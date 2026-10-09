@@ -1,8 +1,8 @@
 # Scramble samples — pair / xcross_pair / G / bin 4
-# Population in this bin: 332
+# Population in this bin: 335
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 3888175073,D2 R2 F' D2 L2 R D2 F2 L D2 U L' D L' D U' L F' L,G,Hari-Hari Horas 2 2024 (2024-06-27),333mbf Final B #1
@@ -22,7 +22,7 @@
 209606001,D2 F2 L' R' D2 L R' U B2 L' R' B D' R2 B' D U2,G,Avenues CUBELELO Open 2015 (2015-10-31~11-01),333ft Final A #2
 5361736006,L2 D' R2 D' R2 B2 U' R2 B2 U' F U R U L' R' F2 R2 F L' F2,G,Stenay Que le Début 2026 (2026-01-31~02-01),333mbf Final A #1
 228895001,L2 B2 L2 B2 U B2 U' L' D' B' L' B L2 D' B L2 B' D2,G,Plenty o' Parity 2015 (2015-12-12~13),333ft Final B #3
-238917001,F2 U B2 D' F2 D' L2 D2 R2 F D F L' R2 B L' B,G,Great Indian Cubeathon 2016 (2016-01-08~10),333oh R1 G E1
+5852591044,U2 B' U2 F2 D2 B' D' F2 L U' B D2 L2 F U2 L2 D2 R2 D2 F' L2 U2,G,Multimatum: New York Multimate PBQ VI 2026 (2026-09-25~27),333mbf R1 B #2
 4037681001,R' L2 B F U2 F L2 R2 B2 D L R2 B D B L B' U,G,Mississippi Cubing Dawgs 2024 (2024-08-24),333 R1 C E1
 270576001,F2 U' D' B R2 B' U B U' L' F2 L2 B2 U L2 B2 D F2,G,CSP Open 2016 (2016-03-20),333 Final F E1
 5223982001,U2 R U B2 U2 B F L2 U2 L2 F2 L B L2 D' L F L' B2,G,Singapore Sprint November 2025 (2025-11-30),333 Final A #4

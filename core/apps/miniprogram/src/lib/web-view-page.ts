@@ -1,3 +1,5 @@
+import { SITE_ORIGIN } from './runtime-config';
+import { readNativePreferences, withNativePreferences } from './preferences';
 import {
   ApiError,
   clearStoredSession,
@@ -13,7 +15,7 @@ import {
   WEB_ROUTE_SHARE_IMAGE,
   type WebRouteKey,
 } from './web-routes';
-import { showFriendShareMenu } from './share';
+import { hidePublicShareMenu, showFriendShareMenu } from './share';
 import {
   clearRuntimeTimeout,
   scheduleRuntimeTimeout,
@@ -30,9 +32,12 @@ import {
   type RequiredSessionDestination,
 } from './required-session';
 import { decodeMiniProgramSessionMessage } from './web-session-contract';
-import { tr } from './i18n';
+import { applyLocalizedTabBar, localizedWebsitePath, receiveNativeLocale, tr } from './i18n';
+import { publicPageSharePath, decodePageShareMessage, type PageShareMessage } from '@cuberoot/shared/page-share';
+import { applyNativeAppearance, receiveNativeAppearance } from './appearance';
 
 export interface WebViewPageData {
+  appearanceStyle: string;
   canRetry: boolean;
   errorMessage: string;
   errorTitle: string;
@@ -56,6 +61,9 @@ export interface WebViewPageContext {
 }
 
 interface WebViewPageMethods {
+  refreshLocale(): void;
+  invalidatePreferences(): void;
+  acceptPreferences(): void;
   handleWebViewError(event: WechatMiniprogram.BaseEvent): void;
   handleWebViewMessage(event: WechatMiniprogram.CustomEvent<{ data?: unknown[] }>): void;
   loginWithMiniProgram(): Promise<void>;
@@ -68,6 +76,13 @@ interface WebViewPageFactoryOptions {
 }
 
 const routeAttempts = new WeakMap<WebViewPageContext, number>();
+const sharedDestinations = new WeakMap<WebViewPageContext, string>();
+const shareMetadata = new WeakMap<WebViewPageContext, PageShareMessage>();
+const preferencesAtOpen = new WeakMap<WebViewPageContext, string>();
+const nativeTabs = new WeakMap<WebViewPageContext, 'tools' | 'timer' | 'web'>();
+const sessionsAtOpen = new WeakMap<WebViewPageContext, string | null>();
+const pendingTabPaths: Partial<Record<'home' | 'timer', string>> = {};
+const stalePreferencePages = new WeakSet<WebViewPageContext>();
 const disposedPages = new WeakSet<WebViewPageContext>();
 const visiblePages = new WeakSet<WebViewPageContext>();
 const pausedRouteResumes = new WeakSet<WebViewPageContext>();
@@ -213,9 +228,7 @@ function updateShareMenu(key: unknown): void {
       showFriendShareMenu();
       return;
     }
-    miniProgramApi().hideShareMenu({
-      menus: isDouyinMiniProgram() ? ['shareAppMessage'] : ['shareAppMessage', 'shareTimeline'],
-    });
+    hidePublicShareMenu();
   } catch {
     // Sharing is optional; route loading must survive unsupported menu APIs.
   }
@@ -268,6 +281,7 @@ export function createWebViewPageData(): WebViewPageData {
     ? { en: 'Douyin', zh: '抖音' }
     : { en: 'WeChat', zh: '微信' });
   return {
+    appearanceStyle: '',
     canRetry: false,
     errorMessage: '',
     errorTitle: '',
@@ -291,7 +305,7 @@ export function createWebViewPageData(): WebViewPageData {
 export async function openWebRoute(context: WebViewPageContext, key: unknown): Promise<boolean> {
   if (disposedPages.has(context)) return false;
 
-  const route = resolveWebRoute(key);
+  const route = resolveWebRoute(key, sharedDestinations.get(context));
   updateShareMenu(key);
   if (!route) {
     const attempt = beginRouteAttempt(context);
@@ -309,6 +323,7 @@ export async function openWebRoute(context: WebViewPageContext, key: unknown): P
     return false;
   }
 
+  preferencesAtOpen.set(context, JSON.stringify(readNativePreferences()));
   const attempt = beginRouteAttempt(context);
   updateNavigationTitle(route.title);
   context.setData({
@@ -336,10 +351,14 @@ export async function openWebRoute(context: WebViewPageContext, key: unknown): P
     return true;
   }
   const session = stored.session;
+  const signedOut = !session && Boolean(sessionsAtOpen.get(context));
+  sessionsAtOpen.set(context, session?.token ?? null);
   if (!session || !route.sessionHandoff) {
     if (isCurrentAttempt(context, attempt)
       && (!route.sessionHandoff || !requireMiniProgramSession(context))) {
-      context.setData({ src: route.url });
+      context.setData({ src: withNativePreferences(signedOut
+        ? `${SITE_ORIGIN}/auth/miniprogram#action=logout&next=${encodeURIComponent(route.path)}`
+        : route.url, nativeTabs.get(context)) });
     }
     return true;
   }
@@ -360,8 +379,8 @@ export async function openWebRoute(context: WebViewPageContext, key: unknown): P
       } else {
         context.setData({
           src: current.session?.token === session.token
-            ? createWebSessionHandoffUrl(route.path, ticket)
-            : route.url,
+            ? withNativePreferences(createWebSessionHandoffUrl(route.path, ticket), nativeTabs.get(context))
+            : withNativePreferences(route.url, nativeTabs.get(context)),
         });
       }
     }
@@ -384,7 +403,7 @@ export async function openWebRoute(context: WebViewPageContext, key: unknown): P
           showMiniProgramLoginGate(context);
         }
       } else {
-        context.setData({ src: route.url });
+        context.setData({ src: withNativePreferences(route.url, nativeTabs.get(context)) });
       }
     } else {
       showWebSessionHandoffFailure(context);
@@ -506,6 +525,19 @@ export function retryWebRoute(context: WebViewPageContext): void {
   miniProgramNextTick(reopenOnce);
 }
 
+function refreshWebLocale(context: WebViewPageContext): void {
+  const labels = createWebViewPageData();
+  if (context.data.loginButtonBusyLabel === labels.loginButtonBusyLabel) return;
+
+  context.setData({ loginButtonBusyLabel: labels.loginButtonBusyLabel,
+    loginButtonLabel: labels.loginButtonLabel, loginRetryLabel: labels.loginRetryLabel,
+    retryLabel: labels.retryLabel,
+    loadingTitle: labels.loadingTitle,
+  });
+  const route = resolveWebRoute(context.data.routeKey);
+  if (route && visiblePages.has(context)) updateNavigationTitle(route.title);
+}
+
 /**
  * Keep every web-backed page as a thin route adapter. Loading, session handoff,
  * errors and retries must stay in this shared controller instead of page files.
@@ -518,22 +550,78 @@ export function createWebViewPageOptions(
     data: createWebViewPageData(),
 
     onLoad(options) {
+      if (!fixedRouteKey && ['tools', 'timer', 'account'].includes(options.nativeTab ?? '')) {
+        if (options.nativeTab === 'tools') {
+          let path = options.path ?? '/';
+          try { if (!path.startsWith('/')) path = decodeURIComponent(path); } catch { path = '/'; }
+          pendingTabPaths.home = publicPageSharePath(path) ?? '/';
+        } else if (options.nativeTab === 'timer' && options.path) {
+          let path = options.path;
+          try { if (!path.startsWith('/')) path = decodeURIComponent(path); } catch { path = ''; }
+          const safe = publicPageSharePath(path);
+          // A plain tab switch keeps the existing timer; explicit scramble options are applied.
+          if (safe && /^\/(?:zh\/|en\/)?timer\/?[?#]/.test(safe)) pendingTabPaths.timer = safe;
+        }
+        miniProgramApi().switchTab({ url: `/pages/${options.nativeTab}/index` });
+        return;
+      }
+      nativeTabs.set(this, fixedRouteKey === 'home' ? 'tools' : fixedRouteKey === 'timer' ? 'timer' : 'web');
       cancelScheduledRetry(this);
       pausedRouteResumes.delete(this);
       disposedPages.delete(this);
       cancelLoginAttempt(this);
+      sharedDestinations.delete(this);
+      shareMetadata.delete(this);
+      if (!fixedRouteKey && options.path !== undefined) {
+        // Decode the query transport once; preserve percent escapes inside the destination.
+        let path = options.path;
+        try { if (!path.startsWith('/')) path = decodeURIComponent(path); }
+        catch { path = ''; }
+        sharedDestinations.set(this, path);
+      }
       if (factoryOptions.requireMiniProgramSession) {
         sessionRequiredPages.add(this);
       } else {
         sessionRequiredPages.delete(this);
       }
+      if ((fixedRouteKey === 'home' || fixedRouteKey === 'timer') && pendingTabPaths[fixedRouteKey] !== undefined) {
+        sharedDestinations.set(this, localizedWebsitePath(pendingTabPaths[fixedRouteKey]!));
+        delete pendingTabPaths[fixedRouteKey];
+      }
       void openWebRoute(this, fixedRouteKey ?? options.key);
     },
 
+    refreshLocale() { refreshWebLocale(this); },
+    invalidatePreferences() { stalePreferencePages.add(this); },
+    acceptPreferences() { preferencesAtOpen.set(this, JSON.stringify(readNativePreferences())); },
+
     onShow() {
       if (disposedPages.has(this)) return;
+      applyNativeAppearance();
+      applyLocalizedTabBar();
       visiblePages.add(this);
+      refreshWebLocale(this);
       startNetworkRecovery(this);
+      if ((fixedRouteKey === 'home' || fixedRouteKey === 'timer') && pendingTabPaths[fixedRouteKey] !== undefined) {
+        sharedDestinations.set(this, localizedWebsitePath(pendingTabPaths[fixedRouteKey]!));
+        delete pendingTabPaths[fixedRouteKey];
+        void openWebRoute(this, fixedRouteKey);
+        return;
+      }
+      const stored = getStoredSessionSnapshot();
+      const changedSession = sessionsAtOpen.has(this)
+        && (stored.status === 'unavailable' || sessionsAtOpen.get(this) !== (stored.session?.token ?? null));
+      const changedPreferences = preferencesAtOpen.has(this)
+        && preferencesAtOpen.get(this) !== JSON.stringify(readNativePreferences());
+      const stalePreferences = stalePreferencePages.delete(this);
+      if (changedSession || stalePreferences || changedPreferences) {
+        // Reissue session handoff rather than replaying a consumed ticket URL.
+        const metadata = shareMetadata.get(this);
+        const path = metadata?.path ?? sharedDestinations.get(this);
+        if (path) sharedDestinations.set(this, localizedWebsitePath(path));
+        void openWebRoute(this, this.data.routeKey);
+        return;
+      }
       if (sessionGateResumes.delete(this)) {
         void openWebRoute(this, this.data.routeKey);
         return;
@@ -549,17 +637,20 @@ export function createWebViewPageOptions(
       visiblePages.delete(this);
       if (!this.data.loginRequired) pausePendingRoute(this);
       stopNetworkRecovery(this);
+      // Preserve the WebView document, its scroll position and consumed handoff.
+      // onShow reopens only when the session or preferences actually changed.
     },
 
     onUnload() {
       cancelWebRoute(this);
     },
 
-    onShareAppMessage() {
-      return resolveWebRouteShare(this.data.routeKey) ?? {
+    onShareAppMessage(options) {
+      // webViewUrl is authoritative after in-web-view navigation; never use stale message URLs.
+      return resolveWebRouteShare(this.data.routeKey, options?.webViewUrl ?? sharedDestinations.get(this), shareMetadata.get(this)) ?? {
         imageUrl: WEB_ROUTE_SHARE_IMAGE,
         title: tr({ en: 'CubeRoot', zh: '魔方根CubeRoot' }),
-        path: '/pages/timer/index',
+        path: '/pages/tools/index',
       };
     },
 
@@ -569,6 +660,16 @@ export function createWebViewPageOptions(
 
     handleWebViewMessage(event) {
       const messages = Array.isArray(event.detail?.data) ? event.detail.data : [];
+      for (const message of messages) {
+        // Once the immediate protocol is active, an old queued WebView message
+        // must not overwrite a newer committed native snapshot.
+        if (!readNativePreferences()) {
+          receiveNativeAppearance(message);
+          receiveNativeLocale(message);
+        }
+        const metadata = decodePageShareMessage(message);
+        if (metadata) shareMetadata.set(this, metadata);
+      }
       if (messages.some((message) => decodeMiniProgramSessionMessage(message))) {
         clearStoredSession();
       }

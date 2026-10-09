@@ -13,6 +13,7 @@ import { ListSelect } from '@/components/ListSelect';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { CONTINENT_NAMES } from '@/lib/continent';
 import { CompactSelect } from '@/components/CompactSelect';
+import { DailyActivityChart } from '@/components/DailyActivityChart';
 import { countryToIso2 } from '@/lib/country-flags';
 import { Flag } from '@/components/Flag';
 import { EVENT_NAME_TO_ID } from '@/lib/event-constants';
@@ -25,6 +26,39 @@ import {
   extractTextFromMdLink, dedupRows,
   selectRecordSection,
 } from './WcaStatView.cells';
+
+export function AnnualParticipationView({ header, sections, event, metric, onChange, isZh }: {
+  header: StatHeader[]; sections: StatSection[]; event: string; metric: string;
+  onChange: (event: string, metric: string) => void; isZh: boolean;
+}) {
+  const availableEvents = new Set(sections.flatMap(section => EVENT_NAME_TO_ID[section.title] ? [EVENT_NAME_TO_ID[section.title]] : []));
+  const selectedEvent = availableEvents.has(event) ? event : '';
+  const section = sections.find(section => selectedEvent
+    ? EVENT_NAME_TO_ID[section.title] === selectedEvent : section.title === 'All events');
+  const options = header.slice(1).map(column => ({ value: column.key, label: tr({ en: column.label, zh: column.labelZh }) }));
+  const selectedMetric = options.some(option => option.value === metric) ? metric : header[1].key;
+  const column = header.findIndex(column => column.key === selectedMetric);
+  const label = options.find(option => option.value === selectedMetric)!.label;
+  const points = useMemo(() => (section?.rows ?? []).map(row => ({
+    date: String(row[0]), values: { count: Number(row[column]) },
+  })), [section, column]);
+  return <>
+    <div className="wca-stats-tab-bar">
+      <WcaEventSelector availableEvents={availableEvents} selectedEvent={selectedEvent}
+        onSelect={value => onChange(value, selectedMetric)} isZh={isZh} allowAll />
+      <ListSelect items={options} value={selectedMetric} onChange={value => onChange(selectedEvent, value)}
+        allLabel={label} clearable={false} />
+    </div>
+    <DailyActivityChart data={points} series={[{ key: 'count', label, tone: 'info' }]}
+      ariaLabel={label} emptyLabel={tr({ zh: '暂无数据', en: 'No data yet' })}
+      dateLabel="year" showTotals={false} />
+    <p className="wca-stats-note">{tr({
+      zh: `历年合计：成功还原 ${(section?.rows ?? []).reduce((sum, row) => sum + Number(row[2]), 0).toLocaleString()} 盘；尝试 ${(section?.rows ?? []).reduce((sum, row) => sum + Number(row[3]), 0).toLocaleString()} 盘。`,
+      en: `All years: ${(section?.rows ?? []).reduce((sum, row) => sum + Number(row[2]), 0).toLocaleString()} successful solves; ${(section?.rows ?? []).reduce((sum, row) => sum + Number(row[3]), 0).toLocaleString()} attempts.`,
+    })}</p>
+    <StatsTable header={header} rows={section?.rows ?? []} searchTerm="" isZh={isZh} />
+  </>;
+}
 
 export function RecordSectionsView({ header, sections, query, onChange, isZh }: {
   header: StatHeader[];
@@ -56,14 +90,14 @@ export function RecordSectionsView({ header, sections, query, onChange, isZh }: 
     return labels[value] ? tr(labels[value]) : value;
   };
   return <>
-    {options.event.some(Boolean) && <WcaEventSelector
-      availableEvents={new Set(options.event.filter(Boolean))}
-      selectedEvent={scope.event}
-      onSelect={value => change('event', value)}
-      isZh={isZh}
-      allowAll
-    />}
     <div className="wca-stats-tab-bar">
+      {options.event.some(Boolean) && <WcaEventSelector
+        availableEvents={new Set(options.event.filter(Boolean))}
+        selectedEvent={scope.event}
+        onSelect={value => change('event', value)}
+        isZh={isZh}
+        allowAll
+      />}
       {(['region', 'level', 'type'] as const).filter(key => options[key].length > 1).map(key => <ListSelect
         key={key}
         items={options[key].map(value => ({ value, label: label(key, value) }))}
@@ -216,7 +250,8 @@ export function WrByCountryYearView({ header, years, cumulative, searchTerm, isZ
   );
 }
 
-export function SectionsView({ header, sections, searchTerm, isZh, selectedEvent }: {
+export function SectionsView({ leadingControls, header, sections, searchTerm, isZh, selectedEvent }: {
+  leadingControls?: React.ReactNode;
   header: StatHeader[];
   sections: StatSection[];
   searchTerm: string;
@@ -290,9 +325,10 @@ export function SectionsView({ header, sections, searchTerm, isZh, selectedEvent
 
   return (
     <div className="wca-stats-sections">
-      {showMetricFilter && (
+      {(leadingControls || showMetricFilter) && (
         <div className="wca-stats-tab-bar">
-          {Array.from(availableMetrics).map(metric => (
+          {leadingControls}
+          {showMetricFilter && Array.from(availableMetrics).map(metric => (
             <button
               key={metric}
               className={`wca-stats-tab ${selectedMetric === metric ? 'active' : ''}`}
@@ -435,7 +471,8 @@ export function AoxRankingSection({ header, rows, isZh }: {
   );
 }
 
-export function PanelsView({ panels, searchTerm, isZh, selectedEvent, activePanel, onSetActivePanel, belowTabs }: {
+export function PanelsView({ leadingControls, panels, searchTerm, isZh, selectedEvent, activePanel, onSetActivePanel, belowTabs }: {
+  leadingControls?: React.ReactNode;
   panels: StatPanel[];
   searchTerm: string;
   isZh: boolean;
@@ -501,20 +538,17 @@ export function PanelsView({ panels, searchTerm, isZh, selectedEvent, activePane
 
   return (
     <>
-      {metrics.length >= 2 && (
-        <div className="wca-stats-tab-bar">
-          {metrics.map(m => (
-            <button
-              key={m}
-              className={`wca-stats-tab ${m === activeMetric ? 'active' : ''}`}
-              onClick={() => setMetric(m)}
-            >
-              {m === 'Single' ? tr({ zh: '单次', en: 'Single' }) : m === 'Average' ? tr({ zh: '平均', en: 'Average' }) : m}
-            </button>
-          ))}
-        </div>
-      )}
       <div className="wca-stats-tab-bar">
+        {leadingControls}
+        {metrics.length >= 2 && metrics.map(m => (
+          <button
+            key={m}
+            className={`wca-stats-tab ${m === activeMetric ? 'active' : ''}`}
+            onClick={() => setMetric(m)}
+          >
+            {m === 'Single' ? tr({ zh: '单次', en: 'Single' }) : m === 'Average' ? tr({ zh: '平均', en: 'Average' }) : m}
+          </button>
+        ))}
         {panels.map((p, i) => (
           <button
             key={p.id}
@@ -639,7 +673,8 @@ export function SourcePanelsView({ sourcePanels, searchTerm, isZh, selectedEvent
   );
 }
 
-export function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh, selectedEvent, availableMetricIds, hideSelector, activeMetric, onSetActiveMetric, onSetActivePanel, activePanel, belowTabs, sourceId, onSetSource }: {
+export function MetricPanelsView({ leadingControls, metricPanels, metricGroups, searchTerm, isZh, selectedEvent, availableMetricIds, hideSelector, activeMetric, onSetActiveMetric, onSetActivePanel, activePanel, belowTabs, sourceId, onSetSource }: {
+  leadingControls?: React.ReactNode;
   metricPanels: MetricPanel[];
   metricGroups?: MetricGroup[];
   searchTerm: string;
@@ -668,13 +703,9 @@ export function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh,
   }, [availableMetricIds, activeMetric, metricPanels, onSetActiveMetric]);
 
   const metric = metricPanels[activeMetric];
-  const METRIC_LABEL_OVERRIDE: Record<string, string> = { 'Ao3': 'Mo3' };
-  const _labelEn = metric?.labelEn ?? '';
-  const currentLabel = METRIC_LABEL_OVERRIDE[_labelEn] ?? (isZh ? metric?.labelZh : _labelEn) ?? _labelEn;
-
   const allMetricItems: Array<{ idx: number; label: string }> = useMemo(() => {
     const LABEL_OVERRIDE: Record<string, string> = {
-      'Ao3': 'Mo3', 'Ao5': 'Ao5', 'Ao12': 'Ao12',
+      'Mo3': 'Mo3', 'Ao3': 'Ao3', 'Ao5': 'Ao5', 'Ao12': 'Ao12',
       'Ao25': 'Ao25', 'Ao50': 'Ao50', 'Ao100': 'Ao100', 'Ao1000': 'Ao1000',
     };
     const resolveLabel = (mp: MetricPanel) =>
@@ -693,34 +724,38 @@ export function MetricPanelsView({ metricPanels, metricGroups, searchTerm, isZh,
       .map((mp, i) => availableMetricIds.has(mp.id) ? { idx: i, label: resolveLabel(mp) } : null)
       .filter(Boolean) as Array<{ idx: number; label: string }>;
   }, [metricGroups, metricPanels, availableMetricIds, isZh]);
+  const currentLabel = allMetricItems.find(item => item.idx === activeMetric)?.label ?? '';
 
   return (
     <div className="wca-stats-metric-panels">
-      {!hideSelector && (allMetricItems.length < 4 ? (
-        <div className="wca-stats-tab-bar">
-          {allMetricItems.map(({ idx, label }) => (
-            <button
-              key={idx}
-              className={`wca-stats-tab${idx === activeMetric ? ' active' : ''}`}
-              onClick={() => onSetActiveMetric(idx)}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      ) : (
-        <CompactSelect
-          className="wca-stats-metric-select"
-          label={currentLabel}
-          items={allMetricItems.map(({ idx, label }) => ({
-            value: idx,
-            label,
-          }))}
-          value={activeMetric}
-          onChange={onSetActiveMetric}
-          ariaLabel={tr({ zh: '统计指标', en: 'Statistic metric' })}
-        />
-      ))}
+      <div className="wca-stats-tab-bar">
+        {leadingControls}
+        {!hideSelector && (allMetricItems.length < 4 ? (
+          <>
+            {allMetricItems.map(({ idx, label }) => (
+              <button
+                key={idx}
+                className={`wca-stats-tab${idx === activeMetric ? ' active' : ''}`}
+                onClick={() => onSetActiveMetric(idx)}
+              >
+                {label}
+              </button>
+            ))}
+          </>
+        ) : (
+          <CompactSelect
+            className="wca-stats-metric-select"
+            label={currentLabel}
+            items={allMetricItems.map(({ idx, label }) => ({
+              value: idx,
+              label,
+            }))}
+            value={activeMetric}
+            onChange={onSetActiveMetric}
+            ariaLabel={tr({ zh: '统计指标', en: 'Statistic metric' })}
+          />
+        ))}
+      </div>
 
       {metric && metric.sourcePanels ? (
         <SourcePanelsView sourcePanels={metric.sourcePanels} searchTerm={searchTerm} isZh={isZh} selectedEvent={selectedEvent}

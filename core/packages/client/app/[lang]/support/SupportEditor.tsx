@@ -2,7 +2,7 @@
 
 /**
  * 弹窗新增/编辑一位赞助者或贡献者(target.kind 区分,两者共用选手搜索/头像逻辑)。
- * 贡献者还会合并后台注册用户搜索(名字 / WCA ID / CubeRoot ID)。
+ * 合并后台注册用户搜索(名字 / WCA ID / CubeRoot ID),直接对应公开名字、WCA ID 与头像。
  * 选中自动带出名字 + WCA ID + 头像。
  * 无独立名字输入框:名字来自选手搜索框 —— 选中选手用其 name,搜不到(没参赛的人)
  * 则把输入的文字当名字(onQueryChange),WCA ID 留空。
@@ -16,6 +16,7 @@ import { DateInput } from '@/components/DateInput';
 import { WcaPersonPicker } from '@/components/WcaPersonPicker';
 import { ClearButton } from '@/components/ClearButton';
 import { UserIdLabel } from '@/components/UserIdLabel';
+import { useModalDismiss } from '@/hooks/useModalDismiss';
 import { toLocalIsoDate } from '@/lib/iso-date';
 import { fetchAdminUsers, type AdminUserRecord } from '@/lib/account-api';
 import { fetchPersonCard, type WcaPersonLite } from '@/lib/wca-api';
@@ -37,6 +38,7 @@ interface Props {
 
 function toDraft(t: EditorTarget) {
   const base = {
+    userId: t.kind === 'sponsor' && t.initial?.userId ? String(t.initial.userId) : '',
     name: t.initial?.name ?? '',
     wcaId: t.initial?.wcaId ?? '',
     avatarUrl: t.initial?.avatarUrl ?? '',
@@ -65,18 +67,25 @@ export default function SupportEditor({ target, onClose, onSaved }: Props) {
   const [picked, setPicked] = useState<WcaPersonLite | null>(
     initial?.wcaId ? { id: initial.wcaId, name: initial.name, country_iso2: '' } : null,
   );
-  const [pickedUser, setPickedUser] = useState<AdminUserRecord | null>(null);
+  const [pickedUser, setPickedUser] = useState<Pick<AdminUserRecord, 'id' | 'displayName' | 'wcaId'> | null>(
+    target.kind === 'sponsor' && target.initial?.userId
+      ? { id: target.initial.userId, displayName: target.initial.name, wcaId: target.initial.wcaId ?? null }
+      : null,
+  );
   const [userQuery, setUserQuery] = useState('');
   const [userResults, setUserResults] = useState<AdminUserRecord[] | null>(null);
   const [userSearchFailed, setUserSearchFailed] = useState(false);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const backdropProps = useModalDismiss(onClose, saving);
 
   useEffect(() => {
     setDraft(toDraft(target));
     setContribs(target.kind === 'contributor' ? target.initial?.contributions ?? [] : []);
     setPicked(target.initial?.wcaId ? { id: target.initial.wcaId, name: target.initial.name, country_iso2: '' } : null);
-    setPickedUser(null);
+    setPickedUser(target.kind === 'sponsor' && target.initial?.userId
+      ? { id: target.initial.userId, displayName: target.initial.name, wcaId: target.initial.wcaId ?? null }
+      : null);
     setUserQuery('');
     setUserResults(null);
     setUserSearchFailed(false);
@@ -84,7 +93,7 @@ export default function SupportEditor({ target, onClose, onSaved }: Props) {
 
   useEffect(() => {
     const q = userQuery.trim();
-    if (target.kind !== 'contributor' || !q) {
+    if (!q) {
       setUserResults(null);
       setUserSearchFailed(false);
       return;
@@ -147,10 +156,10 @@ export default function SupportEditor({ target, onClose, onSaved }: Props) {
     setUserResults(null);
     if (!c) {
       // 清除选手:名字/WCA ID/头像一起清,让 admin 重新输入。
-      setDraft(d => ({ ...d, name: '', wcaId: '', avatarUrl: '' }));
+      setDraft(d => ({ ...d, userId: '', name: '', wcaId: '', avatarUrl: '' }));
       return;
     }
-    setDraft(d => ({ ...d, wcaId: c.id, name: c.name }));
+    setDraft(d => ({ ...d, userId: '', wcaId: c.id, name: c.name }));
     const card = await fetchPersonCard(c.id);
     if (card?.avatar) setDraft(d => ({ ...d, avatarUrl: card.avatar }));
   }
@@ -162,7 +171,8 @@ export default function SupportEditor({ target, onClose, onSaved }: Props) {
     setUserResults(null);
     setDraft(d => ({
       ...d,
-      name: user.displayName,
+      userId: String(user.id),
+      name: target.kind === 'sponsor' && target.initial ? target.initial.name : user.displayName,
       wcaId: user.wcaId ?? '',
       avatarUrl: user.avatarUrl ?? '',
     }));
@@ -203,6 +213,7 @@ export default function SupportEditor({ target, onClose, onSaved }: Props) {
         if (!Number.isFinite(amount) || amount < 0) { setErr(tr({ zh: '金额无效', en: 'Invalid amount'
         })); setSaving(false); return; }
         const body: SponsorInput = {
+          userId: draft.userId ? Number(draft.userId) : null,
           name: draft.name.trim(),
           wcaId: draft.wcaId.trim().toUpperCase() || null,
           avatarUrl: draft.avatarUrl.trim() || null,
@@ -225,18 +236,17 @@ export default function SupportEditor({ target, onClose, onSaved }: Props) {
     : (initial ? tr({ zh: '编辑赞助者', en: 'Edit supporter' }) : tr({ zh: '新增赞助者', en: 'Add supporter' }));
 
   return (
-    <div className="sponsor-editor-backdrop" onClick={onClose}>
-      <div className="sponsor-editor" onClick={e => e.stopPropagation()}>
+    <div className="sponsor-editor-backdrop" {...backdropProps}>
+      <div className="sponsor-editor">
         <div className="sponsor-editor-head">
           <h2>{title}</h2>
           <button className="sponsor-editor-close" onClick={onClose} aria-label="close"><X size={18} /></button>
         </div>
 
         <div className="sponsor-editor-body">
-          <label className="sponsor-editor-row">
-            <span>{target.kind === 'contributor'
-              ? tr({ zh: '搜索', en: 'Search' })
-              : tr({ zh: '搜索选手', en: 'Search cuber' })}</span>
+          {/* A label can forward the result click to the newly rendered clear button in Safari. */}
+          <div className="sponsor-editor-row">
+            <span>{tr({ zh: '搜索', en: 'Search' })}</span>
             {pickedUser ? (
               <div className="cuber-search sponsor-editor-picker">
                 <div className="cuber-search-chip">
@@ -246,7 +256,8 @@ export default function SupportEditor({ target, onClose, onSaved }: Props) {
                   <ClearButton
                     onClick={() => {
                       setPickedUser(null);
-                      setDraft(d => ({ ...d, name: '', wcaId: '', avatarUrl: '' }));
+                      setPicked(null);
+                      setDraft(d => ({ ...d, userId: '', name: '', wcaId: '', avatarUrl: '' }));
                     }}
                     isZh={isZh}
                   />
@@ -258,15 +269,13 @@ export default function SupportEditor({ target, onClose, onSaved }: Props) {
                 onChange={c => void handlePick(c)}
                 onQueryChange={q => {
                   if (!picked) setDraft(d => ({ ...d, name: q }));
-                  if (target.kind === 'contributor') setUserQuery(q);
+                  setUserQuery(q);
                 }}
                 isZh={isZh}
                 className="sponsor-editor-picker"
-                placeholder={target.kind === 'contributor'
-                  ? tr({ zh: '输入名字、WCA ID 或 CubeRoot ID', en: 'Name, WCA ID, or CubeRoot ID' })
-                  : tr({ zh: '输入名字或 WCA ID', en: 'Name or WCA ID' })}
+                placeholder={tr({ zh: '输入名字、WCA ID 或 CubeRoot ID', en: 'Name, WCA ID, or CubeRoot ID' })}
                 excludeIds={userResults?.flatMap(user => user.wcaId ? [user.wcaId] : [])}
-                additionalResults={target.kind === 'contributor' && userQuery.trim() ? (
+                additionalResults={userQuery.trim() ? (
                   <div className="cuber-search-section">
                     <div className="cuber-search-section-label">{tr({ zh: '注册用户', en: 'Registered users' })}</div>
                     {userResults === null ? (
@@ -289,14 +298,10 @@ export default function SupportEditor({ target, onClose, onSaved }: Props) {
               />
             )}
             <span className="sponsor-editor-hint">{tr({
-              zh: target.kind === 'contributor'
-                ? '可搜索 WCA 选手或本站注册用户;搜不到也可按输入名字记录'
-                : '搜不到(没参加过比赛的人)也没关系,按输入的名字记录',
-              en: target.kind === 'contributor'
-                ? 'Search WCA competitors or registered users; unmatched names can still be saved'
-                : 'Not in WCA? No problem — the typed name is used as-is',
+              zh: '选择本站注册用户可直接关联账号,不需要 WCA ID;仅选择 WCA 选手则只记录选手资料',
+              en: 'Select a registered user to link their account without a WCA ID; selecting only a WCA competitor saves their public details',
             })}</span>
-          </label>
+          </div>
 
           {draft.avatarUrl && (
             <div className="sponsor-editor-preview">

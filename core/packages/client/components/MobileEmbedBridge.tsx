@@ -21,6 +21,10 @@ import { applySession, getSessionToken, useAuthStore } from '@/lib/auth-store';
 import { isMobileEmbedAppleLink, mobileEmbedAccountAuthRequest, mobileEmbedSupportsApple } from '@/lib/mobile-embed-auth';
 import { exchangeWebSessionTicket } from '@/lib/web-session-handoff';
 import { tr } from '@/i18n/tr';
+import { installedContentUnavailable } from '@cuberoot/shared/installed-content';
+import { setAppleMembershipBridge, receiveAppleMembershipResult } from '@/lib/apple-membership-bridge';
+import { setStoreMembershipBridge } from '@/lib/store-membership-bridge';
+import { setInstalledBleBridge } from '@/lib/installed-ble-bridge';
 
 const MOBILE_PARENT_ORIGINS = new Set([
   'capacitor://localhost',
@@ -130,6 +134,11 @@ export default function MobileEmbedBridge() {
       const anchor = target instanceof Element ? target.closest<HTMLAnchorElement>('a[href]') : null;
       if (!anchor || anchor.hasAttribute('download')) return;
       const next = new URL(anchor.href, window.location.href);
+      if (installedContentUnavailable(next.href)) {
+        event.preventDefault(); event.stopImmediatePropagation();
+        window.alert(tr({ zh: '此内容暂不在 App 中提供。', en: 'This content is not available in the app.' }));
+        return;
+      }
       if (next.origin !== window.location.origin || anchor.target === '_blank') {
         if (!isMobileEmbedExternalHref(next.href)) return;
         event.preventDefault();
@@ -151,10 +160,14 @@ export default function MobileEmbedBridge() {
       if (init?.surface === surface) {
         parentOrigin = event.origin;
         capabilities = init;
+        setInstalledBleBridge(surface === 'tools' && init.bluetooth === true ? event.origin : null);
+        setAppleMembershipBridge(init.appleMembership === true, postToParent);
+        setStoreMembershipBridge('google', init.googleMembership === true, postToParent);
         postNavigation();
         return;
       }
       if (event.origin !== parentOrigin) return;
+      receiveAppleMembershipResult(event.data);
       const managementResult = decodeMobileEmbedAccountManageResult(event.data);
       if (surface === 'account' && managementResult) {
         if (pendingManagement?.requestId !== managementResult.requestId) return;
@@ -186,10 +199,11 @@ export default function MobileEmbedBridge() {
       // The shared exchange helper owns single-flight ticket consumption (also
       // across StrictMode remounts). Invalidate this consumer, not that shared
       // request: an old response may never restore a logged-out/replaced user.
-      void exchangeWebSessionTicket(webSession.ticket).then((session) => {
+      void exchangeWebSessionTicket(webSession.ticket).then(async (session) => {
         if (!current()) return;
-        const persisted = applySession(session.token, session.user);
-        const ok = persisted && getSessionToken() === session.token;
+        const persisted = await applySession(session.token, session.user, current);
+        if (!current()) return;
+        const ok = persisted && current() && Boolean(getSessionToken());
         postToParent(mobileEmbedWebSessionResultMessage(ok, webSession.requestId));
         if (ok) window.location.reload();
       }).catch(() => {
@@ -214,6 +228,9 @@ export default function MobileEmbedBridge() {
     window.addEventListener('message', onMessage);
     return () => {
       active = false;
+      setInstalledBleBridge(null);
+      setAppleMembershipBridge(false);
+      setStoreMembershipBridge('google', false);
       invalidateWebSession();
       recordRouteRef.current = null;
       if (pendingManagement) window.clearTimeout(pendingManagement.timeout);

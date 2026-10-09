@@ -11,7 +11,7 @@ import type { MouseEvent } from 'react';
 import { tr } from '@/i18n/tr';
 import { useRouter, usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { changeAppLanguage, normalizeAppLang, syncLangToUrl, type AppLang } from '@/i18n/i18n-client';
+import { changeAppLanguage, normalizeAppLang, persistAppLanguage, syncLangToUrl, type AppLang } from '@/i18n/i18n-client';
 
 interface LangToggleProps {
   variant?: 'inline' | 'fixed';
@@ -53,22 +53,26 @@ export default function LangToggle({ variant = 'inline', className, soft = false
   const targetHref = `${targetPath}?lang=${next}`;
 
   const toggle = () => {
-    changeAppLanguage(next);
-    syncLangToUrl(next); // cookie + localStorage + html.lang (also adds ?lang=)
-    if (soft) return; // stay on the current route so the host (e.g. an open modal) keeps its state
-
-    if (!pathname) return;
-    const bare = pathname.replace(/^\/(en|zh)(?=\/|$)/, '') || '/';
-    // Drop the ?lang= syncLangToUrl just injected — Pattern B URLs are clean.
-    let query = '';
-    if (typeof window !== 'undefined') {
-      const sp = new URLSearchParams(window.location.search);
-      sp.delete('lang');
-      query = sp.toString() ? `?${sp.toString()}` : '';
+    if (soft) {
+      changeAppLanguage(next);
+      syncLangToUrl(next);
+      return;
     }
+
+    if (typeof window === 'undefined') return;
+    // Navigate with the real address: dynamic pages can render through a
+    // rewritten static shell. Keep query state and anchors from that address.
+    const url = new URL(window.location.href);
+    const bare = url.pathname.replace(/^\/(en|zh)(?=\/|$)/, '') || '/';
+    url.searchParams.delete('lang');
+    const query = url.searchParams.size ? `?${url.searchParams.toString()}` : '';
     const prefix = next === 'en' ? '' : `/${next}`;
     const path = prefix ? `${prefix}${bare === '/' ? '' : bare}` : bare;
-    router.replace(`${path || '/'}${query}`);
+    // The destination layout owns i18n. Changing it or rewriting the current
+    // URL first wakes the old locale provider and nuqs while navigation is
+    // pending, allowing them to restore the old language/query state.
+    persistAppLanguage(next);
+    router.replace(`${path || '/'}${query}${url.hash}`);
   };
 
   // 左键(无修饰)= 原地软切,保持 SPA;Ctrl/Cmd/Shift/中键 = 放行 href 默认(新标签页)。

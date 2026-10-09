@@ -15,14 +15,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryState, parseAsString, parseAsStringEnum } from 'nuqs';
 import {
-  CalendarDays, ChevronLeft, ChevronRight, Download, Globe, Menu, Plus, Search, Settings2,
+  CalendarDays, ChevronLeft, ChevronRight, Download, Globe, Menu, Plus, Search, Settings,
   Share2, Undo2, Upload, X,
 } from 'lucide-react';
 import BackHome from '@/components/BackHome';
 import HeaderToggles from '@/components/HeaderToggles';
 import AppLink from '@/components/AppLink';
 import { ListSelect } from '@/components/ListSelect';
-import BoolToggle from '@/components/BoolToggle';
 import { ClearButton } from '@/components/ClearButton';
 import { useAuthUser, nextQuery } from '@/lib/auth-store';
 import { useIsMobile } from '@/hooks/useIsMobile';
@@ -31,6 +30,7 @@ import { tr, useLang } from '@/i18n/tr';
 import { localZone, isValidZone, formatOffset, zoneOffsetMinutes } from '@cuberoot/shared/tz';
 import { eventsToIcs, type CalEvent, type CalendarImport, type EditScope } from '@cuberoot/shared/calendar';
 import { colorHex, readableInk } from '@/lib/calendar-colors';
+import { useEffectiveTheme } from '@/lib/theme';
 import { zoneLabel, zoneOptions, zoneSearchTerms } from '@/lib/tz-zones';
 import { expandRange, parseOccurrenceKey, useCalendarStore } from '@/lib/calendar-store';
 import { exportIcs, listImports, undoImport } from '@/lib/calendar-api';
@@ -40,8 +40,15 @@ import EventDialog, { type DialogDraft } from './_components/EventDialog';
 import ShareDialog from './_components/ShareDialog';
 import ScopePrompt from './_components/ScopePrompt';
 import Sidebar from './_components/Sidebar';
+import CalendarSettings, { SETTINGS_SECTIONS } from './_components/CalendarSettings';
+import CompetitionCalendars from './_components/CompetitionCalendars';
+import CompetitionDialog from './_components/CompetitionDialog';
+import GoogleBackupPanel from './_components/GoogleBackupPanel';
+import { readGoogleBackup, reviewGoogleBackup, type GoogleImportReview } from '@/lib/google-calendar-backup';
+import { useWcaCalendar } from './_lib/useWcaCalendar';
+import { competitionCalendarEvent, type CalendarCompetition } from './_lib/competitions';
 import {
-  dayKeyIn, dayStart, formatClock, formatLongDate, rangeTitle, toFcEvents,
+  dayKeyIn, dayStart, defaultEventEnd, formatClock, formatLongDate, rangeTitle, toFcEvents,
   VIEW_KEYS, VIEW_LABELS, isViewKey, type ViewKey,
 } from './_lib/format';
 import './calendar.css';
@@ -62,17 +69,26 @@ export default function CalendarClient() {
   const lang = useLang();
   const isZh = lang === 'zh';
   const user = useAuthUser();
-  const isMobile = useIsMobile();
-  // 768 是「侧栏改抽屉」的线;真正窄到一周排不开是 640(同 calendar.css 里那档)。
+  const theme = useEffectiveTheme();
+  const eventColor = useCallback((key: string) => colorHex(key, theme), [theme]);
+  const isMobile = useIsMobile(900);
+  // 900 是「侧栏改抽屉」的线;真正窄到一周排不开是 640(同 calendar.css 里那档)。
   const isNarrow = useIsMobile(640);
   const gridRef = useRef<GridHandle>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
 
   const store = useCalendarStore();
   const { calendars, events, hidden, prefs, share, me } = store;
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
+  const [now, setNow] = useState(0);
+  useEffect(() => {
+    setNow(Date.now());
+    const timer = window.setInterval(() => setNow(Date.now()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   // 显示时区:偏好里空 = 跟随本机。挂载前一律 UTC,免得 SSG 首帧和客户端对不上。
   const displayTz = useMemo(() => {
@@ -93,44 +109,47 @@ export default function CalendarClient() {
   // 历史,免得返回键要按两下才离开日历。转屏后不再回头改。
   const pickedStartView = useRef(false);
   useEffect(() => {
-    if (!mounted || pickedStartView.current) return;
+    if (!mounted || !store.ready || pickedStartView.current) return;
     pickedStartView.current = true;
-    if (!isNarrow || new URLSearchParams(window.location.search).has('view')) return;
-    void setViewParam('timeGridDay', { history: 'replace' });
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- 只在挂载后跑一次
-  }, [mounted]);
+    if (new URLSearchParams(window.location.search).has('view')) return;
+    const startView = isNarrow ? 'timeGridDay' : (isViewKey(prefs.view) ? prefs.view : 'timeGridWeek');
+    void setViewParam(startView, { history: 'replace' });
+  }, [mounted, store.ready, isNarrow, prefs.view, setViewParam]);
 
   // 首帧用 URL 里的日期,之后的跳转走 FullCalendar 自己的 API(不重建视图)。
   const initialDate = useMemo(() => {
     if (/^\d{4}-\d{2}-\d{2}$/.test(dateParam)) return dayStart(displayTz, dateParam);
-    return Date.now();
+    return mounted ? Date.now() : Date.UTC(2000, 0, 1);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- 只取首帧值:之后靠 gotoDate 跳,重算会把视图弹回今天
   }, [mounted]);
 
-  // allow-hydration-volatile-state: every range-dependent calendar subtree is gated by mounted.
-  const [range, setRange] = useState<GridRange>(() => ({
-    start: Date.now() - 7 * DAY, end: Date.now() + 7 * DAY, anchor: Date.now(),
-  }));
+  const [range, setRange] = useState<GridRange>({ start: Date.UTC(2000, 0, 1), end: Date.UTC(2000, 0, 2), anchor: Date.UTC(2000, 0, 1) });
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsSection, setSettingsSection] = useQueryState('settings', parseAsStringEnum([...SETTINGS_SECTIONS]));
+  const settingsOpen = settingsSection !== null;
+  const closeSettings = useCallback(() => { void setSettingsSection(null); }, [setSettingsSection]);
   const [tzOpen, setTzOpen] = useState(false);
   // 顶栏两个浮层:点外面 / Esc 关。它们是 fixed 定位、挂在顶栏外面,所以触发钮要单独排除,
   // 否则「点钮 → 先关再开」,看着就是按不动。
   const tzBtnRef = useRef<HTMLButtonElement>(null);
   const tzPopRef = useRef<HTMLDivElement>(null);
   const setBtnRef = useRef<HTMLButtonElement>(null);
-  const setPopRef = useRef<HTMLDivElement>(null);
   // 导入记录只在真去看设置时才拉 —— 首屏没人关心,不该多一个请求。
   useEffect(() => {
-    if (!settingsOpen) return;
+    if (settingsSection !== 'import') return;
     void listImports().then(setImports).catch(() => { /* 没登录 / 离线时不打扰 */ });
-  }, [settingsOpen]);
+  }, [settingsSection]);
 
   usePopoverDismiss(tzOpen, () => setTzOpen(false), tzPopRef, tzBtnRef);
-  usePopoverDismiss(settingsOpen, () => setSettingsOpen(false), setPopRef, setBtnRef);
   const [query, setQuery] = useState('');
   const [dialog, setDialog] = useState<DialogDraft | null>(null);
+  const [competition, setCompetition] = useState<CalendarCompetition | null>(null);
+  const todayKey = now ? dayKeyIn(displayTz, now) : '';
+  const wca = useWcaCalendar(mounted ? user?.wcaId ?? '' : '', todayKey);
+  const visibleCompetitions = useMemo(() => wca.competitions.filter((c) =>
+    c.source === 'attended' || c.source === 'registered' ? prefs.showWca : c.source === 'followed' ? prefs.showFollowed : prefs.showUpcoming,
+  ), [wca.competitions, prefs.showWca, prefs.showFollowed, prefs.showUpcoming]);
   const [shareOpen, setShareOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [scopeAsk, setScopeAsk] = useState<{ mode: 'edit' | 'delete'; run: (s: EditScope) => void } | null>(null);
@@ -169,12 +188,14 @@ export default function CalendarClient() {
 
   const calColor = useCallback((id: number) => {
     const c = calendars.find((x) => x.id === id);
-    return colorHex(c?.color ?? 'peacock');
-  }, [calendars]);
+    return eventColor(c?.color ?? 'peacock');
+  }, [calendars, eventColor]);
 
-  const fcEvents = useMemo(() => toFcEvents({
-    occurrences, calendarColor: calColor, colorHex, readableInk, meKey: me?.key ?? '',
-  }), [occurrences, calColor, me?.key]);
+  const fcEvents = useMemo(() => [
+    ...toFcEvents({ occurrences, calendarColor: calColor, colorHex: eventColor, readableInk, meKey: me?.key ?? '' }),
+    ...visibleCompetitions.filter((c) => c.start_date < dayKeyIn(displayTz, range.end) && c.end_date >= dayKeyIn(displayTz, range.start))
+      .map((c) => competitionCalendarEvent(c, isZh, theme)),
+  ], [occurrences, calColor, eventColor, me?.key, visibleCompetitions, displayTz, range.start, range.end, isZh, theme]);
 
   // 迷你月历上的「这天有事」小点:按显示时区归日。
   const busyDays = useMemo(() => {
@@ -215,6 +236,11 @@ export default function CalendarClient() {
   }, [defaultCalendarId, displayTz]);
 
   const openEventByKey = useCallback((key: string) => {
+    if (key.startsWith('wca:')) {
+      const found = wca.competitions.find((c) => c.id === key.slice(4));
+      if (found) setCompetition(found);
+      return;
+    }
     const parsed = parseOccurrenceKey(key);
     if (!parsed) return;
     const e = events.find((x) => x.id === parsed.id);
@@ -240,7 +266,7 @@ export default function CalendarClient() {
       readOnly: !!e.ownerKey && !!me?.key && e.ownerKey !== me.key,
       myRsvp: mine?.status,
     });
-  }, [events, me?.key]);
+  }, [events, me?.key, wca.competitions]);
 
   const openInvite = useCallback((e: CalEvent) => {
     openEventByKey(`${e.id}:${e.start}`);
@@ -348,9 +374,19 @@ export default function CalendarClient() {
   }, [events, applyMove]);
 
   // ── 导入 / 导出 ──────────────────────────────────────────────────────────
-  const onImportFile = useCallback(async (file: File) => {
+  const [backupReview, setBackupReview] = useState<{ file: File; review: GoogleImportReview } | null>(null);
+  useEffect(() => { setBackupReview(null); }, [settingsOpen, user?.uid]);
+  const onImportFile = useCallback(async (file: File, confirmed = false) => {
     setImporting({ done: 0, total: 0 });
     try {
+      if (!confirmed) {
+        const backup = await readGoogleBackup(file);
+        if (backup) {
+          setBackupReview({ file, review: reviewGoogleBackup(backup) });
+          return;
+        }
+      }
+      setBackupReview(null);
       const r = await importCalendarFile({
         file,
         tz: displayTz,
@@ -373,7 +409,12 @@ export default function CalendarClient() {
         en: `Imported ${r.added}${r.failed ? `, skipped ${r.failed}` : ''}${into}`,
       }));
     } catch (e) {
-      setToast((e as Error).message);
+      const message = (e as Error).message;
+      setToast(message === 'calendar_color_upgrade_required' || message === 'calendar_color_not_supported'
+        ? tr({ zh: '服务器尚未更新到支持完整颜色的版本，已停止导入以免丢色。请更新后重试。', en: 'The server needs the full-color update. Import stopped to avoid losing colors. Please retry after it is updated.' })
+        : message.startsWith('google_')
+          ? tr({ zh: '备份不完整、格式不兼容或包含无法恢复的数据，请重新导出；尚未开始导入。', en: 'The backup is incomplete, incompatible or cannot be restored. Export it again; import has not started.' })
+          : message);
     } finally {
       setImporting(null);
     }
@@ -430,12 +471,13 @@ export default function CalendarClient() {
   // 点一下空白格。年视图的格子只有二十几像素,点它多半是想去那天看看,不是想在那儿
   // 建个全天日程(Google 同样是跳转);其余视图按点中的位置起一条 —— 时间格 1 小时,
   // 全天 / 月格一整天,和拖一格出来的时长一致。
-  /** 「创建」/ 悬浮钮:从下一个整点起一小时。左栏和窄屏那颗共用同一份。 */
+  /** 「创建」/ 悬浮钮 / C：从下一个整点起，应用默认时长。 */
   const openCreateNow = useCallback(() => {
     const base = new Date();
     base.setMinutes(0, 0, 0);
-    openCreate(base.getTime() + 3600_000, base.getTime() + 2 * 3600_000, false);
-  }, [openCreate]);
+    const start = base.getTime() + 3600_000;
+    openCreate(start, defaultEventEnd(start, false, prefs.defaultDuration, displayTz), false);
+  }, [openCreate, prefs.defaultDuration, displayTz]);
 
   /** 表头日期数字:切到日视图并停在那天。 */
   const onDayLink = useCallback((ms: number) => {
@@ -449,37 +491,39 @@ export default function CalendarClient() {
       gotoDate(ms);
       return;
     }
-    openCreate(ms, ms + (allDay ? DAY : 3600_000), allDay);
-  }, [view, setViewParam, gotoDate, openCreate]);
+    openCreate(ms, defaultEventEnd(ms, allDay, prefs.defaultDuration, displayTz), allDay);
+  }, [view, setViewParam, gotoDate, openCreate, prefs.defaultDuration, displayTz]);
 
   // 键盘快捷键,和 Google 一致:T 今天、J/K 或 ←/→ 翻页、D/X/W/M/Y/A 切视图、C 新建。
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
       const el = e.target as HTMLElement | null;
-      if (el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) return;
+      if (e.defaultPrevented || e.isComposing || el?.isContentEditable || (el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
-      if (dialog || shareOpen || scopeAsk) return;
+      if (dialog || competition || shareOpen || scopeAsk || settingsOpen || tzOpen) return;
+      if (el?.closest('[role=dialog], .list-select')) return;
       // 窄屏的侧栏是覆盖式抽屉,开着时汉堡钮被它盖住 —— Esc 得能退出来(遮罩也能点关)。
       if (e.key === 'Escape' && sidebarOpen) { setSidebarOpen(false); return; }
+      if (!prefs.keyboardShortcuts) return;
+      if (e.key === '?') { e.preventDefault(); void setSettingsSection('shortcuts'); return; }
+      if (e.key === '/') { e.preventDefault(); searchRef.current?.focus(); return; }
       const map: Record<string, ViewKey> = {
         d: 'timeGridDay', x: 'fourDay', w: 'timeGridWeek',
         m: 'dayGridMonth', y: 'multiMonthYear', a: 'listMonth',
       };
       const k = e.key.toLowerCase();
-      if (map[k]) { void setViewParam(map[k]); return; }
+      if (map[k]) { e.preventDefault(); void setViewParam(map[k]); return; }
       if (k === 't') { gridRef.current?.today(); return; }
-      if (k === 'j' || e.key === 'ArrowLeft') { gridRef.current?.prev(); return; }
-      if (k === 'k' || e.key === 'ArrowRight') { gridRef.current?.next(); return; }
+      if (k === 'j' || e.key === 'ArrowLeft') { e.preventDefault(); gridRef.current?.prev(); return; }
+      if (k === 'k' || e.key === 'ArrowRight') { e.preventDefault(); gridRef.current?.next(); return; }
       if (k === 'c') {
         e.preventDefault();
-        const base = new Date();
-        base.setMinutes(0, 0, 0);
-        openCreate(base.getTime() + 3600_000, base.getTime() + 2 * 3600_000, false);
+        openCreateNow();
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [dialog, shareOpen, scopeAsk, sidebarOpen, setViewParam, openCreate]);
+  }, [dialog, competition, shareOpen, scopeAsk, sidebarOpen, settingsOpen, tzOpen, prefs.keyboardShortcuts, setSettingsSection, setViewParam, openCreateNow]);
 
   const zoneItems = useMemo(() => zoneOptions().map((z) => ({
     value: z.tz,
@@ -509,13 +553,14 @@ export default function CalendarClient() {
   }
 
   return (
-    <div className={`cal-page${sidebarOpen ? ' sidebar-open' : ''}`}>
+    <div className={`cal-page${sidebarOpen ? ' sidebar-open' : ''}${prefs.sidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
       <div className="cal-topbar">
         <button
           type="button"
           className="cal-icon-btn cal-menu-btn"
           aria-label={tr({ zh: '侧栏', en: 'Sidebar' })}
-          onClick={() => setSidebarOpen((v) => !v)}
+          aria-expanded={isMobile ? sidebarOpen : !prefs.sidebarCollapsed}
+          onClick={() => { if (isMobile) setSidebarOpen((v) => !v); else store.setPrefs({ sidebarCollapsed: !prefs.sidebarCollapsed }); }}
         >
           <Menu size={18} aria-hidden />
         </button>
@@ -541,7 +586,9 @@ export default function CalendarClient() {
         <div className="cal-search">
           <Search size={15} aria-hidden />
           <input
+            ref={searchRef}
             type="search"
+            aria-label={tr({ zh: '搜索日程', en: 'Search events' })}
             className="cal-search-field"
             value={query}
             placeholder={tr({ zh: '搜索日程', en: 'Search events' })}
@@ -566,7 +613,7 @@ export default function CalendarClient() {
           aria-label={tr({ zh: '显示时区', en: 'Display time zone' })}
           aria-expanded={tzOpen}
           title={zoneLabel(displayTz, isZh)}
-          onClick={() => { setSettingsOpen(false); setTzOpen((v) => !v); }}
+          onClick={() => { closeSettings(); setTzOpen((v) => !v); }}
         >
           <Globe size={17} aria-hidden />
         </button>
@@ -576,9 +623,9 @@ export default function CalendarClient() {
           className="cal-icon-btn"
           aria-label={tr({ zh: '设置', en: 'Settings' })}
           aria-expanded={settingsOpen}
-          onClick={() => { setTzOpen(false); setSettingsOpen((v) => !v); }}
+          onClick={() => { setTzOpen(false); void setSettingsSection(settingsOpen ? null : 'general'); }}
         >
-          <Settings2 size={17} aria-hidden />
+          <Settings size={17} aria-hidden />
         </button>
         <button
           type="button"
@@ -626,39 +673,31 @@ export default function CalendarClient() {
         </div>
       )}
 
-      {settingsOpen && (
-        <div className="cal-pop cal-pop-settings" ref={setPopRef}>
-          <div className="cal-pop-head">
-            <span className="cal-field-label">{tr({ zh: '设置', en: 'Settings' })}</span>
-            <button
-              type="button"
-              className="cal-icon-btn"
-              onClick={() => setSettingsOpen(false)}
-              aria-label={tr({ zh: '关闭', en: 'Close' })}
-            >
-              <X size={16} aria-hidden />
-            </button>
-          </div>
-          <BoolToggle
-            value={prefs.weekStart === 1}
-            label={tr({ zh: '一周从周一开始', en: 'Week starts Monday' })}
-            onChange={(v) => store.setPrefs({ weekStart: v ? 1 : 0 })}
-          />
-          <BoolToggle
-            value={prefs.hour24}
-            label={tr({ zh: '24 小时制', en: '24-hour clock' })}
-            onChange={(v) => store.setPrefs({ hour24: v })}
-          />
-          <BoolToggle
-            value={prefs.weekends}
-            label={tr({ zh: '显示周末', en: 'Show weekends' })}
-            onChange={(v) => store.setPrefs({ weekends: v })}
-          />
-          <BoolToggle
-            value={prefs.showDeclined}
-            label={tr({ zh: '显示已拒绝的邀请', en: 'Show declined invitations' })}
-            onChange={(v) => store.setPrefs({ showDeclined: v })}
-          />
+      {settingsSection && (
+        <CalendarSettings
+          section={settingsSection}
+          onSection={(section) => { void setSettingsSection(section); }}
+          prefs={prefs}
+          onPrefs={store.setPrefs}
+          displayTz={displayTz}
+          zoneItems={zoneItems}
+          onClose={closeSettings}
+        >
+          <GoogleBackupPanel key={me?.key} disabled={importing != null} onFile={(file) => void onImportFile(file)} />
+          {backupReview && <section className="cal-google-backup" aria-label={tr({ zh: '导入预览', en: 'Import preview' })}>
+            <h4>{tr({ zh: '导入预览', en: 'Import preview' })}</h4>
+            <p>{tr({ zh: `备份含 ${backupReview.review.archived} 条原始记录，其中 ${backupReview.review.cancelled} 条为取消记录。可导入 ${backupReview.review.sources.reduce((n, s) => n + s.events.length, 0)} 条日程。`, en: `The backup has ${backupReview.review.archived} raw records, including ${backupReview.review.cancelled} cancelled records. ${backupReview.review.sources.reduce((n, s) => n + s.events.length, 0)} events can be imported.` })}</p>
+            <ul>{backupReview.review.sources.map((s, i) => <li key={i}>{s.name} — {s.tz}</li>)}</ul>
+            <p className="cal-pop-hint">{tr({ zh: '导入时间、地点、标题、说明、支持的重复规则、弹窗提醒和活动颜色。参与人、会议、附件、扩展字段等原始信息保存在备份文件中，本站暂不恢复为对应功能；不会向参与人发送邀请。请保留备份包。', en: 'Imports times, locations, titles, descriptions, supported recurrence, popup reminders and event colors. Attendees, conferences, attachments and extra fields remain in the backup file and are not restored as active features. No invitations are sent. Keep the backup.' })}</p>
+            {backupReview.review.skipped > 0 && <p role="alert">{tr({ zh: `${backupReview.review.skipped} 条记录的重复规则或时间暂不支持，将仅保留在备份中，不导入。`, en: `${backupReview.review.skipped} records use unsupported recurrence or times and will remain in the backup without being imported.` })}</p>}
+            {backupReview.review.warnings.includes('legacy_calendar_palette') && <p role="alert">{tr({ zh: '部分日历使用 Google 旧版默认配色：原始色值已保留，但与 Google 现代主题的显示可能不同，需要核对。', en: 'Some calendars use legacy Google default colors. Original values are preserved, but their appearance may differ from Google’s modern theme and needs review.' })}</p>}
+            {backupReview.review.warnings.some(w => ['text_limits', 'reminder_methods', 'reminder_limits'].includes(w)) && <p role="alert">{tr({ zh: '部分内容超过本站长度或提醒限制：标题/地点最多 300 字、说明 5000 字、最多 5 个提前 28 天以内的弹窗提醒。完整内容仍在备份文件中。', en: 'Some fields exceed site limits: titles/locations 300 characters, descriptions 5,000, and up to 5 popup reminders within 28 days. Full content remains in the backup file.' })}</p>}
+            <p className="cal-pop-hint">{tr({ zh: '这是追加导入，重复导入会产生重复活动。可在下方“最近导入”撤销整批。', en: 'This adds events; importing again creates duplicates. Undo the batch under Recent imports below.' })}</p>
+            <div className="cal-pop-actions">
+              <button type="button" className="cal-btn" disabled={importing != null || !backupReview.review.sources.some(s => s.events.length)} onClick={() => void onImportFile(backupReview.file, true)}>{tr({ zh: '确认导入', en: 'Confirm import' })}</button>
+              <button type="button" className="cal-btn" disabled={importing != null} onClick={() => setBackupReview(null)}>{tr({ zh: '取消', en: 'Cancel' })}</button>
+            </div>
+          </section>}
           <div className="cal-pop-actions">
             <button
               type="button"
@@ -681,8 +720,15 @@ export default function CalendarClient() {
           </div>
           <p className="cal-pop-hint">
             {tr({
-              zh: 'Google 日历:设置 → 导入和导出 → 导出,下载到的 .zip 不用解压,里面每个日历会各自成一列。',
-              en: 'Google Calendar: Settings → Import & export → Export. Pick the downloaded .zip as-is — each calendar inside lands in its own list.',
+              zh: '在电脑浏览器打开 Google 日历：⚙️ → 导入和导出 → 导出。手机 App 不支持导出。下载的 .zip 不用解压，直接导入即可，里面每个日历会各自成一列。',
+              en: 'Open Google Calendar in a browser on your computer: ⚙️ → Import & export → Export. The mobile app does not support export. Import the downloaded .zip without unzipping it; each calendar inside becomes its own list.',
+            })}
+          </p>
+
+          <p className="cal-pop-hint">
+            {tr({
+              zh: 'Google 网页普通导出的 .ics / .zip 没有颜色信息；需要保留颜色时，请使用上方“带颜色导出”。普通文件中新建日历使用灰色，已有日历保留当前配色。重复上传会追加活动，不会覆盖或去重。',
+              en: 'Standard Google .ics / .zip exports omit colors. Use Export with colors above to preserve them. Ordinary file imports create gray calendars and keep existing calendar colors. Uploading again adds events without replacing or deduplicating them.',
             })}
           </p>
 
@@ -718,7 +764,7 @@ export default function CalendarClient() {
               ))}
             </div>
           )}
-        </div>
+        </CalendarSettings>
       )}
 
       <input
@@ -740,6 +786,7 @@ export default function CalendarClient() {
           anchor={range.anchor}
           tz={displayTz}
           weekStart={prefs.weekStart}
+          todayKey={todayKey}
           busyDays={busyDays}
           invites={invites}
           onCreate={() => { openCreateNow(); if (isMobile) setSidebarOpen(false); }}
@@ -752,7 +799,10 @@ export default function CalendarClient() {
           onRecolor={(id, color) => void store.patchCalendar(id, { color }).catch((e: Error) => setToast(e.message))}
           onRemove={(id) => void store.removeCalendar(id).catch((e: Error) => setToast(e.message))}
           onOpenInvite={openInvite}
-        />
+        >
+          <CompetitionCalendars wcaId={user?.wcaId ?? ''} competitions={wca.competitions} loading={wca.loading} incomplete={wca.incomplete} prefs={prefs} onPrefs={store.setPrefs} onRefresh={wca.refresh}
+            onPick={(c) => { gotoDate(dayStart(displayTz, c.start_date)); setCompetition(c); if (isMobile) setSidebarOpen(false); }} />
+        </Sidebar>
 
         {/* 窄屏抽屉的遮罩:抽屉盖住了汉堡钮,没有它就只能靠选日期才关得掉。
             用真 <button> 而不是 <div onClick>(iOS Safari 上 div 的 tap 不可靠)。 */}
@@ -781,6 +831,7 @@ export default function CalendarClient() {
               hour24={prefs.hour24}
               weekStart={prefs.weekStart}
               weekends={prefs.weekends}
+              weekNumbers={prefs.weekNumbers}
               editable
               onSelect={openCreate}
               onDayLink={onDayLink}
@@ -809,7 +860,7 @@ export default function CalendarClient() {
                     >
                       <span
                         className="cal-dot"
-                        style={{ background: o.event.color ? colorHex(o.event.color) : calColor(o.event.calendarId) }}
+                        style={{ background: o.event.color ? eventColor(o.event.color) : calColor(o.event.calendarId) }}
                         aria-hidden
                       />
                       <span className="cal-result-when">
@@ -838,9 +889,12 @@ export default function CalendarClient() {
         <Plus size={22} aria-hidden />
       </button>
 
+      {competition && <CompetitionDialog key={competition.id} competition={competition} onClose={() => setCompetition(null)} />}
+
       {dialog && (
         <EventDialog
           draft={dialog}
+          hour24={prefs.hour24}
           calendars={calendars}
           meKey={me?.key ?? ''}
           saving={saving}

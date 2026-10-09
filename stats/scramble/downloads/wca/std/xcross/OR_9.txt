@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / OR / bin 9
-# Population in this bin: 301
+# Population in this bin: 304
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 5055001,B2 U' R' U2 D' F' B U L' D F2 U2 D2 R' B2 U2 R L2 F2 U2,O,Tula Open 2014 (2014-03-28~30),333oh R1 B E2
@@ -132,7 +132,7 @@
 1948835001,F2 D2 U B2 D R2 D' R2 D2 U' R' F U L' D' U' F2 L' U' B,O,Odd Seattle Summer 2022 (2022-05-28),333 R2 B E2
 1965163001,B' L U' R' L U' D' B' R2 D' L F2 U2 D2 B R2 F2 B U2 L2,O,NSW Open 2022 (2022-06-11~12),333bf Final A #1
 1966526001,F' R' U R D' L B2 U' R B' U2 L2 F R2 F2 L2 B' R2 D2 B R2,O,Pulmapelipäivät 2022 (2022-06-10~12),333bf Final A E1
-4729892001,R2 D' B R' U2 B' R B U F' U2 D2 R F2 B2 D2 F2 L2 U',O,Joinville Open 2025 (2025-05-17~18),333 R2 A #3
+5850655001,L' U R F D B L' U D2 F2 U2 R2 B' U2 F2 L2 F L2 D2 B,O,Colorado Cubing Weekend 2026 (2026-09-26~27),333 R2 B #3
 4524768001,B2 D U R2 D B2 F2 U F D B2 R F2 D L B F D2 U' R',O,Spark Melbourne February 2025 (2025-02-22~23),333 R2 E #1
 2212302001,R' F' L2 B' L2 B D2 L2 F' U2 D' B R U' F' L' B' D' R' F',O,Qubes Don' Lie İstanbul 2022 (2022-10-01~02),333oh R1 A #3
 2236380053,U R2 D L2 B' F2 D2 B U2 L R D2 R' F' R' U2 F' U' L B2,O,Bishop's Stortford Autumn - British Blind Off 2022 (2022-10-15~16),333mbf R1 B #2

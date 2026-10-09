@@ -8,27 +8,24 @@
  * Capacitor/Vite workers; neither host owns a second puzzle implementation.
  * Host code is responsible only for scheduling and buffering these synchronous
  * CPU-heavy calls away from the timing/input thread.
+ * Browser hosts must import metadata from cstimer-nonwca-events instead: this
+ * engine installs a message handler and must only be loaded inside a worker.
  */
 
 import cstimer from 'cstimer_module';
 
-export type CstimerNonWcaTimerEvent = 'kilominx' | 'mpyram';
+import {
+  CSTIMER_NONWCA_TIMER_KEYS,
+  isCstimerNonWcaTimerEvent,
+  type CstimerNonWcaTimerEvent,
+} from '@cuberoot/puzzle-solvers/cstimer-nonwca-events';
+export * from '@cuberoot/puzzle-solvers/cstimer-nonwca-events';
 
-export const CSTIMER_NONWCA_TIMER_EVENTS = Object.freeze([
-  'kilominx',
-  'mpyram',
-] as const satisfies readonly CstimerNonWcaTimerEvent[]);
-
-/** Exact upstream scrambler identities; also used by csTimer import/export. */
-export const CSTIMER_NONWCA_TIMER_KEYS = Object.freeze({
-  kilominx: 'klmso',
-  mpyram: 'mpyrso',
-} as const satisfies Readonly<Record<CstimerNonWcaTimerEvent, string>>);
-
-export function isCstimerNonWcaTimerEvent(
-  event: string,
-): event is CstimerNonWcaTimerEvent {
-  return Object.prototype.hasOwnProperty.call(CSTIMER_NONWCA_TIMER_KEYS, event);
+/** Worker-only access to the existing upstream state generators. */
+export function generateCstimerScramble(key: string): string {
+  const result = cstimer.getScramble(key, 0);
+  if (typeof result !== 'string' || !result.trim()) throw new Error(`Empty scramble: ${key}`);
+  return result.trim();
 }
 
 /**
@@ -50,4 +47,12 @@ export function generateCstimerNonWcaTimerScramble(
     throw new Error(`csTimer non-WCA provider returned empty: ${event} (${key})`);
   }
   return scramble;
+}
+
+/** Worker-only deterministic call. Reset the engine for every occurrence, including retries. */
+export function generateSeededCstimerScramble(key: string, length: number, seed: string): string {
+  cstimer.setSeed(seed);
+  const result = cstimer.getScramble(key, length);
+  if (typeof result !== 'string' || !result.trim()) throw new Error(`Empty seeded scramble: ${key}`);
+  return result.trim();
 }

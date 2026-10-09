@@ -15,13 +15,14 @@ const result: Result = {
   i: 8509370, c: 0, n: 4, e: '333', r: 'f', f: 'a',
   b: 354, a: 452, v: [450, 474, 354, 547, 433], sr: '', ar: 'FWR', pS: 1, pA: 1,
 };
-function records(overrides: Partial<Result> = {}, includePersonalRecords = false) {
+function records(overrides: Partial<Result> = {}, includePersonalRecords = false, fwrBaseline?: number) {
   const data: CompData = {
     slug: 'WuhanCrimsonAutumn2026', name: 'Wuhan Crimson Autumn 2026', source: 'wca',
     compId: 0, type: 'WCA', events: [], fetchedAt: 0,
     users: { '4': { number: 4, name: 'Yunzhi Lian (连允之)', wcaid: '2025LIAN01', region: 'cn' } },
     resultsByRound: { '333:f': [{ ...result, ...overrides }] },
     membersByFilter: { females: [4], children: [], newcomers: [] },
+    ...(fwrBaseline === undefined ? {} : { currentRecords: { fwr: { '333|1': fwrBaseline }, wr: {}, cr: {}, nr: {} } }),
   };
   return collectInferred(data, '2026-09-13', includePersonalRecords);
 }
@@ -79,6 +80,14 @@ describe('same-round personal record in recent records and Bark', () => {
     const output = await formatInferred(record);
     expect(output.cn).toContain('4.52三阶平均女子世界纪录FWR/WR10 连允之🇨🇳| 3.54单次个人纪录PR/WR17 | ');
     expect(output.en).toContain('4.52 3x3 FWR/WR10 Avg Yunzhi Lian🇨🇳| 3.54 PR/WR17 Single | Wuhan Crimson Autumn 2026');
+  });
+
+  it('carries an FWR tie against the pre-competition female baseline into formatting', async () => {
+    const [record] = records({ a: 427, b: 360, pS: undefined }, false, 427);
+    expect(record.tied).toBe(true);
+    const output = await formatInferred(record);
+    expect(output.cn).toContain('4.27三阶平均女子世界纪录FWR(平)/WR10');
+    expect(output.en).toContain('4.27 3x3 FWR(Tied)/WR Avg');
   });
 
   it.each([{ pS: undefined }, { pS: 2 }, { b: 0 }, { b: -1 }, { b: -2 }, { sr: 'NR' }])(

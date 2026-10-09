@@ -102,9 +102,10 @@ function detectCrossType(recon: string): number {
   return 0;
 }
 
-/** Slice S 步数：大写 S 字符出现次数（减去 STM/TPS/SPS 关键字带的） */
+/** Slice S 步数：排除阶段注释，再扣除 STM/TPS/SPS 摘要关键字。 */
 function countS(recon: string): number {
   if (!recon) return 0;
+  recon = deleteComment(recon);
   let total = 0;
   for (const ch of recon) if (ch === 'S') total++;
   if (recon.includes('STM')) total -= 1;

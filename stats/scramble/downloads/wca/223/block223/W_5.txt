@@ -1,8 +1,8 @@
 # Scramble samples — 223 / block223 / W / bin 5
-# Population in this bin: 860
+# Population in this bin: 869
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 2100560023,R B2 R2 F2 U2 L2 F2 U B R B D2 B' D2 R2 B U B' L' F2,W,Korean Championship 2022 (2022-08-12~14),333mbf Final A #1
@@ -13,7 +13,7 @@
 1216388001,B R' B2 U' F2 L' F' L B' L D' F2 D2 F2 U B2 D R2 D' B2,W,Luzon Championship 2019 (2019-06-22~23),333 R1 B #4
 1025130001,D2 U2 B F U2 B' L2 U2 L' R' F' L2 U' L D R' F D B,W,UCSD Winter 2019 (2019-02-16~17),333 R1 A #4
 2332029001,L' R2 F' L2 D2 L2 R2 F' L F2 D' F2 D' F R2 B' F,W,Tbilisi Open 2022 (2022-11-27),333 R2 B E2
-978538001,R2 U2 B' R2 F' L2 B U2 F2 L2 R D' L D' L2 R2 F D2 B2 D',W,Polish Speedcubing Tour LLS Lublin 2019 (2019-01-12~13),333 R1 C #2
+5844489001,F2 R2 F D2 F' U2 B U2 R2 U' B' D2 F D L' F' R' U' F2,W,Kedah Cube Open 2026 (2026-09-26),333oh R1 C #2
 36800001,F2 L2 B' U2 F D2 B F R' B' R2 U' B' F' L2 D' B' R F',W,Czech Open 2014 (2014-07-11~13),333 R1 A E2
 3024738001,B D' U2 F' D2 B2 F' R2 B F' R' F' D L2 F D2 R2 D' R,W,Montealegre Winter Open 2023 (2023-08-27),333oh R1 B #4
 40621001,R2 B' R F2 U' L B2 D R2 F D B2 U' B2 R2 U2 B2 U',W,Ha Noi Open 2014 (2014-07-26~27),333 R1 B #3
@@ -111,7 +111,7 @@
 5668787001,U F U L' R2 F R2 B' R2 F' L2 R' F2 D B2 R2 F2 L2,W,Hungarian All-Rounder 4 2026 (2026-05-30),333 R1 A #5
 972741001,U2 L' U2 F2 D2 F2 L' R U2 B D U2 F2 R U' F' D2 B' R,W,Northern Neck Winter 2019 (2019-01-05),333oh Final C #1
 2235082001,R' B2 L2 U2 R2 D' U' L2 B2 F' U' F' D B2 R' D2 L2 F',W,Fecap Open 2022 (2022-10-08),333 R1 A E2
-487102001,B R F R2 F R' U' R B R2 L2 U2 D' R2 D L2 D R2 U R2,W,SSL 2 Stockholm 2017 (2017-04-08~09),333 R1 D #5
+5854270001,U F' D F' D L D2 L' U B2 U' F2 L2 D F2 U B',W,Balam Cubes Bekasi Comeback 2026 (2026-09-26~27),333 R1 A E1
 4650293001,B D' L2 U F D B' L F2 B2 R' U2 R' F2 D R' B,W,Brazos Cubing Spring 2025 (2025-04-13),333oh R1 B #2
 954406001,L' D L F B2 U' F U2 R' B D L2 F2 D2 F' U2 F L2 D2,W,Nacionales Argentinas 2018 (2018-12-08~09),333oh Final C #4
 501588001,F2 L2 D F2 L2 D2 F2 D' L2 F2 L2 B' U2 F R2 F2 L' D B2 L2 F2,W,Dunas Open 2017 (2017-05-05~06),333oh R1 B #3
@@ -124,7 +124,7 @@
 2782668001,L2 F2 L2 F L2 F' D2 F D' F2 U L' F' D' B' L' R U2,W,Timisoara Cube Days 2023 (2023-06-02~03),333oh Final A #5
 5829376001,B' L2 U2 B F2 U2 L2 F L2 R2 F' R F' U' R' B2 R2 F2 U2,W,L'Open de Meaux 2026 (2026-09-12~13),333oh R1 B #5
 4801071001,B' U' L2 B F' L2 U2 B' U2 D F L2 U' R2 U2 L' B' F2,W,Metrópolis Bogotá 2025 (2025-06-15),333 R2 C #4
-3452114001,U B L' U2 F2 R' U2 L2 D2 L' B D B2 D' B2 D F' R2 U',W,Big Cube Battle of Waterloo 2024 (2024-01-27),333oh Final A #2
+5849382001,R' U' F R2 F2 U' F2 L2 U' R2 F B2 U' D2 B2 R L2 F2 U2 D2 R' B2 R' U' F,W,Goiânia Xiu 2026 (2026-09-26~27),333fm Final A #2
 2383848001,F2 U' F' D' F2 R' U2 L D2 L2 D2 L B D U2 F' R' D2 R,W,Naperville Winter B 2022 (2022-12-18),333 R1 D #2
 1500835001,B2 L2 R2 U' L2 R2 B2 U' R2 F2 L U' R' B' L2 U B L2 U B',W,Bay Area Speedcubin' 23 2020 (2020-01-12),333 R1 C #3
 3381286035,R F' D' F L2 B2 U2 L2 R2 D' L2 U L' U R D' B R D L B2,W,Colombo Cubing Christmas 2023 (2023-12-23~25),333mbf Final A #1

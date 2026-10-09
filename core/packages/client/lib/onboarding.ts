@@ -1,3 +1,4 @@
+import { sessionFetch } from './session-fetch';
 import { apiUrl } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
 import type { WcaUser } from './auth-store';
@@ -18,7 +19,7 @@ function write(key: string, value: string): void {
 }
 
 async function save(key: string, headers: Record<string, string>): Promise<void> {
-  await handleApi(await fetch(apiUrl(PATH), {
+  await handleApi(await sessionFetch(apiUrl(PATH), {
     method: 'PUT', headers, signal: AbortSignal.timeout(12_000),
   }));
   write(key, 'true');
@@ -34,7 +35,7 @@ export async function isOnboardingGuided(user: WcaUser | null): Promise<boolean>
     return true;
   }
   try {
-    const result = await handleApi<{ seen: boolean }>(await fetch(apiUrl(PATH), {
+    const result = await handleApi<{ seen: boolean }>(await sessionFetch(apiUrl(PATH), {
       headers, cache: 'no-store', signal: AbortSignal.timeout(12_000),
     }));
     if (typeof result.seen !== 'boolean') return true;

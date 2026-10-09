@@ -6,15 +6,16 @@ import {
 } from '../src/utils/douyin_miniprogram';
 
 describe('parseDouyinMiniProgramSession', () => {
-  it('keeps only openid and rejects expired or malformed responses', () => {
+  it('keeps stable identity fields and rejects expired or malformed responses', () => {
     expect(parseDouyinMiniProgramSession({
       err_no: 0,
       data: {
         openid: 'open-id',
+        unionid: 'union-id',
         anonymous_openid: 'anonymous-id',
         session_key: 'secret-session-key',
       },
-    })).toEqual({ openid: 'open-id' });
+    })).toEqual({ openid: 'open-id', unionid: 'union-id' });
 
     expect(() => parseDouyinMiniProgramSession({ err_no: 40018 }))
       .toThrow(DouyinMiniProgramError);
@@ -24,5 +25,7 @@ describe('parseDouyinMiniProgramSession', () => {
       .toThrow('douyin response has no numeric err_no');
     expect(() => parseDouyinMiniProgramSession({ err_no: 0, data: { openid: 'open\nid' } }))
       .toThrow('douyin response has invalid openid');
+    expect(() => parseDouyinMiniProgramSession({ err_no: 0, data: { openid: 'open-id', unionid: 'union\nid' } }))
+      .toThrow('douyin response has invalid unionid');
   });
 });

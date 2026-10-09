@@ -159,7 +159,7 @@ export default function FeedbackAdminPage() {
 
               <div className="fba-meta">
                 <span className="fba-who">{displayCuberName(it.wcaName, isZh) || it.wcaId}</span>
-                <UserIdLabel userId={it.userId} />
+                <UserIdLabel contact userId={it.userId} />
                 {it.contact && <span className="fba-contact">{it.contact}</span>}
                 {it.pageUrl && (
                   <a className="fba-pageurl" href={it.pageUrl} target="_blank" rel="noreferrer">

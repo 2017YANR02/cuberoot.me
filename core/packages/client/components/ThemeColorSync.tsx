@@ -10,9 +10,75 @@
 
 import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
+import { CONTRAST_KEY, THEME_KEY, restorePersistedAppearance } from '@/lib/theme';
+import { PALETTE_KEY } from '@/lib/palettes';
+import { HOME_BACKGROUND_CHANGE_EVENT } from '@/hooks/useHomeBackgroundChoice';
+import { HOME_BACKGROUND_KEY } from '@/lib/home-backgrounds';
+import i18n, { changeAppLanguage, normalizeAppLang, syncLangToUrl } from '@/i18n/i18n-client';
+import { mayUseMiniProgramBridge } from '@/lib/miniprogram-bridge';
+import { syncMiniProgramAppearance } from '@/lib/miniprogram-appearance';
 
 export default function ThemeColorSync() {
   const pathname = usePathname();
+  useEffect(() => {
+    const publish = () => { void syncMiniProgramAppearance(); };
+    const media = matchMedia('(prefers-color-scheme: dark)');
+    media.addEventListener('change', publish);
+    i18n.on('languageChanged', publish);
+    const observer = new MutationObserver(publish);
+    observer.observe(document.documentElement, { attributes: true,
+      attributeFilter: ['data-theme', 'data-palette', 'data-contrast', 'data-appearance-preview'] });
+    window.addEventListener('theme-change', publish);
+    window.addEventListener(HOME_BACKGROUND_CHANGE_EVENT, publish);
+    const onBackgroundStorage = (event: StorageEvent) => {
+      if (event.key === null || event.key.startsWith(HOME_BACKGROUND_KEY)) publish();
+    };
+    window.addEventListener('storage', onBackgroundStorage);
+    publish();
+    return () => {
+      media.removeEventListener('change', publish);
+      i18n.off('languageChanged', publish);
+      observer.disconnect();
+      window.removeEventListener(HOME_BACKGROUND_CHANGE_EVENT, publish);
+      window.removeEventListener('storage', onBackgroundStorage);
+      window.removeEventListener('theme-change', publish);
+    };
+  }, [pathname]);
+  useEffect(() => {
+    // Mini-program tabs keep separate WebView documents alive. Their storage
+    // is shared, but changing it does not update another document's html attrs.
+    const restore = () => {
+      if (mayUseMiniProgramBridge()) {
+        try {
+          const saved = localStorage.getItem('trainer-lang');
+          if ((saved === 'en' || saved === 'zh') && normalizeAppLang(i18n.language) !== saved) {
+            syncLangToUrl(saved);
+            changeAppLanguage(saved);
+          }
+        } catch { /* Storage is optional in embedded browsers. */ }
+      }
+      restorePersistedAppearance();
+      window.dispatchEvent(new Event('theme-change'));
+    };
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === null || event.key === THEME_KEY
+        || event.key === PALETTE_KEY || event.key === CONTRAST_KEY || event.key === 'trainer-lang') restore();
+    };
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') restore();
+    };
+    restore();
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('pageshow', restore);
+    window.addEventListener('focus', restore);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('pageshow', restore);
+      window.removeEventListener('focus', restore);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, []);
   useEffect(() => {
     const sync = () => {
       const bg = getComputedStyle(document.documentElement).backgroundColor;

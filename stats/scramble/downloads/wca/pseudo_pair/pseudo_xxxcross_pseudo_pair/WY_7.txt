@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / WY / bin 7
-# Population in this bin: 236
+# Population in this bin: 239
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 1993001,F' D' F2 R2 U F R F2 D R' D' F2 D2 F R2 F2 R2 L2,Y,Zonhoven Open 2014 (2014-03-22~23),333 R1 A #1
@@ -40,7 +40,7 @@
 680755001,U2 L F2 L U2 L2 F2 D R F2 U2 F2 U F' U2 F R' B,Y,Happy New Year Cubing Dordrecht 2018 (2018-01-05~06),333oh R1 C E1
 5489750001,U2 L2 D' B2 U' L2 R2 U B2 F' D' F R2 U' R U2 B2 L',W,Kopli NxN Rampage 2026 (2026-03-28~29),333 R1 A #2
 703290001,L2 F2 U2 B2 L' D2 L F2 U' B' D2 L' D2 R D F L' D R2,W,Bulgarian Open 2018 (2018-02-10),333 R1 A E2
-724911001,D B' U L B' R L' B' R2 F2 R' B2 R' U2 F2 L2 B2 L D2,Y,Longhorn Spring 2018 (2018-03-10),333 Final A #3
+5839550001,L2 D2 R2 U2 B R2 B' D' R F2 U F' L' B L' D B' L2,Y,Les Hérault de Claret Open 2026 (2026-09-19~20),333 R1 A #2
 726756012,R2 F D2 F D2 R2 F' U2 F L2 U' F' D' L F' U L U' R B' D2 L B,W,Brilliant Big & Blind Blast 2018 (2018-03-17~18),333mbf Final A #2
 728361001,L2 F2 R2 U F2 R2 F2 U2 L' U2 B' U B L2 U' F' L2 B,W,Ponikva Open 2018 (2018-03-17),333 R1 C E1
 730649001,U B2 U F2 D' U' B2 F2 L F' U' F2 U' L D B D2 B2,Y,Bacau Easter Open 2018 (2018-03-24),333 R1 D E1
@@ -155,7 +155,7 @@
 5661276001,L2 F2 U' F2 L2 U' L2 F2 R2 B R' U F' L' F2 R D' B' F2,W,Liuzhou Open 2026 (2026-05-24),333 R2 D E2
 3501831001,D R2 U' L2 R2 U' B2 R' F' R F' D2 F2 U B2 R F2,Y,Rubí Guanajuato 2024 (2024-02-10~11),333oh R1 C E1
 3512315001,L2 U2 F L2 U2 F2 D2 F R' B2 L R2 U R2 F' R D2 U L2 U,W,Christchurch Mind Games 2024 (2024-02-17),333bf Final A E1
-3512487020,L2 D B' D2 B L2 D2 F2 L2 D2 F2 L' B L2 D L' R2 B D2 L' F2,Y,Big N Blind Bangalore Feb 2024 (2024-02-17~18),333mbf Final A #1
+5852605070,L2 D' L2 B2 R2 B2 D2 U' F R B F' U' F U2 R2 F D B R',W,Multimatum: New York Multimate PBQ VI 2026 (2026-09-25~27),333mbf R1 B #3
 3563846001,R2 U' L2 U2 D2 B D' B2 U2 B U2 R2 D2 L' U2 B2 U2 F',W,Altona Algorithms 2024 (2024-03-02~03),333oh R1 B #4
 5695904001,D' B2 D' R2 F' R2 D B U F L' R2 U2 R2 F2 U R2 F2,W,Athens Summer Break A 2026 (2026-06-13),333 R1 B #4
 3632424001,L2 F2 R D2 L2 U2 R' B2 R' F' L U' F L' F' U2 L R2 D,Y,PBQ and a Little Eggstra Oxford 2024 (2024-03-30~31),333bf Final A #2
@@ -204,4 +204,4 @@
 4763691001,L2 U2 B L2 F' U2 R2 D B L' F' D2 L2 R' D F2 R B2 L B,Y,Cubing Heat Raipur 2025 (2025-05-31~06-01),333bf Final B #2
 4772898001,D2 U' F2 U2 F2 R2 F2 L' F D2 F' L2 F U R B' F2 R U' B' L',Y,Kewbz Scottish Championship 2025 (2025-05-30~06-01),333bf Final A E2
 4797982028,L' B' U' F' U' R2 F L2 F D F L2 D2 F' R2 U2 B2 L',Y,Perdiendo el Tiempo en Granada 2025 (2025-06-14~15),333mbf Final A #2
-4805777022,R2 D2 B2 R2 D' U2 R2 U' B' F' L' F' U L' U' L R U' F2 L' F,W,New York Multimate PBQ II 2025 (2025-06-13~15),333mbf R1 A #3
+5843930001,D2 B L' D' R' B2 R2 D2 R' B R2 L2 F' U2 L2 D2,W,ArquiCube Xalapa 2026 (2026-09-19~20),333oh R1 C #4

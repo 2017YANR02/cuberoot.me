@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 import { API_ORIGIN } from '@/lib/api-base';
 import { authHeaders, handleApi } from '@/lib/admin-api';
 
@@ -29,12 +30,12 @@ export async function listWcaTeacherStudents(teacherWcaId: string): Promise<WcaT
     v: RESPONSE_VERSION,
     refresh: Date.now().toString(),
   });
-  const data = await handleApi<{ teachers: WcaTeacher[] }>(await fetch(`${BASE}?${qs.toString()}`, { cache: 'no-store' }));
+  const data = await handleApi<{ teachers: WcaTeacher[] }>(await sessionFetch(`${BASE}?${qs.toString()}`, { cache: 'no-store' }));
   return data.teachers;
 }
 
 export async function listWcaNamedStudents(teacherWcaId: string): Promise<WcaNamedStudent[]> {
-  const data = await handleApi<{ students: WcaNamedStudent[] }>(await fetch(
+  const data = await handleApi<{ students: WcaNamedStudent[] }>(await sessionFetch(
     `${BASE}/${encodeURIComponent(teacherWcaId)}/named-students?v=${RESPONSE_VERSION}&refresh=${Date.now()}`,
     { cache: 'no-store' },
   ));
@@ -47,7 +48,7 @@ export async function createWcaNamedStudent(
   countryIso2: string,
   eventIds: string[],
 ): Promise<WcaNamedStudent> {
-  const data = await handleApi<{ student: WcaNamedStudent }>(await fetch(
+  const data = await handleApi<{ student: WcaNamedStudent }>(await sessionFetch(
     `${BASE}/${encodeURIComponent(teacherWcaId)}/named-students`,
     {
       method: 'POST',
@@ -65,7 +66,7 @@ export async function updateWcaNamedStudent(
   countryIso2: string,
   eventIds: string[],
 ): Promise<WcaNamedStudent> {
-  const data = await handleApi<{ student: WcaNamedStudent }>(await fetch(
+  const data = await handleApi<{ student: WcaNamedStudent }>(await sessionFetch(
     `${BASE}/${encodeURIComponent(teacherWcaId)}/named-students/${encodeURIComponent(studentId)}`,
     {
       method: 'PUT',
@@ -77,7 +78,7 @@ export async function updateWcaNamedStudent(
 }
 
 export async function removeWcaNamedStudent(teacherWcaId: string, studentId: string): Promise<void> {
-  await handleApi<{ ok: true }>(await fetch(
+  await handleApi<{ ok: true }>(await sessionFetch(
     `${BASE}/${encodeURIComponent(teacherWcaId)}/named-students/${encodeURIComponent(studentId)}`,
     { method: 'DELETE', headers: authHeaders(false) },
   ));
@@ -90,7 +91,7 @@ export async function listWcaTeachers(studentWcaIds: string[], eventIds: string[
     events: eventIds.join(','),
     v: RESPONSE_VERSION,
   });
-  const data = await handleApi<{ teachers: WcaTeacher[] }>(await fetch(`${BASE}?${qs.toString()}`));
+  const data = await handleApi<{ teachers: WcaTeacher[] }>(await sessionFetch(`${BASE}?${qs.toString()}`));
   return data.teachers;
 }
 
@@ -100,7 +101,7 @@ export async function setWcaTeacher(
   teacherWcaId?: string,
   selfTaught = false,
 ): Promise<WcaTeacher> {
-  const data = await handleApi<{ teacher: WcaTeacher }>(await fetch(`${BASE}/${encodeURIComponent(studentWcaId)}/${encodeURIComponent(eventId)}`, {
+  const data = await handleApi<{ teacher: WcaTeacher }>(await sessionFetch(`${BASE}/${encodeURIComponent(studentWcaId)}/${encodeURIComponent(eventId)}`, {
     method: 'PUT',
     headers: authHeaders(),
     body: JSON.stringify(selfTaught ? { selfTaught: true } : teacherWcaId ? { teacherWcaId } : {}),
@@ -109,7 +110,7 @@ export async function setWcaTeacher(
 }
 
 export async function removeWcaTeacher(studentWcaId: string, eventId: string): Promise<void> {
-  await handleApi<{ ok: true }>(await fetch(`${BASE}/${encodeURIComponent(studentWcaId)}/${encodeURIComponent(eventId)}`, {
+  await handleApi<{ ok: true }>(await sessionFetch(`${BASE}/${encodeURIComponent(studentWcaId)}/${encodeURIComponent(eventId)}`, {
     method: 'DELETE',
     headers: authHeaders(false),
   }));

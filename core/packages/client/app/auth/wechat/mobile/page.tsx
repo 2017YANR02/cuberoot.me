@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { tr } from '@/i18n/tr';
 import { isWebSessionTicket } from '@cuberoot/shared/auth/web-session';
-import { applySession, getSessionToken } from '@/lib/auth-store';
+import { applySession } from '@/lib/auth-store';
 import {
   exchangeWechatBrowserLogin,
   startWechatBrowserLogin,
@@ -62,9 +62,10 @@ export default function WechatMobileAuthPage() {
             throw new Error('account choice expired or changed');
           }
         }
-        if (!applySession(session.token, session.user) || getSessionToken() !== session.token) {
+        if (!(await applySession(session.token, session.user, () => active))) {
           throw new Error('session persistence failed');
         }
+        if (!active) return;
         clearPendingLogin();
         const choice = getIdentityChoice();
         if (choice?.stage === 'authenticate') updateIdentityChoice(choice.ticket, { stage: 'confirm', expectedUid: session.user.uid, otherIdentityRejected: false });

@@ -1,8 +1,8 @@
 # Scramble samples — dr / dr / B / bin 6
-# Population in this bin: 621
+# Population in this bin: 628
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 1875958001,U2 L2 B L2 B2 D2 F' U2 F2 L2 R' U' F2 D B R',B,Kirkkonummen Kuutionvääntelyt 2022 (2022-04-15~17),333 Final A #2
@@ -35,7 +35,7 @@
 197693001,F2 D2 B2 D L2 U L2 F2 D R2 D2 F D2 F D L R2 D2,B,REC Cube Challenge 2015 (2015-10-02~03),333ft Final B #2
 3910804010,L2 F D U2 L2 D F2 U' B2 F' D' U2 F2 U L' F' L B' L2 U2,B,PBQ at MSU 2024 (2024-06-28),333mbf Final A #2
 2017981001,U2 R2 B' U2 B2 L2 F' U2 B2 D2 F' D2 L' F U' L B2 D2,B,Rubik's WCA European Championship 2022 (2022-07-14~17),333 R1 C #5
-4926298001,B2 L2 B' U2 F D F B' U' R2 L' U2 R2 L2 F2 B2,B,Vegas Cubing Cup Summer 2025 (2025-08-09),333 R2 B #1
+5848789001,B2 D F2 D2 F' D2 U2 R2 B' L2 F' U' R2 B2 U B R' D',B,Weston-super-Mare Autumn 2026 (2026-09-26~27),333 R1 B E2
 216578001,B' R2 B R2 F' D2 L2 R2 F' R2 U' F D B2 F' D L2,B,Würfelä im Drachenäscht 2015 (2015-11-13~14),333 R2 B #3
 2767376043,F2 U2 L2 D B2 R2 L2 U' F R2 B R2 U2 D2 B D2 B L B,B,Washtenaw Qualifier 2023 (2023-05-27~28),333mbf Final A #1
 3328889023,F2 R2 U2 B2 F' R2 D' B U B2 L' B' L' D F2 L2 F2 L2 U',B,Spanish Championship 2023 (2023-12-08~10),333mbf Final A #2
@@ -150,7 +150,7 @@
 3630414001,B' F2 U B2 U L2 D2 U' F2 B' U2 B F R' B F R' F',B,Welcome Back Hong Kong 2024 (2024-03-31),333 R1 D #1
 2780578001,F2 R B2 R F2 D2 F2 R B2 L F2 U B2 F2 U2 L' D' R' F' R,B,Boyaquirá Tunja 2023 (2023-06-03),333 R1 B #4
 4033998001,F' D2 B' R2 F2 D2 F2 D2 L' U' B2 L2 D L F2 L2 D' U' L B2,B,Please Be Quiet Beijing 2024 (2024-08-18),333bf R1 B #2
-5174462001,F2 D' R L2 F R2 B U2 F D2 U2 F' L' D F D' U2 R D,B,Trujillo Cubing Fest 2025 (2025-11-09),333 R1 D E1
+5844749010,B2 D2 F2 R' B' D L2 D R F' R2 F2 R2 F2 L2 U F2 B2 D2 L,B,Kublördag Jönköping XIII - 2026 (2026-09-26),333mbf Final B #1
 5490225001,D2 U2 L2 F D2 F2 L2 R2 B' L' F L F2 U2 L2 R2 F2 U',B,Solving Ferry Fast Rosslare 2026 (2026-03-28~29),333 R1 B E2
 5227396001,F D2 F U2 L2 F' R' F R' U2 B L' B' D2 L' U2 F',B,Rahn Education Advent Open 2025 (2025-11-29~30),333oh R1 B E1
 3786991001,F' R' U2 L' R2 B2 D2 R B2 D B' R F2 U2 L2 R2 U F U B R,B,Vegas Cubing Cup Spring 2024 (2024-05-25),333bf Final B #2

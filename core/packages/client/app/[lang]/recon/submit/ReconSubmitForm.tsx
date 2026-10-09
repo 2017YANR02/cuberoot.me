@@ -1,4 +1,6 @@
 'use client';
+
+import { normalizeReconVideoUrls } from '@/lib/recon-video-url';
 /**
  * /recon/submit — submit/edit a reconstruction.
  *
@@ -45,7 +47,7 @@ import { useAuthStore } from '@/lib/auth-store';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useMembership } from '@/hooks/useMembership';
 import { displayCuberName } from '@/lib/cuber-name-display';
-import { compNameZh, loadFlagData, flagDataVersion, personFlagIso2 } from '@/lib/country-flags';
+import { loadFlagData, flagDataVersion, personFlagIso2 } from '@/lib/country-flags';
 import { fetchCompRounds, type RoundFormat } from '@/lib/comp-wcif';
 import { toWcaEventId } from '@/lib/wca-events';
 import {
@@ -55,7 +57,7 @@ import {
 import { computeAllStats } from '@/lib/recon-stats';
 import { normalizeIsoDate, toLocalIsoDate } from '@/lib/iso-date';
 import { revalidateRecon } from '../revalidate-action';
-import { fetchAttempts, fetchCubingAttempts, fetchResultRow, fetchCubingPrRanks, fetchScrambles, fetchOptimalScrambles, fetchScrambleGroups, matchRoundType } from '@/lib/wca-results-api';
+import { fetchAttempts, fetchCubingAttempts, fetchResultRow, fetchCubingPrRanks, fetchCubingLiveResultInfo, fetchScrambles, fetchOptimalScrambles, fetchScrambleGroups, matchRoundType } from '@/lib/wca-results-api';
 import { fetchAttemptPrRank } from '@/lib/recon-attempt-pr-rank';
 import { fetchPb, type PbByEvent } from '@/lib/wca-pb';
 import {
@@ -405,6 +407,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     getRecon(Number(editId)).then(solve => {
       const normalized = {
         ...solve,
+        videoUrl: normalizeReconVideoUrls(solve.videoUrl || ''),
         date: normalizeIsoDate(solve.date),
         reconDate: normalizeIsoDate(solve.reconDate),
         wcaScramble: normalizeReconScrambleSpacing(solve.event, solve.wcaScramble || ''),
@@ -465,7 +468,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
         reconDate: normalizeIsoDate(src.reconDate),
         solveNum: targetSolveNum ?? prev.solveNum,
         cube: src.cube,
-        videoUrl: src.videoUrl,
+        videoUrl: normalizeReconVideoUrls(src.videoUrl || ''),
       }));
       const fromBaseKey = `${src.personId ?? ''}|${src.event ?? ''}|${src.comp ?? ''}|${src.compWcaId ?? ''}|${src.round ?? ''}`;
       loadedAvgKeySnapshot.current = fromBaseKey;
@@ -568,7 +571,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       reconer: authUser?.name ?? prev.reconer,
       reconerId: authUser?.wcaId ?? prev.reconerId,
       // 成绩弹窗里填好的比赛视频链接(多行)→ 预填视频字段。
-      videoUrl: searchParams?.get('video') || prev.videoUrl,
+      videoUrl: normalizeReconVideoUrls(searchParams?.get('video') || prev.videoUrl || ''),
     }));
     // 原始成绩(罚时前的 base,秒):仅当链接带 rawTime 才覆盖「原始成绩」并锁住,
     // 防下面的自动获取把它改回含罚时的官方值;「单次」仍交给自动获取取官方值。
@@ -716,16 +719,15 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
   // ── CompPicker handlers ──
   const applyPickedComp = useCallback((c: Comp) => {
-    const zh = isZh ? compNameZh(c.name) : '';
     setForm(prev => ({
       ...prev,
-      comp: zh || c.name,
+      comp: c.name,
       compWcaId: c.id,
       country: (c.country || '').toLowerCase(),
       date: c.start_date,
     }));
     pruneReused(['comp', 'date']);
-  }, [isZh, pruneReused]);
+  }, [pruneReused]);
 
   const clearPickedComp = useCallback(() => {
     setForm(prev => ({ ...prev, comp: '', compWcaId: '', country: '', date: '' }));
@@ -1190,20 +1192,28 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
             setRecordAutoSource(null);
             return;
           }
+          // The person-results adapter deliberately clears live regional tags.
+          // Restore the adjudicated markers through the same helper as person-page badges.
+          const liveInfo = liveRow.live ? await fetchCubingLiveResultInfo(
+            form.compWcaId!, form.event!, form.round!, form.personId!, liveRow.best, liveRow.average,
+          ) : null;
+          if (cancelled) return;
           const rf = computePrRank(personMerged!.results, personMerged!.comps).get(wcaResultRowKey(liveRow));
           const prTag = (rank: number | null | undefined): string =>
             rank == null ? '' : (rank <= 1 ? 'PR' : `PR${rank}`);
           let avgFilled: string | null = null;
           let singleFilled: string | null = null;
           if (!averageRecordUserTouched) {
-            const v = liveRow.regional_average_record || prTag(rf?.averageRank);
+            const v = (liveInfo?.averageTag ?? liveRow.regional_average_record) || prTag(liveInfo?.pA ?? rf?.averageRank);
             setField('regionalAverageRecord', v);
             if (v) avgFilled = v;
           }
           if (!singleRecordUserTouched) {
             const idx = form.solveNum != null ? form.solveNum - 1 : -1;
             const attRank = idx >= 0 ? rf?.attemptRanks?.[idx] : rf?.singleRank;
-            const v = liveRow.regional_single_record || prTag(attRank);
+            const isBestSolve = liveRow.best > 0 && (idx < 0 || liveRow.attempts[idx] === liveRow.best);
+            const regionalTag = liveInfo?.singleTag ?? liveRow.regional_single_record;
+            const v = (isBestSolve && regionalTag) || prTag(attRank);
             setField('regionalSingleRecord', v);
             if (v) singleFilled = v;
           }
@@ -1525,6 +1535,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
       const data: Partial<ReconSolve> = {
         ...form,
+        videoUrl: normalizeReconVideoUrls(form.videoUrl || ''),
         person,
         recordType: timingOnly ? 'timing' : 'reconstruction',
         solution,
@@ -2379,7 +2390,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     value={form.videoUrl || ''}
                     onChange={e => setField('videoUrl', e.target.value)}
                     onBlur={async () => {
-                      const cur = form.videoUrl || '';
+                      const cur = normalizeReconVideoUrls(form.videoUrl || '');
+                      if (cur !== (form.videoUrl || '')) setField('videoUrl', cur);
                       if (!/b23\.tv/i.test(cur)) return;
                       const lines = cur.split('\n');
                       let changed = false;
@@ -2391,12 +2403,16 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                           const res = await resolveShortUrl(m[0]);
                           if (res.url) {
                             changed = true;
-                            return line.replace(m[0], res.url.split('?')[0]);
+                            return normalizeReconVideoUrls(line.replace(m[0], res.url));
                           }
                         } catch { /* keep short link on failure */ }
                         return line;
                       }));
-                      if (changed) setField('videoUrl', resolved.join('\n'));
+                      if (changed) {
+                        // Do not overwrite edits made while a short link is resolving.
+                        setForm(prev => prev.videoUrl === cur ? { ...prev, videoUrl: resolved.join('\n') } : prev);
+                        pruneReused('videoUrl');
+                      }
                     }}
                     rows={2}
                   />

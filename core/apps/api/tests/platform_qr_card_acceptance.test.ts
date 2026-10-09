@@ -224,7 +224,7 @@ describe('Platform QR card acceptance', () => {
     expect(write).toContain('parseQrCardDesign(');
 
     const publicSvg = routeBlock('get', '/qr/:code/card');
-    expect(publicSvg).toContain('findQr(resourceId(c.req.param(\'code\'), \'code\'), true)');
+    expect(publicSvg).toContain("findQr(resourceId(c.req.param('code'), 'code'), 'public')");
     expect(publicSvg).toContain("c.header('Content-Type', 'image/svg+xml; charset=utf-8')");
     expect(publicSvg).toContain("c.header('Content-Disposition'");
     expect(publicSvg).toContain('renderQrCardSvg(');

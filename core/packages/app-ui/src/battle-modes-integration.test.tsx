@@ -6,9 +6,10 @@ import type {
   NetRoomState,
 } from '@cuberoot/shared/timer';
 import { generateTimerScramble } from '@cuberoot/shared/timer';
+import { TwistyPlayer } from 'cubing/twisty';
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
 import { SOLVED_3X3 } from '@cuberoot/puzzle-solvers/timer-333-cube';
-import { act, createElement } from 'react';
+import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -28,27 +29,13 @@ vi.mock('@cuberoot/shared/timer', async (importOriginal) => {
   };
 });
 
-vi.mock('@cuberoot/timer-ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@cuberoot/timer-ui')>();
-  return {
-    ...actual,
-    TimerCubePreview: ({ ariaLabel, visualization }: {
-      ariaLabel?: string;
-      visualization?: '2D' | '3D';
-    }) => createElement('div', {
-      'aria-label': ariaLabel,
-      'data-preview-visualization': visualization,
-      role: 'img',
-    }),
-  };
-});
-
 const eventGroups = [{
   id: 'wca',
   label: 'WCA',
   items: [
     { id: '333', label: '3×3', iconClass: '333' },
     { id: '222', label: '2×2', iconClass: '222' },
+    { id: '333bf', label: '3×3 blindfolded', iconClass: '333bf' },
   ],
 }];
 
@@ -125,6 +112,7 @@ describe('installed app multiplayer modes', () => {
       }),
     });
     window.localStorage.clear();
+    vi.mocked(TwistyPlayer).mockClear();
     vi.mocked(generateTimerScramble).mockReset().mockImplementation(async ({ event }) => ({
       ok: true,
       event,
@@ -141,6 +129,7 @@ describe('installed app multiplayer modes', () => {
     await act(async () => root.unmount());
     host.remove();
     vi.restoreAllMocks();
+    vi.useRealTimers();
   });
 
   it('renders real 2/3/4 and online mode choices without a browser fallback', async () => {
@@ -151,6 +140,8 @@ describe('installed app multiplayer modes', () => {
     await act(async () => Promise.resolve());
 
     expect(host.querySelectorAll('.battle-player')).toHaveLength(2);
+    expect(host.querySelectorAll('.timing-surface--local')).toHaveLength(2);
+    expect(host.querySelectorAll('.timing-surface-scramble-top')).toHaveLength(2);
     const selector = host.querySelector<HTMLSelectElement>('.shell-players-select')!;
     expect(Array.from(selector.options).map((option) => option.value)).toEqual(['1', '2', '3', '4', 'net']);
 
@@ -168,6 +159,41 @@ describe('installed app multiplayer modes', () => {
     expect(host.querySelector('a[href*="timer"]')).toBeNull();
   });
 
+  it.each([2, 3, 4] as const)('shares local preview slots for %s players and follows preview settings', async (playerCount) => {
+    const draw = (showCubePreview: boolean, prefer3D: boolean) => root.render(
+      <LocalBattleMode {...baseProps} playerCount={playerCount}
+        scramblePreviewSettings={{ showCubePreview, prefer3D }} />,
+    );
+    await act(async () => draw(true, false));
+    const readout = host.querySelector('.timer-display');
+    await vi.waitFor(() => expect(host.querySelectorAll('[data-visualization="2D"]')).toHaveLength(2));
+    await act(async () => draw(true, true));
+    await vi.waitFor(() => expect(host.querySelectorAll('[data-visualization="3D"]')).toHaveLength(2));
+    expect(host.querySelector('.timer-display')).toBe(readout);
+    await act(async () => draw(false, true));
+    expect(host.querySelector('.timing-surface-cube-frame')).toBeNull();
+    expect(host.querySelector('.timer-display')).toBe(readout);
+  });
+
+  it('cancels a held local key when the device dialog opens and blocks new presses', async () => {
+    const render = (inputBlocked: boolean) => root.render(
+      <LocalBattleMode {...baseProps} inputBlocked={inputBlocked} playerCount={2} />,
+    );
+    await act(async () => render(false));
+    const key = ' ';
+    await act(async () => window.dispatchEvent(new KeyboardEvent('keydown', { key })));
+    expect(host.querySelector('.timer-display.holding')).not.toBeNull();
+    await act(async () => render(true));
+    await act(async () => {
+      window.dispatchEvent(new KeyboardEvent('keyup', { key }));
+      window.dispatchEvent(new KeyboardEvent('keydown', { key }));
+    });
+    expect(host.querySelector('.timer-display.holding, .timer-display.running')).toBeNull();
+    await act(async () => render(false));
+    await act(async () => window.dispatchEvent(new KeyboardEvent('keydown', { key })));
+    expect(host.querySelector('.timer-display.holding')).not.toBeNull();
+  });
+
   it('renders a working retry after local scramble generation fails', async () => {
     vi.mocked(generateTimerScramble)
       .mockResolvedValueOnce({
@@ -180,7 +206,7 @@ describe('installed app multiplayer modes', () => {
     await act(async () => Promise.resolve());
 
     const retry = host.querySelector<HTMLElement>('.scramble-text[role="button"]')!;
-    expect(retry.textContent).toContain('Try again');
+    expect(retry.textContent).toContain('Unable to load scramble. Retry');
     await act(async () => retry.click());
     await act(async () => Promise.resolve());
 
@@ -188,7 +214,36 @@ describe('installed app multiplayer modes', () => {
     expect(host.querySelector('.scramble-strip')?.textContent).toContain("R U R'");
   });
 
-  it('uses the injected shared room client and protected session store to create a room', async () => {
+  it('cancels an old source and preserves the completed round through failed prefetch, then deletes it without resurrection', async () => {
+    let resolveOld!: (row: { scramble: string }) => void;
+    const oldProvider = () => new Promise<{ scramble: string }>(resolve => { resolveOld = resolve; });
+    const provider = vi.fn().mockResolvedValueOnce({ scramble: 'F' }).mockRejectedValueOnce(new Error('offline')).mockResolvedValue({ scramble: 'U' });
+    await act(async () => root.render(<LocalBattleMode {...baseProps} playerCount={2} scrambleProvider={oldProvider} />));
+    await act(async () => root.render(<LocalBattleMode {...baseProps} playerCount={2} scrambleProvider={provider} />));
+    await act(async () => resolveOld({ scramble: 'R' }));
+    expect(host.querySelector('.scramble-strip')?.textContent).toContain('F');
+    vi.useFakeTimers(); let now = 1000; vi.spyOn(performance, 'now').mockImplementation(() => now);
+    const surfaces = host.querySelectorAll('.timing-surface--local');
+    for (const id of [0, 1]) {
+      await act(async () => { dispatchPointer(surfaces[id], 'pointerdown', id + 1); await vi.advanceTimersByTimeAsync(350); dispatchPointer(surfaces[id], 'pointerup', id + 1); });
+    }
+    for (const id of [0, 1]) { now = 2000 + id * 500; await act(async () => dispatchPointer(surfaces[id], 'pointerdown', id + 1)); }
+    const key = 'cuberoot_local_battle_rounds_v1';
+    const original = JSON.parse(localStorage.getItem(key)!)[0];
+    expect(original.attempts[0].solve.scramble).toBe('F');
+    const retry = host.querySelector<HTMLElement>('.scramble-text[role="button"]')!;
+    await act(async () => retry.click());
+    expect(host.querySelector('.scramble-strip')?.textContent).toContain('U');
+    expect(JSON.parse(localStorage.getItem(key)!)[0].id).toBe(original.id);
+    await act(async () => host.querySelector<HTMLButtonElement>('[aria-label="Local battle history"]')!.click());
+    await act(async () => document.querySelector<HTMLButtonElement>('.timer-battle-history-list button')!.click());
+    const remove = [...document.querySelectorAll<HTMLButtonElement>('.timer-room-actions button')].find(button => button.textContent === 'Delete round')!;
+    await act(async () => remove.click()); await act(async () => remove.click());
+    expect(JSON.parse(localStorage.getItem(key)!)).toEqual([]);
+    expect(host.querySelectorAll('.timer-battle-player-actions button')).toHaveLength(0);
+  });
+
+  it.each(['create', 'join'])('uses the shared lobby to %s a room and preserves its protected session', async (entry) => {
     const state = roomState();
     const credentials = { playerId: 'abcdef', playerToken: 'x'.repeat(48) };
     const createNetRoom = vi.fn(async () => ({ state, credentials }));
@@ -196,7 +251,7 @@ describe('installed app multiplayer modes', () => {
     let saved: NetBattleSession | null = null;
     const client = {
       createNetRoom,
-      joinNetRoom: vi.fn(),
+      joinNetRoom: vi.fn(async () => ({ state, credentials })),
       getNetRoom: vi.fn(async () => state),
       postNetStatus: vi.fn(async () => state),
       postNetSyncStart: vi.fn(async () => state),
@@ -227,18 +282,45 @@ describe('installed app multiplayer modes', () => {
       />,
     ));
     await act(async () => Promise.resolve());
-    await act(async () => host.querySelector<HTMLButtonElement>('.battle-primary-action')!.click());
-
-    expect(createNetRoom).toHaveBeenCalledWith('333', { name: 'Cuber' });
+    if (entry === 'create') {
+      await act(async () => host.querySelector<HTMLButtonElement>('.timer-room-lobby-actions button')!.click());
+      expect(createNetRoom).toHaveBeenCalledWith('333', { name: 'Cuber' });
+    } else {
+      const codeInput = host.querySelector<HTMLInputElement>('[aria-label="Room code"]')!;
+      await act(async () => {
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(codeInput, '1234');
+        codeInput.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+      expect(client.joinNetRoom).toHaveBeenCalledExactlyOnceWith('1234', { name: 'Cuber' });
+      expect(createNetRoom).not.toHaveBeenCalled();
+    }
     expect(saved).toEqual({ code: '1234', name: 'Cuber', ...credentials });
+    const fetcher = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ error: 'bandwidth' }), { status: 503 }));
+    try {
+      const videoToggle = host.querySelector<HTMLButtonElement>('[aria-label="Start video"]');
+      expect(videoToggle).not.toBeNull();
+      await act(async () => videoToggle!.click());
+      expect(fetcher).toHaveBeenCalledWith(expect.stringContaining('/v1/video/token'), expect.objectContaining({
+        headers: expect.objectContaining({ 'X-Battle-Token': credentials.playerToken }),
+        body: JSON.stringify({ code: '1234', pid: credentials.playerId }),
+      }));
+      expect(host.querySelector('.vs-strip')?.textContent).toContain('Server video capacity is full');
+    } finally { fetcher.mockRestore(); }
     expect(host.textContent).toContain('1234');
-    expect(host.querySelectorAll('.battle-player-list li')).toHaveLength(1);
-    const preview = host.querySelector<HTMLElement>('.timing-surface-cube .mobile-cube-preview[data-no-timer]');
+    expect(host.querySelectorAll('.timer-room-player')).toHaveLength(1);
+    const preview = host.querySelector<HTMLElement>('.timing-surface-cube-frame[data-no-timer]');
     expect(preview).not.toBeNull();
     expect(preview?.querySelector('[role="img"]')?.getAttribute('aria-label')).toBe(COPY.en.cubeState);
-    expect(preview?.querySelector<HTMLElement>('[role="img"]')
-      ?.dataset.previewVisualization).toBe('3D');
-    const surface = host.querySelector<HTMLElement>('.battle-net-timer .timing-surface')!;
+    await vi.waitFor(() => {
+      const player = preview?.querySelector<HTMLElement>('[data-test-twisty-player]');
+      expect(player?.dataset.visualization).toBe('3D');
+      expect(player?.dataset.scramble).toBe("R U R'");
+    });
+    const surface = host.querySelector<HTMLElement>('.timer-room-stage .timing-surface')!;
+    expect(surface.classList.contains('timing-surface--net')).toBe(true);
+    expect(surface.firstElementChild?.classList.contains('timing-surface-scramble-top')).toBe(true);
+    expect(surface.querySelector<HTMLElement>('.timer-display')!.style.fontSize)
+      .toContain('clamp(48px, 10vw, 132px)');
     const postNetStatus = vi.mocked(client.postNetStatus);
     await act(async () => {
       dispatchPointer(surface, 'pointerdown', 1);
@@ -254,26 +336,38 @@ describe('installed app multiplayer modes', () => {
     expect(writeClipboardText).not.toHaveBeenCalled();
     await act(async () => dispatchPointer(surface, 'pointercancel', 1));
     await act(async () => host.querySelector<HTMLButtonElement>(
-      `[aria-label="${COPY.en.battleCopyCode}"]`,
+      `[aria-label="${COPY.en.battleCopyInvite}"]`,
     )!.click());
-    expect(writeClipboardText).toHaveBeenCalledWith('1234');
+    expect(writeClipboardText).toHaveBeenCalledWith('https://cuberoot.me/timer?players=net&room=1234');
     expect(host.textContent).toContain(COPY.en.battleInviteCopied);
-    const syncStart = Array.from(host.querySelectorAll<HTMLButtonElement>('.battle-room-header button'))
-      .find((button) => button.textContent === 'Synchronized start')!;
+    await act(async () => host.querySelector<HTMLButtonElement>('[aria-label="Room settings"]')!.click());
+    const syncStart = document.querySelector<HTMLButtonElement>('[role="switch"][aria-label="Synchronized start"]')!;
     await act(async () => syncStart.click());
+    await act(async () => document.querySelector<HTMLButtonElement>('.timer-room-dialog [aria-label="Close"]')!.click());
     expect(client.postNetSyncStart).toHaveBeenCalledWith('1234', credentials, true);
-    const qrButton = Array.from(host.querySelectorAll<HTMLButtonElement>('.battle-room-header button'))
-      .find((button) => button.textContent === 'Invite QR')!;
+    const qrButton = Array.from(host.querySelectorAll<HTMLButtonElement>('.timer-room-toolbar button'))
+      .find((button) => button.getAttribute('aria-label') === 'Room QR code')!;
     await act(async () => qrButton.click());
     expect(document.querySelector('.room-qr-code svg')).not.toBeNull();
     expect(document.querySelector('.room-qr-link')?.textContent).toContain(
       'https://cuberoot.me/timer?players=net&room=1234',
     );
     await act(async () => document.querySelector<HTMLButtonElement>('.room-qr-close')!.click());
+    await act(async () => host.querySelector<HTMLButtonElement>('.timer-room-player-name')!.click());
+    const nickname = document.querySelector<HTMLInputElement>('.timer-room-dialog input')!;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(nickname, 'Guest alias');
+      nickname.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await act(async () => document.querySelector<HTMLButtonElement>('.timer-room-dialog .timer-room-actions button')!.click());
+    expect(client.renameNetPlayer).toHaveBeenCalledWith('1234', credentials, { name: 'Guest alias' });
+    expect(document.querySelector('.timer-room-dialog')).toBeNull();
   });
 
   it('routes a batched smart-cube scramble completion and first solve move through the online timer', async () => {
-    const state = roomState();
+    const openDevice = vi.fn();
+    const onRecordSolve = vi.fn(async (_record: import('@cuberoot/shared/timer').NetRecordedAttempt) => undefined);
+    let state = roomState();
     const credentials = { playerId: 'abcdef', playerToken: 'x'.repeat(48) };
     const postNetResult = vi.fn(async () => state);
     const client = {
@@ -307,14 +401,24 @@ describe('installed app multiplayer modes', () => {
       <NetBattleMode
         {...baseProps}
         capability={capability}
+        sessionId="session-original"
+        onRecordSolve={onRecordSolve}
+        recordGyro
+        deviceControls={<button data-device-controls onClick={openDevice}>Device operations</button>}
         onSmartCubeHandlersChange={(next) => { handlers = next; }}
         smartCube={smartCube}
       />,
     ));
-    await act(async () => host.querySelector<HTMLButtonElement>('.battle-primary-action')!.click());
+    await act(async () => host.querySelector<HTMLButtonElement>('.timer-room-lobby-actions button')!.click());
     expect(handlers).not.toBeNull();
 
-    const startedAt = performance.now();
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-device-controls]')!.click());
+    expect(openDevice).toHaveBeenCalledOnce();
+    expect(smartCube.disconnect).not.toHaveBeenCalled();
+
+    const startedAt = Math.ceil(performance.now());
+    let clock = startedAt;
+    const performanceSpy = vi.spyOn(performance, 'now').mockImplementation(() => clock);
     await act(async () => {
       handlers!.onMove('F', startedAt - 20, SOLVED_3X3);
       handlers!.onSolved(startedAt - 10);
@@ -323,11 +427,32 @@ describe('installed app multiplayer modes', () => {
 
     await act(async () => {
       handlers!.onMove("R'", startedAt, smartCubeTargetFacelets("R U R'")!);
-      handlers!.onMove('R', startedAt + 10, 'U'.repeat(54));
-      handlers!.onSolved(startedAt + 1_010);
+      clock = startedAt + 10;
+      handlers!.onMove('R', clock, 'U'.repeat(54));
+    });
+    // A newer room countdown must not replace the active attempt's round or clock.
+    state = { ...state, revision: 2, round: 2, syncStart: true,
+      roundRoster: ['abcdef'], startAt: Date.now() - 10, now: Date.now(),
+      scrambles: { '333': 'F' }, results: { '1': {}, '2': {} } };
+    await act(async () => { document.dispatchEvent(new Event('visibilitychange')); });
+    await act(async () => {
+      clock = startedAt + 510;
+      handlers!.onGyro?.({ w: 1, x: 0, y: 0, z: 0 }, clock);
+      handlers!.onMove("U'", clock, 'U'.repeat(54));
+      clock = startedAt + 1010;
+      handlers!.onMove("R'", clock, SOLVED_3X3);
+      handlers!.onSolved(clock);
     });
     await act(async () => Promise.resolve());
-    expect(postNetResult).toHaveBeenCalledTimes(1);
+    expect(postNetResult).not.toHaveBeenCalled();
+    expect(onRecordSolve).toHaveBeenCalledTimes(1);
+    expect(onRecordSolve.mock.calls[0]![0]).toMatchObject({
+      context: { code: '1234', round: 1, sessionId: 'session-original' },
+      solve: { timeMs: 1000, scramble: "R U R'", moves: [
+        { m: 'R', ts: 0 }, { m: "U'", ts: 500 }, { m: "R'", ts: 1000 },
+      ], gyro: expect.any(String) },
+    });
+    performanceSpy.mockRestore();
   });
 
   it('routes one installed smart cube through the shared local-battle timer and hands it off', async () => {
@@ -352,18 +477,32 @@ describe('installed app multiplayer modes', () => {
     expect(handlers).not.toBeNull();
     const target = smartCubeTargetFacelets("R U R'")!;
     const at = performance.now();
+    let clock = at;
+    const performanceSpy = vi.spyOn(performance, 'now').mockImplementation(() => clock);
     await act(async () => handlers!.onMove('F', at - 20, SOLVED_3X3));
     await act(async () => handlers!.onSolved(at - 10));
-    expect(host.querySelectorAll('.battle-penalties')).toHaveLength(0);
+    expect(host.querySelectorAll('.timer-penalty-actions')).toHaveLength(0);
 
     await act(async () => handlers!.onMove('R', at, target));
     await act(async () => handlers!.onMove('U', at + 10, 'U'.repeat(54)));
-    await act(async () => handlers!.onSolved(at + 1_010));
+    clock = at + 1_010;
+    await act(async () => handlers!.onSolved(clock));
+    performanceSpy.mockRestore();
 
-    const holderButtons = host.querySelectorAll<HTMLButtonElement>('.battle-cube-holders button');
+    await act(async () => host.querySelector<HTMLButtonElement>('[aria-label="Settings"]')!.click());
+    const holderButtons = document.querySelectorAll<HTMLButtonElement>('.timer-battle-cube-controls [aria-label="Now up"] button');
     expect(holderButtons[0].getAttribute('aria-pressed')).toBe('false');
     expect(holderButtons[1].getAttribute('aria-pressed')).toBe('true');
-    expect(host.querySelectorAll('.battle-penalties')).toHaveLength(1);
+    await act(async () => document.querySelector<HTMLButtonElement>('.timer-room-dialog [aria-label="Close"]')!.click());
+    expect(host.querySelectorAll('.timer-penalty-actions')).toHaveLength(1);
+    const penalties = host.querySelectorAll<HTMLButtonElement>('.timer-penalty-actions button');
+    const originalSeconds = Number.parseFloat(host.querySelector('[data-player-id="0"] .battle-player .timer-display')!.textContent!);
+    await act(async () => penalties[1].click());
+    expect(penalties[1].getAttribute('aria-pressed')).toBe('true');
+    expect(Number.parseFloat(host.querySelector('[data-player-id="0"] .battle-player .timer-display')!.textContent!))
+      .toBeCloseTo(originalSeconds + 2, 3);
+    await act(async () => penalties[2].click());
+    expect(host.querySelector('[data-player-id="0"] .battle-player .timer-display')?.textContent).toBe('DNF');
   });
 
   it('keeps manual input disabled while the server owns a synchronized countdown', async () => {
@@ -387,15 +526,42 @@ describe('installed app multiplayer modes', () => {
     };
 
     await act(async () => root.render(<NetBattleMode {...baseProps} capability={capability} />));
-    await act(async () => host.querySelector<HTMLButtonElement>('.battle-primary-action')!.click());
+    await act(async () => host.querySelector<HTMLButtonElement>('.timer-room-lobby-actions button')!.click());
 
-    const surface = host.querySelector<HTMLElement>('.battle-net-timer .timing-surface')!;
+    const surface = host.querySelector<HTMLElement>('.timer-room-stage .timing-surface')!;
     expect(surface.getAttribute('role')).toBeNull();
     expect(surface.querySelector('.timer-display')?.textContent).toBe('3');
   });
 
-  it('uses the shared room transition to advance a settled round without forcing it', async () => {
+  it('restores the same room identity after a temporary outage and clears an expired room on wake', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'] });
     const state = roomState();
+    const session = { code: '1234', playerId: 'abcdef', playerToken: 'x'.repeat(48), name: 'Cuber' };
+    const clear = vi.fn(async () => undefined);
+    const getNetRoom = vi.fn().mockRejectedValueOnce(new Error('Failed to fetch')).mockResolvedValueOnce(state)
+      .mockRejectedValue(new Error('room not found'));
+    const joinNetRoom = vi.fn();
+    const capability: InstalledAppNetBattle = {
+      client: { getNetRoom, joinNetRoom } as unknown as NetBattleClient,
+      sessions: { clear, load: vi.fn(async () => session), save: vi.fn(async () => undefined) },
+    };
+    await act(async () => root.render(<NetBattleMode {...baseProps} capability={capability} />));
+    expect(clear).not.toHaveBeenCalled();
+    await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+    expect(host.querySelector('.timer-room-stage')).not.toBeNull();
+    expect(joinNetRoom).not.toHaveBeenCalled();
+    expect(getNetRoom.mock.calls[1]?.[1]).toMatchObject({ playerId: session.playerId, playerToken: session.playerToken });
+    await act(async () => { window.dispatchEvent(new Event('online')); });
+    expect(clear).toHaveBeenCalledOnce();
+    expect(host.querySelector('.timer-room-stage')).toBeNull();
+    expect(host.textContent).toContain('Room not found or expired');
+  });
+
+  it.each(['333', '333bld'] as const)('holds a settled %s round with its canonical event label until this device requests the next round', async (event) => {
+    const state = roomState();
+    state.event = event;
+    state.players.abcdef.event = event;
+    state.scrambles = { [event]: "R U R'" };
     state.results = { '1': { abcdef: { t: 1_000, p: 'ok' } } };
     const nextState = { ...state, revision: 2, round: 2, results: { ...state.results, '2': {} } };
     const credentials = { playerId: 'abcdef', playerToken: 'x'.repeat(48) };
@@ -415,9 +581,14 @@ describe('installed app multiplayer modes', () => {
     };
 
     await act(async () => root.render(<NetBattleMode {...baseProps} capability={capability} />));
-    await act(async () => host.querySelector<HTMLButtonElement>('.battle-primary-action')!.click());
+    await act(async () => host.querySelector<HTMLButtonElement>('.timer-room-lobby-actions button')!.click());
     await act(async () => Promise.resolve());
 
+    expect(host.querySelector('.timer-room-event')?.textContent).toBe(event === '333' ? '3×3' : '3×3 blindfolded');
+    expect(host.querySelector('.timer-room-event .cubing-icon')).not.toBeNull();
+    expect(nextNetRound).not.toHaveBeenCalled();
+    const nextButton = [...host.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent?.includes('Next round'))!;
+    await act(async () => nextButton.click());
     expect(nextNetRound).toHaveBeenCalledWith('1234', credentials, 1, false);
   });
 
@@ -477,27 +648,40 @@ describe('installed app multiplayer modes', () => {
     };
     vi.spyOn(window, 'confirm').mockReturnValue(true);
 
-    await act(async () => root.render(<NetBattleMode {...baseProps} capability={capability} />));
-    await act(async () => host.querySelector<HTMLButtonElement>('.battle-primary-action')!.click());
+    let closeOverlay: (() => void) | null = null;
+    await act(async () => root.render(<NetBattleMode {...baseProps} capability={capability}
+      onOverlayCloseChange={(close) => { closeOverlay = close; }} />));
+    await act(async () => host.querySelector<HTMLButtonElement>('.timer-room-lobby-actions button')!.click());
 
-    const historyButton = Array.from(host.querySelectorAll<HTMLButtonElement>('.battle-room-header button'))
-      .find((button) => button.textContent === 'History and statistics')!;
+    const historyButton = Array.from(host.querySelectorAll<HTMLButtonElement>('.timer-room-toolbar button'))
+      .find((button) => button.getAttribute('aria-label') === 'Scramble history and results')!;
     await act(async () => historyButton.click());
-    expect(host.querySelector('.battle-history-panel')?.textContent).toContain('Xuanyi Geng');
-    expect(host.querySelector('.battle-history-panel')?.textContent).toContain('Best');
-    expect(host.querySelector('.battle-history-panel')?.textContent).toContain('U R U\'');
+    expect(document.querySelector('.timer-room-dialog')?.textContent).toContain('Xuanyi Geng');
+    expect(document.querySelector('.timer-room-dialog')?.textContent).toContain('Best');
+    expect(document.querySelector('.timer-room-dialog')?.textContent).toContain('U R U\'');
+    await act(async () => { await vi.dynamicImportSettled(); });
+    expect(TwistyPlayer).toHaveBeenCalled();
+    expect(document.querySelector('.timer-room-dialog [data-test-twisty-player]')).not.toBeNull();
+    expect(vi.mocked(TwistyPlayer).mock.calls.some(([options]) => options?.puzzle === '3x3x3')).toBe(true);
 
-    const adminButton = Array.from(host.querySelectorAll<HTMLButtonElement>('.battle-room-header button'))
-      .find((button) => button.textContent === 'Room management')!;
+    expect(closeOverlay).not.toBeNull();
+    await act(async () => { closeOverlay?.(); });
+    expect(document.querySelector('.timer-room-dialog')).toBeNull();
+    const adminButton = Array.from(host.querySelectorAll<HTMLButtonElement>('.timer-room-toolbar button'))
+      .find((button) => button.getAttribute('aria-label') === 'Room settings')!;
     await act(async () => adminButton.click());
-    const makeHost = Array.from(host.querySelectorAll<HTMLButtonElement>('.battle-admin-list button'))
+    const makeHost = Array.from(document.querySelectorAll<HTMLButtonElement>('.timer-room-admin-list button'))
       .find((button) => button.textContent === 'Make host')!;
+    await act(async () => makeHost.click());
+    expect(postNetAdmin).not.toHaveBeenCalled();
     await act(async () => makeHost.click());
     expect(postNetAdmin).toHaveBeenCalledWith('1234', credentials, 'ghijkl');
 
     await act(async () => adminButton.click());
-    const remove = Array.from(host.querySelectorAll<HTMLButtonElement>('.battle-admin-list button'))
+    const remove = Array.from(document.querySelectorAll<HTMLButtonElement>('.timer-room-admin-list button'))
       .find((button) => button.textContent === 'Remove')!;
+    await act(async () => remove.click());
+    expect(postNetKick).not.toHaveBeenCalled();
     await act(async () => remove.click());
     expect(postNetKick).toHaveBeenCalledWith('1234', credentials, 'ghijkl');
   });

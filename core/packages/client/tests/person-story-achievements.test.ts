@@ -37,6 +37,27 @@ describe('competition story achievements', () => {
     expect(awards([old, row('Live', '2024-01-01', { best: 900, average: 1100, live: true })], 'thaw')).toEqual([]);
     expect(awards([old, row('New', '2024-01-01', { average: 1100 })].map(r => ({ ...r, event_id: '333mbf' })), 'thaw')).toEqual([]);
   });
+  it('combines thawed events into one badge while retaining every old/new PB pair', () => {
+    const rows = ['333', '222', '444'].flatMap(event_id => [
+      row('Old', '2020-01-01', { event_id }),
+      row('New', '2023-01-01', { event_id, best: 900, average: 1100 }),
+      row('Again', '2026-01-01', { event_id, best: 800, average: 1000 }),
+    ]);
+    const result = awards([...rows, rows[0], rows[1]], 'thaw');
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({ count: 3, tier: 1 });
+    expect(result[0].event).toBeUndefined();
+    expect(result[0].evidence).toHaveLength(24);
+    for (const event of ['333', '222', '444']) {
+      expect(result[0].evidence.filter(e => e.event === event).map(e => [e.compId, e.type, e.value])).toEqual([
+        ['Old', 'single', 1000], ['New', 'single', 900],
+        ['Old', 'average', 1200], ['New', 'average', 1100],
+        ['New', 'single', 900], ['Again', 'single', 800],
+        ['New', 'average', 1100], ['Again', 'average', 1000],
+      ]);
+    }
+    expect(awards([], 'thaw')).toEqual([]);
+  });
   it('counts twelve distinct start months within one year, including DNF but excluding DNS', () => {
     const rows = Array.from({ length: 12 }, (_, i) => row(`C${i}`, `2024-${String(i + 1).padStart(2, '0')}-01`, { best: -1 }));
     expect(awards(rows, 'twelveMonths')[0].evidence).toHaveLength(12);

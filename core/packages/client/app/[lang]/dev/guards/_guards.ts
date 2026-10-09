@@ -15,6 +15,15 @@ export interface PairedGuard {
 
 export const PAIRED_GUARDS: PairedGuard[] = [
   {
+    id: 'css-position-cascade',
+    scope: 'project',
+    hook: 'block-css-position-cascade.mts',
+    test: 'css-position-cascade-guard.test.ts + codex_hook_adapters.test.ts',
+    baseline: '0',
+    zh: { title: '共享控件定位与偏移复位', desc: '拦截已纳管共享控件的单 class 定位覆盖，避免 CSS 加载顺序改变按钮位置；absolute/fixed 改 relative 时显式重置偏移，改 static 时重置 transform/translate。Hook 重建完整多文件补丁，CI 共用扫描器检查 Web、app-ui、timer-ui 和 shared。规则内 allow-css-position 必须写具体理由；复杂选择器、CSS Modules、动态 class 与真实视口仍需浏览器验收。' },
+    en: { title: 'Shared control positioning and offset resets', desc: 'Blocks single-class positioning overrides for registered shared controls so CSS load order cannot change control placement. Reset offsets when moving from absolute/fixed to relative, and transform/translate when moving to static. The hook reconstructs complete multi-file patches; CI uses the same scanner for Web, app-ui, timer-ui and shared. A rule-local allow-css-position exception needs a reason. Complex selectors, CSS Modules, dynamic classes and actual viewport behavior still require browser verification.' },
+  },
+  {
     id: 'manual-search',
     scope: 'project',
     hook: 'hook-detect-manual-search.mjs',
@@ -53,7 +62,7 @@ export const PAIRED_GUARDS: PairedGuard[] = [
   {
     id: 'browser-regexp-lookbehind',
     scope: 'project',
-    hook: 'block-browser-regexp-lookbehind.mjs',
+    hook: 'block-browser-regexp-lookbehind.mts',
     test: 'browser-regexp-compat.test.ts',
     baseline: '0（6→0）',
     zh: { title: '浏览器端正则后行断言', desc: '浏览器会执行的 client、platform、shared、visualcube 源码禁用正则后行断言,避免 iOS 16.4 之前的 WebKit 在解析 chunk 时整页启动失败。改用捕获边界或显式前字符判断;Codex 写入即拦,CI 全量扫描。' },
@@ -62,11 +71,20 @@ export const PAIRED_GUARDS: PairedGuard[] = [
   {
     id: 'workspace-reparse-links',
     scope: 'project',
-    hook: 'block-workspace-reparse-links.mjs',
+    hook: 'block-workspace-reparse-links.mts',
     test: 'workspace-reparse-links-guard.test.ts',
     baseline: '0',
     zh: { title: '临时目录链接正式工作区', desc: '临时验证目录和 worktree 禁止通过 Junction 或 SymbolicLink 复用正式 node_modules / packages。每个验证树独立 pnpm install --offline --frozen-lockfile,由 pnpm store 安全去重;Codex 命令写入前拦截,CI 锁定危险命令与安全替代路径。' },
     en: { title: 'Disposable trees linking into the live workspace', desc: 'Temporary verification trees and worktrees may not reuse live node_modules or packages through junctions or symlinks. Each tree runs its own pnpm install --offline --frozen-lockfile and relies on the pnpm store for safe deduplication; Codex blocks link creation before execution and CI pins both dangerous commands and the safe replacement.' },
+  },
+  {
+    id: 'toggle-side',
+    scope: 'project',
+    hook: 'block-toggle-side.mts',
+    test: 'toggle-side-guard.test.ts',
+    baseline: '0',
+    zh: { title: '开关在右', desc: '共享 BoolToggle 与计时设置行文字在左、开关在右；禁止 CSS reverse/order/rtl 反转。覆盖 Web、timer-ui 与 app-ui，CI 检查完整源码，Hook 检查新增片段。' },
+    en: { title: 'Switch on the right', desc: 'Shared boolean labels precede switches. No CSS reverse/order/rtl overrides across Web, timer-ui or app-ui. CI checks full sources; the hook checks added fragments.' },
   },
   {
     id: 'checkbox',
@@ -74,8 +92,8 @@ export const PAIRED_GUARDS: PairedGuard[] = [
     hook: 'hook-detect-raw-checkbox.mjs',
     test: 'no-raw-checkbox.test.ts',
     baseline: '0（113→0）',
-    zh: { title: '裸 checkbox', desc: '禁 <input type="checkbox">,布尔开关统一走 BoolToggle（左滑钮 + 右文字）。多选网格/列表例外,行内 allow-checkbox 豁免。' },
-    en: { title: 'Raw checkbox', desc: 'No bare <input type="checkbox"> — boolean toggles go through BoolToggle (left switch + right label). Multi-select grids are exempt via inline allow-checkbox.' },
+    zh: { title: '裸 checkbox', desc: '禁 <input type="checkbox">,布尔开关统一走 BoolToggle（左文字 + 右滑钮）。多选网格/列表例外,行内 allow-checkbox 豁免。' },
+    en: { title: 'Raw checkbox', desc: 'No bare <input type="checkbox"> — boolean toggles go through BoolToggle (left label + right switch). Multi-select grids are exempt via inline allow-checkbox.' },
   },
   {
     id: 'date-input',
@@ -91,9 +109,9 @@ export const PAIRED_GUARDS: PairedGuard[] = [
     scope: 'project',
     hook: 'hook-detect-component-reimplementation.mjs',
     test: 'component-reuse-guard.test.ts',
-    baseline: '关闭按钮 79 ↓;项目选择器 0;BackHome 根节点 14 ↓',
-    zh: { title: '组件复用与放置契约', desc: '规则表拦高置信度的重复造轮子和错误放置。手写关闭/清除叉号统一复用 ClearButton;页面内项目选择统一复用 PuzzlePicker(/wca 展开式项目行用 WcaEventSelector);BackHome 必须位于与正文同宽的 header/topbar/wrap。Codex apply_patch 写入即拦,CI 对零存量规则保持为零、对旧存量只降不升;确有例外时行内写 allow-component-reimplementation 和理由。' },
-    en: { title: 'Component reuse and placement contracts', desc: 'A rule registry blocks high-confidence reinventions and unsafe placement. Close/clear crosses use ClearButton; page-local puzzle selection uses PuzzlePicker (expanded /wca event rows use WcaEventSelector); BackHome stays in the same-width header/topbar/wrap as the body. Codex apply_patch is blocked at write time; CI keeps zero-debt rules at zero and ratchets legacy debt down. Real exceptions need an inline allow-component-reimplementation reason.' },
+    baseline: '关闭按钮 79 ↓;项目选择器 0;选手选择器嵌套 label 0;BackHome 根节点 14 ↓',
+    zh: { title: '组件复用与放置契约', desc: '规则表拦高置信度的重复造轮子和错误放置。WcaPersonPicker 禁嵌入原生 label，避免 Safari 将选中点击转发给清除按钮；hook 重建完整补丁结构，CI 共用 AST 扫描 Web、app-ui 和 timer-ui。手写关闭/清除叉号统一复用 ClearButton;页面内项目选择统一复用 PuzzlePicker(/wca 展开式项目行用 WcaEventSelector);BackHome 必须位于与正文同宽的 header/topbar/wrap。Codex apply_patch 写入即拦,CI 对零存量规则保持为零、对旧存量只降不升;确有例外时行内写 allow-component-reimplementation 和理由。' },
+    en: { title: 'Component reuse and placement contracts', desc: 'A rule registry blocks high-confidence reinventions and unsafe placement. WcaPersonPicker cannot be nested inside native labels: Safari can forward selection clicks to the new clear button. The hook reconstructs complete patches; CI shares the AST scanner across Web, app-ui and timer-ui. Close/clear crosses use ClearButton; page-local puzzle selection uses PuzzlePicker (expanded /wca event rows use WcaEventSelector); BackHome stays in the same-width header/topbar/wrap as the body. Codex apply_patch is blocked at write time; CI keeps zero-debt rules at zero and ratchets legacy debt down. Real exceptions need an inline allow-component-reimplementation reason.' },
   },
   {
     id: 'puzzle-image-state-parity',
@@ -206,7 +224,7 @@ export const PAIRED_GUARDS: PairedGuard[] = [
   {
     id: 'recon-ground-truth',
     scope: 'project',
-    hook: 'recon-ground-truth-gate.mjs',
+    hook: 'recon-ground-truth-gate.mts',
     test: 'recon-ground-truth-gate.test.ts + recon_ground_truth.test.ts',
     baseline: '当前集合全量',
     zh: { title: '复盘 Ground Truth 未验证', desc: '管理员管理器是唯一手工入口，测试命令从公开导出生成供 Git 和 AI 审查的 JSON。Codex 命令 hook 与 Git pre-commit 两层拦截：提交复盘算法、陀螺仪、转体处理或 ground-truth 管道前，当前内容指纹必须对应一次全部 confirmed 样本测试通过记录；管理器新增样本并同步后，旧凭证立即失效。' },
@@ -255,8 +273,8 @@ export const CI_GUARDS_UI: CiGuard[] = [
   {
     id: 'pilltoggle-fit',
     test: 'pilltoggle-default-fit.test.ts',
-    zh: { title: 'PillToggle 默认宽度', desc: '锁住 PillToggle 两根支柱:基类 min-width:0(默认贴合文字)+ 两个隐形 ghost span(按更长标签预留宽度,切换不跳变),防止哪天被悄悄改回固定宽度。' },
-    en: { title: 'PillToggle default width', desc: 'Locks two pillars of PillToggle: the base class keeps min-width:0 (hugs its label by default) and renders two invisible ghost spans that reserve the longer label’s width so toggling never jumps — guards against either silently regressing.' },
+    zh: { title: '布尔开关保留', desc: '二选一改用原生菜单后，确认 BoolToggle 仍保留左侧标签与右侧纯开关，开启和关闭状态语义不变。' },
+    en: { title: 'Boolean switches preserved', desc: 'After two-choice controls move to native menus, verifies that BoolToggle still has a left label and a plain switch on the right, preserving both boolean states.' },
   },
   {
     id: 'fixed-width-dropdown',
@@ -435,7 +453,7 @@ export const PROCESS_GUARDS: ProcessGuard[] = [
   {
     id: 'banned-words',
     scope: 'project',
-    hook: 'block-banned-words.mjs',
+    hook: 'block-banned-words.mts',
     matcher: 'apply_patch',
     zh: { title: '站内违禁词', desc: 'Codex 新增文本命中 .codex/banned-words.json 时立即拦截,并给出统一替代词;确有必要时用行内 allow-banned-word 说明原因。' },
     en: { title: 'Site-banned wording', desc: 'Codex writes are blocked when newly added text matches .codex/banned-words.json, with the approved replacement shown; genuine exceptions require an inline allow-banned-word reason.' },

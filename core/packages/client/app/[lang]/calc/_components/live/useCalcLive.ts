@@ -11,6 +11,7 @@ import {
 import { websocketApiUrl } from '@/lib/api-base';
 
 const ROOM_CODE_SPACE = 10 ** CALC_LIVE_ROOM_CODE_LENGTH;
+const ROOM_CODE_SAMPLE_LIMIT = Math.floor(2 ** 32 / ROOM_CODE_SPACE) * ROOM_CODE_SPACE;
 const MAX_COLLISION_RETRIES = 20;
 const RECONNECT_DELAY_MS = 1_500;
 const SEND_DEBOUNCE_MS = 120;
@@ -39,7 +40,11 @@ function sessionKey(code: string): string {
 function randomRoomCode(exclude?: string): string {
   let code: string;
   do {
-    const value = crypto.getRandomValues(new Uint32Array(1))[0] % ROOM_CODE_SPACE;
+    let sample: number;
+    do {
+      sample = crypto.getRandomValues(new Uint32Array(1))[0];
+    } while (sample >= ROOM_CODE_SAMPLE_LIMIT);
+    const value = sample % ROOM_CODE_SPACE;
     code = value.toString().padStart(CALC_LIVE_ROOM_CODE_LENGTH, '0');
   } while (code === exclude);
   return code;

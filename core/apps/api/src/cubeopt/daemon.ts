@@ -27,6 +27,8 @@ import { existsSync, writeFileSync, readFileSync } from 'node:fs';
 import { registerTenant, claimMemory } from '../mem-arbiter.js';
 import { createBootDeadline } from './boot-deadline.js';
 import { cubeoptChildEnv, resolveCubeoptArtifactConfig, resolveCubeoptIdleMs } from './config.js';
+import { diagnosticLog } from '../observability/request.js';
+import { createSolverDiagnostics, traceSolverJob } from './diagnostics.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -96,6 +98,7 @@ export type SolveState = { phase: 'queued'; ahead: number } | { phase: 'active' 
 
 interface Job {
   id: string;
+  trace: ReturnType<typeof traceSolverJob>;
   scramble: string;
   resolve: (r: SolveResult) => void;
   reject: (e: Error) => void;
@@ -113,6 +116,10 @@ let nextId = 1;
 // it one-at-a-time lets each solve's timeout start when it truly begins.
 const queue: Job[] = [];
 let active: Job | null = null;
+const diagnostics = createSolverDiagnostics(() => ({ solverPid: child?.pid ?? null, ready,
+  queueDepth: queue.length, activeJobId: active?.id ?? null }));
+export const captureSolverDiagnostics = diagnostics.snapshot;
+if (ENABLED) diagnostics.start();
 
 let lastActivity = 0;       // updated on each solve; drives idle-unload
 let cooldownUntil = 0;      // refuse reload until this time after a low-mem drop
@@ -146,12 +153,14 @@ function pump(): void {
   if (!job) return;
   if (job.queueTimer) { clearTimeout(job.queueTimer); job.queueTimer = null; }
   active = job;
+  job.trace.started();
   try { job.onState?.({ phase: 'active' }); } catch { /* callback must not break the pump */ }
   job.solveTimer = setTimeout(() => {
     // The active solve genuinely hung past the budget — the only way to reclaim
     // a blocking wasm call is to kill the process (exit handler rejects it).
     console.error(`[cubeopt] active solve exceeded ${SOLVE_TIMEOUT_MS}ms — recycling daemon`);
-    recycleChild();
+    job.trace.finish('solve_timeout');
+    recycleChild('solve_timeout');
   }, SOLVE_TIMEOUT_MS);
   child.stdin.write(`${job.id}\t${job.scramble}\n`);
 }
@@ -165,6 +174,8 @@ function spawnDaemon(): Promise<void> {
     const spawnStartedAt = Date.now();
     let proc: ChildProcess | null = null;
     const bootDeadline = createBootDeadline(BOOT_TIMEOUT_MS, () => {
+      diagnosticLog('cubeopt_daemon_load_failed', { reason: 'boot_timeout', durationMs: Date.now() - spawnStartedAt }, true);
+      void diagnostics.snapshot('boot_timeout');
       rejectBoot(new Error(`solver did not become ready within ${BOOT_TIMEOUT_MS}ms`));
       if (proc && child === proc) {
         ready = false;
@@ -174,6 +185,7 @@ function spawnDaemon(): Promise<void> {
     const finishOk = () => {
       bootDeadline.finish(() => {
         lastLoadMs = Date.now() - spawnStartedAt;
+        diagnosticLog('cubeopt_daemon_ready', { solverPid: proc?.pid, loadMs: lastLoadMs });
         resolveBoot();
       });
     };
@@ -192,6 +204,7 @@ function spawnDaemon(): Promise<void> {
     }
     const spawned = proc;
     child = spawned;
+    diagnosticLog('cubeopt_daemon_spawned', { solverPid: spawned.pid });
 
     // Layer 3: make THIS process the OOM killer's first victim, so a memory
     // spike that beats the watchdog poll sacrifices the (respawnable) table
@@ -231,6 +244,7 @@ function spawnDaemon(): Promise<void> {
       const field = tab2 < 0 ? rest : rest.slice(0, tab2);
       const tail = tab2 < 0 ? '' : rest.slice(tab2 + 1);
       if (field === 'ERROR') {
+        job.trace.finish('solver_error');
         job.reject(new Error(`solver: ${tail}`));
       } else {
         const htm = Number(field);
@@ -241,6 +255,9 @@ function spawnDaemon(): Promise<void> {
     });
 
     spawned.on('exit', (code, signal) => {
+      diagnosticLog('cubeopt_daemon_exited', { solverPid: spawned.pid, code, signal,
+        activeJobId: active?.id ?? null, queueDepth: queue.length }, true);
+      void diagnostics.snapshot('daemon_exit');
       console.error(`[cubeopt] daemon exited code=${code} signal=${signal}`);
       ready = false;
       child = null;
@@ -251,6 +268,7 @@ function spawnDaemon(): Promise<void> {
     });
 
     spawned.on('error', (err) => {
+      diagnosticLog('cubeopt_daemon_load_failed', { reason: 'spawn_error' }, true);
       console.error('[cubeopt] spawn error:', err);
       ready = false;
       child = null;
@@ -302,7 +320,7 @@ function startMonitors(): void {
       if (!child || !ready || inFlight()) return;
       if (Date.now() - lastActivity > IDLE_MS) {
         console.log('[cubeopt] idle — dropping table to free memory');
-        recycleChild();
+        recycleChild('idle');
       }
     }, 30_000).unref();
   }
@@ -325,7 +343,7 @@ function startMonitors(): void {
         console.error(`[cubeopt] low memory (${avail}MB < ${MEM_FLOOR_MB}MB) — dropping table to avert OOM`);
         cooldownUntil = Date.now() + COOLDOWN_MS;
         lowMemReads = 0;
-        recycleChild();
+        recycleChild('low_memory');
       }
     } else {
       lowMemReads = 0;
@@ -352,8 +370,11 @@ export function getLastLoadMs(): number {
 }
 
 /** Kill the child; the 'exit' handler rejects pending + clears state, next call respawns. */
-function recycleChild(): void {
+function recycleChild(reason = 'memory_arbiter'): void {
   if (child) {
+    diagnosticLog('cubeopt_daemon_recycle', { reason, solverPid: child.pid,
+      activeJobId: active?.id ?? null, queueDepth: queue.length }, reason !== 'idle');
+    if (reason !== 'idle') void diagnostics.snapshot(reason);
     try { child.kill('SIGKILL'); } catch { /* already gone */ }
   }
 }
@@ -375,22 +396,29 @@ registerTenant({
  * the daemon. Resolves with the optimal {htm, solution}.
  */
 export async function solveOptimal(scramble: string, onState?: (s: SolveState) => void): Promise<SolveResult> {
+  const id = `${nextId++}`;
+  const trace = traceSolverJob(id, diagnostics.snapshot);
   lastActivity = Date.now();
-  await ensureDaemon();
-  if (!child?.stdin) throw new Error('solver stdin unavailable');
+  try {
+    await ensureDaemon();
+    if (!child?.stdin) throw new Error('solver stdin unavailable');
+  } catch (error) { trace.finish('load_error'); throw error; }
   if (active !== null && queue.length + 1 >= MAX_QUEUE) {
+    trace.finish('queue_full');
     throw new Error('Rate limit: solver busy, try again shortly');
   }
   lastActivity = Date.now();
 
   return new Promise<SolveResult>((resolveSolve, rejectSolve) => {
     const ahead = (active ? 1 : 0) + queue.length; // jobs that must finish before this one
+    trace.queued(ahead);
     if (ahead > 0) { try { onState?.({ phase: 'queued', ahead }); } catch { /* ignore */ } }
     const job: Job = {
-      id: `${nextId++}`,
+      id,
+      trace,
       scramble,
-      resolve: resolveSolve,
-      reject: rejectSolve,
+      resolve: (result) => { trace.finish('success', result.htm); resolveSolve(result); },
+      reject: (error) => { trace.finish('failed'); rejectSolve(error); },
       onState,
       queueTimer: null,
       solveTimer: null,
@@ -400,6 +428,7 @@ export async function solveOptimal(scramble: string, onState?: (s: SolveState) =
       const idx = queue.indexOf(job);
       if (idx >= 0) {
         queue.splice(idx, 1);
+        trace.finish('queue_timeout');
         rejectSolve(new Error('Rate limit: solver busy (queue wait exceeded), try again shortly'));
       }
     }, QUEUE_WAIT_MS);

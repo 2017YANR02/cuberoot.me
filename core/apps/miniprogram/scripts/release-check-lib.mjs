@@ -67,7 +67,7 @@ const sensitiveCapabilities = [
     '文件、图片或媒体',
     'chooseImage|chooseMedia|chooseVideo|chooseMessageFile|saveImageToPhotosAlbum|saveVideoToPhotosAlbum',
   ),
-  sensitiveWxCapability('录音', 'startRecord|getRecorderManager'),
+  sensitiveWxCapability('录音', 'startRecord|getRecorderManager', null, { sourcePaths: ['src/lib/external-timer/stackmat.ts'], uploadPaths: ['pages/external-timer/index.js'] }),
   sensitiveWxCapability(
     '通讯录、地址或发票',
     'addPhoneContact|chooseAddress|chooseInvoice|chooseInvoiceTitle',
@@ -90,8 +90,11 @@ const sensitiveCapabilities = [
         'src/lib/smart-cube/giiker-ble.ts',
         'src/lib/smart-cube/gocube-ble.ts',
         'src/lib/smart-cube/moyu-ble.ts',
+        'src/lib/smart-cube/encrypted-ble.ts',
+        'src/lib/smart-cube/moyu32-ble.ts',
+        'src/lib/smart-cube/qiyi-ble.ts',
       ],
-      uploadPaths: ['pages/smart-cube/index.js'],
+      uploadPaths: ['pages/smart-cube/index.js', 'pages/external-timer/index.js'],
     },
   ),
   {
@@ -155,10 +158,12 @@ export const PUBLIC_INDEXED_PAGES = [
 export const EXPECTED_APP_PAGES = [
   'pages/timer/index',
   'pages/smart-cube/index',
+  'pages/external-timer/index',
   'pages/tools/index',
   'pages/account/index',
   'pages/web/index',
   'pages/payment/index',
+  'pages/preferences/index',
 ];
 
 export const EXPECTED_TAB_BAR = [
@@ -173,6 +178,7 @@ export const MAX_UPLOAD_FILE_BYTES = 128 * 1024;
 export const MIN_TEXT_CONTRAST_RATIO = 4.5;
 
 export const REQUIRED_RELEASE_CONFIRMATIONS = [
+  { key: 'externalTimerReviewed', env: 'WECHAT_MINI_EXTERNAL_TIMER_REVIEWED', failure: '外接计时器尚未完成 GAN/奇艺与 Stackmat 的 iOS、Android 真机验收及后台麦克风隐私声明；完成后才能设置 WECHAT_MINI_EXTERNAL_TIMER_REVIEWED=1。' },
   {
     key: 'socketDomainConfigured',
     env: 'WECHAT_MINI_SOCKET_DOMAIN_CONFIGURED',

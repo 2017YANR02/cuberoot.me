@@ -1,11 +1,11 @@
 # Scramble samples — std / cross / R / bin 8
-# Population in this bin: 698
+# Population in this bin: 709
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
-2275001,F2 U2 L B2 L2 F2 U2 F2 L F2 R' D B F R' D F2 U L B',R,IIT Roorkee Open 2014 (2014-03-21),333 Final C #5
+5852583053,R2 U2 B2 R L' D' F' D2 R B2 U' B U2 L2 F D2 F2 U2 L2 B' L2 U,R,Multimatum: New York Multimate PBQ VI 2026 (2026-09-25~27),333mbf R1 A #2
 2535001,B2 U R U' L' F U2 B2 R2 D' R2 D2 B R2 F R2 B R2 B L2,R,CMI Fiesta Open 2014 (2014-03-21~23),333 R1 H #1
 4441986001,D' F' B L' U' R U2 F D' L2 B' D2 F D2 L2 U2 R2 F D2 F,R,Franconia Winter 2025 (2025-01-24~25),333 Final B #5
 12322001,R2 D2 F2 U' R2 B2 F2 U L2 U F' R' F U' B' D' F2 L B D F L2 U,R,Pantheon Cube Open 2014 (2014-04-12),333bf Final B E1
@@ -58,7 +58,7 @@
 321100001,L2 B2 D R2 F2 L2 R2 D2 R2 D B' R2 U2 R2 D F' D2 R D F2,R,SESC Gravataí 2016 (2016-06-25~26),333 R2 A #2
 5660426001,B U2 B' U2 L2 D2 R2 B L2 U2 R F' D2 U' F U' L D' R U,R,UPV Open 2026 (2026-05-23~24),333 R2 B #4
 4545568001,B2 U L' F2 U2 B2 F2 D R2 U' F2 U' B' L' U2 B2 U' F' R,R,Korea Newcomers PM 2025 (2025-03-08),333 R1 D #2
-334032001,R' D2 L' U D' R' B D2 F L U' F2 U2 B' L2 F' D2 L2 D2 L2,R,Westlake Open 2016 (2016-07-23),333 R2 B #4
+5831413001,R2 L D' F' L2 U R' B' R' L2 D2 B' D2 R2 F' L2 F2 L' B2,R,Shin Kong Cube Open - Kaohsiung 2026 (2026-09-13),333 R1 G #3
 1443289001,R U' D F L B' D' F2 U' F' L D2 F2 U2 L U2 B2 L2 B2 U2,R,SSL Final Stockholm 2019 (2019-12-07~08),333 R2 A E2
 4025788024,L U' R2 B' L' F U F R D2 B2 R D2 R' B2 L F2 U2 D F' L2 U2,R,Big n' Blind Caloocan 2024 (2024-08-18),333mbf Final A #1
 1457723001,L2 U2 B2 D R2 U2 L2 D' B2 L D U R B' F' U' L B2 F2 R2,R,Bolivia Nationals 2019 (2019-12-06~08),333 R2 A #4
@@ -111,7 +111,7 @@
 1673002001,R2 U' L B L2 B2 L2 U2 B D2 F2 R' U' L2 U B D U F',R,WA State Championship 2021 (2021-07-17~18),333oh R1 C #4
 2270386001,U' L2 U2 L2 B' L2 B' D2 F' L R' D' R B2 U L B' D B2,R,Swedish Championship 2022 (2022-10-28~30),333 R3 B #4
 2818759063,D' F2 L2 R2 U B2 L2 F2 R2 F2 U' L' U' L' F' U R D' B R' D,R,Side Events Bangalore 2023 (2023-06-24~25),333mbf Final B #3
-4885180001,F2 L2 F2 L2 U' R2 D L2 R2 D B L D R B D2 R' F' R2 F2,R,PUCP Cubing Festival V 2025 (2025-07-19~20),333oh R1 B #4
+5853092001,B2 R2 F2 D2 B L2 R2 B2 L2 D B R2 U' F L' R' D' B' L2,R,Cubing for Yuval Israel 2026 (2026-09-28~29),333 R1 B #5
 1578523017,R2 U2 F R2 B R2 F L2 D2 F2 R2 D' R' D' L' R' F2 R2 D' F' U L' F',R,PBQtah Sandy Winter 2020 (2020-02-29),333mbf Final A #1
 1255360002,F2 D' L2 D' U' F2 D' F2 R2 B2 L B2 F' U B D2 L' U2 R2 F2 U B R',R,Jönköping Side Events 2019 (2019-08-10~11),333mbf Final A #2
 2055835001,U' F' U2 L2 B2 D2 F' U2 R2 B' L2 D2 L B' R B D' F' D' B',R,Bangkok Cube Day Rainy 2022 (2022-07-30~31),333 R1 D #1
@@ -137,7 +137,7 @@
 5741852001,R B' D F' B' R2 D' F U' R' D L2 D2 R' L F2 D2 R' U2,R,Wiltshire Summer 2026 (2026-07-04~05),333 R2 A E1
 1605604001,L' B2 R2 U2 F2 D2 R U2 L' B' U' L R D L' B F D' L2,R,Iceland Open 2020 (2020-03-07),333 R1 A #5
 1368395001,D R2 F2 D' U2 F2 D R2 U' B2 R' F D' B F2 R' F' L2 R2 D,R,Santa Marta Open 2019 (2019-10-19),333 R1 D E2
-5162126001,R D' R2 U' L B' D' F U' R D R2 U2 L2 F2 L' B2 U2,R,Penn Cube Day Fall 2025 (2025-11-02),333 R2 B #1
+5852574018,L' U2 B' U2 L2 B2 D2 B' R2 B' L' R' F L' D L' B L2 U L2 U2,R,Multimatum: New York Multimate PBQ VI 2026 (2026-09-25~27),333mbf Final A #1
 5064350001,B2 L D2 U2 B2 D2 U2 F2 L B R' B2 F' D' B' U' R' F2 R',R,Himalaya School Fusagasugá II 2025 (2025-10-04),333 R1 C #3
 5780822001,F U2 L B' L' F' D' L F R2 F2 D' F2 U' R2 U' L2 F2 L' U,R,Shin Kong Cube Open - New Taipei 2026 (2026-08-09),333 R1 C E1
 5172120001,L2 F' U' F2 U2 L' R2 B2 U2 L R2 D L2 D2 L' B' D' R B,R,Calvià Open 2025 (2025-11-08~09),333oh Final B #5
@@ -151,7 +151,7 @@
 746579001,L2 R2 U2 R2 F R2 B' L2 B' F' L R U F2 L' U' F L2 R' D2,R,Faria Brito Open 2018 (2018-04-07~08),333 R2 A #5
 4805785001,F D' L R2 U2 R2 F2 U2 F' L2 R2 F2 D F L' F R B' R B2 D2,R,New York Multimate PBQ II 2025 (2025-06-13~15),333mbf Final B #1
 755289001,L U2 F2 U2 L2 R' D2 R2 D B F2 U2 F U' F2 L D' L F,R,Cerritos Open 2018 (2018-04-14),333 R1 G E2
-1141904001,D L B R U2 D' F' U' F' B L' D' R2 U L2 B2 L2 U2 B2,R,IT Puebla 2019 (2019-05-11~12),333 R2 B E1
+5845562001,D' L2 R2 U R2 B2 U' F2 B R' B R' U B D F R2 U' R',R,Cube Girardeau 2026 (2026-09-26),333 R2 A #2
 4949371001,R' L D2 R2 F L2 F' D F L B U' D2 B2 L2 U',R,Korea Open 2025 (2025-08-15~17),333 R3 C #4
 3141073001,U' R' F' L2 D2 R2 D2 F L2 F D B U' F' L2 D R D2 R2,R,Pavlodar Open 2023 (2023-10-07),333oh Final B #1
 5654436001,F D2 R' B2 R' D2 L D2 U2 F' R U L' U2 F2 U F' U' R2,R,Spark Melbourne Autumn Sunday 2026 (2026-05-24),333 R1 A E1

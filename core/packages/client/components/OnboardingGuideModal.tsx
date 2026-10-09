@@ -17,6 +17,8 @@
 // `--muted-foreground` / `--card` / `--accent` / `--accent-foreground` /
 // `--accent-soft` / `--border-strong`），不引入自定义色值。
 
+import { useModalBackdrop } from '@/hooks/useModalDismiss';
+import { useT } from '@/hooks/useT';
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import {
   Blocks,
@@ -194,7 +196,6 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
 
 interface Props {
   open: boolean;
-  lang: 'zh' | 'en';
   onClose: () => void;
 }
 
@@ -209,7 +210,9 @@ const HIGHLIGHT_PAD = 6;
 const TOOLTIP_GAP = 12;
 const TOOLTIP_WIDTH = 360;
 
-export default function OnboardingGuideModal({ open, lang, onClose }: Props) {
+export default function OnboardingGuideModal({ open, onClose }: Props) {
+  const t = useT();
+  const backdropProps = useModalBackdrop(onClose);
   const total = ONBOARDING_STEPS.length;
   const [step, setStep] = useState(0);
   const [rect, setRect] = useState<TargetRect | null>(null);
@@ -417,7 +420,6 @@ export default function OnboardingGuideModal({ open, lang, onClose }: Props) {
 
   if (!open) return null;
 
-  const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
 
   // —— 第 0 步：独立纯净雪山背景 + 中央大气玻璃卡片（独立前置状态，不占用 step 索引）——
   // 对标设计稿：宽大通透毛玻璃卡 + 顶部悬挂图标 + 宽松呼吸感排版；背后功能网格完全不可见。
@@ -429,7 +431,7 @@ export default function OnboardingGuideModal({ open, lang, onClose }: Props) {
         className={`fixed inset-0 z-50 flex items-center justify-center overflow-y-auto px-4 py-6 text-center transition-opacity duration-300 sm:px-6 sm:py-10 ${
           welcomeLeaving ? 'opacity-0' : 'opacity-100'
         }`}
-        role="presentation"
+        role="presentation" {...backdropProps}
       >
         {/* 独立背景层：跟随用户的换背景选择（无背景时回落为浅色兜底），与正文完全隔离 */}
         <span aria-hidden="true" className="pointer-events-none fixed inset-0 bg-slate-200">
@@ -454,7 +456,7 @@ export default function OnboardingGuideModal({ open, lang, onClose }: Props) {
           className="relative my-auto flex w-full max-w-5xl flex-col items-center justify-center outline-none"
         >
           {/* 顶部悬挂图标：文档流负 margin 压住卡片上沿，无 absolute、不参与裁剪 */}
-          <div className="relative z-10 -mb-12 rounded-3xl border border-white/60 bg-white/30 p-2.5 shadow-xl backdrop-blur-md sm:-mb-14 lg:-mb-16">
+          <div onPointerDown={(event) => event.stopPropagation()} className="relative z-10 -mb-12 rounded-3xl border border-white/60 bg-white/30 p-2.5 shadow-xl backdrop-blur-md sm:-mb-14 lg:-mb-16">
             <div className="flex items-center justify-center overflow-hidden rounded-2xl bg-white shadow-md">
               {/* eslint-disable-next-line @next/next/no-img-element -- One local precompressed brand image. */}
               <img
@@ -467,7 +469,7 @@ export default function OnboardingGuideModal({ open, lang, onClose }: Props) {
           </div>
 
           {/* 中央大气玻璃卡片：上内边距预留图标重叠位 */}
-          <div className="w-full rounded-3xl border border-white/60 bg-white/30 px-6 pb-12 pt-24 shadow-2xl backdrop-blur-xl sm:px-14 sm:pb-16 sm:pt-28 lg:px-20 lg:pb-20 lg:pt-32">
+          <div onPointerDown={(event) => event.stopPropagation()} className="w-full rounded-3xl border border-white/60 bg-white/30 px-6 pb-12 pt-24 shadow-2xl backdrop-blur-xl sm:px-14 sm:pb-16 sm:pt-28 lg:px-20 lg:pb-20 lg:pt-32">
             {/* 标题：响应式阶梯，实色高对比，无渐变；字距行距放宽 */}
             <h1 className="mb-6 text-4xl font-bold leading-snug tracking-wide text-slate-800 sm:mb-8 sm:text-5xl sm:leading-tight lg:text-7xl lg:leading-tight">
               {t('欢迎来到 CubeRoot', 'Welcome to CubeRoot')}
@@ -642,7 +644,7 @@ export default function OnboardingGuideModal({ open, lang, onClose }: Props) {
   // 不拼四块缺口遮罩，避免负 height/width 闪出横贯细线。
   if (!hasTarget || !rect || !tooltipLayout || !clampedRect) {
     return (
-      <div className="fixed inset-0 z-[1000] bg-black/55 backdrop-blur-[2px]" role="presentation">
+      <div className="fixed inset-0 z-[1000] bg-black/55 backdrop-blur-[2px]" role="presentation" {...backdropProps}>
         <div
           ref={dialogRef}
           tabIndex={-1}
@@ -678,29 +680,29 @@ export default function OnboardingGuideModal({ open, lang, onClose }: Props) {
         };
 
   return (
-    <div className="fixed inset-0 z-[1000]" role="presentation">
+    <div className="fixed inset-0 z-[1000]" role="presentation" {...backdropProps}>
       {/* 上 / 下 / 左 / 右四块半透明遮罩 */}
-      <div className={mask} style={{ left: 0, right: 0, top: 0, height: Math.max(0, hy) }} onClick={(e) => e.stopPropagation()} />
+      <div className={mask} {...backdropProps} style={{ left: 0, right: 0, top: 0, height: Math.max(0, hy) }}  />
       <div
-        className={mask}
+        className={mask} {...backdropProps}
         style={{ left: 0, right: 0, top: hy + hh, bottom: 0 }}
-        onClick={(e) => e.stopPropagation()}
+
       />
       <div
-        className={mask}
+        className={mask} {...backdropProps}
         style={{ left: 0, width: Math.max(0, hx), top: hy, height: hh }}
-        onClick={(e) => e.stopPropagation()}
+
       />
       <div
-        className={mask}
+        className={mask} {...backdropProps}
         style={{ left: hx + hw, right: 0, top: hy, height: hh }}
-        onClick={(e) => e.stopPropagation()}
+
       />
       {/* 高亮缺口上的透明点击拦截层：展示目标但阻止巡游中误触跳转 */}
       <div
         className="fixed bg-transparent"
         style={{ left: hx, top: hy, width: hw, height: hh }}
-        onClick={(e) => e.stopPropagation()}
+
         aria-hidden="true"
       />
       {/* 高亮描边框 */}
@@ -719,7 +721,7 @@ export default function OnboardingGuideModal({ open, lang, onClose }: Props) {
         aria-label={t(current.title.zh, current.title.en)}
         className={`${cardShell} fixed`}
         style={tooltipStyle}
-        onClick={(e) => e.stopPropagation()}
+
       >
         <span
           aria-hidden="true"

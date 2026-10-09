@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 // 2×2×2 全空间精确枚举视图(与 WCA 真题采样相对)。数据来自 scripts/build_2x2_essential.mjs
 // 生成的静态 JSON。视图由顶部**唯一**的数据源下拉(page.tsx 的 essSrc)选,本组件按 view 只渲染
@@ -11,7 +12,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import DiscreteHistogram, { type HistSeries } from './DiscreteHistogram';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import BoolToggle from '@/components/BoolToggle';
 import {
   fetchEssential2x2, fetchEssential2x2Cases, ESS_STAT_BY_SLUG,
@@ -389,13 +389,15 @@ export default function Essential2x2View({ isZh, view }: { isZh: boolean; view: 
       <div className="scramble-stats-controls">
         <div className="scramble-stats-puzzle-toggle">
           <span className="scramble-stats-puzzle-toggle-label">{tr({ zh: '度量', en: 'Metric' })}</span>
-          <PillToggle
-            value={metric === 'htm'}
-            onChange={(v) => setMetric(v ? 'htm' : 'qtm')}
-            onLabel="HTM"
-            offLabel="QTM"
-            ariaLabel={tr({ zh: '度量:HTM 或 QTM', en: 'Metric: HTM or QTM' })}
-          />
+          <select
+            value={String(metric === 'htm')}
+            onChange={event => { const v = event.currentTarget.value === 'true'; setMetric(v ? 'htm' : 'qtm'); }}
+            aria-label={tr({ zh: '度量:HTM 或 QTM', en: 'Metric: HTM or QTM' })}
+            className="native-select"
+          >
+            <option value="true">{"HTM"}</option>
+            <option value="false">{"QTM"}</option>
+          </select>
         </div>
       </div>
       <div className="scramble-stats-chart-wrapper">

@@ -542,8 +542,8 @@ export default function ChainExplorer({ scramble, lang }: Props) {
       <div className={`chx-panel${disabled ? ' is-off' : ''}`}>
         {key === 'fr' && (
           <label className="chx-fr-enable">
-            <PillToggle value={frEnabled} onChange={setFrEnabled} ariaLabel="enable FR" />
             <span>{t('启用 FR', 'Enable FR')}</span>
+            <PillToggle value={frEnabled} onChange={setFrEnabled} ariaLabel="enable FR" />
           </label>
         )}
         {key === 'rzp' && !useTriggers && (

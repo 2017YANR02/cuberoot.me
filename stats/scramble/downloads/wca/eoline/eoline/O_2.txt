@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / O / bin 2
-# Population in this bin: 849
+# Population in this bin: 857
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 5460689001,B2 L2 F' R B2 F2 R B2 L2 R D2 U' L U F2 D2 R B' U',O,URJC Open 2026 (2026-03-21~22),333oh Final C #5
@@ -27,7 +27,7 @@
 2129102001,F2 U' B2 L' F' B2 R F' R' L2 F2 U2 L' B2 F L,O,French Championship 2022 (2022-08-26~28),333oh R1 A E1
 1135019001,F' U2 L2 R2 B2 F' U2 L R' F L B2 L R B' L2 B' L,O,Valborg Cubing 2019 (2019-05-03~05),333bf R2 B #3
 2073451001,R2 F2 D2 R U2 R2 D2 B2 L F2 R' D L U' B2 L2 R' D,O,Turning in Townsville 2022 (2022-08-06~07),333 R1 C #3
-133464001,B2 R' U2 L2 U2 R B2 R2 U2 R' B2 F D2 R2 B R' D2 U' F2,O,Wenzhou Open 2015 (2015-04-26),333 R2 A #3
+5855153001,D2 B D' B2 R' D2 L F2 L' D2 L2 F2 D U2 B2 F' L2 F U,O,Desafio Hungria em SP 2026 (2026-09-26),333 R1 B E2
 3256048023,D F L2 B' R' D2 F R2 F2 R' F2 D2 B2 R2 B' U2 B D2 B' L',O,Falukorv Open 2023 (2023-11-11~12),333mbf Final B #1
 3734883001,R' F' R' F' U' R2 U' F2 D' R2 U' L D2 B2 R2 B2 L' B',O,Cubing Mada 2024 (2024-05-04~05),333 R1 B #1
 5753871001,D' F2 U' D2 F' D2 R2 B R2 D2 L2 B D B' F R F R' B2,O,South Omaha Scramble 2026 (2026-07-18),333oh Final A #4
@@ -89,7 +89,7 @@
 452755001,U' B2 L2 U2 L2 U' B2 D2 R' B2 R B2 U2 F R' B2 R D2,O,Belgian Winter 2017 (2017-02-25~26),333 R2 A #2
 1340009001,B2 F2 U2 L' F2 D2 L' D2 U2 F' R' B2 L' B L2 B' R2,O,Otago October 2019 (2019-10-05~06),333 R2 C E1
 458041001,D2 R' D2 B2 F2 U2 F' L' R' B2 F2 D2 B L2 R F R',O,Bluegrass Spring 2017 (2017-03-04),333 R1 D #2
-464915001,U L2 D' F2 U2 B2 R2 B2 U2 L' F' R U2 R' F U2 F2 U F2,O,Les Franqueses Open 2017 (2017-03-11~12),333 R2 C E1
+5842758001,B2 R' U2 R' B' R L2 B' R F' U2 D2 F2 R2 U2 F2 B,O,New Cubing Season Athens B 2026 (2026-09-20),333oh Final A #3
 2722408013,U2 L' U2 F2 L' B2 R' D2 B2 L D F2 D2 L D R F2 L' D',O,Let's Qualify Kuwait 2023 (2023-05-19),333mbf Final D #1
 3588706026,B L2 B2 U B U R D R' F R' U2 R F2 L2 B2 U2 B2 D2,O,Manchester MBLD Day 2024 (2024-03-16),333mbf Final A #2
 3303271001,R2 F R' B2 R2 U B2 U L2 F2 R2 B2 F' U' L D2 U L' U',O,UBC Big & Blind 2023 (2023-12-02),333oh R1 B E1

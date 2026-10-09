@@ -4,7 +4,7 @@ import AppLink from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
 import PersonLink from '@/components/PersonLink';
 import { tr } from '@/i18n/tr';
-import { CREATOR_PROFILE } from '@/lib/creator-profile';
+import { CREATOR_PROFILE, CREATOR_AUDIENCE } from '@/lib/creator-profile';
 import { AWARD_GROUPS, EDUCATION, type AwardEntry } from './profile-data';
 import CreatorGallery from './CreatorGallery';
 import './ruimin.css';
@@ -98,8 +98,8 @@ export default function RuiminProfilePage() {
               </p>
               <p>
                 {tr({
-                  zh: '他曾两次获全国高中数学联赛一等奖，并获中国数学奥林匹克三等奖（铜牌）。自 2017 年起参加 WCA 比赛，曾在斜转、脚拧和最少步项目综合排名中位列中国第一。公众号、B 站和抖音合计约 30 万关注者，著有《超脑思维：魔方游戏技巧从入门到精通》。',
-                  en: 'He won first prize twice in the National High School Mathematics League and a third prize bronze medal at the Chinese Mathematical Olympiad. He has competed in WCA events since 2017 and formerly ranked first in China in a combined ranking across Skewb, 3×3 With Feet, and Fewest Moves. His WeChat Official Account, Bilibili, and Douyin channels have about 300,000 followers, and he wrote Superbrain Thinking: Rubik’s Cube Skills from Beginner to Mastery.',
+                  zh: `他曾两次获全国高中数学联赛一等奖，并获中国数学奥林匹克三等奖（铜牌）。自 2017 年起参加 WCA 比赛，曾在斜转、脚拧和最少步项目综合排名中位列中国第一。${CREATOR_AUDIENCE.summary.zh}，著有《超脑思维：魔方游戏技巧从入门到精通》。关注数为平台合计、未去重，按本人 2026 年 10 月确认口径。`,
+                  en: `He won first prize twice in the National High School Mathematics League and a third prize bronze medal at the Chinese Mathematical Olympiad. He has competed in WCA events since 2017 and formerly ranked first in China in a combined ranking across Skewb, 3×3 With Feet, and Fewest Moves. ${CREATOR_AUDIENCE.summary.en}, and author of Superbrain Thinking: Rubik’s Cube Skills from Beginner to Mastery. Follows are not deduplicated across platforms; the figure was confirmed by him in October 2026.`,
                 })}
               </p>
               <ul className="ruimin-specialties" aria-label={tr({ zh: '关注方向', en: 'Focus areas' })}>

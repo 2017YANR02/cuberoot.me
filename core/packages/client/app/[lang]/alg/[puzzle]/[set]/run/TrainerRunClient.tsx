@@ -1,4 +1,6 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
+
 import { useModalBackdrop } from '@/hooks/useModalDismiss';
 
 // Ported from packages/client-vite/src/pages/trainer/TrainerRunPage.tsx
@@ -7,7 +9,7 @@ import Link from '@/components/AppLink';
 import { useParams, useRouter } from 'next/navigation';
 import { parseAsString, useQueryState } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Settings, Copy, Check, QrCode, RotateCcw, X } from 'lucide-react';
+import { ArrowLeft, Copy, Check, QrCode, RotateCcw, X } from 'lucide-react';
 import { ALG_CATALOG, getAlgSetMeta, type AlgCase } from '@cuberoot/shared/alg';
 import { loadTrainingAlg as loadAlg } from '@/lib/alg_case_alignment';
 import {
@@ -16,12 +18,10 @@ import {
 } from '@/lib/trainer-store';
 import TimerFontPicker from '@/components/TimerFontPicker';
 import { useSpaceHoldTimer } from '@/hooks/useSpaceHoldTimer';
-import { usePanelClamp } from '@/hooks/usePanelClamp';
 import { GestureWheel, useGestureWheel } from '@cuberoot/timer-ui';
 import { useCopy } from '@/hooks/useCopy';
 import { shouldIgnoreTimerTarget } from '@/lib/timer-ignore-target';
 import BoolToggle from '@/components/BoolToggle';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import AlgCaseMetaModal from '@/components/AlgCaseMetaModal';
 import AlgPdfButton from '@/components/AlgPdfButton';
 import { CaseThumb } from '@/components/CaseThumb';
@@ -70,6 +70,7 @@ import '@/app/[lang]/alg/_trainer/memory.css';
 import '@/app/[lang]/alg/alg.css';
 import { tr } from '@/i18n/tr';
 import { Spinner } from '@/components/Spinner/Spinner';
+import { SettingsPopover } from '@/components/TrainingSettings';
 
 /** 顶层只区分动作训练与间隔记忆;训练内部再选覆盖或随机抽题。 */
 const PRIMARY_MODES: Array<{ id: 'train' | 'memo'; zh: string; en: string }> = [
@@ -790,24 +791,12 @@ export default function TrainerRunClient() {
     void joinRoom(code).then(r => { if (r.ok) { setJoinCode(''); void setRoomParam(code.toUpperCase()); } });
   }, [joinRoom, roomBusy, setRoomParam]);
 
-  // 齿轮设置弹出面板(训练选项全收在里面),点外部关闭。
-  // 监听 pointerdown 而非 mousedown:stage 手势层在 pointerdown 里 preventDefault,
-  // 会抑制后续的兼容性 mousedown —— 挂 mousedown 的话点 stage 空白永远关不上。
-  const optsRef = useRef<HTMLDivElement | null>(null);
-  const optsPanelRef = useRef<HTMLDivElement | null>(null);
+  // 齿轮设置弹出面板(训练选项全收在里面)，打开状态仍供常驻计时监听读取；
+  // 外部点击、Escape 和视口钳制统一由 SettingsPopover 处理。
   const [optsOpen, setOptsOpen] = useState(false);
   // 空白按压处理器(下方)是常驻监听、不随 optsOpen 重订阅 —— 用 ref 让它读到当次最新值。
   const optsOpenRef = useRef(false);
   optsOpenRef.current = optsOpen;
-  usePanelClamp(optsOpen, optsPanelRef);
-  useEffect(() => {
-    if (!optsOpen) return;
-    const handler = (e: PointerEvent) => {
-      if (optsRef.current && !optsRef.current.contains(e.target as Node)) setOptsOpen(false);
-    };
-    document.addEventListener('pointerdown', handler);
-    return () => document.removeEventListener('pointerdown', handler);
-  }, [optsOpen]);
   // 房间模式题面由服务端队列领取,本机 selected 可空(经邀请链接进来的新设备)—— 不算「未选」。
   const stageMounted = !!(puzzle && meta) && !isMemo && !splitActive
     && !(pool.length === 0 && cases.length > 0 && !room);
@@ -1339,31 +1328,31 @@ export default function TrainerRunClient() {
         </span>
         {/* 训练选项全收进齿轮弹出面板,齿轮居中吸在页面正上方
             (data-no-timer:面板空白不触发按压计时) */}
-        <div className="trainer-opts trainer-opts--top" data-no-timer ref={optsRef}>
-          {/* 打印和进度紧凑贴在齿轮左侧:absolute 脱流,齿轮仍精确居中。
-              合练的 case 来自不同 set,不能拿一个 set 契约渲染整份 PDF,先不露错误入口。 */}
-          <div className="trainer-top-actions">
-            {!isMix && printableCases.length > 0 && (
-              <AlgPdfButton
-                build={buildPdfSheet}
-                title={tr({ zh: '下载可打印的训练打乱', en: 'Download printable training scrambles' })}
-              />
-            )}
-            <Link href="/alg/progress" className="trainer-progress-link" prefetch={false}>
-              {tr({ zh: '进度', en: 'Progress' })}
-            </Link>
-          </div>
-          <button
-            type="button"
-            className="trainer-opts-gear"
-            onClick={() => setOptsOpen(o => !o)}
-            aria-expanded={optsOpen}
-            aria-label={tr({ zh: '训练设置', en: 'Trainer settings' })}
-          >
-            <Settings size={22} />
-          </button>
-          {/* 复习进度贴在齿轮右侧(absolute 脱流:齿轮仍精确居中,面板锚点不受影响) */}
-          {recapShown && recapCur && !splitActive && (
+        <SettingsPopover
+          label={tr({ zh: '训练设置', en: 'Trainer settings' })}
+          className="trainer-opts trainer-opts--top"
+          triggerClassName="trainer-opts-gear"
+          panelClassName="trainer-opts-panel"
+          iconSize={22}
+          open={optsOpen}
+          onOpenChange={setOptsOpen}
+          ignoreTimer
+          triggerPrefix={(
+            /* 打印和进度紧凑贴在齿轮左侧:absolute 脱流,齿轮仍精确居中。
+               合练的 case 来自不同 set,不能拿一个 set 契约渲染整份 PDF,先不露错误入口。 */
+            <div className="trainer-top-actions">
+              {!isMix && printableCases.length > 0 && (
+                <AlgPdfButton
+                  build={buildPdfSheet}
+                  title={tr({ zh: '下载可打印的训练打乱', en: 'Download printable training scrambles' })}
+                />
+              )}
+              <Link href="/alg/progress" className="trainer-progress-link" prefetch={false}>
+                {tr({ zh: '进度', en: 'Progress' })}
+              </Link>
+            </div>
+          )}
+          triggerSuffix={recapShown && recapCur && !splitActive ? (
             <span className="trainer-recap-progress">
               {/* 分轮次的范围(LSLL 已收录:302 条一轮、494 轮)把「第几轮」摆在进度前面 */}
               {roundLabel && roundNumber && totalRounds && virtual?.scopeForRound ? (
@@ -1397,9 +1386,8 @@ export default function TrainerRunClient() {
               ) : null}
               {recapCompleted}/{recapCur.total}
             </span>
-          )}
-          {optsOpen && (
-            <div className="trainer-opts-panel" ref={optsPanelRef}>
+          ) : undefined}
+        >
               {/* 虚拟集的打乱 / 公式是现算的 —— 这话得摆在设置面板最上面,别让人以为是收录的公式 */}
               {virtual && <div className="trainer-opts-hint">{tr(virtual.note)}</div>}
               {/* 公式集与打乱类型共用一行,空间不足时由 trainer-opts-row 自然换行。一起练的成员
@@ -1480,18 +1468,18 @@ export default function TrainerRunClient() {
                 {!isMemo && (
                   <>
                     <span className="trainer-opts-label">{tr({ zh: '出题', en: 'Draw' })}</span>
-                    <PillToggle
-                      value={mode === 'recap'}
-                      onChange={covered => {
-                        const next = covered ? 'recap' : 'train';
-                        lastTrainingMode.current = next;
-                        setMode(next);
-                      }}
-                      onLabel={tr({ zh: '覆盖', en: 'Coverage' })}
-                      offLabel={tr({ zh: '随机', en: 'Random' })}
-                      ariaLabel={tr({ zh: '出题方式', en: 'Draw mode' })}
+                    <select
                       disabled={splitActive}
-                    />
+                      value={String(mode === 'recap')}
+                      onChange={event => { const covered = event.currentTarget.value === 'true'; const next = covered ? 'recap' : 'train';
+                        lastTrainingMode.current = next;
+                        setMode(next); }}
+                      aria-label={tr({ zh: '出题方式', en: 'Draw mode' })}
+                      className="native-select"
+                    >
+                      <option value="true">{tr({ zh: '覆盖', en: 'Coverage' })}</option>
+                      <option value="false">{tr({ zh: '随机', en: 'Random' })}</option>
+                    </select>
                     <BoolToggle
                       value={timing}
                       onChange={setTiming}
@@ -1500,14 +1488,16 @@ export default function TrainerRunClient() {
                     />
                     {mode === 'recap' && (
                       <>
-                        <PillToggle
-                          value={recapOrder === 'shuffle'}
-                          onChange={v => setRecapOrder(v ? 'shuffle' : 'seq')}
-                          onLabel={tr({ zh: '乱序', en: 'Shuffled' })}
-                          offLabel={tr({ zh: '顺序', en: 'In order' })}
-                          ariaLabel={tr({ zh: '复习顺序', en: 'Recap order' })}
+                        <select
                           disabled={!!room}
-                        />
+                          value={String(recapOrder === 'shuffle')}
+                          onChange={event => { const v = event.currentTarget.value === 'true'; setRecapOrder(v ? 'shuffle' : 'seq'); }}
+                          aria-label={tr({ zh: '复习顺序', en: 'Recap order' })}
+                          className="native-select"
+                        >
+                          <option value="true">{tr({ zh: '乱序', en: 'Shuffled' })}</option>
+                          <option value="false">{tr({ zh: '顺序', en: 'In order' })}</option>
+                        </select>
                         {!room && !roundEndPromptRequired && (
                           <BoolToggle
                             value={showRecapRoundEnd}
@@ -1706,13 +1696,15 @@ export default function TrainerRunClient() {
                 <>
                   <div className="trainer-opts-row">
                     <span className="trainer-opts-label">{tr({ zh: '概率', en: 'Odds' })}</span>
-                    <PillToggle
-                      value={probMode === 'uniform'}
-                      onChange={v => setProbMode(v ? 'uniform' : 'real')}
-                      onLabel={tr({ zh: '均等', en: 'Uniform' })}
-                      offLabel={tr({ zh: '真实', en: 'Real' })}
-                      ariaLabel={tr({ zh: '出题概率模式', en: 'Case probability mode' })}
-                    />
+                    <select
+                      value={String(probMode === 'uniform')}
+                      onChange={event => { const v = event.currentTarget.value === 'true'; setProbMode(v ? 'uniform' : 'real'); }}
+                      aria-label={tr({ zh: '出题概率模式', en: 'Case probability mode' })}
+                      className="native-select"
+                    >
+                      <option value="true">{tr({ zh: '均等', en: 'Uniform' })}</option>
+                      <option value="false">{tr({ zh: '真实', en: 'Real' })}</option>
+                    </select>
                   </div>
                   <div className="trainer-opts-hint">
                     {probMode === 'uniform'
@@ -1741,16 +1733,6 @@ export default function TrainerRunClient() {
                   onReset={resetOriSel}
                 />
               )}
-              {aufSupported && (
-                <div className="trainer-opts-row">
-                  <BoolToggle value={preAuf} onChange={setPreAuf} label="pre-AUF" />
-                  {/* 钉了朝向就没有 post-AUF 这一说了(store 里同时关掉):留一个永远得让位的
-                      开关只会让人以为随机还在跑。pre-AUF 不受影响,它改的是收尾不是朝向。 */}
-                  {!oriPinned && (
-                    <BoolToggle value={postAuf} onChange={setPostAuf} label="post-AUF" />
-                  )}
-                </div>
-              )}
               {setAdjustSupported && (
                 <>
                   <div className="trainer-opts-row">
@@ -1768,13 +1750,15 @@ export default function TrainerRunClient() {
                         aria-label={tr({ zh: '剩余 F2L 状态', en: 'Remaining F2L state' })}
                       >
                         <span>{tr({ zh: '一角', en: 'One corner' })}</span>
-                        <PillToggle
-                          value={!psf2lExtraScramble}
-                          onChange={bothPresent => setPsf2lExtraScramble(!bothPresent)}
-                          onLabel={tr({ zh: '和', en: 'and' })}
-                          offLabel={tr({ zh: '或', en: 'or' })}
-                          ariaLabel={tr({ zh: '一角和一棱或一角或一棱', en: 'One corner and one edge or one corner or one edge' })}
-                        />
+                        <select
+                          value={String(!psf2lExtraScramble)}
+                          onChange={event => { const bothPresent = event.currentTarget.value === 'true'; setPsf2lExtraScramble(!bothPresent); }}
+                          aria-label={tr({ zh: '一角和一棱或一角或一棱', en: 'One corner and one edge or one corner or one edge' })}
+                          className="native-select"
+                        >
+                          <option value="true">{tr({ zh: '和', en: 'and' })}</option>
+                          <option value="false">{tr({ zh: '或', en: 'or' })}</option>
+                        </select>
                         <span>{tr({ zh: '一棱', en: 'one edge' })}</span>
                       </div>
                     )}
@@ -1801,7 +1785,16 @@ export default function TrainerRunClient() {
               )}
               {/* 极简:侧栏两块各自可隐藏(issue #30)。统计=成绩用时列表,不计时根本
                   没有用时可统计 —— 不计时时连开关一起隐掉,而不是留一个永远关着的死开关。 */}
-              <div className="trainer-opts-row">
+              <div className="trainer-opts-row trainer-opts-toggles">
+                {aufSupported && (
+                  <>
+                    <BoolToggle value={preAuf} onChange={setPreAuf} label="pre-AUF" />
+                    {/* 钉住朝向时隐藏 post-AUF，其余开关在同一网格自动补位。 */}
+                    {!oriPinned && (
+                      <BoolToggle value={postAuf} onChange={setPostAuf} label="post-AUF" />
+                    )}
+                  </>
+                )}
                 <BoolToggle
                   value={showStageThumb}
                   onChange={setShowStageThumb}
@@ -1828,33 +1821,29 @@ export default function TrainerRunClient() {
                     label={timing ? tr({ zh: '统计', en: 'Stats' }) : tr({ zh: '历史', en: 'History' })}
                   />
                 )}
-              </div>
-              {/* 计时练的这几把也算复习 —— 不然计时练一晚上,记忆模式明天还当你没碰过 */}
-              {timing && (
-                <>
-                  <div className="trainer-opts-row">
-                    <BoolToggle
-                      value={srsFromSolves}
-                      onChange={setSrsFromSolves}
-                      label={tr({ zh: '成绩计入记忆', en: 'Solves feed memory' })}
-                    />
-                  </div>
-                  <div className="trainer-opts-hint">
-                    {tr({
-                      zh: 'DNF 记「忘了」,明显慢于本场中位数记「犹豫」,正常记「记得」,明显快记「秒答」。同一个 case 每到期一次只计一把,连做十把不会把间隔吹上天',
-                      en: 'A DNF counts as “forgot”, clearly slower than your session median as “hard”, normal as “good”, clearly faster as “easy”. Each case counts once per time it comes due, so ten reps in a row can’t inflate the interval',
-                    })}
-                  </div>
-                </>
-              )}
-              {/* 三条一屏时「上一个」整屏回看,改叫「上三个」。 */}
-              {!splitActive && (
-                <div className="trainer-opts-row">
+                {/* 计时练的这几把也算复习。 */}
+                {timing && (
+                  <BoolToggle
+                    value={srsFromSolves}
+                    onChange={setSrsFromSolves}
+                    label={tr({ zh: '成绩计入记忆', en: 'Solves feed memory' })}
+                  />
+                )}
+                {/* 三条一屏时「上一个」整屏回看,改叫「上三个」。 */}
+                {!splitActive && (
                   <BoolToggle
                     value={showPrevCard}
                     onChange={setShowPrevCard}
                     label={multi ? tr({ zh: '上三个', en: 'Previous 3' }) : tr({ zh: '上一个', en: 'Previous' })}
                   />
+                )}
+              </div>
+              {timing && (
+                <div className="trainer-opts-hint">
+                  {tr({
+                    zh: 'DNF 记「忘了」,明显慢于本场中位数记「犹豫」,正常记「记得」,明显快记「秒答」。同一个 case 每到期一次只计一把,连做十把不会把间隔吹上天',
+                    en: 'A DNF counts as “forgot”, clearly slower than your session median as “hard”, normal as “good”, clearly faster as “easy”. Each case counts once per time it comes due, so ten reps in a row can’t inflate the interval',
+                  })}
                 </div>
               )}
               {timing && (
@@ -1891,9 +1880,7 @@ export default function TrainerRunClient() {
                       en: 'Keys 1 shaky and 2 mastered mark the “Previous” case',
                     })}
               </div>
-            </div>
-          )}
-        </div>
+        </SettingsPopover>
       </div>
 
       {isMemo ? (

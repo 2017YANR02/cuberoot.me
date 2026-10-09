@@ -43,6 +43,40 @@ function ready(role: 'sink' | 'source', lastMoveSeq = 0): string {
 }
 
 describe('SmartCubeRelay', () => {
+  it('forwards calibration capability and correlated results, strips extras and does not cache ACKs', () => {
+    const relay = new SmartCubeRelay(); const source = fakeSocket(); const sink = fakeSocket();
+    const b = hello(relay, sink, 'sink'); const a = hello(relay, source, 'source');
+    a.handleMessage(JSON.stringify({ type: 'status', phase: 'connected', canResetDevice: true }));
+    expect(sink.send).toHaveBeenLastCalledWith(JSON.stringify({ type: 'status', phase: 'connected', canResetDevice: true }));
+    b.handleMessage(JSON.stringify({ type: 'command', command: 'reset-device', requestId: TOKEN, unexpected: 'strip' }));
+    expect(source.send).toHaveBeenLastCalledWith(JSON.stringify({ type: 'command', command: 'reset-device', requestId: TOKEN }));
+    a.handleMessage(JSON.stringify({ type: 'command-result', requestId: TOKEN, ok: true, unexpected: 'strip' }));
+    expect(sink.send).toHaveBeenLastCalledWith(JSON.stringify({ type: 'command-result', requestId: TOKEN, ok: true }));
+    a.handleMessage(JSON.stringify({ type: 'state', facelets: 'U'.repeat(54), calibration: true }));
+    a.handleMessage(JSON.stringify({ type: 'status', phase: 'connected', canResetDevice: true, calibrating: false }));
+    const lateSink = fakeSocket(); const c = hello(relay, lateSink, 'sink');
+    expect(lateSink.send.mock.calls.map(([s]) => JSON.parse(s))).toContainEqual({ type: 'state', facelets: 'U'.repeat(54), calibration: true, relaySeq: 1 });
+    expect(lateSink.send.mock.calls.some(([s]) => JSON.parse(s).type === 'command-result')).toBe(false);
+    a.handleClose(); b.handleClose(); c.handleClose();
+  });
+  it('replays the calibration baseline in sequence before later turns and rejects source-assigned sequence', () => {
+    const relay = new SmartCubeRelay(); const sourceSocket = fakeSocket(); const sinkSocket = fakeSocket();
+    const sink = hello(relay, sinkSocket, 'sink'); const source = hello(relay, sourceSocket, 'source');
+    source.handleMessage(JSON.stringify({ type: 'move', move: 'R' }));
+    sink.handleClose();
+    source.handleMessage(JSON.stringify({ type: 'state', facelets: 'U'.repeat(54), calibration: true }));
+    source.handleMessage(JSON.stringify({ type: 'move', move: 'U' }));
+    const rejoinedSocket = fakeSocket(); const rejoined = hello(relay, rejoinedSocket, 'sink', TOKEN, '127.0.0.1', 1);
+    expect(rejoinedSocket.send.mock.calls.map(([s]) => JSON.parse(s))).toEqual([
+      { type: 'state', facelets: 'U'.repeat(54), calibration: true, relaySeq: 2 },
+      { type: 'move', move: 'U', relaySeq: 3 },
+      { type: 'ready', role: 'sink', lastMoveSeq: 3 },
+    ]);
+    source.handleMessage(JSON.stringify({ type: 'state', facelets: 'U'.repeat(54), calibration: true, relaySeq: 4 }));
+    expect(sourceSocket.close).toHaveBeenCalled();
+    source.handleClose(); rejoined.handleClose();
+  });
+
   it('acknowledges both peers and forwards events in the allowed direction', () => {
     const relay = new SmartCubeRelay();
     const sinkSocket = fakeSocket();
@@ -52,9 +86,11 @@ describe('SmartCubeRelay', () => {
 
     expect(sinkSocket.send).toHaveBeenCalledWith(ready('sink'));
     expect(sourceSocket.send).toHaveBeenCalledWith(ready('source'));
-    source.handleMessage(JSON.stringify({ type: 'move', move: "R'", deviceTs: 123 }));
+    source.handleMessage(JSON.stringify({
+      type: 'move', move: "R'", deviceTs: 123, futureHistory: true,
+    }));
     expect(sinkSocket.send).toHaveBeenCalledWith(JSON.stringify({
-      type: 'move', move: "R'", deviceTs: 123, relaySeq: 1,
+      type: 'move', move: "R'", deviceTs: 123, futureHistory: true, relaySeq: 1,
     }));
 
     sink.handleMessage(JSON.stringify({ type: 'command', command: 'disconnect' }));
@@ -425,4 +461,15 @@ describe('SmartCubeRelay', () => {
     expect(unpairedSinkSocket.close).toHaveBeenCalledWith(1001, 'channel expired');
     expect(relay.channelCount()).toBe(0);
   });
+});
+
+ it('replays external timer results once by the shared relay sequence and rejects forged sequences', () => {
+  const relay = new SmartCubeRelay(); const sink = fakeSocket(); const source = fakeSocket();
+  hello(relay, sink, 'sink'); const connection = hello(relay, source, 'source');
+  connection.handleMessage(JSON.stringify({ type: 'timer', event: { state: 'STOPPED', solveTime: 12345 } }));
+  expect(sink.send).toHaveBeenLastCalledWith(JSON.stringify({ type: 'timer', event: { state: 'STOPPED', solveTime: 12345 }, relaySeq: 1 }));
+  const resumed = fakeSocket(); hello(relay, resumed, 'sink', TOKEN, '127.0.0.2', 1);
+  expect(resumed.send.mock.calls.flat().filter(value => String(value).includes('STOPPED'))).toEqual([]);
+  connection.handleMessage(JSON.stringify({ type: 'timer', event: { state: 'STOPPED', solveTime: 12345 }, relaySeq: 5 }));
+  expect(source.close).toHaveBeenCalled();
 });

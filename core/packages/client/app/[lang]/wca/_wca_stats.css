@@ -44,14 +44,17 @@
 
 /* NOTE: Tab 按钮容器 — inline-flex 让多个 tab-bar 可在同一行流动 */
 .wca-stats-tab-bar {
+  align-items: center;
+  flex-wrap: wrap;
+  max-width: 100%;
   display: inline-flex;
-  gap: 0;
+  gap: 4px 8px;
   margin: 6px 12px 6px 0;
   vertical-align: middle;
 }
 
 /* ── Dedup toggle（iOS 药丸风格）───── */
-/* 日期去重布尔开关现走 components/BoolToggle(左滑钮 + 右文字);此处仅留位置 / 字号。 */
+/* 日期去重布尔开关现走 components/BoolToggle(左文字 + 右滑钮);此处仅留位置 / 字号。 */
 .wca-stats-dedup-toggle {
   margin-left: 12px;
   font-size: 13px;

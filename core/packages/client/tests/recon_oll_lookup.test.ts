@@ -6,18 +6,25 @@
  * sticker fingerprint, so the UI incorrectly reported that the formula library
  * had no match even though its OLL algorithm solved the state.
  */
-import { describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
-vi.mock('@cuberoot/shared/alg', () => ({
-  loadAlg: vi.fn(async () => ({
-    puzzle: '3x3',
-    set: 'oll',
-    cases: [{
-      name: 'OLL 8',
-      algs: [[{ alg: "R U2 R' U2 R' F R F'" }]],
-    }],
-  })),
-}));
+// Stub the HTTP boundary: shared recon may load alg through its built entry,
+// which does not share the public source module's Vitest mock identity.
+beforeAll(() => {
+  vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+    expect(new URL(url).pathname).toBe('/v1/alg/sets/3x3/oll');
+    return Response.json({
+      puzzle: '3x3',
+      set: 'oll',
+      cases: [{
+        name: 'OLL 8',
+        setup: invertAlg(OLL_8),
+        algs: [[{ alg: OLL_8 }]],
+      }],
+    });
+  }));
+});
+afterAll(() => vi.unstubAllGlobals());
 
 import { invertAlg, patternFromAlg } from '@/lib/cube3';
 import { lookupOllAlgs } from '@/lib/oll_lookup';

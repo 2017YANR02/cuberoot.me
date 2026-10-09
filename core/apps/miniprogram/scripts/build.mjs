@@ -7,6 +7,7 @@ import process from 'node:process';
 import { build } from 'esbuild';
 
 import { BUILD_ASSETS } from './build-assets.mjs';
+import { buildDouyinTabIcons } from './build-tab-icons.mjs';
 import { resolveProjectConfig } from './build-config.mjs';
 import {
   buildGraphInputFiles,
@@ -46,7 +47,6 @@ const douyinUnsupportedAppConfigKeys = [
   'themeLocation',
 ];
 const watch = process.argv.includes('--watch');
-if (watch && douyin) throw new Error('抖音构建暂不支持 watch，请运行 build:douyin。');
 
 function watchExactFiles(files, onChange) {
   const filenamesByDirectory = new Map();
@@ -127,8 +127,10 @@ async function buildProject() {
     format: 'iife',
     logLevel: 'info',
     metafile: true,
-    minifySyntax: !watch,
-    minifyWhitespace: !watch,
+    // Douyin's converter and output guard must not see dead WeChat branches
+    // or platform examples in comments, including in watch builds.
+    minifySyntax: !watch || douyin,
+    minifyWhitespace: !watch || douyin,
     // Only local identifiers: WXML handlers, data keys and native API properties stay intact.
     minifyIdentifiers: !watch,
     outbase: sourceRoot,
@@ -152,6 +154,7 @@ async function buildProject() {
     stagedPath: stagingRoot,
     targetPath: outputRoot,
     backupPath: backupRoot,
+    preserveRoot: douyin,
   });
   if (!douyin) {
     await writeBuildState(packageRoot, {
@@ -190,6 +193,10 @@ async function normalizeDouyinAppConfig() {
     if (typeof resolvedValue !== 'string') throw new Error(`抖音 app.json 无法解析主题值：${value}`);
     return resolvedValue;
   }));
+  // Douyin privacy-related capabilities (including Bluetooth) must enter the
+  // platform privacy authorization flow before the native API is invoked.
+  normalized.usePrivacyCheck = true;
+  normalized.tabBar.list = await buildDouyinTabIcons(stagingRoot, normalized.tabBar);
   await writeFile(appConfigPath, `${JSON.stringify(normalized, null, 2)}\n`, 'utf8');
   await Promise.all([
     rm(themePath, { force: true }),
@@ -207,6 +214,9 @@ async function validateDouyinOutput() {
   const appConfig = JSON.parse(await readFile(join(stagingRoot, 'app.json'), 'utf8'));
   const unsupportedKey = douyinUnsupportedAppConfigKeys.find((key) => key in appConfig);
   if (unsupportedKey) throw new Error(`抖音 app.json 残留微信配置：${unsupportedKey}`);
+  if (appConfig.usePrivacyCheck !== true) {
+    throw new Error('抖音 app.json 必须开启 usePrivacyCheck');
+  }
   if (/\"@[^\"]+\"/.test(JSON.stringify(appConfig))) {
     throw new Error('抖音 app.json 残留微信主题变量');
   }

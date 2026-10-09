@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 // Cloud library client for /paint — talks to /v1/paint/drawings (server routes/paint.ts).
 // Identity is the Bearer JWT (authHeaders); the client never sends a wca_id.
 // `doc` is JSON.stringify(PaintDoc) on the wire; parsed back to PaintDoc on read.
@@ -30,13 +31,13 @@ function normalizeDoc(raw: string): PaintDoc {
 }
 
 export async function listDrawings(): Promise<DrawingMeta[]> {
-  const r = await fetch(apiUrl(ENDPOINT), { headers: authHeaders(false) });
+  const r = await sessionFetch(apiUrl(ENDPOINT), { headers: authHeaders(false) });
   const d = await handleApi<{ drawings?: DrawingMeta[] }>(r);
   return d.drawings ?? [];
 }
 
 export async function getDrawing(id: number): Promise<DrawingFull> {
-  const r = await fetch(apiUrl(`${ENDPOINT}/${id}`), { headers: authHeaders(false) });
+  const r = await sessionFetch(apiUrl(`${ENDPOINT}/${id}`), { headers: authHeaders(false) });
   const d = await handleApi<{ drawing: DrawingMeta & { doc: string } }>(r);
   return { ...d.drawing, doc: normalizeDoc(d.drawing.doc) };
 }
@@ -46,7 +47,7 @@ export async function createDrawing(
   doc: PaintDoc,
   thumbnail: string | null,
 ): Promise<{ id: number; title: string; createdAt: number; updatedAt: number }> {
-  const r = await fetch(apiUrl(ENDPOINT), {
+  const r = await sessionFetch(apiUrl(ENDPOINT), {
     method: 'POST',
     headers: authHeaders(true),
     body: JSON.stringify({ title, doc: JSON.stringify(doc), thumbnail }),
@@ -62,7 +63,7 @@ export async function updateDrawing(
   if (patch.title !== undefined) body.title = patch.title;
   if (patch.doc !== undefined) body.doc = JSON.stringify(patch.doc);
   if (patch.thumbnail !== undefined) body.thumbnail = patch.thumbnail;
-  const r = await fetch(apiUrl(`${ENDPOINT}/${id}`), {
+  const r = await sessionFetch(apiUrl(`${ENDPOINT}/${id}`), {
     method: 'PUT',
     headers: authHeaders(true),
     body: JSON.stringify(body),
@@ -71,7 +72,7 @@ export async function updateDrawing(
 }
 
 export async function deleteDrawing(id: number): Promise<void> {
-  const r = await fetch(apiUrl(`${ENDPOINT}/${id}`), {
+  const r = await sessionFetch(apiUrl(`${ENDPOINT}/${id}`), {
     method: 'DELETE',
     headers: authHeaders(false),
   });

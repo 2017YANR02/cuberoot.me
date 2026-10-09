@@ -37,8 +37,9 @@ const REPORT = join(ROOT, '..', 'timer-ui', 'src', 'reconstruct', 'ReconstructRe
 const STEP_LIST = join(ROOT, '..', 'timer-ui', 'src', 'reconstruct', 'StepMoveList.tsx');
 const SOLVE_MODAL = join(TIMER, '_components', 'SolveModal.tsx');
 const TIMER_UI = join(ROOT, '..', 'timer-ui', 'src');
+const SHELL_CSS = join(TIMER, '_shell', 'shell.css');
 const DETAIL_MODAL = join(TIMER_UI, 'TimerSolveDetailModal.tsx');
-const RECONSTRUCT_METRICS = join(TIMER_UI, 'TimerReconstructMetrics.tsx');
+const STEP_ANALYSIS = join(TIMER_UI, 'reconstruct', 'StepAnalysis.tsx');
 
 const read = (p: string) => readFileSync(p, 'utf8');
 /** 只留代码。断言「不许再出现某个写法」时用 —— 注释里讲得清来历,那不算回归。 */
@@ -53,12 +54,11 @@ describe('报告顺序:回放和谱子在前,数据在后', () => {
     expect(src).toMatch(/const analysisBlock = \(/);
   });
 
-  it('那一块里确实是质量分 / 分步分析 / 总量,不是个空壳', () => {
+  it('那一块只保留分步分析和阶段补充信息', () => {
     const from = src.indexOf('const analysisBlock = (');
     const block = src.slice(from, src.indexOf('\n  return (', from));
-    expect(block).toMatch(/<QualityRow\b/);
     expect(block).toMatch(/<StepAnalysis\b/);
-    expect(block).toMatch(/<TimerReconstructMetrics\b/);
+    expect(block).not.toMatch(/TimerReconstructMetrics|reconstruct-waste-line/);
   });
 
   it('渲染时排在回放后面', () => {
@@ -69,9 +69,33 @@ describe('报告顺序:回放和谱子在前,数据在后', () => {
     expect(rendered).toBeGreaterThan(playback);
   });
 
-  it('回放默认展开 —— 它是主体,不是附录', () => {
-    // 排到第一位却折叠着,等于把报告的主体藏在一次点击后面。
-    expect(src).toMatch(/const \[playbackExpanded, setPlaybackExpanded\] = useState\(true\)/);
+  it('回放固定展示,不再保留展开行', () => {
+    const code = stripComments(src);
+    expect(code).toMatch(/\{playbackAvailable && \(\s*<PlaybackPanel/);
+    expect(code).not.toMatch(/playbackExpanded|reconstruct-playback-toggle|回放与分步动作/);
+  });
+
+  it('参考解法排在数据之后、动作序列之前', () => {
+    const analysis = src.indexOf('{analysisBlock}');
+    const reference = src.indexOf("title={tr({ zh: '参考解法'");
+    const moves = src.indexOf("title={tr({ zh: `动作序列");
+    expect(reference, '报告里找不到参考解法').toBeGreaterThan(analysis);
+    expect(moves, '报告里找不到动作序列').toBeGreaterThan(reference);
+  });
+
+  it('整把补充统计不再显示拿起时长', () => {
+    expect(stripComments(src)).not.toMatch(/stepMetrics\.pickupMs/);
+    expect(src).toMatch(/stepMetrics\.putDownMs/);
+  });
+});
+
+describe('CFOP 分步分析表头', () => {
+  const src = read(STEP_ANALYSIS);
+
+  it('使用 Cross 与 F1-F4 的紧凑列名', () => {
+    expect(src).toMatch(/label: 'Cross'/);
+    expect(src).toMatch(/label: `F\$\{i \+ 1\}`/);
+    expect(stripComments(src)).not.toMatch(/label: `F2L-/);
   });
 });
 
@@ -93,11 +117,10 @@ describe('同一个数不写两遍', () => {
     expect(pb).toMatch(/<SolveTimeline[\s\S]{0,240}showLabels/);
   });
 
-  it('HTM 那张卡不再和摘要里的「步数 / TPS」重复', () => {
-    const stats = read(RECONSTRUCT_METRICS);
-    expect(stats).not.toMatch(/>HTM</);
-    // QTM 留着:四分之一圈是另一个口径,摘要里没有。
-    expect(stats).toMatch(/>QTM</);
+  it('废步只在动作序列里标记,不再额外显示汇总说明', () => {
+    expect(report).toMatch(/const wasted = wastedIdx\.has\(i\)/);
+    expect(report).toMatch(/reconstruct-move-row[^\n]*wasted/);
+    expect(report).not.toMatch(/reconstruct-waste-line/);
   });
 });
 
@@ -121,6 +144,48 @@ describe('回放进度条匀速走', () => {
   it('该播到第几手是从时间反查的,不是自增', () => {
     // 自增会和墙钟脱钩:掉帧 / 后台标签页回来之后,魔方停在半路而游标已经到底。
     expect(pb).toMatch(/while \(i < total && moves\[i\]\.ts <= at\) i\+\+/);
+  });
+
+  it('虚拟魔方按相邻动作的真实间隔转动', () => {
+    // 引擎默认一手 500ms,比真实动作间隔长时会把动作排队,所以回放必须
+    // 把当前动作到下一手(或结束)的时间间隔换成 60Hz ticks,并跟随播放倍率。
+    expect(pb).toMatch(/moveDurationTicks = idx > 0/);
+    expect(pb).toMatch(/moves\[idx\]\.ts : totalMs/);
+    expect(pb).toMatch(/\* 60\) \/\s*\(1000 \* speedMult\)/);
+    expect(pb).toMatch(/moveDurationTicks=\{moveDurationTicks\}/);
+  });
+});
+
+describe('移动端自动打开的解法浮层可手动关闭', () => {
+  const panel = readFileSync(new URL(import.meta.resolve('@cuberoot/timer-ui/TimerSolverPanel')), 'utf8');
+
+  it('每个自动打开请求只消费一次,关闭后不会被同一个请求重新打开', () => {
+    expect(panel).toMatch(/openedSolveRequestRef\.current === autoOpenOnSolve/);
+    expect(panel).toMatch(/openedSolveRequestRef\.current = autoOpenOnSolve/);
+  });
+
+  it('自动打开只在桌面左栏生效,移动端保留手动入口', () => {
+    expect(panel).toMatch(/if \(isDesktopRail\) setRailOpen\(true\);/);
+    expect(panel).not.toMatch(/void setSheetOpen\(true\);\s*\n\s*\}, \[autoOpenOnSolve/);
+  });
+
+  it('ready 收起只响应 ready 状态变化,不监听浮层自身开关', () => {
+    expect(panel).toMatch(/if \(sheetOpenRef\.current\) closeSheet\(\);/);
+    expect(panel).toMatch(/\}, \[autoCollapseOnReady, closeSheet\]\);/);
+  });
+});
+
+describe('移动端复盘直接进入整屏详情', () => {
+  const shell = read(SHELL_CSS);
+  const solo = read(join(TIMER, '_shell', 'SoloView.tsx'));
+
+  it('不再挂在计时区下方或保留内联高度预算', () => {
+    expect(solo).not.toMatch(/\{!isDesktop && solveRecap\}/);
+    expect(shell).not.toMatch(/--recap-h|:has\(> \.shell-recap\)/);
+  });
+
+  it('打乱所属比赛留在正常文档流，不覆盖换行后的打乱', () => {
+    expect(shell).not.toMatch(/\.timing-surface-scramble-top \.scramble-src-row \{[^}]*position:\s*sticky;/);
   });
 });
 

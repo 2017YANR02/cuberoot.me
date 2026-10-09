@@ -1,8 +1,10 @@
+import { DEV_PREVIEW_HOSTS } from '@cuberoot/shared/dev-preview';
 import { cors } from 'hono/cors';
 
 export const apiCors = cors({
   origin: (origin) => {
     const allowed = new Set([
+      ...DEV_PREVIEW_HOSTS.map(host => `https://${host}`),
       'http://localhost:3000',              // Next dev server
       'http://127.0.0.1:3000',              // Next dev server (binds 127.0.0.1; SSE bypasses the dev proxy → direct CORS call)
       'https://www.cuberoot.me',            // 主域
@@ -21,7 +23,7 @@ export const apiCors = cors({
     return null;
   },
   credentials: true,                      // 兼容浏览器 sendBeacon / 默认 include 的请求;server 用 Bearer 鉴权,不读 cookie
-  allowHeaders: ['Content-Type', 'Authorization', 'X-Battle-Token', 'Upload-Offset', 'Upload-Checksum'],
+  allowHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key', 'X-Battle-Token', 'Upload-Offset', 'Upload-Checksum'],
   exposeHeaders: ['Upload-Offset', 'Upload-Length', 'Upload-Expires'],
   maxAge: 86400,
 });

@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxcross / BGORWY / bin 5
-# Population in this bin: 362
+# Population in this bin: 367
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 1779001,F U2 B' U L' F' R F' B D F R2 U R2 F2 B2 D' F2,G,Kansai Open 2014 (2014-03-21~22),333ft Final A #1
@@ -88,10 +88,10 @@
 5443996001,L2 B2 L' B' L2 B' D2 L2 F2 R2 B2 D2 U' R' F' D2 F2 L' U',G,Bojacá Cundinamarca 2026 (2026-03-14),333 R1 B #5
 3670527001,L' U' R2 D' B2 D2 B' U' L2 D2 L D2 R' D2 F2 L D' R2,W,Nebraska Championship 2024 (2024-04-12~14),333 Final A #4
 781796001,D2 L D2 B2 D2 B2 L2 U2 L' B' U R B2 U' L F2 L R' F',O,Shanghai Love in ECNU 2018 (2018-05-19~20),333 R1 D #1
-781935001,F2 U2 B L2 B R2 D2 F' D2 B2 D' L2 U' R F2 L2 R2 F2 R,G,ZHBIT Open 2018 (2018-05-20),333 R2 A #2
+5852577054,B' L2 D U2 F2 D' B2 U' L B2 U2 B U' L D2 F' R' F' L2 U',Y,Multimatum: New York Multimate PBQ VI 2026 (2026-09-25~27),333mbf R1 B #1
 784708019,R2 D' B2 L2 D' B2 D' U2 B D2 B' L' D2 F2 D' B2 L2 F2 U' L2 U2,O,Oruro Autumn 2018 (2018-05-19~20),333mbf Final A #2
 5099434028,B2 R' D B' D R' U R U' F' R2 U F2 D F2 U2 B2 U D L B,O,Thailand Championship 2025 (2025-10-11~13),333mbf Final A #1
-797386001,L B2 L2 F2 R' B2 L' R' B' U' B' D2 B2 U2 L R2 D,B,Ibi Open 2018 (2018-06-02),333oh Final B #2
+5846172001,D2 B2 R2 B2 R' F2 U2 L2 R' F2 L2 B' D2 R' F D2 F R2 B R,G,Tafalla Open 2026 (2026-09-26~27),333bf Final A #1
 4800566001,U L B' F2 D' R2 U2 L2 F2 D2 U' F' D B' D' L2 R' F2,W,Risbjerg Juni 2025 (2025-06-14~15),333oh Final B #3
 5413681001,F2 R U2 F2 R' D2 L2 D2 F' D2 R U2 F L2 B' R,W,Kublördag Uppsala IV - 2026 (2026-02-21),333 R2 A E1
 816854001,F2 R2 U R2 U F2 D' L F L' U' F' L' D2 B D',G,Vantaa Open 2018 (2018-06-30~07-01),333oh R2 C #4
@@ -175,7 +175,7 @@
 4279953001,D F R' F' R2 L2 D' R2 U' F' R2 F2 R2 F R2 F' U,B,Egypt Fall 2024 (2024-11-09),333 R2 C #5
 2318007001,U2 B2 L' D2 R2 U2 F2 D2 R' B' R' U2 L B R2 U B' F L,O,Butler Blitz 2022 (2022-11-26),333 R1 E #2
 2325976001,R L' F2 D B' D2 F' R F' L2 F2 B' U2 F L2 F D2 R' U2,G,El CUBO Tour Zacamil 2022 (2022-11-26~27),333 R2 C #3
-4154034001,B R' D L' U2 L D2 B' U' D2 L2 U D' R2 L2 F U,W,Fast Turns Only in Cebu 2024 (2024-09-28~29),333 R2 C #2
+5854329001,F L' B2 L2 F D L' B2 D2 L F' U' D2 F2 D' R2 B2 R2,B,Balam Cubes Bekasi Comeback 2026 (2026-09-26~27),333 Final A E2
 5697437027,R2 L U L B' L' U L2 U2 L2 B2 R2 L' U2 B2 L F' L2 D2 B R,R,Side N Blind Narre Warren 2026 (2026-06-13~14),333mbf Final A #2
 2380898001,U2 B' D F' D2 L2 F U2 B2 F' D2 U L R U' R' U R2 F2,G,Panama Nationals 2022 (2022-12-17~18),333 R1 C #2
 2482476001,F L' D B2 F U B2 D2 U' L2 F' L2 D2 U F D2 U',B,Washtenaw Winter 2023 (2023-02-11),333 R1 C E1
@@ -194,7 +194,7 @@
 4073507014,U2 B2 U2 L2 D' F' B2 D L F2 L' B2 L B2 R B2 L F' L' F,W,Romanian Breaking Records 2024 (2024-08-30~09-01),333mbf Final A #1
 5126406001,L' D B' U' F2 R2 U2 L F2 R' F' R' F' L' B2 D2 F2,Y,Hvidovre Liga III 2025 (2025-10-25),333 Final B #5
 2839668001,L' F2 L' D2 U2 B2 L2 F2 B D2 U' R F U' F' U2 B2 L2 U2,W,Swisscubing Cup IV 2023 (2023-06-24~25),333bf Final A E2
-2857243001,D2 B2 R2 D2 R B2 L' R2 U F2 L U B' L U2 F' R D' L2,O,Eugene Cubing 2023 (2023-07-08),333oh Final A #1
+5844209001,B' D L' B D2 B2 L' R2 D' F2 U R2 U' B2 U2 R2 U L' B',G,Ribeirão ao Cubo 2026 (2026-09-19~20),333oh Final C #4
 3960674001,L2 F2 U F2 D2 U F2 L' D F2 R' F' D B2 D L2 D2 U' L' F',R,Rubik's WCA South American Championship 2024 (2024-07-22~25),333bf Final A #1
 3516189003,U B U B2 L2 U2 B L2 R' U2 L U B U L2 B' L2 U',G,Love Is Blind Lima 2024 (2024-02-18),333mbf Final A #1
 4151018001,R2 D' R' D L2 F2 U' L2 R2 D U2 F D U' R F2 D B' L,Y, Esprit Cube Open Bayonne 2024 (2024-09-28~29),333oh Final A E1

@@ -15,15 +15,25 @@ import jwt from 'jsonwebtoken';
 import { sql } from '../db/connection.js';
 import { ADMIN_WCA_IDS } from '@cuberoot/shared/admin';
 
-export async function isRolePreviewActive(id: string, uid: number): Promise<boolean> {
-  if (typeof id !== 'string' || !Number.isSafeInteger(uid) || uid <= 0) return false;
+export type RolePreviewSessionRole = 'admin' | 'member' | 'user' | 'user-complete' | 'guest' | 'impersonation';
+
+export async function getActiveRolePreview(
+  id: string,
+  uid: number,
+): Promise<{ role: RolePreviewSessionRole } | null> {
+  if (typeof id !== 'string' || !Number.isSafeInteger(uid) || uid <= 0) return null;
   const [session] = await sql`
-    SELECT s.id FROM role_preview_sessions s JOIN app_users actor ON actor.id = s.actor_user_id
-    JOIN role_preview_profiles p ON p.actor_user_id = s.actor_user_id AND p.role = s.role AND p.user_id = s.user_id
+    SELECT s.role FROM role_preview_sessions s JOIN app_users actor ON actor.id = s.actor_user_id
+    LEFT JOIN role_preview_profiles p ON p.actor_user_id = s.actor_user_id AND p.role = s.role AND p.user_id = s.user_id
     WHERE s.id::text = ${id} AND s.user_id = ${uid}
       AND s.ended_at IS NULL AND s.expires_at > NOW()
+      AND (s.role = 'impersonation' OR p.user_id IS NOT NULL)
       AND actor.wca_id = ANY(${[...ADMIN_WCA_IDS]}::text[])`;
-  return !!session;
+  return session ? { role: session.role as RolePreviewSessionRole } : null;
+}
+
+export async function isRolePreviewActive(id: string, uid: number): Promise<boolean> {
+  return !!await getActiveRolePreview(id, uid);
 }
 
 export const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
@@ -36,6 +46,8 @@ export const SESSION_TTL = '365d';
  * amr = 本次会话的认证方式(RFC 8176);重置密码授权见下方两个 fresh-grant helper。
  */
 export interface SessionPayload {
+  /** Browser access tokens cannot be exchanged for a new durable session. */
+  browserAccess?: true;
   uid?: number;
   wcaId?: string;
   name?: string;
@@ -93,4 +105,14 @@ export function hasFreshPhonePasswordResetGrant(token: string): boolean {
 /** 验证并解出载荷;非法/过期抛异常(与 jwt.verify 一致)。 */
 export function verifySession(token: string): SessionPayload {
   return jwt.verify(token, JWT_SECRET) as SessionPayload;
+}
+
+/** Preserve authentication time: renewing access must not renew password-reset grants. */
+export function signBrowserAccessSession(payload: SessionPayload): string {
+  const now = Math.floor(Date.now() / 1000);
+  if (payload.browserAccess || !Number.isFinite(payload.exp) || !Number.isFinite(payload.iat)) {
+    throw new Error('A durable, expiring session is required');
+  }
+  return jwt.sign({ uid: payload.uid, wcaId: payload.wcaId, name: payload.name,
+    amr: payload.amr, iat: payload.iat, exp: Math.min(payload.exp!, now + 900), browserAccess: true }, JWT_SECRET);
 }

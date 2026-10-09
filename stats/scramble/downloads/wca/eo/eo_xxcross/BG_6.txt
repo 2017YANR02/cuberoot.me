@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxcross / BG / bin 6
-# Population in this bin: 234
+# Population in this bin: 235
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 3270001,D2 R D2 R' F2 D2 F2 R2 F2 R B U' R' U B' U' R2 D F',B,CMI Fiesta Open 2014 (2014-03-21~23),333oh R1 S #5
@@ -94,7 +94,7 @@
 1370900001,L2 U2 R2 D2 R2 F U2 L2 R B2 U2 L' B' U' R' B' D2 U2,B,Cubeland Arequipa Speedsolving 2019 (2019-10-26),333 R2 D #4
 5632277001,U2 F' L2 B2 R2 U2 F L2 F U B' U' B2 R U B F2 D' R2,B,Westerns Warmup Riverside B 2026 (2026-05-16),333 Final A #3
 1404726001,B U' B2 U L D L' U2 L F2 D F2 U' D2 L2 U' D',G,Chengdu Winter 2019 (2019-11-09~10),333 R1 B E1
-1404900001,F2 U B U' B' L D' L2 U2 R2 B R2 B2 L2 F2 D L2,B,Chengdu Winter 2019 (2019-11-09~10),333oh R1 A #5
+5847851023,D B' D' U' B2 U R2 D R2 B' D B2 D2 B' U2 L D2 U L',G,BLD Fall Fürth 2026 (2026-09-26~27),333mbf Final A #1
 1408956051,R2 F2 U2 L F2 L' D2 U' F' R' D L' D2 U B D B2 U' B' L',B,Thailand Championship 2019 (2019-11-15~17),333mbf Final A #1
 1458690001,U R2 L D2 L2 U' R' U2 R' U' D2 F2 L U2 B2 U2 R2,B,Santa Claus Cube Race Poland 2019 (2019-12-06~08),333oh R1 B E2
 1462209001,R2 U2 L2 B' U2 B2 F2 U2 L D F2 U' L2 D' U2 F U L2 U' L B,G,New Zealand Nationals 2019 (2019-12-13~15),333bf R1 B E2

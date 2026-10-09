@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxxcross / O / bin 10
-# Population in this bin: 329
+# Population in this bin: 334
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 9200001,B' U2 L' B L2 B2 U' R U2 D' R2 U2 F2 R2 B' R2 F' U2 B' L2,O,SLS Tarnowskie Gory 2014 (2014-04-05),333 R1 A #4
@@ -33,7 +33,7 @@
 4590392001,R2 B' D' F2 R' B2 L2 U2 R' U2 B2 U' B2 U R2 B2 L2,O,Santa Rosa Spring 2025 (2025-03-23),333 R1 B #2
 427005001,D L U D2 F' B R U2 R' B2 U L2 B2 D B2 R2 L2 U' R2 D',O,Vancouver Open Winter 2017 (2017-01-07),333 R1 G E2
 5759556001,F' U B2 F2 D' B2 F' U' B2 R B' F2 L' B D B,O,Jiajiang Open 2026 (2026-07-25),333 Final A #4
-4795625001,D R2 F' U2 L2 F L2 D2 L2 U' F' D U2 L F' D2 B2 L',O,Saint John's Warm Up 2025 (2025-06-07),333 R1 D E2
+5855841007,R' B2 R' D R' D B U2 D F' U2 R' U2 D2 F2 U2 R' D' B R2,O,Finnish Quiet Championship 2026 (2026-10-03),333mbf Final A #1
 475046001,D' B2 R2 F2 U2 R2 D L F' U F' L D R2 F2 R' U2,O,Almost Rome Open 2017 (2017-03-26),333 R2 A E1
 3961360001,D U R2 B2 D2 R2 F2 U' B' L2 R B' F' R D2 L R2 D' U,O,Tbilisi July Open 2024 (2024-07-21),333 R1 B E2
 3770477001,F' R' L2 F' R' B R2 U' R B' U2 B' D2 F L2 F' B2 D,O,Gulf of Finland 2024 (2024-05-18~19),333oh Final B #4
@@ -133,7 +133,7 @@
 4634480019,L2 R2 U2 B2 F2 U' R2 U' L2 F2 D U2 F U' L D R' U2 B' D2 R2 D2,O,Nacionales Chilenas 2025 (2025-02-07~09),333mbf Final B #2
 1453509001,R2 U F2 D' F2 D' B2 U' B' L B D2 F' L2 D' U' L' U R',O,Sydney Open 2019 (2019-12-14~15),333 R1 E E2
 1460063001,L' B2 R2 U2 F2 D2 F2 R D2 L' B U B' R2 U F2 R2 F2 D',O,Tirol Open 2019 (2019-12-14~15),333oh R2 A E1
-1486191001,D2 B2 U2 F U2 F D2 B D' F2 R' D2 U R2 B' R' U L' B2,O,Small Cheese 2019 (2019-12-30),333ft Final A #2
+5852000001,F2 R' F2 L2 D' R2 D' L B' F2 U2 L' U2 R2 F2 D2 B2 R,O,GAN WCA African Championship 2026 (2026-09-24~27),333oh R2 B #3
 1491080001,R' F2 R2 B2 D2 B2 R2 F2 L' B' D2 R' B2 F2 U' F' L' D L B',O,Ha Noi Cube Day 2020 (2020-01-05),333 R1 E #2
 1493558001,L2 B U2 B2 U2 L2 R2 B' D' F2 D B' L2 F' L' B2 D2 U' L2 U2 L2 U',O,Please Be Quiet Frisco 2020 (2020-01-11~12),333bf R1 D #2
 1511280001,D F U B2 D2 R2 L' D2 L U B2 D2 R' F2 L2 D2 F2 U2,O,Jieyang Winter 2020 (2020-01-19),333oh R1 A E1

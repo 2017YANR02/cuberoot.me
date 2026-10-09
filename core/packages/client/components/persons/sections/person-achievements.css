@@ -36,6 +36,7 @@
 .wp-achievement-card-body .wp-achievement-card-event { color: var(--foreground); font-weight: 600; }
 .wp-achievement-history { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-default); }
 .wp-achievement-history h4 { margin: 0 0 12px; font-size: .8rem; color: var(--muted-foreground); font-weight: 500; }
+.wp-achievement-history ol + h4 { margin-top: 20px; }
 .wp-achievement-history ul { padding-left: 18px; margin: 0 0 12px; }
 .wp-achievement-history ol { padding: 0 0 0 16px; margin: 0; list-style: none; border-left: 1px solid var(--border-strong); }
 .wp-achievement-history ol li { position: relative; margin: 0 0 16px; }

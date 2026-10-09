@@ -17,7 +17,7 @@ import { ownerDisplayName } from '@/lib/cuber-name-display';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import ReconPlayerCanvas from '@/components/recon/ReconPlayerCanvas';
 import SolutionView from '@/components/SolutionView';
-import { UserIdLabel } from '@/components/UserIdLabel';
+import { UserContactLink } from '@/components/UserIdLabel';
 import { computeAllStats } from '@/lib/recon-stats';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
@@ -83,8 +83,7 @@ export default function ReconAltViewClient() {
       <div className="submit-header">
         <div className="detail-header">
           <h1>
-            {ownerDisplayName(alt.addedById, alt.addedBy, isZh)}
-            <UserIdLabel userId={alt.addedByUserId} />
+            <UserContactLink userId={alt.addedByUserId}>{ownerDisplayName(alt.addedById, alt.addedBy, isZh)}</UserContactLink>
           </h1>
         </div>
       </div>

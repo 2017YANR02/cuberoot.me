@@ -10,7 +10,7 @@
 // 流程:
 //   1. 从 stats/wr_metric.json 提取去重后的顶尖选手 WCA ID + 项目 + WR 标记
 //   2. 爬取 WCA API 获取名单内所有人的 upcoming_competitions
-//   3. 从 cubing.com 获取中国内地比赛列表 + 选手 HTML 页面，交叉匹配 top cubers
+//   3. 从 cubing.com 获取中国内地比赛列表 + 公开报名接口，交叉匹配 top cubers
 //   4. 数据清洗、去重、按时间线聚合
 //   5. 生成极简 JSON 给前端页面使用
 //
@@ -28,6 +28,8 @@ import {
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as readline from 'node:readline/promises';
+import { fetchCubingCompetitions, fetchCubingCompetitors } from '@cuberoot/shared/cubing-live';
+import { localizeCity } from '@cuberoot/shared/city-localize';
 import { enrichCompElevations } from '../elevation.js';
 
 // ================= Configuration ==================
@@ -50,8 +52,6 @@ const CACHE_DIR = resolve(ROOT_DIR, '.upcoming_cache');
 const WCA_API_BASE = process.env.WCA_API_BASE || 'https://www.worldcubeassociation.org/api/v0';
 const WCA_PROXY_SECRET = process.env.WCA_PROXY_SECRET;
 // NOTE: cubing.com（粗饼网）管理中国内地比赛报名，WCA API 不返回这些比赛
-const CUBING_CHINA_API = 'https://cubing.com/api/competition';
-const CUBING_CHINA_BASE = 'https://cubing.com';
 const API_DELAY_SEC = 0.5;
 const MAX_RETRIES = 3;
 // NOTE: 429 限流独立于失败重试——遵守 Retry-After 多等几次，别因限流就丢掉一场比赛
@@ -439,6 +439,7 @@ async function fetchWithRetry(url: string, raw = false, timeoutMs = 10_000): Pro
 
 interface CnComp {
   alias: string;
+  wcaId: string;
   name: string;
   city: string;
   start_date: string;
@@ -460,65 +461,24 @@ async function fetchCubingChinaComps(): Promise<CnComp[]> {
    * 从 cubing.com API 获取即将举行的中国内地 WCA 比赛列表。
    * 返回 [{alias, name, city, start_date, end_date, competitor_limit}, ...]
    */
-  const cacheFile = resolve(CACHE_DIR, '_cubing_china_list.json');
+  const cacheFile = resolve(CACHE_DIR, '_cubing_china_list_v2.json');
   if (isCacheValid(cacheFile)) {
     const data = JSON.parse(readFileSync(cacheFile, 'utf-8')) as CnComp[];
     console.log(`[CN] 比赛列表: ${data.length} 场 [缓存]`);
     return data;
   }
 
-  const rawData = await fetchWithRetry(CUBING_CHINA_API);
-  if (
-    !rawData ||
-    typeof rawData !== 'object' ||
-    (rawData as { status?: unknown }).status !== 0
-  ) {
-    console.log('[CN] 获取比赛列表失败');
-    return [];
-  }
-
-  const nowTs = Date.now() / 1000;
-  const comps: CnComp[] = [];
-  for (const c of ((rawData as { data?: unknown[] }).data ?? []) as Record<string, unknown>[]) {
-    // NOTE: 只要 WCA 认证赛、未结束、日期在未来
-    if (c.type !== 'WCA' || c.live !== 0) {
-      continue;
-    }
-    const dateObj = (c.date ?? {}) as { from?: number; to?: number };
-    const dateFrom = dateObj.from ?? 0;
-    if (dateFrom <= nowTs) {
-      continue;
-    }
-
-    // NOTE: 时间戳 → YYYY-MM-DD（UTC）
-    const start = utcDate(dateFrom * 1000);
-    const dateTo = dateObj.to ?? dateFrom;
-    const end = utcDate(dateTo * 1000);
-
-    // NOTE: 多地点比赛顶级 competitor_limit 可能为 0，fallback 到各 location 限额之和
-    const locations = (c.locations ?? []) as { competitor_limit?: number; province?: string; city?: string }[];
-    let limit = (c.competitor_limit as number | undefined) ?? 0;
-    if (!limit) {
-      limit = sumValues(locations.map((loc) => loc.competitor_limit ?? 0));
-    }
-
-    // NOTE: 拼接省份+城市（取第一个 location）
-    const locs = locations.length ? locations : [{} as { province?: string; city?: string }];
-    const province = locs[0]!.province ?? '';
-    const city = locs[0]!.city ?? '';
-    const registration = (c.registration ?? {}) as { from?: number };
-
-    comps.push({
-      alias: c.alias as string,
-      name: c.name as string,
-      city: province !== city ? `${province}, ${city}` : city,
-      start_date: start,
-      end_date: end,
-      competitor_limit: limit,
-      registered_competitors: typeof c.registered_competitors === 'number' ? c.registered_competitors : undefined,
-      registration_open_ts: typeof registration.from === 'number' ? registration.from : undefined,
-    });
-  }
+  const rawData = await fetchCubingCompetitions();
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai' }).format(new Date());
+  const comps: CnComp[] = rawData.filter(comp => comp.type === 'WCA' && comp.wcaCompetitionId
+    && (comp.endDate ?? comp.startDate) >= today && comp.locations.some(location => location.regionIso2 === 'CN'))
+    .map(comp => ({
+      alias: comp.alias, wcaId: comp.wcaCompetitionId, name: comp.nameZh || comp.name, city: '',
+      start_date: comp.startDate, end_date: comp.endDate ?? comp.startDate,
+      competitor_limit: comp.competitorLimit || comp.locations.reduce((sum, location) => sum + location.competitorLimit, 0),
+      registered_competitors: comp.acceptedCount,
+      registration_open_ts: comp.registrationStartTime ? Date.parse(comp.registrationStartTime) / 1000 : undefined,
+    }));
 
   // 写入缓存
   writeFileSync(cacheFile, JSON.stringify(comps), 'utf-8');
@@ -527,35 +487,13 @@ async function fetchCubingChinaComps(): Promise<CnComp[]> {
 }
 
 async function fetchCubingChinaCompetitors(alias: string): Promise<Set<string>> {
-  /*
-   * 从 cubing.com 比赛选手页面提取所有参赛者的 WCA ID。
-   * 返回 set of WCA IDs。
-   */
-  const cacheFile = resolve(CACHE_DIR, `_cubing_china_${alias}.html`);
-  let html: string;
-  if (isCacheValid(cacheFile)) {
-    html = readFileSync(cacheFile, 'utf-8');
-  } else {
-    const url = `${CUBING_CHINA_BASE}/competition/${alias}/competitors`;
-    const raw = await fetchWithRetry(url, true);
-    // NOTE: raw=true 失败时返回空 dict（fetchWithRetry 的兜底）
-    if (!raw || typeof raw !== 'string') {
-      return new Set();
-    }
-    html = raw;
-    writeFileSync(cacheFile, html, 'utf-8');
-  }
-
-  // NOTE: cubing.com 使用完整 URL（href="https://cubing.com/results/person/..."）
-  const ids = new Set<string>();
-  for (const m of html.matchAll(/person\/([A-Z0-9]+)/g)) {
-    ids.add(m[1]!);
-  }
-  // NOTE: 0 个 ID 通常意味着 cubing.com 页面结构变更，需要更新正则
-  if (ids.size === 0) {
-    console.log(`[CN][WARN] ${alias}: 选手页面未解析到任何 WCA ID，请检查 cubing.com 页面结构`);
-  }
-  return ids;
+  const cacheFile = resolve(CACHE_DIR, '_cubing_china_' + alias + '_v2.json');
+  if (isCacheValid(cacheFile)) return new Set(JSON.parse(readFileSync(cacheFile, 'utf8')) as string[]);
+  const users = await fetchCubingCompetitors(alias);
+  const ids = [...new Set(Object.values(users).map(user => user.wcaid).filter(Boolean))];
+  // Empty rosters are valid before registration; do not freeze a transient empty response.
+  if (Object.keys(users).length) writeFileSync(cacheFile, JSON.stringify(ids), 'utf8');
+  return new Set(ids);
 }
 
 async function integrateCubingChina(
@@ -578,13 +516,13 @@ async function integrateCubingChina(
     for (const comp of cnComps) {
       const alias = comp.alias;
       // NOTE: alias 去连字符 = WCA comp ID，确保前端链接正确
-      const compId = alias.replaceAll('-', '');
+      const compId = comp.wcaId;
 
       // NOTE: WCA API 可能已创建此条目，但缺少 cubing.com 独有字段
       if (compId in compsMap) {
         // NOTE: 补充中文名、中文城市、cubing.com 链接
         compsMap[compId]!.name_zh = comp.name;
-        compsMap[compId]!.city_zh = comp.city;
+        compsMap[compId]!.city_zh = localizeCity(compsMap[compId]!.city, true, 'CN');
         compsMap[compId]!.cubing_china_url = `https://cubing.com/competition/${alias}`;
         continue;
       }
@@ -627,7 +565,7 @@ async function integrateCubingChina(
         name: enName,
         name_zh: comp.name,
         city: enCity,
-        city_zh: comp.city,
+        city_zh: localizeCity(enCity, true, 'CN'),
         country: 'CN',
         start_date: comp.start_date,
         end_date: comp.end_date,
@@ -672,8 +610,7 @@ async function buildCnRegistrations(): Promise<Record<string, string[]>> {
   try {
     cnComps = await fetchCubingChinaComps();
   } catch (e) {
-    console.log(`[CN-REG][WARN] 比赛列表拉取失败: ${(e as Error).message ?? e}`);
-    return out;
+    throw new Error('cubing.com competition list refresh failed', { cause: e });
   }
   if (!cnComps.length) {
     return out;
@@ -685,7 +622,7 @@ async function buildCnRegistrations(): Promise<Record<string, string[]>> {
   for (const comp of cnComps) {
     i += 1;
     const alias = comp.alias;
-    const compId = alias.replaceAll('-', '');
+    const compId = comp.wcaId;
     if (!isRegistrationOpen(comp)) {
       out[compId] = [];
       console.log(`[CN-REG] [${i}/${total}] ${compId}: 报名未开放,跳过`);
@@ -698,8 +635,7 @@ async function buildCnRegistrations(): Promise<Record<string, string[]>> {
       totalIds += ids.size;
       console.log(`[CN-REG] [${i}/${total}] ${compId}: ${ids.size} 人`);
     } catch (e) {
-      console.log(`[CN-REG][WARN] ${compId}: ${(e as Error).message ?? e}`);
-      out[compId] = [];
+      throw new Error(`cubing.com registration refresh failed: ${compId}`, { cause: e });
     }
   }
   console.log(`[CN-REG] 共 ${total} 场,合计 ${totalIds} 个 WCA ID`);

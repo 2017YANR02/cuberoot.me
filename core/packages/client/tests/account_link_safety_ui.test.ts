@@ -40,7 +40,7 @@ const openMove = async () => {
 beforeEach(() => {
   vi.clearAllMocks(); vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
   mocks.user = { uid: 42, name: 'Existing' }; mocks.language = 'en';
-  mocks.issueIdentityLinkCode.mockResolvedValue({ linkCode: 'L42-123456', expiresInSeconds: 600 });
+  mocks.issueIdentityLinkCode.mockResolvedValue({ linkCode: '123456', expiresInSeconds: 600 });
   mocks.issueAccountMergeCode.mockResolvedValue({ code: '42-123456', expiresInSeconds: 600 });
   mocks.mergeAccount.mockResolvedValue({ token: 'merged-session', user: { uid: 99, name: 'Kept' } });
   mocks.applySession.mockReturnValue(true);
@@ -48,40 +48,39 @@ beforeEach(() => {
 });
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); vi.useRealTimers(); vi.unstubAllGlobals(); });
 
-describe('explicit mini program account linking proof', () => {
-  it.each(['en', 'zh'] as const)('does not issue a code on account view or disclosure expansion (%s)', async (language) => {
+describe('explicit mini program sign-in proof', () => {
+  it.each(['en', 'zh'] as const)('shows the sign-in path prominently without issuing a code automatically (%s)', async (language) => {
     mocks.language = language; await render();
-    expect(host.querySelector('details')?.open).toBe(false);
-    await act(async () => host.querySelector('summary')!.click());
+    expect(host.textContent).toContain(language === 'zh' ? '在小程序登录已有账号' : 'Sign in to your existing account in the Mini Program');
     expect(mocks.issueIdentityLinkCode).not.toHaveBeenCalled();
-    expect(host.textContent).toContain('ID 42');
+    expect(host.textContent).not.toContain('ID 42');
   });
-  it('issues only on request and clearly separates the linking code from account merging', async () => {
-    await render(); await act(async () => button('Generate linking code').click());
+  it('issues only on request and clearly separates the sign-in code from account merging', async () => {
+    await render(); await act(async () => button('Generate 6-digit sign-in code').click());
     expect(mocks.issueIdentityLinkCode).toHaveBeenCalledExactlyOnceWith(42, expect.any(AbortSignal));
-    expect(host.querySelector<HTMLInputElement>('[aria-label="Mini program linking code"]')?.value).toBe('L42-123456');
-    expect(host.textContent).toContain('It is not a merge code.');
-    expect(host.textContent).toContain('Do not screenshot, forward or share it.');
+    expect(host.querySelector<HTMLInputElement>('[aria-label="Mini Program sign-in code"]')?.value).toBe('123456');
+    expect(host.textContent).toContain('The sign-in code works once and expires in 10 minutes.');
+    expect(host.textContent).toContain('Do not share it with anyone.');
     expect(mocks.mergeAccount).not.toHaveBeenCalled();
   });
-  it('removes an expired linking code', async () => {
-    vi.useFakeTimers(); await render(); await act(async () => button('Generate linking code').click());
+  it('removes an expired sign-in code', async () => {
+    vi.useFakeTimers(); await render(); await act(async () => button('Generate 6-digit sign-in code').click());
     await act(async () => { await vi.advanceTimersByTimeAsync(600_000); });
-    expect(host.querySelector('[aria-label="Mini program linking code"]')).toBeNull();
+    expect(host.querySelector('[aria-label="Mini Program sign-in code"]')).toBeNull();
   });
   it('ignores late code issuance after the account changes', async () => {
     let resolve!: (value: unknown) => void;
     mocks.issueIdentityLinkCode.mockImplementation(() => new Promise((done) => { resolve = done; }));
-    await render(); await act(async () => button('Generate linking code').click());
+    await render(); await act(async () => button('Generate 6-digit sign-in code').click());
     mocks.user = { uid: 99, name: 'Other' }; await render();
-    await act(async () => resolve({ linkCode: 'L42-123456', expiresInSeconds: 600 }));
-    expect(host.querySelector('[aria-label="Mini program linking code"]')).toBeNull();
-    expect(button('Generate linking code').disabled).toBe(false);
+    await act(async () => resolve({ linkCode: '123456', expiresInSeconds: 600 }));
+    expect(host.querySelector('[aria-label="Mini Program sign-in code"]')).toBeNull();
+    expect(button('Generate 6-digit sign-in code').disabled).toBe(false);
   });
   it('offers manual copy when clipboard access is unavailable', async () => {
-    await render(); await act(async () => button('Generate linking code').click());
-    await act(async () => button('Copy linking code').click());
-    expect(host.textContent).toContain('Select the code and copy it manually.');
+    await render(); await act(async () => button('Generate 6-digit sign-in code').click());
+    await act(async () => button('Copy sign-in code').click());
+    expect(host.textContent).toContain('Select the sign-in code and copy it manually.');
   });
 });
 

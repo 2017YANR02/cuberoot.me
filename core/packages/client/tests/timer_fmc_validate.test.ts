@@ -188,10 +188,9 @@ describe('FMC — result display', () => {
   });
 });
 
-describe('FMC — mo3 is ROUNDED to 2 dp, not truncated (WCA A7c vs 9f7)', () => {
-  it('rounds up where the time rule would truncate down', () => {
-    // (25 + 26 + 26) / 3 = 25.666… moves. WCA rounds to 25.67; the time rule
-    // (truncate to centiseconds) would have produced 25.66.
+describe('FMC — mo3 is rounded to two decimals of a move', () => {
+  it('keeps two decimal places in the FMC mean', () => {
+    // (25 + 26 + 26) / 3 = 25.666… moves → 25.67.
     const solves = [fmcSolve(25), fmcSolve(26), fmcSolve(26)];
     expect(meanOfN(solves, 3)).toBe(25_670);
     expect(formatEventMs('333fm', meanOfN(solves, 3))).toBe('25.67');
@@ -202,13 +201,13 @@ describe('FMC — mo3 is ROUNDED to 2 dp, not truncated (WCA A7c vs 9f7)', () =>
     expect(bestMeanOfN(solves, 3)).toBe(25_670);
   });
 
-  it('non-FMC means still TRUNCATE to centiseconds', () => {
-    // (10.000 + 11.000 + 11.002) / 3 = 10.667333s → truncate 10.660, not 10.670.
+  it('timed means also round to the nearest hundredth (9f1)', () => {
+    // (10.000 + 11.000 + 11.002) / 3 = 10.667333s → 10.670.
     const solves = [
       { ...fmcSolve(0, '333'), timeMs: 10_000 },
       { ...fmcSolve(0, '333'), timeMs: 11_000 },
       { ...fmcSolve(0, '333'), timeMs: 11_002 },
     ];
-    expect(meanOfN(solves, 3)).toBe(10_660);
+    expect(meanOfN(solves, 3)).toBe(10_670);
   });
 });

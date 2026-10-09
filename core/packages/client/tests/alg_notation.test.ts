@@ -3,8 +3,9 @@ import { Alg } from 'cubing/alg';
 import { cube3x3x3 } from 'cubing/puzzles';
 import {
   tokenizeMoves, flattenAlg, expandGroups, cubeOnly, stripGripMarks, deleteAuf,
-  stripUpstreamMarks, invertMoveString, toMoveString,
-  canonicalize3x3WideMoves, stm, sqtm, htm, qtm, etm, gen,
+  stripUpstreamMarks, invertMoveString, toMoveString, toMoveStringStrict,
+  canonicalize3x3WideMoves, findIllegalGluedCubeMoves, spaceIllegalGluedCubeMoves,
+  stm, sqtm, htm, qtm, etm, gen,
 } from '@cuberoot/shared/alg-notation';
 import { cleanForPlayer, countMovesExpanded } from '@/lib/recon-alg-utils';
 
@@ -55,6 +56,22 @@ describe('tokenizeMoves', () => {
   });
 });
 
+describe('glued cube move spacing', () => {
+  it('allows only turns on opposite parallel faces', () => {
+    expect(findIllegalGluedCubeMoves("RL L2R' U'D dU F2B bF")).toBeNull();
+  });
+
+  it.each(['rU', 'Dr', 'RR', 'MR', 'yR'])(
+    'rejects %s because the two moves are not opposite parallel faces',
+    (alg) => expect(findIllegalGluedCubeMoves(alg)?.joined).toBe(alg),
+  );
+
+  it('adds only required spaces and leaves permitted pairs and comments intact', () => {
+    expect(spaceIllegalGluedCubeMoves("rU RL Dr U'D // RU\nFB"))
+      .toBe("r U RL D r U'D // RU\nFB");
+  });
+});
+
 describe('expandGroups', () => {
   it('expands nested repeats', () => {
     expect(expandGroups("(R U R' U (R U' R' U)2 R)")).toBe("R U R' U R U' R' U R U' R' U R");
@@ -63,6 +80,9 @@ describe('expandGroups', () => {
   it('throws on unbalanced parens — flattenAlg is the forgiving one', () => {
     expect(() => expandGroups('(R U')).toThrow();
     expect(flattenAlg('(R U')).toBe('R U');
+    expect(() => toMoveStringStrict('(R U')).toThrow('少一个 ")"');
+    expect(() => toMoveStringStrict('R U)')).toThrow('多出一个 ")"');
+    expect(toMoveStringStrict('(R U)2')).toBe('R U R U');
   });
 
   // cubedb 抓来的 zbls 里有 `F' (L' U2 L U')2' F U'` —— 重复两遍**再整段取逆**。

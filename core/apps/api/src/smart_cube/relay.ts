@@ -74,6 +74,8 @@ function canonicalizeRelayPayload(message: SmartCubeRelayPayload): SmartCubeRela
     };
     if (message.brand !== undefined) canonical.brand = message.brand;
     if (message.deviceName !== undefined) canonical.deviceName = message.deviceName;
+    if (message.calibrating !== undefined) canonical.calibrating = message.calibrating;
+    if (message.canResetDevice !== undefined) canonical.canResetDevice = message.canResetDevice;
     if (message.hasGyro !== undefined) canonical.hasGyro = message.hasGyro;
     if (message.error !== undefined) canonical.error = message.error;
     return canonical;
@@ -84,12 +86,27 @@ function canonicalizeRelayPayload(message: SmartCubeRelayPayload): SmartCubeRela
       move: message.move,
     };
     if (message.deviceTs !== undefined) canonical.deviceTs = message.deviceTs;
+    if (message.calibration !== undefined) canonical.calibration = message.calibration;
+    if (message.futureHistory !== undefined) canonical.futureHistory = message.futureHistory;
     if (message.relaySeq !== undefined) canonical.relaySeq = message.relaySeq;
     return canonical;
   }
-  if (message.type === 'state') return { type: 'state', facelets: message.facelets };
+  if (message.type === 'timer') {
+    return {
+      type: 'timer',
+      event: {
+        state: message.event.state,
+        ...(message.event.solveTime === undefined ? {} : { solveTime: message.event.solveTime }),
+        ...(message.event.inspectTime === undefined ? {} : { inspectTime: message.event.inspectTime }),
+      },
+    };
+  }
+  if (message.type === 'state') return { type: 'state', facelets: message.facelets, ...(message.calibration === undefined ? {} : { calibration: message.calibration }) };
   if (message.type === 'battery') return { type: 'battery', level: message.level };
-  if (message.type === 'command') return { type: 'command', command: message.command };
+  if (message.type === 'command-result') return { type: 'command-result', requestId: message.requestId, ok: message.ok, ...(message.error === undefined ? {} : { error: message.error }) };
+  if (message.type === 'command') return message.command === 'disconnect'
+    ? { type: 'command', command: 'disconnect' }
+    : { type: 'command', command: 'reset-device', requestId: message.requestId };
   const canonical: Extract<SmartCubeRelayPayload, { type: 'gyro' }> = {
     type: 'gyro',
     quaternion: {
@@ -339,18 +356,18 @@ export class SmartCubeRelay {
             reject('source cannot send commands');
             return;
           }
-          if (message.type === 'move' && message.relaySeq !== undefined) {
+          if ((message.type === 'move' || message.type === 'timer' || message.type === 'state') && message.relaySeq !== undefined) {
             reject('source cannot set relay sequence');
             return;
           }
           const canonicalMessage = canonicalizeRelayPayload(message);
-          const outboundMessage = canonicalMessage.type === 'move'
+          const outboundMessage = (canonicalMessage.type === 'move' || canonicalMessage.type === 'timer' || (canonicalMessage.type === 'state' && canonicalMessage.calibration === true))
             ? { ...canonicalMessage, relaySeq: ++channel.lastMoveSeq }
             : canonicalMessage;
           const encoded = JSON.stringify(outboundMessage);
-          if (outboundMessage.type === 'move') {
+          if (outboundMessage.type === 'move' || outboundMessage.type === 'timer' || (outboundMessage.type === 'state' && outboundMessage.calibration === true)) {
             const bytes = encodedBytes(encoded);
-            channel.moves.push({ bytes, encoded, seq: outboundMessage.relaySeq });
+            channel.moves.push({ bytes, encoded, seq: outboundMessage.relaySeq! });
             channel.replayedMoveBytes += bytes;
             while (channel.moves.length > MAX_REPLAYED_MOVES
               || channel.replayedMoveBytes > SMART_CUBE_RELAY_MAX_REPLAY_BYTES) {
@@ -358,6 +375,8 @@ export class SmartCubeRelay {
               if (removed) channel.replayedMoveBytes -= removed.bytes;
             }
           }
+          // A cached snapshot predating a turn is not a valid current baseline.
+          if (message.type === 'move') channel.snapshots.delete('state');
           if (message.type === 'status' || message.type === 'state' || message.type === 'battery') {
             channel.snapshots.set(message.type, encoded);
           }

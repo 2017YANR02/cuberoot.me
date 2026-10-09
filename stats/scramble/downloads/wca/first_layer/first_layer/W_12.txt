@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_layer / W / bin 12
-# Population in this bin: 912
+# Population in this bin: 923
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 4538480001,D' B2 F2 L2 F2 D U B2 U' F2 R2 B' R' D L D' B2 L U' F,W,Bangladesh Cubing Fiesta 2025 (2025-02-27~28),333oh R1 B #5
@@ -120,7 +120,7 @@
 3979198001,B2 U' B2 L U2 B2 U2 L' F2 R2 U2 B U R B' F' D' L' B2,W,Colorado Springs Showdown 2024 (2024-08-03),333 R1 C #2
 4003518001,D' F' U2 L2 B L2 B2 R2 F' R U2 R2 U2 L2 B D' F U L B2,W,North Branch Campfire 2024 (2024-08-10),333bf Final B #3
 544520001,U B2 L2 D' R2 D R2 B' U2 L B' F2 D2 B2 F R' D',W,Cubing Kerala Alappey Open 2017 (2017-07-08~09),333 R1 A #3
-553148001,F' B U2 R2 D L' F U2 L2 U R' D2 B2 U2 F R2 D2 R2 B2,W,Southern Championships 2017 (2017-07-15~16),333 R2 D E1
+5852871001,R2 B D2 F R2 B' F' R2 D2 L' D F R U B D' B' D' R' B,W,Cubing for Yuval Israel 2026 (2026-09-28~29),333 R2 C #1
 560594001,D' R' L' F' L B2 L' B R D2 B2 L2 U B2 D R2 F2 D' B2 U2,W,SSN Cube Open 2017 (2017-07-28~29),333 Final C #4
 5702416001,D B L D F' U2 L F R2 U' F R L D2 B2 D2 R F2 L',W,WCA South American Championship 2026 (2026-06-12~15),333 R2 C #1
 4097015001,R' L' U F' D' B U' F2 U2 R2 F D2 B' L2 F2 L D,W,Fleur-de-Lis Fall LA 2024 (2024-09-14),333 R1 D #2

@@ -4,7 +4,7 @@
  * 三阶 HTM 距离分布 + 最少步分析 (FMC distribution)。
  *
  * 数据来源:全站单一源 lib/god-distance-333(cube20.org)。d=0..15 穷举精确,d=16..19 只公布
- * 两位有效数字,d=20 的 4.9 亿是「已找到」的下界。画图与占比用归一化档(Σ 恰为 |G|),
+ * 两位有效数字,d=20 的 4.9 亿同样是估计。画图与占比用归一化档(Σ 恰为 |G|),
  * 读数里显示的仍是公布的原值 —— 别把归一化产生的十几位数字当成真精度。
  * 交互:
  *   - 鼠标悬停某个深度看精确数字 + 占比
@@ -24,7 +24,7 @@ interface Row {
   /** cube20.org 的公布值 —— 读数里显示的是它,免得把归一化产生的十几位数字当成真精度。 */
   raw: number;
   kind: GodBinKind;
-  /** 是否穷举精确值(false = cube20.org 的估计,或 d=20 的「已找到」下界)。 */
+  /** 是否穷举精确值(false = cube20.org 的估计)。 */
   exact: boolean;
 }
 
@@ -206,8 +206,8 @@ export default function DistanceDistribution({ isZh }: Props) {
         })() : (
           <span className="god-growth-hint">
             <MathText>{t(
-              'hover 某个深度看数字。d=0..15 是 Rokicki 团队穷举出的精确分布;d=16..19 只公布到两位有效数字;d=20 的 4.9 亿是「已找到这么多」的下界。约 97% 的随机三阶状态最优解落在 17-19 步。',
-              'Hover a depth for the numbers. d=0..15 are Rokicki\'s exhaustive exact counts; d=16..19 are published to two significant figures only; the 490 million at d=20 is a lower bound on what has been found. About 97% of random 3×3 states are optimal at 17-19 moves.'
+              'hover 某个深度看数字。d=0..15 是 Rokicki 团队穷举出的精确分布;d=16..19 只公布到两位有效数字;d=20 的约 4.9 亿也是估计。约 97% 的随机三阶状态最优解落在 17-19 步。',
+              'Hover a depth for the numbers. d=0..15 are Rokicki\'s exhaustive exact counts; d=16..19 are published to two significant figures only; the 490 million at d=20 is also an estimate. About 97% of random 3×3 states are optimal at 17-19 moves.'
             )}</MathText>
           </span>
         )}

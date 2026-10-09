@@ -8,7 +8,7 @@ const plugin = registerPlugin<{
   start(): Promise<PushStatus>; status(): Promise<PushStatus>; stop(): Promise<PushStatus>;
 }>('RecordPush');
 
-export const recordPush = Capacitor.getPlatform() === 'android' ? new RecordPushController({
+export const recordPush = ['android', 'ios'].includes(Capacitor.getPlatform()) ? new RecordPushController({
   storage: nativeMobileSecureStorage,
   appId: async () => (await App.getInfo()).id,
   identity: () => ({ installationId: crypto.randomUUID(),

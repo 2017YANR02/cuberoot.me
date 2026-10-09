@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxxcross / Y / bin 10
-# Population in this bin: 348
+# Population in this bin: 353
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 16592001,D2 L2 D' F2 R2 F2 R2 D' U' L2 F' D2 R2 D' F2 L' B2 L' D2 F' R D2,Y,Atlantic Open 2014 (2014-05-03),333bf Final A E2
@@ -105,7 +105,7 @@
 4121169001,R2 U2 F2 L U2 L' D2 R' U' L U F2 R' U' L' R' F' D,Y,UMBC Fall 2024 (2024-09-21),333 R1 E #2
 1396664001,D' F U2 L' B' R2 B2 D L' F2 R2 D2 F B2 U2 D2 F' R2 F2 R2,Y,Sin Fronteras Ecuador 2019 (2019-11-09~10),333 Final A #1
 1404726001,B U' B2 U L D L' U2 L F2 D F2 U' D2 L2 U' D',Y,Chengdu Winter 2019 (2019-11-09~10),333 R1 B E1
-4806394001,R L2 D2 U2 B L2 B2 L2 F R2 F' L B F U' B2 D F L2 D,Y,Nada Que Ver Lebrija 2025 (2025-06-14),333 Final B E1
+5842841001,F' U' B D' U2 F2 D' B2 L2 B' F D' F' R B2 F' L2,Y,Take Your Time Brisbane 2026 (2026-09-19~20),333oh R1 A #1
 1440612001,B2 F2 L2 U' R2 D' U2 B2 U2 L2 B U2 R D B2 L2 D L2 R U2,Y,Khakassia Open 2019 (2019-12-07~08),333 Final A #2
 5817157001,R' D2 F D2 L2 B F D2 F2 L' F R2 F D B' R2 F2 L' D2,Y,Soorsi 2026 (2026-09-05~06),333 R2 C #5
 1552979028,B2 D2 B2 D' R2 D2 F2 R' U R' D' L' D U' B2 U L' U2 L,Y,Kiev Super Blind 2020 (2020-02-15~16),333mbf Final B #3
@@ -186,7 +186,7 @@
 3390839001,F2 R2 D2 B2 U' L2 B R B2 R B' R' D2 U L2 R F2,Y,Seoul Open 2024 (2024-01-06),333 R1 N #2
 4211957001,L F' R2 B L2 R2 B' F' D2 L2 D L2 B' D' R' F' R2 U B2,Y,Hampshire Autumn 2024 (2024-10-19~20),333 R2 C E1
 5509978001,U2 L D' F U F' R2 D' F' U2 L2 U B2 R2 D L2 B2 D' R',Y,Relámpago Explora Medellín 2026 (2026-04-05),333 R1 B #3
-3451494001,L D2 B' L' B' D2 R F L B R2 U F2 R2 D' F2 R2 U,Y,Folkets Kub Alvesta 2024 (2024-01-27~28),333oh Final B E1
+5843122001,U2 F2 L' F D' R' D2 B' R2 F' L2 D F2 D R2 B2 R2 L2 U2,Y,Michigan Mini 45 2026 (2026-09-24),333 R1 B #1
 5317007001,F' L2 D' U' R2 D2 L2 U' B' L' D F' L' D2 F' D' F' R2,Y,Super Duper San Diego 2026 (2026-01-09~11),333 R1 C #3
 5007081001,U' L F' R B' D2 R2 B' D' R2 U2 L2 B2 L U2 R2 U2 D2 B R,Y,Eretum III 2025 (2025-09-06~07),333bf Final A E2
 3507733001,B' D' B2 D L2 B2 L U L F' L2 U' L' U' R2,Y,Stevenage February 2024 (2024-02-10~11),333 R1 D #4

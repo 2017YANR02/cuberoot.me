@@ -1,0 +1,122 @@
+.timer-room-layout { display: flex; flex: 1; flex-direction: column; min-width: 0; min-height: 0; }
+.timer-room-stage { display: flex; flex: 1; flex-direction: column; min-width: 0; min-height: 360px; }
+.timer-room-players {
+  display: flex;
+  flex-wrap: wrap;
+  flex: 0 0 auto;
+  gap: 6px;
+  max-height: 220px;
+  overflow: auto;
+  margin: 0;
+  padding: 8px;
+  list-style: none;
+}
+.timer-room-player {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 4px 8px;
+  font-size: 12px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+}
+.timer-room-player.is-offline { opacity: 0.5; }
+.timer-room-player.is-active { background: var(--accent-soft); }
+.timer-room-player-name {
+  min-width: 0;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.timer-room-player.is-me .timer-room-player-name { font-weight: 700; }
+.timer-room-player button {
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.timer-room-player button:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.timer-room-player-view { min-width: 44px; }
+.timer-room-player-score { display: flex; align-items: center; gap: 4px; }
+.timer-room-player-status { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.timer-room-player-flag, .timer-room-player-icon { flex: 0 0 16px; width: 16px; }
+.timer-room-toolbar, .timer-room-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.timer-room-toolbar { flex: 0 0 auto; padding: 4px 8px; font-size: 12px; }
+.timer-room-actions { margin-inline-start: auto; }
+.timer-room-actions button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 44px; min-height: 44px; padding: 6px 8px; border: 1px solid var(--border-default); border-radius: 6px; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.timer-room-actions button:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.timer-room-actions button:disabled { opacity: 0.5; cursor: default; }
+.timer-room-copy-status:empty { display: none; }
+.timer-room-overlay { position: fixed; inset: 0; z-index: 70; display: flex; align-items: center; justify-content: center; padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); background: var(--modal-overlay, color-mix(in srgb, var(--foreground) 70%, transparent)); }
+.timer-room-dialog { width: min(100%, 720px); max-height: calc(100vh - 48px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); max-height: calc(100dvh - 48px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); overflow: auto; overscroll-behavior: contain; padding: 16px; border: 1px solid var(--border-default); border-radius: 12px; background: var(--card); color: var(--foreground); font-size: 14px; }
+.timer-room-dialog-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 16px; }
+.timer-room-dialog-head h2 { margin: 0; font-size: 18px; }
+.timer-room-dialog-head button { display: grid; place-items: center; flex: 0 0 44px; min-height: 44px; border: 0; border-radius: 6px; background: transparent; color: inherit; cursor: pointer; }
+.timer-room-dialog button:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.timer-room-admin-list, .timer-room-history { list-style: none; padding: 0; margin: 16px 0 0; }
+.timer-room-admin-list > li { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border-default); }
+.timer-room-admin-name { overflow-wrap: anywhere; }
+.timer-room-admin-name small { display: block; color: var(--muted-foreground); }
+.timer-room-standings-scroll { overflow: auto; }
+.timer-room-standings { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+.timer-room-standings th, .timer-room-standings td { text-align: start; padding: 8px; border-bottom: 1px solid var(--border-default); }
+.timer-room-standings .is-me { font-weight: 700; }
+.timer-room-standings small, .timer-room-history small { color: var(--muted-foreground); font-weight: normal; }
+.timer-room-history > li { padding: 8px 0; border-top: 1px solid var(--border-default); }
+.timer-room-history h4 { margin: 8px 0; }
+.timer-room-history-event { display: flex; flex-wrap: wrap; gap: 12px; margin: 8px 0; }
+.timer-room-history-event > div { flex: 1; min-width: min(220px, 100%); }
+.timer-room-history-event p { overflow-wrap: anywhere; margin: 0 0 8px; }
+.timer-room-history-result { display: flex; justify-content: space-between; gap: 12px; font-variant-numeric: tabular-nums; }
+.timer-room-history-result > span { overflow-wrap: anywhere; }
+.timer-room-round-status { display: flex; flex-direction: column; align-items: center; gap: 8px; max-width: 100%; padding: 8px; text-align: center; font-size: 13px; }
+.timer-room-round-status p { margin: 0; }
+.timer-room-round-status .timer-room-actions { margin-inline-start: 0; }
+.timer-room-lobby { width: min(100%, 560px); margin: auto; padding: 24px 16px; box-sizing: border-box; }
+.timer-room-lobby h2 { margin: 0 0 20px; font-size: 20px; }
+.timer-room-lobby-fields, .timer-room-lobby-actions, .timer-room-identity { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.timer-room-lobby-actions { margin-top: 20px; }
+.timer-room-lobby-actions button { min-height: 44px; padding: 8px 16px; border: 1px solid var(--border-default); border-radius: 6px; background: var(--background); color: var(--foreground); font: inherit; cursor: pointer; }
+.timer-room-lobby-actions input { width: 120px; min-height: 44px; box-sizing: border-box; border: 1px solid var(--border-default); border-radius: 6px; background: var(--background); color: var(--foreground); font: inherit; padding: 8px; }
+.timer-room-lobby button:disabled, .timer-room-lobby input:disabled { opacity: 0.5; cursor: default; }
+.timer-room-lobby :is(button, input):focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.timer-room-lobby [role="alert"] { color: var(--destructive); }
+.timer-room-lobby .search-control, .timer-room-dialog .search-control, .timer-room-lobby .cuber-search-item, .timer-room-dialog .cuber-search-item { min-height: 44px; }
+.timer-room-lobby .clear-btn, .timer-room-dialog .clear-btn { width: 44px; height: 44px; right: 0; }
+.timer-room-lobby .search-control--with-clear, .timer-room-dialog .search-control--with-clear { padding-right: 44px; }
+.timer-battle-history-list { list-style: none; padding: 0; }
+.timer-battle-history-list button { display: flex; flex-wrap: wrap; width: 100%; gap: 8px 16px; min-height: 44px; padding: 12px 0; text-align: start; border: 0; border-bottom: 1px solid var(--border-default); background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.timer-battle-history-list button > span:last-child { flex-basis: 100%; }
+.timer-battle-history-list time { margin-inline-start: auto; color: var(--muted-foreground); }
+.timer-battle-history-results { display: flex; flex-wrap: wrap; gap: 20px; margin-block: 20px; }
+.timer-battle-history-results > div { display: flex; flex-direction: column; gap: 8px; }
+.timer-battle-history-results strong { font: 28px var(--font-mono); }
+.timer-battle-history-scramble p { overflow-wrap: anywhere; }
+.timer-room-dialog.timer-battle-settings-dialog {
+  width: fit-content;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.timer-battle-settings { display: flex; flex-direction: column; gap: 16px; }
+.timer-battle-settings > .bool-toggle {
+  justify-content: space-between;
+  width: 100%;
+}
+.timer-battle-settings > label, .timer-battle-key-bindings > div, .timer-battle-cube-device { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.timer-battle-settings select, .timer-battle-key-bindings button { min-height: 44px; padding: 6px 12px; border: 1px solid var(--border-default); border-radius: 6px; background: var(--background); color: var(--foreground); font: inherit; }
+.timer-battle-key-bindings { border: 0; padding: 0; margin: 0; }
+.timer-battle-key-bindings legend { margin-bottom: 8px; }
+.timer-battle-key-bindings button { min-width: 88px; cursor: pointer; }
+.timer-battle-key-bindings button[aria-pressed="true"] { background: var(--accent-soft); }
+.timer-battle-cube-controls h3 { margin: 0 0 12px; font-size: inherit; }
+.timer-battle-cube-controls p { font-size: 13px; color: var(--muted-foreground); }
+.timer-battle-cube-device { margin-block: 12px; }
+.timer-battle-cube-device .shell-device-center { position: relative; inset: auto; }
+
+.timer-room-event { display: inline-flex; align-items: center; gap: 4px; min-width: 0; }

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-18T00:15:52.730Z",
+  "generated_at": "2026-10-08T01:42:57.566Z",
   "notes": "WR progression 自动生成于本地 WCA dump (running-min over daily best). 手写注释 (STM/TPS/method/hardware) 在 wr333_history_annotations.ts。",
   "singles": [
     {
@@ -241,6 +241,14 @@
       "country": "PL",
       "comp": "GLS Big Cubes Gdańsk 2026",
       "comp_id": "GLSBigCubesGdansk2026"
+    },
+    {
+      "date": "2026-10-05",
+      "time": 2.51,
+      "holder": "Xuanyi Geng",
+      "country": "CN",
+      "comp": "Guangzhou Grand Open 2026",
+      "comp_id": "GuangzhouGrandOpen2026"
     }
   ],
   "ao5": [

@@ -27,9 +27,10 @@ beforeAll(async () => {
   vi.stubEnv('WECHAT_APPID', 'wx-test');
   vi.stubEnv('WECHAT_MINI_APP_ID', 'wx-mini-test');
   vi.stubEnv('WECHAT_MINI_PAY_ENABLED', 'true');
+  vi.stubEnv('WECHAT_H5_ENABLED', 'false');
   vi.stubEnv('WECHAT_MCHID', '1900000001');
   vi.stubEnv('WECHAT_API_V3_KEY', apiV3Key);
-  vi.stubEnv('WECHAT_CERT_SERIAL', 'MERCHANT_CERT_SERIAL');
+  vi.stubEnv('WECHAT_CERT_SERIAL', 'AABBCCDDEEFF00112233');
   vi.stubEnv('WECHAT_PRIVATE_KEY', merchantPrivateKey);
   vi.stubEnv('WECHAT_PLATFORM_PUBKEY_ID', publicKeyId);
   vi.stubEnv('WECHAT_PLATFORM_PUBKEY', platformPublicKey);
@@ -41,13 +42,17 @@ afterAll(() => {
   vi.unstubAllGlobals();
 });
 
-function encryptedCallbackBody(): string {
+function encryptedCallbackBody(overrides: Record<string, unknown> = {}): string {
   const nonce = 'qwertyuiop12';
   const associatedData = 'transaction';
   const plaintext = JSON.stringify({
     out_trade_no: 'M_test_1',
     trade_state: 'SUCCESS',
     transaction_id: '4200001',
+    appid: 'wx-test',
+    mchid: '1900000001',
+    amount: { total: 1234, currency: 'CNY', payer_total: 1234, payer_currency: 'CNY' },
+    ...overrides,
   });
   const cipher = createCipheriv(
     'aes-256-gcm',
@@ -57,7 +62,7 @@ function encryptedCallbackBody(): string {
   cipher.setAAD(Buffer.from(associatedData, 'utf8'));
   const encrypted = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()]);
   const ciphertext = Buffer.concat([encrypted, cipher.getAuthTag()]).toString('base64');
-  return JSON.stringify({ resource: { ciphertext, nonce, associated_data: associatedData } });
+  return JSON.stringify({ event_type: 'TRANSACTION.SUCCESS', resource_type: 'encrypt-resource', resource: { original_type: 'transaction', algorithm: 'AEAD_AES_256_GCM', ciphertext, nonce, associated_data: associatedData } });
 }
 
 function signedHeaders(body: string, serial = publicKeyId) {
@@ -72,7 +77,7 @@ function signedHeaders(body: string, serial = publicKeyId) {
 
 describe('official WeChat payment verification', () => {
   it('sends a stable refund number and verifies the signed provider response', async () => {
-    const body=JSON.stringify({refund_id:'refund-test',status:'PROCESSING'});
+    const body=JSON.stringify({refund_id:'refund-test',status:'PROCESSING',transaction_id:'original-payment',out_refund_no:'stable-refund',amount:{refund:1001,total:1001,currency:'CNY'}});
     const signed=signedHeaders(body);
     const fetchMock=vi.fn().mockResolvedValue(new Response(body,{status:200,headers:{
       'Wechatpay-Serial':signed.serial,'Wechatpay-Timestamp':signed.timestamp,
@@ -85,7 +90,7 @@ describe('official WeChat payment verification', () => {
   });
   it('refuses an unsigned refund success response',async()=>{
     vi.stubGlobal('fetch',vi.fn().mockResolvedValue(new Response('{"refund_id":"forged","status":"SUCCESS"}',{status:200})));
-    await expect(wechat.queryWechatRefund('stable-refund')).rejects.toThrow('signature verification failed');
+    await expect(wechat.queryWechatRefund('stable-refund')).rejects.toThrow(/signature/i);
   });
   it('uses the Mini Program AppID and bound payer, then signs native checkout parameters', async () => {
     const body = JSON.stringify({ prepay_id: 'prepay-test' });
@@ -113,7 +118,7 @@ describe('official WeChat payment verification', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{"prepay_id":"forged"}', { status: 200 })));
     await expect(wechat.createWechatMiniProgram({ outTradeNo: 'attempt-123', amountCents: 1234,
       description: 'Competition', notifyUrl: 'https://example.com/notify', openid: 'payer-openid',
-    })).rejects.toThrow('signature verification failed');
+    })).rejects.toThrow(/signature/i);
   });
   it('requires a complete merchant and WeChat Pay public-key configuration', () => {
     expect(wechat.wechatConfigured()).toBe(true);
@@ -152,5 +157,101 @@ describe('official WeChat payment verification', () => {
       .sign(platformPrivateKey, 'base64');
     expect(wechat.handleWechatCallback(body, { ...headers, timestamp, signature }))
       .toEqual({ ok: false });
+  });
+});
+
+
+describe('shared WeChat adapter boundaries', () => {
+  it('does not issue an H5 request without the product switch', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    await expect(wechat.createWechatH5({ outTradeNo: 'attempt-h5', amountCents: 1234,
+      description: 'Checkout', notifyUrl: 'https://example.com/notify', payerClientIp: '203.0.113.1',
+    })).rejects.toThrow('H5 Pay is not configured');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('uses the H5 provider URL only after explicitly enabling the product', async () => {
+    const previous = process.env.WECHAT_H5_ENABLED;
+    vi.stubEnv('WECHAT_H5_ENABLED', 'true');
+    try {
+      const h5Url = 'https://wx.tenpay.com/cgi-bin/mmpayweb-bin/checkmweb?prepay_id=test';
+      const body = JSON.stringify({ h5_url: h5Url });
+      const signed = signedHeaders(body);
+      const fetchMock = vi.fn().mockResolvedValue(new Response(body, { status: 200, headers: {
+        'Wechatpay-Serial': signed.serial, 'Wechatpay-Timestamp': signed.timestamp,
+        'Wechatpay-Nonce': signed.nonce, 'Wechatpay-Signature': signed.signature,
+      } }));
+      vi.stubGlobal('fetch', fetchMock);
+      expect(await wechat.createWechatH5({ outTradeNo: 'attempt-h5', amountCents: 1234,
+        description: 'Checkout', notifyUrl: 'https://example.com/notify', payerClientIp: '203.0.113.1',
+      })).toBe(h5Url);
+      expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toMatchObject({ appid: 'wx-test',
+        scene_info: { payer_client_ip: '203.0.113.1', h5_info: { type: 'Wap' } } });
+    } finally { vi.stubEnv('WECHAT_H5_ENABLED', previous); }
+  });
+
+  it('blocks Mini Program payment and AppID acceptance when its product is disabled', async () => {
+    const previous = process.env.WECHAT_MINI_PAY_ENABLED;
+    vi.stubEnv('WECHAT_MINI_PAY_ENABLED', 'false');
+    try {
+      expect(wechat.wechatMiniProgramPayConfigured()).toBe(false);
+      expect(wechat.isWechatPaymentAppId('wx-mini-test')).toBe(false);
+      await expect(wechat.createWechatMiniProgram({ outTradeNo: 'attempt-mini', amountCents: 1234,
+        description: 'Checkout', notifyUrl: 'https://example.com/notify', openid: 'payer-openid',
+      })).rejects.toThrow('not configured');
+    } finally { vi.stubEnv('WECHAT_MINI_PAY_ENABLED', previous); }
+  });
+
+  it.each([
+    { appid: 'wx-other' },
+    { mchid: '1900000002' },
+    { amount: { total: 0, currency: 'CNY' } },
+    { amount: { total: 1234, currency: 'USD' } },
+    { amount: undefined },
+  ])('rejects a signed notification with invalid merchant or amount %#', (overrides) => {
+    const body = encryptedCallbackBody(overrides);
+    expect(wechat.handleWechatCallback(body, signedHeaders(body))).toEqual({ ok: false });
+  });
+
+  it('surfaces a forged query response as an error, not an unpaid order', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ trade_state: 'SUCCESS' }), { status: 200 })));
+    await expect(wechat.queryWechatOrder('M_test_1')).rejects.toThrow(/signature/i);
+  });
+
+  it('returns null only for a signed missing-order response', async () => {
+    const body = JSON.stringify({ code: 'ORDER_NOT_EXIST', message: 'not found' });
+    const signed = signedHeaders(body);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(body, { status: 404, headers: {
+      'Wechatpay-Serial': signed.serial, 'Wechatpay-Timestamp': signed.timestamp,
+      'Wechatpay-Nonce': signed.nonce, 'Wechatpay-Signature': signed.signature,
+    } })));
+    expect(await wechat.queryWechatOrder('M_test_1')).toBeNull();
+  });
+
+  it('reads later transport mocks through an already used adapter', async () => {
+    const body = JSON.stringify({ out_trade_no: 'M_test_1', trade_state: 'SUCCESS', transaction_id: '4200001',
+      appid: 'wx-test', mchid: '1900000001', amount: { total: 1234, currency: 'CNY' } });
+    const signed = signedHeaders(body);
+    const fetchMock = vi.fn().mockResolvedValue(new Response(body, { status: 200, headers: {
+      'Wechatpay-Serial': signed.serial, 'Wechatpay-Timestamp': signed.timestamp,
+      'Wechatpay-Nonce': signed.nonce, 'Wechatpay-Signature': signed.signature,
+    } }));
+    vi.stubGlobal('fetch', fetchMock);
+    expect(await wechat.queryWechatOrder('M_test_1')).toMatchObject({ paid: true, txn: '4200001' });
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
+  it('keeps an unconfigured provider disabled without throwing on import', async () => {
+    const previous = process.env.WECHAT_MCHID;
+    vi.stubEnv('WECHAT_MCHID', '');
+    try {
+      expect(wechat.wechatConfigured()).toBe(false);
+      expect(wechat.wechatMiniProgramPayConfigured()).toBe(false);
+      expect(wechat.verifyWechatSignature({}, '')).toBe(false);
+      await expect(wechat.createWechatNative({ outTradeNo: 'disabled', amountCents: 1,
+        description: 'Checkout', notifyUrl: 'https://example.com/notify',
+      })).rejects.toThrow('not configured');
+    } finally { vi.stubEnv('WECHAT_MCHID', previous); }
   });
 });

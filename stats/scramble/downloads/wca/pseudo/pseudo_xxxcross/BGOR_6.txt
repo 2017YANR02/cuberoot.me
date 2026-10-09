@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxxcross / BGOR / bin 6
-# Population in this bin: 295
+# Population in this bin: 298
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 6373001,U D2 F U' L' F2 D R2 L D' L2 D' F2 R2 F2 U F2 R2 D,B,Rumia Open 2014 (2014-03-29~30),333 R1 A E2
@@ -155,7 +155,7 @@
 4495543001,D2 F2 U' B2 R2 D' F2 L R F2 R' B R2 B2 F' L2 U B',G,Cube Against Cancer Edmond 2025 (2025-02-16),333 R1 B #5
 2609415001,L U' F R2 B2 L2 D2 B L2 B' D' L' F2 L D U' L2 B F2,O,Cube Carnival Bangladesh 2023 (2023-03-31),333oh Final B E2
 3767508001,U2 F2 D' F2 R2 U' L2 D' B2 D2 F2 B R2 U2 F' U' B2 R U2 R2,O,Bucharest Cubing May B 2024 (2024-05-19),333oh R2 A #3
-2659286001,L' U2 R2 B R2 B2 L2 B' D2 L2 R2 D B F' U2 B U2 F',B,DC Open April Saturday 2023 (2023-04-22),333 R1 G #3
+5844536001,L' D R F' U2 B' U2 F U2 D' L2 D' F2 D2 F2 D2 B' R',O,Kedah Cube Open 2026 (2026-09-26),333oh Final A #4
 2686675001,L2 R U2 L2 R' F2 R F2 D' R' D2 L2 U2 B L F2 R' F2 D',O,Chilling in Canberra 2023 (2023-05-06~07),333oh R1 B #3
 2727996001,L2 R2 B' F' L2 F L2 U F L2 R' U2 L D' F U2 B U2,G,BC Spring Solving A 2023 (2023-05-21),333 R1 B #4
 2785433011,B R2 U2 B2 F2 R2 U2 F D2 F L' D' F' R2 F' R' F L2 R2 U2 L,B,Titan Blind Open 2023 (2023-06-03),333mbf Final A #1
@@ -168,7 +168,7 @@
 2983292021,L' F2 D' U' R2 U F2 L2 B R' B' L R2 F U L2 B' L2,O,Tauranga Open 2023 (2023-08-19~20),333mbf Final B #1
 2987013001,R F L F R2 B R U2 B D2 F' R2 F' D2 F2 L',G,Baguio Speedcubing Open 2023 (2023-08-20),333 R1 B #1
 3011662001,D2 R2 B2 D' B2 D2 R2 D' L B2 U2 L B F2 R' D2 R2 D' B' D',R,August Bank Holiday Manchester 2023 (2023-08-26~27),333bf R1 A #3
-3017221001,U2 L2 B D' F2 R F2 D' L' U2 L2 U2 F' L2 F B2 U2 D' L,B,WA Open 2023 (2023-08-26~27),333bf Final B E1
+5833829001,R' B' R F U2 R' D2 R D2 F2 R2 D L' D2 L R2 F2 D',R,Roswell Rumble Fall 2026 (2026-09-19),333 R1 D #5
 3024785001,R' U' F L' B2 L' U2 L2 D2 R' F2 L F' L2 R' D' L2 F R2 D' F' R' B' R' U' F,B,Singapore Silent September 2023 (2023-09-02),333fm Final A #1
 3029161001,F U' F2 B R D2 L' B' D L2 D2 L2 F2 D' F2 R2 U,B,Venzone Speedcubing 2023 (2023-09-02),333 R2 A #3
 5146314001,F' L' D2 B U2 B' U2 B R2 U2 R' U R' B' D,B,Alfredo Iriarte Bogotá 2025 (2025-11-01),333 Final B #3

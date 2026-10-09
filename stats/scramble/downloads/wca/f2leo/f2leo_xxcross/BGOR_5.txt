@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxcross / BGOR / bin 5
-# Population in this bin: 251
+# Population in this bin: 255
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 5433363044,D' R' B2 D' L F' U2 B' U2 R' D2 L U2 D2 L F2 R U2 L B,O,BrizZon Side Open II 2026 (2026-03-07~08),333mbf Final A #2
@@ -53,7 +53,7 @@
 5167573001,F' B2 D' F' R2 D L B2 L U' D2 R F2 R2 U2 B2 R2 L' F2,B,Guangzhou Small Cubes 2025 (2025-11-09),333 R2 D E1
 700700001,D F2 L2 U' F2 B' L' D2 L2 U R' U L2 U F2 D B2 L2 U2 L2,O,Medan Open 2018 (2018-01-27~28),333oh R1 A #2
 708988001,U2 D' B2 U' F' R U' R' B U B2 L2 U2 R2 F' U2 F' B2 L2,O,Ural Winter 2018 (2018-02-17~18),333 Final A #2
-5660738011,L' D' F2 R2 U L' B2 U' R B L' U2 B2 R' U2 F2 R B L B',R,Ileseum Cube Open 2026 (2026-05-24),333mbf Final A #1
+5844209001,B' D L' B D2 B2 L' R2 D' F2 U R2 U' B2 U2 R2 U L' B',G,Ribeirão ao Cubo 2026 (2026-09-19~20),333oh Final C #4
 720637001,F2 L R2 D2 R2 D L2 F2 R2 F2 L' D2 R F' L2 F,B,Takshashila Cube Open 2018 (2018-03-03),333oh R1 D #2
 724374001,L2 B' L' D' B2 U2 B U B2 D L2 F U2 B D2 R2 B L2,R,RGIT Cube Open 2018 (2018-03-10),333oh R1 A #4
 733249020,F2 U' B2 U2 L2 B2 F2 D F2 U2 F' D' F U' R2 F2 U' L F L B2,R,Nacionales Uruguayas UCHI 2018 (2018-03-24~25),333mbf Final B #2
@@ -158,7 +158,7 @@
 5669975001,R' B' L2 U2 D B2 D F L' F R F2 U2 R L' F2 R',B,ROC the Cube NY 2026 (2026-05-30),333 Final A E2
 3462225001,R D B' D R' B2 D2 R D2 B2 R2 D' R' B D' L B' U',O,DJ Sanghvi Cube Open 2024 (2024-01-28),333 R1 E #2
 3480140001,U2 B' R2 D2 B' F2 D2 F D' B' L R2 U' B' U B L2,R,Daegu Cold Winter 2024 (2024-02-03~04),333 R1 K #3
-3516189003,U B U B2 L2 U2 B L2 R' U2 L U B U L2 B' L2 U',G,Love Is Blind Lima 2024 (2024-02-18),333mbf Final A #1
+5846172001,D2 B2 R2 B2 R' F2 U2 L2 R' F2 L2 B' D2 R' F D2 F R2 B R,G,Tafalla Open 2026 (2026-09-26~27),333bf Final A #1
 3541715001,D L' U2 F2 U2 R' F2 D2 F' D' F' U2 B D F' R2 B2 F',G,Bora Bora Barra Summer 2024 (2024-02-24~25),333 R1 B #4
 3568005001,B F2 L D2 F2 D2 F2 R' B R' B F2 D' R D' B2 D2,O,Stevenage Newcomers Saturday 2024 (2024-03-09),333oh Final B E1
 3599761001,U' R2 D2 F D' F' B' L B2 L' B2 D B2 R2 U' D2 L2 D',O,DFW Megacomp 2024 (2024-03-16~17),333 R1 C #4
@@ -190,10 +190,10 @@
 5547713001,B D L2 F B2 L F' U R2 U2 D' L2 U' L2 B' U' B',R,Brockport Bash 2026 (2026-04-18),333 R2 A E2
 4279953001,D F R' F' R2 L2 D' R2 U' F' R2 F2 R2 F R2 F' U,B,Egypt Fall 2024 (2024-11-09),333 R2 C #5
 4325994001,B' L B' R2 U' R2 B D2 R2 U' F2 D F2 D' R2 D L' U,R,Minnesota Championship 2024 (2024-11-30~12-01),333 R2 A E2
-4359128001,R B' R2 U2 D' R2 F' D2 F' B2 L2 D' B2 D L2 D' L2 D R',O,Hanoi Winter 2024 (2024-12-14~15),333oh R1 B #2
+5846258001,L2 F' R2 L' F' B L D2 F2 U2 D' L2 U2 D B2 L' B' R2,O,Tafalla Open 2026 (2026-09-26~27),333 R1 B #3
 4366646001,F B2 D B' U2 L U D2 R U2 L2 U2 B2 R U2 R' D2 F2 D L,G,Avenida Chile XVIII 2024 (2024-12-15),333 Final B #5
 4473699001,U2 F2 D L2 U' F2 L2 U L2 D B F' L' D' R2 B R B R,B,Singapore Championship 2025 (2025-02-07~09),333 R3 A #4
-4486197001,B' D2 L2 F U' F2 R U R F2 U R2 U F2 R2 B2 D2 F,G,Cubing Returns Nagpur 2025 (2025-02-16),333 R1 D #2
+5854329001,F L' B2 L2 F D L' B2 D2 L F' U' D2 F2 D' R2 B2 R2,B,Balam Cubes Bekasi Comeback 2026 (2026-09-26~27),333 Final A E2
 4550827001,B2 F2 R2 D' B2 L2 B2 R2 D2 U R D L D' R' F' D B' R2,B,Bergen Spring 2025 (2025-03-08~09),333oh R2 B E1
 4559718001,B' R2 B U2 R2 B F2 L2 D2 L2 D' B' F2 U' L B2 U' L2 B R,O,Atlanta Algs at AIS 2025 (2025-03-15),333 Final B #5
 4606347001,L2 U2 L2 U R2 D F2 L' F2 L' F' D F2 L B2 R' B' R2,R,South Dakota Playhouse 2025 (2025-03-29),333oh Final A #2

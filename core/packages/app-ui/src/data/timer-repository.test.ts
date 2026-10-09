@@ -1,7 +1,9 @@
+import { resetTimerSyncSeed, timerSeedTicket } from '@cuberoot/shared/timer/sync-seed';
 import { describe, expect, it } from 'vitest';
 
 import {
   MAX_TIMER_BACKUP_BYTES,
+  resetTimerStoreSettings,
   TIMER_SCRAMBLE_CLICK_ACTIONS,
   activeTimerSolves,
   createTimerManualEntryDraft,
@@ -69,6 +71,88 @@ function repository(driver = new MemoryDriver()) {
 }
 
 describe('mobile timer repository contract', () => {
+  it('seed retries preserve position across failed, ambiguous and cancelled writes', async () => {
+    const { repo, driver } = repository();
+    await repo.updateSettings(current => resetTimerSyncSeed(current, 'seed'));
+    const ticket = timerSeedTicket((await repo.load()).settings)!;
+    driver.failWrites = true;
+    await expect(repo.commitSeed(ticket, () => true)).rejects.toThrow('disk full');
+    expect((await repo.load()).settings.syncSeedCounter).toBe(0);
+    driver.failWrites = false;
+    await expect(repo.commitSeed(ticket, () => false)).rejects.toThrow('cancelled');
+    driver.commitThenFailOnce = true;
+    await expect(repo.commitSeed(ticket, () => true)).rejects.toThrow('ambiguous');
+    expect((await repo.commitSeed(ticket, () => true)).settings.syncSeedCounter).toBe(1);
+    await repo.updateSettings(current => resetTimerSyncSeed(current));
+    await expect(repo.commitSeed(ticket, () => true)).rejects.toThrow('position changed');
+    expect((await repo.load()).settings.syncSeedCounter).toBe(0);
+  });
+  it('checks import ownership inside the repository queue before committing', async () => {
+    const { repo, driver } = repository();
+    const before = await repo.load();
+    const text = await repo.exportJson();
+    const count = driver.writeCount;
+    await expect(repo.importJson(text, () => false)).rejects.toThrow('Import cancelled');
+    expect(await repo.load()).toEqual(before);
+    expect(driver.writeCount).toBe(count);
+  });
+  it('appends imported groups atomically, keeps empty groups and leaves the original group active', async () => {
+    const { repo, driver } = repository(); const before = await repo.load();
+    const imported = [{ name: 'Imported', event: '222' as const, solves: [{ id:'incoming', event:'333' as const, timeMs: 1000, penalty:'ok' as const, ts: 10, scramble:'R' }] }, { name: 'Empty', solves: [] }];
+    driver.failWrites = true;
+    await expect(repo.importSessions(imported)).rejects.toThrow();
+    expect(await repo.load()).toEqual(before);
+    driver.failWrites = false;
+    const after = await repo.importSessions(imported);
+    expect(after.database.activeSessionId).toBe(before.database.activeSessionId);
+    expect(after.database.sessions.map(session => session.name)).toEqual(['Default','Imported','Empty']);
+    expect(after.database.dataBySession[after.database.sessions[1].id]['222']?.[0].event).toBe('222');
+    expect(after.database.dataBySession[after.database.sessions[2].id]).toEqual({});
+  });
+
+  it('saves a recorded online attempt in its original session and only updates its penalty on retry', async () => {
+    const { repo } = repository();
+    const original = (await repo.load()).database.activeSessionId;
+    const solve = { id: 'net-attempt', ts: 123, timeMs: 1000, penalty: 'ok' as const,
+      scramble: 'R', event: '333' as const, moves: [{ m: "R'", ts: 0 }] };
+    await repo.createSession('Another session', '333');
+    await repo.saveNetSolve(original, solve);
+    const other = (await repo.load()).database.activeSessionId;
+    await repo.saveNetSolve(other, { ...solve, ts: 999, moves: undefined, penalty: '+2' });
+    const data = await repo.load();
+    expect(data.database.activeSessionId).not.toBe(original);
+    expect(activeTimerSolves(data, '333')).toEqual([]);
+    await repo.activateSession(original);
+    expect(activeTimerSolves(await repo.load(), '333')).toEqual([{ ...solve, penalty: '+2' }]);
+  });
+
+  it('resets preferences in queue without changing solves, sessions, recovery, or host preferences', async () => {
+    const { repo, driver } = repository();
+    await repo.addSolve({ timeMs: 1234, penalty: 'ok', scramble: 'R', event: '333' });
+    await repo.updateSettings({ event: '222', language: 'zh', theme: 'dark', metronomeBpm: 600,
+      soundsEnabled: true, inspectionBeepAt: [5], keymap: { startStop: null }, dailySolveGoal: 50 });
+    const before = await repo.load();
+    driver.recovery = { marker: 'existing import recovery' };
+    await Promise.all([
+      repo.updateSettings({ language: 'en' }),
+      repo.updateSettings(resetTimerStoreSettings),
+      repo.addSolve({ timeMs: 2345, penalty: '+2', scramble: 'U', event: '333' }),
+    ]);
+    const after = await repo.load();
+    expect(after.database.sessions).toEqual(before.database.sessions);
+    expect(after.database.activeSessionId).toBe(before.database.activeSessionId);
+    expect(activeTimerSolves(after, '333').map(s => s.timeMs)).toEqual([1234, 2345]);
+    expect(after.settings).toMatchObject({ event: '222', language: 'en', theme: 'dark', metronomeBpm: 600,
+      soundsEnabled: false, inspectionBeepAt: [], keymap: {}, dailySolveGoal: null });
+    expect(driver.recovery).toEqual({ marker: 'existing import recovery' });
+    const restarted = repository(driver).repo;
+    expect((await restarted.load()).settings).toEqual(after.settings);
+    await restarted.updateSettings({ soundsEnabled: true });
+    driver.failWrites = true;
+    await expect(restarted.updateSettings(resetTimerStoreSettings)).rejects.toThrow('disk full');
+    expect((await restarted.load()).settings.soundsEnabled).toBe(true);
+  });
+
   it('persists reconstruction feedback without dropping moves or device provenance', async () => {
     const { repo } = repository();
     const data = await repo.addSolve({
@@ -285,9 +369,25 @@ describe('mobile timer repository contract', () => {
     expect((driver.data as TimerStoreData).settings).toMatchObject({
       showCubePreview: true,
       prefer3D: false,
+      timerFont: 'lcd', timerFontScale: 1, scrambleFont: 'liberation', scrambleFontScale: 1,
     });
   });
 
+  it('round-trips typography and normalizes invalid stored values without changing solves', async () => {
+    const driver = new MemoryDriver();
+    const { repo } = repository(driver);
+    await repo.addSolve({ timeMs: 12340, penalty: 'ok', scramble: 'R', event: '333' });
+    const fonts = { timerFont: 'sans', timerFontScale: 1.5, scrambleFont: 'mono', scrambleFontScale: 1.25 } as const;
+    await repo.updateSettings(fonts);
+    const loaded = await repository(driver).repo.load();
+    expect(loaded.settings).toMatchObject(fonts);
+    const solves = activeTimerSolves(loaded, '333');
+    (driver.data as TimerStoreData).settings = { ...loaded.settings,
+      timerFont: 'invalid' as 'sans', timerFontScale: Infinity, scrambleFontScale: 20 };
+    const normalized = await repository(driver).repo.load();
+    expect(normalized.settings).toMatchObject({ timerFont: 'lcd', timerFontScale: 1, scrambleFont: 'mono', scrambleFontScale: 2.5 });
+    expect(activeTimerSolves(normalized, '333')).toEqual(solves);
+  });
   it('updates penalty/comment and deletes one solve', async () => {
     const { repo } = repository();
     let data = await repo.addSolve({ timeMs: 1_000, penalty: 'ok', scramble: 'R', event: '333' });
@@ -699,4 +799,22 @@ describe('mobile timer repository contract', () => {
       failure: 'unknown-solve',
     });
   });
+});
+
+it('bulk deletes atomically from the captured session and preserves data on write failure', async () => {
+  const {repo,driver} = repository();
+  const initial = await repo.load();
+  const sourceId = initial.database.activeSessionId;
+  await repo.addSolve({event:'333',timeMs:1000,penalty:'ok',scramble:'R'});
+  const withSecond = await repo.addSolve({event:'333',timeMs:2000,penalty:'ok',scramble:'U'});
+  const ids = activeTimerSolves(withSecond,'333').map(solve => solve.id);
+  const other = await repo.createSession('Other','333');
+  const targetId = other.database.activeSessionId;
+  driver.failWrites = true;
+  await expect(repo.deleteSolves(sourceId,'333',ids)).rejects.toThrow();
+  expect((driver.data as TimerStoreData).database.dataBySession[sourceId]['333']).toHaveLength(2);
+  driver.failWrites = false;
+  const result = await repo.deleteSolves(sourceId,'333',ids);
+  expect(result.database.activeSessionId).toBe(targetId);
+  expect(result.database.dataBySession[sourceId]['333']).toEqual([]);
 });

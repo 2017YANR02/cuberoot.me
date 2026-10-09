@@ -1,8 +1,8 @@
 # Scramble samples — 123 / fbsquare / O / bin 0
-# Population in this bin: 819
+# Population in this bin: 829
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 6864001,F' D2 F R' D' R' F2 R U2 B D' L2 U2 F2 R2 F2 R' F2 R2,O,Carroll Spring Open 2014 (2014-03-29),333oh R1 A #4
@@ -38,7 +38,7 @@
 199813001,F U2 B D2 L2 F' D2 F2 R2 F L B D F' R U L2 D2 F U',O,Polish Championship 2015 (2015-10-09~11),333 R1 F E1
 5419233001,D' L B' D' R2 F2 D2 B2 D2 U F2 L2 F' R2 F R' B D' F2,O,Summer of the Cube Huancayo 2026 (2026-02-28~03-01),333oh R1 A E1
 210399001,U' R' D2 R2 D' R' F2 U L' B D B' U2 F D2 L2 F D2 B2,O,Munich Open 2015 (2015-10-31~11-01),333 R2 A E1
-5809180001,D' R' B' F2 L2 D U2 B2 R2 U R D2 R U2 L U2 L2 B',O,Mololoa Open 2026 (2026-08-29~30),333 R1 A E2
+5855841007,R' B2 R' D R' D B U2 D F' U2 R' U2 D2 F2 U2 R' D' B R2,O,Finnish Quiet Championship 2026 (2026-10-03),333mbf Final A #1
 2110370001,R D R2 D2 F2 R2 D' L2 D2 F U' B L B L2 D B' R2 B2,O,Lincoln Summer 2022 (2022-08-20~21),333oh Final B #5
 4585669001,F2 R' L' U' F' R2 D' L2 B' R U2 L2 F2 B2 D F2 D L2 U2,O,Catskills Spring 2025 (2025-03-23),333 Final A #2
 218138001,D2 R2 B R2 U2 F D2 B F' U F2 L B2 R' B' U R2 U' F2 L2 B' L',O,La Plata Open 2015 (2015-11-14~15),333bf R1 A #2

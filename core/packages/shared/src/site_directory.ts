@@ -6,7 +6,7 @@ export const HOME_MEMBER_SECTION_IDS = { enterprise: 'enterprise-members', indiv
 // Complete account directory, including entries hidden by account permissions.
 export const ACCOUNT_CARD_GROUP_ID = 'account';
 export const ACCOUNT_CARD_IDS = [
-  'pet', 'wca', 'recon', 'link-wca', 'progress', 'learning-center', 'enterprise',
+  'pet', 'wca', 'recon', 'link-wca', 'identity-verification', 'progress', 'learning-center', 'enterprise',
   'onboarding', 'friends', 'vault', 'notifications', 'mcp', 'users-admin', 'submissions',
 ] as const;
 
@@ -45,13 +45,13 @@ export const SITE_DIRECTORY_TEXTS = {
   liveScripts: { en: 'Live Scripts', zh: '直播话术' },
   documents: { en: 'Docs', zh: '文档' },
   interview: { en: '面试', zh: '面试' },
-  partnership: { en: '合作提案', zh: '合作提案' },
+  partnership: { en: 'Business plan', zh: '商业计划书' },
   spreadsheets: { en: 'Sheets', zh: '表格' },
   algdb: { en: 'Algorithms', zh: '公式' },
   wiki: { en: 'Wiki', zh: 'Wiki' },
   notation: { en: 'Notation', zh: '记号' },
   quiz: { en: 'Quiz', zh: '问答' },
-  sitesDirectory: { en: 'Web', zh: '网站' },
+  sitesDirectory: { en: 'Web Directory', zh: '网站导航' },
   mosaic: { en: 'Mosaic', zh: '马赛克' },
   worldBests: { en: 'World Bests', zh: '非官方纪录' },
   blog: { en: 'Blog', zh: '博客' },
@@ -216,7 +216,7 @@ export const SITE_DIRECTORY_GROUPS = [
       { id: 'live-scripts', href: '/teachers/scripts', internal: true, tier: 'medium', nameKey: 'liveScripts' },
       { id: 'meet', href: '/meet', internal: true, tier: 'medium', nameKey: 'meet' },
       { id: 'documents', href: '/docs', internal: true, tier: 'medium', nameKey: 'documents' },
-      { id: 'partnership', href: '/partnership', internal: true, tier: 'medium', nameKey: 'partnership', lockedForNonAdmin: true, miniProgramAction: 'disabled', miniProgramNote: { en: 'View on the website with an administrator account.', zh: '请在网站使用管理员账号查看' } },
+      { id: 'partnership', href: '/bp', internal: true, tier: 'medium', nameKey: 'partnership', lockedForNonAdmin: true, miniProgramAction: 'disabled', miniProgramNote: { en: 'View on the website with an administrator account.', zh: '请在网站使用管理员账号查看' } },
       { id: 'interview', href: '/docs/edit?id=b769490d-292b-4423-8e83-3ada43c1d96b', internal: true, tier: 'medium', nameKey: 'interview', lockedForNonAdmin: true, miniProgramAction: 'disabled', miniProgramNote: { en: '请在网站使用管理员账号查看', zh: '请在网站使用管理员账号查看' } },
       { id: 'spreadsheets', href: '/sheets', internal: true, tier: 'medium', nameKey: 'spreadsheets' },
       {

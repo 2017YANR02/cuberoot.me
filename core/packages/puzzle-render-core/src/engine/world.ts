@@ -19,6 +19,8 @@ import SkewbCube from "@cuberoot/puzzle-render-core/engine/skewb/SkewbCube";
 import PyraCube from "@cuberoot/puzzle-render-core/engine/pyra/PyraCube";
 import MegaminxCube from "@cuberoot/puzzle-render-core/engine/mega/MegaminxCube";
 import FtoCube from "./fto/FtoCube";
+import GhostCube from "./ghost/GhostCube";
+import { GHOST_DISPLAY_QUATERNION } from "./ghost/ghostModel";
 import ClockBoard from "./clock/clockBoard";
 import { APEX_UP_QUAT } from "@cuberoot/puzzle-render-core/engine/pyra/pyraGeometry";
 import FaceHints, { IVY_CORNER_HINTS, DINO_CORNER_HINTS, REDI_CORNER_HINTS, REX_CORNER_HINTS, HELI_EDGE_HINTS, SKEWB_CORNER_HINTS, PYRA_VERTEX_HINTS, MEGA_FACE_HINTS, MEGA_HINT_LAYOUT, FTO_FACE_HINTS } from "./face_hints";
@@ -38,7 +40,7 @@ export interface SmplxBodyAsset { geometry: THREE.BufferGeometry; heightM: numbe
  *  mesh-less Group; the picture comes from the DOM overlay `SimClockBoard`. It still
  *  lives here so `world.cube` / the twister contract hold and the player controls drive
  *  it unchanged. */
-export type PuzzleKind = number | 'sq1' | 'sq2' | 'sq4' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'skewb' | 'pyraminx' | 'megaminx' | 'fto' | 'mirror' | 'mirror2' | 'clock';
+export type PuzzleKind = number | 'sq1' | 'sq2' | 'sq4' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'skewb' | 'pyraminx' | 'megaminx' | 'fto' | 'ghost' | 'mirror' | 'mirror2' | 'clock';
 
 export default class World<HandsRig extends WorldHands = WorldHands> {
   public width = 1;
@@ -50,7 +52,7 @@ export default class World<HandsRig extends WorldHands = WorldHands> {
   /** Polymorphic cube. NxN puzzles use Cube; SQ1 uses Sq1Cube; Ivy uses IvyCube;
    *  Dino uses DinoCube. Consumers that reach into NxN-specific fields
    *  (instancedRenderer, table, locks) must first check `world.puzzleKind` is a number. */
-  public cube!: Cube | Sq1Cube | SquareFamilyCube | IvyCube | DinoCube | RediCube | RexCube | HeliCube | GearCube | SkewbCube | PyraCube | MegaminxCube | FtoCube | ClockBoard;
+  public cube!: Cube | Sq1Cube | SquareFamilyCube | IvyCube | DinoCube | RediCube | RexCube | HeliCube | GearCube | SkewbCube | PyraCube | MegaminxCube | FtoCube | GhostCube | ClockBoard;
 
   public ambient: THREE.AmbientLight;
   public directional: THREE.DirectionalLight;
@@ -71,6 +73,7 @@ export default class World<HandsRig extends WorldHands = WorldHands> {
   private pyraCube: PyraCube | null = null;
   private megaCube: MegaminxCube | null = null;
   private ftoCube: FtoCube | null = null;
+  private ghostCube: GhostCube | null = null;
   /** 魔表:mesh-less「引擎」,只为撑住 world.cube / twister 契约(画面在 DOM 层)。 */
   private clockBoard: ClockBoard | null = null;
   /** Mirror Cube (Bump Cube) — a Cube with non-uniform geometry, keyed by order
@@ -120,6 +123,7 @@ export default class World<HandsRig extends WorldHands = WorldHands> {
   public megaHints!: FaceHints;
   /** FTO 8 face-turn labels at the octahedron face centers. */
   public ftoHints!: FaceHints;
+  public ghostHints!: FaceHints;
 
   constructor() {
     this.scene = new THREE.Scene();
@@ -186,6 +190,9 @@ export default class World<HandsRig extends WorldHands = WorldHands> {
     // reaches ≈3.2·SIZE at its vertices, so float the labels past them (3.4) + shrink.
     this.ftoHints = new FaceHints(SIZE, FTO_FACE_HINTS, 3.4, 0.95);
     this.scene.add(this.ftoHints);
+    this.ghostHints = new FaceHints(SIZE, undefined, 3.0);
+    this.ghostHints.quaternion.copy(GHOST_DISPLAY_QUATERNION);
+    this.scene.add(this.ghostHints);
     this.setPuzzle(3);
   }
 
@@ -203,6 +210,7 @@ export default class World<HandsRig extends WorldHands = WorldHands> {
       // SQ2/SQ4 instances are cached. Settle their global tween before taking the
       // cube off-scene so it cannot keep mutating invisibly and reappear polluted.
       if (this.cube instanceof SquareFamilyCube) this.cube.finishAnimations();
+      if (this.cube instanceof GhostCube) this.cube.twister.finish();
       this.scene.remove(this.cube);
     }
     if (kind === 'sq1') {
@@ -334,6 +342,14 @@ export default class World<HandsRig extends WorldHands = WorldHands> {
       // the SQ1 rim-light rig (51 solid wedge cells, many oblique facets).
       if (this.controller) this.controller.disable = true;
       this._ensureSq1Lights();
+    } else if (kind === 'ghost') {
+      if (this.ghostCube == null) {
+        this.ghostCube = new GhostCube();
+        this.ghostCube.callbacks.push(this.callback);
+      }
+      this.cube = this.ghostCube;
+      if (this.controller) this.controller.disable = true;
+      this._ensureSq1Lights();
     } else if (kind === 'clock') {
       if (this.clockBoard == null) {
         this.clockBoard = new ClockBoard();
@@ -386,6 +402,11 @@ export default class World<HandsRig extends WorldHands = WorldHands> {
   disposeSquareFamilyCubes(): void {
     for (const cube of Object.values(this.squareFamilyCubes)) cube?.dispose();
     this.squareFamilyCubes = {};
+  }
+
+  disposeGhostCube(): void {
+    this.ghostCube?.dispose();
+    this.ghostCube = null;
   }
 
   /** Legacy property — kept for back-compat. Number kinds only. */
@@ -568,11 +589,12 @@ export default class World<HandsRig extends WorldHands = WorldHands> {
     const isSkewb = this.puzzleKind === 'skewb';
     const isMega = this.puzzleKind === 'megaminx';
     const isFto = this.puzzleKind === 'fto';
+    const isGhost = this.puzzleKind === 'ghost';
     // Dino/Redi/Rex/Heli/Skewb cubes span [-2,2]·SIZE (corners at ~3.5·SIZE); the megaminx
     // dodecahedron reaches ~3.0·SIZE at its vertices; the FTO octahedron ~3.2·SIZE; ~4.0
     // frames them to the NxN-3 fill.
     // 手开着时把 3x3 取景拉宽(手/前臂环在魔方外围,SIZE*3 会顶出画框)。
-    const refHalf = isSquare ? SIZE * 4.6 : (isDino || isRedi || isRex || isHeli || isGear || isSkewb || isMega || isFto) ? SIZE * 4.0 : handsOn ? SIZE * 3.9 : SIZE * 3;
+    const refHalf = isSquare ? SIZE * 4.6 : (isDino || isRedi || isRex || isHeli || isGear || isSkewb || isMega || isFto || isGhost) ? SIZE * 4.0 : handsOn ? SIZE * 3.9 : SIZE * 3;
     const distance = refHalf * this.perspective * dolly;
     this.camera.position.x = this.panX;
     this.camera.position.y = this.panY;
@@ -589,7 +611,7 @@ export default class World<HandsRig extends WorldHands = WorldHands> {
     // = 魔方前 960)会把整个躯干裁掉只剩残臂。near 面位于世界 z=+margin×SIZE
     // (轴向情形,与 dolly 无关)—— 人体最深点(肩背/头后)z 可达 ~50×SIZE,
     // margin 40 恰在头中间切一刀(2026-07-12 拉远「无头人」实测),58 整体罩住。
-    const nearMargin = handsOn ? (this.handsFullBodyWanted ? 58 : 15) : isSquare || isDino || isRedi || isRex || isHeli || isGear || isSkewb || isMega || isFto ? 5 : 4;
+    const nearMargin = handsOn ? (this.handsFullBodyWanted ? 58 : 15) : isSquare || isDino || isRedi || isRex || isHeli || isGear || isSkewb || isMega || isFto || isGhost ? 5 : 4;
     this.camera.near = Math.max(distance - SIZE * nearMargin, SIZE * 0.4);
     // 全身人物:人体站在魔方后方(−z 纵深 ~1m ≈ 数十 SIZE),far 随开关放宽
     // (按意愿而非加载完成算 —— 资产异步就位时不再有 resize 时机)。swap 背视

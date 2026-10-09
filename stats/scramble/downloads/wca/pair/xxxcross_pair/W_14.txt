@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / W / bin 14
-# Population in this bin: 106
-# Samples listed: 106 (all entries in this bin)
+# Population in this bin: 107
+# Samples listed: 107 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 264001,B2 L' R2 F2 U2 B2 F2 L B2 U' L' R B' U' B2 D' F L2 D R2,W,Montréal Open 2014 (2014-03-15),333 R2 B #4
@@ -111,3 +111,4 @@
 5746649001,B L U' F' D' R' F R U2 F U2 R2 D2 B2 L F2 L F2 D',W,Cube4fun Lublin Summer 2026 (2026-07-12),333 R1 A E1
 5800924001,L' U' R' L2 U L' U2 R' F B' U2 R D2 B2 R B2 L F2 R2 F2,W,Rocky Mountain Championship 2026 (2026-08-21~23),333 R1 E #1
 5820354024,B' D2 F2 R2 B L2 R2 B L' B2 D R D U' B2 R' D2 L B' D',W,New York Big and Quiet Championship 2026 (2026-09-05~07),333mbf Final A #2
+5852292001,L2 F2 R2 F2 U2 B' F' L2 R' U R' D B L' B' L2 D2 F2 R,W,GAN WCA African Championship 2026 (2026-09-24~27),333 R1 D E2

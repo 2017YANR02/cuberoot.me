@@ -1,13 +1,13 @@
 # Scramble samples — eo / eo_xxxcross / BG / bin 8
-# Population in this bin: 265
+# Population in this bin: 266
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 23678001,D R2 U2 R2 D2 F2 U B2 F2 R U F' D F U' F' D,B,San Diego Summer Splash 2014 (2014-05-24),333oh R1 A E2
 30610001,U' R2 D' R2 F2 R2 D B2 U' B L U2 L B2 U F2 L2 R2 B' U2,B,Campeonato UNI-Rubik 2014 (2014-06-20~21),333oh R1 C E2
-54190001,L2 U' L2 D' B2 D L2 R2 U F' D' F2 D' U2 L F2 U' B' L2 D B,B,Kharkiv Cube Day 2014 (2014-08-30),333bf Final A #3
+5846172001,D2 B2 R2 B2 R' F2 U2 L2 R' F2 L2 B' D2 R' F D2 F R2 B R,G,Tafalla Open 2026 (2026-09-26~27),333bf Final A #1
 5368054010,F L B' D2 L2 B D2 B L R' U R2 B2 D B' U' B L' F2,G,Bigs & Blind CBBA 2026 (2026-02-07),333mbf Final A #2
 5514017001,R' U2 F2 L D' L' F B2 D F2 B2 D' R2 U2 R2 U2 B R' F,G,Otsu Biwako Spring 2026 (2026-04-11),333 R1 B #4
 108209001,D B' R B2 D B' R F R' L' D2 R2 B R2 L2 F2,B,San Pedro de Macoris Open 2015 (2015-02-08),333 R2 B #2

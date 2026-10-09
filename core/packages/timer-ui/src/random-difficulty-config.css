@@ -71,10 +71,17 @@
   opacity: 0.7;
 }
 
-.timer-random-difficulty-help-trigger:hover,
 .timer-random-difficulty-help-trigger[aria-expanded="true"] {
   color: var(--foreground);
   opacity: 1;
+}
+
+/* Touch browsers retain :hover after tapping; closed hints must return to muted. */
+@media (hover: hover) and (pointer: fine) {
+  .timer-random-difficulty-help-trigger:hover {
+    color: var(--foreground);
+    opacity: 1;
+  }
 }
 
 .timer-random-difficulty-help-trigger:focus-visible {
@@ -83,10 +90,10 @@
 }
 
 .timer-random-difficulty-help-panel {
-  /* anchored-panel: clamped */
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
+  /* Body portal escapes the source row's scrolling clip; usePanelClamp keeps it in view. */
+  position: fixed;
+  top: var(--difficulty-help-top, 0px);
+  left: var(--difficulty-help-left, 0px);
   z-index: 100;
   width: max-content;
   min-width: min(260px, calc(100vw - 32px));

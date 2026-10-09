@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / BG / bin 2
-# Population in this bin: 402
+# Population in this bin: 406
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 5484523001,R' F2 R2 U' R F R' B L' F2 U2 R B2 R D2 L2 D2 B U,B,Cube Against Cancer Pittsburgh 2026 (2026-03-28),333 R1 B #4
@@ -41,7 +41,7 @@
 3331165001,U2 L2 F2 L2 U R2 D B D L F R F L2 B F' U' L2 U,B,Manhattan Mini C 2023 (2023-12-10),333bf Final C #1
 342445001,L' R2 F2 R' U2 B2 U2 L2 D L' F' L' U B2 L D2 U' F',B,SSN Cube Open 2016 (2016-08-05~06),333 R1 H #4
 343083001,L2 D' F2 D2 U B2 R2 D U' L B' L U L' U L' B' F2,G,SSN Cube Open 2016 (2016-08-05~06),333oh R1 A #3
-3842956001,F2 L' F' L' U2 R2 U R' U2 D2 R' U2 L U2 R B2 L F U',B,Berkeley Summer 2024 (2024-06-09),333oh R1 C #4
+5842662001,L F2 U' R D2 R2 B F' R2 U2 B' L B2 L U' R F' R',G,New Cubing Season Athens A 2026 (2026-09-19),333 R1 A #5
 5804944001,B2 U2 B2 R F2 U B L2 D2 L R2 U2 B' D2 R2 F2 B D',B,Calgary Fall 2026 (2026-08-29),333 R2 A #3
 413061001,L2 R2 U' B2 D' U B2 U' F2 U' R B2 L F' L B2 F' D' L2 D,G,2FTI San Diego 2016 (2016-12-10),333oh R2 B #2
 4558189001,D2 L D F2 L2 F' L' F2 U B2 U R2 U' L2 D L' F2 D' L',B,Montemurlo Speedcubing 2025 (2025-03-08~09),333 R1 A #1

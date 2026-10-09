@@ -7,18 +7,6 @@ import './infrastructure.css';
 
 type Lang = 'zh' | 'en';
 
-type LocalizedText = { zh: string; en: string };
-
-type EquipmentGroup = {
-  category: LocalizedText;
-  items: readonly {
-    name: LocalizedText;
-    detail: LocalizedText;
-    amount: LocalizedText;
-    href?: string;
-  }[];
-};
-
 const LAYERS = [
   {
     index: '01',
@@ -82,164 +70,6 @@ const PUBLIC_SPECS = [
   { label: { zh: '内存', en: 'Memory' }, value: { zh: '16 GiB', en: '16 GiB' } },
   { label: { zh: '系统盘', en: 'System disk' }, value: { zh: '80 GiB', en: '80 GiB' } },
   { label: { zh: '网络上限', en: 'Network ceiling' }, value: { zh: '200 Mbps', en: '200 Mbps' } },
-] as const;
-
-const EXPENSES = [
-  {
-    name: { zh: '阿里云服务器', en: 'Alibaba Cloud server' },
-    amount: { zh: '¥300/月', en: 'CN¥300/month' },
-    purpose: { zh: '主站、API 与数据服务', en: 'Primary web, API, and data services' },
-  },
-  {
-    name: { zh: 'Codex Pro', en: 'Codex Pro' },
-    amount: { zh: 'US$200/月', en: 'US$200/month' },
-    purpose: { zh: 'AI 开发工具', en: 'AI development tooling' },
-  },
-  {
-    name: { zh: 'Apple 开发者计划', en: 'Apple Developer Program' },
-    amount: { zh: '¥688/年', en: 'CN¥688/year' },
-    purpose: { zh: 'iOS App 签名与发布', en: 'iOS app signing and distribution' },
-  },
-  {
-    name: { zh: 'Vercel Pro', en: 'Vercel Pro' },
-    amount: { zh: 'US$20/月', en: 'US$20/month' },
-    purpose: { zh: 'Web 构建与托管', en: 'Web builds and hosting' },
-  },
-  {
-    name: { zh: '微信开放平台认证', en: 'WeChat Open Platform verification' },
-    amount: { zh: '¥300/年', en: 'CN¥300/year' },
-    purpose: {
-      zh: '维持网站应用的微信扫码登录与电脑端直发微信能力',
-      en: 'Maintains WeChat QR sign-in and direct desktop sharing for the Website App',
-    },
-  },
-  {
-    name: { zh: '剪映', en: 'CapCut Chinese version' },
-    amount: { zh: '¥208/年', en: 'CN¥208/year' },
-    purpose: { zh: '视频剪辑软件', en: 'Video editing software' },
-  },
-] as const;
-
-const EQUIPMENT_GROUPS: readonly EquipmentGroup[] = [
-  {
-    category: { zh: '影像设备', en: 'Imaging' },
-    items: [
-      {
-        name: { zh: 'Canon EOS R5 Mark II', en: 'Canon EOS R5 Mark II' },
-        detail: { zh: '当前相机机身', en: 'Current camera body' },
-        amount: { zh: '¥24,000', en: 'CN¥24,000' },
-      },
-      {
-        name: { zh: 'Canon EOS R6', en: 'Canon EOS R6' },
-        detail: { zh: '曾用相机机身，由 Yihong 的妈妈提供', en: "Former camera body, provided by Yihong's mom" },
-        amount: { zh: '¥14,000', en: 'CN¥14,000' },
-      },
-      {
-        name: { zh: 'Canon EF 100–400mm f/4.5–5.6L IS II USM', en: 'Canon EF 100–400mm f/4.5–5.6L IS II USM' },
-        detail: { zh: '长焦镜头', en: 'Telephoto lens' },
-        amount: { zh: '约 ¥16,000', en: 'Approx. CN¥16,000' },
-      },
-      {
-        name: { zh: '丛林迷彩炮衣', en: 'Jungle-camouflage lens cover' },
-        detail: { zh: '镜头保护与伪装', en: 'Lens protection and camouflage' },
-        amount: { zh: '¥300', en: 'CN¥300' },
-      },
-      {
-        name: { zh: 'Canon EF–EOS R 卡口适配器', en: 'Canon EF–EOS R mount adapter' },
-        detail: { zh: 'EF 镜头转 RF 卡口', en: 'Adapts EF lenses to the RF mount' },
-        amount: { zh: '¥600', en: 'CN¥600' },
-      },
-      {
-        name: { zh: 'Canon BR-E1 无线遥控快门', en: 'Canon BR-E1 wireless remote control' },
-        detail: { zh: '无线相机快门控制', en: 'Wireless camera shutter control' },
-        amount: { zh: '¥278', en: 'CN¥278' },
-      },
-      {
-        name: { zh: 'SmallRig 斯莫格 CT210', en: 'SmallRig CT210' },
-        detail: { zh: '三脚架', en: 'Tripod' },
-        amount: { zh: '¥677', en: 'CN¥677' },
-      },
-    ],
-  },
-  {
-    category: { zh: '收音与监听', en: 'Audio and monitoring' },
-    items: [
-      {
-        name: { zh: 'DJI Mic 3', en: 'DJI Mic 3' },
-        detail: { zh: '两收一发', en: 'Two receivers and one transmitter' },
-        amount: { zh: '¥2,299', en: 'CN¥2,299' },
-      },
-      {
-        name: { zh: 'DJI Mic Mini', en: 'DJI Mic Mini' },
-        detail: { zh: '两发一收', en: 'Two transmitters and one receiver' },
-        amount: { zh: '¥1,096.5', en: 'CN¥1,096.5' },
-      },
-      {
-        name: { zh: 'DJI Mic 2', en: 'DJI Mic 2' },
-        detail: { zh: '一收一发', en: 'One receiver and one transmitter' },
-        amount: { zh: '¥1,499', en: 'CN¥1,499' },
-      },
-      {
-        name: { zh: 'Newmine 无线监听耳机', en: 'Newmine wireless monitoring headphones' },
-        detail: { zh: '无线音频监听', en: 'Wireless audio monitoring' },
-        amount: { zh: '¥399', en: 'CN¥399' },
-      },
-    ],
-  },
-  {
-    category: { zh: '手机与电脑', en: 'Phones and computers' },
-    items: [
-      {
-        name: { zh: 'iPhone 15 Pro Max 512 GB', en: 'iPhone 15 Pro Max 512 GB' },
-        detail: { zh: '手机', en: 'Phone' },
-        amount: { zh: '未标价', en: 'Price not listed' },
-      },
-      {
-        name: { zh: 'iPhone 12 Pro Max 512 GB', en: 'iPhone 12 Pro Max 512 GB' },
-        detail: { zh: '手机', en: 'Phone' },
-        amount: { zh: '未标价', en: 'Price not listed' },
-      },
-      {
-        name: { zh: 'LEAPLIGHT 力普莱多功能手机夹', en: 'LEAPLIGHT multifunction phone holder' },
-        detail: { zh: '双冷靴口', en: 'Dual cold-shoe mounts' },
-        amount: { zh: '¥57.5', en: 'CN¥57.5' },
-      },
-      {
-        name: { zh: 'Alienware M17 R4', en: 'Alienware M17 R4' },
-        detail: { zh: 'Windows 11 笔记本电脑', en: 'Windows 11 laptop' },
-        amount: { zh: '¥25,000', en: 'CN¥25,000' },
-      },
-      {
-        name: { zh: 'Mac mini（M5 Pro）', en: 'Mac mini (M5 Pro)' },
-        detail: {
-          zh: '18 核 CPU、20 核 GPU、64GB 统一内存、1TB 存储',
-          en: '18-core CPU, 20-core GPU, 64GB unified memory, 1TB storage',
-        },
-        amount: { zh: '¥24,249', en: 'CN¥24,249' },
-        href: 'https://www.apple.com.cn/shop/buy-mac/mac-mini/m5-pro-chip-18-core-cpu-20-core-gpu-64gb-memory-1tb-storage',
-      },
-      {
-        name: { zh: 'MacBook Pro 13 英寸（2020）', en: '13-inch MacBook Pro (2020)' },
-        detail: {
-          zh: '四个雷雳 3 端口；2 GHz 四核 Intel Core i5、16GB LPDDR4X、Intel Iris Plus Graphics；截图未显示存储容量',
-          en: 'Four Thunderbolt 3 ports; 2GHz quad-core Intel Core i5, 16GB LPDDR4X, Intel Iris Plus Graphics; storage capacity not shown',
-        },
-        amount: { zh: '首发 ¥14,499 起', en: 'Launched from CN¥14,499' },
-        href: 'https://support.apple.com/zh-cn/111339',
-      },
-    ],
-  },
-  {
-    category: { zh: '播放软件', en: 'Playback software' },
-    items: [
-      {
-        name: { zh: 'K-Lite Codec Pack', en: 'K-Lite Codec Pack' },
-        detail: { zh: '媒体播放解码包', en: 'Media playback codec bundle' },
-        amount: { zh: '免费', en: 'Free' },
-        href: 'https://codecguide.com/download_kl.htm',
-      },
-    ],
-  },
 ] as const;
 
 const OPERATIONS = [
@@ -315,7 +145,7 @@ export default function InfrastructurePage() {
 
         <header className="infra-hero">
           <p className="infra-kicker">CubeRoot / Infrastructure</p>
-          <h1>{localize(lang, { zh: '生产基础设施', en: 'Production Infrastructure' })}</h1>
+          <h1>{localize(lang, { zh: '基础设施与运维', en: 'Infrastructure & Operations' })}</h1>
           <p className="infra-lead">
             {localize(lang, {
               zh: 'CubeRoot 目前运行在一台克制配置的通用计算实例上。这里公开它承载什么、怎样发布和恢复，以及出于安全不会公开什么。',
@@ -323,9 +153,10 @@ export default function InfrastructurePage() {
             })}
           </p>
           <div className="infra-hero-links">
-            <AppLink href="/dev/architecture">
+            <AppLink href="/dev/architecture" prefetch={false}>
               {localize(lang, { zh: '查看软件架构', en: 'View software architecture' })}
             </AppLink>
+            <AppLink href="/dev/expenses" prefetch={false}>{localize(lang, { zh: '查看支出与设备', en: 'View expenses & equipment' })}</AppLink>
           </div>
         </header>
 
@@ -358,95 +189,9 @@ export default function InfrastructurePage() {
           </p>
         </section>
 
-        <section className="infra-section" aria-labelledby="infra-expenses-title">
-          <div className="infra-section-heading">
-            <span>02</span>
-            <div>
-              <h2 id="infra-expenses-title">{localize(lang, { zh: '支出总览', en: 'Expense overview' })}</h2>
-              <p>
-                {localize(lang, {
-                  zh: '一次性设备费用与年度固定支出分开统计。',
-                  en: 'One-time equipment costs and annual recurring expenses are tracked separately.',
-                })}
-              </p>
-            </div>
-          </div>
-          <dl className="infra-specs infra-cost-summary">
-            <div>
-              <dt>{localize(lang, { zh: '一次性总费用', en: 'One-time total' })}</dt>
-              <dd>{localize(lang, { zh: '¥124,954 起', en: 'From CN¥124,954' })}</dd>
-            </div>
-            <div>
-              <dt>{localize(lang, { zh: '年度固定支出', en: 'Annual recurring total' })}</dt>
-              <dd>{localize(lang, { zh: '约 ¥22,706/年', en: 'Approx. US$3,347/year' })}</dd>
-            </div>
-          </dl>
-          <h3 className="infra-expense-detail-title">
-            {localize(lang, { zh: '年度支出明细', en: 'Annual expense details' })}
-          </h3>
-          <dl className="infra-expenses">
-            {EXPENSES.map((expense) => (
-              <div key={expense.name.en}>
-                <dt>
-                  <span>{localize(lang, expense.name)}</span>
-                  <small>{localize(lang, expense.purpose)}</small>
-                </dt>
-                <dd>{localize(lang, expense.amount)}</dd>
-              </div>
-            ))}
-          </dl>
-          <p className="infra-expense-note">
-            {localize(lang, {
-              zh: '一次性总费用按下方所有已标价设备合计，包含曾用 Canon EOS R6 与 Mac mini。MacBook Pro 按同配置 512GB 基础机型首发价 ¥14,499 计入；截图未显示存储容量，因此总额为最低值。两台未标价手机与免费软件不计入。年度费用按 2026-08-27 人民币汇率中间价 1 美元 = 6.7840 元换算，实际支出会随汇率变动，不含用量计费与税费。',
-              en: 'The one-time total includes every priced item below, including the former Canon EOS R6 and Mac mini. The MacBook Pro is counted at the CN¥14,499 launch price of the 512GB base configuration; because the screenshot does not show its storage capacity, this is a minimum total. The two unpriced phones and free software are excluded. Annual costs use the 2026-08-27 RMB central parity rate of US$1 = CN¥6.7840 and vary with exchange rates; usage charges and taxes are excluded.',
-            })}
-          </p>
-        </section>
-
-        <section className="infra-section" aria-labelledby="infra-equipment-title">
-          <div className="infra-section-heading">
-            <span>03</span>
-            <div>
-              <h2 id="infra-equipment-title">{localize(lang, { zh: '创作设备与软件', en: 'Production equipment and software' })}</h2>
-              <p>
-                {localize(lang, {
-                  zh: 'CubeRoot 用于拍摄、收音、剪辑与日常开发的设备。价格按现有记录展示；“约”表示近似金额，未标价项目不据此推算。',
-                  en: 'Equipment used for CubeRoot filming, audio capture, editing, and day-to-day development. Prices follow the available records; “approx.” marks estimates, and missing prices are not inferred.',
-                })}
-              </p>
-            </div>
-          </div>
-          <div className="infra-equipment-groups">
-            {EQUIPMENT_GROUPS.map((group) => (
-              <section className="infra-equipment-group" key={group.category.en} aria-label={localize(lang, group.category)}>
-                <h3>{localize(lang, group.category)}</h3>
-                <dl className="infra-expenses infra-equipment-list">
-                  {group.items.map((item) => (
-                    <div key={item.name.en}>
-                      <dt>
-                        <span>
-                          {item.href ? (
-                            <a href={item.href} target="_blank" rel="noreferrer">
-                              {localize(lang, item.name)}
-                            </a>
-                          ) : (
-                            localize(lang, item.name)
-                          )}
-                        </span>
-                        <small>{localize(lang, item.detail)}</small>
-                      </dt>
-                      <dd>{localize(lang, item.amount)}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </section>
-            ))}
-          </div>
-        </section>
-
         <section className="infra-section" aria-labelledby="infra-path-title">
           <div className="infra-section-heading">
-            <span>04</span>
+            <span>02</span>
             <div>
               <h2 id="infra-path-title">{localize(lang, { zh: '一次请求经过哪里', en: 'The request path' })}</h2>
               <p>
@@ -475,7 +220,7 @@ export default function InfrastructurePage() {
 
         <section className="infra-section" aria-labelledby="infra-ops-title">
           <div className="infra-section-heading">
-            <span>05</span>
+            <span>03</span>
             <div>
               <h2 id="infra-ops-title">{localize(lang, { zh: '怎样保持可恢复', en: 'How recovery works' })}</h2>
               <p>
@@ -504,7 +249,7 @@ export default function InfrastructurePage() {
 
         <section className="infra-section infra-disclosure" aria-labelledby="infra-disclosure-title">
           <div className="infra-section-heading">
-            <span>06</span>
+            <span>04</span>
             <div>
               <h2 id="infra-disclosure-title">{localize(lang, { zh: '公开边界', en: 'Disclosure boundary' })}</h2>
               <p>

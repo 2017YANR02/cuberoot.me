@@ -338,41 +338,51 @@
   background: color-mix(in srgb, var(--destructive) 12%, transparent) !important;
 }
 
-/* --- 外部链接 --- */
-.recon-external-links {
+/* Navigation stays text-based; clipboard actions are separate outlined buttons. */
+.recon-external-links,
+.recon-navigation-links,
+.recon-copy-actions {
   display: flex;
-  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+
+.recon-external-links {
   margin-bottom: 12px;
   font-size: 0.92rem;
 }
 
-.recon-external-links a {
+.recon-navigation-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   color: var(--accent);
-  text-decoration: none;
-  transition: color 0.15s;
-}
-
-.recon-external-links a:hover {
-  color: var(--foreground);
   text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
-/* 复制整段复盘(STM 摘要 + 打乱 + 带注释解法):紧跟在 caption 之后(不推到行右端) */
-.recon-copy-full {
+.recon-navigation-links a:hover {
+  color: var(--foreground);
+}
+
+.recon-copy-action {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   appearance: none;
-  background: none;
-  border: none;
-  padding: 0;
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  padding: 6px 9px;
   font: inherit;
-  color: var(--muted-foreground);
+  color: var(--foreground);
   cursor: pointer;
-  transition: color 0.15s;
 }
 
-.recon-copy-full:hover {
+.recon-copy-action:hover {
+  border-color: var(--accent);
   color: var(--accent);
 }
 
@@ -1092,17 +1102,18 @@
   align-items: baseline;
   gap: 8px;
   margin-bottom: 2px;
+  font-size: 0.85rem;
 }
 
 .yt-comment-author {
   color: var(--foreground);
-  font-size: 0.95rem;
+  font-size: inherit;
   font-weight: 600;
 }
 
 .yt-comment-time {
   color: var(--faint-foreground);
-  font-size: 0.85rem;
+  font-size: inherit;
 }
 
 .yt-comment-body {
@@ -1186,16 +1197,86 @@
   color: var(--faint-foreground);
   margin-bottom: 2px;
 }
+.yt-comment-pinned-badge > svg {
+  transform: rotate(35deg);
+}
 
 /* ── 回复(单层嵌套) ────────────────────────────────────── */
 .yt-comment-thread {
+  /* Opaque blend keeps intersecting strokes the same color in every theme. */
+  --recon-thread-line: color-mix(in srgb, var(--foreground) 20%, var(--background));
+  position: relative;
   display: flex;
   flex-direction: column;
+}
+.yt-comment-thread.is-expanded > .yt-comment {
+  position: relative;
+}
+.yt-comment-thread.is-expanded > .yt-comment::before {
+  content: '';
+  position: absolute;
+  left: 16px;
+  top: 40px;
+  bottom: 4px;
+  border-left: 1px solid var(--recon-thread-line);
+  pointer-events: none;
 }
 
 /* 评论下方的"回复"按钮(YouTube 风格 pill) */
 .yt-comment-actions {
   margin-top: 6px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.recon-comment-vote {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.recon-comment-vote:hover { background: color-mix(in srgb, var(--foreground) 8%, transparent); }
+.recon-comment-vote[aria-pressed="true"] { color: var(--foreground); }
+.recon-comment-vote:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.recon-comment-vote:disabled { cursor: wait; }
+.recon-comment-vote-icon { position: relative; display: inline-flex; }
+.recon-comment-vote-icon.is-bursting > svg { animation: recon-vote-pop 600ms ease-out; }
+.recon-comment-vote-burst {
+  position: absolute;
+  inset: 7px;
+  border-radius: 50%;
+  color: var(--accent);
+  pointer-events: none;
+  box-shadow: 0 -18px currentColor, 13px -13px currentColor, 18px 0 currentColor,
+    13px 13px currentColor, 0 18px currentColor, -13px 13px currentColor,
+    -18px 0 currentColor, -13px -13px currentColor;
+  animation: recon-vote-burst 600ms ease-out forwards;
+}
+.recon-comment-vote-error { color: var(--destructive); font-size: 0.8rem; }
+@keyframes recon-vote-pop {
+  0%, 100% { transform: scale(1) rotate(0); }
+  35% { transform: scale(1.35) rotate(-18deg); }
+  65% { transform: scale(0.95) rotate(8deg); }
+}
+@keyframes recon-vote-burst {
+  0% { transform: scale(0.4); opacity: 0; }
+  25% { opacity: 1; }
+  100% { transform: scale(1.3); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .recon-comment-vote-icon.is-bursting > svg,
+  .recon-comment-vote-burst { animation-duration: 1ms; }
 }
 .yt-reply-btn {
   background: transparent;
@@ -1242,7 +1323,41 @@
   background: color-mix(in srgb, var(--signal-info) 10%, transparent);
 }
 .yt-reply-item {
+  position: relative;
   display: flex;
+}
+.yt-comment-thread.is-expanded .yt-replies-toggle {
+  position: relative;
+  order: 1;
+}
+/* Start at the curve's tangent; its straight lead-in already draws the trunk above. */
+.yt-comment-thread.is-expanded .yt-reply-item::after,
+.yt-comment-thread.is-expanded .yt-replies:has(> .yt-replies-toggle) > .yt-reply-composer::after {
+  content: '';
+  position: absolute;
+  left: -28px;
+  top: -4px; /* Branch bottom (12px) minus its 16px corner radius. */
+  bottom: 0;
+  border-left: 1px solid var(--recon-thread-line);
+  pointer-events: none;
+}
+.yt-comment-thread.is-expanded .yt-reply-item::before,
+.yt-comment-thread.is-expanded .yt-reply-composer::before,
+.yt-comment-thread.is-expanded .yt-replies-toggle::before {
+  content: '';
+  position: absolute;
+  left: -28px;
+  top: -12px;
+  width: 20px;
+  height: 24px;
+  border-left: 1px solid var(--recon-thread-line);
+  border-bottom: 1px solid var(--recon-thread-line);
+  border-bottom-left-radius: 16px;
+  pointer-events: none;
+}
+.yt-comment-thread.is-expanded .yt-reply-composer::before {
+  top: -16px; /* Include the composer's extra 4px top margin. */
+  height: 28px;
 }
 /* 回复使用更小的 avatar 与 YT 一致 */
 .yt-reply-item .yt-comment-avatar {
@@ -1252,15 +1367,10 @@
 .yt-reply-item .yt-comment-avatar-fallback {
   font-size: 0.75rem;
 }
-.yt-reply-item .yt-comment-author {
-  font-size: 0.82rem;
-}
-.yt-reply-item .yt-comment-body {
-  font-size: 0.9rem;
-}
 
 /* 回复输入框 */
 .yt-reply-composer {
+  position: relative;
   display: flex;
   gap: 12px;
   align-items: flex-start;

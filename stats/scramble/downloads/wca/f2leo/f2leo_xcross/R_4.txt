@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xcross / R / bin 4
-# Population in this bin: 449
+# Population in this bin: 451
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 4927962001,R2 U R2 B D B' U' D F' D2 L2 F2 D' B2 U2 D L2 B2,R,Coffee Cup Tacoma 2025 (2025-08-09~10),333 R1 A #2
@@ -152,7 +152,7 @@
 3594698001,R2 B L2 B2 R2 U2 F L2 F' R B L2 B2 L2 B L' U2,R,Delta County Cubing 2024 (2024-03-16),333 Final A #2
 1293961001,F2 L U2 R' D2 L2 D2 B' U' R U R U' B' L U2 B2 D,R,Chekaad Summer 2019 (2019-09-13),333 R2 A E2
 4674384007,U2 R2 D' F2 U2 B2 D F2 U B R' D' L2 U2 L D' L2 F' U2 B,R,Waterloo Blindfolded 2025 (2025-04-26),333mbf Final A #1
-1372783001,D2 F2 R2 D2 R F2 U2 R2 U R D' B2 D L U' B2 D2,R,UK Championship 2019 (2019-10-25~27),333 R1 B E1
+5846172001,D2 B2 R2 B2 R' F2 U2 L2 R' F2 L2 B' D2 R' F D2 F R2 B R,R,Tafalla Open 2026 (2026-09-26~27),333bf Final A #1
 2371444001,R2 D' F2 B2 U' F B2 L B L' B2 U2 D' B2 L2 B2 R2 U2 L2 U2,R,Viña Cubing Fest 2022 (2022-12-10~11),333bf Final A E2
 2398576040,U' R2 B2 D' L' U L' B D B2 L2 D2 F2 D R2 F2 U R2 B',R,Taiwan Championship 2022 (2022-12-16~18),333mbf Final A #1
 1387451001,F2 D U2 B2 D' U' F2 R2 U' R' F2 R B2 F' R2 U B' R2 U',R,CCC Qualification Yakutsk 2019 (2019-11-02~03),333oh R1 B #2

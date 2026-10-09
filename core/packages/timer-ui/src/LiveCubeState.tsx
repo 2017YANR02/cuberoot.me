@@ -54,6 +54,9 @@ import { Spinner } from './Spinner';
 import './live-cube.css';
 import { readDevQuatSource } from './dev-quat-source';
 import { FaceletsCube } from './FaceletsCube';
+import { orientCubeFacelets } from '@cuberoot/shared/timer';
+import { normalizeWcaScramble } from '@cuberoot/shared/normalize-wca-scramble';
+import { invertAlg } from '@cuberoot/shared/alg-transform';
 import { CUBE_FILL } from '@cuberoot/puzzle-render-core/support/cube-colors';
 import { renderCubeNetSvg } from '@cuberoot/puzzle-render-core/support/cube-net-svg';
 import {
@@ -91,9 +94,13 @@ function useSyntheticQuat(enabled: boolean): Quat | null {
 }
 
 export interface LiveCubeStateProps {
+  /** Fixed training grip, applied to presentation only. */
+  displayOrientation?: string;
   language?: 'en' | 'zh';
   /** Host enables only in its development build. Never poll synthetic data by default. */
   enableDevSource?: boolean;
+  /** Whether the live virtual cube should consume gyroscope orientation. */
+  useGyro?: boolean;
   /**
    * The cube's tracked state as a 54-character facelet string, or null when
    * nothing is being tracked yet. This is the source of truth for the 2D view.
@@ -149,6 +156,8 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
   const {
     language = 'en',
     enableDevSource = false,
+    useGyro = true,
+    displayOrientation = '',
     facelets,
     moves,
     algAnchored,
@@ -164,8 +173,8 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
 
   const tr = (copy: { en: string; zh: string }) => copy[language];
   const wants3d = mode === '3d';
-  const devQuat = useSyntheticQuat(wants3d && enableDevSource);
-  const liveQuat = quat ?? devQuat;
+  const devQuat = useSyntheticQuat(wants3d && useGyro && enableDevSource);
+  const liveQuat = useGyro ? (quat ?? devQuat) : null;
   // A state resync temporarily invalidates the move log. Preserve the last
   // verified 3D instance until the new opening is ready, rather than switching
   // renderers (and disposing a cube while it may still be turning).
@@ -174,6 +183,13 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
     if (algAnchored) lastVerifiedMoves.current = moves;
   }, [algAnchored, moves]);
   const renderedMoves = algAnchored ? moves : lastVerifiedMoves.current;
+  const displayMoves = useMemo(() => {
+    if (!renderedMoves || !displayOrientation) return renderedMoves;
+    const local = normalizeWcaScramble(`${invertAlg(displayOrientation)} ${renderedMoves.join(' ')}`);
+    return local === null ? renderedMoves : `${displayOrientation} ${local}`.trim().split(/\s+/);
+  }, [renderedMoves, displayOrientation]);
+  const displayFacelets = useMemo(() => facelets
+    ? orientCubeFacelets(facelets, displayOrientation) : null, [facelets, displayOrientation]);
 
   // The single decision, taken once and reported, so the owner draws the
   // calibrate button against what is on screen rather than what was asked for.
@@ -192,11 +208,13 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
       <div aria-busy={!algAnchored} style={{ height: '100%', position: 'relative', lineHeight: 1.5 }}>
       <Suspense fallback={<Spinner size={16} label={tr({ zh: '加载中', en: 'Loading' })} />}>
       <SimCubeView
+        key={`${useGyro ? 'gyro' : 'no-gyro'}:${displayOrientation}`}
         language={language}
+        allowViewDrag
         ariaLabel={tr({ zh: '智能魔方实时三维状态', en: 'Live 3D smart-cube state' })}
-        moves={renderedMoves}
+        moves={displayMoves!}
         quat={liveQuat}
-        quatRef={quatRef}
+        quatRef={useGyro ? quatRef : undefined}
         calibrateToken={calibrateToken}
         sensorBasis={sensorBasis}
         mirror={mirror}
@@ -214,14 +232,14 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
 
   // Nothing tracked yet: hold the box open rather than collapsing it, so the
   // first facelet snapshot doesn't shove the rest of the column down.
-  if (!facelets) return <span style={{ display: 'block', height: '100%' }} />;
+  if (!displayFacelets) return <span style={{ display: 'block', height: '100%' }} />;
   const alt = tr({ zh: '智能魔方当前状态', en: 'Current smart-cube state' });
-  if (view === 'q2look') return <FaceletsCube fd={facelets.toLowerCase()} alt={alt} view="q2look" fill />;
+  if (view === 'q2look') return <FaceletsCube fd={displayFacelets.toLowerCase()} alt={alt} view="q2look" fill />;
   // Only an explicit '2d' asks for the isometric still. A '3d' request that got
   // this far has an un-anchored state, and the flat view it falls back
   // to is the net — the one that shows all six faces.
-  if (view === '2d') return <FaceletsCube fd={facelets.toLowerCase()} alt={alt} fill />;
-  return <CubeNet facelets={facelets} alt={alt} />;
+  if (view === '2d') return <FaceletsCube fd={displayFacelets.toLowerCase()} alt={alt} fill />;
+  return <CubeNet facelets={displayFacelets} alt={alt} />;
 }
 
 /**

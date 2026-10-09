@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 /**
  * /v1/feedback 客户端封装。提交 + 传附件走 WCA OAuth Bearer(authHeaders);
  * admin 列表 / 改状态 / 删 / 取媒体也走 Bearer(后端 requireAdmin)。
@@ -110,7 +111,7 @@ export interface FeedbackThread {
 
 /** 创建一条反馈,返回 id(随后逐个传附件)。 */
 export async function submitFeedback(input: SubmitFeedbackInput): Promise<{ id: number }> {
-  const r = await fetch(apiUrl('/v1/feedback'), {
+  const r = await sessionFetch(apiUrl('/v1/feedback'), {
     method: 'POST',
     headers: authHeaders(),
     body: JSON.stringify(input),
@@ -120,7 +121,7 @@ export async function submitFeedback(input: SubmitFeedbackInput): Promise<{ id: 
 
 /** 传一张截图(JSON base64,客户端已缩放/转 webp)。 */
 export async function uploadFeedbackImage(feedbackId: number, dataB64: string, mime: string): Promise<{ id: number }> {
-  const r = await fetch(apiUrl(`/v1/feedback/${feedbackId}/image`), {
+  const r = await sessionFetch(apiUrl(`/v1/feedback/${feedbackId}/image`), {
     method: 'POST',
     headers: authHeaders(),
     body: JSON.stringify({ dataB64, mime }),
@@ -133,7 +134,7 @@ export async function uploadFeedbackVideo(feedbackId: number, file: File, durati
   const fd = new FormData();
   fd.append('file', file);
   if (durationMs != null) fd.append('durationMs', String(Math.round(durationMs)));
-  const r = await fetch(apiUrl(`/v1/feedback/${feedbackId}/video`), {
+  const r = await sessionFetch(apiUrl(`/v1/feedback/${feedbackId}/video`), {
     method: 'POST',
     headers: authHeaders(false),
     body: fd,
@@ -144,13 +145,13 @@ export async function uploadFeedbackVideo(feedbackId: number, file: File, durati
 // ── admin ─────────────────────────────────────────────────────────────────────
 export async function fetchFeedbackList(status?: FeedbackStatus): Promise<AdminFeedbackItem[]> {
   const url = status ? apiUrl(`/v1/feedback?status=${status}`) : apiUrl('/v1/feedback');
-  const r = await fetch(url, { headers: authHeaders(false), cache: 'no-store' });
+  const r = await sessionFetch(url, { headers: authHeaders(false), cache: 'no-store' });
   const data = await handle<{ items: AdminFeedbackItem[] }>(r);
   return data.items ?? [];
 }
 
 export async function updateFeedbackStatus(id: number, status: FeedbackStatus): Promise<void> {
-  const r = await fetch(apiUrl(`/v1/feedback/${id}`), {
+  const r = await sessionFetch(apiUrl(`/v1/feedback/${id}`), {
     method: 'PATCH',
     headers: authHeaders(),
     body: JSON.stringify({ status }),
@@ -159,7 +160,7 @@ export async function updateFeedbackStatus(id: number, status: FeedbackStatus): 
 }
 
 export async function deleteFeedback(id: number): Promise<void> {
-  const r = await fetch(apiUrl(`/v1/feedback/${id}`), {
+  const r = await sessionFetch(apiUrl(`/v1/feedback/${id}`), {
     method: 'DELETE',
     headers: authHeaders(false),
   });
@@ -173,35 +174,36 @@ export function feedbackMediaUrl(id: number): string {
 
 // ── 对话(GitHub issue 式来回) ──────────────────────────────────────────────────
 /** 公开反馈流。 */
-export async function fetchPublicFeedback(page = 1, size = 20): Promise<PublicFeedbackPage> {
+export async function fetchPublicFeedback(page = 1, size = 20, status?: FeedbackStatus): Promise<PublicFeedbackPage> {
   const qs = new URLSearchParams({ page: String(page), size: String(size) });
-  const r = await fetch(apiUrl(`/v1/feedback/public?${qs}`), { headers: authHeaders(false), cache: 'no-store' });
+  if (status) qs.set('status', status);
+  const r = await sessionFetch(apiUrl(`/v1/feedback/public?${qs}`), { headers: authHeaders(false), cache: 'no-store' });
   return handle<PublicFeedbackPage>(r);
 }
 
 /** 当前登录用户自己的反馈线程列表。 */
 export async function fetchMyFeedback(): Promise<MyFeedbackItem[]> {
-  const r = await fetch(apiUrl('/v1/feedback/mine'), { headers: authHeaders(false), cache: 'no-store' });
+  const r = await sessionFetch(apiUrl('/v1/feedback/mine'), { headers: authHeaders(false), cache: 'no-store' });
   const data = await handle<{ items: MyFeedbackItem[] }>(r);
   return data.items ?? [];
 }
 
 /** 「有其他人新回复」未读线程数(给入口红点)。 */
 export async function fetchMyFeedbackUnread(): Promise<number> {
-  const r = await fetch(apiUrl('/v1/feedback/mine/unread'), { headers: authHeaders(false), cache: 'no-store' });
+  const r = await sessionFetch(apiUrl('/v1/feedback/mine/unread'), { headers: authHeaders(false), cache: 'no-store' });
   const data = await handle<{ count: number }>(r);
   return data.count ?? 0;
 }
 
 /** 单条反馈的公开完整对话;作者 / admin 取阅时标记已读。 */
 export async function fetchFeedbackThread(id: number): Promise<FeedbackThread> {
-  const r = await fetch(apiUrl(`/v1/feedback/${id}/thread`), { headers: authHeaders(false), cache: 'no-store' });
+  const r = await sessionFetch(apiUrl(`/v1/feedback/${id}/thread`), { headers: authHeaders(false), cache: 'no-store' });
   return handle<FeedbackThread>(r);
 }
 
 /** 任意登录用户回帖。 */
 export async function replyToFeedback(id: number, body: string): Promise<{ id: number }> {
-  const r = await fetch(apiUrl(`/v1/feedback/${id}/reply`), {
+  const r = await sessionFetch(apiUrl(`/v1/feedback/${id}/reply`), {
     method: 'POST',
     headers: authHeaders(),
     body: JSON.stringify({ body }),
@@ -211,7 +213,7 @@ export async function replyToFeedback(id: number, body: string): Promise<{ id: n
 
 /** 删一条回复(本人或 admin)。 */
 export async function deleteFeedbackMessage(feedbackId: number, messageId: number): Promise<void> {
-  const r = await fetch(apiUrl(`/v1/feedback/${feedbackId}/message/${messageId}`), {
+  const r = await sessionFetch(apiUrl(`/v1/feedback/${feedbackId}/message/${messageId}`), {
     method: 'DELETE',
     headers: authHeaders(false),
   });

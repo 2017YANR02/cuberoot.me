@@ -28,6 +28,8 @@ export const CORE_MASKS: MaskOption[] = [
 ];
 
 export const EXTENDED_MASKS: MaskOption[] = [
+  { value: Masking.WV, label: 'WV' },
+  { value: Masking.VH, label: 'VH' },
   // 尺寸记号不写乘号(222 而非 2x2x2);块都在 D 层,换角落靠拿方朝向转过去。
   { value: Masking.TWO_BY_TWO_BY_TWO, label: '222' },
   { value: Masking.TWO_BY_TWO_BY_THREE, label: '223' },

@@ -22,6 +22,10 @@ import {
   type PaymentChannel,
 } from '@/lib/membership-api';
 import { fmtPrice } from '@/lib/membership-format';
+import { installedMembershipStore } from '@/lib/store-membership-bridge';
+import { isInWeChat } from '@/lib/wechat-share';
+import { copyPageLink } from '@/lib/page-share';
+import AppLink from '@/components/AppLink';
 
 interface Props {
   plan: MembershipPlan;
@@ -43,13 +47,24 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
   const [order, setOrder] = useState<OrderInfo | null>(null);
   const [creating, setCreating] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [needsExternalBrowser, setNeedsExternalBrowser] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const pollRef = useRef<number | null>(null);
 
-  useModalDismiss(onClose);
+  useEffect(() => { setNeedsExternalBrowser(isMobile && isInWeChat()); }, [isMobile]);
+
+  const backdropProps = useModalDismiss(onClose);
   // Stop the pending查单 poll when the modal unmounts (its own concern, not part of dismiss).
   useEffect(() => () => { if (pollRef.current !== null) window.clearTimeout(pollRef.current); }, []);
 
   async function start(ch: PaymentChannel) {
+    if (installedMembershipStore()) return;
+    // H5 checkout is supported only outside WeChat. Check again at click time
+    // so a tap before the effect runs cannot create an unusable payment order.
+    if (ch === 'wechat' && isMobile && isInWeChat()) {
+      setNeedsExternalBrowser(true);
+      return;
+    }
     setChannel(ch);
     setErr(null);
     setCreating(true);
@@ -97,6 +112,14 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
     }
   }
 
+  async function copyMembershipLink() {
+    // Open the same site in the external browser, without payment/query tokens.
+    const url = new URL(isZh ? '/zh/membership' : '/membership', window.location.origin).href;
+    const copied = await copyPageLink(url);
+    setLinkCopied(copied);
+    setErr(copied ? null : tr({ zh: '复制失败，请使用右上角菜单在浏览器中打开。', en: 'Could not copy the link. Use the top-right menu to open this page in your browser.' }));
+  }
+
   function pollStatus(no: string, tries = 0) {
     getOrderStatus(no)
       .then((r) => {
@@ -110,9 +133,17 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
       });
   }
 
+  if (installedMembershipStore()) return (
+    <div className="mem-pay-backdrop" {...backdropProps}>
+      <section className="mem-pay">
+        <AppLink href="/membership" onClick={onClose}>{tr({ zh: '前往 App 内会员订阅', en: 'Open in-app membership subscriptions' })}</AppLink>
+        <button onClick={onClose}>{tr({ zh: '关闭', en: 'Close' })}</button>
+      </section>
+    </div>
+  );
   return (
-    <div className="mem-pay-backdrop" onClick={onClose}>
-      <div className="mem-pay" onClick={(e) => e.stopPropagation()}>
+    <div className="mem-pay-backdrop" {...backdropProps}>
+      <div className="mem-pay">
         <button className="mem-pay-close" onClick={onClose} aria-label={tr({ zh: '关闭', en: 'Close'
         })}><X size={18} /></button>
         <h2 className="mem-pay-title">{isZh ? plan.nameZh : plan.nameEn}</h2>
@@ -131,11 +162,15 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
                 </button>
               )}
               {showWechat && (
-                <button className="mem-pay-ch mem-pay-ch-wechat" disabled={creating} onClick={() => start('wechat')}>
+                <button className="mem-pay-ch mem-pay-ch-wechat" disabled={creating} onClick={() => needsExternalBrowser ? copyMembershipLink() : start('wechat')}>
                   {creating && channel === 'wechat'
                     ? <Spinner size={16} />
                     : <SiWechat size={18} aria-hidden="true" />}
-                  {tr({ zh: '微信支付', en: 'WeChat Pay' })}
+                  {needsExternalBrowser
+                    ? linkCopied
+                      ? tr({ zh: '链接已复制', en: 'Link copied' })
+                      : tr({ zh: '复制链接，在浏览器中支付', en: 'Copy link to pay in your browser' })
+                    : tr({ zh: '微信支付', en: 'WeChat Pay' })}
                 </button>
               )}
               {showCardCn && (
@@ -155,6 +190,11 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
                 </button>
               )}
             </div>
+            {showWechat && needsExternalBrowser && (
+              <p className="mem-pay-tip" role="status">
+                {tr({ zh: '请点击微信右上角「···」，选择「在浏览器打开」，再使用微信支付。也可以复制链接到 Safari 或其他浏览器打开；如提示登录，请登录同一个 CubeRoot 账号。', en: 'Tap the top-right WeChat menu and choose Open in Browser, then select WeChat Pay. You can also copy the link into Safari or another browser. If asked, sign in to the same CubeRoot account.' })}
+              </p>
+            )}
             {err && <div className="mem-pay-err">{err}</div>}
           </>
         ) : (

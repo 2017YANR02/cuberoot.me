@@ -181,6 +181,13 @@
   margin-left: 0;
 }
 
+.compact-select.sim-stage-select { align-self: center; }
+.sim-stage-select .compact-select-trigger.sim-player-mode { font-weight: 400; }
+.sim-stage-option { display: flex; align-items: center; gap: 10px; }
+.sim-stage-thumb { display: block; width: 64px; height: 64px; flex: 0 0 64px; }
+.sim-stage-thumb svg { display: block; width: 100%; height: 100%; }
+.sim-stage-group { color: var(--muted-foreground); font-size: 12px; }
+
 /* 自定义阶段的作图控件:紧跟阶段下拉,窄屏允许整组换行(播放条本来就会换行) */
 .sim-stickering-custom {
   display: inline-flex;
@@ -210,6 +217,10 @@
   border-color: var(--destructive);
   color: var(--destructive);
 }
+
+.sim-stickering-clear.sim-stickering-history { display: inline-flex; align-items: center; }
+.sim-stickering-clear.sim-stickering-history:hover:not(:disabled) { border-color: var(--border-strong); color: var(--foreground); }
+.sim-stickering-clear.sim-stickering-history:disabled { border-color: var(--border-default); color: var(--faint-foreground); cursor: default; }
 
 .sim-player-tools {
   display: flex;
@@ -411,6 +422,22 @@
 .sim-puzzle-toggles .sim-toggle .pill-toggle,
 .sim-puzzle-toggles .sim-toggle select {
   flex: none;
+}
+
+.sim-logo-setting {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.sim-logo-member-prompt {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  white-space: nowrap;
 }
 
 /* 背景档色块外观(各档 1:1 对齐 sim.css 的 .sim-canvas-wrap 固定背景)。选择器本体
@@ -726,7 +753,7 @@
   line-height: 1.2;
   backdrop-filter: blur(5px);
 }
-.sim-picture-face-remove {
+.clear-btn.sim-picture-face-remove {
   position: absolute;
   top: 5px;
   right: 5px;
@@ -928,7 +955,7 @@
     left: 3px;
     padding: 2px 4px;
   }
-  .sim-picture-face-remove { top: 3px; right: 3px; }
+  .clear-btn.sim-picture-face-remove { top: 3px; right: 3px; }
   .sim-picture-crop-workspace { margin-top: 14px; }
   .sim-picture-crop-body {
     grid-template-columns: 1fr;

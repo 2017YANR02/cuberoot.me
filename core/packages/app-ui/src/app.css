@@ -1,6 +1,8 @@
+@import '@cuberoot/timer-ui/typography.css';
+
 :root {
   color-scheme: light;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font-sans);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   --background: #faf9f7;
@@ -31,8 +33,6 @@
   --success-soft: rgb(57 114 79 / 14%);
   --danger: #a13f36;
   --destructive: var(--danger);
-  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --signal-success: var(--success);
   --signal-warning: var(--accent);
   --timer-dnf: var(--danger);
@@ -142,12 +142,6 @@ button {
   grid-template-rows: auto minmax(0, 1fr) auto;
 }
 
-/* Reserve a real row for device controls: long timer content scrolls above
- * it instead of pushing Connect behind the navigation / home indicator. */
-.app-shell--device-footer {
-  grid-template-rows: minmax(0, 1fr) auto auto;
-}
-
 .app-titlebar {
   position: relative;
   display: grid;
@@ -252,19 +246,6 @@ button {
   height: 100%;
   border: 0;
   background: var(--background);
-}
-
-.timer-view {
-  display: flex;
-  width: min(100%, 760px);
-  min-width: 0;
-  min-height: 100%;
-  flex-direction: column;
-  margin: 0 auto;
-}
-
-.timer-view > .shell-topbar {
-  flex: 0 0 auto;
 }
 
 .timer-toolbar-control {
@@ -417,55 +398,6 @@ button {
   right: 0;
 }
 
-.mobile-timer-stage > .timing-surface {
-  /* Never let flex sizing clip the readout when source controls leave less
-     room than the digits + scramble + preview intrinsically need. */
-  min-height: min-content;
-  flex: 1 0 280px;
-  margin: 0;
-  padding: 12px 0;
-  background: transparent;
-  outline: none;
-}
-
-/* Content stays in scrollable normal flow; device controls have their own
- * app-shell row. The shared chrome defaults remain absolute for Web. */
-.mobile-timer-stage > .shell-stat-rail {
-  position: static;
-  flex: 0 0 auto;
-  align-self: flex-start;
-  margin-inline-start: max(12px, env(safe-area-inset-left));
-}
-
-.app-shell--device-footer > .shell-device-actions {
-  position: static;
-  min-width: 0;
-  max-width: calc(100% - 24px);
-  justify-self: center;
-  margin: 2px 0 10px;
-  transform: none;
-}
-
-.app-shell--device-footer > .shell-device-actions .shell-device-connect {
-  min-width: 0;
-  min-height: 44px;
-  max-width: 100%;
-  white-space: normal;
-}
-
-.app-shell--device-footer > .shell-device-actions .shell-device-connect span {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.mobile-timer-stage .timing-surface-core {
-  gap: 10px;
-}
-
-.mobile-timer-stage .timing-surface-sub {
-  gap: 8px;
-}
-
 .timer-view .timing-surface-scramble {
   color: var(--foreground);
 }
@@ -479,7 +411,6 @@ button {
 .surface-chrome { transition: opacity 120ms ease; }
 
 .history-view,
-.settings-view,
 .recovery-screen {
   width: min(100%, 620px);
   margin: 0 auto;
@@ -493,7 +424,6 @@ button {
 }
 
 .section-heading h1,
-.settings-view > h1,
 .recovery-screen h1 {
   margin: 0;
   font-size: 2rem;
@@ -715,127 +645,6 @@ button {
   margin-top: 34px;
 }
 
-.settings-view .settings-section-head {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 8px;
-}
-
-.settings-view .settings-section-head h4 {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 650;
-}
-
-.settings-view .settings-row {
-  display: flex;
-  min-width: 0;
-  min-height: 58px;
-  align-items: center;
-  gap: 16px;
-  border-bottom: 1px solid var(--border-default);
-}
-
-.settings-view .settings-row-label {
-  min-width: 0;
-  flex: 1 1 auto;
-  color: var(--foreground);
-  line-height: 1.35;
-}
-
-.settings-view .settings-row-control {
-  display: flex;
-  min-width: 0;
-  min-height: 44px;
-  flex: 0 1 auto;
-  align-items: center;
-  justify-content: flex-end;
-}
-
-.settings-view .settings-row-control > .hint:last-child:not(:first-child) {
-  min-width: 0;
-  max-width: min(40vw, 12rem);
-  margin-inline-start: 8px;
-  overflow-wrap: anywhere;
-  color: var(--muted-foreground);
-  font-size: 0.78rem;
-  line-height: 1.35;
-  text-align: end;
-  white-space: normal;
-}
-
-.settings-view .settings-row-control-input,
-.settings-view .settings-row-control-select {
-  max-width: min(48vw, 12rem);
-  min-height: 44px;
-  padding: 0 8px;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: var(--muted-foreground);
-  font-size: 1rem;
-  text-align: right;
-}
-
-.settings-view .settings-row-control-input:focus,
-.settings-view .settings-row-control-select:focus {
-  outline: 2px solid var(--ring);
-  outline-offset: -2px;
-}
-
-@media (max-width: 540px) {
-  .settings-view .settings-row {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 4px;
-    padding-block: 7px;
-  }
-
-  .settings-view .settings-row-control {
-    width: 100%;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-  }
-
-  .settings-view .settings-row-control > .hint:last-child:not(:first-child) {
-    max-width: 100%;
-    text-align: start;
-  }
-}
-
-.settings-view .settings-row-boolean .timer-222-mode-toggle--switch {
-  width: 44px;
-  height: 44px;
-  border: 0;
-  background: transparent;
-}
-
-.settings-view .settings-row-boolean .timer-222-mode-toggle--switch::before {
-  position: absolute;
-  top: 11px;
-  left: 3px;
-  width: 38px;
-  height: 22px;
-  border: 1px solid var(--border-default);
-  border-radius: 999px;
-  background: var(--subtle);
-  content: '';
-}
-
-.settings-view .settings-row-boolean .timer-222-mode-toggle--switch.is-on::before {
-  border-color: var(--toggle-on);
-  background: var(--toggle-on);
-}
-
-.settings-view .settings-row-boolean .timer-222-mode-toggle--switch .timer-222-mode-toggle-dot {
-  left: 5px;
-}
-
-.settings-view .settings-row-boolean .timer-222-mode-toggle--switch.is-on .timer-222-mode-toggle-dot {
-  left: 21px;
-}
-
 .settings-section h2 {
   margin: 0;
   font-size: 1rem;
@@ -940,11 +749,11 @@ button {
   grid-template-rows: minmax(0, 1fr);
 }
 
-.app-shell--timer-fullscreen .timer-view > .shell-topbar,
 .app-shell--timer-fullscreen .timer-view > .mobile-scramble-source-config,
 .app-shell--timer-fullscreen .mobile-timer-stage > .shell-stat-rail,
 .app-shell--timer-fullscreen .mobile-timer-stage > .mobile-solution-hints,
 .app-shell--timer-fullscreen > .shell-device-actions,
+.app-shell--timer-fullscreen > .shell-device-center,
 .app-shell--timer-fullscreen > .primary-nav {
   display: none;
 }
@@ -1000,11 +809,6 @@ button {
     min-height: 430px;
   }
 
-  .mobile-timer-stage > .timing-surface {
-    flex-basis: 220px;
-    padding-block: 8px;
-  }
-
   .mobile-cube-preview {
     display: none;
   }
@@ -1016,16 +820,6 @@ button {
    together above the three-tab navigation. */
 .app-shell--compact-viewport .mobile-timer-stage {
   min-height: 350px;
-}
-
-.app-shell--compact-viewport .mobile-timer-stage > .timing-surface {
-  flex-basis: 220px;
-  padding: 8px 0;
-}
-
-.app-shell--compact-viewport .mobile-timer-stage .timing-surface-core,
-.app-shell--compact-viewport .mobile-timer-stage .timing-surface-sub {
-  gap: 5px;
 }
 
 .app-shell--compact-viewport .mobile-cube-preview {
@@ -1043,251 +837,6 @@ button {
   margin: 0 auto;
 }
 
-.battle-top-actions,
-.battle-penalties {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: 6px;
-}
-
-.battle-top-actions button,
-.battle-penalties button,
-.battle-leave,
-.battle-room-header button,
-.battle-lobby button,
-.battle-primary-action,
-.battle-secondary-action,
-.battle-local-tools button {
-  min-height: 44px;
-  padding: 7px 10px;
-  border: 1px solid var(--border-default);
-  border-radius: 8px;
-  background: var(--popover);
-}
-
-.battle-local-tools {
-  display: grid;
-  min-width: 0;
-  gap: 1px;
-  border-top: 1px solid var(--border-default);
-  background: var(--border-default);
-}
-
-.battle-local-tools details {
-  min-width: 0;
-  padding: 10px max(12px, env(safe-area-inset-right)) 10px max(12px, env(safe-area-inset-left));
-  background: var(--background);
-}
-
-.battle-local-tools summary {
-  cursor: pointer;
-  font-weight: 700;
-}
-
-.battle-key-grid,
-.battle-summary-grid,
-.battle-cube-holders {
-  display: grid;
-  min-width: 0;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.battle-local-tools .shell-device-actions,
-.battle-net-timer > .shell-device-actions {
-  position: static;
-  flex: 0 0 auto;
-  max-width: calc(100% - 24px);
-  transform: none;
-}
-
-.battle-local-tools .shell-device-actions {
-  margin: 10px 0 0;
-}
-
-.battle-net-timer > .shell-device-actions {
-  margin: 2px 0 10px;
-}
-
-.battle-local-tools .shell-device-connect,
-.battle-net-timer > .shell-device-actions .shell-device-connect {
-  min-width: 0;
-  min-height: 44px;
-  max-width: 100%;
-}
-
-.battle-local-tools .shell-device-connect span,
-.battle-net-timer > .shell-device-actions .shell-device-connect span {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.battle-cube-holders button[aria-pressed="true"] {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-}
-
-.battle-key-grid button,
-.battle-summary-grid > div {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 9px 10px;
-  border: 1px solid var(--border-default);
-  border-radius: 8px;
-  background: var(--popover);
-}
-
-.battle-key-grid button[aria-pressed="true"] {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-}
-
-.battle-key-grid kbd {
-  overflow: hidden;
-  max-width: 55%;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.battle-summary-grid > div {
-  align-items: flex-start;
-  flex-direction: column;
-}
-
-.battle-summary-grid span,
-.battle-local-history time {
-  color: var(--muted-foreground);
-  font-size: 0.78rem;
-}
-
-.battle-local-history {
-  display: grid;
-  min-width: 0;
-  max-height: 260px;
-  gap: 0;
-  margin: 10px 0;
-  padding: 0;
-  overflow: auto;
-  list-style: none;
-}
-
-.battle-local-history li {
-  display: grid;
-  min-width: 0;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 3px 8px;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--border-default);
-}
-
-.battle-local-history li > span:last-child {
-  overflow: hidden;
-  grid-column: 1 / -1;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.battle-top-actions button:disabled,
-.battle-penalties button:disabled,
-.battle-leave:disabled,
-.battle-lobby button:disabled {
-  color: var(--faint-foreground);
-  opacity: 0.7;
-}
-
-.battle-primary-action {
-  background: var(--accent);
-  color: var(--accent-foreground);
-  font-weight: 700;
-}
-
-.battle-grid {
-  display: grid;
-  min-width: 0;
-  min-height: 0;
-  flex: 1;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-auto-rows: minmax(260px, 1fr);
-  gap: 1px;
-  background: var(--border-default);
-}
-
-.battle-player {
-  display: flex;
-  min-width: 0;
-  min-height: 0;
-  flex-direction: column;
-  background: var(--background);
-  outline: 0 solid var(--accent);
-  outline-offset: -3px;
-}
-
-.battle-player.is-winner {
-  outline-width: 3px;
-}
-
-.battle-player-header {
-  display: flex;
-  min-width: 0;
-  min-height: 44px;
-  align-items: center;
-  gap: 5px;
-  padding: 5px 7px;
-}
-
-.battle-player-header > strong {
-  overflow: hidden;
-  min-width: 0;
-  flex: 1;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.battle-winner {
-  color: var(--signal-success);
-  font-size: 0.72rem;
-  font-weight: 700;
-}
-
-.battle-player-timer.timing-surface {
-  min-width: 0;
-  min-height: 0;
-  flex: 1;
-  padding: 8px 4px;
-  background: transparent;
-}
-
-.battle-player-timer .timing-surface-core,
-.battle-player-timer .timing-surface-sub {
-  min-width: 0;
-  gap: 7px;
-}
-
-.battle-player-timer .scramble-strip {
-  max-width: 100%;
-  font-size: 0.76rem;
-}
-
-.battle-penalties {
-  justify-content: center;
-  padding: 5px 6px 8px;
-}
-
-.battle-penalties button {
-  min-width: 48px;
-}
-
-.battle-penalties button[aria-pressed="true"] {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-}
-
 .battle-round-status,
 .battle-error,
 .battle-empty {
@@ -1300,360 +849,36 @@ button {
   color: var(--destructive);
 }
 
-.battle-lobby {
-  display: grid;
-  width: min(100% - 32px, 460px);
-  min-width: 0;
-  align-content: start;
-  gap: 14px;
-  margin: 20px auto;
-  padding: 18px;
-  border: 1px solid var(--border-default);
-  border-radius: 14px;
-  background: var(--popover);
-}
-
-.battle-lobby h2,
-.battle-lobby p {
-  margin: 0;
-}
-
-.battle-lobby label {
-  display: grid;
-  min-width: 0;
-  gap: 5px;
-  color: var(--muted-foreground);
-  font-size: 0.82rem;
-}
-
-.battle-identity-field {
-  display: grid;
-  min-width: 0;
-  gap: 5px;
-  color: var(--muted-foreground);
-  font-size: 0.82rem;
-}
-
-.battle-person-choice,
-.battle-person-results button {
-  display: flex;
-  width: 100%;
-  min-width: 0;
-  align-items: center;
-  gap: 8px;
-  text-align: start;
-}
-
-.battle-person-choice strong,
-.battle-person-results span {
-  overflow: hidden;
-  min-width: 0;
-  flex: 1;
-  color: var(--foreground);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.battle-person-flag {
-  flex: 0 0 auto;
-}
-
-.battle-person-results {
-  display: grid;
-  min-width: 0;
-  max-height: 220px;
-  margin: 0;
-  padding: 0;
-  overflow: auto;
-  border: 1px solid var(--border-default);
-  border-radius: 8px;
-  list-style: none;
-}
-
-.battle-person-results li + li {
-  border-top: 1px solid var(--border-default);
-}
-
-.battle-person-results button {
-  border: 0;
-  border-radius: 0;
-  background: var(--background);
-}
-
-.battle-lobby input {
-  width: 100%;
-  min-width: 0;
-  min-height: 44px;
-  padding: 8px 10px;
-  border: 1px solid var(--input);
-  border-radius: 8px;
-  background: var(--background);
-  color: var(--foreground);
-}
-
-.battle-join-row {
-  display: grid;
-  min-width: 0;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
-  gap: 8px;
-}
-
-.battle-room-header {
-  display: flex;
-  min-width: 0;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 8px max(12px, env(safe-area-inset-right)) 8px max(12px, env(safe-area-inset-left));
+/* Host navigation offsets; shared TimerWorkspace owns the dock geometry. */
+.app-shell[data-wide='true']:not(.app-shell--timer-fullscreen) { grid-template-rows: auto minmax(0, 1fr); }
+.app-shell[data-wide='true'].app-shell--settings,
+.app-shell[data-wide='true'].app-shell--history { grid-template-rows: auto auto minmax(0, 1fr); }
+.app-shell[data-wide='true'] > .primary-nav {
+  grid-row: 1;
+  grid-template-columns: repeat(3, max-content);
+  border-top: 0;
   border-bottom: 1px solid var(--border-default);
+  padding: 5px 16px;
 }
-
-.battle-room-header > div {
-  display: flex;
-  min-width: 0;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 7px;
-}
-
-.battle-room-panel {
-  min-width: 0;
-  padding: 12px max(12px, env(safe-area-inset-right)) 12px max(12px, env(safe-area-inset-left));
-  border-bottom: 1px solid var(--border-default);
-  background: var(--popover);
-}
-
-.battle-room-panel h3,
-.battle-room-panel h4,
-.battle-room-panel p {
-  margin: 0;
-}
-
-.battle-admin-list,
-.battle-net-history,
-.battle-net-history ul {
-  min-width: 0;
-  margin: 10px 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.battle-admin-list li {
-  display: flex;
-  min-width: 0;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--border-default);
-}
-
-.battle-admin-list li > span {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: 7px;
-}
-
-.battle-admin-list li > span:first-child {
-  overflow: hidden;
-  flex: 1;
-}
-
-.battle-admin-list li > span:last-child {
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-.battle-admin-list strong,
-.battle-admin-list small {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.battle-history-panel {
-  max-height: min(60vh, 560px);
-  overflow: auto;
-}
-
-.battle-history-panel .battle-summary-grid strong {
-  display: flex;
-  min-width: 0;
-  align-items: center;
+.app-shell[data-wide='true'] > .primary-nav button {
+  flex-direction: row;
+  min-height: 34px;
+  padding: 0 12px;
   gap: 6px;
+  font-size: 0.84rem;
 }
-
-.battle-net-history > li {
-  min-width: 0;
-  padding: 10px 0;
-  border-top: 1px solid var(--border-default);
-}
-
-.battle-net-history h4 {
-  display: flex;
-  align-items: baseline;
-  gap: 7px;
-}
-
-.battle-net-history h4 small,
-.battle-net-history li small {
-  color: var(--muted-foreground);
-}
-
-.battle-round-scrambles {
-  display: grid;
-  min-width: 0;
-  gap: 4px;
-  margin-top: 7px;
-}
-
-.battle-round-scrambles span {
-  display: flex;
-  min-width: 0;
-  gap: 7px;
-}
-
-.battle-round-scrambles code {
-  overflow-wrap: anywhere;
-}
-
-.battle-net-history ul li {
-  display: grid;
-  min-width: 0;
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  gap: 8px;
-  padding: 5px 0;
-}
-
-.battle-net-layout {
-  display: grid;
-  min-width: 0;
-  min-height: 0;
-  flex: 1;
-  grid-template-columns: minmax(0, 1fr) minmax(220px, 32%);
-}
-
-.battle-net-timer {
-  display: flex;
-  min-width: 0;
-  min-height: 460px;
-  flex-direction: column;
-  align-items: center;
-  padding-top: 8px;
-}
-
-.battle-net-timer > .timing-surface {
-  min-width: 0;
-  min-height: 300px;
-  flex: 1;
-  padding-inline: 8px;
-}
-
-.battle-player-list {
-  min-width: 0;
-  margin: 0;
-  padding: 8px;
-  overflow: auto;
-  border-left: 1px solid var(--border-default);
-  list-style: none;
-}
-
-.battle-player-list li {
-  display: grid;
-  min-width: 0;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 4px 8px;
-  padding: 10px;
-  border-bottom: 1px solid var(--border-default);
-}
-
-.battle-player-list li.is-me {
-  background: var(--accent-soft);
-}
-
-.battle-player-list li > span:first-child {
-  display: flex;
-  min-width: 0;
-  align-items: baseline;
-  gap: 6px;
-}
-
-.battle-player-list li strong {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.battle-player-list li small,
-.battle-player-list li span {
-  color: var(--muted-foreground);
-}
-
-@media (max-width: 640px) {
-  .battle-top-actions button {
-    max-width: 96px;
-    padding-inline: 7px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .battle-grid {
-    grid-auto-rows: minmax(235px, 1fr);
-  }
-
-  .battle-player-header {
-    flex-wrap: wrap;
-  }
-
-  .battle-player-header > strong {
-    flex-basis: calc(100% - 60px);
-  }
-
-  .battle-player-header > .pp {
-    margin-inline-start: auto;
-  }
-
-  .battle-net-layout {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .battle-net-timer {
-    min-height: 400px;
-  }
-
-  .battle-player-list {
-    max-height: 260px;
-    border-top: 1px solid var(--border-default);
-    border-left: 0;
-  }
-}
-
-@media (orientation: landscape) and (max-height: 560px) {
-  .battle-grid {
-    grid-auto-rows: minmax(250px, 1fr);
-  }
-
-  .battle-net-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(210px, 34%);
-  }
-
-  .battle-net-timer {
-    min-height: 320px;
-  }
-
-  .battle-player-list {
-    max-height: none;
-    border-top: 0;
-    border-left: 1px solid var(--border-default);
-  }
-}
+.app-shell[data-wide='true'] > .view-container { grid-row: 2; }
+.app-shell[data-wide='true'] > .app-titlebar { grid-row: 2; }
+.app-shell[data-wide='true'] > .app-titlebar + .view-container { grid-row: 3; }
+.app-shell[data-wide='true'].app-shell--timer-fullscreen > .view-container { grid-row: 1; }
+.view-container.timer-workspace { --timer-workspace-height: 100%; }
+/* Online workspace lives inside the host navigation viewport. */
+.battle-mode--net.timer-workspace { --timer-workspace-height: 100%; min-height: 100%; }
+.app-shell[data-wide='true'] .mobile-timer-stage { min-height: 0; }
+.app-shell[data-wide='true'] .battle-mode { width: 100%; }
+.app-shell[data-wide='true'] .history-view.timer-workspace-panel { width: 100%; margin: 0; padding: 0; }
+.app-shell[data-wide='true'] .timer-workspace-panel > .app-titlebar { flex-shrink: 0; }
+.app-shell[data-wide='true'] .timer-workspace-panel-body { padding: 18px 20px 38px; }
 
 @media (prefers-reduced-motion: reduce) {
   .surface-chrome,

@@ -989,8 +989,8 @@ describeIf('parity harness self-checks', () => {
     // csTimer refused to seed; a following move frame therefore emits nothing.
     rig.feed(rig.crypto.encrypt(ganV2MoveFrame(10, [2, 0, 0, 0, 0, 0, 0])));
     expect(rig.cstimerMoves()).toEqual([]);
-    // DOCUMENTED DIVERGENCE: our driver seeds `prevMoveCnt` from any mode-4
-    // frame without running CubieCube.verify(), so it *does* emit here.
-    expect(rig.ourMoves).toEqual(['R']);
+    // Both implementations reject an invalid mode-4 frame, so the following
+    // move cannot seed or advance the move stream.
+    expect(rig.ourMoves).toEqual([]);
   });
 });

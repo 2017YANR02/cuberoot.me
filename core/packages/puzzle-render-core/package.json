@@ -95,6 +95,11 @@
       "./engine/gear/gearState": "mixed",
       "./engine/gear/gearGeometry": "mixed",
       "./engine/gear/GearTwister": "mixed",
+      "./engine/ghost/GhostCube": "mixed",
+      "./engine/ghost/GhostTwister": "mixed",
+      "./engine/ghost/ghostModel": "runtime-neutral",
+      "./engine/ghost/ghostGeometry": "runtime-neutral",
+      "./engine/ghost/ghostState": "runtime-neutral",
       "./engine/fto/FtoCube": "mixed",
       "./engine/fto/FtoTwister": "mixed",
       "./engine/fto/ftoAnimation": "mixed",
@@ -108,7 +113,10 @@
       "./sim/worldInteraction": "react-dom",
       "./support/cube-net-svg": "mixed",
       "./engine/nxn/vcStageMask": "mixed",
-      "./support/puzzle-image/masks": "mixed"
+      "./support/puzzle-image/masks": "mixed",
+      "./engine/coreOpacity": "mixed",
+      "./engine/backView": "react-dom",
+      "./support/three": "runtime-neutral"
     }
   },
   "sideEffects": false,
@@ -202,6 +210,11 @@
     "./engine/gear/gearState": "./src/engine/gear/gearState.ts",
     "./engine/gear/gearGeometry": "./src/engine/gear/gearGeometry.ts",
     "./engine/gear/GearTwister": "./src/engine/gear/GearTwister.ts",
+    "./engine/ghost/GhostCube": "./src/engine/ghost/GhostCube.ts",
+    "./engine/ghost/GhostTwister": "./src/engine/ghost/GhostTwister.ts",
+    "./engine/ghost/ghostModel": "./src/engine/ghost/ghostModel.ts",
+    "./engine/ghost/ghostGeometry": "./src/engine/ghost/ghostGeometry.ts",
+    "./engine/ghost/ghostState": "./src/engine/ghost/ghostState.ts",
     "./engine/fto/FtoCube": "./src/engine/fto/FtoCube.ts",
     "./engine/fto/FtoTwister": "./src/engine/fto/FtoTwister.ts",
     "./engine/fto/ftoAnimation": "./src/engine/fto/ftoAnimation.ts",
@@ -215,7 +228,10 @@
     "./sim/worldInteraction": "./src/sim/worldInteraction.ts",
     "./support/cube-net-svg": "./src/support/cube-net-svg.ts",
     "./engine/nxn/vcStageMask": "./src/engine/nxn/vcStageMask.ts",
-    "./support/puzzle-image/masks": "./src/support/puzzle-image/masks.ts"
+    "./support/puzzle-image/masks": "./src/support/puzzle-image/masks.ts",
+    "./engine/coreOpacity": "./src/engine/coreOpacity.ts",
+    "./engine/backView": "./src/engine/backView.ts",
+    "./support/three": "./src/support/three.ts"
   },
   "scripts": {
     "build": "tsc -b && esbuild src/iso-svg.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/iso-svg.js",
@@ -231,7 +247,7 @@
   },
   "devDependencies": {
     "@types/three": "^0.183.1",
-    "esbuild": "^0.27.4",
+    "esbuild": "^0.28.1",
     "typescript": "^5"
   }
 }

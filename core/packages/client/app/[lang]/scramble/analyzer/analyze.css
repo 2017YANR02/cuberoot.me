@@ -98,7 +98,7 @@
 .analyze-scramble-wrap .analyze-scramble {
     padding-right: 2rem;
 }
-.analyze-scramble-clear {
+.clear-btn.analyze-scramble-clear {
     right: 8px;
     top: 1.15rem;
     transform: translateY(-50%);
@@ -327,9 +327,8 @@
     --rs-mark-fg: var(--az-text-sub);
 }
 
-/* 来源切换用通用 PillToggle(蓝色 iOS 开关);宽度跟随两标签较长者,避免翻转时跳动 */
-.pill-toggle.analyze-src-pill {
-    min-width: 7.5rem;
+/* 来源使用浏览器原生菜单。 */
+.native-select.analyze-src-pill {
     font-size: 0.82rem;
 }
 

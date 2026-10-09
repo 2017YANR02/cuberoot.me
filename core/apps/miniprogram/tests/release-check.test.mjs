@@ -258,6 +258,7 @@ describe('mini program release check', () => {
       WECHAT_MINI_GIIKER_TESTED: '1',
       WECHAT_MINI_MOYU_TESTED: '1',
     })).toEqual({
+      externalTimerReviewed: false,
       socketDomainConfigured: true,
       basicInfoApproved: true,
       filingCompleted: false,

@@ -126,6 +126,7 @@ export const MOBILE_AUTH_PROVIDERS = [
   'wechat',
   'qq',
   'alipay',
+  'douyin',
 ] as const;
 
 export type MobileAuthProvider = typeof MOBILE_AUTH_PROVIDERS[number];

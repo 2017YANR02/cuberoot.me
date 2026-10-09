@@ -24,6 +24,13 @@ vi.mock('next/link', () => ({
 }));
 vi.mock('@/components/HeaderToggles', () => ({ default: () => null }));
 vi.mock('@/components/LandingSearch', () => ({ default: () => null }));
+vi.mock('@/components/persons/sections/PersonUpcomingComps', () => ({
+  default: ({ wcaId, isZh }: { wcaId: string; isZh: boolean }) => createElement('section', {
+    'data-testid': 'home-upcoming-comps',
+    'data-wca-id': wcaId,
+    'data-is-zh': String(isZh),
+  }),
+}));
 // Browser optics are verified in Playwright; this suite exercises card access.
 vi.mock('@/lib/theme', () => ({ useEffectiveTheme: () => 'dark' }));
 
@@ -32,6 +39,22 @@ import { changeAppLanguage } from '@/i18n/i18n-client';
 import { PRIMARY_CARDS, WCA_CARDS, SECTIONS } from '@/lib/landing-sections';
 
 describe('homepage development cards', () => {
+  it('shows the shared upcoming competition cards only for a logged-in WCA account', () => {
+    changeAppLanguage('zh');
+    const render = () => {
+      const host = document.createElement('div');
+      host.innerHTML = renderToStaticMarkup(createElement(LandingPage));
+      return host.querySelector('[data-testid="home-upcoming-comps"]');
+    };
+
+    auth.user = null;
+    expect(render()).toBeNull();
+    auth.user = { wcaId: '2017YANR02' };
+    const upcoming = render();
+    expect(upcoming?.getAttribute('data-wca-id')).toBe('2017YANR02');
+    expect(upcoming?.getAttribute('data-is-zh')).toBe('true');
+  });
+
   it.each([null, { wcaId: 'ordinary-user' }, { wcaId: ADMIN_WCA_IDS[0] }])('renders access for %j', (user) => {
     auth.user = user;
     changeAppLanguage('zh');
@@ -51,7 +74,7 @@ describe('homepage development cards', () => {
     expect(host.querySelector('#card-teaching')?.getAttribute('href')).toBe(admin ? '/zh/courses' : undefined);
     const partnership = host.querySelector('#card-partnership');
     if (admin) {
-      expect(partnership?.getAttribute('href')).toBe('/zh/partnership');
+      expect(partnership?.getAttribute('href')).toBe('/zh/bp');
       expect(partnership?.classList.contains('is-disabled')).toBe(true);
       const lock = partnership?.parentElement?.querySelector<HTMLButtonElement>('.landing-card-lock');
       expect(lock?.disabled).toBe(true);
@@ -70,7 +93,8 @@ describe('homepage development cards', () => {
     expect(host.querySelectorAll('.landing-card-lock').length > 0).toBe(admin);
     const adminArea = host.querySelector('#landing-admin-content');
     if (admin) {
-      expect(host.querySelector('.landing-page')?.lastElementChild).toBe(adminArea);
+      expect(host.querySelector('.landing-page')?.lastElementChild).toBe(host.querySelector('.footer'));
+      expect(adminArea?.nextElementSibling).toBe(host.querySelector('.footer'));
       for (const config of [...PRIMARY_CARDS, ...WCA_CARDS, ...SECTIONS.flatMap((section) => section.cards)]) {
         const cards = host.querySelectorAll(`#card-${config.id}`);
         expect(cards).toHaveLength(1);

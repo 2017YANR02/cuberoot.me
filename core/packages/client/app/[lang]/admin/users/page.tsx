@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { parseAsInteger, parseAsString, parseAsStringEnum, useQueryState, useQueryStates } from 'nuqs';
 import { ChevronLeft, ChevronRight, Loader2, Monitor, Search, Smartphone, Tablet } from 'lucide-react';
 import AppLink from '@/components/AppLink';
@@ -11,13 +11,15 @@ import { Flag } from '@/components/Flag';
 import { SearchInput } from '@/components/SearchInput';
 import NumberCommitInput from '@/components/NumberCommitInput';
 import SortArrow from '@/components/SortArrow';
+import { useModalDismiss } from '@/hooks/useModalDismiss';
 import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
-import { hasAdminAccess, useAuthStore } from '@/lib/auth-store';
+import { hasAdminAccess, startUserImpersonation, useAuthStore } from '@/lib/auth-store';
 import { countryName } from '@/lib/country-name';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { fetchAdminUsers, updateAdminRole, type AdminUserRecord, type AdminUsersResponse } from '@/lib/account-api';
 import { isValidIsoDate } from '@/lib/iso-date';
+import MembershipList from './MembershipList';
 import './users.css';
 
 const PROVIDERS = ['all', 'email', 'phone', 'wca', 'google', 'wechat', 'douyin', 'qq', 'alipay', 'apple', 'password', 'none'] as const;
@@ -125,6 +127,65 @@ function DeviceIcon({ deviceType }: { deviceType: NonNullable<AdminUserRecord['l
   return <Monitor size={16} aria-hidden />;
 }
 
+function UserImpersonationDialog({
+  target,
+  busy,
+  error,
+  onClose,
+  onSubmit,
+}: {
+  target: AdminUserRecord;
+  busy: boolean;
+  error: string | null;
+  onClose: () => void;
+  onSubmit: (reason: string) => void;
+}) {
+  const t = useT();
+  const [reason, setReason] = useState('');
+  const dismiss = useModalDismiss(onClose, busy);
+  const trimmedReason = reason.trim();
+  const name = target.displayName || `UID ${target.id}`;
+  return (
+    <div className="admin-users-modal-backdrop" {...dismiss}>
+      <form
+        className="admin-users-modal"
+        data-site-surface="popover"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="admin-users-impersonation-title"
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (trimmedReason.length >= 5 && !busy) onSubmit(trimmedReason);
+        }}
+      >
+        <h2 id="admin-users-impersonation-title">{t(`以 ${name}（UID ${target.id}）身份查看`, `View as ${name} (UID ${target.id})`)}</h2>
+        <p>{t('将在新标签页中打开 30 分钟只读会话。原管理员标签页保持不变，任何写入都会被服务端拦截并记录。', 'A 30-minute read-only session will open in a new tab. This administrator tab stays unchanged, and the server blocks and records every write attempt.')}</p>
+        <label htmlFor="admin-users-impersonation-reason">{t('查看理由', 'Reason for viewing')}</label>
+        <textarea
+          id="admin-users-impersonation-reason"
+          className="admin-users-impersonation-reason"
+          value={reason}
+          minLength={5}
+          maxLength={200}
+          rows={3}
+          autoFocus
+          disabled={busy}
+          placeholder={t('至少 5 个字符，将写入审计记录', 'At least 5 characters; saved in the audit record')}
+          onChange={(event) => setReason(event.target.value)}
+        />
+        <small>{reason.length}/200</small>
+        {error && <p className="admin-users-error" role="alert">{error}</p>}
+        <div className="admin-users-modal-actions">
+          <button className="admin-users-page-button" type="button" disabled={busy} onClick={onClose}>{t('取消', 'Cancel')}</button>
+          <button className="admin-users-page-button admin-users-modal-submit" type="submit" disabled={busy || trimmedReason.length < 5}>
+            {busy ? t('正在打开…', 'Opening…') : t('在新标签页查看', 'View in new tab')}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 export default function AdminUsersPage() {
   const t = useT();
   const lang = useLang();
@@ -136,7 +197,11 @@ export default function AdminUsersPage() {
   const [error, setError] = useState<AdminUsersError | null>(null);
   const [roleError, setRoleError] = useState<string | null>(null);
   const [roleUpdatingId, setRoleUpdatingId] = useState<number | null>(null);
+  const [impersonationTarget, setImpersonationTarget] = useState<AdminUserRecord | null>(null);
+  const [impersonationBusy, setImpersonationBusy] = useState(false);
+  const [impersonationError, setImpersonationError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [membershipRevision, setMembershipRevision] = useState(0);
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
   const [{ q, page }, setSearch] = useQueryStates({
@@ -193,7 +258,7 @@ export default function AdminUsersPage() {
       .catch(() => { if (!cancelled) setError('load'); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [direction, from, isAdmin, mounted, page, provider, q, rangeProblem, sort, to]);
+  }, [direction, from, isAdmin, mounted, page, provider, q, rangeProblem, sort, to, membershipRevision]);
 
   const registrationPoints = useMemo<DailyActivityPoint[]>(() => (
     (data?.activity?.registrations ?? data?.daily ?? []).map((item) => ({ date: item.date, values: { registrations: item.count } }))
@@ -243,6 +308,32 @@ export default function AdminUsersPage() {
       setRoleError(t('管理员权限更新失败，请稍后重试。', 'Could not update administrator access. Try again later.'));
     } finally {
       setRoleUpdatingId(null);
+    }
+  };
+  const closeImpersonation = useCallback(() => {
+    setImpersonationTarget(null);
+    setImpersonationError(null);
+  }, []);
+  const beginImpersonation = async (reason: string) => {
+    if (!impersonationTarget || impersonationBusy) return;
+    const targetWindow = window.open('about:blank', '_blank');
+    if (!targetWindow) {
+      setImpersonationError(t('浏览器阻止了新标签页，请允许弹出窗口后重试。', 'The browser blocked the new tab. Allow pop-ups and try again.'));
+      return;
+    }
+    targetWindow.document.title = t('正在准备只读查看…', 'Preparing read-only view…');
+    setImpersonationBusy(true);
+    setImpersonationError(null);
+    try {
+      await startUserImpersonation(impersonationTarget.id, reason, targetWindow);
+      targetWindow.opener = null;
+      targetWindow.location.replace(`${window.location.origin}${lang === 'en' ? '' : '/zh'}/`);
+      closeImpersonation();
+    } catch {
+      targetWindow.close();
+      setImpersonationError(t('无法开始查看会话，请稍后重试。', 'Could not start the viewing session. Try again later.'));
+    } finally {
+      setImpersonationBusy(false);
     }
   };
 
@@ -468,6 +559,18 @@ export default function AdminUsersPage() {
                                 : record.isAdmin ? t('取消管理员', 'Remove admin') : t('设为管理员', 'Make admin')}
                             </button>
                           )}
+                          {data.canImpersonateUsers && !record.isRootAdmin && (
+                            <button
+                              className="admin-users-page-button admin-users-role-button"
+                              type="button"
+                              onClick={() => {
+                                setImpersonationError(null);
+                                setImpersonationTarget(record);
+                              }}
+                            >
+                              {t('以此用户查看', 'View as user')}
+                            </button>
+                          )}
                         </div>
                       </td>
                       <td><time dateTime={record.createdAt}>{formatTimestamp(record.createdAt, locale)}</time></td>
@@ -502,6 +605,17 @@ export default function AdminUsersPage() {
       )}
 
       {!data && !error && <p className="admin-users-status"><Loader2 size={16} className="admin-users-spin" />{t('正在加载用户数据…', 'Loading user data…')}</p>}
+      <MembershipList key={user?.uid ?? user?.wcaId} onChanged={() => setMembershipRevision(value => value + 1)} />
+      {impersonationTarget && (
+        <UserImpersonationDialog
+          key={impersonationTarget.id}
+          target={impersonationTarget}
+          busy={impersonationBusy}
+          error={impersonationError}
+          onClose={closeImpersonation}
+          onSubmit={(reason) => void beginImpersonation(reason)}
+        />
+      )}
     </main>
   );
 }

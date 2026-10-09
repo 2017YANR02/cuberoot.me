@@ -22,7 +22,11 @@ afterAll(() => vi.unstubAllGlobals());
 
 describe('female record adjudication', () => {
   it('uses the historical baseline, excluding later and invalid results', () => {
-    expect(femaleRecordBaseline([...history, { e: '333', t: 'a', v: -1, d: '2026-01-01' }], '2026-09-13')).toEqual({ '333|1': 468 });
+    expect(femaleRecordBaseline([
+      ...history,
+      { e: '333', t: 'a', v: -1, d: '2026-01-01' },
+      { e: '333', t: 'a', v: 427, d: '2026-09-13' },
+    ], '2026-09-13')).toEqual({ '333|1': 468 });
     expect(femaleRecordBaseline(history, '2024-01-01')).toEqual({});
   });
 
@@ -58,6 +62,12 @@ describe('FWR notification formatting', () => {
     expect(result.cn).toBe('纪录快讯! 4.52三阶平均女子世界纪录FWR/WR10 连允之🇨🇳| 武汉丹秋赛🇨🇳');
     expect(result.en).toContain('FWR/WR10');
     expect(result.en).not.toContain('AsR');
+  });
+
+  it('formats a tied FWR with the Chinese overall rank and an unnumbered English WR marker', () => {
+    const result = formatCombinedRecords([{ ...event, attempt_result: 427, tied: true }], () => 4);
+    expect(result.cn).toBe('纪录快讯! 4.27三阶平均女子世界纪录FWR(平)/WR4 连允之🇨🇳| 武汉丹秋赛🇨🇳');
+    expect(result.en).toBe('BREAKING NEWS! 4.27 3x3 FWR(Tied)/WR Avg Yunzhi Lian🇨🇳| 武汉丹秋赛🇨🇳');
   });
   it('supports double FWR and mixed WR/FWR messages', () => {
     expect(formatCombinedRecords([event, { ...event, rec_type: 'single', attempt_result: 354 }], () => null).cn).toContain('双女子世界纪录FWR');

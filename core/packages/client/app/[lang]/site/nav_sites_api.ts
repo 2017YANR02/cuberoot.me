@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 /**
  * /v1/nav/sites — 网址导航 (admin 编辑) API。
  * server 实现 routes/nav_sites.ts;鉴权走 ADMIN_WCA_IDS WCA OAuth Bearer。
@@ -27,31 +28,31 @@ export interface SiteInput {
 }
 
 export async function listSites(): Promise<Site[]> {
-  return handleApi<Site[]>(await fetch(`${BASE}?v=3`, { cache: 'no-store' }));
+  return handleApi<Site[]>(await sessionFetch(`${BASE}?v=3`, { cache: 'no-store' }));
 }
 
 const TOPICS_BASE = API_ORIGIN + '/v1/nav/topics';
 
 export async function listTopics(): Promise<string[]> {
-  return handleApi<string[]>(await fetch(TOPICS_BASE, { cache: 'no-store' }));
+  return handleApi<string[]>(await sessionFetch(TOPICS_BASE, { cache: 'no-store' }));
 }
 
 export async function saveTopic(method: 'POST' | 'PUT' | 'DELETE', tag: string, replacement?: string): Promise<void> {
-  await handleApi(await fetch(TOPICS_BASE, {
+  await handleApi(await sessionFetch(TOPICS_BASE, {
     method, headers: authHeaders(), body: JSON.stringify({ tag, replacement }),
   }));
 }
 export async function createSite(body: SiteInput): Promise<Site> {
-  return handleApi<Site>(await fetch(BASE, { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) }));
+  return handleApi<Site>(await sessionFetch(BASE, { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) }));
 }
 export async function updateSite(id: number, body: SiteInput): Promise<Site> {
-  return handleApi<Site>(await fetch(`${BASE}/${id}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(body) }));
+  return handleApi<Site>(await sessionFetch(`${BASE}/${id}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(body) }));
 }
 export async function deleteSite(id: number): Promise<{ ok: boolean }> {
-  return handleApi<{ ok: boolean }>(await fetch(`${BASE}/${id}`, { method: 'DELETE', headers: authHeaders() }));
+  return handleApi<{ ok: boolean }>(await sessionFetch(`${BASE}/${id}`, { method: 'DELETE', headers: authHeaders() }));
 }
 export async function reorderGroup(groupId: Site['group'], ids: number[]): Promise<{ ok: boolean }> {
   return handleApi<{ ok: boolean }>(
-    await fetch(`${BASE}/reorder`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify({ groupId, ids }) }),
+    await sessionFetch(`${BASE}/reorder`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify({ groupId, ids }) }),
   );
 }

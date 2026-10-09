@@ -1,8 +1,8 @@
 # Scramble samples — 223 / block223 / O / bin 5
-# Population in this bin: 881
+# Population in this bin: 889
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 5428457001,F D2 F' U' F2 D2 F2 R2 U' B2 D' R U B2 L2 U' R D R,O,Megaminx Madness AZ 2026 (2026-03-07),333 Final D E2
@@ -11,7 +11,7 @@
 14228001,B2 L F2 L2 F' R D' B2 D' B' D' R2 F R2 F U2 F2 B',O,Israel Championship 2014 (2014-04-16~17),333 R1 C #3
 1077804001,U F2 U L2 U' B2 D2 R2 U' F R F2 D2 B2 D2 L' R2 D' B,O,Ghana Open 2019 (2019-04-06),333 R1 D E1
 3914204001,R' D' L F2 U F2 U' F' U2 L2 D R2 F2 U R2 F2 U' F' U,O,Quick Solving at Cobham 2024 (2024-07-06~07),333 R2 A E1
-1290663001,U2 R2 U2 B L2 D2 B L2 B' L2 B2 D' B' L R B' L F' R,O,Spokane Summer 2019 (2019-09-07),333 R1 C #4
+5847851023,D B' D' U' B2 U R2 D R2 B' D B2 D2 B' U2 L D2 U L',O,BLD Fall Fürth 2026 (2026-09-26~27),333mbf Final A #1
 2706123001,B U L' U L' F U' F U2 R' U2 F2 U2 B' R2 B' U2 R2 B L2 U2,O,DFW Cubing Spring 2023 (2023-05-07),333bf R1 A E1
 1182051001,D B' U' L U B D B2 D' R U R D2 R2 F2 U2 B2,O,Pittsburgh Summer 2019 (2019-06-15~16),333 R2 B #3
 1093753001,F' L2 F' D2 B2 D2 U2 F' R U' B' D2 U R D' R' D B,O,Hamburg International 2019 (2019-04-13~14),333 R3 C #1
@@ -154,7 +154,7 @@
 5425939001,L' R2 F2 R2 B U2 L2 F2 U' R' B' R2 F2 R' F' D U R',O,Berkeley Favorites 2026 (2026-03-01),333oh R1 A #2
 2875821001,R2 F U F2 D' L U' F U D2 L D2 F2 L2 D L2 F2 U',O,Algeria Summer Open 2023 (2023-07-08),333oh Final A #3
 5811891001,U B2 D2 B D' B2 D' F2 R2 U2 R2 L' B' U L' R D2 R,O,Shin Kong Cube Open - Taichung 2026 (2026-08-30),333 Final A #3
-2536708008,F2 U2 B2 U2 L2 D' F D U2 B U2 R2 F' R' D2 R D L2 U2,O,I Hope It's Solved Calgary 2023 (2023-03-04~05),333mbf Final A #1
+5847156001,U F' U R F' R U2 F' U L' U2 R' F2 B2 R2 U2 D2 B,O,Esquenta Fortaleza 2026 (2026-09-26),333 Final A E1
 3782345001,U2 R F2 D U' B2 D L2 B2 L' U2 L B' D F2 U2 F D,O,Zibo Open 2024 (2024-05-19),333 R1 E E1
 4232787001,L2 B2 L D L' B D R' D2 B U' F2 R2 U' D' R2 B2 R,O,North Tasmania Spring 2024 (2024-10-27),333 R1 A #5
 5771439017,F' R' B2 D' R' U2 R' F2 L' R' U2 F' U L U2 F' R F' L' F,O,Silent Korea Open 2026 (2026-08-01~02),333mbf Final A #1
@@ -171,7 +171,7 @@
 4682705006,D2 B2 R' F' U F' L F2 U B R2 F' D2 F L2 F2 D F' L B,O,UNSA Speedcubing Otoño 2025 (2025-04-26),333mbf Final A #1
 1683706001,F2 U2 B2 F2 L R D2 L B2 D' R2 B U2 L U2 L R' U' F2,O,Wyoming Summer 2021 (2021-07-31),333oh Final D #3
 3830824061,B2 U R2 D L' U2 L2 D2 L F2 R D B U' R2 F R' F2 D',O,Gniezno Side Open 2024 (2024-06-08),333mbf Final B #1
-1028965004,B2 F2 D B2 R2 D U2 F2 U B' D U B' R B2 L2 D2 F' L' F2 L B',O,CFL Goes Sideways 2019 (2019-02-16~17),333mbf Final A #2
+5838211004,F U L B' D2 R2 B2 D2 L2 F' R2 U2 L' B D2 R U' L' B2 F2 L B2,O,Gouverneur Quiet 2026 (2026-09-19~20),333mbf Final B #2
 1142358001,R2 F U' R2 U F U' R2 U L2 B L2 U2 R2 F2 L2 F2,O,Cochabamba Open 2019 (2019-05-12),333 R1 C E2
 4951126004,R F R' F2 R' D' F2 U2 D2 B' D' L2 B2 U R2 B2 D2 L2 U',O,Couffouleux Open 2025 (2025-08-15~17),333mbf Final A #1
 4888655001,R' D' L2 F R2 D2 B2 L2 R2 U2 B D' R2 B2 U2 F D' R2,O,Dragon Cubing X 2025 (2025-07-26~27),333 R2 B #2

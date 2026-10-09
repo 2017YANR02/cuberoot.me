@@ -1,5 +1,6 @@
 'use client';
 
+import { sessionFetch } from '@/lib/session-fetch';
 import {
   decodeMobileAuthRequest,
   decodeWebSessionTicketEnvelope,
@@ -44,7 +45,7 @@ export function mobileAuthCallbackHref(
 export async function issueMobileAuthTicket(
   request: MobileAuthRequest,
   token: string,
-  fetcher: typeof fetch = fetch,
+  fetcher: typeof fetch = sessionFetch,
 ): Promise<WebSessionTicketEnvelope> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), MOBILE_TICKET_TIMEOUT_MS);

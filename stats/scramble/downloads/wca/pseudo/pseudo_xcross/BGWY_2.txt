@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xcross / BGWY / bin 2
-# Population in this bin: 546
+# Population in this bin: 549
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 261001,R' F D L2 F' B U R2 B' R F L2 U L2 U' R2 U2 L2,W,Montréal Open 2014 (2014-03-15),333 R2 B #1
@@ -137,7 +137,7 @@
 5488072020,L' D' B D L' U D L2 D2 L2 U2 B L2 U2 F' L2 F' L' B' L B',Y,Los Heroes Bogotá II 2026 (2026-03-29),333mbf Final A #1
 1912920001,F' R' U B2 D F2 L2 F2 U' L' R D2 F' L F D F,B,Princeton Spring 2022 (2022-05-07),333oh Final C #2
 824538001,F2 D2 U2 R' B2 D2 B2 D' U R F2 R' F D2 U' B' R B2,W,Phoenix Cube Championship 2018 (2018-07-07~08),333oh R1 A #2
-3495339001,R2 F' R' D2 U2 L' D2 F2 B U B F' D U' L' R2 U2,Y,Cubing in Mount Kisco 2024 (2024-02-10),333oh Final B #5
+5847860012,B' D' R' B2 F2 L' R2 D2 F2 D' L R D2 U' F' U' B U2 B R',B,BLD Fall Fürth 2026 (2026-09-26~27),333mbf Final B #1
 3219621026,U' R2 D' L' U2 L' B2 R2 L2 F L' U' R2 L2 D' R2 B2 D' B2 L',B,Ukrainian Nationals 2023 (2023-10-27~29),333mbf Final A #1
 2795397076,R D2 L B2 R' U2 R' F2 B D F2 L2 B D2 R' B2 D B2 D2 L2 U,Y,Please Be Solved Pickering Evening 2023 (2023-06-17),333mbf Final A #1
 3295752001,D' R F2 U' L2 R2 F2 D2 U B' F L2 U F L' B2 R U2 L',W,Stevenage November 2023 (2023-11-25~26),333 R1 F #2

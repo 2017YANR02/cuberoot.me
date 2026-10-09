@@ -3,24 +3,24 @@
  *
  * 为什么是 TS 而不是 Rust:魔表的最优求解器本来就是纯 TS(`@cuberoot/puzzle-solvers/clock`,零下载表、
  * 可证最优、~10ms/态),再拿 Rust 抄一遍没有收益。所以这个文件**把自己伪装成 analyzer exe**:
- * 与 `solver/target/release/*_analyzer.exe` 完全同一套 CLI 契约,`update_puzzle_stats.ps1` 那段
+ * 与 `solver/target/release/*_analyzer.exe` 完全同一套 CLI 契约,`scripts/stats/puzzles.ts` 那段
  * 分块循环一行都不用改口径。
  *
  * 契约(与 Rust analyzer 逐条对齐):
- *   stdin        每行一个块文件路径(ps1 一次喂一块)
+ *   stdin        每行一个块文件路径(管道一次喂一块)
  *   块文件       每行 `<id>,<scramble>`
  *   输出         同目录 `<块文件名去扩展>_clock.csv`,首行表头,其后与输入**逐行等长同序**
  *   列           `id,clock`(+ `soln` 当 env `PUZZLE_EMIT_SOLN=1`;它的逆 = 最优等价打乱)
- *   进度         stdout 打 `[PROG] ...`(ps1 会把这类行滤掉)
+ *   进度         stdout 打 `[PROG] ...`(TypeScript 编排器汇总展示)
  *   失败         非 0 退出码
  *
- * 并行:worker 池,线程数 = min(14, cpu-2)(全局规则:重计算 ≤14 线程),可用 env `CLOCK_THREADS`
- * 或 `RAYON_NUM_THREADS`(ps1 已设 14)覆盖。worker 起不来(tsx loader 没传进 worker 等)就**退回
+ * 并行:worker 池,默认使用机器可用并行度,可用 env `CLOCK_THREADS`
+ * 或 `RAYON_NUM_THREADS` 覆盖。worker 起不来(tsx loader 没传进 worker 等)就**退回
  * 单进程**,只是慢,不会把整条管道弄挂。
  *
- * 运行(一般由 ps1 调,手跑长这样):
+ * 运行(一般由 TypeScript 统计入口调用,手跑长这样):
  *   pnpm --filter @cuberoot/puzzle-solvers build
- *   echo D:\cube\scramble\puzzle\clock\chunk_clock.txt | pnpm exec tsx src/clock_analyzer.mts
+ *   echo <puzzle_data_dir>/clock/chunk_clock.txt | pnpm exec tsx src/clock_analyzer.mts
  */
 import { clockStateFromAlg, solveClock } from '@cuberoot/puzzle-solvers/clock';
 import fs from 'node:fs';
@@ -67,8 +67,8 @@ if (!isMainThread) {
 
 function threadCount(): number {
   const env = Number(process.env.CLOCK_THREADS || process.env.RAYON_NUM_THREADS || 0);
-  const want = env > 0 ? env : Math.max(1, os.cpus().length - 2);
-  return Math.max(1, Math.min(14, want)); // 全局规则:本机重计算 ≤14 线程
+  const want = env > 0 ? env : os.availableParallelism();
+  return Math.max(1, want);
 }
 
 /** worker 池:把行切成 T 份,每份一个 worker。失败(loader 没进 worker 等)返回 null → 调用方退回单进程。 */
@@ -126,7 +126,7 @@ export async function processClockBlock(
   blockPath: string,
   options: ClockAnalyzerOptions = {},
 ): Promise<ClockAnalyzerResult> {
-  const threads = Math.max(1, Math.min(14, options.threads ?? threadCount()));
+  const threads = Math.max(1, options.threads ?? threadCount());
   const emitSolution = options.emitSolution ?? process.env.PUZZLE_EMIT_SOLN === '1';
   const ids: string[] = [];
   const rows: { i: number; scramble: string }[] = [];

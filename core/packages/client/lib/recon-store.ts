@@ -11,6 +11,11 @@ import {
   formatTime, formatAvg, formatAoXR, formatResult, formatRound, truncateCs,
 } from './recon-utils';
 
+const RECON_EVENT_TAIL_ORDER: Record<string, number> = {
+  '3x3 robot': 0,
+  '3x3 smart': 1,
+};
+
 // ── 排序 ──
 
 // NOTE: 'result' 映射到 rawTime（三位小数列），'aoType' 排序按 aoType 字段
@@ -343,7 +348,16 @@ export const useReconStore = create<ReconStoreState & ReconStoreActions>()((set,
     for (const s of get().allSolves) {
       if (s.event) events.add(wcaToReconEvent(s.event));
     }
-    return Array.from(events).sort();
+    return Array.from(events).sort((a, b) => {
+      const aTail = RECON_EVENT_TAIL_ORDER[a.toLowerCase()];
+      const bTail = RECON_EVENT_TAIL_ORDER[b.toLowerCase()];
+      if (aTail !== undefined || bTail !== undefined) {
+        if (aTail === undefined) return -1;
+        if (bTail === undefined) return 1;
+        return aTail - bTail;
+      }
+      return a.localeCompare(b);
+    });
   },
 
   getAvailableRounds: () => {

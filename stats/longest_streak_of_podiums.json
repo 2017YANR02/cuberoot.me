@@ -45,7 +45,7 @@
       "[Guangzhou GraDUAL 3x3 I 2026](https://www.worldcubeassociation.org/competitions/GuangzhouGraDUAL3x3I2026)"
     ],
     [
-      117,
+      119,
       "[Yiheng Wang (王艺衡)](https://www.worldcubeassociation.org/persons/2019WANY36)",
       "3x3x3 Cube",
       "[Guangdong Open 2021](https://www.worldcubeassociation.org/competitions/GuangdongOpen2021)",
@@ -59,18 +59,18 @@
       null
     ],
     [
+      102,
+      "[Caio Hideaki Sato](https://www.worldcubeassociation.org/persons/2016SATO01)",
+      "3x3x3 Cube",
+      "[Schoolmark Open 2019](https://www.worldcubeassociation.org/competitions/SchoolmarkOpen2019)",
+      null
+    ],
+    [
       101,
       "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
       "4x4x4 Cube",
       "[SacCubing II 2017](https://www.worldcubeassociation.org/competitions/SacCubingII2017)",
       "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025)"
-    ],
-    [
-      99,
-      "[Caio Hideaki Sato](https://www.worldcubeassociation.org/persons/2016SATO01)",
-      "3x3x3 Cube",
-      "[Schoolmark Open 2019](https://www.worldcubeassociation.org/competitions/SchoolmarkOpen2019)",
-      null
     ],
     [
       95,
@@ -129,18 +129,18 @@
       "[WCA World Championship 2023](https://www.worldcubeassociation.org/competitions/WC2023)"
     ],
     [
+      77,
+      "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
+      "4x4x4 Cube",
+      "[Kubsala Winter 2023](https://www.worldcubeassociation.org/competitions/KubsalaWinter2023)",
+      null
+    ],
+    [
       76,
       "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
       "3x3x3 Cube",
       "[CubingUSA Nationals 2019](https://www.worldcubeassociation.org/competitions/CubingUSANationals2019)",
       "[DFW Megacomp 2024](https://www.worldcubeassociation.org/competitions/DFWMegacomp2024)"
-    ],
-    [
-      75,
-      "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
-      "4x4x4 Cube",
-      "[Kubsala Winter 2023](https://www.worldcubeassociation.org/competitions/KubsalaWinter2023)",
-      null
     ],
     [
       72,
@@ -150,14 +150,14 @@
       null
     ],
     [
-      71,
+      72,
       "[Lev Golub (Лев Голуб)](https://www.worldcubeassociation.org/persons/2014HOLU01)",
       "Skewb",
       "[Ukrainian Nationals 2017](https://www.worldcubeassociation.org/competitions/UkrainianNationals2017)",
       null
     ],
     [
-      67,
+      69,
       "[Lim Hung (林弘)](https://www.worldcubeassociation.org/persons/2016HUNG08)",
       "7x7x7 Cube",
       "[YJ Malaysia Cube Open 2022](https://www.worldcubeassociation.org/competitions/YJMalaysiaCubeOpen2022)",
@@ -176,6 +176,13 @@
       "4x4x4 Cube",
       "[Lomas 2015](https://www.worldcubeassociation.org/competitions/LasLomas2015)",
       "[SAC 2024](https://www.worldcubeassociation.org/competitions/SAC2024)"
+    ],
+    [
+      65,
+      "[Caio Hideaki Sato](https://www.worldcubeassociation.org/persons/2016SATO01)",
+      "3x3x3 One-Handed",
+      "[III Barueri Open 2019](https://www.worldcubeassociation.org/competitions/IIIBarueriOpen2019)",
+      null
     ],
     [
       64,
@@ -200,17 +207,17 @@
     ],
     [
       63,
-      "[Caio Hideaki Sato](https://www.worldcubeassociation.org/persons/2016SATO01)",
-      "3x3x3 One-Handed",
-      "[III Barueri Open 2019](https://www.worldcubeassociation.org/competitions/IIIBarueriOpen2019)",
-      null
-    ],
-    [
-      63,
       "[Luke Garrett](https://www.worldcubeassociation.org/persons/2017GARR05)",
       "3x3x3 One-Handed",
       "[Mishawaka Summer 2019](https://www.worldcubeassociation.org/competitions/MishawakaSummer2019)",
       "[CubingUSA Nationals 2023](https://www.worldcubeassociation.org/competitions/CubingUSANationals2023)"
+    ],
+    [
+      60,
+      "[Alexis Rodrigo Cazu Mendoza](https://www.worldcubeassociation.org/persons/2014MEND02)",
+      "7x7x7 Cube",
+      "[Fénix 2014](https://www.worldcubeassociation.org/competitions/Fenix2014)",
+      null
     ],
     [
       60,
@@ -228,9 +235,9 @@
     ],
     [
       59,
-      "[Alexis Rodrigo Cazu Mendoza](https://www.worldcubeassociation.org/persons/2014MEND02)",
-      "7x7x7 Cube",
-      "[Fénix 2014](https://www.worldcubeassociation.org/competitions/Fenix2014)",
+      "[Lingkun Jiang (姜凌坤)](https://www.worldcubeassociation.org/persons/2019JIAN54)",
+      "Pyraminx",
+      "[Chengdu Flash Cube Open 2023](https://www.worldcubeassociation.org/competitions/ChengduFlashCubeOpen2023)",
       null
     ],
     [
@@ -249,9 +256,9 @@
     ],
     [
       57,
-      "[Lingkun Jiang (姜凌坤)](https://www.worldcubeassociation.org/persons/2019JIAN54)",
-      "Pyraminx",
-      "[Chengdu Flash Cube Open 2023](https://www.worldcubeassociation.org/competitions/ChengduFlashCubeOpen2023)",
+      "[Hassan Khanani](https://www.worldcubeassociation.org/persons/2018KHAN26)",
+      "Square-1",
+      "[Bethesda Summer Showdown 2024](https://www.worldcubeassociation.org/competitions/BethesdaSummerShowdown2024)",
       null
     ],
     [
@@ -274,13 +281,6 @@
       "2x2x2 Cube",
       "[Ankara Winter 2022](https://www.worldcubeassociation.org/competitions/AnkaraWinter2022)",
       "[19 Mayıs Loba Ankara 2026](https://www.worldcubeassociation.org/competitions/19MayisLobaAnkara2026)"
-    ],
-    [
-      56,
-      "[Hassan Khanani](https://www.worldcubeassociation.org/persons/2018KHAN26)",
-      "Square-1",
-      "[Bethesda Summer Showdown 2024](https://www.worldcubeassociation.org/competitions/BethesdaSummerShowdown2024)",
-      null
     ],
     [
       55,
@@ -514,6 +514,20 @@
       "[WCA European Championship 2026](https://www.worldcubeassociation.org/competitions/Euro2026)"
     ],
     [
+      44,
+      "[Ryan Eckersley](https://www.worldcubeassociation.org/persons/2019ECKE02)",
+      "4x4x4 Blindfolded",
+      "[Rubik's UK Championship 2023](https://www.worldcubeassociation.org/competitions/RubiksUKChampionship2023)",
+      null
+    ],
+    [
+      44,
+      "[Kaique de Oliveira Neves](https://www.worldcubeassociation.org/persons/2022NEVE01)",
+      "2x2x2 Cube",
+      "[DNFools Boulevard 2023](https://www.worldcubeassociation.org/competitions/DNFoolsBoulevard2023)",
+      null
+    ],
+    [
       43,
       "[Michał Halczuk](https://www.worldcubeassociation.org/persons/2006HALC01)",
       "5x5x5 Cube",
@@ -563,20 +577,6 @@
       "[Steel City Sprint PA 2026](https://www.worldcubeassociation.org/competitions/SteelCitySprint2026)"
     ],
     [
-      43,
-      "[Ryan Eckersley](https://www.worldcubeassociation.org/persons/2019ECKE02)",
-      "4x4x4 Blindfolded",
-      "[Rubik's UK Championship 2023](https://www.worldcubeassociation.org/competitions/RubiksUKChampionship2023)",
-      null
-    ],
-    [
-      43,
-      "[Kaique de Oliveira Neves](https://www.worldcubeassociation.org/persons/2022NEVE01)",
-      "2x2x2 Cube",
-      "[DNFools Boulevard 2023](https://www.worldcubeassociation.org/competitions/DNFoolsBoulevard2023)",
-      null
-    ],
-    [
       42,
       "[Przemysław Kaleta](https://www.worldcubeassociation.org/persons/2012KALE01)",
       "3x3x3 One-Handed",
@@ -620,6 +620,13 @@
     ],
     [
       41,
+      "[Lev Golub (Лев Голуб)](https://www.worldcubeassociation.org/persons/2014HOLU01)",
+      "3x3x3 Cube",
+      "[U24 Open October 2022](https://www.worldcubeassociation.org/competitions/U24OpenOctober2022)",
+      null
+    ],
+    [
+      41,
       "[Pedro Alejandro Condo Tellez](https://www.worldcubeassociation.org/persons/2015TELL01)",
       "5x5x5 Cube",
       "[TCG Spring Open 2015](https://www.worldcubeassociation.org/competitions/TCGSpringOpen2015)",
@@ -655,13 +662,6 @@
     ],
     [
       40,
-      "[Lev Golub (Лев Голуб)](https://www.worldcubeassociation.org/persons/2014HOLU01)",
-      "3x3x3 Cube",
-      "[U24 Open October 2022](https://www.worldcubeassociation.org/competitions/U24OpenOctober2022)",
-      null
-    ],
-    [
-      40,
       "[Bernardo Torres](https://www.worldcubeassociation.org/persons/2015TORR12)",
       "4x4x4 Cube",
       "[CojedesRubik 2016](https://www.worldcubeassociation.org/competitions/CojedesRubik2016)",
@@ -680,6 +680,13 @@
       "Megaminx",
       "[New Zealand Nationals 2019](https://www.worldcubeassociation.org/competitions/NewZealandNationals2019)",
       "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025)"
+    ],
+    [
+      40,
+      "[Manuel Francisco Beltrán](https://www.worldcubeassociation.org/persons/2023BELT07)",
+      "Pyraminx",
+      "[Edén Bogotá 2025](https://www.worldcubeassociation.org/competitions/EdenBogota2025)",
+      null
     ],
     [
       39,
@@ -728,13 +735,6 @@
       "[Juan de Dios Noriega Sánchez](https://www.worldcubeassociation.org/persons/2017SANC24)",
       "4x4x4 Cube",
       "[Fénix México 2022](https://www.worldcubeassociation.org/competitions/FenixMexico2022)",
-      null
-    ],
-    [
-      39,
-      "[Manuel Francisco Beltrán](https://www.worldcubeassociation.org/persons/2023BELT07)",
-      "Pyraminx",
-      "[Edén Bogotá 2025](https://www.worldcubeassociation.org/competitions/EdenBogota2025)",
       null
     ]
   ]

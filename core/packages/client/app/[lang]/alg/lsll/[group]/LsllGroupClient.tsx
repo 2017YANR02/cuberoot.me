@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 /**
  * /alg/lsll/[group] — 大类内浏览。
@@ -6,7 +7,7 @@
  * 一步(`?cls=2`,默认):枚举全部 case(客户端组合数学生成,无后端),翻棱数筛选 + 分页。
  * 两步(`?cls=3`):走 LsllRouteBrowser,浏览 (ZBLS case, ZBLL case) 路线。
  *
- * 「图 / 公式」开关同全站(AlgViewModeToggle),只对一步模式有意义。本页没有公式库,
+ * 列表设置同全站(AlgListSettings),图 / 公式只对一步模式有意义。本页没有公式库,
  * 公式**现算**:setupForCase 出打乱(cubing.js 两阶段解取逆),再取一次逆就是一条有效解法 ——
  * 与训练器现算打乱同一条路子(lib/lsll/trainer-set),不新造数据源。一页 48 个,逐个串行算,
  * 算好一个贴一个;算过的进模块级缓存,翻回来不重算。
@@ -18,8 +19,8 @@ import Link from '@/components/AppLink';
 import { ArrowLeft } from 'lucide-react';
 import { tr, T } from '@/i18n/tr';
 import { FaceletsCube } from '@/components/FaceletsCube';
-import AlgViewModeToggle, { useAlgViewMode } from '@/components/AlgViewModeToggle';
-import PillToggle from '@/components/PillToggle/PillToggle';
+import { useAlgViewMode } from '@/components/AlgViewModeToggle';
+import AlgListSettings, { useAlgCaseNumberVisibility } from '@/components/AlgListSettings';
 import {
   categoryBySlug, enumerateCategory, unpackState, classify, caseFacelets, keyToString, displayState,
 } from '@/lib/lsll/model';
@@ -48,6 +49,7 @@ export default function LsllGroupClient() {
   const [eoBad, setEoBad] = useQueryState('eo', parseAsInteger.withDefault(-1));
   const [page, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
   const [view, changeView] = useAlgViewMode();
+  const [showCaseNumbers, setShowCaseNumbers] = useAlgCaseNumberVisibility();
 
   // 全类枚举一次(memo);再按翻棱数过滤。两步模式用不上,别白付这 ~100ms。
   const allKeys = useMemo(() => (cat && !twoLook ? enumerateCategory(cat.slug) : []), [cat, twoLook]);
@@ -145,15 +147,23 @@ export default function LsllGroupClient() {
             {tr({ zh: twoLook ? '条路线' : '个', en: twoLook ? 'routes' : 'cases' })}
           </span></span>
         </h1>
-        <PillToggle
-          className="alg-view-toggle"
-          value={twoLook}
-          onChange={(v) => setCls(v ? '3' : '2')}
-          offLabel={tr({ zh: '一步', en: 'One-look' })}
-          onLabel={tr({ zh: '两步', en: 'Two-look' })}
-          ariaLabel={tr({ zh: '一步 / 两步', en: 'One-look / two-look' })}
-        />
-        {!twoLook && <AlgViewModeToggle value={view} onChange={changeView} className="alg-view-toggle" />}
+        <select
+          value={String(twoLook)}
+          onChange={event => { const v = event.currentTarget.value === 'true'; setCls(v ? '3' : '2'); }}
+          aria-label={tr({ zh: '一步 / 两步', en: 'One-look / two-look' })}
+          className={['native-select', "alg-view-toggle"].filter(Boolean).join(' ')}
+        >
+          <option value="true">{tr({ zh: '两步', en: 'Two-look' })}</option>
+          <option value="false">{tr({ zh: '一步', en: 'One-look' })}</option>
+        </select>
+        {!twoLook && (
+          <AlgListSettings
+            view={view}
+            onViewChange={changeView}
+            showCaseNumbers={showCaseNumbers}
+            onShowCaseNumbersChange={setShowCaseNumbers}
+          />
+        )}
         {/* 练这一大类:全站同一个训练器,当前的翻棱筛选一并带过去。样式共用 `.alg-train-cta` */}
         {!twoLook && (
           <Link
@@ -212,7 +222,7 @@ export default function LsllGroupClient() {
             >
               <FaceletsCube fd={caseFacelets(displayState(unpackState(k)))} size={88} alt={`#${ks}`} />
               <span className="lsll-case-body">
-                <span className="lsll-case-label">#{(cur - 1) * PAGE_SIZE + i + 1}</span>
+                {showCaseNumbers && <span className="lsll-case-label">#{(cur - 1) * PAGE_SIZE + i + 1}</span>}
                 {showAlgs && (
                   <span className="lsll-case-alg">
                     {sol === undefined

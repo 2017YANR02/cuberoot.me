@@ -13,7 +13,7 @@
  * 记号含义与清洗规范见 `docs/alg-upstream-notation.md`。
  */
 import type { AlgPuzzle } from '@cuberoot/shared';
-import { toMoveString } from '@cuberoot/shared/alg-notation';
+import { toMoveStringStrict } from '@cuberoot/shared/alg-notation';
 import { toWca as skewbToWca } from '@cuberoot/shared/skewb-notation';
 import { canonicalSq1Alg } from '@cuberoot/shared/sq1-notation';
 import { parseFtoEifAlgorithm } from '@/lib/fto-eif-image';
@@ -65,7 +65,7 @@ export function normalizeAlg(puzzle: AlgPuzzle, alg: string): string {
   // 会把它们错误拆成 U R / U L，改变公式含义。
   if (puzzle === 'skewb') return skewbToWca(alg, 'sarah');
   if (!CUBE_NOTATION.has(puzzle)) return alg;
-  return toMoveString(alg);
+  return toMoveStringStrict(alg);
 }
 
 /** 容错版:抛了就原样退回。播放器用 —— 宁可让 cubing.js 自己去判,也不要白屏。 */

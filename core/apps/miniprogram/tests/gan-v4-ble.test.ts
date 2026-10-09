@@ -426,6 +426,31 @@ describe('WeChat GAN BLE transport', () => {
     expect(rig.events.filter((event) => event === 'adapter:close')).toHaveLength(1);
   });
 
+  it.each(['v2', 'v3', 'v4'] as const)('%s waits for a fresh solved snapshot after reset and rejects on disconnect', async (protocol) => {
+    const rig = createBleRig({ protocol }); const onState = vi.fn();
+    const connection = await connectGanV4({ api: rig.api, onState });
+    let complete = false;
+    const reset = connection.resetDeviceState().then(() => { complete = true; });
+    await vi.waitFor(() => expect(rig.commandHeaders.length).toBe(5));
+    expect(complete).toBe(false);
+    const frame = protocol === 'v4' ? solvedFaceletFrame() : new Uint8Array(20);
+    if (protocol === 'v2') writeBits(frame, 0, 4, 4);
+    if (protocol === 'v3') frame.set([0x55, 2, 0x10]);
+    if (protocol !== 'v4') {
+      for (let i = 0; i < 7; i++) writeBits(frame, (protocol === 'v2' ? 12 : 40) + i * 3, 3, i);
+      for (let i = 0; i < 11; i++) writeBits(frame, (protocol === 'v2' ? 47 : 77) + i * 4, 4, i);
+    }
+    rig.emit(frame);
+    await reset;
+    expect(onState).toHaveBeenLastCalledWith(SOLVED_FACELETS);
+    vi.useFakeTimers();
+    const timedOut = expect(connection.resetDeviceState()).rejects.toThrow('did not confirm');
+    await vi.advanceTimersByTimeAsync(4000); await timedOut;
+    vi.useRealTimers();
+    const cancelled = expect(connection.resetDeviceState()).rejects.toThrow('disconnected');
+    await connection.disconnect(); await cancelled;
+  });
+
   it('selects GAN v3 GATT and sends the v3 setup sequence', async () => {
     const rig = createBleRig({ protocol: 'v3' });
     const connection = await connectGanV4({ api: rig.api });
@@ -470,6 +495,21 @@ describe('WeChat GAN BLE transport', () => {
     const rig = createBleRig({
       advertisement: new Uint8Array(6).buffer,
       deviceId: '550e8400-e29b-41d4-a716-446655440000',
+    });
+    const pending = connectGanV4({ api: rig.api, scanTimeoutMs: 1_000 });
+    const rejection = expect(pending).rejects.toMatchObject({ code: 'mac-unavailable' });
+
+    await vi.advanceTimersByTimeAsync(1_000);
+    await rejection;
+    expect(rig.events).not.toContain('connection:open');
+    expect(rig.events).toContain('adapter:close');
+  });
+
+  it('never treats a MAC-shaped Mini Program deviceId as the GAN encryption MAC', async () => {
+    vi.useFakeTimers();
+    const rig = createBleRig({
+      advertisement: new Uint8Array(6).buffer,
+      deviceId: 'AA:BB:CC:DD:EE:FF',
     });
     const pending = connectGanV4({ api: rig.api, scanTimeoutMs: 1_000 });
     const rejection = expect(pending).rejects.toMatchObject({ code: 'mac-unavailable' });

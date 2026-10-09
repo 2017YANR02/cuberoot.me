@@ -1,6 +1,30 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { excerptFromMarkdown, imageUrlsFromMarkdown } from '@cuberoot/shared/forum';
-import { formatJoinedDate } from '@/lib/forum-format';
+import { formatJoinedDate, formatRelativeTime } from '@/lib/forum-format';
+
+describe('relative time duration boundaries', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it.each([
+    [0, '刚刚', 'just now'],
+    [59_999, '刚刚', 'just now'],
+    [60_000, '1 分钟前', '1m ago'],
+    [3_600_000, '1 小时前', '1h ago'],
+    [86_400_000, '1 天前', '1d ago'],
+    [30 * 86_400_000 - 1, '29 天前', '29d ago'],
+    [30 * 86_400_000, '1 个月前', '1mo ago'],
+    [60 * 86_400_000, '2 个月前', '2mo ago'],
+    [365 * 86_400_000 - 1, '12 个月前', '12mo ago'],
+    [365 * 86_400_000, '1 年前', '1y ago'],
+    [3 * 365 * 86_400_000, '3 年前', '3y ago'],
+  ])('formats %i elapsed milliseconds in both languages', (elapsed, zh, en) => {
+    const now = Date.parse('2026-10-07T12:00:00Z');
+    vi.spyOn(Date, 'now').mockReturnValue(now);
+    const timestamp = new Date(now - elapsed).toISOString();
+    expect(formatRelativeTime(timestamp, 'zh')).toBe(zh);
+    expect(formatRelativeTime(timestamp, 'en')).toBe(en);
+  });
+});
 
 describe('forum joined date formatting', () => {
   it('shows the complete local calendar date', () => {

@@ -1,4 +1,5 @@
 'use client';
+import { installedPetAvailable } from '@/lib/installed-content';
 
 // Clawd web desk pet — ported interaction engine from clawd-on-desk renderer.js.
 // Idle = inline SVG with cursor eye-tracking; other states = <img> swap.
@@ -20,6 +21,8 @@ import AppLink from '@/components/AppLink';
 import { AdminTools } from '@/components/AuthTokenRefresher';
 import { ClearButton } from '@/components/ClearButton';
 import { persistItem } from '@/lib/safe-storage';
+import { mayUseMiniProgramBridge } from '@/lib/miniprogram-bridge';
+import { useDeskPetVisible } from '@/hooks/useDeskPetVisible';
 import { subscribeBeat, getMetronomeState } from '@/lib/metronome';
 import { getDeskPetScene, PLAYTIME_SCENES } from '@/lib/deskpet-playtime';
 import { ORIGINAL_CHARACTERS, ORIGINAL_SCENES, type OriginalCharacterId } from '@/lib/deskpet-originals';
@@ -94,9 +97,20 @@ const PEEK = 0.08;
 const clampAnchor = (right: number, bottom: number, w: number, h: number, fx: number, fy: number) => {
   const cw = vpW(), ch = vpH();
   const mX = -w * PEEK, mY = -h * PEEK;
+  // Native navigation bars cannot receive WebView pointer events. Keep the
+  // entire pet vertically inside the visible WebView, including restored pets.
+  // WeChat is included when iOS has not supplied the mini-program marker yet.
+  const viewport = window.visualViewport;
+  const safe = mayUseMiniProgramBridge();
+  const style = safe ? getComputedStyle(document.documentElement) : null;
+  const top = (viewport?.offsetTop ?? 0) + (parseFloat(style?.getPropertyValue('--sat') ?? '') || 0) + 8;
+  const bottomEdge = Math.min(ch, (viewport?.offsetTop ?? 0) + (viewport?.height ?? ch))
+    - (parseFloat(style?.getPropertyValue('--sab') ?? '') || 0) - 8;
+  const minBottom = safe ? ch - bottomEdge : mY - h * (1 - fy);
+  const maxBottom = safe ? Math.max(minBottom, ch - top - h) : ch - mY - h * (1 - fy);
   return {
     right: Math.min(Math.max(mX - w * (1 - fx), right), cw - mX - w * (1 - fx)),
-    bottom: Math.min(Math.max(mY - h * (1 - fy), bottom), ch - mY - h * (1 - fy)),
+    bottom: Math.min(Math.max(minBottom, bottom), maxBottom),
   };
 };
 
@@ -116,6 +130,7 @@ const MINI_KEYS: Record<string, keyof MiniTheme['files']> = {
 const CSS = `
 .clawd-deskpet{position:fixed;right:max(20px,var(--sar,0px));bottom:max(20px,var(--sab,0px));
   z-index:100000;pointer-events:none;--pet-scale:1; /* above every page modal so it stays draggable */
+  -webkit-user-select:none;user-select:none;
   width:calc(var(--pet-base) * var(--pet-scale));height:calc(var(--pet-base) * var(--pet-scale));}
 .clawd-deskpet.pet-front{z-index:100020;} /* above the search backdrop (100010) so it stays sharp */
 .clawd-deskpet[data-size=s]{--pet-base:192px;}
@@ -146,12 +161,12 @@ const CSS = `
 .clawd-deskpet[data-original=true] .clawd-deskpet-hit{left:17%;top:29%;width:66%;height:58%;}
 .clawd-deskpet.dragging .clawd-deskpet-hit{cursor:grabbing;}
 /* The hide action belongs to the pet itself. Reuse the shared ClearButton and
-   reveal it on real hover, keyboard focus, or briefly after a touch tap. */
+   reveal it on hover, keyboard focus, or touch long press. */
 .clawd-deskpet-dismiss.clear-btn--standalone{position:absolute;z-index:4;
   opacity:0;pointer-events:none;transition:opacity .15s;}
 .clawd-deskpet:focus-within .clawd-deskpet-dismiss{opacity:1;pointer-events:auto;}
 @media (hover:hover){.clawd-deskpet:hover .clawd-deskpet-dismiss{opacity:1;pointer-events:auto;}}
-@media (hover:none){.clawd-deskpet.touch-actions .clawd-deskpet-dismiss{opacity:1;pointer-events:auto;}}
+.clawd-deskpet.touch-actions .clawd-deskpet-dismiss{opacity:1;pointer-events:auto;}
 .clawd-deskpet[data-char=clawd] .clawd-deskpet-dismiss{left:calc(69% - 10px);top:calc(66% - 10px);}
 .clawd-deskpet[data-char=calico] .clawd-deskpet-dismiss{left:calc(80% - 10px);top:calc(30% - 10px);}
 .clawd-deskpet[data-char=cloudling] .clawd-deskpet-dismiss{left:calc(73% - 10px);top:calc(28% - 10px);}
@@ -219,9 +234,15 @@ export default function DeskPet() {
   const [mounted, setMounted] = useState(false);
   const [size, setSize] = useState<Size>('m');
   const [character, setCharacter] = useState<ThemeId>('rootbeast');
-  const [hidden, setHidden] = useState(false);
+  const [visible] = useDeskPetVisible();
+  const [temporarilyHidden, setHidden] = useState(false);
+  const hidden = !visible || temporarilyHidden;
   const [resting, setResting] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  useEffect(() => {
+    setHidden(false);
+    if (!visible) setSearchOpen(false);
+  }, [visible]);
   const [touchActionsVisible, setTouchActionsVisible] = useState(false);
   const [lang, setLang] = useState<'zh' | 'en'>('en');
   const [randomMode, setRandomMode] = useState(false);
@@ -237,10 +258,10 @@ export default function DeskPet() {
   const [catalogSaving, setCatalogSaving] = useState(false);
   const catalogBusy = useRef(false);
   const entries = resolveDeskPets(THEME_IDS, catalog?.entries ?? []);
-  const visibleEntries = entries.filter(entry => isAdmin || (catalog && !entry.locked && !entry.removed));
+  const visibleEntries = entries.filter(entry => installedPetAvailable(entry.id) && (isAdmin || (catalog && !entry.locked && !entry.removed)));
   const visibleIds = visibleEntries.map(entry => entry.id);
   const visibleKey = visibleIds.join(',');
-  const petAvailable = isAdmin || visibleIds.includes(character);
+  const petAvailable = installedPetAvailable(character) && (isAdmin || visibleIds.includes(character));
   const petChoices = visibleEntries.map(entry => ({
     ...entry, label: entry.label ?? THEMES[entry.id as ThemeId].label,
     thumb: THEMES[entry.id as ThemeId].thumb, thumbScale: THEMES[entry.id as ThemeId].thumbScale,
@@ -347,9 +368,18 @@ export default function DeskPet() {
   // Close the search overlay on language switch — its content stays untranslated
   // otherwise, which is confusing.
   useEffect(() => {
-    const close = () => setSearchOpen(false);
+    // The destination I18nProvider can emit during render. Close after that
+    // render, just like the deferred language label update above.
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const close = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => setSearchOpen(false), 0);
+    };
     i18n.on('languageChanged', close);
-    return () => { i18n.off('languageChanged', close); };
+    return () => {
+      i18n.off('languageChanged', close);
+      clearTimeout(timer);
+    };
   }, []);
 
   // Keep the pet and its attached tools above the mobile search controls.
@@ -369,7 +399,8 @@ export default function DeskPet() {
       if (Math.max(pet.right, admin?.right ?? pet.right) <= controls.left ||
           Math.min(pet.left, admin?.left ?? pet.left) >= controls.right || bottom <= top - 12) return;
       const dy = Math.min(bottom - top + 12, Math.max(0, pet.top - 12));
-      root.style.bottom = `${parseFloat(getComputedStyle(root).bottom) + dy}px`;
+      root.style.bottom = `${clampAnchor(vpW() - pet.right,
+        parseFloat(getComputedStyle(root).bottom) + dy, pet.width, pet.height, ...VC[character]).bottom}px`;
     };
     const resize = new ResizeObserver(avoidControls);
     const observeControls = () => {
@@ -470,6 +501,7 @@ export default function DeskPet() {
     // While clinging, a size change must re-pin to the edge, not recenter.
     if (miniRef.current.active) {
       root.style.right = miniRightPx(THEMES[character].mini.offsetRatio, miniRef.current.edge, r.width) + 'px';
+      root.style.bottom = clampAnchor(0, vpH() - r.bottom, r.width, r.height, ...VC[character]).bottom + 'px';
       return;
     }
     const [fx, fy] = VC[character];
@@ -897,6 +929,7 @@ export default function DeskPet() {
     let clicks = 0;
     let clickTimer: ReturnType<typeof setTimeout> | undefined;
     let touchActionsTimer: ReturnType<typeof setTimeout> | undefined;
+    let longPressTimer: ReturnType<typeof setTimeout> | undefined;
     const revealTouchActions = () => {
       clearTimeout(touchActionsTimer);
       setTouchActionsVisible(true);
@@ -905,10 +938,6 @@ export default function DeskPet() {
     const onClick = () => {
       if (suppressClick) { suppressClick = false; return; }
       if (dragging) return;
-      // Keep the touch-only dismiss action and search open in this same click.
-      // Updating the DOM during pointerup can cancel iOS's trailing click,
-      // making the first tap reveal only the dismiss action.
-      if (lastTouch) revealTouchActions();
       if (dnd || asleep) { exitRest(); return; }
       // In cling mode a tap just opens search (no multi-click react poses).
       if (mini) { openSearch(); return; }
@@ -946,6 +975,12 @@ export default function DeskPet() {
       baseR = vpW() - r.right;
       baseB = vpH() - r.bottom;
       baseW = r.width; baseH = r.height;
+      clearTimeout(longPressTimer);
+      if (lastTouch) longPressTimer = setTimeout(() => {
+        if (!dragging || moved) return;
+        suppressClick = true;
+        revealTouchActions();
+      }, 550);
       // While clinging, mousedown alone must not change the pose — a mere tap
       // should still open search. The lift happens on the first real move.
       if (!dnd && !mini && e.pointerType === 'mouse') setState('reactDrag', true);
@@ -955,6 +990,7 @@ export default function DeskPet() {
       if (!dragging) return;
       const dist = Math.abs(e.clientX - sx) + Math.abs(e.clientY - sy);
       if (dist > 4 && !moved) {
+        clearTimeout(longPressTimer);
         moved = true;
         if (mini) liftFromMini(dnd ? 'sleeping' : 'reactDrag'); // pull out of cling
         else if (!dnd) setState('reactDrag', true); // first real move (covers touch)
@@ -965,6 +1001,7 @@ export default function DeskPet() {
       root.style.bottom = c.bottom + 'px';
     };
     const onUp = (e: PointerEvent) => {
+      clearTimeout(longPressTimer);
       if (!dragging) return;
       dragging = false;
       root.classList.remove('dragging');
@@ -1048,6 +1085,7 @@ export default function DeskPet() {
         root.style.right = '';
         root.style.bottom = '';
         root.style.transition = '';
+        keepInViewport();
         try { localStorage.removeItem(POS_KEY); localStorage.removeItem(MINI_KEY); } catch {}
         if (!dnd) resetIdle();
       },
@@ -1075,6 +1113,17 @@ export default function DeskPet() {
       }
     } catch {}
 
+    const keepInViewport = () => {
+      const r = root.getBoundingClientRect();
+      const c = clampAnchor(vpW() - r.right, vpH() - r.bottom, r.width, r.height, ...VC[character]);
+      root.style.right = (mini ? miniRight(false) : c.right) + 'px';
+      root.style.bottom = c.bottom + 'px';
+    };
+    keepInViewport();
+    window.addEventListener('resize', keepInViewport);
+    window.visualViewport?.addEventListener('resize', keepInViewport);
+    window.visualViewport?.addEventListener('scroll', keepInViewport);
+
     // force: on character switch state is already 'idle', must repaint
     setState(restoredMini ? (dnd ? 'mini-sleep' : 'mini-idle') : 'idle', true);
     if (randomMode) { playRandom(); scheduleRandom(); }
@@ -1096,8 +1145,12 @@ export default function DeskPet() {
       clearTimeout(idleTimer);
       clearTimeout(clickTimer);
       clearTimeout(touchActionsTimer);
+      clearTimeout(longPressTimer);
       clearTimeout(miniTimer);
       clearTimeout(randomTimer);
+      window.removeEventListener('resize', keepInViewport);
+      window.visualViewport?.removeEventListener('resize', keepInViewport);
+      window.visualViewport?.removeEventListener('scroll', keepInViewport);
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('clawd:state', onExternal as EventListener);
       hit.removeEventListener('click', onClick);

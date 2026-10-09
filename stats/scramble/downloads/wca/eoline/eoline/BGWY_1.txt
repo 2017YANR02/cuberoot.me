@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / BGWY / bin 1
-# Population in this bin: 331
+# Population in this bin: 335
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 5606061001,D R2 B' R2 D2 F' D F' R2 L2 U' D R2 D' F2 B2 R2,W,Speedcubing Huánuco 2026 (2026-05-03),333 R1 E #5
@@ -39,7 +39,7 @@
 5254123001,U2 R F2 R' D2 R2 B2 R U2 F' R F' L' D2 R' D F' U,W,Plaza Madero Chía VI 2025 (2025-12-07),333 Final B #3
 311516001,F2 U' L U2 R D' L U2 D' L F2 D2 R L2 F2 R' D2 L,B,Athens Summer Omega 2016 (2016-06-04~05),333 R1 C #5
 5283686004,F2 R2 D' B2 D B' D F2 D' F L2 B2 F D F' U' L2 U',G,Uppsala Christmas Special 2025 (2025-12-20),333mbf Final B #2
-314356001,B D2 B D2 U2 R' B' D2 R2 B' F2 L2 F R B' F,G,Strasbourg Open 2016 (2016-06-19),333 R1 D #5
+5832886001,L2 D F' L2 B2 L2 D U' R2 D2 B' D' B U2 L2 R,G,Singapore Polytechnic September Showdown 2026 (2026-09-19),333oh R1 A #5
 3614058001,F' D' R2 B' R F D' B' F2 R2 U' F2 R2 B2 D2 L D R2,W,Clayton State Cubing 2024 (2024-03-23~24),333 Final B E1
 5201174001,B' D F2 D' F2 L2 U' B' U' R' B' R2 F2 L2 D' F' R2,W,Drury Summer 2025 (2025-11-15),333oh R1 A #3
 357493001,B F' L2 U2 F2 L2 U' R2 F R2 D F' D' L2 D' R2 B2,Y,CVDB Open 2016 (2016-09-03),333oh Final A #5
@@ -96,7 +96,7 @@
 845757001,F' D' F' U' B D2 F' B U' F2 D2 R' L' B2 U2 B2 D2 R',Y,Ningxia Open 2018 (2018-08-05),333 R2 B #3
 4667431001,L' U' R B2 D' F2 R2 D R' U F2 R2 D F2 L2 U L' F',Y,Deqing Spring 2025 (2025-04-19),333oh R1 D #4
 5791617001,B' R2 U2 L2 U L2 B2 D2 B2 U B U B R2 D' U2 R2,Y,Capelle Chaos A 2026 (2026-08-22),333 Final A E2
-4284674001,L2 F' U2 B' F' L2 D2 L2 B U2 L F2 L' B U2 R B,G,Miami Skewbed 2024 (2024-11-16),333 R1 C #2
+5842758001,B2 R' U2 R' B' R L2 B' R F' U2 D2 F2 R2 U2 F2 B,W,New Cubing Season Athens B 2026 (2026-09-20),333oh Final A #3
 882255014,L2 U2 L2 B' F2 U2 R2 U' B2 D' F' D F' L2 U F' L2 U L2 U',W,Anaheim Fall 2018 (2018-09-15~16),333mbf Final A #2
 897025001,B2 F2 R2 D U2 R2 F2 U F U B2 D F2 D U' B2 U' B',B,Australian Nationals 2018 (2018-10-06~07),333 R1 F #1
 920151001,L' B L F' L' B R2 B L' B L2 F D2 B D2 R2 D2,G,Polish Championship 2018 (2018-10-26~28),333 R1 D #4
@@ -139,7 +139,7 @@
 1421356001,D' R2 U' F2 D R2 U' L2 B2 L' B F2 R B L2 R B U' F' L' F2,Y,I Hope It's Solved Edmonton 2 2019 (2019-11-23~24),333bf R1 C #1
 1434606001,L' U2 F2 L2 D2 U2 L D2 L2 U' B' D F R2 F' D B,B,Lion's Cup 2019 (2019-11-30),333 R1 B #4
 4576603001,R2 B' L2 D R B' U2 B' F2 R2 U B2 R2 U' B2 L2 U2 F2 R2 D' L',G,Chernivtsi Open 2025 (2025-03-15~16),333bf R1 B #1
-1447386001,F2 D B2 U2 R2 D R2 F R2 U B' D L2 D2 B' D' R2 U2,Y,Beijing Winter 2019 (2019-12-07~08),333 R1 A #1
+5855105001,R U2 R2 D' L D' F2 R' F R2 L2 U2 B2 R B2 D L,G,Desafio Hungria em SP 2026 (2026-09-26),333 R1 A #2
 1488835001,U2 R' L D2 F2 B R F' R2 F' R2 D2 B2 L2 F' D2 B2,B,Perth Puzzle Party 2020 (2020-01-04~05),333oh R1 A #4
 1592183001,F2 D' L2 U2 B2 L2 U2 B2 U L2 B R2 D B2 U B' R2 D' R',Y,Santo Domingo Winter 2020 (2020-02-29~03-01),333 R1 A E1
 1627903001,U' R2 F2 U2 R' D2 L2 R F2 R' B2 F2 U' R' D2 L' B2 R' B,Y,New Zealand Nationals 2020 (2020-12-11~13),333 R1 B #4

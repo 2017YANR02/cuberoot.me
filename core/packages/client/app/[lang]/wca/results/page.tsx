@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 /**
  * 排名 — /wca/results
@@ -38,7 +39,6 @@ import { countryName } from '@/lib/country-name';
 import { EventIcon } from '@/components/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
 import { SortArrow } from '@/components/SortArrow';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import BoolToggle from '@/components/BoolToggle';
 import { WcaStatView } from '@/components/wca-stats/WcaStatView';
 import { WR_METRICS, RANK_TYPE_IDS, DEFAULT_METRIC_ID } from '@/lib/wr-metrics';
@@ -48,7 +48,6 @@ import '@/i18n/i18n-client';
 import {
   WcaTeacherCell,
   WcaTeacherColumnHeader,
-  WcaTeacherNote,
   useWcaTeachers,
 } from '@/components/WcaTeacherCell';
 
@@ -513,7 +512,6 @@ function AllResultsPageInner() {
     });
   }, []);
 
-
   // 顶层「类型」下拉(单次 / 平均 = 排名口径;其余派生指标 = 嵌入 wr_metric 对应指标视图)。
   // 同时是 排名 ↔ 指标 的切换入口,故各模式(单项 / 名次和 / 空态 / 指标视图)都渲染一份,保证哪都能切。
   // 各模式互斥 → 同时只挂一份,id 不重复。单项里放在「显示」右侧,其余模式作首个控件。
@@ -582,12 +580,13 @@ function AllResultsPageInner() {
       </header>
 
       {/* ============ 指标视图:嵌入退役的 wr_metric;指标由「类型」下拉受控(隐藏其内置选择器)。
-          顶层「类型」下拉作为 afterEventSelector 插在 WcaStatView 的项目选择器之后 → 项目在类型上方 ============ */}
+          顶层「类型」下拉作为 afterEventSelector 插在 WcaStatView 的项目选择器之后，与类型同行 ============ */}
       {view === 'metric' && (
         <WcaStatView
           statId="wr_metric" headerMode="note" urlScope="m" metricId={metricId}
+          eventSelectorPresentation="inline"
           afterEventSelector={(availableMetricIds) => (
-            <div className="wse-type-standalone">{renderTypeSelect(availableMetricIds)}</div>
+            renderTypeSelect(availableMetricIds)
           )}
         />
       )}
@@ -605,24 +604,118 @@ function AllResultsPageInner() {
         </div>
       )}
 
-      {/* 项目选择(共用):分类快选 + 多选事件条 */}
+      {/* 项目选择器在模式切换时保持挂载。 */}
       <div className="wse-filters">
         <div className="wse-filter" style={{ minWidth: '100%' }}>
           <WcaEventMultiSelector
+            presentation="inline"
             availableEvents={RANK_EVENT_SET}
             selectedEvents={selectedSet}
             onChange={setEventsSet}
             isZh={isZh}
           />
         </div>
+        {mode === 'empty' && renderTypeSelect()}
+        {mode === 'single' && (<>
+          <div className="wse-filter wse-filter-show">
+            <label>{tr({ zh: '显示', en: 'Show' })}</label>
+            <select
+              value={String(show === 'persons')}
+              onChange={event => { const v = event.currentTarget.value === 'true'; handleShowChange(v ? 'persons' : 'results'); }}
+              aria-label={tr({ zh: '选手', en: 'Persons' }) + ' / ' + tr({ zh: '成绩', en: 'Results' })}
+              className={['native-select', "wse-pill"].filter(Boolean).join(' ')}
+            >
+              <option value="true">{tr({ zh: '选手', en: 'Persons' })}</option>
+              <option value="false">{tr({ zh: '成绩', en: 'Results' })}</option>
+            </select>
+          </div>
+          {renderTypeSelect()}
+          <RegionCountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
+          {genderSelect}
+          <div className="wse-filter wse-filter-show"
+            title={mbfAvgPeriodOnly ? tr({ zh: '多盲非官方平均仅支持「当期」口径', en: 'Multi-Blind unofficial average supports the period basis only' }) : undefined}>
+            <label>{tr({ zh: '口径', en: 'Basis' })}</label>
+            <select
+              disabled={mbfAvgPeriodOnly}
+              value={String(basis === 'cumulative')}
+              onChange={event => { const v = event.currentTarget.value === 'true'; handleBasisChange(v ? 'cumulative' : 'period'); }}
+              aria-label={tr({ zh: '截至', en: 'Cumulative' }) + ' / ' + tr({ zh: '当期', en: 'Period' })}
+              className={['native-select', "wse-pill"].filter(Boolean).join(' ')}
+            >
+              <option value="true">{tr({ zh: '截至', en: 'Cumulative' })}</option>
+              <option value="false">{tr({ zh: '当期', en: 'Period' })}</option>
+            </select>
+          </div>
+          <div className="wse-filter">
+            <label>{tr({ zh: '年份', en: 'Year' })}</label>
+            <select className="wse-filter-select" value={year} onChange={e => update('year', e.target.value)}>
+              {show === 'results' && <option value={0}>{tr({ zh: '全部年份', en: 'All years' })}</option>}
+              {years.map(y => <option key={y} value={y}>{y}</option>)}
+            </select>
+          </div>
+          {/* 截至口径按年末、不分月 → 直接隐藏月份框(不再灰显占位) */}
+          {basis !== 'cumulative' && (
+            <div className="wse-filter">
+              <label>{tr({ zh: '月份', en: 'Month' })}</label>
+              <select
+                className="wse-filter-select"
+                value={month}
+                onChange={e => update('month', e.target.value)}
+              >
+                <option value={0}>{tr({ zh: '全年', en: 'All months' })}</option>
+                {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <option key={m} value={m}>{m}</option>)}
+              </select>
+            </div>
+          )}
+          <div className="wse-filter wse-filter-q">
+            <label>{tr({ zh: '搜索', en: 'Search' })}</label>
+            <div className="wse-q-wrap">
+              <input
+                type="search"
+                className="wse-q-input"
+                value={qInput}
+                onChange={e => setQInput(e.target.value)}
+                placeholder={show === 'persons' || qMode !== 'any'
+                  ? tr({ zh: '选手名', en: 'Person name' })
+                  : tr({ zh: '选手或比赛名', en: 'Person or competition' })}
+              />
+              {qInput && <ClearButton onClick={() => { setQInput(''); update('q', ''); }} isZh={isZh} preserveFocus />}
+            </div>
+          </div>
+          <div className="wse-filter">
+            <label>{tr({ zh: '名字匹配', en: 'Name match' })}</label>
+            <select className="wse-filter-select" value={qMode} onChange={e => update('qmode', e.target.value === 'any' ? '' : e.target.value)}>
+              <option value="any">{tr({ zh: '任意部分', en: 'Any part' })}</option>
+              <option value="first">{tr({ zh: '名完全相同', en: 'Exact first name' })}</option>
+              <option value="last">{tr({ zh: '姓完全相同', en: 'Exact last name' })}</option>
+              <option value="exact">{tr({ zh: '全名完全相同', en: 'Exact full name' })}</option>
+            </select>
+          </div>
+          {teacherShareToggle}
+        </>)}
+        {mode === 'sor' && (<>
+          {renderTypeSelect()}
+          <RegionCountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
+          {/* 单次 / 平均 由「类型」下拉统一控制(单次 / 平均 → 排名,派生指标 → 指标视图);此处仅保留「多盲平均不计入名次和」提示 */}
+          {type === 'average' && selectedSet.has('333mbf') && (
+            <div className="wse-filter wse-filter-show">
+              <span className="wse-sor-note">{tr({ zh: '多盲平均(非官方 Mo3)不计入名次和', en: 'Multi-Blind average (unofficial Mo3) is not counted in the sum of ranks' })}</span>
+            </div>
+          )}
+          <div className="wse-filter wse-filter-show">
+            <BoolToggle
+              value={hidePodium}
+              onChange={v => { setQuery({ hidePodium: v ? '1' : null, page: null }); }}
+              label={tr({ zh: '未登领奖台', en: 'No podium' })}
+            />
+          </div>
+          {teacherShareToggle}
+        </>)}
       </div>
-
-      {view === 'rank' && mode !== 'empty' && <WcaTeacherNote />}
 
       {/* ============ 空态:姓名分布(name_stats viz) + 名录(A-Z 平铺) ============ */}
       {mode === 'empty' && (
         <>
-          <div className="wse-type-standalone">{renderTypeSelect()}</div>
           {/* ── 姓名分布 ── */}
           <h2 className="wse-section-title">{tr({ zh: '姓名分布', en: 'Name distribution' })}</h2>
           <div className="wse-table-wrapper">
@@ -727,80 +820,6 @@ function AllResultsPageInner() {
       {/* ============ 单项 ============ */}
       {mode === 'single' && (
         <>
-          <div className="wse-filters">
-            <div className="wse-filter wse-filter-show">
-              <label>{tr({ zh: '显示', en: 'Show' })}</label>
-              <PillToggle
-                className="wse-pill"
-                value={show === 'persons'}
-                onChange={(v) => handleShowChange(v ? 'persons' : 'results')}
-                onLabel={tr({ zh: '选手', en: 'Persons' })}
-                offLabel={tr({ zh: '成绩', en: 'Results' })}
-              />
-            </div>
-            {renderTypeSelect()}
-            <RegionCountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
-            {genderSelect}
-            <div className="wse-filter wse-filter-show"
-              title={mbfAvgPeriodOnly ? tr({ zh: '多盲非官方平均仅支持「当期」口径', en: 'Multi-Blind unofficial average supports the period basis only' }) : undefined}>
-              <label>{tr({ zh: '口径', en: 'Basis' })}</label>
-              <PillToggle
-                className="wse-pill"
-                value={basis === 'cumulative'}
-                onChange={(v) => handleBasisChange(v ? 'cumulative' : 'period')}
-                onLabel={tr({ zh: '截至', en: 'Cumulative' })}
-                offLabel={tr({ zh: '当期', en: 'Period' })}
-                disabled={mbfAvgPeriodOnly}
-              />
-            </div>
-            <div className="wse-filter">
-              <label>{tr({ zh: '年份', en: 'Year' })}</label>
-              <select className="wse-filter-select" value={year} onChange={e => update('year', e.target.value)}>
-                {show === 'results' && <option value={0}>{tr({ zh: '全部年份', en: 'All years' })}</option>}
-                {years.map(y => <option key={y} value={y}>{y}</option>)}
-              </select>
-            </div>
-            {/* 截至口径按年末、不分月 → 直接隐藏月份框(不再灰显占位) */}
-            {basis !== 'cumulative' && (
-              <div className="wse-filter">
-                <label>{tr({ zh: '月份', en: 'Month' })}</label>
-                <select
-                  className="wse-filter-select"
-                  value={month}
-                  onChange={e => update('month', e.target.value)}
-                >
-                  <option value={0}>{tr({ zh: '全年', en: 'All months' })}</option>
-                  {Array.from({ length: 12 }, (_, i) => i + 1).map(m => <option key={m} value={m}>{m}</option>)}
-                </select>
-              </div>
-            )}
-            <div className="wse-filter wse-filter-q">
-              <label>{tr({ zh: '搜索', en: 'Search' })}</label>
-              <div className="wse-q-wrap">
-                <input
-                  type="search"
-                  className="wse-q-input"
-                  value={qInput}
-                  onChange={e => setQInput(e.target.value)}
-                  placeholder={show === 'persons' || qMode !== 'any'
-                    ? tr({ zh: '选手名', en: 'Person name' })
-                    : tr({ zh: '选手或比赛名', en: 'Person or competition' })}
-                />
-                {qInput && <ClearButton onClick={() => { setQInput(''); update('q', ''); }} isZh={isZh} preserveFocus />}
-              </div>
-            </div>
-            <div className="wse-filter">
-              <label>{tr({ zh: '名字匹配', en: 'Name match' })}</label>
-              <select className="wse-filter-select" value={qMode} onChange={e => update('qmode', e.target.value === 'any' ? '' : e.target.value)}>
-                <option value="any">{tr({ zh: '任意部分', en: 'Any part' })}</option>
-                <option value="first">{tr({ zh: '名完全相同', en: 'Exact first name' })}</option>
-                <option value="last">{tr({ zh: '姓完全相同', en: 'Exact last name' })}</option>
-                <option value="exact">{tr({ zh: '全名完全相同', en: 'Exact full name' })}</option>
-              </select>
-            </div>
-            {teacherShareToggle}
-          </div>
-
           {/* 纪录走势 bar chart race:常显在排名表上方(方案 B)。复用 wr_metric 的 Top10HistoryPage,
               受控到当前单项 + 单次 / 平均;筛选(年份 / 国家 / 选手)只作用于下方表,走势恒为全时段。
               图义跟随「显示」开关:选手 = 历史前 10 选手(按人去重);成绩 = 历史最快前 10 条成绩(同人可多条)。 */}
@@ -909,25 +928,6 @@ function AllResultsPageInner() {
       {/* ============ 名次和 ============ */}
       {mode === 'sor' && (
         <>
-          <div className="wse-filters">
-            {renderTypeSelect()}
-            <RegionCountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
-            {/* 单次 / 平均 由「类型」下拉统一控制(单次 / 平均 → 排名,派生指标 → 指标视图);此处仅保留「多盲平均不计入名次和」提示 */}
-            {type === 'average' && selectedSet.has('333mbf') && (
-              <div className="wse-filter wse-filter-show">
-                <span className="wse-sor-note">{tr({ zh: '多盲平均(非官方 Mo3)不计入名次和', en: 'Multi-Blind average (unofficial Mo3) is not counted in the sum of ranks' })}</span>
-              </div>
-            )}
-            <div className="wse-filter wse-filter-show">
-              <BoolToggle
-                value={hidePodium}
-                onChange={v => { setQuery({ hidePodium: v ? '1' : null, page: null }); }}
-                label={tr({ zh: '未登领奖台', en: 'No podium' })}
-              />
-            </div>
-            {teacherShareToggle}
-          </div>
-
           {/* 名人堂 */}
           <div className="sor-census">
             <button type="button" className="sor-census-toggle" onClick={() => setCensusOpen(o => !o)} aria-expanded={censusOpen}>

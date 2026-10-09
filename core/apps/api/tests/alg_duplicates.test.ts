@@ -23,7 +23,7 @@ const app = new Hono();
 app.onError((error, c) => c.json({ error: error.message }, 500));
 app.route('/v1', algRoutes);
 app.route('/v1', algSetsRoutes);
-const existing = { id: 7, puzzle: '3x3', set_slug: 'oll', case_name: 'L', alg: 'R U', author_id: 'test-user', created_at: new Date(0) };
+const existing = { id: 7, puzzle: '3x3', set_slug: 'oll', case_name: 'L', alg: 'R U', notes: null, tags: ['oh'], author_id: 'test-user', author_name: 'Test', created_at: new Date(0) };
 const send = (path: string, method: string, body: unknown) => app.request(`/v1/alg/${path}`, {
   method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
 });
@@ -51,9 +51,19 @@ describe('standard and community formula duplicate enforcement', () => {
 
   it('allows editing the same submission without counting itself as a duplicate', async () => {
     mocks.query.mockImplementation(async (sql: string) => sql.startsWith('SELECT * FROM alg_submissions') || sql.startsWith('SELECT id, alg') ? [existing] : []);
-    const r = await send('submissions/7', 'PUT', { alg: '(R U)', notes: 'Updated note' });
+    const r = await send('submissions/7', 'PUT', { alg: '(R U)', notes: 'Updated note', tags: ['beginner', 'beginner'] });
     expect(r.status).toBe(200);
-    expect(mocks.query.mock.calls.some(([sql]) => sql.startsWith('UPDATE'))).toBe(true);
+    expect(mocks.query.mock.calls).toContainEqual([
+      'UPDATE alg_submissions SET alg = ?, notes = ?, tags = ? WHERE id = ?',
+      ['(R U)', 'Updated note', ['beginner'], 7],
+    ]);
+  });
+
+  it('rejects unknown community tags before querying the database', async () => {
+    const r = await send('3x3/pll/Ga/submit', 'POST', { alg: 'R U', tags: ['oh', 'other'] });
+    expect(r.status).toBe(400);
+    expect(await r.json()).toEqual({ error: 'invalid_tags' });
+    expect(mocks.query).not.toHaveBeenCalled();
   });
 
   it('checks the target case when an administrator moves a submission', async () => {
@@ -76,6 +86,35 @@ describe('standard and community formula duplicate enforcement', () => {
     expect(mocks.query).not.toHaveBeenCalled();
   });
 
+  it.each([
+    ['POST', 'sets/3x3/pll/cases', "(R U R'"],
+    ['PUT', 'sets/3x3/pll/cases/4309', "R U R')"],
+  ])('rejects unbalanced standard rows on %s', async (method, path, alg) => {
+    mocks.query.mockResolvedValue([]);
+    const r = await send(path, method, { caseName: 'Ga', sticker: {}, algs: [[{ alg }]] });
+    expect(r.status).toBe(400);
+    expect(await r.json()).toEqual({ error: 'unbalanced_grouping_parentheses' });
+    expect(mocks.query).not.toHaveBeenCalled();
+  });
+
+  it('rejects unbalanced community submissions before querying the database', async () => {
+    const r = await send('3x3/pll/Ga/submit', 'POST', { alg: "R U (R'" });
+    expect(r.status).toBe(400);
+    expect(await r.json()).toEqual({ error: 'unbalanced_grouping_parentheses' });
+    expect(mocks.query).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['community alg', '3x3/f2l/A-/submit', { alg: "U' r' D' rU r' Dr" }],
+    ['standard alg', 'sets/3x3/f2l/cases', { caseName: 'A-', sticker: {}, algs: [[{ alg: "U' r' D' rU r' Dr" }]] }],
+    ['standard setup', 'sets/3x3/f2l/cases', { caseName: 'A-', sticker: {}, setup: 'rU', algs: [] }],
+  ])('rejects glued nonparallel moves in a %s before querying the database', async (_kind, path, body) => {
+    const r = await send(path, 'POST', body);
+    expect(r.status).toBe(400);
+    expect(await r.json()).toEqual({ error: 'moves_must_be_space_separated' });
+    expect(mocks.query).not.toHaveBeenCalled();
+  });
+
   it('prevents a standard edit from duplicating an existing community submission', async () => {
     mocks.query.mockImplementation(async (sql: string) => sql.startsWith('SELECT id, alg') ? [existing] : []);
     const r = await send('sets/3x3/oll/cases/3930', 'PUT', { caseName: 'L', sticker: {}, algs: [[{ alg: '(R U)' }]] });
@@ -86,5 +125,19 @@ describe('standard and community formula duplicate enforcement', () => {
   it('keeps independent orientations and rejects malformed row arrays', () => {
     expect(() => assertUniqueCaseAlgs([[{ alg: 'R U' }], [{ alg: '(R U)' }]])).not.toThrow();
     expect(() => assertUniqueCaseAlgs([{}])).toThrow('invalid algs');
+  });
+
+  it.each(['3x3', 'pyraminx'])('cleans stored markup on %s without changing the algorithm', async puzzle => {
+    mocks.query.mockImplementation(async (sql: string, params: unknown[]) => {
+      if (sql.startsWith('UPDATE alg_cases')) return [{ id: 7, puzzle, set_slug: 'test', name: 'A', setup: '', standard: null, algs: params[5] }];
+      return [];
+    });
+    const response = await send(`sets/${puzzle}/test/cases/7`, 'PUT', {
+      caseName: 'A', sticker: {},
+      algs: [[{ alg: 'R U', algHtml: '<u class="wavy" onclick="bad()">R</u> U <<x>img src=x onerror=alert(1)>' }]],
+    });
+    expect(response.status).toBe(200);
+    const update = mocks.query.mock.calls.find(([sql]) => sql.startsWith('UPDATE alg_cases'));
+    expect(update?.[1][5]).toEqual([[{ alg: 'R U', algHtml: '<u class="wavy">R</u> U &lt;img src=x onerror=alert(1)&gt;' }]]);
   });
 });

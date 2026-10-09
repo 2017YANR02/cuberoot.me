@@ -1,4 +1,4 @@
-// 约束守卫:布尔开关一律走 components/BoolToggle(左滑钮 + 右文字),不许写裸 <input type="checkbox">(☑)。
+// 约束守卫:布尔开关一律走 components/BoolToggle(左文字 + 右滑钮),不许写裸 <input type="checkbox">(☑)。
 // 多选「网格/列表」式勾选属例外(允许行内 allow-checkbox: <理由> 豁免)。详见 issue #2。
 //
 // 这是 ratchet:BASELINE 锁住当前存量,只许降不许升 —— 新写的 ☑ → CI 直接红。

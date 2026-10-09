@@ -38,8 +38,9 @@
  *     which the engine never writes, so it is ours to own outright.
  *
  * Two things this deliberately does NOT do:
- *   - It does not attach the /sim pointer Controller. A gyro view is driven by
- *     the physical cube; a drag handler would fight it for the same transform.
+ *   - It does not attach the /sim pointer Controller unless the caller opts in
+ *     to view dragging. The live virtual cube uses that opt-in with layer turns
+ *     locked, so dragging adjusts the view without changing cube state.
  *   - It does not put orientation on `world.scene.rotation`. That is the orbit
  *     channel, and the lights live under the scene — rotating it would drag the
  *     lighting around with the cube and kill every shading cue that makes the
@@ -66,15 +67,15 @@ import { useEffect, useRef, useState, type JSX } from 'react';
 import './live-cube.css';
 import type World from '@cuberoot/puzzle-render-core/engine/world';
 import type NxnCube from '@cuberoot/puzzle-render-core/engine/nxn/cube';
+import type Controller from '@cuberoot/puzzle-render-core/engine/nxn/controller';
 import type { SimMount } from '@cuberoot/puzzle-render-core/sim/mountSimWorld';
-import { FRONT_SCENE_ROT, homeSceneRot } from '@cuberoot/puzzle-render-core/engine/viewControls';
+import { FRONT_SCENE_ROT, homeSceneRot, ORBIT_K, orbitScene } from '@cuberoot/puzzle-render-core/engine/viewControls';
 import {
   appendedSlicePair,
   planLiveSimUpdate,
   planSimUpdate,
 } from '@cuberoot/shared/timer/sim-log';
 import {
-  advanceStillMs,
   applyOrientation,
   calibrate,
   mirrorForBrand,
@@ -83,7 +84,6 @@ import {
   SLICE_ORIENTATION_FOLLOW_MS,
   SLICE_ORIENTATION_TAU_MS,
   slerpTowards,
-  snapWhenSettled,
   type Quat,
   type SensorBasisName,
 } from '@cuberoot/shared/smart-cube/orientation';
@@ -114,8 +114,70 @@ function hasValidOrientation(q: Quat | null | undefined): q is Quat {
     && Math.hypot(q.w, q.x, q.y, q.z) > 1e-6;
 }
 
+function attachPointerController(host: HTMLElement, controller: Controller): () => void {
+  let activePointerId: number | null = null;
+  const previousTouchAction = host.style.touchAction;
+  host.style.touchAction = 'none';
+
+  const send = (type: 'mousedown' | 'mousemove' | 'mouseup', event: PointerEvent) => {
+    const rect = host.getBoundingClientRect();
+    controller.touch({
+      type,
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+      shift: event.shiftKey,
+      button: event.button,
+      alt: event.altKey,
+    });
+  };
+
+  const release = (pointerId: number) => {
+    try { host.releasePointerCapture(pointerId); } catch { /* already released */ }
+  };
+
+  const onPointerDown = (event: PointerEvent) => {
+    if (activePointerId !== null) return;
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    activePointerId = event.pointerId;
+    try { host.setPointerCapture(event.pointerId); } catch { /* unsupported WebView */ }
+    send('mousedown', event);
+    event.preventDefault();
+  };
+
+  const onPointerMove = (event: PointerEvent) => {
+    if (event.pointerId !== activePointerId) return;
+    send('mousemove', event);
+    event.preventDefault();
+  };
+
+  const onPointerUp = (event: PointerEvent) => {
+    if (event.pointerId !== activePointerId) return;
+    send('mouseup', event);
+    release(event.pointerId);
+    activePointerId = null;
+    event.preventDefault();
+  };
+
+  host.addEventListener('pointerdown', onPointerDown, { passive: false });
+  host.addEventListener('pointermove', onPointerMove, { passive: false });
+  host.addEventListener('pointerup', onPointerUp, { passive: false });
+  host.addEventListener('pointercancel', onPointerUp, { passive: false });
+
+  return () => {
+    host.removeEventListener('pointerdown', onPointerDown);
+    host.removeEventListener('pointermove', onPointerMove);
+    host.removeEventListener('pointerup', onPointerUp);
+    host.removeEventListener('pointercancel', onPointerUp);
+    if (activePointerId !== null) release(activePointerId);
+    host.style.touchAction = previousTouchAction;
+    activePointerId = null;
+  };
+}
+
 export interface SimCubeViewProps {
   language?: 'en' | 'zh';
+  /** Allow dragging the cube area to orbit the view without turning layers. */
+  allowViewDrag?: boolean;
   /** Moves since the cube was last known SOLVED — see the note above. */
   moves: string[];
   /**
@@ -160,6 +222,12 @@ export interface SimCubeViewProps {
    */
   animate?: boolean;
   /**
+   * Duration of the next appended move in the engine's nominal 60 Hz ticks.
+   * Replay uses this to match the interval until the following recorded move;
+   * live mirrors leave it unset and use their own catch-up timings.
+   */
+  moveDurationTicks?: number;
+  /**
    * Keep an actual smart-cube mirror close to the physical state. Normal turns
    * remain animated, but a growing BLE batch/queue snaps stale turns and plays
    * only the newest one. Replay callers leave this off and retain /sim timing.
@@ -200,6 +268,7 @@ export interface SimCubeViewProps {
 export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
   const {
     language = 'en',
+    allowViewDrag = false,
     moves,
     pose = '',
     quat,
@@ -208,6 +277,7 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
     sensorBasis = sensorBasisForBrand(null),
     mirror = mirrorForBrand(null),
     animate = false,
+    moveDurationTicks,
     realtime = false,
     stickering = '',
     stickeringOrientation = '',
@@ -230,10 +300,6 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
   const referenceRef = useRef<Quat | null>(null);
   const smoothedRef = useRef<Quat | null>(null);
   const appliedRef = useRef<Quat | null>(null);
-  // Settling: the last measured (un-smoothed, un-snapped) pose and how long it
-  // has held still. See the snap block in orientation.ts.
-  const measuredRef = useRef<Quat | null>(null);
-  const stillMsRef = useRef(0);
   const pendingCalibrationRef = useRef(false);
   // M/E/S turns rotate the sensor-bearing core, unlike outer-layer turns. The
   // matching opposite-face BLE pair temporarily accelerates only orientation
@@ -273,11 +339,8 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
     seenTokenRef.current = calibrateToken;
     pendingCalibrationRef.current = true;
     // Re-derive from the new reference rather than easing out of a pose that no
-    // longer means anything. The settle timer restarts with it: stillness
-    // measured against the OLD reference says nothing about the new one.
+    // longer means anything.
     smoothedRef.current = null;
-    measuredRef.current = null;
-    stillMsRef.current = 0;
     sliceFollowUntilRef.current = 0;
   }, [calibrateToken]);
 
@@ -299,10 +362,10 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
       if (!host) return;
       gyroViewActiveRef.current = hasValidOrientation(externalQuatRef.current?.current ?? rawRef.current);
 
-      mount = mountSimWorld({
+      const nextMount = mountSimWorld({
         host,
         puzzle: 3,
-        interactive: false, // gyro-driven: a pointer Controller would fight it
+        interactive: allowViewDrag,
         faceHints: false,
         pixelRatioCap: 2,
         sceneRot: sceneRotation(viewRef.current, gyroViewActiveRef.current),
@@ -327,15 +390,10 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
             basis: basisRef.current,
             mirror: mirrorRef.current,
           });
-          // A cube that has stopped moving near a whole orientation IS at it;
-          // the leftover few degrees are grip and sensor zero, and leaving them
-          // in is what makes the cube on screen read as permanently crooked.
-          // Stillness is measured on the MEASURED pose, never on the smoothed
-          // one — the smoothed pose is still converging on the snap target and
-          // would keep re-arming the timer against itself.
-          stillMsRef.current = advanceStillMs(measuredRef.current, measured, stillMsRef.current, dtMs);
-          measuredRef.current = measured;
-          const target = snapWhenSettled(measured, stillMsRef.current);
+          // Match DCTimer-BLE: always follow the latest measured pose and use
+          // SLERP only to bridge the gaps between BLE samples. Snapping gradual
+          // motion to a whole orientation makes the live cube feel stuck.
+          const target = measured;
           // BLE lands at 20-50 Hz, under the 60 fps loop — ease between samples
           // so the cube glides instead of stepping. A slice turn is the one
           // exception that moves the sensor-bearing core itself; keep SLERP but
@@ -358,6 +416,19 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
           return true;
         },
       });
+      if (allowViewDrag) {
+        const controller = nextMount.world.controller;
+        controller.turnsLocked = true;
+        controller.dragEmpty = 'view';
+        controller.onOrbit = (dx, dy) => orbitScene(nextMount.world, dx, dy, ORBIT_K);
+        const detachPointerController = attachPointerController(host, controller);
+        const originalDispose = nextMount.dispose;
+        nextMount.dispose = () => {
+          detachPointerController();
+          originalDispose();
+        };
+      }
+      mount = nextMount;
       mountRef.current = mount;
       setReady(true);
       onReadyRef.current?.();
@@ -380,7 +451,7 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
       mount?.dispose();
       mountRef.current = null;
     };
-  }, [attempt]);
+  }, [allowViewDrag, attempt]);
 
   // Update the viewing angle without remounting the cube or altering its moves.
   useEffect(() => {
@@ -452,7 +523,7 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
       sliceFollowUntilRef.current = performance.now() + SLICE_ORIENTATION_FOLLOW_MS;
     }
     const plan = realtime
-      ? planLiveSimUpdate(shownRef.current, next, animate, twister.backlog)
+      ? planLiveSimUpdate(shownRef.current, next, animate, twister.backlog, hasShownRef.current)
       : planSimUpdate(shownRef.current, next, animate);
     shownRef.current = { turns, pose };
     hasShownRef.current = true;
@@ -462,7 +533,9 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
         plan.exp,
         false,
         1,
-        realtime ? (queued ? LIVE_QUEUED_TURN_TICKS : LIVE_TURN_TICKS) : undefined,
+        realtime
+          ? (queued ? LIVE_QUEUED_TURN_TICKS : LIVE_TURN_TICKS)
+          : moveDurationTicks,
       );
     } else if (plan.mode === 'catch-up') {
       twister.catchUpRealtime(plan.exp, plan.fallbackExp, LIVE_QUEUED_TURN_TICKS);

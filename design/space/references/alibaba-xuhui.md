@@ -105,7 +105,7 @@
 
 ## 后续编辑
 
-`refine_alibaba_campus.py` 是 Y 区首次增量脚本，`refine_alibaba_districts.py` 是 X/Z 首次增量脚本，默认只生成候选；`--apply` 先备份并校验磁盘源未被他人修改，再保存规范工程。工程已有对应修订时拒绝重建，避免覆盖人工编辑。X/Z 脚本还要求 Y 已存在并校验其几何未变。日常继续编辑当前 `design/space/scenes/shanghai.blend`，然后运行 `batch.ps1 -Asset shanghai`；不要回用新增园区之前的整城候选覆盖现有工程。
+`refine_alibaba_campus.py` 是 Y 区首次增量脚本，`refine_alibaba_districts.py` 是 X/Z 首次增量脚本，默认只生成候选；`--apply` 先备份并校验磁盘源未被他人修改，再保存规范工程。工程已有对应修订时拒绝重建，避免覆盖人工编辑。X/Z 脚本还要求 Y 已存在并校验其几何未变。日常继续编辑当前 `design/space/scenes/shanghai.blend`，然后运行 `cd core && pnpm space:batch --asset shanghai`；不要回用新增园区之前的整城候选覆盖现有工程。
 
 Blender 预设相机：`Alibaba whole campus`、`Alibaba X Art Tower`、`Alibaba campus`、`Alibaba courtyard`、`Alibaba Z campus`、`Alibaba Z courtyard`。网页对应“阿里园区全景”“X 区艺岛”“Y 区主楼”“Y 区中庭”“Z 区方案”“Z 区中庭”。实际保存、导出和网页审查结果以 [迁移跟踪](../../../docs/space-blender-tracker.md) 最新记录为准。
 

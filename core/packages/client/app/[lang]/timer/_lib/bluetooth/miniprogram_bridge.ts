@@ -14,17 +14,19 @@ import {
   mayUseMiniProgramBridge,
   type MiniProgramNavigationApi,
 } from '@/lib/miniprogram-bridge';
+import type { CubeMoveMetadata } from './driver';
 
 export { isMiniProgramWebView, mayUseMiniProgramBridge };
 
 export interface MiniProgramCubeBridgeCallbacks {
+  onTimer?(event: import('@cuberoot/shared/timer/external/types').ExternalTimerEvent): void;
   onBattery(level: number): void;
   onGyro(
     quaternion: { w: number; x: number; y: number; z: number },
     velocity?: { x: number; y: number; z: number },
   ): void;
-  onMove(move: string, deviceTs?: number): void;
-  onState(facelets: string): void;
+  onMove(move: string, deviceTs?: number, metadata?: CubeMoveMetadata, calibration?: boolean): void;
+  onState(facelets: string, calibration?: boolean): void;
   onStatus(status: Extract<SmartCubeRelayEvent, { type: 'status' }>): void;
 }
 
@@ -32,6 +34,7 @@ export interface MiniProgramCubeBridgeConnection {
   readonly brand: string;
   readonly deviceName: string;
   readonly hasGyro: boolean;
+  resetDeviceState?: () => Promise<void>;
   activate(): void;
   disconnect(): void;
 }
@@ -48,6 +51,8 @@ function randomRelayToken(): string {
 
 export async function connectMiniProgramCubeBridge(
   callbacks: MiniProgramCubeBridgeCallbacks,
+  deviceMode?: 'bluetooth-timer' | 'stackmat',
+  signal?: AbortSignal,
 ): Promise<MiniProgramCubeBridgeConnection> {
   if (!mayUseMiniProgramBridge()) throw new Error('NOT_MINIPROGRAM_WEBVIEW');
   const loadedMiniProgramApi = getInstalledMiniProgramNavigationApi()
@@ -69,15 +74,40 @@ export async function connectMiniProgramCubeBridge(
   let replayTimer: number | null = null;
   let lastMoveSeq = 0;
   let connectedStatus: Extract<SmartCubeRelayEvent, { type: 'status' }> | null = null;
+  let resetPending: { id: string; finish(error?: Error): void } | null = null;
+  const resetDeviceState = (): Promise<void> => {
+    if (!active || !connectedStatus?.canResetDevice || socket?.readyState !== WebSocket.OPEN)
+      return Promise.reject(new Error('Device calibration unavailable'));
+    if (resetPending) return Promise.reject(new Error('Device calibration already in progress'));
+    return new Promise<void>((resolve, reject) => {
+      const id = randomRelayToken();
+      const timer = setTimeout(() => task.finish(new Error('Device calibration timed out')), 8000);
+      const task = { id, finish(error?: Error) {
+        if (resetPending !== task) return;
+        resetPending = null; clearTimeout(timer);
+        if (error) reject(error); else resolve();
+      } };
+      resetPending = task;
+      try { socket!.send(JSON.stringify({ type: 'command', command: 'reset-device', requestId: id })); }
+      catch { task.finish(new Error('Device calibration relay unavailable')); }
+    });
+  };
   const pendingEvents: SmartCubeRelayEvent[] = [];
   let finish: (connection: MiniProgramCubeBridgeConnection) => void = () => {};
   let fail: (error: Error) => void = () => {};
 
   const dispatch = (payload: SmartCubeRelayEvent): void => {
-    if (payload.type === 'move') callbacks.onMove(payload.move, payload.deviceTs);
-    else if (payload.type === 'state') callbacks.onState(payload.facelets);
+    if (payload.type === 'command-result') return;
+    if (payload.type === 'move') {
+      const metadata = payload.futureHistory === undefined
+        ? undefined
+        : { futureHistory: payload.futureHistory };
+      callbacks.onMove(payload.move, payload.deviceTs, metadata, payload.calibration);
+    }
+    else if (payload.type === 'state') callbacks.onState(payload.facelets, payload.calibration);
     else if (payload.type === 'battery') callbacks.onBattery(payload.level);
     else if (payload.type === 'gyro') callbacks.onGyro(payload.quaternion, payload.velocity);
+    else if (payload.type === 'timer') callbacks.onTimer?.(payload.event);
     else callbacks.onStatus(payload);
   };
 
@@ -96,7 +126,9 @@ export async function connectMiniProgramCubeBridge(
   const close = (notifySource: boolean): void => {
     if (!active) return;
     active = false;
+    resetPending?.finish(new Error('Cube disconnected'));
     clearTimeout(timeout);
+    signal?.removeEventListener('abort', abort);
     clearRelayTimers();
     const currentSocket = socket;
     socket = null;
@@ -135,7 +167,12 @@ export async function connectMiniProgramCubeBridge(
   };
 
   const handlePayload = (payload: SmartCubeRelayEvent): void => {
-    if (payload.type === 'move') {
+    if (payload.type === 'command-result') {
+      if (resetPending?.id === payload.requestId) resetPending.finish(payload.ok ? undefined : new Error(payload.error || 'Device calibration failed'));
+      return;
+    }
+    if (payload.type === 'status' && (payload.phase === 'disconnected' || payload.phase === 'error')) resetPending?.finish(new Error('Cube disconnected'));
+    if (payload.type === 'move' || payload.type === 'timer' || (payload.type === 'state' && payload.calibration === true)) {
       if (payload.relaySeq === undefined || payload.relaySeq > lastMoveSeq + 1) {
         terminateRelay();
         return;
@@ -159,6 +196,7 @@ export async function connectMiniProgramCubeBridge(
           brand: payload.brand ?? 'unknown',
           deviceName: payload.deviceName ?? '智能魔方',
           hasGyro: payload.hasGyro === true,
+          resetDeviceState: payload.canResetDevice ? resetDeviceState : undefined,
           activate: () => {
             if (activated) return;
             activated = true;
@@ -226,7 +264,9 @@ export async function connectMiniProgramCubeBridge(
         navigated = true;
         try {
           miniProgramApi.navigateTo({
-            url: `/pages/smart-cube/index?token=${encodeURIComponent(token)}`,
+            url: deviceMode
+              ? `/pages/external-timer/index?mode=${deviceMode}&token=${encodeURIComponent(token)}`
+              : `/pages/smart-cube/index?token=${encodeURIComponent(token)}`,
             fail: () => {
               if (settled) return;
               settled = true;
@@ -256,6 +296,7 @@ export async function connectMiniProgramCubeBridge(
     nextSocket.addEventListener('close', (event) => {
       if (!active || socket !== nextSocket) return;
       socket = null;
+      resetPending?.finish(new Error('Device calibration relay disconnected'));
       if (replayTimer !== null) window.clearTimeout(replayTimer);
       replayTimer = null;
       if (!settled) {
@@ -278,8 +319,10 @@ export async function connectMiniProgramCubeBridge(
     settled = true;
     close(true);
     fail(new Error('MINIPROGRAM_CUBE_CONNECT_TIMEOUT'));
-  }, CONNECT_TIMEOUT_MS);
+  }, deviceMode ? 120_000 : CONNECT_TIMEOUT_MS);
 
-  openSocket(false);
+  const abort = (): void => { close(true); if (!settled) { settled = true; fail(new Error('TIMER_CONNECTION_CANCELLED')); } };
+  if (signal?.aborted) abort();
+  else { signal?.addEventListener('abort', abort, { once: true }); openSocket(false); }
   return connectionPromise;
 }

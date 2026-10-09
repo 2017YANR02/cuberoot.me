@@ -1,11 +1,14 @@
 'use client';
 
+import { sessionFetch } from '@/lib/session-fetch';
 import {
   loadWeChatJsSdk,
 } from '@/lib/wechat-js-sdk';
 import { MINI_PROGRAM_LOGOUT_MESSAGE } from '@cuberoot/shared/auth/web-session';
+import { apiUrl } from '@/lib/api-base';
 
 export interface MiniProgramNavigationApi {
+  switchTab?(options: { url: string }): void;
   getEnv?(callback: (result: { miniprogram?: boolean }) => void): void;
   navigateBack?(options?: {
     delta?: number;
@@ -68,18 +71,52 @@ export function mayUseMiniProgramBridge(): boolean {
 }
 
 /**
- * Payment UI must fail closed in every possible Mini Program container. Some
- * iOS WeChat web-views omit the explicit Mini Program marker, so candidates
- * are restricted too instead of briefly exposing an external checkout.
+ * A WeChat browser or an installed JS-SDK is only a bridge candidate, not proof
+ * of a Mini Program. Wait for getEnv when iOS omits the explicit marker; callers
+ * keep checkout unavailable while this check is pending.
  */
-export function isMiniProgramCommerceRestricted(): boolean {
-  return mayUseMiniProgramBridge();
+export async function isMiniProgramCommerceRestricted(): Promise<boolean> {
+  if (isMiniProgramWebView()) return true;
+  if (!mayUseMiniProgramBridge()) return false;
+  const miniProgram = await loadMiniProgramNavigationApi();
+  return miniProgram ? confirmMiniProgramEnvironment(miniProgram) : false;
 }
 
 export function getInstalledMiniProgramNavigationApi(): MiniProgramNavigationApi | null {
   if (typeof window === 'undefined') return null;
   return [window.tt, window.wx, window.jWeixin]
     .find(supportsMiniProgramNavigation)?.miniProgram ?? null;
+}
+
+/** Route through a native adapter so returning within the active tab also works. */
+export async function openMiniProgramHome(tab: 'tools' | 'account' = 'tools'): Promise<boolean> {
+  return openMiniProgramTab(tab, tab === 'tools' ? '/' : undefined);
+}
+
+export async function openMiniProgramTab(tab: 'tools' | 'timer' | 'account', path?: string): Promise<boolean> {
+  if (!mayUseMiniProgramBridge()) return false;
+  const miniProgram = await loadMiniProgramNavigationApi();
+  if (!miniProgram || !await confirmMiniProgramEnvironment(miniProgram)) return false;
+  return new Promise<boolean>((resolve) => {
+    let settled = false;
+    const finish = (handled: boolean) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timeout);
+      resolve(handled);
+    };
+    const timeout = window.setTimeout(() => finish(false), SDK_LOAD_TIMEOUT_MS);
+    try {
+      miniProgram.navigateTo({
+        url: `/pages/web/index?nativeTab=${tab}${path ? `&path=${encodeURIComponent(path)}` : ''}`,
+        success: () => finish(true), fail: () => finish(false),
+      });
+    } catch { finish(false); }
+  });
+}
+
+export function miniProgramTab(): string | null {
+  try { return sessionStorage.getItem('cuberoot.native-tab'); } catch { return null; }
 }
 
 async function loadDouyinJsSdk(): Promise<MiniProgramWebViewSdk | null> {
@@ -157,6 +194,33 @@ export async function notifyMiniProgramLogout(): Promise<boolean> {
     miniProgram.postMessage({ data: MINI_PROGRAM_LOGOUT_MESSAGE });
     miniProgram.navigateBack?.({ delta: 1 });
     return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Start WCA linking in the system browser, then return to the native account page. */
+export async function openMiniProgramWcaLink(sessionToken: string | null): Promise<boolean> {
+  if (!sessionToken || !mayUseMiniProgramBridge()) return false;
+  const miniProgram = await loadMiniProgramNavigationApi();
+  if (!miniProgram || !await confirmMiniProgramEnvironment(miniProgram)) return false;
+  try {
+    const response = await sessionFetch(apiUrl('/v1/auth/wechat/wca-link/start'), {
+      method: 'POST',
+      cache: 'no-store',
+      headers: { Authorization: `Bearer ${sessionToken}` },
+    });
+    const data = await response.json().catch(() => ({})) as { ticket?: unknown; url?: unknown };
+    if (!response.ok || typeof data.ticket !== 'string' || typeof data.url !== 'string') return false;
+    const ticket = data.ticket;
+    const url = data.url;
+    return await new Promise<boolean>((resolve) => {
+      miniProgram.navigateTo({
+        url: `/pages/account/index?wcaLink=${encodeURIComponent(ticket)}&wcaUrl=${encodeURIComponent(url)}`,
+        success: () => resolve(true),
+        fail: () => resolve(false),
+      });
+    });
   } catch {
     return false;
   }

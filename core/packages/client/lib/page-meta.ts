@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { WC_2027_ANNOUNCEMENT } from '@cuberoot/shared/site-announcements';
 
 // Per-route <title> and <meta name="description"> for the whole site.
 //
@@ -40,13 +41,29 @@ const SEP = ' — ';
 const SHARE_IMAGE = '/icons/CubeRoot.png';
 
 export const PAGE_META: Record<string, PageMetaEntry> = {
+  'cube-history': {
+    title: { zh: '三阶魔方发展史与型号图鉴', en: '3×3 Cube History and Model Archive' },
+    description: {
+      zh: '从 1974 年的魔方原型到 GAN17，以中国品牌为主的三阶魔方档案。按年代与品牌查阅型号、发布日期、各市场报价、结构参数、版本差异、评价与原始来源。',
+      en: 'Explore 3×3 cube history from the 1974 prototype to GAN17, with a focus on Chinese brands. Compare release evidence, regional prices, mechanisms, variants and sourced assessments.',
+    },
+  },
+  'wca/wc-2027': { title: WC_2027_ANNOUNCEMENT.title, description: WC_2027_ANNOUNCEMENT.summary },
+  'bp': {
+    title: { zh: '商业计划书', en: 'Business plan' },
+    description: { zh: '魔方根商业计划书：国内魔方市场规模、个人与机构订阅、课程、线上赛事、专业优势与经营规划。', en: 'CubeRoot business plan: China’s cubing market, individual and institutional subscriptions, courses, online competitions and operating plans.' },
+  },
+  'bp/talking-points': {
+    title: { zh: '业务交流提纲', en: 'Business discussion notes' },
+    description: { zh: '市场、订阅、课程、线上赛事与机构服务的交流提纲。', en: 'Discussion notes on the market, subscriptions, courses, online competitions and educator services.' },
+  },
   'partnership': {
-    title: { zh: '合作提案', en: '合作提案' },
-    description: { zh: 'CubeRoot 项目愿景、产品与赞助合作提案。', en: 'CubeRoot 项目愿景、产品与赞助合作提案。' },
+    title: { zh: '商业计划书', en: 'Business plan' },
+    description: { zh: '商业计划书已迁至 /bp。', en: 'The business plan has moved to /bp.' },
   },
   'partnership/talking-points': {
-    title: { zh: '会谈提纲', en: '会谈提纲' },
-    description: { zh: '项目介绍、六个交流切入点、资金请求与常见问题话术。', en: '项目介绍、六个交流切入点、资金请求与常见问题话术。' },
+    title: { zh: '业务交流提纲', en: 'Business discussion notes' },
+    description: { zh: '业务交流提纲已迁至 /bp/talking-points。', en: 'Discussion notes have moved to /bp/talking-points.' },
   },
   // The landing page is the only browser tab that keeps the site name.
   '': {
@@ -66,6 +83,7 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'Find practical CLL, EG, TCLL, and LS solutions for any 2×2 scramble, with bottom-color and build-depth filters plus ergonomic ranking.',
     },
   },
+  'competition-verify': { title: { zh: '输入验证码', en: 'Enter the image code' } },
   'about': {
     title: { zh: '关于', en: 'About' },
     description: {
@@ -90,6 +108,7 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'pets': { title: { zh: '领养宠物', en: 'Adopt a companion' }, description: { zh: '领养根号兽、螃蟹、三花猫或云宝。喂食、互动，点亮星星、月亮与太阳，一起长大。', en: 'Adopt a Root Beast, Clawd, Calico, or Cloud. Feed, play, and grow a friendship from little stars to suns.' } },
   'pets/gallery': { title: { zh: '宠物图鉴', en: 'Companion gallery' }, description: { zh: '探索 CubeRoot 小伙伴的动作与表情，播放喜欢的片段，分享给朋友。', en: 'Explore CubeRoot companion animations and expressions. Play your favorite moments and share them with friends.' } },
   'account': { title: { zh: '账号', en: 'Account' } },
+  'account/verify': { title: { zh: '实名认证', en: 'Identity Verification' } },
   'account/mcp': { title: { zh: 'ChatGPT 只读连接', en: 'ChatGPT Read-only Connection' } },
   'admin': {
     title: { zh: '管理后台', en: 'Administration' },
@@ -97,6 +116,10 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       zh: 'CubeRoot 管理员集中查看用户增长、会员、赞助与内容审核工具。',
       en: 'CubeRoot administration hub for user growth, memberships, sponsorships, and moderation tools.',
     },
+  },
+  'admin/interview': {
+    title: { zh: '采访准备', en: 'Interview preparation' },
+    description: { zh: '管理员专属采访准备。', en: 'Private interview preparation for administrators.' },
   },
   'admin/users': {
     title: { zh: '用户与增长', en: 'Users and Growth' },
@@ -178,6 +201,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   // 'alg' 没有条目:/alg 不再是页面(next.config 直接 redirect 到 /alg/3x3),
   // 每个魔方页的标题由 alg/[puzzle]/layout.tsx 的 generateMetadata 逐个发。
   'alg-trainers': { title: { zh: '公式训练器', en: 'Alg Trainers' } },
+  'alg/combo-types': {
+    title: { zh: '公式叠加类型', en: 'Algorithm Combo Types' },
+    description: {
+      zh: '查看公式库中 CC、OO、OP 等 18 种公式叠加类型的缩写、全称与含义。',
+      en: 'Reference all 18 algorithm combo types used in the algorithm database, including abbreviations, full names, and meanings.',
+    },
+  },
   'alg/3bld': { title: { zh: '盲拧训练', en: '3BLD Trainer' } },
   'alg/3bld/2c2c': { title: { zh: '双角双角训练', en: '2-Corner / 2-Corner Trainer' } },
   'alg/3bld/2e2e': { title: { zh: '双棱双棱训练', en: '2-Edge / 2-Edge Trainer' } },
@@ -328,10 +358,17 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'dev/architecture/flow': { title: { zh: '请求流程', en: 'Request Flow' } },
   'dev/architecture/history': { title: { zh: '历程', en: 'History' } },
   'dev/infrastructure': {
-    title: { zh: '生产基础设施', en: 'Production Infrastructure' },
+    title: { zh: '基础设施与运维', en: 'Infrastructure & Operations' },
     description: {
       zh: 'CubeRoot 生产环境的公开档案:容量、请求路径、发布恢复、健康检查、备份和安全披露边界。',
       en: 'A public profile of CubeRoot production capacity, request routing, release recovery, health checks, backups, and disclosure boundaries.',
+    },
+  },
+  'dev/expenses': {
+    title: { zh: '支出与设备', en: 'Expenses & Equipment' },
+    description: {
+      zh: 'CubeRoot 的投入概览：设备价格、工位租赁、人员与服务订阅，以及订单金额、发售价和可退押金的统计口径。',
+      en: 'An overview of CubeRoot investment: equipment prices, workspace rental, staffing and subscriptions, with the basis for order amounts, launch prices and refundable deposits.',
     },
   },
   'dev/components': { title: { zh: '组件库', en: 'Components' } },
@@ -376,6 +413,14 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'dev/llm': { title: { zh: '大模型', en: 'Large Language Models' } },
   'dev/llm/fable': { title: { zh: 'Claude Fable 5', en: 'Claude Fable 5' } },
   'dev/llm/sonnet-5': { title: { zh: 'Claude Sonnet 5', en: 'Claude Sonnet 5' } },
+  'dev/traffic-incident-2026-09': {
+    title: { zh: '2026 年 9 月流量事件记录', en: 'September 2026 traffic incident' },
+    description: { zh: 'CubeRoot 2026 年 9 月流量事件及截至 10 月 5 日的后续处置：停站恢复、全站验证码、七天通行、自动封禁、名单容量和误封修复。', en: 'CubeRoot September 2026 traffic incident and follow-up through October 5: recovery, site-wide CAPTCHA, seven-day access, automatic bans, list capacity and false-positive fixes.' },
+  },
+  'dev/dns-routing': {
+    title: { zh: '同一个网址，为什么会连到不同的服务器？', en: 'Why can one web address reach different servers?' },
+    description: { zh: '从浏览器打开网页讲起，说明同一网址为何会连到不同服务器、服务器为何会让浏览器改网址，以及 Cloudflare 免费版能否让国内走阿里云、国外走 Cloudflare。', en: 'Follow a browser visit to see why one web address can reach different servers, why the address bar changes, and whether Cloudflare Free can serve overseas visitors while China remains on Alibaba.' },
+  },
   'dev/ops': { title: { zh: '运维', en: 'Ops' } },
   'dev/schema': { title: { zh: '数据库 Schema', en: 'Database schema' } },
   'dev/solvers': { title: { zh: '求解器', en: 'Solvers' } },
@@ -461,6 +506,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     description: {
       zh: '上帝之数:魔方群在半转与四分之一转度量下的直径,20 与 26 是怎么证出来的,以及其它 WCA 项目的对应结果。',
       en: 'God\'s Number — the diameter of the cube group in the half-turn and quarter-turn metrics, how the values 20 and 26 were proved, and the equivalent results for other WCA puzzles.',
+    },
+  },
+  'math/cube-graph': {
+    title: { zh: '魔方与图论', en: 'Rubik’s Cube & Graph Theory' },
+    description: {
+      zh: '支持一至七阶魔方，三维魔方、圆环和圆盘同步演示 6N² 枚贴纸的置换，探索魔方与凯莱图的关系。',
+      en: 'Explore cubes from 1×1 to 7×7 with synchronized 3D, ring and sector maps of 6N² stickers, and learn how cubes relate to Cayley graphs.',
     },
   },
   'math/group': {
@@ -700,7 +752,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'Practice with fresh or historical competition scrambles, track a target, note mistakes, and review every attempt.',
     },
   },
-  'sim/stages': { title: { zh: '阶段遮罩速查', en: 'Stage Masks' } },
+  'sim/agents': {
+    title: { zh: 'AI 解魔方对比', en: 'AI Cube Challenge' },
+    description: {
+      zh: '两组国产大模型各派四个代理解二阶魔方，比较真实耗时、探索状态、Token 用量和估算费用，并回放每次尝试。',
+      en: 'Qwen and DeepSeek each send four agents to solve the same 2×2 cube. Compare measured time, explored states, token usage and estimated costs, then replay their attempts.',
+    },
+  },
   'site': { title: { zh: '网站导航', en: 'Sites Directory' } },
   'solver': { title: { zh: '求解器', en: 'Solver' } },
   'stroop': {

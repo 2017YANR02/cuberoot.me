@@ -3,17 +3,48 @@
 use std::io::Write;
 use std::time::Instant;
 
-use crate::{move_tables, prune_tables, table_profile};
+use crate::{move_tables, prune_tables, table_profile, table_timing};
 
 fn step(name: &str, f: impl FnOnce()) {
+    let path = move_tables::table_path(&format!("{name}.bin"));
+    let before = std::fs::metadata(&path).ok();
     let started = Instant::now();
     eprint!("[GEN high-memory] {:<42} ", name);
     let _ = std::io::stderr().flush();
     f();
-    eprintln!("done in {:>6.1}s", started.elapsed().as_secs_f64());
+    let elapsed = started.elapsed();
+    eprintln!("done in {:>6.1}s", elapsed.as_secs_f64());
+    let after = std::fs::metadata(&path).ok();
+    let size = after.as_ref().map(|m| m.len()).unwrap_or(0);
+    let unchanged = before
+        .as_ref()
+        .zip(after.as_ref())
+        .is_some_and(|(a, b)| a.len() == b.len() && a.modified().ok() == b.modified().ok());
+    table_timing::record(
+        name,
+        elapsed,
+        size,
+        if unchanged { "skipped" } else { "generated" },
+    );
 }
 
 pub fn generate() {
+    generate_selected(None);
+}
+
+/// Generate one exact file stem, or the complete optional group.
+/// Returns whether the requested name belongs to this group.
+pub fn generate_selected(selected: Option<&str>) -> bool {
+    let names = [
+        "mt_ep5_high_memory",
+        "pt_eo_xcross_slot0_high_memory",
+        "pt_eo_xcross_slot1_high_memory",
+        "pt_eo_xcross_slot2_high_memory",
+        "pt_eo_xcross_slot3_high_memory",
+    ];
+    if selected.is_some_and(|name| !names.contains(&name)) {
+        return false;
+    }
     assert!(
         table_profile::high_memory_enabled(),
         "high-memory table generation requires a detected 64 GB-class machine or CUBE_TABLE_PROFILE=high-memory"
@@ -23,13 +54,22 @@ pub fn generate() {
     let mtm = move_tables::instance();
     let ptm = prune_tables::instance();
 
-    eprintln!(
-        "[INFO] generating four physical-slot EO XCross tables sequentially; each packed file is 2,335,703,056 bytes"
-    );
-    step("mt_ep5_high_memory", || {
-        mtm.ensure_ep5_high_memory();
-    });
+    if let Some(name) = selected {
+        eprintln!("[INFO] generating optional high-memory table {name}");
+    } else {
+        eprintln!(
+            "[INFO] generating four physical-slot EO XCross tables sequentially; each packed file is 2,335,703,056 bytes"
+        );
+    }
+    if selected.is_none_or(|name| name == names[0]) {
+        step("mt_ep5_high_memory", || {
+            mtm.ensure_ep5_high_memory();
+        });
+    }
     for slot in 0..4 {
+        if selected.is_some_and(|name| name != names[slot + 1]) {
+            continue;
+        }
         step(&format!("pt_eo_xcross_slot{slot}_high_memory"), || {
             ptm.ensure_pt_eo_xcross_high_memory(slot);
             ptm.release_pt_eo_xcross_high_memory(slot);
@@ -41,4 +81,5 @@ pub fn generate() {
         "[DONE] optional high-memory tables generated in {:.1}s",
         started.elapsed().as_secs_f64()
     );
+    true
 }

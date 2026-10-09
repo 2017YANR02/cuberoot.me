@@ -16,7 +16,7 @@ import {
   type ReactionKind,
 } from '@/lib/forum-api';
 import { ForumVideoPlayer } from './ForumVideoPlayer';
-import { UserIdLabel } from '@/components/UserIdLabel';
+import { UserContactLink } from '@/components/UserIdLabel';
 import './forum-feed.css';
 
 export function ForumFeedList({ threads, compact = false }: { threads: ForumFeedThread[]; compact?: boolean }) {
@@ -80,10 +80,7 @@ export function ForumFeedList({ threads, compact = false }: { threads: ForumFeed
             </div>
             <div className="community-feed-main">
               <div className="community-feed-byline">
-                <PersonLink wcaId={thread.author.wcaId ?? thread.authorId} className="community-feed-author">
-                  {displayName}
-                </PersonLink>
-                <UserIdLabel userId={thread.author.userId} />
+                {thread.author.userId ? <UserContactLink userId={thread.author.userId} className="community-feed-author">{displayName}</UserContactLink> : <PersonLink wcaId={thread.author.wcaId ?? thread.authorId} className="community-feed-author">{displayName}</PersonLink>}
                 <span aria-hidden="true">/</span>
                 <Link href={`/forum/f/${thread.forumSlug}`} prefetch={false} className="community-feed-board">
                   {zh ? thread.forumNameZh : thread.forumNameEn}

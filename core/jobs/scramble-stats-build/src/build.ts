@@ -3,6 +3,7 @@ import path from 'node:path';
 import readline from 'node:readline';
 import { fileURLToPath } from 'node:url';
 import YAML from 'yaml';
+import { taskProgress } from './task_progress.js';
 import { makeRng } from './prng';
 import { dateDisplay } from './comp_date';
 import {
@@ -61,20 +62,20 @@ function newRes(): Reservoir { return { samples: [], seen: 0 }; }
 // 只有该变体自身的 bin 产生 diff, 不污染其它变体/set 的示例样本(否则全局 RNG 会被带偏 churn)。
 let rng = makeRng(0x9e3779b9);
 
-function reservoirAdd(r: Reservoir, s: Sample) {
+function reservoirAdd(r: Reservoir, id: string, scramble: string, color: string) {
   r.seen++;
-  if (r.samples.length < K_DOWNLOAD) { r.samples.push(s); return; }
+  if (r.samples.length < K_DOWNLOAD) { r.samples.push([id, scramble, color]); return; }
   const j = Math.floor(rng() * r.seen);
-  if (j < K_DOWNLOAD) r.samples[j] = s;
+  if (j < K_DOWNLOAD) r.samples[j] = [id, scramble, color];
 }
 
 // per-event 预览 reservoir(cap=K_PREVIEW,独立 rng —— 不消耗全局 rng,保证合并池采样
 // 与未分桶时逐字节一致)
-function reservoirAddK(r: Reservoir, s: Sample, cap: number, rngf: () => number) {
+function reservoirAddK(r: Reservoir, id: string, scramble: string, color: string, cap: number, rngf: () => number) {
   r.seen++;
-  if (r.samples.length < cap) { r.samples.push(s); return; }
+  if (r.samples.length < cap) { r.samples.push([id, scramble, color]); return; }
   const j = Math.floor(rngf() * r.seen);
-  if (j < cap) r.samples[j] = s;
+  if (j < cap) r.samples[j] = [id, scramble, color];
 }
 
 async function loadScrambleMap(txtPath: string): Promise<Map<string, string>> {
@@ -194,7 +195,7 @@ async function buildExampleCompMeta(
 // per-event 桶不做 reservoir 采样(示例 / 下载走合并池,客户端按 idMeta 过滤)。
 // idCountry(可选,仅合并 WCA 池):id → country_id。提供时额外按 (阶段,底色,步数) 聚合各国计数,
 // 每格留 top TOP_COUNTRIES_DIST → countryDist,供前端复用 StackedBar 画国家占比条 + 按国筛选。
-async function aggregateVariant(spec: VariantSpec, csvPath: string, scrambleMap: Map<string, string>, idEvent?: Map<string, string>, idCountry?: Map<string, string>) {
+export async function aggregateVariant(spec: VariantSpec, csvPath: string, scrambleMap: Map<string, string>, idEvent?: Map<string, string>, idCountry?: Map<string, string>) {
   // 每个 (set,variant) 调用前把 RNG 重新 makeRng 到随 variant key 确定的种子: reservoir 采样只依赖本变体自身数据,
   // 不被上一个变体处理时的 rng() 次数带偏 -> 增量只改一个变体时, 其它变体/set 的示例样本不再 spurious churn。
   let seed = 0x9e3779b9 >>> 0;
@@ -243,7 +244,20 @@ async function aggregateVariant(spec: VariantSpec, csvPath: string, scrambleMap:
 
   // NOTE: 每个 subset key 预先映射成它包含的 6 角度列下标中的哪几个（bitmask）
   // 行内遍历时先读 6 角度值，再按 bitmask 取 min(plan 由 buildStagePlans 从表头算)
-  let plans = new Map<string, StagePlan>();
+  // Column positions, color membership and aggregate buckets are fixed for the
+  // whole CSV. Resolve them once instead of millions of nested string lookups.
+  const vals: number[] = new Array(6);
+  let prepared: Array<{
+    stage: string;
+    colorIdx: StagePlan['colorIdx'];
+    subsets: Array<{
+      key: string;
+      indices: number[];
+      hist: Hist;
+      reservoirs: Map<number, Reservoir>;
+      countries: Map<number, Map<string, number>>;
+    }>;
+  }> = [];
 
   const stream = fs.createReadStream(csvPath, { encoding: 'utf-8' });
   const rl = readline.createInterface({ input: stream, crlfDelay: Infinity });
@@ -256,7 +270,21 @@ async function aggregateVariant(spec: VariantSpec, csvPath: string, scrambleMap:
     if (!header) {
       const h = line.split(',');
       header = h;
-      plans = buildStagePlans(h, spec);
+      const plans = buildStagePlans(h, spec);
+      prepared = spec.stages.map((stage) => {
+        const { colorIdx, subsetMasks } = plans.get(stage)!;
+        return {
+          stage, colorIdx,
+          subsets: subsetMasks.map(({ key, mask }) => ({
+            key,
+            // Preserve ascending color order: ties keep the same example color.
+            indices: [0, 1, 2, 3, 4, 5].filter((i) => mask & (1 << i)),
+            hist: byStage[stage][key],
+            reservoirs: resByStage[stage][key],
+            countries: countryByStage[stage][key],
+          })),
+        };
+      });
       continue;
     }
 
@@ -267,9 +295,9 @@ async function aggregateVariant(spec: VariantSpec, csvPath: string, scrambleMap:
     const ev = idEvent?.get(id);
     const evHists = ev !== undefined ? eventBucket(ev) : undefined;
     const country = idCountry?.get(id);
-    for (const stage of spec.stages) {
-      const { colorIdx, subsetMasks } = plans.get(stage)!;
-      const vals: number[] = new Array(6);
+    for (const { stage, colorIdx, subsets } of prepared) {
+      const evStage = evHists?.[stage];
+      const evResStage = ev === undefined ? undefined : evResByEvent.get(ev)![stage];
       let anyBad = false;
       for (let i = 0; i < 6; i++) {
         const v = Number(parts[colorIdx[i]]);
@@ -277,41 +305,36 @@ async function aggregateVariant(spec: VariantSpec, csvPath: string, scrambleMap:
         vals[i] = v;
       }
       if (anyBad) continue;
-      for (const { key, mask } of subsetMasks) {
+      for (const { key, indices, hist, reservoirs, countries } of subsets) {
         let m = Infinity;
         let argi = -1;
-        for (let i = 0; i < 6; i++) {
-          if (mask & (1 << i)) {
-            if (vals[i] < m) { m = vals[i]; argi = i; }
-          }
+        for (const i of indices) {
+          if (vals[i] < m) { m = vals[i]; argi = i; }
         }
-        bump(byStage[stage][key], m);
-        if (evHists) bump(evHists[stage][key], m);
+        bump(hist, m);
+        if (evStage) bump(evStage[key], m);
         if (country !== undefined) {
-          const cm = countryByStage[stage][key];
+          const cm = countries;
           let bm = cm.get(m);
           if (!bm) { bm = new Map(); cm.set(m, bm); }
           bm.set(country, (bm.get(country) ?? 0) + 1);
         }
         if (scramble !== undefined && argi >= 0) {
-          const bucketMap = resByStage[stage][key];
+          const bucketMap = reservoirs;
           let res = bucketMap.get(m);
           if (!res) { res = newRes(); bucketMap.set(m, res); }
-          reservoirAdd(res, [id, scramble, COLOR_LETTERS[argi]]);
+          reservoirAdd(res, id, scramble, COLOR_LETTERS[argi]);
           if (ev !== undefined) {
-            const evBucketMap = evResByEvent.get(ev)![stage][key];
+            const evBucketMap = evResStage![key];
             let evRes = evBucketMap.get(m);
             if (!evRes) { evRes = newRes(); evBucketMap.set(m, evRes); }
-            reservoirAddK(evRes, [id, scramble, COLOR_LETTERS[argi]], K_PREVIEW, evRng);
+            reservoirAddK(evRes, id, scramble, COLOR_LETTERS[argi], K_PREVIEW, evRng);
           }
         }
       }
     }
     if (ev !== undefined) evRowCount.set(ev, (evRowCount.get(ev) ?? 0) + 1);
     sampleCount++;
-    if (sampleCount % 200_000 === 0) {
-      process.stdout.write(`  [${spec.key}] ${sampleCount} rows\r`);
-    }
   }
   process.stdout.write(`  [${spec.key}] ${sampleCount} rows\n`);
 
@@ -577,6 +600,10 @@ async function main() {
       res: { samples: Sample[]; seen: number };
     }> = [];
     const downloadIds = new Set<string>();
+    const availableVariants = VARIANTS.filter(spec => fs.existsSync(path.join(setSpec.csv_dir, spec.file)));
+    const report = taskProgress(`分布 ${setSpec.key}`, availableVariants.length);
+    report(0);
+    let completedVariants = 0;
     for (const spec of VARIANTS) {
       const csvPath = path.join(setSpec.csv_dir, spec.file);
       if (!fs.existsSync(csvPath)) {
@@ -612,6 +639,7 @@ async function main() {
           }
         }
       }
+      report(++completedVariants);
     }
 
     setsOut[setSpec.key] = {
@@ -715,7 +743,9 @@ async function main() {
   console.log(`Wrote ${txtFilesWritten} per-bin txt files under ${downloadsDir} (${(txtTotalBytes / 1024).toFixed(1)} KB total)`);
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  void main().catch((err) => {
+    console.error(err);
+    process.exitCode = 1;
+  });
+}

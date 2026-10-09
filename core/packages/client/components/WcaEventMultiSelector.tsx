@@ -17,6 +17,7 @@ const EVENT_CATEGORIES = [
 ] as const;
 
 interface WcaEventMultiSelectorProps {
+  presentation?: 'menu' | 'inline';
   availableEvents: ReadonlySet<string>;
   selectedEvents: ReadonlySet<string>;
   onChange: (events: Set<string>) => void;
@@ -24,6 +25,7 @@ interface WcaEventMultiSelectorProps {
 }
 
 export default function WcaEventMultiSelector({
+  presentation = 'menu',
   availableEvents,
   selectedEvents,
   onChange,
@@ -69,8 +71,7 @@ export default function WcaEventMultiSelector({
     onChange(next);
   };
 
-  return (
-    <div className="wca-event-multi-selector">
+  const toolbar = (
       <div className="wca-event-multi-toolbar">
         <ClearButton variant="standalone" onClick={() => onChange(new Set())} isZh={isZh} />
         <button
@@ -104,12 +105,18 @@ export default function WcaEventMultiSelector({
           />
         )}
       </div>
+  );
+  return (
+    <div className="wca-event-multi-selector">
+      {presentation === 'inline' && toolbar}
       <WcaEventSelector
+        presentation={presentation}
         availableEvents={renderedEvents}
         selectedEvents={selectedEvents}
         onToggle={toggleEvent}
         isZh={isZh}
         onlyAvailable
+        popupFooter={presentation === 'menu' ? toolbar : undefined}
       />
     </div>
   );

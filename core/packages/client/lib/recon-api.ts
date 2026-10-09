@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 // Full port of packages/client-vite/src/utils/recon_api.ts to client.
 // Auth + write endpoints included.
 
@@ -21,23 +22,23 @@ async function apiGet<T>(path: string, params: Record<string, string> = {}): Pro
   for (const [k, v] of Object.entries(params)) {
     if (v) url.searchParams.set(k, v);
   }
-  return handleApi<T>(await fetch(url.toString(), { headers: authHeaders(false) }));
+  return handleApi<T>(await sessionFetch(url.toString(), { headers: authHeaders(false) }));
 }
 
 async function apiPost<T>(path: string, body: unknown): Promise<T> {
-  return handleApi<T>(await fetch(`${API_BASE}${path}`, {
+  return handleApi<T>(await sessionFetch(`${API_BASE}${path}`, {
     method: 'POST', headers: authHeaders(), body: JSON.stringify(body),
   }));
 }
 
 async function apiPut<T>(path: string, body: unknown): Promise<T> {
-  return handleApi<T>(await fetch(`${API_BASE}${path}`, {
+  return handleApi<T>(await sessionFetch(`${API_BASE}${path}`, {
     method: 'PUT', headers: authHeaders(), body: JSON.stringify(body),
   }));
 }
 
 async function apiDelete<T>(path: string): Promise<T> {
-  return handleApi<T>(await fetch(`${API_BASE}${path}`, {
+  return handleApi<T>(await sessionFetch(`${API_BASE}${path}`, {
     method: 'DELETE', headers: authHeaders(false),
   }));
 }
@@ -109,6 +110,14 @@ export async function getTodayRecons(): Promise<ReconSolve[]> {
   return latest ? [latest] : [];
 }
 
+export async function getPinnedRecons(): Promise<ReconSolve[]> {
+  return apiGet<ReconSolve[]>('/pinned');
+}
+
+export async function setReconHomePin(id: number, pinned: boolean): Promise<{ ok: boolean }> {
+  return apiPut<{ ok: boolean }>(`/${id}/home-pin`, { pinned });
+}
+
 export async function addRecon(solve: Partial<ReconSolve>): Promise<ReconSolve> {
   return apiPost<ReconSolve>('', solve);
 }
@@ -124,7 +133,7 @@ export async function deleteRecon(id: number): Promise<{ ok: boolean }> {
 export async function uploadReconVideo(file: File): Promise<{ id: number; url: string }> {
   const headers = new Headers(authHeaders(false));
   headers.set('Content-Type', file.type || 'application/octet-stream');
-  const result = await handleApi<{ id: number }>(await fetch(`${API_BASE}/video`, {
+  const result = await handleApi<{ id: number }>(await sessionFetch(`${API_BASE}/video`, {
     method: 'POST',
     headers,
     body: file,
@@ -197,14 +206,11 @@ export async function listEditHistory(reconId: number): Promise<EditHistoryItem[
 export interface CommentsResponse { comments: ReconComment[] }
 
 export async function listComments(reconId: number): Promise<ReconComment[]> {
-  // detail page used { comments } envelope; submit endpoints return list directly via /comments?reconId=…
-  // Use envelope shape first, then fall back to list.
-  try {
-    const r = await apiGet<CommentsResponse>(`/${reconId}/comments`);
-    return r.comments;
-  } catch {
-    return apiGet<ReconComment[]>('/comments', { reconId: String(reconId) });
-  }
+  return apiGet<ReconComment[]>('/comments', { reconId: String(reconId), v: '3' });
+}
+
+export async function setCommentVote(commentId: number, vote: 'like' | 'dislike' | null): Promise<Pick<ReconComment, 'likeCount' | 'myVote'>> {
+  return apiPut(`/comments/${commentId}/vote`, { vote });
 }
 
 export async function addComment(reconId: number, content: string, parentId: number | null = null): Promise<{ ok: boolean; id: number }> {
@@ -303,4 +309,12 @@ export async function getDouyinCover(url: string): Promise<{ pic: string }> {
 
 export async function resolveShortUrl(url: string): Promise<{ url: string }> {
   return apiGet('/resolve-shorturl', { url });
+}
+
+export async function getFeaturedRecons(): Promise<ReconSolve[]> {
+  return apiGet<ReconSolve[]>('/featured');
+}
+
+export async function setReconFeatured(id: number, featured: boolean): Promise<{ ok: boolean }> {
+  return apiPut<{ ok: boolean }>(`/${id}/featured`, { featured });
 }

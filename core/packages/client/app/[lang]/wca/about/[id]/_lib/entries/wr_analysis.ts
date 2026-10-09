@@ -696,7 +696,7 @@ QUALIFY ROW_NUMBER() OVER (PARTITION BY person_id, event_id
 };
 
 // ──── average_of ────────────────────────────────────────────────────────────
-// 跨比赛滚动平均 — Ao3/5/12/25/50/100/1000 的滑动窗口
+// 跨比赛滚动平均 — Mo3 与 Ao5/12/25/50/100/1000 的滑动窗口
 const average_of: AboutEntry = {
   id: 'average_of',
   titleZh: '滚动平均 (Rolling Average)',
@@ -704,11 +704,11 @@ const average_of: AboutEntry = {
   badgeZh: '世界纪录',
   badgeEn: 'World record',
   introZh: [
-    '把选手生涯里**所有官方 attempt** 按时间排成一长串,在上面滑一个长度 N 的窗口算裁剪均值,N ∈ {3, 5, 12, 25, 50, 100, 1000}。每个窗口产出一个数,选手生涯里最小的那个 = 他这套 AoN 的 PB。这跟 WCA 官方的"一轮 5 次裁剪均值"不一样 — 这里 N 是**跨比赛 / 跨轮次**滑动的。',
+    '把选手生涯里**所有官方 attempt** 按时间排成一长串，在上面滑一个长度 N 的窗口算均值，N ∈ {3, 5, 12, 25, 50, 100, 1000}。N=3 使用不裁剪的 Mo3；其余档位使用裁剪均值 AoN。每个窗口产出一个数，选手生涯里最小的那个就是该指标的 PB。窗口可以**跨比赛 / 跨轮次**。',
     '它考的是**长期稳定输出** — Ao1000 的 PB 持有者基本意味着这个人有 1000 次官方还原都保持高水准。前端按 N 切下拉,每个 N 都有自己的 Ranking + WR History。聚合层把 7 个 AverageOfX 子类拼成一个 stat。',
   ],
   introEn: [
-    'Lay out a cuber\'s **entire official attempt history** in chronological order, slide a window of size N over it computing the WCA trimmed mean — N ∈ {3, 5, 12, 25, 50, 100, 1000}. Each window emits a number; the smallest across their career = their AoN PB. Unlike the WCA official "trimmed mean of 5 within one round," this N slides **across comps and rounds**.',
+    'Lay out a cuber\'s **entire official attempt history** in chronological order and slide a window of size N over it — N ∈ {3, 5, 12, 25, 50, 100, 1000}. N=3 uses untrimmed Mo3; larger windows use trimmed AoN. The smallest value across their career is their PB for that metric. Windows can span **comps and rounds**.',
     'It probes long-horizon consistency — an Ao1000 PB means 1000 consecutive official attempts at top form. UI dropdown switches N; each N gets its own Ranking + WR History. The aggregator stitches 7 AverageOfX children into one stat.',
   ],
   stats: [
@@ -716,7 +716,7 @@ const average_of: AboutEntry = {
     },
     { value: 'top 15~2000', labelZh: '候选门槛', labelEn: 'Candidate top-N', hintZh: '按项目变化(333 top 15, 333bf top 2000)', hintEn: 'Varies by event (333: 15; 333bf: 2000)'
     },
-    { value: '5%', labelZh: '裁剪比例', labelEn: 'Trim ratio', hintZh: '每端 ceil(N × 5%) 个,共 ~10%', hintEn: 'ceil(N × 5%) per side, ~10% total'
+    { value: '5%', labelZh: '裁剪比例', labelEn: 'Trim ratio', hintZh: 'Mo3 不裁剪；N≥5 每端 ceil(N × 5%) 个', hintEn: 'Mo3 is untrimmed; N≥5 trims ceil(N × 5%) per side'
     },
     { value: '1×', labelZh: 'SQL 查询', labelEn: 'SQL queries', hintZh: '7 个子类共享同一份 row 缓存', hintEn: '7 children share one cached row set'
     },
@@ -758,8 +758,8 @@ ORDER BY competition.start_date, round_type.rank;`,
     {
       titleZh: '滑动窗口 + WCA 裁剪均值',
       titleEn: 'Sliding window + WCA trimmed mean',
-      bodyZh: '`solves.length == N` 时算一次裁剪均值:排序,两端各去 `ceil(N × 5%)`,剩下取算术均值。如果裁后还含 `Infinity` → 整个均值 DNF。然后窗口 `shift()` 一格。',
-      bodyEn: 'When `solves.length == N`, compute the trimmed mean: sort, drop `ceil(N × 5%)` from each side, average the rest. If a trimmed window still contains `Infinity` → DNF the whole average. Then `shift()` the window.'
+      bodyZh: '`solves.length == N` 时计算均值：N=3 为 Mo3，保留全部三次；N≥5 时排序，两端各去 `ceil(N × 5%)`，剩下取算术均值。计入的成绩含 `Infinity` → 整个均值 DNF。然后窗口 `shift()` 一格。',
+      bodyEn: 'When `solves.length == N`, compute the mean: N=3 is Mo3 and counts all three attempts; N≥5 sorts and drops `ceil(N × 5%)` from each side. Any counting attempt of `Infinity` makes the mean DNF. Then `shift()` the window.'
     },
     {
       titleZh: '每人记 best + pbHistory',
@@ -779,21 +779,21 @@ ORDER BY competition.start_date, round_type.rank;`,
     {
       labelZh: 'WCA 裁剪均值 (window = N)',
       labelEn: 'WCA trimmed mean (window = N)',
-      expr: 'AoN = (1 / (N - 2k)) · Σ sᵢ for i ∈ (k, N − k],  k = ⌈N × 0.05⌉',
-      bodyZh: 's₁ ≤ s₂ ≤ ... ≤ s_N 为窗口内排序后成绩;裁剪掉两端各 k = `⌈N × 5%⌉` 个,剩下算术平均。N=5 → k=1(WCA 标准 ao5);N=1000 → k=50。',
-      bodyEn: 's₁ ≤ s₂ ≤ ... ≤ s_N is the sorted window; drop k = `⌈N × 5%⌉` per side, arithmetic mean the rest. N=5 → k=1 (the WCA standard ao5); N=1000 → k=50.'
+      expr: 'Mean = (1 / (N - 2k)) · Σ sᵢ for i ∈ (k, N − k],  k = 0 if N=3, otherwise ⌈N × 0.05⌉',
+      bodyZh: 's₁ ≤ s₂ ≤ ... ≤ s_N 为窗口内排序后成绩。N=3 → k=0，Mo3 保留全部三次；N≥5 时裁剪掉两端各 k = `⌈N × 5%⌉` 个，剩下算术平均。N=5 → k=1；N=1000 → k=50。',
+      bodyEn: 's₁ ≤ s₂ ≤ ... ≤ s_N is the sorted window. N=3 → k=0: Mo3 counts all three attempts. N≥5 drops k = `⌈N × 5%⌉` per side and averages the rest. N=5 → k=1; N=1000 → k=50.'
     },
   ],
   edgesZh: [
     '**跨比赛跨轮**,跟 WCA 官方 ao5(同一轮 5 次)完全不同。AoN 的窗口可能横跨好几年。',
     'MBLD / MBLD-old (`333mbf` / `333mbo`)不参与 — 它们的 attempt 结构不同。',
-    '裁剪比例 5% 是写死的;N=3 时 k=1(去掉最快最慢);N=5 时 k=1(等价 WCA ao5);N=1000 时 k=50。',
+    'N=3 使用 Mo3，不裁剪；任一次 DNF 或 DNS 则均值为 DNF。N≥5 的裁剪比例为每端 5%：N=5 时 k=1；N=1000 时 k=50。',
     'WR History 候选只包含 top-N + WR 持有者(SQL 已过滤),所以"全民最大 Ao1000" 的真正持有者不一定在 — 但这页只关心强者侧,无伤大雅。',
   ],
   edgesEn: [
     '**Cross-comp, cross-round** — not the same as the WCA-official ao5 (within one round). An AoN window can span multiple years.',
     'MBLD / MBLD-old (`333mbf` / `333mbo`) excluded — their attempt structure differs.',
-    'Trim ratio hard-coded to 5%; N=3 → k=1 (drops the single fastest + slowest); N=5 → k=1 (= WCA standard ao5); N=1000 → k=50.',
+    'N=3 uses untrimmed Mo3; any DNF or DNS makes the mean DNF. N≥5 trims 5% per side: N=5 → k=1; N=1000 → k=50.',
     'WR-history candidates = top-N + WR holders only — the absolute "biggest Ao1000 of all humans" may live outside this set; this page focuses on the strong end where it matters.',
   ],
   related: [

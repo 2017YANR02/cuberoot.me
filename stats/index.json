@@ -107,7 +107,7 @@
           "metrics": [
             {
               "id": "ao3",
-              "labelEn": "Ao3",
+              "labelEn": "Mo3",
               "labelZh": "3 次均值"
             },
             {
@@ -345,6 +345,11 @@
       "nameZh": "赛事统计",
       "iconName": "Tent",
       "stats": [
+        {
+          "id": "annual_participation",
+          "titleEn": "Annual participation and solves",
+          "titleZh": "每年参赛人数与还原盘数"
+        },
         {
           "id": "average_event_count_by_competition",
           "titleEn": "Average event count by competition",

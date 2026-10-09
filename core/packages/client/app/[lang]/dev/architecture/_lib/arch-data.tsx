@@ -179,6 +179,258 @@ export interface TLEntry {
 }
 export const TIMELINE: TLEntry[] = ([
   {
+    "date": "2026-09-27",
+    "tag": "infra",
+    "zh": {
+      "title": "账号合并与验证凭证保持一致",
+      "body": "合并完成后使被合并账号的旧会话失效，身份存储失败可明确反馈。",
+      "expand": "手机与合并凭证随账号操作在同一事务中提交；账号判断复用共享策略，避免不同入口作出不同决定。"
+    },
+    "en": {
+      "title": "Consistent account merges and verification proofs",
+      "body": "Completed merges invalidate retired account sessions and surface identity storage failures.",
+      "expand": "Phone and merge proofs commit in the same transaction as account changes; shared account policies keep decisions consistent across entry points."
+    }
+  },
+  {
+    "date": "2026-09-26",
+    "tag": "feature",
+    "zh": {
+      "title": "计时器设备中心与复盘分享统一",
+      "body": "计时器复用设备能力、状态和错误契约，在线房间完善玩家实时操作。",
+      "expand": "复盘可生成服务端保存的分享链接；智能魔方成绩采集复用共同流程，设备连接与断开事件由各宿主接入。各平台支持范围仍以设备能力为准。"
+    },
+    "en": {
+      "title": "Unified timer device controls and reconstruction sharing",
+      "body": "Timer surfaces share device capabilities, status and errors, while online rooms refine live player controls.",
+      "expand": "Reconstructions can produce server-backed share links. Smart cube attempts share a producer, with device lifecycle events supplied by each host. Platform support remains capability-dependent."
+    }
+  },
+  {
+    "date": "2026-09-26",
+    "tag": "infra",
+    "zh": {
+      "title": "页面访问扩展手动验证",
+      "body": "手动验证码从比赛入口扩展到网站页面，通过后保留七天验证状态。",
+      "expand": "重复未验证访问纳入封禁处理；封禁同步按服务商实际写入额度排队，避免高密度事件阻塞同步。"
+    },
+    "en": {
+      "title": "Manual verification expands to site pages",
+      "body": "Manual CAPTCHA verification expands from competition access to site pages, retaining verification for seven days.",
+      "expand": "Repeated unverified access enters ban handling, and synchronization queues writes within verified provider limits so dense event streams do not block progress."
+    }
+  },
+  {
+    "date": "2026-09-25",
+    "tag": "feature",
+    "zh": {
+      "title": "域名解析指南与流量事件图文记录",
+      "body": "开发文档新增域名解析分线路指南和九月流量事件记录。",
+      "expand": "指南解释域名解析、线路与代理的责任；事件页结合图表记录暂停、恢复和防护过程，并区分浏览器分析事件、自有服务器请求与 Vercel 日志。"
+    },
+    "en": {
+      "title": "DNS routing guide and illustrated traffic incident journal",
+      "body": "Developer documentation adds a DNS routing guide and a September traffic incident journal.",
+      "expand": "The guide explains DNS, delivery routes and proxy responsibilities. The journal illustrates pauses, recovery and defenses while distinguishing browser analytics, self-hosted requests and Vercel logs."
+    }
+  },
+  {
+    "date": "2026-09-25",
+    "tag": "infra",
+    "zh": {
+      "title": "比赛访问验证与流量预算补齐",
+      "body": "比赛页面和接口加入访问验证，缓存响应前仍校验访问资格。",
+      "expand": "手动图片验证码、总页面流量预算和扫描请求封禁分别处理访问与容量风险；阶段求解器也修正重复结果，在限制数量前按实际转动路径去重。"
+    },
+    "en": {
+      "title": "Competition verification and traffic budgets",
+      "body": "Competition pages and APIs add access verification, including checks before cached responses.",
+      "expand": "Manual image CAPTCHAs, total page budgets and scanner bans address access and capacity separately. Stage solvers also deduplicate executable move paths before applying result limits."
+    }
+  },
+  {
+    "date": "2026-09-24",
+    "tag": "migration",
+    "zh": {
+      "title": "统计自动化统一 TypeScript 入口",
+      "body": "仓库自有 PowerShell 自动化迁移或退役，日常打乱统计恢复一键计算和发布。",
+      "expand": "统计编排使用 TypeScript，求解与大表生成保留 Rust；开发预览按设备登记密钥、域名和隧道。Blender 与研究所需 Python 保留，未将全部 Python 宣称为已迁移。"
+    },
+    "en": {
+      "title": "Statistics automation adopts TypeScript entry points",
+      "body": "Repository-owned PowerShell automation is migrated or retired, restoring one-command scramble computation and publication.",
+      "expand": "TypeScript orchestrates statistics while Rust retains solving and large-table generation. Preview onboarding registers device keys, domains and tunnels. Python required by Blender and research remains in place."
+    }
+  },
+  {
+    "date": "2026-09-23",
+    "tag": "infra",
+    "zh": {
+      "title": "开发预览分设备，流量监控分来源",
+      "body": "开发域名对应独立设备隧道，监控区分自有服务器与其他交付线路。",
+      "expand": "流量归因保留时间、路径和来源证据；短信发送切换为固定版本的共享传输组件，账号业务规则仍留在原系统。"
+    },
+    "en": {
+      "title": "Device-specific previews and source-aware traffic monitoring",
+      "body": "Development hostnames route to separate device tunnels, and monitoring distinguishes self-hosted traffic from other delivery lines.",
+      "expand": "Traffic attribution preserves time, path and source evidence. SMS sending adopts a pinned shared transport component while account rules remain in their owning system."
+    }
+  },
+  {
+    "date": "2026-09-22",
+    "tag": "feature",
+    "zh": {
+      "title": "桌面智能魔方发现与复盘全屏操作",
+      "body": "桌面端加入设备发现，复盘操作集中到工具栏并完善手机全屏查看。",
+      "expand": "复盘播放器持续可见，转动动画保留设备渐进姿态；智能魔方会话和设备面板由多端共享。抖音网站与小程序身份匹配同时修正。"
+    },
+    "en": {
+      "title": "Desktop smart cube discovery and fullscreen reconstruction",
+      "body": "Desktop gains device discovery, while reconstruction actions move into the toolbar with improved mobile fullscreen viewing.",
+      "expand": "Playback remains visible and turn animations preserve gradual device orientation. Smart cube sessions and device panels are shared across surfaces. Douyin website and mini program identity matching is also corrected."
+    }
+  },
+  {
+    "date": "2026-09-21",
+    "tag": "feature",
+    "zh": {
+      "title": "抖音小程序运行与账号入口完善",
+      "body": "小程序适配抖音原生运行时、分享菜单与已有账号登录。",
+      "expand": "开发产物保持可直接打开的目录结构；Ghost 魔方补充中层拖动与面色自定义，网站部署缩小增量传输并限制并发。"
+    },
+    "en": {
+      "title": "Douyin mini program runtime and account access improve",
+      "body": "The mini program adapts to the native Douyin runtime, sharing menu and existing-account sign-in.",
+      "expand": "Development output remains directly openable. Ghost Cube gains middle-slice dragging and face colors, while website deployment bounds incremental transfers and concurrency."
+    }
+  },
+  {
+    "date": "2026-09-20",
+    "tag": "feature",
+    "zh": {
+      "title": "魔方成长指南与课程兑换完善",
+      "body": "成长指南加入交互能力图谱与图文说明，课程支持携带兑换码的分享链接。",
+      "expand": "成长主题通过弹窗解释家长关心的问题；课程区分试听与完整内容，已兑换状态和课时封面在播放前保持清晰。"
+    },
+    "en": {
+      "title": "Cubing growth guide and course redemption",
+      "body": "The growth guide adds an interactive ability atlas and illustrations; course links can include redemption codes.",
+      "expand": "Topic dialogs explain parent concerns. Courses distinguish trial and complete content, with redeemed status and lesson covers visible before playback."
+    }
+  },
+  {
+    "date": "2026-09-20",
+    "tag": "feature",
+    "zh": {
+      "title": "Ghost 魔方模拟器与跨端智能魔方接入",
+      "body": "模拟器加入按参考切割几何重建的 Ghost 魔方，在线房间接入智能魔方同步。",
+      "expand": "Android 增加 GAN、魔域与奇艺蓝牙适配；小程序扫描逐步显示设备，连接前等待扫描清理。管理员新增只读用户视角。"
+    },
+    "en": {
+      "title": "Ghost Cube simulation and cross-platform smart cubes",
+      "body": "The simulator adds a reference-based Ghost Cube, and online rooms gain smart cube synchronization.",
+      "expand": "Android adds GAN, MoYu and QiYi Bluetooth adapters. Mini programs show scan results incrementally and await scan cleanup before connecting. Administrators gain a read-only user view."
+    }
+  },
+  {
+    "date": "2026-09-19",
+    "tag": "feature",
+    "zh": {
+      "title": "贴纸图与凯莱图可交互学习",
+      "body": "新增魔方贴纸图页面，支持一至七阶与直接贴纸操作，并解释二阶凯莱图。",
+      "expand": "魔方转动与图动画对应，手动操作可打断并平滑接续；说明区分贴纸位置变化与完整状态图，避免混淆两类图。"
+    },
+    "en": {
+      "title": "Interactive sticker and Cayley graphs",
+      "body": "A new cube sticker graph page supports orders one through seven and direct sticker interaction, with explanations of the pocket-cube Cayley graph.",
+      "expand": "Cube turns correspond to graph animation, with smooth continuation after manual interruption. Explanations distinguish sticker-position changes from full state graphs."
+    }
+  },
+  {
+    "date": "2026-09-19",
+    "tag": "feature",
+    "zh": {
+      "title": "公式详情原位编辑与组合类型说明",
+      "body": "公式详情可直接编辑，新增组合类型说明页并扩展投稿标签。",
+      "expand": "展示层可隐藏末尾调整，但播放与保存继续使用完整公式；模拟器加入微缩房间主题。小程序新增浏览器 WCA 绑定入口并扩展智能魔方协议。"
+    },
+    "en": {
+      "title": "Inline algorithm editing and combination-type guidance",
+      "body": "Algorithm details support inline editing, with a new combination-type guide and expanded submission tags.",
+      "expand": "Display can hide finishing adjustments while playback and saving retain full algorithms. Simulators add miniature rooms; mini programs add browser-based WCA linking and more smart cube protocols."
+    }
+  },
+  {
+    "date": "2026-09-19",
+    "tag": "infra",
+    "zh": {
+      "title": "会员订单与权益原子结算",
+      "body": "会员订单结算和权益发放在同一事务中处理，支付调用改用固定版本共享客户端。",
+      "expand": "邮箱验证码在发送成功后激活并原子消费；历史订单对账仍单独跟踪，不把代码修正等同于历史账目已清理。"
+    },
+    "en": {
+      "title": "Atomic membership settlement",
+      "body": "Membership settlement and entitlement grants use one transaction, with pinned shared payment clients.",
+      "expand": "Email codes activate after delivery and are consumed atomically. Historical order reconciliation remains separately tracked rather than implied complete by code changes."
+    }
+  },
+  {
+    "date": "2026-09-17",
+    "tag": "feature",
+    "zh": {
+      "title": "教师直播指南加入交互思维导图",
+      "body": "直播指南增加中文讲稿和可展开的思维导图。",
+      "expand": "教师可按主题查看讲解顺序与讲稿；外观设置按配色记忆背景，二阶公式工具补充有界精确步数计算。"
+    },
+    "en": {
+      "title": "Teacher livestream guidance gains an interactive mind map",
+      "body": "The livestream guide adds a Chinese script and an expandable mind map.",
+      "expand": "Teachers can follow topic order and script sections. Appearance remembers backgrounds by color scheme, and 2×2 algorithm tools add bounded exact move counts."
+    }
+  },
+  {
+    "date": "2026-09-16",
+    "tag": "feature",
+    "zh": {
+      "title": "国家纪录筛选与只读 AI 连接",
+      "body": "国家纪录历史补充性别与国家筛选，账号区新增管理员只读 AI 连接页。",
+      "expand": "连接通过授权访问诊断与报告，不提供任意写入；公式库修正图示朝向保存、公式对齐和重复校验，训练与打乱统计同步更新。"
+    },
+    "en": {
+      "title": "National record filters and read-only AI connections",
+      "body": "National record history adds gender and country filters, and accounts gain an administrator read-only AI connection page.",
+      "expand": "Authorized connections expose diagnostics and reports without arbitrary writes. Algorithm tools correct saved diagram orientation, alignment and duplicate checks; training and scramble data are refreshed."
+    }
+  },
+  {
+    "date": "2026-09-15",
+    "tag": "feature",
+    "zh": {
+      "title": "纪录订阅与管理员磁盘浏览",
+      "body": "纪录订阅支持邮件与 Android 通知，新增管理员只读磁盘浏览页。",
+      "expand": "纪录消息区分女子与新人纪录，磁盘扫描支持进度与结果留存；智能魔方补充奇艺姿态读取并修正魔域轴向与设备复位。"
+    },
+    "en": {
+      "title": "Record subscriptions and administrator disk exploration",
+      "body": "Record subscriptions support email and Android notifications, alongside a new read-only administrator disk explorer.",
+      "expand": "Record messages distinguish female and newcomer records. Disk scans retain progress and results. Smart cubes gain QiYi gyro support and corrected MoYu axes and resets."
+    }
+  },
+  {
+    "date": "2026-09-14",
+    "tag": "feature",
+    "zh": {
+      "title": "搜索即时更新与国家置顶共享",
+      "body": "搜索随输入更新，国家菜单共享置顶选择，账号卡片支持个人排序。",
+      "expand": "置顶需要登录并优先采用 WCA 国家；受限首页内容集中展示，统计导入流式读取压缩历史，减少整份快照驻留。"
+    },
+    "en": {
+      "title": "Live search and shared country pins",
+      "body": "Search updates while typing, country menus share pinned choices, and account cards support personal ordering.",
+      "expand": "Pins require sign-in and prioritize the WCA country. Restricted home content is grouped, and history imports stream compressed snapshots instead of retaining entire archives."
+    }
+  },
+  {
     "date": "2026-09-13",
     "tag": "feature",
     "zh": {

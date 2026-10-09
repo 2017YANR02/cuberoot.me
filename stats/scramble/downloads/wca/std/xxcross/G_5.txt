@@ -1,8 +1,8 @@
 # Scramble samples — std / xxcross / G / bin 5
-# Population in this bin: 120
-# Samples listed: 120 (all entries in this bin)
+# Population in this bin: 123
+# Samples listed: 123 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 1779001,F U2 B' U L' F' R F' B D F R2 U R2 F2 B2 D' F2,G,Kansai Open 2014 (2014-03-21~22),333ft Final A #1
@@ -125,3 +125,6 @@
 5728202001,D' B2 D' U' L2 B2 U R' B L2 U2 R D2 R2 D F L' B',G,Warm Up Carolina Pride 2026 (2026-06-27~28),333oh R1 B #2
 5762024040,L B2 U F2 D U2 L2 F' D2 B R' D B' R2 D' L' B' L2 B R',G,TroisMaisons Zéro Vision 2026 (2026-07-25~26),333mbf Final B #1
 5775855001,B L U' L' U D F L U B2 L2 F2 R2 D R2 F2 B L',G,Cubetec UEA II Manaus 2026 (2026-08-08),333 R1 C #1
+5844209001,B' D L' B D2 B2 L' R2 D' F2 U R2 U' B2 U2 R2 U L' B',G,Ribeirão ao Cubo 2026 (2026-09-19~20),333oh Final C #4
+5845276001,B U2 R' U2 R U2 R' U2 R' F' D' F2 R' D B' F' L R',G,Hancock County NxNs 2026 (2026-09-26),333 R1 D #2
+5846172001,D2 B2 R2 B2 R' F2 U2 L2 R' F2 L2 B' D2 R' F D2 F R2 B R,G,Tafalla Open 2026 (2026-09-26~27),333bf Final A #1

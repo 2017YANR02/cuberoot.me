@@ -7,6 +7,11 @@
  */
 import { useEffect, useState, useCallback, useMemo, useRef, Fragment, type ReactNode } from 'react';
 import Link from '@/components/AppLink';
+import { createPortal } from 'react-dom';
+import { ClearButton } from '@/components/ClearButton';
+import { useModalDismiss } from '@/hooks/useModalDismiss';
+import '@/components/wechat-pc-share-modal.css';
+import { copyPageLink } from '@/lib/page-share';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import {
@@ -15,7 +20,7 @@ import {
   Pencil, Trash2, Pin, PinOff, Plus, Key,
   ChevronDown, ChevronUp,
   ArrowLeft, Copy, Check, Maximize2, Minimize2,
-  Lock, Link2, LogIn,
+  Lock, Link2, LogIn, ExternalLink, Share2,
 } from 'lucide-react';
 import type { ReconSolve, ReconComment, ReconAlternative } from '@cuberoot/shared';
 import { cleanFtoReconAlgForPlayer, getReconScramble } from '@cuberoot/shared/recon-completion';
@@ -25,6 +30,7 @@ import {
   listRecons, deleteAlternative, getSameScramble,
 } from '@/lib/recon-api';
 import { revalidateRecon } from '../revalidate-action';
+import { ReconCommentVotes } from './ReconCommentVotes';
 import {
   formatTime, isBldEvent, hasMethodOnlyReconStats,
   buildExternalLinks, FACE_COLORS, attemptsPerRound, localizeRound,
@@ -64,7 +70,7 @@ import { canonicalSq1Alg, formatScrambleForEvent, compactSq1Solution } from '@cu
 import {
   buildNormalizedSolution, findCrossLineIndex, hasNormalizableCrossMove,
 } from '@/lib/recon-norm-cross-extract';
-import { computeAllStats, buildCaption, buildCaptionHeader } from '@/lib/recon-stats';
+import { computeAllStats, buildCaptionHeader } from '@/lib/recon-stats';
 import {
   DiscussionComposer, DiscussionEditBox, UserHeadline, AuthorName, ItemMenu, UserAvatarFallback,
 } from '@/components/Discussion';
@@ -111,10 +117,23 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
   // still fetched client-side. Falls back to a client fetch if absent.
   const [solve, setSolve] = useState<ReconSolve | null>(initialSolve ?? null);
   const [comments, setComments] = useState<ReconComment[]>([]);
+  const [commentsRevision, setCommentsRevision] = useState(0);
+  const refreshComments = useCallback(() => setCommentsRevision(revision => revision + 1), []);
+  const commentViewer = useAuthUser();
+  useEffect(() => {
+    setComments([]);
+  }, [id, commentViewer?.uid]);
+  useEffect(() => {
+    let active = true;
+    if (id) listComments(Number(id)).then(rows => { if (active) setComments(rows); }).catch(() => {});
+    return () => { active = false; };
+  }, [id, commentViewer?.uid, commentsRevision]);
   const [loading, setLoading] = useState(!initialSolve);
   const [error, setError] = useState<string | null>(null);
   // 全屏(隐藏头部/统计栏,player 铺满整页,与 /sim 的「全屏魔方」同款)。
   const [fullscreen, setFullscreen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const closeShare = useCallback(() => setShareOpen(false), []);
   const fullscreenButton = (
     <button
       type="button"
@@ -158,7 +177,6 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
     try {
       const solveData = await getRecon(Number(id));
       setSolve(solveData);
-      listComments(Number(id)).then(setComments).catch(() => {});
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -167,10 +185,9 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
   }, [id]);
 
   // When the server already handed us the recon, skip the solve refetch and just
-  // load comments. onUpdate (mutations) still calls loadData for a full refresh.
+  // load comments. Comment mutations refresh only the comment list in place.
   useEffect(() => {
     if (initialSolve) {
-      if (id) listComments(Number(id)).then(setComments).catch(() => {});
       return;
     }
     loadData();
@@ -255,6 +272,11 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
               </Fragment>
             ))}
             {' '}
+            {solutionText && <button type="button" className="recon-btn detail-title-edit" aria-haspopup="dialog" onClick={() => setShareOpen(true)}>
+              <Share2 size={15} aria-hidden="true" />
+              {tr({ zh: '分享', en: 'Share' })}
+            </button>}
+            {' '}
             <Link href={`/recon/submit/${solve.id}`} className="recon-btn recon-btn-edit detail-title-edit" title={t('recon.edit')} aria-label={t('recon.edit')}>
               <Pencil size={14} />
             </Link>
@@ -297,15 +319,17 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
         solutionText={solutionText}
         solve={solve}
         comments={comments}
-        onUpdate={loadData}
+        onUpdate={refreshComments}
         initialSameScramble={initialSameScramble}
         fullscreenButton={fullscreenButton}
+        shareOpen={shareOpen}
+        onShareClose={closeShare}
       />
     </div>
   );
 }
 
-function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, initialSameScramble, fullscreenButton }: {
+function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, initialSameScramble, fullscreenButton, shareOpen, onShareClose }: {
   scramble: string;
   solutionText: string;
   solve: ReconSolve;
@@ -313,6 +337,8 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
   onUpdate: () => void;
   initialSameScramble?: ReconSolve[];
   fullscreenButton?: ReactNode;
+  shareOpen: boolean;
+  onShareClose: () => void;
 }) {
   const [sameCompHasRows, setSameCompHasRows] = useState(false);
   const [sameSessionHasRows, setSameSessionHasRows] = useState(false);
@@ -339,10 +365,6 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
     [isSq1, rawDisplayText],
   );
   const crossLineIdx = useMemo(() => findCrossLineIndex(displayText), [displayText]);
-  const caption = useMemo(
-    () => buildCaption(solutionText, (isBldEvent(solve.event) ? solve.execTime : solve.rawTime) ?? 0, solve.event),
-    [solutionText, solve.event, solve.execTime, solve.rawTime],
-  );
   const captionHeader = useMemo(
     () => solutionText ? buildCaptionHeader(solutionText, (isBldEvent(solve.event) ? solve.execTime : solve.rawTime) ?? 0, solve.event) : '',
     [solutionText, solve.event, solve.execTime, solve.rawTime],
@@ -378,9 +400,9 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
       : displayCuberName(solve.reconer, isZh) === displayCuberName(solve.addedBy, isZh));
 
   // 复盘者 / 添加者的 id 是归属键 ownerKey,不一定是 WCA id —— 出链判定收敛在 AuthorName。
-  const renderContributor = (name: string, id?: string) => (
+  const renderContributor = (name: string, id?: string, userId?: number | null) => (
     <span className="detail-meta-value">
-      <AuthorName id={id} name={name} />
+      <AuthorName id={id} name={name} userId={userId} showUserId={false} />
     </span>
   );
 
@@ -402,7 +424,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
       }
       <div className="detail-content-pane">
         {solutionText && (
-          <ExternalLinks event={solve.event} scramble={playerScramble} alg={solutionText} solveId={solve.id} caption={caption} copyText={fullCopyText} />
+          <ExternalLinks event={solve.event} scramble={playerScramble} alg={solutionText} solveId={solve.id} copyText={fullCopyText} shareOpen={shareOpen} onClose={onShareClose} />
         )}
 
         {solve.recordType !== 'timing' && (scramble || solutionText) && (
@@ -432,7 +454,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
           </div>
         )}
 
-        <SameScrambleNav key={solve.id} solve={solve} initial={initialSameScramble} />
+        <SameScrambleNav key={`same-scramble-${solve.id}`} solve={solve} initial={initialSameScramble} />
 
         <StatsGrid solve={solve} />
 
@@ -464,7 +486,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
           {sameContributor ? (
             <div className="detail-meta-item">
               <span className="detail-meta-label detail-meta-label-dual"><PenLine size={16} /><UserPlus size={16} /></span>
-              {renderContributor(solve.reconer!, solve.reconerId || solve.addedById)}
+              {renderContributor(solve.reconer!, solve.reconerId || solve.addedById, solve.addedByUserId)}
             </div>
           ) : solve.reconer && (
             <div className="detail-meta-item">
@@ -481,13 +503,13 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
           {!sameContributor && solve.addedBy && (
             <div className="detail-meta-item">
               <span className="detail-meta-label"><UserPlus size={16} /></span>
-              {renderContributor(solve.addedBy, solve.addedById)}
+              {renderContributor(solve.addedBy, solve.addedById, solve.addedByUserId)}
             </div>
           )}
         </div>
 
         {solve.comp && solve.event && solve.round && !sameCompHasRows && !sameSessionHasRows && (
-          <SameRoundNav solve={solve} />
+          <SameRoundNav key={`same-round-${solve.id}`} solve={solve} />
         )}
 
         {solve.event && solve.personId && (solve.compWcaId || solve.comp) && (
@@ -514,63 +536,93 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
   );
 }
 
-function ExternalLinks({ event, scramble, alg, solveId, caption, copyText }: {
-  event: string; scramble: string; alg: string; solveId: number; caption: string; copyText: string;
+function ExternalLinks({ event, scramble, alg, solveId, copyText, shareOpen, onClose }: {
+  event: string; scramble: string; alg: string; solveId: number; copyText: string;
+  shareOpen: boolean; onClose: () => void;
 }) {
   const { t } = useTranslation();
-  // 外站出链(alg.cubing.net / cubedb.net)只给管理员——普通读者用不上,且
-  // 参数是给上游站排查复盘数据用的。useIsAdmin 是 hydration-safe 版,不能裸读 store。
+  // Preserve the existing admin-only external debugging links.
   const isAdminUser = useIsAdmin();
   const playerAlg = event === 'fto' ? cleanFtoReconAlgForPlayer(alg) : cleanForPlayer(alg);
   const { algUrl, algSiteName, cubedbUrl } = buildExternalLinks(event, scramble, playerAlg);
   const simPuzzle = simPuzzleForReconEvent(event);
   const simHref = simPuzzle ? `/sim?${buildSimQuery(simPuzzle, scramble, alg)}` : null;
-  const shareUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}/recon/${solveId}`
-    : `/recon/${solveId}`;
-  const [copiedFull, setCopiedFull] = useState(false);
+  const [copyResult, setCopyResult] = useState<{ target: 'link' | 'recon'; success: boolean } | null>(null);
+  const copyResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (copyResetRef.current) clearTimeout(copyResetRef.current); }, []);
 
-  const copyTo = (text: string) => (e: React.MouseEvent) => {
-    e.preventDefault();
-    const btn = e.currentTarget as HTMLElement;
-    const orig = btn.textContent;
-    navigator.clipboard.writeText(text).then(() => {
-      btn.textContent = t('recon.copied');
-      setTimeout(() => { btn.textContent = orig; }, 1500);
-    });
+  const copy = async (target: 'link' | 'recon') => {
+    const text = target === 'link' ? `${window.location.origin}/recon/${solveId}` : copyText;
+    const success = await copyPageLink(text);
+    if (copyResetRef.current) clearTimeout(copyResetRef.current);
+    setCopyResult({ target, success });
+    copyResetRef.current = setTimeout(() => setCopyResult(null), 2000);
+  };
+  const copyLabel = (target: 'link' | 'recon') => {
+    if (copyResult?.target === target) {
+      return copyResult.success ? t('recon.copied') : tr({ zh: '复制失败，请重试', en: 'Copy failed, retry' });
+    }
+    return target === 'link'
+      ? tr({ zh: '复制链接', en: 'Copy link' })
+      : tr({ zh: '复制复盘', en: 'Copy reconstruction' });
   };
 
-  const copyFull = () => {
-    if (!copyText) return;
-    navigator.clipboard.writeText(copyText).then(() => {
-      setCopiedFull(true);
-      setTimeout(() => setCopiedFull(false), 1500);
-    });
-  };
+  return shareOpen ? (
+      <ReconShareDialog onClose={onClose}>
+        {(isAdminUser || simHref) && (
+          <div className="recon-navigation-links">
+            {simHref && <Link href={simHref} prefetch={false}>{tr({ zh: '模拟器', en: 'Simulator' })}</Link>}
+            {isAdminUser && (
+              <>
+                <a href={algUrl} target="_blank" rel="noopener noreferrer">{algSiteName}<ExternalLink size={13} aria-hidden="true" /></a>
+                {cubedbUrl && <a href={cubedbUrl} target="_blank" rel="noopener noreferrer">cubedb.net<ExternalLink size={13} aria-hidden="true" /></a>}
+              </>
+            )}
+          </div>
+        )}
+        <div className="recon-copy-actions">
+          <button type="button" className="recon-copy-action" onClick={() => { void copy('link'); }}>
+            {copyResult?.target === 'link' && copyResult.success ? <Check size={15} aria-hidden="true" /> : <Link2 size={15} aria-hidden="true" />}
+            <span aria-live="polite">{copyLabel('link')}</span>
+          </button>
+          {copyText && (
+            <button type="button" className="recon-copy-action" onClick={() => { void copy('recon'); }}>
+              {copyResult?.target === 'recon' && copyResult.success ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
+              <span aria-live="polite">{copyLabel('recon')}</span>
+            </button>
+          )}
+        </div>
+      </ReconShareDialog>
+  ) : null;
+}
 
-  return (
-    <div className="recon-external-links">
-      {isAdminUser && (
-        <>
-          <a href={algUrl} target="_blank" rel="noopener noreferrer">{algSiteName}</a>
-          {cubedbUrl && <a href={cubedbUrl} target="_blank" rel="noopener noreferrer">cubedb.net</a>}
-        </>
-      )}
-      {simHref && <Link href={simHref} prefetch={false}>{tr({ zh: '模拟器', en: 'simulator' })}</Link>}
-      <a href="#" onClick={copyTo(shareUrl)}>{t('recon.link')}</a>
-      {caption && <a href="#" onClick={copyTo(caption)}>{t('recon.caption')}</a>}
-      {copyText && (
-        <button
-          type="button"
-          className="recon-copy-full"
-          onClick={copyFull}
-          title={t('recon.copy')}
-          aria-label={t('recon.copy')}
-        >
-          {copiedFull ? <Check size={15} /> : <Copy size={15} />}
-        </button>
-      )}
-    </div>
+function ReconShareDialog({ onClose, children }: { onClose: () => void; children: ReactNode }) {
+  const backdropProps = useModalDismiss(onClose);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const previous = document.activeElement;
+    dialogRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
+    return () => { if (previous instanceof HTMLElement && previous.isConnected) previous.focus(); };
+  }, []);
+  return createPortal(
+    <div className="wechat-pc-share-backdrop" {...backdropProps}>
+      <div className="wechat-pc-share-modal" data-site-surface="panel" role="dialog" aria-modal="true"
+        aria-label={tr({ zh: '分享', en: 'Share' })} ref={dialogRef}
+        onKeyDown={event => {
+          if (event.key !== 'Tab') return;
+          const items = dialogRef.current?.querySelectorAll<HTMLElement>('a[href], button:not([disabled])');
+          if (!items?.length) return;
+          const first = items[0];
+          const last = items[items.length - 1];
+          if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+          else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+        }}>
+        <ClearButton variant="standalone" className="wechat-pc-share-close" onClick={onClose}
+          ariaLabel={tr({ zh: '关闭', en: 'Close' })} />
+        <h2>{tr({ zh: '分享', en: 'Share' })}</h2>
+        <div style={{ display: 'grid', gap: 16, marginTop: 20 }}>{children}</div>
+      </div>
+    </div>, document.body,
   );
 }
 
@@ -774,6 +826,8 @@ function SameRoundNav({ solve }: { solve: ReconSolve }) {
   const [pastedAttempts, setPastedAttempts] = useState<(number | null)[] | null>(null);
   const [showPaste, setShowPaste] = useState(false);
   const [pasteRaw, setPasteRaw] = useState('');
+  const [attemptsLoading, setAttemptsLoading] = useState(true);
+  const [attemptsRequest, setAttemptsRequest] = useState(0);
 
   useEffect(() => {
     if (loaded) return;
@@ -787,12 +841,16 @@ function SameRoundNav({ solve }: { solve: ReconSolve }) {
   }, [solve, loaded]);
 
   useEffect(() => {
-    if (!solve.compWcaId || !solve.personId || !solve.event || !solve.round) return;
+    if (!solve.compWcaId || !solve.personId || !solve.event || !solve.round) {
+      setAttemptsLoading(false);
+      return;
+    }
     let cancelled = false;
+    setAttemptsLoading(true);
     (async () => {
       const wca = await fetchAttempts(solve.compWcaId!, solve.event!, solve.round!, solve.personId!);
       if (cancelled) return;
-      if (wca) {
+      if (wca?.some(value => value != null)) {
         setWcaAttempts(wca);
       } else {
         const cubing = await fetchCubingAttempts(solve.compWcaId!, solve.event!, solve.round!, solve.personId!);
@@ -801,12 +859,14 @@ function SameRoundNav({ solve }: { solve: ReconSolve }) {
           setWcaAttempts(cubing);
         }
       }
-      const sc = await fetchScrambles(solve.compWcaId!, solve.event!, solve.round!, solve.groupId);
-      if (cancelled) return;
-      if (sc) setScrambles(sc);
-    })().catch(() => { /* ignore */ });
+    })().catch(() => { /* Keep previously loaded values; expose retry below. */ }).finally(() => {
+      if (!cancelled) setAttemptsLoading(false);
+    });
+    fetchScrambles(solve.compWcaId, solve.event, solve.round, solve.groupId).then(sc => {
+      if (!cancelled && sc) setScrambles(sc);
+    }).catch(() => { /* Scrambles are optional for the add-attempt link. */ });
     return () => { cancelled = true; };
-  }, [solve.compWcaId, solve.personId, solve.event, solve.round, solve.groupId]);
+  }, [solve.compWcaId, solve.personId, solve.event, solve.round, solve.groupId, attemptsRequest]);
 
   const bySolveNum = new Map<number, ReconSolve>();
   for (const s of [...siblings, solve]) {
@@ -856,8 +916,7 @@ function SameRoundNav({ solve }: { solve: ReconSolve }) {
     return `/recon/submit?${params.toString()}`;
   };
 
-  const hasAnyAttempt = wcaAttempts != null || pastedAttempts != null;
-  const hasMissingSlot = slots.some(n => !bySolveNum.get(n));
+  const hasMissingAttempt = slots.some(n => !bySolveNum.has(n) && attemptFor(n) == null);
 
   return (
     <div className="detail-section">
@@ -889,12 +948,17 @@ function SameRoundNav({ solve }: { solve: ReconSolve }) {
               className="same-round-item same-round-missing"
               title={t('recon.addAttempt', { n })}
             >
-              {att != null ? renderAttempt(att) : ' '}
+              {att != null ? renderAttempt(att) : t(attemptsLoading ? 'common.loading' : 'recon.attemptUnavailable')}
             </Link>
           );
         })}
       </div>
-      {hasMissingSlot && !hasAnyAttempt && (
+      {hasMissingAttempt && !attemptsLoading && (
+        <button type="button" className="same-round-paste-btn" onClick={() => setAttemptsRequest(v => v + 1)}>
+          {t('recon.retryAttempts')}
+        </button>
+      )}
+      {hasMissingAttempt && !attemptsLoading && (
         <button
           type="button"
           className="same-round-paste-btn"
@@ -1709,7 +1773,7 @@ function AlternativesSection({ reconId, alts, setAlts, solveTime, event }: {
             const stats = computeAllStats(alt.solution, solveTime ?? 0, event);
             return (
               <div key={`${alt.addedById}-${alt.createdAt}-${idx}`} className="yt-comment">
-                <UserAvatarFallback name={alt.addedBy} avatar={isOwn ? user?.avatar : null} />
+                <UserAvatarFallback name={alt.addedBy} avatar={isOwn ? user?.avatar : null} userId={alt.addedByUserId} />
                 <div className="yt-comment-content">
                   <UserHeadline authorId={alt.addedById} authorName={alt.addedBy} authorUserId={alt.addedByUserId} createdAt={alt.createdAt} />
                   {stats.stm > 0 && (
@@ -1881,7 +1945,7 @@ function CommentsView({
     const ownAvatar = isOwn && user?.avatar ? user.avatar : null;
     return (
       <div className="yt-comment">
-        <UserAvatarFallback name={comment.authorName} avatar={ownAvatar} />
+        <UserAvatarFallback name={comment.authorName} avatar={ownAvatar} userId={comment.authorUserId} />
         <div className="yt-comment-content">
           {comment.pinned && (
             <div className="yt-comment-pinned-badge">
@@ -1906,13 +1970,14 @@ function CommentsView({
           ) : (
             <>
               <div className="yt-comment-body">{comment.content}</div>
-              {canReply && (
-                <div className="yt-comment-actions">
+              <div className="yt-comment-actions">
+                <ReconCommentVotes key={`${comment.id}:${user?.uid ?? 'guest'}`} comment={comment} />
+                {canReply && (
                   <button type="button" className="yt-reply-btn" onClick={() => startReply(comment)}>
                     {t('recon.reply')}
                   </button>
-                </div>
-              )}
+                )}
+              </div>
             </>
           )}
         </div>
@@ -1958,7 +2023,7 @@ function CommentsView({
           const replies = repliesByParent.get(comment.id) ?? [];
           const expanded = expandedReplies.has(comment.id);
           return (
-            <div key={comment.id} className="yt-comment-thread">
+            <div key={comment.id} className={`yt-comment-thread${expanded || replyingToId === comment.id ? ' is-expanded' : ''}`}>
               {renderCommentItem(comment, false)}
               {(replies.length > 0 || replyingToId === comment.id) && (
                 <div className="yt-replies">

@@ -34,6 +34,28 @@ describe('shared timer complete-readout fitting', () => {
   const fit = () => Number(host.querySelector<HTMLElement>('.timer-display-value')!.style.getPropertyValue('--timer-readout-fit')) || 1;
   const resize = async () => act(async () => { notify([], {} as ResizeObserver); const pending = frames.splice(0); pending.forEach((callback) => callback(0)); });
 
+  it.each(['solo', 'net', 'local'] as const)('owns %s scramble order, shared font scale and an input-safe stable preview frame', async (layout) => {
+    const surfaceRef = createRef<HTMLDivElement>();
+    const draw = (live: boolean) => act(async () => root.render(createElement(TimingSurface, {
+      layout, phase: 'idle', colorClass: '', surfaceRef, fontScale: 1.2,
+      digits: '0.00', scrambleSlot: createElement('span', null, 'R U'),
+      cornerSlot: createElement('div', null, live ? 'live cube' : 'scramble preview'),
+    })));
+    await draw(false);
+    const surface = surfaceRef.current!;
+    const core = host.querySelector('.timing-surface-core');
+    const frame = host.querySelector('.timing-surface-cube-frame');
+    expect(surface.classList.contains(`timing-surface--${layout}`)).toBe(true);
+    expect(surface.firstElementChild?.classList.contains('timing-surface-scramble-top')).toBe(true);
+    expect(host.querySelector<HTMLElement>('.timer-display')!.style.fontSize)
+      .toContain(layout === 'local' ? 'clamp(40px, 8vw, 80px)' : 'clamp(48px, 10vw, 132px)');
+    expect(frame?.hasAttribute('data-no-timer')).toBe(true);
+    await draw(true);
+    expect(host.querySelector('.timing-surface-core')).toBe(core);
+    expect(host.querySelector('.timing-surface-cube-frame')).toBe(frame);
+    expect(frame?.textContent).toBe('live cube');
+  });
+
   it.each(['48:13.98', '1:48:13.982', '1:48:13.982+'])('shrinks the complete %s while retaining every digit and punctuation node', async (text) => {
     await render(text);
     expect(fit()).toBe(0.53);
@@ -89,7 +111,7 @@ describe('shared timer complete-readout fitting', () => {
     expect(fit()).toBe(initial);
   });
 
-  it('blocks native readout and scramble menus while preserving pointer input and text fields', async () => {
+  it('blocks native readout menus while preserving scramble scrolling, pointer input and text fields', async () => {
     const down = vi.fn();
     const up = vi.fn();
     await act(async () => root.render(createElement(TimingSurface, {
@@ -103,9 +125,8 @@ describe('shared timer complete-readout fitting', () => {
     const moves = host.querySelector('.scramble-moves')!;
     const input = host.querySelector('textarea')!;
     for (const type of ['touchstart', 'selectstart', 'contextmenu']) {
-      for (const target of [colon, moves]) {
-        expect(target.dispatchEvent(new Event(type, { bubbles: true, cancelable: true }))).toBe(false);
-      }
+      expect(colon.dispatchEvent(new Event(type, { bubbles: true, cancelable: true }))).toBe(false);
+      expect(moves.dispatchEvent(new Event(type, { bubbles: true, cancelable: true }))).toBe(true);
       expect(input.dispatchEvent(new Event(type, { bubbles: true, cancelable: true }))).toBe(true);
     }
     colon.dispatchEvent(new Event('pointerdown', { bubbles: true, cancelable: true }));
@@ -119,7 +140,7 @@ describe('shared timer complete-readout fitting', () => {
     expect(moves.dispatchEvent(new Event('touchstart', { bubbles: true, cancelable: true }))).toBe(true);
     moves.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(stripAction).toHaveBeenCalledTimes(1);
-    expect(moves.dispatchEvent(new Event('contextmenu', { bubbles: true, cancelable: true }))).toBe(false);
+    expect(moves.dispatchEvent(new Event('contextmenu', { bubbles: true, cancelable: true }))).toBe(true);
     await act(async () => root.render(null));
     expect(colon.dispatchEvent(new Event('contextmenu', { bubbles: true, cancelable: true }))).toBe(true);
   });

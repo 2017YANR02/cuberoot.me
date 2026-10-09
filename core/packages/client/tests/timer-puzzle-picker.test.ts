@@ -130,7 +130,7 @@ describe('shared timer puzzle picker', () => {
     expect(host.querySelector('.pp')?.classList.contains('pp--compact')).toBe(false);
   });
 
-  it('renders all 43 canonical events with a real SVG or an explicit text badge', () => {
+  it('renders all 52 canonical events with a real SVG or an explicit text badge', () => {
     const groups = TIMER_EVENT_PICKER_GROUPS.map((group) => ({
       id: group.id,
       label: group.nameEn,
@@ -152,9 +152,9 @@ describe('shared timer puzzle picker', () => {
 
     act(() => host.querySelector<HTMLButtonElement>('.pp-trigger')?.click());
     const items = [...host.querySelectorAll<HTMLElement>('.pp-item')];
-    expect(items).toHaveLength(43);
-    expect(items.filter((item) => item.querySelector('.cubing-icon'))).toHaveLength(26);
-    expect(items.filter((item) => item.querySelector('.pp-item-tag'))).toHaveLength(17);
+    expect(items).toHaveLength(52);
+    expect(items.filter((item) => item.querySelector('.cubing-icon'))).toHaveLength(27);
+    expect(items.filter((item) => item.querySelector('.pp-item-tag'))).toHaveLength(25);
     for (const item of items) {
       const icon = item.querySelector<HTMLElement>('.cubing-icon');
       const tag = item.querySelector<HTMLElement>('.pp-item-tag');
@@ -163,4 +163,85 @@ describe('shared timer puzzle picker', () => {
       if (tag) expect(tag.textContent?.trim().length, item.textContent ?? '').toBeGreaterThan(0);
     }
   });
+
+  it('moves every 3x3 training mode into types while preserving its stored identity', () => {
+    const groups = TIMER_EVENT_PICKER_GROUPS.map((group) => ({
+      id: group.id, label: group.nameEn,
+      items: group.items.map((item) => ({ id: item.id, label: item.nameEn })),
+    }));
+    const onSelect = vi.fn();
+    const render = (selectedEvent: string, disabled = false) => act(() => root.render(createElement(TimerPuzzlePicker, {
+      groups, selectedEvent, onSelect, disabled, dataNoTimer: true,
+      puzzleLabel: 'Puzzle', scrambleTypeLabel: 'Scramble type',
+    })));
+    const typeIds = ['333', 'cross', 'f2l', 'll', 'oll', 'pll', 'coll', 'cmll', 'zbll', 'cll', 'ell', 'eocp', '2gll', 'ollcp', 'zzll', 'zbls', 'lse', 'l10p'];
+    for (const selectedEvent of typeIds) {
+      render(selectedEvent);
+      expect(host.querySelector('.pp-trigger')?.getAttribute('aria-label')).toBe('3×3');
+      act(() => host.querySelector<HTMLButtonElement>('[aria-label="Scramble type"]')!.click());
+      const options = [...document.body.querySelectorAll<HTMLButtonElement>('[role="option"]')];
+      expect(options).toHaveLength(typeIds.length);
+      expect(options[typeIds.indexOf(selectedEvent)].getAttribute('aria-selected')).toBe('true');
+      for (const [index, option] of options.entries()) {
+        if (index !== typeIds.indexOf(selectedEvent)) expect(option.getAttribute('aria-selected')).toBe('false');
+      }
+      act(() => options[typeIds.indexOf(selectedEvent)].click());
+      expect(onSelect).toHaveBeenLastCalledWith(selectedEvent);
+    }
+    act(() => host.querySelector<HTMLButtonElement>('.pp-trigger')!.click());
+    expect(host.querySelectorAll('.pp-item')).toHaveLength(35);
+    expect([...host.querySelectorAll('.pp-item')].some(item => item.textContent === 'ZBLL')).toBe(false);
+    act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+    render('222');
+    expect(host.querySelector('[aria-label="Scramble type"]')).toBeNull();
+    render('333');
+    expect(host.querySelector('[aria-label="Scramble type"]')?.textContent).toBe('WCA');
+    render('zbll', true);
+    expect(host.querySelector<HTMLButtonElement>('[aria-label="Scramble type"]')!.disabled).toBe(true);
+  });
+
+  it('coordinates the type menu with host Back and restores its trigger focus', () => {
+    const onOpenChange = vi.fn();
+    const groups = [{ ...GROUPS[0], items: [...GROUPS[0].items, { id: 'zbll', label: 'ZBLL', iconClass: '' }] }];
+    const render = (open: boolean) => act(() => root.render(createElement(TimerPuzzlePicker, {
+      groups, selectedEvent: 'zbll', onSelect: vi.fn(), open, onOpenChange,
+      puzzleLabel: 'Puzzle', scrambleTypeLabel: 'Scramble type',
+    })));
+    render(false);
+    act(() => host.querySelector<HTMLButtonElement>('[aria-label="Scramble type"]')!.click());
+    expect(onOpenChange).toHaveBeenLastCalledWith(true, { id: TIMER_OVERLAY_IDS.puzzlePicker, reason: 'trigger' });
+    render(true);
+    expect(document.body.querySelector('[role="listbox"][aria-label="Scramble type"]')).not.toBeNull();
+    expect(host.querySelector('.pp-popup')).toBeNull();
+    render(false);
+    expect(document.body.querySelector('[role="listbox"][aria-label="Scramble type"]')).toBeNull();
+    expect(document.activeElement).toBe(host.querySelector('[aria-label="Scramble type"]'));
+  });
+
+  it('preserves WCA selector spellings in filtered multiplayer catalogs', () => {
+    act(() => root.render(createElement(TimerPuzzlePicker, {
+      groups: [{ ...GROUPS[0], items: [...GROUPS[0].items, { id: '333bf', label: '3BLD', iconClass: 'event-333bf' }] }],
+      selectedEvent: '333bf', onSelect: vi.fn(), puzzleLabel: 'Puzzle', scrambleTypeLabel: 'Scramble type',
+    })));
+    expect(host.querySelector('.pp-trigger')?.getAttribute('aria-label')).toBe('3BLD');
+    expect(host.querySelector('[aria-label="Scramble type"]')).toBeNull();
+  });
+  it('keeps EG and 3x3 training identities under their puzzles in the combined source menu', () => {
+    const groups = TIMER_EVENT_PICKER_GROUPS.map((group) => ({
+      id: group.id, label: group.nameEn,
+      items: group.items.map((item) => ({ id: item.id, label: item.nameEn })),
+    }));
+    for (const [selectedEvent, puzzle] of [['eg1', '2×2'], ['eg2', '2×2'], ['cross', '3×3'], ['ll', '3×3']]) {
+      act(() => root.render(createElement(TimerPuzzlePicker, {
+        groups, selectedEvent, onSelect: vi.fn(), puzzleLabel: 'Puzzle',
+        scrambleTypeLabel: 'Scramble type', combineScrambleTypes: true,
+      })));
+      expect(host.querySelector('.pp-trigger')?.getAttribute('aria-label')).toBe(puzzle);
+      expect(host.querySelector('[aria-label="Scramble type"]')).toBeNull();
+      act(() => host.querySelector<HTMLButtonElement>('.pp-trigger')!.click());
+      expect(host.querySelectorAll('.pp-item')).toHaveLength(33);
+      act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+    }
+  });
+
 });

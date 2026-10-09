@@ -1,6 +1,6 @@
 'use client';
 
-import { useId } from 'react';
+import { memo, useId } from 'react';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { RecordBadge } from '@/components/RecordBadge';
 import { EXPLORER_ACHIEVEMENTS, type ExplorerAchievement } from '@/lib/person-achievements';
@@ -85,7 +85,7 @@ const ART = {
   gold: { light: '#ffe6a6', dark: '#9a4727', rim: '#fff1b5', shape: 'M100 5 119 22 147 13 155 42 182 51 174 79 195 100 175 121 183 149 155 158 147 187 120 178 100 195 80 178 52 187 44 158 17 149 25 120 5 100 25 80 17 51 45 42 53 13 80 22Z' },
 };
 
-export function AchievementMedal({ kind, event, recordCount, achievement, female = false, record: recordOverride }: { kind: AchievementKind; event?: string; recordCount?: number; achievement?: ExplorerAchievement; female?: boolean; record?: string }) {
+export const AchievementMedal = memo(function AchievementMedal({ kind, event, recordCount, achievement, female = false, record: recordOverride }: { kind: AchievementKind; event?: string; recordCount?: number; achievement?: ExplorerAchievement; female?: boolean; record?: string }) {
   const id = useId();
   const paint = (name: string) => `url(#${id}-${name})`;
   const art = ART[kind];
@@ -524,4 +524,4 @@ export function AchievementMedal({ kind, event, recordCount, achievement, female
       {achievement && <span className="wp-achievement-count">{achievement.kind === 'worldPodium' ? ['','1','2','3'][achievement.place ?? 1] : achievement.kind === 'monument' ? `${achievement.count}d` : `×${achievement.count}`}</span>}
     </span>
   );
-}
+});

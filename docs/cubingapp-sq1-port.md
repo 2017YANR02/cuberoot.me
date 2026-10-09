@@ -9,10 +9,11 @@
 
 The checked-in SQL is generated from that source snapshot:
 
-```powershell
-Set-Location core
-pnpm --filter @cuberoot/alg-build exec tsx gen_cubingapp_sq1_sql.mts D:/cube/cubingapp
-pnpm --filter @cuberoot/alg-build exec tsx gen_cubingapp_sq1_stages_sql.mts D:/cube/cubingapp
+From `core/`, point both commands at a checkout of the recorded upstream commit:
+
+```sh
+pnpm --filter @cuberoot/alg-build exec tsx gen_cubingapp_sq1_sql.mts /path/to/cubingapp
+pnpm --filter @cuberoot/alg-build exec tsx gen_cubingapp_sq1_stages_sql.mts /path/to/cubingapp
 ```
 
 ## Coverage

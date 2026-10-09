@@ -3,7 +3,7 @@
 Sources: SOM and Permasteelisa; see ../references/jin-mao.md. Heights and
 floor sequence have documentary evidence; facade dimensions are photo estimates.
 This edits only Jin Mao, archives its imported meshes and keeps runtime IDs.
-Run through Blender --background shanghai.blend --threads 14 --python this.py.
+Run through Blender --background shanghai.blend --python this.py.
 """
 import argparse
 import json

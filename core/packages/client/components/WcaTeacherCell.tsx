@@ -1,7 +1,9 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { Pencil } from 'lucide-react';
 import { useModalBackdrop } from '@/hooks/useModalDismiss';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
 import { loadPersonsIndex } from '@cuberoot/shared/persons-index';
@@ -12,7 +14,6 @@ import PersonLink from '@/components/PersonLink';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { WcaPersonPicker } from '@/components/WcaPersonPicker';
 import { CountryInput } from '@/components/CountryInput/CountryInput';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { useAuthUser } from '@/lib/auth-store';
 import { getMyMembership } from '@/lib/membership-api';
 import {
@@ -268,17 +269,6 @@ export function WcaTeacherColumnHeader({ className }: { className?: string } = {
     })}>
       {tr({ zh: '老师', en: 'Teacher' })}
     </th>
-  );
-}
-
-export function WcaTeacherNote() {
-  return (
-    <p className="wca-teacher-note">
-      {tr({
-        zh: '老师或自学按项目分别登记。有效会员老师可登记自己，有效会员学生可填写本人学习方式；管理员可代填。',
-        en: 'Teachers or self-taught status are registered per event. Active member teachers can add themselves, active member students can set their learning source, and admins can edit on their behalf.',
-      })}
-    </p>
   );
 }
 
@@ -828,7 +818,7 @@ export function WcaStudentAdder({
             )}
             {(selectedStudent || namedStudentName.trim()) && !loadingEvents && (
               <>
-                <WcaEventSelector
+                <WcaEventSelector presentation="inline"
                   availableEvents={visibleEventSet}
                   selectedEvents={selectedEventIds}
                   onToggle={toggleEvent}
@@ -988,7 +978,7 @@ export function WcaStudentAdder({
             <p className="wca-teacher-dialog-field-label">
               {tr({ zh: '默认项目（必选）', en: 'Default events (required)' })}
             </p>
-            <WcaEventSelector
+            <WcaEventSelector presentation="inline"
               availableEvents={new Set(ALL_EVENT_IDS)}
               selectedEvents={batchEventIds}
               onToggle={toggleBatchEvent}
@@ -1250,7 +1240,7 @@ export function WcaNamedStudentCell({ student, teacherWcaId, directory, isZh, on
                   {tr({ zh: '已参加比赛', en: 'Competed events' })}
                 </p>
                 {competedEventIds.size > 0 ? (
-                  <WcaEventSelector
+                  <WcaEventSelector presentation="inline"
                     availableEvents={competedEventIds}
                     selectedEvents={selectedEventIds}
                     onToggle={toggleEvent}
@@ -1265,7 +1255,7 @@ export function WcaNamedStudentCell({ student, teacherWcaId, directory, isZh, on
                 <p className="wca-teacher-dialog-field-label">
                   {tr({ zh: '未参加比赛', en: 'Not-competed events' })}
                 </p>
-                <WcaEventSelector
+                <WcaEventSelector presentation="inline"
                   availableEvents={notCompetedEventIds}
                   selectedEvents={selectedEventIds}
                   onToggle={toggleEvent}
@@ -1274,7 +1264,7 @@ export function WcaNamedStudentCell({ student, teacherWcaId, directory, isZh, on
                 />
               </>
             ) : (
-              <WcaEventSelector
+              <WcaEventSelector presentation="inline"
                 availableEvents={new Set(ALL_EVENT_IDS)}
                 selectedEvents={selectedEventIds}
                 onToggle={toggleEvent}
@@ -1506,6 +1496,10 @@ export function WcaTeacherCell({ studentWcaId, eventIds, editableEventIds = even
       return next;
     });
   };
+  const editLabel = tr({ zh: '编辑', en: 'Edit' });
+  const manageLabel = tr({ zh: '管理', en: 'Manage' });
+  const relationActionLabel = relations.length > 0 ? editLabel : tr({ zh: '填写', en: 'Add' });
+  const studentActionLabel = isMultiEditor ? manageLabel : relationActionLabel;
 
   return (
     <div className="wca-teacher-cell">
@@ -1534,24 +1528,20 @@ export function WcaTeacherCell({ studentWcaId, eventIds, editableEventIds = even
         </span>
       )}
       {editorOnly && canOpenEditor ? (
-        <button type="button" className="wca-teacher-action" onClick={() => openEditor()}>
-          {tr({ zh: '编辑', en: 'Edit' })}
+        <button type="button" className="wca-teacher-action wca-teacher-edit-action" title={editLabel} aria-label={editLabel} onClick={() => openEditor()}>
+          <Pencil size={14} aria-hidden="true" />
         </button>
       ) : !editorOnly && directory.isAdmin && teacherDataReady ? (
-        <button type="button" className="wca-teacher-action" onClick={() => openEditor()}>
-          {relations.length > 0 ? tr({ zh: '编辑', en: 'Edit' }) : tr({ zh: '填写', en: 'Add' })}
+        <button type="button" className="wca-teacher-action wca-teacher-edit-action" title={relationActionLabel} aria-label={relationActionLabel} onClick={() => openEditor()}>
+          <Pencil size={14} aria-hidden="true" />
         </button>
       ) : !editorOnly && canStudentManageOwnTeachers && teacherDataReady ? (
-        <button type="button" className="wca-teacher-action" onClick={() => openEditor()}>
-          {isMultiEditor
-            ? tr({ zh: '管理', en: 'Manage' })
-            : relations.length > 0
-              ? tr({ zh: '编辑', en: 'Edit' })
-              : tr({ zh: '填写', en: 'Add' })}
+        <button type="button" className="wca-teacher-action wca-teacher-edit-action" title={studentActionLabel} aria-label={studentActionLabel} onClick={() => openEditor()}>
+          <Pencil size={14} aria-hidden="true" />
         </button>
       ) : !editorOnly && isMultiEditor && canOpenEditor ? (
-        <button type="button" className="wca-teacher-action" onClick={() => openEditor()}>
-          {tr({ zh: '管理', en: 'Manage' })}
+        <button type="button" className="wca-teacher-action wca-teacher-edit-action" title={manageLabel} aria-label={manageLabel} onClick={() => openEditor()}>
+          <Pencil size={14} aria-hidden="true" />
         </button>
       ) : !editorOnly && teacherDataReady && !singleSelectedTeacher && directory.canSelfAssign ? (
         <button type="button" className="wca-teacher-action" disabled={saving} onClick={selfAssign}>
@@ -1581,13 +1571,15 @@ export function WcaTeacherCell({ studentWcaId, eventIds, editableEventIds = even
                     : tr({ zh: '填写老师', en: 'Set teacher' })}
               </h2>
               {canChooseLearningSource && (
-                <PillToggle
-                  value={!isSelfTaught}
-                  onChange={(hasTeacher) => setIsSelfTaught(!hasTeacher)}
-                  onLabel={tr({ zh: '有老师', en: 'Teacher' })}
-                  offLabel={tr({ zh: '自学', en: 'Self-taught' })}
-                  ariaLabel={tr({ zh: '选择学习方式', en: 'Select learning source' })}
-                />
+                <select
+                  value={String(!isSelfTaught)}
+                  onChange={event => { const hasTeacher = event.currentTarget.value === 'true'; setIsSelfTaught(!hasTeacher); }}
+                  aria-label={tr({ zh: '选择学习方式', en: 'Select learning source' })}
+                  className="native-select"
+                >
+                  <option value="true">{tr({ zh: '有老师', en: 'Teacher' })}</option>
+                  <option value="false">{tr({ zh: '自学', en: 'Self-taught' })}</option>
+                </select>
               )}
             </div>
             {canChooseLearningSource && !isSelfTaught && (
@@ -1596,12 +1588,13 @@ export function WcaTeacherCell({ studentWcaId, eventIds, editableEventIds = even
                   value={selected}
                   onChange={changeSelectedTeacher}
                   isZh={isZh}
+                  autoOpen
                   placeholder={tr({ zh: '老师姓名或 WCA ID', en: 'Teacher name or WCA ID' })}
                 />
               </div>
             )}
             {isMultiEditor && (
-              <WcaEventSelector
+              <WcaEventSelector presentation="inline"
                 availableEvents={availableEventSet}
                 selectedEvents={selectedEventIds}
                 onToggle={toggleEvent}

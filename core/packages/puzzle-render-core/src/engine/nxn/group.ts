@@ -473,7 +473,16 @@ export class GroupTable {
           return result;
       }
     } else {
-      const list = sign.match(/([0123456789]*)(-?)([0123456789]*)([lrudfb])/i);
+      const pattern = /(\d+)(?:-(\d*))?([lrudfb])|-(\d*)([lrudfb])|([lrudfb])|\d+/gi;
+      let list: string[] | null = null;
+      let match: RegExpExecArray | null;
+      while ((match = pattern.exec(sign))) {
+        const face = match[3] ?? match[5] ?? match[6];
+        if (face === undefined) continue;
+        const dashed = match[2] !== undefined || match[4] !== undefined;
+        list = [match[0], match[1] ?? '', dashed ? '-' : '', match[2] ?? match[4] ?? '', face];
+        break;
+      }
       if (list == null) {
         return result;
       }

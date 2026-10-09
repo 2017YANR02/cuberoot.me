@@ -85,9 +85,13 @@ export interface CstimerEvent {
   solvable?: boolean;
 }
 
+/** Canonical csTimer MoYu identity shared by the generator and timer adapters. */
+export const CSTIMER_REDI_KEY = 'redim';
+
 export const CSTIMER_EVENTS: ReadonlyArray<CstimerEvent> = [
-  // Random-state (length ignored by solver)
-  { id: 'gear',    key: 'gearso',  zh: '齿轮魔方',         en: 'Gear Cube',         textLabel: 'Gear',   family: 'twist',  solvable: true
+  // Random-state (length ignored by solver), plus csTimer's MoYu Redi mode.
+  { id: 'redi_cube', key: CSTIMER_REDI_KEY, length: 8, zh: '热帝魔方', en: 'Redi Cube', iconClass: 'unofficial-redi', family: 'twist', solvable: true },
+  { id: 'gear',    key: 'gearso',  zh: '齿轮魔方',         en: 'Gear Cube',         iconClass: 'unofficial-gear', family: 'twist',  solvable: true
 },
   { id: 'ivy',     key: 'ivyso',   zh: '枫叶魔方',         en: 'Ivy Cube',          textLabel: 'Ivy',    family: 'twist',  solvable: true
 },

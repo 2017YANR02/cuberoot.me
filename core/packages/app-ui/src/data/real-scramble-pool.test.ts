@@ -605,7 +605,7 @@ describe('real scramble pool', () => {
 
     await expect(fetchRealScrambles({
       event: '222', scramble222Mode: 'wca', scramble222Type: 'full',
-    }, fetcher)).rejects.toThrow('no valid 222 rows');
+    }, fetcher)).rejects.toMatchObject({ kind: 'transient-error' });
   });
 
   it('samples real 2x2 rows until the selected state family matches', async () => {
@@ -693,7 +693,7 @@ describe('real scramble pool', () => {
     const liveFetcher = vi.fn(async () => new Response('unavailable', {
       status: 503,
     })) as unknown as typeof fetch;
-    const random = vi.spyOn(Math, 'random').mockReturnValue(0.999999);
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0.5);
 
     try {
       const rows = await fetchRealScrambles({
@@ -768,17 +768,13 @@ describe('real scramble pool', () => {
 
   it('propagates cold network and response-shape failures without generating a substitute', async () => {
     const unavailable = vi.fn(async () => new Response('unavailable', { status: 503 })) as unknown as typeof fetch;
-    await expect(fetchRealScrambles('222', unavailable)).rejects.toThrow(
-      'real scramble request failed (503)',
-    );
+    await expect(fetchRealScrambles('222', unavailable)).rejects.toMatchObject({ kind: 'transient-error' });
     expect(unavailable).toHaveBeenCalledOnce();
 
     const malformed = vi.fn(async () => new Response(JSON.stringify({ scrambles: 'not-an-array' }), {
       status: 200,
     })) as unknown as typeof fetch;
-    await expect(fetchRealScrambles('222', malformed)).rejects.toThrow(
-      'real scramble response is invalid',
-    );
+    await expect(fetchRealScrambles('222', malformed)).rejects.toMatchObject({ kind: 'transient-error' });
     expect(malformed).toHaveBeenCalledOnce();
   });
 

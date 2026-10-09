@@ -183,13 +183,25 @@ export function useRecentRecords(isZh: boolean) {
   return { records, filled };
 }
 
+/** Competition reports already have canonical text and their own round link. */
+type RecordListEntry = RecentRecord | {
+  id: string;
+  eventId: string;
+  competitionId: string;
+  formattedCn: string;
+  formattedEn: string;
+  href: string;
+};
+
 // Headless list — rendered inside the OngoingComps shared scroll panel (no own
 // header / max-height; the panel owns the title tab and the scrollbar).
-export function RecentRecordsList({ filled, isZh }: { filled: RecentRecord[]; isZh: boolean }) {
+export function RecentRecordsList({ filled, isZh, showCopy = true }: {
+  filled: RecordListEntry[]; isZh: boolean; showCopy?: boolean;
+}) {
   const recordCopy = useCopy();
 
-  function handleCopy(r: RecentRecord) {
-    const text = (isZh ? r.formattedCn : r.formattedEn) || fallbackText(r, isZh);
+  function handleCopy(r: RecordListEntry) {
+    const text = (isZh ? r.formattedCn : r.formattedEn) || ('href' in r ? '' : fallbackText(r, isZh));
     if (!text) return;
     recordCopy.copy(text, r.id);
   }
@@ -201,7 +213,7 @@ export function RecentRecordsList({ filled, isZh }: { filled: RecentRecord[]; is
         const copied = recordCopy.copiedKey === r.id;
         return (
           <li key={r.id} className="recent-records-row">
-            <button
+            {showCopy && <button
               type="button"
               className="recent-records-copy"
               onClick={() => handleCopy(r)}
@@ -210,12 +222,12 @@ export function RecentRecordsList({ filled, isZh }: { filled: RecentRecord[]; is
             })}
             >
               {copied ? <Check size={13} strokeWidth={1.75} /> : <Copy size={13} strokeWidth={1.75} />}
-            </button>
-            <Link {...compLinkProps(r.competitionId)} href={compRecordHref({ ...r, eventId: toWcaEventId(r.eventId) })} className="recent-records-body">
+            </button>}
+            <Link {...compLinkProps(r.competitionId)} href={'href' in r ? r.href : compRecordHref({ ...r, eventId: toWcaEventId(r.eventId) })} className="recent-records-body">
               <EventIcon event={r.eventId} />{' '}
               {text
                 ? renderFormatted(shortenEvent(stripRecordNewsPrefix(text), r.eventId, isZh))
-                : renderFallback(r, isZh)}
+                : 'href' in r ? null : renderFallback(r, isZh)}
             </Link>
           </li>
         );

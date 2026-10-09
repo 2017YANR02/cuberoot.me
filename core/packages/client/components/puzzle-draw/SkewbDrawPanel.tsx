@@ -3,10 +3,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 
 import { useT } from '@/hooks/useT';
+import BoolToggle from '@/components/BoolToggle';
 
 import { DrawCanvas } from './DrawCanvas';
 import { SKEWB_STICKER_PALETTE } from './palettes';
-import { SKEWB_3D_SHAPES, SKEWB_NET_SHAPES, SKEWB_SIDE_LINES } from './skewb-data';
+import { SKEWB_3D_SHAPES, SKEWB_BOTTOM_SHAPES, SKEWB_NET_SHAPES, SKEWB_SIDE_LINES } from './skewb-data';
 import type { DrawElement, DrawExport } from './types';
 
 export interface SkewbDrawPanelProps {
@@ -42,25 +43,10 @@ function tabStyle(selected: boolean): CSSProperties {
   };
 }
 
-function sideButtonStyle(selected: boolean): CSSProperties {
-  return {
-    appearance: 'none',
-    border: `1px solid ${selected ? 'var(--accent)' : 'var(--border-default)'}`,
-    borderRadius: 6,
-    background: selected ? 'var(--accent-soft)' : 'transparent',
-    color: 'var(--foreground)',
-    cursor: 'pointer',
-    font: 'inherit',
-    fontSize: 12,
-    lineHeight: 1.2,
-    minHeight: 30,
-    padding: '5px 8px',
-  };
-}
-
 export function SkewbDrawPanel({ onDocumentChange }: SkewbDrawPanelProps) {
   const t = useT();
   const [view, setView] = useState<SkewbView>('net');
+  const [showBottom, setShowBottom] = useState(true);
   const [sideLines, setSideLines] = useState<ReadonlySet<number>>(() => new Set());
   const netDocument = useRef<DrawExport | null>(null);
   const stereoDocument = useRef<DrawExport | null>(null);
@@ -74,17 +60,38 @@ export function SkewbDrawPanel({ onDocumentChange }: SkewbDrawPanelProps) {
     [],
   );
 
+  // The attached face occupies the lower-left flank indicators' space.
+  const availableSideLines = useMemo(() => SKEWB_SIDE_LINES.filter(
+    (line) => !showBottom || line.labelKey !== 'bottomLeft',
+  ), [showBottom]);
+
+  const sideLabel = useCallback((labelKey: (typeof SKEWB_SIDE_LINES)[number]['labelKey']): string => {
+    switch (labelKey) {
+      case 'topLeft': return t('左上', 'Top left');
+      case 'topRight': return t('右上', 'Top right');
+      case 'right': return t('右', 'Right');
+      case 'bottomRight': return t('右下', 'Bottom right');
+      case 'bottomLeft': return t('左下', 'Bottom left');
+      case 'left': return t('左', 'Left');
+    }
+  }, [t]);
+
   const stereoElements = useMemo<DrawElement[]>(() => [
     ...SKEWB_3D_SHAPES.map((d, index) => ({
       key: `sk_3d_2_sk${index}`,
       d,
     })),
-    ...SKEWB_SIDE_LINES.filter((line) => sideLines.has(line.key)).map((line) => ({
+    ...(showBottom ? SKEWB_BOTTOM_SHAPES.map((d, index) => ({
+      key: `sk_3d_bottom${index}`,
+      d,
+    })) : []),
+    ...availableSideLines.map((line) => ({
       key: `sk_3d_line${line.key}`,
       d: line.d,
       transformStr: line.transform,
+      toggle: { selected: sideLines.has(line.key), label: sideLabel(line.labelKey) + line.suffix },
     })),
-  ], [sideLines]);
+  ], [availableSideLines, showBottom, sideLines, sideLabel]);
 
   const publishNetDocument = useCallback((document: DrawExport) => {
     netDocument.current = document;
@@ -101,48 +108,20 @@ export function SkewbDrawPanel({ onDocumentChange }: SkewbDrawPanelProps) {
     if (document) onDocumentChange?.(document);
   }, [onDocumentChange, view]);
 
-  const toggleSideLine = (key: number) => {
+  const toggleSideLine = useCallback((elementKey: string) => {
+    const line = SKEWB_SIDE_LINES.find((item) => `sk_3d_line${item.key}` === elementKey);
+    if (!line) return;
+    const key = line.key;
     setSideLines((current) => {
       const next = new Set(current);
       if (next.has(key)) next.delete(key);
       else next.add(key);
       return next;
     });
-  };
-
-  const sideLabel = (labelKey: (typeof SKEWB_SIDE_LINES)[number]['labelKey']): string => {
-    switch (labelKey) {
-      case 'topLeft': return t('左上', 'Top left');
-      case 'topRight': return t('右上', 'Top right');
-      case 'right': return t('右', 'Right');
-      case 'bottomRight': return t('右下', 'Bottom right');
-      case 'bottomLeft': return t('左下', 'Bottom left');
-      case 'left': return t('左', 'Left');
-    }
-  };
+  }, []);
 
   const stereoControls = (
-    <section aria-label={t('侧面', 'Flanks')} style={{ display: 'grid', gap: 8 }}>
-      <span style={{ color: 'var(--muted-foreground)', fontSize: 13, fontWeight: 600 }}>
-        {t('侧面', 'Flanks')}
-      </span>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(88px, 1fr))', gap: 6 }}>
-        {SKEWB_SIDE_LINES.map((line) => {
-          const selected = sideLines.has(line.key);
-          return (
-            <button
-              key={line.key}
-              type="button"
-              aria-pressed={selected}
-              style={sideButtonStyle(selected)}
-              onClick={() => toggleSideLine(line.key)}
-            >
-              {sideLabel(line.labelKey)}{line.suffix}
-            </button>
-          );
-        })}
-      </div>
-    </section>
+    <BoolToggle value={showBottom} onChange={setShowBottom} label={t('底面', 'Bottom face')} />
   );
 
   return (
@@ -185,14 +164,15 @@ export function SkewbDrawPanel({ onDocumentChange }: SkewbDrawPanelProps) {
       <div role="tabpanel" hidden={view !== 'stereo'}>
         <DrawCanvas
           elements={stereoElements}
-          viewBox="0 0 78 82"
+          viewBox={showBottom ? '0 0 78 114' : '0 0 78 82'}
           width={400}
-          height={400}
+          height={showBottom ? 560 : 400}
           filenameBase="skewb-3d"
           presetColors={SKEWB_STICKER_PALETTE}
           historyStorageKey="SK3DDraw"
           strokeWidthScale={0.2}
           controls={stereoControls}
+          onElementToggle={toggleSideLine}
           onDocumentChange={publishStereoDocument}
         />
       </div>

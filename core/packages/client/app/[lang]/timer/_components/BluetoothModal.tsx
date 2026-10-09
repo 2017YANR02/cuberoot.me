@@ -10,7 +10,13 @@
  *    solved indicator) and a "reset state" + "disconnect" button.
  */
 
-import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
+import { TimerSmartCubeDeviceModal } from '@cuberoot/timer-ui';
+import {
+  createTimerDeviceRegistry,
+  SMART_CUBE_TIMER_DEVICE_REGISTRATIONS,
+} from '@cuberoot/shared/timer/device-contract';
+import { useEffect, useState, useSyncExternalStore, type CSSProperties } from 'react';
+import { installedBleAvailable, subscribeInstalledBleBridge } from '@/lib/installed-ble-bridge';
 import {
   BluetoothConnectError,
   clientEnvironmentLabel,
@@ -21,12 +27,8 @@ import {
   mayUseMiniProgramBridge,
 } from '../_lib/bluetooth';
 import type { BluetoothCubeHandle, ConnectStage, ConnectPickOptions } from '../_lib/bluetooth';
-import { normalizeMac } from '../_lib/bluetooth/mac';
-import { Bluetooth, Check, X, RotateCcw, ExternalLink } from 'lucide-react';
-import { useIsMobile } from '@/hooks/useIsMobile';
+import { ExternalLink } from 'lucide-react';
 import { tr } from '@/i18n/tr';
-import { ClearButton } from '@/components/ClearButton';
-import { useModalBackdrop } from '@/hooks/useModalDismiss';
 
 interface Props {
   isZh: boolean;
@@ -87,6 +89,11 @@ const GYRO_TAG_STYLE: CSSProperties = {
   background: 'color-mix(in srgb, var(--accent) 14%, transparent)',
 };
 
+const WEB_TIMER_DEVICE_REGISTRY = createTimerDeviceRegistry({
+  adapterIds: ['smart-cube'],
+  registrations: SMART_CUBE_TIMER_DEVICE_REGISTRATIONS,
+});
+
 function ConnectFailure() {
   return (
     <div className="modal-section bt-warn" role="alert">
@@ -109,27 +116,8 @@ function ConnectFailure() {
   );
 }
 
-export default function BluetoothModal({ cube, onClose, onConnect, connectAttempt, macPrompt, onSubmitMac, onCancelMac, onResetGyro, allowDeviceCalibration = false }: Props) {
-  const titleId = useId();
-  const [calibrationBusy, setCalibrationBusy] = useState(false);
-  const [confirmCalibration, setConfirmCalibration] = useState(false);
-  const [calibrationFeedback, setCalibrationFeedback] = useState<string | null>(null);
-  const backdropProps = useModalBackdrop(onClose, calibrationBusy);
-  const calibrateDevice = async () => {
-    if (!allowDeviceCalibration || !cube.resetDeviceState || calibrationBusy) return;
-    setCalibrationBusy(true);
-    setCalibrationFeedback(null);
-    try {
-      await cube.resetDeviceState();
-      setCalibrationFeedback(tr({ zh: '设备状态已校准', en: 'Device state calibrated' }));
-    } catch {
-      setCalibrationFeedback(tr({ zh: '未能确认设备已复原，请检查连接后重试', en: 'Could not confirm the solved state. Check the connection and retry.' }));
-    } finally { setCalibrationBusy(false); setConfirmCalibration(false); }
-  };
-  const dialogRef = useRef<HTMLDivElement | null>(null);
-  const isMobile = useIsMobile(480);
-  const [macInput, setMacInput] = useState('');
-  const [macError, setMacError] = useState(false);
+export default function BluetoothModal({ isZh, cube, onClose, onConnect, connectAttempt, macPrompt, onSubmitMac, onCancelMac, onResetGyro }: Props) {
+  useSyncExternalStore(subscribeInstalledBleBridge, installedBleAvailable, () => false);
   const [connecting, setConnecting] = useState(Boolean(connectAttempt) && !cube.status.connected);
   const [connectError, setConnectError] = useState<{ stage: ConnectStage | null; detail: string } | null>(null);
 
@@ -172,237 +160,110 @@ export default function BluetoothModal({ cube, onClose, onConnect, connectAttemp
     return () => { active = false; };
   }, [connectAttempt]);
 
-  const submitMac = (): void => {
-    const norm = normalizeMac(macInput);
-    if (!norm) { setMacError(true); return; }
-    setMacError(false);
-    setMacInput('');
-    onSubmitMac?.(norm);
-  };
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !calibrationBusy) onClose();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose, calibrationBusy]);
-
-  useEffect(() => {
-    const focusable = dialogRef.current?.querySelector<HTMLElement>(macPrompt
-      ? '[data-mac-input]' : 'button, [href], input, select, textarea');
-    focusable?.focus();
-  }, [macPrompt?.deviceName]);
-
   const clientEnvironment = detectClientEnvironment();
   const env = detectBluetoothEnv();
   const advice = envAdvice(env);
   const miniProgramBridge = mayUseMiniProgramBridge();
   const canConnect = miniProgramBridge || env === 'available' || env === 'available-bluefy';
   const connected = cube.status.connected;
+  const resetCube = async () => {
+    if (cube.resetDeviceState) await cube.resetDeviceState();
+    else cube.resetState();
+  };
 
-  const overlayStyle = isMobile ? { padding: 8 } : undefined;
-  const modalStyle = isMobile
-    ? { padding: 14, maxWidth: '100%', maxHeight: '90dvh' }
-    : undefined;
-  const connectBtnStyle = isMobile
-    ? { display: 'flex', width: '100%', justifyContent: 'center', padding: '10px 14px' }
-    : undefined;
-  const actionBtnStyle = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    whiteSpace: 'nowrap',
-    ...(isMobile ? { flex: '1 1 100%', padding: '10px 14px' } : {}),
-  } as const;
+  const macBody = macPrompt ? (
+    <div className="modal-section">
+      {macPrompt.isWrongKey && (
+        <p style={{ fontSize: 12, color: 'var(--signal-warning)', margin: '0 0 8px' }}>
+          {tr({
+            zh: '刚才那个 MAC 可能不对——魔方连上了但读不到转动。核对后重新输入。',
+            en: 'That MAC looked wrong — the cube connected but no turns registered. Double-check and re-enter.',
+          })}
+        </p>
+      )}
+      <p>
+        {tr({ zh: '受 Web 浏览器限制，首次连接需要手动填写魔方的 MAC 地址。连接成功后会记住，下次无需重复输入。', en: 'Your browser cannot provide the cube’s MAC address to this page. Enter it for the first connection; it will be remembered after a successful connection.' })}
+      </p>
+      <p>{tr({ zh: '在浏览器新标签页的地址栏中打开：', en: 'Open this address in a new browser tab:' })}</p>
+      <ul style={{ paddingLeft: 20, overflowWrap: 'anywhere' }}>
+        <li>Chrome: <code>chrome://bluetooth-internals/#devices</code></li>
+        <li>Edge: <code>edge://bluetooth-internals/#devices</code></li>
+      </ul>
+      <p>{tr({ zh: '在 Name 列找到自己的智能魔方，复制同一行的 Address，粘贴到下方。', en: 'Find your cube in the Name column, copy the Address from that row, and paste it below.' })}</p>
+
+    </div>
+  ) : undefined;
+
+  const intro = !connected && !canConnect ? (
+    <>
+      <p className="bt-tip" style={{ margin: '0 0 10px' }}>
+        {tr({ zh: '检测到：', en: 'Detected: ' })}
+        <strong style={{ color: 'var(--foreground)' }}>
+          {tr(clientEnvironmentLabel(clientEnvironment))}
+        </strong>
+      </p>
+      {advice && (
+        <>
+          <div className="modal-section bt-warn">
+            <h3 className="bt-warn-title">{tr(advice.title)}</h3>
+            <p>{tr(advice.body)}</p>
+          </div>
+          {advice.url && (
+            <div className="modal-section">
+              <a
+                className="bt-install-btn"
+                href={advice.url}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                <ExternalLink size={14} />
+                <span>{advice.urlLabel ? tr(advice.urlLabel) : advice.url}</span>
+              </a>
+            </div>
+          )}
+          {clientEnvironment.os === 'ios' && advice.url && (
+            <div className="modal-section bt-tip">
+              <p>{tr({ zh: '提示：在 Bluefy 里访问本页后，把它“添加到主屏幕”就能像 App 一样随时打开。', en: 'Tip: once Bluefy loads this page, “Add to Home Screen” so it opens like a native app.' })}</p>
+            </div>
+          )}
+        </>
+      )}
+    </>
+  ) : undefined;
 
   return (
-    <div className="timer-modal-overlay" style={overlayStyle} {...backdropProps}>
-      <div
-        ref={dialogRef}
-        className={`timer-modal bluetooth-modal${!macPrompt && !connectError ? ' bt-connected-modal' : ''}`}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        style={modalStyle}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <ClearButton
-          variant="standalone"
-          className="bt-modal-close"
-          onClick={() => { if (calibrationBusy) cube.disconnect(); onClose(); }}
-          ariaLabel={tr({ zh: '关闭', en: 'Close' })}
-        />
-        <h2 id={titleId} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Bluetooth size={20} />
-          <span>{macPrompt ? tr({ zh: '输入 MAC 地址', en: 'Enter MAC address' }) : tr({ zh: '智能魔方', en: 'Smart cube' })}</span>
-        </h2>
-
-        {!macPrompt && !connected && !canConnect && (
-          <p className="bt-tip" style={{ margin: '0 0 10px' }}>
-            {tr({ zh: '检测到：', en: 'Detected: ' })}
-            <strong style={{ color: 'var(--foreground)' }}>
-              {tr(clientEnvironmentLabel(clientEnvironment))}
-            </strong>
-          </p>
-        )}
-
-        {macPrompt && (
-          <div className="modal-section">
-            <p style={{ margin: '0 0 8px' }}><strong>{macPrompt.deviceName}</strong></p>
-            {macPrompt.isWrongKey && (
-              <p style={{ fontSize: 12, color: 'var(--signal-warning)', margin: '0 0 8px' }}>
-                {tr({
-                  zh: '刚才那个 MAC 可能不对——魔方连上了但读不到转动。核对后重新输入。',
-                  en: 'That MAC looked wrong — the cube connected but no turns registered. Double-check and re-enter.',
-                })}
-              </p>
-            )}
-            <p>
-              {tr({ zh: '受 Web 浏览器限制，首次连接需要手动填写魔方的 MAC 地址。连接成功后会记住，下次无需重复输入。', en: 'Your browser cannot provide the cube’s MAC address to this page. Enter it for the first connection; it will be remembered after a successful connection.' })}
-            </p>
-            <p>{tr({ zh: '在浏览器新标签页的地址栏中打开：', en: 'Open this address in a new browser tab:' })}</p>
-            <ul style={{ paddingLeft: 20, overflowWrap: 'anywhere' }}>
-              <li>Chrome: <code>chrome://bluetooth-internals/#devices</code></li>
-              <li>Edge: <code>edge://bluetooth-internals/#devices</code></li>
-            </ul>
-            <p>{tr({ zh: '在 Name 列找到自己的智能魔方，复制同一行的 Address，粘贴到下方。', en: 'Find your cube in the Name column, copy the Address from that row, and paste it below.' })}</p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <input
-              type="text"
-              data-mac-input
-              aria-label={tr({ zh: '魔方 MAC 地址', en: 'Cube MAC address' })}
-              value={macInput}
-              onChange={(e) => { setMacInput(e.target.value); setMacError(false); }}
-              onKeyDown={(e) => { if (e.key === 'Enter') submitMac(); }}
-              placeholder="xx:xx:xx:xx:xx:xx"
-              spellCheck={false}
-              autoComplete="off"
-              autoFocus
-              style={{ width: '100%', padding: '8px 10px', fontFamily: 'var(--font-mono)', boxSizing: 'border-box' }}
-            />
-              {macInput && <ClearButton onClick={() => { setMacInput(''); setMacError(false); }} ariaLabel={tr({ zh: '清除地址', en: 'Clear address' })} />}
-            </div>
-            {macError && (
-              <p style={{ fontSize: 12, color: 'var(--destructive)', margin: '6px 0 0' }}>
-                {tr({ zh: '格式不对，应为 6 组两位十六进制，用冒号分隔。', en: 'Invalid format — expected 6 colon-separated hex octets.' })}
-              </p>
-            )}
-            <div className="modal-actions" style={isMobile ? { flexDirection: 'column', alignItems: 'stretch' } : undefined}>
-              <button className="primary modal-action-btn" onClick={submitMac}>{tr({ zh: '确定', en: 'Confirm' })}</button>
-              <button className="modal-action-btn" onClick={() => onCancelMac?.()}>{tr({ zh: '取消', en: 'Cancel' })}</button>
-            </div>
-          </div>
-        )}
-
-        {!macPrompt && !connected && !canConnect && advice && (
-          <>
-            <div className="modal-section bt-warn">
-              <h3 className="bt-warn-title">{tr(advice.title)}</h3>
-              <p>{tr(advice.body)}</p>
-            </div>
-            {advice.url && (
-              <div className="modal-section">
-                <a
-                  className="bt-install-btn"
-                  href={advice.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <ExternalLink size={14} />
-                  <span>{advice.urlLabel ? tr(advice.urlLabel) : advice.url}</span>
-                </a>
-              </div>
-            )}
-            {clientEnvironment.os === 'ios' && advice.url && (
-              <div className="modal-section bt-tip">
-                <p>{tr({ zh: '提示：在 Bluefy 里访问本页后，把它“添加到主屏幕”就能像 App 一样随时打开。', en: 'Tip: once Bluefy loads this page, “Add to Home Screen” so it opens like a native app.'
-              })}</p>
-              </div>
-            )}
-          </>
-        )}
-
-        {!macPrompt && (
-          <>
-            <div className="modal-section bt-connected-summary">
-              <div className="bt-connected-primary">
-                <strong className="bt-connected-device">{cube.status.deviceName || tr({ zh: '智能魔方', en: 'Smart cube' })}</strong>
-                <span className={`bt-value bt-connected-state ${connected && cube.solved ? 'ok' : 'unsolved'}`}>
-                  {connected && (cube.solved ? <Check size={13} /> : <X size={13} />)}
-                  <span role="status" aria-live="polite">{connecting
-                    ? tr({ zh: '连接中…', en: 'Connecting…' })
-                    : connected
-                      ? tr({ zh: `已连接，${cube.solved ? '已还原' : '未还原'}`, en: `Connected, ${cube.solved ? 'solved' : 'unsolved'}` })
-                      : connectError ? tr({ zh: '连接失败', en: 'Connection failed' }) : tr({ zh: '未连接', en: 'Not connected' })}</span>
-                </span>
-              </div>
-              <div className="bt-connected-meta">
-                <span className="bt-connected-fact">
-                  <span className="bt-label">{tr({ zh: '电量', en: 'Battery' })}</span>{' '}
-                  <span className="bt-value">{cube.status.battery !== null ? `${cube.status.battery}%` : '—'}</span>
-                </span>
-                <span className="bt-connected-fact">
-                  <span className="bt-label">{tr({ zh: '最近一步', en: 'Last move' })}</span>{' '}
-                  <span className="bt-value mono">{cube.lastMove ?? '—'}</span>
-                </span>
-                <span className="bt-connected-fact">
-                  <span className="bt-label">{tr({ zh: '协议', en: 'Protocol' })}</span>{' '}
-                  <span className="bt-value">{connected ? cube.status.brand : '—'}</span>
-                </span>
-              </div>
-            </div>
-          </>
-        )}
-
-        {!macPrompt && !connected && !connecting && connectError && <ConnectFailure />}
-        {!macPrompt && !connected && !connecting && canConnect && (
-          <button type="button" className="bt-connect-btn" style={connectBtnStyle} onClick={() => { void runConnect(); }}>
-            <Bluetooth size={14} /> {connectError ? tr({ zh: '重新连接', en: 'Retry connection' }) : tr({ zh: '连接', en: 'Connect' })}
-          </button>
-        )}
-
-        {connected && !macPrompt && confirmCalibration && (
-          <div className="modal-section">
-            <p>{tr({ zh: '请先将实物魔方复原，再校准设备内部状态。', en: 'Solve the physical cube before calibrating its internal state.' })}</p>
-            <button type="button" className="modal-action-btn" disabled={calibrationBusy || !allowDeviceCalibration} onClick={() => { void calibrateDevice(); }}>
-              {calibrationBusy ? tr({ zh: '正在校准…', en: 'Calibrating…' }) : tr({ zh: '已复原，开始校准', en: 'Cube solved, calibrate' })}
-            </button>
-            <button type="button" className="modal-action-btn" disabled={calibrationBusy} onClick={() => setConfirmCalibration(false)}>{tr({ zh: '取消', en: 'Cancel' })}</button>
-          </div>
-        )}
-        {calibrationFeedback && <p role="status">{calibrationFeedback}</p>}
-        {!macPrompt && (
-          <div
-            className="modal-actions"
-            style={isMobile ? { flexDirection: 'column', alignItems: 'stretch' } : undefined}
-          >
-              <button className="modal-action-btn" style={actionBtnStyle} disabled={!connected || connecting || calibrationBusy || Boolean(cube.resetDeviceState && !allowDeviceCalibration)}
-                onClick={() => {
-                  if (cube.resetDeviceState) { setCalibrationFeedback(null); setConfirmCalibration(true); }
-                  else cube.resetState();
-                }}>
-                <RotateCcw size={14} /> {tr({ zh: '重置状态', en: 'Reset state'
-                })}
-              </button>
-              {onResetGyro && (
-                <button type="button" className="modal-action-btn" style={actionBtnStyle}
-                  disabled={!connected || connecting || !cube.status.hasGyro} onClick={onResetGyro}
-                  title={tr({ zh: '按白顶绿前握好魔方，再重置陀螺仪', en: 'Hold white on top and green in front, then reset the gyroscope' })}>
-                  <RotateCcw size={14} /> {tr({ zh: '重置陀螺仪', en: 'Reset gyroscope' })}
-                </button>
-              )}
-              <button
-                className="danger modal-action-btn"
-                style={actionBtnStyle}
-                onClick={() => { cube.disconnect(); onClose(); }}
-              >
-                {connected ? tr({ zh: '断开', en: 'Disconnect' }) : tr({ zh: '取消', en: 'Cancel' })}
-              </button>
-          </div>
-        )}
-      </div>
-    </div>
+    <TimerSmartCubeDeviceModal
+      capabilities={{
+        ...WEB_TIMER_DEVICE_REGISTRY.get('smart-cube')?.capabilities,
+        gyro: Boolean(onResetGyro),
+      }}
+      className={`timer-modal bluetooth-modal${!macPrompt && !connectError ? ' bt-connected-modal' : ''}`}
+      connectionFailure={connectError ? <ConnectFailure /> : undefined}
+      intro={intro}
+      language={isZh ? 'zh' : 'en'}
+      onClose={onClose}
+      onConnect={!macPrompt && canConnect ? () => runConnect() : undefined}
+      onDisconnect={() => cube.disconnect()}
+      onResetGyro={onResetGyro}
+      onResetState={resetCube}
+      macPrompt={macPrompt ? {
+        deviceName: macPrompt.deviceName,
+        instructions: macBody,
+        onSubmit: (mac) => onSubmitMac?.(mac),
+        onCancel: () => onCancelMac?.(),
+      } : undefined}
+      snapshot={{
+        battery: cube.status.battery,
+        deviceName: cube.status.deviceName,
+        hasGyro: cube.status.hasGyro,
+        lastMove: cube.lastMove,
+        phase: connected ? 'connected' : connecting ? 'connecting' : connectError ? 'error' : 'idle',
+        protocol: cube.status.brand,
+        solved: connected ? cube.solved : null,
+      }}
+      title={macPrompt
+        ? tr({ zh: '输入 MAC 地址', en: 'Enter MAC address' })
+        : tr({ zh: '智能魔方', en: 'Smart cube' })}
+    />
   );
 }

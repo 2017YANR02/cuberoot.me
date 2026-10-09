@@ -9,6 +9,7 @@ import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   COMPONENT_REUSE_RULES,
+  personPickersInsideLabels,
   scanAlgCaseDetailLayout,
   scanNewBackHomePlacements,
   scanComponentReimplementations,
@@ -52,6 +53,53 @@ function walk(dir: string): string[] {
   }
   return out;
 }
+
+describe('person picker label placement', () => {
+  it('blocks added picker labels across supported runtimes and skips test fixtures', () => {
+    for (const [runtime, directory] of [['client', 'components'], ['app-ui', 'src'], ['timer-ui', 'src']]) {
+      const path = ['core', 'packages', runtime, directory, 'Picker.tsx'].join('/');
+      expect(violationsFromHookPayload({ tool_input: { file_path: path, content: '<label><WcaPersonPicker /></label>' } })
+        .map(hit => hit.ruleId)).toContain('person-picker-label');
+      expect(violationsFromHookPayload({ tool_input: { file_path: path, content: '<div><WcaPersonPicker /></div>' } })).toEqual([]);
+    }
+    const fixturePath = ['core', 'packages', 'client', 'tests', 'fixture.tsx'].join('/');
+    expect(violationsFromHookPayload({ tool_input: { file_path: fixturePath, content: '<label><WcaPersonPicker /></label>' } })).toEqual([]);
+  });
+
+  it('checks unchanged label ancestors when only a picker is added to an existing file', () => {
+    const path = ['core', 'packages', 'client', 'components', 'Picker.tsx'].join('/');
+    const before = 'export const Field = () => (\n<label>\n  <span>Search</span>\n</label>\n);\n';
+    const patch = `*** Begin Patch\n*** Update File: ${path}\n@@\n   <span>Search</span>\n+  <WcaPersonPicker />\n*** End Patch`;
+    const payload = {
+      original_tool_input: { command: patch },
+      tool_input: { file_path: path, content: '<WcaPersonPicker />' },
+    };
+    expect(violationsFromHookPayload(payload, new Set(), () => before).map(hit => hit.ruleId)).toContain('person-picker-label');
+    expect(violationsFromHookPayload({
+      ...payload,
+      original_tool_input: { command: patch.replace('WcaPersonPicker', 'input') },
+    }, new Set(), () => before)).toEqual([]);
+  });
+
+  it('detects nested and aliased pickers without banning ordinary input labels', () => {
+    expect(personPickersInsideLabels('<label><div>{ok && <WcaPersonPicker value={person} />}</div></label>')).toEqual([1]);
+    expect(personPickersInsideLabels("import { WcaPersonPicker as PersonPicker } from '@/components/WcaPersonPicker';\n<label><PersonPicker /></label>")).toEqual([2]);
+    expect(personPickersInsideLabels('<label><Pickers.WcaPersonPicker /></label>')).toEqual([1]);
+    expect(personPickersInsideLabels('<label><input /></label><div><WcaPersonPicker /></div>')).toEqual([]);
+  });
+
+  it('keeps Web, installed-app UI and shared pickers outside native labels', () => {
+    const dirs = [
+      ...SCAN_DIRS.map(dir => join(ROOT, dir)),
+      join(ROOT, '..', 'app-ui', 'src'),
+      join(ROOT, '..', 'timer-ui', 'src'),
+    ];
+    const violations = dirs.flatMap(dir => walk(dir)).flatMap(file =>
+      personPickersInsideLabels(readFileSync(file, 'utf8')).map(line => `${relative(REPO_ROOT, file)}:${line}`),
+    );
+    expect(violations, 'Use a div around the picker; native labels must target a stable input, not a changing composite control.').toEqual([]);
+  });
+});
 
 describe('component reuse rule registry', () => {
   it('requires the shared PasswordInput for every password field', () => {
@@ -155,8 +203,10 @@ describe('component reuse rule registry', () => {
     const activeRule = css.match(/\.pp-trigger--active\s*\{([\s\S]*?)\}/)?.[1] ?? '';
 
     expect(source).toContain('showTriggerIcon = true');
-    expect(source).toContain('{showTriggerIcon && (selectedItem && showItemIcons');
-    expect(source).toContain('(!selectedItem || !showItemIcons || !showTriggerIcon)');
+    expect(source).toContain('const showSelectedIcons = showTriggerIcon && showItemIcons && hasSelection');
+    expect(source).toContain('{showSelectedIcons ? (');
+    expect(source).toContain('{selectedItems.map(item => (');
+    expect(source).toContain(') : <span className="pp-trigger-label">{triggerLabel}</span>}');
     expect(siteSource.match(/showTriggerIcon=\{false\}/g)).toHaveLength(4);
     expect(source).not.toContain('iconOnlyTrigger');
     expect(triggerRule).toContain('border: 1px solid transparent');
@@ -171,16 +221,20 @@ describe('component reuse rule registry', () => {
       'utf8',
     );
     const compact = readFileSync(join(ROOT, 'components', 'CompactSelect.tsx'), 'utf8');
-    const rolling = readFileSync(
-      join(ROOT, 'app', '[lang]', 'timer', '_components', 'RollingStatsPicker.tsx'),
-      'utf8',
-    );
+    const timerUiEntry = import.meta.resolve('@cuberoot/timer-ui');
+    const rolling = readFileSync(new URL('./TimerRollingStatsPicker.tsx', timerUiEntry), 'utf8');
+    const stats = readFileSync(new URL('./TimerStatsPanel.tsx', timerUiEntry), 'utf8');
+    const history = readFileSync(new URL('./TimerHistoryWorkspace.tsx', timerUiEntry), 'utf8');
     expect(wca).toContain("from '@/components/CompactSelect'");
     expect(wca).toContain('<CompactSelect');
     expect(compact).toContain("from '@cuberoot/timer-ui/compact-select'");
-    expect(rolling).toContain("from '@cuberoot/timer-ui'");
-    expect(rolling).toContain('<TimerRollingStatsPicker');
-    expect(rolling).not.toContain('<CompactSelect');
+    expect(rolling).toContain("from './CompactSelect'");
+    expect(rolling).toContain('<CompactSelect');
+    for (const source of [stats, history]) {
+      expect(source).toContain("from './TimerRollingStatsPicker'");
+      expect(source).toContain('<TimerRollingStatsPicker');
+      expect(source).not.toContain('<CompactSelect');
+    }
   });
 
   it('allows status crosses, text buttons, the shared component, and reasoned exceptions', () => {
@@ -323,7 +377,7 @@ describe('component reuse rule registry', () => {
     const preTool = codex.hooks?.PreToolUse ?? [];
     expect(preTool.some((group: { matcher?: string; hooks?: Array<{ command?: string }> }) =>
       group.matcher === 'apply_patch'
-      && group.hooks?.some((hook) => hook.command?.includes('adapt-codex-write-payload.mjs')
+      && group.hooks?.some((hook) => hook.command?.includes('adapt-codex-write-payload.mts')
         && hook.command.includes('hook-detect-component-reimplementation.mjs')),
     ), 'missing adapted component-reuse hook for apply_patch').toBe(true);
     expect(existsSync(join(REPO_ROOT, 'core', 'packages', 'client', 'scripts', 'hook-detect-component-reimplementation.mjs'))).toBe(true);

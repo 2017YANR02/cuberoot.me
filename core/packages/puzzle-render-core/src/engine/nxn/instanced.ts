@@ -155,6 +155,7 @@ export default class InstancedRenderer extends THREE.Group {
   dimWhite = FM_DIM_WHITE;
   /** 描边(FM_OUTLINE)的 per-instance 开关,static / moving 共享一份(同槽序)。 */
   private outlineFlags!: THREE.InstancedBufferAttribute;
+  private previewStickers: ((initial: number, face: number) => boolean) | null = null;
   private outlineColor!: OutlineUniform;
   /** 图案魔方:每个贴纸槽绑定 HOME 图片切片。static / moving 共用属性,所以转层时
    *  图片碎片跟真实块走。纹理只是一张 3×2 atlas,不增加 mesh / draw call。 */
@@ -1231,13 +1232,25 @@ export default class InstancedRenderer extends THREE.Group {
       this.stickeringCodes = codes;
     }
     // 描边不是颜色,走 shader 的 per-instance 开关(见 stickerOutline.ts)。
-    const flags = this.outlineFlags.array as Float32Array;
-    for (let i = 0; i < flags.length; i++) {
-      flags[i] = this.stickeringCodes?.[i] === FM_OUTLINE ? 1 : 0;
-    }
-    this.outlineFlags.needsUpdate = true;
+    this.refreshOutlineFlags();
     this.refreshPictureFlags();
     this.refreshStickerColors();
+  }
+
+  /** Transient hover outline; never changes saved mask codes or sticker colors. */
+  setStickerPreview(preview: ((initial: number, face: number) => boolean) | null): void {
+    this.previewStickers = preview;
+    this.refreshOutlineFlags();
+    this.cube.dirty = true;
+  }
+
+  private refreshOutlineFlags(): void {
+    const flags = this.outlineFlags.array as Float32Array;
+    for (let i = 0; i < flags.length; i++) {
+      const slot = this.stickerSlots[i];
+      flags[i] = this.stickeringCodes?.[i] === FM_OUTLINE || this.previewStickers?.(slot.cubeletInitial, slot.face) ? 1 : 0;
+    }
+    this.outlineFlags.needsUpdate = true;
   }
 
   private refreshPictureFlags(): void {

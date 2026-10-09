@@ -1,5 +1,6 @@
 'use client';
 
+import { sessionFetch } from '@/lib/session-fetch';
 /**
  * 公式记忆(间隔重复)的存取层:localStorage 落地 + 登录后云端同步 + zustand store。
  * 调度算法本身在 `alg-srs.ts`(纯函数)。
@@ -84,7 +85,7 @@ const cloudEnabled = () => !cloudDown && !!getSessionToken();
 async function cloudGet<T>(path: string): Promise<T | null> {
   if (!cloudEnabled()) return null;
   try {
-    return await handleApi<T>(await fetch(apiUrl(path), { headers: authHeaders(false) }));
+    return await handleApi<T>(await sessionFetch(apiUrl(path), { headers: authHeaders(false) }));
   } catch (e) {
     cloudDown = true;
     console.warn('[alg-srs] cloud unavailable, local only', e);
@@ -95,7 +96,7 @@ async function cloudGet<T>(path: string): Promise<T | null> {
 async function cloudPut(path: string, body: unknown): Promise<boolean> {
   if (!cloudEnabled()) return false;
   try {
-    await handleApi(await fetch(apiUrl(path), {
+    await handleApi(await sessionFetch(apiUrl(path), {
       method: 'PUT', headers: authHeaders(), body: JSON.stringify(body),
     }));
     return true;
@@ -476,7 +477,7 @@ export async function resetSrsDaily(): Promise<{ cloudCleared: boolean }> {
   cloudDown = false;   // 同 resetSetSrs:显式操作不受早先瞬时失败的粘滞状态影响
   if (cloudEnabled()) {
     try {
-      await handleApi(await fetch(apiUrl('/v1/alg/srs/daily'), {
+      await handleApi(await sessionFetch(apiUrl('/v1/alg/srs/daily'), {
         method: 'DELETE', headers: authHeaders(),
       }));
     } catch (e) {

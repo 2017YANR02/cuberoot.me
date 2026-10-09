@@ -70,11 +70,10 @@ export default function SiteBackground({ manageDocument = true }: { manageDocume
 }
 
 /** The same expanded selector is available in every appearance menu. */
-export function SiteBackgroundControl({ onDiagnosticsOpen }: { onDiagnosticsOpen?: () => void } = {}) {
+export function SiteBackgroundControl() {
   const theme = useEffectiveTheme();
   const [choice, selectBackground] = useHomeBackgroundChoice(theme);
   const activeScene = resolveHomeBackground(choice, theme);
-  const [diagnosticsFailed, setDiagnosticsFailed] = useState(false);
   const noneLabel = tr({ zh: '无背景', en: 'No background' });
   return <div className="site-background-control" role="group" aria-label={tr({ zh: '全站背景', en: 'Site background' })}>
       <div className="site-background-modes">
@@ -84,12 +83,7 @@ export function SiteBackgroundControl({ onDiagnosticsOpen }: { onDiagnosticsOpen
           <ImageOff size={14} aria-hidden="true" />
           {noneLabel}
         </button>
-        <button type="button" className="site-background-mode" onClick={() => {
-          void import('./ScrollDiagnostics').then(module => {
-            onDiagnosticsOpen?.();
-            module.openScrollDiagnostics();
-          }).catch(() => setDiagnosticsFailed(true));
-        }}>{diagnosticsFailed ? tr({ zh: '重试加载诊断', en: 'Retry loading diagnostics' }) : tr({ zh: '滚动诊断', en: 'Scroll diagnostics' })}</button>
+
       </div>
       <div className="site-background-grid">
         {SCENES.map(item => (

@@ -500,6 +500,12 @@ export default function Top10HistoryPage({
         )}
         {!embedded && (
           <div className="t10h-toolbar-right">
+            <WcaEventSelector
+              availableEvents={availableEvents}
+              selectedEvent={eventId}
+              onSelect={setEventId}
+              isZh={isZh}
+            />
             <div className="t10h-metric-toggle" role="tablist">
               <button
                 type="button"
@@ -525,16 +531,6 @@ export default function Top10HistoryPage({
         )}
       </div>
 
-      {!embedded && (
-        <div className="t10h-event-bar">
-          <WcaEventSelector
-            availableEvents={availableEvents}
-            selectedEvent={eventId}
-            onSelect={setEventId}
-            isZh={isZh}
-          />
-        </div>
-      )}
 
       <div className="t10h-stage" style={{ position: 'relative' }}>
         {exporting && exportProg && (
@@ -691,19 +687,15 @@ export default function Top10HistoryPage({
 
       {events.length > 0 && (
         <div className="t10h-note">
-          {(() => {
-            const since = events[0]?.d ?? '—';
-            const cubers = new Set(events.map(e => e.p)).size;
-            return mode === 'results'
-              ? tr({
-                  zh: `数据自 ${since}。共 ${events.length} 条曾进过历史 TOP ${index.topK} 的成绩,来自 ${cubers} 名选手(同一选手可多次上榜)。`,
-                  en: `Data since ${since}. ${events.length} results that were ever in the historical top ${index.topK}, from ${cubers} cubers (one cuber may hold multiple slots).`,
-                })
-              : tr({
-                  zh: `数据自 ${since}。共 ${events.length} 次 PB 事件,涉及 ${cubers} 名曾进过历史 TOP ${index.topK} 的选手。`,
-                  en: `Data since ${since}. ${events.length} PB events from ${cubers} cubers who were ever in the historical top ${index.topK}.`,
-                });
-          })()}
+          {mode === 'results'
+            ? tr({
+                zh: `仅统计曾进入历史前 ${index.topK} 名的成绩。`,
+                en: `Only results that have reached the historical top ${index.topK} are included.`,
+              })
+            : tr({
+                zh: `仅统计曾进入历史前 ${index.topK} 名的选手。`,
+                en: `Only cubers who have reached the historical top ${index.topK} are included.`,
+              })}
           <div className="t10h-legend">
             {([
               ['Asia', tr({ zh: '亚洲', en: 'Asia'

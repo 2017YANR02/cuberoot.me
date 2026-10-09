@@ -2,12 +2,19 @@ import { useCallback, useRef, useState } from 'react';
 
 export const TIMER_OVERLAY_IDS = {
   drillPicker: 'timer.drill-picker',
+  stageSolver: 'timer.stage-solver',
+  bulkTool: 'timer.bulk-tool',
+  bldTool: 'timer.bld-tool',
+  solverTool: 'timer.solver-tool',
   historyCompare: 'timer.history-compare',
   historyQuickMenu: 'timer.history-quick-menu',
   solveDetail: 'timer.solve-detail',
   puzzlePicker: 'timer.puzzle-picker',
   scrambleSource: 'timer.scramble-source',
   sessionSwitcher: 'timer.session-switcher',
+  smartTimerDevice: 'timer.smart-timer-device',
+  stackmatDevice: 'timer.stackmat-device',
+  smartCubeDevice: 'timer.smart-cube-device',
   wcaCompetition: 'timer.wca-competition',
   wcaScrambleMarks: 'timer.wca-scramble-marks',
 } as const;

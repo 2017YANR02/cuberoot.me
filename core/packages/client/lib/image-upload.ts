@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 import { apiUrl } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
 
@@ -42,7 +43,7 @@ export async function prepareImageUpload(file: File, maxDimension = 1920): Promi
 }
 
 export async function uploadImageBlob(dataB64: string, mime: string): Promise<UploadedImage> {
-  return handleApi<UploadedImage>(await fetch(apiUrl('/v1/article/img'), {
+  return handleApi<UploadedImage>(await sessionFetch(apiUrl('/v1/article/img'), {
     method: 'POST',
     headers: authHeaders(),
     body: JSON.stringify({ dataB64, mime }),

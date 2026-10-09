@@ -31,7 +31,7 @@ type FakeLS = ReturnType<typeof makeLocalStorage>;
 
 // Globals must exist before importing the module (its store init reads them).
 const g = globalThis as unknown as { window?: unknown; localStorage?: FakeLS };
-g.window = { addEventListener() {} };
+g.window = { location: { pathname: '/' }, addEventListener() {} };
 g.localStorage = makeLocalStorage(1_000_000);
 
 const { useTrainerStore } = await import('@/lib/trainer-store');

@@ -1,10 +1,11 @@
 'use client';
+import { competitionFetch, ensureCompetitionAccess } from '@/lib/competition-access';
 
 /**
  * /wca/comp/[slug] — full port of packages/client-vite/src/pages/comp/CompDetailPage.tsx.
  * Live WS (cubing.com + WCA Live) + Psych Sheet + record badges + round/cuber modals.
  */
-import { useEffect, useMemo, useState, useCallback, useRef, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, useCallback, useRef, memo, startTransition, type ReactNode } from 'react';
 import dynamic from 'next/dynamic';
 import Link from '@/components/AppLink';
 import { usePathname, useRouter } from 'next/navigation';
@@ -13,12 +14,13 @@ import { useTranslation } from 'react-i18next';
 import { ArrowLeft, X as XIcon, RefreshCw, Info, Copy, Check, Radio, ArrowUp, ArrowDown, Ban, Download, Calculator } from 'lucide-react';
 import { Flag } from '@/components/Flag';
 import { RecordBadge } from '@/components/RecordBadge';
-import { ContinentIcon, RECORD_BADGE_CONTINENT } from '@/components/ContinentIcon';
+import { RecentRecordsList } from '@/components/RecentRecords';
 import { summarizeCompRecords } from '@/lib/comp-records';
 import { SearchInput } from '@/components/SearchInput';
 import { useModalBackdrop } from '@/hooks/useModalDismiss';
 import { useCopy } from '@/hooks/useCopy';
 import { stripRecordNewsPrefix } from '@/lib/record-news';
+import { countryFlag } from '@cuberoot/shared/record-news';
 import { eventDisplayName, isWcaEvent } from '@/lib/wca-events';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { countryToIso2, loadFlagData, compFlagIso2 } from '@/lib/country-flags';
@@ -26,7 +28,6 @@ import { countryName } from '@/lib/country-name';
 import { localizeCompName, resolveCompName, stripCompYear } from '@/lib/comp-localize';
 import { nameToCubingSlug, wcaIdToCubingSlug } from '@cuberoot/shared/cubing-slug';
 import { fetchRankForWca, getCachedRankForWca, prefetchRanksForWca, type RankResult } from '@/lib/rank-client';
-import { adjustRankWithLiveComp, applyDayRankDelta, type LiveCompEntry } from '@/lib/comp-live-rank';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { apiUrl } from '@/lib/api-base';
 import { statsUrl } from '@/lib/stats-base';
@@ -59,6 +60,7 @@ import LangToggle from '@/components/LangToggle';
 import { useCompFollows, FollowStar } from '@/components/CompFollow';
 import { personRoundChangeKey, changeChainOldValues, effectiveFieldValue, effectiveAttempts, attemptOldValues, effectiveAttemptPenalties, effectiveAttemptPenaltyNote, effectiveAttemptVideos, pendingAttemptVideos, recordAttemptEdit, recordAttemptOriginal, recordAttemptPenalty, recordAttemptVideos, splitChainByStatus } from '@/lib/result-watch-api';
 import { AttemptPopover } from '@/components/persons/sections/results/AttemptPopover';
+import { SolveValue } from '@/components/persons/sections/results/SolveValue';
 import { listReconsByComp } from '@/lib/recon-api';
 import { buildReconPersonAttemptMap, findReconForPersonAttempt, buildReconSubmitHref } from '@/lib/recon-attempt-lookup';
 import { roundLabel, ROUND_HINT_ZH, ROUND_HINT_EN } from '@/lib/wca-round-meta';
@@ -300,39 +302,6 @@ function effectiveAvg(r: LiveResult): number {
 }
 
 function roundKey(e: string, r: string): string { return `${e}:${r}`; }
-
-// 收集本场某项目某口径(single/average)下每位选手的最快有效成绩 + 国别 + 赛前官方 PB,
-// 喂给 adjustRankWithLiveComp 把实时成绩并进官方名次(修掉官方 dump 滞后造成的假名次)。
-function buildLiveCompEntries(
-  data: CompData,
-  pbMap: Record<string, PbByEvent | null>,
-  eventId: string,
-  type: 'single' | 'average',
-): LiveCompEntry[] {
-  const ev = data.events.find(e => e.i === eventId);
-  if (!ev) return [];
-  const best = new Map<number, number>();
-  for (const rd of ev.rs) {
-    for (const r of data.resultsByRound[roundKey(eventId, rd.i)] || []) {
-      const v = type === 'single' ? r.b : effectiveAvg(r);
-      if (!(v > 0)) continue;
-      const prev = best.get(r.n);
-      if (prev === undefined || v < prev) best.set(r.n, v);
-    }
-  }
-  const out: LiveCompEntry[] = [];
-  for (const [num, compBest] of best) {
-    const u = data.users[String(num)];
-    if (!u) continue;
-    out.push({
-      number: num,
-      iso2: regionToIso2(u.region).toUpperCase(),
-      compBest,
-      officialBest: u.wcaid ? pbMap[u.wcaid]?.[eventId]?.[type]?.best : undefined,
-    });
-  }
-  return out;
-}
 
 interface PodiumGroup { ev: EventMeta; rd: RoundMeta; rows: LiveResult[]; }
 
@@ -710,15 +679,17 @@ function SimilarCompList({ comps, isZh, lang, showPlace = true }: {
   return (
     <ul className="comp-similar-list">
       {comps.map(c => {
-        const name = localizeCompName(c.id, decodeEntities(c.name), isZh);
+        const name = localizeCompName(c.id, decodeEntities(c.name), isZh, { date: c.start });
         const date = formatDateRangeIso(c.start, c.end || c.start);
         return (
           <li key={c.id}>
             <Link {...compLinkProps(c.id, undefined, lang)} className="comp-similar-item">
-              <Flag iso2={c.country} className="comp-similar-flag" />
-              <span className="comp-similar-name">{name}</span>
-              {showPlace && <span className="comp-similar-place">{compPlace(c, isZh)}</span>}
+              <span className="comp-similar-name">
+                <Flag iso2={c.country} className="comp-similar-flag" />
+                <span>{name}</span>
+              </span>
               <span className="comp-similar-date">{date}</span>
+              {showPlace && <span className="comp-similar-place">{compPlace(c, isZh)}</span>}
             </Link>
           </li>
         );
@@ -830,6 +801,7 @@ export default function CompDetailPage() {
     'filter',
     parseAsString.withDefault('all').withOptions({ history: 'replace', scroll: false }),
   );
+  const [resultSearch, setResultSearch] = useQueryState('q', parseAsString.withDefault(''));
   const [layoutParam, setLayoutParam] = useQueryState(
     'layout',
     parseAsStringEnum<'calendar' | 'table' | 'poster'>(['calendar', 'table', 'poster']).withOptions({ history: 'replace', scroll: false }),
@@ -892,7 +864,8 @@ export default function CompDetailPage() {
   const [pbVer, setPbVer] = useState(0);
   type ModalState =
     | { kind: 'round'; number: number; eventId: string; roundId: string }
-    | { kind: 'all'; number: number };
+    | { kind: 'all'; number: number }
+    | { kind: 'mine' };
   const [localModal, setLocalModal] = useState<ModalState | null>(null);
   const openedResult = useRef(false);
   const modal = localModal ?? (resultPath ? { kind: 'round' as const, ...resultPath } : null);
@@ -1161,14 +1134,16 @@ export default function CompDetailPage() {
       resolveOnce();
     };
 
-    const startSse = () => {
-      const q = sourceParam ? `?v=3&source=${encodeURIComponent(sourceParam)}` : '?v=3';
+    const startSse = async () => {
+      try { await ensureCompetitionAccess(); } catch (error) { failWith((error as Error).message); return; }
+      if (done || apiAbort.signal.aborted) return;
+      const q = sourceParam ? `?v=4&source=${encodeURIComponent(sourceParam)}` : '?v=4';
       const url = apiUrl(`/v1/cubing-live-stream/${encodeURIComponent(slug)}${q}`);
-      es = new EventSource(url);
+      es = new EventSource(url, { withCredentials: true });
       const fallback = () => {
         if (done) return;
         es?.close();
-        fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(slug)}${q}`), { signal: apiAbort.signal })
+        competitionFetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(slug)}${q}`), { signal: apiAbort.signal })
           .then(async r => {
             if (!r.ok) {
               const j = await r.json().catch(() => ({ error: `HTTP ${r.status}` }));
@@ -1211,8 +1186,8 @@ export default function CompDetailPage() {
     if (sourceParam || fresh) {
       startSse();
     } else {
-      const onlyQs = only ? `?v=2&only=${encodeURIComponent(only)}` : '?v=2';
-      fetch(`/api/comp/${encodeURIComponent(slug)}${onlyQs}`, { signal: apiAbort.signal })
+      const onlyQs = only ? `?v=4&only=${encodeURIComponent(only)}` : '?v=4';
+      competitionFetch(`/api/comp/${encodeURIComponent(slug)}${onlyQs}`, { signal: apiAbort.signal })
         .then(async r => {
           if (!r.ok) throw new Error(`HTTP ${r.status}`);
           return r.json();
@@ -1247,7 +1222,7 @@ export default function CompDetailPage() {
     if (!slug || !dataReady || fullLoaded || fullReqRef.current) return;
     fullReqRef.current = true;
     const ac = new AbortController();
-    fetch(`/api/comp/${encodeURIComponent(slug)}?v=2`, { signal: ac.signal })
+    competitionFetch(`/api/comp/${encodeURIComponent(slug)}?v=4`, { signal: ac.signal })
       .then(r => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
       .then((j: CompData) => { setData(j); setFullLoaded(true); })
       .catch(() => { fullReqRef.current = false; });
@@ -1305,10 +1280,16 @@ export default function CompDetailPage() {
       }
       if (patch.kind === 'users') {
         const mergedUsers: typeof prev.users = { ...prev.users };
+        let changed = false;
         for (const [k, wsUser] of Object.entries(patch.users)) {
+          const previous = prev.users[k];
+          // Round snapshots repeat unchanged competitors. Keep their identities
+          // so refreshing another round does not invalidate every visible row.
+          if (previous && Object.entries(wsUser).every(([field, value]) => previous[field as keyof User] === value)) continue;
           mergedUsers[k] = { ...prev.users[k], ...wsUser };
+          changed = true;
         }
-        return { ...prev, users: mergedUsers, fetchedAt: Date.now() };
+        return changed ? { ...prev, users: mergedUsers, fetchedAt: Date.now() } : prev;
       }
       return prev;
     });
@@ -1318,25 +1299,23 @@ export default function CompDetailPage() {
   const isWcaLive = data?.source === 'wca_live';
   const isCubing = data?.source === 'cubing';
 
-  const cubingWsRounds = useMemo(() => {
-    if (!isCubing || !data) return [];
-    return data.events.flatMap(event => event.rs
-      .filter(round => round.rn !== 0 || round.s === 2)
-      .map(round => ({ eventId: event.i, roundTypeId: round.i })));
-  }, [isCubing, data?.events]);
+  useEffect(() => {
+    if (isCubing && filterParam === 'children') void setFilterParam(null);
+  }, [isCubing, filterParam, setFilterParam]);
+
   const cubingFocusRound = useMemo(() => {
     if (!isCubing || !data || !eventParam || !roundParam) return null;
-    const roundExists = data.events.some(event => event.i === eventParam
-      && event.rs.some(round => round.i === roundParam));
-    return roundExists ? { eventId: eventParam, roundTypeId: roundParam } : null;
+    const round = data.events.find(event => event.i === eventParam)?.rs.find(round => round.i === roundParam);
+    return round?.liveId ? { eventId: eventParam, roundTypeId: roundParam, roundNumber: Number(round.liveId) } : null;
   }, [isCubing, data?.events, eventParam, roundParam]);
   const cubingWsStatus = useLiveStream({
-    compId: isCubing ? (data?.compId ?? null) : null,
-    rounds: cubingWsRounds,
+    cubingSlug: isCubing ? (data?.cubingSlug ?? null) : null,
     focusRound: cubingFocusRound,
+    rounds: isCubing ? data?.events.flatMap(event => event.rs.filter(round => round.liveId).map(round => ({
+      eventId: event.i, roundTypeId: round.i, roundNumber: Number(round.liveId),
+    }))) : undefined,
     applyPatch,
   });
-
   // 只跟踪正在看的那一轮,不是全场。WCA Live 那边 subscription 走不通(check_origin
   // 403),useWcaLiveStream 改成轮询 GraphQL query 后,订阅范围直接等于流量:
   // 一场比赛 29 轮批量查会撞 WCA Live 的 complexity 上限(实测 ≤5 轮过、10 轮起报
@@ -1569,15 +1548,17 @@ export default function CompDetailPage() {
       const avgVal = effectiveAvg(r);
       if ((averageRank === 1 || r.ar) && isAvgFmt && avgVal > 0) items.push({ event: r.e, type: 'average', value: avgVal, country });
     }
-    // excludeComp=本场:服务端 overlay 排除本场,避免与客户端同场订正重复计数。
-    if (items.length > 0) void prefetchRanksForWca(items, data.slug);
+    // 服务端统一合并官方快照与近期比赛,按选手去重;赛前 PB 仅用于 PR 判断。
+    if (items.length > 0) void prefetchRanksForWca(items);
   }, [data, currentRound, pbMap]);
 
+  const personalRecords = data?.personalRecords;
+  // Live score patches do not change the fetched pre-competition PR baseline.
+  const pbUsers = personalRecords ? undefined : data?.users;
   useEffect(() => {
-    if (!data) return;
-    if (data.personalRecords) {
+    if (personalRecords) {
       const obj: Record<string, PbByEvent | null> = {};
-      for (const [wcaId, byEvent] of Object.entries(data.personalRecords)) {
+      for (const [wcaId, byEvent] of Object.entries(personalRecords)) {
         const pb: PbByEvent = {};
         for (const [ev, slot] of Object.entries(byEvent)) {
           pb[ev] = {
@@ -1593,7 +1574,8 @@ export default function CompDetailPage() {
     // 服务端没给 personalRecords 时才逐人问 WCA API(一人一请求)。必须走 prefetchPbs 的
     // 限并发队列:大比赛 1000+ 选手直接 Promise.all 会一次性打满浏览器连接池,把同页
     // 其它请求(成绩数据 / 国旗表)全挤到队尾。
-    const ids = Object.values(data.users).map(u => u.wcaid).filter(Boolean);
+    if (!pbUsers) return;
+    const ids = Object.values(pbUsers).map(u => u.wcaid).filter(Boolean);
     if (ids.length === 0) return;
     let cancelled = false;
     prefetchPbs(ids)
@@ -1606,7 +1588,7 @@ export default function CompDetailPage() {
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [data, pbVer]);
+  }, [personalRecords, pbUsers, pbVer]);
 
   const onChangeRound = (value: string) => {
     const [e, r] = value.split(':');
@@ -1707,6 +1689,14 @@ export default function CompDetailPage() {
     );
   }
 
+  const meCompetitor = meWcaId
+    ? Object.values(data.users).find(person => person.wcaid === meWcaId)
+    : undefined;
+  const hasMyResults = !!meCompetitor && data.events.some(event =>
+    event.rs.some(round =>
+      (data.resultsByRound[roundKey(event.i, round.i)] ?? []).some(result => result.n === meCompetitor.number)
+    )
+  );
   const availableEventIds = new Set(data.events.filter(e => isWcaEvent(e.i)).map(e => e.i));
   const nonWcaEvents = data.events
     .filter(e => !isWcaEvent(e.i))
@@ -1762,8 +1752,7 @@ export default function CompDetailPage() {
     { value: 'all', labelZh: '全部', labelEn: 'All' },
     { value: 'females', labelZh: '女选手', labelEn: 'Females'
     },
-    { value: 'children', labelZh: '儿童组', labelEn: 'Children'
-    },
+    ...(!isCubing ? [{ value: 'children', labelZh: '儿童组', labelEn: 'Children' }] : []),
     { value: 'newcomers', labelZh: '新人组', labelEn: 'New Comers'
     },
   ];
@@ -1779,7 +1768,6 @@ export default function CompDetailPage() {
               // compFlagIso2 还没数据,会丢旗 + 丢 cubing.com 图标,故用 compInfo 兜底。
               const iso2 = compInfo?.country_iso2?.toLowerCase() || compFlagIso2(slug);
               const cubingSlug = data.cubingSlug || nameToCubingSlug(data.name) || wcaIdToCubingSlug(data.slug);
-              const cubingUrl = `https://cubing.com/competition/${cubingSlug}`;
               const wcaUrl = `https://www.worldcubeassociation.org/competitions/${data.slug}`;
               // WCA Live 链接用内部数字 id(不含比赛名):有比赛 id 时深链到当前选中的轮次
               // (/competitions/<compLiveId>/rounds/<roundLiveId>),否则回退首页。
@@ -1788,6 +1776,7 @@ export default function CompDetailPage() {
                 : 'https://live.worldcubeassociation.org/';
               // 未开始的比赛 WCA Live 上没有页面(404),已知 start_date 且晚于今天才隐藏。
               const notStartedYet = !!compInfo?.start_date && compInfo.start_date.slice(0, 10) > toIsoDate(new Date());
+              const cubingUrl = `https://cubing.com/competition/${cubingSlug}${notStartedYet ? '' : '/live'}`;
               return (
                 <>
                   {/* 旗+比赛名成组:窄屏 h1 flex-wrap 时整组占满第一行、图标落第二行,旗不与名分家 */}
@@ -1966,6 +1955,7 @@ export default function CompDetailPage() {
         {!isPodium && !isScramble && !isSimilar && !(isSchedule && schedView === 'poster') && (
           <div className="comp-event-bar">
             <WcaEventSelector
+              presentation="inline"
               availableEvents={availableEventIds}
               {...(isPsych
                 ? { selectedEvents: psychSelectedSet, onToggle: onTogglePsychEvent }
@@ -2029,7 +2019,7 @@ export default function CompDetailPage() {
                     className="comp-modal-copy-btn"
                     onClick={() => newsCopy.copy(recordNews.map((news, index) => {
                       const message = tr(news.message);
-                      return index === 0 ? `${message} | ${compNameTitle}` : stripRecordNewsPrefix(message);
+                      return index === 0 ? `${message} | ${compNameTitle}${countryFlag(compFlagIso2(slug))}` : stripRecordNewsPrefix(message);
                     }).join('\n'), slug)}
                     title={tr({ zh: '复制全部纪录快讯', en: 'Copy all record news' })}
                     aria-label={tr({ zh: '复制全部纪录快讯', en: 'Copy all record news' })}
@@ -2037,29 +2027,18 @@ export default function CompDetailPage() {
                     {newsCopy.copiedKey === slug ? <Check size={14} /> : <Copy size={14} />}
                   </button>
                 </div>
-                <ul className="comp-record-news-list">
-                  {recordNews.map((news, index) => (
-                    <li key={index}>
-                      <Link
-                        className="comp-record-news-link"
-                        href={`/wca/comp/${slug}?view=result&event=${news.event}${news.round ? `&round=${news.round}` : ''}`}
-                        prefetch={false}
-                      >
-                        <EventIcon event={news.event} className="comp-podium-icon" />
-                        <span>
-                          {news.results.map((result, resultIndex) => (
-                            <span className="comp-record-news-result" key={resultIndex}>
-                              {resultIndex > 0 && ' | '}
-                              {tr(result.text)}{' '}
-                              <span className="comp-record-news-tag">{RECORD_BADGE_CONTINENT[result.tag.replace(/^F/, '')] && <ContinentIcon slug={RECORD_BADGE_CONTINENT[result.tag.replace(/^F/, '')]} />}<RecordBadge record={result.tag} />{result.plural && tr({ zh: '', en: 's' })}{result.rank && `/WR${result.rank}`}</span>
-                              {resultIndex === 0 && <> <span className="comp-record-news-person">{displayCuberName(news.person, isZh)} <Flag iso2={news.country} className="comp-flag" /></span></>}
-                            </span>
-                          ))}
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
+                <RecentRecordsList
+                  isZh={isZh}
+                  showCopy={false}
+                  filled={recordNews.map((news, index) => ({
+                    id: `${slug}-${index}`,
+                    eventId: news.event,
+                    competitionId: slug,
+                    formattedCn: `${news.message.zh} | ${compNameTitle}${countryFlag(compFlagIso2(slug))}`,
+                    formattedEn: `${news.message.en} | ${compNameTitle}${countryFlag(compFlagIso2(slug))}`,
+                    href: `/wca/comp/${slug}?view=result&event=${news.event}${news.round ? `&round=${news.round}` : ''}`,
+                  }))}
+                />
               </section>
             )}
             {compRecords.length > 0 && (
@@ -2097,9 +2076,15 @@ export default function CompDetailPage() {
           </>
         ) : !isPsych ? (
           <>
-            {!isWca && (
+            {(!isWca || hasMyResults || !showCombined) && (
               <div className="comp-selectors">
-                <select
+                {!showCombined && <SearchInput
+                  value={resultSearch}
+                  onChange={value => void setResultSearch(value)}
+                  placeholder={tr({ zh: '搜索选手 / WCA ID', en: 'Search person / WCA ID' })}
+                  ariaLabel={tr({ zh: '搜索选手 / WCA ID', en: 'Search person / WCA ID' })}
+                />}
+                {!isWca && <select
                   className="comp-select comp-filter-select"
                   value={filterParam}
                   onChange={e => onChangeFilter(e.target.value)}
@@ -2107,7 +2092,18 @@ export default function CompDetailPage() {
                   {filterOptions.map(f => (
                     <option key={f.value} value={f.value}>{(isZh ? f.labelZh : f.labelEn)}</option>
                   ))}
-                </select>
+                </select>}
+                {hasMyResults && (
+                  <button
+                    type="button"
+                    className="comp-select"
+                    onClick={() => setModal({ kind: 'mine' })}
+                    aria-haspopup="dialog"
+                    aria-label={tr({ zh: '我的成绩', en: 'My results' })}
+                  >
+                    {tr({ zh: '我', en: 'Me' })}
+                  </button>
+                )}
               </div>
             )}
 
@@ -2126,6 +2122,7 @@ export default function CompDetailPage() {
             ) : (
               <ResultsTable
                 results={filteredResults}
+                search={resultSearch}
                 users={data.users}
                 round={currentRound?.rd}
                 isZh={isZh}
@@ -2197,6 +2194,21 @@ export default function CompDetailPage() {
           onClose={() => setModal(null)}
         />
       )}
+      {modal?.kind === 'mine' && hasMyResults && meCompetitor && (
+        <CuberModal
+          number={meCompetitor.number}
+          data={data}
+          isZh={isZh}
+          pbMap={pbMap}
+          changeMap={changeMap}
+          personal
+          loading={!fullLoaded}
+          onSelectRound={(eventId, roundId) => {
+            setModal({ kind: 'round', number: meCompetitor.number, eventId, roundId });
+          }}
+          onClose={() => setModal(null)}
+        />
+      )}
       {editTarget && (
         <ResultChangeEditor
           target={editTarget}
@@ -2235,10 +2247,10 @@ function CompInfoPanel({
   const cityStr = [info.city ? localizeCity(info.city, isZh, info.country_iso2) : '', country].filter(Boolean).join((i18n.language.startsWith('zh') ? ',' : ', '));
   const todayIso = toIsoDate(new Date());
   const isPast = (iso: string) => !!iso && iso.slice(0, 10) < todayIso;
-  const rows: { label: string; value: React.ReactNode; past?: boolean }[] = [];
+  const rows: { label: string; value: React.ReactNode; past?: boolean; hideLabel?: boolean }[] = [];
   if (dateStr) {
     const wd = weekdayRangeLabel(info.start_date, info.end_date, isZh);
-    rows.push({ label: tr({ zh: '日期', en: 'Date' }), value: wd ? `${dateStr} ${wd}` : dateStr });
+    rows.push({ label: tr({ zh: '日期', en: 'Date' }), hideLabel: true, value: wd ? `${dateStr} ${wd}` : dateStr });
   }
   if (info.competitor_limit) {
     rows.push({ label: tr({ zh: '上限', en: 'Limit' }), value: info.competitor_limit });
@@ -2262,10 +2274,10 @@ function CompInfoPanel({
   // cubing.com 给的是 "2026-08-13 19:00:00" 原样串,展示统一剥秒(全站时间只到时分)
   const stripSec = (s: string) => s.replace(/(\d{2}:\d{2}):\d{2}\b/, '$1');
   if (cubingZh?.withdrawDeadline) {
-    rows.push({ label: '退赛截止', value: stripSec(cubingZh.withdrawDeadline), past: isPast(cubingZh.withdrawDeadline) });
+    rows.push({ label: tr({ zh: '退赛截止', en: 'Cancellation deadline' }), value: stripSec(cubingZh.withdrawDeadline), past: isPast(cubingZh.withdrawDeadline) });
   }
   if (cubingZh?.reopenAt) {
-    rows.push({ label: '重开报名', value: stripSec(cubingZh.reopenAt), past: isPast(cubingZh.reopenAt) });
+    rows.push({ label: tr({ zh: '重开报名', en: 'Registration reopens' }), value: stripSec(cubingZh.reopenAt), past: isPast(cubingZh.reopenAt) });
   }
   if (info.event_change_deadline_date) {
     const d = toIsoDate(new Date(info.event_change_deadline_date));
@@ -2279,8 +2291,8 @@ function CompInfoPanel({
   if (cityStr && !(isZh && cubingZh?.location)) {
     rows.push({ label: tr({ zh: '城市', en: 'City' }), value: cityStr });
   }
-  if (cubingZh?.location) {
-    rows.push({ label: '地点', value: cubingZh.location });
+  if (isZh && cubingZh?.location) {
+    rows.push({ label: tr({ zh: '地点', en: 'Location' }), hideLabel: true, value: cubingZh.location });
   } else {
     if (info.venue_address) rows.push({ label: tr({ zh: '地址', en: 'Address' }), value: renderWcaText(info.venue_address) });
     if (info.venue_details) rows.push({ label: tr({ zh: '详情', en: 'Details'
@@ -2297,7 +2309,7 @@ function CompInfoPanel({
 function CompInfoRows({
   activeRows, pastRows, isZh,
 }: {
-  activeRows: { label: string; value: React.ReactNode }[];
+  activeRows: { label: string; value: React.ReactNode; hideLabel?: boolean }[];
   pastRows: { label: string; value: React.ReactNode }[];
   isZh: boolean;
 }) {
@@ -2305,7 +2317,7 @@ function CompInfoRows({
     <dl className={`comp-info-panel${isZh ? ' comp-info-panel--zh' : ''}`}>
       {activeRows.map((r, i) => (
         <div key={r.label} className="comp-info-row">
-          <dt className="comp-info-label">{r.label}</dt>
+          {!r.hideLabel && <dt className="comp-info-label">{r.label}</dt>}
           <dd className="comp-info-value">
             {r.value}
             {i === 0 && pastRows.length > 0 && (
@@ -2388,6 +2400,7 @@ function CompSortBtn({ active, dir, onClick, children }: { active: boolean; dir:
 
 interface ResultsTableProps {
   results: LiveResult[];
+  search?: string;
   users: Record<string, User>;
   round: RoundMeta | undefined;
   isZh: boolean;
@@ -2410,7 +2423,9 @@ interface ResultsTableProps {
   sortable?: boolean;
 }
 
-function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCuber, compIso2, changeMap, compId, compName, admin, loggedIn, meWcaId, reconMap, onEdit, onRefresh, sortable }: ResultsTableProps) {
+const RESULT_WINDOW_SIZE = 8;
+
+function ResultsTable({ results, search = '', users, round, isZh, pbMap, advancers, onClickCuber, compIso2, changeMap, compId, compName, admin, loggedIn, meWcaId, reconMap, onEdit, onRefresh, sortable }: ResultsTableProps) {
   // 排序:点列头(平均/单次/第 N 把)升→降→取消;无效成绩(DNF/DNS/空)恒垫底,默认 null=按名次序。
   const [sort, setSort] = useState<{ key: string | null; dir: 'asc' | 'desc' }>({ key: null, dir: 'asc' });
   const toggleSort = useCallback((key: string) => {
@@ -2421,11 +2436,16 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
   // 成绩变更覆盖层感知的有效值(订正后的 best/average),供名次 + 列头排序按订正值排。
   const eff = useMemo(() => makeEffRank(users, changeMap), [users, changeMap]);
   const displayResults = useMemo(() => {
-    if (!sort.key) return results;
+    const query = search.trim().toLowerCase();
+    const matching = query ? results.filter(r => {
+      const user = users[String(r.n)];
+      return `${user?.name ?? ''} ${user?.wcaid ?? ''} ${r.n}`.toLowerCase().includes(query);
+    }) : results;
+    if (!sort.key) return matching;
     const k = sort.key, dir = sort.dir;
     const valOf = (r: LiveResult): number =>
       k === 'average' ? eff(r).a : k === 'single' ? eff(r).b : (r.v[Number(k.slice(3))] ?? 0);
-    return results.slice().sort((a, b) => {
+    return matching.slice().sort((a, b) => {
       const va = valOf(a), vb = valOf(b);
       const ia = !(va > 0), ib = !(vb > 0);   // DNF/DNS/空 = 无效
       if (ia && ib) return 0;
@@ -2433,7 +2453,56 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
       if (ib) return -1;
       return dir === 'asc' ? va - vb : vb - va;
     });
-  }, [results, sort, eff]);
+  }, [results, search, users, sort, eff]);
+
+  const tableRef = useRef<HTMLTableElement>(null);
+  const windowed = displayResults.length > 80;
+  // Auto-sized table columns must not shrink when their widest visible row leaves.
+  // Retain measured widths within this round, but allow wider values to grow them.
+  useEffect(() => {
+    const table = tableRef.current;
+    if (!table || !windowed) return;
+    const columns = Array.from(table.querySelectorAll('col'));
+    let widths: number[] = [];
+    let tableWidth = 0;
+    const observer = new ResizeObserver(([entry]) => {
+      // Row windows change table height on every mount. Only remeasure columns
+      // when the width changes, and finish all reads before writing any styles.
+      const nextWidth = entry.borderBoxSize[0]?.inlineSize ?? entry.contentRect.width;
+      if (Math.abs(nextWidth - tableWidth) < 0.5) return;
+      tableWidth = nextWidth;
+      const cells = Array.from(table.tHead?.rows[0]?.cells ?? []);
+      const measured = cells.map(cell => cell.getBoundingClientRect().width);
+      measured.forEach((width, i) => {
+        if (width > (widths[i] ?? 0) + 0.5 && columns[i]) {
+          widths[i] = width;
+          columns[i].style.width = `${width}px`;
+        }
+      });
+    });
+    const reset = () => {
+      widths = [];
+      tableWidth = 0;
+      columns.forEach(col => { col.style.width = ''; });
+    };
+    let viewportWidth = window.innerWidth;
+    const onResize = () => {
+      // iPhone Safari resizes the viewport as its toolbar slides away. A height
+      // change must not discard column widths and reflow the table mid-scroll.
+      if (window.innerWidth === viewportWidth) return;
+      viewportWidth = window.innerWidth;
+      reset();
+    };
+    reset();
+    observer.observe(table);
+    window.addEventListener('resize', onResize);
+    return () => { observer.disconnect(); window.removeEventListener('resize', onResize); reset(); };
+  }, [windowed, round?.e, round?.i]);
+  const handlers = useRef({ onClickCuber, onEdit, onRefresh });
+  useEffect(() => { handlers.current = { onClickCuber, onEdit, onRefresh }; }, [onClickCuber, onEdit, onRefresh]);
+  const handleClickCuber = useCallback((number: number) => handlers.current.onClickCuber(number), []);
+  const handleEdit = useCallback((target: ResultChangeTarget) => handlers.current.onEdit?.(target), []);
+  const handleRefresh = useCallback(() => handlers.current.onRefresh?.(), []);
 
   if (!round) return null;
   const isAverageFormat = isAvgRankedFormat(round.f);
@@ -2456,9 +2525,42 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
     <CompSortBtn active={sort.key === key} dir={sort.dir} onClick={() => toggleSort(key)}>{label}</CompSortBtn>
   );
 
+  const columnCount = (showAvg ? 4 : 3) + attemptCount;
+  const renderRows = (start: number, end: number) => displayResults.slice(start, end).map((r, offset) => {
+    const idx = start + offset;
+    return (
+      <ResultsTableRow
+        key={r.i || `${r.n}:${idx}`}
+        rowIndex={idx + 2}
+        r={r}
+        u={users[String(r.n)]}
+        pb={pbMap[users[String(r.n)]?.wcaid]}
+        changes={changeMap?.get(personRoundChangeKey(users[String(r.n)]?.wcaid ?? '', r.e, r.r))}
+        place={placeByN.get(r.n) ?? null}
+        advanced={advancers?.has(r.n) ?? false}
+        isOdd={idx % 2 === 1}
+        showAvg={showAvg}
+        singleFirst={singleFirst}
+        attemptCount={attemptCount}
+        isZh={isZh}
+        compIso2={compIso2}
+        compId={compId}
+        compName={compName}
+        admin={admin}
+        loggedIn={loggedIn}
+        meWcaId={meWcaId}
+        reconMap={reconMap}
+        onEdit={handleEdit}
+        onRefresh={handleRefresh}
+        onClickCuber={handleClickCuber}
+      />
+    );
+  });
+
   return (
-    <div className="comp-table-wrap">
-      <table className={`comp-table${compIso2 === 'cn' && isZh ? ' comp-table-cn' : ''}`}>
+    <div className="comp-table-wrap sticky-scroll-mobile">
+      <table ref={tableRef} aria-rowcount={displayResults.length + 1} className={`comp-table${compIso2 === 'cn' && isZh ? ' comp-table-cn' : ''}`}>
+        {windowed && <colgroup>{Array.from({ length: columnCount }, (_, i) => <col key={i} />)}</colgroup>}
         <thead>
           <tr>
             <th className="th-place">{tr({ zh: '名次', en: 'Place' })}</th>
@@ -2480,198 +2582,274 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
               : attemptNumHeaders(attemptCount)}
           </tr>
         </thead>
-        <tbody>
-          {displayResults.map((r, idx) => {
-            const u = users[String(r.n)];
-            if (!u) return null;
-            const fullCuberName = displayCuberName(u.name, isZh);
-            const cuberName = displayCuberName(u.name, isZh, { compactForeign: compIso2 === 'cn' && isZh });
-            const place = placeByN.get(r.n) ?? null;
-            const pb = pbMap[u.wcaid];
-            const { singleRank, averageRank } = classifyPr(r, pb);
-            const singleBadge = prBadgeFor(singleRank);
-            const averageBadge = prBadgeFor(averageRank);
-            const wcaid = u.wcaid;
-            // 只取 approved:pending 提议绝不进官方值,也不让其 note 漏到官方单元(见 splitChainByStatus)。
-            const { approved: chain } = splitChainByStatus(wcaid ? changeMap?.get(personRoundChangeKey(wcaid, r.e, r.r)) : undefined);
-            // 当前有效值 = live 值叠加变更链最新(行内改某次后即时反映)。
-            const effBest = effectiveFieldValue(chain, 'best', r.b);
-            const effAvg = effectiveFieldValue(chain, 'average', effectiveAvg(r));
-            const effAttempts = trimEmptyAttempts(effectiveAttempts(chain, r.v));
-            const calcHref = compId ? calcCompetitionHref({
-              eventId: r.e,
-              attempts: effAttempts,
-              personName: fullCuberName,
-              personNumber: r.n,
-              wcaId: wcaid,
-              competitionId: compId,
-              competitionName: compName,
-              roundTypeId: r.r,
-            }) : null;
-            const calcLabel = tr({
-              zh: `把 ${fullCuberName} 的成绩带到计算器`,
-              en: `Open ${fullCuberName}'s results in calculator`,
-            });
-            const isOdd = idx % 2 === 1;
-            const advanced = advancers?.has(r.n);
-            const cls = [advanced ? 'row-advanced' : '', isOdd ? 'row-odd' : ''].filter(Boolean).join(' ');
-            return (
-              <tr
-                key={r.i || `${r.n}:${idx}`}
-                className={`${cls} comp-row-clickable`}
-                onClick={() => onClickCuber(r.n)}
-              >
-                <td className={`td-place${place === 1 ? ' is-gold' : place === 2 ? ' is-silver' : place === 3 ? ' is-bronze' : ''}`}>
-                  {place ?? '-'}
-                  {calcHref && (
-                    <Link
-                      href={calcHref}
-                      prefetch={false}
-                      className="comp-calc-link"
-                      aria-label={calcLabel}
-                      title={calcLabel}
-                      onClick={e => e.stopPropagation()}
-                    >
-                      <Calculator size={13} strokeWidth={1.8} aria-hidden="true" />
-                    </Link>
-                  )}
-                </td>
-                <td className="td-person">
-                  <Flag iso2={regionToIso2(u.region)} className="comp-flag" />
-                  <Link
-                    href={compResultHref(compId ?? '', { eventId: r.e, roundId: r.r, number: r.n })}
-                    prefetch={false}
-                    onClick={e => e.stopPropagation()}
-                    onNavigate={e => { e.preventDefault(); onClickCuber(r.n); }}
-                    className="cuber-name cuber-link"
-                    title={`${fullCuberName}\n${regionDisplay(u.region, isZh)}`}
-                  >
-                    {cuberName}
-                  </Link>
-                  {/* 行级编辑铅笔已移除:管理员经点成绩弹窗里的「编辑变更记录…」打开整条变更编辑器。 */}
-                </td>
-                {(() => {
-                  const avgCell = showAvg ? (
-                    <td key="avg" className={`td-avg${!singleFirst ? ' is-rank-col' : ''}`}>
-                      <span className="record-num-cell">
-                        <ResultChangeChain oldValues={changeChainOldValues(chain, 'average')} eventId={r.e} kind="average" note={chain?.[chain.length - 1]?.note} />
-                        {formatLive(effAvg, r.e, true)}
-                        <ResultRecordBadge tag={String(r.ar || '')} keatoned={r.ak} iso2={regionToIso2(u.region)} fallback={averageBadge} eventId={r.e} isAvg />
-
-                      </span>
-                    </td>
-                  ) : null;
-                  const bestCell = (
-                    <td key="best" className={`td-best${singleFirst ? ' is-rank-col' : ''}`}>
-                      <span className="record-num-cell">
-                        <ResultChangeChain oldValues={changeChainOldValues(chain, 'best')} eventId={r.e} kind="single" note={chain?.[chain.length - 1]?.note} />
-                        {formatLive(effBest, r.e, false)}
-                        <ResultRecordBadge tag={r.sr} keatoned={r.sk} iso2={regionToIso2(u.region)} fallback={singleBadge} eventId={r.e} isAvg={false} />
-
-                      </span>
-                    </td>
-                  );
-                  return singleFirst ? [bestCell, avgCell] : [avgCell, bestCell];
-                })()}
-                {Array.from({ length: attemptCount }).map((_, i) => {
-                  const hasSlot = i < effAttempts.length;            // 该轮赛制下这把存在(空位/DNF 也算);超出=空格不可点
-                  const av = effAttempts[i] ?? 0;
-                  const pen = effectiveAttemptPenalties(chain)[i] ?? 0;
-                  const reconId = hasSlot
-                    ? findReconForPersonAttempt(reconMap, compId ?? '', wcaid ?? '', r.e, r.r, i + 1)
-                    : undefined;
-                  // 复盘目标:有复盘→详情(所有人可看);没复盘→/recon/submit 预填身份字段。
-                  const reconHref = reconId
-                    ? `/recon/${reconId}${isZh ? '?lang=zh' : ''}`
-                    : buildReconSubmitHref({
-                        wcaEventId: r.e, roundTypeId: r.r, solveNum: i + 1,
-                        personId: wcaid ?? '', personName: u.name ?? '', personCountry: regionToIso2(u.region),
-                        compId: compId ?? '', compName: compName ?? '', compCountry: compIso2,
-                        rawTimeSec: pen > 0 && av > 0 ? (av - pen) / 100 : undefined,
-                      });
-                  const isOwner = !!meWcaId && meWcaId === wcaid;
-                  return (
-                  <td key={i} className={`td-attempt ${isAo5Bracketed(effAttempts, i) ? 'td-attempt-trimmed' : ''} ${reconId ? 'td-attempt-has-recon' : ''}`}>
-                    {hasSlot && (
-                      // 选手页同款统一弹窗:复盘 / 判罚原因 / 编辑提议 / 管理员变更记录(全站一致)。
-                      <AttemptPopover
-                        value={av}
-                        eventId={r.e}
-                        penalty={pen}
-                        penaltyNote={effectiveAttemptPenaltyNote(chain)}
-                        format={(v) => formatLive(v, r.e, false)}
-                        oldValues={attemptOldValues(chain, i)}
-                        showOldBelow={false}
-                        reconHref={reconHref}
-                        hasRecon={!!reconId}
-                        reconId={reconId}
-                        reconClassName="att-trig-recon"
-                        plainClassName="att-trig-plain"
-                        canEdit={loggedIn}
-                        isAdmin={admin}
-                        isOwner={isOwner}
-                        video={{
-                          approved: effectiveAttemptVideos(chain)[i],
-                          pending: pendingAttemptVideos(chain)[i],
-                          onAdd: loggedIn ? (url) =>
-                            recordAttemptVideos({
-                              target: { wcaId: wcaid, competitionId: compId ?? '', eventId: r.e, roundTypeId: r.r, resultId: r.i },
-                              currentAttempts: effAttempts,
-                              index: i, videoUrl: url, existingChain: chain, propose: !admin,
-                            }).then(() => onRefresh?.()) : undefined,
-                        }}
-                        onEdit={(newValue, note) =>
-                          recordAttemptEdit({
-                            target: { wcaId: wcaid, competitionId: compId ?? '', eventId: r.e, roundTypeId: r.r, resultId: r.i },
-                            currentAttempts: effAttempts, currentBest: effBest, currentAverage: effAvg,
-                            index: i, newValue, note,
-                          }).then(() => onRefresh?.())
-                        }
-                        onSetOriginal={(originalValue, note) =>
-                          recordAttemptOriginal({
-                            target: { wcaId: wcaid, competitionId: compId ?? '', eventId: r.e, roundTypeId: r.r, resultId: r.i },
-                            currentAttempts: effAttempts, currentBest: effBest, currentAverage: effAvg,
-                            index: i, originalValue, note, existingChain: chain, propose: !admin,
-                          }).then(() => onRefresh?.())
-                        }
-                        onSetPenalty={(penaltyCs, note) =>
-                          recordAttemptPenalty({
-                            target: { wcaId: wcaid, competitionId: compId ?? '', eventId: r.e, roundTypeId: r.r, resultId: r.i },
-                            currentAttempts: effAttempts,
-                            index: i, penaltyCs, note, existingChain: chain, propose: !admin && !isOwner,
-                          }).then(() => onRefresh?.())
-                        }
-                        onEditRecord={admin && wcaid ? () => onEdit?.({
-                          wcaId: wcaid,
-                          competitionId: compId ?? '',
-                          eventId: r.e,
-                          roundTypeId: r.r,
-                          resultId: r.i,
-                          currentAttempts: effAttempts,
-                          currentBest: effBest,
-                          currentAverage: effAvg,
-                          currentSingleRecord: typeof r.sr === 'string' ? r.sr : null,
-                          currentAverageRecord: typeof r.ar === 'string' ? r.ar : null,
-                          personName: u.name ?? null,
-                          compName: compName ?? null,
-                        }) : undefined}
-                      />
-                    )}
-                  </td>
-                  );
-                })}
-              </tr>
-            );
-          })}
-          {results.length === 0 && (
-            <tr><td colSpan={(showAvg ? 4 : 3) + attemptCount} className="comp-empty">{tr({ zh: '此轮暂无成绩', en: 'No results yet'
-            })}</td></tr>
+        {windowed ? Array.from({ length: Math.ceil(displayResults.length / RESULT_WINDOW_SIZE) }, (_, group) => {
+          const start = group * RESULT_WINDOW_SIZE;
+          return <ResultsTableWindow
+            key={`${compId}|${round.e}|${round.i}|${search}|${sort.key}|${sort.dir}|${group}`}
+            count={Math.min(RESULT_WINDOW_SIZE, displayResults.length - start)}
+            columns={columnCount}
+            initial={group === 0}
+            renderRows={() => renderRows(start, start + RESULT_WINDOW_SIZE)}
+          />;
+        }) : <tbody>
+          {renderRows(0, displayResults.length)}
+          {displayResults.length === 0 && (
+            <tr><td colSpan={columnCount} className="comp-empty">{search.trim()
+              ? tr({ zh: '没有匹配的选手', en: 'No matching competitors' })
+              : tr({ zh: '此轮暂无成绩', en: 'No results yet' })}</td></tr>
           )}
-        </tbody>
+        </tbody>}
       </table>
     </div>
   );
 }
+
+// Table-specific viewport windows: keep native table layout and measured row
+// heights (change histories can make a row taller). Visibility updates one window
+// instead of reconciling the full table on every scroll event.
+function ResultsTableWindow({ count, columns, initial, renderRows }: {
+  count: number; columns: number; initial: boolean; renderRows: () => ReactNode;
+}) {
+  const ref = useRef<HTMLTableSectionElement>(null);
+  const [visible, setVisible] = useState(initial);
+  const height = useRef<number | undefined>(undefined);
+  const [retained, setRetained] = useState(false);
+  const mounted = visible || retained;
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    // Rendering is interruptible so a new touch/scroll need not wait for a whole
+    // window. The overscan gives this work time to finish before it is visible.
+    const observer = new IntersectionObserver(([entry]) => {
+      startTransition(() => setVisible(entry.isIntersecting));
+    }, { rootMargin: '600px 0px' });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+  useEffect(() => {
+    const element = ref.current;
+    if (!element || !mounted) return;
+    const observer = new ResizeObserver(([entry]) => {
+      // Cache the browser's measurement without another render or forced layout.
+      height.current = entry.borderBoxSize[0]?.blockSize ?? entry.contentRect.height;
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [mounted]);
+  return <tbody ref={ref}
+    // Preserve focused controls and portals owned by a row after interaction,
+    // including touch devices where pressing a button does not focus it.
+    onFocusCapture={() => setRetained(true)}
+    onClickCapture={() => setRetained(true)}
+  >
+    {mounted ? renderRows() : <tr aria-hidden="true">
+      <td className="comp-result-spacer" colSpan={columns}
+        style={{ height: height.current ?? `calc(var(--comp-result-row-height) * ${count})` }} />
+    </tr>}
+  </tbody>;
+}
+
+// Each row receives its own data, so background metadata and other rounds do not
+// rebuild thousands of attempt buttons. Callbacks stay current via table handlers.
+type ResultsTableRowProps = Pick<ResultsTableProps,
+  'isZh' | 'compIso2' | 'compId' | 'compName' | 'admin' | 'loggedIn' | 'meWcaId' | 'reconMap' | 'onEdit' | 'onRefresh' | 'onClickCuber'> & {
+  r: LiveResult;
+  u: User | undefined;
+  pb: PbByEvent | null | undefined;
+  changes: ResultChange[] | undefined;
+  place: number | null;
+  advanced: boolean;
+  isOdd: boolean;
+  showAvg: boolean;
+  singleFirst: boolean;
+  attemptCount: number;
+  rowIndex: number;
+};
+
+const ResultsTableRow = memo(function ResultsTableRow({
+  r, u, pb, changes, place, advanced, isOdd, showAvg, singleFirst, attemptCount, rowIndex,
+  isZh, compIso2, compId, compName, admin, loggedIn, meWcaId, reconMap, onEdit, onRefresh, onClickCuber,
+}: ResultsTableRowProps) {
+  if (!u) return null;
+  const fullCuberName = displayCuberName(u.name, isZh);
+  const cuberName = displayCuberName(u.name, isZh, { compactForeign: compIso2 === 'cn' && isZh });
+  const { singleRank, averageRank } = classifyPr(r, pb ?? null);
+  const singleBadge = prBadgeFor(singleRank);
+  const averageBadge = prBadgeFor(averageRank);
+  const wcaid = u.wcaid;
+  // 只取 approved:pending 提议绝不进官方值,也不让其 note 漏到官方单元(见 splitChainByStatus)。
+  const { approved: chain } = splitChainByStatus(wcaid ? changes : undefined);
+  // 当前有效值 = live 值叠加变更链最新(行内改某次后即时反映)。
+  const effBest = effectiveFieldValue(chain, 'best', r.b);
+  const effAvg = effectiveFieldValue(chain, 'average', effectiveAvg(r));
+  const effAttempts = trimEmptyAttempts(effectiveAttempts(chain, r.v));
+  const penalties = effectiveAttemptPenalties(chain);
+  const penaltyNote = effectiveAttemptPenaltyNote(chain);
+  const approvedVideos = effectiveAttemptVideos(chain);
+  const pendingVideos = pendingAttemptVideos(chain);
+  const calcHref = compId ? calcCompetitionHref({
+    eventId: r.e,
+    attempts: effAttempts,
+    personName: fullCuberName,
+    personNumber: r.n,
+    wcaId: wcaid,
+    competitionId: compId,
+    competitionName: compName,
+    roundTypeId: r.r,
+  }) : null;
+  const calcLabel = tr({
+    zh: `把 ${fullCuberName} 的成绩带到计算器`,
+    en: `Open ${fullCuberName}'s results in calculator`,
+  });
+  const cls = [advanced ? 'row-advanced' : '', isOdd ? 'row-odd' : ''].filter(Boolean).join(' ');
+  return (
+    <tr
+      aria-rowindex={rowIndex}
+      className={`${cls} comp-row-clickable`}
+      onClick={() => onClickCuber(r.n)}
+    >
+      <td className={`td-place${place === 1 ? ' is-gold' : place === 2 ? ' is-silver' : place === 3 ? ' is-bronze' : ''}`}>
+        {place ?? '-'}
+        {calcHref && (
+          <Link
+            href={calcHref}
+            prefetch={false}
+            className="comp-calc-link"
+            aria-label={calcLabel}
+            title={calcLabel}
+            onClick={e => e.stopPropagation()}
+          >
+            <Calculator size={13} strokeWidth={1.8} aria-hidden="true" />
+          </Link>
+        )}
+      </td>
+      <td className="td-person">
+        <Flag iso2={regionToIso2(u.region)} className="comp-flag" />
+        <Link
+          href={compResultHref(compId ?? '', { eventId: r.e, roundId: r.r, number: r.n })}
+          prefetch={false}
+          onClick={e => e.stopPropagation()}
+          onNavigate={e => { e.preventDefault(); onClickCuber(r.n); }}
+          className="cuber-name cuber-link"
+          title={`${fullCuberName}\n${regionDisplay(u.region, isZh)}`}
+        >
+          {cuberName}
+        </Link>
+        {/* 行级编辑铅笔已移除:管理员经点成绩弹窗里的「编辑变更记录…」打开整条变更编辑器。 */}
+      </td>
+      {(() => {
+        const avgCell = showAvg ? (
+          <td key="avg" className={`td-avg${!singleFirst ? ' is-rank-col' : ''}`}>
+            <span className="record-num-cell">
+              <ResultChangeChain oldValues={changeChainOldValues(chain, 'average')} eventId={r.e} kind="average" note={chain?.[chain.length - 1]?.note} />
+              {formatLive(effAvg, r.e, true)}
+              <ResultRecordBadge tag={String(r.ar || '')} keatoned={r.ak} iso2={regionToIso2(u.region)} fallback={averageBadge} eventId={r.e} isAvg />
+
+            </span>
+          </td>
+        ) : null;
+        const bestCell = (
+          <td key="best" className={`td-best${singleFirst ? ' is-rank-col' : ''}`}>
+            <span className="record-num-cell">
+              <ResultChangeChain oldValues={changeChainOldValues(chain, 'best')} eventId={r.e} kind="single" note={chain?.[chain.length - 1]?.note} />
+              {formatLive(effBest, r.e, false)}
+              <ResultRecordBadge tag={r.sr} keatoned={r.sk} iso2={regionToIso2(u.region)} fallback={singleBadge} eventId={r.e} isAvg={false} />
+
+            </span>
+          </td>
+        );
+        return singleFirst ? [bestCell, avgCell] : [avgCell, bestCell];
+      })()}
+      {Array.from({ length: attemptCount }).map((_, i) => {
+        const hasSlot = i < effAttempts.length;            // 该轮赛制下这把存在(空位/DNF 也算);超出=空格不可点
+        const av = effAttempts[i] ?? 0;
+        const pen = penalties[i] ?? 0;
+        const reconId = hasSlot
+          ? findReconForPersonAttempt(reconMap, compId ?? '', wcaid ?? '', r.e, r.r, i + 1)
+          : undefined;
+        // 复盘目标:有复盘→详情(所有人可看);没复盘→/recon/submit 预填身份字段。
+        const reconHref = reconId
+          ? `/recon/${reconId}${isZh ? '?lang=zh' : ''}`
+          : buildReconSubmitHref({
+              wcaEventId: r.e, roundTypeId: r.r, solveNum: i + 1,
+              personId: wcaid ?? '', personName: u.name ?? '', personCountry: regionToIso2(u.region),
+              compId: compId ?? '', compName: compName ?? '', compCountry: compIso2,
+              rawTimeSec: pen > 0 && av > 0 ? (av - pen) / 100 : undefined,
+            });
+        const isOwner = !!meWcaId && meWcaId === wcaid;
+        return (
+        <td key={i} className={`td-attempt ${isAo5Bracketed(effAttempts, i) ? 'td-attempt-trimmed' : ''} ${reconId ? 'td-attempt-has-recon' : ''}`}>
+          {hasSlot && (
+            // 选手页同款统一弹窗:复盘 / 判罚原因 / 编辑提议 / 管理员变更记录(全站一致)。
+            <AttemptPopover
+              value={av}
+              eventId={r.e}
+              penalty={pen}
+              penaltyNote={penaltyNote}
+              format={(v) => formatLive(v, r.e, false)}
+              oldValues={attemptOldValues(chain, i)}
+              showOldBelow={false}
+              reconHref={reconHref}
+              hasRecon={!!reconId}
+              reconId={reconId}
+              reconClassName="att-trig-recon"
+              plainClassName="att-trig-plain"
+              canEdit={loggedIn}
+              isAdmin={admin}
+              isOwner={isOwner}
+              video={{
+                approved: approvedVideos[i],
+                pending: pendingVideos[i],
+                onAdd: loggedIn ? (url) =>
+                  recordAttemptVideos({
+                    target: { wcaId: wcaid, competitionId: compId ?? '', eventId: r.e, roundTypeId: r.r, resultId: r.i },
+                    currentAttempts: effAttempts,
+                    index: i, videoUrl: url, existingChain: chain, propose: !admin,
+                  }).then(() => onRefresh?.()) : undefined,
+              }}
+              onEdit={(newValue, note) =>
+                recordAttemptEdit({
+                  target: { wcaId: wcaid, competitionId: compId ?? '', eventId: r.e, roundTypeId: r.r, resultId: r.i },
+                  currentAttempts: effAttempts, currentBest: effBest, currentAverage: effAvg,
+                  index: i, newValue, note,
+                }).then(() => onRefresh?.())
+              }
+              onSetOriginal={(originalValue, note) =>
+                recordAttemptOriginal({
+                  target: { wcaId: wcaid, competitionId: compId ?? '', eventId: r.e, roundTypeId: r.r, resultId: r.i },
+                  currentAttempts: effAttempts, currentBest: effBest, currentAverage: effAvg,
+                  index: i, originalValue, note, existingChain: chain, propose: !admin,
+                }).then(() => onRefresh?.())
+              }
+              onSetPenalty={(penaltyCs, note) =>
+                recordAttemptPenalty({
+                  target: { wcaId: wcaid, competitionId: compId ?? '', eventId: r.e, roundTypeId: r.r, resultId: r.i },
+                  currentAttempts: effAttempts,
+                  index: i, penaltyCs, note, existingChain: chain, propose: !admin && !isOwner,
+                }).then(() => onRefresh?.())
+              }
+              onEditRecord={admin && wcaid ? () => onEdit?.({
+                wcaId: wcaid,
+                competitionId: compId ?? '',
+                eventId: r.e,
+                roundTypeId: r.r,
+                resultId: r.i,
+                currentAttempts: effAttempts,
+                currentBest: effBest,
+                currentAverage: effAvg,
+                currentSingleRecord: typeof r.sr === 'string' ? r.sr : null,
+                currentAverageRecord: typeof r.ar === 'string' ? r.ar : null,
+                personName: u.name ?? null,
+                compName: compName ?? null,
+              }) : undefined}
+            />
+          )}
+        </td>
+        );
+      })}
+    </tr>
+  );
+});
 
 interface PodiumViewProps {
   groups: PodiumGroup[];
@@ -2760,7 +2938,7 @@ function CompRecordsView({ groups, users, isZh, onClickCuber }: CompRecordsViewP
               <EventIcon event={g.ev.i} className="comp-podium-icon" />
               <span>{eventDisplayName(g.ev.i, isZh)}</span>
             </h3>
-            <div className="comp-table-wrap">
+            <div className="comp-table-wrap sticky-scroll-mobile">
               <table className="comp-table">
                 <thead>
                   <tr>
@@ -2860,7 +3038,7 @@ function CombinedDualRoundsTable({ data, ev, r1, r2, isZh, pbMap, compIso2, memb
   const fixedCols = 3 + (showAvg ? 2 : 1); // place + person + round + best (+ avg)
 
   return (
-    <div className="comp-table-wrap">
+    <div className="comp-table-wrap sticky-scroll-mobile">
       <table className={`comp-table comp-table-dual${compIso2 === 'cn' && isZh ? ' comp-table-cn' : ''}`}>
         <thead>
           <tr>
@@ -3163,7 +3341,7 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
 
   if (eventIds.length >= 2) {
     return (
-      <div className="comp-table-wrap">
+      <div className="comp-table-wrap sticky-scroll-mobile">
         <table className="comp-table comp-sor-table">
           <thead>
             <tr>
@@ -3220,7 +3398,7 @@ function PsychSheet({ data, isZh, eventIds, pbMap, onClickCuber }: PsychSheetPro
   const rankByN = new Map<number, number>(psychRows.map((r, i) => [r.n, i + 1]));
 
   return (
-    <div className="comp-table-wrap">
+    <div className="comp-table-wrap sticky-scroll-mobile">
       <table className="comp-table">
         {eventId ? (
           <>
@@ -3342,11 +3520,13 @@ interface CuberModalProps {
   isZh: boolean;
   pbMap: Record<string, PbByEvent | null>;
   changeMap?: Map<string, ResultChange[]>;
+  personal?: boolean;
+  loading?: boolean;
   onSelectRound: (eventId: string, roundId: string) => void;
   onClose: () => void;
 }
 
-function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClose }: CuberModalProps) {
+function CuberModal({ number, data, isZh, pbMap, changeMap, personal = false, loading = false, onSelectRound, onClose }: CuberModalProps) {
   const [search, setSearch] = useState('');
   const backdropProps = useModalBackdrop(onClose);
   const [downloadState, setDownloadState] = useState<'idle' | 'busy' | 'error'>('idle');
@@ -3392,8 +3572,8 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClo
     return () => document.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  if (!u) return null;
-  const pb = pbMap[u.wcaid];
+  if (!u && !personal) return null;
+  const pb = u ? pbMap[u.wcaid] ?? null : null;
 
   const groups: { ev: EventMeta; entries: typeof rows }[] = [];
   let cur: { ev: EventMeta; entries: typeof rows } | null = null;
@@ -3407,7 +3587,7 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClo
 
   async function handleDownload() {
     const node = cardRef.current;
-    if (!node) return;
+    if (!node || !u) return;
     setDownloadState('busy');
     // Same treatment as the round modal: expand off internal scroll for the capture,
     // and hide chrome (close button + the download/lang controls themselves).
@@ -3453,8 +3633,8 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClo
       <div ref={cardRef} className="comp-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
         <header className="comp-modal-header comp-cuber-modal-header">
           <div className="comp-modal-title">
-            <Flag iso2={regionToIso2(u.region)} className="comp-flag" />
-            {u.wcaid ? (
+            {u && <Flag iso2={regionToIso2(u.region)} className="comp-flag" />}
+            {u?.wcaid ? (
               <Link
                 prefetch={false}
                 href={`/wca/persons/${u.wcaid}`}
@@ -3463,14 +3643,13 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClo
                 {displayCuberName(u.name, isZh)}
               </Link>
             ) : (
-              <span className="cuber-link-static">{displayCuberName(u.name, isZh)}</span>
+              <span className="cuber-link-static">{u ? displayCuberName(u.name, isZh) : ''}</span>
             )}
           </div>
           <div className="comp-modal-search">
             <SearchInput
               value={search}
               onChange={setSearch}
-              autoFocus
               type="search"
               placeholder={tr({ zh: '搜索成绩', en: 'Search results' })}
             />
@@ -3481,7 +3660,7 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClo
               type="button"
               className="comp-modal-copy-btn"
               onClick={handleDownload}
-              disabled={downloadState === 'busy'}
+              disabled={downloadState === 'busy' || loading || !u}
               title={tr({ zh: '下载为图片', en: 'Download as image' })}
             >
               <Download size={14} />
@@ -3492,9 +3671,12 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClo
           </button>
         </header>
         <div className="comp-modal-body">
-          {groups.length === 0 ? (
-            <div className="comp-empty">{tr({ zh: '暂无成绩', en: 'No results'
-            })}</div>
+          {loading ? (
+            <div className="comp-empty" role="status">{tr({ zh: '加载中…', en: 'Loading…' })}</div>
+          ) : groups.length === 0 ? (
+            <div className="comp-empty">{personal
+              ? tr({ zh: '本场比赛暂无你的成绩', en: 'No results for you at this competition yet' })
+              : tr({ zh: '暂无成绩', en: 'No results' })}</div>
           ) : (
             groups.map(g => {
               // mo3/bo3 项目只出实际把数列,不渲染空的 4/5(与主成绩表同口径)
@@ -3504,12 +3686,13 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClo
               );
               return (
               <div key={g.ev.i} className="comp-modal-group">
-                <h3 className="comp-modal-group-title">{highlight(eventDisplayName(g.ev.i, isZh))}</h3>
-                <table className="comp-modal-table">
+                <table className="comp-modal-table" aria-label={eventDisplayName(g.ev.i, isZh)}>
                   <thead>
                     <tr>
-                      <th>{tr({ zh: '轮次', en: 'Round' })}</th>
-                      <th>{tr({ zh: '名次', en: 'Place' })}</th>
+                      <th aria-label={tr({ zh: '轮次', en: 'Round' })}>
+                        <EventIcon event={g.ev.i} title={eventDisplayName(g.ev.i, isZh)} />
+                      </th>
+                      <th aria-label={tr({ zh: '名次', en: 'Place' })}>#</th>
                       <th>{tr({ zh: '单次', en: 'Best'
                     })}</th>
                       <th>{tr({ zh: '平均', en: 'Average' })}</th>
@@ -3543,11 +3726,11 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClo
                           <td>{highlight(place)}</td>
                           <td>
                             {highlight(formatLive(result.b, result.e, false))}
-                            <ResultRecordBadge tag={result.sr} keatoned={result.sk} iso2={regionToIso2(u.region)} fallback={singleBadge} eventId={result.e} isAvg={false} />
+                            <ResultRecordBadge tag={result.sr} keatoned={result.sk} iso2={regionToIso2(u?.region ?? '')} fallback={singleBadge} eventId={result.e} isAvg={false} />
                           </td>
                           <td>
                             {showAvg ? highlight(formatLive(effectiveAvg(result), result.e, true)) : ''}
-                            {showAvg && <ResultRecordBadge tag={String(result.ar || '')} keatoned={result.ak} iso2={regionToIso2(u.region)} fallback={averageBadge} eventId={result.e} isAvg />}
+                            {showAvg && <ResultRecordBadge tag={String(result.ar || '')} keatoned={result.ak} iso2={regionToIso2(u?.region ?? '')} fallback={averageBadge} eventId={result.e} isAvg />}
                           </td>
                           {Array.from({ length: attemptCount }).map((_, i) => (
                             <td key={i} className={`td-attempt ${isAo5Bracketed(atts, i) ? 'td-attempt-trimmed' : ''}`}>
@@ -3680,14 +3863,13 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
     // PR(rank 1)或带地区纪录标签(sr/ar)都要世界名次:前者显示 PR/WRn,后者显示 记录/WRn。
     const wantSingle = (singleRank === 1 || !!result.sr) && result.b > 0;
     const wantAvg = (averageRank === 1 || !!result.ar) && isAvgFmt && avgVal > 0;
-    // 只在缓存未命中(undefined)时才单查;命中(含确定无名次的 null)直接跳过。excludeComp=本场:
-    // 服务端 overlay 排除本场(客户端已就本场实时成绩自订正,避免重复计数)。
+    // 只在缓存未命中(undefined)时才单查;本场与跨场新成绩均由服务端统一去重。
     const tasks: Promise<unknown>[] = [];
-    if (wantSingle && getCachedRankForWca(result.e, result.b, 'single', country, data.slug) === undefined) {
-      tasks.push(fetchRankForWca(result.e, result.b, 'single', country, data.slug));
+    if (wantSingle && getCachedRankForWca(result.e, result.b, 'single', country) === undefined) {
+      tasks.push(fetchRankForWca(result.e, result.b, 'single', country));
     }
-    if (wantAvg && getCachedRankForWca(result.e, avgVal, 'average', country, data.slug) === undefined) {
-      tasks.push(fetchRankForWca(result.e, avgVal, 'average', country, data.slug));
+    if (wantAvg && getCachedRankForWca(result.e, avgVal, 'average', country) === undefined) {
+      tasks.push(fetchRankForWca(result.e, avgVal, 'average', country));
     }
     if (tasks.length === 0) return;
     let cancelled = false;
@@ -3717,7 +3899,10 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
   const rIdx = rankedArr.findIndex(rr => rr.n === number);
   const place = rIdx >= 0 && result.b !== 0 ? rankedPlaces[rIdx] : null;
   const iso2 = regionToIso2(u.region);
-  const attempts = result.v.filter(v => v !== 0);
+  const { approved: chain } = splitChainByStatus(u.wcaid ? changeMap?.get(personRoundChangeKey(u.wcaid, result.e, result.r)) : undefined);
+  const attempts = trimEmptyAttempts(effectiveAttempts(chain, result.v));
+  const penalties = effectiveAttemptPenalties(chain);
+  const penaltyNote = effectiveAttemptPenaltyNote(chain);
 
   const singleTagForCopy = result.sr ? String(result.sr) : (singleRank ? 'PR' : '');
   const avgTagForCopy = result.ar ? String(result.ar) : (averageRank ? 'PR' : '');
@@ -3725,24 +3910,10 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
 
   // 渲染期同步读名次缓存(命中则秒出;未命中=undefined,上面的 effect 会单查后 bump 重渲染)。
   const country = iso2.toUpperCase();
-  const singleRankBase = getCachedRankForWca(result.e, result.b, 'single', country, data.slug);
-  const avgRankBase = getCachedRankForWca(result.e, effectiveAvg(result), 'average', country, data.slug);
-  // 把本场实时成绩并进官方名次,修掉「官方 dump 滞后 → 假全国/世界第几」(同场更快成绩官方未计入)。
-  // 再叠一层同日跨场的:被「日掩」的成绩,掩它的那几条也不在官方 dump 里,不加就会出现
-  // 「badge 已标明当天有人更快,名次却还是 WR1」。
-  const singleKeatonedBy = judgeRecordTag(result.b, result.e, false, u, data.currentRecords).keatonedBy;
-  const avgKeatonedBy = judgeRecordTag(effectiveAvg(result), result.e, true, u, data.currentRecords).keatonedBy;
-  const self = { person: u.name, comp: data.slug };
-  const singleRankInfo = singleRankBase
-    ? applyDayRankDelta(
-        adjustRankWithLiveComp(singleRankBase, buildLiveCompEntries(data, pbMap, result.e, 'single'), result.b, number, country),
-        singleKeatonedBy, country, self)
-    : singleRankBase;
-  const avgRankInfo = avgRankBase
-    ? applyDayRankDelta(
-        adjustRankWithLiveComp(avgRankBase, buildLiveCompEntries(data, pbMap, result.e, 'average'), effectiveAvg(result), number, country),
-        avgKeatonedBy, country, self)
-    : avgRankBase;
+  // 当前排名由服务端合并官方快照与近期成绩后按选手去重。
+  // pbMap 是赛前 PB,不能据此再次补人数:已入库的新 PB 会被重复计入。
+  const singleRankInfo = getCachedRankForWca(result.e, result.b, 'single', country);
+  const avgRankInfo = getCachedRankForWca(result.e, effectiveAvg(result), 'average', country);
 
   // 破 PR:把 PR 框 + NR/WR 名次拼成一个右上角标组「PR/NR3/WR3」(只 PR 带框,名次纯文本,/ 分割).
   const renderPrMark = (info: RankResult | null | undefined) => (
@@ -3906,23 +4077,22 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
             <div className="comp-round-modal-value">
               {attempts.length === 0
                 ? '—'
-                : (() => {
-                    const isAo5 = (rd.f === 'a' || rd.f === '5') && attempts.length === 5;
-                    if (!isAo5) return attempts.map(v => formatLive(v, result.e, false)).join(', ');
-                    let bestIdx = -1, worstIdx = -1;
-                    let bestVal = Infinity, worstVal = -Infinity;
-                    let dnfIdx = -1;
-                    attempts.forEach((v, i) => {
-                      if (v === -1 || v === -2) { if (dnfIdx < 0) dnfIdx = i; return; }
-                      if (v > 0 && v < bestVal) { bestVal = v; bestIdx = i; }
-                      if (v > 0 && v > worstVal) { worstVal = v; worstIdx = i; }
-                    });
-                    if (dnfIdx >= 0) worstIdx = dnfIdx;
-                    return attempts.map((v, i) => {
-                      const s = formatLive(v, result.e, false);
-                      return (i === bestIdx || i === worstIdx) ? `(${s})` : s;
-                    }).join(', ');
-                  })()}
+                : attempts.map((value, i) => {
+                    const bracketed = (rd.f === 'a' || rd.f === '5') && isAo5Bracketed(attempts, i);
+                    return (
+                      <span key={i}>
+                        {i > 0 && ', '}
+                        {bracketed && '('}
+                        <SolveValue
+                          value={value}
+                          penalty={penalties[i]}
+                          note={penaltyNote}
+                          format={v => formatLive(v, result.e, false)}
+                        />
+                        {bracketed && ')'}
+                      </span>
+                    );
+                  })}
             </div>
           </section>
           <section className="comp-round-modal-section">
@@ -4032,7 +4202,7 @@ function LiveIndicator({ status, source }: { status: WsStatus; isZh: boolean; so
       className={`comp-live-indicator status-${status}`}
       title={source === 'wca_live'
         ? tr({ zh: 'WCA Live 轮次成绩(每 15 秒拉取)', en: 'WCA Live round results (polled every 15s)' })
-        : tr({ zh: 'wss://cubing.com/ws 实时推送', en: 'wss://cubing.com/ws live stream' })}
+        : tr({ zh: '粗饼成绩实时更新，断线自动重试', en: 'Cubing China live results with automatic reconnection' })}
     >
       <span className="comp-live-dot" />
       {label}

@@ -1,4 +1,5 @@
 import { optimalPocketScramble, wcaPocketScramble } from './pocket-scramble';
+import { applyColorNeutral, isCnEligible, normalizeTimerColorNeutralMode, type CnMode } from './color-neutral';
 import {
   DEFAULT_SCRAMBLE_222_MODE,
   DEFAULT_SCRAMBLE_222_TYPE,
@@ -41,6 +42,7 @@ export type TimerCubingScrambleEventId =
 export type TimerSharedScrambleProviderId =
   | 'wca-pocket'
   | 'trainer-case'
+  | 'training-state'
   | 'small-puzzle-random-state'
   | 'cstimer-nonwca';
 
@@ -115,7 +117,7 @@ export const TIMER_SCRAMBLE_CAPABILITIES = Object.freeze({
   r4: { kind: 'compound', provider: 'timer-compound' },
   r5: { kind: 'compound', provider: 'timer-compound' },
   cross: { kind: 'cubing', cubingEventId: '333' },
-  f2l: { kind: 'cubing', cubingEventId: '333' },
+  f2l: { kind: 'shared', provider: 'training-state' },
   ll: { kind: 'shared', provider: 'trainer-case' },
   oll: { kind: 'shared', provider: 'trainer-case' },
   pll: { kind: 'shared', provider: 'trainer-case' },
@@ -124,6 +126,15 @@ export const TIMER_SCRAMBLE_CAPABILITIES = Object.freeze({
   zbll: { kind: 'shared', provider: 'trainer-case' },
   eg1: { kind: 'shared', provider: 'trainer-case' },
   eg2: { kind: 'shared', provider: 'trainer-case' },
+  'cll': { kind: 'shared', provider: 'training-state' },
+  'ell': { kind: 'shared', provider: 'training-state' },
+  'eocp': { kind: 'shared', provider: 'training-state' },
+  '2gll': { kind: 'shared', provider: 'training-state' },
+  'ollcp': { kind: 'shared', provider: 'training-state' },
+  'zzll': { kind: 'shared', provider: 'training-state' },
+  'zbls': { kind: 'shared', provider: 'training-state' },
+  'lse': { kind: 'shared', provider: 'training-state' },
+  'l10p': { kind: 'shared', provider: 'training-state' },
   custom: { kind: 'manual' },
 } as const satisfies Readonly<Record<EventId, TimerScrambleCapability>>);
 
@@ -161,6 +172,8 @@ export type TimerScrambleResult =
 
 export interface TimerScrambleRequest {
   readonly event: EventId;
+  /** Opt-in for ordinary generated scrambles; hosts omit this for constrained generators. */
+  readonly cnMode?: CnMode;
   readonly scramble222Mode?: Scramble222Mode;
   readonly scramble222Type?: Scramble222Type;
   /** Exact shared case ids. Empty or stale subsets preserve the full corpus. */
@@ -179,6 +192,7 @@ export type TimerSharedScrambleValue = string | {
 
 /** Providers whose platform worker may be injected without replacing shared business logic. */
 export type TimerHostSharedScrambleProviderId =
+  | 'training-state'
   | 'wca-pocket'
   | 'cstimer-nonwca'
   | 'small-puzzle-random-state';
@@ -264,6 +278,17 @@ async function defaultSharedScrambleGenerator(
       return (request.scramble222Mode ?? DEFAULT_SCRAMBLE_222_MODE) === 'optimal'
         ? optimalPocketScramble()
         : wcaPocketScramble();
+    }
+    case 'training-state': {
+      const { generateTimerTrainingStateScramble, isTimerTrainingStateEvent } = await import('./training-state-scramble');
+      const { generateCstimerScramble } = await import('@cuberoot/puzzle-solvers/cstimer-nonwca');
+      if (!isTimerTrainingStateEvent(requestedEvent)) throw new Error('Unknown training state event');
+      if (requestedEvent === 'lse' || requestedEvent === 'l10p') {
+        const { generateRouxTrainingCandidate } = await import('./training-state-engine');
+        return generateTimerTrainingStateScramble(requestedEvent, () => generateRouxTrainingCandidate(
+          requestedEvent === 'lse' ? 'roux-lse' : 'roux-l10p'));
+      }
+      return generateTimerTrainingStateScramble(requestedEvent, generateCstimerScramble);
     }
     case 'trainer-case': {
       const {
@@ -411,7 +436,8 @@ export async function generateTimerScramble(
             capability.cubingEventId,
             request.event,
           )
-        : capability.provider === 'wca-pocket'
+        : capability.provider === 'training-state'
+            || capability.provider === 'wca-pocket'
             || capability.provider === 'cstimer-nonwca'
             || capability.provider === 'small-puzzle-random-state'
           ? dependencies.generateSharedScramble
@@ -447,7 +473,9 @@ export async function generateTimerScramble(
       event: request.event,
       kind: 'generated',
       provider,
-      scramble,
+      scramble: isCnEligible(request.event)
+        ? applyColorNeutral(scramble, normalizeTimerColorNeutralMode(request.cnMode), dependencies.random)
+        : scramble,
       ...(generated.metadata ? { metadata: generated.metadata } : {}),
     };
   } catch {

@@ -20,8 +20,10 @@ const store: { data: Record<string, Solve[]> } = { data: {} };
 const writes: Array<{ event: string; solves: Solve[] }> = [];
 
 vi.mock('@/app/[lang]/timer/_lib/storage/db', () => ({
-  loadAll: () => store.data,
-  updateSolves: (event: string, solves: Solve[]) => {
+  getActiveSessionId: () => 'original',
+  loadSessionData: () => store.data,
+  updateSessionSolves: (session: string, event: string, solves: Solve[]) => {
+    expect(session).toBe('original');
     writes.push({ event, solves });
     const list = store.data[event] ?? [];
     for (const u of solves) {

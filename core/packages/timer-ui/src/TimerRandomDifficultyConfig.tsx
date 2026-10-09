@@ -11,8 +11,7 @@
  * 不是同一个槽,没有共同含义 → 直接隐掉,按「四槽取最优」算(= /scramble/stats 的 XCross 口径)。
  */
 
-import { Info } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import {
   dataVariantOfStage,
@@ -38,8 +37,7 @@ import {
 import { SubsetColorPicker, useSubsetSelection, type TimerUiLanguage } from './TimerColorSubsetPicker';
 import { TimerPillToggle } from './TimerPillToggle';
 import { TimerRangeSlider } from './TimerRangeSlider';
-import { usePanelClamp } from './usePanelClamp';
-import { usePopoverDismiss } from './usePopoverDismiss';
+import { TimerDifficultyHelp } from './TimerDifficultyHelp';
 
 export interface TimerRandomDifficultyConfigProps {
   disabled?: boolean;
@@ -100,30 +98,6 @@ const COPY = {
   steps: { en: 'Step range', zh: '步数范围' },
 } as const;
 
-function DifficultyHelp({ content, label }: { content: string; label: string }) {
-  const [open, setOpen] = useState(false);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
-  usePanelClamp(open, panelRef);
-  usePopoverDismiss(open, () => setOpen(false), panelRef, buttonRef);
-  return (
-    <span className="timer-random-difficulty-help">
-      <button
-        aria-expanded={open}
-        aria-label={label}
-        className="timer-random-difficulty-help-trigger"
-        onClick={() => setOpen((value) => !value)}
-        ref={buttonRef}
-        type="button"
-      ><Info aria-hidden="true" size={12} /></button>
-      {open && (
-        <div className="timer-random-difficulty-help-panel" ref={panelRef} role="tooltip">
-          {content.split('\n').map((line) => <div key={line}>{line}</div>)}
-        </div>
-      )}
-    </span>
-  );
-}
 
 export function TimerRandomDifficultyConfig({
   disabled = false,
@@ -319,7 +293,7 @@ export function TimerRandomDifficultyConfig({
           {gaps.length > 0 && (
             <div className="timer-random-difficulty-hint">
               {text(COPY.rare).replace('{gaps}', gapText)}
-              <DifficultyHelp
+              <TimerDifficultyHelp
                 content={text(COPY.answerWhy).replace('{god}', String(bounds.god))}
                 label={text(COPY.moreInfo)}
               />

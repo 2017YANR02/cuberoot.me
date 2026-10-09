@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxxcross / G / bin 7
-# Population in this bin: 938
+# Population in this bin: 949
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 1468868011,B2 D F2 D F2 U B2 U' L2 B2 R U B R2 F2 D2 B2 L' D' B2 U B',G,Bangladesh Cubing Fiesta 2019 (2019-12-19~21),333mbf Final A #1
@@ -17,7 +17,7 @@
 1353146001,R' L F' B L' F' U L' U' B R2 U2 D2 F2 D2 B2 L' U2 R2 L',G,KubeKids Vila Velha 2019 (2019-10-12~13),333 R1 B #4
 1078078001,D2 B' D2 F2 U2 F' D2 F2 R' B U' F2 U B' U' F U' L2 U,G,SBU Spring 2019 (2019-03-31),333 R1 D E2
 1940240001,B2 D' L F' B U B' U F2 R D2 B L2 D2 R2 F2 D2 F2 B',G,3x3x3 Only Hamilton B 2022 (2022-05-29),333 Final A #5
-3061492001,F L F2 B' D' R' U F2 R B2 R L' F2 L U2 L2 D2 U,G,Cerrado Open 2023 (2023-09-08~10),333oh R1 A #2
+5854458001,F' D L2 U' R2 B' R' U2 D' B2 D F2 L U2 L' F2 R' D2,G,Zottegem Open 2026 (2026-09-26),333 R2 A E1
 2915205001,U' R2 U2 L D R' B' F2 U2 L' U2 F2 B2 R' D2 L F2 R D F2,G,Back to İzmir 2023 (2023-07-15~16),333 R1 C E1
 77857001,R' L' D' B L D' L2 D' L' F D' R2 F2 D B2 U B2 D2,G,Asian Championship 2014 (2014-11-01~03),333 R1 I E1
 79745001,U2 F' U2 F2 R2 D2 F D2 R U2 R B' F' R2 U F' R' B' F,G,Pirih Rubik's Competition 2014 (2014-11-15),333 R1 A E1
@@ -76,7 +76,7 @@
 277879001,R B2 U D R2 F L U D R D' R2 U2 R2 F2 R' D2 R' B2 L',G,Apulia Open 2016 (2016-04-03),333oh R1 A E2
 283806001,L2 F2 D2 U2 L2 B D2 R2 U2 L2 R' B' U' F2 U2 L' D2 U R' F2,G,Open Cube Project 2016 (2016-04-16~17),333oh R1 A #3
 774746001,L' F2 R U2 R2 D2 B2 L2 R' F D' U2 F D' B U R' F' L',G,Glorioso San Carlos 2018 (2018-05-05),333 R1 D #3
-3034873001,R D2 R2 D2 F2 D2 L' D2 L B L2 F' U' R2 D2 R' U R2 U,G,Cubing Around Metrotown 2023 (2023-09-02),333 R1 E #1
+5854660001,F L2 U' F2 L2 U2 F2 D U' B' U' L B L' B2 F' L2 D R,G,Next Gen Cube Potosí 2026 (2026-09-26~27),333oh Final A #5
 4395197001,L' F L' U2 F U2 F2 L2 F D2 R F2 U R2 D U2 B D,G,Tarragona Open 2024 (2024-12-27~28),333 R1 A #3
 5054332037,L2 B2 L2 B' L' B2 R2 D2 B' U L D2 L' B2 R2 B2 R F2,G,Dare to DR Rizal 2025 (2025-09-28),333mbf Final A #1
 866128001,D2 R2 B' U2 B' F' R2 B R' U' F2 L' U' B U' R' F,G,YJ Fest Belarus 2018 (2018-08-25~26),333ft Final A E1
@@ -196,7 +196,7 @@
 722141001,R' B2 R U2 L' B2 R2 B2 D' F2 D' F2 L R U L D,G,Eretum Open 2018 (2018-03-10~11),333oh Final A #3
 2992160001,B U F D R F U2 F' R2 F2 R' F2 L U2 R' U' R2,G,Podolian Open 2023 (2023-08-19~20),333 R1 A #3
 3522191001,B U' L U2 R F2 L' F2 R F2 U' R2 F' D U L F2 D,G,UNSA Speedcubing Verano 2024 (2024-02-17~18),333 R2 F #1
-5760665001,B' L B' D2 F U2 F L2 F2 D2 L' F2 U L2 R' D L,G,Temecula Valley Summer 2026 (2026-07-25),333 R2 C #5
+5854367001,B2 U F2 L' D' F2 L' B L2 D2 L' B2 L B2 L' U2 L D2 B2,G,Zottegem Open 2026 (2026-09-26),333 R2 B #1
 3189252001,B2 D2 U' R2 D' L B2 F' D' B' U' L' D L F' D2,G,Intercolegial Tarija 2023 (2023-10-21),333 R1 C #2
 5082147001,U' F' D' L B' F2 R2 U2 B' R2 F' L' B2 R D2 U R D2,G,II Campos do Jordão Open 2025 (2025-10-04),333 R1 B #5
 2948047001,F2 L D2 U2 R2 D2 L' F2 L R F L U2 B F U' B2 F' R,G,Bunbury's South West Speedsolving 2023 (2023-08-05),333 R2 A #4

@@ -1,12 +1,14 @@
 'use client';
 
+import { selectCurrentRecords } from '@cuberoot/shared/wca-records';
+
 // Ported from packages/client-vite/src/pages/wca_stats/RecordsPage.tsx.
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import HomeLink from '@/components/HomeLink';
 import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, Mars, Venus } from 'lucide-react';
-import PuzzlePicker, { type PuzzlePickerGroup } from '@/components/PuzzlePicker/PuzzlePicker';
+import WcaEventSelector from '@/components/WcaEventSelector';
 import { EventIcon } from '@/components/EventIcon';
 import { loadFlagData } from '@/lib/country-flags';
 import { statsUrl } from '@/lib/stats-base';
@@ -136,39 +138,12 @@ function RecordsPageInner() {
     return new Set(bundle.rows.map(r => r.e));
   }, [bundle]);
 
-  const eventPickerGroups = useMemo<readonly PuzzlePickerGroup[]>(() => [{
-    id: 'wca',
-    label: tr({ zh: 'WCA 项目', en: 'WCA events' }),
-    items: [
-      { id: '', label: tr({ zh: '全部', en: 'All' }), textLabel: tr({ zh: '全', en: 'All' }) },
-      ...ALL_EVENT_IDS.filter(id => availableEvents.has(id)).map(id => ({
-        id,
-        label: eventDisplayName(id, isZh),
-        iconClass: `event-${id}`,
-      })),
-    ],
-  }], [availableEvents, isZh]);
-
   // 「当前」视图:每个 (项目, 类型) 在该区域的现行纪录 = 历史进程里成绩最好(v 最小)的那行;
   // 并列(同值多人)全列,按日期升序 —— 与 wr_current 当前世界纪录页的并列处理一致。
   // 区域选择器决定口径:world → 当前世界纪录,某洲 → 当前大洲纪录,某国 → 当前国家纪录。
   const currentRows = useMemo(() => {
     if (show !== 'current') return [];
-    const best = new Map<string, { v: number; rows: Row[] }>();
-    for (const r of visibleRows) {
-      const k = `${r.e}-${r.t}`;
-      const cur = best.get(k);
-      if (!cur || r.v < cur.v) best.set(k, { v: r.v, rows: [r] });
-      else if (r.v === cur.v) cur.rows.push(r);
-    }
-    const out: Row[] = [];
-    for (const id of ALL_EVENT_IDS) {
-      for (const t of ['s', 'a'] as const) {
-        const g = best.get(`${id}-${t}`);
-        if (g) out.push(...[...g.rows].sort((a, b) => (a.d < b.d ? -1 : a.d > b.d ? 1 : 0)));
-      }
-    }
-    return out;
+    return selectCurrentRecords(visibleRows);
   }, [visibleRows, show]);
 
   const grouped = useMemo(() => {
@@ -255,12 +230,13 @@ function RecordsPageInner() {
             clearable={false}
           />
         </div>
-
-        <PuzzlePicker
-          groups={eventPickerGroups}
+        <WcaEventSelector
+          presentation="inline"
+          availableEvents={availableEvents}
           selectedEvent={event}
           onSelect={(v) => update('event', v)}
           isZh={isZh}
+          allowAll
         />
       </div>
 

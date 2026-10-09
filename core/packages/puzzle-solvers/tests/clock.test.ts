@@ -37,6 +37,14 @@ describe('Clock solver fast contract', () => {
     expect(clockMovesToString(parseClockMoves(alg))).toBe(alg);
   });
 
+  it('accepts final WCA pin positions without changing dial state', () => {
+    const turns = 'UR6+ DR2- y2 U2- ALL3-';
+    for (const pins of ['UR', 'UR DR DL UL']) {
+      expect(clockStateFromAlg(`${turns} ${pins}`)).toEqual(clockStateFromAlg(turns));
+    }
+    expect(() => parseClockMoves('UR DR2-')).toThrow(/after final pins/);
+  });
+
   it('rejects a state whose paired corner dials disagree', () => {
     const state = SOLVED_CLOCK();
     state.posit[0] = 1;

@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / OR / bin 3
-# Population in this bin: 409
+# Population in this bin: 411
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 3222001,U' R2 U L2 R2 F2 L2 U' R B2 U L' F2 D' F2 L2 F L,O,CMI Fiesta Open 2014 (2014-03-21~23),333oh R1 L E1
@@ -153,7 +153,7 @@
 4311410011,B' D2 L2 B' L2 F U2 B F D B2 D2 B L U L2 B2 U' F2 L B',O,Indiana Championship 2024 (2024-11-22~24),333mbf Final B #1
 3256048023,D F L2 B' R' D2 F R2 F2 R' F2 D2 B2 R2 B' U2 B D2 B' L',O,Falukorv Open 2023 (2023-11-11~12),333mbf Final B #1
 2876134001,L' F R F2 L2 R' F2 D2 R' D2 B' F' L' B' L2 D2 L F2,R,High Gate Irbid 2023 (2023-07-08),333oh Final B #1
-1183883001,F' B D F' B' U2 B' R U' F2 B R2 L2 F' R2 F2 B D2,R,Chicago Area Twist Spring 2019 (2019-06-16),333 R1 D E2
+5842758001,B2 R' U2 R' B' R L2 B' R F' U2 D2 F2 R2 U2 F2 B,O,New Cubing Season Athens B 2026 (2026-09-20),333oh Final A #3
 2769231001,B2 R2 D' L2 B2 D L2 U B2 U2 R F2 L' U2 L' B2 U' B L',O,Nexus Summer Open Bangalore Sunday 2023 (2023-05-28),333oh Final A #5
 1228140001,D2 U2 F2 D2 F L2 U L' U' R2 U' B2 D2 R' U' F2,O,II Open Carrancubos 2019 (2019-07-20~21),333 R2 B #3
 1247181031,U2 F2 D2 L2 U2 R D2 R' U' B D R2 D B D2 R2 D B U2 L' F2,O,Canadian Championship 2019 (2019-07-26~28),333mbf Final A #2

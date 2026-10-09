@@ -240,7 +240,26 @@ describe('playerStats', () => {
     expect(playerStats(two).ao5).toBe(Infinity);
   });
   it('空序列全 null', () => {
-    expect(playerStats([])).toEqual({ count: 0, single: null, ao5: null, mean: null });
+    expect(playerStats([])).toEqual({ count: 0, single: null, ao5: null, ao12: null, ao50: null, ao100: null, mean: null });
+  });
+  it.each([
+    { key: 'ao12', n: 12, trim: 1, rolling: 8500, plusTwo: 10200 },
+    { key: 'ao50', n: 50, trim: 3, rolling: 27500, plusTwo: 10045 },
+    { key: 'ao100', n: 100, trim: 5, rolling: 52500, plusTwo: 10022 },
+  ] as const)('$key uses the last N results, trims outliers and applies penalties', ({ key, n, trim, rolling, plusTwo }) => {
+    expect(playerStats(Array.from({ length: n - 1 }, () => ok(10000)))[key]).toBeNull();
+    expect(playerStats(Array.from({ length: n + 2 }, (_, i) => ok((i + 1) * 1000)))[key]).toBe(rolling);
+    const results: NetResult[] = Array.from({ length: n }, () => ok(10000));
+    results[0] = ok(0);
+    results[n - 1] = ok(100000);
+    // Keep the penalized solve in the middle after trimming both tails.
+    for (let i = 1; i < trim; i++) results[n - 1 - i] = ok(100000);
+    results[1] = { t: 10000, p: '+2' };
+    expect(playerStats(results)[key]).toBe(plusTwo);
+    const dnfs: NetResult[] = Array.from({ length: n }, (_, i) => i < trim ? { t: 0, p: 'dnf' } : ok(10000));
+    expect(playerStats(dnfs)[key]).toBe(10000);
+    dnfs[trim] = { t: 0, p: 'dnf' };
+    expect(playerStats(dnfs)[key]).toBe(Infinity);
   });
 });
 

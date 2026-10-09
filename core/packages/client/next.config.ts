@@ -16,6 +16,11 @@ const isProd = process.env.NODE_ENV === "production";
 const isVercel = process.env.VERCEL === "1";
 
 const nextConfig: NextConfig = {
+  // Vercel's JS TypeScript worker has repeatedly exhausted the build container
+  // at "Running TypeScript" (OOM / 45-minute timeout). The build command runs
+  // our native tsgo typecheck AFTER Next generates .next/types, and any error
+  // fails the command before Vercel can publish. Standalone keeps Next's check.
+  typescript: { ignoreBuildErrors: isVercel },
   ...(!isProd && process.env.NEXT_DEV_DIST_DIR && { distDir: process.env.NEXT_DEV_DIST_DIR }),
   // Self-contained server bundle for systemd `next start` on next.cuberoot.me
   // (prod only). In dev, `output: standalone` + `outputFileTracingRoot`
@@ -46,7 +51,7 @@ const nextConfig: NextConfig = {
   // Pages without slashes still work because the [...slug] route handler accepts either.
   skipTrailingSlashRedirect: true,
 
-  transpilePackages: ["mp4box", "mediainfo.js", "@cuberoot/timer-ui"],
+  transpilePackages: ["@cuberoot/app-ui", "mp4box", "mediainfo.js", "@cuberoot/timer-ui"],
   // cubing.js worker compat is generated once by core/scripts/build-cubing-worker.mjs
   // into each host's public assets. The patched dependency always requests the
   // stable /cubing-chunks/search-worker-entry.js URL.
@@ -79,6 +84,8 @@ const nextConfig: NextConfig = {
         source: "/sw.js",
         headers: [{ key: "Cache-Control", value: "no-cache, no-store, must-revalidate" }],
       },
+      { source: "/assistant/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=300, s-maxage=3600" }] },
+      { source: "/maplibre/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
       // Long-cache bare public/ assets. Next only auto-immutables hashed
       // /_next/static/*; files served straight from public/ default to
       // `max-age=0, must-revalidate`, so every page navigation re-validates
@@ -130,6 +137,11 @@ const nextConfig: NextConfig = {
       {
         source: "/assets/space/blender-v1/:asset.json",
         headers: [{ key: "Cache-Control", value: "no-store" }],
+      },
+      // Project-brief illustrations use versioned filenames.
+      {
+        source: "/images/overview/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
       },
       // High-resolution certificate photographs are content-stable. Filenames
       // change if a scan is replaced, so they can be cached immutably.

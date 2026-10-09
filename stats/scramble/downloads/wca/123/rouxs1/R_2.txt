@@ -1,8 +1,8 @@
 # Scramble samples — 123 / rouxs1 / R / bin 2
-# Population in this bin: 142
-# Samples listed: 142 (all entries in this bin)
+# Population in this bin: 143
+# Samples listed: 143 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 13936001,B' L2 F U2 L2 F2 R' F2 U L' U' R2 D2 L2 F R2 L2 B',R,Toronto Open Spring 2014 (2014-04-26),333 R2 A #2
@@ -147,3 +147,4 @@
 5735278001,F2 R2 U2 R B2 U2 L D B2 U' R2 B' D' R2 D' F' U' F',R,Shenyang Cubing League 3x3 III 2026 (2026-07-01),333 R2 A #5
 5763768001,B2 D2 R B2 D2 U2 L' D2 R' F2 L2 U' B' U' F U2 L2 U' F',R,Carberry Open 2026 (2026-07-25),333 R1 C #5
 5770627001,F' U F' D2 R B D B D R U2 B2 L2 F2 U2 L' U2 L' D2 B R,R,Super Side Summer Fürth 2026 (2026-07-31~08-02),333bf R2 B E2
+5855670001,B2 F2 D' R2 B2 D2 U R' B' R' B2 R2 U2 B D B' L' R,R,Dublin Autumn Solving 2026 (2026-09-26~27),333 R2 D E1

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / G / bin 5
-# Population in this bin: 944
+# Population in this bin: 956
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 2622391001,U2 B U2 F R B2 R2 B U' F2 D' F2 U2 L2 F2 L U2 R U2,G,Abierto de Pascuas 2023 (2023-04-07~08),333 R1 A #4
@@ -64,13 +64,13 @@
 3318984001,U R2 B' L2 F' U2 L2 F2 U2 L2 B U' L' R2 D2 R2 B2 U L',G,Capivara 2023 (2023-12-02~03),333 R2 A E1
 5730241001,L2 D2 F L' U' R L F' U' R' U2 F' D2 R2 U2 D2 F2 D2 R' D2,G,Hampshire Summer 2026 (2026-06-27~28),333bf R1 A #5
 4599275001,B2 U2 B2 L2 D2 F2 L2 B' D L2 F2 D2 B' R2 U' L2 U F',G,Vienna Fasching 2025 (2025-03-22~23),333oh Final A #2
-1076087012,U2 R B2 U2 B2 L2 B2 R D2 R F' L2 R' U' R' F' R U2 R B L' F2,G,Norwegian Championship 2019 (2019-03-29~31),333mbf Final A #1
+5855469001,B2 U2 L2 F2 D L2 U F' D' R' U R2 U2 L2 D R2 F L',G,Dublin Autumn Solving 2026 (2026-09-26~27),333oh Final A #2
 3573396001,U L' U2 B2 L2 B2 U2 B' U' B F' D' U2 B2 D' L' D L B,G,Big N Blind Bangalore March 2024 (2024-03-09~10),333bf R1 A #2
 1039850001,D R' F2 B L F R F' L' B L2 U2 D' B2 R2 B2 U' B2 D',G,Carte Blanche Kube Open 2019 (2019-03-02~03),333oh Final D #4
 5653293001,U2 R' B R2 U2 L2 D2 R2 F2 L2 F' D B2 D' B2 D2 R' F U',G,Christchurch Autumn 2026 (2026-05-23~24),333 R1 C #5
 5430057001,D2 B2 D2 R' B2 U2 F2 L2 D B2 L2 F D2 F2 R' U' R2 B2,G,Back to Downtown Singapore 2026 (2026-03-08),333oh R1 B #3
 307308001,B2 L2 F2 U2 L U2 R B2 F D2 B' R' D R2 D R2 B F U',G,One Night in Beijing 2016 (2016-05-28~29),333 R2 A #1
-2910188001,U L U L2 D R2 B2 D2 B2 L' D L' D2 L D' F,G,Israel Championship 2023 (2023-07-17~20),333 R3 A #4
+5852144001,F' R' D U R2 U' B2 L2 F2 U B' F' L U2 R2 F R F' R2,G,GAN WCA African Championship 2026 (2026-09-24~27),333 R1 D #5
 969256001,B2 D B2 F2 D' F2 D B2 R F' D' R' B L' R' F' L D',G,Welcome to 2019 (2018-12-31~2019-01-01),333 Final B #3
 5171175001,F' R' U2 B2 R F2 L D2 R' B F U2 F' R D R' D L2 D,G,Gulf Shores 2025 (2025-11-08),333bf Final A E2
 1614210001,F2 D R2 U' R2 U' R2 D L' F R' D2 R2 D L B2 R',G,Estonian Open 2020 (2020-08-22~23),333oh R1 C E1
@@ -185,7 +185,7 @@
 5558688001,U' F2 L2 D2 B D2 F' U2 L2 B' U2 R2 D B2 F2 L U' B',G,Cube Against Cancer - Orange County 2026 (2026-04-19),333 R1 C #4
 3095670001,L2 B2 L U' D' L' B' L U F2 D2 L2 D' B2 U' R2 U L2 F2,G,Foothills NxNs 2023 (2023-09-23),333 R2 B #5
 1940044013,B L D2 L2 D F2 D U' R' F' D R2 B U2 B' F L2 U',G,Please Be Quiet Colorado 2022 (2022-05-28),333mbf Final A #2
-1080765001,R2 F' B2 U F2 U L2 D2 L2 B' U2 D2 L2 F' L2 U2 B',G,Koalafication Brisbane 2019 (2019-04-06~07),333 Final A #5
+5846172001,D2 B2 R2 B2 R' F2 U2 L2 R' F2 L2 B' D2 R' F D2 F R2 B R,G,Tafalla Open 2026 (2026-09-26~27),333bf Final A #1
 2487695001,D2 U2 R2 B D2 L2 B' R' D B D F2 U2 L' B L R',G,TCG Summer Arequipa 2023 (2023-02-11),333 R1 A #3
 5626244001,B' R' U2 R' B2 U2 F2 L D' L U' L F2 R2 D2 F D' F L' F,G,PSS Side Day Gdańsk 2026 (2026-05-09),333bf R1 A #4
 693694001,U' B2 U F2 R2 D' R2 B2 F U B U R' U2 R2 B D L2 D',G,Arena Curuçá Open 2018 (2018-01-27),333 R1 D #3
@@ -194,7 +194,7 @@
 2408563001,F' L2 B2 D2 F2 D R2 D2 L2 R2 B2 F' D' U' R2 F2 D2 R' D2 U',G,Baton Rouge Winter 2023 (2023-01-07),333oh Final B #4
 5796569015,D F2 U' L2 R2 B' L B U' L F' L' D' U' F2 U,G,Lugano Big & Blind 2026 (2026-08-22~23),333mbf Final A #2
 3755286030,F' D B D' L' U2 R' D' B' L2 U B2 D' R2 U' R2 U2 B2 L' F2,G,Blind Faith Denver 2024 (2024-05-11~12),333mbf Final A #2
-940167001,B2 D F2 R2 U F2 L2 R2 F2 R' B' U F D B' U L2 F2 D,G,UA Open 2018 (2018-11-24),333 R1 C #4
+5848475001,D2 B' D F B L U2 L2 U B' U' B2 L2 B2 U2 B2 U' F2,G,Floripa ao Cubo 2026 (2026-09-26~27),333 R1 C #5
 726281001,B' U2 B2 D2 B D2 F2 U' B' L2 D' F2 L B2 D U2 B F',G,Riga Special 2018 (2018-03-17),333 R1 D #2
 4951582001,L' D2 L F2 R' F2 D2 R F2 L2 F L B2 R' F' U' L' B' U,G,Cube Plan Baie 2025 (2025-08-15~17),333oh R1 A #2
 753818001,F2 B2 D B2 D' B U' L2 U' F2 R' F2 D2 R2 B2 U2 B2 D2 R,G,Stenay Open 2018 (2018-04-14~15),333oh Final A #2

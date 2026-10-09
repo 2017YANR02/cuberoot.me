@@ -2,7 +2,7 @@
 
 import type { TeachingLearnerLessonFeedback } from '@cuberoot/shared/teaching';
 import { useT } from '@/hooks/useT';
-import { UserIdLabel } from '@/components/UserIdLabel';
+import { UserContactLink } from '@/components/UserIdLabel';
 import { entityStatusLabel, teachingRoleLabel } from './TeachingUi';
 import { teachingVisibilityLabel } from './WeeklyReportSections';
 
@@ -19,7 +19,7 @@ export default function LessonFeedbackList({ feedback }: { feedback: TeachingLea
             {item.challenges && <p className="teaching-rich-text"><strong>{t('改进：', 'Challenges:')}</strong> {item.challenges}</p>}
             {item.nextGoals && <p className="teaching-rich-text"><strong>{t('目标：', 'Goals:')}</strong> {item.nextGoals}</p>}
             <div className="teaching-row-meta">
-              {new Date(item.publishedAt).toLocaleString()} / {item.authorDisplayNameSnapshot} <UserIdLabel userId={item.authorUserId} /> / {teachingRoleLabel(item.authorRoleSnapshot, t)} / {teachingVisibilityLabel(item.visibility, t)}
+              {new Date(item.publishedAt).toLocaleString()} / <UserContactLink userId={item.authorUserId}>{item.authorDisplayNameSnapshot}</UserContactLink> / {teachingRoleLabel(item.authorRoleSnapshot, t)} / {teachingVisibilityLabel(item.visibility, t)}
             </div>
           </div>
           <span className="teaching-status">{entityStatusLabel(item.attendanceStatusSnapshot, t)}</span>

@@ -333,6 +333,7 @@ calendarRoutes.get('/calendar/bootstrap', async (c) => {
     calendars,
     share: shareJson(share),
     me: { key: me.wcaId, name: me.name, avatar: profile?.avatar || '' },
+    colorFormatVersion: 2,
   });
 });
 

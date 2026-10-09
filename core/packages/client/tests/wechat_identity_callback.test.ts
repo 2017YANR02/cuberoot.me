@@ -13,11 +13,25 @@ vi.mock('@/lib/social-auth', () => ({ takeSocialReturnUrl: () => '/account' }));
 vi.mock('@/i18n/tr', () => ({ tr: ({ en }: { en: string }) => en }));
 let root: Root; let host: HTMLDivElement;
 const ticket = 'a'.repeat(43);
-beforeEach(() => {
+
+const identityHandle = 'h'.repeat(43);
+const secondIdentityHandle = 'i'.repeat(43);
+function stubIdentityRequests(fallback = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => new Response('{}'))) {
+  vi.stubGlobal('fetch', async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (String(input) === '/api/identity-choice') {
+      const body = JSON.parse(String(init?.body ?? '{}'));
+      if (body.operation === 'store') return new Response(JSON.stringify({ handle: body.ticket.startsWith('b') ? secondIdentityHandle : identityHandle }));
+      if (body.operation === 'clear') return new Response('{}');
+    }
+    return fallback(input, init);
+  });
+}
+beforeEach(async () => {
+  stubIdentityRequests();
   vi.clearAllMocks(); vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
   sessionStorage.clear(); clearIdentityChoice(); window.history.replaceState({}, '', '/auth/wechat/mobile');
-  rememberIdentityChoice(new AccountChoiceRequired({ ticket, provider: 'apple', expiresInSeconds: 900 }), '/account');
-  updateIdentityChoice(ticket, { stage: 'authenticate' });
+  await rememberIdentityChoice(new AccountChoiceRequired({ ticket, provider: 'apple', expiresInSeconds: 900 }), '/account');
+  updateIdentityChoice(identityHandle, { stage: 'authenticate' });
   sessionStorage.setItem('wechat_browser_login', JSON.stringify({ ticket: 'w'.repeat(43), urlLink: 'https://wxaurl.cn/test', expiresAt: Date.now() + 600_000, expiresIn: 600, existingOnly: true }));
   host = document.createElement('div'); document.body.append(host); root = createRoot(host);
 });
@@ -35,8 +49,8 @@ describe('WeChat browser existing-account response generation', () => {
     } else {
       clearIdentityChoice();
       if (change === 'replace') {
-        rememberIdentityChoice(new AccountChoiceRequired({ ticket: 'b'.repeat(43), provider: 'google', expiresInSeconds: 900 }), '/other');
-        updateIdentityChoice('b'.repeat(43), { stage: 'authenticate' });
+        await rememberIdentityChoice(new AccountChoiceRequired({ ticket: 'b'.repeat(43), provider: 'google', expiresInSeconds: 900 }), '/other');
+        updateIdentityChoice(secondIdentityHandle, { stage: 'authenticate' });
       }
     }
     await act(async () => resolve({ token: 'canonical', user: { uid: 42 }, isNew: false }));

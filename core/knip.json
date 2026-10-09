@@ -7,15 +7,16 @@
     "{packages/miniprogram,apps/miniprogram}/scripts/release-check-lib.d.mts",
     "packages/client/app/[lang]/timer/_lib/scramble/invert.ts"
   ],
-  "ignoreBinaries": ["netstat", "wasm-pack", "pwsh", "xcrun"],
+  "ignoreBinaries": ["netstat", "wasm-pack", "pwsh", "xcrun", "ssh-keygen", "plutil", "launchctl", "whoami.exe", "icacls.exe", "taskkill.exe", "schtasks.exe"],
   "ignoreDependencies": ["tsx"],
   "workspaces": {
     ".": {
-      "entry": ["scripts/build-shanghai-space.mjs"]
+      "entry": ["scripts/build-shanghai-space.mjs", "scripts/vercel-ignore-build.ts", "scripts/traffic-monitor.ts", "scripts/traffic-monitor.test.mjs", "scripts/traffic-guard.ts", "scripts/traffic-guard.test.mjs", "scripts/dev-preview/cli.ts", "scripts/dev-preview/client.ts", "scripts/dev-preview/model.test.ts"]
     },
     "{packages/client,apps/web}": {
       "entry": [
         "postcss.config.{js,mjs}",
+        "components/ScrollDiagnostics.tsx",
         "app/**/{page,layout,template,loading,error,not-found,route,default,global-error,sitemap,robots,manifest,opengraph-image,twitter-image,icon,apple-icon}.{ts,tsx}",
         "scripts/**/*.{mjs,cjs,mts,ts}",
         "tests/**/*.{ts,tsx,cjs,mjs}",
@@ -37,6 +38,9 @@
         "android/app/src/main/assets/public/**",
         "ios/App/App/public/**"
       ]
+    },
+    "packages/app-ui": {
+      "entry": ["src/**/*.test.{ts,tsx}", "tests/**/*.test.{ts,tsx}"]
     },
     "packages/event-icon": {
       "entry": ["*.mjs"]

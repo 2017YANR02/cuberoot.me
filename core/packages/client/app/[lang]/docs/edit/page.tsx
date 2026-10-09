@@ -1,5 +1,6 @@
 'use client';
 
+import { getWebAccessToken } from '@/lib/web-session';
 import { useCallback, useEffect, useState } from 'react';
 import { useQueryState, parseAsString } from 'nuqs';
 import { ChevronLeft, Share2 } from 'lucide-react';
@@ -46,10 +47,11 @@ export default function DocumentEditorPage() {
 
   useEffect(() => {
     if (!id || !details || !user) return;
+    const sessionToken = getSessionToken() || getWcaToken();
     const ydoc = new Y.Doc();
     const provider = new HocuspocusProvider({
       url: websocketUrl(), name: `document.${id}`, document: ydoc,
-      token: getSessionToken() || getWcaToken(),
+      token: () => getWebAccessToken(sessionToken),
       onStatus: ({ status: nextStatus }) => setStatus(nextStatus),
       onAuthenticationFailed: ({ reason }) => setError(reason || tr({ zh: '文档认证失败', en: 'Document authentication failed' })),
       onAwarenessChange: ({ states }) => {

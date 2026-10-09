@@ -47,7 +47,7 @@ function makeSolve(
 }
 
 const historySource = readFileSync(
-  new URL('../app/[lang]/timer/_components/HistoryPanel.tsx', import.meta.url),
+  new URL('./TimerHistoryWorkspace.tsx', import.meta.resolve('@cuberoot/timer-ui')),
   'utf8',
 );
 const detailSource = readFileSync(
@@ -363,8 +363,8 @@ describe('shared timer history mutations and Web consumers', () => {
   });
 
   it('proves Web delegates filtering, mutation, move-target and action-state rules to shared', () => {
-    expect(historySource).toContain("from '../_lib/history'");
-    expect(historySource).toContain("from '@cuberoot/timer-ui'");
+    expect(historySource).toContain("from '@cuberoot/shared/timer'");
+    expect(readFileSync(new URL('../app/[lang]/timer/_components/HistoryPanel.tsx', import.meta.url), 'utf8')).toContain('<TimerHistoryWorkspace');
     expect(historySource).toContain('<TimerHistoryRow');
     expect(historySource).toContain('filterTimerHistorySolves(solves');
     expect(historySource).toContain('computeTimerHistoryTags(solves)');

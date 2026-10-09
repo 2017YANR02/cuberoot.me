@@ -68,10 +68,11 @@
   visibility: hidden;
   z-index: 200;
   width: max-content;
-  min-width: 160px;
   max-width: min(86vw, 280px);
   max-height: calc(100dvh - 16px);
   overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
   padding: 4px;
   border: 1px solid var(--border-default);
   border-radius: 10px;
@@ -112,4 +113,11 @@
   background: var(--accent-soft);
   color: var(--accent);
   font-weight: 600;
+}
+
+.timer-scramble-source-option.timer-scramble-source-group {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import { sessionFetch } from '@/lib/session-fetch';
 import { create } from 'zustand';
 import type { AlgCase, AlgEntry, AlgPuzzle } from '@cuberoot/shared';
 import { mirrorMoveString } from '@cuberoot/shared/alg-mirror';
@@ -103,7 +104,7 @@ function endpoint(puzzle: string, setSlug: string): string {
 async function fetchCloud(puzzle: string, setSlug: string): Promise<PreferredAlgSnapshot | null> {
   if (!getSessionToken()) return null;
   try {
-    const data = await handleApi<PreferredAlgSnapshot>(await fetch(apiUrl(endpoint(puzzle, setSlug)), {
+    const data = await handleApi<PreferredAlgSnapshot>(await sessionFetch(apiUrl(endpoint(puzzle, setSlug)), {
       headers: authHeaders(false),
       cache: 'no-store',
     }));
@@ -117,7 +118,7 @@ async function fetchCloud(puzzle: string, setSlug: string): Promise<PreferredAlg
 async function saveCloud(puzzle: string, setSlug: string, snapshot: PreferredAlgSnapshot): Promise<void> {
   if (!getSessionToken()) return;
   try {
-    await handleApi(await fetch(apiUrl(endpoint(puzzle, setSlug)), {
+    await handleApi(await sessionFetch(apiUrl(endpoint(puzzle, setSlug)), {
       method: 'PUT',
       headers: authHeaders(),
       body: JSON.stringify(snapshot),

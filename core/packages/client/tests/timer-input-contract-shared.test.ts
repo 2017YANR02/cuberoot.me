@@ -144,6 +144,25 @@ describe('shared timer keydown priority golden matrix', () => {
       .toEqual({ id: 'none' });
   });
 
+  it('reserves Space for timing after focusing a control in a no-timer region', () => {
+    for (const select of [false, true]) {
+      const target = { ...PLAIN_TARGET, noTimerRegion: true, select };
+      for (const phase of ['idle', 'holding', 'ready', 'inspecting', 'running', 'stopped'] as TimerPhase[]) {
+        expect(down(key('Space'), { target, phase })).toEqual({
+          command: { id: 'press-down', warmupSound: true },
+          preventDefault: true,
+          blurActiveElement: true,
+        });
+      }
+      expect(down(key('Space', { repeat: true }), { target })).toEqual({
+        command: { id: 'none' }, preventDefault: true, blurActiveElement: false,
+      });
+      expect(down(key('Space'), { target, modal: 'blocking' }).command).toEqual({ id: 'none' });
+      expect(down(key('Space'), { target: { ...target, textEntry: true } }).command)
+        .toEqual({ id: 'none' });
+    }
+  });
+
   it('keeps Space and Escape fixed ahead of the editable map', () => {
     expect(down(key('Space'))).toEqual({
       command: { id: 'press-down', warmupSound: true },
@@ -272,7 +291,9 @@ describe('keyup, phase, and external pointer policy', () => {
     expect(shared.timerKeyUpDecision({ ...base, modalOpen: true }).command).toEqual({ id: 'none' });
     expect(shared.timerKeyUpDecision({
       ...base, target: { ...PLAIN_TARGET, noTimerRegion: true },
-    }).command).toEqual({ id: 'none' });
+    })).toEqual({
+      command: { id: 'press-up' }, preventDefault: true, blurActiveElement: false,
+    });
     expect(shared.timerKeyUpDecision({ ...base, input: key('KeyD') }).command).toEqual({ id: 'none' });
   });
 
@@ -411,9 +432,11 @@ describe('Web migration consumes the shared contract', () => {
     expect(soloSource).toContain('timerKeyDownDecision({');
     expect(soloSource).toContain('timerGestureActionStates({');
     expect(soloSource).not.toContain('e.code.match(DIGIT_OPENS_SOLVE)');
-    expect(settingsSource).toContain('timerRebindCaptureDecision(e)');
-    expect(settingsSource).toContain('rebindTimerAction(s.keymap, keymap, capturing, capture.binding)');
-    expect(settingsSource).toContain('unbindTimerAction(s.keymap, keymap, action.id)');
+    expect(settingsSource).toContain('<TimerKeymapSettings');
+    const keymapUiSource = readFileSync(new URL('./TimerKeymapSettings.tsx', timerUiEntry), 'utf8');
+    expect(keymapUiSource).toContain('timerRebindCaptureDecision(e)');
+    expect(keymapUiSource).toContain('rebindTimerAction(current, resolveKeymap(current), capturing, capture.binding)');
+    expect(keymapUiSource).toContain('unbindTimerAction(current, resolveKeymap(current), action.id)');
     expect(settingsSource).not.toContain('if (a === capturing) next[b] = null');
     expect(hookSource).toContain('timerRadialGestureStarts(');
     expect(hookSource).toContain('timerRadialGestureDirection(');
@@ -448,7 +471,7 @@ describe('Web migration consumes the shared contract', () => {
       /if \(!await competition\.begin\(scrambleTarget, bluetoothCube\.status\)\) return;[\s\S]*?if \(!latest\?\.status\.connected \|\| latest\.hijacked \|\| !latestFaces \|\| toFaceletString\(latestFaces\) !== scrambleTarget\) \{[\s\S]*?return;\s*\}\s*timer\.onPressDown\(\)/,
     );
     expect(soloSource).toMatch(
-      /startFromCubeRef\.current[\s\S]*?if \(!attemptCanStartRef\.current\) return;[\s\S]*?timer\.startFromCube/,
+      /new SmartCubeSoloTimerController[\s\S]*?canStartAttempt: \(\) => attemptCanStartRef\.current[\s\S]*?competitionRef\.current\.canStart\(\)[\s\S]*?startFromCube: \(timestamp\) => \{[\s\S]*?timerHandleRef\.current\.startFromCube\(timestamp\)/,
     );
     expect(soloSource).toMatch(
       /if \(timerEvent\.state === 'RUNNING'\)[\s\S]*?if \(!attemptCanStartRef\.current\)[\s\S]*?timer\.startNow/,

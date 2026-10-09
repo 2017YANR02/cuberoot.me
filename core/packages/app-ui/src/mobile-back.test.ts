@@ -30,6 +30,11 @@ describe('Android Back priority', () => {
     expect(mobileBackAction({ ...BASE, phase: 'running' })).toBe('block-busy');
   });
 
+  it('dismisses settings before touching the timer or fullscreen behind it', () => {
+    expect(mobileBackAction({ ...BASE, view: 'settings', phase: 'ready', fullscreen: true }))
+      .toBe('close-subview');
+  });
+
   it('closes overlays and subviews before delegating or exiting', () => {
     expect(mobileBackAction({
       ...BASE,
@@ -58,18 +63,17 @@ describe('Android Back priority', () => {
     expect(app).toContain('open={openOverlay === TIMER_OVERLAY_IDS.scrambleSource}');
     expect(app).toContain('open={openOverlay === TIMER_OVERLAY_IDS.wcaCompetition}');
     expect(app).toContain('open={openOverlay === TIMER_OVERLAY_IDS.sessionSwitcher}');
+    expect(app).toContain('openOverlay === TIMER_OVERLAY_IDS.smartCubeDevice');
     expect(app).toMatch(/open=\{openOverlay === TIMER_OVERLAY_IDS\.wcaScrambleMarks\s+&& wcaMarksOverlayIdentityRef\.current === currentWcaMarkIdentity\}/);
     expect(app).toContain('openOverlay === TIMER_OVERLAY_IDS.historyCompare');
     expect(app).toContain('openOverlay === TIMER_OVERLAY_IDS.solveDetail');
-    expect(app).toContain('<TimerHistoryCompareModal');
+    expect(app).toContain('<TimerHistoryWorkspace');
+    expect(app).toContain('onBlockingChange={setHistoryModalOpen}');
+    expect(app).toContain('historyWorkspaceRef.current?.dismiss()');
+    expect(app).toContain('if (statsOpenRef.current) { setStatsOpen(false); return; }');
+    expect(app).toContain('openOverlay !== null || statsOpen || historyModalOpen');
     expect(app).toContain('<TimerSolveDetailModal');
-    expect(app).toContain('toggleTimerHistoryCompareSelection(current, solve.id)');
-    expect(app).toContain('visibleHistoryCompareSelectedIds,');
-    expect(app).toContain('historyCompareSelectionContext === historyCompareContext');
-    expect(app).toContain('canCompare={historyCompareReady}');
-    expect(app).toContain("if (view !== 'history' && historyCompareMode) closeHistoryCompare()");
-    expect(app).toContain("if (action === 'close-history-compare')");
-    expect(app).toContain('previous !== null && previous !== historyCompareContext');
+    expect(app).toContain('<TimerSmartCubeDeviceModal');
     expect(app).toContain('overlayOpen: openOverlayRef.current !== null');
     expect(app).toContain('openOverlay !== TIMER_OVERLAY_IDS.wcaScrambleMarks');
     expect(app).toContain('!wcaMarksIdentityChanged');

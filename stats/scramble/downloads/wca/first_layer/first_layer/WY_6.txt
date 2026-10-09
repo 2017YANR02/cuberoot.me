@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_layer / WY / bin 6
-# Population in this bin: 480
+# Population in this bin: 488
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 27659001,B2 L B2 L D2 R F2 D2 R2 D' F2 R' F2 D' F2 D' B' L2 U,Y,Nottingham Summer 2014 (2014-06-14~15),333oh R1 B #3
@@ -48,7 +48,7 @@
 350401001,B' R2 L' D2 L D' L U2 D' B2 U' F2 B2 U R2 U' F2,Y,Toronto Limited Summer 2016 (2016-08-20),333 R1 F #4
 5416933014,F2 R2 D2 R L2 D2 F' D B2 D R F2 L2 F2 D2 R2 F2 U L' F,Y,Hämeenlinna 2026 (2026-02-28~03-01),333mbf Final A #2
 356995001,L2 B2 U2 L2 D' B2 D' R' B L R' F D F' R' D F2 U L',Y,II Masovian Open Płock 2016 (2016-08-27~28),333 R1 C #5
-4619744001,B2 D B' D F R' F' U2 B2 D' B2 R2 D' F2 U2 R U',W,Crazy Cubing in Christchurch 2025 (2025-04-05~06),333oh Final B #1
+5842724001,L F R2 U' B' L2 D' B L2 F' U2 R2 B R2 B2 D2 B' L' U,W,New Cubing Season Athens B 2026 (2026-09-20),333oh Final A #1
 3501831001,D R2 U' L2 R2 U' B2 R' F' R F' D2 F2 U B2 R F2,Y,Rubí Guanajuato 2024 (2024-02-10~11),333oh R1 C E1
 393260001,B' R' B2 R B' D R2 F2 U' L' D F2 D' L2 U L2 D' L2 F2,W,Munich Open 2016 (2016-11-05~06),333 R2 A #3
 2818759015,B U2 B2 U2 B2 L2 D2 L2 F2 L2 U' R' U' B F R F2 D2 R2 B',W,Side Events Bangalore 2023 (2023-06-24~25),333mbf Final B #3

@@ -4,7 +4,7 @@
 //   2. 趋势 (成绩趋势折线 + 排名历史曲线,两图叠放)
 //   3. 分布 动态分布可视化 (DistributionViz)
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { memo, useState, useEffect, useMemo, useCallback } from 'react';
 import Link from '@/components/AppLink';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
@@ -89,25 +89,29 @@ export default function ByEventView({ profile, results, comps, reconLookup, even
   const [histLoading, setHistLoading] = useState(false);
 
   useEffect(() => {
+    if (view !== 'trend') return;
+    let cancelled = false;
     setHist(null);
     setHistLoading(true);
     fetchPersonRankHistory(profile.person.wca_id, eventId)
-      .then((j) => setHist(j))
+      .then((j) => { if (!cancelled) setHist(j); })
       .catch(() => { /* server endpoint may not exist yet — chart will simply hide */ })
-      .finally(() => setHistLoading(false));
-  }, [profile.person.wca_id, eventId]);
+      .finally(() => { if (!cancelled) setHistLoading(false); });
+    return () => { cancelled = true; };
+  }, [profile.person.wca_id, eventId, view]);
 
-  if (!results || !comps) return <div className="wp-loading-inline">{t('加载中…', 'Loading…')}</div>;
-
-  const compById = new Map(comps.map((c) => [c.id, c]));
-  const eventResults = results
+  // 保持表格输入稳定：头像、排名历史等无关补充数据不能让数百轮成绩重新计算和渲染。
+  const compById = useMemo(() => new Map((comps ?? []).map((c) => [c.id, c])), [comps]);
+  const eventResults = useMemo(() => (results ?? [])
     .filter((r) => r.event_id === eventId)
     .slice()
     .sort((a, b) => {
       const da = compById.get(a.competition_id)?.start_date ?? '';
       const db = compById.get(b.competition_id)?.start_date ?? '';
       return da.localeCompare(db) || wcaResultRowKey(a).localeCompare(wcaResultRowKey(b));
-    });
+    }), [results, eventId, compById]);
+
+  if (!results || !comps) return <div className="wp-loading-inline">{t('加载中…', 'Loading…')}</div>;
 
   return (
     <div className="wp-byevent">
@@ -193,7 +197,7 @@ export default function ByEventView({ profile, results, comps, reconLookup, even
 // ─── 全部成绩 (按比赛倒序的轮次表) ───────────────────────────────────────
 // 轮次显示元数据已抽到 utils/wca_round_meta.ts 共用 (ByCompList / 复盘页同场比赛表也用)
 
-function EventRoundsList({
+const EventRoundsList = memo(function EventRoundsList({
   wcaId, personName, personCountry, rows, compById, results, comps, eventId, reconLookup, isZh, showAttemptRanks = true, reconFilter, femaleRecordLookup,
 }: {
   wcaId: string;
@@ -298,20 +302,20 @@ function EventRoundsList({
         singleLiveRanks: new Map<string, number | null>(),
       };
     }
-    const single = computeWcaMetricStatsByRound(metricRounds, singleMetricMode);
+    const single = computeWcaMetricStatsByRound(metricRounds, singleMetricMode, eventId);
     const hasLiveRounds = metricRounds.some(round => round.live);
     const singleOfficialRanks = hasLiveRounds
-      ? computeWcaMetricStatsByRound(metricRounds.filter(round => !round.live), singleMetricMode).ranks
+      ? computeWcaMetricStatsByRound(metricRounds.filter(round => !round.live), singleMetricMode, eventId).ranks
       : single.ranks;
     return {
       values: {
         single: single.values,
-        average: computeWcaMetricByRound(metricRounds, averageMetricMode),
+        average: computeWcaMetricByRound(metricRounds, averageMetricMode, eventId),
       },
       singleOfficialRanks,
       singleLiveRanks: single.ranks,
     };
-  }, [mbld, metricRounds, singleMetricMode, averageMetricMode]);
+  }, [mbld, metricRounds, singleMetricMode, averageMetricMode, eventId]);
   const metricValues = metricData.values;
   // 直播行另算一份「官方 + 直播」的时间序名次,使直播行的单次/平均/逐把 PR 与官方行同一口径
   // 口径且彼此自洽(最好那把 == 单次列)。只取直播行用,不读官方行 → 不污染官方 PR 标记。
@@ -377,7 +381,7 @@ function EventRoundsList({
 
   // 渐进渲染:先挂前 N 行,其余趁 idle 补齐(顶级选手单项目可 500+ 行,一次性挂 = 单个长任务卡顿)。
   // 切项目 / 改排序 → displayRows 重排 → 重置重新渐进。
-  const { count, ensureIndex } = useProgressiveCount(displayRows.length, `${eventId}|${sort.key ?? ''}|${sort.dir}|${singleMetricMode}|${averageMetricMode}`);
+  const { count, ensureIndex } = useProgressiveCount(displayRows.length, `${eventId}|${sort.key ?? ''}|${sort.dir}|${singleMetricMode}|${averageMetricMode}`, 20, 30);
 
   // 行级 hash 锚点(#r-{comp}-{event}-{round}):点整行 → URL 片段更新,该行黄色高亮持续到
   // 换行。reveal 处理渐进渲染——目标行还没挂到 DOM 时先 ensureIndex 纳入并返回 false,count
@@ -410,18 +414,260 @@ function EventRoundsList({
     return spans;
   }, [displayRows, count, sort.key]);
 
-  const buildAnchorHref = (compId: string, roundType: string) =>
-    `${pathname}${search}${resultRowHash(compId, eventId, roundType)}`;
+  const buildAnchorHref = useCallback((compId: string, roundType: string) =>
+    `${pathname}${search}${resultRowHash(compId, eventId, roundType)}`, [pathname, search, eventId]);
   // 整行点击 → 切 hash,只是点 td 空白处生效;内部 Link/button 走自己 (closest 'a, button' 跳过).
   // Next App Router 改 hash 不触发 hashchange,故手动 setHash 让高亮立即生效.
-  const selectRow = (compId: string, roundType: string) => {
+  const selectRow = useCallback((compId: string, roundType: string) => {
     router.replace(buildAnchorHref(compId, roundType), { scroll: false });
     setHash(resultRowHash(compId, eventId, roundType));
-  };
-  const handleRowClick = (e: React.MouseEvent, compId: string, roundType: string) => {
+  }, [router, buildAnchorHref, setHash, eventId]);
+  const handleRowClick = useCallback((e: React.MouseEvent, compId: string, roundType: string) => {
     if ((e.target as HTMLElement).closest('a, button')) return;
     selectRow(compId, roundType);
-  };
+  }, [selectRow]);
+
+  // 已挂载的行在 idle 追加下一批时保持不变，避免每批重新构造数千个成绩按钮。
+  const renderRow = useCallback((r: WcaResultRow, showComp: boolean, aoxrSpan: number) => {
+    const cmp = compById.get(r.competition_id);
+    const rowKey = wcaResultRowKey(r);
+    const rank = r.live ? prRankLive?.get(rowKey) : prRank.get(rowKey);
+    const liveRank = r.live ? livePrRanks.get(rowKey) : null;
+    // 直播区域纪录异步返回前不先画 PR,否则 ER/AsR 等会短暂显示成错误的 PR。
+    // useLivePrRanks 即使查无区域纪录也会写入空结果,届时才恢复正常 PR 兜底。
+    const liveInfoReady = !r.live || livePrRanks.has(rowKey);
+    const singleRank = liveInfoReady ? (rank?.singleRank ?? liveRank?.pS ?? null) : null;
+    const averageRank = liveInfoReady ? (rank?.averageRank ?? liveRank?.pA ?? null) : null;
+    const metricRank = (r.live ? metricData.singleLiveRanks : metricData.singleOfficialRanks).get(rowKey) ?? null;
+    // 直播行的区域纪录(NR/WR/CR)与 /wca/comp 结果表同口径,优先于 PR 标志。
+    const baseSingleRecord = r.regional_single_record || (liveRank?.singleTag || null);
+    // 多盲非官方平均:WCA 无 regional_average_record,改查站内自算的 WR/大洲/NR 标签。
+    const mbldAvgRec = isMbldEvent(eventId)
+      ? mbldAvgRecords?.get(mbldAvgRecordKey(wcaId, r.competition_id, eventId, r.round_type_id)) ?? null
+      : null;
+    const baseAverageRecord = r.regional_average_record || mbldAvgRec || (liveRank?.averageTag || null);
+    // 拆 status:approved 进有效值显示;pending 仅作「待审核」标记(不改官方值)。
+    const { approved: chain, pending } = splitChainByStatus(changeMap.get(rowChangeKey(r.competition_id, eventId, r.round_type_id)));
+    const oldBest = changeChainOldValues(chain, 'best');
+    const oldAvg = changeChainOldValues(chain, 'average');
+    const oldPos = changeChainOldValues(chain, 'pos');
+    const effPos = effectiveFieldValue(chain, 'pos', r.pos);
+    const hasChange = chain.length > 0;
+    // 当前有效值 = WCA 值叠加变更链最新(行内改某次后即时反映)
+    const effBest = effectiveFieldValue(chain, 'best', r.best);
+    const effAvg = effectiveFieldValue(chain, 'average', effectiveAverage(r, eventId));
+    const singleRecord = personResultRecord(femaleRecordLookup, r, 's', effBest, baseSingleRecord);
+    const averageRecord = personResultRecord(femaleRecordLookup, r, 'a', effAvg, baseAverageRecord);
+    // Official or matched historical records supersede provisional live suppression.
+    const singleKeatoned = r.regional_single_record || singleRecord !== baseSingleRecord ? null : (liveRank?.singleKeatoned ?? null);
+    const averageKeatoned = r.regional_average_record || averageRecord !== baseAverageRecord ? null : (liveRank?.averageKeatoned ?? null);
+    const effAttempts = effectiveAttempts(chain, r.attempts);
+    // 「#」开 + 该轮有复盘(带 stm/tps)→ 详细成绩下补 STM/TPS 两行,轮次列同步出两行标签。
+    const hasReconStats = showAttemptRanks && rowHasReconStats(reconLookup, r.competition_id, eventId, r.round_type_id, effAttempts.length);
+    const hasTimingStats = showAttemptRanks && effAttempts.some((_, i) => {
+      const info = findReconForAttempt(reconLookup, r.competition_id, eventId, r.round_type_id, i + 1);
+      return info?.pickupTime != null && info?.putdownTime != null;
+    });
+    const speedUnit = eventId === 'sq1' ? 'SPS' : 'TPS';
+    // 平均 STM / 平均 TPS(Ao5 去尾均值),5 把全有复盘才给值,展示在平均列下方两行。
+    const roundAvg = hasReconStats ? computeReconRoundAvg(reconLookup, r.competition_id, eventId, r.round_type_id) : null;
+    return (
+      <tr
+        key={rowKey}
+        id={`r-${r.competition_id}-${eventId}-${r.round_type_id}`}
+        className={`wp-row-anchorable ${showComp ? 'wp-row-comp-first' : ''} ${hasChange ? 'wp-row-changed' : ''} ${r.live ? 'wp-row-live' : ''} ${hasReconStats || hasTimingStats ? 'wp-row-has-recon-stats' : ''}`}
+        onClick={(e) => handleRowClick(e, r.competition_id, r.round_type_id)}
+      >
+        <td className="wp-cell-comp">
+          {showComp && cmp && (
+            <>
+              <Link
+                {...compLinkProps(cmp.id, { event: eventId, round: r.round_type_id, view: 'result' })}
+                className="wp-bycomp-name"
+              ><CompCell compId={cmp.id} compName={cmp.name} isZh={isZh} date={cmp.start_date} /></Link>
+              <div className="wp-cell-comp-date">{formatDateRangeIso(cmp.start_date, cmp.end_date)}</div>
+            </>
+          )}
+          {showComp && !cmp && r.competition_id}
+        </td>
+        <td>
+          <span className="wp-round-cell">
+            <span className="wp-round-head">
+              <Link
+                href={buildAnchorHref(r.competition_id, r.round_type_id)}
+                replace
+                scroll={false}
+                onClick={() => setHash(resultRowHash(r.competition_id, eventId, r.round_type_id))}
+                className={`wp-round-tag wp-round-tag-link ${roundClass(r.round_type_id)}`}
+                title={tr({ zh: '复制到链接', en: 'Copy link to this row' })}
+              >
+                {roundLabel(r.round_type_id)}
+              </Link>
+              {r.live && (
+                <span className="wp-live-chip" title={tr({ zh: '直播成绩', en: 'Live result' })}>
+                  {tr({ zh: '直播', en: 'LIVE' })}
+                </span>
+              )}
+              <PendingProposals pending={pending} eventId={eventId} isAdmin={admin} onModerated={refreshChanges} />
+            </span>
+            {hasReconStats && (
+              <>
+                <span className="wp-round-sublabel">STM</span>
+                <span className="wp-round-sublabel">{speedUnit}</span>
+              </>
+            )}
+            {hasTimingStats && <>
+              <span className="wp-round-sublabel">{tr({ zh: '起表', en: 'Pickup' })}</span>
+              <span className="wp-round-sublabel">{tr({ zh: '拍表', en: 'Putdown' })}</span>
+              <span className="wp-round-sublabel">{tr({ zh: '起拍', en: 'Pickup + putdown' })}</span>
+            </>}
+          </span>
+        </td>
+        <td className={`wp-cell-pos ${effPos === 1 ? 'wp-pos-first' : ''} ${oldPos.length > 0 ? 'wp-cell-changed' : ''}`}>
+          <span className="record-num-cell">
+            <ResultChangeChain oldValues={oldPos} eventId={eventId} kind="pos" note={chain?.[chain.length - 1]?.note} />
+            {effPos > 0 ? effPos : '—'}
+          </span>
+        </td>
+        <td className={`wp-cell-result ${mbld ? 'wp-cell-result--mbld' : ''} ${(mbld || singleMetricMode === 'singles') && oldBest.length > 0 ? 'wp-cell-changed' : ''}`}>
+          {mbld || singleMetricMode === 'singles' ? (
+            <span className="record-num-cell">
+              <ResultChangeChain oldValues={oldBest} eventId={eventId} kind="single" note={chain?.[chain.length - 1]?.note} />
+              {formatWcaResult(effBest, eventId, 'single')}
+              {singleKeatoned
+                ? <RecordBadge record={singleRecord} iso2={personCountry} keatoned={singleKeatoned} keatonedEventId={eventId} variant="inline" />
+                : singleRecord
+                  ? <RecordBadge record={singleRecord} iso2={personCountry} variant="inline" />
+                  : singleRank
+                    ? <RecordBadge record={singleRank === 1 ? 'PR' : `PR${singleRank}`} variant="inline" />
+                    : null}
+            </span>
+          ) : (
+            <span className="record-num-cell">
+              {formatMetricValue(metricValues.single.get(rowKey), eventId, singleMetricMode)}
+              {metricRank
+                ? <RecordBadge record={metricRank === 1 ? 'PR' : `PR${metricRank}`} variant="inline" />
+                : null}
+            </span>
+          )}
+        </td>
+        <td className={`wp-cell-result ${(mbld || averageMetricMode === 'avg') && oldAvg.length > 0 ? 'wp-cell-changed' : ''}`}>
+          {!mbld && averageMetricMode !== 'avg' ? (
+            formatMetricValue(metricValues.average.get(rowKey), eventId, averageMetricMode)
+          ) : roundAvg ? (
+            <span className="wp-avg-cell">
+              <AverageValueCell
+                effAvg={effAvg}
+                attempts={effAttempts}
+                eventId={eventId}
+                averageRecord={averageRecord}
+                averageKeatoned={averageKeatoned}
+                averageRank={averageRank}
+                personCountry={personCountry}
+                oldValues={oldAvg}
+                note={chain?.[chain.length - 1]?.note}
+                decimalAlign
+              />
+              <AvgDec text={roundAvg.stm.toFixed(2)} variant="sub" />
+              <AvgDec text={roundAvg.tps.toFixed(2)} variant="sub" />
+            </span>
+          ) : (
+            <AverageValueCell
+              effAvg={effAvg}
+              attempts={effAttempts}
+              eventId={eventId}
+              averageRecord={averageRecord}
+              averageKeatoned={averageKeatoned}
+              averageRank={averageRank}
+              personCountry={personCountry}
+              oldValues={oldAvg}
+              note={chain?.[chain.length - 1]?.note}
+            />
+          )}
+        </td>
+        <td className={`wp-cell-attempts ${isMbldEvent(eventId) ? 'wp-cell-attempts--mbld' : ''} ${showAttemptRanks ? '' : 'wp-cell-attempts--center'}`}>
+          <AttemptsList
+            attempts={effAttempts}
+            best={effBest}
+            eventId={eventId}
+            compId={r.competition_id}
+            roundTypeId={r.round_type_id}
+            reconLookup={reconLookup}
+            isZh={isZh}
+            admin={admin}
+            isOwner={isOwner}
+            canEdit={loggedIn}
+            onEditRecord={admin ? () => setEditTarget({
+              wcaId,
+              competitionId: r.competition_id,
+              eventId,
+              roundTypeId: r.round_type_id,
+              resultId: r.id ?? null,
+              currentAttempts: effAttempts,
+              currentBest: effBest,
+              currentAverage: effAvg,
+              currentSingleRecord: r.regional_single_record ?? null,
+              currentAverageRecord: r.regional_average_record ?? null,
+              personName: personName ?? null,
+              compName: cmp?.name ?? null,
+            }) : undefined}
+            personId={wcaId}
+            personName={personName ?? ''}
+            personCountry={personCountry}
+            compName={cmp?.name ?? ''}
+            compCountry={cmp?.country_iso2}
+            compDate={cmp?.start_date}
+            attemptOlds={effAttempts.map((_, i) => attemptOldValues(chain, i))}
+            penalties={effectiveAttemptPenalties(chain)}
+            penaltyNote={effectiveAttemptPenaltyNote(chain)}
+            attemptVideos={effectiveAttemptVideos(chain)}
+            pendingVideos={pendingAttemptVideos(chain)}
+            onAddVideo={(index, url) =>
+              recordAttemptVideos({
+                target: { wcaId, competitionId: r.competition_id, eventId, roundTypeId: r.round_type_id, resultId: r.id ?? null },
+                currentAttempts: effAttempts,
+                index, videoUrl: url, existingChain: chain, propose: !admin,
+              }).then(refreshChanges)
+            }
+            attemptRanks={showAttemptRanks ? (rank?.attemptRanks ?? null) : null}
+            singleRecord={showAttemptRanks ? singleRecord : null}
+            showReconStats={hasReconStats}
+            showTimingStats={hasTimingStats}
+            cols={maxAttempts}
+            onEdit={(index, newValue, note) =>
+              recordAttemptEdit({
+                target: { wcaId, competitionId: r.competition_id, eventId, roundTypeId: r.round_type_id, resultId: r.id ?? null },
+                currentAttempts: effAttempts, currentBest: effBest, currentAverage: effAvg,
+                index, newValue, note,
+              }).then(refreshChanges)
+            }
+            onSetOriginal={(index, originalValue, note) =>
+              recordAttemptOriginal({
+                target: { wcaId, competitionId: r.competition_id, eventId, roundTypeId: r.round_type_id, resultId: r.id ?? null },
+                currentAttempts: effAttempts, currentBest: effBest, currentAverage: effAvg,
+                index, originalValue, note, existingChain: chain, propose: !admin,
+              }).then(refreshChanges)
+            }
+            onSetPenalty={(index, penaltyCs, note) =>
+              recordAttemptPenalty({
+                target: { wcaId, competitionId: r.competition_id, eventId, roundTypeId: r.round_type_id, resultId: r.id ?? null },
+                currentAttempts: effAttempts,
+                index, penaltyCs, note, existingChain: chain, propose: !admin && !isOwner,
+              }).then(refreshChanges)
+            }
+          />
+        </td>
+        {aoxrSpan > 0 && (
+          <td className="wp-cell-aoxr" rowSpan={aoxrSpan}>
+            <AoxrValue cell={aoxrMap.get(aoxrKey(r.competition_id, eventId))} eventId={eventId} />
+          </td>
+        )}
+      </tr>
+    );
+  }, [compById, prRankLive, prRank, livePrRanks, metricData, eventId, mbldAvgRecords,
+    wcaId, changeMap, femaleRecordLookup, showAttemptRanks, reconLookup, handleRowClick,
+    isZh, buildAnchorHref, setHash, admin, refreshChanges, mbld, singleMetricMode,
+    personCountry, metricValues, averageMetricMode, isOwner, loggedIn, personName, aoxrMap, maxAttempts]);
 
   if (displayRows.length === 0) return <div className="wp-empty">{reconFilter === 'all'
     ? tr({ zh: '暂无成绩', en: 'No results yet' })
@@ -432,7 +678,6 @@ function EventRoundsList({
   const timingStats = computeReconTimingMean(reconLookup, eventId);
   const grouped = !sort.key;
   // 分组视图:同一比赛只在首行展示比赛名 + 日期;排序视图:逐行都展示(已打散).
-  let lastCompId = '';
   // 列头排序按钮的方向箭头(全站统一 components/SortArrow)。
   const sortArrow = (key: string) =>
     <SortArrow active={sort.key === key} dir={sort.dir} size={11} />;
@@ -577,245 +822,15 @@ function EventRoundsList({
           </tr>
         </thead>
         <tbody>
-          {displayRows.slice(0, count).map((r, ri) => {
-            const cmp = compById.get(r.competition_id);
-            const rowKey = wcaResultRowKey(r);
-            const rank = r.live ? prRankLive?.get(rowKey) : prRank.get(rowKey);
-            const liveRank = r.live ? livePrRanks.get(rowKey) : null;
-            // 直播区域纪录异步返回前不先画 PR,否则 ER/AsR 等会短暂显示成错误的 PR。
-            // useLivePrRanks 即使查无区域纪录也会写入空结果,届时才恢复正常 PR 兜底。
-            const liveInfoReady = !r.live || livePrRanks.has(rowKey);
-            const singleRank = liveInfoReady ? (rank?.singleRank ?? liveRank?.pS ?? null) : null;
-            const averageRank = liveInfoReady ? (rank?.averageRank ?? liveRank?.pA ?? null) : null;
-            const metricRank = (r.live ? metricData.singleLiveRanks : metricData.singleOfficialRanks).get(rowKey) ?? null;
-            // 直播行的区域纪录(NR/WR/CR)与 /wca/comp 结果表同口径,优先于 PR 标志。
-            const baseSingleRecord = r.regional_single_record || (liveRank?.singleTag || null);
-            // 多盲非官方平均:WCA 无 regional_average_record,改查站内自算的 WR/大洲/NR 标签。
-            const mbldAvgRec = isMbldEvent(eventId)
-              ? mbldAvgRecords?.get(mbldAvgRecordKey(wcaId, r.competition_id, eventId, r.round_type_id)) ?? null
-              : null;
-            const baseAverageRecord = r.regional_average_record || mbldAvgRec || (liveRank?.averageTag || null);
-            const showComp = !grouped || r.competition_id !== lastCompId;
-            lastCompId = r.competition_id;
-            // 拆 status:approved 进有效值显示;pending 仅作「待审核」标记(不改官方值)。
-            const { approved: chain, pending } = splitChainByStatus(changeMap.get(rowChangeKey(r.competition_id, eventId, r.round_type_id)));
-            const oldBest = changeChainOldValues(chain, 'best');
-            const oldAvg = changeChainOldValues(chain, 'average');
-            const oldPos = changeChainOldValues(chain, 'pos');
-            const effPos = effectiveFieldValue(chain, 'pos', r.pos);
-            const hasChange = chain.length > 0;
-            // 当前有效值 = WCA 值叠加变更链最新(行内改某次后即时反映)
-            const effBest = effectiveFieldValue(chain, 'best', r.best);
-            const effAvg = effectiveFieldValue(chain, 'average', effectiveAverage(r, eventId));
-            const singleRecord = personResultRecord(femaleRecordLookup, r, 's', effBest, baseSingleRecord);
-            const averageRecord = personResultRecord(femaleRecordLookup, r, 'a', effAvg, baseAverageRecord);
-            // Official or matched historical records supersede provisional live suppression.
-            const singleKeatoned = r.regional_single_record || singleRecord !== baseSingleRecord ? null : (liveRank?.singleKeatoned ?? null);
-            const averageKeatoned = r.regional_average_record || averageRecord !== baseAverageRecord ? null : (liveRank?.averageKeatoned ?? null);
-            const effAttempts = effectiveAttempts(chain, r.attempts);
-            // 「#」开 + 该轮有复盘(带 stm/tps)→ 详细成绩下补 STM/TPS 两行,轮次列同步出两行标签。
-            const hasReconStats = showAttemptRanks && rowHasReconStats(reconLookup, r.competition_id, eventId, r.round_type_id, effAttempts.length);
-            const hasTimingStats = showAttemptRanks && effAttempts.some((_, i) => {
-              const info = findReconForAttempt(reconLookup, r.competition_id, eventId, r.round_type_id, i + 1);
-              return info?.pickupTime != null && info?.putdownTime != null;
-            });
-            const speedUnit = eventId === 'sq1' ? 'SPS' : 'TPS';
-            // 平均 STM / 平均 TPS(Ao5 去尾均值),5 把全有复盘才给值,展示在平均列下方两行。
-            const roundAvg = hasReconStats ? computeReconRoundAvg(reconLookup, r.competition_id, eventId, r.round_type_id) : null;
-            return (
-              <tr
-                key={rowKey}
-                id={`r-${r.competition_id}-${eventId}-${r.round_type_id}`}
-                className={`wp-row-anchorable ${showComp ? 'wp-row-comp-first' : ''} ${hasChange ? 'wp-row-changed' : ''} ${r.live ? 'wp-row-live' : ''} ${hasReconStats || hasTimingStats ? 'wp-row-has-recon-stats' : ''}`}
-                onClick={(e) => handleRowClick(e, r.competition_id, r.round_type_id)}
-              >
-                <td className="wp-cell-comp">
-                  {showComp && cmp && (
-                    <>
-                      <Link
-                        {...compLinkProps(cmp.id, { event: eventId, round: r.round_type_id, view: 'result' })}
-                        className="wp-bycomp-name"
-                      ><CompCell compId={cmp.id} compName={cmp.name} isZh={isZh} date={cmp.start_date} /></Link>
-                      <div className="wp-cell-comp-date">{formatDateRangeIso(cmp.start_date, cmp.end_date)}</div>
-                    </>
-                  )}
-                  {showComp && !cmp && r.competition_id}
-                </td>
-                <td>
-                  <span className="wp-round-cell">
-                    <span className="wp-round-head">
-                      <Link
-                        href={buildAnchorHref(r.competition_id, r.round_type_id)}
-                        replace
-                        scroll={false}
-                        onClick={() => setHash(resultRowHash(r.competition_id, eventId, r.round_type_id))}
-                        className={`wp-round-tag wp-round-tag-link ${roundClass(r.round_type_id)}`}
-                        title={t('复制到链接', 'Copy link to this row')}
-                      >
-                        {roundLabel(r.round_type_id)}
-                      </Link>
-                      {r.live && (
-                        <span className="wp-live-chip" title={t('直播成绩', 'Live result')}>
-                          {t('直播', 'LIVE')}
-                        </span>
-                      )}
-                      <PendingProposals pending={pending} eventId={eventId} isAdmin={admin} onModerated={refreshChanges} />
-                    </span>
-                    {hasReconStats && (
-                      <>
-                        <span className="wp-round-sublabel">STM</span>
-                        <span className="wp-round-sublabel">{speedUnit}</span>
-                      </>
-                    )}
-                    {hasTimingStats && <>
-                      <span className="wp-round-sublabel">{tr({ zh: '起表', en: 'Pickup' })}</span>
-                      <span className="wp-round-sublabel">{tr({ zh: '拍表', en: 'Putdown' })}</span>
-                      <span className="wp-round-sublabel">{tr({ zh: '起拍', en: 'Pickup + putdown' })}</span>
-                    </>}
-                  </span>
-                </td>
-                <td className={`wp-cell-pos ${effPos === 1 ? 'wp-pos-first' : ''} ${oldPos.length > 0 ? 'wp-cell-changed' : ''}`}>
-                  <span className="record-num-cell">
-                    <ResultChangeChain oldValues={oldPos} eventId={eventId} kind="pos" note={chain?.[chain.length - 1]?.note} />
-                    {effPos > 0 ? effPos : '—'}
-                  </span>
-                </td>
-                <td className={`wp-cell-result ${mbld ? 'wp-cell-result--mbld' : ''} ${(mbld || singleMetricMode === 'singles') && oldBest.length > 0 ? 'wp-cell-changed' : ''}`}>
-                  {mbld || singleMetricMode === 'singles' ? (
-                    <span className="record-num-cell">
-                      <ResultChangeChain oldValues={oldBest} eventId={eventId} kind="single" note={chain?.[chain.length - 1]?.note} />
-                      {formatWcaResult(effBest, eventId, 'single')}
-                      {singleKeatoned
-                        ? <RecordBadge record={singleRecord} iso2={personCountry} keatoned={singleKeatoned} keatonedEventId={eventId} variant="inline" />
-                        : singleRecord
-                          ? <RecordBadge record={singleRecord} iso2={personCountry} variant="inline" />
-                          : singleRank
-                            ? <RecordBadge record={singleRank === 1 ? 'PR' : `PR${singleRank}`} variant="inline" />
-                            : null}
-                    </span>
-                  ) : (
-                    <span className="record-num-cell">
-                      {formatMetricValue(metricValues.single.get(rowKey), eventId, singleMetricMode)}
-                      {metricRank
-                        ? <RecordBadge record={metricRank === 1 ? 'PR' : `PR${metricRank}`} variant="inline" />
-                        : null}
-                    </span>
-                  )}
-                </td>
-                <td className={`wp-cell-result ${(mbld || averageMetricMode === 'avg') && oldAvg.length > 0 ? 'wp-cell-changed' : ''}`}>
-                  {!mbld && averageMetricMode !== 'avg' ? (
-                    formatMetricValue(metricValues.average.get(rowKey), eventId, averageMetricMode)
-                  ) : roundAvg ? (
-                    <span className="wp-avg-cell">
-                      <AverageValueCell
-                        effAvg={effAvg}
-                        attempts={effAttempts}
-                        eventId={eventId}
-                        averageRecord={averageRecord}
-                        averageKeatoned={averageKeatoned}
-                        averageRank={averageRank}
-                        personCountry={personCountry}
-                        oldValues={oldAvg}
-                        note={chain?.[chain.length - 1]?.note}
-                        decimalAlign
-                      />
-                      <AvgDec text={roundAvg.stm.toFixed(2)} variant="sub" />
-                      <AvgDec text={roundAvg.tps.toFixed(2)} variant="sub" />
-                    </span>
-                  ) : (
-                    <AverageValueCell
-                      effAvg={effAvg}
-                      attempts={effAttempts}
-                      eventId={eventId}
-                      averageRecord={averageRecord}
-                      averageKeatoned={averageKeatoned}
-                      averageRank={averageRank}
-                      personCountry={personCountry}
-                      oldValues={oldAvg}
-                      note={chain?.[chain.length - 1]?.note}
-                    />
-                  )}
-                </td>
-                <td className={`wp-cell-attempts ${isMbldEvent(eventId) ? 'wp-cell-attempts--mbld' : ''} ${showAttemptRanks ? '' : 'wp-cell-attempts--center'}`}>
-                  <AttemptsList
-                    attempts={effAttempts}
-                    best={effBest}
-                    eventId={eventId}
-                    compId={r.competition_id}
-                    roundTypeId={r.round_type_id}
-                    reconLookup={reconLookup}
-                    isZh={isZh}
-                    admin={admin}
-                    isOwner={isOwner}
-                    canEdit={loggedIn}
-                    onEditRecord={admin ? () => setEditTarget({
-                      wcaId,
-                      competitionId: r.competition_id,
-                      eventId,
-                      roundTypeId: r.round_type_id,
-                      resultId: r.id ?? null,
-                      currentAttempts: effAttempts,
-                      currentBest: effBest,
-                      currentAverage: effAvg,
-                      currentSingleRecord: r.regional_single_record ?? null,
-                      currentAverageRecord: r.regional_average_record ?? null,
-                      personName: personName ?? null,
-                      compName: cmp?.name ?? null,
-                    }) : undefined}
-                    personId={wcaId}
-                    personName={personName ?? ''}
-                    personCountry={personCountry}
-                    compName={cmp?.name ?? ''}
-                    compCountry={cmp?.country_iso2}
-                    compDate={cmp?.start_date}
-                    attemptOlds={effAttempts.map((_, i) => attemptOldValues(chain, i))}
-                    penalties={effectiveAttemptPenalties(chain)}
-                    penaltyNote={effectiveAttemptPenaltyNote(chain)}
-                    attemptVideos={effectiveAttemptVideos(chain)}
-                    pendingVideos={pendingAttemptVideos(chain)}
-                    onAddVideo={(index, url) =>
-                      recordAttemptVideos({
-                        target: { wcaId, competitionId: r.competition_id, eventId, roundTypeId: r.round_type_id, resultId: r.id ?? null },
-                        currentAttempts: effAttempts,
-                        index, videoUrl: url, existingChain: chain, propose: !admin,
-                      }).then(refreshChanges)
-                    }
-                    attemptRanks={showAttemptRanks ? (rank?.attemptRanks ?? null) : null}
-                    singleRecord={showAttemptRanks ? singleRecord : null}
-                    showReconStats={hasReconStats}
-                    showTimingStats={hasTimingStats}
-                    cols={maxAttempts}
-                    onEdit={(index, newValue, note) =>
-                      recordAttemptEdit({
-                        target: { wcaId, competitionId: r.competition_id, eventId, roundTypeId: r.round_type_id, resultId: r.id ?? null },
-                        currentAttempts: effAttempts, currentBest: effBest, currentAverage: effAvg,
-                        index, newValue, note,
-                      }).then(refreshChanges)
-                    }
-                    onSetOriginal={(index, originalValue, note) =>
-                      recordAttemptOriginal({
-                        target: { wcaId, competitionId: r.competition_id, eventId, roundTypeId: r.round_type_id, resultId: r.id ?? null },
-                        currentAttempts: effAttempts, currentBest: effBest, currentAverage: effAvg,
-                        index, originalValue, note, existingChain: chain, propose: !admin,
-                      }).then(refreshChanges)
-                    }
-                    onSetPenalty={(index, penaltyCs, note) =>
-                      recordAttemptPenalty({
-                        target: { wcaId, competitionId: r.competition_id, eventId, roundTypeId: r.round_type_id, resultId: r.id ?? null },
-                        currentAttempts: effAttempts,
-                        index, penaltyCs, note, existingChain: chain, propose: !admin && !isOwner,
-                      }).then(refreshChanges)
-                    }
-                  />
-                </td>
-                {aoxrSpans[ri] > 0 && (
-                  <td className="wp-cell-aoxr" rowSpan={aoxrSpans[ri]}>
-                    <AoxrValue cell={aoxrMap.get(aoxrKey(r.competition_id, eventId))} eventId={eventId} />
-                  </td>
-                )}
-              </tr>
-            );
-          })}
+          {displayRows.slice(0, count).map((row, index) => (
+            <EventResultRow
+              key={wcaResultRowKey(row)}
+              row={row}
+              showComp={!grouped || index === 0 || row.competition_id !== displayRows[index - 1].competition_id}
+              aoxrSpan={aoxrSpans[index]}
+              render={renderRow}
+            />
+          ))}
         </tbody>
       </table>
       {editTarget && (
@@ -829,11 +844,20 @@ function EventRoundsList({
       </div>
     </>
   );
-}
+});
+
+const EventResultRow = memo(function EventResultRow({ row, showComp, aoxrSpan, render }: {
+  row: WcaResultRow;
+  showComp: boolean;
+  aoxrSpan: number;
+  render: (row: WcaResultRow, showComp: boolean, aoxrSpan: number) => React.ReactNode;
+}) {
+  return render(row, showComp, aoxrSpan);
+});
 
 function formatMetricValue(value: number | null | undefined, eventId: string, mode: WcaResultMetricMode): string {
   if (value === null || value === undefined || value <= 0) return '—';
-  return formatWcaResult(value, eventId, mode === 'avg' ? 'average' : 'single');
+  return formatWcaResult(value, eventId, WCA_AVERAGE_METRIC_KEYS.includes(mode) ? 'average' : 'single');
 }
 
 function formatResultStdDev(sd: number, eventId: string, kind: 'single' | 'average'): string {

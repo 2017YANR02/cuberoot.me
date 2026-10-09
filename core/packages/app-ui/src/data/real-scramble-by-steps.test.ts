@@ -23,8 +23,8 @@ vi.mock('./cube222-step-filter', () => ({
   },
 }));
 
-vi.mock('./non222-steps-pool', () => ({
-  filterMobileNon222BySteps: filterNon222Mock,
+vi.mock('@cuberoot/timer-ui/scramble/non222-steps', () => ({
+  filterNon222BySteps: filterNon222Mock,
 }));
 
 describe('mobile real 2x2 by-steps source', () => {

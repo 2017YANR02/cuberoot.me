@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xcross / B / bin 10
-# Population in this bin: 27
-# Samples listed: 27 (all entries in this bin)
+# Population in this bin: 28
+# Samples listed: 28 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 174760001,U2 F2 R2 D2 U L2 D R2 U' R' U' L' R2 B U R D2 F R2 B',B,Torneo Salitre Plaza 2015 (2015-08-07~09),333 R2 A #5
@@ -32,3 +32,4 @@
 5340860001,U2 F U L2 F' L2 D2 L2 D' U' R2 B2 L' F' L2 R F' D L' B',B,PBQ in Almaty 2026 (2026-01-17~18),333bf R1 B #4
 5519345001,F L2 F R' B' R2 D2 U2 R2 F2 U2 F' R' F2 R' D F2 D2 L,B,Loba April Ankara 2026 (2026-04-11~12),333 R2 B #1
 5532064004,L2 B L B' L2 U' R2 D B2 D' B2 U2 B D R U L R B2 L' F,B,Nebraska Championship 2026 (2026-04-10~12),333mbf Final B #1
+5844915001,D' U' L2 D' F2 L2 B2 L2 F R B U L R' B2 D' F U' L',B,Learn How To Cube in Laguna 2026 (2026-09-26),333oh Final A #3

@@ -6,21 +6,20 @@
 // the site-search data layer only loads when the user actually opens search.
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Check, Lock, LockOpen, ArrowLeft, ArrowRight, Pencil, Trash2, RotateCcw, Maximize2, Coffee, Sun, Heart, Home, Sparkles, Shuffle, MessageSquarePlus, Music, Share2 } from 'lucide-react';
+import { Check, Lock, LockOpen, ArrowLeft, ArrowRight, Pencil, Trash2, RotateCcw, Maximize2, Coffee, Sun, Heart, Home, Sparkles, Shuffle, MessageSquarePlus, Music } from 'lucide-react';
 import type { DeskPetEntry } from '@cuberoot/shared/deskpet';
 import { CompactSelect } from '@/components/CompactSelect';
 import BoolToggle from '@/components/BoolToggle';
+import { useDeskPetVisible } from '@/hooks/useDeskPetVisible';
 import HomeLink from '@/components/HomeLink';
 import LandingSearch from '@/components/LandingSearch';
 import HeaderToggles from '@/components/HeaderToggles';
 import WcaAuth from '@/components/WcaAuth';
 import DonateModal from '@/components/DonateModal';
 import FeedbackModal from '@/components/FeedbackModal';
-import { MobilePageShareModal, WeChatPcShareModal } from '@/components/WeChatPcShareModal';
 import { SEARCH_CARDS, isLandingSearchCardVisible } from '@/lib/landing-sections';
 import { isAdmin } from '@/lib/auth-store';
 import { useFeedbackUnread, refreshFeedbackUnread } from '@/lib/feedback-unread';
-import { isInWeChat } from '@/lib/wechat-share';
 import { tr } from '@/i18n/tr';
 
 const CSS = `
@@ -29,13 +28,15 @@ const CSS = `
   background:color-mix(in srgb, var(--background) 88%, transparent);
   backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
 .deskpet-search-box{width:min(720px,100%);will-change:transform,opacity;}
+/* The animated box is a stacking context; raise it with its menu above the toolbar. */
+.deskpet-search-box:has(.landing-search-plus-menu){z-index:1;}
 .deskpet-search-box .landing-search{margin:0;}
 /* Box is anchored to the bottom of the screen, so the results open upward. */
 .deskpet-search-box .landing-search-panel{top:auto;bottom:calc(100% + 0.5rem);}
 
 /* Controls render as a bare row of icons (no per-button card/border) — hover only. */
 .deskpet-toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;
-  gap:0;width:min(720px,100%);margin:0;}
+  gap:0;width:min(720px,100%);margin:0;z-index:0;}
 .deskpet-toolbar button:not(.lang-menu *),.deskpet-toolbar a:not(.lang-menu *){display:flex;align-items:center;gap:6px;border:0;cursor:pointer;
   padding:7px;border-radius:9px;text-decoration:none;
   font:13px/1 ui-sans-serif,system-ui,sans-serif;
@@ -72,9 +73,10 @@ const CSS = `
 .deskpet-character-settings,.deskpet-character-gallery{margin-top:4px;padding-top:4px;border-top:1px solid var(--border-default);}
 .deskpet-character-settings{display:flex;flex-direction:column;gap:2px;}
 .deskpet-character-setting{display:flex;align-items:center;gap:12px;padding:6px 10px;font-size:13px;}
+.deskpet-character-settings .bool-toggle{width:100%;justify-content:space-between;}
+.deskpet-character-hint{margin:0;padding:0 10px 6px;font-size:12px;line-height:1.5;color:var(--muted-foreground);}
 .deskpet-character-sizes{display:flex;gap:2px;}
 .deskpet-character-menu .deskpet-character-size{width:auto;padding:6px 10px;white-space:nowrap;}
-.deskpet-character-random .bool-toggle-label{order:-1;}
 .deskpet-character-random .pill-toggle{flex:none;}
 /* Donate heart — filled warm red, a theme-independent semantic color. */
 .deskpet-toolbar .heart-icon{fill:#ff5a5f;color:#ff5a5f;}
@@ -105,7 +107,8 @@ const CSS = `
 @media (max-width:768px){
   .deskpet-toolbar>*{flex:0 0 auto;}
   .deskpet-toolbar .sep{display:none;}
-  .deskpet-search-backdrop{padding-bottom:max(6px,var(--sab,0px));}
+  /* Leave room below the search for the plus menu, including above the keyboard. */
+  .deskpet-search-backdrop{padding-bottom:max(64px,var(--sab,0px));}
 }
 
 `;
@@ -148,13 +151,12 @@ export default function DeskPetSearch({
   onToggleMetronome: () => void;
   onOpenPetHome: () => void;
 }) {
+  const [petVisible, setPetVisible] = useDeskPetVisible();
   const searchCards = SEARCH_CARDS.filter((card) => isLandingSearchCardVisible(card, isAdmin()));
   const backdropRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   const [donateOpen, setDonateOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const [wechatShareOpen, setWechatShareOpen] = useState(false);
-  const [mobileShareHelp, setMobileShareHelp] = useState<'wechat' | 'browser' | null>(null);
   const fbUnread = useFeedbackUnread();
 
   // 反馈按钮红点跟共享未读数;关掉反馈弹窗后复查一次(可能刚读过)。轮询由桌宠统一做。
@@ -223,35 +225,6 @@ export default function DeskPetSearch({
     ['/donate/alipay.webp', '/donate/wechat.webp'].forEach((href) => {
       const img = new Image();
       img.src = href;
-    });
-  };
-
-  const shareCurrentPage = () => {
-    if (isInWeChat()) {
-      setMobileShareHelp('wechat');
-      return;
-    }
-
-    const mobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
-      || window.matchMedia('(max-width: 768px)').matches;
-    if (!mobile) {
-      setWechatShareOpen(true);
-      return;
-    }
-
-    if (typeof navigator.share !== 'function') {
-      setMobileShareHelp('browser');
-      return;
-    }
-
-    const description = document.querySelector<HTMLMetaElement>('meta[name="description"]')?.content;
-    void navigator.share({
-      title: document.title,
-      text: description || undefined,
-      url: window.location.href,
-    }).catch((error: unknown) => {
-      if (error instanceof DOMException && error.name === 'AbortError') return;
-      setMobileShareHelp('browser');
     });
   };
 
@@ -343,12 +316,6 @@ export default function DeskPetSearch({
             }} />
           )}
         </button>
-        <button type="button" className="icon-only" onClick={shareCurrentPage}
-          title={tr({ zh: '分享当前页面', en: 'Share this page' })}
-          aria-label={tr({ zh: '分享当前页面', en: 'Share this page' })}>
-          <Share2 size={16} />
-          <span className="toolbar-label">{t('分享', 'Share')}</span>
-        </button>
         <button type="button" className={`icon-only${metronomeOpen ? ' is-active' : ''}`}
           onClick={onToggleMetronome}
           title={t('音乐与节拍器', 'Music and metronome')}>
@@ -414,6 +381,10 @@ export default function DeskPetSearch({
                 </button>
               </div>
               <div className="deskpet-character-settings">
+                <BoolToggle className="deskpet-character-setting"
+                  value={petVisible} onChange={setPetVisible}
+                  label={tr({ zh: '显示桌宠', en: 'Show desk pet' })} />
+                <p className="deskpet-character-hint">{tr({ zh: '关闭后可在顶部的外观-显示桌宠再次开启', en: 'After hiding your pet, turn it back on from Appearance → Show desk pet at the top.' })}</p>
                 <div className="deskpet-character-setting">
                   <span className="deskpet-character-option">
                     <span className="deskpet-character-thumb" aria-hidden><Maximize2 size={18} /></span>
@@ -465,10 +436,6 @@ export default function DeskPetSearch({
       </div>
       {donateOpen && <DonateModal lang={lang} onClose={() => setDonateOpen(false)} />}
       {feedbackOpen && <FeedbackModal lang={lang} onClose={() => setFeedbackOpen(false)} />}
-      {wechatShareOpen && <WeChatPcShareModal onClose={() => setWechatShareOpen(false)} />}
-      {mobileShareHelp && (
-        <MobilePageShareModal mode={mobileShareHelp} onClose={() => setMobileShareHelp(null)} />
-      )}
     </div>
   );
 }

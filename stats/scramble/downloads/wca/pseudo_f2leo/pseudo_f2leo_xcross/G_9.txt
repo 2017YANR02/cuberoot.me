@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / G / bin 9
-# Population in this bin: 366
+# Population in this bin: 369
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 3775418001,U' B R2 L' B R' F' U L2 B' U2 F L2 B L2 D' L B2,G,Mriy Diy Cubing Lviv 2024 (2024-05-18~19),333 R1 B #3
@@ -166,7 +166,7 @@
 2154426001,D2 F2 L B2 U' R D' B U' F U2 B2 L' F2 U2 R F2 R L U2,G,Pretzel Mania 2022 (2022-09-03~04),333 Final A #1
 5258304034,R B' R2 F R2 D R2 D L2 U2 L U2 B' D2 U' R' D' R2 B R,G,Portugal Championship 2025 (2025-11-29~12-01),333mbf Final A #2
 5279942001,R U L' U L2 B' U F L B D' F D2 B' L2 F2 B' D2 B',G,Master Cube Salvador A 2025 (2025-12-12),333 Final A #1
-2220060001,U B' R' U' D' B L U B' L' F L2 B2 R2 B U2 R2 B' D2 F',G,Cubing in Cill Chainnigh 2022 (2022-10-08~09),333 R2 C #5
+5844281001,R' D R L2 F2 L' F R B' D2 R L' D2 R' U' D2 R' B R,G,Ribeirão ao Cubo 2026 (2026-09-19~20),333bf Final B E1
 2232807052,U L F' U2 L2 U2 B2 R2 F' U2 L D' L R' B' R U R2 F D',G,WCC Western Championship 2022 (2022-10-07~09),333mbf Final A #1
 2958873001,L B U' R' L D2 B D2 B' D B' L D2 L F2 L2 U2 F2 U2 L,G,Peru Nationals 2023 (2023-08-04~06),333 R1 F #3
 3034325001,B2 R2 U L2 D2 R2 B2 D' F U' B2 D' U2 L' R D F R2 D2,G,Nacionales Argentinas 2023 (2023-09-01~03),333oh R1 B #4
@@ -186,7 +186,7 @@
 2489212001,U L2 U2 L B2 R2 B2 D2 R B2 D' B' D2 R' F U' L' U' B2,G,Athens Winter Open 2023 (2023-02-11~12),333 Final A #5
 2568314001,L B2 D' F B' U' D2 B U2 L' F2 L' F2 D2 R' B2 F U L2,G,Di Tella Open 2023 (2023-03-18~19),333 R2 A E1
 5560083001,L' F2 L' B2 D2 L D2 L' D2 F' U B L' R2 U L R' F' D,G,Michigan Mini 40 2026 (2026-04-16),333 R1 A #1
-2606489001,D F2 D2 F2 U' F2 U' L2 B2 D L' F' R2 U' B' R U L' R2 D,G,UoSM Cube Day 2023 (2023-04-01),333oh R1 C #2
+5842331001,U2 F2 D2 R U2 R B2 F L' D R U L F' D' B U R',G,Rio Exxcube Open 2026 (2026-09-19~20),333oh Final B #3
 3315085001,D' F U' R B L F' D' R2 F2 L' B2 R F2 U2 L' B U' F',G,Nub Open Mission Viejo 2023 (2023-12-03),333 R1 D #2
 2645838001,F D R' F' L2 B L D F2 L2 F' L' B2 R' F2 D2 R2 D2 L',G,Washington Championship 2023 (2023-04-14~16),333oh Final A #4
 5170491001,U2 B' D R U' B2 F2 L2 F2 R2 U' F U L2 F L' R2 D',G,Thailand Cool Down 2025 (2025-11-08~09),333 R2 A #3

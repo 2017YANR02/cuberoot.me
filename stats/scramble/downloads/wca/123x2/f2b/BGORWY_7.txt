@@ -1,8 +1,8 @@
 # Scramble samples — 123x2 / f2b / BGORWY / bin 7
-# Population in this bin: 203
+# Population in this bin: 204
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 2686001,F B U2 B' U' R2 B D F' B2 R F2 U2 L2 B' L2 F2 L2,W,CMI Fiesta Open 2014 (2014-03-21~23),333 Final B #5
@@ -35,7 +35,7 @@
 478523001,R2 D R2 F2 D F2 D2 B2 U F U' R' B2 F' U2 L' U L' U' R,Y,Guatemala Nationals 2017 (2017-03-25~26),333 R1 F #1
 541883001,U F2 R2 L2 F U' B' D2 B2 L' D' B2 D2 F2 D F2 B2 R2,Y,German Big Cube Open 2017 (2017-07-01~02),333 R2 A E1
 545171001,U2 R D2 R U2 L' D2 L F' R' U F R2 B' D R2 F2 L R2,W,Celebes Champ 2017 (2017-07-08~09),333 R1 C #2
-559911001,F R' B' U2 B L2 F' R' F' D' B2 D' F2 U' F2 U2 L2 B2 D',R,Delhi Cube Splash 2017 (2017-07-30),333ft Final B E1
+5852594031,B2 D2 L2 U2 L2 R2 F2 U2 R' D' F U' L U' F R U2 B2 L,G,Multimatum: New York Multimate PBQ VI 2026 (2026-09-25~27),333mbf Final C #2
 560586001,D2 F U2 R2 D2 F L2 B R2 F2 R2 D' L' R2 U F U' R2 U2 R',W,SSN Cube Open 2017 (2017-07-28~29),333 Final B #3
 573409001,R2 B2 F D2 B2 D2 U' F' R' U2 R D U2 F D' F R2,R,Shantou Open 2017 (2017-08-20),333 R1 B E1
 611269001,F2 R2 D2 B2 R2 F' L2 F U' L' B D2 R2 U' F2 U' R' U' B,R,Maryland 2017 (2017-10-07~08),333 R1 B #3

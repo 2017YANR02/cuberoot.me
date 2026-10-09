@@ -10,6 +10,7 @@ import { buildReconText as webBuild } from '@/app/[lang]/timer/_lib/reconstruct/
 import { decodeReplayParam } from '@/app/[lang]/timer/_lib/share/decode';
 import ReconstructReport, { type ReconstructHost } from '@cuberoot/timer-ui/reconstruct-report';
 import SolveRecap from '@cuberoot/timer-ui/solve-recap';
+import { reconstructionAnalyzer } from '@cuberoot/timer-ui/reconstruct-analysis';
 
 vi.mock('@cuberoot/timer-ui/SimCubeView', () => ({
   default: ({ moves }: { moves: string[] }) => createElement('div', { 'data-replay-moves': moves.join(' ') }),
@@ -37,6 +38,16 @@ beforeEach(() => {
   // Component behavior is deterministic offline; reference recognition has its
   // own fixture suite. Never depend on the live algorithm API in a UI test.
   vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('offline UI fixture'); }));
+  // jsdom has no Worker. Mock the transport boundary; browser verification
+  // exercises the real worker while this test checks progressive UI updates.
+  vi.spyOn(reconstructionAnalyzer, 'subscribe').mockImplementation((input, notify) => {
+    let alive = true;
+    notify({ text: null, reference: null, slotReference: null, status: 'pending' });
+    void sharedBuild(input.text).then(text => {
+      if (alive) notify({ text, reference: null, slotReference: null, status: 'complete' });
+    });
+    return () => { alive = false; };
+  });
   container = document.createElement('div');
   document.body.append(container);
   root = createRoot(container);
@@ -46,6 +57,7 @@ afterEach(async () => {
   await act(async () => root.unmount());
   container.remove();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 function button(label: string): HTMLButtonElement {
@@ -57,6 +69,31 @@ function button(label: string): HTMLButtonElement {
 }
 
 describe('the complete shared reconstruction report', () => {
+  it('renders identical move lines in live and final modes and clears them for a new attempt', async () => {
+    const render = async (value: Solve, live: boolean) => {
+      await act(async () => {
+        root.render(createElement(ReconstructReport, { solve: value, isZh: false, host, live }));
+      });
+      await vi.waitFor(async () => {
+        await act(async () => undefined);
+        expect(container.querySelector('.sml-scramble')?.textContent).toContain(value.scramble);
+      });
+    };
+    const lines = () => [...container.querySelectorAll('.sml-line')].map(line => ({
+      moves: line.querySelector('.sml-moves')?.textContent,
+      label: line.querySelector('.sml-label')?.textContent,
+      pair: line.querySelector('.sml-sub-name')?.textContent,
+    }));
+    await render(solve, true);
+    const liveLines = lines();
+    expect(container.querySelector('.reconstruct-playback')).toBeNull();
+    expect(vi.mocked(reconstructionAnalyzer.subscribe).mock.calls.at(-1)?.[0].scoreable).toBe(false);
+    await render(solve, false);
+    expect(lines()).toEqual(liveLines);
+    await render({ ...solve, id: 'next-attempt', scramble: 'F', moves: [{ m: "F'", ts: 100 }] }, true);
+    expect(container.querySelector('.sml-scramble')?.textContent).not.toContain('R U');
+  });
+
   it('keeps the website analysis export identical and replay payload compatible', () => {
     expect(webBuild).toBe(sharedBuild);
     expect(decodeReplayParam(encodeReplayPayload(solve))).toMatchObject({
@@ -85,7 +122,9 @@ describe('the complete shared reconstruction report', () => {
     expect(container.querySelector('.sa-scroll')).not.toBeNull();
     expect(container.querySelector('.sml-scramble')?.textContent).toContain('R U');
     expect(container.textContent).toContain('Step analysis');
-    expect(container.textContent).toContain('QTM');
+    expect(container.querySelector('[data-timer-reconstruct-metrics]')).toBeNull();
+    expect(container.textContent).not.toContain('Longest pause');
+    expect(container.textContent).not.toContain('Wasted');
     await act(async () => button('Copy share link').click());
     expect(writeClipboardText).toHaveBeenLastCalledWith(host.replayUrl(solve));
     await act(async () => button('Copy in /recon format').click());
@@ -105,9 +144,11 @@ describe('the complete shared reconstruction report', () => {
   it('keeps the inline recap nonmodal and reuses the same report with localized controls', async () => {
     const onFull = vi.fn();
     const onDismiss = vi.fn();
+    const useScramble = vi.fn();
     await act(async () => {
       root.render(createElement(SolveRecap, {
         solve, history: [solve], isZh: true, onFull, onDismiss,
+        onUseScramble: useScramble,
         host: { ...host, localize: (text) => text.zh },
       }));
     });
@@ -116,8 +157,21 @@ describe('the complete shared reconstruction report', () => {
       expect(container.querySelector('.rc-report')).not.toBeNull();
     });
     expect(container.querySelector('[role="dialog"]')).toBeNull();
-    expect(container.textContent).toContain('回放与分步动作');
-    await act(async () => button('整屏').click());
+    expect(container.querySelector('.reconstruct-playback')).not.toBeNull();
+    expect(container.querySelector('.reconstruct-playback-toggle')).toBeNull();
+    expect(container.querySelector('.shell-recap-body .rc-actions')).toBeNull();
+    const toolbarButtons = [...container.querySelectorAll<HTMLButtonElement>('.shell-recap-head button')];
+    expect(toolbarButtons.map((element) => element.getAttribute('aria-label') ?? element.textContent)).toEqual([
+      '整屏', '复制分享链接', '用这条打乱', '收起',
+    ]);
+    const fullScreenButton = button('整屏');
+    expect(fullScreenButton.textContent).toBe('');
+    expect(button('复制分享链接').textContent).toBe('');
+    await act(async () => button('复制分享链接').click());
+    expect(writeClipboardText).toHaveBeenLastCalledWith(host.replayUrl(solve));
+    await act(async () => button('用这条打乱').click());
+    expect(useScramble).toHaveBeenCalledWith('R U');
+    await act(async () => fullScreenButton.click());
     await act(async () => button('收起').click());
     expect(onFull).toHaveBeenCalledTimes(1);
     expect(onDismiss).toHaveBeenCalledTimes(1);

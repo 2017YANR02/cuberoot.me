@@ -8,6 +8,7 @@ import {
   type ContactDirectDetailId,
   type ContactPlatformId,
 } from '@cuberoot/shared/contact';
+import { applyNativeAppearance, nativeAppearanceStyle } from '../../lib/appearance';
 import type { PendingIdentity } from '@cuberoot/shared/auth/web-session';
 import {
   ApiError,
@@ -18,13 +19,14 @@ import {
   loginErrorMessage,
   loginWithMiniProgram,
   previewIdentityLinkCode,
+  validateStoredSession,
   type SessionData,
 } from '../../lib/auth';
 import { cancelWebsiteNavigation, openWebsitePageOnce } from '../../lib/navigation';
 import { showPublicShareMenu, toTimelineShare } from '../../lib/share';
 import { resolveAccountPageShare } from '../../lib/web-routes';
 import { getMiniProgramLocale, tr } from '../../lib/i18n';
-import { isDouyinMiniProgram, miniProgramApi } from '../../lib/platform';
+import { isDouyinMiniProgram, isExternalHttpsUrl, miniProgramApi, openExternalUrl } from '../../lib/platform';
 import {
   getMiniProgramReleaseView,
   type MiniProgramReleaseView,
@@ -32,128 +34,131 @@ import {
 import { resumeRequiredSessionDestination } from '../../lib/required-session';
 
 const TIMELINE_SCENE = 1154;
-const providerName = tr(isDouyinMiniProgram()
-  ? { en: 'Douyin', zh: '抖音' }
-  : { en: 'WeChat', zh: '微信' });
-const ACCOUNT_COPY = {
-  agreementLabel: tr({
-    en: 'I have read and agree to the terms above',
-    zh: '我已阅读并同意以上内容',
-  }),
-  agreementRequired: tr({
-    en: 'Read the User Agreement and Privacy Policy, then confirm your agreement before signing in.',
-    zh: '请先阅读用户协议和隐私政策，并手动确认同意后再登录',
-  }),
-  accountButtonAria: tr({ en: 'CubeRoot account', zh: 'CubeRoot 账号管理' }),
-  accountButtonLabel: tr({ en: 'Account', zh: '账号管理' }),
-  accountFailure: tr({
-    en: 'Account management is temporarily unavailable. Try again later.',
-    zh: '账号管理暂时无法打开，请稍后重试',
-  }),
-  accountLinkFailure: tr({
-    en: 'The account linking page is temporarily unavailable. Try again later.',
-    zh: '账号绑定页面暂时无法打开，请稍后重试',
-  }),
-  contactCopyFailure: tr({
-    en: 'Unable to copy this contact detail. Try again.',
-    zh: '暂时无法复制这项联系信息，请重试',
-  }),
-  contactPageFailure: tr({
-    en: 'The contact page is temporarily unavailable. Try again later.',
-    zh: '联系页面暂时无法打开，请稍后重试',
-  }),
-  copiedLabel: tr({ en: 'Copied', zh: '已复制' }),
-  createAccountLabel: tr({ en: 'Create a new account', zh: '创建新账号' }),
-  accountChoiceTitle: tr({ en: 'Do you have a CubeRoot account?', zh: '你有 CubeRoot 账号吗？' }),
-  accountChoiceNote: tr({ en: 'Keep your existing membership and profile.', zh: '保留原账号的会员和资料。' }),
-  phoneTitle: tr({ en: 'Use your existing account', zh: '使用原来的账号' }),
-  phoneHint: tr({ en: 'Authorize your phone number to find your account. Nothing is linked or created without your confirmation.', zh: '授权手机号查找原账号。未经确认，不会绑定或创建账号。' }),
-  phoneAuthorize: tr({ en: 'Authorize phone number', zh: '授权手机号' }),
-  phoneOtherLogin: tr({ en: 'Use another sign-in method', zh: '使用其他方式登录' }),
-  phoneDeclined: tr({ en: 'Phone authorization was not completed. Try again or use another sign-in method.', zh: '尚未完成手机号授权，可重试或使用其他方式登录。' }),
-  phoneUnsupported: tr({ en: 'Update WeChat to authorize your phone number, or use another sign-in method.', zh: '请更新微信后授权手机号，或使用其他方式登录。' }),
-  phoneFoundTitle: tr({ en: 'Your existing account', zh: '找到原账号' }),
-  phoneFoundHint: tr({ en: 'This phone number belongs to the account below. Confirm to link WeChat and sign in, keeping your membership and data.', zh: '此手机号已绑定下方账号。确认后绑定微信并登录，保留原会员和数据。' }),
-  cancelLabel: tr({ en: 'Cancel', zh: '取消' }),
-  clearCodeLabel: tr({ en: 'Clear linking code', zh: '清除绑定码' }),
-  linkCodeLabel: tr({ en: 'Mini Program linking code', zh: '小程序绑定码' }),
-  linkCodeHint: tr({ en: 'Sign in to your existing account on the website, then generate a Mini Program linking code in account settings.', zh: '在网站登录原账号，再到账号设置获取「小程序绑定码」。' }),
-  openLinkCodeWebsiteLabel: tr({ en: 'Open account settings', zh: '打开账号设置' }),
-  previewLinkCodeLabel: tr({ en: 'Check account', zh: '查看绑定账号' }),
-  confirmLinkCodeLabel: tr({ en: 'Link and sign in', zh: '确认绑定并登录' }),
-  linkCodeInvalid: tr({ en: 'Enter the Mini Program linking code from your account settings.', zh: '请输入原账号设置中的小程序绑定码。' }),
-  choiceExpired: tr({ en: 'This sign-in request expired. Start again.', zh: '本次登录已过期，请重新开始。' }),
-  defaultUser: tr({ en: 'CubeRoot user', zh: 'CubeRoot 用户' }),
-  entryCopy: tr({
-    en: 'Tap the bottom-right button to open CubeRoot',
-    zh: '点击右下角进入魔方根',
-  }),
-  loginButtonBusyLabel: tr({
-    en: `Signing in with ${providerName}`,
-    zh: `${providerName}登录处理中`,
-  }),
-  loginButtonLabel: tr({
-    en: `Sign in with ${providerName}`,
-    zh: `${providerName}登录`,
-  }),
-  linkExistingAccountLabel: tr({ en: 'Sign in to an existing account', zh: '登录已有账号' }),
-  loginIntro: isDouyinMiniProgram()
-    ? tr({
-      en: 'Sign in to use your CubeRoot account. If this Douyin account is not linked yet, choose whether to use an existing account or create a new one.',
-      zh: '登录后使用 CubeRoot 账号。抖音尚未绑定时，先选择登录已有账号或创建新账号。',
-    })
-    : tr({
-      en: 'Sign in with the same CubeRoot account you use on the website. If you have already used WeChat there, the same account is recognized automatically.',
-      zh: '登录后使用与网站相同的 CubeRoot 账号。已在网站通过微信登录过时，会自动识别为同一账号。',
+function createAccountCopy() {
+  const providerName = tr(isDouyinMiniProgram()
+    ? { en: 'Douyin', zh: '抖音' }
+    : { en: 'WeChat', zh: '微信' });
+  return {
+    accountEyebrow: tr({ en: 'ACCOUNT', zh: '账号' }),
+    wcaLinkHint: tr({ en: 'Complete WCA authorization in your system browser. This page refreshes when you return.', zh: '请在系统浏览器完成 WCA 授权，返回后页面会刷新' }),
+    agreementLabel: tr({
+      en: 'I have read and agree to the terms above',
+      zh: '我已阅读并同意以上内容',
     }),
-  loginNote: isDouyinMiniProgram()
-    ? tr({
-      en: 'We do not read your Douyin nickname or phone number. Only your Douyin account identifier is used to sign you in.',
-      zh: '不会读取抖音昵称或手机号，仅使用抖音账号标识完成登录。',
-    })
-    : tr({
-      en: 'Phone numbers are only read with your authorization to find or link your account. Linked WeChat accounts sign in directly next time.',
-      zh: '仅在你授权后读取手机号，用于查找或绑定账号。微信绑定后，下次直接登录。',
+    agreementRequired: tr({
+      en: 'Read the User Agreement and Privacy Policy, then confirm your agreement before signing in.',
+      zh: '请先阅读用户协议和隐私政策，并手动确认同意后再登录',
     }),
-  pageTitle: tr({ en: 'Me', zh: '我的' }),
-  policyFailure: tr({
-    en: 'The User Agreement and Privacy Policy are temporarily unavailable. Try again later.',
-    zh: '用户协议与隐私政策暂时无法打开，请稍后重试',
-  }),
-  privacyLabel: tr({ en: 'Privacy Policy', zh: '《隐私政策》' }),
-  retrySessionAria: tr({
-    en: 'Read the device sign-in state again',
-    zh: '重新读取设备登录状态',
-  }),
-  retrySessionLabel: tr({ en: 'Try again', zh: '重新读取' }),
-  signingInLabel: tr({ en: 'Signing in', zh: '正在登录' }),
-  storageUnavailable: tr({
-    en: 'Unable to read the sign-in state on this device. Try again.',
-    zh: '暂时无法读取设备上的登录状态，请重新读取。',
-  }),
-  userAgreementLabel: tr({ en: 'User Agreement', zh: '《用户协议》' }),
-  browserLoginFailure: tr({
-    en: 'Website sign-in could not be confirmed. Return to Safari and try again.',
-    zh: '未能确认网页登录，请返回 Safari 重试',
-  }),
-  existingAccountRequired: tr({
-    en: 'This WeChat account is not linked. Return to your browser and use your existing sign-in method.',
-    zh: '此微信尚未绑定，请返回浏览器，使用原账号的登录方式。',
-  }),
-  browserLoginConfirmContent: tr({
-    en: 'Safari is requesting access to this CubeRoot account.',
-    zh: 'Safari 正在请求登录此魔方根账号',
-  }),
-  browserLoginConfirmTitle: tr({ en: 'Confirm website sign-in', zh: '确认网页登录' }),
-  browserLoginSuccess: tr({
-    en: 'Signed in. Returning to Safari',
-    zh: '登录成功，正在返回 Safari',
-  }),
-};
-const accountShare = resolveAccountPageShare();
-const contactLocale = getMiniProgramLocale();
-const joinInstruction = tr(CONTACT_JOIN_INSTRUCTION, contactLocale);
-const [joinInstructionBefore, joinInstructionAfter = ''] = joinInstruction.split(CONTACT_WECHAT_ID);
+    accountButtonAria: tr({ en: 'CubeRoot account', zh: 'CubeRoot 账号管理' }),
+    accountButtonLabel: tr({ en: 'Account', zh: '账号管理' }),
+    accountFailure: tr({
+      en: 'Account management is temporarily unavailable. Try again later.',
+      zh: '账号管理暂时无法打开，请稍后重试',
+    }),
+    accountLinkFailure: tr({
+      en: 'The account linking page is temporarily unavailable. Try again later.',
+      zh: '账号绑定页面暂时无法打开，请稍后重试',
+    }),
+    contactCopyFailure: tr({
+      en: 'Unable to copy this contact detail. Try again.',
+      zh: '暂时无法复制这项联系信息，请重试',
+    }),
+    contactPageFailure: tr({
+      en: 'The contact page is temporarily unavailable. Try again later.',
+      zh: '联系页面暂时无法打开，请稍后重试',
+    }),
+    copiedLabel: tr({ en: 'Copied', zh: '已复制' }),
+    createAccountLabel: tr({ en: 'Create a new account', zh: '创建新账号' }),
+    accountChoiceTitle: tr({ en: 'Do you have a CubeRoot account?', zh: '你有 CubeRoot 账号吗？' }),
+    accountChoiceNote: tr({ en: 'Keep your existing membership and profile.', zh: '保留原账号的会员和资料。' }),
+    phoneTitle: tr({ en: 'Use your existing account', zh: '使用原来的账号' }),
+    phoneHint: tr({ en: 'Authorize your phone number to find your account. Nothing is linked or created without your confirmation.', zh: '授权手机号查找原账号。未经确认，不会绑定或创建账号。' }),
+    phoneAuthorize: tr({ en: 'Authorize phone number', zh: '授权手机号' }),
+    phoneOtherLogin: tr({ en: 'Use another sign-in method', zh: '使用其他方式登录' }),
+    phoneDeclined: tr({ en: 'Phone authorization was not completed. Try again or use another sign-in method.', zh: '尚未完成手机号授权，可重试或使用其他方式登录。' }),
+    phoneUnsupported: tr({ en: 'Update WeChat to authorize your phone number, or use another sign-in method.', zh: '请更新微信后授权手机号，或使用其他方式登录。' }),
+    phoneFoundTitle: tr({ en: 'Your existing account', zh: '找到原账号' }),
+    phoneFoundHint: tr({ en: 'This phone number belongs to the account below. Confirm to link WeChat and sign in, keeping your membership and data.', zh: '此手机号已绑定下方账号。确认后绑定微信并登录，保留原会员和数据。' }),
+    cancelLabel: tr({ en: 'Cancel', zh: '取消' }),
+    clearCodeLabel: tr({ en: 'Clear sign-in code', zh: '清除登录码' }),
+    linkCodeLabel: tr({ en: 'Enter 6-digit sign-in code', zh: '输入 6 位登录码' }),
+    linkCodeHint: tr({ en: 'Sign in to your existing CubeRoot account on the website, generate a 6-digit code, then enter it here.', zh: '在网站登录原账号并生成 6 位登录码，然后在这里输入。' }),
+    linkCodeReadyHint: tr({ en: 'Have a code? Enter the 6 digits below.', zh: '已有登录码？在下方输入 6 位数字。' }),
+    openLinkCodeWebsiteLabel: tr({ en: 'Sign in on the website', zh: '去网站登录' }),
+    previewLinkCodeLabel: tr({ en: 'Continue', zh: '继续' }),
+    confirmLinkCodeLabel: tr({ en: 'Sign in to this account', zh: '登录这个账号' }),
+    loginAsLabel: tr({ en: 'Account:', zh: '登录账号：' }),
+    linkCodeInvalid: tr({ en: 'Enter the 6-digit sign-in code shown on the website.', zh: '请输入网站上显示的 6 位登录码。' }),
+    choiceExpired: tr({ en: 'This sign-in request expired. Start again.', zh: '本次登录已过期，请重新开始。' }),
+    defaultUser: tr({ en: 'CubeRoot user', zh: 'CubeRoot 用户' }),
+    entryCopy: tr({
+      en: 'Tap the bottom-right button to open CubeRoot',
+      zh: '点击右下角进入魔方根',
+    }),
+    loginButtonBusyLabel: tr({
+      en: `Signing in with ${providerName}`,
+      zh: `${providerName}登录处理中`,
+    }),
+    loginButtonLabel: tr({
+      en: `Sign in with ${providerName}`,
+      zh: `${providerName}登录`,
+    }),
+    linkExistingAccountLabel: tr({ en: 'Sign in to an existing CubeRoot account', zh: '登录已有 CubeRoot 账号' }),
+    loginIntro: isDouyinMiniProgram()
+      ? tr({
+        en: 'Sign in to use your CubeRoot account. If this Douyin account is not linked yet, choose whether to use an existing account or create a new one.',
+        zh: '登录后使用 CubeRoot 账号。抖音尚未绑定时，先选择登录已有账号或创建新账号。',
+      })
+      : tr({
+        en: 'Sign in with the same CubeRoot account you use on the website. If you have already used WeChat there, the same account is recognized automatically.',
+        zh: '登录后使用与网站相同的 CubeRoot 账号。已在网站通过微信登录过时，会自动识别为同一账号。',
+      }),
+    loginNote: isDouyinMiniProgram()
+      ? tr({
+        en: 'We do not read your Douyin nickname or phone number. Only your Douyin account identifier is used to sign you in.',
+        zh: '不会读取抖音昵称或手机号，仅使用抖音账号标识完成登录。',
+      })
+      : tr({
+        en: 'Phone numbers are only read with your authorization to find or link your account. Linked WeChat accounts sign in directly next time.',
+        zh: '仅在你授权后读取手机号，用于查找或绑定账号。微信绑定后，下次直接登录。',
+      }),
+    pageTitle: tr({ en: 'Me', zh: '我的' }),
+    policyFailure: tr({
+      en: 'The User Agreement and Privacy Policy are temporarily unavailable. Try again later.',
+      zh: '用户协议与隐私政策暂时无法打开，请稍后重试',
+    }),
+    privacyLabel: tr({ en: 'Privacy Policy', zh: '《隐私政策》' }),
+    retrySessionAria: tr({
+      en: 'Read the device sign-in state again',
+      zh: '重新读取设备登录状态',
+    }),
+    retrySessionLabel: tr({ en: 'Try again', zh: '重新读取' }),
+    signingInLabel: tr({ en: 'Signing in', zh: '正在登录' }),
+    storageUnavailable: tr({
+      en: 'Unable to read the sign-in state on this device. Try again.',
+      zh: '暂时无法读取设备上的登录状态，请重新读取。',
+    }),
+    userAgreementLabel: tr({ en: 'User Agreement', zh: '《用户协议》' }),
+    browserLoginFailure: tr({
+      en: 'Website sign-in could not be confirmed. Return to Safari and try again.',
+      zh: '未能确认网页登录，请返回 Safari 重试',
+    }),
+    existingAccountRequired: tr({
+      en: 'This WeChat account is not linked. Return to your browser and use your existing sign-in method.',
+      zh: '此微信尚未绑定，请返回浏览器，使用原账号的登录方式。',
+    }),
+    browserLoginConfirmContent: tr({
+      en: 'Safari is requesting access to this CubeRoot account.',
+      zh: 'Safari 正在请求登录此魔方根账号',
+    }),
+    browserLoginConfirmTitle: tr({ en: 'Confirm website sign-in', zh: '确认网页登录' }),
+    browserLoginSuccess: tr({
+      en: 'Signed in. Returning to Safari',
+      zh: '登录成功，正在返回 Safari',
+    }),
+  };
+}
+let ACCOUNT_COPY = createAccountCopy();
 const CONTACT_PLATFORM_ICON_PATHS: Record<ContactPlatformId, string> = {
   youtube: '/assets/contact/youtube.png',
   tiktok: '/assets/contact/tiktok.png',
@@ -171,53 +176,60 @@ const CONTACT_DETAIL_ICON_PATHS: Record<ContactDirectDetailId, string> = {
   email: '/assets/contact/email.png',
   discord: '/assets/contact/discord.png',
 };
-const CONTACT_VIEW = {
-  eyebrow: tr({ en: 'CONTACT & COMMUNITY', zh: '联系与社群' }, contactLocale),
-  joinInstructionAfter,
-  joinInstructionBefore,
-  joinInstructionValue: CONTACT_WECHAT_ID,
-  joinTitle: tr({ en: 'How to join', zh: '进群方法' }, contactLocale),
-  qrAria: tr({ en: 'View WeChat QR code', zh: '查看微信二维码' }, contactLocale),
-  qrPath: '/assets/contact/ruimin-wechat-qr.jpg',
-  title: tr({ en: 'Contact', zh: '联系方式' }, contactLocale),
-  websiteLabel: tr({ en: 'Website', zh: '网站' }, contactLocale),
-  website: CONTACT_WEBSITE,
-  platforms: [...CONTACT_SOCIAL_PLATFORMS]
-    .sort((a, b) => Number(b.language === contactLocale) - Number(a.language === contactLocale))
-    .map((platform) => ({
-      account: platform.account,
-      count: platform.count ? tr(platform.count, contactLocale) : '',
-      href: platform.href ?? '',
-      icon: CONTACT_PLATFORM_ICON_PATHS[platform.id],
-      id: platform.id,
-      label: tr(platform.label, contactLocale),
-    })),
-  details: CONTACT_DIRECT_DETAILS.map((detail) => {
-    const value = detail.value ? tr(detail.value, contactLocale) : '';
-    return {
-      action: detail.action,
-      actionValue: detail.action === 'link' ? detail.href ?? '' : value,
-      icon: CONTACT_DETAIL_ICON_PATHS[detail.id],
-      id: detail.id,
-      label: tr(detail.label, contactLocale),
-      showQr: detail.showQr,
-      value,
-    };
-  }),
-  sections: CONTACT_GROUP_SECTIONS.map((section, sectionIndex) => ({
-    blocks: section.blocks.map((block) => ({
-      groups: block.groups.map((group) => ({
-        name: tr(group, contactLocale),
-        secondaryName: contactLocale === 'en' ? group.zh : '',
+function createContactView() {
+  const contactLocale = getMiniProgramLocale();
+  const joinInstruction = tr(CONTACT_JOIN_INSTRUCTION, contactLocale);
+  const [joinInstructionBefore, joinInstructionAfter = ''] = joinInstruction.split(CONTACT_WECHAT_ID);
+  return {
+    eyebrow: tr({ en: 'CONTACT & COMMUNITY', zh: '联系与社群' }, contactLocale),
+    joinInstructionAfter,
+    joinInstructionBefore,
+    joinInstructionValue: CONTACT_WECHAT_ID,
+    joinTitle: tr({ en: 'How to join', zh: '进群方法' }, contactLocale),
+    qrAria: tr({ en: 'View WeChat QR code', zh: '查看微信二维码' }, contactLocale),
+    qrPath: '/assets/contact/ruimin-wechat-qr.jpg',
+    title: tr({ en: 'Contact', zh: '联系方式' }, contactLocale),
+    websiteLabel: tr({ en: 'Website', zh: '网站' }, contactLocale),
+    website: CONTACT_WEBSITE,
+    platforms: [...CONTACT_SOCIAL_PLATFORMS]
+      .sort((a, b) => Number(b.language === contactLocale) - Number(a.language === contactLocale))
+      .map((platform) => ({
+        account: platform.account,
+        count: platform.count ? tr(platform.count, contactLocale) : '',
+        href: platform.href ?? '',
+        icon: CONTACT_PLATFORM_ICON_PATHS[platform.id],
+        id: platform.id,
+        label: tr(platform.label, contactLocale),
       })),
-      title: tr(block.title, contactLocale),
+    details: CONTACT_DIRECT_DETAILS.map((detail) => {
+      const value = detail.value ? tr(detail.value, contactLocale) : '';
+      return {
+        action: detail.action,
+        actionValue: detail.action === 'link' ? detail.href ?? '' : value,
+        icon: CONTACT_DETAIL_ICON_PATHS[detail.id],
+        id: detail.id,
+        label: tr(detail.label, contactLocale),
+        showQr: detail.showQr,
+        value,
+      };
+    }),
+    sections: CONTACT_GROUP_SECTIONS.map((section, sectionIndex) => ({
+      blocks: section.blocks.map((block) => ({
+        groups: block.groups.map((group) => ({
+          name: tr(group, contactLocale),
+          secondaryName: contactLocale === 'en' ? group.zh : '',
+        })),
+        title: tr(block.title, contactLocale),
+      })),
+      description: tr(section.description, contactLocale),
+      id: section.id,
+      index: String(sectionIndex + 1).padStart(2, '0'),
+      title: tr(section.title, contactLocale),
     })),
-    description: tr(section.description, contactLocale),
-    id: section.id,
-    index: String(sectionIndex + 1).padStart(2, '0'),
-    title: tr(section.title, contactLocale),
-  })),
-};
+  };
+
+}
+const CONTACT_VIEW = createContactView();
 
 interface ContactCopyEvent {
   currentTarget: {
@@ -228,6 +240,7 @@ interface ContactCopyEvent {
 }
 
 interface AccountPageData {
+  appearanceStyle: string;
   accountError: string;
   accountLinkPending: boolean;
   accountLinkRequired: boolean;
@@ -258,11 +271,14 @@ interface AccountPageData {
   uidText: string;
   wcaId: string;
   browserLoginPending: boolean;
+  wcaLinkPending: boolean;
 }
 
 interface AccountPageInstance {
   browserLoginApproval?: string;
   browserLoginExistingOnly?: boolean;
+  wcaLinkTicket?: string;
+  wcaLinkBaseline?: string;
   data: AccountPageData;
   setData(data: Partial<AccountPageData>): void;
 }
@@ -347,6 +363,22 @@ async function finishMiniProgramLogin(page: AccountPageInstance, session: Sessio
   if (disposedPages.has(page)) return;
   page.setData({ loginBusy: false });
   resumeRequiredSessionDestination();
+}
+
+async function refreshWcaLink(page: AccountPageInstance): Promise<void> {
+  const ticket = page.wcaLinkTicket;
+  if (!ticket || disposedPages.has(page)) return;
+  const snapshot = getStoredSessionSnapshot();
+  if (snapshot.status !== 'available' || !snapshot.session) return;
+  try {
+    const session = await validateStoredSession(snapshot.session);
+    if (disposedPages.has(page) || page.wcaLinkTicket !== ticket) return;
+    if (!session.user.wcaId || session.user.wcaId === page.wcaLinkBaseline) return;
+    page.wcaLinkTicket = undefined;
+    page.setData({ ...sessionView(session), wcaLinkPending: false, accountError: tr({ en: 'WCA linked.', zh: 'WCA 已绑定' }) });
+  } catch {
+    // The next onShow can retry; the browser flow remains independent.
+  }
 }
 
 const BROWSER_LOGIN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
@@ -522,6 +554,7 @@ async function completeMiniProgramLogin(
 
 Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
   data: {
+    appearanceStyle: '',
     accountError: '',
     accountLinkPending: false,
     accountLinkRequired: false,
@@ -545,11 +578,12 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
     loginButtonLabel: ACCOUNT_COPY.loginButtonLabel,
     loginIntro: ACCOUNT_COPY.loginIntro,
     loginNote: ACCOUNT_COPY.loginNote,
-    release: getMiniProgramReleaseView(contactLocale),
+    release: getMiniProgramReleaseView(getMiniProgramLocale()),
     requiresAgreement: isDouyinMiniProgram(),
     uidText: '',
     wcaId: '',
     browserLoginPending: false,
+    wcaLinkPending: false,
   },
 
   onLoad(options: Record<string, unknown> = {}) {
@@ -560,6 +594,19 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
     }
     setNormalNavigationTitle();
     showPublicShareMenu();
+    const wcaLink = typeof options.wcaLink === 'string' && BROWSER_LOGIN_PATTERN.test(options.wcaLink)
+      ? options.wcaLink : '';
+    const wcaUrl = typeof options.wcaUrl === 'string' && isExternalHttpsUrl(options.wcaUrl)
+      ? options.wcaUrl : '';
+    if (wcaLink && wcaUrl) {
+      const snapshot = getStoredSessionSnapshot();
+      this.wcaLinkTicket = wcaLink;
+      this.wcaLinkBaseline = snapshot.status === 'available' ? snapshot.session?.user.wcaId ?? '' : '';
+      this.setData({ wcaLinkPending: true, accountError: '' });
+      let externalUrl = wcaUrl;
+      try { externalUrl = decodeURIComponent(wcaUrl); } catch { /* use the platform value */ }
+      void openExternalUrl(externalUrl);
+    }
     const browserLogin = typeof options.browserLogin === 'string'
       && BROWSER_LOGIN_PATTERN.test(options.browserLogin)
       && !isDouyinMiniProgram()
@@ -582,20 +629,38 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
     refreshStoredSession(this as unknown as AccountPageInstance);
   },
 
+  refreshLocale() {
+    if (this.data.isTimelineEntry) return;
+    ACCOUNT_COPY = createAccountCopy();
+    this.setData({ copy: ACCOUNT_COPY, contact: createContactView(),
+      loginButtonBusyLabel: ACCOUNT_COPY.loginButtonBusyLabel,
+      loginButtonLabel: ACCOUNT_COPY.loginButtonLabel,
+      loginIntro: ACCOUNT_COPY.loginIntro, loginNote: ACCOUNT_COPY.loginNote,
+      release: getMiniProgramReleaseView(getMiniProgramLocale()),
+    });
+    const pages = typeof getCurrentPages === 'function' ? getCurrentPages() : [this];
+    if (pages[pages.length - 1] === this) setNormalNavigationTitle();
+  },
+
   onShow() {
+    if (this.data.isTimelineEntry) return;
+    this.refreshLocale();
+    this.setData({ appearanceStyle: nativeAppearanceStyle() });
+    applyNativeAppearance();
     if (this.data.isTimelineEntry || (this.data.browserLoginPending && !this.data.accountLinkPending)) return;
     const shouldRetryAccountLink = this.data.accountLinkPending;
     if (shouldRetryAccountLink) clearPendingIdentity(this as unknown as AccountPageInstance);
     showPublicShareMenu();
     refreshStoredSession(this as unknown as AccountPageInstance);
+    if (this.wcaLinkTicket && this.data.wcaLinkPending) void refreshWcaLink(this as unknown as AccountPageInstance);
     currentPendingIdentity(this as unknown as AccountPageInstance);
     this.setData({
       accountLinkPending: false,
-      release: getMiniProgramReleaseView(contactLocale),
+      release: getMiniProgramReleaseView(getMiniProgramLocale()),
     });
     if (shouldRetryAccountLink) {
       void completeMiniProgramLogin(this as unknown as AccountPageInstance);
-    }
+}
   },
 
   onUnload() {
@@ -607,11 +672,11 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
   },
 
   onShareAppMessage() {
-    return accountShare;
+    return resolveAccountPageShare();
   },
 
   onShareTimeline() {
-    return toTimelineShare(accountShare);
+    return toTimelineShare(resolveAccountPageShare());
   },
 
   async loginWithMiniProgram() {
@@ -674,7 +739,8 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
 
   onLinkCodeInput(event: WechatMiniprogram.Input) {
     if (this.data.loginBusy) return;
-    this.setData({ accountLinkCode: event.detail.value.trim().toUpperCase(), accountLinkTargetId: null, accountLinkTargetName: '', loginError: '' });
+    const accountLinkCode = event.detail.value.replace(/\D/g, '').slice(0, 6);
+    this.setData({ accountLinkCode, accountLinkTargetId: null, accountLinkTargetName: '', loginError: '' });
   },
 
   clearLinkCode() {
@@ -687,7 +753,7 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
     const pending = currentPendingIdentity(page);
     if (!pending) return;
     const linkCode = this.data.accountLinkCode;
-    if (!/^L[1-9]\d{0,15}-\d{6}$/.test(linkCode)) { this.setData({ loginError: ACCOUNT_COPY.linkCodeInvalid }); return; }
+    if (!/^\d{6}$/.test(linkCode)) { this.setData({ loginError: ACCOUNT_COPY.linkCodeInvalid }); return; }
     this.setData({ loginBusy: true, loginError: '' });
     try {
       const target = await previewIdentityLinkCode(pending.ticket, linkCode);

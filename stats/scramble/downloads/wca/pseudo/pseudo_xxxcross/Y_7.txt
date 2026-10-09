@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxxcross / Y / bin 7
-# Population in this bin: 879
+# Population in this bin: 887
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 4187118001,D L2 R2 D2 L B2 R F L' D2 R2 D' L B2 R F,Y,Tarazona de la Mancha Open 2024 (2024-10-12~13),333 R2 A E1
@@ -83,7 +83,7 @@
 932786001,R' F2 B2 L U' L D B D2 F2 B2 L2 U R2 U' R2 F2 U',Y,Michigan Cubing Club Delta 2018 (2018-11-10),333 R2 A #4
 5450345001,L F' U L2 D' F2 D' R2 U L2 R2 F L2 U' L' U' B D B U2 B' L2,Y,PBQ NCSU 2026 (2026-03-15),333bf Final A E2
 317590001,L2 F2 D' B2 D R U' B' U' R D F2 U2 L U2 D2 R L,Y,Slow N Steady Spring 2016 (2016-06-18~19),333 R2 C #3
-1663957001,R F L B2 L2 F' L2 R2 F' R F D2 F2 U L F U',Y,GA Cubers Return A 2021 (2021-07-10),333oh R1 A E2
+5845974001,F2 U' R2 F2 D' L2 U' B2 D' L' D2 F2 L' R' F D2 U L' D,Y,UC Canterbury Open 2026 (2026-09-26),333 R1 A E1
 1473547001,B2 D B2 U' F2 D B L U' B F2 U L' F D2 B' F2,Y,Medan 10th Anniversary 2019 (2019-12-21~22),333oh R1 B #3
 5533281001,U2 D' R2 B' D' R' F2 R D F' R2 F R2 L2 F U2 B' U2 F2,Y,Desafio Aves María Sabaneta 2026 (2026-04-12),333 R1 A #4
 4588752001,R B' R' U2 L' B2 F2 L' R2 F2 L B' U' L2 B U2 F R D,Y,Calabria Open 2025 (2025-03-22~23),333 R1 C #3
@@ -100,7 +100,7 @@
 2570149001,F' D' L' B L F' D F' R2 F2 U' R2 D2 L2 U' L2 U F2 D,Y,Synocubix 2023 (2023-03-18),333 R1 C #1
 3821615001,L' F L' B2 L2 F R' D' F L2 U' B2 U D' L2 F2 L2 U B,Y,Turnin' in Termonfeckin Sunday 2024 (2024-06-02),333 Final B #4
 5805117001,L2 U F' L' D2 B' D L' D2 B' U' F2 B U2 F' D2 F' U2,Y,Calgary Fall 2026 (2026-08-29),333 R1 G E1
-2668612001,U2 D' R' B2 D2 B' U' B2 U' D F' R2 F2 D B2 U B2 U',Y,Markham 3x3x3 Afternoon 2023 (2023-04-29),333 R2 A E2
+5845269001,F' R B L' D R F U2 D' F B2 U2 L' U2 F2 R D2 F,Y,Hancock County NxNs 2026 (2026-09-26),333 R2 B #2
 4057629001,L' U' B2 U2 L' B' D' L' D L D2 B2 L2 U2 D2 F' U2 L2,Y,Welcome to Bishkek 2024 (2024-08-23~25),333oh R1 A #5
 1068305001,F L2 D2 R' U D2 L B L B2 U' L2 D L2 U' B2 D R2 U',Y,KSF Almaty City 2019 (2019-03-23~24),333oh Final B #4
 5817607001,U F2 R2 D2 F2 D U2 L F' D L2 D2 L D' U' L F2 U,Y,Cube Factory Aleksandrów 2026 (2026-09-05~06),333 R1 A E1

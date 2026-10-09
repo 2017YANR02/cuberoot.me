@@ -17,7 +17,7 @@ import BoolToggle from '@/components/BoolToggle';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { RotateCw, Play, Pause, X, Moon, Sun, Satellite, Plus, Minus, Compass, Ruler, Undo2, Search, ArrowLeft, ChevronLeft, ChevronRight, Layers, Flame, Globe, Map as MapIcon, Globe2, HelpCircle, Download, LocateFixed } from 'lucide-react';
-import maplibregl from 'maplibre-gl';
+import * as maplibregl from 'maplibre-gl';
 import type { GeoJSONSource, MapMouseEvent, MapGeoJSONFeature } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import * as OpenCC from 'opencc-js';
@@ -1055,11 +1055,8 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
   const userMarkerRef = useRef<maplibregl.Marker | null>(null);
   useEffect(() => {
     try {
-      const raw = localStorage.getItem('globe.userPos.v1');
-      if (raw) {
-        const p = JSON.parse(raw) as { lat: number; lng: number };
-        if (Number.isFinite(p?.lat) && Number.isFinite(p?.lng)) setUserPos(p);
-      }
+      // Precise location stays in memory; remove the cache written by older versions.
+      localStorage.removeItem('globe.userPos.v1');
     } catch { /* */ }
   }, []);
   const locate = useCallback(() => {
@@ -1075,7 +1072,6 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
         const p = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         setUserPos(p);
         setLocState('idle');
-        persistItem('globe.userPos.v1', JSON.stringify(p));
         const map = mapRef.current;
         if (map) map.easeTo({ center: [p.lng, p.lat], zoom: Math.max(map.getZoom(), 4), duration: 900 });
       },
@@ -1589,6 +1585,8 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
 
   useEffect(() => {
     if (!containerRef.current) return;
+    // v6 bundlers must explicitly locate the same-version ESM worker.
+    maplibregl.setWorkerUrl(`/maplibre/${maplibregl.getVersion()}/maplibre-gl-worker.mjs`);
     ensureZhTileProtocol();
 
     const initialTheme = themeRef.current;
@@ -2235,9 +2233,9 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
     const map = mapRef.current;
     if (!map || !mapLoaded) return;
 
-    const safeSetPaint = (id: string, prop: string, val: unknown) => {
+    const safeSetPaint = <K extends keyof maplibregl.AllPaintProperties,>(id: string, prop: K, val: unknown) => {
       if (!map.getLayer(id)) return;
-      try { map.setPaintProperty(id, prop, val as string); } catch { /* */ }
+      try { map.setPaintProperty(id, prop, val as maplibregl.AllPaintProperties[K]); } catch { /* */ }
     };
     const safeSetVis = (id: string, visible: boolean) => {
       if (!map.getLayer(id)) return;

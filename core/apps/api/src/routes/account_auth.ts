@@ -26,8 +26,9 @@ import { signSession, verifySession, hasFreshEmailGrant, hasFreshPhonePasswordRe
 import { beginIdentityLogin, beginWechatPhoneIdentityLogin, completeIdentityChoice, IdentityChoiceError, issueIdentityLinkCode, previewIdentityLinkCode } from '../utils/identity_choice.js';
 import { captureAccountDevice } from '../utils/account_device.js';
 import {
-  issueCode, verifyCode, loginWithIdentity, IdentityNotFoundError, addIdentity, removeIdentity, replaceCredentialIdentity,
+  issueCode, withVerifiedCode, loginWithIdentity, IdentityNotFoundError, addIdentity, removeIdentity, replaceCredentialIdentity,
   getIdentities, getUserById, findUserByIdentity, publicUser,
+  migrateIdentityProviderUid,
   normalizeEmail, isValidEmail, normalizePhone, isValidPhone, isValidPassword,
   normalizeDisplayName, isValidDisplayName, updateDisplayName,
   getAccountBasicProfile, updateAccountBasicProfile,
@@ -41,8 +42,11 @@ import {
 } from '../utils/account.js';
 import { AccountHasMembershipContractError, AccountOwnsOrganizationError, deleteAccount } from '../utils/account_delete.js';
 import { AccountMergeError, mergeAccounts, parseAccountMergeCode } from '../utils/account_merge.js';
-import { emailConfigured, sendEmailCode } from '../utils/email.js';
-import { smsConfigured, sendSmsCode } from '../utils/sms.js';
+import { consumeWechatWcaLink, issueWechatWcaLink } from '../utils/web_session_ticket.js';
+import { emailConfigured } from '../utils/email.js';
+import { EmailCodeActionError, issueEmailCode, loginWithEmailCode, bindEmailWithCode } from '../utils/email_code_auth.js';
+import { smsConfigured } from '../utils/sms.js';
+import { PhoneCodeActionError, issuePhoneCode, loginWithPhoneCode, resetPasswordWithPhoneCode, bindPhoneWithCode } from '../utils/phone_code_auth.js';
 import { googleConfigured, googleClientId, googleRelayUrl, verifyGoogleAssertion } from '../utils/google.js';
 import { AppleLoginError, appleAuthorize, appleCallbackUrl, appleConfigured, exchangeAppleCode } from '../utils/apple_login.js';
 import {
@@ -61,6 +65,7 @@ import {
   exchangeDouyinMiniProgramCode,
   DouyinMiniProgramError,
 } from '../utils/douyin_miniprogram.js';
+import { getDouyinAlliedId } from '../utils/douyin_allied_id.js';
 import {
   consumeMobileSessionTicket,
   consumeWechatBrowserSession,
@@ -302,6 +307,23 @@ accountAuthRoutes.get('/auth/social/authorize', (c) => {
   return c.json({ url });
 });
 
+// 只在抖音平台给出同主体 AlliedID 时跨应用认作同一人；任何归属冲突都不静默合并。
+async function douyinSocialIdentityUid(identity: SocialUser): Promise<string> {
+  if (!identity.alliedId) return identity.sub;
+  const [unionUser, alliedUser] = await Promise.all([
+    findUserByIdentity('douyin', identity.sub),
+    findUserByIdentity('douyin', identity.alliedId),
+  ]);
+  if (unionUser && alliedUser && unionUser.id !== alliedUser.id) throw new IdentityChoiceError('IDENTITY_CONFLICT');
+  const owner = unionUser ?? alliedUser;
+  if (owner) {
+    for (const key of [identity.sub, identity.alliedId]) {
+      if (await addIdentity(owner.id, 'douyin', key) === 'conflict') throw new IdentityChoiceError('IDENTITY_CONFLICT');
+    }
+  }
+  return owner ? identity.sub : identity.alliedId;
+}
+
 // ── 国内三方登录(浏览器回调拿到 code → 此处服务端换 code → 建/取账号)──
 accountAuthRoutes.post('/auth/social/:provider', async (c) => {
   c.header('Cache-Control', 'no-store');
@@ -318,7 +340,14 @@ accountAuthRoutes.post('/auth/social/:provider', async (c) => {
   } catch {
     return c.json({ error: `invalid ${provider} code` }, 401);
   }
-  const result = await beginIdentityLogin({ provider, providerUid: g.sub, profile: {
+  let providerUid = g.sub;
+  try {
+    if (provider === 'douyin') providerUid = await douyinSocialIdentityUid(g);
+  } catch (error) {
+    if (error instanceof IdentityChoiceError) return identityChoiceErrorResponse(c, error);
+    throw error;
+  }
+  const result = await beginIdentityLogin({ provider, providerUid, profile: {
     name: g.name || '', avatar: g.avatar ?? null,
   } });
   if ('pending' in result) return c.json(result, 409);
@@ -489,8 +518,35 @@ accountAuthRoutes.post('/auth/douyin/miniprogram', async (c) => {
   }
 
   try {
-    const { openid } = await exchangeDouyinMiniProgramCode(code);
-    const result = await beginIdentityLogin({ provider: 'douyin', providerUid: openid, profile: { name: '' } });
+    const { openid, unionid } = await exchangeDouyinMiniProgramCode(code);
+    let alliedId: string | null = null;
+    try {
+      alliedId = await getDouyinAlliedId('miniprogram', openid);
+    } catch (error) {
+      console.warn('[auth] douyin miniprogram allied id unavailable:', error instanceof Error ? error.message : 'unknown');
+    }
+    let providerUid = openid;
+    const [openidUser, unionidUser, alliedUser] = await Promise.all([
+      findUserByIdentity('douyin', openid),
+      unionid ? findUserByIdentity('douyin', unionid) : Promise.resolve(null),
+      alliedId ? findUserByIdentity('douyin', alliedId) : Promise.resolve(null),
+    ]);
+    const owners = [openidUser, unionidUser, alliedUser].filter((owner) => owner != null);
+    if (owners.some((owner) => owner.id !== owners[0]?.id)) throw new IdentityChoiceError('IDENTITY_CONFLICT');
+    const owner = owners[0];
+    if (unionid && openidUser) {
+      const migrated = await migrateIdentityProviderUid(openidUser.id, 'douyin', openid, unionid);
+      if (migrated === 'conflict') throw new IdentityChoiceError('IDENTITY_CONFLICT');
+    }
+    if (owner) {
+      for (const key of [unionid ?? openid, alliedId].filter((key): key is string => Boolean(key))) {
+        if (await addIdentity(owner.id, 'douyin', key) === 'conflict') throw new IdentityChoiceError('IDENTITY_CONFLICT');
+      }
+      providerUid = unionid ?? openid;
+    } else {
+      providerUid = alliedId ?? unionid ?? openid;
+    }
+    const result = await beginIdentityLogin({ provider: 'douyin', providerUid, profile: { name: '' } });
     if ('pending' in result) return c.json(result, 409);
     const { user, isNew } = result;
     await captureAccountDevice(user.id, c.req.header('User-Agent'));
@@ -498,6 +554,7 @@ accountAuthRoutes.post('/auth/douyin/miniprogram', async (c) => {
     const session: WebSession = { token, user: publicUser(user) };
     return c.json({ ...session, isNew });
   } catch (error) {
+    if (error instanceof IdentityChoiceError) return identityChoiceErrorResponse(c, error);
     if (error instanceof DouyinMiniProgramError && error.code === 'invalid-code') {
       return c.json(webSessionError('INVALID_DOUYIN_CODE', 'invalid douyin code'), 401);
     }
@@ -603,8 +660,15 @@ accountAuthRoutes.post('/auth/link/social/:provider', async (c) => {
   } catch {
     return c.json({ error: `invalid ${provider} code` }, 401);
   }
-  const r = await addIdentity(uid, provider as SocialProvider, g.sub);
-  if (r === 'conflict') return c.json({ error: `${provider} account already linked to another account` }, 409);
+  const keys = provider === 'douyin' && g.alliedId ? [g.sub, g.alliedId] : [g.sub];
+  for (const key of keys) {
+    const owner = await findUserByIdentity(provider, key);
+    if (owner && owner.id !== uid) return c.json({ error: `${provider} account already linked to another account` }, 409);
+  }
+  for (const key of keys) {
+    const r = await addIdentity(uid, provider as SocialProvider, key);
+    if (r === 'conflict') return c.json({ error: `${provider} account already linked to another account` }, 409);
+  }
   return c.json({ ok: true, identities: await getIdentities(uid) });
 });
 
@@ -616,12 +680,11 @@ accountAuthRoutes.post('/auth/email/send', async (c) => {
   const { email } = await c.req.json<{ email?: string }>().catch(() => ({ email: undefined }));
   const norm = normalizeEmail(email ?? '');
   if (!isValidEmail(norm)) return c.json({ error: 'invalid email' }, 400);
-  const issued = await issueCode('email', norm, 'login');
-  if ('error' in issued) return c.json({ error: 'too frequent' }, 429);
   try {
-    await sendEmailCode(norm, issued.code, langOf(c));
-  } catch (e) {
-    console.error('[auth] email send failed:', e instanceof Error ? e.message : e);
+    const issued = await issueEmailCode(norm, 'login', langOf(c));
+    if ('error' in issued) return c.json({ error: 'too frequent' }, 429);
+  } catch {
+    console.error('[auth] email send failed');
     return c.json({ error: 'send failed' }, 502);
   }
   return c.json({ ok: true });
@@ -638,16 +701,13 @@ accountAuthRoutes.post('/auth/email/verify', async (c) => {
   if (existingOnly !== undefined && typeof existingOnly !== 'boolean') return c.json({ error: 'invalid input' }, 400);
   const norm = normalizeEmail(email ?? '');
   if (!isValidEmail(norm) || !/^\d{6}$/.test(code ?? '')) return c.json({ error: 'invalid input' }, 400);
-  const ok = await verifyCode('email', norm, 'login', code as string);
-  if (!ok) return c.json({ error: 'wrong or expired code' }, 401);
-  const profile = { name: norm.split('@')[0] };
-  const result = await (existingOnly === true
-    ? loginWithIdentity('email', norm, profile, undefined, { createIfMissing: false })
-    : beginIdentityLogin({ provider: 'email', providerUid: norm, profile })).catch((error: unknown) => {
-      if (error instanceof IdentityNotFoundError) return null;
-      throw error;
-    });
-  if (!result) return c.json({ error: 'account not found' }, 400);
+  const checked = await loginWithEmailCode(norm, code, existingOnly === true).catch((error: unknown) => {
+    if (error instanceof IdentityNotFoundError) return null;
+    throw error;
+  });
+  if (!checked) return c.json({ error: 'account not found' }, 400);
+  if (!checked.verified) return c.json({ error: 'wrong or expired code' }, 401);
+  const result = checked.value;
   if ('pending' in result) return c.json(result, 409);
   const { user, isNew } = result;
   await captureAccountDevice(user.id, c.req.header('User-Agent'));
@@ -664,14 +724,11 @@ accountAuthRoutes.post('/auth/phone/send', async (c) => {
   const norm = normalizePhone(phone ?? '');
   const purpose = parsePhoneCodePurpose(rawPurpose);
   if (!isValidPhone(norm) || !purpose) return c.json({ error: 'invalid phone' }, 400);
-  const issued = await issueCode('phone', norm, purpose);
-  if ('error' in issued) return c.json({ error: 'too frequent' }, 429);
   try {
-    await sendSmsCode(norm, issued.code);
-  } catch (e) {
-    // 服务商的拒绝理由(余额不足 / 签名未报备 / 模板停用)只有这一处能看到,吞掉就只剩前端一句
-    // 「发送失败」,线上无从定位。只打 message —— 里面是阿里云的 Code+Message,不含验证码。
-    console.error('[auth] sms send failed:', e instanceof Error ? e.message : e);
+    const issued = await issuePhoneCode(norm, purpose);
+    if ('error' in issued) return c.json({ error: 'too frequent' }, 429);
+  } catch (error) {
+    if (!(error instanceof PhoneCodeActionError)) throw error;
     return c.json({ error: 'send failed' }, 502);
   }
   return c.json({ ok: true });
@@ -690,23 +747,25 @@ accountAuthRoutes.post('/auth/phone/verify', async (c) => {
   const norm = normalizePhone(phone ?? '');
   const purpose = parsePhoneCodePurpose(rawPurpose);
   if (!isValidPhone(norm) || !purpose || !/^\d{6}$/.test(code ?? '')) return c.json({ error: 'invalid input' }, 400);
-  const ok = await verifyCode('phone', norm, purpose, code as string);
-  if (!ok) return c.json({ error: 'wrong or expired code' }, 401);
   if (purpose === 'password_reset') {
-    const user = await findUserByIdentity('phone', norm);
-    if (!user) return c.json({ error: 'phone not linked to an account' }, 404);
+    const checked = await resetPasswordWithPhoneCode(norm, code as string).catch((error: unknown) => {
+      if (error instanceof IdentityNotFoundError) return null;
+      throw error;
+    });
+    if (!checked) return c.json({ error: 'phone not linked to an account' }, 404);
+    if (!checked.verified) return c.json({ error: 'wrong or expired code' }, 401);
+    const user = checked.value;
     await captureAccountDevice(user.id, c.req.header('User-Agent'));
     const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name, amr: 'phone_password_reset' });
     return c.json({ token, user: publicUser(user) });
   }
-  const name = `尾号${norm.slice(-4)}`;
-  const result = await (existingOnly === true
-    ? loginWithIdentity('phone', norm, { name }, undefined, { createIfMissing: false })
-    : beginIdentityLogin({ provider: 'phone', providerUid: norm, profile: { name } })).catch((error: unknown) => {
-      if (error instanceof IdentityNotFoundError) return null;
-      throw error;
-    });
-  if (!result) return c.json({ error: 'account not found' }, 400);
+  const checked = await loginWithPhoneCode(norm, code as string, existingOnly === true).catch((error: unknown) => {
+    if (error instanceof IdentityNotFoundError) return null;
+    throw error;
+  });
+  if (!checked) return c.json({ error: 'account not found' }, 400);
+  if (!checked.verified) return c.json({ error: 'wrong or expired code' }, 401);
+  const result = checked.value;
   if ('pending' in result) return c.json(result, 409);
   const { user, isNew } = result;
   await captureAccountDevice(user.id, c.req.header('User-Agent'));
@@ -773,12 +832,11 @@ accountAuthRoutes.post('/auth/link/email/send', async (c) => {
   const { email } = await c.req.json<{ email?: string }>().catch(() => ({ email: undefined }));
   const norm = normalizeEmail(email ?? '');
   if (!isValidEmail(norm)) return c.json({ error: 'invalid email' }, 400);
-  const issued = await issueCode('email', norm, 'link');
-  if ('error' in issued) return c.json({ error: 'too frequent' }, 429);
   try {
-    await sendEmailCode(norm, issued.code, langOf(c));
-  } catch (e) {
-    console.error('[auth] email send failed:', e instanceof Error ? e.message : e);
+    const issued = await issueEmailCode(norm, 'link', langOf(c));
+    if ('error' in issued) return c.json({ error: 'too frequent' }, 429);
+  } catch {
+    console.error('[auth] email send failed');
     return c.json({ error: 'send failed' }, 502);
   }
   return c.json({ ok: true });
@@ -791,11 +849,14 @@ accountAuthRoutes.post('/auth/link/email/verify', async (c) => {
   const { email, code } = await c.req.json<{ email?: string; code?: string }>().catch(() => ({ email: undefined, code: undefined }));
   const norm = normalizeEmail(email ?? '');
   if (!isValidEmail(norm) || !/^\d{6}$/.test(code ?? '')) return c.json({ error: 'invalid input' }, 400);
-  const ok = await verifyCode('email', norm, 'link', code as string);
-  if (!ok) return c.json({ error: 'wrong or expired code' }, 401);
-  const r = await addIdentity(uid, 'email', norm);
-  if (r === 'has-email') return c.json({ error: 'account already has an email' }, 409);
-  if (r === 'conflict') return c.json({ error: 'email already linked to another account' }, 409);
+  try {
+    const checked = await bindEmailWithCode(uid, norm, code as string);
+    if (!checked.verified) return c.json({ error: 'wrong or expired code' }, 401);
+  } catch (error) {
+    if (error instanceof EmailCodeActionError && error.code === 'has-email') return c.json({ error: 'account already has an email' }, 409);
+    if (error instanceof EmailCodeActionError && error.code === 'conflict') return c.json({ error: 'email already linked to another account' }, 409);
+    throw error;
+  }
   return c.json({ ok: true, identities: await getIdentities(uid) });
 });
 
@@ -811,11 +872,14 @@ accountAuthRoutes.post('/auth/email/replace', async (c) => {
   const { email, code } = await c.req.json<{ email?: string; code?: string }>().catch(() => ({ email: undefined, code: undefined }));
   const norm = normalizeEmail(email ?? '');
   if (!isValidEmail(norm) || !/^\d{6}$/.test(code ?? '')) return c.json({ error: 'invalid input' }, 400);
-  const ok = await verifyCode('email', norm, 'link', code as string);
-  if (!ok) return c.json({ error: 'wrong or expired code' }, 401);
-  const r = await replaceCredentialIdentity(uid, 'email', norm);
-  if (r === 'conflict') return c.json({ error: 'email already linked to another account' }, 409);
-  if (r === 'none') return c.json({ error: 'no email to replace' }, 409);
+  try {
+    const checked = await bindEmailWithCode(uid, norm, code as string, true);
+    if (!checked.verified) return c.json({ error: 'wrong or expired code' }, 401);
+  } catch (error) {
+    if (error instanceof EmailCodeActionError && error.code === 'conflict') return c.json({ error: 'email already linked to another account' }, 409);
+    if (error instanceof EmailCodeActionError && error.code === 'none') return c.json({ error: 'no email to replace' }, 409);
+    throw error;
+  }
   return c.json({ ok: true, identities: await getIdentities(uid) });
 });
 
@@ -827,11 +891,14 @@ accountAuthRoutes.post('/auth/phone/replace', async (c) => {
   const { phone, code } = await c.req.json<{ phone?: string; code?: string }>().catch(() => ({ phone: undefined, code: undefined }));
   const norm = normalizePhone(phone ?? '');
   if (!isValidPhone(norm) || !/^\d{6}$/.test(code ?? '')) return c.json({ error: 'invalid input' }, 400);
-  const ok = await verifyCode('phone', norm, 'link', code as string);
-  if (!ok) return c.json({ error: 'wrong or expired code' }, 401);
-  const r = await replaceCredentialIdentity(uid, 'phone', norm);
-  if (r === 'conflict') return c.json({ error: 'phone already linked to another account' }, 409);
-  if (r === 'none') return c.json({ error: 'no phone to replace' }, 409);
+  try {
+    const checked = await bindPhoneWithCode(uid, norm, code as string, true);
+    if (!checked.verified) return c.json({ error: 'wrong or expired code' }, 401);
+  } catch (error) {
+    if (error instanceof PhoneCodeActionError && error.code === 'conflict') return c.json({ error: 'phone already linked to another account' }, 409);
+    if (error instanceof PhoneCodeActionError && error.code === 'none') return c.json({ error: 'no phone to replace' }, 409);
+    throw error;
+  }
   return c.json({ ok: true, identities: await getIdentities(uid) });
 });
 
@@ -843,14 +910,11 @@ accountAuthRoutes.post('/auth/link/phone/send', async (c) => {
   const { phone } = await c.req.json<{ phone?: string }>().catch(() => ({ phone: undefined }));
   const norm = normalizePhone(phone ?? '');
   if (!isValidPhone(norm)) return c.json({ error: 'invalid phone' }, 400);
-  const issued = await issueCode('phone', norm, 'link');
-  if ('error' in issued) return c.json({ error: 'too frequent' }, 429);
   try {
-    await sendSmsCode(norm, issued.code);
-  } catch (e) {
-    // 服务商的拒绝理由(余额不足 / 签名未报备 / 模板停用)只有这一处能看到,吞掉就只剩前端一句
-    // 「发送失败」,线上无从定位。只打 message —— 里面是阿里云的 Code+Message,不含验证码。
-    console.error('[auth] sms send failed:', e instanceof Error ? e.message : e);
+    const issued = await issuePhoneCode(norm, 'link');
+    if ('error' in issued) return c.json({ error: 'too frequent' }, 429);
+  } catch (error) {
+    if (!(error instanceof PhoneCodeActionError)) throw error;
     return c.json({ error: 'send failed' }, 502);
   }
   return c.json({ ok: true });
@@ -863,11 +927,14 @@ accountAuthRoutes.post('/auth/link/phone/verify', async (c) => {
   const { phone, code } = await c.req.json<{ phone?: string; code?: string }>().catch(() => ({ phone: undefined, code: undefined }));
   const norm = normalizePhone(phone ?? '');
   if (!isValidPhone(norm) || !/^\d{6}$/.test(code ?? '')) return c.json({ error: 'invalid input' }, 400);
-  const ok = await verifyCode('phone', norm, 'link', code as string);
-  if (!ok) return c.json({ error: 'wrong or expired code' }, 401);
-  const r = await addIdentity(uid, 'phone', norm);
-  if (r === 'has-phone') return c.json({ error: 'account already has a phone' }, 409);
-  if (r === 'conflict') return c.json({ error: 'phone already linked to another account' }, 409);
+  try {
+    const checked = await bindPhoneWithCode(uid, norm, code as string);
+    if (!checked.verified) return c.json({ error: 'wrong or expired code' }, 401);
+  } catch (error) {
+    if (error instanceof PhoneCodeActionError && error.code === 'has-phone') return c.json({ error: 'account already has a phone' }, 409);
+    if (error instanceof PhoneCodeActionError && error.code === 'conflict') return c.json({ error: 'phone already linked to another account' }, 409);
+    throw error;
+  }
   return c.json({ ok: true, identities: await getIdentities(uid) });
 });
 
@@ -923,6 +990,58 @@ accountAuthRoutes.post('/auth/link/wca', async (c) => {
   return c.json({ ok: true, token, user: user ? publicUser(user) : undefined, identities: await getIdentities(uid) });
 });
 
+// 小程序账号设置里的 WCA 绑定:浏览器完成 OAuth,票据只负责绑定目标 CubeRoot 账号。
+accountAuthRoutes.post('/auth/wechat/wca-link/start', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const uid = await requireAppUserId(c);
+  const pending = await issueWechatWcaLink(uid);
+  const siteOrigin = process.env.PUBLIC_SITE_ORIGIN || 'https://cuberoot.me';
+  const url = `${siteOrigin}/auth/miniprogram/wca-link?ticket=${encodeURIComponent(pending.ticket)}`;
+  return c.json({ ...pending, url });
+});
+
+accountAuthRoutes.post('/auth/wechat/wca-link/complete', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  checkRateLimit(getIp(c));
+  const body = await c.req.json<{ ticket?: unknown; accessToken?: unknown }>()
+    .catch(() => ({ ticket: undefined, accessToken: undefined }));
+  const ticket = typeof body.ticket === 'string' ? body.ticket.trim() : '';
+  const accessToken = typeof body.accessToken === 'string' ? body.accessToken.trim() : '';
+  if (!ticket || !accessToken) return c.json({ error: 'ticket and accessToken are required' }, 400);
+
+  let me: { wca_id?: string; name?: string; country_iso2?: string; avatar?: { url?: string } };
+  try {
+    const res = await fetch('https://www.worldcubeassociation.org/api/v0/me', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!res.ok) return c.json({ error: 'invalid WCA token' }, 401);
+    const data = (await res.json()) as { me?: typeof me };
+    me = data.me ?? {};
+  } catch {
+    return c.json({ error: 'WCA API unavailable' }, 502);
+  }
+  if (!me.wca_id) return c.json({ error: 'this WCA account has no WCA ID (never competed)' }, 400);
+  const verifiedName = me.name?.normalize('NFC').trim();
+  if (!verifiedName) return c.json({ error: 'WCA profile has no verified name' }, 502);
+  const uid = await consumeWechatWcaLink(ticket);
+  if (!uid) return c.json({ error: 'invalid or expired WCA link ticket' }, 401);
+  const countryIso2 = typeof me.country_iso2 === 'string'
+    ? normalizeCountryIso2(me.country_iso2)
+    : null;
+  const verifiedCountryIso2 = countryIso2 && isValidCountryIso2(countryIso2) ? countryIso2 : null;
+  const result = await addIdentity(uid, 'wca', me.wca_id, me.wca_id, verifiedName, me.avatar?.url ?? null, verifiedCountryIso2);
+  if (result === 'conflict') return c.json({ error: 'WCA account already linked elsewhere' }, 409);
+  await query(
+    `INSERT INTO wca_users (wca_id, name, avatar_url, access_token, token_expires_at)
+     VALUES (?, ?, ?, ?, NOW() + INTERVAL '7200 seconds')
+     ON CONFLICT (wca_id) DO UPDATE SET name = EXCLUDED.name, avatar_url = EXCLUDED.avatar_url,
+       access_token = EXCLUDED.access_token, token_expires_at = EXCLUDED.token_expires_at, updated_at = NOW()`,
+    [me.wca_id, me.name ?? '', me.avatar?.url ?? null, accessToken],
+  );
+  return c.json({ ok: true });
+});
+
 // ── Google(浏览器拿 access_token → 墙外 Vercel 中继验真并签断言 → 此处只验断言 HMAC)──
 // 本服务器出网到 Google 被墙,故不自己回调 Google;中继地址/密钥见 utils/google.ts 顶注。
 accountAuthRoutes.post('/auth/google', async (c) => {
@@ -975,7 +1094,9 @@ accountAuthRoutes.post('/auth/unlink', async (c) => {
   const allowed: Provider[] = ['email', 'phone', 'wca', 'apple', 'google', 'wechat', 'douyin', 'alipay', 'qq'];
   if (!allowed.includes(provider as Provider)) return c.json({ error: 'invalid provider' }, 400);
   let r;
-  try { r = await removeIdentity(uid, provider as Provider, providerUid); }
+  // Douyin's OpenID/UnionID/AlliedID are aliases for one sign-in method. Unlink them together,
+  // including requests sent by older clients that still pass a single providerUid.
+  try { r = await removeIdentity(uid, provider as Provider, provider === 'douyin' ? undefined : providerUid); }
   catch (error) {
     if (error instanceof AppleLoginError) return appleErrorResponse(c, error);
     throw error;
@@ -1275,7 +1396,7 @@ accountAuthRoutes.get('/auth/admin/users', async (c) => {
           ELSE 'personal'
         END AS membership_kind,
         membership.started_at AS joined_at
-      FROM memberships membership
+      FROM effective_memberships membership
       WHERE NOT EXISTS (
         SELECT 1
         FROM paid_firsts paid
@@ -1341,6 +1462,7 @@ accountAuthRoutes.get('/auth/admin/users', async (c) => {
   providerCounts.set('wca', Number(summary?.wca_users ?? 0));
   return c.json({
     canManageAdmins: isAdminWcaId(actor.wcaId),
+    canImpersonateUsers: isAdminWcaId(actor.wcaId),
     summary: {
       totalUsers: Number(summary?.total_users ?? 0),
       registeredToday: Number(summary?.registered_today ?? 0),
@@ -1545,11 +1667,10 @@ accountAuthRoutes.post('/auth/account/merge', async (c) => {
   if (body?.expectedSourceUid !== sourceUserId) return c.json({ error: 'account changed; sign in again', code: 'ACCOUNT_CHANGED' }, 409);
   const parsed = parseAccountMergeCode(body.code);
   if (!parsed || parsed.targetUserId === sourceUserId) return c.json({ error: 'invalid merge code' }, 400);
-  const verified = await verifyCode('merge', String(parsed.targetUserId), 'account_merge', parsed.code);
-  if (!verified) return c.json({ error: 'wrong or expired merge code' }, 400);
-
   try {
-    await mergeAccounts(sourceUserId, parsed.targetUserId);
+    const checked = await withVerifiedCode('merge', String(parsed.targetUserId), 'account_merge', parsed.code,
+      transaction => mergeAccounts(sourceUserId, parsed.targetUserId, transaction));
+    if (!checked.verified) return c.json({ error: 'wrong or expired merge code' }, 400);
   } catch (error) {
     if (error instanceof AccountMergeError) return c.json({ error: error.code }, error.code === 'not_found' ? 404 : 409);
     throw error;

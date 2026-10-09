@@ -197,6 +197,50 @@
 .mem-plan.is-feature .mem-plan-cta { background: var(--accent); color: var(--accent-foreground); }
 .mem-plan.is-feature .mem-plan-cta:hover { background: color-mix(in srgb, var(--accent) 88%, black); }
 
+/* Shared App Store / Google Play surface; no store-specific payment styling. */
+.mem-store { overflow-wrap: anywhere; }
+.mem-store-benefits { margin-bottom: 20px; }
+.mem-note.mem-store-notice { margin: 0 0 24px; }
+.mem-store .mem-plan-name { margin-top: 0; }
+.mem-store .mem-plan-price { margin-top: 0; flex-wrap: wrap; }
+.mem-store .mem-plan-cta { min-height: 44px; margin-top: auto; }
+.mem-store-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+.mem-store-secondary {
+  min-height: 44px;
+  max-width: 100%;
+  padding: 10px 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--foreground);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  cursor: pointer;
+}
+.mem-store-actions .mem-store-secondary { flex: 1 1 200px; }
+.mem-store-secondary:hover:not(:disabled) { background: var(--muted); }
+.mem-store .mem-plan-cta:disabled,
+.mem-store .mem-store-secondary:disabled { opacity: 0.55; cursor: not-allowed; }
+.mem-store .mem-plan-cta:focus-visible,
+.mem-store .mem-store-secondary:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+.mem-store-message {
+  margin: 16px 0 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--muted);
+  color: var(--foreground);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.mem-store-message:empty { display: none; }
+
 .mem-note, .mem-foot-note {
   font-size: 13px;
   color: var(--muted-foreground);
@@ -236,7 +280,7 @@
   background: var(--popover);
   text-align: center;
 }
-.mem-pay-close {
+.clear-btn.mem-pay-close {
   position: absolute;
   top: 12px;
   right: 12px;

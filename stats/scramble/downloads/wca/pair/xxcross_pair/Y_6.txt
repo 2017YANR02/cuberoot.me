@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxcross_pair / Y / bin 6
-# Population in this bin: 249
+# Population in this bin: 255
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 9262001,D2 F' R2 U2 F' L2 B2 D2 B D B' D R2 D' U B L D' R2,Y,SLS Tarnowskie Gory 2014 (2014-04-05),333oh Final C #3
@@ -60,7 +60,7 @@
 812085001,D B' U R' U2 R B U B' U2 B2 R2 F' R2 U2 B' R2,Y,Fairview Cube Day 2018 (2018-06-24),333 R1 B E2
 5327908001,U' L2 U2 B2 D F2 R2 D L2 D' L' F' R2 U R2 D2 B F U',Y,Fuzhou Open 2026 (2026-01-17),333 R1 G E2
 826009001,F2 U2 F2 L' U2 L D2 F R' B2 L' U2 R' B' R U L F',Y,Kansai Summer 2018 (2018-07-14),333 R1 C #5
-863205001,L2 R2 D' F2 R2 D2 U' F2 U2 B R B' L' R' F U' F' L' R,Y,August Bank Holiday Competition 2018 (2018-08-25~26),333 R1 D #4
+5852577054,B' L2 D U2 F2 D' B2 U' L B2 U2 B U' L D2 F' R' F' L2 U',Y,Multimatum: New York Multimate PBQ VI 2026 (2026-09-25~27),333mbf R1 B #1
 863994001,B' D2 F' U F2 B R U' F2 R L2 U2 B L2 F2 B' R2 F2,Y,Ark 2018 (2018-08-24~26),333 R2 C E1
 904716001,U R2 F' L' D' B' R2 F' U B U2 L2 U2 F2 L2 F L2 B' R2 L2,Y,Valencia Summer 2018 (2018-10-13),333 Final B E2
 910729001,D B2 U R2 B2 U B' F' R2 B' L2 U' R' U' L2 F D',Y,Fall Foliage Cubing 2018 (2018-10-20),333oh R1 A #4
@@ -125,7 +125,7 @@
 2540556001,U2 B L' B2 L2 U' B2 L2 D L2 R F' L2 D' F' R' D' F,Y,Oman Open 2023 (2023-03-11),333oh Final B #5
 2565891001,B2 L2 B' F' D2 F' D' F D' U B U' F U2 R' D,Y,Mölnlycke Open 2023 (2023-03-18~19),333 Final A #4
 2703941001,D2 B' R D2 B D L F' U2 F2 D' R2 F2 U' D' F2 R F' D',Y,Larissa Spring Open 2023 (2023-05-06~07),333 R3 B #1
-2758670001,D R B' L2 U' L' U L' U2 B' D2 F' B R2 U' F2 D2,Y,Kent Spring 2023 (2023-05-27),333 R1 C #5
+5834302001,R' B L' B' D2 L2 F2 R2 U2 B2 U B2 U' R' F L2 R' D,Y,Sumgait Fall Open 2026 (2026-09-19),333 R1 A #1
 2762496001,U D R2 D2 L B U R2 F L' D U2 L U2 R F2 B2 R',Y,General Trias Speedcubing Open 2023 (2023-05-28),333 R1 C #4
 5292536034,B D2 F R2 F2 L2 R2 F D2 R F R F D' R' D R' B R2,Y,MYHM Bolivia Nationals 2025 (2025-12-20~22),333mbf Final B #1
 2791974001,F D2 B2 F U2 B' L2 F2 U' R' D2 R F2 D R B' L2 D' R2,Y,Laguna Speedcubing Open II 2023 (2023-06-11),333 Final A #3
@@ -134,7 +134,7 @@
 2818791001,U B R U' D F' R2 L' U2 L F R2 U' F2 U R2 F2 U2,Y,Just 3x3: Old Shanghai Edition 2023 (2023-06-24),333 R1 E #4
 2845214001,R' U' F R' B' D L2 R2 B2 L2 R2 U F' U' L' D' B' F L' D' R U' R' U' F,Y,Suffolk Summer 2023 (2023-07-01~02),333fm Final A #1
 2861813001,L2 F2 R B2 U R2 U' L' F L2 B2 R2 D2 R2 B' L' D R2,Y,Cubing Returns Munich B 2023 (2023-07-09),333 R1 A #5
-5492766033,L2 F2 R U2 B2 D2 U2 R F D F L B2 D B' D F D2 L' F,Y,New York Multimate PBQ IV 2026 (2026-03-27~29),333mbf Final A #1
+5851899001,U F' L U2 R U' L B2 U2 L D2 F2 R B2 U2 R' D2 L',Y,GAN WCA African Championship 2026 (2026-09-24~27),333 R3 A #2
 2871299022,U L D' F' B2 D2 R F' R B L F U2 B2 R2 F2 U2 B L B2,Y,Trondheim Cube Week 2023 (2023-07-04~09),333mbf Final A #2
 2875180001,B' R2 B2 F' L2 D2 B' D2 F2 U2 B2 U R' F' U2 B L' F2 D' F L B2,Y,NZ South Island Championship 2023 (2023-07-07~09),333bf R1 A E1
 2898483001,B' R2 U F' U2 F' L2 B F2 L2 D2 L' F2 R2 U' L R D' B,Y,Nod Don Denver 2023 (2023-07-16),333bf Final B #1
@@ -187,7 +187,7 @@
 4145515001,U' R D L' F' U' L' F' U L2 U2 D2 R' U2 D2 F2 R,Y,Planetário Rio Open 2024 (2024-09-28~29),333oh R1 C #2
 4147930001,F' U' B' D2 R2 B' L' D' B2 D2 R' D2 R2 D2 R U2 D2 L2 D2,Y,Super Duper San Diego 2024 (2024-09-28~29),333oh R1 A #2
 4172628001,R D F2 D2 R2 D2 F' U D2 R2 D2 B2 U F2 L2 U B2,Y,Galerías Bogotá II 2024 (2024-10-06),333oh Final A #3
-4214136001,F' L U2 L D R2 U2 F B2 R L2 D2 R' F2 R' L2 B2 R U,Y,Valsugana Speedcubing 2024 (2024-10-19~20),333 R1 C #5
+5855275001,R2 L2 U R' B2 L B U L2 D F R2 F2 D' R2 L2 F2 L2 B',Y,Cubing Skills in Almaty 2026 (2026-09-26~27),333bf Final A #4
 4216075001,U' B2 R2 U B' D' R2 U' F2 U2 D2 L2 B2 L' D2 R' F2,Y,Berkeley October Weekday Tricubealon 2024 (2024-10-21),333 Final A E2
 4240862001,F2 D R2 D B2 D' U F2 R' D' L R2 D' B D F2 U' B2 R',Y,Keep Christchurch Complex 2024 (2024-11-02),333 R2 B #3
 4271612001,F' L' D' L2 D' F2 L2 D' F2 D' U2 L F' D' L F' L B,Y,Madrid Norte Open 2024 (2024-11-09~10),333 R1 C E2

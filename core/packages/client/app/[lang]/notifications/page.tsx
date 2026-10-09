@@ -13,7 +13,6 @@ import {
 } from 'lucide-react';
 import HomeLink from '@/components/HomeLink';
 import AppLink from '@/components/AppLink';
-import { UserIdLabel } from '@/components/UserIdLabel';
 import BoolToggle from '@/components/BoolToggle';
 import { useT } from '@/hooks/useT';
 import { useAuthStore } from '@/lib/auth-store';
@@ -37,6 +36,7 @@ const KIND_ICON: Record<NotificationKind, typeof MessageSquare> = {
   forum_rejected: CircleX,
   comp_reg: Plane,
   wca_record: BellRing,
+  membership_payment: BellRing,
   document_change: FilePenLine,
   cal_reminder: BellRing,
   cal_invite: CalendarPlus,
@@ -44,6 +44,7 @@ const KIND_ICON: Record<NotificationKind, typeof MessageSquare> = {
   teaching_message: MessagesSquare,
   friend_request: UserPlus,
   friend_accepted: UserCheck,
+  friend_message: MessagesSquare,
 };
 
 /** TIMESTAMPTZ → 本地 `yyyy-mm-dd hh:mm`。 */
@@ -78,6 +79,7 @@ export default function NotificationsPage() {
     forum_rejected: t('驳回了你的帖子', 'declined your post'),
     comp_reg: t('报名了国外比赛', 'registered for an overseas competition'),
     wca_record: t('纪录快讯', 'Record news'),
+    membership_payment: t('会员收款成功', 'Membership payment received'),
     document_change: t('修改了你关注的协作文件', 'updated a collaborative file you follow'),
     cal_reminder: t('日程提醒', 'Event reminder'),
     cal_invite: t('邀请你参加日程', 'invited you to an event'),
@@ -85,6 +87,7 @@ export default function NotificationsPage() {
     teaching_message: t('发送了教学消息', 'sent a teaching message'),
     friend_request: t('申请添加你为好友', 'sent you a friend request'),
     friend_accepted: t('接受了你的好友申请', 'accepted your friend request'),
+    friend_message: t('发来了消息', 'sent you a message'),
   }[k]);
 
   const load = useCallback(() => {
@@ -179,7 +182,6 @@ export default function NotificationsPage() {
                   <span className="ntf-main">
                     <span className="ntf-line">
                       <strong className="ntf-actor">{n.actorName}</strong>
-                      <UserIdLabel userId={n.actorUserId} />
                       <span className="ntf-action">{kindText(n.kind)}</span>
                     </span>
                     <span className="ntf-target">{n.title}</span>

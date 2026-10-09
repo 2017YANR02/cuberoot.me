@@ -4,6 +4,7 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   clearScreen: false,
   plugins: [react()],
+  worker: { format: 'es' },
   server: {
     port: 1420,
     strictPort: true,

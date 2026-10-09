@@ -1,0 +1,18 @@
+.root { display: grid; gap: 24px; min-width: 0; }
+.root section { min-width: 0; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.actions a, .actionButton { display: inline-flex; align-items: center; gap: 4px; color: var(--accent); }
+.actionButton { appearance: none; border: 1px solid var(--border-default); border-radius: 6px; background: var(--card); padding: 6px 9px; cursor: pointer; font: inherit; }
+.actionButton:disabled { opacity: .45; cursor: default; }
+.table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.table th, .table td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-default); vertical-align: top; overflow-wrap: anywhere; }
+.table small { display: block; color: var(--muted-foreground); }
+.metrics { display: flex; flex-wrap: wrap; gap: 24px; }
+.metrics section { padding: 16px; border: 1px solid var(--border-default); border-radius: 12px; flex: 1; }
+.metrics strong { display: block; font-size: 28px; }
+.trend { display: flex; align-items: end; overflow-x: auto; gap: 8px; min-height: 170px; padding-block: 16px; }
+.trend > div { display: grid; justify-items: center; min-width: 35px; font-size: 10px; }
+.trend span { display: block; width: 20px; background: var(--accent); border-radius: 3px 3px 0 0; }
+.preamble { white-space: pre-wrap; overflow-wrap: anywhere; }
+.prompt { border-bottom: 1px solid var(--border-default); padding-block: 16px; }
+.prompt p { white-space: pre-wrap; color: var(--muted-foreground); }

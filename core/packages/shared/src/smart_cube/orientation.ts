@@ -91,11 +91,6 @@
  * whole quarter/half turn, so the live mirror temporarily uses the shorter
  * time constant below instead of letting repeated M/E/S turns outrun it.
  *
- * ── Settling ──────────────────────────────────────────────────────────────
- * A cube that has stopped moving near a whole orientation is at it; see the
- * `snapWhenSettled` block below for why leaving the last few degrees in is the
- * actual cause of "the cube on screen is permanently crooked".
- *
  * ── Dev-only synthetic source ─────────────────────────────────────────────
  * We own zero smart cubes, so `window.__cuberootFakeQuat` lets a dev build (or
  * Playwright) drive the whole path with a synthetic sample stream. See
@@ -433,31 +428,11 @@ export function applyOrientation(
   return quatNormalize(out);
 }
 
-// ── Settling onto a whole orientation ─────────────────────────────────────
+// ── Whole-cube orientation helpers ────────────────────────────────────────
 //
-// WHY THIS EXISTS — the "屏幕上的魔方一直是歪的，校准也没用" report.
-//
-// Calibration zeroes the display AT THE INSTANT OF THE TAP and only then. The
-// reference it captures is whatever pose the cube was in at that moment, which
-// for a hand-held cube is always a few degrees off a whole orientation: the
-// user's grip, a cube still rocking on the table, a sensor whose own zero is
-// not level. From then on the screen shows the delta from THAT pose, so every
-// later rest pose renders a few degrees skewed — permanently, and tapping
-// calibrate again just bakes in a fresh small error. That is the whole reported
-// symptom, including the part where re-calibrating does not help: the error the
-// user sees is never the one calibration is able to remove.
-//
-// The fix is to make "at rest" mean something. A cube that has stopped moving
-// near a whole orientation is, physically, AT that orientation — nobody balances
-// a cube 4° off level. So once the pose has held still for a moment we retarget
-// the smoothing onto the nearest of the 24, and the existing exponential follow
-// glides it there over a few frames instead of snapping.
-//
-// Two guards keep this honest:
-//   - the snap only fires within SNAP_MAX_RAD, so a cube genuinely held at 45°
-//     is left alone and keeps reading 45°;
-//   - it needs SNAP_AFTER_MS of stillness, so it can never fight a rotation in
-//     progress — during a turn the true pose is always what's shown.
+// Live rendering follows the measured pose continuously. The discrete cube
+// orientation set remains useful for reconstruction, where turns must be
+// classified against the 24 physically equivalent whole-cube rotations.
 
 /** All 24 orientations of a cube, as unit quaternions.
  *
@@ -494,44 +469,4 @@ export function nearestCubeOrientation(q: Quat): { quat: Quat; angleRad: number 
     }
   }
   return { quat: { ...best }, angleRad: bestAngle };
-}
-
-/** How far off a whole orientation the pose may be and still be treated as
- *  resting on it. Adjacent orientations are a quarter turn apart, so anything
- *  under 45° is unambiguous; half of that leaves a wide band in which a pose is
- *  reported exactly as measured. */
-export const SNAP_MAX_RAD = (22.5 * Math.PI) / 180;
-
-/** How long the pose must hold still before it is considered at rest. Long
- *  enough to sit out the pause between two turns of a solve, short enough that
- *  putting the cube down looks immediate. */
-export const SNAP_AFTER_MS = 260;
-
-/** Below this a frame-to-frame change is sensor noise, not motion. */
-export const SNAP_STILL_EPS_RAD = 0.02; // ~1.1°
-
-export interface SnapOptions {
-  maxRad?: number;
-  afterMs?: number;
-}
-
-/**
- * The pose to aim the smoothing at: normally `target`, but the nearest whole
- * orientation once the cube has been still for long enough and is close enough.
- *
- * Pure and total — `stillMs` is accumulated by the caller (see
- * `advanceStillMs`) so this stays a function of its arguments and nothing else.
- */
-export function snapWhenSettled(target: Quat, stillMs: number, opts: SnapOptions = {}): Quat {
-  const { maxRad = SNAP_MAX_RAD, afterMs = SNAP_AFTER_MS } = opts;
-  if (!(stillMs >= afterMs)) return quatNormalize(target);
-  const near = nearestCubeOrientation(target);
-  return near.angleRad <= maxRad ? near.quat : quatNormalize(target);
-}
-
-/** Accumulate stillness: `dtMs` more of it if the pose barely moved, otherwise
- *  back to zero. Split out so the rule is testable without a render loop. */
-export function advanceStillMs(prev: Quat | null, next: Quat, stillMs: number, dtMs: number): number {
-  if (!prev) return 0;
-  return quatAngleTo(prev, next) <= SNAP_STILL_EPS_RAD ? stillMs + Math.max(0, dtMs) : 0;
 }

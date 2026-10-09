@@ -6,13 +6,14 @@
  */
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { parseAsInteger, useQueryState } from 'nuqs';
+import { parseAsInteger, parseAsStringEnum, useQueryState } from 'nuqs';
 import { ChevronDown, ChevronLeft, Lightbulb, Bug, Link2, MessageSquare, Plus } from 'lucide-react';
+import { CompactSelect } from '@/components/CompactSelect';
 import HomeLink from '@/components/HomeLink';
 import AppLink from '@/components/AppLink';
 import FeedbackModal from '@/components/FeedbackModal';
 import FeedbackConversation from '@/components/FeedbackConversation';
-import { UserIdLabel } from '@/components/UserIdLabel';
+import { UserContactLink } from '@/components/UserIdLabel';
 import Paginator from '@/components/wca-stats/Paginator';
 import { useT } from '@/hooks/useT';
 import { useAuthStore, isAdmin } from '@/lib/auth-store';
@@ -22,12 +23,14 @@ import {
   fetchFeedbackThread,
   fetchPublicFeedback,
   type FeedbackKind,
+  type FeedbackStatus,
   type PublicFeedbackItem,
   type PublicFeedbackPage,
 } from '@/lib/feedback-api';
 import './feedback.css';
 
 const KIND_ICON: Record<FeedbackKind, typeof Bug> = { need: Lightbulb, bug: Bug, other: MessageSquare };
+const STATUS_FILTERS: Array<'all' | FeedbackStatus> = ['all', 'new', 'triaged', 'done'];
 const PAGE_SIZES = [10, 20, 40];
 
 export default function FeedbackPage() {
@@ -42,6 +45,7 @@ export default function FeedbackPage() {
     'page', parseAsInteger.withDefault(1).withOptions({ history: 'push' }),
   );
   const [size, setSize] = useQueryState('size', parseAsInteger.withDefault(20));
+  const [status, setStatus] = useQueryState('status', parseAsStringEnum(STATUS_FILTERS).withDefault('all'));
   const [selectedId] = useQueryState(
     'id', parseAsInteger.withOptions({ history: 'push' }),
   );
@@ -65,21 +69,21 @@ export default function FeedbackPage() {
         .then((thread) => setSelectedItem(thread.feedback))
         .catch((e) => setErr(e instanceof Error ? e.message : String(e)));
     }
-    return fetchPublicFeedback(safePage, safeSize)
+    return fetchPublicFeedback(safePage, safeSize, status === 'all' ? undefined : status)
       .then(setData)
       .catch((e) => setErr(e instanceof Error ? e.message : String(e)));
-  }, [safePage, safeSelectedId, safeSize]);
+  }, [safePage, safeSelectedId, safeSize, status]);
 
   useEffect(() => {
     if (safeSelectedId != null) return;
     let cancelled = false;
     setData(null);
     setErr(null);
-    fetchPublicFeedback(safePage, safeSize)
+    fetchPublicFeedback(safePage, safeSize, status === 'all' ? undefined : status)
       .then((next) => { if (!cancelled) setData(next); })
       .catch((e) => { if (!cancelled) setErr(e instanceof Error ? e.message : String(e)); });
     return () => { cancelled = true; };
-  }, [safePage, safeSelectedId, safeSize]);
+  }, [safePage, safeSelectedId, safeSize, status]);
 
   useEffect(() => {
     if (safeSelectedId == null) {
@@ -141,11 +145,26 @@ export default function FeedbackPage() {
         </button>
       </div>
 
+      {safeSelectedId == null && (
+        <CompactSelect
+          ariaLabel={t('反馈状态', 'Feedback status')}
+          label={status === 'new' ? t('新', 'New') : status === 'triaged' ? t('处理中', 'In progress') : status === 'done' ? t('已完成', 'Done') : t('全部状态', 'All statuses')}
+          value={status}
+          items={[
+            { value: 'all', label: t('全部', 'All') },
+            { value: 'new', label: t('新', 'New') },
+            { value: 'triaged', label: t('处理中', 'In progress') },
+            { value: 'done', label: t('已完成', 'Done') },
+          ]}
+          onChange={(next) => { void setStatus(next); void setPage(1); }}
+        />
+      )}
+
       {err && <div className="fbm-error">{err}</div>}
       {loading && !err && <div className="fbm-empty">{t('加载中…', 'Loading…')}</div>}
       {safeSelectedId == null && data && data.items.length === 0 && (
         <div className="fbm-empty">
-          <p>{t('还没有反馈。', 'No feedback yet.')}</p>
+          <p>{t('没有符合条件的反馈。', 'No feedback matches this filter.')}</p>
           <button type="button" className="fbm-new" onClick={startFeedback}>
             <Plus size={15} /> {t('提一条反馈', 'Send feedback')}
           </button>
@@ -160,10 +179,9 @@ export default function FeedbackPage() {
           return (
             <article key={it.id} className={`fbm-card fbm-status-${it.status}`}>
               <div className="fbm-card-top">
+                <UserContactLink userId={it.userId} className="fbm-author">{author}</UserContactLink>
                 <button type="button" className="fbm-card-head" onClick={() => toggle(it.id)} aria-expanded={expanded}>
                   <span className="fbm-kind"><Icon size={14} /></span>
-                  <span className="fbm-author">{author}</span>
-                  <UserIdLabel userId={it.userId} />
                   <span className="fbm-when">{String(it.createdAt).slice(0, 10)}</span>
                   <span className={`fbm-badge fbm-badge-${it.status}`}>
                     {it.status === 'new' ? t('新', 'New') : it.status === 'triaged' ? t('处理中', 'In progress') : t('已完成', 'Done')}

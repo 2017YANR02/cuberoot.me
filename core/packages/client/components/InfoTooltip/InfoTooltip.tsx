@@ -19,9 +19,11 @@ interface Props {
   icon?: LucideIcon;
   /** 展示形态:'popover'(默认,贴着图标的小气泡) / 'modal'(居中弹窗,内容多段时更从容) */
   variant?: 'popover' | 'modal';
+  /** 触发按钮的无障碍名称。 */
+  ariaLabel?: string;
 }
 
-export function InfoTooltip({ content, iconSize = 11, className, icon: Icon = Info, variant = 'popover' }: Props) {
+export function InfoTooltip({ content, iconSize = 11, className, icon: Icon = Info, variant = 'popover', ariaLabel }: Props) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLSpanElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -50,7 +52,7 @@ export function InfoTooltip({ content, iconSize = 11, className, icon: Icon = In
         className="info-tooltip-trigger"
         onClick={() => setOpen(o => !o)}
         aria-expanded={open}
-        aria-label="More info"
+        aria-label={ariaLabel ?? tr({ zh: '更多信息', en: 'More info' })}
       >
         <Icon size={iconSize} />
       </button>

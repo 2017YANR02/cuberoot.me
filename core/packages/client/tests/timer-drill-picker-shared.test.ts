@@ -68,14 +68,18 @@ describe('shared TimerDrillPicker', () => {
     expect(dialog.getAttribute('role')).toBe('dialog');
     expect(dialog.getAttribute('aria-modal')).toBe('true');
     expect(document.querySelector('[data-no-timer]')).not.toBeNull();
-    expect(document.querySelector('[data-drill-type="pll"] [role="switch"]')?.getAttribute('aria-checked'))
+    expect(document.querySelector<HTMLSelectElement>('[data-drill-type="pll"] select')?.value)
       .toBe('false');
     expect(document.querySelectorAll('[data-drill-case]')).toHaveLength(21);
     expect(document.querySelector(`[data-drill-case="${activeCase.id}"]`)?.getAttribute('aria-pressed'))
       .toBe('true');
     expect(document.querySelector('.timer-drill-picker__count')?.textContent).toBe('(21)');
 
-    await act(async () => document.querySelector<HTMLButtonElement>('[data-drill-type="pll"] [role="switch"]')!.click());
+    await act(async () => {
+      const select = document.querySelector<HTMLSelectElement>('[data-drill-type="pll"] select')!;
+      select.value = 'true';
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    });
     expect(document.querySelectorAll('[data-drill-case]')).toHaveLength(57);
     expect(document.querySelector('.timer-drill-picker__count')?.textContent).toBe('(57)');
     expect(document.querySelectorAll('.timer-drill-picker__group-title').length).toBeGreaterThan(1);
@@ -144,7 +148,7 @@ describe('shared TimerDrillPicker', () => {
   it('traps/restores focus and closes only on Escape or the actual backdrop', async () => {
     const onClose = vi.fn();
     await render({ onClose });
-    const first = document.querySelector<HTMLButtonElement>('[data-drill-type] [role="switch"]')!;
+    const first = document.querySelector<HTMLSelectElement>('[data-drill-type] select')!;
     const close = Array.from(document.querySelectorAll<HTMLButtonElement>('.timer-drill-picker__button'))
       .find((button) => button.textContent === TIMER_DRILL_PICKER_COPY.close.en)!;
     const dialog = document.querySelector<HTMLDivElement>('.timer-drill-picker__dialog')!;
@@ -214,11 +218,15 @@ describe('shared TimerDrillPicker', () => {
   });
 
   it('keeps the shared green pill visible before color-mix support', () => {
-    const fallback = pillCss.indexOf('background: var(--toggle-on, var(--signal-success));');
-    const enhanced = pillCss.indexOf(
-      'background: color-mix(in srgb, var(--toggle-on, var(--signal-success)) 72%, black);',
-    );
-    expect(fallback).toBeGreaterThan(-1);
-    expect(enhanced).toBeGreaterThan(fallback);
+    const supports = pillCss.indexOf('@supports (background: color-mix(');
+    expect(supports).toBeGreaterThan(-1);
+    for (const css of [pillCss.slice(0, supports), pillCss.slice(supports)]) {
+      for (const selector of ['.timer-222-mode-toggle.is-on', '.timer-222-mode-toggle.is-on:hover']) {
+        const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const rule = css.match(new RegExp(`${escaped}\\s*\\{([^}]+)\\}`))?.[1];
+        expect(rule).toContain('background: var(--toggle-on, var(--signal-success));');
+        expect(rule).toContain('border-color: var(--toggle-on, var(--signal-success));');
+      }
+    }
   });
 });

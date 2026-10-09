@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 /**
  * AlgCategoryView — full port of packages/client-vite/src/pages/alg/AlgCategoryPage.tsx.
@@ -9,13 +10,13 @@
  *   - Formula rows stay compact here; 3D playback lives on each case detail page
  *
  * Keeps: subgroup picker (umbrella sets), second-level picker, ori switcher,
- * per-case ori cycle, subgroup collapse, sticker/setup/HTML alg rendering.
+ * per-case ori cycle, grouped case sections, sticker/setup/HTML alg rendering.
  */
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryState, useQueryStates, parseAsBoolean, parseAsInteger, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Shuffle, Plus, Pencil, ShieldCheck, AlertTriangle, FlipHorizontal2, HelpCircle, Pin } from 'lucide-react';
+import { ArrowLeft, Copy, Check, Shuffle, Plus, ShieldCheck, AlertTriangle, HelpCircle, Pin } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, rectSortingStrategy, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import {
@@ -39,19 +40,16 @@ import {
 } from '@/lib/alg_thumb_plan';
 import AlgCard from '@/components/AlgCard';
 import CommunityAlgs from '@/components/CommunityAlgs';
-import AlgNotationStyleSelect from '@/components/AlgNotationStyleSelect';
 import AdminCaseEditor, { type AdminEditorState } from '@/components/AdminCaseEditor';
 import type { AlgInvalidMark } from '@/components/AlgEditor';
 import ValidationReportModal from '@/components/ValidationReportModal';
 import SortableAlgRow from '@/components/SortableAlgRow';
 import SortableCard from '@/components/SortableCard';
-import AlgMirrorPanel, { hasMirror } from '@/components/AlgMirrorPanel';
-import AlgViewModeToggle, { useAlgViewMode } from '@/components/AlgViewModeToggle';
-import PillToggle from '@/components/PillToggle/PillToggle';
+import { useAlgViewMode } from '@/components/AlgViewModeToggle';
+import AlgListSettings, { useAlgCaseNumberVisibility } from '@/components/AlgListSettings';
 import AlgPdfButton from '@/components/AlgPdfButton';
 import { algSheetFromCases } from '@/lib/alg_pdf/from_cases';
 import { useCopy } from '@/hooks/useCopy';
-import { stm } from '@cuberoot/shared/alg-notation';
 import { listSubmissions } from '@/lib/alg_api';
 import { reorderCases, reorderCaseAlgs, rotateCaseClockwise } from '@/lib/alg_sets_api';
 import { hasAdminAccess, useAuthStore } from '@/lib/auth-store';
@@ -64,12 +62,15 @@ import { canonicalZbllSubgroupSlug } from '@/lib/alg_zbll_subgroups';
 import { sortByCp } from '@/lib/alg_cp_order';
 import { compareAlgGroupLabel, sortAlgItemsBySignedLabel } from '@/lib/alg_group_order';
 import { CUBE_ORIENTATIONS, visualCubeSchemeForOrientation } from '@/lib/cube-orientation';
-import { ALG_TAG_LABEL, ALG_TAGS, OH_TAG_LABEL } from '@/lib/alg_tags';
+import { algTagLabel, ALG_TAGS, OH_TAG_LABEL } from '@/lib/alg_tags';
+import AlgTagLabel from '@/components/AlgTagLabel';
 import {
   CASE_VIEW_ANGLES,
   caseViewAlg,
   caseViewSetup,
   displayCaseScramble,
+  displayCaseAlg,
+  displayCaseAlgHtml,
   oriAdjustSetup,
   shortOriName,
   type CaseViewAngle,
@@ -93,7 +94,6 @@ import {
 } from '@/lib/sq1-ep-parity';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { tr } from '@/i18n/tr';
-import { firstAlgorithmAverageStm } from '@/lib/alg-metrics';
 import {
   SQ1_NOTATION_MODES,
   sq1NotationText,
@@ -220,13 +220,10 @@ function SetupLine({ puzzle, setup, notationStyle, sq1NotationMode = 'compact' }
   );
 }
 
-function AlgRow({ entry, puzzle, invalid, mirror, ori = 0, notationStyle, viewAngle, ohHand, sq1NotationMode = 'compact', sourceKarnaukh, preferred = false, onPreferredToggle }: {
+function AlgRow({ entry, puzzle, set, invalid, notationStyle, viewAngle, ohHand, sq1NotationMode = 'compact', sourceKarnaukh, preferred = false, onPreferredToggle }: {
   entry: AlgEntry;
   puzzle: AlgPuzzle; invalid?: string;
-  /** 有值 = 这个 set 吃镜像系统,行尾出翻转图标;`partner` 是伙伴 case 名(没建链时为 null) */
-  mirror?: { partner: string | null; self: string };
-  /** 这条公式在第几个视角(0=FR),镜像面板要拿它算落点 */
-  ori?: number;
+  set: string;
   notationStyle: AlgNotationStyle;
   viewAngle: CaseViewAngle;
   ohHand?: OhHand;
@@ -240,9 +237,8 @@ function AlgRow({ entry, puzzle, invalid, mirror, ori = 0, notationStyle, viewAn
   const issue = caseAlgIssue(entry);
   invalid ||= issue;
   const { copied, copy } = useCopy();
-  const [mirrorOpen, setMirrorOpen] = useState(false);
   // 列表只负责显示 / 复制,剥掉收尾 AUF；完整公式的动画统一放到 case 详情页。
-  const angledAlg = caseViewAlg(alg, viewAngle);
+  const angledAlg = displayCaseAlg(puzzle, set, caseViewAlg(alg, viewAngle));
   const standardAlgShown = formatScrambleForEvent(puzzle, angledAlg);
   const algShown = formatAlgNotation(standardAlgShown, notationStyle);
   const sq1Notation = puzzle === 'sq1'
@@ -250,45 +246,26 @@ function AlgRow({ entry, puzzle, invalid, mirror, ori = 0, notationStyle, viewAn
     : null;
   const shownText = sq1Notation ? tr(sq1Notation) : algShown;
   const isKarnaukh = puzzle === 'sq1' && sq1NotationMode === 'karnaukh';
-  // 步数要数**屏幕上这一条**。`entry.stm` 是入库值(含收尾 AUF),拿它当徽章就会
-  // 出现「显示 10 步、徽章写 11」。
-  const shownStm = useMemo(
-    () => (entry.stm == null ? null : stm(angledAlg)),
-    [entry.stm, angledAlg],
-  );
   return (
-    <>
-      <div
-        className={`alg-alg-row${invalid ? ' is-invalid' : ''}`}
-        title={invalid}
-      >
+    <div
+      className={`alg-alg-row${invalid ? ' is-invalid' : ''}`}
+      title={invalid}
+    >
         {/* 就是这条过不了校验 —— 卡片红框只说「这张有问题」,不说是哪条 */}
         {invalid && <AlertTriangle size={13} className="alg-alg-invalid-icon" aria-label={invalid} />}
-        {entry.tags?.map(t => {
-          const label = t === 'oh' && ohHand ? OH_TAG_LABEL[ohHand]() : ALG_TAG_LABEL[t]();
-          return <span key={t} className={`alg-tag alg-tag-${t}`} title={label}>{label}</span>;
-        })}
         <span className={`alg-alg-text${isKarnaukh ? ' is-karnaukh' : ''}`}>
           {sq1Notation
             ? shownText
             : algHtml && viewAngle === 'default' && puzzle !== 'sq1' && notationStyle === 'standard'
-            ? <span dangerouslySetInnerHTML={{ __html: sanitizeAlgHtml(algHtml) }} />
+            ? <span dangerouslySetInnerHTML={{ __html: sanitizeAlgHtml(displayCaseAlgHtml(puzzle, set, algHtml)) }} />
             : algShown}
           {!sourceKarnaukh && entry.note && <span className="alg-alg-note">({tr(entry.note)})</span>}
           {issue && <span className="alg-alg-note">{tr({ zh: '（原公式与本图不匹配）', en: '(Source algorithm does not match this case)' })}</span>}
         </span>
-        {!isKarnaukh && shownStm != null && <span className="alg-alg-len" title="STM">{shownStm}</span>}
-        {mirror && !issue && (
-          <button
-            type="button"
-            className={`alg-mirror-toggle${mirrorOpen ? ' is-on' : ''}`}
-            aria-expanded={mirrorOpen}
-            onClick={(e) => { e.stopPropagation(); setMirrorOpen(o => !o); }}
-            title={tr({ zh: '镜像公式', en: 'Mirrored algs' })}
-          >
-            <FlipHorizontal2 size={14} />
-          </button>
-        )}
+        {entry.tags?.map(t => {
+          const label = t === 'oh' && ohHand === 'right' ? OH_TAG_LABEL.right() : algTagLabel(t);
+          return <span key={t} className={`alg-tag alg-tag-${t}`}><AlgTagLabel tag={t} label={label} hand={ohHand} /></span>;
+        })}
         {onPreferredToggle && (
           <button
             type="button"
@@ -311,14 +288,9 @@ function AlgRow({ entry, puzzle, invalid, mirror, ori = 0, notationStyle, viewAn
         >
           {copied ? <Check size={14} /> : <Copy size={14} className="alg-alg-copy-icon" />}
         </button>
-      </div>
-      {mirror && mirrorOpen && (
-        <AlgMirrorPanel alg={angledAlg} puzzle={puzzle} mirrorName={mirror.partner} selfName={mirror.self} ori={ori} />
-      )}
-    </>
+    </div>
   );
 }
-
 
 /**
  * umbrella set 的落地页(`/alg/<p>/<set>`)。
@@ -496,17 +468,6 @@ export interface AlgCategoryViewProps {
   };
 }
 
-/** Large sets normally start collapsed; SQ1 cubeshape sets are learned slice-count by
- * slice-count, so their groups stay visible on first entry despite 100+ cases. */
-export function collapseAlgGroupsByDefault(
-  puzzle: string,
-  set: string,
-  caseCount: number,
-  umbrella: boolean,
-): boolean {
-  return caseCount > 100 && !umbrella && !(puzzle === 'sq1' && ['cs', 'csp', 'obl'].includes(set));
-}
-
 /** 分类选择页没有可见 case 列表，页头仍应显示当前 set / subgroup 的完整数量。 */
 export function categoryHeaderCaseCount(
   scopedCaseCount: number,
@@ -586,7 +547,6 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   const [sq1EpNumericNames, setSq1EpNumericNames] = useState(false);
   const [sq1EpHasParity, setSq1EpHasParity] = useState(false);
   const [caseOri, setCaseOri] = useState<Record<string, number>>({});
-  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [submissions, setSubmissions] = useState<AlgSubmission[]>([]);
   const user = useAuthStore(s => s.user);
   const isAdmin = hasAdminAccess(user);
@@ -688,6 +648,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   // 列表视图(`cards` 只看图 / `full` 公式内联)。语义 + localStorage key 都在
   // AlgViewModeToggle 里,`/alg` 下所有 case 列表页共用同一个偏好。
   const [view, changeView] = useAlgViewMode();
+  const [showCaseNumbers, setShowCaseNumbers] = useAlgCaseNumberVisibility();
   // 分组页也共用图 / 公式偏好；公式模式直接列出当前范围的情况。
 
   /** 这个 set 里实际出现过的标签 —— 没有就不渲染筛选器 */
@@ -799,17 +760,6 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     if (!validPuzzle || !meta) { setError('unknown set'); setData(null); return; }
     let live = true;
     setError(null);
-    // 大集合的公式模式可从总览直接展开，预先折叠分组以免同时挂载数千行。
-    // 子组选择器不读折叠状态；SQ1 cubeshape 仍按 slice 数全展开。
-    const applyCollapse = (d: AlgFile) => {
-      if (collapseAlgGroupsByDefault(puzzleParam, set, d.cases.length, !!meta.umbrella && !!subgroupParam)) {
-        const groups = new Set<string>();
-        for (const c of d.cases) groups.add(c.subgroup || '');
-        setCollapsedGroups(groups);
-      } else {
-        setCollapsedGroups(new Set());
-      }
-    };
     // 哨兵壳分流已经把整份 set 拉好传下来(initialData):非 admin 直接复用,免二次 fetch。
     setData(null);
     // admin 必须绕开那 1 小时的 Cache-Control。他刚删掉的那条公式,DB 里确实没了,
@@ -821,10 +771,9 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     pending.then(d => {
       if (!live) return;
       setData(d);
-      applyCollapse(d);
     }).catch(e => { if (live) setError(String(e)); });
     return () => { live = false; };
-  }, [puzzleParam, set, validPuzzle, meta, isAdmin, initialData, subgroupParam]);
+  }, [puzzleParam, set, validPuzzle, meta, isAdmin, initialData]);
 
   useEffect(() => {
     if (!data || !validPuzzle) return;
@@ -852,22 +801,12 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     return () => { cancelled = true; };
   }, [data, puzzleParam, set, validPuzzle, validationRefreshKey, isAdmin]);
 
-  /**
-   * `#<case 名>` 锚点:分享出去的链接、元数据弹窗的「在列表中打开」、个人页的校验汇总都落这儿
-   * (目标多半在别的组)。落地后:选中它(黄框)+ 滚过去 + 闪一下 —— 一组七十来个 case,
-   * 不指出来等于没跳。(锚点不是页内状态,是 URL 片段,和 nuqs 那条约定不冲突。)
-   *
-   * 目标卡在**折叠的组**里(>100 个 case 的 set 默认全折)⟹ 先把那组展开,否则
-   * `getElementById` 拿到 null,跳转静默失败。
-   */
-  // `#<case 名>` 锚点(分享链接 / 元数据弹窗「在列表中打开」/ 个人页校验汇总都落这儿,目标多半
-  // 在别的、可能还折叠着的组):选中它(黄框)+ 滚过去 + 闪一下。走共享 useHashHighlight ——
-  // reveal 负责选中并展开目标所在折叠组(展开后返回 false,collapsedGroups 进 deps 触发重试);
-  // 闪一下用 flashId(React state,免得卡片重渲染把命令式 class 冲掉),故不传 highlightClass。
+  // `#<case 名>` 锚点来自分享链接、元数据弹窗和个人页校验汇总。选中目标后滚动并闪一下；
+  // 闪烁用 flashId 保持在 React 状态中，避免卡片重渲染覆盖命令式 class。
   const { setHash } = useHashHighlight({
     block: 'center',
     linger: 1800, // 闪一下语义(同一锚点不重放);实际的闪由下面 onScroll→flashId 渲染
-    deps: [data, collapsedGroups, puzzleParam, set, subgroupParam, sq1EpHasParity],
+    deps: [data, puzzleParam, set, subgroupParam, sq1EpHasParity],
     resolve: (h) => {
       const c = findCaseByHash(data?.cases ?? [], h, puzzleParam, set);
       return c?.id != null ? document.getElementById(`case-${c.id}`) : null;
@@ -884,11 +823,6 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       if (parity === 'no-parity' && sq1EpHasParity) {
         setSq1EpHasParity(false);
         return false;
-      }
-      const g = parity ? `${parity}:${c.subgroup || ''}` : c.subgroup || '';
-      if (collapsedGroups.has(g)) {
-        setCollapsedGroups(prev => { const next = new Set(prev); next.delete(g); return next; });
-        return false; // 组刚展开,卡还没挂 → 等 collapsedGroups 变化后重试
       }
     },
     onScroll: (el) => {
@@ -947,11 +881,6 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       return false;
     });
   }, [orderedCases, subgroupSlug, slugLevel]);
-
-  const averageFirstAlgorithmStm = useMemo(
-    () => isPuzzle(puzzleParam) ? firstAlgorithmAverageStm(puzzleParam, scopedCases) : null,
-    [puzzleParam, scopedCases],
-  );
 
   const availableMetrics = useMemo(() => availableOptimalMetrics(scopedCases, computedHtm), [scopedCases, computedHtm]);
   const resolvedOptimalMetric = availableMetrics.includes(optimalMetric)
@@ -1061,27 +990,11 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     ];
   }, [isSq1Ep, sq1EpHasParity, visibleCases]);
 
-  /**
-   * 公式行尾那个镜像入口(issue #40 T5 的 U1)。三份镜像是纯重写,**不依赖建链**,
-   * 所以只要 set 在名单里就出;`mirror_case_id` 落库之后才多标出伙伴的名字。
-   * 伙伴要在**全量** case 里找 —— 它可能正好被标签筛掉或不在当前子组。
-   */
-  const mirrorFor = useCallback((c: AlgCase) => {
-    if (!hasMirror(puzzleParam, set)) return undefined;
-    const self = primaryCaseName(puzzleParam, set, c);
-    const id = c.mirrorCaseId;
-    if (id == null) return { partner: null, self };
-    if (id === c.id) return { partner: self, self };
-    const p = data?.cases.find(x => x.id === id);
-    return { partner: p ? primaryCaseName(puzzleParam, set, p) : null, self };
-  }, [data, puzzleParam, set]);
-
   /** 整个 set 的 case → 唯一短链 slug(点卡片跳转用)。落地解析用同一份算法,见 alg_case_link。 */
   const slugMap = useMemo(() => (data ? buildCaseSlugMap(data.cases, set) : null), [data, set]);
   const caseDetailHref = useCallback(
-    (c: AlgCase, edit = false) => {
-      const detailHref = algCaseDetailHref(puzzleParam, set, (c.id != null && slugMap?.byId.get(c.id)) || caseSlugBase(set, c));
-      const href = edit ? `${detailHref}/edit` : detailHref;
+    (c: AlgCase) => {
+      const href = algCaseDetailHref(puzzleParam, set, (c.id != null && slugMap?.byId.get(c.id)) || caseSlugBase(set, c));
       const query = new URLSearchParams();
       if (puzzleParam === 'sq1' && !sq1BlackTop) query.set('black', 'false');
       if (puzzleParam === 'sq1' && sq1NotationMode !== 'compact') query.set('sq1-notation', sq1NotationMode);
@@ -1134,7 +1047,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   const dispToken = (slug: string) => {
     const oll = ollByGroup.get(slug.toUpperCase()) ?? ollByGroup.get(slug);
     if (oll) return oll;
-    return set === 'zbll' ? displayZbllToken(slug) : slug.toUpperCase();
+    return set === 'zbll' ? displayZbllToken(slug) : displayAlgCaseName(puzzleParam, set, slug.toUpperCase());
   };
   const subgroupDisplay = (
     slugLevel === 'sub' && subParentSlug && subgroupSlug
@@ -1197,12 +1110,6 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     });
   };
 
-  const toggleGroup = (g: string) => setCollapsedGroups(prev => {
-    const next = new Set(prev);
-    if (next.has(g)) next.delete(g); else next.add(g);
-    return next;
-  });
-
   return (
     <div className="alg-root">
       <div className="alg-cat-header">
@@ -1222,9 +1129,6 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
             <span className="alg-cat-metric">
               {headerCaseCount}{tr({ zh: '个', en: ' cases' })}
             </span>
-            {averageFirstAlgorithmStm != null && (
-              <span className="alg-cat-metric">{averageFirstAlgorithmStm.toFixed(1)} STM</span>
-            )}
           </div>
         )}
         {data && canShowAllCases && (
@@ -1357,9 +1261,21 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
             onChange={value => void setSq1NotationMode(value)}
           />
         )}
-        {/* 所有公式集共用图 / 公式开关，公式模式展开当前分组。 */}
-        {data && !collection?.cardsOnly && (
-          <AlgViewModeToggle value={view} onChange={changeView} className="alg-view-toggle" />
+        {/* 所有公式集共用列表设置，偏好跨 `/alg` 页面生效。 */}
+        {data && (
+          <AlgListSettings
+            view={view}
+            onViewChange={changeView}
+            showCaseNumbers={showCaseNumbers}
+            onShowCaseNumbersChange={setShowCaseNumbers}
+            showViewMode={!collection?.cardsOnly}
+            {...(isZh && !showSubgroupPicker && !showSubSubgroupPicker && effectiveView === 'full' && canChooseNotationStyle
+              ? {
+                  notationStyle,
+                  onNotationStyleChange: (value: AlgNotationStyle) => void setNotationStyle(value),
+                }
+              : {})}
+          />
         )}
         {puzzleParam === 'fto' && (
           <Link href="/alg/fto/notation" className="alg-recog-cta" prefetch={false}>
@@ -1383,18 +1299,12 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
           </>
         )}
         {isZh && data && !showSubgroupPicker && !showSubSubgroupPicker && effectiveView === 'full' && canChooseNotationStyle && (
-          <>
-            <AlgNotationStyleSelect
-              value={notationStyle}
-              onChange={value => void setNotationStyle(value)}
-            />
-            {displayedNotationStyle !== 'standard' && (
-              <Link href="/notation" prefetch={false} className="alg-back">
-                <HelpCircle size={15} aria-hidden="true" />
-                {tr({ zh: '记号说明', en: 'Notation guide' })}
-              </Link>
-            )}
-          </>
+          displayedNotationStyle !== 'standard' && (
+            <Link href="/notation" prefetch={false} className="alg-back">
+              <HelpCircle size={15} aria-hidden="true" />
+              {tr({ zh: '记号说明', en: 'Notation guide' })}
+            </Link>
+          )
         )}
         {/* 标签筛选只在公式内联时有意义(只看图时没公式可筛) */}
         {data && !showSubgroupPicker && !showSubSubgroupPicker && effectiveView === 'full' && availableTags.length > 0 && (
@@ -1415,11 +1325,11 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
               <option value="all">{tr({ zh: '全部', en: 'All' })}</option>
               {availableTags.map(t => t === 'oh' && canChooseOhHand ? (
                 <Fragment key={t}>
-                  <option value="oh">{OH_TAG_LABEL.left()}</option>
+                  <option value="oh">{algTagLabel('oh')}</option>
                   <option value={RIGHT_OH_MENU_VALUE}>{OH_TAG_LABEL.right()}</option>
                 </Fragment>
               ) : (
-                <option key={t} value={t}>{ALG_TAG_LABEL[t]()}</option>
+                <option key={t} value={t}>{algTagLabel(t)}</option>
               ))}
             </select>
           </>
@@ -1543,13 +1453,15 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       {data && !showSubgroupPicker && !showSubSubgroupPicker && isSq1Ep && (
         <div className="alg-ep-options">
           <div className="alg-ep-toggle-row">
-            <PillToggle
-              value={sq1EpNumericNames}
-              onChange={setSq1EpNumericNames}
-              offLabel={tr({ zh: '英文命名', en: 'English names' })}
-              onLabel={tr({ zh: '数字命名', en: 'Numeric names' })}
-              ariaLabel={tr({ zh: '切换 SQ1 EP 命名方式', en: 'Switch SQ1 EP naming system' })}
-            />
+            <select
+              value={String(sq1EpNumericNames)}
+              onChange={event => setSq1EpNumericNames(event.currentTarget.value === 'true')}
+              aria-label={tr({ zh: '切换 SQ1 EP 命名方式', en: 'Switch SQ1 EP naming system' })}
+              className="native-select"
+            >
+              <option value="true">{tr({ zh: '数字命名', en: 'Numeric names' })}</option>
+              <option value="false">{tr({ zh: '英文命名', en: 'English names' })}</option>
+            </select>
             <InfoTooltip
               icon={HelpCircle}
               iconSize={16}
@@ -1585,7 +1497,6 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
 
       {data && !showSubgroupPicker && !showSubSubgroupPicker && grouped.map((group) => {
         const { key, subgroup, cases, paritySection, startsParitySection, sectionCaseCount } = group;
-        const collapsed = collapsedGroups.has(key);
         const showHeader = !subgroupParam && (grouped.length > 1 || subgroup !== '');
         return (
           <Fragment key={key}>
@@ -1602,13 +1513,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
           )}
           <section className="alg-subgroup">
             {showHeader && (
-              <h2
-                className="alg-subgroup-title is-toggleable"
-                onClick={() => toggleGroup(key)}
-                role="button"
-                tabIndex={0}
-              >
-                {collapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
+              <h2 className="alg-subgroup-title">
                 {isSq1Ep
                   ? (sq1EpNumericNames
                     ? `${sq1EpNumericLayerName(subgroup) ?? subgroup}.*`
@@ -1616,11 +1521,9 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                   : (ollByGroup.get(subgroup)
                     ?? displayAlgCaseName(puzzleParam, set, subgroup)
                     ?? tr({ zh: '其他', en: 'Other' }))}
-                <span className="alg-subgroup-count">{cases.length}</span>
               </h2>
             )}
-            {!collapsed && (
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 <SortableContext
                   items={cases.map(c => c.id).filter((x): x is number => typeof x === 'number')}
                   strategy={rectSortingStrategy}
@@ -1667,16 +1570,6 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                         prefetch={false}
                         aria-label={cardName}
                       />
-                      {isAdmin && c.id != null && (
-                        <Link
-                          href={caseDetailHref(c, true)}
-                          prefetch={false}
-                          className="alg-admin-edit-btn alg-admin-edit-btn-corner"
-                          title={tr({ zh: '编辑 case (admin)', en: 'Edit case (admin)' })}
-                        >
-                          <Pencil size={12} />
-                        </Link>
-                      )}
                       <div className="alg-case-head">
                         <div className={`alg-case-cube${useSvDualThumb || useZbllDualThumb ? ' is-dual' : ''}`}>
                           {useSvDualThumb ? (
@@ -1756,7 +1649,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                               const primary = primaryCaseName(puzzleParam, set, c);
                               return disp.startsWith(primary) ? null : <span className="alg-case-index">{disp}</span>;
                             })()}
-                            {c.number != null && <span className="alg-case-index">#{c.number}</span>}
+                            {showCaseNumbers && c.number != null && <span className="alg-case-index">#{c.number}</span>}
                             {oriCount > 1 && (
                               <button
                                 type="button"
@@ -1772,7 +1665,8 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                           {effectiveView === 'full' && c.setup && (
                             <SetupLine
                               puzzle={puzzleParam}
-                              setup={displayCaseScramble(puzzleParam, set, caseViewSetup(oriAdjustSetup(c.setup, oriIdx), effectiveViewAngle))}
+                              setup={displayCaseScramble(puzzleParam, set,
+                                caseViewSetup(orientedSetup, effectiveViewAngle))}
                               notationStyle={displayedNotationStyle}
                               sq1NotationMode={sq1NotationMode}
                             />
@@ -1792,9 +1686,8 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                               <AlgRow
                                 entry={entry}
                                 puzzle={puzzleParam as AlgPuzzle}
+                                set={set}
                                 invalid={isAdmin && c.id != null && trueIdx >= 0 ? invalidAlgs.get(`${c.id}:${oriIdx}:${trueIdx}`) : undefined}
-                                ori={oriIdx}
-                                mirror={mirrorFor(c)}
                                 notationStyle={displayedNotationStyle}
                                 viewAngle={effectiveViewAngle}
                                 ohHand={rightHandOh ? 'right' : undefined}
@@ -1810,8 +1703,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                               />
                             );
                             const key = `${entry.altId ?? entry.alg}::${trueIdx >= 0 ? trueIdx : displayIdx}`;
-                            // 不拖的时候一层壳都不加 —— AlgRow 还可能带镜像公式面板,
-                            // 套个 div 会把它和列表的 gap 关系改掉
+                            // 不拖的时候不加额外外壳，保持列表 DOM 和间距一致。
                             return dragAlgs
                               ? (
                                 <SortableAlgRow key={key} id={algDragId(c.id!, oriIdx, trueIdx)} draggable>
@@ -1842,6 +1734,15 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                         firstAlg={c.algs[0]?.[0]?.alg}
                         standardAlgs={c.algs.flat()}
                         submissions={submissionsByCase.get(c.name) ?? []}
+                        allowAdd={false}
+                        compact
+                        preferredRef={preferredRef}
+                        onPreferredToggle={(submission, preferred) => setPreferred(
+                          puzzleParam as AlgPuzzle,
+                          preferenceSet,
+                          preferenceSlot,
+                          preferred ? null : preferredAlgRef({ alg: submission.alg }),
+                        )}
                         notationStyle={displayedNotationStyle}
                         viewAngle={effectiveViewAngle}
                         onPatch={(action) => {
@@ -1860,7 +1761,6 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
               </div>
                 </SortableContext>
               </DndContext>
-            )}
           </section>
           </Fragment>
         );
@@ -1905,7 +1805,6 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
         <ValidationReportModal
           scope={{ kind: 'set', puzzle: puzzleParam as AlgPuzzle, set }}
           onClose={() => setValidationOpen(false)}
-          onPickCase={(_p, _s, c) => setEditorState({ mode: 'edit', existing: c })}
           refreshKey={validationRefreshKey}
         />
       )}

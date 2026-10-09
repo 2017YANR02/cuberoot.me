@@ -1,13 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { WebSession } from '@cuberoot/shared/auth/web-session';
-import { RecordPushController, type RecordPushPort } from '../src/native/record-push-controller';
+import { RecordPushController, type RecordPushPort, type PushStatus } from '../src/native/record-push-controller';
 
 const session = (uid: number): WebSession => ({ token: `token${uid}`, user: {
   uid, wcaId: null, name: 'Test', avatar: '', avatarSource: 'preset', avatarPreset: null, isAdmin: false,
 } });
 function setup() {
   const storage = new Map<string, string>();
-  const status = { configured: true, enabled: true, clientId: 'cid' };
+  const status: PushStatus = { configured: true, enabled: true, clientId: 'cid' };
   const port: RecordPushPort = {
     storage: { getItem: async key => storage.get(key) ?? null,
       setItem: async (key, value) => { storage.set(key, value); },
@@ -19,7 +19,7 @@ function setup() {
   };
   return { controller: new RecordPushController(port), port, storage, status };
 }
-describe('Android record push lifecycle', () => {
+describe('native record push lifecycle', () => {
   it('does not initialize when server configuration is absent', async () => {
     const { controller, port } = setup();
     vi.mocked(port.request).mockResolvedValue({ enabled: false });
@@ -75,4 +75,31 @@ describe('Android record push lifecycle', () => {
     expect(vi.mocked(port.request).mock.calls.at(-1)?.[0]).toBe('DELETE');
     expect(storage.size).toBe(0);
   });
+  it('registers APNs environment and rotates a token without creating a second installation', async () => {
+    const { controller, port, status, storage } = setup();
+    Object.assign(status, { provider: 'apns', environment: 'sandbox', clientId: 'aa'.repeat(32) });
+    await controller.sync(session(1));
+    expect(vi.mocked(port.request).mock.calls[0][1]).toContain('provider=apns&environment=sandbox');
+    expect(vi.mocked(port.request).mock.calls[1][2]).toMatchObject({ provider: 'apns', environment: 'sandbox', clientId: 'aa'.repeat(32) });
+    const identity = storage.get('record_push_device');
+    status.clientId = 'bb'.repeat(32);
+    await controller.sync(session(1));
+    expect(vi.mocked(port.request).mock.calls.at(-1)?.[2]).toMatchObject({ provider: 'apns', environment: 'sandbox', clientId: 'bb'.repeat(32) });
+    expect(storage.get('record_push_device')).toBe(identity);
+    status.environment = 'production';
+    await controller.sync(session(1));
+    expect(vi.mocked(port.request).mock.calls.at(-1)?.[2]).toMatchObject({ environment: 'production' });
+  });
+  it('re-registers after notification permission is granted again', async () => {
+    const { controller, port, status } = setup();
+    status.provider = 'apns';
+    status.environment = 'production';
+    status.enabled = false;
+    await controller.sync(session(1));
+    expect(vi.mocked(port.request).mock.calls.some(call => call[0] === 'PUT')).toBe(false);
+    status.enabled = true;
+    await controller.sync(session(1));
+    expect(vi.mocked(port.request).mock.calls.at(-1)?.[0]).toBe('PUT');
+  });
+
 });

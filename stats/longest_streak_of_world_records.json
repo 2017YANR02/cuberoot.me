@@ -48,7 +48,7 @@
   ],
   "rows": [
     [
-      "8.64",
+      "8.70",
       9,
       "6x6x6 Cube",
       "Single",
@@ -57,13 +57,13 @@
       "Still active"
     ],
     [
-      "8.43",
+      "8.45",
       9,
       "7x7x7 Cube",
       "Average",
       "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
       "[COpen2 2018](https://www.worldcubeassociation.org/competitions/Cerritos2018)",
-      "Still active"
+      "[Hanoi Big Cubes 2026](https://www.worldcubeassociation.org/competitions/HanoiBigCubes2026)"
     ],
     [
       "7.82",
@@ -84,12 +84,21 @@
       "[Western Championship 2018](https://www.worldcubeassociation.org/competitions/WesternChampionship2018)"
     ],
     [
-      "7.39",
+      "7.45",
       8,
       "4x4x4 Blindfolded",
       "Single",
       "[Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04)",
       "[Mental Breakdown Washington 2019](https://www.worldcubeassociation.org/competitions/MentalBreakdownWashington2019)",
+      "Still active"
+    ],
+    [
+      "7.24",
+      7,
+      "4x4x4 Blindfolded",
+      "Average",
+      "[Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04)",
+      "[WCA World Championship 2019](https://www.worldcubeassociation.org/competitions/WC2019)",
       "Still active"
     ],
     [
@@ -100,15 +109,6 @@
       "[Feliks Zemdegs](https://www.worldcubeassociation.org/persons/2009ZEMD01)",
       "[Melbourne Summer Open 2010](https://www.worldcubeassociation.org/competitions/MelbourneSummerOpen2010)",
       "[OCSEF 2017](https://www.worldcubeassociation.org/competitions/OCSEFOpen2017)"
-    ],
-    [
-      "7.19",
-      7,
-      "4x4x4 Blindfolded",
-      "Average",
-      "[Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04)",
-      "[WCA World Championship 2019](https://www.worldcubeassociation.org/competitions/WC2019)",
-      "Still active"
     ],
     [
       "7.05",
@@ -363,6 +363,15 @@
       "[Polish Open 2006](https://www.worldcubeassociation.org/competitions/PolishOpen2006)"
     ],
     [
+      "2.98",
+      5,
+      "5x5x5 Blindfolded",
+      "Single",
+      "[Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04)",
+      "[Square-1 Madison Square 2023](https://www.worldcubeassociation.org/competitions/Square1onaMadisonSquare2023)",
+      "Still active"
+    ],
+    [
       "2.95",
       2,
       "4x4x4 Blindfolded",
@@ -370,15 +379,6 @@
       "[Dror Vomberg](https://www.worldcubeassociation.org/persons/2003VOMB01)",
       "[World Championship 2003](https://www.worldcubeassociation.org/competitions/WC2003)",
       "[US Nationals 2006](https://www.worldcubeassociation.org/competitions/US2006)"
-    ],
-    [
-      "2.93",
-      5,
-      "5x5x5 Blindfolded",
-      "Single",
-      "[Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04)",
-      "[Square-1 Madison Square 2023](https://www.worldcubeassociation.org/competitions/Square1onaMadisonSquare2023)",
-      "Still active"
     ],
     [
       "2.86",
@@ -617,6 +617,15 @@
     [
       "2.03",
       3,
+      "5x5x5 Cube",
+      "Single",
+      "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
+      "[DuPage Fall 2024](https://www.worldcubeassociation.org/competitions/DuPageFall2024)",
+      "Still active"
+    ],
+    [
+      "2.03",
+      3,
       "Square-1",
       "Single",
       "[Grzegorz Prusak](https://www.worldcubeassociation.org/persons/2006PRUS01)",
@@ -649,15 +658,6 @@
       "[Lars Vandenbergh](https://www.worldcubeassociation.org/persons/2003VAND01)",
       "[Dutch Open 2004](https://www.worldcubeassociation.org/competitions/DutchOpen2004)",
       "[Dutch Open 2006](https://www.worldcubeassociation.org/competitions/DutchOpen2006)"
-    ],
-    [
-      "1.97",
-      3,
-      "5x5x5 Cube",
-      "Single",
-      "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
-      "[DuPage Fall 2024](https://www.worldcubeassociation.org/competitions/DuPageFall2024)",
-      "Still active"
     ],
     [
       "1.94",
@@ -750,6 +750,15 @@
       "[US Nationals 2016](https://www.worldcubeassociation.org/competitions/USNationals2016)"
     ],
     [
+      "1.74",
+      2,
+      "Square-1",
+      "Average",
+      "[Sameer Aggarwal](https://www.worldcubeassociation.org/persons/2017AGGA01)",
+      "[Gem City Ohio Showdown 2025](https://www.worldcubeassociation.org/competitions/GemCityOhioShowdown2025)",
+      "Still active"
+    ],
+    [
       "1.73",
       4,
       "Rubik's Cube",
@@ -802,15 +811,6 @@
       "[Daniel Rose-Levine](https://www.worldcubeassociation.org/persons/2015ROSE01)",
       "[SE Champ 2018](https://www.worldcubeassociation.org/competitions/SEChamp2018)",
       "[Medan 10th Anniversary 2019](https://www.worldcubeassociation.org/competitions/Medan10thAnniversary2019)"
-    ],
-    [
-      "1.68",
-      2,
-      "Square-1",
-      "Average",
-      "[Sameer Aggarwal](https://www.worldcubeassociation.org/persons/2017AGGA01)",
-      "[Gem City Ohio Showdown 2025](https://www.worldcubeassociation.org/competitions/GemCityOhioShowdown2025)",
-      "Still active"
     ],
     [
       "1.65",
@@ -1083,6 +1083,15 @@
       "[Asian Championship 2014](https://www.worldcubeassociation.org/competitions/AsianChampionship2014)"
     ],
     [
+      "1.26",
+      2,
+      "5x5x5 Cube",
+      "Average",
+      "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
+      "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025)",
+      "[Guangzhou Grand Open 2026](https://www.worldcubeassociation.org/competitions/GuangzhouGrandOpen2026)"
+    ],
+    [
       "1.23",
       3,
       "3x3x3 One-Handed",
@@ -1108,15 +1117,6 @@
       "[Ryan Patricio](https://www.worldcubeassociation.org/persons/2004PATR01)",
       "[Caltech Fall 2005](https://www.worldcubeassociation.org/competitions/CaltechFall2005)",
       "[KCRC 2007](https://www.worldcubeassociation.org/competitions/KCRC2007)"
-    ],
-    [
-      "1.21",
-      2,
-      "5x5x5 Cube",
-      "Average",
-      "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
-      "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025)",
-      "Still active"
     ],
     [
       "1.20",
@@ -1380,6 +1380,15 @@
       "[Malaysia Cube Open 2017](https://www.worldcubeassociation.org/competitions/MalaysiaCubeOpen2017)"
     ],
     [
+      "0.84",
+      2,
+      "Megaminx",
+      "Average",
+      "[Timofei Tarasenko](https://www.worldcubeassociation.org/persons/2019TARA09)",
+      "[Tashkent Open 2025](https://www.worldcubeassociation.org/competitions/TashkentOpen2025)",
+      "Still active"
+    ],
+    [
       "0.82",
       2,
       "Rubik's Cube",
@@ -1407,6 +1416,15 @@
       "[Schwandorf Open 2016](https://www.worldcubeassociation.org/competitions/SchwandorfOpen2016)"
     ],
     [
+      "0.82",
+      2,
+      "2x2x2 Cube",
+      "Average",
+      "[Sujan Feist](https://www.worldcubeassociation.org/persons/2016FEIS01)",
+      "[Kids America Christmas OH 2025](https://www.worldcubeassociation.org/competitions/KidsAmericaChristmasOH2025)",
+      "Still active"
+    ],
+    [
       "0.81",
       2,
       "Rubik's Cube",
@@ -1425,15 +1443,6 @@
       "[Quanzhou Summer 2026](https://www.worldcubeassociation.org/competitions/QuanzhouSummer2026)"
     ],
     [
-      "0.78",
-      2,
-      "Megaminx",
-      "Average",
-      "[Timofei Tarasenko](https://www.worldcubeassociation.org/persons/2019TARA09)",
-      "[Tashkent Open 2025](https://www.worldcubeassociation.org/competitions/TashkentOpen2025)",
-      "Still active"
-    ],
-    [
       "0.77",
       3,
       "3x3x3 Blindfolded",
@@ -1441,15 +1450,6 @@
       "[Shotaro Makisumi (牧角章太郎)](https://www.worldcubeassociation.org/persons/2003MAKI01)",
       "[US Nationals 2004](https://www.worldcubeassociation.org/competitions/US2004)",
       "[Caltech Spring 2005](https://www.worldcubeassociation.org/competitions/CaltechSpring2005)"
-    ],
-    [
-      "0.76",
-      2,
-      "2x2x2 Cube",
-      "Average",
-      "[Sujan Feist](https://www.worldcubeassociation.org/persons/2016FEIS01)",
-      "[Kids America Christmas OH 2025](https://www.worldcubeassociation.org/competitions/KidsAmericaChristmasOH2025)",
-      "Still active"
     ],
     [
       "0.73",
@@ -1920,6 +1920,15 @@
       "[Busan Winter 2016](https://www.worldcubeassociation.org/competitions/BusanWinter2016)"
     ],
     [
+      "0.36",
+      2,
+      "7x7x7 Cube",
+      "Single",
+      "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+      "[Western Championship 2026](https://www.worldcubeassociation.org/competitions/WesternChampionship2026)",
+      "[Beijing Autumn Rivalry 2026](https://www.worldcubeassociation.org/competitions/BeijingAutumnRivalry2026)"
+    ],
+    [
       "0.34",
       2,
       "2x2x2 Cube",
@@ -1927,15 +1936,6 @@
       "[Rami Sbahi](https://www.worldcubeassociation.org/persons/2011SBAH01)",
       "[Holy Toledo Winter 2014](https://www.worldcubeassociation.org/competitions/HolyToledoWinter2014)",
       "[Michigan 2014](https://www.worldcubeassociation.org/competitions/Michigan2014)"
-    ],
-    [
-      "0.32",
-      2,
-      "7x7x7 Cube",
-      "Single",
-      "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
-      "[Western Championship 2026](https://www.worldcubeassociation.org/competitions/WesternChampionship2026)",
-      "Still active"
     ],
     [
       "0.31",
@@ -2028,6 +2028,15 @@
       "[Cube4fun Lublin on WEII 2024](https://www.worldcubeassociation.org/competitions/Cube4funLublinonWEII2024)"
     ],
     [
+      "0.13",
+      2,
+      "6x6x6 Cube",
+      "Average",
+      "[Timofei Tarasenko](https://www.worldcubeassociation.org/persons/2019TARA09)",
+      "[Kuala Lumpur CC 2026](https://www.worldcubeassociation.org/competitions/KualaLumpurCC2026)",
+      "Still active"
+    ],
+    [
       "0.12",
       2,
       "7x7x7 Cube",
@@ -2071,6 +2080,15 @@
       "[Eryk Kasperek](https://www.worldcubeassociation.org/persons/2021KASP01)",
       "[Cube4fun Lublin on WEII 2024](https://www.worldcubeassociation.org/competitions/Cube4funLublinonWEII2024)",
       "[Chicago Area Twist Spring A 2024](https://www.worldcubeassociation.org/competitions/ChicagoAreaTwistSpringA2024)"
+    ],
+    [
+      "0.03",
+      2,
+      "7x7x7 Cube",
+      "Average",
+      "[Timofei Tarasenko](https://www.worldcubeassociation.org/persons/2019TARA09)",
+      "[Hanoi Big Cubes 2026](https://www.worldcubeassociation.org/competitions/HanoiBigCubes2026)",
+      "Still active"
     ]
   ]
 }

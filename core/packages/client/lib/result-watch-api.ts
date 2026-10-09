@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 // 选手「成绩变更」客户端 — 读 + 管理员写 /v1/wca/result-watch/*。
 // 自动数据由 server monitors/wca_past_results.ts diff 写入(source='auto');
 // 管理员可手动录入/编辑变更链(source='manual')。
@@ -89,7 +90,7 @@ export function splitChainByStatus(
 }
 
 export async function fetchResultWatchStatus(signal?: AbortSignal): Promise<ResultWatchStatus> {
-  const res = await fetch(apiUrl('/v1/wca/result-watch/status'), { signal });
+  const res = await sessionFetch(apiUrl('/v1/wca/result-watch/status'), { signal });
   if (!res.ok) throw new Error(`result-watch/status ${res.status}`);
   return (await res.json()) as ResultWatchStatus;
 }
@@ -104,7 +105,7 @@ export async function fetchResultChanges(
   if (wcaId) qs.set('wcaId', wcaId);
   qs.set('limit', String(limit));
   if (noStore) qs.set('_t', String(Date.now()));
-  const res = await fetch(apiUrl(`/v1/wca/result-watch/changes?${qs.toString()}`), {
+  const res = await sessionFetch(apiUrl(`/v1/wca/result-watch/changes?${qs.toString()}`), {
     signal,
     ...(noStore ? { cache: 'no-store' as RequestCache } : {}),
   });
@@ -115,7 +116,7 @@ export async function fetchResultChanges(
 
 /** 审核队列:拉全部待审核(pending)提议,管理员页用(no-store,要新鲜)。 */
 export async function fetchPendingChanges(limit = 300, signal?: AbortSignal): Promise<ResultChange[]> {
-  const res = await fetch(apiUrl(`/v1/wca/result-watch/changes?status=pending&limit=${limit}&_t=${Date.now()}`), {
+  const res = await sessionFetch(apiUrl(`/v1/wca/result-watch/changes?status=pending&limit=${limit}&_t=${Date.now()}`), {
     signal,
     cache: 'no-store',
   });
@@ -133,7 +134,7 @@ export async function fetchResultChangesByComp(
 ): Promise<ResultChange[]> {
   const qs = new URLSearchParams({ compId, limit: String(limit) });
   if (noStore) qs.set('_t', String(Date.now()));
-  const res = await fetch(apiUrl(`/v1/wca/result-watch/changes?${qs.toString()}`), {
+  const res = await sessionFetch(apiUrl(`/v1/wca/result-watch/changes?${qs.toString()}`), {
     signal,
     ...(noStore ? { cache: 'no-store' as RequestCache } : {}),
   });
@@ -157,7 +158,7 @@ export interface ResultChangeInput {
 }
 
 async function writeChange(method: 'POST' | 'PUT', path: string, input: ResultChangeInput): Promise<unknown> {
-  const res = await fetch(apiUrl(path), {
+  const res = await sessionFetch(apiUrl(path), {
     method,
     headers: authHeaders(),
     body: JSON.stringify(input),
@@ -179,7 +180,7 @@ export async function updateResultChange(id: number, input: ResultChangeInput): 
 }
 
 export async function deleteResultChange(id: number): Promise<void> {
-  const res = await fetch(apiUrl(`/v1/wca/result-watch/changes/${id}`), {
+  const res = await sessionFetch(apiUrl(`/v1/wca/result-watch/changes/${id}`), {
     method: 'DELETE',
     headers: authHeaders(),
   });
@@ -188,7 +189,7 @@ export async function deleteResultChange(id: number): Promise<void> {
 
 // 管理员审核:批准(→ approved 上线)/ 驳回(→ rejected 隐藏)。
 async function moderateChange(id: number, action: 'approve' | 'reject'): Promise<void> {
-  const res = await fetch(apiUrl(`/v1/wca/result-watch/changes/${id}/${action}`), {
+  const res = await sessionFetch(apiUrl(`/v1/wca/result-watch/changes/${id}/${action}`), {
     method: 'POST',
     headers: authHeaders(),
   });

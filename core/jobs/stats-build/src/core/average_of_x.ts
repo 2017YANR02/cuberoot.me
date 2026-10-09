@@ -12,6 +12,7 @@ import { ATTEMPTS_SUBQUERY, query as dbQuery } from './database.js';
 import { formatDate } from './format_date.js';
 import type { StatJson, StatPanel } from './statistic.js';
 import type { RowDataPacket } from 'mysql2';
+import { roundTimedAverageMs } from '@cuberoot/shared/timer';
 
 // NOTE: 各项目的候选选手筛选范围
 const TOP_N_BY_EVENT: Record<string, number> = {
@@ -130,12 +131,11 @@ export abstract class AverageOfX extends GroupedStatistic {
     sharedQueryRows = null;
   }
 
-  // NOTE: Trimmed Mean（WCA 标准裁剪均值）
-  // 两端各去掉 ceil(n*5%) 个成绩
+  // NOTE: 三次使用 Mo3（不裁剪）；更长窗口两端各去掉 ceil(n*5%) 个成绩。
   private trimmedAverage(solves: number[], eventId: string): SolveTime {
-    const trimPerSide = Math.ceil(solves.length * 0.05);
+    const trimPerSide = solves.length === 3 ? 0 : Math.ceil(solves.length * 0.05);
     const sorted = [...solves].sort((a, b) => a - b);
-    const untrimmed = sorted.slice(trimPerSide, -trimPerSide);
+    const untrimmed = sorted.slice(trimPerSide, sorted.length - trimPerSide);
     // NOTE: 如果裁剪后仍有 Infinity（DNF），整个均值 DNF
     if (untrimmed[untrimmed.length - 1] === Infinity) {
       return SolveTime.DNF_INSTANCE;
@@ -143,7 +143,8 @@ export abstract class AverageOfX extends GroupedStatistic {
     let meanValue = untrimmed.reduce((s, v) => s + v, 0) / untrimmed.length;
     // NOTE: FMC 成绩单位是 moves，乘 100 统一为厘秒
     if (eventId === '333fm') meanValue *= 100;
-    return new SolveTime(eventId, 'average', Math.round(meanValue));
+    const rounded = eventId === '333fm' ? Math.round(meanValue) : roundTimedAverageMs(meanValue * 10) / 10;
+    return new SolveTime(eventId, 'average', rounded);
   }
 
   // NOTE: 滑动窗口核心——为指定 event 的每个人计算最佳 AoX

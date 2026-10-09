@@ -22,7 +22,6 @@ import {
   Palette, Disc, MousePointerClick, Image as ImageIcon, type LucideIcon,
 } from 'lucide-react';
 import { tr } from '@/i18n/tr';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import BoolToggle from '@/components/BoolToggle';
 import TrainingNavButton from '@/components/TrainingNavButton';
 import TrainingSettings from '@/components/TrainingSettings';
@@ -37,7 +36,7 @@ import { RangeSlider } from '@/components/RangeSlider/RangeSlider';
 import { ParamSliders, type ParamSliderSpec } from '@/components/ParamSliders';
 import { Spinner } from '@/components/Spinner/Spinner';
 import ResetDefaultsButton from '@/components/ResetDefaultsButton';
-import PlaybackBar from '@/components/PlaybackBar';
+import PlaybackBar from '@cuberoot/timer-ui/PlaybackBar';
 import StackedBar, { type StackedSeg } from '@/components/StackedBar/StackedBar';
 import CountryShareBar from '@/components/CountryShareBar/CountryShareBar';
 import { VARIANT_ORDER } from '@/lib/scramble-variants';
@@ -177,15 +176,14 @@ function useIsZh() {
 
 /* ── demos (self-contained, render on a neutral stage) ──────────────────── */
 
-function PillToggleDemo() {
-  // 二选一:主/默认项放 onLabel → 默认绿(滑钮在右)。单次=主项 → 默认绿。
-  const [b, setB] = useState(true);
+function NativeSelectDemo() {
+  const [value, setValue] = useState('single');
   return (
-    <div className="cg-row">
-      <PillToggle value={b} onChange={setB}
-        onLabel={tr({ zh: '单次', en: 'Single' })}
-        offLabel={tr({ zh: '平均', en: 'Average' })} />
-    </div>
+    <select className="native-select" value={value} onChange={event => setValue(event.currentTarget.value)}
+      aria-label={tr({ zh: '成绩类型', en: 'Result type' })}>
+      <option value="single">{tr({ zh: '单次', en: 'Single' })}</option>
+      <option value="average">{tr({ zh: '平均', en: 'Average' })}</option>
+    </select>
   );
 }
 
@@ -833,6 +831,27 @@ export const EXTRA_DEMOS: Partial<Record<string, () => ReactNode>> = {
 
 export const CATALOG: ComponentEntry[] = [
   {
+    name: 'InstalledContentBoundary',
+    import: "import InstalledContentBoundary from '@/components/InstalledContentBoundary';",
+    category: 'more',
+    zh: '安装端在线页面的首版内容限制，复用 shared 路由规则并在水合前隐藏未核对页面；普通网站不受影响。',
+    en: 'First-release content boundary for installed website surfaces, sharing route rules and hiding unchecked prerendered content before hydration; normal browsing is unchanged.',
+  },
+  {
+    name: 'useAppleMembershipAvailable',
+    import: "import { useAppleMembershipAvailable } from '@/lib/apple-membership-bridge';",
+    category: 'more',
+    zh: '读取可信安装端初始化的 Apple 内购能力；购买结果使用请求标识配对，不跨窗口传递凭据或购买凭证。',
+    en: 'Observes the Apple purchase capability from trusted host initialization; purchase results correlate by request ID without passing credentials or receipts across frames.',
+  },
+  {
+    name: 'ChatPanel',
+    import: "import { ChatPanel, useChat } from '@cuberoot/app-ui/chat';",
+    category: 'more',
+    zh: '好友聊天共享面板与 useChat 生命周期 hook；共享会话、文字与系统 emoji、图片表情包上传收藏、失败重试和可见性已读，宿主注入鉴权传输、语言、身份组件和内置表情清单（微信及已解锁的捉虫素材）。提供紧凑输入栏、最近使用、表情搜索和宿主功能面板插槽；Web 接视频邀请、音乐分享和语音输入。样式从 @cuberoot/app-ui/chat.css 引入。',
+    en: 'Shared friend chat panel and useChat lifecycle hook: conversations, text and native emoji, uploaded sticker favorites, retry and visible-message read receipts. Hosts inject transport, language, identity rendering and built-in expression catalogs (WeChat and unlocked pets); Compact composer, recent expressions, search and host action slots support Web meeting invites, music sharing and dictation; import @cuberoot/app-ui/chat.css for styles.',
+  },
+  {
     name: 'RecordSectionsView',
     import: "import { RecordSectionsView } from '@/components/wca-stats/WcaStatView.views';",
     category: 'more',
@@ -877,6 +896,13 @@ export const CATALOG: ComponentEntry[] = [
     note: { zh: '需要有效会员数据与保存回调，无法独立演示。', en: 'Requires an active membership object and a save callback, so it has no standalone demo.' },
   },
   {
+    name: 'UserContactLink',
+    import: "import { UserContactLink } from '@/components/UserIdLabel';",
+    category: 'more',
+    zh: '站内用户的统一联系入口：按用户 ID 进入现有好友搜索，复用加好友与发消息操作；本人进入账号页，无有效 ID 时显示普通内容。',
+    en: 'Shared site-user contact link: opens existing friend search by user ID, reusing friend and chat actions; self links open the account page and missing IDs remain plain content.',
+  },
+  {
     name: 'UserIdLabel',
     import: "import { UserIdLabel } from '@/components/UserIdLabel';",
     category: 'badge',
@@ -898,6 +924,26 @@ export const CATALOG: ComponentEntry[] = [
     category: 'more',
     zh: '课程视频播放器：进度、音量、自动连播、倍速、休眠、画中画与全屏。',
     en: 'Lesson video controls with seeking, volume, autoplay, speed, sleep timer, picture-in-picture and fullscreen.',
+  },
+  { name: 'PlatformFavoriteButton', import: "import { PlatformFavoriteButton } from '@/components/platform/PlatformFavoriteButton';", category: 'more', zh: '课程、商品、活动与资讯共用收藏状态、添加和取消按钮。', en: 'Shared saved-state, save and remove control for courses, products, events and news.', note: { zh: '需已解析的资源 ID；复用主站登录与收藏接口。', en: 'Requires a resolved resource ID; reuses site login and favorites APIs.' } },
+  { name: 'PlatformReferenceField', import: "import { PlatformReferenceField } from '@/components/platform/PlatformReferenceField';", category: 'more', zh: '运营表单的课程、商品、票种与讲师名称选择器。', en: 'Named course, product, ticket and instructor selectors for operational forms.', note: { zh: '需业务数据及管理权限。', en: 'Requires business data and management access.' } },
+  { name: 'PlatformStructuredField', import: "import { PlatformStructuredField } from '@/components/platform/PlatformStructuredField';", category: 'more', zh: '运营表单共用的规格、场地、测验和路径可视化编辑器。', en: 'Structured editor for variants, venues, quizzes and learning paths.', note: { zh: '需具体业务字段和编辑数据。', en: 'Requires a business field and editable data.' } },
+  { name: 'PlatformQrAdmin', import: "import { PlatformQrAdmin } from '@/components/platform/PlatformQrAdmin';", category: 'more', zh: '二维码管理、逐日统计和提示模板编辑。', en: 'QR management, daily statistics and prompt library.', note: { zh: '需业务数据或相应账号角色。', en: 'Requires business data or the appropriate account role.' } },
+  { name: 'PlatformClassroom', import: "import { PlatformClassroom } from '@/components/platform/PlatformClassroom';", category: 'more', zh: '课程共用课堂、进度、笔记和测验。', en: 'Shared classroom with progress, notes and quizzes.', note: { zh: '需业务数据或相应账号角色。', en: 'Requires business data or the appropriate account role.' } },
+  { name: 'PlatformLearningWorkspace', import: "import { PlatformLearningWorkspace } from '@/components/platform/PlatformLearningWorkspace';", category: 'more', zh: '个人学习和讲师工作台。', en: 'Personal learning and instructor workspace.', note: { zh: '需业务数据或相应账号角色。', en: 'Requires business data or the appropriate account role.' } },
+  { name: 'PlatformCoursePresentation', import: "import { PlatformCoursePresentation } from '@/components/platform/PlatformLearningWorkspace';", category: 'more', zh: '课程介绍与大纲。', en: 'Course presentation and syllabus.', note: { zh: '需业务数据或相应账号角色。', en: 'Requires business data or the appropriate account role.' } },
+  { name: 'PlatformLearningPath', import: "import { PlatformLearningPath } from '@/components/platform/PlatformLearningWorkspace';", category: 'more', zh: '学习路径与真实进度。', en: 'Learning path with actual progress.', note: { zh: '需业务数据或相应账号角色。', en: 'Requires business data or the appropriate account role.' } },
+  { name: 'PlatformCertificate', import: "import { PlatformCertificate } from '@/components/platform/PlatformLearningWorkspace';", category: 'more', zh: '证书验证与下载。', en: 'Certificate verification and download.', note: { zh: '需业务数据或相应账号角色。', en: 'Requires business data or the appropriate account role.' } },
+  { name: 'PlatformCommerceContent', import: "import { PlatformCommerceContent } from '@/components/platform/PlatformCommerceContent';", category: 'more', zh: '商品、活动、资讯和业务分析详情。', en: 'Product, event, news and business analytics detail.', note: { zh: '需业务数据或相应账号角色。', en: 'Requires business data or the appropriate account role.' } },
+  { name: 'PlatformPurchaseForm', import: "import { PlatformPurchaseForm } from '@/components/platform/PlatformPurchaseForm';", category: 'more', zh: '共享服务端报价与订单表单。', en: 'Shared server quote and purchase form.', note: { zh: '需业务数据或相应账号角色。', en: 'Requires business data or the appropriate account role.' } },
+  { name: 'PlatformTeacherCourses', import: "import { PlatformTeacherCourses } from '@/components/platform/PlatformTeacherCourses';", category: 'more', zh: '主站讲师名录关联的真实课程。', en: 'Published courses associated with the main teacher directory.', note: { zh: '需业务数据或相应账号角色。', en: 'Requires business data or the appropriate account role.' } },
+  {
+    name: 'PlatformLessonCoverEditor',
+    import: "import { PlatformLessonCoverEditor } from '@/components/platform/PlatformLessonCoverEditor';",
+    category: 'more',
+    zh: '课程管理与视频页共用的课时封面编辑器，支持上传图片或截取当前视频画面。',
+    en: 'Shared lesson cover editor for management and classroom pages, supporting image uploads and current-frame capture.',
+    note: { zh: '需要课程管理权限和课时媒体，无法独立演示。', en: 'Requires course-management permission and lesson media, so it has no standalone demo.' },
   },
   {
     name: 'ForumVideoPlayer',
@@ -1000,21 +1046,11 @@ export const CATALOG: ComponentEntry[] = [
   },
   {
     name: 'WcaTeacherCell',
-    import: "import { WcaTeacherCell, WcaTeacherColumnHeader, WcaTeacherNote, useWcaTeachers } from '@/components/WcaTeacherCell';",
+    import: "import { WcaTeacherCell, WcaTeacherColumnHeader, useWcaTeachers } from '@/components/WcaTeacherCell';",
     category: 'more',
     zh: 'WCA 榜单与选手页按项目显示老师：批量读取关系与老师链接，并按有效会员 / 管理员权限提供登记、编辑和撤销入口。',
     en: 'Shows per-event teachers in WCA tables and person pages, with batched relations, profile links, and membership/admin-controlled actions.',
     note: { zh: '页面按选手与项目各调用一次 useWcaTeachers，再把 directory 传给各行，避免逐行请求。', en: 'Call useWcaTeachers once per page with cubers and events, then pass its directory to rows to avoid per-row requests.' },
-  },
-  {
-    name: 'PillToggle',
-    import: "import PillToggle from '@/components/PillToggle/PillToggle';",
-    category: 'toggle',
-    zh: 'iOS 风格二选一开关(本项目主力用法):传 onLabel/offLabel = 两个互斥选项的标签(如 单次/平均、截至/当期),文字内嵌、只显示并高亮当前选中那个。约定:把「主/默认」那个选项放 onLabel —— 默认态即绿色(滑钮在右),另一项为灰(滑钮在左)。可点击,也能拖动滑钮横滑过中线切换。「开/关单个东西」的布尔场景(显示废止项 / 只看未登领奖台…)不要用它,用 BoolToggle(滑钮在左、文字在右)。',
-    en: 'iOS-style two-choice toggle (the primary use in this project): pass onLabel/offLabel as the two mutually-exclusive option labels (e.g. Single/Average, Cumulative/Period) — text is inside, only the selected one shows, highlighted. Convention: put the primary/default option as onLabel, so the default state reads green (knob right) and the other is grey (knob left). Click it, or drag the knob past the midline. For boolean on/off of a single thing, use BoolToggle (knob left, label right) — not this.',
-    usage: '<PillToggle value={type === "single"} onChange={v => setType(v ? "single" : "average")} onLabel="单次" offLabel="平均" />',
-    Demo: PillToggleDemo,
-    note: { zh: '默认就贴合文字、并自动按较长标签预留宽度(切换 on/off 不跳变),无需再 page-scope 覆盖 min-width。当过滤器跟 select 同行时给它跟 select 同高(看 /wca/results 的 .wse-filter pill,34px 上下居中)。锁:tests/pilltoggle-default-fit.test.ts。', en: 'Hugs the text by default and auto-reserves the longer label’s width (no jump on toggle) — no page-scope min-width override needed. When used as a filter alongside selects, match the select height (see /wca/results .wse-filter pill — 34px, vertically centered). Locked by tests/pilltoggle-default-fit.test.ts.' },
   },
   {
     name: 'TimerFontPicker',
@@ -1029,8 +1065,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'BoolToggle',
     import: "import BoolToggle from '@/components/BoolToggle';",
     category: 'toggle',
-    zh: '布尔开关:左边 iOS 风滑钮 + 右边文字标签(文字也可点)。用于「开/关单个东西」(显示废止项 / 只看未登领奖台 / 开启动画…)。全站复选框(☑)一律换成它。二选一(A/B 各有含义)请用 PillToggle 的文字内嵌形态,别用本组件。',
-    en: 'Boolean switch: an iOS-style knob on the left + a label on the right (the label is clickable too). For toggling a single thing on/off (show cancelled events / only un-podiumed / enable animation…). Replace all checkboxes (☑) site-wide with it. For a genuine two-choice (A/B each meaningful), use PillToggle’s inline-label form instead.',
+    zh: '布尔开关:左边文字标签 + 右边 iOS 风滑钮(文字也可点)。用于「开/关单个东西」(显示废止项 / 只看未登领奖台 / 开启动画…)。全站复选框(☑)一律换成它。二选一(A/B 各有含义)使用浏览器原生 select 菜单。',
+    en: 'Boolean switch: a label on the left + an iOS-style switch on the right (the label is clickable too). For toggling a single thing on/off (show cancelled events / only un-podiumed / enable animation…). Replace all checkboxes (☑) site-wide with it. For a genuine two-choice (A/B each meaningful), use a native select menu.',
     usage: '<BoolToggle value={on} onChange={setOn} label="废止项" />',
     Demo: BoolToggleDemo,
   },
@@ -1044,10 +1080,10 @@ export const CATALOG: ComponentEntry[] = [
   },
   {
     name: 'TrainingSettings',
-    import: "import TrainingSettings, { useTrainingAutoAdvance } from '@/components/TrainingSettings';",
+    import: "import TrainingSettings, { SettingsPopover, useTrainingAutoAdvance } from '@/components/TrainingSettings';",
     category: 'toggle',
-    zh: '答题训练页共用的齿轮设置：保存“答对后自动进入下一题”偏好，默认关闭。',
-    en: 'Shared training settings gear that persists the auto-next-after-correct preference, off by default.',
+    zh: '共用齿轮设置浮层；TrainingSettings 保存“答对后自动进入下一题”偏好，其他设置可复用 SettingsPopover 外壳。',
+    en: 'Shared gear settings popover. TrainingSettings persists the auto-next preference; other settings can reuse the SettingsPopover shell.',
     usage: 'const autoAdvance = useTrainingAutoAdvance();\n<TrainingSettings value={autoAdvance.enabled} onChange={autoAdvance.setEnabled} />',
     Demo: TrainingSettingsDemo,
   },
@@ -1064,11 +1100,20 @@ export const CATALOG: ComponentEntry[] = [
     name: 'AlgViewModeToggle',
     import: "import AlgViewModeToggle, { useAlgViewMode } from '@/components/AlgViewModeToggle';",
     category: 'toggle',
-    zh: '/alg 下所有 case 列表页的「图 / 公式」视图开关(PillToggle 的一层语义封装)。图 = 只看缩略图的密排画廊(默认,点卡进详情看公式),公式 = 公式内联。配套 useAlgViewMode() 读写唯一的 localStorage key `alg-list-view` —— 跨页显示偏好、不进 URL,用户切一次全站的 case 列表都生效。新做 case 列表页直接用这一对,别再各写各的开关和 key。',
-    en: 'The images / algs view switch shared by every case-list page under /alg (a semantic wrapper over PillToggle). Images = a dense thumbnail gallery (the default — click a card for the algs), Algs = algorithms inlined. The paired useAlgViewMode() hook reads and writes the single localStorage key `alg-list-view`: a cross-page display preference, deliberately not in the URL, so flipping it once applies to every case list site-wide. Use this pair on any new case-list page instead of rolling another toggle and key.',
+    zh: '/alg 下所有 case 列表页的「图 / 公式」视图下拉菜单(浏览器原生 select)。图 = 只看缩略图的密排画廊(默认,点卡进详情看公式),公式 = 公式内联。配套 useAlgViewMode() 读写唯一的 localStorage key `alg-list-view` —— 跨页显示偏好、不进 URL,用户切一次全站的 case 列表都生效。新做 case 列表页直接用这一对,别再各写各的开关和 key。',
+    en: 'The images / algs native select shared by every case-list page under /alg. Images = a dense thumbnail gallery (the default — click a card for the algs), Algs = algorithms inlined. The paired useAlgViewMode() hook reads and writes the single localStorage key `alg-list-view`: a cross-page display preference, deliberately not in the URL, so flipping it once applies to every case list site-wide. Use this pair on any new case-list page instead of rolling another toggle and key.',
     usage: 'const [view, changeView] = useAlgViewMode();\n<AlgViewModeToggle value={view} onChange={changeView} className="alg-view-toggle" />',
     Demo: AlgViewModeToggleDemo,
     note: { zh: '演示用的是本地 state;真页面必须走 useAlgViewMode(),否则偏好不跨页。className 由页面给(定位用),组件自身不带页面样式。', en: 'The demo uses local state; real pages must go through useAlgViewMode() or the preference won’t carry across pages. className is supplied by the page (for positioning) — the component ships no page-level styling.' },
+  },
+  {
+    name: 'AlgListSettings',
+    import: "import AlgListSettings, { useAlgCaseNumberVisibility } from '@/components/AlgListSettings';",
+    category: 'toggle',
+    zh: '/alg case 列表页共用的齿轮设置浮层，与训练页复用同一个 SettingsPopover，统一承载图 / 公式视图和数字编号偏好；数字编号默认隐藏。',
+    en: 'The shared gear settings popover for /alg case lists. It shares one SettingsPopover with the trainer and contains the images / algorithms view and numeric-ID preference; numeric IDs are hidden by default.',
+    usage: 'const [showCaseNumbers, setShowCaseNumbers] = useAlgCaseNumberVisibility();\n<AlgListSettings view={view} onViewChange={changeView} showCaseNumbers={showCaseNumbers} onShowCaseNumbersChange={setShowCaseNumbers} />',
+    note: { zh: '页面仍用 useAlgViewMode() 取得视图状态；数字编号只包住 c.number，不隐藏有语义的别名。', en: 'Pages still obtain the view state with useAlgViewMode(); numeric visibility wraps c.number only and must not hide semantic aliases.' },
   },
   {
     name: 'HeaderToggles',
@@ -1120,9 +1165,16 @@ export const CATALOG: ComponentEntry[] = [
     name: 'DailyActivityChart',
     import: "import { DailyActivityChart } from '@/components/DailyActivityChart';",
     category: 'display',
-    zh: '后台时序活动柱形图。支持多数据序列、键盘逐日移动、鼠标与触摸选日、窄屏横向滚动和区间合计。',
-    en: 'Administrative time-series bar chart with multiple series, keyboard day navigation, pointer and touch selection, mobile horizontal scrolling, and range totals.',
+    zh: '时序活动柱形图。支持多数据序列、键盘、鼠标与触摸选点、窄屏横向滚动和区间合计；dateLabel="year" 展示年度标签，showTotals={false} 隐藏不可相加的人数合计。',
+    en: 'Time-series bar chart with multiple series, keyboard, pointer and touch selection, mobile scrolling, and totals. dateLabel="year" displays years; showTotals={false} hides totals for non-additive people counts.',
     usage: '<DailyActivityChart data={points} series={series} ariaLabel="Daily registrations" emptyLabel="No data" />',
+  },
+  {
+    name: 'CalendarColorSelect',
+    import: "import CalendarColorSelect from '@/components/CalendarColorSelect';",
+    category: 'more',
+    zh: '日历与日程共用的 24 色菜单，展示双语名称、主题色块与日程默认颜色。',
+    en: 'Shared 24-color calendar and event menu with bilingual labels, theme swatches, and an event default.',
   },
   {
     name: 'ListSelect',
@@ -1134,11 +1186,20 @@ export const CATALOG: ComponentEntry[] = [
     Demo: ListSelectDemo,
   },
   {
+    name: 'Native select',
+    import: "import '@cuberoot/timer-ui/compact-select.css';",
+    category: 'input',
+    zh: '二选一使用浏览器原生 select 菜单，展开与键盘交互由浏览器和系统提供。普通布尔开关继续使用 BoolToggle。',
+    en: 'Use native select menus for two-choice controls. The browser and operating system provide the menu and keyboard behavior. Keep BoolToggle for boolean switches.',
+    usage: '<select className="native-select" value={type} onChange={event => setType(event.currentTarget.value)} aria-label="Result type"><option value="single">Single</option><option value="average">Average</option></select>',
+    Demo: NativeSelectDemo,
+  },
+  {
     name: 'CompactSelect',
     import: "import { CompactSelect } from '@/components/CompactSelect';",
     category: 'input',
-    zh: '紧凑单选菜单，支持药丸或无框触发器、禁用项、自定义页脚，并通过 body portal 自动避让视口。',
-    en: 'Compact single-choice menu with pill or plain triggers, disabled items, a custom footer, and viewport-aware body portal positioning.',
+    zh: '紧凑单选菜单，支持药丸或无框触发器、禁用项、自定义页脚、菜单内编辑面板，并通过 body portal 自动避让视口。',
+    en: 'Compact single-choice menu with pill or plain triggers, disabled items, a custom footer, an inline editor panel, and viewport-aware body portal positioning.',
     usage: '<CompactSelect label={label} items={items} value={value} onChange={setValue} ariaLabel="Metric" />',
     Demo: CompactSelectDemo,
   },
@@ -1200,7 +1261,7 @@ export const CATALOG: ComponentEntry[] = [
   },
   {
     name: 'SearchInput',
-    import: "import { SearchInput } from '@/components/SearchInput';",
+    import: "import { SearchInput } from '@/components/SearchInput'; // @cuberoot/timer-ui/search-input",
     category: 'input',
     zh: 'IME 安全的受控文本搜索框:中文 / 日文输入法合成途中不写回外部 store,合成结束才提交,避免 nuqs / 节流 store 的重渲染打断拼音(把 bei 拼成乱码)。内置行内清除 ×。',
     en: 'IME-safe controlled text search box: during CJK composition it holds value locally and only commits on compositionend, so a nuqs / throttled-store re-render can’t corrupt the in-progress pinyin. Built-in inline clear ×.',
@@ -1219,8 +1280,8 @@ export const CATALOG: ComponentEntry[] = [
     note: { zh: '别再给 lucide 的 Loader2 手写 @keyframes 转 —— 那份重复过 22 遍。动作图标(如刷新时转的 RefreshCw)不算加载转圈,不要换成它。', en: 'Don’t hand-roll another @keyframes rotation on lucide’s Loader2 — that was duplicated 22 times. Action icons (a RefreshCw spinning while refreshing) are not loading spinners; leave those alone.' },
   },
   {
-    name: 'ResetDefaultsButton',
-    import: "import ResetDefaultsButton from '@/components/ResetDefaultsButton';",
+    name: 'ResetDefaultsButton / TimerResetSettings',
+    import: "import { ResetDefaultsButton, TimerResetSettings } from '@cuberoot/timer-ui/reset-defaults-button';",
     category: 'input',
     zh: '「恢复默认」按钮:把一页的设置(+视角)一键推回出厂值。/sim 播放器控制行与 /predict 共用,恢复什么由 onReset 决定,title 写清这一页的「默认」含哪些。',
     en: 'The “Reset defaults” button — puts a page’s settings (and view) back to factory values in one click. Shared by /sim’s player control row and /predict; onReset decides what gets restored, title spells out what this page’s defaults cover.',
@@ -1250,7 +1311,7 @@ export const CATALOG: ComponentEntry[] = [
   },
   {
     name: 'PlaybackBar',
-    import: "import PlaybackBar from '@/components/PlaybackBar';",
+    import: "import PlaybackBar from '@cuberoot/timer-ui/PlaybackBar';",
     category: 'input',
     zh: '魔方解法播放控制条(twizzle alpha.twizzle.net/edit 两排式:进度条 + 计数在上,传输按钮在下)。recon 的 ReconPlayerBase 与 /sim 引擎播放条共用同一份,像素一致 —— 不要各页手写一排按钮/滑条。leading / trailing 往按钮排两端塞额外控件(/sim 的阶段色块 + 锚点下拉)。内部滑条用 PlaybackScrubber。',
     en: 'Cube alg-playback transport (twizzle alpha.twizzle.net/edit two-row layout: scrubber + counter on top, transport buttons below). Shared pixel-for-pixel by recon’s ReconPlayerBase and /sim’s engine playback bar — don’t hand-roll a per-page control row. leading / trailing slot extra controls into the button row (/sim’s stickering + anchor selects). Wraps PlaybackScrubber internally.',
@@ -1262,18 +1323,18 @@ export const CATALOG: ComponentEntry[] = [
     name: 'WcaEventSelector',
     import: "import WcaEventSelector from '@/components/WcaEventSelector';",
     category: 'input',
-    zh: 'WCA 21 项目图标选择器(绿色 active)。/wca 子页选项目统一用它,不要下拉。支持单选 / 多选 / 徽章 / 折叠废止项。',
-    en: 'The 21-event WCA icon picker (green active). Use it for event selection across /wca pages instead of a dropdown. Single / multi / badges / collapsible cancelled events.',
+    zh: 'WCA 项目菜单，底层复用 PuzzlePicker。支持单选、多选、轮次标记、废止项和非 WCA 分组。',
+    en: 'WCA event menu built on PuzzlePicker, with single or multiple selection, round details, former events and non-WCA groups.',
     usage: '<WcaEventSelector availableEvents={set} isZh={isZh} selectedEvent={ev} onSelect={setEv} />',
     Demo: EventSelectorDemo,
-    note: { zh: '项目选择器必须绿色 active,只走这个组件,禁 per-page 覆写。', en: 'Event pickers must be green-active — only this component, no per-page overrides.' },
+    note: { zh: '默认收成菜单；师生编辑与双人计时浮层用 presentation="inline" 保留展开形式。', en: 'Menus by default; teacher/student editors and the local battle overlay retain presentation="inline".' },
   },
   {
     name: 'WcaEventMultiSelector',
     import: "import WcaEventMultiSelector from '@/components/WcaEventMultiSelector';",
     category: 'input',
-    zh: 'WCA 项目多选器。在图标选择器上统一提供清空、全选、项目分类和废止项开关。',
-    en: 'WCA multi-event picker with shared clear, select-all, category, and cancelled-event controls above the icon row.',
+    zh: 'WCA 项目多选菜单，菜单内统一提供清空、全选、项目分类和废止项开关。',
+    en: 'WCA multi-event menu with clear, select-all, category, and cancelled-event controls inside the menu.',
     usage: '<WcaEventMultiSelector availableEvents={set} selectedEvents={events} onChange={setEvents} isZh={isZh} />',
     Demo: EventMultiSelectorDemo,
     note: { zh: '需要项目多选和分类快选时直接用它，不要在页面里重写工具栏。', en: 'Use this whenever event multi-selection needs category shortcuts; do not rebuild the toolbar in a page.' },
@@ -1445,7 +1506,7 @@ export const CATALOG: ComponentEntry[] = [
   },
   {
     name: 'WcaPersonPicker',
-    import: 'components/WcaPersonPicker.tsx',
+    import: '@cuberoot/timer-ui/wca-person-picker (Web adapter: components/WcaPersonPicker.tsx)',
     category: 'more',
     zh: '选手搜索选择器。默认本地索引最快,别传 searchFn(后端代理对中文 / 单字符返空)。',
     en: 'Cuber search / picker. The default local index is fastest — don’t pass searchFn (the backend proxy returns empty for Chinese / single chars).',
@@ -1468,8 +1529,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'TimerPuzzlePicker',
     import: "import { TimerPuzzlePicker } from '@cuberoot/timer-ui';",
     category: 'more',
-    zh: 'Web、Android 与 iOS 计时器共用的项目选择器；触发器、43 项菜单、焦点恢复、Escape、点外关闭、视口 clamp 和旧 Android WebView 窄屏布局只维护这一份。项目目录来自 @cuberoot/shared/timer；默认非受控，也可用 open/onOpenChange 接入 Android Back，宿主只接 selectedEvent/onSelect。',
-    en: 'The puzzle picker shared by the Web, Android, and iOS timers. Its trigger, 43-item menu, focus restoration, Escape/outside close, viewport clamp, and narrow-layout fallback for older Android WebViews live in one implementation. The catalog comes from @cuberoot/shared/timer. It remains uncontrolled by default and accepts open/onOpenChange for Android Back; hosts otherwise only wire selectedEvent/onSelect.',
+    zh: 'Web 与 App 共用的项目选择器。传 scrambleTypeLabel 后将三阶专项移入独立打乱类型下拉，默认 WCA；目录与旧成绩标识映射来自 shared，类型菜单复用 CompactSelect。省略此属性时保留全部存储模式，供数据导入使用。项目菜单支持 open/onOpenChange、焦点恢复、Escape、点外关闭和视口钳制。',
+    en: 'The shared Web/App puzzle picker. Passing scrambleTypeLabel moves 3×3 training modes into a separate scramble-type dropdown, defaulting to WCA. Shared owns the catalog and legacy solve identities; CompactSelect renders the type menu. Omitting the prop retains all storage modes for data import. The puzzle menu supports open/onOpenChange, focus restoration, Escape, outside dismissal, and viewport clamping.',
   },
   {
     name: 'TimerDrillPicker',
@@ -1486,6 +1547,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'The scramble-source selector shared by the Web, Android, and iOS timers. Its fixed Real, Random state, and Manual input options plus popup, keyboard, focus, outside-dismiss, and viewport-clamp behavior live in one implementation. Every host passes the canonical realValue="wca". It remains uncontrolled by default and accepts open/onOpenChange for Android Back.',
   },
   {
+    name: 'TimerDifficultyHelp',
+    import: "import { TimerDifficultyHelp } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: '计时器难度说明浮层，支持点击、可选鼠标悬停，以及外部点击和 Esc 关闭。',
+    en: 'Timer difficulty help with click, optional mouse hover, outside dismissal and Escape.',
+  },
+  {
     name: 'TimerWcaSourceConfig',
     import: "import { TimerWcaSourceConfig } from '@cuberoot/timer-ui';",
     category: 'more',
@@ -1500,6 +1568,27 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Shared Web, Android, and iOS session switch/create/rename/clear/delete popover. It remains uncontrolled by default and accepts the common open/onOpenChange contract for system Back; hosts inject only persistence operations and confirmation adaptation.',
   },
   {
+    name: 'TimerSmartCubeDeviceModal',
+    import: "import { TimerSmartCubeDeviceModal } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 与五端 App 共用的智能魔方状态和恢复弹层；设备名、电量、协议、连接/还原状态、重置/状态回读、陀螺仪校准、断开、焦点圈定与统一关闭只维护这一份。宿主只注入 BLE transport 动作，Web 可额外插入浏览器环境、失败详情和 MAC 输入。',
+    en: 'The smart-cube status and recovery modal shared by Web and all five installed clients. Device name, battery, protocol, connected/solved state, reset/state refresh, gyro calibration, disconnect, focus trapping, and dismissal live in one implementation. Hosts inject only BLE transport actions; Web may add browser environment advice, failure detail, and MAC entry.',
+  },
+  {
+    name: 'BluetoothTimerModal / StackmatModal',
+    import: "import { BluetoothTimerModal, StackmatModal } from '@cuberoot/timer-ui/external';",
+    category: 'more',
+    zh: 'Web 与安装端共用的外部计时器面板。蓝牙计时器显示状态、最近成绩和断开；Stackmat 显示音频输入、信号电平、解码状态和精度。统一 MAC 输入、取消、遮罩关闭和焦点管理，宿主注入设备能力。',
+    en: 'External timer panels shared by Web and installed clients. Bluetooth timers expose state, last result and disconnect; Stackmat exposes audio inputs, signal level, decoder status and resolution. MAC entry, cancellation, dismissal and focus are shared; hosts inject device capabilities.',
+  },
+  {
+    name: 'TimerDeviceCenter',
+    import: "import { TimerDeviceCenter } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 与五端 App 共用的设备中心；宿主注入真实设备及可选辅助入口。Web 开发环境的假魔方排在麦克风下方，面板锚定同一入口。无辅助入口且智能魔方已连接时直接打开设备操作；否则显示菜单。统一活动态、设备详情、Escape、点外关闭和焦点恢复。',
+    en: 'Shared device center for Web and installed clients, with host-provided devices and optional utility actions. The Web development fake cube follows the microphone and anchors its panel to the same trigger. Connected cubes open directly when no utility needs menu access; otherwise the menu remains available. Active state, details, Escape/outside dismissal and focus return are shared.',
+  },
+  {
     name: 'TimerScramble222Config',
     import: "import { TimerScramble222Config } from '@cuberoot/timer-ui';",
     category: 'more',
@@ -1507,8 +1596,134 @@ export const CATALOG: ComponentEntry[] = [
     en: 'The controlled 2x2 scramble type/style UI shared by the Web, Android, and iOS timers. Its type select, WCA 11-move/Optimal pill, pointer drag, keyboard semantics, and narrow layout live in one implementation. The 11 random and 10 real-WCA types come from @cuberoot/shared/timer; hosts only wire persistence and translated labels.',
   },
   {
+    name: 'VideoStrip / VideoToggle / VideoTiles / useTimerBattleVideo',
+    import: "import VideoStrip, { VideoToggle, useTimerBattleVideo } from '@cuberoot/timer-ui/video/TimerBattleVideo';",
+    category: 'more',
+    zh: 'Web 与安装端共用联机视频授权、房间代际隔离、前后台关闭和画面控制；宿主仅提供 API 地址与系统媒体权限。',
+    en: 'Shared battle video authorization, generation isolation, background cleanup, and media controls. Hosts provide the API origin and native media permissions.',
+  },
+  {
+    name: 'TimerSoloPage / TimerTools / TimerBulkScrambleModal / TimerBldHelperModal / TimerGeneralSolverModal',
+    import: "import { TimerSoloPage } from '@cuberoot/timer-ui/TimerSoloPage'; import { TimerTools } from '@cuberoot/timer-ui/TimerTools';",
+    category: 'more',
+    zh: 'Web 与安装端共用单人顶栏、来源、计时主体、解法响应式落点、历史插槽及工具窗口；批量打乱、盲拧助手、通用求解器留在计时器内，宿主注入状态、存储、复制与文件输出。',
+    en: 'Shared Solo topbar, source, timing, responsive solver placement, history slots and in-timer tools. Hosts inject state, persistence, clipboard and file output.',
+  },
+  {
+    name: 'TimerSolverPanel / TimerSolverBody / TimerStepSolve / TimerSolverCompareModal / TimerSolverHints',
+    import: "import TimerSolverPanel from '@cuberoot/timer-ui/TimerSolverPanel'; import TimerSolverBody from '@cuberoot/timer-ui/TimerSolverBody'; import TimerStepSolve from '@cuberoot/timer-ui/TimerStepSolve'; import TimerSolverCompareModal from '@cuberoot/timer-ui/TimerSolverCompareModal'; import TimerSolverHints from '@cuberoot/timer-ui/TimerSolverHints';",
+    category: 'more',
+    zh: 'Web 与安装端共用响应式侧栏/全屏、折叠偏好、换题手势与嵌套关闭，以及解法内容：阶段最优、六方法分步与对比、阶段/整套播放、小魔方提示、SQ1 近最优解及五魔状态统计；原生宿主打包同一份 SQ1 Worker。',
+    en: 'Shared responsive rail/fullscreen, collapse preferences, scramble gestures, nested dismissal, and solution content: optimal stages, six step methods and comparisons, stage/full playback, small puzzle hints, near-optimal SQ1 solutions, and Megaminx state statistics. Installed hosts bundle the same SQ1 worker.',
+  },
+  {
+    name: 'TimerLocalBattlePage / TimerLocalBattlePlayer / TimerNetBattlePage / TimerNetBattleStage / TimerNetBattleEvent',
+    import: "import { TimerLocalBattlePage, TimerLocalBattlePlayer, TimerNetBattlePage, TimerNetBattleStage, TimerNetBattleEvent } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 与五端 App 共用完整本地多人和联机页面，集中维护大厅、房间、视频、计时区、玩家布局以及设置、历史、邀请和改名弹窗；宿主保留状态、存储、输入和系统能力适配。',
+    en: 'Complete local and online battle pages shared by Web and installed apps: lobby, room, video, timing, player layouts, settings, history, invitations, and rename dialogs. Hosts retain state, storage, input, and system adapters.',
+  },
+  {
+    name: 'TimerRoomPlayers',
+    import: "import { TimerRoomPlayers, TimerRoomLayout, TimerRoomToolbar, TimerRoomAdmin, TimerRoomHistory, TimerRoomDialog, TimerRoomLobby, TimerRoomIdentity, TimerRoomRoundStatus } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 与五端 App 共用的联机玩家列表及房间内容布局，统一房主、自己、在线状态、成绩、得分和姓名；宿主注入实况查看、改名及逐帧读数。',
+    en: 'Shared online roster and room layout with host/self markers, presence, results, scores, and names. Hosts inject live-cube selection, rename, and live readout updates.',
+  },
+  {
+    name: 'TimerBattlePlayer',
+    import: "import { TimerBattlePlayer, TimerBattleHistory, TimerBattleSettings, TimerBattleSourceSettings, TimerBattleAppearanceSettings, TimerBattleKeyBindings, TimerBattleCubeControls, TimerBattleToolbar } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 与五端 App 的玩家卡片，共用玩家名称、得分、胜者、项目操作区、中央计时内容和底部成绩操作。',
+    en: 'Shared player card with player name, score, winner state, event controls, timing content, and result actions for Web and installed apps.',
+  },
+  {
+    name: 'TimerBattleLayout',
+    import: "import { TimerBattleLayout, TimerBattleLayoutControls, useTimerBattleOrientation } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 与五端 App 共用的 2～4 人排布、并排/面对面切换、上排旋转和成对共用打乱；宿主注入玩家内容与设置回调。',
+    en: 'Shared 2–4 player arrangement, side-by-side/face-to-face controls, top-row rotation, and paired scramble rows for Web and installed apps. Hosts supply player content and settings callbacks.',
+  },
+  {
+    name: 'TimerPenaltyActions',
+    import: "import { TimerPenaltyActions } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 联机与五端 App 对战共用的 OK、+2、DNF 操作栏，统一选中态、44px 触控区域、键盘焦点和禁用状态；宿主负责更新成绩。',
+    en: 'Shared OK, +2, and DNF actions for Web online rooms and installed battles, with common selection, 44px touch targets, keyboard focus, and disabled states. Hosts update the result.',
+  },
+  {
+    name: 'TimerSettingsPanel',
+    import: "import { TimerSettingsPanel } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 与安装端共用的计时设置窗口：宽屏左侧分类导航，720px 及以下使用分类下拉；窗口尺寸、滚动、焦点恢复和关闭交互由共享组件维护，宿主提供可用分类和设置内容。',
+    en: 'Shared timer settings dialog for Web and installed apps: a category rail on wide screens and a dropdown at 720px or below. Dialog geometry, scrolling, focus restoration and dismissal have one implementation; hosts supply supported categories and fields.',
+  },
+  {
+    name: 'TimerGoalSettings / TimerRoundSettings / TimerGoalProgress / TimerRoundPanel / TimerTargetTime / useTimerTargetFeedback / useTimerRound',
+    import: "import { TimerGoalSettings, TimerRoundSettings, TimerGoalProgress, TimerRoundPanel, TimerTargetTime, useTimerTargetFeedback, useTimerRound } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 与安装端共享目标、每日练习进度、轮次设置和展示；目标输入、过关线、累计时限与起停反馈使用同一实现，宿主只提供成绩和持久化。',
+    en: 'Shared goal and round settings, daily progress, round projections and target feedback. Hosts supply solve history and persistence.',
+  },
+  {
+    name: 'TimerSoundSettings / TimerMetronomeSettings / useTimerSoundFeedback',
+    import: "import { TimerSoundSettings, TimerMetronomeSettings, useTimerSoundFeedback, createTimerSound } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 与安装端共享声音、语音、节拍器、敲击定速和自定义观察提示设置；音频时钟调度、起停警告和失败回退同源。',
+    en: 'Shared sound, voice, metronome, tap-tempo and custom inspection cues, backed by one audio-clock scheduler and warning/fallback implementation.',
+  },
+  {
+    name: 'TimerSyncSeedSettings / TimerTrainerSubsetModal',
+    import: "import { TimerSyncSeedSettings, TimerTrainerSubsetModal } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 与安装端共用同步种子的应用、清除、重置计数与 OLL/PLL 子集选择；宿主持久化设置，共享 Worker 绑定历史槽生成，成功显示后消费编号。',
+    en: 'Shared seed apply, clear and reset controls plus OLL/PLL subset selection. Hosts persist settings; a shared worker generates each history slot, which is published after its index is persisted.',
+  },
+  {
+    name: 'TimerRankSettings / TimerRankBadge / TimerExportSettings / TimerImportSettings / TimerBackupSettings / TimerReanalyzeSettings / TimerReplayImportModal',
+    import: "import { TimerRankSettings, TimerExportSettings, TimerImportSettings, TimerBackupSettings, TimerReanalyzeSettings, TimerReplayImportModal } from '@cuberoot/timer-ui'; import { TimerRankBadge } from '@cuberoot/timer-ui/rank-badge';",
+    category: 'more',
+    zh: 'Web 与安装端共用四种导出入口：CubeRoot 整库备份、当前分组的 csTimer/CSV、当前项目的 Speedstacks；编码规则由 shared 提供，宿主负责保存文件。',
+    en: 'Shared export controls for whole-store CubeRoot backups, current-session csTimer/CSV and current-event Speedstacks. Shared encoders produce files; hosts save them.',
+  },
+  {
+    name: 'TimerKeymapSettings',
+    import: "import { TimerKeymapSettings } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 与安装端共享快捷键录入、保留键提示、解除和恢复默认；取消录入不关闭设置，宿主在最新设置上应用修改。',
+    en: 'Shared shortcut capture, reserved-key feedback, unbinding and reset. Escape cancels capture; hosts apply changes to their latest preferences.',
+  },
+  {
+    name: 'CubeOrientationSelect / TimerPreScrambleSettings / TimerColorNeutralSetting',
+    import: "import { CubeOrientationSelect, TimerPreScrambleSettings, TimerColorNeutralSetting } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 与安装端共用 24 档朝向及双色预览；预朝向只作用于打乱图，颜色中立设置复用共享生成规则和适用项目表。',
+    en: 'Shared 24-orientation picker with color chips. Preview orientation is separate from color-neutral generation, whose setting and event policy are shared.',
+  },
+  {
+    name: 'TimerDisplaySettings / TimerTypographySettings',
+    import: "import { TimerDisplaySettings, TimerTypographySettings } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 与安装端共用计时、打乱字体预览和字号，以及紧凑打乱、运行隐藏 UI 设置；字体资产由 timer-ui 打包，宿主保存偏好并消费共享显示规则。',
+    en: 'Shared timer and scramble typography, compact scramble and hide-while-running controls. Font assets ship with timer-ui; hosts persist preferences and consume shared display rules.',
+  },
+  {
+    name: 'TimerWorkspace / useTimerWideLayout',
+    import: "import { TimerWorkspace, useTimerWideLayout } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 与安装端共享 1024px 宽屏断点、全宽计时区、360px 成绩侧栏及独立滚动；宿主只提供导航高度。',
+    en: 'Shared 1024px breakpoint, full-width timer workspace, 360px results dock and independent scrolling. Hosts provide navigation offsets.',
+  },
+  {
+    name: 'TimerStageLayout',
+    import: "import { TimerStageLayout } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 与五端单人计时页的共享布局：来源配置在上、计时内容居中、统计和设备入口分列底栏两侧；统一全屏隐藏和设备菜单定位。',
+    en: 'Shared solo timer composition for Web and installed apps: source controls above the timing content, statistics and devices on opposite sides of the footer, with common fullscreen visibility and menu anchoring.',
+  },
+  {
     name: 'TimerStatsPanel',
-    import: "import { TimerStatsPanel } from '@cuberoot/timer-ui';",
+    import: "import { TimerStatsPanel, TimerStatsModal, TimerStatisticsWorkspace, TimerDailyStatsPanel, TimerCfopCaseStatsPanel, TimerCaseStatsPanel, TimerCrossSessionStats, TimerRecordsOverlay, TimerScatterChart, TimerHistogramChart, TimerHourChart, TimerTrendChart, TimerPracticeHeatmap } from '@cuberoot/timer-ui';",
     category: 'more',
     zh: 'Web、Android 与 iOS 计时器共用的紧凑统计面板；当前/最佳、PR 插槽、rolling 列、展开统计与 Sub-X 只维护这一份。统计算法来自 @cuberoot/shared/timer，宿主只注入成绩、双语文案、设置持久化和平台徽章。完整 StatsModal 与五类图表不属于这个紧凑面板。',
     en: 'The compact statistics panel shared by the Web, Android, and iOS timers. Current/best rows, the PR slot, rolling columns, expanded statistics, and Sub-X live in one implementation. Algorithms come from @cuberoot/shared/timer; hosts inject solves, translated copy, settings persistence, and their badge. The full StatsModal and five chart types remain separate product surfaces.',
@@ -1521,11 +1736,11 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Basic reconstruction metric cards shared by Web and all five installed clients. QTM/QTPS, first-move delay, longest pause, and pause count are computed only by @cuberoot/shared/timer/reconstruct/solve-metrics; the component receives the computed result so the full Web report does not traverse moves twice. The full move stream, timeline, replay, and feedback remain separate surfaces.',
   },
   {
-    name: 'ReconstructReport / SolveRecap / PlaybackPanel / SolveTimeline / StepAnalysis / StepMoveList',
-    import: "import ReconstructReport from '@cuberoot/timer-ui/reconstruct-report';",
+    name: 'ReconstructModal / ReconstructReport / SolveRecap / PlaybackPanel / SolveTimeline / StepAnalysis / StepMoveList',
+    import: "import ReconstructReport from '@cuberoot/timer-ui/reconstruct-report'; import ReconstructModal from '@cuberoot/timer-ui/reconstruct-modal';",
     category: 'display',
-    zh: 'Web 与安装端共用的完整智能魔方复盘：分步动作谱、可定位时间线、三维/陀螺仪回放、方法切换、参考解法、质量和反馈只维护一份。纯分析来自 shared/recon 与 shared/timer/reconstruct；宿主只注入双语解析、剪贴板、分享 URL 和录姿态设置。按需加载，不能以基础指标卡或网站外跳代替。',
-    en: 'The full smart-cube reconstruction shared by Web and installed clients: per-step move score, seekable timeline, 3D/gyro replay, method selection, reference lines, quality and feedback have one implementation. Analysis comes from shared/recon and shared/timer/reconstruct; hosts inject localization, clipboard, public share URLs and gyro settings. Load on demand; metric cards and external website links are not substitutes.',
+    zh: 'Web 与安装端共用的完整智能魔方复盘：分步动作谱、可定位时间线、三维/陀螺仪回放、方法切换、参考解法、质量和反馈只维护一份。live 模式以同一阶段识别、记号和 StepMoveList 展示进行中的 Cross、F2L 分组、OLL、PLL，Worker 合并连续更新且不做参考解搜索。纯分析来自 shared/recon 与 shared/timer/reconstruct；宿主只注入双语解析、剪贴板、分享 URL 和录姿态设置。按需加载，不能以基础指标卡或网站外跳代替。',
+    en: 'The full smart-cube reconstruction shared by Web and installed clients: per-step move score, seekable timeline, 3D/gyro replay, method selection, reference lines, quality and feedback have one implementation. Live mode uses the same recognition, notation and StepMoveList for Cross, F2L pairs, OLL and PLL; the worker coalesces updates without reference searches. Analysis comes from shared/recon and shared/timer/reconstruct; hosts inject localization, clipboard, public share URLs and gyro settings. Load on demand; metric cards and external website links are not substitutes.',
   },
   {
     name: 'TimerPrintController / TimerPrintDocument',
@@ -1557,10 +1772,17 @@ export const CATALOG: ComponentEntry[] = [
   },
   {
     name: 'TimerHistoryRow / TimerHistoryColumns / TimerHistoryTags',
-    import: "import { TimerHistoryRow, TimerHistoryColumnsHeader, TimerHistoryDayDivider, TimerHistoryRollingCells, TimerHistoryTagBadges } from '@cuberoot/timer-ui';",
+    import: "import { TimerHistoryWorkspace, TimerHistoryRow, TimerHistoryColumnsHeader, TimerHistoryDayDivider, TimerHistoryRollingCells, TimerHistoryTagBadges } from '@cuberoot/timer-ui';",
     category: 'more',
     zh: 'Web 与五个安装端计时器共用的完整成绩行、rolling 列头/逐行值/PB、日期分组、快捷菜单、派生标签和筛选器。算法来自 shared；FMC、MBLD、窄屏换行、触控高度和读屏顺序只维护一份。宿主只注入设置持久化与真实副作用。',
     en: 'The complete solve row, rolling header/values/PBs, day groups, quick menu, derived tags, and filters shared by Web and all five installed clients. Algorithms come from shared; FMC, MBLD, narrow-screen wrapping, touch height, and reading order live in one implementation. Hosts only inject setting persistence and real effects.',
+  },
+  {
+    name: 'TimerNetOutboxNotice',
+    import: "import { TimerNetOutboxNotice } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 与安装端共用的联机待处理成绩恢复和状态提示。挂在模式宿主，统一重启恢复、联网重试、存储失败提示及保留本机成绩的确认操作。',
+    en: 'Online result recovery and status shared by Web and installed clients. The mode host owns one recovery loop for restart, reconnect, storage failure, and acknowledging locally retained results.',
   },
   {
     name: 'TimerInfoToast',
@@ -1700,14 +1922,6 @@ export const CATALOG: ComponentEntry[] = [
     usage: '<SimCaptureGroup simBridge={simBridge} />',
   },
   {
-    name: 'MaskCatalogGrid',
-    import: "import MaskCatalogGrid from '@/components/puzzle-image/MaskCatalogGrid';",
-    category: 'more',
-    zh: 'stage mask 速查网格(~147 张卡,数据来自 lib/puzzle-image/masks 的 STAGE_SECTIONS)。hrefFor 决定点卡片去哪(/sim/stages 传的是「打开模拟器并选中该阶段」),href 必须自带语言前缀。卡片一律 prefetch={false} —— 147 张的视口预取会打爆 Edge Requests。',
-    en: 'The stage-mask cheat-sheet grid (~147 cards, data from STAGE_SECTIONS in lib/puzzle-image/masks). hrefFor decides where a card goes (/sim/stages sends it to the simulator with that stage selected); the href must carry the lang prefix. Cards are prefetch={false} — viewport-prefetching 147 links would blow the Edge Request budget.',
-    usage: '<MaskCatalogGrid hrefFor={(n, mask) => `/${lang}/sim?puzzle=${n}&stickering=${mask}`} />',
-  },
-  {
     name: 'StackedBar',
     import: "import StackedBar, { type StackedSeg } from '@/components/StackedBar/StackedBar';",
     category: 'display',
@@ -1805,12 +2019,19 @@ export const CATALOG: ComponentEntry[] = [
     en: `5x5 scramble-mode toggle (random-state vs random-move), shown only when 5x5 is selected, with an about/help link, persisting the choice to localStorage.`,
   },
   {
+    name: 'ScrambleRediModePicker',
+    import: "import ScrambleRediModePicker from '@/components/ScrambleRediModePicker';",
+    category: 'toggle',
+    zh: 'Redi「转体」BoolToggle，默认关闭并使用计时器同款打乱；开启生成有转体打乱，持久化选择并同步比赛模式缓存。',
+    en: 'Redi Rotations BoolToggle, off by default for timer-style scrambles; persists the rotation preference and invalidates the competition cache.',
+  },
+  {
     name: 'ScrambleModePickerRow',
     import: "import ScrambleModePickerRow from '@/components/ScrambleModePickerRow';",
     category: 'toggle',
-    zh: `打乱引擎 / 模式切换的共享行布局,标签 + PillToggle + 可选帮助问号;被各项目专用 picker 包装复用。`,
-    en: `Shared row layout for scramble engine/mode toggles, pairing a label with a PillToggle and optional help icon; wrapped by the per-event pickers.`,
-    note: { zh: `底层复用 PillToggle,按需传 helpHref。`, en: `Built on PillToggle; pass helpHref to add a help link.` },
+    zh: `打乱引擎 / 模式切换的共享行布局,标签 + 原生 select + 可选帮助问号;被各项目专用 picker 包装复用。`,
+    en: `Shared row layout for scramble engine/mode toggles, pairing a label with a native select and optional help icon; wrapped by the per-event pickers.`,
+    note: { zh: `底层使用浏览器原生 select,按需传 helpHref。`, en: `Built on the browser’s native select; pass helpHref to add a help link.` },
   },
 
   // ── 按钮 ────────────────────────────────────────────────────────────────
@@ -1833,7 +2054,7 @@ export const CATALOG: ComponentEntry[] = [
   },
   {
     name: 'CountryInput',
-    import: "import { CountryInput } from '@/components/CountryInput/CountryInput';",
+    import: "import { CountryInput } from '@cuberoot/timer-ui/country-input';",
     category: 'input',
     zh: `国家搜索 / 选择输入框,单选或多选(multi),带国旗、IME 安全、可限定范围、洲分组与计数,选中显示旗帜或 chip。`,
     en: `Country search/select input, single or multi-select, with flags, IME-safe typing, optional restrictTo, continent grouping and counts.`,
@@ -1853,7 +2074,7 @@ export const CATALOG: ComponentEntry[] = [
     category: 'input',
     zh: `WCA 项目下拉选择器,带项目图标和本地化名,可选「全部」项;从给定 events 列表里选单个项目。`,
     en: `WCA event dropdown selector with event icon and localized name, optional 'all' item; picks one event from a given events list.`,
-    note: { zh: `/wca 子页选项目优先用 WcaEventSelector(21 图标行),此下拉用于空间紧凑或非 21 项场景。`, en: `For /wca subpages prefer WcaEventSelector (21-icon row); use this dropdown for compact or non-standard event lists.` },
+    note: { zh: `旧调用的兼容入口，底层复用 PuzzlePicker；新的 WCA 筛选用 WcaEventSelector。`, en: `Compatibility entry built on PuzzlePicker; use WcaEventSelector for new WCA filters.` },
   },
   {
     name: 'RecordSelect',
@@ -1892,6 +2113,13 @@ export const CATALOG: ComponentEntry[] = [
     zh: `多条公式行编辑器,二维(朝向 x 条数)结构,每行 AlgInput + 共享虚拟键盘,支持增删行、聚焦行驱动外部预览,ref 的 getValue() 取回 AlgEntry[][]。`,
     en: `Multi-row algorithm editor over a 2D (orientation x lines) structure; each row is an AlgInput with a shared on-screen keyboard, supports add/remove rows, focused-row preview hooks, and ref getValue() returns AlgEntry[][].`,
     note: { zh: `forwardRef 暴露 AlgEditorHandle.getValue(),配合 AlgInput / CubeKeyboardSection,主要给 admin 公式编辑。`, en: `Exposes AlgEditorHandle.getValue() via forwardRef; pairs with AlgInput / CubeKeyboardSection, mainly for admin alg editing.` },
+  },
+  {
+    name: 'AlgTagLabel',
+    import: "import AlgTagLabel from '@/components/AlgTagLabel';",
+    category: 'input',
+    zh: '公式标签图标:复用单手、脚拧、最少步、五阶项目图标和键盘图标,单手显示左右标记,自定义标签保留名称。',
+    en: 'Algorithm tag icons reuse event artwork and the keyboard icon, with explicit left/right hand markers and text for custom tags.',
   },
   {
     name: 'AlgInput',
@@ -2019,7 +2247,7 @@ export const CATALOG: ComponentEntry[] = [
   },
   {
     name: 'CuberReconPlayer',
-    import: "import CuberReconPlayer from '@/components/CuberReconPlayer';",
+    import: "import CuberReconPlayer from '@cuberoot/timer-ui/CuberReconPlayer';",
     category: 'display',
     zh: `用 /sim 的 cuber WebGL 引擎做的只读 NxN 复盘播放器,常驻背视图 + 播放 / 步进 / 拖条,作为 TwistySection 的 NxN 替代。`,
     en: `Read-only NxN recon player on /sim's cuber WebGL engine with an always-on back view and play/step/scrub controls; an NxN alternative to TwistySection.`,
@@ -2055,6 +2283,14 @@ export const CATALOG: ComponentEntry[] = [
     zh: `任意 (puzzle, set, case) 的统一缩略图入口,按 puzzle 自动选渲染器(SQ1 走服务端 svg、金字塔 / 斜转 / 五魔走 PuzzleSVG、其余走 VisualCube)并按 set 选视图与遮罩。`,
     en: `Single entry for any (puzzle, set, case) thumbnail: auto-picks the renderer per puzzle (server SVG for SQ1, PuzzleSVG for pyraminx/skewb/megaminx, VisualCube otherwise) and chooses view/mask per set.`,
     note: { zh: `画公式案例缩略图统一用它,别手拼 VisualCube / PuzzleSVG 选择逻辑。`, en: `Use this for alg-case thumbnails; don't hand-wire the VisualCube/PuzzleSVG selection logic yourself.` },
+  },
+  {
+    name: 'AlgCaseRelationCards',
+    import: "import { AlgCaseRelationCards } from '@/components/AlgCaseRelationCards';",
+    category: 'more',
+    zh: `公式详情页共用的原始、镜像、逆关系缩略图行，统一 CaseThumb、当前态与链接或切换交互。`,
+    en: `Shared origin, mirror, and inverse thumbnail row for algorithm details, with canonical CaseThumb rendering and navigation states.`,
+    note: { zh: `F2L 精简详情与 PLL 等富元数据详情共用同一结构。`, en: `Shared by lean F2L and metadata-rich PLL detail layouts.` },
   },
   {
     name: 'RecognizeTrainer',
@@ -2155,8 +2391,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'CommunityAlgs',
     import: "import CommunityAlgs from '@/components/CommunityAlgs';",
     category: 'more',
-    zh: `单个案例下的社区投稿公式列表,登录用户可添加(保存前 cubing.js 校验),作者和管理员可编辑 / 删除,管理员还能改 caseName 把公式转到别的案例。`,
-    en: `Community-submitted algs for one case: logged-in users can add (cubing.js-validated on save), authors and admins edit/delete, and admins can re-target the caseName to move an alg to another case.`,
+    zh: `单个案例下的社区投稿公式列表,登录用户可添加公式与标签(保存前 cubing.js 校验),作者和管理员可编辑 / 删除,管理员还能改 caseName 把公式转到别的案例;allowAdd 可隐藏新增入口。`,
+    en: `Community-submitted algs for one case: logged-in users can add algs and tags (cubing.js-validated on save), authors and admins edit/delete, admins can re-target the caseName, and allowAdd can hide the add control.`,
     note: { zh: `需登录态、submissions 数据和 onPatch 回写,由 AlgCategoryView 按 case 切分喂入,无法独立渲染。`, en: `Needs auth login, submissions data and an onPatch writer; fed per-case by AlgCategoryView, not standalone.` },
   },
   {
@@ -2217,8 +2453,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'DiscussionComposer',
     import: "import { DiscussionComposer } from '@/components/Discussion';",
     category: 'more',
-    zh: `评论 / 另解共用的 UI 原子集,导出 YouTube 风格提交框 DiscussionComposer、编辑框 DiscussionEditBox、作者名 AuthorName、作者元信息条 UserHeadline、三点菜单 ItemMenu、头像 fallback UserAvatarFallback。AuthorName 是全站「归属键 ownerKey → 要不要出 WCA 外链」的唯一判定点(合成 u<uid> 账号没有 WCA 档案页)。`,
-    en: `Shared comment/alt-solution UI atoms: exports the YouTube-style composer DiscussionComposer, edit box DiscussionEditBox, author name AuthorName, author meta line UserHeadline, kebab menu ItemMenu, and avatar fallback UserAvatarFallback. AuthorName is the single place deciding whether an ownerKey earns an outbound WCA link (synthetic u<uid> accounts have no WCA profile).`,
+    zh: `评论 / 另解共用的 UI 原子集,导出 YouTube 风格提交框 DiscussionComposer、编辑框 DiscussionEditBox、作者名 AuthorName、作者元信息条 UserHeadline、三点菜单 ItemMenu、头像 fallback UserAvatarFallback。AuthorName 优先以站内用户 ID 打开好友入口，只有缺少站内 ID 的真实 WCA 选手才使用 WCA 外链；头像复用 UserContactLink。`,
+    en: `Shared comment/alt-solution UI atoms: exports the YouTube-style composer DiscussionComposer, edit box DiscussionEditBox, author name AuthorName, author meta line UserHeadline, kebab menu ItemMenu, and avatar fallback UserAvatarFallback. AuthorName opens the shared contact entry for site users and keeps WCA links only when no site user ID is known. Avatars reuse UserContactLink.`,
     note: { zh: `多组件原子集(无默认导出),按需具名引入;Composer / UserHeadline 依赖 auth store。`, en: `A multi-component atom set (no default export); import members by name. Composer/UserHeadline depend on the auth store.` },
   },
   {
@@ -2265,8 +2501,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'RecentRecordsList',
     import: "import { RecentRecordsList } from '@/components/RecentRecords';",
     category: 'more',
-    zh: `近 10 天 WR / CR / NR 纪录列表(无头无滚动条,嵌在 OngoingComps 共享面板里),每行渲染服务端预格式化的纪录文案(国旗 / 纪录徽章 / 洲图标)并可一键复制,配套 useRecentRecords hook。`,
-    en: `Headless last-10-days WR/CR/NR record list (embedded in the OngoingComps shared panel), each row rendering server-preformatted record text (flags, record badges, continent icons) with one-click copy.`,
+    zh: `首页与比赛详情共用的纪录快讯列表，渲染统一格式的文案、国旗、纪录徽标和洲图标，支持逐条复制。首页配套 useRecentRecords，比赛页传入文案及轮次链接。`,
+    en: `Shared record news list for the homepage and competition details, rendering canonical text, flags, record badges and continent icons with per-row copy. Competition reports supply formatted text and round links.`,
     note: { zh: `靠 useRecentRecords 拉 /v1/wca/recent-records(60s 轮询),需真实数据。`, en: `Driven by useRecentRecords fetching /v1/wca/recent-records (60s poll); needs live data.` },
   },
   {
@@ -2294,12 +2530,19 @@ export const CATALOG: ComponentEntry[] = [
     note: { zh: `靠 stats/scramble/*.json 数据,无可展示项目时返回 null。`, en: `Driven by stats/scramble/*.json; returns null when no event has data.` },
   },
   {
+    name: 'CuratedReconCard',
+    import: "import { CuratedReconCard } from '@/components/ReconCard/CuratedReconCard';",
+    category: 'more',
+    zh: `复用 ReconCard，管理员图钉控制首页置顶、星标控制复盘页精选；按钮与卡片链接为同级元素。`,
+    en: `ReconCard with optional admin pin and featured controls, rendered as siblings of the card link.`,
+  },
+  {
     name: 'TodayRecon',
     import: "import TodayRecon from '@/components/TodayRecon';",
     category: 'more',
     zh: `首页「今日复盘」面板:展示 /recon 最新录入那天的复盘,复用 ReconCard 排成宽屏四卡网格(成绩 / 选手 / 比赛,不出打乱图,有视频才带封面),超高走滚动面板,点卡进 /recon/[id] 回放。`,
     en: `Landing Recon of the Day panel: shows recons from the latest day entered in /recon as a four-up ReconCard grid (no scramble thumbnail — only video covers), scrolling once it overflows, each card linking into /recon/[id].`,
-    note: { zh: `靠 getTodayRecons 拉后端,无数据返回 null。`, en: `Driven by getTodayRecons from the backend; returns null when empty.` },
+    note: { zh: `同时复用为首页计时器入口上方的多条置顶复盘区；仅管理员显示置顶/取消按钮，状态由首页统一管理并保存到后端。无数据返回 null。`, en: `Also renders multiple pinned recons above the homepage timer entry. Admin-only pin controls share homepage state persisted to the backend. Returns null when empty.` },
   },
   {
     name: 'BarRaceChart',
@@ -2367,7 +2610,7 @@ export const CATALOG: ComponentEntry[] = [
   },
   {
     name: 'StageSolver',
-    import: "import StageSolver from '@/components/StageSolver';",
+    import: "import StageSolver from '@cuberoot/timer-ui/StageSolver';",
     category: 'more',
     zh: `逐阶段最优解浏览器,6 视角对比步数 + 可执行多解列表 + 共享 3D 播放,覆盖 cross / EO / DR / HTR 等方法,用在 analyzer 与 gen 行内。`,
     en: `Per-stage optimal-solve explorer: 6-view move counts + executable solution list + shared 3D player across cross/EO/DR/HTR methods; used in analyzer and gen.`,
@@ -2421,7 +2664,7 @@ export const CATALOG: ComponentEntry[] = [
   },
   {
     name: 'RoomCodeInput',
-    import: "import { RoomCodeInput } from '@/components/RoomCodeInput';",
+    import: "import { RoomCodeInput } from '@/components/RoomCodeInput'; // @cuberoot/timer-ui/room-code-input",
     category: 'more',
     zh: `统一的 4 位数字房间码输入框:过滤非数字并唤起数字键盘,填满即触发加入,同一码不会因重渲染重复提交。`,
     en: `Shared four-digit numeric room-code input: filters non-digits, opens a numeric keypad, joins when complete, and prevents duplicate submissions across rerenders.`,
@@ -2434,14 +2677,6 @@ export const CATALOG: ComponentEntry[] = [
     zh: `房间邀请二维码弹窗:把邀请链接用 uqr 本地编成 SVG 二维码,配大字房间码和一键复制链接;队友扫码即进房。`,
     en: `Room invite QR modal: encodes the invite link into an SVG QR locally via uqr, with the room code in large type and one-tap link copy; teammates scan to join.`,
     note: { zh: `需传 url / code / onClose。/alg 训练器房间与 /timer 联机对战共用;二维码固定深码白底(不随主题反色),保证扫得出。`, en: `Takes url / code / onClose. Shared by /alg trainer rooms and /timer online battle; the QR stays dark-on-white regardless of theme so it always scans.` },
-  },
-  {
-    name: 'WeChatPcShareModal / MobilePageShareModal',
-    import: "import { MobilePageShareModal, WeChatPcShareModal } from '@/components/WeChatPcShareModal';",
-    category: 'more',
-    zh: `页面分享弹窗组:电脑端按需调用网站应用 PC OpenSDK;手机微信提示使用右上角菜单,不支持系统分享时提供复制链接。`,
-    en: `Page sharing dialogs: desktop calls the Website App PC OpenSDK on demand; mobile WeChat explains the top-right menu, with link-copy fallback when system sharing is unavailable.`,
-    note: { zh: `电脑弹窗传 onClose;手机弹窗另传 mode="wechat" 或 mode="browser"。`, en: `The desktop dialog takes onClose; the mobile dialog also takes mode="wechat" or mode="browser".` },
   },
   {
     name: 'DonateModal',
@@ -2466,6 +2701,13 @@ export const CATALOG: ComponentEntry[] = [
     zh: `首次第三方身份的页内选择：登录已有账号或创建新账号。已有账号验证复用 LoginForm 的凭据表单，再显示账号并明确确认绑定；网站与 App 登录交接共用，不提前建号、不按邮箱自动关联。`,
     en: `In-page choice for a first-time provider identity: sign in to an existing account or create an account. Reuses LoginForm credentials, then shows the account for explicit linking confirmation. Shared by website and App handoffs; no premature creation or email-based auto-linking.`,
     note: { zh: `pending 来自短期 identity-choice store；完成后 onDone(info, returnPath) 延续原路径，取消不创建或绑定账号。`, en: `pending comes from the short-lived identity-choice store; onDone(info, returnPath) resumes the original destination. Cancellation does not create or link an account.` },
+  },
+  {
+    name: 'OnboardingGuideModal',
+    import: "import OnboardingGuideModal from '@/components/OnboardingGuideModal';",
+    category: 'more',
+    zh: '首页欢迎页与功能导览；账号页可手动重看。',
+    en: 'Homepage welcome and feature tour, replayable from My account.',
   },
   {
     name: 'AuthPanel',
@@ -2722,6 +2964,20 @@ export const CATALOG: ComponentEntry[] = [
       zh: `刻意不放 hooks/:这是可供命令式嵌入调用的普通函数。调用方一律 await import() 本模块,three 才不会进首包。measure(host) 覆盖画布尺寸(PLL 浮层的立方体只占舞台一小块),onRendered(world) 给跟着主视图一起画的第二个渲染器(recon 的 backView 小窗)。交互式 WebGL 嵌入已统一复用本生命周期;EnginePuzzleSVG 不属于嵌入器,只调用 puzzle-render-core 的无头 SVG API。`,
       en: `Deliberately not in hooks/: this is a plain function for imperative embedders. Callers should await import() so three stays out of the initial bundle. measure(host) overrides the canvas size when the cube occupies only part of the stage, while onRendered(world) drives a second renderer such as recon's back-view inset. Interactive WebGL embedders now share this lifecycle; EnginePuzzleSVG is not an embedder and only calls the headless SVG API from puzzle-render-core.`,
     },
+  },
+  {
+    name: 'SiteAssistantDialog',
+    import: "import SiteAssistantDialog from '@/components/SiteAssistantDialog';",
+    category: 'more',
+    zh: '站内流式对话：正文引用、数据表、PR 曲线、复制、重新生成、编辑上一问、草稿、全屏和停止请求。',
+    en: 'Streaming site conversation with inline citations, tables, PR charts, copy, regenerate, last-question editing, drafts, full screen and cancellation.',
+  },
+  {
+    name: 'SiteAssistantAnswerText',
+    import: "import { SiteAssistantAnswerText } from '@/components/SiteAssistantDialog';",
+    category: 'more',
+    zh: '问答窗口与搜索预览共用的 Markdown 正文，只将实际来源渲染为链接，过滤 HTML、图片与未验证链接。',
+    en: 'Shared Markdown answer rendering for conversations and search previews; only verified sources become links, with HTML, images and unverified links excluded.',
   },
   {
     name: 'SimStage',

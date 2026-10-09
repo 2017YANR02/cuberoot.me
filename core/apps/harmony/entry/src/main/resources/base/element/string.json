@@ -15,6 +15,14 @@
     {
       "name": "bluetooth_reason",
       "value": "Used to connect to a GAN smart cube"
+    },
+    {
+      "name": "camera_reason",
+      "value": "Used when you enable online battle video"
+    },
+    {
+      "name": "microphone_reason",
+      "value": "Used for online battle audio and Stackmat timer signals"
     }
   ]
 }

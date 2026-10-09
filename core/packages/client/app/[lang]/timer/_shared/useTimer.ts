@@ -18,7 +18,8 @@ import {
 } from '@cuberoot/shared/timer';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getSettings } from '../_lib/settings';
-import { play, playInspectionBeep } from '../_lib/sound';
+import { timerSound } from '../_lib/sound';
+import { useTimerSoundFeedback } from '@cuberoot/timer-ui';
 
 export type { SolveResult, TimerPhase } from '@cuberoot/shared/timer';
 
@@ -42,7 +43,7 @@ export interface TimerHandle {
   /** Start an armed attempt from a smart-cube move timestamp. */
   startFromCube: (atMs?: number) => boolean;
   /** A matched smart-cube scramble skips the manual holding phase. */
-  armFromCube: () => void;
+  armFromCube: () => boolean;
   /** Stop a running attempt at the smart cube's calibrated move timestamp. */
   stopFromCube: (atMs?: number) => boolean;
   /** Cancel an in-progress arm while preserving the last displayed solve. */
@@ -62,6 +63,7 @@ export function useTimer(
   onSolve?: (result: SolveResult) => void,
   onStart?: (startedAtMs: number) => void,
 ): TimerHandle {
+  const onSoundTransition = useTimerSoundFeedback(timerSound);
   const initial = useRef<TimerMachineState>(initialTimerMachineState());
   const machineRef = useRef<TimerMachineState>(initial.current);
   const [phase, setPhase] = useState<TimerPhase>(initial.current.phase);
@@ -72,9 +74,6 @@ export function useTimer(
   const tickRef = useRef<number | null>(null);
   const inspTickRef = useRef<number | null>(null);
   const holdTimerRef = useRef<number | null>(null);
-  const warned8Ref = useRef(false);
-  const warned12Ref = useRef(false);
-  const firedBeepsRef = useRef<Set<number>>(new Set());
   const onSolveRef = useRef(onSolve);
   const onStartRef = useRef(onStart);
   onSolveRef.current = onSolve;
@@ -109,31 +108,12 @@ export function useTimer(
 
   const beginInspectionEffects = useCallback((startedAtMs: number) => {
     setInspectionDisplayMs(0);
-    warned8Ref.current = false;
-    warned12Ref.current = false;
-    firedBeepsRef.current = new Set();
-    play('inspection-start');
     stopInspectionTick();
     inspTickRef.current = window.setInterval(() => {
       const elapsed = Math.max(0, performance.now() - startedAtMs);
       setInspectionDisplayMs((previous) => (
         Math.floor(previous / 1000) === Math.floor(elapsed / 1000) ? previous : elapsed
       ));
-      if (!warned8Ref.current && elapsed >= 8000) {
-        warned8Ref.current = true;
-        play('warn-8');
-      }
-      if (!warned12Ref.current && elapsed >= 12000) {
-        warned12Ref.current = true;
-        play('warn-12');
-      }
-      const beepAt = getSettings().inspectionBeepAt;
-      for (const sec of beepAt) {
-        if (sec > 0 && elapsed >= sec * 1000 && !firedBeepsRef.current.has(sec)) {
-          firedBeepsRef.current.add(sec);
-          playInspectionBeep();
-        }
-      }
     }, 100);
   }, [stopInspectionTick]);
 
@@ -143,7 +123,6 @@ export function useTimer(
     stopTick();
     setInspectionDisplayMs(0);
     setDisplayMs(Math.max(0, performance.now() - startedAtMs));
-    play('start');
     tickRef.current = window.setInterval(() => {
       const startedAt = machineRef.current.startedAtMs;
       if (startedAt !== null) setDisplayMs(Math.max(0, performance.now() - startedAt));
@@ -179,7 +158,6 @@ export function useTimer(
         setInspectionDisplayMs(0);
         if (solve) {
           setDisplayMs(solve.timeMs);
-          play('stop');
           onSolveRef.current?.(solve);
         }
       } else if (effect === 'arm-cancelled') {
@@ -199,9 +177,10 @@ export function useTimer(
   const dispatch = useCallback((action: TimerMachineAction) => {
     const transition = transitionTimer(machineRef.current, action, machineConfig());
     commitState(transition.state);
+    onSoundTransition(transition);
     runEffects(transition.effects, transition.state, transition.solve);
     return transition;
-  }, [commitState, runEffects]);
+  }, [commitState, runEffects, onSoundTransition]);
 
   const onPressDown = useCallback(() => {
     dispatch({ type: 'press-down', nowMs: performance.now() });
@@ -232,8 +211,8 @@ export function useTimer(
     return transition.accepted === true;
   }, [dispatch]);
 
-  const armFromCube = useCallback(() => {
-    dispatch({ type: 'arm-from-cube', nowMs: performance.now() });
+  const armFromCube = useCallback((): boolean => {
+    return dispatch({ type: 'arm-from-cube', nowMs: performance.now() }).accepted === true;
   }, [dispatch]);
 
   const stopFromCube = useCallback((atMs?: number): boolean => {

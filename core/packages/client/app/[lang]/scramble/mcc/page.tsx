@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 /**
  * /scramble/mcc — Movecount Coefficient(MCC)公式测速。
@@ -12,7 +13,6 @@ import { useParams } from 'next/navigation';
 import { useQueryState, parseAsBoolean, parseAsStringEnum } from 'nuqs';
 import { ChevronDown } from 'lucide-react';
 import BoolToggle from '@/components/BoolToggle';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
 import SortArrow from '@/components/SortArrow';
 import { ClearButton } from '@/components/ClearButton';
@@ -175,13 +175,15 @@ export default function MccPage() {
           onSelect={(id) => { void setPuzzle(id as Puzzle); }}
         />
         {!isPocket && (
-          <PillToggle
-            value={metric === 'esq'}
-            onChange={(v) => { void setMetric(v ? 'esq' : 'mcc'); }}
-            offLabel="MCC"
-            onLabel={tr({ zh: '增强 SQTM', en: 'Enhanced SQTM' })}
-            ariaLabel={tr({ zh: '输出指标', en: 'Output metric' })}
-          />
+          <select
+            value={String(metric === 'esq')}
+            onChange={event => { const v = event.currentTarget.value === 'true'; void setMetric(v ? 'esq' : 'mcc'); }}
+            aria-label={tr({ zh: '输出指标', en: 'Output metric' })}
+            className="native-select"
+          >
+            <option value="true">{tr({ zh: '增强 SQTM', en: 'Enhanced SQTM' })}</option>
+            <option value="false">{"MCC"}</option>
+          </select>
         )}
         {!isPocket && (
           <BoolToggle

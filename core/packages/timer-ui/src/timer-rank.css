@@ -1,0 +1,59 @@
+/* Rank badge — WR / CR / NR pills (shared by Solo digits corner + Battle player).
+   Token-only: accent-soft pill, accent text; top-tier names go signal-success. */
+.rank-badge-row {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.rank-pills {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+.rank-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  /* 与 /wca/records 徽章一致的 Inter sans(含 loading 占位 "WR …");不用 mono. */
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 0.82em;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+/* WR12/AsR9/NR9 segments: center-align text + any inline RecordBadge, even gaps
+   around the "/" separators. 字体继承 .rank-pill 的 Inter(已非 mono). */
+.timer-display-corner:has(.rank-badge-row) {
+  right: 0;
+  max-width: min(100%, calc(100vw - 32px));
+  transform: translateY(-100%);
+}
+.rank-badge-row, .rank-pills, .rank-pill { max-width: 100%; }
+.rank-chip-inner { display: inline-flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 3px; }
+.rank-chip-sep { color: var(--faint-foreground); font-weight: 400; }
+.rank-chip-inner .record-badge { font-size: 1em; padding: 0 4px; }
+.rank-scope-options {
+  display: inline-flex;
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.settings-row-control .rank-scope-option {
+  justify-content: center;
+  border: 0;
+  border-radius: 0;
+  outline-offset: -2px;
+}
+.settings-row-control .rank-scope-option + .rank-scope-option {
+  border-left: 1px solid var(--border-default);
+}
+.settings-row-control .rank-scope-option[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}

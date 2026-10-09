@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xcross / ORWY / bin 2
-# Population in this bin: 573
+# Population in this bin: 574
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 261001,R' F D L2 F' B U R2 B' R F L2 U L2 U' R2 U2 L2,W,Montréal Open 2014 (2014-03-15),333 R2 B #1
@@ -35,7 +35,7 @@
 3702534001,U B' R2 D2 L2 F2 U R U R2 U R F' L2 D2 B U',O,Israel Open 2024 (2024-04-24~25),333 R2 B #5
 5433693001,F2 U D2 B2 R' U2 F2 R D L2 B' R2 D2 R2 D2 L2 B D L,W,Classic Cubing Capelle 2026 (2026-03-08),333 R2 B E2
 238028001,U L2 F2 B2 L U2 L2 F L' B2 R2 B' L2 U2 R2 L2 B,Y,Music City Winter 2016 (2016-01-02),333 Final B #3
-4693309001,D2 B2 U2 L' U2 R2 D2 U2 R' U' L U' B R D B' L D,R,Pueblo Puzzling 2025 (2025-04-26),333oh Final A #5
+5847787001,U2 L2 F2 R2 D' R2 B' R B2 U2 R F' L D2 L B D',R,Maltese Championship 2026 (2026-09-26),333 R1 A #5
 245477001,B2 R D2 L' R' B2 R' U' R F' U2 R D2 R D2 R2 F2 U2 L2 U,R,Shaastra Cube Open 2016 (2016-01-23~24),333bf Final D #1
 251961001,F2 L' F2 U2 B D' B R2 D' F D2 F2 B2 R' F2 R L' B2 D2,Y,Ural Winter 2016 (2016-02-06~07),333 R1 B #3
 4902702001,B' R U2 B R L2 U L F2 D2 B2 U2 R2 D2 L D2 F2 D',Y,Fort Lee Summer 2025 (2025-08-02),333 R1 C #3

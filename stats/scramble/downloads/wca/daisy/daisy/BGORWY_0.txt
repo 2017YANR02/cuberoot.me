@@ -1,8 +1,8 @@
 # Scramble samples — daisy / daisy / BGORWY / bin 0
-# Population in this bin: 978
+# Population in this bin: 987
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 262001,R2 U' R2 F2 U2 L2 D B2 L2 F U2 L D U' F2 L2 U2 B' L',Y,Montréal Open 2014 (2014-03-15),333 R2 B #2
@@ -20,7 +20,7 @@
 4485598001,R' F' U2 L2 U' F2 D F2 U2 B2 R2 U' F' D2 B2 L2 D' L' B' L',O,GA Cubers Please Banana Quiet 2025 (2025-02-15),333bf Final A E1
 2485471001,D' R2 D2 B2 U' B2 R2 F2 L2 R' D2 B D' R' D2 R2 B2 L2 D',Y,Charente Open 2023 (2023-02-11~12),333 R2 A #4
 2176752001,U2 F' L2 R2 D2 B' U2 B2 R' D2 F2 D B D' L F' L2 D2,B,U24 Open September 2022 (2022-09-18),333 R1 A #5
-68264001,B2 D2 L F2 R B2 L B2 F2 D2 L2 F' R' F2 R2 D B' D2 L,W,Rice University 2014 (2014-10-18),333 R2 A #3
+5854846001,R' U' F L' B2 D' F2 D R2 U L2 R2 U2 F L U' L R2 F2 D2 F L' D R' U' F,G,Cube Days at SEK 2026 (2026-09-26~27),333fm Final A #1
 1042679001,U2 B2 U2 F R2 F R2 U2 F D2 B R F' D2 U R B U F R2 B',O,Iruña Open 2019 (2019-03-02~03),333bf Final A #2
 1407098024,U2 R2 U2 B2 D L2 F2 L2 F2 U2 L' B D2 B L D' B' D' U2 B' L',R,Mini Minnesota Fall 2019 (2019-11-16~17),333mbf Final A #2
 4760530001,L2 D' U' R2 D F2 U' B' D2 F L' F2 R2 B R B2 R',B,Kanto Spring 2025 (2025-05-31),333oh R1 B #5
@@ -201,7 +201,7 @@
 704566025,B2 F R2 D2 B2 U2 R2 D2 L2 D' L D L B' L B R2 F L R2 D',G,Big Bang Open 2018 (2018-02-10~11),333mbf Final A #1
 3670042001,L U' F2 D2 B2 R2 B2 R2 D L' R' F2 U F' L D2 R U' B2,R,Hungarian All-Rounder 2: Second Chance 2024 (2024-04-14),333 Final B E1
 706755001,U2 R' U B2 L2 U' R D' F' U B2 U2 L' U2 L2 F2 U2 D2 R' F2,W,HSE Open 2018 (2018-02-09~10),333 R2 A E2
-2679428001,U' B' F2 L' F2 U2 L' D2 L' U2 R B2 U L' U' L U B' D,Y,Michigan Speedcubing Spring 2023 (2023-04-30),333 R1 A #2
+5854845001,D2 R2 B' U2 F D2 B' U' L2 D' R D L2 R2 F U2 F' D',Y,Cube Days at SEK 2026 (2026-09-26~27),333 R1 A #1
 5773788001,U' D2 L' F U2 B' D2 L U' D' L' B R2 F L2 F2 D2 B',W,CCPA Open 2026 (2026-08-01),333oh Final A #2
 3752642001,L' F D2 B' U R F' L B2 R D2 L D2 B2 D2 F2 B R' F',B,North Jersey Speedsolving A 2024 (2024-05-11),333 Final A #4
 932955001,F2 L D2 B' U2 R' U' L' F U' L' F2 U2 R' D2 L D2 L U2 D2,B,SnoCo Fall 2018 (2018-11-17),333bf R1 B #3

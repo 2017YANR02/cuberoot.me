@@ -6,7 +6,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import SimCubeView from '@cuberoot/timer-ui/SimCubeView';
 import LiveCubeState from '@cuberoot/timer-ui/LiveCubeState';
 
-const state = vi.hoisted(() => ({ mount: vi.fn(), dispose: vi.fn(), setup: vi.fn() }));
+const state = vi.hoisted(() => ({
+  mount: vi.fn(),
+  dispose: vi.fn(),
+  push: vi.fn(),
+  setup: vi.fn(),
+  setQuaternion: vi.fn(),
+}));
 vi.mock('@cuberoot/puzzle-render-core/sim/mountSimWorld', () => ({ mountSimWorld: state.mount }));
 let root: Root;
 let host: HTMLDivElement;
@@ -20,8 +26,9 @@ beforeEach(() => {
     host.appendChild(canvas);
     return { dispose: () => { state.dispose(); canvas.remove(); }, invalidate() {}, world: {
     puzzleKind: 3,
+    controller: { turnsLocked: false, dragEmpty: 'orbit', onOrbit: null, touch: vi.fn(() => true) },
     scene: { rotation: { set() {} }, updateMatrix() {} },
-    cube: { quaternion: { set() {} }, updateMatrix() {}, twister: { setup: state.setup, backlog: 0 }, instancedRenderer: { setStickering() {} } },
+    cube: { quaternion: { set: state.setQuaternion }, updateMatrix() {}, twister: { push: state.push, setup: state.setup, backlog: 0 }, instancedRenderer: { setStickering() {} } },
     } };
   });
   host = document.createElement('div'); document.body.append(host); root = createRoot(host);
@@ -39,6 +46,7 @@ describe('the single live/replay 3D failure surface', () => {
     })));
     await vi.waitFor(() => expect(state.mount).toHaveBeenCalledOnce());
     const options = state.mount.mock.calls[0][0];
+    expect(options.interactive).toBe(true);
     expect(options.sceneRot).toEqual({ x: Math.atan2(4.1, Math.hypot(4.8, 7.2)), y: -Math.atan2(4.8, 7.2), z: 0 });
     const world = state.mount.mock.results[0].value.world;
     const rotate = vi.spyOn(world.scene.rotation, 'set');
@@ -61,6 +69,79 @@ describe('the single live/replay 3D failure surface', () => {
     })));
     expect(state.mount.mock.calls[0][0].sceneRot).toEqual({ x: Math.atan2(4.1, 7.2), y: 0, z: 0 });
   });
+
+  it('keeps following a slow continuous gyro rotation instead of settling to a whole orientation', async () => {
+    const quatRef = { current: { w: 1, x: 0, y: 0, z: 0 } };
+    await act(async () => root.render(createElement(SimCubeView, {
+      view: 'smart', moves: [], quatRef, sensorBasis: 'identity',
+    })));
+    await vi.waitFor(() => expect(state.mount).toHaveBeenCalledOnce());
+
+    const options = state.mount.mock.calls[0][0];
+    const world = state.mount.mock.results[0].value.world;
+    const displayedAngle = () => {
+      const call = state.setQuaternion.mock.calls.at(-1);
+      if (!call) throw new Error('Expected the gyro frame to update the cube quaternion');
+      const [, y, , w] = call;
+      return 2 * Math.atan2(Math.abs(y), Math.abs(w));
+    };
+    let angleAtFrame16 = 0;
+
+    for (let frame = 1; frame <= 24; frame++) {
+      const angle = frame * 0.005;
+      quatRef.current = { w: Math.cos(angle / 2), x: 0, y: Math.sin(angle / 2), z: 0 };
+      options.onFrame(world, 16);
+      if (frame === 16) angleAtFrame16 = displayedAngle();
+    }
+
+    expect(displayedAngle()).toBeGreaterThan(angleAtFrame16);
+  });
+
+  it('animates both directions across the solved-state boundary after the initial sync', async () => {
+    const draw = (moves: string[]) => act(async () => root.render(createElement(SimCubeView, {
+      animate: true, realtime: true, moves,
+    })));
+    await draw([]);
+    await vi.waitFor(() => expect(state.setup).toHaveBeenLastCalledWith(''));
+    expect(state.push).not.toHaveBeenCalled();
+
+    await draw(['R']);
+    await draw([]);
+
+    expect(state.push.mock.calls.map((call: unknown[]) => call[0])).toEqual(['R', "R'"]);
+  });
+
+  it('bridges desktop pointer dragging to the interactive controller', async () => {
+    await act(async () => root.render(createElement(SimCubeView, {
+      allowViewDrag: true, moves: [],
+    })));
+    await vi.waitFor(() => expect(state.mount).toHaveBeenCalledOnce());
+
+    const view = host.querySelector<HTMLElement>('.timer-live-cube-3d')!;
+    const touch = state.mount.mock.results[0].value.world.controller.touch;
+    const dispatch = (type: string, x: number, y: number) => {
+      const event = new Event(type, { bubbles: true, cancelable: true });
+      Object.defineProperties(event, {
+        button: { value: 0 },
+        clientX: { value: x },
+        clientY: { value: y },
+        pointerId: { value: 1 },
+        pointerType: { value: 'mouse' },
+        shiftKey: { value: false },
+        altKey: { value: false },
+      });
+      view.dispatchEvent(event);
+    };
+
+    dispatch('pointerdown', 20, 30);
+    dispatch('pointermove', 60, 45);
+    dispatch('pointerup', 60, 45);
+
+    expect(touch.mock.calls.map((call: unknown[]) => (call[0] as { type: string }).type)).toEqual([
+      'mousedown', 'mousemove', 'mouseup',
+    ]);
+  });
+
   it('retains its 3D instance while an authoritative state is being re-anchored', async () => {
     const draw = (algAnchored: boolean, moves: string[]) => act(async () => root.render(createElement(LiveCubeState, {
       mode: '3d', algAnchored, moves, facelets: 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB',

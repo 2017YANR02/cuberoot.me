@@ -8,11 +8,12 @@ import type {
 } from '@cuberoot/shared/auth/web-session';
 import { webSessionError } from '@cuberoot/shared/auth/web-session';
 import { query, sql } from '../db/connection.js';
-import { JWT_SECRET, signSession, verifySession, isRolePreviewActive } from '../utils/session.js';
+import { JWT_SECRET, signSession, signBrowserAccessSession, verifySession, getActiveRolePreview } from '../utils/session.js';
 import { requireAuth } from '../utils/recon_helpers.js';
 import { captureAccountDevice } from '../utils/account_device.js';
 import {
   findUserByWcaId,
+  findUserForLegacyWcaSession,
   getUserById,
   publicUser,
   isValidCountryIso2,
@@ -23,6 +24,7 @@ import { beginIdentityLogin } from '../utils/identity_choice.js';
 const WCA_CLIENT_ID = process.env.WCA_CLIENT_ID || '';
 const WCA_CLIENT_SECRET = process.env.WCA_CLIENT_SECRET || '';
 const WCA_REDIRECT_URI = process.env.WCA_REDIRECT_URI || 'http://localhost:3000/auth/callback';
+const ROLE_PREVIEW_TTL_SECONDS = 30 * 60;
 
 /**
  * WCA OAuth + JWT 认证路由
@@ -33,6 +35,23 @@ const WCA_REDIRECT_URI = process.env.WCA_REDIRECT_URI || 'http://localhost:3000/
  */
 export const authRoutes = new Hono();
 
+/** Browser access is a data credential, never a grant to mint durable credentials. */
+export const browserSessionGuard: MiddlewareHandler = async (c, next) => {
+  if (!c.req.path.startsWith('/v1/auth/')) return next();
+  const header = c.req.header('Authorization');
+  if (!header?.startsWith('Bearer ')) return next();
+  const token = header.slice(7);
+  const decoded = jwt.decode(token);
+  if (!decoded || typeof decoded === 'string' || decoded.browserAccess !== true) return next();
+  try { verifySession(token); }
+  catch { return c.json({ error: 'unauthorized' }, 401); }
+  c.header('Cache-Control', 'private, no-store');
+  if (c.req.method !== 'GET' || !['/v1/auth/me', '/v1/auth/profile', '/v1/auth/providers', '/v1/auth/identities'].includes(c.req.path)) {
+    return c.json({ error: 'A durable session is required' }, 401);
+  }
+  return next();
+};
+
 /** Validate the revocable test session before any route can consume its identity. */
 export const rolePreviewGuard: MiddlewareHandler = async (c, next) => {
   const token = c.req.header('Authorization')?.replace(/^Bearer /, '');
@@ -42,9 +61,16 @@ export const rolePreviewGuard: MiddlewareHandler = async (c, next) => {
   let payload;
   try {
     payload = jwt.verify(token, JWT_SECRET, { audience: 'role-preview', issuer: 'cuberoot' }) as { previewId: string; uid: number };
-  } catch { return c.json({ error: 'Test session expired or invalid; exit test mode.' }, 401); }
-  if (!await isRolePreviewActive(payload.previewId, payload.uid)) return c.json({ error: 'Test session ended; exit test mode.' }, 401);
+  } catch { return c.json({ error: 'Preview session expired or invalid; exit preview mode.' }, 401); }
+  const preview = await getActiveRolePreview(payload.previewId, payload.uid);
+  if (!preview) return c.json({ error: 'Preview session ended; exit preview mode.' }, 401);
   c.header('Cache-Control', 'no-store');
+  if (preview.role === 'impersonation' && !['GET', 'HEAD', 'OPTIONS'].includes(c.req.method)) {
+    // Record attempts before side effects; no request bodies, secrets or query parameters.
+    await sql`INSERT INTO role_preview_events (session_id, method, path)
+      VALUES (${payload.previewId}, ${c.req.method}, ${c.req.path})`;
+    return c.json({ error: 'User viewing sessions are read-only.' }, 403);
+  }
   // No credential minting, identity linking, account editing or API-key bypass while testing.
   if (c.req.header('X-Admin-Key') || c.req.path.startsWith('/v1/mcp/oauth/') || (c.req.path.startsWith('/v1/auth/')
     && !['/v1/auth/me', '/v1/auth/profile', '/v1/auth/providers', '/v1/auth/identities'].includes(c.req.path))) {
@@ -93,14 +119,41 @@ authRoutes.post('/auth/role-preview', async (c) => {
       else await tx`UPDATE drive_members SET enabled = FALSE WHERE user_id = ${userId}`;
     }
     await tx`INSERT INTO role_preview_sessions (id, actor_user_id, user_id, role, expires_at)
-      VALUES (${id}, ${actor.uid!}, ${userId}, ${role}, 'infinity'::timestamptz)`;
+      VALUES (${id}, ${actor.uid!}, ${userId}, ${role}, NOW() + ${ROLE_PREVIEW_TTL_SECONDS} * INTERVAL '1 second')`;
     return userId;
   });
   const user = uid === null ? null : await getUserById(uid);
   const token = uid === null ? '' : jwt.sign({ uid, previewId: id }, JWT_SECRET,
-    { audience: 'role-preview', issuer: 'cuberoot' });
+    { audience: 'role-preview', issuer: 'cuberoot', expiresIn: ROLE_PREVIEW_TTL_SECONDS });
   c.header('Cache-Control', 'no-store');
   return c.json({ id, role, token, user: user ? publicUser(user) : null });
+});
+
+authRoutes.post('/auth/admin/users/:userId/impersonation', async (c) => {
+  const actor = await requireAuth(c);
+  if (!actor.uid || !isAdminWcaId(actor.realWcaId)) return c.json({ error: 'Super administrator required' }, 403);
+  const requestedUserId = Number(c.req.param('userId'));
+  if (!Number.isSafeInteger(requestedUserId) || requestedUserId <= 0) {
+    return c.json({ error: 'Invalid user id' }, 400);
+  }
+  const body = await c.req.json<{ reason?: unknown }>().catch((): { reason?: unknown } => ({}));
+  const reason = typeof body.reason === 'string' ? body.reason.trim() : '';
+  if (reason.length < 5 || reason.length > 200) {
+    return c.json({ error: 'Reason must contain 5 to 200 characters' }, 400);
+  }
+  const target = await getUserById(requestedUserId);
+  if (!target) return c.json({ error: 'Account not found' }, 404);
+  if (target.id === actor.uid) return c.json({ error: 'Cannot view your own account this way' }, 400);
+  if (isAdminWcaId(target.wca_id)) return c.json({ error: 'Cannot view another superadministrator account' }, 403);
+
+  const id = randomUUID();
+  await sql`INSERT INTO role_preview_sessions (id, actor_user_id, user_id, role, reason, expires_at)
+    VALUES (${id}, ${actor.uid}, ${target.id}, 'impersonation', ${reason},
+      NOW() + ${ROLE_PREVIEW_TTL_SECONDS} * INTERVAL '1 second')`;
+  const token = jwt.sign({ uid: target.id, previewId: id }, JWT_SECRET,
+    { audience: 'role-preview', issuer: 'cuberoot', expiresIn: ROLE_PREVIEW_TTL_SECONDS });
+  c.header('Cache-Control', 'no-store');
+  return c.json({ id, role: 'impersonation', token, user: publicUser(target) });
 });
 
 authRoutes.delete('/auth/role-preview/:id', async (c) => {
@@ -214,9 +267,11 @@ authRoutes.get('/auth/me', async (c) => {
     const account = payload.uid != null
       ? await getUserById(payload.uid)
       : payload.wcaId
-        ? await findUserByWcaId(payload.wcaId)
+        ? await findUserForLegacyWcaSession(payload.wcaId)
         : null;
-    if (!account) return c.json(webSessionError('INVALID_SESSION', 'Invalid token'), 401);
+    if (!account || (payload.uid != null && account.id !== payload.uid)) {
+      return c.json(webSessionError('INVALID_SESSION', 'Invalid token'), 401);
+    }
     await captureAccountDevice(account.id, c.req.header('User-Agent'));
     const response: WebSessionUserEnvelope = { user: publicUser(account) };
     return c.json(response);
@@ -311,16 +366,17 @@ authRoutes.post('/auth/refresh', async (c) => {
   const token = authHeader.slice(7);
   try {
     const payload = verifySession(token);
+    if (payload.browserAccess) return c.json(webSessionError('UNAUTHENTICATED', 'A durable session is required'), 401);
     // uid token 直接续;老 wca-only token 借机升级(按真实 wcaId 查库补 uid)。
     let uid = payload.uid ?? null;
     if (uid == null && payload.wcaId) {
-      const u = await findUserByWcaId(payload.wcaId);
+      const u = await findUserForLegacyWcaSession(payload.wcaId);
       if (u) uid = u.id;
     }
     if (uid == null) return c.json(webSessionError('UNAUTHENTICATED', 'unauthorized'), 401);
     // 按账号最新态续签(可能刚绑了新的 wca / 改了名)。查不到账号 → 强制重登。
     const u = await getUserById(uid);
-    if (!u) return c.json(webSessionError('UNAUTHENTICATED', 'unauthorized'), 401);
+    if (!u || u.id !== uid) return c.json(webSessionError('UNAUTHENTICATED', 'unauthorized'), 401);
     await captureAccountDevice(u.id, c.req.header('User-Agent'));
     const fresh = signSession({ uid: u.id, wcaId: u.wca_id, name: u.display_name || (payload.name ?? '') });
     const session: WebSession = { token: fresh, user: publicUser(u) };
@@ -329,4 +385,19 @@ authRoutes.post('/auth/refresh', async (c) => {
     // 过期或非法 JWT — 不续签,前端回退到重新登录。
     return c.json(webSessionError('UNAUTHENTICATED', 'unauthorized'), 401);
   }
+});
+
+// Used by the same-origin HttpOnly session bridge. Native bearer contracts stay unchanged.
+authRoutes.post('/auth/browser-access', async (c) => {
+  c.header('Cache-Control', 'private, no-store');
+  const header = c.req.header('Authorization');
+  if (!header?.startsWith('Bearer ')) return c.json({ error: 'unauthorized' }, 401);
+  try {
+    const payload = verifySession(header.slice(7));
+    if (payload.browserAccess || !payload.uid) return c.json({ error: 'unauthorized' }, 401);
+    const user = await getUserById(payload.uid);
+    if (!user || user.id !== payload.uid) return c.json({ error: 'unauthorized' }, 401);
+    const token = signBrowserAccessSession({ ...payload, wcaId: user.wca_id ?? undefined, name: user.display_name });
+    return c.json({ token, user: publicUser(user), sessionExpiresAt: payload.exp! * 1000 });
+  } catch { return c.json({ error: 'unauthorized' }, 401); }
 });

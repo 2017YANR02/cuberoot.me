@@ -61,40 +61,91 @@ export function useTrainingAutoAdvance() {
   return useMemo(() => ({ enabled, setEnabled, schedule, cancel }), [cancel, enabled, schedule, setEnabled]);
 }
 
+export function SettingsPopover({
+  label,
+  className,
+  triggerClassName,
+  panelClassName,
+  triggerPrefix,
+  triggerSuffix,
+  iconSize = 18,
+  open: controlledOpen,
+  onOpenChange,
+  ignoreTimer = false,
+  children,
+}: {
+  label: string;
+  className?: string;
+  triggerClassName?: string;
+  panelClassName?: string;
+  triggerPrefix?: ReactNode;
+  triggerSuffix?: ReactNode;
+  iconSize?: number;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  ignoreTimer?: boolean;
+  children?: ReactNode;
+}) {
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const open = controlledOpen ?? uncontrolledOpen;
+  const setOpen = useCallback((next: boolean) => {
+    if (controlledOpen === undefined) setUncontrolledOpen(next);
+    onOpenChange?.(next);
+  }, [controlledOpen, onOpenChange]);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  usePanelClamp(open, panelRef);
+  usePopoverDismiss(open, () => setOpen(false), rootRef, triggerRef);
+
+  return (
+    <div
+      ref={rootRef}
+      className={`settings-popover${className ? ` ${className}` : ''}`}
+      data-no-timer={ignoreTimer || undefined}
+    >
+      {triggerPrefix}
+      <button
+        ref={triggerRef}
+        type="button"
+        className={`settings-popover-trigger${triggerClassName ? ` ${triggerClassName}` : ''}`}
+        aria-label={label}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        onClick={() => setOpen(!open)}
+      >
+        <Settings size={iconSize} aria-hidden="true" />
+      </button>
+      {triggerSuffix}
+      {open && (
+        <div
+          ref={panelRef}
+          className={`settings-popover-panel${panelClassName ? ` ${panelClassName}` : ''}`}
+          role="dialog"
+          aria-label={label}
+          data-site-surface="popover"
+        >
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function TrainingSettings({ value, onChange, className, children }: {
   value: boolean;
   onChange: (next: boolean) => void;
   className?: string;
   children?: ReactNode;
 }) {
-  const [open, setOpen] = useState(false);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const panelRef = useRef<HTMLSpanElement>(null);
-  usePanelClamp(open, panelRef);
-  usePopoverDismiss(open, () => setOpen(false), panelRef, triggerRef);
-
   return (
-    <span className={`training-settings${className ? ` ${className}` : ''}`}>
-      <button
-        ref={triggerRef}
-        type="button"
-        className="training-settings-trigger"
-        aria-label={tr({ zh: '训练设置', en: 'Training settings' })}
-        aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
-      >
-        <Settings size={18} aria-hidden="true" />
-      </button>
-      {open && (
-        <span ref={panelRef} className="training-settings-panel">
-          <BoolToggle
-            value={value}
-            onChange={onChange}
-            label={tr({ zh: '答对后自动进入下一题', en: 'Auto-next after a correct answer' })}
-          />
-          {children}
-        </span>
-      )}
-    </span>
+    <SettingsPopover label={tr({ zh: '训练设置', en: 'Training settings' })} className={className}>
+      <BoolToggle
+        value={value}
+        onChange={onChange}
+        label={tr({ zh: '答对后自动进入下一题', en: 'Auto-next after a correct answer' })}
+      />
+      {children}
+    </SettingsPopover>
   );
 }

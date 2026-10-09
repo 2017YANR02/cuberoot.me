@@ -238,10 +238,17 @@ export default class Controller {
       this.handleUp();
     }
     this.dragging = true;
-    this.holder.index = -1;
+    const hit = this.hitTest(this.down);
+    this.holder.index = hit?.index ?? -1;
+    if (hit) this.holder.plane = hit.plane;
+  }
+
+  /** Same geometry as a tap, without starting a drag or changing the held target. */
+  hitTest(position: THREE.Vector2): { index: number; face: FACE; plane: THREE.Plane } | null {
+    let hit: { index: number; face: FACE; plane: THREE.Plane } | null = null;
     let distance = 0;
-    this.planes.forEach((plane) => {
-      const point = this.intersect(this.down, plane);
+    this.planes.forEach((plane, planeIndex) => {
+      const point = this.intersect(position, plane);
       if (point !== null) {
         let x = point.x / Cubelet.SIZE / 3;
         let y = point.y / Cubelet.SIZE / 3;
@@ -252,17 +259,18 @@ export default class Controller {
             Math.pow(point.y - this.ray.origin.y, 2) +
             Math.pow(point.z - this.ray.origin.z, 2);
           if (distance == 0 || d < distance) {
-            this.holder.plane = plane;
             const order = this.world.cube.order;
             x = Math.max(0, Math.min(order - 1, Math.floor((x + 0.5) * order)));
             y = Math.max(0, Math.min(order - 1, Math.floor((y + 0.5) * order)));
             z = Math.max(0, Math.min(order - 1, Math.floor((z + 0.5) * order)));
-            this.holder.index = z * order * order + y * order + x;
+            hit = { index: z * order * order + y * order + x,
+              face: [FACE.R, FACE.U, FACE.F, FACE.L, FACE.D, FACE.B][planeIndex], plane };
             distance = d;
           }
         }
       }
     }, this);
+    return hit;
   }
 
   handleMove(): void {

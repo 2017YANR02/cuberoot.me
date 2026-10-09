@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 const app = readFileSync(new URL('./App.tsx', import.meta.url), 'utf8');
+const solo = readFileSync(new URL(import.meta.resolve('@cuberoot/timer-ui/TimerSoloPage')), 'utf8');
 const battleModes = readFileSync(new URL('./BattleModes.tsx', import.meta.url), 'utf8');
 const copy = readFileSync(new URL('./copy.ts', import.meta.url), 'utf8');
 
@@ -21,7 +22,7 @@ describe('Mobile capability surface guard', () => {
   });
 
   it('does not expose Stackmat without a native microphone adapter', () => {
-    const deviceActions = app.match(/<TimerDeviceActions[\s\S]*?\/>/)?.[0];
+    const deviceActions = app.match(/<TimerDeviceCenter[\s\S]*?\/>/)?.[0];
 
     expect(deviceActions).toBeDefined();
     expect(deviceActions).not.toContain('onMicrophone');
@@ -29,57 +30,83 @@ describe('Mobile capability surface guard', () => {
     expect(copy).not.toMatch(/coming soon|即将推出|暂未开放/i);
   });
 
+  it('uses the shared smart-cube device surface without losing direct scan', () => {
+    expect(app).toContain('<TimerSmartCubeDeviceModal');
+    expect(app).toContain('onConnect={connectSmartCube}');
+    expect(app).toContain('onDisconnect={disconnectSmartCube}');
+    expect(app).toContain('onResetState={smartCube.resetState ? resetSmartCubeState : undefined}');
+    expect(app).toContain('openOverlayRef.current = TIMER_OVERLAY_IDS.smartCubeDevice');
+    expect(app).toContain("if (smartCube.phase === 'idle' || smartCube.phase === 'error')");
+    expect(app).toContain('void connectSmartCube().catch(() => undefined)');
+    expect(app).toContain('onSelect: openSmartCubeDevice');
+    expect(app).not.toContain('onConnect={toggleSmartCube}');
+  });
+
+  it('keeps the installed timer surface aligned with the shared Web layout contract', () => {
+    expect(app).toContain('<TimerSoloPage');
+    expect(app).toContain('timing={{');
+    expect(solo).toContain('<TimingSurface {...timing}');
+    expect(solo).toContain('layout="solo"');
+    expect(app).toContain('<TimerScrambleStrip');
+    expect(app).toContain('<LiveCubeState');
+    expect(app).toContain('<TimerSmartCubeDeviceModal');
+    expect(app).toContain('<TimerDeviceCenter');
+    expect(app).not.toContain('className="live-cube-calibrate"');
+  });
+
   it('routes clipboard writes through the installed host capability', () => {
     expect(app).toContain('host.writeClipboardText');
-    expect(battleModes).toContain('writeClipboardText(room.code)');
+    expect(app).toContain('writeClipboardText={host.writeClipboardText}');
+    expect(battleModes).toContain('copyKind: "invite"');
+    expect(battleModes).toContain("writeClipboardText(`https://cuberoot.me${language === 'zh' ? '/zh' : ''}/timer?players=net&room=${room.code}`)");
     expect(`${app}\n${battleModes}`).not.toContain('navigator.clipboard');
   });
 
-  it('reuses the shared smart-cube guide and consumes an armed first turn before verification', () => {
-    const onMove = app.match(/onMove: \(move, timestamp, facelets\) => \{[\s\S]*?(?=\n    onSolved:)/)?.[0];
+  it('routes Solo smart-cube timing through the shared controller', () => {
+    const onMove = app.match(/onMove: \(move, timestamp, facelets, metadata\) => \{[\s\S]*?(?=\n    onSolved:)/)?.[0];
+    const controller = app.match(/new SmartCubeSoloTimerController\(\{[\s\S]*?\n  \}\), \[attemptSplitRecorder\]\)/)?.[0];
 
     expect(onMove).toBeDefined();
+    expect(controller).toBeDefined();
     expect(onMove).toContain('if (timerModeRef.current !== 1)');
-    expect(onMove).toContain('battleSmartCubeHandlersRef.current?.onMove');
-    expect(onMove).toContain('timer.startFromCube(timestamp)');
-    expect(onMove).not.toContain('smartCubeMoveRecorderRef.current.begin(timestamp)');
-    expect(onMove).toContain('smartCubeMoveRecorderRef.current.record(move, timestamp)');
-    expect(app).toContain('smartCubeMoveRecorderRef.current.begin(startedAtMs)');
-    expect(onMove).toContain('smartCubeGuidanceController.setRunning(true)');
-    expect(onMove).toContain('smartCubeGuidanceController.observe(facelets)');
-    expect(onMove).toContain('observation.completedNow');
-    expect(onMove).toContain("settings.bluetoothAutoReady === 'scrambled'");
+    expect(onMove).toContain('const futureHistory = metadata?.futureHistory === true');
+    expect(onMove).toContain('if (!futureHistory) battleSmartCubeHandlersRef.current?.onMove');
+    expect(onMove).toContain('smartCubeSoloController.move({ facelets, metadata, move, timestamp })');
     expect(onMove).toContain('smartCubeAnchorController.move(move)');
-    expect(onMove!.indexOf('timer.startFromCube(timestamp)'))
-      .toBeLessThan(onMove!.indexOf('smartCubeGuidanceController.observe(facelets)'));
-    expect(onMove!.indexOf("timerPhaseRef.current === 'running'"))
-      .toBeLessThan(onMove!.indexOf('!timerSupportsSmartCubeAutoTiming(event)'));
-    expect(onMove).toContain('timerSmartCubeStartsAttemptOnTurn(event)');
-    expect(onMove).toMatch(/observation\.completedNow[\s\S]*?timerSmartCubeStartsAttemptOnTurn\(event\)[\s\S]*?timer\.armFromCube\(\)/);
-    expect(onMove).toContain('attemptSplitRecorder.observeMoves');
-    expect(onMove).not.toContain('!timingEnabled ||');
-    expect(app).toContain('createSmartCubeGuidanceController');
+    expect(onMove!.indexOf('smartCubeAnchorController.move(move)'))
+      .toBeLessThan(onMove!.indexOf('smartCubeSoloController.move'));
+    expect(controller).toContain('canStartAttempt: () => attemptCanStartRef.current');
+    expect(controller).toContain('isTimingEnabled: () => timingEnabledRef.current');
+    expect(controller).toContain("autoReadyOnScramble: () => storeRef.current?.settings.bluetoothAutoReady === 'scrambled'");
+    expect(controller).toContain('startFromCube: (timestamp) => timerRef.current.startFromCube(timestamp)');
+    expect(controller).toContain('smartCubeAttemptProducerRef.current.recordMove(move, timestamp)');
+    expect(controller).toContain('attemptSplitRecorder.observeMoves');
+    expect(controller).toContain('smartCubeMoveSubscribersRef.current');
+    expect(app).toContain('smartCubeAttemptProducerRef.current.begin(startedAtMs, connectedSmartCubeRef.current)');
+    expect(app).toContain('new SmartCubeSoloTimerController');
     expect(app).toContain('id: currentScrambleEntry.id');
-    expect(app).toContain('smartCubeGuidanceController.setConnected(connected)');
-    expect(app).toContain("smartCubeGuidanceController.setRunning(timer.machine.phase === 'running')");
-    expect(app).toContain('smartCubeGuidanceController.syncFacelets(smartCube.facelets)');
+    expect(app).toContain('smartCubeSoloController.setConnected(connected)');
+    expect(app).toContain("smartCubeSoloController.setRunning(timer.machine.phase === 'running')");
+    expect(app).toContain('smartCubeSoloController.syncFacelets(smartCube.facelets)');
     expect(app).toMatch(/syncFacelets\(smartCube\.facelets\);[\s\S]*?currentScrambleEntry\?\.id,[\s\S]*?smartCube\.phase,[\s\S]*?smartCubeTarget,[\s\S]*?timer\.machine\.phase,[\s\S]*?timerMode,/);
     expect(app).toContain('hint={smartCubeGuidance.hint}');
     expect(app).toContain('correctionActive={smartCubeGuidance.correctionActive}');
+    expect(app).not.toContain('createSmartCubeGuidanceController');
     expect(app).not.toContain('verifySmartCubeScramble');
     expect(app).not.toContain('createSmartCubeFixupRequester');
     expect(app).not.toContain('smartCubeGuidanceCompleteRef');
-    expect(app).toMatch(/smartCubeMoveRecorderRef\.current\.take\(\)[\s\S]*?stageSegmentsFor\(solve\)[\s\S]*?repository\.addSolve\(solve, sessionId\)/);
+    expect(app).toMatch(/smartCubeAttemptProducerRef\.current\.finishSolveFields\(solve\)[\s\S]*?repository\.addSolve\(solve, sessionId\)/);
     expect(app).toMatch(/repository\.addSolve\(solve, sessionId\)[\s\S]*?setPendingSolves/);
     expect(app).toContain('repository.addSolve(pending.solve, pending.sessionId)');
     expect(app).toContain('onUndo={retryPendingSolve}');
     expect(app).toContain('durationMs={null}');
     expect(app).toContain('actionBusy={retryingPendingSolve}');
     expect(app).toContain('copy.saveFailed(pendingSolves.length)');
-    expect(app).toMatch(/timer\.stopFromCube\(timestamp\)\) timerPhaseRef\.current = 'stopped'/);
+    expect(app).toContain('smartCubeSoloController.solved(timestamp)');
+    expect(controller).toContain('timerRef.current.stopFromCube(timestamp)');
     // Scramble verification and the shared still/double-flick gesture are the
     // two explicit ready sources; neither may bypass the shared controller.
-    expect(app.match(/timer\.armFromCube\(\)/g)).toHaveLength(2);
+    expect(controller).toContain('timerRef.current.armFromCube()');
     expect(app).toContain('useAutoReady({');
     expect(battleModes.match(/timer\.armFromCube\(\)/g)).toHaveLength(1);
   });

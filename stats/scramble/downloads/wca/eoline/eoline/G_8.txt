@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / G / bin 8
-# Population in this bin: 69
-# Samples listed: 69 (all entries in this bin)
+# Population in this bin: 70
+# Samples listed: 70 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 30696001,F B' D' L U R D R' U2 L F' D2 B2 U2 R2 F' R2 B D2 B,G,São Paulo Open 2014 (2014-06-20~22),333ft R1 A E1
@@ -74,3 +74,4 @@
 5670401001,B2 D2 R2 B D2 F L2 B' R2 B D2 R B D L F R' F D F U',G,Brilliant Ballarat 2026 (2026-05-30~31),333 R2 A #3
 5724769001,L' D R2 U B2 U2 L2 B2 D U' B2 F' U L' F L2 B D R' U',G,Questem'paire 2026 (2026-06-27~28),333 R2 A E1
 5783649001,D2 B2 U2 B2 R' B2 R' F2 R2 F' L' D' B U2 R D L' D U,G,BC Championship 2026 (2026-08-07~09),333 R2 B E2
+5851872010,R' D' B2 L U' R' F B2 U' L U2 R2 B U2 F' L2 F' U2 F' D' B R',G,GAN WCA African Championship 2026 (2026-09-24~27),333mbf Final A #2

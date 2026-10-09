@@ -1,14 +1,14 @@
 # Scramble samples — std / xxcross / BG / bin 5
-# Population in this bin: 230
+# Population in this bin: 235
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 1779001,F U2 B' U L' F' R F' B D F R2 U R2 F2 B2 D' F2,G,Kansai Open 2014 (2014-03-21~22),333ft Final A #1
 5587689001,U L2 U2 B2 D2 L B2 L U F2 D L' R' B' L D' U' B,B,Odd Day in Hong Kong 2026 (2026-04-26),333 R1 D E1
 107292001,D2 L D2 L' B2 R U2 F2 U B2 L F' U B2 D2 U2 F' U2 R',B,SMA Winter 2015 (2015-02-07),333 R1 B #3
-114998001,L' U' F' R' L' D' L B' D L2 B R2 U2 F2 U2 R2 D2 B D2,G,Murcia 2015 (2015-03-07),333 R2 A E2
+5837276001,D' F D2 R' F2 R' B2 U2 D R F U' F R' D' U' L',B,UNSA Speedcubing Otoño II 2026 (2026-09-19),333oh Final B E1
 5714305001,D' B2 D' L' F D R U D' R2 D2 L2 B2 U' D2 B R B2 L',B,Ruta Cubera: Vila-real Open 2026 (2026-06-20~21),333bf Final B E1
 167436001,L2 F2 L2 D U2 R2 D' B2 D2 B2 R' B' F' U L U R' D' R' B',G,ŚLS Sosnowiec 2015 (2015-07-18~19),333oh R1 C #4
 189381001,L' F2 D2 L R D2 R' F2 U F L' U B R2 B' L F' L' F2,B,MCC Gamma 2015 (2015-09-13),333oh R1 C #3
@@ -141,7 +141,7 @@
 3541715001,D L' U2 F2 U2 R' F2 D2 F' D' F' U2 B D F' R2 B2 F',G,Bora Bora Barra Summer 2024 (2024-02-24~25),333 R1 B #4
 3587136010,D2 B U2 B' L2 R2 U2 R' U2 F' D2 R' U' L' R D R B2 L2 U',G,Bucharest Side Events March 2024 (2024-03-09),333mbf Final A #2
 3597235001,U R U L2 F2 D2 F2 D L2 F U2 R U' B2 U2 R' F' D,G,Utah Newcomers 2024 (2024-03-16),333 R1 A #3
-3626768012,U B2 R2 U2 R L2 B2 R2 D B2 D F2 B L F D' B' D' U L',B,TahimiKubing in MultiLupa 2024 (2024-03-31),333mbf Final A #2
+5845276001,B U2 R' U2 R U2 R' U2 R' F' D' F2 R' D B' F' L R',G,Hancock County NxNs 2026 (2026-09-26),333 R1 D #2
 3664527001,U' F2 L' U2 L U F2 R' F' L2 U2 F' L2 F2 L2 D2 F2 D2 F2,B,Fundación de Cuenca Open 2024 (2024-04-13~14),333oh R1 B #4
 3670889052,R F' B' D B2 D F' B' D2 L' U F2 D F2 U R2 U' D' L2 U2,G,New Jersey Quiet Championship 2024 (2024-04-14),333mbf Final A #1
 3775412001,F L2 B D B' L B L F D B D2 R2 F' R2,B,Mriy Diy Cubing Lviv 2024 (2024-05-18~19),333 R1 A #4
@@ -198,7 +198,7 @@
 5013726001,F' D2 B' D' F D B R2 B2 D R2 U B2 U2 R2 F2 R F2 L,B,Megaminx in Mordialloc 2025 (2025-09-13),333oh Final A #2
 5095206001,L F2 D' R2 D2 F' D' L U2 B2 D' F2 D' R2 D2 R2 U2 B,B,Makati Speedcubing Open V 2025 (2025-10-12),333 R2 A #4
 5117341001,D B2 D' L2 D2 R2 U F' U2 B' F2 R' F' D2 L' U2 R F2,B,Regina Twist 'N Treat 2025 (2025-10-18),333 R1 A #2
-5167573001,F' B2 D' F' R2 D L B2 L U' D2 R F2 R2 U2 B2 R2 L' F2,B,Guangzhou Small Cubes 2025 (2025-11-09),333 R2 D E1
+5846172001,D2 B2 R2 B2 R' F2 U2 L2 R' F2 L2 B' D2 R' F D2 F R2 B R,G,Tafalla Open 2026 (2026-09-26~27),333bf Final A #1
 5174969001,L2 U' R L B L' D2 R' F' L2 D' L2 U R2 L2 U2 F' B2 L2 U',G,Ladce Open 2025 (2025-11-08~09),333bf R1 B #2
 5177679001,R' B' L F2 L R2 D2 L' U2 B' D B F' R2 B2 L F' D B',G,Viña Cubing Fest V SC 2025 (2025-11-07~09),333mbf Final A #1
 5223982001,U2 R U B2 U2 B F L2 U2 L2 F2 L B L2 D' L F L' B2,G,Singapore Sprint November 2025 (2025-11-30),333 Final A #4

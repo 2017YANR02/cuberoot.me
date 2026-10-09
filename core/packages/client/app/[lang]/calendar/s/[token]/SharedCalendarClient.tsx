@@ -12,12 +12,13 @@ import { CalendarDays, ChevronLeft, ChevronRight, Link2, Check, Copy } from 'luc
 import BackHome from '@/components/BackHome';
 import HeaderToggles from '@/components/HeaderToggles';
 import { ListSelect } from '@/components/ListSelect';
-import { UserIdLabel } from '@/components/UserIdLabel';
+import { UserContactLink } from '@/components/UserIdLabel';
 import { useCopy } from '@/hooks/useCopy';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr, useLang } from '@/i18n/tr';
 import { localZone, isValidZone, formatOffset, zoneOffsetMinutes } from '@cuberoot/shared/tz';
 import { colorHex, readableInk } from '@/lib/calendar-colors';
+import { useEffectiveTheme } from '@/lib/theme';
 import { expandRange } from '@/lib/calendar-store';
 import { fetchPublicCalendar, icsFeedUrl, type PublicCalendar } from '@/lib/calendar-api';
 import CalendarGrid, { type GridHandle, type GridRange } from '../../_components/CalendarGrid';
@@ -38,6 +39,8 @@ function tokenFromPath(): string {
 
 export default function SharedCalendarClient() {
   const isZh = useLang() === 'zh';
+  const theme = useEffectiveTheme();
+  const eventColor = useCallback((key: string) => colorHex(key, theme), [theme]);
   const gridRef = useRef<GridHandle>(null);
   const { copied, copy } = useCopy();
 
@@ -81,8 +84,8 @@ export default function SharedCalendarClient() {
 
   const calColor = useCallback((id: number) => {
     const c = data?.calendars.find((x) => x.id === id);
-    return colorHex(c?.color ?? 'graphite');
-  }, [data]);
+    return eventColor(c?.color ?? 'graphite');
+  }, [data, eventColor]);
 
   const busyLabel = tr({ zh: '忙碌', en: 'Busy' });
 
@@ -94,13 +97,13 @@ export default function SharedCalendarClient() {
     return toFcEvents({
       occurrences,
       calendarColor: calColor,
-      colorHex,
+      colorHex: eventColor,
       readableInk,
       meKey: '',
       readOnly: true,
       busyLabel: data.detail === 'busy' ? busyLabel : undefined,
     });
-  }, [data, range.start, range.end, calColor, busyLabel]);
+  }, [data, range.start, range.end, calColor, eventColor, busyLabel]);
 
   const shareUrl = typeof window === 'undefined' ? '' : window.location.href;
 
@@ -124,9 +127,8 @@ export default function SharedCalendarClient() {
         <BackHome />
         <h1 className="cal-brand">
           <CalendarDays size={20} aria-hidden />
-          {pageTitle || tr({ zh: '共享日历', en: 'Shared calendar' })}
+          <UserContactLink userId={data?.ownerUserId}>{pageTitle || tr({ zh: '共享日历', en: 'Shared calendar' })}</UserContactLink>
         </h1>
-        <UserIdLabel userId={data?.ownerUserId} />
         {data?.detail === 'busy' && (
           <span className="cal-badge">{tr({ zh: '仅显示忙碌时段', en: 'Busy times only' })}</span>
         )}

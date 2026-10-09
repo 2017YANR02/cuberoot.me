@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_cross / Y / bin 2
-# Population in this bin: 147
-# Samples listed: 147 (all entries in this bin)
+# Population in this bin: 148
+# Samples listed: 148 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 68271001,U F2 B D' B2 D B D2 B' U R2 D B2 U L2 U' B2 D,Y,Rice University 2014 (2014-10-18),333 R2 B #3
@@ -152,3 +152,4 @@
 5688308051,F' U' F' D2 B2 D2 L' D2 R' D2 U R' U2 R2 U' B' D' U B R2,Y,More Than One Cube Shanghai 2026 (2026-06-06~07),333mbf Final A #3
 5760272001,F D2 L2 D U2 L2 F2 U' L D2 R' U R D' U' F U' B,Y,Cube4fun Nowa Sarzyna Summer 2026 (2026-07-25),333 Final A E2
 5802462001,L2 U2 B D2 R U2 L' U2 L' B2 R2 D F' D' B2 L2 R F' U2,Y,Cubing Kazakhstan Nationals 2026 (2026-08-21~23),333oh R1 B #1
+5855275001,R2 L2 U R' B2 L B U L2 D F R2 F2 D' R2 L2 F2 L2 B',Y,Cubing Skills in Almaty 2026 (2026-09-26~27),333bf Final A #4

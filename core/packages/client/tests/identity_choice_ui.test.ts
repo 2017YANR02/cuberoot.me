@@ -30,7 +30,21 @@ const done = vi.fn();
 const ticket = 'a'.repeat(43);
 const button = (label: string) => Array.from(host.querySelectorAll('button')).find((node) => node.textContent === label)!;
 const render = async () => { await act(async () => root.render(createElement(LoginForm, { onDone: done }))); };
-beforeEach(() => {
+
+const identityHandle = 'h'.repeat(43);
+const secondIdentityHandle = 'i'.repeat(43);
+function stubIdentityRequests(fallback = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => new Response('{}'))) {
+  vi.stubGlobal('fetch', async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (String(input) === '/api/identity-choice') {
+      const body = JSON.parse(String(init?.body ?? '{}'));
+      if (body.operation === 'store') return new Response(JSON.stringify({ handle: body.ticket.startsWith('b') ? secondIdentityHandle : identityHandle }));
+      if (body.operation === 'clear') return new Response('{}');
+    }
+    return fallback(input, init);
+  });
+}
+beforeEach(async () => {
+  stubIdentityRequests();
   vi.clearAllMocks(); vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
   sessionStorage.clear(); clearIdentityChoice();
   window.history.replaceState({}, '', '/account');
@@ -40,7 +54,7 @@ beforeEach(() => {
   mocks.completeIdentityChoice.mockResolvedValue({ token: 'canonical-session', user: { uid: 42, name: 'Existing' }, isNew: false });
   mocks.sendEmailCode.mockResolvedValue({ ok: true }); mocks.sendPhoneCode.mockResolvedValue({ ok: true });
   mocks.verifyEmailCode.mockReset(); mocks.verifyPhoneCode.mockReset();
-  rememberIdentityChoice(new AccountChoiceRequired({ ticket, provider: 'apple', expiresInSeconds: 900 }), '/account?auth=mobile&next=%2Fauth%2Fmobile%3FcodeChallenge%3Doriginal');
+  await rememberIdentityChoice(new AccountChoiceRequired({ ticket, provider: 'apple', expiresInSeconds: 900 }), '/account?auth=mobile&next=%2Fauth%2Fmobile%3FcodeChallenge%3Doriginal');
   host = document.createElement('div'); document.body.append(host); root = createRoot(host);
 });
 
@@ -117,20 +131,20 @@ describe('one canonical first-identity choice UI', () => {
     expect(host.textContent).toContain('Existing · ID 42');
     expect(mocks.completeIdentityChoice).not.toHaveBeenCalled();
     await act(async () => button('Confirm linking').click());
-    expect(mocks.completeIdentityChoice).toHaveBeenCalledExactlyOnceWith(ticket, 'link', 42, expect.any(AbortSignal));
+    expect(mocks.completeIdentityChoice).toHaveBeenCalledExactlyOnceWith(identityHandle, 'link', 42, expect.any(AbortSignal));
     expect(done).toHaveBeenCalledWith({ isNew: false, hasWca: false }, expect.stringContaining('codeChallenge%3Doriginal'));
     expect(getIdentityChoice()).toBeNull();
   });
   it('creates only after the explicit create button', async () => {
     await render(); await act(async () => button('Create a new account').click());
-    expect(mocks.completeIdentityChoice).toHaveBeenCalledExactlyOnceWith(ticket, 'create', undefined, expect.any(AbortSignal));
+    expect(mocks.completeIdentityChoice).toHaveBeenCalledExactlyOnceWith(identityHandle, 'create', undefined, expect.any(AbortSignal));
   });
   it('reuses the original provider form and rejects a second unknown identity', async () => {
     mocks.loginGoogle.mockRejectedValue(new AccountChoiceRequired({ ticket: 'b'.repeat(43), provider: 'google', expiresInSeconds: 900 }));
     await render(); await act(async () => button('Sign in to an existing account').click());
     expect(host.querySelectorAll('[data-mobile-auth-provider="google"]')).toHaveLength(1);
     await act(async () => button('Continue with Google').click());
-    expect(getIdentityChoice()?.ticket).toBe(ticket);
+    expect(getIdentityChoice()?.ticket).toBe(identityHandle);
     expect(host.textContent).toContain('Use one already linked to your account.');
     expect(mocks.applySession).not.toHaveBeenCalled(); expect(mocks.completeIdentityChoice).not.toHaveBeenCalled();
   });
@@ -145,7 +159,7 @@ describe('one canonical first-identity choice UI', () => {
     expect(mocks.completeIdentityChoice).toHaveBeenCalledOnce();
   });
   it('blocks confirmation when another tab changes the current account', async () => {
-    mocks.user = { uid: 42, name: 'Existing' }; updateIdentityChoice(ticket, { stage: 'confirm', expectedUid: 42 }); await render();
+    mocks.user = { uid: 42, name: 'Existing' }; updateIdentityChoice(identityHandle, { stage: 'confirm', expectedUid: 42 }); await render();
     mocks.user = { uid: 99, name: 'Other' }; await render();
     expect(button('Confirm linking').disabled).toBe(true);
     expect(host.textContent).toContain('Your account changed');
@@ -156,10 +170,10 @@ describe('one canonical first-identity choice UI', () => {
     ['phone', 'phone number', 'Your account already has another phone number. Change it in account settings.'],
   ] as const)('explains a conflicting existing %s without advising unsafe unlinking', async (provider, label, message) => {
     clearIdentityChoice();
-    rememberIdentityChoice(new AccountChoiceRequired({ ticket, provider, expiresInSeconds: 900 }), '/account');
+    await rememberIdentityChoice(new AccountChoiceRequired({ ticket, provider, expiresInSeconds: 900 }), '/account');
     mocks.user = { uid: 42, name: 'Existing' };
     mocks.completeIdentityChoice.mockRejectedValue(new Error(provider === 'email' ? 'account already has an email; change it in account settings' : 'account already has a phone; change it in account settings'));
-    updateIdentityChoice(ticket, { stage: 'confirm', expectedUid: 42 });
+    updateIdentityChoice(identityHandle, { stage: 'confirm', expectedUid: 42 });
     await render();
     expect(host.querySelector('h2')?.textContent).toBe(`Link ${label}`);
     await act(async () => button('Confirm linking').click());
@@ -180,7 +194,7 @@ describe('one canonical first-identity choice UI', () => {
   it('does not replace a changed account with a late link response', async () => {
     let resolve!: (value: unknown) => void;
     mocks.completeIdentityChoice.mockImplementation(() => new Promise((done) => { resolve = done; }));
-    mocks.user = { uid: 42, name: 'Existing' }; updateIdentityChoice(ticket, { stage: 'confirm', expectedUid: 42 }); await render();
+    mocks.user = { uid: 42, name: 'Existing' }; updateIdentityChoice(identityHandle, { stage: 'confirm', expectedUid: 42 }); await render();
     await act(async () => button('Confirm linking').click());
     mocks.user = { uid: 99, name: 'Other' };
     await act(async () => resolve({ token: 'old-account', user: { uid: 42 } }));

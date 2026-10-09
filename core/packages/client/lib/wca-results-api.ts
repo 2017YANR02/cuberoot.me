@@ -1,3 +1,4 @@
+import { competitionFetch } from '@/lib/competition-access';
 /**
  * WCA public competition results / scrambles API — ported from packages/client-vite/src/utils/wca_results_api.ts.
  * Module-level promise cache; proxy via cuberoot server with direct WCA fallback.
@@ -96,6 +97,14 @@ export function extractPersonCompetitionResults(
     })));
 }
 
+function attemptsForRecon(attempts: number[], eventId: string): (number | null)[] {
+  return attempts.map(value => {
+    if (value === 0) return null;
+    if (value < 0 || eventId === '333fm') return value;
+    return value / 100;
+  });
+}
+
 export async function fetchAttempts(
   compId: string,
   reconEvent: string,
@@ -109,11 +118,7 @@ export async function fetchAttempts(
   if (!targetRound || targetRound.results.length === 0) return null;
   const row = targetRound.results.find(r => r.wca_id === personId);
   if (!row) return null;
-  return row.attempts.map(v => {
-    if (v === 0) return null;
-    if (v < 0) return v;
-    return v / 100;
-  });
+  return attemptsForRecon(row.attempts, wcaEventId);
 }
 
 export async function fetchResultRow(
@@ -134,11 +139,7 @@ export async function fetchResultRow(
   if (!targetRound || targetRound.results.length === 0) return null;
   const row = targetRound.results.find(r => r.wca_id === personId);
   if (!row) return null;
-  const attempts = row.attempts.map(v => {
-    if (v === 0) return null;
-    if (v < 0) return v;
-    return v / 100;
-  });
+  const attempts = attemptsForRecon(row.attempts, wcaEventId);
   let bestIndex = -1;
   let bestVal = Infinity;
   for (let i = 0; i < row.attempts.length; i++) {
@@ -338,7 +339,7 @@ export async function fetchCubingAttempts(
   const wcaEventId = toWcaEventId(reconEvent);
   // 传 compId(无横杠 WCA ID),cubing.com slug 由服务端按真实比赛名推导 —— 客户端从 ID 反推
   // 会把内部大写词误拆(GuangzhouGraDUAL3x3I2026 → Guangzhou-Gra-DUAL-…)导致 404。见 /recon/cubing-attempts。
-  const url = apiUrl(`/v1/recon/cubing-attempts?compId=${encodeURIComponent(compWcaId)}&event=${encodeURIComponent(wcaEventId)}&round=${encodeURIComponent(round)}&personId=${encodeURIComponent(personId)}`);
+  const url = apiUrl(`/v1/recon/cubing-attempts?compId=${encodeURIComponent(compWcaId)}&event=${encodeURIComponent(wcaEventId)}&round=${encodeURIComponent(round)}&personId=${encodeURIComponent(personId)}&v=5`);
   try {
     const res = await fetch(url);
     if (!res.ok) return null;
@@ -361,16 +362,18 @@ interface CubingLiveData {
   resultsByRound?: Record<string, CubingLiveResult[]>;
   currentRecords?: CubingRecordsSnapshot;
 }
-const cubingLiveCache = new Map<string, Promise<CubingLiveData | null>>();
+const cubingLiveCache = new Map<string, { expires: number; promise: Promise<CubingLiveData | null> }>();
 
 function loadCubingLive(compWcaId: string): Promise<CubingLiveData | null> {
-  let p = cubingLiveCache.get(compWcaId);
-  if (!p) {
-    p = fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(compWcaId)}?v=2`))
+  const hit = cubingLiveCache.get(compWcaId);
+  if (hit && hit.expires > Date.now()) return hit.promise;
+  const p = competitionFetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(compWcaId)}?v=5`))
       .then(r => r.ok ? r.json() as Promise<CubingLiveData> : null)
       .catch(() => null);
-    cubingLiveCache.set(compWcaId, p);
-  }
+  cubingLiveCache.set(compWcaId, { expires: Date.now() + 15_000, promise: p });
+  void p.then(data => {
+    if (!data && cubingLiveCache.get(compWcaId)?.promise === p) cubingLiveCache.delete(compWcaId);
+  });
   return p;
 }
 

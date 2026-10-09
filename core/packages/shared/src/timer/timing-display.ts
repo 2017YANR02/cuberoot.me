@@ -6,8 +6,10 @@ import type { Penalty } from './types';
 
 export interface TimerTimingDisplayInput extends Pick<
   TimerTimingSettings,
-  'timingEnabled' | 'hideTime' | 'runningPrecision' | 'precision'
+  'timingEnabled' | 'hideTime'
 > {
+  precision: 0 | 1 | 2 | 3;
+  runningPrecision: 0 | 1 | 2 | 3;
   displayMs: number;
   inspectionDisplayMs: number;
   inspectionLimitSec: number;

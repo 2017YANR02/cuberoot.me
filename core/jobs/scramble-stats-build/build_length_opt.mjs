@@ -1,9 +1,9 @@
 // 长度 tab「原始/最优」切换的数据源:为 event_length_examples.json 里的样例打乱算「最优等价打乱」
-// (= 最优解的逆,同状态最少步)。本地步(需 cube48opt 表 + puzzle analyzer,均 gitignored、CI 无),
+// (= 最优解的逆,同状态最少步)。本地步(需 H48 h10 表 + puzzle analyzer,均 gitignored、CI 无),
 // 跟难度 tab 的 puzzle 管线一样手动跑 + 发布;产出独立 overlay 文件,CI 日更的 base examples 不被覆盖。
 //
 // 覆盖范围:
-//   3x3 纯面转族(333/333oh/333fm/333ft)→ cube48opt5(972M 表)整解最优,逆得最优打乱。
+//   3x3 纯面转族(333/333oh/333fm/333ft)→ 统一 H48 h10 整解最优,逆得最优打乱。
 //   222/pyram/skewb → 各自 analyzer(PUZZLE_EMIT_SOLN)整解最优,逆得最优打乱。
 //   333bf/333mbf(含 wide/旋转,改朝向)、sq1/clock/大方块 → 跳过(前端自动只显原始)。
 //
@@ -11,27 +11,21 @@
 // 同一文本(面转字母表互不冲突)→ 同一最优,故全局 byText 足够;前端按样例文本查表。
 //
 // 用法: node build_length_opt.mjs   (从 core/jobs/scramble-stats-build/ 或任意 CWD,路径自解析)
-import {
-  readFileSync, writeFileSync, existsSync, openSync, readSync, closeSync, fstatSync, statSync, mkdtempSync, rmSync,
-} from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, statSync, mkdtempSync, rmSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
-import { tmpdir, cpus } from 'node:os';
+import { fileURLToPath } from 'node:url';
+import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
-
-// 算力限额(全局规则:重计算 ≤14 线程,留核给系统)。THREADS 可覆盖(并发跑别的活时调低)。
-const SOLVE_THREADS = Number(process.env.THREADS) || Math.min(14, Math.max(1, cpus().length - 2));
+import { executableSuffix } from './pipeline_paths.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, '../../..');
 const EX = resolve(repoRoot, 'stats/scramble/event_length_examples.json');
 const OUT = resolve(repoRoot, 'stats/scramble/event_length_examples_opt.json');
 
-const OPT_MJS = resolve(repoRoot, 'core/packages/client/public/cubeopt/cube48opt5.mjs');
-const OPT_DAT = resolve(repoRoot, 'solver/tables/h48/h48prun31h5.dat');
 const ANALYZER_DIR = resolve(repoRoot, 'solver/target/release');
 
-// 纯 3x3 面转(无 wide / 旋转 / 小写)→ cube48opt 可直接吃。
+// 纯 3x3 面转(无 wide / 旋转 / 小写)→ H48 h10 可直接吃。
 const FACE_ONLY = /^[UDLRFB][2']? ?(?:[UDLRFB][2']? ?)*$/;
 const FACE_EVENTS = new Set(['333', '333oh', '333fm', '333ft']);
 const PUZZLE_BY_EVENT = { '222': '222', pyram: 'pyraminx', skewb: 'skewb' };
@@ -43,37 +37,42 @@ function invertAlg(s) {
     .join(' ');
 }
 
-// cube48opt 求解器(复刻 solver/333opt/solve.mjs makeSolver,opt5 + 972M 表,inproc K 线程)。
-async function makeCubeSolver(threads) {
-  if (!existsSync(OPT_MJS) || !existsSync(OPT_DAT)) return null;
-  const state = { last: '', sol: '' };
-  const createModule = (await import(pathToFileURL(OPT_MJS).href)).default;
-  const m = await createModule({
-    print: (t) => {
-      const s = t.match(/Solution found!:\s*(.*)/);
-      if (s) state.sol = s[1].trim().replace(/\s+/g, ' ');
-      if (/finished in/.test(t)) state.last = t;
-    },
-    printErr: () => {},
-  });
-  const base = Number(m._get_mem_ptr());
-  const fd = openSync(OPT_DAT, 'r');
-  const sz = fstatSync(fd).size;
-  const CH = 64 * 1024 * 1024;
-  const tmp = Buffer.allocUnsafe(CH);
-  for (let off = 0; off < sz;) { const g = readSync(fd, tmp, 0, Math.min(CH, sz - off), off); m.HEAPU8.set(tmp.subarray(0, g), base + off); off += g; }
-  closeSync(fd);
-  m.init(0, threads);
-  return (scr, nt) => {
-    state.last = ''; state.sol = '';
-    m.solve_scramble(scr, nt, 1, true);
-    return state.sol; // 最优解序列
-  };
+// 复用 333opt 的同一个 H10 worker；临时语料和结果不改全量 out.0.csv/counts.json。
+function solveFaceTexts(texts) {
+  const out = new Map();
+  if (texts.length === 0) return out;
+  const dir = mkdtempSync(join(tmpdir(), 'lenopt-h10-'));
+  try {
+    const corpus = join(dir, 'corpus.csv');
+    const output = join(dir, 'out.csv');
+    writeFileSync(corpus, texts.map((text, i) => `${i},${text}`).join('\n') + '\n');
+    const result = spawnSync('pnpm', ['exec', 'tsx', '../solver/333opt/solve_h10.mts', '--no-counts'], {
+      cwd: resolve(repoRoot, 'core'),
+      env: { ...process.env, CORPUS: corpus, OUT: output },
+      encoding: 'utf8',
+      maxBuffer: 16 * 1024 * 1024,
+    });
+    if (result.error || result.status !== 0) {
+      throw new Error(`H48 h10 length sample solve failed: ${String(result.error || result.status)}\n${result.stderr}`);
+    }
+    for (const row of readFileSync(output, 'utf8').trim().split('\n')) {
+      const first = row.indexOf(',');
+      const second = row.indexOf(',', first + 1);
+      const index = Number(row.slice(0, first));
+      if (first < 1 || second < 0 || !Number.isInteger(index) || index < 0 || index >= texts.length) {
+        throw new Error(`Invalid H48 h10 length sample row: ${row}`);
+      }
+      out.set(texts[index], invertAlg(row.slice(second + 1)));
+    }
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+  return out;
 }
 
 // 批量跑 puzzle analyzer(PUZZLE_EMIT_SOLN)→ Map<text, optScramble>。
 function solvePuzzleTexts(puzzleKey, texts) {
-  const exe = join(ANALYZER_DIR, `${puzzleKey}_analyzer.exe`);
+  const exe = join(ANALYZER_DIR, `${puzzleKey}_analyzer${executableSuffix}`);
   const out = new Map();
   if (!existsSync(exe) || texts.length === 0) return out;
   const dir = mkdtempSync(join(tmpdir(), 'lenopt-'));
@@ -142,19 +141,9 @@ async function main() {
   // 3x3 面转族(跳过已解)。
   const faceArr = [...faceTexts].filter((t) => !(t in byText));
   if (faceArr.length) {
-    const K = SOLVE_THREADS;
-    const solve = await makeCubeSolver(K);
-    if (!solve) {
-      console.warn(`  [3x3] 跳过:缺 cube48opt5 模块或 972M 表(${OPT_DAT})`);
-    } else {
-      let n = 0;
-      for (const text of faceArr) {
-        const sol = solve(text, K);
-        if (sol !== undefined) byText[text] = invertAlg(sol);
-        if (++n % 50 === 0) console.log(`  [3x3] ${n}/${faceArr.length}`);
-      }
-      console.log(`  [3x3] ${faceArr.length} 条 → 最优`);
-    }
+    const solved = solveFaceTexts(faceArr);
+    for (const [text, optimal] of solved) byText[text] = optimal;
+    console.log(`  [3x3] H48 h10 ${solved.size}/${faceArr.length} 条 → 最优`);
   }
 
   // 222 / pyram / skewb(跳过已解)。

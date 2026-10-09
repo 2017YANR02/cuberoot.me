@@ -219,6 +219,49 @@ describe('shared useGestureWheel pointer lifecycle', () => {
     return accepted;
   }
 
+  it.each(['touch', 'mouse'] as const)('consumes the %s stop press click even when it lands on a restored source link', (pointerType) => {
+    render({ canGesture: false, ignoreButtons: true });
+    const surface = host.querySelector('.fixture-surface')!;
+    const link = document.createElement('a');
+    link.href = '#competition';
+    const navigate = vi.fn((event: Event) => event.preventDefault());
+    link.addEventListener('click', navigate);
+    surface.appendChild(link);
+    const fixture = { pointerType, time: 100, x: 50, y: 60 };
+
+    // While running, chrome has pointer-events:none. Stopping restores it
+    // before the WebView dispatches the compatibility click at this position.
+    dispatch(surface, 'pointerdown', fixture);
+    dispatch(surface, 'pointerup', { ...fixture, time: 140 });
+    link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, detail: 1 }));
+    expect(effects.down).toHaveBeenCalledTimes(1);
+    expect(navigate).not.toHaveBeenCalled();
+
+    // A new deliberate press must still open the competition normally.
+    dispatch(link, 'pointerdown', { ...fixture, time: 200 });
+    dispatch(link, 'pointerup', { ...fixture, time: 240 });
+    link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, detail: 1 }));
+    expect(navigate).toHaveBeenCalledTimes(1);
+  });
+
+  it('preserves keyboard activation and clears click suppression when a press is cancelled', () => {
+    render({ canGesture: false, ignoreButtons: true });
+    const surface = host.querySelector('.fixture-surface')!;
+    const button = host.querySelector('button')!;
+    const activate = vi.fn();
+    button.addEventListener('click', activate);
+    const fixture = { pointerType: 'touch' as const, time: 100, x: 50, y: 60 };
+    dispatch(surface, 'pointerdown', fixture);
+    dispatch(surface, 'pointerup', { ...fixture, time: 140 });
+    button.click();
+    expect(activate).toHaveBeenCalledTimes(1);
+
+    dispatch(surface, 'pointerdown', { ...fixture, time: 200 });
+    dispatch(surface, 'pointercancel', { ...fixture, time: 240 });
+    button.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, detail: 1 }));
+    expect(activate).toHaveBeenCalledTimes(2);
+  });
+
   it('keeps a sub-slop mouse press on the normal timing path', () => {
     render();
     const surface = host.querySelector('.fixture-surface')!;
@@ -251,7 +294,6 @@ describe('shared useGestureWheel pointer lifecycle', () => {
 
   it.each([
     ['mouse', '.timer-display-value'], ['touch', '.timer-display-value'],
-    ['mouse', '.scramble-moves'], ['touch', '.scramble-moves'],
   ] as const)('keeps %s presses on %s timing-only even after dragging', (pointerType, selector) => {
     render({ ignoreButtons: true });
     const digits = host.querySelector(selector)!;
@@ -262,6 +304,18 @@ describe('shared useGestureWheel pointer lifecycle', () => {
     dispatch(surface, 'pointerup', { pointerType, time: 800, x: 200, y: 200 });
     expect(effects.down).toHaveBeenCalledTimes(1);
     expect(effects.up).toHaveBeenCalledTimes(1);
+    expect(effects.cancel).not.toHaveBeenCalled();
+    expect(effects.fire).not.toHaveBeenCalled();
+  });
+
+  it.each(['mouse', 'touch'] as const)('keeps %s scramble scrolling outside the timing path', (pointerType) => {
+    render({ ignoreButtons: true });
+    const scramble = host.querySelector('.scramble-moves')!;
+    dispatch(scramble, 'pointerdown', { pointerType, time: 0, x: 100, y: 100 });
+    dispatch(scramble, 'pointermove', { pointerType, time: 700, x: 100, y: 30 });
+    dispatch(scramble, 'pointerup', { pointerType, time: 800, x: 100, y: 30 });
+    expect(effects.down).not.toHaveBeenCalled();
+    expect(effects.up).not.toHaveBeenCalled();
     expect(effects.cancel).not.toHaveBeenCalled();
     expect(effects.fire).not.toHaveBeenCalled();
   });
@@ -412,6 +466,12 @@ describe('gesture wheel migration, theme, and i18n guards', () => {
       expect(source).not.toContain("from '@/components/GestureWheel'");
       expect(source).not.toContain("from '@/hooks/useGestureWheel'");
     }
+  });
+
+  it('keeps the live smart cube outside timer gesture handling', () => {
+    const solo = readFileSync('app/[lang]/timer/_shell/SoloView.tsx', 'utf8');
+
+    expect(solo).toMatch(/<div\s+className="timer-live-cube"\s+data-no-timer/);
   });
 
   it('keeps labels and thresholds in shared contracts and CSS on canonical tokens', () => {

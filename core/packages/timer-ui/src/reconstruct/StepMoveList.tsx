@@ -189,9 +189,9 @@ export default function StepMoveList({
                   {/* 「第 n 对」和它的徽章跟动作同一行 —— 一对 F2L 是一件事,
                       拆两行读起来是两件,四对就白占四行。窄屏由 flex-wrap 兜。 */}
                   <div className="sml-body">
-                    {g.key === 'f2l' && (
+                    {g.key === 'f2l' && line.key.startsWith('slot-') && (
                       <span className="sml-sub-name">
-                        {tr({ zh: `第 ${i + 1} 组`, en: `Slot ${i + 1}` })}
+                        {`F2L-${i + 1}`}
                       </span>
                     )}
                     {grade && <span className={`sa-grade ${grade}`}>{gradeLabel(tr)}</span>}

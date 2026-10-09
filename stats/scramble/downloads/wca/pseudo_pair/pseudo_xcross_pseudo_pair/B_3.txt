@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / B / bin 3
-# Population in this bin: 650
+# Population in this bin: 655
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 3323001,D B2 D' U2 R2 D' L2 U' R2 U' B R' B2 L B L R2 B F2 R2,B,CMI Fiesta Open 2014 (2014-03-21~23),333oh R2 G #2
@@ -113,7 +113,7 @@
 4653542001,F D2 L2 D2 B2 U F2 U' B2 L2 R F' D2 B2 U2 L U' R2 F2,B,Intermoda BSD Sides Day 2025 (2025-04-12),333 R1 A #2
 3315260001,R2 U' R' U2 L U2 R B2 R' U F R F' D' F2 R B',B,ZGZ Open 2023 (2023-12-02~03),333 R1 D E2
 660854024,B2 U2 L2 U L2 B2 L2 R B U' B2 F D2 R2 F L2 B L' D2,B,Uberlândia Open 2015 (2015-10-31~11-01),333mbf Final A #2
-2763704001,D' U R2 U F2 R' B' D2 U R D2 B D2 B2 L' R' F2,B,Solved Central Alberta 2023 (2023-05-27),333oh Final D E1
+5847498001,B' F2 L2 R2 D R2 D' U' L2 F2 U2 F U L F' L' B U F' U,B,Kölner Kubing 2026 (2026-09-25~27),333 R1 A #4
 1456679001,F' L2 R2 D2 B R2 U2 R2 F R U' F D' U2 F' U2 B D2 U',B,Indianapolis Cubes Winter 2019 (2019-12-14),333 R2 D E2
 1540081001,B2 F2 L' D2 B2 R2 U2 B2 R F' R U2 B' D2 L2 U' L' U2 R2 U,B,Fontwell Open 2020 (2020-02-08~09),333bf Final A #2
 661174017,U B2 D U2 F2 L2 U' F2 U' B2 L B D' U' F L' D' B' D' L' D L2 U,B,Basauri Open 2016 (2016-11-12~13),333mbf Final A #2
@@ -167,7 +167,7 @@
 4316828001,B2 L' D' F D2 R2 B' L2 F D2 B' R' F2 U' R U B' D B',B,Books and Cubes at Liszt 2024 (2024-11-23),333oh R1 C E1
 5317251001,D2 L2 B2 D2 B2 R2 B' D2 L2 F' U R' D' F2 L B' F D U2 R,B,Super Duper San Diego 2026 (2026-01-09~11),333oh Final A #4
 884313001,B U2 F U2 B2 D2 F R' B2 F2 D2 R D L2 D' B' D' L' D L B',B,Stratford-upon-Avon Open 2018 (2018-09-22~23),333bf Final B #1
-5413659014,F' U B L D2 R B2 F2 D2 B2 L U2 L U B2 L' F U' F D L B2,B,Blind League Dobřejovice I: Hearthborn 2026 (2026-02-28),333mbf Final A #1
+5845296001,F U2 D' B' R2 F' B2 D2 R' D R2 D R2 U2 B2 U' L2 F D,B,Hancock County NxNs 2026 (2026-09-26),333 R2 B #3
 5147002001,D R2 F D2 B' L2 B' L2 F2 U B2 D F' R' F' L' R U2,B,Fall Fiesta Cubes Honduras 2025 (2025-11-01),333 R1 B #2
 888748001,F2 L2 D2 U L2 D R2 F2 D F' U' B2 L' U' L' B2 R F' U,B,Oakville Limited Fall 2018 (2018-09-29),333 Final A #1
 889143001,B' D2 F2 U2 B' U2 B U2 B' R D R U R2 D U' R2 B D2,B,Princeton Fall 2018 (2018-09-29),333oh Final D #3

@@ -1,4 +1,5 @@
 'use client';
+import './compact-select.css';
 
 import {
   OLL_CASES,
@@ -20,7 +21,6 @@ import { createPortal } from 'react-dom';
 
 import { ClearButton } from './ClearButton';
 import { modalFocusableElements } from './modal-focus';
-import { TimerPillToggle } from './TimerPillToggle';
 
 export interface TimerDrillPickerProps {
   activeCase?: TimerDrillTarget | null;
@@ -165,13 +165,15 @@ export function TimerDrillPicker({
 
         <div className="timer-drill-picker__toolbar">
           <span data-drill-type={type}>
-            <TimerPillToggle
-              ariaLabel={copy.typeLabel[language]}
-              offLabel="PLL"
-              onChange={(oll) => selectType(oll ? 'oll' : 'pll')}
-              onLabel="OLL"
-              value={type === 'oll'}
-            />
+            <select
+              value={String(type === 'oll')}
+              onChange={event => { const oll = event.currentTarget.value === 'true'; selectType(oll ? 'oll' : 'pll'); }}
+              aria-label={copy.typeLabel[language]}
+              className="native-select"
+            >
+              <option value="true">{"OLL"}</option>
+              <option value="false">{"PLL"}</option>
+            </select>
           </span>
           {activeCase && (
             <button

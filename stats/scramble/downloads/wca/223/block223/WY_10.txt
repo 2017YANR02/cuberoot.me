@@ -1,8 +1,8 @@
 # Scramble samples — 223 / block223 / WY / bin 10
-# Population in this bin: 921
+# Population in this bin: 927
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 3307504001,R2 F U R' B U R F R2 D' L2 U' B2 U2 R2 F2 R F' L',W,Texas Championship 2023 (2023-12-02~03),333 R2 C E1
@@ -119,7 +119,7 @@
 525465001,D L2 D R2 B2 U' B2 F2 D F2 D' B' D' R U B R2 D2 L' F' L2,W,McDonogh Worlds Qualifier 2017 (2017-06-04),333oh Final A #2
 5085161001,B' D R D2 F2 R' U2 F2 D2 R B2 L2 B R' D B2 U2 F R2 U2,W,Cubing for Yuval Israel 2025 (2025-10-08~09),333oh Final A #3
 3321126001,D B U D2 R F2 B2 U F D2 B2 R2 U2 F' L2 B' R2 L2 U2 L,W,Kőbánya Advent 2023 (2023-12-09),333 R1 B #3
-536713001,F' D2 F U2 R2 B L2 B U' F' D2 B' L' R' D2 L D' L' B,W,Windsor Classic 2017 (2017-06-24),333 R1 D #2
+5831986011,L' D2 L' B R U B2 L2 B2 L2 U2 L2 B U B F' U' L' D2 B R,W,Les Beaupreau du Blind 2026 (2026-09-12~13),333mbf Final A #2
 1328731001,U' L2 U' B2 U F2 L2 D2 U2 L D' B' L R' F L B2 U' R2 F',W,Santa Barbara Fall 2019 (2019-09-28),333 R2 A #4
 1552977013,D' B L U D L U2 L' F' R U F2 U2 D F2 U L2 B2 R2 F2 D,W,Kiev Super Blind 2020 (2020-02-15~16),333mbf Final B #1
 1864638001,F2 L2 U L' U R2 D L2 F' D2 L' D2 L2 U2 R D2 R F2 R',W,Saint John's Spring 2022 (2022-04-09),333 R1 A #1
@@ -201,7 +201,7 @@
 741965001,D' L2 R2 D2 F2 L2 U B2 F2 U2 L F2 R' U B' L U2 B2 L F L',W,Cube-A-POOLooza 2018 (2018-03-31),333 Final B #4
 3143348001,U' R2 D2 R2 B2 D' U' L' D L' F' R2 F L R2 B' L' F2,W,Gurugram Cube Open 2023 (2023-10-07~08),333 R1 B E1
 1661935001,R' U L U2 R' B2 F2 D2 R' F2 L D2 F' D' B U F L' R' D2,W,Wuhan Open 2021 (2021-06-05),333 R1 C #3
-1599261021,L2 B D2 L2 D2 F D2 B' F U2 R B' D' U F U2 L D' R2 F' U L' F,W,Side 'n Blind Forserum 2020 (2020-03-06~08),333mbf Final B #3
+5845890001,L2 R U2 R' D2 B2 U2 R2 D2 L' U B U2 R' B2 D U F' U' B,W,UC Canterbury Open 2026 (2026-09-26),333 R1 B #1
 4105486036,L2 U' R' U2 R2 F2 D2 F R2 B' D2 L2 B2 R D2 B R U' B D B R',W,SacQuiet Fall 2024 (2024-09-15),333mbf Final A #2
 4798521001,U' R' D2 L2 B' D L' D' L2 U2 L2 F2 L2 U2 F2 U R' B' D' L B',W,VIC Side State Championship 2025 (2025-06-14~15),333mbf Final A #1
 5413659021,U' F2 R' B2 D L2 F2 L2 F2 U2 B2 D2 U' R D U2 B U B' F' L,W,Blind League Dobřejovice I: Hearthborn 2026 (2026-02-28),333mbf Final A #1

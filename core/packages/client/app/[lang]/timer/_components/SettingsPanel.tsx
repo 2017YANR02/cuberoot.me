@@ -1,55 +1,29 @@
 'use client';
+import { TimerSyncSeedSettings, TimerRankSettings, TimerBackupSettings, TimerImportSettings, TimerReanalyzeSettings, TimerDisplaySettings, TimerSoundSettings, TimerMetronomeSettings } from '@cuberoot/timer-ui';
 
 /**
  * Settings panel — modal launched from the topbar gear button.
  */
 
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
-import {
-  Bluetooth,
-  CloudDownload,
-  CloudUpload,
-  Database,
-  Dices,
-  Download,
-  FileSpreadsheet,
-  FileText,
-  Keyboard,
-  LogIn,
-  Palette,
-  RefreshCw,
-  Target,
-  Timer as TimerIcon,
-  Trophy,
-  Volume2,
-} from 'lucide-react';
-import { formatTargetTime, parseDailySolveGoal, parseTargetTime, resetSettings, updateSettings, useSettings } from '../_lib/settings';
-import TimerFontPicker from '@/components/TimerFontPicker';
+import { useEffect, useId, useRef, useState } from 'react';
+import { getSettings, resetSettings, updateSettings, useSettings } from '../_lib/settings';
+import { TimerKeymapSettings, TimerGoalSettings, TimerRoundSettings, TimerSettingsPanel, TimerTypographySettings } from '@cuberoot/timer-ui';
 import { warmupSound, play, playInspectionBeep } from '../_lib/sound';
 import { isVoiceAvailable } from '../_lib/sound/voice';
-import { getSeedCounter, resetSeedCounter } from '../_lib/scramble';
-import {
-  exportJson, exportSpeedstacks, importJson, inspectImportJson, listBackups,
-  importNamedSessions, loadAll, pushBackup, restoreBackup,
-  type BackupEntry,
-} from '../_lib/storage/db';
-import { parseCstimerExport } from '../_lib/storage/import_cstimer';
-import { isDctimerDatabase, parseDctimerExport } from '../_lib/storage/import_dctimer';
-import {
-  planTimerImport,
-  type TimerImportSession,
-  type TimerImportSource,
-} from '../_lib/storage/import_timer';
+import { resetTimerSyncSeed } from '@cuberoot/shared/timer/sync-seed';
+import { exportJson, exportSpeedstacks, importJson, inspectImportJson, listBackups, importNamedSessions, loadAll, pushBackup, restoreBackup } from '../_lib/storage/db';
+
+
+
 import { exportCstimerJson } from '../_lib/storage/export_cstimer';
 import { exportSolvesCsv } from '../_lib/storage/export_csv';
-import { uploadBackup, restoreFromCloud, fetchBackupMeta, formatSyncTime, type CloudBackupMeta } from '../_lib/storage/cloud';
-import { useAuthStore } from '@/lib/auth-store';
+import { uploadBackup, restoreFromCloud, fetchBackupMeta } from '../_lib/storage/cloud';
+import { getSessionToken, useAuthStore } from '@/lib/auth-store';
 import { useRankCountry } from '../_shared/use-rank-country';
 import { reanalyzeAll } from '../_lib/storage/reanalyze';
-import { EVENTS, eventInfo, type EventId } from '../_lib/types';
+import { type EventId } from '../_lib/types';
+
 import {
-  TIMER_SETTING_CATEGORY_CONTRACTS,
-  TIMER_RANK_SCOPES,
   timerSettingFieldContract,
   timerSettingFieldStates,
   timerWcaScrambleEventId,
@@ -57,35 +31,17 @@ import {
   type TimerSettingCategoryId,
   type TimerSettingFieldId,
 } from '@cuberoot/shared/timer';
-import {
-  TimerAttemptSplitSettings,
-  TimerScramblePreviewSettings,
-  TimerBooleanSettingRow,
-  TimerTimingSettingsSections,
-  TimerSmartCubeSettingsFields,
-  type TimerBooleanControlProps,
-} from '@cuberoot/timer-ui';
+import { TimerAttemptSplitSettings, TimerScramblePreviewSettings, TimerBooleanSettingRow, TimerTimingSettingsSections, TimerSmartCubeSettingsFields, type TimerBooleanControlProps } from '@cuberoot/timer-ui';
 import { canUseRandomOptimal333 } from '../_lib/scramble/optimal333_pool';
-import CubeOrientationSelect from '@/components/CubeOrientationSelect';
-import { useMetronome, setMetronome, tapTempo, bpmToTps, BPM_MIN, BPM_MAX } from '@/lib/metronome';
+import { TimerPreScrambleSettings, TimerColorNeutralSetting } from '@cuberoot/timer-ui';
+import { useMetronome, setMetronome, tapTempo } from '@/lib/metronome';
 import { CountryInput } from '@/components/CountryInput';
-import PillToggle from '@/components/PillToggle/PillToggle';
+
 import SharedBoolToggle from '@/components/BoolToggle';
-import { ClearButton } from '@/components/ClearButton';
-import ResetDefaultsButton from '@/components/ResetDefaultsButton';
+import { TimerResetSettings, TimerExportSettings } from '@cuberoot/timer-ui';
 import { tr } from '@/i18n/tr';
-import { useModalDismiss } from '@/hooks/useModalDismiss';
-import type { RoundFormat } from '@cuberoot/shared/timer';
-import {
-  TIMER_ACTIONS,
-  bindingsForAction,
-  formatBinding,
-  rebindTimerAction,
-  resolveKeymap,
-  timerRebindCaptureDecision,
-  unbindTimerAction,
-  type TimerActionId,
-} from '../_lib/keymap';
+
+
 // .settings-row* 原语来自 wca-source.css(现已提取到共享 components/)—— 以前靠
 // WcaSourceConfig 顺带 import 进来,「打乱来源」那节移出后这里得自己 import,否则每个 Row 掉样式。
 import '@/components/wca-source.css';
@@ -94,6 +50,7 @@ interface Props {
   onClose: () => void;
   /** Current event — target-time setting applies to this event. */
   event: EventId;
+  mergeSlotRef: (element: HTMLDivElement | null) => void;
   /** Called after the local DB is wholesale-replaced (cloud restore) so the host can refresh. */
   onDataReplaced?: () => void;
 }
@@ -121,37 +78,12 @@ function SettingsSection({ category, activeCategory, title, children, headerCont
   );
 }
 
-export default function SettingsPanel({ onClose, event, onDataReplaced }: Props) {
+export default function SettingsPanel({ onClose, event, mergeSlotRef, onDataReplaced }: Props) {
   const s = useSettings();
   const optimalUser = useAuthStore((st) => st.user);
   const metro = useMetronome();
   const [activeCategory, setActiveCategory] = useState<TimerSettingCategoryId>('timer');
-  const dialogRef = useRef<HTMLDivElement | null>(null);
-  const mainRef = useRef<HTMLElement | null>(null);
-  const categoryIcons = {
-    timer: TimerIcon,
-    'smart-cube': Bluetooth,
-    scramble: Dices,
-    training: Trophy,
-    appearance: Palette,
-    sound: Volume2,
-    data: Database,
-    advanced: Keyboard,
-  } as const;
-  const categories = TIMER_SETTING_CATEGORY_CONTRACTS.map((category) => ({
-    id: category.id,
-    label: tr(category.label),
-    icon: categoryIcons[category.id],
-  }));
-  const activeCategoryMeta = categories.find((category) => category.id === activeCategory)!;
-  useModalDismiss(onClose);
-  useEffect(() => {
-    mainRef.current?.scrollTo({ top: 0 });
-  }, [activeCategory]);
-  const [seedTick, setSeedTick] = useState(0);
-  const [seedDraft, setSeedDraft] = useState<string>(() => s.syncSeed ?? '');
   // Keep draft in sync when the active seed changes externally (e.g. settings reset).
-  useEffect(() => { setSeedDraft(s.syncSeed ?? ''); }, [s.syncSeed]);
 
   // WCA 真题沿用各项目既有的同态最优能力；随机状态只接三阶云端最优表。
   // 偏好本身不清空，切回可用来源/项目时自动恢复。
@@ -160,232 +92,17 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
   const optimalAvailable = s.scrambleSource === 'wca'
     ? hasOptimal
     : canUseRandomOptimal333(event, s.scrambleSource, !!optimalUser, s.syncSeed);
-  // Target-time input is a free-form string while editing; commit on blur /
-  // Enter. Empty / invalid / non-positive → clear the per-event target.
-  const currentTargetMs: number | null = (() => {
-    const v = s.targetMsByEvent[event];
-    return typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : null;
-  })();
-  const [targetInput, setTargetInput] = useState<string>(() => formatTargetTime(currentTargetMs));
-  // Keep input in sync when user changes event while modal is open.
-  useEffect(() => {
-    setTargetInput(formatTargetTime(currentTargetMs));
-  }, [event, currentTargetMs]);
-
-  function commitTargetInput(raw: string): void {
-    const parsed = parseTargetTime(raw);
-    const next = { ...s.targetMsByEvent };
-    if (parsed === null) {
-      delete next[event];
-    } else {
-      next[event] = parsed;
-    }
-    updateSettings({ targetMsByEvent: next });
-    setTargetInput(formatTargetTime(parsed));
-  }
-
-  // Daily solve-count goal — free-form string while editing, commit on
-  // blur / Enter. Empty / 0 / non-positive → null (disable the pill).
-  const currentDailyGoal: number | null =
-    typeof s.dailySolveGoal === 'number' && Number.isFinite(s.dailySolveGoal) && s.dailySolveGoal > 0
-      ? Math.floor(s.dailySolveGoal)
-      : null;
-  const [goalInput, setGoalInput] = useState<string>(() =>
-    currentDailyGoal === null ? '' : String(currentDailyGoal),
-  );
-  useEffect(() => {
-    setGoalInput(currentDailyGoal === null ? '' : String(currentDailyGoal));
-  }, [currentDailyGoal]);
-  function commitGoalInput(raw: string): void {
-    const parsed = parseDailySolveGoal(raw);
-    updateSettings({ dailySolveGoal: parsed });
-    setGoalInput(parsed === null ? '' : String(parsed));
-  }
-
-  // Round-simulation cutoff / time limit. Free-form while editing, committed on
-  // blur or Enter, exactly like the target-time field above — and parsed by the
-  // same `parseTargetTime`, so `1:00`, `60`, `10.50` all mean what they look like.
-  const [roundCutoffInput, setRoundCutoffInput] = useState<string>(() => formatTargetTime(s.round.cutoffMs));
-  const [roundLimitInput, setRoundLimitInput] = useState<string>(() => formatTargetTime(s.round.limitMs));
-  useEffect(() => {
-    setRoundCutoffInput(formatTargetTime(s.round.cutoffMs));
-    setRoundLimitInput(formatTargetTime(s.round.limitMs));
-  }, [s.round.cutoffMs, s.round.limitMs]);
-  function commitRoundLimitField(field: 'cutoffMs' | 'limitMs', raw: string): void {
-    const parsed = parseTargetTime(raw);
-    updateSettings({ round: { ...s.round, [field]: parsed } });
-    (field === 'cutoffMs' ? setRoundCutoffInput : setRoundLimitInput)(formatTargetTime(parsed));
-  }
-
-  const [beepAtInput, setBeepAtInput] = useState<string>(() => (s.inspectionBeepAt ?? []).join(','));
-  useEffect(() => {
-    setBeepAtInput((s.inspectionBeepAt ?? []).join(','));
-  }, [s.inspectionBeepAt]);
-  function commitBeepAtInput(raw: string): void {
-    const out: number[] = [];
-    for (const p of raw.split(/[,，\s]+/).map(x => x.trim()).filter(Boolean)) {
-      const n = Math.floor(Number(p));
-      if (Number.isFinite(n) && n >= 1 && n <= 60 && !out.includes(n)) out.push(n);
-    }
-    out.sort((a, b) => a - b);
-    updateSettings({ inspectionBeepAt: out });
-    setBeepAtInput(out.join(','));
-  }
-
-  // Tap-to-tempo — the rolling-window math lives in lib/metronome so this row
-  // and the floating panel stay one implementation.
-  const tapResetTimerRef = useRef<number | null>(null);
-  const [tapBpmHint, setTapBpmHint] = useState<number | null>(null);
-
-  function tapBpm(): void {
-    const bpm = tapTempo();
-    if (bpm != null) {
-      setMetronome({ bpm });
-      setTapBpmHint(bpm);
-    }
-    if (tapResetTimerRef.current !== null) {
-      window.clearTimeout(tapResetTimerRef.current);
-    }
-    tapResetTimerRef.current = window.setTimeout(() => {
-      tapResetTimerRef.current = null;
-      setTapBpmHint(null);
-    }, 3000);
-  }
-
-  useEffect(() => {
-    return () => {
-      if (tapResetTimerRef.current !== null) window.clearTimeout(tapResetTimerRef.current);
-    };
-  }, []);
-
-  useEffect(() => {
-    const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    dialogRef.current?.focus({ preventScroll: true });
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Tab' || !dialogRef.current) return;
-      const focusable = Array.from(dialogRef.current.querySelectorAll<HTMLElement>(
-        'button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])',
-      )).filter((element) => !element.hasAttribute('hidden') && element.getClientRects().length > 0);
-      if (focusable.length === 0) {
-        e.preventDefault();
-        dialogRef.current.focus();
-        return;
-      }
-      const first = focusable[0]!;
-      const last = focusable[focusable.length - 1]!;
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => {
-      window.removeEventListener('keydown', onKey);
-      previouslyFocused?.focus({ preventScroll: true });
-    };
-  }, [onClose]);
-
-  // ── External timer import state ──
-  const timerFileRef = useRef<HTMLInputElement | null>(null);
-  const [timerImportSource, setTimerImportSource] = useState<TimerImportSource | null>(null);
-  const [timerImportSessions, setTimerImportSessions] = useState<TimerImportSession[] | null>(null);
-  const [timerImportTargets, setTimerImportTargets] = useState<Record<string, EventId>>({});
-  const [timerBulkImported, setTimerBulkImported] = useState(false);
-  const [timerImportBusy, setTimerImportBusy] = useState(false);
-
-  const timerImportPlan = timerImportSessions
-    ? planTimerImport(timerImportSessions, timerImportTargets)
-    : null;
-  const timerImportSolveCount = timerImportPlan?.solveCount ?? 0;
-  const timerImportUnresolvedCount = timerImportPlan?.unresolvedSessionIds.length ?? 0;
-
   // ── Import / export status ──
   const [ioMsg, setIoMsg] = useState<string | null>(null);
   const ioMsgTimerRef = useRef<number | null>(null);
-  const [backupEntries, setBackupEntries] = useState<BackupEntry[] | null>(null);
 
   // ── Cloud backup state ──
   const user = useAuthStore((st) => st.user);
   const { accountCountry: rankAccountCountry } = useRankCountry();
   const login = useAuthStore((st) => st.login);
-  const [cloudMsg, setCloudMsg] = useState<string | null>(null);
-  const cloudMsgTimerRef = useRef<number | null>(null);
-  const [cloudBusy, setCloudBusy] = useState(false);
-  const [cloudMeta, setCloudMeta] = useState<CloudBackupMeta | null>(null);
-
-  // Read the cloud snapshot metadata once when logged in (lightweight, no blob).
-  useEffect(() => {
-    if (!user) { setCloudMeta(null); return; }
-    let alive = true;
-    fetchBackupMeta()
-      .then((m) => { if (alive) setCloudMeta(m); })
-      .catch(() => { if (alive) setCloudMeta({ exists: false }); });
-    return () => { alive = false; };
-  }, [user]);
-
-  function flashCloudMsg(msg: string): void {
-    setCloudMsg(msg);
-    if (cloudMsgTimerRef.current !== null) window.clearTimeout(cloudMsgTimerRef.current);
-    cloudMsgTimerRef.current = window.setTimeout(() => {
-      setCloudMsg(null);
-      cloudMsgTimerRef.current = null;
-    }, 2500);
-  }
-
-  async function onCloudUpload(): Promise<void> {
-    setCloudBusy(true);
-    try {
-      const { updatedAt, solveCount, byteSize } = await uploadBackup();
-      setCloudMeta({ exists: true, solveCount, updatedAt, byteSize });
-      flashCloudMsg(tr({ zh: `已上传 ${solveCount} 条到云端`, en: `Uploaded ${solveCount} solves` }));
-    } catch {
-      flashCloudMsg(tr({ zh: '上传失败,请重试', en: 'Upload failed, try again'
-    }));
-    } finally {
-      setCloudBusy(false);
-    }
-  }
-
-  async function onCloudRestore(): Promise<void> {
-    const ok = window.confirm(tr({ zh: '将用云端备份覆盖本地全部成绩,本地未上传的成绩会丢失。确定继续?', en: 'This replaces ALL local solves with the cloud backup. Unsynced local solves will be lost. Continue?'
-    }));
-    if (!ok) return;
-    setCloudBusy(true);
-    try {
-      const result = await restoreFromCloud();
-      if (result === 'ok') {
-        onDataReplaced?.();
-        flashCloudMsg(tr({ zh: '已从云端恢复', en: 'Restored from cloud'
-        }));
-      } else if (result === 'invalid') {
-        flashCloudMsg(tr({ zh: '云端备份损坏,无法恢复', en: 'Cloud backup is corrupt'
-        }));
-      } else {
-        flashCloudMsg(tr({ zh: '云端暂无备份', en: 'No cloud backup yet'
-        }));
-      }
-    } catch {
-      flashCloudMsg(tr({ zh: '恢复失败,请重试', en: 'Restore failed, try again'
-    }));
-    } finally {
-      setCloudBusy(false);
-    }
-  }
-
-  // ── Reanalyze stage data state ──
-  const [reanalyzeBusy, setReanalyzeBusy] = useState(false);
-  const [reanalyzeProgress, setReanalyzeProgress] = useState<{ scanned: number; total: number } | null>(null);
-  const [reanalyzeMsg, setReanalyzeMsg] = useState<string | null>(null);
-  const reanalyzeMsgTimerRef = useRef<number | null>(null);
-
   useEffect(() => {
     return () => {
       if (ioMsgTimerRef.current !== null) window.clearTimeout(ioMsgTimerRef.current);
-      if (reanalyzeMsgTimerRef.current !== null) window.clearTimeout(reanalyzeMsgTimerRef.current);
-      if (cloudMsgTimerRef.current !== null) window.clearTimeout(cloudMsgTimerRef.current);
     };
   }, []);
 
@@ -396,34 +113,6 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
       setIoMsg(null);
       ioMsgTimerRef.current = null;
     }, 2000);
-  }
-
-  async function onReanalyze(): Promise<void> {
-    if (reanalyzeBusy) return;
-    setReanalyzeBusy(true);
-    setReanalyzeMsg(null);
-    setReanalyzeProgress({ scanned: 0, total: 0 });
-    try {
-      const result = await reanalyzeAll(p => {
-        setReanalyzeProgress({ scanned: p.scanned, total: p.total });
-      });
-      const msg = tr({
-        zh: `已更新 ${result.updated} 条成绩，涉及 ${result.eventsTouched.length} 个项目`,
-        en: `Updated ${result.updated} solves across ${result.eventsTouched.length} events`,
-      });
-      setReanalyzeMsg(msg);
-      if (reanalyzeMsgTimerRef.current !== null) window.clearTimeout(reanalyzeMsgTimerRef.current);
-      reanalyzeMsgTimerRef.current = window.setTimeout(() => {
-        setReanalyzeMsg(null);
-        reanalyzeMsgTimerRef.current = null;
-      }, 2000);
-    } catch {
-      setReanalyzeMsg(tr({ zh: '重算失败', en: 'Reanalyze failed'
-    }));
-    } finally {
-      setReanalyzeBusy(false);
-      setReanalyzeProgress(null);
-    }
   }
 
   function downloadText(contents: string, mime: string, fileName: string): void {
@@ -501,137 +190,6 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
     }));
   }
 
-  function importTimerSessionsAsNew(
-    sessions: readonly TimerImportSession[],
-    targets: Readonly<Record<string, EventId>>,
-  ): boolean {
-    const plan = planTimerImport(sessions, targets);
-    if (plan.unresolvedSessionIds.length > 0) {
-      alert(tr({
-        zh: `请先为 ${plan.unresolvedSessionIds.length} 个未识别的分组选择项目。`,
-        en: `Choose an event for ${plan.unresolvedSessionIds.length} unrecognized groups first.`,
-      }));
-      return false;
-    }
-
-    const result = importNamedSessions(plan.sessions);
-    if (!result) {
-      alert(tr({ zh: '整体导入失败，请检查存储空间后重试。', en: 'Bulk import failed. Check storage space and try again.' }));
-      return false;
-    }
-
-    setTimerBulkImported(true);
-    onDataReplaced?.();
-    flashIoMsg(tr({
-      zh: `已新建 ${result.sessionCount} 个会话并导入 ${result.solveCount} 条成绩`,
-      en: `Created ${result.sessionCount} sessions and imported ${result.solveCount} solves`,
-    }));
-    return true;
-  }
-
-  function stageOrImportTimerSessions(
-    source: TimerImportSource,
-    sessions: TimerImportSession[],
-  ): void {
-    setTimerImportSource(source);
-    setTimerImportSessions(sessions);
-    setTimerImportTargets({});
-    setTimerBulkImported(false);
-
-    const plan = planTimerImport(sessions);
-    if (plan.unresolvedSessionIds.length > 0) {
-      flashIoMsg(tr({
-        zh: `已读取 ${sessions.length} 个分组，请为 ${plan.unresolvedSessionIds.length} 个未识别分组选择项目`,
-        en: `Read ${sessions.length} groups; choose events for ${plan.unresolvedSessionIds.length} unrecognized groups`,
-      }));
-      return;
-    }
-    importTimerSessionsAsNew(sessions, {});
-  }
-
-  async function onTimerImportFile(e: React.ChangeEvent<HTMLInputElement>): Promise<void> {
-    const file = e.target.files?.[0];
-    e.target.value = ''; // allow re-selecting the same file
-    if (!file) return;
-    setTimerImportBusy(true);
-    setTimerImportSource(null);
-    setTimerImportSessions(null);
-    setTimerImportTargets({});
-    setTimerBulkImported(false);
-    try {
-      const bytes = new Uint8Array(await file.arrayBuffer());
-      if (isDctimerDatabase(bytes)) {
-        const sessions = await parseDctimerExport(bytes);
-        if (sessions.length === 0) {
-          alert(tr({
-            zh: '这个 SQLite 文件不是可识别的 dcTimer 数据库。',
-            en: 'This SQLite file is not a recognized dcTimer database.',
-          }));
-          return;
-        }
-        stageOrImportTimerSessions('dcTimer', sessions);
-        return;
-      }
-
-      const text = new TextDecoder().decode(bytes);
-      const nativePreview = inspectImportJson(text);
-      if (nativePreview) {
-        const shouldReplace = confirm(tr({
-          zh: `这个备份包含 ${nativePreview.sessionCount} 个会话、${nativePreview.solveCount} 条成绩。导入会覆盖当前全部成绩，是否继续？`,
-          en: `This backup contains ${nativePreview.sessionCount} sessions and ${nativePreview.solveCount} solves. Importing replaces all current solves. Continue?`,
-        }));
-        if (!shouldReplace) return;
-        if (!importJson(text)) {
-          alert(tr({ zh: '导入失败，请重试。', en: 'Import failed. Try again.' }));
-          return;
-        }
-        setTimerImportSource(null);
-        setTimerImportSessions(null);
-        setTimerImportTargets({});
-        setTimerBulkImported(false);
-        onDataReplaced?.();
-        flashIoMsg(tr({ zh: 'CubeRoot 备份已导入', en: 'CubeRoot backup imported' }));
-        return;
-      }
-      const sessions = parseCstimerExport(text);
-      if (sessions.length === 0) {
-        alert(tr({ zh: '未识别为 CubeRoot 备份、csTimer 或 dcTimer 导出文件。', en: 'Not a recognized CubeRoot backup, csTimer export, or dcTimer export.'
-        }));
-        return;
-      }
-      stageOrImportTimerSessions('csTimer', sessions);
-    } catch {
-      alert(tr({ zh: '读取文件失败。', en: 'Failed to read file.'
-      }));
-    } finally {
-      setTimerImportBusy(false);
-    }
-  }
-
-  function importAllTimerSessions(): void {
-    if (!timerImportSessions || timerImportSessions.length === 0) return;
-    importTimerSessionsAsNew(timerImportSessions, timerImportTargets);
-  }
-
-  async function showBackupPicker(): Promise<void> {
-    if (backupEntries !== null) {
-      setBackupEntries(null);
-      return;
-    }
-    setBackupEntries(await listBackups());
-  }
-
-  async function restoreLocalBackup(target: BackupEntry): Promise<void> {
-    if (!confirm(tr({
-      zh: `确认用 ${new Date(target.ts).toLocaleString()} 的备份覆盖当前数据？`,
-      en: `Restore backup from ${new Date(target.ts).toLocaleString()} (overwrites current data)?`,
-    }))) return;
-    const ok = await restoreBackup(target.key);
-    if (ok) onDataReplaced?.();
-    flashIoMsg(ok ? tr({ zh: '已恢复本机备份', en: 'Local backup restored' }) : tr({ zh: '恢复失败', en: 'Restore failed' }));
-    if (ok) setBackupEntries(null);
-  }
-
   const settingStates = timerSettingFieldStates({
     event,
     source: s.scrambleSource,
@@ -645,13 +203,13 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
     soundsEnabled: s.soundsEnabled,
     voiceAvailable: isVoiceAvailable(),
     metronomeEnabled: s.metronomeOn,
-    localBackupsExpanded: backupEntries !== null,
-    stagedImport: !!timerImportSessions && timerImportSessions.length > 0 && !timerBulkImported,
-    importUnresolved: timerImportUnresolvedCount > 0,
-    cloudBusy,
-    importBusy: timerImportBusy,
-    reanalyzeBusy,
-    syncSeedDraft: seedDraft,
+    localBackupsExpanded: false,
+    stagedImport: false,
+    importUnresolved: false,
+    cloudBusy: false,
+    importBusy: false,
+    reanalyzeBusy: false,
+    syncSeedDraft: s.syncSeed ?? '',
     activeSyncSeed: s.syncSeed,
   });
   function settingState(id: TimerSettingFieldId) {
@@ -661,67 +219,8 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
   }
 
   return (
-    <div className="timer-modal-overlay" onClick={onClose}>
-      <div
-        ref={dialogRef}
-        className="timer-modal settings-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="settings-modal-title"
-        tabIndex={-1}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <header className="settings-modal-head">
-          <div>
-            <h2 id="settings-modal-title">{tr({ zh: '设置', en: 'Settings' })}</h2>
-          </div>
-          <ClearButton
-            variant="standalone"
-            className="settings-modal-close"
-            onClick={onClose}
-            ariaLabel={tr({ zh: '关闭设置', en: 'Close settings' })}
-          />
-        </header>
-
-        <div className="settings-layout">
-          <aside className="settings-category-rail" aria-label={tr({ zh: '设置分类', en: 'Settings categories' })}>
-            <nav className="settings-category-nav">
-              {categories.map((category) => {
-                const Icon = category.icon;
-                return (
-                  <button
-                    key={category.id}
-                    type="button"
-                    className="settings-category-button"
-                    data-active={activeCategory === category.id ? 'true' : undefined}
-                    aria-current={activeCategory === category.id ? 'page' : undefined}
-                    onClick={() => setActiveCategory(category.id)}
-                  >
-                    <Icon size={16} aria-hidden />
-                    <span>{category.label}</span>
-                  </button>
-                );
-              })}
-            </nav>
-            <label className="settings-category-picker">
-              <span>{tr({ zh: '分类', en: 'Category' })}</span>
-              <select
-                className="settings-category-select"
-                value={activeCategory}
-                onChange={(event) => setActiveCategory(event.target.value as TimerSettingCategoryId)}
-              >
-                {categories.map((category) => (
-                  <option key={category.id} value={category.id}>{category.label}</option>
-                ))}
-              </select>
-            </label>
-          </aside>
-
-          <main ref={mainRef} className="settings-main">
-            <div className="settings-category-intro">
-              <h3>{activeCategoryMeta.label}</h3>
-            </div>
-
+    <TimerSettingsPanel language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'}
+      activeCategory={activeCategory} onCategoryChange={setActiveCategory} onClose={onClose}>
             {activeCategory === 'appearance' && (
               <div
                 className="settings-appearance-preview"
@@ -758,6 +257,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
             />
           )}
           <TimerSmartCubeSettingsFields value={s} localize={tr} onChange={updateSettings} renderBooleanControl={renderTimingBooleanControl} />
+          <TimerPreScrambleSettings only="training" value={s} onChange={updateSettings} localize={tr} />
         </SettingsSection>
 
         <SettingsSection
@@ -775,43 +275,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
             stageVisible={settingState('settings.training.stage-splits').visible}
             value={s}
           />
-          <SettingRow id="settings.training.target-time">
-            <input
-              className="settings-row-control-input"
-              type="text"
-              value={targetInput}
-              placeholder={tr({ zh: '例：0:10.50（留空关闭）', en: 'e.g. 0:10.50 (blank = off)'
-            })}
-              onChange={(e) => setTargetInput(e.target.value)}
-              onBlur={(e) => commitTargetInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') commitTargetInput((e.target as HTMLInputElement).value); }}
-              style={{ fontFamily: 'ui-monospace, monospace' }}
-            />
-            <span className="hint">
-              <Target size={12} style={{ verticalAlign: '-1px', marginRight: 4 }} />
-              {currentTargetMs === null
-                ? tr({ zh: `当前 ${eventInfo(event).nameZh}：关闭`, en: `${eventInfo(event).nameEn}: off` })
-                : tr({ zh: `当前 ${eventInfo(event).nameZh}：${formatTargetTime(currentTargetMs)}`, en: `${eventInfo(event).nameEn}: ${formatTargetTime(currentTargetMs)}` })}
-            </span>
-          </SettingRow>
-          <SettingRow id="settings.training.daily-goal">
-            <input
-              className="settings-row-control-input"
-              type="number"
-              min={0}
-              step={1}
-              value={goalInput}
-              placeholder={tr({ zh: '例：50（留空 / 0 关闭）', en: 'e.g. 50 (blank / 0 = off)'
-            })}
-              onChange={(e) => setGoalInput(e.target.value)}
-              onBlur={(e) => commitGoalInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') commitGoalInput((e.target as HTMLInputElement).value); }}
-            />
-            <span className="hint">{currentDailyGoal === null
-              ? tr({ zh: '关闭', en: 'off'
-                                      })
-              : tr({ zh: `每天 ${currentDailyGoal} 次（全部项目合计）`, en: `${currentDailyGoal} solves/day (all events)` })}</span>
-          </SettingRow>
+          <TimerGoalSettings value={s} event={event} onChange={updateSettings} localize={tr} />
         </SettingsSection>
 
         <SettingsSection
@@ -843,37 +307,12 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
               onChange={(v) => updateSettings({ autoMarkWcaScramble: v })}
             />
           )}
+          <div ref={mergeSlotRef} />
         </SettingsSection>
 
         <SettingsSection category="scramble" activeCategory={activeCategory}>
-          <SettingRow id="settings.scramble.pre-orientation">
-            <CubeOrientationSelect
-              className="settings-row-control-select"
-              value={s.preScr}
-              onChange={(v) => updateSettings({ preScr: v })}
-            />
-          </SettingRow>
-          <SettingRow id="settings.scramble.training-pre-orientation">
-            <CubeOrientationSelect
-              className="settings-row-control-select"
-              value={s.preScrT}
-              onChange={(v) => updateSettings({ preScrT: v })}
-            />
-          </SettingRow>
-          {settingState('settings.scramble.color-neutral').visible && (
-            <SettingRow id="settings.scramble.color-neutral">
-              <select
-                className="settings-row-control-select"
-                value={s.cnMode}
-                onChange={(e) => updateSettings({ cnMode: e.target.value as 'none' | 'single' | 'dual' | 'six' })}
-              >
-                <option value="none">{tr({ zh: '固定白底', en: 'None (white)' })}</option>
-                <option value="single">{tr({ zh: '单面随机', en: 'Single (random)' })}</option>
-                <option value="dual">{tr({ zh: '双面（白黄）', en: 'Dual (white/yellow)' })}</option>
-                <option value="six">{tr({ zh: '六面', en: 'Six-sided' })}</option>
-              </select>
-            </SettingRow>
-          )}
+          <TimerPreScrambleSettings only="normal" value={s} onChange={updateSettings} localize={tr} />
+          <TimerColorNeutralSetting event={event} value={s.cnMode} onChange={cnMode => updateSettings({ cnMode })} localize={tr} />
         </SettingsSection>
 
         <SettingsSection
@@ -882,54 +321,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           title={tr({ zh: '声音', en: 'Sound'
         })}
         >
-          <BooleanSettingRow
-            id="settings.sound.enabled"
-            value={s.soundsEnabled}
-            onChange={(v) => { updateSettings({ soundsEnabled: v }); if (v) warmupSound(); }}
-          />
-          <SettingRow id="settings.sound.volume">
-            <input
-              className="settings-row-control-input"
-              type="range" min={0} max={1} step={0.05}
-              value={s.volume}
-              disabled={settingState('settings.sound.volume').disabled}
-              onChange={(e) => updateSettings({ volume: Number(e.target.value) })}
-            />
-            <button
-              className="hint-btn"
-              disabled={settingState('settings.sound.volume').disabled}
-              onClick={() => play('start')}
-              title={tr({ zh: '试听', en: 'Test'
-            })}
-            >
-              ♪
-            </button>
-          </SettingRow>
-          <SettingRow id="settings.sound.voice-inspection">
-            <select
-              className="settings-row-control-select"
-              value={s.voiceInspection}
-              onChange={(e) => {
-                updateSettings({ voiceInspection: e.target.value as 'none' | 'en-male' | 'en-female' | 'zh-male' | 'zh-female' });
-                warmupSound();
-              }}
-              disabled={settingState('settings.sound.voice-inspection').disabled}
-            >
-              <option value="none">{tr({ zh: '关闭（用提示音）', en: 'Off (beeps)'
-            })}</option>
-              <option value="en-male">{tr({ zh: '英文 男声', en: 'English (male)'
-            })}</option>
-              <option value="en-female">{tr({ zh: '英文 女声', en: 'English (female)'
-            })}</option>
-              <option value="zh-male">{tr({ zh: '中文 男声', en: 'Chinese (male)'
-            })}</option>
-              <option value="zh-female">{tr({ zh: '中文 女声', en: 'Chinese (female)'
-            })}</option>
-            </select>
-            {!isVoiceAvailable() && (
-              <span className="hint">{tr({ zh: '浏览器不支持', en: 'Unsupported by browser' })}</span>
-            )}
-          </SettingRow>
+          <TimerSoundSettings value={s} onChange={updateSettings} localize={tr} voiceAvailable={isVoiceAvailable()} onWarmup={warmupSound} onPreview={() => play('start')} />
         </SettingsSection>
 
         <SettingsSection
@@ -938,55 +330,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           title={tr({ zh: '节拍器', en: 'Metronome'
         })}
         >
-          <BooleanSettingRow
-            id="settings.sound.metronome-enabled"
-            value={s.metronomeOn}
-            onChange={(v) => { updateSettings({ metronomeOn: v }); if (v) warmupSound(); }}
-          />
-          <SettingRow id="settings.sound.metronome-tempo">
-            <input
-              className="settings-row-control-input"
-              type="range" min={BPM_MIN} max={BPM_MAX} step={1}
-              value={metro.bpm}
-              disabled={settingState('settings.sound.metronome-tempo').disabled}
-              onChange={(e) => setMetronome({ bpm: Number(e.target.value) })}
-            />
-            <span className="hint" style={{ fontVariantNumeric: 'tabular-nums', minWidth: '9ch', display: 'inline-block' }}>
-              {bpmToTps(metro.bpm).toFixed(2)} TPS
-            </span>
-            <span className="hint" style={{ fontVariantNumeric: 'tabular-nums' }}>{metro.bpm} BPM</span>
-            <button
-              className="hint-btn"
-              disabled={settingState('settings.sound.metronome-tempo').disabled}
-              onClick={tapBpm}
-              title={tr({ zh: '连续敲击设定速度', en: 'Tap repeatedly to set tempo'
-            })}
-            >
-              {tr({ zh: '敲击', en: 'Tap'
-            })}
-            </button>
-            {tapBpmHint !== null && (
-              <span className="hint" style={{ fontVariantNumeric: 'tabular-nums' }}>→ {tapBpmHint}</span>
-            )}
-          </SettingRow>
-          <SettingRow id="settings.sound.inspection-beeps">
-            <input
-              className="settings-row-control-input"
-              type="text"
-              value={beepAtInput}
-              disabled={settingState('settings.sound.inspection-beeps').disabled}
-              placeholder={tr({ zh: '例：5,10,15（逗号分隔）', en: 'e.g. 5,10,15 (comma-separated)'
-            })}
-              onChange={(e) => setBeepAtInput(e.target.value)}
-              onBlur={(e) => commitBeepAtInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') commitBeepAtInput((e.target as HTMLInputElement).value); }}
-            />
-            <button className="hint-btn" disabled={settingState('settings.sound.inspection-beeps').disabled} onClick={() => { warmupSound(); playInspectionBeep(); }} title={tr({ zh: '试听', en: 'Test'
-            })}>
-              {tr({ zh: '试听', en: 'Test'
-            })}
-            </button>
-          </SettingRow>
+          <TimerMetronomeSettings value={s} bpm={metro.bpm} onChange={updateSettings} onBpmChange={bpm => setMetronome({ bpm })} onTap={tapTempo} onWarmup={warmupSound} onPreviewBeep={playInspectionBeep} localize={tr} />
         </SettingsSection>
 
         <SettingsSection
@@ -995,178 +339,18 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           title={tr({ zh: '同步种子', en: 'Sync seed'
         })}
         >
-          <SettingRow id="settings.advanced.sync-seed">
-            <input
-              className="settings-row-control-input"
-              type="text"
-              value={seedDraft}
-              placeholder={tr({ zh: '任意字符串', en: 'any string'
-            })}
-              onChange={(e) => setSeedDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  const v = (e.target as HTMLInputElement).value;
-                  if (v !== '') {
-                    updateSettings({ syncSeed: v, syncSeedCounter: 0 });
-                    setSeedTick((t) => t + 1);
-                  }
-                }
-              }}
-            />
-            <button
-              className="hint-btn"
-              onClick={() => {
-                if (seedDraft === '') return;
-                updateSettings({ syncSeed: seedDraft, syncSeedCounter: 0 });
-                setSeedTick((t) => t + 1);
-              }}
-              disabled={settingState('settings.advanced.sync-seed').disabled}
-            >
-              {tr({ zh: '应用', en: 'Apply'
-            })}
-            </button>
-            <button
-              className="hint-btn"
-              onClick={() => {
-                updateSettings({ syncSeed: null, syncSeedCounter: 0 });
-                setSeedDraft('');
-                setSeedTick((t) => t + 1);
-              }}
-              disabled={settingState('settings.advanced.sync-seed-counter').disabled}
-            >
-              {tr({ zh: '清除', en: 'Clear' })}
-            </button>
-          </SettingRow>
-          <SettingRow id="settings.advanced.sync-seed-counter">
-            <span className="hint" title={String(seedTick)}>
-              {s.syncSeed === null
-                ? tr({ zh: '未启用', en: 'off'
-                                              })
-                : tr({ zh: `seed=${s.syncSeed}，第 ${getSeedCounter()} 个打乱`, en: `seed=${s.syncSeed}, scramble #${getSeedCounter()}` })}
-            </span>
-            <button
-              className="hint-btn"
-              onClick={() => { resetSeedCounter(); setSeedTick((t) => t + 1); }}
-              disabled={settingState('settings.advanced.sync-seed-counter').disabled}
-            >
-              {tr({ zh: '重置计数', en: 'Reset counter'
-            })}
-            </button>
-          </SettingRow>
+          <TimerSyncSeedSettings value={s} language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} onReset={seed => updateSettings(resetTimerSyncSeed(getSettings(), seed))} />
         </SettingsSection>
 
-        <SettingsSection
-          category="data"
-          activeCategory={activeCategory}
-          title={tr({ zh: '本机自动备份', en: 'Local auto-backup'
-        })}
-        >
-          <SettingRow id="settings.data.auto-backup-frequency">
-            <input
-              className="settings-row-control-input"
-              type="number" min={0} max={30} step={1}
-              value={s.autoBackupEvery}
-              onChange={(e) => updateSettings({ autoBackupEvery: Math.max(0, Math.min(30, Number(e.target.value) | 0)) })}
-            />
-            <span className="hint">{s.autoBackupEvery === 0
-              ? tr({ zh: '已禁用', en: 'disabled' })
-              : tr({ zh: '保留最近 10 份', en: 'keeps last 10' })}</span>
-          </SettingRow>
-          <Row label={tr({ zh: '操作', en: 'Actions' })}>
-            <button data-setting-id="settings.data.local-backup-create" className="hint-btn" onClick={() => { void pushBackup().then(async () => {
-              flashIoMsg(tr({ zh: '已写入本机备份', en: 'Local backup created' }));
-              if (backupEntries !== null) setBackupEntries(await listBackups());
-            }); }}>
-              {settingLabel('settings.data.local-backup-create')}
-            </button>
-            <button data-setting-id="settings.data.local-backup-list" className="hint-btn" onClick={() => { void showBackupPicker(); }}>
-              {backupEntries === null
-                ? settingLabel('settings.data.local-backup-list')
-                : tr({ zh: '收起备份', en: 'Hide backups' })}
-            </button>
-          </Row>
-          {backupEntries !== null && (
-            <div className="settings-backup-list">
-              {backupEntries.length === 0 ? (
-                <p>{tr({ zh: '还没有本机备份', en: 'No local backups yet' })}</p>
-              ) : backupEntries.map((entry) => (
-                <div key={entry.key} className="settings-backup-row">
-                  <span>
-                    <strong>{new Date(entry.ts).toLocaleString()}</strong>
-                    <small>{(entry.size / 1024).toFixed(1)} KB</small>
-                  </span>
-                  <button type="button" data-setting-id="settings.data.local-backup-restore" className="hint-btn" onClick={() => { void restoreLocalBackup(entry); }}>
-                    {settingLabel('settings.data.local-backup-restore')}
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </SettingsSection>
-
-        <SettingsSection
-          category="data"
-          activeCategory={activeCategory}
-          title={tr({ zh: '云备份', en: 'Cloud backup'
-        })}
-        >
-          {!user ? (
-            <Row label={tr({ zh: '登录', en: 'Sign in'
-            })}>
-              <button data-setting-id="settings.data.cloud-sign-in" className="hint-btn" onClick={() => login()}>
-                <LogIn size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
-                {settingLabel('settings.data.cloud-sign-in')}
-              </button>
-            </Row>
-          ) : (
-            <>
-              <Row label={tr({ zh: '操作', en: 'Actions' })}>
-                <button
-                  data-setting-id="settings.data.cloud-upload"
-                  className="hint-btn"
-                  disabled={settingState('settings.data.cloud-upload').disabled}
-                  onClick={() => { void onCloudUpload(); }}
-                  title={tr({ zh: '把本地全部成绩上传到云端(覆盖云端旧备份)', en: 'Upload all local solves to the cloud (replaces the cloud copy)'
-                })}
-                >
-                  <CloudUpload size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
-                  {settingLabel('settings.data.cloud-upload')}
-                </button>
-                <button
-                  data-setting-id="settings.data.cloud-restore"
-                  className="hint-btn"
-                  disabled={settingState('settings.data.cloud-restore').disabled}
-                  onClick={() => { void onCloudRestore(); }}
-                  title={tr({ zh: '用云端备份覆盖本地全部成绩', en: 'Replace all local solves with the cloud backup'
-                })}
-                >
-                  <CloudDownload size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
-                  {settingLabel('settings.data.cloud-restore')}
-                </button>
-              </Row>
-              <Row label="">
-                <span className="hint" role="status" aria-live="polite">{
-                  cloudMsg !== null
-                    ? cloudMsg
-                    : cloudMeta === null
-                      ? tr({ zh: '正在读取云端状态…', en: 'Checking cloud…'
-                                                                  })
-                      : cloudMeta.exists
-                        ? tr({
-                            zh: `云端 ${cloudMeta.solveCount ?? 0} 条，上次同步 ${formatSyncTime(cloudMeta.updatedAt ?? 0, true)}`,
-                            en: `Cloud: ${cloudMeta.solveCount ?? 0} solves, synced ${formatSyncTime(cloudMeta.updatedAt ?? 0, false)}`,
-                          })
-                        : tr({ zh: '云端暂无备份', en: 'No cloud backup yet'
-                                                                          })
-                }</span>
-              </Row>
-              <Row label="">
-                <span className="hint">{tr({ zh: '恢复会用云端整库覆盖本地(含所有会话);计时器设置项不在备份内。', en: 'Restore replaces ALL local sessions with the cloud copy; timer settings are not included.'
-                })}</span>
-              </Row>
-            </>
-          )}
-        </SettingsSection>
+        {activeCategory === 'data' && <TimerBackupSettings language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} every={s.autoBackupEvery} onEveryChange={autoBackupEvery => updateSettings({ autoBackupEvery })}
+          owner={getSessionToken()} login={login} local={{ create: pushBackup, list: listBackups, restore: async (key, canCommit) => {
+            if (!await restoreBackup(key, canCommit)) throw new Error('Restore failed'); onDataReplaced?.();
+          } }} cloud={{ meta: fetchBackupMeta, upload: uploadBackup, restore: async canCommit => {
+            const result = await restoreFromCloud(canCommit);
+            if (result === 'invalid') throw new Error('Invalid backup');
+            if (result === 'ok') onDataReplaced?.();
+            return result === 'ok';
+          } }} />}
 
         <SettingsSection
           category="data"
@@ -1174,159 +358,31 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           title={tr({ zh: '导入与导出', en: 'Import and export'
         })}
         >
-          <Row label={tr({ zh: '导入', en: 'Import'
-        })}>
-            <input
-              className="settings-row-control-input"
-              ref={timerFileRef}
-              type="file"
-              accept=".json,.txt,.db,.sqlite,application/json,application/vnd.sqlite3,application/x-sqlite3"
-              style={{ display: 'none' }}
-              onChange={(event) => { void onTimerImportFile(event); }}
-            />
-            <button
-              data-setting-id="settings.data.import-file"
-              className="hint-btn"
-              disabled={settingState('settings.data.import-file').disabled}
-              onClick={() => timerFileRef.current?.click()}
-              aria-busy={timerImportBusy}
-            >
-              {timerImportBusy
-                ? tr({ zh: '正在导入…', en: 'Importing…' })
-                : settingLabel('settings.data.import-file')}
-            </button>
-            <span className="hint">{tr({
-              zh: '选择 csTimer 或 dcTimer 文件后自动按原分组新增会话，不覆盖现有数据；CubeRoot 备份覆盖前会确认',
-              en: 'Selecting a csTimer or dcTimer file automatically creates sessions from its groups without replacing existing data; CubeRoot backups ask before replacing data',
-            })}</span>
-          </Row>
-          <Row label={tr({ zh: '导出', en: 'Export'
-        })}>
-            <button
-              data-setting-id="settings.data.export-cuberoot"
-              className="hint-btn"
-              onClick={onCubeRootExport}
-              title={tr({ zh: '完整备份全部成绩，可重新导入 CubeRoot', en: 'Back up all solves for later re-import into CubeRoot' })}
-            >
-              <Download size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
-              {settingLabel('settings.data.export-cuberoot')}
-            </button>
-            <button
-              data-setting-id="settings.data.export-cstimer"
-              className="hint-btn"
-              onClick={() => { void onCstimerExport(); }}
-              title={tr({ zh: '下载所有成绩为 csTimer 兼容的 JSON', en: 'Download all solves as a csTimer-compatible JSON'
-            })}
-            >
-              <Download size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
-              {settingLabel('settings.data.export-cstimer')}
-            </button>
-            <button
-              data-setting-id="settings.data.export-csv"
-              className="hint-btn"
-              onClick={onCsvExport}
-              title={tr({ zh: '每条成绩一行的 CSV，便于 Excel / Python 分析', en: 'One row per solve, for spreadsheets / Python'
-            })}
-            >
-              <FileSpreadsheet size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
-              {settingLabel('settings.data.export-csv')}
-            </button>
-            <button
-              data-setting-id="settings.data.export-speedstacks"
-              className="hint-btn"
-              onClick={onSpeedstacksExport}
-              title={tr({ zh: '导出当前项目为 Speedstacks 文本', en: 'Export the current event as Speedstacks text' })}
-            >
-              <FileText size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
-              {settingLabel('settings.data.export-speedstacks')}
-            </button>
-          </Row>
+          <TimerImportSettings language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} importSessions={async sessions => {
+            if (!importNamedSessions(sessions)) throw new Error('Import failed');
+            onDataReplaced?.();
+          }} importBackup={async text => {
+            const preview = inspectImportJson(text);
+            if (!preview) throw new Error('Invalid backup');
+            if (!confirm(tr({ en: 'Importing replaces all current solves. Continue?', zh: '导入会覆盖当前全部成绩，是否继续？' }))) return false;
+            if (!importJson(text)) throw new Error('Import failed');
+            onDataReplaced?.();
+            return true;
+          }} />
+          <TimerExportSettings localize={tr} onExport={format => {
+            if (format === 'cuberoot') onCubeRootExport();
+            else if (format === 'cstimer') void onCstimerExport();
+            else if (format === 'csv') onCsvExport();
+            else onSpeedstacksExport();
+          }} />
           {ioMsg !== null && (
             <Row label=""><span className="hint" role="status" aria-live="polite">{ioMsg}</span></Row>
           )}
-          {timerImportSessions && timerImportSessions.length > 0 && timerBulkImported && (
-            <Row label="">
-              <span className="hint" role="status">{tr({
-                zh: `${timerImportSource}：已导入 ${timerImportSessions.length} 个分组、${timerImportSolveCount} 条成绩`,
-                en: `${timerImportSource}: imported ${timerImportSessions.length} groups and ${timerImportSolveCount} solves`,
-              })}</span>
-            </Row>
-          )}
-          {timerImportSessions && timerImportSessions.length > 0 && !timerBulkImported && (
-            <>
-              <Row label="">
-                <button
-                  data-setting-id="settings.data.import-complete"
-                  className="hint-btn"
-                  disabled={settingState('settings.data.import-complete').disabled}
-                  onClick={importAllTimerSessions}
-                  title={timerImportUnresolvedCount > 0
-                    ? tr({ zh: `还有 ${timerImportUnresolvedCount} 个分组需要选择项目`, en: `${timerImportUnresolvedCount} groups still need an event` })
-                    : tr({ zh: '保留全部分组名和顺序，分别建立新会话', en: 'Keep every group name and order as separate new sessions' })}
-                >
-                  {settingLabel('settings.data.import-complete')}
-                </button>
-                <span className="hint">{tr({
-                  zh: `${timerImportSource}：已读取 ${timerImportSessions.length} 个分组、${timerImportSolveCount} 条成绩；为未识别分组选择项目后完成导入`,
-                  en: `${timerImportSource}: read ${timerImportSessions.length} groups and ${timerImportSolveCount} solves; choose events for unrecognized groups to finish`,
-                })}</span>
-              </Row>
-              <div className="cstimer-import-list">
-                {timerImportSessions.map(sess => {
-                  const ev = eventInfo(sess.event);
-                  const evLabel = tr({ zh: ev.nameZh, en: ev.nameEn });
-                  const selectedTarget = timerImportTargets[sess.sessionId];
-                  return (
-                    <div key={sess.sessionId} className="cstimer-import-row">
-                      <div className="cstimer-import-info">
-                        <span className="cstimer-import-name">{sess.name}</span>
-                        {sess.matched ? (
-                          <span className="hint">{tr({ zh: `${sess.solves.length} 条 → ${evLabel}`, en: `${sess.solves.length} solves → ${evLabel}` })}</span>
-                        ) : sess.solves.length === 0 ? (
-                          <span className="hint">{tr({ zh: '空分组', en: 'Empty group' })}</span>
-                        ) : (
-                          <label className="cstimer-target-picker">
-                            <span>{tr({ zh: `${sess.solves.length} 条，选择项目`, en: `${sess.solves.length} solves, choose event` })}</span>
-                            <select
-                              data-setting-id="settings.data.import-session-mapping"
-                              className="cstimer-target-select"
-                              value={selectedTarget ?? ''}
-                              onChange={(event) => setTimerImportTargets((current) => ({ ...current, [sess.sessionId]: event.target.value as EventId }))}
-                            >
-                              <option value="" disabled>{settingLabel('settings.data.import-session-mapping')}</option>
-                              {EVENTS.map((item) => (
-                                <option key={item.id} value={item.id}>{tr({ zh: item.nameZh, en: item.nameEn })}</option>
-                              ))}
-                            </select>
-                          </label>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </>
-          )}
-          <SettingRow id="settings.data.reanalyze">
-            <button
-              className="hint-btn"
-              onClick={() => { void onReanalyze(); }}
-              disabled={settingState('settings.data.reanalyze').disabled}
-              title={tr({ zh: '给旧成绩补上分阶段拆分。新拧的会自动带上，这里用当前识别器重算所有有动作记录的成绩', en: 'Backfill stage splits for older solves. New solves carry them automatically; this reruns the current recognizer over every solve that has recorded moves'
-            })}
-            >
-              <RefreshCw size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
-              {reanalyzeBusy
-                ? (reanalyzeProgress && reanalyzeProgress.total > 0
-                    ? tr({ zh: `处理中… ${reanalyzeProgress.scanned}/${reanalyzeProgress.total}`, en: `Working… ${reanalyzeProgress.scanned}/${reanalyzeProgress.total}` })
-                    : tr({ zh: '处理中…', en: 'Working…'
-                                                      }))
-                : tr({ zh: '重新分析', en: 'Reanalyze' })}
-            </button>
-            {reanalyzeMsg !== null && (
-              <span className="hint" role="status" aria-live="polite">{reanalyzeMsg}</span>
-            )}
-          </SettingRow>
+          <TimerReanalyzeSettings language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} run={async () => {
+            const result = await reanalyzeAll();
+            onDataReplaced?.();
+            return result;
+          }} />
         </SettingsSection>
 
         <SettingsSection
@@ -1335,45 +391,8 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           title={tr({ zh: '外观', en: 'Appearance'
         })}
         >
-          <SettingRow id="settings.appearance.timer-font">
-            <TimerFontPicker
-              value={s.timerFont}
-              onChange={(id) => updateSettings({ timerFont: id })}
-            />
-          </SettingRow>
-          <SettingRow id="settings.appearance.timer-font-scale">
-            <input
-              className="settings-row-control-input"
-              type="range" min={0.5} max={2} step={0.05}
-              value={s.timerFontScale}
-              onChange={(e) => updateSettings({ timerFontScale: Number(e.target.value) })}
-            />
-            <span className="hint">{s.timerFontScale.toFixed(2)}×</span>
-          </SettingRow>
-          <SettingRow id="settings.appearance.scramble-font">
-            <TimerFontPicker
-              value={s.scrambleFont}
-              onChange={(id) => updateSettings({ scrambleFont: id })}
-              ariaLabel={tr({ zh: '打乱字体', en: 'Scramble font' })}
-              preview="R U R' F2"
-              options={['liberation', 'mono', 'sans']}
-              previewWeight={400}
-            />
-          </SettingRow>
-          <SettingRow id="settings.appearance.scramble-font-scale">
-            <input
-              className="settings-row-control-input"
-              type="range" min={0.6} max={2.5} step={0.05}
-              value={s.scrambleFontScale}
-              onChange={(e) => updateSettings({ scrambleFontScale: Number(e.target.value) })}
-            />
-            <span className="hint">{s.scrambleFontScale.toFixed(2)}×</span>
-          </SettingRow>
-          <BooleanSettingRow
-            id="settings.appearance.compact-scramble"
-            value={s.compactScramble}
-            onChange={(v) => updateSettings({ compactScramble: v })}
-          />
+          <TimerTypographySettings value={s} onChange={updateSettings} language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} />
+          <TimerDisplaySettings value={s} onChange={updateSettings} localize={tr} renderBooleanControl={props => <SharedBoolToggle {...props} />}>
           <TimerScramblePreviewSettings
             localize={tr}
             onChange={updateSettings}
@@ -1387,139 +406,21 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
             )}
             value={s}
           />
-          <BooleanSettingRow
-            id="settings.appearance.hide-all-while-running"
-            value={s.hideAllUiWhileRunning}
-            onChange={(v) => updateSettings({ hideAllUiWhileRunning: v })}
-          />
-          <SettingRow id="settings.appearance.rank-scopes">
-            <span className="rank-scope-options">
-              {TIMER_RANK_SCOPES.map((scope) => (
-                <button
-                  key={scope}
-                  type="button"
-                  className="hint-btn rank-scope-option"
-                  aria-pressed={s.rankScopes.includes(scope)}
-                  onClick={() => updateSettings({
-                    rankScopes: s.rankScopes.includes(scope) ? s.rankScopes.filter((value) => value !== scope) : [...s.rankScopes, scope],
-                  })}
-                >
-                  {scope}
-                </button>
-              ))}
-            </span>
-          </SettingRow>
-          {/* 有有效账号国家时沿用账号信息；否则允许手选。 */}
-          {settingState('settings.appearance.ranking-region').visible && (
-            <SettingRow id="settings.appearance.ranking-region">
-              {/* placeholder 显式给空:组件默认会兜底成「搜国家名」,这里靠左侧 Row 标签说明即可。 */}
-              <CountryInput
-                value={(s.rankCountry ?? '').toLowerCase()}
-                onChange={(iso2) => updateSettings({ rankCountry: iso2.toUpperCase() })}
-                placeholder=""
-              />
-              {!user && <button
-                className="hint-btn"
-                onClick={() => login()}
-                title={tr({ zh: '登录 WCA 自动带入账号国家', en: 'Sign in with WCA to auto-fill your country' })}
-              >
-                <LogIn size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
-                {tr({ zh: '登录', en: 'Sign in' })}
-              </button>}
-            </SettingRow>
-          )}
+          </TimerDisplaySettings>
+          <TimerRankSettings language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} scopes={s.rankScopes} country={s.rankCountry ?? ''} accountCountry={rankAccountCountry} onScopes={rankScopes => updateSettings({ rankScopes })} onCountry={rankCountry => updateSettings({ rankCountry })} renderCountry={() => <CountryInput value={(s.rankCountry ?? '').toLowerCase()} onChange={iso2 => updateSettings({ rankCountry: iso2.toUpperCase() })} placeholder="" />} login={!user ? login : undefined} />
         </SettingsSection>
 
-        <SettingsSection
-          category="training"
-          activeCategory={activeCategory}
-          title={tr({ zh: '轮次模拟', en: 'Round simulation' })}
-          headerControl={
-            <span data-setting-id="settings.training.round-enabled">
-              <PillToggle
-                value={s.round.on}
-                onChange={(v) => updateSettings({ round: { ...s.round, on: v } })}
-                onLabel={tr({ zh: '开启', en: 'On' })}
-                offLabel={tr({ zh: '关闭', en: 'Off' })}
-                ariaLabel={settingLabel('settings.training.round-enabled')}
-              />
-            </span>
-          }
-        >
-          {settingState('settings.training.round-format').visible && (
-            <>
-          <SettingRow id="settings.training.round-format">
-            <select
-              className="settings-row-control-select"
-              value={s.round.format}
-              onChange={(e) => updateSettings({ round: { ...s.round, format: e.target.value as RoundFormat } })}
-            >
-              <option value="ao5">{tr({ zh: '五次去头尾平均 (ao5)', en: 'Average of 5' })}</option>
-              <option value="mo3">{tr({ zh: '三次均值 (mo3)', en: 'Mean of 3' })}</option>
-              <option value="bo3">{tr({ zh: '三次取最好 (bo3)', en: 'Best of 3' })}</option>
-              <option value="bo1">{tr({ zh: '一次 (bo1)', en: 'Best of 1' })}</option>
-            </select>
-          </SettingRow>
-          <SettingRow id="settings.training.round-cutoff">
-            <input
-              className="settings-row-control-input"
-              type="text"
-              value={roundCutoffInput}
-              placeholder={tr({ zh: '留空 = 无', en: 'blank = none' })}
-              onChange={(e) => setRoundCutoffInput(e.target.value)}
-              onBlur={(e) => commitRoundLimitField('cutoffMs', e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') commitRoundLimitField('cutoffMs', (e.target as HTMLInputElement).value); }}
-              style={{ fontFamily: 'ui-monospace, monospace' }}
-            />
-          </SettingRow>
-          <SettingRow id="settings.training.round-time-limit">
-            <input
-              className="settings-row-control-input"
-              type="text"
-              value={roundLimitInput}
-              placeholder={tr({ zh: '留空 = 无', en: 'blank = none' })}
-              onChange={(e) => setRoundLimitInput(e.target.value)}
-              onBlur={(e) => commitRoundLimitField('limitMs', e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') commitRoundLimitField('limitMs', (e.target as HTMLInputElement).value); }}
-              style={{ fontFamily: 'ui-monospace, monospace' }}
-            />
-            <span data-setting-id="settings.training.round-cumulative">
-              <PillToggle
-                value={s.round.cumulative}
-                onChange={(v) => updateSettings({ round: { ...s.round, cumulative: v } })}
-                onLabel={tr({ zh: '累计', en: 'cumulative' })}
-                offLabel={tr({ zh: '每把', en: 'per attempt' })}
-                ariaLabel={settingLabel('settings.training.round-cumulative')}
-              />
-            </span>
-          </SettingRow>
-            </>
-          )}
-        </SettingsSection>
+        {activeCategory === 'training' && <TimerRoundSettings value={s} onChange={patch => updateSettings({ round: { ...getSettings().round, ...patch } })} localize={tr} />}
 
         <SettingsSection
           category="advanced"
           activeCategory={activeCategory}
           title={tr({ zh: '快捷键与手势', en: 'Shortcuts and gestures' })}
         >
-          <div data-setting-id="settings.advanced.keymap">
-            <KeymapEditor />
-          </div>
-            <div className="settings-reset-row" data-setting-id="settings.advanced.reset-defaults">
-              <ResetDefaultsButton
-                onReset={() => {
-                  if (confirm(tr({ zh: '把所有设置恢复为默认值？', en: 'Reset all settings to defaults?' }))) {
-                    resetSettings();
-                  }
-                }}
-                title={tr({ zh: '恢复全部计时器设置，不会删除成绩', en: 'Reset all timer settings without deleting solves' })}
-              />
-            </div>
+          <TimerKeymapSettings value={s.keymap} onChange={update => updateSettings({ keymap: update(getSettings().keymap) })} localize={tr} />
+          <TimerResetSettings onReset={resetSettings} confirmReset={message => confirm(message)} localize={tr} />
         </SettingsSection>
-          </main>
-        </div>
-      </div>
-    </div>
+    </TimerSettingsPanel>
   );
 }
 
@@ -1542,16 +443,6 @@ function renderTimingBooleanControl({
       value={value}
     />
   );
-}
-
-function SettingRow({
-  id,
-  children,
-}: {
-  id: TimerSettingFieldId;
-  children: React.ReactNode;
-}) {
-  return <Row label={settingLabel(id)} settingId={id}>{children}</Row>;
 }
 
 function Row({
@@ -1600,104 +491,5 @@ function BooleanSettingRow({
         {children}
       </span>
     </div>
-  );
-}
-
-/**
- * Keyboard-binding editor for the rebindable timer actions.
- *
- * Capture-on-press rather than an on-screen keyboard grid: /sim's keymap UI
- * uses a grid because its bindings are one key → one move, but the timer needs
- * `Shift+` combinations, which a flat grid cannot express. `keyLabel` (the part
- * that IS shared) is reused via `formatBinding`.
- *
- * Only Shift is offered as a modifier — Ctrl/Meta belong to the browser and the
- * OS, and shadowing Ctrl+D or Cmd+F would be hostile.
- */
-function KeymapEditor() {
-  const s = useSettings();
-  const keymap = useMemo(() => resolveKeymap(s.keymap), [s.keymap]);
-  const [capturing, setCapturing] = useState<TimerActionId | null>(null);
-  const [rejected, setRejected] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!capturing) return;
-    const onKey = (e: KeyboardEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const capture = timerRebindCaptureDecision(e);
-      if (capture.kind === 'cancel') {
-        setCapturing(null);
-        setRejected(null);
-        return;
-      }
-      if (capture.kind === 'wait-for-key') return;
-      if (capture.kind === 'reject') {
-        setRejected(capture.reason === 'browser-modifier'
-          ? tr({ zh: 'Ctrl / Cmd / Alt 组合键留给浏览器，不能占用', en: 'Ctrl / Cmd / Alt combinations belong to the browser' })
-          : tr({
-              zh: `${formatBinding(capture.binding!)} 是计时器自己的按键（开始 / 停止 / 取消），不能改绑`,
-              en: `${formatBinding(capture.binding!)} is the timer's own key (start / stop / cancel) and can't be rebound`,
-            }));
-        return;
-      }
-      updateSettings({
-        keymap: rebindTimerAction(s.keymap, keymap, capturing, capture.binding),
-      });
-      setCapturing(null);
-      setRejected(null);
-    };
-    // Capture phase: the timer's own window listener must not see these.
-    window.addEventListener('keydown', onKey, true);
-    return () => window.removeEventListener('keydown', onKey, true);
-  }, [capturing, keymap, s.keymap]);
-
-  return (
-    <>
-      {TIMER_ACTIONS.map(action => {
-        const bindings = bindingsForAction(keymap, action.id);
-        const active = capturing === action.id;
-        return (
-          <Row key={action.id} label={tr(action)}>
-            <button
-              type="button"
-              className="keymap-bind-btn"
-              data-capturing={active ? 'true' : undefined}
-              onClick={() => { setCapturing(active ? null : action.id); setRejected(null); }}
-            >
-              {active
-                ? tr({ zh: '按下新按键…（Esc 取消）', en: 'Press a key… (Esc to cancel)' })
-                : bindings.length > 0
-                  ? bindings.map(formatBinding).join(' / ')
-                  : tr({ zh: '未绑定', en: 'Unbound' })}
-            </button>
-            {bindings.length > 0 && !active && (
-              <button
-                type="button"
-                className="hint-btn"
-                onClick={() => {
-                  updateSettings({
-                    keymap: unbindTimerAction(s.keymap, keymap, action.id),
-                  });
-                }}
-              >
-                {tr({ zh: '解除', en: 'Unbind' })}
-              </button>
-            )}
-          </Row>
-        );
-      })}
-      {rejected && <div className="keymap-reject">{rejected}</div>}
-      <div className="keymap-actions">
-        <button
-          type="button"
-          data-setting-id="settings.advanced.reset-keymap"
-          className="hint-btn"
-          onClick={() => updateSettings({ keymap: {} })}
-        >
-          {settingLabel('settings.advanced.reset-keymap')}
-        </button>
-      </div>
-    </>
   );
 }

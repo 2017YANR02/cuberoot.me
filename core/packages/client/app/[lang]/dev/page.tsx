@@ -16,6 +16,20 @@ interface Card {
 
 const CARDS: Card[] = [
   {
+    href: '/dev/dns-routing',
+    glyph: '⌁',
+    accent: 'var(--signal-info)',
+    zh: { title: '同一个网址，为何连到不同服务器？', sub: '域名 · 跳转 · Cloudflare', tagline: '从打开网页讲起：网址为何会变，Cloudflare 免费版能否让国内走阿里云、国外走 Cloudflare', meta: '访问过程 / 路线图 / 官方文档' },
+    en: { title: 'One address, different servers', sub: 'Domain · Redirect · Cloudflare', tagline: 'Follow a page visit to see why the address bar changes and what Cloudflare Free can do for overseas visitors', meta: 'Visit steps / route diagrams / sources' },
+  },
+  {
+    href: '/dev/traffic-incident-2026-09',
+    glyph: '↗',
+    accent: 'var(--accent)',
+    zh: { title: '9 月流量事件记录', sub: '2026.09.22–25', tagline: '计算器访问量突增后的日志排查、停站与恢复记录，以及新增的防护措施', meta: 'Vercel 截图 / 请求统计 / 处置记录' },
+    en: { title: 'September traffic incident', sub: '2026.09.22–25', tagline: 'Log analysis, service pauses, reopening and protection changes after the calculator traffic spike', meta: 'Vercel screenshots / request counts / response log' },
+  },
+  {
     href: '/dev/auth',
     glyph: '⇄',
     accent: 'var(--accent)',
@@ -44,16 +58,33 @@ const CARDS: Card[] = [
     glyph: '▤',
     accent: 'var(--signal-info)',
     zh: {
-      title: '基础设施',
+      title: '基础设施与运维',
       sub: 'Infrastructure',
       tagline: '生产环境的公开档案:容量、请求路径、发布、监控、备份和安全披露边界',
       meta: '4 vCPU / 16 GiB / 发布与恢复',
     },
     en: {
-      title: 'Infrastructure',
+      title: 'Infrastructure & Operations',
       sub: 'Production systems',
       tagline: 'A public profile of production capacity, request routing, releases, monitoring, backups, and disclosure boundaries',
       meta: '4 vCPU / 16 GiB / release and recovery',
+    },
+  },
+  {
+    href: '/dev/expenses',
+    glyph: '¥',
+    accent: 'var(--signal-info)',
+    zh: {
+      title: '支出与设备',
+      sub: 'Expenses & Equipment',
+      tagline: '设备、工位、人员与服务订阅的投入概览，公开金额和统计口径',
+      meta: '一次性投入 / 持续支出 / 设备清单',
+    },
+    en: {
+      title: 'Expenses & Equipment',
+      sub: 'Investment overview',
+      tagline: 'Equipment, workspace, staffing and subscriptions, with amounts and their accounting basis',
+      meta: 'One-off investment / recurring costs / equipment inventory',
     },
   },
   {
@@ -413,6 +444,7 @@ export default function DevIndexPage() {
             <Link
               key={c.href}
               href={c.href}
+              prefetch={false}
               className="code-index-card"
               style={{ ['--accent' as string]: c.accent }}
             >

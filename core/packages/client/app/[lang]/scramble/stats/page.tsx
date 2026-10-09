@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
@@ -9,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import DiscreteHistogram, { type HistSeries } from './_components/DiscreteHistogram';
 import PuzzleDistView from './_components/PuzzleDistView';
+import NoBarStats from './_components/NoBarStats';
 import EnumeratedDistView from './_components/EnumeratedDistView';
 import { ENUM_SPECS } from './_components/enumerated-specs';
 import Slide15DistView from './_components/Slide15DistView';
@@ -43,7 +45,6 @@ import {
 } from '@/lib/god-distance-333';
 import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
 import { CSTIMER_SOLVABLE_IDS } from '@/lib/cstimer-scramble';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import BoolToggle from '@/components/BoolToggle';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import { HelpCircle } from 'lucide-react';
@@ -1029,34 +1030,40 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   // 2×2「所有本质状态」是理论全空间统计,无「首次出现」时间线概念,隐藏该开关。
   const viewToggle = canTimeline && !avgOn && !isTheoreticalPuzzleView ? (
     <div className="scramble-stats-view-toggle">
-      <PillToggle
-        value={viewMode === 'timeline'}
-        onChange={(v) => setViewMode(v ? 'timeline' : 'chart')}
-        offLabel={tr({ zh: '图表', en: 'Chart' })}
-        onLabel={tr({ zh: '时间线', en: 'Timeline' })}
-        ariaLabel={tr({ zh: '图表或首次出现时间线', en: 'Chart or first-appearance timeline' })}
-      />
+      <select
+        value={String(viewMode === 'timeline')}
+        onChange={event => { const v = event.currentTarget.value === 'true'; setViewMode(v ? 'timeline' : 'chart'); }}
+        aria-label={tr({ zh: '图表或首次出现时间线', en: 'Chart or first-appearance timeline' })}
+        className="native-select"
+      >
+        <option value="true">{tr({ zh: '时间线', en: 'Timeline' })}</option>
+        <option value="false">{tr({ zh: '图表', en: 'Chart' })}</option>
+      </select>
     </div>
   ) : null;
 
   // 单个 / 组平均 切换(+ 备打子开关):仅当前选择有比赛分组时出现(难度族 / 有分组的长度项目)。
   const avgToggle = avgAvailable ? (
     <div className="scramble-stats-avg-toggle">
-      <PillToggle
-        value={avgMode}
-        onChange={setAvgMode}
-        offLabel={tr({ zh: '单次', en: 'Single' })}
-        onLabel={tr({ zh: '平均', en: 'Average' })}
-        ariaLabel={tr({ zh: '单个打乱或按比赛组求平均', en: 'Per single scramble or per competition-group average' })}
-      />
+      <select
+        value={String(avgMode)}
+        onChange={event => setAvgMode(event.currentTarget.value === 'true')}
+        aria-label={tr({ zh: '单个打乱或按比赛组求平均', en: 'Per single scramble or per competition-group average' })}
+        className="native-select"
+      >
+        <option value="true">{tr({ zh: '平均', en: 'Average' })}</option>
+        <option value="false">{tr({ zh: '单次', en: 'Single' })}</option>
+      </select>
       {avgMode && (
-        <PillToggle
-          value={avgExtras}
-          onChange={setAvgExtras}
-          offLabel={tr({ zh: '不含备打', en: 'No extras' })}
-          onLabel={tr({ zh: '含备打', en: 'With extras' })}
-          ariaLabel={tr({ zh: '组平均是否含备打', en: 'Include extra scrambles in the group average' })}
-        />
+        <select
+          value={String(avgExtras)}
+          onChange={event => setAvgExtras(event.currentTarget.value === 'true')}
+          aria-label={tr({ zh: '组平均是否含备打', en: 'Include extra scrambles in the group average' })}
+          className="native-select"
+        >
+          <option value="true">{tr({ zh: '含备打', en: 'With extras' })}</option>
+          <option value="false">{tr({ zh: '不含备打', en: 'No extras' })}</option>
+        </select>
       )}
     </div>
   ) : null;
@@ -1249,27 +1256,31 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
           {srcToggle}
         {showMergeToggle && (
           <div className="scramble-len-merge">
-            <PillToggle
-              value={merged}
-              onChange={setMerged}
-              onLabel={tr({ zh: '合并', en: 'Merged'
+            <select
+              value={String(merged)}
+              onChange={event => setMerged(event.currentTarget.value === 'true')}
+              aria-label={tr({ zh: '合并打乱相同的项目', en: 'Merge events that share scrambles'
             })}
-              offLabel={tr({ zh: '分开', en: 'Split'
-            })}
-              ariaLabel={tr({ zh: '合并打乱相同的项目', en: 'Merge events that share scrambles'
-            })}
-            />
+              className="native-select"
+            >
+              <option value="true">{tr({ zh: '合并', en: 'Merged'
+            })}</option>
+              <option value="false">{tr({ zh: '分开', en: 'Split'
+            })}</option>
+            </select>
           </div>
         )}
         {lenHasQtm && (
           <div className="scramble-stats-puzzle-toggle scramble-len-metric-head">
-            <PillToggle
-              value={lenMetric === 'qtm'}
-              onChange={(v) => setLenMetric(v ? 'qtm' : 'htm')}
-              offLabel={lenAlt.off}
-              onLabel={lenAlt.on}
-              ariaLabel={lenAlt.aria}
-            />
+            <select
+              value={String(lenMetric === 'qtm')}
+              onChange={event => { const v = event.currentTarget.value === 'true'; setLenMetric(v ? 'qtm' : 'htm'); }}
+              aria-label={lenAlt.aria}
+              className="native-select"
+            >
+              <option value="true">{lenAlt.on}</option>
+              <option value="false">{lenAlt.off}</option>
+            </select>
             <InfoTooltip icon={HelpCircle} content={lenMetric === 'qtm' ? lenAlt.onHint : lenAlt.offHint} />
           </div>
         )}
@@ -1281,6 +1292,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
       {/* SolveTabs 在 dist 模式下只剩 3×3 子标签(最优解 / 分布 / 阶段 / CFOP / DR);项目行由上面那个
           PuzzlePicker 承担,不重复渲染,故非 3×3 时它是空的 —— 直接不挂。 */}
       {!embedded && distPuzzle === '3x3' && <SolveTabs puzzle={distPuzzle} mode="dist" sub="distribution" />}
+      {dataset === 'wca' && ['222', '333', '333oh', '333bf', '333mbf', '333fm', '333ft'].includes(event) && <NoBarStats event={event} isZh={isZh} />}
     </div>
   );
 
@@ -1537,13 +1549,15 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
         {is333 && (
           <div className="scramble-stats-puzzle-toggle">
             <span className="scramble-stats-puzzle-toggle-label">{tr({ zh: '度量', en: 'Metric' })}</span>
-            <PillToggle
-              value={optMetric === 'qtm'}
-              onChange={(v) => setOptMetric(v ? 'qtm' : 'htm')}
-              offLabel="HTM"
-              onLabel="QTM"
-              ariaLabel={tr({ zh: '度量:HTM(半圈计 1)或 QTM(半圈计 2)', en: 'Move metric: HTM (half turn = 1) or QTM (half turn = 2)' })}
-            />
+            <select
+              value={String(optMetric === 'qtm')}
+              onChange={event => { const v = event.currentTarget.value === 'true'; setOptMetric(v ? 'qtm' : 'htm'); }}
+              aria-label={tr({ zh: '度量:HTM(半圈计 1)或 QTM(半圈计 2)', en: 'Move metric: HTM (half turn = 1) or QTM (half turn = 2)' })}
+              className="native-select"
+            >
+              <option value="true">{"QTM"}</option>
+              <option value="false">{"HTM"}</option>
+            </select>
             <span className="scramble-stats-puzzle-toggle-hint">
               {optMetric === 'qtm'
                 ? tr({ zh: 'QTM 计步即将加入', en: 'QTM coming soon' })
@@ -2044,15 +2058,17 @@ function ExamplesPanel({
           />
         )}
         {hasOpt && (
-          <PillToggle
-            value={exView === 'opt'}
-            onChange={(v) => onExView(v ? 'opt' : 'orig')}
-            offLabel={tr({ zh: '原始', en: 'Original' })}
-            onLabel={tr({ zh: '最优', en: 'Optimal'
+          <select
+            value={String(exView === 'opt')}
+            onChange={event => { const v = event.currentTarget.value === 'true'; onExView(v ? 'opt' : 'orig'); }}
+            aria-label={tr({ zh: '原始打乱或最优等价打乱', en: 'Original scramble or optimal equivalent'
             })}
-            ariaLabel={tr({ zh: '原始打乱或最优等价打乱', en: 'Original scramble or optimal equivalent'
-            })}
-          />
+            className="native-select"
+          >
+            <option value="true">{tr({ zh: '最优', en: 'Optimal'
+            })}</option>
+            <option value="false">{tr({ zh: '原始', en: 'Original' })}</option>
+          </select>
         )}
         {canFullList && (
           <FullScrambleFilterBar

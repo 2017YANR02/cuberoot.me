@@ -7,7 +7,7 @@
 // resetKey 变化(切项目 / 改排序 → displayRows 重排)时重置回 initial 重新渐进。
 // ensureIndex(i):把某行(如深链目标)立即纳入渲染范围,不必等 idle 逐块追上。
 
-import { useState, useEffect, useCallback } from 'react';
+import { startTransition, useState, useEffect, useCallback } from 'react';
 
 type IdleHandle = number;
 const scheduleIdle: (cb: () => void) => IdleHandle =
@@ -25,23 +25,30 @@ export function useProgressiveCount(
   initial = 60,
   chunk = 120,
 ): { count: number; ensureIndex: (i: number) => void } {
-  const [count, setCount] = useState(() => Math.min(initial, total));
-
-  // 切项目 / 改排序 / 数据行数变化 → 回到 initial 重新渐进。
-  useEffect(() => {
-    setCount(Math.min(initial, total));
-  }, [resetKey, total, initial]);
+  const [state, setState] = useState(() => ({ resetKey, total, initial, count: Math.min(initial, total) }));
+  const changed = !Object.is(state.resetKey, resetKey) || state.total !== total || state.initial !== initial;
+  const count = changed ? Math.min(initial, total) : state.count;
+  // 必须在子树渲染前重置；effect 重置会先提交整张新排序/新项目表，再删回首批。
+  if (changed) setState({ resetKey, total, initial, count });
 
   // 每个 idle tick 追加一块,直到全部就位。
   useEffect(() => {
     if (count >= total) return;
-    const h = scheduleIdle(() => setCount((c) => Math.min(total, c + chunk)));
+    const h = scheduleIdle(() => startTransition(() => setState((previous) => (
+      Object.is(previous.resetKey, resetKey) && previous.total === total && previous.initial === initial
+        ? { ...previous, count: Math.min(total, previous.count + chunk) }
+        : previous
+    ))));
     return () => cancelIdle(h);
-  }, [count, total, chunk]);
+  }, [count, total, chunk, resetKey, initial]);
 
   const ensureIndex = useCallback((i: number) => {
-    setCount((c) => Math.max(c, Math.min(total, i + 1)));
-  }, [total]);
+    setState((previous) => (
+      Object.is(previous.resetKey, resetKey) && previous.total === total
+        ? { ...previous, count: Math.max(previous.count, Math.min(total, i + 1)) }
+        : previous
+    ));
+  }, [total, resetKey]);
 
   return { count, ensureIndex };
 }

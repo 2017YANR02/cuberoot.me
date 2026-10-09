@@ -1,4 +1,5 @@
 import { isBldEvent, type EventId, type TimerScrambleSourceKind } from './types';
+import { isCnEligible } from './color-neutral';
 
 /**
  * Runtime-neutral contract for the settings surfaces currently reachable from
@@ -183,15 +184,20 @@ export interface TimerSmartCubeSettings {
   bluetoothAutoReady: (typeof TIMER_SMART_CUBE_AUTO_READY_MODES)[number];
   /** 3D is available without a gyro; an unanchored state falls back to the net. */
   liveCubeView: (typeof TIMER_SMART_CUBE_LIVE_VIEWS)[number];
+  /** Whether the live virtual cube consumes the device gyroscope pose. */
+  gyroEnabled: boolean;
   recordGyro: boolean;
   autoRecap: boolean;
+  autoOpenSolution: boolean;
 }
 
 export const DEFAULT_TIMER_SMART_CUBE_SETTINGS: TimerSmartCubeSettings = {
   bluetoothAutoReady: 'scrambled',
   liveCubeView: '3d',
+  gyroEnabled: true,
   recordGyro: true,
   autoRecap: true,
+  autoOpenSolution: true,
 };
 
 export function normalizeTimerSmartCubeSettings(value: Partial<Record<keyof TimerSmartCubeSettings, unknown>>): TimerSmartCubeSettings {
@@ -200,8 +206,10 @@ export function normalizeTimerSmartCubeSettings(value: Partial<Record<keyof Time
       ? value.bluetoothAutoReady as TimerSmartCubeSettings['bluetoothAutoReady'] : DEFAULT_TIMER_SMART_CUBE_SETTINGS.bluetoothAutoReady,
     liveCubeView: TIMER_SMART_CUBE_LIVE_VIEWS.includes(value.liveCubeView as TimerSmartCubeSettings['liveCubeView'])
       ? value.liveCubeView as TimerSmartCubeSettings['liveCubeView'] : DEFAULT_TIMER_SMART_CUBE_SETTINGS.liveCubeView,
+    gyroEnabled: normalizedBoolean(value.gyroEnabled, DEFAULT_TIMER_SMART_CUBE_SETTINGS.gyroEnabled),
     recordGyro: normalizedBoolean(value.recordGyro, DEFAULT_TIMER_SMART_CUBE_SETTINGS.recordGyro),
     autoRecap: normalizedBoolean(value.autoRecap, DEFAULT_TIMER_SMART_CUBE_SETTINGS.autoRecap),
+    autoOpenSolution: normalizedBoolean(value.autoOpenSolution, DEFAULT_TIMER_SMART_CUBE_SETTINGS.autoOpenSolution),
   };
 }
 
@@ -254,7 +262,7 @@ export function timerScrambleClickEffect(
 /** Exact SettingsPanel order within each of the eight categories. */
 export const TIMER_SETTING_FIELD_CONTRACTS = [
   // Timing
-  { id: 'settings.timer.enabled', category: 'timer', copy: { en: 'Timing', zh: '计时' }, storagePath: 'timingEnabled', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-timing-enabled' },
+  { id: 'settings.timer.enabled', category: 'timer', copy: { en: 'Timing mode', zh: '计时模式' }, storagePath: 'timingEnabled', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-timing-enabled' },
   { id: 'settings.timer.inspection', category: 'timer', copy: { en: 'WCA inspection', zh: 'WCA 观察' }, storagePath: 'inspectionSec', value: { kind: 'enum', values: [0, 15] }, visibility: 'always', disabledWhen: 'never', effect: 'persist-inspection-seconds' },
   { id: 'settings.timer.hold-threshold', category: 'timer', copy: { en: 'Hold threshold (ms)', zh: '按住阈值（毫秒）' }, storagePath: 'holdMs', value: { kind: 'integer', min: 100, max: 2000, step: 50 }, visibility: 'always', disabledWhen: 'never', effect: 'persist-hold-threshold' },
   { id: 'settings.timer.auto-session-for-event', category: 'timer', copy: { en: 'Match session when changing event', zh: '切换项目时匹配分组' }, storagePath: 'autoSessionForEvent', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-auto-session-for-event' },
@@ -264,17 +272,20 @@ export const TIMER_SETTING_FIELD_CONTRACTS = [
   { id: 'settings.timer.result-precision', category: 'timer', copy: { en: 'Result precision', zh: '成绩精度' }, storagePath: 'precision', value: { kind: 'enum', values: [2, 3] }, visibility: 'always', disabledWhen: 'never', effect: 'persist-result-precision' },
 
   // Smart cube
-  { id: 'settings.smart-cube.fake-cube', category: 'smart-cube', copy: { en: 'Fake cube', zh: '假魔方' }, storagePath: 'showDevFakeCube', value: bool, visibility: 'development-only', disabledWhen: 'never', effect: 'persist-development-fake-cube-controls' },
+  { id: 'settings.smart-cube.fake-cube', category: 'smart-cube', copy: { en: 'Virtual cube', zh: '虚拟魔方' }, storagePath: 'showDevFakeCube', value: bool, visibility: 'development-only', disabledWhen: 'never', effect: 'persist-development-fake-cube-controls' },
+  { id: 'settings.smart-cube.gyro', category: 'smart-cube', copy: { en: 'Gyroscope', zh: '陀螺仪' }, storagePath: 'gyroEnabled', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-live-cube-gyro' },
   { id: 'settings.smart-cube.auto-ready', category: 'smart-cube', copy: { en: 'Smart-cube auto-ready', zh: '智能魔方自动预备' }, storagePath: 'bluetoothAutoReady', value: { kind: 'enum', values: TIMER_SMART_CUBE_AUTO_READY_MODES }, visibility: 'always', disabledWhen: 'never', effect: 'persist-smart-cube-auto-ready' },
   { id: 'settings.smart-cube.live-view', category: 'smart-cube', copy: { en: 'Live cube', zh: '实况魔方' }, storagePath: 'liveCubeView', value: { kind: 'enum', values: TIMER_SMART_CUBE_LIVE_VIEWS }, visibility: 'always', disabledWhen: 'never', effect: 'persist-live-cube-view' },
-  { id: 'settings.smart-cube.record-orientation', category: 'smart-cube', copy: { en: 'Record orientation for replay', zh: '录姿态用于回放' }, storagePath: 'recordGyro', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-record-orientation' },
-  { id: 'settings.smart-cube.auto-recap', category: 'smart-cube', copy: { en: 'Open reconstruction after each solve', zh: '拧完后打开复盘' }, storagePath: 'autoRecap', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-auto-recap' },
+  { id: 'settings.smart-cube.record-orientation', category: 'smart-cube', copy: { en: 'Record orientation for replay', zh: '记录姿态用于回放' }, storagePath: 'recordGyro', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-record-orientation' },
+  { id: 'settings.smart-cube.auto-recap', category: 'smart-cube', copy: { en: 'Open reconstruction after each solve', zh: '结束后自动打开复盘' }, storagePath: 'autoRecap', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-auto-recap' },
+  { id: 'settings.smart-cube.auto-solution', category: 'smart-cube', copy: { en: 'Open solution after each solve', zh: '结束后自动打开解法' }, storagePath: 'autoOpenSolution', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-auto-solution' },
+
+  { id: 'settings.scramble.training-pre-orientation', category: 'smart-cube', copy: { en: 'Training orientation', zh: '训练朝向' }, storagePath: 'preScrT', value: { kind: 'orientation' }, visibility: 'always', disabledWhen: 'never', effect: 'persist-training-pre-scramble-orientation' },
 
   // Scrambles
   { id: 'settings.scramble.optimal', category: 'scramble', copy: { en: 'Optimal scramble', zh: '最优打乱' }, storagePath: 'wcaUseOptimal', value: bool, visibility: 'event-not-222', disabledWhen: 'optimal-unavailable', effect: 'persist-optimal-scramble' },
   { id: 'settings.scramble.auto-mark-wca', category: 'scramble', copy: { en: 'Auto-mark completed real scrambles', zh: '完成真题后自动打卡' }, storagePath: 'autoMarkWcaScramble', value: bool, visibility: 'wca-source', disabledWhen: 'never', effect: 'persist-auto-mark-wca' },
   { id: 'settings.scramble.pre-orientation', category: 'scramble', copy: { en: 'Pre-scramble', zh: '预打乱朝向' }, storagePath: 'preScr', value: { kind: 'orientation' }, visibility: 'always', disabledWhen: 'never', effect: 'persist-pre-scramble-orientation' },
-  { id: 'settings.scramble.training-pre-orientation', category: 'scramble', copy: { en: 'Training pre-scramble', zh: '训练预打乱朝向' }, storagePath: 'preScrT', value: { kind: 'orientation' }, visibility: 'always', disabledWhen: 'never', effect: 'persist-training-pre-scramble-orientation' },
   { id: 'settings.scramble.color-neutral', category: 'scramble', copy: { en: 'Color neutral', zh: '颜色中立' }, storagePath: 'cnMode', value: { kind: 'enum', values: ['none', 'single', 'dual', 'six'] }, visibility: 'color-neutral-event', disabledWhen: 'never', effect: 'persist-color-neutral-mode' },
 
   // Training
@@ -385,10 +396,6 @@ export function timerSupportsStageSplits(event: EventId): boolean {
   return STAGE_SPLIT_EVENTS.has(event);
 }
 
-const COLOR_NEUTRAL_EVENTS: ReadonlySet<EventId> = new Set([
-  '333', '333oh', '333fm', '333bld', '333ni', '333mbld',
-]);
-
 function settingVisible(
   visibility: TimerSettingVisibility,
   context: TimerSettingFieldContext,
@@ -400,7 +407,7 @@ function settingVisible(
     case 'wca-source': return context.source === 'wca';
     case 'stage-split-event': return timerSupportsStageSplits(context.event);
     case 'bld-event': return isBldEvent(context.event);
-    case 'color-neutral-event': return COLOR_NEUTRAL_EVENTS.has(context.event);
+    case 'color-neutral-event': return isCnEligible(context.event);
     case 'rank-enabled-without-account-country': return context.rankEnabled && !/^[a-z]{2}$/i.test(context.rankAccountCountry?.trim() ?? '');
     case 'signed-out': return !context.signedIn;
     case 'signed-in': return context.signedIn;

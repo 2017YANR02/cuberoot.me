@@ -7,13 +7,14 @@ import { CompactSelect } from '@cuberoot/timer-ui/compact-select';
 let root: Root;
 let host: HTMLDivElement;
 const popup = () => document.querySelector('[role="listbox"]');
-async function open(dismissOnMouseLeave = true) {
+async function open(dismissOnMouseLeave?: boolean) {
   host = document.createElement('div');
   document.body.append(host);
   root = createRoot(host);
   await act(async () => root.render(createElement(CompactSelect, {
     label: 'Role', ariaLabel: 'Role', items: [{ value: 'admin', label: 'Admin' }],
-    onChange: () => {}, openOnHover: true, dismissOnMouseLeave,
+    onChange: () => {}, openOnHover: true,
+    ...(dismissOnMouseLeave === undefined ? {} : { dismissOnMouseLeave }),
   })));
   const trigger = host.querySelector('button')!;
   await act(async () => trigger.click());
@@ -27,6 +28,33 @@ async function move(target: Element, x: number, y: number, pointerType = 'mouse'
 afterEach(async () => {
   await act(async () => root?.unmount());
   host?.remove();
+});
+
+it('keeps editor fields interactive and dismisses only on an outside press or Escape', async () => {
+  const trigger = await open(false);
+  const selections: string[] = [];
+  await act(async () => root.render(createElement(CompactSelect<string>, {
+    label: 'Stage', ariaLabel: 'Edit stages', items: [{ value: 'full', label: 'Full' }],
+    onChange: value => selections.push(value),
+    panelContent: createElement('input', { 'aria-label': 'Stage name', defaultValue: 'Full' }),
+  })));
+  const editor = document.querySelector('[role="dialog"]')!;
+  const input = editor.querySelector('input')!;
+  expect(trigger.getAttribute('aria-haspopup')).toBe('dialog');
+  expect(editor.querySelector('[role="option"]')).toBeNull();
+  await act(async () => {
+    input.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
+    document.body.dispatchEvent(new MouseEvent('pointerup', { bubbles: true }));
+    input.click();
+  });
+  expect(document.querySelector('[role="dialog"]')).toBe(editor);
+  expect(selections).toEqual([]);
+  await act(async () => document.body.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true })));
+  expect(document.querySelector('[role="dialog"]')).toBeNull();
+  await act(async () => trigger.click());
+  await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+  expect(document.querySelector('[role="dialog"]')).toBeNull();
+  expect(selections).toEqual([]);
 });
 
 it('immediately dismisses outside without a click, while touch moves do not dismiss', async () => {
@@ -51,8 +79,36 @@ it.each([false, true])('keeps trigger, popup and crossing gap usable (above=%s)'
   expect(popup()).toBeNull();
 });
 
-it('preserves the default behavior of other menus', async () => {
+it('allows hover-dismiss to be disabled explicitly', async () => {
   await open(false);
   await move(document.body, 500, 500);
   expect(popup()).not.toBeNull();
+});
+
+it('disables click and hover, closes an open menu, and allows selection after re-enabling', async () => {
+  await open();
+  expect(popup()).not.toBeNull();
+  const selections: string[] = [];
+  const render = (disabled: boolean) => act(async () => root.render(createElement(CompactSelect<string>, {
+    id: 'account-region', label: 'Province', ariaLabel: 'Province',
+    items: [{ value: 'SH', label: 'Shanghai' }], onChange: value => selections.push(value),
+    openOnHover: true, disabled,
+  })));
+  await render(true);
+  const trigger = host.querySelector('button')!;
+  expect(trigger.id).toBe('account-region');
+  expect(trigger.disabled).toBe(true);
+  expect(trigger.getAttribute('aria-expanded')).toBe('false');
+  expect(popup()).toBeNull();
+  const hover = new MouseEvent('pointerover', { bubbles: true });
+  Object.defineProperty(hover, 'pointerType', { value: 'mouse' });
+  await act(async () => { trigger.click(); trigger.dispatchEvent(hover); });
+  expect(popup()).toBeNull();
+  expect(selections).toEqual([]);
+  await render(false);
+  await act(async () => trigger.click());
+  expect(popup()).not.toBeNull();
+  await act(async () => (popup()!.querySelector('button') as HTMLButtonElement).click());
+  expect(selections).toEqual(['SH']);
+  expect(popup()).toBeNull();
 });

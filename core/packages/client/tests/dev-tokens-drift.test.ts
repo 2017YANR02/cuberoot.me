@@ -16,19 +16,13 @@ import { GROUPS } from '@/app/[lang]/dev/tokens/_tokens';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..'); // packages/client
 const css = readFileSync(join(ROOT, 'app', 'globals.css'), 'utf8');
 
-// Grab the body of the first `selector { ... }` block via brace matching.
+// Find the exact selector within a list (tokens also style the native preview).
 function block(selector: string): string {
-  const re = new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*\\{');
-  const m = re.exec(css);
+  const source = css.replace(/\/\*[\s\S]*?\*\//g, '');
+  const m = [...source.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+    .find((match) => match[1].split(',').some((entry) => entry.trim() === selector));
   if (!m) throw new Error(`block not found: ${selector}`);
-  let i = m.index + m[0].length;
-  let depth = 1;
-  const start = i;
-  for (; i < css.length && depth > 0; i++) {
-    if (css[i] === '{') depth++;
-    else if (css[i] === '}') depth--;
-  }
-  return css.slice(start, i - 1);
+  return m[2];
 }
 
 const lightBlock = block(':root');

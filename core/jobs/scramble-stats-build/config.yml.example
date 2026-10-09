@@ -1,21 +1,4 @@
-# 多 set 配置:每项一个数据来源,UI 上 dropdown 切换
-# 每个 set 的 CSV 目录可含以下文件:std.csv / eo.csv / pair.csv / pseudo.csv / pseudo_pair.csv / f2leo.csv / pseudo_f2leo.csv
-# 缺失的变体 CSV 会被跳过并打警告(不再是必需,build 不再抛错)
-sets:
-  - key: wca
-    label: WCA
-    label_zh: WCA
-    csv_dir: D:/cube/scramble/wca_scramble/stats
-    scrambles_txt: D:/cube/scramble/wca_scramble/wca_scrambles_no_wide_move.txt
-  - key: xcross_2_col_10f
-    label: dual-color 10f xcross
-    label_zh: 双色底 10f xcross
-    csv_dir: D:/cube/scramble/xcross_2_col_10f/stat
-    scrambles_txt: D:/cube/scramble/xcross_2_col_10f/scrambles.txt
-
-# 老格式(单 set,等价于 sets: [{key: wca, ...}])仍兼容:
-# csv_dir: D:/cube/scramble/wca_scramble/stats
-
-# 非 3x3 puzzle 整解最优步数分布管线(update_puzzle_stats.ps1 / build_puzzle_dist.ts)的数据根:
-# <root>/<puzzle>/scrambles.txt + <puzzle>.csv
-puzzle_data_dir: D:/cube/scramble/puzzle
+# 运行 node prepare_config.mjs 自动生成 config.yml；默认数据在仓库同级 scramble/。
+# 目录可通过 CUBEROOT_DATA_ROOT / CUBEROOT_WCA_DATA_DIR /
+# CUBEROOT_PUZZLE_DATA_DIR / CUBEROOT_XCROSS_DATA_DIR 覆盖。
+# 手工修改生成的 config.yml 后会保留你的自定义配置。

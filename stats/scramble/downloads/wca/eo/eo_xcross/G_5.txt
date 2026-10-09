@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xcross / G / bin 5
-# Population in this bin: 721
+# Population in this bin: 724
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 5139459001,D2 F2 L' B2 R2 F2 L2 D' L2 B' D B2 F' D' R2 F' U' F,G,Spookin' on the Plains at Auburn 2025 (2025-10-25),333oh R1 C E2
@@ -21,7 +21,7 @@
 1348940002,L2 D' L2 F2 U R2 U R' U2 F2 R D2 F D L2 R2 B2 U2 B' L2,G,Yakima Side Events 2019 (2019-10-12),333mbf Final A #1
 2623423001,L' F2 B R' B' U' R U F2 R B L' D2 R D2 L2 F2 L B2,G,Tokyo Challenge BLD I 2023 (2023-04-09),333bf Final B E2
 72780001,F B' R2 D' L F2 L' F2 D' L' U' R2 U' D' F2 U2 D' R2,G,Człuchów Panzer Cube 2014 (2014-10-25~26),333oh Final A E1
-1128962001,D2 B' D2 R' L B D2 F L' U2 D2 F2 B' U2 F2 B D2 L2,G,Perm Open 2019 (2019-05-04~05),333 Final A #2
+5842662001,L F2 U' R D2 R2 B F' R2 U2 B' L B2 L U' R F' R',G,New Cubing Season Athens A 2026 (2026-09-19),333 R1 A #5
 2787916001,R2 F D2 B2 L2 B2 U' F L' D2 L F2 L2 F2 U2 D2 L2 U' R',G,Reno Summer 2023 (2023-06-10),333 R1 B #2
 1712092001,D2 F' L2 F L2 F L2 U F R2 F' R' F2 D U2 B' F2 R',G,Finnish Championship 2021 (2021-10-30~31),333oh R1 B #5
 108204001,U2 R2 L2 F2 D B D' R2 U L2 F' U2 B R2 L2 F2 D2 F,G,San Pedro de Macoris Open 2015 (2015-02-08),333 R2 A #4

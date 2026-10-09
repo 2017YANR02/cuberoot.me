@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxxcross / BGORWY / bin 10
-# Population in this bin: 245
+# Population in this bin: 246
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 17388001,R B R2 U2 D' B2 D2 R' L' D B D2 F' U2 D2 F' L2 B U2 B2,Y,Apollo Open 2014 (2014-05-04),333oh Final A #4
@@ -149,7 +149,7 @@
 3195593032,B R D' F U D B2 U F L2 F2 R2 U2 B L2 B' D' L' F',G,CubingUSA Great Lakes Championship 2023 (2023-10-20~22),333mbf Final A #2
 3273436001,B U' D L D B U2 F' L F' R L2 D2 F' D2 L2 D2 F' B,Y,Albacete Open 2023 (2023-11-18~19),333 R1 D #2
 5634547001,R B2 R' U2 R U2 R U2 R2 D R2 U L2 D' B' R' B2 D2,O,Tomelloso Open 2026 (2026-05-16~17),333oh R1 B #2
-3299987012,D2 R2 D2 B' L2 B D2 B' R D2 B' U F2 D2 R D' U F' U,Y,No Clock in Lužice 2023 (2023-11-25~26),333mbf Final A #2
+5850633001,R' B U2 R F' R2 U2 B2 L U' F U2 R2 F D2 L2 F2 U2 B,B,Colorado Cubing Weekend 2026 (2026-09-26~27),333 R2 A #3
 3362111001,U2 B2 D2 B2 L' R' B R B L' B2 D2 F' U2 F2,R,Pocos Cupos Floridablanca 2023 (2023-12-17),333oh R1 B #3
 3389114001,D2 F2 B U R B2 D R B2 U2 B2 R2 D' L2 B2 D' F' D,B,Race the Clock Minnesota 2023 (2023-12-30),333 R1 A #3
 3411898001,U2 F U2 R2 F U2 B' R2 F D2 B' L2 R' B2 F' D F2 D2 L2,R,Ke Solo Lur 2024 (2024-01-13~14),333 R2 A #1

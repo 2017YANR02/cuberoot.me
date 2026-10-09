@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_cross / BG / bin 2
-# Population in this bin: 309
+# Population in this bin: 312
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 33026001,U2 R' D2 F' L' U R' B' L F2 L D2 F' B2 L2 D2 R2 L2,G,Masterpress Summer 2014 (2014-06-28~29),333oh Final A E2
@@ -12,11 +12,11 @@
 74944001,U2 L2 B2 D' L2 R2 D' U2 B2 L2 R2 B' U2 L' D' F' D' L' F R2,G,BASC 4: Día de los Cubos 2014 (2014-11-02),333 Final C E2
 121646001,D2 R' L D' R U2 R2 U2 R2 F' L2 D' F2 U' B2 U R2 U B2,B,Atlantic Open 2015 (2015-03-28),333 Final B #2
 3699749001,L2 F2 L2 D' B2 U F2 D U' B2 L U B U' F2 R B R' D',G,Lodi Speedcubing 2024 (2024-04-20~21),333oh R1 A E2
-137365001,F2 L B2 R2 F2 R D2 R2 U2 R' B D R2 U' F D2 U' B D F2,B,Mega Rubik 2015 (2015-05-02~03),333oh Final A #3
+5842662001,L F2 U' R D2 R2 B F' R2 U2 B' L B2 L U' R F' R',G,New Cubing Season Athens A 2026 (2026-09-19),333 R1 A #5
 5811958001,F2 L U' F' L2 F2 D2 B' R2 U2 F D' L2 R' B U' B R' B,G,Shin Kong Cube Open - Taichung 2026 (2026-08-30),333 R1 G #5
 172752001,R' U2 F2 R2 D2 U2 L' F2 D F L' B2 D2 U2 L' R2 B' L R',G,US Nationals 2015 (2015-07-31~08-02),333 R2 B #2
 4663824001,R F U2 B' D2 F' R' U F' U F U' L2 U L2 B2 R2 U L2 U2,G,Uppsalaligan 4: Clock - 2025 (2025-04-21),333bf Final B #2
-190373001,B' U2 D R2 B2 R D2 R' D' L2 F2 R2 U2 B U2 D2 R2 F,G,Norwich Summer 2015 (2015-09-12),333 R2 A E2
+5848797001,D' L R2 B U2 F' U2 B2 D2 L2 U2 L' U' B' F' D2 U' B' R,G,Weston-super-Mare Autumn 2026 (2026-09-26~27),333 R2 B E2
 191419001,D2 F' D2 L2 F' U2 F D2 B R2 U B2 D' L' D U' L2 B2 L' U F L B,B,Moscow South-West Open 2015 (2015-09-19~20),333bf R2 A #2
 5035182001,D' U' F2 R2 L D' R' D2 U2 B2 D L R D' F U',B,Fitchburg Fall 2025 (2025-09-20),333 R2 A #2
 237545001,R' U2 F2 U2 B2 L' F2 R' F2 R D2 B D' L D2 F2 R' U L,G,South East Texas Open 2016 (2016-01-02),333oh R1 B E2

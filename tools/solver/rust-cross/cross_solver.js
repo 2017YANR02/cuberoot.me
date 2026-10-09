@@ -1535,6 +1535,18 @@ export class XCrossRestrictSolverWasm {
     }
 }
 if (Symbol.dispose) XCrossRestrictSolverWasm.prototype[Symbol.dispose] = XCrossRestrictSolverWasm.prototype.free;
+
+/**
+ * Generate the canonical packed XCross table in a dedicated browser worker.
+ * @param {Function} on_layer
+ * @returns {Uint8Array}
+ */
+export function generate_xcross_table(on_layer) {
+    const ret = wasm.generate_xcross_table(on_layer);
+    var v1 = getArrayU8FromWasm0(ret[0], ret[1]).slice();
+    wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+    return v1;
+}
 function __wbg_get_imports() {
     const import0 = {
         __proto__: null,
@@ -1640,6 +1652,11 @@ function addToExternrefTable0(obj) {
 function getArrayU32FromWasm0(ptr, len) {
     ptr = ptr >>> 0;
     return getUint32ArrayMemory0().subarray(ptr / 4, ptr / 4 + len);
+}
+
+function getArrayU8FromWasm0(ptr, len) {
+    ptr = ptr >>> 0;
+    return getUint8ArrayMemory0().subarray(ptr / 1, ptr / 1 + len);
 }
 
 function getStringFromWasm0(ptr, len) {

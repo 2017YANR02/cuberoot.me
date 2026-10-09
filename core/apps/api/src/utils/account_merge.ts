@@ -1,5 +1,6 @@
 import { ownerKey } from '@cuberoot/shared/account';
-import { withTransaction, type QueryRunner } from '../db/connection.js';
+import type { TransactionSql } from 'postgres';
+import { transactionQuery, withTransaction, type QueryRunner } from '../db/connection.js';
 import { ANONYMIZE_TABLES, PURGE_TABLES } from './account_delete.js';
 
 export type AccountMergeErrorCode =
@@ -35,6 +36,8 @@ const MERGE_OWNED_DIRECT_TABLES = new Set([
   'account_last_devices',
   'auth_web_session_tickets',
   'user_pets',
+  'apple_membership_accounts',
+  'google_membership_accounts',
   'app_users',
 ]);
 
@@ -89,10 +92,10 @@ async function moveOwnerKey(tx: QueryRunner, from: string, to: string): Promise<
  * source 并入 target。所有检查和迁移共用一个事务；唯一键冲突会整单回滚。
  * ponytail: 直接引用 app_users 的复杂业务域暂不猜合并策略，有真实需求时按域补规则。
  */
-export async function mergeAccounts(sourceUserId: number, targetUserId: number): Promise<void> {
+export async function mergeAccounts(sourceUserId: number, targetUserId: number, transaction?: TransactionSql): Promise<void> {
   if (sourceUserId === targetUserId) throw new AccountMergeError('already_merged');
   try {
-    await withTransaction(async (tx) => {
+    const merge = async (tx: QueryRunner) => {
       const users = await tx<MergeUser>(
         `SELECT id, wca_id, password_hash, merged_into_user_id FROM app_users
          WHERE id IN (?, ?) ORDER BY id FOR UPDATE`,
@@ -148,6 +151,10 @@ export async function mergeAccounts(sourceUserId: number, targetUserId: number):
       await tx('DELETE FROM account_last_devices WHERE user_id = ?', [sourceUserId]);
       await tx('DELETE FROM auth_web_session_tickets WHERE user_id = ?', [sourceUserId]);
       await tx('UPDATE auth_identities SET user_id = ? WHERE user_id = ?', [targetUserId, sourceUserId]);
+      // Preserve every original Apple token so renewals and restored transactions
+      // continue to resolve to the explicitly merged account.
+      await tx('UPDATE apple_membership_accounts SET user_id = ? WHERE user_id = ?', [targetUserId, sourceUserId]);
+      await tx('UPDATE google_membership_accounts SET user_id = ? WHERE user_id = ?', [targetUserId, sourceUserId]);
 
       // 先释放 source 持有的唯一 WCA ID，再写入 target；仍在同一事务内，不会出现中间态。
       await tx('UPDATE app_users SET wca_id = NULL WHERE id = ?', [sourceUserId]);
@@ -212,7 +219,9 @@ export async function mergeAccounts(sourceUserId: number, targetUserId: number):
          WHERE channel = 'merge' AND target = ? AND consumed_at IS NULL`,
         [String(sourceUserId)],
       );
-    });
+    };
+    if (transaction) await merge(transactionQuery(transaction));
+    else await withTransaction(merge);
   } catch (error) {
     if (error instanceof AccountMergeError) throw error;
     if ((error as { code?: string })?.code === '23505') throw new AccountMergeError('data_conflict');

@@ -8,6 +8,33 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (path: string) => readFileSync(join(ROOT, path), 'utf8');
 
 describe('algorithm player placement', () => {
+  it('embeds editing in the canonical detail and links category actions to it', () => {
+    const detail = read('app/[lang]/alg/[puzzle]/[set]/[subgroup]/AlgCaseView.tsx');
+    const category = read('components/AlgCategoryView.tsx');
+    expect(detail).toContain('>{renderDetail}</AdminCaseEditor>');
+    expect(detail).toContain('editorAlgorithms={editor?.algorithms}');
+    expect(detail).toContain('{editor ? editor.name : primary}');
+    expect(detail).not.toContain('<Pencil');
+    expect(category).not.toContain('<Pencil');
+    expect(category).toMatch(/<Link\s+href=\{caseDetailHref\(c\)\}\s+className="alg-case-cardlink"/);
+    expect(category).not.toContain("setEditorState({ mode: 'edit'");
+    expect(detail).toContain('isAdmin && caseObj.id != null');
+    expect(detail).not.toContain('editMode');
+    expect(category).toContain('onClose={() => setEditorState(null)}');
+  });
+
+  it('uses the shared top-layer display rule in every formula list, rich text and PDF', () => {
+    for (const path of [
+      'components/AlgCategoryView.tsx',
+      'components/AlgCaseMetaContent.tsx',
+      'app/[lang]/alg/[puzzle]/[set]/[subgroup]/AlgCaseView.tsx',
+    ]) {
+      const source = read(path);
+      expect(source, path).toMatch(/displayCaseAlg\(puzzle, set,/);
+      expect(source, path).toMatch(/displayCaseAlgHtml\(puzzle, set,/);
+    }
+    expect(read('lib/alg_pdf/from_cases.ts')).toContain('displayCaseAlg(puzzle, set, angled)');
+  });
   it('keeps category lists static and plays algs on case detail pages', () => {
     const category = read('components/AlgCategoryView.tsx');
     const detail = read('app/[lang]/alg/[puzzle]/[set]/[subgroup]/AlgCaseView.tsx');
@@ -28,44 +55,73 @@ describe('algorithm player placement', () => {
 
   it('reuses the fixed F2L player-and-list layout for every lean case detail', () => {
     const detail = read('app/[lang]/alg/[puzzle]/[set]/[subgroup]/AlgCaseView.tsx');
+    const relations = read('components/AlgCaseRelationCards.tsx');
     const styles = read('app/[lang]/alg/alg.css');
     const sharedStyles = read('components/AlgPlayer/alg-sim-player.css');
 
-    expect(detail).toMatch(/caseObj\.algs\.map\(\(oriAlgs, oi\) => \{[\s\S]*?const orientedSetup = oriAdjustSetup\(caseObj\.setup, oi\);/);
-    expect(detail).toMatch(/className="alg-case-detail-ori-player alg-player-list-player"[\s\S]*?<AlgPlayer[\s\S]*?alg=\{caseViewAlg\(selectedEntry\.alg, effectiveViewAngle\)\}[\s\S]*?setup=\{caseViewSetup\(orientedSetup, effectiveViewAngle\)\}/);
+    expect(detail).toMatch(/displayedOrientations\.map\(\(\{ oriAlgs, oi \}\) => \{[\s\S]*?const orientedSetup = oriAdjustSetup\(caseObj\.setup, oi\);/);
+    expect(detail).toContain("const selectedAlg = caseViewAlg(selectedEntry?.alg ?? '', effectiveViewAngle);");
+    expect(detail).not.toContain('f2lPlayerSequence');
+    expect(detail).toContain('const orientationSetup = caseViewSetup(orientedSetup, effectiveViewAngle);');
+    expect(detail).toMatch(/className="alg-case-detail-ori-player alg-player-list-player"[\s\S]*?<AlgPlayer[\s\S]*?alg=\{selectedAlg\}[\s\S]*?setup=\{orientationSetup\}[\s\S]*?orientation=\{effectiveOrientation\}/);
+    expect(detail).toMatch(/className="alg-case-detail-ori-algs alg-player-list-options">[\s\S]*?<SetupLine[\s\S]*?displayCaseScramble\(puzzle, set, orientationSetup\)/);
+    expect(detail).toContain('renderOrientationSetup={m ? undefined : (setup) => (');
+    expect(detail).not.toContain('{editor && <div hidden={effectiveViewAngle !== \'default\'}>{editor.setup}</div>}');
     expect(detail).not.toContain('inlinePlayer');
     expect(detail).toContain('autoPlay={playRequest > 0}');
     expect(detail).toContain('playRequest={playRequest}');
     expect(detail).toContain('className="alg-case-detail-lean is-paired-player"');
-    expect(detail).toContain('className="alg-case-detail-lean-algs is-paired-player"');
+    expect(detail).toContain("useF2lOrientationGrid = puzzle === '3x3'");
+    expect(detail).toContain("(set === 'f2l' || set === 'adv-f2l')");
+    expect(detail).toMatch(/F2L_DETAIL_ORIENTATION_ORDER = new Map\(\[\s*\['FR', 0\],[\s\S]*?\['FL', 1\],[\s\S]*?\['BR', 2\],[\s\S]*?\['BL', 3\]/);
+    expect(detail).toContain("useF2lOrientationGrid ? ' is-f2l-orientation-grid' : ''");
+    expect(detail).toContain('size={useF2lOrientationGrid ? 220 : 260}');
+    expect(detail).toContain("editor ? ' is-editing' : ''");
     expect(detail).toMatch(/className="alg-case-detail-ori-main alg-player-list-layout"[\s\S]*?className="alg-case-detail-ori-player alg-player-list-player"[\s\S]*?className="alg-case-detail-ori-algs alg-player-list-options"/);
-    expect(detail).toMatch(/className="alg-case-detail-lean-thumb"[\s\S]*?<CaseThumb/);
+    expect(detail).toContain("import { AlgCaseRelationCards, type AlgCaseRelationCardItem } from '@/components/AlgCaseRelationCards'");
+    expect(detail).toContain("import { compareAlgGroupLabel } from '@/lib/alg_group_order'");
+    expect(detail).toMatch(/const leanRelationCards = \(editor\?: InlineCaseEditorParts\): AlgCaseRelationCardItem\[\] => \(\[[\s\S]*?\]\)\.sort\(\(a, b\) => \([\s\S]*?compareAlgGroupLabel\(a\.name, b\.name\)/);
+    expect(detail).toMatch(/\.map\(\(member, index\): AlgCaseRelationCardItem => \(\{[\s\S]*?current: member\.current,[\s\S]*?href: member\.current \? undefined : hrefFor\(member\.caseObj\)/);
+    expect(detail).toContain('items={leanRelationCards(editor)}');
+    expect(relations).toContain('className="alg-meta-related-grid alg-meta-top-grid"');
+    expect(relations).toMatch(/<CaseThumb[\s\S]*?size=\{76\}/);
+    expect(relations).toContain('alg-meta-related-card${item.current ? \' is-self is-current\' : \'\'}');
+    expect(detail).not.toContain('alg-case-detail-lean-aside');
+    expect(styles).toMatch(/\.alg-case-detail-lean\s*\{[\s\S]*?display:\s*flex;[\s\S]*?flex-direction:\s*column;[\s\S]*?gap:\s*0;/);
+    expect(styles).not.toContain('.alg-case-detail-lean-aside');
     expect(detail).not.toContain('{!multiOri && (');
     expect(detail).not.toContain('is-without-thumb');
     expect(styles).toMatch(/\.alg-case-detail-lean-algs\.is-paired-player\s*\{\s*gap:\s*24px;/);
+    expect(styles).toMatch(/@media \(min-width: 901px\)[\s\S]*?\.alg-case-detail\.is-f2l-orientation-grid\s*\{[\s\S]*?max-width:\s*min\(1440px, 100%\);/);
+    expect(styles).toMatch(/\.alg-case-detail-lean-algs\.is-paired-player\.is-f2l-orientation-grid\.is-editing \.alg-editor\s*\{[\s\S]*?grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);/);
+    expect(styles).toMatch(/\.is-f2l-orientation-grid\.is-editing \.alg-editor > \.alg-editor-ori:nth-child\(3\)\s*\{\s*order:\s*4;/);
+    expect(styles).toMatch(/@media \(min-width: 901px\) and \(max-width: 1399px\)[\s\S]*?\.is-f2l-orientation-grid \.alg-player-list-layout\s*\{[\s\S]*?flex-direction:\s*column;/);
     expect(sharedStyles).toMatch(/\.alg-player-list-layout\s*\{[\s\S]*?grid-template-columns:\s*300px minmax\(0, 1fr\);/);
-    expect(styles).toContain('@media (max-width: 900px)');
-    expect(styles).toContain('.alg-case-detail-lean.is-paired-player .alg-case-detail-lean-aside');
     expect(styles).toContain('.alg-case-detail-ori-algs > .alg-alg-sortable:has(.alg-alg-row.is-expanded)');
     expect(sharedStyles).toMatch(/@media \(max-width: 900px\)[\s\S]*?\.alg-player-list-layout\s*\{[\s\S]*?flex-direction:\s*column;/);
   });
 
   it('keeps rich metadata above a fixed shared player and alg list', () => {
     const meta = read('components/AlgCaseMetaContent.tsx');
+    const relations = read('components/AlgCaseRelationCards.tsx');
     const modal = read('components/AlgCaseMetaModal.tsx');
     const styles = read('app/[lang]/alg/alg.css');
-    const beforePlayer = meta.slice(meta.indexOf('<div className="alg-meta-related-grid alg-meta-top-grid">'), meta.indexOf('<div className="alg-meta-case">'));
+    const beforePlayer = meta.slice(meta.indexOf('<AlgCaseRelationCards'), meta.indexOf('<div className="alg-meta-case">'));
     const mappedAlgs = meta.slice(meta.indexOf('algsWrap(algs.map'));
 
-    expect(beforePlayer).toContain('family.map');
-    expect(beforePlayer).toContain('<CaseThumb');
-    expect(beforePlayer).toContain('alg-meta-related-label');
-    expect(beforePlayer).toContain('alg-meta-related-name');
-    expect(beforePlayer).toContain('is-current');
+    expect(meta).toContain('const relationCards: AlgCaseRelationCardItem[]');
+    expect(beforePlayer).toContain('<AlgCaseRelationCards');
+    expect(relations).toContain('<CaseThumb');
+    expect(relations).toContain('alg-meta-related-label');
+    expect(relations).toContain('alg-meta-related-name');
+    expect(relations).toContain('is-current');
     expect(beforePlayer).toContain('alg-meta-scramble-row');
+    expect(beforePlayer).toContain('prefix={(');
+    expect(beforePlayer).toContain('alg-meta-scramble-prefix');
     expect(beforePlayer).not.toContain('<AlgPlayer');
     expect(meta).toContain('?? algs.find(a => !caseAlgIssue(a.entry))');
-    expect(meta).toContain('playbackAlg: shown');
+    expect(meta).toContain('const playbackAlg = caseViewAlg(a.alg, viewAngle)');
+    expect(meta).toContain('const shown = displayCaseAlg(puzzle, set, playbackAlg)');
     expect(meta).toMatch(/alg-meta-case-player-layout alg-case-detail-ori-main alg-player-list-layout[\s\S]*?className="alg-case-detail-ori-player alg-player-list-player"[\s\S]*?<AlgPlayer[\s\S]*?alg=\{selectedAlg\.playbackAlg\}[\s\S]*?alg-meta-case-algs alg-case-detail-ori-algs alg-player-list-options/);
     expect(meta).toContain('selected={selected}');
     expect(meta).toContain('setSelectedAlgKey(rowKey)');
@@ -74,8 +130,11 @@ describe('algorithm player placement', () => {
     expect(modal).toMatch(/<AlgCaseMetaContent\s+caseObj=\{caseObj\}[\s\S]*?jump=\{\{ kind: 'callback', onJump \}\}\s*\/>/);
     expect(modal).not.toMatch(/<AlgCaseMetaContent[\s\S]{0,500}?\bplayable\b/);
     expect(styles).toMatch(/\.alg-meta-related-grid\s*\{[^}]*display:\s*flex;[^}]*flex-wrap:\s*wrap;[^}]*gap:\s*10px;/);
-    expect(styles).toMatch(/\.alg-meta-top-grid\s*\{[^}]*border-bottom:\s*1px solid var\(--border-default\);/);
-    expect(styles).toMatch(/\.alg-meta-case-player-layout\s*\{\s*flex:\s*1;\s*\}/);
+    expect(styles).toMatch(/\.alg-meta-top-grid\s*\{[^}]*padding-bottom:\s*12px;[^}]*margin-bottom:\s*12px;/);
+    expect(styles).not.toMatch(/\.alg-meta-top-grid\s*\{[^}]*border-bottom:/);
+    expect(styles).toMatch(/\.alg-meta-scramble-row\s*\{[^}]*display:\s*flex;[^}]*flex-direction:\s*row;[^}]*flex-wrap:\s*nowrap;/);
+    expect(styles).toMatch(/\.alg-case-standard-detail code\s*\{[^}]*white-space:\s*nowrap;[^}]*overflow-x:\s*auto;/);
+    expect(styles).toMatch(/\.alg-meta-case-player-layout\s*\{\s*flex:\s*1;\s*min-width:\s*0;\s*\}/);
   });
 
   it('preserves saved move marks on both lean and metadata-rich case details', () => {
@@ -84,9 +143,9 @@ describe('algorithm player placement', () => {
     const styles = read('app/[lang]/alg/alg.css');
 
     expect(detail).toContain("import { sanitizeAlgHtml } from '@/lib/alg_html'");
-    expect(detail).toMatch(/entry\.algHtml && viewAngle === 'default' && puzzle !== 'sq1'[\s\S]*?sanitizeAlgHtml\(entry\.algHtml\)/);
+    expect(detail).toMatch(/entry\.algHtml && viewAngle === 'default' && puzzle !== 'sq1'[\s\S]*?sanitizeAlgHtml\(displayCaseAlgHtml\(puzzle, set, entry\.algHtml\)\)/);
     expect(meta).toContain("import { sanitizeAlgHtml } from '@/lib/alg_html'");
-    expect(meta).toMatch(/algHtml=\{viewAngle === 'default' && puzzle !== 'sq1' \? a\.entry\.algHtml : undefined\}/);
+    expect(meta).toMatch(/algHtml=\{viewAngle === 'default' && puzzle !== 'sq1' \? a\.html : undefined\}/);
     expect(meta).toContain('sanitizeAlgHtml(algHtml)');
     expect(styles).toContain('.alg-meta-algline-code u.wavy');
     expect(styles).toContain('.alg-meta-algline-code s');
@@ -105,7 +164,7 @@ describe('algorithm player placement', () => {
     const route = read('app/[lang]/alg/[puzzle]/[set]/[subgroup]/AlgSubOrCaseClient.tsx');
 
     expect(route).toContain("import AlgCaseView from './AlgCaseView'");
-    expect(route).toContain('return <AlgCaseView puzzle={puzzle as AlgPuzzle} set={set} caseObj={caseObj} data={data} editMode={route.edit} />;');
+    expect(route).toContain('return <AlgCaseView puzzle={puzzle as AlgPuzzle} set={set} caseObj={caseObj} data={data} />;');
   });
 
   it('binds the shared sim pointer bridge so dragging the cube changes only the view', () => {

@@ -2,6 +2,7 @@
 import { createHash } from 'node:crypto';
 import { createReadStream } from 'node:fs';
 import { lstat, mkdir, readFile, readdir, rename, writeFile } from 'node:fs/promises';
+import { availableParallelism } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -15,8 +16,8 @@ async function atomicWrite(file, text) {
   await rename(temporary, file);
 }
 
-export async function buildManifest({ root, cache, output, force = false, concurrency = 8, progress = () => {} }) {
-  if (!Number.isInteger(concurrency) || concurrency < 1 || concurrency > 14) throw new Error('concurrency must be 1..14');
+export async function buildManifest({ root, cache, output, force = false, concurrency = availableParallelism(), progress = () => {} }) {
+  if (!Number.isInteger(concurrency) || concurrency < 1) throw new Error('concurrency must be positive');
   root = path.resolve(root);
   for (const file of [cache, output]) {
     const relative = path.relative(root, path.resolve(file));

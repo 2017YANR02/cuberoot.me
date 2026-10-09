@@ -16,7 +16,11 @@ import { query } from '../db/connection.js';
 import { requireAdminOrApiKey, checkRateLimit } from '../utils/recon_helpers.js';
 import { syncMirrorAndLog, syncMirrorForCase } from '../utils/alg_mirror.js';
 import { is3x3TopLayerSet } from '@cuberoot/shared';
-import { canonicalize3x3WideMoves, startsWithYRotation } from '@cuberoot/shared/alg-notation';
+import { sanitizeAlgHtmlFields } from '@cuberoot/shared/alg-html';
+import {
+  canonicalize3x3WideMoves, cubeOnly, findIllegalGluedCubeMoves, hasBalancedGrouping,
+  startsWithYRotation,
+} from '@cuberoot/shared/alg-notation';
 import { validateRequiredAlgCaseSetup } from '../utils/alg_case_setup.js';
 
 export const algSetsRoutes = new Hono();
@@ -67,6 +71,7 @@ interface AlgCaseInput {
 }
 
 const FORMULA_JSON_FIELDS = new Set(['alg', 'algHtml', 'setup', 'scramble']);
+const SPACING_JSON_FIELDS = new Set(['alg', 'setup', 'scramble']);
 
 function canonicalize3x3FormulaJson(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(canonicalize3x3FormulaJson);
@@ -81,12 +86,13 @@ function canonicalize3x3FormulaJson(value: unknown): unknown {
 }
 
 function canonicalize3x3CaseInput(puzzle: string, body: AlgCaseInput): AlgCaseInput {
-  if (puzzle !== '3x3') return body;
+  const algs = sanitizeAlgHtmlFields(body.algs);
+  if (puzzle !== '3x3') return { ...body, algs };
   return {
     ...body,
     ...(typeof body.setup === 'string' ? { setup: canonicalize3x3WideMoves(body.setup) } : {}),
     ...(typeof body.standard === 'string' ? { standard: canonicalize3x3WideMoves(body.standard) } : {}),
-    algs: canonicalize3x3FormulaJson(body.algs),
+    algs: canonicalize3x3FormulaJson(algs),
   };
 }
 
@@ -121,6 +127,27 @@ function containsLeadingY(value: unknown): boolean {
     || (typeof entry.algHtml === 'string' && startsWithYRotation(entry.algHtml));
 }
 
+function containsUnbalancedGrouping(value: unknown): boolean {
+  if (Array.isArray(value)) return value.some(containsUnbalancedGrouping);
+  if (!value || typeof value !== 'object') return false;
+  const entry = value as Record<string, unknown>;
+  return Object.entries(entry).some(([key, child]) => (
+    FORMULA_JSON_FIELDS.has(key) && typeof child === 'string'
+      ? !hasBalancedGrouping(cubeOnly(child))
+      : containsUnbalancedGrouping(child)
+  ));
+}
+
+function containsIllegalGluedCubeMoves(value: unknown): boolean {
+  if (Array.isArray(value)) return value.some(containsIllegalGluedCubeMoves);
+  if (!value || typeof value !== 'object') return false;
+  return Object.entries(value as Record<string, unknown>).some(([key, child]) => (
+    SPACING_JSON_FIELDS.has(key) && typeof child === 'string'
+      ? findIllegalGluedCubeMoves(child) !== null
+      : containsIllegalGluedCubeMoves(child)
+  ));
+}
+
 async function validateCaseInput(puzzle: string, setSlug: string, body: AlgCaseInput): Promise<{ error?: string }> {
   if (typeof body.caseName !== 'string' || !body.caseName.trim()) return { error: 'caseName required' };
   if (body.caseName.length > CASE_NAME_MAX) return { error: 'caseName too long' };
@@ -133,6 +160,17 @@ async function validateCaseInput(puzzle: string, setSlug: string, body: AlgCaseI
   if (!body.sticker || typeof body.sticker !== 'object') return { error: 'sticker required (object)' };
   if (!Array.isArray(body.algs)) return { error: 'algs must be array' };
   assertUniqueCaseAlgs(body.algs);
+  if ((typeof body.setup === 'string' && !hasBalancedGrouping(cubeOnly(body.setup)))
+    || (typeof body.standard === 'string' && !hasBalancedGrouping(cubeOnly(body.standard)))
+    || containsUnbalancedGrouping(body.algs)) {
+    return { error: 'unbalanced_grouping_parentheses' };
+  }
+  if (/^\d+x\d+$/.test(puzzle)
+    && ((typeof body.setup === 'string' && findIllegalGluedCubeMoves(body.setup))
+      || (typeof body.standard === 'string' && findIllegalGluedCubeMoves(body.standard))
+      || containsIllegalGluedCubeMoves(body.algs))) {
+    return { error: 'moves_must_be_space_separated' };
+  }
   const setupError = await validateRequiredAlgCaseSetup(puzzle, setSlug, body.setup);
   if (setupError) return { error: setupError };
   if (is3x3TopLayerSet(puzzle, setSlug)

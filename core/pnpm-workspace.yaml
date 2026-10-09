@@ -3,6 +3,9 @@ packages:
   - 'packages/*'
   - 'jobs/*'
   - '!packages/platform'
+# Corepack and pnpm/action-setup select the pinned version. Avoid pnpm 12's
+# extra package-manager lockfile document, which breaks single-document readers.
+pmOnFail: ignore
 allowBuilds:
   better-sqlite3: true
   core-js: true
@@ -10,3 +13,17 @@ allowBuilds:
   sharp: false # next/image native build,POC 不用图片优化跳过
 patchedDependencies:
   cubing@0.63.3: patches/cubing@0.63.3.patch
+# These packages publish Three.js declarations without a types dependency.
+# Pin their matching types so installs cannot resolve cubing's older hoisted types.
+packageExtensions:
+  'three-bvh-csg@0.0.18':
+    dependencies:
+      '@types/three': '0.183.1'
+  'three-mesh-bvh@0.9.10':
+    dependencies:
+      '@types/three': '0.183.1'
+minimumReleaseAgeExclude:
+  - '@capacitor/android@8.5.3'
+  - '@capacitor/cli@8.5.3'
+  - '@capacitor/core@8.5.3'
+  - '@capacitor/ios@8.5.3'

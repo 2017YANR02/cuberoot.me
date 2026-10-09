@@ -95,6 +95,9 @@ export const NONWCA_TS: NonWcaTsSolver[] = [
   { event: 'dino', zhName: '恐龙魔方', enName: 'Dino Cube', tier: 'D', quality: 'near',
     states: '239,500,800', zhStates: '= A12 = 12!/2', enStates: '= A12 = 12!/2', gods: 'God 10 (face-turn)',
     zhMethod: 'wrap cstimer dino solver (redi IDA*) 当引擎: 棱置换 A12 超 BFS/表, 不建表, 均值 ~9.53', enMethod: 'wraps cstimer’s dino solver (redi IDA*) as the engine: A12 edge perm is beyond BFS/table, no table built, mean ~9.53' },
+  { event: 'redi_cube', zhName: '热帝魔方', enName: 'Redi Cube', tier: 'D', quality: 'near',
+    states: '239,500,800', zhStates: '= A12 = 12!/2', enStates: '= A12 = 12!/2', gods: 'God 10 (face-turn)',
+    zhMethod: '直接复用 cstimer Redi IDA* 求解器，棱置换 A12 超 BFS/表，不建表', enMethod: 'wraps cstimer’s Redi IDA* solver; the A12 edge permutation is beyond BFS/table, so no table is built' },
   // ── TIER D: 从零构造式约简, 有效 + 有界 (非最优) ──
   { event: 'sq2', zhName: '方块二', enName: 'Square-2', tier: 'D', quality: 'bounded',
     states: '76,828,484,468,736,000', zhStates: '= 12·18! ≈ 7.68×10¹⁶', enStates: '= 12·18! ≈ 7.68×10¹⁶', gods: 'cap SQ2_MAX_LENGTH=130',

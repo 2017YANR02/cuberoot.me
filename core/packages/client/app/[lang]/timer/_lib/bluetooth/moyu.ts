@@ -1,3 +1,4 @@
+import { startLegacyWebCube } from './legacy_session';
 /**
  * MoYu AI smart cube driver — covers the MoYu AI ("MHC..." device-name
  * series). The companion WCU/MY32-prefixed firmware on MoYu's "AI 32" cube
@@ -60,16 +61,10 @@
  */
 
 import {
-  MOYU_GYRO_CHARACTERISTIC_UUID,
-  MOYU_READ_CHARACTERISTIC_UUID,
   MOYU_SERVICE_UUID,
-  MOYU_TURN_CHARACTERISTIC_UUID,
-  MOYU_WRITE_CHARACTERISTIC_UUID,
-  createMoyuDecodeState,
   matchesMoyuName,
-  parseMoyuTurnFrame,
 } from '@cuberoot/shared/smart-cube/moyu';
-import type { CubeDriver, CubeDriverStartResult } from './driver';
+import type { CubeDriver } from './driver';
 import type { CubeBrand } from './types';
 
 export const moyuDriver: CubeDriver = {
@@ -85,82 +80,7 @@ export const moyuDriver: CubeDriver = {
     return matchesMoyuName(n);
   },
 
-  async start(server, onMove): Promise<CubeDriverStartResult> {
-    const service = await server.getPrimaryService(MOYU_SERVICE_UUID);
-
-    // The four characteristics. Read/gyro are subscribed to but their
-    // payloads are intentionally ignored — cstimer logs them but never
-    // surfaces moves from them. Turn is the move stream.
-    const turnChar = await service.getCharacteristic(MOYU_TURN_CHARACTERISTIC_UUID);
-    let readChar: BluetoothRemoteGATTCharacteristic | null = null;
-    let gyroChar: BluetoothRemoteGATTCharacteristic | null = null;
-    try {
-      readChar = await service.getCharacteristic(MOYU_READ_CHARACTERISTIC_UUID);
-    } catch {
-      // older firmware may omit the read char; non-fatal.
-    }
-    try {
-      gyroChar = await service.getCharacteristic(MOYU_GYRO_CHARACTERISTIC_UUID);
-    } catch {
-      // gyro is optional; non-fatal.
-    }
-    // Touch the write char so future host->cube commands are possible if
-    // we ever need them; failure is non-fatal.
-    try {
-      await service.getCharacteristic(MOYU_WRITE_CHARACTERISTIC_UUID);
-    } catch {
-      // ignore
-    }
-
-    const faceStatus = createMoyuDecodeState();
-
-    const onTurn = (ev: Event): void => {
-      const target = ev.target as BluetoothRemoteGATTCharacteristic;
-      const dv = target.value;
-      if (!dv) return;
-      try {
-        const moves = parseMoyuTurnFrame(dv, faceStatus);
-        for (const mv of moves) onMove(mv);
-      } catch {
-        // Defensive — never let a malformed frame crash the host.
-      }
-    };
-
-    // No-op listeners on read/gyro keep notifications flowing; cstimer
-    // subscribes for parity with the real firmware's expectations.
-    const onIgnored = (): void => { /* no-op */ };
-
-    turnChar.addEventListener('characteristicvaluechanged', onTurn);
-    await turnChar.startNotifications();
-    if (readChar) {
-      readChar.addEventListener('characteristicvaluechanged', onIgnored);
-      try { await readChar.startNotifications(); } catch { /* ignore */ }
-    }
-    if (gyroChar) {
-      gyroChar.addEventListener('characteristicvaluechanged', onIgnored);
-      try { await gyroChar.startNotifications(); } catch { /* ignore */ }
-    }
-
-    let cleaned = false;
-    const cleanup = (): void => {
-      if (cleaned) return;
-      cleaned = true;
-      turnChar.removeEventListener('characteristicvaluechanged', onTurn);
-      void turnChar.stopNotifications().catch(() => {});
-      if (readChar) {
-        readChar.removeEventListener('characteristicvaluechanged', onIgnored);
-        void readChar.stopNotifications().catch(() => {});
-      }
-      if (gyroChar) {
-        gyroChar.removeEventListener('characteristicvaluechanged', onIgnored);
-        void gyroChar.stopNotifications().catch(() => {});
-      }
-    };
-
-    // No battery characteristic on this firmware (cstimer stub returns a
-    // placeholder). Surface null so the UI shows "—".
-    const battery = async (): Promise<number | null> => null;
-
-    return { battery, cleanup };
+  start(server, onMove, context) {
+    return startLegacyWebCube('moyu', server, onMove, context);
   },
 };

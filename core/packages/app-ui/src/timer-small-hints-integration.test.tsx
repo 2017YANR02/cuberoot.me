@@ -13,6 +13,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MobileSmallPuzzleHints } from './MobileSmallPuzzleHints';
 
 const appSource = readFileSync(resolve(process.cwd(), 'src/App.tsx'), 'utf8');
+const soloSource = readFileSync(new URL(import.meta.resolve('@cuberoot/timer-ui/TimerSoloPage')), 'utf8');
 const css = readFileSync(resolve(process.cwd(), 'src/app.css'), 'utf8');
 
 describe('Mobile Timer small-puzzle hints integration', () => {
@@ -36,15 +37,20 @@ describe('Mobile Timer small-puzzle hints integration', () => {
     vi.restoreAllMocks();
   });
 
-  it('mounts the event-only host after timing/stats and before device actions', () => {
-    const timingIndex = appSource.indexOf('<TimingSurface');
-    const statsIndex = appSource.indexOf('<TimerStatRail', timingIndex);
-    const hintsIndex = appSource.indexOf('<MobileSmallPuzzleHints', statsIndex);
-    const deviceIndex = appSource.indexOf('<TimerDeviceActions', hintsIndex);
-    expect(timingIndex).toBeGreaterThan(-1);
-    expect(statsIndex).toBeGreaterThan(timingIndex);
-    expect(hintsIndex).toBeGreaterThan(statsIndex);
-    expect(deviceIndex).toBeGreaterThan(hintsIndex);
+  it('mounts event-only hints under the timing surface inside the shared stage', () => {
+    const soloIndex = appSource.indexOf('<TimerSoloPage');
+    const afterTimingIndex = appSource.indexOf('afterTiming={', soloIndex);
+    const hintsIndex = appSource.indexOf('<MobileSmallPuzzleHints', afterTimingIndex);
+    expect(soloIndex).toBeGreaterThan(-1);
+    expect(afterTimingIndex).toBeGreaterThan(soloIndex);
+    expect(hintsIndex).toBeGreaterThan(afterTimingIndex);
+    const stageIndex = soloSource.indexOf('<TimerStageLayout');
+    const timingIndex = soloSource.indexOf('<TimingSurface', stageIndex);
+    const afterTimingSlot = soloSource.indexOf('{afterTiming}', timingIndex);
+    expect(stageIndex).toBeGreaterThan(-1);
+    expect(timingIndex).toBeGreaterThan(stageIndex);
+    expect(afterTimingSlot).toBeGreaterThan(timingIndex);
+    expect(soloSource.indexOf('</TimerStageLayout>', stageIndex)).toBeGreaterThan(afterTimingSlot);
 
     const hintCall = appSource.slice(hintsIndex, appSource.indexOf('/>', hintsIndex));
     expect(hintCall).toContain('event={activeEvent}');

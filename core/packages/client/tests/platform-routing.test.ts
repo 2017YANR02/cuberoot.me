@@ -10,6 +10,7 @@ import {
   loadPlatformMemberships,
   loadPlatformPrivacyConsents,
   loadPlatformResource,
+  localizePlatformEntity,
   PLATFORM_PRIVACY_POLICY_VERSION,
   PLATFORM_ACTION_LABELS,
 } from '@/lib/platform-gateway';
@@ -132,6 +133,12 @@ describe('Platform route conservation', () => {
     expect(matchPlatformRoute(['events', 'preview', 'extra'])).toBeNull();
   });
 
+  it('keeps only the course introduction public', () => {
+    expect(matchPlatformRoute(['courses', 'course-1', 'sections', 'introduction'])?.definition.access).toBe('public');
+    expect(matchPlatformRoute(['courses', 'course-1', 'sections', 'trial'])?.definition.access).toBe('account');
+    expect(matchPlatformRoute(['courses', 'course-1', 'sections', 'core'])?.definition.access).toBe('account');
+  });
+
   it('matches all 95 legacy page mappings while allowing required new target routes', () => {
     const targets = manifest.capabilities
       .filter((capability) => capability.kind === 'page')
@@ -220,7 +227,7 @@ describe('Platform route conservation', () => {
 
   it('resolves canonical SEO targets without losing dynamic parameters', () => {
     expect(resolvePlatformCanonicalPath(['timer'])).toEqual({ path: '/timer', rewritten: true });
-    expect(resolvePlatformCanonicalPath(['teachers'])).toEqual({ path: '/teachers', rewritten: false });
+    expect(resolvePlatformCanonicalPath(['teachers'])).toEqual({ path: '/teachers', rewritten: true });
     expect(resolvePlatformCanonicalPath(['org', 'cube root', 'classes', 'group/1'])).toEqual({
       path: '/org/cube%20root/classes/group%2F1',
       rewritten: true,
@@ -236,7 +243,7 @@ describe('Platform route conservation', () => {
     expect(timerLinks).not.toContain('cuberoot.me/zh/platform/timer');
 
     const teacherLinks = (await proxy(new NextRequest('https://cuberoot.me/zh/platform/teachers'))).headers.get('Link');
-    expect(teacherLinks).not.toContain('rel="canonical"');
+    expect(teacherLinks).toContain('<https://cuberoot.me/zh/teachers>; rel="canonical"');
     expect(teacherLinks).toContain('<https://cuberoot.me/teachers>; rel="alternate"; hreflang="en"');
   });
 
@@ -260,6 +267,26 @@ describe('Platform route conservation', () => {
 });
 
 describe('Platform gateway contracts', () => {
+  it.each([['admin-teachers', 'instructor'], ['admin-applications', 'application']] as const)('retains the %s detail envelope for editing and decisions', async (resource, key) => {
+    const record = { id: 'record-1', displayName: 'Teacher', pitch: 'Experience', status: 'pending' };
+    vi.stubGlobal('fetch', vi.fn(async () => response({ [key]: record })));
+    const result = await loadPlatformResource(resource, { params: { id: 'record-1' } });
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0].data).toEqual(record);
+  });
+
+  it('preserves server pagination and business data while localizing only display fields', async () => {
+    const course = { id: 'c1', titleZh: '课程', titleEn: 'Course', summaryZh: '中文', summaryEn: 'English', baseAmountMinor: 1250 };
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL) => response({ categories: ['beginner'], courses: [course], total: 61, page: 3, pageSize: 20 }));
+    vi.stubGlobal('fetch', fetchMock);
+    const result = await loadPlatformResource('courses', { routeId: 'courses', params: {}, page: 3, pageSize: 20, query: ' cube ', category: 'beginner', sort: 'title' });
+    expect(requestPath(fetchMock.mock.calls[0][0])).toBe('/v1/platform/courses?q=cube&sort=title&page=3&pageSize=20&category=beginner&v=3');
+    expect(result).toMatchObject({ total: 61, page: 3, pageSize: 20, categories: ['beginner'] });
+    expect(localizePlatformEntity(result.items[0], 'en')).toMatchObject({ title: 'Course', summary: 'English', data: course });
+    fetchMock.mockImplementation(async () => response({ items: [course], page: 1, pageSize: 20 }));
+    expect((await loadPlatformResource('courses', { routeId: 'courses', params: {} })).total).toBeUndefined();
+  });
+
   it('preserves the lesson response envelope and its playable media binding', async () => {
     const lesson = { id: 'lesson-1', titleZh: '第一课', mediaId: 'media-1', bodyZh: { text: '课时正文' }, questions: [] };
     const fetchMock = vi.fn(async (_input: RequestInfo | URL) => response({ lesson }));

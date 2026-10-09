@@ -12,7 +12,7 @@
 
 ## 执行与产物
 
-在仓库根使用已安装的 Blender 后台执行，最多 14 线程，以隐藏窗口和 BelowNormal 优先级启动：
+在仓库根使用已安装的 Blender 后台执行，线程数由 Blender 按机器可用并行度决定，以隐藏窗口和 BelowNormal 优先级启动：
 
 ```powershell
 $probeLabel = 'hsbc-next'
@@ -20,7 +20,7 @@ $probeLogRoot = Join-Path (Get-Location) '.tmp/png/space-light-bake'
 New-Item -ItemType Directory -Force -Path $probeLogRoot | Out-Null
 $probeProcess = Start-Process -FilePath 'E:/Apps/Blender/blender.exe' -ArgumentList @(
   '--background', '--disable-autoexec', 'D:/cube/cuberoot.me/design/space/scenes/shanghai.blend',
-  '--threads', '14', '--python-exit-code', '1',
+  '--python-exit-code', '1',
   '--python', 'D:/cube/cuberoot.me/design/space/scripts/probe_facade_bake.py',
   '--', '--building', '12', '--size', '2048', '--samples', '128', '--label', $probeLabel
 ) -WindowStyle Hidden -PassThru -RedirectStandardOutput "$probeLogRoot/$probeLabel.log" -RedirectStandardError "$probeLogRoot/$probeLabel-error.log"

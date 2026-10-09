@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { beforeEach, expect, it, vi } from 'vitest';
 import type { WcaUser } from '@/lib/auth-store';
+vi.mock('@/lib/session-fetch', () => ({ sessionFetch: (...args: Parameters<typeof fetch>) => fetch(...args) }));
 vi.mock('@/lib/api-base', () => ({ apiUrl: (path: string) => path }));
 vi.mock('@/lib/auth-store', () => ({ getSessionToken: () => 'test-session', getWcaToken: () => '' }));
 import { isOnboardingGuided, markOnboardingGuided } from '@/lib/onboarding';

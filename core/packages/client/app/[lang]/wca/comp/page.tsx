@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 /**
  * 顶尖选手近期比赛追踪页 — 日历视图
@@ -63,7 +64,6 @@ import { CompCuberPicker } from '@/components/CompCuberPicker';
 import { CompCardWithRounds, wcaRoundsSeed } from '@/components/CompCardWithRounds';
 import OnThisDayModal from './_components/OnThisDayModal';
 import MonthGrid from '@/components/MonthGrid';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import BoolToggle from '@/components/BoolToggle';
 import { useCompFollows } from '@/components/CompFollow';
 import { useAuthStore, useOwnerKey } from '@/lib/auth-store';
@@ -93,7 +93,6 @@ function decodeEntities(s: string): string {
     .replace(/&gt;/g, '>')
     .replace(/&amp;/g, '&');
 }
-
 
 // ── 类型定义 ──────────────────────────────────────────────────────────────
 
@@ -630,7 +629,7 @@ type ViewMode = 'calendar' | 'card' | 'list' | 'globe';
 const VIEW_MODES: ViewMode[] = ['calendar', 'card', 'list', 'globe'];
 
 // 日历视图的两种排布:'comp' = 每场比赛一条 event-bar(原 calendar);'country' = 同国当天聚成一面国旗(原 compact)。
-// 由 month-bar 的 PillToggle 切换,取代原先独立的「紧凑」视图图标。
+// 由 month-bar 的原生下拉菜单切换,取代原先独立的「紧凑」视图图标。
 type CalLayout = 'comp' | 'country';
 const CAL_LAYOUTS: CalLayout[] = ['comp', 'country'];
 
@@ -1994,6 +1993,16 @@ function CalendarPageInner() {
   const monthMm = String(viewDate.getMonth() + 1).padStart(2, '0');
   const weekdays = (isZh ? WEEKDAY_ZH : WEEKDAY_EN);
 
+  const cycleEvent = (eid: string) => setEventFilters(prev => {
+    const next = { ...prev };
+    const current = prev[eid];
+    const max = maxRoundsByEid[eid] ?? 0;
+    if (current === undefined) next[eid] = 'any';
+    else if (current === 'any' && max >= 1) next[eid] = 1;
+    else if (typeof current === 'number' && current < max) next[eid] = (current + 1) as 1 | 2 | 3 | 4;
+    else delete next[eid];
+    return next;
+  });
   return (
     <div
       ref={pageRef}
@@ -2217,14 +2226,15 @@ function CalendarPageInner() {
           </button>
         </div>
         {viewMode === 'calendar' && (
-          <PillToggle
-            className="cal-layout-toggle"
-            value={calLayout === 'country'}
-            onChange={(v) => setCalLayout(v ? 'country' : 'comp')}
-            offLabel={tr({ zh: '比赛', en: 'Comps' })}
-            onLabel={tr({ zh: '国家', en: 'Countries' })}
-            ariaLabel={tr({ zh: '日历布局:按比赛或按国家', en: 'Calendar layout: by competition or by country' })}
-          />
+          <select
+            value={String(calLayout === 'country')}
+            onChange={event => { const v = event.currentTarget.value === 'true'; setCalLayout(v ? 'country' : 'comp'); }}
+            aria-label={tr({ zh: '日历布局:按比赛或按国家', en: 'Calendar layout: by competition or by country' })}
+            className={['native-select', "cal-layout-toggle"].filter(Boolean).join(' ')}
+          >
+            <option value="true">{tr({ zh: '国家', en: 'Countries' })}</option>
+            <option value="false">{tr({ zh: '比赛', en: 'Comps' })}</option>
+          </select>
         )}
         {(viewMode === 'calendar' || viewMode === 'card') && (
           <div className="month-nav">
@@ -2298,6 +2308,7 @@ function CalendarPageInner() {
           const daysActive = daysFilter != null;
           const daysChip = (
             <button
+              type="button"
               key="days-filter"
               className={`event-chip days-chip ${daysActive ? 'is-active' : ''}`}
               onClick={() => setDaysFilter((cur) => {
@@ -2315,34 +2326,19 @@ function CalendarPageInner() {
             </button>
           );
           const chips = EVENT_ORDER.map((eid) => {
-            const cur = eventFilters[eid];
-            const active = cur !== undefined;
+            const current = eventFilters[eid];
+            const active = current !== undefined;
             const max = maxRoundsByEid[eid] ?? 0;
-            const badge = typeof cur === 'number' ? String(cur) : '';
-            const cycle = () => setEventFilters((prev) => {
-              const next = { ...prev };
-              const c = prev[eid];
-              if (c === undefined) {
-                next[eid] = 'any';
-              } else if (c === 'any') {
-                if (max >= 1) next[eid] = 1;
-                else delete next[eid]; // 此项目无任何 rounds 数据 → 直接关
-              } else {
-                const n = c + 1;
-                if (n <= max) next[eid] = n as 1 | 2 | 3 | 4;
-                else delete next[eid];
-              }
-              return next;
-            });
+            const badge = typeof current === 'number' ? String(current) : '';
             const cycleHint = max >= 1
-              ? ((isZh ? `点击切换：关 → max → 1 → ... → ${max} → 关` : `Click to cycle: off → max → 1 → ... → ${max} → off`))
-              : tr({ zh: '点击切换：关 → max → 关', en: 'Click to cycle: off → max → off'
-                            });
+              ? tr({ zh: `点击切换：关 → 任意轮数 → 1 → ... → ${max} → 关`, en: `Click to cycle: off → any rounds → 1 → ... → ${max} → off` })
+              : tr({ zh: '点击切换：关 → 任意轮数 → 关', en: 'Click to cycle: off → any rounds → off' });
             return (
               <button
                 key={eid}
+                type="button"
                 className={`event-chip ${active ? 'is-active' : ''}`}
-                onClick={cycle}
+                onClick={() => cycleEvent(eid)}
                 aria-pressed={active}
                 title={cycleHint}
               >
@@ -2508,7 +2504,6 @@ function CalendarPageInner() {
       {allError && mode === 'all' && (
         <div className="mode-status is-error">{allError}</div>
       )}
-
 
       {viewMode === 'list' && (
         <CompList

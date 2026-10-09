@@ -7,6 +7,8 @@
 import { X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CUBE_FILL } from '@/lib/cube-colors';
+import GhostCube from '@cuberoot/puzzle-render-core/engine/ghost/GhostCube';
+import { GHOST_DEFAULT_FACE_COLORS, GHOST_FACE_LABELS } from '@cuberoot/puzzle-render-core/engine/ghost/ghostGeometry';
 import { persistItem } from '@/lib/safe-storage';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import World from './engine/world';
@@ -32,6 +34,7 @@ import { KEYMAP_GROUPS, KEYBOARD_ROWS, keyLabel, displayMove, type KeyMove } fro
 import './setting-drawer.css';
 import { useT } from "@/hooks/useT";
 import { tr } from '@/i18n/tr';
+import { normalizeRoomTheme, roomCubeActive, type RoomThemeSetting } from './room-themes';
 
 /** Canvas background. 'auto' = solid, follows the page theme (var --background);
  *  'white'/'dark' = fixed solid; 'checkerDark'/'checkerLight' = fixed transparent
@@ -119,6 +122,8 @@ export interface SimSettings {
   stickerGap: number;
   /** 6 面色 (WCA 默认) */
   faceColors: { U: string; D: string; L: string; R: string; F: string; B: string };
+  /** Ghost keeps its white default and custom shell palette separate from NxN. */
+  ghostFaceColors?: SimSettings['faceColors'];
   /** 原核 (raw / stickerless body):
    *  - 'normal' = 默认。黑色内核 + 平面贴片。
    *  - 'raw'    = 整块实色,去黑核 —— 每块塑料本身即颜色,棱块沿对角线劈成双色、
@@ -140,6 +145,8 @@ export interface SimSettings {
   customLogo: string;
   /** NxN 图案魔方总开关。图片按 HOME 面切成贴纸碎片,转层后随物理块移动。 */
   pictureCube: boolean;
+  /** Procedural miniature rooms; mutually exclusive with uploaded pictures. */
+  roomTheme: RoomThemeSetting;
   /** 图案贴纸是否保留原本的六面色斜边。默认关,斜边跟随内核色。 */
   pictureBaseColors: boolean;
   /** 六面用户图片(data URL)。单独存储,避免每次拖滑条都重写大字符串。 */
@@ -228,6 +235,7 @@ export const DEFAULT_SETTINGS: SimSettings = {
   logo: 'none',
   customLogo: '',
   pictureCube: false,
+  roomTheme: 'off',
   pictureBaseColors: false,
   pictureFaces: emptyPictureFaces(),
   liveReduce: true,
@@ -291,6 +299,14 @@ export function loadSettings(): SimSettings {
     if (!raw) return { ...DEFAULT_SETTINGS, pictureFaces };
     const parsed = JSON.parse(raw) as Partial<SimSettings> & { checkeredBg?: boolean };
     const merged = { ...DEFAULT_SETTINGS, ...parsed, pictureFaces };
+    const ghostColors = parsed.ghostFaceColors;
+    merged.ghostFaceColors = { ...GHOST_DEFAULT_FACE_COLORS };
+    for (const face of GHOST_FACE_LABELS) {
+      const color = ghostColors?.[face];
+      if (typeof color === 'string' && /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(color)) {
+        merged.ghostFaceColors[face] = color;
+      }
+    }
     // Migrate the old boolean checkeredBg → boardBg (true = the dark twizzle grid;
     // false stays the theme-following solid, i.e. 'auto').
     if (!('boardBg' in parsed) && parsed.checkeredBg) merged.boardBg = 'checkerDark';
@@ -306,6 +322,8 @@ export function loadSettings(): SimSettings {
     if (merged.logo !== 'site' && merged.logo !== 'custom' && merged.logo !== 'none') merged.logo = 'none';
     if (typeof merged.customLogo !== 'string') merged.customLogo = '';
     if (typeof merged.pictureCube !== 'boolean') merged.pictureCube = false;
+    merged.roomTheme = normalizeRoomTheme(merged.roomTheme);
+    if (merged.roomTheme !== 'off') merged.pictureCube = false;
     if (typeof merged.pictureBaseColors !== 'boolean') merged.pictureBaseColors = false;
     if (typeof merged.pointerTurns !== 'boolean') merged.pointerTurns = true;
     if (typeof merged.hands !== 'boolean') merged.hands = false;
@@ -352,6 +370,11 @@ export function saveSettings(s: SimSettings): boolean {
   return saved;
 }
 
+/** 会员权益只影响实际渲染，不删除用户已经保存在本地的自定义 logo。 */
+export function withCustomLogoAccess(s: SimSettings, enabled: boolean): SimSettings {
+  return !enabled && s.logo === 'custom' ? { ...s, logo: 'none' } : s;
+}
+
 // 把 0~100 → 实际数值。scale 50 = 1.0 (upstream 默认), 范围 0.5 ~ 1.5。
 /** 几何映射:每 25 格 ×2,默认(50)= 0.4 与旧线性映射同值(手感不变)。范围 0.1 ~ 1.6
  *  即 0.25×~4×。改几何是因为旧线性区间 0.05~0.75 比例上偏斜(下半程 8 倍、上半程 1.9 倍),
@@ -377,7 +400,7 @@ export function mapFrames(v: number): number { return simSpeedToTicks(v); }
 /** The in-house Three.js engine puzzles (everything that is NOT an order-N NxN cube).
  *  Their geometry is baked at construction with no InstancedRenderer, so style toggles
  *  (立体贴片 / 镂空 / structure colors) are applied generically off userData tags. */
-const ENGINE_BODY_PUZZLES = new Set<string>(['sq1', 'sq2', 'sq4', 'ivy', 'dino', 'redi', 'rex', 'heli', 'gear', 'skewb', 'pyraminx', 'megaminx', 'fto']);
+const ENGINE_BODY_PUZZLES = new Set<string>(['sq1', 'sq2', 'sq4', 'ivy', 'dino', 'redi', 'rex', 'heli', 'gear', 'skewb', 'pyraminx', 'megaminx', 'fto', 'ghost']);
 
 export function applySettings(world: World, s: SimSettings, prev?: SimSettings): void {
   // 手指(指法演示):意愿写进 world,实际显隐由 world.syncHands 按拼图门控
@@ -432,15 +455,17 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
   if (!ENGINE_BODY_PUZZLES.has(world.puzzleKind as string)) {
     // NxN: sticker thickness / hollow / hint / face colors live on the InstancedRenderer.
     const cube = world.cube as import('./engine/nxn/cube').default;
+    const roomsActive = roomCubeActive(world.puzzleKind, s.roomTheme);
     const pictureActive = typeof world.puzzleKind === 'number'
+      && !roomsActive
       && s.pictureCube === true
       && countPictureFaces(s.pictureFaces) > 0;
-    cube.arrow = s.arrow && !pictureActive;
+    cube.arrow = s.arrow && !pictureActive && !roomsActive;
     // 「动画」关 → 撤销/重做也瞬切(手动转/拖/单击各自路径已 fast)。
     cube.twister.instantTurns = !s.animatePlayback;
     cube.instancedRenderer.thickness = s.thickness;
     cube.instancedRenderer.hollow = s.hollow;
-    cube.instancedRenderer.hint = s.hint;
+    cube.instancedRenderer.hint = s.hint && !roomsActive;
     if (hintBg) cube.instancedRenderer.setHintBackdrop(hintBg);
     // 内核色: frame (CORE + CORE_BASIC,前者 Phong 后者 Basic) + 内层 slice 填充板共享
     Cubelet.CORE.color.set(s.coreColor);
@@ -482,26 +507,30 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
     // 顶面 U 中心 logo(仅 NxN 奇数阶有正中心块;偶数阶在 setLogo 内部隐藏)。
     if (!prev
       || prev.pictureCube !== s.pictureCube
+      || prev.roomTheme !== s.roomTheme
       || prev.pictureFaces !== s.pictureFaces) {
       cube.instancedRenderer.setPictureFaces(
         pictureActive ? s.pictureFaces : null,
         () => { world.dirty = true; },
       );
     }
-    const logoTex = pictureActive ? null : s.logo === 'site'
+    const logoTex = pictureActive || roomsActive ? null : s.logo === 'site'
       ? loadLogoTexture(SITE_LOGO_SRC, () => { world.dirty = true; })
       : (s.logo === 'custom' && s.customLogo)
         ? loadLogoTexture(s.customLogo, () => { world.dirty = true; })
         : null;
     cube.setLogo(logoTex);
   } else {
+    if (world.cube instanceof GhostCube) {
+      world.cube.setFaceColors(s.ghostFaceColors ?? GHOST_DEFAULT_FACE_COLORS);
+    }
     // In-house engine puzzles (SQ1 / Ivy / Dino / Redi / Rex / Heli / Skewb): their
     // sticker thickness + body materials are baked at construction (no InstancedRenderer),
     // so 立体贴片 / 镂空 / structure-colors are applied generically off userData tags.
     applyStickerThickness(world.cube, s.thickness);
     // 原核 (raw/stickerless body): generic across the in-house engines — paints each
     // body from its sibling stickers' colors + hides the tiles. Raw > debug > hollow.
-    applyEngineBodyOverlay(world.cube, s.hollow, s.debugStructureColor, s.coreStyle === 'raw');
+    applyEngineBodyOverlay(world.cube, s.hollow, s.debugStructureColor, s.coreStyle === 'raw', s.coreColor);
     applyHintFacelets(world.cube, s.hint, hintBg);
   }
   // 内核透明度在两族引擎的材质/overlay 都落定后统一应用:NxN 走有序 x-ray

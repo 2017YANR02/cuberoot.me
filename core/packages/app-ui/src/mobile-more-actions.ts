@@ -21,6 +21,7 @@ export const MOBILE_TIMER_MORE_IMPLEMENTED_ACTION_IDS = [
   'more.bld-helper',
   'more.fullscreen',
   'more.manual-entry',
+  'more.replay',
   'more.solver',
   'more.bulk',
   'more.print',

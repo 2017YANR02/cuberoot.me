@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxcross / BGWY / bin 6
-# Population in this bin: 436
+# Population in this bin: 437
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 5829061001,U' R' U2 R' L2 U D2 B' D' F' D2 F L2 F L2 B' U2 D2 R',Y,Cocha NxN CBBA 2026 (2026-09-12~13),333oh R1 B #4
@@ -36,7 +36,7 @@
 293516001,F L2 B' L2 F D' F' R2 D' B R2 U D F2 U' L2 B2,W,Hari ng Norte 2016 (2016-05-01),333 R1 B E2
 295040001,B2 R' B2 U2 L2 R F2 L B2 D2 R F D F D' B2 U B' F' R,G,Hessen Open 2016 (2016-05-07~08),333oh R2 A #5
 317462001,B2 D2 B2 D2 L F2 D2 R2 B' L' B' U2 R2 D' L2 F' U B2 L',Y,Slow N Steady Spring 2016 (2016-06-18~19),333 R1 F #1
-3830423001,R2 U' B' F2 L' B2 D2 R' D2 U2 F D U R U2 B' D B2,G,Singapore 50 and Counting 2024 (2024-06-08),333 R1 D #1
+5847851023,D B' D' U' B2 U R2 D R2 B' D B2 D2 B' U2 L D2 U L',G,BLD Fall Fürth 2026 (2026-09-26~27),333mbf Final A #1
 4143891001,B U' L' B' L D F2 D' R L B2 U' R2 D F2 R2 L2 U',W,Abierto del Mirador en Primavera 2024 (2024-09-28~29),333 Final A E2
 3637494001,U' F' D2 R' B' R B U' R2 U R' U' R2 U' B2 D' F2,Y,French Championship 2024 (2024-03-30~04-01),333oh R1 D #3
 4327846001,U2 L2 B2 R' B' R2 B' L' U2 F2 R' U2 B2 R' B2 R2 F2 D R,G,Spanish Championship 2024 (2024-11-29~12-01),333oh Final A E2

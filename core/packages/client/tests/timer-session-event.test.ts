@@ -150,7 +150,7 @@ describe('timer session event associations', () => {
 
     const importedIds = stored.sessions.slice(1).map(session => session.id);
     expect(stored.dataBySession[importedIds[0]]['333oh'][0].event).toBe('333oh');
-    expect(stored.dataBySession[importedIds[1]]).toEqual({});
+    expect(stored.dataBySession[importedIds[1]]).toEqual({ fto: [] });
     expect(stored.dataBySession[importedIds[2]]).toEqual({});
   });
 

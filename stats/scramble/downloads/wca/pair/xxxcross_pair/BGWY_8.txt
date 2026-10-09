@@ -1,11 +1,11 @@
 # Scramble samples — pair / xxxcross_pair / BGWY / bin 8
-# Population in this bin: 475
+# Population in this bin: 484
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
-2500839001,F2 R2 F2 D2 R B2 F2 R2 D L D2 U2 B' R2 B U2 F' U,B,Ohio State RPAC Cube Clash 2023 (2023-02-18),333 R1 C #4
+5835166005,L2 U L' B2 D2 R B2 R' U2 L2 D' L2 D U' R' D B D B' L B,W,LA Quiet Championship 2026 (2026-09-19),333mbf Final A #1
 4413237001,R F2 U' R' F2 U2 B2 R' F2 U2 D' B' L' D2 F' R' U' B,W,Gem City Ohio Showdown 2025 (2025-01-11),333 Final A #1
 5542001,D' R2 L' F' R2 B2 U B L' U2 F2 L2 U2 F2 B2 U' R2 D' R2 U',B,Swiss Open 2014 (2014-03-29~30),333oh R1 A #2
 2979253001,R2 U2 F2 D F2 D L2 B2 U2 R B' F L D' F' R' D' F L,B,Nacionales El Salvador 2023 (2023-08-11~13),333 R1 A #4
@@ -19,7 +19,7 @@
 5144951001,L B2 D2 F' L2 B F U2 B' D2 L2 U2 D R' D U F L' R2,W,Pampanga Speedcubing Open 2025 (2025-10-25),333 R1 C E2
 122052001,U' D' B R2 D L' D' R' U2 R' F R U2 L F2 L2 D2 R2,B,Swiss Nationals 2015 (2015-03-29),333 R2 B E2
 2191665001,U' D2 R F' L U F U' F' U' D2 B2 R2 B2 R2 D2 B2 U2,Y,Dutch Autumn 2022 (2022-09-25),333 R1 C #4
-149476001,B' L F2 L2 F L2 U2 D B R F' U D' R2 D' L2 D' L2 U2,B,Bratislava No-Cutoff Open 2015 (2015-06-06~07),333 Final A #2
+5844142001,D F R2 B' U2 B2 F D2 L F U2 L2 D2 U' B' U' R2 D',W,Ribeirão ao Cubo 2026 (2026-09-19~20),333 R2 A #3
 166720001,R' D' R D2 L' U R' D2 F2 D' R' L U2 F2 R2,B,World Rubik's Cube Championship 2015 (2015-07-17~19),333oh R2 A #3
 2496655045,F B L B2 R B' D' L F2 R' F2 R' F2 B2 L F2 R2 D' B2 L,B,Sleepless in Seattle 2023 (2023-02-18~19),333mbf Final A #1
 3273973001,D2 B' L F U' B2 R' B2 U2 D' F2 L2 U' D' L U B',Y,Rhein-Neckar Autumn 2023 (2023-11-18~19),333 R2 C #1
@@ -200,7 +200,7 @@
 4151708001,B' R2 U2 F' L2 U L' B D' F' U' F2 U L2 B' D2,B,Rubik's WCA African Championship 2024 (2024-09-21~24),333oh R1 C E1
 1921497001,U' B U2 B' U2 R2 B' R' D B' D R2 F' D2 L2 U2,Y,MSU Quiet Qualifier 2022 (2022-05-14),333bf Final B E1
 5439229001,U2 L2 F2 U' F2 L2 U2 L2 D B2 F D F D R' U' B L D,B,PUCP Cubing Festival IX 2026 (2026-03-07~08),333 R2 B #4
-4821497001,D U2 L2 D R2 F2 D' F' D F2 R' F' R D' U' F' D2,G,Plymouth Puzzle-Off 2025 (2025-06-22),333 R2 C #2
+5856383001,L' B' U2 L U2 R F2 L F2 D B U2 L' B L' B2 U2 B,Y,Adelaide Spring 2026 (2026-10-03),333 R1 B #3
 2003358001,R2 B F2 D' F2 L2 B2 U F2 U B L2 B' L' F' L2 D' R,B,We are Back Sofia 2022 (2022-07-09),333 R1 A #2
 2068497001,R B2 L2 U2 F2 R B2 L2 D2 R2 U' L B F2 L2 D2 U' R' U' B2,Y,AZCubing Summer 2022 (2022-07-30),333 R2 A #1
 5736478001,R2 D' L' U2 D2 L2 F' D' R2 F' L2 U2 B2 L2 U' L2 U D,B,BBQ Ropaži 2026 (2026-07-04),333oh Final B #5

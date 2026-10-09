@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_cross / ORWY / bin 2
-# Population in this bin: 597
+# Population in this bin: 602
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 5809326001,R2 F2 U2 R' B L2 B' R2 D2 F' D2 R U' F2 D F D2 R2,O,Brampton Summer 2026 (2026-08-29),333 R1 E #5
@@ -86,7 +86,7 @@
 5571248001,R' U' F U2 F2 R2 B2 U B2 R2 U B2 R D2 U L2 F2 D' U2 B' U' R' U' F,R,Fewest Moves Bogotá XII 2026 (2026-04-25),333fm Final A #2
 1823950001,F2 U B U L' F2 R2 U2 F L B2 D2 L2 U2 L D2 B2 L2 U,Y,Cape Town Summer 2022 (2022-03-06),333 R2 C #1
 5677616009,B L2 F2 D R2 D2 L2 D' F' D2 F2 R2 B' L R2 U L D2 L B,W,New York Multimate PBQ V 2026 (2026-05-29~31),333mbf Final B #1
-2737473062,D2 L U2 F L2 F' U2 L D R L' D R2 D R2 L2 D',W,Salt Lake Utah Summer 2023 (2023-05-19~21),333mbf Final A #1
+5849117001,F2 B R' B R2 L' U F2 U2 R2 L D2 L U2 B2 L' B2 D2 B',W,Central Washington Fall 2026 (2026-09-26),333 R1 C #4
 628086001,R2 B2 D' U2 L2 U B2 F2 L2 B2 L' B' U F2 L U2 L' B F2,R,Cubing ATMOSphere 2017 (2017-10-28~29),333oh Final B #3
 630508001,R U2 D B U' B' R' L D2 F2 U D2 F2 R F2 L2 U2 B2 L,Y,Villa Open 2017 (2017-10-28~29),333 Final B #5
 632780001,F2 R2 U' F2 D F2 U L2 U B' F' U L' B R2 U' L U B2 F2,O,Atomic Cubing Fall 2017 (2017-11-04),333 R1 D #1
@@ -94,7 +94,7 @@
 4005585007,D2 L2 D' F2 L2 U2 R2 F2 D' L U' F2 L' B D2 B' F D' L,O,Silesian Minx Fest 2024 (2024-08-10~13),333mbf Final A #1
 4515097001,D L D2 R2 D2 U2 L' D' B2 L' B2 U2 L2 U B L B',Y,Risbjerg Februar 2025 (2025-02-22~23),333oh R1 A #4
 4623419001,D R2 F2 U R' F' R U' B2 D' L2 U F2 R2 D2 R' B,Y,Kirkkonummen Kuutionvääntelyt 2025 (2025-04-04~06),333 R2 C E2
-649827001,F2 R2 D L2 U2 F2 R2 U' L2 F' D B2 R' F' L' F R' F2,O,Bahrain Open 2017 (2017-11-18),333 Final A #1
+5835824013,R2 D' L' U2 L2 F2 D2 L2 U2 F' L2 F D F2 L' D L D' U' L' F,W,Swisscubing Cup Mental Breakdown II 2026 (2026-09-19~20),333mbf Final A #2
 660506023,D B2 R2 B2 L2 D' U' B2 L' B2 D F D B D B D' L D',W,Michigan 2014 (2014-07-12~13),333mbf Final A #1
 4087938001,U' R' D B L2 R2 U2 F' R2 B R2 D' L2 D2 U2 R D' L2 U,R,Apol Open Guayaquil 2024 (2024-09-07),333oh Final C E1
 1429605001,L U2 B2 L' D2 B2 R2 B2 R B' D2 R2 B D2 R D R B D',O,Malaysia Cube Championship 2019 (2019-11-22~24),333oh R1 A #1
@@ -108,7 +108,7 @@
 661398010,F2 D' B2 L2 D L2 R' B' U L' U F L U B2 R2 B2 F' L B,R,Plentzia Open 2017 (2017-06-17~18),333mbf Final A #1
 4461504001,B R2 F R2 F' D2 B D2 L U2 R B' L' D2 B' R F D2 B' L,O,Melbourne Summer 2025 (2025-01-24~26),333bf R1 D E2
 5593688001,L' F' L' F2 L2 F2 D2 B2 L' B2 U' B' D2 R' F2 R2 U2 F L',Y,Foshan Open 2026 (2026-05-02~03),333 R2 A #2
-3681576001,F' U L2 R2 U2 L2 R2 F' L2 D2 F2 U2 R B' R' U B' D F2,W,Middle Georgia Speedsolving 2024 (2024-04-20),333 Final B #1
+5855275001,R2 L2 U R' B2 L B U L2 D F R2 F2 D' R2 L2 F2 L2 B',Y,Cubing Skills in Almaty 2026 (2026-09-26~27),333bf Final A #4
 665383001,F2 D F2 L2 U F2 L2 U' B2 U2 L R F' L F' L2 R' U',O,Taiwan Championship 2017 (2017-12-08~10),333 R1 D E1
 5365478001,R D L F2 R U2 L2 B' F2 L' B2 U2 R2 B2 D2 L' B2 F' L',W,San Cristóbal 2026 (2026-01-31),333 R1 D #3
 5821060001,D R' F2 D2 F' D2 B D2 L2 U2 L2 U B2 U' B F2 U B L2 U',W,Presidente Prudente Open 2026 (2026-09-05~06),333bf Final B #5

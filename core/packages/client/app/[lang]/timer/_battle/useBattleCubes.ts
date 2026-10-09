@@ -39,17 +39,15 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 import {
-  TimerSmartCubeMoveRecorder,
+  SmartCubeAttemptProducer,
   timerSupportsLocalBattleSmartCube,
 } from '@cuberoot/shared/timer';
 
 import { useBluetoothCube } from '../_lib/bluetooth';
 import type { BluetoothCubeHandle } from '../_lib/bluetooth';
-import { GyroRecorder, encodeGyroTrack } from '../_lib/bluetooth/gyro_track';
 import type { Quat } from '../_lib/bluetooth/orientation';
 import { applyScramble, facesEqual, type CubeFaces } from '../_lib/cube/state';
 import { useSettings } from '../_lib/settings';
-import { stageSegmentsFor } from '../_lib/reconstruct/stage_segments';
 import { appendSolves, makeSolve } from '../_lib/storage/db';
 import type { EventId } from '../_lib/types';
 import { battleToTimerEvent, MAX_PLAYERS, useBattleStore } from './engine/battle_store';
@@ -120,14 +118,14 @@ function attemptKey(owner: number, startTime: number): string {
 interface Track {
   /** 这份缓冲属于哪一把(`attemptKey`)。`''` = 空的,不属于任何一把。 */
   attempt: string;
-  recorder: TimerSmartCubeMoveRecorder;
+  recorder: SmartCubeAttemptProducer;
   scramble: string;
   event: string;
 }
 
 const emptyTrack = (): Track => ({
   attempt: '',
-  recorder: new TimerSmartCubeMoveRecorder(),
+  recorder: new SmartCubeAttemptProducer(),
   scramble: '',
   event: '333',
 });
@@ -150,24 +148,19 @@ export function useBattleCubes(opts: BattleCubesOpts = {}): BattleCubes {
   /**
    * 这一把的转动流,每路一份。对战的成绩表只存数字,所以在此之前,拿智能魔方在
    * 对战里拧的每一把都是**扔掉的**。这里把它按 Solo 那条路留一份到本机计时记录里
-   * (同一个 `makeSolve` + `stageSegmentsFor` + `appendSolves`),复盘 / 回放 / 分段
+   * (同一个 `makeSolve` + `finishSolveFields` + `appendSolves`),复盘 / 回放 / 分段
    * 统计就全都有了 —— 对战自己的记分板一个字都不用改。
    */
   const trackRef = useRef<Array<Track>>(
     Array.from({ length: MAX_PLAYERS }, emptyTrack),
   );
-  const deviceRef = useRef<Array<{ model: string; name: string } | null>>(
-    Array.from({ length: MAX_PLAYERS }, () => null),
-  );
+  const handlesRef = useRef<BluetoothCubeHandle[]>([]);
   /**
    * 姿态流,每路一份。开关沿用 Solo 的 `recordGyro` 设置 —— 一个人不会「在单人想录、
    * 在对战不想录」,所以这里不另开一个开关。
    *
-   * 零点用 `performance.now()` 自己记一个,不用起表时刻:起表时刻是**魔方那一下**的
-   * 时刻(来自 BLE 事件),而陀螺仪回调根本不带时间戳,两个钟相减出来的是垃圾 ——
-   * 和 Solo 那边踩过的是同一个坑。
+   * 本地对战的 BLE 时间戳已映射到 performance.now()，姿态沿用同一起表零点。
    */
-  const gyroRecRef = useRef<GyroRecorder[]>(Array.from({ length: MAX_PLAYERS }, () => new GyroRecorder()));
   const gyroStartRef = useRef<number[]>(Array.from({ length: MAX_PLAYERS }, () => 0));
 
   /**
@@ -189,12 +182,13 @@ export function useBattleCubes(opts: BattleCubesOpts = {}): BattleCubes {
     if (trackRef.current[slot].attempt !== key) {
       trackRef.current[slot] = {
         attempt: key,
-        recorder: new TimerSmartCubeMoveRecorder(),
+        recorder: new SmartCubeAttemptProducer(),
         scramble: st.scrambles[owner] ?? '',
         event: st.puzzleIds[owner],
       };
-      trackRef.current[slot].recorder.begin(p.startTime);
-      gyroRecRef.current[slot].reset();
+      const device = handlesRef.current[slot]?.status;
+      trackRef.current[slot].recorder.begin(p.startTime, device?.connected
+        ? { model: device.brand, name: device.deviceName } : undefined);
       gyroStartRef.current[slot] = p.startTime;
     }
     return trackRef.current[slot];
@@ -208,14 +202,14 @@ export function useBattleCubes(opts: BattleCubesOpts = {}): BattleCubes {
     const p = st.players[owner];
     if (p.isTiming) {
       const track = syncTrack(slot, owner);
-      track.recorder.record(move, ts);
+      track.recorder.recordMove(move, ts);
       return;
     }
     if (armedRef.current[slot] && p.canStart) {
       armedRef.current[slot] = false;
       if (!st.cubeStart(owner, ts)) return;
       // 起表那一手也属于这一把 —— cubeStart 已经把 startTime 定在它身上了。
-      syncTrack(slot, owner).recorder.record(move, ts);
+      syncTrack(slot, owner).recorder.recordMove(move, ts);
       return;
     }
     // 没预备就转动 —— 可能正在拧打乱。下面的 checkArm 会在拧到位时把预备补上。
@@ -234,13 +228,15 @@ export function useBattleCubes(opts: BattleCubesOpts = {}): BattleCubes {
     armedRef.current[slot] = false;
     // 缓冲无论如何都要清空:这一路已经不在这一把里了,留着只会漏给下一把。
     const track = trackRef.current[slot];
-    const moves = track.recorder.take();
-    const gyro = encodeGyroTrack(gyroRecRef.current[slot].take());
+    const hasMoves = track.recorder.snapshotMoves().length > 0;
+
     trackRef.current[slot] = emptyTrack();
-    if (!stopped) return;                       // 没成把(太短 / 没在计时)就不留档
-    if (track.attempt !== attempt) return;      // 缓冲不是这一把的(上一把没清干净)
-    if (!recordsToLocalHistory(slot, st.cubeMode, st.cubeHolder)) return;   // 别人的把,不进我的历史
-    if (moves.length === 0 || !track.scramble) return;
+    if (!stopped || track.attempt !== attempt
+      || !recordsToLocalHistory(slot, st.cubeMode, st.cubeHolder)
+      || !hasMoves || !track.scramble) {
+      track.recorder.reset();
+      return;
+    }
     const ev = battleToTimerEvent(track.event) as EventId;
     // 停表已经把观察罚时结算进 player.penalty 了,照抄过来 —— 本机记录和对战记分板
     // 对同一把不该给出两个判罚。
@@ -251,13 +247,7 @@ export function useBattleCubes(opts: BattleCubesOpts = {}): BattleCubes {
       event: ev,
       penalty: done.penalty === PENALTY.DNF ? 'DNF' : done.penalty === PENALTY.PLUS2 ? '+2' : 'ok',
     });
-    solve.moves = moves;
-    // 没开录 / 魔方不报姿态 / 一次都没动 → 编码是 null,字段整个不出现 —— 回放面板
-    // 就是靠「有没有这个字段」决定要不要给陀螺仪开关的。
-    if (gyro) solve.gyro = gyro;
-    if (deviceRef.current[slot]) solve.device = deviceRef.current[slot]!;
-    const segs = stageSegmentsFor(solve);
-    if (segs) solve.stageSegments = segs;
+    Object.assign(solve, track.recorder.finishSolveFields(solve));
     appendSolves(ev, [solve]);
   }, []);
 
@@ -295,10 +285,6 @@ export function useBattleCubes(opts: BattleCubesOpts = {}): BattleCubes {
     if (!faces || !facesEqual(faces, target)) return;
     if (!st.cubeArm(owner)) return;
     armedRef.current[slot] = true;
-    // 哪颗魔方拧的,在预备这一刻定下来 —— 中途掉线不该把这一把的出处抹掉。
-    deviceRef.current[slot] = handle.status.connected
-      ? { model: handle.status.brand, name: handle.status.deviceName }
-      : null;
   }, []);
 
   // hooks 不能进循环 —— MAX_PLAYERS 是常量,所以写死四次。多出来的那几路在
@@ -317,8 +303,7 @@ export function useBattleCubes(opts: BattleCubesOpts = {}): BattleCubes {
     if (!st.players[owner].isTiming) return;
     // 和转动流同一份缓冲、同一个零点 —— 姿态的时刻要能和转动的时刻直接比,
     // 而且这一把如果是按键起的表,姿态流也得在这里把上一把的残留清掉。
-    syncTrack(slot, owner);
-    gyroRecRef.current[slot].push(q, performance.now() - gyroStartRef.current[slot]);
+    syncTrack(slot, owner).recorder.recordGyro(q, performance.now() - gyroStartRef.current[slot]);
   }, [syncTrack]);
 
   const h0 = useSlot(0, onMove, onSolved, checkArm, needMac, recordGyro ? onGyro : undefined);
@@ -326,6 +311,7 @@ export function useBattleCubes(opts: BattleCubesOpts = {}): BattleCubes {
   const h2 = useSlot(2, onMove, onSolved, checkArm, needMac, recordGyro ? onGyro : undefined);
   const h3 = useSlot(3, onMove, onSolved, checkArm, needMac, recordGyro ? onGyro : undefined);
   const handles = [h0, h1, h2, h3];
+  useEffect(() => { handlesRef.current = [h0, h1, h2, h3]; });
 
   const cubeMode = useBattleStore(s => s.cubeMode);
 
@@ -358,7 +344,7 @@ function useSlot(
   // 晚于挂载 effect,拿不到 null。
   const selfRef = useRef<BluetoothCubeHandle | null>(null);
   const handle = useBluetoothCube({
-    onMove: (m, ts, metadata) => {
+    onMove: (m, ts, _facelets, metadata) => {
       onMove(slot, m, ts);
       if (selfRef.current && !metadata?.futureHistory) checkArm(slot, selfRef.current);
     },

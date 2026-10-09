@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 import type { AlgCase } from '@cuberoot/shared';
 import { apiUrl } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
@@ -128,7 +129,7 @@ export async function fetchCloudTimeAttackOrder(
   scope: string,
 ): Promise<TimeAttackOrderSnapshot | null> {
   const data = await handleApi<{ keys: string[]; updatedAt: number }>(
-    await fetch(apiUrl(orderPath(puzzle, setSlug, scope)), {
+    await sessionFetch(apiUrl(orderPath(puzzle, setSlug, scope)), {
       headers: authHeaders(false),
       cache: 'no-store',
     }),
@@ -142,7 +143,7 @@ export async function saveCloudTimeAttackOrder(
   scope: string,
   snapshot: TimeAttackOrderSnapshot,
 ): Promise<void> {
-  await handleApi(await fetch(apiUrl(orderPath(puzzle, setSlug, scope)), {
+  await handleApi(await sessionFetch(apiUrl(orderPath(puzzle, setSlug, scope)), {
     method: 'PUT',
     headers: authHeaders(),
     body: JSON.stringify(snapshot),

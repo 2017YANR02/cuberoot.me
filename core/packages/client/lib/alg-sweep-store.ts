@@ -1,5 +1,6 @@
 'use client';
 
+import { sessionFetch } from '@/lib/session-fetch';
 /**
  * 「过遍」进度的存取层:localStorage 落地 + 登录后云端同步 + zustand store。
  * 口径与折叠规则全在纯函数 `alg-sweep.ts` 的文件头,这里只管存取。
@@ -58,7 +59,7 @@ async function cloudGet(puzzle: string, set: string): Promise<Wire | null> {
   if (!cloudEnabled()) return null;
   try {
     return await handleApi<Wire>(
-      await fetch(apiUrl(`/v1/alg/sweep/${puzzle}/${set}`), { headers: authHeaders(false) }),
+      await sessionFetch(apiUrl(`/v1/alg/sweep/${puzzle}/${set}`), { headers: authHeaders(false) }),
     );
   } catch (e) {
     cloudDown = true;
@@ -79,7 +80,7 @@ async function flushPut(): Promise<void> {
   const { p, s } = target;
   const cur = loadLocal(p, s);
   try {
-    const wire = await handleApi<Wire>(await fetch(apiUrl(`/v1/alg/sweep/${p}/${s}`), {
+    const wire = await handleApi<Wire>(await sessionFetch(apiUrl(`/v1/alg/sweep/${p}/${s}`), {
       method: 'PUT',
       headers: authHeaders(),
       body: JSON.stringify({ sweeps: cur.counts, cursor: cur.cursor, t: cur.t }),
@@ -184,7 +185,7 @@ export const useAlgSweep = create<AlgSweepState>((set, get) => ({
     void (async () => {
       try {
         const res = await handleApi<{ foldedAt: number }>(
-          await fetch(apiUrl(`/v1/alg/sweep/${puzzle}/${setSlug}/fold`), {
+          await sessionFetch(apiUrl(`/v1/alg/sweep/${puzzle}/${setSlug}/fold`), {
             method: 'POST', headers: authHeaders(), body: JSON.stringify({ keys }),
           }),
         );

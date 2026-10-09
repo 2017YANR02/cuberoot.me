@@ -1,3 +1,5 @@
+import InstalledContentBoundary from "@/components/InstalledContentBoundary";
+import { MOBILE_EMBED_FRAME_NAMES } from '@cuberoot/shared/mobile-embed';
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { THEME_BOOTSTRAP, LANG_BOOTSTRAP } from "@/lib/theme-bootstrap";
@@ -69,6 +71,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Hide prerendered route content in installed surfaces until their content boundary has checked it. */}
+        <script dangerouslySetInnerHTML={{ __html: `if(window.parent!==window&&${JSON.stringify(Object.values(MOBILE_EMBED_FRAME_NAMES))}.includes(window.name))document.documentElement.dataset.installedSurface='true';` }} />
+        <style>{`[data-installed-route]{display:contents}html[data-installed-surface="true"] [data-installed-route]:not([data-installed-reviewed="true"]){display:none}`}</style>
         <link rel="icon" href="/icons/CubeRoot.png" />
         <link rel="icon" href="/icons/CubeRoot-dark.png" media="(prefers-color-scheme: dark)" />
         {/* iOS「添加到主屏幕」的图标。Safari 只认 apple-touch-icon —— 缺这条它就
@@ -93,9 +98,6 @@ export default function RootLayout({
         {BROWSER_STATIC_ORIGIN && (
           <link rel="dns-prefetch" href={BROWSER_STATIC_ORIGIN} />
         )}
-        {/* 关键字体预加载 — 正文 Inter 400 / 500 加快首屏 */}
-        <link rel="preload" href="/fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
-        <link rel="preload" href="/fonts/inter-latin-500-normal.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
         {/* 主题 / 语言 bootstrap 必须在 CSS 解析前同步执行(避免 white→dark FOUC + 设对 html[lang])。
             React 19 dev 会对 inline <script> 报 "Encountered a script tag while rendering"
             (CSR 重渲染时脚本不会重跑) — 我们本来就不需要重跑,这是 false positive,prod 不显示。 */}
@@ -116,7 +118,7 @@ export default function RootLayout({
         <AppNuqsAdapter>
           <SiteBackground />
           <SiteGlass />
-          {children}
+          <InstalledContentBoundary>{children}</InstalledContentBoundary>
           <MembershipReminder />
           <DeskPet />
           <AuthRouteBridge />

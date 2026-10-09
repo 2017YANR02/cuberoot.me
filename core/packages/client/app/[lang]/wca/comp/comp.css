@@ -580,6 +580,7 @@
   border: 1px solid var(--border-default);
 }
 .comp-table {
+  --comp-result-row-height: 38px;
   width: auto;
   border-collapse: collapse;
   font-size: 0.9rem;
@@ -600,6 +601,7 @@
   padding: 7px 10px;
   white-space: nowrap;
 }
+.comp-table tbody td.comp-result-spacer { padding: 0; border: 0; }
 .comp-table tbody tr:last-child td { border-bottom: none; }
 .comp-table tbody tr.row-odd { background: color-mix(in srgb, var(--foreground) 2.5%, transparent); }
 .comp-table tbody tr.row-advanced { background: color-mix(in srgb, var(--signal-success) 16%, transparent); }
@@ -1012,6 +1014,7 @@ td.is-pr {
   padding: 6px 8px;
   text-align: left;
   font-weight: 600;
+  white-space: nowrap;
 }
 .comp-modal-table tbody td {
   padding: 5px 8px;
@@ -1469,6 +1472,7 @@ td.is-pr {
   .comp-input-row { flex-direction: column; }
   .comp-go-btn { justify-content: center; }
   .comp-table-wrap { font-size: 0.82rem; }
+  .comp-table { --comp-result-row-height: 36px; }
   .comp-table thead th,
   .comp-table tbody td { padding: 6px 7px; }
   .td-attempt { padding-right: 10px !important; }
@@ -2066,6 +2070,7 @@ td.is-pr {
 .comp-similar-list li { margin: 0; }
 .comp-similar-item {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.6rem;
   padding: 0.5rem 0.6rem;
@@ -2078,23 +2083,18 @@ td.is-pr {
   background: color-mix(in srgb, var(--foreground) 5%, transparent);
 }
 .comp-similar-flag { flex: none; }
-.comp-similar-name { flex: 1 1 auto; min-width: 0; font-weight: 500; }
-.comp-similar-place { flex: none; color: var(--muted-foreground); font-size: 0.85em; }
-/* 固定宽度 + 排最后一列:同一 flex 行内前面元素宽度随内容变化,只有靠右且宽度固定的
-   列才能在各行之间对齐(name 是唯一 flex-grow 项,吸收剩余空间,把 date 推到行尾)。 */
+.comp-similar-name { display: inline-flex; align-items: center; gap: 0.6rem; min-width: 0; max-width: 100%; font-weight: 500; }
+.comp-similar-place { min-width: 0; color: var(--muted-foreground); font-size: 0.85em; }
+/* 日期紧随名称，空间不足时自然换行。 */
 .comp-similar-date {
   flex: none;
-  width: 8.4em;
   color: var(--muted-foreground);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-/* 窄屏:整行放不下就换行,但旗必须跟名字同行(name 别钉 flex-basis:100%,否则旗被单独
-   挤成一行);地点 / 日期落到第二行,靠 padding-left 与名字左沿对齐。 */
+/* 旗与名称成组，窄屏保留紧凑的行间距。 */
 @media (max-width: 480px) {
-  .comp-similar-item { flex-wrap: wrap; gap: 0.25rem 0.55rem; }
-  .comp-similar-place, .comp-similar-date { padding-left: calc(1.33em + 0.6rem); }
-  .comp-similar-date { width: auto; }
+  .comp-similar-item { gap: 0.25rem 0.55rem; }
 }
 
 /* Site scenery: preserve the original surface when scenery is disabled. */

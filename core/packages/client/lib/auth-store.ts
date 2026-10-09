@@ -10,14 +10,15 @@ import { ADMIN_WCA_IDS, isAdminWcaId } from '@cuberoot/shared/admin';
 import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
 import type { AvatarSource, ClawdAvatarPresetId } from '@cuberoot/shared/account-avatar';
 import {
-  decodeWebSession,
   decodeWebSessionUserEnvelope,
   type WebSessionUser,
 } from '@cuberoot/shared/auth/web-session';
 import { apiUrl } from './api-base';
+import { sessionFetch } from './session-fetch';
+import { clearWebSession, establishWebSession, getWebAccessToken, getWebSessionMarker, subscribeWebSession, WEB_SESSION_MARKER_KEY } from './web-session';
 import { persistItem } from './safe-storage';
 import { resolveAccountAvatar } from './account-avatar';
-import { syncPageSessionCookie } from './home-card-access';
+import { isMiniProgramWebView, openMiniProgramWcaLink } from './miniprogram-bridge';
 
 export { ADMIN_WCA_IDS };
 export { safeNext } from './safe-next';
@@ -56,12 +57,12 @@ const WCA_AUTHORIZE_URL = 'https://www.worldcubeassociation.org/oauth/authorize'
 
 const SESSION_KEY = 'wca_user';
 const TOKEN_KEY = 'wca_access_token';
-const JWT_KEY = 'cuberoot_jwt';
 const STATE_KEY = 'wca_oauth_state';
 const RETURN_URL_KEY = 'wca_return_url';
 const PREVIEW_KEY = 'cuberoot_role_preview';
 export type TestRole = 'admin' | 'member' | 'user' | 'user-complete' | 'guest';
-interface RolePreview { id: string; role: TestRole; token: string; user: WcaUser | null }
+export type PreviewRole = TestRole | 'impersonation';
+export interface RolePreview { id: string; role: PreviewRole; token: string; user: WcaUser | null }
 
 export function getRolePreview(): RolePreview | null {
   if (typeof window === 'undefined') return null;
@@ -78,8 +79,8 @@ export function canTestRoles(): boolean {
 export async function startRolePreview(role: TestRole): Promise<void> {
   const current = getRolePreview();
   if (current) await revokeRolePreview(current.id);
-  const response = await fetch(apiUrl('/v1/auth/role-preview'), {
-    method: 'POST', headers: { Authorization: `Bearer ${localStorage.getItem(JWT_KEY) || ''}`, 'Content-Type': 'application/json' },
+  const response = await sessionFetch(apiUrl('/v1/auth/role-preview'), {
+    method: 'POST', headers: { Authorization: `Bearer ${getWebSessionMarker()}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ role }),
   });
   if (!response.ok) throw new Error('Could not start role test.');
@@ -92,14 +93,47 @@ export async function startRolePreview(role: TestRole): Promise<void> {
     user: user ? { ...user, wcaId: user.wcaId ?? '', country: '' } : null,
   };
   sessionStorage.setItem(PREVIEW_KEY, JSON.stringify(preview));
-  syncPageSessionCookie(preview.token);
   // Reload clears queries, open files and owner-scoped state from the previous identity.
   window.location.reload();
 }
 
+export async function startUserImpersonation(
+  userId: number,
+  reason: string,
+  targetWindow: Pick<Window, 'sessionStorage'>,
+): Promise<void> {
+  const normalizedReason = reason.trim();
+  if (!Number.isSafeInteger(userId) || userId <= 0) throw new Error('Invalid user id.');
+  if (normalizedReason.length < 5 || normalizedReason.length > 200) throw new Error('Invalid viewing reason.');
+  const response = await sessionFetch(apiUrl(`/v1/auth/admin/users/${userId}/impersonation`), {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${getWebSessionMarker()}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reason: normalizedReason }),
+  });
+  if (!response.ok) throw new Error('Could not start user viewing session.');
+  const result = await response.json();
+  const user = result.user ? decodeWebSessionUserEnvelope({ user: result.user })?.user : null;
+  if (typeof result.id !== 'string' || result.role !== 'impersonation' || typeof result.token !== 'string'
+    || !user || !Number.isSafeInteger(user.uid)) throw new Error('Invalid user viewing response.');
+  const preview: RolePreview = {
+    id: result.id,
+    role: 'impersonation',
+    token: result.token,
+    user: { ...user, wcaId: user.wcaId ?? '', country: '' },
+  };
+  try {
+    targetWindow.sessionStorage.setItem(PREVIEW_KEY, JSON.stringify(preview));
+  } catch {
+    await revokeRolePreview(preview.id).catch(() => undefined);
+    throw new Error('Could not store user viewing session.');
+  }
+  // Deliberately do not change the page-session cookie: cookies are shared by tabs.
+  // The child tab reads this tab-scoped session before making authenticated API calls.
+}
+
 async function revokeRolePreview(id: string): Promise<void> {
-  const response = await fetch(apiUrl(`/v1/auth/role-preview/${encodeURIComponent(id)}`), {
-    method: 'DELETE', headers: { Authorization: `Bearer ${localStorage.getItem(JWT_KEY) || ''}` },
+  const response = await sessionFetch(apiUrl(`/v1/auth/role-preview/${encodeURIComponent(id)}`), {
+    method: 'DELETE', headers: { Authorization: `Bearer ${getWebSessionMarker()}` },
   });
   if (!response.ok) throw new Error('Could not end role test. Please retry.');
 }
@@ -109,7 +143,6 @@ export async function endRolePreview(): Promise<void> {
   if (!preview) return;
   await revokeRolePreview(preview.id);
   sessionStorage.removeItem(PREVIEW_KEY);
-  syncPageSessionCookie(localStorage.getItem(JWT_KEY) || '');
   window.location.reload();
 }
 
@@ -117,6 +150,7 @@ function readUser(): WcaUser | null {
   if (typeof window === 'undefined') return null;
   const preview = getRolePreview();
   if (preview) return preview.user;
+  if (!getWebSessionMarker()) return null;
   try {
     const raw = localStorage.getItem(SESSION_KEY);
     if (!raw) return null;
@@ -185,7 +219,15 @@ export const useAuthStore = create<AuthState & AuthActions>()((set) => ({
 
   loginWithWca: (returnTo?: string) => {
     if (typeof window === 'undefined') return;
-    const state = Math.random().toString(36).substring(2) + Date.now().toString(36);
+    let intent = '';
+    try { intent = sessionStorage.getItem('wca_oauth_intent') ?? ''; } catch { /* private mode */ }
+    if (intent === 'link' && isMiniProgramWebView()) {
+      void getWebAccessToken(getSessionToken()).then(openMiniProgramWcaLink).then(() => {
+        try { sessionStorage.removeItem('wca_oauth_intent'); } catch { /* private mode */ }
+      });
+      return;
+    }
+    const state = crypto.randomUUID();
     sessionStorage.setItem(STATE_KEY, state);
     sessionStorage.setItem(RETURN_URL_KEY, returnTo || window.location.href);
 
@@ -206,87 +248,40 @@ export const useAuthStore = create<AuthState & AuthActions>()((set) => ({
     if (getRolePreview()) { void endRolePreview(); return; }
     localStorage.removeItem(SESSION_KEY);
     localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem('cuberoot_jwt');
-    syncPageSessionCookie('');
+    void clearWebSession().catch(() => undefined);
     set({ user: null });
   },
 
   refresh: () => {
-    syncPageSessionCookie(getSessionToken());
     set({ user: readUser() });
   },
 }));
 
-/**
- * 把 { token, user } 作为一个完整登录态落地。任一项写入或回读失败时恢复
- * 旧会话，避免出现「有 token 没用户」或「有用户没 token」的半登录状态。
- */
-export function applySession(
-  token: string,
-  user: WebSessionUser,
-): boolean {
-  if (typeof window === 'undefined') return false;
-
-  // Test credentials and callback results must never overwrite the real login.
-  if (getRolePreview()) return false;
-
-  let previousToken: string | null;
-  let previousUser: string | null;
-  try {
-    previousToken = localStorage.getItem(JWT_KEY);
-    previousUser = localStorage.getItem(SESSION_KEY);
-  } catch {
-    return false;
+/** The server owns persistent credentials; only user metadata and a marker are stored. */
+function persistSessionUser(user: WebSessionUser | null): void {
+  if (!user) {
+    try { localStorage.removeItem(SESSION_KEY); } catch { /* unavailable storage */ }
+    useAuthStore.setState({ user: null });
+    return;
   }
-
   const avatar = resolveAccountAvatar(user.avatar, user.avatarPreset, user.avatarSource);
   const wu: WcaUser = {
-    wcaId: user.wcaId ?? '',
-    name: user.name,
-    avatar: avatar.src,
-    avatarSource: user.avatarSource,
-    avatarPreset: user.avatarPreset,
-    country: '',
-    uid: user.uid,
-    isAdmin: user.isAdmin,
+    wcaId: user.wcaId ?? '', name: user.name, avatar: avatar.src,
+    avatarSource: user.avatarSource, avatarPreset: user.avatarPreset,
+    country: '', uid: user.uid, isAdmin: user.isAdmin,
   };
-  const serializedUser = JSON.stringify(wu);
-
-  const restoreItem = (key: string, value: string | null) => {
-    if (value === null) {
-      try {
-        localStorage.removeItem(key);
-      } catch {
-        // Best effort: the false return still prevents navigation as logged in.
-      }
-      return;
-    }
-    persistAuthItem(key, value);
-  };
-
-  const persisted =
-    persistAuthItem(SESSION_KEY, serializedUser) &&
-    persistAuthItem(JWT_KEY, token);
-  let verified = false;
-  if (persisted) {
-    try {
-      verified =
-        localStorage.getItem(SESSION_KEY) === serializedUser &&
-        localStorage.getItem(JWT_KEY) === token;
-    } catch {
-      verified = false;
-    }
+  if (!persistAuthItem(SESSION_KEY, JSON.stringify(wu))) {
+    try { localStorage.removeItem(SESSION_KEY); } catch { /* avoid displaying the previous identity after reload */ }
   }
+  useAuthStore.setState({ user: wu });
+}
 
-  if (!verified) {
-    restoreItem(SESSION_KEY, previousUser);
-    restoreItem(JWT_KEY, previousToken);
-    useAuthStore.getState().refresh();
-    return false;
-  }
-
-  useAuthStore.getState().refresh();
-  return true;
+export async function applySession(token: string, _user: WebSessionUser, isCurrent?: () => boolean): Promise<boolean> {
+  if (typeof window === 'undefined' || getRolePreview()) return false;
+  try {
+    await establishWebSession(token, isCurrent);
+    return true;
+  } catch { return false; }
 }
 
 // ── 新人「绑定 WCA」引导的待办标记 ──
@@ -315,27 +310,25 @@ export function takeWcaLinkPrompt(): boolean {
   }
 }
 
-/** 当前会话的 cuberoot_jwt(账号 API 的 Bearer)。 */
+/** Primary session marker, or the tab-scoped temporary role-preview credential. */
 export function getSessionToken(): string {
   if (typeof window === 'undefined') return '';
   const preview = getRolePreview();
   if (preview) return preview.token;
-  return localStorage.getItem('cuberoot_jwt') || '';
+  return getWebSessionMarker();
 }
 
 if (typeof window !== 'undefined') {
+  subscribeWebSession(user => { if (!getRolePreview()) persistSessionUser(user); });
   window.addEventListener('storage', (e) => {
-    if (e.key === null || e.key === JWT_KEY || e.key === SESSION_KEY || e.key === TOKEN_KEY) {
+    if (e.key === null || e.key === WEB_SESSION_MARKER_KEY || e.key === SESSION_KEY) {
       useAuthStore.getState().refresh();
     }
   });
 }
 
-export function getWcaToken(): string {
-  if (typeof window === 'undefined') return '';
-  if (getRolePreview()) return '';
-  return localStorage.getItem(TOKEN_KEY) || '';
-}
+/** WCA assertions are exchanged in memory during OAuth and never persisted. */
+export function getWcaToken(): string { return ''; }
 
 export function getWcaId(): string {
   return useAuthStore.getState().user?.wcaId || '';
@@ -383,16 +376,16 @@ export function useIsAdmin(): boolean {
 export async function refreshSessionUser(): Promise<void> {
   if (typeof window === 'undefined') return;
   if (getRolePreview()) return;
-  const token = localStorage.getItem(JWT_KEY);
+  const token = getWebSessionMarker();
   if (!token) return;
   try {
-    const response = await fetch(apiUrl('/v1/auth/me'), {
+    const response = await sessionFetch(apiUrl('/v1/auth/me'), {
       headers: { Authorization: `Bearer ${token}` },
       cache: 'no-store',
     });
     if (!response.ok) return;
     const envelope = decodeWebSessionUserEnvelope(await response.json());
-    if (envelope) applySession(token, envelope.user);
+    if (envelope && getWebSessionMarker() === token) persistSessionUser(envelope.user);
   } catch {
     // 网络或后端暂不可用：保留已有登录态，下次页面加载再同步。
   }
@@ -404,44 +397,10 @@ export function useOwnerKey(): string {
   return computeOwnerKey(user?.uid, user?.wcaId);
 }
 
-// ── 长效 JWT 滑动续签 ──
-// callback 用 WCA token 换的 cuberoot_jwt 有效期 365 天。临近过期时静默用旧 jwt 换新 jwt
-// (POST /v1/auth/refresh),只要一年内活跃过就不掉线;整年不开站才需重新 WCA 登录。
-const REFRESH_BEFORE_MS = 30 * 24 * 3600 * 1000; // 剩余 < 30 天才续,避免每次启动都打后端
-
-/** 解析 JWT payload 的 exp(毫秒),不验签;非法/无 exp 返 null。 */
-function jwtExpMs(token: string): number | null {
-  try {
-    const part = token.split('.')[1];
-    if (!part) return null;
-    const json = atob(part.replace(/-/g, '+').replace(/_/g, '/'));
-    const payload = JSON.parse(json) as { exp?: number };
-    return typeof payload.exp === 'number' ? payload.exp * 1000 : null;
-  } catch {
-    return null;
-  }
-}
-
-/** 启动时调用:旧会话缺 uid 或 cuberoot_jwt 临近过期时静默续签。best-effort,失败不影响现有登录态。 */
+/** Startup migration/restore. Failures never fall back to a persisted bearer token. */
 export async function ensureFreshToken(): Promise<void> {
-  if (typeof window === 'undefined') return;
-  if (getRolePreview()) return;
-  const token = localStorage.getItem(JWT_KEY);
-  if (!token) return;
-  const expMs = jwtExpMs(token);
-  const storedUser = readUser();
-  const needsUserId = storedUser != null && !Number.isSafeInteger(storedUser.uid);
-  // 老会话缺 uid 时立即升级;否则无 exp(永久 token)无需续,剩余还很多也不续。
-  if (!needsUserId && (expMs == null || expMs - Date.now() > REFRESH_BEFORE_MS)) return;
-  try {
-    const r = await fetch(apiUrl('/v1/auth/refresh'), {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!r.ok) return;
-    const session = decodeWebSession(await r.json());
-    if (session) applySession(session.token, session.user);
-  } catch {
-    // 网络/后端不可用 — 保留旧 token,下次启动再试。
-  }
+  if (typeof window === 'undefined' || getRolePreview()) return;
+  const marker = getWebSessionMarker();
+  if (!marker) return;
+  try { await getWebAccessToken(marker); } catch { /* allow a later network retry */ }
 }

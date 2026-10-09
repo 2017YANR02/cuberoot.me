@@ -6,7 +6,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { ADMIN_WCA_IDS } from '@cuberoot/shared/admin';
 import { expect, it, vi } from 'vitest';
 
-vi.mock('@/lib/membership-api', () => ({ getMyMembership: vi.fn() }));
+vi.mock('@/lib/membership-api', () => ({ getMyMembership: vi.fn().mockResolvedValue({ membership: null }) }));
 
 it.each([
   { session: 'anonymous', wcaId: null, member: false },
@@ -16,6 +16,7 @@ it.each([
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   vi.resetModules();
   if (wcaId) {
+    localStorage.setItem('cuberoot_web_session_marker', 'web-session:00000000-0000-4000-8000-000000000001');
     localStorage.setItem('wca_user', JSON.stringify({
       wcaId, name: 'Hydration test', avatar: '', country: '',
     }));
@@ -45,5 +46,6 @@ it.each([
     await act(async () => root?.unmount());
     host.remove();
     localStorage.removeItem('wca_user');
+    localStorage.removeItem('cuberoot_web_session_marker');
   }
 });

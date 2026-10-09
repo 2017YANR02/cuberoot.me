@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxcross / BGOR / bin 5
-# Population in this bin: 30
-# Samples listed: 30 (all entries in this bin)
+# Population in this bin: 31
+# Samples listed: 31 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 80535001,R F' U2 L2 U D2 R U D' B U' L2 B R2 B' D2 B,O,Plaza de las Américas 2014 (2014-11-15),333oh Final A #1
@@ -35,3 +35,4 @@
 4550827001,B2 F2 R2 D' B2 L2 B2 R2 D2 U R D L D' R' F' D B' R2,B,Bergen Spring 2025 (2025-03-08~09),333oh R2 B E1
 4821497001,D U2 L2 D R2 F2 D' F' D F2 R' F' R D' U' F' D2,G,Plymouth Puzzle-Off 2025 (2025-06-22),333 R2 C #2
 5122870001,U L U' D2 B' U F2 D2 B' U' F' B U2 L2 F2 B' L2 B,R,FSUbers 10.0 2025 (2025-10-18),333 R2 A #1
+5846172001,D2 B2 R2 B2 R' F2 U2 L2 R' F2 L2 B' D2 R' F D2 F R2 B R,G,Tafalla Open 2026 (2026-09-26~27),333bf Final A #1

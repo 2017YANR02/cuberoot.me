@@ -1,0 +1,3 @@
+<template name="native-scenery">
+  <view class="native-scenery" aria-hidden="true"><view class="native-scenery-image" /></view>
+</template>

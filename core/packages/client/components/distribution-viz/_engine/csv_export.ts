@@ -5,6 +5,8 @@
 import { getConfigs as getRollingConfigs, type RollingResult } from '@/lib/wca-result-metrics/rolling';
 import { getConfigs as getRoundConfigs, type RoundMetricsResult, type SolveEntry } from '@/lib/wca-result-metrics/round';
 import { ROUND_NAMES } from './data_fetch';
+import { formatWcaResult } from '@/lib/wca-format-result';
+import { WCA_AVERAGE_METRIC_KEYS, type WcaResultMetricMode } from '@/lib/wca-result-metrics';
 
 interface CsvGroup {
   dataKey: string;
@@ -36,7 +38,7 @@ export function download(params: CsvDownloadParams): void {
   const groups = getAllGroups();
 
   // NOTE: 表头——固定列 + 注册列
-  const headers: string[] = ['index', 'date', 'competition', 'round', 'attempt', 'single_s', 'single_pb', 'avg', 'avg_pb'];
+  const headers: string[] = ['index', 'date', 'competition', 'round', 'attempt', params.eventId === '333fm' ? 'single_moves' : 'single_s', 'single_pb', 'avg', 'avg_pb'];
   for (const g of groups) {
     for (const cfg of g.configs) {
       // NOTE: label 转蛇形（如 BAo5 → bao5, WorstC → worstc）
@@ -59,13 +61,13 @@ export function download(params: CsvDownloadParams): void {
     row.push(csvField(e.compName));
     row.push(csvField(ROUND_NAMES[e.roundType] || e.roundType));
     row.push(String(e.attemptIdx + 1));
-    row.push(formatCs(e.cs));
+    row.push(formatCs(e.cs, params.eventId, 'single'));
     // NOTE: 单次 PB 从 stats 的 pbFlags.singles 取
     row.push(params.stats && params.stats.pbFlags.singles[i] ? 'PB' : '');
 
     // NOTE: avg 列 — WCA 官方 average（轮次第一把填值，其余空）
     const avgCs = e.average;
-    row.push(avgCs !== null && avgCs !== undefined ? formatCs(avgCs) : '');
+    row.push(avgCs !== null && avgCs !== undefined ? formatCs(avgCs, params.eventId, 'average') : '');
     // avg PB 判定
     if (avgCs !== null && avgCs !== undefined && avgCs > 0) {
       if (avgCs < bestAvg) {
@@ -84,7 +86,8 @@ export function download(params: CsvDownloadParams): void {
       for (const cfg of g.configs) {
         const arr = data ? (data[cfg.key] as (number | null)[]) : null;
         const val = arr ? arr[i] : null;
-        row.push(val === null || val === undefined ? '' : formatCs(val));
+        const kind = WCA_AVERAGE_METRIC_KEYS.includes(cfg.key as WcaResultMetricMode) ? 'average' : 'single';
+        row.push(val === null || val === undefined ? '' : formatCs(val, params.eventId, kind));
         const pbFlags = data ? (data as { pbFlags?: Record<string, boolean[]> }).pbFlags : null;
         row.push(pbFlags && pbFlags[cfg.key] && pbFlags[cfg.key][i] ? 'PB' : '');
       }
@@ -108,8 +111,9 @@ export function download(params: CsvDownloadParams): void {
 
 // ─── 工具 ───
 
-function formatCs(cs: number): string {
-  if (cs <= 0) return 'DNF';
+function formatCs(cs: number, eventId: string, kind: 'single' | 'average'): string {
+  if (eventId === '333fm') return formatWcaResult(cs, eventId, kind);
+  if (cs <= 0) return formatWcaResult(cs, eventId, kind);
   return (cs / 100).toFixed(2);
 }
 

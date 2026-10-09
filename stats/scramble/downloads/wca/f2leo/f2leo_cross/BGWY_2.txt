@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_cross / BGWY / bin 2
-# Population in this bin: 598
+# Population in this bin: 605
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 5392183001,R F' L U F2 U' R2 B2 U B2 U F' L' B2 D' F D2,G,Melbourne Summer 2026 (2026-01-24~26),333 R1 E E1
@@ -13,7 +13,7 @@
 5634398032,L U R2 F2 R2 F2 D F2 D2 L2 F2 B' U' L' B2 D2 L D' R D2 B R,G,Please Don't DNF Beijing 2026 (2026-05-16~17),333mbf Final A #2
 1348334001,L' D F2 U L' D' F2 R2 L B2 R2 D2 B2 U2 B2 D',Y,Dutch Open 2019 (2019-10-12~13),333oh Final B #3
 121646001,D2 R' L D' R U2 R2 U2 R2 F' L2 D' F2 U' B2 U R2 U B2,B,Atlantic Open 2015 (2015-03-28),333 Final B #2
-5750761001,R B U L2 U2 L2 F R2 B D2 U F' L' U B2 D U R2,W,GAN New Zealand Nationals 2026 (2026-07-10~12),333oh R2 A #4
+5842662001,L F2 U' R D2 R2 B F' R2 U2 B' L B2 L U' R F' R',G,New Cubing Season Athens A 2026 (2026-09-19),333 R1 A #5
 137365001,F2 L B2 R2 F2 R D2 R2 U2 R' B D R2 U' F D2 U' B D F2,B,Mega Rubik 2015 (2015-05-02~03),333oh Final A #3
 5780705001,B2 R L2 B D2 B F2 L2 R2 U F L' U' L' R' F R2 F',B,Shin Kong Cube Open - New Taipei 2026 (2026-08-09),333 R2 F #2
 5721512029,B2 D' F2 R D2 L2 D' R F' D2 B' L2 D2 F2 L2 F' U2 F' D2 B',B,Blind League Dobřejovice III: Brightscript 2026 (2026-06-27),333mbf Final A #2
@@ -132,7 +132,7 @@
 751859001,B' L2 B' F2 R2 B R2 D2 U F U' L2 F2 D2 R' B2 L U,B,Saint-Maurice Sunday Open 2018 (2018-04-15),333 R1 B #2
 2100661007,B2 U' L F R2 D2 U2 B' F' U2 L' B' D' R2 F2 R D2 L B',B,SoCal Silent Spectacular 2022 (2022-08-13~14),333mbf Final A #2
 766379001,L F' L U L' U2 L' D' B R2 B' R2 D2 F2 U2 F2 U R2,Y,Oakville Limited Spring 2018 (2018-04-28),333oh R1 C #5
-2401493001,F' L2 B2 L2 R2 U2 B L2 F L2 R' D' F2 L2 B2 U' R' D2,G,Race the Clock Minnesota 2022 (2022-12-31),333 R1 A E1
+5835824013,R2 D' L' U2 L2 F2 D2 L2 U2 F' L2 F D F2 L' D L D' U' L' F,W,Swisscubing Cup Mental Breakdown II 2026 (2026-09-19~20),333mbf Final A #2
 3828324014,U2 R B R2 B2 F2 D2 U' R2 D L2 U' B2 R F2 U2 L2 B' U F2 L B',W,Rio Cubolympics 2024 (2024-05-30~06-02),333mbf Final A #2
 4844388001,F' L2 B F R2 U2 D B' D' L D2 L2 F2 U' F' U' L',Y,Kublördag Landvetter I: 2025 (2025-07-05),333 R1 A #2
 826425001,U2 F2 R2 F2 L D2 U2 B' D B2 D2 B2 F2 R' D U2 B D2,Y,Adelaide Winter 2018 (2018-07-14),333 R2 A #5
@@ -202,6 +202,6 @@
 1262173022,D2 L' R D2 R' F2 L' F2 U2 F' D F L' R2 F2 D' R U' B2 L2 U',B,Baia Mare North Open 2019 (2019-08-17~18),333mbf Final A #3
 1262217001,D L2 F2 D L2 U L2 F2 D L2 U' R D' L R' B' D B2 F2 L2 U B',Y,Vantaa Back to School 2019 (2019-08-17~18),333bf Final A #2
 1283683001,D2 R2 B2 U R2 U' B2 R2 D' L2 B D U2 L F' R2 F U' L B,Y,Back to School DFW 2019 (2019-08-31),333 R2 B E1
-4067278069,R' L F2 D2 B L' B' L' F2 B2 R' D2 L F2 L U' L' B L B' L2,Y,La La Land 2024 (2024-08-31~09-01),333mbf Final B #1
+5849117001,F2 B R' B R2 L' U F2 U2 R2 L D2 L U2 B2 L' B2 D2 B',W,Central Washington Fall 2026 (2026-09-26),333 R1 C #4
 4728943001,F2 R2 F' L' D2 F' R2 D R F2 L2 F2 U B2 U' D R2 U2,W,Quick 'n Slick Meppel 2025 (2025-05-17~18),333 R1 D #4
 4450738001,F2 R2 F U2 L2 F' R2 U2 D' L R2 B' U2 B' R' U' L2 F2 U,Y,Sicily Winter 2025 (2025-01-25~26),333oh Final A #3

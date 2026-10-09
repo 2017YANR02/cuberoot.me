@@ -96,12 +96,14 @@ description: "用户说造魔方模拟器、给 /sim 加魔方、新魔方类型
 
 播放循环用 `twist(action,false,false)` + 仅 `started===true` 才推进 step(完成才接下一步);别用 `force=true`+固定 `setInterval`(会在缓动结束前砍掉 120° 转动);NxN 分支先 `if(cube.busy) return`。
 所有显隐/能力走 `simCaps` 单一 registry,别写 `isTwistyLocal`/`isCornerLocal`/`isIvyLocal` 布尔链或 `puzzleKind!=='megaminx'` 单点补丁。
+让项目选择器直接读取 URL 的拼图状态；从无 World 的渲染器切回默认 NxN 时，即使新 World 已是该拼图，也同步逻辑阶数。
 
 ## 拖拽转动(每种魔方都做,不只整体旋转)
 - 抓魔方任意位置都能转(别要求精准命中窄区);拖拽方向自动选要转的可动单元(角/面/层)。
 - 范本:Ivy `ivyDrag.ts`(离散 120° 过阈值整步)、SQ1 `sq1Drag.ts`(连续跟手 + 松手 snap);`<x>Drag.ts` 运行时 `import * as THREE`(SimPage 保持 type-only)。
 - `<x>PickHit`:`scene.updateMatrixWorld()`→`setFromCamera`→`intersectObject(cube,true)`;命中魔方任意件都返回(命中点 + 一组候选单元),脱靶才 null→orbit;鼠标在魔方上一律不 orbit。
 - 候选单元只认 `hits[0]`,沿 parent 链读 `userData`(花瓣→它的角、中心→它 live 面相邻 2 角、缝/黑体→全部)。
+- 层转拼图把合法中层切片纳入拖拽候选，按命中块的当前归属筛选，覆盖 E/M/S 双向、错层与整体转体回归。
 - `<x>ResolveMove`:对每候选算「绕它转时命中点的屏幕切向」与拖拽向量点积 `s`,取 |s| 最大者、`sign(s)` 作方向(别用固定符号),离散魔方过阈值(~6px)触发整步。
 - SimPage 接线:pointerdown 先 PickHit(命中→记 pending、`rotating=false`;脱靶→orbit);pointermove pending 过阈值→ResolveMove→`cube.twister.twist(move,false,true)` + `userMoveRef.current?.(move.name)`(传 string,免 TwistAction 吞多字符);非活跃时各分支 `if(pending){…return}`/`if(orbiting){…return}` 让出到底部双指 pinch,别整体 `return`。
 - 离散角/棱转:用 `engine/cornerTurnGesture.ts` 的 `CornerTurnGesture` —— SimPage 写 ~7 行 `CornerTurnAdapter<Cube,Move,PickHit>`(`match` instanceof、`pickHit`/`resolveLive`/`resolveMove` 给 drag 函数、`beginMove:(c,m)=>c.beginMove(m)`、`moveToString`、`fullPx`/`threshold`)进注册表,别 copy 175 行 dispatch;连续(SQ1)/异类(Ivy)各写各的。
@@ -131,8 +133,11 @@ description: "用户说造魔方模拟器、给 /sim 加魔方、新魔方类型
 - involution/对称转(Heli 180°,顺逆终态相同)动画也跟手做两方向:给 move 加 cosmetic `dir?:1|-1`(状态/记号忽略它),`<x>ResolveLive` 把 `score.dir` 烤进 move,`beginMove` 用 `(move.dir ?? sweepDir)*ANGLE` 定扫动符号。
 - alg/打乱输入框坏 token 别 throw(async `jumpToStep` 里 throw = 崩页):token 分类器算 validity(坏则早退、totalSteps=0)+ mirror 高亮层标红(范本 `classifyIvyTokens` + `.sim-player-hl`);strict parser 只留求解器。
 - 改记号约定同步改锁约定的 baseline 测试。
+- 形变拼图先完整验证公式序列再改状态/队列；拖拽拾取与播放前统一清除半转冻结，别只清 NxN controller 的锁。
 
 ## 验证(必做)
+- 多视口 AI 回放复用 NxN 引擎，按每次真实尝试从原始状态复位，压缩短间隔内的转动并在验证成功且完整播完后展开胜者；保留原模型标签和不完整用量提示。
+- NxN 房间装饰复用 `room-cube.ts`，按 HOME 块索引跟随 `getCubeletRenderMatrix`，切主题时释放自有几何并恢复原渲染器，遍历主题与支持阶数验证边界及转动中间帧。
 - 干净 worktree/新 clone 先 `pnpm -F @cuberoot/shared build && pnpm -F @cuberoot/visualcube build`(否则 typecheck/dev 报缺 `@cuberoot/visualcube`/`@cuberoot/shared/admin`)。
 - `pnpm --filter @cuberoot/client typecheck`(tsgo)。
 - Playwright 开 `127.0.0.1:3000/zh/sim?puzzle=x`:① solved 看花纹(非实色,对账参考图);② 随机打乱看乱态(招式动画 + 颜色跨面);③ 拖某可抓件 → 单件转动 + 解法框追加 token,拖中心/空白 → 转视角(合成 PointerEvent 打 canvas、读第 2 个 `<textarea>`.value)。

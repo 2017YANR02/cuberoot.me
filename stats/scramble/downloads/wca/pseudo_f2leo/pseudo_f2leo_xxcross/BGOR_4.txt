@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / BGOR / bin 4
-# Population in this bin: 324
+# Population in this bin: 327
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 27263001,R' F' B L D R2 L D F' L' F2 B' D2 B' L2 U2 L2 U2 F' L2,G,Polish Nationals 2014 (2014-05-31~06-01),333 R2 B #3
@@ -191,7 +191,7 @@
 5228653001,D B2 D B2 R' L2 F U F2 L2 D' L2 U2 B2 L2 D R2 F2 B,O,Ushuaia 2025 (2025-11-29~30),333 R2 B #2
 3168379006,L B2 F2 U2 R' F2 L2 R U R D2 F L' U' R' D L B R' B',G,Kuwaiti Nationals 2023 (2023-10-13~14),333mbf Final A #1
 3172485001,R U L' D L' D L2 B' R2 U L2 F D2 F2 D2 F' D2 L2,G,Salonica Autumn Open 2023 (2023-10-14~15),333 R2 D #4
-5675972001,D2 R D R' D2 F' R U L F2 D2 R2 D2 R' B2 D2 L' F2 R,G,Franconia Cube Days 2026 (2026-05-30~31),333oh Final A E2
+5854329001,F L' B2 L2 F D L' B2 D2 L F' U' D2 F2 D' R2 B2 R2,B,Balam Cubes Bekasi Comeback 2026 (2026-09-26~27),333 Final A E2
 3216033001,D' F R U F' D2 L D' F U2 R' D2 R' B2 R' U',B,Sambil Valencia 2023 (2023-10-29),333 R2 B #3
 4805783058,U F U' B2 U' D2 L' D2 B R2 D' L2 D B2 D' L2 R' D2 L B2,R,New York Multimate PBQ II 2025 (2025-06-13~15),333mbf Final A #2
 3282489001,L' B' D2 L' F L2 U' L' D2 B2 R2 B2 L' F2 R' D' L D',O,Azerbaijan Nationals 2023 (2023-11-18~19),333oh Final B E1

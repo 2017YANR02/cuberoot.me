@@ -1,3 +1,5 @@
+import { util } from '@kit.ArkTS';
+import { picker, fileIo } from '@kit.CoreFileKit';
 import { abilityAccessCtrl, common, type Permissions } from '@kit.AbilityKit';
 import { window } from '@kit.ArkUI';
 
@@ -69,6 +71,28 @@ export class HarmonyBridge {
     return successValue(DeepLinkInbox.shared().takeAll());
   }
 
+  async exportFile(text: string, filename: string): Promise<string> {
+    if (!this.context || !filename || filename === '.' || filename === '..' || filename.includes('/') || filename.includes('\\')) return failure();
+    try {
+      const options = new picker.DocumentSaveOptions();
+      options.newFileNames = [filename];
+      const uris = await new picker.DocumentViewPicker(this.context).save(options);
+      if (uris.length === 0) return successValue(false);
+      const file = await fileIo.open(uris[0], fileIo.OpenMode.READ_WRITE | fileIo.OpenMode.TRUNC);
+      try {
+        const bytes = new util.TextEncoder().encodeInto(text);
+        let written = 0;
+        while (written < bytes.length) {
+          const count = await fileIo.write(file.fd, bytes.slice(written).buffer);
+          if (count <= 0) throw new Error('File write did not advance');
+          written += count;
+        }
+      }
+      finally { await fileIo.close(file); }
+      return successValue(true);
+    } catch (_) { return failure(); }
+  }
+
   async openExternal(url: string): Promise<string> {
     if (!this.context || !isExternalUrl(url)) return failure();
     try {
@@ -125,9 +149,13 @@ export class HarmonyBridge {
   }
 
   async bleRequestDevice(namePrefix: string): Promise<string> {
-    if (namePrefix !== 'GAN') return failure();
     try {
-      return successValue(await this.bluetooth.requestDevice(namePrefix));
+      const decoded = JSON.parse(namePrefix) as Object;
+      if (!Array.isArray(decoded)) return failure();
+      const prefixes = decoded as string[];
+      const allowed: string[] = ['GAN', 'MG', 'AiCube', 'Gi', 'WCU_MY3', 'QY-QYSC', 'XMD-TornadoV4-i', 'Mi Smart Magic Cube', 'Hi-', 'GoCube', 'Rubik', 'MHC', 'MoYu', 'MY-'];
+      if (prefixes.length === 0 || prefixes.some((prefix: string): boolean => !allowed.includes(prefix))) return failure();
+      return successValue(await this.bluetooth.requestDevice(prefixes));
     } catch (_) {
       return failure();
     }
@@ -149,6 +177,11 @@ export class HarmonyBridge {
     } catch (_) {
       return failure();
     }
+  }
+
+  async bleGetServices(deviceId: string): Promise<string> {
+    try { return successValue(this.bluetooth.getServices(deviceId)); }
+    catch (_) { return failure(); }
   }
 
   async bleGetMtu(deviceId: string): Promise<string> {

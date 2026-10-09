@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import ReconDetailClient from './ReconDetailClient';
 import {
-  fetchReconForSeo, fetchSameScrambleForSeo, buildReconTitle, buildReconDescription, reconCanonical,
+  fetchReconForSeo, fetchSameScrambleForSeo, fetchCompNamesForSeo, buildReconTitle, buildReconDescription, reconCanonical,
   isZhLang, buildVideoJsonLd, parseReconId, reconPathSeg,
 } from '@/lib/recon-seo';
 
@@ -48,9 +48,10 @@ export async function generateMetadata({ params }: {
   // Canonical points at the keyword-rich slugged URL (consolidates bare-id and
   // any slug variant onto one canonical — Phase 1's consolidation mechanism).
   const canonical = reconCanonical(id, lang, reconPathSeg(solve));
-  const title = buildReconTitle(solve, isZh);
+  const names = await fetchCompNamesForSeo();
+  const title = buildReconTitle(solve, isZh, names);
   const shareTitle = `CubeRoot — ${title}`;
-  const description = buildReconDescription(solve, isZh);
+  const description = buildReconDescription(solve, isZh, names);
   // 不公开列出(unlisted)= 有链接可看但不进搜索 → noindex;否则非 WCA / 练习是薄内容也 noindex;
   // 公开的 WCA 复盘才索引。
   const robots = (solve.visibility === 'unlisted' || solve.official !== 'wca')
@@ -88,7 +89,8 @@ export default async function Page({ params }: {
   // paint); the client island still refreshes them in the background.
   const sameScramble = await fetchSameScrambleForSeo(id);
 
-  const videoJsonLd = buildVideoJsonLd(solve, lang);
+  const names = await fetchCompNamesForSeo();
+  const videoJsonLd = buildVideoJsonLd(solve, lang, names);
 
   return (
     <>

@@ -1,18 +1,17 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 /**
  * 「图 / 公式」列表视图开关 —— `/alg` 下**所有 case 列表页**共用这一份。
  *
- * 语义(从 AlgCategoryView 抽出来,原样保留):
- *   - `cards` = 只看图(密排画廊,点整卡进详情页看公式)——**默认**。列表是「认图 / 浏览」页,
- *     公式是详情页的事;顺带让首屏不挂一堆播放器 / 社区区,更轻。
- *   - `full`  = 公式内联(旧行为)。
+ * 语义:
+ *   - `cards` = 只看图(密排画廊,点整卡进详情页看公式)。
+ *   - `full`  = 公式内联——**默认**。
  *
  * 偏好存 localStorage(`alg-list-view`):这是**跨页显示偏好**,不是页内可分享状态,
- * 所以不进 URL。想常看公式的人切一次,全站的 case 列表都生效。
+ * 所以不进 URL。用户切换一次,全站的 case 列表都生效。
  */
 import { useCallback, useSyncExternalStore } from 'react';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { persistItem } from '@/lib/safe-storage';
 import { tr } from '@/i18n/tr';
 
@@ -51,9 +50,9 @@ function subscribe(cb: () => void): () => void {
 function getSnapshot(): AlgViewMode {
   if (current === null) {
     try {
-      current = localStorage.getItem(ALG_VIEW_MODE_KEY) === 'full' ? 'full' : 'cards';
+      current = localStorage.getItem(ALG_VIEW_MODE_KEY) === 'cards' ? 'cards' : 'full';
     } catch {
-      current = 'cards';
+      current = 'full';
     }
   }
   return current;
@@ -61,7 +60,7 @@ function getSnapshot(): AlgViewMode {
 
 /** 服务端 / 注水那一帧一律给默认值 —— 预渲染的 HTML 里就是它。 */
 function getServerSnapshot(): AlgViewMode {
-  return 'cards';
+  return 'full';
 }
 
 /**
@@ -69,7 +68,7 @@ function getServerSnapshot(): AlgViewMode {
  *
  * 走 useSyncExternalStore 而不是「useState initializer 里同步读 localStorage」:
  * 后者在**同步就渲染出开关**的页面(如 /alg/lsll/[group],预渲染的静态页)会撞
- * 注水不一致 —— 服务端 HTML 写「图」,客户端首帧读出「公式」,React 报错并把整棵树
+ * 注水不一致 —— 服务端 HTML 写默认值,客户端首帧读出不同偏好,React 报错并把整棵树
  * 重画。getServerSnapshot 把注水那一帧钉在默认值上,注水完再切到真实偏好。
  */
 export function useAlgViewMode(): [AlgViewMode, (next: AlgViewMode) => void] {
@@ -91,13 +90,14 @@ export interface AlgViewModeToggleProps {
 
 export default function AlgViewModeToggle({ value, onChange, className }: AlgViewModeToggleProps) {
   return (
-    <PillToggle
-      value={value === 'full'}
-      onChange={(on) => onChange(on ? 'full' : 'cards')}
-      onLabel={tr({ zh: '公式', en: 'Algs' })}
-      offLabel={tr({ zh: '图', en: 'Images' })}
-      ariaLabel={tr({ zh: '切换只看图 / 看公式', en: 'Toggle images-only / show algs' })}
-      className={className}
-    />
+    <select
+      value={String(value === 'full')}
+      onChange={event => { const on = event.currentTarget.value === 'true'; onChange(on ? 'full' : 'cards'); }}
+      aria-label={tr({ zh: '切换只看图 / 看公式', en: 'Toggle images-only / show algs' })}
+      className={['native-select', className].filter(Boolean).join(' ')}
+    >
+      <option value="true">{tr({ zh: '公式', en: 'Algs' })}</option>
+      <option value="false">{tr({ zh: '图', en: 'Images' })}</option>
+    </select>
   );
 }

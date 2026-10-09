@@ -1,8 +1,8 @@
 # Scramble samples — 123 / rouxs1 / Y / bin 2
-# Population in this bin: 135
-# Samples listed: 135 (all entries in this bin)
+# Population in this bin: 137
+# Samples listed: 137 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 749001,B' F' L2 B' R2 F' D2 R' D2 F R2 F' D L B' L' R' F2,Y,Bogotá Cúbico 2014 (2014-03-15),333 R1 A #2
@@ -140,3 +140,5 @@
 5798755013,B' D' F R2 D' L' B2 U' L' D L2 U2 F D2 F D2 B2 L2 F L B2,Y,Algorithmes Artistiques Abrésiens 2026 (2026-08-22~23),333mbf Final B #1
 5814178001,R2 B' D2 B2 U2 F2 D F2 D F' L2 R' D U2 B2 L U' B,Y,Hungarian All-Rounder 7 2026 (2026-09-05),333 R1 B E1
 5820794001,U2 R2 B D2 B U2 B' F D2 R B' D L' B L' U' R' U2 R',Y,Santos Mágico Open 2026 (2026-09-06~07),333oh Final C #5
+5852591044,U2 B' U2 F2 D2 B' D' F2 L U' B D2 L2 F U2 L2 D2 R2 D2 F' L2 U2,Y,Multimatum: New York Multimate PBQ VI 2026 (2026-09-25~27),333mbf R1 B #2
+5853265001,U2 F' R U' D2 R' B2 R' B2 R B2 D2 B L R B' D' R' F',Y,Manaus Beginners 2026 (2026-09-26),333 Final A #3

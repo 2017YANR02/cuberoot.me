@@ -16,13 +16,67 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  /* PageNoticeBar is a sibling above the timer and publishes its live height.
-     Subtract it so bottom controls stay inside the visible viewport. */
-  min-height: calc(100dvh - var(--page-notice-h, 0px));
   background: var(--background);
   color: var(--foreground);
   overflow: hidden;
 }
+
+/* Fill the viewport, but let scramble/source content grow the page naturally. */
+.timer-shell.timer-workspace.timer-workspace {
+  height: auto;
+  min-height: calc(100dvh - var(--page-notice-h, 0px));
+  overflow: visible;
+}
+
+.timer-shell .timing-surface--solo,
+.timer-shell .timing-surface--net {
+  min-height: min-content;
+  flex: 1 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(min-content, 1fr);
+  align-items: stretch;
+}
+.timer-shell :is(.timing-surface--solo, .timing-surface--net) .timing-surface-scramble-top {
+  position: static;
+  inset: auto;
+  transform: none;
+  max-height: none;
+  overflow: visible;
+  scrollbar-gutter: auto;
+  align-self: stretch;
+}
+.timer-shell :is(.timing-surface--solo, .timing-surface--net) .timing-surface-core {
+  --timer-readout-max-size: 25dvh;
+  grid-row: 2;
+  align-self: center;
+  gap: 8px;
+}
+.timer-shell :is(.timing-surface--solo, .timing-surface--net) .timing-surface-sub {
+  --timer-cube-h: min(30vw, 26dvh, 260px);
+  position: static;
+  inset: auto;
+  transform: none;
+  padding-top: 0;
+  gap: 8px;
+}
+.timer-shell .timer-stage-source {
+  max-height: none;
+  overflow: visible;
+}
+
+/* Scrambles, results and recaps expand with the document. The solution panel
+   keeps its independent scrolling; full-screen results use one outer scroller. */
+.timer-shell :is(.timer-workspace-panel, .timer-workspace-panel-body,
+  .shell-recap, .shell-recap-body, .history-panel, .history-list,
+  .stats-panel, .case-stats-panel, .case-stats-scroll,
+  .reconstruct-move-list, .reconstruct-playback-side) {
+  height: auto;
+  max-height: none;
+  overflow: visible;
+}
+.timer-shell .shell-recap { flex: 0 0 auto; }
+.timer-shell .shell-recap-rail > .shell-recap { height: auto; }
 
 /* ── Topbar ─────────────────────────────────────────────── */
 /* 「难度」开关的挂点。内容由打乱来源条里的 WcaSourceConfig / GenDiffConfig portal 过来
@@ -34,39 +88,31 @@
 /* 品牌 logo:占第 1 列贴左(与对战 middle-bar 的 logo 同一份资源 + 主页链接). */
 .shell-topbar-brand img { height: 24px; width: auto; display: block; }
 /* ── Main column ────────────────────────────────────────── */
-.shell-main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  min-height: 0;
-  position: relative;
-}
 
-/* Scramble slot — sits in the sub stack directly above the cube net. */
-/* /timer 打乱展示尺寸令牌 —— 共享 TimerScrambleStrip 消费 --timer-scramble-fs；单人
-   (.timing-surface 内 .scramble-strip /
-   .shell-corner-net / .scramble-src)与双人 side 共享打乱(battle.css 的
-   .side-scramble-row)引用同一套尺寸的唯一真源。两棵子树不共享 DOM 祖先(TimerShell
-   只渲染其一),故挂在各自根(.timing-surface / .battle-container)上,一处改两边一起变。 */
-.timing-surface,
-.battle-container {
+/* Default surfaces outside the shared solo/net/local layouts. */
+.timing-surface:not(.timing-surface--solo):not(.timing-surface--net):not(.timing-surface--local) {
   --timer-scramble-fs: clamp(26px, 4.4vw, 36px);
   --timer-cube-h: min(30vw, 26dvh, 260px);
   /* 来源行(国旗 + 比赛名 + 项目 + 轮次)是背景信息,不该跟打乱公式抢视线 —— 取原先 24px 的一半。 */
   --timer-scramble-src-fs: 12px;
 }
 
-.timing-surface-scramble {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-}
 /* Cube net — centered directly under the digits (Battle-style). Lives inside
    the absolute .timing-surface-sub, so showing/hiding it never shifts the
    digits. */
-.timing-surface-cube { display: flex; justify-content: center; }
+
 /* --cube-h 同时驱动预览框和它常驻的占位框,所以显示/隐藏魔方时下面的内容不会跳动。 */
+/* Legacy battle RAF writes remain attached to this inner node; geometry and
+   typography now come from the shared local TimingSurface. */
+.battle-container .timer-battle-cell > .player-area { padding: 0; gap: 0; }
+.player-area .timing-surface--local .time-display {
+  font-size: inherit;
+  font-family: inherit;
+  line-height: inherit;
+  min-height: 0;
+  margin-top: 0;
+}
+
 .shell-corner-net { display: flex; flex-direction: column; align-items: center; gap: 6px; --cube-h: var(--timer-cube-h); }
 .shell-corner-net-imgbox { height: var(--cube-h); display: flex; align-items: center; justify-content: center; }
 .shell-corner-net-img {
@@ -118,56 +164,43 @@
   white-space: nowrap;
 }
 
-/* Target indicator */
-.timing-surface .timer-target-indicator {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
+.shell-recap.timer-live-solution {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.timer-live-solution-label {
   color: var(--muted-foreground);
+  font-size: 12px;
 }
-.timing-surface .timer-target-indicator.overshot { color: var(--destructive); }
+.timer-shell[data-live-reconstruction] .shell-recap-rail {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+.timer-shell[data-live-reconstruction] .timing-surface--solo {
+  grid-template-rows: 1fr;
+}
+.timer-shell[data-live-reconstruction] .timing-surface-scramble-top {
+  display: none;
+}
+.timer-shell[data-live-reconstruction] .timing-surface-core {
+  grid-row: 1;
+  align-self: center;
+}
+@media (max-width: 1023px) {
+  .timer-shell[data-live-reconstruction] .timer-stage-source,
+  .timer-shell[data-live-reconstruction] .timer-stage-footer,
+  .timer-shell[data-live-reconstruction] .shell-undersurface {
+    display: none;
+  }
+  .shell-recap.timer-live-solution {
+    flex: 0 0 auto;
+    height: auto;
+  }
+}
 
-/* Rank badge — WR / CR / NR pills (shared by Solo digits corner + Battle player).
-   Token-only: accent-soft pill, accent text; top-tier names go signal-success. */
-.rank-badge-row {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-}
-.rank-pills {
-  display: inline-flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 6px;
-}
-.rank-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 0;
-  border: none;
-  background: none;
-  color: var(--accent);
-  /* 与 /wca/records 徽章一致的 Inter sans(含 loading 占位 "WR …");不用 mono. */
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 0.82em;
-  font-weight: 600;
-  line-height: 1.4;
-  white-space: nowrap;
-}
-/* WR12/AsR9/NR9 segments: center-align text + any inline RecordBadge, even gaps
-   around the "/" separators. 字体继承 .rank-pill 的 Inter(已非 mono). */
-.timer-display-corner:has(.rank-badge-row) {
-  right: 0;
-  max-width: min(100%, calc(100vw - 32px));
-  transform: translateY(-100%);
-}
-.rank-badge-row, .rank-pills, .rank-pill { max-width: 100%; }
-.rank-chip-inner { display: inline-flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 3px; }
-.rank-chip-sep { color: var(--faint-foreground); font-weight: 400; }
-.rank-chip-inner .record-badge { font-size: 1em; padding: 0 4px; }
+/* Target indicator */
 /* PB celebration toast — floating overlay. MUST be position:fixed so it stays
    out of the .timer-shell grid (desktop), otherwise it auto-places as an
    unnamed grid item and stretches the topbar row, shifting the digits down. */
@@ -206,9 +239,9 @@
 @media (prefers-reduced-motion: reduce) { .tmr-pb-card { animation: none; } }
 
 /* Target overshot / pulse on the digits */
-.timing-surface.target-overshot .timer-display.running { color: var(--destructive); }
-.timing-surface.target-pulse-good .timer-display { color: var(--signal-success); }
-.timing-surface.target-pulse-bad .timer-display  { color: var(--destructive); }
+
+
+
 
 /* ── Under-surface chrome (goal / subset / hints) ───────── */
 .shell-undersurface {
@@ -238,379 +271,6 @@
 
 /* Solver-hint pills (de-boxed in SolverHints.tsx) brighten on hover. */
 .shell-undersurface .solver-hints .solver-hint-btn:hover { color: var(--foreground); }
-
-/* ── 解法提示 panel (333) — desktop right rail / phone full-screen sheet ──
-   A persistent, collapsible StageSolver host (replaces the old modal). SoloView
-   mounts it in one of two places: on phones it's the last control in the topbar's
-   centre group (next to 人数 / 项目 / 打乱来源) and tapping it opens .solver-sheet
-   (below); on desktop it goes in .shell-rail, an absolute left column, and
-   .shell-main gains matching left padding so the centered timer never sits under
-   it. Both forms are just a pill until opened, so the base rule below sizes it as
-   an inline control and each mount point takes it from there. */
-.timer-shell { --solver-rail-w: clamp(380px, 31vw, 520px); }
-.solver-panel {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-width: 0;
-}
-.solver-panel-head {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 14px;
-  background: var(--shell-chip);
-  border: 1px solid var(--shell-divider);
-  border-radius: 999px;
-  color: var(--muted-foreground);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 120ms, color 120ms;
-}
-.solver-panel-head:hover { background: var(--shell-hover); color: var(--foreground); }
-/* 头部一行 = 折叠按钮 (+ 桌面右栏展开后的全屏按钮)。默认 display:contents —— 手机顶栏、
-   桌面收起态的 pill 形态里当它不存在,原有布局一字不改;只有右栏展开态(见 ≥1024 段)
-   才把它变成真的 flex 行,好把按钮摆到标题那条分隔线上。 */
-.solver-panel-headrow { display: contents; }
-/* 手机形态:顶栏那排控件里的一员,但不画框 —— 纯文字入口,高度对齐旁边的下拉。
-   (桌面那颗仍是 pill:它在右栏里是唯一的可点物,没有边框就读不出可点。) */
-.shell-topbar-left .solver-panel-head {
-  height: 32px;
-  padding: 0 4px;
-  border: 0;
-  background: transparent;
-  border-radius: 6px;
-}
-.solver-panel-title { white-space: nowrap; }
-.solver-panel-chevron { opacity: 0.7; transition: transform 160ms ease; }
-/* Desktop accordion: collapsed ▾ (down) → expand, open ▴ (up) → collapse.
-   Phones show a static ⤢ (.solver-panel-expand) instead — they get a full-screen
-   sheet, not an in-place fold, so a rotating chevron would misdescribe the tap. */
-.solver-panel[data-open='false'] .solver-panel-chevron { transform: rotate(90deg); }
-.solver-panel[data-open='true']  .solver-panel-chevron { transform: rotate(-90deg); }
-.solver-panel-expand { opacity: 0.7; }
-/* 窗口操作:右栏提供全屏,全屏浮层提供还原。 */
-.solver-layout-action {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  flex: 0 0 auto;
-  min-height: 32px;
-  margin: 0 8px;
-  padding: 6px 8px;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--muted-foreground);
-  font: inherit;
-  font-size: 13px;
-  line-height: 1;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: background 120ms, color 120ms;
-}
-.solver-layout-action:hover { background: var(--shell-hover); color: var(--foreground); }
-.solver-layout-action:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
-.solver-panel-body { width: 100%; margin-top: 8px; }
-/* 打乱原文 — 面板/浮层里解法讲的是哪条打乱。同 .scramble-strip 的记号字体,但只做正文
-   大小:这里是对照用的参考行,不是要人隔着房间读的主视觉。窄栏放不下就折行。 */
-.solver-panel-scramble {
-  margin: 0 0 10px;
-  font-family: 'LiberationMono', var(--font-mono);
-  font-size: 14px;
-  line-height: 1.55;
-  color: var(--foreground);
-  overflow-wrap: anywhere;
-  -webkit-user-select: text;
-  user-select: text;
-}
-.solver-panel-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 90px;
-  color: var(--muted-foreground);
-}
-.solver-panel-head:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-  border-radius: inherit;
-}
-
-/* 分步解法 sub-section (StepSolve) — sits inside the panel under the StageSolver.
-   Method tabs → per-stage breakdown (each row plays that stage on the 3D cube) →
-   shared TwistyPlayer. Collapsed by default so its BFS only runs on demand. */
-.stepsolve {
-  width: 100%;
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px solid var(--shell-divider);
-  text-align: left;
-}
-.stepsolve-head {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
-  padding: 4px 2px;
-  background: none;
-  border: 0;
-  color: var(--foreground);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-}
-.stepsolve-head:hover { color: var(--accent); }
-.stepsolve-chevron { margin-left: auto; opacity: 0.7; transition: transform 120ms ease; }
-.stepsolve-chevron.is-open { transform: rotate(90deg); }
-.stepsolve-body { display: flex; flex-direction: column; gap: 8px; padding: 6px 2px 2px; }
-.stepsolve-tabs { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
-.stepsolve-tab {
-  padding: 3px 10px;
-  background: transparent;
-  border: 1px solid var(--border-default);
-  border-radius: 999px;
-  color: var(--muted-foreground);
-  font-size: 12px;
-  cursor: pointer;
-}
-.stepsolve-tab:hover { color: var(--foreground); }
-.stepsolve-tab.is-active {
-  background: var(--accent);
-  color: var(--accent-foreground);
-  border: 1px solid var(--accent);
-  font-weight: 600;
-}
-.stepsolve-compare {
-  margin-left: auto;
-  padding: 3px 10px;
-  background: transparent;
-  border: 1px dashed var(--border-default);
-  border-radius: 999px;
-  color: var(--muted-foreground);
-  font-size: 12px;
-  cursor: pointer;
-}
-.stepsolve-compare:hover { color: var(--foreground); }
-.stepsolve-status { color: var(--muted-foreground); font-size: 13px; }
-.stepsolve-stages { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
-.stepsolve-row {
-  display: grid;
-  grid-template-columns: auto 28px 1fr auto;
-  gap: 8px;
-  align-items: baseline;
-  padding: 4px 8px;
-  border-radius: 6px;
-  border: 1px solid transparent;
-  cursor: pointer;
-}
-.stepsolve-row:hover { background: var(--shell-hover); }
-.stepsolve-row.is-active { background: var(--accent-soft); border-color: var(--accent); }
-.stepsolve-row.is-static { cursor: default; }
-.stepsolve-row.is-static:hover { background: transparent; }
-.stepsolve-label { color: var(--muted-foreground); font-size: 12.5px; white-space: nowrap; }
-.stepsolve-count {
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-  color: var(--muted-foreground);
-  font-size: 12.5px;
-}
-.stepsolve-alg {
-  font-family: var(--font-mono);
-  font-size: 12.5px;
-  white-space: pre-wrap;
-  word-break: break-word;
-  color: var(--foreground);
-}
-.stepsolve-play { align-self: center; color: var(--muted-foreground); opacity: 0; transition: opacity 120ms; }
-.stepsolve-row:hover .stepsolve-play,
-.stepsolve-row.is-active .stepsolve-play { opacity: 0.8; color: var(--accent); }
-.stepsolve-total { margin-top: 2px; }
-.stepsolve-total .stepsolve-label,
-.stepsolve-total .stepsolve-count { color: var(--accent); font-weight: 600; }
-.stepsolve-total .stepsolve-alg { color: var(--muted-foreground); font-style: italic; }
-/* Block (not flex) with a centered max-width so the player gets a definite width
-   — a width:100% twisty-player inside a justify-content:center flex parent
-   collapses to 0. */
-.stepsolve-player { width: 100%; max-width: 300px; min-width: 0; margin: 6px auto 0; }
-/* 同 .stsv-player:/recon 的播放器默认 height:100% 撑定高父容器,这里高度由内容决定,
-   所以放开高度、改给画布定 1:1(flex:0 0 auto + width:100%,理由见 StageSolver.css)。 */
-.stepsolve-player .recon-player { height: auto; }
-.stepsolve-player .recon-player-canvas { flex: 0 0 auto; width: 100%; aspect-ratio: 1 / 1; }
-
-/* Config rail wrapper (解法提示, desktop only — SoloView puts the phone form in the
-   topbar instead). display:contents keeps it out of the layout on phones, where it
-   is empty; desktop turns it into the absolute left column below. */
-.shell-rail { display: contents; }
-
-/* Phone / tablet (<1024px): the pill opens a full-screen sheet. It used to expand
-   in place under the scramble, but that put it directly above the bottom bar, so
-   everything it revealed landed below the fold and the page didn't scroll to it —
-   the tap read as a dead button (issue #49). Fixed + inset:0 with its own scroll
-   container; ?hints=1 owns the open state so the back gesture closes it. */
-.solver-sheet {
-  position: fixed;
-  inset: 0;
-  /* over the 成绩/图表/工具 bottom sheet (61) and the deskpet (40). Only comparable
-     with those because the sheet is portalled to <body> — the pill that opens it
-     now lives in the z-index:41 topbar, whose stacking context would otherwise cap it. */
-  z-index: 62;
-  display: flex;
-  flex-direction: column;
-  background: var(--background);
-  color: var(--foreground);
-  animation: solver-sheet-in 180ms ease;
-}
-@keyframes solver-sheet-in {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: none; }
-}
-@media (prefers-reduced-motion: reduce) { .solver-sheet { animation: none; } }
-.solver-sheet-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 0 0 auto;
-  padding: calc(10px + env(safe-area-inset-top)) 12px 10px;
-  border-bottom: 1px solid var(--shell-divider);
-}
-.solver-sheet-title { font-size: 15px; font-weight: 600; }
-/* Toolbar convention: title left, close right — the one place a spacer is right. */
-.solver-sheet-close {
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--muted-foreground);
-  cursor: pointer;
-}
-.solver-sheet-close:hover { background: var(--shell-hover); color: var(--foreground); }
-.solver-sheet-body {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: 10px 12px calc(16px + env(safe-area-inset-bottom));
-}
-
-/* Desktop: solutions dock on the left of .shell-main. The right grid column
-   belongs to the latest reconstruction or the Times/Chart/Stats panel.
-   Matching left padding keeps the timer and its bottom controls clear of the rail. */
-@media (min-width: 1024px) {
-  .shell-main {
-    --shell-left-inset: 0px;
-    padding-left: var(--shell-left-inset);
-    transition: padding-left 160ms ease;
-  }
-  .shell-main > .shell-stat-rail {
-    left: calc(var(--shell-left-inset) + max(12px, env(safe-area-inset-left)));
-  }
-  .shell-main > .shell-device-actions { left: calc(50% + var(--shell-left-inset) / 2); }
-  /* 两侧都展开时，为中央计时区保留可用宽度。 */
-  .timer-shell.panel-open { --solver-rail-w: clamp(280px, 25vw, 380px); }
-
-  .shell-rail {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-    position: absolute;
-    top: 12px;
-    left: max(12px, env(safe-area-inset-left));
-    width: auto;
-    max-height: 100%;
-    z-index: 42; /* above the deskpet (40), like the docked rail */
-  }
-  /* :not(.fullscreen) so fullscreen (rail hidden via display:none) doesn't keep a
-     phantom left pad — :has() still matches display:none panels otherwise. */
-  .timer-shell:not(.fullscreen):has(.shell-rail .solver-panel[data-open='true']) .shell-main {
-    --shell-left-inset: var(--solver-rail-w);
-  }
-  .timer-shell:has(.shell-rail .solver-panel[data-open='true']) .shell-rail {
-    top: 0;
-    left: 0;
-    bottom: 0;
-    align-items: stretch;
-    gap: 0;
-    width: var(--solver-rail-w);
-    border-right: 1px solid var(--shell-divider);
-    background: var(--background);
-    overflow-y: auto;
-  }
-
-  /* Panels flow inside the rail (no longer each self-absolute). */
-  .shell-rail .solver-panel {
-    position: static;
-    align-items: stretch;
-    width: auto;
-    padding: 0;
-    transform: none;
-  }
-  /* Rail expanded: panels span its width; the open one grows to fill, any
-     still-collapsed sibling becomes a full-width accordion header bar. */
-  .timer-shell:has(.shell-rail .solver-panel[data-open='true']) .shell-rail .solver-panel { width: 100%; }
-  .shell-rail .solver-panel[data-open='true'] { flex: 1 1 auto; min-height: 0; }
-  .shell-rail .solver-panel[data-open='false'] { flex: 0 0 auto; }
-
-  /* Header, rail expanded: full-width bar + bottom divider. 分隔线挂在 headrow 上,
-     好让标题按钮与形态开关共用同一条底边。 */
-  .timer-shell:has(.shell-rail .solver-panel[data-open='true']) .shell-rail .solver-panel-headrow {
-    display: flex;
-    align-items: stretch;
-    border-bottom: 1px solid var(--shell-divider);
-  }
-  .timer-shell:has(.shell-rail .solver-panel[data-open='true']) .shell-rail .solver-panel-head {
-    flex: 1;
-    justify-content: space-between;
-    padding: 12px 14px;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-  }
-  /* Header, rail collapsed (all closed): free-floating pill under the topbar
-     icons (not flush to the viewport edge, so it's rounded all the way round). */
-  .shell-rail .solver-panel[data-open='false'] .solver-panel-head {
-    border: 1px solid var(--shell-divider);
-    border-radius: 999px;
-    padding: 9px 13px;
-    background: var(--shell-chip);
-    box-shadow: 0 2px 12px color-mix(in srgb, var(--foreground) 10%, transparent);
-  }
-  .shell-rail .solver-panel[data-open='false'] .solver-panel-head:hover { background: var(--shell-hover); }
-
-  .shell-rail .solver-panel-body {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    margin-top: 0;
-    padding: 10px 12px 16px;
-  }
-
-  /* 左栏收起时 › 展开，展开时 ‹ 收回左侧。 */
-  .shell-rail .solver-panel[data-open='false'] .solver-panel-chevron { transform: rotate(0deg); }
-  .shell-rail .solver-panel[data-open='true']  .solver-panel-chevron { transform: rotate(180deg); }
-
-  /* The rail is a narrow tall column — stack the 3D player ABOVE the solution
-     list (StageSolver's default puts them side-by-side, only collapsing under a
-     viewport-width query that never fires on a wide desktop). Stacking gives
-     each solution's full move sequence the rail's whole width, so deeper-stage
-     algs aren't clipped. Override only from this wrapper (shared CSS off-limits). */
-  .shell-rail .solver-panel-body .stsv-result { flex-direction: column-reverse; }
-  .shell-rail .solver-panel-body .stsv-player {
-    position: static;
-    flex-basis: auto;
-    width: 100%;
-    max-width: 300px;
-    margin: 0 auto;
-  }
-}
 
 /* ── 打乱来源常驻配置条 (ScrambleSourceBar) ───────────────
    固定在计时读数上方(取代旧的右栏可折叠面板)。居中限宽;短屏内部滚动,
@@ -662,37 +322,6 @@
   justify-content: center;
   gap: 4px;
 }
-/* ── 停表后就地摊开的复盘 ───────────────────────────────
-   在文档流里,不是浮层:它把计时区顶上去而不是盖住它,所以读数、打乱、实时魔方
-   照旧在上面,空格照按。
-
-   高度写死成一格(不是 max-height):报告比这格高得多,靠自己滚;而定高才让上面的
-   计时区有一个稳定的剩余空间,以及让绝对定位的统计条知道该往上让多少(见下面的
-   --recap-h)。留 0 时这块整个不存在,所有让位规则一起归零。 */
-.shell-main { --recap-h: 0px; }
-/* 高度按「计时区压不动的那部分」倒推,不是拍一个 44dvh 就完事:读数 128 + 打乱两行
-   148 + 缩小后的魔方 ~110 + 间距 + 顶栏和打乱来源条 ≈ 545px,复盘只能拿剩下的。
-   多给一格就是把读数顶出视口(实测过:surface 被压到 min-content 以下时,居中列直接
-   溢出到打乱来源条上面,读数和「比赛」下拉叠在一起)。 */
-.shell-main:has(> .shell-recap) { --recap-h: clamp(180px, calc(100dvh - 545px), 460px); }
-/* 外壳平时是 `min-height: 100dvh`(可以被内容撑高,溢出的那截由 overflow:hidden
-   吃掉)。复盘展开时必须钉成正好一屏,否则「不足」这个前提不成立,下面的
-   flex-shrink 永远不触发 —— 实测就是整页多出 105px 滚动条,复盘的下半截落在屏外。
-   只在有复盘时钉,不动其它形态。 */
-.timer-shell:has(.shell-recap) { height: calc(100dvh - var(--page-notice-h, 0px)); }
-/* SolveRecap owns its component styles in @cuberoot/timer-ui/solve-recap.css. */
-
-/* 复盘吃掉的那半屏得有人让。让的是魔方图那一格:它是四件东西里唯一按比例缩了还
-   照样成立的(读数是主角,打乱要能读,复盘是刚打开的那件事)。缩不是藏 —— 连着智能
-   魔方时这一格显示的是手里那颗的实时状态,拧完正要对着它看复盘。 */
-.shell-main:has(> .shell-recap) .timing-surface { --timer-cube-h: min(20vw, 13dvh, 110px); }
-/* 同理让位:校准是「拧之前把朝向摆正」的动作,拧完这一刻没人按它。收起复盘就回来。 */
-.shell-main:has(> .shell-recap) .live-cube-calibrate { display: none; }
-
-/* 统计条是相对 .shell-main 绝对定位的左下角浮层,复盘一展开就正好压在它上面。
-   往上让一整格 —— 它是成绩 / 图表面板的唯一入口,不能在拧完那一刻消失。 */
-.shell-main:has(> .shell-recap) .shell-stat-rail { bottom: calc(var(--recap-h) + 10px); }
-.shell-main:has(> .shell-recap) .shell-device-actions { bottom: calc(var(--recap-h) + 10px); }
 
 /* ── Distraction-free fade while running ────────────────── */
 .timer-shell.is-solving .surface-chrome {
@@ -706,42 +335,11 @@
 /* Scramble + cube fade (opacity:0) but KEEP their box while running, so the
    centered column's height is constant and the readout never jumps on start. */
 
-/* 例外:连着智能魔方时那颗**实时**魔方,计时中照常显示。
-   淡出这一套是给「静态打乱图 + 打乱文字」设计的 —— 那些讲的是你要拧到哪儿去,
-   拧起来之后确实只剩干扰。实时魔方讲的是你现在拧到哪儿了,它每一手都在变,恰恰
-   只有计时中才有内容(拧完就停在还原态)。把它一起淡掉,等于在唯一有意义的那段
-   时间里关掉它 —— /alg 训练器的实时魔方全程都在,这里对齐。
-   `:has(.timer-live-cube)` 精确挑出「实时」那一种:同一个格子的另一位租客是静态
-   CubePreview(见 SoloView 的 centerCubeSlot),那个照旧淡出。
-   `hide-ui`(用户显式选的「计时中隐藏全部界面」)仍然一票否决。 */
-.timer-shell.is-solving:not(.hide-ui) .timing-surface .timing-surface-cube:has(.timer-live-cube) {
-  opacity: 1;
-  pointer-events: auto;
-}
-/* 留下的是那颗魔方,不是它底下的按钮:校准是拧之前摆正朝向的动作,计时中没人按它,
-   留着只是在专注模式里多一个亮着的控件。 */
-.timer-shell.is-solving .timing-surface-cube .live-cube-calibrate {
-  opacity: 0;
-  pointer-events: none;
-}
-
-/* "Hide all UI while running" (opt-in setting). Goes further than .is-solving:
-   that only touches .surface-chrome, which leaves the side panel and the solver
-   rail on screen. Targets the rail's CHILDREN because .shell-rail is
-   `display: contents` on mobile, where opacity would do nothing. Everything
-   fades rather than unmounting, so the layout can't reflow mid-solve. */
-.timer-shell.hide-ui .shell-panel,
-.timer-shell.hide-ui .shell-rail > * {
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 120ms ease;
-}
+/* Live-cube visibility while solving is owned by timer-ui/live-cube.css. */
 
 @media (prefers-reduced-motion: reduce) {
   .surface-chrome,
   .timer-shell.is-solving .surface-chrome { transition: none; }
-  .timer-shell.hide-ui .shell-panel,
-  .timer-shell.hide-ui .shell-rail > * { transition: none; }
   .timer-display { transition: none; }
 }
 
@@ -769,6 +367,8 @@
   z-index: 61;
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .shell-panel-tabs {
   display: flex;
@@ -806,11 +406,12 @@
 .shell-panel-body {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-gutter: stable;
+  overflow: visible;
   padding: 12px 14px 18px;
 }
+.shell-panel--sheet .shell-panel-tabs,
+.shell-panel--sheet .shell-panel-body { flex: 0 0 auto; }
+.timer-shell .shell-panel--sheet { overflow-y: auto; }
 .shell-panel-body::-webkit-scrollbar { width: 10px; }
 .shell-panel-body::-webkit-scrollbar-track { background: transparent; }
 .shell-panel-body::-webkit-scrollbar-thumb {
@@ -841,51 +442,12 @@
 .shell-chart-canvas { display: flex; justify-content: center; }
 .shell-panel-statgrid { margin-bottom: 8px; }
 
-/* ── Desktop dock (>=1024px): rail on the right ─────────── */
-@media (min-width: 1024px) {
-  .timer-shell {
-    display: grid;
-    grid-template-columns: 1fr 0;
-    grid-template-rows: auto 1fr;
-    grid-template-areas:
-      "topbar  panel"
-      "main    panel";
-    transition: grid-template-columns 160ms ease;
-  }
-  /* 面板打开时把壳限制在视口内，右栏内容才会在 .shell-panel-body 内形成
-     独立滚动条，而不是继续把整页往下撑长。 */
-  .timer-shell.panel-open {
-    height: calc(100dvh - var(--page-notice-h, 0px));
-    grid-template-columns: 1fr 360px;
-  }
-  .timer-shell.recap-open { grid-template-columns: minmax(0, 1fr) clamp(340px, 30vw, 480px); }
-  .shell-recap-rail { min-width: 0; min-height: 0; display: flex; }
-  .shell-recap-rail > .shell-recap {
-    flex: 1;
-    min-width: 0;
-    height: 100%;
-    border-top: 0;
-  }
-  /* 报告按侧栏宽度排版，不能沿用宽视口的双列回放。完整表格仍可横向滚动。 */
-  .shell-recap-rail .reconstruct-playback.has-side { grid-template-columns: minmax(0, 1fr); }
-  .shell-recap-rail .reconstruct-stage-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .shell-topbar { grid-area: topbar; }
-  .shell-main { grid-area: main; }
-  .shell-panel--rail {
-    grid-area: panel;
-    border-left: 1px solid var(--shell-divider);
-    background: var(--background);
-    overflow: hidden;
-  }
-}
-
 /* 平板与窄桌面:中列按 max-content 参与三列布局时,右侧工具会被项目/来源控件挤出视口。
    这里提前切成两列,左侧允许折行,右侧工具始终保留完整宽度。 */
 /* ── Phone (<480px) ─────────────────────────────────────── */
 @media (max-width: 480px) {
   .shell-players-select { padding: 0 4px; font-size: 12px; }
   /* 顶栏这组控件在手机上要挤下五件(多了「难度」),解法入口与难度开关跟着同档收窄。 */
-  .shell-topbar-left .solver-panel-head { height: 30px; padding: 0 3px; font-size: 12px; gap: 4px; }
   .shell-topbar-diff .settings-row-tight-group { font-size: 12px; gap: 4px; }
   .shell-topbar-right .tb-btn { width: 30px; height: 30px; }
   .timing-surface-scramble { top: 8px; }
@@ -983,6 +545,12 @@ body:has(.battle-container .penalty-dropdown.open) .clawd-deskpet {
 }
 
 /* Fullscreen: hide chrome rows, keep just the surface. */
+.timer-shell.fullscreen[data-mini-program-fullscreen] {
+  /* The hidden topbar no longer protects scrambles from the camera cutout. */
+  padding-top: calc(12px + env(safe-area-inset-top, 0px));
+  box-sizing: border-box;
+}
+
 .timer-shell.fullscreen .shell-topbar,
 .timer-shell.fullscreen .shell-stat-rail,
 .timer-shell.fullscreen .shell-device-actions,

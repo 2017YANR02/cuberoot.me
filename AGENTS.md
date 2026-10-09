@@ -29,6 +29,14 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 
 新代码归属：页面和平台适配留在所属 app；稳定、运行时中性且有真实多端消费者的契约/纯逻辑才进共享 package；只因两份文件相似不拆 package。
 
+新的一般业务代码、统计/生成 job 和仓库自动化优先 TypeScript，求解器与大表生成优先 Rust；现存 Python 的迁移状态和必须保留的 Blender/研究/上游例外见 `docs/python-to-typescript-rust-tracker.md`。新增 Python 入口前先核对该跟踪表，避免把已经迁出的管道接回 Python。
+
+仓库自有 PowerShell 脚本已迁为 TypeScript 或退役，清单和验证边界见 `docs/powershell-to-typescript-tracker.md`。新增自动化入口使用 TypeScript；调用方、CI、hook 配置和文档不得重新引入 `.ps1` 或把 `pwsh` 当作 TS 入口的依赖。
+
+打乱统计的日常一键入口在 `core/` 运行 `pnpm stats:scramble`：默认增量运行全部作业，成功后自动灌线上 PG、上传 static，并提交推送统计文件，与旧 `update_cross_stats.ps1` 的默认发布语义一致。明确只想本地计算时用 `pnpm stats:scramble:local`；仅跑指定作业用 `--jobs stages|333opt|puzzles`，只读查看路径与计划用 `pnpm stats:scramble:local --plan`。运行日常一键命令即明确授权本轮统计发布；其他代码 push 仍遵守部署章节。
+
+创建或修改 Mac 快捷指令用 [mac-shortcuts skill](.agents/skills/mac-shortcuts/SKILL.md)；本机「跑打乱统计」实例见 [docs/mac-stats-shortcut.md](docs/mac-stats-shortcut.md)。
+
 改 `core/apps/miniprogram/src/` 后必须在 `core/` 运行 `pnpm --filter @cuberoot/miniprogram build` 刷新开发者工具读取的 `dist/`；该命令不跑测试。
 WXML 表达式直接写 `&&` / `||`，禁 HTML 实体；改 WXML 后必须通过小程序 build 并在微信开发者工具关闭项目后重开做干净编译。
 
@@ -43,7 +51,7 @@ WXML 表达式直接写 `&&` / `||`，禁 HTML 实体；改 WXML 后必须通过
 | Solver | `/solver` | 根目录静态(Vercel 走 `tools/[...slug]` 反代) | fork of or18/RubiksSolverDemo | ❌ |
 | Alg Trainer | `/alg-trainers` | 同上 | fork of mihlefeld/Alg-Trainers | ❌ |
 | csTimer | `/cstimer` | iframe → `/tools/cstimer/` | cs0x7f/cstimer | ❌ |
-| BLDDB | `/blddb` | iframe → `/tools/blddb/`(next build 静态导出,统一入口 `sync_upstream.ps1 -Only blddb`) | nbwzx/blddb v2 | ❌ |
+| BLDDB | `/blddb` | iframe → `/tools/blddb/`(next build 静态导出,统一入口 `cd core && pnpm upstream:sync --only blddb`) | nbwzx/blddb v2 | ❌ |
 | 盲拧公式查询 | `/alg/3bld/lookup` | client,吃 `tools/blddb/data/*Manmade.json`(三阶六套) | 自有 UI + blddb 数据 | ✅ |
 | WCA Stats | `/wca` | `jobs/stats-build` | jonatanklosko/wca_statistics TS 重写 | ⚠️ 管道重写,UI 自有 |
 | Score Calculator | `/calc` | client `app/[lang]/calc/` | ported from carykh/hthgrapher | ✅ |
@@ -82,9 +90,19 @@ WXML 表达式直接写 `&&` / `||`，禁 HTML 实体；改 WXML 后必须通过
 - client 页面默认 SSG:根 layout 禁动态 API(cookies/headers),全局组件禁 render 调 `useSearchParams`;语言归属在 `[lang]/layout`。
 - 省 Vercel 配额:①高基数/响应式 href/离开本页的 `<Link>` 必 `prefetch={false}`;②无 SEO 的动态 `[param]` 页走静态哨兵壳(`dynamicParams=false` + `generateStaticParams` 返 `['_']` + beforeFiles rewrite + client 读 `window.location`);③`public/` 大资产必设 `Cache-Control`;④取证看 `/www/wwwlogs/www.cuberoot.me.log`(全 IP+UA)。
 
+## 开发预览域名接入
+
+维护者 Mac 的终端命令 `cuberoot` 是本机 `~/.local/bin/devsite` 的同名快捷命令，登记在 `~/.config/devsite/projects.json`。它在 `core/` 运行现有 `pnpm --filter @cuberoot/client dev:clean`，开发域名就绪后打开 `https://dev.cuberoot.me`。
+
+此命令复用既有常驻 FRP，不负责 DNS、证书或设备隧道配置。新增项目使用 `devsite add`，不要再复制一套 shell 启动函数。该工具属于本机配置，换设备或修改前先核对实际脚本、登记项及服务状态。
+
+用户说“帮我配置 dev，名字是…电脑是…”、新增同事开发域名或撤销某台电脑时，读取 `.agents/skills/dev-preview/SKILL.md` 和 `docs/dev-preview-onboarding.md`。以 `ops/dev-preview/machines.json` 为唯一设备清单，使用 `core/scripts/dev-preview/cli.ts` 和 `client.ts` 完成登记、授权、DNS、证书、部署、电脑自启和验收；不能只改 DNS 就报完成。新增同事使用每设备独立 SSH 密钥，不分发现有 FRP 共用令牌。
+
 ## 开发命令
 
-使用 pnpm 11、pwsh；运行 core 命令前核实 CWD，在仓库根时先 `Set-Location core`；`ERR_PNPM_NO_PKG_MANIFEST` 时先检查执行目录。
+流量异常排查先读 [`docs/traffic-monitor.md`](docs/traffic-monitor.md) 与 [`docs/traffic-defense.md`](docs/traffic-defense.md)（当前防护、费用保护、暂停及恢复步骤），2026-09-22 `/zh/calc` 峰值的证据见 [`docs/traffic-incident-2026-09-22.md`](docs/traffic-incident-2026-09-22.md)。先核对报表的 `coverage`：自动来源分析目前只覆盖自有服务器 nginx；Vercel 请求在现有 Firewall 和 Logs 中按时间与路径核查。Analytics 是浏览器事件，自有线路也可能上报，不能等同于 Vercel 页面线路；停用时不得为了监控自行重新开启。User-Agent 和浏览器名称不能证明是真人；不要把 nginx 请求数当作全站访客数，也不要为监控启用额外收费项。
+
+使用 pnpm 12.6.0；运行 core 命令前核实 CWD，在仓库根时先进入 `core/`；`ERR_PNPM_NO_PKG_MANIFEST` 时先检查执行目录。
 改 `core/packages/shared/src/**` 后完成前必须在 `core/` 运行 `pnpm --filter @cuberoot/shared build` 刷新 `dist`;“不用检查”只跳过测试/校验,不跳过该构建。
 
 - shell 路径相对 `core/` 写(`packages/...`),禁加 `core/` 前缀(会变 `core/core/`)。含 `[lang]` 等方括号的路径一律单引号,必要时 `git add ':(literal)packages/.../[lang]/x.tsx'`。
@@ -109,11 +127,12 @@ pnpm --filter @cuberoot/client lint
 
 ## 测试
 
+- 非必要不新增、不运行测试。简单、可逆的改动优先直接实现并审阅差异，不写只复述实现的测试，不为凑验证数量扩展测试范围。只有涉及明确的回归风险、关键计算或安全边界，且已有证据不足时，才做能验证具体风险的最小检查；用户本次要求不测试时优先遵从。必要构建与发布后的部署状态确认不属于额外测试。
 - 提交前完成适用验证;push 后不重复已通过的检查,只观察对应提交的 CI;新增改动、失败或遗漏的必要验收仅跑对应最小检查;本地 commit 不视为触发 CI;用户本次“不用检查”限制仍优先。
 - `pnpm --filter @cuberoot/client test` 全集;单文件 `pnpm --filter @cuberoot/client exec vitest run <path>`(**禁** `test -- <path>`,pnpm 透传会被 vitest 吞、跑全集)。
 - `tests/analyzer_worker.test.ts` ~225s(占全集 99%),只改别处就单跑其它文件。
 - 测试统一 `packages/client/tests/*.test.ts`(不与源码并排),源文件 `@/` alias import。
-- 改 worker/kociemba/scramble 生成器/utils 必配 fixture 测试,先看同类怎么写;worker 回归走 `_*_runner.cjs` 模式(见 `tests/analyzer_worker.test.ts`)。
+- 改 worker/kociemba/scramble 生成器或相关 utils 的算法、计算或输出行为时，按具体回归风险补必要 fixture；纯重构、样式、文案及无行为变化的 utils 改动不自动要求新增测试。先看同类怎么写;worker 回归走 `_*_runner.cjs` 模式(见 `tests/analyzer_worker.test.ts`)。
 - 回归 baseline 用 `toBe()` 锁数值,改算法主动改 baseline 当 review 信号,禁放宽成 `toBeGreaterThan`。
 - CI `.github/workflows/test.yml`(PR + push main:typecheck + test)。
 
@@ -123,6 +142,7 @@ pnpm --filter @cuberoot/client lint
 - 新增或复刻任何功能前先全仓搜索现有组件、数据源、工具、交互契约与资源，存在同职责实现时直接复用或先提取单一事实源，禁止复制后改名、各端维护副本或擅自增加源实现没有的内容，跨运行时只保留必要的平台适配层。
 - 优先编辑已有文件；typecheck 范围遵循全局验证规则。
 - 改动先定位根因,禁止在症状点打补丁;根因定位后落地用最小实现,不臆造抽象层/翻译层。
+- 展示格式化、隐藏步骤和本地化后的值只用于渲染或复制;播放器、计算、校验、保存、API 和派生状态必须使用无损原值,登录/管理员态只能增加操作能力,不得改变公开内容语义。
 - SSR 首次 render / useState 初始化禁读随机数、当前时间或浏览器存储;固定首屏后再用 effect 更新,外部存储走 useSyncExternalStore 的 server snapshot。
 - 浏览器端源码禁用正则后行断言,改用捕获边界或显式前字符判断;Hook + CI 守卫。
 - UI 可用 lucide-react;不放页面级"返回"按钮(wizard 步骤间不算)。
@@ -131,15 +151,16 @@ pnpm --filter @cuberoot/client lint
 - 选择/搜索输入框非空时显示清除按钮,统一 `components/ClearButton`。
 - 所有密码输入统一复用 `components/PasswordInput`,必须带可切换明文的眼睛按钮,禁页面手写 `type="password"`。
 - 切换器默认下拉;chip 仅当选项 ≤4 且需左右对比。
-- 布尔开关用 `BoolToggle`,二选一用 `PillToggle`(主项置绿);禁裸 checkbox,特例注释 `allow-checkbox: <理由>`。守卫:hook + CI ratchet。
+- 布尔开关用 `BoolToggle`，全项目统一内容/文字在左、开关在右（共享组件保持此 DOM 顺序，页面不得用 row-reverse/order 反转）；同组纵向设置行须占满共同宽度，开关右侧对齐，不得随标签长短错位；设置行已有独立标签时，开关也放在标签右侧。`block-toggle-side.mts` 与 `toggle-side-guard.test.ts` 共用扫描器，覆盖 client/timer-ui/app-ui；Hook 检查新增片段，CI 验证完整源码和共享 DOM 顺序。二选一统一用浏览器原生 `<select>` 菜单；`PillToggle` 仅保留无文字开关底层，不再提供二选一形态;禁裸 checkbox,特例注释 `allow-checkbox: <理由>`。守卫:hook + CI ratchet。
 - 表头排序一律 `components/SortArrow`(文字右侧,仅当前列显示)。CI 守卫。
 - 下拉/菜单宽度 fit-content,column flex 加 `align-self:flex-start`;禁钉 `min-width`。
 - 锚定下拉面板(absolute + top:100%)必挂 `hooks/usePanelClamp` 钳视口,CSS 注明 `anchored-panel: clamped`;确证安全注明 `anchored-panel: safe (<理由>)`。守卫:hook + CI ratchet;实测 `audit:overflow` popup pass。
+- 共享控件的页面定位覆盖不能依赖 CSS 加载顺序：用 `.共享class.角色class` 等明确作用域，禁止同优先级单 class 覆盖。absolute/fixed 改 relative 时显式重置原有 inset/top/left 等偏移，改 static 时重置 transform/translate；静态定位下未生效的 inset 不视为 bug。Hook `block-css-position-cascade.mts` 与 CI `css-position-cascade-guard.test.ts` 共用扫描器；规则内 `allow-css-position: 具体理由` 才能豁免，动态 class/复杂选择器仍须浏览器复核。
 - 吸顶表头走 `components/sticky-table.css`(`.sticky-scroll` + `.sticky-thead`),禁手写 sticky thead;契约见文件头注。
 - 新可复用组件/hook 登记 `/dev` catalog(`_catalog.tsx`)。CI 守卫:`dev-catalog-sync` + `dev-tokens-drift`。
 - 答题/训练的对错提示统一复用 `components/TrainingFeedbackOverlay` 的绿色 ✅ / 红色 ❌,禁页面自画。
 - 浏览器基线跟随当前 Next 官方支持范围，禁为旧 WebView/开发者工具下调 `browserslist`；旧内核走全站启动失败提示，顶层 `ssr:false` 加载态用 `ClientLoadStatus`。CI:`browser-support-policy.test.ts` + `timer-bootstrap.test.ts`。
-- 项目下拉统一用 `components/PuzzlePicker`;`/wca` 页内展开式项目行用 `WcaEventSelector`;禁页面内自写项目菜单。hook + CI 守卫:`component-reuse-guard`。
+- 项目菜单统一用 `components/PuzzlePicker`;WCA 筛选用默认菜单式 `WcaEventSelector`/`WcaEventMultiSelector`，师生编辑和双人计时浮层显式 `presentation="inline"`；比赛列表保留项目表头；禁页面自写项目菜单。hook + CI 守卫:`component-reuse-guard`。
 - `/alg` case 详情统一走 `AlgCaseView`:静态主图用 `CaseThumb`,动画用 `AlgPlayer`;多朝向不得省略主图或另造结构,桌面一行一朝向且动画左公式右。
 - 全局固定按钮对齐内容右沿:`right: max(16px, calc((100vw - <content-max-width>) / 2))`。
 - chip/tab/下拉项不显示数量计数。
@@ -178,6 +199,8 @@ pnpm --filter @cuberoot/client lint
 
 ## 主题/颜色
 
+`/dev/infrastructure` 的设备图片必须是实际透明背景的产品抠图，不能把白底、棋盘格或其他底色烘焙进图片。仅检查 PNG/WebP 的 `hasAlpha` 不够：还要检查产品外空白区域的像素透明度，并在深色、浅色背景上预览。这个页面的透明 WebP 用 `next/image` 时保留 `unoptimized`，本地曾实测 Next 图片优化把它们转成白底 JPEG。替换已浏览过的同名图片时更换资源 URL，避免缓存继续显示旧图。
+
 写任何 CSS 色值前调 `theme-tokens` skill(token 表 + dark-locked 页清单 + color-mix 规则);禁 `#888 #aaa` 等硬码灰阶。
 
 透明背景材质只在 `glass-material.css` 定义，旧样式由 `site-surfaces.css` 适配；新表面复用 `data-site-surface="panel|popover|heading"`，禁页面另造透明度/blur，保留状态色和无障碍回退，详 `theme-tokens` skill。
@@ -211,7 +234,15 @@ Space 的 `.blend` 源工程及必要原始贴图纳入版本管理时必须使�
 
 ## 造 SQ1 最优求解器 loop
 
-`/loop 继续造 SQ1 最优求解器`(或"造 SQ1 最优")= 读 `solver/SQ1_WCA_LOOP.md` + `solver/SQ1_WCA_GODS_NUMBER.md` 全文,按前者 §0 推进;≤15GB 大表、禁 OOM、线程 12/14。
+`/loop 继续造 SQ1 最优求解器`(或"造 SQ1 最优")= 读 `solver/SQ1_WCA_LOOP.md` + `solver/SQ1_WCA_GODS_NUMBER.md` 全文,按前者 §0 推进;≤15GB 大表、禁 OOM；线程默认用机器可用并行度。
+
+## 求解器磁盘表生成
+
+执行命令、源码入口、进度查看与验收记录见 [solver/HIGH_MEMORY_TABLE_PROFILE.md](solver/HIGH_MEMORY_TABLE_PROFILE.md)。修改 H48 遍历或进度前先读 [solver/vendor/nissy-core/VENDOR.md](solver/vendor/nissy-core/VENDOR.md)，保留固定上游的计算边界及分布校验基准。
+
+需要生成、补齐或重建 solver 磁盘大表时，统一从 `solver/` 运行 `cargo run --release --bin table_generator`。SQ1 精确表与 H48 h10 也由这个入口生成；只补单表用同一 binary 的 `--only sq1` / `--only h48-h10`，H48 小档位流程验证用 `--only h48-h7`，不要把 ignored test、`333opt/gen-table.mjs` 或上游工具当作给 AI 的独立建表步骤。H7 只验证生成和校验流程，不替代统计管道所需的 H10。三阶整解离线统计统一使用原生 H48 h10，经 `solver/333opt/solve_h10.mts` 接入；不再生成 cubeopt9。表根目录由 `CUBE_TABLE_DIR` 指定，默认 `solver/tables/`；逐表耗时和峰值 RSS 由生成器写入该目录。64 GiB Mac 上 H48 h10 的 RSS 警戒线为 57 GiB，触线停下报告；线程使用可用 CPU 并行度，不手工钳制 12/14。
+
+H48 **建表**不得把正在写的表文件映射为计算缓冲区（禁止 file-backed mmap / MAP_SHARED 生成）：先在进程内存中生成，完成上游校验，再顺序写入临时文件、同步落盘并原子改名。2026-09-24 本机有上限对比显示文件映射 256 个短状态约 163 秒，而内存生成的上游加锁算法 32,768 个约 35 秒；不得为降低 RSS 擅自改回文件映射。读已完成表的只读映射与建表写入是不同用途。当前统一入口支持 H7 流程验证与正式 H10；nissy-core 此版本最高 H11（约 56.50 GiB 表），H12 不受支持。换更大 Mac 后不能只改 `h10` 字符串：要同步生成器大小和资源警戒、原生求解器、TS 编排、统计管道、进度查看与 `/dev/solvers` 快照，并用真实表与样例验收。
 
 ## 造非 WCA 小魔方求解器 loop
 

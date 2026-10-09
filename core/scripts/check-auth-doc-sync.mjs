@@ -13,20 +13,34 @@ const ROOTS = [
   'packages/app-ui/src', 'packages/shared/src', 'packages/client/lib',
   'packages/client/components', 'packages/client/hooks', 'packages/client/app/auth',
   'packages/client/app/[lang]/account', 'packages/client/app/api/google-verify',
-  'packages/client/app/api/page-access',
+  'packages/client/app/api/page-access', 'packages/client/app/api/web-session',
+  'packages/client/app/api/identity-choice',
 ];
 const EXACT = new Set([
+  'packages/client/app/[lang]/admin/page.tsx',
+  'packages/client/lib/store-membership-bridge.ts',
+  'packages/client/i18n/i18n-client.ts',
+  'packages/client/app/[lang]/calendar/_components/GoogleBackupPanel.tsx',
   'apps/api/src/db/schema.pg.sql', 'apps/api/src/index.ts',
   'apps/api/src/routes/mcp.ts',
   'apps/api/src/routes/onboarding.ts', 'apps/api/migrations/0265_home_onboarding.sql',
   'packages/client/lib/onboarding.ts', 'packages/client/components/OnboardingGuideModal.tsx',
   'packages/client/app/[lang]/LandingClient.tsx',
+  'apps/api/src/routes/site_assistant.ts',
+  'packages/client/components/LandingSearch.tsx', 'packages/client/components/SiteAssistantDialog.tsx',
   'apps/miniprogram/src/lib/navigation.ts', 'apps/miniprogram/src/lib/web-routes.ts',
   'apps/miniprogram/src/pages/web/index.ts',
+  'apps/miniprogram/src/pages/external-timer/index.ts',
+  'apps/miniprogram/src/lib/web-view-page.ts',
+  'packages/shared/src/page_share.ts', 'packages/client/lib/page-share.ts',
   'packages/client/components/MobileEmbedBridge.tsx', 'packages/shared/src/mobile_embed.ts',
   'packages/client/components/CountryPinButton.tsx', 'packages/client/hooks/usePinnedCountries.ts',
   'packages/client/lib/pinned-countries.ts', 'packages/client/lib/ip-country.ts',
   'packages/client/lib/page-access-api.ts',
+  'packages/client/lib/competition-gate.ts', 'packages/client/lib/traffic-defense.ts', 'packages/shared/src/competition-access.ts',
+  'packages/client/app/v1/competition-access/check/route.ts',
+  'packages/client/app/[lang]/competition-verify/page.tsx',
+  'packages/client/app/v1/competition-access/verify/route.ts',
   'packages/app-ui/src/App.tsx', 'apps/mobile/src/capacitor-host.ts',
   'apps/mobile/src/native/secure-storage.ts', 'apps/desktop/src/tauri-host.ts',
   'apps/mobile/src/native/record-push.ts', 'apps/mobile/src/native/record-push-controller.ts',
@@ -37,7 +51,7 @@ const EXACT = new Set([
   'apps/harmony/entry/src/main/ets/entryability/EntryAbility.ets',
 ]);
 const NATIVE = ['apps/mobile/ios/App/App', 'apps/mobile/android/app/src/main'];
-const NATIVE_NAME = /^(?:AppDelegate\.swift|SceneDelegate\.swift|Info\.plist|AndroidManifest\.xml|MainActivity\.(?:java|kt)|RecordPushPlugin\.java)$/;
+const NATIVE_NAME = /^(?:AppDelegate\.swift|SceneDelegate\.swift|AppleMembershipPlugin\.swift|GoogleMembershipPlugin\.java|Info\.plist|AndroidManifest\.xml|MainActivity\.(?:java|kt)|RecordPushPlugin\.(?:java|swift))$/;
 const CONFIG = [
   'packages/client/proxy.ts',
   'apps/desktop/src-tauri/tauri.conf.json', 'apps/desktop/src-tauri/capabilities/default.json',
@@ -55,6 +69,8 @@ export function isAuthDocSource(path) {
     || normalized.startsWith('packages/client/app/[lang]/account/')
     || normalized.startsWith('packages/client/app/api/google-verify/')
     || normalized.startsWith('packages/client/app/api/page-access/')
+    || normalized.startsWith('packages/client/app/api/web-session/')
+    || normalized.startsWith('packages/client/app/api/identity-choice/')
     || normalized.startsWith('apps/miniprogram/src/pages/account/')
     || normalized.startsWith('packages/shared/src/auth/')
     || normalized.startsWith('packages/app-ui/src/auth/')) return true;
@@ -72,7 +88,7 @@ export function collectAuthDocSources(root = CORE_ROOT) {
     }
   }
   for (const path of [...ROOTS, ...NATIVE]) walk(path);
-  for (const path of CONFIG) entries.set(path, readFileSync(resolve(root, path), 'utf8'));
+  for (const path of [...CONFIG, ...EXACT]) entries.set(path, readFileSync(resolve(root, path), 'utf8'));
   return [...entries];
 }
 

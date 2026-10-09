@@ -18,6 +18,7 @@ import {
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { TimerDifficultyHelp } from './TimerDifficultyHelp';
 import { TimerPillToggle } from './TimerPillToggle';
 import { SubsetColorPicker, type TimerUiLanguage } from './TimerColorSubsetPicker';
 import { TimerRangeSlider } from './TimerRangeSlider';
@@ -55,6 +56,8 @@ export interface TimerWcaDifficultyConfigProps {
   topControlsSlot?: HTMLElement | null;
   /** Optional timer-topbar destination for Difficulty only. */
   toggleSlot?: HTMLElement | null;
+  /** Settings destination for Merge; null hides it while settings are closed. */
+  mergeSlot?: HTMLElement | null;
   wcaEventId: string | null | undefined;
 }
 
@@ -75,6 +78,7 @@ export function TimerWcaDifficultyConfig({
   settings,
   topControlsSlot,
   toggleSlot,
+  mergeSlot,
   wcaEventId,
 }: TimerWcaDifficultyConfigProps) {
   const [catalog, setCatalog] = useState<TimerWcaDifficultyCatalog>(EMPTY_CATALOG);
@@ -201,30 +205,33 @@ export function TimerWcaDifficultyConfig({
     </span>
   );
   const mergeControl = model.canMerge && normalized.wcaDifficultyOn && !model.locked ? (
-    <span className="timer-wca-difficulty-control settings-row-tight-group">
+    <span className={mergeSlot !== undefined ? 'settings-row settings-row-boolean' : 'timer-wca-difficulty-control settings-row-tight-group'}>
       <span className="timer-wca-difficulty-label settings-row-label">
         {labels.merge}
-        <span aria-label={labels.mergeHelp} className="timer-wca-difficulty-help" role="img" title={labels.mergeHelp}>?</span>
+        <TimerDifficultyHelp content={labels.mergeHelp} hover label={labels.merge} question />
       </span>
-      <TimerPillToggle
-        ariaLabel={labels.mergeAriaLabel}
-        disabled={disabled}
-        onChange={(wcaDiffMerged) => onChange({ wcaDiffMerged })}
-        value={normalized.wcaDiffMerged}
-      />
+      <span className="settings-row-control">
+        <TimerPillToggle
+          ariaLabel={labels.mergeAriaLabel}
+          disabled={disabled}
+          onChange={(wcaDiffMerged) => onChange({ wcaDiffMerged })}
+          value={normalized.wcaDiffMerged}
+        />
+      </span>
     </span>
   ) : null;
   const localControls: ReactNode = (
     <div className="timer-wca-difficulty-top-row">
-      {mergeControl}
+      {mergeSlot === undefined && mergeControl}
       {!toggleSlot && difficultyToggle}
     </div>
   );
 
   return (
     <div className="timer-wca-difficulty-config">
-      {topControlsSlot ? createPortal(<>{mergeControl}{!toggleSlot && difficultyToggle}</>, topControlsSlot) : localControls}
+      {topControlsSlot ? createPortal(<>{mergeSlot === undefined && mergeControl}{!toggleSlot && difficultyToggle}</>, topControlsSlot) : localControls}
       {toggleSlot && createPortal(difficultyToggle, toggleSlot)}
+      {mergeSlot && createPortal(mergeControl, mergeSlot)}
       {model.locked && showUnindexedReason && (
         <p className="timer-wca-difficulty-warning" role="status">{labels.unindexedCompetition}</p>
       )}

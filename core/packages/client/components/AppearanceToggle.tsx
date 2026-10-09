@@ -32,8 +32,11 @@ import { PALETTES, type PaletteId } from '@/lib/palettes';
 import { SiteBackgroundControl } from '@/components/SiteBackground';
 import AppLink from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
+import { useDeskPetVisible } from '@/hooks/useDeskPetVisible';
 import { useT } from '@/hooks/useT';
 import { tr } from '@/i18n/tr';
+
+const HOVER_CLOSE_DELAY_MS = 120;
 
 function Swatch({ color }: { color: string }) {
   return (
@@ -59,7 +62,16 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const previewingRef = useRef(false);
+  const hoverCloseTimerRef = useRef<number | null>(null);
+  const pointerTypeRef = useRef('mouse');
   const eff = useEffectiveTheme();
+  const [petVisible, setPetVisible] = useDeskPetVisible();
+
+  const cancelHoverClose = () => {
+    if (hoverCloseTimerRef.current === null) return;
+    window.clearTimeout(hoverCloseTimerRef.current);
+    hoverCloseTimerRef.current = null;
+  };
 
   const endPreview = () => {
     if (!previewingRef.current) return;
@@ -68,9 +80,19 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
   };
 
   const closeMenu = () => {
+    cancelHoverClose();
     endPreview();
     endAppearancePreview(true);
     setOpen(false);
+  };
+
+  const scheduleHoverClose = (pointerType: string) => {
+    if (pointerType === 'touch') return;
+    cancelHoverClose();
+    hoverCloseTimerRef.current = window.setTimeout(() => {
+      hoverCloseTimerRef.current = null;
+      closeMenu();
+    }, HOVER_CLOSE_DELAY_MS);
   };
 
   const showThemePreview = (choice: 'light' | 'dark') => {
@@ -115,6 +137,7 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
   }, [open]);
 
   useEffect(() => () => {
+    cancelHoverClose();
     if (previewingRef.current) restorePersistedAppearance();
     endAppearancePreview(true);
   }, []);
@@ -164,13 +187,16 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
         className={cls}
         onPointerEnter={(event) => {
           if (event.pointerType !== 'touch') {
+            cancelHoverClose();
             beginAppearancePreview();
             setOpen(true);
           }
         }}
+        onPointerLeave={(event) => scheduleHoverClose(event.pointerType)}
+        onPointerDown={(event) => { pointerTypeRef.current = event.pointerType; }}
         onClick={(event) => {
-          // Mouse hover already opens the menu; its following click must keep it open.
-          if (open && event.detail === 0) closeMenu();
+          // Mouse hover already opens the menu; touch and keyboard toggle it.
+          if (open && (event.detail === 0 || pointerTypeRef.current !== 'mouse')) closeMenu();
           else {
             beginAppearancePreview();
             setOpen(true);
@@ -188,14 +214,18 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
         <div
           className="lang-menu palette-menu appearance-menu"
           role="menu"
-          onPointerLeave={endPreview}
+          onPointerEnter={cancelHoverClose}
+          onPointerLeave={(event) => {
+            endPreview();
+            scheduleHoverClose(event.pointerType);
+          }}
           onBlur={(event) => {
             if (!event.currentTarget.contains(event.relatedTarget as Node | null)) endPreview();
           }}
-        >
+          >
           <div className="appearance-settings">
             <div className="appearance-schemes" style={{ display: 'flex', flexFlow: 'row nowrap', gap: 0 }}>
-              {(['light', 'dark'] as const).map((choice) => {
+              {(['dark', 'light'] as const).map((choice) => {
                 const Icon = choice === 'light' ? Sun : Moon;
                 const active = onScheme && eff === choice;
                 return (
@@ -238,20 +268,19 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
               );
             })}
 
-            <div className="appearance-sec-label appearance-sec-div">
+            <div className="appearance-sec-label appearance-sec-div" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <BoolToggle
                 value={contrast === 'soft'}
                 onChange={(enabled) => pickContrast(enabled ? 'soft' : 'normal')}
                 label={L.lowContrast}
               />
+              <BoolToggle
+                value={petVisible}
+                onChange={setPetVisible}
+                label={t('显示桌宠', 'Show desk pet')}
+              />
             </div>
           </div>
-
-          {<div
-            className="appearance-extra"
-            onPointerEnter={endPreview}
-            onFocus={endPreview}
-          ><SiteBackgroundControl onDiagnosticsOpen={closeMenu} />{menuContent}</div>}
 
           <AppLink
             href="/appearance"
@@ -262,6 +291,12 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
           >
             {L.more} →
           </AppLink>
+
+          {<div
+            className="appearance-extra"
+            onPointerEnter={endPreview}
+            onFocus={endPreview}
+          ><SiteBackgroundControl />{menuContent}</div>}
         </div>
       )}
     </div>

@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 // Per-event scramble move-length distribution. Reads the histogram-per-event
 // JSON produced by stats-build/bin/build_scramble_lengths.ts. Many events are
@@ -8,7 +9,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import DiscreteHistogram, { type HistSeries } from './DiscreteHistogram';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { Flag } from '@/components/Flag';
 import { compSourceLine } from '@/lib/comp-schedule';
@@ -394,15 +394,17 @@ export default function ScrambleLengthView({ isZh, data, event, merged, metric, 
                                                   })}
             </div>
               {selectedBin !== null && curExamples?.some(({ ex }) => !!optMap?.[ex[4]]) && (
-                <PillToggle
-                  value={exView === 'opt'}
-                  onChange={(v) => setExView(v ? 'opt' : 'orig')}
-                  offLabel={tr({ zh: '原始', en: 'Original' })}
-                  onLabel={tr({ zh: '最优', en: 'Optimal'
+                <select
+                  value={String(exView === 'opt')}
+                  onChange={event => { const v = event.currentTarget.value === 'true'; setExView(v ? 'opt' : 'orig'); }}
+                  aria-label={tr({ zh: '原始打乱或最优等价打乱', en: 'Original scramble or optimal equivalent'
                 })}
-                  ariaLabel={tr({ zh: '原始打乱或最优等价打乱', en: 'Original scramble or optimal equivalent'
-                })}
-                />
+                  className="native-select"
+                >
+                  <option value="true">{tr({ zh: '最优', en: 'Optimal'
+                })}</option>
+                  <option value="false">{tr({ zh: '原始', en: 'Original' })}</option>
+                </select>
               )}
             </div>
             {selectedBin === null && (
