@@ -96,6 +96,7 @@ import PlayerControls, { stripHandMarks, type SimPuzzle } from './PlayerControls
 import AppLink from '@/components/AppLink';
 import { reconEventForSim, buildReconSubmitQuery } from '@/lib/sim-recon-link';
 import { PG_DEF_BY_ID, isPgPuzzleId } from './pgCatalog';
+import { isNativePuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { isTwistyPuzzle } from './twistyPuzzles';
 import { EXPLORE_BOUND } from './engine/exploreBound';
 import AlgsPanel from './AlgsPanel';
@@ -438,7 +439,7 @@ export default function SimPage() {
   const backViewRef = useRef<BackView | null>(null);
   const backSizeRef = useRef<number>(140);
   const wasCompleteRef = useRef(false);
-  const userMoveRef = useRef<((action: TwistAction | string) => void) | null>(null);
+  const userMoveRef = useRef<((action: TwistAction | string, anchoredSetup?: { setup: string }) => string | void) | null>(null);
   // Debug "hold partial turn": closure that snaps the currently-frozen SQ1/Ivy
   // partial turn back to its pre-drag pose (NxN's frozen layer lives in the
   // controller). Cleared by clearPartialFreeze() — called before any new gesture,
@@ -2232,6 +2233,7 @@ export default function SimPage() {
             <TwistySection
               puzzle={String(puzzleParam)}
               puzzleDescription={pgDef}
+              nativePuzzleId={isNativePuzzleId(puzzleParam) ? puzzleParam : undefined}
               // Keep editor / URL notation intact; translate at the player boundary.
               scramble={toPlayerText(setupParam)}
               alg={toPlayerText(algParam)}
@@ -2243,12 +2245,12 @@ export default function SimPage() {
               experimentalStickering={(puzzleParam === 'megaminx' || puzzleParam === 'fto') ? query.stickering : undefined}
               settings={renderSettings}
               fallbackMoves={fallbackMoves}
-              onUserMove={(moveText) => {
+              onUserMove={(moveText, anchoredSetup) => {
                 // moveText is already cubing.js canonical (`Uv`/`BL2`); pass raw
                 // to skip TwistAction parsing which would eat multi-char families.
-                userMoveRef.current?.(puzzleParam === 'kilominx'
+                return userMoveRef.current?.(puzzleParam === 'kilominx'
                   ? fromCubingKilominx(moveText, query.kiloNotation)
-                  : moveText);
+                  : moveText, anchoredSetup);
               }}
               // wheel / pinch zoom on twisty → persist as settings.scale (the settings
               // effect re-applies cameraDistance; mirrors the NxN syncScaleToSettings).

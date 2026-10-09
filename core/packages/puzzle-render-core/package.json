@@ -7,7 +7,8 @@
     "kind": "library",
     "externalRuntime": {
       "three-bvh-csg": "mixed",
-      "three": "runtime-neutral"
+      "three": "runtime-neutral",
+      "cubing": "runtime-neutral"
     },
     "runtime": {
       "./engine/duo/duoGeometry": "runtime-neutral",
@@ -126,7 +127,8 @@
       "./support/three": "runtime-neutral",
       "./magic-svg": "runtime-neutral",
       "./engine/magic/MagicCube": "mixed",
-      "./engine/magic/magicDrag": "mixed"
+      "./engine/magic/magicDrag": "mixed",
+      "./native-puzzle-svg": "runtime-neutral"
     }
   },
   "sideEffects": false,
@@ -259,10 +261,15 @@
       "default": "./src/magic-svg.ts"
     },
     "./engine/magic/MagicCube": "./src/engine/magic/MagicCube.ts",
-    "./engine/magic/magicDrag": "./src/engine/magic/magicDrag.ts"
+    "./engine/magic/magicDrag": "./src/engine/magic/magicDrag.ts",
+    "./native-puzzle-svg": {
+      "types": "./src/native-puzzle-svg.ts",
+      "node": "./dist/native-puzzle-svg.js",
+      "default": "./src/native-puzzle-svg.ts"
+    }
   },
   "scripts": {
-    "build": "tsc -b && esbuild src/iso-svg.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/iso-svg.js && esbuild src/magic-svg.ts --bundle --packages=external --platform=node --target=node20 --format=esm --outfile=dist/magic-svg.js && esbuild src/sphere-svg.ts --bundle --external:three --external:@cuberoot/stack-kernel --platform=node --target=node20 --format=esm --define:Worker=undefined --minify-syntax --outfile=dist/sphere-svg.js",
+    "build": "tsc -b && esbuild src/iso-svg.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/iso-svg.js && esbuild src/magic-svg.ts --bundle --packages=external --platform=node --target=node20 --format=esm --outfile=dist/magic-svg.js && esbuild src/sphere-svg.ts --bundle --external:three --external:@cuberoot/stack-kernel --platform=node --target=node20 --format=esm --define:Worker=undefined --minify-syntax --outfile=dist/sphere-svg.js && esbuild src/native-puzzle-svg.ts --bundle --packages=external --platform=node --target=node20 --format=esm --outfile=dist/native-puzzle-svg.js",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -271,7 +278,8 @@
     "@cuberoot/stack-kernel": "workspace:*",
     "@cuberoot/visualcube": "workspace:*",
     "three": "^0.183.2",
-    "three-bvh-csg": "^0.0.18"
+    "three-bvh-csg": "^0.0.18",
+    "cubing": "^0.63.3"
   },
   "devDependencies": {
     "@types/three": "^0.183.1",

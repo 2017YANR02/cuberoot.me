@@ -3,6 +3,7 @@ import { generateSeededCstimerScramble } from '@cuberoot/puzzle-solvers/cstimer-
 import { generateGearTimerScramble } from '@cuberoot/puzzle-solvers/gear';
 import { generateIvyTimerScramble } from '@cuberoot/puzzle-solvers/ivy';
 import { generatePyraminxDuoScramble } from '@cuberoot/puzzle-solvers/pyraminx-duo';
+import { generateNativePuzzleScramble, isNativePuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { rngFor } from './seeded_rng';
 import * as nx from './nxnxn';
 import * as other from './others';
@@ -40,6 +41,7 @@ export function generateSeededTimerScramble(request: TimerSeedRequest): TimerSee
   const cstimer = (key: string, length = 0) => generateSeededCstimerScramble(key, length,
     JSON.stringify([ticket.seed, ticket.index, key]));
   const generate = (id: EventId): string => {
+    if (isNativePuzzleId(id)) return generateNativePuzzleScramble(id, random);
     if (id === 'lse' || id === 'l10p') return generateTimerTrainingStateScramble(id, () =>
       generateRouxTrainingCandidate(id === 'lse' ? 'roux-lse' : 'roux-l10p', random));
     if (isTimerTrainingStateEvent(id)) return deterministicTrainingNotation(generateTimerTrainingStateScramble(id, (key, attempt) =>

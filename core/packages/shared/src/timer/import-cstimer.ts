@@ -82,6 +82,10 @@ const CSTIMER_EVENT_MAP: Record<string, EventId> = {
   // normalizeEventKey removes spaces, underscores and hyphens before lookup.
   'pyraminxduo': 'pyraminx_duo', 'duo': 'pyraminx_duo',
   '二重奏魔方': 'pyraminx_duo', '二重奏': 'pyraminx_duo',
+  'superz': 'superz', '二阶＋斜转': 'superz',
+  'dogic': 'dogic', 'dogic二十面体': 'dogic',
+  'octahedron4': 'octahedron4', '4×4octahedron': 'octahedron4', '4x4octahedron': 'octahedron4', '四阶八面体': 'octahedron4',
+  'dinoskewb': 'dinoskewb', '恐龙斜转': 'dinoskewb',
 };
 
 /* ------------------------------------------------------------------ */
@@ -148,6 +152,12 @@ function nameToEvent(name: unknown): { event: EventId; matched: boolean } {
   // Preserve the compound name before trying individual event tokens.
   if (tokens.some((token, index) => token === 'pyraminx' && tokens[index + 1] === 'duo')) {
     return normalizeEventKey('pyraminxduo');
+  }
+  if (tokens.some((token, index) => token === 'dino' && tokens[index + 1] === 'skewb')) {
+    return normalizeEventKey('dinoskewb');
+  }
+  if (/\b4\s*[x×]\s*4[\s_-]+octahedron\b/i.test(name)) {
+    return normalizeEventKey('octahedron4');
   }
   for (const t of tokens) {
     const tried = normalizeEventKey(t);

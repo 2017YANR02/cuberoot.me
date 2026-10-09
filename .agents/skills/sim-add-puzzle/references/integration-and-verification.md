@@ -36,6 +36,8 @@
 - 将可跨运行时复用的纯状态、记号解析和打乱生成放在 `packages/puzzle-solvers/src/`；具体算法按 `new-substep-solver` 分流。
 - 将共享几何和 SVG 放在 `packages/puzzle-render-core/src/`；修改真实实现，保留 client 中已有的薄包装。
 - 统一事件 ID、记号、配色及状态含义；让模拟器、生成页和 Timer 消费同一份纯实现，避免按页面复制生成器。
+- 原生 PG 项目从 `packages/puzzle-solvers/src/native-puzzles.ts` 派生 ID、双语名称、文字徽标、描述与生成器；状态和解析走 `native-puzzle-model.ts`，跨入口图示走 `packages/puzzle-render-core/src/native-puzzle-svg.ts`，按 [原生 PG 参考](native-pg-puzzles.md) 保持加载选项和可见几何一致。
+- 原生随机生成只读取纯注册表并注入随机源，不为生成一串招式构建 PG 几何、DOM 或 SVG；明确标注有界随机转动练习打乱，不宣称均匀随机状态。
 - 核实上游是否支持目标事件；原生项目记录真实结构来源和自有抽样政策，禁止为了进入旧分支伪造 csTimer key。
 - 给生成器注入随机源，使普通生成和种子生成复用算法；用独立状态模型核对结果，避免生成器与判据共享同一错误假设。
 - 新增公开 subpath 时同步所属 `package.json` 的 `exports` 和适用的运行时分类；跨包只导入公开出口，禁止私有 deep import。
@@ -64,6 +66,7 @@
 - 在生成页 `_tnoodle-pdf.ts` 核对图示入口与宽高比；让网页、PDF 和 Timer 共用 SVG，避免各画一份轮廓或调色表。
 - 分别检查还原态与合法打乱态，核对片数、面色和方向；错误输入不得静默画成另一个项目或宣称已还原。
 - 对粘贴公式先限制输入长度、嵌套深度与展开工作量，再展开分组和执行转动；计入空分组重复与大转数，避免新解析器在同步预览中无限计算。
+- 对原生 PG 的完整记号复用 `parseNativePuzzleAlg`；模拟器 setup/alg、原生播放器初始化与时间轴、简化/求逆及共享 SVG 都执行同一前置校验，不能只有输入模式受限。
 
 ## 接入计时器
 
@@ -97,6 +100,7 @@
 | Timer 导入导出 | `packages/client/tests/timer_cstimer_io.test.ts` 及 `timer_battle_event_sync.test.ts` 的逐项目往返契约 |
 | app-ui 来源消费 | 仅影响该消费者时检查 `packages/app-ui/src/scramble-source-contract.test.ts`、`scramble-source-matrix.audit.test.ts` |
 | 原生生成页接入 | 参考 `packages/client/tests/pyraminx-duo-native-scramble.test.ts` 的 native 路由、选择器和公开名称契约 |
+| 原生 PG 模型、手势与图示 | 按差异选择 `packages/client/tests/superz_geometry.test.ts`、`additional-puzzles-native-geometry.test.ts`、`native-puzzle-drag.test.ts`、`native-puzzle-svg.test.ts`；跨入口与 PDF 契约见 `native-puzzles-client-integration.test.ts` |
 | 新增脚本子进程 | `architecture-boundaries.json` 的 `manualContracts` 与 `packages/client/tests/architecture-boundary-guard.test.ts` |
 
 - 更新公开出口列表和合法来源类型，保留严格断言；不要伪造 provider、添加无效图标或放宽断言来让旧契约通过。
@@ -129,11 +133,13 @@
 | 登录或权限提示 | 记录访问受阻，完成允许的登录后重开目标页面；尚未验收应用 |
 | 网络、资源加载或应用异常日志 | 按对应错误排查，不能归因为 WebGL |
 | 明确的 WebGL context 创建失败日志 | 记录当前浏览器该次渲染能力受阻；继续验证可用 SVG 与页面功能 |
+| 显示二维回退提示，手动按钮改变展开图并追加记录 | 记录二维手动转动、状态与记录通过；继续验证公式播放和分享恢复，保留 3D 动画与拖拽为未验 |
 | 页面正常但画布空白、缺少明确原因 | 核对 canvas 尺寸、显示状态及日志；保持原因未定，不推断所有云浏览器都禁用 WebGL |
 | 真实模型可见且实际转动、拖拽、回放成功 | 记录对应页面、动作、可见状态及截图，声明已验证的具体交互 |
 
 - 源码接线、HTTP 200、构建成功、SVG 或无浏览器离线渲染只证明各自覆盖的部分；不要据此宣称 3D 浏览器验收通过。
 - 在可用的 3D 浏览器中检查还原态、随机打乱终态、转动中间帧、拖拽追加 token 和回放；以可见模型变化核对动作。
+- 原生 PG 的 tap、按钮或 orbit 均不作为拖拽转层证据；实际拖可抓件，切换可用深度与观察角度，核对层、转向、追加记号及重放结果。
 - 3D 受阻时优先完成生成页、Timer 和 SVG 的有用验证，并提供可打开的链接；明确保留尚未验证的动画与拖拽。
 - 截取实际操作后的页面，不以设计稿或离线帧替代浏览器结果；按照当前工具规定保存截图，不让截图落点触发开发服务重载。
 

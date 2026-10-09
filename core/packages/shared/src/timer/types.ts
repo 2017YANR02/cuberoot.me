@@ -26,7 +26,8 @@ export type EventId =
   | 'pyra' | 'skewb' | 'sq1' | 'mega' | 'clock'
   | 'magic' | 'mmagic'
   // Non-WCA puzzles (shared providers declare their generation capability).
-  | 'fto' | 'kilominx' | 'gear' | 'ivy' | 'redi' | 'mpyram' | 'pyraminx_duo'
+  | 'fto' | 'kilominx' | 'gear' | 'ivy' | 'redi' | 'mpyram' | 'pyraminx_duo' | 'superz'
+  | 'dogic' | 'octahedron4' | 'dinoskewb'
   // Relays
   | 'r3' | 'r4' | 'r5'
   // CFOP step training
@@ -229,6 +230,10 @@ export const EVENTS: EventInfo[] = [
   { id: 'redi',     nameEn: 'Redi Cube',       nameZh: '热帝魔方',   group: 'nonwca', icon: 'unofficial-redi' },
   { id: 'mpyram',   nameEn: 'Master Pyraminx', nameZh: '四阶金字塔', group: 'nonwca', icon: 'unofficial-mpyram' },
   { id: 'pyraminx_duo', nameEn: 'Pyraminx Duo', nameZh: '二重奏魔方', group: 'nonwca' },
+  { id: 'superz', nameEn: 'SuperZ (2×2 + Skewb)', nameZh: '二阶＋斜转', group: 'nonwca' },
+  { id: 'dogic', nameEn: 'Dogic', nameZh: 'Dogic 二十面体', group: 'nonwca' },
+  { id: 'octahedron4', nameEn: '4×4 Octahedron', nameZh: '四阶八面体', group: 'nonwca' },
+  { id: 'dinoskewb', nameEn: 'Dino Skewb', nameZh: '恐龙斜转', group: 'nonwca' },
 
   // CFOP step training
   { id: 'cross',  nameEn: 'Cross only',  nameZh: '十字',       group: 'cfop'

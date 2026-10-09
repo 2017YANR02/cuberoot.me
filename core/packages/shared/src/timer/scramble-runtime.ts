@@ -44,6 +44,7 @@ export type TimerSharedScrambleProviderId =
   | 'trainer-case'
   | 'training-state'
   | 'small-puzzle-random-state'
+  | 'native-random-move'
   | 'cstimer-nonwca';
 
 /** Runtime-neutral recipes that compose already registered child providers. */
@@ -115,6 +116,10 @@ export const TIMER_SCRAMBLE_CAPABILITIES = Object.freeze({
   redi: { kind: 'cubing', cubingEventId: 'redi_cube' },
   mpyram: { kind: 'shared', provider: 'cstimer-nonwca' },
   pyraminx_duo: { kind: 'shared', provider: 'small-puzzle-random-state' },
+  superz: { kind: 'shared', provider: 'native-random-move' },
+  dogic: { kind: 'shared', provider: 'native-random-move' },
+  octahedron4: { kind: 'shared', provider: 'native-random-move' },
+  dinoskewb: { kind: 'shared', provider: 'native-random-move' },
   r3: { kind: 'compound', provider: 'timer-compound' },
   r4: { kind: 'compound', provider: 'timer-compound' },
   r5: { kind: 'compound', provider: 'timer-compound' },
@@ -197,7 +202,8 @@ export type TimerHostSharedScrambleProviderId =
   | 'training-state'
   | 'wca-pocket'
   | 'cstimer-nonwca'
-  | 'small-puzzle-random-state';
+  | 'small-puzzle-random-state'
+  | 'native-random-move';
 
 export type TimerSharedScrambleGenerator = (
   provider: TimerHostSharedScrambleProviderId,
@@ -327,6 +333,13 @@ async function defaultSharedScrambleGenerator(
       }
       throw new Error(`Small-puzzle provider cannot generate event: ${requestedEvent}`);
     }
+    case 'native-random-move': {
+      const { generateNativePuzzleScramble, isNativePuzzleId } = await import('@cuberoot/puzzle-solvers/native-puzzles');
+      if (!isNativePuzzleId(requestedEvent)) {
+        throw new Error(`Native random-move provider cannot generate event: ${requestedEvent}`);
+      }
+      return generateNativePuzzleScramble(requestedEvent, random);
+    }
     case 'cstimer-nonwca': {
       const {
         generateCstimerNonWcaTimerScramble,
@@ -446,6 +459,7 @@ export async function generateTimerScramble(
             || capability.provider === 'wca-pocket'
             || capability.provider === 'cstimer-nonwca'
             || capability.provider === 'small-puzzle-random-state'
+            || capability.provider === 'native-random-move'
           ? dependencies.generateSharedScramble
             ? dependencies.generateSharedScramble(capability.provider, request.event, request)
             : defaultSharedScrambleGenerator(

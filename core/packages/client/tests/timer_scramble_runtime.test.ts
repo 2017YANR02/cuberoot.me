@@ -22,6 +22,7 @@ import {
   solveIvy,
 } from '@cuberoot/puzzle-solvers/ivy';
 import { generatePyraminxDuoScramble } from '@cuberoot/puzzle-solvers/pyraminx-duo';
+import { generateNativePuzzleScramble } from '@cuberoot/puzzle-solvers/native-puzzles';
 
 const CUBING_EVENTS: Readonly<Partial<Record<EventId, TimerCubingScrambleEventId>>> = {
   '333': '333',
@@ -70,6 +71,10 @@ const SHARED_EVENTS: Readonly<Partial<Record<EventId, TimerSharedScrambleProvide
   gear: 'small-puzzle-random-state',
   ivy: 'small-puzzle-random-state',
   pyraminx_duo: 'small-puzzle-random-state',
+  superz: 'native-random-move',
+  dogic: 'native-random-move',
+  octahedron4: 'native-random-move',
+  dinoskewb: 'native-random-move',
   kilominx: 'cstimer-nonwca',
   mpyram: 'cstimer-nonwca',
 };
@@ -298,15 +303,32 @@ describe('shared timer scramble runtime', () => {
     expect(generateCubingScramble).not.toHaveBeenCalled();
   });
 
-  it('preserves Pyraminx Duo provider errors and empty results', async () => {
+  it.each(['superz', 'dogic', 'octahedron4', 'dinoskewb'] as const)('routes %s through its native generator and the shared worker seam', async (event) => {
+    const scramble = generateNativePuzzleScramble(event, () => 0.375);
+    const generateCubingScramble = vi.fn(async () => 'must not run');
+    const expected = { ok: true, event, kind: 'generated', provider: 'native-random-move', scramble };
+    await expect(generateTimerScramble(
+      { event },
+      { random: () => 0.375, generateCubingScramble },
+    )).resolves.toEqual(expected);
+    const generateSharedScramble = vi.fn(async () => scramble);
+    await expect(generateTimerScramble(
+      { event },
+      { generateSharedScramble, generateCubingScramble },
+    )).resolves.toEqual(expected);
+    expect(generateSharedScramble).toHaveBeenCalledWith('native-random-move', event, { event });
+    expect(generateCubingScramble).not.toHaveBeenCalled();
+  });
+
+  it.each(['pyraminx_duo', 'superz', 'dogic', 'octahedron4', 'dinoskewb'] as const)('preserves %s provider errors and empty results', async (event) => {
     for (const [generateSharedScramble, code] of [
       [async () => '   ', 'empty-result'],
-      [async () => { throw new Error('Duo worker failed'); }, 'generation-failed'],
+      [async () => { throw new Error('Native worker failed'); }, 'generation-failed'],
     ] as const) {
       await expect(generateTimerScramble(
-        { event: 'pyraminx_duo' },
+        { event },
         { generateSharedScramble },
-      )).resolves.toEqual({ ok: false, event: 'pyraminx_duo', code, retryable: true });
+      )).resolves.toEqual({ ok: false, event, code, retryable: true });
     }
   });
 
