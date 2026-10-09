@@ -54,6 +54,7 @@
 - 用注册表 `visibleFacelets` 核对去重后的物理片数，按完整展开图包络与 `nativePuzzleSvgAspect` 排版；同时检查还原态和发生中心朝向变化的打乱态，没有重复片、缺色或面被裁掉。
 - 保留原生二十色、八色与六色方案，使每个还原面颜色一致；先核对 Dogic 二十个面确实使用二十种不同颜色。
 - 在四个原生项目的二维回退中，用公开 `ExperimentalSVGAnimator`、同一 loader 的 SVG/KPuzzle 和实际 `legacyPosition` 镜像图像浮层及转动过渡，保护播放器/loader 替换与卸载；失败或超时明确提示并禁用导出，不用 `setup + alg` 重建当前帧，也不回退三阶 spec 图。
+- 拼图或伴图来源切换时先清除上一帧，无论目标是否仍是原生项目；等待新来源期间，只有当前 spec 能精确表示盘面时才允许静态回退。所有 engineOnly 来源都应等待自己的有效帧，同步禁用复制、下载及已打开的格式菜单，不能导出上个拼图或默认三阶图。
 - 用可观察的颜色和形状判定还原，忽略单色等边三角块不可辨的自转及同色块之间不可辨的交换；不要拿原生朝向轨道的严格单位元替代可见还原。
 - 保留四阶八面体原生描述的小数精度，几何比较采用覆盖该近似误差的数值容差，片数、置换数与周期仍用精确断言。
 
@@ -104,4 +105,5 @@
 - 按改动选择 `packages/client/tests/superz_geometry.test.ts` 和 `additional-puzzles-native-geometry.test.ts`，核对片数、合法深度、宽转组合、基本周期及独立刚体旋转与原生置换。
 - 用 `native-puzzle-drag.test.ts` 核对真实几何上的拾取与方向，用 `native-puzzle-svg.test.ts` 和 `native-puzzles-client-integration.test.ts` 核对有界输入、完整记号、原生颜色、确定性生成、共享 SVG 和 PDF 比例；这些文件同在 `packages/client/tests/`。
 - 用 `native-puzzle-manual-anchor.test.ts` 读取未挂载真实 TwistyPlayer 的 `currentPattern`，核对双锚点下快速追加的盘面、记录和分享重建，以及编辑打断与卸载后的过期取消。
+- 用 `sim-native-companion-lifecycle.test.ts` 挂载真实页面、播放器控件与图像面板，覆盖原生→通用 PG→原生：旧伴图清空，等待精确帧时复制、下载及已打开的导出菜单禁用，返回后恢复当前原生 SVG；仅验证独立镜像 helper 的清理不覆盖页面保留上一帧的问题。
 - 在浏览器分别记录模型显示、手动操作、随机打乱、公式播放、记录与分享恢复；WebGL 不可用时验证二维按钮和展开图，明确保留 3D 动画与拖拽未验，不把 tap、静态几何或离线手势测试当成 3D 浏览器验收。
