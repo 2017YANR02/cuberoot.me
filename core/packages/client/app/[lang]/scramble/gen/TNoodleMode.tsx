@@ -38,12 +38,14 @@ import { VARIANT_LABEL, VARIANT_ORDER, stageLabel, dataVariantOfStage, variantDa
 import { TNOODLE_WCA_EVENTS, TWIZZLE_NONWCA_EVENTS, TWIZZLE_NONWCA_APPEND, tnoodleRandomScramble } from '@/lib/cubing-scramble';
 import { CSTIMER_NONWCA_APPEND, CSTIMER_EVENT_IDS, CSTIMER_EVENTS, cstimerScramble, isCstimerEvent } from '@/lib/cstimer-scramble';
 import { SHAPE_MOD_APPEND, SHAPE_MOD_EVENT_IDS, SHAPE_MOD_EVENTS, isShapeModEvent, shapeModSourceEvent } from '@/lib/shape-mod-scramble';
+import { NATIVE_SCRAMBLE_APPEND, NATIVE_SCRAMBLE_EVENT_IDS, NATIVE_SCRAMBLE_EVENTS, isNativeScrambleEvent, nativeScramble, nativeScramblePracticeHint } from '@/lib/native-scramble';
 
-// 配置菜单的完整项目顺序:WCA + twizzle 非 WCA + cstimer + shape-mod。
-const TNOODLE_EVENT_IDS = [...TNOODLE_WCA_EVENTS, ...TWIZZLE_NONWCA_EVENTS, ...CSTIMER_EVENT_IDS, ...SHAPE_MOD_EVENT_IDS];
-const TN_APPEND_EVENTS = [...TWIZZLE_NONWCA_APPEND, ...CSTIMER_NONWCA_APPEND, ...SHAPE_MOD_APPEND];
+// 配置菜单的完整项目顺序:WCA + twizzle 非 WCA + cstimer + shape-mod + native。
+const TNOODLE_EVENT_IDS = [...TNOODLE_WCA_EVENTS, ...TWIZZLE_NONWCA_EVENTS, ...CSTIMER_EVENT_IDS, ...SHAPE_MOD_EVENT_IDS, ...NATIVE_SCRAMBLE_EVENT_IDS];
+const TN_APPEND_EVENTS = [...TWIZZLE_NONWCA_APPEND, ...CSTIMER_NONWCA_APPEND, ...SHAPE_MOD_APPEND, ...NATIVE_SCRAMBLE_APPEND];
 const CSTIMER_EVENT_ORDER: ReadonlyArray<string> = CSTIMER_EVENTS.map((e) => e.id);
 const SHAPE_MOD_EVENT_ORDER: ReadonlyArray<string> = SHAPE_MOD_EVENTS.map((e) => e.id);
+const NATIVE_SCRAMBLE_EVENT_ORDER: ReadonlyArray<string> = NATIVE_SCRAMBLE_EVENTS.map((e) => e.id);
 import {
   allowedFormats, FORMAT_LABEL, formatAttempts, DEFAULT_EXTRA_COUNT,
   defaultEventConfig, defaultRoundConfig, groupIdxOf, groupLetter,
@@ -52,7 +54,7 @@ import {
 import type { RoundSheetInput } from './_tnoodle-pdf';
 import ClockColorPicker from './ClockColorPicker';
 import ProgressButton from './ProgressButton';
-import CopyAllScramblesButton from './CopyAllScramblesButton';
+import CopyAllScramblesButton, { scrambleClipboardText } from './CopyAllScramblesButton';
 import { scrambleEventPickerGroups } from './_event-picker';
 import TranslationsPicker from './TranslationsPicker';
 import SheetView, { type AttemptScramble, type RoundSheet } from './SheetView';
@@ -389,6 +391,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
       ...TWIZZLE_NONWCA_EVENTS.filter((e) => events[e]),
       ...CSTIMER_EVENT_ORDER.filter((e) => events[e]),
       ...SHAPE_MOD_EVENT_ORDER.filter((e) => events[e]),
+      ...NATIVE_SCRAMBLE_EVENT_ORDER.filter((e) => events[e]),
       ...customNxN,
     ],
     [events, customNxN],
@@ -478,9 +481,10 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
     return ev;
   };
 
-  // Generate one scramble. Routed by type: cstimer ids → worker bridge;
-  // everything else → cubing.js / TNoodle pool.
+  // Generate one scramble: native puzzles → shared pure generator;
+  // cstimer ids → worker bridge; everything else → cubing.js / TNoodle pool.
   const generateOne = async (type: string): Promise<string> => {
+    if (isNativeScrambleEvent(type)) return nativeScramble(type);
     if (isCstimerEvent(type) && type !== 'redi_cube') return cstimerScramble(type);
     return (await tnoodleRandomScramble(type)) ?? '';
   };
@@ -781,7 +785,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
         : (compInput.trim() || `Scrambles for ${todayIso()}`);
       const blob = await generateTnoodlePdf(sheetInputs, {
         competitionTitle: title,
-        generatorTag: GENERATOR_TAG,
+        generatorTag: sheetInputs.some(({ event }) => isNativeScrambleEvent(event)) ? 'CubeRoot' : GENERATOR_TAG,
         isZh,
         showPreview,
         onProgress: (done, total) => setPdfProgress({ done, total }),
@@ -879,6 +883,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
   }, [viewedEvent]);
   // 3x3 系列(333/oh/ft/fm/bf)cross-step 分析:跟随当前事件视图。
   const activeView = activeEventOf(viewedEvent, eventsInSheets);
+  const practiceHint = nativeScramblePracticeHint(activeView);
   const is333Family = FAMILY_333.has(activeView ?? '');
   const analysisScrambles = useMemo(() => {
     const out: string[] = [];
@@ -1106,6 +1111,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
   const allScramblesText = useMemo(
     () => (sheets ?? []).flatMap((sh) => convSheet(sh).attempts
       .map((attempt) => attempt.displayScramble ?? attempt.scramble)
+      .map(scrambleClipboardText)
       .filter(Boolean)).join('\n'),
     [sheets, convSheet],
   );
@@ -1521,6 +1527,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
 
       {loaded && activeView && (
         <>
+          {practiceHint && <p>{t(practiceHint.zh, practiceHint.en)}</p>}
           {is333Family && sheetsInEvent.length > 0 && (
             <div className="gen-cx-switchrow">
               {forcedCompId && <div className="gen-cx-actions-inline">{actionsNode}</div>}

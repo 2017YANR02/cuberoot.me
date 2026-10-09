@@ -16,6 +16,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { EventIcon } from '@/components/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
 import { ScramblePreview2D, eventHasScramblePreview } from '@/components/ScramblePreview2D';
+import { scrambleClipboardText } from './CopyAllScramblesButton';
 import { isAnalysableScramble } from '@/lib/cross-solver';
 import type { Method } from '@/components/StageSolver';
 import { isBlockVariant } from '@/lib/scramble-variants';
@@ -185,7 +186,7 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
   const copyAttempt = async (idx: number, scramble: string) => {
     if (!scramble) return;
     try {
-      await navigator.clipboard.writeText(scramble);
+      await navigator.clipboard.writeText(scrambleClipboardText(scramble));
       setCopiedIdx(idx);
       setTimeout(() => setCopiedIdx((cur) => (cur === idx ? null : cur)), 1200);
     } catch { /* swallow */ }

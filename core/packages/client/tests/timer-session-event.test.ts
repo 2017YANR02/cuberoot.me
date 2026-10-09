@@ -50,6 +50,24 @@ describe('timer session event associations', () => {
     expect(db.getSessionEvent(id)).toBe('222');
   });
 
+  it('keeps Sphere sessions and solves separate from ordinary 3x3 after reload', async () => {
+    seed([{ id: '333-session', name: '3x3', createdTs: 1, event: '333' }], '333-session', {
+      '333-session': { '333': [{ id: '333-solve', event: '333', timeMs: 9000, penalty: 'ok', scramble: 'R U', ts: 2 }] },
+    });
+    let db = await loadDb();
+    const sphereId = db.createAndActivateSession('Sphere practice', 'sphere');
+    db.appendSolves('sphere', [{ id: 'sphere-solve', event: 'sphere', timeMs: 15000, penalty: 'ok', scramble: 'R U', ts: 3 }]);
+
+    db = await loadDb();
+    expect(db.getSessionEvent(sphereId)).toBe('sphere');
+    expect(db.loadSessionData(sphereId).sphere.map(solve => solve.id)).toEqual(['sphere-solve']);
+    expect(db.loadSessionData(sphereId)['333']).toBeUndefined();
+    expect(db.activateSessionForEvent('333')).toBe('333-session');
+    expect(db.loadAll()['333'].map(solve => solve.id)).toEqual(['333-solve']);
+    expect(db.activateSessionForEvent('sphere')).toBe(sphereId);
+    expect(db.loadAll().sphere.map(solve => solve.id)).toEqual(['sphere-solve']);
+  });
+
   it('creates one stable default session on first read, including zero-quota fallback', async () => {
     let db = await loadDb();
     const first = db.getSessionSnapshot();

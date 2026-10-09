@@ -17,3 +17,78 @@
   min-height: 240px;
 }
 
+/* Reserve space for fallback controls inside a fixed-height simulator/recon pane.
+   The fill + 2D scope outranks parent-page container sizing in either CSS order. */
+.twisty-section.twisty-section--2d,
+.twisty-section.twisty-section--manual {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.twisty-section.twisty-section--fill.twisty-section--2d > .twisty-container,
+.twisty-section.twisty-section--fill.twisty-section--manual > .twisty-container {
+  flex: 1 1 0;
+  height: auto;
+  min-height: 0;
+  margin-bottom: 0;
+}
+
+.twisty-fallback {
+  flex: none;
+  padding: 8px;
+}
+
+.twisty-fallback-notice {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.twisty-fallback-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.twisty-fallback-angle-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+}
+
+/* Reuse the shared button palette; only compact the size for face notation. */
+.btn-secondary.twisty-fallback-move,
+.btn-secondary.twisty-fallback-angle {
+  min-height: 32px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.btn-secondary.twisty-fallback-angle {
+  width: fit-content;
+}
+
+.btn-secondary.twisty-fallback-move:disabled {
+  cursor: default;
+  color: var(--faint-foreground);
+}
+
+.twisty-native-notation {
+  margin-top: 6px;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.twisty-native-notation summary { cursor: pointer; }
+.twisty-native-notation p { margin: 4px 0 0; }
+.twisty-native-error { margin: 4px 0; color: var(--error, #c43b3b); font-size: 0.75rem; }
+

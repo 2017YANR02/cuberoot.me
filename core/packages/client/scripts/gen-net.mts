@@ -59,7 +59,7 @@ const PUZZLES: Record<string, Cfg> = {
   },
   kilominx: {
     constName: 'KILOMINX', file: 'kilominx.ts',
-    title: 'Kilominx — corners-only megaminx (megaminx face-turn notation R++ / D-- / U)',
+    title: 'Kilominx — visible corners of the named loader (outer faces, rotations and R++ / D++)',
     orbitRename: { CORNERS: 'corners' },
     tokens: 'kilominx', sampleN: 0,
     goldenScramble:
@@ -268,6 +268,11 @@ async function gen(id: string): Promise<void> {
   const scrambles: string[] = [];
   if (cfg.tokens === 'kilominx') {
     for (let i = 0; i < 90; i++) scrambles.push(kilominxScramble());
+    // Manual/pasted algorithms need every outer face and native rotation, not
+    // just the R++/D++/U alphabet emitted by the random-move scrambler. Keep
+    // geometry and the visible CORNERS orbit from the same named loader.
+    const manualMoves = Object.keys(kp.definition.moves).filter((move) => /^[A-Z]+$|v$/.test(move));
+    scrambles.push(...manualMoves, 'y', manualMoves.join(' '));
   } else {
     for (let i = 0; i < cfg.sampleN; i++) scrambles.push((await randomScrambleForEvent(id)).toString());
   }

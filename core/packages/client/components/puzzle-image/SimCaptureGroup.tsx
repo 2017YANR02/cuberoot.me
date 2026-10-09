@@ -46,7 +46,18 @@ export interface TwistyPlayerLike {
     contentWrapper?: HTMLElement;
   }>>;
   experimentalScreenshot?: () => Promise<string>;
+  experimentalDownloadScreenshot?: (filename?: string) => Promise<void>;
+  experimentalModel?: { visualizationStrategy?: { get: () => Promise<string> } };
   getBoundingClientRect: () => DOMRect;
+}
+
+/** Native 2D export uses the displayed SVG; experimentalScreenshot forces WebGL. */
+async function downloadTwisty2DScreenshot(player: TwistyPlayerLike | null): Promise<boolean> {
+  if (!player?.experimentalDownloadScreenshot) return false;
+  const mode = await player.experimentalModel?.visualizationStrategy?.get();
+  if (mode !== '2D' && mode !== 'experimental-2D-LL' && mode !== 'experimental-2D-LL-face') return false;
+  await player.experimentalDownloadScreenshot(`sim-${Date.now()}`);
+  return true;
 }
 
 export default function SimCaptureGroup({ simBridge }: { simBridge: SimBridge }) {
@@ -104,8 +115,9 @@ export default function SimCaptureGroup({ simBridge }: { simBridge: SimBridge })
     }
     // cubing.js TwistyPlayer 拼图:官方离屏截图(dataURL)
     const tp = simBridge.getTwistyPlayer?.() as TwistyPlayerLike | null;
-    if (!tp?.experimentalScreenshot) return;
     try {
+      if (await downloadTwisty2DScreenshot(tp)) return;
+      if (!tp?.experimentalScreenshot) return;
       downloadUrl(await tp.experimentalScreenshot(), `sim-${Date.now()}.png`);
     } catch { /* 截图失败静默(与旧行为一致:无引擎时无操作) */ }
   }, [simBridge, downloadUrl]);
@@ -133,8 +145,9 @@ export default function SimCaptureGroup({ simBridge }: { simBridge: SimBridge })
           svg = exportSimSvg({ world, renderer: simBridge.getRenderer() });
         }
       } else {
-        const { exportSimSvg } = await import('@/app/[lang]/sim/sim_svg_export');
         const tp = simBridge.getTwistyPlayer?.() as TwistyPlayerLike | null;
+        if (await downloadTwisty2DScreenshot(tp)) return;
+        const { exportSimSvg } = await import('@/app/[lang]/sim/sim_svg_export');
         if (!tp?.experimentalCurrentVantages) return;
         const vantage = [...await tp.experimentalCurrentVantages()][0];
         if (!vantage) return;

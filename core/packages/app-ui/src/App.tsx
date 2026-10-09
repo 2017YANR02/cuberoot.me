@@ -205,6 +205,7 @@ import {
   TimerAttemptSplitStatus,
   TimerSolveDetailModal,
   TimerCubePreview,
+  timerCubePreviewAspect,
   TimerDrillPicker,
   TimerManualEntryModal,
   TimerMoreMenu,
@@ -3896,7 +3897,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                         return;
                       }
                       const selection = timerPuzzleSelection(activeEvent);
-                      const leavingTraining = selection.puzzle === '333' && activeEvent !== '333';
+                      const leavingTraining = source !== 'manual' && selection.puzzle === '333' && activeEvent !== '333';
                       if (source === scrambleSourceRef.current && !leavingTraining) return;
                       invalidateCurrentScramble();
                       setScrambleSource(source);
@@ -4074,6 +4075,7 @@ className: targetFeedbackClass,
 ariaLabel: copy.timer,
 colorClass: `${timerColorClass} tf-${store!.settings.timerFont}`,
 fontScale: store!.settings.timerFontScale,
+cornerAspect: smartCube.phase === 'connected' ? undefined : timerCubePreviewAspect(activeEvent, scramble),
 cornerSlot: smartCube.phase === 'connected' ? (
                   <div className="timer-live-cube">
                     <LiveCubeState

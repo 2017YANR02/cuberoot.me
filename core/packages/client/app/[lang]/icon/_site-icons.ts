@@ -2,5 +2,5 @@
 import { ALL_PUZZLE_TYPE_OPTIONS } from '../sim/puzzleOptions';
 
 export const PUZZLE_ICON_NAMES: Record<string, { en: string; zh: string }> = Object.fromEntries(
-  ALL_PUZZLE_TYPE_OPTIONS.map(p => [p.iconClass, { en: p.labelEn, zh: p.labelZh }]),
+  ALL_PUZZLE_TYPE_OPTIONS.filter(p => p.iconClass).map(p => [p.iconClass, { en: p.labelEn, zh: p.labelZh }]),
 );

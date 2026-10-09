@@ -25,6 +25,10 @@ import { FONT_MONO, FONT_SANS, FONT_CJK, loadPdfFonts, ensureCjkFont } from '@/l
 import { svgStringToElement, embedSvg } from '@/lib/pdf-svg';
 import { eventToCubeSize, renderUnfoldedSvgForEvent } from '@cuberoot/shared/cube-unfolded-svg';
 import { renderScramblePreviewSvg } from '@/components/scramble-preview-svg';
+import { magicSvgAspect } from '@cuberoot/puzzle-render-core/magic-svg';
+import { DUO_SVG_ASPECT } from '@cuberoot/puzzle-render-core/pyraminx-duo-svg';
+import { nativePuzzleSvgAspect } from '@cuberoot/puzzle-render-core/native-puzzle-svg';
+import { isNativePuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { groupLetter, type WcaFormat } from './_wca-round';
 import { eventDisplayName } from '@/lib/wca-events';
 import { tFmc, fontForLocale, type TnoodleLocale } from './_tnoodle-translate';
@@ -294,8 +298,14 @@ function tnoodleEventTitle(event: string): string | null {
 // in tnoodle-lib (rough; only used to compute column proportions). NxN
 // cubes always 4:3 — handled by cube_unfolded_svg's own viewBox.
 function nonCubeAspect(event: string): number | null {
+  if (isNativePuzzleId(event)) return nativePuzzleSvgAspect(event);
   if (eventToCubeSize(event)) return 4 / 3;
   switch (event) {
+    case 'sphere': return 4 / 3;
+    case 'pyraminx_duo': return DUO_SVG_ASPECT;
+    // The rectangle is the wider practice start. Reserve that column width;
+    // embedSvg fits each Forward/Backward SVG using its own actual viewBox.
+    case 'magic': case 'mmagic': return magicSvgAspect(event);
     case 'pyram': return 1.16;   // tnoodle PyraminxPuzzleImageInfo
     case 'minx': return 2.087;   // tnoodle MegaminxPuzzle 304.8/146.1 ≈ 2.087
     case 'sq1': return 0.5;     // sq1_svg native viewBox W:H ≈ 122:244 (portrait)

@@ -34,7 +34,11 @@ const enterMergeCode = async (code: string) => {
 };
 const openMove = async () => {
   await act(async () => button('Open').click());
-  await act(async () => host.querySelector<HTMLButtonElement>('[aria-label="Choose merge direction"]')!.click());
+  await act(async () => {
+    const select = host.querySelector<HTMLSelectElement>('[aria-label="Choose merge direction"]')!;
+    select.value = 'false';
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+  });
   await enterMergeCode('99-123456');
 };
 beforeEach(() => {

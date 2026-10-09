@@ -393,7 +393,7 @@ export default function OnboardingGuideModal({ open, onClose }: Props) {
       <div className="onboarding-guide-heading">
         <span className="onboarding-guide-icon"><StepIcon size={20} strokeWidth={1.8} aria-hidden="true" /></span>
         <span className="onboarding-guide-count">{t('新手指南', 'Beginner guide')} <span>{step + 1} / {total}</span></span>
-        <button type="button" onClick={onClose} className="onboarding-guide-close" aria-label={t('关闭导览', 'Close tour')}><X size={18} aria-hidden="true" /></button>
+        <button type="button" onClick={onClose} className="onboarding-guide-button onboarding-guide-close" aria-label={t('关闭导览', 'Close tour')}><X size={18} aria-hidden="true" /></button>
       </div>
       <div className="onboarding-guide-copy" aria-live="polite" aria-atomic="true">
         <h2>{t(current.title.zh, current.title.en)}</h2>
@@ -403,10 +403,10 @@ export default function OnboardingGuideModal({ open, onClose }: Props) {
         <span style={{ width: ((step + 1) / total) * 100 + '%' }} />
       </div>
       <div className="onboarding-guide-actions">
-        <button type="button" onClick={onClose} className="onboarding-guide-skip">{t('跳过', 'Skip')}</button>
+        <button type="button" onClick={onClose} className="onboarding-guide-button onboarding-guide-skip">{t('跳过', 'Skip')}</button>
         <div className="onboarding-guide-navigation">
-          {!isFirst && <button type="button" onClick={goPrev} className="onboarding-guide-back" aria-label={t('上一步', 'Previous step')}><ChevronLeft size={17} aria-hidden="true" /></button>}
-          <button type="button" onClick={isLast ? onClose : goNext} className="onboarding-guide-next">
+          {!isFirst && <button type="button" onClick={goPrev} className="onboarding-guide-button onboarding-guide-back" aria-label={t('上一步', 'Previous step')}><ChevronLeft size={17} aria-hidden="true" /></button>}
+          <button type="button" onClick={isLast ? onClose : goNext} className="onboarding-guide-button onboarding-guide-next">
             {isLast ? t('完成', 'Done') : t('下一步', 'Next')}
             {!isLast && <ChevronRight size={16} aria-hidden="true" />}
           </button>

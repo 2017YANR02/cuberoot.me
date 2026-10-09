@@ -32,9 +32,10 @@ const EXPECTED_WCA: EventId[] = [
 ];
 
 const EXPECTED_OTHER: EventId[] = [
-  '333ni', '333mr', '666bld', '777bld', 'r3', 'r4', 'r5',
+  '333ni', '333mr', 'sphere', '666bld', '777bld', 'r3', 'r4', 'r5',
   'cross', 'f2l', 'll', 'oll', 'pll', 'coll', 'cmll', 'zbll', 'cll', 'ell', 'eocp', '2gll', 'ollcp', 'zzll', 'zbls', 'lse', 'l10p', 'eg1', 'eg2',
-  'custom', 'fto', 'kilominx', 'gear', 'ivy', 'redi', 'mpyram',
+  'custom', 'fto', 'kilominx', 'gear', 'ivy', 'redi', 'mpyram', 'pyraminx_duo',
+  'superz', 'dogic', 'octahedron4', 'dinoskewb',
 ];
 
 const EXPECTED_REAL_WCA_EVENTS = {
@@ -72,14 +73,14 @@ describe('shared timer event picker catalog', () => {
       expect(timerPuzzleSelection(id)).toEqual({ puzzle: id, scrambleType: null });
     }
   });
-  it('is a complete, duplicate-free 52-event partition in the website order', () => {
+  it('is a complete, duplicate-free 58-event partition in the website order', () => {
     expect(TIMER_EVENT_PICKER_GROUPS.map((group) => group.id)).toEqual(['wca', 'other']);
     expect(TIMER_EVENT_PICKER_GROUPS[0].items.map((item) => item.id)).toEqual(EXPECTED_WCA);
     expect(TIMER_EVENT_PICKER_GROUPS[1].items.map((item) => item.id)).toEqual(EXPECTED_OTHER);
 
     const pickerIds = TIMER_EVENT_PICKER_ITEMS.map((item) => item.id);
     const eventIds = EVENTS.map((event) => event.id);
-    expect(pickerIds).toHaveLength(52);
+    expect(pickerIds).toHaveLength(58);
     expect(new Set(pickerIds).size).toBe(pickerIds.length);
     expect(new Set(pickerIds)).toEqual(new Set(eventIds));
   });
@@ -133,10 +134,30 @@ describe('shared timer event picker catalog', () => {
     }
   });
 
-  it('uses the dedicated icons for gear and mirror blocks', () => {
+  it('uses dedicated icons where available and explicit native-puzzle text badges', () => {
     expect(cstimerEvent('gear')?.iconClass).toBe('unofficial-gear');
     expect(timerEventPickerItem('333mr').iconClass).toBe('unofficial-333_mirror_blocks');
     expect(timerEventPickerItem('333mr').textLabel).toBeUndefined();
+    expect(timerEventPickerItem('pyraminx_duo')).toMatchObject({
+      nameEn: 'Pyraminx Duo', nameZh: '二重奏魔方', textLabel: 'Duo',
+    });
+    expect(timerEventPickerItem('pyraminx_duo').iconClass).toBeUndefined();
+    expect(timerEventPickerItem('sphere')).toMatchObject({
+      nameEn: 'Sphere Cube', nameZh: '球形魔方', textLabel: 'Sphere',
+    });
+    expect(timerEventPickerItem('sphere').iconClass).toBeUndefined();
+    expect(timerEventPickerItem('superz')).toMatchObject({
+      nameEn: 'SuperZ (2×2 + Skewb)', nameZh: '二阶＋斜转', textLabel: 'SuperZ',
+    });
+    expect(timerEventPickerItem('superz').iconClass).toBeUndefined();
+    for (const [event, nameEn, nameZh, textLabel] of [
+      ['dogic', 'Dogic', 'Dogic 二十面体', 'Dogic'],
+      ['octahedron4', '4×4 Octahedron', '四阶八面体', 'Octa4'],
+      ['dinoskewb', 'Dino Skewb', '恐龙斜转', 'DinoSk'],
+    ] as const) {
+      expect(timerEventPickerItem(event)).toMatchObject({ nameEn, nameZh, textLabel });
+      expect(timerEventPickerItem(event).iconClass).toBeUndefined();
+    }
   });
 
   it('publishes preview and smart-cube capabilities without a Mobile-only map', () => {
@@ -148,6 +169,7 @@ describe('shared timer event picker catalog', () => {
       '333ni': 3,
       '333fm': 3,
       '333mr': 3,
+      sphere: 3,
       '444': 4,
       '444bld': 4,
       '555': 5,

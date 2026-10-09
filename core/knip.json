@@ -17,6 +17,8 @@
       "entry": [
         "postcss.config.{js,mjs}",
         "components/ScrollDiagnostics.tsx",
+        "app/**/timer/_lib/bluetooth/{legacy_session,types}.ts",
+        "app/**/timer/_lib/scramble/kociemba/{coords,kociemba.worker,randomstate}.ts",
         "app/**/{page,layout,template,loading,error,not-found,route,default,global-error,sitemap,robots,manifest,opengraph-image,twitter-image,icon,apple-icon}.{ts,tsx}",
         "scripts/**/*.{mjs,cjs,mts,ts}",
         "tests/**/*.{ts,tsx,cjs,mjs}",

@@ -22,7 +22,7 @@ import { canTrainerDifficulty } from '../_lib/scramble/trainer-source';
 import { tr } from '@/i18n/tr';
 import Scramble222ModePicker from '@/components/Scramble222ModePicker';
 import { use222Type } from '@/lib/scramble-222-mode';
-import { TIMER_MANUAL_SCRAMBLE_EMPTY_COPY, SCRAMBLE_222_TYPES, WCA_SCRAMBLE_222_TYPES, type Scramble222Type } from '@cuberoot/shared/timer';
+import { TIMER_MANUAL_SCRAMBLE_EMPTY_COPY, SCRAMBLE_222_TYPES, WCA_SCRAMBLE_222_TYPES, timerSupportsRealWcaScrambles, type Scramble222Type } from '@cuberoot/shared/timer';
 import { ManualScrambleQueueEditor } from '@cuberoot/timer-ui';
 
 interface Props {
@@ -54,7 +54,7 @@ export default function ScrambleSourceBar({ disabled = false, event, isZh, diffS
 
   return (
     <fieldset className="scramble-src-bar surface-chrome" data-no-timer disabled={disabled}>
-      {src === 'wca' && (
+      {src === 'wca' && timerSupportsRealWcaScrambles(event) && (
         <WcaSourceConfig disabled={disabled} isZh={isZh} event={event} settings={s} updateSettings={updateSettings} toggleSlot={diffSlot} mergeSlot={mergeSlot} sourceSlot={wcaSourceSlot} />
       )}
 

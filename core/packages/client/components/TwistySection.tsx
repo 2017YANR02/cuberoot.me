@@ -1,6 +1,12 @@
 'use client';
 
-import { useState, useRef, useEffect, type MutableRefObject } from 'react';
+import { useState, useRef, useEffect, useMemo, type MutableRefObject } from 'react';
+import { Move } from 'cubing/alg';
+import { parseNativePuzzleAlg } from '@cuberoot/puzzle-solvers/native-puzzle-model';
+import type { NativePuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
+import WebGL from 'three/addons/capabilities/WebGL.js';
+import NativePuzzleControls, { type NativeDragDepth } from './NativePuzzleControls';
+import { attachNativePgMoveAppend } from './puzzle-models/gestures/nativePgMoveAppend';
 import FaceOverlay, { type FaceTable } from './FaceOverlay';
 import ReconPlayOverlay from './recon/ReconPlayOverlay';
 import { applyTwistyCoreOpacity } from './twistyCoreOpacity';
@@ -8,6 +14,7 @@ import { simSpeedToTps, uniformSimTimeline } from '@/lib/sim_timing';
 import { pgAlgError } from '@/lib/pg-alg-validation';
 import { tr } from '@/i18n/tr';
 import { applyFreeOrbitDelta, ORBIT_K } from '@/app/[lang]/sim/engine/viewControls';
+import { useT } from '@/hooks/useT';
 import './TwistySection.css';
 
 // Pyraminx 4 vertex 方向。screenSlot mode:字母 (U/L/R/B) 不绑定具体 vertex,
@@ -117,7 +124,7 @@ export interface TwistySettings {
 
 /** Twisty 播放器区域——动态导入 cubing 库，用构造函数 API 创建（对齐 legacy） */
 export default function TwistySection({
-  puzzle, puzzleDescription, scramble, alg, playerRef, fillPane = false, twistOnClick = false, onUserMove, onScaleChange, settings, backView, playbackMode, hideControls = false, experimentalStickering,
+  puzzle, puzzleDescription, nativePuzzleId, scramble, alg, playerRef, fillPane = false, twistOnClick = false, onUserMove, onScaleChange, settings, backView, playbackMode, hideControls = false, experimentalStickering, fallbackMoves,
 }: {
   puzzle: string;
   /** cubing.js PuzzleGeometry description string (e.g. "c e 0"). When set, the
@@ -125,6 +132,8 @@ export default function TwistySection({
    *  `puzzle` — lets /sim show any PuzzleGeometry puzzle (alpha.twizzle.net/explore
    *  set) with no in-house engine. See app/[lang]/sim/pgCatalog.ts. */
   puzzleDescription?: string;
+  /** Validated native model with accessible controls and a real layer-drag adapter. */
+  nativePuzzleId?: NativePuzzleId;
   scramble: string;
   alg: string;
   /** 撑满父容器（左栏分栏模式），否则走原 inline 固定宽模式 */
@@ -141,10 +150,12 @@ export default function TwistySection({
    *  传 true 改成 "basic",DragTracker → raycastMove → experimentalAddMove 链路接通。
    *  对齐 alpha.twizzle.net/explore 行为。 */
   twistOnClick?: boolean;
+  /** Native move families with editor-notation labels for manual turns in the 2D fallback. */
+  fallbackMoves?: readonly { move: string; label: string }[];
   /** 用户在 player 上 tap/拖动产生 move 时回调。包装了 model.experimentalAddMove,
    *  press handler 走 raycast → addMove → 我们这里截到 move 文本。
    *  程序化设 alg/setup 走 model.alg.set 不经 addMove,不会误触发。 */
-  onUserMove?: (moveText: string) => void;
+  onUserMove?: (moveText: string, anchoredSetup?: { setup: string }) => string | void;
   /** wheel / 双指捏合缩放产生的新 scale (0..100) 回调 — sim 把它写回 settings.scale,
    *  让缩放持久化 + Scale 滑条同步 (对齐 NxN/engine 的 syncScaleToSettings)。 */
   onScaleChange?: (scale: number) => void;
@@ -158,6 +169,30 @@ export default function TwistySection({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   playerRef?: MutableRefObject<any>;
 }) {
+  const t = useT();
+  const nativeInputValid = useMemo(() => {
+    if (!nativePuzzleId) return true;
+    try {
+      parseNativePuzzleAlg(nativePuzzleId, scramble);
+      parseNativePuzzleAlg(nativePuzzleId, alg);
+      return true;
+    } catch { return false; }
+  }, [nativePuzzleId, scramble, alg]);
+  const nativeInputValidRef = useRef(nativeInputValid);
+  useEffect(() => { nativeInputValidRef.current = nativeInputValid; }, [nativeInputValid]);
+  const [nativeDragDepth, setNativeDragDepth] = useState<NativeDragDepth>('auto');
+  const nativeDragDepthRef = useRef(nativeDragDepth);
+  useEffect(() => { nativeDragDepthRef.current = nativeDragDepth; }, [nativeDragDepth]);
+  // Decide before constructing the first player: a failed 3D scene cannot provide
+  // its initial-object promise, while the native SVG player needs no WebGL context.
+  const [use2D, setUse2D] = useState<boolean | null>(null);
+  const webglCheckedRef = useRef(false);
+  const [fallbackTurnAmount, setFallbackTurnAmount] = useState(1);
+  useEffect(() => {
+    if (webglCheckedRef.current) return;
+    webglCheckedRef.current = true;
+    setUse2D(!WebGL.isWebGL2Available());
+  }, []);
   // NOTE: 用 state 而非 ref 存构造函数——确保 import 完成后触发重渲染
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [Ctor, setCtor] = useState<any>(null);
@@ -214,19 +249,20 @@ export default function TwistySection({
   // 创建 player——只在 ctor / puzzle / twistOnClick / fillPane 变化时重建,
   // 不依赖 scramble/alg,避免每次 alg 变就 rebuild 闪烁。
   useEffect(() => {
-    if (!Ctor || !containerRef.current) return;
+    if (!Ctor || use2D === null || !containerRef.current) return;
     const container = containerRef.current;
     container.innerHTML = '';
     const playerInit: Record<string, unknown> = {
-      experimentalSetupAlg: puzzleDescription ? '' : scramble,
-      alg: puzzleDescription ? '' : alg,
-      controlPanel: hideControls ? 'none' : 'bottom-row',
+      experimentalSetupAlg: (puzzleDescription && !nativePuzzleId) || !nativeInputValid ? '' : scramble,
+      alg: (puzzleDescription && !nativePuzzleId) || !nativeInputValid ? '' : alg,
+      controlPanel: hideControls || !nativeInputValid ? 'none' : 'bottom-row',
     };
+    if (use2D) playerInit.visualization = '2D';
     // PuzzleGeometry puzzle (explore set) → set the description and omit `puzzle`
     // entirely (mirrors alpha.twizzle.net/explore's `delete config.puzzle`).
     if (puzzleDescription) playerInit.experimentalPuzzleDescription = puzzleDescription;
     else playerInit.puzzle = puzzle;
-    if (twistOnClick) playerInit.experimentalMovePressInput = 'basic';
+    if (twistOnClick && !use2D) playerInit.experimentalMovePressInput = 'basic';
     const player = new Ctor(playerInit);
     playerInstRef.current = player;
     setPlayerNonce((n) => n + 1);
@@ -241,16 +277,26 @@ export default function TwistySection({
     // 修饰键 → cubing.js 内置:shift = 2nd slice (wide/layer), ctrl = rotation, right-click = invert。
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const model = (player as any).experimentalModel;
-    if (model && typeof model.experimentalAddMove === 'function') {
+    const stopNativeAppend = nativePuzzleId && model
+      ? attachNativePgMoveAppend(model, nativePuzzleId, {
+        enabled: () => pointerTurnsRef.current && nativeInputValidRef.current,
+        current: () => playerInstRef.current === player,
+        onMove: (text, anchoredSetup) => {
+          if (anchoredSetup) return onUserMoveRef.current?.(text, anchoredSetup);
+          return onUserMoveRef.current?.(text);
+        },
+      })
+      : undefined;
+    if (!nativePuzzleId && model && typeof model.experimentalAddMove === 'function') {
       const orig = model.experimentalAddMove.bind(model);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       model.experimentalAddMove = (mv: any, opts?: unknown) => {
         // 手拧锁(设置面板「手拧」关):raycast 照常跑,但吞掉 move —— 拼图不动、
         // 不记步。这是 tap/拖转层的唯一入口(程序化 alg 走 model.alg.set 不经此),
         // 相机 orbit 与它无关 → 视角照常可拖。
-        if (pointerTurnsRef.current === false) return;
+        if (pointerTurnsRef.current === false || !nativeInputValidRef.current) return;
         const text = typeof mv === 'string' ? mv : (mv?.toString?.() ?? String(mv));
-        if (puzzleDescription) {
+        if (puzzleDescription && !nativePuzzleId) {
           // Do not publish a pointer-generated move to the URL before validating it.
           return model.kpuzzle.get().then((kpuzzle: { algToTransformation: (alg: string) => unknown }) => {
             if (playerInstRef.current !== player || !pgInputValidRef.current) return;
@@ -276,7 +322,7 @@ export default function TwistySection({
     //
     // 三段式触控:面中心 → F (big corner / 3-layer);近角 → u/l/r/b (layer / 2-layer);
     // 贴顶点 → U/L/R/B (tip / 1-layer)。
-    if (puzzle === 'pyraminx') {
+    if (!use2D && puzzle === 'pyraminx') {
       // Pyraminx tip 三段判定:
       //   - F-center 朝外距 ≈ 0.39 (world after PG_SCALE=0.5)
       //   - 大边 mid 距 ≈ 0.7-0.9
@@ -335,6 +381,7 @@ export default function TwistySection({
       if (playerRef) playerRef.current = player;
       return () => {
         ro.disconnect();
+        stopNativeAppend?.();
         if (playerRef) playerRef.current = null;
         playerInstRef.current = null;
       };
@@ -345,6 +392,7 @@ export default function TwistySection({
       container.appendChild(player);
       if (playerRef) playerRef.current = player;
       return () => {
+        stopNativeAppend?.();
         if (playerRef) playerRef.current = null;
         playerInstRef.current = null;
       };
@@ -353,7 +401,7 @@ export default function TwistySection({
     // scramble/alg/puzzleDescription 走下面的 setter 路径,不触发重建。
     // puzzleDescription 不入 deps:改 cut 深度时原地 set(见下方 effect),不重建 player。
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [Ctor, puzzle, fillPane, twistOnClick, hideControls]);
+  }, [Ctor, puzzle, nativePuzzleId, fillPane, twistOnClick, hideControls, use2D]);
 
   // puzzleDescription 原地同步 — 改 cut 深度(Puzzle Cuts 编辑器)时不重建 player,
   // 对齐 alpha.twizzle.net/explore 的丝滑切割:只把新 description set 到已存在的 player。
@@ -384,11 +432,11 @@ export default function TwistySection({
   // backView prop 强制接管 cubing.js 原生背面视图(recon 用)。undefined 时不碰,
   // 让 settings.backView 那条路径(/sim)负责。
   useEffect(() => {
-    if (backView === undefined) return;
+    if (use2D !== false || backView === undefined) return;
     const player = playerInstRef.current;
     if (!player) return;
     try { player.backView = backView ? 'top-right' : 'none'; } catch { /* */ }
-  }, [backView, playerNonce]);
+  }, [backView, playerNonce, use2D]);
 
   // hideControls 浮层:订阅 cubing.js playingInfo → 同步本地 playing(驱动浮层图标)。
   useEffect(() => {
@@ -408,9 +456,9 @@ export default function TwistySection({
   // → cubing.js no-op,不会拨回 timeline。
   useEffect(() => {
     const player = playerInstRef.current;
-    if (!player || puzzleDescription) return;
+    if (!player || (puzzleDescription && !nativePuzzleId) || !nativeInputValid) return;
     try { player.alg = alg; } catch { /* parser 拒绝就忽略 */ }
-  }, [alg, puzzleDescription]);
+  }, [alg, puzzleDescription, nativeInputValid, nativePuzzleId]);
 
   // PG validation in cubing.js is asynchronous; catching attribute setters cannot
   // catch CurrentPatternProp failures. Validate before publishing either input.
@@ -418,7 +466,7 @@ export default function TwistySection({
     const player = playerInstRef.current;
     pgInputValidRef.current = false;
     setPgInputError(null);
-    if (!player || !puzzleDescription) return;
+    if (!player || !puzzleDescription || nativePuzzleId || !nativeInputValid) return;
     let current = true;
     void player.experimentalModel.kpuzzle.get().then((kpuzzle: { algToTransformation: (alg: string) => unknown }) => {
       if (!current || playerInstRef.current !== player) return;
@@ -431,18 +479,18 @@ export default function TwistySection({
       if (current && playerInstRef.current === player) setPgInputError(String(error));
     });
     return () => { current = false; };
-  }, [alg, scramble, puzzleDescription, playerNonce]);
+  }, [alg, scramble, puzzleDescription, playerNonce, nativeInputValid, nativePuzzleId]);
 
   // /sim defines TPS per expanded notation leaf, independent of turn angle.
   // cubing.js defaults a double turn to 1.5× a quarter turn, so supply a custom
   // one-second-per-leaf timeline and let tempoScale convert that baseline to TPS.
   useEffect(() => {
     const player = playerInstRef.current;
-    if (!player || !simTimingEnabled) return;
+    if (!player || !simTimingEnabled || !nativeInputValid) return;
     let current = true;
     void import('cubing/alg').then(async ({ Alg, Move, Pause }) => {
       let timelineAlg = alg;
-      if (puzzleDescription) {
+      if (puzzleDescription && !nativePuzzleId) {
         const kpuzzle = await player.experimentalModel.kpuzzle.get();
         if (pgAlgError(kpuzzle, scramble) || pgAlgError(kpuzzle, alg)) timelineAlg = '';
       }
@@ -454,14 +502,23 @@ export default function TwistySection({
       } catch { /* parser rejects incomplete live input */ }
     }).catch(() => { /* invalid puzzle geometry is reported by input validation */ });
     return () => { current = false; };
-  }, [alg, scramble, puzzleDescription, playerNonce, simTimingEnabled]);
+  }, [alg, scramble, puzzleDescription, playerNonce, simTimingEnabled, nativeInputValid, nativePuzzleId]);
 
   // setup 同步 — 同上但走 experimentalSetupAlg。
   useEffect(() => {
     const player = playerInstRef.current;
-    if (!player || puzzleDescription) return;
+    if (!player || (puzzleDescription && !nativePuzzleId) || !nativeInputValid) return;
     try { player.experimentalSetupAlg = scramble; } catch { /* ignore */ }
-  }, [scramble, puzzleDescription]);
+  }, [scramble, puzzleDescription, nativeInputValid, nativePuzzleId]);
+
+  // A partial or invalid native algorithm keeps the last legal picture and cannot
+  // reach the upstream animation expander, including through its own play button.
+  useEffect(() => {
+    const player = playerInstRef.current;
+    if (!player || !nativePuzzleId) return;
+    if (!nativeInputValid) { try { player.pause(); } catch { /* disposed */ } }
+    player.controlPanel = hideControls || !nativeInputValid ? 'none' : 'bottom-row';
+  }, [nativePuzzleId, nativeInputValid, hideControls, playerNonce]);
 
   // 按阶段展示色块 — cubing.js 原生 experimentalStickering。依赖 playerNonce:
   // player 重建(换拼图)后默认回 full,非 full 值要立刻补挂。undefined = 不接管。
@@ -485,10 +542,13 @@ export default function TwistySection({
   useEffect(() => {
     const player = playerInstRef.current;
     if (!player || !settings) return;
+    try { player.tempoScale = simSpeedToTps(settings.speed); } catch { /* */ }
+    // Setup and playback stay on the shared model in both visualizations.
+    try { player.experimentalSetupAnchor = settings.playbackMode === 'algorithm' ? 'end' : 'start'; } catch { /* */ }
+    if (use2D !== false) return;
     const yawDeg = ((settings.viewAngle - 50) / 50) * 180;
     const pitchDeg = ((50 - settings.viewGradient) / 50) * 90;
     const dist = scaleToDist(settings.scale);
-    const tempo = simSpeedToTps(settings.speed);
     const isNewPlayer = prevNonceRef.current !== playerNonce;
     if (!isNewPlayer && (
       prevYawRef.current !== settings.viewAngle
@@ -503,16 +563,12 @@ export default function TwistySection({
       try { player.cameraLatitude = pitchDeg; } catch { /* */ }
     }
     try { player.cameraDistance = dist; liveDistRef.current = dist; } catch { /* */ }
-    try { player.tempoScale = tempo; } catch { /* */ }
     try { player.hintFacelets = settings.hint ? 'floating' : 'none'; } catch { /* */ }
     try { player.backView = settings.backView ? 'top-right' : 'none'; } catch { /* */ }
-    // playbackMode → cubing.js setupAnchor (start = 'moves' / end = 'algorithm')。
-    // end 模式下 cube 终点 = setup,起点 = setup·alg⁻¹。
-    try { player.experimentalSetupAnchor = settings.playbackMode === 'algorithm' ? 'end' : 'start'; } catch { /* */ }
     prevYawRef.current = settings.viewAngle;
     prevPitchRef.current = settings.viewGradient;
     prevNonceRef.current = playerNonce;
-  }, [settings?.viewAngle, settings?.viewGradient, settings?.scale, settings?.speed, settings?.hint, settings?.backView, settings?.playbackMode, settings, playerNonce]);
+  }, [settings?.viewAngle, settings?.viewGradient, settings?.scale, settings?.speed, settings?.hint, settings?.backView, settings?.playbackMode, settings, playerNonce, use2D]);
 
   // Recon and other lightweight callers do not pass a full settings object. An
   // explicit prop still needs to drive cubing.js's setup anchor in that path.
@@ -526,14 +582,14 @@ export default function TwistySection({
   const coreOpacityEnabled = settings != null;
   useEffect(() => {
     const player = playerInstRef.current;
-    if (!player || !coreOpacityEnabled) return;
+    if (use2D !== false || !player || !coreOpacityEnabled) return;
     let current = true;
     void applyTwistyCoreOpacity(player, coreOpacity, () => current).catch(() => {
       // cubing.js internals can change independently; visibility still falls back to
       // its supported foundationDisplay path inside the helper.
     });
     return () => { current = false; };
-  }, [coreOpacity, coreOpacityEnabled, playerNonce, puzzleDescription]);
+  }, [coreOpacity, coreOpacityEnabled, playerNonce, puzzleDescription, use2D]);
 
   // 实时整体转 commit:user 拖动 cube,累积旋转 ≥ 对称阈值时自动 commit alg + camera reset。
   // 视觉无缝要求:commit 瞬间 cube state + camera 同步切换,绕过 cubing.js 的
@@ -555,6 +611,7 @@ export default function TwistySection({
     pyraminx: { thresholdDeg: 120, axes: [{ name: 'U', axis: [0, 1, 0], moveCW: 'Uv', moveCCW: "Uv'" }] },
     // 校准 (.tmp/png/mega_lon-71_alg-RU vs mega_lon0_alg-RUUvi)
     megaminx: { thresholdDeg: 72, axes: [{ name: 'U', axis: [0, 1, 0], moveCW: 'Uv', moveCCW: "Uv'" }] },
+    kilominx: { thresholdDeg: 72, axes: [{ name: 'U', axis: [0, 1, 0], moveCW: 'Uv', moveCCW: "Uv'" }] },
     // skewb 走自己的 pixel-based effect (横/纵两轴 80px = 1 commit),不在这里配。
     // (this entry kept empty 以让 ROTATE_CONFIG['skewb'] 仍存在供 algToOrientation 等用)
     skewb: { thresholdDeg: 90, axes: [] },
@@ -632,12 +689,13 @@ export default function TwistySection({
   }
   // 任何 alg 变化 → 重算 orient → 推 overlay。URL load / commit / 手输都过这条 path。
   useEffect(() => {
+    if (use2D !== false) return;
     const cfg = ROTATE_CONFIG[puzzle];
     if (!cfg) return;
     const orient = quatMulRaw(freeViewOrientationRef.current, algToOrientation(alg, cfg));
     try { faceOverlayRef.current?.setCubeOrientation(orient); } catch { /* */ }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [alg, puzzle, playerNonce]);
+  }, [alg, puzzle, playerNonce, use2D]);
 
   // cubing.js clamps OrbitCoordinatesRequest to latitude +/-90 degrees and wraps
   // longitude. For the simulator's pure View mode (and Drag turn off), intercept
@@ -645,6 +703,7 @@ export default function TwistySection({
   // their deltas to the puzzle Object3D. Camera settings, zoom, taps and raycasting
   // keep using cubing.js normally.
   useEffect(() => {
+    if (use2D !== false) return;
     const host = containerRef.current;
     const player = playerInstRef.current;
     if (!host || !player) return;
@@ -775,17 +834,19 @@ export default function TwistySection({
       if (freeViewObjectRef.current === obj) freeViewObjectRef.current = null;
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playerNonce, puzzle, puzzleDescription]);
+  }, [playerNonce, puzzle, puzzleDescription, use2D]);
 
   const freeViewEnabled = settings?.dragEmpty === 'view' || settings?.pointerTurns === false;
   const previousFreeViewRef = useRef(false);
   useEffect(() => {
+    if (use2D !== false) return;
     if (previousFreeViewRef.current && !freeViewEnabled) resetFreeViewRoot();
     previousFreeViewRef.current = freeViewEnabled;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [freeViewEnabled, playerNonce]);
+  }, [freeViewEnabled, playerNonce, use2D]);
 
   useEffect(() => {
+    if (use2D !== false) return;
     const player = playerInstRef.current;
     const cfg = ROTATE_CONFIG[puzzle];
     if (!player || !cfg) return;
@@ -907,7 +968,8 @@ export default function TwistySection({
         const { lat: targetLat, lon: targetLon } = quatToOrbit(targetQ);
         try {
           const curAlg = currentAlgRef.current.trim();
-          const newAlg = curAlg ? `${curAlg} ${move}` : move;
+          const sep = curAlg.slice(curAlg.lastIndexOf('\n') + 1).includes('//') ? '\n' : ' ';
+          const newAlg = curAlg ? `${curAlg}${sep}${move}` : move;
           currentAlgRef.current = newAlg;
           player.alg = newAlg;
           m.timestampRequest.set('end');
@@ -930,7 +992,7 @@ export default function TwistySection({
     };
   // ROTATE_CONFIG 是组件内 const 不变,不入 deps
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playerNonce, puzzle]);
+  }, [playerNonce, puzzle, use2D]);
 
   // rotate 模式:player 容器上 pointerup 时,把 cameraLat/Long snap 到 puzzle 旋转对称角度。
   //   pyraminx (四面体): 120° (3 重对称 — 顶点轴)
@@ -938,9 +1000,10 @@ export default function TwistySection({
   //   megaminx (十二面体): 72° (5 重对称 — 面轴)
   // cubing.js 自带 orbit 我们不拦截,只在松手后修正。
   useEffect(() => {
+    if (use2D !== false) return;
     const el = containerRef.current;
     if (!el) return;
-    const Q_DEG = puzzle === 'pyraminx' ? 120 : puzzle === 'megaminx' ? 72 : 90;
+    const Q_DEG = puzzle === 'pyraminx' ? 120 : puzzle === 'megaminx' || puzzle === 'kilominx' ? 72 : 90;
     const onUp = () => {
       if (dragEmptyRef.current !== 'rotate') return;
       const player = playerInstRef.current;
@@ -958,12 +1021,13 @@ export default function TwistySection({
       el.removeEventListener('pointerup', onUp);
       el.removeEventListener('pointercancel', onUp);
     };
-  }, [playerNonce, puzzle]);
+  }, [playerNonce, puzzle, use2D]);
 
   // Face hints (字母指示):TwistyPlayer 用 closed shadow DOM,renderer 拿不到,
   // 改用 HTML overlay。订阅 orbitCoordinates → 自家投影 3D→2D → 绝对定位 span。
   // sticker drag 不改 orbit,所以 lat/lon 没变 = 不点亮(跟 sim NxN 同语义)。
   useEffect(() => {
+    if (use2D !== false) return;
     const player = playerInstRef.current;
     const host = containerRef.current;
     const table = FACE_TABLES[puzzle];
@@ -1004,15 +1068,16 @@ export default function TwistySection({
       overlay.dispose();
       if (faceOverlayRef.current === overlay) faceOverlayRef.current = null;
     };
-  }, [playerNonce, puzzle]);
+  }, [playerNonce, puzzle, use2D]);
 
   // 「字母」开关 live 切换 → 常显 / 隐藏。overlay 实例在上面的 effect 内创建,
   // 经 faceOverlayRef 触达;依赖 playerNonce 让 puzzle 重建后重新套用当前开关。
   useEffect(() => {
+    if (use2D !== false) return;
     const ov = faceOverlayRef.current;
     if (!ov) return;
     if (settings?.faceLabels) ov.show(); else ov.hide();
-  }, [settings?.faceLabels, playerNonce]);
+  }, [settings?.faceLabels, playerNonce, use2D]);
 
   // skewb 拖动直接 commit x/y:横拖 80px/y/y'、纵拖 80px/x/x'。
   // cubing.js 同时收到 pointer events (overlay 默认 pointer-events:none) → 想改 lat/lon。
@@ -1020,7 +1085,7 @@ export default function TwistySection({
   // → camera 视觉不动,只有 cube alg state 跟着 y/x 累计转,无限 chain。
   // pointerup 后延迟 600ms 解锁让 cubing.js inertia 平息。
   useEffect(() => {
-    if (puzzle !== 'skewb') return;
+    if (use2D !== false || puzzle !== 'skewb') return;
     const section = containerRef.current?.parentElement;
     const player = playerInstRef.current;
     if (!section || !player) return;
@@ -1144,7 +1209,7 @@ export default function TwistySection({
       section.removeEventListener('pointercancel', sectionUp, true);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [puzzle, playerNonce]);
+  }, [puzzle, playerNonce, use2D]);
 
   // Wheel (desktop) + 2-finger pinch (mobile) zoom for the cubing.js TwistyPlayer.
   // cubing.js's orbit controls only change lat/lon (never distance) and have NO wheel
@@ -1158,6 +1223,7 @@ export default function TwistySection({
   // handler stands down via pinchingRef (capture order: section ancestor fires first and
   // sees pinchingRef already set on the 2nd-finger pointerdown).
   useEffect(() => {
+    if (use2D !== false) return;
     const host = containerRef.current;
     const player = playerInstRef.current;
     if (!host || !player) return;
@@ -1233,16 +1299,94 @@ export default function TwistySection({
       host.removeEventListener('pointercancel', onUp, true);
       pinchingRef.current = false;
     };
-  }, [playerNonce, puzzle]);
+  }, [playerNonce, puzzle, use2D]);
+
+  // Install after the pinch listener so a second finger cancels a layer gesture
+  // before the native pointer adapter can commit it. The 2D path never asks for
+  // a Three.js object or camera.
+  useEffect(() => {
+    const host = containerRef.current;
+    const player = playerInstRef.current;
+    if (use2D !== false || !nativePuzzleId || !host || !player) return;
+    let live = true;
+    let detach: (() => void) | undefined;
+    void import('./puzzle-models/gestures/nativePgPointer').then(({ attachNativePgPointer }) => {
+      if (!live || playerInstRef.current !== player) return;
+      detach = attachNativePgPointer(host, player, nativePuzzleId, {
+        enabled: () => pointerTurnsRef.current && nativeInputValidRef.current && dragEmptyRef.current !== 'view',
+        depth: () => nativeDragDepthRef.current,
+        pinching: () => pinchingRef.current,
+      });
+    });
+    return () => { live = false; detach?.(); };
+  }, [nativePuzzleId, playerNonce, puzzleDescription, use2D, backView, settings?.backView]);
 
   return (
-    <div className={`twisty-section${fillPane ? ' twisty-section--fill' : ''}`}>
+    <div className={`twisty-section${fillPane ? ' twisty-section--fill' : ''}${use2D ? ' twisty-section--2d' : ''}${nativePuzzleId ? ' twisty-section--manual' : ''}`}>
       {puzzleDescription && pgInputError && <div role="alert">
         {tr({ zh: '公式不适用于当前项目，请修改输入。', en: 'This algorithm is not valid for the selected puzzle. Please edit the input.' })}
         {' '}{pgInputError}
       </div>}
       <div ref={containerRef} className="twisty-container" />
-      {hideControls && alg.trim().length > 0 && (
+      {(use2D || nativePuzzleId) && (
+        <div className="twisty-fallback">
+          {use2D && <p className="twisty-fallback-notice" role="status">
+            {t('3D 不可用，已显示二维展开图', '3D is unavailable. Showing a 2D net.')}
+          </p>}
+          {!nativeInputValid && <p className="twisty-native-error" role="alert">
+            {t('记号无效或公式过长。请修正红色文本后继续。', 'Invalid notation or an oversized algorithm. Correct the highlighted text to continue.')}
+          </p>}
+          {nativePuzzleId && <NativePuzzleControls
+            id={nativePuzzleId}
+            disabled={playerNonce === 0 || !nativeInputValid || settings?.pointerTurns === false}
+            showDragDepth={use2D === false}
+            depth={nativeDragDepth}
+            onDepthChange={setNativeDragDepth}
+            onMove={(token) => {
+              const player = playerInstRef.current;
+              if (!player || !nativeInputValidRef.current || !pointerTurnsRef.current) return;
+              void Promise.resolve(player.experimentalAddMove(token)).catch(() => { /* disposed */ });
+            }}
+          />}
+          {fallbackMoves && fallbackMoves.length > 0 && (
+            <div className="twisty-fallback-controls" role="group" aria-label={t('手动转动', 'Manual turns')}>
+              <label className="twisty-fallback-angle-label">
+                <span>{t('转动角度', 'Turn angle')}</span>
+                <select
+                  className="btn-secondary twisty-fallback-angle"
+                  aria-label={t('转动角度', 'Turn angle')}
+                  value={fallbackTurnAmount}
+                  onChange={(event) => setFallbackTurnAmount(Number(event.target.value))}
+                >
+                  <option value={1}>72°</option>
+                  <option value={-1}>−72°</option>
+                  <option value={2}>144°</option>
+                  <option value={-2}>−144°</option>
+                </select>
+              </label>
+              {fallbackMoves.map(({ move, label }) => (
+                <button
+                  key={move}
+                  type="button"
+                  className="btn-secondary twisty-fallback-move"
+                  disabled={playerNonce === 0 || settings?.pointerTurns === false}
+                  onClick={() => {
+                    const player = playerInstRef.current;
+                    if (!player || pointerTurnsRef.current === false) return;
+                    try {
+                      const token = new Move(move).modified({ amount: fallbackTurnAmount }).toString();
+                      player.experimentalAddMove(token);
+                    } catch { /* The native parser owns move validation. */ }
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+      {hideControls && nativeInputValid && alg.trim().length > 0 && (
         <ReconPlayOverlay
           playing={playing}
           onToggle={() => { try { playerInstRef.current?.togglePlay(); } catch { /* */ } }}

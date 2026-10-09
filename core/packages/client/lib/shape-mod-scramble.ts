@@ -21,6 +21,7 @@ export interface ShapeModEvent {
 }
 
 export const SHAPE_MOD_EVENTS: ReadonlyArray<ShapeModEvent> = [
+  { id: 'sphere',          scrambleSourceId: '333', zh: '球形',     en: 'Sphere Cube',     textLabel: 'Sphere' },
   { id: 'mirror_333',       scrambleSourceId: '333', zh: '镜面',     en: 'Mirror Blocks',   iconClass: 'unofficial-333_mirror_blocks'
 },
   { id: 'pyramorphix',      scrambleSourceId: '222', zh: '二阶金字塔',   en: 'Pyramorphix',     iconClass: 'unofficial-pyramorphix'

@@ -11,7 +11,7 @@
  */
 
 import type { EventId, Solve } from './types';
-import { CSTIMER_TRAINING_FALLBACKS } from './export-cstimer';
+import { CSTIMER_EVENT_FALLBACKS } from './export-cstimer';
 const newId = () => globalThis.crypto.randomUUID();
 import type { TimerImportSession } from './import-timer';
 
@@ -33,12 +33,13 @@ const CSTIMER_EVENT_MAP: Record<string, EventId> = {
   '777': '777', '7': '777', '77': '777',
   '333oh': '333oh', '3oh': '333oh', 'oh': '333oh',
   '333fm': '333fm', '3fm': '333fm', 'fm': '333fm', 'fmc': '333fm',
-  '333bld': '333bld', '3bld': '333bld', 'bld': '333bld',
+  '333bld': '333bld', '3bld': '333bld', 'bld': '333bld', '333ble': '333bld',
   '333mbld': '333mbld', '3mbld': '333mbld', 'mbld': '333mbld', 'mbo': '333mbld',
   '333ni': '333ni', '3ni': '333ni', 'ni': '333ni',
   '333mr': '333mr', 'mirror': '333mr', 'mirrorblocks': '333mr', 'mirblocks': '333mr',
-  '444bld': '444bld', '4bld': '444bld',
-  '555bld': '555bld', '5bld': '555bld',
+  'sphere': 'sphere', 'spherecube': 'sphere', '球形魔方': 'sphere', '球形三阶': 'sphere',
+  '444bld': '444bld', '4bld': '444bld', '4ni': '444bld',
+  '555bld': '555bld', '5bld': '555bld', '5ni': '555bld',
   '666bld': '666bld', '6bld': '666bld',
   '777bld': '777bld', '7bld': '777bld',
   'pyram': 'pyra', 'pyra': 'pyra', 'pyraminx': 'pyra',
@@ -78,6 +79,13 @@ const CSTIMER_EVENT_MAP: Record<string, EventId> = {
   'ivy': 'ivy', 'ivyso': 'ivy', 'ivyo': 'ivy',
   'redi': 'redi', 'redim': 'redi', 'rediso': 'redi',
   'mpyram': 'mpyram', 'mpyrso': 'mpyram', 'mpyr': 'mpyram',
+  // normalizeEventKey removes spaces, underscores and hyphens before lookup.
+  'pyraminxduo': 'pyraminx_duo', 'duo': 'pyraminx_duo',
+  '二重奏魔方': 'pyraminx_duo', '二重奏': 'pyraminx_duo',
+  'superz': 'superz', '二阶＋斜转': 'superz',
+  'dogic': 'dogic', 'dogic二十面体': 'dogic',
+  'octahedron4': 'octahedron4', '4×4octahedron': 'octahedron4', '4x4octahedron': 'octahedron4', '四阶八面体': 'octahedron4',
+  'dinoskewb': 'dinoskewb', '恐龙斜转': 'dinoskewb',
 };
 
 /* ------------------------------------------------------------------ */
@@ -140,6 +148,17 @@ function nameToEvent(name: unknown): { event: EventId; matched: boolean } {
   if (direct.matched) return direct;
   // Common naming patterns: "3x3 OH", "Session: 4x4", etc — extract a likely tag.
   const tokens = name.toLowerCase().match(/[a-z0-9]+/g) ?? [];
+  // The first word of "Pyraminx Duo practice" names a different puzzle.
+  // Preserve the compound name before trying individual event tokens.
+  if (tokens.some((token, index) => token === 'pyraminx' && tokens[index + 1] === 'duo')) {
+    return normalizeEventKey('pyraminxduo');
+  }
+  if (tokens.some((token, index) => token === 'dino' && tokens[index + 1] === 'skewb')) {
+    return normalizeEventKey('dinoskewb');
+  }
+  if (/\b4\s*[x×]\s*4[\s_-]+octahedron\b/i.test(name)) {
+    return normalizeEventKey('octahedron4');
+  }
   for (const t of tokens) {
     const tried = normalizeEventKey(t);
     if (tried.matched) return tried;
@@ -199,9 +218,9 @@ export function parseCstimerExport(jsonText: string): CstimerSessionParsed[] {
     const scrType = meta?.opt?.scrType ?? meta?.scrType;
     let { event, matched } = normalizeEventKey(scrType);
     const original = meta?.cuberootEvent;
-    if (typeof original === 'string' && Object.prototype.hasOwnProperty.call(CSTIMER_TRAINING_FALLBACKS, original)
-      && CSTIMER_TRAINING_FALLBACKS[original as keyof typeof CSTIMER_TRAINING_FALLBACKS] === scrType) {
-      event = original as keyof typeof CSTIMER_TRAINING_FALLBACKS;
+    if (typeof original === 'string' && Object.prototype.hasOwnProperty.call(CSTIMER_EVENT_FALLBACKS, original)
+      && CSTIMER_EVENT_FALLBACKS[original as keyof typeof CSTIMER_EVENT_FALLBACKS] === scrType) {
+      event = original as keyof typeof CSTIMER_EVENT_FALLBACKS;
       matched = true;
     }
     if (!matched) {

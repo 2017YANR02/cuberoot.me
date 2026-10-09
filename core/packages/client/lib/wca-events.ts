@@ -3,6 +3,7 @@
 import { EVENT_DISPLAY_EN, EVENT_DISPLAY_ZH } from '@cuberoot/shared/wca-events';
 import { cstimerEventDisplayName } from './cstimer-scramble';
 import { shapeModDisplayName } from './shape-mod-scramble';
+import { nativeScrambleDisplayName } from './native-scramble';
 
 // NOTE: 仓库里历史上有 3 套短名约定，全部归一化到 WCA 标准 id（333 / 222 / 333oh ...）
 //   - recon 数据：3x3 / 2x2 / 3bld / oh / mbld / pyra / mega / fmc ...
@@ -58,7 +59,7 @@ const DISPLAY_EN = EVENT_DISPLAY_EN;
 
 /** 获取项目显示名（接受短名或 WCA id）。zh/en 双语；未知 id 原样返回。
  *  `nxnN` 合成 id（N≥8 高阶魔方）走 "N阶" / "N×N"。
- *  WCA / cubing.js / cstimer 三套 catalog 的 fallback 链:WCA → cstimer → 原样 id。 */
+ *  WCA → cstimer → shape-mod → native catalog → 原样 id。 */
 export function eventDisplayName(input: string, isZh: boolean): string {
   const id = toWcaEventId(input);
   const m = /^nxn(\d+)$/.exec(id);
@@ -72,6 +73,8 @@ export function eventDisplayName(input: string, isZh: boolean): string {
   if (cstimerName) return cstimerName;
   const shapeName = shapeModDisplayName(id, isZh);
   if (shapeName) return shapeName;
+  const nativeName = nativeScrambleDisplayName(id, isZh);
+  if (nativeName) return nativeName;
   return id;
 }
 
