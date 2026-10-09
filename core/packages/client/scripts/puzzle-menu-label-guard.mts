@@ -4,6 +4,7 @@ export const puzzleMenuCatalogs = [
   'core/packages/client/lib/shape-mod-scramble.ts',
   'core/packages/client/app/[lang]/sim/pgCatalog.ts',
   'core/packages/client/app/[lang]/sim/PlayerControls.tsx',
+  'core/packages/client/app/[lang]/sim/puzzleOptions.ts',
 ];
 export function puzzleMenuLabelViolations(filePath: string, source: string): string[] {
   const path = filePath.replaceAll('\\', '/');
