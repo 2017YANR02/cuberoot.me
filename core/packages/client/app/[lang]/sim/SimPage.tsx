@@ -103,6 +103,7 @@ import AlgsPanel from './AlgsPanel';
 import PuzzleImageStudio, { type SimBridge } from '@/components/puzzle-image/PuzzleImageStudio';
 import type { DrawExport } from '@/components/puzzle-draw/types';
 import type { TwistyPlayerLike } from '@/components/puzzle-image/SimCaptureGroup';
+import { attachNative2DCompanion, type Native2DCompanionPlayer } from '@/lib/puzzle-image/native-2d-companion';
 import { useImageSpec } from '@/components/puzzle-image/useImageSpec';
 import { rotationDefaultsFor } from '@/lib/puzzle-image/defaults';
 import { type InheritedFields } from '@/lib/puzzle-image/codec';
@@ -659,7 +660,7 @@ export default function SimPage() {
   // full puzzle before the first engine frame arrives.
   const stickeringAffectsView = query.stickering !== 'full'
     && resolveCaps(puzzleParam, query.renderer).supports.stickering;
-  const staticFallbackExact = puzzleParam !== 'sphere' && (!stickeringAffectsView
+  const staticFallbackExact = !isNativePuzzleId(puzzleParam) && puzzleParam !== 'sphere' && (!stickeringAffectsView
     || (typeof puzzleParam === 'number'
       && visualcubeMaskForStickering(puzzleParam, query.stickering) !== ''));
 
@@ -1877,8 +1878,11 @@ export default function SimPage() {
   });
   const srCompanionForced = imgEngineMode === 'sr';
   const [engineSvg, setEngineSvg] = useState<string | null>(null);
+  const [engineSvgUnavailable, setEngineSvgUnavailable] = useState(false);
   useEffect(() => {
     const active = imageOpen && (!srCompanionForced || pictureCubeActive || roomsActive || !staticFallbackExact);
+    setEngineSvgUnavailable(false);
+    if (isNativePuzzleId(puzzleParam)) setEngineSvg(null);
     if (!active) { setEngineSvg(null); return; }
     // 贴纸遮罩(mask 直映):有派生表的拼图把灰化烙进镜像;没有的整程置 null,
     // PuzzleImage 落回 spec 渲染器(sr/visualcube 认 mask)—— 哪条路都不丢遮罩。
@@ -1896,6 +1900,9 @@ export default function SimPage() {
     let stable = 0;
     let exportedSig = '';
     let disposed = false;
+    let nativeCompanionPlayer: TwistyPlayerLike | null = null;
+    let stopNativeCompanion: (() => void) | undefined;
+    let native2DActive = false;
     // twisty 拼图(PG 目录 / 自定义切割 / cubing.js 渲染的 fto)无引擎 world:伴图
     // 从 TwistyPlayer vantage 取 scene+camera,喂截图 SVG 同款投影导出器(painter,
     // 颜色 sRGB 直存)。vantage 异步解析,缓存供采样拍同步用;每拍都发起刷新(不只
@@ -1912,7 +1919,7 @@ export default function SimPage() {
         if (!vantage) return;
         const camera = await vantage.camera();
         const scene = await vantage.scene.scene();
-        if (disposed || twistyPlayerRef.current !== tp) return;
+        if (disposed || native2DActive || twistyPlayerRef.current !== tp) return;
         twistyView = { scene, camera, el: (vantage.contentWrapper ?? tp) as unknown as Element };
       })().finally(() => { twistyRefreshing = false; });
     };
@@ -2093,7 +2100,39 @@ export default function SimPage() {
         return;
       }
       const tp = twistyPlayerRef.current as TwistyPlayerLike | null;
-      if (!tp) { if (exportedSig) { exportedSig = ''; setEngineSvg(null); } return; }
+      if (!tp) {
+        if (nativeCompanionPlayer) {
+          stopNativeCompanion?.();
+          stopNativeCompanion = undefined;
+          nativeCompanionPlayer = null;
+          native2DActive = false;
+          setEngineSvg(null);
+          setEngineSvgUnavailable(false);
+        }
+        if (exportedSig) { exportedSig = ''; setEngineSvg(null); }
+        return;
+      }
+      if (isNativePuzzleId(puzzleParam)) {
+        if (nativeCompanionPlayer !== tp) {
+          stopNativeCompanion?.();
+          nativeCompanionPlayer = tp;
+          native2DActive = true;
+          stopNativeCompanion = attachNative2DCompanion(tp as unknown as Native2DCompanionPlayer, {
+            current: () => !disposed && twistyPlayerRef.current === tp,
+            onUpdate: (frame) => {
+              native2DActive = frame.status !== 'inactive';
+              // The exact native SVG already includes the actual timeline
+              // pattern and any in-progress 2D transition; never rebuild it from
+              // setup + alg or request a nonexistent 3D vantage in this mode.
+              twistyView = null;
+              exportedSig = '';
+              setEngineSvg(frame.svg);
+              setEngineSvgUnavailable(frame.status === 'unavailable');
+            },
+          });
+        }
+        if (native2DActive) return;
+      }
       if (tp !== twistyFor) { twistyFor = tp; twistyView = null; }
       refreshTwistyView(tp); // 每拍刷新缓存(异步),本拍仍用手头这份
       if (!twistyView) return;
@@ -2118,7 +2157,7 @@ export default function SimPage() {
       }
     };
     raf = requestAnimationFrame(tick);
-    return () => { disposed = true; cancelAnimationFrame(raf); };
+    return () => { disposed = true; cancelAnimationFrame(raf); stopNativeCompanion?.(); };
   }, [imageOpen, srCompanionForced, pictureCubeActive, roomsActive, settings.roomTheme, pictureImageStudioEngineOnly,
       staticFallbackExact,
       imgSpec.stickerMask, imgSpec.maskColor, imgPuzzle.puzzleType,
@@ -2458,6 +2497,7 @@ export default function SimPage() {
             simBridge={simBridge}
             previewHost={imageHost}
             engineSvg={engineSvg}
+            engineSvgUnavailable={engineSvgUnavailable}
             staticFallbackExact={staticFallbackExact}
             engineOnly={pictureImageStudioEngineOnly}
             compare={imgEngineMode === 'both' && !pictureCubeActive && !roomsActive}

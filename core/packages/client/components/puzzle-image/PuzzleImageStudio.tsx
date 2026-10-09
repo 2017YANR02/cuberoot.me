@@ -206,6 +206,8 @@ export interface PuzzleImageStudioProps {
   previewHost?: HTMLElement | null;
   /** /sim 引擎 BSP 矢量镜像,透传 PuzzleImage(见其 engineSvg 注释)。 */
   engineSvg?: string | null;
+  /** The native 2D mirror failed or timed out; hide stale output and disable export. */
+  engineSvgUnavailable?: boolean;
   /** 当前状态能否由 spec/static renderer 精确复现。每个宿主必须显式表态:
    *  false 时 engineSvg 未就绪就只显示等待态并禁用导出,绝不静默退回一张内容不同的图;
    *  服务端 API / img / Markdown 也隐藏,因为它们永远拿不到实时引擎状态。 */
@@ -226,7 +228,7 @@ export interface PuzzleImageStudioProps {
 
 export default function PuzzleImageStudio({
   spec, onSpecChange, className, simBridge, previewHost, engineSvg,
-  staticFallbackExact, engineOnly = false, compare = false, externalImage,
+  engineSvgUnavailable = false, staticFallbackExact, engineOnly = false, compare = false, externalImage,
 }: PuzzleImageStudioProps) {
   const t = useT();
   const s = spec;
@@ -246,12 +248,12 @@ export default function PuzzleImageStudio({
 
   // 预览当前显示的是否引擎矢量镜像(与 PuzzleImage 的 engineMirrors 同一条件):
   // 是 → SVG/PNG 导出的必须就是它(所见即所得),而不是 spec 重渲染的近似版。
-  const engineShown = !!engineSvg && (engineOnly
+  const engineShown = !engineSvgUnavailable && !!engineSvg && (engineOnly
     || (s.puzzleType === 'cube'
       ? (s.cubeView === 'normal' || s.cubeView === 'net' || s.cubeView === 'wca'
         || s.cubeView === 'plan' || s.cubeView === 'trans')
       : s.puzzleVariant === 'iso'));
-  const exportReady = !!externalImage || engineShown || staticFallbackExact;
+  const exportReady = !engineSvgUnavailable && (!!externalImage || engineShown || staticFallbackExact);
 
   // ── export ─────────────────────────────────────────────────────────────
   // Always ask the PURE renderer first — the old code scraped `.vc-preview > svg`
@@ -259,6 +261,7 @@ export default function PuzzleImageStudio({
   // no <svg> at all). Only the genuinely DOM-only renderers fall back to
   // serializing the live DOM.
   const getCurrentSvg = useCallback((): string => {
+    if (engineSvgUnavailable) return '';
     if (externalImage) return externalImage.svg;
     // 引擎镜像:所见即所得 —— 下载件也套图片尺寸(PX),否则导出的是导出器紧凑
     // 非方 viewBox 的原生像素尺寸,忽略了尺寸控件(退役对照表 §2b「图片尺寸」)。
@@ -277,7 +280,7 @@ export default function PuzzleImageStudio({
     // layout, so a tnoodle-net fallback would export a picture unlike the preview.
     const node = previewRef.current?.querySelector('svg');
     return node ? new XMLSerializer().serializeToString(node) : '';
-  }, [s, engineShown, engineSvg, externalImage, staticFallbackExact]);
+  }, [s, engineShown, engineSvg, engineSvgUnavailable, externalImage, staticFallbackExact]);
 
   const exportWidth = externalImage?.width ?? s.imageSize;
   const exportHeight = externalImage?.height ?? s.imageSize;
@@ -458,7 +461,11 @@ export default function PuzzleImageStudio({
             dangerouslySetInnerHTML={{ __html: sizeEngineSvg(engineSvg, s.imageSize) }}
           />
         ) : (
-          <div className="vc-preview vc-preview-pending">{t('等待精确图像…', 'Waiting for the exact image…')}</div>
+          <div className="vc-preview vc-preview-pending" role="status">
+            {engineSvgUnavailable
+              ? t('二维图像暂不可用，请关闭后重新打开图像。', 'The 2D image is unavailable. Close and reopen the image to retry.')
+              : t('等待精确图像…', 'Waiting for the exact image…')}
+          </div>
         )
       ) : compare ? (
         // 对照模式(/sim?img_engine=both):同一个 spec 渲染两遍 —— 左边喂 engineSvg

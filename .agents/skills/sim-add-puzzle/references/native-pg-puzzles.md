@@ -26,6 +26,7 @@
 - 从注册表派生选择器和生成器分支，保留已有项目 ID；没有专用图标时沿用 `textLabel`，不要借用无关图标或伪造键。
 - 经 package 的公开 subpath 导入模型和 SVG；让模型、SVG 和手势统一使用 `allMoves: true`、`orientCenters: true`、`addRotations: true` 及原生 `ExperimentalPGNotation`，保持与描述播放器一致。
 - 让普通与种子打乱共用注入随机源的纯生成器，只读取注册表，不在生成路径构建几何、DOM 或图示；说明有界随机转动策略，不宣称均匀随机状态或伪造 csTimer 项目键。
+- Timer 来源显示按 `timerScrambleCapability(event)` 的实际 provider 派生：`native-random-move` 即使沿用全局 WCA 偏好，也显示练习用随机转动并同步打印文案，保留手动来源，不改全局偏好；来源菜单隐藏不可用 WCA 选项，比赛配置按 `timerSupportsRealWcaScrambles(event)` 门控。核对重新进入页面、切回 WCA 项目与训练子项目，不能只验证公式和 SVG 正确。
 - 按 [跨页面接入与验收](integration-and-verification.md) 补齐生成页三个模式、Timer 外层分发及 PDF 比例；不要以项目出现在菜单中替代实际消费验证。
 
 ## 已核证的结构来源
@@ -52,6 +53,7 @@
 - 解析原生 SVG 时，先保存所有 `orbit/piece/orientation` 的颜色查找项，再按面名和多边形顶点集合去重重合轮廓；只去重输出几何，不删除朝向颜色，否则转动后的单色中心会取不到颜色。
 - 用注册表 `visibleFacelets` 核对去重后的物理片数，按完整展开图包络与 `nativePuzzleSvgAspect` 排版；同时检查还原态和发生中心朝向变化的打乱态，没有重复片、缺色或面被裁掉。
 - 保留原生二十色、八色与六色方案，使每个还原面颜色一致；先核对 Dogic 二十个面确实使用二十种不同颜色。
+- 在四个原生项目的二维回退中，用公开 `ExperimentalSVGAnimator`、同一 loader 的 SVG/KPuzzle 和实际 `legacyPosition` 镜像图像浮层及转动过渡，保护播放器/loader 替换与卸载；失败或超时明确提示并禁用导出，不用 `setup + alg` 重建当前帧，也不回退三阶 spec 图。
 - 用可观察的颜色和形状判定还原，忽略单色等边三角块不可辨的自转及同色块之间不可辨的交换；不要拿原生朝向轨道的严格单位元替代可见还原。
 - 保留四阶八面体原生描述的小数精度，几何比较采用覆盖该近似误差的数值容差，片数、置换数与周期仍用精确断言。
 
