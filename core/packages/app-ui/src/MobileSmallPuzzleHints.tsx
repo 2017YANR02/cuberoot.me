@@ -5,6 +5,8 @@ import {
   type TimerPhase,
 } from '@cuberoot/shared/timer';
 import { TimerSmallPuzzleHints } from '@cuberoot/timer-ui';
+import { lazy, Suspense } from 'react';
+const TimerSolverHints = lazy(() => import('@cuberoot/timer-ui/TimerSolverHints'));
 
 import type { SupportedLanguage } from './copy';
 
@@ -22,6 +24,9 @@ export function MobileSmallPuzzleHints({
   phase,
   scramble,
 }: MobileSmallPuzzleHintsProps) {
+  if (event === 'sq1' || event === 'mega') return <div className="mobile-solution-hints surface-chrome" data-no-timer>
+    <Suspense fallback={null}><TimerSolverHints event={event} scramble={scramble} isZh={language === 'zh'} /></Suspense>
+  </div>;
   if (!timerSupportsSmallPuzzleHints(event)) return null;
   return (
     <div className="mobile-solution-hints surface-chrome">

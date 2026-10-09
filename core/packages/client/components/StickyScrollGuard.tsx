@@ -10,9 +10,22 @@ import { useEffect } from 'react';
 
 export default function StickyScrollGuard() {
   useEffect(() => {
+    // 窄屏已由 sticky-table.css 保证横滚，无需在每批成绩挂载后强制计算整表布局。
+    const mobile = window.matchMedia('(max-width: 767px)');
+    const pending = new Set<Element>();
+    let frame = 0;
+    const flush = () => {
+      frame = 0;
+      // 先完成所有布局读取，再写 class，避免多表之间读写交错触发重复布局。
+      const measured = [...pending].filter(host => host.isConnected)
+        .map(host => [host, host.scrollWidth > host.clientWidth + 1] as const);
+      pending.clear();
+      for (const [host, overflow] of measured) host.classList.toggle('stk-overflow', overflow);
+    };
     const check = (host: Element) => {
-      // +1 容差:亚像素取整误差,避免临界宽度反复横跳
-      host.classList.toggle('stk-overflow', host.scrollWidth > host.clientWidth + 1);
+      if (mobile.matches) return;
+      pending.add(host);
+      if (!frame) frame = requestAnimationFrame(flush);
     };
     const ro = new ResizeObserver((entries) => {
       for (const e of entries) {
@@ -24,6 +37,7 @@ export default function StickyScrollGuard() {
     });
     const seen = new WeakSet<Element>();
     const scan = () => {
+      if (mobile.matches) return;
       for (const host of document.querySelectorAll('.sticky-scroll')) {
         if (!seen.has(host)) { seen.add(host); ro.observe(host); }
         // 子元素(表格)也要观察:数据加载后内容宽度才定,容器自身 box 不一定变
@@ -33,10 +47,26 @@ export default function StickyScrollGuard() {
         check(host);
       }
     };
-    scan();
     const mo = new MutationObserver(scan);
-    mo.observe(document.body, { childList: true, subtree: true });
-    return () => { mo.disconnect(); ro.disconnect(); };
+    const syncViewport = () => {
+      mo.disconnect();
+      if (frame) cancelAnimationFrame(frame);
+      frame = 0;
+      pending.clear();
+      if (mobile.matches) {
+        for (const host of document.querySelectorAll('.sticky-scroll.stk-overflow')) host.classList.remove('stk-overflow');
+      } else {
+        mo.observe(document.body, { childList: true, subtree: true });
+        scan();
+      }
+    };
+    syncViewport();
+    mobile.addEventListener('change', syncViewport);
+    return () => {
+      mo.disconnect(); ro.disconnect();
+      mobile.removeEventListener('change', syncViewport);
+      if (frame) cancelAnimationFrame(frame);
+    };
   }, []);
   return null;
 }

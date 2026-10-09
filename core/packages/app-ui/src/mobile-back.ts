@@ -32,12 +32,14 @@ export function mobileBackAction(context: MobileBackContext): MobileBackAction {
   if (context.view === 'history' && context.historyCompareMode) return 'close-history-compare';
   if (context.moreOpen) return 'close-more';
   if (context.manualEntryOpen) return 'close-manual-entry';
+  // Settings is now a modal over the mounted timer, so dismiss it first.
+  if (context.view === 'settings') return 'close-subview';
   if (context.fullscreen) return 'exit-fullscreen';
   if (context.phase === 'holding'
     || context.phase === 'ready'
     || context.phase === 'inspecting') return 'cancel-arm';
   if (context.phase === 'running' || context.mutationBusy) return 'block-busy';
-  if (context.view === 'history' || context.view === 'settings') return 'close-subview';
+  if (context.view === 'history') return 'close-subview';
   if (context.view === 'tools' || context.view === 'account') {
     return context.webDepth > 0 ? 'embedded-back' : 'close-subview';
   }

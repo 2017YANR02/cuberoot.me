@@ -11,6 +11,9 @@
   font-weight: 600;
 }
 
+.friends-page.is-chat { max-width: 1040px; }
+.friends-actions a.friends-action { text-decoration: none; }
+
 .friends-tabs {
   display: flex;
   align-items: center;

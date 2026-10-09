@@ -77,7 +77,6 @@ function cstimerSandbox(): Record<string, unknown> | null {
   const repoRoot = path.resolve(here, '..', '..', '..', '..');
   const candidates = [
     path.join(repoRoot, 'tools', 'cstimer-scramble'),
-    'D:/cube/cuberoot.me/tools/cstimer-scramble',
   ];
   let root: string | null = null;
   for (const c of candidates) {
@@ -165,7 +164,10 @@ const REGISTRY: PuzzleDistSpec[] = [
       const solveCuboid335 = m.solveCuboid335 as (s: string, options: { optimalBudget: number; optimalDepthCap: number }) => { length: number; optimal?: boolean };
       return {
         scramble: m.randomCuboid335Scramble as SolverAdapter['scramble'],
-        solve: (s: string) => solveCuboid335(s, { optimalBudget: 50_000_000, optimalDepthCap: 20 }),
+        solve: (s: string) => {
+          const result = solveCuboid335(s, { optimalBudget: 50_000_000, optimalDepthCap: 20 });
+          return { length: result.length, optimal: result.optimal === true };
+        },
         maxBound: m.CUBOID335_MAX_LENGTH as number,
         stateCountStr: m.CUBOID335_STATE_COUNT_STR as string,
       };

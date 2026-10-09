@@ -4,12 +4,13 @@
  * NOTE: 1:1 移植自 PHP db.php + index.php 的工具函数
  */
 import type { Context } from 'hono';
+import { HTTPException } from 'hono/http-exception';
 import jwt from 'jsonwebtoken';
 import { validateReconTiming } from '@cuberoot/shared/recon-completion';
 import { ADMIN_WCA_IDS, BANNED_WCA_IDS, isAdminWcaId } from '@cuberoot/shared/admin';
 export { ADMIN_WCA_IDS } from '@cuberoot/shared/admin';
 import { JWT_SECRET, isRolePreviewActive } from './session.js';
-import { findUserByWcaId, getUserById, ownerKey } from './account.js';
+import { findUserByWcaId, findUserForLegacyWcaSession, getUserById, ownerKey } from './account.js';
 
 // 装饰性标注字符:`·`(间隔)、`↑↓`(regrip 方向记号)、分数 `⅓⅔`、ASCII `.`、各类零宽字符。
 // 这些不是真转动,记号区校验前先剥掉(与客户端 lib/recon-alg-utils.ts 的 COSMETIC_ANNOTATION_CHARS
@@ -374,9 +375,10 @@ export async function authenticateUser(authHeader: string | undefined): Promise<
       const account = payload.uid != null
         ? await getUserById(payload.uid)
         : payload.wcaId
-          ? await findUserByWcaId(payload.wcaId)
+          ? await findUserForLegacyWcaSession(payload.wcaId)
           : null;
-      if (payload.uid != null && !account) return null;
+      // Retired UID sessions and ambiguous UID-less WCA sessions cannot survive a merge.
+      if (!account || (payload.uid != null && account.id !== payload.uid)) return null;
       return {
         wcaId: ownerKey(account?.id ?? payload.uid, account?.wca_id ?? payload.wcaId),
         name: account?.display_name ?? payload.name ?? '',
@@ -636,4 +638,16 @@ export function buildDuplicateQuery(
   }
   sql += ' LIMIT 1';
   return { sql, params };
+}
+
+/** Match the existing alternative-solution byte budget, before any parsing. */
+export function assertReconTextLengths(fields: Record<string, unknown>): void {
+  for (const key of ['solution', 'scramble', 'wcaScramble', 'optimalScramble', 'wca_scramble', 'optimal_scramble']) {
+    const value = fields[key];
+    if (typeof value === 'string' && Buffer.byteLength(value, 'utf8') > 65535) {
+      throw new HTTPException(400, {
+        message: 'Validation failed: Reconstruction text must not exceed 65,535 UTF-8 bytes. 校验失败：复盘文本不能超过 65,535 个 UTF-8 字节。',
+      });
+    }
+  }
 }

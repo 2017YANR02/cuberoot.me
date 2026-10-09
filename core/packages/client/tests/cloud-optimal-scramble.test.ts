@@ -3,6 +3,11 @@ import { cloudOptimalScramble, firstBadHtmToken } from '@/lib/cloud-optimal-scra
 import { CloudOptimalScrambleHttpError } from '@cuberoot/shared/timer';
 import { useAuthStore } from '@/lib/auth-store';
 
+vi.mock('@/lib/web-session', async original => ({
+  ...await original<typeof import('@/lib/web-session')>(),
+  getWebAccessToken: vi.fn(async () => 'short-access'),
+}));
+
 const realLogout = useAuthStore.getState().logout;
 
 function sseResponse(events: string[], status = 200): Response {
@@ -87,8 +92,8 @@ describe('cloudOptimalScramble', () => {
   });
 
   it('logs out only the web session whose token received 401', async () => {
-    vi.stubGlobal('window', {});
-    vi.stubGlobal('localStorage', memoryStorage({ cuberoot_jwt: 'expired' }));
+    vi.stubGlobal('window', { location: { href: 'https://www.cuberoot.me/timer', origin: 'https://www.cuberoot.me' } });
+    vi.stubGlobal('localStorage', memoryStorage({ cuberoot_web_session_marker: 'web-session:expired' }));
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 }),
     ));
@@ -99,10 +104,10 @@ describe('cloudOptimalScramble', () => {
   });
 
   it('does not let a stale 401 log out a newer web session', async () => {
-    vi.stubGlobal('window', {});
-    vi.stubGlobal('localStorage', memoryStorage({ cuberoot_jwt: 'old' }));
+    vi.stubGlobal('window', { location: { href: 'https://www.cuberoot.me/timer', origin: 'https://www.cuberoot.me' } });
+    vi.stubGlobal('localStorage', memoryStorage({ cuberoot_web_session_marker: 'web-session:old' }));
     vi.stubGlobal('fetch', vi.fn().mockImplementation(async () => {
-      localStorage.setItem('cuberoot_jwt', 'new');
+      localStorage.setItem('cuberoot_web_session_marker', 'web-session:new');
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
     }));
     const logout = vi.fn();

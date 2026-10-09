@@ -1,5 +1,6 @@
 'use client';
 
+import { sessionFetch } from '@/lib/session-fetch';
 // 内部账号 API 客户端(邮箱/手机验证码登录 + 绑定/解绑)。全走 apiUrl(),别硬编码 origin。
 import { apiUrl } from './api-base';
 import { getSessionToken } from './auth-store';
@@ -41,7 +42,7 @@ async function authJson<T>(path: string, init: RequestInit = {}): Promise<{ resp
     });
     return await Promise.race([
       (async () => {
-        const response = await fetch(apiUrl(path), { ...init, signal: controller.signal });
+        const response = await sessionFetch(path.startsWith('/api/') ? path : apiUrl(path), { ...init, signal: controller.signal });
         const data = await response.json().catch(() => ({})) as T;
         controller.signal.throwIfAborted();
         return { response, data };
@@ -65,6 +66,7 @@ async function authJson<T>(path: string, init: RequestInit = {}): Promise<{ resp
 async function post<T>(path: string, body: unknown, auth = false, signal?: AbortSignal): Promise<T> {
   const existingIdentity = existingAccountRequired() ? getIdentityChoice()?.ticket : undefined;
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (path.startsWith('/api/') && window.parent !== window) headers['X-Web-Session-Embedded'] = '1';
   if (auth) {
     const tok = getSessionToken();
     if (tok) headers.Authorization = `Bearer ${tok}`;
@@ -104,7 +106,7 @@ export const mergeAccount = (code: string, expectedSourceUid: number) =>
 export const updateDisplayName = (name: string) =>
   post<{ ok: true; token: string; user: SessionUser }>('/v1/auth/profile', { name }, true);
 export async function fetchAccountBasicProfile(): Promise<AccountBasicProfile> {
-  const response = await fetch(apiUrl('/v1/auth/profile?v=2'), {
+  const response = await sessionFetch(apiUrl('/v1/auth/profile?v=2'), {
     headers: { Authorization: `Bearer ${getSessionToken()}` },
     cache: 'no-store',
   });
@@ -119,7 +121,7 @@ export const updateAccountBasicProfile = (
   basic: Pick<AccountBasicProfile, 'fullName' | 'birthDate' | 'gender' | 'countryIso2' | 'regionCode' | 'cityName'>,
 ) => post<{ ok: true; profile: AccountBasicProfile }>('/v1/auth/profile', { basic }, true);
 export async function fetchAdminUser(userId: number): Promise<SessionUser> {
-  const response = await fetch(apiUrl(`/v1/auth/admin/users/${userId}`), {
+  const response = await sessionFetch(apiUrl(`/v1/auth/admin/users/${userId}`), {
     headers: authHeaders(false),
     cache: 'no-store',
   });
@@ -162,6 +164,7 @@ export interface AdminUserRecord {
 }
 export interface AdminUsersResponse {
   canManageAdmins: boolean;
+  canImpersonateUsers: boolean;
   summary: {
     totalUsers: number;
     registeredToday: number;
@@ -206,14 +209,14 @@ export async function fetchAdminUsers(params: {
   if (params.direction) search.set('direction', params.direction);
   if (params.from) search.set('from', params.from);
   if (params.to) search.set('to', params.to);
-  const response = await fetch(apiUrl(`/v1/auth/admin/users?${search}`), {
+  const response = await sessionFetch(apiUrl(`/v1/auth/admin/users?${search}`), {
     headers: authHeaders(false),
     cache: 'no-store',
   });
   return handleApi<AdminUsersResponse>(response);
 }
 export async function updateAdminDisplayName(userId: number, name: string): Promise<SessionUser> {
-  const response = await fetch(apiUrl(`/v1/auth/admin/users/${userId}/profile`), {
+  const response = await sessionFetch(apiUrl(`/v1/auth/admin/users/${userId}/profile`), {
     method: 'POST',
     headers: authHeaders(true),
     body: JSON.stringify({ name }),
@@ -224,7 +227,7 @@ export async function updateAdminRole(
   userId: number,
   isAdmin: boolean,
 ): Promise<{ isAdmin: boolean; isRootAdmin: boolean }> {
-  const response = await fetch(apiUrl(`/v1/auth/admin/users/${userId}/admin`), {
+  const response = await sessionFetch(apiUrl(`/v1/auth/admin/users/${userId}/admin`), {
     method: 'PATCH',
     headers: authHeaders(true),
     body: JSON.stringify({ isAdmin }),
@@ -271,12 +274,12 @@ function canonicalSessionResponse(response: SessionResp): SessionResp {
 }
 export const loginWca = (accessToken: string, signal?: AbortSignal) => postCanonicalSession('/v1/auth/exchange', { accessToken }, false, signal);
 export const completeIdentityChoice = (ticket: string, action: 'create' | 'link', expectedUid?: number, signal?: AbortSignal) =>
-  postCanonicalSession('/v1/auth/identity/complete', { ticket, action, ...(expectedUid === undefined ? {} : { expectedUid }) }, action === 'link', signal);
+  postCanonicalSession('/api/identity-choice', { operation: 'complete', ticket, action, ...(expectedUid === undefined ? {} : { expectedUid }) }, action === 'link', signal);
 export const linkGoogle = (assertion: string) => post<{ ok: true; identities: Identity[] }>('/v1/auth/link/google', { assertion }, true);
 
-// 国内三方(微信/QQ/支付宝):授权码重定向流。浏览器跳授权页 → 回调拿 code → 交后端换身份。
-export type SocialProvider = 'wechat' | 'qq' | 'alipay';
-export const SOCIAL_PROVIDERS: readonly SocialProvider[] = ['wechat', 'qq', 'alipay'];
+// 国内三方(微信/QQ/支付宝/抖音):授权码重定向流。浏览器跳授权页 → 回调拿 code → 交后端换身份。
+export type SocialProvider = 'wechat' | 'qq' | 'alipay' | 'douyin';
+export const SOCIAL_PROVIDERS: readonly SocialProvider[] = ['wechat', 'qq', 'alipay', 'douyin'];
 export type RedirectAuthProvider = SocialProvider | 'apple';
 export const REDIRECT_AUTH_PROVIDERS: readonly RedirectAuthProvider[] = ['apple', ...SOCIAL_PROVIDERS];
 // 服务端验签 state；Apple 额外验证只在 POST body 传递的浏览器 PKCE verifier。
@@ -306,7 +309,7 @@ export const startWechatBrowserLogin = () => post<WechatBrowserLoginStart>(
 );
 
 export async function exchangeWechatBrowserLogin(ticket: string): Promise<SessionResp | null> {
-  const res = await fetch(apiUrl('/v1/auth/wechat/browser-session/exchange'), {
+  const res = await sessionFetch(apiUrl('/v1/auth/wechat/browser-session/exchange'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ticket }),
@@ -327,7 +330,7 @@ let providersCache: AuthProviders | null = null;
 /** 服务端已配置的登录方式(env 未配 email/sms/google 则对应关闭)。成功结果进模块缓存;
  *  拿不到就乐观全开 email/phone/wca(退化成旧行为:点未配的方式走 503 + 友好文案),
  *  但 google 拿不到 clientId/relayUrl 就是 null(没有它俩发不起弹窗/验不了真,不能乐观)。 */
-const NO_SOCIAL: Record<SocialProvider, string | null> = { wechat: null, qq: null, alipay: null };
+const NO_SOCIAL: Record<SocialProvider, string | null> = { wechat: null, qq: null, alipay: null, douyin: null };
 function normSocial(raw: unknown): Record<SocialProvider, string | null> {
   const s = (raw ?? {}) as Record<string, unknown>;
   const out = { ...NO_SOCIAL };

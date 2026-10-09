@@ -11,7 +11,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Check, X, RotateCcw, ArrowRight, Flag } from 'lucide-react';
 import Link from '@/components/AppLink';
-import { UserIdLabel } from '@/components/UserIdLabel';
+import { UserContactLink } from '@/components/UserIdLabel';
 import { tr } from '@/i18n/tr';
 import { persistItem } from '@/lib/safe-storage';
 import { useAuthStore, useAuthUser } from '@/lib/auth-store';
@@ -329,13 +329,12 @@ export default function QuizRunner({ level, cat, category, community }: Props) {
 
           {q.by && (
             <div className="quiz-by">
-              <span className="quiz-by-who">
+              <UserContactLink userId={q.by.authorUserId} className="quiz-by-who">
                 {tr({
                   zh: `出题人:${q.by.authorName || '一位用户'}`,
                   en: `Contributed by ${q.by.authorName || 'a member'}`,
                 })}
-              </span>
-              <UserIdLabel userId={q.by.authorUserId} />
+              </UserContactLink>
               {q.by.onlyLang && (
                 <span className="quiz-by-lang">
                   {q.by.onlyLang === 'zh'

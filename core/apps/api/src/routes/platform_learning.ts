@@ -1,4 +1,5 @@
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import type { Context } from 'hono';
 import { requirePlatformActor, requirePlatformAdmin } from '../platform/auth.js';
 import { decryptPlatformPrivateData, encryptPlatformPrivateData } from '../platform/data_encryption.js';
 import {
@@ -40,6 +41,8 @@ import {
   resourceId,
   stringField,
 } from '../platform/validation.js';
+
+import { awardLearningPoints, learningAchievementMetrics, learningDate, learningStreak } from '../platform/learning_completion.js';
 
 export const platformLearningRoutes = platformRouter();
 
@@ -142,11 +145,17 @@ platformLearningRoutes.get('/entitlements', async (c) => {
 
 platformLearningRoutes.get('/me/courses', async (c) => {
   const actor = await requirePlatformActor(c);
+  const {page,pageSize,offset}=pagination(c);
+  const paged=c.req.query('page')!==undefined;
   const rows = await platformQuery(platformDb(), `
-    SELECT e.course_id::text AS id, course.slug, e.status,
+    SELECT COUNT(*) OVER()::int AS "resultTotal", e.course_id::text AS id, course.slug, e.status,
            COALESCE(NULLIF(cr.title_zh, ''), cr.title_en) AS title,
-           cr.title_zh AS "titleZh", cr.title_en AS "titleEn",
-           COALESCE(ROUND(AVG(progress.progress_bps))::integer, 0) AS "progressBps"
+           cr.title_zh AS "titleZh", cr.title_en AS "titleEn", cr.presentation,
+           COUNT(lesson.id)::int AS "totalLessons", COUNT(lesson.id) FILTER (WHERE progress.status = 'completed')::int AS "completedLessons",
+           (SELECT l.id::text FROM platform_lessons l LEFT JOIN platform_lesson_progress p ON p.lesson_id=l.id AND p.user_id=e.user_id
+             WHERE l.course_id=e.course_id AND l.status='published'
+             ORDER BY (p.status='in_progress') DESC NULLS LAST, p.updated_at DESC NULLS LAST, l.ordinal LIMIT 1) AS "continueLessonId",
+           COALESCE(ROUND(AVG(COALESCE(progress.progress_bps, 0)))::integer, 0) AS "progressBps"
     FROM platform_course_entitlements e
     JOIN platform_courses course ON course.id = e.course_id
     LEFT JOIN platform_course_revisions cr
@@ -154,12 +163,12 @@ platformLearningRoutes.get('/me/courses', async (c) => {
     LEFT JOIN platform_lessons lesson ON lesson.course_id = course.id AND lesson.status = 'published'
     LEFT JOIN platform_lesson_progress progress
       ON progress.lesson_id = lesson.id AND progress.user_id = e.user_id
-    WHERE e.user_id = $1
-    GROUP BY e.course_id, course.slug, e.status, cr.title_zh, cr.title_en
-    ORDER BY MAX(e.updated_at) DESC, e.course_id
-  `, [actor.userId]);
+    WHERE e.user_id = $1 AND ($4::text IS NULL OR ((e.course_id::text=$4 OR course.slug=$4) AND e.status='active' AND e.valid_from<=NOW() AND (e.valid_until IS NULL OR e.valid_until>NOW())))
+    GROUP BY e.course_id, e.user_id, course.slug, e.status, cr.title_zh, cr.title_en, cr.presentation
+    ORDER BY MAX(e.updated_at) DESC, e.course_id LIMIT $2 OFFSET $3
+  `, [actor.userId,paged?pageSize:null,paged?offset:0,c.req.query('courseId')??null]);
   privateNoStore(c);
-  return c.json({ items: rows });
+  return c.json({items:rows,page,pageSize,total:Number(rows[0]?.resultTotal??0)});
 });
 
 platformLearningRoutes.get('/me/progress', async (c) => {
@@ -191,7 +200,7 @@ platformLearningRoutes.put('/me/progress/:lessonId', async (c) => {
   const completed = booleanField(body, 'completed');
   const progressBps = explicitBps ?? (progressPercent == null ? (completed ? 10_000 : undefined) : progressPercent * 100);
   if (progressBps == null) badRequest('progressBps or progressPercent is required');
-  const positionSeconds = integerField(body, 'positionSeconds', { min: 0, max: 86_400 }) ?? 0;
+  const positionSeconds = integerField(body, 'positionSeconds', { min: 0, max: 86_400 }) ?? integerField(body, 'lastPositionSeconds', { min: 0, max: 86_400 }) ?? 0;
   const requestedStatus = enumField(body, 'status', ['not_started', 'in_progress', 'completed'] as const);
   const status = requestedStatus ?? (progressBps === 10_000 ? 'completed' : progressBps > 0 ? 'in_progress' : 'not_started');
   if (status === 'completed' && progressBps !== 10_000) badRequest('Completed progress must be 10000 bps');
@@ -203,17 +212,17 @@ platformLearningRoutes.put('/me/progress/:lessonId', async (c) => {
         started_at, completed_at
       ) VALUES (
         $1, $2::uuid, $3, $4, $5, $6,
-        CASE WHEN $4 <> 'not_started' THEN NOW() END,
-        CASE WHEN $4 = 'completed' THEN NOW() END
+        CASE WHEN $4::varchar <> 'not_started' THEN NOW() END,
+        CASE WHEN $4::varchar = 'completed' THEN NOW() END
       )
       ON CONFLICT (user_id, lesson_id) DO UPDATE SET
         lesson_revision = EXCLUDED.lesson_revision,
-        status = EXCLUDED.status,
-        progress_bps = EXCLUDED.progress_bps,
+        status = CASE WHEN platform_lesson_progress.status = 'completed' THEN 'completed' ELSE EXCLUDED.status END,
+        progress_bps = GREATEST(platform_lesson_progress.progress_bps, EXCLUDED.progress_bps),
         position_seconds = EXCLUDED.position_seconds,
         started_at = COALESCE(platform_lesson_progress.started_at, EXCLUDED.started_at),
         completed_at = CASE WHEN EXCLUDED.status = 'completed'
-          THEN COALESCE(platform_lesson_progress.completed_at, NOW()) ELSE NULL END
+          THEN COALESCE(platform_lesson_progress.completed_at, NOW()) ELSE platform_lesson_progress.completed_at END
       RETURNING lesson_id::text AS id, lesson_revision AS "lessonRevision", status,
                 progress_bps AS "progressBps", position_seconds AS "positionSeconds",
                 started_at AS "startedAt", completed_at AS "completedAt", updated_at AS "updatedAt"
@@ -222,6 +231,7 @@ platformLearningRoutes.put('/me/progress/:lessonId', async (c) => {
       `learning.progress:${lessonId}:${lesson.revision}:${progressBps}:${positionSeconds}:${randomUUID()}`, {
         lessonId, courseId: lesson.courseId, progressBps, status,
       });
+    if (rows[0]?.status === 'completed') await awardLearningPoints(db, actor.userId!, `learning:lesson:${lessonId}`, 8);
     return { status: 200, body: rows[0]!, resourceType: 'lesson_progress', resourceId: lessonId };
   });
   return sendMutation(c, result);
@@ -229,20 +239,24 @@ platformLearningRoutes.put('/me/progress/:lessonId', async (c) => {
 
 platformLearningRoutes.get('/me/notes', async (c) => {
   const actor = await requirePlatformActor(c);
+  const {page,pageSize,offset}=pagination(c);
+  const paged=c.req.query('page')!==undefined;
   const rows = await platformQuery(platformDb(), `
-    SELECT n.id::text, n.lesson_id::text AS "lessonId", lesson.course_id::text AS "courseId",
+    SELECT COUNT(*) OVER()::int AS "resultTotal", n.id::text, n.lesson_id::text AS "lessonId", lesson.course_id::text AS "courseId",
            n.position_seconds AS "positionSeconds", n.body,
-           n.created_at AS "createdAt", n.updated_at AS "updatedAt",
+           n.created_at AS "createdAt", n.updated_at AS "updatedAt", cr.title_zh AS "courseTitleZh", cr.title_en AS "courseTitleEn",
            COALESCE(NULLIF(lr.title_zh, ''), lr.title_en) AS title
     FROM platform_lesson_notes n
     JOIN platform_lessons lesson ON lesson.id = n.lesson_id
+    JOIN platform_courses course ON course.id=lesson.course_id
+    JOIN platform_course_revisions cr ON cr.course_id=course.id AND cr.revision=course.current_revision
     LEFT JOIN platform_lesson_revisions lr
       ON lr.lesson_id = lesson.id AND lr.revision = lesson.current_revision
     WHERE n.user_id = $1
-    ORDER BY n.updated_at DESC, n.id
-  `, [actor.userId]);
+    ORDER BY n.updated_at DESC, n.id LIMIT $2 OFFSET $3
+  `, [actor.userId,paged?pageSize:null,paged?offset:0]);
   privateNoStore(c);
-  return c.json({ items: rows });
+  return c.json({items:rows,page,pageSize,total:Number(rows[0]?.resultTotal??0)});
 });
 
 platformLearningRoutes.put('/me/notes/:id', async (c) => {
@@ -299,16 +313,19 @@ platformLearningRoutes.delete('/me/notes/:id', async (c) => {
 platformLearningRoutes.get('/me/favorites', async (c) => {
   const actor = await requirePlatformActor(c);
   const rows = await platformQuery(platformDb(), `
-    SELECT COALESCE(f.course_id, f.product_id, f.event_id)::text AS id, f.target_type AS "targetType",
+    SELECT COALESCE(f.course_id, f.product_id, f.event_id, f.news_article_id)::text AS id, f.target_type AS "targetType",
+           COALESCE(cr.title_zh,product.title_zh,event.title_zh,news.title_zh) AS "titleZh",
+           COALESCE(cr.title_en,product.title_en,event.title_en,news.title_en) AS "titleEn",
            COALESCE(NULLIF(cr.title_zh, ''), cr.title_en,
                     NULLIF(product.title_zh, ''), product.title_en,
-                    NULLIF(event.title_zh, ''), event.title_en) AS title,
+                    NULLIF(event.title_zh, ''), event.title_en, NULLIF(news.title_zh,''),news.title_en) AS title,
            f.created_at AS "createdAt"
     FROM platform_favorites f
     LEFT JOIN platform_courses course ON course.id = f.course_id
     LEFT JOIN platform_course_revisions cr ON cr.course_id = course.id AND cr.revision = course.current_revision
     LEFT JOIN platform_products product ON product.id = f.product_id
     LEFT JOIN platform_events event ON event.id = f.event_id
+    LEFT JOIN platform_news_articles news ON news.id=f.news_article_id
     WHERE f.user_id = $1
     ORDER BY f.created_at DESC
   `, [actor.userId]);
@@ -319,7 +336,7 @@ platformLearningRoutes.get('/me/favorites', async (c) => {
 platformLearningRoutes.get('/me/wishlist', async (c) => {
   const actor = await requirePlatformActor(c);
   const rows = await platformQuery(platformDb(), `
-    SELECT f.product_id::text AS id, 'product' AS "targetType",
+    SELECT f.product_id::text AS id, 'product' AS "targetType", product.title_zh AS "titleZh", product.title_en AS "titleEn",
            COALESCE(NULLIF(product.title_zh, ''), product.title_en) AS title,
            f.created_at AS "createdAt"
     FROM platform_favorites f
@@ -335,10 +352,10 @@ async function mutateFavorite(c: Parameters<typeof requirePlatformActor>[0], for
   const actor = await requirePlatformActor(c);
   const targetId = resourceId(c.req.param('id') ?? '');
   const body = await readJsonObject(c);
-  const targetType = forcedType ?? enumField(body, 'targetType', ['course', 'product', 'event'] as const, { required: true })!;
+  const targetType = forcedType ?? enumField(body, 'targetType', ['course', 'product', 'event', 'news'] as const, { required: true })!;
   const enabled = booleanField(body, 'active') ?? booleanField(body, 'enabled') ?? true;
-  const column = targetType === 'course' ? 'course_id' : targetType === 'product' ? 'product_id' : 'event_id';
-  const table = targetType === 'course' ? 'platform_courses' : targetType === 'product' ? 'platform_products' : 'platform_events';
+  const column = targetType === 'course' ? 'course_id' : targetType === 'product' ? 'product_id' : targetType === 'news' ? 'news_article_id' : 'event_id';
+  const table = targetType === 'course' ? 'platform_courses' : targetType === 'product' ? 'platform_products' : targetType === 'news' ? 'platform_news_articles' : 'platform_events';
   const result = await withIdempotency(c, actor, `learning.favorite:${targetType}:${targetId}`, body, async (db) => {
     const exists = await platformQuery(db, `SELECT id::text FROM ${table} WHERE id = $1::uuid`, [targetId]);
     if (!exists[0]) notFound(targetType);
@@ -360,20 +377,34 @@ platformLearningRoutes.put('/me/wishlist/:id', (c) => mutateFavorite(c, 'product
 
 platformLearningRoutes.get('/me/badges', async (c) => {
   const actor = await requirePlatformActor(c);
-  const rows = await platformQuery(platformDb(), `
-    SELECT ua.id::text, a.achievement_key AS "achievementKey",
-           COALESCE(NULLIF(a.title_zh, ''), a.title_en) AS title,
-           a.title_zh AS "titleZh", a.title_en AS "titleEn",
-           a.description_zh AS "descriptionZh", a.description_en AS "descriptionEn",
-           a.point_reward AS "pointReward", ua.evidence_snapshot AS evidence,
-           ua.awarded_at AS "awardedAt"
-    FROM platform_user_achievements ua
-    JOIN platform_achievements a ON a.id = ua.achievement_id
-    WHERE ua.user_id = $1 AND a.status <> 'archived'
-    ORDER BY ua.awarded_at DESC, ua.id
-  `, [actor.userId]);
+  const db = platformDb();
+  const metrics = await learningAchievementMetrics(db, actor.userId!, actor.ownerKey);
+  const rows = await platformQuery(db, `SELECT a.id::text, a.achievement_key AS "achievementKey", a.title_zh AS "titleZh", a.title_en AS "titleEn",
+    a.description_zh AS "descriptionZh", a.description_en AS "descriptionEn", a.point_reward AS "pointReward", a.rule_snapshot AS rule,
+    ua.awarded_at AS "awardedAt" FROM platform_achievements a LEFT JOIN platform_user_achievements ua ON ua.achievement_id=a.id AND ua.user_id=$1
+    WHERE a.status='active' OR ua.id IS NOT NULL ORDER BY a.created_at,a.id`, [actor.userId]);
+  // A read is read-only: award evaluation happens explicitly via the refresh action below.
   privateNoStore(c);
-  return c.json({ items: rows });
+  return c.json({ items: rows.map(row => { const rule = row.rule as Record<string, unknown>; return { ...row, progress: metrics[String(rule.metric)] ?? 0 }; }) });
+});
+
+platformLearningRoutes.post('/me/badges/refresh', async (c) => {
+  const actor = await requirePlatformActor(c);
+  const result = await withIdempotency(c, actor, 'learning.badges.refresh', await readJsonObject(c), async db => {
+    await platformQuery(db, 'SELECT id FROM app_users WHERE id=$1 FOR UPDATE', [actor.userId]);
+    // Snapshot before any award: a badge cannot fund its own threshold.
+    const metrics = await learningAchievementMetrics(db, actor.userId!, actor.ownerKey);
+    const achievements = await platformQuery(db, `SELECT id::text,rule_snapshot AS rule,point_reward AS points FROM platform_achievements WHERE status='active'`);
+    for (const achievement of achievements) {
+      const rule = achievement.rule as Record<string, unknown>; const value = metrics[String(rule.metric)];
+      if (value === undefined || value < Number(rule.threshold)) continue;
+      await platformQuery(db, `INSERT INTO platform_user_achievements(user_id,achievement_id,evidence_snapshot)
+        VALUES($1,$2::uuid,$3::jsonb) ON CONFLICT(user_id,achievement_id) DO NOTHING`, [actor.userId,achievement.id,{metric:rule.metric,value}]);
+      await awardLearningPoints(db, actor.userId!, `learning:badge:${achievement.id}`, Number(achievement.points));
+    }
+    return {status:200,body:{refreshed:true},resourceType:'learning_achievements',resourceId:String(actor.userId)};
+  });
+  return sendMutation(c,result);
 });
 
 platformLearningRoutes.get('/me/invites', async (c) => {
@@ -519,8 +550,10 @@ platformLearningRoutes.post('/invites/redeem', async (c) => {
     let entitlementId: string | null = null;
     let entitlementGrantLedgerId: string | null = null;
     let membershipId: string | null = null;
+    let redeemedCourseId: string | null = null;
     if (typeof benefit.courseId === 'string') {
       const courseId = resourceId(benefit.courseId, 'courseId');
+      redeemedCourseId = courseId;
       const courses = await platformQuery(db, `SELECT id::text FROM platform_courses WHERE id = $1::uuid AND status IN ('published','unlisted') FOR SHARE`, [courseId]);
       if (!courses[0]) notFound('Course');
       const entitlements = await platformQuery<{ id: string }>(db, `
@@ -571,7 +604,7 @@ platformLearningRoutes.post('/invites/redeem', async (c) => {
     `, [invite.id, actor.userId, entitlementId, entitlementGrantLedgerId, membershipId]);
     return {
       status: 201,
-      body: { id: redemptions[0].id, entitlementId, membershipId },
+      body: { id: redemptions[0].id, entitlementId, membershipId, courseId: redeemedCourseId },
       resourceType: 'platform_invite_redemption',
       resourceId: redemptions[0].id,
     };
@@ -759,33 +792,50 @@ platformLearningRoutes.delete('/admin/invites/:id', async (c) => {
   return sendMutation(c, result);
 });
 
-platformLearningRoutes.get('/lessons/:lessonId/media', async (c) => {
-  const lessonId = resourceId(c.req.param('lessonId'), 'lessonId');
+async function lessonMediaContext(c: Context) {
+  const lessonKey = c.req.param('lessonId');
+  if (!lessonKey) badRequest('lessonId is required');
+  const lessonId = resourceId(lessonKey, 'lessonId');
   const token = c.req.query('token');
   const db = platformDb();
-  const lessons = await platformQuery<{ current_revision: number; course_id: string; access_scope: string }>(db, `
-    SELECT lesson.current_revision, lesson.course_id::text, lesson.access_scope
+  const lessons = await platformQuery<{
+    current_revision: number; course_id: string; access_scope: string;
+    media_id: string | null; media_storage_key: string | null; media_mime_type: string | null; media_size_bytes: number | string | null;
+    cover_id: string | null; cover_storage_key: string | null; cover_mime_type: string | null; cover_size_bytes: number | string | null;
+  }>(db, `
+    SELECT lesson.current_revision, lesson.course_id::text, lesson.access_scope,
+      media.id::text AS media_id, media.storage_key AS media_storage_key,
+      media.mime_type AS media_mime_type, media.size_bytes AS media_size_bytes,
+      cover.id::text AS cover_id, cover.storage_key AS cover_storage_key,
+      cover.mime_type AS cover_mime_type, cover.size_bytes AS cover_size_bytes
     FROM platform_lessons lesson JOIN platform_courses course ON course.id = lesson.course_id
-    WHERE lesson.id = $1::uuid AND lesson.status = 'published' AND lesson.current_revision IS NOT NULL
-      AND course.status IN ('published', 'unlisted')
-  `, [lessonId]);
+    JOIN platform_lesson_revisions revision
+      ON revision.lesson_id = lesson.id AND revision.revision = lesson.current_revision
+    LEFT JOIN platform_media_assets media
+      ON media.id = revision.media_id AND media.status = 'ready' AND media.access_scope IN ('public', 'entitled')
+    LEFT JOIN platform_media_assets cover
+      ON cover.id = revision.cover_media_id AND cover.status = 'ready' AND cover.access_scope IN ('public', 'entitled')
+    WHERE lesson.id = $1::uuid AND lesson.current_revision IS NOT NULL
+      AND ($2::boolean OR (lesson.status = 'published' AND course.status IN ('published', 'unlisted')))
+  `, [lessonId, token != null]);
   const lesson = lessons[0];
   if (!lesson) notFound('Lesson');
-  const revision = lesson.current_revision;
   if (token == null && lesson.access_scope !== 'public') {
     await requireCourseEntitlement(db, await requirePlatformActor(c), lesson.course_id, lessonId);
   }
-  const assets = await platformQuery<{
-    id: string; storage_key: string; mime_type: string; size_bytes: number | string;
-  }>(db, `
-    SELECT media.id::text, media.storage_key, media.mime_type, media.size_bytes
-    FROM platform_lesson_revisions revision
-    JOIN platform_media_assets media ON media.id = revision.media_id
-    WHERE revision.lesson_id = $1::uuid AND revision.revision = $2
-      AND media.status = 'ready' AND media.access_scope IN ('public', 'entitled')
-  `, [lessonId, revision]);
-  const asset = assets[0];
-  if (!asset) notFound('Lesson media');
+  return { lessonId, token, lesson };
+}
+
+platformLearningRoutes.get('/lessons/:lessonId/media', async (c) => {
+  const { lessonId, token, lesson } = await lessonMediaContext(c);
+  const revision = lesson.current_revision;
+  if (!lesson.media_id || !lesson.media_storage_key || !lesson.media_mime_type || lesson.media_size_bytes == null) notFound('Lesson media');
+  const asset = {
+    id: lesson.media_id,
+    storage_key: lesson.media_storage_key,
+    mime_type: lesson.media_mime_type,
+    size_bytes: lesson.media_size_bytes,
+  };
   const binding = `lesson:${lessonId}:${revision}`;
   if (token != null) {
     if (!verifyPlatformMediaToken({ token, mediaId: asset.id, binding })) {
@@ -801,6 +851,18 @@ platformLearningRoutes.get('/lessons/:lessonId/media', async (c) => {
   const accessUrl = new URL(c.req.url);
   accessUrl.search = '';
   accessUrl.searchParams.set('token', signed.token);
+  let posterUrl: string | null = null;
+  if (lesson.cover_id) {
+    const poster = createPlatformMediaToken({
+      mediaId: lesson.cover_id,
+      binding: `lesson-cover:${lessonId}:${revision}`,
+    });
+    const url = new URL(c.req.url);
+    url.pathname = url.pathname.replace(/\/media$/, '/cover');
+    url.search = '';
+    url.searchParams.set('token', poster.token);
+    posterUrl = url.toString();
+  }
   privateNoStore(c);
   return c.json({
     mediaId: asset.id,
@@ -808,7 +870,24 @@ platformLearningRoutes.get('/lessons/:lessonId/media', async (c) => {
     sizeBytes: Number(asset.size_bytes),
     accessUrl: accessUrl.toString(),
     expiresAt: signed.expiresAt,
+    posterUrl,
   });
+});
+
+platformLearningRoutes.get('/lessons/:lessonId/cover', async (c) => {
+  const { lessonId, token, lesson } = await lessonMediaContext(c);
+  if (!lesson.cover_id || !lesson.cover_storage_key || !lesson.cover_mime_type || lesson.cover_size_bytes == null) {
+    notFound('Lesson cover');
+  }
+  const binding = `lesson-cover:${lessonId}:${lesson.current_revision}`;
+  if (token != null && !verifyPlatformMediaToken({ token, mediaId: lesson.cover_id, binding })) {
+    throw new PlatformApiError('FORBIDDEN', 403, 'Media access token is invalid or expired');
+  }
+  return servePlatformMedia(c, {
+    storageKey: lesson.cover_storage_key,
+    mimeType: lesson.cover_mime_type,
+    sizeBytes: lesson.cover_size_bytes,
+  }, 'private, no-store');
 });
 
 platformLearningRoutes.post('/learning/lessons/:lessonId/quiz', async (c) => {
@@ -854,6 +933,7 @@ platformLearningRoutes.post('/learning/lessons/:lessonId/quiz', async (c) => {
     let maxPoints = 0;
     const submittedAnswers = rawAnswers as unknown[] | Record<string, unknown>;
     const typedAnswers: PlatformQuizAnswer[] = [];
+    const feedback: Record<string, unknown>[] = [];
     for (const [index, question] of questions.entries()) {
       const choices = question.choices;
       const choiceCount = Array.isArray(choices) ? choices.length : -1;
@@ -887,6 +967,7 @@ platformLearningRoutes.post('/learning/lessons/:lessonId/quiz', async (c) => {
         label: `answerKey[${index}]`,
       });
       typedAnswers.push(answer);
+      feedback.push({ questionId: question.id, selected: answer, expected, correct: platformQuizAnswersEqual(answer, expected), explanation: answerKey.explanation ?? answerKey.explain ?? '' });
       if (platformQuizAnswersEqual(answer, expected)) {
         scorePoints += question.points;
       }
@@ -894,7 +975,7 @@ platformLearningRoutes.post('/learning/lessons/:lessonId/quiz', async (c) => {
     }
     const scoreBps = Math.round((scorePoints * 10_000) / maxPoints);
     const passed = scoreBps >= quiz.passing_score_bps;
-    const answersSnapshot = encryptPlatformPrivateData({ answers: typedAnswers });
+    const answersSnapshot = encryptPlatformPrivateData({ answers: typedAnswers, feedback });
     const rows = await platformQuery(db, `
       INSERT INTO platform_quiz_attempts (
         user_id, quiz_id, quiz_revision, attempt_number, status,
@@ -911,7 +992,8 @@ platformLearningRoutes.post('/learning/lessons/:lessonId/quiz', async (c) => {
       `learning.quiz:${rows[0]!.id}`, {
         attemptId: rows[0]!.id, quizId: quiz.id, scoreBps, passed,
       });
-    return { status: 201, body: rows[0]!, resourceType: 'quiz_attempt', resourceId: String(rows[0]!.id) };
+    const awardedPoints = scoreBps === 10_000 ? await awardLearningPoints(db, actor.userId!, `learning:quiz:${quiz.id}`, 5) : false;
+    return { status: 201, body: { ...rows[0]!, feedback, awardedPoints }, resourceType: 'quiz_attempt', resourceId: String(rows[0]!.id) };
   });
   return sendMutation(c, result);
 });
@@ -957,7 +1039,15 @@ platformLearningRoutes.get('/certificates/:code/image', async (c) => {
       AND media.mime_type LIKE 'image/%'
   `, [hash]);
   const asset = rows[0];
-  if (!asset) notFound('Certificate image');
+  if (!asset) {
+    const certs=await platformQuery(platformDb(),`SELECT recipient_name_snapshot AS name,course_title_snapshot AS course,issued_at::date::text AS date FROM platform_certificates WHERE verification_code_hash=decode($1,'hex') AND status='issued'`,[hash]);
+    if(!certs[0]) notFound('Certificate image');
+    const escape=(value:unknown)=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[char]!));
+    const cert=certs[0];
+    c.header('Content-Type','image/svg+xml; charset=utf-8'); c.header('Cache-Control','public, max-age=60, s-maxage=300');
+    c.header('Content-Security-Policy',"default-src 'none'; style-src 'unsafe-inline'");
+    return c.body(`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800"><rect width="1200" height="800" fill="#faf8f2"/><rect x="30" y="30" width="1140" height="740" fill="none" stroke="#89734b" stroke-width="3"/><g text-anchor="middle" fill="#302b20" font-family="sans-serif"><text x="600" y="160" font-size="36">CubeRoot · 结课证书</text><text x="600" y="230" font-size="22">Certificate of completion</text><text x="600" y="345" font-size="42">${escape(cert.name)}</text><text x="600" y="425" font-size="26">${escape(cert.course)}</text><text x="600" y="560" font-size="22">${escape(cert.date)}</text><text x="600" y="665" font-size="15">${escape(code)}</text></g></svg>`);
+  }
   return servePlatformMedia(c, {
     storageKey: asset.storage_key,
     mimeType: asset.mime_type,
@@ -1009,13 +1099,14 @@ platformLearningRoutes.post('/instructor/certificates', async (c) => {
     }
     const verificationCode = randomBytes(24).toString('base64url');
     const hash = createHash('sha256').update(verificationCode, 'utf8').digest('hex');
+    const encryptedCode = encryptPlatformPrivateData({ verificationCode });
     const rows = await platformQuery(db, `
       INSERT INTO platform_certificates (
         verification_code_hash, user_id, course_id, entitlement_id, recipient_name_snapshot,
-        course_title_snapshot, image_media_id, issued_by_user_id
-      ) VALUES (decode($1, 'hex'), $2, $3::uuid, $4::uuid, $5, $6, $7::uuid, $8)
+        course_title_snapshot, image_media_id, issued_by_user_id, verification_code_encrypted, verification_key_version
+      ) VALUES (decode($1, 'hex'), $2, $3::uuid, $4::uuid, $5, $6, $7::uuid, $8, $9, $10)
       RETURNING id::text, status, issued_at AS "issuedAt"
-    `, [hash, userId, courseId, entitlements[0].id, recipientName, entitlements[0].title, imageMediaId, actor.userId]);
+    `, [hash, userId, courseId, entitlements[0].id, recipientName, entitlements[0].title, imageMediaId, actor.userId, encryptedCode.payload, encryptedCode.keyVersion]);
     await enqueuePlatformEvent(db, 'learning.certificate_issued', 'certificate', String(rows[0]!.id),
       `learning.certificate:${rows[0]!.id}`, { certificateId: rows[0]!.id, courseId });
     return {
@@ -1189,19 +1280,20 @@ platformLearningRoutes.post('/admin/retention-jobs', async (c) => {
 platformLearningRoutes.post('/me/checkins', async (c) => {
   const actor = await requirePlatformActor(c);
   const body = await readJsonObject(c);
-  const timezone = stringField(body, 'timezone', { required: true, max: 80 })!;
-  const localDate = stringField(body, 'localDate', { required: true, max: 10, pattern: /^\d{4}-\d{2}-\d{2}$/ })!;
+  const timezone = stringField(body, 'timezone', { max: 80 }) ?? 'Asia/Shanghai';
+  const today = learningDate(timezone);
+  const localDate = stringField(body, 'localDate', { max: 10, pattern: /^\d{4}-\d{2}-\d{2}$/ }) ?? today;
+  if (localDate !== today) badRequest('Check-in is only available for today');
   const result = await withIdempotency(c, actor, `learning.checkin:${localDate}`, body, async (db) => {
     await platformQuery(db, 'SELECT id FROM app_users WHERE id = $1 FOR UPDATE', [actor.userId]);
     const rows = await platformQuery(db, `
       INSERT INTO platform_checkins (user_id, local_date, timezone, points_awarded)
-      VALUES ($1, $2::date, $3, 1)
+      VALUES ($1, $2::date, $3, 5)
       ON CONFLICT (user_id, local_date) DO NOTHING
       RETURNING id::text, local_date AS "localDate", timezone, points_awarded AS "pointsAwarded", created_at AS "createdAt"
     `, [actor.userId, localDate, timezone]);
     const balances = await platformQuery<{ balance: string }>(db, `
-      SELECT COALESCE((SELECT balance_after FROM platform_point_ledger
-        WHERE user_id = $1 ORDER BY created_at DESC, id DESC LIMIT 1), 0)::text AS balance
+      SELECT COALESCE(SUM(delta_points),0)::text AS balance FROM platform_point_ledger WHERE user_id=$1
     `, [actor.userId]);
     const previousBalance = Number(balances[0]!.balance);
     if (!rows[0]) {
@@ -1211,45 +1303,52 @@ platformLearningRoutes.post('/me/checkins', async (c) => {
       return { status: 200, body: { ...existing[0], balance: previousBalance }, resourceType: 'checkin', resourceId: String(existing[0]!.id) };
     }
     const checkinId = String(rows[0].id);
-    const balance = previousBalance + 1;
+    const balance = previousBalance + 5;
     await platformQuery(db, `
       INSERT INTO platform_point_ledger (user_id, entry_type, delta_points, balance_after, checkin_id)
-      VALUES ($1, 'checkin', 1, $2, $3::uuid) ON CONFLICT DO NOTHING
+      VALUES ($1, 'checkin', 5, $2, $3::uuid) ON CONFLICT DO NOTHING
     `, [actor.userId, balance, checkinId]);
     return { status: 200, body: { ...rows[0], balance }, resourceType: 'checkin', resourceId: checkinId };
   });
   return sendMutation(c, result);
 });
 
-platformLearningRoutes.get('/leaderboard', async (c) => {
-  const { page, pageSize, offset } = pagination(c);
-  const rows = await platformQuery(platformDb(), `
-    SELECT user_id::text AS id, user_id::text AS title, MAX(balance_after)::text AS points
-    FROM platform_point_ledger WHERE user_id IS NOT NULL
-    GROUP BY user_id ORDER BY MAX(balance_after) DESC, user_id LIMIT $1 OFFSET $2
-  `, [pageSize, offset]);
-  publicCache(c, rows.length > 0);
-  return c.json({ items: rows, page, pageSize });
+platformLearningRoutes.get('/leaderboard', async c => {
+  const {page,pageSize,offset}=pagination(c);
+  const period=enumField({period:c.req.query('period')??'all'},'period',['week','month','all'] as const)!;
+  const metric=enumField({metric:c.req.query('metric')??'points'},'metric',['points','learning'] as const)!;
+  const days=period==='week'?7:period==='month'?30:null;
+  const source=metric==='points'?`SELECT user_id,SUM(delta_points)::bigint AS value FROM platform_point_ledger WHERE user_id IS NOT NULL AND ($1::int IS NULL OR created_at>=NOW()-make_interval(days=>$1)) GROUP BY user_id`:
+    `SELECT user_id,COUNT(*)::bigint AS value FROM platform_lesson_progress WHERE status='completed' AND ($1::int IS NULL OR completed_at>=NOW()-make_interval(days=>$1)) GROUP BY user_id`;
+  const items=await platformQuery(platformDb(),`SELECT scores.user_id::text AS id,COALESCE(NULLIF(u.display_name,''),'—') AS title,scores.value::text AS value,
+    DENSE_RANK() OVER(ORDER BY scores.value DESC)::int AS rank,COUNT(*) OVER()::int AS "resultTotal"
+    FROM (${source}) scores JOIN app_users u ON u.id=scores.user_id WHERE scores.value>0 ORDER BY scores.value DESC,scores.user_id LIMIT $2 OFFSET $3`,[days,pageSize,offset]);
+  publicCache(c,items.length>0);return c.json({items,page,pageSize,total:Number(items[0]?.resultTotal??0),metric,period});
 });
 
 platformLearningRoutes.get('/instructor/students', async (c) => {
   const actor = await requirePlatformActor(c);
+  const {page,pageSize,offset}=pagination(c);
+  const paged=c.req.query('page')!==undefined;
   await requireInstructor(platformDb(), actor);
   const rows = await platformQuery(platformDb(), `
-    SELECT DISTINCT e.user_id::text AS id, e.user_id::text AS title,
-           e.course_id::text AS "courseId", COALESCE(NULLIF(cr.title_zh, ''), cr.title_en) AS "courseTitle",
-           e.status, e.valid_from AS "validFrom", e.valid_until AS "validUntil"
+    SELECT DISTINCT COUNT(*) OVER()::int AS "resultTotal", e.id::text AS id, e.user_id::text AS "userId", COALESCE(NULLIF(u.display_name,''), e.user_id::text) AS title,
+           e.course_id::text AS "courseId", cr.title_zh AS "courseTitleZh", cr.title_en AS "courseTitleEn", COALESCE(NULLIF(cr.title_zh, ''), cr.title_en) AS "courseTitle",
+           e.status, e.valid_from AS "validFrom", e.valid_until AS "validUntil",
+           (SELECT COUNT(*)::int FROM platform_lesson_progress p JOIN platform_lessons l ON l.id=p.lesson_id WHERE p.user_id=e.user_id AND l.course_id=e.course_id AND p.status='completed' AND l.status='published') AS "completedLessons",
+           (SELECT COUNT(*)::int FROM platform_lessons l WHERE l.course_id=e.course_id AND l.status='published') AS "totalLessons"
     FROM platform_course_owners owner
     JOIN platform_instructors instructor ON instructor.id = owner.instructor_id
     JOIN platform_course_entitlements e ON e.course_id = owner.course_id
+    JOIN app_users u ON u.id=e.user_id
     JOIN platform_courses course ON course.id = e.course_id
     LEFT JOIN platform_course_revisions cr ON cr.course_id = course.id AND cr.revision = course.current_revision
     WHERE instructor.user_id = $1 AND instructor.status = 'active' AND owner.status = 'active'
       AND e.user_id IS NOT NULL
-    ORDER BY e.valid_from DESC, e.user_id
-  `, [actor.userId]);
+    ORDER BY "validFrom" DESC, "userId" LIMIT $2 OFFSET $3
+  `, [actor.userId,paged?pageSize:null,paged?offset:0]);
   privateNoStore(c);
-  return c.json({ items: rows });
+  return c.json({items:rows,page,pageSize,total:Number(rows[0]?.resultTotal??0)});
 });
 
 platformLearningRoutes.get('/instructor/earnings', async (c) => {
@@ -1266,4 +1365,75 @@ platformLearningRoutes.get('/instructor/earnings', async (c) => {
   `, [actor.userId]);
   privateNoStore(c);
   return c.json({ items: rows });
+});
+
+platformLearningRoutes.get('/learning/lessons/:lessonId/state', async c => {
+  const actor = await requirePlatformActor(c);
+  const lessonId = resourceId(c.req.param('lessonId'));
+  const lesson = await requireLessonAccess(actor, lessonId);
+  const db = platformDb();
+  const [progress, notes, attempts, lessons] = await Promise.all([
+    platformQuery(db, `SELECT status,progress_bps AS "progressBps",position_seconds AS "positionSeconds" FROM platform_lesson_progress WHERE user_id=$1 AND lesson_id=$2::uuid`,[actor.userId,lessonId]),
+    platformQuery(db, `SELECT id::text,body,position_seconds AS "positionSeconds",updated_at AS "updatedAt" FROM platform_lesson_notes WHERE user_id=$1 AND lesson_id=$2::uuid ORDER BY position_seconds,created_at`,[actor.userId,lessonId]),
+    platformQuery(db, `SELECT a.id::text,a.quiz_id::text AS "quizId",a.quiz_revision AS "quizRevision",a.attempt_number AS "attemptNumber",a.score_bps AS "scoreBps",a.passed,a.graded_at AS "gradedAt",a.answers_snapshot_encrypted,a.answers_key_version FROM platform_quiz_attempts a JOIN platform_quizzes q ON q.id=a.quiz_id WHERE a.user_id=$1 AND q.lesson_id=$2::uuid AND a.status='graded' ORDER BY a.attempt_number DESC LIMIT 30`,[actor.userId,lessonId]),
+    platformQuery(db, `SELECT l.id::text,l.ordinal,r.title_zh AS "titleZh",r.title_en AS "titleEn",l.access_scope AS "accessScope",r.duration_seconds AS "durationSeconds",COALESCE(p.status,'not_started') AS status,COALESCE(p.progress_bps,0) AS "progressBps" FROM platform_lessons l JOIN platform_lesson_revisions r ON r.lesson_id=l.id AND r.revision=l.current_revision LEFT JOIN platform_lesson_progress p ON p.lesson_id=l.id AND p.user_id=$1 WHERE l.course_id=$2::uuid AND l.status='published' ORDER BY l.ordinal`,[actor.userId,lesson.courseId]),
+  ]);
+  privateNoStore(c);
+  return c.json({progress:progress[0]??null,notes,lessons,attempts:attempts.map(({answers_snapshot_encrypted,answers_key_version,...attempt})=>({...attempt,...decryptPlatformPrivateData(Buffer.from(answers_snapshot_encrypted as Uint8Array),Number(answers_key_version))}))});
+});
+
+platformLearningRoutes.get('/me/checkins', async c => {
+  const actor = await requirePlatformActor(c);
+  const timezone = c.req.query('timezone') ?? 'Asia/Shanghai'; const today = learningDate(timezone);
+  const [dates,balance] = await Promise.all([
+    platformQuery<{day:string}>(platformDb(),'SELECT local_date::text AS day FROM platform_checkins WHERE user_id=$1 ORDER BY local_date',[actor.userId]),
+    platformQuery(platformDb(),'SELECT COALESCE(SUM(delta_points),0)::text AS balance FROM platform_point_ledger WHERE user_id=$1',[actor.userId]),
+  ]);
+  privateNoStore(c); return c.json({...learningStreak(dates.map(row=>row.day),today),today,timezone,balance:Number(balance[0]?.balance??0)});
+});
+
+platformLearningRoutes.get('/me/certificates', async c => {
+  const actor = await requirePlatformActor(c);
+  const rows = await platformQuery(platformDb(),`SELECT id::text,course_id::text AS "courseId",course_title_snapshot AS title,recipient_name_snapshot AS "recipientName",status,issued_at AS "issuedAt",verification_code_encrypted,verification_key_version FROM platform_certificates WHERE user_id=$1 ORDER BY issued_at DESC`,[actor.userId]);
+  privateNoStore(c);
+  return c.json({items:rows.map(({verification_code_encrypted,verification_key_version,...row})=>({...row,...(verification_code_encrypted?decryptPlatformPrivateData(Buffer.from(verification_code_encrypted as Uint8Array),Number(verification_key_version)):{})}))});
+});
+
+platformLearningRoutes.post('/me/certificates', async c => {
+  const actor = await requirePlatformActor(c); const body=await readJsonObject(c);
+  const courseId=resourceId(stringField(body,'courseId',{required:true,max:128})!);
+  const result=await withIdempotency(c,actor,`learning.certificate.claim:${courseId}`,body,async db=>{
+    await platformQuery(db,'SELECT id FROM app_users WHERE id=$1 FOR UPDATE',[actor.userId]);
+    await requireCourseEntitlement(db,actor,courseId);
+    const counts=await platformQuery<{total:number;complete:number}>(db,`SELECT COUNT(*)::int AS total,COUNT(*) FILTER(WHERE p.status='completed')::int AS complete FROM platform_lessons l LEFT JOIN platform_lesson_progress p ON p.lesson_id=l.id AND p.user_id=$1 WHERE l.course_id=$2::uuid AND l.status='published'`,[actor.userId,courseId]);
+    if(!counts[0]?.total||counts[0].complete!==counts[0].total) conflict('Complete every published lesson before claiming the certificate');
+    const existing=await platformQuery(db,`SELECT id::text,verification_code_encrypted,verification_key_version FROM platform_certificates WHERE user_id=$1 AND course_id=$2::uuid AND status='issued' ORDER BY issued_at DESC LIMIT 1`,[actor.userId,courseId]);
+    if(existing[0]?.verification_code_encrypted){const row=existing[0];return {status:200,body:{id:row.id,...decryptPlatformPrivateData(Buffer.from(row.verification_code_encrypted as Uint8Array),Number(row.verification_key_version))},resourceType:'certificate',resourceId:String(row.id)};}
+    // Legacy hashes cannot be reversed. Issue a new credential without invalidating the old certificate.
+    const code=randomBytes(24).toString('base64url');const hash=createHash('sha256').update(code).digest('hex');const encrypted=encryptPlatformPrivateData({verificationCode:code});
+    const rows=await platformQuery(db,`INSERT INTO platform_certificates(verification_code_hash,user_id,course_id,entitlement_id,recipient_name_snapshot,course_title_snapshot,issued_by_user_id,verification_code_encrypted,verification_key_version)
+      SELECT decode($1,'hex'),$2,c.id,e.id,$3,COALESCE(NULLIF(r.title_zh,''),r.title_en),$2,$5,$6
+      FROM platform_courses c JOIN platform_course_revisions r ON r.course_id=c.id AND r.revision=c.current_revision JOIN platform_course_entitlements e ON e.course_id=c.id AND e.user_id=$2 AND e.status='active'
+      WHERE c.id=$4::uuid AND e.valid_from<=NOW() AND (e.valid_until IS NULL OR e.valid_until>NOW()) LIMIT 1 RETURNING id::text`,[hash,actor.userId,actor.displayName,courseId,encrypted.payload,encrypted.keyVersion]);
+    if(!rows[0]) conflict('An active course entitlement is required');
+    return {status:201,body:{...rows[0],verificationCode:code},resourceType:'certificate',resourceId:String(rows[0].id)};
+  });return sendMutation(c,result);
+});
+
+platformLearningRoutes.get('/instructor/dashboard',async c=>{
+  const actor=await requirePlatformActor(c); const db=platformDb(); const instructorId=await requireInstructor(db,actor);
+  const [courses,students,months,payouts,recent]=await Promise.all([
+    platformQuery(db,`SELECT COUNT(*)::int AS count FROM platform_course_owners o JOIN platform_courses c ON c.id=o.course_id WHERE o.instructor_id=$1::uuid AND o.status='active' AND c.status<>'archived'`,[instructorId]),
+    platformQuery(db,`SELECT COUNT(DISTINCT e.user_id)::int AS count FROM platform_course_owners o JOIN platform_course_entitlements e ON e.course_id=o.course_id WHERE o.instructor_id=$1::uuid AND o.status='active' AND e.status='active'`,[instructorId]),
+    platformQuery(db,`SELECT to_char(l.created_at AT TIME ZONE 'Asia/Shanghai','YYYY-MM') AS month,l.currency,
+      COUNT(DISTINCT l.order_id) FILTER(WHERE l.entry_type='sale')::int AS orders,
+      COALESCE(SUM(l.delta_amount_minor) FILTER(WHERE l.entry_type='sale'),0)::text AS "saleAmountMinor",
+      COALESCE(SUM(l.delta_amount_minor) FILTER(WHERE l.entry_type IN ('refund','chargeback')),0)::text AS "refundAmountMinor",
+      SUM(l.delta_amount_minor)::text AS "netAmountMinor"
+      FROM platform_instructor_revenue_ledger l WHERE l.instructor_id=$1::uuid GROUP BY month,l.currency ORDER BY month DESC,l.currency`,[instructorId]),
+    platformQuery(db,`SELECT id::text,payout_number AS "payoutNumber",status,amount_minor::text AS "amountMinor",currency,provider_reference AS "providerReference",paid_at AS "paidAt",created_at AS "createdAt" FROM platform_instructor_payouts WHERE instructor_id=$1::uuid ORDER BY created_at DESC`,[instructorId]),
+    platformQuery(db,`SELECT l.id::text,o.order_number AS "orderNumber",COALESCE(NULLIF(u.display_name,''),'—') AS "studentName",o.status,l.currency,l.delta_amount_minor::text AS "amountMinor",l.created_at AS "createdAt"
+      FROM platform_instructor_revenue_ledger l LEFT JOIN platform_orders o ON o.id=l.order_id LEFT JOIN app_users u ON u.id=o.buyer_user_id
+      WHERE l.instructor_id=$1::uuid ORDER BY l.created_at DESC LIMIT 20`,[instructorId]),
+  ]);privateNoStore(c);return c.json({courseCount:courses[0]?.count??0,studentCount:students[0]?.count??0,months,payouts,recent});
 });

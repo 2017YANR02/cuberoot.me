@@ -1,5 +1,9 @@
 import { readFileSync } from 'node:fs';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
+import { TimerHistoryWorkspace } from '@cuberoot/timer-ui';
+import { COPY, dateRangeInputLabels } from './copy';
 
 import {
   TIMER_GESTURE_ACTION_IDS,
@@ -234,8 +238,10 @@ describe('mobile displayed-scramble history', () => {
     expect(app).toContain('histBack(scrambleHistoryRef.current)');
     expect(app).toContain('histForward(scrambleHistoryRef.current)');
     expect(app).toContain('const { wheelRef: gestureWheelRef } = useGestureWheel({');
-    expect(app).toMatch(/active: storeLoaded\s+&& view === 'timer'/);
-    expect(app).toContain('&& openOverlay === null');
+    expect(app).toMatch(/active: storeLoaded\s+&& view !== 'settings'\s+&& timerVisible\s+&& !timerOverlayBlocking\s+&& !moreOpen\s+&& !manualEntryOpen/);
+    expect(app).toContain('const timerOverlayBlocking = solverBlocking || openOverlay !== null || statsOpen || historyModalOpen || replayBlocking');
+    expect(app).toMatch(/const modalState = \(\) => timerSoloModalState\(\s+viewRef\.current === 'settings'\s+\|\| !timerVisibleRef\.current/);
+    expect(app).toContain('|| statsOpenRef.current || historyModalOpenRef.current || replayBlockingRef.current');
     expect(app).toContain('<GestureWheel ref={gestureWheelRef}');
     for (const actionId of TIMER_GESTURE_ACTION_IDS) {
       if (actionId === 'copy-scramble') expect(app).not.toContain(`'${actionId}':`);
@@ -272,25 +278,22 @@ describe('mobile displayed-scramble history', () => {
     expect(app).toContain("fullscreen ? ' app-shell--timer-fullscreen' : ''");
     expect(app).toContain('if (fullscreenRef.current) {');
     expect(app).toContain('document.exitFullscreen()');
-    expect(css).toContain('.app-shell--timer-fullscreen .timer-view > .shell-topbar');
+    expect(readFileSync(new URL(import.meta.resolve('@cuberoot/timer-ui/timer-solo-page.css')), 'utf8')).toContain('.shell-topbar.timer-solo-topbar--fullscreen');
     expect(css).toContain('.app-shell--timer-fullscreen > .primary-nav');
     expect(css).toContain('.app-shell--timer-fullscreen .mobile-timer-stage > .shell-stat-rail');
     expect(css).toContain('.app-shell--timer-fullscreen > .shell-device-actions');
   });
 
-  it('reserves a normal-flow device footer outside long content without changing timer gestures', () => {
-    const footer = app.indexOf('<TimerDeviceActions');
-    const navigation = app.indexOf('<nav className="primary-nav"');
-    expect(footer).toBeGreaterThan(app.indexOf('settings-meta'));
-    expect(footer).toBeLessThan(navigation);
-    expect(app.slice(footer - 70, footer)).toContain("view === 'timer' && timerMode === 1");
-    expect(app.match(/<TimerDeviceActions/g)).toHaveLength(1);
-    expect(css).toMatch(/\.app-shell--device-footer\s*\{\s*grid-template-rows: minmax\(0, 1fr\) auto auto;/);
-    expect(css).toMatch(/\.app-shell--device-footer > \.shell-device-actions\s*\{\s*position: static;/);
-    expect(css).toMatch(/\.shell-device-connect\s*\{\s*min-width: 0;\s*min-height: 44px;/);
+  it('uses the shared stage footer without changing timer gestures', () => {
+    expect(app).toContain('<TimerSoloPage');
+    expect(app).toContain('devices: smartCubeDeviceCenter');
+    const page = readFileSync(new URL(import.meta.resolve('@cuberoot/timer-ui/TimerSoloPage')), 'utf8');
+    expect(page).toContain('<TimerStageLayout');
+    expect(page).toContain('<TimingSurface {...timing} layout="solo" />');
+    expect(app.match(/<TimerDeviceCenter/g)).toHaveLength(1);
+    expect(app).not.toContain('app-shell--device-footer');
     expect(css).not.toContain('touch-action: pan-y');
   });
-
   it('consumes the shared history row/menu/editor and wires filters plus host effects', () => {
     const actions = timerHistoryQuickActionStates({
       menuOpen: true,
@@ -300,13 +303,42 @@ describe('mobile displayed-scramble history', () => {
       canDelete: true,
     });
     expect(actions.map((action) => action.id)).toEqual(TIMER_HISTORY_QUICK_ACTION_IDS);
-    expect(app).toContain('<TimerHistoryRow');
+    // Exercise the public shared component instead of asserting that its
+    // internals still live in the installed App.tsx after extraction.
+    const historyHtml = renderToStaticMarkup(createElement(TimerHistoryWorkspace, {
+      historyContextKey: 'session:333',
+      solves: [1, 2, 3].map(id => ({
+        id: String(id), event: '333' as const, penalty: 'ok' as const,
+        timeMs: id * 1000, ts: 1_000 + id, scramble: 'R U',
+      })),
+      isZh: false,
+      dateRangeLabels: dateRangeInputLabels('en'),
+      rollingPickerLabels: {
+        changeColumn: COPY.en.statsChangeColumn,
+        clear: COPY.en.clear,
+        customPlaceholder: COPY.en.statsCustomPlaceholder,
+        customSize: COPY.en.statsCustomSize,
+        replace: COPY.en.replace,
+      },
+      rollingStatColumns: ['mo3'],
+      onRollingColumnsChange: () => undefined,
+      onRowClick: () => undefined,
+    }));
+    expect(historyHtml).toContain('timer-history-columns-head');
+    expect(historyHtml).toContain('timer-history-day-divider');
+    expect(historyHtml.match(/data-stat="mo3"/g)).toHaveLength(3);
+    expect(historyHtml).toContain('aria-label="; mo3: 2.00, PB"');
+    expect(historyHtml).toContain('data-tag-id="pb-single"');
+    expect(historyHtml).toContain('aria-label="Search comment or scramble"');
+    // The shared workspace shows a match count only while filters are active.
+    expect(historyHtml).not.toContain('class="history-search-count"');
+    expect(app).toContain('<TimerHistoryWorkspace');
     expect(app).toContain('<TimerSolveDetailModal');
     expect(app).toContain('<TimerCubePreview');
-    expect(app).toContain("cornerSlot={smartCube.phase === 'connected'");
+    expect(app).toContain("cornerSlot: smartCube.phase === 'connected'");
     expect(app).toContain(') : store!.settings.showCubePreview && scrambleReady');
     expect(app).toContain('<LiveCubeState');
-    expect(app).toContain('<div className="mobile-cube-preview" data-no-timer>');
+    expect(app).toContain('<TimerSoloPage'); // Shared TimingSurface owns the input-safe preview frame.
     const stripStart = app.indexOf('<TimerScrambleStrip');
     const stripEnd = app.indexOf('</TimerScrambleStrip>', stripStart);
     const preview = app.indexOf('<TimerCubePreview');
@@ -315,40 +347,30 @@ describe('mobile displayed-scramble history', () => {
     expect(app).toContain('event={activeEvent}');
     expect(app).toContain('scramble={scramble}');
     expect(app).toContain("visualization={store!.settings.prefer3D ? '3D' : '2D'}");
-    expect(app).toContain('TIMER_HISTORY_QUICK_ACTION_IDS.map((actionId)');
-    expect(app).toContain('onCopyScramble: onCopy');
-    expect(app).toContain('onDelete: onQuickDelete');
-    expect(app).toContain('onQuickDelete={quickDeleteSolve}');
-    expect(app).toContain('onOpenChange: onQuickMenuOpenChange');
-    expect(app).toContain('open: quickMenuOpen');
+    expect(app).toContain('onQuickDelete={id => { const solve = solves.find(item => item.id === id); if (solve) quickDeleteSolve(solve); }}');
+    expect(app).toContain('onQuickPenalty={(id, penalty) => { const solve = solves.find(item => item.id === id); if (solve) updateSolve(solve, {penalty}); }}');
+    expect(app).toContain('onCopyText={text => host.writeClipboardText(text)}');
+    expect(app).toContain('quickMenuOpen={openOverlay === TIMER_OVERLAY_IDS.historyQuickMenu}');
+    expect(app).toContain('onQuickMenuOpenChange={handleTimerOverlayOpenChange}');
+    expect(app).toContain('historyContextKey={historyContext}');
+    expect(app).toContain('onRowClick={solve => openHistorySolveDetail(solve)}');
+    expect(app).toContain('onQuickComment={solve => openHistorySolveDetail(solve, true)}');
     expect(app).toContain('message: copy.deletedSolve');
     expect(app).toContain('repository.restoreSolve(sessionId, solve)');
     expect(app).not.toContain('function HistoryRow(');
     expect(app).not.toContain('timerHistoryQuickActionStates({');
-    expect(app).toContain('computeTimerHistoryTags(solves)');
-    expect(app).toContain('filterTimerHistorySolves(solves, historyFilters, historyTagsById)');
-    expect(app).toContain('<TimerHistoryTagBadges');
-    expect(app).toContain('<TimerHistoryTagFilter');
-    expect(app).toContain('<TimerHistoryColumnsHeader');
-    expect(app).toContain('<TimerHistoryDayDivider');
-    expect(app).toContain('<TimerHistoryRollingCells');
-    expect(app).toContain('projectRollingStats(solves, visibleHistoryRollingColumns)');
-    expect(app).toContain('rollingStatColumnsForEvent(activeEvent');
-    expect(app).toContain('groupSolvesByLocalDay(filteredHistory.solves)');
-    expect(app).toContain('historyIndexById.get(solve.id)');
-    expect(app).toContain("activeEvent === '333mbld' ? copy.result : copy.historyTime");
-    expect(app).toContain('trailing={rollingColumns.length > 0 ? (');
+    // Filtering, tags, ordering and rolling columns belong to the shared
+    // workspace. The installed host supplies the complete history snapshot.
+    expect(app).toContain('historyContextKey={historyContext} solves={solves}');
+    expect(app).toContain('rollingStatColumns={store!.settings.statsRollingColumns}');
+    expect(app).toMatch(/onRollingColumnsChange=\{statsRollingColumns => updateSettings\(\{\s*statsRollingColumns\s*\}\)\}/);
+    expect(app).not.toContain('filterTimerHistorySolves(');
+    expect(app).not.toContain('projectRollingStats(');
     expect(app).not.toContain('solves.findIndex((entry) => entry.id === solve.id)');
     expect(app).not.toContain('const historyDayCounts');
     expect(app).not.toContain('className="mobile-history-date"');
-    expect(app).toContain('className="mobile-history-match-count" role="status"');
-    expect(app).toContain('toggleTimerHistoryTag(current.tags, tagId)');
-    expect(app).toContain("updateHistoryFilter('query'");
-    expect(app).toContain("updateHistoryFilter('timeMin'");
-    expect(app).toContain("updateHistoryFilter('timeMax'");
-    expect(app).toContain("updateHistoryFilter('ollCase'");
-    expect(app).toContain("updateHistoryFilter('pllCase'");
-    expect(app).toContain('toggleTimerHistoryPenalty(current.penalties, penalty)');
+    expect(app).toContain('onBlockingChange={setHistoryModalOpen}');
+    expect(app).toContain('historyWorkspaceRef.current?.dismiss()');
     expect(app).toContain('timerHistoryMoveTargets(');
     expect(app).toContain('repository.moveSolveToSession(solve.id, targetSessionId)');
     expect(app).toContain('moveTargets={historyMoveTargets}');
@@ -357,7 +379,7 @@ describe('mobile displayed-scramble history', () => {
     expect(app).toContain('if (expected && historyDetailRef.current !== expected) return;');
     expect(app).toContain('if (committed) closeHistorySolveDetail(historyDetail);');
     expect(app).toContain('if (moved) closeHistorySolveDetail(historyDetail);');
-    expect(css).toMatch(/\.mobile-history-filter-grid \{[\s\S]*?min-width: 0;[\s\S]*?minmax\(0, 1fr\)/);
+    expect(app).not.toContain('className="mobile-history-filter-grid"');
     expect(app).toContain('openOverlay === TIMER_OVERLAY_IDS.solveDetail');
   });
 });

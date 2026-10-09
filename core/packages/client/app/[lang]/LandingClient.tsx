@@ -16,7 +16,9 @@ import { isOnboardingGuided, markOnboardingGuided } from '@/lib/onboarding';
 import './home-background.css';
 import { useTranslation } from 'react-i18next';
 import { useAuthUser, nextQuery } from '@/lib/auth-store';
+import { fmtVipId } from '@/lib/membership-format';
 import LandingSearch from '@/components/LandingSearch';
+import PersonUpcomingComps from '@/components/persons/sections/PersonUpcomingComps';
 import SearchInput from '@/components/SearchInput';
 import LazyVisible from '@/components/LazyVisible';
 import {
@@ -62,6 +64,7 @@ import { colorFor, iconFor } from '@/lib/page-notice-visuals';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { listPublicMembers, type PublicMember } from '@/lib/membership-api';
 import { getHomeCardLocks, getHomeCardOrders, reorderHomeCards, setHomeCardLock } from '@/lib/home-card-order-api';
+import { getPinnedRecons, setReconHomePin } from '@/lib/recon-api';
 import { HOME_MEMBER_SECTION_IDS } from '@cuberoot/shared/site-directory';
 
 const ABOUT_FOOTER_ENTRY = FOOTER_ENTRIES.find((entry) => entry.id === 'about')!;
@@ -100,6 +103,8 @@ function LandingCardContent({ label, Icon, iconImg }: LandingCardContentProps) {
     </>
   );
 }
+
+type ReconSolve = Awaited<ReturnType<typeof getPinnedRecons>>[number];
 
 export default function LandingPage() {
   // Title is owned by page.tsx's generateMetadata (lib/page-meta.ts, key '').
@@ -188,6 +193,32 @@ export default function LandingPage() {
   // 是 hydration-safe(SSG 首帧按未登录渲染,挂载后才切到已登录),避免 SSG/CSR 错配。
 
   const isAdmin = Boolean(user?.isAdmin || isAdminWcaId(user?.wcaId));
+  const [pinnedRecons, setPinnedRecons] = useState<ReconSolve[] | null>(null);
+  const [savingPins, setSavingPins] = useState<Set<number>>(new Set());
+  const [pinError, setPinError] = useState<string | null>(null);
+  useEffect(() => {
+    let active = true;
+    getPinnedRecons().then(rows => { if (active) setPinnedRecons(rows); }).catch(() => {
+      if (active) setPinError(tr({ zh: '置顶复盘加载失败，请刷新重试。', en: 'Could not load pinned recons. Please refresh to retry.' }));
+    });
+    return () => { active = false; };
+  }, []);
+  const onPin = async (solve: ReconSolve, pinned: boolean) => {
+    if (!isAdmin || savingPins.has(solve.id)) return;
+    setSavingPins(prev => new Set(prev).add(solve.id));
+    setPinError(null);
+    try {
+      await setReconHomePin(solve.id, pinned);
+      setPinnedRecons(prev => pinned
+        ? [solve, ...(prev ?? []).filter(item => item.id !== solve.id)]
+        : (prev ?? []).filter(item => item.id !== solve.id));
+    } catch {
+      setPinError(tr({ zh: '置顶设置未保存，请重试。', en: 'Could not save the pin. Please try again.' }));
+    } finally {
+      setSavingPins(prev => { const next = new Set(prev); next.delete(solve.id); return next; });
+    }
+  };
+  const reconProps = { lang, pinnedRecons, isAdmin, savingPins, pinError, onPin };
   const [cardOrders, setCardOrders] = useState<Record<string, string[]>>({});
   const [cardLocks, setCardLocks] = useState<Record<string, boolean>>({});
   const [locksLoaded, setLocksLoaded] = useState(false);
@@ -251,7 +282,7 @@ export default function LandingPage() {
 
   // 新手引导锚点：card.id -> data-tour（OnboardingGuideModal 用
   // document.querySelector('[data-tour="..."]') + getBoundingClientRect() 定位）。
-  // 触发后直接从第 1 步开始高亮，无欢迎页。共 12 步：
+  // 欢迎页之后依次高亮，共 12 步：
   // 1 计时 timer / 2 公式 formulas / 3 模拟 simulator / 4 复盘 replay /
   // 5 打乱 scramble / 6 比赛 competition / 7 纪录 records / 8 排名 rankings /
   // 9 统计 statistics；10~12 为下方挂件（近期打乱 / 今日复盘 / 论坛），
@@ -364,7 +395,7 @@ export default function LandingPage() {
     const query = memberQueries[section.id].trim().toLowerCase();
     const sectionMembers = orderedMembers.filter((member) => member.planSlug.startsWith('enterprise_') === section.enterprise);
     const members = sectionMembers.filter((member) => !query || [
-      member.name, member.wcaId, member.vipId ?? '', member.vipId?.replace(/^VIP0+(\d+)$/, 'VIP$1') ?? '',
+      member.name, member.wcaId, member.vipId ?? '', fmtVipId(member.vipId ?? ''),
     ].some((value) => value.toLowerCase().includes(query)));
     return (
       <section key={section.id} className="cards-section" aria-labelledby={`${section.id}-members-title`}>
@@ -390,7 +421,7 @@ export default function LandingPage() {
                 {member.avatarUrl
                   ? <img src={member.avatarUrl} alt="" className="landing-member-avatar" />
                   : <User size={24} aria-hidden="true" />}
-                <span>{displayCuberName(member.name, lang === 'zh')}{member.vipId ? ` ${member.vipId.replace(/^VIP0+(\d+)$/, 'VIP$1')}` : ''}</span>
+                <span>{displayCuberName(member.name, lang === 'zh')}{member.vipId ? ` ${fmtVipId(member.vipId)}` : ''}</span>
               </Link>
             ))}
           </div>
@@ -438,7 +469,8 @@ export default function LandingPage() {
         <img src={mounted && effectiveTheme === 'dark' ? '/icons/CubeRoot-dark.png' : '/icons/CubeRoot.png'} alt="" className="brand-logo" />
         <span className="brand-name">{t('brand')}</span>
       </div>
-      <LandingSearch cards={searchCards} lang={lang} autoFocus />
+      <LandingSearch cards={searchCards} lang={lang} />
+      {user?.wcaId && <PersonUpcomingComps wcaId={user.wcaId} isZh={lang === 'zh'} />}
       {featuredNotice && featuredNotice.href && (() => {
         const FeaturedIcon = iconFor(featuredNotice);
         const isHistoryFeature = featuredNotice === HISTORY_HOME_FEATURE;
@@ -476,6 +508,8 @@ export default function LandingPage() {
             );
       })()}
 
+      {!!pinnedRecons?.length && <TodayRecon {...reconProps} pinnedOnly />}
+
       {/* 两行 hero 的共同外壳。桌面是 5 + 4 两个独立网格;手机端外壳自己变成 3 列网格、
           两个子网格 display:contents,9 张卡直接排成 3 行 3 个(见 landing.css)。 */}
       <div className="hero-grids">
@@ -490,7 +524,7 @@ export default function LandingPage() {
         <RecentScrambles lang={lang} />
       </LazyVisible>
       <LazyVisible minHeight={HOME_WIDGET_HEIGHT.todayRecon} rootMargin="120px 0px" unwrapWhenVisible>
-        <TodayRecon lang={lang} />
+        <TodayRecon {...reconProps} />
       </LazyVisible>
 
       <LazyVisible minHeight={HOME_WIDGET_HEIGHT.ongoingComps} rootMargin="120px 0px" unwrapWhenVisible>
@@ -517,6 +551,20 @@ export default function LandingPage() {
         })}
         {renderMemberSections()}
       </div>
+
+      {isAdmin && (
+        <section id="landing-admin-content" className="cards-sections" aria-labelledby="landing-admin-title">
+          <div className="cards-section">
+            <h2 id="landing-admin-title" className="section-title-serif">{tr({ zh: '仅管理员可见', en: 'Administrators only' })}</h2>
+            <div className="cards-container">
+              {renderCardGrid('main', PRIMARY_CARDS, 'landing-admin-card-group', true)}
+              {renderCardGrid('wca', WCA_CARDS, 'landing-admin-card-group', true)}
+              {SECTIONS.map((sec) => renderCardGrid(sec.id, sec.cards, 'landing-admin-card-group', true))}
+            </div>
+          </div>
+          {renderMemberSections(true)}
+        </section>
+      )}
 
       <div className="footer">
         {/* allow-nested-link: footer entries are sibling links with text-only contents. */}
@@ -561,20 +609,7 @@ export default function LandingPage() {
           </a>
         </div>
       )}
-      {isAdmin && (
-        <section id="landing-admin-content" className="cards-sections" aria-labelledby="landing-admin-title">
-          <div className="cards-section">
-            <h2 id="landing-admin-title" className="section-title-serif">{tr({ zh: '仅管理员可见', en: 'Administrators only' })}</h2>
-            <div className="cards-container">
-              {renderCardGrid('main', PRIMARY_CARDS, 'landing-admin-card-group', true)}
-              {renderCardGrid('wca', WCA_CARDS, 'landing-admin-card-group', true)}
-              {SECTIONS.map((sec) => renderCardGrid(sec.id, sec.cards, 'landing-admin-card-group', true))}
-            </div>
-          </div>
-          {renderMemberSections(true)}
-        </section>
-      )}
-      <OnboardingGuideModal open={guideOpen} lang={lang} onClose={closeGuide} />
+      <OnboardingGuideModal open={guideOpen} onClose={closeGuide} />
     </div>
   );
 }

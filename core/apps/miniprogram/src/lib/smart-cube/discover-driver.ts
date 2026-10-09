@@ -6,10 +6,15 @@ import { matchesGanV4Name } from '@cuberoot/shared/smart-cube/gan-v4';
 import { matchesGiikerName } from '@cuberoot/shared/smart-cube/giiker';
 import { matchesGoCubeName } from '@cuberoot/shared/smart-cube/gocube';
 import { matchesMoyuName } from '@cuberoot/shared/smart-cube/moyu';
+import { matchesMoyu32Name } from '@cuberoot/shared/smart-cube/moyu32';
+import { matchesQiyiName } from '@cuberoot/shared/smart-cube/qiyi';
 import {
   beginBleResourceCleanup,
+  bleRuntimeInfo,
   bluetoothAdapterErrorMessage,
   claimBleResourceLease,
+  createBleDiagnostic,
+  describeBleDevice,
   ignoreBleFailure,
   invokeBleCleanupForLease,
   invokeBleWithLateCleanupForLease,
@@ -22,9 +27,15 @@ import {
   type MiniProgramBleApi,
 } from './ble-api';
 
-export type DetectableSmartCubeDriver = 'gan-v4' | 'giiker' | 'gocube' | 'moyu';
+export type DetectableSmartCubeDriver = 'gan-v4' | 'giiker' | 'gocube' | 'moyu' | 'moyu32' | 'qiyi';
+
+export interface DiscoveredSmartCube {
+  device: DiscoveredDevice;
+  driver: DetectableSmartCubeDriver;
+}
 
 const DEFAULT_SCAN_TIMEOUT_MS = 6_000;
+const SCAN_UPDATE_THROTTLE_MS = 150;
 
 export function classifySmartCubeDriver(
   device: DiscoveredDevice | string,
@@ -38,6 +49,8 @@ export function classifySmartCubeDriver(
   if (names.length === 0) return null;
 
   if (matches(matchesGoCubeName)) return 'gocube';
+  if (matches(matchesQiyiName)) return 'qiyi';
+  if (matches(matchesMoyu32Name)) return 'moyu32';
   if (matches(matchesMoyuName)) return 'moyu';
   if (matches(matchesGanV4Name) || matches(matchesGanV3Name)) return 'gan-v4';
   if (matches(matchesGiikerName)) return 'giiker';
@@ -47,9 +60,10 @@ export function classifySmartCubeDriver(
 
 export async function discoverSmartCubeDriver(options: {
   api?: MiniProgramBleApi;
+  onUpdate?: (devices: DiscoveredSmartCube[]) => void;
   scanTimeoutMs?: number;
   signal?: BleAbortSignal;
-} = {}): Promise<DetectableSmartCubeDriver> {
+} = {}): Promise<DiscoveredSmartCube[]> {
   const api = options.api ?? (miniProgramApi() as unknown as MiniProgramBleApi);
   const scanTimeoutMs = options.scanTimeoutMs ?? DEFAULT_SCAN_TIMEOUT_MS;
   if (!Number.isFinite(scanTimeoutMs) || scanTimeoutMs < 1_000 || scanTimeoutMs > 30_000) {
@@ -57,6 +71,8 @@ export async function discoverSmartCubeDriver(options: {
   }
 
   const lease = claimBleResourceLease(api);
+  const diagnostic = createBleDiagnostic('scan');
+  diagnostic.info('start', { runtime: bleRuntimeInfo(), scanTimeoutMs });
   let adapterOpen = false;
   let discoveryStarted = false;
   let listener: ((result: { devices: DiscoveredDevice[] }) => void) | null = null;
@@ -86,36 +102,96 @@ export async function discoverSmartCubeDriver(options: {
       throw new Error(bluetoothAdapterErrorMessage(error), { cause: error });
     }
 
-    return await new Promise<DetectableSmartCubeDriver>((resolve, reject) => {
+    return await new Promise<DiscoveredSmartCube[]>((resolve, reject) => {
       let settled = false;
       let timer: ReturnType<typeof setTimeout> | undefined;
+      let updateTimer: ReturnType<typeof setTimeout> | undefined;
+      let hasPublishedUpdate = false;
       let offAbort = (): void => {};
-      const finish = (result: DetectableSmartCubeDriver | Error): void => {
+      const devices = new Map<string, DiscoveredSmartCube>();
+      const loggedDevices = new Map<string, string>();
+      const sortedDevices = (): DiscoveredSmartCube[] => [...devices.values()].sort((left, right) => {
+        const leftRssi = left.device.RSSI ?? Number.NEGATIVE_INFINITY;
+        const rightRssi = right.device.RSSI ?? Number.NEGATIVE_INFINITY;
+        return rightRssi - leftRssi;
+      });
+      const publishUpdate = (): void => {
+        if (settled || devices.size === 0 || !options.onUpdate) return;
+        if (updateTimer !== undefined) {
+          clearTimeout(updateTimer);
+          updateTimer = undefined;
+        }
+        hasPublishedUpdate = true;
+        try {
+          options.onUpdate(sortedDevices());
+        } catch (error) {
+          diagnostic.error('update-callback-failed', {
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      };
+      const scheduleUpdate = (): void => {
+        if (!options.onUpdate) return;
+        if (!hasPublishedUpdate) {
+          publishUpdate();
+          return;
+        }
+        if (updateTimer !== undefined) return;
+        updateTimer = setTimeout(publishUpdate, SCAN_UPDATE_THROTTLE_MS);
+      };
+      const finish = (result: DiscoveredSmartCube[] | Error): void => {
         if (settled) return;
         settled = true;
         if (timer !== undefined) clearTimeout(timer);
+        if (updateTimer !== undefined) clearTimeout(updateTimer);
         offAbort();
         if (result instanceof Error) reject(result);
         else resolve(result);
       };
 
       listener = (result): void => {
+        let foundCompatibleDevice = false;
         for (const device of result.devices) {
           const driver = classifySmartCubeDriver(device);
-          if (driver) {
-            finish(driver);
-            return;
+          const description = { ...describeBleDevice(device), driver };
+          const stableDescription: Record<string, unknown> = { ...description };
+          delete stableDescription['RSSI'];
+          const signature = JSON.stringify(stableDescription);
+          if (loggedDevices.get(device.deviceId) !== signature) {
+            loggedDevices.set(device.deviceId, signature);
+            diagnostic.info('device-found', description);
           }
+          if (!driver || !device.deviceId) continue;
+          const previous = devices.get(device.deviceId)?.device;
+          const merged: DiscoveredDevice = {
+            ...previous,
+            ...device,
+            name: device.name ?? previous?.name,
+            localName: device.localName ?? previous?.localName,
+            advertisData: device.advertisData ?? previous?.advertisData,
+            RSSI: device.RSSI ?? previous?.RSSI,
+          };
+          devices.set(device.deviceId, { device: merged, driver });
+          foundCompatibleDevice = true;
         }
+        if (foundCompatibleDevice) scheduleUpdate();
       };
       api.onBluetoothDeviceFound(listener);
       offAbort = options.signal?.onAbort(() => finish(new BleOperationAbortedError())) ?? offAbort;
       if (settled) return;
 
-      timer = setTimeout(() => finish(new Error(tr({
-        en: 'No smart cube found. Turn the cube to wake it up and try again.',
-        zh: '未发现智能魔方，请转动魔方将它唤醒后重试',
-      }))), scanTimeoutMs);
+      timer = setTimeout(() => {
+        if (updateTimer !== undefined) publishUpdate();
+        const found = sortedDevices();
+        diagnostic.info('finish', {
+          count: found.length,
+          devices: found.map(({ device, driver }) => ({ ...describeBleDevice(device), driver })),
+        });
+        finish(found.length > 0 ? found : new Error(tr({
+          en: 'No smart cube found. Turn the cube to wake it up and try again.',
+          zh: '未发现智能魔方，请转动魔方将它唤醒后重试',
+        })));
+      }, scanTimeoutMs);
 
       const startDiscovery = invokeBleWithLateCleanupForLease(
         lease,
@@ -131,7 +207,9 @@ export async function discoverSmartCubeDriver(options: {
         stopDiscovery,
       ).then(() => {
         discoveryStarted = true;
+        diagnostic.info('discovery-started');
       }).catch((error: unknown) => {
+        diagnostic.error('discovery-failed', { error: error instanceof Error ? error.message : String(error) });
         finish(error instanceof BleOperationAbortedError
           ? error
           : new Error(tr({

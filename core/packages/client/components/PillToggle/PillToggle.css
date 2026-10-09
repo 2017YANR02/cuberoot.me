@@ -4,8 +4,7 @@
   align-items: center;
   justify-content: flex-end;
   height: 28px;
-  /* 默认贴合内容:宽度 = 较长标签 + 滑钮 + padding(由 .pill-toggle-label 的 ghost 撑出),
-     不再写死 min-width 把短标签拉成长条。各页直接用,不用每次 page-scope 覆盖 min-width:0。 */
+  /* 保留 BoolToggle 的无文字滑轨，尺寸由 --switch 指定。 */
   min-width: 0;
   padding: 0 14px 0 32px;
   background: color-mix(in srgb, var(--foreground) 10%, transparent);
@@ -22,12 +21,10 @@
 }
 
 .pill-toggle.is-on {
-  /* 带文字的胶囊:白字压在轨道上,纯 iOS 亮绿(#34c759)对白字对比不够(发糊)。
-     这里把绿压暗一档专给「有文字」的轨道用,白字清晰;无文字的开关(.pill-toggle--switch)
-     下面再盖回纯亮绿,保 iOS 观感。 */
-  background: color-mix(in srgb, var(--toggle-on) 72%, black);
-  border-color: color-mix(in srgb, var(--toggle-on) 72%, black);
-  color: #fff;
+  /* 所有开启态共用浅绿轨道；文字用深色保证对比度。 */
+  background: var(--toggle-on);
+  border-color: var(--toggle-on);
+  color: color-mix(in srgb, var(--toggle-on) 20%, black);
   padding: 0 32px 0 14px;
   justify-content: flex-start;
 }
@@ -38,23 +35,8 @@
 
 .pill-toggle:hover { border-color: color-mix(in srgb, var(--foreground) 24%, transparent); }
 .pill-toggle.is-on:hover {
-  background: color-mix(in srgb, var(--toggle-on) 64%, black);
-  border-color: color-mix(in srgb, var(--toggle-on) 64%, black);
-}
-
-/* 标签区:cur(可见)+ 两个 ghost(隐形)叠在同一 grid 格。
-   grid 列宽 = 三者里最宽的 = 较长标签的宽 → 宽度贴合文字且切换不跳变。 */
-.pill-toggle-label {
-  display: inline-grid;
-  justify-items: center;
-}
-.pill-toggle-label > span {
-  grid-area: 1 / 1;
-  font-weight: 500;
-  white-space: nowrap;
-}
-.pill-toggle-label-ghost {
-  visibility: hidden;
+  background: var(--toggle-on);
+  border-color: var(--toggle-on);
 }
 
 .pill-toggle-dot {
@@ -74,7 +56,7 @@
   left: calc(100% - 24px);
 }
 
-/* ── 无文字 iOS 风开关(不传 on/off 标签时)──
+/* ── BoolToggle 使用的无文字 iOS 风开关──
    固定尺寸滑轨 + 白色宽胶囊滑钮;off 深灰轨,on 绿轨(var(--toggle-on))。 */
 .pill-toggle--switch {
   min-width: 0;
@@ -91,8 +73,8 @@
   justify-content: flex-start;
 }
 .pill-toggle--switch.is-on:hover {
-  background: color-mix(in srgb, var(--toggle-on) 90%, white);
-  border-color: color-mix(in srgb, var(--toggle-on) 90%, white);
+  background: var(--toggle-on);
+  border-color: var(--toggle-on);
 }
 .pill-toggle--switch .pill-toggle-dot {
   width: 18px;

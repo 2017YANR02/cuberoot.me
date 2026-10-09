@@ -1,0 +1,38 @@
+{
+  "scope": "Local direct real-model calls; no production quota, release or browser acceptance.",
+  "results": [
+    {
+      "question": "WC 2027 的相关信息",
+      "answer": "2027 年 WCA 世界魔方锦标赛将在瑞典乌普萨拉（Uppsala）举办，由 SveKub 与重大锦标赛团队（WMCT）合作筹备，将决出全部 17 个 WCA 官方项目的世界冠军[[announcement:wc-2027]]。这是世锦赛继 2017 年巴黎后再次回到欧洲，瑞典是唯一申办方[[announcement:wc-2027]]。该 2025 年 7 月的公告未公布具体日期、场馆或报名安排，后续请以 WCA 官方更新为准[[announcement:wc-2027]]。",
+      "actions": [
+        {
+          "id": "announcement:wc-2027",
+          "title": "2027 年 WCA 世锦赛：举办城市公告",
+          "href": "/wca/wc-2027"
+        }
+      ]
+    },
+    {
+      "question": "2027年世锦赛什么时候报名？",
+      "answer": "2025年7月的举办城市公告只公布了2027年世锦赛将在瑞典乌普萨拉举行，未提及报名安排，因此该公告中没有报名时间信息[[announcement:wc-2027]]。具体日期、场馆和报名请以WCA官方后续更新为准[[announcement:wc-2027]]。",
+      "actions": [
+        {
+          "id": "announcement:wc-2027",
+          "title": "2027 年 WCA 世锦赛：举办城市公告",
+          "href": "/wca/wc-2027"
+        }
+      ]
+    },
+    {
+      "question": "Where will WC2027 take place?",
+      "answer": "The July 2025 announcement selected Uppsala, Sweden, to host the 2027 WCA World Championship, organized with SveKub and WMCT. That announcement did not specify dates, venue or registration details. [[announcement:wc-2027]]",
+      "actions": [
+        {
+          "id": "announcement:wc-2027",
+          "title": "WCA World Championship 2027: Host City Announcement",
+          "href": "/wca/wc-2027"
+        }
+      ]
+    }
+  ]
+}

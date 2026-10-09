@@ -23,6 +23,8 @@
 
 import { lazy, Suspense } from 'react';
 import type { ReconstructHost } from './ReconstructHost';
+import { SolveRecapBodyPlaceholder } from './SolveRecapPlaceholder';
+import ReconstructActions from './ReconstructActions';
 import './solve-recap.css';
 import { Maximize2, X } from 'lucide-react';
 import type { Solve } from '@cuberoot/shared/timer';
@@ -51,11 +53,22 @@ export default function SolveRecap({
   return (
     <section className="shell-recap" aria-label={tr({ zh: '计时复盘', en: 'Solve reconstruction' })}>
       <div className="shell-recap-head">
-        <button type="button" className="shell-recap-btn" onClick={onFull}>
+        <button
+          type="button"
+          className="shell-recap-btn shell-recap-btn--icon"
+          onClick={onFull}
+          aria-label={tr({ zh: '整屏', en: 'Full screen' })}
+          title={tr({ zh: '整屏', en: 'Full screen' })}
+        >
           <Maximize2 size={13} />
-          {tr({ zh: '整屏', en: 'Full screen' })}
         </button>
-        {/* 工具栏形态:整屏入口、右侧关闭。 */}
+        <ReconstructActions
+          host={host}
+          solve={solve}
+          onUseScramble={onUseScramble}
+          placement="recap"
+        />
+        {/* 工具栏形态:整屏、分享、重用打乱，右侧关闭。 */}
         <button
           type="button"
           className="shell-recap-x"
@@ -68,13 +81,13 @@ export default function SolveRecap({
       </div>
       <div className="shell-recap-body">
         {/* hideDate:这把是刚拧完的,日期是唯一不用告诉他的东西。 */}
-        <Suspense fallback={null}><ReconstructReport
+        <Suspense fallback={<SolveRecapBodyPlaceholder />}><ReconstructReport
           host={host}
           solve={solve}
           isZh={isZh}
           history={history}
           hideDate
-          onUseScramble={onUseScramble}
+          hideActions
           onReconFeedback={onReconFeedback}
         /></Suspense>
       </div>

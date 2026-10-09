@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 
 export const STAT_ICONS: Record<string, LucideIcon> = {
+  annual_participation: Users,
   // 世界纪录分析
   wr_current: Trophy,
   wr_metric: Gauge,

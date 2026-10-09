@@ -4,7 +4,12 @@ import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import type { PlatformEntity, PlatformRouteDefinition } from '@/lib/platform-types';
 vi.mock('@/hooks/useT', () => ({ useT: () => (zh: string) => zh }));
-vi.mock('@/lib/platform-gateway', () => ({ loadPlatformLessonMedia: vi.fn(async () => ({ mimeType: 'video/mp4', accessUrl: '/test-video' })) }));
+vi.mock('@/lib/platform-gateway', () => ({
+  loadPlatformResource: vi.fn(async (_resource, { params }) => ({ items: [{ id: params.lessonId, title: 'Lesson', data: {} }] })),
+  loadPlatformLessonMedia: vi.fn(async () => ({ mimeType: 'video/mp4', accessUrl: '/test-video' })),
+  platformMediaBrowserUrl: (value: string) => value,
+  PlatformPermissionError: class PlatformPermissionError extends Error {},
+}));
 vi.mock('@/components/AppLink', () => ({ default: ({ href, children }: { href: string; children: ReactNode }) => createElement('a', { href }, children) }));
 vi.mock('@/components/platform/PlatformQrLanding', () => ({ PlatformQrLanding: () => null }));
 import { LessonVideoPlayer } from '@/components/video/LessonVideoPlayer';
@@ -185,10 +190,12 @@ it('navigates adjacent lessons with Shift+N/P and stops at each end', async () =
   await act(async () => root.render(createElement(Classroom)));
   const selected = () => host.querySelector('nav button[aria-current]');
   const first = selected();
+  expect(first).not.toBeNull();
+  const firstTitle = first!.textContent;
   await key('P', { shiftKey: true }); expect(selected()).toBe(first);
   await key('N', { shiftKey: true }, first!); expect(selected()).not.toBe(first);
   expect(host.querySelector('video')!.autoplay).toBe(true);
   const last = selected();
   await key('N', { shiftKey: true }); expect(selected()).toBe(last);
-  await key('P', { shiftKey: true }); expect(selected()).toBe(first);
+  await key('P', { shiftKey: true }); expect(selected()?.textContent).toBe(firstTitle);
 });

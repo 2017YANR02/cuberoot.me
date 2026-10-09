@@ -1,3 +1,4 @@
+import { normalizeTimerSyncSeed, consumeTimerSeed, type TimerSeedTicket } from '@cuberoot/shared/timer/sync-seed';
 /**
  * User-facing settings — persisted to localStorage as a single JSON blob.
  *
@@ -13,6 +14,16 @@ import {
   DEFAULT_ROUND_CONFIG,
   DEFAULT_TIMER_ATTEMPT_SPLIT_SETTINGS,
   DEFAULT_TIMER_TIMING_SETTINGS,
+  DEFAULT_TIMER_TYPOGRAPHY,
+  normalizeTimerTypography,
+  normalizeTimerDisplaySettings,
+  normalizeTimerPreScrambleSettings,
+  normalizeTimerSoundSettings,
+  normalizeTimerMetronomeSettings,
+  normalizeTimerColorNeutralMode,
+  normalizeTimerTrainingSettings,
+  normalizeTimerKeymap,
+  type TimerTypeface,
   DEFAULT_TIMER_SMART_CUBE_SETTINGS,
   normalizeTimerSmartCubeSettings,
   normalizeTimerAttemptSplitSettings,
@@ -41,7 +52,7 @@ import {
 const KEY = 'cuberoot-timer.settings.v1';
 
 /** Big-digit typeface ids — shared vocabulary with the /alg trainer's picker. */
-export type TimerFontId = 'lcd' | 'mono' | 'liberation' | 'sans';
+export type TimerFontId = TimerTypeface;
 
 export interface TimerSettings extends
   TimerTimingSettings,
@@ -54,7 +65,7 @@ export interface TimerSettings extends
   /** 0..1 master volume. */
   volume: number;
 
-  /** Show the development-only fake-cube controls in the timer topbar. */
+  /** Show the development-only fake-cube entry in the device menu. */
   showDevFakeCube: boolean;
 
   /** Scale factor for the big timer display (0.5..2). */
@@ -191,6 +202,7 @@ export interface TimerSettings extends
    * resumes the same sequence. Reset whenever `syncSeed` changes or is cleared.
    */
   syncSeedCounter: number;
+  syncSeedRevision: number;
 
   /** Auto-backup every N saves. 0 = disabled, max 30. */
   autoBackupEvery: number;
@@ -228,7 +240,7 @@ export interface TimerSettings extends
    * Positive integer count of solves the user wants to complete each local
    * calendar day. Per-event variants are intentionally deferred.
    */
-  dailySolveGoal?: number | null;
+  dailySolveGoal: number | null;
 
   /** 显示的排名范围；空数组表示全部关闭。 */
   rankScopes: TimerRankScope[];
@@ -249,10 +261,7 @@ export const DEFAULTS: TimerSettings = {
   volume: 0.5,
   ...DEFAULT_TIMER_SCRAMBLE_PREVIEW_SETTINGS,
   showDevFakeCube: true,
-  timerFontScale: 1,
-  timerFont: 'lcd',
-  scrambleFontScale: 1,
-  scrambleFont: 'liberation',
+  ...DEFAULT_TIMER_TYPOGRAPHY,
   compactScramble: false,
   preScr: '',    // (UF)
   preScrT: 'z2', // (DF) — LL cases are read yellow-up (csTimer's default)
@@ -289,6 +298,7 @@ export const DEFAULTS: TimerSettings = {
   inspectionBeepAt: [],
   syncSeed: null,
   syncSeedCounter: 0,
+  syncSeedRevision: 0,
   autoBackupEvery: 10,
   bluetoothAutoReadyMigrated: true,
   keymap: {},
@@ -299,62 +309,8 @@ export const DEFAULTS: TimerSettings = {
   rankCountry: '',
 };
 
-/**
- * Parse a daily-solve-goal string. Empty / 0 / negative / non-finite → null
- * (treated as "disabled" by the progress pill).
- */
-export function parseDailySolveGoal(raw: string): number | null {
-  if (typeof raw !== 'string') return null;
-  const trimmed = raw.trim();
-  if (trimmed === '') return null;
-  const n = Number(trimmed);
-  if (!Number.isFinite(n) || n <= 0) return null;
-  return Math.floor(n);
-}
 
-/**
- * Parse a time-attack target time string (`m:ss.ms` style, e.g. `0:10.50`,
- * `1:23.4`, or plain seconds like `10.5`) into milliseconds.
- *
- * Returns null for empty / invalid / non-positive / non-finite input — callers
- * should treat null as "disable the target".
- */
-export function parseTargetTime(raw: string): number | null {
-  if (typeof raw !== 'string') return null;
-  const trimmed = raw.trim();
-  if (trimmed === '') return null;
-  // Accept: "m:ss.ms", "m:ss", "s.ms", or plain integer seconds.
-  // Use a permissive parse — a single colon splits minutes:seconds.
-  let mins = 0;
-  let secStr = trimmed;
-  const colonIdx = trimmed.indexOf(':');
-  if (colonIdx >= 0) {
-    const mPart = trimmed.slice(0, colonIdx);
-    secStr = trimmed.slice(colonIdx + 1);
-    const m = Number(mPart);
-    if (!Number.isFinite(m) || m < 0) return null;
-    mins = Math.floor(m);
-  }
-  const sec = Number(secStr);
-  if (!Number.isFinite(sec) || sec < 0) return null;
-  const totalMs = Math.round(mins * 60_000 + sec * 1000);
-  if (!Number.isFinite(totalMs) || totalMs <= 0) return null;
-  return totalMs;
-}
-
-/**
- * Format a target-time ms value back into `m:ss.ms` for display in the
- * settings input. 0 / null / non-finite → empty string.
- */
-export function formatTargetTime(ms: number | null | undefined): string {
-  if (ms == null || !Number.isFinite(ms) || ms <= 0) return '';
-  const totalCs = Math.round(ms / 10);
-  const cs = totalCs % 100;
-  const totalSec = Math.floor(totalCs / 100);
-  const sec = totalSec % 60;
-  const min = Math.floor(totalSec / 60);
-  return `${min}:${String(sec).padStart(2, '0')}.${String(cs).padStart(2, '0')}`;
-}
+export { parseDailySolveGoal, parseTargetTime, formatTargetTime } from '@cuberoot/shared/timer';
 
 let _cache: TimerSettings = load();
 const _listeners = new Set<() => void>();
@@ -381,9 +337,18 @@ function load(): TimerSettings {
       ...DEFAULTS,
       ...parsed,
       ...normalizedTiming,
+      ...normalizeTimerSyncSeed(parsed),
       ...normalizedSplits,
       ...normalizedScramblePreview,
       ...normalizedSmartCube,
+      ...normalizeTimerTypography(parsed),
+      ...normalizeTimerDisplaySettings(parsed),
+      ...normalizeTimerPreScrambleSettings(parsed),
+      ...normalizeTimerSoundSettings(parsed),
+      inspectionBeepAt: normalizeTimerMetronomeSettings(parsed).inspectionBeepAt,
+      ...normalizeTimerTrainingSettings(parsed),
+      keymap: normalizeTimerKeymap(parsed.keymap),
+      cnMode: normalizeTimerColorNeutralMode(parsed.cnMode),
       rankScopes: showRankBadge === false ? [] : normalizeTimerRankScopes(parsed.rankScopes),
     } as TimerSettings & {
       statsAoWindows?: unknown;
@@ -492,6 +457,15 @@ export function updateSettings(patch: Partial<TimerSettings>): void {
   _cache = {
     ...candidate,
     ...normalizeTimerTimingSettings(candidate),
+    ...normalizeTimerSyncSeed(candidate),
+    ...normalizeTimerTypography(candidate),
+    ...normalizeTimerDisplaySettings(candidate),
+    ...normalizeTimerPreScrambleSettings(candidate),
+    ...normalizeTimerSoundSettings(candidate),
+    inspectionBeepAt: normalizeTimerMetronomeSettings(candidate).inspectionBeepAt,
+    ...normalizeTimerTrainingSettings(candidate),
+    keymap: normalizeTimerKeymap(candidate.keymap),
+    cnMode: normalizeTimerColorNeutralMode(candidate.cnMode),
     ...normalizeTimerAttemptSplitSettings(candidate),
     ...normalizeTimerScramblePreviewSettings(candidate),
     ...normalizeTimerSmartCubeSettings(candidate),
@@ -523,3 +497,14 @@ export function useSettings(): TimerSettings {
 // 计时器曾经有自己独立于站点的明暗(data-timer-theme + settings.theme,cstimer 遗留),
 // 于是同一个 <html> 上挂两套主题:shell 走站点 token、内层走那套硬码灰阶,二者可能相反
 // (站点浅色 + 计时器深色 → 浅底配深控件)。现已整体并入站点主题,颜色全走 :root token。
+
+/** Commit before publishing a visible seeded slot; storage failure leaves the index reusable. */
+export function commitTimerSeed(ticket: TimerSeedTicket): void {
+  const current = getSettings();
+  const patch = consumeTimerSeed(current, ticket);
+  if (!patch) throw new Error('Seed position changed');
+  const next = { ...current, ...patch };
+  if (!persistItem(KEY, JSON.stringify(next))) throw new Error('Seed position could not be saved');
+  _cache = next;
+  for (const listener of _listeners) listener();
+}

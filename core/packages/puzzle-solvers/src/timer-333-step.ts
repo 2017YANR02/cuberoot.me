@@ -393,8 +393,8 @@ const STAGE_LABELS: Readonly<Record<MethodId, Readonly<Record<string, { en: stri
     'F2L-4': { en: 'F2L-4', zh: 'F2L-4' },
   },
   roux: {
-    'Step 1': { en: 'First block', zh: '左桥' },
-    'Step 2': { en: 'Second block', zh: '右桥' },
+    'Step 1': { en: 'FB', zh: 'FB' },
+    'Step 2': { en: 'SB', zh: 'SB' },
   },
   petrus: {
     '2x2x2': { en: '2×2×2', zh: '2×2×2' },

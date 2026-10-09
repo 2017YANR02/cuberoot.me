@@ -10,12 +10,10 @@
 //! `get_stats` 输出 48 个值(12 sym × 4 阶段),wrapper 取 `min(2c, 2c+1)`
 //! 把 12 sym 折叠成 6 rotation 视角输出。
 //!
-//! Cross+EO 解法上界 12 步;XC+EO 上界 20 步(C++ 同款)。
+//! Cross+EO 直接查询已有完整 EP4×EO12 表;XC+EO 上界 20 步(C++ 同款)。
 //!
-//! 表依赖:
-//!   - mt_edge / mt_edge2 / mt_corn / mt_edge4 / mt_edge6 / mt_corn2 / mt_ep4 /
-//!     mt_eo12 / mt_eo12_alt
-//!   - pt_cross (140 KB)
+//! 原生完整分析器表依赖(下方 EOSmallSolver 保留独立的浏览器表集):
+//!   - mt_edge / mt_corn / mt_edge4 / mt_edge6 / mt_corn2 / mt_ep4 / mt_eo12_alt
 //!   - pt_cross_C4E0 (52 MB)
 //!   - pt_cross_C4E0E1/E2/E3 (CEE,3 张)
 //!   - pt_cross_C4C5E0 / C4C6E0 / C4C7E0 (CCE,3 张)
@@ -23,6 +21,7 @@
 //!   - pt_ep4eo12 (~12 MB)
 //!   - pt_cross_C4C5E0E1 (huge ~10 GB)
 //!   - pt_cross_C4C6E0E2 (huge ~10 GB,可选,`with_diagonal=false` 跳过)
+//!   - high-memory 档另加载 mt_ep5_high_memory + pt_eo_xcross_slot{0..3}_high_memory
 
 use std::sync::Arc;
 
@@ -40,9 +39,9 @@ use crate::prune_tables::{self, PackedPruneTable};
 // ============================================================================
 
 pub struct EOCrossSolver {
-    mt_edge2: Arc<MoveTable>,
+    mt_ep4: Arc<MoveTable>,
     mt_eo12: Arc<MoveTable>,
-    pt_cross: Arc<PackedPruneTable>,
+    pt_ep4eo12: Arc<PackedPruneTable>,
 }
 
 impl EOCrossSolver {
@@ -51,91 +50,37 @@ impl EOCrossSolver {
         let mtm = move_tables::instance();
         let ptm = prune_tables::instance();
         EOCrossSolver {
-            mt_edge2: mtm.ensure_edge2(),
-            mt_eo12: mtm.ensure_eo12(),
-            pt_cross: ptm.ensure_pt_cross(),
+            mt_ep4: mtm.ensure_ep4(),
+            mt_eo12: mtm.ensure_eo12_alt(),
+            pt_ep4eo12: ptm.ensure_pt_ep4eo12(),
         }
     }
 
-    fn get_indices_sym(&self, alg: &[u8], sym_idx: usize) -> (u32, u32, u32) {
-        let mt2 = self.mt_edge2.as_u32();
+    fn get_indices_sym(&self, alg: &[u8], sym_idx: usize) -> (u32, u32) {
+        let mt_ep4 = self.mt_ep4.as_u32();
         let mt_eo = self.mt_eo12.as_u32();
         let sm = sym_moves_flat();
-        let mut i1 = state_space::EDGE2_A_SOLVED as u32;
-        let mut i2 = state_space::EDGE2_B_SOLVED as u32;
+        let mut ep4 = state_space::EP4_SOLVED as u32;
         let mut ieo: u32 = 0;
         for &m in alg {
             let conj_m = sm[m as usize][sym_idx] as usize;
-            i1 = mt2[(i1 as usize) * 18 + conj_m];
-            i2 = mt2[(i2 as usize) * 18 + conj_m];
-            ieo = mt_eo[(ieo as usize) + conj_m];
+            ep4 = mt_ep4[ep4 as usize * 18 + conj_m];
+            ieo = mt_eo[ieo as usize * 18 + conj_m];
         }
-        (i1, i2, ieo)
+        (ep4, ieo)
     }
 
-    fn search(&self, i1: usize, i2: usize, i_eo: usize, depth: u32, prev: u8) -> bool {
-        let (vmoves, vcnt) = valid_moves();
-        let count = vcnt[prev as usize] as usize;
-        let row = &vmoves[prev as usize];
-        let mt2 = self.mt_edge2.as_u32();
-        let mt_eo = self.mt_eo12.as_u32();
-
-        let mut local: u64 = 0;
-        for k in 0..count {
-            let m = row[k] as usize;
-            local += 1;
-            let n1 = mt2[i1 + m] as usize;
-            let n2 = mt2[i2 + m] as usize;
-            let idx: u64 = n1 as u64 * state_space::EDGE2 as u64 + n2 as u64;
-            let pr = self.pt_cross.get(idx) as u32;
-            if pr >= depth {
-                continue;
-            }
-            let neo = mt_eo[i_eo + m] as usize;
-            if depth == 1 {
-                if pr == 0 && neo == 0 {
-                    bump_node_count(local);
-                    return true;
-                }
-            } else if self.search(n1 * 18, n2 * 18, neo, depth - 1, m as u8) {
-                bump_node_count(local);
-                return true;
-            }
-        }
-        bump_node_count(local);
-        false
-    }
-
-    /// 12 sym 视角,返回 12 个 best 值。
+    /// 12 sym 视角的精确距离。EP4 固定四枚 Cross 棱的位置，EO12 固定所有棱
+    /// 朝向，故这个完整 BFS 表的目标恰好就是 Cross + EO，不需要再做 IDA*。
+    /// 表由同样的 18 个 HTM 转动生成，全部 24,330,240 项已填满，直径为 10。
     pub fn get_stats(&self, alg: &[u8]) -> Vec<u32> {
-        let mut res = vec![99u32; 12];
-        let mut tasks: Vec<(u32, usize)> = Vec::with_capacity(12);
-        let mut sym_state: Vec<(u32, u32, u32)> = Vec::with_capacity(12);
-        for s in 0..12 {
-            let (i1, i2, ieo) = self.get_indices_sym(alg, s);
-            sym_state.push((i1, i2, ieo));
-            let idx: u64 = i1 as u64 * state_space::EDGE2 as u64 + i2 as u64;
-            let mut h = self.pt_cross.get(idx) as u32;
-            if h == 0 && ieo != 0 {
-                h = 1;
-            }
-            if h == 0 && ieo == 0 {
-                res[s] = 0;
-                continue;
-            }
-            tasks.push((h, s));
-        }
-        tasks.sort();
-        for &(h0, s) in &tasks {
-            let (i1, i2, ieo) = sym_state[s];
-            for d in h0..=12 {
-                if self.search(i1 as usize * 18, i2 as usize * 18, ieo as usize, d, 18) {
-                    res[s] = d;
-                    break;
-                }
-            }
-        }
-        res
+        (0..12)
+            .map(|s| {
+                let (ep4, eo) = self.get_indices_sym(alg, s);
+                self.pt_ep4eo12
+                    .get(ep4 as u64 * state_space::EO12 as u64 + eo as u64) as u32
+            })
+            .collect()
     }
 }
 
@@ -1512,8 +1457,8 @@ pub fn eo_cross_get_stats(alg: &[Move], with_diagonal: bool) -> Vec<u32> {
 // (==0)。两者都是真实距离的可采纳下界 ⇒ IDA* 首达深度 = 真最优,与 big 路径逐格
 // bit-exact,仅访问更多节点(丢了 CEE/CCE/C4C5C6/huge 的剪枝力)。
 //
-// 阶段 0(eo_cross)big 本就只用 mt_edge2 + mt_eo12 + pt_cross 三张小表,直接复用
-// `EOCrossSolver` 同款逻辑。
+// 阶段 0(eo_cross)保留 mt_edge2 + mt_eo12 + pt_cross 的浏览器搜索路径。
+// 原生 `EOCrossSolver` 已改查完整距离表，二者输出保持一致。
 //
 // 用表清单(全 wasm 可服):
 //   mt_edge2(38KB)、mt_edge4(18MB)、mt_corn(1.7KB)、mt_edge(1.7KB)、
@@ -1609,8 +1554,7 @@ impl EOSmallSolver {
     }
 
     // ===================== stage 0:cross + EO =====================
-    // 与 `EOCrossSolver` 完全同款(mt_edge2 + mt_eo12 + pt_cross),只是内联进来以便
-    // wasm from_tables 复用。
+    // 保留原有 mt_edge2 + mt_eo12 + pt_cross 搜索，供 wasm from_tables 复用。
 
     fn cross_indices_sym(&self, alg: &[u8], sym_idx: usize) -> (u32, u32, u32) {
         let mt2 = self.mt_edge2.as_u32();
@@ -3003,6 +2947,109 @@ mod tests {
     use super::*;
     use crate::cube_common::{string_to_alg, test_env_lock};
     use std::path::PathBuf;
+
+    /// Read existing tables only. Compare all 12 symmetry distances to the
+    /// independent original IDA* path, and all checked-in EO Cross fixtures.
+    #[test]
+    #[ignore = "requires existing EP4/EO and XCross tables (read-only)"]
+    fn eo_cross_exact_lookup_matches_search_and_fixtures() {
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        let dir = std::env::var_os("CUBE_TABLE_DIR")
+            .map(PathBuf::from)
+            .unwrap_or_else(|| root.join("tables"));
+        let mt = |name: &str, count, stride| {
+            Arc::new(MoveTable::from_bin(
+                &std::fs::read(dir.join(format!("{name}.bin"))).unwrap(),
+                count,
+                stride,
+            ))
+        };
+        let pt = |name: &str| {
+            Arc::new(PackedPruneTable::from_bin(
+                &std::fs::read(dir.join(format!("{name}.bin"))).unwrap(),
+            ))
+        };
+        let original = EOSmallSolver::from_tables(
+            mt("mt_edge2", 528, 18),
+            mt("mt_eo12", 2048, 18),
+            pt("pt_cross"),
+            mt("mt_edge4", 190080, 24),
+            mt("mt_corn", 24, 18),
+            mt("mt_edge", 24, 18),
+            mt("mt_ep4", 11880, 18),
+            mt("mt_eo12_alt", 2048, 18),
+            pt("pt_cross_C4E0"),
+            pt("pt_ep4eo12"),
+        );
+        let lookup = EOCrossSolver {
+            mt_ep4: original.mt_ep4.clone(),
+            mt_eo12: original.mt_eo12_alt.clone(),
+            pt_ep4eo12: original.pt_ep4eo12.clone(),
+        };
+        let mut histogram = [0u64; 16];
+        assert_eq!(lookup.pt_ep4eo12.entry_count, 24_330_240);
+        for i in 0..lookup.pt_ep4eo12.entry_count {
+            histogram[lookup.pt_ep4eo12.get(i) as usize] += 1;
+        }
+        assert_eq!(
+            histogram,
+            [
+                1, 15, 178, 1982, 21041, 204732, 1645039, 8477633, 12917628, 1061851, 140, 0, 0, 0,
+                0, 0,
+            ]
+        );
+
+        for size in [5, 100] {
+            let input = std::fs::read_to_string(root.join(format!("testdata/scramble_{size}.txt")))
+                .unwrap();
+            let golden = std::fs::read_to_string(
+                root.join(format!("testdata/golden/scramble_{size}_eo.csv")),
+            )
+            .unwrap();
+            let rows: Vec<_> = input.lines().filter(|line| !line.is_empty()).collect();
+            let expected: Vec<_> = golden.lines().skip(1).collect();
+            assert_eq!(rows.len(), expected.len());
+            for (line, expected) in rows.into_iter().zip(expected) {
+                let (id, scramble) = line.split_once(',').unwrap();
+                let alg: Vec<u8> = string_to_alg(scramble)
+                    .iter()
+                    .map(|m| m.index() as u8)
+                    .collect();
+                let actual = lookup.get_stats(&alg);
+                assert_eq!(
+                    actual,
+                    original.cross_stats_sym(&alg),
+                    "{id}: all 12 symmetries"
+                );
+                let mut columns = expected.split(',');
+                assert_eq!(columns.next().unwrap(), id);
+                let values: Vec<u32> = columns.take(6).map(|v| v.parse().unwrap()).collect();
+                assert_eq!(fold_cross_sym_to_rot(&actual), values, "{id}: golden");
+            }
+        }
+
+        // Include the solved state, every one-move state, and deterministic
+        // legal walks beyond the fixture corpus; retain all 12 symmetry values.
+        let mut cases = vec![vec![]];
+        cases.extend((0u8..18).map(|m| vec![m]));
+        let mut seed = 0x243f6a88u32;
+        for _ in 0..128 {
+            let alg: Vec<u8> = (0..24)
+                .map(|_| {
+                    seed = seed.wrapping_mul(1664525).wrapping_add(1013904223);
+                    ((seed >> 16) % 18) as u8
+                })
+                .collect();
+            cases.push(alg);
+        }
+        for alg in cases {
+            assert_eq!(
+                lookup.get_stats(&alg),
+                original.cross_stats_sym(&alg),
+                "{alg:?}"
+            );
+        }
+    }
 
     /// 小表 EO cascade(from_tables,无 huge / 无 1.3GB / 无 mt_edge6)逐格 bit-exact
     /// 对照大表 golden(值由 huge-table eo_cross_analyzer 算出)。

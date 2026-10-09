@@ -9,11 +9,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RefreshCw, Download, Image as ImageIcon, ImageOff, ChevronDown, Check } from 'lucide-react';
 import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
+import EventScrambleOptions from './EventScrambleOptions';
 import NumberCommitInput from '@/components/NumberCommitInput';
-import Scramble555ModePicker from '@/components/Scramble555ModePicker';
-import Scramble333ModePicker from '@/components/Scramble333ModePicker';
-import Scramble222ModePicker from '@/components/Scramble222ModePicker';
-import HighOrderNxNInput from '@/components/HighOrderNxNInput';
+import { useRediMode } from '@/lib/scramble-redi-mode';
 import { EventIcon } from '@/components/EventIcon';
 import { ScramblePreview2D, eventHasScramblePreview } from '@/components/ScramblePreview2D';
 import { eventDisplayName } from '@/lib/wca-events';
@@ -26,7 +24,6 @@ import ProgressButton from './ProgressButton';
 import CopyAllScramblesButton from './CopyAllScramblesButton';
 import { scrambleEventPickerGroups } from './_event-picker';
 import ScrambleLines from './ScrambleLines';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { displaySq1ForEvent } from '@cuberoot/shared/sq1-notation';
 
 const GENERATOR_TAG = 'TNoodle-WCA-1.2.3-port';
@@ -104,7 +101,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
     return () => document.removeEventListener('mousedown', onDown);
   }, [countOpen]);
 
-  // 高阶 NxN(8-50)合成 event id `nxn<N>`,排在 WCA 21 项之后。
+  // 非 WCA 阶数(1、8-300)合成 event id `nxn<N>`，2-7 阶复用已有项目。
   const customNxN = useMemo(
     () => Array.from(events)
       .filter((id) => /^nxn\d+$/.test(id))
@@ -143,7 +140,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
   };
 
   const addHighNxN = (n: number) => {
-    const id = `nxn${n}`;
+    const id = n >= 2 && n <= 7 ? String(n).repeat(3) : `nxn${n}`;
     setEvents((prev) => {
       if (prev.has(id)) return prev;
       const next = new Set(prev);
@@ -158,19 +155,23 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
   // lastCount/lastTick 用 ref 跨 effect 持久,跟 state 一同变更时不冲突。
   const lastCountRef = useRef(count);
   const lastTickRef = useRef(tick);
+  const [rediMode] = useRediMode();
+  const lastRediModeRef = useRef(rediMode);
   useEffect(() => {
     if (subMode !== 'batch') return;
     const fullRegen = count !== lastCountRef.current || tick !== lastTickRef.current;
+    const rediChanged = rediMode !== lastRediModeRef.current;
+    lastRediModeRef.current = rediMode;
     lastCountRef.current = count;
     lastTickRef.current = tick;
 
     const existing = generated;
     const toGenerate = fullRegen
       ? eventsOrdered
-      : eventsOrdered.filter((ev) => !(ev in existing));
+      : eventsOrdered.filter((ev) => !(ev in existing) || (ev === 'redi_cube' && rediChanged));
     const toKeep = fullRegen
       ? new Set<string>()
-      : new Set(eventsOrdered.filter((ev) => ev in existing));
+      : new Set(eventsOrdered.filter((ev) => ev in existing && !toGenerate.includes(ev)));
 
     // 移除已经不在 eventsOrdered 里的旧项目(用户点 ×) — 同步更新 generated/timing。
     const removedKeys = Object.keys(existing).filter((ev) => !eventsOrdered.includes(ev));
@@ -217,7 +218,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
         const t0 = performance.now();
         if (!(ev in evWallStart) || t0 < evWallStart[ev]) evWallStart[ev] = t0;
         promises.push(
-          (isCstimerEvent(ev)
+          (isCstimerEvent(ev) && ev !== 'redi_cube'
             ? cstimerScramble(ev)
             : isShapeModEvent(ev)
               ? tnoodleRandomScramble(shapeModSourceEvent(ev)!)
@@ -272,7 +273,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
       setLoading(false);
       setGenProgress(null);
     });
-  }, [subMode, eventsKey, count, tick]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [subMode, eventsKey, count, tick, rediMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const regenerate = () => setTick((n) => n + 1);
 
@@ -361,11 +362,20 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
       <div className="gen-config-toolbar">
         <PuzzlePicker
           groups={configPickerGroups}
+          itemAction={(item) => (
+            <EventScrambleOptions
+              event={item.id}
+              isZh={isZh}
+              onAddOrder={addHighNxN}
+              sq1Compact={sq1Compact}
+              onSq1CompactChange={onSq1CompactChange}
+            />
+          )}
           selectedEvents={events}
           onToggle={toggleEvent}
           isZh={isZh}
-          popupFooter={(
-            <HighOrderNxNInput isZh={isZh} onAdd={addHighNxN}>
+          popupFooter={customNxN.length > 0 ? (
+            <div className="gen-tn-config-group">
               {customNxN.map((id) => (
                 <button
                   key={id}
@@ -377,8 +387,8 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
                   {eventDisplayName(id, isZh)}
                 </button>
               ))}
-            </HighOrderNxNInput>
-          )}
+            </div>
+          ) : null}
         />
         {subMode === 'batch' && (
           <div className="gen-count-row">
@@ -419,25 +429,6 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
           </div>
         )}
         <div className="gen-config-toolbar-scroll">
-
-      {/* 配置条:各项目打乱模式(选中对应项目才显示) */}
-      <div className="gen-tn-config-row">
-        <Scramble555ModePicker active555={events.has('555')} isZh={isZh} />
-        <Scramble333ModePicker active333={events.has('333')} isZh={isZh} />
-        <Scramble222ModePicker active222={events.has('222')} />
-        {events.has('sq1') && (
-          <div className="gen-sq1-format">
-            <span className="gen-sq1-format-label">{t('SQ1', 'SQ1')}</span>
-            <PillToggle
-              value={sq1Compact}
-              onChange={onSq1CompactChange}
-              onLabel={t('简写', 'Compact')}
-              offLabel={t('完整', 'Full')}
-              ariaLabel={t('SQ1 打乱记号:简写或完整', 'SQ1 scramble notation: compact or full')}
-            />
-          </div>
-        )}
-      </div>
 
       <div className="gen-tn-controls">
         <div className="gen-control-group gen-control-actions">
@@ -489,6 +480,15 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
         <div className="gen-view-picker">
           <PuzzlePicker
             groups={viewPickerGroups}
+            itemAction={(item) => (
+              <EventScrambleOptions
+                event={item.id}
+                isZh={isZh}
+                onAddOrder={addHighNxN}
+                sq1Compact={sq1Compact}
+                onSq1CompactChange={onSq1CompactChange}
+              />
+            )}
             selectedEvent={activeView}
             onSelect={setViewedEvent}
             isZh={isZh}

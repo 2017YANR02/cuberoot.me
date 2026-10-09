@@ -1,6 +1,8 @@
+import { createMiniProgramStackmatSource } from '@/app/[lang]/timer/_lib/bluetooth/timer/miniprogram';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { connectMiniProgramCubeBridge } from '@/app/[lang]/timer/_lib/bluetooth/miniprogram_bridge';
+import { normalizeMiniProgramCubeBrand } from '@/app/[lang]/timer/_lib/bluetooth';
 
 type Listener = (event: { data?: string; reason?: string }) => void;
 
@@ -70,11 +72,90 @@ function stubMiniProgram(navigateTo: MiniProgramNavigateTo = () => {}): void {
 }
 
 describe('mini-program smart-cube bridge', () => {
+  it('correlates calibration ACKs, surfaces failures and cancels on relay loss without replay', async () => {
+    stubMiniProgram();
+    const onState = vi.fn(); const onMove = vi.fn();
+    const pending = connectMiniProgramCubeBridge({ onBattery: vi.fn(), onGyro: vi.fn(), onMove, onState, onStatus: vi.fn() });
+    await vi.waitFor(() => expect(FakeWebSocket.instance).not.toBeNull());
+    const socket = FakeWebSocket.instance!; socket.emitOpen();
+    socket.emitMessage({ type: 'ready', role: 'sink', lastMoveSeq: 0 });
+    socket.emitMessage({ type: 'status', phase: 'connected', canResetDevice: true });
+    const bridge = await pending; bridge.activate();
+    let confirmed = false;
+    const reset = bridge.resetDeviceState!().then(() => { confirmed = true; });
+    const command = JSON.parse(socket.sent.at(-1)!);
+    socket.emitMessage({ type: 'command-result', requestId: 'wrongrequest000000', ok: true });
+    await Promise.resolve(); expect(confirmed).toBe(false);
+    socket.emitMessage({ type: 'command-result', requestId: command.requestId, ok: true });
+    await reset;
+    socket.emitMessage({ type: 'state', facelets: 'U'.repeat(54), calibration: true, relaySeq: 1 });
+    socket.emitMessage({ type: 'move', move: 'R', relaySeq: 2 });
+    expect(onState).toHaveBeenCalledWith('U'.repeat(54), true);
+    expect(onMove).toHaveBeenCalledOnce();
+    const failure = expect(bridge.resetDeviceState!()).rejects.toThrow('hardware failure');
+    const next = JSON.parse(socket.sent.at(-1)!);
+    socket.emitMessage({ type: 'command-result', requestId: next.requestId, ok: false, error: 'hardware failure' });
+    await failure;
+    vi.useFakeTimers();
+    const timedOut = expect(bridge.resetDeviceState!()).rejects.toThrow('timed out');
+    await vi.advanceTimersByTimeAsync(8000); await timedOut;
+    vi.useRealTimers();
+    const lost = expect(bridge.resetDeviceState!()).rejects.toThrow('disconnected');
+    socket.emitClose(); await lost; bridge.disconnect();
+  });
+
+  it('updates native Stackmat readings without starting or recording a solve twice', async () => {
+    stubMiniProgram();
+    const source = createMiniProgramStackmatSource(); const listener = vi.fn(); source.subscribe(listener);
+    const pending = source.connect();
+    await vi.waitFor(() => expect(FakeWebSocket.instance).not.toBeNull());
+    const socket = FakeWebSocket.instance!; socket.emitOpen();
+    socket.emitMessage({ type: 'ready', role: 'sink', lastMoveSeq: 0 });
+    socket.emitMessage({ type: 'status', phase: 'connected', brand: 'stackmat-mic' });
+    await pending;
+    expect(source.snapshot().listening).toBe(true);
+    for (const [index, state, solveTime] of [[1, 'RUNNING', 100], [2, 'RUNNING', 200], [3, 'STOPPED', 234], [4, 'STOPPED', 234]] as const) {
+      socket.emitMessage({ type: 'timer', event: { state, solveTime }, relaySeq: index });
+    }
+    expect(listener.mock.calls.map(([event]) => event)).toEqual([{ state: 'RUNNING', solveTime: 100 }, { state: 'STOPPED', solveTime: 234 }]);
+    expect(source.snapshot()).toMatchObject({ phase: 'stopped', ms: 234, listening: true });
+    await source.disconnect();
+    expect(source.snapshot().listening).toBe(false);
+  });
+
+  it('routes timers to native setup and does not replay a received result twice', async () => {
+    const navigateTo = vi.fn(); stubMiniProgram(navigateTo);
+    const onTimer = vi.fn();
+    const pending = connectMiniProgramCubeBridge({ onTimer, onBattery: vi.fn(), onGyro: vi.fn(), onMove: vi.fn(), onState: vi.fn(), onStatus: vi.fn() }, 'bluetooth-timer');
+    await vi.waitFor(() => expect(FakeWebSocket.instance).not.toBeNull());
+    const socket = FakeWebSocket.instance!; socket.emitOpen();
+    socket.emitMessage({ type: 'ready', role: 'sink', lastMoveSeq: 0 });
+    expect(navigateTo.mock.calls[0][0].url).toContain('/pages/external-timer/index?mode=bluetooth-timer&token=');
+    socket.emitMessage({ type: 'status', phase: 'connected', brand: 'gan-timer' });
+    const bridge = await pending; bridge.activate();
+    const result = { type: 'timer', event: { state: 'STOPPED', solveTime: 12345 }, relaySeq: 1 };
+    socket.emitMessage(result); socket.emitMessage(result);
+    expect(onTimer).toHaveBeenCalledExactlyOnceWith({ state: 'STOPPED', solveTime: 12345 });
+    bridge.disconnect();
+  });
+
   afterEach(() => {
     FakeWebSocket.instance = null;
     FakeWebSocket.instances = [];
     vi.useRealTimers();
     vi.unstubAllGlobals();
+  });
+
+  it.each(['gan-v2', 'gan-v3', 'gan-v4', 'gocube', 'qiyi', 'giiker', 'moyu', 'moyu32'])(
+    'preserves the supported %s protocol identity',
+    (brand) => {
+      expect(normalizeMiniProgramCubeBrand(brand)).toBe(brand);
+    },
+  );
+
+  it('maps an absent or unsupported protocol identity to unknown', () => {
+    expect(normalizeMiniProgramCubeBrand(undefined)).toBe('unknown');
+    expect(normalizeMiniProgramCubeBrand('future-protocol')).toBe('unknown');
   });
 
   it('confirms the iOS WeChat container when its user agent omits miniProgram', async () => {
@@ -168,7 +249,9 @@ describe('mini-program smart-cube bridge', () => {
     const pending = connectMiniProgramCubeBridge({
       onBattery: (level) => received.push(`battery:${level}`),
       onGyro: () => received.push('gyro'),
-      onMove: (move) => received.push(`move:${move}`),
+      onMove: (move, _deviceTs, metadata) => received.push(
+        `move:${move}:${metadata?.futureHistory ? 'future' : 'current'}`,
+      ),
       onState: (facelets) => received.push(`state:${facelets[0]}`),
       onStatus: (status) => received.push(`status:${status.phase}`),
     });
@@ -182,7 +265,7 @@ describe('mini-program smart-cube bridge', () => {
       type: 'state',
       facelets: 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB',
     });
-    socket.emitMessage({ type: 'move', move: 'U', deviceTs: 42, relaySeq: 1 });
+    socket.emitMessage({ type: 'move', move: 'U', deviceTs: 42, futureHistory: true, relaySeq: 1 });
     expect(received).toEqual([]);
 
     socket.emitMessage({
@@ -196,7 +279,7 @@ describe('mini-program smart-cube bridge', () => {
     expect(received).toEqual([]);
 
     connection.activate();
-    expect(received).toEqual(['state:U', 'move:U', 'status:connected']);
+    expect(received).toEqual(['state:U', 'move:U:future', 'status:connected']);
     expect(connection).toMatchObject({ brand: 'gan-v4', deviceName: 'GAN16ui', hasGyro: true });
   });
 

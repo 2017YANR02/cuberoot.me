@@ -22,7 +22,7 @@ import type { Metric as Top10Metric } from '@/lib/top10-axis';
 import type { StatData, StatSection, StatPanel, MetricPanel } from './WcaStatView.types';
 import { getAllPanelsFromMetric, metricIdsWithDataForEvent } from './WcaStatView.cells';
 import {
-  WrByCountryYearView, StatsTable, SectionsView, PanelsView, MetricPanelsView, RecordSectionsView,
+  WrByCountryYearView, StatsTable, SectionsView, PanelsView, MetricPanelsView, RecordSectionsView, AnnualParticipationView,
 } from './WcaStatView.views';
 import '../../app/[lang]/wca/_wca_stats.css';
 import { tr } from '@/i18n/tr';
@@ -39,12 +39,14 @@ interface WcaStatViewProps {
   /** 受控指标 id(metricPanels 的 id,如 'bao5')。传了即由宿主页驱动:同步到对应面板 +
    *  隐藏组件内置的指标选择器(/wca/results 把它提升进顶层「类型」下拉,避免重复)。 */
   metricId?: string | null;
+  /** Override the shared event selector presentation for an embedding surface. */
+  eventSelectorPresentation?: 'menu' | 'inline';
   /** 插在「项目选择器」与 note 之间的内容。/wca/results 指标视图把顶层「类型」下拉放这,
    *  实现 项目选择器 在 类型下拉 上方。 */
   afterEventSelector?: React.ReactNode | ((availableMetricIds: ReadonlySet<string>) => React.ReactNode);
 }
 
-export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metricId = null, afterEventSelector = null }: WcaStatViewProps) {
+export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metricId = null, eventSelectorPresentation = 'menu', afterEventSelector = null }: WcaStatViewProps) {
   const { i18n } = useTranslation();
   const [data, setData] = useState<StatData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -150,6 +152,7 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
 
   const renderMode = useMemo(() => {
     if (!data) return 'empty';
+    if (data.id === 'annual_participation') return 'annual';
     if (data.sections?.some(section => section.recordScope)) return 'records';
     if (data.metricPanels && data.metricPanels.length > 0) return 'metricPanels';
     if (data.panels && data.panels.length > 0) return 'panels';
@@ -188,7 +191,7 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
   );
 
   useEffect(() => {
-    if (availableEvents.size > 0 && !selectedEvent) {
+    if (renderMode !== 'annual' && availableEvents.size > 0 && !selectedEvent) {
       const urlEvent = new URLSearchParams(window.location.search).get(k('event'));
       const initial = (urlEvent && availableEvents.has(urlEvent))
         ? urlEvent
@@ -198,9 +201,9 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
         setUrlState({ [k('event')]: initial });
       }
     }
-  }, [availableEvents, selectedEvent, setUrlState, k]);
+  }, [availableEvents, selectedEvent, setUrlState, k, renderMode]);
 
-  const showEventSelector = renderMode !== 'records' && renderMode !== 'rows' && renderMode !== 'empty' && availableEvents.size >= 2;
+  const showEventSelector = !['annual', 'records', 'rows', 'empty'].includes(renderMode) && availableEvents.size >= 2;
 
   // headerMode='full' = 路由页:.wca-stats-page 自带暗锁 + 页面内边距 + h1。
   // 嵌入页(note/none)宿主已是暗锁的 .wse-page,用轻量壳,免重复暗锁/双层内边距。
@@ -227,6 +230,23 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
     );
   }
 
+  const filterControls = showEventSelector || afterEventSelector ? (
+    <>
+      {showEventSelector && (
+        <WcaEventSelector
+          presentation={eventSelectorPresentation}
+          availableEvents={availableEvents}
+          selectedEvent={selectedEvent}
+          onSelect={handleSelectEvent}
+          isZh={isZh}
+        />
+      )}
+      {typeof afterEventSelector === 'function'
+        ? afterEventSelector(availableMetricIds)
+        : afterEventSelector}
+    </>
+  ) : null;
+
   return (
     <div className={wrapperClass}>
       {headerMode === 'full' && (
@@ -237,18 +257,9 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
           )}
         </div>
       )}
-      {/* 项目选择器放最上面;afterEventSelector(/wca/results 的顶层「类型」下拉)紧随其后 → 项目在类型上方 */}
-      {showEventSelector && (
-        <WcaEventSelector
-          availableEvents={availableEvents}
-          selectedEvent={selectedEvent}
-          onSelect={handleSelectEvent}
-          isZh={isZh}
-        />
+      {!['sections', 'panels', 'metricPanels'].includes(renderMode) && (showEventSelector || afterEventSelector) && (
+        <div className="wca-stats-tab-bar">{filterControls}</div>
       )}
-      {typeof afterEventSelector === 'function'
-        ? afterEventSelector(availableMetricIds)
-        : afterEventSelector}
       {headerMode === 'note' && data.note && (
         <p className="wca-stats-note wca-stats-embedded-note">{tr({ zh: data.noteZh ?? data.note, en: data.note })}</p>
       )}
@@ -266,6 +277,12 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
         <StatsTable header={data.header} rows={data.rows} searchTerm={searchTerm} isZh={isZh} />
       )}
 
+      {renderMode === 'annual' && data.sections && <AnnualParticipationView
+        header={data.header} sections={data.sections} isZh={isZh}
+        event={urlState[k('event')] ?? ''} metric={urlState[k('type')] ?? 'people'}
+        onChange={(event, metric) => { void setUrlState({ [k('event')]: event || null, [k('type')]: metric }); }}
+      />}
+
       {renderMode === 'records' && data.sections && <RecordSectionsView
         header={data.header}
         sections={data.sections}
@@ -276,6 +293,7 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
 
       {renderMode === 'sections' && data.sections && (
         <SectionsView
+          leadingControls={filterControls}
           header={data.header}
           sections={data.sections}
           searchTerm={searchTerm}
@@ -286,6 +304,7 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
 
       {renderMode === 'panels' && data.panels && (
         <PanelsView
+          leadingControls={filterControls}
           panels={data.panels}
           searchTerm={searchTerm}
           isZh={isZh}
@@ -297,6 +316,7 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
 
       {renderMode === 'metricPanels' && data.metricPanels && (
         <MetricPanelsView
+          leadingControls={filterControls}
           metricPanels={data.metricPanels}
           metricGroups={data.metricGroups}
           searchTerm={searchTerm}

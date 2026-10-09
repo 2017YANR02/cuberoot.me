@@ -88,6 +88,12 @@ describe('shared TimerScrambleStrip', () => {
     expect(activate).toHaveBeenCalledTimes(3);
   });
 
+  it('keeps space-free Square-1 scrambles wrappable instead of making the whole string nowrap', () => {
+    const strip = render({ scramble: '-5/22/-3/1-5/0-3/-3/2/0-3,1/0-3/-2/2-1' });
+    expect(strip.querySelector('.scramble-moves')?.textContent).toContain('-5/22/-3/1-5/0-3/-3/2/0-3,1/0-3/-2/2-1');
+    expect(strip.querySelector('.scramble-moves > .scramble-copied-tail')).toBeNull();
+  });
+
   it('renders current-turn progress and correction-copy feedback without a false tail check', () => {
     const strip = render({
       copied: true,
@@ -292,9 +298,18 @@ describe('shared TimerScrambleStrip', () => {
   });
 
   it('keeps Solo and NetBattle as real consumers instead of private strip renderers', () => {
+    const netPage = readFileSync(new URL('./TimerNetBattlePage.tsx', import.meta.resolve('@cuberoot/timer-ui')), 'utf8');
     for (const file of ['SoloView.tsx', 'NetBattleView.tsx']) {
       const source = readFileSync(join(process.cwd(), 'app', '[lang]', 'timer', '_shell', file), 'utf8');
-      expect(source).toContain('<TimerScrambleStrip');
+      if (file === 'SoloView.tsx') {
+        expect(source).toContain('<TimerScrambleStrip');
+      } else {
+        expect(source).toContain('<TimerNetBattlePage');
+        expect(source).toContain('stage: ownTimingStage');
+        expect(source).toContain('scramble: displayScramble');
+        expect(netPage).toContain('<TimerNetBattleStage {...room.stage}');
+        expect(netPage).toContain('<TimerScrambleStrip {...scramble}');
+      }
       expect(source).not.toMatch(/<div\s+className=\{`scramble-strip/);
       expect(source).not.toContain('import ScrambleHintText');
     }
@@ -310,6 +325,8 @@ describe('shared TimerScrambleStrip', () => {
     expect(css).toMatch(/\.scramble-strip \.scramble-text[\s\S]*?min-width:\s*0;[\s\S]*?max-width:\s*100%;/);
     expect(rootRule).not.toContain('word-spacing');
     expect(css).toMatch(/\.scramble-strip \.scramble-moves,[\s\S]*?word-spacing:\s*0\.25em;/);
+    expect(css).toMatch(/\.scramble-strip \.scramble-moves,[\s\S]*?overflow-wrap:\s*anywhere;/);
+    expect(css).toMatch(/\.scramble-strip \.scramble-moves,[\s\S]*?white-space:\s*pre-wrap;/);
     expect(css).toMatch(/\.timer-scramble-source-meta[\s\S]*?word-spacing:\s*normal;/);
     expect(css).toMatch(/\.scramble-src[\s\S]*?min-height:\s*44px;/);
     expect(css).toMatch(/\.scramble-status-retry[\s\S]*?min-width:\s*44px;[\s\S]*?min-height:\s*44px;/);

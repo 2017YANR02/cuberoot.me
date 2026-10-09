@@ -1,1 +1,5 @@
-NSBluetoothAlwaysUsageDescription = "CubeRoot 会连接智能魔方，用于计时和记录转动。";
+NSBluetoothAlwaysUsageDescription = "CubeRoot 会连接智能魔方或智能计时器，用于计时和记录转动。";
+
+NSMicrophoneUsageDescription = "CubeRoot 会使用麦克风进行联机对战语音通话，以及读取 Stackmat 计时器信号。";
+
+NSCameraUsageDescription = "CubeRoot 会在你开启联机对战视频时使用摄像头。";

@@ -10,7 +10,7 @@ import { rememberLang, verifyUnsubToken } from '../utils/notify.js';
 import { publicUserIdsForOwnerKeys } from '../utils/account.js';
 import { defaultRecordNotificationPreferences, parseRecordNotificationPreferences } from '@cuberoot/shared/record-notifications';
 import { ISO2_TO_CR } from '../utils/record_format.js';
-import { getuiConfig } from '../utils/getui.js';
+import { pushConfigured } from '../utils/push_provider.js';
 import { parsePushDevice } from '../utils/push_device.js';
 
 export const notificationRoutes = new Hono();
@@ -18,7 +18,7 @@ export const notificationRoutes = new Hono();
 notificationRoutes.get('/notifications/push/config', async (c) => {
   c.header('Cache-Control', 'no-store');
   await requireAuth(c);
-  return c.json({ enabled: !!getuiConfig(c.req.query('appId') ?? '') });
+  return c.json({ enabled: pushConfigured(c.req.query('appId') ?? '', c.req.query('provider'), c.req.query('environment')) });
 });
 
 notificationRoutes.put('/notifications/push/device', async (c) => {
@@ -26,17 +26,18 @@ notificationRoutes.put('/notifications/push/device', async (c) => {
   const user = await requireAuth(c);
   const device = parsePushDevice(await c.req.json().catch(() => null));
   if (!device) return c.json({ error: 'Invalid push device' }, 400);
-  if (!getuiConfig(device.appId)) return c.json({ error: 'Push is not configured' }, 503);
+  if (!pushConfigured(device.appId, device.provider, device.environment)) return c.json({ error: 'Push is not configured' }, 503);
   const id = await userIdForOwnerKey(user.wcaId);
   if (id == null) return c.json({ error: 'Account not found' }, 404);
   try {
-    const rows = await query(`INSERT INTO notification_push_devices (installation_id, secret_hash, user_id, app_id, client_id)
-      VALUES (?, ?, ?, ?, ?) ON CONFLICT (installation_id) DO UPDATE SET
+    const rows = await query(`INSERT INTO notification_push_devices (installation_id, secret_hash, user_id, app_id, client_id, provider, environment)
+      VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT (installation_id) DO UPDATE SET
         user_id = EXCLUDED.user_id, app_id = EXCLUDED.app_id, client_id = EXCLUDED.client_id,
+        provider = EXCLUDED.provider, environment = EXCLUDED.environment,
         bound_at = CASE WHEN notification_push_devices.user_id = EXCLUDED.user_id
           THEN notification_push_devices.bound_at ELSE NOW() END, refreshed_at = NOW()
       WHERE notification_push_devices.secret_hash = EXCLUDED.secret_hash RETURNING installation_id`,
-    [device.installationId, device.secretHash, id, device.appId, device.clientId]);
+    [device.installationId, device.secretHash, id, device.appId, device.clientId, device.provider, device.environment]);
     if (!rows.length) return c.json({ error: 'Device binding conflict' }, 409);
   } catch (error) {
     if ((error as { code?: string }).code === '23505') return c.json({ error: 'Device binding conflict' }, 409);

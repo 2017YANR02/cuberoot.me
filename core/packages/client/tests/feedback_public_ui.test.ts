@@ -15,10 +15,14 @@ describe('public feedback UI contract', () => {
 
   it('loads the public feed and keeps pagination in URL state', () => {
     const page = read('app/[lang]/feedback/page.tsx');
-    expect(page).toContain('fetchPublicFeedback(safePage, safeSize)');
+    expect(page).toContain("fetchPublicFeedback(safePage, safeSize, status === 'all' ? undefined : status)");
     expect(page).toContain("parseAsInteger.withDefault(1).withOptions({ history: 'push' })");
     expect(page).toContain('<FeedbackConversation feedbackId={it.id}');
-    expect(page).toContain('<UserIdLabel userId={it.userId} />');
+    expect(page).toContain('<UserContactLink userId={it.userId} className="fbm-author">{author}</UserContactLink>');
+    expect(page).not.toContain('<UserIdLabel');
+    const expandButton = page.match(/<button\b[^>]*className="fbm-card-head"[\s\S]*?<\/button>/)?.[0];
+    expect(expandButton).toBeDefined();
+    expect(expandButton).not.toContain('<UserContactLink');
     expect(page).not.toContain('fetchMyFeedback');
   });
 
@@ -37,6 +41,7 @@ describe('public feedback UI contract', () => {
     expect(api).toContain('/v1/feedback/public?${qs}');
     expect(conversation).toContain("t('登录后回复', 'Sign in to reply')");
     expect(conversation).toContain('fetchFeedbackThread(feedbackId)');
-    expect(conversation).toContain('<UserIdLabel userId={m.userId} />');
+    expect(conversation).toContain('<UserContactLink userId={m.userId} className="fbc-msg-who">');
+    expect(conversation).not.toContain('<UserIdLabel');
   });
 });

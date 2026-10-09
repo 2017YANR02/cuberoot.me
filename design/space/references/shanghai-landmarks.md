@@ -1,6 +1,6 @@
 # 上海地标 Blender 细节档案
 
-2026-09-08。编辑源为 `design/space/scenes/shanghai.blend`，保留地理位置、所有运行根节点、已有独立楼体、招牌和海关钟表。制作脚本 `../scripts/refine_shanghai_landmarks.py` 是一次性增量作者工具；已有本批修订标记时拒绝重新生成。日常继续编辑 `.blend`，再运行 `batch.ps1 -Asset shanghai`。
+2026-09-08。编辑源为 `design/space/scenes/shanghai.blend`，保留地理位置、所有运行根节点、已有独立楼体、招牌和海关钟表。制作脚本 `../scripts/refine_shanghai_landmarks.py` 是一次性增量作者工具；已有本批修订标记时拒绝重新生成。日常继续编辑 `.blend`，再运行 `cd core && pnpm space:batch --asset shanghai`。
 
 ## 三件套实拍与结构对照
 

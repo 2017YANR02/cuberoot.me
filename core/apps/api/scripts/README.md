@@ -1,5 +1,17 @@
 # Local full-stack dev (edit DB data before push)
 
+## Manual SOR player-best refresh
+
+The scheduled refresh runs in `.github/workflows/sor.yml`. For a local fallback, run from `core/`:
+
+```sh
+pnpm sor:update --dry-run       # read-only inventory of the four existing outputs
+pnpm sor:update --no-publish    # compute and assemble the local copy TSV
+pnpm sor:update --skip-solve    # reuse all four outputs, then publish to production PG
+```
+
+`SOR_DATA_DIR` changes the local data directory; `SOR_REMOTE` changes the SSH target. The default thread count uses the machine's available parallelism, without a fixed cap. The command with no flags computes and publishes, so use `--no-publish` for a local-only run.
+
 By default `pnpm --filter @cuberoot/client dev` proxies **all** `/v1/*` to the prod
 API (see `client/next.config.ts`), so you get real data + your real prod login with
 zero local setup — but you can't test **data** changes (case moves, subgroup renames,
@@ -18,7 +30,7 @@ opt in per domain with `LOCAL_DOMAINS`.
 - Seed the tables for the domain you want, from prod (read-only `pg_dump`, re-runnable).
   Pass **every** table that domain's queries read:
 
-  ```pwsh
+  ```sh
   pnpm --filter @cuberoot/server seed:local-alg           # shortcut: alg_sets + alg_cases
   pnpm --filter @cuberoot/server seed:local wiki_terms    # any other domain, by table name
   ```
@@ -27,7 +39,7 @@ opt in per domain with `LOCAL_DOMAINS`.
 
 1. Run the local API against pg13 (leave it running):
 
-   ```pwsh
+   ```sh
    pnpm --filter @cuberoot/server dev:local
    ```
 
@@ -35,9 +47,11 @@ opt in per domain with `LOCAL_DOMAINS`.
 
 2. Start (or restart) the frontend with the domains you're editing:
 
-   ```pwsh
-   $env:LOCAL_DOMAINS='alg'; pnpm --filter @cuberoot/client dev     # comma list: 'alg,wiki'
+   ```sh
+   LOCAL_DOMAINS=alg pnpm --filter @cuberoot/client dev     # Mac/Linux; comma list: alg,wiki
    ```
+
+   On Windows, set `LOCAL_DOMAINS` in your terminal first, then run the same pnpm command.
 
    Now `/v1/alg/*` (and any other listed domain) hits your **local** DB; **all other
    endpoints — WCA stats, recon, and crucially auth/login — still hit prod**, so you
@@ -53,7 +67,7 @@ To go back to all-prod, start the frontend **without** `LOCAL_DOMAINS` set.
   against the local DB. When in doubt, grep the route file in `src/routes/<domain>.ts`.
 - Don't put a WCA-heavy domain (wca/recon/scramble_marks — they read the multi-GB
   `wca_*` tables) in `LOCAL_DOMAINS`; leave those on prod.
-- `seed-local.ps1` reads the prod DB password from `$env:PROD_PG_PASS` or the gitignored
+- `scripts/local/seed-api.ts` reads the prod DB password from `PROD_PG_PASS` or the gitignored
   repo-root `.password.md`; nothing secret is committed. Re-run anytime to reset.
 - To test a **migration** locally, apply it to pg13 after seeding:
   `Get-Content migrations/00xx_*.sql | docker exec -i pg13 psql -U postgres -d cuberoot_db`.

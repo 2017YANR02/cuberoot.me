@@ -31,6 +31,7 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
+import { useT } from '@/hooks/useT';
 import {
   Play,
   FlipHorizontal2, FlipVertical2, Eraser,
@@ -87,6 +88,12 @@ import {
   parseFtoMoves, ftoMovesToString, invertFtoMoves, randomFtoScramble, type FtoMove,
 } from './engine/fto/ftoState';
 import { parseFtoEifMoveGroups } from './engine/fto/ftoEifMoves';
+import GhostCube from '@cuberoot/puzzle-render-core/engine/ghost/GhostCube';
+import { GHOST_DEFAULT_FACE_COLORS } from '@cuberoot/puzzle-render-core/engine/ghost/ghostGeometry';
+import {
+  GHOST_ALIGN, ghostAlignmentMoves, parseGhostMoves, ghostMovesToString,
+  invertGhostMoves, reduceGhostAlg, ghostSequenceValid, type GhostMove,
+} from '@cuberoot/puzzle-render-core/engine/ghost/ghostState';
 import {
   parseClockSteps, clockStepsToString, invertClockSteps, type ClockStep,
 } from '@/lib/clock-notation';
@@ -114,7 +121,7 @@ import {
 import { deriveScrambleFromSolution } from '@/lib/scramble-from-solution';
 import { tnoodleRandomScramble } from '@/lib/cubing-scramble';
 import { pgRandomScramble } from '@/lib/pg-scramble';
-import { cloudOptimalScramble, firstBadHtmToken } from '@/lib/cloud-optimal-scramble';
+import { cloudOptimalScramble } from '@/lib/cloud-optimal-scramble';
 import { useAuthStore } from '@/lib/auth-store';
 import {
   formatScrambleForEvent, canonicalSq1Alg, compactSq1Alg,
@@ -130,6 +137,7 @@ import {
 import { KEYBOARD_ROWS, keyLabel, displayMove, type KeyMove } from './keymap';
 import CubeVirtualKeyboard from '@/components/CubeVirtualKeyboard';
 import ResetDefaultsButton from '@/components/ResetDefaultsButton';
+import AppLink from '@/components/AppLink';
 import { defaultPlatonicColorSchemes } from '@/lib/puzzle-geometry/colors';
 import { fileToLogoDataUrl } from './engine/nxn/logo';
 import {
@@ -154,9 +162,9 @@ import { PG_PUZZLES, isPgPuzzleId, type PgPuzzleId } from './pgCatalog';
 import { resolveCaps } from './simCaps';
 import StickeringSelect from './StickeringSelect';
 import SwatchCell, { SwatchPopup } from './SwatchCell';
-import type { PickGrain, CustomTreatment } from './engine/nxn/customStickering';
+import type { PickGrain, CustomTreatment, CustomBrush } from '@/components/sim-embed/customStickering';
 import { simulateGrips, type GripName, type GripSimStep, type HandSide, type PinSpec } from './engine/hands/handsRig';
-import { stm, stripGripMarks } from '@cuberoot/shared/alg-notation';
+import { flattenAlg, stm, stripGripMarks } from '@cuberoot/shared/alg-notation';
 import {
   canonicalFtoEifAlgorithm,
   invertFtoEifAlgorithm,
@@ -172,6 +180,7 @@ import PlaybackBar from '@/components/PlaybackBar';
 import BoolToggle from '@/components/BoolToggle';
 import NxNOrderInput from '@/components/NxNOrderInput';
 import './player-controls.css';
+import { ROOM_THEMES, normalizeRoomTheme, roomCubeActive, supportsRoomCube } from './room-themes';
 
 /**
  * 换握记号(仅 NxN 解法框):↑ 上手(拇指起手在 U 面)、↓ 下手(D 面)、· 回 home 握。
@@ -338,6 +347,7 @@ export const SIM_FIXED_PUZZLE_OPTIONS = [
   { value: 'rex',      iconClass: 'unofficial-rex', labelZh: 'Rex', labelEn: 'Rex Cube' },
   { value: 'heli',     iconClass: 'unofficial-helicopter', labelZh: '直升机', labelEn: 'Helicopter' },
   { value: 'gear',     iconClass: 'unofficial-gear', labelZh: '齿轮', labelEn: 'Gear Cube' },
+  { value: 'ghost',    iconClass: 'unofficial-ghost', labelZh: '鬼魔', labelEn: 'Ghost Cube' },
   { value: 'mirror',   iconClass: 'unofficial-333_mirror_blocks', labelZh: '镜面', labelEn: 'Mirror' },
   { value: 'mirror2',  iconClass: 'unofficial-222_mirror_blocks', labelZh: '二阶镜面', labelEn: 'Mirror 2x2' },
 ] as const;
@@ -416,7 +426,7 @@ function randomMoveScrambleNxN(N: number): string {
 }
 
 /** SimPage puzzle kind. */
-export type SimPuzzle = number | 'sq1' | 'sq2' | 'sq4' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'pyraminx' | 'skewb' | 'megaminx' | 'fto' | 'mirror' | 'mirror2' | 'clock' | 'custom' | PgPuzzleId;
+export type SimPuzzle = number | 'sq1' | 'sq2' | 'sq4' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'ghost' | 'pyraminx' | 'skewb' | 'megaminx' | 'fto' | 'mirror' | 'mirror2' | 'clock' | 'custom' | PgPuzzleId;
 
 interface SquarePlaybackCube {
   twister: {
@@ -563,7 +573,7 @@ function reduceSkewbAlg(s: string): string {
 // here + one line in `cornerKind` below (mirrors the engine/cornerTurnGesture adapters).
 // 「corner」是历史名字,准确说是"离散整步、逐招重放"的引擎拼图 —— 魔表(转的是表盘,一步
 // 30° 的倍数)与它们形状完全一致,所以也走这张表,而不是再开一条 isClock 分支链。
-type CornerKind = 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'skewb' | 'pyraminx' | 'megaminx' | 'fto' | 'clock';
+type CornerKind = 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'ghost' | 'skewb' | 'pyraminx' | 'megaminx' | 'fto' | 'clock';
 
 interface CornerSpec {
   /** Parse alg / scramble text → the puzzle's move list. */
@@ -599,6 +609,13 @@ interface CornerCube {
 }
 
 const CORNER_SPECS: Record<CornerKind, CornerSpec> = {
+  ghost: {
+    parse: parseGhostMoves,
+    toString: (m) => ghostMovesToString(m as GhostMove[]),
+    invert: (m) => invertGhostMoves(m as GhostMove[]),
+    reduce: reduceGhostAlg,
+    scramble: () => `${GHOST_ALIGN} ${randomMoveScrambleNxN(3)}`,
+  },
   dino: {
     parse: parseDinoMoves,
     toString: (m) => dinoMovesToString(m as DinoMove[]),
@@ -912,6 +929,7 @@ function collapseSameAxis(alg: string, N: number): string {
 
 interface Props {
   world: World | null;
+  clearFrozen: () => void;
   alg: string;
   setup?: string;
   onAlgChange: (alg: string) => void;
@@ -922,6 +940,8 @@ interface Props {
   onPuzzleChange: (kind: SimPuzzle) => void;
   settings: SimSettings;
   onSettingsChange: (s: SimSettings) => void;
+  /** 自定义 logo 是会员权益；无权限时仍可使用无 logo 或本站 logo。 */
+  canUseCustomLogo: boolean;
   /** 图像面板选中 trans(X 光)视图时的内核预设值(SettingDrawer 的 TRANS_CORE),否则 null。
    *  非 null = 内核色 / 内核不透明度由预设接管(3D 与伴图同吃这一份,见 SimPage 的
    *  withTransCore):外观区那两行显示预设值、锁死不可改,hover 说明原因。 */
@@ -964,24 +984,26 @@ interface Props {
   /** 阶段遮罩的拿方朝向(整体转前缀,24 档),仅 NxN 引擎遮罩;默认 ''(UF,恒等)。 */
   stickeringRot?: string;
   onStickeringRotChange?: (v: string) => void;
-  /** 自定义阶段:选中的贴纸清单(mask-core DSL)+ 作图开关。状态归 SimPage。 */
+  /** 自定义阶段的贴纸样式与画笔。状态归 SimPage。 */
   stickeringMask?: string;
   onStickeringMaskClear?: () => void;
-  customEditing?: boolean;
-  onCustomEditingChange?: (v: boolean) => void;
   customGrain?: PickGrain;
   onCustomGrainChange?: (v: PickGrain) => void;
   /** 自定义阶段的画法:选中的 / 其余的各自原色、压暗还是置灰。 */
-  customPick?: CustomTreatment;
-  onCustomPickChange?: (v: CustomTreatment) => void;
+  customPick?: CustomBrush;
+  onCustomPickChange?: (v: CustomBrush) => void;
+  onCustomUndo?: () => void;
+  onCustomRedo?: () => void;
+  canCustomUndo?: boolean;
+  canCustomRedo?: boolean;
   customRest?: CustomTreatment;
   onCustomRestChange?: (v: CustomTreatment) => void;
 }
 
 export default function PlayerControls({
-  world, alg, setup, onAlgChange: onAlgChangeProp, onSetupChange: onSetupChangeProp,
+  world, clearFrozen, alg, setup, onAlgChange: onAlgChangeProp, onSetupChange: onSetupChangeProp,
   order, onOrderChange, puzzleKind, onPuzzleChange,
-  settings, onSettingsChange, transCore = null,
+  settings, onSettingsChange, canUseCustomLogo, transCore = null,
   keymap, onKeymapChange, onResetKeymap,
   userMoveRef, twistyPlayerRef,
   skewbNotation, onSkewbNotationChange,
@@ -990,10 +1012,10 @@ export default function PlayerControls({
   stickering = 'full', onStickeringChange,
   stickeringRot = '', onStickeringRotChange,
   stickeringMask = '', onStickeringMaskClear,
-  customEditing = true, onCustomEditingChange,
   customGrain = 'sticker', onCustomGrainChange,
   customPick = 'regular', onCustomPickChange,
   customRest = 'ignored', onCustomRestChange,
+  onCustomUndo, onCustomRedo, canCustomUndo, canCustomRedo,
 }: Props) {
   const isSq1 = puzzleKind === 'sq1';
   const squareFamilyKind: SquareFamilyKind | null = puzzleKind === 'sq2' || puzzleKind === 'sq4'
@@ -1028,6 +1050,7 @@ export default function PlayerControls({
         : puzzleKind === 'rex' ? 'rex'
           : puzzleKind === 'heli' ? 'heli'
           : puzzleKind === 'gear' ? 'gear'
+          : puzzleKind === 'ghost' ? 'ghost'
             : isSkewbEngine ? 'skewb'
               : isPyraEngine ? 'pyraminx'
                 : isMegaEngine ? 'megaminx'
@@ -1069,6 +1092,7 @@ export default function PlayerControls({
     algAutoSpaceSafe ? true : cornerKind === 'gear' ? 'simple' : false;
   // "Derive scramble from solution" (cubedb-style) is 3x3-only — the solver is.
   const is3x3 = !isSquarePuzzle && !isIvy && !corner && !isTwistyMode && order === 3;
+  const tr = useT();
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const t = (zh: string, en: string) => (isZh ? zh : en);
@@ -1103,7 +1127,6 @@ export default function PlayerControls({
   // a non-caret action (play / step / reset) moves the timeline.
   const [caretChar, setCaretChar] = useState<number | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
-  const [derivingScramble, setDerivingScramble] = useState(false);
   const [optimalScrambleBusy, setOptimalScrambleBusy] = useState(false);
   const [optimalScrambleStatus, setOptimalScrambleStatus] = useState<string | null>(null);
   const optimalScrambleAbortRef = useRef<AbortController | null>(null);
@@ -1315,8 +1338,18 @@ export default function PlayerControls({
   const squareAlgSpans = squareFamilySpec && !squareFamilyAlgValid
     ? [{ text: algDraft, bad: true }]
     : null;
-  const setupValidationSpans = ivySetupSpans ?? squareSetupSpans;
-  const algValidationSpans = ivyAlgSpans ?? squareAlgSpans;
+  const ghostSetupValid = useMemo(() => puzzleKind !== 'ghost' || ghostSequenceValid(setupDraft), [puzzleKind, setupDraft]);
+  const ghostCanPlay = useMemo(() => {
+    if (puzzleKind !== 'ghost') return true;
+    if (!ghostSetupValid) return false;
+    try {
+      const inverse = settings.playbackMode === 'algorithm' ? ghostMovesToString(invertGhostMoves(parseGhostMoves(algDraft))) : '';
+      return ghostSequenceValid(`${setupDraft} ${inverse} ${algDraft}`);
+    } catch { return false; }
+  }, [puzzleKind, ghostSetupValid, setupDraft, algDraft, settings.playbackMode]);
+  const setupValidationSpans = ivySetupSpans ?? squareSetupSpans ?? (!ghostSetupValid ? [{ text: setupDraft, bad: true }] : null);
+  const algValidationSpans = ivyAlgSpans ?? squareAlgSpans ?? (!ghostCanPlay ? [{ text: algDraft, bad: true }] : null);
+  useEffect(() => { if (!ghostCanPlay) setPlaying(false); }, [ghostCanPlay]);
 
   // One move list for whichever corner-turn engine puzzle is active (empty otherwise).
   // algDraft 是**正在打字**的文本 → 随时可能停在半个 token 上,解析器严格会抛;兜住当空
@@ -1394,14 +1427,14 @@ export default function PlayerControls({
     : isIvy
       ? (ivyCanPlay ? ivyActions.length : 0)
       : corner
-        ? cornerActions.length
+        ? (ghostCanPlay ? cornerActions.length : 0)
         : nxnItems.length;
 
   const jumpToStep = useCallback(async (n: number) => {
     if (!world) return;
     // Release any held-partial (debug) turn first: an NxN frozen layer holds the
     // cube lock, which would make the replay's group.twist below spin forever.
-    world.controller.clearFrozen();
+    clearFrozen();
     if (isSquarePuzzle) {
       if (!squareFamilyCanPlay) {
         setPlaying(false);
@@ -1445,6 +1478,7 @@ export default function PlayerControls({
       // move functions (via `corner`) differ. setup() lays the scramble (or the
       // inverted solution, in Algorithm mode) as the base state, then the first
       // `target` solution moves are applied instantly on top.
+      if (!ghostCanPlay) { setStep(0); return; }
       const cube = world.cube as unknown as CornerCube;
       cube.twister.finish();
       const effSetup = settings.playbackMode === 'algorithm'
@@ -1500,7 +1534,7 @@ export default function PlayerControls({
       hands.setGrips(g.R, g.L);
     }
     setStep(target);
-  }, [world, setupDraft, algDraft, nxnItems, squareActions, squareFamilyAlgMoves, squareFamilySpec, squareFamilyCanPlay, ivyActions, cornerActions, corner, toEngineText, isSquarePuzzle, isSq1, isIvy, ivyCanPlay, settings.playbackMode]);
+  }, [world, clearFrozen, setupDraft, algDraft, nxnItems, squareActions, squareFamilyAlgMoves, squareFamilySpec, squareFamilyCanPlay, ivyActions, cornerActions, corner, toEngineText, isSquarePuzzle, isSq1, isIvy, ivyCanPlay, ghostCanPlay, settings.playbackMode]);
 
   // Notation guide (engine skewb): play ONE token on the main cube from solved so the
   // user sees which corner a letter turns. It only borrows the cube — setup/alg text is
@@ -1509,10 +1543,10 @@ export default function PlayerControls({
     if (!world || isTwistyMode) return;
     const tw = (world.cube as unknown as CornerCube).twister;
     tw.finish();
-    world.controller.clearFrozen();
+    clearFrozen();
     tw.setup('');
     tw.push(toEngineText(token));
-  }, [world, isTwistyMode, toEngineText]);
+  }, [world, clearFrozen, isTwistyMode, toEngineText]);
 
   const restoreFromDemo = useCallback(() => { jumpToStep(stepRef.current); }, [jumpToStep]);
 
@@ -1548,15 +1582,16 @@ export default function PlayerControls({
         // 的先例保持瞬切。
         if (
           settings.animatePlayback !== false && settings.playbackMode !== 'algorithm'
-          && !isSquarePuzzle && !isIvy && world
+          && !isSquarePuzzle && !isIvy && ghostCanPlay && world
           && n === actions.length && stepRef.current === n - 1
           && algDraft.startsWith(prevText)
         ) {
+          clearFrozen();
           if (corner) {
             const twister = (world.cube as unknown as CornerCube).twister;
             const group = actions[n - 1] as unknown[];
             if (corner.parseGroups && twister.pushMoves) twister.pushMoves(group);
-            else twister.twist(group[0], false, true);
+            else if (!twister.twist(group[0], false, true)) return;
             stepRef.current = n;
             setStep(n);
             return;
@@ -1620,6 +1655,7 @@ export default function PlayerControls({
   // 目前只走 NxN(SQ1/Ivy/角转引擎仍瞬切):cube 状态恒等于 setup+前 step 项,
   // 正向 twist 第 step 项 / 反向 twist 第 step-1 项的逆,状态保持一致。
   const stepForward = useCallback(() => {
+    clearFrozen();
     setCaretChar(null); // hand the highlight back to the playback position
     const animate = settings.animatePlayback !== false;
     if (animate && !isSquarePuzzle && !isIvy && !corner && world && step < nxnItems.length) {
@@ -1642,9 +1678,10 @@ export default function PlayerControls({
       return;
     }
     jumpToStep(step + 1);
-  }, [jumpToStep, step, settings.animatePlayback, settings.speed, playbackFrames, isSquarePuzzle, isIvy, corner, world, nxnItems]);
+  }, [clearFrozen, jumpToStep, step, settings.animatePlayback, settings.speed, playbackFrames, isSquarePuzzle, isIvy, corner, world, nxnItems]);
 
   const stepBack = useCallback(() => {
+    clearFrozen();
     setCaretChar(null); // hand the highlight back to the playback position
     const animate = settings.animatePlayback !== false;
     if (animate && !isSquarePuzzle && !isIvy && !corner && world && step > 0 && step <= nxnItems.length) {
@@ -1679,20 +1716,21 @@ export default function PlayerControls({
       return;
     }
     jumpToStep(step - 1);
-  }, [jumpToStep, step, settings.animatePlayback, settings.speed, playbackFrames, isSquarePuzzle, isIvy, corner, world, nxnItems]);
+  }, [clearFrozen, jumpToStep, step, settings.animatePlayback, settings.speed, playbackFrames, isSquarePuzzle, isIvy, corner, world, nxnItems]);
 
   // Play/pause toggle for the shared PlaybackBar. Pausing is instant; starting
   // from the end first复位到第 0 步(并同步 stepRef,否则播放轮询读到 step≥total
   // 会立刻停),复位完成后再开播 — 与旧内联 handler 行为一致。
   const handleTogglePlay = useCallback(async () => {
     if (playing) { setPlaying(false); return; }
+    clearFrozen();
     setCaretChar(null); // playback owns the highlight from here
     if (step >= totalSteps) {
       await jumpToStep(0);
       stepRef.current = 0;
     }
     setPlaying(true);
-  }, [playing, step, totalSteps, jumpToStep]);
+  }, [playing, step, totalSteps, jumpToStep, clearFrozen]);
 
   useEffect(() => {
     if (!playing) {
@@ -1719,6 +1757,7 @@ export default function PlayerControls({
       const s = stepRef.current;
       if (s >= total) { setPlaying(false); return; }
       if (!world) return;
+      clearFrozen();
       if (!animatePlayback) {
         // 瞬切:走跟「下一步」按钮同一条 instant 落子路径(fast+force / applyMoveInstant),
         // 不产生 tween;节拍由 interval 周期 stepDelayMs 控制。
@@ -1782,7 +1821,7 @@ export default function PlayerControls({
       if (playTimerRef.current) { window.clearInterval(playTimerRef.current); playTimerRef.current = null; }
       timing.frames = mapFrames(settings.speed);
     };
-  }, [playing, nxnItems, squareActions, ivyActions, cornerActions, corner, world, playbackFrames, isSquarePuzzle, isIvy, settings.animatePlayback, settings.speed]);
+  }, [playing, nxnItems, squareActions, ivyActions, cornerActions, corner, world, clearFrozen, playbackFrames, isSquarePuzzle, isIvy, settings.animatePlayback, settings.speed]);
 
   const tool = (transform: (s: string) => string) => () => {
     // 镜像/转体变换先剥手部记号(cubing.js Alg 解析不了会 catch 返 '',静默清空解法框)。
@@ -1942,6 +1981,7 @@ export default function PlayerControls({
   // QWERTY: keymap → twist + append (hard keys + the on-screen keymap keypad).
   const applyMove = useCallback((k: KeyMove) => {
     if (isSquarePuzzle || isIvy || isTwistyMode) return;
+    clearFrozen();
     if (corner) {
       // corner-registry engines (gear/dino/…): route the keys the puzzle's own
       // grammar parses (gear: U R F D L B + x/y/z rotations); everything else is
@@ -1979,7 +2019,7 @@ export default function PlayerControls({
     skipAutoResetRef.current = true;
     setAlgDraft(next);
     onAlgChange(next);
-  }, [world, isSquarePuzzle, isIvy, corner, isTwistyMode, onAlgChange, settings.animatePlayback, appendUserMove]);
+  }, [world, clearFrozen, isSquarePuzzle, isIvy, corner, isTwistyMode, onAlgChange, settings.animatePlayback, appendUserMove]);
 
   // QWERTY 键盘展开时,实体按键按 keymap 走(捕获阶段,连解法框聚焦时也接管);
   // 打乱框聚焦时放行(让字符正常落进打乱框)。capture + stopPropagation 同时挡掉
@@ -1989,6 +2029,7 @@ export default function PlayerControls({
     const onKey = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       const target = e.target as HTMLElement | null;
+      if (target?.closest('[role="dialog"], [role="listbox"]')) return;
       // 设置区的原生表单控件必须自行接收按键。否则 Digit2 等会命中魔方
       // keymap，applyMove 随后聚焦解法框，在 iOS 上表现为数字键盘输一位即关闭。
       if (target && (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.isContentEditable)) return;
@@ -2094,7 +2135,7 @@ export default function PlayerControls({
     }
     if (reqId !== scrambleReqIdRef.current) return;
     if (!scramble) return;
-    world.controller.clearFrozen(); // release any debug held-partial turn first
+    clearFrozen(); // release any debug held-partial turn first
     // Random scramble always lands on its final state immediately. The adjacent
     // play button owns its explicit animation path.
     animatingScrambleRef.current = true;
@@ -2110,7 +2151,7 @@ export default function PlayerControls({
     }
     setSetupDraft(scramble);
     onSetupChange(scramble);
-  }, [world, order, isSq1, squareFamilySpec, isIvy, corner, isTwistyMode, puzzleKind, squareFormat, onSetupChange, twistyPlayerRef]);
+  }, [world, clearFrozen, order, isSq1, squareFamilySpec, isIvy, corner, isTwistyMode, puzzleKind, squareFormat, onSetupChange, twistyPlayerRef]);
 
   // ▶ Play button: animate the CURRENT scramble (the text already in the box) from
   // solved, on demand. This is the explicit animation entry point for a normal random scramble:
@@ -2118,7 +2159,7 @@ export default function PlayerControls({
   // alg track and jumpToStart + play.
   const handlePlayScramble = useCallback(async () => {
     const scramble = setupDraft.trim();
-    if (!scramble || !squareFamilySetupValid) return;
+    if (!scramble || !squareFamilySetupValid || !ghostSetupValid) return;
     if (isTwistyMode) {
       if (setupElRef.current) { setupElRef.current.value = ''; autosize(setupElRef.current); }
       setSetupDraft('');
@@ -2146,7 +2187,7 @@ export default function PlayerControls({
         tw.setupMoves(groups.flat(), engScramble);
         return;
       }
-      world.controller.clearFrozen();
+      clearFrozen();
       tw.setupMoves([], '');
       tw.pushMoves(groups.flat());
       return;
@@ -2158,10 +2199,10 @@ export default function PlayerControls({
     // via push() (the engine's tweened playback — the same primitive the auto-animate
     // scramble uses). setupDraft is unchanged, so the setup-sync effect never fires
     // and won't snap the cube mid-animation — no animatingScrambleRef needed here.
-    world.controller.clearFrozen();
+    clearFrozen();
     tw.setup('');
     tw.push(engScramble);
-  }, [setupDraft, squareFamilySetupValid, isTwistyMode, world, corner, onSetupChange, onAlgChange, twistyPlayerRef, toEngineText]);
+  }, [setupDraft, squareFamilySetupValid, ghostSetupValid, isTwistyMode, world, clearFrozen, corner, onSetupChange, onAlgChange, twistyPlayerRef, toEngineText]);
 
   // 点解法框时,若打乱动画仍在逐步播放(高阶打乱可达 400+ 步 ≈ 分钟级),立即落到完整打乱态,
   // 让用户马上能在打乱好的魔方上输解法。走快速整体应用 setup(打乱文本):它清空待播队列后用
@@ -2171,71 +2212,52 @@ export default function PlayerControls({
     const tw = (world.cube as unknown as CornerCube).twister;
     const scr = setupDraft.trim();
     const hasPendingAnimation = corner?.parseGroups ? tw?.busy : (tw?.length ?? 0) > 0;
-    if (!tw || !hasPendingAnimation || !scr || !squareFamilySetupValid) return;
+    if (!tw || !hasPendingAnimation || !scr || !squareFamilySetupValid || !ghostSetupValid) return;
     const engScramble = toEngineText(scr);
     if (corner?.parseGroups && tw.setupMoves) {
       try { tw.setupMoves(parseCornerGroups(corner, engScramble).flat(), engScramble); } catch { /* keep last legal state */ }
       return;
     }
     tw.setup(engScramble);
-  }, [world, isTwistyMode, corner, setupDraft, squareFamilySetupValid, toEngineText]);
+  }, [world, isTwistyMode, corner, setupDraft, squareFamilySetupValid, ghostSetupValid, toEngineText]);
 
-  // cubedb-style "反推打乱": invert + re-orient + solve the current solution to
-  // recover the clean rotation-free scramble it solves, drop it into the
-  // scramble box, and flip to forward (Moves) playback so the cube shows the
-  // scramble and the solution plays forward to solve it.
+  // Derive the state solved by the reconstruction, then minimize its scramble.
   const handleDeriveScramble = useCallback(async () => {
-    if (!is3x3 || !world || !algDraft.trim()) return;
-    setDerivingScramble(true);
-    try {
-      const scramble = await deriveScrambleFromSolution(stripHandMarks(algDraft));
-      if (!scramble) return;
-      if (settings.playbackMode !== 'moves') {
-        onSettingsChange({ ...settings, playbackMode: 'moves' });
-      }
-      // Apply the scramble to the cube instantly. animatingScrambleRef tells the
-      // setup-change effect to land on step 0 (cube shows the scramble) instead
-      // of re-running jumpToStep, which would otherwise double-apply.
-      animatingScrambleRef.current = true;
-      const tw = world.cube.twister as unknown as {
-        setupAsync?: (e: string) => Promise<void>;
-        setup: (e: string) => void;
-      };
-      if (tw.setupAsync) await tw.setupAsync(scramble);
-      else tw.setup(scramble);
+    if (!is3x3 || !world || optimalScrambleBusy) return;
+    const solution = algDraft;
+    const originalSetup = (setupElRef.current?.value ?? setupDraft).trim();
+    if (!solution.trim()) return;
+    if (!authUser) { authLogin(); return; }
+    const reqId = ++scrambleReqIdRef.current;
+    setOptimalScrambleBusy(true);
+    setOptimalScrambleStatus(t('正在反推打乱…', 'Deriving scramble…'));
+    const ac = new AbortController();
+    optimalScrambleAbortRef.current = ac;
+    const applyScramble = (scramble: string) => {
       if (setupElRef.current) {
         setupElRef.current.value = scramble;
         autosize(setupElRef.current);
       }
       setSetupDraft(scramble);
       onSetupChange(scramble);
-    } catch (err) {
-      console.warn('[sim] derive scramble failed:', err);
-    } finally {
-      setDerivingScramble(false);
-    }
-  }, [is3x3, world, algDraft, settings, onSettingsChange, onSetupChange]);
-
-  // Optimal scramble (cloud): reuses the exact protocol /scramble/solver's cloud
-  // 求打乱(最优) flow uses (cloudOptimalScramble, lib/cloud-optimal-scramble.ts) —
-  // generate a fast random-state scramble (Kociemba), cloud-solve it optimally,
-  // then invert that solution back into the setup box. The fewest-move solution
-  // to a state IS the fewest-move scramble reaching it — a true God's-number-length
-  // scramble, unlike the 🔀 button above (fast, but not move-optimal). 3x3-only;
-  // login-gated server-side.
-  const handleOptimalScramble = useCallback(async () => {
-    if (!is3x3 || !world || optimalScrambleBusy) return;
-    if (!authUser) { authLogin(); return; }
-    const reqId = ++scrambleReqIdRef.current;
-    setOptimalScrambleBusy(true);
-    setOptimalScrambleStatus(t('生成随机状态…', 'Generating a random state…'));
-    const ac = new AbortController();
-    optimalScrambleAbortRef.current = ac;
+      setupDraftRef.current = scramble;
+    };
     try {
-      const raw = (await tnoodleRandomScramble('333')) ?? '';
+      const raw = await deriveScrambleFromSolution(stripHandMarks(solution));
+      if (ac.signal.aborted) throw new DOMException('Aborted', 'AbortError');
       if (reqId !== scrambleReqIdRef.current) return;
-      if (!raw || firstBadHtmToken(raw)) throw new Error(t('生成打乱失败', 'Failed to generate a scramble'));
-      setOptimalScrambleStatus(t('云端求最优中…', 'Solving optimally (cloud)…'));
+      if (!raw) throw new Error(t('无法从当前解法反推打乱。', 'Could not derive a scramble from the current solution.'));
+      if ((setupElRef.current?.value ?? setupDraftRef.current).trim() !== originalSetup
+        || (algElRef.current?.value ?? algDraftRef.current) !== solution) {
+        setOptimalScrambleStatus(t('公式已更改，已忽略本次结果。', 'Algorithm changed; result discarded.'));
+        return;
+      }
+      if (settings.playbackMode !== 'moves') {
+        onSettingsChange({ ...settings, playbackMode: 'moves' });
+      }
+      // Publish the fast local result before waiting for the cloud solver.
+      applyScramble(raw);
+      setOptimalScrambleStatus(t('已生成打乱，继续求最优中…', 'Scramble ready; optimizing…'));
       const { scramble, moves } = await cloudOptimalScramble(raw, (p) => {
         if (reqId !== scrambleReqIdRef.current) return;
         setOptimalScrambleStatus(
@@ -2247,26 +2269,14 @@ export default function PlayerControls({
         );
       }, ac.signal);
       if (reqId !== scrambleReqIdRef.current) return;
-      world.controller.clearFrozen();
-      if (settings.animateScramble) {
-        animatingScrambleRef.current = true;
-        world.cube.twister.setup('');
-        world.cube.twister.push(scramble);
-      } else {
-        animatingScrambleRef.current = true;
-        const tw = world.cube.twister as unknown as {
-          setupAsync?: (e: string) => Promise<void>;
-          setup: (e: string) => void;
-        };
-        if (tw.setupAsync) await tw.setupAsync(scramble);
-        else tw.setup(scramble);
+      if (ac.signal.aborted) throw new DOMException('Aborted', 'AbortError');
+      if ((setupElRef.current?.value ?? setupDraftRef.current).trim() !== raw
+        || (algElRef.current?.value ?? algDraftRef.current) !== solution) {
+        setOptimalScrambleStatus(t('公式已更改，已忽略本次结果。', 'Algorithm changed; result discarded.'));
+        return;
       }
-      if (setupElRef.current) {
-        setupElRef.current.value = scramble;
-        autosize(setupElRef.current);
-      }
-      setSetupDraft(scramble);
-      onSetupChange(scramble);
+      // Rebuild the derived setup at the current playback step.
+      applyScramble(scramble);
       setOptimalScrambleStatus(t(`已求出 ${moves} 步最优打乱。`, `Optimal scramble: ${moves} moves.`));
     } catch (err) {
       if (ac.signal.aborted) setOptimalScrambleStatus(t('已取消。', 'Cancelled.'));
@@ -2275,7 +2285,7 @@ export default function PlayerControls({
       setOptimalScrambleBusy(false);
       optimalScrambleAbortRef.current = null;
     }
-  }, [is3x3, world, optimalScrambleBusy, authUser, authLogin, settings.animateScramble, onSetupChange]);
+  }, [is3x3, world, setupDraft, algDraft, optimalScrambleBusy, authUser, authLogin, settings, onSettingsChange, onSetupChange, t]);
 
   const cancelOptimalScramble = useCallback(() => { optimalScrambleAbortRef.current?.abort(); }, []);
 
@@ -2308,7 +2318,7 @@ export default function PlayerControls({
         mask={stickeringMask} onMaskClear={onStickeringMaskClear}
         pick={customPick} onPickChange={onCustomPickChange}
         rest={customRest} onRestChange={onCustomRestChange}
-        editing={customEditing} onEditingChange={onCustomEditingChange}
+        onUndo={onCustomUndo} onRedo={onCustomRedo} canUndo={canCustomUndo} canRedo={canCustomRedo}
         grain={customGrain} onGrainChange={onCustomGrainChange}
       />
     )
@@ -2355,38 +2365,38 @@ export default function PlayerControls({
             type="button"
             className="sim-player-scramble"
             onClick={handleDeriveScramble}
-            disabled={derivingScramble || !algDraft.trim()}
-            title={t('从下方解法反推打乱', 'Derive scramble from the solution below')}
-            aria-label={t('反推打乱', 'Derive scramble')}
+            disabled={optimalScrambleBusy || !algDraft.trim()}
+            title={t('从下方解法反推最优打乱(云端，需登录)', 'Derive an optimal scramble from the solution below (cloud, sign-in required)')}
+            aria-label={t('反推最优打乱', 'Derive optimal scramble')}
           >
-            {derivingScramble ? <Loader2 size={14} className="sim-spin" /> : <Search size={14} />}
-          </button>
-        )}
-        {is3x3 && (
-          <button
-            type="button"
-            className="sim-player-scramble sim-player-scramble-optimal"
-            onClick={handleOptimalScramble}
-            disabled={optimalScrambleBusy}
-            title={authUser
-              ? t('最优打乱(云端):求一个保证最少步数(God\'s number)到达随机状态的打乱', 'Optimal scramble (cloud): a scramble guaranteed to reach a random state in the fewest possible moves (God\'s number)')
-              : t('最优打乱(云端)需登录(WCA),点击登录', 'Optimal scramble (cloud) requires login (WCA) — click to log in')}
-            aria-label={t('最优打乱', 'Optimal scramble')}
-          >
-            {optimalScrambleBusy ? <Loader2 size={14} className="sim-spin" /> : t('最优', 'optimal')}
+            {optimalScrambleBusy ? <Loader2 size={14} className="sim-spin" /> : <Search size={14} />}
           </button>
         )}
         <button
           type="button"
           className="sim-player-scramble"
           onClick={handlePlayScramble}
-          disabled={!setupDraft.trim() || !squareFamilySetupValid}
+          disabled={!setupDraft.trim() || !squareFamilySetupValid || !ghostSetupValid}
           title={t('动画展示打乱', 'Animate scramble')}
           aria-label={t('动画展示打乱', 'Animate scramble')}
         >
           <Play size={14} />
         </button>
       </div>
+      {puzzleKind === 'ghost' && (
+        <div className="sim-player-status">
+          <button type="button" className="sim-player-scramble" onClick={() => {
+            if (!(world?.cube instanceof GhostCube)) return;
+            clearFrozen();
+            world.cube.twister.finish();
+            const text = ghostMovesToString(ghostAlignmentMoves(world.cube.pose));
+            if (text) { world.cube.twister.push(text); appendUserMove(text); }
+          }}>{tr('对齐切层', 'Align layers')}</button>
+          <span>{ghostCanPlay
+            ? tr('先对齐再转侧层；字母表示内部转轴。', 'Align before side turns; letters refer to internal axes.')
+            : tr('记号无效或切层未对齐。还原态先输入 U29° D35°。', 'Invalid notation or misaligned layers. From solved, start with U29° D35°.')}</span>
+        </div>
+      )}
       {optimalScrambleStatus && (
         <div className="sim-player-status">
           {optimalScrambleBusy && <Loader2 size={14} className="sim-spin" />}
@@ -2599,8 +2609,16 @@ export default function PlayerControls({
             onChange={setLiveReduce}
           />
         )}
-        {!isSquarePuzzle && !isTwistyMode && <button onClick={tool((s) => mirrorAlg(s, 'M'))} title={t('Mirror M (L↔R)', 'Mirror M (L↔R)')} aria-label="Mirror M"><FlipHorizontal2 size={13} /></button>}
-        {!isSquarePuzzle && !isTwistyMode && <button onClick={tool((s) => mirrorAlg(s, 'S'))} title={t('Mirror S (F↔B)', 'Mirror S (F↔B)')} aria-label="Mirror S"><FlipVertical2 size={13} /></button>}
+        {!isSquarePuzzle && !isTwistyMode && puzzleKind !== 'ghost' && <button onClick={tool((s) => mirrorAlg(s, 'M'))} title={t('Mirror M (L↔R)', 'Mirror M (L↔R)')} aria-label="Mirror M"><FlipHorizontal2 size={13} /></button>}
+        {!isSquarePuzzle && !isTwistyMode && puzzleKind !== 'ghost' && <button onClick={tool((s) => mirrorAlg(s, 'S'))} title={t('Mirror S (F↔B)', 'Mirror S (F↔B)')} aria-label="Mirror S"><FlipVertical2 size={13} /></button>}
+        {!isSquarePuzzle && !isIvy && !corner && !isTwistyMode && (
+          <button
+            onClick={tool(flattenAlg)}
+            title={t('展开所有括号并保留等价动作', 'Expand all groups into equivalent moves')}
+          >
+            {t('去括号', 'Expand')}
+          </button>
+        )}
         <button onClick={tool(() => '')} title={t('清空', 'Clear')}><Eraser size={13} />{t('清空', 'Clear')}</button>
         <button
           onClick={handleCopyLink}
@@ -2622,6 +2640,7 @@ export default function PlayerControls({
         onRendererChange={onRendererChange}
         settings={settings}
         onSettingsChange={onSettingsChange}
+        canUseCustomLogo={canUseCustomLogo}
         transCore={transCore}
         bgSlot={bgSlot}
         t={t}
@@ -3622,6 +3641,7 @@ function PuzzleSettings({
   order, onOrderChange, puzzleKind, onPuzzleChange,
   renderer, onRendererChange,
   settings, onSettingsChange, transCore, bgSlot, t,
+  canUseCustomLogo,
 }: {
   world: World | null;
   order: number;
@@ -3632,6 +3652,7 @@ function PuzzleSettings({
   onRendererChange?: (r: 'cubing' | 'engine' | 'group') => void;
   settings: SimSettings;
   onSettingsChange: (s: SimSettings) => void;
+  canUseCustomLogo: boolean;
   /** 非 null = trans 视图接管了内核色 / 内核不透明度(见 Props.transCore)。 */
   transCore?: { coreColor: string; coreOpacity: number } | null;
   /** 画布左下角浮层槽(SimPage 的 .sim-bg-overlay);背景选择器 portal 到这里,
@@ -3648,13 +3669,23 @@ function PuzzleSettings({
   // by puzzle, absent on NxN/SQ1) and `caps.hasRendererChoice` (cubing.js ↔ 群论内核
   // dropdown). Adding a puzzle's controls = one simCaps entry, never an edit to the JSX.
   const caps = resolveCaps(puzzleKind, renderer);
+  const roomsActive = roomCubeActive(puzzleKind, settings.roomTheme) && caps.engineActive;
+  // Rooms replace only the visible surface; keep the user's ordinary cube settings.
+  if (roomsActive) Object.assign(caps.supports, {
+    thickness: false, hollow: false, hint: false, logo: false, structureColor: false,
+    coreColor: false, coreOpacity: false, coreFinish: false, faceColors: false,
+  });
   const isNxNLocal = typeof puzzleKind === 'number';
   const isMirror = puzzleKind === 'mirror' || puzzleKind === 'mirror2';
+  const faceColorsKey = puzzleKind === 'ghost' ? 'ghostFaceColors' : 'faceColors';
+  const faceColors = settings[faceColorsKey] ?? GHOST_DEFAULT_FACE_COLORS;
   // 灰掉「该拼图暂不支持」的控件时,hover 给出统一说明。engineMode 拼图(斜转/金字塔/五魔/FTO)
   // 在 cubing.js 渲染下引擎特性不生效,但切到「群论内核」即点亮 → 附一句提示往哪切;PG 探索
   // 拼图切渲染也不会启用(引擎未建),只给通用说明。
   const switchEnables = !caps.engineActive && resolveCaps(puzzleKind, 'engine').engineActive;
-  const naHint = switchEnables
+  const naHint = roomsActive
+    ? t('立体房间使用独立布景，切回普通色块后可调整', '3D rooms use their own artwork. Switch to classic colors to adjust this.')
+    : switchEnables
     ? t('该拼图暂不支持此功能(切到「群论内核」渲染可启用)', 'Not available for this puzzle (switch the renderer to "Group theory" to enable)')
     : t('该拼图暂不支持此功能', 'Not available for this puzzle');
   const hint = (ok: boolean) => (ok ? undefined : naHint);
@@ -3681,6 +3712,7 @@ function PuzzleSettings({
       ...settings,
       pictureFaces: faces,
       pictureCube: countPictureFaces(faces) > 0,
+      roomTheme: 'off',
     });
     return true;
   }, [onSettingsChange, settings]);
@@ -3754,10 +3786,14 @@ function PuzzleSettings({
   };
 
   const logoFileRef = useRef<HTMLInputElement>(null);
+  const [showCustomLogoUpsell, setShowCustomLogoUpsell] = useState(false);
+  useEffect(() => {
+    if (canUseCustomLogo) setShowCustomLogoUpsell(false);
+  }, [canUseCustomLogo]);
   const handleLogoFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = ''; // 允许再次选同一文件
-    if (!file) return;
+    if (!file || !canUseCustomLogo) return;
     try {
       const url = await fileToLogoDataUrl(file);
       onSettingsChange({ ...settings, customLogo: url, logo: 'custom' });
@@ -3811,7 +3847,7 @@ function PuzzleSettings({
                 value={typeof puzzleKind === 'number' ? 'nxn' : String(puzzleKind)}
                 isZh={isZh}
                 onChange={(v) => {
-                  if (v === 'sq1' || v === 'sq2' || v === 'sq4' || v === 'ivy' || v === 'dino' || v === 'redi' || v === 'rex' || v === 'heli' || v === 'gear' || v === 'pyraminx' || v === 'skewb' || v === 'megaminx' || v === 'fto' || v === 'mirror' || v === 'mirror2' || v === 'clock' || v === 'custom') onPuzzleChange(v);
+                  if (v === 'sq1' || v === 'sq2' || v === 'sq4' || v === 'ivy' || v === 'dino' || v === 'redi' || v === 'rex' || v === 'heli' || v === 'gear' || v === 'ghost' || v === 'pyraminx' || v === 'skewb' || v === 'megaminx' || v === 'fto' || v === 'mirror' || v === 'mirror2' || v === 'clock' || v === 'custom') onPuzzleChange(v);
                   else if (isPgPuzzleId(v)) onPuzzleChange(v as PgPuzzleId);
                   else onPuzzleChange(order || 3);
                 }}
@@ -3849,11 +3885,11 @@ function PuzzleSettings({
               <div className="sim-puzzle-section">
                 <select
                   className="sim-puzzle-select"
-                  value={settings.viewMode}
+                  value={roomsActive ? 'cube' : settings.viewMode}
                   onChange={(e) => set('viewMode', e.target.value as 'cube' | 'net')}
                 >
                   <option value="cube">{t('立体图', '3D cube')}</option>
-                  <option value="net">{t('平面图', 'Flat net')}</option>
+                  <option value="net" disabled={roomsActive}>{t('平面图', 'Flat net')}</option>
                 </select>
               </div>
             )}
@@ -3913,8 +3949,8 @@ function PuzzleSettings({
               label={t('字母', 'Letters')}
               value={settings.faceLabels === true}
               onChange={(v) => set('faceLabels', v)}
-              disabled={!caps.supports.faceLabels || pictureCubeActive}
-              title={pictureCubeActive
+              disabled={!caps.supports.faceLabels || pictureCubeActive || roomsActive}
+              title={pictureCubeActive || roomsActive
                 ? t('使用图案时暂时隐藏字母', 'Letters are hidden while artwork is active')
                 : hint(caps.supports.faceLabels)}
             />
@@ -3922,29 +3958,49 @@ function PuzzleSettings({
                 的 .sim-bg-overlay),不再占开关行。 */}
             {/* 顶面 U 中心 logo:无 / 网站 / 自定义上传。仅 NxN 奇数阶有正中心块时实际显示
                 (偶数阶 / 非 NxN 引擎里 setLogo 自动隐藏)。选「自定义」开文件选择器。 */}
-            <label className={'sim-toggle' + (caps.supports.logo ? '' : ' sim-toggle--disabled')} title={hint(caps.supports.logo)}>
-              <span>logo</span>
-              <select
-                value={settings.logo}
-                disabled={!caps.supports.logo}
-                onChange={(e) => {
-                  const v = e.target.value as SimSettings['logo'];
-                  if (v === 'custom') logoFileRef.current?.click();
-                  else set('logo', v);
-                }}
-              >
-                <option value="none">{t('无', 'None')}</option>
-                <option value="site">{t('魔方根', 'CubeRoot')}</option>
-                <option value="custom">{t('自定义', 'Custom')}</option>
-              </select>
-              <input
-                ref={logoFileRef}
-                type="file"
-                accept="image/*"
-                style={{ display: 'none' }}
-                onChange={handleLogoFile}
-              />
-            </label>
+            <div className="sim-logo-setting">
+              <label className={'sim-toggle' + (caps.supports.logo ? '' : ' sim-toggle--disabled')} title={hint(caps.supports.logo)}>
+                <span>logo</span>
+                <select
+                  value={settings.logo === 'custom' && !canUseCustomLogo ? 'none' : settings.logo}
+                  disabled={!caps.supports.logo}
+                  onChange={(e) => {
+                    const v = e.target.value as SimSettings['logo'];
+                    if (v === 'custom') {
+                      if (!canUseCustomLogo) {
+                        setShowCustomLogoUpsell(true);
+                        return;
+                      }
+                      setShowCustomLogoUpsell(false);
+                      logoFileRef.current?.click();
+                      return;
+                    }
+                    setShowCustomLogoUpsell(false);
+                    set('logo', v);
+                  }}
+                >
+                  <option value="none">{t('无', 'None')}</option>
+                  <option value="site">{t('魔方根', 'CubeRoot')}</option>
+                  <option value="custom">
+                    {canUseCustomLogo ? t('自定义', 'Custom') : t('自定义（会员）', 'Custom (members)')}
+                  </option>
+                </select>
+                <input
+                  ref={logoFileRef}
+                  type="file"
+                  accept="image/*"
+                  disabled={!canUseCustomLogo}
+                  style={{ display: 'none' }}
+                  onChange={handleLogoFile}
+                />
+              </label>
+              {showCustomLogoUpsell && !canUseCustomLogo && (
+                <span className="sim-logo-member-prompt" role="status">
+                  {t('会员权益：', 'Member benefit:')}
+                  <AppLink href="/membership" prefetch={false}>{t('开通会员', 'Join')}</AppLink>
+                </span>
+              )}
+            </div>
             {/* 锁定大小位置 锁的是引擎滚轮/捏合缩放,cubing.js 拼图自管缩放 → 引擎未驱动时灰掉。 */}
             <Toggle label={t('锁定大小位置', 'Lock size & position')} value={settings.lockView} onChange={(v) => set('lockView', v)} disabled={!caps.supports.lockView} title={hint(caps.supports.lockView)} />
             {/* 小窗(背面视图)的开关不在这里:小窗自己右上角有 ×,关掉后播放条最右出现
@@ -3963,7 +4019,7 @@ function PuzzleSettings({
             {/* 箭头贴片仅 NxN 引擎生效(cube.arrow),非 NxN 拼图无此属性 → 仅 NxN 显示。
                 用户指定的唯一例外。 */}
             {isNxNLocal && (
-              <Toggle label={t('箭头', 'Arrows')} value={settings.arrow} onChange={(v) => set('arrow', v)} />
+              <Toggle label={t('箭头', 'Arrows')} value={settings.arrow} onChange={(v) => set('arrow', v)} disabled={roomsActive} title={hint(!roomsActive)} />
             )}
           </div>
           {caps.supports.hands && settings.hands && settings.fullBody && (
@@ -4134,16 +4190,16 @@ function PuzzleSettings({
             action={{
               label: 'WCA',
               title: t('恢复 WCA 默认', 'Reset to WCA defaults'),
-              onClick: () => set('faceColors', { ...DEFAULT_FACE_COLORS }),
+              onClick: () => set(faceColorsKey, { ...DEFAULT_FACE_COLORS }),
             }}
           >
             {FACE_ORDER.map((f) => (
               <span key={f} className="sim-face-pick">
                 <span className="sim-swatch-label">{f}</span>
                 <ModeColorSelect
-                  color={settings.faceColors[f]}
+                  color={faceColors[f]}
                   presets={FACE_COLOR_PRESETS}
-                  onPickColor={(c) => set('faceColors', { ...settings.faceColors, [f]: c })}
+                  onPickColor={(c) => set(faceColorsKey, { ...faceColors, [f]: c })}
                   title={t(FACE_LABELS_ZH[f], f)}
                   t={t}
                 />
@@ -4154,21 +4210,32 @@ function PuzzleSettings({
             className={'sim-picture-setting' + (caps.supports.pictureCube ? '' : ' sim-picture-setting--disabled')}
             title={hint(caps.supports.pictureCube)}
           >
-            <Toggle
-              label={t('图案魔方', 'Picture cube')}
-              value={settings.pictureCube && pictureFaceCount > 0}
-              disabled={!caps.supports.pictureCube}
-              title={hint(caps.supports.pictureCube)
-                ?? t('把六张图片切到魔方的真实贴纸上,打乱后图片会随块移动', 'Slice six images across the real stickers so the artwork moves with every turn')}
-              onChange={(enabled) => {
-                if (enabled && pictureFaceCount === 0) {
-                  setPictureEditorOpen(true);
-                  return;
-                }
-                set('pictureCube', enabled);
-              }}
-            />
-            <button
+            <label className="sim-toggle">
+              <span>{t('图案魔方', 'Picture cube')}</span>
+              <select
+                aria-label={t('图案魔方主题', 'Picture cube theme')}
+                value={roomsActive ? settings.roomTheme : settings.pictureCube ? 'pictures' : 'off'}
+                disabled={!caps.supports.pictureCube}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  if (value === 'pictures' && pictureFaceCount === 0) {
+                    setPictureEditorOpen(true);
+                    return;
+                  }
+                  const roomTheme = normalizeRoomTheme(value);
+                  onSettingsChange({ ...settings, roomTheme, pictureCube: value === 'pictures',
+                    ...(roomTheme !== 'off' ? { viewMode: 'cube' as const } : {}) });
+                }}
+              >
+                <option value="off">{t('普通色块', 'Classic colors')}</option>
+                <optgroup label={t('立体房间（二至七阶）', '3D rooms (2–7 layers)')}>
+                  {ROOM_THEMES.map((theme) => <option key={theme.id} value={theme.id}
+                    disabled={!supportsRoomCube(puzzleKind)}>{t(theme.zh, theme.en)}</option>)}
+                </optgroup>
+                <option value="pictures">{t('自选图片', 'Your pictures')}</option>
+              </select>
+            </label>
+            {settings.pictureCube && <button
               type="button"
               className="sim-picture-open"
               disabled={!caps.supports.pictureCube}
@@ -4178,10 +4245,12 @@ function PuzzleSettings({
               <span>{pictureFaceCount > 0
                 ? t('编辑', 'Edit')
                 : t('选择六面图片', 'Choose face images')}</span>
-            </button>
-            {pictureCubeActive && (
+            </button>}
+            {(pictureCubeActive || roomsActive) && (
               <span className="sim-picture-setting-note">
-                {t('使用图案时暂时隐藏 logo、字母和箭头', 'Logo, letters and arrows are hidden while pictures are in use')}
+                {roomsActive
+                  ? t('每个小块都是立体房间，随转动一起移动', 'Every cubie is a 3D room that moves with your turns')
+                  : t('使用图案时暂时隐藏 logo、字母和箭头', 'Logo, letters and arrows are hidden while pictures are in use')}
               </span>
             )}
           </div>

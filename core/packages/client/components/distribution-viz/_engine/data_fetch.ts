@@ -2,10 +2,11 @@
 // 从 viz/viz.js fetchPlayerData() + buildChannelDataForPlayer() 1:1 翻译为 TypeScript
 // 复用 @cuberoot/shared 的 fetchResults / fetchCompetitions API
 
-import { fetchResults, fetchCompetitions } from '@cuberoot/shared';
+import { fetchResults, fetchCompetitions } from '@cuberoot/shared/wca-search';
+import { roundChronologicalOrder } from '@cuberoot/shared/wca-round';
 import { compute as computeRollingStats, type RollingResult } from '@/lib/wca-result-metrics/rolling';
 import { compute as computeRoundMetrics, type RoundMetricsResult, type SolveEntry } from '@/lib/wca-result-metrics/round';
-import type { WcaResultMetricMode } from '@/lib/wca-result-metrics';
+import { WCA_AVERAGE_METRIC_KEYS, type WcaResultMetricMode } from '@/lib/wca-result-metrics';
 import type { KDEPoint } from './kde';
 
 // ─── 类型定义 ───
@@ -21,6 +22,7 @@ export interface MeanTrailPoint {
 
 export interface PlayerData {
   wcaId: string;
+  eventId: string;
   name: string;
   nameZh: string;
   solveData: [number, number][];    // [cs, compIdx]
@@ -59,9 +61,6 @@ export const PLAYER_COLORS = [
 // NOTE: 常量
 export const MAX_PLAYERS = 4;
 export const KDE_POINTS = 200;
-
-// ─── 轮次排序 ───
-const ROUND_ORDER: Record<string, number> = { '1': 0, 'd': 1, '2': 2, 'b': 3, '3': 4, 'c': 5, 'f': 6 };
 
 // ─── 数据模式类型 ───
 export type DataMode = WcaResultMetricMode;
@@ -123,7 +122,8 @@ export async function fetchPlayerData(wcaId: string, eventId: string): Promise<P
       const da = compMap[a.competition_id as string].date;
       const db = compMap[b.competition_id as string].date;
       if (da !== db) return da < db ? -1 : 1;
-      return (ROUND_ORDER[a.round_type_id as string] || 0) - (ROUND_ORDER[b.round_type_id as string] || 0);
+      return String(a.competition_id).localeCompare(String(b.competition_id))
+        || roundChronologicalOrder(a.round_type_id as string) - roundChronologicalOrder(b.round_type_id as string);
     });
 
   const competitions: string[] = [];
@@ -159,7 +159,7 @@ export async function fetchPlayerData(wcaId: string, eventId: string): Promise<P
   }
 
   const singlesCs = solveEntries.map(e => e.cs);
-  const statsData = computeRollingStats(singlesCs);
+  const statsData = computeRollingStats(singlesCs, eventId);
   // NOTE: 轮次衍生指标（BAo5/WAo5 等），供 CSV 导出和折线图使用
   const roundMetricsData = computeRoundMetrics(solveEntries);
 
@@ -186,6 +186,7 @@ export async function fetchPlayerData(wcaId: string, eventId: string): Promise<P
 
   return {
     wcaId,
+    eventId,
     name: personName.replace(/\s*\(.+?\)/, ''),
     nameZh: zhMatch ? zhMatch[1] : personName.replace(/\s*\(.+?\)/, ''),
     solveData,
@@ -222,7 +223,9 @@ export function buildChannelDataForPlayer(player: PlayerData, dataMode: DataMode
   if (!arr) return;
   for (let i = 0; i < arr.length; i++) {
     if (arr[i] !== null) {
-      player.channelData.push([arr[i] as number, player.solveData[i][1], i + 1]);
+      const raw = arr[i] as number;
+      const value = player.eventId === '333fm' && WCA_AVERAGE_METRIC_KEYS.includes(dataMode) ? raw / 100 : raw;
+      player.channelData.push([value, player.solveData[i][1], i + 1]);
     }
   }
 }
@@ -250,7 +253,7 @@ export function rawToVal(v: number, eventId: string): number {
  * NOTE: 格式化显示值（1:1 翻译自 viz.js fmtVal）
  */
 export function fmtVal(v: number, eventId: string): string {
-  if (eventId === '333fm') return Math.round(v) + ' moves';
+  if (eventId === '333fm') return Number(v.toFixed(2)) + ' moves';
   if (eventId === '333mbf') return Math.round(v) + ' pts';
   return v.toFixed(2) + 's';
 }

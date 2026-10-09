@@ -38,6 +38,21 @@ describe('recon event aliases', () => {
     }
   });
 
+  it('keeps robot and smart 3x3 entries together at the end of the project list', () => {
+    useReconStore.setState({
+      allSolves: [
+        { id: 1, event: '3x3 smart', official: 'wca' },
+        { id: 2, event: '333', official: 'wca' },
+        { id: 3, event: '3x3 robot', official: 'wca' },
+        { id: 4, event: 'gear', official: 'non_wca' },
+      ],
+    });
+
+    expect(useReconStore.getState().getAvailableEvents()).toEqual([
+      '3x3', 'gear', '3x3 robot', '3x3 smart',
+    ]);
+  });
+
   it.each([
     ['OH', '3x3x3', '3x3x3'],
     ['Pyraminx', 'pyraminx', 'pyraminx'],

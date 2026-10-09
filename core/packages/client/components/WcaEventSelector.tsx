@@ -2,7 +2,7 @@
 
 // Ported from packages/client-vite/src/components/WcaEventSelector.tsx.
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { useParams } from 'next/navigation';
 import { X, Search } from 'lucide-react';
 import { ALL_EVENT_IDS, CANCELLED_EVENT_IDS, EVENT_ZH, EVENT_EN } from '@/lib/event-constants';
@@ -10,10 +10,13 @@ import { eventDisplayName } from '@/lib/wca-events';
 import { CubingIcon } from './EventIcon/EventIcon';
 import AppLink from './AppLink';
 import { ClearButton } from './ClearButton';
+import PuzzlePicker, { type PuzzlePickerItem } from './PuzzlePicker/PuzzlePicker';
 import './WcaEventSelector.css';
 import { tr } from '@/i18n/tr';
 
 interface WcaEventSelectorProps {
+  presentation?: 'menu' | 'inline';
+  popupFooter?: ReactNode;
   availableEvents: Set<string>;
   isZh: boolean;
   allowAll?: boolean;
@@ -55,6 +58,7 @@ export default function WcaEventSelector({
   selectedEvents, onToggle, badges, topBadges, onlyAvailable, onRemove, appendEvents,
   collapsibleAppend, onExpandedChange, linkFor, searchable,
   containerClassName = 'wca-stats-event-selector',
+  presentation = 'menu', popupFooter,
 }: WcaEventSelectorProps) {
   const params = useParams();
   const prefix = params?.lang === 'zh' ? '/zh' : '';
@@ -111,6 +115,38 @@ export default function WcaEventSelector({
       : tr({ zh: '已废止项目', en: 'Former events'
               });
   const renderedAllLabel = allLabel ?? tr({ zh: '全部', en: 'All' });
+
+  if (presentation === 'menu') {
+    const detail = (id: string) => {
+      const round = badges?.[id];
+      const total = topBadges?.[id];
+      if (round === undefined && total === undefined) return undefined;
+      return [round, total].filter(value => value !== undefined).join(' / ');
+    };
+    const items = ALL_EVENT_IDS.filter(id => availableEvents.has(id)).map(id => ({
+      id, label: eventDisplayName(id, isZh), iconClass: `event-${id}`, detail: detail(id),
+    }));
+    const official: PuzzlePickerItem[] = items.filter(item => !CANCELLED_EVENT_IDS.has(item.id));
+    if (allowAll && !isMulti) official.unshift({ id: '', label: renderedAllLabel });
+    return (
+      <PuzzlePicker
+        isZh={isZh}
+        selectedEvent={selectedEvent}
+        selectedEvents={selectedEvents}
+        onSelect={onSelect}
+        onToggle={onToggle}
+        linkFor={linkFor}
+        popupFooter={popupFooter}
+        groups={[
+          { id: 'wca', label: tr({ zh: 'WCA 项目', en: 'WCA events' }), items: official },
+          { id: 'cancelled', label: tr({ zh: '已废止项目', en: 'Former events' }), items: items.filter(item => CANCELLED_EVENT_IDS.has(item.id)) },
+          { id: 'other', label: tr({ zh: '其他项目', en: 'Other events' }), items: renderedAppend.map(item => ({
+            ...item, label: item.label ?? eventDisplayName(item.id, isZh), detail: detail(item.id),
+          })) },
+        ]}
+      />
+    );
+  }
 
   const removeBtn = (id: string, isActive: boolean) => (isMulti && isActive && onRemove ? (
     <span

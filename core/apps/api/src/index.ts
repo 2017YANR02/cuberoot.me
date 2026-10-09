@@ -1,15 +1,21 @@
 import { Hono } from 'hono';
+import { bodyLimit } from 'hono/body-limit';
+import { checkCompetitionAccess, requireCompetitionAccess } from './utils/competition_access.js';
+import { issueCompetitionCaptcha, submitCompetitionCaptcha } from './utils/competition_captcha.js';
 import { startRecordPushSweep } from './utils/record_push.js';
 import { requestDiagnostics } from './observability/request.js';
 import { startRuntimeDiagnostics } from './observability/runtime.js';
 import { serve } from '@hono/node-server';
 import { createNodeWebSocket } from '@hono/node-ws';
 import { apiCors } from './api_cors.js';
-import { authRoutes, rolePreviewGuard } from './routes/auth.js';
+import { authRoutes, browserSessionGuard, rolePreviewGuard } from './routes/auth.js';
+import { accountFaceRoutes } from './routes/account_face.js';
 import { onboardingRoutes } from './routes/onboarding.js';
 import { accountAuthRoutes } from './routes/account_auth.js';
 import { progressRoutes } from './routes/progress.js';
 import { healthRoutes } from './routes/health.js';
+import { siteAssistantRoutes } from './routes/site_assistant.js';
+import { cubeAgentRoutes } from './routes/cube_agents.js';
 import { mcpRoutes } from './routes/mcp.js';
 import { mcpOauthRoutes, mcpDiscoveryRoutes } from './routes/mcp_oauth.js';
 import { adminDiskRoutes } from './routes/admin_disk.js';
@@ -45,12 +51,16 @@ import { timerBackupsRoutes } from './routes/timer_backups.js';
 import { timerBootTelemetryRoutes } from './routes/timer_boot_telemetry.js';
 import { appBootDiagnosticRoutes } from './routes/app_boot_diagnostics.js';
 import { timerPresenceRoutes } from './routes/timer_presence.js';
+import { timerReplaySharesRoutes } from './routes/timer_replay_shares.js';
 import { calendarRoutes, startCalendarReminderSweep } from './routes/calendar.js';
 import { wcaScheduleRoutes } from './routes/wca_schedule.js';
 import { wcaScramblesRoutes } from './routes/wca_scrambles.js';
 import { scrambleMarksRoutes } from './routes/scramble_marks.js';
 import { announcedCompsRoutes, startAnnouncedCompsPoller } from './routes/announced_comps.js';
 import { sponsorsRoutes } from './routes/sponsors.js';
+import { membershipAppleRoutes } from './routes/membership_apple.js';
+import { membershipGoogleRoutes } from './routes/membership_google.js';
+import { membershipBenefitsRoutes } from './routes/membership_benefits.js';
 import { membershipRoutes } from './routes/membership.js';
 import { membershipSubscriptionRoutes } from './routes/membership_subscriptions.js';
 import { compFollowsRoutes } from './routes/comp_follows.js';
@@ -67,10 +77,11 @@ import { paintRoutes } from './routes/paint.js';
 import { pbRoutes } from './routes/pb.js';
 import { forumRoutes } from './routes/forum.js';
 import { friendRoutes } from './routes/friends.js';
+import { chatRoutes } from './routes/chat.js';
 import { privateVaultRoutes } from './routes/private_vault.js';
 import { notificationRoutes } from './routes/notifications.js';
 import { trainerRoomsRoutes } from './routes/trainer_rooms.js';
-import { battleRoomsRoutes } from './routes/battle_rooms.js';
+import { authorizeBattleRoomLivePlayer, battleRoomsRoutes } from './routes/battle_rooms.js';
 import { videoRoomsRoutes } from './routes/video_rooms.js';
 import { wechatJssdkRoutes } from './routes/wechat_jssdk.js';
 import { wechatPcOpenSdkRoutes } from './routes/wechat_pc_opensdk.js';
@@ -96,6 +107,7 @@ import { driveRoutes } from './routes/drive.js';
 import { musicRoutes } from './routes/music.js';
 import { collaborativeDocuments } from './documents/realtime.js';
 import { smartCubeRelay } from './smart_cube/relay.js';
+import { battleRoomLiveRelay } from './battle_live_relay.js';
 import { calcLiveRelay } from './calc/live_relay.js';
 import { ensureDaemon as ensureCubeoptDaemon, isEnabled as cubeoptEnabled } from './cubeopt/daemon.js';
 import { startWcaPastResultsMonitor } from './monitors/wca_past_results.js';
@@ -120,6 +132,12 @@ const { injectWebSocket, upgradeWebSocket } = createNodeWebSocket({ app });
 // Phase 4 (2026-05-27): 主域全员切 Next; vite.cuberoot.me 已下线。
 // *.vercel.app 用 function 形式兜底,Vercel preview 每 PR 一个新 URL 全开。
 app.use('*', apiCors);
+app.get('/v1/competition-access/check', checkCompetitionAccess);
+app.get('/v1/competition-access/challenge', issueCompetitionCaptcha);
+app.post('/v1/competition-access/verify', bodyLimit({ maxSize: 512 }), submitCompetitionCaptcha);
+app.use('/v1/cubing-live/*', requireCompetitionAccess);
+app.use('/v1/cubing-live-stream/*', requireCompetitionAccess);
+app.use('/v1/*', browserSessionGuard);
 app.use('/v1/*', rolePreviewGuard);
 
 // NOTE: 全局错误处理——把未捕获的 throw new Error(...) 转成 JSON 格式
@@ -142,10 +160,13 @@ app.onError((err, c) => {
 app.route('/v1', authRoutes);
 app.route('/v1', accountAuthRoutes);
 app.route('/v1', onboardingRoutes);
+app.route('/v1', accountFaceRoutes);
 app.route('/v1', driveRoutes);
 app.route('/v1', musicRoutes);
 app.route('/v1', progressRoutes);
 app.route('/v1', healthRoutes);
+app.route('/v1', siteAssistantRoutes);
+app.route('/v1', cubeAgentRoutes);
 app.route('/v1', mcpRoutes);
 app.route('/v1', mcpOauthRoutes);
 app.route('/', mcpDiscoveryRoutes);
@@ -182,6 +203,7 @@ app.route('/v1', timerBackupsRoutes);
 app.route('/v1', timerBootTelemetryRoutes);
 app.route('/v1', appBootDiagnosticRoutes);
 app.route('/v1', timerPresenceRoutes);
+app.route('/v1', timerReplaySharesRoutes);
 app.route('/v1', calendarRoutes);
 app.route('/v1', wcaScheduleRoutes);
 app.route('/v1', wcaScramblesRoutes);
@@ -189,6 +211,9 @@ app.route('/v1', scrambleMarksRoutes);
 app.route('/v1', announcedCompsRoutes);
 app.route('/v1', sponsorsRoutes);
 app.route('/v1', membershipRoutes);
+app.route('/v1', membershipBenefitsRoutes);
+app.route('/v1', membershipAppleRoutes);
+app.route('/v1', membershipGoogleRoutes);
 app.route('/v1', membershipSubscriptionRoutes);
 app.route('/v1', compFollowsRoutes);
 app.route('/v1', algMarksRoutes);
@@ -204,6 +229,7 @@ app.route('/v1', paintRoutes);
 app.route('/v1', pbRoutes);
 app.route('/v1', forumRoutes);
 app.route('/v1', friendRoutes);
+app.route('/v1', chatRoutes);
 app.route('/v1', privateVaultRoutes);
 app.route('/v1', notificationRoutes);
 app.route('/v1', trainerRoomsRoutes);
@@ -246,20 +272,23 @@ app.get('/v1/documents/realtime', upgradeWebSocket((c) => {
   };
 }));
 app.get('/v1/smart-cube/relay', upgradeWebSocket((c) => {
-  let connection: ReturnType<typeof smartCubeRelay.connect> | undefined;
+  let connection: { handleMessage(data: unknown): void; handleClose(): void } | undefined;
   return {
     onOpen(_event, ws) {
-      connection = smartCubeRelay.connect({
+      const socket = {
         get bufferedAmount() {
           return ws.raw?.bufferedAmount ?? 0;
         },
-        send(data) {
+        send(data: string) {
           ws.send(data);
         },
-        close(code, reason) {
+        close(code?: number, reason?: string) {
           ws.close(code, reason);
         },
-      }, getIp(c));
+      };
+      connection = c.req.query('mode') === 'battle'
+        ? battleRoomLiveRelay.connect(socket, authorizeBattleRoomLivePlayer, getIp(c))
+        : smartCubeRelay.connect(socket, getIp(c));
     },
     onMessage(event) {
       connection?.handleMessage(event.data);

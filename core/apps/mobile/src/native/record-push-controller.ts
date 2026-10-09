@@ -1,7 +1,7 @@
 import type { WebSession } from '@cuberoot/shared/auth/web-session';
 import type { MobileSecureStorage } from './secure-storage';
 
-export interface PushStatus { configured: boolean; enabled: boolean; clientId: string | null }
+export interface PushStatus { configured: boolean; enabled: boolean; clientId: string | null; provider?: 'getui' | 'apns'; environment?: 'sandbox' | 'production' }
 interface PushIdentity { installationId: string; secret: string; uid: number; revoke: boolean }
 export interface RecordPushPort {
   storage: MobileSecureStorage;
@@ -73,7 +73,8 @@ export class RecordPushController {
     const appId = await this.port.appId();
     const initial = await this.port.status();
     if (!initial.configured) return;
-    const config = await this.port.request('GET', `/notifications/push/config?appId=${encodeURIComponent(appId)}`, undefined, session.token);
+    const target = new URLSearchParams({ appId, provider: initial.provider ?? 'getui', environment: initial.environment ?? 'production' });
+    const config = await this.port.request('GET', `/notifications/push/config?${target}`, undefined, session.token);
     if (!config.enabled || this.desired !== session) {
       if (!config.enabled) { await this.port.stop(); this.startedFor = null; }
       return;
@@ -93,11 +94,12 @@ export class RecordPushController {
       device = { ...this.port.identity(), uid: session.user.uid, revoke: false };
       await this.port.storage.setItem(KEY, JSON.stringify(device));
     }
-    const binding = `${session.user.uid}:${status.clientId}`;
+    const binding = `${session.user.uid}:${status.provider}:${status.environment}:${status.clientId}`;
     if (this.registered === binding && Date.now() - this.registeredAt < 3_600_000) return;
     if (this.desired !== session) return;
     await this.port.request('PUT', '/notifications/push/device', {
       installationId: device.installationId, secret: device.secret, appId, clientId: status.clientId,
+      ...(status.provider ? { provider: status.provider, environment: status.environment } : {}),
     }, session.token);
     this.registered = binding;
     this.registeredAt = Date.now();

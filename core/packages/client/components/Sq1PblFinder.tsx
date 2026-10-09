@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 import {
   useEffect,
@@ -14,7 +15,6 @@ import AlgPlayer from '@/components/AlgPlayer';
 import AppLink from '@/components/AppLink';
 import { CaseThumb } from '@/components/CaseThumb';
 import { CompactSelect } from '@/components/CompactSelect';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import SearchInput from '@/components/SearchInput';
 import { useCopy } from '@/hooks/useCopy';
 import { tr } from '@/i18n/tr';
@@ -392,16 +392,16 @@ export default function Sq1PblFinder() {
         <div className={styles.advancedContent}>
           <label className={styles.modeControl}>
             <span>{tr({ zh: '搜索口径', en: 'Search mode' })}</span>
-            <PillToggle
-              value={mode === 'legacy'}
-              offLabel={tr({ zh: '严格', en: 'Strict' })}
-              onLabel={tr({ zh: '旧版兼容', en: 'Legacy' })}
-              ariaLabel={tr({ zh: '切换严格或旧版兼容搜索', en: 'Toggle strict or legacy-compatible search' })}
-              onChange={legacy => {
-                setMode(legacy ? 'legacy' : 'strict');
-                clearResult();
-              }}
-            />
+            <select
+              value={String(mode === 'legacy')}
+              onChange={event => { const legacy = event.currentTarget.value === 'true'; setMode(legacy ? 'legacy' : 'strict');
+                clearResult(); }}
+              aria-label={tr({ zh: '切换严格或旧版兼容搜索', en: 'Toggle strict or legacy-compatible search' })}
+              className="native-select"
+            >
+              <option value="true">{tr({ zh: '旧版兼容', en: 'Legacy' })}</option>
+              <option value="false">{tr({ zh: '严格', en: 'Strict' })}</option>
+            </select>
           </label>
           <p className={styles.sourceLine}>
             {tr({ zh: '旧版兼容模式复现原工具行为；严格模式额外检查中层状态。', en: 'Legacy mode reproduces the original tool; strict mode also checks the middle layer.' })}

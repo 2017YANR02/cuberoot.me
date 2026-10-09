@@ -8,6 +8,8 @@
  *   DB 没有 / fetched_at > 7d 的串行 scrape,500ms 间隔避免 cubing.com 限流。
  */
 import { query } from '../db/connection.js';
+import { parseHTML } from 'linkedom';
+import { nameToCubingSlug } from '@cuberoot/shared/cubing-slug';
 import { getUpcomingComps, getUpcomingCnCompName } from './upcoming_comps_cache.js';
 
 export interface CnCompZh {
@@ -24,21 +26,35 @@ const SCRAPE_DELAY_MS = 500;
 const STALE_DAYS = 7;
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 
-function extractDd(html: string, label: string): string | null {
-  const re = new RegExp(`<dt>\\s*${label}\\s*<\\/dt>\\s*<dd>([\\s\\S]*?)<\\/dd>`);
-  const m = html.match(re);
-  if (!m) return null;
-  // dd 里可能套 <div class="text-info">(暂停报名说明),只取首个 tag 之前的纯文本
-  const lead = m[1].split('<')[0].replace(/\s+/g, ' ').trim();
-  return lead || null;
-}
-
-// cubing.com 详情页标题 <h1 class="heading-title ...">中文全名</h1>(如 2026WCA湛江魔方公开赛)
-function extractName(html: string): string | null {
-  const m = html.match(/<h1[^>]*class="[^"]*heading-title[^"]*"[^>]*>([\s\S]*?)<\/h1>/);
-  if (!m) return null;
-  const name = m[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
-  return name || null;
+/** 兼容旧版 dl 与新版带嵌套标签的地点、报名时间轴。 */
+export function parseCnCompZh(html: string): CnCompZh {
+  const { document } = parseHTML(html);
+  const clean = (text: string | null | undefined) => text?.replace(/\s+/g, ' ').trim() || null;
+  const fields = new Map<string, string>();
+  for (const label of document.querySelectorAll('dt, [data-active-timeline] p')) {
+    const value = label.nextElementSibling;
+    if (!value || (label.tagName === 'DT' ? value.tagName !== 'DD' : value.tagName !== 'P')) continue;
+    const copy = value.cloneNode(true) as typeof value;
+    // 旧版退赛日期后可能附带暂停报名说明，不并入时间值。
+    copy.querySelectorAll('.text-info').forEach(note => note.remove());
+    const text = clean(copy.textContent);
+    if (text) fields.set(clean(label.textContent) ?? '', text);
+  }
+  const date = (...labels: string[]): string | null => {
+    const text = labels.map(label => fields.get(label)).find(Boolean);
+    const match = text?.match(/^(\d{4})(?:年|-)(\d{1,2})(?:月|-)(\d{1,2})日?\s+(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+    if (!match) return null;
+    const [, year, month, day, hour, minute, second = '00'] = match;
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')} ${hour.padStart(2, '0')}:${minute}:${second}`;
+  };
+  const name = clean(document.querySelector('h1')?.textContent);
+  const location = fields.get('地点');
+  return {
+    location: location && /[一-鿿]/.test(location) ? location.replace(/\s*·\s*/g, ' ') : null,
+    withdrawDeadline: date('退赛截止时间'),
+    reopenAt: date('重开报名时间', '报名重启时间'),
+    nameZh: name && /[一-鿿]/.test(name) ? name : null,
+  };
 }
 
 interface DbRow {
@@ -50,7 +66,9 @@ interface DbRow {
 
 async function fetchFromDb(wcaId: string): Promise<CnCompZh | null> {
   const rows = await query<DbRow>(
-    `SELECT location_zh, withdraw_deadline, reopen_at, name_zh FROM cn_comp_zh WHERE wca_id = ?`,
+    `SELECT location_zh, withdraw_deadline, reopen_at, name_zh FROM cn_comp_zh
+     WHERE wca_id = ? AND location_zh IS NOT NULL AND name_zh IS NOT NULL
+       AND fetched_at > NOW() - INTERVAL '${STALE_DAYS} days'`,
     [wcaId],
   );
   if (rows.length === 0) return null;
@@ -73,21 +91,16 @@ async function upsert(wcaId: string, meta: CnCompZh): Promise<void> {
 }
 
 async function scrapeAndUpsert(wcaId: string, compName: string): Promise<CnCompZh> {
-  const slug = compName.trim().replace(/['`‘’]/g, '').replace(/\s+/g, '-');
+  const slug = nameToCubingSlug(compName);
   try {
-    const res = await fetch(`${CUBING_BASE}/competition/${encodeURIComponent(slug)}`, {
+    const res = await fetch(`${CUBING_BASE}/competition/${encodeURIComponent(slug)}?lang=zh`, {
       headers: { 'User-Agent': UA, Accept: 'text/html', 'Accept-Language': 'zh-CN,zh;q=0.9' },
+      signal: AbortSignal.timeout(15_000),
     });
     if (!res.ok) return EMPTY;
     const html = await res.text();
-    const meta: CnCompZh = {
-      location: extractDd(html, '地点'),
-      withdrawDeadline: extractDd(html, '退赛截止时间'),
-      reopenAt: extractDd(html, '重开报名时间'),
-      nameZh: extractName(html),
-    };
-    // 即使全 null 也写一行,避免下次再触发 scrape
-    await upsert(wcaId, meta);
+    const meta = parseCnCompZh(html);
+    if (meta.location || meta.nameZh) await upsert(wcaId, meta);
     return meta;
   } catch (e) {
     console.warn(`[cn-comp-zh] scrape ${wcaId}:`, (e as Error).message);
@@ -138,9 +151,9 @@ export async function warmCnCompZh(): Promise<void> {
     if (cn.length === 0) return;
     const ids = cn.map((c) => c.id);
     const placeholders = ids.map(() => '?').join(',');
-    // name_zh IS NULL 的旧行(0044 迁移前抓的)视为过期 → warm 时回填中文名
+    // 旧解析器在上游改版后写下的空地点也需要重新抓取。
     const fresh = await query<{ wca_id: string }>(
-      `SELECT wca_id FROM cn_comp_zh WHERE wca_id IN (${placeholders}) AND fetched_at > NOW() - INTERVAL '${STALE_DAYS} days' AND name_zh IS NOT NULL`,
+      `SELECT wca_id FROM cn_comp_zh WHERE wca_id IN (${placeholders}) AND fetched_at > NOW() - INTERVAL '${STALE_DAYS} days' AND name_zh IS NOT NULL AND location_zh IS NOT NULL`,
       ids,
     );
     const freshSet = new Set(fresh.map((r) => r.wca_id));

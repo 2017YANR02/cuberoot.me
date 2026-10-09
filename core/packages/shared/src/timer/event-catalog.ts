@@ -1,5 +1,46 @@
 import { EVENTS, eventInfo, fromWcaSpelling, isBldEvent, toWcaSpelling, type EventId } from './types';
 
+/**
+ * 3x3 scramble types are choices within one puzzle, not separate puzzles.
+ * `event` preserves the existing generator, session, URL and solve identity:
+ * old training results must not be merged into ordinary 3x3 results.
+ */
+export const TIMER_333_SCRAMBLE_TYPES = [
+  { id: 'wca', event: '333' },
+  { id: 'cross', event: 'cross' },
+  { id: 'f2l', event: 'f2l' },
+  { id: 'll', event: 'll' },
+  { id: 'oll', event: 'oll' },
+  { id: 'pll', event: 'pll' },
+  { id: 'coll', event: 'coll' },
+  { id: 'cmll', event: 'cmll' },
+  { id: 'zbll', event: 'zbll' },
+  { id: 'cll', event: 'cll' },
+  { id: 'ell', event: 'ell' },
+  { id: 'eocp', event: 'eocp' },
+  { id: '2gll', event: '2gll' },
+  { id: 'ollcp', event: 'ollcp' },
+  { id: 'zzll', event: 'zzll' },
+  { id: 'zbls', event: 'zbls' },
+  { id: 'lse', event: 'lse' },
+  { id: 'l10p', event: 'l10p' },
+] as const satisfies readonly { id: string; event: EventId }[];
+
+export type Timer333ScrambleType = (typeof TIMER_333_SCRAMBLE_TYPES)[number]['id'];
+
+/** Training navigation only; each entry keeps its existing event/provider identity. */
+export const TIMER_333_TRAINING_GROUPS = [
+  { id: 'cfop', label: { en: 'CFOP', zh: 'CFOP' }, events: ['cross', 'f2l', 'll', 'oll', 'pll', 'coll', 'cll', 'ell', 'eocp', '2gll', 'ollcp'] },
+  { id: 'zb', label: { en: 'ZB', zh: 'ZB' }, events: ['zbll', 'zzll', 'zbls'] },
+  { id: 'roux', label: { en: 'Roux', zh: '桥式' }, events: ['cmll', 'lse', 'l10p'] },
+] as const satisfies readonly { id: string; label: Record<'en' | 'zh', string>; events: readonly Timer333ScrambleType[] }[];
+
+/** Project a persisted timer mode into its puzzle and optional scramble type. */
+export function timerPuzzleSelection(event: EventId): { puzzle: EventId; scrambleType: Timer333ScrambleType | null } {
+  const type = TIMER_333_SCRAMBLE_TYPES.find((item) => item.event === event);
+  return type ? { puzzle: '333', scrambleType: type.id } : { puzzle: event, scrambleType: null };
+}
+
 /** The two sections shown by the canonical solo-timer event picker. */
 export type TimerEventPickerGroupId = 'wca' | 'other';
 
@@ -26,6 +67,8 @@ interface TimerEventPickerLayoutItem {
   readonly group: TimerEventPickerGroupId;
   /** Reuse another timer event's WCA icon, for example 3BLD for 3x3 NI. */
   readonly iconEvent?: EventId;
+  /** Use a non-WCA icon key when the event has a dedicated cubing icon. */
+  readonly iconClass?: string;
   readonly textLabel?: string;
 }
 
@@ -33,7 +76,7 @@ interface TimerEventPickerLayoutItem {
  * Canonical solo-timer picker order and grouping.
  *
  * Names come from `EVENTS`; WCA icon keys come through `toWcaSpelling`; the
- * layout contains internal EventIds only. Keeping the 43 entries here means a
+ * layout contains internal EventIds only. Keeping the 52 entries here means a
  * Web or App picker cannot silently drift into a different product catalog.
  */
 const TIMER_EVENT_PICKER_LAYOUT = [
@@ -60,7 +103,7 @@ const TIMER_EVENT_PICKER_LAYOUT = [
 
   // Extra BLD / puzzle / relay / training modes.
   { id: '333ni', group: 'other', iconEvent: '333bld' },
-  { id: '333mr', group: 'other', textLabel: 'MR' },
+  { id: '333mr', group: 'other', iconClass: 'unofficial-333_mirror_blocks' },
   { id: '666bld', group: 'other', textLabel: '6BLD' },
   { id: '777bld', group: 'other', textLabel: '7BLD' },
   { id: 'r3', group: 'other', textLabel: 'R3' },
@@ -74,6 +117,15 @@ const TIMER_EVENT_PICKER_LAYOUT = [
   { id: 'coll', group: 'other', textLabel: 'COLL' },
   { id: 'cmll', group: 'other', textLabel: 'CMLL' },
   { id: 'zbll', group: 'other', textLabel: 'ZBLL' },
+  { id: 'cll', group: 'other', textLabel: 'CLL' },
+  { id: 'ell', group: 'other', textLabel: 'ELL' },
+  { id: 'eocp', group: 'other', textLabel: 'EOCP' },
+  { id: '2gll', group: 'other', textLabel: '2GLL' },
+  { id: 'ollcp', group: 'other', textLabel: 'OLLCP' },
+  { id: 'zzll', group: 'other', textLabel: 'ZZLL' },
+  { id: 'zbls', group: 'other', textLabel: 'ZBLS' },
+  { id: 'lse', group: 'other', textLabel: 'LSE' },
+  { id: 'l10p', group: 'other', textLabel: 'L10P' },
   { id: 'eg1', group: 'other', textLabel: 'EG-1' },
   { id: 'eg2', group: 'other', textLabel: 'EG-2' },
   { id: 'custom', group: 'other', textLabel: 'Custom' },
@@ -89,9 +141,9 @@ const TIMER_EVENT_PICKER_LAYOUT = [
 
 function pickerItem(entry: TimerEventPickerLayoutItem): TimerEventPickerItem {
   const info = eventInfo(entry.id);
-  const iconClass = entry.iconEvent
+  const iconClass = entry.iconClass ?? (entry.iconEvent
     ? `event-${toWcaSpelling(entry.iconEvent)}`
-    : info.icon ?? (entry.group === 'wca' ? `event-${toWcaSpelling(entry.id)}` : undefined);
+    : info.icon ?? (entry.group === 'wca' ? `event-${toWcaSpelling(entry.id)}` : undefined));
   return Object.freeze({
     id: entry.id,
     nameEn: info.nameEn,
@@ -185,7 +237,8 @@ const PICKER_ITEM_BY_EVENT = new Map(
 
 const THREE_BY_THREE_PREVIEW_EVENTS = new Set<EventId>([
   '333', '333oh', '333bld', '333ni', '333fm', '333mr',
-  'cross', 'f2l', 'll', 'oll', 'pll', 'coll', 'cmll', 'zbll', 'eg1', 'eg2',
+  'cross', 'f2l', 'll', 'oll', 'pll', 'coll', 'cmll', 'zbll',
+  'cll', 'ell', 'eocp', '2gll', 'ollcp', 'zzll', 'zbls', 'lse', 'l10p',
 ]);
 
 /** Look up a picker item without making each app rebuild its own event map. */
@@ -217,7 +270,7 @@ export function timerEventIdFromSelector(id: string): EventId | null {
 
 /** NxN renderer size for timer modes whose scramble can be shown as one cube. */
 export function timerEventNxnSize(id: EventId): number | null {
-  if (id === '222') return 2;
+  if (id === '222' || id === 'eg1' || id === 'eg2') return 2;
   if (id === '444' || id === '444bld') return 4;
   if (id === '555' || id === '555bld') return 5;
   if (id === '666' || id === '666bld') return 6;

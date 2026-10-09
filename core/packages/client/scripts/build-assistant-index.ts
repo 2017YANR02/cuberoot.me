@@ -1,0 +1,180 @@
+import { readdir, readFile, writeFile, mkdir } from 'node:fs/promises';
+import path from 'node:path';
+import { parseHTML } from 'linkedom';
+import { SITE_DIRECTORY_GROUPS } from '@cuberoot/shared/site-directory';
+import { EVENT_DISPLAY_EN, EVENT_DISPLAY_ZH } from '@cuberoot/shared/wca-events';
+import { EVENT_ID } from '../lib/solver-routes';
+import { CSTIMER_EVENTS } from '../lib/cstimer-scramble';
+import { EVENT_NAME_TO_ID } from '../lib/event-constants';
+import { PAGE_META } from '../lib/page-meta';
+import { PLATFORM_ROUTES } from '../lib/platform-routes';
+const restricted=SITE_DIRECTORY_GROUPS.flatMap(g=>g.entries.filter(e=>('adminOnly' in e && e.adminOnly)||('lockedForNonAdmin' in e && e.lockedForNonAdmin)).map(e=>e.href));
+
+
+function isPublicRoute(route: string) {
+  if (!/^\/(en|zh)\//.test(route) || /\/(?:_|admin|platform|org|learn|courses|tutorial-legacy|account|settings)(?:\/|$)/.test(route)
+    || /^\/(en|zh)\/(auth|login|register)(?:\/|$)/.test(route)) return false;
+  const href=route.replace(/^\/(en|zh)/,'');
+  return !restricted.some(p=>href===p || href.startsWith(p+'/'));
+}
+
+export function indexPublicHtml(route: string, html: string) {
+  if (!isPublicRoute(route)) return null;
+  const { document } = parseHTML(html);
+  if (document.querySelector('meta[name="robots"]')?.getAttribute('content')?.includes('noindex')) return null;
+  const title = document.querySelector('title')?.textContent ?? route;
+  const description=document.querySelector('meta[name="description"]')?.getAttribute('content') ?? '';
+  document.querySelectorAll('div[hidden][id]').forEach(n=>{if (/^S:[0-9a-f]+$/i.test(n.id)) n.removeAttribute('hidden');});
+  document.querySelectorAll('header,footer').forEach(n=>{if(!n.closest('main,article'))n.remove();});
+  document.querySelectorAll('script,style,nav,form,button,[hidden],[aria-hidden="true"]').forEach(n=>n.remove());
+  const body=(document.querySelector('main') ?? document.body)?.textContent ?? '';
+  const text=[description,body].join(' ').replace(/\s+/g,' ').trim();
+  if (text.length<80 && description.length<20) return null;
+  return { lang:route.startsWith('/zh/')?'zh':'en', href:route.replace(/^\/(en|zh)/,''),title,text:text.slice(0,60000) };
+}
+
+/** On-demand public pages are in the existing sitemap but have no build HTML.
+ * Keep their public link labels searchable; the API reads their body on demand.
+ * Never turn a rendered noindex/empty/private page back into an indexed page. */
+export function discoverPublicPages(xml: string, labels: Map<string,string>, rendered: Set<string>) {
+  const {document}=parseHTML(xml);
+  const pages: NonNullable<ReturnType<typeof indexPublicHtml>>[]=[];
+  for (const loc of document.querySelectorAll('loc')) {
+    let url: URL;
+    try { url=new URL(loc.textContent ?? ''); } catch { continue; }
+    if (url.origin!=='https://cuberoot.me' || url.search || url.hash) continue;
+    const href=url.pathname.replace(/^\/(?:en|zh)(?=\/|$)/,'').replace(/\/$/,'');
+    for (const lang of ['en','zh']) {
+      const route=`/${lang}${href}`;
+      if (!isPublicRoute(route) || rendered.has(route)) continue;
+      rendered.add(route);
+      pages.push({lang,href,title:labels.get(route) ?? href.split('/').filter(Boolean).join(' · '),text:''});
+    }
+  }
+  return pages;
+}
+
+/** Reuse links rendered by the real tool menus, including solver event selection. */
+export function discoverNavigationLinks(route: string, html: string) {
+  if (!isPublicRoute(route)) return [];
+  const {document}=parseHTML(html);
+  const lang=route.startsWith('/zh/')?'zh':'en';
+  const destinations: Array<{lang:string;href:string;title:string}>=[];
+  for (const link of document.querySelectorAll('a[href]')) {
+    try {
+      const url=new URL(link.getAttribute('href')!,`https://cuberoot.me${route}`);
+      const href=url.pathname.replace(/^\/(en|zh)(?=\/|$)/,'');
+      if(url.origin!=='https://cuberoot.me' || !isPublicRoute(`/${lang}${href}`)) continue;
+      if([...url.searchParams.keys()].some(key=>!['event','tool','method','stage','variant'].includes(key))) continue;
+      const title=link.textContent?.replace(/\s+/g,' ').trim();
+      if(title) destinations.push({lang,href:href+url.search,title:title.slice(0,250)});
+    } catch { /* Invalid or non-HTTP link. */ }
+  }
+  return destinations;
+}
+
+/** Labels only, never private HTML. SEO noindex does not hide a tool from site navigation. */
+export function metadataDestinations(routes: readonly string[]) {
+  return routes.flatMap(route=>{
+    const meta=PAGE_META[route];
+    if(!meta || /(?:^|\/)(?:_|\[)[^/]*|[?#\\]/.test(route) || route.startsWith('tutorial-legacy')) return [];
+    const access=/(?:^|\/)admin(?:\/|$)/.test(route)?'admin':/^(account|settings|org|learn)(?:\/|$)/.test(route)?'account':'public';
+    return (['en','zh'] as const).map(lang=>({lang,href:`/${route}`,title:meta.title[lang],description:meta.description?.[lang] ?? '',access}));
+  });
+}
+
+/** Platform uses a catch-all page; concrete entry routes come from its own registry. */
+export function platformDestinations() {
+  return PLATFORM_ROUTES.filter(route=>!route.pattern.includes(':') && !route.canonicalHref).flatMap(route=>
+    (['en','zh'] as const).map(lang=>({lang,href:`/platform${route.pattern?'/'+route.pattern:''}`,title:route.title[lang],description:route.description?.[lang] ?? '',access:route.access})));
+}
+
+/** The project picker is closed during SSR, so index its canonical routing data too. */
+export function solverDestinations() {
+  return Object.values(EVENT_ID).flatMap(event=>{
+    const puzzle=CSTIMER_EVENTS.find(p=>p.id===event);
+    const english=Object.entries(EVENT_NAME_TO_ID).find(([,id])=>id===event)?.[0] ?? EVENT_DISPLAY_EN[event];
+    return (['en','zh'] as const).map(lang=>({lang,href:`/scramble/solver?event=${event}`,title:`${puzzle?.[lang] ?? {en:english,zh:EVENT_DISPLAY_ZH[event]}[lang] ?? event} — ${{en:'Solver',zh:'求解器'}[lang]}`}));
+  });
+}
+
+/** Next adapters scope prerenders by source-route hash; standalone keeps app/.
+ * Only page HTML and the public sitemap handler are inputs, never RSC/module files. */
+export async function discoverBuildArtifacts(serverRoot: string) {
+  const htmlFiles = new Map<string, string>();
+  let sitemapFile: string | undefined;
+  async function walk(dir: string, scoped: boolean): Promise<void> {
+    const entries = await readdir(dir, { withFileTypes: true }).catch(error => {
+      if (error.code === 'ENOENT') return [];
+      throw error;
+    });
+    for (const entry of entries) {
+      const file = path.join(dir, entry.name);
+      if (entry.isDirectory()) { await walk(file, scoped); continue; }
+      const relative = path.relative(serverRoot, file).split(path.sep).join('/');
+      const page = scoped
+        ? /^route-cache\/APP_PAGE\/[a-f0-9]{64}\/\$(\/.*)\.html$/.exec(relative)
+        : /^app(\/.*)\.html$/.exec(relative);
+      if (page) htmlFiles.set(page[1], file);
+      if (scoped
+        ? /^route-cache\/APP_ROUTE\/[a-f0-9]{64}\/\$\/sitemap\.xml\.body$/.test(relative)
+        : relative === 'app/sitemap.xml.body') sitemapFile = file;
+    }
+  }
+  await walk(path.join(serverRoot, 'app'), false);
+  // The current adapter output wins over any legacy files restored from a cache.
+  await walk(path.join(serverRoot, 'route-cache'), true);
+  return { htmlFiles, sitemapFile };
+}
+
+async function main() {
+  const root=path.resolve('.next/server');
+  const pages: NonNullable<ReturnType<typeof indexPublicHtml>>[]=[];
+  const rendered=new Set<string>();
+  const labels=new Map<string,string>();
+  const destinations=new Map<string, {lang:string;href:string;title:string;description?:string;access?:string}>();
+  for(const destination of solverDestinations()) destinations.set(destination.lang+destination.href,destination);
+  // Only register real static page files, not layout-only or parameter placeholders.
+  const routeFiles=await readdir('app/[lang]',{recursive:true});
+  const staticRoutes=routeFiles.filter(file=>/(?:^|\/)page\.tsx$/.test(file) && !file.split('/').slice(0,-1).some(segment=>segment.startsWith('_') || segment.includes('[') || segment.startsWith('(')))
+    .map(file=>file.replace(/(?:^|\/)page\.tsx$/,''));
+  for(const destination of metadataDestinations(staticRoutes)) destinations.set(destination.lang+destination.href,destination);
+  for(const route of staticRoutes) for(const lang of ['en','zh']) {
+    const href=`/${route}`;
+    if(!destinations.has(lang+href)) destinations.set(lang+href,{lang,href,title:route.split('/').join(' · ') || 'CubeRoot'});
+  }
+  for(const destination of platformDestinations()) destinations.set(destination.lang+destination.href,destination);
+  const {htmlFiles,sitemapFile}=await discoverBuildArtifacts(root);
+  for (const [route,file] of htmlFiles) {
+    const html=await readFile(file,'utf8');
+    rendered.add(route);
+    const page=indexPublicHtml(route,html);
+    for(const destination of discoverNavigationLinks(route,html)) {
+      const key=destination.lang+destination.href;
+      if(!destinations.has(key)) destinations.set(key,destination);
+    }
+    if (page) {
+      pages.push(page);
+      const {document}=parseHTML(html);
+      for (const link of document.querySelectorAll('a[href]')) {
+        try {
+          const url=new URL(link.getAttribute('href')!,`https://cuberoot.me${route}`);
+          if(url.origin!=='https://cuberoot.me')continue;
+          const target=/^\/(en|zh)(?:\/|$)/.test(url.pathname)?url.pathname:`/en${url.pathname}`;
+          const label=link.textContent?.replace(/\s+/g,' ').trim();
+          if(isPublicRoute(target) && label && (!labels.has(target) || label.length>labels.get(target)!.length))labels.set(target,label.slice(0,250));
+        } catch { /* Non-HTTP and malformed links are not content entries. */ }
+      }
+    }
+  }
+  if (!pages.length) throw new Error(`No public assistant content found in ${htmlFiles.size} prerendered HTML files under ${root}`);
+  const xml=sitemapFile?await readFile(sitemapFile,'utf8'):'';
+  const discovered=discoverPublicPages(xml,labels,rendered);
+  pages.push(...discovered);
+  await mkdir('public/assistant',{recursive:true});
+  await writeFile('public/assistant/pages.json',JSON.stringify({updated:new Date().toISOString(),pages,destinations:[...destinations.values()]}));
+  console.log(`Assistant content index: ${pages.length} public pages (${discovered.length} read on demand)`);
+}
+if (path.basename(process.argv[1] ?? '')==='build-assistant-index.ts') {
+  main().catch(error=>{console.error(error);process.exitCode=1;});
+}

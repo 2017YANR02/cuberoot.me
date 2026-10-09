@@ -1,5 +1,5 @@
 // NOTE: WCA 数据库下载+导入
-// CI 用法：npx tsx src/bin/update_database.ts
+// 从 core/ 运行：pnpm --filter @cuberoot/stats-build exec tsx src/bin/update_database.ts
 // 步骤：
 //   1. 下载 WCA export zip (~2GB)
 //   2. 解压得到 .sql 文件

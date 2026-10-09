@@ -76,7 +76,7 @@ D'p 的用指在原教程有明文；Dp 是对应的左右镜像规格。其它�
 
 | 能力 | 状态 / 事实源 |
 | --- | --- |
-| `/alg` 保存、清洗和展示富文本记号 | 已有 `AlgEntry.algHtml`、`lib/alg_html.ts`、`CubeVirtualKeyboard.tsx`；保留格式不代表已解析指法语义 |
+| `/alg` 保存、清洗和展示富文本记号 | 已有 `AlgEntry.algHtml`、`CubeVirtualKeyboard.tsx`；API 写入与 Web 旧数据展示共用 `@cuberoot/shared/alg-html` 的解析器白名单，保留六种标签及 `u.wavy`；`lib/alg_html.ts` 负责保留记号的文字编辑。保留格式不代表已解析指法语义 |
 | `/sim` 解析和剥除 `p` 后缀 | 已有 `PlayerControls.tsx`；未编排的 push 会回落默认动作 |
 | 右食指 `U'p` | 已有 `handsRig.ts` 的 `upPush`，但全行程贴块跟随仍有限制，见动作规格 §4.5 / §6 |
 | 左食指 `Up`、无名指 `Dp` / `D'p` | 用户已要求、含义在本文统一；尚待动作编排和实际播放验收，不能写成已支持 |

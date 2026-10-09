@@ -12,6 +12,8 @@ import {
 
 const app = readFileSync(new URL('./App.tsx', import.meta.url), 'utf8');
 const css = readFileSync(new URL('./app.css', import.meta.url), 'utf8');
+const stageCss = readFileSync(new URL(import.meta.resolve('@cuberoot/timer-ui/timer-stage-layout.css')), 'utf8');
+const surfaceCss = readFileSync(new URL(import.meta.resolve('@cuberoot/timer-ui/timing-surface.css')), 'utf8');
 
 class ResizeTarget extends EventTarget {
   constructor(public height: number) {
@@ -104,22 +106,51 @@ describe('mobile visible viewport layout', () => {
     ]);
     expect(css).toMatch(/\.view-container \{[^}]*overflow-x: hidden;[^}]*overflow-y: auto;/s);
     expect(css).toMatch(/\.mobile-timer-stage \{[^}]*min-height: 520px;/s);
-    expect(css).toMatch(/\.mobile-timer-stage > \.timing-surface \{[^}]*min-height: min-content;/s);
+    expect(surfaceCss).toMatch(/\.timing-surface--solo,\s*\.timing-surface--net \{[^}]*min-height: 280px;/s);
     expect(css).toMatch(/\.app-shell--compact-viewport \.mobile-timer-stage \{[^}]*min-height: 350px;/s);
-    expect(css).toMatch(/\.app-shell--compact-viewport \.mobile-timer-stage > \.timing-surface \{[^}]*padding: 8px 0;/s);
+    expect(css).not.toMatch(/\.mobile-timer-stage \.timing-surface-(?:core|sub)\s*\{/);
     expect(app).toContain('const primaryNavRef = useRef<HTMLElement>(null)');
     expect(app).toContain('primaryNavRef.current?.getBoundingClientRect().height ?? 0');
-    expect(app).toContain('<nav className="primary-nav" aria-label={copy.title} ref={primaryNavRef}>');
-    expect(app.match(/viewportBottomInset=\{primaryNavBottomInset\}/g)).toHaveLength(8);
+    const primaryNav = app.match(/<nav\b[^>]*>/g)?.find((tag) => tag.includes('className="primary-nav"'));
+    expect(primaryNav).toBeDefined();
+    expect(primaryNav).toContain('aria-label={copy.title}');
+    expect(primaryNav).toContain('ref={primaryNavRef}');
+    const source = ts.createSourceFile('App.tsx', app, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+    const insetConsumers: string[] = [];
+    const visit = (node: ts.Node) => {
+      if (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) {
+        const inset = node.attributes.properties.find(attribute => (
+          ts.isJsxAttribute(attribute) && attribute.name.getText(source) === 'viewportBottomInset'
+        ));
+        if (inset && ts.isJsxAttribute(inset)) {
+          expect(inset.initializer?.getText(source)).toBe('{primaryNavBottomInset}');
+          insetConsumers.push(node.tagName.getText(source));
+        }
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(source);
+    // Workspace extraction changes the JSX count; require each actual overlay
+    // owner (including both save-failure and undo toasts) to receive the inset.
+    expect(insetConsumers.sort()).toEqual([
+      'TimerHistoryWorkspace', 'TimerInfoToast', 'TimerInfoToast', 'TimerMoreMenu',
+      'TimerNetOutboxNotice', 'TimerSessionSwitcher', 'TimerStatisticsWorkspace',
+      'TimerWcaScrambleProgress',
+    ].sort());
     expect(app).not.toMatch(/viewportBottomInset=\{(?:64|96)\}/);
   });
 
-  it('keeps multiplayer device actions in normal flow without overflowing narrow screens', () => {
-    expect(css).toMatch(/\.battle-local-tools \.shell-device-actions,\s*\.battle-net-timer > \.shell-device-actions \{[^}]*position: static;[^}]*max-width: calc\(100% - 24px\);[^}]*transform: none;/s);
-    expect(css).toMatch(/\.battle-local-tools \.shell-device-connect span,\s*\.battle-net-timer > \.shell-device-actions \.shell-device-connect span \{[^}]*overflow: hidden;[^}]*text-overflow: ellipsis;/s);
+  it('keeps multiplayer device actions in the shared footer flow', () => {
+    expect(stageCss).toMatch(/\.timer-stage-footer \{[^}]*display: flex;[^}]*flex: 0 0 auto;/s);
+    expect(stageCss).toMatch(/\.timer-stage-footer \.shell-device-center \{[^}]*position: relative;[^}]*inset: auto;/s);
+    expect(css).not.toMatch(/\.battle-(?:local-tools|net-timer)[^{]*\.shell-device-center\s*\{/);
   });
 
-  it('lets shared setting hints wrap within narrow screens', () => {
-    expect(css).toMatch(/\.settings-view \.settings-row-control > \.hint:last-child:not\(:first-child\) \{[^}]*max-width: min\(40vw, 12rem\);[^}]*overflow-wrap: anywhere;[^}]*white-space: normal;/s);
+  it('uses the shared settings dialog and its wrapping rules on narrow screens', () => {
+    const settingsCss = readFileSync(new URL(import.meta.resolve('@cuberoot/timer-ui/timer-settings-panel.css')), 'utf8');
+    expect(app).toContain('<TimerSettingsPanel');
+    expect(css).not.toContain('.settings-view');
+    expect(settingsCss).toContain('overflow-wrap: anywhere;');
+    expect(settingsCss).toMatch(/@media \(max-width: 720px\)[\s\S]*\.settings-category-nav \{ display: none; \}/);
   });
 });

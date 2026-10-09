@@ -19,6 +19,10 @@
 
 ## 1. 当前可直接复用的应用事实
 
+2026-10-06 内测构建增量（覆盖下方历史 1000 快照，不代表正式上架资料已完成）：候选包为 `0.1.0 (1003)`，包名/minSdk 26/targetSdk 36 不变。包含浏览器登录回跳的安全存储读取修复，以及近期已提交的计时器/设备功能。相对 1001，最终 APK 新增 `RECORD_AUDIO` / `MODIFY_AUDIO_SETTINGS` 用于 Stackmat 本机音频输入，并显式将麦克风硬件声明为可选；其他权限未新增。正式发行前须复核 Android Stackmat 权限拒绝、音频生命周期及隐私说明，不能沿用旧版“不请求麦克风”的描述。商店发布状态和真机验收仍分别记录于路线图。
+
+2026-10-04 Google Play 增量：Android 已接入 Billing Library 9.1.0 源码与独立交易归属/权益账本，新增 `com.android.vending.BILLING` 普通权限；购买记录、随机混淆账号标识、Google 订阅状态与退款处理须纳入最终 Data safety。商家、商品、服务账号、RTDN、签名包和真实内测以 [配置清单](google-play-billing-setup.md) 及路线图的分层证据为准，当前仍不代表内购已开通。商店图标/头图/两张截图与初始表单已在 Console 保存；截图来自 iPhone，最终 Android 包仍需实机核对。
+
 | 字段 | 当前值 | 状态 |
 |---|---|---|
 | 应用名 | CubeRoot | 已核对 |
@@ -334,6 +338,16 @@ Apple `form_post` 回调通过 303 返回网站既有 `/auth/social/callback`。
 
 ### 9.4 会员内购：复用现状与实施边界
 
+**2026-09-29 当前增量（覆盖本节下方的历史盘点）**：首发商品已在 App Store Connect 创建：`me.cuberoot.app.membership.monthly` / `me.cuberoot.app.membership.yearly`，同一组同一等级，CNY 29.90 / 299，自动续费，148 个非欧盟地区；家庭共享、促销与优惠码不启用。当前源码已接 StoreKit 2 商品、购买、恢复、交易更新和管理订阅，经既有安全会话发送交易到 API；API 使用 Apple 官方库验签并查询当前订阅状态，0254 migration 将有效 Apple 权益与原网站会员取较长有效期（不叠加时长）。账号合并保留原 token，注销解除关联；失败交易不提前 finish。iOS 内网站付款弹窗改为 Apple 内购入口。
+
+本地实现和验证不等于上线或 Sandbox 验收。已完成 shared build、App UI 404 项测试、Mobile 新增 6 项交易边界测试、服务端状态/PG 权益测试、客户端类型及文档守卫；真实购买、恢复、续期、退款、跨账号拒绝与通知回调仍未验收。Paid Apps Agreement 已经所有者确认签署，当前 Pending User Info，银行与税务未齐。内购密钥已经所有者批准创建并安全配置，购买开关在验收前保持关闭。App Privacy 已核对包含关联身份的购买历史；线上隐私页已核对显示 Apple 自动续费、账号关联、交易记录和注销保留说明。订阅审核截图与首批订阅随版本提交仍待完成。
+
+发布证据：`d942a0c348` 的 Test 与 Next 部署通过；API 首次部署因线上会员表列顺序不同而在 0254 迁移中止并回滚，`6537329a62` 已改用显式列名，生产列顺序回归测试 5 项通过，修复后 Test 通过，Core 重部署跟踪 run `36545773459`。原生 `1.0 (2)` 已通过 Apple 分发校验、上传与处理，出口问卷已完成，并关联到版本 1.0 草稿；未提交审核。IPA 和日志位于维护者 Mac 的 `~/Library/Developer/CubeRootReleases/ios-1.0-build2-20260929/`。内购密钥已配置服务器，生产/Sandbox 通知网址已保存；无效交易 ID 的 Sandbox 凭据探测仅证明认证通过，不代表真实交易或通知验收。
+
+首版不配置 promoted IAP、offer codes、win-back 或 contingent pricing。当前无 PurchaseIntent/无 token 交易认领实现；不得开放这些外部购买渠道。Streamlined Purchasing 的默认开启状态不代表上述优惠已配置，后续开放前须补齐对应 StoreKit 流程并完成 Apple 要求的 approved binary 条件。
+
+首版授权排除包括微信表情、Clawd、音乐、SQ1 PBL/finder/衍生记号表；不据此作所有第三方内容均已授权的声明。尚需核实 two-tool、SpeedCubeDB 内容许可及 Best 2x2 已授权合并的范围，内容版权声明保持待确认。
+
 2026-09-11 所有者确认 App 内购买会员，全球发行包含中国大陆。本节仅记录源码/公开 API 盘点和待决策范围，没有创建商品、接 StoreKit、修改会员或发起付款。
 
 | 单一来源 | 当前责任 |
@@ -353,10 +367,12 @@ IAP 不只是加一个支付按钮：
 - StoreKit 商品/购买/恢复放 iOS 薄宿主，服务端验签交易和 App Store 通知，再更新同一会员权益；展示价格来自当前 StoreKit storefront，不用网站 CNY 数字冒充全球商店价。
 - 按真实商品建立 `productId → membership plan/entitlement` 映射与账号绑定，服务端对 transaction/original transaction、环境、Bundle ID、所有者及重放做校验；恢复购买不得转移到任意登录账号。
 - 当前网站开通使用 `max(now,现有到期)+周期`，不能直接当 Apple 订阅事件处理器，否则续费/恢复/重放可能重复加时。Apple 到期、撤销、退款与其他渠道权益须按来源证据汇总，不能因一笔 Apple 退款抹掉其他渠道仍有效的会员。
-- 当前 `settlePaidOrder` 先将订单设为 paid 再调用 grant，两步不在同一事务；接 IAP 前须在同一权益服务中解决幂等与原子性，不能复制另一套“iOS grant”绕过旧逻辑。
+- 2026-09-29 源码复核：`settlePaidOrder` 已委托 `settleMembershipPayment`，支付证据校验、订单加锁与 `grantMembershipInTransaction` 在同一事务完成；旧版非原子性描述已失效。Apple 接入仍须复用这套权益边界，并补充可撤销的逐笔来源凭证，不能直接把聚合到期日清零而损害其他渠道已购时长。
 - 必须补购买取消/pending、断网、服务端通知乱序/重复、退款/撤销、恢复、到期、换账号/绑 WCA、升级与沙盒/生产隔离验收；App Store Server API key 与 Sign in with Apple key 不是同一用途。
 
 商品创建前由所有者确认：个人/企业哪些档位首发；是否同一会员权益；月/年是自动续费还是一次购买固定期限；是否提供永久；各 storefront 价格与基准币种；免费试用/优惠、家庭共享；网站已有剩余时长与 Apple 订阅并存规则。自动续费订阅适用于持续服务、非续期订阅适用于固定期手动购买、永久权益通常对应非消耗型商品；不得未经确认将一次性年卡改成连续扣费。[Apple 商品类型](https://developer.apple.com/help/app-store-connect/reference/in-app-purchases-and-subscriptions/in-app-purchase-types/)
+
+2026-09-29 所有者最终确认首发个人月／年自动续费订阅，覆盖此前手动续购决定；企业版、优惠与家庭共享暂不加入。两种周期应放在同一自动续费订阅组、同一权益等级，复用现有个人会员权益；网站月卡 CNY 29.99、年卡 CNY 299 是价格参考，实际 Apple 价格档及 storefront 展示仍须在商品配置时核对。商品与 StoreKit、服务端接入已完成，具体进展以上方 2026-09-29 增量为准；源码接通不代表真实购买验收完成。Apple 权益使用已验证交易的到期时间，不按每次回调累加月份；恢复购买不得重复延长时长，退款必须按逐笔交易来源撤销，会员归属要覆盖账号合并与注销；服务端验证、原生购买和恢复已有实现，真实沙盒购买、恢复及完整订阅生命周期仍待验收。免费 App 下载价格保持不变。需覆盖自动续费、取消后到期、账单重试／宽限期、月年切换、退款及通知乱序；购买页展示周期、价格、自动续费说明、条款和隐私链接，并提供恢复与管理订阅入口。
 
 ### 9.5 IAP 协议与全球（含中国大陆）材料
 
@@ -385,3 +401,5 @@ IAP 不只是加一个支付按钮：
 - [ ] iOS：门户会员/协议、Bundle ID、版本/build number、分发签名与 entitlement 已对齐；Release Archive、Validate App 和 Privacy Report 通过。
 - [ ] iOS：最终候选版完成 iPhone 核心、Apple 登录/回跳/注销、BLE 与升级数据保留验收，支持型号只引用实测矩阵。
 - [ ] iOS：App Store Connect 已处理目标构建，资料与所选构建一致；记录 archive/导出产物摘要、源码 SHA、版本/build number、上传与审核状态。TestFlight、App Review 和公开上架分别记录。
+
+2026-09-29：所有者要求微信表情暂不上线。本地已从聊天表情目录及选择入口移除，历史 token 通过现有 ChatMessageText 回退为纯文本；原始素材移至 client/withheld，不随 public 分发，未删除历史消息。网站部署前在线聊天仍未生效，旧浏览器缓存不会因此立即消失。此项不构成所有第三方内容权利已确认，商店 Content Rights 仍不得凭此填写“无第三方内容”。

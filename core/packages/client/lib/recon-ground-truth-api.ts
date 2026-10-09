@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 import { API_ORIGIN } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
 
@@ -86,12 +87,12 @@ export async function listGroundTruthCandidates(params: {
   if (params.status) url.searchParams.set('status', params.status);
   if (params.page) url.searchParams.set('page', String(params.page));
   if (params.limit) url.searchParams.set('limit', String(params.limit));
-  return handleApi<CandidatePage>(await fetch(url, { headers: authHeaders(false) }));
+  return handleApi<CandidatePage>(await sessionFetch(url, { headers: authHeaders(false) }));
 }
 
 export async function getGroundTruthDetail(reconId: number): Promise<GroundTruthDetail> {
   return handleApi<GroundTruthDetail>(
-    await fetch(`${BASE}/${reconId}`, { headers: authHeaders(false) }),
+    await sessionFetch(`${BASE}/${reconId}`, { headers: authHeaders(false) }),
   );
 }
 
@@ -105,7 +106,7 @@ export async function saveGroundTruthDecision(
     acknowledgeWarnings: boolean;
   },
 ): Promise<Pick<GroundTruthDetail, 'assessment' | 'decision' | 'sourceChanged'>> {
-  return handleApi(await fetch(`${BASE}/${reconId}`, {
+  return handleApi(await sessionFetch(`${BASE}/${reconId}`, {
     method: 'PUT',
     headers: authHeaders(),
     body: JSON.stringify(body),

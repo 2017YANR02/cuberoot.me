@@ -7,6 +7,7 @@ export type { PendingIdentity } from '@cuberoot/shared/auth/web-session';
 
 const KEY = 'cuberoot_pending_identity';
 export interface IdentityChoice extends Omit<PendingIdentity, 'expiresInSeconds'> {
+  storageVersion: 2;
   expiresAt: number;
   returnPath: string;
   stage: 'choose' | 'authenticate' | 'confirm';
@@ -34,6 +35,7 @@ export function identityReturnPath(value: string, currentHref = window.location.
   } catch { return '/account'; }
 }
 
+let choiceRevision = 0;
 let cachedRaw: string | null = null;
 let cached: IdentityChoice | null = null;
 const listeners = new Set<() => void>();
@@ -47,7 +49,10 @@ export function getIdentityChoice(): IdentityChoice | null {
     cachedRaw = raw; cached = null;
     try {
       const value = JSON.parse(raw ?? 'null') as IdentityChoice | null;
-      if (value && typeof value.ticket === 'string' && /^[A-Za-z0-9_-]{43}$/.test(value.ticket) && IDENTITY_CHOICE_PROVIDERS.includes(value.provider)
+      if (value && value.storageVersion !== 2) {
+        sessionStorage.removeItem(KEY); cachedRaw = null; return null;
+      }
+      if (value && value.storageVersion === 2 && typeof value.ticket === 'string' && /^[A-Za-z0-9_-]{43}$/.test(value.ticket) && IDENTITY_CHOICE_PROVIDERS.includes(value.provider)
         && Number.isFinite(value.expiresAt) && value.expiresAt <= Date.now() + 900_000
         && typeof value.returnPath === 'string' && value.returnPath === identityReturnPath(value.returnPath)
         && ['choose', 'authenticate', 'confirm'].includes(value.stage)
@@ -65,7 +70,8 @@ function write(value: IdentityChoice): void {
   cachedRaw = raw; cached = value; emit();
 }
 
-export function rememberIdentityChoice(error: AccountChoiceRequired, returnPath: string): void {
+export async function rememberIdentityChoice(error: AccountChoiceRequired, returnPath: string): Promise<void> {
+  const expectedRevision = choiceRevision;
   const existing = getIdentityChoice();
   if (existing) {
     // A second unknown provider is not a request to abandon the first identity
@@ -73,7 +79,15 @@ export function rememberIdentityChoice(error: AccountChoiceRequired, returnPath:
     write({ ...existing, otherIdentityRejected: true });
     return;
   }
-  write({ ticket: error.pending.ticket, provider: error.pending.provider, expiresAt: Date.now() + error.pending.expiresInSeconds * 1000,
+  const response = await fetch('/api/identity-choice', { method: 'POST', credentials: 'same-origin', cache: 'no-store',
+    headers: { 'Content-Type': 'application/json', ...(window.parent !== window ? { 'X-Web-Session-Embedded': '1' } : {}) },
+    body: JSON.stringify({ operation: 'store', ticket: error.pending.ticket, expiresInSeconds: error.pending.expiresInSeconds }) });
+  const stored = await response.json() as { handle?: unknown };
+  if (!response.ok || typeof stored.handle !== 'string' || !/^[A-Za-z0-9_-]{43}$/.test(stored.handle)) throw new Error('Could not save account choice');
+  if (expectedRevision !== choiceRevision) throw new DOMException('Account choice canceled', 'AbortError');
+  const current = getIdentityChoice();
+  if (current) { write({ ...current, otherIdentityRejected: true }); return; }
+  write({ storageVersion: 2, ticket: stored.handle, provider: error.pending.provider, expiresAt: Date.now() + error.pending.expiresInSeconds * 1000,
     returnPath: identityReturnPath(returnPath), stage: 'choose' });
 }
 
@@ -84,6 +98,11 @@ export function updateIdentityChoice(ticket: string, update: Partial<Pick<Identi
 
 export function clearIdentityChoice(ticket?: string): void {
   if (ticket && cached?.ticket !== ticket) return;
+  choiceRevision++;
+  const handle = cached?.ticket;
+  if (handle) void fetch('/api/identity-choice', { method: 'POST', credentials: 'same-origin', cache: 'no-store',
+    headers: { 'Content-Type': 'application/json', ...(window.parent !== window ? { 'X-Web-Session-Embedded': '1' } : {}) },
+    body: JSON.stringify({ operation: 'clear', ticket: handle }) }).catch(() => undefined);
   try { sessionStorage.removeItem(KEY); } catch { /* unavailable storage cannot authorize a pending operation */ }
   cached = null; cachedRaw = null; emit();
 }

@@ -188,7 +188,10 @@ describe('mobile timer controller source invalidation', () => {
     const onStart = vi.fn();
     await render(true, 0, true, onStart);
     await act(async () => vi.advanceTimersByTime(10_000));
-    expect(controller.armFromCube()).toBe(true);
+    await act(async () => {
+      expect(controller.armFromCube()).toBe(true);
+    });
+    expect(controller.machine.phase).toBe('ready');
 
     await act(async () => {
       expect(controller.startFromCube(5_000)).toBe(true);

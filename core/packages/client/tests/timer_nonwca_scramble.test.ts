@@ -106,15 +106,16 @@ describe('non-WCA scramble catalog', () => {
     for (const id of NON_WCA_EVENT_IDS) {
       const key = cstimerKeyForEvent(id as EventId);
       expect(key, `${id} has no csTimer key`).toBeTruthy();
-      expect(() => ask(key!), `${id} (${key}) did not generate`).not.toThrow();
+      expect(() => ask(key!, key === 'redim' ? 8 : 0), `${id} (${key}) did not generate`).not.toThrow();
     }
   }, 120_000);
 
   it('produces a well-formed, non-empty, non-constant scramble for every event', () => {
     for (const id of NON_WCA_EVENT_IDS) {
       const key = cstimerKeyForEvent(id as EventId)!;
-      const a = ask(key);
-      const b = ask(key);
+      const length = key === 'redim' ? 8 : 0;
+      const a = ask(key, length);
+      const b = ask(key, length);
       expect(a.length, `${id}: empty scramble`).toBeGreaterThan(0);
       expect(tokens(a).length, `${id}: implausibly short scramble`).toBeGreaterThanOrEqual(4);
       for (const tok of tokens(a)) {
@@ -267,18 +268,20 @@ describe('kilominx (klmso)', () => {
   }, 60_000);
 });
 
-describe('redi (rediso)', () => {
-  // csTimer's Redi Cube notation: corner turns F/L/B/R (upper) and f/l/b/r
-  // (lower), optional '. Same alphabet its Dino sibling uses (DINO_TOKEN_RE).
-  const REDI_TOKEN_RE = /^[FLBRflbr]'?$/;
-  it('uses the csTimer Redi alphabet with both cases present', () => {
-    const s = ask('rediso');
-    const toks = tokens(s);
-    expect(toks.length).toBeGreaterThanOrEqual(6);
-    for (const tok of toks) {
-      expect(REDI_TOKEN_RE.test(tok), `redi: bad token ${tok} in ${s}`).toBe(true);
+describe('redi (redim MoYu)', () => {
+  // csTimer's MoYu mode emits eight short R/L groups joined by `x`.
+  const REDI_TOKEN_RE = /^[RL]'?$/;
+  it('uses the csTimer MoYu Redi format', () => {
+    const s = ask('redim', 8);
+    const groups = s.split(/\s+x\s+/);
+    expect(groups).toHaveLength(8);
+    for (const group of groups) {
+      const toks = tokens(group);
+      expect(toks.length).toBeGreaterThanOrEqual(3);
+      expect(toks.length).toBeLessThanOrEqual(5);
+      for (const tok of toks) {
+        expect(REDI_TOKEN_RE.test(tok), `redi: bad token ${tok} in ${s}`).toBe(true);
+      }
     }
-    expect(toks.some((t) => /[a-z]/.test(t)), `redi: no lower-case corner turn in ${s}`).toBe(true);
-    expect(toks.some((t) => /[A-Z]/.test(t)), `redi: no upper-case corner turn in ${s}`).toBe(true);
   }, 60_000);
 });

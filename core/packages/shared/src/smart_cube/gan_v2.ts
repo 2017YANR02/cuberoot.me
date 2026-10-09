@@ -37,14 +37,21 @@ export interface GanV2DecodeState {
   prevMoves: string[];
   battery: number | null;
   badFrames: number;
+  decodeFacelets?: (frame: Uint8Array) => string | null;
+  onState?: (facelets: string) => void;
 }
 
-export function createGanV2DecodeState(): GanV2DecodeState {
+export function createGanV2DecodeState(options: {
+  decodeFacelets?: (frame: Uint8Array) => string | null;
+  onState?: (facelets: string) => void;
+} = {}): GanV2DecodeState {
   return {
     prevMoveCnt: -1,
     prevMoves: [],
     battery: null,
     badFrames: 0,
+    decodeFacelets: options.decodeFacelets ?? decodeGanV2Facelets,
+    onState: options.onState,
   };
 }
 
@@ -90,7 +97,16 @@ export function decodeGanV2Frame(
 
   if (mode === 4) {
     const moveCnt = bit(4, 12);
-    if (state.prevMoveCnt === -1) state.prevMoveCnt = moveCnt;
+    if (state.prevMoveCnt === -1) {
+      const facelets = state.decodeFacelets?.(frame);
+      if (state.decodeFacelets && facelets === null) {
+        state.badFrames++;
+        return [];
+      }
+      state.badFrames = 0;
+      state.prevMoveCnt = moveCnt;
+      if (facelets) state.onState?.(facelets);
+    }
     return [];
   }
 

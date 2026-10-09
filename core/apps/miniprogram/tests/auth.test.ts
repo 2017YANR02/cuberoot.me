@@ -51,16 +51,16 @@ describe('mini program authentication', () => {
     });
     vi.stubGlobal('wx', { request, setStorageSync });
     const ticket = 'p'.repeat(43);
-    expect(await previewIdentityLinkCode(ticket, 'L42-123456')).toEqual({ id: 42, displayName: 'Original' });
+    expect(await previewIdentityLinkCode(ticket, '123456')).toEqual({ id: 42, displayName: 'Original' });
     expect(setStorageSync).not.toHaveBeenCalled();
-    await completeMiniProgramIdentity(ticket, 'link_with_code', { linkCode: 'L42-123456', expectedUid: 42, isCurrent: () => true });
-    expect(request.mock.calls[1][0].data).toEqual({ ticket, action: 'link_with_code', linkCode: 'L42-123456', expectedUid: 42 });
+    await completeMiniProgramIdentity(ticket, 'link_with_code', { linkCode: '123456', expectedUid: 42, isCurrent: () => true });
+    expect(request.mock.calls[1][0].data).toEqual({ ticket, action: 'link_with_code', linkCode: '123456', expectedUid: 42 });
     expect(setStorageSync).toHaveBeenCalledOnce();
   });
 
   it('rejects an invalid preview account before presenting it for confirmation', async () => {
     vi.stubGlobal('wx', { request(options: { success(value: unknown): void }) { options.success({ statusCode: 200, data: { user: { id: 0, displayName: 'Invalid' } } }); } });
-    await expect(previewIdentityLinkCode('p'.repeat(43), 'L42-123456')).rejects.toMatchObject({ status: 502 });
+    await expect(previewIdentityLinkCode('p'.repeat(43), '123456')).rejects.toMatchObject({ status: 502 });
   });
 
   it('treats an absent session as logged out without mutating storage', () => {

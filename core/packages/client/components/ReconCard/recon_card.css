@@ -195,3 +195,32 @@
     font-size: 0.72rem;
   }
 }
+
+.recon-curated-card { position: relative; min-width: 0; }
+.recon-curated-card > .recon-card { height: 100%; }
+.recon-curated-card > .recon-card:not(:has(.recon-card-media)) .recon-card-body {
+  padding-right: 2.5rem;
+  min-height: 5rem;
+}
+.recon-curation-actions {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  display: flex;
+  flex-direction: row;
+  gap: 2px;
+}
+.recon-curation-button {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.recon-curation-button:hover, .recon-curation-button[aria-pressed="true"] { color: var(--accent); }
+.recon-curation-button:disabled { opacity: 0.5; cursor: wait; }

@@ -24,13 +24,20 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
 
-import { shouldAutoRecap } from '@/app/[lang]/timer/_lib/reconstruct/recap';
+import {
+  AutoRecapDismissGesture,
+  shouldAutoRecap,
+} from '@/app/[lang]/timer/_lib/reconstruct/recap';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..'); // packages/client
 const TIMER = join(ROOT, 'app', '[lang]', 'timer');
 const SOLO_VIEW = join(TIMER, '_shell', 'SoloView.tsx');
+const WEB_RECAP = join(TIMER, '_components', 'SolveRecap.tsx');
+const SOLVE_MODAL = join(TIMER, '_components', 'SolveModal.tsx');
 const SHELL_CSS = join(TIMER, '_shell', 'shell.css');
 const RECAP = join(ROOT, '..', 'timer-ui', 'src', 'reconstruct', 'SolveRecap.tsx');
+const DETAIL_MODAL = join(ROOT, '..', 'timer-ui', 'src', 'TimerSolveDetailModal.tsx');
+const RECAP_PLACEHOLDER = join(ROOT, '..', 'timer-ui', 'src', 'reconstruct', 'SolveRecapPlaceholder.tsx');
 const RECAP_CSS = join(ROOT, '..', 'timer-ui', 'src', 'reconstruct', 'solve-recap.css');
 
 const read = (p: string) => readFileSync(p, 'utf8');
@@ -57,27 +64,95 @@ describe('shouldAutoRecap —— 哪把成绩配得上那半屏', () => {
   });
 });
 
-describe('复盘挂在计时页上', () => {
-  const src = read(SOLO_VIEW);
+describe('AutoRecapDismissGesture', () => {
+  it('ignores turns until the fullscreen recap has painted', () => {
+    const gesture = new AutoRecapDismissGesture();
+    expect(gesture.observe('U')).toBe(false);
+    expect(gesture.observe("U'")).toBe(false);
 
-  it('计时页自己渲染那块', () => {
+    gesture.markDisplayed();
+    expect(gesture.observe('U')).toBe(false);
+    expect(gesture.observe("U'")).toBe(true);
+  });
+
+  it('accepts one adjacent inverse quarter-turn pair on any face, in either order', () => {
+    for (const face of ['U', 'R', 'F', 'D', 'L', 'B']) {
+      for (const [first, second] of [[face, `${face}'`], [`${face}'`, face]]) {
+        const gesture = new AutoRecapDismissGesture();
+        gesture.markDisplayed();
+        expect(gesture.observe(first)).toBe(false);
+        expect(gesture.observe(second)).toBe(true);
+      }
+    }
+  });
+
+  it.each([
+    ['same direction', 'U', 'U'],
+    ['different faces', 'U', "R'"],
+    ['half turns', 'U2', 'U2'],
+  ])('rejects %s', (_label, first, second) => {
+    const gesture = new AutoRecapDismissGesture();
+    gesture.markDisplayed();
+    expect(gesture.observe(first)).toBe(false);
+    expect(gesture.observe(second)).toBe(false);
+  });
+});
+
+describe('复原后自动复盘', () => {
+  const src = read(SOLO_VIEW);
+  const recordStart = src.indexOf('const recordSolve = useCallback');
+  const recordSolve = src.slice(recordStart, src.indexOf('const timer = useTimer', recordStart));
+  const dismissStart = src.indexOf('const dismissAutoRecapOnMove');
+  const dismissOnMove = src.slice(dismissStart, src.indexOf('subscribers.add', dismissStart));
+
+  it('桌面继续在计时页右栏渲染复盘', () => {
     expect(src).toMatch(/<SolveRecap\b/);
+    expect(src).toContain('recap={liveSolutionPanel ?? solveRecap}');
+  });
+
+  it('移动端停表后直接打开带来源标记的整屏详情', () => {
+    expect(recordStart).toBeGreaterThan(0);
+    expect(recordSolve).toMatch(/if \(showRecap && !isDesktop\) \{[\s\S]{0,240}setModalSolve\(\{ s: solve, idx: solveIndex, autoRecap: true \}\);/);
+    expect(src).not.toMatch(/\{!isDesktop && solveRecap\}/);
   });
 
   it('仍是独立 chunk —— 手动计时的人不该为一份不会渲染的报告买单', () => {
     expect(src).toMatch(/dynamic\(\s*\(\)\s*=>\s*import\('\.\.\/_components\/SolveRecap'\)/);
   });
 
-  it('该不该摊开走 shouldAutoRecap,不在视图里另写一套判据', () => {
+  it('该不该自动打开走 shouldAutoRecap,不在视图里另写一套判据', () => {
     expect(src).toMatch(/shouldAutoRecap\(/);
   });
 
-  it('开下一把就收起 —— 停表以外的任何阶段都清掉', () => {
-    // 观察、按住、计时中都不该有半屏复盘压在下面。
+  it('弹窗显示后只有同面正反扭组合会关闭自动整屏复盘', () => {
+    expect(dismissStart).toBeGreaterThan(0);
+    expect(dismissOnMove).toMatch(/if \(!autoRecapDismissGestureRef\.current\.observe\(move\)\) return/);
+    expect(dismissOnMove).toMatch(/current\?\.autoRecap && current\.s\.id === recapId[\s\S]{0,80}\? \{ \.\.\.current, closeRequested: true \}/);
+    expect(dismissOnMove).not.toMatch(/autoRecapInputBlockedRef\.current = false/);
+    expect(dismissOnMove).not.toMatch(/setRecapId\(null\)/);
+    expect(src).toMatch(/closeRequested=\{modalSolve\.closeRequested\}/);
+  });
+
+  it('弹窗首帧显示前不解锁手势，也不允许智能魔方起下一把', () => {
+    const detail = read(SOLVE_MODAL);
+    const sharedDetail = read(DETAIL_MODAL);
+    expect(src).toMatch(/canStartAttempt:[\s\S]{0,100}!autoRecapInputBlockedRef\.current/);
+    expect(src).toMatch(/onDisplayed=\{modalSolve\.autoRecap \? markAutoRecapDisplayed : undefined\}/);
+    expect(detail).toMatch(/onEntered=\{onDisplayed\}/);
+    expect(detail).not.toContain('requestAnimationFrame');
+    expect(sharedDetail.match(/window\.requestAnimationFrame\(/g)).toHaveLength(2);
+  });
+
+  it('历史记录手动打开的详情没有 autoRecap 标记,不会被转动订阅误关', () => {
+    expect(src).toMatch(/onRowClick=\{\(s, idx\) => setModalSolve\(\{ s, idx \}\)\}/);
+    expect(dismissOnMove).toMatch(/current\?\.autoRecap/);
+  });
+
+  it('开下一把就清掉复盘标识', () => {
     expect(src).toMatch(/timer\.phase !== 'stopped'[\s\S]{0,40}setRecapId\(null\)/);
   });
 
-  it('报告本体只有一份实现:这块渲染的是 ReconstructReport,不是精简版分叉', () => {
+  it('报告本体只有一份实现:右栏和整屏都复用 ReconstructReport', () => {
     expect(read(RECAP)).toMatch(/import\('\.\/ReconstructReport'\)/);
   });
 });
@@ -102,49 +177,120 @@ describe('停表那一下不该现下载 200 KB', () => {
   });
 });
 
+describe('复盘异步加载时先稳定容器', () => {
+  const solo = read(SOLO_VIEW);
+  const recap = read(RECAP);
+
+  it('外层 chunk 等待期间立即渲染与正式复盘同框的占位', () => {
+    expect(solo).toMatch(/import SolveRecapPlaceholder from '@cuberoot\/timer-ui\/solve-recap-placeholder'/);
+    expect(solo).toMatch(/const SolveRecap = dynamic\([\s\S]{0,220}loading:\s*SolveRecapPlaceholder/);
+
+    const placeholder = read(RECAP_PLACEHOLDER);
+    expect(placeholder).toMatch(/<section className="shell-recap shell-recap-placeholder"/);
+    expect(placeholder).toMatch(/<div className="shell-recap-body">[\s\S]*<SolveRecapBodyPlaceholder\s*\/>/);
+  });
+
+  it('chunk 已缓存时，每一把只用一个绘制帧稳定空容器', () => {
+    const adapter = read(WEB_RECAP);
+    expect(adapter).toMatch(/import \{ useEffect, useState \} from 'react'/);
+    expect(adapter).toMatch(/import SolveRecapPlaceholder from '@cuberoot\/timer-ui\/solve-recap-placeholder'/);
+    expect(adapter).toMatch(/revealedSolveId !== props\.solve\.id[\s\S]{0,80}<SolveRecapPlaceholder\s*\/>/);
+    expect(adapter.match(/requestAnimationFrame\(/g)).toHaveLength(1);
+
+    const placeholder = read(RECAP_PLACEHOLDER);
+    expect(placeholder).not.toMatch(/placeholder-(?:line|metrics)/);
+  });
+
+  it('桌面自动复盘不在完整报告挂载时动画改变栏宽', () => {
+    const css = read(fileURLToPath(import.meta.resolve('@cuberoot/timer-ui/timer-workspace.css')));
+    expect(css).toContain('.timer-workspace[data-recap-open]');
+    expect(css).not.toMatch(/transition\s*:/);
+  });
+
+  it('报告自身的 lazy 边界也保留正文占位', () => {
+    expect(recap).toMatch(/import \{ SolveRecapBodyPlaceholder \} from '\.\/SolveRecapPlaceholder'/);
+    expect(recap).toMatch(/<Suspense fallback=\{<SolveRecapBodyPlaceholder\s*\/>\}>/);
+    expect(recap).not.toMatch(/<Suspense fallback=\{null\}>/);
+  });
+
+  it('占位没有额外动画，内容到达时只做原位替换', () => {
+    const css = read(RECAP_CSS);
+    const placeholderRules = css.match(/\/\* Recap loading placeholder[\s\S]*$/)?.[0] ?? '';
+    expect(placeholderRules).toContain('.shell-recap-placeholder');
+    expect(placeholderRules).not.toMatch(/placeholder-(?:line|metrics)/);
+    expect(placeholderRules).not.toMatch(/animation\s*:/);
+  });
+});
+
 describe('计时中那颗智能魔方留在屏幕上', () => {
-  const css = read(SHELL_CSS);
+  const css = read(fileURLToPath(import.meta.resolve('@cuberoot/timer-ui/live-cube.css')));
 
   it('专注模式对实时魔方开了例外', () => {
     // `:has(.timer-live-cube)` 精确挑出实时那一种:同一个格子的另一位租客是静态
     // 打乱图,那个照旧淡出。
     const rule = css.match(
-      /\.timer-shell\.is-solving[^{]*\.timing-surface-cube:has\(\.timer-live-cube\)\s*\{([^}]*)\}/,
+      /\.is-solving[^{]*\.timing-surface-cube:has\(\.timer-live-cube\)\s*\{([^}]*)\}/,
     );
-    expect(rule, 'shell.css 里没有「计时中保留实时魔方」那条规则').not.toBeNull();
+    expect(rule, '共享 live-cube.css 中缺少计时中保留实时魔方的规则').not.toBeNull();
     expect(rule![1]).toMatch(/opacity:\s*1/);
   });
 
   it('例外不越过用户显式选的「计时中隐藏全部界面」', () => {
-    expect(css).toMatch(/\.timer-shell\.is-solving:not\(\.hide-ui\)[^{]*\.timing-surface-cube:has\(\.timer-live-cube\)/);
+    expect(css).toMatch(/\.is-solving:not\(\.hide-ui\)[^{]*\.timing-surface-cube:has\(\.timer-live-cube\)/);
   });
 
   it('留下的是魔方本身,不是它底下的校准按钮', () => {
     // 校准是拧之前摆正朝向的动作,计时中没人按它。
-    expect(css).toMatch(/\.timer-shell\.is-solving[^{]*\.live-cube-calibrate\s*\{[^}]*opacity:\s*0/);
+    expect(css).toMatch(/\.is-solving[^{]*\.live-cube-calibrate\s*\{[^}]*opacity:\s*0/);
   });
 });
 
-describe('复盘那一格不许把计时区挤出视口', () => {
-  const css = read(SHELL_CSS) + read(RECAP_CSS);
+describe('移动端复盘不再挤压计时区', () => {
+  const src = read(SOLO_VIEW);
+  const shell = read(SHELL_CSS);
+  const css = shell + read(RECAP_CSS);
 
-  it('普通态、复盘态和桌面侧栏态都扣除页面通知栏高度', () => {
-    // PageNoticeBar 是计时器前面的兄弟节点。直接占 100dvh 会把底部连接胶囊推出视口；
-    // 复盘或侧栏展开时也必须沿用同一可见高度，不能退回完整视口高。
-    const visibleHeight = String.raw`calc\(100dvh - var\(--page-notice-h,\s*0px\)\)`;
-    expect(css).toMatch(new RegExp(String.raw`\.timer-shell\s*\{[^}]*min-height:\s*${visibleHeight}`));
-    expect(css).toMatch(new RegExp(String.raw`\.timer-shell:has\(\.shell-recap\)\s*\{[^}]*height:\s*${visibleHeight}`));
-    expect(css).toMatch(new RegExp(String.raw`\.timer-shell\.panel-open\s*\{[^}]*height:\s*${visibleHeight}`));
+  it('比赛来源跟随打乱滚动,不能吸附到短视口底部遮住下一把打乱', () => {
+    const stripCss = read(join(ROOT, '..', 'timer-ui', 'src', 'scramble-strip.css'));
+    const sourceRules = [...(css + stripCss).matchAll(/[^{}]*\.scramble-src-row[^{}]*\{([^}]*)\}/g)];
+    expect(sourceRules.length).toBeGreaterThan(0);
+    for (const rule of sourceRules) {
+      expect(rule[1]).not.toMatch(/position:\s*(?:sticky|absolute|fixed)/);
+    }
   });
 
-  it('那一格自己可收缩,让位给计时区压不动的部分', () => {
-    const rule = css.match(/\n\.shell-recap\s*\{([^}]*)\}/);
-    expect(rule, 'shell.css 里没有 .shell-recap').not.toBeNull();
-    expect(rule![1]).toMatch(/flex:\s*0 1 auto/);
-    expect(rule![1]).toMatch(/min-height:\s*0/);
+  it('窄屏不再挂载内联复盘或预留垂直高度', () => {
+    expect(src).not.toMatch(/\{!isDesktop && solveRecap\}/);
+    expect(shell).not.toMatch(/--recap-h|:has\(> \.shell-recap\)|timer-shell:has\(\.shell-recap\)/);
   });
 
-  it('绝对定位的统计条跟着往上让 —— 它是成绩面板的唯一入口', () => {
-    expect(css).toMatch(/:has\(> \.shell-recap\) \.shell-stat-rail\s*\{[^}]*bottom:\s*calc\(var\(--recap-h\)/);
+  it('桌面实时解法与最终复盘共用右栏，内容随整页展开', () => {
+    expect(src).toContain('recap={liveSolutionPanel ?? solveRecap}');
+    expect(src).toContain('panelOpen={Boolean(panelTab) && !liveSolutionPanel}');
+    expect(src).toContain('narrowRecap={liveSolutionPanel}');
+    const soloPage = read(fileURLToPath(import.meta.resolve('@cuberoot/timer-ui/TimerSoloPage')));
+    expect(soloPage).toContain('{!wide && narrowRecap}');
+    expect(src).toMatch(/className="shell-recap-body">\s*<LiveReconstructReport/);
+    const workspaceCss = read(fileURLToPath(import.meta.resolve('@cuberoot/timer-ui/timer-workspace.css')));
+    expect(workspaceCss).toMatch(/\.shell-recap-rail > \.shell-recap\s*\{[^}]*height:\s*100%/);
+    expect(shell).toMatch(/\.timer-shell :is\([^}]*\.shell-recap-body[^}]*\)\s*\{[^}]*height:\s*auto;[^}]*max-height:\s*none;[^}]*overflow:\s*visible/);
+  });
+
+  it('页面至少填满视口，打乱和来源内容可自然撑高页面', () => {
+    const shellLayout = shell.match(/\.timer-shell(?:\.timer-workspace)+\s*\{([^}]*)\}/)?.[1];
+    expect(shellLayout).toBeDefined();
+    expect(shellLayout).toContain('height: auto;');
+    expect(shellLayout).toContain('min-height: calc(100dvh - var(--page-notice-h, 0px));');
+    expect(shellLayout).toContain('overflow: visible;');
+  });
+
+  it('打乱和来源区完整展开，计时数字在后续行中排布', () => {
+    const surface = shell.match(/\.timer-shell \.timing-surface--solo,\s*\.timer-shell \.timing-surface--net\s*\{([^}]*)\}/)?.[1];
+    expect(surface).toBeDefined();
+    expect(surface).toContain('flex: 1 0 auto;');
+    expect(surface).not.toContain('container-type: size');
+    expect(surface).toContain('grid-template-rows: auto minmax(min-content, 1fr)');
+    expect(shell).toMatch(/\.timer-shell :is\([^}]+\) \.timing-surface-scramble-top\s*\{[^}]*max-height:\s*none;[^}]*overflow:\s*visible/);
+    expect(shell).toMatch(/\.timer-shell \.timer-stage-source\s*\{[^}]*max-height:\s*none;[^}]*overflow:\s*visible/);
   });
 });

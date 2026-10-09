@@ -10,11 +10,12 @@ import { useTranslation } from 'react-i18next';
 import { Key, MoreVertical } from 'lucide-react';
 import { useAuthStore, useAuthUser } from '@/lib/auth-store';
 import { ownerDisplayName } from '@/lib/cuber-name-display';
-import { UserIdLabel } from '@/components/UserIdLabel';
+import { UserContactLink, UserIdLabel } from '@/components/UserIdLabel';
 import { Flag } from '@/components/Flag';
 import { wcaPersonUrl } from '@/lib/recon-utils';
 import { personFlagIso2 } from '@/lib/country-flags';
-import { toIsoDate } from '@/lib/wca-date';
+import { formatRelativeTime } from '@/lib/forum-format';
+import { useLang } from '@/i18n/tr';
 import { isWcaIdFormat } from '@cuberoot/shared/account';
 
 /** textarea 高度跟随内容——空时 1 行,粘贴长解法时自动撑开 */
@@ -174,32 +175,34 @@ export function DiscussionEditBox({
 /**
  * 作者 / 贡献者名:国旗 + 名字。
  * id 是全站归属键 ownerKey(shared/account.ts):绑了 WCA = 真 wca_id,没绑 = 合成 `u<uid>`。
- * 合成键在 WCA 官网没有档案页(/persons/u144 是 404),所以只有真 WCA id 才出外链。
+ * 站内用户优先进入好友页；缺少站内 ID 时，只有真 WCA id 才出外链。
  * 国旗同理:查不到国籍时不渲染(空 iso2 会渲染成一个空白占位方块)。
  */
-export function AuthorName({ id, name, userId, className }: {
+export function AuthorName({ id, name, userId, className, showUserId = false }: {
   id: string | undefined | null;
   name: string | undefined | null;
   userId?: number | null;
   className?: string;
+  showUserId?: boolean;
 }) {
   const { i18n } = useTranslation();
   const displayName = ownerDisplayName(id, name, i18n.language === 'zh');
   const iso2 = id ? personFlagIso2(id) : '';
+  const contactId = userId ?? (id && /^u[1-9]\d*$/.test(id) ? Number(id.slice(1)) : null);
   return (
     <>
       {iso2 && <Flag iso2={iso2} className="yt-comment-flag" />}
-      {id && isWcaIdFormat(id) ? (
+      {contactId ? <UserContactLink userId={contactId} className={className}>{displayName}</UserContactLink> : id && isWcaIdFormat(id) ? (
         <a href={wcaPersonUrl(id)} target="_blank" rel="noopener noreferrer" className={className}>
           {displayName}
         </a>
       ) : <span className={className}>{displayName}</span>}
-      <UserIdLabel userId={userId} />
+      {showUserId && <UserIdLabel userId={contactId} contact />}
     </>
   );
 }
 
-/** 作者元信息条:国旗 + 名字(真 WCA id 才链到 WCA profile)+ 时间戳 */
+/** 作者元信息条:国旗 + 名字(优先站内联系入口)+ 时间戳 */
 export function UserHeadline({
   authorId, authorName, authorUserId, createdAt, suffix,
 }: {
@@ -210,13 +213,22 @@ export function UserHeadline({
   /** 时间戳后追加文本(如 "(已编辑)") */
   suffix?: ReactNode;
 }) {
+  const lang = useLang();
+  const timestamp = new Date(createdAt * 1000).toISOString();
+  const [relativeTime, setRelativeTime] = useState('');
+  useEffect(() => {
+    const update = () => setRelativeTime(formatRelativeTime(timestamp, lang));
+    update();
+    const timer = window.setInterval(update, 60_000);
+    return () => window.clearInterval(timer);
+  }, [timestamp, lang]);
   return (
     <div className="yt-comment-meta">
       <AuthorName id={authorId} name={authorName} userId={authorUserId} className="yt-comment-author" />
-      <span className="yt-comment-time">
-        {toIsoDate(new Date(createdAt * 1000))}
+      <time className="yt-comment-time" dateTime={timestamp} title={timestamp}>
+        {relativeTime || timestamp.slice(0, 10)}
         {suffix}
-      </span>
+      </time>
     </div>
   );
 }
@@ -261,11 +273,11 @@ export function ItemMenu({ items }: { items: Array<{ icon: ReactNode; label: str
 }
 
 /** 头像 fallback —— 圆形首字母色块,avatar URL 优先 */
-export function UserAvatarFallback({ name, avatar }: { name?: string | null; avatar?: string | null }) {
-  if (avatar) return <img src={avatar} alt="" className="yt-comment-avatar" />;
-  return (
-    <div className="yt-comment-avatar yt-comment-avatar-fallback">
+export function UserAvatarFallback({ name, avatar, userId }: { name?: string | null; avatar?: string | null; userId?: number | null }) {
+  const content = avatar ? <img src={avatar} alt="" className="yt-comment-avatar" /> : (
+    <span className="yt-comment-avatar yt-comment-avatar-fallback">
       {name?.[0]?.toUpperCase() || '?'}
-    </div>
+    </span>
   );
+  return userId ? <UserContactLink userId={userId} label={name || undefined}>{content}</UserContactLink> : content;
 }

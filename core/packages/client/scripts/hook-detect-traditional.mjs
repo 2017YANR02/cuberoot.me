@@ -19,8 +19,8 @@ import * as OpenCC from 'opencc-js';
 
 const t2s = OpenCC.Converter({ from: 't', to: 'cn' });
 const DUAL_USE = new Set(['著', '覆']);
-const HAN = /[㐀-䶿一-鿿豈-﫿]/g;
-const HAS_CJK = /[㐀-鿿豈-﫿]/;
+const HAN = /[㐀-䶿一-鿿\uF900-\uFAFF]/g;
+const HAS_CJK = /[㐀-鿿\uF900-\uFAFF]/;
 
 const deny = (reason) => {
   process.stdout.write(JSON.stringify({

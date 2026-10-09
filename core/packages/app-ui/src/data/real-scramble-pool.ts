@@ -1,3 +1,5 @@
+import { cube222StateTypeMatchesScramble } from '@cuberoot/puzzle-solvers/cube222';
+import { createWcaScramblePool, type WcaSourceSpec, type WcaDispensedScramble } from '@cuberoot/timer-ui/wca-scramble-pool';
 import {
   DEFAULT_SCRAMBLE_222_MODE,
   DEFAULT_SCRAMBLE_222_TYPE,
@@ -6,30 +8,24 @@ import {
   decodeTimerWcaCompetitionScrambleSlot,
   isCube222StateType,
   isTimerWcaScrambleEventId,
-  isTimer222StepMetric,
   normalizeTimerByStepsSettings,
   normalizeTimerWcaSourceSettings,
   resolveTimerWcaSourceCore,
   timerWcaDifficultyFilter,
   timerWcaOptimalRequested,
-  timerWcaRandomRequestQuery,
   timerWcaCompetitionScrambleSlotIdentity,
   timerWcaScrambleEventId,
   timerWcaSourceIdentity,
   timerByStepsFilter,
   timerByStepsIdentity,
-  usesStepsIndex,
   type EventId,
   type Scramble222Mode,
   type Scramble222Type,
   type TimerWcaScrambleEventId,
   type TimerWcaSourceSettings,
   type TimerByStepsSettings,
-  type Timer222StepMetric,
 } from '@cuberoot/shared/timer';
-import { cube222StateTypeMatchesScramble } from '@cuberoot/puzzle-solvers/cube222';
 import { filterMobileCube222BySteps } from './cube222-step-filter';
-import { filterMobileNon222BySteps } from './non222-steps-pool';
 import {
   loadMobilePuzzleExamples,
   loadMobileWcaCompetitionScrambles,
@@ -37,7 +33,6 @@ import {
   mobileTimerWcaDifficultyAdapter,
 } from './wca-source-adapter';
 
-const API_RANDOM_PATH = '/v1/wca/scrambles/random';
 const CACHE_PREFIX = 'cuberoot.mobile.real-scrambles';
 const LEGACY_333_CACHE_KEY = 'cuberoot.mobile.real-scrambles.333.v1';
 // v5 could only persist one row for repeated scramble text outside selected-
@@ -49,21 +44,6 @@ const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const MAX_CACHE_CLOCK_SKEW_MS = 5 * 60 * 1000;
 const CACHE_LIMIT = 50;
 const MAX_SCRAMBLE_CHARS = 20_000;
-const TYPE_FILTER_BATCHES = 30;
-const TYPE_FILTER_BATCHES_WITH_PRECOMPUTED = 3;
-
-function sampleWithoutReplacement<T>(items: readonly T[], limit: number): T[] {
-  const pool = [...items];
-  const picks = Math.min(limit, pool.length);
-  for (let index = 0; index < picks; index++) {
-    const remaining = pool.length - index;
-    const offset = Math.floor(Math.random() * remaining);
-    const selected = index + Math.min(remaining - 1, Math.max(0, offset));
-    [pool[index], pool[selected]] = [pool[selected], pool[index]];
-  }
-  return pool.slice(0, picks);
-}
-
 export interface RealScrambleSourceSpec extends Partial<TimerWcaSourceSettings>, Partial<TimerByStepsSettings> {
   event: EventId;
   scramble222Mode?: Scramble222Mode;
@@ -117,8 +97,6 @@ export function realScrambleSourceKey(input: RealScrambleSourceInput): string {
   const spec = normalizeRealScrambleSourceSpec(input);
   const wcaEventId = timerWcaScrambleEventId(spec.event);
   const source = timerWcaSourceIdentity(spec.event, wcaEventId, spec, {
-    competitionUnindexed: spec.wcaScrambleMode === 'comp' && !!spec.wcaComp && !!wcaEventId
-      && mobileTimerWcaDifficultyAdapter.getCompetitionCoverage(spec.wcaComp, wcaEventId) === false,
     optimalOverride: spec.event === '222' ? spec.scramble222Mode === 'optimal' : undefined,
   });
   if (!source) {
@@ -299,115 +277,6 @@ function parseItem(
   };
 }
 
-async function fetchPrecomputed222Type(
-  type: Exclude<Scramble222Type, 'full' | '3gen'>,
-  useOptimal: boolean,
-  fetcher: typeof fetch,
-  signal?: AbortSignal,
-): Promise<RealScramble[] | null> {
-  try {
-    const json = await loadMobilePuzzleExamples(fetcher, signal);
-    const entry = json?.puzzles?.['222'];
-    if (!entry || !entry.types || !Array.isArray(entry.types[type])) return [];
-    const rows = entry.types[type]
-      .map(([id, scramble, optimal]) => {
-        const meta = entry.idMeta[id];
-        if (!meta) return null;
-        const [competitionId, eventId, scrambleNumber, roundTypeId, groupId, isExtra] = meta;
-        if (eventId !== '222') return null;
-        return parseItem({
-          scramble,
-          o: optimal,
-          ci: competitionId,
-          cn: entry.comps[competitionId]?.[0] ?? competitionId,
-          e: eventId,
-          r: roundTypeId,
-          g: groupId,
-          n: scrambleNumber,
-          x: isExtra,
-        }, '222', useOptimal);
-      })
-      .filter((item): item is RealScramble => item !== null)
-      .filter((item) => cube222StateTypeMatchesScramble(item.scramble, type));
-    return sampleWithoutReplacement(
-      uniqueRealScrambleOccurrences(rows),
-      CACHE_LIMIT,
-    );
-  } catch {
-    // Static examples are an acceleration/rarity oracle. A failed download is
-    // transient and must fall through to live sampling, never prove emptiness.
-    return null;
-  }
-}
-
-async function fetchPrecomputed222Steps(
-  filter: { metric: Timer222StepMetric; lo: number; hi: number },
-  useOptimal: boolean,
-  fetcher: typeof fetch,
-  signal: AbortSignal,
-): Promise<RealScramble[] | null> {
-  try {
-    const json = await loadMobilePuzzleExamples(fetcher, signal);
-    const entry = json?.puzzles?.['222'];
-    const bins = entry?.metrics?.[filter.metric]?.bins
-      ?? (filter.metric === 'htm' ? entry?.bins : undefined);
-    if (!entry || !bins) return [];
-    const samples = [];
-    for (let value = filter.lo; value <= filter.hi; value++) {
-      samples.push(...(bins[String(value)] ?? []));
-    }
-    const parsed = samples.map(([id, scramble, optimal]) => {
-      const meta = entry.idMeta[id];
-      if (!meta) return null;
-      const [competitionId, eventId, scrambleNumber, roundTypeId, groupId, isExtra] = meta;
-      if (eventId !== '222') return null;
-      return parseItem({
-        scramble,
-        o: optimal,
-        ci: competitionId,
-        cn: entry.comps[competitionId]?.[0] ?? competitionId,
-        e: eventId,
-        r: roundTypeId,
-        g: groupId,
-        n: scrambleNumber,
-        x: isExtra,
-      }, '222', useOptimal);
-    }).filter((item): item is RealScramble => item !== null);
-    const measured = await filterMobileCube222BySteps(parsed, filter, signal);
-    return sampleWithoutReplacement(
-      uniqueRealScrambleOccurrences(measured),
-      CACHE_LIMIT,
-    );
-  } catch (error) {
-    if (signal.aborted) throw error;
-    return null;
-  }
-}
-
-async function applyLocalSourceFilters(
-  spec: NormalizedRealScrambleSourceSpec,
-  rows: readonly RealScramble[],
-  typeFilter: Exclude<Scramble222Type, 'full' | '3gen'> | null,
-  signal: AbortSignal,
-): Promise<RealScramble[]> {
-  const byType = typeFilter
-    ? rows.filter((item) => cube222StateTypeMatchesScramble(item.scramble, typeFilter))
-    : [...rows];
-  if (typeFilter) return byType;
-  const filter = timerByStepsFilter(spec.event, 'wca', spec);
-  if (!filter) return byType;
-  if (spec.event === '222' && isTimer222StepMetric(filter.metric)) {
-    return filterMobileCube222BySteps(byType, {
-      ...filter,
-      metric: filter.metric,
-    }, signal);
-  }
-  if (spec.event === 'pyra' || spec.event === 'skewb') {
-    return filterMobileNon222BySteps(spec.event, byType, filter, signal);
-  }
-  return byType;
-}
-
 function cachedItem(
   value: unknown,
   requestedEvent: TimerWcaScrambleEventId,
@@ -524,224 +393,74 @@ export function writeRealScrambleCache(
   }
 }
 
-export async function fetchRealScrambles(
-  input: RealScrambleSourceInput,
-  fetcher: typeof fetch = fetch,
-  signal?: AbortSignal,
-  examplesFetcher?: typeof fetch,
-  onClosedSet?: (scrambles: readonly RealScramble[]) => void,
-): Promise<RealScramble[]> {
+
+/** Convert persisted App settings into the shared source request. */
+export function realSpecToWcaSource(input: RealScrambleSourceInput): WcaSourceSpec {
   const spec = normalizeRealScrambleSourceSpec(input);
-  const wcaEventId = timerWcaScrambleEventId(spec.event);
-  if (!wcaEventId) {
-    throw new Error(`real WCA scrambles unsupported for timer event ${spec.event}`);
-  }
   const source = resolveTimerWcaSourceCore(spec);
-  const requestedDifficulty = timerWcaDifficultyFilter(wcaEventId, spec);
-  let competitionUnindexed = false;
-  if (source.mode === 'comp'
-    && source.comp
-    && requestedDifficulty
-    && usesStepsIndex(requestedDifficulty.variant)) {
-    const cached = mobileTimerWcaDifficultyAdapter.getCompetitionCoverage(source.comp, wcaEventId);
-    const coverage = cached ?? await mobileTimerWcaDifficultyAdapter.probeCompetitionCoverage(
-      source.comp,
-      source.compName,
-      wcaEventId,
-    );
-    competitionUnindexed = coverage === false;
-  }
-  const difficulty = timerWcaDifficultyFilter(wcaEventId, spec, { competitionUnindexed });
-  const useOptimal = timerWcaOptimalRequested(wcaEventId, spec, {
-    competitionUnindexed,
-    optimalOverride: spec.event === '222' ? spec.scramble222Mode === 'optimal' : undefined,
+  const wca = timerWcaScrambleEventId(spec.event);
+  const difficulty = wca ? timerWcaDifficultyFilter(wca, spec) : null;
+  return {
+    event: spec.event, mode: source.mode, comp: source.comp, compName: source.compName,
+    round: source.round, group: source.group, from: source.from, to: source.to,
+    optimal: !!wca && timerWcaOptimalRequested(wca, spec, {
+      optimalOverride: spec.event === '222' ? spec.scramble222Mode === 'optimal' : undefined }),
+    diff: difficulty ?? undefined,
+    stepFilter: timerByStepsFilter(spec.event, 'wca', spec) ?? undefined,
+    typeFilter: spec.event === '222' && isCube222StateType(spec.scramble222Type ?? 'full') ? spec.scramble222Type as import('@cuberoot/puzzle-solvers/cube222').Cube222StateType : undefined,
+  };
+}
+export function wcaRowToReal(row: WcaDispensedScramble): RealScramble {
+  const m = row.meta;
+  if (!m || !isTimerWcaScrambleEventId(m.e)) throw new Error('invalid official WCA row');
+  return { scramble: row.scramble, competitionId: m.ci, competitionName: m.cn,
+    eventId: m.e, roundTypeId: m.r, groupId: m.g, scrambleNumber: m.n, isExtra: m.x === 1,
+    ...(m.nonOptimal ? { nonOptimal: true } : {}) };
+}
+export function createMobileWcaPool(fetcher?: typeof fetch, examplesFetcher: typeof fetch | undefined = (...args) => fetch(...args), persistent = true) {
+  return createWcaScramblePool({
+    apiUrl: mobileApiUrl, fetcher,
+    difficulty: mobileTimerWcaDifficultyAdapter,
+    loadCompetition: (id, signal) => loadMobileWcaCompetitionScrambles(id, fetcher ?? fetch, signal),
+    loadExamples: signal => examplesFetcher ? loadMobilePuzzleExamples(examplesFetcher, signal) : Promise.resolve(null),
+    filter222: filterMobileCube222BySteps,
+    storage: () => persistent && typeof localStorage !== 'undefined' ? localStorage : null,
+    storageKey: 'cuberoot.mobile.wca-pool.v1',
+    restoreSource: persistent ? source => {
+      if (typeof localStorage === 'undefined') return [];
+      const rows = readRealScrambleCache({
+        event: source.event, wcaScrambleMode: source.mode, wcaComp: source.comp,
+        wcaCompName: source.compName, wcaRound: source.round, wcaGroup: source.group,
+        wcaDateFrom: source.from, wcaDateTo: source.to, wcaUseOptimal: source.optimal,
+        wcaDifficultyOn: !!source.diff, wcaDiffVariant: source.diff?.variant,
+        wcaDiffStage: source.diff?.stage, wcaDiffColors: source.diff?.colors,
+        wcaDiffSteps: source.diff?.steps, wcaDiffMerged: source.diff?.merged,
+        scramble222Mode: source.optimal ? 'optimal' : 'wca', scramble222Type: source.typeFilter ?? 'full',
+        genByStepsOn: !!source.stepFilter, genStepsMetric: source.stepFilter?.metric,
+        genSteps: source.stepFilter ? [source.stepFilter.lo, source.stepFilter.hi] : [],
+      });
+      return rows.map(row => ({ scramble: row.scramble, slot: timerWcaCompetitionScrambleSlotIdentity(row),
+        meta: { ci: row.competitionId, cn: row.competitionName, e: row.eventId, r: row.roundTypeId,
+          g: row.groupId, n: row.scrambleNumber, x: row.isExtra ? 1 as const : 0 as const,
+          ...(row.nonOptimal ? { nonOptimal: true } : {}) } }));
+    } : undefined,
   });
-  const typeFilter = spec.event === '222'
-    && spec.scramble222Type
-    && isCube222StateType(spec.scramble222Type)
-    ? spec.scramble222Type
-    : null;
-  const rawStepFilter = spec.event === '222' && !typeFilter && spec.scramble222Type === 'full'
-    ? timerByStepsFilter('222', 'wca', spec as TimerByStepsSettings)
-    : null;
-  const stepFilter = rawStepFilter && isTimer222StepMetric(rawStepFilter.metric)
-    ? { ...rawStepFilter, metric: rawStepFilter.metric }
-    : null;
-  const requestSignal = signal ?? new AbortController().signal;
+}
 
-  if (source.mode === 'comp') {
-    let parsedBeforeType: RealScramble[];
-    let optimalUnavailable = false;
-    if (difficulty) {
-      const bins = [...new Set(difficulty.steps)].sort((left, right) => left - right);
-      const results = await Promise.all(bins.map((bin) => (
-        mobileTimerWcaDifficultyAdapter.fetchByDifficulty({
-          bin,
-          colors: difficulty.colors,
-          event: difficulty.merged ? undefined : wcaEventId,
-          names: source.compName ? [source.compName] : undefined,
-          pageSize: 200,
-          stage: difficulty.stage,
-          variant: difficulty.variant,
-        }, signal)
-      )));
-      if (results.some((result) => result === null)) {
-        throw new RealScrambleFetchError(
-          'transient-error',
-          'competition difficulty request failed',
-        );
-      }
-      const seen = new Set<string>();
-      parsedBeforeType = [];
-      for (const result of results) {
-        for (const row of result?.scrambles ?? []) {
-          if (row.ci !== source.comp
-            || (source.round && row.r !== source.round)
-            || (source.group && row.g !== source.group)
-            || (!difficulty.merged && row.e !== wcaEventId)
-            || (difficulty.merged && !isTimerWcaScrambleEventId(row.e))) continue;
-          if (useOptimal && !row.o) {
-            optimalUnavailable = true;
-            continue;
-          }
-          const item = parseItem(row, row.e as TimerWcaScrambleEventId, useOptimal);
-          if (!item) continue;
-          const identity = realScrambleOfficialSlotIdentity(item);
-          if (seen.has(identity)) continue;
-          seen.add(identity);
-          parsedBeforeType.push(item);
-        }
-      }
-    } else {
-      const rows = await loadMobileWcaCompetitionScrambles(source.comp, fetcher, signal);
-      if (rows === null) {
-        throw new RealScrambleFetchError(
-          'transient-error',
-          'competition scramble request failed',
-        );
-      }
-      const matchingRows = rows.filter((row) => row.eventId === wcaEventId
-        && (!source.round || row.roundTypeId === source.round)
-        && (!source.group || row.groupId === source.group));
-      if (matchingRows.length === 0) {
-        throw new RealScrambleFetchError(
-          'confirmed-empty',
-          'competition has no matching real scrambles',
-        );
-      }
-      optimalUnavailable = useOptimal && matchingRows.some((row) => !row.optimalScramble);
-      parsedBeforeType = matchingRows
-        .filter((row) => !useOptimal || !!row.optimalScramble)
-        .map((row) => parseItem({
-          scramble: row.scramble,
-          o: row.optimalScramble,
-          ci: source.comp,
-          cn: source.compName || source.comp,
-          e: row.eventId,
-          r: row.roundTypeId,
-          g: row.groupId,
-          n: row.scrambleNumber,
-          x: row.isExtra,
-        }, wcaEventId, useOptimal))
-        .filter((item): item is RealScramble => item !== null);
-    }
-    if (useOptimal && parsedBeforeType.length === 0 && optimalUnavailable) {
-      throw new RealScrambleFetchError(
-        'transient-error',
-        'competition optimal scrambles are temporarily unavailable',
-      );
-    }
-    const parsed = await applyLocalSourceFilters(spec, parsedBeforeType, typeFilter, requestSignal);
-    const unique = uniqueRealScrambleOccurrences(parsed)
-      .sort(compareTimerWcaCompetitionScrambleOrder);
-    if (unique.length === 0) {
-      throw new RealScrambleFetchError(
-        'confirmed-empty',
-        'competition has no matching real scrambles',
-      );
-    }
-    // A selected competition is a finite ordered source, not a random page.
-    // Keep the complete in-memory sequence; persistence remains separately
-    // bounded by CACHE_LIMIT so a large competition cannot exhaust storage.
-    return unique;
-  }
-
-  const query = timerWcaRandomRequestQuery(wcaEventId, spec, CACHE_LIMIT, {
-    optimalOverride: spec.event === '222' ? spec.scramble222Mode === 'optimal' : undefined,
-  });
-  const localStepFilter = typeFilter ? null : timerByStepsFilter(spec.event, 'wca', spec);
-  const precomputed = examplesFetcher && spec.event === '222' && !source.from && !source.to
-    ? typeFilter
-      ? await fetchPrecomputed222Type(typeFilter, useOptimal, examplesFetcher, signal)
-      : stepFilter
-        ? await fetchPrecomputed222Steps(stepFilter, useOptimal, examplesFetcher, requestSignal)
-        : null
-    : null;
-  const seeded = precomputed ?? [];
-  const batches = typeFilter || localStepFilter
-    ? (seeded.length > 0 ? TYPE_FILTER_BATCHES_WITH_PRECOMPUTED : TYPE_FILTER_BATCHES)
-    : 1;
-
-  for (let batch = 0; batch < batches; batch++) {
-    let response: Response;
-    try {
-      response = await fetcher(`${mobileApiUrl(API_RANDOM_PATH)}?${query.toString()}`, { signal });
-    } catch (error) {
-      if (seeded.length > 0) return seeded;
-      throw error;
-    }
-    if (response.status === 404) {
-      if (seeded.length > 0) return seeded;
-      throw new RealScrambleFetchError('confirmed-empty', 'real scramble source is empty');
-    }
-    if (!response.ok) {
-      if (seeded.length > 0) return seeded;
-      throw new RealScrambleFetchError(
-        'transient-error',
-        `real scramble request failed (${response.status})`,
-      );
-    }
-    const payload = await response.json() as { scrambles?: ApiScramble[] };
-    if (!Array.isArray(payload.scrambles)) {
-      if (seeded.length > 0) return seeded;
-      throw new RealScrambleFetchError('transient-error', 'real scramble response is invalid');
-    }
-    if (payload.scrambles.length === 0) {
-      if (seeded.length > 0) return seeded;
-      throw new RealScrambleFetchError('confirmed-empty', 'real scramble source is empty');
-    }
-    const parsed = payload.scrambles
-      .map((item) => {
-        const rowEvent = difficulty?.merged && isTimerWcaScrambleEventId(item.e)
-          ? item.e
-          : wcaEventId;
-        return parseItem(item, rowEvent, useOptimal);
-      })
-      .filter((item): item is RealScramble => item !== null);
-    if (parsed.length === 0) {
-      throw new RealScrambleFetchError(
-        'transient-error',
-        `real scramble response contains no valid ${wcaEventId} rows`,
-      );
-    }
-    const matches = await applyLocalSourceFilters(spec, parsed, typeFilter, requestSignal);
-    if (matches.length > 0) {
-      const live = uniqueRealScrambleOccurrences(matches);
-      if (!source.from && !source.to
-        && !typeFilter
-        && !localStepFilter
-        && payload.scrambles.length < CACHE_LIMIT) {
-        onClosedSet?.(live);
-      }
-      // Live rows lead so a full static seed cannot starve freshly sampled
-      // competition data from the bounded pool.
-      return uniqueRealScrambleOccurrences([...live, ...seeded])
-        .slice(0, CACHE_LIMIT);
-    }
-  }
-  if (seeded.length > 0) return seeded;
-  throw new RealScrambleFetchError(
-    'transient-error',
-    'real scramble type was not found within the live sampling budget',
-  );
+/** Compatibility batch API for non-page callers; it uses the same pool engine. */
+export async function fetchRealScrambles(
+  input: RealScrambleSourceInput, fetcher: typeof fetch = fetch, signal?: AbortSignal,
+  examplesFetcher?: typeof fetch, onClosedSet?: (rows: readonly RealScramble[]) => void,
+): Promise<RealScramble[]> {
+  const pool = createMobileWcaPool(fetcher, examplesFetcher ?? (async () => new Response(null, { status: 503 })), false);
+  try {
+    const spec = realSpecToWcaSource(input);
+    if (!pool.hasWcaSource(spec)) throw new Error(`real WCA scrambles unsupported for timer event ${spec.event}`);
+    const result = await pool.loadBatch(spec, signal);
+    if (signal?.aborted) throw new DOMException('WCA request cancelled', 'AbortError');
+    if (result.kind !== 'ready') throw new RealScrambleFetchError(result.kind, 'real scramble source unavailable');
+    const rows = (spec.mode === 'comp' ? result.rows : result.rows.slice(0, 50)).map(wcaRowToReal);
+    if (result.closed) onClosedSet?.(rows);
+    return rows;
+  } finally { pool.dispose(); }
 }

@@ -11,7 +11,7 @@ import { listRecons } from '@/lib/recon-api';
 import { loadCachedSolves, saveCachedSolves } from '@/lib/recon-cache';
 import { compNameZh, loadFlagData } from '@/lib/country-flags';
 import { formatTime, formatAvg, expandContinentRecord } from '@/lib/recon-utils';
-import { API_ORIGIN } from '@/lib/api-base';
+import { API_ORIGIN, apiUrl } from '@/lib/api-base';
 import { STACK_TOOLS_META, type StackToolMeta } from '@/app/[lang]/dev/stack/_lib/stack_meta';
 import GLOSSARY_DATA from '@/app/[lang]/wiki/glossary.json';
 import { WR_METRICS, resultsQueryForMetric } from '@/lib/wr-metrics';
@@ -81,7 +81,7 @@ const ALG_SET_PATH_OVERRIDE: Record<string, string> = {
   '3x3/comm-edge': '/alg/3bld/comm',
 };
 
-export const METRIC_LABEL_OVERRIDE: Record<string, string> = { 'Ao3': 'Mo3' };
+export const METRIC_LABEL_OVERRIDE: Record<string, string> = { 'Mo3': 'Mo3' };
 
 export const TOOL_ITEMS: ToolItem[] = [
   { path: '/wca/comp',       zh: '比赛',   en: 'Comp'
@@ -137,6 +137,12 @@ function tokenize(q: string): string[] {
 function allTokensIn(haystack: string, tokens: readonly string[]): boolean {
   for (const t of tokens) if (!haystack.includes(t)) return false;
   return true;
+}
+
+export function searchSiteCards(cards: readonly SiteSearchCard[], query: string): SiteSearchCard[] {
+  const tokens=tokenize(query.trim().toLowerCase());
+  if(!tokens.length) return [];
+  return cards.filter(c=>allTokensIn(`${c.nameEn}\n${c.nameZh}\n${c.sectionTitleEn}\n${c.sectionTitleZh}\n${c.href}\n${c.keywords ?? ''}`.toLowerCase(),tokens));
 }
 
 interface GlossaryEntry { head: string; body: string }
@@ -338,6 +344,8 @@ export interface UseSiteSearchOptions {
   lookups?: LookupItem[];
 }
 
+export interface PlatformSearchHit { id: string; type: string; href: string; titleZh: string; titleEn: string; }
+
 export interface SiteSearchResult {
   q: string;
   qRaw: string;
@@ -354,6 +362,8 @@ export interface SiteSearchResult {
   aboutMatches: AboutHit[];
   stackMatches: StackHit[];
   algSetMatches: AlgSetHit[];
+  platformMatches: PlatformSearchHit[];
+  platformSearchError: boolean;
   totalCount: number;
   yearMatch: string | null;
   statIndexLoaded: boolean;
@@ -372,6 +382,8 @@ export function useSiteSearch(
   const [personMatches, setPersonMatches] = useState<WcaPerson[]>([]);
   const [compMatches, setCompMatches] = useState<Comp[]>([]);
   const [reconMatches, setReconMatches] = useState<ReconHit[]>([]);
+  const [platformMatches, setPlatformMatches] = useState<PlatformSearchHit[]>([]);
+  const [platformSearchError, setPlatformSearchError] = useState(false);
   const [algSetMatches, setAlgSetMatches] = useState<AlgSetHit[]>([]);
   const compsRef = useRef<Comp[] | null>(null);
   const reconsRef = useRef<ReconRecord[] | null>(null);
@@ -385,6 +397,22 @@ export function useSiteSearch(
   const qRaw = deferredRawQuery.trim();
   const xSearchEnabled = qRaw.length >= (hasNonLatin(qRaw) ? 1 : MIN_LEN_LATIN);
   const tokens = useMemo(() => tokenize(q), [q]);
+
+  useEffect(() => {
+    setPlatformMatches([]);
+    setPlatformSearchError(false);
+    if (qRaw.length < 2) return;
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      void fetch(apiUrl('/v1/platform/search?v=3&q=' + encodeURIComponent(qRaw)), { signal: controller.signal })
+        .then(async response => {
+          if (!response.ok) throw new Error('search_failed');
+          const data = await response.json() as { results?: PlatformSearchHit[] };
+          if (!controller.signal.aborted) setPlatformMatches((data.results ?? []).filter(item => typeof item.href === 'string' && item.href.startsWith('/platform/')));
+        }).catch(() => { if (!controller.signal.aborted) setPlatformSearchError(true); });
+    }, 300);
+    return () => { clearTimeout(timer); controller.abort(); };
+  }, [qRaw]);
 
   useEffect(() => {
     if (prefetch === 'lazy' && !xSearchEnabled) return;
@@ -476,11 +504,7 @@ export function useSiteSearch(
   }, [qRaw, tokens, xSearchEnabled, xLoaded]);
 
   const cardMatches = useMemo(() => {
-    if (q === '' || tokens.length === 0) return [];
-    return cards.filter(c => {
-      const hay = `${c.nameEn}\n${c.nameZh}\n${c.sectionTitleEn}\n${c.sectionTitleZh}\n${c.href}\n${c.keywords ?? ''}`.toLowerCase();
-      return allTokensIn(hay, tokens);
-    });
+    return searchSiteCards(cards,q);
   }, [cards, q, tokens]);
 
   const toolMatches = useMemo(() => {
@@ -569,13 +593,14 @@ export function useSiteSearch(
     glossaryMatches.length +
     aboutMatches.length +
     stackMatches.length +
-    algSetMatches.length;
+    algSetMatches.length + platformMatches.length;
 
   return {
     q, qRaw, xSearchEnabled, xLoaded,
     cardMatches, toolMatches, lookupMatches, statMatches,
     personMatches, compMatches,
     reconMatches, glossaryMatches, aboutMatches, stackMatches, algSetMatches,
+    platformMatches, platformSearchError,
     totalCount,
     yearMatch,
     statIndexLoaded: statIndex !== null,

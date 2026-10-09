@@ -15,11 +15,11 @@ const scrambleHistory = readFileSync(
   'utf8',
 );
 const cube222Pool = readFileSync(
-  new URL('./data/cube222-special-pool.ts', import.meta.url),
+  new URL(import.meta.resolve('@cuberoot/timer-ui/scramble/cube222-special')),
   'utf8',
 );
 const cube222Worker = readFileSync(
-  new URL('./data/cube222-special.worker.ts', import.meta.url),
+  new URL(import.meta.resolve('@cuberoot/timer-ui/scramble/cube222-special.worker')),
   'utf8',
 );
 const cstimerNonWcaPool = readFileSync(
@@ -31,25 +31,22 @@ const cstimerNonWcaWorker = readFileSync(
   'utf8',
 );
 const cube222StepsPool = readFileSync(
-  new URL('./data/cube222-steps-pool.ts', import.meta.url),
+  new URL(import.meta.resolve('@cuberoot/timer-ui/scramble/cube222-steps')),
   'utf8',
 );
 const cube222StepsWorker = readFileSync(
-  new URL('./data/cube222-steps.worker.ts', import.meta.url),
+  new URL(import.meta.resolve('@cuberoot/timer-ui/scramble/cube222-steps.worker')),
   'utf8',
 );
 const non222StepsPool = readFileSync(
-  new URL('./data/non222-steps-pool.ts', import.meta.url),
+  new URL(import.meta.resolve('@cuberoot/timer-ui/scramble/non222-steps')),
   'utf8',
 );
 const non222StepsWorker = readFileSync(
-  new URL('./data/non222-steps.worker.ts', import.meta.url),
+  new URL(import.meta.resolve('@cuberoot/timer-ui/scramble/non222-steps.worker')),
   'utf8',
 );
-const mobile333WorkerHost = readFileSync(
-  new URL('./smart-cube/fixup.ts', import.meta.url),
-  'utf8',
-);
+const mobile333WorkerHost = readFileSync(new URL('./smart-cube/fixup.ts', import.meta.url), 'utf8') + readFileSync(new URL(import.meta.resolve('@cuberoot/timer-ui/scramble/trainer')), 'utf8');
 
 describe('mobile scramble-source parity contract', () => {
   it('uses the shared opaque manual queue and wraps in source order', () => {
@@ -88,12 +85,11 @@ describe('mobile scramble-source parity contract', () => {
   });
 
   it('isolates real pools by complete source spec and never falls back to 333', () => {
-    expect(app).toContain('startRealScrambleFetchRetry(spec, {');
-    expect(app).toContain('readRealScrambleCache(spec)');
-    expect(app).toContain('writeRealScrambleCache(realSpec, [next, ...realPoolFor(realSpec)])');
-    expect(app).toContain('realScrambleSourceKey(spec)');
-    expect(app).toContain('new Map<string, RealScramble[]>()');
-    expect(app).toContain('new Map<string, RealPoolRequest>()');
+    expect(app).toContain('mobileWcaPool.startNext(poolSpec)');
+    expect(app).toContain('mobileWcaPool.peekWcaRow(poolSpec)');
+    expect(app).toContain('mobileWcaPool.cancelSource(');
+    expect(app).not.toContain('realPoolsRef');
+    expect(app).not.toContain('realRequestsRef');
     expect(app).not.toContain("if (event !== '333')");
     expect(app).not.toContain('scramble333');
   });
@@ -123,8 +119,9 @@ describe('mobile scramble-source parity contract', () => {
   });
 
   it('keeps Kilominx and Master Pyraminx on one package provider and shared pool policy', () => {
-    expect(app).toContain('nextMobileCstimerNonWcaScramble');
-    expect(app).toContain("provider === 'cstimer-nonwca'");
+    expect(app).toContain("from '@cuberoot/timer-ui/random-scramble'");
+    expect(app).toContain('ordinaryRandom.next(request, controller.signal)');
+    expect(app).toContain('ordinaryRandom.reset();');
     expect(cstimerNonWcaWorker).toContain(
       "from '@cuberoot/puzzle-solvers/cstimer-nonwca'",
     );
@@ -150,7 +147,7 @@ describe('mobile scramble-source parity contract', () => {
   });
 
   it('keeps every non-2x2 metric in one package engine behind the shared Worker host', () => {
-    expect(app).toContain('const byStepsSourceSignature = timerByStepsIdentity(');
+    expect(app).toContain("const byStepsSourceSignature = store?.settings.syncSeed ? '' : timerByStepsIdentity(");
     expect(app).toMatch(
       /activeEvent,[\s\S]*?activeScrambleIdentity,[\s\S]*?byStepsSourceSignature,[\s\S]*?nextScramble,[\s\S]*?wcaSourceSignature/,
     );
@@ -207,14 +204,14 @@ describe('mobile scramble-source parity contract', () => {
 
   it('isolates random-difficulty generation, answers, and smart-cube fixup transports', () => {
     expect(mobile333WorkerHost).toContain("createMobile333Rpc('mobile smart-cube worker')");
-    expect(mobile333WorkerHost).toContain("createMobile333Rpc('mobile trainer generation worker')");
-    expect(mobile333WorkerHost).toContain("createMobile333Rpc('mobile trainer solution worker')");
+    expect(mobile333WorkerHost).toContain("createRpc('trainer generation worker')");
+    expect(mobile333WorkerHost).toContain("createRpc('trainer solution worker')");
     expect(mobile333WorkerHost).not.toMatch(/const trainerRpc\s*=/);
   });
 
-  it('releases random-difficulty and optimal work outside the timer view', () => {
-    expect(app).toContain("if (view !== 'timer' || !randomOptimalSource)");
-    expect(app).toContain("if (view !== 'timer') {\n      releaseMobileRandomDifficulty();");
+  it('releases random-difficulty and optimal work when the timer is no longer visible', () => {
+    expect(app).toContain('if (!timerVisible || !randomOptimalSource)');
+    expect(app).toContain('if (!timerVisible) {\n      releaseMobileRandomDifficulty();');
     expect(app).toContain("if (previousView === 'timer' || view !== 'timer') return;");
     expect(app).toContain("if (entry?.availability === 'loading') fillScrambleHistoryEntry(entry);");
     expect(app).toContain('else releaseMobileRandomDifficulty()');
@@ -258,7 +255,7 @@ describe('mobile scramble-source parity contract', () => {
     expect(app).toContain('canUseRandomOptimal333(');
     expect(app).toContain('shouldUseRandomOptimal333(');
     expect(app).toContain('const randomOptimalRequested = timerMode === 1 && shouldUseRandomOptimal333(');
-    expect(app).toContain('const randomOptimalAuthPending = timerMode === 1');
+    expect(app).toContain('const randomOptimalAuthPending = !store?.settings.syncSeed && timerMode === 1');
     expect(app).toContain("return `${drillIdentity}|optimal:auth-pending`");
     expect(app).toContain("if (source === 'random' && event === '333' && randomOptimalAuthPending) return;");
     expect(app).toContain('randomOptimalRequested || randomOptimalAuthPending');
@@ -282,10 +279,10 @@ describe('mobile scramble-source parity contract', () => {
   });
 
   it('reuses shared occurrence progress and marks only after a persisted solve succeeds', () => {
-    expect(app).toContain('new TimerWcaFinitePoolProgressTracker()');
-    expect(app).toContain('isAllTimeRealScrambleDateSource(spec)');
-    expect(app).toContain('registerClosedSet(sourceKey, scrambles)');
-    expect(app).toContain('noteServed(sourceKey, next)');
+    expect(app).toContain('mobileWcaPool.wcaPoolProgress(realSpecToWcaSource(activeRealSourceSpec))');
+    const pool = readFileSync(new URL(import.meta.resolve('@cuberoot/timer-ui/wca-scramble-pool')), 'utf8');
+    expect(pool).toContain('finitePoolProgress.registerClosedSet(key, closed.map((row) => row.slot))');
+    expect(pool).toContain('finitePoolProgress.noteServed(key, slot)');
     expect(app).toContain('<TimerWcaScrambleProgress');
     expect(app).toContain("key={currentWcaMarkIdentity ?? 'wca-source-progress'}");
     expect(app).toContain('timerWcaScrambleProgressLabels(language)');
@@ -346,12 +343,14 @@ describe('mobile scramble-source parity contract', () => {
     expect(app).not.toContain('applyStoreSnapshot(latest);\n    nextScramble(');
   });
 
-  it('disables global timer input outside Timer and behind overlays or context writes', () => {
+  it('disables global timer input when hidden, in settings, or behind overlays or context writes', () => {
+    expect(app).toContain("const dockHistory = wideLayout && view === 'history' && timerMode === 1;");
+    expect(app).toContain("const timerVisible = view === 'timer' || view === 'settings' || dockHistory;");
     expect(app).toMatch(
-      /canStart: attemptCanStart,[\s\S]*?enabled: view === 'timer'[\s\S]*?&& !moreOpen[\s\S]*?&& !timerContextMutationBusy/,
+      /canStart: attemptCanStart,[\s\S]*?enabled: view !== 'settings' && timerVisible\s+&& timerMode === 1\s+&& timingEnabled\s+&& !moreOpen\s+&& !manualEntryOpen\s+&& !timerOverlayBlocking\s+&& !timerContextMutationBusy/,
     );
     expect(app).toContain('&& !manualEntryOpen');
-    expect(app).toContain('&& openOverlay === null');
+    expect(app).toContain('&& !timerOverlayBlocking');
     expect(app).toMatch(
       /const sourceControlsEnabled = timer\.machine\.phase !== 'running'[\s\S]*?&& !timerContextMutationBusy/,
     );
@@ -404,7 +403,13 @@ describe('mobile scramble-source parity contract', () => {
   });
 
   it('places the shared textarea before the timer stage without horizontal overflow', () => {
-    expect(app.indexOf('mobile-scramble-source-config')).toBeLessThan(app.indexOf('mobile-timer-stage'));
+    const soloStart = app.indexOf('<TimerSoloPage');
+    const timingStart = app.indexOf('timing={{', soloStart);
+    expect(soloStart).toBeGreaterThan(-1);
+    expect(timingStart).toBeGreaterThan(soloStart);
+    const stage = app.slice(soloStart, timingStart);
+    expect(stage).toMatch(/stage=\{\{[\s\S]*source: [\s\S]*mobile-scramble-source-config/);
+    expect(stage).toContain('<ManualScrambleQueueEditor');
     expect(css).toMatch(/\.mobile-scramble-source-config \{[^}]*min-width: 0;/s);
     expect(css).toMatch(/\.mobile-scramble-source-config \.scramble-src-manual \{[^}]*width: min\(100%, 44rem\);/s);
   });

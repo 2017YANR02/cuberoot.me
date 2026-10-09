@@ -113,6 +113,22 @@ describe('mini program account page', () => {
     vi.unstubAllGlobals();
   });
 
+  it('keeps existing-account sign-in in plain user language and shows the website step first', () => {
+    const source = readFileSync(new URL('../src/pages/account/index.ts', import.meta.url), 'utf8');
+    const template = readFileSync(new URL('../src/pages/account/index.wxml', import.meta.url), 'utf8');
+    expect(source).toContain("zh: '登录已有 CubeRoot 账号'");
+    expect(source).toContain("zh: '去网站登录'");
+    expect(source).toContain("zh: '输入 6 位登录码'");
+    expect(source).not.toContain('小程序绑定码');
+    expect(template.indexOf('bindtap="openLinkCodeWebsite"')).toBeLessThan(
+      template.indexOf('class="account-link-code-row"'),
+    );
+    expect(template).toContain('{{copy.loginAsLabel}}{{accountLinkTargetName}}');
+    const codeModeStart = template.indexOf('<block wx:elif="{{accountLinkCodeMode}}">');
+    const codeModeEnd = template.indexOf('\n    <button wx:else', codeModeStart);
+    expect(template.slice(codeModeStart, codeModeEnd)).not.toContain('CubeRoot ID');
+  });
+
   async function wechatPhoneFixture(options: {
     knownPhone?: boolean;
     supported?: boolean;
@@ -227,9 +243,9 @@ describe('mini program account page', () => {
     const { page, authorize, request, navigateTo, ticket } = await wechatPhoneFixture();
     await authorize(); page.linkExistingAccount();
     expect(page.data.accountLinkCodeMode).toBe(true); expect(navigateTo).not.toHaveBeenCalled();
-    page.onLinkCodeInput({ detail: { value: 'L42-123456' } }); await page.previewLinkCode();
+    page.onLinkCodeInput({ detail: { value: '123456' } }); await page.previewLinkCode();
     expect(request).toHaveBeenCalledTimes(3); await page.confirmLinkCode();
-    expect(request.mock.calls[3][0].data).toEqual({ ticket, action: 'link_with_code', linkCode: 'L42-123456', expectedUid: 42 });
+    expect(request.mock.calls[3][0].data).toEqual({ ticket, action: 'link_with_code', linkCode: '123456', expectedUid: 42 });
   });
 
   it.each(['cancel', 'unload'] as const)('ignores a native authorization callback after %s', async (action) => {
@@ -376,6 +392,7 @@ describe('mini program account page', () => {
   } = {}) {
     let storedSession: unknown = null;
     const ticket = 'p'.repeat(43);
+    const getStorageInfoSync = vi.fn(() => ({ keys: storedSession === null ? [] : ['cuberoot:session'] }));
     const getStorageSync = vi.fn(() => storedSession);
     const setStorageSync = vi.fn((_key: string, value: unknown) => { storedSession = value; });
     const navigateTo = vi.fn((options: { complete?(): void }) => options.complete?.());
@@ -392,9 +409,9 @@ describe('mini program account page', () => {
       } else throw new Error(`Unexpected request: ${options.url}`);
     });
     const login = vi.fn((options: { success(result: { code: string }): void }) => options.success({ code: 'douyin-proof' }));
-    const page = await loadPage({ getStorageSync, setStorageSync, removeStorageSync: vi.fn(), login, request, navigateTo, showShareMenu: vi.fn() }, 'douyin');
+    const page = await loadPage({ getStorageInfoSync, getStorageSync, setStorageSync, removeStorageSync: vi.fn(), login, request, navigateTo, showShareMenu: vi.fn() }, 'douyin');
     page.onLoad(); page.toggleAgreement(); await page.loginWithMiniProgram();
-    return { page, request, login, getStorageSync, setStorageSync, navigateTo, ticket };
+    return { page, request, login, getStorageInfoSync, getStorageSync, setStorageSync, navigateTo, ticket };
   }
 
   it('keeps unknown Douyin identity in memory and creates only after the explicit choice', async () => {
@@ -428,22 +445,22 @@ describe('mini program account page', () => {
     expect(navigateTo).not.toHaveBeenCalled();
     page.openLinkCodeWebsite();
     expect(navigateTo).toHaveBeenCalledWith(expect.objectContaining({ url: '/pages/web/index?key=account-link' }));
-    page.onLinkCodeInput({ detail: { value: ' L42-123456 ' } });
+    page.onLinkCodeInput({ detail: { value: ' 123456 ' } });
     await page.previewLinkCode();
     expect(page.data.accountLinkTargetId).toBe(42);
     expect(page.data.accountLinkTargetName).toBe('Existing member');
     expect(request).toHaveBeenCalledTimes(2); expect(setStorageSync).not.toHaveBeenCalled();
     await page.confirmLinkCode();
-    expect(request.mock.calls[2][0].data).toEqual({ ticket, action: 'link_with_code', linkCode: 'L42-123456', expectedUid: 42 });
+    expect(request.mock.calls[2][0].data).toEqual({ ticket, action: 'link_with_code', linkCode: '123456', expectedUid: 42 });
     expect(request.mock.calls[2][0].header?.Authorization).toBeUndefined();
-    expect(request.mock.calls.every(([options]) => !options.url.includes(ticket) && !options.url.includes('L42-123456'))).toBe(true);
+    expect(request.mock.calls.every(([options]) => !options.url.includes(ticket) && !options.url.includes('123456'))).toBe(true);
     expect(page.data.uidText).toBe('42'); expect(setStorageSync).toHaveBeenCalledOnce();
   });
 
   it('invalidates target confirmation whenever the entered binding code changes or clears', async () => {
     const { page, request } = await douyinChoiceFixture();
-    page.linkExistingAccount(); page.onLinkCodeInput({ detail: { value: 'L42-123456' } }); await page.previewLinkCode();
-    page.onLinkCodeInput({ detail: { value: 'L99-654321' } });
+    page.linkExistingAccount(); page.onLinkCodeInput({ detail: { value: '123456' } }); await page.previewLinkCode();
+    page.onLinkCodeInput({ detail: { value: '654321' } });
     expect(page.data.accountLinkTargetId).toBeNull();
     await page.confirmLinkCode(); expect(request).toHaveBeenCalledTimes(2);
     page.clearLinkCode(); expect(page.data.accountLinkCode).toBe(''); expect(page.data.accountLinkTargetName).toBe('');
@@ -499,10 +516,10 @@ describe('mini program account page', () => {
 
   it('does not persist a pending completion when the original empty session becomes unreadable', async () => {
     let complete!: (response: unknown) => void;
-    const { page, getStorageSync, setStorageSync } = await douyinChoiceFixture({ complete: (options) => { complete = options.success; } });
+    const { page, getStorageInfoSync, setStorageSync } = await douyinChoiceFixture({ complete: (options) => { complete = options.success; } });
     const pending = page.createAccount();
     expect(page.data.loginBusy).toBe(true);
-    getStorageSync.mockImplementation(() => { throw new Error('storage unavailable'); });
+    getStorageInfoSync.mockImplementation(() => { throw new Error('storage unavailable'); });
     complete({ statusCode: 200, data: { token: 'c'.repeat(20), user: { uid: 42, name: 'Late', wcaId: null, avatar: '' }, isNew: true } });
     await pending;
     expect(setStorageSync).not.toHaveBeenCalled();
@@ -513,7 +530,7 @@ describe('mini program account page', () => {
   it('releases busy after background expiry and ignores the old preview during a new attempt', async () => {
     const replies: Array<(response: unknown) => void> = [];
     const { page } = await douyinChoiceFixture({ preview: (options) => { replies.push(options.success); } });
-    page.linkExistingAccount(); page.onLinkCodeInput({ detail: { value: 'L42-123456' } });
+    page.linkExistingAccount(); page.onLinkCodeInput({ detail: { value: '123456' } });
     const oldPreview = page.previewLinkCode();
     expect(page.data.loginBusy).toBe(true);
     const expired = Date.now() + 900_001;
@@ -523,7 +540,7 @@ describe('mini program account page', () => {
     expect(page.data.loginBusy).toBe(false);
     expect(page.data.accountLinkRequired).toBe(false);
     await page.loginWithMiniProgram();
-    page.linkExistingAccount(); page.onLinkCodeInput({ detail: { value: 'L55-654321' } });
+    page.linkExistingAccount(); page.onLinkCodeInput({ detail: { value: '654321' } });
     const newPreview = page.previewLinkCode();
     expect(page.data.loginBusy).toBe(true);
     replies[0]({ statusCode: 200, data: { user: { id: 42, displayName: 'Old target' } } });
@@ -538,7 +555,7 @@ describe('mini program account page', () => {
 
   it('never installs a completion session for an account different from the preview', async () => {
     const { page, setStorageSync } = await douyinChoiceFixture({ complete: (options) => options.success({ statusCode: 200, data: { token: 'c'.repeat(20), user: { uid: 99, name: 'Wrong', wcaId: null, avatar: '' } } }) });
-    page.linkExistingAccount(); page.onLinkCodeInput({ detail: { value: 'L42-123456' } }); await page.previewLinkCode(); await page.confirmLinkCode();
+    page.linkExistingAccount(); page.onLinkCodeInput({ detail: { value: '123456' } }); await page.previewLinkCode(); await page.confirmLinkCode();
     expect(page.data.loginRequired).toBe(true); expect(setStorageSync).not.toHaveBeenCalled();
     expect(page.data.loginError).toBe('账号或绑定状态已改变，请先检查账号后重试。');
   });
@@ -558,7 +575,7 @@ describe('mini program account page', () => {
 
     page.onLoad();
 
-    expect(accountConfig).toEqual({ navigationBarTitleText: '' });
+    expect(accountConfig).toEqual({ navigationBarTitleText: '', disableScroll: true });
     expect(page.data).toMatchObject({
       isTimelineEntry: false,
       loginRequired: true,
@@ -579,6 +596,24 @@ describe('mini program account page', () => {
       menus: ['shareAppMessage', 'shareTimeline'],
     });
     expect(setNavigationBarTitle).toHaveBeenCalledWith({ title: '我的' });
+  });
+
+  it('refreshes account and contact text when a delayed tools locale message arrives', async () => {
+    const storage = new Map<string, unknown>();
+    const page = await loadPage({
+      getLaunchOptionsSync: normalLaunchOptions,
+      getAppBaseInfo: () => ({ language: 'zh_CN' }),
+      getStorageSync: (key: string) => storage.get(key),
+      setStorageSync: (key: string, value: unknown) => storage.set(key, value),
+      setNavigationBarTitle: vi.fn(),
+    });
+    vi.stubGlobal('getCurrentPages', () => [page]);
+    expect(page.data.contact.details.find((detail) => detail.id === 'author')?.label).toBe('作者');
+    const { receiveNativeLocale } = await import('../src/lib/i18n');
+    receiveNativeLocale({ type: 'cuberoot:locale', locale: 'en' });
+    expect(page.data.contact.details.find((detail) => detail.id === 'author')?.label).toBe('Author');
+    expect(page.data.release.versionLabel).toBe('Version');
+    expect(page.data).toMatchObject({ copy: { pageTitle: 'Me' }, loginRequired: true });
   });
 
   it('renders the Moments login landing without using unavailable single-page APIs', async () => {
@@ -635,7 +670,7 @@ describe('mini program account page', () => {
       isTimelineEntry: false,
       loginRequired: true,
     });
-    expect(getStorageSync).toHaveBeenCalledOnce();
+    expect(getStorageSync.mock.calls.filter(([key]: unknown[]) => key === 'cuberoot:session')).toHaveLength(1);
     expect(showShareMenu).toHaveBeenCalledWith({
       menus: ['shareAppMessage', 'shareTimeline'],
     });
@@ -667,6 +702,7 @@ describe('mini program account page', () => {
       });
     });
     const page = await loadPage({
+      getStorageInfoSync: () => ({ keys: [] }),
       getStorageSync: () => null,
       login,
       removeStorageSync: vi.fn(),

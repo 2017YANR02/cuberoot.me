@@ -12,7 +12,7 @@
 // 运行:
 //   pnpm --filter @cuberoot/scramble-stats-build build:bic-table
 //   (或) pnpm exec tsx src/build_bic_table.ts
-// 由 update_puzzle_stats.ps1 的「TIER B 离线表」步骤调用。
+// 由 scripts/stats/puzzles-cli.ts 的「TIER B 离线表」步骤调用。
 
 import fs from 'node:fs';
 import path from 'node:path';

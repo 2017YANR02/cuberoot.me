@@ -43,11 +43,12 @@ export type NotificationKind =
   | 'forum_review' | 'forum_approved' | 'forum_rejected'
   | 'comp_reg'
   | 'wca_record'
+  | 'membership_payment'
   | 'document_change'
   | 'quiz_report' | 'quiz_hidden'
   | 'cal_reminder' | 'cal_invite' | 'cal_rsvp'
   | 'teaching_message'
-  | 'friend_request' | 'friend_accepted'
+  | 'friend_request' | 'friend_accepted' | 'friend_message'
   | 'sponsor_claim_pending' | 'sponsor_claim_approved'
   | 'sponsor_claim_rejected' | 'sponsor_claim_revoked';
 
@@ -74,6 +75,8 @@ export interface NotifyInput {
   link: string;
   /** Stable source key for repeatable background jobs. */
   dedupeKey?: string;
+  /** Some operational events use in-site/Bark only. */
+  email?: boolean;
 }
 
 const KIND_TEXT: Record<NotificationKind, Record<MailLang, string>> = {
@@ -88,6 +91,7 @@ const KIND_TEXT: Record<NotificationKind, Record<MailLang, string>> = {
   forum_rejected: { zh: '驳回了你的帖子', en: 'declined your post' },
   comp_reg: { zh: '报名了国外比赛', en: 'registered for an overseas competition' },
   wca_record: { zh: '纪录快讯', en: 'Record news' },
+  membership_payment: { zh: '会员收款成功', en: 'Membership payment received' },
   document_change: { zh: '修改了你关注的协作文件', en: 'updated a collaborative file you follow' },
   quiz_report: { zh: '举报了一道社区题', en: 'reported a community quiz question' },
   quiz_hidden: { zh: '下架了你出的题', en: 'took down one of your questions' },
@@ -98,6 +102,7 @@ const KIND_TEXT: Record<NotificationKind, Record<MailLang, string>> = {
   teaching_message: { zh: '发送了教学消息', en: 'sent a teaching message' },
   friend_request: { zh: '申请添加你为好友', en: 'sent you a friend request' },
   friend_accepted: { zh: '接受了你的好友申请', en: 'accepted your friend request' },
+  friend_message: { zh: '发来了消息', en: 'sent you a message' },
   sponsor_claim_pending: { zh: '提交了赞助认领申请', en: 'submitted a supporter claim' },
   sponsor_claim_approved: { zh: '通过了你的赞助认领', en: 'approved your supporter claim' },
   sponsor_claim_rejected: { zh: '驳回了你的赞助认领', en: 'declined your supporter claim' },
@@ -230,7 +235,7 @@ export async function notify(input: NotifyInput): Promise<void> {
     if (inserted.length) insertedTargets.push(key);
   }
 
-  if (!emailConfigured()) return;
+  if (input.email === false || !emailConfigured()) return;
   void (async () => {
     for (const key of insertedTargets) {
       try {

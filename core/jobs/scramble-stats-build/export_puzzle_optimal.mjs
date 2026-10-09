@@ -14,17 +14,18 @@ import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createInterface } from 'node:readline';
 import YAML from 'yaml';
+import { wcaDir, puzzleDir } from './pipeline_paths.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DEST = resolve(__dirname, 'wca_optimal_puzzle.csv');
 const SCRAMBLES_TSV = process.env.SCRAMBLES_TSV
   ? resolve(process.env.SCRAMBLES_TSV)
-  : 'D:/cube/scramble/wca_scramble/incremental/tsv/Scrambles.tsv';
+  : join(wcaDir, 'incremental/tsv/Scrambles.tsv');
 
-// key → WCA event_id(与 update_puzzle_stats.ps1 / build_puzzle_examples 注册表一致)。
+// key → WCA event_id(与 scripts/stats/puzzles-cli.ts / build_puzzle_examples 注册表一致)。
 const PUZZLES = { '222': '222', pyraminx: 'pyram', skewb: 'skewb' };
 
-let dataRoot = 'D:/cube/scramble/puzzle';
+let dataRoot = puzzleDir;
 const cfgPath = resolve(__dirname, 'config.yml');
 if (existsSync(cfgPath)) {
   const cfg = YAML.parse(readFileSync(cfgPath, 'utf8'));
@@ -55,7 +56,7 @@ for (const key of Object.keys(PUZZLES)) {
   console.log(`[${key}] ${n} solved ids`);
   totalSolved += n;
 }
-if (!totalSolved) { console.error('无解列数据。先开 PUZZLE_EMIT_SOLN 重跑 update_puzzle_stats.ps1。'); process.exit(1); }
+if (!totalSolved) { console.error('无解列数据。先开 PUZZLE_EMIT_SOLN 重跑 scripts/stats/puzzles-cli.ts。'); process.exit(1); }
 
 // ---- 2. 流式 Scrambles.tsv,join 自然键,产表行 ----
 if (!existsSync(SCRAMBLES_TSV)) { console.error(`缺 ${SCRAMBLES_TSV}`); process.exit(1); }

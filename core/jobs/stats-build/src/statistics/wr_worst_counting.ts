@@ -19,11 +19,12 @@ export class WrWorstCounting extends RoundMetric {
 
   // NOTE: Worst Counting = 去掉最好和最差后的最大值
   computeMetric(values: number[]): number | null {
+    if (values.length !== 5 || values.includes(0)) return null;
     const valid = values.filter(v => v > 0).sort((a, b) => a - b);
     const invalidCount = values.filter(v => v <= 0).length;
     switch (invalidCount) {
       case 0: return valid[3] ?? null;  // 5 全有效，第 4 小 = counting 最差
-      case 1: return valid[2] ?? null;  // 1 DNF，4 有效中第 3 个
+      case 1: return valid[3] ?? null;  // 1 DNF 去掉最差，余下 4 次只去掉最好
       default: return null;
     }
   }

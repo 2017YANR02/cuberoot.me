@@ -1,71 +1,27 @@
 'use client';
 
-// Living hero cube. Two modes:
-//   • 看它还原 (watch) — auto-plays the scramble → solve, with the cubing.js
-//     control panel for replay / scrub.
-//   • 你来拧 (play)   — tap the cube faces (or the on-screen keys) to turn it,
-//     drag to orbit. A self-paced "it's interactive" demo.
+// Living hero cube. Both modes reuse the site's own /sim engine:
+//   • 看它还原 (watch) — auto-plays the scramble → solve with shared controls.
+//   • 你来拧 (play)   — drag a face to turn it, or drag empty space to orbit.
 
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RotateCcw } from 'lucide-react';
-import TwistySection from '@/components/TwistySection';
+import AlgPlayer from '@/components/AlgPlayer/AlgPlayer';
 import { useT } from '../../../hooks/useT';
 import { HERO_SCRAMBLE, HERO_SOLUTION } from './_cube-util';
 import './_LiveHero.css';
-
-const FACES = ['U', 'R', 'F', 'L', 'D', 'B'] as const;
 
 export default function LiveHero() {
   useTranslation();
   const t = useT();
   const [mode, setMode] = useState<'watch' | 'play'>('watch');
-  const [prime, setPrime] = useState(false);
   const [moveCount, setMoveCount] = useState(0);
-  const [alg, setAlg] = useState('');
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const playerRef = useRef<any>(null);
-  const movesRef = useRef<string[]>([]);
-
-  // Drop the cubing.js checkerboard (let the warm glow show through) and, in
-  // watch mode, auto-play the solve once the async-built player is ready.
-  useEffect(() => {
-    let tries = 0;
-    const id = window.setInterval(() => {
-      const p = playerRef.current;
-      tries += 1;
-      if (p && typeof p.play === 'function') {
-        try { p.background = 'none'; } catch { /* */ }
-        if (mode === 'watch') {
-          try { p.timestamp = 0; } catch { /* */ }
-          try { p.play(); } catch { /* */ }
-        }
-        window.clearInterval(id);
-      } else if (tries > 24) {
-        window.clearInterval(id);
-      }
-    }, 250);
-    return () => window.clearInterval(id);
-  }, [mode]);
-
-  function onUserMove(mv: string) {
-    movesRef.current = [...movesRef.current, mv];
-    setMoveCount(movesRef.current.length);
-    setAlg(movesRef.current.join(' '));
-  }
-
-  function press(face: string) {
-    const move = prime ? `${face}'` : face;
-    const p = playerRef.current;
-    if (p && typeof p.experimentalAddMove === 'function') {
-      try { p.experimentalAddMove(move); } catch { /* */ }
-    }
-  }
+  const [playSession, setPlaySession] = useState(0);
 
   function reset() {
-    movesRef.current = [];
     setMoveCount(0);
-    setAlg('');
+    setPlaySession((session) => session + 1);
   }
 
   function switchMode(next: 'watch' | 'play') {
@@ -78,14 +34,19 @@ export default function LiveHero() {
     <div className="wc-livehero">
       <div className="wc-livehero-glow" aria-hidden />
       <div className="wc-livehero-stage">
-        <TwistySection
-          puzzle="3x3x3"
-          scramble={mode === 'watch' ? HERO_SCRAMBLE : ''}
-          alg={mode === 'watch' ? HERO_SOLUTION : alg}
-          twistOnClick={mode === 'play'}
-          onUserMove={mode === 'play' ? onUserMove : undefined}
-          playerRef={playerRef}
-          settings={{ scale: 52, viewAngle: 50, viewGradient: 36, speed: 58, hint: false }}
+        <AlgPlayer
+          key={`${mode}-${playSession}`}
+          puzzle="3x3"
+          set=""
+          engine="sim"
+          alg={mode === 'watch' ? HERO_SOLUTION : ''}
+          setup={mode === 'watch' ? HERO_SCRAMBLE : undefined}
+          autoPlay={mode === 'watch'}
+          controlMode={mode === 'watch' ? 'full' : 'none'}
+          interactionMode={mode === 'watch' ? 'view' : 'turn'}
+          onUserMove={mode === 'play' ? () => setMoveCount((count) => count + 1) : undefined}
+          moveDurationMs={360}
+          size={300}
         />
       </div>
 
@@ -104,20 +65,7 @@ export default function LiveHero() {
 
       {mode === 'play' && (
         <div className="wc-livehero-pad">
-          <div className="wc-livehero-keys">
-            {FACES.map((f) => (
-              <button key={f} type="button" className="wc-livehero-key" onClick={() => press(f)}>
-                {f}{prime ? '′' : ''}
-              </button>
-            ))}
-          </div>
           <div className="wc-livehero-pad-foot">
-            <button
-              type="button"
-              className={`wc-livehero-dir${prime ? ' is-active' : ''}`}
-              onClick={() => setPrime((v) => !v)}
-              aria-pressed={prime}
-            >{prime ? t('逆时针', 'Counter-CW') : t('顺时针', 'Clockwise')}</button>
             <span className="wc-livehero-count">{t('已转', 'Turns')} {moveCount}</span>
             <button type="button" className="wc-livehero-reset" onClick={reset}>
               <RotateCcw size={14} />{t('重置', 'Reset')}

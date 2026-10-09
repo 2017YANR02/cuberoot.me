@@ -58,17 +58,6 @@ pub fn high_memory_enabled() -> bool {
     selection().high_memory()
 }
 
-pub fn configure_rayon_threads(max_threads: usize) -> usize {
-    assert!(max_threads > 0, "Rayon thread limit must be positive");
-    let threads = std::env::var("RAYON_NUM_THREADS")
-        .ok()
-        .and_then(|value| value.parse::<usize>().ok())
-        .unwrap_or(max_threads)
-        .clamp(1, max_threads);
-    std::env::set_var("RAYON_NUM_THREADS", threads.to_string());
-    threads
-}
-
 fn select_profile() -> TableProfileSelection {
     let total_memory_bytes = detect_total_memory_bytes();
     match std::env::var("CUBE_TABLE_PROFILE") {

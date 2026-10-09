@@ -44,16 +44,16 @@ function rules(file: string, content: string): string[] {
 
 describe('architecture boundary guard', () => {
   it('pins the complete current dependency baseline by exact finding identity', () => {
-    expect(MANIFEST.legacyFindings).toHaveLength(201);
+    expect(MANIFEST.legacyFindings).toHaveLength(193);
     expect(compareFindings(uncontractedFindings(CURRENT, MANIFEST.manualContracts), MANIFEST.legacyFindings)).toEqual({ additions: [], stale: [] });
-    // Reviewed FFmpeg adapter and local psql integration-test adapter.
-    expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length + 2);
-    expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'shared-root-import')).toHaveLength(156);
+    // Reviewed native adapters, isolated fixtures, SOR refresh, and bounded solver diagnostics.
+    expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length + 7);
+    expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'shared-root-import')).toHaveLength(147);
     expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'cross-package-alias-import')).toHaveLength(0);
   });
 
   it('keeps every semantic edge contract tied to live repository evidence', () => {
-    expect(MANIFEST.manualContracts).toHaveLength(15);
+    expect(MANIFEST.manualContracts).toHaveLength(19);
     expect(validateManifestSchema(MANIFEST)).toEqual([]);
     expect(validateManualContracts(MANIFEST.manualContracts)).toEqual([]);
     expect(new Set(MANIFEST.manualContracts.map((item: { phase: string }) => item.phase))).toEqual(new Set([
@@ -94,6 +94,20 @@ describe('architecture boundary guard', () => {
     const absoluteServerPath = ['D:', 'cube', 'cuberoot.me', 'core', 'apps', 'api', 'src', 'index.ts'].join('/');
     expect(rules(CLIENT_PROBE, `readFileSync('${absoluteServerPath}');`))
       .toContain('cross-package-path');
+  });
+
+  it('limits solver diagnostics and backup fixtures to their exact commands, files and counts', () => {
+    const diagnosticFile = ['core', 'apps', 'api/src/cubeopt/diagnostics.ts'].join('/');
+    const diagnosticCall = "import { execFile } from 'node:child_process'; import { promisify } from 'node:util'; const exec = promisify(execFile); exec('systemctl', args);";
+    expect(rules(diagnosticFile, diagnosticCall)).toEqual([]);
+    expect(rules(diagnosticFile, diagnosticCall + " exec('systemctl', args);")).toContain('subprocess-call');
+    expect(rules(diagnosticFile, diagnosticCall.replace("'systemctl'", "'other-command'"))).toContain('subprocess-call');
+    expect(rules(SERVER_PROBE, diagnosticCall)).toContain('subprocess-call');
+    const backupFile = ['core', 'apps', 'api/tests/backup_recon.test.ts'].join('/');
+    const backupCall = "import { spawnSync } from 'node:child_process'; spawnSync('bash', args);";
+    expect(rules(backupFile, backupCall)).toEqual([]);
+    expect(rules(backupFile, backupCall + " spawnSync('bash', args);")).toContain('subprocess-call');
+    expect(rules(SERVER_PROBE, backupCall)).toContain('subprocess-call');
   });
 
   it('limits the approved encoder contract to one adapter in its exact file', () => {

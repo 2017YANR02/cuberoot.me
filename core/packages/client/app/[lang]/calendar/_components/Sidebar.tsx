@@ -3,22 +3,26 @@
 // 左栏:迷你月历(跳日期)+ 我的日历(显示/隐藏、改名改色、删)+ 待回应的邀请。
 // 迷你月历直接用站内的 MonthGrid(/wca/comp 与首页日历同一个),不另造一个月网格。
 
-import { useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { ChevronLeft, ChevronRight, Plus, Trash2, Pencil, Check } from 'lucide-react';
 import MonthGrid from '@/components/MonthGrid';
 import { tr } from '@/i18n/tr';
-import { CALENDAR_COLOR_DEFS, colorHex, colorName } from '@/lib/calendar-colors';
+import { colorHex } from '@/lib/calendar-colors';
+import CalendarColorSelect from '@/components/CalendarColorSelect';
 import { useLang } from '@/i18n/tr';
+import { useEffectiveTheme } from '@/lib/theme';
 import type { CalendarMeta, CalEvent } from '@cuberoot/shared/calendar';
-import { dayKeyIn } from '../_lib/format';
+import { dayKeyIn, dayStart } from '../_lib/format';
 
 interface Props {
+  children?: ReactNode;
   calendars: CalendarMeta[];
   hidden: number[];
   /** 迷你月历当前锚点(绝对时刻) */
   anchor: number;
   tz: string;
   weekStart: 0 | 1;
+  todayKey: string;
   /** 有日程的日子打点 */
   busyDays: Set<string>;
   /** 待我回应的邀请 */
@@ -41,7 +45,10 @@ const WEEKDAY_LABELS = [
 
 export default function Sidebar(props: Props) {
   const isZh = useLang() === 'zh';
-  const [mini, setMini] = useState(() => new Date(props.anchor));
+  const theme = useEffectiveTheme();
+  const anchorKey = dayKeyIn(props.tz, props.anchor);
+  const [mini, setMini] = useState(() => new Date(`${anchorKey}T12:00:00`));
+  useEffect(() => { setMini(new Date(`${anchorKey}T12:00:00`)); }, [anchorKey]);
   const [editing, setEditing] = useState<number | null>(null);
   const [draftName, setDraftName] = useState('');
   const [pickingColor, setPickingColor] = useState<number | null>(null);
@@ -57,6 +64,8 @@ export default function Sidebar(props: Props) {
   const shift = (months: number): void => {
     setMini((cur) => new Date(cur.getFullYear(), cur.getMonth() + months, 1));
   };
+  // MonthGrid 输出本地日期；点击与打点必须把同一个日历日映射到显示时区。
+  const cellKey = (date: Date): string => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
   return (
     <aside className="cal-sidebar">
@@ -82,19 +91,23 @@ export default function Sidebar(props: Props) {
           month={mini.getMonth() + 1}
           weekStart={props.weekStart === 1 ? 'mon' : 'sun'}
           weekdays={weekdays}
+          today={new Date(`${props.todayKey || '2000-01-01'}T12:00:00`)}
           dayCellProps={(date) => ({
             role: 'button',
             tabIndex: 0,
-            onClick: () => props.onPickDate(date.getTime()),
+            'aria-label': cellKey(date),
+            'aria-pressed': cellKey(date) === anchorKey,
+            className: cellKey(date) === anchorKey ? 'is-selected' : '',
+            onClick: () => props.onPickDate(dayStart(props.tz, cellKey(date))),
             onKeyDown: (e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
-                props.onPickDate(date.getTime());
+                props.onPickDate(dayStart(props.tz, cellKey(date)));
               }
             },
           })}
           renderDay={(date) => {
-            const key = dayKeyIn(props.tz, date.getTime());
+            const key = cellKey(date);
             return (
               <span className={`cal-mini-day${props.busyDays.has(key) ? ' has-events' : ''}`}>
                 {date.getDate()}
@@ -143,7 +156,7 @@ export default function Sidebar(props: Props) {
                     <button
                       type="button"
                       className={`cal-tick${on ? ' is-on' : ''}`}
-                      style={{ '--tick': colorHex(c.color) } as React.CSSProperties}
+                      style={{ '--tick': colorHex(c.color, theme) } as React.CSSProperties}
                       aria-pressed={on}
                       aria-label={c.name || tr({ zh: '我的日历', en: 'My calendar' })}
                       onClick={() => props.onToggle(c.id)}
@@ -167,7 +180,7 @@ export default function Sidebar(props: Props) {
                       aria-label={tr({ zh: '换颜色', en: 'Change colour' })}
                       onClick={() => setPickingColor(pickingColor === c.id ? null : c.id)}
                     >
-                      <span className="cal-dot" style={{ background: colorHex(c.color) }} aria-hidden />
+                      <span className="cal-dot" style={{ background: colorHex(c.color, theme) }} aria-hidden />
                     </button>
                     {!c.isDefault && (
                       <button
@@ -182,18 +195,8 @@ export default function Sidebar(props: Props) {
                   </>
                 )}
                 {pickingColor === c.id && (
-                  <div className="cal-swatches cal-row-swatches">
-                    {CALENDAR_COLOR_DEFS.map((col) => (
-                      <button
-                        key={col.key}
-                        type="button"
-                        className={`cal-swatch${c.color === col.key ? ' is-on' : ''}`}
-                        style={{ background: col.hex }}
-                        title={colorName(col.key, isZh)}
-                        aria-label={colorName(col.key, isZh)}
-                        onClick={() => { props.onRecolor(c.id, col.key); setPickingColor(null); }}
-                      />
-                    ))}
+                  <div className="cal-row-colors">
+                    <CalendarColorSelect value={c.color} onChange={(color) => { props.onRecolor(c.id, color); setPickingColor(null); }} />
                   </div>
                 )}
               </li>
@@ -201,6 +204,8 @@ export default function Sidebar(props: Props) {
           })}
         </ul>
       </div>
+
+      {props.children}
 
       {props.invites.length > 0 && (
         <div className="cal-side-block">
@@ -211,7 +216,7 @@ export default function Sidebar(props: Props) {
             {props.invites.map((e) => (
               <li key={e.id} className="cal-list-row">
                 <button type="button" className="cal-invite-btn" onClick={() => props.onOpenInvite(e)}>
-                  <span className="cal-dot" style={{ background: colorHex(e.color || 'graphite') }} aria-hidden />
+                  <span className="cal-dot" style={{ background: colorHex(e.color || 'graphite', theme) }} aria-hidden />
                   <span className="cal-list-name">{e.title || tr({ zh: '(无标题)', en: '(No title)' })}</span>
                 </button>
               </li>

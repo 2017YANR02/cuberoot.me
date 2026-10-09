@@ -1,0 +1,12 @@
+[Unit]
+Description=Check CubeRoot nginx traffic every minute
+
+[Timer]
+OnCalendar=*-*-* *:*:15 UTC
+Persistent=true
+AccuracySec=1s
+Unit=cuberoot-traffic-guard.service
+
+[Install]
+WantedBy=timers.target
+

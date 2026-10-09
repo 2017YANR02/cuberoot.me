@@ -1,4 +1,5 @@
 import { CubingIcon } from '@cuberoot/event-icon';
+import { TIMER_333_SCRAMBLE_TYPES, timerEventIdFromSelector, timerPuzzleSelection } from '@cuberoot/shared/timer';
 import { Boxes, ChevronDown } from 'lucide-react';
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 
@@ -8,6 +9,7 @@ import {
   type TimerOverlayOpenReason,
   useTimerOverlayControl,
 } from './timer-overlay-control';
+import { CompactSelect } from './CompactSelect';
 
 export interface TimerPuzzlePickerItem {
   id: string;
@@ -29,6 +31,10 @@ export interface TimerPuzzlePickerProps extends TimerOverlayControlProps {
   puzzleLabel: string;
   selectedEvent: string;
   dataNoTimer?: boolean;
+  /** Enable the puzzle/type split on timer controls; data import may keep raw modes. */
+  scrambleTypeLabel?: string;
+  /** The host renders training choices in its combined source menu. */
+  combineScrambleTypes?: boolean;
 }
 
 const VIEWPORT_MARGIN_PX = 8;
@@ -47,13 +53,30 @@ export function TimerPuzzlePicker({
   open: controlledOpen,
   puzzleLabel,
   selectedEvent,
+  scrambleTypeLabel,
+  combineScrambleTypes = false,
 }: TimerPuzzlePickerProps) {
-  const groups = suppliedGroups.filter((group) => group.items.length > 0);
-  const [open, changeOpen] = useTimerOverlayControl({
+  const availableItems = suppliedGroups.flatMap((group) => group.items);
+  const separateTypes = Boolean(scrambleTypeLabel && availableItems.some((item) => item.id === '333'));
+  const storedEvent = timerEventIdFromSelector(selectedEvent);
+  const selection = storedEvent ? timerPuzzleSelection(storedEvent) : null;
+  // Non-training selectors may use WCA spellings such as 333bf; keep their UI identity.
+  const selectedPuzzle = combineScrambleTypes && (selectedEvent === 'eg1' || selectedEvent === 'eg2')
+    ? '222' : separateTypes && selection?.puzzle === '333' ? '333' : selectedEvent;
+  const groups = suppliedGroups.map((group) => ({
+    ...group,
+    items: group.items.filter((item) => !(combineScrambleTypes && (item.id === 'eg1' || item.id === 'eg2')) && (!separateTypes || !TIMER_333_SCRAMBLE_TYPES.some(
+      (type) => type.event !== '333' && type.event === item.id,
+    ))),
+  })).filter((group) => group.items.length > 0);
+  const scrambleTypes = TIMER_333_SCRAMBLE_TYPES.filter((type) => availableItems.some((item) => item.id === type.event));
+  const [activeMenu, setActiveMenu] = useState<'puzzle' | 'type'>('puzzle');
+  const [expanded, changeOpen] = useTimerOverlayControl({
     id: TIMER_OVERLAY_IDS.puzzlePicker,
     onOpenChange,
     open: controlledOpen,
   });
+  const open = expanded && activeMenu === 'puzzle';
   const [compact, setCompact] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -62,7 +85,7 @@ export function TimerPuzzlePicker({
   const popupId = useId();
   const selectedItem = groups
     .flatMap((group) => group.items)
-    .find((item) => item.id === selectedEvent);
+    .find((item) => item.id === selectedPuzzle);
 
   const close = useCallback((reason: TimerOverlayOpenReason, restoreFocus = false) => {
     changeOpen(false, reason);
@@ -142,6 +165,7 @@ export function TimerPuzzlePicker({
   };
 
   return (
+    <>
     <div className={`pp${compact ? ' pp--compact' : ''}`} data-no-timer={dataNoTimer ? '' : undefined} ref={rootRef}>
       <button
         aria-controls={open ? popupId : undefined}
@@ -150,7 +174,7 @@ export function TimerPuzzlePicker({
         aria-label={selectedItem?.label ?? puzzleLabel}
         className={`pp-trigger${selectedItem ? ' pp-trigger--active' : ''}`}
         disabled={disabled}
-        onClick={() => changeOpen(!open, 'trigger')}
+        onClick={() => { setActiveMenu('puzzle'); changeOpen(!open, 'trigger'); }}
         ref={triggerRef}
         type="button"
       >
@@ -165,7 +189,7 @@ export function TimerPuzzlePicker({
               <div className="pp-group-title">{group.label}</div>
               <div className="pp-group-items">
                 {group.items.map((item) => {
-                  const active = item.id === selectedEvent;
+                  const active = item.id === selectedPuzzle;
                   return (
                     <button
                       aria-current={active ? 'page' : undefined}
@@ -189,5 +213,27 @@ export function TimerPuzzlePicker({
         </div>
       )}
     </div>
+    {!combineScrambleTypes && separateTypes && selectedPuzzle === '333' && scrambleTypes.length > 1 && (
+      <CompactSelect
+        variant="plain"
+        className="timer-scramble-type-select"
+        open={expanded && activeMenu === 'type'}
+        onOpenChange={(next) => {
+          setActiveMenu('type');
+          changeOpen(next, next ? 'trigger' : 'select');
+        }}
+        ariaLabel={scrambleTypeLabel!}
+        dataNoTimer={dataNoTimer}
+        disabled={disabled}
+        label={storedEvent === '333' ? 'WCA' : availableItems.find((item) => item.id === storedEvent)?.label ?? 'WCA'}
+        items={scrambleTypes.map((type) => ({
+          value: type.event,
+          label: type.event === '333' ? 'WCA' : availableItems.find((item) => item.id === type.event)!.label,
+        }))}
+        value={storedEvent ?? '333'}
+        onChange={onSelect}
+      />
+    )}
+    </>
   );
 }

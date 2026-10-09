@@ -267,23 +267,30 @@ describe('Solo smart-cube guidance has one shared lifecycle controller', () => {
   );
 
   it('keeps only the Web facelet/Worker adapter in SoloView', () => {
-    expect(source).toContain('createSmartCubeGuidanceController');
+    expect(source).toContain('new SmartCubeSoloTimerController<CubeMoveMetadata>');
     expect(source).toContain('id: currentScrambleEntry.id');
-    expect(source).toContain('scrambleGuidanceController.setConnected(cubeConnected)');
-    expect(source).toContain("scrambleGuidanceController.setRunning(timer.phase === 'running')");
-    expect(source).toContain('scrambleGuidanceController.syncFacelets(bluetoothCube.facelets)');
+    expect(source).toContain('smartCubeSoloController.setConnected(cubeConnected)');
+    expect(source).toContain("smartCubeSoloController.setRunning(timer.phase === 'running')");
+    expect(source).toContain('smartCubeSoloController.syncFacelets(bluetoothCube.facelets)');
     expect(source).toMatch(/syncFacelets\(bluetoothCube\.facelets\);[\s\S]*?cubeConnected,[\s\S]*?currentScrambleEntry\.id,[\s\S]*?scrambleTarget,[\s\S]*?timer\.phase,/);
-    expect(source).toContain('scrambleGuidanceController.observe(toFaceletString(faces))');
-    expect(source).toContain('observation.completedNow');
+    expect(source).toContain('smartCubeSoloController.move({ facelets, metadata, move, timestamp: ts })');
+    expect(source).toContain('return from && target ? fixupScramble(from, target) : null');
+    expect(source).not.toContain('createSmartCubeGuidanceController');
     expect(source).not.toContain('verifySmartCubeScramble');
     expect(source).not.toContain('createFixupRequester');
     expect(source).not.toContain('scrambleGuidanceCompleteRef');
   });
 
-  it('starts an armed solve before broadcasting that first move to guidance', () => {
-    const start = source.indexOf('startFromCubeRef.current(ts)');
-    const broadcast = source.indexOf('for (const sub of bluetoothSubscribersRef.current)');
+  it('delegates the first-turn order to the shared controller', () => {
+    const controller = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'shared', 'src', 'smart_cube', 'solo_timer.ts'),
+      'utf8',
+    );
+    const start = controller.indexOf('this.options.startFromCube(event.timestamp)');
+    const record = controller.indexOf('this.options.recordMove(event)', start);
+    const guidance = controller.indexOf('this.guidance.observe(event.facelets)');
     expect(start).toBeGreaterThan(-1);
-    expect(broadcast).toBeGreaterThan(start);
+    expect(record).toBeGreaterThan(start);
+    expect(guidance).toBeGreaterThan(record);
   });
 });

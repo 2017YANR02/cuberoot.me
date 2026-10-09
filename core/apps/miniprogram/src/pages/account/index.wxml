@@ -1,9 +1,13 @@
+<page-meta page-style="{{appearanceStyle}}" />
+<import src="../../templates/native-appearance.wxml" />
+<template is="native-scenery" wx:if="{{!isTimelineEntry}}" />
+<scroll-view class="account-scroll" scroll-y="{{true}}" scroll-x="{{false}}" enhanced="{{true}}" show-scrollbar="{{false}}">
 <view wx:if="{{isTimelineEntry}}" class="page account-entry-page">
   <text class="account-entry-copy" aria-role="status">{{copy.entryCopy}}</text>
 </view>
 
 <view wx:elif="{{loginRequired}}" class="page account-login-page">
-  <text class="eyebrow">ACCOUNT</text>
+  <text class="eyebrow">{{copy.accountEyebrow}}</text>
   <text class="page-title">{{wechatPhoneRequired ? copy.phoneTitle : accountLinkCodeMode ? copy.linkExistingAccountLabel : phoneAccountFound ? copy.phoneFoundTitle : accountLinkRequired ? copy.accountChoiceTitle : copy.pageTitle}}</text>
   <text class="page-intro">{{wechatPhoneRequired ? copy.phoneHint : accountLinkCodeMode ? copy.linkCodeHint : phoneAccountFound ? copy.phoneFoundHint : accountLinkRequired ? copy.accountChoiceNote : loginIntro}}</text>
   <view wx:if="{{requiresAgreement}}" class="account-policy">
@@ -50,14 +54,20 @@
       <button class="primary-button account-primary-button" disabled="{{loginBusy}}" aria-busy="{{loginBusy}}" hover-class="press-feedback" bindtap="confirmPhoneAccount">{{loginBusy ? copy.signingInLabel : copy.confirmLinkCodeLabel}}</button>
     </block>
     <block wx:elif="{{accountLinkCodeMode}}">
-      <view class="account-link-code-row">
-        <input class="account-link-code-input" value="{{accountLinkCode}}" placeholder="{{copy.linkCodeLabel}}" aria-label="{{copy.linkCodeLabel}}" maxlength="24" disabled="{{loginBusy}}" bindinput="onLinkCodeInput" />
-        <button wx:if="{{accountLinkCode}}" class="text-button" aria-label="{{copy.clearCodeLabel}}" disabled="{{loginBusy}}" hover-class="press-feedback" bindtap="clearLinkCode">×</button>
-      </view>
-      <text wx:if="{{accountLinkTargetId}}" class="account-user-meta">{{accountLinkTargetName}} · CubeRoot ID {{accountLinkTargetId}}</text>
-      <button wx:if="{{accountLinkTargetId}}" class="primary-button account-primary-button" disabled="{{loginBusy || (requiresAgreement && !agreementAccepted)}}" aria-busy="{{loginBusy}}" hover-class="press-feedback" bindtap="confirmLinkCode">{{loginBusy ? copy.signingInLabel : copy.confirmLinkCodeLabel}}</button>
-      <button wx:else class="primary-button account-primary-button" disabled="{{loginBusy || !accountLinkCode}}" aria-busy="{{loginBusy}}" hover-class="press-feedback" bindtap="previewLinkCode">{{copy.previewLinkCodeLabel}}</button>
-      <button class="text-button account-create-button" disabled="{{loginBusy}}" hover-class="press-feedback" bindtap="openLinkCodeWebsite">{{copy.openLinkCodeWebsiteLabel}}</button>
+      <block wx:if="{{accountLinkTargetId}}">
+        <text class="account-user-meta">{{copy.loginAsLabel}}{{accountLinkTargetName}}</text>
+        <button class="primary-button account-primary-button" disabled="{{loginBusy || (requiresAgreement && !agreementAccepted)}}" aria-busy="{{loginBusy}}" hover-class="press-feedback" bindtap="confirmLinkCode">{{loginBusy ? copy.signingInLabel : copy.confirmLinkCodeLabel}}</button>
+        <button class="text-button account-create-button" aria-label="{{copy.clearCodeLabel}}" disabled="{{loginBusy}}" hover-class="press-feedback" bindtap="clearLinkCode">{{copy.clearCodeLabel}}</button>
+      </block>
+      <block wx:else>
+        <button class="primary-button account-primary-button account-link-website-button" disabled="{{loginBusy}}" hover-class="press-feedback" bindtap="openLinkCodeWebsite">{{copy.openLinkCodeWebsiteLabel}}</button>
+        <text class="account-link-code-prompt">{{copy.linkCodeReadyHint}}</text>
+        <view class="account-link-code-row">
+          <input class="account-link-code-input" value="{{accountLinkCode}}" type="number" placeholder="{{copy.linkCodeLabel}}" aria-label="{{copy.linkCodeLabel}}" maxlength="6" disabled="{{loginBusy}}" bindinput="onLinkCodeInput" />
+          <button wx:if="{{accountLinkCode}}" class="text-button" aria-label="{{copy.clearCodeLabel}}" disabled="{{loginBusy}}" hover-class="press-feedback" bindtap="clearLinkCode">×</button>
+        </view>
+        <button class="primary-button account-primary-button account-link-continue-button" disabled="{{loginBusy || !accountLinkCode}}" aria-busy="{{loginBusy}}" hover-class="press-feedback" bindtap="previewLinkCode">{{copy.previewLinkCodeLabel}}</button>
+      </block>
     </block>
     <button wx:else
       class="primary-button account-primary-button"
@@ -96,9 +106,10 @@
 </view>
 
 <view wx:else class="page account-user-page">
-  <text class="eyebrow">ACCOUNT</text>
+  <text class="eyebrow">{{copy.accountEyebrow}}</text>
   <text class="page-title">{{displayName}}</text>
   <text wx:if="{{uidText}}" class="account-user-meta">CubeRoot ID {{uidText}}</text>
+  <text wx:if="{{wcaLinkPending}}" class="status-text" aria-role="status" aria-live="polite">{{copy.wcaLinkHint}}</text>
   <button
     class="primary-button account-primary-button"
     aria-label="{{copy.accountButtonAria}}"
@@ -267,3 +278,4 @@
     </view>
   </view>
 </view>
+</scroll-view>

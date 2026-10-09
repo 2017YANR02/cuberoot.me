@@ -1,13 +1,18 @@
 'use client';
 
-import { useEffect, useRef, useState, type SyntheticEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type SyntheticEvent } from 'react';
 import AppLink from '@/components/AppLink';
 import { VisualCube } from '@/components/VisualCube';
 import { useT } from '@/hooks/useT';
-import { loadPlatformLessonMedia, type PlatformLessonMedia } from '@/lib/platform-gateway';
+import { nextQuery, useIsAdmin } from '@/lib/auth-store';
+import { loadPlatformLessonMedia, platformMediaBrowserUrl, PlatformPermissionError, type PlatformLessonMedia } from '@/lib/platform-gateway';
 import type { PlatformEntity, PlatformRouteDefinition } from '@/lib/platform-types';
-import { PLATFORM_COURSE_SECTIONS } from '@/lib/platform-routes';
+import { PLATFORM_COURSE_SECTIONS, platformCourseSectionsIncludedBy } from '@/lib/platform-routes';
 import { PlatformQrLanding } from './PlatformQrLanding';
+import { PlatformLessonCoverEditor } from './PlatformLessonCoverEditor';
+import { PlatformClassroom } from './PlatformClassroom';
+import { PlatformCoursePresentation, PlatformLearningPath, PlatformCertificate } from './PlatformLearningWorkspace';
+import { PlatformCommerceContent } from './PlatformCommerceContent';
 import { LessonVideoPlayer } from '@/components/video/LessonVideoPlayer';
 
 function record(value: unknown): Record<string, unknown> | null {
@@ -80,18 +85,21 @@ function DomainList({ title, items, href, showStatus = true }: {
   return <section className="platform-domain-content"><h2>{title}</h2>{list}</section>;
 }
 
-function LessonMedia({ lessonId, autoContinue, onAutoContinueChange, onNext, onPrevious, autoPlay, startTime }: {
+function LessonMedia({ lessonId, courseSlug, autoContinue, onAutoContinueChange, onNext, onPrevious, autoPlay, startTime, posterOverride, onVideoElement }: {
   lessonId: string;
+  courseSlug?: string;
   startTime?: number;
   autoContinue?: boolean;
   onAutoContinueChange?: (enabled: boolean) => void;
   onNext?: () => void;
   onPrevious?: () => void;
   autoPlay?: boolean;
+  posterOverride?: string;
+  onVideoElement?: (element: HTMLVideoElement | null) => void;
 }) {
   const t = useT();
   const [media, setMedia] = useState<PlatformLessonMedia | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
   const [reload, setReload] = useState(0);
   const resume = useRef({ time: 0, playing: false });
   const refreshing = useRef(false);
@@ -104,7 +112,7 @@ function LessonMedia({ lessonId, autoContinue, onAutoContinueChange, onNext, onP
         if (!controller.signal.aborted) { refreshing.current = false; setMedia(value); }
       })
       .catch((reason: unknown) => {
-        if (!controller.signal.aborted) setError(reason instanceof Error ? reason.message : String(reason));
+        if (!controller.signal.aborted) setError(reason instanceof Error ? reason : new Error(String(reason)));
       });
     return () => controller.abort();
   }, [lessonId, reload]);
@@ -114,21 +122,42 @@ function LessonMedia({ lessonId, autoContinue, onAutoContinueChange, onNext, onP
     if (media && Date.parse(media.expiresAt) <= Date.now() && !refreshing.current) {
       refreshing.current = true;
       setReload(value => value + 1);
-    } else setError(t('播放失败，请重新加载后再试。', 'Playback failed. Reload and try again.'));
+    } else setError(new Error(t('播放失败，请重新加载后再试。', 'Playback failed. Reload and try again.')));
   };
   const onLoadedMetadata = (event: SyntheticEvent<HTMLMediaElement>) => {
     const element = event.currentTarget;
     if (resume.current.time > 0) element.currentTime = resume.current.time;
     if (resume.current.playing) void element.play().catch(() => { /* Native play control remains available. */ });
   };
+  if (error instanceof PlatformPermissionError && error.status === 403) {
+    return <div className="platform-locked-media">
+      <div className="platform-locked-media-visual" aria-hidden="true">
+        {courseSlug === 'yan-ruimin-3x3-beginner'
+          ? <img src="/images/ruimin/gallery/photo-03.webp" alt="" />
+          : <VisualCube view="iso" size={240} local alt="" />}
+      </div>
+      <AppLink className="platform-locked-media-action" href="/platform/account/invites" prefetch={false}>
+        {t('兑换课程', 'Redeem course')}
+      </AppLink>
+    </div>;
+  }
+  if (error instanceof PlatformPermissionError) {
+    const href = `/account${nextQuery(`${window.location.pathname}${window.location.search}`)}`;
+    return <div className="platform-domain-note">
+      <p>{t('请先登录，再继续观看这个课时。', 'Sign in to continue watching this lesson.')}</p>
+      <AppLink className="platform-action-link" href={href} prefetch={false}>
+        {t('前往登录', 'Go to sign in')}
+      </AppLink>
+    </div>;
+  }
   if (error) return <div className="platform-domain-note">
-    <p>{t('课时媒体暂时无法加载：', 'Lesson media could not be loaded: ')}{error}</p>
+    <p>{t('课时媒体暂时无法加载：', 'Lesson media could not be loaded: ')}{error.message}</p>
     <button type="button" className="platform-action-link" onClick={() => setReload(value => value + 1)}>{t('重新加载播放器', 'Reload player')}</button>
   </div>;
   if (!media) return <p className="platform-domain-note">{t('正在取得课时媒体访问权限。', 'Requesting lesson media access.')}</p>;
-  if (media.mimeType.startsWith('video/')) return <LessonVideoPlayer src={media.accessUrl} onError={onError} onLoadedMetadata={onLoadedMetadata}
+  if (media.mimeType.startsWith('video/')) return <LessonVideoPlayer src={platformMediaBrowserUrl(media.accessUrl)} poster={posterOverride ?? (media.posterUrl ? platformMediaBrowserUrl(media.posterUrl) : undefined)} onError={onError} onLoadedMetadata={onLoadedMetadata}
     lessonId={lessonId} mediaId={media.mediaId} mimeType={media.mimeType} startTime={startTime}
-    autoContinue={autoContinue} onAutoContinueChange={onAutoContinueChange} onNext={onNext} onPrevious={onPrevious} autoPlay={autoPlay} />;
+    autoContinue={autoContinue} onAutoContinueChange={onAutoContinueChange} onNext={onNext} onPrevious={onPrevious} autoPlay={autoPlay} onVideoElement={onVideoElement} />;
   if (media.mimeType.startsWith('audio/')) return <audio className="platform-lesson-media" controls preload="metadata" src={media.accessUrl} onError={onError} onLoadedMetadata={onLoadedMetadata} />;
   return <a className="platform-action-link" href={media.accessUrl} target="_blank" rel="noreferrer">{t('打开课时媒体', 'Open lesson media')}</a>;
 }
@@ -179,21 +208,82 @@ function OrderItems({ items, status }: { items: unknown[]; status?: string }) {
   );
 }
 
-export function PlatformDomainContent({ definition, entity, params, previewRedirect, selectedLessonId, onSelectLesson, lessonStartTime }: {
+function ClassroomLessonStage({ title, courseId, lessonId, courseSlug, canEditCover, startTime, autoContinue, onAutoContinueChange, autoPlay, onPrevious, onNext, onVideoElement }: {
+  title: string;
+  courseId: string;
+  lessonId: string;
+  courseSlug?: string;
+  canEditCover: boolean;
+  startTime?: number;
+  autoContinue?: boolean;
+  onAutoContinueChange?: (enabled: boolean) => void;
+  autoPlay?: boolean;
+  onPrevious?: () => void;
+  onNext?: () => void;
+  onVideoElement?: (video: HTMLVideoElement | null) => void;
+}) {
+  const [posterOverride, setPosterOverride] = useState<string>();
+  const [videoElement, setVideoElement] = useState<HTMLVideoElement | null>(null);
+  const attachVideo = useCallback((element: HTMLVideoElement | null) => { setVideoElement(element); onVideoElement?.(element); }, [onVideoElement]);
+  return <section className="platform-classroom-stage" aria-label={title}>
+    <div className="platform-classroom-stage-heading">
+      <h2 aria-live="polite">{title}</h2>
+      {canEditCover ? <PlatformLessonCoverEditor
+        scope="admin"
+        courseId={courseId}
+        lessonId={lessonId}
+        currentVideo
+        videoElement={videoElement}
+        onCoverUpdated={(posterUrl) => { if (posterUrl) setPosterOverride(posterUrl); }}
+      /> : null}
+    </div>
+    <div className="platform-classroom-player"><LessonMedia
+      lessonId={lessonId}
+      courseSlug={courseSlug}
+      startTime={startTime}
+      autoContinue={autoContinue}
+      onAutoContinueChange={onAutoContinueChange}
+      autoPlay={autoPlay}
+      onPrevious={onPrevious}
+      onNext={onNext}
+      posterOverride={posterOverride}
+      onVideoElement={attachVideo}
+    /></div>
+  </section>;
+}
+
+export function PlatformDomainContent({ definition, entity, params, previewRedirect, selectedLessonId, onSelectLesson, lessonStartTime, courseRedeemed }: {
   definition: PlatformRouteDefinition;
   entity?: PlatformEntity;
   params: Record<string, string>;
   previewRedirect?: boolean;
   selectedLessonId?: string | null;
   lessonStartTime?: number;
+  courseRedeemed?: boolean;
   onSelectLesson?: (id: string) => void;
 }) {
   const t = useT();
+  const isAdmin = useIsAdmin();
   const [autoContinue, setAutoContinue] = useState(false);
   const [autoPlayLessonId, setAutoPlayLessonId] = useState<string | null>(null);
+  if (['product-detail', 'event-detail', 'news-detail', 'admin', 'admin-event-analytics'].includes(definition.id)) return <PlatformCommerceContent definition={definition} entity={entity} />;
   if (!entity?.data) return null;
   const data = entity.data;
   const english = t('zh', 'en') === 'en';
+
+  if (definition.id === 'admin-application') {
+    const application = record(data.application) ?? {};
+    const labels: Record<string, string> = { experience: t('教学经历', 'Teaching experience'), specialties: t('擅长项目', 'Specialties'), contact: t('联系方式', 'Contact'), city: t('所在城市', 'City'), wcaId: 'WCA ID', formats: t('授课方式', 'Teaching formats'), introduction: t('自我介绍', 'Introduction') };
+    const readable = (value: unknown): string => typeof value === 'string' ? value : Array.isArray(value) ? value.map(readable).filter(Boolean).join(' · ') : value && typeof value === 'object' ? Object.entries(value).map(([key, item]) => `${labels[key] ?? key}: ${readable(item)}`).join('\n') : typeof value === 'number' || typeof value === 'boolean' ? String(value) : '';
+    return <section className="platform-domain-content"><h2>{t('讲师申请资料', 'Instructor application')}</h2><dl>
+      <dt>{t('申请人', 'Applicant')}</dt><dd>{string(data.applicantDisplayName) ?? entity.title}</dd>
+      <dt>{t('申请时间', 'Submitted')}</dt><dd>{String(data.createdAt ?? '').slice(0, 10)}</dd>
+      <dt>{t('状态', 'Status')}</dt><dd>{data.status === 'approved' ? t('已通过', 'Approved') : data.status === 'rejected' ? t('已拒绝', 'Rejected') : data.status === 'withdrawn' ? t('已撤回', 'Withdrawn') : t('待审核', 'Pending review')}</dd>
+      {Object.entries(application).map(([key, value]) => <div key={key}><dt>{labels[key] ?? key}</dt><dd className="platform-prose">{readable(value).split('\n').map((line, index) => <p key={index}>{line}</p>)}</dd></div>)}
+      {data.decisionNote ? <><dt>{t('审核意见', 'Review note')}</dt><dd>{String(data.decisionNote)}</dd></> : null}
+      {data.decidedAt ? <><dt>{t('审核时间', 'Reviewed')}</dt><dd>{String(data.decidedAt).slice(0, 10)}</dd></> : null}
+    </dl></section>;
+  }
 
   const selectedSection = PLATFORM_COURSE_SECTIONS.find(section => definition.id === `course-section-${section.slug}`);
   if (definition.id === 'course-detail' || selectedSection) {
@@ -220,38 +310,24 @@ export function PlatformDomainContent({ definition, entity, params, previewRedir
     };
     if (selectedSection) {
       // Invalid or stale query IDs fall back to the first lesson in this section.
-      const sectionLessons = lessons.flatMap(raw => {
+      const sectionLessons = platformCourseSectionsIncludedBy(selectedSection.slug).flatMap(section => lessons.flatMap(raw => {
         const lesson = record(raw);
         const id = string(lesson?.id);
-        return lesson && id && (string(lesson.titleZh) ?? '').startsWith(selectedSection.title.zh)
-          ? [{ id, title: sectionLessonTitle(localized(lesson, 'title', english) ?? t('未命名课时', 'Untitled lesson'), selectedSection) }] : [];
-      });
+        return lesson && id && (string(lesson.titleZh) ?? '').startsWith(section.title.zh)
+          ? [{ id, title: sectionLessonTitle(localized(lesson, 'title', english) ?? t('未命名课时', 'Untitled lesson'), section) }] : [];
+      }));
       const active = sectionLessons.find(lesson => lesson.id === selectedLessonId) ?? sectionLessons[0];
       if (!active) return <p className="platform-domain-note">{t('暂无课时。', 'No lessons yet.')}</p>;
-      const activeIndex = sectionLessons.findIndex(lesson => lesson.id === active.id);
-      const playLesson = (index: number) => {
-        const lesson = sectionLessons[index];
-        if (lesson && onSelectLesson) { setAutoPlayLessonId(lesson.id); onSelectLesson(lesson.id); }
-      };
-      return <div className="platform-classroom">
-        <nav className="platform-classroom-directory platform-glass" aria-label={t('课时目录', 'Lesson directory')}>
-          <h2>{t('课时目录', 'Lesson directory')}</h2>
-          <div className="platform-classroom-lessons">{sectionLessons.map(lesson => <button
-            key={lesson.id} className="platform-classroom-lesson" type="button" aria-current={lesson.id === active.id ? 'true' : undefined}
-            onClick={() => { setAutoPlayLessonId(null); onSelectLesson?.(lesson.id); }}
-          >{lesson.title}</button>)}</div>
-        </nav>
-        <section className="platform-classroom-stage" aria-label={t('课程视频', 'Lesson video')}>
-          <h2 aria-live="polite">{active.title}</h2>
-          <div className="platform-classroom-player"><LessonMedia key={active.id} lessonId={active.id} startTime={lessonStartTime}
-            autoContinue={autoContinue} onAutoContinueChange={onSelectLesson ? setAutoContinue : undefined} autoPlay={autoPlayLessonId === active.id}
-            onPrevious={onSelectLesson && activeIndex > 0 ? () => playLesson(activeIndex - 1) : undefined}
-            onNext={onSelectLesson && activeIndex < sectionLessons.length - 1 ? () => playLesson(activeIndex + 1) : undefined} /></div>
-        </section>
-      </div>;
+      return <PlatformClassroom key={active.id} courseId={entity.id} lessonId={active.id}
+        lessons={sectionLessons.map(item=>({id:item.id,titleZh:item.title,titleEn:item.title}))}
+        startTime={lessonStartTime} onSelectLesson={onSelectLesson ? id=>{setAutoPlayLessonId(null);onSelectLesson(id);} : undefined}
+        renderMedia={mediaProps=><ClassroomLessonStage {...mediaProps} title={active.title} courseId={entity.id} courseSlug={string(data.slug)??undefined}
+          canEditCover={isAdmin} autoContinue={autoContinue} onAutoContinueChange={setAutoContinue} autoPlay={autoPlayLessonId===active.id}
+          onNext={mediaProps.onNext?()=>{const next=sectionLessons[sectionLessons.findIndex(item=>item.id===active.id)+1];if(next){setAutoPlayLessonId(next.id);onSelectLesson?.(next.id);}}:undefined} />} />;
     }
     return (
       <div className="platform-domain-stack platform-course-outline" id="platform-course-outline">
+        <PlatformCoursePresentation entity={entity} />
         {canGroup ? <section className="platform-domain-content">
           <h2>{t('课程课时', 'Course lessons')}</h2>
           <div className="platform-lesson-grid">{grouped.map((items, index) => items.length > 0 ? <AppLink
@@ -265,7 +341,12 @@ export function PlatformDomainContent({ definition, entity, params, previewRedir
                 : <VisualCube view={index === 1 ? 'f2l' : 'iso'} size={144} local alt="" />}
               <span className="platform-lesson-cover-number">0{index + 1}</span>
             </span>
-            <span className="platform-lesson-card-title">{t(PLATFORM_COURSE_SECTIONS[index].title.zh, PLATFORM_COURSE_SECTIONS[index].title.en)}</span>
+            <span className="platform-lesson-card-title">
+              {t(PLATFORM_COURSE_SECTIONS[index].title.zh, PLATFORM_COURSE_SECTIONS[index].title.en)}
+              {courseRedeemed && PLATFORM_COURSE_SECTIONS[index].slug === 'core'
+                ? <> <span className="platform-course-redeemed">{t('已兑换', 'Redeemed')}</span></>
+                : null}
+            </span>
           </AppLink> : null)}</div>
         </section> : <DomainList
           title={t('课程课时', 'Course lessons')}
@@ -282,23 +363,10 @@ export function PlatformDomainContent({ definition, entity, params, previewRedir
   }
 
   if (definition.id === 'course-lesson') {
-    const body = readableJson(data[english ? 'bodyEn' : 'bodyZh']) ?? readableJson(data[english ? 'bodyZh' : 'bodyEn']);
-    const mediaId = string(data.mediaId);
-    return body || mediaId ? (
-      <section className="platform-domain-content platform-prose">
-        <h2>{t('课时内容', 'Lesson content')}</h2>
-        {body ? body.split('\n\n').map((paragraph, index) => <p key={`${index}-${paragraph.slice(0, 24)}`}>{paragraph}</p>) : null}
-        {mediaId ? <LessonMedia key={entity.id} lessonId={entity.id} startTime={lessonStartTime} /> : null}
-      </section>
-    ) : null;
+    return <PlatformClassroom key={entity.id} courseId={params.id} lessonId={entity.id} startTime={lessonStartTime}
+      renderMedia={mediaProps=><ClassroomLessonStage {...mediaProps} title={entity.title} courseId={params.id} canEditCover={isAdmin} />} />;
   }
-
-  if (definition.id === 'path-detail') {
-    return <DomainList title={t('路径内容', 'Path contents')} items={Array.isArray(data.items) ? data.items : []} href={(item) => {
-      const courseId = string(item.courseId) ?? (item.itemType === 'course' ? string(item.itemId) : null);
-      return courseId ? `/platform/courses/${encodeURIComponent(courseId)}` : null;
-    }} />;
-  }
+  if (definition.id === 'path-detail') return <PlatformLearningPath entity={entity} />;
 
   if (definition.id === 'event-detail') {
     return <DomainList title={t('活动票种', 'Ticket types')} items={Array.isArray(data.tickets) ? data.tickets : []} />;
@@ -326,12 +394,7 @@ export function PlatformDomainContent({ definition, entity, params, previewRedir
     );
   }
 
-  if (definition.id === 'certificate') {
-    const recipient = string(data.recipientName) ?? string(data.displayName);
-    const course = localized(data, 'courseTitle', english);
-    if (!recipient && !course) return null;
-    return <section className="platform-domain-content"><h2>{t('验证结果', 'Verification result')}</h2><dl>{recipient ? <div><dt>{t('获得者', 'Recipient')}</dt><dd>{recipient}</dd></div> : null}{course ? <div><dt>{t('课程', 'Course')}</dt><dd>{course}</dd></div> : null}</dl></section>;
-  }
+  if (definition.id === 'certificate') return <PlatformCertificate entity={entity} code={params.code} />;
 
   if (definition.id === 'qr') {
     return <PlatformQrLanding entity={entity} previewRedirect={previewRedirect} />;

@@ -40,6 +40,8 @@ export interface DrawElement {
   unColorBindKey?: string;
   disShow?: boolean;
   defaultFill?: string;
+  /** Optional shape selected directly in the preview; omitted from exports when off. */
+  toggle?: { selected: boolean; label: string };
 }
 
 /** Sparse paint overrides. Element defaults remain in the geometry definition. */
@@ -60,6 +62,7 @@ export interface RenderDrawSvgOptions {
   height: number;
   strokeWidth?: number;
   strokeWidthScale?: number;
+  interactive?: boolean;
 }
 
 export interface DrawCanvasProps {
@@ -76,6 +79,7 @@ export interface DrawCanvasProps {
   defaultColors?: Readonly<DrawColorDocument>;
   onColorsChange?: (colors: DrawColorDocument) => void;
   onDocumentChange?: (doc: DrawExport) => void;
+  onElementToggle?: (key: string) => void;
   controls?: ReactNode;
   strokeWidthScale?: number;
   className?: string;

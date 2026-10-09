@@ -8,6 +8,7 @@
 
 import type { Solve, EventId, Penalty } from './types';
 import { effectiveMs } from './types';
+import { roundTimedAverageMs } from './round';
 
 /** WCA trim count: ceil(n/20), but at least 1 for n in [3,20]. */
 function trimCount(n: number): number {
@@ -25,7 +26,7 @@ function maxDnfsAllowed(n: number): number {
 }
 
 /** Trimmed mean over an array of effective-ms numbers (Infinity = DNF). */
-function trimmedMean(times: number[]): number {
+export function trimmedMean(times: number[]): number {
   const n = times.length;
   if (n < 3) return mean(times);
   const trim = trimCount(n);
@@ -43,28 +44,18 @@ function mean(times: number[]): number {
 }
 
 /**
- * Truncate to centiseconds (10ms) — WCA standard for averages and means
- * (Regulations 9f3 / 9f7). Single-time values are reported as-is (no trunc).
- */
-function truncToCs(ms: number): number {
-  if (!Number.isFinite(ms)) return ms;
-  if (ms <= 0) return 0;
-  return Math.floor(ms / 10) * 10;
-}
-
-/**
  * Average of N over the last N solves. Returns null when fewer than N exist.
  *
  * For N = 3, 5, 12, 25, 50, 100, ... uses the WCA "average" definition: drop
  * top and bottom 5% (rounded up to at least 1), mean the rest. For N = 1 we
- * return the single time. We treat "mean of N" the same as average for our
- * purposes — single-DNF tolerance only.
+ * return the single time. Mean of N is separate and does not trim failures.
  */
 export function averageOfN(solves: Solve[], n: number): number | null {
   if (solves.length < n) return null;
-  const last = solves.slice(-n).map(effectiveMs);
+  const window = solves.slice(-n);
+  const last = window.map(effectiveMs);
   if (n === 1) return last[0];
-  return truncToCs(trimmedMean(last));
+  return roundMeanFor(window, trimmedMean(last));
 }
 
 /**
@@ -81,7 +72,7 @@ export function bpa(solves: Solve[], n: number): number | null {
   if (solves.length !== n - 1) return null;
   const last = solves.slice(-(n - 1)).map(effectiveMs);
   const window = [...last, 0];
-  return truncToCs(trimmedMean(window));
+  return roundMeanFor(solves, trimmedMean(window));
 }
 
 /**
@@ -94,26 +85,27 @@ export function wpa(solves: Solve[], n: number): number | null {
   if (solves.length !== n - 1) return null;
   const last = solves.slice(-(n - 1)).map(effectiveMs);
   const window = [...last, Infinity];
-  return truncToCs(trimmedMean(window));
+  return roundMeanFor(solves, trimmedMean(window));
 }
 
 /** Best avg of N across the entire solve history. */
 export function bestAverageOfN(solves: Solve[], n: number): number | null {
   if (solves.length < n) return null;
   let best = Infinity;
+  let bestWindow: Solve[] = [];
   for (let i = 0; i + n <= solves.length; i++) {
-    const window = solves.slice(i, i + n).map(effectiveMs);
+    const slice = solves.slice(i, i + n);
+    const window = slice.map(effectiveMs);
     const avg = n === 1 ? window[0] : trimmedMean(window);
-    if (avg < best) best = avg;
+    if (avg < best) { best = avg; bestWindow = slice; }
   }
-  return Number.isFinite(best) ? truncToCs(best) : best;
+  return n === 1 ? best : roundMeanFor(bestWindow, best);
 }
 
 /**
- * FMC stores a move count as `moves * 1000` ms. Its mean is ROUNDED to two
- * decimals of a move (WCA A7c / 9f8) rather than truncated to centiseconds
- * like a time mean (9f7) — and 0.01 move == 10 ms in our encoding, so the two
- * rules differ only in floor-vs-round. Applied only when the whole window is
+ * FMC stores a move count as `moves * 1000` ms. Its average is rounded to two
+ * decimals of a move; the ten-minute timed-result threshold does not apply.
+ * Applied only when the whole window is
  * FMC; a mixed window is nonsense and falls back to the time rule.
  */
 function isFmcWindow(window: Solve[]): boolean {
@@ -122,13 +114,13 @@ function isFmcWindow(window: Solve[]): boolean {
 
 function roundMeanFor(window: Solve[], raw: number): number {
   if (!Number.isFinite(raw)) return raw;
-  return isFmcWindow(window) ? Math.round(raw / 10) * 10 : truncToCs(raw);
+  return isFmcWindow(window) ? Math.round(raw / 10) * 10 : roundTimedAverageMs(raw);
 }
 
 /**
  * Mean of N over the last N solves — no trim, all solves count.
- * Any DNF/DNS in the window → Infinity. Per WCA 9f7 the mean is truncated to
- * cs; the FMC mean is rounded to 2 dp instead (see `roundMeanFor`).
+ * Any DNF/DNS in the window → Infinity. Timed means round per WCA 9f1/9f2;
+ * FMC means round to two decimals of a move.
  */
 export function meanOfN(solves: Solve[], n: number): number | null {
   if (solves.length < n) return null;
@@ -162,7 +154,7 @@ export function bestMeanOfN(solves: Solve[], n: number): number | null {
     const m = window.reduce((a, b) => a + b, 0) / n;
     if (m < best) { best = m; bestWindow = slice; }
   }
-  // Same FMC round-vs-truncate rule as `meanOfN` so "best mo3" agrees with the
+  // Same rounding rule as `meanOfN` so "best mo3" agrees with the
   // live mo3 when they land on the same window.
   return Number.isFinite(best) ? roundMeanFor(bestWindow, best) : best;
 }
@@ -263,7 +255,7 @@ export function meanOfAll(solves: Solve[]): number | null {
   if (solves.length === 0) return null;
   const times = solves.map(effectiveMs);
   if (times.some(t => t === Infinity)) return Infinity;
-  return truncToCs(times.reduce((a, b) => a + b, 0) / times.length);
+  return roundMeanFor(solves, times.reduce((a, b) => a + b, 0) / times.length);
 }
 
 /** Number of solves (incl. DNF). */

@@ -3,14 +3,82 @@ import * as THREE from 'three';
 import Cube from '@/app/[lang]/sim/engine/nxn/cube';
 import { engineHomeSid } from '@/app/[lang]/sim/engine/nxn/netIndex';
 import {
-  customMaskFn, pickedSids, pieceSids, toggleSids, countSids,
-} from '@/app/[lang]/sim/engine/nxn/customStickering';
+  customMaskFn, pickedSids, pieceSids, toggleSids, countSids, paintSids, CustomMaskHistory,
+} from '@/components/sim-embed/customStickering';
 import { FM_REGULAR, FM_DIM, FM_IGNORED, FM_OUTLINE } from '@/app/[lang]/sim/engine/nxn/stickering';
 import { buildFaceletMap } from '@/components/sim-embed/faceletMap';
 import { solvedCube, applyAlg } from '@/lib/lsll/cube333';
 import { stickerFacelet } from '@/app/[lang]/predict/_lib/challenge';
 
 const MAP3 = buildFaceletMap(3);
+
+describe('per-sticker brush', () => {
+  it('erases only the targeted sticker or piece and restores the unset treatment', () => {
+    const mask = paintSids('dim=U:4|outline=F:4', ['U4'], 'erase');
+    expect(mask).toBe('outline=F:4');
+    const fn = customMaskFn(3, mask, 'erase', 'dim')!;
+    const u = MAP3[4];
+    expect(fn(u.cube, u.face)).toBe(FM_DIM);
+    expect(paintSids(mask, ['F4'], 'erase')).toBe('');
+    const corner = pieceSids(26, 3);
+    const painted = paintSids(mask, corner, 'regular');
+    expect(paintSids(painted, corner, 'erase')).toBe(mask);
+  });
+  it('changing brush or painting another sticker preserves all previous styles', () => {
+    let mask = paintSids('', ['U4'], 'dim');
+    mask = paintSids(mask, ['F4'], 'outline');
+    mask = paintSids(mask, ['R4'], 'ignored');
+    expect(mask).toBe('dim=U:4|ignored=R:4|outline=F:4');
+    expect(paintSids(mask, [], 'regular')).toBe(mask);
+    expect(paintSids(mask, ['F4'], 'outline')).toBe(mask);
+    const fn = customMaskFn(3, mask, 'regular', 'regular')!;
+    for (const [sid, code] of [['U4', FM_DIM], ['F4', FM_OUTLINE], ['R4', FM_IGNORED], ['B4', FM_REGULAR]] as const) {
+      const slot = MAP3.find(entry => engineHomeSid(entry.cube, entry.face, 3) === sid)!;
+      expect(fn(slot.cube, slot.face)).toBe(code);
+    }
+    expect(countSids(mask)).toBe(3);
+  });
+
+  it('freezes old uniform masks before changing the brush and preserves unclicked pieces', () => {
+    const frozen = paintSids('U:4;F:4', [], 'dim', 'dim');
+    expect(frozen).toBe('dim=F:4;U:4');
+    expect(paintSids(frozen, ['U4'], 'outline')).toBe('dim=F:4|outline=U:4');
+  });
+
+  it('paints a whole piece, then allows just one of its stickers to be changed', () => {
+    const corner = pieceSids(26, 3);
+    expect(corner).toHaveLength(3);
+    const whole = paintSids('', corner, 'dim');
+    const one = paintSids(whole, [corner[0]], 'outline');
+    const fn = customMaskFn(3, one, 'regular', 'ignored')!;
+    for (const sid of corner) {
+      const slot = MAP3.find(entry => engineHomeSid(entry.cube, entry.face, 3) === sid)!;
+      expect(fn(slot.cube, slot.face)).toBe(sid === corner[0] ? FM_OUTLINE : FM_DIM);
+    }
+    expect(countSids(one)).toBe(3);
+  });
+});
+
+describe('paint history', () => {
+  it('undoes painting, erase, clear and background changes independently of brush selection', () => {
+    const blank = { mask: '', rest: 'ignored' as const };
+    const first = { ...blank, mask: 'dim=U:4' };
+    const second = { ...first, mask: 'dim=U:4|outline=F:4' };
+    const erased = { ...second, mask: 'outline=F:4' };
+    const background = { ...erased, rest: 'regular' as const };
+    const cleared = { ...background, mask: '' };
+    const h = new CustomMaskHistory(blank);
+    for (const value of [first, second, erased, background, cleared]) expect(h.record(value)).toBe(true);
+    expect(h.record(cleared)).toBe(false);
+    for (const value of [background, erased, second, first, blank]) expect(h.undo()).toEqual(value);
+    expect(h.undo()).toBeNull();
+    for (const value of [first, second, erased, background, cleared]) expect(h.redo()).toEqual(value);
+    expect(h.redo()).toBeNull();
+    h.undo();
+    h.record(first);
+    expect(h.redo()).toBeNull();
+  });
+});
 /** facelet(URFDLB 位置)→ 该位置的 sid,读的是「几何格位 + 世界面」那一层。 */
 const sidAtFacelet = (f: number): string => engineHomeSid(MAP3[f].cube, MAP3[f].face, 3);
 
@@ -115,9 +183,11 @@ describe('pieceSids', () => {
 });
 
 describe('customMaskFn', () => {
-  it('空清单 = 不遮罩(先让用户看着真配色去点第一枚)', () => {
-    expect(customMaskFn(3, '')).toBeNull();
-    expect(customMaskFn(3, '   ')).toBeNull();
+  it('进入自定义或清空后，未设置的全部贴纸默认变灰', () => {
+    for (const mask of ['', '   ']) {
+      const fn = customMaskFn(3, mask)!;
+      for (const slot of MAP3) expect(fn(slot.cube, slot.face)).toBe(FM_IGNORED);
+    }
   });
 
   it('选中的保原色,其余置灰', () => {
@@ -167,8 +237,17 @@ describe('customMaskFn', () => {
     }
   });
 
-  it('清单空时画法也不生效(仍是不遮罩)', () => {
-    expect(customMaskFn(3, '', 'regular', 'dim')).toBeNull();
+  it('空清单遵循未设置样式，改画笔不会改变画布', () => {
+    const dim = customMaskFn(3, '', 'outline', 'dim')!;
+    for (const slot of MAP3) expect(dim(slot.cube, slot.face)).toBe(FM_DIM);
+    expect(customMaskFn(3, '', 'dim', 'regular')).toBeNull();
+  });
+
+  it('从全灰画布点亮一格，只改变该格，其余保持灰色', () => {
+    const fn = customMaskFn(3, paintSids('', ['U4'], 'regular'))!;
+    for (const slot of MAP3) {
+      expect(fn(slot.cube, slot.face)).toBe(engineHomeSid(slot.cube, slot.face, 3) === 'U4' ? FM_REGULAR : FM_IGNORED);
+    }
   });
 });
 
@@ -176,6 +255,26 @@ describe('描边(FM_OUTLINE)落到渲染层', () => {
   /** 贴纸 mesh 上的 per-instance 描边开关(shader 读的就是这条 attribute)。 */
   const outlineFlags = (cube: Cube): Float32Array =>
     cube.instancedRenderer.staticSticker.geometry.getAttribute('aOutline').array as Float32Array;
+
+  it('hover outlines preserve painted colors and saved outlines through mask refresh and removal', () => {
+    const cube = new Cube(3);
+    const renderer = cube.instancedRenderer;
+    renderer.setStickering(customMaskFn(3, 'outline=U:4|dim=F:4'));
+    const index = renderer.stickerSlots.findIndex(slot => engineHomeSid(slot.cubeletInitial, slot.face, 3) === 'F4');
+    const before = new THREE.Color();
+    renderer.staticSticker.getColorAt(index, before);
+    renderer.setStickerPreview((initial, face) => engineHomeSid(initial, face, 3) === 'F4');
+    expect([...outlineFlags(cube)].filter(value => value === 1)).toHaveLength(2);
+    const after = new THREE.Color();
+    renderer.staticSticker.getColorAt(index, after);
+    expect(after.getHex()).toBe(before.getHex());
+    renderer.setStickering(customMaskFn(3, 'outline=U:4|dim=F:4'));
+    expect([...outlineFlags(cube)].filter(value => value === 1)).toHaveLength(2);
+    renderer.setStickerPreview(null);
+    expect(outlineFlags(cube)[index]).toBe(0);
+    expect([...outlineFlags(cube)].filter(value => value === 1)).toHaveLength(1);
+    cube.dispose();
+  });
 
   it('只有被标 outline 的槽位开描边,static / moving 共用同一份', () => {
     const cube = new Cube(3);

@@ -4,6 +4,8 @@
 
 审计快照：2026-08-31
 
+当前状态同步：2026-09-29。本文继续保存完整 surface inventory；会随产品决定改变语义的行已在本次校正，实时进度、共享层状态和五端证据统一以 [mobile-timer-parity-tracker.md](./mobile-timer-parity-tracker.md) 第 4～5 节为准。
+
 事实源：当前 Web `/timer` 可达页面与 `core/packages/client/app/[lang]/timer/**` 源码
 
 对比目标：`core/packages/app-ui` 的五端唯一 React 产品层，以及 `core/apps/mobile`、`core/apps/desktop`、`core/apps/harmony` 三个薄宿主
@@ -23,17 +25,17 @@
 | 编号 | 事实源能力 | Mobile 快照 | 结论 |
 | --- | --- | --- | --- |
 | GAP-001 | `1～4 人 + 联机` 是 `/timer` 内的五个完整模式 | 五端 App 已有真实 2/3/4 人与联机页面、本地原子轮次/基础统计及联机房主管理/历史统计，不再只读“1人”或外跳；但 Web 与 App 仍是两套 Battle/Net React 视图，完整设置、视频、多 BLE、高级历史展示、双设备和五平台矩阵未齐 | P0，入口/基础流程落地不等于完整模式 parity |
-| GAP-002 | Web 顶栏有人数、项目、来源、难度、解法、更多、设置的真实交互 | WCA 真题难度与 222/pyra/skewb 解法提示已改成 Web/Mobile 共用真实 UI，原静态“解法”已删除；More 通用求解器已复用 Tools 子页；333/SQ1/Mega 顶栏解法、随机难度与大量条件控件仍缺 | P0，局部产品面仍缺 |
+| GAP-002 | Web 顶栏有人数、项目、来源、难度、解法、更多、设置的真实交互 | WCA 真题难度、333-family 随机难度与 222/pyra/skewb 解法提示已改成 Web/五端共用真实 UI；More 通用求解器复用 Tools 子页。333 完整顶栏解法面板、SQ1/Mega 提示和部分条件控件仍缺，单人页面编排也未同视图 | P0，局部产品面仍缺 |
 | GAP-003 | Web 随机来源对 43/43 `EventId` 都有已注册的语义 | shared runtime 42 个 generated；`custom` 的 Real/Random 已按网站接成显式 ready 空槽并可计时，仍待 OPPO 触摸/重启验收 | P0，菜单/生成器数量不等于完整功能 parity |
 | GAP-004 | 真题有比赛/日期、比赛搜索、轮次、组别、难度、步数、2×2 类型、最优口径、来源元数据与空/错误状态 | Mobile 已共享比赛/日期/搜索/国旗/轮组、2×2 配置、完整 WCA 难度/合并/最优、222/pyra/skewb 真题按步数、完整出处/进度/打卡，以及 17 类 loading/empty/error/unsupported 文案、ARIA 与重试 UI；多 bin 任一失败保持 transient。全配置、真实断网恢复和真机异常矩阵仍未关闭 | P0，共享实现与自动化通过仍不等于完整真题 UI parity |
 | GAP-005 | 手动来源还包含编辑后重置、顺序循环、已显示打乱历史的上一条/下一条、空打乱可起表与 attempt snapshot | Mobile 已直接消费 shared editor/queue/`ScrambleHistory`，覆盖上一条/下一条、队尾生成、solve 后前进、左右键、空槽和冻结 attempt；仍缺 OPPO/iOS 真机全状态证据 | P0，源码与自动化已接，待设备矩阵 |
-| GAP-006 | Web 有 session 切换/新建/重命名/清空/删除/项目关联、搜索筛选、成绩对比、成绩详情、移动分组 | session CRUD/项目关联、共用成绩行/七项菜单/备注/Undo、行级罚时/复制/删除、完整筛选/tag、成绩对比与基础成绩详情已接五端共享产品层。详情的原始/生效成绩、日期、罚时、打乱、CFOP/BLD/MBLD 分段、备注、移组、删除和关闭只保留一份 `timer-ui` DOM；Web 仅注入重型复盘。Web/五端的打乱图也已统一为同一 `TimerCubePreview`，覆盖网站当前的 NxN、Clock、Pyraminx、Skewb、SQ1、Megaminx、FTO 和 relay/custom 分派；完整复盘仍缺。`HistoryPanel` 的批量删除分支当前在网站主路径没有 consumer，不把不可达代码当网站现有功能 | P0，基础详情/预览单源不等于完整复盘 parity |
+| GAP-006 | Web 有 session 切换/新建/重命名/清空/删除/项目关联、搜索筛选、成绩对比、成绩详情、移动分组 | session CRUD/项目关联、成绩行/七项菜单/备注/Undo、完整筛选/tag、成绩对比、基础详情和预览已接五端共享产品层。2026-09-11 起完整动作谱、时间线、回放、方法分析和反馈也由同一 `ReconstructReport` / `SolveRecap` 提供；Web/App 仍分别编排整体 History/Stats 工作区。`HistoryPanel` 的批量删除分支当前在网站主路径没有 consumer，不把不可达代码当网站现有功能 | P0，完整复盘已同源，剩余重点是完整统计、整体工作区和五端状态矩阵 |
 | GAP-007 | Web 有成绩/图表/统计三栏、5 图、完整统计、case/跨分组/按天、纪录对比 | 紧凑 current/best 面板与 rolling picker 已迁 timer-ui 并由 Web/Mobile 真实消费；OPPO 已显示 time/ao5/ao12 共用面板且 360px 无横向溢出。完整 StatsModal/五图、case/跨分组/按天与纪录对比仍缺 | P0，紧凑面板接线完成不等于完整统计完成 |
-| GAP-008 | Web 设置有 8 类、64 个字段（其中 1 个仅开发环境） | 8 类与 64 个稳定 ID、copy/value/visibility/disabled/effect 已迁 shared；“计时”8 字段、“训练”的 CFOP 分段/BLD memo、“打乱”的最优开关及“外观”的打乱图、2D/3D、点击打乱动作已由 Web/Mobile 共用真实 UI/effect，App effect ledger 为 14 项。OPPO 已读到 canonical 8/8 计时 ID、20～340px 内容边界与滚动底部，并实证点击打乱三动作及最优开关 44px、真题可用/手动禁用/切回恢复；其余 50 字段、iOS/其他三端和全视口仍缺 | P0，14 项接线完成不等于 64 项设置 parity |
+| GAP-008 | 设置注册表有 8 类、66 个稳定 ID（其中 1 个仅开发环境，1 个旧点击打乱字段只保留数据兼容） | copy/value/visibility/disabled/effect contract 已迁 shared；Web `SettingsPanel` 当前消费 65 项。五端共用计时 8、智能魔方 6、训练分段 2、真题 2、预览 2，字体/字号 4，训练目标/轮次 7、快捷键 2、显示 2、预朝向 2、颜色中立 1、声音 3、节拍器与自定义观察提示 3、恢复默认 1、导出 4，共 49 个当前可见且有真实 effect 的字段；相对 Web consumer 仍缺 16 项，其中 15 项为生产功能、1 项为开发态 | P0，49 项接线完成不等于设置 parity |
 | GAP-009 | Web “更多”包含打乱足迹、统计、语言、专项、盲拧助手、全屏、手动录入、replay、求解器、批量打乱、打印、清空 | 12 项 action/条件/effect 已共享；App 已真实接通 11 项：专项的 78 个 OLL/PLL case、严格生成、搜索/分组、切换/退出和弹层均由 Web/五端消费同一 shared/timer-ui 实现；统计复用共享页，盲拧助手/通用求解器/批量打乱复用 Tools canonical 子路由。仅 replay 仍绑定 Web 私有 decoder/重建状态；没有外跳 Web timer 或占位冒充 | P0，剩余 replay 及深层交互矩阵未完成 |
-| GAP-010 | Web 有智能魔方、智能计时器、Stackmat 麦克风，各自完整弹层、状态与错误 | Mobile 只显示真实 BLE 入口；Android GAN v4 主链已真机跑通，iOS UUID 后 manufacturer-data MAC 提取有 adapter/握手单测但无真机；Stackmat/智能计时器未实现且不渲染假入口 | P0，缺失能力保持不可见且仍登记为 gap |
-| GAP-011 | Web 有手动录成绩、FMC/MBLD 特殊输入、轮次模拟、目标、每日目标、分段、BLD memo | 手动成绩/FMC/MBLD 与 CFOP 分段/BLD memo 已共享接入；分段共用 recorder/status/settings，手动键盘和 44px 触摸均可标记，智能三阶自动分段复用 canonical move-stream producer。轮次、目标、每日目标仍缺，新增分段路径待 OPPO 真机 | P0 |
-| GAP-012 | Web 触摸有八向操作轮盘与撤销，键盘有可重绑快捷键，还有全屏/运行隐藏/UI fade | Mobile 已直接消费 shared 八向轮盘、默认键盘决策、任意键停表、分段/BLD memo 键与 44px 触摸标记、删除撤销 toast 与起表门禁；但自定义改键持久化/UI、运行隐藏全 UI 和完整真机矩阵仍缺 | P1，但声称“UI/UX 完全一致”前仍是硬门槛 |
+| GAP-010 | Web 有智能魔方、智能计时器、Stackmat 麦克风，各自完整弹层、状态与错误 | 五端 App 只显示真实智能魔方入口。Android picker 已按已知名称前缀过滤并仅显示名称；2026-09-20 所有者确认当前扫描、连接和使用正常。GAN v2/v3/v4、MoYu32、QiYi 已有代码级 bridge；2026-09-22 起 Web/App 的标准 move/state 会话、Solo 起表/录制/引导/停表顺序和智能魔方状态/恢复弹层分别共用 `SmartCubeSessionController`、`SmartCubeSoloTimerController` 与 `TimerSmartCubeDeviceModal`。共享弹层覆盖设备名、电量、协议、连接/还原状态、重置/状态回读、陀螺仪校准、断开和统一关闭行为；Web 仍独有浏览器环境检测、失败详情与 MAC 输入。型号级真机证据仍只登记 GAN v4；2026-10-05 Mobile/Desktop 已接入共享智能计时器/Stackmat 面板、BLE/音频 source 和权限配置；各平台硬件矩阵仍待验 | P0，智能魔方局部同视图不等于统一设备中心完成；缺失能力保持不可见且仍登记为 gap |
+| GAP-011 | Web 有手动录成绩、FMC/MBLD 特殊输入、轮次模拟、目标、每日目标、分段、BLD memo | 手动成绩/FMC/MBLD 与 CFOP 分段/BLD memo 已共享接入；分段共用 recorder/status/settings，手动键盘和 44px 触摸均可标记，智能三阶自动分段复用 canonical move-stream producer。轮次、目标、每日目标已于 2026-09-29 接共享设置和运行展示，实体设备矩阵仍缺，新增分段路径待 OPPO 真机 | P0 |
+| GAP-012 | Web 触摸有八向操作轮盘与撤销，键盘有可重绑快捷键，还有全屏/运行隐藏/UI fade | Mobile 已直接消费 shared 八向轮盘、默认键盘决策、任意键停表、分段/BLD memo 键与 44px 触摸标记、删除撤销 toast 与起表门禁；自定义改键持久化/UI 与运行隐藏全 UI 已接入；完整真机矩阵仍缺 | P1，但声称“UI/UX 完全一致”前仍是硬门槛 |
 
 任何一项不等都必须保持整体 `NOT COMPLETE`。
 
@@ -151,22 +153,22 @@ shared 映射快照是 19 个 Timer ID：
 | `source.wca.steps` | 222/pyra/skewb 真题按步数，各项目度量和 WCA 可达范围 | 三项目均接 shared normalize/identity + canonical Worker predicate；Mobile pool/source 定向回归通过，待全范围真机抽题 |
 | `source.wca.222-type` | 完整状态、EG、CLL、EG1、EG2、TCLL+、TCLL-、TCLL、LS、无连色 | 10 类共用 catalog 已接；precomputed/live 筛选与 full source key 有 fixture，待完整比赛/日期范围和真机全类型矩阵 |
 | `source.wca.222-mode` | WCA 恰 11 步 / 最优等态口径 | 共用 mode 控件、请求、cache/inflight identity 已接；待完整真题配置组合验收 |
-| `source.random.difficulty` | 当前可达项目的方法/阶段/颜色/槽位/步数直接生成、loading/empty/rare/retry | 缺 |
+| `source.random.difficulty` | 当前可达项目的方法/阶段/颜色/槽位/步数直接生成、loading/empty/rare/retry | 当前真实可达的 `333/333oh/333fm` 已共用 puzzle-solvers batch、shared pool/identity/status 与 timer-ui 配置/答案行；Web 与 Android 360px 已成对取证。已登录云最优组合、其他视口与其余平台仍待验 |
 | `source.random.steps` | 222/pyra/skewb/ivy/gear 按精确度量与步数生成 | 五项目均由 shared 设置/identity 驱动；222 与非二阶各走既有 canonical Worker host，待 OPPO 全项目切换/取消/stale 矩阵 |
 | `source.random.222-type` | 真题 10 类之外再有 3-gen，每类独立 worker 队列 | 已接 runtime-neutral generator + shared RPC/pool；本地浏览器与 OPPO 已验证 EG1/CLL/No Bar/3-gen 样例，仍待 11 类全量真机矩阵 |
 | `source.random.optimal333` | 登录可用、种子禁用、loading/failure/retry | 普通随机 333 与 78 个 OLL/PLL 专项已共用 shared pool、SSE 协议和等价纯 HTM 转换；App 已接登录门禁、认证恢复 fail-closed、loading/failure/retry、当前 token 401 登出和 stale 请求隔离。OPPO WebView 103 已实证来源菜单、随机题、未登录禁用提示、spinner 与 360/360 无溢出。同步种子尚未迁入 App，随机难度与最优组合及已登录云请求真机链仍缺，因此不得标完整 |
 | `source.config.persistence` | 来源、细项、队列与切项目后的精确恢复规则 | 完整 WCA difficulty/optimal/merge 与 by-steps 字段进入 shared store decode/normalize/migration；Web 11 项 + Mobile repository 17 项通过，仍待进程重启真机组合矩阵 |
 | `scramble.status` | generated/optimal/real/steps 的 loading/error，trainer rare/empty，WCA type/steps/difficulty/competition/date empty，unsupported 与 retry | 17 类原因、双语文案、retryable policy、spinner、alert/live region 和 44px 重试按钮已由 Web/五端 App 共用；Web 的 WCA 七次耗尽与 csTimer/专项 Worker 失败可原位重试，App 保留精确 failure。待真实断网/恢复、320/340、横屏、大字、TalkBack 和其余平台矩阵 |
 | `scramble.prev-next` | 已显示打乱历史的上一条/下一条，与生成队列分离 | 已消费 shared `ScrambleHistory` 并覆盖键盘/触摸/队尾生成/solve 后前进，待 OPPO/iOS 真机矩阵 |
-| `scramble.click-action` | 无操作/下一条/复制，复制勾和智能魔方修正路径特例 | 枚举/default/normalizer/persistence 与选择控件已由 Web/五端共用；产品层统一调用宿主剪贴板 capability，Android/iOS 薄宿主使用 Capacitor Clipboard，打乱、历史、联网房间码和二维码邀请链接复用同一 transport。OPPO `PFDM00` 已实证无操作不响应且不可聚焦、下一条更换真题、复制保持原题并提示成功，360px 无横向溢出。仍待 iOS/Harmony/Windows/macOS 三动作、智能魔方修正路径与完整视觉矩阵 |
+| `scramble.click-action` | 2026-09-12 起打乱正文与数字区使用同一按压起停流程；不再提供点击复制/换题设置，显式“下一题”按钮独立存在 | Web/App 均强制正文 action 为 `none`，不再渲染 `TimerScrambleClickActionSetting`；旧 `scrambleClickAction` 只为历史数据解码保留，不能计入当前可见设置或完成度。历史成绩与邀请链接的显式复制不受影响 |
 | `scramble.format` | SQ1 等项目显示 adapter，存储仍保留 canonical 原文 | 未证明 |
 | `scramble.preview` | 2D/3D/NxN/异形专用 renderer，显示开关、拖动、朝向 | Web/五端共用 `TimerCubePreview`/`TimerScramblePreview`；显示开关、2D/3D 默认/归一化/持久化与设置 UI 也已共享，单人和联网均从独立 `TimingSurface.cornerSlot` 渲染，避免拖动误触打乱动作。cubing.js 与 SQ1/Megaminx renderer 均为单源，不可解析手动题 fail closed；SQ1/Megaminx 保持 canonical 2D。OPPO 已装入对应源码构建，但手机仍被通知层遮挡；拖动/朝向、无遮挡及全设备视觉矩阵仍待关闭 |
 | `scramble.source-meta` | 国旗、本地化比赛名、项目、轮/组/题号/加赛、深链 | Web/Mobile 已收敛为共享 `TimerWcaScrambleSource`；OPPO 360px 实证完整显示、无溢出，深链进入 Tools 对应比赛页，返回不换题/不误复制。iOS/Harmony/Windows/macOS 设备矩阵仍待验 |
 | `scramble.source-progress` | 稀有池 `seen/total`、全练过、非最优标志、打乱足迹人数 | Web/五端产品层共用 occurrence-aware tracker、strict slot/mark codec、marks HTTP client 与 `TimerWcaScrambleProgress`；同文本不同官方 slot 分别计数。公开名单/人数、canonical 姓名/国旗/成绩/日期/真实 WCA 深链与 durable-save 后自动打卡均单源；关闭设置只用认证 update-only PATCH，登出/换号/pending retry fail closed。Portal 弹层按实测三栏和 visualViewport 钳制，三种纵向边界回归均不遮挡。OPPO 已安装最终共享构建并验证当前零足迹常见池不画假按钮；仍待非零/稀有池真机和其他四平台矩阵 |
-| `scramble.loading` | WCA、csTimer worker、难度 worker、云端最优各自区分 loading | WCA/csTimer 与云端最优已走共享的精确 loading/status；OPPO WebView 103 spinner fallback 已实证可见。随机难度 worker 尚未接入 App，因此本项仍未完整 |
+| `scramble.loading` | WCA、csTimer worker、难度 worker、云端最优各自区分 loading | WCA、csTimer、随机难度和云端最优均走共享的精确 loading/status；OPPO WebView 103 spinner fallback 已实证可见。真实断网恢复、组合状态和其余平台仍待验 |
 | `scramble.empty-error` | 比赛无项目、日期无题、难度无匹配、难度库待更新、稀有、短暂网络失败各自文案/重试 | 仅通用 error/unsupported |
 | `scramble.smart-hint` | 已拧步骤变暗、当前高亮、打乱完成、不符、拧回原打乱、复制原打乱 | Web/五端产品层已共用 `TimerScrambleStrip`、shared 提示/匹配/偏离修正 requester 与同一 Solo lifecycle controller；Web/App 只保留 facelets、Worker 和预备回调适配。Android 最新 APK 已安装，OPPO 新版逐步提示、故意偏离、修正完成和 Worker 冷启动延迟仍待解锁后用 GAN 16 UI 实测，其他四端也未验收 |
-| `scramble.trainer-case` | 随机难度直接生成时显示方法/阶段/步数与按需答案；当前 internal EventId 真可达集合是 `333/333oh/333fm` | 缺；不得误当成 LL/OLL/PLL 等 case provider 的逐题答案 |
+| `scramble.trainer-case` | 随机难度直接生成时显示方法/阶段/步数与按需答案；当前 internal EventId 真可达集合是 `333/333oh/333fm` | 已共用 `TimerRandomDifficultyCaseBar`、题目 metadata 和迟到结果 identity gate；不得误当成 LL/OLL/PLL 等 case provider 的逐题答案。五平台视觉/交互矩阵仍待验 |
 | `scramble.trainer-subset` | OLL/PLL 子集选择；LL/OLL/PLL/COLL/CMLL/ZBLL/EG1/EG2 保存 case identity 并进入 case stats | Mobile 丢失/未展示部分 metadata、subset 与 case stats；Web 当前没有这些项目的逐题答案条 |
 | `solution.small` | `222/pyra/skewb/SQ1/Megaminx` 的下方独立提示；前三项为完整还原+逐面/V，SQ1 为异步近最优+WCA 步数，Mega 当前只显示状态/错位贴纸 | 222/pyra/skewb 已接同一 solver/UI，支持 event-only 空打乱、展开/关闭、loading/error/stale、运行淡出；SQ1/Mega 仍缺 |
 | `solution.panel` | 仅 `333` 的顶栏解法入口：手机全屏、桌面右栏/全屏，StageSolver + 六方法分步解法，展开/收起/前后题/计时淡出 | 六方法 runtime-neutral 引擎/阶段/调度已单源且 Web 为真实 consumer；Mobile React 面板、StageSolver Rust/WASM Worker/表 adapter、展开/导航/计时淡出仍缺。原静态文字已删除，不得把 engine migration 或 small hints 当成 333 面板完成 |
@@ -182,11 +184,11 @@ shared 映射快照是 19 个 Timer ID：
 | `timer.result` | OK/+2/DNF/DNS，生效时间和项目格式化 | Mobile 简化成绩行，完整语义未对齐 |
 | `timer.target` | 目标差值、超时、pulse | 缺 |
 | `timer.rank` | WR/CR/NR 区域排名徽章、国家选择 | 缺 |
-| `timer.live-moves` | 动作列表、TPS、CFOP 阶段、BLD memo | 缺 |
+| `timer.live-moves` | 动作列表、TPS、CFOP 阶段、BLD memo | 动作 recorder、TPS/阶段识别、BLD memo 与 `LiveCubeState` / `TimerAttemptSplitStatus` 已共享；最新实体魔方动作、姿态、丢步和五平台显示矩阵仍待验 |
 | `timer.sound` | start/stop/8/12 提示音、音量/试听 | 缺 |
 | `timer.voice` | 中/英男女语音观察 | 缺 |
 | `timer.metronome` | 开关、BPM、tap tempo、观察提示秒数 | 缺 |
-| `input.space-anykey` | Space 与“任意键停表”规则，Escape，数字快捷键 | Mobile 已接 shared 默认决策，包括 Space、Escape、任意键停表、Digit 成绩入口、默认分段/BLD memo 键与 44px 触摸标记；基础成绩详情已共享，自定义改键和完整复盘仍缺 |
+| `input.space-anykey` | Space 与“任意键停表”规则，Escape，数字快捷键 | Mobile 已接 shared 默认决策，包括 Space、Escape、任意键停表、Digit 成绩入口、默认分段/BLD memo 键与 44px 触摸标记；完整复盘已共享，自定义改键持久化/UI 已接入，真机中断矩阵仍缺 |
 | `input.keymap` | 可重绑、解绑、恢复默认，组合键拒绝与冲突处理 | Mobile 已执行 shared 默认 map/effect，但尚未持久化 overrides，也缺重绑/解绑/恢复 UI |
 | `input.gesture-wheel` | 八向：next/OK/+2/DNF/prev/note/delete/copy，以及撤销 toast | Mobile 已渲染同一 `GestureWheel` 并接通 8 个 effect 及 shared Undo toast；边缘 clamp 和 OPPO/iOS 真机交互仍待验 |
 | `input.pointer-stop` | running 时点击屏幕任何非豁免区停表，不重入 hold | Web/Mobile 已同用 shared policy；门禁只拦截新起表，running 即使来源变为 loading/unavailable 也仍可停表，待真机多区域验收 |
@@ -243,18 +245,18 @@ shared 映射快照是 19 个 Timer ID：
 
 ### 4.5 设置全量表
 
-Web 当前有 8 类、64 个可达偏好/命令 surface；稳定 ID 与交互策略见 shared `settings-contract.ts`，Web source-set guard 会在新增/删除字段时失败。清单单源不等于 Mobile 已实现：下表每一项仍必须使用同一设置 schema/归一化规则，不能把 Web `TimerSettings` 和 Mobile `TimerStoreSettings` 长期保留为两个不对等的业务模型。
+共享注册表当前有 8 类、66 个稳定 ID；`settings.smart-cube.fake-cube` 仅开发环境可见，`settings.appearance.scramble-click-action` 只保留旧数据解码，Web `SettingsPanel` 实际消费其余 65 项。清单单源不等于 App 已实现：下表每一项仍必须使用同一设置 schema/归一化规则，不能把 Web `TimerSettings` 和 App `TimerStoreSettings` 长期保留为两个不对等的业务模型。
 
 | 类别 | Web 项目 | Mobile 快照 |
 | --- | --- | --- |
 | 计时 | 计时开关、WCA 观察、按住阈值、切项目匹配 session、切 session 匹配项目、隐藏运行时间、运行精度、成绩精度 | shared 已统一默认/normalizer，`TimerTimingSettingsSections` 已成为 Web/Mobile 共用真实 UI consumer；Mobile 8 字段 effect 已接且 OPPO 读到 8/8 canonical ID、无横向溢出并可滚动到底。仍缺逐字段效果、iOS、横屏/大字与全视口证据 |
-| 智能魔方 | 自动预备：打乱正确/关/静止 2s/双拨；实况 3D/q2look/net/2D；记录姿态；每把后展开复盘 | 四组设置的默认/归一化/持久化与 TimerSmartCubeSettingsFields、useAutoReady 已由 Web/App 共用；模式/弹层/阶段门禁及连续手势自动化已锁，五平台实操待验 |
-| 打乱 | 最优打乱、真题自动打卡、预打乱朝向、训练预朝向、颜色中立、同步种子/计数器 | 缺 |
-| 训练 | CFOP 分段、BLD memo/执行分段、每项目目标时间、每日目标、轮次模拟开关/赛制/cutoff/time limit/累计口径 | 缺 |
-| 外观 | 计时器字体/字号、打乱字体/字号、紧凑打乱、打乱图、3D 魔方、点击打乱动作、运行隐藏全 UI、排名徽章、排名国家 | “打乱图”“3D 魔方”“点击打乱动作”已用 shared schema/default/normalizer、共用 UI 与真实 effect；单人/联网复用同一预览 renderer，3D 拖动区与打乱点击区隔离。OPPO 已完成点击打乱三动作与 360px 无溢出实证；新增两开关只具备自动化、构建和安装证据，仍待解锁后实点。其余 8 项仍缺，且 iOS/Harmony/Windows/macOS 的实体环境视觉与交互矩阵未验 |
-| 声音与节奏 | 提示音、音量/试听、观察语音、节拍器、BPM/tap、自定义 beep 秒数/试听 | 缺 |
-| 数据 | 本机自动备份频率/立即备份/列表/恢复；云备份状态/上传/覆盖恢复/登录；CubeRoot/csTimer/dcTimer 导入及 session/event 映射；CubeRoot/csTimer JSON/CSV/Speedstacks 导出；重算分段 | Mobile 只有 CubeRoot JSON 整库导入/导出/一次撤销 |
-| 高级 | 所有可重绑快捷键、解绑/重置；同步种子应用/清空/当前计数/重置计数；恢复所有默认设置 | 缺 |
+| 智能魔方 | 陀螺仪；自动预备：打乱正确/关/静止 2s/双拨；实况 3D/q2look/net/2D；记录姿态；每把后展开复盘；自动打开解法 | 六项设置的默认/归一化/持久化与 TimerSmartCubeSettingsFields、useAutoReady 已由 Web/App 共用；模式/弹层/阶段门禁及连续手势自动化已锁，五平台实操待验 |
+| 打乱 | 最优打乱、真题自动打卡、预打乱朝向、训练预朝向、颜色中立、同步种子/计数器 | 最优、自动打卡、两类预朝向和颜色中立已有共享设置及实际 effect；同步种子/计数仍缺，五端操作矩阵待验 |
+| 训练 | CFOP 分段、BLD memo/执行分段、每项目目标时间、每日目标、轮次模拟开关/赛制/cutoff/time limit/累计口径 | 分段与目标/轮次设置、反馈均由 shared/timer-ui 提供，App 持久化及运行接线已完成；五端操作矩阵待验 |
+| 外观 | 计时器字体/字号、打乱字体/字号、紧凑打乱、打乱图、3D 魔方、运行隐藏全 UI、排名徽章、排名国家；旧点击动作字段不再可见 | 字体/字号、紧凑打乱、预览与运行隐藏 UI 均有共享设置和真实 effect；排名徽章/国家仍缺。Android/iOS/Harmony/Windows/macOS 的实体环境视觉与交互矩阵未验 |
+| 声音与节奏 | 提示音、音量/试听、观察语音、节拍器、BPM/tap、自定义 beep 秒数/试听 | 共享 UI、音频调度与 App 持久化已接；五端音频解锁、后台恢复和真机试听待验 |
+| 数据 | 本机自动备份频率/立即备份/列表/恢复；云备份状态/上传/覆盖恢复/登录；CubeRoot/csTimer/dcTimer 导入及 session/event 映射；CubeRoot/csTimer JSON/CSV/Speedstacks 导出；重算分段 | CubeRoot JSON 整库导入/导出/一次撤销已有；四种导出 UI 和编码现已共享（csTimer/CSV 为当前分组、Speedstacks 为当前项目）。本机/云备份、异构导入与重算仍缺 |
+| 高级 | 所有可重绑快捷键、解绑/重置；同步种子应用/清空/当前计数/重置计数；恢复所有默认设置 | 快捷键改绑/解绑/重置和恢复默认设置已共享；同步种子/计数仍缺 |
 
 设置还有通用状态需逐项验收：默认值、老版迁移、值归一化、项目不支持时的隐藏/禁用、提示文案、立即持久化、取消/关闭后恢复、失败不覆盖旧值，以及同一账号/设备升级后的数据意义。
 
@@ -262,14 +264,14 @@ Web 当前有 8 类、64 个可达偏好/命令 surface；稳定 ID 与交互策
 
 | Parity ID | Web 可达行为/状态 | Mobile 快照 |
 | --- | --- | --- |
-| `device.picker` | 统一设备入口区分智能魔方/智能计时器/Stackmat | 图标位置近似，功能集不等 |
-| `device.smart-cube.protocols` | GAN v2/v3/v4、Giiker、GoCube、MoYu/MoYu32、QiYi 等 Web 已有 driver，统一选择 | 只实证 GAN v4 |
-| `device.smart-cube.connect` | 扫描/连接/加密/MAC 输入/超时/拒绝/断连/重连/重置 | iOS 复用 manufacturer-data MAC，所有者已确认 iPhone 12 + GAN 连接；旧版出现还原不停止，本轮修复状态停止 edge、末帧查询与迟到回调，不能提前宣称真机修好。多品牌/MAC fallback UI、自动重连、拒绝/后台/蓝牙关闭/距离中断仍缺矩阵 |
-| `device.smart-cube.status` | 型号、电量、协议、最后动作、魔方时钟/丢步诊断 | Mobile 只显名称/最后动作 |
+| `device.picker` | 统一设备入口区分智能魔方/智能计时器/Stackmat | Mobile/Desktop 注册三类设备能力；Harmony 和实体设备矩阵待补 |
+| `device.smart-cube.protocols` | GAN v2/v3/v4、Giiker、GoCube、MoYu/MoYu32、QiYi 等 Web 已有 driver，统一选择 | 2026-10-05 App 已接 GAN v2/v3/v4、MoYu32、QiYi 设备校准回写，Giiker/GoCube/旧 MoYu 与 Web 共用 shared 协议会话；旧 MoYu 仍仅有转动与软件状态。Harmony 源码已接，HAP 受工具链版本阻断；各新增型号真机矩阵未验，现有型号级成功证据仍只登记 GAN v4 |
+| `device.smart-cube.connect` | 扫描/连接/加密/MAC 输入/超时/拒绝/断连/重连/重置 | Android picker 使用无 service 过滤扫描，再按 `GAN` / `WCU_MY3` / `QY-QYSC` / `XMD-TornadoV4-i` 前缀过滤、按地址去重且列表只显示名称；2026-09-20 当前扫描、连接、使用已确认。iOS 复用 manufacturer-data MAC；多品牌型号、自动重连、拒绝/后台/蓝牙关闭/距离中断仍缺矩阵 |
+| `device.smart-cube.status` | 型号、电量、协议、最后动作、魔方时钟/丢步诊断 | Web/App 已共用 `TimerSmartCubeDeviceModal` 展示设备名、电量、协议和连接/还原状态，并共用重置/状态回读、陀螺仪校准、断开、焦点与关闭行为；Web 只包平台环境、失败详情和 MAC 输入。最近一步按当前产品决定不展示，魔方时钟、丢步与连接诊断仍未形成完整共享可见面板 |
 | `device.smart-cube.scramble` | 状态定锚、打乱匹配、逐步提示、走偏修正、第一手起表、还原停表 | 3×3 GAN v4 自动起停主链已有旧版实证；提示、匹配、走偏修正、同批帧和 pending Worker 现在由 Web/五端共享并有自动回归，但最新 OPPO 可视提示/走偏修正仍待实体魔方复测，不能据此宣布设备完成 |
 | `device.live-cube` | 3D/q2look/net/2D、陀螺仪、朝向、校准、fallback | 共用 LiveCubeState/SimCubeView，定锚、姿态/校准和现有 VisualCube 平面视图接入；无重复几何。生产 bundle 四条报告 WebGL 可见；真机实时转动/朝向/校准与图形失败恢复待验 |
-| `device.smart-timer` | GAN/QiYi timer 选择、连接、MAC、读数、错误、断开 | 缺 |
-| `device.stackmat` | 麦克风权限、输入设备、监听、信号级别、状态、精度、解码错误、停止 | 未实现；Mobile 不渲染麦克风假入口 |
+| `device.smart-timer` | GAN/QiYi timer 选择、连接、MAC、读数、错误、断开 | Mobile/Desktop 共享面板、协议会话和 BLE 接入已落地，型号实测待验 |
+| `device.stackmat` | 麦克风权限、输入设备、监听、信号级别、状态、精度、解码错误、停止 | Mobile/Desktop 共用音频 source、解码及面板，权限配置与原生构建完成；音频线/USB声卡及拒绝后恢复实测待验 |
 | `device.permission` | 未支持/未开蓝牙/拒绝/不再询问/系统设置返回后重试 | 需 Android、iOS、HarmonyOS NEXT、Windows 和 macOS 各平台状态矩阵 |
 
 ## 5. 本地多人模式（2～4 人）
@@ -477,3 +479,34 @@ Android / iOS / HarmonyOS NEXT / Windows / macOS: build / install / device / int
 - `trainer-source.ts` 的 `TRAINER_EVENTS` 包含 WCA spelling `333bf/333ft`，而 `SoloView` 传入 internal `EventId`；因此当前真可达难度生成项目必须用 UI/fixture 实测，不能直接把注释所说的“3×3 族”写入 Mobile 能力表。
 - Web `generateScramble` 底层仍有 unknown 时返回 333 的历史 fallback；迁移时应用 exhaustive registry 消除这条危险路径，而不是把它复制到 shared/Mobile。同一个已登记的 Web 可达项目行为仍要保持。
 - 如果 Web 本身有 bug，先用用户可见的 fixture 和产品决定修正 Web，再让 shared UI 同时供 Web/Mobile 消费；不应为“一模一样”刻意新造一个已知 bug。
+
+
+### 2026-10-05 联机录制与多人状态机增量
+
+Web/App 已共同消费 shared 的 `NetBattleAttemptRecorder`、`NetRecordingOutbox` 和 `transitionLocalBattle`（本地 2～4 人起停、观察、同步准备、轮次与打乱修订号）。App 联机复盘使用既有 `ReconstructReport`；失败本地保存可重试，原分组与轮次固定，改罚时不覆盖前轮历史。源码与构建证据、重试队列仅进程内保留等边界统一见 `mobile-app-roadmap.md` 的同日记录。两端 Battle/Net 视图仍分别存在；视频、多路 BLE、真实多设备及五平台 UI/UX 矩阵仍未完成，整体维持 **ACTIVE — NOT COMPLETE**。
+
+
+### 2026-10-05 联机控制流程增量
+
+Web/App 已接同一 shared 房间 controller、轮询及会话恢复；App 结算改为与 Web 一致的本机显式推进。覆盖同码重入晚回包、恢复断网保留身份、被踢不自动重新加入、并发轮询/切轮、成绩重试与改罚时顺序。具体构建与验收边界见 `mobile-app-roadmap.md` 同日“联机房间控制流程同源”记录。持久化成绩重试队列、视频、多 BLE 及真实多设备矩阵仍未关闭，整体继续 **ACTIVE — NOT COMPLETE**。
+
+
+### 2026-10-05 联机持久化待处理队列增量
+
+Web/App 已共同接入持久化联机成绩队列，覆盖本机保存、房间上传、重启恢复、同轮罚时更新与原身份校验。手动成绩也留档，只有动作记录提供复盘；日志写失败、恢复阻断及房间拒收有同源提示。此项关闭此前“待处理队列仅进程内保留”的源码缺口。构建/回归证据、Web sessionStorage 身份限制和真实杀进程/多设备验收边界见 `mobile-app-roadmap.md` 同日记录；总体继续 **ACTIVE — NOT COMPLETE**。
+
+### 2026-10-05 本地多人来源、设置与历史增量
+
+Web/App 共用打乱来源契约、失败/重试规则、持久化设置、CSV 和来源/外观控件。安装端补齐真题选择、精度/观察选项、背景与历史导出；换项目同步四个槽位，换人数重新取题，旧请求不能覆盖新题。预取失败保留已完成轮次，删除当前轮不再被罚时操作恢复，Web 删除旧轮次重算积分。源码与本地构建证据见 `mobile-app-roadmap.md` 同日记录；这不代替实体设备验收。历史/统计完整工作区、视频、多 BLE 及全平台验收仍未关闭，总体继续 **ACTIVE — NOT COMPLETE**。
+
+### 2026-10-06 历史与统计工作区增量
+
+历史筛选/滚动列/对比/批量选择及完整统计、跨分组、案例、五类图表已由 Web/App 同时消费共享 UI。已覆盖批量删除失败、A→B→A 迟到回调、固定原分组写入、统计弹窗阻止智能魔方起表以及窄屏溢出；PR 徽标与手感指标同源。此项关闭独立历史组合和安装端缺完整统计/图表的源码缺口；构建/浏览器检查不代替五平台设备验收，总体继续 **ACTIVE — NOT COMPLETE**。
+
+### 2026-10-06 更多复盘、数据设置与排名增量
+
+Web/App 共用 replay 输入/解码/短链读取与复盘弹窗，More 12/12 已有真实动作；导入（csTimer/dcTimer/CubeRoot）、本机/云备份、重新分析、停表排名及地区设置接入共享契约与 UI。数据替换在宿主队列及 driver 最后一次异步等待后检查生命周期，关闭设置/换账号后不再迟到覆盖。effect ledger 49→62，仍缺同步种子/计数 2 个生产字段及 fake-cube 开发字段；国家选择器的账号置顶 adapter 和全部真机 parity 也未据此完成。源码、回归/窄屏验证与本地构建证据见 mobile-app-roadmap.md 同日记录；顺序 5 尚有同步生成链路工作，总体仍为 **ACTIVE — NOT COMPLETE**。
+
+### 2026-10-06 同步种子增量
+
+单人计时的种子/计数、42 项目生成及自定义空题、二阶类型、OLL/PLL 子集已共用 shared 引擎与 timer-ui 控件。历史槽保存请求，成功持久化后推进计数；预取、失败、取消和历史回看不额外消费，同 seed 重置也拒绝旧 revision。Web 主线程 solver ready 不再重置种子历史；App 快照竞争只单调合并同 revision 的进度。Chrome Web/App 实测应用、重置与重启后的两条打乱逐字一致。设置 effect 62→64，64 个生产字段均已接入，fake-cube 开发字段仍未接；不等于五端完整 parity。完整验证与既有 2 条过期历史源码断言见 mobile-app-roadmap.md 同日记录。

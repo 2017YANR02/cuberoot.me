@@ -15,6 +15,8 @@
 // 直连 SSE,不进这里.
 
 import dns from 'node:dns';
+import { trafficDefenseEnabled } from '@/lib/traffic-defense';
+import { COMPETITION_ACCESS_COOKIE, COMPETITION_SERVICE_HEADER, competitionCookie, createCompetitionProof } from '@cuberoot/shared/competition-access';
 
 // Node fetch 默认 IPv6-first,api.cuberoot.me 的 AAAA 查询会挂起到超时 (next.config
 // 在主进程设过,但 route handler 运行时 / Vercel serverless function 不一定继承,
@@ -36,18 +38,39 @@ export async function GET(
   if (!/^[A-Za-z0-9_-]{1,128}$/.test(slug)) {
     return Response.json({ error: 'invalid slug' }, { status: 400, headers: { 'cache-control': 'no-store' } });
   }
-  // 首屏分片:?only=<event> 只要当前项目 (WC2023 380KB → 数 KB)。查询串进边缘缓存键,
-  // 分片与全量各自成条目;上游认不出的 only 会自己回全量,这里只做形状校验。
-  const only = new URL(req.url).searchParams.get('only');
-  const onlyQs = only && /^(auto|[A-Za-z0-9]+(:[A-Za-z0-9]+)?)$/.test(only)
-    ? `?v=2&only=${encodeURIComponent(only)}`
-    : '?v=2';
+  // Only these two parameters affect the client cache key. Reject arbitrary
+  // variants before they trigger an upstream request (and one cache entry each).
+  const query = new URL(req.url).searchParams;
+  const only = query.get('only');
+  const version = query.get('v');
+  if ([...query.keys()].some((key) => key !== 'only' && key !== 'v')
+    || query.getAll('only').length > 1 || query.getAll('v').length > 1
+    || (version !== null && !/^\d{1,2}$/.test(version))
+    || (only !== null && !/^(auto|[A-Za-z0-9]{1,32}(:[A-Za-z0-9]{1,32})?)$/.test(only))) {
+    return Response.json({ error: 'invalid query' }, { status: 400, headers: { 'cache-control': 'no-store' } });
+  }
+  const onlyQs = only ? `?v=4&only=${encodeURIComponent(only)}` : '?v=4';
 
+  const upstreamPath = `/v1/cubing-live/${encodeURIComponent(slug)}${onlyQs}`;
+  const secret = process.env.COMPETITION_ACCESS_SECRET;
+  const proof = secret ? await createCompetitionProof(secret, 'service', upstreamPath) : '';
+  const headers = new Headers({ accept: 'application/json' });
+  if (proof) headers.set(COMPETITION_SERVICE_HEADER, proof);
+  else if (await trafficDefenseEnabled()) {
+    // Development has no signing secret. Relay only the visitor's existing
+    // browser proof with its bound UA; the API still checks its signature.
+    const browserProof = competitionCookie(req.headers.get('cookie') ?? '');
+    if (!browserProof) return Response.json({ code: 'competition_verification_required' }, {
+      status: 403, headers: { 'cache-control': 'no-store' },
+    });
+    headers.set('cookie', `${COMPETITION_ACCESS_COOKIE}=${browserProof}`);
+    headers.set('user-agent', req.headers.get('user-agent') ?? '');
+  }
   let upstream: Response;
   try {
     upstream = await fetch(`${UPSTREAM}/v1/cubing-live/${encodeURIComponent(slug)}${onlyQs}`, {
       signal: AbortSignal.timeout(28_000),
-      headers: { accept: 'application/json' },
+      headers,
     });
   } catch {
     return Response.json({ error: 'upstream error' }, { status: 502, headers: { 'cache-control': 'no-store' } });
@@ -58,7 +81,7 @@ export async function GET(
     try { body = await upstream.text(); } catch { /* ignore */ }
     return new Response(body || JSON.stringify({ error: `HTTP ${upstream.status}` }), {
       status: upstream.status,
-      headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },
+      headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', ...(upstream.headers.has('retry-after') ? { 'retry-after': upstream.headers.get('retry-after')! } : {}) },
     });
   }
 
@@ -82,6 +105,6 @@ export async function GET(
     : 'public, max-age=0, must-revalidate, s-maxage=30, stale-while-revalidate=600';
 
   return new Response(JSON.stringify(data), {
-    headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': cacheControl },
+    headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': proof ? cacheControl : 'private, no-store' },
   });
 }

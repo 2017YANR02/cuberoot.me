@@ -231,14 +231,6 @@
   margin-left: 6px;
 }
 
-/* Solve-level wasted-work line, above the stage panel. */
-.reconstruct-waste-line {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--signal-warning);
-  margin: 0 0 10px;
-}
-
 .reconstruct-stages-section {
   margin-bottom: 16px;
 }
@@ -273,7 +265,7 @@
   );
 }
 
-/* Solve-level 观察/拿起/放下 summary under the stage bar. */
+/* Solve-level 观察/放下 summary under the stage bar. */
 .reconstruct-stage-meta {
   font-family: var(--font-mono);
   font-size: 10px;
@@ -349,26 +341,6 @@
 /* A turn delta sits inline after the reference count, not on its own line. */
 .reconstruct-stage-recexec .reconstruct-stage-delta {
   margin-left: 5px;
-}
-
-.reconstruct-playback-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: transparent;
-  border: 1px solid var(--border-default);
-  color: var(--foreground);
-  font-size: 12px;
-  padding: 6px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-family: inherit;
-}
-.reconstruct-playback-toggle:hover {
-  background: var(--muted);  background: color-mix(in srgb, var(--foreground) 6%, transparent);
-  color: var(--foreground);
 }
 
 /* 左魔方 右分步。两栏是同一件事的两种读法,分开折叠就得来回开关,而「对着看」
@@ -527,11 +499,6 @@
   .reconstruct-section-header:active {
     background: var(--muted);    background: color-mix(in srgb, var(--foreground) 6%, transparent);
   }
-  .reconstruct-playback-toggle {
-    min-height: 44px;
-    width: 100%;
-    justify-content: flex-start;
-  }
 }
 
 @media (max-width: 480px) {
@@ -685,10 +652,10 @@
 }
 
 /* ── 顶部六个数 ────────────────────────────────────────────────────────
-   时间 / TPS / 步数 / 流畅 / 日期 / 魔方。以前散在标题和各个面板里,要自己拼;
+   时间 / TPS / 步数 / 日期 / 魔方。以前散在标题和各个面板里,要自己拼;
    报告应该一开口就说完。分隔靠竖线不靠卡片框。 */
-/* 读完那几个数之后的动作:再打一遍 / 分享 / 拿到别的工具里看。靠左紧凑,不撑成
-   一整行的条;第一个是主动作(实心),其余是次动作(描边)。 */
+/* 读完那几个数之后的动作:分享 / 再打一遍 / 拿到别的工具里看。靠左紧凑,不撑成
+   一整行的条;分享只留图标,「用这条打乱」保留为主动作。 */
 .rc-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: -6px 0 14px; }
 .rc-action {
   appearance: none; cursor: pointer;

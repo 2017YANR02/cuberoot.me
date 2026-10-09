@@ -15,16 +15,12 @@
 // guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { join, dirname } from 'node:path';
 import { workspaceFixturePath } from './workspace-fixture-path';
 
-const HERE = dirname(fileURLToPath(import.meta.url)); // packages/client/tests
-const CLIENT = join(HERE, '..');
 const SERVER_ROUTE = workspaceFixturePath('@cuberoot/server', 'src', 'routes', 'video_rooms.ts');
-const CLIENT_API = join(CLIENT, 'lib', 'video-room-api.ts');
+const CLIENT_API = workspaceFixturePath('@cuberoot/shared', 'src', 'video.ts');
 // 连接参数是 /timer 对战房与 /meet 会议室共用的一份(两边只有授权方式不同)。
-const VIDEO_STRIP = join(CLIENT, 'components', 'video', 'video-call.ts');
+const VIDEO_STRIP = workspaceFixturePath('@cuberoot/timer-ui', 'src', 'video', 'video-call.ts');
 
 /** 去掉数字字面量里的下划线分隔符(3_000_000)再转数。 */
 function num(raw: string): number {

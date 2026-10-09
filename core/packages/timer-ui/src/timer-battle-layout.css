@@ -1,0 +1,166 @@
+.timer-battle-layout {
+  --timer-scramble-fs: clamp(11px, min(2vw, 2.6dvh), 20px);
+  --timer-scramble-src-fs: 12px;
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  overflow: auto;
+}
+.timer-battle-pair {
+  display: flex;
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+  flex-direction: column;
+}
+.timer-battle-row {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.timer-battle-cell {
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+}
+.timer-battle-cell > * { flex: 1; min-width: 0; min-height: 0; }
+
+.timer-battle-cell[data-flipped] { transform: rotate(180deg); }
+.timer-battle-pair[data-flipped] { flex-direction: column-reverse; }
+.timer-battle-pair[data-flipped] > .timer-battle-scramble { transform: rotate(180deg); }
+.timer-battle-scramble {
+  --timer-cube-h: min(18vw, 11dvh, 110px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  flex: 0 0 auto;
+}
+.timer-battle-layout-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px;
+}
+.timer-battle-layout-controls > button,
+.timer-battle-layout-controls > label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 6px 10px;
+  font: inherit;
+  font-size: 12px;
+}
+.timer-battle-layout-controls > button {
+  border: none;
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+}
+.timer-battle-layout-controls > button[aria-pressed="true"] {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* Raise the open picker above adjacent players, including rotated cells. */
+.timer-battle-cell:has(.pp-popup) { position: relative; z-index: 2; }
+
+/* Two players share the available stage, including on short phone screens. */
+.timer-battle-layout .timer-battle-cell,
+.timer-battle-layout[data-layout='side'] .timer-battle-pair {
+  flex: 1 1 0;
+  min-height: 0;
+}
+.timer-battle-layout .timer-battle-row { min-height: 0; }
+.timer-battle-layout .timer-battle-scramble {
+  --timer-cube-h: min(18vw, 12dvh, 100px);
+  --timer-scramble-fs: clamp(11px, min(2vw, 2.6dvh), 20px);
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: 55%;
+  padding: 6px;
+  overflow-y: auto;
+}
+
+.timer-battle-layout .timing-surface--local {
+  container-type: size;
+  --timer-cube-h: min(18vw, 22cqh, 100px);
+  --timer-readout-max-size: min(28cqh, 10dvh);
+  --timer-scramble-fs: clamp(11px, min(2vw, 2.6dvh), 20px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  align-items: stretch;
+}
+.timer-battle-layout .timing-surface--local:has(.timing-surface-scramble-top) {
+  grid-template-rows: minmax(0, 1fr) minmax(0, 2fr);
+}
+.timer-battle-layout .timing-surface--local:not(:has(.timing-surface-scramble-top)) {
+  --timer-readout-max-size: min(60cqh, 12dvh);
+}
+.timer-battle-layout .timing-surface-scramble-top {
+  position: static;
+  inset: auto;
+  transform: none;
+  max-height: 100%;
+  min-height: 0;
+  width: 100%;
+}
+.timer-battle-layout .timing-surface-core {
+  min-height: 0;
+  justify-content: center;
+  gap: 4px;
+}
+.timer-battle-layout .timing-surface-sub {
+  position: static;
+  inset: auto;
+  transform: none;
+  padding-top: 0;
+  gap: 4px;
+}
+
+/* Equal bounded halves keep every player reachable on short viewports. */
+.timer-battle-layout > .timer-battle-cell,
+.timer-battle-layout > .timer-battle-pair { min-height: 150px; }
+.timer-battle-layout > .timer-battle-toolbar { flex: 0 0 auto; }
+.timer-battle-layout:not([data-layout='side']) > .timer-battle-toolbar {
+  border-top: 1px solid var(--shell-divider, var(--border-default));
+}
+.timer-battle-layout-controls:empty { display: none; }
+.battle-readout-label { font-size: 12px; line-height: 1.4; }
+
+/* Explicit battle scope retains the centered mode control on narrow screens. */
+.shell-topbar.timer-battle-toolbar { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+.timer-battle-toolbar .shell-topbar-left { grid-column: 2; grid-row: 1; justify-self: center; justify-content: center; flex-wrap: nowrap; }
+.timer-battle-toolbar .shell-topbar-right { grid-column: 3; grid-row: 1; }
+.timer-battle-toolbar > .middle-logo { grid-column: 1; grid-row: 1; }
+@media (max-width: 480px) {
+  .shell-topbar.timer-battle-toolbar { gap: 2px; padding-inline: 6px; }
+  .timer-battle-toolbar .timer-room-actions { gap: 2px; }
+  .timer-battle-toolbar .timer-room-actions > button { min-width: 32px; padding-inline: 6px; }
+}
+
+/* Keep battle toolbar icon controls unframed, including the puzzle trigger. */
+.timer-battle-toolbar .timer-room-actions > button,
+.timer-battle-toolbar .timer-room-actions .pp-trigger {
+  border: none;
+  background: none;
+}
+
+.ao5-display {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: clamp(0.7rem, 2.5vw, 0.9rem);
+    color: var(--faint-foreground);
+    text-align: center;
+    min-height: 1.2em;
+    letter-spacing: 0.02em;
+}

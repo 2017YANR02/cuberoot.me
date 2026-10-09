@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 /**
  * /v1/sponsors + /v1/contributors — /support 致谢墙(赞助者 + 贡献者)API。
  * server 实现 routes/sponsors.ts;写操作走 ADMIN_WCA_IDS WCA OAuth Bearer / X-Admin-Key。
@@ -10,6 +11,8 @@ const BASE = API_ORIGIN + '/v1/sponsors';
 const LIST_BASE = `${BASE}?v=2`;
 
 export interface Sponsor {
+  /** Returned only by the authenticated administrator view. */
+  userId?: number | null;
   id: number;
   name: string;
   amount: number;
@@ -21,6 +24,8 @@ export interface Sponsor {
 }
 
 export interface SponsorInput {
+  /** Omitted preserves the current association; null removes it. */
+  userId?: number | null;
   name: string;
   amount: number;
   currency?: string;
@@ -29,18 +34,21 @@ export interface SponsorInput {
   message?: string | null;
 }
 
-export async function listSponsors(fresh = false): Promise<Sponsor[]> {
-  const url = fresh ? `${LIST_BASE}&fresh=${Date.now()}` : LIST_BASE;
-  return handleApi<Sponsor[]>(await fetch(url, fresh ? { cache: 'no-store' } : undefined));
+export async function listSponsors(fresh = false, admin = false): Promise<Sponsor[]> {
+  const base = admin ? `${BASE}?v=3&admin=1` : LIST_BASE;
+  const url = fresh ? `${base}&fresh=${Date.now()}` : base;
+  return handleApi<Sponsor[]>(await sessionFetch(url, admin
+    ? { cache: 'no-store', headers: authHeaders() }
+    : fresh ? { cache: 'no-store' } : undefined));
 }
 export async function createSponsor(body: SponsorInput): Promise<Sponsor> {
-  return handleApi<Sponsor>(await fetch(BASE, { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) }));
+  return handleApi<Sponsor>(await sessionFetch(BASE, { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) }));
 }
 export async function updateSponsor(id: number, body: SponsorInput): Promise<Sponsor> {
-  return handleApi<Sponsor>(await fetch(`${BASE}/${id}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(body) }));
+  return handleApi<Sponsor>(await sessionFetch(`${BASE}/${id}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(body) }));
 }
 export async function deleteSponsor(id: number): Promise<{ ok: boolean }> {
-  return handleApi<{ ok: boolean }>(await fetch(`${BASE}/${id}`, { method: 'DELETE', headers: authHeaders() }));
+  return handleApi<{ ok: boolean }>(await sessionFetch(`${BASE}/${id}`, { method: 'DELETE', headers: authHeaders() }));
 }
 
 // ── 赞助认领 ──
@@ -87,24 +95,24 @@ async function handleClaimApi<T>(res: Response): Promise<T> {
 const CLAIMS_BASE = API_ORIGIN + '/v1/sponsor-claims';
 
 export async function listMySponsorClaims(): Promise<SponsorClaim[]> {
-  return handleClaimApi<SponsorClaim[]>(await fetch(`${CLAIMS_BASE}/mine`, { headers: authHeaders() }));
+  return handleClaimApi<SponsorClaim[]>(await sessionFetch(`${CLAIMS_BASE}/mine`, { headers: authHeaders() }));
 }
 
 export async function createSponsorClaim(sponsorId: number, note: string): Promise<{
   id: number; status: SponsorClaimStatus; autoApproved: boolean;
 }> {
-  return handleClaimApi(await fetch(`${BASE}/${sponsorId}/claims`, {
+  return handleClaimApi(await sessionFetch(`${BASE}/${sponsorId}/claims`, {
     method: 'POST', headers: authHeaders(), body: JSON.stringify({ note }),
   }));
 }
 
 export async function cancelSponsorClaim(id: number): Promise<{ ok: boolean }> {
-  return handleClaimApi(await fetch(`${CLAIMS_BASE}/${id}`, { method: 'DELETE', headers: authHeaders() }));
+  return handleClaimApi(await sessionFetch(`${CLAIMS_BASE}/${id}`, { method: 'DELETE', headers: authHeaders() }));
 }
 
 export async function listSponsorClaims(status?: SponsorClaimStatus): Promise<SponsorClaim[]> {
   const suffix = status ? `?status=${encodeURIComponent(status)}` : '';
-  return handleClaimApi<SponsorClaim[]>(await fetch(`${CLAIMS_BASE}${suffix}`, { headers: authHeaders() }));
+  return handleClaimApi<SponsorClaim[]>(await sessionFetch(`${CLAIMS_BASE}${suffix}`, { headers: authHeaders() }));
 }
 
 export async function reviewSponsorClaim(
@@ -112,13 +120,13 @@ export async function reviewSponsorClaim(
   decision: 'approve' | 'reject',
   note: string,
 ): Promise<{ ok: boolean; status: SponsorClaimStatus }> {
-  return handleClaimApi(await fetch(`${CLAIMS_BASE}/${id}/review`, {
+  return handleClaimApi(await sessionFetch(`${CLAIMS_BASE}/${id}/review`, {
     method: 'POST', headers: authHeaders(), body: JSON.stringify({ decision, note }),
   }));
 }
 
 export async function unclaimSponsor(id: number, note: string): Promise<{ ok: boolean }> {
-  return handleClaimApi(await fetch(`${BASE}/${id}/unclaim`, {
+  return handleClaimApi(await sessionFetch(`${BASE}/${id}/unclaim`, {
     method: 'POST', headers: authHeaders(), body: JSON.stringify({ note }),
   }));
 }
@@ -158,18 +166,18 @@ function normContributor(c: Contributor): Contributor {
 }
 
 export async function listContributors(): Promise<Contributor[]> {
-  return (await handleApi<Contributor[]>(await fetch(CONTRIB_BASE))).map(normContributor);
+  return (await handleApi<Contributor[]>(await sessionFetch(CONTRIB_BASE))).map(normContributor);
 }
 export async function createContributor(body: ContributorInput): Promise<Contributor> {
-  return normContributor(await handleApi<Contributor>(await fetch(CONTRIB_BASE, { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) })));
+  return normContributor(await handleApi<Contributor>(await sessionFetch(CONTRIB_BASE, { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) })));
 }
 export async function updateContributor(id: number, body: ContributorInput): Promise<Contributor> {
-  return normContributor(await handleApi<Contributor>(await fetch(`${CONTRIB_BASE}/${id}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(body) })));
+  return normContributor(await handleApi<Contributor>(await sessionFetch(`${CONTRIB_BASE}/${id}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(body) })));
 }
 /** score 原子 +1(admin 点卡片上的数字)。 */
 export async function bumpContributor(id: number): Promise<Contributor> {
-  return normContributor(await handleApi<Contributor>(await fetch(`${CONTRIB_BASE}/${id}/bump`, { method: 'POST', headers: authHeaders() })));
+  return normContributor(await handleApi<Contributor>(await sessionFetch(`${CONTRIB_BASE}/${id}/bump`, { method: 'POST', headers: authHeaders() })));
 }
 export async function deleteContributor(id: number): Promise<{ ok: boolean }> {
-  return handleApi<{ ok: boolean }>(await fetch(`${CONTRIB_BASE}/${id}`, { method: 'DELETE', headers: authHeaders() }));
+  return handleApi<{ ok: boolean }>(await sessionFetch(`${CONTRIB_BASE}/${id}`, { method: 'DELETE', headers: authHeaders() }));
 }

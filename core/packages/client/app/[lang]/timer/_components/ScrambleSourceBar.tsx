@@ -22,7 +22,7 @@ import { canTrainerDifficulty } from '../_lib/scramble/trainer-source';
 import { tr } from '@/i18n/tr';
 import Scramble222ModePicker from '@/components/Scramble222ModePicker';
 import { use222Type } from '@/lib/scramble-222-mode';
-import { SCRAMBLE_222_TYPES, WCA_SCRAMBLE_222_TYPES, type Scramble222Type } from '@cuberoot/shared/timer';
+import { TIMER_MANUAL_SCRAMBLE_EMPTY_COPY, SCRAMBLE_222_TYPES, WCA_SCRAMBLE_222_TYPES, type Scramble222Type } from '@cuberoot/shared/timer';
 import { ManualScrambleQueueEditor } from '@cuberoot/timer-ui';
 
 interface Props {
@@ -31,9 +31,10 @@ interface Props {
   isZh: boolean;
   /** 顶栏里「难度」开关的落点(SoloView 提供)。给了就把开关 portal 上去,不给就留在本条里。 */
   diffSlot?: HTMLElement | null;
+  mergeSlot?: HTMLElement | null;
 }
 
-export default function ScrambleSourceBar({ disabled = false, event, isZh, diffSlot }: Props) {
+export default function ScrambleSourceBar({ disabled = false, event, isZh, diffSlot, mergeSlot }: Props) {
   const s = useSettings();
   const hasSteps = !!stepPuzzleOf(event);
   const src = s.scrambleSource;
@@ -53,12 +54,13 @@ export default function ScrambleSourceBar({ disabled = false, event, isZh, diffS
   return (
     <fieldset className="scramble-src-bar surface-chrome" data-no-timer disabled={disabled}>
       {src === 'wca' && (
-        <WcaSourceConfig disabled={disabled} isZh={isZh} event={event} settings={s} updateSettings={updateSettings} toggleSlot={diffSlot} />
+        <WcaSourceConfig disabled={disabled} isZh={isZh} event={event} settings={s} updateSettings={updateSettings} toggleSlot={diffSlot} mergeSlot={mergeSlot} />
       )}
 
       {src === 'manual' && (
         <ManualScrambleQueueEditor
           ariaLabel={tr({ zh: '手动输入打乱', en: 'Manual scrambles' })}
+          placeholder={tr(TIMER_MANUAL_SCRAMBLE_EMPTY_COPY)}
           onChange={(manualScrambles) => updateSettings({ manualScrambles })}
           value={s.manualScrambles}
         />
@@ -70,7 +72,7 @@ export default function ScrambleSourceBar({ disabled = false, event, isZh, diffS
       )}
 
       {/* 二阶专项打乱有自己的精确目标条件,不再叠加「按步数」状态筛选。 */}
-      {uses222SpecialType && (
+      {uses222SpecialType && src === 'wca' && (
         <div className="wca-src-config">
           <div className="settings-row wca-src-toprow">
             <Scramble222ModePicker
@@ -78,7 +80,6 @@ export default function ScrambleSourceBar({ disabled = false, event, isZh, diffS
               disabled={disabled}
               showLabel={false}
               showModeWithSpecialType={src === 'wca'}
-              showSpecialTypes
               typeOptions={type222Options ?? undefined}
             />
           </div>
@@ -100,7 +101,6 @@ export default function ScrambleSourceBar({ disabled = false, event, isZh, diffS
                 active222
                 disabled={disabled}
                 showLabel={false}
-                showSpecialTypes={show222SpecialTypes}
                 typeOptions={type222Options ?? undefined}
               />
             : undefined}

@@ -3,6 +3,7 @@
  *
  * 库里存的是**完整公式**:`setup + alg` 精确还原,所以末尾常带一个把顶层转正的收尾 AUF。
  * 那个 U 对魔友没有任何帮助(他自己会转),所以显示和复制时剥掉。
+ * 公式末尾用来恢复持方的 y 转体也同理：原式和播放保留，仅展示时隐藏。
  *
  * 剥掉是安全的:若 `setup + A U^b` 还原,那 A 单独执行后魔方只差一个顶层转 —— 末尾的
  * U^b 必然是纯收尾 AUF,不可能是公式的一部分(它后面没有任何步骤能被它影响)。
@@ -15,7 +16,7 @@
 
 import { is3x3TopLayerSet } from '@cuberoot/shared/alg';
 import { mergeAdjacentMoves, renderMove, toMoveString, tokenizeMoves } from '@cuberoot/shared/alg-notation';
-import type { AlgTextEdit } from '@/lib/alg_html';
+import { algHtmlText, editAlgHtmlText, type AlgTextEdit } from '@/lib/alg_html';
 
 /** Only U-layer turns: cube order four, Megaminx order five, Pyraminx/FTO order three. */
 export function uTurnOrder(puzzle: string): number | undefined {
@@ -58,6 +59,19 @@ export function applyAlgTextEdits(alg: string, edits: readonly AlgTextEdit[]): s
   return out.trim();
 }
 
+/** Half turns have no direction; keep /alg presentation on the canonical `y2` spelling. */
+function canonicalY2PrimeEdits(alg: string): AlgTextEdit[] {
+  return [...alg.matchAll(/\by2'(?![\w'])/g)].map(match => ({
+    start: match.index! + 2,
+    end: match.index! + match[0].length,
+    text: '',
+  }));
+}
+
+export function canonicalizeAlgY2(alg: string): string {
+  return applyAlgTextEdits(alg, canonicalY2PrimeEdits(alg));
+}
+
 export function simplifyAdjacentU(puzzle: string, alg: string): string {
   const order = uTurnOrder(puzzle);
   return order ? applyAlgTextEdits(alg, adjacentUEdits(alg, order)) : alg;
@@ -69,7 +83,7 @@ export function simplifyAdjacentU(puzzle: string, alg: string): string {
  * 只处理末尾连续的 U/y（包括观察角度追加的 U），不碰内部转体或 F2L 换槽。
  */
 export function displayCaseScramble(puzzle: string, set: string, scramble: string): string {
-  scramble = simplifyAdjacentU(puzzle, scramble);
+  scramble = canonicalizeAlgY2(simplifyAdjacentU(puzzle, scramble));
   if (!scramble || !is3x3TopLayerSet(puzzle, set)) return scramble;
   try {
     const { moves, junk } = tokenizeMoves(toMoveString(scramble));
@@ -86,18 +100,79 @@ export function displayCaseScramble(puzzle: string, set: string, scramble: strin
   }
 }
 
-/** 末尾的 U / U2 / U' / U2'(可带括号),`Uw`、`u` 不算(它们不是 AUF) */
-const TRAILING_AUF = /[\s(]*\bU(?:2'?|'|)(?![\w'])\s*\)?\s*$/;
+/** 末尾的 U 层 AUF 或 y 转体(可带括号)；`Uw`、`u` 不算。 */
+const TRAILING_DISPLAY_ADJUSTMENT = /[\s(]*\b[Uy](?:2'?|'|)(?![\w'])\s*\)?\s*$/;
 
 export function displayAlg(alg: string): string {
   if (!alg) return '';
   let stripped = alg;
   while (true) {
-    const next = stripped.replace(TRAILING_AUF, '').trimEnd();
-    // 整条公式只剩 AUF(理论上不该有)—— 至少留下一步,别剥成空串。
+    const next = stripped.replace(TRAILING_DISPLAY_ADJUSTMENT, '').trimEnd();
+    // 整条公式只剩显示调整(理论上不该有)—— 至少留下一步,别剥成空串。
     if (!next || next === stripped) return stripped;
     stripped = next;
   }
+}
+
+/** Presentation always drops finishing y; top-layer sets also drop finishing AUF. */
+function caseAlgDisplayEdits(puzzle: string, set: string, alg: string): AlgTextEdit[] {
+  const hideAuf = is3x3TopLayerSet(puzzle, set);
+  const tokens = [...alg.matchAll(/[()]|[^\s()]+/g)];
+  let end = tokens.length - 1;
+  let adjustments = 0;
+  while (end >= 0) {
+    const token = tokens[end][0];
+    if (token === '(' || token === ')') { end--; continue; }
+    if (!/^y(?:2'?|')?$/.test(token) && !(hideAuf && /^U(?:2'?|')?$/.test(token))) break;
+    adjustments++;
+    end--;
+  }
+  if (!adjustments || end < 0) return [];
+  // Retain groups around surviving moves; discard groups containing only AUF/y.
+  // A repetition, commutator, wide turn or x/z at the end stops the scan.
+  const start = tokens[end].index! + tokens[end][0].length;
+  let depth = 0;
+  let closing = '';
+  for (const token of tokens.slice(end + 1)) {
+    if (token[0] === '(') depth++;
+    if (token[0] === ')') {
+      if (depth > 0) depth--;
+      else closing += ')';
+    }
+  }
+  return [{ start, end: alg.length, text: closing }];
+}
+
+/**
+ * 已入库旧数据的只读兜底：移除没有左括号的 `)`，并在末尾补齐缺少的 `)`。
+ * 新写入会被严格校验拒绝；这里不展开分组，也不改变任何 move。
+ */
+function legacyGroupingBalanceEdits(alg: string): AlgTextEdit[] {
+  const edits: AlgTextEdit[] = [];
+  let depth = 0;
+  for (let i = 0; i < alg.length; i++) {
+    if (alg[i] === '(') depth++;
+    else if (alg[i] === ')') {
+      if (depth > 0) depth--;
+      else edits.push({ start: i, end: i + 1, text: '' });
+    }
+  }
+  if (depth > 0) edits.push({ start: alg.length, end: alg.length, text: ')'.repeat(depth) });
+  return edits;
+}
+
+export function displayCaseAlg(puzzle: string, set: string, alg: string): string {
+  const edits = caseAlgDisplayEdits(puzzle, set, alg);
+  const shown = edits.length ? applyAlgTextEdits(alg, edits) : alg;
+  const balanced = applyAlgTextEdits(shown, legacyGroupingBalanceEdits(shown));
+  return canonicalizeAlgY2(balanced);
+}
+
+/** Apply the same move edits to rich text without losing finger annotations. */
+export function displayCaseAlgHtml(puzzle: string, set: string, html: string): string {
+  const shown = editAlgHtmlText(html, caseAlgDisplayEdits(puzzle, set, algHtmlText(html)));
+  const balanced = editAlgHtmlText(shown, legacyGroupingBalanceEdits(algHtmlText(shown)));
+  return editAlgHtmlText(balanced, canonicalY2PrimeEdits(algHtmlText(balanced)));
 }
 
 /**

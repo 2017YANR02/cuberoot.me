@@ -10,7 +10,23 @@ import {
 import {
   TimerAttemptSplitSettings,
   TIMER_SCRAMBLE_PREVIEW_SETTING_FIELD_IDS,
+  TIMER_SMART_CUBE_SETTING_FIELD_IDS,
   TIMER_TIMING_SETTING_FIELD_IDS,
+  TIMER_TYPOGRAPHY_SETTING_FIELD_IDS,
+  TIMER_TRAINING_SETTING_FIELD_IDS,
+  TIMER_KEYMAP_SETTING_FIELD_IDS,
+  TIMER_DISPLAY_SETTING_FIELD_IDS,
+  TIMER_PRE_SCRAMBLE_SETTING_FIELD_IDS,
+  TIMER_COLOR_NEUTRAL_SETTING_FIELD_IDS,
+  TIMER_SOUND_SETTING_FIELD_IDS,
+  TIMER_METRONOME_SETTING_FIELD_IDS,
+  TIMER_RESET_SETTING_FIELD_IDS,
+  TIMER_EXPORT_SETTING_FIELD_IDS,
+  TIMER_BACKUP_SETTING_FIELD_IDS,
+  TIMER_IMPORT_SETTING_FIELD_IDS,
+  TIMER_REANALYZE_SETTING_FIELD_IDS,
+  TIMER_RANK_SETTING_FIELD_IDS,
+  TIMER_SYNC_SEED_SETTING_FIELD_IDS,
 } from '@cuberoot/timer-ui';
 
 import {
@@ -22,21 +38,39 @@ describe('Mobile timer settings parity ledger', () => {
   it('records all real shared effects and no unverified device parity', () => {
     expect(MOBILE_TIMER_SETTING_EFFECT_FIELD_IDS).toEqual([
       ...TIMER_TIMING_SETTING_FIELD_IDS,
+      ...TIMER_SMART_CUBE_SETTING_FIELD_IDS,
       'settings.training.stage-splits',
       'settings.training.bld-memo-split',
       'settings.scramble.optimal',
       'settings.scramble.auto-mark-wca',
       ...TIMER_SCRAMBLE_PREVIEW_SETTING_FIELD_IDS,
-      'settings.appearance.scramble-click-action',
+      ...TIMER_TYPOGRAPHY_SETTING_FIELD_IDS,
+  ...TIMER_TRAINING_SETTING_FIELD_IDS,
+      ...TIMER_KEYMAP_SETTING_FIELD_IDS,
+      ...TIMER_DISPLAY_SETTING_FIELD_IDS,
+      ...TIMER_PRE_SCRAMBLE_SETTING_FIELD_IDS,
+      ...TIMER_COLOR_NEUTRAL_SETTING_FIELD_IDS,
+      ...TIMER_SOUND_SETTING_FIELD_IDS,
+      ...TIMER_METRONOME_SETTING_FIELD_IDS,
+      ...TIMER_RESET_SETTING_FIELD_IDS,
+      ...TIMER_EXPORT_SETTING_FIELD_IDS,
+  ...TIMER_BACKUP_SETTING_FIELD_IDS,
+  ...TIMER_IMPORT_SETTING_FIELD_IDS,
+  ...TIMER_REANALYZE_SETTING_FIELD_IDS,
+  ...TIMER_RANK_SETTING_FIELD_IDS,
+  ...TIMER_SYNC_SEED_SETTING_FIELD_IDS,
     ]);
+    expect(MOBILE_TIMER_SETTING_EFFECT_FIELD_IDS).not.toContain(
+      'settings.appearance.scramble-click-action',
+    );
     expect(MOBILE_TIMER_SETTING_PARITY_FIELD_IDS).toEqual([]);
   });
 
   it('locks the canonical category gap counts so a new Web field fails here', () => {
-    expect(TIMER_SETTING_FIELD_IDS).toHaveLength(64);
+    expect(TIMER_SETTING_FIELD_IDS).toHaveLength(66);
     expect(TIMER_SETTING_CATEGORY_IDS.map((category) => (
       TIMER_SETTING_FIELD_CONTRACTS.filter((field) => field.category === category).length
-    ))).toEqual([8, 5, 5, 9, 11, 6, 15, 5]);
+    ))).toEqual([8, 8, 4, 9, 11, 6, 15, 5]);
 
     const parity = new Set<string>(MOBILE_TIMER_SETTING_PARITY_FIELD_IDS);
     expect(TIMER_SETTING_CATEGORY_IDS.map((category) => (
@@ -45,16 +79,20 @@ describe('Mobile timer settings parity ledger', () => {
         && field.visibility !== 'development-only'
         && !parity.has(field.id)
       )).length
-    ))).toEqual([8, 4, 5, 9, 11, 6, 15, 5]);
+    ))).toEqual([8, 7, 4, 9, 11, 6, 15, 5]);
   });
 
   it('renders the shared settings UI and keeps its runtime effects wired', () => {
     const app = readFileSync('src/App.tsx', 'utf8');
     expect(app).toContain('<TimerTimingSettingsSections');
+    expect(app).toContain('<TimerSmartCubeSettingsFields');
     expect(app).toContain('<TimerAttemptSplitSettings');
     expect(app).toContain('<TimerAttemptSplitStatus');
     expect(app).not.toContain('<TimerScrambleClickActionSetting');
     expect(app).toContain('<TimerScramblePreviewSettings');
+    expect(app).toContain('<TimerPreScrambleSettings');
+    expect(app).toContain("'timer', 'smart-cube', 'scramble', 'training', 'appearance', 'sound', 'data', 'advanced'");
+    expect(app).toContain('applyOrientationPrefix(scramble, preScrambleFor(activeEvent, store!.settings.preScr, store!.settings.preScrT))');
     expect(app).toContain('<TimerBooleanSettingRow');
     expect(app).toContain('store!.settings.showCubePreview && scrambleReady');
     expect(app).toContain("visualization={store!.settings.prefer3D ? '3D' : '2D'}");

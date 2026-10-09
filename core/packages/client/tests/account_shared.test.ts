@@ -144,6 +144,30 @@ describe('站内用户名规范化 + 校验', () => {
 });
 
 describe('forum reply profile completeness', () => {
+  it('has Chinese display labels for every Chinese account city without changing saved identifiers', () => {
+    const regions: Array<{ code: string; cities: string[]; cityNamesZh: Record<string, string> }> = JSON.parse(readFileSync(join(__dirname, '../public/account-locations/CN.json'), 'utf8'));
+    for (const region of regions) {
+      expect(Object.keys(region.cityNamesZh).sort()).toEqual([...region.cities].sort());
+      for (const city of region.cities) expect(region.cityNamesZh[city], `${region.code}/${city}`).toMatch(/^[\u3400-\u9fff]+$/);
+    }
+    const shanghai = regions.find(region => region.code === 'SH')!;
+    expect(shanghai.cityNamesZh['Pudong New Area']).toBe('浦东新区');
+    expect(shanghai.cityNamesZh.Zhujiajiao).toBe('朱家角');
+    const label = (code: string, city: string) => regions.find(region => region.code === code)!.cityNamesZh[city];
+    expect(label('AH', 'Suzhou')).toBe('宿州');
+    // Administrative entities must not become their seats, aliases or homophones.
+    for (const [code, city, expected] of [
+      ['AH', 'Dangtu', '当涂'], ['AH', 'Feidong', '肥东'], ['AH', 'Huizhou', '徽州'],
+      ['AH', 'Huaiyuan', '怀远'], ['AH', 'Lieshan', '烈山'], ['GD', 'Shenzhen', '深圳'],
+      ['GD', 'Zhongshan', '中山'], ['SH', 'Fengxian', '奉贤'], ['YN', 'Gongshan', '贡山'],
+      ['YN', 'Jinping', '金平'], ['GZ', 'Sandu', '三都'], ['QH', 'Datong', '大通'],
+      ['JS', 'Yandu', '盐都'], ['TW', 'Suzhou', '苏州'], ['XJ', 'Kokdala', '可克达拉'],
+      ['GD', 'Dabu', '大埔'], ['TJ', 'Shimianzhuang', '拾棉庄'], ['HN', 'Gangdong', '江东'],
+      ['FJ', 'Luxia', '路下'], ['TJ', 'Chengtougu', '蛏头沽'], ['TJ', 'Caijiapu', '蔡家堡'],
+      ['TJ', 'Caodian', '糙甸'], ['TJ', 'Liuzikou', '柳子口'], ['GZ', 'Qinglang', '清浪'],
+      ['TJ', 'Mengquan', '蒙酄'], ['CQ', 'Zhong', '忠县'],
+    ]) expect(label(code, city), `${code}/${city}`).toBe(expected);
+  });
   const profile: AccountBasicProfile = { fullName: 'Test User', birthDate: '2000-01-01', gender: 'male', countryIso2: 'CN', regionCode: 'GD', cityName: 'Shenzhen', countrySource: 'self' };
   const complete = (patch: Partial<AccountBasicProfile>) => isForumReplyProfileComplete({ ...profile, ...patch }, '2026-09-11');
   it('requires valid saved identity fields and location selections', () => {

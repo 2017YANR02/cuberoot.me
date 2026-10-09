@@ -20,6 +20,7 @@ import { sql } from '../db/connection.js';
 import { deletedOwnerKey } from '@cuberoot/shared/account';
 import { removeDriveAccountFiles } from './drive_storage.js';
 import { revokeAppleIdentities, type AppleRevocationIdentity } from './apple_login.js';
+import { purgeOrphanedStickers } from './chat_stickers.js';
 
 /** 私有数据:[表, 归属列]。整行删除。 */
 export const PURGE_TABLES: readonly (readonly [string, string])[] = [
@@ -33,6 +34,7 @@ export const PURGE_TABLES: readonly (readonly [string, string])[] = [
   ['alg_submission_reads', 'wca_id'],    // 公式提交的已读位置
   ['scramble_marks', 'wca_id'],          // 打乱标记
   ['timer_backups', 'wca_id'],           // 计时器云备份
+  ['timer_replay_shares', 'user_id'],    // 计时器复盘分享
   ['timer_sessions', 'wca_id'],          // 计时器会话
   ['recon_videos', 'owner_wca_id'],      // 未提交的复盘视频上传
   ['train_results', 'user_id'],          // 训练成绩
@@ -50,6 +52,7 @@ export const PURGE_TABLES: readonly (readonly [string, string])[] = [
   ['calendar_events', 'owner_key'],      // 我的日程(删日历也会级联,这里显式兜一遍)
   ['calendars', 'owner_key'],            // 日历本体
   ['calendar_shares', 'owner_key'],      // 对外展示设置 + 分享 token
+  ['video_meetings', 'owner_key'],      // 私人会议安排；无身份信息的预留码保留，避免旧链接指向新会议
   // 导入批次行。事件和日历都已在上面删掉了,但批次行不会跟着走 —— 那两列是
   // ON DELETE SET NULL,删的是被指向的一方,批次自己留了下来,还带着导入文件名。
   ['calendar_imports', 'owner_key'],     // 一次 .ics / .zip 导入一行(source = 原文件名)
@@ -143,6 +146,9 @@ export const PLATFORM_ACCOUNT_DELETE_TABLES = [
  */
 export const NOT_USER_OWNED: Readonly<Record<string, string>> = {
   wca_pr_streaks: 'WCA 官方成绩派生的公开统计，不属于站内账号私有数据',
+  apple_membership_accounts: 'Apple 交易归属凭证：注销时外键置空，保留交易对账且禁止收据转绑其他账号',
+  google_membership_accounts: 'Google Play 购买归属：注销时外键置空，保留对账证据并禁止购买转绑其他账号',
+  account_face_attempts: '实名认证记录通过 user_id 外键随账号级联删除，不随账号合并迁移',
   app_users: '账号本体,最后整行删',
   role_preview_profiles: '专用测试身份映射随账号级联删除',
   role_preview_sessions: '角色测试审计保留，实际操作者与测试账号删除时外键置空',
@@ -150,9 +156,14 @@ export const NOT_USER_OWNED: Readonly<Record<string, string>> = {
   mcp_oauth_grants: '管理员 MCP 授权通过 user_id 外键随账号级联删除，不迁移到合并后的账号',
   account_last_devices: '账号最近设备摘要是私有支持数据,随 app_users 级联删',
   record_notification_preferences: '纪录通知偏好是账号私有数据,通过 user_id 外键随 app_users 级联删',
+  recon_comment_votes: '复盘评论赞踩通过 user_id 外键随账号级联删除',
   auth_web_session_tickets: '未确认的微信浏览器票据无账号归属，已确认的跨运行时票据随 app_users 级联删',
   auth_identity_pending: '未确认的 OAuth 尝试无账号归属，15 分钟过期并定时清理；成功确认的身份与凭据原子迁入 auth_identities，随既有解绑/注销策略处理',
   user_friendships: '好友关系的三个账号外键都随 app_users 级联删',
+  friend_chat_conversations: '私人聊天在任一参与账号注销时整段级联删除',
+  friend_chat_messages: '私人聊天消息随会话或发送账号级联删除',
+  friend_chat_sticker_favorites: '表情包收藏随账号级联删除',
+  friend_chat_stickers: '上传者归属随账号清空；删除无会话和收藏引用的图片，其余仅保留其他用户持有的副本',
   user_blocks: '黑名单关系的双向账号外键都随 app_users 级联删',
   user_wca_friend_contacts: '未注册 WCA 好友条目只属于账号本人,随 app_users 级联删',
   user_pets: '私人宠物领养与养成数据通过 user_id 外键随 app_users 级联删',
@@ -307,6 +318,12 @@ export async function deleteAccount(userId: number, key: string): Promise<void> 
       SELECT provider, provider_uid, apple_refresh_token_encrypted, apple_token_key_version
       FROM auth_identities WHERE user_id = ${userId} FOR UPDATE`;
     await revokeAppleIdentities(ids as unknown as AppleRevocationIdentity[]);
+    // Keep all mutations after deletion guards and Apple revocation; clear both
+    // inboxes before the account FK cascades remove conversation IDs.
+    await tx`DELETE FROM notifications WHERE kind = 'friend_message'
+      AND dedupe_key IN (SELECT 'friend-chat:' || id::text FROM friend_chat_conversations
+        WHERE user_low_id = ${userId} OR user_high_id = ${userId})`;
+
     const targets = (ids as unknown as { provider: string; provider_uid: string }[])
       .filter((i) => i.provider === 'email' || i.provider === 'phone')
       .map((i) => i.provider_uid);
@@ -412,6 +429,7 @@ export async function deleteAccount(userId: number, key: string): Promise<void> 
     // 最后删账号本体。auth_identities 有 ON DELETE CASCADE(0064),Platform 由 0168
     // 的 BEFORE DELETE trigger 在同一事务内完整清理并匿名化。
     await tx`DELETE FROM app_users WHERE id = ${userId}`;
+    await purgeOrphanedStickers(tx);
   });
 
   // 数据库提交后再清实体文件:事务失败时仍保留可用文件；成功后已没有账号可继续写这些路径。

@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 /**
  * 社区题的编辑器 —— /quiz/new(出题、改自己的题)和 /quiz/manage(管理员补译、修错)共用。
@@ -15,7 +16,6 @@ import {
   QUIZ_LIMITS, filledLangs, validateQuizDraft,
   type QuizDraft, type QuizDraftError,
 } from '@cuberoot/shared/quiz';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { tr } from '@/i18n/tr';
 import type { CommunityQuestionRow } from '@/lib/quiz-api';
 import { CATEGORIES } from '../_data';
@@ -138,24 +138,28 @@ export default function QuestionEditor({ draft, onChange }: Props) {
 
         <div className="quiz-field is-inline">
           <span className="quiz-field-label">{tr({ zh: '难度', en: 'Difficulty' })}</span>
-          <PillToggle
-            value={draft.level === 'hard'}
-            onChange={(on) => set({ level: on ? 'hard' : 'easy' })}
-            offLabel={tr({ zh: '简单', en: 'Easy' })}
-            onLabel={tr({ zh: '进阶', en: 'Advanced' })}
-            ariaLabel={tr({ zh: '难度', en: 'Difficulty' })}
-          />
+          <select
+            value={String(draft.level === 'hard')}
+            onChange={event => { const on = event.currentTarget.value === 'true'; set({ level: on ? 'hard' : 'easy' }); }}
+            aria-label={tr({ zh: '难度', en: 'Difficulty' })}
+            className="native-select"
+          >
+            <option value="true">{tr({ zh: '进阶', en: 'Advanced' })}</option>
+            <option value="false">{tr({ zh: '简单', en: 'Easy' })}</option>
+          </select>
         </div>
 
         <div className="quiz-field is-inline">
           <span className="quiz-field-label">{tr({ zh: '题型', en: 'Type' })}</span>
-          <PillToggle
-            value={!choice}
-            onChange={(on) => set({ type: on ? 'open' : 'choice' })}
-            offLabel={tr({ zh: '选择题', en: 'Multiple choice' })}
-            onLabel={tr({ zh: '问答题', en: 'Short answer' })}
-            ariaLabel={tr({ zh: '题型', en: 'Question type' })}
-          />
+          <select
+            value={String(!choice)}
+            onChange={event => { const on = event.currentTarget.value === 'true'; set({ type: on ? 'open' : 'choice' }); }}
+            aria-label={tr({ zh: '题型', en: 'Question type' })}
+            className="native-select"
+          >
+            <option value="true">{tr({ zh: '问答题', en: 'Short answer' })}</option>
+            <option value="false">{tr({ zh: '选择题', en: 'Multiple choice' })}</option>
+          </select>
         </div>
       </div>
 

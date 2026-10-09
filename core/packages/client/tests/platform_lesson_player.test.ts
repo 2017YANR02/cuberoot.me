@@ -3,18 +3,177 @@ import { act, createElement, useState, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { beforeEach, expect, it, vi } from 'vitest';
 import type { PlatformEntity, PlatformRouteDefinition } from '@/lib/platform-types';
-const { load } = vi.hoisted(() => ({ load: vi.fn() }));
-vi.mock('@/lib/platform-gateway', () => ({ loadPlatformLessonMedia: load }));
+const { access, load, loadManaged, uploadCover, learningRequest } = vi.hoisted(() => ({
+  access: { admin: false, user: null as null | {id:number} },
+  learningRequest: vi.fn(),
+  load: vi.fn(),
+  loadManaged: vi.fn(),
+  uploadCover: vi.fn(),
+}));
+vi.mock('@/lib/platform-gateway', () => ({
+  loadPlatformLessonMedia: load,
+  loadPlatformResource: async (resource: string, options: {params: Record<string,string>}) => ({items:[{id:options.params.lessonId,title:'Lesson',data:resource==='courses'?{lessons:[{id:'first',titleZh:'公开课时一'},{id:'second',titleZh:'公开课时二'}]}:{mediaId:'media',bodyZh:{text:'课时正文'},bodyEn:{markdown:''}}}]}),
+  loadPlatformManagedLessonMedia: loadManaged,
+  uploadPlatformLessonCover: uploadCover,
+  platformMediaBrowserUrl: (value: string) => {
+    const url = new URL(value, window.location.origin);
+    return url.pathname.startsWith('/v1/') ? `${url.pathname}${url.search}` : value;
+  },
+  PlatformPermissionError: class PlatformPermissionError extends Error {
+    constructor(public readonly status: 401 | 403) {
+      super(status === 401 ? 'Authentication required.' : 'Permission denied.');
+      this.name = 'PlatformPermissionError';
+    }
+  },
+}));
+vi.mock('@/lib/auth-store', () => ({
+  nextQuery: (next: string) => `?next=${encodeURIComponent(next)}`,
+  useIsAdmin: () => access.admin,
+  useAuthUser: () => access.user,
+  getOwnerKey: () => access.user ? `u${access.user.id}` : '',
+}));
+vi.mock('@/lib/platform-learning', async importOriginal => ({...await importOriginal<typeof import('@/lib/platform-learning')>(), platformLearningRequest: learningRequest}));
 const locale = vi.hoisted(() => ({ english: false }));
 vi.mock('@/hooks/useT', () => ({ useT: () => (zh: string, en: string) => locale.english ? en : zh }));
 vi.mock('@/components/AppLink', () => ({ default: ({ href, children, className }: { href: string; children: ReactNode; className?: string }) => createElement('a', { href, className }, children) }));
 vi.mock('@/components/platform/PlatformQrLanding', () => ({ PlatformQrLanding: () => null }));
 import { PlatformDomainContent } from '@/components/platform/PlatformDomainContent';
 import { LessonVideoPlayer } from '@/components/video/LessonVideoPlayer';
+import { PlatformPermissionError } from '@/lib/platform-gateway';
 
 beforeEach(() => {
   (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+  access.admin = false;access.user=null;
+  learningRequest.mockReset().mockResolvedValue({progress:{positionSeconds:45,progressBps:5000,status:'in_progress'},notes:[],attempts:[],lessons:[]});
   load.mockReset().mockResolvedValue({ mimeType: 'video/mp4', accessUrl: '/signed-video', expiresAt: '2099-01-01T00:00:00Z' });
+  loadManaged.mockReset().mockResolvedValue({
+    mediaId: 'media', mimeType: 'video/mp4', sizeBytes: 100, accessUrl: 'https://api.cuberoot.me/v1/platform/lessons/first/media?token=signed', expiresAt: '2099-01-01T00:00:00Z',
+    posterUrl: '/signed-cover', posterMediaId: 'cover', posterMimeType: 'image/jpeg', posterSizeBytes: 50,
+  });
+  uploadCover.mockReset().mockResolvedValue({ ok: true });
+});
+
+it('uses the saved lesson cover as the native video poster', async () => {
+  const host = document.createElement('div'), root = createRoot(host);
+  try {
+    await act(async () => root.render(createElement(LessonVideoPlayer, {
+      src: '/signed-video', poster: '/signed-cover', onError: vi.fn(), onLoadedMetadata: vi.fn(),
+    })));
+    const video = host.querySelector('video');
+    expect(video?.getAttribute('poster')).toBe('/signed-cover');
+  } finally {
+    await act(async () => root.unmount());
+  }
+});
+
+it('keeps the poster visible instead of seeking to the first video frame on open', async () => {
+  const host = document.createElement('div'), root = createRoot(host);
+  try {
+    await act(async () => root.render(createElement(LessonVideoPlayer, {
+      src: '/signed-video', poster: '/signed-cover', startTime: 0, onError: vi.fn(), onLoadedMetadata: vi.fn(),
+    })));
+    const video = host.querySelector('video')!;
+    let currentTime = 0;
+    const setCurrentTime = vi.fn((value: number) => { currentTime = value; });
+    Object.defineProperties(video, {
+      duration: { configurable: true, value: 120 },
+      currentTime: { configurable: true, get: () => currentTime, set: setCurrentTime },
+    });
+    await act(async () => video.dispatchEvent(new Event('loadedmetadata')));
+    expect(setCurrentTime).not.toHaveBeenCalled();
+    expect(video.getAttribute('poster')).toBe('/signed-cover');
+  } finally {
+    await act(async () => root.unmount());
+  }
+});
+
+it('shows the shared current-frame cover editor only to administrators', async () => {
+  access.admin = true;
+  const host = document.createElement('div'), root = createRoot(host);
+  const createObjectUrl = Object.getOwnPropertyDescriptor(URL, 'createObjectURL');
+  Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: vi.fn(() => 'blob:lesson-cover') });
+  const getContext = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => ({ drawImage: vi.fn() }) as never);
+  const toBlob = vi.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation(callback => callback(new Blob(['cover'], { type: 'image/jpeg' })));
+  try {
+    await act(async () => root.render(createElement(PlatformDomainContent, {
+      definition: { id: 'course-section-core' } as PlatformRouteDefinition,
+      entity: { id: 'course', title: 'Course', data: { lessons: [{ id: 'first', titleZh: '正式课 01' }] } } as PlatformEntity,
+      params: {},
+    })));
+    const details = host.querySelector<HTMLDetailsElement>('.platform-classroom-cover-editor');
+    expect(details?.querySelector('summary')?.textContent).toBe('编辑封面');
+    await act(async () => {
+      if (details) details.open = true;
+      details?.dispatchEvent(new Event('toggle', { bubbles: true }));
+    });
+    expect(loadManaged).not.toHaveBeenCalled();
+    expect([...host.querySelectorAll('button')].map(button => button.textContent)).toEqual(expect.arrayContaining(['上传图片', '使用当前画面']));
+    expect(host.querySelectorAll('.platform-classroom-player video')).toHaveLength(1);
+    expect(host.querySelector('.platform-classroom-player video')?.getAttribute('src')).toBe('/signed-video');
+    expect(host.querySelectorAll('.platform-lesson-frame-picker video')).toHaveLength(0);
+    expect(host.textContent).not.toContain('Not Found');
+    const video = host.querySelector<HTMLVideoElement>('.platform-classroom-player video')!;
+    Object.defineProperties(video, {
+      readyState: { configurable: true, value: HTMLMediaElement.HAVE_CURRENT_DATA },
+      videoWidth: { configurable: true, value: 1280 },
+      videoHeight: { configurable: true, value: 720 },
+    });
+    const useFrame = [...host.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent === '使用当前画面')!;
+    expect(useFrame.disabled).toBe(false);
+    await act(async () => useFrame.click());
+    expect(uploadCover).toHaveBeenCalledWith('admin', 'course', 'first', expect.objectContaining({ type: 'image/jpeg' }));
+    expect(video.getAttribute('poster')).toBe('blob:lesson-cover');
+  } finally {
+    getContext.mockRestore();
+    toBlob.mockRestore();
+    if (createObjectUrl) Object.defineProperty(URL, 'createObjectURL', createObjectUrl);
+    else Reflect.deleteProperty(URL, 'createObjectURL');
+    await act(async () => root.unmount());
+  }
+});
+
+it('turns unauthenticated media access into a sign-in action', async () => {
+  window.history.replaceState({}, '', '/zh/platform/courses/course/sections/core?lesson=first');
+  load.mockRejectedValueOnce(new PlatformPermissionError(401));
+  const host = document.createElement('div'), root = createRoot(host);
+  try {
+    await act(async () => root.render(createElement(PlatformDomainContent, {
+      definition: { id: 'course-section-core' } as PlatformRouteDefinition,
+      entity: { id: 'course', title: 'Course', data: { lessons: [{ id: 'first', titleZh: '正式课 01' }] } } as PlatformEntity,
+      params: {},
+    })));
+    expect(host.textContent).toContain('请先登录，再继续观看这个课时。');
+    expect(host.textContent).toContain('前往登录');
+    expect(host.textContent).not.toContain('Authentication required.');
+    expect(host.querySelector('a')?.getAttribute('href')).toBe('/account?next=%2Fzh%2Fplatform%2Fcourses%2Fcourse%2Fsections%2Fcore%3Flesson%3Dfirst');
+  } finally {
+    await act(async () => root.unmount());
+    window.history.replaceState({}, '', '/');
+  }
+});
+
+it('shows a blurred course visual with only the redemption action when a lesson is locked', async () => {
+  load.mockRejectedValueOnce(new PlatformPermissionError(403));
+  const host = document.createElement('div'), root = createRoot(host);
+  try {
+    await act(async () => root.render(createElement(PlatformDomainContent, {
+      definition: { id: 'course-section-core' } as PlatformRouteDefinition,
+      entity: { id: 'course', title: 'Course', data: {
+        slug: 'yan-ruimin-3x3-beginner',
+        lessons: [{ id: 'first', titleZh: '正式课 01' }],
+      } } as PlatformEntity,
+      params: {},
+    })));
+    const locked = host.querySelector('.platform-locked-media');
+    expect(locked?.textContent).toBe('兑换课程');
+    expect(locked?.querySelector('p')).toBeNull();
+    expect(locked?.querySelector('img')?.getAttribute('src')).toBe('/images/ruimin/gallery/photo-03.webp');
+    expect(locked?.querySelector('a')?.getAttribute('href')).toBe('/platform/account/invites');
+    expect(host.textContent).not.toContain('Permission denied.');
+    expect(host.textContent).not.toContain('这个课时尚未解锁');
+  } finally {
+    await act(async () => root.unmount());
+  }
 });
 
 it('opens the video menu, prioritizes looping, and copies safe lesson links and diagnostics', async () => {
@@ -150,9 +309,9 @@ it('links section cards to separate lesson pages without losing lessons or chang
       id: `${group}-${index}`, titleZh: `${prefix} ${index + 1}`, titleEn: `Lesson ${group}-${index}`, status: 'published',
     })));
   const host = document.createElement('div'), root = createRoot(host);
-  const render = (items: unknown[], id = 'course-detail') => act(async () => root.render(createElement(PlatformDomainContent, {
+  const render = (items: unknown[], id = 'course-detail', courseRedeemed = false) => act(async () => root.render(createElement(PlatformDomainContent, {
     definition: { id } as PlatformRouteDefinition,
-    entity: { id: 'course', title: 'Course', data: { lessons: items } } as PlatformEntity, params: {},
+    entity: { id: 'course', title: 'Course', data: { lessons: items } } as PlatformEntity, params: {}, courseRedeemed,
   })));
   try {
     await render(lessons);
@@ -162,11 +321,18 @@ it('links section cards to separate lesson pages without losing lessons or chang
     expect(host.querySelector('details')).toBeNull();
     expect([...host.querySelectorAll('a')].map(node => node.getAttribute('href'))).toEqual(
       ['introduction', 'trial', 'core'].map(section => `/platform/courses/course/sections/${section}`));
+    expect(host.querySelector('.platform-course-redeemed')).toBeNull();
+    await render(lessons, 'course-detail', true);
+    const redeemedBadge = host.querySelector('.platform-course-redeemed');
+    expect(redeemedBadge?.textContent).toBe('已兑换');
+    expect(redeemedBadge?.closest('a')?.getAttribute('href')).toBe('/platform/courses/course/sections/core');
     for (const [index, section] of ['introduction', 'trial', 'core'].entries()) {
       await render(lessons, `course-section-${section}`);
       expect(host.textContent).not.toContain('published');
-      expect([...host.querySelectorAll('nav button')].map(node => node.textContent)).toEqual(
-        Array.from({ length: [2, 2, 19][index] }, (_, lessonIndex) => String(lessonIndex + 1)));
+      const expectedTitles = index === 2
+        ? ['1', '2', ...Array.from({ length: 19 }, (_, lessonIndex) => String(lessonIndex + 1))]
+        : ['1', '2'];
+      expect([...host.querySelectorAll('nav button')].map(node => node.textContent)).toEqual(expectedTitles);
       expect(host.querySelector('.platform-classroom-stage h2')?.textContent).toBe('1');
       expect(host.querySelectorAll('video')).toHaveLength(1);
       expect(host.querySelector('a')).toBeNull();
@@ -229,20 +395,20 @@ it('switches videos in place, resets position, rejects stale IDs and ignores abo
   }
   try {
     await act(async () => root.render(createElement(Classroom)));
-    expect(load.mock.calls[0][0]).toBe('first');
-    expect(host.querySelectorAll('nav button')).toHaveLength(2);
-    await act(async () => (host.querySelectorAll('nav button')[1] as HTMLButtonElement).click());
+    expect(load.mock.calls[0][0]).toBe('other');
+    expect(host.querySelectorAll('nav button')).toHaveLength(3);
+    await act(async () => (host.querySelectorAll('nav button')[2] as HTMLButtonElement).click());
     expect(load.mock.calls[0][1].aborted).toBe(true);
     expect(host.querySelector('[aria-current]')?.textContent).toBe('02');
     expect(host.querySelector('video')?.getAttribute('src')).toBe('/signed-video');
     await act(async () => resolveOld({ mimeType: 'video/mp4', accessUrl: '/stale' }));
     expect(host.querySelector('video')?.getAttribute('src')).toBe('/signed-video');
     host.querySelector('video')!.currentTime = 40;
-    await act(async () => (host.querySelector('nav button') as HTMLButtonElement).click());
+    await act(async () => (host.querySelectorAll('nav button')[1] as HTMLButtonElement).click());
     expect(host.querySelector('video')!.currentTime).toBe(0);
     expect(host.querySelectorAll('video')).toHaveLength(1);
     load.mockRejectedValueOnce(new Error('Access denied'));
-    await act(async () => (host.querySelectorAll('nav button')[1] as HTMLButtonElement).click());
+    await act(async () => (host.querySelectorAll('nav button')[2] as HTMLButtonElement).click());
     expect(host.querySelector('video')).toBeNull();
     expect(host.textContent).toContain('Access denied');
     await act(async () => root.render(createElement(PlatformDomainContent, { ...props, entity: { id: 'empty', data: { lessons: [] } } as unknown as PlatformEntity })));
@@ -376,4 +542,46 @@ it('autoplays the next lesson only when enabled and stops at the last lesson', a
     await act(async () => host.querySelector<HTMLButtonElement>('nav button')!.click());
     expect(host.querySelector('video')!.autoplay).toBe(false);
   } finally { await act(async () => root.unmount()); }
+});
+
+
+it('refreshes saved notes through GET and renders structured lesson text with language fallback', async () => {
+  access.user={id:1};locale.english=true;
+  const host=document.createElement('div'),root=createRoot(host);
+  try {
+    await act(async()=>root.render(createElement(PlatformDomainContent,{definition:{id:'course-lesson'} as PlatformRouteDefinition,entity:{id:'first',title:'Lesson',data:{}} as PlatformEntity,params:{id:'course'},lessonStartTime:0})));
+    expect(host.textContent).toContain('课时正文');
+    const add=[...host.querySelectorAll('button')].find(button=>button.textContent==='Take a note at this moment')!;
+    await act(async()=>add.click());
+    const textarea=host.querySelector('textarea')!;
+    await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value')!.set!.call(textarea,'My note');textarea.dispatchEvent(new Event('input',{bubbles:true}));});
+    await act(async()=>host.querySelector('form')!.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
+    const reads=learningRequest.mock.calls.filter(([path])=>path==='/learning/lessons/first/state');
+    expect(reads).toHaveLength(2);expect(reads.every(call=>call[2]==='GET')).toBe(true);
+    const video=host.querySelector('video')!;Object.defineProperty(video,'duration',{value:120,configurable:true});
+    await act(async()=>video.dispatchEvent(new Event('loadedmetadata')));expect(video.currentTime).toBe(0);
+  } finally {locale.english=false;await act(async()=>root.unmount());}
+});
+
+
+it('loads the public course directory for an anonymous direct lesson without private requests',async()=>{
+ const host=document.createElement('div'),root=createRoot(host);
+ try{
+  await act(async()=>root.render(createElement(PlatformDomainContent,{definition:{id:'course-lesson'} as PlatformRouteDefinition,entity:{id:'first',title:'Lesson',data:{}} as PlatformEntity,params:{id:'course'}})));
+  const directory=host.querySelector('nav')!;expect(directory.textContent).toContain('公开课时一');expect(directory.textContent).toContain('公开课时二');expect(directory.querySelector('a[href="/platform/courses/course/learn/second"]')).not.toBeNull();expect(learningRequest).not.toHaveBeenCalled();
+ }finally{await act(async()=>root.unmount());}
+});
+
+it('drops queued progress writes when the authenticated owner changes',async()=>{
+ access.user={id:1};const host=document.createElement('div'),root=createRoot(host);let release:()=>void=()=>{};
+ const pending=new Promise<void>(resolve=>{release=resolve;});
+ learningRequest.mockImplementation((_path:string,_body:unknown,method:string)=>method==='PUT'?pending:Promise.resolve({progress:{positionSeconds:0,progressBps:0,status:'not_started'},notes:[],attempts:[],lessons:[]}));
+ try{
+  await act(async()=>root.render(createElement(PlatformDomainContent,{definition:{id:'course-lesson'} as PlatformRouteDefinition,entity:{id:'first',title:'Lesson',data:{}} as PlatformEntity,params:{id:'course'}})));
+  const video=host.querySelector('video')!;Object.defineProperty(video,'duration',{value:120,configurable:true});
+  await act(async()=>video.dispatchEvent(new Event('pause')));
+  await act(async()=>video.dispatchEvent(new Event('pause')));
+  access.user={id:2};await act(async()=>{release();await pending;});
+  expect(learningRequest.mock.calls.filter(call=>call[2]==='PUT')).toHaveLength(1);
+ }finally{release();await act(async()=>root.unmount());}
 });

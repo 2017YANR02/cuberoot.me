@@ -1,20 +1,32 @@
 //! WASM 入口(wasm-bindgen):浏览器内三阶 cross 系列求解
 //! (cross / xc / xxc / xxxc / xxxxc),小表可采纳启发式,返回最优步数。
 //!
-//! 表的两条来路(2026-07-27 起):
-//!   · **pt_*(剪枝表)**:BFS 深搜产物,生成要几十秒 ⇒ 只能由 JS fetch 后传入构造器,
+//! 浏览器表来源:
+//!   · **pt_*(剪枝表)**:由 JS 传入；pt_cross_C4E0 支持缓存和下载/现场生成竞速，
 //!     `PackedPruneTable::from_bin` 装进线性内存。
 //!   · **mt_*(移动表)**:多数小求解器在 `mt_gen::get()` 现场生成，不再经 JS 传入。
 //!     First Layer 是例外：其 4490 万态 BFS 冷启动过重，最终移动表与 packed PDB 一起离线装载。
 //!
 //! 另:`CrossSolverWasm` 分两段 —— 构造只吃 pt_cross(gz 50KB)即可算纯十字;
 //! xcross 及以上要的 pt_cross_C4E0(gz 20MB)由 `attach_xcross` 惰性补,用户不切到
-//! 那些阶段就永远不下载。
+//! 那些阶段就不下载或生成这张大表。
 
 use std::cell::RefCell;
 use std::sync::Arc;
 
 use wasm_bindgen::prelude::*;
+
+/// Generate the canonical packed XCross table in a dedicated browser worker.
+#[wasm_bindgen]
+pub fn generate_xcross_table(on_layer: &js_sys::Function) -> Vec<u8> {
+    crate::xcross_table_gen::generate(|depth, count| {
+        let _ = on_layer.call2(
+            &JsValue::NULL,
+            &JsValue::from_f64(depth as f64),
+            &JsValue::from_f64(count as f64),
+        );
+    })
+}
 
 use crate::block222_solver::{block_label, Block222Solver, Y_NAMES};
 use crate::block223_solver::{block223_label, Block223Solver};
@@ -45,6 +57,7 @@ use crate::roux_s1_solver::{s1_block_label, square_label, FbSquareSolver, RouxS1
 use crate::skewb_solver::{parse_skewb, SkewbSolver};
 use crate::xcross_restrict_solver::XCrossRestrictSolver;
 use crate::xcross_solver::XCrossSolver;
+use crate::unique_solutions::enumerate_unique;
 
 /// 6 个 cube 视角(哪一面当底)。顺序对应 CSV 后缀 _z0/_z2/_z3/_z1/_x3/_x1。
 const ROTS: [&str; 6] = ["", "z2", "z'", "z", "x'", "x"];
@@ -1136,21 +1149,25 @@ impl CrossSolverWasm {
                 .join(" ")
         };
         // 流式回调:每枚举到一条解即 fmt + label 后 call 进 JS(worker postMessage 给 UI)。
+        let mut emitted = std::collections::HashSet::new();
         let mut emit = |combo: &[usize], p: &[u8]| {
-            emit_sol(on_sol, &fmt_moves(rot, p), &label(combo), p.len())
+            if emitted.len() < cap && emitted.insert(p.to_vec()) {
+                emit_sol(on_sol, &fmt_moves(rot, p), &label(combo), p.len());
+            }
         };
         // combo 非空 = 用户指定槽位(只枚举该 combo);空 = 自动挑最优槽。
         let slots = parse_combo(combo);
-        let (len, sols) = if slots.is_empty() {
-            self.xcross()
-                .enumerate_best(&alg, rot, k, extra, cap, &mut emit)
-        } else {
-            self.xcross()
-                .enumerate_combo(&alg, rot, &slots, extra, cap, &mut emit)
-        };
+        let (len, sols) = enumerate_unique(cap, |take| {
+            let (len, sols) = if slots.is_empty() {
+                self.xcross().enumerate_best(&alg, rot, k, extra, take, &mut emit)
+            } else {
+                self.xcross().enumerate_combo(&alg, rot, &slots, extra, take, &mut emit)
+            };
+            (len, sols.into_iter().map(|(combo, p)| (rot.to_string(), combo, p)).collect())
+        });
         let items: Vec<(String, String)> = sols
             .iter()
-            .map(|(combo, p)| (fmt_moves(rot, p), label(combo)))
+            .map(|(_, combo, p)| (fmt_moves(rot, p), label(combo)))
             .collect();
         sols_json(len, &items)
     }
@@ -1223,40 +1240,32 @@ impl CrossSolverWasm {
                 .collect::<Vec<_>>()
                 .join(" ")
         };
+        let mut emitted = std::collections::HashSet::new();
         let mut emit = |combo: &[usize], p: &[u8]| {
-            emit_sol(on_sol, &fmt_moves(rot, p), &label(combo), p.len())
+            if emitted.len() < cap && emitted.insert(p.to_vec()) {
+                emit_sol(on_sol, &fmt_moves(rot, p), &label(combo), p.len());
+            }
         };
         let slots = parse_combo(combo);
-        let (len, sols) = if slots.is_empty() {
-            self.xcross().enumerate_best_masked(
-                &alg,
-                rot,
-                k,
-                extra,
-                cap,
-                mask,
-                XCROSS_MASK_DEPTH,
-                &mut emit,
-            )
-        } else {
-            self.xcross().enumerate_combo_masked(
-                &alg,
-                rot,
-                &slots,
-                extra,
-                cap,
-                mask,
-                XCROSS_MASK_DEPTH,
-                &mut emit,
-            )
-        };
+        let (len, sols) = enumerate_unique(cap, |take| {
+            let (len, sols) = if slots.is_empty() {
+                self.xcross().enumerate_best_masked(
+                    &alg, rot, k, extra, take, mask, XCROSS_MASK_DEPTH, &mut emit,
+                )
+            } else {
+                self.xcross().enumerate_combo_masked(
+                    &alg, rot, &slots, extra, take, mask, XCROSS_MASK_DEPTH, &mut emit,
+                )
+            };
+            (len, sols.into_iter().map(|(combo, p)| (rot.to_string(), combo, p)).collect())
+        });
         // best_len==99 = 限制下(或超界)无解 → u32::MAX 哨兵 + 空解集(同 cross None 分支语义)。
         if len >= 99 {
             return sols_json(u32::MAX, &[]);
         }
         let items: Vec<(String, String)> = sols
             .iter()
-            .map(|(combo, p)| (fmt_moves(rot, p), label(combo)))
+            .map(|(_, combo, p)| (fmt_moves(rot, p), label(combo)))
             .collect();
         sols_json(len, &items)
     }
@@ -1421,15 +1430,15 @@ impl F2leoSolverWasm {
         let (len, raw) = if pseudo {
             self.ensure_pseudo();
             let b = self.pseudo.borrow();
-            b.as_ref()
-                .unwrap()
-                .enumerate_small(&alg, rot, stage, extra, cap, &force)
+            enumerate_unique(cap, |take| {
+                b.as_ref().unwrap().enumerate_small(&alg, rot, stage, extra, take, &force)
+            })
         } else {
             self.ensure_f2leo();
             let b = self.f2leo.borrow();
-            b.as_ref()
-                .unwrap()
-                .enumerate_small(&alg, rot, stage, extra, cap, &force)
+            enumerate_unique(cap, |take| {
+                b.as_ref().unwrap().enumerate_small(&alg, rot, stage, extra, take, &force)
+            })
         };
         let items: Vec<(String, String)> = raw
             .iter()
@@ -1497,29 +1506,19 @@ impl F2leoSolverWasm {
         let (len, raw) = if pseudo {
             self.ensure_pseudo();
             let b = self.pseudo.borrow();
-            b.as_ref().unwrap().enumerate_small_masked(
-                &alg,
-                rot,
-                stage,
-                extra,
-                cap,
-                &force,
-                mask,
-                variant_mask_depth(mask),
-            )
+            enumerate_unique(cap, |take| {
+                b.as_ref().unwrap().enumerate_small_masked(
+                    &alg, rot, stage, extra, take, &force, mask, variant_mask_depth(mask),
+                )
+            })
         } else {
             self.ensure_f2leo();
             let b = self.f2leo.borrow();
-            b.as_ref().unwrap().enumerate_small_masked(
-                &alg,
-                rot,
-                stage,
-                extra,
-                cap,
-                &force,
-                mask,
-                variant_mask_depth(mask),
-            )
+            enumerate_unique(cap, |take| {
+                b.as_ref().unwrap().enumerate_small_masked(
+                    &alg, rot, stage, extra, take, &force, mask, variant_mask_depth(mask),
+                )
+            })
         };
         // best_len==99 = 限制下(或超界)无解 → u32::MAX 哨兵 + 空解集。
         if len >= 99 {
@@ -1803,37 +1802,33 @@ impl VariantSolverWasm {
             0 => {
                 self.ensure_pair();
                 let b = self.pair.borrow();
-                let (len, raw) = b
-                    .as_ref()
-                    .unwrap()
-                    .enumerate_small(&alg, rot, stage, extra, cap, &force, base);
+                let (len, raw) = enumerate_unique(cap, |take| {
+                    b.as_ref().unwrap().enumerate_small(&alg, rot, stage, extra, take, &force, base)
+                });
                 pack(len, raw)
             }
             1 => {
                 self.ensure_eo();
                 let b = self.eo.borrow();
-                let (len, raw) = b
-                    .as_ref()
-                    .unwrap()
-                    .enumerate_small(&alg, rot, stage, extra, cap, &force);
+                let (len, raw) = enumerate_unique(cap, |take| {
+                    b.as_ref().unwrap().enumerate_small(&alg, rot, stage, extra, take, &force)
+                });
                 pack(len, raw)
             }
             2 => {
                 self.ensure_pseudo();
                 let b = self.pseudo.borrow();
-                let (len, raw) = b
-                    .as_ref()
-                    .unwrap()
-                    .enumerate_small(&alg, rot, stage, extra, cap, &force);
+                let (len, raw) = enumerate_unique(cap, |take| {
+                    b.as_ref().unwrap().enumerate_small(&alg, rot, stage, extra, take, &force)
+                });
                 pack(len, raw)
             }
             3 => {
                 self.ensure_pseudo_pair();
                 let b = self.pseudo_pair.borrow();
-                let (len, raw) = b
-                    .as_ref()
-                    .unwrap()
-                    .enumerate_small(&alg, rot, stage, extra, cap, &force, base);
+                let (len, raw) = enumerate_unique(cap, |take| {
+                    b.as_ref().unwrap().enumerate_small(&alg, rot, stage, extra, take, &force, base)
+                });
                 pack(len, raw)
             }
             _ => sols_json(0, &[]),
@@ -1932,37 +1927,33 @@ impl VariantSolverWasm {
             0 => {
                 self.ensure_pair();
                 let b = self.pair.borrow();
-                let (len, raw) = b
-                    .as_ref()
-                    .unwrap()
-                    .enumerate_small_masked(&alg, rot, stage, extra, cap, &force, base, mask, d);
+                let (len, raw) = enumerate_unique(cap, |take| {
+                    b.as_ref().unwrap().enumerate_small_masked(&alg, rot, stage, extra, take, &force, base, mask, d)
+                });
                 pack(len, raw)
             }
             1 => {
                 self.ensure_eo();
                 let b = self.eo.borrow();
-                let (len, raw) = b
-                    .as_ref()
-                    .unwrap()
-                    .enumerate_small_masked(&alg, rot, stage, extra, cap, &force, mask, d);
+                let (len, raw) = enumerate_unique(cap, |take| {
+                    b.as_ref().unwrap().enumerate_small_masked(&alg, rot, stage, extra, take, &force, mask, d)
+                });
                 pack(len, raw)
             }
             2 => {
                 self.ensure_pseudo();
                 let b = self.pseudo.borrow();
-                let (len, raw) = b
-                    .as_ref()
-                    .unwrap()
-                    .enumerate_small_masked(&alg, rot, stage, extra, cap, &force, mask, d);
+                let (len, raw) = enumerate_unique(cap, |take| {
+                    b.as_ref().unwrap().enumerate_small_masked(&alg, rot, stage, extra, take, &force, mask, d)
+                });
                 pack(len, raw)
             }
             3 => {
                 self.ensure_pseudo_pair();
                 let b = self.pseudo_pair.borrow();
-                let (len, raw) = b
-                    .as_ref()
-                    .unwrap()
-                    .enumerate_small_masked(&alg, rot, stage, extra, cap, &force, base, mask, d);
+                let (len, raw) = enumerate_unique(cap, |take| {
+                    b.as_ref().unwrap().enumerate_small_masked(&alg, rot, stage, extra, take, &force, base, mask, d)
+                });
                 pack(len, raw)
             }
             _ => sols_json(u32::MAX, &[]),

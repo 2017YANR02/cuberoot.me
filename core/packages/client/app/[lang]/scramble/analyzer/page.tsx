@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 /**
  * /scramble/analyzer — 3x3 scramble CFOP analyzer.
@@ -39,7 +40,6 @@ import WcaSourceConfig, { type WcaSourceSettings } from '@/components/WcaSourceC
 import { nextWca, prefetchWca, wcaMetaFor, isWcaSourceEmpty, type WcaSourceSpec, type WcaScrambleMeta } from '@/app/[lang]/timer/_lib/scramble/wca_pool';
 import type { EventId } from '@/app/[lang]/timer/_lib/types';
 import ChainExplorer from '@/components/ChainExplorer';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { ClearButton } from '@/components/ClearButton';
 import { Flag } from '@/components/Flag';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
@@ -501,14 +501,15 @@ function AnalyzePageInner() {
       <div className="analyze-wca-line">
         <div className="analyze-wca">
           {/* 来源切换:WCA 真实打乱(带比赛信息)/ 随机生成 */}
-          <PillToggle
-            value={scrSource === 'wca'}
-            onChange={(v) => setScrSource(v ? 'wca' : 'random')}
-            onLabel={t('WCA 真题', 'WCA real')}
-            offLabel={t('随机生成', 'Random')}
-            ariaLabel={t('打乱来源', 'Scramble source')}
-            className="analyze-src-pill"
-          />
+          <select
+            value={String(scrSource === 'wca')}
+            onChange={event => { const v = event.currentTarget.value === 'true'; setScrSource(v ? 'wca' : 'random'); }}
+            aria-label={t('打乱来源', 'Scramble source')}
+            className={['native-select', "analyze-src-pill"].filter(Boolean).join(' ')}
+          >
+            <option value="true">{t('WCA 真题', 'WCA real')}</option>
+            <option value="false">{t('随机生成', 'Random')}</option>
+          </select>
         </div>
 
         {/* 综合来源配置:复用计时器的 WcaSourceConfig(按日期范围 / 指定比赛 / 按难度 / 最优等态)。

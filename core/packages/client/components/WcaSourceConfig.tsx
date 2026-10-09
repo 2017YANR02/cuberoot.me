@@ -35,6 +35,7 @@ interface Props {
   isZh: boolean;
   settings: WcaSourceSettings;
   toggleSlot?: HTMLElement | null;
+  mergeSlot?: HTMLElement | null;
   updateSettings: (patch: Partial<WcaSourceSettings>) => void;
 }
 
@@ -44,6 +45,7 @@ export default function WcaSourceConfig({
   isZh,
   settings,
   toggleSlot,
+  mergeSlot,
   updateSettings,
 }: Props) {
   const wcaEventId = timerWcaScrambleEventId(event);
@@ -165,6 +167,7 @@ export default function WcaSourceConfig({
         settings={settings}
         topControlsSlot={topControlsSlot}
         toggleSlot={toggleSlot}
+        mergeSlot={mergeSlot}
         wcaEventId={wcaEventId}
       />
     </div>

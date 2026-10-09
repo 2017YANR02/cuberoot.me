@@ -12,7 +12,10 @@ import { useQueryState } from 'nuqs';
 import { tr, useLang } from '@/i18n/tr';
 import { useAuthStore, isAdmin, getSessionToken, getWcaToken } from '@/lib/auth-store';
 import { isMiniProgramCommerceRestricted } from '@/lib/miniprogram-bridge';
-import { fmtPrice, fmtDate } from '@/lib/membership-format';
+import { fmtPrice, fmtDate, fmtVipId } from '@/lib/membership-format';
+import { benefitCopy } from '@cuberoot/shared/membership-benefits';
+import { useMembershipBenefits } from '@/hooks/useMembershipBenefits';
+import BenefitsEditor from './BenefitsEditor';
 import AppLink from '@/components/AppLink';
 import CubeRootLogo from '@/components/CubeRootLogo';
 import DonateModal from '@/components/DonateModal';
@@ -28,40 +31,10 @@ import MemberContact from './MemberContact';
 import MemberProfileEditor from '@/components/MemberProfileEditor';
 import AutoRenewModal from './AutoRenewModal';
 import './membership.css';
+import AppleMembership from './AppleMembership';
+import { isIosMembershipSurface, useAppleMembershipAvailable } from '@/lib/apple-membership-bridge';
+import { installedMembershipStore, useStoreMembershipAvailable } from '@/lib/store-membership-bridge';
 
-const PERK_LABEL: Record<string, { zh: string; en: string }> = {
-  unlimited_333_cloud_optimal: {
-    zh: '不限量三阶魔方云端最少步快速求解',
-    en: 'Unlimited cloud-based 3×3 optimal solving',
-  },
-  expert_recon_10_monthly: {
-    zh: '获取高手的解法复盘（每月 10 把）',
-    en: 'Expert solve reconstructions (10 per month)',
-  },
-  badge: { zh: '专属会员徽章', en: 'Exclusive member badge' },
-  early: { zh: '新功能抢先体验', en: 'Early access to new features' },
-  thanks: { zh: '致谢名单署名', en: 'Listed in the acknowledgments' },
-  platform_follow: { zh: '获得魔方根在各平台的关注', en: 'Get followed by CubeRoot across platforms' },
-  vip_group: { zh: '进入魔方根 VIP 群', en: 'Join the CubeRoot VIP group' },
-  group_qr_sharing: { zh: '允许在魔方根群分享二维码', en: 'Share QR codes in CubeRoot groups' },
-  personal_video_review_2_monthly: {
-    zh: '每月可发送 2 把视频给我进行复盘（仅限三阶、二阶、SQ1、金字塔和斜转）',
-    en: 'Send me up to 2 solve videos per month for review (3×3, 2×2, SQ1, Pyraminx, and Skewb only)',
-  },
-  lifetime: { zh: '一次付费,永久有效', en: 'Pay once, valid forever' },
-  teacher_student_profile_ranking: {
-    zh: '老师主页展示学生，学生主页展示老师，排名页展示老师',
-    en: 'Show students on teacher profiles, teachers on student profiles, and teachers in rankings',
-  },
-  enterprise_profile: {
-    zh: '企业专属介绍页面',
-    en: 'Dedicated enterprise profile page',
-  },
-  enterprise_content_storage_custom_course: {
-    zh: '教程、图文资料和视频等云端存储，以及企业课程方案定制',
-    en: 'Cloud storage for tutorials, articles, images, and videos, plus customized enterprise course plans',
-  },
-};
 
 function intersectPerks(plans: MembershipPlan[]): string[] {
   if (plans.length === 0) return [];
@@ -82,6 +55,8 @@ function planUnit(plan: MembershipPlan, isZh: boolean): string {
 }
 
 export default function MembershipPage() {
+  const { content: benefits, setContent: setBenefits } = useMembershipBenefits();
+  const benefitMap = new Map(benefits.items.map(item => [item.id, item]));
   const lang = useLang();
   const isZh = lang !== 'en';
 
@@ -89,9 +64,20 @@ export default function MembershipPage() {
   const login = useAuthStore((s) => s.login);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+  const appleAvailable = useAppleMembershipAvailable();
+  const appleSurface = mounted && (appleAvailable || isIosMembershipSurface());
+  const googleAvailable = useStoreMembershipAvailable('google');
+  const googleSurface = mounted && (googleAvailable || installedMembershipStore() === 'google');
   const admin = mounted && isAdmin();
   const loggedIn = mounted && !!user;
-  const commerceRestricted = mounted && isMiniProgramCommerceRestricted();
+  const [commerceRestricted, setCommerceRestricted] = useState<boolean | null>(null);
+  useEffect(() => {
+    let cancel = false;
+    void isMiniProgramCommerceRestricted().then((restricted) => {
+      if (!cancel) setCommerceRestricted(restricted);
+    });
+    return () => { cancel = true; };
+  }, []);
 
   const [plans, setPlans] = useState<MembershipPlan[] | null>(null);
   const [payEnabled, setPayEnabled] = useState(false);
@@ -115,21 +101,21 @@ export default function MembershipPage() {
   }, []);
 
   useEffect(() => {
-    if (isMiniProgramCommerceRestricted()) return;
+    if (commerceRestricted !== false) return;
     let cancel = false;
     listPlans()
       .then((r) => { if (!cancel) { setPlans(r.plans); setPayEnabled(r.payEnabled); setChannels(r.channels); } })
       .catch((e) => { if (!cancel) setLoadErr(e instanceof Error ? e.message : String(e)); });
     return () => { cancel = true; };
-  }, []);
+  }, [commerceRestricted]);
 
   useEffect(() => {
-    if (mounted && !commerceRestricted) refreshMembership();
+    if (mounted && commerceRestricted === false) refreshMembership();
   }, [mounted, commerceRestricted, user?.wcaId, refreshMembership]);
 
   // 支付返回(return_url 带 ?paid=<单号>):轮询查单几次,确认入账后刷新状态。
   useEffect(() => {
-    if (!paid || !mounted || commerceRestricted) return;
+    if (!paid || !mounted || commerceRestricted !== false) return;
     let tries = 0;
     let timer: number | undefined;
     const poll = () => {
@@ -176,7 +162,7 @@ export default function MembershipPage() {
 
   // 全局到期提醒 banner 深链 ?renew=1 → 自动打开续费弹窗(永久会员忽略)。
   useEffect(() => {
-    if (commerceRestricted || !renew || !mounted || !plans || !membership || membership.lifetime) return;
+    if (commerceRestricted !== false || !renew || !mounted || !plans || !membership || membership.lifetime) return;
     renewMembership();
     setRenew(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -188,19 +174,20 @@ export default function MembershipPage() {
   const enterprisePlans = oneTimePlans.filter((plan) => plan.slug.startsWith('enterprise_'));
   const personalPlans = oneTimePlans.filter((plan) => !plan.slug.startsWith('enterprise_'));
   const showAutoRenew = autoRenewPlans.length > 0;
-  const universalPerks = intersectPerks(sortedPlans);
-  if (!universalPerks.includes('platform_follow')) universalPerks.push('platform_follow');
-  if (!universalPerks.includes('vip_group')) universalPerks.push('vip_group');
-  if (!universalPerks.includes('group_qr_sharing')) universalPerks.push('group_qr_sharing');
-  if (!universalPerks.includes('personal_video_review_2_monthly')) universalPerks.push('personal_video_review_2_monthly');
-  const universalPerkSet = new Set(universalPerks);
-  const enterpriseSharedPerks = intersectPerks(enterprisePlans)
-    .filter((perk) => !universalPerkSet.has(perk));
-  const enterpriseSharedPerkSet = new Set(enterpriseSharedPerks);
+  const universalPerks = benefits.items.filter(item => item.group === 'common' && item.enabled).map(item => item.id);
+  const universalPerkSet = new Set(benefits.items.filter(item => item.group === 'common').map(item => item.id));
+  const enterpriseSharedPerks = benefits.items.filter(item => item.group === 'enterprise' && item.enabled).map(item => item.id);
+  const enterpriseSharedPerkSet = new Set(benefits.items.filter(item => item.group === 'enterprise').map(item => item.id));
 
   const handlePlanUpdated = useCallback((updatedPlan: MembershipPlan) => {
     setPlans((current) => current ? reconcileVisiblePlan(current, updatedPlan) : current);
   }, []);
+
+  if (appleSurface || googleSurface) return <div className="mem-page"><AppleMembership store={googleSurface ? 'google' : 'apple'} refresh={refreshMembership} benefits={renderPerks([...new Set([...universalPerks, ...intersectPerks(personalPlans)])].filter(perk => perk !== 'lifetime'))} /></div>;
+
+  if (commerceRestricted === null) return (
+    <div className="mem-page"><div className="mem-empty" role="status"><Spinner size={16} /> {tr({ zh: '加载中…', en: 'Loading…' })}</div></div>
+  );
 
   if (commerceRestricted) {
     return (
@@ -225,8 +212,8 @@ export default function MembershipPage() {
     if (perks.length === 0) return null;
     return (
       <ul className="mem-plan-perks">
-        {perks.map((perk) => (
-          <li key={perk}><Check size={13} /> {tr(PERK_LABEL[perk] ?? { zh: perk, en: perk })}</li>
+        {perks.filter(perk => benefitMap.get(perk)?.enabled !== false).map((perk) => (
+          <li key={perk}><Check size={13} /> {tr(benefitMap.has(perk) ? benefitCopy(benefitMap.get(perk)!) : { zh: perk, en: perk })}</li>
         ))}
       </ul>
     );
@@ -286,7 +273,7 @@ export default function MembershipPage() {
         <div className={`mem-status${expiry?.expiringSoon ? ' is-warning' : ''}${expiry?.expired ? ' is-expired' : ''}`}>
           {expiry?.expired && <AlertTriangle size={16} className="mem-status-icon" />}
           <span className="mem-status-text">
-            {membership.vipId && <><strong>{membership.vipId.replace(/^VIP0+(\d+)$/, 'VIP$1')}</strong>{' '}</>}
+            {membership.vipId && <><strong>{fmtVipId(membership.vipId)}</strong>{' '}</>}
             {membership.lifetime
               ? tr({ zh: '你是永久会员,感谢长期的支持 ♡', en: "You're a lifetime member — thank you for the support ♡"
             })
@@ -320,6 +307,8 @@ export default function MembershipPage() {
       )}
 
       {/* 套餐 */}
+      {admin && <BenefitsEditor onSaved={setBenefits} />}
+
       {loadErr ? (
         <div className="mem-empty">{tr({ zh: '加载失败', en: 'Failed to load'
         })}: {loadErr}</div>
@@ -369,8 +358,8 @@ export default function MembershipPage() {
                       <li><CalendarClock size={13} /> {tr(copy.cadence)}</li>
                       <li><Check size={13} /> {tr({ zh: '扣费前发送通知', en: 'Notice before every charge' })}</li>
                       <li><Check size={13} /> {tr({ zh: '可随时关闭自动续费', en: 'Cancel anytime' })}</li>
-                      {plan.perks.filter((perk) => !universalPerkSet.has(perk)).map((p) => (
-                        <li key={p}><Check size={13} /> {tr(PERK_LABEL[p] ?? { zh: p, en: p })}</li>
+                      {plan.perks.filter((perk) => !universalPerkSet.has(perk) && benefitMap.get(perk)?.enabled !== false).map((p) => (
+                        <li key={p}><Check size={13} /> {tr(benefitMap.has(p) ? benefitCopy(benefitMap.get(p)!) : { zh: p, en: p })}</li>
                       ))}
                     </ul>
                     <button className="mem-plan-cta" onClick={() => setSelectedAutoRenewPlan(plan)}>

@@ -1,5 +1,5 @@
 /**
- * 国内三方登录(微信 / QQ / 支付宝)—— 标准 OAuth2「授权码」重定向流,服务端换 code。
+ * 国内三方登录(微信 / QQ / 支付宝 / 抖音)—— 标准 OAuth2「授权码」重定向流,服务端换 code。
  *
  * 与 Google 不同:本服务器出网到微信/QQ/支付宝 API 全部畅通(均为国内域),故**无需墙外中继**,
  * 直接服务端 code→access_token→userinfo。浏览器只负责跳授权页 + 把回调 code 送回来。
@@ -14,10 +14,11 @@
 import { createSign, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { buildAlipaySignContent, type SignParams } from '@cuberoot/shared/payment';
 import { JWT_SECRET } from './session.js';
+import { getDouyinAlliedId } from './douyin_allied_id.js';
 
-export type SocialProvider = 'wechat' | 'qq' | 'alipay';
+export type SocialProvider = 'wechat' | 'qq' | 'alipay' | 'douyin';
 export type SocialIntent = 'login' | 'link';
-export const SOCIAL_PROVIDERS: readonly SocialProvider[] = ['wechat', 'qq', 'alipay'];
+export const SOCIAL_PROVIDERS: readonly SocialProvider[] = ['wechat', 'qq', 'alipay', 'douyin'];
 export function isSocialProvider(x: string): x is SocialProvider {
   return (SOCIAL_PROVIDERS as readonly string[]).includes(x);
 }
@@ -26,12 +27,15 @@ export interface SocialUser {
   sub: string;              // 稳定唯一标识(unionid / openid / alipay user_id)→ 存 auth_identities.provider_uid
   name?: string;
   avatar?: string;
+  alliedId?: string;
 }
 
 // 授权回调统一落到这个前端页(各平台后台需把它的域名/地址登记为回调域)。
 // 用 PUBLIC_SITE_ORIGIN(支付已在用)保证与前端跳转时的 origin 一致,免 www/apex 漂移。
 const SITE_ORIGIN = (process.env.PUBLIC_SITE_ORIGIN || 'https://cuberoot.me').replace(/\/+$/, '');
 const SOCIAL_REDIRECT = `${SITE_ORIGIN}/auth/social/callback`;
+// 抖音网站应用后台按完整 URL 逐字匹配；当前备案地址包含末尾斜杠。
+const DOUYIN_REDIRECT = `${SOCIAL_REDIRECT}/`;
 
 // ── 微信开放平台「网站应用」扫码登录(需企业主体 + ¥300/年认证)──
 const WECHAT_APP_ID = process.env.WECHAT_LOGIN_APP_ID || '';
@@ -52,17 +56,26 @@ const ALIPAY_PRIVATE_KEY = normalizePem(process.env.ALIPAY_PRIVATE_KEY || '', 'P
 const ALIPAY_LOGIN_ON = process.env.ALIPAY_LOGIN_ENABLED === '1' || process.env.ALIPAY_LOGIN_ENABLED === 'true';
 export function alipayLoginConfigured(): boolean { return Boolean(ALIPAY_LOGIN_ON && ALIPAY_APP_ID && ALIPAY_PRIVATE_KEY); }
 
+// 抖音开放平台「网站应用」,与抖音小程序是两套独立凭据。
+const DOUYIN_LOGIN_CLIENT_KEY = process.env.DOUYIN_LOGIN_CLIENT_KEY || '';
+const DOUYIN_LOGIN_CLIENT_SECRET = process.env.DOUYIN_LOGIN_CLIENT_SECRET || '';
+export function douyinLoginConfigured(): boolean {
+  return Boolean(DOUYIN_LOGIN_CLIENT_KEY && DOUYIN_LOGIN_CLIENT_SECRET);
+}
+
 /** 某 provider 的公开 appId(供前端展示/兜底;未配返 null)。 */
 export function socialAppId(provider: SocialProvider): string | null {
   if (provider === 'wechat') return wechatLoginConfigured() ? WECHAT_APP_ID : null;
   if (provider === 'qq') return qqLoginConfigured() ? QQ_APP_ID : null;
-  return alipayLoginConfigured() ? ALIPAY_APP_ID : null;
+  if (provider === 'alipay') return alipayLoginConfigured() ? ALIPAY_APP_ID : null;
+  return douyinLoginConfigured() ? DOUYIN_LOGIN_CLIENT_KEY : null;
 }
 
 export function socialLoginConfigured(provider: SocialProvider): boolean {
   if (provider === 'wechat') return wechatLoginConfigured();
   if (provider === 'qq') return qqLoginConfigured();
-  return alipayLoginConfigured();
+  if (provider === 'alipay') return alipayLoginConfigured();
+  return douyinLoginConfigured();
 }
 
 // ── 自包含签名 state ──
@@ -98,10 +111,10 @@ export function verifySocialState(state: string, expectProvider: SocialProvider 
   return { intent: i };
 }
 
-/** 服务端下发的授权页 URL(内部生成签名 state,redirect_uri 固定为 SOCIAL_REDIRECT)。未配返 null。 */
+/** 服务端下发的授权页 URL(内部生成签名 state,redirect_uri 与各平台后台配置逐字一致)。未配返 null。 */
 export function socialAuthorizeUrl(provider: SocialProvider, intent: SocialIntent): string | null {
   if (!socialLoginConfigured(provider)) return null;
-  const redirect = encodeURIComponent(SOCIAL_REDIRECT);
+  const redirect = encodeURIComponent(provider === 'douyin' ? DOUYIN_REDIRECT : SOCIAL_REDIRECT);
   const st = encodeURIComponent(signSocialState(provider, intent));
   if (provider === 'wechat') {
     // 网站应用扫码登录;#wechat_redirect 结尾为微信强制要求。
@@ -110,14 +123,54 @@ export function socialAuthorizeUrl(provider: SocialProvider, intent: SocialInten
   if (provider === 'qq') {
     return `https://graph.qq.com/oauth2.0/authorize?response_type=code&client_id=${QQ_APP_ID}&redirect_uri=${redirect}&scope=get_user_info&state=${st}`;
   }
-  return `https://openauth.alipay.com/oauth2/publicAppAuthorize.htm?app_id=${ALIPAY_APP_ID}&scope=auth_user&redirect_uri=${redirect}&state=${st}`;
+  if (provider === 'alipay') {
+    return `https://openauth.alipay.com/oauth2/publicAppAuthorize.htm?app_id=${ALIPAY_APP_ID}&scope=auth_user&redirect_uri=${redirect}&state=${st}`;
+  }
+  return `https://open.douyin.com/platform/oauth/connect/?client_key=${encodeURIComponent(DOUYIN_LOGIN_CLIENT_KEY)}&response_type=code&scope=user_info&redirect_uri=${redirect}&state=${st}`;
 }
 
 /** 用回调 code 换取用户身份(登录/绑定共用)。任一步失败即抛异常。 */
 export async function exchangeSocialCode(provider: SocialProvider, code: string): Promise<SocialUser> {
   if (provider === 'wechat') return exchangeWechat(code);
   if (provider === 'qq') return exchangeQq(code);
-  return exchangeAlipay(code);
+  if (provider === 'alipay') return exchangeAlipay(code);
+  return exchangeDouyin(code);
+}
+
+// UnionID 只在同一超管账号范围内稳定；跨网站应用和小程序须另取同主体 AlliedID。
+async function exchangeDouyin(code: string): Promise<SocialUser> {
+  const tokenBody = new URLSearchParams({
+    client_key: DOUYIN_LOGIN_CLIENT_KEY,
+    client_secret: DOUYIN_LOGIN_CLIENT_SECRET,
+    code,
+    grant_type: 'authorization_code',
+  });
+  const token = await postFormJson<{
+    access_token?: string;
+    open_id?: string;
+    data?: { access_token?: string; open_id?: string };
+  }>('https://open.douyin.com/oauth/access_token/', tokenBody);
+  const accessToken = token.data?.access_token || token.access_token;
+  const openId = token.data?.open_id || token.open_id;
+  if (!accessToken || !openId) throw new Error('douyin token exchange failed');
+
+  const info = await postFormJson<{
+    data?: { union_id?: string; nickname?: string; avatar?: string };
+    union_id?: string;
+    nickname?: string;
+    avatar?: string;
+  }>('https://open.douyin.com/oauth/userinfo/', new URLSearchParams({ access_token: accessToken, open_id: openId }));
+  const profile = info.data ?? info;
+  if (!profile.union_id) throw new Error('douyin unionid required');
+  let alliedId: string | null = null;
+  try {
+    alliedId = await getDouyinAlliedId('website', openId);
+  } catch (error) {
+    // AlliedID 能力尚未开通或临时不可用时，网站原有 UnionID 登录仍可用。
+    console.warn('[auth] douyin website allied id unavailable:', error instanceof Error ? error.message : 'unknown');
+  }
+  return { sub: profile.union_id, name: profile.nickname || undefined, avatar: profile.avatar || undefined,
+    ...(alliedId ? { alliedId } : {}) };
 }
 
 // ─────────────────────────── 微信 ───────────────────────────
@@ -218,6 +271,17 @@ async function getJson<T>(url: string): Promise<T> {
   return JSON.parse(text) as T;
 }
 
+async function postFormJson<T>(url: string, body: URLSearchParams): Promise<T> {
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: body.toString(),
+    signal: AbortSignal.timeout(12000),
+  });
+  if (!res.ok) throw new Error(`fetch ${res.status}`);
+  return res.json() as Promise<T>;
+}
+
 // 与 payment/alipay.ts 同款(那边未导出,这里本地保留一份,避免耦合支付模块)。
 function normalizePem(raw: string, type: 'PRIVATE KEY' | 'PUBLIC KEY'): string {
   const s = raw.trim();
@@ -241,5 +305,7 @@ function beijingTimestamp(): string {
  *   微信:  WECHAT_LOGIN_APP_ID / WECHAT_LOGIN_APP_SECRET(微信开放平台「网站应用」,与微信支付 WECHAT_* 分开)
  *   QQ:    QQ_APP_ID / QQ_APP_KEY(QQ 互联「网站应用」APPID/APPKEY)
  *   支付宝: 复用 ALIPAY_APP_ID / ALIPAY_PRIVATE_KEY(支付那套),另需 ALIPAY_LOGIN_ENABLED=1 显式开启
- * 各平台后台回调域/地址统一登记:  https://cuberoot.me/auth/social/callback(域名 cuberoot.me 已 ICP 备案)
+ *   抖音:  DOUYIN_LOGIN_CLIENT_KEY / DOUYIN_LOGIN_CLIENT_SECRET(抖音开放平台「网站应用」)
+ * 微信 / QQ / 支付宝回调: https://cuberoot.me/auth/social/callback(域名 cuberoot.me 已 ICP 备案)
+ * 抖音网站应用回调:       https://cuberoot.me/auth/social/callback/(后台按完整 URL 逐字匹配)
  */

@@ -17,11 +17,10 @@
  *
  * Runtime-neutral priority, bindings, and rebind rules live in
  * `@cuberoot/shared/timer`. This file is the Web adapter: it preserves the old
- * import path, adds DOM-target classification, and formats browser key codes
- * with the simulator's existing labels.
+ * import path, adds DOM-target classification, and re-exports shared key labels.
  */
 
-import { keyLabel } from '../../sim/keymap';
+export { formatBinding } from '@cuberoot/shared/timer';
 export { timerKeyboardTargetContext } from '@cuberoot/timer-ui';
 
 export {
@@ -47,9 +46,3 @@ export type {
   TimerKeyboardModalState,
   TimerRebindCaptureDecision,
 } from '@cuberoot/shared/timer';
-
-/** Human-readable binding, e.g. `Shift+KeyD` → `Shift + D`. */
-export function formatBinding(binding: string): string {
-  if (binding.startsWith('Shift+')) return `Shift + ${keyLabel(binding.slice(6))}`;
-  return keyLabel(binding);
-}

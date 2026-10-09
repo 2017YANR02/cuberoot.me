@@ -8,10 +8,18 @@ const mocks = vi.hoisted(() => ({
   retireBattleVideoGeneration: vi.fn(),
   generateNetBattleScramble: vi.fn(),
   generateNetBattleScrambleForSlot: vi.fn(),
+  disconnectBattlePlayer: vi.fn(),
+  disconnectBattleRoom: vi.fn(),
 }));
 
 vi.mock('../src/db/connection.js', () => ({ query: mocks.query, withTransaction: mocks.withTransaction }));
 vi.mock('../src/routes/video_rooms.js', () => ({ retireBattleVideoGeneration: mocks.retireBattleVideoGeneration }));
+vi.mock('../src/battle_live_relay.js', () => ({
+  battleRoomLiveRelay: {
+    disconnectPlayer: mocks.disconnectBattlePlayer,
+    disconnectRoom: mocks.disconnectBattleRoom,
+  },
+}));
 vi.mock('../src/utils/battle_scramble.js', () => ({
   generateNetBattleScramble: mocks.generateNetBattleScramble,
   generateNetBattleScrambleForSlot: mocks.generateNetBattleScrambleForSlot,
@@ -19,7 +27,7 @@ vi.mock('../src/utils/battle_scramble.js', () => ({
 vi.mock('../src/utils/analytics_helpers.js', () => ({ getIp: vi.fn(() => '127.0.0.1') }));
 vi.mock('../src/utils/recon_helpers.js', () => ({ checkRateLimit: vi.fn() }));
 
-import { battleRoomsRoutes } from '../src/routes/battle_rooms.js';
+import { authorizeBattleRoomLivePlayer, battleRoomsRoutes } from '../src/routes/battle_rooms.js';
 import { apiCors } from '../src/api_cors.js';
 import { hashBattlePlayerToken } from '../src/utils/battle_room_auth.js';
 
@@ -70,10 +78,24 @@ describe('battle-room player capabilities', () => {
     mocks.generateNetBattleScramble.mockReset();
     mocks.generateNetBattleScramble.mockImplementation(async (event: string) => `SERVER-${event}`);
     mocks.generateNetBattleScrambleForSlot.mockReset();
+    mocks.disconnectBattlePlayer.mockReset();
+    mocks.disconnectBattleRoom.mockReset();
     mocks.generateNetBattleScrambleForSlot.mockImplementation(async (_slot: string, event: string) => `SERVER-${event}`);
     mocks.withTransaction.mockImplementation(async (run) => run(mocks.query));
   });
 
+  it('authorizes live telemetry with the same room capability', async () => {
+    mocks.query.mockResolvedValueOnce([roomRow()]).mockResolvedValueOnce([roomRow()]);
+
+    await expect(authorizeBattleRoomLivePlayer('0427', {
+      playerId: PLAYER_ID,
+      playerToken: PLAYER_TOKEN,
+    })).resolves.toBe(true);
+    await expect(authorizeBattleRoomLivePlayer('0427', {
+      playerId: PLAYER_ID,
+      playerToken: 'b'.repeat(43),
+    })).resolves.toBe(false);
+  });
   it('rejects events outside the canonical shared online-battle registry', async () => {
     const response = await post('/v1/battle/rooms', { event: 'banana', scramble: 'R U', name: 'Cuber' });
 
@@ -96,7 +118,7 @@ describe('battle-room player capabilities', () => {
       expect(response.status).toBe(204);
       expect(response.headers.get('Access-Control-Allow-Origin')).toBe(origin);
       expect(response.headers.get('Access-Control-Allow-Headers')?.toLowerCase().split(','))
-        .toEqual(['content-type', 'authorization', 'x-battle-token', 'upload-offset', 'upload-checksum']);
+        .toEqual(['content-type', 'authorization', 'idempotency-key', 'x-battle-token', 'upload-offset', 'upload-checksum']);
     }
 
     const rejected = await preflight('https://evil.example');
@@ -619,6 +641,26 @@ describe('battle-room player capabilities', () => {
     expect(mocks.query).toHaveBeenCalledOnce();
   });
 
+  it('retains the latest 100 completed rounds for ao100', async () => {
+    const before = {
+      ...roomRow(), round: 101,
+      history: Array.from({ length: 100 }, (_, i) => ({
+        round: i + 1, scrambles: { '333': 'R U' }, playerEvents: { [PLAYER_ID]: '333' },
+        results: { [PLAYER_ID]: { t: 10000, p: 'ok' } }, winners: [PLAYER_ID],
+      })),
+      results: { '101': { [PLAYER_ID]: { t: 12000, p: 'ok' } } },
+    };
+    const after = { ...before, round: 102, results: {} };
+    mocks.query.mockResolvedValueOnce([before]).mockResolvedValueOnce([before]).mockResolvedValueOnce([after]);
+    const response = await post('/v1/battle/rooms/0427/next', { pid: PLAYER_ID, round: 101 }, PLAYER_TOKEN);
+    expect(response.status).toBe(200);
+    const history = mocks.query.mock.calls[2][1][1] as Array<{ round: number; results: Record<string, unknown> }>;
+    expect(history).toHaveLength(100);
+    expect(history[0].round).toBe(2);
+    expect(history[99].round).toBe(101);
+    expect(history[99].results[PLAYER_ID]).toEqual({ t: 12000, p: 'ok' });
+  });
+
   it('settles and archives only the frozen roster, not active-round observers', async () => {
     const observerId = 'observer12';
     const before = {
@@ -680,6 +722,7 @@ describe('battle-room player capabilities', () => {
     expect(mocks.query.mock.calls[1][0]).toContain('start_at IS NOT NULL');
     expect(after.results).toEqual(before.results);
     expect(mocks.retireBattleVideoGeneration).toHaveBeenCalledWith('0427', before.video_generation);
+    expect(mocks.disconnectBattlePlayer).toHaveBeenCalledWith('0427', target, 'removed from room');
   });
 
   it('cancels and clears an active round when its final roster member is kicked', async () => {
@@ -715,6 +758,7 @@ describe('battle-room player capabilities', () => {
     expect(mocks.query.mock.calls[0][0]).toContain('FOR UPDATE');
     expect(mocks.query.mock.calls[1][0]).toContain('start_at IS NOT NULL');
     expect(mocks.retireBattleVideoGeneration).toHaveBeenCalledWith('0427', before.video_generation);
+    expect(mocks.disconnectBattleRoom).toHaveBeenCalledWith('0427');
   });
 
   it('requires the same capability for lazy scramble creation', async () => {

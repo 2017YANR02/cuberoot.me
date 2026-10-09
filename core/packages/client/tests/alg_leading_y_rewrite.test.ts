@@ -6,7 +6,8 @@ import {
   rewriteLeadingYRotationAsAuf, startsWithYRotation, toMoveString,
 } from '@cuberoot/shared/alg-notation';
 import { validateAlgCase, completeAlgAuf } from '@/lib/alg_validation';
-import { caseViewAlg, caseViewSetup, displayAlg } from '@/lib/alg_display';
+import { caseViewAlg, caseViewSetup, displayAlg, displayCaseAlg, displayCaseAlgHtml } from '@/lib/alg_display';
+import { algHtmlText } from '@/lib/alg_html';
 
 const FACE: AlgSticker = { kind: 'face', us: '', ub: '', uf: '', ul: '', ur: '' };
 const inv = (a: string) => new Alg(a).invert().toString();
@@ -142,6 +143,7 @@ describe('validateAlgCase — 收尾 AUF 由库来补,不要求人写', () => {
     const marked = `=y2 ${BODY.split(' ').join('·')}`;            // 等价标注 + 换握记号
     expect((await validateAlgCase(inv(`y2 ${BODY}`), marked, FACE, '3x3')).ok).toBe(true);
   });
+
 });
 
 describe('completeAlgAuf — 入库前补成完整式', () => {
@@ -174,10 +176,15 @@ describe('displayAlg', () => {
     expect(displayAlg("U' R U R' (U) U2'")).toBe("U' R U R'");
   });
 
-  it('leaves an alg with no trailing AUF alone', () => {
+  it('leaves an alg with no trailing display adjustment alone', () => {
     expect(displayAlg("R U R' U R U2 R'")).toBe("R U R' U R U2 R'");
     expect(displayAlg('M2 U M2 U2 M2 U M2')).toBe('M2 U M2 U2 M2 U M2');
-    expect(displayAlg("R U R' U' R' F R F' y")).toBe("R U R' U' R' F R F' y");
+  });
+
+  it('hides consecutive finishing y rotations without touching internal rotations', () => {
+    expect(displayAlg("y' r' U' R U M' y")).toBe("y' r' U' R U M'");
+    expect(displayAlg("R U R' y y2'")).toBe("R U R'");
+    expect(displayAlg("R y R' U'")).toBe("R y R'");
   });
 
   it('does not mistake a wide U for an AUF', () => {
@@ -195,6 +202,76 @@ describe('displayAlg', () => {
   it('never strips an alg down to nothing', () => {
     expect(displayAlg('U')).toBe('U');
     expect(displayAlg('')).toBe('');
+  });
+});
+
+describe('top-layer formula presentation', () => {
+  const aPerm = "U x' (R U' R D2) (R' U R D2) R2' x";
+  it.each(['U', "U'", 'U2', "U2'", 'y', "y'", 'y2', "y2'", "U' y U2 y2'"])(
+    'removes trailing %s while preserving the leading AUF and returning x', tail => {
+      expect(displayCaseAlg('3x3', 'pll', `${aPerm} ${tail}`)).toBe(aPerm);
+    },
+  );
+  it.each([
+    ["U x' (R U' R D2) R' U R z' R2 U2' x U' y", "U x' (R U' R D2) R' U R z' R2 U2' x"],
+    ["(R U R' U') y", "(R U R')"],
+    ["((R U R' U') (y U2))", "((R U R'))"],
+    ["R U R' (U y')", "R U R'"],
+    ["(R U)2 U' y", '(R U)2'],
+    ["R y R' x'", "R y R' x'"],
+    ["R U R' z2", "R U R' z2"],
+    ["R U R' Uw", "R U R' Uw"],
+    ["R U R' u'", "R U R' u'"],
+    ["R U R' 2U", "R U R' 2U"],
+    ['U y2', 'U y2'],
+    ['', ''],
+  ])('preserves move and grouping semantics: %s', (input, expected) => {
+    const shown = displayCaseAlg('3x3', 'oll', input);
+    expect(shown).toBe(expected);
+    expect(displayCaseAlg('3x3', 'oll', shown)).toBe(shown);
+    expect(() => new Alg(shown)).not.toThrow();
+  });
+  it('keeps rich annotations on surviving moves and matches the copy text', () => {
+    const html = "(<em>R</em> <u>U</u> <s>R'</s> <u>U'</u>) <strong>y2</strong>";
+    const shown = displayCaseAlgHtml('3x3', 'pll', html);
+    expect(shown).toBe("(<em>R</em> <u>U</u> <s>R'</s>)");
+    expect(algHtmlText(shown)).toBe(displayCaseAlg('3x3', 'pll', algHtmlText(html)));
+  });
+  it('strips the tail and repairs a missing closing parenthesis in legacy source notation', () => {
+    const source = "U2 R2 U (R' U R' U') (R U' R2 U'D) (R' U R u' U' y";
+    expect(displayCaseAlg('3x3', 'pll', source))
+      .toBe("U2 R2 U (R' U R' U') (R U' R2 U'D) (R' U R u')");
+  });
+  it('repairs both existing unmatched-parenthesis shapes without changing moves', () => {
+    const missingClose = "U2 R2 U (R' U R' U') (R U' R2 U'D) (R' U R u' U'";
+    const extraClose = "(F R U R' U') (R U R' F2) r U r2' F r)";
+    const shownGa = "U2 R2 U (R' U R' U') (R U' R2 U'D) (R' U R u')";
+    expect(displayCaseAlg('3x3', 'pll', missingClose)).toBe(shownGa);
+    expect(displayCaseAlg('3x3', '1lll', extraClose)).toBe(extraClose.slice(0, -1));
+    expect(algHtmlText(displayCaseAlgHtml('3x3', 'pll', `<em>${missingClose}</em>`)))
+      .toBe(shownGa);
+  });
+  it.each([['3x3', 'f2l'], ['3x3', 'wv'], ['2x2', 'eg1'], ['sq1', 'pbl']])(
+    'hides finishing y for non-top-layer %s/%s without hiding its U turn', (puzzle, set) => {
+      const source = "R U R' U' y";
+      expect(displayCaseAlg(puzzle, set, source)).toBe("R U R' U'");
+    },
+  );
+  it('hides finishing y in rich text for non-top-layer sets', () => {
+    const html = "<em>y'</em> r' U' R U M' <strong>y</strong>";
+    const shown = displayCaseAlgHtml('3x3', 'f2l', html);
+    expect(shown).toBe("<em>y'</em> r' U' R U M'");
+    expect(algHtmlText(shown)).toBe(displayCaseAlg('3x3', 'f2l', algHtmlText(html)));
+  });
+  it('still finishes PLL up to AUF/y with the same top colour', async () => {
+    const solved = (await cube3x3x3.kpuzzle()).defaultPattern();
+    const full = `${aPerm} U' y`;
+    const setup = inv(full);
+    const shown = displayCaseAlg('3x3', 'pll', full);
+    const result = solved.applyAlg(`${setup} ${shown}`);
+    expect(result.patternData.CENTERS.pieces[0]).toBe(solved.patternData.CENTERS.pieces[0]);
+    expect((await validateAlgCase(setup, shown, FACE, '3x3')).ok).toBe(true);
+    expect(solved.applyAlg(`${setup} ${full}`).isIdentical(solved)).toBe(true);
   });
 });
 

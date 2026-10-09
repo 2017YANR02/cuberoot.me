@@ -19,12 +19,13 @@ import { fileURLToPath } from 'node:url';
 import { createInterface } from 'node:readline';
 import { createGzip } from 'node:zlib';
 import YAML from 'yaml';
+import { wcaDir } from './pipeline_paths.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, '../../..');
 
 // 路径(默认本机布局;config.yml 的 wca.csv_dir 覆盖 std.csv 目录)。
-let csvDir = 'D:/cube/scramble/wca_scramble/stats';
+let csvDir = join(wcaDir, 'stats');
 const cfgPath = resolve(__dirname, 'config.yml');
 if (existsSync(cfgPath)) {
   const cfg = YAML.parse(readFileSync(cfgPath, 'utf8'));

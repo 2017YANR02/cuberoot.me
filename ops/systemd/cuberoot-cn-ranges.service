@@ -1,0 +1,9 @@
+[Unit]
+Description=Update CubeRoot China IP exemption ranges
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/root/.nvm/versions/node/v24.14.0/bin/node --experimental-strip-types /usr/local/lib/cuberoot/update-cn-ranges.ts --apply
+TimeoutStartSec=180

@@ -19,6 +19,60 @@
   },
   "manualContracts": [
     {
+      "id": "server-cubeopt-systemd-diagnostics",
+      "from": "apps/api CubeOpt diagnostics",
+      "to": "host systemd running service names",
+      "phase": "subprocess-native",
+      "mechanism": "One shell-free systemctl list-units call, fixed read-only arguments, 1.5 second deadline, 64 KiB output and 60 second snapshot cooldown",
+      "owner": "server",
+      "rationale": "User requested persistent solver incident evidence, including background tasks, on 2026-09-28.",
+      "replacement": "Keep observational and bounded; never execute service actions or accept request-provided command arguments.",
+      "subprocessCalls": [{"file":"apps/api/src/cubeopt/diagnostics.ts","mechanism":"exec","target":"systemctl","count":1}],
+      "evidence": [{"file":"core/apps/api/src/cubeopt/diagnostics.ts","contains":"timeout: 1500, maxBuffer: 65536"}]
+    },
+    {
+      "id": "server-backup-shell-regression",
+      "from": "apps/api backup regression tests",
+      "to": "repository backup shell script with disposable fixture binaries and archive",
+      "phase": "subprocess-native",
+      "mechanism": "One fixed bash spawnSync adapter; pg_dump is replaced by a fixture executable and backups go to a fresh temporary directory",
+      "owner": "server",
+      "rationale": "Verify failed dumps never replace or prune successful backups and the requested two-date retention is enforced.",
+      "replacement": "Keep test-only with synthetic SQL; do not connect fixture tests to a real database.",
+      "subprocessCalls": [{"file":"apps/api/tests/backup_recon.test.ts","mechanism":"spawnSync","target":"bash","count":1}],
+      "evidence": [{"file":"core/apps/api/tests/backup_recon.test.ts","contains":"CUBEROOT_BACKUP_DIR: archive"}]
+    },
+    {
+      "id": "server-sor-manual-refresh",
+      "from": "apps/api/scripts/update_sor.mts",
+      "to": "local sorcalc plus explicitly requested production SSH publish",
+      "phase": "subprocess-native",
+      "mechanism": "Shell-free spawn adapter for sorcalc, scp and ssh; dry-run and no-publish modes keep production untouched",
+      "owner": "server",
+      "rationale": "Preserve the manual fallback for the scheduled SOR build while deriving local paths and thread count from the current machine.",
+      "replacement": "Keep the remote write behind an explicit invocation of the manual command; do not invoke it from application request handlers.",
+      "subprocessCalls": [{"file":"apps/api/scripts/update_sor.mts","mechanism":"spawn","target":"<dynamic>","count":1}],
+      "evidence": [{"file":"core/apps/api/scripts/update_sor.mts","contains":"const noPublish = process.argv.includes('--no-publish')"}]
+    },
+    {
+      "id": "server-isolated-postgresql-test-runners",
+      "from": "apps/api authentication and membership regression runners",
+      "to": "disposable loopback PostgreSQL and local vitest processes",
+      "phase": "subprocess-native",
+      "mechanism": "Shell-free fixed initdb/pg_ctl/createdb/pnpm calls; random loopback ports and dedicated test databases",
+      "owner": "server",
+      "rationale": "Exercise actual migration, transaction rollback and concurrency without connecting to application databases or external providers.",
+      "replacement": "Keep test-only and local; do not accept remote databases or arbitrary executable arguments.",
+      "subprocessCalls": [
+        {"file":"apps/api/scripts/test-email-code-auth.mjs","mechanism":"execFileSync","target":"<dynamic>","count":1},
+        {"file":"apps/api/scripts/test-membership-settlement.mjs","mechanism":"execFileSync","target":"<dynamic>","count":1}
+      ],
+      "evidence": [
+        {"file":"core/apps/api/scripts/test-email-code-auth.mjs","contains":"EMAIL_CODE_PG_TEST: '1'"},
+        {"file":"core/apps/api/scripts/test-membership-settlement.mjs","contains":"MEMBERSHIP_TEST_DATABASE_URL:"}
+      ]
+    },
+    {
       "id": "stats-import-postgresql-regression",
       "from": "jobs/stats-build tests",
       "to": "loopback PostgreSQL test database via psql",
@@ -109,13 +163,13 @@
       "from": "jobs/scramble-stats-build",
       "to": "repo stats/scramble and solver native analyzers/tables",
       "phase": "build-artifact",
-      "mechanism": "PowerShell orchestration plus JSON/binary artifact generation",
+      "mechanism": "TypeScript orchestration plus JSON/binary artifact generation",
       "owner": "scramble-stats-build",
       "rationale": "The offline job consumes non-workspace solver binaries and publishes versioned static data outside core.",
-      "replacement": "Keep the job boundary explicit; PS1-01 must map callers before any script relocation.",
+      "replacement": "Keep the job boundary explicit; local generation and explicit publication use scripts/stats TypeScript entries.",
       "evidence": [
-        {"file":"core/jobs/scramble-stats-build/update_cross_stats.ps1","contains":"$SolverDir   = 'D:\\cube\\cuberoot.me\\solver'"},
-        {"file":"core/jobs/scramble-stats-build/update_cross_stats.ps1","contains":"$env:CUBE_TABLE_DIR = Join-Path $SolverDir 'tables'"}
+        {"file":"scripts/stats/common.ts","contains":"export const solverDir = join(repoRoot, 'solver')"},
+        {"file":"core/jobs/scramble-stats-build/pipeline_paths.mjs","contains":"export const tableDir = resolve(process.env.CUBE_TABLE_DIR || join(repoRoot, 'solver/tables'))"}
       ]
     },
     {
@@ -410,18 +464,24 @@
     },
     {
       "file": "jobs/scramble-stats-build/build_length_opt.mjs",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "build",
-      "specifier": "core/packages/client/public/cubeopt/cube48opt5.mjs",
-      "target": "client"
+      "mechanism": "spawnSync",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "<dynamic>"
     },
     {
       "file": "jobs/scramble-stats-build/build_length_opt.mjs",
       "mechanism": "spawnSync",
       "rule": "subprocess-call",
       "sourceKind": "subprocess",
-      "target": "<dynamic>"
+      "target": "pnpm"
+    },
+    {
+      "file": "jobs/scramble-stats-build/src/incremental.ts",
+      "mechanism": "spawn",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "tar"
     },
     {
       "file": "jobs/stats-build/src/bin/compute_all.ts",
@@ -545,15 +605,6 @@
     {
       "file": "packages/client/app/[lang]/alg/[puzzle]/[set]/run/TrainerSplitScreen.tsx",
       "importKind": "type-only",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
-      "file": "packages/client/app/[lang]/alg/skewb-trainer/page.tsx",
-      "importKind": "runtime",
       "mechanism": "static-import",
       "sourceKind": "runtime",
       "specifier": "@cuberoot/shared",
@@ -813,15 +864,6 @@
       "target": "shared"
     },
     {
-      "file": "packages/client/components/AlgEditor.tsx",
-      "importKind": "type-only",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
       "file": "packages/client/components/AlgMirrorPanel.tsx",
       "importKind": "runtime",
       "mechanism": "static-import",
@@ -859,15 +901,6 @@
     },
     {
       "file": "packages/client/components/CompCuberPicker.tsx",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
-      "file": "packages/client/components/distribution-viz/_engine/data_fetch.ts",
       "importKind": "runtime",
       "mechanism": "static-import",
       "sourceKind": "runtime",
@@ -966,34 +999,7 @@
       "target": "shared"
     },
     {
-      "file": "packages/client/components/WcaPersonPicker.tsx",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
-      "file": "packages/client/lib/alg_api.ts",
-      "importKind": "type-only",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
       "file": "packages/client/lib/alg_case_link.ts",
-      "importKind": "type-only",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
-      "file": "packages/client/lib/alg_case_optimal.ts",
       "importKind": "type-only",
       "mechanism": "static-import",
       "sourceKind": "runtime",
@@ -1093,15 +1099,6 @@
     },
     {
       "file": "packages/client/lib/alg_simple_zbll.ts",
-      "importKind": "type-only",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
-      "file": "packages/client/lib/alg_tags.ts",
       "importKind": "type-only",
       "mechanism": "static-import",
       "sourceKind": "runtime",
@@ -1500,15 +1497,6 @@
     },
     {
       "file": "packages/client/tests/alg_case_display.test.ts",
-      "importKind": "type-only",
-      "mechanism": "static-import",
-      "sourceKind": "test",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
-      "file": "packages/client/tests/alg_case_optimal.test.ts",
       "importKind": "type-only",
       "mechanism": "static-import",
       "sourceKind": "test",
@@ -1973,15 +1961,6 @@
       "rule": "cross-package-path",
       "sourceKind": "test",
       "specifier": "../../shared/src/api/comps_json.ts",
-      "target": "shared"
-    },
-    {
-      "file": "packages/client/tests/wca-person-picker-free-text.test.ts",
-      "importKind": "runtime",
-      "mechanism": "vi.mock",
-      "sourceKind": "test",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
       "target": "shared"
     },
     {

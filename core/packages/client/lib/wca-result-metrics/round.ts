@@ -2,6 +2,9 @@
 // 从 viz/round_metrics.js 1:1 翻译为 TypeScript
 // 对每轮的 attempts 计算 9 个指标（BAo5/WAo5/Mo5/BPA/WPA/Median/BestCounting/WorstCounting/Worst）
 // 值放在轮次第一把，其余把为 null；供个人成绩表、viz 和 csv_export 共用
+import { roundTimedAverageMs } from '@cuberoot/shared/timer';
+
+const roundMean = (cs: number): number => roundTimedAverageMs(cs * 10) / 10;
 
 export interface RoundMetricConfig {
   key: string;
@@ -83,17 +86,17 @@ function computeRound(values: number[]): Record<string, number | null> {
   const r: Record<string, number | null> = {};
 
   // BAo5: 最好 3 把均值，需 ≥3 有效
-  r.bao5 = n >= 3 ? Math.round((valid[0] + valid[1] + valid[2]) / 3) : null;
+  r.bao5 = n >= 3 ? roundMean((valid[0] + valid[1] + valid[2]) / 3) : null;
 
   // WAo5: 最差 3 把均值，需全部有效
   r.wao5 = (inv === 0 && n >= 3)
-    ? Math.round((valid[n - 1] + valid[n - 2] + valid[n - 3]) / 3) : null;
+    ? roundMean((valid[n - 1] + valid[n - 2] + valid[n - 3]) / 3) : null;
 
   // Mo5: 纯均值，需全部有效
   if (inv === 0 && n > 0) {
     let sum = 0;
     for (let k = 0; k < n; k++) sum += valid[k];
-    r.mo5 = Math.round(sum / n);
+    r.mo5 = roundMean(sum / n);
   } else {
     r.mo5 = null;
   }
@@ -105,15 +108,16 @@ function computeRound(values: number[]): Record<string, number | null> {
     if (f4[j] > 0) f4v.push(f4[j]);
   }
   f4v.sort((a, b) => a - b);
-  r.bpa = f4v.length >= 3 ? Math.round((f4v[0] + f4v[1] + f4v[2]) / 3) : null;
+  r.bpa = f4v.length >= 3 ? roundMean((f4v[0] + f4v[1] + f4v[2]) / 3) : null;
 
   // WPA: 前 4 把中最差 3 把均值，需前 4 把全部有效
   const f4inv = f4.length - f4v.length;
   r.wpa = (f4inv === 0 && f4v.length >= 3)
-    ? Math.round((f4v[f4v.length - 1] + f4v[f4v.length - 2] + f4v[f4v.length - 3]) / 3) : null;
+    ? roundMean((f4v[f4v.length - 1] + f4v[f4v.length - 2] + f4v[f4v.length - 3]) / 3) : null;
 
-  // Median: 排序后第 3 个有效值，最多 2 个无效
-  r.median = (inv <= 2 && n >= 3) ? valid[2] : null;
+  // Mo3/Ao5 的中位数：失败排在末尾，取全部成绩的正中间一项。
+  const middle = Math.floor(values.length / 2);
+  r.median = (values.length === 3 || values.length === 5) ? valid[middle] ?? null : null;
 
   // Best Counting: Ao5 中 counting 3 把的最小值 = sorted[1]
   // 1 DNF 时 DNF 是 dropped worst，sorted[1] 仍是 counting 最小
@@ -132,6 +136,11 @@ function computeRound(values: number[]): Record<string, number | null> {
 
   // Worst: 绝对最差把，需全部有效
   r.worst = (inv === 0 && n > 0) ? valid[n - 1] : null;
+
+  // 五次结构的指标只适用于完整五次轮次；不能把 Mo3/未过及格线当作 Ao5。
+  if (values.length !== 5) {
+    for (const key of ['bao5', 'wao5', 'mo5', 'bpa', 'wpa', 'bestc', 'worstc']) r[key] = null;
+  }
 
   return r;
 }

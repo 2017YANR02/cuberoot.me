@@ -26,10 +26,6 @@
   align-items: center;
   margin-bottom: 12px;
 }
-/* 「类型」下拉单独成行时(指标视图 / 空态:无同行 filter 可并)外层,轻量不套 .wse-filters 卡片 */
-.wse-type-standalone { margin: 0 0 16px; }
-/* 不被全宽容器拉满:filter 收内容宽,select 也贴合最长选项(别再钉死 160px) */
-.wse-type-standalone .wse-filter { width: fit-content; min-width: 0; }
 /* 嵌入「指标」视图时,wr_metric 的 note 段贴着类型下拉下方,留点呼吸 */
 .wca-stats-embedded-note { margin: 4px 0 16px; }
 /* 单项视图:排名表上方常显的「纪录走势」bar race 容器,留点上下间距 */
@@ -58,6 +54,7 @@
 .wse-filters {
   display: flex;
   flex-wrap: wrap;
+  align-items: flex-end;
   gap: 12px 16px;
   margin: 16px 0;
   padding: 0;
@@ -299,15 +296,11 @@
 .wse-pagination .paginator-input::-webkit-outer-spin-button,
 .wse-pagination .paginator-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
-/* 过滤 / 废止项 pill:贴合文字(默认 110px 是给 on/off 文案不同的开关用的);
-   flex-shrink:0 防止在 events-bar flex 里被压窄到文字钻进滑钮下面;
-   align-self:flex-start 防止在 column flex 的 .wse-filter 里被 stretch 拉满整列宽(手机端半屏长) */
-.pill-toggle.wse-pill { min-width: 0; flex-shrink: 0; align-self: flex-start; height: 26px; font-size: 12px; }
-/* 作过滤器(.wse-filter 直接子)时跟同行 select / input(34px)同高,内容已 align-items:center
-   → 与相邻控件上下居中对齐;events-bar 里的「废止项」不是 .wse-filter 直接子,仍 26px 不受影响 */
-.wse-filter > .pill-toggle.wse-pill { height: 34px; font-size: 13px; }
+/* 原生筛选菜单贴合文字，与同行输入控件等高。 */
+.native-select.wse-pill { flex-shrink: 0; align-self: flex-start; height: 26px; font-size: 12px; }
+.wse-filter > .native-select.wse-pill { height: 34px; font-size: 13px; }
 
-/* 布尔开关(BoolToggle:左滑钮 + 右文字)。作 .wse-filter 直接子(无 label)时纵向居中,
+/* 布尔开关(BoolToggle:左文字 + 右滑钮)。作 .wse-filter 直接子(无 label)时纵向居中,
    跟相邻「label+控件」filter 对齐。 */
 .wse-filter:has(> .bool-toggle) { justify-content: center; }
 

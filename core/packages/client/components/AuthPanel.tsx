@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 // 全站认证 UI。**没有任何弹层形态** —— 两块面板都只长在页面里,认证只有 /account 一个地址:
 //  1. LoginForm —— 只服务未登录:行业标准布局,邮箱为主凭据(验证码优先,可切密码),下方分隔线
@@ -12,7 +13,6 @@ import { SiApple, SiWechat, SiQq, SiAlipay } from 'react-icons/si';
 import { primaryHandle } from '@cuberoot/shared/account';
 import type { MobileAuthProvider } from '@cuberoot/shared/auth/web-session';
 import AppLink from '@/components/AppLink';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { PasswordInput } from '@/components/PasswordInput';
 import { ClearButton } from '@/components/ClearButton';
 import { useAuthStore, applySession } from '@/lib/auth-store';
@@ -111,6 +111,7 @@ const DouyinGlyph = ({ size = 16 }: { size?: number }) => (
 
 /** 国内三方 provider 配置(标 + 名),供 SSO 按钮 / 账号绑定 chip 共用。 */
 const SOCIALS: { key: RedirectAuthProvider; Glyph: (p: { size?: number }) => React.ReactNode; name: { zh: string; en: string } }[] = [
+  { key: 'douyin', Glyph: DouyinGlyph, name: { zh: '抖音', en: 'Douyin' } },
   { key: 'apple', Glyph: AppleGlyph, name: { zh: 'Apple', en: 'Apple' } },
   { key: 'wechat', Glyph: WechatGlyph, name: { zh: '微信', en: 'WeChat' } },
   { key: 'qq', Glyph: QqGlyph, name: { zh: 'QQ', en: 'QQ' } },
@@ -274,18 +275,18 @@ function CodeFlow({ channel, mode, onDone }: { channel: Channel; mode: 'login' |
       } else if (mode === 'reset') {
         const r = await verifyPhonePasswordResetCode(target, code, controller.signal);
         if (controller.signal.aborted) return;
-        if (!applySession(r.token, r.user)) throw new Error('session storage failed');
+        if (!(await applySession(r.token, r.user))) throw new Error('session storage failed');
         onDone();
       } else {
         const r = channel === 'email' ? await verifyEmailCode(target, code, { signal: controller.signal }) : await verifyPhoneCode(target, code, { signal: controller.signal });
         if (controller.signal.aborted) return;
-        if (!applySession(r.token, r.user)) throw new Error('session storage failed');
+        if (!(await applySession(r.token, r.user))) throw new Error('session storage failed');
         onDone({ isNew: r.isNew, hasWca: !!r.user.wcaId });
       }
     } catch (e) {
       if (controller.signal.aborted) return;
       if (mode === 'login' && e instanceof AccountChoiceRequired) {
-        try { rememberIdentityChoice(e, window.location.href); }
+        try { await rememberIdentityChoice(e, window.location.href); }
         catch (storageError) { setError(authErrorText(String(storageError), t)); }
         return;
       }
@@ -389,12 +390,12 @@ function EmailCodeFlow({ email, setEmail, onDone, toPassword, reset }: {
     try {
       const r = await verifyEmailCode(email, code, { existingOnly: reset, signal: controller.signal });
       if (controller.signal.aborted) return;
-      if (!applySession(r.token, r.user)) throw new Error('session storage failed');
+      if (!(await applySession(r.token, r.user))) throw new Error('session storage failed');
       onDone({ isNew: r.isNew, hasWca: !!r.user.wcaId });
     } catch (e) {
       if (controller.signal.aborted) return;
       if (!reset && e instanceof AccountChoiceRequired) {
-        try { rememberIdentityChoice(e, window.location.href); }
+        try { await rememberIdentityChoice(e, window.location.href); }
         catch (storageError) { setError(authErrorText(String(storageError), t)); }
         return;
       }
@@ -473,7 +474,7 @@ function EmailPasswordFlow({ email, setEmail, onDone, toCode, onForgot }: {
     setBusy(true);
     try {
       const r = await loginPassword(email, pw);
-      if (!applySession(r.token, r.user)) throw new Error('session storage failed');
+      if (!(await applySession(r.token, r.user))) throw new Error('session storage failed');
       onDone();
     } catch (e) {
       setError(authErrorText(e instanceof Error ? e.message : String(e), t));
@@ -779,7 +780,7 @@ export function IdentityChoicePanel({ pending, firstPartyOnly = false, onDone, o
       if (action === 'link' && (useAuthStore.getState().user?.uid !== expectedUid || result.user.uid !== expectedUid)) {
         throw new Error(t('当前账号已更改，请重新确认。', 'Your account changed. Confirm the account again.'));
       }
-      if (!applySession(result.token, result.user)) throw new Error(t('无法保存登录状态，请检查浏览器存储后重试。', 'Could not save your session. Check browser storage and retry.'));
+      if (!(await applySession(result.token, result.user))) throw new Error(t('无法保存登录状态，请检查浏览器存储后重试。', 'Could not save your session. Check browser storage and retry.'));
       clearIdentityChoice(pending.ticket);
       onDone({ isNew: result.isNew, hasWca: !!result.user.wcaId }, pending.returnPath);
     } catch (cause) {
@@ -831,7 +832,7 @@ function LoginFormFields({
   // reload 即自动亮。拿不到默认全开 email/phone/wca(退化成旧行为),google/三方拿不到凭据不乐观开。
   const [providers, setProviders] = useState<AuthProviders | null>(null);
   useEffect(() => { void fetchAuthProviders().then(setProviders); }, []);
-  const avail = providers ?? { email: true, phone: true, wca: true, apple: false, googleClientId: null, googleRelayUrl: null, social: { wechat: null, qq: null, alipay: null } };
+  const avail = providers ?? { email: true, phone: true, wca: true, apple: false, googleClientId: null, googleRelayUrl: null, social: { wechat: null, qq: null, alipay: null, douyin: null } };
   const googleOn = !!(avail.googleClientId && avail.googleRelayUrl);
 
   // 主凭据区:邮箱(默认)/ 手机;仅邮箱未开放时落到手机。
@@ -855,12 +856,12 @@ function LoginFormFields({
       if (!googleMounted.current) return;
       const r = await loginGoogle(assertion);
       if (!googleMounted.current) return;
-      if (!applySession(r.token, r.user)) throw new Error('session storage failed');
+      if (!(await applySession(r.token, r.user))) throw new Error('session storage failed');
       onDone({ isNew: r.isNew, hasWca: !!r.user.wcaId });
     } catch (e) {
       if (!googleMounted.current) return;
       if (e instanceof AccountChoiceRequired) {
-        try { rememberIdentityChoice(e, window.location.href); }
+        try { await rememberIdentityChoice(e, window.location.href); }
         catch (storageError) { setGError(authErrorText(String(storageError), t)); }
         return;
       }
@@ -1009,10 +1010,10 @@ const PROVIDER_LABEL: Record<string, { zh: string; en: string }> = {
 };
 
 /** Only an authenticated account may issue this short-lived proof; it is never an account lookup. */
-function MiniProgramLinkCodePanel() {
+function MiniProgramLinkCodePanel({ emphasized = false }: { emphasized?: boolean }) {
   const t = useT();
   const uid = useAuthStore((state) => state.user?.uid);
-  const [result, setResult] = useState<{ linkCode: string; expiresAt: number; uid: number; name: string } | null>(null);
+  const [result, setResult] = useState<{ linkCode: string; expiresAt: number; uid: number } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
@@ -1033,36 +1034,35 @@ function MiniProgramLinkCodePanel() {
     try {
       const issued = await issueIdentityLinkCode(uid, controller.signal);
       if (controller.signal.aborted || useAuthStore.getState().user?.uid !== uid) return;
-      setResult({ linkCode: issued.linkCode, expiresAt: Date.now() + issued.expiresInSeconds * 1000, uid, name: useAuthStore.getState().user?.name ?? '' });
+      setResult({ linkCode: issued.linkCode, expiresAt: Date.now() + issued.expiresInSeconds * 1000, uid });
     } catch (cause) {
       if (!controller.signal.aborted) setError(authErrorText(cause instanceof Error ? cause.message : String(cause), t));
     } finally {
       if (request.current === controller) { request.current = null; setBusy(false); }
     }
   };
-  return <details className="auth-flow">
-    <summary>{t('绑定小程序到这个账号', 'Link a mini program to this account')}</summary>
-    <p className="auth-hint">{t(`保留当前账号 ID ${uid ?? ''}。在微信手机号授权后的账号选择页，或抖音小程序选择“已有账号”，输入绑定码，再确认绑定。`, `Keep account ID ${uid ?? ''}. Choose “Existing account” after WeChat phone authorization, or in the Douyin mini program, enter this code, then confirm linking.`)}</p>
-    <p className="auth-hint">{t('绑定码有效期 10 分钟，只能使用一次。它不是合并码；不要截图、转发或提供给他人。', 'The code lasts 10 minutes and works once. It is not a merge code. Do not screenshot, forward or share it.')}</p>
+  return <section className={`auth-flow auth-mini-link${emphasized ? ' auth-mini-link-emphasized' : ''}`} aria-labelledby="mini-program-link-title">
+    <h2 id="mini-program-link-title" className="auth-mini-link-title">{t('在小程序登录已有账号', 'Sign in to your existing account in the Mini Program')}</h2>
+    <p className="auth-hint">{t('生成 6 位登录码，然后在小程序中输入。', 'Generate a 6-digit sign-in code, then enter it in the Mini Program.')}</p>
+    <p className="auth-hint">{t('登录码 10 分钟内有效，只能使用一次。请勿转发给他人。', 'The sign-in code works once and expires in 10 minutes. Do not share it with anyone.')}</p>
     {result?.uid === uid && result && <>
-      <p className="auth-hint">{result.name} · ID {result.uid}</p>
-      <input className="auth-input" readOnly value={result.linkCode} aria-label={t('小程序绑定码', 'Mini program linking code')} />
+      <input className="auth-input auth-mini-link-code" inputMode="numeric" readOnly value={result.linkCode} aria-label={t('小程序登录码', 'Mini Program sign-in code')} />
       <button type="button" className="auth-textbtn" onClick={async () => {
         setError('');
         try { await navigator.clipboard.writeText(result.linkCode); setCopied(true); }
-        catch { setError(t('无法复制，请选中绑定码手动复制。', 'Could not copy. Select the code and copy it manually.')); }
-      }}>{copied ? t('已复制', 'Copied') : t('复制绑定码', 'Copy linking code')}</button>
+        catch { setError(t('无法复制，请选中登录码手动复制。', 'Could not copy. Select the sign-in code and copy it manually.')); }
+      }}>{copied ? t('已复制', 'Copied') : t('复制登录码', 'Copy sign-in code')}</button>
     </>}
-    <button type="button" className="auth-primary" disabled={busy || !uid} onClick={() => void generate()}>{busy ? <Loader2 size={ICON} className="auth-spin" /> : t('生成绑定码', 'Generate linking code')}</button>
+    <button type="button" className="auth-primary" disabled={busy || !uid} onClick={() => void generate()}>{busy ? <Loader2 size={ICON} className="auth-spin" /> : t('生成 6 位登录码', 'Generate 6-digit sign-in code')}</button>
     {error && <p className="auth-error" role="alert">{error}</p>}
-  </details>;
+  </section>;
 }
 
 /**
  * 账号面板:已绑定身份 + 绑定新方式 + 解绑 + 设/改密码。只渲染于 /account。
  * 姓名与登出归宿主页头部管(那是页面级信息),这里只管凭据本身。
  */
-export function AccountPanel({ expectedAppleUid }: { expectedAppleUid?: number | null }) {
+export function AccountPanel({ expectedAppleUid, miniProgramLogin = false }: { expectedAppleUid?: number | null; miniProgramLogin?: boolean }) {
   const lang = useLang();
   const currentUid = useAuthStore((s) => s.user?.uid);
   const appleAccountMismatch = expectedAppleUid !== undefined && (!expectedAppleUid || currentUid !== expectedAppleUid);
@@ -1086,7 +1086,7 @@ export function AccountPanel({ expectedAppleUid }: { expectedAppleUid?: number |
   // googleClientId 拿不到没法弹窗,不能乐观开。
   const [providers, setProviders] = useState<AuthProviders | null>(null);
   useEffect(() => { void fetchAuthProviders().then(setProviders); }, []);
-  const avail = providers ?? { email: true, phone: true, wca: true, apple: false, googleClientId: null, googleRelayUrl: null, social: { wechat: null, qq: null, alipay: null } };
+  const avail = providers ?? { email: true, phone: true, wca: true, apple: false, googleClientId: null, googleRelayUrl: null, social: { wechat: null, qq: null, alipay: null, douyin: null } };
   const googleOn = !!(avail.googleClientId && avail.googleRelayUrl);
   const [linkingGoogle, setLinkingGoogle] = useState(false);
   const socialRedirect = useSocialRedirect();
@@ -1238,7 +1238,7 @@ export function AccountPanel({ expectedAppleUid }: { expectedAppleUid?: number |
     try {
       const result = await mergeAccount(mergeCode.trim(), currentUid);
       if (!mounted.current || useAuthStore.getState().user?.uid !== currentUid) return;
-      if (!applySession(result.token, result.user)) throw new Error('session storage failed');
+      if (!(await applySession(result.token, result.user))) throw new Error('session storage failed');
       setConfirmMerge(false);
       setMergeMode(null);
       setMergeCode('');
@@ -1260,6 +1260,7 @@ export function AccountPanel({ expectedAppleUid }: { expectedAppleUid?: number |
             : t('浏览器账号与 App 一致。请主动点击 Apple 旁的绑定按钮完成授权。', 'This browser is signed in to the same account as the app. Choose Link next to Apple to authorize linking.')}
         </p>
       ) : null}
+      <MiniProgramLinkCodePanel emphasized={miniProgramLogin} />
       <div className="auth-idlist">
         {identityLoadFailed ? (
           <div role="alert">
@@ -1271,10 +1272,10 @@ export function AccountPanel({ expectedAppleUid }: { expectedAppleUid?: number |
         ) : identities.length === 0 ? (
           <p className="auth-hint">{t('暂无已绑定的登录方式。', 'No linked login methods yet.')}</p>
         ) : (
-          identities.map((i) => {
+          identities.filter((i, index, all) => i.provider !== 'douyin' || all.findIndex((row) => row.provider === 'douyin') === index).map((i) => {
             const lab = PROVIDER_LABEL[i.provider] ?? { zh: i.provider, en: i.provider };
             const key = `${i.provider}:${i.providerUid}`;
-            const onlyOne = identities.length <= 1;
+            const onlyOne = new Set(identities.map((row) => row.provider === 'douyin' ? 'douyin' : `${row.provider}:${row.providerUid}`)).size <= 1;
             // WCA ID / 邮箱 / 手机号对用户有意义,展示;三方(Google/支付宝/微信/QQ)的 uid 是不透明数字串,不展示。
             const showUid = i.provider === 'wca' || i.provider === 'email' || i.provider === 'phone';
             return (
@@ -1464,8 +1465,6 @@ export function AccountPanel({ expectedAppleUid }: { expectedAppleUid?: number |
         />
       )}
 
-      <MiniProgramLinkCodePanel />
-
       <div className="auth-linklist">
         <div className="auth-idrow">
           <span className="auth-idicon"><Merge size={ICON} /></span>
@@ -1484,18 +1483,20 @@ export function AccountPanel({ expectedAppleUid }: { expectedAppleUid?: number |
             {t('合并后不能撤销。登录方式和个人数据会进入保留账号；遇到重复或归属不明确的数据会停止,不会改动任何账号。',
               'Merging cannot be undone. Sign-in methods and personal data move to the kept account; conflicts stop the merge without changing either account.')}
           </p>
-          <PillToggle
-            value={mergeMode === 'keep'}
+          <select
             disabled={mergeBusy}
-            onChange={(keep) => { if (!mergeBusy) { setMergeMode(keep ? 'keep' : 'move'); setConfirmMerge(false); } }}
-            onLabel={t('保留当前账号', 'Keep this account')}
-            offLabel={t('合并当前账号', 'Merge this account')}
-            ariaLabel={t('选择合并方向', 'Choose merge direction')}
-          />
+            value={String(mergeMode === 'keep')}
+            onChange={event => { const keep = event.currentTarget.value === 'true'; if (!mergeBusy) { setMergeMode(keep ? 'keep' : 'move'); setConfirmMerge(false); } }}
+            aria-label={t('选择合并方向', 'Choose merge direction')}
+            className="native-select"
+          >
+            <option value="true">{t('保留当前账号', 'Keep this account')}</option>
+            <option value="false">{t('合并当前账号', 'Merge this account')}</option>
+          </select>
           {mergeMode === 'keep' ? (
             <>
               <p className="auth-hint">{t('生成合并码,再登录另一个账号输入。合并后保留当前账号。', 'Generate a code, then sign in to the other account and enter it. This account will be kept.')}</p>
-              <p className="auth-hint">{t('合并码有效期 10 分钟，只能使用一次。请勿向他人分享；小程序绑定请使用上面的绑定码。', 'The merge code lasts 10 minutes and works once. Do not share it. To link a mini program, use the linking code above.')}</p>
+              <p className="auth-hint">{t('合并码有效期 10 分钟，只能使用一次。请勿向他人分享；小程序登录请使用上面的登录码。', 'The merge code lasts 10 minutes and works once. Do not share it. To sign in to the Mini Program, use the sign-in code above.')}</p>
               {generatedMergeCode && <input className="auth-input" readOnly value={generatedMergeCode} aria-label={t('合并码', 'Merge code')} />}
               <button type="button" className="auth-primary" disabled={mergeBusy} onClick={() => void generateMergeCode()}>
                 {mergeBusy ? <Loader2 size={ICON} className="auth-spin" /> : t('生成合并码', 'Generate merge code')}
@@ -1595,6 +1596,7 @@ export function DeleteAccountPanel({ backHref }: { backHref: string }) {
 
         <p className="auth-dl-head">{t('永久删除', 'Permanently deleted')}</p>
         <ul className="auth-dl">
+          <li>{t('与其他用户的整段好友聊天记录及双方相关提醒；对方已复制的内容不受影响', 'Entire friend conversations and their notifications for both participants; copies already made by others are unaffected')}</li>
           <li>{t('登录方式(邮箱 / 手机 / WCA / 第三方绑定)', 'Sign-in methods (email / phone / WCA / third-party links)')}</li>
           <li>{t('计时器云备份、训练成绩、公式掌握与记忆进度', 'Timer backups, training results, algorithm mastery and review progress')}</li>
           <li>{t('关注的比赛、打乱标记、画板作品', 'Followed competitions, scramble marks, drawings')}</li>
@@ -1612,6 +1614,7 @@ export function DeleteAccountPanel({ backHref }: { backHref: string }) {
             'These keep an author slot reading “Deleted user”, with no WCA ID or email attached — so other people’s discussions stay intact and public reconstruction links keep working. Any purchase records are kept for accounting.')}
         </p>
 
+        <p className="auth-hint">{t('如果你通过 Apple 或 Google Play 订阅会员，请先在对应商店的订阅管理中取消自动续费。注销 CubeRoot 账号不会取消商店订阅，注销后的购买记录也不能恢复到新账号。', 'If you subscribe through Apple or Google Play, cancel auto-renewal in that store first. Deleting your CubeRoot account does not cancel store subscriptions, and purchases cannot be restored to a new account after deletion.')}</p>
         {handle === null ? (
           <div className="auth-loading"><Loader2 size={ICON} className="auth-spin" /></div>
         ) : handle === '' ? (

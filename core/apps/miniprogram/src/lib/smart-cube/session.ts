@@ -13,10 +13,16 @@ import { connectGanV4 } from './gan-v4-ble';
 import { connectGiiker } from './giiker-ble';
 import { connectGoCube } from './gocube-ble';
 import { connectMoyu } from './moyu-ble';
-import { discoverSmartCubeDriver } from './discover-driver';
-import type { BleAbortSignal } from './ble-api';
+import { connectMoyu32 } from './moyu32-ble';
+import { connectQiyi } from './qiyi-ble';
+import {
+  discoverSmartCubeDriver,
+  type DetectableSmartCubeDriver,
+  type DiscoveredSmartCube,
+} from './discover-driver';
+import type { BleAbortSignal, DiscoveredDevice } from './ble-api';
 
-export type SmartCubeDriverKind = 'gan-v4' | 'gocube' | 'giiker' | 'moyu' | 'simulator';
+export type SmartCubeDriverKind = 'gan-v4' | 'gocube' | 'giiker' | 'moyu' | 'moyu32' | 'qiyi' | 'simulator';
 export type SmartCubeSessionPhase =
   | 'idle'
   | 'scanning'
@@ -29,9 +35,18 @@ export interface SmartCubeSessionSnapshot {
   phase: SmartCubeSessionPhase;
   brand: SmartCubeDriverKind | '';
   deviceName: string;
+  devices: SmartCubeCandidate[];
   battery: number | null;
   error: string;
   lastMove: string;
+}
+
+export interface SmartCubeCandidate {
+  deviceId: string;
+  deviceName: string;
+  driver: DetectableSmartCubeDriver;
+  driverLabel: string;
+  rssi: number | null;
 }
 
 interface SocketTaskLike {
@@ -51,12 +66,14 @@ interface CubeConnectionLike {
   readonly deviceName?: string;
   disconnect(): Promise<void>;
   requestBattery(): Promise<number | null>;
+  resetDeviceState?(): Promise<void>;
 }
 
 const INITIAL_SNAPSHOT: SmartCubeSessionSnapshot = {
   phase: 'idle',
   brand: '',
   deviceName: '',
+  devices: [],
   battery: null,
   error: '',
   lastMove: '',
@@ -67,7 +84,7 @@ const RELAY_SEND_TIMEOUT_MS = 5_000;
 class SmartCubeRelaySendError extends Error {}
 
 function supportsGyro(kind: SmartCubeDriverKind): boolean {
-  return kind === 'gan-v4' || kind === 'gocube';
+  return kind === 'gan-v4' || kind === 'gocube' || kind === 'moyu32' || kind === 'qiyi';
 }
 
 function relayUrl(): string {
@@ -80,6 +97,21 @@ function errorMessage(error: unknown): string {
   return error instanceof Error
     ? error.message
     : tr({ en: 'Connection failed. Try again.', zh: '连接失败，请重试' });
+}
+
+function smartCubeCandidatesEqual(
+  left: SmartCubeCandidate[],
+  right: SmartCubeCandidate[],
+): boolean {
+  return left.length === right.length && left.every((candidate, index) => {
+    const other = right[index];
+    return other !== undefined
+      && candidate.deviceId === other.deviceId
+      && candidate.deviceName === other.deviceName
+      && candidate.driver === other.driver
+      && candidate.driverLabel === other.driverLabel
+      && candidate.rssi === other.rssi;
+  });
 }
 
 interface BleCancellation {
@@ -141,6 +173,7 @@ export class SmartCubeSession {
   private socketGeneration = 0;
   private connectionGeneration = 0;
   private connection: CubeConnectionLike | null = null;
+  private discoveredDevices = new Map<string, DiscoveredSmartCube>();
   private pendingConnection: BleCancellation | null = null;
   private hardwareCleanup: Promise<void> = Promise.resolve();
   private cancelPendingStart: (() => void) | null = null;
@@ -174,6 +207,7 @@ export class SmartCubeSession {
       throw new Error(tr({ en: 'The timer connection was replaced by a new session', zh: '计时器连接已被新的会话替代' }));
     }
     this.token = token;
+    this.discoveredDevices.clear();
     this.setSnapshot({ ...INITIAL_SNAPSHOT });
 
     await new Promise<void>((resolve, reject) => {
@@ -234,7 +268,9 @@ export class SmartCubeSession {
         }
         if (isSmartCubeRelayPayload(payload)
           && payload.type === 'command'
-          && payload.command === 'disconnect') {
+          && payload.command === 'reset-device') {
+          void this.resetDevice(payload.requestId);
+        } else if (isSmartCubeRelayPayload(payload) && payload.type === 'command' && payload.command === 'disconnect') {
           void this.disconnect(tr({ en: 'The timer disconnected the smart cube', zh: '计时器已断开智能魔方' }));
         }
       });
@@ -272,20 +308,16 @@ export class SmartCubeSession {
     await this.connectSelected(kind);
   }
 
-  async connectAutomatically(): Promise<void> {
+  async scan(): Promise<void> {
     if (!this.socketOpen) throw new Error(tr({ en: 'Open the connection page from the timer first', zh: '请先从计时器打开连接页' }));
     if (this.snapshot.phase === 'connected') {
-      const brand = this.snapshot.brand;
-      await this.publishConnectedStatus({
-        type: 'status',
-        phase: 'connected',
-        brand,
-        deviceName: this.snapshot.deviceName,
-        hasGyro: brand ? supportsGyro(brand) : false,
-      });
+      await this.disconnectHardware();
+      this.discoveredDevices.clear();
+      this.setSnapshot({ ...INITIAL_SNAPSHOT, phase: 'scanning' });
+      this.send({ type: 'status', phase: 'scanning' });
+    } else if (this.snapshot.phase === 'scanning' || this.snapshot.phase === 'connecting') {
       return;
     }
-    if (this.snapshot.phase === 'scanning' || this.snapshot.phase === 'connecting') return;
 
     this.setSnapshot({
       phase: 'scanning',
@@ -294,7 +326,9 @@ export class SmartCubeSession {
       battery: null,
       error: '',
       lastMove: '',
+      devices: [],
     });
+    this.discoveredDevices.clear();
     this.send({ type: 'status', phase: 'scanning' });
 
     const generation = ++this.connectionGeneration;
@@ -303,9 +337,22 @@ export class SmartCubeSession {
     const cancellation = createBleCancellation();
     this.pendingConnection = cancellation;
 
-    let kind: Exclude<SmartCubeDriverKind, 'simulator'>;
+    const updateDiscoveredDevices = (foundDevices: DiscoveredSmartCube[]): void => {
+      if (generation !== this.connectionGeneration) return;
+      this.discoveredDevices = new Map(foundDevices.map((item) => [item.device.deviceId, item]));
+      const devices = foundDevices.map(({ device, driver }) => this.toCandidate(device, driver));
+      if (smartCubeCandidatesEqual(this.snapshot.devices, devices)) return;
+      this.setSnapshot({ phase: 'scanning', devices, error: '' });
+    };
+
+    let found: DiscoveredSmartCube[];
     try {
-      kind = await discoverSmartCubeDriver({ signal: cancellation.signal });
+      const discovery = discoverSmartCubeDriver({
+        signal: cancellation.signal,
+        onUpdate: updateDiscoveredDevices,
+      });
+      cancellation.track(discovery);
+      found = await discovery;
     } catch (error) {
       if (this.pendingConnection === cancellation) this.pendingConnection = null;
       if (generation !== this.connectionGeneration) return;
@@ -318,10 +365,20 @@ export class SmartCubeSession {
 
     if (this.pendingConnection === cancellation) this.pendingConnection = null;
     if (generation !== this.connectionGeneration) return;
-    await this.connectSelected(kind);
+    updateDiscoveredDevices(found);
   }
 
-  private async connectSelected(kind: SmartCubeDriverKind): Promise<void> {
+  async connectDevice(deviceId: string): Promise<void> {
+    if (!this.socketOpen) throw new Error(tr({ en: 'Open the connection page from the timer first', zh: '请先从计时器打开连接页' }));
+    if (this.snapshot.phase === 'connected' || this.snapshot.phase === 'connecting') return;
+    const selected = this.discoveredDevices.get(deviceId);
+    if (!selected) {
+      throw new Error(tr({ en: 'That smart cube is no longer available. Search again.', zh: '该智能魔方已不可用，请重新扫描' }));
+    }
+    await this.connectSelected(selected.driver, selected.device);
+  }
+
+  private async connectSelected(kind: SmartCubeDriverKind, selectedDevice?: DiscoveredDevice): Promise<void> {
     const deviceName = kind === 'gan-v4'
       ? tr({ en: 'GAN v2, v3 or v4 device', zh: 'GAN v2、v3、v4 协议设备' })
       : kind === 'gocube'
@@ -330,13 +387,23 @@ export class SmartCubeSession {
           ? tr({ en: 'Giiker or Mi Smart Cube', zh: 'Giiker、米家智能魔方' })
           : kind === 'moyu'
             ? tr({ en: 'MoYu AI (legacy MHC protocol)', zh: 'MoYu AI（MHC 旧协议）' })
+            : kind === 'moyu32'
+              ? tr({ en: 'MoYu32 smart cube', zh: 'MoYu32 智能魔方' })
+              : kind === 'qiyi'
+                ? tr({ en: 'QiYi / Tornado V4 smart cube', zh: 'QiYi / Tornado V4 智能魔方' })
             : tr({ en: 'DevTools simulated cube', zh: '开发者工具仿真魔方' });
     this.publishStatus({
       type: 'status',
-      phase: kind === 'simulator' ? 'connecting' : 'scanning',
+      phase: 'connecting',
       brand: kind,
-      deviceName,
+      deviceName: selectedDevice?.name ?? selectedDevice?.localName ?? deviceName,
       hasGyro: supportsGyro(kind),
+    });
+    this.setSnapshot({
+      phase: 'connecting',
+      devices: [],
+      deviceName: selectedDevice?.name ?? selectedDevice?.localName ?? deviceName,
+      error: '',
     });
 
     const generation = ++this.connectionGeneration;
@@ -355,6 +422,7 @@ export class SmartCubeSession {
         };
       } else if (kind === 'gan-v4') {
         const operation = connectGanV4({
+          device: selectedDevice,
           signal: cancellation.signal,
           onDisconnect: (message) => this.handleHardwareDisconnect(generation, kind, message),
           onMove: (move, deviceTs) => this.publishMove(generation, move, deviceTs),
@@ -368,6 +436,7 @@ export class SmartCubeSession {
         connection = await operation;
       } else if (kind === 'gocube') {
         const operation = connectGoCube({
+          device: selectedDevice,
           signal: cancellation.signal,
           onDisconnect: (message) => this.handleHardwareDisconnect(generation, kind, message),
           onMove: (move) => this.publishMove(generation, move),
@@ -379,6 +448,7 @@ export class SmartCubeSession {
         connection = await operation;
       } else if (kind === 'giiker') {
         const operation = connectGiiker({
+          device: selectedDevice,
           signal: cancellation.signal,
           onDisconnect: (message) => this.handleHardwareDisconnect(generation, kind, message),
           onMove: (move) => this.publishMove(generation, move),
@@ -387,11 +457,38 @@ export class SmartCubeSession {
         });
         cancellation.track(operation);
         connection = await operation;
-      } else {
+      } else if (kind === 'moyu') {
         const operation = connectMoyu({
+          device: selectedDevice,
           signal: cancellation.signal,
           onDisconnect: (message) => this.handleHardwareDisconnect(generation, kind, message),
           onMove: (move) => this.publishMove(generation, move),
+        });
+        cancellation.track(operation);
+        connection = await operation;
+      } else if (kind === 'moyu32') {
+        const operation = connectMoyu32({
+          device: selectedDevice,
+          signal: cancellation.signal,
+          onDisconnect: (message) => this.handleHardwareDisconnect(generation, kind, message),
+          onMove: (move, deviceTs) => this.publishMove(generation, move, deviceTs),
+          onState: (facelets) => this.publishFor(generation, { type: 'state', facelets }),
+          onBattery: (level) => this.publishBattery(generation, level),
+          onGyro: (quaternion) => this.publishFor(generation, { type: 'gyro', quaternion }),
+        });
+        cancellation.track(operation);
+        connection = await operation;
+      } else {
+        const operation = connectQiyi({
+          device: selectedDevice,
+          signal: cancellation.signal,
+          onDisconnect: (message) => this.handleHardwareDisconnect(generation, kind, message),
+          onMove: (move, deviceTs, metadata) => {
+            this.publishMove(generation, move, deviceTs, metadata);
+          },
+          onState: (facelets) => this.publishFor(generation, { type: 'state', facelets }),
+          onBattery: (level) => this.publishBattery(generation, level),
+          onGyro: (quaternion) => this.publishFor(generation, { type: 'gyro', quaternion }),
         });
         cancellation.track(operation);
         connection = await operation;
@@ -404,12 +501,15 @@ export class SmartCubeSession {
         return;
       }
       this.connection = connection;
+      this.resetRequests.clear();
+      this.calibrating = false;
       const connectedName = connection.deviceName ?? deviceName;
       await this.publishConnectedStatus({
         type: 'status',
         phase: 'connected',
         brand: kind,
         deviceName: connectedName,
+        canResetDevice: !!connection.resetDeviceState,
         hasGyro: supportsGyro(kind),
       });
       void connection.requestBattery()
@@ -439,11 +539,34 @@ export class SmartCubeSession {
   async disconnect(message = tr({ en: 'Smart cube disconnected', zh: '已断开智能魔方' })): Promise<void> {
     ++this.connectionGeneration;
     await this.disconnectHardware();
+    this.discoveredDevices.clear();
     this.publishStatus({ type: 'status', phase: 'disconnected' });
-    this.setSnapshot({ error: '', deviceName: message, battery: null, lastMove: '' });
+    this.setSnapshot({ error: '', deviceName: message, battery: null, lastMove: '', devices: [] });
+  }
+
+  private toCandidate(device: DiscoveredDevice, driver: DetectableSmartCubeDriver): SmartCubeCandidate {
+    const driverLabel = driver === 'gan-v4'
+      ? tr({ en: 'GAN', zh: 'GAN' })
+      : driver === 'gocube'
+        ? tr({ en: 'GoCube / Rubik’s Connected', zh: 'GoCube / Rubik’s Connected' })
+        : driver === 'giiker'
+          ? tr({ en: 'Giiker / Mi Smart Cube', zh: 'Giiker / 米家智能魔方' })
+          : driver === 'moyu32'
+            ? tr({ en: 'MoYu32', zh: 'MoYu32' })
+            : driver === 'qiyi'
+              ? tr({ en: 'QiYi / Tornado V4', zh: 'QiYi / Tornado V4' })
+              : tr({ en: 'MoYu AI', zh: '魔域 AI' });
+    return {
+      deviceId: device.deviceId,
+      deviceName: device.name ?? device.localName ?? driverLabel,
+      driver,
+      driverLabel,
+      rssi: typeof device.RSSI === 'number' ? device.RSSI : null,
+    };
   }
 
   private async disconnectHardware(): Promise<void> {
+    this.calibrating = false;
     const cancellation = this.pendingConnection;
     this.pendingConnection = null;
     cancellation?.cancel();
@@ -470,8 +593,18 @@ export class SmartCubeSession {
     this.setSnapshot({ battery: null, deviceName: message, error: '', lastMove: '' });
   }
 
-  private publishMove(generation: number, move: string, deviceTs?: number): void {
-    this.publishFor(generation, { type: 'move', move, deviceTs });
+  private publishMove(
+    generation: number,
+    move: string,
+    deviceTs?: number,
+    metadata?: { futureHistory?: boolean },
+  ): void {
+    this.publishFor(generation, {
+      type: 'move',
+      move,
+      deviceTs,
+      futureHistory: metadata?.futureHistory,
+    });
     if (generation === this.connectionGeneration) this.setSnapshot({ lastMove: move });
   }
 
@@ -490,6 +623,43 @@ export class SmartCubeSession {
     });
   }
 
+  private calibrating = false;
+  private resetRequests = new Set<string>();
+  private async resetDevice(requestId: string): Promise<void> {
+    // Never replay a destructive command, including while its first write is pending.
+    if (this.resetRequests.has(requestId)) return;
+    if (this.resetRequests.size >= 128) return;
+    this.resetRequests.add(requestId);
+    if (this.calibrating) {
+      this.send({ type: 'command-result', requestId, ok: false, error: 'Device calibration already in progress' });
+      return;
+    }
+    const generation = this.connectionGeneration;
+    const connection = this.connection;
+    const status = (calibrating: boolean): SmartCubeRelayEvent => ({
+      type: 'status', phase: 'connected', brand: this.snapshot.brand,
+      deviceName: this.snapshot.deviceName, hasGyro: supportsGyro(this.snapshot.brand as SmartCubeDriverKind),
+      canResetDevice: !!connection?.resetDeviceState, calibrating,
+    });
+    try {
+      if (!connection?.resetDeviceState) throw new Error('Device calibration unavailable');
+      this.calibrating = true;
+      await this.sendConfirmed(status(true));
+      if (generation !== this.connectionGeneration || connection !== this.connection) return;
+      await connection.resetDeviceState();
+      if (generation === this.connectionGeneration && connection === this.connection)
+        this.send({ type: 'command-result', requestId, ok: true });
+    } catch (error) {
+      if (generation === this.connectionGeneration && connection === this.connection)
+        this.send({ type: 'command-result', requestId, ok: false, error: errorMessage(error).slice(0, 256) });
+    } finally {
+      if (generation === this.connectionGeneration && connection === this.connection) {
+        this.calibrating = false;
+        if (connection?.resetDeviceState) this.send(status(false));
+      }
+    }
+  }
+
   private async publishConnectedStatus(
     status: Extract<SmartCubeRelayEvent, { type: 'status' }> & { phase: 'connected' },
   ): Promise<void> {
@@ -503,7 +673,9 @@ export class SmartCubeSession {
   }
 
   private publishFor(generation: number, event: SmartCubeRelayEvent): void {
-    if (generation === this.connectionGeneration) this.send(event);
+    if (generation === this.connectionGeneration) this.send(
+      this.calibrating && (event.type === 'state' || event.type === 'move') ? { ...event, calibration: true } : event,
+    );
   }
 
   private send(payload: SmartCubeRelayEvent): boolean {

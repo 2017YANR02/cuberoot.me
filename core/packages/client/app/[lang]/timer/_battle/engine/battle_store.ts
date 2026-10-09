@@ -1,3 +1,4 @@
+import { timerSupportsRealWcaScrambles, readLocalBattlePreferences, requestLocalBattleScramble, type LocalBattleScramble, summarizeLocalBattleRounds } from '@cuberoot/shared/timer';
 /**
  * Battle 模块 Zustand Store
  * 1:1 翻译自 battle.js state 对象 + 全部 action 函数
@@ -9,15 +10,21 @@ import { create } from 'zustand';
 import type { PlayerState, SolveEntry, Session, BattleMode, BattleLayout, TabName } from './types';
 import { PENALTY, LS_PREFIX, MIN_SOLVE_TIME, DEFAULT_PLAYER_KEYS } from './constants';
 import type { PenaltyType } from './constants';
-import { generateScramble, generateScrambleImageUrl } from './scramble_engine';
-import { isScrambleEngineReady, loadScrambleEngine } from './engine_loader';
+import { generateScrambleImageUrl } from './scramble_engine';
+import { createRandomScrambleClient } from '@cuberoot/timer-ui/random-scramble';
+const randomClient = createRandomScrambleClient();
 import { getEffectiveTimeFromEntry, computeAo5, computeAverage } from '@/app/[lang]/timer/_shared/stats-core';
 import { getSettings } from '@/app/[lang]/timer/_lib/settings';
-import { peekWca, nextWca, prefetchWca, hasWcaSource, type WcaSourceSpec } from '@/app/[lang]/timer/_lib/scramble/wca_pool';
+import { nextWcaRow, prefetchWca, hasWcaSource, type WcaSourceSpec } from '@/app/[lang]/timer/_lib/scramble/wca_pool';
 import { fromWcaSpelling, toWcaSpelling, type EventId } from '@/app/[lang]/timer/_lib/types';
 import { persistItem } from '@/lib/safe-storage';
 import {
   BATTLE_EVENT_IDS,
+  initialTimerMachineState,
+  transitionLocalBattle,
+  createLocalBattleRound,
+  type LocalBattleState,
+  type LocalBattleAction,
   LOCAL_BATTLE_MAX_PLAYERS,
   assignLocalBattlePlayerKey,
   groupLocalBattlePlayersByEvent,
@@ -29,7 +36,6 @@ import {
   normalizeLocalBattlePlayerCount,
   decodeLocalBattleRounds,
   type LocalBattleRound,
-  type Solve as SharedSolve,
 } from '@cuberoot/shared/timer';
 
 // Battle puzzle id ⇄ timer EventId. Both directions come from the ONE mapping
@@ -440,10 +446,13 @@ export interface BattleState {
   goalTime: number;
   // 每位玩家当前的打乱
   scrambles: (string | null)[];
+  scrambleRows: (LocalBattleScramble | null)[];
+  scrambleErrors: boolean[];
   // 每位玩家当前的打乱图 data URL
   scrambleImageUrls: (string | null)[];
   // 每位玩家是否正在加载打乱
   scrambleLoadings: boolean[];
+  scrambleRevisions: number[];
   // 赢家标识
   winners: number[];
   /** Atomic multiplayer history; never reconstructed from per-player array indexes. */
@@ -503,6 +512,7 @@ export interface BattleState {
   toggleShowTime: () => void;
   resetAll: () => void;
   // target 只换该玩家。Solo 始终 target=0；1v1 各自独立
+  changeAllPuzzles: (newPuzzleId: string) => void;
   changePuzzle: (target: number, puzzleId: string) => void;
   // NOTE: 自定义按键;和另一位玩家当前键冲突时与其互换
   setPlayerKey: (target: number, key: string) => void;
@@ -570,33 +580,90 @@ export interface BattleState {
 const initialBattleSessionId = localStorage.getItem(LS_PREFIX + 'sessionId') || '1';
 const initialBattleHistory = loadStoredBattleRounds(initialBattleSessionId);
 
+/** Project legacy view/storage fields into the canonical multiplayer machine. */
+function localState(s: BattleState): LocalBattleState {
+  return { playerCount: s.playerCount, players: s.players.map((p, id) => {
+    const phase = p.isTiming ? 'running' : p.hasFinished ? 'stopped' : p.canStart ? 'ready'
+      : p.isReady ? 'holding' : p.isInspecting ? 'inspecting' : 'idle';
+    return { id, event: battleToTimerEvent(s.puzzleIds[id]), scramble: s.scrambles[id] ?? '',
+      scrambleSource: s.scrambleRows[id]?.source, resultScrambleSource: p.resultScrambleSource,
+      scrambleRevision: s.scrambleRevisions[id] ?? 0, penalty: p.penalty, resultScramble: p.resultScramble,
+      result: p.hasFinished ? p.timerResult ?? { timeMs: p.time, inspectionMs: 0, autoPenalty: p.penalty === 'dnf' ? 'DNF' : p.penalty } : null,
+      timer: { ...initialTimerMachineState(), ...p.timerState, phase,
+        lastMs: p.hasFinished || p.time > 0 ? p.time : null,
+        startedAtMs: p.isTiming ? p.startTime : null,
+        inspectionStartedAtMs: p.isInspecting ? p.inspectionStart : p.isTiming ? p.timerState?.inspectionStartedAtMs ?? null : null,
+        inspectionSec: p.isInspecting ? p.timerState?.inspectionSec ?? s.inspectionTime : p.timerState?.inspectionSec ?? null,
+      } };
+  }) };
+}
+
+function applyLocalAction(get: () => BattleState, set: (patch: Partial<BattleState>) => void, action: LocalBattleAction): boolean {
+  const s = get();
+  const transition = transitionLocalBattle(localState(s), action, { inspectionSec: s.inspectionTime, syncStart: s.syncStart, minSolveMs: MIN_SOLVE_TIME });
+  if (!transition.accepted) return false;
+  set({ scrambles: transition.state.players.map(p => p.scramble || null),
+    scrambleRevisions: transition.state.players.map(p => p.scrambleRevision),
+    players: s.players.map((p, id) => {
+    const next = transition.state.players[id], timer = next.timer;
+    return { ...p, timerState: timer, timerResult: next.result, resultScramble: next.resultScramble, resultScrambleSource: next.resultScrambleSource, isTiming: timer.phase === 'running', hasFinished: next.result !== null,
+      isReady: timer.phase === 'holding' || timer.phase === 'ready' && (p.isReady || s.syncStart), canStart: timer.phase === 'ready',
+      isInspecting: timer.inspectionStartedAtMs !== null && timer.phase !== 'running',
+      inspectionStart: timer.inspectionStartedAtMs ?? 0,
+      startTime: timer.startedAtMs ?? p.startTime, time: next.result?.timeMs ?? (timer.phase === 'running' ? 0 : p.time),
+      penalty: next.penalty,
+    };
+  }) });
+  for (const effect of transition.effects) {
+    if (effect.type !== 'player-timer') continue;
+    if (effect.effect === 'hold-cancelled' || effect.effect === 'run-started') get().cancelReadyTimer(effect.playerId);
+    if (effect.effect === 'hold-started') {
+      get().cancelReadyTimer(effect.playerId);
+      const timers = [...get().readyTimers];
+      timers[effect.playerId] = setTimeout(() => {
+        const next = [...get().readyTimers]; next[effect.playerId] = null; set({ readyTimers: next });
+        applyLocalAction(get, set, { type: 'player-timer', playerId: effect.playerId, action: { type: 'hold-ready' } });
+      }, s.startDelay);
+      set({ readyTimers: timers });
+    }
+    if (effect.effect === 'run-stopped') {
+      const raf = s.players[effect.playerId].rafId;
+      if (raf !== null) cancelAnimationFrame(raf);
+    }
+  }
+  if (transition.effects.some(effect => effect.type === 'player-timer' && effect.effect === 'run-stopped')) get().checkBothFinished();
+  return true;
+}
+
+const initialBattlePreferences = readLocalBattlePreferences(localStorage);
+
 export const useBattleStore = create<BattleState>((set, get) => ({
   // NOTE: 初始值 — 1:1 翻译自 battle.js state 对象（行 99~141）
   mode: (localStorage.getItem(LS_PREFIX + 'mode') as BattleMode) || '1v1',
-  layout: (localStorage.getItem(LS_PREFIX + 'layout') as BattleLayout) || 'versus',
+  layout: initialBattlePreferences.layout,
   // NOTE: 人数由 URL ?players= 驱动(BattleView 同步进来),不持久化
   playerCount: 2,
   puzzleIds: loadInitialPuzzleIds(),
   playerKeys: Array.from({ length: MAX_PLAYERS }, (_, i) =>
     localStorage.getItem(LS_PREFIX + `key_${i}`) ?? DEFAULT_PLAYER_KEYS[i]),
   recordingKeyFor: null,
-  showTime: localStorage.getItem(LS_PREFIX + 'showTime') !== 'false',
-  showImage: localStorage.getItem(LS_PREFIX + 'showImage') !== 'false',
-  flipTopRow: localStorage.getItem(LS_PREFIX + 'flipTopRow') !== 'false',
+  showTime: !initialBattlePreferences.hideTime,
+  showImage: initialBattlePreferences.showImage,
+  flipTopRow: initialBattlePreferences.flipTopRow,
   // 默认各自开始(=== 'true' 而非 !== 'false':没存过时取 false)
-  syncStart: localStorage.getItem(LS_PREFIX + 'syncStart') === 'true',
-  inspectionTime: parseInt(localStorage.getItem(LS_PREFIX + 'inspectionTime') || '0') || 0,
+  syncStart: initialBattlePreferences.syncStart,
+  inspectionTime: initialBattlePreferences.inspectionSec,
   voice: localStorage.getItem(LS_PREFIX + 'voice') !== 'false',
   phases: parseInt(localStorage.getItem(LS_PREFIX + 'phases') || '1') || 1,
-  scrambleScale: parseFloat(localStorage.getItem(LS_PREFIX + 'scrambleScale') || '1.0') || 1.0,
-  bgOpacity: parseFloat(localStorage.getItem(LS_PREFIX + 'bgOpacity') || '1.0') || 1.0,
+  scrambleScale: initialBattlePreferences.scrambleScale,
+  bgOpacity: initialBattlePreferences.bgOpacity,
   bgColors: Array.from({ length: MAX_PLAYERS }, (_, i) =>
     localStorage.getItem(LS_PREFIX + `bg_color_${i}`) || ''),
   bgImages: Array.from({ length: MAX_PLAYERS }, (_, i) =>
     localStorage.getItem(LS_PREFIX + `bg_img_${i}`)),
   eventPickerOpen: Array.from({ length: MAX_PLAYERS }, () => false),
-  timerPrecision: (() => { const v = localStorage.getItem(LS_PREFIX + 'timerPrecision'); return v !== null ? parseInt(v) : 3; })(),
-  startDelay: (() => { const v = localStorage.getItem(LS_PREFIX + 'startDelay'); return v !== null ? parseInt(v) : 300; })(),
+  timerPrecision: initialBattlePreferences.precision,
+  startDelay: initialBattlePreferences.holdMs,
   cubeMode: (() => {
     const v = localStorage.getItem(LS_PREFIX + 'cubeMode');
     return v === 'shared' ? 'shared' as const : 'own' as const;
@@ -604,9 +671,12 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   cubeHolder: 0,
   enabledAverages: JSON.parse(localStorage.getItem(LS_PREFIX + 'enabledAverages') || '[5, 12]'),
   goalTime: parseFloat(localStorage.getItem(LS_PREFIX + 'goalTime') || '0') || 0,
+  scrambleRows: Array.from({ length: MAX_PLAYERS }, () => null),
+  scrambleErrors: Array.from({ length: MAX_PLAYERS }, () => false),
   scrambles: Array.from({ length: MAX_PLAYERS }, () => null),
   scrambleImageUrls: Array.from({ length: MAX_PLAYERS }, () => null),
   scrambleLoadings: Array.from({ length: MAX_PLAYERS }, () => false),
+  scrambleRevisions: Array.from({ length: MAX_PLAYERS }, () => 0),
   winners: [],
   battleRounds: initialBattleHistory.rounds,
   battleHistoryWarning: initialBattleHistory.warning,
@@ -643,11 +713,9 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   loadNewScramble: (playerId?: number) => {
     // 引擎(scrMgr)是异步 <script>,任何早于它的调用都会抛 ReferenceError。所有重生打乱的
     // 路径都汇到这里,所以只在这一处等待,调用方不必各自判空。
-    if (!isScrambleEngineReady()) {
-      void loadScrambleEngine().then(() => get().loadNewScramble(playerId));
-      return;
-    }
     const s = get();
+    const revisions = new Map<string, number>();
+    if (s.mode !== 'solo' && s.players.slice(0, s.playerCount).some(p => p.isTiming || p.isReady || p.canStart || p.isInspecting)) return;
     const n = s.mode === 'solo' ? 1 : s.playerCount;
     const targets = playerId === undefined
       ? Array.from({ length: n }, (_, i) => i)
@@ -661,6 +729,11 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       activeSlots.filter((playerId) => targetEvents.has(s.puzzleIds[playerId])),
     );
     const affected = [...groups.values()].flat();
+    if (s.mode !== 'solo') for (const [puzzle, ids] of groups) {
+      applyLocalAction(get, set, { type: 'request-next-scramble', event: battleToTimerEvent(puzzle),
+        preserveResults: s.players.slice(0, s.playerCount).every(p => p.hasFinished) });
+      revisions.set(puzzle, get().scrambleRevisions[ids[0]]);
+    }
     // WCA 真实打乱模式(打乱来源在共享的 timer 设置里,Solo / Duo 同一份配置)
     const useWca = getSettings().scrambleSource === 'wca';
 
@@ -673,42 +746,48 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       scramblesNext[i] = null;
       imagesNext[i] = null;
     }
-    set({ scrambleLoadings: loadings, scrambles: scramblesNext, scrambleImageUrls: imagesNext });
+    set({ scrambleLoadings: loadings, scrambles: scramblesNext, scrambleImageUrls: imagesNext,
+      scrambleRows: s.scrambleRows.map((row, id) => affected.includes(id) ? null : row),
+      scrambleErrors: s.scrambleErrors.map((error, id) => affected.includes(id) ? false : error) });
 
     // 把一个具体打乱写进若干槽位(同 puzzle 共享时一份复制给两人),并解除 loading。
     // 打乱图由 TimerArea 的 CubingPreview 从打乱串直接渲染,scrambleImageUrls 已是死状态
     // (无组件读取),故不再调 generateScrambleImageUrl(该函数在 Next port 缺 image.js 全局会抛)。
-    const commit = (idxs: number[], text: string) => {
+    const commit = (idxs: number[], row: LocalBattleScramble | null) => {
+      const text = row?.scramble && !row.scramble.startsWith('⚠️') ? row.scramble : '';
       const cur = get();
+      if (cur.mode !== s.mode) return;
+      if (cur.mode !== 'solo') {
+        const puzzle = s.puzzleIds[idxs[0]];
+        const revision = revisions.get(puzzle)!;
+        if (idxs.some(id => cur.puzzleIds[id] !== puzzle || cur.scrambleRevisions[id] !== revision)) return;
+        if (!applyLocalAction(get, set, text ? { type: 'scramble-ready', event: battleToTimerEvent(puzzle), revision, scramble: text, source: row?.source }
+          : { type: 'scramble-failed', event: battleToTimerEvent(puzzle), revision })) return;
+      }
       const ns: (string | null)[] = [...cur.scrambles];
       const ni: (string | null)[] = [...cur.scrambleImageUrls];
       const nl: boolean[] = [...cur.scrambleLoadings];
       for (const i of idxs) { ns[i] = text; ni[i] = null; nl[i] = false; }
-      set({ scrambles: ns, scrambleImageUrls: ni, scrambleLoadings: nl });
+      set({ scrambles: ns, scrambleImageUrls: ni, scrambleLoadings: nl,
+        scrambleRows: cur.scrambleRows.map((old, id) => idxs.includes(id) ? row : old),
+        scrambleErrors: cur.scrambleErrors.map((old, id) => idxs.includes(id) ? !text : old) });
     };
 
-    // 队列为空时异步取一条真实打乱填回。期间若 puzzle 改了 / 关了 WCA / 已被填,放弃;
-    // 取不到(该比赛无此项目 / 网络失败)→ 回退本地生成。
-    const fillWca = (idxs: number[], puzzleId: string, spec: WcaSourceSpec) => {
-      void nextWca(spec).then((real) => {
-        if (getSettings().scrambleSource !== 'wca') return;
-        const cur = get();
-        for (const i of idxs) if (cur.puzzleIds[i] !== puzzleId) return;
-        if (idxs.some((i) => cur.scrambles[i] != null)) return;
-        commit(idxs, real ?? generateScramble(puzzleId));
-      });
-    };
-
-    // 2) 派发:同 puzzle 组一份复制给全组;不同 puzzle 各组独立生成
     const drawInto = (idxs: number[], puzzleId: string) => {
       const spec = useWca ? wcaSpecFor(puzzleId) : null;
-      if (spec && hasWcaSource(spec)) {
-        const sync = peekWca(spec);
-        if (sync != null) commit(idxs, sync);
-        else fillWca(idxs, puzzleId, spec); // 队列空 → 保持 loading,异步填
-      } else {
-        commit(idxs, generateScramble(puzzleId));
-      }
+      const event = battleToTimerEvent(puzzleId);
+      void requestLocalBattleScramble(event, async (_event, signal) => {
+        if (spec && timerSupportsRealWcaScrambles(event)) {
+          if (!hasWcaSource(spec)) throw new Error('WCA source is incomplete');
+          const row = await nextWcaRow(spec, signal);
+          if (!row) throw new Error('No WCA scramble');
+          return { scramble: row.scramble, wca: row.meta ?? undefined,
+            source: { kind: 'wca', identity: JSON.stringify(spec) + '|' + row.slot } };
+        }
+        const result = await randomClient.generate({ event }, signal);
+        if (!result.ok || result.kind !== 'generated') throw new Error('Scramble generation failed');
+        return { scramble: result.scramble, source: { kind: 'random', identity: `random|${event}` } };
+      }).then(row => commit(idxs, row), () => commit(idxs, null));
     };
 
     for (const [puz, idxs] of groups) drawInto(idxs, puz);
@@ -721,6 +800,10 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   // 所以「一半人用魔方、一半人用键盘」是自然成立的,不需要第二套状态。
 
   cubeArm: (playerId: number): boolean => {
+    if (get().mode !== 'solo') {
+      if (get().players.slice(0, get().playerCount).every(p => p.hasFinished)) get().resetForNextRound();
+      return applyLocalAction(get, set, { type: 'player-timer', playerId, action: { type: 'arm-from-cube', nowMs: performance.now() } });
+    }
     const s = get();
     if (!inPlay(s, playerId)) return false;
     // 上一轮全员拧完了 → 这一下是「开下一轮」。和 playerDown 同一条规则。
@@ -756,6 +839,9 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   },
 
   cubeStart: (playerId: number, atMs: number): boolean => {
+    if (get().mode !== 'solo') {
+      return applyLocalAction(get, set, { type: 'player-timer', playerId, action: { type: 'start-from-cube', nowMs: atMs, atMs } });
+    }
     const s = get();
     if (!inPlay(s, playerId)) return false;
     const p = s.players[playerId];
@@ -782,6 +868,9 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   },
 
   cubeStop: (playerId: number, atMs: number): boolean => {
+    if (get().mode !== 'solo') {
+      return applyLocalAction(get, set, { type: 'player-timer', playerId, action: { type: 'stop-from-cube', nowMs: atMs, atMs } });
+    }
     const s = get();
     if (!inPlay(s, playerId)) return false;
     const p = s.players[playerId];
@@ -907,38 +996,8 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       return false;
     }
 
-    // === 1v1 模式原有逻辑(推广到 N 人:全员完成才能进入下一轮) ===
-    if (s.players.slice(0, s.playerCount).every(pl => pl.hasFinished)) {
-      get().resetForNextRound();
-    }
-
-    // NOTE: 重新读取——resetForNextRound 可能改了 players
-    const ps = get().players[playerId];
-
-    if (ps.isTiming) {
-      const elapsed = performance.now() - ps.startTime;
-      if (elapsed > MIN_SOLVE_TIME) {
-        const newPlayers = [...get().players];
-        newPlayers[playerId] = {
-          ...ps,
-          time: elapsed,
-          hasFinished: true,
-          isTiming: false,
-        };
-        if (ps.rafId !== null) cancelAnimationFrame(ps.rafId);
-        set({ players: newPlayers });
-        // NOTE: 立即触发 confetti + vibrate（在 UI 组件中处理）
-        get().checkBothFinished();
-      }
-      return true;
-    } else if (!ps.hasFinished && !ps.canStart && get().scrambles[playerId]) {
-      const newPlayers = [...get().players];
-      newPlayers[playerId] = { ...ps, isReady: true };
-      set({ players: newPlayers });
-      get().checkBothReady(playerId);
-      return true;
-    }
-    return false;
+    if (get().players.slice(0, get().playerCount).every(p => p.hasFinished)) get().resetForNextRound();
+    return applyLocalAction(get, set, { type: 'player-timer', playerId, action: { type: 'press-down', nowMs: performance.now() } });
   },
 
   // 1:1 翻译自 battle.js playerUp()（行 641~711）
@@ -988,50 +1047,14 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       return;
     }
 
-    // === 1v1 模式原有逻辑 ===
-    if (p.canStart) {
-      const startTime = performance.now();
-      const newPlayers = [...s.players];
-      if (s.syncStart) {
-        // --- 同时开始:第一名玩家松手触发,带着全部已绿灯的玩家共用同一 startTime ---
-        for (let i = 0; i < s.playerCount; i++) {
-          const player = s.players[i];
-          if (player.canStart) {
-            newPlayers[i] = {
-              ...player,
-              canStart: false,
-              isTiming: true,
-              isReady: false,
-              startTime,
-              time: 0,
-              penalty: PENALTY.OK,
-            };
-          }
-        }
-      } else {
-        // --- 各自开始:只起自己这一路,别人还在看打乱 / 还在拧都不受影响 ---
-        newPlayers[playerId] = {
-          ...p,
-          canStart: false,
-          isTiming: true,
-          isReady: false,
-          startTime,
-          time: 0,
-          penalty: PENALTY.OK,
-        };
-      }
-      set({ players: newPlayers });
-    } else if (p.isReady && !p.isTiming && !p.hasFinished) {
-      // NOTE: 红灯期间松手 → 恢复 idle（黑色），取消红灯延时。
-      //   同时开始:延时是全员共有的,整条作废;各自开始:只作废自己那条。
-      get().cancelReadyTimer(s.syncStart ? undefined : playerId);
-      const newPlayers = [...s.players];
-      newPlayers[playerId] = { ...p, isReady: false };
-      set({ players: newPlayers });
-    }
+    applyLocalAction(get, set, { type: 'player-timer', playerId, action: { type: 'press-up', nowMs: performance.now() } });
   },
 
   playerCancel: (playerId: number) => {
+    if (get().mode !== 'solo') {
+      applyLocalAction(get, set, { type: 'player-timer', playerId, action: { type: 'cancel-press' } });
+      return;
+    }
     const s = get();
     if (!inPlay(s, playerId)) return;
     const player = s.players[playerId];
@@ -1064,7 +1087,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     const solo = s.mode === 'solo';
 
     // 单人点亮:solo 与「各自开始」共用同一条路径
-    if (solo || !s.syncStart) {
+    if (solo) {
       const target = solo ? 0 : playerId;
       const p = s.players[target];
       if (!p.isReady || p.canStart) return;
@@ -1084,26 +1107,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       return;
     }
 
-    // === 同时开始(推广到 N 人:全员按住才进入红灯延时) ===
-    const active = s.players.slice(0, s.playerCount);
-    if (active.every(pl => pl.isReady && !pl.canStart)) {
-      const timer = setTimeout(() => {
-        const curr = get();
-        if (curr.players.slice(0, curr.playerCount).every(pl => pl.isReady)) {
-          const newPlayers = [...curr.players];
-          const timers = [...curr.readyTimers];
-          for (let i = 0; i < curr.playerCount; i++) {
-            newPlayers[i] = { ...curr.players[i], canStart: true };
-            timers[i] = null;
-          }
-          set({ players: newPlayers, readyTimers: timers });
-        }
-      }, s.startDelay);
-      // 同一 handle 写进全部参战槽位 —— 任一槽位被取消即整条作废
-      const timers = [...s.readyTimers];
-      for (let i = 0; i < s.playerCount; i++) timers[i] = timer;
-      set({ readyTimers: timers });
-    }
+    // Multiplayer callers dispatch through applyLocalAction; no second readiness machine.
   },
 
   // playerId 省略 = 清掉全部槽位(换人数 / 同时开始模式下任一人松手)
@@ -1173,23 +1177,8 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       get().computeWinner();
       const finalized = get();
       const roundId = createLocalBattleRoundId();
-      const attempts = finalized.players.slice(0, finalized.playerCount).map((player, playerId) => {
-        const solve: SharedSolve = {
-          id: `${roundId}-${playerId}`,
-          timeMs: player.time,
-          penalty: player.penalty === PENALTY.DNF ? 'DNF' : player.penalty,
-          scramble: finalized.scrambles[playerId] || '',
-          event: battleToTimerEvent(finalized.puzzleIds[playerId]),
-          ts: roundTs,
-        };
-        return { playerId, solve };
-      });
-      const round: LocalBattleRound = {
-        id: roundId,
-        ts: roundTs,
-        attempts,
-        winners: finalized.winners,
-      };
+      const round = createLocalBattleRound(localState(finalized), roundId, roundTs);
+      if (!round) return;
       const battleRounds = [...finalized.battleRounds, round];
       const persisted = persistBattleRounds(finalized.sessionId, battleRounds);
       set({
@@ -1224,18 +1213,10 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       set({ players: newPlayers });
       return;
     }
-    // === 1v1 原有逻辑(推广到 N 人) ===
-    const newPlayers = [...s.players];
-    for (let i = 0; i < s.playerCount; i++) {
-      newPlayers[i] = {
-        ...s.players[i],
-        isReady: false,
-        canStart: false,
-        isTiming: false,
-        hasFinished: false,
-      };
-    }
-    set({ players: newPlayers, winners: [] });
+    if (s.players.slice(0, s.playerCount).every(player => player.hasFinished)
+      && s.scrambles.slice(0, s.playerCount).some(scramble => !scramble)) return;
+    applyLocalAction(get, set, { type: 'reset-round' });
+    set({ winners: [] });
   },
 
   // 1:1 翻译自 battle.js computeWinner()（行 963~1001;推广到 N 人,最小有效成绩者胜,可并列）
@@ -1273,6 +1254,12 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       }
       set({ players: newPlayers });
       get().saveSolveHistory();
+      return;
+    }
+
+    // The current round has no history entry until every player finishes.
+    if (!newPlayers.slice(0, s.playerCount).every(player => player.hasFinished)) {
+      set({ players: newPlayers });
       return;
     }
 
@@ -1426,11 +1413,23 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     s.loadNewScramble();
   },
 
+  changeAllPuzzles: (newPuzzleId: string) => {
+    const s = get();
+    if (s.puzzleIds.every(id => id === newPuzzleId)) return;
+    if (!transitionLocalBattle(localState(s), { type: 'set-event', event: battleToTimerEvent(newPuzzleId) }, { inspectionSec: s.inspectionTime }).accepted) return;
+    s.saveSolveHistory(); s.cancelReadyTimer();
+    for (let id = 0; id < MAX_PLAYERS; id++) persistItem(LS_PREFIX + `puzzle_${id}`, newPuzzleId);
+    persistItem(LS_PREFIX + 'puzzle', newPuzzleId);
+    set({ puzzleIds: Array.from({ length: MAX_PLAYERS }, () => newPuzzleId), winners: [], players: freshPlayers().map((player, id) => ({ ...player, points: s.players[id].points })) });
+    get().loadSolveHistory(); get().loadNewScramble();
+  },
+
   // target → 仅换该玩家。Solo 始终 target=0；1v1 各自调用
   // NOTE: 同 puzzle 共享 scramble 由 loadNewScramble 的分组逻辑处理
   changePuzzle: (target: number, newPuzzleId: string) => {
     const s = get();
     if (s.puzzleIds[target] === newPuzzleId) return;
+    if (s.mode !== 'solo' && !transitionLocalBattle(localState(s), { type: 'set-player-event', playerId: target, event: battleToTimerEvent(newPuzzleId) }, { inspectionSec: s.inspectionTime }).accepted) return;
 
     s.saveSolveHistory();
 
@@ -1516,6 +1515,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     const count = normalizeLocalBattlePlayerCount(n);
     const s = get();
     if (s.playerCount === count) return;
+    if (s.mode !== 'solo' && !transitionLocalBattle(localState(s), { type: 'set-player-count', playerCount: count }, { inspectionSec: s.inspectionTime }).accepted) return;
     s.saveSolveHistory();
     get().cancelReadyTimer();
     set({
@@ -1805,10 +1805,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       set({ battleHistoryWarning: 'write-failed' });
       return;
     }
-    const newPoints = s.players.map(p => p.points);
-    if (isLast) for (const winner of round.winners) {
-      newPoints[winner] = Math.max(0, (newPoints[winner] ?? 0) - 1);
-    }
+    const newPoints = summarizeLocalBattleRounds(battleRounds, MAX_PLAYERS).map(player => player.wins);
 
     const newPlayers = [...s.players];
     let legacyPersisted = true;

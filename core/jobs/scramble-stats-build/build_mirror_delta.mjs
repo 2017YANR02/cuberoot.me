@@ -19,6 +19,7 @@
 // stdout 末行打 JSON 统计供调用方解析。
 import fs from 'node:fs';
 import readline from 'node:readline';
+import { decodeWcaTsvField } from './src/wca_tsv.mjs';
 
 function arg(name, def) {
   const i = process.argv.indexOf(`--${name}`);
@@ -38,7 +39,7 @@ if (!scramblesPath || !prodCountsPath || !outDelta || !outComps) {
   process.exit(2);
 }
 
-// incremental.py 同款列名归一化(抗 camelCase/snake_case 漂移)。
+// src/incremental.ts 同款列名归一化(抗 camelCase/snake_case 漂移)。
 const norm = (s) => s.trim().toLowerCase().replace(/[_\s]/g, '');
 function colmap(header, aliases) {
   const idx = new Map();
@@ -131,7 +132,8 @@ if (toLoad.size > 0) {
     if (!toLoad.has(comp)) continue;
     const g = (k) => (scm[k] != null && scm[k] < p.length ? p[scm[k]] : '') ?? '';
     const isExtra = (() => { const v = g('is_extra').trim().toLowerCase(); return v === '1' || v === 'true' ? '1' : '0'; })();
-    const row = [comp, g('event_id'), g('round_type_id'), g('group_id'), isExtra, g('scramble_num'), g('scramble')]
+    // Decode MySQL field escapes, retaining the mirror's existing MBF pipe format.
+    const row = [comp, g('event_id'), g('round_type_id'), g('group_id'), isExtra, g('scramble_num'), decodeWcaTsvField(g('scramble'))]
       .map(csvCell).join(',');
     buf.push(row);
     deltaRows++;

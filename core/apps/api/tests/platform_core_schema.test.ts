@@ -87,6 +87,22 @@ const PLATFORM_ACCOUNT_DELETE_EVIDENCE_TABLES = [
 ] as const;
 
 describe('main-site Platform PostgreSQL schema', () => {
+  it('keeps lesson-cover migration, canonical schema, ledger, and /dev/schema in sync', async () => {
+    const [migration, schema, readme, devSchema] = await Promise.all([
+      read('../migrations/0244_platform_lesson_covers.sql'),
+      read('../src/db/schema.pg.sql'),
+      read('../migrations/README.md'),
+      readFile(workspaceFixturePath('@cuberoot/client', 'app/[lang]/dev/schema/page.tsx'), 'utf8'),
+    ]);
+
+    expect(migration).not.toMatch(/^(?:BEGIN|COMMIT)\s*;/im);
+    expect(migration).toContain('ADD COLUMN cover_media_id UUID REFERENCES platform_media_assets(id) ON DELETE SET NULL');
+    expect(schema).toContain('cover_media_id UUID REFERENCES platform_media_assets(id) ON DELETE SET NULL');
+    expect(readme).toContain('0244_platform_lesson_covers.sql');
+    expect(devSchema).toContain("{ n: 244, slug: 'platform_lesson_covers'");
+    expect(devSchema).toContain("evolved: [203, 244, 258, 259, 260]");
+  });
+
   it('keeps Platform account deletion compatible with immutable evidence', async () => {
     const [migration, schema, readme, devSchema, accountDelete, learning, fixture] = await Promise.all([
       read('../migrations/0168_platform_account_deletion.sql'),
@@ -170,15 +186,18 @@ describe('main-site Platform PostgreSQL schema', () => {
       '0226_competition_settlement_ledger.sql',
       '0227_competition_device_reports.sql',
       '0229_organizer_applications.sql',
+      '0258_platform_qr_daily_scans.sql',
     ].map((filename) => read(`../migrations/${filename}`)));
     const laterTables = laterMigrations.flatMap((source) =>
       [...source.matchAll(/^CREATE TABLE (platform_[a-z0-9_]+) \(/gm)].map((match) => match[1]));
     expect(migrationTables).toEqual(PLATFORM_TABLES);
     expect(schemaTables.filter((table) => !laterTables.includes(table))).toEqual(PLATFORM_TABLES);
-    expect(schemaTables.filter((table) => laterTables.includes(table))).toEqual(laterTables);
+    // The snapshot groups related tables; later migration tables need not appear in migration order.
+    expect(schemaTables.filter((table) => laterTables.includes(table)).sort()).toEqual([...laterTables].sort());
     expect(new Set(migrationTables).size).toBe(62);
-    expect(laterTables).toHaveLength(9);
-    expect(new Set(schemaTables).size).toBe(71);
+    expect(laterTables).toHaveLength(10);
+    expect(new Set(schemaTables).size).toBe(72);
+    expect(schemaTables).toContain('platform_qr_scan_daily');
     expect(schemaTables).toContain('platform_qr_card_designs');
     expect(schema.indexOf('CREATE TABLE app_users')).toBeLessThan(schema.indexOf('CREATE TABLE platform_instructors'));
     expect(schema.indexOf('CREATE TABLE teacher_directory_entries')).toBeLessThan(schema.indexOf('CREATE TABLE platform_instructors'));

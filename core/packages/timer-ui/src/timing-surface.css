@@ -23,6 +23,65 @@
   user-select: none;
 }
 
+/* Solo and online geometry is shared by Web and every installed host. Hosts
+   supply the available viewport, navigation and safe-area containers only. */
+.timing-surface--solo,
+.timing-surface--net {
+  --timer-scramble-fs: clamp(26px, 4.4vw, 36px);
+  --timer-cube-h: min(30vw, 26dvh, 260px);
+  --timer-scramble-src-fs: 12px;
+  min-height: 280px;
+  flex: 1 0 280px;
+  margin: 0;
+  padding: 16px;
+}
+
+.timing-surface--net { width: 100%; box-sizing: border-box; }
+
+/* Local player cells share a compact readout and independently scrollable
+   scramble area. Rotation and multi-player grids belong to the host. */
+.timing-surface--local {
+  --timer-cube-h: min(18vw, 14dvh, 140px);
+  --timer-scramble-fs: clamp(12px, 2vw, 18px);
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px;
+}
+
+.timing-surface--local .timing-surface-core,
+.timing-surface--local .timing-surface-sub { gap: 7px; }
+
+.timing-surface--local.timing-surface--scramble-above .timing-surface-scramble-top {
+  top: 8px;
+  inset-inline: 8px;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.timing-surface-scramble {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.timing-surface-cube {
+  display: flex;
+  justify-content: center;
+}
+
+.timing-surface-cube-frame {
+  --cube-h: var(--timer-cube-h);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: min(80vw, calc(var(--cube-h) * 1.5));
+  max-width: 100%;
+  height: var(--cube-h);
+}
+
+.timing-surface-cube-frame > * { max-width: 100%; }
+
 .timing-surface-core {
   display: flex;
   width: 100%;

@@ -10,6 +10,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowDown, ArrowUp, ChevronDown, Minus, Plus } from 'lucide-react';
 import BoolToggle from '@/components/BoolToggle';
 import { ListSelect } from '@/components/ListSelect';
+import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
 import NumberCommitInput from '@/components/NumberCommitInput';
 import { MCC_SLIDERS, ParamSliders } from '@/components/ParamSliders';
 import { useT } from '@/hooks/useT';
@@ -426,7 +427,10 @@ export default function BatchSolverPage() {
       <div className="bsv-form">
         <div className="bsv-field-row">
           <label className="bsv-label">{t('谜题', 'Puzzle')}</label>
-          <ListSelect items={puzzleItems} value={puzzle} onChange={selectPuzzle} allLabel="3x3x3" clearable={false} />
+          <PuzzlePicker selectedEvent={puzzle} onSelect={selectPuzzle} showItemIcons={false} groups={[{
+            id: 'puzzles', label: tr({ zh: '项目', en: 'Puzzles' }),
+            items: puzzleItems.map(item => ({ id: item.value, label: item.label })),
+          }]} />
           <button
             type="button"
             className={`bsv-collapse-toggle${showDef ? ' is-open' : ''}`}

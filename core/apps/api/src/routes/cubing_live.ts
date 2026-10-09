@@ -2,14 +2,14 @@
  * /v1/cubing-live/* — cubing.com 比赛直播数据接口。
  *   GET /v1/cubing-live/:slug         — 元数据 (compId, 比赛名, events, users) + 全部 round 结果
  *
- * 流程: 抓 /live/{slug} HTML 拿 data-c (competition id) + data-events;
- *       连 wss://cubing.com/ws,subscribe competition,fetch result.all 所有 round。
+ * 流程: 从 api.cubing.com 获取比赛、轮次和每轮成绩,复用浏览器刷新适配器。
  *
  * Cache: in-memory 60s。比赛实时刷新但 60s 粒度够看。
  */
 import { Hono } from 'hono';
+import { fetchCubingLiveRound, fetchCubingCompetitors } from '@cuberoot/shared/cubing-live';
 import { streamSSE } from 'hono/streaming';
-import WebSocket from 'ws';
+import { fetchCubingMeta as scrapeMeta, collectCubingResults as collectCompData } from '../utils/cubing_live.js';
 import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
 import type { CompPersonalRecordSlot } from '@cuberoot/shared';
 import { query } from '../db/connection.js';
@@ -20,7 +20,6 @@ import type { OverlayEntry } from '../utils/wca_live_overlay.js';
 import { getCnCompZh } from '../utils/cn_comp_zh_cache.js';
 import { hasCompResults, trimToRounds, resolveOnlyKeys } from '../utils/comp_trim.js';
 import { getUpcomingComps } from '../utils/upcoming_comps_cache.js';
-import { parseCubingCompetitors } from '../utils/cubing_competitors.js';
 import { wcaIdToCubingSlug, nameToCubingSlug } from '@cuberoot/shared/cubing-slug';
 
 export const cubingLiveRoutes = new Hono();
@@ -54,7 +53,7 @@ interface RoundMeta {
   tt: number;       // total attempts
   name: string;     // "First round" / "Final" / etc
   allStatus?: string[];
-  liveId?: string;  // WCA Live 内部 round id(订阅用)
+  liveId?: string;  // 上游轮次 ID（刷新用）
 }
 
 interface EventMeta {
@@ -62,7 +61,7 @@ interface EventMeta {
   name: string;     // "3x3x3 Cube"
   rs: RoundMeta[];  // rounds in chronological order
   // 双轮赛制 (WCA Reg 9v, 2026):该项目前两轮作为「双轮」合并排名。
-  // cubing.com 的 data-events JSON 直接带此字段,scrapeMeta JSON.parse 后原样透传;
+  // cubing.com 的 events[].dualRounds 映射到此字段;
   // WCA/WCA Live/WCA DB 源无此标记,客户端按规则兜底推断。
   dual?: boolean;
 }
@@ -122,14 +121,6 @@ export interface CompData {
 
 const CUBING_BASE = 'https://cubing.com';
 
-function attrFromHtml(html: string, attr: string): string | null {
-  // simple data-* extractor that is robust to attribute order
-  const re = new RegExp(`\\b${attr}\\s*=\\s*"([^"]*)"`);
-  const m = html.match(re);
-  if (!m) return null;
-  return decodeHtmlEntities(m[1]);
-}
-
 function decodeHtmlEntities(s: string): string {
   return s
     .replace(/&quot;/g, '"')
@@ -148,90 +139,10 @@ interface ScrapedMeta {
   slug?: string; // 成功抓到本 meta 的 cubing.com slug(下游复用,避免再从无横杠 ID 反推)
 }
 
-async function scrapeMeta(slug: string): Promise<ScrapedMeta> {
-  // Force English locale + a real-browser UA so cubing.com renders the full
-  // English HTML with data-events embedded (Chinese locale strips events to null).
-  const res = await fetch(`${CUBING_BASE}/live/${encodeURIComponent(slug)}?lang=en`, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-      'Accept': 'text/html,application/xhtml+xml',
-      'Accept-Language': 'en-US,en;q=0.9',
-    },
-  });
-  if (!res.ok) throw new Error(`cubing.com returned ${res.status} for /live/${slug}`);
-  const html = await res.text();
-
-  // Find #live-container and read its data-* attrs. The data-* attrs come AFTER
-  // the id= within the same <div ...> opening tag — slice from a bit before the
-  // id (to keep the start of the opening tag) through ~16KB after (data-events
-  // alone is ~7KB and stages can be larger for big comps).
-  const idx = html.indexOf('id="live-container"');
-  if (idx < 0) throw new Error('live-container not found (slug may be invalid or has no live page)');
-  const start = Math.max(0, idx - 200);
-  const end = Math.min(html.length, idx + 16000);
-  const block = html.slice(start, end);
-
-  const cRaw = attrFromHtml(block, 'data-c');
-  const eventsRaw = attrFromHtml(block, 'data-events');
-  const typeRaw = attrFromHtml(block, 'data-type');
-  if (!cRaw || !eventsRaw || eventsRaw === 'null') {
-    throw new Error('live-container missing data-c / data-events (locale or slug issue)');
-  }
-
-  const compId = Number(cRaw);
-  if (!Number.isFinite(compId)) throw new Error(`invalid compId: ${cRaw}`);
-
-  let events: EventMeta[];
-  try {
-    events = JSON.parse(eventsRaw);
-  } catch (e) {
-    throw new Error(`failed to parse data-events: ${(e as Error).message}`);
-  }
-
-  // Extract title
-  const titleMatch = html.match(/<title>([^<]+)<\/title>/);
-  let name = titleMatch ? titleMatch[1].trim() : slug;
-  // "Xi'an Cherry Blossom 2026 - Live - Cubing China" → "Xi'an Cherry Blossom 2026"
-  name = name.replace(/\s*-\s*Live\s*-\s*Cubing China\s*$/i, '');
-
-  return { compId, name, type: typeRaw || 'WCA', events, slug };
-}
-
-// ─── WS fetch ──────────────────────────────────────────────────────────────
-
-interface WsMessage {
-  code?: number;
-  type?: string;
-  data?: unknown;
-}
-
-function openCubingWs(): Promise<WebSocket> {
-  return new Promise((resolve, reject) => {
-    const ws = new WebSocket('wss://cubing.com/ws', {
-      headers: {
-        'Origin': 'https://cubing.com',
-        'User-Agent': 'Mozilla/5.0 (compatible; cuberoot-me/1.0)',
-      },
-    });
-    const t = setTimeout(() => {
-      ws.terminate();
-      reject(new Error('WS open timeout'));
-    }, 10000);
-    ws.once('open', () => { clearTimeout(t); resolve(ws); });
-    ws.once('error', (e) => { clearTimeout(t); reject(e); });
-  });
-}
-
 interface MembersByFilter {
   females: number[];
   children: number[];
   newcomers: number[];
-}
-
-interface WsCollectResult {
-  users: Record<string, User>;
-  resultsByRound: Record<string, LiveResult[]>;
-  membersByFilter: MembersByFilter;
 }
 
 type SecondaryFilter = 'females' | 'children' | 'newcomers';
@@ -243,119 +154,6 @@ export interface ProgressEvent {
   total: number;
 }
 export type ProgressFn = (p: ProgressEvent) => void;
-
-async function collectCompData(compId: number, events: EventMeta[], onProgress?: ProgressFn, timeoutMs = 25000): Promise<WsCollectResult> {
-  const ws = await openCubingWs();
-  const result: WsCollectResult = {
-    users: {},
-    resultsByRound: {},
-    membersByFilter: { females: [], children: [], newcomers: [] },
-  };
-
-  const rounds: { e: string; r: string }[] = [];
-  for (const ev of events) {
-    for (const rd of ev.rs) {
-      // Skip rounds that have 0 results to save time on huge comps
-      if (rd.rn === 0 && rd.s !== 2) continue;
-      rounds.push({ e: ev.i, r: rd.i });
-    }
-  }
-
-  // cubing.com 不在 result.all 消息里回传 filter,只能"一次只跑一个 filter"分相,
-  // 收齐这相的所有 round 响应再发下一相 — 共 4 相 (all + 3 secondary)。
-  type Phase = { filter: 'all' | SecondaryFilter; pending: Set<string>; received: number; done: () => void };
-  let currentPhase: Phase | null = null;
-  let gotUsers = false;
-
-  await new Promise<void>((resolve, reject) => {
-    const finish = (err?: Error) => {
-      try { ws.close(); } catch {}
-      if (err) reject(err); else resolve();
-    };
-    const overallTimeout = setTimeout(() => {
-      finish(new Error(`WS collect timeout; phase=${currentPhase?.filter}, gotUsers=${gotUsers}`));
-    }, timeoutMs);
-
-    ws.on('message', (raw: WebSocket.RawData) => {
-      let msg: WsMessage;
-      try {
-        const text = raw.toString();
-        if (text === '"pong"' || text === 'pong') return;
-        msg = JSON.parse(text);
-      } catch { return; }
-      if (msg.code !== 200) return;
-
-      if (msg.type === 'users' && msg.data && typeof msg.data === 'object') {
-        result.users = msg.data as Record<string, User>;
-        gotUsers = true;
-        return;
-      }
-      if (msg.type !== 'result.all' || !Array.isArray(msg.data)) return;
-      if (!currentPhase) return;
-
-      const arr = msg.data as LiveResult[];
-      currentPhase.received += 1;
-
-      if (currentPhase.filter === 'all') {
-        if (arr.length > 0) {
-          const key = `${arr[0].e}:${arr[0].r}`;
-          result.resultsByRound[key] = arr;
-        }
-      } else {
-        const bucket = result.membersByFilter[currentPhase.filter];
-        for (const r of arr) if (!bucket.includes(r.n)) bucket.push(r.n);
-      }
-
-      try {
-        onProgress?.({
-          step: currentPhase.filter === 'all' ? 'cubing.results' : 'cubing.filter',
-          filter: currentPhase.filter === 'all' ? undefined : currentPhase.filter,
-          done: currentPhase.received,
-          total: currentPhase.pending.size,
-        });
-      } catch { /* progress 异常不影响主流程 */ }
-
-      if (currentPhase.received >= currentPhase.pending.size) {
-        currentPhase.done();
-      }
-    });
-
-    ws.once('close', () => {
-      clearTimeout(overallTimeout);
-      if (!gotUsers) finish(new Error('WS closed before users received'));
-      else resolve();
-    });
-    ws.once('error', (e) => {
-      clearTimeout(overallTimeout);
-      finish(e as Error);
-    });
-
-    const runPhase = (filter: 'all' | SecondaryFilter) => new Promise<void>((res) => {
-      currentPhase = {
-        filter,
-        pending: new Set(rounds.map(r => `${r.e}:${r.r}`)),
-        received: 0,
-        done: res,
-      };
-      for (const r of rounds) {
-        ws.send(JSON.stringify({ type: 'result', action: 'fetch', params: { event: r.e, round: r.r, filter } }));
-      }
-    });
-
-    (async () => {
-      ws.send(JSON.stringify({ type: 'competition', competitionId: compId }));
-      await runPhase('all');
-      // secondary filters: 缺数据不致命,单相 timeout 用全局 overallTimeout 兜底
-      for (const f of ['females', 'children', 'newcomers'] as const) {
-        await runPhase(f);
-      }
-      clearTimeout(overallTimeout);
-      finish();
-    })().catch((e) => finish(e as Error));
-  });
-
-  return result;
-}
 
 // ─── Cache ─────────────────────────────────────────────────────────────────
 
@@ -402,7 +200,7 @@ function ttlFor(source: SourceId): number {
 //     ymd() 补上 pg 的 Date 形态.
 // v7: compOver 不再把「昨天结束」的比赛锁进 1h TTL —— 之前 enrich 只在重启后跑过一次,
 //     同日裁决永远停在第一次(池里只有自己)的结果上.
-const SCHEMA_VERSION = 7;
+const SCHEMA_VERSION = 8;
 
 const startDateCache = new Map<string, { d: string | null; end: string | null; at: number }>();
 const START_DATE_CACHE_TTL = 60 * 60_000;
@@ -680,7 +478,7 @@ const ROUND_NAME: Record<string, string> = {
  *  - 现有 results 的空 sr/ar 用 wca_results_flat 当前 MIN 推断填充
  *  - 附加 currentRecords 快照供 client 给 WS 实时推送的成绩做同款推断
  *  女子历史缓存 1 小时,选手性别缓存 24 小时。 */
-async function enrichRecordTags(data: CompData): Promise<void> {
+export async function enrichRecordTags(data: CompData): Promise<void> {
   // 比赛日:用来判定「上游 tag 已被本场之前的纪录证伪」(refutesTag).拿不到就不动上游 tag.
   const compDate = ymd((await getCompDates(data.slug)).start);
   const fwr = data.type === 'WCA'
@@ -1557,26 +1355,17 @@ async function loadFromCubing(wcaId: string, onProgress?: ProgressFn, prefetched
   // 用「成功抓到 meta 的那个 slug」(probe 已按真实比赛名校正,避免 GraDUAL→Gra-DUAL),不再从无横杠 ID 反推.
   const cubingSlug = meta.slug ?? wcaIdToCubingSlug(wcaId);
 
-  // 没开始的比赛所有 round rn=0 && s!=2 ⇒ WS subscribe 后只回个空 users,
-  // 接着 runPhase('all') 等不到任何 result.all 响应,挂到 25s overallTimeout 才返回.
-  // 跳过 WS,直接落到 competitors HTML 兜底.
-  const hasAnyResults = meta.events.some(ev => ev.rs.some(rd => rd.rn > 0 || rd.s === 2));
-  let users: Record<string, User> = {};
-  let resultsByRound: Record<string, LiveResult[]> = {};
-  let membersByFilter: MembersByFilter = { females: [], children: [], newcomers: [] };
-  if (hasAnyResults) {
-    ({ users, resultsByRound, membersByFilter } = await collectCompData(meta.compId, meta.events, onProgress));
-  }
+  let { users, resultsByRound, membersByFilter } = await collectCompData(cubingSlug, meta.events, onProgress);
 
-  // WS 没返回报名表(comp 没开始,或 WS 异常)→ 抓 /competition/{slug}/competitors HTML
+  // API 未返回报名表时,保留 HTML 兜底。
   if (Object.keys(users).length === 0) {
     try {
       users = await scrapeCompetitors(cubingSlug, onProgress);
     } catch (e) {
       console.warn(`[cubing-live] competitors scrape failed for ${cubingSlug}:`, (e as Error).message);
     }
-  } else {
-    // WS 给的 users 没 eventIds — Psych Sheet 还没出成绩的项目按报名表过滤靠这个字段.
+  } else if (Object.values(users).some(user => !user.eventIds)) {
+    // 成绩中的 users 没 eventIds — Psych Sheet 还没出成绩的项目按报名表过滤靠这个字段.
     // 进行中的比赛 (有部分轮成绩) 抓一份 /competitors HTML 把 eventIds 合并进 WS users.
     try {
       const scraped = await scrapeCompetitors(cubingSlug);
@@ -1604,38 +1393,9 @@ async function loadFromCubing(wcaId: string, onProgress?: ProgressFn, prefetched
   return data;
 }
 
-const COMPETITORS_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
-const CJK_NAME_RE = /[一-鿿]/;
-
-/** 抓 cubing.com /competitors HTML(指定语言)。cubing.com 对裸 UA 返 429 + 发 cookie 让浏览器
- *  reload,服务器侧按 CubingRateLimit=1 cookie 放行. */
-async function fetchCompetitorsHtml(cubingSlug: string, lang: 'en' | 'zh'): Promise<string> {
-  const url = `${CUBING_BASE}/competition/${encodeURIComponent(cubingSlug)}/competitors?lang=${lang}`;
-  const res = await fetch(url, {
-    headers: {
-      'User-Agent': COMPETITORS_UA,
-      'Accept': 'text/html,application/xhtml+xml',
-      'Accept-Language': lang === 'zh' ? 'zh-CN,zh;q=0.9' : 'en-US,en;q=0.9',
-      'Cookie': 'CubingRateLimit=1',
-    },
-  });
-  if (!res.ok) throw new Error(`cubing.com /competitors HTTP ${res.status}`);
-  return res.text();
-}
-
-/** 复用同一报名表解析器读取中英文姓名及每位选手实际报名的项目。 */
 async function scrapeCompetitors(cubingSlug: string, onProgress?: ProgressFn): Promise<Record<string, User>> {
   onProgress?.({ step: 'cubing.results', done: 0, total: 1 });
-  const [users, zhUsers] = await Promise.all([
-    fetchCompetitorsHtml(cubingSlug, 'en').then(parseCubingCompetitors),
-    fetchCompetitorsHtml(cubingSlug, 'zh').then(parseCubingCompetitors).catch(() => ({} as Record<string, User>)),
-  ]);
-  for (const [number, user] of Object.entries(users)) {
-    const zhName = zhUsers[number]?.name;
-    if (zhName && CJK_NAME_RE.test(zhName) && !CJK_NAME_RE.test(user.name)) {
-      user.name = `${user.name} (${zhName})`;
-    }
-  }
+  const users = await fetchCubingCompetitors(cubingSlug);
   onProgress?.({ step: 'cubing.results', done: 1, total: 1 });
   return users;
 }
@@ -2115,6 +1875,8 @@ export interface InferredRecord {
   personWcaId: string;   // 可能为空(新人);排名 overlay 按它去重
   personIso2: string;    // 大写
   startDate: string | null;
+  /** Result equals the pre-competition record baseline. */
+  tied?: boolean;
   newcomerSource?: NewcomerSource;
   /** Same-round personal record, confirmed by the existing chronological PR ranks. */
   companionPr?: { type: 'single' | 'average'; attemptResult: number };
@@ -2176,6 +1938,7 @@ export function collectInferred(data: CompData, startDate: string | null, includ
         id: `inferred|${data.slug}|${r.e}|${roundId}|single|${r.n}|${sr}|${r.b}`,
         compId: data.slug, compNameEn, eventId: r.e, roundId, type: 'single',
         tag: sr, attemptResult: r.b, personName: u.name, personWcaId: u.wcaid ?? '', personIso2, startDate,
+        ...(sr === 'FWR' && r.b === data.currentRecords?.fwr?.[`${r.e}|0`] ? { tied: true } : {}),
         ...(!wantA && !ar && r.a > 0 && r.pA === 1
           ? { companionPr: { type: 'average' as const, attemptResult: r.a } } : {}),
       });
@@ -2183,6 +1946,7 @@ export function collectInferred(data: CompData, startDate: string | null, includ
         id: `inferred|${data.slug}|${r.e}|${roundId}|average|${r.n}|${ar}|${r.a}`,
         compId: data.slug, compNameEn, eventId: r.e, roundId, type: 'average',
         tag: ar, attemptResult: r.a, personName: u.name, personWcaId: u.wcaid ?? '', personIso2, startDate,
+        ...(ar === 'FWR' && r.a === data.currentRecords?.fwr?.[`${r.e}|1`] ? { tied: true } : {}),
         ...(!wantS && !sr && r.b > 0 && r.pS === 1
           ? { companionPr: { type: 'single' as const, attemptResult: r.b } } : {}),
       });
@@ -2338,12 +2102,56 @@ cubingLiveRoutes.get('/cubing-zh/:wcaId', async (c) => {
   try {
     const meta = await getCnCompZh(wcaId);
     const isEmpty = !meta.location && !meta.withdrawDeadline && !meta.reopenAt && !meta.nameZh;
-    // 命中数据缓存 7d;空(非 CN / cubing.com 无页面)只缓存 1h
-    c.header('Cache-Control', isEmpty ? 'public, max-age=3600' : 'public, max-age=604800');
+    // 空响应不固化；浏览器最多 1h，共享缓存保留 7d。
+    c.header('Cache-Control', isEmpty ? 'no-store' : 'public, max-age=3600, s-maxage=604800');
     return c.json(meta);
   } catch (e) {
     console.warn(`[cubing-zh] ${wcaId}:`, (e as Error).message);
+    c.header('Cache-Control', 'no-store');
     return c.json({ location: null, withdrawDeadline: null, reopenAt: null, nameZh: null });
+  }
+});
+
+// Browser requests go through our API because api.cubing.com does not allow our origin.
+cubingLiveRoutes.get('/cubing-live/:slug/stream', async (c) => {
+  const { slug } = c.req.param();
+  c.header('Cache-Control', 'no-store');
+  if (!/^[A-Za-z0-9_-]{1,128}$/.test(slug)) return c.json({ error: 'invalid slug' }, 400);
+  const abort = new AbortController();
+  const timeout = setTimeout(() => abort.abort(), 15_000);
+  try {
+    const response = await fetch(`https://api.cubing.com/competitions/${encodeURIComponent(slug)}/live/stream`, {
+      headers: { accept: 'text/event-stream' }, signal: AbortSignal.any([abort.signal, c.req.raw.signal]),
+    });
+    if (!response.ok || !response.headers.get('content-type')?.includes('text/event-stream') || !response.body) {
+      await response.body?.cancel();
+      return c.json({ error: 'cubing.com live stream unavailable' }, 502);
+    }
+    // Preserve SSE event names, reconnect semantics and upstream heartbeats.
+    return new Response(response.body, { headers: {
+      'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', 'X-Accel-Buffering': 'no',
+    } });
+  } catch {
+    return c.json({ error: 'cubing.com live stream unavailable' }, 502);
+  } finally {
+    clearTimeout(timeout);
+  }
+});
+
+cubingLiveRoutes.get('/cubing-live/:slug/round/:event/:round', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const { slug, event, round } = c.req.param();
+  const roundTypeId = c.req.query('roundTypeId') ?? round;
+  if (!/^[A-Za-z0-9_-]{1,128}$/.test(slug) || !/^[A-Za-z0-9]{1,32}$/.test(event)
+    || !/^[1-9][0-9]?$/.test(round) || !/^(f|[1-9][0-9]?)$/.test(roundTypeId)) {
+    return c.json({ error: 'invalid round' }, 400);
+  }
+  try {
+    const snapshot = await fetchCubingLiveRound(slug, event, Number(round), roundTypeId, c.req.raw.signal);
+    // SSE invalidations must see corrections immediately, including deleted results.
+    return c.json(snapshot);
+  } catch (error) {
+    return c.json({ error: (error as Error).message }, 502);
   }
 });
 

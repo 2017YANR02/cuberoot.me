@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 // /forum/review — 管理员审核台:待审核内容(issue #36)+ 举报处理(forum_reports)。
 // 待审队列先来先审;每项就地 通过/驳回(驳回可附原因,随站内通知+邮件发给作者)。
@@ -7,7 +8,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { Hourglass, Check, CircleX, ExternalLink } from 'lucide-react';
 import Link from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { UserIdLabel } from '@/components/UserIdLabel';
 import { tr, T, useLang } from '@/i18n/tr';
 import { useIsAdmin } from '@/lib/auth-store';
@@ -102,13 +102,15 @@ export default function ForumReviewPage() {
           </p>
         </div>
         <div className="forum-header-actions">
-          <PillToggle
-            value={showQueue}
-            onChange={setShowQueue}
-            onLabel={tr({ zh: '待审核', en: 'Queue' })}
-            offLabel={tr({ zh: '举报', en: 'Reports' })}
-            ariaLabel={tr({ zh: '切换 待审核/举报', en: 'Toggle queue/reports' })}
-          />
+          <select
+            value={String(showQueue)}
+            onChange={event => setShowQueue(event.currentTarget.value === 'true')}
+            aria-label={tr({ zh: '切换 待审核/举报', en: 'Toggle queue/reports' })}
+            className="native-select"
+          >
+            <option value="true">{tr({ zh: '待审核', en: 'Queue' })}</option>
+            <option value="false">{tr({ zh: '举报', en: 'Reports' })}</option>
+          </select>
         </div>
       </div>
 
@@ -132,7 +134,7 @@ export default function ForumReviewPage() {
                   </span>
                   <span className="forum-review-item-author">
                     {ownerDisplayName(item.authorId, item.authorName, zh)}
-                    <UserIdLabel userId={item.authorUserId} />
+                    <UserIdLabel contact userId={item.authorUserId} />
                   </span>
                   <span className="forum-review-item-time">{formatRelativeTime(item.createdAt, lang)}</span>
                   {item.type === 'thread' && (item.forumNameZh || item.forumNameEn) && (
@@ -189,10 +191,10 @@ export default function ForumReviewPage() {
                       </span>
                       <span className="forum-review-item-author">
                         {ownerDisplayName(r.reporterId, r.reporterName, zh)}
-                        <UserIdLabel userId={r.reporterUserId} />
+                        <UserIdLabel contact userId={r.reporterUserId} />
                         {' → '}
                         {ownerDisplayName(r.postAuthorId, r.postAuthorName, zh)}
-                        <UserIdLabel userId={r.postAuthorUserId} />
+                        <UserIdLabel contact userId={r.postAuthorUserId} />
                       </span>
                       <span className="forum-review-item-time">{formatRelativeTime(r.createdAt, lang)}</span>
                       {r.resolvedAt && (

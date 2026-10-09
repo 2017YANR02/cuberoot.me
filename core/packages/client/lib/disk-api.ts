@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 import { apiUrl } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
 
@@ -18,7 +19,7 @@ export interface DiskReport {
 export async function fetchDiskReport(path: string, refresh: boolean, signal: AbortSignal): Promise<DiskReport> {
   const query = new URLSearchParams({ path });
   if (refresh) query.set('refresh', '1');
-  return handleApi<DiskReport>(await fetch(apiUrl(`/v1/admin/disk?${query}`), {
+  return handleApi<DiskReport>(await sessionFetch(apiUrl(`/v1/admin/disk?${query}`), {
     headers: authHeaders(false), cache: 'no-store', signal,
   }));
 }

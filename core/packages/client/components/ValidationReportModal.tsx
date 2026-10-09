@@ -12,8 +12,8 @@
  *
  * 扫描逻辑在 `lib/alg_validation_scan.ts`(卡片红框、个人页汇总共用同一份)。
  *
- * 失败项可点击,触发父组件打开对应 case 的 admin editor。
- * 父组件在 case saved 后递增 refreshKey,modal 重新校验(轻量 revalidate)。
+ * 失败项链接到对应 case 详情；详情页宿主可以接管为定位当前编辑区。
+ * 父组件递增 refreshKey 可重新校验。
  */
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -21,6 +21,10 @@ import { X, Play, ExternalLink } from 'lucide-react';
 import { ALG_CATALOG, type AlgCase, type AlgPuzzle } from '@cuberoot/shared';
 import { scanCases, scanTargets, allTargets, type AlgFailure } from '@/lib/alg_validation_scan';
 import { tr } from '@/i18n/tr';
+import Link from '@/components/AppLink';
+import { loadAlg } from '@/lib/alg_case_alignment';
+import { algCaseDetailHref, buildCaseSlugMap } from '@/lib/alg_case_link';
+import { useModalBackdrop } from '@/hooks/useModalDismiss';
 
 export type ValidationScope =
   | { kind: 'case'; puzzle: AlgPuzzle; set: string; caseObj: AlgCase }
@@ -33,13 +37,15 @@ export type FailureItem = AlgFailure;
 interface Props {
   scope: ValidationScope;
   onClose: () => void;
-  onPickCase: (puzzle: AlgPuzzle, set: string, caseObj: AlgFailure['caseObj']) => void;
+  onPickCase?: (puzzle: AlgPuzzle, set: string, caseObj: AlgFailure['caseObj']) => void;
+  /** 扫描完成后把逐行结果交给宿主；详情页用它标出对应公式。 */
+  onResults?: (failures: AlgFailure[]) => void;
   /** 改变会触发重新校验(用于 case saved 后) */
   refreshKey?: number;
 }
 
 export default function ValidationReportModal({
-  scope, onClose, onPickCase, refreshKey = 0,
+  scope, onClose, onPickCase, onResults, refreshKey = 0,
 }: Props) {
   useTranslation(); // subscribe to language changes; text via tr()
   const [progress, setProgress] = useState({ done: 0, total: 0 });
@@ -47,6 +53,19 @@ export default function ValidationReportModal({
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const cancelRef = useRef(false);
+  const backdrop = useModalBackdrop(onClose);
+  const [caseLinks, setCaseLinks] = useState<Record<string, string>>({});
+  useEffect(() => {
+    if (onPickCase || !failures.length) return;
+    let live = true;
+    const sets = [...new Map(failures.map(f => [`${f.puzzle}/${f.set}`, f])).values()];
+    void Promise.all(sets.map(async ({ puzzle, set }) => {
+      const data = await loadAlg(puzzle, set);
+      return [...buildCaseSlugMap(data.cases, set).byId].map(([id, slug]) => [`${puzzle}/${set}/${id}`, algCaseDetailHref(puzzle, set, slug)]);
+    })).then(entries => { if (live) setCaseLinks(Object.fromEntries(entries.flat())); })
+      .catch(e => { if (live) setError((e as Error).message); });
+    return () => { live = false; };
+  }, [failures, onPickCase]);
 
   const targets = useMemo(() => {
     if (scope.kind === 'case' || scope.kind === 'set') return [{ puzzle: scope.puzzle, set: scope.set }];
@@ -72,6 +91,7 @@ export default function ValidationReportModal({
         if (cancelRef.current) return;
         setProgress({ done: total, total });
         setFailures(found);
+        onResults?.(found);
         return;
       }
       const found = await scanTargets(targets, {
@@ -80,6 +100,7 @@ export default function ValidationReportModal({
       });
       if (cancelRef.current) return;
       setFailures(found);
+      onResults?.(found);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -110,7 +131,7 @@ export default function ValidationReportModal({
   })();
 
   return (
-    <div className="alg-admin-modal-backdrop" onClick={onClose} role="dialog" aria-modal="true">
+    <div className="alg-admin-modal-backdrop" {...backdrop} role="dialog" aria-modal="true">
       <div className="alg-admin-modal alg-validation-modal" onClick={e => e.stopPropagation()}>
         <div className="alg-admin-modal-head">
           <h2>{title}</h2>
@@ -139,12 +160,19 @@ export default function ValidationReportModal({
                 <li
                   key={`${f.puzzle}/${f.set}/${f.caseObj.id}/${f.oriIdx}/${f.algIdx}/${i}`}
                   className="alg-validation-row"
-                  onClick={() => onPickCase(f.puzzle, f.set, f.caseObj)}
                 >
                   <div className="alg-validation-row-head">
                     <span className="alg-validation-tag">{f.puzzle}/{f.set}</span>
-                    <span className="alg-validation-name">{f.caseObj.name}</span>
-                    <ExternalLink size={12} className="alg-validation-link" />
+                    {onPickCase ? <button type="button" className="alg-validation-name" onClick={() => { onClose(); onPickCase(f.puzzle, f.set, f.caseObj); }}>
+                      {f.caseObj.name}
+                      <ExternalLink size={12} className="alg-validation-link" aria-hidden="true" />
+                    </button>
+                      : caseLinks[`${f.puzzle}/${f.set}/${f.caseObj.id}`]
+                        ? <Link className="alg-validation-name" href={caseLinks[`${f.puzzle}/${f.set}/${f.caseObj.id}`]} prefetch={false}>
+                          {f.caseObj.name}
+                          <ExternalLink size={12} className="alg-validation-link" aria-hidden="true" />
+                        </Link>
+                        : <span className="alg-validation-name">{f.caseObj.name}</span>}
                   </div>
                   <div className="alg-validation-alg">{f.alg}</div>
                   <div className="alg-validation-reason">{f.reason}</div>

@@ -19,6 +19,7 @@ export class WrBestCounting extends RoundMetric {
 
   // NOTE: Best Counting = 排序后第 2 个值（0-indexed: [1]）
   computeMetric(values: number[]): number | null {
+    if (values.length !== 5 || values.includes(0)) return null;
     const valid = values.filter(v => v > 0).sort((a, b) => a - b);
     const invalidCount = values.filter(v => v <= 0).length;
     if (invalidCount >= 2) return null;  // 2+ DNF → Ao5 本身 DNF

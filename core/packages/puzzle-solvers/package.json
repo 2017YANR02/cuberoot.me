@@ -16,6 +16,7 @@
       "./crz3a": "runtime-neutral",
       "./ctico": "runtime-neutral",
       "./cstimer-nonwca": "runtime-neutral",
+      "./cstimer-nonwca-events": "runtime-neutral",
       "./cstimer-gsolver": "runtime-neutral",
       "./cube-moves": "runtime-neutral",
       "./cube222": "runtime-neutral",
@@ -66,7 +67,9 @@
       "./ssq1": "runtime-neutral",
       "./sq2": "runtime-neutral",
       "./stm": "runtime-neutral",
-      "./stm-cube": "runtime-neutral"
+      "./stm-cube": "runtime-neutral",
+      "./timer-mega-state": "runtime-neutral",
+      "./timer-mega-hints": "runtime-neutral"
     }
   },
   "sideEffects": false,
@@ -105,6 +108,11 @@
       "types": "./src/cstimer-nonwca.ts",
       "node": "./dist/cstimer-nonwca.js",
       "default": "./src/cstimer-nonwca.ts"
+    },
+    "./cstimer-nonwca-events": {
+      "types": "./src/cstimer-nonwca-events.ts",
+      "node": "./dist/cstimer-nonwca-events.js",
+      "default": "./src/cstimer-nonwca-events.ts"
     },
     "./cstimer-gsolver": {
       "types": "./src/cstimer-gsolver.ts",
@@ -360,6 +368,16 @@
       "types": "./src/stm-cube.ts",
       "node": "./dist/stm-cube.js",
       "default": "./src/stm-cube.ts"
+    },
+    "./timer-mega-state": {
+      "types": "./src/timer-mega-state.ts",
+      "node": "./dist/timer-mega-state.js",
+      "default": "./src/timer-mega-state.ts"
+    },
+    "./timer-mega-hints": {
+      "types": "./src/timer-mega-hints.ts",
+      "node": "./dist/timer-mega-hints.js",
+      "default": "./src/timer-mega-hints.ts"
     }
   },
   "scripts": {
@@ -369,7 +387,7 @@
   },
   "devDependencies": {
     "typescript": "^5",
-    "vitest": "^4.1.6"
+    "vitest": "^4.1.11"
   },
   "dependencies": {
     "cstimer_module": "^0.1.5"

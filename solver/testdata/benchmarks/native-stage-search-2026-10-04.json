@@ -1,0 +1,554 @@
+{
+  "date": "2026-10-04",
+  "machine": {
+    "cpu": "Apple M5 Pro",
+    "physicalMemoryBytes": 68719476736,
+    "logicalCpus": 18,
+    "platform": "macOS arm64"
+  },
+  "scope": "Native 3x3 stage statistics only. No change to WASM search, table contents, target coordinates, HTM metric, valid moves, or cascade pruning.",
+  "accepted": [
+    "Batch node-counter increments in thread-local storage; publish at 65536 nodes and at solve completion. Direct solver callers retain immediate global updates.",
+    "Look up native EO Cross in the already-loaded complete EP4 x EO12 distance table."
+  ],
+  "rejected": [
+    {
+      "change": "EO search_3/4 small EO + high-memory EO bounds before huge bound",
+      "warmSolveSeconds": 11.39,
+      "reason": "No improvement over the original bound order."
+    },
+    {
+      "change": "EO search_3/4 small EO bound before huge bound, then high-memory EO",
+      "warmSolveSeconds": 11.47,
+      "reason": "No improvement over the original bound order."
+    }
+  ],
+  "timingMethod": "Release -C target-cpu=native; existing tables; original/new EO100 runs alternate after warmup. No stack sampling during final timing. Times are analyzer-reported batch wall times; medians use 3 runs. Cold page-cache measurements and the earlier sampled profile timings are excluded from speed claims.",
+  "eoHighMemory": {
+    "before": [
+      {
+        "name": "eo",
+        "input": "100",
+        "profile": "high-memory",
+        "code": 0,
+        "stopped": false,
+        "seconds": 10.850039208,
+        "solveSeconds": 10.66,
+        "nodes": "1189415547",
+        "peakRss": 38508953600,
+        "minFree": 76,
+        "golden": "equal"
+      },
+      {
+        "name": "eo",
+        "input": "100",
+        "profile": "high-memory",
+        "code": 0,
+        "stopped": false,
+        "seconds": 10.5551475,
+        "solveSeconds": 10.36,
+        "nodes": "1189415547",
+        "peakRss": 38509019136,
+        "minFree": 75,
+        "golden": "equal"
+      },
+      {
+        "name": "eo",
+        "input": "100",
+        "profile": "high-memory",
+        "code": 0,
+        "stopped": false,
+        "seconds": 10.544464583000002,
+        "solveSeconds": 10.36,
+        "nodes": "1189415547",
+        "peakRss": 38508986368,
+        "minFree": 75,
+        "golden": "equal"
+      }
+    ],
+    "after": [
+      {
+        "name": "eo",
+        "input": "100",
+        "profile": "high-memory",
+        "code": 0,
+        "stopped": false,
+        "seconds": 9.629565625000001,
+        "solveSeconds": 9.43,
+        "nodes": "1140137607",
+        "peakRss": 38508609536,
+        "minFree": 75,
+        "golden": "equal"
+      },
+      {
+        "name": "eo",
+        "input": "100",
+        "profile": "high-memory",
+        "code": 0,
+        "stopped": false,
+        "seconds": 10.392279291,
+        "solveSeconds": 10.2,
+        "nodes": "1140137607",
+        "peakRss": 38508625920,
+        "minFree": 75,
+        "golden": "equal"
+      },
+      {
+        "name": "eo",
+        "input": "100",
+        "profile": "high-memory",
+        "code": 0,
+        "stopped": false,
+        "seconds": 9.755680125,
+        "solveSeconds": 9.57,
+        "nodes": "1140137607",
+        "peakRss": 38508625920,
+        "minFree": 75,
+        "golden": "equal"
+      }
+    ],
+    "medianSecondsBefore": 10.36,
+    "medianSecondsAfter": 9.57,
+    "timeReductionPercent": 7.625482625482616,
+    "speedup": 1.0825496342737722
+  },
+  "eoDefault": {
+    "before": [
+      {
+        "name": "eo",
+        "input": "100",
+        "profile": "default",
+        "code": 0,
+        "stopped": false,
+        "seconds": 12.152496166,
+        "solveSeconds": 11.99,
+        "nodes": "1295799472",
+        "peakRss": 33785249792,
+        "minFree": 75,
+        "golden": "equal"
+      }
+    ],
+    "after": [
+      {
+        "name": "eo",
+        "input": "5",
+        "profile": "default",
+        "code": 0,
+        "stopped": false,
+        "seconds": 1.4379661670000001,
+        "solveSeconds": 1.3,
+        "nodes": "39973379",
+        "peakRss": 26038272000,
+        "minFree": 77,
+        "golden": "equal"
+      },
+      {
+        "name": "eo",
+        "input": "100",
+        "profile": "default",
+        "code": 0,
+        "stopped": false,
+        "seconds": 10.738303833,
+        "solveSeconds": 10.57,
+        "nodes": "1246521532",
+        "peakRss": 33784889344,
+        "minFree": 76,
+        "golden": "equal"
+      }
+    ],
+    "note": "Single warm before/after run for 100 rows, plus full 5-row correctness fixture. Not a multi-run performance median."
+  },
+  "correctness": {
+    "golden": "std, pseudo, pair, eo and pseudo_pair: both complete scramble_5 and scramble_100 fixture files byte-identical to checked-in golden CSVs.",
+    "goldenNumericCells": 13860,
+    "f2leo": "f2leo and pseudo_f2leo: both complete 5/100 fixture outputs byte-identical to original release analyzers; node totals identical.",
+    "f2leoNumericCells": 5040,
+    "counterOnly": "All 10 original/counter-only analyzer fixture runs have exactly identical node totals and CSV output.",
+    "eoLookup": "All 105 fixture rows x 12 symmetries match the retained original IDA* implementation; 147 extra legal states x 12 symmetries also match. Entire 24,330,240-entry table histogram is checked.",
+    "eoDistanceHistogram": [
+      1,
+      15,
+      178,
+      1982,
+      21041,
+      204732,
+      1645039,
+      8477633,
+      12917628,
+      1061851,
+      140,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "tests": [
+      "prune_create::direction_tests::forward_reverse_and_adaptive_preserve_every_distance",
+      "executor::tests::node_counter_parallel_batch_exact",
+      "eo_cross_solver::tests::eo_cross_exact_lookup_matches_search_and_fixtures"
+    ]
+  },
+  "resources": {
+    "maximumEoHighMemoryRssBytes": 38509019136,
+    "minimumSystemAvailablePercent": 75,
+    "stopIfSystemAvailableBelowPercent": 15,
+    "note": "RSS from macOS /usr/bin/time -l; available percentage from memory_pressure. Read-only mapped tables are reclaimable. No simultaneous H48 generation or other solver benchmark."
+  },
+  "finalOtherAnalyzers": [
+    {
+      "name": "std",
+      "input": "5",
+      "profile": "high-memory",
+      "code": 0,
+      "stopped": false,
+      "seconds": 0.8300042919999999,
+      "solveSeconds": 0.45,
+      "nodes": "1966124",
+      "peakRss": 16191078400,
+      "minFree": 76,
+      "golden": "equal"
+    },
+    {
+      "name": "std",
+      "input": "100",
+      "profile": "high-memory",
+      "code": 0,
+      "stopped": false,
+      "seconds": 0.9292586669999999,
+      "solveSeconds": 0.81,
+      "nodes": "37035515",
+      "peakRss": 24594055168,
+      "minFree": 76,
+      "golden": "equal"
+    },
+    {
+      "name": "pseudo",
+      "input": "5",
+      "profile": "high-memory",
+      "code": 0,
+      "stopped": false,
+      "seconds": 0.37281399999999987,
+      "solveSeconds": 0.07,
+      "nodes": "1348401",
+      "peakRss": 2005319680,
+      "minFree": 76,
+      "golden": "equal"
+    },
+    {
+      "name": "pseudo",
+      "input": "100",
+      "profile": "high-memory",
+      "code": 0,
+      "stopped": false,
+      "seconds": 0.12890787500000034,
+      "solveSeconds": 0.11,
+      "nodes": "30997071",
+      "peakRss": 2304868352,
+      "minFree": 76,
+      "golden": "equal"
+    },
+    {
+      "name": "pair",
+      "input": "5",
+      "profile": "high-memory",
+      "code": 0,
+      "stopped": false,
+      "seconds": 0.4977075420000001,
+      "solveSeconds": 0.14,
+      "nodes": "478737",
+      "peakRss": 5435211776,
+      "minFree": 76,
+      "golden": "equal"
+    },
+    {
+      "name": "pair",
+      "input": "100",
+      "profile": "high-memory",
+      "code": 0,
+      "stopped": false,
+      "seconds": 0.43500895899999975,
+      "solveSeconds": 0.32,
+      "nodes": "11179686",
+      "peakRss": 23988764672,
+      "minFree": 76,
+      "golden": "equal"
+    },
+    {
+      "name": "pseudo_pair",
+      "input": "5",
+      "profile": "high-memory",
+      "code": 0,
+      "stopped": false,
+      "seconds": 0.5020354579999998,
+      "solveSeconds": 0.2,
+      "nodes": "14709304",
+      "peakRss": 2307751936,
+      "minFree": 76,
+      "golden": "equal"
+    },
+    {
+      "name": "pseudo_pair",
+      "input": "100",
+      "profile": "high-memory",
+      "code": 0,
+      "stopped": false,
+      "seconds": 0.9354985830000005,
+      "solveSeconds": 0.92,
+      "nodes": "295652801",
+      "peakRss": 2350530560,
+      "minFree": 76,
+      "golden": "equal"
+    },
+    {
+      "name": "f2leo",
+      "input": "5",
+      "profile": "high-memory",
+      "code": 0,
+      "stopped": false,
+      "seconds": 0.41508887500000036,
+      "solveSeconds": 0.08,
+      "nodes": "349073",
+      "peakRss": 2975858688,
+      "minFree": 77,
+      "golden": "none"
+    },
+    {
+      "name": "f2leo",
+      "input": "100",
+      "profile": "high-memory",
+      "code": 0,
+      "stopped": false,
+      "seconds": 0.36716116700000023,
+      "solveSeconds": 0.26,
+      "nodes": "7421478",
+      "peakRss": 21234384896,
+      "minFree": 76,
+      "golden": "none"
+    },
+    {
+      "name": "pseudo_f2leo",
+      "input": "5",
+      "profile": "high-memory",
+      "code": 0,
+      "stopped": false,
+      "seconds": 0.42128870800000007,
+      "solveSeconds": 0.1,
+      "nodes": "5874450",
+      "peakRss": 2262106112,
+      "minFree": 76,
+      "golden": "none"
+    },
+    {
+      "name": "pseudo_f2leo",
+      "input": "100",
+      "profile": "high-memory",
+      "code": 0,
+      "stopped": false,
+      "seconds": 0.3855704590000005,
+      "solveSeconds": 0.37,
+      "nodes": "132255256",
+      "peakRss": 2304638976,
+      "minFree": 77,
+      "golden": "none"
+    }
+  ],
+  "counterOnlyRuns": [
+    {
+      "name": "eo",
+      "input": "5",
+      "profile": "high-memory",
+      "code": 0,
+      "stopped": false,
+      "seconds": 3.884724917,
+      "solveSeconds": 3.21,
+      "nodes": "39453713",
+      "peakRss": 28273180672,
+      "minFree": 100,
+      "golden": "equal"
+    },
+    {
+      "name": "eo",
+      "input": "100",
+      "profile": "high-memory",
+      "code": 0,
+      "stopped": false,
+      "seconds": 11.053984457999999,
+      "solveSeconds": 10.87,
+      "nodes": "1189415547",
+      "peakRss": 38509019136,
+      "minFree": 73,
+      "golden": "equal"
+    },
+    {
+      "name": "pseudo_pair",
+      "input": "5",
+      "profile": "high-memory",
+      "code": 0,
+      "stopped": false,
+      "seconds": 1.5923816669999997,
+      "solveSeconds": 1.29,
+      "nodes": "14709304",
+      "peakRss": 2307686400,
+      "minFree": 100,
+      "golden": "equal"
+    },
+    {
+      "name": "pseudo_pair",
+      "input": "100",
+      "profile": "high-memory",
+      "code": 0,
+      "stopped": false,
+      "seconds": 0.9351462080000019,
+      "solveSeconds": 0.92,
+      "nodes": "295652801",
+      "peakRss": 2350415872,
+      "minFree": 100,
+      "golden": "equal"
+    },
+    {
+      "name": "std",
+      "input": "5",
+      "profile": "high-memory",
+      "code": 0,
+      "stopped": false,
+      "seconds": 0.8125467910000007,
+      "solveSeconds": 0.41,
+      "nodes": "1966124",
+      "peakRss": 16191078400,
+      "minFree": 100,
+      "golden": "equal"
+    },
+    {
+      "name": "std",
+      "input": "100",
+      "profile": "high-memory",
+      "code": 0,
+      "stopped": false,
+      "seconds": 0.6338250000000007,
+      "solveSeconds": 0.52,
+      "nodes": "37035515",
+      "peakRss": 24594120704,
+      "minFree": 100,
+      "golden": "equal"
+    },
+    {
+      "name": "pair",
+      "input": "5",
+      "profile": "high-memory",
+      "code": 0,
+      "stopped": false,
+      "seconds": 0.4764205000000002,
+      "solveSeconds": 0.13,
+      "nodes": "478737",
+      "peakRss": 5435211776,
+      "minFree": 100,
+      "golden": "equal"
+    },
+    {
+      "name": "pair",
+      "input": "100",
+      "profile": "high-memory",
+      "code": 0,
+      "stopped": false,
+      "seconds": 0.4330065829999985,
+      "solveSeconds": 0.32,
+      "nodes": "11179686",
+      "peakRss": 23988797440,
+      "minFree": 100,
+      "golden": "equal"
+    },
+    {
+      "name": "pseudo",
+      "input": "5",
+      "profile": "high-memory",
+      "code": 0,
+      "stopped": false,
+      "seconds": 0.35979195900000194,
+      "solveSeconds": 0.06,
+      "nodes": "1348401",
+      "peakRss": 2005303296,
+      "minFree": 100,
+      "golden": "equal"
+    },
+    {
+      "name": "pseudo",
+      "input": "100",
+      "profile": "high-memory",
+      "code": 0,
+      "stopped": false,
+      "seconds": 0.12718129099999714,
+      "solveSeconds": 0.11,
+      "nodes": "30997071",
+      "peakRss": 2304884736,
+      "minFree": 100,
+      "golden": "equal"
+    }
+  ],
+  "originalF2leoRuns": [
+    {
+      "name": "f2leo",
+      "input": "5",
+      "profile": "high-memory",
+      "code": 0,
+      "stopped": false,
+      "seconds": 0.673281083,
+      "solveSeconds": 0.08,
+      "nodes": "349073",
+      "peakRss": 2975776768,
+      "minFree": 76,
+      "golden": "none"
+    },
+    {
+      "name": "f2leo",
+      "input": "100",
+      "profile": "high-memory",
+      "code": 0,
+      "stopped": false,
+      "seconds": 0.6003848749999998,
+      "solveSeconds": 0.49,
+      "nodes": "7421478",
+      "peakRss": 21234450432,
+      "minFree": 77,
+      "golden": "none"
+    },
+    {
+      "name": "pseudo_f2leo",
+      "input": "5",
+      "profile": "high-memory",
+      "code": 0,
+      "stopped": false,
+      "seconds": 1.422509583,
+      "solveSeconds": 1.09,
+      "nodes": "5874450",
+      "peakRss": 2262056960,
+      "minFree": 76,
+      "golden": "none"
+    },
+    {
+      "name": "pseudo_f2leo",
+      "input": "100",
+      "profile": "high-memory",
+      "code": 0,
+      "stopped": false,
+      "seconds": 0.46915604200000005,
+      "solveSeconds": 0.45,
+      "nodes": "132255256",
+      "peakRss": 2304557056,
+      "minFree": 77,
+      "golden": "none"
+    }
+  ],
+  "localEvidenceDirectory": ".tmp/stage-search-baseline",
+  "sourceBaselineCommit": "563618f807396d35c074d0092d83f1bddf6d9f58",
+  "baselineBinaryOrigin": "Existing solver/target/release analyzers copied before any source edits; these are the original local pipeline binaries, not a fresh clean rebuild of sourceBaselineCommit.",
+  "baselineBinarySha256": {
+    "std_analyzer": "6471f31b3d1a307f61d62c0cd4cbea50470745fecdd494f8c2c93c590d51fbab",
+    "pseudo_analyzer": "ce286131ae59c4508b89b0f0006ff7fc22e53e7515af5654ee38f8cb30327508",
+    "pair_analyzer": "69c4539184cc61324cb726d303902dec30aac672f3f2b4500c5a8b455220f7af",
+    "eo_cross_analyzer": "39f2486c243cfc4a35b91967bd3098f7cffcb35fa0dcc321045aaa0535e9d880",
+    "pseudo_pair_analyzer": "f4ffb976996dc828d955c3d21a4bc7b49ca4aa6a71a2322ddbf64f6c1235bc81",
+    "f2leo_analyzer": "9c06ed6803442c2fde7cd338e261e7808fcb8170fa395e5df1fc727a8311d681",
+    "pseudo_f2leo_analyzer": "aeee771a25dd3209d40d7605744d50f031ee6b66ff43afa5af755d5192608da8"
+  }
+}

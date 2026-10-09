@@ -7,7 +7,6 @@ import AppLink from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
 import { CompactSelect } from '@/components/CompactSelect';
 import { Flag } from '@/components/Flag';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { RecordBadge } from '@/components/RecordBadge';
 import { useT } from '@/hooks/useT';
 import { useModalDismiss } from '@/hooks/useModalDismiss';
@@ -258,11 +257,10 @@ export default function PersonHero({
           popupClassName="wp-result-view-popup"
         />
         {(resultView === 'pr' || resultView === 'historical') && (
-          <PillToggle
+          <BoolToggle
             value={inclCancelled}
             onChange={onInclCancelledChange}
-            onLabel={t('废止项', 'Cancelled')}
-            offLabel={t('废止项', 'Cancelled')}
+            label={t('废止项', 'Cancelled')}
           />
         )}
         {resultView === 'pb' && pbVisibilityControl && (

@@ -10,7 +10,7 @@ import { tr, useLang } from '@/i18n/tr';
 import { ownerDisplayName } from '@/lib/cuber-name-display';
 import type { ForumThread, LatestThread, SearchThread } from '@/lib/forum-api';
 import { formatRelativeTime, formatCount } from '@/lib/forum-format';
-import { UserIdLabel } from '@/components/UserIdLabel';
+import { UserContactLink } from '@/components/UserIdLabel';
 
 export const THREAD_PAGE_SIZE = 20;
 
@@ -45,8 +45,7 @@ export function ThreadRow({ thread }: { thread: RowThread }) {
           )}
         </div>
         <div className="forum-thread-sub">
-          <span className="forum-thread-starter">{starter}</span>
-          <UserIdLabel userId={thread.authorUserId} />
+          <UserContactLink userId={thread.authorUserId} className="forum-thread-starter">{starter}</UserContactLink>
           <span>{formatRelativeTime(thread.createdAt, lang)}</span>
         </div>
         {thread.snippet && <div className="forum-thread-snippet">{thread.snippet}</div>}
@@ -67,8 +66,7 @@ export function ThreadRow({ thread }: { thread: RowThread }) {
         >
           {formatRelativeTime(thread.lastPostAt, lang)}
         </Link>
-        <span className="forum-thread-last-by">{lastBy}</span>
-        <UserIdLabel userId={thread.lastPostAuthorUserId} />
+        <UserContactLink userId={thread.lastPostAuthorUserId} className="forum-thread-last-by">{lastBy}</UserContactLink>
       </div>
     </div>
   );

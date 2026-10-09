@@ -1,5 +1,97 @@
 # CubeRoot 五端 App 完整路线图
 
+### 2026-10-07：Capacitor 与宿主构建依赖安全升级（构建通过，安装包未发布）
+
+- Android/iOS 的 Capacitor core、CLI 和两平台运行时统一从 8.5.0 升至 8.5.3，包含 GHSA-rvm3-566m-v7fv 的内部 HTTP 代理导航修复；Android Gradle 引用、iOS SPM 配置及解析锁同步到相同版本。
+- Mobile/Desktop/Harmony 的 Vite 从 8.0.1 升至 8.0.16；Mobile/Desktop 的 Vitest 最低版本升至 4.1.11。保留既有宿主边界、插件、App 标识、版本号与 WebView 103 构建目标。
+- 本机 Mobile Web build、Android/iOS Capacitor sync、JDK 21 Android debug APK 和 iOS unsigned Simulator build 通过。未安装到设备、未签名发布、未上传或提交应用商店；已经安装或审核中的旧包不会因 Git push 自动取得此修复，仍需后续发布新版客户端。此次依赖修复不代表五端整体验收完成。
+
+### 2026-10-07：九个智能魔方专项与连续训练 P1（本地，设备待验）
+
+- 共享目录新增 CLL/ELL/EOCP/2GLL/OLLCP/ZZLL/ZBLS/LSE/L10P，Web 与 App 共用随机/种子生成、固定朝向与专项停表；csTimer 兼容导出保留原专项供回导恢复。
+- shared build、Web/App typecheck、专项生成/种子/完成条件/控制器/导入导出回归及四条 confirmed 复盘基准通过。真实 App 组件的九专项停表与连续训练共 10 项通过：从上一题未还原状态引导到下一目标，再预备、计时、保存；修正 Worker 传输在测试中替换。
+- 既有来源矩阵两条源码断言及两个非训练 App 场景的 Worker 环境失败另记，不宣称全集通过。仅本地提交，未 push/部署、未重建原生包或 BLE 真机验收；五端整体仍为 NOT COMPLETE。详细规则与边界见 `docs/timer-smartcube-plan.md`。
+
+### 2026-10-07：智能魔方专项停表 P0（本地，设备待验）
+
+- Web/五端共享产品层现有 Solo 接线共同消费 shared 专项完成规则和控制器；Cross/F2L/OLL/COLL/CMLL 在固定训练朝向下按阶段停表，COLL/CMLL 允许 AUF，PLL/LL/ZBLL 仍需最终 AUF。末手先记录后保存，运行中项目/朝向变更不改本次目标，状态同步不制造停表。
+- shared build、App typecheck、共享规则/控制器/打乱引导/记录回归及全部四条 confirmed 复盘基准通过；真实 App 组件测试覆盖五专项黄顶绿前打乱、自动预备、转动起停、250ms 成绩及两步完整持久化。独立源码审查无阻断问题。Web typecheck 被另一任务 `TimerSolverPanel.tsx` 的 `spinner`/`Spinner` 导入大小写冲突阻断，未改该文件。
+- 未 push、未重建或发布原生安装包，未做五端 BLE 真机验收；新专项及完整连续训练验收留在 P1，整体 parity 仍为 NOT COMPLETE。详细边界见 `docs/timer-smartcube-plan.md` 同日记录。
+
+### 2026-10-06：Google Play 1003 已提交审核
+
+- 所有者明确确认“确定 送审吧”后，在发布概览提交全部 10 项更改并确认最终送审弹窗。Console 随后显示“正在审核中的更改”，包含 `0.1.0 (1003) - Initial release`、146 个国家/地区、商品详情与内容声明。
+- 提交后 Google 又显示快速检查进行中（页面估计至多 9 分钟），通过后自动送审；这是提交受理证据，不是人工审核通过或已上架。自管式发布仍关闭，所有者已知悉审核批准后会自动发布。
+- 本次没有新建构建、推送代码、调整价格或变更付款资料；审核截图 `/tmp/cuberoot-play-submitted-1003.png`。下方“待最终确认/尚未提交”的记录为此前阶段，现由本节覆盖。
+
+### 2026-10-06：Google Play 首发送审收口（待最终确认）
+
+- 正式版候选仍为已内测的 `0.1.0 (1003)`；Console 已保存正式发布草稿与 146 个非欧盟国家/地区，没有重新构建或夹带其他任务代码。发布概览列出 10 项待送审更改，自动预检完成并显示“您的更改现在可以送审”；自管式发布关闭，批准后会自动上线，尚未点击提交审核。
+- 所有者确认使用两张 Android 真机「计时 / 工具」截图，已替换默认商品详情的 iPhone 截图并保存；工具图不含布局编辑控件或宠物遮挡。原图仍在资源库，可恢复。
+- 审核账号 UID 70 经邮箱身份与 WCA ID 三重核对，使用现有 `memberships` 免费手工权益，独立查询确认 `effective_memberships` 有效至 `2027-10-06T09:09:11.307Z`。未创建订单、未收费、未修改 Google/Apple 订阅账本。后续 Google 到期/退款测试必须核对其独立账本，不能用该账号总会员状态作为验收证据。
+- 购买页样式和 Android Stackmat 隐私说明按所有者授权从隔离工作区推送；最终 CSS 选择器修复 `33d61fbb48` 的 Test `37440179522`、Deploy Next `37440179583` 与 Vercel 状态均成功。没有新原生包或 API 发布。下方“未授权/未推送”是此前阶段记录，已被本节覆盖。
+- 所有者确认 two-tool、SpeedCubeDB、Best 2x2 已具备 App 展示授权，未独立核验授权原件。月卡主流程已验收；年卡及取消到期/退款异常生命周期仍未实测。实时税务中心显示美国 W-8BEN“审核中”（2026-10-04 提交）；银行账号已作为主要电汇方式，当前页面未显示验证待办，也未明确显示银行已验证，不能宣称收款验证完成。审核访问英文说明已保存，包含一年期免费会员和浏览器回跳步骤。
+
+### 2026-10-06：Google Play 首发资料复核（未送审）
+
+- 对最终 1003 APK/AAB 核对广告 ID：Manifest 无 `AD_ID` 权限，推送插件禁用 advertising ID，当前 Getui 未配置启动；Console 已保存“不使用广告 ID”。这不代表不处理其他设备标识。应用内容页面显示 10 项已处理、没有需要注意的声明。
+- Data safety 补充实际在线 Tools 能访问的论坛视频、云盘音乐/其他音频/文件、日历活动，均为用户可选、App 功能用途、非临时收集；用户主动发布/分享按对应豁免处理。删除链接从 GitHub 原始 HTML 改为已验证 HTTP 200 的 `https://static.cuberoot.me/tools/play/account-deletion.html`。Console 确认更改已保存，仍待送审。
+- 正式轨道创建 `0.1.0 (1003) - Initial release` 草稿，从内容库复用已内测的 1003，保存英文首发说明；没有上传新包、正式发布或点击送审。
+- Android Stackmat 本机音频处理的双语隐私说明已本地补充，client typecheck 通过；购买页样式与本次隐私说明尚未获得本轮发布确认，未推送。其他任务的计时器改动未纳入本轮发布。
+- 仍需收口：正式发布地区、Android 代表性截图、审核账号在审核期间的付费内容访问、two-tool/SpeedCubeDB/Best 2x2 内容授权范围、商家税务/银行验证状态；年卡与取消到期/退款异常生命周期尚未实测。声明填写完成不是所有政策、素材和业务验收通过。
+
+### 2026-10-06：Google Play 月订阅内测主流程通过
+
+- 所有者在 Play 内测 1003 使用测试卡完成月订阅；服务端核对为测试订单、`SUBSCRIPTION_STATE_ACTIVE`、`ACKNOWLEDGEMENT_STATE_ACKNOWLEDGED`，并授予同一 CubeRoot 账号会员权益。
+- 自动续期通知到达受认证的 RTDN 端点并返回 200，到期日随续期更新；重新登录后的恢复请求 `verify` / `sync` 均返回 200。所有者随后再次重启并确认正常。
+- 中途出现商品不可用与恢复失败，当时未观察到会员接口请求，重新登录后恢复；网络或会话原因没有实证定位，不记为已修复的登录缺陷。
+- 验收范围限月卡购买、确认、权益、续期、恢复及所有者重启复测；年卡、取消后到期、退款/撤销及异常交易场景仍未实测。主流程通过不等于全部订阅生命周期或正式提审通过。
+- 本轮购买页仅本地调整共享商店界面的标题、价格、主次按钮、触控尺寸和状态提示，支付桥、商品 ID、价格来源与验单逻辑不变；未推送部署、未新建或上传 Android 包。
+
+### 2026-10-06：Google Play 内测 1003 已发布（真机待验）
+
+- Play 内部轨道 `4701471578963469404` / release `3` 于 00:23 PDT 确认「有效」，最新版本 `0.1.0 (1003) - Login handoff fix`，已面向内部测试人员发布；未提交正式审核。1002 曾上传但未发布，因麦克风被隐式要求而减少 12 款设备，从草稿移出后以 1003 替换，制品库仍保留 1002。
+- 构建来自隔离干净工作区 `271e7c4e64e87df7b2c7d58a1a2c605ce04e1154` 加可选麦克风声明修复 `b0241b9950db072fb60bed43fb4625a2a009e179`（主工作区对应 `43de58d4aa`）；没有带入其他任务未提交的计时器改动。包含下节登录修复及此前已提交的计时器/设备更新。Android 的 `RECORD_AUDIO` / `MODIFY_AUDIO_SETTINGS` 用于 Stackmat，麦克风硬件声明为可选。Play 最终预览确认相对 1001 无设备减少。
+- shared/VisualCube build、Mobile Web build + Android sync、JDK 21 正式签名 AAB/APK 构建、APK 签名与 ZIP 16 KB 对齐、AAB JAR 验签通过；上传证书与 1001 相同。Manifest 兼容性改动通过登录文档指纹及 5 项文档检查，独立发布审计通过。控制台仅剩去混淆文件与原生调试符号两项提示。
+- AAB SHA-256 `084d9183c7f3705fcf0190b358a6bc12cb39961752ab19fd9d26507e2bde3886`；APK `c6e20882d1e3fc05c356fa20cec3736bdce6acd38c1a11864f44c6e1a4ff6560`。产物和控制台截图存维护者桌面 `CubeRoot-Google-Play`，密钥不入库。
+- 待用户从 Play 覆盖升级验证：保留本地记录、浏览器已有登录态回跳、账号 iframe 会话同步、重启恢复。未用上传证书 APK 覆盖 Play 签名安装，未卸载或清数据；未发布 iOS/其他端，未推送仓库或部署网站/API，未变更内购开关，不代表真实购买验收。
+
+### 2026-10-06：Android/iOS 登录安全存储修复（本地，未发布）
+
+- Play 内测 1001 真机失败证据：浏览器已有会话，确认打开 App 后仍显示登录表单；无线 ADB 确认系统将回调送达 MainActivity。实际 secure-storage 8.0.0 的 `set` 会 JSON 编码字符串，旧适配用 `getItem` 读取原始编码，导致 pending 登录信息解析后仍是字符串，无法发起换票。
+- 适配改用配对的 `set/get`，保留旧存储格式、前缀、关闭 iCloud 同步和设备解锁保护，不清除或迁移计时数据。旧 pending 和 session 可直接读取；其他安全存储消费者继续获得原始字符串。桌面/鸿蒙存储适配未变。
+- 缺失 pending 或 state 不匹配时拒绝换票并报告错误；账号页在系统浏览器打开完成之后仍报告回调失败。PKCE、state、有效期与服务端票据校验保持不变，长期凭据不进入 URL 或错误信息。
+- 本地验证：真实存储库序列化 6 项、共享登录/Hook 11 项、登录流程文档 78 项通过；Mobile/app-ui 类型检查及 Mobile Web build、Android sync、JDK 21 `assembleDebug` 通过。Android/iOS 更新包的真实回跳、账号页会话同步和重启恢复仍待验收；未上传 Play，不代表内购测试已通过。
+
+### 2026-10-05：智能魔方设备校准与旧型号接入（本地，实体设备待验）
+
+- Web/安装端共用 shared 设备校准事务；GAN v2/v3/v4、MoYu32、QiYi 的“重置状态”真实写入设备并等待复原状态确认，写失败、超时或断连不得报成功。校准不触发正常复原停表；MoYu32 过滤旧计数帧，QiYi 保留校准期间的新转动，超时后排队写入不得迟发。
+- Giiker（含小米名称）、GoCube / Rubik’s Connected、旧 MoYu 的协议会话提至 shared，Web 与 app-ui 均消费；扫描、订阅、转动、设备支持的状态/电量/姿态及断连清理接入 Mobile/Desktop。Gi 名称用实际 GATT 服务区分 GAN 与 Giiker。旧 MoYu 仅上报转动，没有绝对状态/设备校准/电量协议，沿用 Web 的软件复原基准，不宣称具备硬件回写。
+- Harmony 源码补多前缀扫描、受限 GATT 服务发现及同一协议消费；本机 HAP 被既有工具链版本挡住（工程 modelVersion 6.0.2，已安装 Hvigor 只支持 6.0.1），没有降级工程配置。ArkTS 编译与实体设备仍未验收。
+- 验证：安装端定向 50 项、Web 定向 26 项通过（另 5 项 upstream oracle 因本地 fixture 缺失跳过）；shared build，app-ui/client/Mobile/Harmony 类型检查，Mobile/Desktop/Harmony Web 构建和 Capacitor Android/iOS sync 通过。Android Debug APK、iOS Simulator 无签名构建及 macOS Debug 无签名 .app 通过；Windows 原生构建需 Windows 环境。全部新增型号及 macOS GAN16ui / WCU_MY32 真实转动、校准后继续计时、后台与断线恢复仍待实机验证；未安装、签名公证或发布。
+
+### 2026-10-05：工具页验证码分区凭证（本地，未发布）
+
+- 网站验证码页报告 iframe 环境，API 对嵌入页面签发 `SameSite=None; Partitioned`，普通浏览器保留 Lax；验证码、签名与 7 天期限不变。工具仍在 App 内打开，无系统浏览器跳转，也没有复制工具页或新增宿主代码。
+- macOS 27 的 WKWebView 隔离探针在 `tauri://localhost` 内验证旧 Cookie 不回传、分区 Cookie 回传；API 的 10 项专项通过。此证据不等于线上 CubeRoot App 全流程验收。
+- 待网站/API 发布及 macOS、iOS、Android、Windows、HarmonyOS 实机验收。旧 WebKit 不支持分区 Cookie，不能据此宣称已覆盖所有系统版本。详情见 `docs/traffic-defense.md` 的同日记录。
+
+
+### 2026-10-05：macOS 原生真实 MAC 适配（本地）
+
+- Desktop 保留 BLEC/CoreBluetooth 的 UUID 作为设备连接身份，新增 macOS 可选原生查询，把真实地址单独通过 `macAddress` 交给 GAN/MoYu32 共享密钥逻辑。Windows 的真实 MAC 路径不变，不新增协议或计时副本。
+- 原生查询在 blocking worker/独立队列运行，检查 `retrieveAddressForPeripheral:` 是否存在、返回类型和六字节长度；接口异常/不可用返回空值，前端 4 秒总等待超时后使用既有广播/手填兜底。此未公开接口可能随系统更新失效；超时不会强制终止已进入系统调用的 worker。
+- macOS 27.0 (26A428) 本机临时只读扫描实测：`GAN16ui_C2AF` 自动返回真实 MAC，末两字节为 C2AF；没有打印完整地址，也没有向设备写入。此次未扫描到 `WCU_MY32_5C3A`，MoYu 取址仍待实物验证。取址成功不等于协议解密、转动或自动计时验收。
+- Desktop Web build、macOS `cargo build`、原生 2 项及 TS 定向 40 项测试通过，独立审查确认 UUID/MAC 分离及 Windows 路径。此次只交付本地开发构建，未打包安装、签名、公证或发布。
+
+### 2026-10-05：macOS 智能魔方地址与握手修复（本地，实机待复测）
+
+- 所有者报告 Windows 智能魔方主流程体验正常；macOS `WCU_MY32_5C3A` 显示连接/协议但无转动，`GAN16ui_C2AF` 显示泛化连接失败。这是失败实测，不记为 macOS BLE 验收通过。
+- Apple BLE 设备 ID 为 UUID，不能当作密钥所需的 MAC。安装端移除 MY32 名称前缀猜址，Windows/Android 的真实 MAC 路径保持；GAN 保留广播/完整名称地址获取。缺少可靠地址时使用 Web/安装端共用的 MAC 表单，请求真实地址；成功地址仅在当前 hook 会话缓存，失败后移除。
+- 安装端握手完成后还须收到有效状态帧才发布 connected；8 秒未收到状态会清理连接并给出核对 MAC 的提示。补齐输入取消、关闭弹层、异步 MAC 恢复后不得重开 GATT 的清理边界。没有新增自动重连或扩大型号支持。
+- 地址、首状态超时、协议、取消清理以及 Web/安装端共享表单的定向自动检查已通过；App/Web 类型检查通过。macOS 两颗实体魔方的转动、自动计时、复盘与断线恢复仍须所有者复测，不把 Windows 体验或合成帧测试当作 macOS 成功证据。未发布。
+
+
 > Android、iOS、HarmonyOS NEXT、Windows 和 macOS 已由仓库所有者于 2026-08-31 确认为同一个完整产品目标。五端一次设计，但绝不维护五套业务代码；宿主、共享层、能力接口和总体完成口径以 [cross-platform-app-contract.md](./cross-platform-app-contract.md) 为最高优先级合同，当前状态只在本路线图记录。网站继续作为第六个在线 surface 与内容事实源。
 
 > 顶层产品结构已由仓库所有者于 2026-08-30 明确为“计时 / 工具 / 我的”三栏，且五端共用 `@cuberoot/app-ui` 的同一 React 实现；网站首页、子页面和未改写的 `/account` 必须直接复用，不在 App 复制。页面或按钮可见不等于完成；所有当前已配置登录方式、子页交互与会话状态都要按平台端到端验收。唯一合同与成本回退规则见 [mobile-three-tab-contract.md](./mobile-three-tab-contract.md)。
@@ -8,7 +100,7 @@
 
 > 状态：执行中
 >
-> 更新日期：2026-09-15
+> 更新日期：2026-09-22
 >
 > 目标：以最低长期维护成本，把同一个 CubeRoot 产品发布到 Android、iOS、HarmonyOS NEXT、Windows 和 macOS，并逐步覆盖对应商店和安装渠道。
 >
@@ -18,13 +110,47 @@
 
 本节是移动端工作的进度账本。只有完成实现并取得对应验证证据后才打勾；只完成代码但缺少真机、账号或商店证据的项目保持未勾选，并注明依赖条件。
 
+### 2026-10-04 Google Play 首发内购（开发中，未开通）
+
+- 最终连通结果：Vercel `e495b25314` 已 Ready；阿里云发起签名只读探测，经 OIDC→STS→服务账号模拟→Play 成功读取月卡、年卡两商品，HTTP 200 / 2060 ms。下文的订阅读取“待验证”记录已由此结果关闭；真实收据验单/确认购买、续费/退款、内部测试与商家验证仍未验收。支付开关保持 `GOOGLE_IAP_ENABLED=0`。
+
+- 2026-10-05 Vercel Google Play 中转已发布：固定四种签名操作、Production 限制、短期 WIF，无 JSON 私钥上传；原 API 保留账号归属、权益事务与提交后确认购买。shared build、API/client 类型检查与 26 项针对性检查通过，独立安全审查完成。API `b9207ebb11` 的 Deploy Core `37289869614` 成功，五项 Production 配置已写入；Play 通知在 09:39:02、09:39:52 UTC 经真实身份校验返回 HTTP 200。无签名中转/通知请求 401，购买接口仍 503。STS audience 与商品探测路径的修复 `752cd31379` / `e495b25314` 通过 7 项定向检查，订阅读取线上待验证。支付保持关闭，不代表真实购买通过；无新 App 包或 DB migration。CI 仍有既有登录文档指纹失败。
+- 2026-10-05 已配置 Vercel→Google 的无私钥身份联合：`cuberoot-play-production/vercel-production`，只接受 `cube-root/cuberoot-me/production`；Google 服务账号主体页已核对精确主体的 `Workload Identity User` 授权。未扩大 Play 权限、未上传 JSON 私钥；部署与实际连通状态见上一条，支付仍关闭，不算真实验单闭环。
+- 后续内测构建 `0.1.0 (1001)` 基于干净源码 `c140e273794cbdc8217502626386228e09d02ea9`，通过 `MOBILE_VERSION_CODE=1001` 单独递增 Android 构建号。shared build、app-ui/Mobile typecheck、Mobile build/sync、正式签名 AAB/APK、签名和 ZIP 对齐检查通过。AAB SHA-256 `bc97d5ea7b344fe3014ccd3ae440211f3a5e5e9b774de297b65e1a66bd3512a6`；APK `6b9bd994f661f0aa56b48f3a29718a6396af3da08005e639ec8be8b120ae399d`。内测重点：新增双人布局的 `cqh` 在 WebView 103 上存在源码推导的兼容性风险，尚未真机复现或修复；不作为正式上线通过证据。
+- Android 原生 Billing、服务端 subscriptionsv2 验单/确认、OIDC RTDN、独立权益账本和账号合并/注销归属接入；两端复用同一网页会员组件。服务账号与 RTDN 已配置，通知已真实送达；商家验证、订阅读取与内部测试真实购买仍有待完成，不能标为支付可用。
+- Play Console 两个商品及基础方案 `monthly` / `yearly` 已创建并启用，分别 USD 3.99/月、USD 39.99/年（所有者确认）；各开放 147 个 Play 国家/地区，排除欧盟 27 国及自动新增地区，无试用/优惠。保持 iOS 非欧盟策略，不声称两平台地区数量一致；商品启用不等于正式上架或真实支付验收。
+- 构建 1001 于 2026-10-04 02:14 PDT 发布到 Play 内部测试（release 2），替代 1000；控制台确认设备支持范围未减少，无发布错误，仍提示未指定测试人员、缺少去混淆文件和原生调试符号。未提交正式审核。
+- 2026-10-04 已通过 shared build、Mobile Web build/Android sync、API/client/app-ui/Mobile 类型检查和 Android Release Java 编译。旧的 cubing worker 构建阻断在本次当前代码构建未复现；历史记录保留，不继续当作当前阻断。
+- 独立 PostgreSQL 16 验证 0256 迁移、购买归属、测试隔离、退款、pending→active 替换链、注销墓碑；不是生产 PG13 部署或真实 Google 验单证据。
+- 长期 RSA 4096 上传密钥已在仓库外生成，密码存本机 Keychain；JDK 21 正式签名 `assembleRelease bundleRelease` 成功。`me.cuberoot.app` 0.1.0 (1000)，targetSdk 36；APK 签名、ZIP 16 KB 对齐及 arm64/x86_64 ELF LOAD 16 KB 对齐通过。AAB 已上传并于 10-04 01:09 PDT 发布至 Play 内部测试轨道（未审核，临时名称 `me.cuberoot.app (unreviewed)`）；尚未指定测试人员，当前无人能通过内测链接获取。
+- 配置及真实验收清单见 [google-play-billing-setup.md](google-play-billing-setup.md)。商家资料已建立，银行验证待所有者完成、税务补充材料审核中；验单密钥已安全安装于服务器、API 已启用、Pub/Sub 认证推送及 Play 主题绑定已保存。先前阿里云直连 Google 超时、通知 401 的问题现通过 Vercel 验签中转取得通知 HTTP 200；支付仍关闭，真实购买未验收。Cloud 未升级付费；上传密钥的异地安全备份仍需所有者完成。
+
+### 2026-09-29 远端主线整合（本地，未发布）
+
+以 `61023b48a8` 为基线，保留远端 Apple 个人月卡／年卡自动续费实现与语音输入；迁入原本地 iOS APNs 纪录通道、隐私说明及联系页精确放行。推送使用新增 `0255_ios_record_push.sql`，不改远端已经使用的 `0249_friend_chat.sql`。旧非续期购买方案不再迁入；Apple 的购买、恢复、账号合并及注销实现保持远端版本。
+
+本轮验证：shared build；API、client、app-ui、Mobile 类型检查；API 定向 39 项、client 定向 135 项、Mobile 全部 36 项、app-ui 全部 404 项测试通过。API 迁移、设备归属与队列测试使用本机新建 PostgreSQL 16 隔离实例，非生产 PG13；APNs 使用本地 HTTP/2 与临时测试密钥，未访问 Apple 或发送真实通知。独立源码审查未发现迁入代码阻断问题。
+
+完整 Mobile Web / iOS 构建受现有 `cubing` worker 顶层 await 与 IIFE 输出冲突阻断；在仅含 `61023b48a8` 的独立工作区、独立离线安装依赖并构建 shared 后复现相同错误，确认不由本轮 APNs 迁入引入。日志：`/tmp/cuberoot-pull-ios-build.log`、`/tmp/cuberoot-remote-mobile-build.log`。此阻断尚未修复，不以测试通过代替完整 App 构建、签名或真机验收。 单独执行原生 `mobile-ios-toolchain.mjs build` 已通过 Xcode 无签名 Simulator 构建（arm64/x86_64），验证 Swift 插件与工程可共同编译；未重新生成成功的 Web bundle，不作为完整新包验收。原生日志：`/tmp/cuberoot-pull-ios-native.log`。
+
+### 2026-09-27 iOS 纪录推送通道（源码接入，真机未验收）
+
+- [x] 仅覆盖 wca_record；复用既有订阅匹配、站内消息、队列、账号设备绑定和退出撤销。Bark 与 Android 个推继续独立工作。
+- [x] 迁移 0255 为设备补 provider/environment，并隔离 APNs sandbox/production；旧 Android 请求与数据仍按 getui/production 处理。
+- [x] API APNs HTTP/2 + ES256 provider JWT、公开比赛链接校验、固定通知 collapse ID、重试分类和失效设备清理；密钥只从服务端文件读取，默认关闭。
+- [x] iOS 薄 Swift 插件、Push capability/entitlement、系统授权、token 更新、前台展示、冷启动点击暂存、退出停用及清理；点击沿用现有 Android 行为打开系统浏览器中的比赛页，本轮未做 App 内比赛深链。
+- [x] 配置继续复用「我的 → 消息」订阅页面和 iOS 系统通知权限，不新增第二套订阅 UI；/dev/auth 中英文流程与守卫已同步覆盖 Swift 适配器。
+- [ ] APNs key/topic、实际签名环境、线上迁移/配置和开发/生产真机送达；本轮没有 push、上线或向真实用户发送消息。
+
+2026-09-27 原分支验证记录（不替代本次远端主线整合验证）：隔离 PostgreSQL 16 schema 执行 0239→0249 迁移、真实设备登记路由、账号隔离和队列重试/失效清理；APNs 请求用本地 HTTP/2 接收端与临时测试 EC key 验证 JWT、topic、环境、payload 和错误分类，未访问真实 Apple 推送端点。API 类型检查、通知偏好回归、APNs/个推/PG 11 tests、Mobile 类型检查与全部 30 tests、schema ledger 6 tests、auth documentation 65 tests 已通过；Mobile Web build 与 iOS sync 完成。Xcode 无签名 iOS Simulator 构建成功（arm64/x86_64），产物 Info.plist 的推送环境为 development；这不代表真实签名、安装或 APNs 送达。配置见 [record-notification-setup.md](record-notification-setup.md)。
+
 ### 2026-09-15 纪录订阅与通知（未完成）
 
 - [x] 本地实现 shared 订阅规则、服务端订阅 API 和 canonical `/notifications` 设置：项目、单次/平均、纪录级别、选手所属地区共用一份偏好；绑定 WCA 的本人纪录（含 PR）自动纳入，邮件仍尊重已验证邮箱和总开关。
 - [x] 比赛预热任务复用既有成绩判定与快讯格式，首次快照静默建立基线，后续新成绩按比赛/轮次/选手/成绩去重，复用站内消息及邮件发送入口。首次快照中已有成绩不补发；邮件沿用现有 best-effort 机制，发送失败没有独立重试队列。
 - [x] Android 个推薄宿主与 API 持久化队列本地实现：隐私同意后初始化、通知权限、设备绑定、退出/换号撤销与断网重试；复用原站内纪录通知，队列退避重试，不发送绑定前历史。正式/调试包隔离，配置缺失时禁用发送；过期数据仍清理。
 - [ ] Android 服务商应用、国内厂商通道、生产开关和真实收取：OPPO/vivo/小米/魅族/荣耀已有条件构建入口，真实凭据和各分支验收未完成；华为 Android 仍待 HMS 配置。通知当前打开网站比赛链接，前台/后台/杀进程/点击/权限及账号切换须真机验证。
-- [ ] iOS 按所有者 2026-09-15 指示留待 Mac 上继续；已有开发者会员不等于 APNs 已配置。HarmonyOS NEXT、Windows/macOS 原生通知适配尚未实现，站内消息与邮件不能替代系统推送证据。
+- [ ] iOS APNs 凭据、签名及真机送达未验收；2026-09-27 已按所有者要求补 wca_record 通道源码，见上方增量记录。HarmonyOS NEXT、Windows/macOS 原生通知适配尚未实现，站内消息与邮件不能替代系统推送证据。
 - [ ] 生产迁移、部署和真实收信验收；本轮没有向真实用户发送测试消息。
 
 本地证据：迁移 0238 在 PostgreSQL 13 事务中验证建表、JSONB 与级联删除后回滚；API 通知相关回归、shared build、client/server typecheck 通过；Playwright 使用隔离 API fixture 验证 390px/1280px 设置页、地区选择和保存请求，无页面横向溢出。迁移 0239 在本机 PG13 隔离 schema 中执行真实绑定/撤销路由及队列重试/去重测试；Getui HTTP 使用 mock，未向服务商发送。Mobile 25 tests、app-ui 299 tests、Mobile/API/app-ui/client 类型检查与 Mobile Web build/Android sync 已通过。Android `:app:assembleDebug --max-workers=14` 构建成功；基础 debug 合并 manifest 已确认无电话状态、任务列表、全量应用列表或后台定位权限，明文流量关闭。SDK 编译有上游 D8 stack-map 和原生库 strip 警告；2026-09-16 的 CI（ab783cbeab，run 35061047653）已完成 release APK/AAB 构建和临时证书签名验证，权限白名单需同步四项推送权限；尚未证明 R8、16KB 页兼容、真实厂商配置或真机运行，不代表发布或真机到达；具体配置见 [record-notification-setup.md](record-notification-setup.md)。
@@ -45,7 +171,7 @@
 - [ ] 注册并完成 Google Play Console 组织账号验证。（需要所有者操作账号、付款和身份验证）
 - [x] Google Play 组织核验所需的 D-U-N-S 已由邓白氏门户核验通过。（所有者提供门户结果）
 - [x] 核对 Apple Developer Program 个人会员有效期、已接受协议与 Xcode Team。（2026-09-11 门户显示个人 Team、续费日期 2027-09-11，Program License Agreement 于 9 月 10 日接受、Developer Agreement 于 9 月 3 日接受，所见页面无待处理提示；未出现字面 `Active`，不虚构该标签。Xcode 开发签名已通过；不包含 App Store Connect Paid Apps Agreement/税务/收款验收）
-- [ ] 为 App 内会员购买完成 Paid Apps Agreement、税务、收款与商品配置。（2026-09-11 所有者明确要求会员内购；商品、周期和价格待确认，不再按“首版无购买入口”规划）
+- [ ] 为 App 内会员购买完成 Paid Apps Agreement、税务、收款与商品配置。（2026-09-29 所有者确认首发个人月／年自动续费订阅（覆盖此前手动续购决定）；企业、优惠、家庭共享暂不加入。商品已创建，价格 CNY 29.90/299；Paid Apps Agreement 已签署，当前 Pending User Info，银行与税务未齐，Sandbox 验收及订阅审核材料待完成）
 - [ ] 建立 Android 真机和测试者名单。（组织账号不预设个人账号的 12 人/14 天门槛；质量测试仍建议 15 到 20 人）
 - [ ] 建立发布账号 2FA、恢复方式、密码管理和签名密钥备份规则。（需要账号所有者参与）
 - [x] 完成当前构建的数据与 SDK 清单：本地计时数据、可选账号、网络状态、Browser/Network/Haptics/Secure Storage/BLE；无广告、分析或用户画像 SDK。
@@ -137,18 +263,18 @@
 - [ ] 完成现有 Web/五端计时器迁移，使 `@cuberoot/timer-ui` 覆盖网站 `/timer` 的完整可达功能，不留宿主私有业务副本。
 - [x] 已从 Mobile 提取有真实多宿主消费者的 `@cuberoot/app-ui`；Mobile、Desktop 和 Harmony 只通过公开入口消费，无 app→app 源码或 `dist` 依赖。
 - [x] 已建立 `core/apps/desktop`，Windows 和 macOS 共用同一 Tauri 工程。
-- [ ] Desktop 两平台构建、安装、实体机功能、签名与发布验收完成。macOS 本机已有可启动 `.app` 和经 `hdiutil verify` 的未签名 DMG；Windows 只有 CI 定义，尚无实际 run 证据。
+- [ ] Desktop 两平台构建、安装、实体机功能、签名与发布验收完成。macOS 本机已有可启动 `.app` 和经 `hdiutil verify` 的未签名 DMG；Windows 当前源码的 release 可执行文件已构建，并有 Desktop 实际运行与 GAN v4 BLE 使用证据，但正式安装包、升级、签名和完整功能矩阵仍未验收。
 - [ ] `core/apps/harmony` 完成设备安装、ArkWeb/bridge 交互、BLE、签名与发布验收。ArkWeb 本地 bundle、ArkTS bridge 和 unsigned HAP 已本地构建成功，但当前 `hdc` 无设备，不能记为鸿蒙适配完成。
-- [ ] BLE、安全存储、认证、文件、分享、打印、保亮和生命周期 capability contracts 与宿主 adapters 逐项完成。Desktop BLEC 与 Harmony ConnectivityKit adapter 均接入共享 GAN 连接逻辑，但两端都没有实机 BLE 证据。
+- [ ] BLE、安全存储、认证、文件、分享、打印、保亮和生命周期 capability contracts 与宿主 adapters 逐项完成。Desktop BLEC 已接共享多协议扫描、选择和连接链路，Windows 的 GAN v4 已实测；其他 Desktop 型号、macOS 与 Harmony 仍缺实体设备 BLE 证据。
 - [ ] 建立五端 build/安装/真机或实体电脑/签名/发布矩阵；五端全部通过前总体状态保持 `NOT COMPLETE`。
 
 当前证据：
 
 - `@cuberoot/app-ui` 已是五端唯一 React 产品层；`@cuberoot/app-ui` typecheck 与自动化测试已本地通过。
-- Desktop 源码已共用 Tauri 宿主、系统 keyring、深链、外链和 BLEC transport，BLEC 复用 `@cuberoot/app-ui` 中的同一 GAN connection 逻辑。2026-09-01 当前源码的 macOS `CubeRoot.app` 已启动；`CubeRoot_0.1.0_x64.dmg` 为 6,297,645 bytes，`hdiutil verify` 通过，SHA-256 为 `94af17fe41d3dade835ebe929a83858d6d2ea0ff2acfc386c5fea29bf3d61fea`。该包未签名、未公证，也没有实机 BLE 证据。Windows CI 矩阵只是已定义的待运行检查；本机交叉 `cargo check` 缺 Windows `llvm-rc`，不能当作 Windows 构建/安装证据。
+- Desktop 源码已共用 Tauri 宿主、系统 keyring、深链、外链和 BLEC transport；BLEC 通过 `tauri-plugin-blec` / `btleplug` 使用 Windows 与 macOS 的系统 BLE 栈，并复用 `@cuberoot/app-ui` 中的 GAN v2/v3/v4、MoYu32 和 QiYi connection。2026-09-22 当前源码执行 `tauri build --no-bundle` 成功，产出 `src-tauri/target/release/cuberoot-desktop.exe`；所有者同日确认 Windows Desktop 上 GAN v4 可以正常连接和使用。这只证明 Windows 原生编译和该型号主链，不替代正式安装包、其他协议或压力矩阵。2026-09-01 当前源码的 macOS `CubeRoot.app` 已启动；`CubeRoot_0.1.0_x64.dmg` 为 6,297,645 bytes，`hdiutil verify` 通过，SHA-256 为 `94af17fe41d3dade835ebe929a83858d6d2ea0ff2acfc386c5fea29bf3d61fea`。该包未签名、未公证，也没有 macOS 实机 BLE 证据。
 - Harmony 的本地 Web bundle、ArkWeb/ArkTS bridge、ConnectivityKit BLE bridge、安全存储与 unsigned HAP 已通过官方 Hvigor 构建。2026-09-01 在当前 Intel `x86_64` Mac 上使用 DevEco Studio `26.0.0.821` 的官方 SDK 再次执行 `assembleHap`，日志为 `BUILD SUCCESSFUL`，产物是 `entry-default-unsigned.hap`。当前 `hdc list targets` 为 `[Empty]`，所以安装、ArkWeb 运行、系统交互、真实 GAN 16 UI BLE、签名和发布仍未验收，`HARMONY-01` 保持进行中。
 - Harmony 首次 BLE 现由 `UIAbilityContext` 显式请求 `ACCESS_BLUETOOTH`，Asset Store 机密限定为 `DEVICE_UNLOCKED`，系统备份关闭，native 版本由 build guard 对齐 `package.json`；BLE connect 以 generation + GATT identity 拒绝超时连接的迟到回调，避免同设备快速重连被旧请求断开。ArkTS/HAP 目前只能在已安装的官方 CLT 上本地编译；GitHub CI 尚无官方 Harmony SDK runner，不能把 Vite build 当成 native 回归。所有者已完成华为企业开发者认证；自动调试签名现因未连接 HarmonyOS NEXT 设备而无法生成 profile，`build-profile.json5` 的 `signingConfigs` 仍为空，Hvigor 明确跳过签名。模拟器不需要签名，真机才需要把设备写入调试 profile；不得为绕过设备门槛手填、生成或提交 `.p12`、密码或本机 profile。
-- Desktop BLE 扫描已按插件真实异步回调等待并在 8 秒后 `stopScan`；但 `tauri-plugin-blec 0.12.0` 的通知队列容量为 1，快速转动时的上游 `try_send(...).expect(...)` 仍须用 GAN 16 UI 做压力测试，复现后优先升级或最小 patch upstream，不能用 mock test 宣布稳定。
+- Desktop BLE 现有 8 秒实时扫描、按地址去重、RSSI 排序、名称列表选择、连接后 service/characteristic discovery、通知、读写和写入模式选择；关闭弹层、重扫和发起连接都会停止旧扫描。2026-09-27 所有者在 Windows 持续拧动 GAN v4 / MoYu32 时复现假连接，原生日志确认 `tauri-plugin-blec 0.12.0` 的容量 1 通知队列在 `commands.rs:179` 因 `Full(..)` panic，终止 `listen_notify` 却没有断连事件。Desktop 现通过插件公开的 Rust `Handler.subscribe` 直接转发到 Tauri IPC Channel，取消该中间队列；其余扫描、连接、退订与 GATT 仍由 BLEC 管理，不复制厂商协议。IPC 转发失败通过独立错误通道使所属前端会话断开，并等待原生清理后重连；已关闭的 WebView 无法保证收到错误通知。Rust 测试覆盖 4,096 帧顺序完整性和 IPC 失败，adapter 测试覆盖清理屏障及旧订阅迟到错误，Desktop CI 同时运行原生测试。新构建的 GAN v4 / MoYu32 持续拧动及 macOS 真机验证仍待验收，不能用自动化代替实物压力测试。
 - Android 对不支持安全 main-frame message listener 的旧 WebView 启动即 fail closed，并锁定 release manifest 的 10 项权限及 legacy 权限 `maxSdkVersion=30`/扫描 `neverForLocation`。Capacitor 内部仍注册 Cookies/Http/SystemBars 辅助 JS interface；通用 plugin dispatcher 已主 frame 隔离，但远端 iframe 的 cookie 边界仍是发布前 P2 审核项，文档不得声称“所有原生接口均仅主 frame”。
 - `@cuberoot/app-ui` 已接真实 2/3/4 人 `LocalBattleMode` 与 `NetBattleMode`，三个宿主均注入同一联机 client/session contract；本地模式已有原子轮次、胜场/次数/最佳、按键冲突交换、共享一颗智能魔方轮换与打乱失败的 12 秒超时/原位重试；联机已有 WCA 身份、邀请二维码、房主转让/踢人、历史打乱及 single/ao5/mean。Web 仍有另一套 Battle/Net React 视图，完整设置/视频/每人独立 BLE/高级历史展示、staged API 部署、真实双设备和五平台交互仍未完成。
 - API CORS 与网站 embed bridge 已在本地源码加入 Tauri origins，但本轮未 push/部署；不能把本地代码写成生产 Desktop Tools/Account/登录已通。
@@ -232,7 +358,7 @@
 当前决策与目标设备：
 
 - 首测手机：OPPO Reno7 Pro 5G `PFDM00`（Android 13 / ColorOS 13.1）；首测魔方：GAN 16 UI（GAN v4）。
-- 原生 transport 采用 `@capacitor-community/bluetooth-le` 8.x 的薄 adapter；选择依据是 Capacitor 8 同主版本、Android/iOS central BLE、manufacturer data、读写、通知、断线和 MTU 能力齐全。GAN 协议继续复用 `@cuberoot/shared/smart-cube/gan-v4`；网站保留 Web Bluetooth adapter，不复制协议、不从 client deep import。
+- 原生 transport 采用 `@capacitor-community/bluetooth-le` 8.x 的薄 adapter；选择依据是 Capacitor 8 同主版本、Android/iOS central BLE、manufacturer data、读写、通知、断线和 MTU 能力齐全。智能魔方协议继续复用 `@cuberoot/shared/smart-cube` 下的 GAN v2/v3/v4、MoYu32 与 QiYi 实现，由 `@cuberoot/app-ui` 负责原生连接编排；网站保留 Web Bluetooth adapter，不复制协议、不从 client deep import。
 - Capawesome BLE 因本项目不需要其付费的 peripheral/headless/foreground 扩展而不选；Capgo Web Bluetooth shim 因设备选择语义受限且会把 Mobile 重新耦合到浏览器 GATT 对象而不选。只有社区插件真机 spike 暴露无法补齐的硬阻断时，才重开插件或自有原生桥决策。
 - 真机证据已覆盖 Android 13 附近设备授权、扫描、选择、连接、服务发现、写命令、通知、GAN v4 解密、状态帧与真实转动解析。2026-08-30 进一步实测打乱匹配后自动预备、第一手起表、复原自动停表并保存 `5.20`，统计从 `3/3` 更新为 `4/4` 后自动切换下一条比赛打乱。权限拒绝恢复、后台、蓝牙关闭、距离中断和反复重连仍是独立未完成门槛。
 - 2026-09-01 的 shared 指引/修正与 Solo lifecycle controller 已通过 Web/App 延迟 requester、同 target coalesce、新 target 续跑、协议错拒绝晚帧、同批帧、连接/切题后 authoritative state 重放、一次性完成 edge 与 43 项能力矩阵回归；Android APK 为 8,788,904 bytes、SHA-256 `5cc6b17112332c4c1e814b7495852365f761e951f0ee6b6fc8d046b3b7935ce7`，已安装到同一 OPPO 且与设备内 `base.apk` 字节一致。实体 GAN 新路径未在解锁屏幕上复验，故本阶段仍不完成。
@@ -312,14 +438,20 @@
 - [ ] iOS 权限、后台、系统中断、安全区、动态字体和 VoiceOver 验证通过。
 - [ ] 网站唯一 `LoginForm`/后端提供满足 Apple 4.8 的等价登录（优先 Sign in with Apple），且完成全 provider、会话衔接、TestFlight 和 App Store 审核取证。（当前 P0 `BLOCKED`）
 - [x] Apple 门户已配置 Sign in with Apple primary App ID `me.cuberoot.app` 与 Services ID `me.cuberoot.web`，并取得仅本机保存的有效 SIWA 私钥。（2026-09-11，配置/密钥格式证据；不代表生产配置、令牌交换或登录 E2E）
-- [ ] Release Archive、Validate App 与最终 Xcode Privacy Report 通过。
-- [ ] App Store Connect 应用条目、构建上传与 Apple 处理完成。
+- [x] Release Archive 与 Apple Validate App 通过。（2026-09-28 PDT：Xcode 27.0 / iOS SDK 27.0，`me.cuberoot.app` `1.0 (1)`；App Store IPA 使用 Cloud Managed Apple Distribution，`codesign --verify --deep --strict` 通过，服务端返回 `Validated App`。）
+- [ ] 最终 Xcode Privacy Report 完成复核；本轮 IPA 可见 Capacitor/Cordova 隐私清单，但不能以 Apple 上传校验替代完整隐私声明复核。
+- [x] App Store Connect 应用条目、构建上传与 Apple 处理完成。（2026-09-28 PDT：App `6816632957` 的 `1.0 (1)` 上传返回 `Upload succeeded`，TestFlight Build Uploads 为 `Complete`；构建已关联到待提审版本，仍为 `Missing Compliance`，待明确加密出口分类及所需材料，不代表可测试或可提审。）
 - [ ] TestFlight 内部构建在 iPhone 安装、启动并完成首发核心回归。
 - [ ] Apple IAP 复用网站会员、订单和服务端权益，完成购买、恢复、续期/到期、退款/撤销及跨端会话验收；全球发行包含中国大陆，备案和地区材料须完成后才能开放对应地区。
 - [ ] App Store 审核通过，且业务逻辑未复制为 iOS 专属实现。
 
 当前 iOS 证据与阻塞：
 
+- **2026-09-29 最新状态（后面的 09-28 条目为历史）**：首发月/年自动续费商品已创建，价格 CNY 29.90/299，同组同级、非欧盟 148 地区；Paid Apps Agreement 已签但银行/税务未齐。StoreKit 原生桥、登录账号绑定、服务端 Apple 验签/当前状态核对、权益视图、恢复/通知及账号合并/注销处理已在本地实现；shared build、App UI 404 项测试和 Mobile 交易边界测试通过。新 `1.0 (2)` 已通过分发归档、Apple 校验、上传与处理，出口问卷完成，已关联版本 1.0 草稿；未提交审核，不以此关闭 Sandbox 与真机门槛。密钥已获所有者批准创建并配置；购买开关在部署验收前关闭。内容排除已覆盖 SQ1 PBL 衍生记号表，剩余 two-tool/SpeedCubeDB 等授权依据未齐，Content Rights 尚不能作肯定声明。详情见商店准备文档 9.4。
+
+- 2026-09-28 PDT 已完成首个 `1.0 (1)` 分发包：共享 App UI typecheck 与 366 项测试、Mobile typecheck 与 28 项测试、Vite build、Capacitor iOS sync 均通过；Release 归档后以 Team `R25HL7AXXK` 导出 Apple Distribution 签名 IPA。Apple Validate App 与正式上传均成功，23:12 PDT 已确认 TestFlight Build Uploads 为 `Complete`；构建 ID `8437a5b6-caa1-4d5d-85e7-9ccc09c23600`，当前 `Missing Compliance` 指向加密算法问卷。加密声明、TestFlight 安装及 App Review 仍是独立步骤。Mac 本地产物与日志位于 `~/Library/Developer/CubeRootReleases/ios-1.0-20260929/`，不纳入 Git；导出 IPA SHA-256 为 `c1bdac48bcac8ff8611cd28cde531bde809a2994af77de31b8098922ebb382c1`。本轮未提交审核、未公开发布。
+- 同轮提审准备补充：已保存普通计时、数据本机保存、在线账号/工具和可选 BLE 的审核 Notes，并将 `1.0 (1)` 关联到版本。Business 页面确认 Free Apps Agreement 为 Active，DSA trader 声明待填，Paid Apps Agreement 为 New；App Information 的大陆 ICP 备案号为空。独立审计确认实际 IPA 包含 `shared/smart_cube/gan_crypto.ts` 的 JS AES-128 与 GAN/MoYu 重叠帧编解码，不可声明为仅使用 Apple OS 加密；全球发行包含法国，分类与适用材料仍需确认。技术草稿保存在上述本机产物目录 `export-compliance-technical-draft.md`，不是已签声明或获批文档。账号页仍有数字会员购买入口，公开 membership API 启用微信/支付宝，尚无 iOS StoreKit 验收证据；首发购买方案待所有者决定。Simulator Release build、iPad Pro 13-inch (M5) 安装与进程启动通过，但 Device Hub UI 工具读取连续超时，尚未获得真实商店截图或 iPad 运行交互证据。原有第三方内容授权保留未确认；未代填 DSA 身份、备案号或法律文件。
+- 本轮 App Store Connect 已保存中英文支持网址 `/contact`、`/zh/contact`，免费价格与全部 175 个国家/地区（包含未来新增地区）；可用范围设置不证明各地区材料齐全。所有者确认隐私声明已发布；因第三方内容授权尚未确认，所有者要求内容版权声明暂留空。本轮只核对 iPad device family、四方向及 1024px 宽屏布局源码，未将其记为 iPad 真机验收。
 - `xcodebuild` 使用 Xcode 26.6、iOS Simulator SDK 26.5 完成 Debug 构建；`simctl install` 和 `simctl launch` 对 `me.cuberoot.app` 成功。
 - iOS 原生工程只承载 Capacitor 壳，计时 UI、项目图标和魔方展开图分别复用 `@cuberoot/timer-ui`、`@cuberoot/event-icon` 和 `@cuberoot/visualcube`；架构边界守卫与相关定向测试通过。
 - 小程序的计时页已确认只是指向网站 `/zh/timer` 的 WebView；移动 App 以该真实网站界面为产品事实源，但不跨 app 导入小程序源码。计时器状态正按 `docs/mobile-timer-parity-tracker.md` 与零遗漏审计迁到 shared/timer-ui；迁移未完成，未接真实行为的控件不能用占位、外跳或隐藏冒充完成。当前仍是 `ACTIVE — NOT COMPLETE`。
@@ -1170,6 +1302,23 @@ CubeRoot 应以这些证据证明不是简单套壳：
 - 仓库所有者预计 2026-09-22 收到 Apple silicon Mac mini。到货后的唯一流程是：现场确认 `uname -m` 为 `arm64` → 安装 DevEco Studio Mac ARM 版 → 登录同一企业开发者账号 → 打开现有 `core/apps/harmony` → Device Manager 创建模拟器 → 安装运行同一 HAP。不得复制 Intel 版 DevEco，也不得新建 Harmony 业务工程。
 - 模拟器验证不需要配置签名；需要真机验证时，先连接 HarmonyOS NEXT 设备并确认 `hdc list targets` 可见，再让 DevEco 自动生成调试 profile。证书、密码和本机签名材料不得进入 Git。
 
+### 19.2 Android 智能魔方桥接进度（2026-09-20）
+
+- `core/apps/mobile` 的 Capacitor BLE transport 已完成 Android 权限初始化、设备选择、GATT 连接、service/characteristic discovery、通知、读写、MTU 和断连清理；写入能力缓存按 `deviceId` 隔离，避免多连接或迟到清理串用其他设备的 write mode。
+- `@cuberoot/app-ui` 的 `useInstalledSmartCube` 现已在宿主提供 service discovery 时，识别 `GAN`、`MG`、`AiCube`、`Gi`、`WCU_MY3`、`QY-QYSC`、`XMD-TornadoV4-i` 名称前缀。Android 多品牌设备选择按 DCTimer 的策略使用低延迟无 service 过滤扫描，避免未在广播包声明 GATT UUID 的魔方被系统提前丢弃；原生选择列表再按上述名称前缀做大小写不敏感的软件过滤并按蓝牙地址去重，不展示其他未知 BLE 设备。列表只显示设备名称，MAC 地址仅用于内部去重和连接。选中后再由设备名与已发现的 service 判定协议。Desktop 已提供 discovery 和共享设备列表；当前仍不提供 discovery 的 Harmony 路径继续保持原 GAN v4 入口，不误标为其他协议已支持。
+- GAN v2/v3 与 MoYu32 已完成代码级 Android bridge。MoYu32 覆盖名称推导 MAC、service/characteristic 校验、A1/A3/A4 握手、AES 通知、状态/动作/电量/姿态、设备增量时间、AC 陀螺开关、坏密钥熔断和断连迟到通知隔离；成绩设备型号不再固定写成 `gan-v4`。
+- QiYi 已完成代码级 Android bridge，覆盖 `fff0` service、`fff6` 通知/优先写入、`fff5` 后备写入、Android 地址优先与设备名 MAC 后备、AES-ECB hello/ACK、状态与完整历史动作、电量、设备时间、Tornado V4 陀螺仪、坏帧熔断和断连迟到通知隔离。状态帧中晚于 facelet 快照的 future-history 动作会继续推进本地魔方状态；仅在计时已经运行时记入复盘，不会在空闲态、预备监听或 battle 中误触发起表。
+- 自动化证据包括 app-ui 的 GAN/MoYu32/QiYi connection 与 hook 定向测试、Mobile transport 的 Android 多前缀原生 picker 路由与非 Android 无过滤回退测试、设备隔离测试，以及 shared/app-ui/mobile 构建或类型检查。2026-09-20 所有者已确认当前 Android 真机能够正常扫描、连接并使用智能魔方；由于本次未单独登记魔方型号，不增加任何品牌协议的型号级验收，既有 OPPO Reno7 Pro 5G + GAN 16 UI 记录仍只证明 GAN v4 主链。
+- QiYi、GAN v2/v3 与 MoYu32 仍需补齐多品牌真机矩阵；自动重连、后台/蓝牙关闭/距离中断和异常压力测试也未完成。QiYi 真机需分别确认实际 Android MAC 与名称后备、`fff6`/`fff5` 写通道、广播包不含 service UUID 时的选择器可见性、状态历史以及 Tornado V4 陀螺仪。
+
+### 19.3 Desktop 智能魔方桥接进度（2026-09-22）
+
+- Windows 与 macOS 继续共用 `core/apps/desktop` 的同一 Tauri 宿主，不新增平台专用协议实现。前端 `TauriBleTransport` 通过 BLEC/btleplug 调用系统 BLE 栈，协议、加解密、状态跟踪和 UI 继续来自共享包。
+- Desktop 智能魔方弹层现会主动扫描并显示支持设备列表，按地址去重、按 RSSI 排序，只展示名称和信号等级；用户选择设备后按原扫描得到的设备 ID 连接，不再自动连接信号最强的一台，也不在 UI 暴露设备地址。
+- 连接后会读取系统返回的 GATT service/characteristic，映射 notify/indicate/read/write/write-without-response 能力，并按实际写入属性选择 BLE 写入方式。由设备名称和 service 共同路由 GAN v2/v3/v4、MoYu32、QiYi/Tornado 共享 connection。
+- 2026-09-22 所有者已确认 Windows 上 GAN v4 可以正常连接和使用。GAN v2/v3（含 `MG`、`AiCube`、`Gi` 名称）、MoYu32、QiYi/Tornado 的 Desktop 入口已有源码与自动化覆盖，但尚无实体魔方验收；macOS 也尚未做任何型号的 BLE 实机验收。
+- 下一门槛是分别记录 Windows/macOS 的型号、硬件/固件、广播名称、系统地址形态、service/characteristic、写入模式、通知稳定性和断连恢复；同时补蓝牙关闭、拒绝权限、同名多设备、超距、休眠、快速转动和重新扫描矩阵。自动重连仍未实现。
+
 ## 20. 决策检查表
 
 在每个大阶段开始前重新确认：
@@ -1186,7 +1335,7 @@ CubeRoot 应以这些证据证明不是简单套壳：
 | 业务逻辑 | 共享 TypeScript 核心 | 不复制三套 |
 | 内容更新 | API/数据驱动 | 保持 |
 | 代码更新 | 商店构建和审核 | 保持 |
-| 首发付费 | App 内会员购买已纳入目标；复用网站权益，Apple IAP 未接通 | 商品类型、周期、SKU、价格与商店配置由所有者确认 |
+| 首发付费 | 个人月卡、年卡采用 Apple 自动续费，复用网站权益；2026-09-29 所有者再次确认 | 保留远端 StoreKit 与 API 实现；Sandbox 与真机购买验收仍待完成，详商店准备文档 §9.4 |
 | 首发语言 | 英文 + 简体中文 | 有用户和支持能力后增加 |
 | 中国大陆 | 全球发行目标明确包含 Apple 中国大陆；Android 多商店独立记账 | 按实际 App 备案、类别与渠道材料开放，不以网站备案替代 |
 | 发布节奏 | staged rollout + 月度版本 | 严重故障走紧急版 |
@@ -1246,3 +1395,192 @@ CubeRoot 应以这些证据证明不是简单套壳：
 ```
 
 最省心不是永远不更新 App，而是把“每天会变的内容”和“必须审核的客户端代码”分开。只要这个边界从第一天守住，CubeRoot 网站继续快速迭代，App 不需要跟着每次手工改一遍。
+
+
+### 2026-10-05：外部计时器接入 Mobile / Desktop
+
+- 设备入口文案以 Web 为准统一为「智能魔方 / 智能计时器 / Stackmat 麦克风」；菜单、入口和连接状态中英文均由 `TIMER_DEVICE_CENTER_LABELS` 同源提供。
+
+- Web、Mobile、Desktop 共用 `@cuberoot/timer-ui/external` 的 `BluetoothTimerModal`、`StackmatModal` 与 React controllers。智能计时器保留独立标题、设备状态、最近成绩和断开操作，不包含智能魔方的状态重置/陀螺仪重置。Stackmat 保留输入选择、电平、解码状态、精度和停止监听。
+- GAN / QiYi timer 的通知解析、加解密、hello 与 ACK 会话统一由 shared 驱动；安装端复用 Capacitor / Tauri BLE transport。桌面扫描由共享面板选择设备，QiYi 地址依次使用原生地址、广播及可取消的手动输入。连接/扫描取消、迟到连接释放和设备切换均有代际隔离。
+- Stackmat 复用同一 Web Audio 采集管线和 shared 解码器，Mobile / Desktop 宿主显式注入 source。Android 补 RECORD_AUDIO / MODIFY_AUDIO_SETTINGS，iOS/macOS 补用途说明，macOS 补 hardened-runtime audio-input entitlement；权限请求继续使用现有 Capacitor / Wry 媒体委托。取消待授权监听后，迟到音频流立即释放。
+- 安装端设备中心现在注册三类真实能力。外部计时冻结开始时项目、打乱和分组，保存设备最终读数；断连清理尝试，重复 STOPPED 不重复保存，外部设备接管时屏蔽普通触摸/键盘停表。
+- 当前证据：相关 Web/安装端定向回归、App真实计时与 repository 集成回归通过；Mobile/Desktop Web build、Android `assembleDebug`、iOS Simulator unsigned build、macOS `cargo build` 通过。原生权限弹窗、设备型号、音频线/USB声卡、后台恢复等仍需 Android、iOS、Windows、macOS 各自实体设备验收；本轮未发布。Harmony 未接入本轮新增宿主 capability，整体仍为 NOT COMPLETE。
+
+### 2026-10-05：联机录制与本地多人状态机统一
+
+- Web 与五端 App 产品层共用 `NetBattleAttemptRecorder`：起表冻结房间、玩家、轮次、项目、打乱、本地分组和记录 ID；保存智能魔方首末招、设备、陀螺仪及阶段信息。房间轮询或下一轮倒计时不覆盖正在录制的尝试，上传房间成绩与本机复盘保存相互独立。App 联机页接入既有 `ReconstructReport`，保存后也进入本机历史。
+- 两端使用 `NetRecordingOutbox` 与按 ID 幂等保存；失败显示重试，改罚时只更新对应记录且保留已有备注/反馈。队列在当前进程内跨模式/房间保留，尚不保证关闭应用后恢复未落盘记录；这不是账号云同步。
+- Web 本地 2～4 人起停、预备取消、观察、同步开始和下一轮生命周期改用 App 已消费的 `transitionLocalBattle`。共享设置提供「同时开始」，共享轮次生成冻结本轮打乱/观察时长，预取下一题不会污染旧轮次。修正先完成者改罚时覆盖上一轮旧历史的问题。
+- 当前证据：Web 定向 7 文件 80 项、App 状态机/页面消费/仓储定向 3 文件 61 项通过；App/client typecheck、shared build、Mobile Capacitor 双平台同步、Android debug APK、iOS Simulator unsigned build、macOS unsigned debug `.app`、Harmony Web build 通过。Windows 原生构建未在此 Mac 执行；Harmony HAP 仍受既有本机 Hvigor 6.0.1 与工程 6.0.2 不匹配阻断。未进行真实联机房间、实体魔方、多设备或五平台 UI 全量验收，未发布，整体仍为 NOT COMPLETE。
+
+
+### 2026-10-05：联机房间控制流程同源
+
+- Web 与 App 的轮询、恢复、响应接纳、退出失效、推进保护和上传重试共同使用 shared 的 `NetRoomController`、`startNetRoomPolling`、`startNetRoomRestore`。宿主仅注入请求、会话存储、页面状态与可见性/联网事件。每次 membership 都有独立代际；同码退出重进后，旧请求成功/失败/重试不能修改新房间。
+- 轮询隐藏暂停、可见或联网时立即刷新，同一 membership 不重叠；恢复断网保留原 capability 并重试，明确被踢/失效才清理。被撤销的已保存身份不会自动以新人身份重入。异步 session clear/save 串行，退出与被踢清除计时、倒计时、旧弹层及复盘展示。
+- App 与 Web 都保留本机结算直到显式下一轮；较新轮询不会吞掉推进意图，强制推进期间仍保留正在计时的旧轮及历史结果。成绩上传和罚时变更按 membership/轮次串行；服务端 advanced 响应只有历史成绩与本次提交一致才算成功，否则显示既有 result-rejected 错误，本机录制仍独立保留。
+- 当前证据：定向 Web 8 文件 96 项与 App 页面集成 14 项通过；shared build、App/client typecheck 通过。Mobile 双平台 sync、Android debug APK、iOS Simulator unsigned build、macOS unsigned debug app、Harmony Web build 通过。Windows 原生构建/真实联机多设备验收未执行，Harmony HAP 工具链版本阻断未改变。本轮无 API 改动、无发布；持久化成绩重试队列仍是后续步骤，整体保持 NOT COMPLETE。
+
+
+### 2026-10-05：联机成绩持久化待处理队列
+
+- Web 与五端 App 共用 `NetRecordingOutbox` 的版本化待处理日志和 `uploadNetRecordedAttempt`；DOM 宿主复用 IndexedDB adapter 与 `TimerNetOutboxNotice`。根计时/App 宿主负责启动恢复、联网/回前台及有界间隔重试，切换到单人或历史页也会恢复。此记录取代此前“队列仅进程内保留”的限制。
+- 入队写日志独立于网络交付锁，上一条上传挂起时后续成绩/罚时仍能落盘。每条以稳定房间/玩家/轮次 ID 幂等保存，状态回写/删除使用 revision 比较；上传与本机保存分别确认，两者完成才清除日志。刷新后修改罚时保留原动作流、时间戳及分组；本机已存记录按 ID 跨分组定位，避免切分组后重复插入。手动联机成绩也进入本机历史，只有包含动作的成绩展示复盘报告。本机已完成但尚未上传的本轮成绩（含刷新恢复）禁止重复起表与换项目；是否收齐成绩仍以房间服务端状态为准。
+- 队列不保存 playerToken。安装端上传时读取原有安全会话；Web 仍使用原来的 sessionStorage 身份。先核对房间/玩家、项目、打乱、轮次及已收成绩，再发送；与服务端整数毫秒口径一致。已失效或未被原轮接受的成绩保留本机，只有用户点击“保留本机成绩”才移除相应失败上传项。浏览器完整关闭导致 sessionStorage 身份丢失时，日志和本机成绩仍在，不能伪造原身份或自动以新人提交旧成绩。
+- 跨窗口交付使用 Web Locks；缺少独占锁时只落日志并显示恢复失败，不执行不安全的并发交付。日志本身写失败时明确提示勿关闭；损坏日志保持原样，不自动覆盖。原分组已删除时不会悄悄转存其他分组，条目继续保留等待处理。上述状态均不能记成成功上传或账号云同步。
+- 当前证据：使用真实 fake-indexeddb 的跨实例恢复、上传挂起期间入队、旧 ACK/new penalty、清理失败重放、缺锁/配额失败、拒收确认与服务端确认回归通过；Web 定向含 catalog/架构守卫 5 文件 39 项、App 页面/仓储 2 文件 50 项通过。shared build、App/client typecheck、Mobile 双平台 sync、Android debug APK、iOS Simulator unsigned build、macOS unsigned debug app、Harmony Web build 通过。真实断网/杀进程/重启及五平台实体设备验收尚未完成；Windows native 未在 Mac 构建，Harmony HAP 既有工具链阻断不变；未发布，整体保持 NOT COMPLETE。
+
+### 2026-10-05：本地多人打乱来源、设置与历史操作统一
+
+- Web 与 App 共用本地多人打乱结果契约、超时/失败规则、设置持久化模型、CSV 导出及来源/外观设置组件。App 补齐 WCA 真题（比赛/日期）、0～3 位精度、8 秒/无限观察、打乱字号、玩家背景和历史 CSV，Mobile/Desktop 消费同一 App 产品层。Web 原本无效的多人语音/阶段控件不再展示。
+- 换项目一次更新全部四个玩家槽位，切换人数重新取题；来源或项目变化使旧请求失效。真题未选定、返回空题或随机引擎错误都显示失败并允许重试，不静默替换随机题。下一轮预取失败保留本轮成绩、来源与罚时操作，重试不清空结算；历史记录冻结真题具体题号，不能按打乱文本反查覆盖。
+- App 删除/清空等待仓储完成，失败不移除界面记录；删除当前轮同时退出其罚时编辑状态，避免重新写回已删除成绩。Web 删除任意历史轮次都重新计算积分。背景图片读取隔离换图、重置和卸载后的迟到回调。
+- 当前证据：Web 定向 7 文件 48 项、App 页面集成 15 项通过；shared build、App/client typecheck、Mobile 双平台 sync、Android debug APK、iOS Simulator unsigned build、macOS unsigned debug app、Harmony Web build 通过。Chrome 检查 Web/App 多人设置在窄屏及系统/手动深浅主题下的边界与运行错误。独立源码复核通过。Windows 原生构建未在 Mac 执行，Harmony HAP 既有工具链阻断不变；实体设备、真实多人操作完整验收仍待所有者完成。本轮仅本地，整体保持 NOT COMPLETE。
+
+### 2026-10-06：历史与统计工作区统一（顺序 4，本地）
+
+- Web/App 历史筛选、日期分组、滚动列、自动标签、比较和批量选择统一消费 `TimerHistoryWorkspace`；App 移除原有私有列表组合。两端批量删除都先完成真实持久化，失败保留选择并提示；App 仓储固定原分组/项目，界面按代际隔离 A→B→A 后的迟到成功、失败和 finally。
+- 统计与图表共用 `TimerStatisticsWorkspace`，安装端补齐完整统计、时间段、按天、训练/CFOP 案例、跨分组及分布/趋势/散点/时段/日历五类图表。旧 Web 文件保留薄适配出口，图表 CSS 也由共享包维护。统计采用原有 shared 计算；跨分组表改用 event-aware summary，FMC 显示步数，MBLD 最佳按分数排序且不显示无意义的滚动时间平均。
+- PR 徽标复用共享展示与记录格式化，Web 的洲际展开和日掩文案仍由原 adapter 提供。免搜索手感指标迁入 shared，缓存以不可变成绩快照为键，同 ID 修改罚时/动作后重新计算。WCA 纪录栏仅迁移原有日期标注快照，本轮没有刷新纪录数据。
+- 完整统计和比较弹窗都纳入安装端键盘、手势、智能魔方及外部设备起表门禁；Back 优先关闭弹窗和当前可见临时模式。保留外部计时器自身连接面板内的计时行为；切历史/统计/图表清理临时选择。
+- 当前证据：针对删除失败、A→B→A、固定原分组原子写、罚时缓存和统计弹窗阻止设备起表新增回归，既有历史/统计、仓储、Android Back、架构与 catalog 定向检查通过；shared build、App/client typecheck 通过。Chrome 两端同一 14 条成绩 fixture，390/320px、系统/手动深浅主题无页面横向溢出和运行错误；320px 英文统计标签溢出已修。独立源码反例审查完成。
+- Mobile build/双平台 sync、Android debug APK、iOS Simulator unsigned build、macOS unsigned debug app、Harmony Web build 通过。Windows native 未在本 Mac 执行，Harmony HAP 既有 Hvigor 版本阻断未改变；本轮没有 OPPO/iOS/Harmony 真机或 Windows/macOS 实体完整操作验收，没有签名、推送或发布。总体继续 NOT COMPLETE。
+
+### 2026-10-06：更多复盘、数据设置与停表排名（顺序 5，本地增量）
+
+- Web/App 的 replay URL/token/短链读取、载荷校验、动作与姿态恢复共用 shared；粘贴弹窗和完整复盘窗口共用 timer-ui。安装端补齐 More 的最后一个 replay 动作，当前 12/12 个入口都有真实 effect；支持使用该打乱和临时反馈，打开外来回放不自动保存成绩，关闭后迟到请求不能重开窗口。登录分享复用既有服务端短链，匿名分享仍用内嵌载荷。
+- csTimer JSON 与 dcTimer SQLite 的解析、分组/项目匹配及追加计划进入 shared，Web/App 共用导入映射 UI；保留原分组与空组，未识别项目必须完成映射。CubeRoot 备份覆盖前确认，App 保留恢复点；追加导入只在一次真实持久化成功后刷新。重新分析固定启动时分组，共用动作分析和阶段比较，避免切组后写入其他分组。
+- 本机自动备份间隔、最近 10 份备份、手动创建/恢复与账号云备份使用共享设置 UI、HTTP 契约。云备份只传既有数据库形态，不包含 App 设置，不等同自动多设备同步。卸载设置、切换账号或计时起表后，仓储排队和 IndexedDB 打开后的迟到恢复都在 put 前再次检查；手动备份失败不再提示成功。
+- 停表 PR/NR/CR/WR 显示、查询缓存、国家映射/搜索和国家输入框已共享。App 接入范围/地区持久化与实际排名；排除 DNF/DNS、FMC/多盲时长和未计时练习，+2 按生效成绩比较；切项目/成绩/国家时不保留旧响应。Web 国家置顶仍由原账号 adapter 注入，App 本轮接地区选择，未增加国家置顶偏好适配。
+- 设置 effect ledger 从 49 增到 62；相对 Web 当前 65 个 consumer，仍缺同步种子及其计数 2 个生产字段、fake-cube 1 个开发字段。同步种子涉及 Web 同步 registry 与 App 异步 provider 的算法/RNG/消费顺序，尚未迁移；因此顺序 5 和完整设置 parity 均不能记为全部完成。
+- 当前验证：shared build、App/client typecheck；Web replay/import/reanalysis/rank、架构/catalog 定向回归，App 仓储/设备起表/More/设置账本及真实 fake-indexeddb 的取消写入、备份间隔/保留验证通过。Chrome 隔离上下文实测两端粘贴打开复盘、本机备份/列表、排名地区搜索，390/320px 页面及弹窗无横向溢出、无运行异常；未改用户浏览器资料或上传真实云备份。
+- Mobile build 与双平台 Capacitor sync、Android debug APK、iOS Simulator unsigned build、macOS unsigned debug app、Harmony Web build 通过。Windows native 未在本 Mac 执行，Harmony HAP 的既有工具链差异本轮未重试；未做五平台实体设备、真实账号云恢复/升级验收，未签名、未推送、未发布。总体维持 NOT COMPLETE。
+
+### 2026-10-06：单人同步种子与计数接入（本地）
+
+- Web 与五个安装端共用 seeded Worker 引擎、FNV/xorshift RNG、42 个非空项目生成及 custom 空题契约；Web 原 NxN、BLD、SQ1 等路径保留兼容出口。csTimer 项目与二阶专项在每次请求重设引擎种子，重试不依赖上一次 Worker 的随机状态。相同 seed/index/项目/二阶口径、类型、颜色与案例选择生成相同打乱；显式 OLL/PLL 单案例或子集也使用同一 RNG。
+- TimerSyncSeedSettings 的应用/清除/重置计数与提示两端共用；TimerTrainerSubsetModal 同时迁入 timer-ui，App 补齐 OLL/PLL 子集存储、普通生成和种子请求。种子优先于本地按难度/按步数/云端最优生成，手动来源及映射的 WCA 真题继续原来源；本轮范围是单人种子，未给本地多人或联机另加种子策略。
+- 种子请求绑定历史槽，先成功持久化计数再发布打乱；取消/失败不预扣、重试及历史回看不重复计数，同 seed 重置也换 revision。App 在较新设置更新拒绝整份快照时仅单调合并同 revision 的已提交计数；旧设置重置后的回调不能回写。Web 跳过旧主线程求解器 ready 引起的种子历史重置，修复浏览器重启实测多消费一题的问题。
+- 设置 effect ledger 62→64：Web 当前 64 个生产字段均有 App 真实消费者，只剩 fake-cube 开发字段不接；effect 不等于五端完整视觉/硬件验收，整体继续 ACTIVE — NOT COMPLETE。
+- 验证：puzzle-solvers/shared build，timer-ui/app-ui/client typecheck；种子 57 项（43 项目、11 二阶类型、状态/提交合并/案例回归）、App 仓储/设置账本 43 项、架构/catalog/遮罩 31 项通过。Chrome 隔离上下文实测 Web/App 应用、重置、重新加载后续号，两条打乱逐字相同且计数 1→2，无 pageerror。附加运行的 mobile-scramble-history.test.ts 有 2 条旧源码断言失败：仍要求 App 内直接 HistoryRow 与旧键盘门禁排列；HEAD 原源码同样不满足，未据此改回已共享的工作区，也未宣称全集通过。
+- Mobile production build、Android/iOS Capacitor sync、Android debug APK、iOS unsigned Simulator build、macOS unsigned debug app、Harmony Web build 已做本地构建；具体最后产物以本轮命令记录为准。Windows native 未在本 Mac 运行，Harmony HAP 既有 Hvigor 版本问题未重试；无实体设备、签名、公证、推送或发布证据。
+
+### 2026-10-06：联机视频共享接入（本地）
+
+- Web 与 App 共用 `@cuberoot/shared/video` 的配置、私有 capability 请求和错误契约，以及 `@cuberoot/timer-ui/video/TimerBattleVideo` / `VideoTiles` 的连接控制、画面、麦克风、摄像头、前后镜头、放大与挂断。Web 原路径仅保留兼容入口；Mobile/Desktop/Harmony 直接消费 App 产品层。多人多魔方按用户要求暂不推进，入口保持现状。
+- 进入房间不自动开启视频；更换房间/身份、退出、被踢与后台会释放原媒体。成员代际变化先拆旧房再授权；旧 token/回调不能影响新房，退役视频房等待新的代际，避免反复连接旧房。配置晚到不重启通话；瞬时配置失败仍允许显式尝试；请求可取消，错误允许手动重试。
+- LiveKit 自动采集关闭，首次/重新开麦或摄像头由共享媒体会话管理。退出时立即停止已获取轨道；用户之后才批准权限的迟到轨道立即停止且不发布，不依赖 SDK 的发布等待超时。摄像头切换保留 1080p 约束与原有自拍镜像规则。
+- Android 补 CAMERA 与非必需摄像头声明；iOS/macOS 补摄像头用途、扩展麦克风用途，macOS 补 camera entitlement；桌面 CSP 仅增加实际 RTC HTTPS/WSS origin 与本地媒体 blob。Harmony 补双语媒体用途、系统权限和仅限本地应用 origin 的 ArkWeb 授权适配。
+- 验证：共享构建、timer-ui/App/client 类型检查通过；视频生命周期、HTTP capability/取消、迟到媒体清理、原相机/会议 token、码率/canonical 路径、catalog/架构守卫共 8 文件 55 项，App 房间集成 15 项通过。Chrome 安装端 production preview（拦截测试房间/token，未创建真实房间）在 320/390/1280px 的视频入口与拒绝态无横向溢出。独立审查提出的配置晚到重连、迟到授权清轨均已修复并复核。
+- Mobile Web build + Android/iOS sync、Android debug APK、iOS Simulator unsigned build、macOS unsigned debug `.app` 与 Harmony Web build 通过。Harmony HAP 再次被本机 Hvigor 6.0.1 不支持工程 modelVersion 6.0.2 阻断，ArkTS 改动尚未得到 HAP 编译证据；Windows 原生构建未在本 Mac 执行。
+- 未进行真实多设备音视频、五平台权限拒绝/恢复、前后台及 Stackmat 与通话同时使用麦克风验收；ICE 端口连通、签名/公证、商店摄像头/麦克风资料与发布仍需单独确认。未 push/发布，整体继续 **NOT COMPLETE**。
+
+### 2026-10-06：本地多人和联机完整页面共享（本地）
+
+- 新增 `TimerLocalBattlePage` / `TimerLocalBattlePlayer` 与 `TimerNetBattlePage` / `TimerNetBattleStage` / `TimerNetBattleEvent`，Web 和 App 均接入。共享层维护本地 2～4 人布局、中央工具栏、玩家标签/计时区、设置/历史，以及联机大厅、房间、视频、玩家列表、打乱/回合状态、邀请/管理/改名/历史弹窗。宿主保留状态、存储、输入、路由、账号与系统适配；并非将这些平台职责搬进 shared。
+- App 对齐 Web 玩家标签与 ao5（完整轮次统计），本地下一轮沿用按玩家键继续，取消 App 独有的额外下一局按钮；联机复制改为邀请链接，视频入口放在同一顶栏，交卷/旁观显示静态项目，混合项目使用共享图标，SQ1 展示使用既有格式化而保存/预览保留原始打乱。三盲等项目的内部 ID 统一转换为目录 ID，避免交卷后显示原始代码。Web 改名只在请求成功后关窗，邀请复制失败不再提示成功。
+- App 联机工作区使用扣除宿主导航后的高度；Chrome 隔离上下文验证 Web/App 2、3、4 人在 320/1280px 的玩家标签与页面宽度，联机房间在 320/390/1280px 无横向溢出。房间 API 使用拦截 fixture，未创建真实房间或请求真实媒体。
+- 验证：App/client/timer-ui 类型检查；App 房间/本地设备集成 16 项，Web 状态机 23 项及布局/设置/历史/名单/键盘门禁/QR/catalog/遮罩等 36 项通过。旧状态机 fixture 显式设置随机来源，避免默认 WCA 且 mock 无真题时实际只有一轮却执行第二轮删除。独立审查发现的三盲静态标签问题已修复并加定向回归。
+- Mobile production build + Android/iOS Capacitor sync、Android debug APK、iOS unsigned Simulator build、macOS release `.app`/`.dmg` 与 Harmony Web build/sync 通过。本轮未修改原生适配；Windows native 未在本 Mac 运行，Harmony HAP 既有 Hvigor/modelVersion 不匹配未重试。构建不代表签名、公证、安装或五平台实体设备验收。
+- 多人多魔方继续保持隐藏入口，不推进 PK/远端魔方实况；网站 presence/品牌导航、安装端宿主导航继续留在适配层。真实多人音视频、实体设备交互与发布尚未验收，整体继续 **NOT COMPLETE**。本轮仅本地提交，未 push。
+
+### 2026-10-06：完整解法提示内容共享（本地）
+
+- Web 与五端 App 的解法内容共同消费 `TimerSolverBody`：原有阶段最优面板、六方法分步提示（CFOP/Roux/Petrus/ZZ/EODR/Thistle）、方法对比、阶段/全部步骤播放与偏好。Web `StepSolve/SolverCompareModal/SolverHints` 路径仅兼容导出；安装端不再只有 StageSolver。Web 侧栏/全屏与 App 弹窗的宿主入口继续各自接路由/返回；本条不表示两种外层布局已完全收敛。
+- `TimerSolverHints` 共用已有 222/Pyra/Skewb 控件、SQ1 近最优解与五魔状态统计。SQ1 WCA/斜切/面转步数进入 shared；五魔原状态模型与统计迁入 puzzle-solvers，未改求解数学。六方法保留原有阶段目标和深度限制，CFOP 等方法并不保证完成整枚还原；五魔仍只是状态统计，本轮未新增完整五魔求解器。
+- SQ1 使用同一 vendored sq12phase Worker，Mobile/Desktop/Harmony 的现有构建同步其本地可执行资源；不下载远程运行代码。每次请求独占 Worker，关闭/换题/超时即终止；迟到结果不污染新打乱。Harmony 补 SQ1 和 rust-cross 的本地 `/tools/` 映射并保留 origin/路径穿越校验。
+- 结果以打乱/方法隔离，比较窗口换题后重建，播放器切已缓存方法时重建并清旧播放；阶段点击用真实 button，取消挂起的动画帧。方法偏好在挂载后读取，避免 SSR 读浏览器存储。App Back 与 Escape 优先关闭方法对比、求解器信息/设置，再关闭外层解法。
+- 验证：shared/puzzle-solvers build，timer-ui/App/client 类型检查；共享 UI/取消/动画 5 项、六方法迁移/SQ1 oracle/catalog/遮罩合计 34 项，App 小魔方集成 5 项、架构边界 20 项、Harmony 资源映射/路径拒绝 8 项（共 67 项）通过。Chrome 隔离上下文实测 Web/App 六方法列表、真实 R 打乱阶段解与画布、对比 320/390/1280px、Escape 嵌套关闭，无横向溢出/pageerror；SQ1 `(1,0)` 实际 Worker 返回 `(-1,0)`，五魔抵消打乱返回 100%，两端 320px 一致。
+- Mobile production build + Android/iOS Capacitor sync、Android debug APK、iOS unsigned Simulator build、macOS release app/DMG、Harmony Web build/sync 通过。Harmony HAP 实际尝试仍因本机 Hvigor 支持 6.0.1、工程要求 6.0.2 失败，ArkTS 路径适配未取得 HAP 编译/实体设备证据；Windows 原生构建未在本 Mac 执行。未签名、公证、实体设备验收、push 或发布，整体继续 **NOT COMPLETE**。
+
+### 2026-10-06：普通随机生成链路同源（本地）
+
+- Web 单人移除普通随机的同步 registry/主线程预热与同步缓冲消费，和五端 App 共同使用 `timer-ui/random-scramble` → shared `generateTimerScramble`。42 个生成项目均由已有 exhaustive capability 表分流；`custom` 为 ready 空槽，不伪造三阶。三阶族、FMC、FTO、Redi 等统一使用 shared 已有 cubing provider；二阶完整状态、Kilominx/Master Pyraminx、Gear/Ivy 由同一 Worker adapter 调既有 package 引擎。未修改上游或新增求解算法。
+- shared `createTimerRandomScramblePool` 为单人提供最多两条在途/缓存的同一策略，按 event/CN/二阶口径与类型/案例子集隔离。结果携带 case metadata；Web 历史槽记录本次请求，回看不再生成，切来源/配置清池，取消的等待者不吞当前结果；空返回/超时可原位重试。普通预取不读取或推进同步种子计数。种子、专项、精确步数、随机难度与云最优继续各自现有链路，本轮不宣称这些编排全部同源。
+- Web/App 本地多人普通 provider 和 Web 批量打乱也接入该 client。独立任务各持有 RPC，成功、失败或取消后释放，避免一个玩家超时终止另一项目请求；批量切项目/数量/关闭拒绝迟到结果并复用已有失败文案。cubing 自有 search Worker 仍由 cubing 管理，取消只拒收对应结果，不声称终止全部底层计算。多人多魔方隐藏入口未开放。
+- 验证：shared build、timer-ui/App/client typecheck 通过。生成契约/同步种子/缓冲 92 项、架构边界 20 项、既有 Harmony 路径回归 8 项、独立 transport 2 项、Web 多人来源/轮次/历史 34 项、App 来源/多人/预朝向 44 项，共 200 项定向检查通过。修正已过时的来源源码断言，并把上一批 Harmony 资源 fixture 改走已有 workspace 解析器，未增加生产跨包依赖。
+- Chrome 实际逐个生成全部 43 项：42 个 generated、custom manual 空槽，无 pageerror；两端真实单人随机→下一题→上一题返回原文→手动空队列，在 320/390px 无横向溢出。Mobile production preview 实测三阶及二阶 Worker 生成，320px 无溢出。独立复核提出的来源离开清理、多人取消连带问题均修复；自动化不替代五平台触摸、后台与长时间计时验收。
+- 最终 Mobile production build、Android/iOS Capacitor sync、Android debug APK、iOS unsigned Simulator、macOS release app/DMG、Harmony Web build/sync 通过。Harmony HAP 实际尝试仍报 Hvigor 00303028：本机仅支持 modelVersion 6.0.1、工程为 6.0.2；未降级配置。Windows native、安装/签名/公证、真机和发布未验；仅本地提交，未 push，整体继续 **NOT COMPLETE**。
+
+### 2026-10-07：专项生成调度同源（本地）
+
+- `timer-ui/scramble/*` 为 Web/五端 App 共用的二阶按步数、二阶专项、非二阶步数、同步种子、随机难度 Worker 调度入口；宿主保留持久化和页面适配。Web 二阶同步路径退场；随机难度状态转打乱采用已有 Worker 内两阶段求解器，采样和答案规则不变。普通云最优基础题统一调用普通随机客户端，云端 API 与付费链路未修改。
+- 118 项定向检查（92 项既有核心契约、2 项取消/队列回归、24 项 App 来源契约）、4 条 confirmed 复盘 ground truth、client/app-ui/timer-ui typecheck 与 architecture boundary guard 通过。独立只读复核确认 seed 协议不变、零步非空、Worker 公开入口、生成/答案/修正取消隔离。Chrome 实测两种二阶口径的零步/三步、全部 9 种专项、相同 ticket 重复生成和 Cross 三步状态及答案；生成/答案实测约 667ms，无页面错误。Web（独立 3003 开发端口）与 App（1431）页面按步数开关、连续换题及切换手动空队列均通过，迟到结果未覆盖手动来源。
+- Mobile build + Android/iOS Capacitor sync、Android `assembleDebug`、iOS 未签名模拟器 build、macOS Tauri release `.app`/`.dmg` 和 Harmony Web build/sync 通过。Harmony HAP 实际尝试仍报 `00303028`：本机 Hvigor 支持 modelVersion 6.0.1，项目为 6.0.2，未降级项目配置。Windows native build、各平台设备安装与完整交互、签名/公证和发布尚未验证。
+- 本轮只本地提交，不 push、不部署、不更新商店包。WCA 真题池编排、解法外壳和完整 Solo 编排仍未整体共享；隐藏的多人多魔方按用户指示不做。五端总体继续 NOT COMPLETE。
+
+### 2026-10-07：WCA 真题池编排同源（本地）
+
+- Web 与五端 App 单人及本地多人共用 `timer-ui/wca-scramble-pool` factory，统一日期/比赛来源队列、预取、缓存、重试、有限题池循环及来源 metadata。Web 旧路径只注入 API/数据 adapter；App 删除页面与本地多人各自维护的队列，保留原有二阶筛选 Worker。共享层仍使用已有难度与步数引擎，未改变求解算法。
+- 官方槽位标识用于去重与进度，相同打乱文本的不同官方题号仍分别保留。比赛持久化缓存最多 50 条，消费后从最后缓存槽位继续读取未缓存尾部，再循环；日期采样不足 50 条只有满足无日期边界、无本地筛选的条件才记为闭合池。预计算样本不抢占新返回的真实题目，保留三阶族实际来源项目。
+- `200 + []` 统一为暂态、404 为已确认空池，不回退成随机题。请求及静态样本加载有硬超时；单个等待者取消不吞掉其他等待者的题，来源切换拒绝迟到回写。样本加载失败可重试；来源键只依赖请求设置，比赛覆盖查询从未知变成未收录不会重建题池或重复首题。独立复核提出的挂起样本、重复迁移与覆盖查询键漂移均已修复并加入回归。
+- App 旧 v6 缓存 helper 仅留作兼容与一次性迁移，新缓存只持久化待消费题目；迁移标记跨实例保留，消费完或缓存淘汰后不重新导入旧题。App 实例和本地多人实例分别持有生命周期，避免共享取消影响其他消费者。
+- 验证：Web 33 项、App 122 项定向测试通过，覆盖超时/取消/缓存续取/过滤/来源切换/智能魔方与本地多人集成；client、app-ui、timer-ui typecheck 和架构边界检查通过。Chrome 实测 Web/App 使用真实 API 返回题目，下一题、返回历史、切换手动来源拒绝迟到结果均通过；390px 无页面横向溢出或页面异常。App 本地 Vite 预览的 API 跨域限制由测试代理读取真实响应处理，此证据不代表原生设备网络验收。
+- 最终 Mobile production build 与双平台 sync、Android debug APK、iOS 未签名 Simulator build、macOS release app/DMG、Harmony Web build 通过。Harmony HAP 实际尝试仍被 Hvigor `00303028` 阻断：本机支持 modelVersion 6.0.1，工程要求 6.0.2，未降级配置。Windows native、五平台实体设备交互、签名/公证与发布尚未验证。
+- 仅本地提交，未 push 或部署；测试专用 1431/3003 服务已关闭，原有 3000 服务保留。下一步为解法外壳统一，完整 Solo 编排仍待推进；隐藏的多人多魔方不在范围内，五端整体继续 **NOT COMPLETE**。
+
+### 2026-10-07：解法外层界面同源（本地）
+
+- Web 与五端 App 共用 `timer-ui/TimerSolverPanel` 和 `timer-solver-panel.css`，原 Web `SolverHintPanel` 只适配 nuqs push/back/深链 replace，App `StageSolverDialog` 只适配共享面板与表资源位置。App 不再维护独立的紧凑房间弹窗；窄屏入口移入顶栏，宽屏与 Web 使用同一左栏占位规则，计时全屏释放该占位。
+- 同源维护 1024px 侧栏断点、560px 紧凑内容、折叠与全屏偏好、齿轮/前后题/布局操作、内部滚动和横划换题。侧栏与全屏只挂载一个求解内容实例；桌面关闭全屏或浏览器返回清除全屏偏好，不被自动恢复效应重新打开。保留原 Web 偏好键，首次渲染不读存储。
+- App 接入解法独占时的 `hints-only` 键盘策略、智能魔方 ready 自动收起及持久化成绩成功后的 `autoOpenSolution` 展栏请求；手机自动请求不弹全屏，沿用 Web 的手动入口。内部设置、信息和方法比较的阻塞状态传到两端键盘及设备起表门禁，Android Back 先关内部窗口再关解法。阻塞期间清除横划起点，关闭内部窗口后不会接续旧拖动。
+- 关闭恢复触发器焦点，全屏 Tab 圈定焦点并允许内部 portal 窗口获取焦点；修复原入口先 blur 导致无法恢复的问题。全屏使用现有主题变量及宿主缺少 shell token 时的回退，没有另造平台色值。内部求解算法、六方法目标、SQ1/五魔提示内容不变。
+- 验证：Web 6 文件 64 项（含新增 5 项面板交互/取消回归）、App 提示与视口 12 项通过；client/app-ui/timer-ui typecheck 与架构边界检查通过。旧源码守卫改为读取 canonical 共享面板。独立只读审查提出的嵌套窗口横划穿透已修复并复核。
+- Chrome 实测两端侧栏不遮挡中央计时区、全屏只有一个求解实例、手动 R/U/F 队列的前后题、设置打开时拒绝方向键换题、Escape 先内后外；Web 深链关闭与浏览器返回不重开。320/390/768/1280px × system-light/system-dark/forced-light/forced-dark 检查无页面或内容横向溢出，关闭按钮可见，无 pageerror。此处验证外层交互，不替代实体设备触摸/读屏与完整求解验收。
+- 最终 Mobile production build 与 Android/iOS sync、Android debug APK、iOS unsigned Simulator、macOS release app/DMG 和 Harmony Web build/sync 通过；Mobile CSS 产物保留传统 max-width/min-width 媒体查询。Harmony HAP 实际尝试仍报 `00303028`，本机 Hvigor 只支持 modelVersion 6.0.1，而工程为 6.0.2。Windows 原生、五平台实体设备、签名/公证与发布未验。
+- 仅本地提交，未 push/部署；关闭本任务 1431/3003 服务并还原临时 Next include，保留原有 3000 服务及其他任务的并行源码。下一步继续完整 Solo 页面编排；隐藏的多人多魔方不推进，总体继续 **NOT COMPLETE**。
+
+
+### 2026-10-07：更多工具与单人页面编排同源（本地）
+
+- 对应原剩余清单第 4 项（更多工具）和第 5 项（Solo 页面）。`TimerSoloPage` 成为 Web `SoloView` 与五端 `App` 的共同视图组合：顶栏、来源、统一 `TimingSurface`、辅助内容、窄屏复盘、解法侧栏/顶栏落点、统计/设备底栏、历史插槽和 `TimerTools`。1024px 解法/历史布局、480px 更多菜单判定、全屏隐藏及 `blocking/hints-only/none` 输入分类同源；宿主保留 Web nuqs、安装端导航、状态机接线、仓储及系统能力。未声称所有宿主业务状态都已合并成一个 hook。
+- `TimerTools` 共用三种现有 Timer 工具窗口。共享房间弹窗保留 `vh` 高度回退后渐进使用 `dvh`，兼容安装端 WebView 103 的滚动边界。App 的批量打乱、盲拧助手、通用求解器留在当前计时页；底部工具栏继续按三栏合同浏览 canonical 网站，不改其职责。批量沿用独立 random client 和 1..100 数量范围，修改项目/数量/口径或关闭时取消，失败不显示半批，复制/下载只输出完整当前批次。
+- BLD 读码、字母/状态模型与类型从 Web 原文迁到 `shared/bld/*`，旧路径兼容导出；Web 训练页与两端 Timer 共用 `bld-config-store`，保留 `bld-config` 既有持久化 envelope、默认配置、多盲逐魔方选择和高级配置。没有第二份引擎或原生 BLD 页面。
+- 通用求解器复用已有 trainer Worker 的 `solve-state` 路径，以独立 RPC 提供有界请求、取消与错误；该 Worker 返回从复原态生成目标状态的序列，窗口必须取逆后展示“解”，此前 Web 直接展示原序列的语义错误已修正。失败后可重试，修改输入/关闭后迟到解不回写。复制失败与求解失败分开提示。
+- 三个工具共用 `TimerRoomDialog` 的遮罩拖出保护、焦点与 Tab 约束。`TimerTools` 捕获 Escape 并与系统 Back 共用内部优先 dismiss，避免忙碌按钮禁用使焦点落 body 后关不掉；Bulk 先关项目菜单再关工具。独立反例审查发现旧复制/导出 Promise 会污染新内容的反馈，已用 export revision 隔离并补回归。
+- 验证：`@cuberoot/shared build`、client/app-ui/timer-ui typecheck 与 `audit:boundaries` 通过。Web BLD golden、More 目录全项目遍历、catalog、CSS 定位守卫及新增工具/单人布局检查通过；新增 7 项覆盖取消、失败重试、导出内容、嵌套返回、BLD 逐魔方、响应式单实例、求解取逆、body Escape 与迟到复制。App More/history 接线、25 项智能魔方/历史生命周期回归及新增工具内禁止起表/两级 Back 集成检查通过。旧源码断言按共享入口更新；More 全目录遍历不再把并行训练扩展后的目录锁死为 43 项。
+- Chrome 实测 Web 与 App：真实 3×3 批量生成、通用求解并把输出应用回目标状态确认复原、BLD 高级配置、Escape 先内后外及留在计时页。批量窗口在 320/390/768/1280px × 系统浅/深与强制浅/深下无页面/窗口横向溢出；既有解法侧栏/全屏键盘、URL 历史和同一视口/主题矩阵通过，无 pageerror。额外检查宽屏历史与主区、解法侧栏互不遮挡，全屏隐藏顶栏/来源/辅助区/底栏并释放左侧 padding。
+- Mobile production build、Capacitor Android/iOS sync、Android debug APK、iOS unsigned Simulator、macOS release app/DMG、Harmony Web build/sync 通过。Harmony HAP 实际尝试仍报 `00303028`：工程 modelVersion 6.0.2，本机 Hvigor 只支持 6.0.1。Windows 原生构建、OPPO/五平台实体设备、签名/公证与发布未验；App 文件输出沿用现有 Web Share/Blob 下载 adapter，不将浏览器成功当作原生文件导出已验收。
+- 仅本地提交，未 push/部署。保留其他任务的训练工作与原有 3000 开发服务；移除本任务临时 Next include，并关闭自建 1431/3003 服务。多人多魔方继续隐藏，总体 **NOT COMPLETE**。
+
+### 2026-10-07：优先级 1——工具页原生 BLE 与媒体接入（本地）
+
+- Tools iframe 通过共享 MessageChannel 契约消费宿主已有 BLE transport，Web 保留原有智能魔方/计时器协议驱动；未复制原生协议或修改 navigator。仅当前 Tools 窗口与 canonical origin 可取得通道，Account 不获蓝牙 capability。设备选择复用共享选择窗口，必须由用户选中，不自动连接信号最强设备。
+- GATT 服务、读写、通知、MAC 广播解析与物理/主动断开后重连已接线。切栏、导航、撤权与过期请求关闭通道并清理资源；Tools 与计时栏交接等待迟到扫描启动及停止完成，避免旧扫描清理关闭新扫描。系统返回先关闭设备选择窗口。独立审查提出的自动选设备、重连、迟到连接和扫描竞态均已修复并复核。
+- Tools iframe 增加 camera/microphone 权限委派；Harmony 媒体请求允许 canonical 网站来源并保留本地顶层/生命周期校验。登录、PKCE、换票、绑定、合并、退出与注销行为未改，账号生命周期说明完成源码复核。
+- 验证：shared build、app-ui/client typecheck、架构边界检查通过。App BLE host/picker/共享选择窗口/智能魔方扫描与清理 26 项通过；Web bridge/嵌入认证/蓝牙环境/魔方重连与写入 50 项、计时器与设备选择/账号文档 134 项通过；最终账号文档两文件 78 项复验通过。跨域 Chrome 使用真实桥代码与模拟 native transport 验证读写、通知、两种断开重连、撤权及模拟音视频流，无 pageerror；此证据不代表实体蓝牙或摄像头/麦克风验收。
+- 最终 Mobile production build 与 Android/iOS sync、Android debug APK、iOS unsigned Simulator build、macOS unsigned release app、Harmony Web build/sync 通过。iOS 使用隔离 DerivedData 绕过本机旧缓存缺失 xcframework 元数据；未删除旧缓存。Harmony HAP 实际尝试报 Hvigor 00303028（工程 modelVersion 6.0.2，本机只支持 6.0.1），未降级工程。Windows native、各宿主实体设备权限/蓝牙/媒体、签名公证及商店发布未验。
+- 仅本地提交，未 push、部署或发布；本轮不处理其余审计优先级，总体继续 **NOT COMPLETE**。
+
+### 2026-10-07：优先级 2——微信小程序设备校准（本地）
+
+- 补齐 Web → 中继 → 小程序原生驱动的设备校准链路：GAN v2/v3/v4、奇艺与魔域 32 使用现有共享 reset 指令、协议解析和 createDeviceStateReset 确认器。写入完成不等于成功，必须收到设备复原状态；校准超时、写入失败或断线返回失败。GAN v2 同时补回原本遗漏的状态帧回调。
+- connected 状态声明 canResetDevice；网页通过桥调用 resetDeviceState，无需 Web GATT 对象。请求使用独立随机 ID，原生去重并拒绝并发，网页只接受匹配结果；断网时结束待确认请求，不自动重发硬件校准。未声明能力的旧小程序和无校准协议设备仍保留原有“重置状态”本地操作，不能算硬件校准。
+- 校准期间通知所有连接网页，分开本地请求与远端校准状态，避免另一网页或并发请求被拒后误触发解完。校准状态及转动带语义标记；校准状态纳入有序中继回放，断网恢复先应用复原基线、再应用后续转动。后续转动清除旧状态快照，不用过期基线覆盖已经追平的网页。
+- 奇艺 SYNC 确认和魔域 32 状态确认沿用既有协议语义，保留确认后排队的转动；陀螺帧实时发布，不挤占校准缓冲。外接计时器仅忽略新增魔方校准命令，优先级 3 的 Stackmat 启动取消问题本轮未处理。
+- 验证：shared build、client/server typecheck、架构边界守卫通过；小程序 check:all 的 typecheck、38 文件 866 项测试以及微信/抖音构建通过（抖音转换仍提示既有 page-meta 不支持）。Web 桥、真实 hook 与蓝牙重连 46 项、服务端中继 22 项通过，账号文档复核 78 项通过。覆盖 GAN 三代校准/超时/断线、奇艺与魔域校准后转动、并发拒绝、双网页、回放顺序与禁止 source 自定序号；独立复核未发现剩余阻断。
+- 仅本地实现与提交，未 push、部署、上传或发布。上线需配套更新 API/Web 与小程序；尚无本轮微信实体魔方校准验收，构建和模拟测试不代表真机通过。五端总体继续 **NOT COMPLETE**。
+
+### 2026-10-07：优先级 3——微信 Stackmat 启动取消（本地）
+
+- 区分原生错误与应用取消/超时；取消不再清掉 requested 后跳过 stop。保留停止中的回调直至原生终止，迟到 onStart 补停，旧帧不再进入计时；新会话等待停止确认，等待超时不抢占录音器。原生权限拒绝仍按终止错误处理。
+- 7 项外接计时器/录音生命周期回归、miniprogram typecheck 与微信 build 通过。仅本地提交，未上传/发布；实际微信麦克风权限、系统中断与硬件音频仍待真机验收。
+
+### 2026-10-07：优先级 4——原生文件导出（本地）
+
+- 备份 JSON、csTimer/CSV/文本成绩、批量打乱和本地多人轮次统一走 InstalledAppHost.exportFile。Android 使用 ACTION_CREATE_DOCUMENT 及用户选择 URI；iOS 使用系统分享面板（包含存储到文件）；Windows/macOS 使用 Tauri 原生保存对话框并写 UTF-8；Harmony 使用 DocumentViewPicker 与文件 API。不申请全盘读写权限，原生取消/失败不回退浏览器下载；取消不报导出成功或失败。
+- 4 项无损内容/等待完成/取消路由测试、85 项工具与账号文档检查、app-ui/client/宿主类型及架构边界检查通过；Mobile build/sync、Android APK、iOS unsigned Simulator、macOS unsigned app、Harmony Web build/sync 通过。Harmony HAP 仍被本机 Hvigor 6.0.1 与工程 modelVersion 6.0.2 不匹配阻断；Windows 原生构建未验。
+- 独立审查未发现阻断。各系统文件面板、用户取消、导出后重读与实体设备验收仍待完成；仅本地提交，未 push/部署/商店发布，总体 NOT COMPLETE。
+
+### 2026-10-07：优先级 5——macOS 原生打印（本地）
+
+- macOS 通过 WKWebView / NSPrintOperation 打开系统打印面板，主线程等待面板结束才释放打印报告；并发互斥，原生异常直接报告，不回退到固定 30 秒浏览器超时。Windows 保留 WebView2 打印路径。
+- 原生完成/取消、错误和非 macOS 回退的路由测试以及 macOS unsigned app 构建通过，独立复核无阻断。真实系统预览、取消与保存 PDF 尚未验收；仅本地提交，未 push 或发布。
+
+### 2026-10-07：优先级 6——原生计时防休眠（本地）
+
+- Android 使用 Activity FLAG_KEEP_SCREEN_ON，iOS 使用 idleTimerDisabled 并在失活时释放、恢复活跃时按请求恢复；Windows 在同一主线程设置/清除 ES_CONTINUOUS + ES_DISPLAY_REQUIRED + ES_SYSTEM_REQUIRED；macOS 使用 IOKit display idle assertion，窗口销毁时清理。
+- Mobile、Desktop、Harmony 共用 app-ui 计时阶段与 visibility 生命周期；观察/运行时持有，隐藏/停止/卸载时释放。原生调用串行化并按所有者管理，旧阶段迟到释放不关掉新阶段的保活。Harmony 保留已有原生 window adapter，Web 仍使用标准 Wake Lock。
+- 10 项定向生命周期/竞态测试、78 项账号文档检查、app-ui typecheck 与架构边界检查通过；Mobile build/sync、Android debug APK、iOS unsigned Simulator、macOS unsigned app、Harmony Web build/sync 通过。macOS 实际 IOKit 调用验证持有期间存在本进程断言，释放后消失、重复开启/释放成功。独立审查发现的 Windows 系统空闲锁遗漏已修复，最终复核无阻断。
+- Windows 原生构建与实机休眠未验；Harmony HAP 仍受本机 Hvigor 6.0.1 / 工程 modelVersion 6.0.2 不匹配限制。各端实体设备长计时、前后台与电源策略仍需验收。仅本地提交，未 push/部署/发布，五端总体继续 NOT COMPLETE。

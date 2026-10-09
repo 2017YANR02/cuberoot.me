@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 // Landing "近期打乱" (Recent Scrambles). An event picker on top:
 //  - 333 → the rich variant(std/eo/pseudo/...) × metric(cross/xc/...) × bottom-color × move
@@ -30,7 +31,6 @@ import { compSourceLine } from '@/lib/comp-schedule';
 import { statsUrl } from '@/lib/stats-base';
 import { VARIANT_ORDER, stageLabel, variantLabel, BLOCK_DATA_VARIANTS, BLOCK_STAGE_VARIANT, EO_DATA_VARIANTS, EO_STAGE_VARIANT, LBL_STAGE_VARIANT, VARIANT_STAGES, LENGTH_VARIANT, RECENT_METRIC_ORDER, uiVariantOf, uiVariantOptions, dataVariantOfStage, uiStagesOf, variantDataRef } from '@/lib/scramble-variants';
 import { VariantSelect } from '@/components/VariantSelect';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { fetchRecentScramblesEvents, type RecentScramblesEventsJson, type RecentScrMeta } from '@/lib/recent-scrambles-events';
 import { formatDateRangeIso } from '@/lib/wca-date';
 import { eventDisplayName, wcaToReconEvent } from '@/lib/wca-events';
@@ -664,13 +664,15 @@ function Recent333Body({ data, dist, eventsJson, isZh, lp }: {
   );
 
   const modePill = (
-    <PillToggle
-      value={mode === 'rare'}
-      onChange={(v) => setMode(v ? 'rare' : 'type')}
-      offLabel={tr({ zh: '类型', en: 'By type' })}
-      onLabel={tr({ zh: '概率', en: 'Rare' })}
-      ariaLabel={tr({ zh: '视图', en: 'View' })}
-    />
+    <select
+      value={String(mode === 'rare')}
+      onChange={event => { const v = event.currentTarget.value === 'true'; setMode(v ? 'rare' : 'type'); }}
+      aria-label={tr({ zh: '视图', en: 'View' })}
+      className="native-select"
+    >
+      <option value="true">{tr({ zh: '概率', en: 'Rare' })}</option>
+      <option value="false">{tr({ zh: '类型', en: 'By type' })}</option>
+    </select>
   );
   const variantSelect = (
     <VariantSelect
@@ -816,13 +818,15 @@ function RecentEventBody({ event, json, isZh, lp, headExtra }: {
       <div className="rs-head">
         {headExtra}
         {showLengthToggle && (
-          <PillToggle
-            value={curMode === 'length'}
-            onChange={(v) => { setMode(v ? 'length' : 'difficulty'); setValue(null); }}
-            offLabel={tr({ zh: '难度', en: 'Difficulty' })}
-            onLabel={tr({ zh: '打乱长度', en: 'Length' })}
-            ariaLabel={tr({ zh: '维度', en: 'Dimension' })}
-          />
+          <select
+            value={String(curMode === 'length')}
+            onChange={event => { const v = event.currentTarget.value === 'true'; setMode(v ? 'length' : 'difficulty'); setValue(null); }}
+            aria-label={tr({ zh: '维度', en: 'Dimension' })}
+            className="native-select"
+          >
+            <option value="true">{tr({ zh: '打乱长度', en: 'Length' })}</option>
+            <option value="false">{tr({ zh: '难度', en: 'Difficulty' })}</option>
+          </select>
         )}
         <select className="rs-select" value={curValue ?? ''} onChange={(e) => setValue(Number(e.target.value))} aria-label={curMode === 'difficulty' ? tr({ zh: '难度', en: 'Difficulty' }) : tr({ zh: '长度', en: 'Length' })}>
           {values.map((v) => (<option key={v} value={v}>{stepOptionLabel(v)}</option>))}

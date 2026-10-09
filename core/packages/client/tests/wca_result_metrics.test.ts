@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { compute as computeRolling, getConfigs } from '@/lib/wca-result-metrics/rolling';
 import {
   computeWcaMetricByRound,
   computeWcaMetricStatsByRound,
@@ -20,6 +21,42 @@ const rounds: WcaMetricRound[] = [
 ];
 
 describe('WCA result metrics', () => {
+  it('keeps FMC Mo3 decimals and invalidates windows with a failure', () => {
+    const fmc = [{ ...rounds[0]!, attempts: [21, 17, 18], average: 1867 }];
+    expect(computeWcaMetricByRound(fmc, 'mo3', '333fm').get('later')).toBe(1867);
+    expect(computeWcaMetricByRound(fmc, 'median', '333fm').get('later')).toBe(18);
+    expect(computeWcaMetricByRound([{ ...fmc[0]!, attempts: [17, -1, 18] }], 'mo3', '333fm').get('later')).toBeNull();
+  });
+
+  it('uses the middle of three attempts and limits five-solve metrics to full rounds', () => {
+    const mo3 = [{ ...rounds[0]!, attempts: [100, 300, 200], average: 200 }];
+    expect(computeWcaMetricByRound(mo3, 'median').get('later')).toBe(200);
+    expect(computeWcaMetricByRound([{ ...mo3[0]!, attempts: [100, 200, -2] }], 'median').get('later')).toBe(200);
+    expect(computeWcaMetricByRound([{ ...mo3[0]!, attempts: [100, -1, -2] }], 'median').get('later')).toBeNull();
+    for (const mode of ['bao5', 'wao5', 'mo5', 'bpa', 'wpa', 'bestc', 'worstc'] as const) {
+      expect(computeWcaMetricByRound(mo3, mode).get('later')).toBeNull();
+      expect(computeWcaMetricByRound([{ ...mo3[0]!, attempts: [100, 200, 300, 0, 0] }], mode).get('later')).toBeNull();
+    }
+  });
+
+  it('counts the worst of four valid attempts when Ao5 drops one DNF', () => {
+    expect(computeWcaMetricByRound([{ ...rounds[0]!, attempts: [100, 200, 300, 400, -1] }], 'worstc').get('later')).toBe(400);
+  });
+
+  it('rounds Ao25/Ao50 trimming up and preserves their failure allowance', () => {
+    expect(getConfigs().find(config => config.key === 'ao25')?.trim).toBe(2);
+    expect(getConfigs().find(config => config.key === 'ao50')?.trim).toBe(3);
+    expect((computeRolling([...Array.from({ length: 23 }, (_, i) => i + 1), 900, 1000]).ao25 as number[])[24]).toBe(13);
+    expect((computeRolling([...Array(47).fill(600), -1, -2, -1]).ao50 as number[])[49]).toBe(600);
+    expect((computeRolling([...Array(46).fill(600), -1, -2, -1, -1]).ao50 as (number | null)[])[49]).toBeNull();
+  });
+
+  it('applies WCA second rounding to timed means over ten minutes', () => {
+    const slow = [{ ...rounds[0]!, attempts: [60000, 60100, 60100] }];
+    expect(computeWcaMetricByRound(slow, 'mo3', '666').get('later')).toBe(60100);
+    expect(computeWcaMetricByRound([{ ...rounds[0]!, attempts: [60000, 60100, 60100, 60100, 60200] }], 'bao5').get('later')).toBe(60100);
+  });
+
   it('uses chronological solves for rolling values and returns each round endpoint', () => {
     expect(computeWcaMetricByRound(rounds, 'ao5')).toEqual(new Map([
       ['earlier', 300],

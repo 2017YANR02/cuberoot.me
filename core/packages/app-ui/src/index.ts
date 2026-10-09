@@ -15,16 +15,19 @@ export type {
   InstalledAppNetBattle,
   InstalledAppNetBattleSessionStore,
   InstalledAppSmartCube,
+  InstalledAppSmartCubeDevice,
   InstalledAppSmartCubeOptions,
 } from './platform';
 export type {
   BleDevicePickerLabels,
   BleDeviceRef,
   BleRequestOptions,
+  BleServiceRef,
   BleTransport,
 } from './smart-cube/transport';
 export { useInstalledSmartCube } from './smart-cube/use-smart-cube';
 export {
+  createNativeScreenWakeLock,
   startTimerScreenWakeLock,
   timerHapticCue,
   timerNeedsScreenAwake,

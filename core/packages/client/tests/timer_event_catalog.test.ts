@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   EVENTS,
   TIMER_EVENT_PICKER_GROUPS,
+  TIMER_333_SCRAMBLE_TYPES,
+  timerPuzzleSelection,
   TIMER_EVENT_PICKER_ITEMS,
   TIMER_WCA_SCRAMBLE_EVENT_MAP,
   eventInfo,
@@ -21,6 +23,7 @@ import {
   type EventId,
 } from '@cuberoot/shared/timer';
 import { nxnSizeForEvent } from '@/app/[lang]/timer/_lib/cube/colors';
+import { cstimerEvent } from '@/lib/cstimer-scramble';
 
 const EXPECTED_WCA: EventId[] = [
   '333', '222', '444', '555', '666', '777', '333bld', '333fm', '333oh',
@@ -30,7 +33,7 @@ const EXPECTED_WCA: EventId[] = [
 
 const EXPECTED_OTHER: EventId[] = [
   '333ni', '333mr', '666bld', '777bld', 'r3', 'r4', 'r5',
-  'cross', 'f2l', 'll', 'oll', 'pll', 'coll', 'cmll', 'zbll', 'eg1', 'eg2',
+  'cross', 'f2l', 'll', 'oll', 'pll', 'coll', 'cmll', 'zbll', 'cll', 'ell', 'eocp', '2gll', 'ollcp', 'zzll', 'zbls', 'lse', 'l10p', 'eg1', 'eg2',
   'custom', 'fto', 'kilominx', 'gear', 'ivy', 'redi', 'mpyram',
 ];
 
@@ -57,14 +60,26 @@ const EXPECTED_REAL_WCA_EVENTS = {
 } as const satisfies Partial<Record<EventId, string>>;
 
 describe('shared timer event picker catalog', () => {
-  it('is a complete, duplicate-free 43-event partition in the website order', () => {
+  it('separates 3x3 scramble types without changing legacy generator and solve ids', () => {
+    expect(TIMER_333_SCRAMBLE_TYPES.map(type => type.id)).toEqual([
+      'wca', 'cross', 'f2l', 'll', 'oll', 'pll', 'coll', 'cmll', 'zbll', 'cll', 'ell', 'eocp', '2gll', 'ollcp', 'zzll', 'zbls', 'lse', 'l10p',
+    ]);
+    for (const type of TIMER_333_SCRAMBLE_TYPES) {
+      expect(timerPuzzleSelection(type.event)).toEqual({ puzzle: '333', scrambleType: type.id });
+    }
+    for (const { id } of EVENTS) {
+      if (TIMER_333_SCRAMBLE_TYPES.some(type => type.event === id)) continue;
+      expect(timerPuzzleSelection(id)).toEqual({ puzzle: id, scrambleType: null });
+    }
+  });
+  it('is a complete, duplicate-free 52-event partition in the website order', () => {
     expect(TIMER_EVENT_PICKER_GROUPS.map((group) => group.id)).toEqual(['wca', 'other']);
     expect(TIMER_EVENT_PICKER_GROUPS[0].items.map((item) => item.id)).toEqual(EXPECTED_WCA);
     expect(TIMER_EVENT_PICKER_GROUPS[1].items.map((item) => item.id)).toEqual(EXPECTED_OTHER);
 
     const pickerIds = TIMER_EVENT_PICKER_ITEMS.map((item) => item.id);
     const eventIds = EVENTS.map((event) => event.id);
-    expect(pickerIds).toHaveLength(43);
+    expect(pickerIds).toHaveLength(52);
     expect(new Set(pickerIds).size).toBe(pickerIds.length);
     expect(new Set(pickerIds)).toEqual(new Set(eventIds));
   });
@@ -118,6 +133,12 @@ describe('shared timer event picker catalog', () => {
     }
   });
 
+  it('uses the dedicated icons for gear and mirror blocks', () => {
+    expect(cstimerEvent('gear')?.iconClass).toBe('unofficial-gear');
+    expect(timerEventPickerItem('333mr').iconClass).toBe('unofficial-333_mirror_blocks');
+    expect(timerEventPickerItem('333mr').textLabel).toBeUndefined();
+  });
+
   it('publishes preview and smart-cube capabilities without a Mobile-only map', () => {
     const expectedNxnSizes: Partial<Record<EventId, number>> = {
       '222': 2,
@@ -143,8 +164,17 @@ describe('shared timer event picker catalog', () => {
       coll: 3,
       cmll: 3,
       zbll: 3,
-      eg1: 3,
-      eg2: 3,
+      'cll': 3,
+      'ell': 3,
+      'eocp': 3,
+      '2gll': 3,
+      'ollcp': 3,
+      'zzll': 3,
+      'zbls': 3,
+      'lse': 3,
+      'l10p': 3,
+      eg1: 2,
+      eg2: 2,
     };
 
     for (const { id } of EVENTS) {

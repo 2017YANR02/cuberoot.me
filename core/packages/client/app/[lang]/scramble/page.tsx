@@ -62,6 +62,13 @@ export default function ScrambleHubPage() {
               )}
               {c.area === 'hardest' && <span className="scramble-hub-art-note">H* 20</span>}
               {c.area === 'subsolver' && <span className="scramble-hub-art-note">U / R / F</span>}
+              {c.area === 'mcc' && (
+                <span className="scramble-hub-mcc-rows">
+                  <span><b>R R' L L'</b><b>0.8</b></span>
+                  <span><b>R2 L2</b><b>1.32</b></span>
+                  <span><b>U U'</b><b>1</b></span>
+                </span>
+              )}
             </span>
             <div className="scramble-hub-card-title">{tr(c).title}</div>
           </Link>
@@ -146,9 +153,10 @@ const INLINE_CSS = `
   max-height: 5.75rem;
 }
 .scramble-hub-page .scramble-hub-art-formula,
-.scramble-hub-page .scramble-hub-art-note {
+.scramble-hub-page .scramble-hub-art-note,
+.scramble-hub-page .scramble-hub-mcc-rows {
   color: var(--muted-foreground);
-  font-family: ui-monospace, monospace;
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   line-height: 1.5;
   text-align: center;
@@ -159,6 +167,26 @@ const INLINE_CSS = `
 }
 .scramble-hub-page .scramble-hub-art-note {
   font-size: 0.8125rem;
+}
+.scramble-hub-page .scramble-hub-mcc-rows {
+  display: grid;
+  width: min(100%, 13rem);
+  gap: 0.125rem;
+  font-size: 0.6875rem;
+  text-align: left;
+}
+.scramble-hub-page .scramble-hub-mcc-rows span {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.75rem;
+}
+.scramble-hub-page .scramble-hub-mcc-rows b {
+  font: inherit;
+  font-weight: 400;
+  white-space: nowrap;
+}
+.scramble-hub-page .scramble-hub-card--mcc .scramble-hub-art-image {
+  display: none;
 }
 .scramble-hub-page .scramble-hub-card:hover,
 .scramble-hub-page .scramble-hub-card:focus-visible {

@@ -139,6 +139,27 @@ describe('planSimUpdate:追加就转给你看', () => {
 });
 
 describe('planLiveSimUpdate:实况追帧', () => {
+  it('已显示复原态后第一步仍保留转动动画', () => {
+    expect(planLiveSimUpdate(S(''), S('R'), true, 0, true)).toEqual({
+      mode: 'push',
+      exp: 'R',
+    });
+  });
+
+  it('距离复原态一步时用真实逆转完成动画', () => {
+    expect(planLiveSimUpdate(S('R'), S(''), true, 0, true)).toEqual({
+      mode: 'push',
+      exp: "R'",
+    });
+  });
+
+  it('首次挂载在一步态仍直接同步,不把已有状态当成新动作播放', () => {
+    expect(planLiveSimUpdate(S(''), S('R'), true, 0, false)).toEqual({
+      mode: 'setup',
+      exp: 'R',
+    });
+  });
+
   it('没有积压时保留完整动画', () => {
     expect(planLiveSimUpdate(S('R U'), S('R U F'), true, 0)).toEqual({
       mode: 'push',

@@ -13,10 +13,8 @@ export type ScrambleHint = SmartCubeScrambleHint;
 /**
  * Split a scramble into hintable face turns.
  *
- * Returns null if it contains anything a smart cube cannot report — wide
- * moves, slices, whole-cube rotations. Those appear in big-cube and FMC
- * scrambles, never in a WCA 3x3 scramble, and hinting on a move the cube
- * cannot see would strand the user on a step they can never complete.
+ * Wide/slice turns and rotations are mapped into the cube's fixed center
+ * frame by the shared notation adapter. Unsupported notation returns null.
  */
 export const parseHintableScramble = parseHintableSmartCubeScramble;
 

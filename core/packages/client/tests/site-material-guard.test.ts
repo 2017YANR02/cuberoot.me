@@ -9,6 +9,16 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const PAGE = 'app/[lang]/example/example.css';
 
 describe('site materials have one definition and shared scenery tokens', () => {
+  it('keeps layered simulator and OTP inputs transparent', () => {
+    const css = readFileSync(join(ROOT, 'components/site-surfaces.css'), 'utf8');
+    const transparentCompositeRule = css.match(
+      /body\[data-site-scenery\] :is\(([^}]+)\) \{\s*background-color: transparent !important;\s*-webkit-backdrop-filter: none;\s*backdrop-filter: none;\s*\}/,
+    );
+
+    expect(transparentCompositeRule?.[1]).toContain('.sim-player-hlwrap .sim-player-input--hl');
+    expect(transparentCompositeRule?.[1]).toContain('.auth-otp-native');
+  });
+
   it.each([
     'background: var(--popover)',
     'background-color: #222',
@@ -38,6 +48,19 @@ describe('site materials have one definition and shared scenery tokens', () => {
     expect(scanSiteMaterial('.page { --glass-filter: blur(6px) !important; }', 'components/scroll-diagnostics.css')).toEqual([]);
     expect(scanSiteMaterial('.page { --glass-filter: blur(8px) !important; }', 'components/scroll-diagnostics.css')).toHaveLength(1);
     expect(scanSiteMaterial('.page { --glass-filter: none; --glass-background: var(--card); }', 'app/[lang]/home-background.css')).toEqual([]);
+  });
+
+  it('keeps timer dialogs on the shared high-opacity reading layer', () => {
+    const material = readFileSync(join(ROOT, 'components/glass-material.css'), 'utf8');
+    const surfaces = readFileSync(join(ROOT, 'components/site-surfaces.css'), 'utf8');
+    const timer = readFileSync(join(ROOT, 'app/[lang]/timer/timer.css'), 'utf8');
+    const battle = readFileSync(join(ROOT, 'app/[lang]/timer/_battle/battle.css'), 'utf8');
+
+    expect(material).toContain('--glass-dialog-bg: color-mix(in srgb, var(--popover) 96%, transparent);');
+    expect(timer).toMatch(/body\[data-site-scenery\] \.timer-modal\s*\{\s*background: var\(--glass-dialog-bg\);/);
+    expect(surfaces).toMatch(/body\[data-site-scenery\] \.solver-sheet\s*\{\s*background: var\(--glass-dialog-bg\);/);
+    expect(surfaces).toMatch(/:is\(\s*\.timer-history-compare-modal,\s*\.timer-solve-detail-modal,\s*\.timer-room-dialog\s*\)\s*\{\s*background: var\(--glass-dialog-bg\);/);
+    expect(battle).toMatch(/body\[data-site-scenery\] \.ao-detail-panel\s*\{\s*background: var\(--glass-dialog-bg\);/);
   });
 
   it('requires a reason on the same declaration line for intentional exceptions', () => {

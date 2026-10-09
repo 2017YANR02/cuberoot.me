@@ -13,6 +13,20 @@ export function stripWcaPrefix(value: string): string {
   return output.trim();
 }
 
+/** Accept both official Chinese names and the site's shortened display form.
+ * Keep the year in the key so editions of the same competition stay distinct. */
+export function createCompNameEnResolver(names: Readonly<Record<string, string>>): (name: string) => string {
+  const exact = new Map<string, string>();
+  const display = new Map<string, string>();
+  for (const [en, zh] of Object.entries(names)) {
+    if (!zh) continue;
+    if (!exact.has(zh)) exact.set(zh, en);
+    const key = stripWcaPrefix(zh);
+    if (!display.has(key)) display.set(key, en);
+  }
+  return name => exact.get(name) ?? display.get(stripWcaPrefix(name)) ?? '';
+}
+
 /**
  * Remove a duplicated competition year only when the host already displays
  * that same year through a date/range. The canonical data remains unchanged.

@@ -52,7 +52,7 @@
 export type CubeStep =
   | 'cross'
   | 'f2l'
-  | 'oll' | 'ocll' | 'eoll' | 'cpll'
+  | 'oll' | 'ocll' | 'eoll' | 'cpll' | 'cll'
   | 'fb' | 'sb' | 'cmll'
   | 'solved';
 
@@ -76,6 +76,7 @@ const STEPS: Record<CubeStep, StepSpec> = {
   ocll:  { mask: 'U-U-U-U-U---RRRRRR---FFFFFFDDDDDDDDD---LLLLLL---BBBBBB', axes: 6 },
   eoll:  { mask: '-U-UUU-U----RRRRRR---FFFFFFDDDDDDDDD---LLLLLL---BBBBBB', axes: 6 },
   cpll:  { mask: 'UUUUUUUUUr-rRRRRRRf-fFFFFFFDDDDDDDDDl-lLLLLLLb-bBBBBBB', axes: 6 },
+  cll:   { mask: 'U-U-U-U-Ur-rRRRRRRf-fFFFFFFDDDDDDDDDl-lLLLLLLb-bBBBBBB', axes: 6 },
   fb:    { mask: '---------------------F--F--D--D--D-----LLLLLL-----B--B', axes: 24 },
   sb:    { mask: '------------RRRRRR---F-FF-FD-DD-DD-D---LLLLLL---B-BB-B', axes: 24 },
   cmll:  { mask: 'U-U---U-Ur-rRRRRRRf-fF-FF-FD-DD-DD-Dl-lLLLLLLb-bB-BB-B', axes: 24 },
@@ -262,6 +263,12 @@ function maskHolds(facelets: string, groups: readonly number[][], orientation: r
     }
   }
   return true;
+}
+
+/** Judge the displayed training frame only, without accepting another cross face or Roux axis. */
+export function stepSolvedInFrame(step: CubeStep, facelets: string): boolean {
+  return facelets.length === 54 && EQUIVALENCES[step].every((group) =>
+    group.every((index) => facelets[index] === facelets[group[0]]));
 }
 
 /**

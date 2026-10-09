@@ -1,3 +1,4 @@
+import { ScanMode } from '@capacitor-community/bluetooth-le';
 import { describe, expect, it, vi } from 'vitest';
 
 import { NativeBleTransport, type NativeBleClientPort } from './native-ble-transport';
@@ -62,6 +63,13 @@ describe('NativeBleTransport', () => {
 
     const disconnected = vi.fn();
     await transport.connect('AA:BB:CC:DD:EE:FF', disconnected);
+    await expect(transport.getServices?.('AA:BB:CC:DD:EE:FF')).resolves.toEqual([{
+      uuid: 'service',
+      characteristics: [{
+        uuid: 'notify',
+        properties: { notify: true, indicate: false, read: true, write: false, writeWithoutResponse: true },
+      }],
+    }]);
     await transport.write('AA:BB:CC:DD:EE:FF', 'service', 'notify', Uint8Array.of(1, 2));
     expect(client.writeWithoutResponse).toHaveBeenCalledOnce();
     expect(client.write).not.toHaveBeenCalled();
@@ -72,6 +80,65 @@ describe('NativeBleTransport', () => {
     await unsubscribe();
     expect(client.startNotifications).toHaveBeenCalledOnce();
     expect(client.stopNotifications).toHaveBeenCalledOnce();
+  });
+
+  it('uses the Android smart-cube picker to filter multiple name prefixes', async () => {
+    const client = fakeClient();
+    const picker = {
+      requestDevice: vi.fn(async () => ({
+        deviceId: 'CF:30:16:00:A1:B2',
+        name: 'WCU_MY32_A1B2',
+      })),
+    };
+    const transport = new NativeBleTransport(client, picker, 'android');
+    const pickerLabels = {
+      availableDevices: 'Available',
+      cancel: 'Cancel',
+      noDeviceFound: 'None',
+      scanning: 'Scanning',
+    };
+
+    await expect(transport.requestDevice({
+      namePrefix: 'GAN',
+      namePrefixes: ['GAN', 'WCU_MY3', 'QY-QYSC', 'XMD-TornadoV4-i'],
+      services: ['gan-service', 'moyu32-service', 'qiyi-service'],
+      optionalServices: ['gan-service', 'moyu32-service', 'qiyi-service'],
+      pickerLabels,
+    })).resolves.toEqual({ id: 'CF:30:16:00:A1:B2', name: 'WCU_MY32_A1B2' });
+
+    expect(picker.requestDevice).toHaveBeenCalledWith({
+      namePrefixes: ['GAN', 'WCU_MY3', 'QY-QYSC', 'XMD-TornadoV4-i'],
+      ...pickerLabels,
+    });
+    expect(client.requestDevice).not.toHaveBeenCalled();
+  });
+
+  it('uses an unfiltered low-latency community scan outside Android', async () => {
+    const client = fakeClient();
+    const picker = { requestDevice: vi.fn() };
+    const transport = new NativeBleTransport(client, picker, 'ios');
+    const pickerLabels = {
+      availableDevices: 'Available',
+      cancel: 'Cancel',
+      noDeviceFound: 'None',
+      scanning: 'Scanning',
+    };
+
+    await transport.requestDevice({
+      namePrefix: 'GAN',
+      namePrefixes: ['GAN', 'WCU_MY3'],
+      services: ['gan-service', 'moyu32-service'],
+      optionalServices: ['gan-service', 'moyu32-service'],
+      pickerLabels,
+    });
+
+    expect(client.requestDevice).toHaveBeenCalledWith({
+      optionalServices: ['gan-service', 'moyu32-service'],
+      scanMode: ScanMode.SCAN_MODE_LOW_LATENCY,
+    });
+    const request = vi.mocked(client.requestDevice).mock.calls[0]?.[0];
+    expect(request).not.toHaveProperty('namePrefix');
+    expect(request).not.toHaveProperty('services');
   });
 
   it('captures manufacturer data for an iOS UUID after the native picker returns', async () => {
@@ -107,5 +174,32 @@ describe('NativeBleTransport', () => {
       0xa3, 0xb4, 0xc5, 6, 5, 4, 3, 2, 1,
     ]);
     expect(client.stopLEScan).toHaveBeenCalledOnce();
+  });
+
+  it('keeps write capability discovery isolated between connected devices', async () => {
+    const client = fakeClient();
+    vi.mocked(client.getServices)
+      .mockResolvedValueOnce([{
+        uuid: 'service-a',
+        characteristics: [{ uuid: 'write', descriptors: [], properties: {
+          authenticatedSignedWrites: false, broadcast: false, indicate: false, notify: false,
+          read: false, write: false, writeWithoutResponse: true,
+        } }],
+      }])
+      .mockResolvedValueOnce([{
+        uuid: 'service-b',
+        characteristics: [{ uuid: 'write', descriptors: [], properties: {
+          authenticatedSignedWrites: false, broadcast: false, indicate: false, notify: false,
+          read: false, write: true, writeWithoutResponse: false,
+        } }],
+      }]);
+    const transport = new NativeBleTransport(client);
+    await transport.connect('device-a', vi.fn());
+    await transport.connect('device-b', vi.fn());
+
+    await transport.write('device-a', 'service-a', 'write', Uint8Array.of(1));
+    await transport.write('device-b', 'service-b', 'write', Uint8Array.of(2));
+    expect(client.writeWithoutResponse).toHaveBeenCalledOnce();
+    expect(client.write).toHaveBeenCalledOnce();
   });
 });

@@ -19,6 +19,20 @@ function mkCase(over: Partial<AlgCase> & { name: string }): AlgCase {
 const base = { puzzle: '3x3' as const, set: 'pll', title: 'T', filename: 'f' };
 
 describe('algSheetFromCases', () => {
+  it('F2L printed scrambles follow the canonical case orientation independently of formula order', () => {
+    const c = mkCase({ name: 'W+', setup: "R U R' U2' R U' R' U y", algs: [
+      [{ alg: "U R' F r U' r' F' R y'" }, { alg: "F' L F L' y'" }],
+      [{ alg: "U L U' L' y2" }],
+    ] });
+    const options = { ...base, set: 'f2l', cases: [c], allOris: true };
+    expect(algSheetFromCases(options).cases.map(row => row.setup))
+      .toEqual(["R U R' U2' R U' R' U y", "R U R' U2' R U' R' U y y"]);
+    c.algs[0].reverse();
+    expect(algSheetFromCases(options).cases[0].setup).toBe("R U R' U2' R U' R' U y");
+    expect(algSheetFromCases({ ...options, viewAngle: 'u' }).cases[0].setup).toBe("R U R' U2' R U' R' U y U");
+    expect(c.setup).toBe("R U R' U2' R U' R' U y");
+  });
+
   it('跳过不匹配公式后再截断，保留 case、图和后续有效公式，不修改源数据', async () => {
     const c = mkCase({ name: 'test', setup: "R'", algs: [[]] });
     const invalid = await alignCaseEntry('3x3', 'pll', c, { alg: 'U' });
@@ -26,7 +40,7 @@ describe('algSheetFromCases', () => {
     c.algs = [[invalid, { alg: 'R' }, { alg: "R U U'" }]];
     const sheet = algSheetFromCases({ ...base, cases: [c], maxAlgs: 2 });
     expect(sheet.cases).toHaveLength(1);
-    expect(sheet.cases[0].algs).toEqual(['R', "R U U'"]);
+    expect(sheet.cases[0].algs).toEqual(['R', 'R']);
     expect(sheet.cases[0].thumb?.setup).toBe("R'");
     expect(sheet.subtitle).toContain('1 unverified algorithms omitted');
     expect(c.algs[0]).toHaveLength(3);
@@ -61,12 +75,14 @@ describe('algSheetFromCases', () => {
     expect(sheet.cases[0].algs[0]).toBe("R U0 R'");
   });
 
-  it('所有导出保留必要收尾调整，与实际执行一致', () => {
-    const c = mkCase({ name: 'AD', algs: [[{ alg: "R U R' U" }]] });
+  it('顶层导出去掉收尾 U/y，缩略图和源数据仍保留完整公式', () => {
+    const c = mkCase({ name: 'AD', algs: [[{ alg: "R U R' x U y'" }]] });
     const stripped = algSheetFromCases({ ...base, cases: [c] });
     const raw = algSheetFromCases({ ...base, cases: [c], rawAlg: true });
-    expect(stripped.cases[0].algs[0]).toBe("R U R' U");
-    expect(raw.cases[0].algs[0]).toBe("R U R' U");
+    expect(stripped.cases[0].algs[0]).toBe("R U R' x");
+    expect(raw.cases[0].algs[0]).toBe("R U R' x");
+    expect(stripped.cases[0].thumb?.alg).toBe("R U R' x U y'");
+    expect(c.algs[0][0].alg).toBe("R U R' x U y'");
   });
 
   it('allOris:一张 case 摊成每视角一格,计数仍按 case 算', () => {
@@ -199,6 +215,6 @@ describe('algSheetFromCases', () => {
     expect(sheet.cases[0].setup).toBe("R U R' U");
     expect(sheet.cases[0].thumb?.setup).toBe("R U R' U");
     expect(sheet.cases[0].thumb?.alg).toBe("R U R' U");
-    expect(sheet.cases[0].algs).toEqual(["R U R' U"]);
+    expect(sheet.cases[0].algs).toEqual(["R U R'"]);
   });
 });

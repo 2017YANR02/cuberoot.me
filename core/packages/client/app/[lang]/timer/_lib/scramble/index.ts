@@ -25,7 +25,7 @@ import {
 } from './others';
 import { applyColorNeutral, isCnEligible } from './cn';
 import { getSettings, updateSettings } from '../settings';
-import { rngFor } from './seeded_rng';
+import { resetTimerSyncSeed } from '@cuberoot/shared/timer/sync-seed';
 import { generateGearTimerScramble } from '@cuberoot/puzzle-solvers/gear';
 import { generateIvyTimerScramble } from '@cuberoot/puzzle-solvers/ivy';
 
@@ -60,7 +60,7 @@ export function registerScramble(event: EventId, gen: Gen): void {
 }
 
 export function resetSeedCounter(): void {
-  updateSettings({ syncSeedCounter: 0 });
+  updateSettings(resetTimerSyncSeed(getSettings()));
 }
 
 export function getSeedCounter(): number {
@@ -68,17 +68,8 @@ export function getSeedCounter(): number {
 }
 
 export function generateScramble(event: EventId, rng?: () => number): string {
-  let useRng = rng;
-  if (!useRng) {
-    const seed = getSettings().syncSeed;
-    if (seed) {
-      const counter = getSettings().syncSeedCounter;
-      useRng = rngFor(seed, counter);
-      updateSettings({ syncSeedCounter: counter + 1 });
-    } else {
-      useRng = Math.random;
-    }
-  }
+  // Seed consumption belongs to the displayed async slot, never a preload.
+  const useRng = rng ?? Math.random;
   const gen = REG[event];
   const raw = gen ? gen(useRng) : scramble333(useRng);
   // Apply color-neutral rotation prefix for 3x3-shaped events.

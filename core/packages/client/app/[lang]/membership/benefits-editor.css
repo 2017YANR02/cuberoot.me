@@ -1,0 +1,23 @@
+.mem-benefits-editor { margin-block: 24px; }
+.mem-benefits-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--border-default); border-radius: 9px; background: var(--card); color: var(--foreground); padding: 10px 15px; font: inherit; font-size: 13px; cursor: pointer; }
+.mem-benefits-button:disabled { opacity: .45; cursor: default; }
+.mem-benefits-form { padding: 24px; border: 1px solid var(--border-default); border-radius: 16px; background: var(--card); }
+.mem-benefits-form > h2 { margin-top: 0; }
+.mem-benefits-form p { color: var(--muted-foreground); font-size: 13px; line-height: 1.8; }
+.mem-benefits-form fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+.mem-benefits-group { border-top: 1px solid var(--border-default); margin-top: 24px; padding-top: 12px; }
+.mem-benefit-row { padding: 18px; margin-bottom: 16px; border: 1px solid var(--border-default); border-radius: 12px; }
+.mem-benefit-row label { display: flex; flex-direction: column; gap: 7px; margin-top: 12px; color: var(--muted-foreground); font-size: 12px; }
+.mem-benefit-textarea { box-sizing: border-box; width: 100%; border: 1px solid var(--input); border-radius: 8px; padding: 10px; font: inherit; font-size: 14px; line-height: 1.7; resize: vertical; background: var(--background); color: var(--foreground); }
+.mem-benefit-textarea:focus-visible, .mem-benefits-button:focus-visible, .mem-benefit-row summary:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+.mem-benefit-row summary { cursor: pointer; color: var(--muted-foreground); font-size: 12px; padding-block: 14px 4px; }
+.mem-benefit-tools { padding-left: 40px; min-height: 32px; display: flex; gap: 12px; align-items: center; }
+.mem-benefit-tools > span:first-child { font-size: 12px; color: var(--faint-foreground); margin-right: auto; }
+.mem-benefits-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 25px; }
+.mem-benefits-button.mem-benefits-save { background: var(--primary); color: var(--primary-foreground); }
+.mem-benefits-error { color: var(--destructive); font-size: 13px; line-height: 1.7; }
+.mem-benefits-saved { display: inline-block; margin-left: 12px; color: var(--signal-success); font-size: 13px; }
+@media (max-width: 600px) { .mem-benefits-form { padding: 15px; } .mem-benefit-row { padding: 13px; } }
+
+.mem-benefit-row > .sortable-card-drag-handle { top: 18px; left: 18px; min-width: 32px; min-height: 32px; }
+@media (max-width: 600px) { .mem-benefit-row > .sortable-card-drag-handle { top: 13px; left: 13px; } }

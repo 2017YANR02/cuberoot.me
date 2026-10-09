@@ -26,6 +26,7 @@ function handlers(): MobileTimerMoreActionHandlers {
     'more.bld-helper': vi.fn(),
     'more.fullscreen': vi.fn(),
     'more.manual-entry': vi.fn(),
+    'more.replay': vi.fn(),
     'more.solver': vi.fn(),
     'more.bulk': vi.fn(),
     'more.print': vi.fn(),
@@ -43,6 +44,7 @@ describe('Mobile timer More effect adapter', () => {
       'more.bld-helper',
       'more.fullscreen',
       'more.manual-entry',
+      'more.replay',
       'more.solver',
       'more.bulk',
       'more.print',
@@ -55,6 +57,7 @@ describe('Mobile timer More effect adapter', () => {
       'more.drill',
       'more.fullscreen',
       'more.manual-entry',
+      'more.replay',
       'more.solver',
       'more.bulk',
       'more.print',
@@ -68,7 +71,7 @@ describe('Mobile timer More effect adapter', () => {
         id as (typeof MOBILE_TIMER_MORE_IMPLEMENTED_ACTION_IDS)[number],
       ),
     );
-    expect(missing).toEqual(['more.replay']);
+    expect(missing).toEqual([]);
   });
 
   it('binds and runs every displayed callback, with shared bilingual labels', () => {
@@ -82,6 +85,7 @@ describe('Mobile timer More effect adapter', () => {
       'Drill mode',
       'Fullscreen',
       'Manual entry',
+      'Paste replay URL',
       'Solver',
       'Bulk scrambles',
       'Print',
@@ -94,6 +98,7 @@ describe('Mobile timer More effect adapter', () => {
       '专项练习',
       '全屏',
       '手动录入',
+      '粘贴 replay 链接',
       '通用求解器',
       '批量打乱',
       '打印',
@@ -147,13 +152,13 @@ describe('Mobile timer More effect adapter', () => {
     const css = readFileSync('src/app.css', 'utf8');
     expect(app).toContain('<TimerMoreMenu');
     expect(app).toContain("'more.marks': () => openToolsRoute('/timer/marks')");
-    expect(app).toContain("'more.stats-mobile': () => setView('history')");
+    expect(app).toContain("'more.stats-mobile': () => { setView('history'); setHistoryTab('stats'); }");
     expect(app).toContain("'more.language-mobile': toggleMoreLanguage");
-    expect(app).toContain("'more.bld-helper': () => openToolsRoute('/alg/3bld/helper')");
+    expect(app).toContain("'more.bld-helper': () => setOpenOverlay(TIMER_OVERLAY_IDS.bldTool)");
     expect(app).toContain("'more.fullscreen': toggleTimerFullscreen");
     expect(app).toContain("'more.manual-entry': openManualEntry");
-    expect(app).toContain("'more.solver': () => openToolsRoute('/scramble/solver?event=333')");
-    expect(app).toContain("'more.bulk': () => openToolsRoute('/scramble/gen?mode=batch')");
+    expect(app).toContain("'more.solver': () => setOpenOverlay(TIMER_OVERLAY_IDS.solverTool)");
+    expect(app).toContain("'more.bulk': () => setOpenOverlay(TIMER_OVERLAY_IDS.bulkTool)");
     expect(app).toContain("'more.print': () => printControllerRef.current?.print()");
     expect(app).toContain("'more.clear-event': clearCurrentEvent");
     expect(app).toContain('repository.clearSessionEvent(sessionId, activeEvent)');

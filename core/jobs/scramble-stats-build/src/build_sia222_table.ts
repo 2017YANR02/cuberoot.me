@@ -11,7 +11,7 @@
 // 复用求解器逻辑:直接 import @cuberoot/puzzle-solvers/sia222 的 sia222BuildPdbs() / serializeSia222Pdbs() /
 // deserializeSia222Pdbs()(同一份 BFS + 字节格式)。运行:
 //   pnpm --filter @cuberoot/scramble-stats-build build:sia222-table
-// 由 update_puzzle_stats.ps1 的「TIER B 离线表」步骤调用。
+// 由 scripts/stats/puzzles-cli.ts 的「TIER B 离线表」步骤调用。
 
 import fs from 'node:fs';
 import path from 'node:path';

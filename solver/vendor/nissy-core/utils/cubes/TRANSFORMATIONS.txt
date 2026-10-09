@@ -1,0 +1,23 @@
+Transformations can be either simple rotations or a rotation composed
+with a mirroring.
+
+Simple rotations are denoted by two letters corresponding to the faces
+to be moved to the U and F positions, respectively. For example FD is
+the rotation that brings the F face on top and the D face on front.
+
+A composed rotation + mirror is obtained by applying the corresponding
+rotation to the solved cube mirrored along the M plane.
+
+For example, to apply the transformation RBm (mirrored RB) to a cube C:
+1a. Apply a mirror along the M plane to the solved cube
+1b. Rotate the mirrored cube with z' y2
+3.  Apply the cube C to the transformed solved cube
+4.  Apply the transformations of step 1a and 1b in reverse
+
+The orientation of pieces after a rotation ignores the new position
+of centers.  A rotated cube can technically be inconsistent, because
+the parity of the edge permutation has to be adjusted considering the
+parity of the centers, which we ignore.
+
+The utility script mirror.sh transforms a solved, rotated cube to its
+mirrored and rotated version.

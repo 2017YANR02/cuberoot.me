@@ -10,31 +10,32 @@ interface TopUpcomingData {
 
 type CnUpcomingRegistrations = Record<string, string[]>;
 
-let staticUpcomingPromise: Promise<[TopUpcomingData, CnUpcomingRegistrations]> | null = null;
-
-function loadStaticUpcoming(): Promise<[TopUpcomingData, CnUpcomingRegistrations]> {
-  if (!staticUpcomingPromise) {
-    staticUpcomingPromise = Promise.all([
-      fetch(statsUrl('/stats/upcoming_comps.json'))
-        .then((response) => response.ok ? response.json() : {})
-        .catch(() => ({})) as Promise<TopUpcomingData>,
-      fetch(statsUrl('/stats/cn_upcoming_registrations.json'))
-        .then((response) => response.ok ? response.json() : {})
-        .catch(() => ({})) as Promise<CnUpcomingRegistrations>,
-    ]);
-  }
-  return staticUpcomingPromise;
+async function loadStatsJson<T>(path: string): Promise<T> {
+    // These indexes are regenerated daily. Always revalidate instead of keeping
+    // one stale Promise for the lifetime of a long-open browser tab.
+    const response = await fetch(statsUrl(path), { cache: 'no-cache' });
+    if (!response.ok) throw new Error('registration index unavailable');
+    return await response.json() as T;
 }
 
 /** 与比赛中心一致：静态报名索引先命中，WCA upcoming API 再补全。 */
 export async function fetchPersonUpcomingCompetitionIds(wcaId: string): Promise<string[]> {
-  const id = wcaId.trim().toUpperCase();
-  if (!WCA_ID_REGEX.test(id)) return [];
+  return (await fetchPersonUpcomingCompetitions(wcaId)).ids;
+}
 
-  const [[topData, cnRegistrations], apiIds] = await Promise.all([
-    loadStaticUpcoming(),
-    fetchUserUpcoming(id),
+/** 保留可用来源，同时把来源失败与“确实没有报名”区分开。 */
+export async function fetchPersonUpcomingCompetitions(wcaId: string): Promise<{ ids: string[]; incomplete: boolean }> {
+  const id = wcaId.trim().toUpperCase();
+  if (!WCA_ID_REGEX.test(id)) return { ids: [], incomplete: false };
+
+  const [top, cn, api] = await Promise.allSettled([
+    loadStatsJson<TopUpcomingData>('/stats/upcoming_comps.json'),
+    loadStatsJson<CnUpcomingRegistrations>('/stats/cn_upcoming_registrations.json'),
+    fetchUserUpcoming(id, { strict: true }),
   ]);
+  const topData = top.status === 'fulfilled' ? top.value : {};
+  const cnRegistrations = cn.status === 'fulfilled' ? cn.value : {};
+  const apiIds = api.status === 'fulfilled' ? api.value : [];
   const competitionIds = new Set(apiIds);
 
   for (const competition of topData.competitions ?? []) {
@@ -46,5 +47,5 @@ export async function fetchPersonUpcomingCompetitionIds(wcaId: string): Promise<
     if (personIds.includes(id)) competitionIds.add(competitionId);
   }
 
-  return [...competitionIds];
+  return { ids: [...competitionIds], incomplete: [top, cn, api].some((r) => r.status === 'rejected') };
 }

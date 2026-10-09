@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 /**
  * Shared row layout for scramble engine/mode toggles (3x3 engine, 5x5 mode, …).
@@ -8,7 +9,6 @@
 import Link from '@/components/AppLink';
 import { HelpCircle } from 'lucide-react';
 import { EventIcon } from '@/components/EventIcon';
-import PillToggle from './PillToggle/PillToggle';
 import './scramble-mode-picker-row.css';
 
 interface Props {
@@ -38,13 +38,15 @@ export default function ScrambleModePickerRow({
           {label}
         </span>
       )}
-      <PillToggle
-        value={value}
-        onChange={onChange}
-        onLabel={onLabel}
-        offLabel={offLabel}
-        ariaLabel={ariaLabel}
-      />
+      <select
+        value={String(value)}
+        onChange={event => onChange(event.currentTarget.value === 'true')}
+        aria-label={ariaLabel}
+        className="native-select"
+      >
+        <option value="true">{onLabel}</option>
+        <option value="false">{offLabel}</option>
+      </select>
       {helpHref && (
         <Link
           href={helpHref}

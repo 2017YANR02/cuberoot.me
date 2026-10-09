@@ -98,7 +98,7 @@ function precisionLabel(value: number): string {
   return value === 0 ? 'x' : `x.${'x'.repeat(value)}`;
 }
 
-function TimerSettingsSection({
+export function TimerSettingsSection({
   children,
   headerControl,
   title,
@@ -194,18 +194,14 @@ export function TimerTimingSettingsSections({
 
   return (
     <>
-      <TimerSettingsSection
-        headerControl={(
-          <span data-setting-id={TIMING_FIELDS.timingEnabled.id}>
-            {renderBooleanControl({
-              label: label(TIMING_FIELDS.timingEnabled),
-              onChange: (timingEnabled) => onChange({ timingEnabled }),
-              settingId: TIMING_FIELDS.timingEnabled.id as TimerSettingFieldId,
-              value: settings.timingEnabled,
-            })}
-          </span>
-        )}
-      >
+      <TimerSettingsSection>
+        <TimerBooleanSettingRow
+          field={TIMING_FIELDS.timingEnabled}
+          label={label(TIMING_FIELDS.timingEnabled)}
+          onChange={(timingEnabled) => onChange({ timingEnabled })}
+          renderBooleanControl={renderBooleanControl}
+          value={settings.timingEnabled}
+        />
         <TimerBooleanSettingRow
           field={TIMING_FIELDS.inspectionSec}
           label={label(TIMING_FIELDS.inspectionSec)}

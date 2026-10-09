@@ -22,7 +22,7 @@ function makeLocalStorage() {
   };
 }
 const g = globalThis as unknown as { window?: unknown; localStorage?: ReturnType<typeof makeLocalStorage> };
-g.window = { addEventListener() {} };
+g.window = { location: { pathname: '/' }, addEventListener() {} };
 g.localStorage = makeLocalStorage();
 
 // 内存房间模拟:createRoom 记下 keys,claimRoomBatch 顺序出队(最多 count 格),nextRoundRoom 重置游标 + 轮次。

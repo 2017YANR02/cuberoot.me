@@ -1,27 +1,14 @@
-/* 遮罩清单管理抽屉(仅管理员)。列表可能有几十条 → 自己滚,别把页面撑长。
-   窄屏隐藏 key，字段和操作按可用宽度换行。 */
-.sim-mask-admin-scrim {
-  position: fixed;
-  inset: 0;
-  z-index: 101;   /* 压过设置抽屉(50/51)与键位表(100),它是从播放条里弹出的模态 */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  background: color-mix(in srgb, var(--foreground) 45%, transparent);
-}
-
 .sim-mask-admin {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  width: min(660px, 100%);
-  max-height: min(80vh, 720px);
+  width: 400px;
+  max-width: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+  max-height: min(75dvh, 720px);
   padding: 14px 16px;
-  border-radius: 8px;
-  background: var(--popover);
   color: var(--foreground);
-  border: 1px solid var(--border-default);
 }
 
 .sim-mask-admin-head {
@@ -88,20 +75,14 @@
   margin-bottom: 4px;
 }
 
-.sim-mask-admin-row,
-.sim-mask-admin-columns {
+.sim-mask-admin-row {
   display: grid;
-  grid-template-columns: 15ch minmax(0, 1fr) minmax(0, 1fr) 28px 28px;
+  grid-template-columns: 64px minmax(0, 1fr) 28px;
   font-size: 12px;
   align-items: center;
   gap: 6px;
-  padding: 2px 34px 2px 16px;
+  padding: 8px 28px 8px 0;
 }
-
-.sim-mask-admin-columns > span { white-space: nowrap; }
-.sim-mask-admin-columns { overflow-y: auto; scrollbar-gutter: stable; flex-shrink: 0; }
-.sim-mask-admin-columns > span:first-child { grid-column: 2; }
-.sim-mask-admin-columns > span:last-child { grid-column: 3; }
 
 .sim-mask-admin-group-title { min-height: 28px; padding-right: 34px; }
 .sim-mask-admin-group > .sortable-card-drag-handle,
@@ -200,38 +181,40 @@
   color: var(--destructive);
 }
 
-/* 播放条上的齿轮(管理员) */
-.sim-stickering-admin {
+
+.sim-mask-admin-fields { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.sim-mask-admin-field { flex-direction: row; align-items: center; gap: 6px; }
+.sim-mask-admin-row-actions { display: flex; flex-direction: column; gap: 6px; }
+.sim-mask-admin-note { flex-basis: 100%; order: 1; }
+.sim-mask-admin-head, .sim-mask-admin-new { flex-shrink: 0; }
+.sim-mask-admin-list { min-height: 0; }
+.sim-mask-admin-row.is-hidden .sim-stage-thumb { opacity: 0.4; }
+
+/* CompactSelect owns viewport clamping and the shared popover material. */
+.compact-select-popup.sim-stage-options { overflow: hidden; }
+.sim-stage-options > .compact-select-options { overflow-y: auto; min-height: 0; }
+.sim-stage-menu-heading {
+  order: -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 6px 16px;
+}
+.sim-stage-edit-button {
   display: inline-flex;
   align-items: center;
-  padding: 3px;
-  border: 1px solid transparent;
-  border-radius: 4px;
+  padding: 4px;
+  border: 0;
   background: transparent;
   color: var(--muted-foreground);
+  font: inherit;
+  font-size: 12px;
   cursor: pointer;
 }
-
-.sim-stickering-admin:hover {
-  border-color: var(--border-default);
-  color: var(--foreground);
-}
-
-@media (max-width: 720px) {
-  .sim-mask-admin-head > .sim-mask-admin-note { order: 1; width: 100%; }
-  .sim-mask-admin-key {
-    display: none;
-  }
-
-  .sim-mask-admin-input {
-    width: 10ch;
-  }
-
-  .sim-mask-admin-row,
-  .sim-mask-admin-columns {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 28px 28px;
-    gap: 4px;
-  }
-  .sim-mask-admin-columns > span:first-child { grid-column: 1; }
-  .sim-mask-admin-columns > span:last-child { grid-column: 2; }
+.sim-stage-edit-button:hover { color: var(--foreground); }
+@media (max-width: 420px) {
+  .sim-mask-admin { padding: 8px; }
+  .sim-mask-admin-row { gap: 4px; }
 }

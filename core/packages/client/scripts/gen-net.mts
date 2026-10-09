@@ -272,6 +272,8 @@ async function gen(id: string): Promise<void> {
     for (let i = 0; i < cfg.sampleN; i++) scrambles.push((await randomScrambleForEvent(id)).toString());
   }
   const alphabet = [...new Set(scrambles.flatMap((s) => s.trim().split(/\s+/)).filter(Boolean))];
+  // MoYu Redi previews normalize R/L to F/UL but retain whole-cube rotations.
+  if (id === 'redi_cube') alphabet.push('x', "x'", 'x2');
 
   // 3. transform of every token, via applyAlg from solved
   const flatOf = (token: string): Record<string, Flat> => {

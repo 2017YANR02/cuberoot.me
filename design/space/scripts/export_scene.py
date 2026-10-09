@@ -1,4 +1,4 @@
-"""Run with blender scene.blend --background --threads 14 --python this.py."""
+"""Run with blender scene.blend --background --python this.py."""
 import json
 import re
 import sys

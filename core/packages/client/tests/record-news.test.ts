@@ -11,6 +11,15 @@ vi.mock('@/components/AppLink', () => ({
 }));
 
 describe('record news presentation', () => {
+  it.each([['CN', '中国', '🇨🇳'], ['HK', '中国香港', '🇭🇰'], ['RU', '俄罗斯', '🇷🇺']])(
+    'localizes national record country %s through the Bark formatter', (region, country, flag) => {
+      const [news] = competitionRecordNews('FutureCompetition2027', [], {
+        '1': { name: 'Test Cuber', region },
+      }, [], [{ ev: { i: '333' }, res: { n: 1 }, roundId: '2', type: 'single', tag: 'NR', value: 274 }]);
+      expect(news.message.zh).toBe(`纪录快讯! 2.74三阶单次${country}纪录${flag}NR Test Cuber`);
+      expect(news.message.en).toBe(`Breaking News! 2.74 3x3${flag}NR Single Test Cuber`);
+    },
+  );
   it('shows Rhys Caskey\'s exact final average NWR without changing his single or other rounds', () => {
     const row = { e: '444', r: 'f', n: 1, b: 2562, a: 2759, sr: '', ar: '' };
     const rows = { '444:f': [row, { ...row, n: 2 }, { ...row, a: 2760 }], '444:d': [{ ...row, r: 'd' }] };
@@ -34,10 +43,25 @@ describe('record news presentation', () => {
       expect(news[0].results[0].text.zh).toContain('4.27 三阶平均女子世界纪录');
       expect(news[0].round).toBe(3);
       expect(news[0].results[0].tag).toBe('FWR');
+      expect(news[0].message.zh).toContain('连允之🇨🇳');
+      expect(news[0].message.en).toContain('Yunzhi Lian🇨🇳');
     }
     expect(competitionRecordNews('Invalid', [], users, [], [{ ...record, value: -1 }])).toEqual([]);
     expect(competitionRecordNews('Invalid', [], users, [], [{ ...record, tag: '1' }])).toEqual([]);
     expect(competitionRecordNews('WuhanCrimsonAutumn2026', [], users, [], [{ ...record, value: 452 }])).toHaveLength(COMP_RECORD_NEWS.WuhanCrimsonAutumn2026!.length);
+  });
+  it('uses Bark ordering and mean labels for the Beijing six-by-six clipboard news', () => {
+    const news = competitionRecordNews('BeijingAutumnRivalry2026', [], {
+      '1': { name: 'Timofei Tarasenko', region: 'RU' },
+      '2': { name: 'Seung Hyuk Nahm', region: 'KR' },
+    }, [], [
+      { ev: { i: '666' }, res: { n: 1 }, roundId: 'f', type: 'average', tag: 'WR', value: 6176 },
+      { ev: { i: '666' }, res: { n: 2 }, roundId: 'f', type: 'single', tag: 'AsR', value: 6008 },
+    ]);
+    expect(news[0].message.en).toBe('BREAKING NEWS! 1:01.76 6x6 WR Mean Timofei Tarasenko🇷🇺');
+    expect(news[1].message.en).toBe('Breaking News! 1:00.08 6x6 AsR Single Seung Hyuk Nahm🇰🇷');
+    expect(news[0].message.zh).toBe('纪录快讯! 1:01.76六阶平均世界纪录WR Timofei Tarasenko🇷🇺');
+    expect(news[1].message.zh).toBe('纪录快讯! 1:00.08六阶单次亚洲纪录AsR Seung Hyuk Nahm🇰🇷');
   });
   it('retains both newcomer sources and both metrics, while deduplicating curated news', () => {
     const records = (['1st-solve', '1st-comp'] as const).flatMap(source => (['single', 'average'] as const).map(type => ({ eventId: '444', roundId: 'f', personNumber: 1, source, type, value: 2763 })));
@@ -46,6 +70,7 @@ describe('record news presentation', () => {
     expect(news.filter(row => row.event === '444')).toHaveLength(4);
     expect(news.filter(row => row.newcomerSource === '1st-solve')).toHaveLength(2);
     expect(news.filter(row => row.newcomerSource === '1st-comp')).toHaveLength(2);
+    expect(news.filter(row => row.newcomerSource === '1st-solve').every(row => row.message.zh.endsWith('耿暄一🇨🇳') && row.message.en.endsWith('Xuanyi Geng🇨🇳'))).toBe(true);
     expect(news.find(row => row.newcomerSource === '1st-comp' && row.newcomerType === 'average')?.message.zh).toContain('25.81');
   });
   it('colors newcomer world records as world records without changing national records', () => {

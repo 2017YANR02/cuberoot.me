@@ -20,15 +20,15 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Sprout, Shapes, Workflow, Hand, Target, Award, Users, Sigma,
+  Sprout, Workflow, Hand, Target, Users, Sigma,
   Lightbulb, Quote, ArrowRight, BookMarked, Box, Shuffle, Scale, Timer as TimerIcon,
   Brain, FlaskConical, MonitorOff, HelpCircle,
   Layers, Search, ListChecks, TriangleAlert,
   Sparkles, Boxes, GraduationCap, MapPin,
 } from 'lucide-react';
 import Link from '@/components/AppLink';
-import dynamic from 'next/dynamic';
 import { EventIcon } from '@/components/EventIcon';
+import AlgPlayer from '@/components/AlgPlayer/AlgPlayer';
 import BackHome from '@/components/BackHome';
 import { useT } from '../../../hooks/useT';
 import LiveHero from './_LiveHero';
@@ -40,15 +40,8 @@ import GodsNumberDist from './_GodsNumberDist';
 import MemoryPalace from './_MemoryPalace';
 import SpeedFeel from './_SpeedFeel';
 import StickyToc from './_StickyToc';
+import AbilityAtlas from './_AbilityAtlas';
 import './why_cube.css';
-
-// Server-rendered cube SVG (api.cuberoot.me). Client-only to dodge a dev
-// hydration mismatch (server picks absolute API origin, client-dev picks a
-// relative path). Used for the static cube imagery throughout the page.
-const VisualCube = dynamic(() => import('@/components/VisualCube').then(m => m.VisualCube), {
-  loading: () => <span className="wc-cube-ph" aria-hidden="true" />,
-  ssr: false,
-});
 
 /* NxN family for the size line-up. */
 const SIZES = [
@@ -231,50 +224,13 @@ export default function WhyCubePage() {
           </p>
         </Sec>
 
-        {/* ── Six abilities ─────────────────────────────────── */}
+        {/* ── Thirty areas of growth ────────────────────── */}
         <Sec
           eyebrow={t('核心能力', 'Core abilities')}
-          title={t('一块方块，练六种能力', 'One puzzle, six abilities')}
+          title={t('一块魔方，展开三十种成长', 'One puzzle, thirty areas of growth')}
         >
+          <AbilityAtlas />
           <SolveFlow />
-          <div className="wc-benefits">
-            <Benefit icon={<Shapes size={26} />} title={t('空间想象能力', 'Spatial imagination')}>
-              {t(
-                '还原的过程，是不断的“心理旋转”：预判一块转过去会落到哪里、在脑子里翻转整个方块。这是孩子最稀缺、也最值钱的一种思维。',
-                'Solving is constant “mental rotation”: predicting where a piece lands when it turns, flipping the whole cube in your head. It is one of the scarcest — and most valuable — ways of thinking a child can build.'
-              )}
-            </Benefit>
-            <Benefit icon={<Workflow size={26} />} title={t('逻辑与算法思维', 'Logic & algorithmic thinking')}>
-              {t(
-                '每一步都是“看到这个图案，就用这个公式”。先观察、再判断、再执行 —— 这正是计算机科学里“条件判断 + 算法”的雏形。',
-                'Every step is “see this pattern, apply this algorithm.” Observe, decide, execute — exactly the “conditionals + algorithms” at the heart of computer science.'
-              )}
-            </Benefit>
-            <Benefit icon={<Hand size={26} />} title={t('手眼协调', 'Hand-eye coordination')}>
-              {t(
-                '一次快速还原平均要拧四五十下，几秒内完成。手指的灵活度、双手的配合、眼到手到的反应速度，全都在练。',
-                'A fast solve averages 40–60 turns done in a few seconds. Finger dexterity, two-handed teamwork and eye-to-hand reaction are all under training.'
-              )}
-            </Benefit>
-            <Benefit icon={<Target size={26} />} title={t('专注与耐心', 'Focus & patience')}>
-              {t(
-                '一次解不开，就再来一次。魔方给孩子大量“坚持到把问题解决”的练习，也让他们慢慢学会面对挫折、不轻易放弃。',
-                'If it doesn’t work, try again. The cube gives kids endless practice at sticking with a problem until it’s solved — and at facing frustration without giving up.'
-              )}
-            </Benefit>
-            <Benefit icon={<Award size={26} />} title={t('自信与成就感', 'Confidence & achievement')}>
-              {t(
-                '“我会还原魔方”是一个让孩子骄傲的标签。亲手攻克一个看起来很难的东西，会悄悄变成“难的事我也能学会”的底气。',
-                '“I can solve a Rubik’s Cube” is a label kids wear proudly. Conquering something that looks hard quietly becomes the belief that “I can learn hard things.”'
-              )}
-            </Benefit>
-            <Benefit icon={<Users size={26} />} title={t('朋友与赛场', 'Friends & community')}>
-              {t(
-                'WCA 比赛全靠志愿者组织，气氛友善、鼓励互助。很多魔方少年最好的朋友，都是在赛场上认识的。',
-                'WCA competitions are run by volunteers in a friendly, helpful spirit. Many young cubers say their best friends are the ones they met at events.'
-              )}
-            </Benefit>
-          </div>
         </Sec>
 
         {/* ── What research actually says ───────────────────── */}
@@ -526,7 +482,17 @@ export default function WhyCubePage() {
           <div className="wc-sizes">
             {SIZES.map(s => (
               <Fig key={s.n} cap={s.label}>
-                <VisualCube algorithm="" view="iso" puzzleSize={s.n} size={96} alt={`${s.label} cube`} loading="lazy" />
+                <AlgPlayer
+                  alg=""
+                  puzzle="3x3"
+                  puzzleOrder={s.n}
+                  set=""
+                  startSolved
+                  controlMode="none"
+                  interactionMode="view"
+                  engine="sim"
+                  size={96}
+                />
               </Fig>
             ))}
           </div>

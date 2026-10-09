@@ -1,0 +1,90 @@
+import { useEffect, type ReactNode } from 'react';
+import BoolToggle from './BoolToggle';
+
+export interface TimerBattleCell {
+  hideScramble: boolean;
+  controlsCorner: 'left' | 'right' | 'center';
+}
+
+export interface TimerBattleLayoutProps {
+  playerCount: 2 | 3 | 4;
+  layout: 'side' | 'versus';
+  flipTopRow: boolean;
+  middle?: ReactNode;
+  bottomScramble?: ReactNode;
+  topScramble?: ReactNode;
+  renderPlayer(id: number, cell: TimerBattleCell): ReactNode;
+}
+
+const COPY = {
+  en: { layout: 'Layout', side: 'Side by side', versus: 'Face to face', flip: 'Rotate top players' },
+  zh: { layout: '布局', side: '并排', versus: '面对面', flip: '旋转上方玩家' },
+} as const;
+
+/** Orientation follows the mounted battle, independently of its settings dialog. */
+export function useTimerBattleOrientation(playerCount: number, onLayoutChange: (value: 'side' | 'versus') => void, autoOrientation = true) {
+  useEffect(() => {
+    if (!autoOrientation || playerCount !== 2 || typeof window.matchMedia !== 'function') return;
+    const media = window.matchMedia('(orientation: landscape)');
+    const update = () => onLayoutChange(media.matches ? 'side' : 'versus');
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, [autoOrientation, onLayoutChange, playerCount]);
+}
+
+export function TimerBattleLayoutControls({ playerCount, layout, flipTopRow, language, onLayoutChange, onFlipChange, hideFlipControl = false, autoOrientation = true }: {
+  playerCount: 2 | 3 | 4;
+  layout: 'side' | 'versus';
+  flipTopRow: boolean;
+  language: 'en' | 'zh';
+  onLayoutChange(value: 'side' | 'versus'): void;
+  onFlipChange(value: boolean): void;
+  hideFlipControl?: boolean;
+  autoOrientation?: boolean;
+}) {
+  const copy = COPY[language];
+  useTimerBattleOrientation(playerCount, onLayoutChange, autoOrientation);
+  return <div className="timer-battle-layout-controls" role="group" aria-label={copy.layout} data-no-timer>
+    {playerCount === 2 && (['versus', 'side'] as const).map((value) => (
+      <button type="button" key={value} aria-pressed={layout === value} onClick={() => onLayoutChange(value)}>{copy[value]}</button>
+    ))}
+    {!hideFlipControl && (playerCount > 2 || layout === 'versus') && <BoolToggle label={copy.flip} value={flipTopRow} onChange={onFlipChange} />}
+  </div>;
+}
+
+/** Shared player ordering, paired scramble rows and facing direction. */
+export function TimerBattleLayout({
+  playerCount, layout, flipTopRow, middle, bottomScramble, topScramble, renderPlayer,
+}: TimerBattleLayoutProps) {
+  const cell = (id: number, flipped: boolean, hideScramble = false, controlsCorner: TimerBattleCell['controlsCorner'] = 'center') => (
+    <div className="timer-battle-cell" data-player-id={id} data-flipped={flipped || undefined} key={id}>
+      {renderPlayer(id, { hideScramble, controlsCorner })}
+    </div>
+  );
+  const pair = (ids: number[], flipped: boolean, scramble: ReactNode) => (
+    <div className="timer-battle-pair" data-flipped={flipped || undefined}>
+      {scramble && <div className="timer-battle-scramble" data-no-timer>{scramble}</div>}
+      <div className="timer-battle-row">
+        {ids.map((id, index) => cell(id, flipped, Boolean(scramble),
+          index === 0 ? (flipped ? 'right' : 'left') : (flipped ? 'left' : 'right')))}
+      </div>
+    </div>
+  );
+  return (
+    <div className="timer-battle-layout" data-layout={playerCount > 2 ? 'grid' : layout}>
+      {playerCount > 2 ? <>
+        {playerCount === 4 ? pair([2, 3], flipTopRow, topScramble) : cell(2, flipTopRow)}
+        {middle}
+        {pair([0, 1], false, bottomScramble)}
+      </> : layout === 'side' ? <>
+        {middle}
+        {pair([0, 1], false, bottomScramble)}
+      </> : <>
+        {cell(1, flipTopRow)}
+        {middle}
+        {cell(0, false)}
+      </>}
+    </div>
+  );
+}

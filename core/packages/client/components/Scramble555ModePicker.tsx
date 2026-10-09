@@ -10,16 +10,17 @@ import ScrambleModePickerRow from './ScrambleModePickerRow';
 interface Props {
   active555: boolean;
   isZh: boolean;
+  showLabel?: boolean;
 }
 
-export default function Scramble555ModePicker({ active555, isZh }: Props) {
+export default function Scramble555ModePicker({ active555, isZh, showLabel = true }: Props) {
   const [mode, setMode] = use555Mode();
   if (!active555) return null;
   const t = (zh: string, en: string) => (isZh ? zh : en);
   return (
     <ScrambleModePickerRow
-      iconEvent="555"
-      label={t('打乱', 'scramble')}
+      iconEvent={showLabel ? '555' : undefined}
+      label={showLabel ? t('打乱', 'scramble') : undefined}
       value={mode === 'rs'}
       onChange={(v) => setMode(v ? 'rs' : 'rm')}
       onLabel={t('随机状态', 'random-state')}

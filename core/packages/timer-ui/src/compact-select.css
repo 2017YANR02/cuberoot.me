@@ -9,7 +9,8 @@
   align-self: center;
 }
 
-.compact-select-trigger {
+.compact-select-trigger,
+.native-select {
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
@@ -28,13 +29,32 @@
   transition: background 0.2s;
 }
 
-.compact-select-trigger:hover {
+.compact-select-trigger:hover:not(:disabled),
+.native-select:hover:not(:disabled) {
   background: color-mix(in srgb, var(--foreground) 8%, var(--popover));
 }
 
-.compact-select-trigger:focus-visible {
+.compact-select-trigger:disabled,
+.native-select:disabled {
+  color: var(--faint-foreground);
+  cursor: not-allowed;
+}
+
+.compact-select-trigger:focus-visible,
+.native-select:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
+}
+
+.native-select {
+  appearance: auto;
+  width: fit-content;
+  max-width: 100%;
+  align-self: flex-start;
+  flex-shrink: 0;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-weight: 400;
 }
 
 .compact-select-current {
@@ -64,10 +84,28 @@
   font-weight: inherit;
 }
 
-.compact-select--plain .compact-select-trigger:hover {
+.compact-select--plain .compact-select-trigger:hover:not(:disabled) {
   background: transparent;
   text-decoration: underline;
   text-underline-offset: 2px;
+}
+
+/* Timer toolbar types share the adjacent players/source control sizing. */
+.compact-select.timer-scramble-type-select {
+  align-self: center;
+  width: fit-content;
+}
+
+.compact-select.timer-scramble-type-select .compact-select-trigger {
+  width: auto;
+  height: 32px;
+  padding-inline: 4px;
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.compact-select.timer-scramble-type-select .compact-select-trigger:hover:not(:disabled) {
+  text-decoration: none;
 }
 
 /* anchored-panel: clamped (body portal + visualViewport bounds in component) */

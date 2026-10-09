@@ -48,21 +48,35 @@ function externalRelayInput(graphInputFiles) {
 }
 
 describe('mini program build graph state', () => {
-  it.each(['wechat', 'douyin'])('minifies local identifiers without changing %s template handlers, data properties, or login payloads', async (target) => {
+  it.each([
+    { target: 'wechat', watch: false }, { target: 'douyin', watch: false },
+    { target: 'wechat', watch: true }, { target: 'douyin', watch: true },
+  ])('preserves $target handlers, data and login payloads (watch=$watch)', async ({ target, watch }) => {
     const buildSource = await readFile(resolve(packageRoot, 'scripts/build.mjs'), 'utf8');
     expect(buildSource).toContain('minifyIdentifiers: !watch');
+    expect(buildSource).toContain('minifySyntax: !watch || douyin');
+    expect(buildSource).toContain('minifyWhitespace: !watch || douyin');
+    expect(buildSource).toContain('normalized.usePrivacyCheck = true');
+    expect(buildSource).toContain("appConfig.usePrivacyCheck !== true");
     expect(buildSource).not.toMatch(/\bmangleProps\s*:/);
     const { outputFiles } = await build({ absWorkingDir: packageRoot, bundle: true,
       entryPoints: ['src/pages/account/index.ts'], format: 'iife', write: false,
-      minifyIdentifiers: true, minifyWhitespace: true, minifySyntax: true,
+      minifyIdentifiers: !watch,
+      minifyWhitespace: !watch || target === 'douyin', minifySyntax: !watch || target === 'douyin',
       platform: 'browser', target: 'chrome91', define: { __MINI_PROGRAM_TARGET__: JSON.stringify(target) },
       logLevel: 'silent',
     });
     const source = outputFiles[0].text;
+    if (target === 'douyin') {
+      expect(source).not.toContain('/auth/wechat/miniprogram');
+      expect(source).not.toContain('wechat_redirect');
+      expect(source).toContain('/auth/douyin/miniprogram');
+    }
     let page;
     let storedSession = null;
     let payload;
     const api = {
+      getStorageInfoSync() { return { keys: storedSession === null ? [] : ['cuberoot:session'] }; },
       getStorageSync(key) { return key === 'cuberoot:session' ? storedSession : ''; },
       setStorageSync(_key, value) { storedSession = value; },
       getSystemInfoSync() { return { language: 'en' }; },

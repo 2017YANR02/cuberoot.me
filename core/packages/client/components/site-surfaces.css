@@ -25,6 +25,7 @@ body[data-site-scenery] .wp-page {
 body[data-site-scenery] :is(
   [data-site-surface='panel'],
   .alg-card,
+  .alg-case-detail-ori-algs,
   .chx-panel,
   .chx-chain,
   .chx-tabs,
@@ -58,6 +59,11 @@ body[data-site-scenery] .deskpet-story .deskpet-story-art {
   background: var(--glass-surface-bg);
   -webkit-backdrop-filter: var(--glass-filter);
   backdrop-filter: var(--glass-filter);
+}
+
+/* Formula rows share their enclosing material; keep hover, selection and errors. */
+body[data-site-scenery] :is(.alg-card, .alg-case, .alg-case-detail-ori-algs) .alg-alg-row:not(:hover):not(.is-expanded):not(.is-invalid) {
+  background: transparent;
 }
 
 /* Keep pet selection and hover accents on the shared glass. */
@@ -113,6 +119,9 @@ body[data-site-scenery] .calendar-page .event-chip-rounds {
 body[data-site-scenery] :is(
   .wca-stats-section-title:not(:hover),
   .wca-stats-index-tab:not(.active),
+  .alg-cat-metric,
+  .alg-ori-tab.is-active,
+  .alg-case-y-btn,
   .cuber-search-chip,
   .wp-ms-order,
   .wp-ms-chip,
@@ -199,7 +208,6 @@ body[data-site-scenery] :is(
   .stsv-slotsel-panel,
   .stsv-modal,
   .tfp-popup,
-  .training-settings-panel,
   .cuber-search-popup,
   .t10h-export-card,
   .wca-teacher-dialog,
@@ -216,6 +224,13 @@ body[data-site-scenery] .wca-stats-event-selector .event-btn-remove:not(:hover) 
   -webkit-backdrop-filter: var(--glass-filter);
   backdrop-filter: var(--glass-filter);
   box-shadow: var(--glass-shadow);
+}
+
+/* Dense site filters need stronger separation from the card text beneath them. */
+body[data-site-scenery] .sites-filter-row .pp-popup {
+  background: var(--glass-menu-bg);
+  -webkit-backdrop-filter: var(--glass-menu-filter);
+  backdrop-filter: var(--glass-menu-filter);
 }
 
 /* Dialog shells provide the reading layer; inner sections need no opaque mat. */
@@ -295,10 +310,12 @@ body[data-site-scenery] :is(
   backdrop-filter: var(--glass-filter);
 }
 
-/* Search fields inside their glass shell need no second sheet of glass. */
+/* Composite controls paint their visual surface on a sibling or parent layer. */
 body[data-site-scenery] :is(
   .landing-search-input .landing-search-field,
-  .region-picker-search .region-picker-search-input
+  .region-picker-search .region-picker-search-input,
+  .sim-player-hlwrap .sim-player-input--hl,
+  .auth-otp-native
 ) {
   background-color: transparent !important;
   -webkit-backdrop-filter: none;
@@ -307,9 +324,14 @@ body[data-site-scenery] :is(
 
 /* Timer's legacy dock selector has higher specificity than a surface role.
    Adapt the actual shell so controls and the cube share one reading layer. */
-body[data-site-scenery] .timer-shell:has(.shell-rail .solver-panel[data-open='true']) .shell-rail,
-body[data-site-scenery] .solver-sheet {
+body[data-site-scenery] .timer-shell:has(.shell-rail .solver-panel[data-open='true']) .shell-rail {
   background: var(--glass-surface-bg);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+}
+
+body[data-site-scenery] .solver-sheet {
+  background: var(--glass-dialog-bg);
   -webkit-backdrop-filter: var(--glass-filter);
   backdrop-filter: var(--glass-filter);
 }
@@ -329,10 +351,25 @@ body[data-site-scenery] :is(
   .timer-history-compare-modal,
   .timer-solve-detail-modal
 ) {
-  background: var(--glass-popover-bg);
   border-color: var(--glass-border);
   -webkit-backdrop-filter: var(--glass-filter);
   backdrop-filter: var(--glass-filter);
+}
+
+body[data-site-scenery] :is(
+  .tsession-panel,
+  .timer-history-quick-panel,
+  .timer-history-quick-sheet
+) {
+  background: var(--glass-popover-bg);
+}
+
+body[data-site-scenery] :is(
+  .timer-history-compare-modal,
+  .timer-solve-detail-modal,
+  .timer-room-dialog
+) {
+  background: var(--glass-dialog-bg);
 }
 
 /* Nested sections use the existing shell's blur, without another opaque mat. */

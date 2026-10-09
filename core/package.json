@@ -1,9 +1,23 @@
 {
   "name": "cuberoot-toolkit",
   "private": true,
-  "packageManager": "pnpm@11.1.2",
+  "packageManager": "pnpm@12.6.0",
   "scripts": {
     "audit:boundaries": "node scripts/check-architecture-boundaries.mjs",
+    "solver:build-wasm": "tsx ../solver/scripts/build_wasm.mts",
+    "solver:verify": "tsx ../solver/scripts/verify.mts",
+    "solver:first-layer": "tsx ../solver/scripts/run_first_layer_gods_number.mts",
+    "solver:lsll": "tsx ../solver/lsll/run_lsll.mts",
+    "solver:lsll:update": "tsx ../solver/lsll/update_lsll.mts",
+    "space:batch": "tsx ../design/space/scripts/batch.mts",
+    "sor:update": "tsx apps/api/scripts/update_sor.mts",
+    "upstream:sync": "tsx ../sync_upstream.ts",
+    "music:prepare": "tsx ../scripts/music/prepare-music.ts",
+    "music:publish": "tsx ../scripts/music/publish-music.ts",
+    "stats:progress:sq1": "tsx ../scripts/progress/sq1-exact.ts",
+    "stats:scramble": "tsx ../scripts/stats/update-published.ts --publish --push",
+    "stats:scramble:local": "tsx ../scripts/stats/update-local.ts",
+    "stats:scramble:publish": "tsx ../scripts/stats/update-published.ts",
     "build:cubing-worker": "node scripts/build-cubing-worker.mjs packages/client/public/cubing-chunks",
     "dev:next": "turbo dev --filter=@cuberoot/client",
     "dev:server": "turbo dev --filter=@cuberoot/server",
@@ -13,11 +27,11 @@
   },
   "devDependencies": {
     "ajv": "^8.20.0",
-    "esbuild": "0.27.4",
+    "esbuild": "^0.28.1",
     "knip": "^6.21.0",
-    "sharp": "0.34.5",
+    "sharp": "0.35.5",
     "ts-morph": "^28.0.0",
-    "tsx": "^4.21.0",
-    "turbo": "^2.5.0"
+    "tsx": "^4.23.15",
+    "turbo": "^2.11.7"
   }
 }

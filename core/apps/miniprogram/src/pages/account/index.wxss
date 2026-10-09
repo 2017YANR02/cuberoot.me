@@ -1,3 +1,11 @@
+/* Native scroll-view owns scrolling; the outer page is disabled in index.json. */
+.account-scroll {
+  height: 100vh;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+}
+
 .account-login-page,
 .account-user-page {
   padding-top: 72rpx;
@@ -25,6 +33,7 @@
 
 .account-primary-button {
   margin-top: 64rpx;
+  box-sizing: border-box;
   width: 100%;
 }
 
@@ -44,6 +53,22 @@
   gap: 16rpx;
   margin-top: 32rpx;
   padding: 20rpx 0;
+}
+
+.account-link-website-button {
+  margin-top: 40rpx;
+}
+
+.account-link-code-prompt {
+  color: var(--cr-muted);
+  display: block;
+  font-size: 25rpx;
+  line-height: 1.5;
+  margin-top: 40rpx;
+}
+
+.account-link-continue-button {
+  margin-top: 32rpx;
 }
 
 .account-link-code-input {
@@ -231,6 +256,7 @@
 }
 
 .contact-row-value {
+  flex-wrap: wrap;
   align-items: center;
   display: inline-flex;
   gap: 12rpx;
@@ -240,8 +266,9 @@
 }
 
 .contact-platform-value > text {
-  flex: none;
-  white-space: nowrap;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .contact-row-meta {
@@ -251,7 +278,7 @@
 }
 
 .contact-detail-value {
-  justify-self: start;
+  justify-self: stretch;
   word-break: break-all;
 }
 
@@ -260,12 +287,14 @@
 }
 
 .contact-value-button {
-  flex: none;
+  flex: 0 1 auto;
   line-height: 1.5;
   max-width: 100%;
+  min-width: 0;
   overflow-wrap: anywhere;
   text-align: left;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-all;
   width: auto;
 }
 

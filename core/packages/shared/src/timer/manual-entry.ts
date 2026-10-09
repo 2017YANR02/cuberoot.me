@@ -34,9 +34,9 @@ export function parseTimerEntry(input: string): ParsedTimerEntry | null {
     penalty = '+2';
     plusTwoIsDisplayedTotal = true;
     value = value.replace(/^\+2\s+/i, '').trim();
-  } else if (/\s*\+2$/i.test(value)) {
+  } else if (value.endsWith('+2')) {
     penalty = '+2';
-    value = value.replace(/\s*\+2$/i, '').trim();
+    value = value.slice(0, -2).trim();
   }
 
   if (!/^(?:\d+(?::\d{1,2}){0,2})?(?:\.\d+)?$/.test(value)) return null;
@@ -319,7 +319,7 @@ export function parseTimerFmcSolution(solution: string): TimerFmcSolutionParse {
   const normalized: string[] = [];
   let count = 0;
   for (const line of solution.split(/[\r\n]+/)) {
-    const code = line.replace(/(\/\/|#).*$/, '').replace(/,/g, ' ').trim();
+    const code = stripTrailingLineComment(line).replace(/,/g, ' ').trim();
     if (!code) continue;
     const parsed = tokenizeMoves(code);
     if (parsed.junk.length > 0) return { kind: 'invalid', token: parsed.junk[0] };
@@ -468,4 +468,12 @@ export function validateTimerManualEntry(draft: TimerManualEntryDraft): TimerMan
     mbld: null,
     value: baseValue(draft, kind, time.ms, penalty),
   };
+}
+
+// JS dot excludes Unicode line separators; retain that comment boundary.
+function stripTrailingLineComment(line: string): string {
+  const start = Math.max(line.lastIndexOf('\u2028'), line.lastIndexOf('\u2029')) + 1;
+  const tail = line.slice(start);
+  const comment = tail.search(/\/\/|#/);
+  return comment < 0 ? line : line.slice(0, start + comment);
 }

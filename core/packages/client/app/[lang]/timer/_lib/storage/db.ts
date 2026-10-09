@@ -1,3 +1,8 @@
+import { appendTimerImportSessions } from '@cuberoot/shared/timer/import-timer';
+import { createNetOutboxStorage } from '@cuberoot/timer-ui';
+import { uploadNetRecordedAttempt, decodeNetBattleSession } from '@cuberoot/shared/timer';
+import * as netBattleClient from '@/lib/battle-room-api';
+import { NetRecordingOutbox, upsertNetRecordedSolve } from '@cuberoot/shared/timer';
 /**
  * localStorage-backed solve store.
  *
@@ -196,7 +201,7 @@ export function saveAll(byEvent: Record<string, Solve[]>): void {
   const n = bumpSaveCounter();
   const every = getSettings().autoBackupEvery | 0;
   if (every > 0 && n > 0 && n % every === 0) {
-    void pushBackup(); // fire-and-forget:备份失败不影响保存本体
+    void pushBackup().catch(() => {}); // fire-and-forget:备份失败不影响保存本体
   }
 }
 
@@ -328,37 +333,9 @@ export function importNamedSessions(
     return null;
   }
 
-  const db = loadRaw();
-  const usedIds = new Set(db.sessions.map(session => session.id));
-  const createdTs = Date.now();
-  let solveCount = 0;
-
-  for (const source of sources) {
-    let id = genSessionId();
-    while (usedIds.has(id)) id = genSessionId();
-    usedIds.add(id);
-
-    const name = source.name.trim().length > 0 ? source.name : defaultSessionName();
-    db.sessions.push({
-      id,
-      name,
-      createdTs,
-      ...(source.event ? { event: source.event } : {}),
-    });
-
-    if (source.event && source.solves.length > 0) {
-      const normalized = source.solves
-        .map(solve => solve.event === source.event ? solve : { ...solve, event: source.event })
-        .sort((a, b) => a.ts - b.ts);
-      db.dataBySession[id] = { [source.event]: normalized };
-      solveCount += normalized.length;
-    } else {
-      db.dataBySession[id] = {};
-    }
-  }
-
+  const db = appendTimerImportSessions(loadRaw(), [...sources], { createId: genSessionId, now: Date.now, defaultName: defaultSessionName() });
   if (!saveRaw(db)) return null;
-  return { sessionCount: sources.length, solveCount };
+  return { sessionCount: sources.length, solveCount: sources.reduce((count, source) => count + source.solves.length, 0) };
 }
 
 export function renameSession(id: string, name: string): void {
@@ -400,8 +377,7 @@ export function moveSolveToSession(solveId: string, targetSessionId: string): bo
 export interface BackupEntry { key: string; ts: number; size: number; }
 
 export async function pushBackup(): Promise<void> {
-  let json: string;
-  try { json = exportJson(); } catch { return; }
+  const json = exportJson();
   try {
     await idbBackupPut(Date.now(), json, BACKUP_KEEP);
   } catch {
@@ -418,17 +394,17 @@ export async function listBackups(): Promise<BackupEntry[]> {
   }
 }
 
-export async function restoreBackup(key: string): Promise<boolean> {
+export async function restoreBackup(key: string, canCommit: () => boolean = () => true): Promise<boolean> {
   if (/^\d+$/.test(key)) {
     try {
       const v = await idbBackupGet(Number(key));
-      if (v != null) return importJson(v);
+      if (v != null) return canCommit() && importJson(v);
     } catch { /* fall through to legacy */ }
   }
   try {
     const v = localStorage.getItem(key);
     if (!v) return false;
-    return importJson(v);
+    return canCommit() && importJson(v);
   } catch {
     return false;
   }
@@ -438,18 +414,21 @@ export async function restoreBackup(key: string): Promise<boolean> {
 
 function pushBackupLS(json: string): void {
   const key = BACKUP_LS_PREFIX + Date.now();
+  let saved = false;
   // Quota loop: drop oldest backup until setItem succeeds, or no more to drop.
   for (let attempts = 0; attempts < 16; attempts++) {
     try {
       // allow-raw-localstorage: 自带驱逐-重试循环,不能走吞异常的 persistItem
       localStorage.setItem(key, json);
+      saved = true;
       break;
     } catch {
       const all = listBackupsLS();
-      if (all.length === 0) return; // nothing left to drop, quota truly full
-      try { localStorage.removeItem(all[all.length - 1]!.key); } catch { return; }
+      if (all.length === 0) throw new Error('Backup storage full'); // nothing left to drop, quota truly full
+      localStorage.removeItem(all[all.length - 1]!.key);
     }
   }
+  if (!saved) throw new Error('Backup storage full');
   // Rotate: keep only the most-recent BACKUP_KEEP entries.
   const all = listBackupsLS();
   if (all.length > BACKUP_KEEP) {
@@ -622,3 +601,45 @@ export {
   exportTsv,
   exportSpeedstacks,
 } from './import_export';
+
+/** Online recordings keep the session selected at attempt start. */
+const netSolveSavedListeners = new Set<(sessionId: string, solve: Solve) => void>();
+export function subscribeNetSolveSaved(listener: (sessionId: string, solve: Solve) => void): () => void {
+  netSolveSavedListeners.add(listener);
+  return () => { netSolveSavedListeners.delete(listener); };
+}
+export function saveNetSolve(sessionId: string, solve: Solve): void {
+  const db = loadRaw();
+  const existingSession = Object.entries(db.dataBySession).find(([, events]) => Object.values(events).some(solves => solves?.some(item => item.id === solve.id)));
+  const byEvent = existingSession?.[1] ?? db.dataBySession[sessionId];
+  if (!byEvent) throw new Error('Unknown timer session');
+  byEvent[solve.event] = upsertNetRecordedSolve(byEvent[solve.event] ?? [], solve);
+  if (!saveRaw(db)) throw new TimerSessionWriteError();
+  for (const listener of netSolveSavedListeners) listener(existingSession?.[0] ?? sessionId, solve);
+}
+
+export const netRecordingOutbox = new NetRecordingOutbox(record => saveNetSolve(record.context.sessionId, record.solve), createNetOutboxStorage());
+
+netRecordingOutbox.setUploader(record => uploadNetRecordedAttempt(record, netBattleClient, {
+  load: async () => { const raw = sessionStorage.getItem('net_battle_session'); return raw ? decodeNetBattleSession(JSON.parse(raw)) : null; },
+}));
+
+export function deleteSessionSolves(sessionId: string, event: EventId, ids: readonly string[]): boolean {
+  const db = loadRaw();
+  const current = db.dataBySession[sessionId];
+  if (!current) return false;
+  const selected = new Set(ids);
+  return saveRaw({...db, dataBySession:{...db.dataBySession,[sessionId]:{...current,[event]:(current[event] ?? []).filter(solve => !selected.has(solve.id))}}});
+}
+
+/** Captured-session patch: late analysis must not write into the newly active group. */
+export function updateSessionSolves(sessionId: string, event: EventId, updates: Solve[]): void {
+  const db = loadRaw();
+  const current = db.dataBySession[sessionId];
+  if (!current) throw new TimerSessionWriteError();
+  const patches = new Map(updates.map(solve => [solve.id, solve]));
+  const next = { ...db, dataBySession: { ...db.dataBySession, [sessionId]: { ...current,
+    [event]: (current[event] ?? []).map(solve => patches.has(solve.id) ? { ...solve, stageSegments: patches.get(solve.id)!.stageSegments } : solve),
+  } } };
+  if (!saveRaw(next)) throw new TimerSessionWriteError();
+}

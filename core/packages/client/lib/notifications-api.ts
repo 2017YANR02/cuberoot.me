@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 import { apiUrl } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
 import i18n, { normalizeAppLang } from '@/i18n/i18n-client';
@@ -9,10 +10,11 @@ export type NotificationKind =
   | 'forum_review' | 'forum_approved' | 'forum_rejected'
   | 'comp_reg'
   | 'wca_record'
+  | 'membership_payment'
   | 'document_change'
   | 'cal_reminder' | 'cal_invite' | 'cal_rsvp'
   | 'teaching_message'
-  | 'friend_request' | 'friend_accepted';
+  | 'friend_request' | 'friend_accepted' | 'friend_message';
 
 export interface SiteNotification {
   id: number;
@@ -30,7 +32,7 @@ export interface SiteNotification {
 }
 
 export async function fetchNotifications(limit = 30): Promise<SiteNotification[]> {
-  const r = await fetch(apiUrl(`/v1/notifications?limit=${limit}`), {
+  const r = await sessionFetch(apiUrl(`/v1/notifications?limit=${limit}`), {
     headers: authHeaders(false),
     cache: 'no-store',
   });
@@ -43,7 +45,7 @@ export async function fetchNotifications(limit = 30): Promise<SiteNotification[]
  */
 export async function fetchUnreadNotifications(): Promise<number> {
   const lang = normalizeAppLang(i18n.language);
-  const r = await fetch(apiUrl(`/v1/notifications/unread?lang=${lang}`), {
+  const r = await sessionFetch(apiUrl(`/v1/notifications/unread?lang=${lang}`), {
     headers: authHeaders(false),
     cache: 'no-store',
   });
@@ -53,7 +55,7 @@ export async function fetchUnreadNotifications(): Promise<number> {
 
 /** 标记已读。不传 ids = 全部已读。 */
 export async function markNotificationsRead(ids?: number[]): Promise<void> {
-  const r = await fetch(apiUrl('/v1/notifications/read'), {
+  const r = await sessionFetch(apiUrl('/v1/notifications/read'), {
     method: 'POST',
     headers: authHeaders(),
     body: JSON.stringify(ids?.length ? { ids } : {}),
@@ -63,7 +65,7 @@ export async function markNotificationsRead(ids?: number[]): Promise<void> {
 
 /** 邮件通知开关(关掉 = 退订;站内红点不受影响)。 */
 export async function fetchEmailNotifyPref(): Promise<boolean> {
-  const r = await fetch(apiUrl('/v1/notifications/prefs'), {
+  const r = await sessionFetch(apiUrl('/v1/notifications/prefs'), {
     headers: authHeaders(false),
     cache: 'no-store',
   });
@@ -72,7 +74,7 @@ export async function fetchEmailNotifyPref(): Promise<boolean> {
 }
 
 export async function setEmailNotifyPref(emailNotify: boolean): Promise<void> {
-  const r = await fetch(apiUrl('/v1/notifications/prefs'), {
+  const r = await sessionFetch(apiUrl('/v1/notifications/prefs'), {
     method: 'PUT',
     headers: authHeaders(),
     body: JSON.stringify({ emailNotify }),
@@ -88,13 +90,13 @@ export interface RecordNotifySettings {
 }
 
 export async function fetchRecordNotifySettings(): Promise<RecordNotifySettings> {
-  return handleApi<RecordNotifySettings>(await fetch(apiUrl('/v1/notifications/records'), {
+  return handleApi<RecordNotifySettings>(await sessionFetch(apiUrl('/v1/notifications/records'), {
     headers: authHeaders(false), cache: 'no-store',
   }));
 }
 
 export async function saveRecordNotifySettings(preferences: RecordNotificationPreferences): Promise<void> {
-  await handleApi(await fetch(apiUrl('/v1/notifications/records'), {
+  await handleApi(await sessionFetch(apiUrl('/v1/notifications/records'), {
     method: 'PUT', headers: authHeaders(), body: JSON.stringify(preferences),
   }));
 }

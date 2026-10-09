@@ -40,9 +40,11 @@ pub mod roux_s1_solver;
 pub mod skewb_solver;
 // sq1:Square-1 twist-metric 最优(双阶段 search + 五张投影剪枝表 ~43MB 现场建,零盘表,独立状态模型)。
 pub mod sq1_solver;
+pub mod table_timing;
 // sq1 two-phase:cstimer 移植的近最优 SQ1 求解器(slash 数,毫秒级;管道默认走它)。
 pub mod sq1_twophase;
 pub mod xcross_solver;
+pub mod xcross_table_gen;
 // xcross restricted optimal:任意受限 54-move 集 + 中心朝向 + center_offset/max_rot 的最优
 // xcross(cross + 1 F2L pair)IDA*。全自包含(运行时建表 + 双 PDB,无外部文件),
 // native+wasm 双轨可编。
@@ -74,6 +76,8 @@ pub mod pseudo_pair_solver;
 // pseudo:native(manager,4×54MB 表)+ wasm(PseudoSmallSolver,cross+corner 表现建)。
 // manager 构造已门控,模块自包含 wasm 可编。pseudo_xxcross/xxxcross 仍 native-only。
 pub mod pseudo_xcross_solver;
+#[cfg(any(test, target_arch = "wasm32"))]
+mod unique_solutions;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod pseudo_xxcross_solver;
 #[cfg(not(target_arch = "wasm32"))]

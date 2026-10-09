@@ -1,5 +1,7 @@
 # 非 WCA 小魔方求解器 Loop — backlog + 协议
 
+> 当前统计脚本统一为 TypeScript：本地一键入口在 `core/` 运行 `pnpm stats:scramble:local`，单独 puzzle 入口是 `scripts/stats/puzzles-cli.ts`。下方日期日志里的 `.ps1` 名称只记录当时的历史实现，不能作为现行命令。
+
 > `/loop 继续造小魔方求解器`(别名「造非 WCA 求解器」「继续造 puzzle 求解器」)的**单一事实源**。
 > 每轮**先完整读本文件**,按 §0 协议推进 §1 backlog 下一个未完成单元,干完更新本文件(打勾 + §2 日志 +
 > 必要时 §3)。
@@ -37,7 +39,7 @@
 
 11. **移动端不再是硬门(2026-06-23,用户改)** —— 本 loop 内「窄屏 <480px 必须能用」从**硬约束降为非必须**:重型求解器(大常驻表)允许 **desktop-first**,UI 给「建议桌面端」提示即可,不再因「手机内存扛不住」单独否决一个档位/方案。**本条取代 #10 与下方 sia113 判墙里引用的「移动端 <480px 硬约束」内存上限**(桌面可接受 ~数百 MB 常驻 + 数十 MB 下载)。**直接影响 = 三个连体魔方 `sia113/sia123/sia222`(D2-11/12/13)重新变成候选**:它们的延后理由本是「单表陪集 PDB ~10⁷ 条、~100–300MB 常驻、移动端发不动」,此门取消后可走 **bic 式两阶段**(phase-1 边→子群 H 的离线陪集 PDB,desktop-only 胖表,~数十 MB gz 下载 / ~100–300MB 常驻类型化数组 + phase-2 H 内解)。⚠ **仍非「直接能 ship」**:① 开工前必按 #2 把陪集 BFS **到饱和**重测真实大小(sia113 实测 ≥4.8M/直径 >21/外推 10⁷–3×10⁷,高端 ~270MB 偏重需评估);② 这仍是一个中型工程(离线 builder + 两阶段解器 + H-solver),非 Ivy 范式照抄。**不影响 `prcp/giga`(D2-14/15)**:它们的墙是**角棱强耦合**(搜遍两千万 commutator 无短角 gadget),与内存/移动端**无关**,仍需盲拧式专属引擎。**作用域 = 仅本求解器 loop 的档位/方案判据;全站其它 UI(图表/面板/浮层)的移动端适配规则照旧不变。** 真要开建连体魔方时,先把 §1 的 D2-11/12/13 三条 `⏸` 标记翻成在建,并按上述路径走。
 
-12. **非 WCA 采样分布全面停用(铁律,2026-06-25,用户要求)** —— 用户决定:**不再为任何非 WCA puzzle 跑 / 接入离线采样分布**(TIER C/D 的 `stats/scramble/dist_<event>.json`)。`update_puzzle_stats.ps1` 的采样步已默认关(加 `-Sampled` 才跑),「更新打乱统计」一条龙不再产采样分布。**本条覆盖 #6 / #8 / §0.4 验收门里「TIER C/D 分布必须离线采样预计算」的全部要求 —— 造求解器单元时直接跳过「分布 tab / `dist_<event>.json`」这一交付项**(求解器本体 + `/scramble/solver` 页照做,只是不再配采样分布)。已生成的旧 `dist_*.json` 留着不动(前端已 fetch 的别破坏),但**别再新增 / 重跑 / retrofit**。要恢复需用户显式说。
+12. **非 WCA 采样分布全面停用(铁律,2026-06-25,用户要求)** —— 用户决定:**不再为任何非 WCA puzzle 跑 / 接入离线采样分布**(TIER C/D 的 `stats/scramble/dist_<event>.json`)。现行 `scripts/stats/puzzles-cli.ts` 默认不采样，只有显式 `--sampled` 才会运行,「更新打乱统计」一条龙不再产采样分布。**本条覆盖 #6 / #8 / §0.4 验收门里「TIER C/D 分布必须离线采样预计算」的全部要求 —— 造求解器单元时直接跳过「分布 tab / `dist_<event>.json`」这一交付项**(求解器本体 + `/scramble/solver` 页照做,只是不再配采样分布)。已生成的旧 `dist_*.json` 留着不动(前端已 fetch 的别破坏),但**别再新增 / 重跑 / retrofit**。要恢复需用户显式说。
 
 ---
 
@@ -85,7 +87,7 @@
 
 **档边界 puzzle**(`gear` 12.4M / `ctico` ~1e8 / `cm3` ⚠):先按上一档现场 BFS 试跑,实测慢 / 态数超阈再降一档落表。子 agent 自行实测决定,在 §1 条目旁记真实态数 + 选定档。
 
-> **C/D 分布脚本(2026-06-21)**:复用 `core/jobs/scramble-stats-build/src/build_puzzle_sampled_dist.ts`(参数化 `event + N`,import 该 puzzle 纯 TS 求解器、用其 cstimer 同款随机生成器采样,落 `dist_<event>.json`)。接入新单元 = `REGISTRY` 加一行 + `update_puzzle_stats.ps1` 的 `$SAMPLED_DIST_EVENTS` 加 event。范本 DistView = `Cuboid335DistView.tsx`(纯 fetch+渲染)。**N 取够平滑又几分钟跑完单进程**(335 在 ~0.25s/解下取 N≈1000 ≈ 5min)。
+> **C/D 分布脚本(2026-06-21)**:复用 `core/jobs/scramble-stats-build/src/build_puzzle_sampled_dist.ts`(参数化 `event + N`,import 该 puzzle 纯 TS 求解器、用其 cstimer 同款随机生成器采样,落 `dist_<event>.json`)。接入新单元 = 在该脚本的 `REGISTRY` 加一行，并按需在 `scripts/stats/puzzles.ts` 的采样事件列表登记；从 `core/` 运行 `pnpm --filter @cuberoot/scramble-stats-build build:puzzle-sampled-dist <event> <N>` 单独生成。范本 DistView = `Cuboid335DistView.tsx`(纯 fetch+渲染)。**N 取够平滑又几分钟跑完单进程**(335 在 ~0.25s/解下取 N≈1000 ≈ 5min)。
 
 ---
 
@@ -96,7 +98,7 @@
 1. **先量闭包(§0.0 #2)+ 分流打乱类型**:读 vendored 生成器(`tools/cstimer-scramble/scramble/*.js`)判 random-MOVE vs random-STATE。
 2. **有 cstimer solver(random-STATE)→ WRAP**(mpyrso/dino 范式):`cstimerSolve(id,scr)`(`lib/cstimer-scramble.ts`)→ worker `op:'solve'` → `SOLVERS` 映射;在 vendored 源该 puzzle 的 IIFE 内**加最小 additive 导出**(`solveScramble`/`roundTripCheck`),不改上游行为。oracle = 真引擎 round-trip。**(注:剩 18 个都没有,见 §3。)**
 3. **无 cstimer solver(random-MOVE,剩 18 个的常态)→ 自建 reduction / 两阶段**。有效性 oracle 必须从几何**独立重导**移动置换(**禁**从 solver 拷),验 scramble∘solution=solved。**部分有 poly3dlib 几何**(giga/prcp/heli/helicv/ctico,见 §3)→ apply oracle 可用,但**无 solver**。
-4. **分布 = 离线采样**(§0.0 #6 铁律):**严禁在 DistView 里现场 solve 采样**。用 build 脚本 `build_puzzle_sampled_dist.ts`(REGISTRY 加一行:event / solver 路径+导出名 / 打乱长度 / 默认 N / 质量桶)离线解 N 条随机打乱、分桶,落静态 `stats/scramble/dist_<event>.json`;DistView 只 `fetch(statsUrl(...))` 渲染(范本 `Cuboid335DistView.tsx`,**零求解器 import**),显式标「采样,非全空间」。新脚本 event 接入 `update_puzzle_stats.ps1` 的 `$SAMPLED_DIST_EVENTS`。下载 = JSON 内嵌 `generatedSamples` 的样本 CSV。可枚举但 >2M 的态集才用流式下载(generator + 分块 Blob + confirm,A4 范式;**禁**拼一个巨串,A4 撞过 80MB OOM)。
+4. **分布 = 离线采样**(§0.0 #6 铁律):**严禁在 DistView 里现场 solve 采样**。用 build 脚本 `build_puzzle_sampled_dist.ts`(REGISTRY 加一行:event / solver 路径+导出名 / 打乱长度 / 默认 N / 质量桶)离线解 N 条随机打乱、分桶,落静态 `stats/scramble/dist_<event>.json`;DistView 只 `fetch(statsUrl(...))` 渲染(范本 `Cuboid335DistView.tsx`,**零求解器 import**),显式标「采样,非全空间」。新脚本 event 按需接入 `scripts/stats/puzzles.ts` 的采样事件列表。下载 = JSON 内嵌 `generatedSamples` 的样本 CSV。可枚举但 >2M 的态集才用流式下载(generator + 分块 Blob + confirm,A4 范式;**禁**拼一个巨串,A4 撞过 80MB OOM)。
 5. **质量诚实(§0.0 #3)**:近最优做到就标近最优;jumbling / 天文量级「有效 + 有界」是已接受结果,别造假。
 6. **大数当字符串(§0.0 #4)**。
 7. **「单实例最优 or `too-deep`」不是合格交付(334 血泪,2026-06-21)**:TIER C/D 必须解 100% 的**真实 cstimer 打乱**(预算内最优,否则有界 reduction 兜底);务必拿 N 条真打乱跑求解器并报 solve-rate。强 factored 启发式(如 233 的 max(角,棱))只在直径相对启发表小时才收敛 —— 大直径 puzzle(长方体 335/336/337 等)的真打乱接近直径,IDA* 会爆,**必须**配两阶段 / reduction 兜底。
@@ -346,7 +348,7 @@
   - **棱可解、角是墙(根因 = 角棱强耦合)**:
     - 棱:**纯棱 3-循环 4 步即得**(`[U,B] = U+ B+ U- B-`,960 个变体,U/B 是十二面体两极对面;6 对对面 = U-D/F-B/R-Dbl/Br-Dl/Bl-Dr/L-Dbr)。棱 reduction 干净。
     - 角:**穷尽搜索找不到任何短角 gadget** —— ① `[X^a,Y^b]` 2-gen commutator(48×48 全扫):**0 个**纯角 3-循环、0 个角 twist、0 个「角 3-循环 + 可消棱」(连含棱副作用的角 3-循环都 0:2-gen comm 从不恰好动 3 个角,角总是 5-循环及其积);② `[A,B]` A/B 为 1–3 步序列(含 6 面邻域 3 步 setup),**~2000 万 commutator(深度 ≤14)全扫:0 个**纯角 3-循环/角 twist;③ 单 setup 共轭 `Z[X,Y]Z'`:0 个;④ **角-only BFS**(只哈希 20 槽角 perm+ori、忽略棱,parent-pointer 紧凑)实测深度 3 = 1.34M 角态、深度 4 撞 6M cap **仍无角 3-循环** → **最短角 3-循环深度 ≥5**,且该深度角态空间数千万,**in-browser 搜不动**。文献佐证(WebSearch speedsolving):五魔金字塔角 commutator 长(~13+ 步)且靠**逐实例构造 + 直觉分层**,非短固定 gadget。
-  - **可行但 gated 的路(executor 自荐,主 loop 认同)= BLD 式专属 reduction 引擎**:棱用 4 步 3-循环(易);角需 ①**离线**搜出一个可靠 base 角 3-循环 commutator(在群里存在但深 ≥~13,本机 Node ≤14 线程深搜可得,运行时只嵌一条)+ ②角位 setup-move 系统(20 角位 BFS,小、内存轻)+ ③角 twist 处理。**运行时内存轻**(无大表,setup 表 ~20 位)。但这是**单 puzzle 专属、多文件、易错的真工程**(比 cm3 式 sign+gadget 重得多 —— prcp 的角棱耦合堵死了 cm3 范式),与 siamese 家族同属「effort-gated dedicated build」,**不是一轮 loop 单元能安全做完的快速从零 reduction**。
+  - **可行但 gated 的路(executor 自荐,主 loop 认同)= BLD 式专属 reduction 引擎**:棱用 4 步 3-循环(易);角需 ①**离线**搜出一个可靠 base 角 3-循环 commutator(在群里存在但深 ≥~13,本机 Node 并行深搜可得,运行时只嵌一条)+ ②角位 setup-move 系统(20 角位 BFS,小、内存轻)+ ③角 twist 处理。**运行时内存轻**(无大表,setup 表 ~20 位)。但这是**单 puzzle 专属、多文件、易错的真工程**(比 cm3 式 sign+gadget 重得多 —— prcp 的角棱耦合堵死了 cm3 范式),与 siamese 家族同属「effort-gated dedicated build」,**不是一轮 loop 单元能安全做完的快速从零 reduction**。
   - **依据延后(同 siamese 决策口径)**:① 简单 gadget / cm3 范式被角棱耦合结构性堵死(实证,非没试);② 真正的解器 = BLD 专属引擎(offline base-comm + setup 系统),工作量 ~siamese PDB 量级;③ 用户「看着办」已授权主 loop 对这类 effort-gated 大工程自行拍板延后不逐项问。**未擅自开建、未降标违约、未 ScheduleWakeup(本单元红灯)**。**giga(D2-15)是 prcp 的放大版(六阶五魔,>1e18,同 megaminx-family 角棱耦合),大概率同墙,executor 接它前应先看本条。**
 - **✅ 主 loop 拍板(2026-06-22,「看着办」授权)— megaminx 家族延后 + 重排到 heli**:接 prcp 红灯,**giga(D2-15)一并延后**(已标 ⏸)—— executor 的结构论据成立(六阶五魔 = prcp 放大版,同角棱耦合,>1e18 strictly harder,重测是注定结论),不再派 agent 确认;giga 与 prcp 同属「BLD 专属引擎」effort-gated epic,与 siamese 并列,待用户愿投入时一起做。**重排:下一个做 D2-17 `heli`(直升机)而非 D2-16 `ctico`** —— 二者都是 commutator-reduction 候选,但 heli 更标准/简单(180° 边转全是对合,wing/corner commutator 公认可行,cstimer `adjScramble` 不 jumbling),先做它当模板;ctico(7e34 二十面体,更 exotic)留到 heli 之后按其 commutator 思路再评估。已派 heli agent。
 - (采样分布(C/D 档)的灌注 / 发布 MANUAL 交接,做到时写这里)

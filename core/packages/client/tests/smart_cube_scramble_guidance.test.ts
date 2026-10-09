@@ -27,6 +27,22 @@ const target = (scramble: string) => {
   return facelets;
 };
 
+it('invalidates correction work when the grip changes even if the physical target is unchanged', async () => {
+  const pending = deferred<string | null>();
+  const controller = createSmartCubeGuidanceController({ solve: () => pending.promise });
+  const context = { id: 1, scramble: 'U', targetFacelets: target('U') };
+  controller.setContext({ ...context, orientation: '' });
+  controller.setConnected(true);
+  controller.observe(target('R'));
+  controller.setContext({ ...context, orientation: 'y' });
+  pending.resolve("R' U");
+  await flush();
+  equal(controller.snapshot(), { correctionActive: false, hint: null, match: null }, 'old grip correction must not return');
+  controller.syncFacelets(target(''));
+  assert(controller.snapshot().hint?.current === 'U', 'new grip can rebuild guidance');
+  controller.dispose();
+});
+
 async function completedNowIsAnEdgeAndBatchOrderIsSafe() {
   let solveCalls = 0;
   const controller = createSmartCubeGuidanceController({

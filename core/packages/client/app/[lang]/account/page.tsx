@@ -8,6 +8,7 @@
  * fragment 续接,不能进入 query、服务端日志或 Referer。
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { installedPetAvailable } from '@/lib/installed-content';
 import { useRouter } from 'next/navigation';
 import { useQueryState, parseAsInteger, parseAsStringEnum } from 'nuqs';
 import { Bell, BookOpen, Building2, ChevronLeft, Crown, LockKeyhole, LogOut, Settings, Rewind, IdCard, GraduationCap, Inbox, Lightbulb, Loader2, Upload, UserRound, Users, UserCog } from 'lucide-react';
@@ -21,6 +22,7 @@ import PageNoticesAdmin from '@/components/PageNoticesAdmin';
 import { UserIdLabel } from '@/components/UserIdLabel';
 import { Flag } from '@/components/Flag';
 import { CountryInput } from '@/components/CountryInput/CountryInput';
+import { CompactSelect } from '@/components/CompactSelect';
 import { DateInput } from '@/components/DateInput';
 import { AccountPanel, LoginForm, IdentityChoicePanel, WcaLinkPrompt, DeleteAccountPanel, type SignedIn } from '@/components/AuthPanel';
 import { getIdentityChoice, useIdentityChoice } from '@/lib/identity-choice';
@@ -103,7 +105,7 @@ function AvatarEditor() {
     setError(null);
     try {
       const session = await updateAvatar(choice);
-      if (!applySession(session.token, session.user)) throw new Error('session persistence failed');
+      if (!(await applySession(session.token, session.user))) throw new Error('session persistence failed');
     } catch {
       setError(t('头像保存失败，请稍后重试。', 'Could not save the avatar. Try again later.'));
     } finally {
@@ -119,7 +121,7 @@ function AvatarEditor() {
       const prepared = await prepareImageUpload(file, 512);
       const image = await uploadImageBlob(prepared.dataB64, prepared.mime);
       const session = await updateAvatar({ kind: 'upload', imageId: image.id });
-      if (!applySession(session.token, session.user)) throw new Error('session persistence failed');
+      if (!(await applySession(session.token, session.user))) throw new Error('session persistence failed');
     } catch (uploadError) {
       setError((uploadError as Error).message === 'unsupported_image_type'
         ? t('请选择 PNG、JPEG 或 WebP 图片。', 'Choose a PNG, JPEG, or WebP image.')
@@ -163,7 +165,7 @@ function AvatarEditor() {
           {saving && <Loader2 size={14} className="auth-spin" aria-label={t('正在保存', 'Saving')} />}
         </div>
       </div>
-      <details className="account-avatar-picker">
+      {installedPetAvailable('clawd') && <details className="account-avatar-picker">
         <summary>{t('选择 Clawd 头像', 'Choose a Clawd avatar')}</summary>
         {user.wcaId && (
           <button
@@ -196,7 +198,7 @@ function AvatarEditor() {
             );
           })}
         </div>
-      </details>
+      </details>}
       {error && <p className="auth-error" role="alert">{error}</p>}
     </div>
   );
@@ -322,7 +324,7 @@ function DisplayNameEditor() {
   if (!user) return null;
   const save = async (name: string) => {
     const session = await updateDisplayName(name);
-    if (!applySession(session.token, session.user)) throw new Error('session persistence failed');
+    if (!(await applySession(session.token, session.user))) throw new Error('session persistence failed');
   };
   return (
     <div className="account-profile-editor">
@@ -338,7 +340,7 @@ function DisplayNameEditor() {
 }
 
 type EditableBasicProfile = Pick<AccountBasicProfile, 'fullName' | 'birthDate' | 'gender' | 'countryIso2' | 'regionCode' | 'cityName'>;
-type AccountRegion = { code: string; name: string; cities: string[] };
+type AccountRegion = { code: string; name: string; cities: string[]; cityNamesZh?: Record<string, string> };
 
 function BasicProfileEditor() {
   const t = useT();
@@ -385,7 +387,7 @@ function BasicProfileEditor() {
     }
     let cancelled = false;
     setLocationsLoading(true);
-    fetch(`/account-locations/${countryIso2}.json`, { cache: 'force-cache' })
+    fetch(`/account-locations/${countryIso2}.json?v=3`, { cache: 'force-cache' })
       .then(async (response) => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const next = await response.json() as AccountRegion[];
@@ -556,55 +558,57 @@ function BasicProfileEditor() {
       {draft.countryIso2 && (
         <div className="account-basic-profile-field">
           <label className="auth-label" htmlFor="account-region">{t('省份', 'State or province')}</label>
-          <select
+          <CompactSelect
             id="account-region"
-            className="auth-input account-basic-profile-select"
-            value={draft.regionCode ?? ''}
-            disabled={saving || locationsLoading || locationsError || regions.length === 0}
-            onChange={(event) => updateDraft({ regionCode: event.target.value || null, cityName: null })}
-          >
-            <option value="" hidden>
-              {locationsLoading
+            ariaLabel={t('省份', 'State or province')}
+            label={draft.regionCode
+              ? (selectedRegion ? localizeCity(selectedRegion.name, isZh, draft.countryIso2) : draft.regionCode)
+              : locationsLoading
                 ? t('正在加载…', 'Loading…')
                 : locationsError
                   ? t('省份加载失败', 'Could not load states')
                   : regions.length === 0
                     ? t('暂无省份', 'No states or provinces')
                     : t('请选择省份', 'Select a state or province')}
-            </option>
-            {draft.regionCode && !selectedRegion && <option value={draft.regionCode}>{draft.regionCode}</option>}
-            {regions.map((region) => (
-              <option key={region.code} value={region.code}>{localizeCity(region.name, isZh, draft.countryIso2)}</option>
-            ))}
-          </select>
+            value={draft.regionCode ?? ''}
+            disabled={saving || locationsLoading || locationsError || regions.length === 0}
+            onChange={(value) => updateDraft({ regionCode: value || null, cityName: null })}
+            items={[
+              ...(draft.regionCode && !selectedRegion ? [{ value: draft.regionCode, label: draft.regionCode }] : []),
+              ...regions.map((region) => ({ value: region.code, label: localizeCity(region.name, isZh, draft.countryIso2) })),
+            ]}
+          />
         </div>
       )}
       {draft.regionCode && (
         <div className="account-basic-profile-field">
           <label className="auth-label" htmlFor="account-city">{t('城市', 'City')}</label>
-          <select
+          <CompactSelect
             id="account-city"
-            className="auth-input account-basic-profile-select"
-            value={draft.cityName ?? ''}
-            disabled={saving || locationsLoading || locationsError || !selectedRegion || selectedRegion.cities.length === 0}
-            onChange={(event) => updateDraft({ cityName: event.target.value || null })}
-          >
-            <option value="" hidden>
-              {locationsLoading
+            ariaLabel={t('城市', 'City')}
+            label={draft.cityName
+              ? t(selectedRegion?.cityNamesZh?.[draft.cityName] ?? localizeCity(draft.cityName, true, draft.countryIso2), localizeCity(draft.cityName, false, draft.countryIso2))
+              : locationsLoading
                 ? t('正在加载…', 'Loading…')
                 : locationsError
                   ? t('城市加载失败', 'Could not load cities')
                   : selectedRegion?.cities.length === 0
                     ? t('暂无城市', 'No cities')
                     : t('请选择城市', 'Select a city')}
-            </option>
-            {draft.cityName && !selectedRegion?.cities.includes(draft.cityName) && (
-              <option value={draft.cityName}>{localizeCity(draft.cityName, isZh, draft.countryIso2)}</option>
-            )}
-            {selectedRegion?.cities.map((city) => (
-              <option key={city} value={city}>{localizeCity(city, isZh, draft.countryIso2)}</option>
-            ))}
-          </select>
+            value={draft.cityName ?? ''}
+            disabled={saving || locationsLoading || locationsError || !selectedRegion || selectedRegion.cities.length === 0}
+            onChange={(value) => updateDraft({ cityName: value || null })}
+            items={[
+              ...(draft.cityName && !selectedRegion?.cities.includes(draft.cityName) ? [{
+                value: draft.cityName,
+                label: t(selectedRegion?.cityNamesZh?.[draft.cityName] ?? localizeCity(draft.cityName, true, draft.countryIso2), localizeCity(draft.cityName, false, draft.countryIso2)),
+              }] : []),
+              ...(selectedRegion?.cities.map((city) => ({
+                value: city,
+                label: t(selectedRegion.cityNamesZh?.[city] ?? localizeCity(city, true, draft.countryIso2), localizeCity(city, false, draft.countryIso2)),
+              })) ?? []),
+            ]}
+          />
         </div>
       )}
       {error && <p className="auth-error" role="alert">{error}</p>}
@@ -672,6 +676,7 @@ export default function AccountPage() {
   const [managedUserId] = useQueryState('user', parseAsInteger);
   const [linkProvider] = useQueryState('link_provider', parseAsStringEnum(['apple']));
   const [expectedLinkUid] = useQueryState('expected_uid', parseAsInteger);
+  const [miniProgramAction] = useQueryState('mini_program', parseAsStringEnum(['login']));
 
   // 'wait' = 还没判定(SSR / 正在跳走)—— auth-store 从 localStorage 同步初始化,服务端恒为
   // null,所以判定只能在挂载后做,渲染前固定空壳避免 hydration 错配。
@@ -679,6 +684,14 @@ export default function AccountPage() {
   const [mode, setMode] = useState<'wait' | 'login' | 'onboard' | 'me'>('wait');
   const [mobileAuth, setMobileAuth] = useState(false);
   const [mobileAuthProvider, setMobileAuthProvider] = useState<MobileAuthProvider | null>(null);
+  const [commerceRestricted, setCommerceRestricted] = useState(true);
+  useEffect(() => {
+    let cancel = false;
+    void isMiniProgramCommerceRestricted().then((restricted) => {
+      if (!cancel) setCommerceRestricted(restricted);
+    });
+    return () => { cancel = true; };
+  }, []);
   const next = useRef<string | null>(null);
 
   // The native Apps reuse this page instead of maintaining a second account UI.
@@ -759,7 +772,6 @@ export default function AccountPage() {
   // 没绑的人在原位看到「绑定 WCA 账号」:注册那步跳过了、或后来才拿到 WCA ID,都从这里回来。
   const wcaId = user?.wcaId;
   const isAdmin = hasAdminAccess(user);
-  const commerceRestricted = isMiniProgramCommerceRestricted();
   const cards = [
     {
       key: 'onboarding',
@@ -790,6 +802,12 @@ export default function AccountPage() {
         desc: tr({ zh: '把比赛成绩、个人纪录和复盘接进来', en: 'Bring your results, records and reconstructions here' }),
       },
     ]),
+    {
+      key: 'identity-verification',
+      href: '/account/verify',
+      icon: <IdCard size={22} className="account-card-icon" />,
+      title: tr({ zh: '实名认证', en: 'Identity Verification' }),
+    },
     {
       key: 'progress',
       href: '/alg/progress',
@@ -870,9 +888,9 @@ export default function AccountPage() {
             <span>{t('账号设置', 'Account settings')}</span>
           </AppLink>
         ) : (
-          <HomeLink className="account-back">
+          <HomeLink className="account-back" miniProgramTarget="account">
             <ChevronLeft size={16} />
-            <span>{t('首页', 'Home')}</span>
+            <span>{t('返回', 'Back')}</span>
           </HomeLink>
         )}
         {mode === 'me' && view === 'main' && (
@@ -931,7 +949,10 @@ export default function AccountPage() {
             <section className="account-creds">
               <DisplayNameEditor />
               <h2 className="account-creds-title">{t('登录方式', 'Sign-in methods')}</h2>
-              <AccountPanel expectedAppleUid={linkProvider === 'apple' ? expectedLinkUid : undefined} />
+              <AccountPanel
+                expectedAppleUid={linkProvider === 'apple' ? expectedLinkUid : undefined}
+                miniProgramLogin={miniProgramAction === 'login'}
+              />
               {/* 清掉 ?view= —— 否则重新登录后会莫名其妙落在登录方式视图 */}
               <button type="button" className="account-logout" onClick={handleLogout}>
                 <LogOut size={14} />

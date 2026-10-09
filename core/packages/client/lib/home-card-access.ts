@@ -18,9 +18,3 @@ export function homeCardsRequireAdmin(cards: readonly SiteDirectoryEntry[], lock
   return cards.some((card) => ('adminOnly' in card && card.adminOnly)
     || (locks[card.id] ?? ('lockedForNonAdmin' in card && card.lockedForNonAdmin) ?? false));
 }
-
-/** Existing bearer session for document requests; never trusted without API verification. */
-export function syncPageSessionCookie(token: string): void {
-  if (typeof document === 'undefined') return;
-  document.cookie = `${PAGE_SESSION_COOKIE}=${encodeURIComponent(token)}; Path=/; SameSite=Lax; Max-Age=${token ? 3600 : 0}${window.location.protocol === 'https:' ? '; Secure' : ''}`;
-}

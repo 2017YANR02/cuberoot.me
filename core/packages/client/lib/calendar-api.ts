@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 // /calendar 的 API 层 —— 全站 apiUrl() + authHeaders/handleApi 那一套(lib/admin-api),
 // 不自己拼 origin、不自己写 token 读取。
 //
@@ -11,6 +12,8 @@ import type {
 } from '@cuberoot/shared/calendar';
 
 export interface BootstrapPayload {
+  /** v2 supports precise hex and Google label colors. Older servers omit this. */
+  colorFormatVersion?: number;
   calendars: CalendarMeta[];
   share: ShareSettings;
   me: { key: string; name: string; avatar: string };
@@ -42,14 +45,14 @@ export interface EventDraft {
 }
 
 export async function fetchBootstrap(tz: string): Promise<BootstrapPayload> {
-  const r = await fetch(apiUrl(`/v1/calendar/bootstrap?tz=${encodeURIComponent(tz)}`), {
+  const r = await sessionFetch(apiUrl(`/v1/calendar/bootstrap?v=2&tz=${encodeURIComponent(tz)}`), {
     headers: authHeaders(false), cache: 'no-store',
   });
   return handleApi<BootstrapPayload>(r);
 }
 
 export async function fetchEvents(from: number, to: number): Promise<EventsPayload> {
-  const r = await fetch(apiUrl(`/v1/calendar/events?from=${from}&to=${to}`), {
+  const r = await sessionFetch(apiUrl(`/v1/calendar/events?from=${from}&to=${to}`), {
     headers: authHeaders(false), cache: 'no-store',
   });
   return handleApi<EventsPayload>(r);
@@ -58,7 +61,7 @@ export async function fetchEvents(from: number, to: number): Promise<EventsPaylo
 export async function createCalendar(
   input: { name: string; color: string; tz: string; importId?: number },
 ): Promise<CalendarMeta> {
-  const r = await fetch(apiUrl('/v1/calendar/calendars'), {
+  const r = await sessionFetch(apiUrl('/v1/calendar/calendars'), {
     method: 'POST', headers: authHeaders(), body: JSON.stringify(input),
   });
   return (await handleApi<{ calendar: CalendarMeta }>(r)).calendar;
@@ -67,28 +70,28 @@ export async function createCalendar(
 export async function updateCalendar(
   id: number, input: Partial<{ name: string; color: string; tz: string }>,
 ): Promise<CalendarMeta> {
-  const r = await fetch(apiUrl(`/v1/calendar/calendars/${id}`), {
+  const r = await sessionFetch(apiUrl(`/v1/calendar/calendars/${id}`), {
     method: 'PATCH', headers: authHeaders(), body: JSON.stringify(input),
   });
   return (await handleApi<{ calendar: CalendarMeta }>(r)).calendar;
 }
 
 export async function deleteCalendar(id: number): Promise<void> {
-  const r = await fetch(apiUrl(`/v1/calendar/calendars/${id}`), {
+  const r = await sessionFetch(apiUrl(`/v1/calendar/calendars/${id}`), {
     method: 'DELETE', headers: authHeaders(false),
   });
   await handleApi<{ ok: boolean }>(r);
 }
 
 export async function createEvent(draft: EventDraft): Promise<CalEvent> {
-  const r = await fetch(apiUrl('/v1/calendar/events'), {
+  const r = await sessionFetch(apiUrl('/v1/calendar/events'), {
     method: 'POST', headers: authHeaders(), body: JSON.stringify(draft),
   });
   return (await handleApi<{ event: CalEvent }>(r)).event;
 }
 
 export async function updateEvent(id: number, draft: EventDraft, scope: EditScope): Promise<CalEvent> {
-  const r = await fetch(apiUrl(`/v1/calendar/events/${id}?scope=${scope}`), {
+  const r = await sessionFetch(apiUrl(`/v1/calendar/events/${id}?scope=${scope}`), {
     method: 'PATCH', headers: authHeaders(), body: JSON.stringify(draft),
   });
   return (await handleApi<{ event: CalEvent }>(r)).event;
@@ -96,7 +99,7 @@ export async function updateEvent(id: number, draft: EventDraft, scope: EditScop
 
 export async function deleteEvent(id: number, scope: EditScope, occurrenceMs?: number): Promise<void> {
   const q = `scope=${scope}${occurrenceMs != null ? `&occurrence=${occurrenceMs}` : ''}`;
-  const r = await fetch(apiUrl(`/v1/calendar/events/${id}?${q}`), {
+  const r = await sessionFetch(apiUrl(`/v1/calendar/events/${id}?${q}`), {
     method: 'DELETE', headers: authHeaders(false),
   });
   await handleApi<{ ok: boolean }>(r);
@@ -105,7 +108,7 @@ export async function deleteEvent(id: number, scope: EditScope, occurrenceMs?: n
 export async function importEvents(
   calendarId: number, events: Omit<EventDraft, 'calendarId'>[], importId?: number,
 ): Promise<{ added: number; failed: number }> {
-  const r = await fetch(apiUrl('/v1/calendar/events/bulk'), {
+  const r = await sessionFetch(apiUrl('/v1/calendar/events/bulk'), {
     method: 'POST', headers: authHeaders(), body: JSON.stringify({ calendarId, importId, events }),
   });
   return handleApi<{ added: number; failed: number }>(r);
@@ -113,14 +116,14 @@ export async function importEvents(
 
 /** 开一个导入批次 —— 之后的建日历 / 塞事件都挂在它下面,用来整批撤销。 */
 export async function startImport(source: string): Promise<number> {
-  const r = await fetch(apiUrl('/v1/calendar/imports'), {
+  const r = await sessionFetch(apiUrl('/v1/calendar/imports'), {
     method: 'POST', headers: authHeaders(), body: JSON.stringify({ source }),
   });
   return (await handleApi<{ id: number }>(r)).id;
 }
 
 export async function listImports(): Promise<CalendarImport[]> {
-  const r = await fetch(apiUrl('/v1/calendar/imports'), {
+  const r = await sessionFetch(apiUrl('/v1/calendar/imports'), {
     headers: authHeaders(false), cache: 'no-store',
   });
   return (await handleApi<{ imports: CalendarImport[] }>(r)).imports;
@@ -128,14 +131,14 @@ export async function listImports(): Promise<CalendarImport[]> {
 
 /** 撤销:删掉那次导入进来的全部事件,以及它新建且此刻仍空着的日历。 */
 export async function undoImport(id: number): Promise<{ removedEvents: number; removedCalendars: number }> {
-  const r = await fetch(apiUrl(`/v1/calendar/imports/${id}`), {
+  const r = await sessionFetch(apiUrl(`/v1/calendar/imports/${id}`), {
     method: 'DELETE', headers: authHeaders(false),
   });
   return handleApi<{ removedEvents: number; removedCalendars: number }>(r);
 }
 
 export async function rsvp(id: number, status: 'accepted' | 'declined'): Promise<void> {
-  const r = await fetch(apiUrl(`/v1/calendar/events/${id}/rsvp`), {
+  const r = await sessionFetch(apiUrl(`/v1/calendar/events/${id}/rsvp`), {
     method: 'POST', headers: authHeaders(), body: JSON.stringify({ status }),
   });
   await handleApi<{ ok: boolean }>(r);
@@ -144,14 +147,14 @@ export async function rsvp(id: number, status: 'accepted' | 'declined'): Promise
 export async function saveShare(input: {
   enabled?: boolean; detail?: ShareDetail; title?: string; calendarIds?: number[]; tz?: string;
 }): Promise<ShareSettings> {
-  const r = await fetch(apiUrl('/v1/calendar/share'), {
+  const r = await sessionFetch(apiUrl('/v1/calendar/share'), {
     method: 'PUT', headers: authHeaders(), body: JSON.stringify(input),
   });
   return (await handleApi<{ share: ShareSettings }>(r)).share;
 }
 
 export async function rotateShareToken(): Promise<ShareSettings> {
-  const r = await fetch(apiUrl('/v1/calendar/share/rotate'), {
+  const r = await sessionFetch(apiUrl('/v1/calendar/share/rotate'), {
     method: 'POST', headers: authHeaders(false),
   });
   return (await handleApi<{ share: ShareSettings }>(r)).share;
@@ -166,7 +169,7 @@ export interface PersonHit {
 }
 
 export async function searchPeople(q: string): Promise<PersonHit[]> {
-  const r = await fetch(apiUrl(`/v1/calendar/people?q=${encodeURIComponent(q)}`), {
+  const r = await sessionFetch(apiUrl(`/v1/calendar/people?q=${encodeURIComponent(q)}`), {
     headers: authHeaders(false), cache: 'no-store',
   });
   return (await handleApi<{ people: PersonHit[] }>(r)).people;
@@ -174,7 +177,7 @@ export async function searchPeople(q: string): Promise<PersonHit[]> {
 
 /** 导出:后端直接吐 .ics 文本(要带 Bearer,所以不能直接开链接下载)。 */
 export async function exportIcs(): Promise<string> {
-  const r = await fetch(apiUrl('/v1/calendar/export'), { headers: authHeaders(false), cache: 'no-store' });
+  const r = await sessionFetch(apiUrl('/v1/calendar/export'), { headers: authHeaders(false), cache: 'no-store' });
   if (!r.ok) throw new Error(`export failed ${r.status}`);
   return r.text();
 }
@@ -191,7 +194,7 @@ export interface PublicCalendar {
 
 /** 公开分享页读取(免登录)。busy 档下服务端已经把内容抹掉了,前端拿到的就是空标题。 */
 export async function fetchPublicCalendar(token: string, from: number, to: number): Promise<PublicCalendar> {
-  const r = await fetch(apiUrl(`/v1/calendar/public/${encodeURIComponent(token)}?from=${from}&to=${to}`), {
+  const r = await sessionFetch(apiUrl(`/v1/calendar/public/${encodeURIComponent(token)}?from=${from}&to=${to}`), {
     cache: 'no-store',
   });
   return handleApi<PublicCalendar>(r);

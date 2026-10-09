@@ -1,20 +1,25 @@
 // @vitest-environment jsdom
 
 import { SOLVED_3X3 } from '@cuberoot/puzzle-solvers/timer-333-cube';
+import { GAN_V4_SERVICE_UUID } from '@cuberoot/shared/smart-cube/gan-v4';
+import { MOYU32_SERVICE_UUID } from '@cuberoot/shared/smart-cube/moyu32';
+import { QIYI_SERVICE_UUID } from '@cuberoot/shared/smart-cube/qiyi';
 import { act, useEffect } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { InstalledAppSmartCube } from '../platform';
+import type { InstalledAppSmartCube, InstalledSmartCubeMoveMetadata } from '../platform';
 import type { BleTransport } from './transport';
 import { useInstalledSmartCube } from './use-smart-cube';
 
 const state = vi.hoisted(() => ({
   onMove: vi.fn(), onSolved: vi.fn(), requestState: vi.fn(),
   connect: vi.fn<() => Promise<void>>(), disconnect: vi.fn<() => Promise<void>>(),
+  publishState: true,
+  connectionKind: '' as '' | 'gan-v4' | 'moyu32' | 'qiyi',
   callbacks: null as null | {
     onDisconnect(): void;
-    onMove(move: string, timestamp: number): void;
+    onMove(move: string, timestamp: number, metadata?: InstalledSmartCubeMoveMetadata): void;
     onProtocolError(): void;
     onState(facelets: string): void;
   },
@@ -23,16 +28,54 @@ const state = vi.hoisted(() => ({
 vi.mock('./gan-v4-cube', () => ({
   GanV4CubeConnection: class {
     constructor(_transport: BleTransport, callbacks: NonNullable<typeof state.callbacks>) {
+      state.connectionKind = 'gan-v4';
       state.callbacks = callbacks;
     }
 
     async connect() {
       await state.connect();
-      state.callbacks?.onState(SOLVED_3X3);
+      if (state.publishState) state.callbacks?.onState(SOLVED_3X3);
     }
 
     async disconnect() { await state.disconnect(); }
     async requestState() { state.requestState(); }
+    async resetDeviceState() { state.callbacks?.onState(SOLVED_3X3); }
+  },
+}));
+
+vi.mock('./moyu32-cube', () => ({
+  Moyu32CubeConnection: class {
+    constructor(_transport: BleTransport, callbacks: NonNullable<typeof state.callbacks>) {
+      state.connectionKind = 'moyu32';
+      state.callbacks = callbacks;
+    }
+
+    async connect() {
+      await state.connect();
+      if (state.publishState) state.callbacks?.onState(SOLVED_3X3);
+    }
+
+    async disconnect() { await state.disconnect(); }
+    async requestState() { state.requestState(); }
+    async resetDeviceState() { state.callbacks?.onState(SOLVED_3X3); }
+  },
+}));
+
+vi.mock('./qiyi-cube', () => ({
+  QiyiCubeConnection: class {
+    constructor(_transport: BleTransport, callbacks: NonNullable<typeof state.callbacks>) {
+      state.connectionKind = 'qiyi';
+      state.callbacks = callbacks;
+    }
+
+    async connect() {
+      await state.connect();
+      if (state.publishState) state.callbacks?.onState(SOLVED_3X3);
+    }
+
+    async disconnect() { await state.disconnect(); }
+    async requestState() { state.requestState(); }
+    async resetDeviceState() { state.callbacks?.onState(SOLVED_3X3); }
   },
 }));
 
@@ -60,8 +103,13 @@ describe('useInstalledSmartCube', () => {
 
   beforeEach(async () => {
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+    state.publishState = true;
     state.callbacks = null;
+    state.connectionKind = '';
+    delete transport.getServices;
+    delete transport.scanDevices;
     vi.clearAllMocks();
+    vi.mocked(transport.requestDevice).mockResolvedValue({ id: 'cube', name: 'GAN16ui' });
     state.connect.mockResolvedValue(undefined);
     state.disconnect.mockResolvedValue(undefined);
     container = document.createElement('div');
@@ -76,6 +124,134 @@ describe('useInstalledSmartCube', () => {
   afterEach(async () => {
     await act(async () => root.unmount());
     container.remove();
+    vi.useRealTimers();
+  });
+
+  it('does not count hardware calibration as a solve or turn', async () => {
+    await act(async () => { await cube.connect(); });
+    act(() => state.callbacks?.onMove('R', 100));
+    expect(cube.solved).toBe(false);
+    state.onMove.mockClear(); state.onSolved.mockClear();
+    await act(async () => { await cube.resetDeviceState!(); });
+    expect(cube.facelets).toBe(SOLVED_3X3);
+    expect(state.onSolved).not.toHaveBeenCalled();
+    expect(state.onMove).not.toHaveBeenCalled();
+  });
+
+  it('keeps hosts without service discovery on the GAN v4 picker', () => {
+    expect(state.connectionKind).toBe('gan-v4');
+    expect(cube.model).toBe('gan-v4');
+    expect(transport.requestDevice).toHaveBeenCalledWith(expect.objectContaining({
+      namePrefix: 'GAN',
+      optionalServices: [GAN_V4_SERVICE_UUID],
+    }));
+    const options = vi.mocked(transport.requestDevice).mock.calls[0]?.[0];
+    expect(options).not.toHaveProperty('namePrefixes');
+    expect(options).not.toHaveProperty('services');
+  });
+
+  it('opens the native service picker for MoYu32 and exposes its protocol model', async () => {
+    await act(async () => { await cube.disconnect(); });
+    transport.getServices = vi.fn(async () => []);
+    vi.mocked(transport.requestDevice).mockResolvedValueOnce({
+      id: 'CF:30:16:00:A1:B2',
+      name: 'WCU_MY32_A1B2',
+    });
+
+    await act(async () => { await cube.connect(); });
+
+    expect(state.connectionKind).toBe('moyu32');
+    expect(cube.model).toBe('moyu32');
+    expect(transport.requestDevice).toHaveBeenLastCalledWith(expect.objectContaining({
+      namePrefix: 'GAN',
+      namePrefixes: ['GAN', 'MG', 'AiCube', 'Gi', 'WCU_MY3', 'QY-QYSC', 'XMD-TornadoV4-i', 'Mi Smart Magic Cube', 'Hi-', 'GoCube', 'Rubik', 'MHC', 'MoYu', 'MY-'],
+      services: expect.arrayContaining([GAN_V4_SERVICE_UUID, MOYU32_SERVICE_UUID, QIYI_SERVICE_UUID]),
+      optionalServices: expect.arrayContaining([GAN_V4_SERVICE_UUID, MOYU32_SERVICE_UUID, QIYI_SERVICE_UUID]),
+    }));
+  });
+
+  it('opens the native service picker for QiYi and exposes its protocol model', async () => {
+    await act(async () => { await cube.disconnect(); });
+    transport.getServices = vi.fn(async () => []);
+    vi.mocked(transport.requestDevice).mockResolvedValueOnce({
+      id: 'CC:A3:00:00:A1:B2',
+      name: 'XMD-TornadoV4-i-1-A1B2',
+    });
+
+    await act(async () => { await cube.connect(); });
+
+    expect(state.connectionKind).toBe('qiyi');
+    expect(cube.model).toBe('qiyi');
+    expect(transport.requestDevice).toHaveBeenLastCalledWith(expect.objectContaining({
+      namePrefixes: ['GAN', 'MG', 'AiCube', 'Gi', 'WCU_MY3', 'QY-QYSC', 'XMD-TornadoV4-i', 'Mi Smart Magic Cube', 'Hi-', 'GoCube', 'Rubik', 'MHC', 'MoYu', 'MY-'],
+      services: expect.arrayContaining([QIYI_SERVICE_UUID]),
+      optionalServices: expect.arrayContaining([QIYI_SERVICE_UUID]),
+    }));
+  });
+
+  it('publishes a live device list and connects the selected desktop device without reopening a picker', async () => {
+    transport.getServices = vi.fn(async () => []);
+    const stopScan = vi.fn(async () => undefined);
+    transport.scanDevices = vi.fn(async (options, onDevices) => {
+      expect(options.namePrefixes).toEqual([
+        'GAN', 'MG', 'AiCube', 'Gi', 'WCU_MY3', 'QY-QYSC', 'XMD-TornadoV4-i', 'Mi Smart Magic Cube', 'Hi-', 'GoCube', 'Rubik', 'MHC', 'MoYu', 'MY-',
+      ]);
+      onDevices([
+        { id: 'moyu', name: 'WCU_MY32_A1B2', rssi: -41 },
+        { id: 'gan', name: 'GAN16ui', rssi: -58 },
+      ]);
+      return stopScan;
+    });
+    await act(async () => { await cube.disconnect(); });
+    const pickerCalls = vi.mocked(transport.requestDevice).mock.calls.length;
+
+    await act(async () => { await cube.scanDevices?.(); });
+    expect(cube.scanning).toBe(true);
+    expect(cube.availableDevices).toEqual([
+      { id: 'moyu', name: 'WCU_MY32_A1B2', rssi: -41 },
+      { id: 'gan', name: 'GAN16ui', rssi: -58 },
+    ]);
+
+    await act(async () => { await cube.connect('moyu'); });
+    expect(stopScan).toHaveBeenCalledOnce();
+    expect(transport.requestDevice).toHaveBeenCalledTimes(pickerCalls);
+    expect(state.connectionKind).toBe('moyu32');
+    expect(cube.deviceName).toBe('WCU_MY32_A1B2');
+    expect(cube.availableDevices).toEqual([]);
+  });
+
+  it('drains a late scan startup before releasing the native adapter to Tools', async () => {
+    let finishScan!: (stop: () => Promise<void>) => void;
+    let finishStop!: () => void;
+    const stop = vi.fn(() => new Promise<void>(resolve => { finishStop = resolve; }));
+    transport.scanDevices = vi.fn(() => new Promise<() => Promise<void>>(resolve => { finishScan = resolve; }));
+    await act(async () => { await cube.disconnect(); });
+    let scanning!: Promise<void>;
+    await act(async () => { scanning = cube.scanDevices!(); });
+    expect(transport.scanDevices).toHaveBeenCalledOnce();
+    let drained = false;
+    let disconnecting!: Promise<void>;
+    await act(async () => { disconnecting = cube.disconnect().then(() => { drained = true; }); });
+    expect(drained).toBe(false);
+    await act(async () => { finishScan(stop); });
+    expect(stop).toHaveBeenCalledOnce();
+    expect(drained).toBe(false);
+    await act(async () => { finishStop(); await scanning; await disconnecting; });
+    expect(drained).toBe(true);
+    expect(cube.scanning).toBe(false);
+  });
+
+  it('never reports connected for a silent protocol and times out with an actionable error', async () => {
+    await act(async () => { await cube.disconnect(); });
+    state.publishState = false;
+    vi.useFakeTimers();
+    let pending!: Promise<unknown>;
+    await act(async () => { pending = cube.connect().catch((error: unknown) => error); });
+    expect(cube.phase).toBe('connecting');
+    await act(async () => { await vi.advanceTimersByTimeAsync(8_000); await pending; });
+    expect(cube.phase).toBe('error');
+    expect(cube.error).toBe('No valid cube state received. Check the MAC address and reconnect.');
+    expect(state.disconnect).toHaveBeenCalled();
   });
 
   it('clears tracked cube state on an unexpected disconnect', async () => {
@@ -121,6 +297,16 @@ describe('useInstalledSmartCube', () => {
     expect(state.onMove.mock.invocationCallOrder.at(-1)).toBeLessThan(state.onSolved.mock.invocationCallOrder[0]);
   });
 
+  it('forwards future-history metadata with the tracked facelets', async () => {
+    await act(async () => state.callbacks?.onMove("R'", 251, { futureHistory: true }));
+    expect(state.onMove).toHaveBeenLastCalledWith(
+      "R'",
+      expect.any(Number),
+      SOLVED_3X3,
+      { futureHistory: true },
+    );
+  });
+
   it('explicit physical-solved reset is not a solve completion and uses the same state model', async () => {
     await act(async () => cube.resetState?.());
     expect(cube.facelets).toBe(SOLVED_3X3);
@@ -138,7 +324,7 @@ describe('useInstalledSmartCube', () => {
 
     await act(async () => {
       state.callbacks?.onMove('R', 2);
-      state.callbacks?.onState(SOLVED_3X3);
+      if (state.publishState) state.callbacks?.onState(SOLVED_3X3);
     });
     expect(cube.phase).toBe('error');
     expect(cube.lastMove).toBe('');

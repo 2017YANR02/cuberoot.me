@@ -9,7 +9,7 @@
 | 监控 | 文件 | Python 源 | 作用 | 轮询 |
 |------|------|-----------|------|------|
 | WCA Live 纪录 | `wca_live_record.ts` | `wca_record_monitor.py` | WCA Live `recentRecords` 扫新 WR/CR/NR | 60s |
-| cubing.com 纪录 + PR | `cubing_record.ts` | `cubing_record_monitor.py` | 近期中国比赛 WS 扫 sr/ar 纪录 + 关注选手 `result.user` nb/na PR | 60s |
+| cubing.com 纪录 + PR | `cubing_record.ts` | `cubing_record_monitor.py` | 新版 REST 轮次成绩的地区纪录与关注选手 personalSingleRecord/personalAverageRecord | 60s |
 | cubing.com 比赛 | `cubing_comp.ts` | `cubing_com_monitor.py` | 新公示的中国比赛 | 60s |
 | WCA 比赛 | `wca_comp.ts` | `wca_comp_monitor.py` | 新公示的 WCA 比赛(全球) | 60s |
 | WCA Live PR | `wca_live_pr.ts` | `wca_pr_detector.py` / `wca_pr_cache.py` | 关注选手生涯 PR 检测(自管基线) | 60s |

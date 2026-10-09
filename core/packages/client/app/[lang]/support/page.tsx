@@ -8,26 +8,33 @@
  * 数据走 /v1/sponsors + /v1/contributors。
  */
 import { useEffect, useMemo, useState } from 'react';
-import { BadgeCheck, Heart, Plus, Pencil, Trash2, Crown, List, ShieldCheck, X } from 'lucide-react';
+import { Heart, Plus, Pencil, Trash2, Crown, List, X } from 'lucide-react';
 import { tr, useLang } from '@/i18n/tr';
 import AppLink from '@/components/AppLink';
 import DonateModal from '@/components/DonateModal';
 import { displayCuberName } from '@/lib/cuber-name-display';
+import { pinyin } from 'pinyin-pro';
 import { useAuthUser, useIsAdmin } from '@/lib/auth-store';
 import { firstGlyph } from '@/lib/first-glyph';
 import {
   listSponsors, deleteSponsor, type Sponsor,
   listContributors, deleteContributor, bumpContributor, type Contributor,
-  listMySponsorClaims, type SponsorClaim,
 } from '@/lib/sponsors-api';
 import SupportEditor, { type EditorTarget } from './SupportEditor';
-import {
-  ClaimStatusMark, SponsorClaimAdminDialog, SponsorClaimDialog,
-} from './SponsorClaimDialogs';
 import './support.css';
 
 const INITIAL_VISIBLE = 18;
 const CURRENCY_SYMBOL: Record<string, string> = { CNY: '¥', USD: '$', EUR: '€' };
+
+// WCA names already carry their preferred Latin spelling. Only romanize
+// Chinese-only credit names; keep the stored name untouched for editing.
+function supportName(rawName: string, isZh: boolean): string {
+  const name = displayCuberName(rawName, isZh);
+  if (isZh || !/^[\u3400-\u9fff·\s]+$/.test(name)) return name;
+  return pinyin(name, { toneType: 'none', type: 'array', surname: 'head', nonZh: 'consecutive' })
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ').replace(/\s+/g, ' ').trim();
+}
 
 function fmtAmount(amount: number, currency: string): string {
   const sym = CURRENCY_SYMBOL[currency] || '';
@@ -57,49 +64,25 @@ function PersonName({ name, wcaId }: { name: string; wcaId?: string }) {
 function AdminBtns<T>({ item, onEdit, onDelete }: { item: T; onEdit: (x: T) => void; onDelete: (x: T) => void }) {
   return (
     <div className="sponsor-admin">
-      <button className="sponsor-admin-btn" onClick={() => onEdit(item)} aria-label="edit"><Pencil size={13} /></button>
-      <button className="sponsor-admin-del sponsor-admin-btn" onClick={() => onDelete(item)} aria-label="delete"><Trash2 size={13} /></button>
+      <button className="sponsor-admin-btn" onClick={() => onEdit(item)} aria-label={tr({ zh: '编辑', en: 'Edit' })}><Pencil size={13} /></button>
+      <button className="sponsor-admin-del sponsor-admin-btn" onClick={() => onDelete(item)} aria-label={tr({ zh: '删除', en: 'Delete' })}><Trash2 size={13} /></button>
     </div>
   );
 }
 
-function SponsorCard({ sponsor, isZh, admin, loggedIn, claim, onEdit, onDelete, onClaim }: {
+function SponsorCard({ sponsor, isZh, admin, onEdit, onDelete }: {
   sponsor: Sponsor;
   isZh: boolean;
   admin: boolean;
-  loggedIn: boolean;
-  claim?: SponsorClaim;
   onEdit: (s: Sponsor) => void;
   onDelete: (s: Sponsor) => void;
-  onClaim: (s: Sponsor) => void;
 }) {
-  const name = displayCuberName(sponsor.name, isZh);
-  const claimed = sponsor.claimed || claim?.status === 'approved';
+  const name = supportName(sponsor.name, isZh);
   return (
     <div className="sponsor-card" title={sponsor.message || undefined}>
       <PersonAvatar name={name} wcaId={sponsor.wcaId} avatarUrl={sponsor.avatarUrl} />
       <PersonName name={name} wcaId={sponsor.wcaId} />
       <span className="sponsor-amount">{fmtAmount(sponsor.amount, sponsor.currency)}</span>
-      {claimed ? (
-        <span className="sponsor-claimed"><BadgeCheck size={12} /> {tr({ zh: '已认领', en: 'Claimed' })}</span>
-      ) : (
-        <>
-          <ClaimStatusMark claim={claim} />
-          {loggedIn ? (
-            <button className="sponsor-claim-open" onClick={() => onClaim(sponsor)}>
-              {claim?.status === 'pending'
-                ? tr({ zh: '查看申请', en: 'View claim' })
-                : claim && ['rejected', 'revoked', 'cancelled'].includes(claim.status)
-                  ? tr({ zh: '重新认领', en: 'Claim again' })
-                  : tr({ zh: '认领', en: 'Claim' })}
-            </button>
-          ) : (
-            <AppLink href="/account?next=%2Fsupport" className="sponsor-claim-open">
-              {tr({ zh: '登录后认领', en: 'Sign in to claim' })}
-            </AppLink>
-          )}
-        </>
-      )}
       {sponsor.message && <span className="sponsor-message">{sponsor.message}</span>}
       {admin && <AdminBtns item={sponsor} onEdit={onEdit} onDelete={onDelete} />}
     </div>
@@ -115,7 +98,7 @@ function ContributorCard({ contributor, isZh, admin, onEdit, onDelete, onBump, o
   onBump: (ct: Contributor) => void;
   onOpenDetail: (ct: Contributor) => void;
 }) {
-  const name = displayCuberName(contributor.name, isZh);
+  const name = supportName(contributor.name, isZh);
   const countTitle = tr({ zh: '贡献 {n} 次', en: '{n} contributions' }).replace('{n}', String(contributor.score));
   const hasDetail = contributor.contributions.length > 0;
   return (
@@ -150,7 +133,7 @@ function ContributorDetail({ contributor, isZh, onClose }: {
   isZh: boolean;
   onClose: () => void;
 }) {
-  const name = displayCuberName(contributor.name, isZh);
+  const name = supportName(contributor.name, isZh);
   const items = contributor.contributions;
   return (
     <div className="sponsor-editor-backdrop" onClick={onClose}>
@@ -198,19 +181,16 @@ export default function SupportPage() {
 
   const [sponsors, setSponsors] = useState<Sponsor[] | null>(null);
   const [contributors, setContributors] = useState<Contributor[] | null>(null);
-  const [claims, setClaims] = useState<SponsorClaim[]>([]);
   const [loadErr, setLoadErr] = useState<string | null>(null);
   const [contribErr, setContribErr] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [donateOpen, setDonateOpen] = useState(false);
   const [editorTarget, setEditorTarget] = useState<EditorTarget | null>(null);
   const [detailContributor, setDetailContributor] = useState<Contributor | null>(null);
-  const [claimTarget, setClaimTarget] = useState<Sponsor | null>(null);
-  const [claimAdminOpen, setClaimAdminOpen] = useState(false);
 
   useEffect(() => {
     let cancel = false;
-    listSponsors()
+    listSponsors(false, admin)
       .then(rows => { if (!cancel) setSponsors(rows); })
       .catch(e => { if (!cancel) setLoadErr(e instanceof Error ? e.message : String(e)); });
     // 贡献者拉不到不拖累赞助区:公开视图静默隐藏,admin 视图显示错误。
@@ -218,19 +198,7 @@ export default function SupportPage() {
       .then(rows => { if (!cancel) setContributors(rows); })
       .catch(e => { if (!cancel) setContribErr(e instanceof Error ? e.message : String(e)); });
     return () => { cancel = true; };
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    if (!user) {
-      setClaims([]);
-      return () => { cancelled = true; };
-    }
-    listMySponsorClaims()
-      .then((rows) => { if (!cancelled) setClaims(rows); })
-      .catch(() => { if (!cancelled) setClaims([]); });
-    return () => { cancelled = true; };
-  }, [user]);
+  }, [admin]);
 
   const total = sponsors?.length ?? 0;
   const visible = useMemo(
@@ -238,18 +206,6 @@ export default function SupportPage() {
     [sponsors, expanded],
   );
   const remaining = total - visible.length;
-  const claimBySponsor = useMemo(() => {
-    const map = new Map<number, SponsorClaim>();
-    for (const claim of claims) if (!map.has(claim.sponsorId)) map.set(claim.sponsorId, claim);
-    return map;
-  }, [claims]);
-
-  async function refreshClaimData() {
-    const jobs: Promise<unknown>[] = [listSponsors(true).then(setSponsors)];
-    if (user) jobs.push(listMySponsorClaims().then(setClaims));
-    await Promise.all(jobs);
-  }
-
   function applySavedContributor(saved: Contributor) {
     setContributors(prev => {
       const list = prev ? prev.slice() : [];
@@ -377,9 +333,6 @@ export default function SupportPage() {
                 <button className="support-add" onClick={() => setEditorTarget({ kind: 'sponsor', initial: null })}>
                   <Plus size={13} /> {tr({ zh: '新增', en: 'Add' })}
                 </button>
-                <button className="support-add" onClick={() => setClaimAdminOpen(true)}>
-                  <ShieldCheck size={13} /> {tr({ zh: '认领审核', en: 'Claim review' })}
-                </button>
               </>
             )}
           </div>
@@ -392,11 +345,8 @@ export default function SupportPage() {
                   sponsor={s}
                   isZh={isZh}
                   admin={admin}
-                  loggedIn={!!user}
-                  claim={claimBySponsor.get(s.id)}
                   onEdit={x => setEditorTarget({ kind: 'sponsor', initial: x })}
                   onDelete={handleDelete}
-                  onClaim={setClaimTarget}
                 />
               ))}
             </div>
@@ -458,20 +408,6 @@ export default function SupportPage() {
           target={editorTarget}
           onClose={() => setEditorTarget(null)}
           onSaved={handleSaved}
-        />
-      )}
-      {claimTarget && (
-        <SponsorClaimDialog
-          sponsor={claimTarget}
-          claim={claimBySponsor.get(claimTarget.id)}
-          onClose={() => setClaimTarget(null)}
-          onChanged={refreshClaimData}
-        />
-      )}
-      {claimAdminOpen && (
-        <SponsorClaimAdminDialog
-          onClose={() => setClaimAdminOpen(false)}
-          onChanged={refreshClaimData}
         />
       )}
     </div>

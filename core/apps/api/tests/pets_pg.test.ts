@@ -53,10 +53,29 @@ describe.skipIf(process.env.DESKPET_TEST_PG!=='1')('account pet adoption and car
     const repeat=await (await call('rootbeast/care',1,{action:'feed'})).json();
     expect(repeat.accepted).toBe(true);expect(repeat.gained).toBe(false);expect(repeat.pet.care.bond).toBe(4);
   });
-  it('honors catalog changes after adoption and rejects stale merged identities',async()=>{
+  it('preserves both owners’ progress through catalog locking, unlocking and re-adoption',async()=>{
+    await call('rootbeast/adopt',2,{});
+    await call('rootbeast/care',2,{action:'pet'});
+    const before=await sql.unsafe('SELECT user_id, pet_id, adopted_at, care FROM user_pets ORDER BY user_id, pet_id');
+    expect(before.map(row=>row.care.bond)).toEqual([4,1]);
     await sql.unsafe('UPDATE deskpet_catalog SET entries=$1',[sql.json([{id:'rootbeast',locked:true,removed:false}])]);
-    expect((await call('rootbeast/care',1,{action:'pet'})).status).toBe(404);
-    expect((await call('rootbeast/adopt',1,{})).status).toBe(404);
+    for(const uid of [1,2]){
+      expect((await call('rootbeast/care',uid,{action:'pet'})).status).toBe(404);
+      expect((await call('rootbeast/adopt',uid,{})).status).toBe(404);
+      const pets=await (await call('mine',uid)).json();
+      expect(pets).toHaveLength(1);
+      expect(pets[0].care.bond).toBe(uid===1?4:1);
+    }
+    expect(await sql.unsafe('SELECT user_id, pet_id, adopted_at, care FROM user_pets ORDER BY user_id, pet_id')).toEqual(before);
+    await sql.unsafe('UPDATE deskpet_catalog SET entries=$1',[sql.json([{id:'rootbeast',locked:false,removed:false}])]);
+    for(const uid of [1,2]){
+      const response=await call('rootbeast/adopt',uid,{});
+      expect(response.status).toBe(200);
+      expect((await response.json()).care.bond).toBe(uid===1?4:1);
+    }
+    expect(await sql.unsafe('SELECT user_id, pet_id, adopted_at, care FROM user_pets ORDER BY user_id, pet_id')).toEqual(before);
+  });
+  it('rejects stale merged identities',async()=>{
     await sql.unsafe('UPDATE deskpet_catalog SET entries=$1',[sql.json([{id:'fox',locked:false,removed:false}])]);
     expect((await call('fox/adopt',2,{})).status).toBe(200);
     await sql.unsafe('UPDATE app_users SET merged_into_user_id=1 WHERE id=2');

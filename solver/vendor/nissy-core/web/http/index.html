@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en-US">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>Nissy - H48 solver POC</title>
+  <script type="module" src="./nissyapp.mjs"></script>
+</head>
+
+<body>
+
+  <div id="scrambleRaw">
+    <input id="scrambleText" placeholder="Type the scramble here...">
+    <select id="solverSelector">
+      <option value="h48h3" selected="selected">
+        h48 h=4 (500 Mb) - light
+      </option>
+      <option value="h48h5" selected="selected">
+        h48 h=5 (1 Gb) - fastest
+      </option>
+    </select>
+    <button id="solveButton">Solve</button>
+    <button id="pauseResumeButton" disabled>Pause</button>
+    <button id="cancelSolveButton" disabled>Cancel</button>
+  </div>
+
+  <div id="solverConfiguration">
+    <label id="minLabel" for="minSlider">Minimum moves: 0</label><br>
+    <input id="minMovesSlider" name="minSlider"
+      type="range" min="0" max="20" value="0">
+    <br>
+    <label id="maxLabel" for="maxSlider">Maximum moves: 20</label><br>
+    <input id="maxMovesSlider" name="maxSlider"
+      type="range" min="0" max="20" value="20">
+    <br>
+    <label for="maxSolutions">Limit number of solutions to</label>
+    <input id="maxSolutions" name="maxSolutions"
+      type="number" min="1" max="999" value="1">
+    <br>
+    <label for="optimalInput">Above optimal by at most</label>
+    <input id="optimalInput" name="optimal"
+      type="number" min="0" max="20" value="20">
+  </div>
+
+  <div id="confirmDownload" style="display:none">
+    <p id="confirmDownloadText">
+      For this solver to work, a large data table is required.
+      You can either download it or generate it locally.
+    </p>
+    <p id="confirmDownloadExtraText">
+      In either case, this data will be stored locally for future use. You
+      can delete it at any time by clearing your browser's data.
+    </p>
+    <button id="confirmDownloadCancel">Cancel</button>
+    <button id="confirmDownloadConfirm">Download</button>
+    <button id="confirmDownloadGenerate">Generate locally</button>
+  </div>
+
+
+  <p id="resultsLabel"></p>
+  <p id="results"></p>
+  <button id="toggleShowLog">Show nissy log messages</button>
+  <p id="logPane" style="display:none"></p>
+
+</body>
+
+</html>

@@ -1,6 +1,6 @@
 # CubeRoot 文档索引
 
-状态：`ACTIVE`。最后更新：2026-09-02。
+状态：`ACTIVE`。最后更新：2026-09-27。
 
 本页是文档状态和权威入口的索引，不替代代码、schema、workflow 或各专题跟踪表。
 
@@ -21,6 +21,7 @@
 | 领域 | 权威入口 | 状态 | 用途 |
 | --- | --- | --- | --- |
 | 架构现代化 | [architecture-modernization-tracker.md](./architecture-modernization-tracker.md) | `ACTIVE` | 决策、批次、验收和审核记录 |
+| 好友轻量聊天 | [friend-chat-design.md](./friend-chat-design.md) | `ACTIVE` | 设计提案：跨端共享、一对一文字、权限与持久化；尚未实现或部署 |
 | 音乐播放器 | [music-player-tracker.md](./music-player-tracker.md) | `ACTIVE` | `/music`、DeskPet 悬浮音频中心、曲库转码与静态媒体发布 |
 | 后台与增长监控 | [admin-observability-tracker.md](./admin-observability-tracker.md) | `ACTIVE` | `/admin` 首页、用户注册与会员增长的口径、实施和验收 |
 | 架构现状锐评 | [architecture-audit-2026-08.md](./architecture-audit-2026-08.md) | `HISTORICAL` | 2026-08 审计快照；当前状态以 tracker 为准 |
@@ -39,6 +40,7 @@
 | 五端 App 路线图 | [mobile-app-roadmap.md](./mobile-app-roadmap.md) | `ACTIVE` | 五端实现、设备、发布和长期维护进度 |
 | 五端三栏合同 | [mobile-three-tab-contract.md](./mobile-three-tab-contract.md) | `ACTIVE` | 计时/工具/我的结构、网站复用策略和五端协作边界 |
 | App `/timer` 一致性 | [mobile-timer-parity-tracker.md](./mobile-timer-parity-tracker.md) | `ACTIVE` | 网站与已安装客户端的计时器完整 UI/UX、复用边界与逐项验收 |
+| App `/timer` 零遗漏审计 | [mobile-timer-zero-omission-audit.md](./mobile-timer-zero-omission-audit.md) | `ACTIVE` | Tracker 的强制 inventory 附录：43 项、可达 surface、状态矩阵和 parity guard 设计 |
 | 小程序 | [../core/docs/MINIPROGRAM.md](../core/docs/MINIPROGRAM.md) | `REFERENCE` | 小程序实现、构建和发布契约 |
 
 未列出的专题文档仍可作为局部证据；涉及继续实施前，先核对其日期、状态和对应现役代码。

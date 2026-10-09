@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 // /wca/fun-stats 趣味统计 — port of cubingchina /results/statistics.
 // 单一聚合页:左侧按家族选榜(?stat= 深链),顶部统一 region/事件/类型/年份控件,下方表格。
@@ -9,7 +10,6 @@ import { useQueryState, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { RegionPicker } from '@/components/RegionPicker';
 import WcaEventSelector from '@/components/WcaEventSelector';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import Paginator from '@/components/wca-stats/Paginator';
 import { useCountries } from '@/components/wca-stats/useCountries';
 import { EventIcon } from '@/components/EventIcon';
@@ -259,13 +259,39 @@ function FunStatsInner() {
 
           {/* 控件 */}
           <div className="fun-stats-controls">
-            <RegionPicker isZh={isZh} value={region} onChange={setRegion} restrictTo={restrictTo} />
-            {stat.typeToggle && !NO_AVERAGE.has(event) && (
-              <PillToggle
-                value={typeAvg} onChange={setTypeAvg}
-                onLabel={tr({ zh: '平均', en: 'Average' })} offLabel={tr({ zh: '单次', en: 'Single'
+            {stat.eventMode === 'select' && (
+              <WcaEventSelector
+                availableEvents={availableEvents}
+                isZh={isZh}
+                selectedEvent={event}
+                onSelect={setEvent}
+              />
+            )}
+            {stat.eventMode === 'multi' && (
+              <WcaEventSelector
+                availableEvents={availableEvents}
+                isZh={isZh}
+                selectedEvents={selEvents.size ? selEvents : availableEvents}
+                onToggle={(id) => setSelEvents(prev => {
+                  const base = prev.size ? new Set(prev) : new Set(availableEvents);
+                  if (base.has(id)) base.delete(id); else base.add(id);
+                  return base;
                 })}
               />
+            )}
+            <RegionPicker isZh={isZh} value={region} onChange={setRegion} restrictTo={restrictTo} />
+            {stat.typeToggle && !NO_AVERAGE.has(event) && (
+              <select
+                value={String(typeAvg)}
+                onChange={event => setTypeAvg(event.currentTarget.value === 'true')}
+                aria-label={tr({ zh: '平均', en: 'Average' }) + ' / ' + tr({ zh: '单次', en: 'Single'
+                })}
+                className="native-select"
+              >
+                <option value="true">{tr({ zh: '平均', en: 'Average' })}</option>
+                <option value="false">{tr({ zh: '单次', en: 'Single'
+                })}</option>
+              </select>
             )}
             {stat.needsYear && years.length > 0 && (
               <select className="fun-stats-year" value={year} onChange={e => setYear(parseInt(e.target.value, 10))}>
@@ -273,27 +299,6 @@ function FunStatsInner() {
               </select>
             )}
           </div>
-
-          {stat.eventMode === 'select' && (
-            <WcaEventSelector
-              availableEvents={availableEvents}
-              isZh={isZh}
-              selectedEvent={event}
-              onSelect={setEvent}
-            />
-          )}
-          {stat.eventMode === 'multi' && (
-            <WcaEventSelector
-              availableEvents={availableEvents}
-              isZh={isZh}
-              selectedEvents={selEvents.size ? selEvents : availableEvents}
-              onToggle={(id) => setSelEvents(prev => {
-                const base = prev.size ? new Set(prev) : new Set(availableEvents);
-                if (base.has(id)) base.delete(id); else base.add(id);
-                return base;
-              })}
-            />
-          )}
 
           {err && <div className="fun-stats-error">{tr({ zh: '加载失败:', en: 'Error: '
         })}{err}</div>}

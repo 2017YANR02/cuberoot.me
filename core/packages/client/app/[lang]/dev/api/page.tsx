@@ -65,17 +65,28 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   equals the set mounted via app.route('/v1', …) in apps/api/src/index.ts.
 //   CI red here = a newly-mounted route is undocumented: add its endpoints below,
 //   then add the file stem to this list.
-//   account_auth admin_disk alg alg_lsll alg_marks alg_preferred_algs alg_srs alg_sets alg_sweep alg_time_attack_order announced_comps app_boot_diagnostics article auth battle_rooms calendar cn_comp_names colpi
-//   comp_follows creator_gallery cube cubeopt_solve cubing_live documents drive feedback forum friends geo health historical_ranks pb private_vault
-//   membership membership_subscriptions music nav_sites pets nemesizer notifications ops page_notices paint pattern_examples platform_catalog platform_commerce platform_content platform_learning platform_qr progress quiz recon recon_ground_truth scramble_555 teacher_directory teaching teaching_saas
+//   account_auth account_face admin_disk alg alg_lsll alg_marks alg_preferred_algs alg_srs alg_sets alg_sweep alg_time_attack_order announced_comps app_boot_diagnostics article auth battle_rooms calendar cn_comp_names colpi
+//   chat comp_follows creator_gallery cube cubeopt_solve cubing_live documents drive feedback forum friends geo health historical_ranks pb private_vault
+//   membership membership_benefits membership_apple membership_google membership_subscriptions music nav_sites pets nemesizer notifications ops page_notices paint pattern_examples platform_catalog platform_commerce platform_content platform_learning platform_qr progress quiz recon recon_ground_truth scramble_555 teacher_directory teaching teaching_saas
 //   scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
 //   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wechat_jssdk wechat_pc_opensdk wiki
 //   platform_competitions platform_competition_attempts platform_competition_evidence platform_competition_settlements platform_competition_device_reports platform_organizer_applications platform_refunds
-//   mcp mcp_oauth onboarding
+//   mcp mcp_oauth onboarding timer_replay_shares site_assistant cube_agents
 // ─ covers-routes-end ─
 const ENDPOINTS: Ep[] = [
   { m: 'GET', p: '/v1/auth/onboarding', d: 'auth', g: 'login', c: 'no-store', zh: '读取当前账号的首页导览已看标记；不缓存', en: 'Read the signed-in account’s homepage tour status; no cache' },
   { m: 'PUT', p: '/v1/auth/onboarding', d: 'auth', g: 'login', c: 'no-store', zh: '将当前账号标记为已看导览；幂等，不接受其他账号 ID', en: 'Mark the current account’s tour as seen; idempotent, accepts no target account ID' },
+  { d: 'membership', m: 'GET', p: '/v1/membership/google/me', g: 'login', c: 'no-store', zh: 'Google Play 混淆账号标识', en: 'Google Play obfuscated account identifier' },
+  { d: 'membership', m: 'POST', p: '/v1/membership/google/verify', g: 'login', c: 'no-store', zh: '查询 Google 当前订阅并按归属发放权益、确认购买', en: 'Verify current Google subscription ownership, persist grants and acknowledge purchases' },
+  { d: 'membership', m: 'POST', p: '/v1/membership/google/sync', g: 'login', c: 'no-store', zh: '核对已保存订阅的续期与退款状态', en: 'Reconcile persisted subscriptions after renewals or refunds' },
+  { d: 'membership', m: 'POST', p: '/v1/membership/google/notifications', g: 'webhook', c: 'no-store', zh: '验证 Pub/Sub OIDC 后重新查询 Google 订阅', en: 'Verify Pub/Sub OIDC and reconcile current Google subscription state' },
+  { d: 'membership', m: 'GET', p: '/v1/membership/apple/me', g: 'login', c: 'no-store', zh: 'Apple 订阅账号标识及状态', en: 'Apple subscription account token and status' },
+  { d: 'membership', m: 'POST', p: '/v1/membership/apple/verify', g: 'login', c: 'no-store', zh: '验签并查询 Apple 当前权益后入账', en: 'Verify and reconcile current Apple entitlement' },
+  { d: 'membership', m: 'POST', p: '/v1/membership/apple/notifications/production', g: 'webhook', c: 'no-store', zh: 'Apple 生产 V2 通知', en: 'Apple production V2 notifications' },
+  { d: 'membership', m: 'POST', p: '/v1/membership/apple/notifications/sandbox', g: 'webhook', c: 'no-store', zh: 'Apple 沙盒 V2 通知', en: 'Apple sandbox V2 notifications' },
+  { d: 'content', m: 'GET', p: '/v1/cube-agents', g: 'public', c: 'no-store', zh: '国产模型魔方对比的配置、运行状态与最近一次真实结果；不返回 API 密钥', en: 'Domestic-model cube experiment availability, active state and latest real result; no API credentials' },
+  { d: 'content', m: 'POST', p: '/v1/cube-agents/runs', g: 'admin', c: 'no-store', zh: '管理员启动 Qwen3.8/DeepSeek 两组各四代理，SSE 推送真实转法、验证状态与用量；同一打乱、每代理六轮、总计 120 秒、每日最多 20 轮实验；断连取消，费用为未折扣人民币估算', en: 'Admin starts two teams of four Qwen3.8/DeepSeek agents; SSE streams moves, verified states and usage. Same scramble, six rounds per agent, 120-second deadline, 20 experiments/day, cancellation on disconnect, undiscounted CNY estimates' },
+  { d: 'content', m: 'POST', p: '/v1/site-assistant', g: 'login', c: 'no-store', zh: '仅登录且当前绑定真实 WCA ID 的账号可用；接口不要求浏览器验证码，服务器校验资格，拒绝不扣额度；所配置的模型（支持 DeepSeek 官方与百炼）结合公开全文索引和受限数据查询，支持 SSE 流式回答、实际查询步骤反馈、正文内来源引用、连续对话、成绩表与 PR 曲线；只读公开内容；全站每天 1000 次持久额度（北京时间零点恢复），失败调用也计数；超额返回 429 daily_limit，普通搜索仍可使用；服务端最多 28 秒，区分验证、限流、超时、模型与数据源失败', en: 'Requires a signed-in account with a current real WCA ID; no browser CAPTCHA on this API; the server checks eligibility before charging quota. The configured model (official DeepSeek or Bailian) combines public full-text search and bounded read tools, with opt-in SSE answer streaming, real lookup status, inline source citations, conversation history, result tables and PR charts; a durable site-wide quota of 1000 questions per Beijing calendar day includes failed calls; exhausted quota returns 429 daily_limit while regular search remains available; a 28-second server budget and distinct verification, rate-limit, timeout, model and data-source errors' },
   { d: 'system', m: 'POST', p: '/v1/mcp', g: 'admin', c: 'no-store', zh: 'OAuth 授权的只读 MCP 工具；限流、查询超时与调用审计', en: 'OAuth-authorized read-only MCP tools with rate limits, query deadlines and audit logs' },
   { d: 'auth', m: 'GET', p: '/.well-known/oauth-protected-resource/v1/mcp', g: 'public', c: 'no-store', zh: 'MCP 资源与授权服务器发现', en: 'MCP resource and authorization-server discovery' },
   { d: 'auth', m: 'GET', p: '/.well-known/oauth-authorization-server', g: 'public', c: 'no-store', zh: 'OAuth 发现与 S256 PKCE 能力', en: 'OAuth discovery and S256 PKCE capabilities' },
@@ -98,7 +109,10 @@ const ENDPOINTS: Ep[] = [
   { d: 'auth', m: 'GET', p: '/v1/auth/login', g: 'public', zh: '跳转 WCA OAuth 授权页', en: 'Redirect to WCA OAuth' },
   { d: 'auth', m: 'GET', p: '/v1/auth/callback', g: 'public', zh: 'OAuth 回调,建立登录态', en: 'OAuth callback, establish session' },
   { d: 'auth', m: 'POST', p: '/v1/auth/exchange', g: 'public', zh: '用授权码换取 JWT', en: 'Exchange auth code for JWT' },
+  { d: 'auth', m: 'POST', p: '/v1/auth/browser-access', g: 'login', c: 'no-store', zh: '由长期会话换取最长 15 分钟浏览器访问令牌；保留原验证时间，短令牌不能再次换取或续签长期会话', en: 'Exchange a durable session for at most 15 minutes of browser access; preserve authentication time and prohibit short-token renewal of durable sessions' },
   { d: 'auth', m: 'POST', p: '/v1/auth/refresh', g: 'login', zh: '刷新 JWT', en: 'Refresh JWT' },
+  { d: 'auth', m: 'GET', p: '/v1/auth/face', g: 'login', zh: '本人实名认证状态', en: 'Own identity verification status' },
+  { d: 'auth', m: 'POST', p: '/v1/auth/face', g: 'login', zh: '本人单独同意后发起活体实名核验，或服务端查询当前认证结果', en: 'Start consented identity/liveness verification or query the current provider result' },
   { d: 'auth', m: 'GET', p: '/v1/auth/me', g: 'login', zh: '当前登录用户信息', en: 'Current signed-in user' },
   { d: 'auth', m: 'POST', p: '/v1/auth/role-preview', g: 'admin', zh: '超级管理员创建 30 分钟独立角色测试会话', en: 'Superadmin starts a separate 30-minute role-test session' },
   { d: 'auth', m: 'DELETE', p: '/v1/auth/role-preview/:id', g: 'admin', zh: '超级管理员撤销自己的角色测试会话', en: 'Superadmin revokes their role-test session' },
@@ -232,6 +246,10 @@ const ENDPOINTS: Ep[] = [
   // ---- recon ----
   { d: 'recon', m: 'GET', p: '/v1/recon/list', g: 'public', c: 'cdn', zh: '复盘列表', en: 'Recon list' },
   { d: 'recon', m: 'GET', p: '/v1/recon/latest', g: 'public', zh: '最新复盘', en: 'Latest recons' },
+  { d: 'recon', m: 'GET', p: '/v1/recon/featured', g: 'public', zh: '精选复盘', en: 'Featured solves' },
+  { d: 'recon', m: 'PUT', p: '/v1/recon/:id/featured', g: 'admin', zh: '添加或取消精选复盘', en: 'Feature or unfeature a solve' },
+  { d: 'recon', m: 'GET', p: '/v1/recon/pinned', g: 'public', zh: '首页置顶复盘', en: 'Pinned homepage recons' },
+  { d: 'recon', m: 'PUT', p: '/v1/recon/:id/home-pin', g: 'admin', zh: '置顶或取消置顶复盘', en: 'Pin or unpin a homepage recon' },
   { d: 'recon', m: 'GET', p: '/v1/recon/today', g: 'public', zh: '今日复盘', en: "Today's recons" },
   { d: 'recon', m: 'GET', p: '/v1/recon/list-persons', g: 'public', zh: '复盘作者列表', en: 'Recon authors' },
   { d: 'recon', m: 'GET', p: '/v1/recon/search-solvers', g: 'public', zh: '按作者搜索', en: 'Search solvers' },
@@ -251,6 +269,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'recon', m: 'GET', p: '/v1/recon/comments', g: 'public', zh: '复盘评论', en: 'Recon comments' },
   { d: 'recon', m: 'POST', p: '/v1/recon/comments', g: 'login', zh: '发评论', en: 'Post comment' },
   { d: 'recon', m: 'PUT', p: '/v1/recon/comments/:id', g: 'login', zh: '改评论', en: 'Edit comment' },
+  { d: 'recon', m: 'PUT', p: '/v1/recon/comments/:id/vote', g: 'login', zh: '设置或取消评论赞踩', en: 'Set or remove a comment vote' },
   { d: 'recon', m: 'DELETE', p: '/v1/recon/comments/:id', g: 'login', zh: '删评论', en: 'Delete comment' },
   { d: 'recon', m: 'PUT', p: '/v1/recon/comments/:id/pin', g: 'admin', zh: '置顶评论', en: 'Pin comment' },
   { d: 'recon', m: 'GET', p: '/v1/recon/edits', g: 'public', zh: '编辑记录', en: 'Edit log' },
@@ -296,7 +315,12 @@ const ENDPOINTS: Ep[] = [
   { d: 'nemesizer', m: 'GET', p: '/v1/nemesizer/stats', g: 'public', zh: '汇总统计', en: 'Stats' },
 
   // ---- live ----
+  { d: 'live', m: 'GET', p: '/v1/competition-access/challenge', g: 'public', c: 'no-store', zh: '获取手动输入的图片验证码', en: 'Get a manual image challenge' },
+  { d: 'live', m: 'POST', p: '/v1/competition-access/verify', g: 'public', c: 'no-store', zh: '核销图片验证码并签发通行凭证', en: 'Consume an image challenge and issue access' },
+  { d: 'live', m: 'GET', p: '/v1/competition-access/check', g: 'public', c: 'no-store', zh: '比赛访问凭证校验（中国大陆 IP 豁免）', en: 'Competition access proof check (mainland China IP exemption)' },
   { d: 'live', m: 'GET', p: '/v1/cubing-live/:slug', g: 'public', zh: '比赛实时成绩(L2 缓存)', en: 'Live comp results (L2 cache)' },
+  { d: 'live', m: 'GET', p: '/v1/cubing-live/:slug/round/:event/:round', g: 'public', zh: '粗饼单轮成绩刷新', en: 'Cubing China round refresh' },
+  { d: 'live', m: 'GET', p: '/v1/cubing-live/:slug/stream', g: 'public', c: 'no-store', zh: '粗饼成绩更新事件', en: 'Cubing China live result events' },
   { d: 'live', m: 'GET', p: '/v1/cubing-live-stream/:slug', g: 'public', zh: '实时成绩流(SSE)', en: 'Live result stream (SSE)' },
   { d: 'live', m: 'GET', p: '/v1/cubing-zh/:wcaId', g: 'public', zh: '国内选手中文信息', en: 'CN cuber Chinese info' },
 
@@ -311,10 +335,10 @@ const ENDPOINTS: Ep[] = [
   { d: 'alg', m: 'DELETE', p: '/v1/alg/sets/:puzzle/:set/cases/:id', g: 'admin', zh: '删除 case', en: 'Delete case' },
   { d: 'alg', m: 'GET', p: '/v1/alg/lsll/case/:key', g: 'public', c: 'cdn', zh: 'LSLL case 的整方 HTM 最优解;未回填返 pending', en: 'Whole-cube HTM-optimal solution for an LSLL case; pending until backfilled' },
   { d: 'alg', m: 'GET', p: '/v1/alg/lsll/dist', g: 'public', c: 'cdn', zh: 'LSLL 最优步数直方图 + 覆盖数', en: 'LSLL optimal-length histogram and coverage' },
-  { d: 'alg', m: 'GET', p: '/v1/alg/:puzzle/:set/submissions', g: 'public', zh: '用户投稿的公式', en: 'User-submitted algs' },
-  { d: 'alg', m: 'POST', p: '/v1/alg/:puzzle/:set/:case/submit', g: 'login', zh: '提交公式投稿', en: 'Submit an alg' },
-  { d: 'alg', m: 'PUT', p: '/v1/alg/submissions/:id', g: 'admin', zh: '编辑投稿', en: 'Edit submission' },
-  { d: 'alg', m: 'DELETE', p: '/v1/alg/submissions/:id', g: 'admin', zh: '删除投稿', en: 'Delete submission' },
+  { d: 'alg', m: 'GET', p: '/v1/alg/:puzzle/:set/submissions', g: 'public', zh: '用户投稿的公式与标签', en: 'User-submitted algs and tags' },
+  { d: 'alg', m: 'POST', p: '/v1/alg/:puzzle/:set/:case/submit', g: 'login', zh: '提交公式与标签', en: 'Submit an alg and tags' },
+  { d: 'alg', m: 'PUT', p: '/v1/alg/submissions/:id', g: 'login', zh: '作者或管理员编辑投稿与标签', en: 'Author or admin edits a submission and its tags' },
+  { d: 'alg', m: 'DELETE', p: '/v1/alg/submissions/:id', g: 'login', zh: '作者或管理员删除投稿', en: 'Author or admin deletes a submission' },
   { d: 'alg', m: 'GET', p: '/v1/alg/submissions/admin/unread', g: 'admin', zh: '未读投稿', en: 'Unread submissions' },
   { d: 'alg', m: 'GET', p: '/v1/alg/submissions/admin/recent', g: 'admin', zh: '最近投稿', en: 'Recent submissions' },
   { d: 'alg', m: 'POST', p: '/v1/alg/submissions/admin/seen', g: 'admin', zh: '标记已读', en: 'Mark seen' },
@@ -438,6 +462,15 @@ const ENDPOINTS: Ep[] = [
   { d: 'teaching-saas', m: 'GET', p: '/v1/teaching/organizations/:orgSlug/weekly-reports/:reportId', g: 'login', c: 'no-store', zh: '读取当前角色范围内的周报聚合快照', en: 'Read a weekly-report aggregate snapshot within the caller\'s current student scope' },
   { d: 'teaching-saas', m: 'POST', p: '/v1/teaching/organizations/:orgSlug/weekly-reports/:reportId/publish', g: 'login', c: 'no-store', zh: '以总结、下周计划与可见性发布并冻结周报，要求幂等键', en: 'Publish and freeze a weekly report with summary, next-week plan, and visibility; requires an idempotency key' },
 
+  { d: 'platform', m: 'POST', p: '/v1/platform/orders/quote', g: 'login', c: 'no-store', zh: '无写入的优惠、会员价与库存报价', en: 'Preview coupon, member price and availability without writes' },
+  { d: 'platform', m: 'GET', p: '/v1/platform/teachers/:id/courses', g: 'public', c: 'short', zh: '主站讲师名录关联的已发布课程', en: 'Published courses owned by a main-site teacher' },
+  { d: 'platform', m: 'GET', p: '/v1/platform/learning/lessons/:lessonId/state', g: 'login', c: 'no-store', zh: '当前课时进度、笔记和测验历史', en: 'Current lesson progress, notes and quiz attempts' },
+  { d: 'platform', m: 'GET', p: '/v1/platform/me/checkins', g: 'login', c: 'no-store', zh: '本地日签到与连续天数', en: 'Local-day check-ins and streaks' },
+  { d: 'platform', m: 'GET', p: '/v1/platform/me/certificates', g: 'login', c: 'no-store', zh: '本人证书及验证链接', en: 'Own certificates and verification links' },
+  { d: 'platform', m: 'POST', p: '/v1/platform/me/certificates', g: 'login', c: 'no-store', zh: '完成全部课时后领取证书', en: 'Claim a certificate after completing all lessons' },
+  { d: 'platform', m: 'POST', p: '/v1/platform/me/badges/refresh', g: 'login', c: 'no-store', zh: '从真实学习记录计算新成就', en: 'Award new achievements from actual learning records' },
+  { d: 'platform', m: 'GET', p: '/v1/platform/instructor/dashboard', g: 'login', c: 'no-store', zh: '讲师课程、学员、月度分成与结算概览', en: 'Instructor courses, learners, monthly revenue shares and payouts' },
+
   // ---- platform: public catalog ----
   { d: 'platform', m: 'GET', p: '/v1/platform/competitions', g: 'public', c: 'no-store', zh: '公开线上比赛', en: 'List published online competitions' },
   { d: 'platform', m: 'GET', p: '/v1/platform/competitions/manage', g: 'login', c: 'no-store', zh: '本人可管理的赛事', en: 'List managed competitions' },
@@ -490,6 +523,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'platform', m: 'GET', p: '/v1/platform/me/memberships', g: 'login', c: 'no-store', zh: '我的课程权益会员与有效期', en: 'My course-entitlement memberships and validity periods' },
   { d: 'platform', m: 'GET', p: '/v1/platform/entitlements', g: 'login', c: 'no-store', zh: '我的有效课程权益', en: 'My active course entitlements' },
   { d: 'platform', m: 'GET', p: '/v1/platform/lessons/:lessonId/media', g: 'login', c: 'no-store', zh: '校验课时权益后签发短时媒体地址', en: 'Issue a short-lived media URL after entitlement checks' },
+  { d: 'platform', m: 'GET', p: '/v1/platform/lessons/:lessonId/cover', g: 'public', c: 'no-store', zh: '使用短时令牌读取课时封面', en: 'Read a lesson cover with a short-lived token' },
   { d: 'platform', m: 'GET', p: '/v1/platform/me/courses', g: 'login', c: 'no-store', zh: '我的课程', en: 'My courses' },
   { d: 'platform', m: 'GET', p: '/v1/platform/me/progress', g: 'login', c: 'no-store', zh: '我的学习进度', en: 'My learning progress' },
   { d: 'platform', m: 'PUT', p: '/v1/platform/me/progress/:lessonId', g: 'login', c: 'no-store', zh: '幂等保存课时进度', en: 'Idempotently save lesson progress' },
@@ -531,6 +565,8 @@ const ENDPOINTS: Ep[] = [
   { d: 'platform', m: 'PATCH', p: '/v1/platform/instructor/courses/:id', g: 'login', c: 'no-store', zh: '版本化编辑自有课程', en: 'Versioned update of an owned course' },
   { d: 'platform', m: 'DELETE', p: '/v1/platform/instructor/courses/:id', g: 'login', c: 'no-store', zh: '归档自有课程', en: 'Archive an owned course' },
   { d: 'platform', m: 'POST', p: '/v1/platform/instructor/courses/:courseId/lessons', g: 'login', c: 'no-store', zh: '新建自有课程课时', en: 'Create a lesson in an owned course' },
+  { d: 'platform', m: 'GET', p: '/v1/platform/instructor/courses/:courseId/lessons/:lessonId/media', g: 'login', c: 'no-store', zh: '读取自有课时的媒体与封面编辑信息', en: 'Read media and cover editing data for an owned lesson' },
+  { d: 'platform', m: 'PUT', p: '/v1/platform/instructor/courses/:courseId/lessons/:lessonId/cover', g: 'login', c: 'no-store', zh: '上传或替换自有课时封面', en: 'Upload or replace an owned lesson cover' },
   { d: 'platform', m: 'PATCH', p: '/v1/platform/instructor/courses/:courseId/lessons/:lessonId', g: 'login', c: 'no-store', zh: '版本化编辑自有课时', en: 'Versioned update of an owned lesson' },
   { d: 'platform', m: 'DELETE', p: '/v1/platform/instructor/courses/:courseId/lessons/:lessonId', g: 'login', c: 'no-store', zh: '归档自有课时', en: 'Archive an owned lesson' },
   { d: 'platform', m: 'GET', p: '/v1/platform/instructor/courses/:courseId/lessons/:lessonId/quizzes', g: 'login', c: 'no-store', zh: '列出自有课时测验与加密答案', en: 'List owned lesson quizzes and protected answer keys' },
@@ -551,6 +587,8 @@ const ENDPOINTS: Ep[] = [
   { d: 'platform', m: 'PATCH', p: '/v1/platform/admin/courses/:id', g: 'admin', c: 'no-store', zh: '后台版本化编辑课程', en: 'Administratively version a course' },
   { d: 'platform', m: 'DELETE', p: '/v1/platform/admin/courses/:id', g: 'admin', c: 'no-store', zh: '后台归档课程', en: 'Administratively archive a course' },
   { d: 'platform', m: 'POST', p: '/v1/platform/admin/courses/:courseId/lessons', g: 'admin', c: 'no-store', zh: '后台新建课时', en: 'Administratively create a lesson' },
+  { d: 'platform', m: 'GET', p: '/v1/platform/admin/courses/:courseId/lessons/:lessonId/media', g: 'admin', c: 'no-store', zh: '后台读取课时媒体与封面编辑信息', en: 'Administratively read lesson media and cover editing data' },
+  { d: 'platform', m: 'PUT', p: '/v1/platform/admin/courses/:courseId/lessons/:lessonId/cover', g: 'admin', c: 'no-store', zh: '后台上传或替换课时封面', en: 'Administratively upload or replace a lesson cover' },
   { d: 'platform', m: 'PATCH', p: '/v1/platform/admin/courses/:courseId/lessons/:lessonId', g: 'admin', c: 'no-store', zh: '后台版本化编辑课时', en: 'Administratively version a lesson' },
   { d: 'platform', m: 'DELETE', p: '/v1/platform/admin/courses/:courseId/lessons/:lessonId', g: 'admin', c: 'no-store', zh: '后台归档课时', en: 'Administratively archive a lesson' },
   { d: 'platform', m: 'GET', p: '/v1/platform/admin/courses/:courseId/lessons/:lessonId/quizzes', g: 'admin', c: 'no-store', zh: '后台列出测验', en: 'Administratively list quizzes' },
@@ -644,6 +682,8 @@ const ENDPOINTS: Ep[] = [
   { d: 'platform', m: 'PATCH', p: '/v1/platform/admin/qr/:id/card', g: 'admin', c: 'no-store', zh: '保存二维码卡片设计版本', en: 'Save a QR card design version' },
 
   // ---- membership ----
+  { d: 'membership', m: 'GET', p: '/v1/membership/benefits', g: 'public', c: 'no-store', zh: '会员权益展示内容与版本；英文可空', en: 'Versioned benefit copy; English may be empty' },
+  { d: 'membership', m: 'PUT', p: '/v1/membership/admin/benefits', g: 'admin', c: 'no-store', zh: '管理员或 API key 更新权益；revision 防覆盖，中文改变后旧英文失效', en: 'Admin or API key updates with revision conflict protection and translation invalidation' },
   { d: 'membership', m: 'GET', p: '/v1/membership/subscriptions', g: 'login', c: 'no-store', zh: '查询本人自动续费合约并向微信核验状态', en: 'List owned renewal contracts and verify their state with WeChat' },
   { d: 'membership', m: 'POST', p: '/v1/membership/subscriptions/:id/cancel', g: 'login', c: 'no-store', zh: '本人确认退订；微信确认后返回成功，待确认返回 202', en: 'Cancel an owned contract after confirmation; return 202 until verified' },
   { d: 'membership', m: 'POST', p: '/v1/membership/subscriptions/wechat/notify', g: 'public', c: 'no-store', zh: '微信合约通知：APIv2 验签、绑定已有记录并查证状态', en: 'WeChat contract notification: verify APIv2 signature, saved binding and current state' },
@@ -716,6 +756,14 @@ const ENDPOINTS: Ep[] = [
   { d: 'notification', m: 'POST', p: '/v1/notifications/unsubscribe', g: 'public', zh: '一键退订(RFC 8058,邮件客户端调)', en: 'One-click unsubscribe (RFC 8058)' },
 
   // ---- friend ----
+  { d: 'friend', m: 'GET', p: '/v1/chat/stickers', g: 'login', c: 'no-store', zh: '读取本账号收藏的表情包', en: 'Read account sticker favorites' },
+  { d: 'friend', m: 'POST', p: '/v1/chat/stickers', g: 'login', c: 'no-store', zh: '上传不超过 2 MB 的 PNG、JPG、GIF 或 WebP 并收藏；验证文件头与尺寸，每天最多 50 个、总计 100 MB', en: 'Upload and save a PNG, JPG, GIF or WebP up to 2 MB; validate raster headers and dimensions, with limits of 50 daily uploads and 100 MB total' },
+  { d: 'friend', m: 'GET', p: '/v1/chat/stickers/:id/image', g: 'login', c: 'no-store', zh: '仅上传者、收藏者与相关会话参与者可读取图片原文件', en: 'Read original images as owner, favorites holder or conversation participant only' },
+  { d: 'friend', m: 'PUT', p: '/v1/chat/stickers/:id', g: 'login', c: 'no-store', zh: '通过 saved 收藏或取消收藏有权访问的表情包，不删除聊天图片', en: 'Use saved to favorite or unfavorite an accessible sticker without deleting message images' },
+  { d: 'friend', m: 'GET', p: '/v1/chat/conversations', g: 'login', c: 'no-store', zh: '分页读取本人聊天会话、最新消息、未读数量与可发送状态；cursor 按最近消息时间和会话 ID 翻页', en: 'Page through own conversations with latest messages, unread counts, and send availability; cursor uses last-message time and conversation ID' },
+  { d: 'friend', m: 'GET', p: '/v1/chat/peers/:peer/messages', g: 'login', c: 'no-store', zh: '读取与指定账号的消息及已读位置；before / after 按序号加载历史或增量，互斥；解除好友后已有历史仍可读', en: 'Read messages and read position for a peer; mutually exclusive before / after sequence cursors load history or new messages; existing history remains readable after friendship ends' },
+  { d: 'friend', m: 'POST', p: '/v1/chat/peers/:peer/messages', g: 'login', c: 'no-store', zh: '向未互相拉黑的已接受好友发送 1–2,000 字文字或携带 stickerId 的图片表情包；clientMessageId 保证重试幂等，新消息返回 201，重放返回 200，同一标识正文不同返回 409', en: 'Send 1–2,000 characters or a stickerId image to an accepted friend with no block in either direction; clientMessageId makes retries idempotent: 201 for new messages, 200 for replays, and 409 for reused IDs with different bodies' },
+  { d: 'friend', m: 'PUT', p: '/v1/chat/peers/:peer/read', g: 'login', c: 'no-store', zh: '用 throughSequence 单调推进本人已读位置，返回剩余未读数；读到最新消息时同步标记对应通知已读', en: 'Monotonically advance own read position using throughSequence and return remaining unread count; reaching the latest message also marks its notification read' },
   { d: 'friend', m: 'GET', p: '/v1/friends', g: 'login', c: 'no-store', zh: '好友、WCA 好友条目、收到 / 发出的申请与黑名单总览', en: 'Friends, saved WCA friend entries, incoming/outgoing requests, and blocked-user overview' },
   { d: 'friend', m: 'GET', p: '/v1/friends/search', g: 'login', c: 'no-store', zh: '按用户名、CubeRoot ID 或 WCA ID 搜索可见账号', en: 'Search visible accounts by username, CubeRoot ID, or WCA ID' },
   { d: 'friend', m: 'POST', p: '/v1/friends/requests', g: 'login', c: 'no-store', zh: '发送好友申请；遇到对方已有申请时直接接受', en: 'Send a friend request; accept automatically when the other user already requested' },
@@ -880,9 +928,9 @@ const ENDPOINTS: Ep[] = [
   { d: 'content', m: 'PUT', p: '/v1/nav/sites/reorder', g: 'admin', zh: '重排站点', en: 'Reorder sites' },
   { d: 'content', m: 'PUT', p: '/v1/nav/sites/:id', g: 'admin', zh: '改站点', en: 'Edit site' },
   { d: 'content', m: 'DELETE', p: '/v1/nav/sites/:id', g: 'admin', zh: '删站点', en: 'Delete site' },
-  { d: 'content', m: 'GET', p: '/v1/sponsors', g: 'public', c: 'cdn', zh: '赞助墙', en: 'Sponsors wall' },
+  { d: 'content', m: 'GET', p: '/v1/sponsors', g: 'public', c: 'cdn', zh: '赞助墙；admin=1 为管理员无缓存账号关联视图', en: 'Sponsors wall; admin=1 is an authenticated, uncached account-link view' },
   { d: 'content', m: 'POST', p: '/v1/sponsors', g: 'admin', zh: '加赞助', en: 'Add sponsor' },
-  { d: 'content', m: 'PUT', p: '/v1/sponsors/:id', g: 'admin', zh: '改赞助', en: 'Edit sponsor' },
+  { d: 'content', m: 'PUT', p: '/v1/sponsors/:id', g: 'admin', zh: '改赞助；userId 直接关联本站账号，null 解除，省略保留', en: 'Edit sponsor; userId links an account, null unlinks, omission preserves it' },
   { d: 'content', m: 'DELETE', p: '/v1/sponsors/:id', g: 'admin', zh: '删赞助', en: 'Delete sponsor' },
   { d: 'content', m: 'POST', p: '/v1/sponsors/:id/claims', g: 'login', zh: '申请认领赞助', en: 'Claim supporter entry' },
   { d: 'content', m: 'POST', p: '/v1/sponsors/:id/unclaim', g: 'admin', zh: '解除赞助认领', en: 'Revoke supporter claim' },
@@ -947,6 +995,9 @@ const ENDPOINTS: Ep[] = [
   { d: 'timer', m: 'GET', p: '/v1/video/config', g: 'public', c: 'no-store', zh: '本站是否启用视频通话 + 单房人数/码率上限', en: 'Whether video calling is enabled, plus per-room participant and bitrate caps' },
   { d: 'timer', m: 'POST', p: '/v1/video/token', g: 'public', c: 'no-store', zh: '凭玩家 X-Battle-Token 换取短期 LiveKit 凭证；锁内复验 membership + 带宽预算', en: 'Mint a short-lived LiveKit token with the player’s X-Battle-Token after locked membership recheck and bandwidth admission' },
   { d: 'timer', m: 'POST', p: '/v1/video/meet/code', g: 'login', c: 'no-store', zh: '分配一个未被活跃会议或待创建会议占用的 4 位数字码', en: 'Allocate a four-digit numeric code not held by an active or pending meeting' },
+  { d: 'timer', m: 'GET', p: '/v1/video/meet/plans', g: 'login', c: 'no-store', zh: '读取本人会议预约', en: 'List own scheduled meetings' },
+  { d: 'timer', m: 'POST', p: '/v1/video/meet/plans', g: 'login', c: 'no-store', zh: '创建预约和周期会议，永久保留会议码', en: 'Schedule a meeting or series with a reserved code' },
+  { d: 'timer', m: 'PATCH', p: '/v1/video/meet/plans/:id', g: 'login', c: 'no-store', zh: '编辑或取消本人预约（整个周期）', en: 'Edit or cancel own meeting or entire series' },
   { d: 'timer', m: 'POST', p: '/v1/video/meet/token', g: 'login', c: 'no-store', zh: '换取会议室 LiveKit 凭证(校验 4 位会议码 + 带宽预算)', en: 'Mint a meeting-room LiveKit token (validates the four-digit code and bandwidth budget)' },
 
   // ---- calendar ----

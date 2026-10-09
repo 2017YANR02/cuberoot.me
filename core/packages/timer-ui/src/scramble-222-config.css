@@ -70,7 +70,7 @@
   padding: 0 32px 0 14px;
   background: var(--toggle-on, var(--signal-success));
   border-color: var(--toggle-on, var(--signal-success));
-  color: var(--destructive-foreground, var(--accent-foreground));
+  color: color-mix(in srgb, var(--toggle-on, var(--signal-success)) 20%, black);
 }
 
 .timer-222-mode-toggle:hover {
@@ -89,8 +89,8 @@
   }
 
   .timer-222-mode-toggle.is-on {
-    border-color: color-mix(in srgb, var(--toggle-on, var(--signal-success)) 72%, black);
-    background: color-mix(in srgb, var(--toggle-on, var(--signal-success)) 72%, black);
+    border-color: var(--toggle-on, var(--signal-success));
+    background: var(--toggle-on, var(--signal-success));
   }
 
   .timer-222-mode-toggle:hover {
@@ -98,8 +98,8 @@
   }
 
   .timer-222-mode-toggle.is-on:hover {
-    border-color: color-mix(in srgb, var(--toggle-on, var(--signal-success)) 64%, black);
-    background: color-mix(in srgb, var(--toggle-on, var(--signal-success)) 64%, black);
+    border-color: var(--toggle-on, var(--signal-success));
+    background: var(--toggle-on, var(--signal-success));
   }
 }
 
@@ -112,19 +112,6 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
-
-.timer-222-mode-toggle-label {
-  display: inline-grid;
-  justify-items: center;
-}
-
-.timer-222-mode-toggle-label > span {
-  grid-area: 1 / 1;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.timer-222-mode-toggle-ghost { visibility: hidden; }
 
 .timer-222-mode-toggle-dot {
   position: absolute;

@@ -159,12 +159,20 @@ function getCubeRotTables(): { quats: THREE.Quaternion[]; compose: Uint8Array } 
   return { quats, compose };
 }
 
+// A failed numeric prefix is consumed once, rather than retried at every digit.
+function matchTwist(exp: string): RegExpExecArray | null {
+  const pattern = /([*#~;.xyz]|[0-9-]*[bsfdeulmr]w*)('?)(\d*)('?)|[0-9-]+/gi;
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(exp))) if (match[1] !== undefined) return match;
+  return null;
+}
+
 export class TwistAction {
   sign: string;
   reverse: boolean;
   times: number;
   constructor(exp: string, reverse = false, times = 1) {
-    const values = exp.match(/([\*\#~;.#xyz]|[0123456789-]*[bsfdeulmr][w]*)('?)(\d*)('?)/i);
+    const values = matchTwist(exp);
     if (values) {
       exp = values[1];
       reverse = reverse !== ((values[2] + values[4]).length == 1);
@@ -316,7 +324,7 @@ export class TwistNode {
         values = item.match(/^\((.+)\)('?)(\d*)('?)$/i);
       }
       if (values === null) {
-        values = item.match(/([\*\#~;.#xyz]|[0123456789-]*[bsfdeulmr][w]*)('?)(\d*)('?)/i);
+        values = matchTwist(item);
       }
       if (null === values) {
         continue;

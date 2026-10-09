@@ -1,0 +1,95 @@
+UFr	U	U
+UFr	R	R
+UFr	F	F
+
+ULr	U	U
+ULr	R	F
+ULr	F	L
+
+UBr	U	U
+UBr	R	L
+UBr	F	B
+
+URr	U	U
+URr	R	B
+URr	F	R
+
+DFr	U	D
+DFr	R	L
+DFr	F	F
+
+DLr	U	D
+DLr	R	B
+DLr	F	L
+
+DBr	U	D
+DBr	R	R
+DBr	F	B
+
+DRr	U	D
+DRr	R	F
+DRr	F	R
+
+RUr	U	R
+RUr	R	F
+RUr	F	U
+
+RFr	U	R
+RFr	R	D
+RFr	F	F
+
+RDr	U	R
+RDr	R	B
+RDr	F	D
+
+RBr	U	R
+RBr	R	U
+RBr	F	B
+
+LUr	U	L
+LUr	R	B
+LUr	F	U
+
+LFr	U	L
+LFr	R	U
+LFr	F	F
+
+LDr	U	L
+LDr	R	F
+LDr	F	D
+
+LBr	U	L
+LBr	R	D
+LBr	F	B
+
+FUr	U	F
+FUr	R	L
+FUr	F	U
+
+FRr	U	F
+FRr	R	U
+FRr	F	R
+
+FDr	U	F	
+FDr	R	R
+FDr	F	D
+
+FLr	U	F
+FLr	R	D
+FLr	F	L
+
+BUr	U	B
+BUr	R	R
+BUr	F	U
+
+BRr	U	B
+BRr	R	D
+BRr	F	R
+
+BDr	U	B
+BDr	R	L
+BDr	F	D
+
+BLr	U	B
+BLr	R	U
+BLr	F	L

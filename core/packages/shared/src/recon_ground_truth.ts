@@ -252,7 +252,24 @@ export function normalizeLines(linesOfTokens: string[][], opts: NormalizeOptions
 
 const CROSS_RE = /\b(?:p?s?x*)?cross\b/i;
 const MOVE_RE = /[RUFLDBrufldbxyzMSE]w?(?:2'?|')?/g;
-const TIMING_COMMENT_RE = /\(\s*\d+(?:\.\d+)?(?:\s*\+\s*\d+(?:\.\d+)?)*\s*(?:h\*)?\s*\)/gi;
+// Delimiter-separated candidates keep whitespace/number matching linear.
+function stripTimingComments(comment: string): string {
+  let result = '';
+  let cursor = 0;
+  let open = -1;
+  for (let i = 0; i < comment.length; i++) {
+    if (comment[i] === '(') open = i;
+    else if (comment[i] === ')' && open >= 0) {
+      const body = comment.slice(open + 1, i).trim().replace(/h\*$/i, '').trimEnd();
+      if (body.split('+').every(part => /^\d+(?:\.\d+)?$/.test(part.trim()))) {
+        result += comment.slice(cursor, open);
+        cursor = i + 1;
+      }
+      open = -1;
+    }
+  }
+  return result + comment.slice(cursor);
+}
 const COMMENT_NOISE_RE = /(?:\.{3,}|…+|[→←↔⇄⇆⇋⇌⇔]+)/g;
 
 function tokenizeReconMoves(input: string): string[] {
@@ -351,8 +368,7 @@ export function canonicalizeReconSolution(solution: string): string {
   return solution.split(/\r?\n/).map((line) => {
     const { alg, comment } = splitAlgComment(line);
     const moves = tokenizeReconMoves(alg).join(' ');
-    const cleanComment = comment
-      .replace(TIMING_COMMENT_RE, '')
+    const cleanComment = stripTimingComments(comment)
       .replace(COMMENT_NOISE_RE, '')
       .replace(/\s+/g, ' ')
       .trim();

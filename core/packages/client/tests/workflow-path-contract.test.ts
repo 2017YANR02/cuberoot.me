@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -29,6 +29,64 @@ function readWorkflow(workflowName: string): string {
   return readFileSync(join(REPO_ROOT, '.github', 'workflows', workflowName), 'utf8');
 }
 
+function workflowNames(): string[] {
+  return readdirSync(join(REPO_ROOT, '.github', 'workflows'))
+    .filter((name) => name.endsWith('.yml') || name.endsWith('.yaml'));
+}
+
+function readWorkspacePackage(packageName: string): {
+  root: string;
+  manifest: {
+    dependencies?: Record<string, string>;
+    scripts?: Record<string, string>;
+  };
+} {
+  const directoryName = packageName.slice('@cuberoot/'.length);
+  const matches = [appPath(directoryName), packagePath(directoryName), jobPath(directoryName)]
+    .filter((root) => {
+      const manifestPath = join(REPO_ROOT, ...root.split('/'), 'package.json');
+      if (!existsSync(manifestPath)) return false;
+      const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as { name?: string };
+      return manifest.name === packageName;
+    });
+  if (matches.length !== 1) {
+    throw new Error(`Expected exactly one ${packageName} workspace, found ${matches.length}`);
+  }
+  const root = matches[0];
+  if (!root) throw new Error(`Missing ${packageName} workspace after validation`);
+  return {
+    root,
+    manifest: JSON.parse(readFileSync(
+      join(REPO_ROOT, ...root.split('/'), 'package.json'),
+      'utf8',
+    )) as {
+      dependencies?: Record<string, string>;
+      scripts?: Record<string, string>;
+    },
+  };
+}
+
+function workspaceDependencyClosure(packageName: string): string[] {
+  const pending = [packageName];
+  const roots = new Set<string>();
+  const visited = new Set<string>();
+
+  while (pending.length > 0) {
+    const current = pending.pop();
+    if (!current || visited.has(current)) continue;
+    visited.add(current);
+    const { root, manifest } = readWorkspacePackage(current);
+    roots.add(`${root}/**`);
+    for (const [dependency, version] of Object.entries(manifest.dependencies ?? {})) {
+      if (dependency.startsWith('@cuberoot/') && version.startsWith('workspace:')) {
+        pending.push(dependency);
+      }
+    }
+  }
+
+  return [...roots].sort();
+}
+
 function readStepLines(workflowName: string, stepName: string): { lines: string[]; stepIndent: number } {
   const lines = readWorkflow(workflowName).split(/\r?\n/);
   const header = `- name: ${stepName}`;
@@ -37,8 +95,11 @@ function readStepLines(workflowName: string, stepName: string): { lines: string[
   const stepIndent = indentation(lines[stepStart]);
   const stepEnd = lines.findIndex((line, index) => (
     index > stepStart
-    && line.trim().startsWith('- ')
-    && indentation(line) <= stepIndent
+    && line.trim()
+    && (
+      indentation(line) < stepIndent
+      || (line.trim().startsWith('- ') && indentation(line) === stepIndent)
+    )
   ));
   const end = stepEnd < 0 ? lines.length : stepEnd;
   return { lines: lines.slice(stepStart + 1, end), stepIndent };
@@ -77,6 +138,32 @@ function readStepEnv(workflowName: string, stepName: string): Record<string, str
       if (!entry) throw new Error(`Unsupported env YAML for ${stepName}: ${line.trim()}`);
       return [entry[1], entry[2]];
     }));
+}
+
+function readStepFilterPaths(workflowName: string, stepName: string, filterName: string): string[] {
+  const { lines } = readStepLines(workflowName, stepName);
+  const filters = lines.findIndex((line) => line.trim() === 'filters: |');
+  if (filters < 0) throw new Error(`Missing filters block for ${stepName} in ${workflowName}`);
+  const filtersIndent = indentation(lines[filters]);
+  const filter = lines.findIndex((line, index) => (
+    index > filters
+    && indentation(line) === filtersIndent + 2
+    && line.trim() === `${filterName}:`
+  ));
+  if (filter < 0) throw new Error(`Missing filter ${filterName} for ${stepName} in ${workflowName}`);
+  const filterIndent = indentation(lines[filter]);
+  const values: string[] = [];
+  for (let index = filter + 1; index < lines.length; index += 1) {
+    const trimmed = lines[index].trim();
+    if (trimmed && indentation(lines[index]) <= filterIndent) break;
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    if (!trimmed.startsWith('- ')) {
+      throw new Error(`Unsupported filter YAML at ${workflowName}:${index + 1}`);
+    }
+    values.push(parseYamlScalar(trimmed.slice(2).trim()));
+  }
+  if (!values.length) throw new Error(`Empty filter ${filterName} in ${workflowName}`);
+  return values;
 }
 
 const WORKSPACE_INPUT_OVERRIDES: Readonly<Record<string, readonly string[]>> = {
@@ -138,6 +225,7 @@ const CORE_PATHS = [
 const NEXT_PATHS = [
   repoPath('.node-version'),
   packagePath('client', '**'),
+  `!${packagePath('client', 'tests', '**')}`,
   appPath('web', '**'),
   // The Web renderer consumes stack-kernel through puzzle-render-core now;
   // moving that import must not remove its versioned WASM from deploy inputs.
@@ -149,6 +237,7 @@ const NEXT_PATHS = [
   corePath('patches', '**'),
   corePath('scripts', 'resolve-workspace-path.mjs'),
   corePath('scripts', 'build-cubing-worker.mjs'),
+  corePath('scripts', 'vercel-ignore-build.ts'),
   repoPath('ops', 'systemd', 'cuberoot-next.service'),
   repoPath('.github', 'workflows', 'deploy_next.yml'),
 ] as const;
@@ -165,11 +254,14 @@ const TEST_PATHS = [
   `!${packagePath('platform', '**')}`,
   repoPath('docs', 'platform-capability-manifest.json'),
   repoPath('docs', 'platform-unification-plan.md'),
-  '*.ps1',
+  'sync_upstream.ts',
   repoPath('.sync', '**'),
   repoPath('scripts', 'upstream', '**'),
   repoPath('ops', 'nginx', '**'),
+  repoPath('ops', 'vercel-ban-relay', 'competition-rule.json'),
   repoPath('ops', 'systemd', 'cuberoot-drive-compression.service'),
+  repoPath('ops', 'bin', 'pg-dump-recon.sh'),
+  repoPath('ops', 'systemd', 'pg-dump-recon.service'),
   repoPath('.github', 'workflows', 'backup_recon.yml'),
   repoPath('.github', 'workflows', 'best2x2_drift.yml'),
   repoPath('.github', 'workflows', 'deploy_core.yml'),
@@ -181,6 +273,18 @@ const TEST_PATHS = [
   repoPath('.github', 'workflows', 'stats.yml'),
   repoPath('.github', 'workflows', 'test.yml'),
   repoPath('.github', 'workflows', 'update_upcoming.yml'),
+] as const;
+
+const DESKTOP_PATHS = [
+  repoPath('.node-version'),
+  repoPath('.github', 'workflows', 'test.yml'),
+  corePath('package.json'),
+  corePath('pnpm-lock.yaml'),
+  corePath('pnpm-workspace.yaml'),
+  corePath('tsconfig.base.json'),
+  corePath('patches', '**'),
+  corePath('scripts', 'build-cubing-worker.mjs'),
+  ...workspaceDependencyClosure('@cuberoot/desktop'),
 ] as const;
 
 function indentation(line: string): number {
@@ -292,6 +396,28 @@ describe('deployment workflow path contracts', () => {
   const testPushPaths = readEventPaths('test.yml', 'push');
   const testPullRequestPaths = readEventPaths('test.yml', 'pull_request');
 
+  it('bounds Next transfers and reuses live bytes without modifying the live release', () => {
+    const transfer = readStepRun('deploy_next.yml', 'rsync standalone + systemd unit');
+    const step = readStepLines('deploy_next.yml', 'rsync standalone + systemd unit').lines.join('\n');
+    expect(step).toContain('timeout-minutes: 19');
+    expect(transfer).toContain('for i in 1 2; do');
+    expect(transfer).toContain('timeout --kill-after=15s 300s rsync -az --checksum');
+    expect(transfer).toContain("split -t '\\0' -n r/8");
+    expect(transfer).toContain('--from0 --files-from="$1"');
+    expect(transfer).toContain('xargs -0 -n 1 -P 8');
+    expect(transfer).toContain('timeout --kill-after=15s 360s rsync -az --checksum --delete-delay');
+    expect(transfer.indexOf('xargs -0 -n 1 -P 8')).toBeLessThan(transfer.indexOf('--delete-delay'));
+    expect(transfer).toContain('--partial --timeout=60 --stats --copy-dest=/www/wwwroot/toolkit-next');
+    expect(transfer).toContain(':/www/wwwroot/toolkit-next.new/');
+    expect(transfer).not.toMatch(/--(?:inplace|link-dest)|tar\.gz/);
+    const deploy = readStepRun('deploy_next.yml', 'Deploy + restart');
+    expect(deploy).not.toContain('rm -rf "$STAGE"');
+    expect(deploy).toContain('mv "$LIVE" "$BACKUP"');
+    expect(deploy).toContain('mv "$STAGE" "$LIVE"');
+    expect(deploy).toContain('mv "$BACKUP" "$LIVE"');
+    expect(readWorkflow('deploy_next.yml')).toContain('cancel-in-progress: false');
+  });
+
   it('keeps the Core deploy boundary limited to real API production inputs', () => {
     expect(corePaths).toEqual(CORE_PATHS);
 
@@ -337,6 +463,7 @@ describe('deployment workflow path contracts', () => {
 
     const cases = [
       [packagePath('client', 'app', '[lang]', 'page.tsx'), true],
+      [packagePath('client', 'tests', 'workflow-path-contract.test.ts'), false],
       [appPath('web', 'app', '[lang]', 'page.tsx'), true],
       [packagePath('shared', 'src', 'account.ts'), true],
       [packagePath('visualcube', 'src', 'index.ts'), true],
@@ -389,6 +516,30 @@ describe('deployment workflow path contracts', () => {
     }
   });
 
+  it('builds stats runtime dependencies before every workflow tsx entrypoint', () => {
+    const { manifest } = readWorkspacePackage('@cuberoot/stats-build');
+    expect(manifest.scripts?.['build:deps']).toBe(
+      'pnpm --filter "@cuberoot/stats-build^..." -r run build',
+    );
+
+    const statsWorkflows = workflowNames()
+      .map((name) => [name, readWorkflow(name)] as const)
+      .filter(([, workflow]) => (
+        workflow.includes('resolve-workspace-path.mjs @cuberoot/stats-build')
+        && /npx tsx src\/bin\//.test(workflow)
+      ));
+
+    expect(statsWorkflows.length).toBeGreaterThan(0);
+    for (const [name, workflow] of statsWorkflows) {
+      const dependencyBuild = workflow.indexOf(
+        'pnpm --filter @cuberoot/stats-build build:deps',
+      );
+      const firstRuntimeEntrypoint = workflow.search(/npx tsx src\/bin\//);
+      expect(dependencyBuild, name).toBeGreaterThan(-1);
+      expect(firstRuntimeEntrypoint, name).toBeGreaterThan(dependencyBuild);
+    }
+  });
+
   it('fails workspace resolution before publishing an empty workflow output', () => {
     const expectedResolverCalls = {
       'backup_recon.yml': 1,
@@ -426,16 +577,126 @@ describe('deployment workflow path contracts', () => {
     for (const paths of [testPushPaths, testPullRequestPaths]) {
       expect(workflowTriggers(paths, [repoPath('ops', 'nginx', 'www.cuberoot.me.conf')])).toBe(true);
       expect(workflowTriggers(paths, [repoPath('ops', 'nginx', 'api.cuberoot.me.conf')])).toBe(true);
+      expect(workflowTriggers(paths, [repoPath('ops', 'vercel-ban-relay', 'competition-rule.json')])).toBe(true);
       expect(workflowTriggers(paths, [repoPath('.github', 'workflows', 'stats.yml')])).toBe(true);
-      expect(workflowTriggers(paths, [repoPath('sync_upstream.ps1')])).toBe(true);
-      expect(workflowTriggers(paths, [repoPath('_sync_blddb.ps1')])).toBe(true);
-      expect(workflowTriggers(paths, [repoPath('_sync_cstimer.ps1')])).toBe(true);
-      expect(workflowTriggers(paths, [repoPath('nested', '_sync_cstimer.ps1')])).toBe(false);
-      expect(workflowTriggers(paths, [repoPath('.sync', 'sync_utils.ps1')])).toBe(true);
-      expect(workflowTriggers(paths, [repoPath('scripts', 'upstream', 'sync-all.ps1')])).toBe(true);
+      expect(workflowTriggers(paths, [repoPath('sync_upstream.ts')])).toBe(true);
+      expect(workflowTriggers(paths, [repoPath('nested', 'sync_upstream.ts')])).toBe(false);
+      expect(workflowTriggers(paths, [repoPath('.sync', 'page_config.json')])).toBe(true);
+      expect(workflowTriggers(paths, [repoPath('scripts', 'upstream', 'sync-all.ts')])).toBe(true);
       expect(workflowTriggers(paths, [packagePath('platform', 'README.md')])).toBe(false);
       expect(workflowTriggers(paths, [packagePath('server', 'src', 'index.ts')])).toBe(true);
     }
+  });
+
+  it('runs desktop UI checks when its dependency closure or workflow changes', () => {
+    const workflow = readWorkflow('test.yml');
+    const desktopPaths = readStepFilterPaths('test.yml', 'Detect affected inputs', 'desktop');
+    expect(desktopPaths).toEqual(DESKTOP_PATHS);
+    expect(workflow).toContain(
+      "if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.desktop == 'true' }}",
+    );
+    expect(workflow).toContain(
+      'uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3',
+    );
+
+    const cases = [
+      [appPath('desktop', 'src', 'main.tsx'), true],
+      [packagePath('app-ui', 'src', 'App.tsx'), true],
+      [packagePath('timer-ui', 'src', 'Timer.tsx'), true],
+      [packagePath('event-icon', 'src', 'event.tsx'), true],
+      [packagePath('puzzle-render-core', 'src', 'index.ts'), true],
+      [packagePath('stack-kernel', 'src', 'lib.rs'), true],
+      [corePath('pnpm-lock.yaml'), true],
+      [repoPath('.github', 'workflows', 'test.yml'), true],
+      [packagePath('client', 'app', '[lang]', 'page.tsx'), false],
+      [appPath('api', 'src', 'index.ts'), false],
+      [appPath('mobile', 'src', 'App.tsx'), false],
+      [repoPath('.github', 'workflows', 'deploy_next.yml'), false],
+      [repoPath('docs', 'platform-unification-plan.md'), false],
+    ] as const;
+
+    for (const [path, expected] of cases) {
+      expect(workflowTriggers(desktopPaths, [path]), path).toBe(expected);
+    }
+  });
+
+  it('uses affected-job conditions for the expensive platform and analyzer jobs', () => {
+    const workflow = readWorkflow('test.yml');
+    expect(workflow).toContain(
+      "if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.mobile == 'true' }}",
+    );
+    expect(workflow).toContain(
+      "if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.analyzer == 'true' }}",
+    );
+  });
+
+  it('skips unrelated domains and native compilers for Web-only changes', () => {
+    for (const domain of ['server', 'stats', 'solvers', 'scramble_stats', 'miniprogram', 'desktop_native', 'mobile_native']) {
+      const paths = readStepFilterPaths('test.yml', 'Detect affected inputs', domain);
+      expect(workflowTriggers(paths, [packagePath('client', 'app', '[lang]', 'page.tsx')]), domain).toBe(false);
+      expect(workflowTriggers(paths, [repoPath('.github', 'workflows', 'test.yml')]), domain).toBe(false);
+    }
+    for (const domain of ['desktop_native', 'mobile_native']) {
+      const paths = readStepFilterPaths('test.yml', 'Detect affected inputs', domain);
+      expect(workflowTriggers(paths, [packagePath('app-ui', 'src', 'App.tsx')]), domain).toBe(false);
+      expect(workflowTriggers(paths, [packagePath('shared', 'src', 'forum.ts')]), domain).toBe(false);
+    }
+    expect(workflowTriggers(readStepFilterPaths('test.yml', 'Detect affected inputs', 'desktop_native'), [
+      appPath('desktop', 'src-tauri', 'src', 'lib.rs'),
+    ])).toBe(true);
+    expect(workflowTriggers(readStepFilterPaths('test.yml', 'Detect affected inputs', 'mobile_native'), [
+      appPath('mobile', 'capacitor.config.ts'),
+    ])).toBe(true);
+    for (const domain of ['server', 'stats', 'scramble_stats', 'miniprogram']) {
+      expect(workflowTriggers(readStepFilterPaths('test.yml', 'Detect affected inputs', domain), [
+        packagePath('shared', 'src', 'forum.ts'),
+      ]), domain).toBe(true);
+    }
+    const gatedSteps = {
+      'Test server': 'server',
+      'PostgreSQL 13 final schema snapshot': 'server',
+      'Verify stats-build producer contracts': 'stats',
+      'Verify puzzle solvers package': 'solvers',
+      'Verify Clock analyzer runtime': 'scramble_stats',
+      'Verify SQ2 sampled builder runtime': 'scramble_stats',
+      'Verify Mini Program': 'miniprogram',
+      'Compile Android APK and signed release AAB': 'mobile_native',
+    };
+    for (const [step, domain] of Object.entries(gatedSteps)) {
+      expect(readStepLines('test.yml', step).lines.join('\n'), step)
+        .toContain(`needs.changes.outputs.${domain} == 'true'`);
+    }
+  });
+
+  it('limits Vercel rebuilds to the canonical frontend build inputs', () => {
+    const config = JSON.parse(readFileSync(join(REPO_ROOT, packagePath('client', 'vercel.json')), 'utf8')) as { ignoreCommand: string };
+    const expectedPaths = nextPaths
+      .filter((path) => !path.startsWith('ops/') && !path.startsWith('.github/'))
+      .map((path) => path.startsWith('!')
+        ? `:(exclude)${path.slice(1).replace(/\/\*\*$/, '')}`
+        : path.replace(/\/\*\*$/, ''));
+    expect(config.ignoreCommand).toBe('node ../../scripts/vercel-ignore-build.ts');
+    expect(config.ignoreCommand.length).toBeLessThanOrEqual(256);
+    const script = readFileSync(join(REPO_ROOT, corePath('scripts', 'vercel-ignore-build.ts')), 'utf8');
+    expect(script).toContain("new URL('../../.github/workflows/deploy_next.yml', import.meta.url)");
+    expect(script).toContain("['-C', root, 'diff', '--quiet', base, 'HEAD', '--', ...paths]");
+    expect(expectedPaths).toContain(':(exclude)core/packages/client/tests');
+    expect(expectedPaths).not.toContain('.');
+  });
+
+  it('shards the complete client suite without duplicating the isolated cross trainer test', () => {
+    const workflow = readWorkflow('test.yml');
+    expect(workflow).toContain('shard: [1, 2]');
+    expect(readStepRun('test.yml', 'Test client shard')).toBe(
+      'pnpm --filter @cuberoot/client exec vitest run --exclude tests/cross_trainer_reach.test.ts --shard=${{ matrix.shard }}/2',
+    );
+    expect(readStepRun('test.yml', 'Test cross trainer reachability')).toBe(
+      'pnpm --filter @cuberoot/client exec vitest run tests/cross_trainer_reach.test.ts',
+    );
+    expect(workflow).toMatch(
+      /- name: Test cross trainer reachability\n\s+if: \$\{\{ matrix\.shard == 1 \}\}/,
+    );
+    expect(workflow).not.toContain('- name: Test fast suite');
   });
 
   it('applies GitHub path patterns in order, including exclusion and re-inclusion', () => {
@@ -466,6 +727,56 @@ describe('deployment workflow path contracts', () => {
     expect(coreBuilds).toContain(solverBuild);
   });
 
+  it('checks out all installed solver assets in every host build job', () => {
+    const workflow = readWorkflow('test.yml');
+    for (const job of ['mobile', 'desktop-ui', 'desktop']) {
+      const start = workflow.indexOf(`\n  ${job}:\n`);
+      expect(start, job).toBeGreaterThan(-1);
+      const next = workflow.slice(start + 1).search(/\n  [a-z][a-z-]*:\n/);
+      const block = workflow.slice(start, next < 0 ? undefined : start + 1 + next);
+      for (const asset of [
+        '/tools/cstimer-scramble/',
+        '/tools/solver/rust-cross/cross-solver-worker.js',
+        '/tools/solver/rust-cross/xcross-table-worker.js',
+        '/tools/solver/rust-cross/cross_solver.js',
+        '/tools/solver/rust-cross/cross_solver_bg.wasm',
+      ]) expect(block, `${job}: ${asset}`).toContain(asset);
+    }
+    for (const domain of ['mobile', 'desktop']) {
+      expect(workflowTriggers(readStepFilterPaths('test.yml', 'Detect affected inputs', domain), [
+        repoPath('.github', 'workflows', 'test.yml'),
+      ]), domain).toBe(true);
+    }
+  });
+
+  it('bypasses path enumeration for full manual and scheduled runs', () => {
+    const { lines } = readStepLines('test.yml', 'Detect affected inputs');
+    expect(lines.join('\n')).toContain(
+      "if: ${{ github.event_name != 'workflow_dispatch' && github.event_name != 'schedule' }}",
+    );
+    // Every downstream job must still run with absent filter outputs.
+    const workflow = readWorkflow('test.yml');
+    for (const job of ['test', 'client-tests', 'mobile', 'desktop-ui', 'desktop', 'analyzer-worker']) {
+      const start = workflow.indexOf(`\n  ${job}:\n`);
+      expect(start).toBeGreaterThan(-1);
+      const next = workflow.slice(start + 1).search(/\n  [a-z][a-z-]*:\n/);
+      const block = workflow.slice(start, next < 0 ? undefined : start + 1 + next);
+      expect(block).toContain("github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'");
+    }
+  });
+
+  it('checks out ancestor Git ignore rules for native Cargo fingerprinting', () => {
+    const workflow = readWorkflow('test.yml');
+    const start = workflow.indexOf('\n  desktop:\n');
+    expect(start).toBeGreaterThan(-1);
+    const next = workflow.slice(start + 1).search(/\n  [a-z][a-z-]*:\n/);
+    const block = workflow.slice(start, next < 0 ? undefined : start + 1 + next);
+    // Partial clones omit the root blob unless selected. Cargo cannot lazily
+    // fetch it when its Git reader computes the package source fingerprint.
+    expect(block).toMatch(/sparse-checkout: \|[\s\S]*?^\s+\/\.gitignore\s*$/m);
+    expect(block).toMatch(/^\s+\/core\/\s*$/m);
+  });
+
   it('prepares dist-only dependencies through the canonical desktop entrypoints', () => {
     const desktop = JSON.parse(readFileSync(join(REPO_ROOT, appPath('desktop', 'package.json')), 'utf8'));
     const tauri = JSON.parse(readFileSync(join(REPO_ROOT, appPath('desktop', 'src-tauri', 'tauri.conf.json')), 'utf8'));
@@ -483,7 +794,7 @@ describe('deployment workflow path contracts', () => {
     }
     expect(tauri.build.beforeBuildCommand).toBe('pnpm build');
     expect(tauri.build.beforeDevCommand).toBe('pnpm dev');
-    expect(readStepRun('test.yml', 'Test desktop adapter and build native host'))
+    expect(readStepRun('test.yml', 'Build native desktop host'))
       .toContain('pnpm --filter @cuberoot/desktop exec tauri build --no-bundle');
   });
 

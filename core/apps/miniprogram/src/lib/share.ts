@@ -1,28 +1,37 @@
 import type { WebRouteShare } from './web-routes';
 import { isDouyinMiniProgram, miniProgramApi } from './platform';
 
-export function showFriendShareMenu(): void {
-  const api = miniProgramApi();
-  if (typeof api.showShareMenu !== 'function') return;
-
+function updateShareMenu(
+  method: 'showShareMenu' | 'hideShareMenu',
+  menus: WechatMiniprogram.ShowShareMenuOption['menus'],
+): void {
   try {
-    api.showShareMenu({ menus: ['shareAppMessage'] });
+    const api = miniProgramApi();
+    if (typeof api[method] !== 'function') return;
+    if (isDouyinMiniProgram()) {
+      // Douyin names its native share action "share", not "shareAppMessage".
+      const douyinApi = api as unknown as Record<typeof method, (options: { menus: ['share'] }) => void>;
+      douyinApi[method]({ menus: ['share'] });
+    } else if (method === 'showShareMenu') {
+      api.showShareMenu({ menus });
+    } else {
+      api.hideShareMenu({ menus });
+    }
   } catch {
     // Sharing is optional; page loading must survive unsupported platform APIs.
   }
 }
 
-export function showPublicShareMenu(): void {
-  const api = miniProgramApi();
-  if (typeof api.showShareMenu !== 'function') return;
+export function showFriendShareMenu(): void {
+  updateShareMenu('showShareMenu', ['shareAppMessage']);
+}
 
-  try {
-    api.showShareMenu({
-      menus: isDouyinMiniProgram() ? ['shareAppMessage'] : ['shareAppMessage', 'shareTimeline'],
-    });
-  } catch {
-    // Sharing is optional; page loading must survive unsupported platform APIs.
-  }
+export function showPublicShareMenu(): void {
+  updateShareMenu('showShareMenu', ['shareAppMessage', 'shareTimeline']);
+}
+
+export function hidePublicShareMenu(): void {
+  updateShareMenu('hideShareMenu', ['shareAppMessage', 'shareTimeline']);
 }
 
 export function toTimelineShare(

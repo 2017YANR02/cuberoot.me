@@ -1,3 +1,7 @@
+import { availableParallelism } from 'node:os';
+if (process.env.CUBEROOT_ALLOW_LEGACY_OPT9 !== '1') {
+  throw new Error('旧 cubeopt 建表入口已停用；请在 solver/ 运行 cargo run --release --bin table_generator -- --only h48-h10');
+}
 // Generate a cubeopt h48 pruning table headlessly in Node and stream it to disk.
 // The browser /scramble/solver builds these via init(hwConcurrency,..) then a
 // File-System-Access download; this is the same thing without a browser, so the
@@ -12,8 +16,8 @@
 // Usage:  THREADS=12 MODULE=<cube48optN.mjs> OUT=<dir> node gen-table.mjs
 //   MODULE  default cube48opt9.mjs (the 15G table)
 //   OUT     default solver/tables/h48
-//   THREADS default 12
-import { openSync, writeSync, closeSync, existsSync, statSync, mkdirSync } from 'node:fs';
+//   THREADS default all available CPU threads
+import { openSync, writeSync, closeSync, existsSync, statSync, mkdirSync, renameSync } from 'node:fs';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { resolve, dirname } from 'node:path';
 
@@ -22,8 +26,8 @@ const repoRoot = resolve(__dirname, '../..');
 const MJS = process.env.MODULE
   ? resolve(process.env.MODULE)
   : resolve(repoRoot, 'core/packages/client/public/cubeopt/cube48opt9.mjs');
-const OUTDIR = process.env.OUT ? resolve(process.env.OUT) : resolve(repoRoot, 'solver/tables/h48');
-const THREADS = Number(process.env.THREADS || 12);
+const OUTDIR = process.env.OUT ? resolve(process.env.OUT) : resolve(process.env.CUBE_TABLE_DIR || resolve(repoRoot, 'solver/tables'), 'h48');
+const THREADS = Number(process.env.THREADS || availableParallelism());
 
 const createModule = (await import(pathToFileURL(MJS).href)).default;
 const m = await createModule({ print: (t) => process.stdout.write(t + '\n'), printErr: (t) => process.stderr.write(t + '\n') });
@@ -52,7 +56,8 @@ if (rc !== 0) { console.error('generation failed (init returned nonzero)'); proc
 // 15G into a second Node buffer (would double peak RAM).
 const base = Number(m._get_mem_ptr());
 const size = Number(m.get_table_size());
-const fd = openSync(out, 'w');
+const temporary = `${out}.tmp`;
+const fd = openSync(temporary, 'w');
 const CH = 64 * 1024 * 1024;
 let written = 0;
 for (let off = 0; off < size; off += CH) {
@@ -62,6 +67,7 @@ for (let off = 0; off < size; off += CH) {
   if ((off / CH) % 16 === 0 || written === size) process.stdout.write(`\rwriting ${((written / size) * 100).toFixed(1)}%   `);
 }
 closeSync(fd);
-const finalSize = statSync(out).size;
+const finalSize = statSync(temporary).size;
+if (finalSize === expected) renameSync(temporary, out);
 console.log(`\nwrote ${out}  ${finalSize} bytes  (${finalSize === expected ? 'OK' : 'SIZE MISMATCH!'})`);
 process.exit(finalSize === expected ? 0 : 1);

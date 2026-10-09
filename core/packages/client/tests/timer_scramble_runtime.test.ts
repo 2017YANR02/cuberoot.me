@@ -43,11 +43,20 @@ const CUBING_EVENTS: Readonly<Partial<Record<EventId, TimerCubingScrambleEventId
   fto: 'fto',
   redi: 'redi_cube',
   cross: '333',
-  f2l: '333',
 };
 
 const SHARED_EVENTS: Readonly<Partial<Record<EventId, TimerSharedScrambleProviderId>>> = {
+  f2l: 'training-state',
   '222': 'wca-pocket',
+  'cll': 'training-state',
+  'ell': 'training-state',
+  'eocp': 'training-state',
+  '2gll': 'training-state',
+  'ollcp': 'training-state',
+  'zzll': 'training-state',
+  'zbls': 'training-state',
+  'lse': 'training-state',
+  'l10p': 'training-state',
   ll: 'trainer-case',
   oll: 'trainer-case',
   pll: 'trainer-case',
@@ -190,7 +199,7 @@ describe('shared timer scramble runtime', () => {
       });
       expect(generate).toHaveBeenLastCalledWith(cubingEventId, event);
     }
-    expect(generate).toHaveBeenCalledTimes(21);
+    expect(generate).toHaveBeenCalledTimes(20);
   });
 
   it('routes 222 through the shared TNoodle WCA provider, never cubing.js', async () => {

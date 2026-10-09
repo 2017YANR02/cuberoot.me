@@ -19,11 +19,12 @@
  */
 
 import type { EventId } from '../types';
+import { CSTIMER_REDI_KEY } from '@/lib/cstimer-scramble';
 import {
   CSTIMER_NONWCA_TIMER_EVENTS,
   CSTIMER_NONWCA_TIMER_KEYS,
   isCstimerNonWcaTimerEvent,
-} from '@cuberoot/puzzle-solvers/cstimer-nonwca';
+} from '@cuberoot/puzzle-solvers/cstimer-nonwca-events';
 import { cstimerWorkerScramble, warmCstimerWorker } from './cstimer_worker';
 import {
   _resetSharedCstimerNonWcaPool,
@@ -54,7 +55,7 @@ const CSTIMER_KEYS: Partial<Record<EventId, CstimerScrambleSpec>> = {
   fto:      { key: 'ftoso' },
   gear:     { key: 'gearso' },
   ivy:      { key: 'ivyso' },
-  redi:     { key: 'rediso' },
+  redi:     { key: CSTIMER_REDI_KEY, length: 8 },
 };
 
 // Gear and Ivy keep their csTimer keys above for import/export compatibility

@@ -21,7 +21,7 @@ import {
   useLocalParticipantPermissions,
   usePersistentUserChoices,
 } from '@livekit/components-react';
-import { MessageSquare, PhoneOff, ScreenShare, Users } from 'lucide-react';
+import { MessageSquare, PhoneOff, ScreenShare, Users, Volume2, VolumeX } from 'lucide-react';
 
 import { tr } from '@/i18n/tr';
 import { useIsMobile } from '@/hooks/useIsMobile';
@@ -34,6 +34,8 @@ const SOURCE_TO_PROTOCOL: Partial<Record<Track.Source, number>> = {
 };
 
 export interface MeetControlBarProps {
+  speakerEnabled: boolean;
+  onToggleSpeaker: () => void;
   showChat: boolean;
   unread: number;
   onToggleChat: () => void;
@@ -44,6 +46,8 @@ export interface MeetControlBarProps {
 }
 
 export default function MeetControlBar({
+  speakerEnabled,
+  onToggleSpeaker,
   showChat,
   unread,
   onToggleChat,
@@ -108,6 +112,8 @@ export default function MeetControlBar({
         <div className="lk-button-group">
           <TrackToggle
             source={Track.Source.Microphone}
+            aria-label={micLabel}
+            title={micLabel}
             showIcon
             onChange={onMicChange}
           >
@@ -127,6 +133,8 @@ export default function MeetControlBar({
         <div className="lk-button-group">
           <TrackToggle
             source={Track.Source.Camera}
+            aria-label={camLabel}
+            title={camLabel}
             showIcon
             onChange={onCameraChange}
           >
@@ -156,7 +164,9 @@ export default function MeetControlBar({
       ) : (
         <TrackToggle
           source={Track.Source.ScreenShare}
-          captureOptions={{ audio: true, selfBrowserSurface: 'include' }}
+          // Preserve fine detail at the existing bandwidth cap. Leave resolution to the SDK,
+          // which also handles Safari's screen-capture resolution workaround.
+          captureOptions={{ audio: true, selfBrowserSurface: 'exclude', contentHint: 'detail' }}
           showIcon={false}
           aria-label={shareLabel}
           title={shareLabel}
@@ -166,6 +176,13 @@ export default function MeetControlBar({
           {!compact && shareLabel}
         </TrackToggle>
       ))}
+
+      <button type="button" className="lk-button" aria-pressed={speakerEnabled}
+        aria-label={tr({ zh: '扬声器', en: 'Speaker' })}
+        title={tr({ zh: '扬声器', en: 'Speaker' })} onClick={onToggleSpeaker}>
+        {speakerEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
+        {!compact && tr({ zh: '扬声器', en: 'Speaker' })}
+      </button>
 
       <button
         type="button"

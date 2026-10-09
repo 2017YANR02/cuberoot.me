@@ -19,6 +19,7 @@ export class WrMo5 extends RoundMetric {
 
   // NOTE: Mo5 = 5 次全部均值，需要全部有效
   computeMetric(values: number[]): number | null {
+    if (values.length !== 5 || values.includes(0)) return null;
     if (!values.every(v => v > 0)) return null;
     return values.reduce((s, v) => s + v, 0) / 5;
   }

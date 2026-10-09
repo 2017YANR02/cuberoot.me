@@ -19,6 +19,7 @@
  *      other events stay at 3 since their solver is single-worker anyway.
  */
 import { cstimerScramble444 } from './cstimer-444';
+import { cstimerScramble } from './cstimer-scramble';
 import { fetch555Scramble, fetch555ScrambleBatch } from './scramble-555-server';
 import { get555Mode, on555ModeChange } from './scramble-555-mode';
 import { get333Mode, on333ModeChange } from './scramble-333-mode';
@@ -26,6 +27,7 @@ import { m2pScramble333 } from './m2p-scramble';
 import { wcaPocketScramble, optimalPocketScramble } from './pocket-scramble';
 import { get222Mode, on222ModeChange } from './scramble-222-mode';
 import { toWcaEventId } from './wca-events';
+import { getRediMode } from './scramble-redi-mode';
 
 /**
  * cubing/scramble + cubing/search on demand.
@@ -65,11 +67,12 @@ export const TNOODLE_WCA_EVENTS = [
 ] as const;
 
 // cubing.js `twizzleEvents` 里非 WCA 但已支持 random-state 打乱的项目。
-// 跟 https://experiments.cubing.net/cubing.js/mark3 暴露的对齐。
-// id 形态保持 cubing.js 一致(redi_cube / master_tetraminx 等下划线),
+// 跟 https://experiments.cubing.net/cubing.js/mark3 暴露的对齐；Redi 单独
+// 支持计时器的 cubing.js 方式与 csTimer redim (MoYu) 方式。
+// id 形态保持 cubing.js 一致(master_tetraminx 等下划线),
 // EventIcon 把它们映到 cubing-icons 的 `unofficial-*` class。
 export const TWIZZLE_NONWCA_EVENTS = [
-  'fto', 'master_tetraminx', 'kilominx', 'redi_cube', 'baby_fto',
+  'fto', 'master_tetraminx', 'kilominx', 'baby_fto',
 ] as const;
 
 /**
@@ -81,7 +84,6 @@ export const TWIZZLE_NONWCA_APPEND: ReadonlyArray<{ id: string; iconClass: strin
   { id: 'fto', iconClass: 'unofficial-fto' },
   { id: 'master_tetraminx', iconClass: 'unofficial-mtetram' },
   { id: 'kilominx', iconClass: 'unofficial-kilominx' },
-  { id: 'redi_cube', iconClass: 'unofficial-redi' },
   { id: 'baby_fto', iconClass: 'unofficial-baby_fto' },
 ];
 
@@ -137,7 +139,7 @@ function randomMoveKilominxScramble(): string {
 }
 
 export function randomMoveScrambleNxN(N: number): string {
-  if (N < 2) return '';
+  if (N < 1) return '';
   const length = N >= 5 ? 20 * (N - 2) : Math.max(20, 9 * N);
   const maxDepth = Math.max(1, Math.floor(N / 2));
   const moves: string[] = [];
@@ -147,13 +149,14 @@ export function randomMoveScrambleNxN(N: number): string {
   while (moves.length < length) {
     const face = SCRAMBLE_FACES[Math.floor(Math.random() * 6)];
     const axis = SCRAMBLE_AXIS_OF[face];
+    if (N === 1 && axis === prevAxis) continue;
     if (face === prevFace) continue;
     if (axis === prevAxis && axis === prevPrevAxis) continue;
     const depth = 1 + Math.floor(Math.random() * maxDepth);
     const suffix = SCRAMBLE_SUFFIXES[Math.floor(Math.random() * SCRAMBLE_SUFFIXES.length)];
     const prefix = depth >= 3 ? String(depth) : '';
     const wide = depth >= 2 ? 'w' : '';
-    moves.push(`${prefix}${face}${wide}${suffix}`);
+    moves.push(N === 1 ? `${['y', 'x', 'z'][axis]}${suffix}` : `${prefix}${face}${wide}${suffix}`);
     prevPrevAxis = prevAxis;
     prevAxis = axis;
     prevFace = face;
@@ -356,16 +359,24 @@ export function prewarmScramble(...events: string[]): void {
  * direct cubing call. Either way, schedules a refill so the next caller
  * stays warm. Same return shape as `tnoodleRandomScramble`.
  */
-/** `nxn<N>` synthetic ids (N ≥ 8) for high-order NxN beyond WCA's 7x7 ceiling. */
+/** `nxn<N>` synthetic ids for orders 1–300; 2–7 reuse the WCA generators. */
 const NXN_HIGH_RE = /^nxn(\d+)$/;
 
 export async function pooledScramble(event: string): Promise<string | null> {
+  // No shared pool for Redi: capture the mode for this request so an in-flight
+  // result cannot refill the newly selected mode's pool.
+  if (event === 'redi_cube') {
+    if (getRediMode() === 'rotations') return cstimerScramble(event);
+    const { randomScrambleForEvent } = await loadCubingScramble();
+    return (await randomScrambleForEvent('redi_cube')).toString();
+  }
   // High-order NxN: route directly to the random-move generator. No pool —
   // generation is cheap (no solver), and pool refills are unnecessary.
   const nxnHigh = NXN_HIGH_RE.exec(event);
   if (nxnHigh) {
     const n = parseInt(nxnHigh[1], 10);
-    if (n >= 2 && n <= 300) return randomMoveScrambleNxN(n);
+    if (n >= 2 && n <= 7) return pooledScramble(String(n).repeat(3));
+    if (n >= 1 && n <= 300) return randomMoveScrambleNxN(n);
     return null;
   }
   const wcaId = toWcaEventId(event);

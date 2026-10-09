@@ -11,7 +11,7 @@ import path from 'node:path';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import {
-  rowToJson, jsonToRow, validateRow,
+  rowToJson, jsonToRow, validateRow, assertReconTextLengths,
   requireAuth, requireAdmin, optionalAuth, checkRateLimit,
   visibilityDiscoverFilter, visibilityOwnerFilter,
   buildInsert, buildUpdate, buildDuplicateQuery, buildSameScrambleQuery, DUP_REASONS,
@@ -161,6 +161,46 @@ const TODAY_COLUMNS = LIST_COLUMNS + ', wca_scramble, created_at';
 // 个人主页用:列表字段 + 添加者(added_by/added_by_id 不在 LIST_COLUMNS,个人页要按添加者角色筛)。
 // + video_url/caption 给「复用以前的填写」选择器做视频缩略图 + 标题(个人页忽略多余列)。
 const PERSON_COLUMNS = LIST_COLUMNS + ', added_by, added_by_id, video_url, caption';
+
+// Fixed server-owned identifiers only; both collections share the same public/admin boundary.
+for (const collection of [
+  { list: 'pinned', action: 'home-pin', table: 'recon_home_pins', date: 'pinned_at', field: 'pinned' },
+  { list: 'featured', action: 'featured', table: 'recon_featured_solves', date: 'featured_at', field: 'featured' },
+] as const) {
+  reconRoutes.get(`/recon/${collection.list}`, async (c) => {
+    c.header('Cache-Control', 'no-store');
+    const rows = await query<Record<string, unknown>>(
+      `SELECT ${TODAY_COLUMNS} FROM recons
+       WHERE visibility = 'public' AND record_type IS DISTINCT FROM 'timing'
+         AND id IN (SELECT recon_id FROM ${collection.table})
+       ORDER BY (SELECT ${collection.date} FROM ${collection.table} WHERE recon_id = recons.id) DESC, id DESC`,
+    );
+    return c.json(await reconRowsToJson(rows));
+  });
+
+  reconRoutes.put(`/recon/:id/${collection.action}`, async (c) => {
+    c.header('Cache-Control', 'no-store');
+    await requireAdmin(c);
+    const id = Number(c.req.param('id'));
+    const body = await c.req.json<Record<string, unknown>>();
+    if (!Number.isSafeInteger(id) || id <= 0 || typeof body?.[collection.field] !== 'boolean') {
+      return c.json({ error: 'Invalid curation request' }, 400);
+    }
+    if (body[collection.field]) {
+      const rows = await query(
+        `INSERT INTO ${collection.table} (recon_id)
+         SELECT id FROM recons WHERE id = ? AND visibility = 'public' AND record_type IS DISTINCT FROM 'timing'
+         ON CONFLICT (recon_id) DO UPDATE SET recon_id = EXCLUDED.recon_id
+         RETURNING recon_id`, [id],
+      );
+      if (!rows.length) return c.json({ error: 'Public reconstruction not found' }, 404);
+    } else {
+      await query(`DELETE FROM ${collection.table} WHERE recon_id = ?`, [id]);
+    }
+    return c.json({ ok: true });
+  });
+
+}
 
 reconRoutes.get('/recon/list', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -391,13 +431,17 @@ reconRoutes.get('/recon/comments', async (c) => {
     c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
     return c.json({ error: 'This reconstruction is private', private: true }, 403);
   }
+  const viewer = await optionalAuth(c);
   const rows = await query<{
     id: number; recon_id: number; author_id: string; author_name: string;
     content: string; created_at: number; updated_at: number | null; pinned: number;
     parent_id: number | null;
+    like_count: number; my_vote: 'like' | 'dislike' | null;
   }>(
-    `SELECT id, recon_id, author_id, author_name, content, created_at, updated_at, pinned, parent_id
-     FROM comments WHERE recon_id = ? ORDER BY pinned DESC, created_at ASC`, [reconId]
+    `SELECT c.*,
+       (SELECT COUNT(*) FROM recon_comment_votes v WHERE v.comment_id = c.id AND v.vote = 'like') AS like_count,
+       (SELECT v.vote FROM recon_comment_votes v WHERE v.comment_id = c.id AND v.user_id = ?) AS my_vote
+     FROM comments c WHERE recon_id = ? ORDER BY pinned DESC, created_at ASC`, [viewer?.uid ?? null, reconId]
   );
   const userIds = await publicUserIdsForOwnerKeys(rows.map((row) => row.author_id));
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -412,7 +456,38 @@ reconRoutes.get('/recon/comments', async (c) => {
     updatedAt: r.updated_at ? Number(r.updated_at) : null,
     pinned: !!r.pinned,
     parentId: r.parent_id != null ? Number(r.parent_id) : null,
+    likeCount: Number(r.like_count),
+    myVote: r.my_vote ?? null,
   })));
+});
+
+// Explicit desired state makes retries idempotent; each account gets one vote.
+reconRoutes.put('/recon/comments/:id/vote', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  checkRateLimit(getIp(c));
+  const user = await requireAuth(c);
+  if (!user.uid) return c.json({ error: 'Please sign in again' }, 401);
+  const commentId = Number(c.req.param('id'));
+  if (!Number.isSafeInteger(commentId) || commentId <= 0) return c.json({ error: 'Invalid comment id' }, 400);
+  const { vote } = await c.req.json<{ vote?: unknown }>();
+  if (vote !== null && vote !== 'like' && vote !== 'dislike') return c.json({ error: 'Invalid vote' }, 400);
+  const rows = await query<{ recon_id: number }>(
+    'SELECT c.recon_id FROM comments c JOIN recons r ON r.id = c.recon_id WHERE c.id = ?', [commentId],
+  );
+  if (!rows.length) return c.json({ error: 'Comment not found' }, 404);
+  if (await privateReconForbidden(c, rows[0].recon_id)) return c.json({ error: 'This reconstruction is private' }, 403);
+  if (vote === null) {
+    await query('DELETE FROM recon_comment_votes WHERE comment_id = ? AND user_id = ?', [commentId, user.uid]);
+  } else {
+    await query(`INSERT INTO recon_comment_votes (comment_id, user_id, vote) VALUES (?, ?, ?)
+      ON CONFLICT (comment_id, user_id) DO UPDATE SET vote = EXCLUDED.vote`, [commentId, user.uid, vote]);
+  }
+  const counts = await query<{ like_count: number; my_vote: 'like' | 'dislike' | null }>(
+    `SELECT COUNT(*) FILTER (WHERE vote = 'like') AS like_count,
+       MAX(vote) FILTER (WHERE user_id = ?) AS my_vote
+     FROM recon_comment_votes WHERE comment_id = ?`, [user.uid, commentId],
+  );
+  return c.json({ likeCount: Number(counts[0].like_count), myVote: counts[0].my_vote ?? null });
 });
 
 // POST /v1/recon/comments
@@ -606,6 +681,7 @@ reconRoutes.post('/recon/save-edit', async (c) => {
 
   const now = Math.floor(Date.now() / 1000);
   const normalizedFields = { ...(fields ?? {}) };
+  assertReconTextLengths(normalizedFields);
   normalizeReconSolutionRow(normalizedFields);
   const current = await query<Record<string, unknown>>('SELECT * FROM recons WHERE id = ?', [solveId]);
   if (!current.length) return c.json({ error: 'Not found' }, 404);
@@ -743,10 +819,7 @@ reconRoutes.get('/recon/wca-attempts', async (c) => {
 });
 
 // GET /v1/recon/cubing-attempts?slug=&event=&round=&personId= — 代理 cubing.com 实时直播成绩
-// NOTE: 经验观察:cubing.com 数据要么全空要么全填,极少卡在中间态。所以
-//   "attempts 全部非 null" 即可作为"该选手该轮已完赛"的判据,可安全长 TTL 缓存到 DB,
-//   让第二位用户/设备在 WCA post 之前秒加载。
-const CUBING_CACHE_TTL_DAYS = 7;
+// Filled attempts can still be corrected; do not reuse the old seven-day DB cache.
 
 reconRoutes.get('/recon/cubing-attempts', async (c) => {
   // 优先 compId(WCA 比赛 ID,无横杠):服务端按真实比赛名推 cubing slug,避免无横杠 ID 反推
@@ -780,51 +853,17 @@ reconRoutes.get('/recon/cubing-attempts', async (c) => {
     slug = name ? nameToCubingSlug(name) : wcaIdToCubingSlug(compId);
   }
 
-  // 1. 查缓存
-  try {
-    const rows = await query<{ attempts: string }>(
-      `SELECT attempts FROM cubing_attempts_cache
-        WHERE slug = ? AND event = ? AND round = ? AND person_id = ?
-          AND fetched_at > NOW() - INTERVAL '${CUBING_CACHE_TTL_DAYS} days'`,
-      [slug, event, round, personId],
-    );
-    if (rows[0]?.attempts) {
-      c.header('Cache-Control', 'public, max-age=86400');
-      c.header('X-Cache', 'HIT');
-      return c.json({ attempts: JSON.parse(rows[0].attempts) });
-    }
-  } catch (err) {
-    console.error('[cubing-attempts] cache read failed:', err);
-  }
-
-  // 2. miss → fetchCubingAttempts(内含 5min 内存缓存 + WS 拉取)
+  // The REST adapter has a short round cache, including ongoing attempts.
   let attempts: (number | null)[] | null;
   try {
     attempts = await fetchCubingAttempts(slug, event, round, personId);
   } catch (err) {
     console.error('[cubing-attempts] fetch failed:', err);
+    c.header('Cache-Control', 'no-store');
     return c.json({ error: 'cubing.com unreachable', detail: String((err as Error)?.message ?? err) }, 502);
   }
 
-  // 3. 仅当"完赛"(数组非空且全部非 null)写库;部分填 / 全空保持短 TTL
-  const isComplete = Array.isArray(attempts) && attempts.length >= 1 && attempts.every(v => v != null);
-  if (isComplete) {
-    try {
-      await query(
-        `INSERT INTO cubing_attempts_cache (slug, event, round, person_id, attempts)
-         VALUES (?, ?, ?, ?, ?)
-         ON CONFLICT (slug, event, round, person_id) DO UPDATE SET
-           attempts = EXCLUDED.attempts,
-           fetched_at = NOW()`,
-        [slug, event, round, personId, JSON.stringify(attempts)],
-      );
-    } catch (err) {
-      console.error('[cubing-attempts] cache write failed:', err);
-    }
-  }
-
-  c.header('Cache-Control', isComplete ? 'public, max-age=86400' : 'public, max-age=60');
-  c.header('X-Cache', 'MISS');
+  c.header('Cache-Control', attempts?.some(value => value !== null) ? 'public, max-age=0, s-maxage=15' : 'no-store');
   return c.json({ attempts });
 });
 
@@ -1176,6 +1215,7 @@ reconRoutes.post('/recon', async (c) => {
   delete body.id;
 
   const row = jsonToRow(body);
+  assertReconTextLengths(row);
   normalizeReconScrambleRow(row);
   normalizeReconSolutionRow(row);
   const errors = validateRow(row);
@@ -1238,6 +1278,7 @@ reconRoutes.put('/recon/:id', async (c) => {
   }
 
   const row = jsonToRow(body);
+  assertReconTextLengths(row);
   normalizeReconScrambleRow(row, existing[0].event);
   normalizeReconSolutionRow(row);
   if (Object.keys(row).length === 0) {
@@ -1352,6 +1393,7 @@ reconRoutes.post('/recon/:id/alternatives', async (c) => {
   const authUser = await requireAuth(c);
   const id = c.req.param('id');
   const body = await c.req.json<{ solution?: string }>();
+  assertReconTextLengths(body);
   const solution = normalizeReconSolution(body.solution ?? '').trim();
   if (!solution) return c.json({ error: 'solution required' }, 400);
   if (Buffer.byteLength(solution, 'utf8') > 65535) return c.json({ error: 'solution too long' }, 400);
@@ -1394,6 +1436,7 @@ reconRoutes.put('/recon/:id/alternatives/:idx', async (c) => {
   const id = c.req.param('id');
   const idx = Number(c.req.param('idx'));
   const body = await c.req.json<{ solution?: string }>();
+  assertReconTextLengths(body);
   const solution = normalizeReconSolution(body.solution ?? '').trim();
   if (!solution) return c.json({ error: 'solution required' }, 400);
   if (Buffer.byteLength(solution, 'utf8') > 65535) return c.json({ error: 'solution too long' }, 400);

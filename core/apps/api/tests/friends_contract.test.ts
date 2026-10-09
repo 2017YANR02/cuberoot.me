@@ -37,7 +37,12 @@ describe('friends contract', () => {
     expect(route).toContain("friendRoutes.post('/friends/blocks'");
     expect(route).toContain("friendRoutes.delete('/friends/blocks/:userId'");
     expect(route).toContain('requireAppUserId(c)');
-    expect(route).toContain('ORDER BY id\n     FOR UPDATE');
+    expect(await read('../src/utils/friend_relationships.ts')).toContain('ORDER BY id\n     FOR UPDATE');
+    expect(route).toContain('lockFriendUsers as lockedUsers');
+    const removal = route.slice(route.indexOf("friendRoutes.delete('/friends/:userId'"), route.indexOf("friendRoutes.post('/friends/blocks'"));
+    expect(removal).toContain('removeAcceptedFriend(tx, userId, targetUserId)');
+    const sharedRemoval = await read('../src/utils/friend_relationships.ts');
+    expect(sharedRemoval.indexOf('await lockFriendUsers(tx, userId, peerId)')).toBeLessThan(sharedRemoval.indexOf('DELETE FROM user_friendships'));
     expect(route).toContain('DELETE FROM user_friendships');
     expect(route).toContain("kind: 'friend_request'");
     expect(route).toContain("kind: 'friend_accepted'");

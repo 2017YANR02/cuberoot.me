@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 import type { PbRecordType } from '@cuberoot/shared/pb';
 import { apiUrl } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
@@ -40,7 +41,7 @@ export interface CreatePbRecordInput {
 }
 
 export async function fetchMyPbs(signal?: AbortSignal): Promise<PbCollection> {
-  return handleApi(await fetch(apiUrl('/v1/pb/me'), {
+  return handleApi(await sessionFetch(apiUrl('/v1/pb/me'), {
     headers: authHeaders(false),
     cache: 'no-store',
     signal,
@@ -48,14 +49,14 @@ export async function fetchMyPbs(signal?: AbortSignal): Promise<PbCollection> {
 }
 
 export async function fetchPbPerson(wcaId: string, signal?: AbortSignal): Promise<PbCollection> {
-  return handleApi(await fetch(apiUrl(`/v1/pb/person/${encodeURIComponent(wcaId)}`), {
+  return handleApi(await sessionFetch(apiUrl(`/v1/pb/person/${encodeURIComponent(wcaId)}`), {
     cache: 'no-store',
     signal,
   }));
 }
 
 export async function fetchManagedPbs(wcaId: string, signal?: AbortSignal): Promise<PbCollection> {
-  return handleApi(await fetch(apiUrl(`/v1/pb/manage/${encodeURIComponent(wcaId)}`), {
+  return handleApi(await sessionFetch(apiUrl(`/v1/pb/manage/${encodeURIComponent(wcaId)}`), {
     headers: authHeaders(false),
     cache: 'no-store',
     signal,
@@ -68,7 +69,7 @@ function managedPath(path: string, ownerWcaId?: string): string {
 }
 
 export async function updatePbVisibility(isPublic: boolean, ownerWcaId?: string): Promise<void> {
-  await handleApi(await fetch(apiUrl(managedPath('/v1/pb/profile', ownerWcaId)), {
+  await handleApi(await sessionFetch(apiUrl(managedPath('/v1/pb/profile', ownerWcaId)), {
     method: 'PUT',
     headers: authHeaders(),
     body: JSON.stringify({ isPublic }),
@@ -76,7 +77,7 @@ export async function updatePbVisibility(isPublic: boolean, ownerWcaId?: string)
 }
 
 export async function createPbRecord(input: CreatePbRecordInput, ownerWcaId?: string): Promise<PbRecord> {
-  const data = await handleApi<{ record: PbRecord }>(await fetch(apiUrl(managedPath('/v1/pb/records', ownerWcaId)), {
+  const data = await handleApi<{ record: PbRecord }>(await sessionFetch(apiUrl(managedPath('/v1/pb/records', ownerWcaId)), {
     method: 'POST',
     headers: authHeaders(),
     body: JSON.stringify(input),
@@ -89,7 +90,7 @@ export async function updatePbRecord(
   input: CreatePbRecordInput,
   ownerWcaId?: string,
 ): Promise<PbRecord> {
-  const data = await handleApi<{ record: PbRecord }>(await fetch(apiUrl(managedPath(`/v1/pb/records/${id}`, ownerWcaId)), {
+  const data = await handleApi<{ record: PbRecord }>(await sessionFetch(apiUrl(managedPath(`/v1/pb/records/${id}`, ownerWcaId)), {
     method: 'PUT',
     headers: authHeaders(),
     body: JSON.stringify(input),
@@ -98,7 +99,7 @@ export async function updatePbRecord(
 }
 
 export async function deletePbRecord(id: number, ownerWcaId?: string): Promise<void> {
-  await handleApi(await fetch(apiUrl(managedPath(`/v1/pb/records/${id}`, ownerWcaId)), {
+  await handleApi(await sessionFetch(apiUrl(managedPath(`/v1/pb/records/${id}`, ownerWcaId)), {
     method: 'DELETE',
     headers: authHeaders(false),
   }));

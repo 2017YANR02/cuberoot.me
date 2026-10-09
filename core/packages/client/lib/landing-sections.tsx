@@ -17,6 +17,7 @@ import {
 } from '@cuberoot/shared/site-directory';
 import { type LandingSearchCard } from '@/components/LandingSearch';
 import { PAGE_META } from '@/lib/page-meta';
+import { SITE_ANNOUNCEMENTS } from '@cuberoot/shared/site-announcements';
 import { PLATFORM_ROUTES } from '@/lib/platform-routes';
 import { TOC } from '@/app/[lang]/math/group/_data/toc';
 import { REG_ARTICLES, regArticleHref } from '@/app/[lang]/regulation/_data/articles';
@@ -198,7 +199,7 @@ const DIRECTORY_SEARCH_CARDS: LandingSearchCard[] = [
 // rather than independently browsable content. Dynamic [param] keys are also
 // excluded below; real dynamic content is enumerated from its own catalog.
 const SEARCH_EXCLUDED_ROUTES = new Set([
-  '', 'search', 'partnership', 'partnership/talking-points', 'vault',
+  '', 'search', 'partnership', 'partnership/talking-points', 'bp', 'bp/talking-points', 'vault',
   'teachers-edit', 'wca/persons/students', 'alg/lsll/case', 'alg/lsll/route',
   'recon/ground-truth', 'recon/submit', 'recon/submit-sketch',
 ]);
@@ -218,7 +219,7 @@ const PAGE_SEARCH_CARDS: LandingSearchCard[] = Object.entries(PAGE_META)
       nameZh: meta.title.zh,
       sectionTitleEn: section.en,
       sectionTitleZh: section.zh,
-      keywords: `${meta.description?.en ?? ''}\n${meta.description?.zh ?? ''}`,
+      keywords: `${meta.description?.en ?? ''}\n${meta.description?.zh ?? ''}\n${SITE_ANNOUNCEMENTS.find(entry=>entry.href===`/${route}`)?.aliases.join('\n') ?? ''}`,
     };
   });
 

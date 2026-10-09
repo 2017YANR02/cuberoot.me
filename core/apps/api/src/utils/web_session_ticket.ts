@@ -10,6 +10,7 @@ import { challengeFromVerifier } from './auth_pkce.js';
 
 export const WEB_SESSION_TICKET_TTL_SECONDS = 90;
 export const WECHAT_BROWSER_SESSION_TTL_SECONDS = 5 * 60;
+export const WECHAT_WCA_LINK_TTL_SECONDS = 10 * 60;
 
 function hashTicket(ticket: string): string {
   return createHash('sha256').update(ticket).digest('hex');
@@ -72,6 +73,33 @@ export async function issueWechatBrowserSession(existingOnly = false): Promise<{
     [hashTicket(ticket), challengeFromVerifier(approval), expiresAt, existingOnly],
   );
   return { approval, expiresIn: WECHAT_BROWSER_SESSION_TTL_SECONDS, ticket };
+}
+
+export async function issueWechatWcaLink(userId: number): Promise<WebSessionTicketEnvelope> {
+  assertUserId(userId);
+  const ticket = randomBytes(32).toString('base64url');
+  const expiresAt = new Date(Date.now() + WECHAT_WCA_LINK_TTL_SECONDS * 1000);
+  await query('DELETE FROM auth_web_session_tickets WHERE expires_at <= NOW()');
+  await query(
+    `INSERT INTO auth_web_session_tickets
+      (ticket_hash, user_id, purpose, expires_at)
+     VALUES (?, ?, 'wechat_wca_link', ?)`,
+    [hashTicket(ticket), userId, expiresAt],
+  );
+  return { ticket, expiresIn: WECHAT_WCA_LINK_TTL_SECONDS };
+}
+
+/** Atomically claim a WCA-link ticket after the browser has verified WCA. */
+export async function consumeWechatWcaLink(ticket: string): Promise<number | null> {
+  if (!isWebSessionTicket(ticket)) return null;
+  const rows = await query<{ user_id: number }>(
+    `DELETE FROM auth_web_session_tickets
+     WHERE ticket_hash = ? AND purpose = 'wechat_wca_link' AND expires_at > NOW()
+     RETURNING user_id`,
+    [hashTicket(ticket)],
+  );
+  const userId = Number(rows[0]?.user_id);
+  return Number.isSafeInteger(userId) && userId > 0 ? userId : null;
 }
 
 /** Mini Program approval is idempotent for the same account, but cannot be reassigned. */

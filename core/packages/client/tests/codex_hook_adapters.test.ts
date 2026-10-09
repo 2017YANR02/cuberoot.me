@@ -9,8 +9,8 @@ import { describe, expect, it } from 'vitest';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(HERE, '../../../..');
 const CORE_ROOT = join(REPO_ROOT, 'core');
-const WRITE_ADAPTER = join(REPO_ROOT, '.codex/hooks/adapt-codex-write-payload.mjs');
-const COMMAND_ADAPTER = join(REPO_ROOT, '.codex/hooks/adapt-codex-command-payload.mjs');
+const WRITE_ADAPTER = join(REPO_ROOT, '.codex/hooks/adapt-codex-write-payload.mts');
+const COMMAND_ADAPTER = join(REPO_ROOT, '.codex/hooks/adapt-codex-command-payload.mts');
 const HOOK_CONFIG = join(REPO_ROOT, '.codex/hooks.json');
 const HOOKS = join(REPO_ROOT, '.codex', 'hooks');
 const DELETE_FIXTURE = join(HERE, 'fixtures/block-rm-use-trash-fixture.mjs');
@@ -63,6 +63,29 @@ describe('Codex hook payload adapters', () => {
     expect(JSON.parse(result.stdout).hookSpecificOutput.permissionDecision).toBe('deny');
   });
 
+  it('denies shared-control positioning regressions through the registered write hook', () => {
+    const target = join(HOOKS, 'block-css-position-cascade.mts');
+    const config = JSON.parse(readFileSync(HOOK_CONFIG, 'utf8'));
+    const command = config.hooks.PreToolUse.find((entry: { matcher: string }) => entry.matcher === 'apply_patch').hooks[0].command;
+    expect(command).toContain('block-css-position-cascade.mts');
+    const file = join(CORE_ROOT, 'packages/client/components/position-hook-probe.css');
+    for (const selector of ['.trainer-opts--top', '.mem-pay-close']) {
+      const patch = `*** Begin Patch\n*** Add File: ${file}\n+${selector} { position: absolute; }\n*** End Patch`;
+      const result = runAdapter(WRITE_ADAPTER, target, { tool_input: { command: patch } });
+      expect(result.status).toBe(0);
+      expect(JSON.parse(result.stdout).hookSpecificOutput.permissionDecision).toBe('deny');
+    }
+    const legalPatch = `*** Begin Patch\n*** Add File: ${file}\n+.settings-popover.trainer-opts--top { position: absolute; }\n*** End Patch`;
+    const legal = runAdapter(WRITE_ADAPTER, target, { tool_input: { command: legalPatch } });
+    expect(legal.status).toBe(0);
+    expect(legal.stdout).toBe('');
+    for (const input of ['bad JSON', '{}', '{"tool_input":null}']) {
+      const result = runProcess(process.execPath, [target], CORE_ROOT, input);
+      expect(result.status).toBe(0);
+      expect(result.stdout).toBe('');
+    }
+  });
+
   it('registers only cross-platform Node hooks', () => {
     const config = JSON.parse(readFileSync(HOOK_CONFIG, 'utf8')) as {
       hooks: Record<string, Array<{ hooks: Array<{ command: string; commandWindows: string }> }>>;
@@ -96,10 +119,10 @@ describe('Codex hook payload adapters', () => {
   });
 
   it('emits both PostToolUse reminders through Node', () => {
-    const calc = runAdapter(join(HOOKS, 'calc-test-reminder.mjs'), [], {
+    const calc = runAdapter(join(HOOKS, 'calc-test-reminder.mts'), [], {
       tool_input: { command: '*** Update File: core/packages/client/app/[lang]/calc/page.tsx' },
     });
-    const migration = runAdapter(join(HOOKS, 'dev-data-sync-reminder.mjs'), [], {
+    const migration = runAdapter(join(HOOKS, 'dev-data-sync-reminder.mts'), [], {
       tool_input: { command: '*** Add File: core/apps/api/migrations/9999_probe.sql' },
     });
 
@@ -111,7 +134,7 @@ describe('Codex hook payload adapters', () => {
     const list = JSON.parse(readFileSync(join(REPO_ROOT, '.codex', 'banned-words.json'), 'utf8')) as {
       words: Array<{ word: string }>;
     };
-    const result = runAdapter(join(HOOKS, 'block-banned-words.mjs'), [], {
+    const result = runAdapter(join(HOOKS, 'block-banned-words.mts'), [], {
       tool_input: {
         file_path: join(REPO_ROOT, 'core/packages/client/app/probe/page.tsx'),
         content: String(list.words[0].word),
@@ -123,7 +146,7 @@ describe('Codex hook payload adapters', () => {
   });
 
   it('reports no SessionStart guard-documentation drift', () => {
-    const result = runAdapter(join(HOOKS, 'check-guards-drift-session.mjs'), [], {});
+    const result = runAdapter(join(HOOKS, 'check-guards-drift-session.mts'), [], {});
 
     expect(result.status).toBe(0);
     expect(result.stdout).toBe('');

@@ -9,7 +9,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CornerDownRight, LogIn, Trash2 } from 'lucide-react';
 import { Spinner } from '@/components/Spinner/Spinner';
-import { UserIdLabel } from '@/components/UserIdLabel';
+import { UserContactLink } from '@/components/UserIdLabel';
 import { useT } from '@/hooks/useT';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { getOwnerKey, isAdmin, useAuthStore } from '@/lib/auth-store';
@@ -95,10 +95,9 @@ export default function FeedbackConversation({ feedbackId, onActivity }: {
           {messages.map((m) => (
             <div key={m.id} className={`fbc-msg fbc-msg-${m.role}`}>
               <div className="fbc-msg-head">
-                <span className="fbc-msg-who">
+                <UserContactLink userId={m.userId} className="fbc-msg-who">
                   {m.role === 'admin' ? t('管理员', 'Admin') : (displayCuberName(m.wcaName, isZh) || m.wcaId)}
-                </span>
-                <UserIdLabel userId={m.userId} />
+                </UserContactLink>
                 <span className="fbc-msg-when">{when(m.createdAt)}</span>
                 {canDelete(m) && (
                   confirmId === m.id ? (

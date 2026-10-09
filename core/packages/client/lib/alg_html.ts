@@ -7,7 +7,8 @@
  *
  * 单一来源:公式库列表(AlgCategoryView)与记忆模式(MemoryTrainer)共用这一份。
  */
-const ALG_HTML_TAG_WHITELIST = new Set(['u', 's', 'em', 'strong', 'sub', 'sup']);
+import { algHtmlText, sanitizeAlgHtml } from '@cuberoot/shared/alg-html';
+export { algHtmlText, sanitizeAlgHtml } from '@cuberoot/shared/alg-html';
 
 export interface AlgTextEdit { start: number; end: number; text: string }
 
@@ -40,26 +41,4 @@ export function editAlgHtmlText(html: string, edits: readonly AlgTextEdit[]): st
     active = char.tags;
   }
   return out + active.reverse().map(close).join('');
-}
-
-/** Plain moves represented by the safe markup, usable without a browser DOM. */
-export function algHtmlText(html: string): string {
-  const entities: Record<string, string> = { amp: '&', apos: "'", quot: '"', lt: '<', gt: '>', nbsp: ' ' };
-  return sanitizeAlgHtml(html).replace(/<[^>]*>/g, '').replace(/&(#x[\da-f]+|#\d+|\w+);/gi, (whole, entity: string) => {
-    if (entity.startsWith('#')) {
-      const code = entity[1].toLowerCase() === 'x' ? parseInt(entity.slice(2), 16) : Number(entity.slice(1));
-      return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : whole;
-    }
-    return entities[entity.toLowerCase()] ?? whole;
-  });
-}
-
-export function sanitizeAlgHtml(html: string): string {
-  return html.replace(/<(\/?)([a-z][a-z0-9]*)\b([^>]*)>/gi, (_full, slash, tag, attrs) => {
-    const t = tag.toLowerCase();
-    if (!ALG_HTML_TAG_WHITELIST.has(t)) return '';
-    if (slash) return `</${t}>`;
-    if (t === 'u' && /\bclass\s*=\s*["']?wavy["']?/i.test(attrs)) return '<u class="wavy">';
-    return `<${t}>`;
-  });
 }

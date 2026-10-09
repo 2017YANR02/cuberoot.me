@@ -6,7 +6,7 @@
 // 最终下拉。没有任何行时,合成结果必须与代码默认逐字相同 —— 测试钉死这条。
 //
 // 先合成旧 position 排序，再应用按阶数保存的完整布局；新条目追加到默认分组。
-import { customMaskFn, type CustomTreatment } from './customStickering';
+import { customMaskFn, type CustomTreatment } from '@/components/sim-embed/customStickering';
 import type { StickeringGroup, StickeringMaskFn } from './stickering';
 import { PRESET_PREFIX, type SimMaskRow } from '@/lib/sim-masks-api';
 

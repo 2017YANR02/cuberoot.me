@@ -6,6 +6,7 @@
 // map below is baked into the string at build time from lib/palettes.ts, so it
 // can't drift from the real palette list.
 
+import { decodeMiniProgramPreferences, MINI_PROGRAM_PREFERENCES_QUERY } from '@cuberoot/shared/appearance';
 import { PALETTES } from './palettes';
 
 const PALETTE_SCHEMES = JSON.stringify(
@@ -14,6 +15,30 @@ const PALETTE_SCHEMES = JSON.stringify(
 
 export const THEME_BOOTSTRAP = `(() => {
   try {
+    var incoming = new URLSearchParams(location.search).get('${MINI_PROGRAM_PREFERENCES_QUERY}');
+    if (incoming) {
+      sessionStorage.setItem('cuberoot.native-preferences', '2');
+      if (sessionStorage.getItem('cuberoot.native-preferences.applied') !== incoming) {
+        var snapshot = JSON.parse(incoming);
+        if (['tools', 'timer', 'web'].includes(snapshot.tab)) sessionStorage.setItem('cuberoot.native-tab', snapshot.tab);
+        var preferences = (${decodeMiniProgramPreferences.toString()})(snapshot.preferences);
+        if (preferences) {
+          document.cookie = 'lang=' + preferences.locale + '; max-age=31536000; path=/; samesite=lax';
+          var values = { 'trainer-lang': preferences.locale, theme: preferences.theme,
+            palette: preferences.palette, contrast: preferences.contrast,
+            'home-background.v1.light': preferences.lightBackground,
+            'home-background.v1.dark': preferences.darkBackground };
+          Object.keys(values).forEach(function(key) {
+            try {
+              if (values[key] === null) localStorage.removeItem(key);
+              // allow-raw-localstorage: standalone pre-hydration script; each write is caught so quota failures cannot stop theme initialization.
+              else localStorage.setItem(key, values[key]);
+            } catch (_) {}
+          });
+        }
+        sessionStorage.setItem('cuberoot.native-preferences.applied', incoming);
+      }
+    }
     var de = document.documentElement;
     var schemes = ${PALETTE_SCHEMES};
     var pal = localStorage.getItem('palette');

@@ -17,7 +17,7 @@
 // (z2 重排 piece-id / 取向约定, 不像 sia222 的 z2 y 能共享), 故 A/B **各存一份**(两半 PDB 块串进同一张 gz)。
 // 运行:
 //   pnpm --filter @cuberoot/scramble-stats-build build:sia123-table
-// 由 update_puzzle_stats.ps1 的「TIER B 离线表」步骤调用。
+// 由 scripts/stats/puzzles-cli.ts 的「TIER B 离线表」步骤调用。
 
 import fs from 'node:fs';
 import path from 'node:path';

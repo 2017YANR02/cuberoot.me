@@ -5,6 +5,8 @@ import type { WebViewPageData } from '../src/lib/web-view-page';
 interface ToolsPage {
   data: WebViewPageData;
   onLoad(options: Record<string, unknown>): void;
+  onHide(): void;
+  onShow(): void;
   onShareAppMessage(): WechatMiniprogram.Page.ICustomShareContent;
   setData(data: Partial<WebViewPageData>): void;
 }
@@ -71,4 +73,21 @@ describe('mini program tools page', () => {
       path: '/pages/tools/index',
     });
   });
+
+  it('keeps the document and scroll state alive across tab switches even before preferences arrive', async () => {
+    const page = await loadPage({ getStorageSync: () => null,
+      setNavigationBarTitle: vi.fn(), showShareMenu: vi.fn() });
+    page.onLoad({});
+    await Promise.resolve();
+    expect(page.data.src).toBe('https://cuberoot.me/zh#wechat_redirect');
+    page.onHide();
+    expect(page.data.src).toBe('https://cuberoot.me/zh#wechat_redirect');
+    page.onShow();
+    await Promise.resolve();
+    expect(page.data.src).toBe('https://cuberoot.me/zh#wechat_redirect');
+    expect(page.data.viewAttempt).toBe(1);
+  });
 });
+
+// Route/session tests isolate the appearance URL transport, covered by preferences.test.ts.
+vi.mock('../src/lib/preferences', () => ({ readNativePreferences: () => null, withNativePreferences: (url: string) => url }));

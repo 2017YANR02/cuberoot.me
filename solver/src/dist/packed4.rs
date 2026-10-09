@@ -136,20 +136,23 @@ pub fn bfs_multi_packed4(
                         let limit = if remaining < 64 { remaining } else { 64 };
 
                         // AVX2 块跳过(只在满 64 + 字节对齐内时)
-                        if remaining >= 64 {
-                            let nibble_off = base_state + c_base;
-                            let byte_off = nibble_off >> 1;
-                            let chunk = _mm256_loadu_si256(p.add(byte_off) as *const __m256i);
-                            let mask_low = _mm256_set1_epi8(0x0F);
-                            let vec_d = _mm256_set1_epi8(depth as i8);
-                            let low = _mm256_and_si256(chunk, mask_low);
-                            let high = _mm256_and_si256(_mm256_srli_epi16(chunk, 4), mask_low);
-                            let cmp_low = _mm256_cmpeq_epi8(low, vec_d);
-                            let cmp_high = _mm256_cmpeq_epi8(high, vec_d);
-                            let cmp_any = _mm256_or_si256(cmp_low, cmp_high);
-                            if _mm256_testz_si256(cmp_any, cmp_any) != 0 {
-                                c_base += 64;
-                                continue;
+                        #[cfg(target_arch = "x86_64")]
+                        {
+                            if remaining >= 64 {
+                                let nibble_off = base_state + c_base;
+                                let byte_off = nibble_off >> 1;
+                                let chunk = _mm256_loadu_si256(p.add(byte_off) as *const __m256i);
+                                let mask_low = _mm256_set1_epi8(0x0F);
+                                let vec_d = _mm256_set1_epi8(depth as i8);
+                                let low = _mm256_and_si256(chunk, mask_low);
+                                let high = _mm256_and_si256(_mm256_srli_epi16(chunk, 4), mask_low);
+                                let cmp_low = _mm256_cmpeq_epi8(low, vec_d);
+                                let cmp_high = _mm256_cmpeq_epi8(high, vec_d);
+                                let cmp_any = _mm256_or_si256(cmp_low, cmp_high);
+                                if _mm256_testz_si256(cmp_any, cmp_any) != 0 {
+                                    c_base += 64;
+                                    continue;
+                                }
                             }
                         }
 

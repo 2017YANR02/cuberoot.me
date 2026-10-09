@@ -1,8 +1,11 @@
+import { printDesktopDocument } from './native-print';
+import { createStackmatMicSource } from '@cuberoot/timer-ui/external';
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrent, onOpenUrl } from '@tauri-apps/plugin-deep-link';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import {
   InstalledAuthClient,
+  createNativeScreenWakeLock,
   mobileApiUrl,
   useInstalledSmartCube,
   useInstalledAuth,
@@ -14,7 +17,7 @@ import {
   createNetBattleClient,
   createNetBattleSessionStore,
 } from '@cuberoot/shared/timer';
-import { browserClipboardTransport, browserPrintTransport } from '@cuberoot/timer-ui';
+import { browserClipboardTransport } from '@cuberoot/timer-ui';
 
 import packageInfo from '../package.json';
 import { TauriBleTransport } from './tauri-ble-transport';
@@ -54,7 +57,13 @@ const desktopNetBattle = {
   sessions: createNetBattleSessionStore(desktopSecureStorage),
 };
 
+const requestDesktopScreenWakeLock = createNativeScreenWakeLock(
+  (enabled) => invoke<void>('set_keep_awake', { enabled }),
+);
+
 export const desktopHost: InstalledAppHost = {
+  createBleTransport: () => new TauriBleTransport(),
+  createStackmatSource: createStackmatMicSource,
   async addNetworkListener(listener) {
     const update = () => listener(navigator.onLine);
     window.addEventListener('online', update);
@@ -70,10 +79,13 @@ export const desktopHost: InstalledAppHost = {
   isInstalled: () => true,
   netBattle: desktopNetBattle,
   openExternal: openUrl,
-  print: browserPrintTransport,
+  print: printDesktopDocument,
+  async exportFile(text, filename) {
+    if (!await invoke<boolean>('export_file', { text, filename })) throw new DOMException('Export cancelled', 'AbortError');
+  },
   writeClipboardText: browserClipboardTransport,
   useAuth: (language) => useInstalledAuth(language, desktopAuthPort),
   useSmartCube: (options) => useInstalledSmartCube(() => new TauriBleTransport(), options),
-  useTimerEffects: useInstalledTimerEffects,
+  useTimerEffects: (phase) => useInstalledTimerEffects(phase, undefined, requestDesktopScreenWakeLock),
   version: packageInfo.version,
 };

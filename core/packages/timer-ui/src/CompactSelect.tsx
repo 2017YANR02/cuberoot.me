@@ -8,6 +8,7 @@ import {
   useState,
   type CSSProperties,
   type ReactNode,
+  type RefObject,
 } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -20,9 +21,13 @@ export interface CompactSelectItem<T extends string | number> {
 }
 
 export interface CompactSelectProps<T extends string | number> {
+  id?: string;
+  disabled?: boolean;
   label: ReactNode;
   items: readonly CompactSelectItem<T>[];
   value?: T;
+  /** Multi-selection uses the same menu; onChange toggles the chosen value. */
+  selectedValues?: readonly T[];
   onChange: (value: T) => void;
   ariaLabel: string;
   valueText?: string;
@@ -30,15 +35,24 @@ export interface CompactSelectProps<T extends string | number> {
   className?: string;
   triggerClassName?: string;
   popupClassName?: string;
+  /** Align option content with an external row containing the trigger. */
+  contentAnchorRef?: RefObject<HTMLElement | null>;
   variant?: 'pill' | 'plain';
+  /** Some icon-only triggers are self-explanatory and do not need a caret. */
+  showArrow?: boolean;
   footer?: (close: () => void) => ReactNode;
+  /** Replace options with an inline editor, preserving anchoring and dismissal. */
+  panelContent?: ReactNode;
   dataNoTimer?: boolean;
   /** Mouse hover opens the menu; touch and keyboard keep click activation. */
   openOnHover?: boolean;
-  /** Close immediately outside the trigger/popup, retaining their small crossing gap. */
+  /** Close immediately outside the trigger/popup, retaining their small crossing gap. Defaults to openOnHover. */
   dismissOnMouseLeave?: boolean;
   /** Fixed content below the popup, such as Mobile's bottom navigation. */
   viewportBottomInset?: number;
+  /** Optional host control for modal/back-button coordination. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 interface PanelGeometry {
@@ -57,9 +71,12 @@ const PANEL_GAP = 6;
  * viewport clamping implementation.
  */
 export function CompactSelect<T extends string | number>({
+  id,
+  disabled = false,
   label,
   items,
   value,
+  selectedValues,
   onChange,
   ariaLabel,
   valueText,
@@ -67,19 +84,42 @@ export function CompactSelect<T extends string | number>({
   className,
   triggerClassName,
   popupClassName,
+  contentAnchorRef,
   variant = 'pill',
+  showArrow = true,
   footer,
+  panelContent,
   dataNoTimer = false,
   openOnHover = false,
-  dismissOnMouseLeave = false,
+  dismissOnMouseLeave = openOnHover,
   viewportBottomInset = 0,
+  open: controlledOpen,
+  onOpenChange,
 }: CompactSelectProps<T>) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = (next: boolean | ((current: boolean) => boolean)) => {
+    const value = typeof next === 'function' ? next(open) : next;
+    if (controlledOpen === undefined) setInternalOpen(next);
+    onOpenChange?.(value);
+  };
   const [geometry, setGeometry] = useState<PanelGeometry | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const previousOpenRef = useRef(open);
   const close = () => setOpen(false);
+  const hasPanelContent = panelContent != null;
   usePopoverDismiss(open, close, panelRef, triggerRef);
+
+  useEffect(() => {
+    const wasOpen = previousOpenRef.current;
+    previousOpenRef.current = open;
+    if (controlledOpen !== undefined && wasOpen && !open && !disabled) triggerRef.current?.focus();
+  }, [controlledOpen, disabled, open]);
+
+  useEffect(() => {
+    if (disabled) setOpen(false);
+  }, [disabled]);
 
   useEffect(() => {
     if (!open || !dismissOnMouseLeave) return;
@@ -139,13 +179,17 @@ export function CompactSelect<T extends string | number>({
         safeTop,
         viewportTop + viewportHeight - VIEWPORT_MARGIN - Math.max(0, viewportBottomInset),
       );
-      const anchor = trigger.getBoundingClientRect();
+      const anchor = (contentAnchorRef?.current ?? trigger).getBoundingClientRect();
       const panelRect = panel.getBoundingClientRect();
+      const optionContent = panel.querySelector('.compact-select-option')?.firstElementChild;
+      const contentInset = contentAnchorRef?.current && optionContent
+        ? optionContent.getBoundingClientRect().left - panelRect.left
+        : 0;
       const safeWidth = Math.max(0, safeRight - safeLeft);
       const naturalWidth = panel.scrollWidth || panelRect.width || anchor.width;
       const desiredWidth = Math.min(naturalWidth, safeWidth);
       const left = Math.min(
-        Math.max(anchor.left, safeLeft),
+        Math.max(anchor.left - contentInset, safeLeft),
         Math.max(safeLeft, safeRight - desiredWidth),
       );
       const belowTop = anchor.bottom + PANEL_GAP;
@@ -177,7 +221,7 @@ export function CompactSelect<T extends string | number>({
       window.visualViewport?.removeEventListener('resize', positionPanel);
       window.visualViewport?.removeEventListener('scroll', positionPanel);
     };
-  }, [items.length, open, viewportBottomInset]);
+  }, [contentAnchorRef, items.length, open, viewportBottomInset, hasPanelContent]);
 
   const panelStyle = geometry ? {
     left: geometry.left,
@@ -195,43 +239,55 @@ export function CompactSelect<T extends string | number>({
         className,
       ].filter(Boolean).join(' ')}
       data-no-timer={dataNoTimer ? '' : undefined}
+      onKeyDown={event => {
+        if (!open || event.key !== 'Escape') return;
+        event.preventDefault();
+        event.stopPropagation();
+        close();
+        triggerRef.current?.focus();
+      }}
     >
       <button
         ref={triggerRef}
+        id={id}
+        disabled={disabled}
         type="button"
         className={['compact-select-trigger', triggerClassName].filter(Boolean).join(' ')}
-        onClick={() => setOpen(current => !current)}
+        onClick={() => { if (!disabled) setOpen(current => !current); }}
         onPointerEnter={event => {
-          if (openOnHover && event.pointerType === 'mouse') setOpen(true);
+          if (!disabled && openOnHover && event.pointerType === 'mouse') setOpen(true);
         }}
         aria-label={ariaLabel}
         aria-description={valueText}
-        aria-expanded={open}
-        aria-haspopup="listbox"
+        aria-expanded={open && !disabled}
+        aria-haspopup={hasPanelContent ? 'dialog' : 'listbox'}
         title={title}
       >
         <span className="compact-select-current">{label}</span>
-        <ChevronDown
-          size={14}
-          strokeWidth={2}
-          className={`compact-select-arrow${open ? ' open' : ''}`}
-          aria-hidden="true"
-        />
+        {showArrow && (
+          <ChevronDown
+            size={14}
+            strokeWidth={2}
+            className={`compact-select-arrow${open ? ' open' : ''}`}
+            aria-hidden="true"
+          />
+        )}
       </button>
 
-      {open && typeof document !== 'undefined' && createPortal(
+      {open && !disabled && typeof document !== 'undefined' && createPortal(
         <div
           ref={panelRef}
           className={['compact-select-popup', popupClassName].filter(Boolean).join(' ')}
           data-site-surface="popover"
-          role="listbox"
+          role={hasPanelContent ? 'dialog' : 'listbox'}
+          aria-multiselectable={!hasPanelContent && selectedValues ? true : undefined}
           aria-label={ariaLabel}
           data-no-timer={dataNoTimer ? '' : undefined}
           style={panelStyle}
         >
-          <div className="compact-select-options">
+          {panelContent ?? <div className="compact-select-options">
             {items.map(item => {
-              const active = item.value === value;
+              const active = selectedValues ? selectedValues.includes(item.value) : item.value === value;
               return (
                 <button
                   type="button"
@@ -250,12 +306,12 @@ export function CompactSelect<T extends string | number>({
                 </button>
               );
             })}
-          </div>
+          </div>}
           {footer?.(close)}
         </div>,
         // Native modal dialogs make the rest of the document inert. Keep the
         // shared, viewport-clamped popup in its trigger's top-layer surface.
-        triggerRef.current?.closest('dialog') ?? document.body,
+        triggerRef.current?.closest('dialog, [role="dialog"]') ?? document.body,
       )}
     </div>
   );

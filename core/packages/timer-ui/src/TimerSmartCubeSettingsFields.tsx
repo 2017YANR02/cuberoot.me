@@ -17,7 +17,7 @@ export interface TimerSmartCubeSettingsFieldsProps {
 }
 
 const FIELDS = TIMER_SETTING_FIELD_CONTRACTS.filter((field) => (
-  field.category === 'smart-cube' && field.id !== 'settings.smart-cube.fake-cube'
+  field.category === 'smart-cube' && field.id !== 'settings.smart-cube.fake-cube' && field.storagePath !== 'preScrT'
 ));
 export const TIMER_SMART_CUBE_SETTING_FIELD_IDS = FIELDS.map((field) => field.id);
 const field = (path: keyof TimerSmartCubeSettings) => FIELDS.find((candidate) => candidate.storagePath === path)!;
@@ -35,15 +35,19 @@ const LIVE_VIEW_COPY = {
   '2d': { zh: '立体图', en: 'Isometric' },
 } satisfies Record<TimerSmartCubeSettings['liveCubeView'], TimerSettingCopy>;
 
-/** The website's four production smart-cube rows; hosts only persist patches. */
+/** The shared smart-cube rows; hosts only persist patches. */
 export function TimerSmartCubeSettingsFields({ value, localize, onChange, renderBooleanControl }: TimerSmartCubeSettingsFieldsProps) {
   const settings = normalizeTimerSmartCubeSettings(value);
+  const gyro = field('gyroEnabled');
   const autoReady = field('bluetoothAutoReady');
   const liveView = field('liveCubeView');
   const orientation = field('recordGyro');
   const recap = field('autoRecap');
+  const solution = field('autoOpenSolution');
   return (
     <>
+      <TimerBooleanSettingRow field={gyro} label={localize(gyro.copy)} value={settings.gyroEnabled}
+        onChange={(gyroEnabled) => onChange({ gyroEnabled })} renderBooleanControl={renderBooleanControl} />
       <TimerSettingRow field={autoReady} label={localize(autoReady.copy)}>
         <select className="settings-row-control-select" aria-label={localize(autoReady.copy)} value={settings.bluetoothAutoReady}
           onChange={(event) => onChange({ bluetoothAutoReady: normalizeTimerSmartCubeSettings({ bluetoothAutoReady: event.target.value }).bluetoothAutoReady })}>
@@ -60,6 +64,9 @@ export function TimerSmartCubeSettingsFields({ value, localize, onChange, render
         onChange={(recordGyro) => onChange({ recordGyro })} renderBooleanControl={renderBooleanControl} />
       <TimerBooleanSettingRow field={recap} label={localize(recap.copy)} value={settings.autoRecap}
         onChange={(autoRecap) => onChange({ autoRecap })} renderBooleanControl={renderBooleanControl} />
+      <TimerBooleanSettingRow field={solution} label={localize(solution.copy)} value={settings.autoOpenSolution}
+        onChange={(autoOpenSolution) => onChange({ autoOpenSolution })} renderBooleanControl={renderBooleanControl}
+        hint={localize({ zh: '仅桌面窗口自动展开，移动端请手动打开解法。', en: 'Auto-opens on desktop only; open solutions manually on mobile.' })} />
     </>
   );
 }

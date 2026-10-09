@@ -6,17 +6,23 @@
 
 从 `core/` 运行：
 
-```powershell
+```sh
 pnpm --filter @cuberoot/miniprogram dev
+pnpm --filter @cuberoot/miniprogram dev:douyin
 pnpm --filter @cuberoot/miniprogram check:all
 ```
 
 微信开发者工具导入本目录并读取 `dist/`；抖音开发者工具直接导入 `dist-douyin/`。`check:all` 只跑一次类型检查和测试，再构建两个目标；单独检查抖音时运行 `check:douyin`。
 抖音构建后可打开 `.tmp/wx-to-tt-log/__wxToTT/report/index.html` 查看官方转换器的逐文件报告；它包含本机路径并且每次可重建，因此不提交生成页。
-构建会先验证本机项目配置和全部源码 JSON，并在 `.tmp` 生成完整候选产物后再替换 `dist/`；配置或编译失败时保留上一份可用产物和小程序身份。
+`dev` 监听微信，`dev:douyin` 复用同一套监听、合并连续变更和串行重建机制；分别在需要时运行，不要对同一个目标同时启动多个构建进程。
+构建会先验证本机项目配置和全部源码 JSON，并在 `.tmp` 生成完整候选产物；配置、编译或转换失败时保留上一份可用产物和小程序身份。微信仍整体替换 `dist/`；抖音在原 `dist-douyin/` 内更新变动文件、清理过期产物，不再重命名开发工具打开的项目根目录，未变文件不重写。普通构建和监听构建均适用，无需因项目根目录占用而关闭工具。
+抖音逐文件同步不是多文件原子事务，开发工具若在更新期间编译可在完成后重新编译；个别文件被独占或磁盘错误仍会明确报错并保留候选目录，排除错误后重新构建。监听进程继续等待下次修改，不会把失败报告成成功。
 跨包源码依赖由 esbuild 的实际解析图统一驱动构建指纹和开发监听；新增 `@cuberoot/shared` 子路径后不需要维护额外文件清单。
 
 首次构建可分别用 `WECHAT_MINI_APP_ID` 和 `DOUYIN_MINI_APP_ID` 生成并保留被忽略的本机项目配置。微信 `release:check` 只接受 CubeRoot 官方身份；抖音尚未做上传闸门，`check:douyin` 只证明工程产物可生成。
+抖音导入正式项目后，也要将正式 AppID 写入被忽略的 `project.douyin.config.json`；仅在开发工具修改 `dist-douyin/project.config.json` 会被下次构建覆盖。
+抖音底栏图标由 `scripts/build-tab-icons.mjs` 复用 Lucide 静态图标和现有主题色，生成本地 PNG 与许可证，微信底栏配置不变；不要手改生成图。平台 API 使用宿主直接注入的 `tt` / `wx`，不假设小程序提供浏览器 `globalThis`。
+抖音读取不存在的存储键会抛错（[官方 getStorageSync 文档](https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/api/data-caching/tt-get-storage-sync)）；会话读取先确认键是否存在，只有明确不存在才按游客处理，真实存储故障仍阻止网页账号同步。
 
 ## 单一来源
 
@@ -28,6 +34,14 @@ pnpm --filter @cuberoot/miniprogram check:all
 - 必须原生化的跨端纯逻辑：先提取到 `@cuberoot/shared`，确认有调用方后再添加依赖
 
 不要按平台复制页面。只有平台 API、离线能力或明确的性能需求无法通过 `web-view` 满足时，才新增原生页面。
+
+## 语言与外观同步
+
+已确认的语言、明暗、配色、柔和度和两种明暗各自的背景保存在 Web 存储与小程序原生存储。新版壳通过 `mpPreferences` 把原生快照交给每个新 WebView，在首屏主题脚本中恢复；同一文档刷新不会重放旧快照覆盖刚修改的偏好。分享会移除该内部参数。
+
+WebView 的 `postMessage` 不保证即时送达。新版页面确认设置后，通过 `pages/preferences/index` 立即保存、更新原生导航及底栏，再自动返回原页面。后台 WebView 在显示时比较持久偏好，发生变化就重新加载并重新申请会话票据；不重放已消费的登录票据。未接收新版快照的旧壳继续使用旧消息协议，因此网页与小程序都需要发布后才能使用即时同步。
+
+所有原生页面使用同一背景模板与主题变量；系统模式保存明暗两套颜色和背景，原生页在系统切换时立即重新应用。构建和模拟回归不等于 iOS/Android 微信真机验收。
 
 ## 安全和发布
 
@@ -62,7 +76,15 @@ pnpm --filter @cuberoot/miniprogram release:check
 ### 微信手机号实时授权（2026-09-12，本地接入）
 
 - 已绑定 UnionID 仍直接登录。未绑定用户可主动点击 `getRealtimePhoneNumber`；后端用独立 `phoneCode` 与本次 `wx.login` 换得的 OpenID 校验归属，不接受客户端传入的手机号。
-- 已有手机号账号先显示账号并确认；未匹配则明确创建，或复用网站「绑定小程序」的一次性绑定码验证旧号。手机号与微信同一事务绑定，冲突不覆盖、不合并。手机号契约暂为中国大陆；其他号码、拒绝或无能力时保留原有旧号登录入口。
+- 已有手机号账号先显示账号并确认；未匹配则明确创建，或复用网站的一次性小程序登录码验证旧号。手机号与微信同一事务绑定，冲突不覆盖、不合并。手机号契约暂为中国大陆；其他号码、拒绝或无能力时保留原有旧号登录入口。
 - 只使用[微信官方实时验证组件](https://developers.weixin.qq.com/miniprogram/dev/framework/open-ability/getRealtimePhoneNumber.html)，不回退普通快速验证。平台资质/可用额度需在微信公众平台「接口设置 → 手机号」及「付费管理」核对（以实际后台为准）；不会自动购买额度。
 - 隐私政策已补充主动授权、用途、短期认证资料和删除边界。发布前须在「设置 → 服务内容声明 → 用户隐私保护指引」声明手机号用于登录/账号绑定，并实测 iOS、Android 授权成功、拒绝、匹配旧号确认和冲突恢复。
 - `release:check` 仅为原生账号页放行实时组件，其余页面及普通 `getPhoneNumber` 仍阻断；新增独立 `WECHAT_MINI_PHONE_AUTHORIZATION_REVIEWED` 确认门禁，不能沿用上次无手机号版本的隐私确认。源码实现/构建通过不代表已上传或发布。
+
+## 外接计时器桥接
+
+WebView 的外接蓝牙入口打开原生页，可连接 GAN 或奇艺计时器／适配器；Stackmat 入口使用微信 RecorderManager 的单声道 44.1kHz PCM 分帧。协议、CRC、奇艺加解密与分包、Stackmat 音频解码均来自 shared/timer/external，Web 驱动复用同一实现。中继沿用 /v1/smart-cube/relay，timer 事件和 move 事件共用有序重放与去重序号，因此必须先发布更新后的 API 和 Web，再发布小程序。
+
+音频仅本机解码，不上传。只支持微信的 PCM 采集，抖音入口明确提示未适配；满 10 分钟、录音中断或原生连接断开后需要重连。WebView 恢复连接时按序回放事件；不能恢复的缺口断开，不推测成绩。
+
+源码/模拟测试不等于真机通过。上传前需在平台后台新增麦克风用途声明，并实测 iOS/Android 的外接音频路由、PCM 格式与采样率、授权拒绝、页面返回、后台中断、同时间连续成绩及蓝牙断线。实际通过后才可设置 WECHAT_MINI_EXTERNAL_TIMER_REVIEWED=1；不要沿用旧版验收结果。

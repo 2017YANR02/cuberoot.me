@@ -61,6 +61,7 @@ export function iconFor(e: UtilEntry): LucideIcon {
 }
 
 export const UCATS: { id: UtilCat; zh: string; en: string }[] = [
+
   { id: 'hook', zh: 'React Hooks', en: 'React Hooks' },
   { id: 'i18n', zh: '国际化 / 文案', en: 'i18n / Text' },
   { id: 'api', zh: 'API 地址', en: 'API URLs' },
@@ -71,6 +72,59 @@ export const UCATS: { id: UtilCat; zh: string; en: string }[] = [
 ];
 
 export const CATALOG: UtilEntry[] = [
+  {
+    name: 'useTimerSoloCompactLayout / timerSoloModalState / useBldConfigStore / useBldConfigHydrated',
+    sig: 'useTimerSoloCompactLayout(): boolean; timerSoloModalState(blocking: boolean, solverSheet: boolean)',
+    imp: "import { useTimerSoloCompactLayout, timerSoloModalState } from '@cuberoot/timer-ui/TimerSoloPage'; import { useBldConfigStore, useBldConfigHydrated } from '@cuberoot/timer-ui/bld-config-store';",
+    category: 'util',
+    zh: '单人计时器的紧凑菜单判定、弹层输入门禁和与盲拧训练共用的持久配置。',
+    en: 'Shared Solo compact menus, modal input gating, and persisted BLD configuration used by the trainer and timer.',
+  },
+  {
+    name: 'createVideoMediaSession',
+    sig: 'createVideoMediaSession(adapter): { enable(kind, enabled): Promise<void>; dispose(): void }',
+    imp: "import { createVideoMediaSession } from '@cuberoot/timer-ui/video/local-media';",
+    category: 'util',
+    zh: '联机视频媒体轨道的生命周期：退出后迟到的授权结果立即停止，发布失败与取消均释放轨道。',
+    en: 'Owns battle media tracks across permission and publication delays; stops late tracks after disposal.',
+  },
+  {
+    name: 'useBluetoothTimer',
+    sig: 'useBluetoothTimer(createSource, options): BluetoothTimerHandle',
+    imp: "import { useBluetoothTimer } from '@cuberoot/timer-ui/external';",
+    category: 'hook',
+    zh: 'Web 与安装端共用的智能计时器控制层，注入 BLE source，订阅状态及硬件读数并释放连接。',
+    en: 'Shared Bluetooth timer controller with an injected source, device readings, state subscription and connection cleanup.',
+  },
+  {
+    name: 'useStackmat',
+    sig: 'useStackmat(createSource, options): StackmatHandle',
+    imp: "import { useStackmat } from '@cuberoot/timer-ui/external';",
+    category: 'hook',
+    zh: 'Web 与安装端共用的 Stackmat 控制层，注入音频 source，合并电平刷新并订阅设备计时事件。',
+    en: 'Shared Stackmat controller with an injected audio source, batched level updates and device timing events.',
+  },
+  { name: 'platformMajorToMinor', sig: 'platformMajorToMinor(value: string): number | null', imp: "import { platformMajorToMinor, platformMinorToMajor, platformLocalDateTime } from '@/lib/platform-commerce-fields'", category: 'format', zh: '运营金额按十进制精确转换为分，共用金额回显与本地日期时间字段。', en: 'Exact decimal major-to-minor money conversion with shared money and local datetime display.' },
+  { name: 'platformLearningRequest', sig: "platformLearningRequest<T>(path: string, body?: Record<string, unknown>, method = 'POST', signal?: AbortSignal): Promise<T>", imp: "import { platformLearningRequest } from '@/lib/platform-learning'", category: 'api', zh: '学习工作台与课堂共用的鉴权、幂等请求和错误读取。', en: 'Authenticated, idempotent requests and error handling shared by learning workspaces and classrooms.' },
+  { name: 'qrAdminRequest', sig: 'qrAdminRequest<T>(path: string, options?: { method?: string; body?: unknown; signal?: AbortSignal }): Promise<T>', imp: "import { qrAdminRequest, qrAdminEntity } from '@/lib/platform-qr-admin'", category: 'api', zh: '二维码管理、统计、提示库与工作室的请求入口和列表实体转换。', en: 'Shared requests and entity conversion for QR management, statistics, prompts and studio.' },
+  { name: 'localizePlatformEntity', sig: 'localizePlatformEntity(item: PlatformEntity, lang: string): PlatformEntity', imp: "import { localizePlatformEntity } from '@/lib/platform-gateway'", category: 'i18n', zh: '只本地化展示标题和摘要，保留无损业务字段。', en: 'Localize display titles and summaries while retaining lossless business data.' },
+
+  {
+    name: 'useMembershipBenefits',
+    sig: 'useMembershipBenefits(): { content, setContent }',
+    imp: "import { useMembershipBenefits } from '@/hooks/useMembershipBenefits';",
+    category: 'hook',
+    zh: '会员页与商业计划书共用数据库权益文案；固定首屏、可空英文和保存后更新。',
+    en: 'Shared membership and BP benefit copy with stable SSR, optional English and post-save updates.',
+  },
+  {
+    name: 'pickedSids / customMaskFn / paintSids / CustomMaskHistory',
+    sig: 'pickedSids(cube, positionIndex, worldFace, grain): StickerId[]; customMaskFn(order, mask, pick?: CustomBrush, rest?): StickeringMaskFn | null; paintSids(mask, sids, brush, legacyPick?): string; new CustomMaskHistory(snapshot)',
+    imp: "import { pickedSids, customMaskFn, paintSids, CustomMaskHistory } from '@/components/sim-embed/customStickering';",
+    category: 'cube',
+    zh: '将三维命中位置转换为原始贴纸身份，支持逐格画笔、橡皮擦及独立撤销／重做，生成随块移动的遮罩。',
+    en: 'Resolve 3D hits to original sticker identities, apply per-sticker brushes or erasing, and track separate undo/redo history for piece-following masks.',
+  },
   {
     name: 'useTrainingStats',
     sig: 'useTrainingStats(group: string)',
@@ -102,6 +156,14 @@ export const CATALOG: UtilEntry[] = [
     category: 'hook',
     zh: '登录后默认依次置顶 WCA 国家、IP 国家并去重，游客仅 IP 国家；手动设置按账号在当前浏览器同步，记住取消置顶，服务端首屏为空列表。',
     en: 'Defaults to WCA then IP country without duplicates; guests see IP only. Manual choices and unpins sync per account across menus and tabs in this browser, with an empty server snapshot.',
+  },
+  {
+    name: 'useDeskPetVisible',
+    sig: 'useDeskPetVisible(): readonly [boolean, (visible: boolean) => void]',
+    imp: "import { useDeskPetVisible } from '@/hooks/useDeskPetVisible';",
+    category: 'hook',
+    zh: '桌宠显示偏好，默认开启，保存在当前浏览器并同步页面与标签页。',
+    en: 'Desk-pet visibility, enabled by default, persisted in the current browser and synced across pages and tabs.',
   },
   {
     name: 'useHomeBackgroundChoice',
@@ -162,8 +224,8 @@ export const CATALOG: UtilEntry[] = [
     imp: "import { useModalDismiss } from '@/hooks/useModalDismiss';",
     usage: "const backdropProps = useModalDismiss(onClose, saving);\n<div className=\"modal-backdrop\" {...backdropProps}>...</div>",
     category: 'hook',
-    zh: '挂载期 Escape 关闭并锁 body 滚动;返回的 props 展开到外部遮罩,支持点击和触摸关闭,内部操作或拖出不误关。disabled 在提交中暂时禁止关闭。',
-    en: 'Escape dismissal and body scroll lock while mounted. Spread returned props onto the backdrop for outside click/tap dismissal without closing on inside clicks or drag-out. disabled temporarily blocks dismissal during submission.',
+    zh: 'Web/App 共用 timer-ui 实现。挂载期 Escape 关闭并锁 body 滚动;返回的 props 展开到外部遮罩,支持点击和触摸关闭,内部操作或拖出不误关。disabled 在提交中暂时禁止关闭。',
+    en: 'Web/App share the timer-ui implementation. Escape dismissal and body scroll lock while mounted. Spread returned props onto the backdrop for outside click/tap dismissal without closing on inside clicks or drag-out. disabled temporarily blocks dismissal during submission.',
   },
   {
     name: 'useModalBackdrop',
@@ -171,8 +233,8 @@ export const CATALOG: UtilEntry[] = [
     imp: "import { useModalBackdrop } from '@/hooks/useModalDismiss';",
     usage: "const backdropProps = useModalBackdrop(onClose, saving);\n<div className=\"modal-backdrop\" {...backdropProps}>...</div>",
     category: 'hook',
-    zh: '已有键盘与滚动生命周期的弹窗复用此 hook,仅接入外部遮罩关闭。必须在遮罩上按下并点击才关闭,内部拖到外部不关闭。',
-    en: 'Backdrop dismissal for dialogs with an existing keyboard and scroll lifecycle. Pressing and clicking the backdrop closes; dragging from inside to outside does not.',
+    zh: 'Web/App 共用 timer-ui 实现。已有键盘与滚动生命周期的弹窗复用此 hook,仅接入外部遮罩关闭。必须在遮罩上按下并点击才关闭,内部拖到外部不关闭。',
+    en: 'Shared timer-ui backdrop dismissal for Web/App dialogs with an existing keyboard and scroll lifecycle. Pressing and clicking the backdrop closes; dragging from inside to outside does not.',
   },
   {
     name: 'useSingleLineSolve',
@@ -265,11 +327,11 @@ export const CATALOG: UtilEntry[] = [
   },
   {
     name: 'useSpeechToText',
-    sig: 'useSpeechToText({ lang, onResult }): { supported; listening; start; stop }',
+    sig: 'useSpeechToText({ lang, onResult }): { supported; listening; status; error; microphone; start; stop }',
     imp: "import { useSpeechToText } from '@/hooks/useSpeechToText';",
     category: 'hook',
-    zh: 'Web Speech API 语音转文字封装(Chrome / Edge / Safari,Firefox 不支持)。',
-    en: 'Web Speech API speech-to-text wrapper (Chrome/Edge/Safari; not Firefox).',
+    zh: 'Web Speech API 语音转文字封装。桌面 Chromium 135+ 显式使用系统默认麦克风并返回设备名，其他浏览器保留原生采音；提供状态、错误与超时反馈，停止或卸载时释放音轨。接口存在不代表识别服务可用。',
+    en: 'Web Speech API wrapper. Desktop Chromium 135+ explicitly uses the system default microphone and returns its label; other browsers retain native capture. Includes status, errors, timeouts and track cleanup. API presence does not guarantee service availability.',
   },
   {
     name: 'useLiveStream',
@@ -461,6 +523,14 @@ export const CATALOG: UtilEntry[] = [
     category: 'wca',
     zh: '比赛名:去 WCA 前缀 + 中文名回退(走 cubing.com)。opts.date = 页面上已经显示的该场日期/年份,传了就剥掉名字里重复的年号(单一实现 stripCompYear);页面没显示年份就别传。',
     en: 'Competition name: strip the WCA prefix and fall back to the Chinese name. opts.date is the comp date/year already shown on the page — pass it and the duplicated year is stripped from the name (single implementation: stripCompYear); omit it where no year is shown.',
+  },
+  {
+    name: 'createCompNameEnResolver',
+    sig: 'createCompNameEnResolver(names: Readonly<Record<string, string>>): (name: string) => string',
+    imp: "import { createCompNameEnResolver } from '@cuberoot/shared/comp-localize';",
+    category: 'wca',
+    zh: '从比赛名称映射反查英文，兼容完整中文名与展示简称，保留年份以区分不同届比赛。',
+    en: 'Resolve English competition names from official or shortened Chinese names, retaining years to distinguish editions.',
   },
   {
     name: 'unofficialAoN',

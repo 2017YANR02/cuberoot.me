@@ -4,10 +4,10 @@ solver-rust 的测试与基准对比入口。给未来的 AI / 维护者:**先�
 
 ## TL;DR
 
-```powershell
+```sh
 cargo test --release          # 单元 + 轻量 e2e(秒级,不碰 huge 表)
-pwsh verify.ps1               # 全 5 analyzer × scramble_5/100,计时 + diff golden
-pwsh verify.ps1 -Generate     # 重建 golden 基线(改了算法、确认更优后)
+pnpm --dir core solver:verify             # 全 5 analyzer × scramble_5/100,计时 + diff golden
+pnpm --dir core solver:verify --generate  # 重建 golden 基线(改了算法、确认更优后)
 ```
 
 ## 两层测试
@@ -15,22 +15,22 @@ pwsh verify.ps1 -Generate     # 重建 golden 基线(改了算法、确认更优
 | 层 | 跑法 | 覆盖 | 需要 huge 表 |
 |:--|:--|:--|:--:|
 | **cargo 单元 / e2e** | `cargo test --release` | 各 solver 内部逻辑 + Cross/XCross e2e | 否 |
-| **analyzer 端到端** | `pwsh verify.ps1` | 全 5 analyzer 全 cascade × scramble_5/100,bit-exact + 计时 | **是** |
+| **analyzer 端到端** | `pnpm --dir core solver:verify` | 全 5 analyzer 全 cascade × scramble_5/100,bit-exact + 计时 | **是** |
 
 `cargo test` 默认套件秒级、不依赖大表,适合每次改动跑。
 `--ignored` 额外跑中表(pt_cross_C4E0 52MB)+ pseudo 单测/e2e。
 
 全 cascade(std XXCross+ / pair / eo / pseudo_pair)依赖 ~20 GB huge 表
 (`pt_cross_C4C5E0E1` + `pt_cross_C4C6E0E2` 各 10 GB + `mt_edge6` 3 GB),不进 cargo
-默认套件,统一由 `verify.ps1` 驱动。
+默认套件,统一由 `scripts/verify.mts` 驱动。
 
-## verify.ps1
+## scripts/verify.mts
 
-```powershell
-pwsh verify.ps1                          # scramble_5 + scramble_100,对照 golden
-pwsh verify.ps1 -Generate                # 把当前输出写成 golden(建/更新基线)
-pwsh verify.ps1 -Inputs scramble_5.txt   # 只跑某个输入
-pwsh verify.ps1 -TableDir D:\my-tables   # 覆盖表目录(默认 ./tables)
+```sh
+pnpm --dir core solver:verify                              # scramble_5 + scramble_100,对照 golden
+pnpm --dir core solver:verify --generate                   # 把当前输出写成 golden(建/更新基线)
+pnpm --dir core solver:verify --inputs scramble_5.txt      # 只跑某个输入
+pnpm --dir core solver:verify --table-dir /path/to/tables  # 覆盖表目录(默认 solver/tables)
 ```
 
 逐 analyzer 打印 `耗时 / 行数 / 状态(OK|FAIL|GEN|NO-GOLDEN)`,末尾汇总;有 FAIL 退出码 1。
@@ -58,7 +58,7 @@ pwsh verify.ps1 -TableDir D:\my-tables   # 覆盖表目录(默认 ./tables)
 | pseudo_pair | `…\scramble_100_pseudo_pair.txt` |
 | eo | `…\scramble_20_eo.txt` |
 
-改算法后若想更新基线:跑 `verify.ps1 -Generate`,再人工确认前 20 行仍 == 上游(本仓库
+改算法后若想更新基线:跑 `pnpm --dir core solver:verify --generate`,再人工确认前 20 行仍 == 上游(本仓库
 `git diff` 应只动你预期的行)。
 
 ## 实测耗时(基线)

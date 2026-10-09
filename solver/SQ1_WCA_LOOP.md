@@ -8,7 +8,7 @@
 > ① 把 SQ1 的 **WCA 12c4 最优求解器**做到**任意真实打乱都够快**(现状 A3-full 后:5 真深态全解出无超时,最慢 37.86s;残留最难态 ~38s 是纯 phase-1 成本,待 A4);
 > ② 用它接统计管道(精确步数 + 最优打乱)、上 UI;
 > ③ 终极:算出 **`D_WCA`**(WCA 12c4 上帝之数,现可证区间 `[13,27]`)。
-> **允许建 ≤15GB 大表**(盘缓存,`solver/tables/`,gitignored);**严禁 OOM**;**线程一律 12**(用户 2026-06-16:14→8→12)。
+> **允许建 ≤15GB 大表**(盘缓存,`solver/tables/`,gitignored);**严禁 OOM**;2026-09-23 起生成器线程默认使用机器可用并行度。生成磁盘表统一运行 `cargo run --release --bin table_generator`，只补 SQ1 用 `--only sq1`。
 
 ---
 
@@ -22,7 +22,7 @@
    - **真正的 OOM 风险是构建瞬时 frontier,不是表本身**。实测:283MB 表用「frontier 存全态」builder 峰值 **~3.6GB**(frontier ≈ 10× 表大小)。⇒ **表 > ~1GB 前必须先把 builder 改成「frontier 存 u32 索引」或 scan-based**(见 §1 EPIC A 的 A1),否则 3GB 表 → ~15-30GB 瞬时 → 必 OOM。
    - **预算公式**:`需要 ≈ 表大小(dist) + 峰值frontier + 2GB余量`。不够就**别建**(红灯,§3 记账等用户),不死等。
    - **一次只建一张表**;**绝不并发两个重进程**(两个 cargo / cargo+建表),严格串行;建完 drop 瞬时再下一张。
-   - **线程(用户 2026-06-16:14→8→12,当前 12)**:`RAYON_NUM_THREADS=12` + 编译 `cargo -j 12`(`CARGO_BUILD_JOBS=12`);长跑进程 BelowNormal 低优先级启动(留机器给用户)。
+   - **线程**:建表不设置 `RAYON_NUM_THREADS` / `cargo -j` 人工上限，默认使用机器可用并行度；长跑仍逐表执行，内存门独立生效。
    - 长建表用后台 + 盯 WS(`Get-Process`),逼近 `可用-2GB` 立即 abort。
 5. **验收门(全过才算成,这是最优求解器的命门 —— 错的"最优"比慢更糟)**:
    - **正确性**:任何动 `Sq1WcaSolver` 启发式/搜索/表的改动 → ① 浅层(depth ≤4)对**独立暴力 WCA-BFS oracle 逐态相等**;② 解 **replay 回精确 SOLVED**(不是 `h==0`,见笔记 §7 陪集坑)且 token 数 = cost;③ `twist ≤ WCA ≤ 2·twist+1`。
@@ -53,7 +53,7 @@
 - [x] **A2 先诊断再加料**(2026-06-16,**先于 A1 做**,见 §3):新增运行时门控 profiler(`wca_profile` + `solve_profile`,默认零成本 + node/time cap 不挂),profile 5 条真深态(id 774-778)。**结论**:h 深态只 13-15、gap 7-12(比估计大);首方形深度浅(6-12)⇒「更早转 phase-2」是伪命题;两种慢模式 = phase-1 节点爆炸 + **phase-2 现搜时间槽**(776/778 仅 1-2 万节点却烧 7-15s)。**杠杆 = A3 角×棱联合精确 phase-2 表(一次查表替现搜)**,非更早入口、非单堆 h。详见笔记 §5 诊断 A2。下一步 A1→A3。
 - [x] **A3 加厚 phase-2 —— ✅ 完成(jsq 半成 9d2e7c4ed → A3-full 精确表收尾 aa93699b7,2026-06-16)**:角×棱联合表 `jsq`(`8!·8!·2`=3.25GB,scan-based 建,峰值仅表本身不 OOM,原地转换免 2×)替 `sq_h_wca` 的 `max(csq,esq)`。**正确性门全过**:`max(csq,esq) ≤ jsq ≤ 真距离`(可采纳)+ oracle 5568 态逐字节(最优性保持)+ scan 驱动==frontier + 配对 action 健全。**效果**:777 >5min→35.6s、775 1.3s。**但 <30s-all 门未过**:774/778/776 仍 >90s。profile 定论(笔记 §5「诊断 A3-后」):jsq 只是**更强剪枝启发**,phase-2 仍是搜索(分支~145)⇒ **没消灭 phase-2 时间槽**(776/778,461-753µs/节点),且 phase-1 爆炸(774/777,~23µs/节点 ×9-17/bound)jsq 根本碰不到。⇒「全 <30s」是 **A3-full(13GB 精确 phase-2 查表,杀 776/778)+ A4(phase-1,杀 774/777)** 的多单元目标。
   **→ A3-full 收尾(本轮,详见 §3 + 笔记 §5「工程 A3-full」)**:补 per-layer shape 位的 13GB 精确表 `jsq_full` 建成(12 线程 ~52min,scan-based + 原地转换,无 OOM),phase-2 变 **O(1) 精确查表 + 梯度重建**(无搜索)。`wca_a3_jsqfull_exact`(3104 态 == 独立精确)+ oracle 5568 绿;`wca_a3_deep_timing` **5 真深态零超时**:774=22@6.7s / 775=19@0.26s / 776=22@37.86s / 777=20@0.52s / 778=22@5.0s。**惊喜:精确 h 顺带驯服 phase-1 爆炸(774/777 从估 >5min→秒级)**,推翻 jsq-lite 的悲观外推。残留 776@37.86s 是纯 phase-1 成本 ⇒ A4。
-- [x] **A4 phase-1 置换表(TT)—— ✅ 完成(2026-06-17,非大表路线)**。**背景**:全量灌注真实语料撞到远比 776(37.86s)惨的态 —— `inject_sq1_wca_exact.ps1` 在某条上**卡死 11.7h**(无超时机制,12 线程里 11 个早完工、1 个单核死搜)。真凶 = **id=217111**(`(-5,0) / (0,-3) / (3,-3) / (0,-3) / (-4,0) / (0,-3) / (6,0) / (-4,-5) / (4,-4) / (4,-4) / (5,-2) / (-3,0) / (-2,0)`,本身方形态、h=13、actual=**23**);次难 id=218075(h=16,actual=24)。
+- [x] **A4 phase-1 置换表(TT)—— ✅ 完成(2026-06-17,非大表路线)**。**背景**:全量灌注真实语料撞到远比 776(37.86s)惨的态 —— 当时的 SQ1 WCA 注入脚本在某条上**卡死 11.7h**(无超时机制,12 线程里 11 个早完工、1 个单核死搜)。真凶 = **id=217111**(`(-5,0) / (0,-3) / (3,-3) / (0,-3) / (-4,0) / (0,-3) / (6,0) / (-4,-5) / (4,-4) / (4,-4) / (5,-2) / (-3,0) / (-2,0)`,本身方形态、h=13、actual=**23**);次难 id=218075(h=16,actual=24)。
   **诊断(profile 实证,非猜)**:`solve_profile` 逐 bound 节点数**平坦**(218075:bound22=60M、bound23=60.7M,几何增长本应每层 ×B)⇒ IDA* 大量**重复访问同一状态**。`wca_profile_file`(新增运行时驱动 profiler,读 `SQ1_PROFILE_FILE`,#[ignore])定位。**排序教训**:别按近最优 near 排(松上界),爆炸由 `gap = actual − h` 驱动 ⇒ **按低 h 找最难态**(217111 near 才 25 但最难)。
   **修法**:`dfs` 加 phase-1 **置换表** `tt: HashMap<u128,u8>`,key=`(top48|bottom48|ml|lm)`、值=已证无解的最大剩余预算 `rem`。`tt[key] ≥ rem` ⇒ 直接剪(只缓存**已穷举无解**的子树、且只在 `rem' ≤ 已证 rem` 时剪 ⇒ **保最优**)。`lm` 进 key(turn/slash 交替剪枝令子树随 lm 不同)。profiler 中止时**不写** TT(`profiler_aborted()` 守,否则毒化成假 fail)。
   **OOM 安全**:全局共享计数 `TT_GLOBAL_ENTRIES` + `tt_budget()`(默认 240M≈9GB,`SQ1_TT_BUDGET` 覆盖)⇒ 总内存有界**与线程数无关**(满了停插、查询照旧 ⇒ 只少剪枝不出错),单条怪物可独占大预算(它需要大表),12 线程不 OOM。每 solve 结束 `fetch_sub(tt.len())` 释放。
@@ -62,14 +62,14 @@
 
 ### EPIC B — 接统计管道(A 达标后)
 - [x] **B1 精确步数进管道(2026-06-17 wiring 完;首轮灌注卡死已杀,待用修复后 analyzer 重启)**:`sq1_analyzer SQ1_WCA_EXACT=1 [+SQ1_WCA_SOLN=1]` 出 `id,wca_exact,opt_scramble`。`build_puzzle_dist.ts` 的 `aggregateExactSq1` 产 `sq1.exact.dist`(WCA 可证最优)+`.alt`(slash=数 opt_scramble 的 `/`);`PuzzleDistView.tsx` 加「求解:精确/近最优」开关(默认精确)+ 进度徽标。
-  ⚠️**首轮(无 TT)在 chunk 6 的 217111 上卡死 11.7h** → 杀掉,做 A4(TT)。**重启前提**:用 A4 修复后重建的 `sq1_analyzer.exe`(已重建)。已落 chunk 0-5(3000 条)+ chunk6 重验中;重启 `inject_sq1_wca_exact.ps1` 会自动 Ingest 已完成块 + 跳过已解,续跑剩余。
+  ⚠️**首轮(无 TT)在 chunk 6 的 217111 上卡死 11.7h** → 杀掉,做 A4(TT)。**重启前提**:用 A4 修复后重建的 `sq1_analyzer.exe`(已重建)。已落 chunk 0-5(3000 条)+ chunk6 重验中;重启 `scripts/stats/sq1.ts wca` 会自动 Ingest 已完成块 + 跳过已解,续跑剩余。
   ⚠️**坑①**:注入主 CSV 只在进程启停各 ingest 一次,**长跑中冻结**,build 必须读 `sq1/_exact_chunks/*`(已做)。⚠️**坑②**:analyzer **整块缓冲、不到 ChunkSize 不落盘** ⇒ 中途杀进程**丢整块在算的**(已解的别的块不丢)。✅**坑③(2026-06-18 解)**:加 **per-scramble 超时跳过**(`SQ1_SOLVE_TIMEOUT_SECS`)+ 看门狗安全网(`ANALYZER_STUCK_SECS`)+ 怪物清单,见 B1-monitor。详见 memory [[project_sq1_wca_optimal_solver]] + skill `update-scramble-stats`。
 - [x] **B1-monitor + 怪物超时跳过(2026-06-18 完,实证)**:全量灌注撞到比 217111 更硬的深尾(actual 24-25,240M TT 仍 cap-limited、单条可远超 10min),纯等会拖死整个 run。**解法 = 超时跳过 + 怪物清单,不降级**(仍可证最优,只是怪物延后单独跑)。
   - **求解器**(`sq1_solver.rs`):`solve_with_solution_deadline(st, deadline)` —— 命中墙钟返 `None`。`dfs` 顶部 `deadline_check()`(全局原子门 ⇒ 无 deadline 热路径只一条 relaxed load;有则每 16384 节点查一次 `Instant::now()`,命中粘滞 unwind)。**关键正确性**:中止 ≠ 已证无解 ⇒ TT 写入加 `!deadline_aborted()` 守(同 `profiler_aborted` 的毒化防护)。`jsq_full` 在位 ⇒ phase-2 O(1) 查表无搜索 ⇒ 怪物耗时**全在 phase-1 dfs**,deadline 覆盖到。
   - **analyzer**(`sq1_analyzer.rs`):`SQ1_SOLVE_TIMEOUT_SECS=N` ⇒ 单条 >N 秒判怪物 → 输出 `id,M`(标记已处理:续跑跳过、build 侧 `Number('M')`=NaN 自动略过不污染分布、不进 `seen` ⇒ 以后单独跑出真值仍计入)+ 实时 `cube_solver::executor::emit_event` 写 `[MONSTER] id=.. scramble=..`(executor 新 `pub emit_event`)。
-  - **inject**(`inject_sq1_wca_exact.ps1`):`SQ1_SOLVE_TIMEOUT_SECS=60` + 看门狗 `ANALYZER_STUCK_SECS=120`(安全网:>超时 ⇒ 正常怪物已跳、不响;响=超时有路径没覆盖到的真 hang,立即暴露)。`Update-Monsters` 从 out 的 `id,M` 回捞原始打乱进 `sq1_wca_monsters.csv`(id,scramble,幂等去重,启停各一次)。
+  - **inject**(`scripts/stats/sq1.ts wca`):`SQ1_SOLVE_TIMEOUT_SECS=60` + 看门狗 `ANALYZER_STUCK_SECS=120`(安全网:>超时 ⇒ 正常怪物已跳、不响;响=超时有路径没覆盖到的真 hang,立即暴露)。`Update-Monsters` 从 out 的 `id,M` 回捞原始打乱进 `sq1_wca_monsters.csv`(id,scramble,幂等去重,启停各一次)。
   - **实证(2026-06-18,10 线程)**:① 控制测 4 已知怪物全 `id,M`+`[MONSTER]`、774/775/776 正常解值==EPIC A 已知最优;② 生产重启后**冲过原卡点 35490**,~35k 区段实时报出新怪物 1121507/1139047 等(≥6 个),含怪物的块正常 flush,`[STUCK]`=0,无 OOM。**待解 90605/125605(28%),run 自走中**。
-- [x] **B1-monster-grind 啃怪物到最优 ✅ 全清(2026-06-18,触发词「跑SQ1怪物」)**:用户硬约束 = **一定要算出最优**;超时跳过只是延后,IDA* 完备+可采纳、TT 满只少剪枝不出错 ⇒ **给够时间必收敛到可证最优**(怪物是速度问题非正确性问题)。`grind_sq1_monsters.ps1`(主 run 完后跑):拿 `sq1_wca_monsters.csv`、`id,M` 原地替换成真值、可续、防 OOM(检测 `sq1_analyzer` 在跑即拒)、报最深 WCA(= D_WCA 经验下界候选)。**先测后定**:主 run 完跑一遍拿真实硬度(数量 + 每条耗时),据此决定是否上 Tier 2。skill `update-scramble-stats` 已记触发词 + 命令。
+- [x] **B1-monster-grind 啃怪物到最优 ✅ 全清(2026-06-18,触发词「跑SQ1怪物」)**:用户硬约束 = **一定要算出最优**;超时跳过只是延后,IDA* 完备+可采纳、TT 满只少剪枝不出错 ⇒ **给够时间必收敛到可证最优**(怪物是速度问题非正确性问题)。`scripts/stats/sq1.ts grind`(主 run 完后跑):拿 `sq1_wca_monsters.csv`、`id,M` 原地替换成真值、可续、防 OOM(检测 `sq1_analyzer` 在跑即拒)、报最深 WCA(= D_WCA 经验下界候选)。**先测后定**:主 run 完跑一遍拿真实硬度(数量 + 每条耗时),据此决定是否上 Tier 2。skill `update-scramble-stats` 已记触发词 + 命令。
   - **EPIC ④ root-split 并行 IDA*(2026-06-18 落地 + 实测 + 运行中)**:老串行 `dfs`/`solve_with_solution` **一行未改**,纯新增 env 门控的并行入口 `solve_with_solution_parallel[_deadline]` + `dfs_par` + 分片共享 `ShardedTt`(64 片锁,proven-fail 单调 max ⇒ 并发 race 无害)。`SQ1_SOLVE_PARALLEL=split` 开;`g<split` 且子>1 ⇒ rayon `find_map_any` 并行子树,成功 bound 任一线程找到即 `cancel` 其余(失败 bound 全穷举完才 +1 ⇒ **保最优**;cancel 用 Relaxed 安全:失败 bound 永不 set cancel ⇒ proven-fail 全有效,成功 bound 找到即结束 ⇒ race 写的假 proven-fail 永不再被查)。**用户硬约束(2026-06-18):每条 ≤10min + 看门狗 + 别死等** ⇒ 并行版用 `thread::scope` 起墙钟看门狗线程,到点置 cancel → 全线程下个节点 unwind → 记 `id,M`(不毒化 TT);grind 默认 `-TimeoutSecs 600`。门:`wca_parallel_matches_serial`(并行==串行最优 + replay 到 SOLVED)绿。**实测加速**:怪物 1121507(actual=24)串行跑到 623 CPU-s 未解出,**④ 12 核 ~52s 解出 24(>12×)**。**✅ 完成(2026-06-18,无人值守)**:`grind -Split 2 -TimeoutSecs 600` 全 278 条(一次一条、12 核、10min 看门狗、240M TT,~95min)→ 解出 277;最后 1 条 4798824(全场最硬)Stage 2 升 300M TT 后也解出(=24,gap 大非值深)→ **278/278 全清,0 残留**。**全 125605 条真实打乱现可证 WCA 最优**(峰 22:37063,深尾 25:30 / 26:9,早先「16 空隙」复证消失=16:152)。已发布(`update_cross_stats -Jobs puzzles -Puzzles sq1`,commit ade4d8296;SSH 实证 static 文件 125605/max26 mtime 刚更新——「[delta] 0 文件」是脚本显示顺序误导,文件实际已 scp)。**🎯 D_WCA 经验下界 = 26**(9 条真实打乱需 26)+ 已证上界 27 ⇒ **D_WCA ∈ [26,27]**(从 [13,27] 大幅收窄,只差 1)。下一步可做 C1 `/math/god?event=sq1` 把这结果写进页面。
 - [ ] **⏳ B1-cleanup(run 完后做)**:全量灌注 100% + **16 空隙复证**(见下)后,**重新评估近最优档**:它直方图角色冗余(系统偏高 ~2.6 步、甚至略输 TNoodle),用户(2026-06-17)倾向**删或降级成「对照(近最优)」**。删的前提:先给精确档补一套示例(现示例按近最优分桶,删近最优会丢示例 + 「原始/最优打乱」切换)。**勿删 `sq1_twophase.rs` 代码本身**(§0.10),这里只说前端档位。
 - [ ] **⚠️🔬 B1-verify 16 空隙**:精确 WCA 分布有孤立空隙 `wca=16`(实际解长度也从不为 16),已排除 wiring bug + id 偏倚。需跑 Rust oracle 独立复证是真实壳层空隙还是求解器在该值漏最优 —— 但会与 13GB 注入 job 抢内存(禁并跑),故 deferred 到 run 完或暂停注入时验。上线为公众前必证。
@@ -137,13 +137,13 @@ cd solver
 echo '1,(1,0)/' > /d/cube/cuberoot.me/core/.tmp/sq1_wca/triv.txt
 printf 'D:/cube/cuberoot.me/core/.tmp/sq1_wca/triv.txt\nexit\n' | \
   CUBE_TABLE_DIR=D:/cube/cuberoot.me/solver/tables SQ1_BUILD_PDB=1 SQ1_WCA_EXACT=1 \
-  RAYON_NUM_THREADS=14 ./target/release/sq1_analyzer.exe
+  ./target/release/sq1_analyzer.exe
 ```
 **精确求解**(表已缓存则自动加载;无 `SQ1_BUILD_PDB` 缺表则回退 5 表):
 ```bash
 # 输入文件每行 `id,(x,y)/ (x,y)/ ...`;输出 <basename>_sq1.csv 两列 id,wca_exact
 printf 'INPUT.txt\nexit\n' | CUBE_TABLE_DIR=D:/cube/cuberoot.me/solver/tables \
-  SQ1_WCA_EXACT=1 RAYON_NUM_THREADS=14 ./target/release/sq1_analyzer.exe
+  SQ1_WCA_EXACT=1 ./target/release/sq1_analyzer.exe
 ```
 **测试**:`CUBE_TABLE_DIR=...\tables cargo test --release --lib <name> -- --nocapture`(`wca_bigtable_report` 出 h 分布;`pdb_par_matches_serial` 锁并行正确性)。⚠ 别用 `| grep` 吞掉 cargo 的 "Blocking waiting for file lock"(笔记 §7)。
 

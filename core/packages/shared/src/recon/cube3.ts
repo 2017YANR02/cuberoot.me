@@ -2,7 +2,14 @@
  * Thin wrappers around cubing.js for alg manipulation (invert / simplify / mirror).
  * Ported from packages/client-vite/src/utils/cube3.ts.
  */
-import { Alg, Move } from 'cubing/alg';
+import {
+  Alg,
+  Commutator,
+  Conjugate,
+  Grouping,
+  Move,
+  type AlgNode,
+} from 'cubing/alg';
 import type { KPattern, KPuzzle } from 'cubing/kpuzzle';
 import { mirrorFamily, mirrorKeepsAmount, type MirrorAxis } from '../alg_notation';
 export { invertAlg } from '../alg_transform';
@@ -30,6 +37,33 @@ export async function patternFromAlg(alg: string): Promise<KPattern> {
 
 function leafMoves(a: Alg): Move[] {
   return [...a.experimentalLeafMoves()];
+}
+
+function mirrorMove(move: Move, axis: MirrorAxis): Move {
+  const family = mirrorFamily(move.family, axis);
+  const amount = mirrorKeepsAmount(move.family, axis) ? move.amount : -move.amount;
+  return move.modified({ family, amount });
+}
+
+function mirrorAlgTree(alg: Alg, axis: MirrorAxis): Alg {
+  const nodes: AlgNode[] = [];
+  for (const node of alg.childAlgNodes()) {
+    if (node instanceof Move) {
+      // Nothing legitimate produces amount 0, so omit it rather than stringifying
+      // it as a quarter turn.
+      if (node.amount !== 0) nodes.push(mirrorMove(node, axis));
+    } else if (node instanceof Grouping) {
+      nodes.push(new Grouping(mirrorAlgTree(node.alg, axis), node.amount));
+    } else if (node instanceof Commutator) {
+      nodes.push(new Commutator(mirrorAlgTree(node.A, axis), mirrorAlgTree(node.B, axis)));
+    } else if (node instanceof Conjugate) {
+      nodes.push(new Conjugate(mirrorAlgTree(node.A, axis), mirrorAlgTree(node.B, axis)));
+    } else {
+      // Pauses, comments, and newlines carry no move direction.
+      nodes.push(node);
+    }
+  }
+  return new Alg(nodes);
 }
 
 export function countMoves(alg: string): number {
@@ -67,19 +101,10 @@ export function isAlgPrefix(needle: string, haystack: string): boolean {
 export function mirrorAlg(alg: string, axis: MirrorAxis): string {
   if (!alg) return '';
   try {
-    const out: string[] = [];
-    for (const m of new Alg(alg).experimentalLeafMoves()) {
-      const family = mirrorFamily(m.family, axis);
-      const amount = mirrorKeepsAmount(m.family, axis) ? m.amount : -m.amount;
-      // `new Move(f, 0)` stringifies back to "R" — a real quarter turn. Nothing
-      // legitimate produces amount 0, so drop it rather than invent a move.
-      if (amount === 0) continue;
-      // `.modified()` keeps the layer prefix. `new Move(family, amount)` throws it
-      // away, which silently rewrote `2R` as `L'` and `3Rw` as `Lw'` — /sim's mirror
-      // buttons are live on 4x4 and 5x5.
-      out.push(m.modified({ family, amount }).toString());
-    }
-    return out.join(' ');
+    // Transform the parsed tree instead of flattening its leaf moves. Flattening
+    // preserves the cube state but silently deletes grouping parentheses, repeat
+    // counts, commutators, comments, and pauses from the user's text.
+    return mirrorAlgTree(new Alg(alg), axis).toString();
   } catch {
     return alg;
   }

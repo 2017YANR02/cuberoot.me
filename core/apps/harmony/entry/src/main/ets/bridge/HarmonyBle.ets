@@ -3,9 +3,12 @@ import { BusinessError } from '@kit.BasicServicesKit';
 
 const SCAN_TIMEOUT_MS = 8_000;
 const CONNECT_TIMEOUT_MS = 12_000;
-const GAN_SERVICE_UUID = '00000010-0000-fff7-fff6-fff5fff4fff0';
-const GAN_NOTIFY_UUID = '0000fff6-0000-1000-8000-00805f9b34fb';
-const GAN_WRITE_UUID = '0000fff5-0000-1000-8000-00805f9b34fb';
+// Native bridge security boundary; services from shared smart-cube protocol exports.
+const CUBE_SERVICES: string[] = ["6e400001-b5a3-f393-e0a9-e50e24dc4179","8653000a-43e6-47b7-9cb0-5fc21d4ae340","00000010-0000-fff7-fff6-fff5fff4fff0","0783b03e-7735-b5a0-1760-a305d2795cb0","0000fff0-0000-1000-8000-00805f9b34fb","0000aadb-0000-1000-8000-00805f9b34fb","0000aaaa-0000-1000-8000-00805f9b34fb","6e400001-b5a3-f393-e0a9-e50e24dcca9e","00001000-0000-1000-8000-00805f9b34fb"];
+
+interface CharacteristicProperties { read: boolean; write: boolean; writeWithoutResponse: boolean; notify: boolean; indicate: boolean; }
+interface CharacteristicInfo { uuid: string; properties: CharacteristicProperties; }
+interface ServiceInfo { uuid: string; characteristics: CharacteristicInfo[]; }
 
 export type BleEventSink = (name: string, detail: Object) => void;
 
@@ -93,7 +96,7 @@ export class HarmonyBle {
     });
   }
 
-  requestDevice(namePrefix: string): Promise<SelectedBleDevice> {
+  requestDevice(namePrefixes: string[]): Promise<SelectedBleDevice> {
     return new Promise((resolve, reject) => {
       let selected: ble.ScanResult | undefined = undefined;
       let finished = false;
@@ -110,7 +113,7 @@ export class HarmonyBle {
         } catch (_) {
         }
         if (!selected) {
-          reject(new Error('No GAN smart cube found'));
+          reject(new Error('No smart cube found'));
           return;
         }
         const manufacturerData: ManufacturerDataEntry[] = [];
@@ -121,12 +124,12 @@ export class HarmonyBle {
         resolve({
           id: selected.deviceId,
           manufacturerData,
-          name: selected.deviceName || namePrefix
+          name: selected.deviceName || namePrefixes[0]
         });
       };
       const onDeviceFind = (results: ble.ScanResult[]): void => {
         for (const result of results) {
-          if (!result.deviceName.startsWith(namePrefix)) continue;
+          if (!namePrefixes.some((prefix: string): boolean => result.deviceName.startsWith(prefix))) continue;
           if (!selected || result.rssi > selected.rssi) selected = result;
         }
       };
@@ -267,12 +270,28 @@ export class HarmonyBle {
     this.selectedDeviceIds.clear();
   }
 
+  getServices(deviceId: string): ServiceInfo[] {
+    this.requireGatt(deviceId);
+    return this.services.filter((service: ble.GattService): boolean => CUBE_SERVICES.includes(service.serviceUuid.toLowerCase()))
+      .map((service: ble.GattService): ServiceInfo => {
+        const characteristics: CharacteristicInfo[] = service.characteristics.map((characteristic: ble.BLECharacteristic): CharacteristicInfo => {
+          const properties: CharacteristicProperties = {
+            read: !!characteristic.properties?.read, write: !!characteristic.properties?.write,
+            writeWithoutResponse: !!characteristic.properties?.writeNoResponse,
+            notify: !!characteristic.properties?.notify, indicate: !!characteristic.properties?.indicate
+          };
+          return { uuid: characteristic.characteristicUuid, properties };
+        });
+        return { uuid: service.serviceUuid, characteristics };
+      });
+  }
+
   getMtu(deviceId: string): number | null {
     return this.requireDevice(deviceId) ? this.mtu : null;
   }
 
   async read(deviceId: string, service: string, characteristic: string): Promise<number[]> {
-    this.ensureGanCharacteristic(service, characteristic);
+    this.ensureCubeCharacteristic(service, characteristic);
     const gatt = this.requireGatt(deviceId);
     const target = this.findCharacteristic(service, characteristic);
     try {
@@ -284,9 +303,7 @@ export class HarmonyBle {
   }
 
   async write(deviceId: string, service: string, characteristic: string, value: number[]): Promise<void> {
-    if (!sameUuid(service, GAN_SERVICE_UUID) || !sameUuid(characteristic, GAN_WRITE_UUID)) {
-      throw new Error('Bluetooth write characteristic denied');
-    }
+    this.ensureCubeCharacteristic(service, characteristic);
     const gatt = this.requireGatt(deviceId);
     if (value.length < 1 || value.length > this.mtu - 3) throw new Error('Bluetooth write value too large');
     const target = this.findCharacteristic(service, characteristic);
@@ -315,9 +332,7 @@ export class HarmonyBle {
     characteristic: string,
     enabled: boolean
   ): Promise<void> {
-    if (!sameUuid(service, GAN_SERVICE_UUID) || !sameUuid(characteristic, GAN_NOTIFY_UUID)) {
-      throw new Error('Bluetooth notification characteristic denied');
-    }
+    this.ensureCubeCharacteristic(service, characteristic);
     const gatt = this.requireGatt(deviceId);
     const target = this.findCharacteristic(service, characteristic);
     await new Promise<void>((resolve, reject) => {
@@ -351,9 +366,8 @@ export class HarmonyBle {
     throw new Error('Bluetooth characteristic unavailable');
   }
 
-  private ensureGanCharacteristic(service: string, characteristic: string): void {
-    const allowed = sameUuid(service, GAN_SERVICE_UUID) &&
-      (sameUuid(characteristic, GAN_NOTIFY_UUID) || sameUuid(characteristic, GAN_WRITE_UUID));
-    if (!allowed) throw new Error('Bluetooth characteristic denied');
+  private ensureCubeCharacteristic(service: string, characteristic: string): void {
+    if (!CUBE_SERVICES.includes(service.toLowerCase())) throw new Error('Bluetooth characteristic denied');
+    this.findCharacteristic(service, characteristic);
   }
 }

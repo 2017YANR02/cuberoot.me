@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 // /forum API client — typed fetch helpers for /v1/forum/*.
 // Same shape as lib/recon-api.ts: API_BASE + authHeaders/handleApi.
 
@@ -223,11 +224,11 @@ async function apiGet<T>(path: string, params: Record<string, string> = {}): Pro
   for (const [k, v] of Object.entries(params)) {
     if (v) url.searchParams.set(k, v);
   }
-  return handleApi<T>(await fetch(url.toString(), { headers: authHeaders(false) }));
+  return handleApi<T>(await sessionFetch(url.toString(), { headers: authHeaders(false) }));
 }
 
 async function apiSend<T>(method: string, path: string, body?: unknown): Promise<T> {
-  return handleApi<T>(await fetch(`${API_BASE}${path}`, {
+  return handleApi<T>(await sessionFetch(`${API_BASE}${path}`, {
     method,
     headers: authHeaders(body !== undefined),
     body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -276,7 +277,7 @@ export async function createThread(
 }
 
 export async function uploadForumVideo(file: File): Promise<ForumVideo> {
-  return handleApi<ForumVideo>(await fetch(`${API_BASE}/video`, {
+  return handleApi<ForumVideo>(await sessionFetch(`${API_BASE}/video`, {
     method: 'POST',
     headers: authHeaders(false),
     body: file,
@@ -324,7 +325,7 @@ export async function reactToPost(
 export async function trackThreadView(id: number): Promise<void> {
   // Fire-and-forget; failures are irrelevant to the reader.
   try {
-    await fetch(`${API_BASE}/t/${id}/view`, { method: 'POST' });
+    await sessionFetch(`${API_BASE}/t/${id}/view`, { method: 'POST' });
   } catch { /* ignore */ }
 }
 

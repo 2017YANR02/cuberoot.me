@@ -1,0 +1,68 @@
+/* recon-player — shared read-only cuber-engine preview (CuberReconPlayer /
+   Sq1ReconPlayer, both via ReconPlayerBase). An optional back-view mini window
+   pins to the canvas top-right. Sizing chains off the parent pane
+   (submit-player-pane / submit-inline-player / detail-player-pane) like
+   TwistySection's fill mode. */
+
+.recon-player {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.recon-player-canvas {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+  touch-action: none;
+}
+
+/* renderer.setSize 会把当前尺寸写成画布的行内 px 宽高。那份 px 宽同时是父盒的
+   min-content:容器想变窄时会被自己的画布顶住(min-width:auto 的 flex 行里必现),
+   ResizeObserver 于是永远等不到新尺寸 —— 画布卡在旧宽度上,一路漫出右边。
+   max-width 把这条棘轮断掉:盒子先缩,RO 再把画布量回去。 */
+.recon-player-canvas > canvas { max-width: 100%; }
+
+/* Back-view window — pinned top-right of the canvas. Transparent canvas inside
+   shows this var(--card) backdrop where the cube doesn't cover. pointer-events
+   none so dragging passes through to the main view. */
+.recon-player-backview {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--card);
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--foreground) 14%, transparent);
+  pointer-events: none;
+  z-index: 2;
+}
+.recon-player-backview canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Thin padded wrapper around the shared <PlaybackBar> (buttons + scrubber styling
+   live in PlaybackBar.css — same bar /sim renders). */
+.recon-player-controls {
+  display: flex;
+  justify-content: center;
+  padding: 8px 10px;
+}
+
+/* Fullscreen plus five transport buttons must share one row, including when
+   the 260px playback bar is narrower than their combined preferred widths. */
+.recon-player-controls .playback-bar-controls {
+  flex-wrap: nowrap;
+}
+
+.recon-player-controls .playback-bar-btn {
+  flex: 0 1 38px;
+  min-width: 0;
+  padding-inline: 0;
+}

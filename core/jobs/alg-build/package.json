@@ -12,21 +12,20 @@
   },
   "dependencies": {
     "@cuberoot/shared": "workspace:*",
-    "adm-zip": "^0.5.16",
+    "adm-zip": "^0.6.1",
     "cheerio": "^1.0.0",
     "cubing": "^0.63.3",
     "fast-glob": "^3.3.2",
     "fast-xml-parser": "^5.7.3",
-    "fflate": "^0.8.2",
+    "fflate": "^0.8.3",
     "fs-extra": "^11.2.0",
     "mammoth": "^1.8.0",
     "pinyin-pro": "^3.26.0"
   },
   "devDependencies": {
-    "@types/adm-zip": "^0.5.5",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^25.5.0",
-    "tsx": "^4.19.0",
+    "tsx": "^4.23.15",
     "typescript": "^5.8.0"
   }
 }

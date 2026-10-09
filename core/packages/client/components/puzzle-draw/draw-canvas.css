@@ -47,6 +47,16 @@
   filter: brightness(1.08);
 }
 
+.draw-canvas-preview [data-draw-toggle] {
+  cursor: pointer;
+  pointer-events: all;
+}
+
+.draw-canvas-preview [data-draw-toggle]:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
 .draw-canvas-controls {
   display: flex;
   flex-wrap: wrap;

@@ -1,0 +1,5 @@
+WeChat emoji artwork copyright Tencent. Unofficial collection by xxk8.
+Source: https://github.com/xxk8/wechat-emojis/tree/58b70fbc3b96644348b85757950fe7b54b876ba5
+Upstream allows personal learning and noncommercial use only; commercial use requires Tencent permission.
+The repository code MIT license does not override the artwork restriction.
+Original PNG bytes preserved; numeric filenames follow upstream EMOJI_DATA order.

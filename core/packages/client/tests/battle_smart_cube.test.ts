@@ -19,6 +19,13 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { updateSettings } from '@/app/[lang]/timer/_lib/settings';
+
+vi.mock('@cuberoot/timer-ui/random-scramble', () => ({
+  createRandomScrambleClient: () => ({ generate: async ({ event }: { event: string }) => ({
+    ok: true, kind: 'generated', event, scramble: "R U R' U'",
+  }) }),
+}));
 
 vi.mock('@/app/[lang]/timer/_battle/engine/engine_loader', () => ({
   isScrambleEngineReady: () => true,
@@ -80,6 +87,7 @@ function resetPlayers(playerCount: number, cubeMode: 'own' | 'shared') {
 const P = (i: number) => useBattleStore.getState().players[i];
 
 beforeEach(() => {
+  updateSettings({ scrambleSource: 'random' });
   vi.useFakeTimers();
   vi.setSystemTime(0);
   resetPlayers(2, 'own');
@@ -104,7 +112,7 @@ describe('cubeArm', () => {
     expect(useBattleStore.getState().cubeArm(-1)).toBe(false);
   });
 
-  it('全员拧完之后再预备 = 开下一轮(旧成绩清掉)', () => {
+  it('全员拧完并取得下一题后再预备 = 开下一轮(旧成绩清掉)', async () => {
     for (const i of [0, 1]) {
       useBattleStore.getState().cubeArm(i);
       useBattleStore.getState().cubeStart(i, 0);
@@ -112,6 +120,10 @@ describe('cubeArm', () => {
     }
     expect(P(0).hasFinished).toBe(true);
     expect(P(1).hasFinished).toBe(true);
+    // The shared provider is asynchronous; finished results stay editable until it is ready.
+    expect(useBattleStore.getState().cubeArm(0)).toBe(false);
+    expect(P(0).hasFinished).toBe(true);
+    await vi.waitFor(() => expect(useBattleStore.getState().scrambles.slice(0, 2)).toEqual(["R U R' U'", "R U R' U'"]));
     useBattleStore.getState().cubeArm(0);
     expect(P(0).hasFinished).toBe(false);
     expect(P(0).canStart).toBe(true);

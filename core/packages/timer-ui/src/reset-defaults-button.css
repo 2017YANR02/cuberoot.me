@@ -1,0 +1,17 @@
+/* Shared reset button; hosts only override placement and sizing. */
+.reset-defaults-btn {
+  padding: 8px 12px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.reset-defaults-btn:hover {
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+}
+
+.settings-reset-row .reset-defaults-btn { min-height: 44px; }

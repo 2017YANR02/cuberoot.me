@@ -19,6 +19,7 @@ export class WrBpa extends RoundMetric {
 
   // NOTE: BPA = 前 4 次中取最好 3 次均值
   computeMetric(values: number[]): number | null {
+    if (values.length !== 5 || values.includes(0)) return null;
     const first4 = values.slice(0, 4);
     const valid = first4.filter(v => v > 0);
     if (valid.length < 3) return null;

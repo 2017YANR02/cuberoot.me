@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 // /alg/3bld/lookup 的「显示选项」面板 —— 对齐上游 /settings 那批开关。
 // 折叠形态与同目录 BldConfigBar 一致(同一套 .bld-config-* 样式),别再造第二种。
@@ -6,7 +7,6 @@
 import { useState, type JSX } from 'react';
 import { SlidersHorizontal, ChevronDown, ChevronUp } from 'lucide-react';
 import BoolToggle from '@/components/BoolToggle';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { tr } from '@/i18n/tr';
 import { useBlddbPrefsStore, type BlddbPrefs } from '../_store/blddb-prefs-store';
 
@@ -94,13 +94,15 @@ export function BlddbOptions({
           <div className="bld-db-opt-row">
             <label className="bld-db-opt-field">
               <span>{tr({ zh: '多个 case 的排序', en: 'Order of results' })}</span>
-              <PillToggle
-                value={prefs.order === 'position'}
-                onChange={(v) => setPrefs({ order: v ? 'position' : 'letter' })}
-                offLabel={tr({ zh: '编码', en: 'Letters' })}
-                onLabel={tr({ zh: '位置', en: 'Position' })}
-                ariaLabel={tr({ zh: '多个 case 的排序', en: 'Order of results' })}
-              />
+              <select
+                value={String(prefs.order === 'position')}
+                onChange={event => { const v = event.currentTarget.value === 'true'; setPrefs({ order: v ? 'position' : 'letter' }); }}
+                aria-label={tr({ zh: '多个 case 的排序', en: 'Order of results' })}
+                className="native-select"
+              >
+                <option value="true">{tr({ zh: '位置', en: 'Position' })}</option>
+                <option value="false">{tr({ zh: '编码', en: 'Letters' })}</option>
+              </select>
             </label>
 
             <label className="bld-db-opt-field">
@@ -135,13 +137,15 @@ export function BlddbOptions({
             {showWingCode && (
               <label className="bld-db-opt-field">
                 <span>{tr({ zh: '翼棱编码位置', en: 'Wing lettering position' })}</span>
-                <PillToggle
-                  value={prefs.wingAlt}
-                  onChange={(v) => setPrefs({ wingAlt: v })}
-                  offLabel="UFr"
-                  onLabel="FUr"
-                  ariaLabel={tr({ zh: '翼棱编码位置', en: 'Wing lettering position' })}
-                />
+                <select
+                  value={String(prefs.wingAlt)}
+                  onChange={event => { const v = event.currentTarget.value === 'true'; setPrefs({ wingAlt: v }); }}
+                  aria-label={tr({ zh: '翼棱编码位置', en: 'Wing lettering position' })}
+                  className="native-select"
+                >
+                  <option value="true">{"FUr"}</option>
+                  <option value="false">{"UFr"}</option>
+                </select>
               </label>
             )}
           </div>

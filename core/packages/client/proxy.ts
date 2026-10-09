@@ -27,6 +27,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { fillPlatformParams, matchPlatformRoute } from './lib/platform-routes';
+import { competitionGate } from './lib/competition-gate';
 
 const SUPPORTED_LOCALES = ['en', 'zh'] as const;
 type Locale = typeof SUPPORTED_LOCALES[number];
@@ -115,7 +116,7 @@ function platformSeoRoute(rest: string): { rest: string; ownsCanonical: boolean;
   const match = matchPlatformRoute(segments);
   if (!match) return { rest, ownsCanonical: true, noindex: true };
   const noindex = match.definition.access !== 'public'
-    || ['search', 'offline', 'login', 'notifications'].includes(match.definition.id);
+    || ['search', 'offline', 'login', 'notifications', 'online-competition-preview', 'course-lesson', 'course-section-introduction', 'course-section-trial', 'course-section-core', 'certificate', 'qr'].includes(match.definition.id);
   const canonicalRest = match.definition.canonicalHref
     ? fillPlatformParams(match.definition.canonicalHref, match.params)
     : rest;
@@ -151,7 +152,9 @@ function setSeoLinkHeaders(res: NextResponse, rest: string, locale: Locale) {
 }
 
 // Homepage card visibility never gates page delivery or adds an API dependency.
-export function proxy(req: NextRequest) {
+export async function proxy(req: NextRequest) {
+  const challenge = await competitionGate(req);
+  if (challenge) return challenge;
   return routeLanguage(req);
 }
 

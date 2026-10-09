@@ -4,12 +4,21 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createBootDeadline } from '../src/cubeopt/boot-deadline.js';
 import { DEFAULT_CUBEOPT_IDLE_MS, resolveCubeoptIdleMs } from '../src/cubeopt/config.js';
 import { assertCubeoptSmokeResult } from '../src/cubeopt/smoke-contract.js';
+import { assertCubeoptLoadMemory, requiredCubeoptLoadBytes, CUBEOPT_LOAD_FLOOR_BYTES } from '../src/cubeopt/memory-budget.js';
 
 afterEach(() => {
   vi.useRealTimers();
 });
 
 describe('CubeOpt runtime contracts', () => {
+  it('refuses a full table load without service headroom and enforces a loading floor', () => {
+    const tableBytes = 7_782_727_680;
+    expect(requiredCubeoptLoadBytes(tableBytes)).toBe(8_856_469_504);
+    expect(() => assertCubeoptLoadMemory(8_003_664 * 1024, requiredCubeoptLoadBytes(tableBytes))).toThrow(/load deferred/);
+    expect(() => assertCubeoptLoadMemory(10 * 1024 ** 3, requiredCubeoptLoadBytes(tableBytes))).not.toThrow();
+    expect(() => assertCubeoptLoadMemory(160_236 * 1024, CUBEOPT_LOAD_FLOOR_BYTES)).toThrow(/load deferred/);
+    expect(() => assertCubeoptLoadMemory(512 * 1024 ** 2, CUBEOPT_LOAD_FLOOR_BYTES)).not.toThrow();
+  });
   it('allows zero to disable idle unload without accepting invalid delays', () => {
     expect(resolveCubeoptIdleMs(undefined)).toBe(DEFAULT_CUBEOPT_IDLE_MS);
     expect(resolveCubeoptIdleMs('')).toBe(DEFAULT_CUBEOPT_IDLE_MS);

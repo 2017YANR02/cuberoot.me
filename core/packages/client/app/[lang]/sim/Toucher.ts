@@ -80,7 +80,7 @@ export default class Toucher {
       first.clientY - this.dom.getBoundingClientRect().top
     );
     this.callback(action);
-    event.preventDefault();
+    if (event.cancelable) event.preventDefault();
     if (event.type === "touchend" || event.type === "touchcancel") {
       this.target = null;
     }

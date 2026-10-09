@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 /**
  * /quiz —— 魔方知识问答。
@@ -17,7 +18,6 @@ import { useQueryState, parseAsStringLiteral } from 'nuqs';
 import { Shuffle, PenLine } from 'lucide-react';
 import BackHome from '@/components/BackHome';
 import HeaderToggles from '@/components/HeaderToggles';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import Link from '@/components/AppLink';
 import { tr } from '@/i18n/tr';
 import { fetchCommunityQuestions } from '@/lib/quiz-api';
@@ -91,13 +91,15 @@ function QuizPage() {
           </p>
 
           <div className="quiz-level">
-            <PillToggle
-              value={level === 'hard'}
-              onChange={(on) => void setLevel(on ? 'hard' : 'easy')}
-              offLabel={tr({ zh: '简单', en: 'Easy' })}
-              onLabel={tr({ zh: '进阶', en: 'Advanced' })}
-              ariaLabel={tr({ zh: '难度', en: 'Difficulty' })}
-            />
+            <select
+              value={String(level === 'hard')}
+              onChange={event => { const on = event.currentTarget.value === 'true'; void setLevel(on ? 'hard' : 'easy'); }}
+              aria-label={tr({ zh: '难度', en: 'Difficulty' })}
+              className="native-select"
+            >
+              <option value="true">{tr({ zh: '进阶', en: 'Advanced' })}</option>
+              <option value="false">{tr({ zh: '简单', en: 'Easy' })}</option>
+            </select>
             <span className="quiz-level-hint">
               {level === 'hard'
                 ? tr({

@@ -260,7 +260,10 @@ describe.skipIf(!enabled)('real PostgreSQL stats imports preserve online reads a
     const file = await fixture('compressed_people.copy.tsv.gz', body);
     const sql = refreshTable({ table: 'wca_persons', columns: ['id', 'name', 'country_id'], keyColumns: ['id'], file, expectedRows: 2 });
     const outcome = await run(`${importTransactionStart('stats_import_test')}\n${sql}\nSELECT 'source_bytes=' || current_setting('cuberoot.import_source_bytes');\nCOMMIT;`);
-    expect(outcome).toContain(`source_bytes=${Buffer.byteLength(body)}`);
+    // BSD wc pads its byte count; GNU wc does not. Preserve the exact size check.
+    const sourceBytes = outcome.match(/^source_bytes=\s*(\d+)\s*$/m);
+    expect(sourceBytes).not.toBeNull();
+    expect(Number(sourceBytes![1])).toBe(Buffer.byteLength(body));
     expect(await readdir(workDir)).not.toContain('compressed_people.copy.tsv');
     expect(await run('SELECT id,name FROM wca_persons ORDER BY id;')).toBe('1|New name\n3|New person');
   });

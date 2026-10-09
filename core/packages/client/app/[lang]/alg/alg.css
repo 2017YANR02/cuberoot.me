@@ -389,28 +389,10 @@ html[data-theme=dark] .alg-root {
   margin: 16px 0 10px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  border-bottom: 1px solid var(--border-default);
-  padding-bottom: 6px;
   display: flex;
   align-items: center;
   gap: 6px;
 }
-.alg-subgroup-title.is-toggleable {
-  cursor: pointer;
-  user-select: none;
-}
-.alg-subgroup-title.is-toggleable:hover {
-  color: var(--foreground);
-}
-.alg-subgroup-count {
-  margin-left: auto;
-  font-size: 11px;
-  color: var(--faint-foreground);
-  font-weight: 500;
-  text-transform: none;
-  letter-spacing: 0;
-}
-
 .alg-ep-options,
 .alg-ep-parity-section {
   max-width: 1200px;
@@ -568,7 +550,7 @@ html[data-theme=dark] .alg-root {
 .alg-sq1-black-top-toggle {
   align-self: center;
 }
-/* ZBLL 全集开关与相邻的图/公式 PillToggle 同高，避免页头里一高一矮。 */
+/* ZBLL 全集开关与相邻的图/公式下拉菜单对齐。 */
 .alg-show-all-toggle {
   align-self: center;
 }
@@ -642,16 +624,12 @@ html[data-theme=dark] .alg-root {
   .alg-pdf-menu-item {
     min-block-size: 44px;
   }
-  /* 保留紧凑滑轨视觉，同时让整块透明命中区达到 44px。 */
-  .alg-cat-header .alg-view-toggle {
-    margin-block: 8px;
+  .alg-cat-header .alg-list-settings .settings-popover-trigger {
+    inline-size: 44px;
+    block-size: 44px;
   }
-  .alg-cat-header .alg-view-toggle::after {
-    content: '';
-    position: absolute;
-    inset-block: -9px;
-    inset-inline: 0;
-    z-index: 1;
+  .alg-cat-header .native-select.alg-view-toggle {
+    min-block-size: 44px;
   }
   .alg-cat-header .alg-sq1-black-top-toggle,
   .alg-cat-header .alg-sq1-black-top-toggle .bool-toggle-label {
@@ -860,9 +838,8 @@ html[data-theme=dark] .alg-root {
   justify-content: space-between;
   gap: 8px;
   padding: 6px 8px;
-  background: var(--background);
-  border: 1px solid var(--border-default);
-  border-radius: 6px;
+  background: transparent;
+  border: 0;
   font-family: var(--font-mono, Consolas, monospace);
   font-size: 12px;
   color: var(--foreground);
@@ -870,8 +847,7 @@ html[data-theme=dark] .alg-root {
   text-align: left;
 }
 .alg-alg-row:hover {
-  background: color-mix(in srgb, var(--foreground) 6%, transparent);
-  border-color: var(--accent);
+  background: transparent;
 }
 .alg-alg-text {
   flex: 1;
@@ -893,6 +869,11 @@ html[data-theme=dark] .alg-root {
   text-decoration: underline;
   text-decoration-thickness: 2px;
   text-underline-offset: 3px;
+}
+.alg-alg-text strong,
+.alg-meta-algline-code strong,
+.alg-editor-input strong {
+  font-weight: inherit;
 }
 .alg-alg-text u.wavy,
 .alg-meta-algline-code u.wavy {
@@ -939,6 +920,62 @@ html[data-theme=dark] .alg-root {
   gap: 4px;
   align-items: center;
 }
+.alg-case-inline-editor [hidden] { display: none !important; }
+.alg-case-inline-editor .alg-editor-ori {
+  padding: 0;
+  border: 0;
+  background: none;
+  margin-top: 12px;
+}
+.alg-case-inline-editor .alg-case-detail-title label { display: flex; min-width: 0; }
+.alg-case-inline-editor .alg-case-detail-title label > span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.alg-case-inline-editor .alg-case-name-input {
+  field-sizing: content;
+  width: auto;
+  min-width: 3ch;
+  max-width: min(30ch, 65vw);
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  border-bottom: 1px dashed var(--border-default);
+}
+.alg-case-inline-status { margin: 8px 0 16px; }
+.alg-case-inline-actions .alg-admin-modal-foot { padding: 0; border: 0; flex-wrap: wrap; }
+.alg-case-inline-actions { max-width: 100%; }
+.alg-case-inline-status .alg-admin-modal-error { margin-bottom: 8px; }
+.alg-case-inline-fields.alg-admin-modal-body { margin: 24px 0 0; padding: 0; border: 0; min-width: 0; overflow: visible; }
+.alg-case-inline-editor .alg-admin-setup-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 12px 0;
+  min-width: 0;
+}
+.alg-case-inline-editor .alg-admin-setup-label > span:first-child,
+.alg-case-inline-editor .alg-admin-algs-label { font-size: 0.78rem; color: var(--muted-foreground); }
+.alg-case-inline-editor .alg-editor-input {
+  min-width: 0;
+  background: none;
+  border-color: transparent;
+  font-family: inherit;
+  font-size: 0.85rem;
+}
+.alg-case-inline-editor .alg-editor-input:hover { border-color: var(--border-default); }
+.alg-case-inline-editor .alg-editor-input:focus { border-color: var(--accent); }
+.alg-case-inline-editor .alg-editor-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; align-items: start; }
+.alg-case-inline-editor .alg-editor-tools { max-width: 250px; }
+.alg-case-inline-editor .alg-alg-sortable { display: block; padding-left: 18px; margin-bottom: 6px; }
+.alg-case-inline-editor .alg-alg-drag-handle { position: absolute; left: 0; top: 8px; }
+.alg-editor-mirror { flex-basis: 100%; min-width: 0; }
+.alg-editor-notation { flex-basis: 100%; overflow-wrap: anywhere; }
+.alg-validation-name:is(button, a) { display: flex; flex: 1; align-items: center; gap: 6px; color: inherit; font: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: start; }
 .alg-editor-input {
   flex: 1;
   min-height: 32px;
@@ -1134,8 +1171,8 @@ html[data-theme=dark] .alg-root {
 .alg-alg-copy-icon { color: var(--faint-foreground); flex: 0 0 auto; }
 .alg-alg-row:hover .alg-alg-copy-icon { color: var(--accent); }
 .alg-alg-row.is-expanded {
-  background: var(--accent-soft);
-  border-color: var(--accent);
+  background: transparent;
+  color: var(--accent);
 }
 .alg-alg-copy-btn {
   display: inline-flex;
@@ -1166,12 +1203,26 @@ html[data-theme=dark] .alg-root {
   padding: 8px 12px;
   font-size: 12px;
 }
+.alg-community.is-compact {
+  gap: 2px;
+  padding: 0;
+}
 .alg-community-row {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  min-height: 24px;
+}
+.alg-player-list-options > .alg-community {
+  padding: 8px 0 0;
+}
+.alg-community-meta {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  min-height: 24px;
+  min-width: 0;
 }
 .alg-community-author {
   flex-shrink: 0;
@@ -1197,8 +1248,7 @@ a.alg-community-author:hover {
   font-size: 12px;
   color: var(--foreground);
   background: none;
-  flex: 1 1 12rem;
-  min-width: min(100%, 12rem);
+  min-width: 0;
   word-break: break-word;
 }
 .alg-community-notes {
@@ -1417,6 +1467,17 @@ a.alg-community-author:hover {
   padding: 12px 16px; overflow-y: auto;
   display: flex; flex-direction: column; gap: 10px;
 }
+.alg-list-settings-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.alg-list-settings-label {
+  color: var(--muted-foreground);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
 .alg-admin-modal-body label {
   display: flex; flex-direction: column; gap: 4px;
 }
@@ -1525,17 +1586,14 @@ a.alg-community-author:hover {
   padding-top: 6px;
 }
 
-/* ── 公式标签 + 步数(1LLL 表带来的:[oh] / [ft] / [fmc] / [big] / [key])──────── */
+/* ── 公式右侧标签 + 步数 ──────────────────────────────────────────────── */
 .alg-tag {
   flex: none;
-  padding: 1px 5px;
-  border-radius: 4px;
   font-family: var(--font-sans, inherit);
   font-size: 10px;
   font-weight: 600;
   line-height: 1.5;
   color: var(--muted-foreground);
-  background: color-mix(in srgb, var(--foreground) 8%, transparent);
 }
 /* 照写的 STM。`R4` 是 1 步 —— 它是个真实的物理动作,不折 mod 4(见 shared/alg_notation) */
 .alg-alg-len {
@@ -1579,30 +1637,149 @@ a.alg-community-author:hover {
 }
 .alg-meta-row {
   display: flex;
-  align-items: baseline;
-  gap: 10px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
   font-size: 13px;
 }
-/* 编号 / 子集 / OLL / 角换 / 生成元 / 对称性:每条值都只有几个字符,一行一条时右边空掉大半。
-   三列并排;`.is-wide`(出现概率:两个 chip + 「原理」)独占一整行。
-   列数写死 3 而不是 `auto-fit`:弹窗宽度是 `max-content`,auto-fit 在固有尺寸阶段会按项数铺开
-   把弹窗一路撑到上限。写死 3 列,这块的固有宽 = 3 × 最宽一格,撑不动弹窗。 */
+/* 规格表在宽屏完整成行,逐级降为两列和一列;长名称留在值区自然换行。 */
 .alg-meta-facts {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 4px 18px;
+  gap: 18px 32px;
 }
-.alg-meta-facts > .is-wide { grid-column: 1 / -1; }
-@media (max-width: 560px) {
+@media (max-width: 720px) {
   .alg-meta-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 480px) {
+  .alg-meta-facts { grid-template-columns: minmax(0, 1fr); }
 }
 .alg-meta-key {
   flex: none;
-  min-width: 5.5em;
   color: var(--muted-foreground);
 }
-/* 网格里每格自成一条,键不必再互相对齐 —— 5.5em 的固定键宽只会把值挤出格。 */
-.alg-meta-facts .alg-meta-key { min-width: 0; }
+.alg-meta-facts .alg-meta-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.25;
+}
+.alg-meta-facts .alg-meta-val {
+  min-width: 0;
+  line-height: 1.45;
+}
+.alg-meta-type-help {
+  display: inline-flex;
+  color: inherit;
+}
+.alg-meta-type-help:hover { color: var(--foreground); }
+.alg-meta-type-value {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+.alg-meta-type-value:hover { text-decoration: underline; }
+.alg-meta-subgroup-editor {
+  min-width: 0;
+}
+.alg-meta-subgroup-editor > label {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  min-width: 0;
+  font-size: 13px;
+}
+.alg-meta-subgroup-editor > label > span {
+  flex: none;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 1.25;
+}
+.alg-meta-subgroup-editor .alg-admin-modal-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: var(--input);
+  color: inherit;
+  font: inherit;
+}
+
+/* /alg/combo-types */
+.alg-combo-types-page {
+  width: min(920px, 100%);
+  margin: 0 auto;
+  padding: 28px 20px 56px;
+}
+.alg-combo-types-page h1 {
+  margin: 0;
+  font-size: clamp(1.75rem, 4vw, 2.4rem);
+}
+.alg-combo-types-lead {
+  max-width: 720px;
+  margin: 12px 0 0;
+  color: var(--muted-foreground);
+  line-height: 1.7;
+}
+.alg-combo-types-page h2 {
+  margin: 30px 0 12px;
+  font-size: 1.2rem;
+}
+.alg-combo-abbr-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin: 0;
+}
+.alg-combo-abbr-list > div {
+  display: grid;
+  grid-template-columns: 3.5em minmax(0, 1fr);
+  gap: 8px;
+}
+.alg-combo-abbr-list dt,
+.alg-combo-abbr-list dd { margin: 0; }
+.alg-combo-types-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px 32px;
+}
+.alg-combo-type {
+  min-width: 0;
+  scroll-margin-top: 20px;
+}
+.alg-combo-type h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+.alg-combo-type h3 a {
+  color: inherit;
+  text-decoration: none;
+}
+.alg-combo-type h3 a:hover { text-decoration: underline; }
+.alg-combo-type p {
+  margin: 5px 0 0;
+  color: var(--muted-foreground);
+  line-height: 1.55;
+}
+.alg-combo-source-note {
+  margin: 12px 0 0;
+  color: var(--muted-foreground);
+  line-height: 1.6;
+}
+@media (max-width: 640px) {
+  .alg-combo-types-page { padding: 20px 16px 40px; }
+  .alg-combo-types-grid { grid-template-columns: minmax(0, 1fr); }
+}
 .alg-meta-val {
   display: flex;
   align-items: center;
@@ -1629,11 +1806,10 @@ a.alg-community-author:hover {
   flex-wrap: wrap;
   gap: 10px;
 }
-/* 顶部那排缩略图(当前 + 镜像 / 逆 / 镜像逆),与下面公式用一条分隔线隔开 */
+/* 顶部那排缩略图(当前 + 镜像 / 逆 / 镜像逆)只保留与下面公式的留白。 */
 .alg-meta-top-grid {
   padding-bottom: 12px;
   margin-bottom: 12px;
-  border-bottom: 1px solid var(--border-default);
 }
 .alg-meta-related-card {
   display: flex;
@@ -1725,22 +1901,12 @@ a.alg-community-author:hover {
   overflow: visible;
 }
 
-/* 非 meta case(f2l / oll / coll / cmll / zbls …)的精简正文:
-   左边保留静态辨识图和打乱，右边专注动画与公式。 */
+/* 非 meta case(f2l / oll / coll / cmll / zbls …)复用 meta 页层级:
+   关系卡片独占顶行，动画与公式排列在下方。 */
 .alg-case-detail-lean {
-  display: grid;
-  grid-template-columns: 136px minmax(0, 1fr);
-  align-items: start;
-  gap: 24px;
-}
-.alg-case-detail-lean-aside {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
-}
-.alg-case-detail-lean-thumb {
-  align-self: flex-start;
+  gap: 0;
 }
 .alg-case-detail-lean-algs {
   display: flex;
@@ -1752,6 +1918,32 @@ a.alg-community-author:hover {
 .alg-case-detail-lean-algs.is-paired-player {
   gap: 24px;
 }
+@media (min-width: 901px) {
+  .alg-case-detail.is-f2l-orientation-grid {
+    max-width: min(1440px, 100%);
+  }
+  .alg-case-detail-lean-algs.is-paired-player.is-f2l-orientation-grid:not(.is-editing),
+  .alg-case-detail-lean-algs.is-paired-player.is-f2l-orientation-grid.is-editing .alg-editor {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    column-gap: 32px;
+    row-gap: 24px;
+  }
+  .alg-case-detail-lean-algs.is-paired-player.is-f2l-orientation-grid.is-editing .alg-editor > .alg-editor-ori:nth-child(3) {
+    order: 4;
+  }
+  .alg-case-detail-lean-algs.is-paired-player.is-f2l-orientation-grid.is-editing .alg-editor > .alg-editor-ori:nth-child(4) {
+    order: 3;
+  }
+}
+@media (min-width: 901px) and (max-width: 1399px) {
+  .alg-case-detail-lean-algs.is-paired-player.is-f2l-orientation-grid .alg-player-list-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+}
 .alg-case-detail-ori {
   display: flex;
   flex-direction: column;
@@ -1762,28 +1954,40 @@ a.alg-community-author:hover {
 }
 .alg-case-detail-ori-algs {
   min-width: 0;
+  --alg-case-detail-formula-size: 0.85rem;
+  --alg-case-detail-formula-indent: 32px;
 }
-/* 同一朝向的公式是一个连续列表:相邻行共用一条边,不要各画一条横线再留缝。
-   普通访客的行直接相邻;管理员多一层 sortable 外壳,两种 DOM 都要拼起来。 */
-.alg-case-detail-ori > .alg-alg-row:has(+ .alg-alg-row),
-.alg-case-detail-ori > .alg-alg-sortable:has(+ .alg-alg-sortable) > .alg-alg-row,
-.alg-case-detail-ori-algs > .alg-alg-row:has(+ .alg-alg-row),
-.alg-case-detail-ori-algs > .alg-alg-sortable:has(+ .alg-alg-sortable) > .alg-alg-row {
-  border-bottom-right-radius: 0;
-  border-bottom-left-radius: 0;
+.alg-case-detail-ori-algs > .alg-case-standard {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  column-gap: 8px;
 }
-.alg-case-detail-ori > .alg-alg-row + .alg-alg-row,
-.alg-case-detail-ori > .alg-alg-sortable + .alg-alg-sortable,
-.alg-case-detail-ori-algs > .alg-alg-row + .alg-alg-row,
-.alg-case-detail-ori-algs > .alg-alg-sortable + .alg-alg-sortable {
-  margin-top: -1px;
+.alg-case-detail-ori-algs > .alg-case-standard .alg-case-icon {
+  justify-self: start;
 }
-.alg-case-detail-ori > .alg-alg-row + .alg-alg-row,
-.alg-case-detail-ori > .alg-alg-sortable + .alg-alg-sortable > .alg-alg-row,
-.alg-case-detail-ori-algs > .alg-alg-row + .alg-alg-row,
-.alg-case-detail-ori-algs > .alg-alg-sortable + .alg-alg-sortable > .alg-alg-row {
-  border-top-left-radius: 0;
-  border-top-right-radius: 0;
+.alg-case-detail-ori-algs > .alg-alg-row {
+  padding-inline-start: var(--alg-case-detail-formula-indent);
+}
+.alg-case-detail-ori-algs > .alg-community {
+  padding-inline-start: var(--alg-case-detail-formula-indent);
+}
+.alg-case-inline-editor .alg-case-detail-ori-algs .alg-alg-sortable {
+  padding-inline-start: var(--alg-case-detail-formula-indent);
+}
+.alg-case-inline-editor .alg-case-detail-ori-algs .alg-editor-input {
+  padding-inline: 0;
+}
+.alg-case-detail-ori-algs > .alg-case-standard,
+.alg-case-detail-ori-algs > .alg-admin-setup-label {
+  margin: 0 0 10px;
+}
+.alg-case-detail-ori-algs > .alg-case-standard code,
+.alg-case-detail-ori-algs > .alg-alg-row,
+.alg-case-detail-ori-algs > .alg-alg-sortable .alg-alg-row,
+.alg-case-detail-ori-algs .alg-editor-input {
+  font-family: inherit;
+  font-size: var(--alg-case-detail-formula-size);
+  line-height: 1.5;
 }
 .alg-case-detail-ori > .alg-alg-row:hover,
 .alg-case-detail-ori > .alg-alg-row.is-expanded,
@@ -1806,24 +2010,6 @@ a.alg-community-author:hover {
   min-width: 0;
 }
 
-/* 中等宽度先把静态信息移到上方，把整行留给动画与公式。 */
-@media (max-width: 900px) {
-  .alg-case-detail-lean.is-paired-player {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-  .alg-case-detail-lean.is-paired-player .alg-case-detail-lean-aside {
-    width: 100%;
-    display: grid;
-    grid-template-columns: 116px minmax(0, 1fr);
-    column-gap: 12px;
-    row-gap: 6px;
-  }
-  .alg-case-detail-lean.is-paired-player .alg-case-detail-lean-thumb { grid-row: 1 / span 3; }
-  .alg-case-detail-lean.is-paired-player .alg-case-detail-lean-aside > :not(.alg-case-detail-lean-thumb) { grid-column: 2; }
-}
-
 @media (max-width: 680px) {
   .alg-case-detail {
     padding: 12px;
@@ -1836,26 +2022,6 @@ a.alg-community-author:hover {
     min-block-size: 44px;
     align-items: center;
     justify-content: center;
-  }
-  .alg-case-detail-lean {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-  .alg-case-detail-lean-aside {
-    width: 100%;
-    display: grid;
-    grid-template-columns: 116px minmax(0, 1fr);
-    column-gap: 12px;
-    row-gap: 6px;
-  }
-  .alg-case-detail-lean-thumb { grid-row: 1 / span 3; }
-  .alg-case-detail-lean-aside > :not(.alg-case-detail-lean-thumb) { grid-column: 2; }
-  .alg-case-detail-lean-aside .alg-mirror-row {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 4px;
-    margin: 0;
   }
   .alg-case-detail-lean-algs.is-paired-player {
     gap: 10px;
@@ -1879,6 +2045,8 @@ a.alg-community-author:hover {
 }
 .alg-meta-scramble-row {
   display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 8px;
   min-width: 0;
@@ -1891,15 +2059,56 @@ a.alg-community-author:hover {
   flex: 1;
   min-width: 0;
 }
+.alg-meta-scramble-prefix {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  color: var(--muted-foreground);
+}
 .alg-meta-scramble-kind {
-  align-self: flex-start;
+  align-self: center;
   width: fit-content;
   padding: 2px 6px;
   border: 1px solid var(--input);
   border-radius: 6px;
   background: var(--background);
   color: var(--foreground);
+  font-family: inherit;
   font-size: 12px;
+}
+.alg-meta-scramble-kind option { font-family: inherit; }
+
+.alg-meta-setup-editor {
+  flex: 1;
+  min-width: 0;
+}
+.alg-meta-setup-editor[hidden] { display: none; }
+.alg-case-inline-editor .alg-meta-setup-editor .alg-admin-setup-label { margin: 0; }
+.alg-meta-setup-editor .alg-admin-setup-label > span:first-child {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.alg-case-inline-editor .alg-admin-setup-label .alg-admin-setup-textarea {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: none;
+  border: 1px solid transparent;
+  padding: 4px;
+  color: var(--foreground);
+}
+.alg-case-inline-editor .alg-admin-setup-textarea:hover { border-color: var(--border-default); }
+.alg-case-inline-editor .alg-admin-setup-textarea:focus { border-color: var(--accent); }
+@media (max-width: 479px) {
+  .alg-meta-scramble-row:has(.alg-meta-setup-editor) { flex-wrap: wrap; }
+  .alg-meta-setup-editor { flex-basis: 100%; }
 }
 
 .alg-view-angle {
@@ -1943,6 +2152,17 @@ a.alg-community-author:hover {
   font-size: 12px;
 }
 .alg-meta-algline-code::-webkit-scrollbar { display: none; }
+.alg-case-standard-detail {
+  align-items: center;
+  padding-inline-end: 8px;
+}
+.alg-case-standard-detail code {
+  white-space: nowrap;
+  word-break: normal;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.alg-case-standard-detail code::-webkit-scrollbar { display: none; }
 .alg-meta-copy {
   flex: none;
   display: inline-flex;
@@ -1992,6 +2212,7 @@ a.alg-community-author:hover {
 }
 .alg-meta-case-player-layout {
   flex: 1;
+  min-width: 0;
 }
 .alg-meta-algline-len {
   flex: none;
@@ -2240,24 +2461,6 @@ a.alg-community-author:hover {
   .alg-mirror-line .alg-alg-copy-btn { grid-area: copy; }
 }
 
-/* 伙伴 case 缩略卡(case 详情页,建链之后才出现) */
-.alg-mirror-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 4px 0 8px;
-  font-size: 12px;
-}
-.alg-mirror-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: inherit;
-  text-decoration: none;
-}
-.alg-mirror-link:hover .alg-mirror-name { color: var(--accent); }
-.alg-mirror-name { font-weight: 600; }
-
 /* Site scenery: preserve the original surface when scenery is disabled. */
 @media screen {
   body[data-site-scenery] .alg-root {
@@ -2278,4 +2481,94 @@ a.alg-community-author:hover {
   body[data-site-scenery] .alg-admin-modal {
     background: var(--glass-popover-bg);
   }
+}
+.alg-editor-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; min-width: 0; }
+.alg-editor-tools-group { display: contents; }
+
+/* Inline detail rows reuse the admin toolbar's compact capsule behavior: the
+   action group stays behind a small hover target, then opens toward the input. */
+@media (hover: hover) and (pointer: fine) {
+  .alg-case-inline-editor .alg-editor-tools {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    max-width: none;
+    justify-self: end;
+    overflow: visible;
+    z-index: 2;
+  }
+  .alg-case-inline-editor .alg-editor-tools-group {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-end: 0;
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 4px;
+    box-sizing: border-box;
+    width: max-content;
+    max-width: 40px;
+    min-height: 40px;
+    padding: 3px;
+    overflow: hidden;
+    border: 1px solid var(--border-default);
+    border-radius: 22px;
+    transition: max-width 420ms cubic-bezier(.22, 1, .36, 1);
+  }
+  .alg-case-inline-editor .alg-editor-tools-group::before {
+    content: '…';
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: var(--muted-foreground);
+    line-height: 1;
+    transition: opacity 140ms ease;
+  }
+  .alg-case-inline-editor .alg-editor-tools-group > * {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(8px);
+    transition: opacity 140ms ease, transform 300ms cubic-bezier(.22, 1, .36, 1);
+  }
+  .alg-case-inline-editor .alg-editor-tools:is(:hover, :has(:focus-visible), :has([aria-expanded='true'])) .alg-editor-tools-group {
+    max-width: min(320px, calc(100vw - 32px));
+  }
+  .alg-case-inline-editor .alg-editor-tools:is(:hover, :has(:focus-visible), :has([aria-expanded='true'])) .alg-editor-tools-group::before {
+    opacity: 0;
+  }
+  .alg-case-inline-editor .alg-editor-tools:is(:hover, :has(:focus-visible), :has([aria-expanded='true'])) .alg-editor-tools-group > * {
+    opacity: 1;
+    pointer-events: auto;
+    transform: none;
+    transition: opacity 220ms ease 100ms, transform 420ms cubic-bezier(.22, 1, .36, 1);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .alg-case-inline-editor .alg-editor-tools-group,
+    .alg-case-inline-editor .alg-editor-tools-group::before,
+    .alg-case-inline-editor .alg-editor-tools-group > * { transition: none; }
+  }
+}
+.alg-editor-row.has-gen-heading { margin-top: 18px; }
+.alg-editor-gen { position: relative; display: inline-flex; align-items: center; min-width: 6ch; min-height: 32px; white-space: nowrap; font-size: 11px; }
+.alg-editor-gen-heading { position: absolute; inset-inline-start: 0; bottom: calc(100% + 2px); font-family: var(--font-sans, inherit); white-space: nowrap; }
+.alg-editor-gen code { font: inherit; }
+.alg-editor-tools .alg-editor-del { border-color: transparent; min-width: 28px; min-height: 32px; justify-content: center; }
+.alg-editor-tools .alg-editor-del:hover { color: var(--foreground); background: var(--muted); }
+.alg-editor-tools .alg-editor-remove:hover { color: var(--destructive); }
+.alg-editor-tools .alg-alg-len { margin: 0 4px; }
+.alg-editor-tools .alg-tag-select .compact-select-trigger { min-height: 32px; padding: 4px 6px; }
+.alg-admin-setup-input-row { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.alg-admin-setup-input-row .alg-admin-setup-textarea { flex: 1; min-width: 0; }
+.alg-input-keyboard-toggle { display: inline-flex; flex: none; }
+.alg-input-keyboard-toggle:empty { display: none; }
+.alg-input-keyboard-toggle .vkb-toggle { margin: 0; min-height: 32px; }
+.alg-editor .alg-tag-select, .alg-editor .alg-tag-select .compact-select-trigger { width: fit-content; max-width: 100%; }
+@media (max-width: 600px) {
+  .alg-case-inline-editor .alg-editor-row { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .alg-case-inline-editor .alg-editor-tools { max-width: 100%; }
+  .alg-case-inline-editor .alg-alg-sortable { margin-bottom: 14px; }
+  .alg-editor-tools .alg-editor-del,
+  .alg-editor-tools .alg-tag-select .compact-select-trigger { min-width: 40px; min-height: 40px; }
+  .alg-editor-add { min-height: 40px; min-width: 40px; justify-content: center; }
 }

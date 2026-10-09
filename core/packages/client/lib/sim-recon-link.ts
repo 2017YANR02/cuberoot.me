@@ -12,7 +12,7 @@ import { wcaRoundToReconRound } from './recon-attempt-lookup';
 import { cleanFtoReconAlgForPlayer } from '@cuberoot/shared/recon-completion';
 
 /** sim puzzleKind (cuber engine) — number for NxN, else a named twisty/square-family/corner-turn/clock puzzle. */
-type SimPuzzle = number | 'sq1' | 'sq2' | 'sq4' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'pyraminx' | 'skewb' | 'megaminx' | 'fto' | 'clock';
+type SimPuzzle = number | 'sq1' | 'sq2' | 'sq4' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'pyraminx' | 'skewb' | 'megaminx' | 'fto' | 'clock' | 'ghost';
 
 /** sim puzzle → recon event id, or null when recon has no matching event.
  *  Accepts PuzzleGeometry explore ids (string) too — they have no recon event. */

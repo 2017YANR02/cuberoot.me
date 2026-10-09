@@ -5,6 +5,8 @@ const driverMocks = vi.hoisted(() => ({
   connectGiiker: vi.fn(),
   connectGoCube: vi.fn(),
   connectMoyu: vi.fn(),
+  connectMoyu32: vi.fn(),
+  connectQiyi: vi.fn(),
   discoverSmartCubeDriver: vi.fn(),
 }));
 
@@ -26,6 +28,14 @@ vi.mock('../src/lib/smart-cube/giiker-ble', () => ({
 
 vi.mock('../src/lib/smart-cube/moyu-ble', () => ({
   connectMoyu: driverMocks.connectMoyu,
+}));
+
+vi.mock('../src/lib/smart-cube/moyu32-ble', () => ({
+  connectMoyu32: driverMocks.connectMoyu32,
+}));
+
+vi.mock('../src/lib/smart-cube/qiyi-ble', () => ({
+  connectQiyi: driverMocks.connectQiyi,
 }));
 
 import { SmartCubeSession } from '../src/lib/smart-cube/session';
@@ -117,8 +127,13 @@ describe('SmartCubeSession', () => {
     driverMocks.connectGiiker.mockReset();
     driverMocks.connectGoCube.mockReset();
     driverMocks.connectMoyu.mockReset();
+    driverMocks.connectMoyu32.mockReset();
+    driverMocks.connectQiyi.mockReset();
     driverMocks.discoverSmartCubeDriver.mockReset();
-    driverMocks.discoverSmartCubeDriver.mockResolvedValue('gan-v4');
+    driverMocks.discoverSmartCubeDriver.mockResolvedValue([{
+      device: { deviceId: 'gan-1', name: 'GAN16ui Test' },
+      driver: 'gan-v4',
+    }]);
     socket = new FakeSocketTask();
     vi.stubGlobal('wx', {
       connectSocket: vi.fn(() => socket),
@@ -148,6 +163,24 @@ describe('SmartCubeSession', () => {
     socket.ready();
     await startPromise;
     expect(started).toBe(true);
+  });
+
+  it('advertises calibration, deduplicates commands and waits for hardware confirmation', async () => {
+    let confirm!: () => void;
+    const resetDeviceState = vi.fn(() => new Promise<void>(resolve => { confirm = resolve; }));
+    driverMocks.connectGanV4.mockResolvedValue({ disconnect: async () => {}, requestBattery: async () => null, resetDeviceState });
+    const session = new SmartCubeSession(); await startSession(session); await session.connect('gan-v4');
+    expect(socket.sent.map(x => JSON.parse(x))).toContainEqual(expect.objectContaining({ phase: 'connected', canResetDevice: true }));
+    const command = { type: 'command', command: 'reset-device', requestId: 'a'.repeat(32) };
+    socket.message(command); socket.message(command);
+    await vi.waitFor(() => expect(resetDeviceState).toHaveBeenCalledOnce());
+    expect(socket.sent.map(x => JSON.parse(x)).filter(x => x.type === 'command-result')).toEqual([]);
+    confirm();
+    await vi.waitFor(() => expect(socket.sent.map(x => JSON.parse(x))).toContainEqual({ type: 'command-result', requestId: command.requestId, ok: true }));
+    socket.message({ ...command, requestId: 'b'.repeat(32) });
+    await vi.waitFor(() => expect(resetDeviceState).toHaveBeenCalledTimes(2));
+    await session.disconnect(); confirm(); await Promise.resolve();
+    expect(socket.sent.map(x => JSON.parse(x)).filter(x => x.type === 'command-result')).toHaveLength(1);
   });
 
   it('relays Giiker moves, state and battery without claiming gyro support', async () => {
@@ -410,47 +443,158 @@ describe('SmartCubeSession', () => {
     expect(driverMocks.connectGanV4).toHaveBeenCalledOnce();
   });
 
-  it('detects the nearby protocol before using the existing driver', async () => {
+  it('scans and exposes all nearby devices without connecting one automatically', async () => {
     const session = new SmartCubeSession();
     await startSession(session, 'j'.repeat(32));
-    driverMocks.discoverSmartCubeDriver.mockResolvedValue('gocube');
+    driverMocks.discoverSmartCubeDriver.mockResolvedValue([
+      { device: { deviceId: 'gan-1', name: 'GAN16ui Test', RSSI: -42 }, driver: 'gan-v4' },
+      { device: { deviceId: 'cube-1', name: 'GoCube Edge', RSSI: -60 }, driver: 'gocube' },
+    ]);
+    const snapshots: Array<{ phase: string; devices: string[] }> = [];
+    session.subscribe((snapshot) => snapshots.push({
+      phase: snapshot.phase,
+      devices: snapshot.devices.map((device) => device.deviceId),
+    }));
+
+    await session.scan();
+
+    expect(driverMocks.discoverSmartCubeDriver).toHaveBeenCalledOnce();
+    expect(snapshots.at(-1)).toEqual({ phase: 'scanning', devices: ['gan-1', 'cube-1'] });
+    expect(driverMocks.connectGoCube).not.toHaveBeenCalled();
+    expect(driverMocks.connectGanV4).not.toHaveBeenCalled();
+  });
+
+  it('waits for incremental scan cleanup before connecting the selected device', async () => {
+    const session = new SmartCubeSession();
+    await startSession(session, 'v'.repeat(32));
+    const found = {
+      device: { deviceId: 'cube-1', name: 'GoCube Edge', RSSI: -48 },
+      driver: 'gocube' as const,
+    };
+    let finishScanCleanup!: () => void;
+    driverMocks.discoverSmartCubeDriver.mockImplementation((options: {
+      onUpdate?(devices: typeof found[]): void;
+      signal: { onAbort(listener: () => void): () => void };
+    }) => {
+      options.onUpdate?.([found]);
+      return new Promise<typeof found[]>((_resolve, reject) => {
+        options.signal.onAbort(() => {
+          void new Promise<void>((resolve) => {
+            finishScanCleanup = resolve;
+          }).then(() => reject(new Error('cancelled')));
+        });
+      });
+    });
+    driverMocks.connectGoCube.mockResolvedValue({
+      deviceName: 'GoCube Edge',
+      disconnect: async () => {},
+      requestBattery: async () => 65,
+    });
+    const snapshots: Array<{ phase: string; devices: string[] }> = [];
+    session.subscribe((snapshot) => snapshots.push({
+      phase: snapshot.phase,
+      devices: snapshot.devices.map((device) => device.deviceId),
+    }));
+
+    const scan = session.scan();
+    await vi.waitFor(() => {
+      expect(snapshots.at(-1)).toEqual({ phase: 'scanning', devices: ['cube-1'] });
+    });
+
+    const connection = session.connectDevice('cube-1');
+    await vi.waitFor(() => expect(finishScanCleanup).toBeTypeOf('function'));
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    expect(driverMocks.connectGoCube).not.toHaveBeenCalled();
+
+    finishScanCleanup();
+    await Promise.all([scan, connection]);
+    expect(driverMocks.connectGoCube).toHaveBeenCalledWith(expect.objectContaining({
+      device: found.device,
+    }));
+  });
+
+  it('connects only the device selected from the scan result', async () => {
+    const session = new SmartCubeSession();
+    await startSession(session, 'k'.repeat(32));
+    const device = { deviceId: 'cube-1', name: 'GoCube Edge', RSSI: -55 };
+    driverMocks.discoverSmartCubeDriver.mockResolvedValue([{ device, driver: 'gocube' }]);
     driverMocks.connectGoCube.mockResolvedValue({
       deviceName: 'GoCube Edge',
       disconnect: async () => {},
       requestBattery: async () => 65,
     });
 
-    await session.connectAutomatically();
+    await session.scan();
+    await session.connectDevice('cube-1');
 
     expect(driverMocks.discoverSmartCubeDriver).toHaveBeenCalledOnce();
     expect(driverMocks.connectGoCube).toHaveBeenCalledOnce();
+    expect(driverMocks.connectGoCube.mock.calls[0]?.[0]).toEqual(expect.objectContaining({ device }));
     expect(driverMocks.connectGanV4).not.toHaveBeenCalled();
   });
 
-  it('coalesces repeated automatic connection requests', async () => {
+  it('routes selected MoYu32 and QiYi devices to their own drivers', async () => {
     const session = new SmartCubeSession();
-    await startSession(session, 'k'.repeat(32));
-    let finishDetection!: (driver: 'gan-v4') => void;
-    driverMocks.discoverSmartCubeDriver.mockReturnValue(new Promise((resolve) => {
-      finishDetection = resolve;
-    }));
-    driverMocks.connectGanV4.mockResolvedValue({
-      deviceName: 'GAN16ui Test',
+    await startSession(session, 'p'.repeat(32));
+    driverMocks.discoverSmartCubeDriver.mockResolvedValue([
+      { device: { deviceId: 'moyu32-1', name: 'WCU_MY32_12AF' }, driver: 'moyu32' },
+      { device: { deviceId: 'qiyi-1', name: 'QY-QYSC-X-12AF' }, driver: 'qiyi' },
+    ]);
+    const connection = {
+      deviceName: 'QY-QYSC-X-12AF',
       disconnect: async () => {},
-      requestBattery: async () => 80,
-    });
+      requestBattery: async () => null,
+    };
+    driverMocks.connectQiyi.mockResolvedValue(connection);
 
-    const first = session.connectAutomatically();
-    const second = session.connectAutomatically();
-    await vi.waitFor(() => expect(driverMocks.discoverSmartCubeDriver).toHaveBeenCalledOnce());
-    finishDetection('gan-v4');
-    await Promise.all([first, second]);
+    await session.scan();
+    await session.connectDevice('qiyi-1');
 
-    expect(driverMocks.discoverSmartCubeDriver).toHaveBeenCalledOnce();
-    expect(driverMocks.connectGanV4).toHaveBeenCalledOnce();
+    expect(driverMocks.connectQiyi).toHaveBeenCalledWith(expect.objectContaining({
+      device: { deviceId: 'qiyi-1', name: 'QY-QYSC-X-12AF' },
+    }));
+    expect(driverMocks.connectMoyu32).not.toHaveBeenCalled();
+    expect(driverMocks.connectGanV4).not.toHaveBeenCalled();
   });
 
-  it('publishes an actionable error when automatic discovery finds no cube', async () => {
+  it('relays QiYi future-history metadata to the timer', async () => {
+    const session = new SmartCubeSession();
+    await startSession(session, 'h'.repeat(32));
+    const device = { deviceId: 'qiyi-1', name: 'QY-QYSC-X-12AF' };
+    driverMocks.discoverSmartCubeDriver.mockResolvedValue([{ device, driver: 'qiyi' }]);
+    driverMocks.connectQiyi.mockImplementation(async (options: {
+      onMove(
+        move: string,
+        timestamp?: number,
+        metadata?: { futureHistory?: boolean },
+      ): void;
+    }) => {
+      options.onMove('R', 200, { futureHistory: true });
+      return {
+        deviceName: device.name,
+        disconnect: async () => {},
+        requestBattery: async () => null,
+      };
+    });
+
+    await session.scan();
+    await session.connectDevice(device.deviceId);
+
+    const payloads = socket.sent.map((data) => JSON.parse(data) as {
+      deviceTs?: number;
+      futureHistory?: boolean;
+      move?: string;
+      type?: string;
+    });
+    expect(payloads).toContainEqual({
+      type: 'move',
+      move: 'R',
+      deviceTs: 200,
+      futureHistory: true,
+    });
+  });
+
+  it('publishes an actionable error when scanning finds no cube', async () => {
     const session = new SmartCubeSession();
     const snapshots: Array<{ error: string; phase: string }> = [];
     session.subscribe((snapshot) => snapshots.push({
@@ -462,7 +606,7 @@ describe('SmartCubeSession', () => {
       '未发现智能魔方，请转动魔方将它唤醒后重试',
     ));
 
-    await expect(session.connectAutomatically()).rejects.toThrow('未发现智能魔方');
+    await expect(session.scan()).rejects.toThrow('未发现智能魔方');
 
     expect(snapshots.at(-1)).toEqual({
       error: '未发现智能魔方，请转动魔方将它唤醒后重试',

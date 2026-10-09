@@ -1,4 +1,4 @@
-# SOR(Sum of Ranks)预计算周更 — 全自动替代本地 update_sor.ps1 手动管道。
+# SOR(Sum of Ranks)预计算周更 — 全自动替代本地 update_sor.mts 手动管道。
 #   inputs:  ssh 从生产 PG 导 4 个 TSV(dump_sor_inputs.sh;数据由每日 stats.yml 刷新。
 #            pe.tsv 导的是 wca_person_ranks 排名 —— 对排名再 competition-rank 结果不变,
 #            与喂 PB 值字节等价,已用 rows 模式 4 套 × 5 选手 diff 实证)
@@ -162,7 +162,7 @@ jobs:
           mkdir -p import
 
           # sor_player_best.copy.tsv — 7 列: wca_id is_avg scope incl_cancelled best_rank combo_count best_events
-          # 在每行 wca_id 后插 is_avg/world/incl_cancelled(同 update_sor.ps1 第 2 步)
+          # 在每行 wca_id 后插 is_avg/world/incl_cancelled(同 update_sor.mts 第 2 步)
           add() {
             awk -v p="\t$2\tworld\t$3" '{ i = index($0, "\t"); if (i > 0) print substr($0, 1, i-1) p substr($0, i) }' \
               "out/best_$1.tsv" >> import/sor_player_best.copy.tsv
@@ -182,7 +182,7 @@ jobs:
 
           cat > import/load.sql <<SQL
           \\set ON_ERROR_STOP 1
-          -- sor_player_best: 幂等 ALTER + 改 PK + TRUNCATE 全量重灌(同 update_sor.ps1 的 load_sor_pb.sql)
+          -- sor_player_best: 幂等 ALTER + 改 PK + TRUNCATE 全量重灌(同 update_sor.mts 的 load_sor_pb.sql)
           CREATE TABLE IF NOT EXISTS sor_player_best (
             wca_id VARCHAR(20) NOT NULL, is_avg BOOLEAN NOT NULL, scope VARCHAR(8) NOT NULL DEFAULT 'world',
             incl_cancelled BOOLEAN NOT NULL DEFAULT true, best_rank INTEGER NOT NULL,

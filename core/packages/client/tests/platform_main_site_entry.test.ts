@@ -7,6 +7,13 @@ import { PLATFORM_SITEMAP_PATHS } from '@/app/sitemap';
 const read = (relativePath: string) => readFileSync(new URL(`../${relativePath}`, import.meta.url), 'utf8');
 
 describe('Platform capabilities stay in canonical main-site entrypoints', () => {
+  it('keeps the default signed-out state to one direct sentence', () => {
+    const state = read('components/platform/PlatformState.tsx');
+    expect(state).toContain("if (kind === 'permission' && !message)");
+    expect(state).toContain("t('请先登录', 'Please sign in')");
+    expect(state).toContain('className="platform-button platform-sign-in-button"');
+  });
+
   it('keeps redemption focused on login, code entry and starting the course', () => {
     const view = read('components/platform/PlatformRouteView.tsx');
     const start = view.indexOf("  if (definition.id === 'account-invites') {");
@@ -16,18 +23,70 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
     expect(redemption).toContain("!user ? (");
     expect(redemption).toContain('href="/account"');
     expect(redemption).toContain('<PlatformDomainActions');
-    expect(redemption).toContain('href="/platform/account/courses"');
     expect(redemption).toContain('role="status"');
+    expect(redemption).not.toContain('兑换成功');
+    expect(redemption).not.toContain('开始学习');
     expect(redemption).not.toMatch(/kind="permission"|platform-route-header|PlatformEntityList|SearchInput/);
     expect(view).toContain("&& definition.id !== 'account-invites'");
-    expect(view).toContain("if (action === 'redeem-invite') setRedeemed(true);");
+    expect(view).toContain("const redemptionReturnPath = `${lang === 'zh' ? '/zh' : ''}/platform/account/invites`;");
+    expect(view).toContain('const courseSectionLoginHref = `/account${nextQuery(redemptionReturnPath)}`;');
+    expect(view).toContain('permissionHref={courseSection && error.status !== 403 ? courseSectionLoginHref : undefined}');
+    expect(view).toContain("if (action === 'redeem-invite') {");
+    expect(view).toContain("loadPlatformResource('entitlements', { params: {} })");
+    expect(view).toContain("window.location.replace(`${lang === 'zh' ? '/zh' : ''}/platform/courses/${encodeURIComponent(courseId)}/sections/core`);");
+    expect(view).not.toContain('setRedeemed(true)');
+  });
+
+  it('marks active redeemed courses and exposes their learning entry', () => {
+    const view = read('components/platform/PlatformRouteView.tsx');
+    const styles = read('components/platform/platform.css');
+
+    expect(view).toContain("loadPlatformResource('account-courses'");
+    expect(view).toContain("item.status === 'active'");
+    expect(view).toContain('redeemedCourseIds.has(item.id)');
+    expect(view).toContain("t('已兑换', 'Redeemed')");
+    expect(view).toContain("courseRedeemed ? t('开始学习', 'Start learning')");
+    expect(styles).toMatch(/\.platform-course-redeemed\s*\{[^}]*var\(--signal-success\)/s);
+  });
+
+  it('fully expands generated redemption details without an inner scrollbar', () => {
+    const actions = read('components/platform/PlatformDomainActions.tsx');
+    const styles = read('components/platform/platform.css');
+
+    expect(actions).toContain('textarea.style.height = `${textarea.scrollHeight + borderHeight}px`;');
+    expect(actions).toContain('ref={shareTextRef}');
+    expect(styles).toMatch(/\.platform-invite-code-lines\s*\{[^}]*overflow:\s*hidden[^}]*resize:\s*none/s);
+  });
+
+  it('lets course managers upload a cover or capture the current video frame', () => {
+    const actions = read('components/platform/PlatformDomainActions.tsx');
+    const content = read('components/platform/PlatformDomainContent.tsx');
+    const editor = read('components/platform/PlatformLessonCoverEditor.tsx');
+    const gateway = read('lib/platform-gateway.ts');
+
+    expect(actions).toContain('<PlatformLessonCoverEditor');
+    expect(editor).toContain("t('上传图片', 'Upload image')");
+    expect(editor).toContain("t('从视频选择', 'Choose from video')");
+    expect(editor).toContain("t('使用当前画面', 'Use current frame')");
+    expect(editor).toContain("canvas.toBlob(resolve, 'image/jpeg', 0.9)");
+    expect(editor).toContain('platformMediaBrowserUrl');
+    expect(gateway).toContain('export async function uploadPlatformLessonCover(');
+    expect(gateway).toContain('export function platformMediaBrowserUrl(');
+    expect(content).toContain('canEditCover={isAdmin}');
+    expect(content).toContain('videoElement={videoElement}');
+    expect(content).toContain('src={platformMediaBrowserUrl(media.accessUrl)}');
   });
 
   it('does not expose internal API fields or status in learner course lists and lesson pages', () => {
     const view = read('components/platform/PlatformRouteView.tsx');
     expect(view).toContain("const learnerContent = learnerCourses || definition.id === 'course-lesson';");
     expect(view).toContain('!learnerContent && item.status');
-    expect(view).toContain('!learnerContent && fields?.length');
+    expect(view).toContain('entityDisplayFields(item, t)');
+    expect(view).not.toContain('item.fields');
+    const curated = view.slice(view.indexOf('function entityDisplayFields'), view.indexOf('function PlatformEntityList'));
+    expect(curated).toContain('baseAmountMinor');
+    expect(curated).not.toContain('currentRevision');
+    expect(curated).not.toContain('ownerUserId');
   });
 
   it('keeps /search as a URL-backed reuse of LandingSearch', () => {
@@ -52,7 +111,7 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
     const teachingEntry = learnEntries.find((entry) => entry.id === 'teaching');
 
     expect(landing).not.toMatch(/<Link\s+href="\/search"/);
-    expect(landing).toContain('<LandingSearch cards={searchCards} lang={lang} autoFocus />');
+    expect(landing).toContain('<LandingSearch cards={searchCards} lang={lang} />');
     expect(platformEntry).toMatchObject({ href: '/platform', internal: true });
     expect(platformEntry).not.toHaveProperty('adminOnly');
     expect(teachingEntry).toMatchObject({ href: '/courses', internal: true });

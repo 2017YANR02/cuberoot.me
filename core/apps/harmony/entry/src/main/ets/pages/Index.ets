@@ -1,4 +1,4 @@
-import { common } from '@kit.AbilityKit';
+import { abilityAccessCtrl, common, type Permissions } from '@kit.AbilityKit';
 import { webview } from '@kit.ArkWeb';
 import { connection } from '@kit.NetworkKit';
 
@@ -32,6 +32,7 @@ struct Index {
   private netConnection: connection.NetConnection | undefined = undefined;
   private rawfiles: RawfileResponder | undefined = undefined;
   private webReady: boolean = false;
+  private mediaEpoch: number = 0;
   private readonly bridgePermission: JsBridgePermission = {
     javascriptProxyPermission: {
       urlPermissionList: [{
@@ -52,6 +53,7 @@ struct Index {
   }
 
   aboutToDisappear(): void {
+    this.mediaEpoch++;
     DeepLinkInbox.shared().setListener(undefined);
     try {
       this.netConnection?.unregister(() => undefined);
@@ -101,12 +103,38 @@ struct Index {
     this.controller.runJavaScript(script).catch(() => undefined);
   }
 
+  private async requestMedia(request: PermissionRequest): Promise<void> {
+    const epoch = this.mediaEpoch;
+    const resources = request.getAccessibleResource();
+    if (!['https://localhost', 'https://cuberoot.me'].includes(request.getOrigin()) || resources.length === 0 ||
+      resources.some((resource: string) => resource !== 'TYPE_VIDEO_CAPTURE' && resource !== 'TYPE_AUDIO_CAPTURE')) {
+      request.deny();
+      return;
+    }
+    const permissions: Permissions[] = resources.map((resource: string): Permissions =>
+      resource === 'TYPE_VIDEO_CAPTURE' ? 'ohos.permission.CAMERA' : 'ohos.permission.MICROPHONE');
+    try {
+      const context = this.getUIContext().getHostContext() as common.UIAbilityContext;
+      const result = await abilityAccessCtrl.createAtManager().requestPermissionsFromUser(context, permissions);
+      if (epoch !== this.mediaEpoch || !this.controller.getUrl().startsWith(LOCAL_PREFIX) ||
+        result.authResults.length !== permissions.length ||
+        result.authResults.some((status: number) => status !== abilityAccessCtrl.GrantStatus.PERMISSION_GRANTED)) {
+        request.deny();
+        return;
+      }
+      request.grant(resources);
+    } catch (_) {
+      request.deny();
+    }
+  }
+
   build() {
     Column() {
       Web({ src: LOCAL_ENTRY, controller: this.controller })
         .width('100%')
         .height('100%')
         .javaScriptAccess(true)
+        .onPermissionRequest((event) => { if (event) void this.requestMedia(event.request); })
         .domStorageAccess(true)
         .fileAccess(false)
         .imageAccess(true)
@@ -121,6 +149,7 @@ struct Index {
             'secureRemove',
             'takeLaunchUrls',
             'openExternal',
+            'exportFile',
             'exitApp',
             'getNetworkStatus',
             'setBackHandlerReady',
@@ -130,6 +159,7 @@ struct Index {
             'bleConnect',
             'bleDisconnect',
             'bleGetMtu',
+            'bleGetServices',
             'bleRead',
             'bleWrite',
             'bleSubscribe',

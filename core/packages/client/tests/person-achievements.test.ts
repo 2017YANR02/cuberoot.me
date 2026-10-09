@@ -6,6 +6,7 @@ import type { WcaResultRow } from '@/lib/wca-person-api';
 import type { ReactNode } from 'react';
 import { AchievementMedal, recordAchievementTier } from '@/components/persons/sections/AchievementMedal';
 import { ALL_EVENT_IDS, CANCELLED_EVENT_IDS } from '@/lib/event-constants';
+import type { ExplorerAchievement } from '@/lib/person-achievements';
 
 // Keep eligibility and evidence assertions independent of the portal's closed state.
 // Actual hover, keyboard and touch behavior is exercised in the browser.
@@ -18,7 +19,7 @@ vi.mock('@/components/persons/sections/AchievementBadge', async () => {
 vi.mock('@/hooks/useT', () => ({ useT: () => (_zh: string, en: string) => en }));
 vi.mock('next/navigation', () => ({ useParams: () => ({ lang: 'en' }) }));
 
-it('awards historical records per event and level, deduplicating and rejecting invalid or unofficial records', () => {
+it('combines historical events by record level and rejects invalid or unofficial records', () => {
   const result = (event: string, single: string | null, average: string | null = null, extra: Partial<WcaResultRow> = {}): WcaResultRow => ({
     competition_id: 'Test2026', event_id: event, round_type_id: 'f', format_id: 'a',
     best: 100, average: 200, pos: 1, attempts: [],
@@ -34,15 +35,15 @@ it('awards historical records per event and level, deduplicating and rejecting i
       result('666', 'WR', null, { live: true }), result('777', 'PR'), result('skewb', null),
     ],
   }));
-  expect((html.match(/data-kind="historical/g) ?? []).length).toBe(5);
+  expect((html.match(/data-kind="historical/g) ?? []).length).toBe(3);
   expect(html).toContain('data-kind="haul"');
-  expect(html).toContain('data-kind="historicalWR" data-count="3">2×2');
+  expect(html).toContain('data-kind="historicalWR" data-count="4"> Historical world record');
   expect(html).toContain('data-kind="historicalCR" data-count="7">3×3');
-  expect(html).toContain('data-kind="historicalNR" data-count="1">2×2');
-  expect(html).toContain('2×2 Historical world record');
-  expect(html).toContain('2×2 Historical national record');
+  expect(html).toContain('data-kind="historicalNR" data-count="2"> Historical national record');
+  expect(html).toContain('2×2 Single');
+  expect(html).toContain('2×2 Average');
   expect(html).toContain('3×3 Historical continental record');
-  expect(html).toContain('4×4 Historical national record');
+  expect(html).toContain('4×4 Average');
   expect(html).toContain('Feet');
   expect(html).not.toContain('5×5');
   expect(html).not.toContain('6×6');
@@ -68,21 +69,55 @@ it('keeps the actual count above the highest tier on historical and current reco
   expect(current).toContain('×1250');
 });
 
-it('renders one female world badge per event with current status and historical counts', () => {
+it('combines female historical events while keeping current holders distinct', () => {
   const row = { e: '333', t: 'a' as const, v: 452, l: 'FWR', c: 'Test2026', d: '2026-09-13', currentWorld: true };
   const html = renderToStaticMarkup(createElement(GrandSlamBadges, {
     rows: [], wcaId: 'TEST', isZh: false, countryIso2: 'CN',
-    femaleRecords: [row, { ...row, c: 'Earlier2026', v: 480, currentWorld: false }, { ...row, e: '444', currentWorld: false }],
+    femaleRecords: [row, { ...row, c: 'Earlier2026', v: 480, currentWorld: false }, { ...row, e: '444', currentWorld: false }, { ...row, e: '333fm', v: 2500, currentWorld: false }],
   }));
   expect((html.match(/data-kind="wr"/g) ?? []).length).toBe(1);
   expect(html).toContain('data-kind="wr" data-count="2">3×3');
   expect((html.match(/data-kind="historicalWR"/g) ?? []).length).toBe(1);
-  expect(html).toContain('data-kind="historicalWR" data-count="1">4×4');
+  expect(html).toContain('data-kind="historicalWR" data-count="2"> Historical world record');
+  expect(html).toContain('4×4 Average');
+  expect(html).toContain('>25.00</strong>');
+  expect((html.match(/Currently held/g) ?? []).length).toBe(1);
   expect(html).not.toContain('data-kind="historicalCR"');
   expect(html).not.toContain('data-kind="historicalNR"');
   const medal = renderToStaticMarkup(createElement(AchievementMedal, { kind: 'historicalCR', female: true, record: 'FAsR', recordCount: 2 }));
   expect(medal).toContain('>FAsR<');
   expect(medal).not.toContain('>FCR<');
+});
+
+it('retains female continent labels and current event scopes while grouping history', () => {
+  const row = { e: '333', t: 's' as const, v: 500, l: 'FAsR', c: 'Test2026', d: '2026-09-13' };
+  const html = renderToStaticMarkup(createElement(GrandSlamBadges, {
+    rows: [], wcaId: 'TEST', isZh: false, femaleNationalComplete: true,
+    femaleRecords: [row, { ...row, e: '333oh' }, { ...row, e: '444', l: 'FER' },
+      { ...row, e: '555', l: 'FNR' }, { ...row, e: '666', l: 'FNR' },
+      { ...row, e: '222', l: 'FWR', currentWorld: true }, { ...row, e: 'skewb', l: 'FWR', currentWorld: true }],
+  }));
+  expect((html.match(/data-kind="historicalCR"/g) ?? []).length).toBe(2);
+  expect(html).toContain('data-kind="historicalCR" data-count="2"> Historical continental record');
+  expect(html).toContain('data-kind="historicalCR" data-count="1">4×4');
+  expect(html).toContain('data-kind="historicalNR" data-count="2"> Historical national record');
+  expect((html.match(/data-kind="wr"/g) ?? []).length).toBe(2);
+  expect((html.match(/Currently held/g) ?? []).length).toBe(2);
+  expect(html).toContain('>FAsR<');
+  expect(html).toContain('>FER<');
+});
+
+it('renders one experience badge with all event headings and competition links', () => {
+  const extraAchievements: ExplorerAchievement[] = [
+    { kind: 'podiumStreak', event: '333', count: 6, tier: 5, evidence: [{ compId: 'Three2026', date: '2026-01-01' }] },
+    { kind: 'podiumStreak', event: '444', count: 7, tier: 5, evidence: [{ compId: 'Four2026', date: '2026-02-01' }] },
+  ];
+  const html = renderToStaticMarkup(createElement(GrandSlamBadges, { rows: [], wcaId: 'TEST', isZh: false, extraAchievements }));
+  expect((html.match(/data-kind="podiumStreak"/g) ?? []).length).toBe(1);
+  expect(html).toContain('<h4>3×3 ×6</h4>');
+  expect(html).toContain('<h4>4×4 ×7</h4>');
+  expect(html).toContain('href="/wca/comp/Three2026"');
+  expect(html).toContain('href="/wca/comp/Four2026"');
 });
 
 const participation = (competition_id: string, event_id = '333', best = 100, live = false): WcaResultRow => ({

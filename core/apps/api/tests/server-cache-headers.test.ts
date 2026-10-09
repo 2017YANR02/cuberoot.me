@@ -25,7 +25,7 @@ const IMMUTABLE_ALLOWLIST = new Set([
   'feedback.ts',      // 反馈媒体(/feedback/media/:id)上传即不可变,同 article 图片 bytea
   'wca_scrambles.ts', // 已结束比赛的官方打乱,永不变
   'wca_schedule.ts',  // 已结束比赛的赛程,永不变(进行中已是 3600)
-  'recon.ts',         // cubing.com 整轮完整成绩(complete = 全填,不再变)
+  'recon.ts',         // 已公示的 WCA 成绩与打乱;粗饼实时成绩仅共享缓存 15s
   'nemesizer.ts',     // 启动时载入内存的静态 .bin.gz 数据集
   'cubing_live.ts',   // wca_db 源(已结束比赛)immutable;实时源已是 30s
   'cube.ts',          // 确定性求解结果(同输入恒同输出)

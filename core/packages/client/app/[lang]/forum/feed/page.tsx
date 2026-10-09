@@ -1,8 +1,8 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 import { useEffect, useState } from 'react';
 import { parseAsInteger, parseAsStringEnum, useQueryState } from 'nuqs';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import Paginator from '@/components/wca-stats/Paginator';
 import { ForumFeedList } from '@/components/forum/ForumFeedList';
 import { T, tr, useLang } from '@/i18n/tr';
@@ -56,13 +56,15 @@ export default function ForumFeedPage() {
         }}
       />
       <div className="forum-feed-toolbar">
-        <PillToggle
-          value={sort === 'latest'}
-          onChange={(latest) => { void setSort(latest ? 'latest' : 'active'); void setPage(1); }}
-          offLabel={tr({ zh: '活跃', en: 'Active' })}
-          onLabel={tr({ zh: '最新', en: 'Latest' })}
-          ariaLabel={tr({ zh: '动态排序', en: 'Feed order' })}
-        />
+        <select
+          value={String(sort === 'latest')}
+          onChange={event => { const latest = event.currentTarget.value === 'true'; void setSort(latest ? 'latest' : 'active'); void setPage(1); }}
+          aria-label={tr({ zh: '动态排序', en: 'Feed order' })}
+          className="native-select"
+        >
+          <option value="true">{tr({ zh: '最新', en: 'Latest' })}</option>
+          <option value="false">{tr({ zh: '活跃', en: 'Active' })}</option>
+        </select>
         <span>
           {sort === 'active'
             ? <T zh="优先显示最近有回复的讨论" en="Discussions with recent replies first" />

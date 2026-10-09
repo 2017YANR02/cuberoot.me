@@ -35,7 +35,8 @@ it('requires a star rating and allows an optional title without using the course
       expect(form.querySelectorAll('[data-filled="true"]')).toHaveLength(rating);
       expect(form.checkValidity()).toBe(true);
       await act(async () => form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
-      expect(runAction).toHaveBeenLastCalledWith('submit-review', 'course', { rating, title: null, body: null });
+      // Editable copy uses an explicit empty string so saving can clear a previous title.
+      expect(runAction).toHaveBeenLastCalledWith('submit-review', 'course', { rating, title: '', body: null });
     }
   } finally { await act(async () => root.unmount()); }
 });

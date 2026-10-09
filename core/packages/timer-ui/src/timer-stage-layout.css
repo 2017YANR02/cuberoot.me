@@ -1,0 +1,38 @@
+.timer-stage-layout {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.timer-stage-source { flex: 0 0 auto; min-width: 0; }
+
+.timer-stage-footer {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px max(12px, env(safe-area-inset-right)) 10px max(12px, env(safe-area-inset-left));
+}
+
+.timer-stage-footer[hidden], .timer-stage-source[hidden] { display: none; }
+.timer-stage-statistics { min-width: 0; }
+.timer-stage-devices { flex: 0 0 auto; }
+
+.timer-stage-footer .shell-stat-rail,
+.timer-stage-footer .shell-device-center {
+  position: relative;
+  inset: auto;
+  margin: 0;
+  transform: none;
+}
+
+.timer-stage-footer .shell-device-center,
+.timer-stage-footer .shell-device-center-trigger {
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+}

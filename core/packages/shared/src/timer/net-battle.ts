@@ -11,6 +11,7 @@ import {
   timerEventSelectorId,
 } from './event-catalog';
 import type { EventId } from './types';
+import { trimmedMean } from './stats';
 
 export const NET_BATTLE_TOKEN_HEADER = 'X-Battle-Token';
 export const NET_BATTLE_ROOM_CODE_LENGTH = 4;
@@ -131,8 +132,14 @@ export interface NetBattleSessionStore {
 export function createNetBattleSessionStore(
   storage: NetBattleSessionStorage,
 ): NetBattleSessionStore {
+  let tail: Promise<unknown> = Promise.resolve();
+  const run = <T>(operation: () => Promise<T>): Promise<T> => {
+    const pending = tail.then(operation);
+    tail = pending.catch(() => undefined);
+    return pending;
+  };
   return {
-    async load() {
+    load: () => run(async () => {
       const raw = await storage.getItem(NET_BATTLE_SESSION_STORAGE_KEY);
       if (!raw) return null;
       try {
@@ -140,15 +147,15 @@ export function createNetBattleSessionStore(
       } catch {
         return null;
       }
-    },
-    async save(session) {
+    }),
+    save: session => run(async () => {
       const decoded = decodeNetBattleSession(session);
       if (!decoded) throw new Error('invalid battle session');
       await storage.setItem(NET_BATTLE_SESSION_STORAGE_KEY, JSON.stringify(decoded));
-    },
-    async clear() {
+    }),
+    clear: () => run(async () => {
       await storage.removeItem(NET_BATTLE_SESSION_STORAGE_KEY);
-    },
+    }),
   };
 }
 
@@ -374,6 +381,7 @@ export const OFFLINE_MS = 15_000;
 /** Return bilingual copy data; hosts render it through the canonical i18n helper. */
 export function netErrorMessage(error: unknown): { zh: string; en: string } {
   const message = error instanceof Error ? error.message : String(error ?? '');
+  if (message === 'removed from room') return { zh: '你已被房主移出房间', en: 'The host removed you from the room' };
   if (message === 'invalid battle room code') return { zh: '房间码必须是 4 位数字', en: 'Room code must be exactly four digits' };
   if (message === 'room not found') return { zh: '房间不存在或已过期', en: 'Room not found or expired' };
   if (message === 'room full') return { zh: '房间人数已满', en: 'Room is full' };
@@ -585,7 +593,15 @@ export function playerTimeline(state: NetRoomState, playerId: string): NetResult
   return results;
 }
 
-export interface NetStats { count: number; single: number | null; ao5: number | null; mean: number | null }
+export interface NetStats {
+  count: number;
+  single: number | null;
+  ao5: number | null;
+  ao12: number | null;
+  ao50: number | null;
+  ao100: number | null;
+  mean: number | null;
+}
 
 export function playerStats(results: NetResult[]): NetStats {
   const count = results.length;
@@ -598,13 +614,9 @@ export function playerStats(results: NetResult[]): NetStats {
       ? Infinity
       : Math.round(effective.reduce((sum, time) => sum + time, 0) / count);
   }
-  let ao5: number | null = null;
-  if (count >= 5) {
-    const lastFive = effective.slice(-5).sort((a, b) => a - b);
-    const dnfCount = lastFive.filter((time) => !Number.isFinite(time)).length;
-    ao5 = dnfCount >= 2 ? Infinity : Math.round((lastFive[1] + lastFive[2] + lastFive[3]) / 3);
-  }
-  return { count, single, ao5, mean };
+  // Reuse the timer's trimming/DNF rules, preserving online results' ms precision.
+  const average = (n: number) => count < n ? null : Math.round(trimmedMean(effective.slice(-n)));
+  return { count, single, ao5: average(5), ao12: average(12), ao50: average(50), ao100: average(100), mean };
 }
 
 export interface NetRoundView {

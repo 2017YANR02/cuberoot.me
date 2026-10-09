@@ -22,6 +22,26 @@ function controllerWorld(cube?: Cube): World {
 }
 
 describe('sim NxN finite gesture boundary', () => {
+  it('hover hit testing matches taps without starting a gesture or changing its held target', () => {
+    const cube = new Cube(3);
+    const world = controllerWorld(cube);
+    world.camera.position.set(0, 0, 500);
+    world.camera.updateMatrixWorld(true);
+    const controller = new Controller(world);
+    const point = new THREE.Vector2(50, 50);
+    const hit = controller.hitTest(point)!;
+    expect(hit.index).toBe(22);
+    expect(controller.holder.index).toBe(-1);
+    expect(controller.dragging).toBe(false);
+    controller.down.copy(point);
+    controller.handleDown();
+    expect(controller.holder.index).toBe(hit.index);
+    expect(controller.holder.plane).toBe(hit.plane);
+    expect(controller.hitTest(new THREE.Vector2(-1000, -1000))).toBeNull();
+    expect(controller.holder.index).toBe(hit.index);
+    controller.handleUp();
+    cube.dispose();
+  });
   it('returns null when a pointer ray is parallel to the drag plane', () => {
     const controller = new Controller(controllerWorld());
     const parallelPlane = new THREE.Plane(new THREE.Vector3(1, 0, 0), -1);

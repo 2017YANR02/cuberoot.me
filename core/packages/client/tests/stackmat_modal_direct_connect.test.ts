@@ -13,10 +13,6 @@ const SOLO_VIEW = readFileSync(join(
   dirname(fileURLToPath(import.meta.url)),
   '..', 'app', '[lang]', 'timer', '_shell', 'SoloView.tsx',
 ), 'utf8');
-const TIMER_CHROME = readFileSync(join(
-  dirname(fileURLToPath(import.meta.url)),
-  '..', '..', 'timer-ui', 'src', 'TimerChrome.tsx',
-), 'utf8');
 
 function stackmatHandle(): StackmatHandle {
   return {
@@ -72,8 +68,7 @@ describe('StackmatModal direct connection attempt', () => {
     expect(handlerStart).toBeGreaterThan(-1);
     expect(handler).toContain('setStackmatOpen(true)');
     expect(handler).toContain('const attempt = stackmat.start()');
-    expect(SOLO_VIEW).toContain('onMicrophone={connectStackmat}');
-    expect(TIMER_CHROME).toContain('onClick={onMicrophone}');
+    expect(SOLO_VIEW).toContain('onSelect: connectStackmat');
     expect(SOLO_VIEW).toContain('connectAttempt={stackmatConnectAttempt}');
   });
 
@@ -122,7 +117,7 @@ describe('StackmatModal direct connection attempt', () => {
       await connectAttempt.catch(() => undefined);
     });
 
-    expect(host.textContent).toContain('The browser denied microphone access');
+    expect(host.textContent).toContain('Microphone access was denied');
     expect(host.textContent).toContain('Start listening');
   });
 });

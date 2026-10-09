@@ -87,7 +87,7 @@ export const PYRA_CORE_MOVE_NAMES: readonly string[] = (() => {
   for (let a = 0; a < 4; a++) for (const turns of [1, 2]) out.push(AXIS_LETTERS[a] + (turns === 2 ? "'" : ''));
   return out;
 })();
-export const PYRA_TIP_MOVE_NAMES: readonly string[] = PYRA_CORE_MOVE_NAMES.map((n) => n.toLowerCase().replace("'", "'"));
+export const PYRA_TIP_MOVE_NAMES: readonly string[] = PYRA_CORE_MOVE_NAMES.map((n) => n.toLowerCase());
 
 const CORE_MOVE_INVERSE: readonly number[] = PYRA_CORE_MOVE_NAMES.map((_, mi) => (mi % 2 === 0 ? mi + 1 : mi - 1));
 

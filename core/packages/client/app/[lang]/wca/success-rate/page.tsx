@@ -81,14 +81,13 @@ function SuccessRatePageInner() {
         subtitle={{ zh: '每位选手在该项目中成功完成的轮次占比(主要看盲拧 / FMC 等失败率高的项目)', en: 'Per-cuber success rate per event (most relevant for BLD / FMC)' }}
       />
 
-      <WcaEventSelector
-        availableEvents={EVENTS_SET}
-        selectedEvent={event}
-        onSelect={v => update('event', v)}
-        isZh={isZh}
-      />
-
       <div className="wse-filters">
+        <WcaEventSelector
+          availableEvents={EVENTS_SET}
+          selectedEvent={event}
+          onSelect={v => update('event', v)}
+          isZh={isZh}
+        />
         <RegionCountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
         <div className="wse-filter">
           <label>{tr({ zh: '最小尝试数', en: 'Min attempts'
