@@ -22,6 +22,7 @@ description: "用户说造魔方模拟器、给 /sim 加魔方、新魔方类型
 - **没有立体形态的拼图(魔表)走「平面引擎」,别硬造 3D**:`/sim` 与 twizzle 一样只有 2D。做法 = **mesh-less 引擎**:`ClockCube` 只挂空 `THREE.Object3D` pivot 当动画载体(18 个,前后各 9 盘),真正的画面是 `_SimClockBoard.tsx` 覆在上面的 `components/InteractiveClock`(全站共用的那块 SVG 板),每帧读 `pivot.rotation.z` 经 `animOffset(dial)` 喂 SVG。等于把「引擎只算、渲染另接」这条缝显式化了 —— NxN 的 `_SimCubeNet` 平面视图是同一条路。能力门控走 `simCaps.ts` 的 `flat` 旗标(`scale`/`hint`/`dragEmpty` 一律 `!flat`),别给某拼图手写 `disabled={puzzleKind==='clock'}`。
 - **非均匀切割的 NxN 变体(镜面 / Bump)别新建引擎**:扩 `engine/nxn` —— logical 层保持均匀(转动 / twister / controller / 打乱 / 播放 / 配色全复用零改),只在 `instanced.ts` 加 mirror 模式把渲染 matrix 换成 `compose(R·center0, R, scale0)`(范本 `engine/mirror/mirrorGeometry.ts` + `new Cube(order, true)`)。**再加一个阶数只改 `CORE_OFFSET` 那张表 + 各注册表加一行**,别复制引擎。
 - 制作球块三阶时复用 `new Cube(3, 'sphere')` 与原核球面分色，保留完整球体、实际球面拾取和按实体排序的矢量导出，按 [球块三阶](references/sphere-cubies.md) 门控不适用的方形外观设置并验证转动间距。
+- 用户明确要求八板 / 十二板时，按 [Magic 折叠板](references/magic-panels.md) 复用已核证的标准路线、固定双面图案与跨页面预览；将引导折叠的范围写进控件说明，不套用面转轴或声称支持任意绳系折法。
 - **twizzle 式「自定义切割」编辑器**(基础多面体 c/t/o/d/i + face/vertex/edge cuts 任意深度)= 纯 UI:拼 cubing.js puzzle-description 字符串喂 `TwistySection.puzzleDescription`(= `experimentalPuzzleDescription`),零几何移植;范本 `app/[lang]/sim/CutEditor.tsx`(SimPuzzle `'custom'`,desc 进 URL `cuts` query + debounce 重建)。
 
 ## 模板

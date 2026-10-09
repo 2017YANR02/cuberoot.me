@@ -68,6 +68,7 @@ const PUBLIC_SUBPATHS = [
   'cross-trainer/xpair',
   'pyra',
   'pyraminx-duo',
+  'magic',
   'sia123',
   'sia222',
   'ssq1',

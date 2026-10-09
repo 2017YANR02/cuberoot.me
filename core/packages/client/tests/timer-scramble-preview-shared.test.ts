@@ -5,6 +5,7 @@ import { renderSq1ScrambleSvg as webSq1 } from '@/lib/sq1-svg';
 import { renderMegaScrambleSvg as sharedMega } from '@cuberoot/puzzle-render-core/mega-svg';
 import { renderSq1ScrambleSvg as sharedSq1 } from '@cuberoot/puzzle-render-core/sq1-svg';
 import { renderPyraminxDuoSvg, DUO_SVG_ASPECT } from '@cuberoot/puzzle-render-core/pyraminx-duo-svg';
+import { renderMagicSvg, magicSvgAspect } from '@cuberoot/puzzle-render-core/magic-svg';
 import { TimerCubePreview } from '@cuberoot/timer-ui';
 import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -62,6 +63,8 @@ describe('shared timer scramble preview', () => {
     ['sq1', '(1,0) / (0,-1)'],
     ['mega', "R++ D-- U'"],
     ['pyraminx_duo', "R U'"],
+    ['magic', 'Forward'],
+    ['mmagic', 'M Backward'],
   ] as const)('renders %s from the canonical installed-client component', async (event, scramble) => {
     await act(async () => root.render(createElement(TimerCubePreview, {
       ariaLabel: 'Cube state',
@@ -130,7 +133,7 @@ describe('shared timer scramble preview', () => {
     expect(threeD).not.toBe(twoD);
     expect(threeD.dataset.visualization).toBe('3D');
 
-    for (const [event, scramble] of [['sq1', '(1,0) /'], ['mega', 'R++'], ['pyraminx_duo', "R U'"]] as const) {
+    for (const [event, scramble] of [['sq1', '(1,0) /'], ['mega', 'R++'], ['pyraminx_duo', "R U'"], ['magic', 'Backward'], ['mmagic', 'M Forward']] as const) {
       await act(async () => root.render(createElement(TimerCubePreview, {
         event,
         scramble,
@@ -182,6 +185,35 @@ describe('shared timer scramble preview', () => {
       expect(host.querySelector('mock-twisty-player')).toBeNull();
       expect(host.querySelector('svg')).not.toBeNull();
       expect(host.querySelector<HTMLElement>('[role="img"]')?.style.visibility).toBe('visible');
+    } finally {
+      warning.mockRestore();
+    }
+  });
+
+  it.each([
+    ['magic', 'Forward', 'Backward'],
+    ['mmagic', 'M Forward', 'M Backward'],
+  ] as const)('replaces no-preview with the current %s pattern and preserves its aspect', async (event, forward, backward) => {
+    const render = async (scramble: string) => act(async () => root.render(createElement(TimerCubePreview, {
+      event, scramble, height: 160, ariaLabel: 'Practice start',
+    })));
+    for (const scramble of [forward, backward]) {
+      await render(scramble);
+      const expected = document.createElement('div');
+      expected.innerHTML = renderMagicSvg(event, scramble);
+      const preview = host.querySelector<HTMLElement>('[aria-label="Practice start"]');
+      expect(preview?.innerHTML).toBe(expected.innerHTML);
+      expect(preview?.style.aspectRatio).toBe(`${10 * magicSvgAspect(event, scramble)} / 10`);
+      expect(host.querySelector('mock-twisty-player')).toBeNull();
+      expect(host.textContent).not.toContain('no preview');
+    }
+
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      await render('R U');
+      expect(host.querySelector('svg')).toBeNull();
+      await render(forward);
+      expect(host.querySelector('svg')).not.toBeNull();
     } finally {
       warning.mockRestore();
     }

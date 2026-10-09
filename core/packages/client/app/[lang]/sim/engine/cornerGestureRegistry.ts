@@ -1,4 +1,7 @@
 import DinoCube from './dino/DinoCube';
+import MagicCube from '@cuberoot/puzzle-render-core/engine/magic/MagicCube';
+import { magicMoveToString, type MagicMove } from '@cuberoot/puzzle-solvers/magic';
+import { magicPickHit, magicResolveMove, type MagicPickHit } from '@cuberoot/puzzle-render-core/engine/magic/magicDrag';
 import DuoCube from '@cuberoot/puzzle-render-core/engine/duo/DuoCube';
 import { duoMoveToString, type DuoMove } from '@cuberoot/puzzle-solvers/pyraminx-duo';
 import { duoPickHit, duoResolveLive, duoResolveMove, type DuoPickHit } from '@/components/puzzle-models/gestures/duoDrag';
@@ -157,7 +160,15 @@ export function createCornerGestureResolver(
     threshold: 6,
   };
 
+  const magicGesture = new CornerTurnGesture<MagicCube, MagicMove, MagicPickHit>({
+    match: (cube): cube is MagicCube => cube instanceof MagicCube,
+    pickHit: magicPickHit, resolveMove: magicResolveMove, resolveLive: () => null,
+    beginMove: (cube, move) => cube.beginMove(move), moveToString: magicMoveToString,
+    fullPx: 180, threshold: 8,
+  }, { ...ctx, settings: () => ({ ...ctx.settings(), holdPartialTurn: false }) });
   const gestures = {
+    magic: magicGesture,
+    mmagic: magicGesture,
     pyraminx_duo: new CornerTurnGesture<DuoCube, DuoMove, DuoPickHit>({
       match: (cube): cube is DuoCube => cube instanceof DuoCube,
       pickHit: duoPickHit, resolveLive: duoResolveLive, resolveMove: duoResolveMove,

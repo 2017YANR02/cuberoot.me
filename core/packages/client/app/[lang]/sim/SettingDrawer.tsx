@@ -400,7 +400,7 @@ export function mapFrames(v: number): number { return simSpeedToTicks(v); }
 /** The in-house Three.js engine puzzles (everything that is NOT an order-N NxN cube).
  *  Their geometry is baked at construction with no InstancedRenderer, so style toggles
  *  (立体贴片 / 镂空 / structure colors) are applied generically off userData tags. */
-const ENGINE_BODY_PUZZLES = new Set<string>(['sq1', 'sq2', 'sq4', 'ivy', 'dino', 'redi', 'rex', 'heli', 'gear', 'skewb', 'pyraminx', 'pyraminx_duo', 'megaminx', 'fto', 'ghost']);
+const ENGINE_BODY_PUZZLES = new Set<string>(['sq1', 'sq2', 'sq4', 'ivy', 'dino', 'redi', 'rex', 'heli', 'gear', 'skewb', 'pyraminx', 'pyraminx_duo', 'megaminx', 'fto', 'ghost', 'magic', 'mmagic']);
 
 export function applySettings(world: World, s: SimSettings, prev?: SimSettings): void {
   const supports = resolveCaps(world.puzzleKind, 'engine').supports;
@@ -536,15 +536,15 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
     // In-house engine puzzles (SQ1 / Ivy / Dino / Redi / Rex / Heli / Skewb): their
     // sticker thickness + body materials are baked at construction (no InstancedRenderer),
     // so 立体贴片 / 镂空 / structure-colors are applied generically off userData tags.
-    applyStickerThickness(world.cube, s.thickness);
+    applyStickerThickness(world.cube, supports.thickness && s.thickness);
     // 原核 (raw/stickerless body): generic across the in-house engines — paints each
     // body from its sibling stickers' colors + hides the tiles. Raw > debug > hollow.
-    applyEngineBodyOverlay(world.cube, s.hollow, s.debugStructureColor, s.coreStyle === 'raw', s.coreColor);
-    applyHintFacelets(world.cube, s.hint, hintBg);
+    applyEngineBodyOverlay(world.cube, supports.hollow && s.hollow, supports.structureColor && s.debugStructureColor, supports.coreColor && s.coreStyle === 'raw', supports.coreColor ? s.coreColor : undefined);
+    applyHintFacelets(world.cube, supports.hint && s.hint, hintBg);
   }
   // 内核透明度在两族引擎的材质/overlay 都落定后统一应用:NxN 走有序 x-ray
   // 道次,其余拼图按 simRole 克隆块身材质,不会污染共用的贴纸侧材质。
-  applyCoreOpacity(world.cube, s.coreOpacity);
+  applyCoreOpacity(world.cube, supports.coreOpacity ? s.coreOpacity : 100);
   // Carve: hide one move's moving group to inspect the core + neighbours' inner walls.
   // The UI offers a uniform 挖角/挖面/挖棱 pick on every puzzle, but the engine carves
   // only the puzzle's NATIVE turning element today (setCarve is a boolean; the element

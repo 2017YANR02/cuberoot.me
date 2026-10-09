@@ -113,6 +113,14 @@ function randomIvyScramble(): string {
   return out.join(' ');
 }
 import { invertAlg, simplifyAlg, simplifyTwistyAlg, mirrorAlg } from '@/lib/cube3';
+import MagicCube from '@cuberoot/puzzle-render-core/engine/magic/MagicCube';
+import MagicRouteControls from './MagicRouteControls';
+import {
+  classifyMagicTokens, isMagicPuzzle, parseMagicMoves, magicMovesToString,
+  invertMagicMoves, reduceMagicAlg, magicSequenceValid, magicSolution,
+  type MagicMove, type MagicPuzzle,
+} from '@cuberoot/puzzle-solvers/magic';
+import { formatTimerCompoundScramble } from '@cuberoot/shared/timer';
 import {
   classifyDuoTokens, duoMovesToString, generatePyraminxDuoScramble,
   invertDuoMoves, parseDuoMoves, reduceDuoAlg, type DuoMove,
@@ -345,6 +353,8 @@ export const SIM_FIXED_PUZZLE_OPTIONS = [
   { value: 'pyraminx_duo', iconClass: 'unofficial-pyraminx_duo', labelZh: '二重奏魔方', labelEn: 'Pyraminx Duo' },
   { value: 'skewb',    iconClass: 'event-skewb', labelZh: eventDisplayName('skewb', true), labelEn: eventDisplayName('skewb', false) },
   { value: 'megaminx', iconClass: 'event-minx',  labelZh: eventDisplayName('minx', true), labelEn: eventDisplayName('minx', false) },
+  { value: 'magic', iconClass: 'event-magic', labelZh: '八板', labelEn: 'Rubik’s Magic' },
+  { value: 'mmagic', iconClass: 'event-mmagic', labelZh: '十二板', labelEn: 'Master Magic' },
   { value: 'clock',    iconClass: 'event-clock', labelZh: eventDisplayName('clock', true), labelEn: eventDisplayName('clock', false) },
   { value: 'fto',      iconClass: 'unofficial-fto', labelZh: eventDisplayName('fto', true), labelEn: eventDisplayName('fto', false) },
   { value: 'dino',     iconClass: 'unofficial-dino', labelZh: '恐龙', labelEn: 'Dino' },
@@ -433,7 +443,7 @@ function randomMoveScrambleNxN(N: number): string {
 }
 
 /** SimPage puzzle kind. */
-export type SimPuzzle = number | 'sq1' | 'sq2' | 'sq4' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'ghost' | 'pyraminx' | 'pyraminx_duo' | 'skewb' | 'megaminx' | 'fto' | 'mirror' | 'mirror2' | 'sphere' | 'clock' | 'custom' | PgPuzzleId;
+export type SimPuzzle = number | 'sq1' | 'sq2' | 'sq4' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'ghost' | 'pyraminx' | 'pyraminx_duo' | 'skewb' | 'megaminx' | 'fto' | 'mirror' | 'mirror2' | 'sphere' | 'clock' | 'magic' | 'mmagic' | 'custom' | PgPuzzleId;
 
 interface SquarePlaybackCube {
   twister: {
@@ -580,13 +590,16 @@ function reduceSkewbAlg(s: string): string {
 // here + one line in `cornerKind` below (mirrors the engine/cornerTurnGesture adapters).
 // 「corner」是历史名字,准确说是"离散整步、逐招重放"的引擎拼图 —— 魔表(转的是表盘,一步
 // 30° 的倍数)与它们形状完全一致,所以也走这张表,而不是再开一条 isClock 分支链。
-type CornerKind = 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'ghost' | 'skewb' | 'pyraminx' | 'pyraminx_duo' | 'megaminx' | 'fto' | 'clock';
+type CornerKind = 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'ghost' | 'skewb' | 'pyraminx' | 'pyraminx_duo' | 'megaminx' | 'fto' | 'clock' | 'magic' | 'mmagic';
 
 interface CornerSpec {
   /** Optional per-token validation for both editable text tracks. */
   classify?(s: string): Array<{ text: string; bad: boolean }>;
   /** Opt out when the generic six-face M/S mirror grammar does not apply. */
   cubeMirrors?: boolean;
+  /** Bounded folding routes have explicit starts; inverse anchoring does not apply. */
+  endAnchor?: boolean;
+  sequenceValid?(setup: string, algorithm: string): boolean;
   /** Parse alg / scramble text → the puzzle's move list. */
   parse(s: string): unknown[];
   /** Optional notation-token groups for moves that expand to multiple physical turns. */
@@ -619,7 +632,22 @@ interface CornerCube {
   applyMoveInstant(move: unknown): void;
 }
 
+function magicSpec(puzzle: MagicPuzzle): CornerSpec {
+  return {
+    cubeMirrors: false, endAnchor: false,
+    classify: text => classifyMagicTokens(text, puzzle),
+    parse: text => parseMagicMoves(text, puzzle),
+    toString: moves => magicMovesToString(moves as MagicMove[]),
+    invert: moves => invertMagicMoves(moves as MagicMove[]),
+    reduce: text => reduceMagicAlg(text, puzzle),
+    sequenceValid: (setup, algorithm) => magicSequenceValid(puzzle, setup, algorithm),
+    scramble: () => formatTimerCompoundScramble(puzzle, []),
+  };
+}
+
 const CORNER_SPECS: Record<CornerKind, CornerSpec> = {
+  magic: magicSpec('magic'),
+  mmagic: magicSpec('mmagic'),
   ghost: {
     cubeMirrors: false,
     parse: parseGhostMoves,
@@ -1078,6 +1106,7 @@ export default function PlayerControls({
           : puzzleKind === 'gear' ? 'gear'
           : puzzleKind === 'ghost' ? 'ghost'
           : puzzleKind === 'pyraminx_duo' ? 'pyraminx_duo'
+          : isMagicPuzzle(puzzleKind) ? puzzleKind
             : isSkewbEngine ? 'skewb'
               : isPyraEngine ? 'pyraminx'
                 : isMegaEngine ? 'megaminx'
@@ -1100,6 +1129,7 @@ export default function PlayerControls({
     }
     return spec;
   }, [cornerKind, skewbNotation]);
+  const playbackMode = corner?.endAnchor === false ? 'moves' : settings.playbackMode;
   // The setup box is fed straight to the engine twister (it bypasses corner.parse), so
   // translate it the same way — mirrors SimPage, which runs toWca on both the setup and
   // alg it hands the cubing.js renderer. No-op outside skewb and in WCA mode.
@@ -1372,16 +1402,27 @@ export default function PlayerControls({
     if (puzzleKind !== 'ghost') return true;
     if (!ghostSetupValid) return false;
     try {
-      const inverse = settings.playbackMode === 'algorithm' ? ghostMovesToString(invertGhostMoves(parseGhostMoves(algDraft))) : '';
+      const inverse = playbackMode === 'algorithm' ? ghostMovesToString(invertGhostMoves(parseGhostMoves(algDraft))) : '';
       return ghostSequenceValid(`${setupDraft} ${inverse} ${algDraft}`);
     } catch { return false; }
-  }, [puzzleKind, ghostSetupValid, setupDraft, algDraft, settings.playbackMode]);
+  }, [puzzleKind, ghostSetupValid, setupDraft, algDraft, playbackMode]);
   const cornerSetupSpans = useMemo(() => corner?.classify?.(setupDraft) ?? null, [corner, setupDraft]);
   const cornerAlgSpans = useMemo(() => corner?.classify?.(algDraft) ?? null, [corner, algDraft]);
-  const cornerSetupValid = ghostSetupValid && !cornerSetupSpans?.some(span => span.bad);
-  const cornerCanPlay = ghostCanPlay && cornerSetupValid && !cornerAlgSpans?.some(span => span.bad);
-  const setupValidationSpans = ivySetupSpans ?? squareSetupSpans ?? cornerSetupSpans ?? (!cornerSetupValid ? [{ text: setupDraft, bad: true }] : null);
-  const algValidationSpans = ivyAlgSpans ?? squareAlgSpans ?? cornerAlgSpans ?? (!cornerCanPlay ? [{ text: algDraft, bad: true }] : null);
+  const cornerSetupValid = ghostSetupValid && !cornerSetupSpans?.some(span => span.bad)
+    && (corner?.sequenceValid?.(setupDraft, '') ?? true);
+  const cornerCanPlay = ghostCanPlay && cornerSetupValid && !cornerAlgSpans?.some(span => span.bad)
+    && (corner?.sequenceValid?.(setupDraft, algDraft) ?? true);
+  // A token can be spelled correctly yet leave the legal route (F' at its
+  // start, or too many F steps). Preserve precise lexical errors, otherwise
+  // highlight the invalid sequence instead of hiding it behind valid spans.
+  const setupValidationSpans = ivySetupSpans ?? squareSetupSpans ?? (
+    !cornerSetupValid && !cornerSetupSpans?.some(span => span.bad)
+      ? [{ text: setupDraft, bad: true }] : cornerSetupSpans
+  );
+  const algValidationSpans = ivyAlgSpans ?? squareAlgSpans ?? (
+    cornerSetupValid && !cornerCanPlay && !cornerAlgSpans?.some(span => span.bad)
+      ? [{ text: algDraft, bad: true }] : cornerAlgSpans
+  );
   useEffect(() => { if (!cornerCanPlay) setPlaying(false); }, [cornerCanPlay]);
 
   // One move list for whichever corner-turn engine puzzle is active (empty otherwise).
@@ -1479,7 +1520,7 @@ export default function PlayerControls({
       }
       const squareCube = world.cube as unknown as SquarePlaybackCube;
       squareCube.twister.finish();
-      const effSetup = settings.playbackMode === 'algorithm'
+      const effSetup = playbackMode === 'algorithm'
         ? (setupDraft + ' ' + (isSq1 ? invertSq1Alg(algDraft) : squareFamilyMovesToString(
           invertSquareFamilyMoves(squareFamilyAlgMoves ?? [], squareFamilySpec ?? undefined),
         ))).trim()
@@ -1499,7 +1540,7 @@ export default function PlayerControls({
       if (!ivyCanPlay) { setStep(0); return; }
       const ivyCube = world.cube as unknown as import('./engine/ivy/IvyCube').default;
       ivyCube.twister.finish();
-      const effSetup = settings.playbackMode === 'algorithm'
+      const effSetup = playbackMode === 'algorithm'
         ? (setupDraft + ' ' + invertAlg(algDraft)).trim()
         : setupDraft;
       ivyCube.twister.setup(effSetup);
@@ -1516,7 +1557,7 @@ export default function PlayerControls({
       if (!cornerCanPlay) { setStep(0); return; }
       const cube = world.cube as unknown as CornerCube;
       cube.twister.finish();
-      const effSetup = settings.playbackMode === 'algorithm'
+      const effSetup = playbackMode === 'algorithm'
         ? (toEngineText(setupDraft) + ' ' + (corner.invertText
           ? corner.invertText(algDraft)
           : corner.toString(corner.invert(cornerActions.flat())))).trim()
@@ -1540,7 +1581,7 @@ export default function PlayerControls({
       return;
     }
     const cube = world.cube as import('./engine/nxn/cube').default;
-    const effectiveSetup = settings.playbackMode === 'algorithm'
+    const effectiveSetup = playbackMode === 'algorithm'
       ? (setupDraft + ' ' + invertAlg(stripHandMarks(algDraft))).trim()
       : setupDraft;
     replayPendingRef.current = true;
@@ -1579,7 +1620,7 @@ export default function PlayerControls({
       hands.setGrips(g.R, g.L);
     }
     setStep(target);
-  }, [world, activeCube, engineReady, clearFrozen, setupDraft, algDraft, nxnItems, squareActions, squareFamilyAlgMoves, squareFamilySpec, squareFamilyCanPlay, ivyActions, cornerActions, corner, toEngineText, isSquarePuzzle, isSq1, isIvy, ivyCanPlay, cornerCanPlay, settings.playbackMode]);
+  }, [world, activeCube, engineReady, clearFrozen, setupDraft, algDraft, nxnItems, squareActions, squareFamilyAlgMoves, squareFamilySpec, squareFamilyCanPlay, ivyActions, cornerActions, corner, toEngineText, isSquarePuzzle, isSq1, isIvy, ivyCanPlay, cornerCanPlay, playbackMode]);
 
   // Notation guide (engine skewb): play ONE token on the main cube from solved so the
   // user sees which corner a letter turns. It only borrows the cube — setup/alg text is
@@ -1647,7 +1688,7 @@ export default function PlayerControls({
         // 多招/algorithm 模式基座会变)仍整段瞬切重放。SQ1/Ivy 沿 stepForward
         // 的先例保持瞬切。
         if (
-          settings.animatePlayback !== false && settings.playbackMode !== 'algorithm'
+          settings.animatePlayback !== false && playbackMode !== 'algorithm'
           && !isSquarePuzzle && !isIvy && cornerCanPlay && world
           && n === actions.length && stepRef.current === n - 1
           && algDraft.startsWith(prevText)
@@ -1677,7 +1718,7 @@ export default function PlayerControls({
     }
     jumpToStep(stepRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeCube, engineReady, setupDraft, nxnItems, squareActions, ivyActions, cornerActions, settings.playbackMode]);
+  }, [activeCube, engineReady, setupDraft, nxnItems, squareActions, ivyActions, cornerActions, playbackMode]);
 
   /** 光标位置 → 光标前的完整步数(各拼图各自的 parser);解析不了返回 null。 */
   const caretStepOf = useCallback((text: string, caretIndex: number): number | null => {
@@ -1997,7 +2038,9 @@ export default function PlayerControls({
     if (!moveText) return;
     const algEl = algElRef.current;
     if (!algEl) return;
-    const current = algEl.value;
+    const current = isMagicPuzzle(puzzleKind)
+      ? magicMovesToString(cornerActions.slice(0, stepRef.current).flat() as MagicMove[])
+      : algEl.value;
     const currentLine = current.slice(current.lastIndexOf('\n') + 1);
     const hasTrailingLineBreak = /\n[ \t]*$/.test(current);
     const appendAfterComment = isSquarePuzzle && !hasTrailingLineBreak && currentLine.includes('//');
@@ -2040,7 +2083,7 @@ export default function PlayerControls({
     // current above; the URL can lag, so land it once the turn animation has settled
     // (idle-gated) and coalesce rapid turns into one write.
     commitAlgDebounced(next);
-  }, [commitAlgDebounced, isSquarePuzzle, isSq1, squareFamilySpec, isIvy, isTwistyMode, world, settings.liveReduce, simplifyForPuzzle, squareFormat]);
+  }, [commitAlgDebounced, isSquarePuzzle, isSq1, squareFamilySpec, isIvy, isTwistyMode, world, settings.liveReduce, simplifyForPuzzle, squareFormat, puzzleKind, cornerActions]);
 
   useEffect(() => {
     if (!userMoveRef) return;
@@ -2323,7 +2366,7 @@ export default function PlayerControls({
         setOptimalScrambleStatus(t('公式已更改，已忽略本次结果。', 'Algorithm changed; result discarded.'));
         return;
       }
-      if (settings.playbackMode !== 'moves') {
+      if (playbackMode !== 'moves') {
         onSettingsChange({ ...settings, playbackMode: 'moves' });
       }
       // Publish the fast local result before waiting for the cloud solver.
@@ -2369,7 +2412,8 @@ export default function PlayerControls({
   const anchorSelect = (
     <select
       className="sim-player-mode"
-      value={settings.playbackMode}
+      value={playbackMode}
+      disabled={corner?.endAnchor === false}
       onChange={(e) => onSettingsChange({ ...settings, playbackMode: e.target.value as 'moves' | 'algorithm' })}
       title={t('锚点:回放固定打乱起点还是解法终点', 'Anchor: keep the scramble start or the solve end fixed')}
     >
@@ -2412,7 +2456,7 @@ export default function PlayerControls({
             rows={1}
             spellCheck={false}
             className={setupValidationSpans ? 'sim-player-input sim-player-input--hl' : 'sim-player-input'}
-            aria-invalid={squareFamilySpec ? !squareFamilySetupValid : undefined}
+            aria-invalid={squareFamilySpec ? !squareFamilySetupValid : corner ? !cornerSetupValid : undefined}
             placeholder={t('打乱', 'Scramble')}
             onInput={(e) => {
               const el = e.currentTarget;
@@ -2447,13 +2491,42 @@ export default function PlayerControls({
           type="button"
           className="sim-player-scramble"
           onClick={handlePlayScramble}
-          disabled={!setupDraft.trim() || !squareFamilySetupValid || !cornerSetupValid}
+          disabled={corner?.endAnchor === false || !setupDraft.trim() || !squareFamilySetupValid || !cornerSetupValid}
           title={t('动画展示打乱', 'Animate scramble')}
           aria-label={t('动画展示打乱', 'Animate scramble')}
         >
           <Play size={14} />
         </button>
       </div>
+      {isMagicPuzzle(puzzleKind) && (
+        <MagicRouteControls
+          cube={engineReady && world?.cube instanceof MagicCube ? world.cube : null}
+          puzzle={puzzleKind}
+          valid={cornerCanPlay}
+          onRoute={direction => {
+            clearFrozen();
+            setPlaying(false);
+            const setup = `${puzzleKind === 'mmagic' ? 'M ' : ''}${direction}`;
+            const solution = magicSolution(puzzleKind);
+            setSetupDraft(setup);
+            onSetupChange(setup);
+            setAlgDraft(solution);
+            onAlgChange(solution);
+            if (setupElRef.current) setupElRef.current.value = setup;
+            if (algElRef.current) algElRef.current.value = solution;
+            stepRef.current = 0;
+            setStep(0);
+            if (world?.cube instanceof MagicCube) world.cube.twister.setup(setup);
+          }}
+          onFold={dir => {
+            if (!engineReady || !(world?.cube instanceof MagicCube)) return;
+            clearFrozen();
+            if (world.cube.twister.twist({ kind: 'fold', dir }, settings.animatePlayback === false, false)) {
+              appendUserMove(dir === 1 ? 'F' : "F'");
+            }
+          }}
+        />
+      )}
       {puzzleKind === 'pyraminx_duo' && (
         <div className="sim-player-status">
           {tr('使用 U、L、R、B 及其逆转（加撇号），每次转动 120°。', 'Use U, L, R, B and their inverses (with a prime); each turn is 120°.')}
@@ -2606,7 +2679,7 @@ export default function PlayerControls({
       // Twisty puzzles (pyraminx/skewb/megaminx/fto/PG explore — cubing.js TwistyPlayer,
       // alpha.twizzle.net/edit's actual engine) already show a native play/pause/scrub bar
       // (TwistySection's bottom-row controlPanel); only the anchor select is ours to add —
-      // TwistySection already reads settings.playbackMode into experimentalSetupAnchor, it
+      // TwistySection already reads playbackMode into experimentalSetupAnchor, it
       // just had no control to change it in this mode.
       <div className="sim-player-row">{imageButton}{fullscreenButton}{stickeringSelect}{anchorSelect}{backViewButton}</div>
       );
@@ -2675,7 +2748,7 @@ export default function PlayerControls({
       </div>
 
       <div className="sim-player-tools">
-        <button onClick={tool(invertForPuzzle)} title={t('取逆', 'Invert')}>{t('逆', 'Invert')}</button>
+        <button disabled={corner?.endAnchor === false} onClick={tool(invertForPuzzle)} title={t('取逆', 'Invert')}>{t('逆', 'Invert')}</button>
         {/* 消步:实时消步开关(默认开)。开 = 手势 / 键盘转动追加时自动合并 / 抵消重复转动,
             并对当前解法消一次步;关 = 原样保留。取代原一次性「消步」按钮。 */}
         {!isIvy && (
@@ -3923,7 +3996,7 @@ function PuzzleSettings({
                 value={typeof puzzleKind === 'number' ? 'nxn' : String(puzzleKind)}
                 isZh={isZh}
                 onChange={(v) => {
-                  if (v === 'sq1' || v === 'sq2' || v === 'sq4' || v === 'ivy' || v === 'dino' || v === 'redi' || v === 'rex' || v === 'heli' || v === 'gear' || v === 'ghost' || v === 'pyraminx' || v === 'pyraminx_duo' || v === 'skewb' || v === 'megaminx' || v === 'fto' || v === 'mirror' || v === 'mirror2' || v === 'sphere' || v === 'clock' || v === 'custom') onPuzzleChange(v);
+                  if (v === 'sq1' || v === 'sq2' || v === 'sq4' || v === 'ivy' || v === 'dino' || v === 'redi' || v === 'rex' || v === 'heli' || v === 'gear' || v === 'ghost' || v === 'pyraminx' || v === 'pyraminx_duo' || v === 'skewb' || v === 'megaminx' || v === 'fto' || v === 'mirror' || v === 'mirror2' || v === 'sphere' || v === 'clock' || v === 'magic' || v === 'mmagic' || v === 'custom') onPuzzleChange(v);
                   else if (isPgPuzzleId(v)) onPuzzleChange(v as PgPuzzleId);
                   else onPuzzleChange(order || 3);
                 }}

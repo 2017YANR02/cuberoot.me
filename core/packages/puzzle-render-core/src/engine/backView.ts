@@ -131,6 +131,8 @@ export function createBackView(
         : k === 'megaminx' ? 3.3
         : k === 'fto' ? 3.2
         : k === 'ghost' ? 3.3
+        : k === 'magic' ? 2.9
+        : k === 'mmagic' ? 3.8
         : (k === 'dino' || k === 'redi' || k === 'rex' || k === 'heli' || k === 'gear'
            || k === 'skewb') ? 3.6
         : 3;

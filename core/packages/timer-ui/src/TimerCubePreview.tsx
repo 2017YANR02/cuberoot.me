@@ -4,7 +4,7 @@
  * Top-level scramble preview dispatcher.
  *
  * All puzzles route through TimerScramblePreview. It uses cubing.js for the
- * supported 2D/3D puzzles and the canonical SVG renderers for SQ1/Megaminx/Duo.
+ * supported 2D/3D puzzles and the canonical SVG renderers for SQ1/Megaminx/Duo/Magic.
  * NxN-class events (333oh / 333bld / 333fm / 444bld / 555bld / etc.) reuse
  * their base size's scrambler. Relays show only the 3x3 sub-scramble.
  *
@@ -13,7 +13,8 @@
  *   fto / redi                                           → shared preview
  *   r3 / r4 / r5                                         → 3x3 of first sub
  *   custom                                               → best-effort 3x3
- *   magic / mmagic + the other non-WCA ids               → blank "no preview"
+ *   magic / mmagic                                      → practice start pattern
+ *   other unsupported ids                               → blank "no preview"
  */
 
 import { timerEventNxnSize, type EventId } from '@cuberoot/shared/timer';
@@ -122,6 +123,8 @@ export function TimerCubePreview(props: TimerCubePreviewProps): JSX.Element {
     case 'mega':
     case 'clock':
     case 'pyraminx_duo':
+    case 'magic':
+    case 'mmagic':
     // Redi now uses cubing.js notation; the shared preview also normalizes
     // saved MoYu R/L/x scrambles before drawing them.
     case 'fto':
@@ -133,9 +136,6 @@ export function TimerCubePreview(props: TimerCubePreviewProps): JSX.Element {
       return <TimerScramblePreview ariaLabel={ariaLabel} event="333" fill={fill} scramble={firstNxnScramble(scramble)} size={size} height={height} className={className} visualization={v} />;
     case 'custom':
       return <TimerScramblePreview ariaLabel={ariaLabel} event="333" fill={fill} scramble={scramble} size={size} height={height} className={className} visualization={v} />;
-    case 'magic':
-    case 'mmagic':
-      return <NoPreview ariaLabel={ariaLabel} fill={fill} size={noPreviewSize} className={className} />;
     default:
       return <NoPreview ariaLabel={ariaLabel} fill={fill} size={noPreviewSize} className={className} />;
   }

@@ -28,7 +28,7 @@ describe('native Pyraminx Duo scramble integration', () => {
     expect(eventDisplayName('pyraminx_duo', false)).toBe('Pyraminx Duo');
 
     const groups = scrambleEventPickerGroups(['333', ...NATIVE_SCRAMBLE_EVENT_IDS], NATIVE_SCRAMBLE_APPEND, true);
-    expect(groups.find(({ id }) => id === 'wca')?.items.map(({ id }) => id)).toEqual(['333']);
+    expect(groups.find(({ id }) => id === 'wca')?.items.map(({ id }) => id)).toEqual(['333', 'magic', 'mmagic']);
     expect(groups.find(({ id }) => id === 'other')?.items.find(({ id }) => id === 'pyraminx_duo')).toEqual({
       id: 'pyraminx_duo',
       label: '二重奏魔方',

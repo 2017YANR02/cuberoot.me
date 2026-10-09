@@ -12,6 +12,7 @@ import SquareFamilyCube from "@cuberoot/puzzle-render-core/engine/squareFamily/S
 import IvyCube from "./ivy/IvyCube";
 import DinoCube from "./dino/DinoCube";
 import DuoCube from "./duo/DuoCube";
+import MagicCube from "./magic/MagicCube";
 import RediCube from "./redi/RediCube";
 import RexCube from "./rex/RexCube";
 import HeliCube from "./heli/HeliCube";
@@ -41,7 +42,7 @@ export interface SmplxBodyAsset { geometry: THREE.BufferGeometry; heightM: numbe
  *  mesh-less Group; the picture comes from the DOM overlay `SimClockBoard`. It still
  *  lives here so `world.cube` / the twister contract hold and the player controls drive
  *  it unchanged. */
-export type PuzzleKind = number | 'sq1' | 'sq2' | 'sq4' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'skewb' | 'pyraminx' | 'pyraminx_duo' | 'megaminx' | 'fto' | 'ghost' | 'mirror' | 'mirror2' | 'sphere' | 'clock';
+export type PuzzleKind = number | 'sq1' | 'sq2' | 'sq4' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'skewb' | 'pyraminx' | 'pyraminx_duo' | 'megaminx' | 'fto' | 'ghost' | 'mirror' | 'mirror2' | 'sphere' | 'clock' | 'magic' | 'mmagic';
 
 export default class World<HandsRig extends WorldHands = WorldHands> {
   public width = 1;
@@ -53,7 +54,7 @@ export default class World<HandsRig extends WorldHands = WorldHands> {
   /** Polymorphic cube. NxN puzzles use Cube; SQ1 uses Sq1Cube; Ivy uses IvyCube;
    *  Dino uses DinoCube. Consumers that reach into NxN-specific fields
    *  (instancedRenderer, table, locks) must first check `world.puzzleKind` is a number. */
-  public cube!: Cube | Sq1Cube | SquareFamilyCube | IvyCube | DinoCube | DuoCube | RediCube | RexCube | HeliCube | GearCube | SkewbCube | PyraCube | MegaminxCube | FtoCube | GhostCube | ClockBoard;
+  public cube!: Cube | Sq1Cube | SquareFamilyCube | IvyCube | DinoCube | DuoCube | RediCube | RexCube | HeliCube | GearCube | SkewbCube | PyraCube | MegaminxCube | FtoCube | GhostCube | ClockBoard | MagicCube;
 
   public ambient: THREE.AmbientLight;
   public directional: THREE.DirectionalLight;
@@ -73,6 +74,7 @@ export default class World<HandsRig extends WorldHands = WorldHands> {
   private skewbCube: SkewbCube | null = null;
   private pyraCube: PyraCube | null = null;
   private duoCube: DuoCube | null = null;
+  private magicCubes: Partial<Record<'magic' | 'mmagic', MagicCube>> = {};
   private megaCube: MegaminxCube | null = null;
   private ftoCube: FtoCube | null = null;
   private ghostCube: GhostCube | null = null;
@@ -213,7 +215,7 @@ export default class World<HandsRig extends WorldHands = WorldHands> {
       // SQ2/SQ4 instances are cached. Settle their global tween before taking the
       // cube off-scene so it cannot keep mutating invisibly and reappear polluted.
       if (this.cube instanceof SquareFamilyCube) this.cube.finishAnimations();
-      if (this.cube instanceof GhostCube || this.cube instanceof DuoCube) this.cube.twister.finish();
+      if (this.cube instanceof GhostCube || this.cube instanceof DuoCube || this.cube instanceof MagicCube) this.cube.twister.finish();
       this.scene.remove(this.cube);
     }
     if (kind === 'sq1') {
@@ -331,6 +333,15 @@ export default class World<HandsRig extends WorldHands = WorldHands> {
       this.cube = this.duoCube;
       if (this.controller) this.controller.disable = true;
       this._ensureSq1Lights();
+    } else if (kind === 'magic' || kind === 'mmagic') {
+      if (!this.magicCubes[kind]) {
+        const cube = new MagicCube(kind);
+        cube.callbacks.push(this.callback);
+        this.magicCubes[kind] = cube;
+      }
+      this.cube = this.magicCubes[kind];
+      if (this.controller) this.controller.disable = true;
+      this._ensureSq1Lights();
     } else if (kind === 'megaminx') {
       if (this.megaCube == null) {
         this.megaCube = new MegaminxCube();
@@ -431,6 +442,11 @@ export default class World<HandsRig extends WorldHands = WorldHands> {
   disposeDuoCube(): void {
     this.duoCube?.dispose();
     this.duoCube = null;
+  }
+
+  disposeMagicCubes(): void {
+    for (const cube of Object.values(this.magicCubes)) cube?.dispose();
+    this.magicCubes = {};
   }
 
   disposeSphereCube(): void {
@@ -623,7 +639,7 @@ export default class World<HandsRig extends WorldHands = WorldHands> {
     // dodecahedron reaches ~3.0·SIZE at its vertices; the FTO octahedron ~3.2·SIZE; ~4.0
     // frames them to the NxN-3 fill.
     // 手开着时把 3x3 取景拉宽(手/前臂环在魔方外围,SIZE*3 会顶出画框)。
-    const refHalf = isSquare ? SIZE * 4.6 : (isDino || isRedi || isRex || isHeli || isGear || isSkewb || isMega || isFto || isGhost) ? SIZE * 4.0 : handsOn ? SIZE * 3.9 : SIZE * 3;
+    const refHalf = this.puzzleKind === 'magic' ? SIZE * 3.25 : this.puzzleKind === 'mmagic' ? SIZE * 4.25 : isSquare ? SIZE * 4.6 : (isDino || isRedi || isRex || isHeli || isGear || isSkewb || isMega || isFto || isGhost) ? SIZE * 4.0 : handsOn ? SIZE * 3.9 : SIZE * 3;
     const distance = refHalf * this.perspective * dolly;
     this.camera.position.x = this.panX;
     this.camera.position.y = this.panY;

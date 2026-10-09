@@ -70,7 +70,8 @@
       "./stm": "runtime-neutral",
       "./stm-cube": "runtime-neutral",
       "./timer-mega-state": "runtime-neutral",
-      "./timer-mega-hints": "runtime-neutral"
+      "./timer-mega-hints": "runtime-neutral",
+      "./magic": "runtime-neutral"
     }
   },
   "sideEffects": false,
@@ -384,6 +385,11 @@
       "types": "./src/timer-mega-hints.ts",
       "node": "./dist/timer-mega-hints.js",
       "default": "./src/timer-mega-hints.ts"
+    },
+    "./magic": {
+      "types": "./src/magic.ts",
+      "node": "./dist/magic.js",
+      "default": "./src/magic.ts"
     }
   },
   "scripts": {

@@ -4,7 +4,7 @@
  * Shared scramble preview component used by /timer.
  *
  * Renders a 2D scramble preview using cubing.js TwistyPlayer for most events.
- * Square-1, Megaminx and Pyraminx Duo use our shared SVG renderers.
+ * Square-1, Megaminx, Pyraminx Duo and Magic use our shared SVG renderers.
  * Bypasses the scramble-display npm package so we don't add an extra dep.
  *
  * Accepts both timer-side EventIds (mega/pyra/333bld/...) and battle/WCA-style
@@ -15,6 +15,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperti
 import { renderMegaScrambleSvg, DEFAULT_MEGA_COLORS } from '@cuberoot/puzzle-render-core/mega-svg';
 import { renderSq1ScrambleSvg, DEFAULT_SQ1_COLORS } from '@cuberoot/puzzle-render-core/sq1-svg';
 import { renderPyraminxDuoSvg, DUO_SVG_ASPECT } from '@cuberoot/puzzle-render-core/pyraminx-duo-svg';
+import { renderMagicSvg, magicSvgAspect } from '@cuberoot/puzzle-render-core/magic-svg';
 import { rediScrambleForCubing } from '@cuberoot/shared/timer';
 
 export interface TimerScramblePreviewProps {
@@ -31,7 +32,7 @@ export interface TimerScramblePreviewProps {
   height?: number | string;
   className?: string;
   /** TwistyPlayer visualization mode. Defaults to '2D'. Inline-SVG puzzles
-   *  (sq1 / mega / pyraminx_duo) ignore this and always render 2D. */
+   *  (sq1 / mega / pyraminx_duo / magic / mmagic) ignore this and always render 2D. */
   visualization?: '2D' | '3D';
   ariaLabel?: string;
   /** Fill a host-owned responsive box instead of setting puzzle pixel dimensions. */
@@ -61,7 +62,7 @@ interface PuzzleSpec {
   /** cubing.js puzzle id (only used when we go through TwistyPlayer). */
   cubingPuzzle: string | null;
   /** Inline SVG renderer; overrides TwistyPlayer when present. */
-  inlineSvg?: 'sq1' | 'mega' | 'pyraminx_duo';
+  inlineSvg?: 'sq1' | 'mega' | 'pyraminx_duo' | 'magic' | 'mmagic';
   /** Unit multipliers for width/height (units of `size`). */
   w: number;
   h: number;
@@ -93,6 +94,7 @@ function planFor(event: string): PuzzleSpec | null {
     case 'sq1':                                  return { cubingPuzzle: null, inlineSvg: 'sq1',  w: 7,  h: 14 };
     case 'mega': case 'minx':                    return { cubingPuzzle: null, inlineSvg: 'mega', w: 17, h: 8 };
     case 'pyraminx_duo':                         return { cubingPuzzle: null, inlineSvg: 'pyraminx_duo', w: 10 * DUO_SVG_ASPECT, h: 10 };
+    case 'magic': case 'mmagic':                return { cubingPuzzle: null, inlineSvg: event, w: 10 * magicSvgAspect(event), h: 10 };
     // Relays / custom / unknown — hide.
     case 'r3': case 'r4': case 'r5': case 'custom':
     default:                                     return null;
@@ -122,6 +124,7 @@ export function TimerScramblePreview({
       if (plan.inlineSvg === 'sq1')  return renderSq1ScrambleSvg(scramble ?? '', DEFAULT_SQ1_COLORS);
       if (plan.inlineSvg === 'mega') return renderMegaScrambleSvg(scramble ?? '', DEFAULT_MEGA_COLORS);
       if (plan.inlineSvg === 'pyraminx_duo') return renderPyraminxDuoSvg(scramble ?? '');
+      if (plan.inlineSvg === 'magic' || plan.inlineSvg === 'mmagic') return renderMagicSvg(plan.inlineSvg, scramble ?? '');
     } catch (err) {
       console.warn(`[CubingPreview] ${plan.inlineSvg} render failed`, err);
     }
@@ -194,14 +197,20 @@ export function TimerScramblePreview({
     return <div className={className} style={{ display: 'none' }} aria-hidden />;
   }
 
+  // Magic's reverse practice starts in the target shape, which has a different
+  // aspect from its rectangular start. Only parse after a valid SVG exists.
+  const previewWidth = plan.inlineSvg === 'magic' || plan.inlineSvg === 'mmagic'
+    ? plan.h * magicSvgAspect(plan.inlineSvg, scramble ?? '')
+    : plan.w;
+
   // Fixed-height mode keeps every puzzle the same height; width follows the
   // puzzle's natural w:h ratio via CSS aspect-ratio (so a string height like
   // 'min(28vw,26dvh,260px)' stays fluid). Otherwise size drives both dims.
   const boxStyle: CSSProperties = fill
     ? { width: '100%', height: '100%', display: 'block' }
     : height != null
-    ? { height: typeof height === 'number' ? `${height}px` : height, aspectRatio: `${plan.w} / ${plan.h}`, display: 'block' }
-    : { width: plan.w * size, height: plan.h * size, display: 'block' };
+    ? { height: typeof height === 'number' ? `${height}px` : height, aspectRatio: `${previewWidth} / ${plan.h}`, display: 'block' }
+    : { width: previewWidth * size, height: plan.h * size, display: 'block' };
 
   if (portedSvg) {
     // A preceding invalid Twisty alg may have hidden this reused host.
