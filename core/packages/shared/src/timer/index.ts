@@ -36,6 +36,7 @@ export * from './scramble-222';
 export * from './scramble-history';
 export * from './scramble-runtime';
 export * from './redi-notation';
+export * from '../kilominx-notation';
 export * from './scramble-status';
 export * from './scramble-variants';
 export * from './session';

@@ -9,7 +9,7 @@
  * state.orient[slot], so the polygon shows that piece's sticker (orient − o):
  *     color = solvedColor[orbit][q][(orient − o) mod ori].
  */
-import { applyScramble, type PuzzleGroup } from '@/lib/puzzle-group';
+import { applyScramble, type PuzzleGroup, type PuzzleState } from '@/lib/puzzle-group';
 
 export interface NetFacelet {
   orbit: string;
@@ -36,8 +36,12 @@ export interface PuzzleNetDef {
 }
 
 export function renderNet(def: PuzzleNetDef, scramble: string): string {
+  return renderNetState(def, applyScramble(def.group, scramble));
+}
+
+/** Share the exact polygons/colors with callers that use a strict alg parser. */
+export function renderNetState(def: PuzzleNetDef, st: PuzzleState): string {
   const { group, net } = def;
-  const st = applyScramble(group, scramble);
   const out: string[] = [
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${net.viewBox}" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%">`,
     `<g stroke="${net.stroke}" stroke-width="${net.strokeWidth}" stroke-linejoin="round">`,

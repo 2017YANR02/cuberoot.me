@@ -57,7 +57,7 @@ export function generateSeededTimerScramble(request: TimerSeedRequest): TimerSee
         }
         return nx.scramble222(random, request.scramble222Mode);
       }
-      case '333': case '333oh': case '333fm': case '333mr': case 'cross': return nx.scramble333(random);
+      case '333': case '333oh': case '333fm': case '333mr': case 'sphere': case 'cross': return nx.scramble333(random);
       case '444': return nx.scramble444(random);
       case '555': return nx.scramble555(random);
       case '666': return nx.scramble666(random);
