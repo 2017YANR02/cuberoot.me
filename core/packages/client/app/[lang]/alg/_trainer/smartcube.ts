@@ -14,7 +14,7 @@
  *    ends with the last layer merely oriented and a COLL drill with its edges
  *    still scrambled. Stopping the clock only on a full solve would make every
  *    partial set unusable, so each set names the step that IS its finish line
- *    (`../../timer/_lib/cube/steps`). csTimer keeps the same table for the eight
+ *    (`@cuberoot/shared/timer/reconstruct/steps`). csTimer keeps the same table for the eight
  *    scramble types it can drill (`bluetoothutil.js` `isGiiSolved`); ours covers
  *    the library, which is bigger.
  *
@@ -26,50 +26,11 @@
  */
 
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
-import { stepSolved, type CubeStep } from '../../timer/_lib/cube/steps';
-import { applyMoves, solved, toFaceletString } from '../../timer/_lib/cube/state';
-import { parseScrambleStrict } from '../../timer/_lib/cube/moves';
+import { stepSolved, type CubeStep } from '@cuberoot/shared/timer/reconstruct/steps';
+import { applyMoves, solved, toFaceletString } from '@cuberoot/shared/timer/reconstruct/state';
+import { parseScrambleStrict } from '@cuberoot/puzzle-solvers/cube-moves';
+import { ALG_SET_TRAINING_STEPS } from '@cuberoot/shared/timer/smart-cube-training';
 import { purifyScramble } from '@/lib/trainer-scramble';
-
-/**
- * Set slug → the step whose completion ends the repetition.
- *
- * Only 3x3: every smart cube on the market is a 3x3, so the other puzzles in the
- * library have nothing to connect.
- *
- * Deliberately absent, because there is no honest answer:
- *   - `2-look-cmll` — its orient and permute subgroups have different finish lines.
- *   - `eo4a`, `lse-eolr` — Roux edge orientation. Finishing it leaves the M-slice centres
- *               free, so "oriented" is not a statement about which colour a
- *               facelet shows, and a mask cannot say it.
- *   - `anti-pll`, `fruf` — upstream sets whose finishing state we have not
- *               established. Guessing `solved` would silently never stop.
- */
-const SET_STEP: Readonly<Record<string, CubeStep>> = {
-  // Cross → F2L
-  'f2l': 'f2l',
-  'adv-f2l': 'f2l',
-  'sbls': 'sb',            // Roux second block's last slot
-  // Last slot + something about the last layer
-  'zbls': 'eoll',          // …+ edge orientation
-  'wv': 'oll',             // …+ corner orientation (edges already oriented)
-  'sv': 'oll',             // …same, other approach angle
-  'vls': 'oll',            // …+ full OLL
-  // …+ corner orientation with the edges left alone, so the finish is `ocll`
-  // and not `oll`. Harmless if a case turns out to have had its edges oriented
-  // all along: reaching `oll` reaches `ocll` in the same instant.
-  'cls': 'ocll',
-  // Last layer
-  'oll': 'oll',
-  'coll': 'cpll',          // corners oriented AND permuted; edges left alone
-  'ollcp': 'cpll',         // OLL + corner permutation
-  'cmll': 'cmll',
-  'oh-cmll': 'cmll',
-  'pll': 'solved',
-  'ell': 'solved',         // edges of the last layer; corners already done
-  'zbll': 'solved',
-  '1lll': 'solved',
-};
 
 /** Does this puzzle have smart cubes at all? */
 export function puzzleHasSmartCube(puzzle: AlgPuzzle | null | undefined): boolean {
@@ -82,7 +43,7 @@ export function puzzleHasSmartCube(puzzle: AlgPuzzle | null | undefined): boolea
  */
 export function algSetStep(puzzle: AlgPuzzle | null | undefined, setSlug: string | null | undefined): CubeStep | null {
   if (!puzzleHasSmartCube(puzzle) || !setSlug) return null;
-  return SET_STEP[setSlug] ?? null;
+  return ALG_SET_TRAINING_STEPS[setSlug] ?? null;
 }
 
 /**
@@ -153,5 +114,5 @@ export function autoStopStep(
 
 /** For the UI: which 3x3 sets can auto-stop, for a "why not here?" explanation. */
 export function setsWithAutoStop(): string[] {
-  return Object.keys(SET_STEP);
+  return Object.keys(ALG_SET_TRAINING_STEPS);
 }

@@ -34,6 +34,7 @@ import {
 } from '../utils/video_upload.js';
 import { hasActiveMembership } from '../utils/membership.js';
 import { publicUserIdsForOwnerKeys } from '../utils/account.js';
+import { revalidateReconPages } from '../utils/recon_revalidate.js';
 
 export const reconRoutes = new Hono();
 
@@ -245,8 +246,8 @@ reconRoutes.get('/recon/:id/same-scramble', async (c) => {
   const id = c.req.param('id');
   const match = buildSameScrambleQuery(id, LIST_COLUMNS);
   const rows = await query<Record<string, unknown>>(match.sql, match.params);
-  // 可变数据,浏览器短缓存即可(SSR 已给首屏,客户端再刷新求新)。
-  c.header('Cache-Control', 'public, max-age=300');
+  // 可变数据每次核对版本(SSR 已给首屏,客户端再刷新求新)。
+  c.header('Cache-Control', 'public, no-cache, must-revalidate');
   return c.json(await reconRowsToJson(rows));
 });
 
@@ -278,12 +279,12 @@ reconRoutes.get('/recon/person/:wcaId', async (c) => {
 // ==================== GET /v1/recon/latest ====================
 // 首页「今日复盘」用:取 id 最大(最新录入)的一条,含 solution 等全字段 + edits 覆盖层。
 // NOTE: 必须先于 /:id 注册,否则 'latest' 会被当成 :id。
-// ⚠️ 本端点(同 /today /same-scramble)带 public/max-age,响应会进共享缓存 → 禁止按查看者变化,
+// ⚠️ 本端点(同 /today /same-scramble)带 public,响应会进共享缓存 → 禁止按查看者变化,
 //    可见性一律硬编码 visibility='public'(连管理员也不在这里拿非公开),否则会把非公开泄露给匿名。
 reconRoutes.get('/recon/latest', async (c) => {
   const rows = await query(`SELECT * FROM recons WHERE visibility = 'public' ORDER BY id DESC LIMIT 1`);
   if (rows.length === 0) {
-    c.header('Cache-Control', 'public, max-age=300');
+    c.header('Cache-Control', 'public, no-cache, must-revalidate');
     return c.json(null);
   }
   const result = (await reconRowsToJson([rows[0] as Record<string, unknown>]))[0];
@@ -299,7 +300,7 @@ reconRoutes.get('/recon/latest', async (c) => {
     result._edited = true;
   }
 
-  c.header('Cache-Control', 'public, max-age=300');
+  c.header('Cache-Control', 'public, no-cache, must-revalidate');
   return c.json(result);
 });
 
@@ -324,10 +325,10 @@ reconRoutes.get('/recon/today', async (c) => {
   if (rows.length === 0) {
     // created_at 全空的旧库:退回最新一条
     const fallback = await query<Record<string, unknown>>(`SELECT ${TODAY_COLUMNS} FROM recons WHERE visibility = 'public' ORDER BY id DESC LIMIT 1`);
-    c.header('Cache-Control', 'public, max-age=300');
+    c.header('Cache-Control', 'public, no-cache, must-revalidate');
     return c.json(await reconRowsToJson(fallback));
   }
-  c.header('Cache-Control', 'public, max-age=300');
+  c.header('Cache-Control', 'public, no-cache, must-revalidate');
   return c.json(await reconRowsToJson(rows));
 });
 
@@ -715,6 +716,7 @@ reconRoutes.post('/recon/save-edit', async (c) => {
     }
   }
 
+  await revalidateReconPages(solveId);
   return c.json({ ok: true });
 });
 
@@ -723,6 +725,7 @@ reconRoutes.delete('/recon/edit/:id', async (c) => {
   checkRateLimit(getIp(c));
   await requireAdmin(c);
   await query('DELETE FROM edits WHERE solve_id = ?', [c.req.param('id')]);
+  await revalidateReconPages(c.req.param('id'));
   return c.json({ ok: true });
 });
 
@@ -1167,6 +1170,7 @@ reconRoutes.on('HEAD', '/recon/video/:id', (c) => serveReconVideo(c, true));
 
 // GET /v1/recon/:id — 获取单条复盘
 reconRoutes.get('/recon/:id', async (c) => {
+  c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   const id = c.req.param('id');
 
   const rows = await query('SELECT * FROM recons WHERE id = ?', [id]);
@@ -1254,6 +1258,7 @@ reconRoutes.post('/recon', async (c) => {
   const { sql, values } = buildInsert('recons', row);
   const inserted = await query<{ id: number }>(sql + ' RETURNING id', values);
   body.id = Number(inserted[0].id);
+  await revalidateReconPages(body.id as number);
   return c.json(body);
 });
 
@@ -1323,6 +1328,7 @@ reconRoutes.put('/recon/:id', async (c) => {
 
   const { sql, values } = buildUpdate('recons', row, 'id', id);
   await query(sql, values);
+  await revalidateReconPages(id);
   return c.json({ ok: true });
 });
 
@@ -1346,6 +1352,7 @@ reconRoutes.delete('/recon/:id', async (c) => {
   }
 
   await query('DELETE FROM recons WHERE id = ?', [id]);
+  await revalidateReconPages(id);
   return c.json({ ok: true });
 });
 
@@ -1384,6 +1391,7 @@ async function loadAlternatives(id: string): Promise<AlternativeEntry[] | null> 
 
 async function saveAlternatives(id: string, alts: AlternativeEntry[]): Promise<void> {
   await query('UPDATE recons SET alternatives = ? WHERE id = ?', [JSON.stringify(alts), id]);
+  await revalidateReconPages(id);
 }
 
 // POST /v1/recon/:id/alternatives — 追加一条另解

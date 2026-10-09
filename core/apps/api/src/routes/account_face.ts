@@ -89,7 +89,7 @@ accountFaceRoutes.post("/auth/face", async c => {
         COUNT(*) FILTER (WHERE user_id = ? AND created_at > NOW() - INTERVAL '1 minute')::int AS recent
         FROM account_face_attempts WHERE created_at > NOW() - INTERVAL '24 hours'`, [uid, uid, uid]);
       if (quota.pending > 0) throw new FaceVerificationError("An attempt is pending.", 429, "FACE_PENDING");
-      if (quota.own >= 3) throw new FaceVerificationError("Daily attempt limit reached.", 429, "FACE_DAILY_LIMIT");
+      if (quota.own >= 50) throw new FaceVerificationError("Daily attempt limit reached.", 429, "FACE_DAILY_LIMIT");
       if (quota.total >= 100) throw new FaceVerificationError("Site attempt limit reached.", 429, "FACE_SITE_LIMIT");
       if (quota.recent > 0) throw new FaceVerificationError("Retry after one minute.", 429, "FACE_RETRY_SOON");
       await run(`INSERT INTO account_face_attempts (id,user_id,session_hash,identity_digest,id_last4,scene_id,status,consent_version,expires_at)

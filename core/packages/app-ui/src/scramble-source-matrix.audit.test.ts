@@ -19,11 +19,11 @@ const appSource = readFileSync(new URL('./App.tsx', import.meta.url), 'utf8');
 
 const CURRENT_LOCAL_PROVIDERS: readonly EventId[] = [
   '222', '333', '444', '555', '666', '777',
-  '333oh', '333bld', '333mbld', '333ni', '333fm', '333mr',
+  '333oh', '333bld', '333mbld', '333ni', '333fm', '333mr', 'sphere',
   '444bld', '555bld', '666bld', '777bld',
   'pyra', 'skewb', 'sq1', 'mega', 'clock',
   'magic', 'mmagic',
-  'fto', 'kilominx', 'gear', 'ivy', 'redi', 'mpyram', 'pyraminx_duo',
+  'fto', 'kilominx', 'gear', 'ivy', 'redi', 'mpyram', 'pyraminx_duo', 'superz', 'dogic', 'octahedron4', 'dinoskewb',
   'r3', 'r4', 'r5', 'cross', 'f2l',
   'll', 'oll', 'pll', 'coll', 'cmll', 'zbll', 'cll', 'ell', 'eocp', '2gll', 'ollcp', 'zzll', 'zbls', 'lse', 'l10p', 'eg1', 'eg2',
 ];
@@ -41,7 +41,7 @@ function currentMobileOutcome(event: EventId, source: Source): RouteOutcome {
     : 'provider-missing';
 }
 
-describe('adversarial 53 × 3 Mobile scramble-source matrix', () => {
+describe('adversarial 58 × 3 Mobile scramble-source matrix', () => {
   it('enumerates every event/source cell exactly once', () => {
     const matrix = EVENTS.flatMap(({ id }) => (
       (['real', 'random', 'manual'] as const).map((source) => ({
@@ -51,12 +51,12 @@ describe('adversarial 53 × 3 Mobile scramble-source matrix', () => {
       }))
     ));
 
-    expect(EVENTS).toHaveLength(53);
-    expect(matrix).toHaveLength(159);
-    expect(new Set(matrix.map(({ event, source }) => `${event}:${source}`))).toHaveLength(159);
+    expect(EVENTS).toHaveLength(58);
+    expect(matrix).toHaveLength(174);
+    expect(new Set(matrix.map(({ event, source }) => `${event}:${source}`))).toHaveLength(174);
   });
 
-  it('keeps the real route at 19 isolated WCA pools, 33 same-event fallbacks, and custom manual-only', () => {
+  it('keeps the real route at 19 isolated WCA pools, 38 same-event fallbacks, and custom manual-only', () => {
     const mapped = EVENTS.filter(({ id }) => currentMobileOutcome(id, 'real') === 'real-pool')
       .map(({ id }) => id);
     const local = EVENTS.filter(({ id }) => currentMobileOutcome(id, 'real') === 'same-event-local')
@@ -67,9 +67,9 @@ describe('adversarial 53 × 3 Mobile scramble-source matrix', () => {
     expect(mapped.sort()).toEqual(Object.keys(TIMER_WCA_SCRAMBLE_EVENT_MAP).sort());
     expect(mapped).toHaveLength(19);
     expect(local.sort()).toEqual([
-      '666bld', '777bld', 'magic', 'mmagic',
+      '666bld', '777bld', 'magic', 'mmagic', 'sphere',
       'r3', 'r4', 'r5',
-      'cross', 'f2l', 'fto', 'kilominx', 'gear', 'ivy', 'redi', 'mpyram', 'pyraminx_duo',
+      'cross', 'f2l', 'fto', 'kilominx', 'gear', 'ivy', 'redi', 'mpyram', 'pyraminx_duo', 'superz', 'dogic', 'octahedron4', 'dinoskewb',
       'll', 'oll', 'pll', 'coll', 'cmll', 'zbll', 'cll', 'ell', 'eocp', '2gll', 'ollcp', 'zzll', 'zbls', 'lse', 'l10p', 'eg1', 'eg2',
     ].sort());
     // Custom's empty user-supplied source remains explicit; it is never a 333
@@ -78,7 +78,7 @@ describe('adversarial 53 × 3 Mobile scramble-source matrix', () => {
       ...CURRENT_MISSING_LOCAL_PROVIDERS,
       'custom',
     ].sort());
-    expect(local).toHaveLength(33);
+    expect(local).toHaveLength(38);
     expect(missing).toHaveLength(1);
   });
 
@@ -90,7 +90,7 @@ describe('adversarial 53 × 3 Mobile scramble-source matrix', () => {
 
     expect(local.sort()).toEqual([...CURRENT_LOCAL_PROVIDERS].sort());
     expect(missing.sort()).toEqual([...CURRENT_MISSING_LOCAL_PROVIDERS, 'custom'].sort());
-    expect(local).toHaveLength(52);
+    expect(local).toHaveLength(57);
     expect(missing).toHaveLength(1);
   });
 
@@ -129,9 +129,9 @@ describe('adversarial 53 × 3 Mobile scramble-source matrix', () => {
     }
   });
 
-  it('routes manual through one queue for all 53 events, including custom and empty input', () => {
+  it('routes manual through one queue for all 58 events, including custom and empty input', () => {
     const outcomes = EVENTS.map(({ id }) => currentMobileOutcome(id, 'manual'));
-    expect(outcomes).toHaveLength(53);
+    expect(outcomes).toHaveLength(58);
     expect(new Set(outcomes)).toEqual(new Set<RouteOutcome>(['manual-queue']));
   });
 

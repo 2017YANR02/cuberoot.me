@@ -14,9 +14,9 @@ import TrainingSettings, { useTrainingAutoAdvance } from '@/components/TrainingS
 import { SubsetColorPicker, COLOR_NAME, useSubsetSelection, type ColorLetter } from '@/components/SubsetColorPicker/SubsetColorPicker';
 import { tr } from '@/i18n/tr';
 import { applyOrientationPrefix } from '@/lib/cube-orientation';
-import { useBluetoothCube } from '../../../timer/_lib/bluetooth';
-import { applyScramble, facesEqual, isSolvedFaces, toFaceletString, type CubeFaces } from '../../../timer/_lib/cube/state';
-import { countExecutedHtm } from '../../../timer/_lib/reconstruct/htm';
+import { useBluetoothCube } from '@/lib/bluetooth';
+import { applyScramble, facesEqual, isSolvedFaces, toFaceletString, type CubeFaces } from '@cuberoot/shared/timer/reconstruct/state';
+import { countExecutedHtm } from '@cuberoot/shared/timer/reconstruct/htm';
 import { generateStageQuestion } from './_lib/stage-training-engine';
 import {
   STAGE_FIXED_LENGTH,

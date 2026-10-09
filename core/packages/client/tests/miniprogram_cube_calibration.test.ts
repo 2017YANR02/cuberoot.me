@@ -2,12 +2,12 @@
 import { act, createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 import { expect, it, vi } from 'vitest';
-import { useBluetoothCube, type BluetoothCubeHandle } from '@/app/[lang]/timer/_lib/bluetooth';
-import type { MiniProgramCubeBridgeCallbacks } from '@/app/[lang]/timer/_lib/bluetooth/miniprogram_bridge';
+import { useBluetoothCube, type BluetoothCubeHandle } from '@/lib/bluetooth';
+import type { MiniProgramCubeBridgeCallbacks } from '@/lib/bluetooth/miniprogram_bridge';
 import { applyMoves, solved, toFaceletString } from '@/app/[lang]/timer/_lib/cube/state';
 import { parseScramble } from '@/app/[lang]/timer/_lib/cube/moves';
 const bridge = vi.hoisted(() => ({ connect: vi.fn() }));
-vi.mock('@/app/[lang]/timer/_lib/bluetooth/miniprogram_bridge', () => ({
+vi.mock('@/lib/bluetooth/miniprogram_bridge', () => ({
   mayUseMiniProgramBridge: () => true,
   isMiniProgramWebView: () => true,
   connectMiniProgramCubeBridge: bridge.connect,

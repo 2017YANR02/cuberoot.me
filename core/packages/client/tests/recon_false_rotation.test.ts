@@ -27,7 +27,7 @@ describe('真实握持倾斜和转体要分开', () => {
     rawGyro[2] = 0;
     rawGyro[3] = Math.floor((rawGyro.length - 4) / 6);
     const samples = decodeGyroTrack(rawGyro.toString('base64'));
-    const core = buildCoreTrack(samples, { brand: replay.device.model });
+    const core = buildCoreTrack(samples, { brand: replay.device.model, moves: replay.moves });
     const result = await buildReconText({
       scramble: view.scramble,
       moves: view.moves,

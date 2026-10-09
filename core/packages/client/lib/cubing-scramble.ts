@@ -81,8 +81,8 @@ export const TWIZZLE_NONWCA_EVENTS = [
  * 注意 cubing.js id 跟 cubing-icons class 短名不完全一致(`redi_cube`→`unofficial-redi`)。
  */
 export const TWIZZLE_NONWCA_APPEND: ReadonlyArray<{ id: string; iconClass: string }> = [
-  { id: 'fto', iconClass: 'unofficial-fto' },
-  { id: 'master_tetraminx', iconClass: 'unofficial-mtetram' },
+  { id: 'fto', iconClass: 'puzzle-fto' },
+  { id: 'master_tetraminx', iconClass: 'puzzle-mastertetraminx' },
   { id: 'kilominx', iconClass: 'unofficial-kilominx' },
   { id: 'baby_fto', iconClass: 'unofficial-baby_fto' },
 ];

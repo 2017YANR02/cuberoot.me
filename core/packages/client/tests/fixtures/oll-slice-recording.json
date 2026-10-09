@@ -1,0 +1,276 @@
+{
+  "scramble": "F D2 R2 B U' B2 R B' D R2 D2 F2 R F U' R' D'",
+  "timeMs": 19955.80000007153,
+  "moves": [
+    {
+      "m": "R'",
+      "ts": 0
+    },
+    {
+      "m": "U'",
+      "ts": 276
+    },
+    {
+      "m": "F",
+      "ts": 513
+    },
+    {
+      "m": "U'",
+      "ts": 740
+    },
+    {
+      "m": "F",
+      "ts": 1136
+    },
+    {
+      "m": "U",
+      "ts": 1942
+    },
+    {
+      "m": "U",
+      "ts": 2066
+    },
+    {
+      "m": "F'",
+      "ts": 4055
+    },
+    {
+      "m": "D'",
+      "ts": 4175
+    },
+    {
+      "m": "F",
+      "ts": 4363
+    },
+    {
+      "m": "D'",
+      "ts": 4500
+    },
+    {
+      "m": "F'",
+      "ts": 4680
+    },
+    {
+      "m": "D'",
+      "ts": 4854
+    },
+    {
+      "m": "F",
+      "ts": 5222
+    },
+    {
+      "m": "D",
+      "ts": 6098
+    },
+    {
+      "m": "D",
+      "ts": 6186
+    },
+    {
+      "m": "R",
+      "ts": 6888
+    },
+    {
+      "m": "R",
+      "ts": 6921
+    },
+    {
+      "m": "L'",
+      "ts": 6931
+    },
+    {
+      "m": "U",
+      "ts": 7057
+    },
+    {
+      "m": "F'",
+      "ts": 7142
+    },
+    {
+      "m": "U'",
+      "ts": 7250
+    },
+    {
+      "m": "R'",
+      "ts": 7344
+    },
+    {
+      "m": "L",
+      "ts": 7344
+    },
+    {
+      "m": "D'",
+      "ts": 7524
+    },
+    {
+      "m": "R'",
+      "ts": 7714
+    },
+    {
+      "m": "L'",
+      "ts": 9575
+    },
+    {
+      "m": "D",
+      "ts": 9617
+    },
+    {
+      "m": "L",
+      "ts": 9682
+    },
+    {
+      "m": "R'",
+      "ts": 11223
+    },
+    {
+      "m": "D'",
+      "ts": 11428
+    },
+    {
+      "m": "R",
+      "ts": 11657
+    },
+    {
+      "m": "D'",
+      "ts": 11875
+    },
+    {
+      "m": "R'",
+      "ts": 12407
+    },
+    {
+      "m": "D",
+      "ts": 12695
+    },
+    {
+      "m": "R",
+      "ts": 12861
+    },
+    {
+      "m": "D",
+      "ts": 14007
+    },
+    {
+      "m": "B'",
+      "ts": 14688
+    },
+    {
+      "m": "F",
+      "ts": 14704
+    },
+    {
+      "m": "D",
+      "ts": 16813
+    },
+    {
+      "m": "L",
+      "ts": 16928
+    },
+    {
+      "m": "D'",
+      "ts": 16976
+    },
+    {
+      "m": "L'",
+      "ts": 17062
+    },
+    {
+      "m": "D'",
+      "ts": 17160
+    },
+    {
+      "m": "B",
+      "ts": 17204
+    },
+    {
+      "m": "D",
+      "ts": 17272
+    },
+    {
+      "m": "F'",
+      "ts": 17330
+    },
+    {
+      "m": "D",
+      "ts": 18543
+    },
+    {
+      "m": "R'",
+      "ts": 18684
+    },
+    {
+      "m": "B",
+      "ts": 18742
+    },
+    {
+      "m": "R",
+      "ts": 18811
+    },
+    {
+      "m": "F'",
+      "ts": 18860
+    },
+    {
+      "m": "U'",
+      "ts": 18966
+    },
+    {
+      "m": "B",
+      "ts": 19013
+    },
+    {
+      "m": "U",
+      "ts": 19101
+    },
+    {
+      "m": "U",
+      "ts": 19152
+    },
+    {
+      "m": "R",
+      "ts": 19237
+    },
+    {
+      "m": "U'",
+      "ts": 19318
+    },
+    {
+      "m": "R'",
+      "ts": 19390
+    },
+    {
+      "m": "U'",
+      "ts": 19482
+    },
+    {
+      "m": "B'",
+      "ts": 19547
+    },
+    {
+      "m": "U",
+      "ts": 19671
+    },
+    {
+      "m": "U",
+      "ts": 19722
+    },
+    {
+      "m": "R",
+      "ts": 19791
+    },
+    {
+      "m": "U'",
+      "ts": 19897
+    },
+    {
+      "m": "F",
+      "ts": 19971
+    },
+    {
+      "m": "B'",
+      "ts": 19971
+    }
+  ],
+  "gyro": "RwEAbQA7DUudFwBaDFKjGACWCE6gHABaDkygHQA8B1OjFgB++V6sDQBU82GwCQBa82OxBADS72Oy/gDw716tBwB48lmoDwA881OjFwB49U6iHwBa9k2iJQC09VCnKQB47VmuIAB/51ywGQCX7VyuFwAD7mKyCABt6Ge7+AA83mfH3wEO5WW76QAe8GW19gB49WW0+gCW92Kw+QGG+2Kv/ABa/F+s/wDw+12pAQHgAVmlCAA8/VmlBQBaAF6rCQB4/mGuBgA8/WWzAwDS/2Wz/wA8/2CtCAB4/mCtAgC0/2CtBwPe/WGuAwCW/Wa0AAKyAWe2AwBk32S/HgBuxFfMMAA8tUe5FQBauEu/IgBax07BNACWDV+t/QA8A12qCQBa/lypCABa+1qnCgBa+FypBAB4/V6rAwDw/mGuAAEs/mSy/gKy+2i4/gA8/23ABAB4/3PLCAB4+H75BgB4/H4GDQBa3HkGCQA87X0HCwBa+X4LCgB4830LCwHg934JCQOEBH8BCgB4AX4CDgDSBn4FDwA8AH4LDwB4AX0PDQEs/X4PCgFoA34JDQDwBn4GDgAeCH0PEgDw/30REAFo/X0PDQFK+34NCQHw+30SCQIM/30V/QBaB3EYywEOCmUYuAEODGEWsgC0DF4VrgVGBE4rpgBbBEI2ogA7D18PrwB4BVwXrAB4BmH9rwA8BmAMrgBa/H0U+gB4+3wV8QA8/3wT7wB4A30R8wB4An4R+ADwA34R/QHgAH4QAAC0BX4QAgBaGnz9BwAuC34ECQBR9lgJWgBxFVkMVwBaAFkJWgA8xmT0MwCA1WIERACO8VkIWQBa8lYDXAAe+lT+XwB49V0FVgA80Vn4TQCA1FL8VgBT9GkERg==",
+  "model": "gan-v4"
+}

@@ -44,7 +44,7 @@ function rules(file: string, content: string): string[] {
 
 describe('architecture boundary guard', () => {
   it('pins the complete current dependency baseline by exact finding identity', () => {
-    expect(MANIFEST.legacyFindings).toHaveLength(193);
+    expect(MANIFEST.legacyFindings).toHaveLength(195);
     expect(compareFindings(uncontractedFindings(CURRENT, MANIFEST.manualContracts), MANIFEST.legacyFindings)).toEqual({ additions: [], stale: [] });
     // Reviewed native adapters, isolated fixtures, SOR refresh, bounded diagnostics and the Duo geometry proof.
     expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length + 8);
@@ -53,7 +53,7 @@ describe('architecture boundary guard', () => {
   });
 
   it('keeps every semantic edge contract tied to live repository evidence', () => {
-    expect(MANIFEST.manualContracts).toHaveLength(20);
+    expect(MANIFEST.manualContracts).toHaveLength(21);
     expect(validateManifestSchema(MANIFEST)).toEqual([]);
     expect(validateManualContracts(MANIFEST.manualContracts)).toEqual([]);
     expect(new Set(MANIFEST.manualContracts.map((item: { phase: string }) => item.phase))).toEqual(new Set([

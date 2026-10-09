@@ -8,8 +8,8 @@ import '@cuberoot/timer-ui/compact-select.css';
 // 两者共用同一套表单原语(CodeFlow / 密码表单 / 错误文案),故同处一文件。
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Loader2, Mail, Smartphone, KeyRound, Merge } from 'lucide-react';
-import { SiApple, SiWechat, SiQq, SiAlipay } from 'react-icons/si';
+import { Check, Copy, Loader2, Mail, Smartphone, KeyRound, Merge } from 'lucide-react';
+import { SiApple, SiWechat, SiQq, SiAlipay, SiTiktok } from 'react-icons/si';
 import { primaryHandle } from '@cuberoot/shared/account';
 import type { MobileAuthProvider } from '@cuberoot/shared/auth/web-session';
 import AppLink from '@/components/AppLink';
@@ -106,7 +106,7 @@ const QqGlyph = ({ size = 16 }: { size?: number }) => <SiQq size={size} color="#
 const AlipayGlyph = ({ size = 16 }: { size?: number }) => <SiAlipay size={size} color="#1677FF" aria-hidden="true" />;
 const AppleGlyph = ({ size = 16 }: { size?: number }) => <SiApple size={size} aria-hidden="true" />;
 const DouyinGlyph = ({ size = 16 }: { size?: number }) => (
-  <img src="/assets/douyin_logo.svg" alt="" width={size} height={size} aria-hidden="true" />
+  <SiTiktok size={size} aria-hidden="true" />
 );
 
 /** 国内三方 provider 配置(标 + 名),供 SSO 按钮 / 账号绑定 chip 共用。 */
@@ -1047,11 +1047,11 @@ function MiniProgramLinkCodePanel({ emphasized = false }: { emphasized?: boolean
     <p className="auth-hint">{t('登录码 10 分钟内有效，只能使用一次。请勿转发给他人。', 'The sign-in code works once and expires in 10 minutes. Do not share it with anyone.')}</p>
     {result?.uid === uid && result && <>
       <input className="auth-input auth-mini-link-code" inputMode="numeric" readOnly value={result.linkCode} aria-label={t('小程序登录码', 'Mini Program sign-in code')} />
-      <button type="button" className="auth-textbtn" onClick={async () => {
+      <button type="button" className="auth-textbtn" aria-label={copied ? t('已复制', 'Copied') : t('复制登录码', 'Copy sign-in code')} title={copied ? t('已复制', 'Copied') : t('复制登录码', 'Copy sign-in code')} onClick={async () => {
         setError('');
         try { await navigator.clipboard.writeText(result.linkCode); setCopied(true); }
         catch { setError(t('无法复制，请选中登录码手动复制。', 'Could not copy. Select the sign-in code and copy it manually.')); }
-      }}>{copied ? t('已复制', 'Copied') : t('复制登录码', 'Copy sign-in code')}</button>
+      }}>{copied ? <Check size={ICON} aria-hidden="true" /> : <Copy size={ICON} aria-hidden="true" />}</button>
     </>}
     <button type="button" className="auth-primary" disabled={busy || !uid} onClick={() => void generate()}>{busy ? <Loader2 size={ICON} className="auth-spin" /> : t('生成 6 位登录码', 'Generate 6-digit sign-in code')}</button>
     {error && <p className="auth-error" role="alert">{error}</p>}
@@ -1466,15 +1466,16 @@ export function AccountPanel({ expectedAppleUid, miniProgramLogin = false }: { e
       )}
 
       <div className="auth-linklist">
-        <div className="auth-idrow">
+        <button
+          type="button"
+          className="auth-idrow auth-merge-trigger"
+          disabled={mergeBusy}
+          aria-expanded={Boolean(mergeMode)}
+          onClick={() => { setMergeMode((mode) => mode ? null : 'keep'); setConfirmMerge(false); }}
+        >
           <span className="auth-idicon"><Merge size={ICON} /></span>
           <span className="auth-idprov">{t('合并账号', 'Merge accounts')}</span>
-          <div className="auth-idactions">
-            <button type="button" className="auth-link" disabled={mergeBusy} onClick={() => { setMergeMode((mode) => mode ? null : 'keep'); setConfirmMerge(false); }}>
-              {mergeMode ? t('收起', 'Close') : t('打开', 'Open')}
-            </button>
-          </div>
-        </div>
+        </button>
       </div>
       {mergeMode && (
         <div className="auth-flow">

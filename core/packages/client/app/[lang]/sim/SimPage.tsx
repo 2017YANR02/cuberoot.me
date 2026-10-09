@@ -96,12 +96,14 @@ import PlayerControls, { stripHandMarks, type SimPuzzle } from './PlayerControls
 import AppLink from '@/components/AppLink';
 import { reconEventForSim, buildReconSubmitQuery } from '@/lib/sim-recon-link';
 import { PG_DEF_BY_ID, isPgPuzzleId } from './pgCatalog';
+import { isNativePuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { isTwistyPuzzle } from './twistyPuzzles';
 import { EXPLORE_BOUND } from './engine/exploreBound';
 import AlgsPanel from './AlgsPanel';
 import PuzzleImageStudio, { type SimBridge } from '@/components/puzzle-image/PuzzleImageStudio';
 import type { DrawExport } from '@/components/puzzle-draw/types';
 import type { TwistyPlayerLike } from '@/components/puzzle-image/SimCaptureGroup';
+import { attachNative2DCompanion, type Native2DCompanionPlayer } from '@/lib/puzzle-image/native-2d-companion';
 import { useImageSpec } from '@/components/puzzle-image/useImageSpec';
 import { rotationDefaultsFor } from '@/lib/puzzle-image/defaults';
 import { type InheritedFields } from '@/lib/puzzle-image/codec';
@@ -438,7 +440,7 @@ export default function SimPage() {
   const backViewRef = useRef<BackView | null>(null);
   const backSizeRef = useRef<number>(140);
   const wasCompleteRef = useRef(false);
-  const userMoveRef = useRef<((action: TwistAction | string) => void) | null>(null);
+  const userMoveRef = useRef<((action: TwistAction | string, anchoredSetup?: { setup: string }) => string | void) | null>(null);
   // Debug "hold partial turn": closure that snaps the currently-frozen SQ1/Ivy
   // partial turn back to its pre-drag pose (NxN's frozen layer lives in the
   // controller). Cleared by clearPartialFreeze() — called before any new gesture,
@@ -653,12 +655,12 @@ export default function SimPage() {
       imgPuzzle, query.stickering, query.stickeringRot]);
   const [imgSpec, setImgSpec] = useImageSpec('img_', { puzzle: imgPuzzle, inherit: imgInherit });
   // Static/spec rendering is an exact fallback only when it can encode every visible
-  // piece of simulator state. Unsupported stage stickerings must wait for the live
-  // engine mirror; otherwise a cold/private window can export a plausible but different
-  // full puzzle before the first engine frame arrives.
+  // piece of simulator state. Engine-only puzzles and picture/room scenes have no
+  // accurate spec model. They and unsupported stage stickerings must wait for the
+  // live mirror, including after changing puzzles while an export menu is open.
   const stickeringAffectsView = query.stickering !== 'full'
     && resolveCaps(puzzleParam, query.renderer).supports.stickering;
-  const staticFallbackExact = puzzleParam !== 'sphere' && (!stickeringAffectsView
+  const staticFallbackExact = !pictureImageStudioEngineOnly && (!stickeringAffectsView
     || (typeof puzzleParam === 'number'
       && visualcubeMaskForStickering(puzzleParam, query.stickering) !== ''));
 
@@ -1876,8 +1878,13 @@ export default function SimPage() {
   });
   const srCompanionForced = imgEngineMode === 'sr';
   const [engineSvg, setEngineSvg] = useState<string | null>(null);
+  const [engineSvgUnavailable, setEngineSvgUnavailable] = useState(false);
   useEffect(() => {
     const active = imageOpen && (!srCompanionForced || pictureCubeActive || roomsActive || !staticFallbackExact);
+    setEngineSvgUnavailable(false);
+    // A restarted mirror must wait for its current source, including when
+    // leaving a native 2D puzzle for a player with no ready frame yet.
+    setEngineSvg(null);
     if (!active) { setEngineSvg(null); return; }
     // 贴纸遮罩(mask 直映):有派生表的拼图把灰化烙进镜像;没有的整程置 null,
     // PuzzleImage 落回 spec 渲染器(sr/visualcube 认 mask)—— 哪条路都不丢遮罩。
@@ -1895,6 +1902,9 @@ export default function SimPage() {
     let stable = 0;
     let exportedSig = '';
     let disposed = false;
+    let nativeCompanionPlayer: TwistyPlayerLike | null = null;
+    let stopNativeCompanion: (() => void) | undefined;
+    let native2DActive = false;
     // twisty 拼图(PG 目录 / 自定义切割 / cubing.js 渲染的 fto)无引擎 world:伴图
     // 从 TwistyPlayer vantage 取 scene+camera,喂截图 SVG 同款投影导出器(painter,
     // 颜色 sRGB 直存)。vantage 异步解析,缓存供采样拍同步用;每拍都发起刷新(不只
@@ -1911,7 +1921,7 @@ export default function SimPage() {
         if (!vantage) return;
         const camera = await vantage.camera();
         const scene = await vantage.scene.scene();
-        if (disposed || twistyPlayerRef.current !== tp) return;
+        if (disposed || native2DActive || twistyPlayerRef.current !== tp) return;
         twistyView = { scene, camera, el: (vantage.contentWrapper ?? tp) as unknown as Element };
       })().finally(() => { twistyRefreshing = false; });
     };
@@ -2092,7 +2102,39 @@ export default function SimPage() {
         return;
       }
       const tp = twistyPlayerRef.current as TwistyPlayerLike | null;
-      if (!tp) { if (exportedSig) { exportedSig = ''; setEngineSvg(null); } return; }
+      if (!tp) {
+        if (nativeCompanionPlayer) {
+          stopNativeCompanion?.();
+          stopNativeCompanion = undefined;
+          nativeCompanionPlayer = null;
+          native2DActive = false;
+          setEngineSvg(null);
+          setEngineSvgUnavailable(false);
+        }
+        if (exportedSig) { exportedSig = ''; setEngineSvg(null); }
+        return;
+      }
+      if (isNativePuzzleId(puzzleParam)) {
+        if (nativeCompanionPlayer !== tp) {
+          stopNativeCompanion?.();
+          nativeCompanionPlayer = tp;
+          native2DActive = true;
+          stopNativeCompanion = attachNative2DCompanion(tp as unknown as Native2DCompanionPlayer, {
+            current: () => !disposed && twistyPlayerRef.current === tp,
+            onUpdate: (frame) => {
+              native2DActive = frame.status !== 'inactive';
+              // The exact native SVG already includes the actual timeline
+              // pattern and any in-progress 2D transition; never rebuild it from
+              // setup + alg or request a nonexistent 3D vantage in this mode.
+              twistyView = null;
+              exportedSig = '';
+              setEngineSvg(frame.svg);
+              setEngineSvgUnavailable(frame.status === 'unavailable');
+            },
+          });
+        }
+        if (native2DActive) return;
+      }
       if (tp !== twistyFor) { twistyFor = tp; twistyView = null; }
       refreshTwistyView(tp); // 每拍刷新缓存(异步),本拍仍用手头这份
       if (!twistyView) return;
@@ -2117,7 +2159,7 @@ export default function SimPage() {
       }
     };
     raf = requestAnimationFrame(tick);
-    return () => { disposed = true; cancelAnimationFrame(raf); };
+    return () => { disposed = true; cancelAnimationFrame(raf); stopNativeCompanion?.(); };
   }, [imageOpen, srCompanionForced, pictureCubeActive, roomsActive, settings.roomTheme, pictureImageStudioEngineOnly,
       staticFallbackExact,
       imgSpec.stickerMask, imgSpec.maskColor, imgPuzzle.puzzleType,
@@ -2171,7 +2213,9 @@ export default function SimPage() {
         >
           <option value="sim">{t('模拟', 'Simulate')}</option>
           <option value="draw">{t('绘图', 'Draw')}</option>
-          <option value="image">{t('FTO 图片', 'FTO image')}</option>
+          {puzzleParam === 'fto' && (
+            <option value="image">{t('FTO 图片', 'FTO image')}</option>
+          )}
         </select>
         <div className="sim-spacer" />
         {!drawMode && !imageMode && reconHref && (
@@ -2232,6 +2276,7 @@ export default function SimPage() {
             <TwistySection
               puzzle={String(puzzleParam)}
               puzzleDescription={pgDef}
+              nativePuzzleId={isNativePuzzleId(puzzleParam) ? puzzleParam : undefined}
               // Keep editor / URL notation intact; translate at the player boundary.
               scramble={toPlayerText(setupParam)}
               alg={toPlayerText(algParam)}
@@ -2243,12 +2288,12 @@ export default function SimPage() {
               experimentalStickering={(puzzleParam === 'megaminx' || puzzleParam === 'fto') ? query.stickering : undefined}
               settings={renderSettings}
               fallbackMoves={fallbackMoves}
-              onUserMove={(moveText) => {
+              onUserMove={(moveText, anchoredSetup) => {
                 // moveText is already cubing.js canonical (`Uv`/`BL2`); pass raw
                 // to skip TwistAction parsing which would eat multi-char families.
-                userMoveRef.current?.(puzzleParam === 'kilominx'
+                return userMoveRef.current?.(puzzleParam === 'kilominx'
                   ? fromCubingKilominx(moveText, query.kiloNotation)
-                  : moveText);
+                  : moveText, anchoredSetup);
               }}
               // wheel / pinch zoom on twisty → persist as settings.scale (the settings
               // effect re-applies cameraDistance; mirrors the NxN syncScaleToSettings).
@@ -2456,6 +2501,7 @@ export default function SimPage() {
             simBridge={simBridge}
             previewHost={imageHost}
             engineSvg={engineSvg}
+            engineSvgUnavailable={engineSvgUnavailable}
             staticFallbackExact={staticFallbackExact}
             engineOnly={pictureImageStudioEngineOnly}
             compare={imgEngineMode === 'both' && !pictureCubeActive && !roomsActive}

@@ -12,68 +12,18 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
 import { ArrowRightLeft } from 'lucide-react';
+import Link from '@/components/AppLink';
+import { loadAlg } from '@cuberoot/shared/alg';
+import { reconCommentCaseIndex, reconCommentLinks, type ReconCommentCases } from '@/lib/recon-comment-links';
+import { tr } from '@/i18n/tr';
 import CubeColorChip, {
   crossColorFromReconText,
   cubeColorGroups,
   f2lDisplayColors,
 } from '@/components/CubeColorChip/CubeColorChip';
-import { findTokenPositions, extractAlgFromText, syncPlayerToMoveCount, countMovesExpanded, type TokenPosition } from '@/lib/recon-alg-utils';
-import { parseSq1Tokens } from '@cuberoot/shared/sq1-notation';
+import { findTokenPositions, syncReconPlayerCursorFromText } from '@/lib/recon-alg-utils';
+import { getTextOffsetInElement, snapCaretToLine } from '@cuberoot/timer-ui/recon/text-cursor';
 import './solution_view.css';
-
-/** 获取点击在 DOM 元素纯文本中的绝对偏移 */
-function sourceTextLength(node: Node): number {
-  if (node instanceof HTMLElement) {
-    const replacedLength = node.dataset.reconTextLength;
-    if (replacedLength != null) return Number(replacedLength);
-  }
-  if (node.nodeType === Node.TEXT_NODE) return (node.textContent || '').length;
-  let length = 0;
-  for (const child of node.childNodes) length += sourceTextLength(child);
-  return length;
-}
-
-function getTextOffsetInElement(el: HTMLElement): number {
-  const sel = window.getSelection();
-  if (!sel || sel.rangeCount === 0) return -1;
-  const node = sel.anchorNode;
-  let offset = sel.anchorOffset;
-  if (!node || !el.contains(node)) return -1;
-  let current: Node | null = node;
-  while (current && current !== el) {
-    let prev = current.previousSibling;
-    while (prev) {
-      offset += sourceTextLength(prev);
-      prev = prev.previousSibling;
-    }
-    current = current.parentNode;
-  }
-  return offset;
-}
-
-/** 把点击偏移磁吸到「本行」的招式边界——保证光标落在点击那一行(不像旧的
- *  snapToTokenBoundary 会退回上一行末招)。规则:落在本行首招之前 → 行首列 0(此时
- *  textBefore 干净、不含半个 `(` 分组,player 计步不受污染);落在本行末招之后 → 末招
- *  结尾;行内 → 最近的招式边界。无招式的行(纯注释 / 空行)→ 行首列 0。 */
-function snapCaretToLine(raw: number, plainText: string, positions: TokenPosition[]): number {
-  const lineStart = plainText.lastIndexOf('\n', Math.max(0, raw - 1)) + 1;
-  let lineEnd = plainText.indexOf('\n', raw);
-  if (lineEnd === -1) lineEnd = plainText.length;
-  const onLine = positions.filter(t => t.start >= lineStart && t.end <= lineEnd);
-  if (onLine.length === 0) return lineStart;
-  const first = onLine[0];
-  const last = onLine[onLine.length - 1];
-  if (raw <= first.start) return lineStart;
-  if (raw >= last.end) return last.end;
-  let best = first.start, bestD = Math.abs(first.start - raw);
-  for (const t of onLine) {
-    for (const b of [t.start, t.end]) {
-      const d = Math.abs(b - raw);
-      if (d < bestD) { bestD = d; best = b; }
-    }
-  }
-  return best;
-}
 
 /** 光标位置该高亮哪一个招式 token 的字符区间(与 /sim highlightRange 同规则):
  *  优先本行光标前的招式,否则本行第一个招式,否则退回光标前最后一个招式。 */
@@ -100,8 +50,11 @@ function computeHighlightRange(plainText: string, offset: number): [number, numb
   return [p.start, p.end];
 }
 
-export default function SolutionView({ text, playerRef, crossLineIdx = -1, crossNormalized = false, onToggleCross }: {
+export default function SolutionView({ text, event, scramble = '', sourceText = text, playerRef, crossLineIdx = -1, crossNormalized = false, onToggleCross }: {
   text: string;
+  event?: string;
+  scramble?: string;
+  sourceText?: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   playerRef: MutableRefObject<any>;
   /** cross 行索引;>=0 时该行末尾渲染内联切换按钮。-1 表示不渲染 */
@@ -116,6 +69,37 @@ export default function SolutionView({ text, playerRef, crossLineIdx = -1, cross
   const [hlRange, setHlRange] = useState<[number, number] | null>(null);
   const plainText = useMemo(() => text.replace(/\r\n?/g, '\n'), [text]);
   const crossColor = useMemo(() => crossColorFromReconText(plainText), [plainText]);
+  const linkComments = event === '3x3' || event === '333' || event === 'oh' || event === '333oh';
+  const [commentCases, setCommentCases] = useState<ReconCommentCases>(new Map());
+  const [f2lLinks, setF2lLinks] = useState<Map<number, Map<string, string>>>(new Map());
+  useEffect(() => {
+    let cancelled = false;
+    setF2lLinks(new Map());
+    if (linkComments && scramble && sourceText.split('\n').some(line => {
+      const comment = line.indexOf('//');
+      if (comment < 0) return false;
+      const label = line.slice(comment + 2).trim();
+      return /\bF2L\b/i.test(label) || cubeColorGroups(label).some(group => group.colors.length === 2);
+    })) {
+      void import('@/lib/recon-f2l-links').then(({ reconF2lLinks }) => reconF2lLinks(scramble, sourceText))
+        .then(links => { if (!cancelled) setF2lLinks(links); })
+        .catch(() => { /* Unknown states stay as plain labels, never a guessed case. */ });
+    }
+    return () => { cancelled = true; };
+  }, [linkComments, scramble, sourceText]);
+  const commentSets = useMemo(() => linkComments
+    ? [...new Set(plainText.split('\n').flatMap(line => reconCommentLinks(line).map(link => link.href.split('/').pop()!)))].sort().join(',')
+    : '', [plainText, linkComments]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setCommentCases(new Map());
+    if (commentSets) void Promise.all(commentSets.split(',').map(async set => {
+      try { return [set, reconCommentCaseIndex(set, (await loadAlg('3x3', set)).cases)] as const; }
+      catch { return [set, new Map<string, string>()] as const; }
+    })).then(entries => { if (!cancelled) setCommentCases(new Map(entries)); });
+    return () => { cancelled = true; };
+  }, [commentSets]);
 
   useEffect(() => {
     cursorOffsetRef.current = null;
@@ -123,47 +107,32 @@ export default function SolutionView({ text, playerRef, crossLineIdx = -1, cross
     setHlRange(null);
   }, [text]);
 
-  // Scrub the player to the caret. SQ1 uses the cuber-engine player
-  // (Sq1ReconPlayer, `__kind: 'sq1'`): count tuple/slice tokens directly —
-  // extractAlgFromText would strip the `(t,b)` parens SQ1 depends on.
-  const syncToOffset = useCallback((text: string, offset: number) => {
-    const player = playerRef.current;
-    if (!player) return;
-    const textBefore = text.substring(0, offset);
-    if (player.__kind === 'sq1') {
-      player.jumpToMoveCount?.(parseSq1Tokens(textBefore).length);
-      return;
-    }
-    // cuber NxN engine (CuberReconPlayer) scrubs by whitespace move count, same
-    // as the submit form's caret handler — it has no cubing.js indexer.
-    if (player.__kind === 'nxn-cuber') {
-      const moves = extractAlgFromText(textBefore).trim().split(/\s+/).filter(Boolean);
-      player.jumpToMoveCount?.(moves.length);
-      return;
-    }
-    syncPlayerToMoveCount(player, countMovesExpanded(extractAlgFromText(textBefore)));
+  const syncToOffset = useCallback((text: string, offset: number, autoplay = false) => {
+    syncReconPlayerCursorFromText(playerRef.current, text.substring(0, offset), autoplay);
   }, [playerRef]);
 
-  const moveCaret = useCallback((plainText: string, offset: number) => {
+  const moveCaret = useCallback((plainText: string, offset: number, autoplay = false) => {
     cursorOffsetRef.current = offset;
     setCursorOffset(offset);
     setHlRange(computeHighlightRange(plainText, offset));
-    syncToOffset(plainText, offset);
+    syncToOffset(plainText, offset, autoplay);
   }, [syncToOffset]);
 
   // NOTE: 点击解法文本——计算偏移 → 磁吸到 token 边界 → 更新光标 + 高亮 + 同步 player
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    if ((e.target as Element).closest('a, button')) return;
     const el = preRef.current;
     if (!el) return;
-    let offset = getTextOffsetInElement(el);
+    let offset = getTextOffsetInElement(el, { x: e.clientX, y: e.clientY });
     if (offset < 0) return;
     const result = findTokenPositions(plainText);
     offset = snapCaretToLine(offset, plainText, result);
-    moveCaret(plainText, offset);
+    moveCaret(plainText, offset, true);
   }, [moveCaret, plainText]);
 
   // NOTE: 方向键导航——左右按 token 跳转,上下按行跳转
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if ((e.target as Element).closest('a, button')) return;
     if (!['ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown'].includes(e.key)) return;
     const el = preRef.current;
     if (!el || !playerRef.current) return;
@@ -265,6 +234,11 @@ export default function SolutionView({ text, playerRef, crossLineIdx = -1, cross
             }))
           : [];
         const colorsAt = new Map(labelColorGroups.map(group => [group.start, group.colors]));
+        const links = linkComments ? reconCommentLinks(line, commentCases).flatMap(link => {
+          if (link.href !== '/alg/3x3/f2l') return [link];
+          const href = f2lLinks.get(i)?.get('F2L');
+          return href ? [{ ...link, href }] : [];
+        }) : [];
 
         // 切点:0 / 行尾 / 光标 / 高亮起止 / 色块位置 → 分段渲染。
         const cuts = new Set<number>([0, line.length]);
@@ -274,15 +248,20 @@ export default function SolutionView({ text, playerRef, crossLineIdx = -1, cross
           cuts.add(group.start);
           cuts.add(group.end);
         }
+        for (const link of links) { cuts.add(link.start); cuts.add(link.end); }
         const sorted = [...cuts].sort((a, b) => a - b);
         const parts: React.ReactNode[] = [];
         for (let s = 0; s < sorted.length - 1; s++) {
           const a = sorted[s], b = sorted[s + 1];
           const colors = colorsAt.get(a);
           if (colors) {
+            const chip = <CubeColorChip colors={f2lDisplayColors(colors, crossColor)} className="recon-label-chip" />;
+            const f2lHref = linkComments ? f2lLinks.get(i)?.get(colors) : undefined;
             parts.push(
               <span key={`color${a}`} data-recon-text-length={colors.length}>
-                <CubeColorChip colors={f2lDisplayColors(colors, crossColor)} className="recon-label-chip" />
+                {f2lHref
+                  ? <Link href={f2lHref} prefetch={false} className="recon-comment-link" title={tr({ en: 'Learn this F2L case', zh: '学习这个 F2L 情况' })}>{chip}</Link>
+                  : chip}
               </span>,
             );
           }
@@ -295,7 +274,9 @@ export default function SolutionView({ text, playerRef, crossLineIdx = -1, cross
             continue;
           }
           const inHl = hasHl && a >= Math.max(0, hlS) && b <= Math.min(line.length, hlE);
+          const link = links.find(link => a >= link.start && b <= link.end);
           if (inHl) parts.push(<span key={`h${a}`} className="recon-move-current">{seg}</span>);
+          else if (link) parts.push(<Link key={`link${a}`} href={link.href} prefetch={false} className="recon-comment-link">{seg}</Link>);
           else parts.push(seg);
         }
         if (localCursor === line.length) parts.push(<span key="cend" className="detail-cursor" />);

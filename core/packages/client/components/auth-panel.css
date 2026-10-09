@@ -298,6 +298,15 @@
   border-radius: 9px;
   background: color-mix(in srgb, var(--foreground) 4%, transparent);
 }
+.auth-idrow.auth-merge-trigger {
+  appearance: none;
+  width: 100%;
+  border: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.auth-merge-trigger:disabled { cursor: default; opacity: 0.5; }
 /* 登录方式的标。定宽 + 居中,认不出的 provider 渲染空占位,整列文字仍对齐。 */
 .auth-idicon {
   display: inline-flex;

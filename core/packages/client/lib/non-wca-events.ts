@@ -4,8 +4,8 @@
 // need this static table for icon rendering.
 
 export const TWIZZLE_NONWCA_APPEND: ReadonlyArray<{ id: string; iconClass: string }> = [
-  { id: 'fto', iconClass: 'unofficial-fto' },
-  { id: 'master_tetraminx', iconClass: 'unofficial-mtetram' },
+  { id: 'fto', iconClass: 'puzzle-fto' },
+  { id: 'master_tetraminx', iconClass: 'puzzle-mastertetraminx' },
   { id: 'kilominx', iconClass: 'unofficial-kilominx' },
   { id: 'redi_cube', iconClass: 'unofficial-redi' },
   { id: 'baby_fto', iconClass: 'unofficial-baby_fto' },

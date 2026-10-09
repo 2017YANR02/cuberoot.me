@@ -1,11 +1,12 @@
-// One-shot generator: walks svg/{event,unofficial,penalty}/*.svg and emits the
+// One-shot generator: walks svg/{event,unofficial,penalty,puzzle}/*.svg and emits the
 // literal-string Record<string,string> maps. Replaces Vite's
 // import.meta.glob('./svg/{...}/*.svg', { query: '?raw', eager: true }).
 // Re-run via: pnpm --filter @cuberoot/event-icon generate
 //
-// THREE maps, on purpose:
+// Separate maps, on purpose:
 //  · svg-map-event.ts — WCA projects, independently importable by native apps.
 //  · svg-map-unofficial.ts — non-WCA projects, loaded by generic <CubingIcon>.
+//  · svg-map-puzzle.ts — CubeRoot original structural puzzle glyphs.
 //  · svg-map-penalty.ts (penalty, ~168KB) — the regulation penalty illustrations
 //    are 20-27KB each (full drawings, not glyphs) and nothing renders them through
 //    CubingIcon; only the /icon gallery enumerates them. Keeping them in the main
@@ -53,3 +54,6 @@ emit('svg-map-unofficial.ts', 'UNOFFICIAL_SVG_BY_KEY', ['unofficial'],
   'Unofficial event set — read by the generic <CubingIcon> entry.');
 emit('svg-map-penalty.ts', 'PENALTY_SVG_BY_KEY', ['penalty'],
   'Regulation penalty illustrations — import only where they are actually drawn (/icon).');
+
+emit('svg-map-puzzle.ts', 'PUZZLE_SVG_BY_KEY', ['puzzle'],
+  'CubeRoot original structural glyphs — kept separate from the upstream artwork.');

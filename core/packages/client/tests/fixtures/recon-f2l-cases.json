@@ -1,0 +1,248 @@
+[
+  {
+    "id": 3823,
+    "name": "A+",
+    "subgroup": "Free Pairs",
+    "setup": "R U R' U'"
+  },
+  {
+    "id": 3824,
+    "name": "A-",
+    "subgroup": "Free Pairs",
+    "setup": "R' F R F'"
+  },
+  {
+    "id": 3825,
+    "name": "B-",
+    "subgroup": "Free Pairs",
+    "setup": "F' U F"
+  },
+  {
+    "id": 3826,
+    "name": "B+",
+    "subgroup": "Free Pairs",
+    "setup": "R U' R'"
+  },
+  {
+    "id": 3827,
+    "name": "W+",
+    "subgroup": "Disconnected Pairs",
+    "setup": "R U R' U2' R U' R' U"
+  },
+  {
+    "id": 3828,
+    "name": "W-",
+    "subgroup": "Disconnected Pairs",
+    "setup": "F' U' F U2' F' U F U'"
+  },
+  {
+    "id": 3829,
+    "name": "M+",
+    "subgroup": "Disconnected Pairs",
+    "setup": "R U2 R' U R U2 R' U"
+  },
+  {
+    "id": 3830,
+    "name": "M-",
+    "subgroup": "Disconnected Pairs",
+    "setup": "r' U' R2 U' R2' U2' r"
+  },
+  {
+    "id": 3831,
+    "name": "R-",
+    "subgroup": "Disconnected Pairs",
+    "setup": "F' U F U' R U R' U"
+  },
+  {
+    "id": 3832,
+    "name": "R+",
+    "subgroup": "Disconnected Pairs",
+    "setup": "R U' R' U' R U' R' U"
+  },
+  {
+    "id": 3833,
+    "name": "X-",
+    "subgroup": "Connected Pairs",
+    "setup": "F' U F U' R U2' R' U"
+  },
+  {
+    "id": 3834,
+    "name": "X+",
+    "subgroup": "Connected Pairs",
+    "setup": "R U R' U2' R U R' U' R U R'"
+  },
+  {
+    "id": 3835,
+    "name": "K-",
+    "subgroup": "Connected Pairs",
+    "setup": "r U2' R' U R U' R' U M"
+  },
+  {
+    "id": 3836,
+    "name": "K+",
+    "subgroup": "Connected Pairs",
+    "setup": "R U' R' U' R U R' U"
+  },
+  {
+    "id": 3837,
+    "name": "I+",
+    "subgroup": "Connected Pairs",
+    "setup": "R U R' U' R U R' U2' R U' R'"
+  },
+  {
+    "id": 3838,
+    "name": "I-",
+    "subgroup": "Connected Pairs",
+    "setup": "F' U F U2' R U R'"
+  },
+  {
+    "id": 3839,
+    "name": "H+",
+    "subgroup": "Connected Pairs",
+    "setup": "R U' R' U R U2' R'"
+  },
+  {
+    "id": 3840,
+    "name": "H-",
+    "subgroup": "Connected Pairs",
+    "setup": "R U R' U' R U R' F R' F' R"
+  },
+  {
+    "id": 3841,
+    "name": "Q+",
+    "subgroup": "Disconnected Pairs",
+    "setup": "R U R' U' R U2' R' U'"
+  },
+  {
+    "id": 3842,
+    "name": "Q-",
+    "subgroup": "Disconnected Pairs",
+    "setup": "R U R' F R' F' R2' U R' U"
+  },
+  {
+    "id": 3843,
+    "name": "P+",
+    "subgroup": "Disconnected Pairs",
+    "setup": "R U' R' U2' R U R'"
+  },
+  {
+    "id": 3844,
+    "name": "P-",
+    "subgroup": "Disconnected Pairs",
+    "setup": "F' L' U2' L F"
+  },
+  {
+    "id": 3845,
+    "name": "G+",
+    "subgroup": "Connected Pairs",
+    "setup": "R U' R' U R U' R' U2' R U' R'"
+  },
+  {
+    "id": 3846,
+    "name": "G-",
+    "subgroup": "Connected Pairs",
+    "setup": "R U R' F R U R' U' F'"
+  },
+  {
+    "id": 3847,
+    "name": "E+",
+    "subgroup": "Corner In Slot",
+    "setup": "F' R U R' U' R' F R"
+  },
+  {
+    "id": 3848,
+    "name": "E-",
+    "subgroup": "Corner In Slot",
+    "setup": "F' U' F U R U R' U'"
+  },
+  {
+    "id": 3849,
+    "name": "J+",
+    "subgroup": "Corner In Slot",
+    "setup": "R U R' U' R U R'"
+  },
+  {
+    "id": 3850,
+    "name": "J-",
+    "subgroup": "Corner In Slot",
+    "setup": "R' F R F' U R U' R'"
+  },
+  {
+    "id": 3851,
+    "name": "L-",
+    "subgroup": "Corner In Slot",
+    "setup": "F R' F' R F R' F' R"
+  },
+  {
+    "id": 3852,
+    "name": "L+",
+    "subgroup": "Corner In Slot",
+    "setup": "R U' R' U R U' R'"
+  },
+  {
+    "id": 3853,
+    "name": "T",
+    "subgroup": "Edge In Slot",
+    "setup": "R U R' F R' F' R U"
+  },
+  {
+    "id": 3854,
+    "name": "S",
+    "subgroup": "Edge In Slot",
+    "setup": "R U' R' U R U' R' U R U' R'"
+  },
+  {
+    "id": 3855,
+    "name": "U+",
+    "subgroup": "Edge In Slot",
+    "setup": "R U R' U2' R U R' U"
+  },
+  {
+    "id": 3856,
+    "name": "U-",
+    "subgroup": "Edge In Slot",
+    "setup": "R U' R' U2' R U' R' U'"
+  },
+  {
+    "id": 3857,
+    "name": "V+",
+    "subgroup": "Edge In Slot",
+    "setup": "F' U F U' R U' R' U"
+  },
+  {
+    "id": 3858,
+    "name": "V-",
+    "subgroup": "Edge In Slot",
+    "setup": "R U' R' U2' F R' F' R U2'"
+  },
+  {
+    "id": 3859,
+    "name": "F",
+    "subgroup": "Pieces In Slot",
+    "setup": "R U' R U2' F R2' F' U2' R2'"
+  },
+  {
+    "id": 3860,
+    "name": "D+",
+    "subgroup": "Pieces In Slot",
+    "setup": "R U' R' U R U2' R' U R U' R'"
+  },
+  {
+    "id": 3861,
+    "name": "D-",
+    "subgroup": "Pieces In Slot",
+    "setup": "R U' R' U' R U R' U2' R U' R'"
+  },
+  {
+    "id": 3862,
+    "name": "C+",
+    "subgroup": "Pieces In Slot",
+    "setup": "R U R' F U R U' R' F' R U R'"
+  },
+  {
+    "id": 3863,
+    "name": "C-",
+    "subgroup": "Pieces In Slot",
+    "setup": "R F U R U' R' F' U' R'"
+  }
+]

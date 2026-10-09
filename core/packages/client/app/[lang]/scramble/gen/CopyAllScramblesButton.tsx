@@ -8,6 +8,15 @@ interface Props {
   t: (zh: string, en: string) => string;
 }
 
+/** Keep one generated Mega/Kilominx scramble on one clipboard line. These
+ * R++/D++/U rows are soft wrapping; arbitrary pasted algs/comments stay intact. */
+export function scrambleClipboardText(scramble: string): string {
+  if (!/[\r\n]/.test(scramble)) return scramble;
+  const tokens = scramble.trim().split(/\s+/);
+  return tokens.every((token) => /^(?:[RD](?:\+\+|--)|U'?)$/.test(token))
+    ? tokens.join(' ') : scramble;
+}
+
 /** Shared bulk-copy action for competition and batch generation modes. */
 export default function CopyAllScramblesButton({ text, t }: Props) {
   const { copied, copy } = useCopy();

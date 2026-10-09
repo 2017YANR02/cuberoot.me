@@ -1,4 +1,11 @@
 /** Native generators and practice setups without an upstream csTimer event key. */
+import {
+  NATIVE_PUZZLES,
+  NATIVE_PUZZLE_IDS,
+  generateNativePuzzleScramble,
+  isNativePuzzleId,
+} from '@cuberoot/puzzle-solvers/native-puzzles';
+
 interface NativeScrambleEvent {
   id: string;
   zh: string;
@@ -9,7 +16,7 @@ interface NativeScrambleEvent {
 }
 
 export const NATIVE_SCRAMBLE_EVENTS = [
-  { id: 'pyraminx_duo', zh: '二重奏魔方', en: 'Pyraminx Duo', textLabel: 'Duo' },
+  { id: 'pyraminx_duo', zh: '二重奏', en: 'Pyraminx Duo', textLabel: 'Duo' },
   {
     id: 'magic', zh: '八板', en: "Rubik's Magic", iconClass: 'event-magic',
     practiceHint: {
@@ -24,6 +31,16 @@ export const NATIVE_SCRAMBLE_EVENTS = [
       en: 'M Forward: rectangular linked rings → staircase unlinked rings. M Backward reverses the practice. The preview shows the starting pattern; Master Magic needs no random scramble.',
     },
   },
+  ...NATIVE_PUZZLE_IDS.map((id) => ({
+    id,
+    zh: NATIVE_PUZZLES[id].zh,
+    en: NATIVE_PUZZLES[id].en,
+    textLabel: NATIVE_PUZZLES[id].textLabel,
+    practiceHint: {
+      zh: `练习打乱：${NATIVE_PUZZLES[id].scrambleLength} 步随机转动。`,
+      en: `Practice scramble: ${NATIVE_PUZZLES[id].scrambleLength} random moves.`,
+    },
+  })),
 ] as const satisfies readonly NativeScrambleEvent[];
 
 export const NATIVE_SCRAMBLE_EVENT_IDS: ReadonlySet<string> = new Set(
@@ -52,6 +69,7 @@ export function nativeScramblePracticeHint(id: string | null): NonNullable<Nativ
 
 /** Both generator modes use the same pure generator as the simulator and timer. */
 export async function nativeScramble(id: string, rng?: () => number): Promise<string> {
+  if (isNativePuzzleId(id)) return generateNativePuzzleScramble(id, rng);
   if (id === 'pyraminx_duo') {
     const { generatePyraminxDuoScramble } = await import('@cuberoot/puzzle-solvers/pyraminx-duo');
     return generatePyraminxDuoScramble(rng);

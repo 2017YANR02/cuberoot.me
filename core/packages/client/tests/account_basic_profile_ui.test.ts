@@ -25,8 +25,9 @@ describe('账号基本资料 UI 契约', () => {
     expect(accountPage).toContain('<DateInput');
     expect(accountPage).toContain('<CountryInput');
     expect(accountPage).toContain('updateAccountBasicProfile');
-    expect(accountPage).toContain('id="account-region"');
-    expect(accountPage).toContain('id="account-city"');
+    expect(accountPage).toContain('id="account-location"');
+    expect(accountPage).toContain('setLocationMenuRegion(region.code)');
+    expect(accountPage).toContain('updateDraft({ regionCode: menuRegion.code, cityName: city })');
   });
 
   it('WCA 国家只读，未绑定时才允许编辑', () => {

@@ -646,3 +646,22 @@ td[data-tip-show]:hover::after {
 
 .recon-featured { margin-bottom: 2rem; }
 .recon-featured h2 { font-size: 1.1rem; margin: 0 0 0.75rem; }
+
+/* Grouped reconstruction filters share CompactSelect surfaces and option states. */
+.recon-filter-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.recon-filter-heading {
+  padding: 6px 16px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.recon-filter-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

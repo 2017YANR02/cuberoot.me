@@ -4,6 +4,47 @@ import { stepSolvedInFrame, type CubeStep } from './reconstruct/steps';
 import type { EventId } from './types';
 import { isCnEligible, timerColorNeutralOrientations, type CnMode } from './color-neutral';
 
+/**
+ * Set slug → the step whose completion ends the repetition.
+ *
+ * Shared by the formula trainer and the timer's partial-finish events.
+ * These are 3x3 rules; callers retain their own puzzle and event eligibility.
+ * This table does not choose the grip, AUF handling or when to arm the timer.
+ *
+ * Deliberately absent, because there is no honest answer:
+ *   - `2-look-cmll` — its orient and permute subgroups have different finish lines.
+ *   - `eo4a`, `lse-eolr` — Roux edge orientation. Finishing it leaves the M-slice centres
+ *               free, so "oriented" is not a statement about which colour a
+ *               facelet shows, and a mask cannot say it.
+ *   - `anti-pll`, `fruf` — upstream sets whose finishing state we have not
+ *               established. Guessing `solved` would silently never stop.
+ */
+export const ALG_SET_TRAINING_STEPS: Readonly<Record<string, CubeStep>> = {
+  // Cross → F2L
+  'f2l': 'f2l',
+  'adv-f2l': 'f2l',
+  'sbls': 'sb',            // Roux second block's last slot
+  // Last slot + something about the last layer
+  'zbls': 'eoll',          // …+ edge orientation
+  'wv': 'oll',             // …+ corner orientation (edges already oriented)
+  'sv': 'oll',             // …same, other approach angle
+  'vls': 'oll',            // …+ full OLL
+  // …+ corner orientation with the edges left alone, so the finish is `ocll`
+  // and not `oll`. Harmless if a case turns out to have had its edges oriented
+  // all along: reaching `oll` reaches `ocll` in the same instant.
+  'cls': 'ocll',
+  // Last layer
+  'oll': 'oll',
+  'coll': 'cpll',          // corners oriented/permuted, edges oriented, free U alignment
+  'ollcp': 'cpll',         // OLL + corner permutation
+  'cmll': 'cmll',          // both blocks intact; corners modulo AUF; LSE unconstrained
+  'oh-cmll': 'cmll',
+  'pll': 'solved',
+  'ell': 'solved',         // edges of the last layer; corners already done
+  'zbll': 'solved',
+  '1lll': 'solved',
+};
+
 /** Freeze valid goal frames from the starting training state, before any turns. */
 export function timerSmartCubeTrainingFrames(event: EventId, target: string | null, orientation: string, mode: CnMode): readonly string[] {
   if (!target || mode === 'none' || !isCnEligible(event)) return [orientation];
@@ -21,15 +62,12 @@ export function timerSmartCubeTrainingFrames(event: EventId, target: string | nu
 export function timerSmartCubeTrainingStep(event: EventId): CubeStep | 'eocp' | null {
   switch (event) {
     case 'cross': return 'cross';
-    case 'f2l': return 'f2l';
-    case 'oll': return 'oll';
-    // cpll requires oriented/permuted corners and oriented edges, with a free U alignment.
-    case 'coll': case 'ollcp': return 'cpll';
+    // These formula sets share their finish line with the library trainer.
+    // Keep this explicit subset: timer full-solve events use a separate path.
+    case 'f2l': case 'oll': case 'coll': case 'ollcp': case 'zbls': case 'cmll':
+      return ALG_SET_TRAINING_STEPS[event];
     case 'cll': return 'cll';
-    case 'zbls': return 'eoll';
     case 'eocp': return 'eocp';
-    // Roux corners may be U-misaligned; both blocks must remain intact, LSE is unconstrained.
-    case 'cmll': return 'cmll';
     default: return null;
   }
 }

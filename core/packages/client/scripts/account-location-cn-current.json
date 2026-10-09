@@ -1,0 +1,2717 @@
+{
+  "reviewedAt": "2026-10-09",
+  "baselineDate": "2025-12-31",
+  "sources": [
+    {
+      "url": "https://dmfw.mca.gov.cn/XzqhVersionPublish.html",
+      "archive": "https://github.com/dataxiv/data-district/blob/19256edb1e999d02cdd9da73a696df88d1ff69fc/%E6%B0%91%E6%94%BF%E9%83%A8/2025/data.json",
+      "sha256": "4de3aceb420bb654d8bb9d34d8e0e9fa91922d4fa591f8b654d1b1cc402a3621",
+      "note": "Official-site connection failed during review; archived MCA snapshot used. All 333 prefecture-level units, direct-administered counties and municipality districts are projected without inferred names."
+    },
+    {
+      "url": "https://www.xinjiang.gov.cn/xinjiang/tzgg/202604/3691350b13064945947d8f78933ccb3e.shtml",
+      "note": "2026-04-17: add direct-administered Caohu; Cenling is under Kashgar, not a province-direct child."
+    },
+    {
+      "url": "https://mzj.cq.gov.cn/zwgk_218/zfxxgkml/tzgg/202512/t20251205_15215632.html",
+      "note": "Liangjiang 500157; Jiangbei and Yubei removed in 2025 baseline."
+    },
+    {
+      "url": "https://www.had.gov.hk/chs/18_districts/my_map.htm",
+      "note": "18 district names; English identifiers retained."
+    },
+    {
+      "url": "https://ones.moc.gov.tw/MOC/Account/Register",
+      "note": "22 city/county names; Simplified Chinese display; distinguish Hsinchu/Chiayi city from county."
+    },
+    {
+      "url": "https://dmfw.mca.gov.cn/XzqhVersionPublish.html",
+      "note": "Macao has no lower-level administrative units in this hierarchy; do not manufacture cities from statistical parishes."
+    }
+  ],
+  "regions": [
+    {
+      "code": "AH",
+      "name": "Anhui",
+      "administrativeCode": "340000",
+      "cities": [
+        {
+          "code": "340100",
+          "name": "合肥市",
+          "value": "Hefei"
+        },
+        {
+          "code": "340200",
+          "name": "芜湖市",
+          "value": "Wuhu"
+        },
+        {
+          "code": "340300",
+          "name": "蚌埠市",
+          "value": "Bengbu"
+        },
+        {
+          "code": "340400",
+          "name": "淮南市",
+          "value": "Huainan"
+        },
+        {
+          "code": "340500",
+          "name": "马鞍山市",
+          "value": "Ma'anshan"
+        },
+        {
+          "code": "340600",
+          "name": "淮北市",
+          "value": "Huaibei"
+        },
+        {
+          "code": "340700",
+          "name": "铜陵市",
+          "value": "Tongling"
+        },
+        {
+          "code": "340800",
+          "name": "安庆市",
+          "value": "Anqing"
+        },
+        {
+          "code": "341000",
+          "name": "黄山市",
+          "value": "Huangshan"
+        },
+        {
+          "code": "341100",
+          "name": "滁州市",
+          "value": "Chuzhou"
+        },
+        {
+          "code": "341200",
+          "name": "阜阳市",
+          "value": "Fuyang"
+        },
+        {
+          "code": "341300",
+          "name": "宿州市",
+          "value": "Suzhou"
+        },
+        {
+          "code": "341500",
+          "name": "六安市",
+          "value": "Lu'an"
+        },
+        {
+          "code": "341600",
+          "name": "亳州市",
+          "value": "Bozhou"
+        },
+        {
+          "code": "341700",
+          "name": "池州市",
+          "value": "Chizhou"
+        },
+        {
+          "code": "341800",
+          "name": "宣城市",
+          "value": "Xuancheng"
+        }
+      ],
+      "nameZh": "安徽省"
+    },
+    {
+      "code": "BJ",
+      "name": "Beijing",
+      "administrativeCode": "110000",
+      "cities": [
+        {
+          "code": "110101",
+          "name": "东城区",
+          "value": "Dongcheng"
+        },
+        {
+          "code": "110102",
+          "name": "西城区",
+          "value": "Xicheng"
+        },
+        {
+          "code": "110105",
+          "name": "朝阳区",
+          "value": "Chaoyang"
+        },
+        {
+          "code": "110106",
+          "name": "丰台区",
+          "value": "Fengtai"
+        },
+        {
+          "code": "110107",
+          "name": "石景山区",
+          "value": "Shijingshan"
+        },
+        {
+          "code": "110108",
+          "name": "海淀区",
+          "value": "Haidian"
+        },
+        {
+          "code": "110109",
+          "name": "门头沟区",
+          "value": "Mentougou"
+        },
+        {
+          "code": "110111",
+          "name": "房山区",
+          "value": "Fangshan"
+        },
+        {
+          "code": "110112",
+          "name": "通州区",
+          "value": "Tongzhou"
+        },
+        {
+          "code": "110113",
+          "name": "顺义区",
+          "value": "Shunyi"
+        },
+        {
+          "code": "110114",
+          "name": "昌平区",
+          "value": "Changping"
+        },
+        {
+          "code": "110115",
+          "name": "大兴区",
+          "value": "Daxing"
+        },
+        {
+          "code": "110116",
+          "name": "怀柔区",
+          "value": "Huairou"
+        },
+        {
+          "code": "110117",
+          "name": "平谷区",
+          "value": "Pinggu"
+        },
+        {
+          "code": "110118",
+          "name": "密云区",
+          "value": "Miyun"
+        },
+        {
+          "code": "110119",
+          "name": "延庆区",
+          "value": "Yanqing"
+        }
+      ],
+      "nameZh": "北京市"
+    },
+    {
+      "code": "CQ",
+      "name": "Chongqing",
+      "administrativeCode": "500000",
+      "cities": [
+        {
+          "code": "500101",
+          "name": "万州区",
+          "value": "Wanzhou"
+        },
+        {
+          "code": "500102",
+          "name": "涪陵区",
+          "value": "Fuling"
+        },
+        {
+          "code": "500103",
+          "name": "渝中区",
+          "value": "Yuzhong"
+        },
+        {
+          "code": "500104",
+          "name": "大渡口区",
+          "value": "Dadukou"
+        },
+        {
+          "code": "500106",
+          "name": "沙坪坝区",
+          "value": "Shapingba"
+        },
+        {
+          "code": "500107",
+          "name": "九龙坡区",
+          "value": "Jiulongpo"
+        },
+        {
+          "code": "500108",
+          "name": "南岸区",
+          "value": "Nan'an"
+        },
+        {
+          "code": "500109",
+          "name": "北碚区",
+          "value": "Beibei"
+        },
+        {
+          "code": "500110",
+          "name": "綦江区",
+          "value": "Qijiang"
+        },
+        {
+          "code": "500111",
+          "name": "大足区",
+          "value": "Dazu"
+        },
+        {
+          "code": "500113",
+          "name": "巴南区",
+          "value": "Banan"
+        },
+        {
+          "code": "500114",
+          "name": "黔江区",
+          "value": "Qianjiang"
+        },
+        {
+          "code": "500115",
+          "name": "长寿区",
+          "value": "Changshou"
+        },
+        {
+          "code": "500116",
+          "name": "江津区",
+          "value": "Jiangjin"
+        },
+        {
+          "code": "500117",
+          "name": "合川区",
+          "value": "Hechuan"
+        },
+        {
+          "code": "500118",
+          "name": "永川区",
+          "value": "Yongchuan"
+        },
+        {
+          "code": "500119",
+          "name": "南川区",
+          "value": "Nanchuan"
+        },
+        {
+          "code": "500120",
+          "name": "璧山区",
+          "value": "Bishan"
+        },
+        {
+          "code": "500151",
+          "name": "铜梁区",
+          "value": "Tongliang"
+        },
+        {
+          "code": "500152",
+          "name": "潼南区",
+          "value": "Tongnan"
+        },
+        {
+          "code": "500153",
+          "name": "荣昌区",
+          "value": "Rongchang"
+        },
+        {
+          "code": "500154",
+          "name": "开州区",
+          "value": "Kaizhou"
+        },
+        {
+          "code": "500155",
+          "name": "梁平区",
+          "value": "Liangping"
+        },
+        {
+          "code": "500156",
+          "name": "武隆区",
+          "value": "Wulong"
+        },
+        {
+          "code": "500157",
+          "name": "两江新区",
+          "value": "Liangjiang New Area"
+        },
+        {
+          "code": "500229",
+          "name": "城口县",
+          "value": "Chengkou"
+        },
+        {
+          "code": "500230",
+          "name": "丰都县",
+          "value": "Fengdu"
+        },
+        {
+          "code": "500231",
+          "name": "垫江县",
+          "value": "Dianjiang"
+        },
+        {
+          "code": "500233",
+          "name": "忠县",
+          "value": "Zhong"
+        },
+        {
+          "code": "500235",
+          "name": "云阳县",
+          "value": "Yunyang"
+        },
+        {
+          "code": "500236",
+          "name": "奉节县",
+          "value": "Fengjie"
+        },
+        {
+          "code": "500237",
+          "name": "巫山县",
+          "value": "Wushan"
+        },
+        {
+          "code": "500238",
+          "name": "巫溪县",
+          "value": "Wuxi"
+        },
+        {
+          "code": "500240",
+          "name": "石柱土家族自治县",
+          "value": "Shizhu"
+        },
+        {
+          "code": "500241",
+          "name": "秀山土家族苗族自治县",
+          "value": "Xiushan"
+        },
+        {
+          "code": "500242",
+          "name": "酉阳土家族苗族自治县",
+          "value": "Youyang"
+        },
+        {
+          "code": "500243",
+          "name": "彭水苗族土家族自治县",
+          "value": "Pengshui"
+        }
+      ],
+      "nameZh": "重庆市"
+    },
+    {
+      "code": "FJ",
+      "name": "Fujian",
+      "administrativeCode": "350000",
+      "cities": [
+        {
+          "code": "350100",
+          "name": "福州市",
+          "value": "Fuzhou"
+        },
+        {
+          "code": "350200",
+          "name": "厦门市",
+          "value": "Xiamen"
+        },
+        {
+          "code": "350300",
+          "name": "莆田市",
+          "value": "Putian"
+        },
+        {
+          "code": "350400",
+          "name": "三明市",
+          "value": "Sanming"
+        },
+        {
+          "code": "350500",
+          "name": "泉州市",
+          "value": "Quanzhou"
+        },
+        {
+          "code": "350600",
+          "name": "漳州市",
+          "value": "Zhangzhou"
+        },
+        {
+          "code": "350700",
+          "name": "南平市",
+          "value": "Nanping"
+        },
+        {
+          "code": "350800",
+          "name": "龙岩市",
+          "value": "Longyan"
+        },
+        {
+          "code": "350900",
+          "name": "宁德市",
+          "value": "Ningde"
+        }
+      ],
+      "nameZh": "福建省"
+    },
+    {
+      "code": "GS",
+      "name": "Gansu",
+      "administrativeCode": "620000",
+      "cities": [
+        {
+          "code": "620100",
+          "name": "兰州市",
+          "value": "Lanzhou"
+        },
+        {
+          "code": "620200",
+          "name": "嘉峪关市",
+          "value": "Jiayuguan"
+        },
+        {
+          "code": "620300",
+          "name": "金昌市",
+          "value": "Jinchang"
+        },
+        {
+          "code": "620400",
+          "name": "白银市",
+          "value": "Baiyin"
+        },
+        {
+          "code": "620500",
+          "name": "天水市",
+          "value": "Tianshui"
+        },
+        {
+          "code": "620600",
+          "name": "武威市",
+          "value": "Wuwei"
+        },
+        {
+          "code": "620700",
+          "name": "张掖市",
+          "value": "Zhangye"
+        },
+        {
+          "code": "620800",
+          "name": "平凉市",
+          "value": "Pingliang"
+        },
+        {
+          "code": "620900",
+          "name": "酒泉市",
+          "value": "Jiuquan"
+        },
+        {
+          "code": "621000",
+          "name": "庆阳市",
+          "value": "Qingyang"
+        },
+        {
+          "code": "621100",
+          "name": "定西市",
+          "value": "Dingxi"
+        },
+        {
+          "code": "621200",
+          "name": "陇南市",
+          "value": "Longnan"
+        },
+        {
+          "code": "622900",
+          "name": "临夏回族自治州",
+          "value": "Linxia Huizu Zizhizhou"
+        },
+        {
+          "code": "623000",
+          "name": "甘南藏族自治州",
+          "value": "Gannan Tibetan Autonomous Prefecture"
+        }
+      ],
+      "nameZh": "甘肃省"
+    },
+    {
+      "code": "GD",
+      "name": "Guangdong",
+      "administrativeCode": "440000",
+      "cities": [
+        {
+          "code": "440100",
+          "name": "广州市",
+          "value": "Guangzhou"
+        },
+        {
+          "code": "440200",
+          "name": "韶关市",
+          "value": "Shaoguan"
+        },
+        {
+          "code": "440300",
+          "name": "深圳市",
+          "value": "Shenzhen"
+        },
+        {
+          "code": "440400",
+          "name": "珠海市",
+          "value": "Zhuhai"
+        },
+        {
+          "code": "440500",
+          "name": "汕头市",
+          "value": "Shantou"
+        },
+        {
+          "code": "440600",
+          "name": "佛山市",
+          "value": "Foshan"
+        },
+        {
+          "code": "440700",
+          "name": "江门市",
+          "value": "Jiangmen"
+        },
+        {
+          "code": "440800",
+          "name": "湛江市",
+          "value": "Zhanjiang"
+        },
+        {
+          "code": "440900",
+          "name": "茂名市",
+          "value": "Maoming"
+        },
+        {
+          "code": "441200",
+          "name": "肇庆市",
+          "value": "Zhaoqing"
+        },
+        {
+          "code": "441300",
+          "name": "惠州市",
+          "value": "Huizhou"
+        },
+        {
+          "code": "441400",
+          "name": "梅州市",
+          "value": "Meizhou"
+        },
+        {
+          "code": "441500",
+          "name": "汕尾市",
+          "value": "Shanwei"
+        },
+        {
+          "code": "441600",
+          "name": "河源市",
+          "value": "Heyuan"
+        },
+        {
+          "code": "441700",
+          "name": "阳江市",
+          "value": "Yangjiang"
+        },
+        {
+          "code": "441800",
+          "name": "清远市",
+          "value": "Qingyuan"
+        },
+        {
+          "code": "441900",
+          "name": "东莞市",
+          "value": "Dongguan"
+        },
+        {
+          "code": "442000",
+          "name": "中山市",
+          "value": "Zhongshan"
+        },
+        {
+          "code": "445100",
+          "name": "潮州市",
+          "value": "Chaozhou"
+        },
+        {
+          "code": "445200",
+          "name": "揭阳市",
+          "value": "Jieyang"
+        },
+        {
+          "code": "445300",
+          "name": "云浮市",
+          "value": "Yunfu"
+        }
+      ],
+      "nameZh": "广东省"
+    },
+    {
+      "code": "GX",
+      "name": "Guangxi",
+      "administrativeCode": "450000",
+      "cities": [
+        {
+          "code": "450100",
+          "name": "南宁市",
+          "value": "Nanning"
+        },
+        {
+          "code": "450200",
+          "name": "柳州市",
+          "value": "Liuzhou"
+        },
+        {
+          "code": "450300",
+          "name": "桂林市",
+          "value": "Guilin"
+        },
+        {
+          "code": "450400",
+          "name": "梧州市",
+          "value": "Wuzhou"
+        },
+        {
+          "code": "450500",
+          "name": "北海市",
+          "value": "Beihai"
+        },
+        {
+          "code": "450600",
+          "name": "防城港市",
+          "value": "Fangchenggang"
+        },
+        {
+          "code": "450700",
+          "name": "钦州市",
+          "value": "Qinzhou"
+        },
+        {
+          "code": "450800",
+          "name": "贵港市",
+          "value": "Guigang"
+        },
+        {
+          "code": "450900",
+          "name": "玉林市",
+          "value": "Yulin"
+        },
+        {
+          "code": "451000",
+          "name": "百色市",
+          "value": "Baise"
+        },
+        {
+          "code": "451100",
+          "name": "贺州市",
+          "value": "Hezhou"
+        },
+        {
+          "code": "451200",
+          "name": "河池市",
+          "value": "Hechi"
+        },
+        {
+          "code": "451300",
+          "name": "来宾市",
+          "value": "Laibin"
+        },
+        {
+          "code": "451400",
+          "name": "崇左市",
+          "value": "Chongzuo"
+        }
+      ],
+      "nameZh": "广西壮族自治区"
+    },
+    {
+      "code": "GZ",
+      "name": "Guizhou",
+      "administrativeCode": "520000",
+      "cities": [
+        {
+          "code": "520100",
+          "name": "贵阳市",
+          "value": "Guiyang"
+        },
+        {
+          "code": "520200",
+          "name": "六盘水市",
+          "value": "Liupanshui"
+        },
+        {
+          "code": "520300",
+          "name": "遵义市",
+          "value": "Zunyi"
+        },
+        {
+          "code": "520400",
+          "name": "安顺市",
+          "value": "Anshun"
+        },
+        {
+          "code": "520500",
+          "name": "毕节市",
+          "value": "Bijie"
+        },
+        {
+          "code": "520600",
+          "name": "铜仁市",
+          "value": "Tongren"
+        },
+        {
+          "code": "522300",
+          "name": "黔西南布依族苗族自治州",
+          "value": "Qianxinan Bouyei and Miao Autonomous Prefecture"
+        },
+        {
+          "code": "522600",
+          "name": "黔东南苗族侗族自治州",
+          "value": "Qiandongnan Miao and Dong Autonomous"
+        },
+        {
+          "code": "522700",
+          "name": "黔南布依族苗族自治州",
+          "value": "Qiannan Bouyei and Miao Autonomous Prefecture"
+        }
+      ],
+      "nameZh": "贵州省"
+    },
+    {
+      "code": "HI",
+      "name": "Hainan",
+      "administrativeCode": "460000",
+      "cities": [
+        {
+          "code": "460100",
+          "name": "海口市",
+          "value": "Haikou"
+        },
+        {
+          "code": "460200",
+          "name": "三亚市",
+          "value": "Sanya"
+        },
+        {
+          "code": "460300",
+          "name": "三沙市",
+          "value": "Sansha"
+        },
+        {
+          "code": "460400",
+          "name": "儋州市",
+          "value": "Danzhou"
+        },
+        {
+          "code": "469001",
+          "name": "五指山市",
+          "value": "Wuzhishan"
+        },
+        {
+          "code": "469002",
+          "name": "琼海市",
+          "value": "Qionghai"
+        },
+        {
+          "code": "469005",
+          "name": "文昌市",
+          "value": "Wenchang"
+        },
+        {
+          "code": "469006",
+          "name": "万宁市",
+          "value": "Wanning"
+        },
+        {
+          "code": "469007",
+          "name": "东方市",
+          "value": "Dongfang"
+        },
+        {
+          "code": "469021",
+          "name": "定安县",
+          "value": "Ding'an"
+        },
+        {
+          "code": "469022",
+          "name": "屯昌县",
+          "value": "Tunchang"
+        },
+        {
+          "code": "469023",
+          "name": "澄迈县",
+          "value": "Chengmai"
+        },
+        {
+          "code": "469024",
+          "name": "临高县",
+          "value": "Lingao"
+        },
+        {
+          "code": "469025",
+          "name": "白沙黎族自治县",
+          "value": "Baisha"
+        },
+        {
+          "code": "469026",
+          "name": "昌江黎族自治县",
+          "value": "Changjiang"
+        },
+        {
+          "code": "469027",
+          "name": "乐东黎族自治县",
+          "value": "Ledong"
+        },
+        {
+          "code": "469028",
+          "name": "陵水黎族自治县",
+          "value": "Lingshui"
+        },
+        {
+          "code": "469029",
+          "name": "保亭黎族苗族自治县",
+          "value": "Baoting"
+        },
+        {
+          "code": "469030",
+          "name": "琼中黎族苗族自治县",
+          "value": "Qiongzhong"
+        }
+      ],
+      "nameZh": "海南省"
+    },
+    {
+      "code": "HE",
+      "name": "Hebei",
+      "administrativeCode": "130000",
+      "cities": [
+        {
+          "code": "130100",
+          "name": "石家庄市",
+          "value": "Shijiazhuang"
+        },
+        {
+          "code": "130200",
+          "name": "唐山市",
+          "value": "Tangshan"
+        },
+        {
+          "code": "130300",
+          "name": "秦皇岛市",
+          "value": "Qinhuangdao"
+        },
+        {
+          "code": "130400",
+          "name": "邯郸市",
+          "value": "Handan"
+        },
+        {
+          "code": "130500",
+          "name": "邢台市",
+          "value": "Xingtai"
+        },
+        {
+          "code": "130600",
+          "name": "保定市",
+          "value": "Baoding"
+        },
+        {
+          "code": "130700",
+          "name": "张家口市",
+          "value": "Zhangjiakou"
+        },
+        {
+          "code": "130800",
+          "name": "承德市",
+          "value": "Chengde"
+        },
+        {
+          "code": "130900",
+          "name": "沧州市",
+          "value": "Cangzhou"
+        },
+        {
+          "code": "131000",
+          "name": "廊坊市",
+          "value": "Langfang"
+        },
+        {
+          "code": "131100",
+          "name": "衡水市",
+          "value": "Hengshui"
+        }
+      ],
+      "nameZh": "河北省"
+    },
+    {
+      "code": "HL",
+      "name": "Heilongjiang",
+      "administrativeCode": "230000",
+      "cities": [
+        {
+          "code": "230100",
+          "name": "哈尔滨市",
+          "value": "Harbin"
+        },
+        {
+          "code": "230200",
+          "name": "齐齐哈尔市",
+          "value": "Qiqihar"
+        },
+        {
+          "code": "230300",
+          "name": "鸡西市",
+          "value": "Jixi"
+        },
+        {
+          "code": "230400",
+          "name": "鹤岗市",
+          "value": "Hegang"
+        },
+        {
+          "code": "230500",
+          "name": "双鸭山市",
+          "value": "Shuangyashan"
+        },
+        {
+          "code": "230600",
+          "name": "大庆市",
+          "value": "Daqing"
+        },
+        {
+          "code": "230700",
+          "name": "伊春市",
+          "value": "Yichun"
+        },
+        {
+          "code": "230800",
+          "name": "佳木斯市",
+          "value": "Jiamusi"
+        },
+        {
+          "code": "230900",
+          "name": "七台河市",
+          "value": "Qitaihe"
+        },
+        {
+          "code": "231000",
+          "name": "牡丹江市",
+          "value": "Mudanjiang"
+        },
+        {
+          "code": "231100",
+          "name": "黑河市",
+          "value": "Heihe"
+        },
+        {
+          "code": "231200",
+          "name": "绥化市",
+          "value": "Suihua"
+        },
+        {
+          "code": "232700",
+          "name": "大兴安岭地区",
+          "value": "Daxing'anling"
+        }
+      ],
+      "nameZh": "黑龙江省"
+    },
+    {
+      "code": "HA",
+      "name": "Henan",
+      "administrativeCode": "410000",
+      "cities": [
+        {
+          "code": "410100",
+          "name": "郑州市",
+          "value": "Zhengzhou"
+        },
+        {
+          "code": "410200",
+          "name": "开封市",
+          "value": "Kaifeng"
+        },
+        {
+          "code": "410300",
+          "name": "洛阳市",
+          "value": "Luoyang"
+        },
+        {
+          "code": "410400",
+          "name": "平顶山市",
+          "value": "Pingdingshan"
+        },
+        {
+          "code": "410500",
+          "name": "安阳市",
+          "value": "Anyang"
+        },
+        {
+          "code": "410600",
+          "name": "鹤壁市",
+          "value": "Hebi"
+        },
+        {
+          "code": "410700",
+          "name": "新乡市",
+          "value": "Xinxiang"
+        },
+        {
+          "code": "410800",
+          "name": "焦作市",
+          "value": "Jiaozuo"
+        },
+        {
+          "code": "410900",
+          "name": "濮阳市",
+          "value": "Puyang"
+        },
+        {
+          "code": "411000",
+          "name": "许昌市",
+          "value": "Xuchang"
+        },
+        {
+          "code": "411100",
+          "name": "漯河市",
+          "value": "Luohe"
+        },
+        {
+          "code": "411200",
+          "name": "三门峡市",
+          "value": "Sanmenxia"
+        },
+        {
+          "code": "411300",
+          "name": "南阳市",
+          "value": "Nanyang"
+        },
+        {
+          "code": "411400",
+          "name": "商丘市",
+          "value": "Shangqiu"
+        },
+        {
+          "code": "411500",
+          "name": "信阳市",
+          "value": "Xinyang"
+        },
+        {
+          "code": "411600",
+          "name": "周口市",
+          "value": "Zhoukou"
+        },
+        {
+          "code": "411700",
+          "name": "驻马店市",
+          "value": "Zhumadian"
+        },
+        {
+          "code": "419001",
+          "name": "济源市",
+          "value": "Jiyuan"
+        }
+      ],
+      "nameZh": "河南省"
+    },
+    {
+      "code": "HK",
+      "name": "Hong Kong SAR",
+      "cities": [
+        {
+          "name": "中西区",
+          "value": "Central and Western"
+        },
+        {
+          "name": "东区",
+          "value": "Eastern"
+        },
+        {
+          "name": "离岛区",
+          "value": "Islands"
+        },
+        {
+          "name": "九龙城区",
+          "value": "Kowloon City"
+        },
+        {
+          "name": "葵青区",
+          "value": "Kwai Tsing"
+        },
+        {
+          "name": "观塘区",
+          "value": "Kwun Tong"
+        },
+        {
+          "name": "北区",
+          "value": "North"
+        },
+        {
+          "name": "西贡区",
+          "value": "Sai Kung"
+        },
+        {
+          "name": "沙田区",
+          "value": "Sha Tin"
+        },
+        {
+          "name": "深水埗区",
+          "value": "Sham Shui Po"
+        },
+        {
+          "name": "南区",
+          "value": "Southern"
+        },
+        {
+          "name": "大埔区",
+          "value": "Tai Po"
+        },
+        {
+          "name": "荃湾区",
+          "value": "Tsuen Wan"
+        },
+        {
+          "name": "屯门区",
+          "value": "Tuen Mun"
+        },
+        {
+          "name": "湾仔区",
+          "value": "Wan Chai"
+        },
+        {
+          "name": "黄大仙区",
+          "value": "Wong Tai Sin"
+        },
+        {
+          "name": "油尖旺区",
+          "value": "Yau Tsim Mong"
+        },
+        {
+          "name": "元朗区",
+          "value": "Yuen Long"
+        }
+      ],
+      "nameZh": "香港特别行政区"
+    },
+    {
+      "code": "HB",
+      "name": "Hubei",
+      "administrativeCode": "420000",
+      "cities": [
+        {
+          "code": "420100",
+          "name": "武汉市",
+          "value": "Wuhan"
+        },
+        {
+          "code": "420200",
+          "name": "黄石市",
+          "value": "Huangshi"
+        },
+        {
+          "code": "420300",
+          "name": "十堰市",
+          "value": "Shiyan"
+        },
+        {
+          "code": "420500",
+          "name": "宜昌市",
+          "value": "Yichang"
+        },
+        {
+          "code": "420600",
+          "name": "襄阳市",
+          "value": "Xiangyang"
+        },
+        {
+          "code": "420700",
+          "name": "鄂州市",
+          "value": "Ezhou"
+        },
+        {
+          "code": "420800",
+          "name": "荆门市",
+          "value": "Jingmen"
+        },
+        {
+          "code": "420900",
+          "name": "孝感市",
+          "value": "Xiaogan"
+        },
+        {
+          "code": "421000",
+          "name": "荆州市",
+          "value": "Jingzhou"
+        },
+        {
+          "code": "421100",
+          "name": "黄冈市",
+          "value": "Huanggang"
+        },
+        {
+          "code": "421200",
+          "name": "咸宁市",
+          "value": "Xianning"
+        },
+        {
+          "code": "421300",
+          "name": "随州市",
+          "value": "Suizhou"
+        },
+        {
+          "code": "422800",
+          "name": "恩施土家族苗族自治州",
+          "value": "Enshi Tujiazu Miaozu Zizhizhou"
+        },
+        {
+          "code": "429004",
+          "name": "仙桃市",
+          "value": "Xiantao"
+        },
+        {
+          "code": "429005",
+          "name": "潜江市",
+          "value": "Qianjiang"
+        },
+        {
+          "code": "429006",
+          "name": "天门市",
+          "value": "Tianmen"
+        },
+        {
+          "code": "429021",
+          "name": "神农架林区",
+          "value": "Shennongjia Forestry"
+        }
+      ],
+      "nameZh": "湖北省"
+    },
+    {
+      "code": "HN",
+      "name": "Hunan",
+      "administrativeCode": "430000",
+      "cities": [
+        {
+          "code": "430100",
+          "name": "长沙市",
+          "value": "Changsha"
+        },
+        {
+          "code": "430200",
+          "name": "株洲市",
+          "value": "Zhuzhou"
+        },
+        {
+          "code": "430300",
+          "name": "湘潭市",
+          "value": "Xiangtan"
+        },
+        {
+          "code": "430400",
+          "name": "衡阳市",
+          "value": "Hengyang"
+        },
+        {
+          "code": "430500",
+          "name": "邵阳市",
+          "value": "Shaoyang"
+        },
+        {
+          "code": "430600",
+          "name": "岳阳市",
+          "value": "Yueyang"
+        },
+        {
+          "code": "430700",
+          "name": "常德市",
+          "value": "Changde"
+        },
+        {
+          "code": "430800",
+          "name": "张家界市",
+          "value": "Zhangjiajie"
+        },
+        {
+          "code": "430900",
+          "name": "益阳市",
+          "value": "Yiyang"
+        },
+        {
+          "code": "431000",
+          "name": "郴州市",
+          "value": "Chenzhou"
+        },
+        {
+          "code": "431100",
+          "name": "永州市",
+          "value": "Yongzhou"
+        },
+        {
+          "code": "431200",
+          "name": "怀化市",
+          "value": "Huaihua"
+        },
+        {
+          "code": "431300",
+          "name": "娄底市",
+          "value": "Loudi"
+        },
+        {
+          "code": "433100",
+          "name": "湘西土家族苗族自治州",
+          "value": "Xiangxi Tujiazu Miaozu Zizhizhou"
+        }
+      ],
+      "nameZh": "湖南省"
+    },
+    {
+      "code": "NM",
+      "name": "Inner Mongolia",
+      "administrativeCode": "150000",
+      "cities": [
+        {
+          "code": "150100",
+          "name": "呼和浩特市",
+          "value": "Hohhot"
+        },
+        {
+          "code": "150200",
+          "name": "包头市",
+          "value": "Baotou"
+        },
+        {
+          "code": "150300",
+          "name": "乌海市",
+          "value": "Wuhai"
+        },
+        {
+          "code": "150400",
+          "name": "赤峰市",
+          "value": "Chifeng"
+        },
+        {
+          "code": "150500",
+          "name": "通辽市",
+          "value": "Tongliao"
+        },
+        {
+          "code": "150600",
+          "name": "鄂尔多斯市",
+          "value": "Ordos"
+        },
+        {
+          "code": "150700",
+          "name": "呼伦贝尔市",
+          "value": "Hulunbuir"
+        },
+        {
+          "code": "150800",
+          "name": "巴彦淖尔市",
+          "value": "Bayannur"
+        },
+        {
+          "code": "150900",
+          "name": "乌兰察布市",
+          "value": "Ulanqab"
+        },
+        {
+          "code": "152200",
+          "name": "兴安盟",
+          "value": "Hinggan"
+        },
+        {
+          "code": "152500",
+          "name": "锡林郭勒盟",
+          "value": "Xilingol"
+        },
+        {
+          "code": "152900",
+          "name": "阿拉善盟",
+          "value": "Alxa"
+        }
+      ],
+      "nameZh": "内蒙古自治区"
+    },
+    {
+      "code": "JS",
+      "name": "Jiangsu",
+      "administrativeCode": "320000",
+      "cities": [
+        {
+          "code": "320100",
+          "name": "南京市",
+          "value": "NanJing"
+        },
+        {
+          "code": "320200",
+          "name": "无锡市",
+          "value": "WuXi"
+        },
+        {
+          "code": "320300",
+          "name": "徐州市",
+          "value": "XuZhou"
+        },
+        {
+          "code": "320400",
+          "name": "常州市",
+          "value": "ChangZhou"
+        },
+        {
+          "code": "320500",
+          "name": "苏州市",
+          "value": "SuZhou"
+        },
+        {
+          "code": "320600",
+          "name": "南通市",
+          "value": "NanTong"
+        },
+        {
+          "code": "320700",
+          "name": "连云港市",
+          "value": "LianYunGang"
+        },
+        {
+          "code": "320800",
+          "name": "淮安市",
+          "value": "HuaiAn"
+        },
+        {
+          "code": "320900",
+          "name": "盐城市",
+          "value": "YanCheng"
+        },
+        {
+          "code": "321000",
+          "name": "扬州市",
+          "value": "YangZhou"
+        },
+        {
+          "code": "321100",
+          "name": "镇江市",
+          "value": "ZhenJiang"
+        },
+        {
+          "code": "321200",
+          "name": "泰州市",
+          "value": "TaiZhou"
+        },
+        {
+          "code": "321300",
+          "name": "宿迁市",
+          "value": "SuQian"
+        }
+      ],
+      "nameZh": "江苏省"
+    },
+    {
+      "code": "JX",
+      "name": "Jiangxi",
+      "administrativeCode": "360000",
+      "cities": [
+        {
+          "code": "360100",
+          "name": "南昌市",
+          "value": "Nanchang"
+        },
+        {
+          "code": "360200",
+          "name": "景德镇市",
+          "value": "Jingdezhen"
+        },
+        {
+          "code": "360300",
+          "name": "萍乡市",
+          "value": "Pingxiang"
+        },
+        {
+          "code": "360400",
+          "name": "九江市",
+          "value": "Jiujiang"
+        },
+        {
+          "code": "360500",
+          "name": "新余市",
+          "value": "Xinyu"
+        },
+        {
+          "code": "360600",
+          "name": "鹰潭市",
+          "value": "Yingtan"
+        },
+        {
+          "code": "360700",
+          "name": "赣州市",
+          "value": "Ganzhou"
+        },
+        {
+          "code": "360800",
+          "name": "吉安市",
+          "value": "Ji'an"
+        },
+        {
+          "code": "360900",
+          "name": "宜春市",
+          "value": "Yichun"
+        },
+        {
+          "code": "361000",
+          "name": "抚州市",
+          "value": "Fuzhou"
+        },
+        {
+          "code": "361100",
+          "name": "上饶市",
+          "value": "Shangrao"
+        }
+      ],
+      "nameZh": "江西省"
+    },
+    {
+      "code": "JL",
+      "name": "Jilin",
+      "administrativeCode": "220000",
+      "cities": [
+        {
+          "code": "220100",
+          "name": "长春市",
+          "value": "Changchun"
+        },
+        {
+          "code": "220200",
+          "name": "吉林市",
+          "value": "Jilin"
+        },
+        {
+          "code": "220300",
+          "name": "四平市",
+          "value": "Siping"
+        },
+        {
+          "code": "220400",
+          "name": "辽源市",
+          "value": "Liaoyuan"
+        },
+        {
+          "code": "220500",
+          "name": "通化市",
+          "value": "Tonghua"
+        },
+        {
+          "code": "220600",
+          "name": "白山市",
+          "value": "Baishan"
+        },
+        {
+          "code": "220700",
+          "name": "松原市",
+          "value": "Songyuan"
+        },
+        {
+          "code": "220800",
+          "name": "白城市",
+          "value": "Baicheng"
+        },
+        {
+          "code": "222400",
+          "name": "延边朝鲜族自治州",
+          "value": "Yanbian Chaoxianzu Zizhizhou"
+        }
+      ],
+      "nameZh": "吉林省"
+    },
+    {
+      "code": "LN",
+      "name": "Liaoning",
+      "administrativeCode": "210000",
+      "cities": [
+        {
+          "code": "210100",
+          "name": "沈阳市",
+          "value": "Shenyang"
+        },
+        {
+          "code": "210200",
+          "name": "大连市",
+          "value": "Dalian"
+        },
+        {
+          "code": "210300",
+          "name": "鞍山市",
+          "value": "Anshan"
+        },
+        {
+          "code": "210400",
+          "name": "抚顺市",
+          "value": "Fushun"
+        },
+        {
+          "code": "210500",
+          "name": "本溪市",
+          "value": "Benxi"
+        },
+        {
+          "code": "210600",
+          "name": "丹东市",
+          "value": "Dandong"
+        },
+        {
+          "code": "210700",
+          "name": "锦州市",
+          "value": "Jinzhou"
+        },
+        {
+          "code": "210800",
+          "name": "营口市",
+          "value": "Yingkou"
+        },
+        {
+          "code": "210900",
+          "name": "阜新市",
+          "value": "Fuxin"
+        },
+        {
+          "code": "211000",
+          "name": "辽阳市",
+          "value": "Liaoyang"
+        },
+        {
+          "code": "211100",
+          "name": "盘锦市",
+          "value": "Panjin"
+        },
+        {
+          "code": "211200",
+          "name": "铁岭市",
+          "value": "Tieling"
+        },
+        {
+          "code": "211300",
+          "name": "朝阳市",
+          "value": "Chaoyang"
+        },
+        {
+          "code": "211400",
+          "name": "葫芦岛市",
+          "value": "Huludao"
+        }
+      ],
+      "nameZh": "辽宁省"
+    },
+    {
+      "code": "MO",
+      "name": "Macau SAR",
+      "cities": [],
+      "nameZh": "澳门特别行政区"
+    },
+    {
+      "code": "NX",
+      "name": "Ningxia",
+      "administrativeCode": "640000",
+      "cities": [
+        {
+          "code": "640100",
+          "name": "银川市",
+          "value": "Yinchuan"
+        },
+        {
+          "code": "640200",
+          "name": "石嘴山市",
+          "value": "Shizuishan"
+        },
+        {
+          "code": "640300",
+          "name": "吴忠市",
+          "value": "Wuzhong"
+        },
+        {
+          "code": "640400",
+          "name": "固原市",
+          "value": "Guyuan"
+        },
+        {
+          "code": "640500",
+          "name": "中卫市",
+          "value": "Zhongwei"
+        }
+      ],
+      "nameZh": "宁夏回族自治区"
+    },
+    {
+      "code": "QH",
+      "name": "Qinghai",
+      "administrativeCode": "630000",
+      "cities": [
+        {
+          "code": "630100",
+          "name": "西宁市",
+          "value": "Xining"
+        },
+        {
+          "code": "630200",
+          "name": "海东市",
+          "value": "Haidong"
+        },
+        {
+          "code": "632200",
+          "name": "海北藏族自治州",
+          "value": "Haibei Tibetan Autonomous"
+        },
+        {
+          "code": "632300",
+          "name": "黄南藏族自治州",
+          "value": "Huangnan Zangzu Zizhizhou"
+        },
+        {
+          "code": "632500",
+          "name": "海南藏族自治州",
+          "value": "Hainan Tibetan Autonomous Prefecture"
+        },
+        {
+          "code": "632600",
+          "name": "果洛藏族自治州",
+          "value": "Golog Tibetan Autonomous"
+        },
+        {
+          "code": "632700",
+          "name": "玉树藏族自治州",
+          "value": "Yushu Zangzu Zizhizhou"
+        },
+        {
+          "code": "632800",
+          "name": "海西蒙古族藏族自治州",
+          "value": "Haixi Mongol and Tibetan Autonomous Prefecture"
+        }
+      ],
+      "nameZh": "青海省"
+    },
+    {
+      "code": "SN",
+      "name": "Shaanxi",
+      "administrativeCode": "610000",
+      "cities": [
+        {
+          "code": "610100",
+          "name": "西安市",
+          "value": "Xi'an"
+        },
+        {
+          "code": "610200",
+          "name": "铜川市",
+          "value": "Tongchuan"
+        },
+        {
+          "code": "610300",
+          "name": "宝鸡市",
+          "value": "Baoji"
+        },
+        {
+          "code": "610400",
+          "name": "咸阳市",
+          "value": "Xianyang"
+        },
+        {
+          "code": "610500",
+          "name": "渭南市",
+          "value": "Weinan"
+        },
+        {
+          "code": "610600",
+          "name": "延安市",
+          "value": "Yan'an"
+        },
+        {
+          "code": "610700",
+          "name": "汉中市",
+          "value": "Hanzhong"
+        },
+        {
+          "code": "610800",
+          "name": "榆林市",
+          "value": "Yulin"
+        },
+        {
+          "code": "610900",
+          "name": "安康市",
+          "value": "Ankang"
+        },
+        {
+          "code": "611000",
+          "name": "商洛市",
+          "value": "Shangluo"
+        }
+      ],
+      "nameZh": "陕西省"
+    },
+    {
+      "code": "SD",
+      "name": "Shandong",
+      "administrativeCode": "370000",
+      "cities": [
+        {
+          "code": "370100",
+          "name": "济南市",
+          "value": "Jinan"
+        },
+        {
+          "code": "370200",
+          "name": "青岛市",
+          "value": "Qingdao"
+        },
+        {
+          "code": "370300",
+          "name": "淄博市",
+          "value": "Zibo"
+        },
+        {
+          "code": "370400",
+          "name": "枣庄市",
+          "value": "Zaozhuang"
+        },
+        {
+          "code": "370500",
+          "name": "东营市",
+          "value": "Dongying"
+        },
+        {
+          "code": "370600",
+          "name": "烟台市",
+          "value": "Yantai"
+        },
+        {
+          "code": "370700",
+          "name": "潍坊市",
+          "value": "Weifang"
+        },
+        {
+          "code": "370800",
+          "name": "济宁市",
+          "value": "Jining"
+        },
+        {
+          "code": "370900",
+          "name": "泰安市",
+          "value": "Tai'an"
+        },
+        {
+          "code": "371000",
+          "name": "威海市",
+          "value": "Weihai"
+        },
+        {
+          "code": "371100",
+          "name": "日照市",
+          "value": "Rizhao"
+        },
+        {
+          "code": "371300",
+          "name": "临沂市",
+          "value": "Linyi"
+        },
+        {
+          "code": "371400",
+          "name": "德州市",
+          "value": "Dezhou"
+        },
+        {
+          "code": "371500",
+          "name": "聊城市",
+          "value": "Liaocheng"
+        },
+        {
+          "code": "371600",
+          "name": "滨州市",
+          "value": "Binzhou"
+        },
+        {
+          "code": "371700",
+          "name": "菏泽市",
+          "value": "Heze"
+        }
+      ],
+      "nameZh": "山东省"
+    },
+    {
+      "code": "SH",
+      "name": "Shanghai",
+      "administrativeCode": "310000",
+      "cities": [
+        {
+          "code": "310101",
+          "name": "黄浦区",
+          "value": "Huangpu"
+        },
+        {
+          "code": "310104",
+          "name": "徐汇区",
+          "value": "Xuhui"
+        },
+        {
+          "code": "310105",
+          "name": "长宁区",
+          "value": "Changning"
+        },
+        {
+          "code": "310106",
+          "name": "静安区",
+          "value": "Jing'an"
+        },
+        {
+          "code": "310107",
+          "name": "普陀区",
+          "value": "Putuo"
+        },
+        {
+          "code": "310109",
+          "name": "虹口区",
+          "value": "Hongkou"
+        },
+        {
+          "code": "310110",
+          "name": "杨浦区",
+          "value": "Yangpu"
+        },
+        {
+          "code": "310112",
+          "name": "闵行区",
+          "value": "Minhang"
+        },
+        {
+          "code": "310113",
+          "name": "宝山区",
+          "value": "Baoshan"
+        },
+        {
+          "code": "310114",
+          "name": "嘉定区",
+          "value": "Jiading"
+        },
+        {
+          "code": "310115",
+          "name": "浦东新区",
+          "value": "Pudong New Area"
+        },
+        {
+          "code": "310116",
+          "name": "金山区",
+          "value": "Jinshan"
+        },
+        {
+          "code": "310117",
+          "name": "松江区",
+          "value": "Songjiang"
+        },
+        {
+          "code": "310118",
+          "name": "青浦区",
+          "value": "Qingpu"
+        },
+        {
+          "code": "310120",
+          "name": "奉贤区",
+          "value": "Fengxian"
+        },
+        {
+          "code": "310151",
+          "name": "崇明区",
+          "value": "Chongming"
+        }
+      ],
+      "nameZh": "上海市"
+    },
+    {
+      "code": "SX",
+      "name": "Shanxi",
+      "administrativeCode": "140000",
+      "cities": [
+        {
+          "code": "140100",
+          "name": "太原市",
+          "value": "Taiyuan"
+        },
+        {
+          "code": "140200",
+          "name": "大同市",
+          "value": "Datong"
+        },
+        {
+          "code": "140300",
+          "name": "阳泉市",
+          "value": "Yangquan"
+        },
+        {
+          "code": "140400",
+          "name": "长治市",
+          "value": "Changzhi"
+        },
+        {
+          "code": "140500",
+          "name": "晋城市",
+          "value": "Jincheng"
+        },
+        {
+          "code": "140600",
+          "name": "朔州市",
+          "value": "Shuozhou"
+        },
+        {
+          "code": "140700",
+          "name": "晋中市",
+          "value": "Jinzhong"
+        },
+        {
+          "code": "140800",
+          "name": "运城市",
+          "value": "Yuncheng"
+        },
+        {
+          "code": "140900",
+          "name": "忻州市",
+          "value": "Xinzhou"
+        },
+        {
+          "code": "141000",
+          "name": "临汾市",
+          "value": "Linfen"
+        },
+        {
+          "code": "141100",
+          "name": "吕梁市",
+          "value": "Lüliang"
+        }
+      ],
+      "nameZh": "山西省"
+    },
+    {
+      "code": "SC",
+      "name": "Sichuan",
+      "administrativeCode": "510000",
+      "cities": [
+        {
+          "code": "510100",
+          "name": "成都市",
+          "value": "Chengdu"
+        },
+        {
+          "code": "510300",
+          "name": "自贡市",
+          "value": "Zigong"
+        },
+        {
+          "code": "510400",
+          "name": "攀枝花市",
+          "value": "Panzhihua"
+        },
+        {
+          "code": "510500",
+          "name": "泸州市",
+          "value": "Luzhou"
+        },
+        {
+          "code": "510600",
+          "name": "德阳市",
+          "value": "Deyang"
+        },
+        {
+          "code": "510700",
+          "name": "绵阳市",
+          "value": "Mianyang"
+        },
+        {
+          "code": "510800",
+          "name": "广元市",
+          "value": "Guangyuan"
+        },
+        {
+          "code": "510900",
+          "name": "遂宁市",
+          "value": "Suining"
+        },
+        {
+          "code": "511000",
+          "name": "内江市",
+          "value": "Neijiang"
+        },
+        {
+          "code": "511100",
+          "name": "乐山市",
+          "value": "Leshan"
+        },
+        {
+          "code": "511300",
+          "name": "南充市",
+          "value": "Nanchong"
+        },
+        {
+          "code": "511400",
+          "name": "眉山市",
+          "value": "Meishan"
+        },
+        {
+          "code": "511500",
+          "name": "宜宾市",
+          "value": "Yibin"
+        },
+        {
+          "code": "511600",
+          "name": "广安市",
+          "value": "Guang'an"
+        },
+        {
+          "code": "511700",
+          "name": "达州市",
+          "value": "Dazhou"
+        },
+        {
+          "code": "511800",
+          "name": "雅安市",
+          "value": "Ya'an"
+        },
+        {
+          "code": "511900",
+          "name": "巴中市",
+          "value": "Bazhong"
+        },
+        {
+          "code": "512000",
+          "name": "资阳市",
+          "value": "Ziyang"
+        },
+        {
+          "code": "513200",
+          "name": "阿坝藏族羌族自治州",
+          "value": "Aba Tibetan and Qiang Autonomous Prefecture"
+        },
+        {
+          "code": "513300",
+          "name": "甘孜藏族自治州",
+          "value": "Garze Tibetan Autonomous Prefecture"
+        },
+        {
+          "code": "513400",
+          "name": "凉山彝族自治州",
+          "value": "Liangshan Yi Autonomous Prefecture"
+        }
+      ],
+      "nameZh": "四川省"
+    },
+    {
+      "code": "TW",
+      "name": "Taiwan",
+      "cities": [
+        {
+          "name": "台北市",
+          "value": "Taipei"
+        },
+        {
+          "name": "新北市",
+          "value": "New Taipei"
+        },
+        {
+          "name": "桃园市",
+          "value": "Taoyuan"
+        },
+        {
+          "name": "台中市",
+          "value": "Taichung"
+        },
+        {
+          "name": "台南市",
+          "value": "Tainan"
+        },
+        {
+          "name": "高雄市",
+          "value": "Kaohsiung"
+        },
+        {
+          "name": "基隆市",
+          "value": "Keelung"
+        },
+        {
+          "name": "新竹市",
+          "value": "Hsinchu City"
+        },
+        {
+          "name": "嘉义市",
+          "value": "Chiayi City"
+        },
+        {
+          "name": "宜兰县",
+          "value": "Yilan"
+        },
+        {
+          "name": "新竹县",
+          "value": "Hsinchu County"
+        },
+        {
+          "name": "苗栗县",
+          "value": "Miaoli"
+        },
+        {
+          "name": "彰化县",
+          "value": "Changhua"
+        },
+        {
+          "name": "南投县",
+          "value": "Nantou"
+        },
+        {
+          "name": "云林县",
+          "value": "Yunlin"
+        },
+        {
+          "name": "嘉义县",
+          "value": "Chiayi County"
+        },
+        {
+          "name": "屏东县",
+          "value": "Pingtung"
+        },
+        {
+          "name": "花莲县",
+          "value": "Hualien"
+        },
+        {
+          "name": "台东县",
+          "value": "Taitung"
+        },
+        {
+          "name": "澎湖县",
+          "value": "Penghu"
+        },
+        {
+          "name": "金门县",
+          "value": "Kinmen"
+        },
+        {
+          "name": "连江县",
+          "value": "Lienchiang"
+        }
+      ],
+      "nameZh": "台湾省"
+    },
+    {
+      "code": "TJ",
+      "name": "Tianjin",
+      "administrativeCode": "120000",
+      "cities": [
+        {
+          "code": "120101",
+          "name": "和平区",
+          "value": "Heping"
+        },
+        {
+          "code": "120102",
+          "name": "河东区",
+          "value": "Hedong"
+        },
+        {
+          "code": "120103",
+          "name": "河西区",
+          "value": "Hexi"
+        },
+        {
+          "code": "120104",
+          "name": "南开区",
+          "value": "Nankai"
+        },
+        {
+          "code": "120105",
+          "name": "河北区",
+          "value": "Hebei"
+        },
+        {
+          "code": "120106",
+          "name": "红桥区",
+          "value": "Hongqiao"
+        },
+        {
+          "code": "120110",
+          "name": "东丽区",
+          "value": "Dongli"
+        },
+        {
+          "code": "120111",
+          "name": "西青区",
+          "value": "Xiqing"
+        },
+        {
+          "code": "120112",
+          "name": "津南区",
+          "value": "Jinnan"
+        },
+        {
+          "code": "120113",
+          "name": "北辰区",
+          "value": "Beichen"
+        },
+        {
+          "code": "120114",
+          "name": "武清区",
+          "value": "Wuqing"
+        },
+        {
+          "code": "120115",
+          "name": "宝坻区",
+          "value": "Baodi"
+        },
+        {
+          "code": "120116",
+          "name": "滨海新区",
+          "value": "Binhai New Area"
+        },
+        {
+          "code": "120117",
+          "name": "宁河区",
+          "value": "Ninghe"
+        },
+        {
+          "code": "120118",
+          "name": "静海区",
+          "value": "Jinghai"
+        },
+        {
+          "code": "120119",
+          "name": "蓟州区",
+          "value": "Jizhou"
+        }
+      ],
+      "nameZh": "天津市"
+    },
+    {
+      "code": "XZ",
+      "name": "Tibet",
+      "administrativeCode": "540000",
+      "cities": [
+        {
+          "code": "540100",
+          "name": "拉萨市",
+          "value": "Lhasa"
+        },
+        {
+          "code": "540200",
+          "name": "日喀则市",
+          "value": "Xigaze"
+        },
+        {
+          "code": "540300",
+          "name": "昌都市",
+          "value": "Qamdo"
+        },
+        {
+          "code": "540400",
+          "name": "林芝市",
+          "value": "Nyingchi"
+        },
+        {
+          "code": "540500",
+          "name": "山南市",
+          "value": "Shannan"
+        },
+        {
+          "code": "540600",
+          "name": "那曲市",
+          "value": "Nagqu"
+        },
+        {
+          "code": "542500",
+          "name": "阿里地区",
+          "value": "Ngari"
+        }
+      ],
+      "nameZh": "西藏自治区"
+    },
+    {
+      "code": "XJ",
+      "name": "Xinjiang",
+      "administrativeCode": "650000",
+      "cities": [
+        {
+          "code": "650100",
+          "name": "乌鲁木齐市",
+          "value": "Urumqi"
+        },
+        {
+          "code": "650200",
+          "name": "克拉玛依市",
+          "value": "Karamay"
+        },
+        {
+          "code": "650400",
+          "name": "吐鲁番市",
+          "value": "Turpan"
+        },
+        {
+          "code": "650500",
+          "name": "哈密市",
+          "value": "Hami"
+        },
+        {
+          "code": "652300",
+          "name": "昌吉回族自治州",
+          "value": "Changji Hui Autonomous Prefecture"
+        },
+        {
+          "code": "652700",
+          "name": "博尔塔拉蒙古自治州",
+          "value": "Bortala Mongol Autonomous Prefecture"
+        },
+        {
+          "code": "652800",
+          "name": "巴音郭楞蒙古自治州",
+          "value": "Bayingolin Mongol Autonomous Prefecture"
+        },
+        {
+          "code": "652900",
+          "name": "阿克苏地区",
+          "value": "Aksu"
+        },
+        {
+          "code": "653000",
+          "name": "克孜勒苏柯尔克孜自治州",
+          "value": "Kizilsu Kyrgyz Autonomous Prefecture"
+        },
+        {
+          "code": "653100",
+          "name": "喀什地区",
+          "value": "Kashgar"
+        },
+        {
+          "code": "653200",
+          "name": "和田地区",
+          "value": "Hotan"
+        },
+        {
+          "code": "654000",
+          "name": "伊犁哈萨克自治州",
+          "value": "Ili Kazakh Autonomous Prefecture"
+        },
+        {
+          "code": "654200",
+          "name": "塔城地区",
+          "value": "Tacheng"
+        },
+        {
+          "code": "654300",
+          "name": "阿勒泰地区",
+          "value": "Altay"
+        },
+        {
+          "code": "659001",
+          "name": "石河子市",
+          "value": "Shihezi"
+        },
+        {
+          "code": "659002",
+          "name": "阿拉尔市",
+          "value": "Aral"
+        },
+        {
+          "code": "659003",
+          "name": "图木舒克市",
+          "value": "Tumxuk"
+        },
+        {
+          "code": "659004",
+          "name": "五家渠市",
+          "value": "Wujiaqu"
+        },
+        {
+          "code": "659005",
+          "name": "北屯市",
+          "value": "Beitun"
+        },
+        {
+          "code": "659006",
+          "name": "铁门关市",
+          "value": "Tiemenguan"
+        },
+        {
+          "code": "659007",
+          "name": "双河市",
+          "value": "Shuanghe"
+        },
+        {
+          "code": "659008",
+          "name": "可克达拉市",
+          "value": "Kokdala"
+        },
+        {
+          "code": "659009",
+          "name": "昆玉市",
+          "value": "Kunyu"
+        },
+        {
+          "code": "659010",
+          "name": "胡杨河市",
+          "value": "Huyanghe"
+        },
+        {
+          "code": "659011",
+          "name": "新星市",
+          "value": "Xinxing"
+        },
+        {
+          "code": "659012",
+          "name": "白杨市",
+          "value": "Baiyang"
+        },
+        {
+          "code": "659013",
+          "name": "草湖市",
+          "value": "Caohu"
+        }
+      ],
+      "nameZh": "新疆维吾尔自治区"
+    },
+    {
+      "code": "YN",
+      "name": "Yunnan",
+      "administrativeCode": "530000",
+      "cities": [
+        {
+          "code": "530100",
+          "name": "昆明市",
+          "value": "Kunming"
+        },
+        {
+          "code": "530300",
+          "name": "曲靖市",
+          "value": "Qujing"
+        },
+        {
+          "code": "530400",
+          "name": "玉溪市",
+          "value": "Yuxi"
+        },
+        {
+          "code": "530500",
+          "name": "保山市",
+          "value": "Baoshan"
+        },
+        {
+          "code": "530600",
+          "name": "昭通市",
+          "value": "Zhaotong"
+        },
+        {
+          "code": "530700",
+          "name": "丽江市",
+          "value": "Lijiang"
+        },
+        {
+          "code": "530800",
+          "name": "普洱市",
+          "value": "Pu'er"
+        },
+        {
+          "code": "530900",
+          "name": "临沧市",
+          "value": "Lincang"
+        },
+        {
+          "code": "532300",
+          "name": "楚雄彝族自治州",
+          "value": "Chuxiong Yi Autonomous Prefecture"
+        },
+        {
+          "code": "532500",
+          "name": "红河哈尼族彝族自治州",
+          "value": "Honghe Hani and Yi Autonomous Prefecture"
+        },
+        {
+          "code": "532600",
+          "name": "文山壮族苗族自治州",
+          "value": "Wenshan Zhuang and Miao Autonomous Prefecture"
+        },
+        {
+          "code": "532800",
+          "name": "西双版纳傣族自治州",
+          "value": "Xishuangbanna Dai Autonomous Prefecture"
+        },
+        {
+          "code": "532900",
+          "name": "大理白族自治州",
+          "value": "Dali Bai Autonomous Prefecture"
+        },
+        {
+          "code": "533100",
+          "name": "德宏傣族景颇族自治州",
+          "value": "Dehong Dai and Jingpo Autonomous Prefecture"
+        },
+        {
+          "code": "533300",
+          "name": "怒江傈僳族自治州",
+          "value": "Nujiang Lisu Autonomous Prefecture"
+        },
+        {
+          "code": "533400",
+          "name": "迪庆藏族自治州",
+          "value": "Dêqên"
+        }
+      ],
+      "nameZh": "云南省"
+    },
+    {
+      "code": "ZJ",
+      "name": "Zhejiang",
+      "administrativeCode": "330000",
+      "cities": [
+        {
+          "code": "330100",
+          "name": "杭州市",
+          "value": "Hangzhou"
+        },
+        {
+          "code": "330200",
+          "name": "宁波市",
+          "value": "Ningbo"
+        },
+        {
+          "code": "330300",
+          "name": "温州市",
+          "value": "Wenzhou"
+        },
+        {
+          "code": "330400",
+          "name": "嘉兴市",
+          "value": "Jiaxing"
+        },
+        {
+          "code": "330500",
+          "name": "湖州市",
+          "value": "Huzhou"
+        },
+        {
+          "code": "330600",
+          "name": "绍兴市",
+          "value": "Shaoxing"
+        },
+        {
+          "code": "330700",
+          "name": "金华市",
+          "value": "Jinhua"
+        },
+        {
+          "code": "330800",
+          "name": "衢州市",
+          "value": "Quzhou"
+        },
+        {
+          "code": "330900",
+          "name": "舟山市",
+          "value": "Zhoushan"
+        },
+        {
+          "code": "331000",
+          "name": "台州市",
+          "value": "Taizhou"
+        },
+        {
+          "code": "331100",
+          "name": "丽水市",
+          "value": "Lishui"
+        }
+      ],
+      "nameZh": "浙江省"
+    }
+  ]
+}

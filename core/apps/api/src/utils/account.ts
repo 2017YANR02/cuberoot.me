@@ -338,6 +338,14 @@ const FORUM_PROFILE_EXEMPT_SQL = `EXISTS (
     AND p.created_at < TIMESTAMPTZ '2026-09-11 09:20:14+00'
 ) AS "forumProfileExempt"`;
 
+/** Import only public WCA profile fields. Birth dates remain manually entered. */
+export function normalizeWcaBasicProfile(me: { gender?: unknown }) {
+  const gender: AccountGender | null = me.gender === 'm' ? 'male' : me.gender === 'f' ? 'female' : me.gender === 'o' ? 'other' : null;
+  return { gender };
+}
+
+type WcaBasicFields = ReturnType<typeof normalizeWcaBasicProfile>;
+
 type AccountBasicProfileRow = {
   forumProfileExempt: boolean;
   forumBanned: boolean;
@@ -348,15 +356,18 @@ type AccountBasicProfileRow = {
   regionCode: string | null;
   cityName: string | null;
   wcaId: string | null;
+  wcaGender?: string | null;
 };
 
 function basicProfileFromRow(row: AccountBasicProfileRow): AccountBasicProfile {
+  const wcaGender = normalizeWcaBasicProfile({ gender: row.wcaGender }).gender;
   return {
     forumProfileExempt: row.forumProfileExempt,
     forumBanned: row.forumBanned,
     fullName: row.fullName,
     birthDate: row.birthDate,
-    gender: row.gender,
+    gender: row.gender ?? wcaGender,
+    genderSource: wcaGender && (!row.gender || row.gender === wcaGender) ? 'wca' : 'self',
     countryIso2: row.countryIso2,
     regionCode: row.regionCode,
     cityName: row.cityName,
@@ -368,7 +379,8 @@ export async function getAccountBasicProfile(id: number): Promise<AccountBasicPr
   const rows = await query<AccountBasicProfileRow>(
     `SELECT full_name AS "fullName", birth_date::text AS "birthDate", gender,
             country_iso2 AS "countryIso2", region_code AS "regionCode",
-            city_name AS "cityName", wca_id AS "wcaId", ${FORUM_PROFILE_EXEMPT_SQL}, forum_banned AS "forumBanned"
+            city_name AS "cityName", wca_id AS "wcaId",
+            (SELECT p.gender FROM wca_persons p WHERE p.wca_id = app_users.wca_id) AS "wcaGender", ${FORUM_PROFILE_EXEMPT_SQL}, forum_banned AS "forumBanned"
      FROM app_users WHERE id = ?`,
     [id],
   );
@@ -395,7 +407,8 @@ export async function updateAccountBasicProfile(
      WHERE id = ?
      RETURNING full_name AS "fullName", birth_date::text AS "birthDate", gender,
                country_iso2 AS "countryIso2", region_code AS "regionCode",
-               city_name AS "cityName", wca_id AS "wcaId", ${FORUM_PROFILE_EXEMPT_SQL}, forum_banned AS "forumBanned"`,
+               city_name AS "cityName", wca_id AS "wcaId",
+               (SELECT p.gender FROM wca_persons p WHERE p.wca_id = app_users.wca_id) AS "wcaGender", ${FORUM_PROFILE_EXEMPT_SQL}, forum_banned AS "forumBanned"`,
     [
       profile.fullName !== undefined, profile.fullName ?? null,
       profile.birthDate, profile.gender, profile.countryIso2,
@@ -515,7 +528,7 @@ export class IdentityNotFoundError extends Error {
 export async function loginWithIdentity(
   provider: Provider,
   providerUid: string,
-  profile: { name?: string; avatar?: string | null; wcaId?: string | null; countryIso2?: string | null },
+  profile: { name?: string; avatar?: string | null; wcaId?: string | null; countryIso2?: string | null } & Partial<WcaBasicFields>,
   appleCredential?: AppleIdentityCredential,
   options: { transaction?: TransactionSql; createIfMissing?: boolean } = {},
 ): Promise<{ user: AppUser; isNew: boolean }> {
@@ -536,7 +549,8 @@ export async function loginWithIdentity(
            avatar_url = CASE WHEN ? = 'wca' AND avatar_source = 'auto' THEN ? ELSE avatar_url END,
            region_code = CASE WHEN ? = 'wca' AND country_iso2 IS DISTINCT FROM ? THEN NULL ELSE region_code END,
            city_name = CASE WHEN ? = 'wca' AND country_iso2 IS DISTINCT FROM ? THEN NULL ELSE city_name END,
-           country_iso2 = CASE WHEN ? = 'wca' THEN ? ELSE country_iso2 END
+           country_iso2 = CASE WHEN ? = 'wca' THEN ? ELSE country_iso2 END,
+           gender = CASE WHEN ? = 'wca' THEN COALESCE(?, gender) ELSE gender END
          WHERE id = ?`,
         [
           provider, profile.name ?? '', profile.name ?? '',
@@ -544,6 +558,7 @@ export async function loginWithIdentity(
           provider, profile.countryIso2 ?? null,
           provider, profile.countryIso2 ?? null,
           provider, profile.countryIso2 ?? null,
+          provider, profile.gender ?? null,
           existing.id,
         ],
       );
@@ -554,14 +569,15 @@ export async function loginWithIdentity(
   try {
     const created = await begin(async (tx) => {
       const rows = await tx`
-        INSERT INTO app_users (display_name, avatar_url, avatar_source, avatar_preset, wca_id, country_iso2)
+        INSERT INTO app_users (display_name, avatar_url, avatar_source, avatar_preset, wca_id, country_iso2, gender)
         VALUES (
           ${profile.name ?? ''},
           ${provider === 'wca' ? profile.avatar ?? null : null},
           'auto',
           NULL,
           ${profile.wcaId ?? null},
-          ${provider === 'wca' ? profile.countryIso2 ?? null : null}
+          ${provider === 'wca' ? profile.countryIso2 ?? null : null},
+          ${provider === 'wca' ? profile.gender ?? null : null}
         )
         RETURNING id, display_name, avatar_url, avatar_source, avatar_preset, wca_id, is_admin`;
       const row = rows[0] as unknown as AppUserRow | undefined;
@@ -615,6 +631,7 @@ export async function addIdentity(
   verifiedCountryIso2?: string | null,
   appleCredential?: AppleIdentityCredential,
   transaction?: TransactionSql,
+  wcaBasic: Partial<WcaBasicFields> = {},
 ): Promise<'ok' | 'conflict' | `has-${SingleProvider}`> {
   assertIdentityCredential(provider, appleCredential);
   const run = transaction ? transactionQuery(transaction) : query;
@@ -640,7 +657,8 @@ export async function addIdentity(
            avatar_url = CASE WHEN avatar_source = 'auto' THEN ? ELSE avatar_url END,
            region_code = CASE WHEN country_iso2 IS DISTINCT FROM ? THEN NULL ELSE region_code END,
            city_name = CASE WHEN country_iso2 IS DISTINCT FROM ? THEN NULL ELSE city_name END,
-           country_iso2 = ?
+           country_iso2 = ?,
+           gender = COALESCE(?, gender)
          WHERE id = ?`,
         [
           wcaMirror ?? providerUid,
@@ -649,6 +667,7 @@ export async function addIdentity(
           verifiedCountryIso2 ?? null,
           verifiedCountryIso2 ?? null,
           verifiedCountryIso2 ?? null,
+          wcaBasic.gender ?? null,
           userId,
         ],
       );
@@ -681,7 +700,8 @@ export async function addIdentity(
               WHEN country_iso2 IS DISTINCT FROM ${verifiedCountryIso2 ?? null} THEN NULL
               ELSE city_name
             END,
-            country_iso2 = ${verifiedCountryIso2 ?? null}
+            country_iso2 = ${verifiedCountryIso2 ?? null},
+            gender = COALESCE(${wcaBasic.gender ?? null}, gender)
           WHERE id = ${userId} AND wca_id IS NULL`;
         if (upd.count === 0) return 'conflict';
       }

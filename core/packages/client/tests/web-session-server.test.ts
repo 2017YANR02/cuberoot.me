@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PATCH, POST as establish } from '@/app/api/web-session/route';
-import { GET, POST, DELETE } from '@/app/api/web-session/account/[...path]/route';
+import { GET, PUT, POST, DELETE } from '@/app/api/web-session/account/[...path]/route';
 const generation = '00000000-0000-4000-8000-000000000001';
 const nextGeneration = '00000000-0000-4000-8000-000000000002';
 const user = (uid = 7) => ({ uid, wcaId: null, name: 'Canonical', avatar: '', avatarSource: 'auto', avatarPreset: null, isAdmin: false });
@@ -27,6 +27,18 @@ beforeEach(() => {
 afterEach(() => { vi.unstubAllGlobals(); vi.useRealTimers(); });
 
 describe('same-origin account bridge', () => {
+  it('bridges onboarding reads and idempotent writes without widening PUT access', async () => {
+    fetcher.mockImplementation(async () => json({ seen: true }));
+    for (const [method, handler] of [['GET', GET], ['PUT', PUT]] as const) {
+      const response = await handler(request('/account/onboarding', method), context('onboarding'));
+      expect(response.status).toBe(200);
+      expect(await response.json()).toEqual({ seen: true });
+      expect(fetcher.mock.lastCall?.[1]?.headers).toMatchObject({ Authorization: 'Bearer ' + long });
+    }
+    fetcher.mockClear();
+    expect((await PUT(request('/account/profile', 'PUT'), context('profile'))).status).toBe(404);
+    expect(fetcher).not.toHaveBeenCalled();
+  });
   it('uses the cookie credential and only returns short credentials after profile changes', async () => {
     const response = await POST(request('/account/profile', 'POST', { name: 'Updated' }), context('profile'));
     expect(response.status).toBe(200);

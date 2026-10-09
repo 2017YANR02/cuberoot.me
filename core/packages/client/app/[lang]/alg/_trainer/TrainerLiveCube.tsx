@@ -27,7 +27,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { FaceletsCube } from '@/components/FaceletsCube';
 import { tr } from '@/i18n/tr';
-import { mirrorForBrand, sensorBasisForBrand } from '../../timer/_lib/bluetooth/orientation';
+import { mirrorForBrand, sensorBasisForBrand } from '@cuberoot/shared/smart-cube/orientation';
 import type { TrainerCubeState } from './useTrainerCube';
 import { pickTrainerLiveVisual } from './trainer-live-view';
 

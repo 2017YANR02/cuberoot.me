@@ -1,0 +1,122 @@
+<svg id="cloudling" xmlns="http://www.w3.org/2000/svg" width="880" height="720" viewBox="-32 -24 88 72" preserveAspectRatio="xMidYMid meet">
+<style><![CDATA[
+.phase {
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  color: #888;
+  text-align: center;
+}
+.phase span { color: #7A9DFF; font-weight: 600; }
+.edge-rim-tight { stroke-opacity: .08; }
+.edge-rim-soft { stroke-opacity: .06; }
+.edge-contact { stroke-opacity: .08; }
+@media (prefers-color-scheme: light) {
+.phase span { color: #3941FF; }
+.edge-rim-tight { stroke-opacity: .15; }
+.edge-rim-soft { stroke-opacity: .10; }
+.edge-contact { stroke-opacity: .18; }
+.cloud-drop-shadow { flood-opacity: .13; }
+.food-cloud-shadow { flood-opacity: .28; flood-color: #5060FF; }
+.food-cloud > path {
+  stroke: #5870E8 !important;
+  stroke-width: 1.2 !important;
+  stroke-opacity: .9 !important;
+  vector-effect: non-scaling-stroke !important;
+}
+}
+]]></style>
+    <defs>
+      <linearGradient id="body-grad" x1="12" y1="2" x2="12" y2="22" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#ffffff" />
+        <stop offset="0.5" stop-color="#f4f5f9" />
+        <stop offset="1" stop-color="#dee2eb" />
+      </linearGradient>
+      <linearGradient id="eye-grad" x1="12" y1="11.559508646656383" x2="12" y2="29.559508646656383" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#B1A7FF" />
+        <stop offset="0.5" stop-color="#7A9DFF" />
+        <stop offset="1" stop-color="#3941FF" />
+      </linearGradient>
+      <radialGradient id="hi-grad" cx="0.45" cy="0.25" r="0.55">
+        <stop offset="0" stop-color="#ffffff" stop-opacity="0.9" />
+        <stop offset="1" stop-color="#ffffff" stop-opacity="0" />
+      </radialGradient>
+      <filter id="drop" x="-40%" y="-40%" width="180%" height="180%">
+        <feDropShadow class="cloud-drop-shadow" dx="0" dy="0.6" stdDeviation="0.8" flood-color="#3941FF" flood-opacity="0.18" />
+      </filter>
+      <filter id="edge-blur" x="-40%" y="-40%" width="180%" height="180%">
+        <feGaussianBlur stdDeviation="0.16" />
+      </filter>
+      <radialGradient id="lens-glass-grad" cx="0.34" cy="0.22" r="0.86">
+        <stop offset="0" stop-color="#ffffff" stop-opacity="0.72" />
+        <stop offset="0.48" stop-color="#DDE7FF" stop-opacity="0.35" />
+        <stop offset="1" stop-color="#89A7FF" stop-opacity="0.12" />
+      </radialGradient>
+      <linearGradient id="lens-rim-grad" x1="-5" y1="-5" x2="5" y2="5" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#ffffff" stop-opacity="0.82" />
+        <stop offset="0.44" stop-color="#B9C6DC" stop-opacity="0.54" />
+        <stop offset="1" stop-color="#6F83B7" stop-opacity="0.42" />
+      </linearGradient>
+      <linearGradient id="scan-grad" x1="-4" y1="0" x2="4" y2="0" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#89F2FF" stop-opacity="0" />
+        <stop offset="0.5" stop-color="#EAFBFF" stop-opacity="0.72" />
+        <stop offset="1" stop-color="#89F2FF" stop-opacity="0" />
+      </linearGradient>
+      <filter id="lens-soft-glow" x="-60%" y="-60%" width="220%" height="220%">
+        <feGaussianBlur stdDeviation="0.45" result="glow" />
+        <feMerge><feMergeNode in="glow" /><feMergeNode in="SourceGraphic" /></feMerge>
+      </filter>
+      <path id="cloud-shape" d="M9.064 3.344a4.578 4.578 0 012.285-.312c1 .115 1.891.54 2.673 1.275.01.01.024.017.037.021a.09.09 0 00.043 0 4.55 4.55 0 013.046.275l.047.022.116.057a4.581 4.581 0 012.188 2.399c.209.51.313 1.041.315 1.595a4.24 4.24 0 01-.134 1.223.123.123 0 00.03.115c.594.607.988 1.33 1.183 2.17.289 1.425-.007 2.71-.887 3.854l-.136.166a4.548 4.548 0 01-2.201 1.388.123.123 0 00-.081.076c-.191.551-.383 1.023-.74 1.494-.9 1.187-2.222 1.846-3.711 1.838-1.187-.006-2.239-.44-3.157-1.302a.107.107 0 00-.105-.024c-.388.125-.78.143-1.204.138a4.441 4.441 0 01-1.945-.466 4.544 4.544 0 01-1.61-1.335c-.152-.202-.303-.392-.414-.617a5.81 5.81 0 01-.37-.961 4.582 4.582 0 01-.014-2.298.124.124 0 00.006-.056.085.085 0 00-.027-.048 4.467 4.467 0 01-1.034-1.651 3.896 3.896 0 01-.251-1.192 5.189 5.189 0 01.141-1.6c.337-1.112.982-1.985 1.933-2.618.212-.141.413-.251.601-.33.215-.089.43-.164.646-.227a.098.098 0 00.065-.066 4.51 4.51 0 01.829-1.615 4.535 4.535 0 011.837-1.388z" />
+      <clipPath id="cloud-clip"><use href="#cloud-shape" /></clipPath>
+
+      <!-- 镜片 clip 中心化到 (0,0), lens-group 通过 transform 平移 -->
+      <clipPath id="lens-clip"><circle cx="0" cy="0" r="4.75" /></clipPath>
+
+      <!-- 轻玻璃镜框 (中心化到 0,0) -->
+      <g id="lens-frame">
+        <circle cx="0" cy="0" r="5.05" stroke="url(#lens-rim-grad)" stroke-width="0.34" fill="none" opacity="0.9" />
+        <circle cx="0" cy="0" r="4.55" stroke="#ffffff" stroke-width="0.10" stroke-opacity="0.34" fill="none" />
+        <path id="lens-frame-highlight" d="M -1.476 -4.829 A 5.05 5.05 0 0 1 1.476 -4.829" stroke="#ffffff" stroke-width="0.22" stroke-opacity="0.640" stroke-linecap="round" fill="none" />
+      </g>
+    </defs>
+
+    <!-- 云朵 layer (rotate + scale 围绕 12,12) -->
+    <g transform="translate(12 12) scale(1.1) rotate(7) scale(1.0051 1.0145) translate(-12 -12)" id="cloud-group">
+      <g id="edge-system">
+        <use class="edge-contact" href="#cloud-shape" fill="none" stroke="#7d8aa7" stroke-width="1.05" stroke-linejoin="round" transform="translate(0 0.18)" filter="url(#edge-blur)" />
+        <use class="edge-rim-soft" href="#cloud-shape" fill="none" stroke="#7A9DFF" stroke-width="0.90" stroke-linejoin="round" filter="url(#edge-blur)" />
+        <use class="edge-rim-tight" href="#cloud-shape" fill="none" stroke="#aab3c6" stroke-width="0.42" stroke-linejoin="round" />
+      </g>
+      <g filter="url(#drop)">
+        <use href="#cloud-shape" fill="url(#body-grad)" />
+        <rect x="1" y="2" width="22" height="11" fill="url(#hi-grad)" clip-path="url(#cloud-clip)" />
+      </g>
+    </g>
+
+    <!-- 眼睛 layer (只 scale, 不 rotate, 眼睛保持竖直 — typing 同款分层)
+         每只眼 = capsule + dot 两个元素, opacity 互斥 fade (不再 morph 形状, 避免横扁椭圆中间帧鬼畜) -->
+    <g transform="translate(12 12) scale(1.1) translate(-12 -12)" id="eye-group">
+      <g id="eye-l-wrap" transform="translate(9 12) translate(0.220 0.000)">
+        <rect opacity="0" class="cap" x="-1.3" y="-2.5" width="2.6" height="5" rx="1.3" ry="1.3" fill="url(#eye-grad)" stroke="#ffffff" stroke-width="0.08" stroke-opacity="0.7" />
+        <circle opacity="1" class="dot" cx="0" cy="0" r="1.35" fill="url(#eye-grad)" />
+      </g>
+      <g id="eye-r-wrap" transform="translate(15 12) translate(0.000 0.000)">
+        <rect opacity="0" class="cap" x="-1.3" y="-2.5" width="2.6" height="5" rx="1.3" ry="1.3" fill="url(#eye-grad)" stroke="#ffffff" stroke-width="0.08" stroke-opacity="0.7" />
+        <circle opacity="0" class="dot" cx="0" cy="0" r="1.35" fill="url(#eye-grad)" />
+      </g>
+    </g>
+
+    <!-- 镜片 layer (独立, transform 平移到 lensX/lensY) -->
+    <g id="lens-group" transform="translate(15 12.012140198638491)">
+      <circle id="lens-glow" cx="0" cy="0" r="5.05" fill="#7A9DFF" opacity="0.08" filter="url(#lens-soft-glow)" />
+      <circle id="lens-glass" cx="0" cy="0" r="4.75" fill="url(#lens-glass-grad)" />
+      <g clip-path="url(#lens-clip)">
+        <g id="lens-content"><rect x="-1.7550000000000001" y="-3.391389268161963" width="3.5100000000000002" height="6.75" rx="1.7550000000000001" ry="1.7550000000000001" fill="url(#eye-grad)" /></g>
+      </g>
+      <use href="#lens-frame" />
+    </g>
+  <g id="__cloudling-export-shims" opacity="0" pointer-events="none" style="display:none">
+<g id="phaseLabel"><span>right-focus</span> · lens (15.00, 12.01) · cloud rot 7.0° scale 1.100 · stage <b>capsule</b> · R=[slash,gt,plus,lt,bslash] L=[slash,gt,plus,lt,bslash]</g>
+</g>
+
+
+</svg>

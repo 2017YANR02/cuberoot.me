@@ -2294,7 +2294,7 @@ export default function FrameCountPage() {
                   {!exporting && <span className="fc-export-caret">▾</span>}
                 </button>
                 {showExportMenu && !exporting && (
-                  <div className="fc-export-menu">
+                  <div className="fc-export-menu" data-site-surface="popover">
                     <button
                       className="fc-export-menu-item"
                       onClick={() => { setShowExportMenu(false); handleExport(); }}

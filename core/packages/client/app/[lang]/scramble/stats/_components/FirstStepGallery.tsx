@@ -4,10 +4,10 @@
 // 数据由 scripts/build_*_firstface 预生成的静态 JSON 提供(代表打乱 + 该步步数 metric +
 // 镜像组 mgid + 该打乱的一条最优解 sol,|sol| == metric)。渲染走 ScramblePreview2D 的 mask
 // (灰阶随块跟随打乱)。2×2 与金字塔共用本组件,差异走 props。
+import '@cuberoot/timer-ui/compact-select.css';
 import { useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { tr } from '@/i18n/tr';
 import './_essential-shared.css';
 import './_gallery.css';
@@ -60,11 +60,10 @@ export default function FirstStepGallery({
           <span className="scramble-stats-puzzle-toggle-label">
             {tr({ zh: '镜像合并', en: 'Fold mirrors' })}
           </span>
-          <PillToggle
-            value={foldMirror}
-            onChange={setFoldMirror}
-            ariaLabel={tr({ zh: '是否合并镜像情况', en: 'Fold mirror-image cases' })}
-          />
+          <select className="native-select" value={String(foldMirror)} onChange={event => { setFoldMirror(event.currentTarget.value === 'true'); }} aria-label={tr({ zh: '是否合并镜像情况', en: 'Fold mirror-image cases' })}>
+            <option value="true">{tr({ zh: '开启', en: 'On' })}</option>
+            <option value="false">{tr({ zh: '关闭', en: 'Off' })}</option>
+          </select>
         </div>
         <label className="ess-filter">
           <span>{tr(metricLabel)}</span>

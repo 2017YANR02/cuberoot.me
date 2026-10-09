@@ -1,26 +1,30 @@
 ---
 name: sim-add-puzzle
-description: "用户说造魔方模拟器、给 /sim 加魔方、新魔方类型、X cube simulator、拖拽转动，或给该魔方接入 /scramble/gen、/timer 与验证预览时使用。覆盖 Three.js 渲染、转动交互、共享打乱/图示接线和验收；新求解器算法走 new-substep-solver。"
+description: "用户说造魔方模拟器、给 /sim 加魔方、新魔方类型、X cube simulator、拖拽转动，或给该魔方接入 /scramble/gen、/timer 与验证预览时使用。新增魔方默认同步交付模拟器、计时器打乱与打乱生成页，覆盖共享打乱、图示和跨页面验收；新求解器算法走 new-substep-solver。"
 ---
 
 # sim-add-puzzle
 
-给 `/sim` 加新魔方类型(站内渲染 + 转角动画 + 拖拽转动)，按用户范围接入打乱页与计时器。写真「引擎类型」，复用项目页面与共享能力。
+给 `/sim` 加新魔方类型(站内渲染 + 转角动画 + 拖拽转动)时，同一任务同步完成 `/timer` 的项目与打乱，以及 `/scramble/gen` 的比赛、批量、输入模式和图示；只有用户本次明确限定范围时才缩减。写真「引擎类型」，复用项目页面与共享能力。
 新求解器算法走 skill `new-substep-solver`；本 skill 负责渲染、交互、跨页面消费与验收，不因已有求解器就自动扩张产品页面。
 
 ## 路径与接入范围
 
 - 先读文件内容与 package `exports` 确认真实实现：共享状态/纯打乱在 `core/packages/puzzle-solvers/src/`，共享几何/SVG/引擎在 `core/packages/puzzle-render-core/src/`；`core/packages/client/app/[lang]/sim/engine/world.ts` 已是宿主薄层，禁止把共享实现复制回来。
 - 本文与旧范本的 `engine/` 是功能简称，不保证仍在 Web 目录；用 `rg --files` 定位并沿 re-export 找源文件。页面与浏览器手势留在 client；已迁手势见 `core/packages/client/components/puzzle-models/gestures/`，尚未迁出的适配仍按源码定位。
-- 任务含打乱页、计时器、新公开出口或网页预览时，先读 [跨页面接入与验收](references/integration-and-verification.md)，逐项标明适用、已验或未验；不要只因 `/sim` 菜单出现项目就报全站接入完成。
+- 新增独立可选魔方时，必读 [跨页面接入与验收](references/integration-and-verification.md)，以 `/sim`、`/timer`、`/scramble/gen` 三处全部可用为默认完成条件；单独修改既有外观或交互时只核对受影响入口。
+- 开工先列目标魔方的三入口接入矩阵，沿选择器、生成器、外层分发、实际预览及导出逐层核实；缺项同任务补齐，收尾逐入口写明已验、未验与限制。
+- 外观变体复用原规则的生成器，保留独立项目 ID、双语名称与计时记录；模拟器展示真实外观，打乱预览按该拼图的平面展开方式展示完整状态。
+- 在 `/timer` 打乱预览、`/scramble/gen` 与 PDF 中使用六面或对应多面体的平面展开图；球形三阶复用三阶六面布局与比例，避免把立体场景截图用作打乱核对图。
 
 ## 先分流(动手前定这 3 件)
 - cubing.js 有 `pg()`(PuzzleGeometry,有 3D 模型)→ 走 twisty(`TwistySection`),不碰自有引擎;只有 `svg()`(仅 2D net、没注册)→ 必走自有引擎(实测:`redi_cube`/`dino` 都得自有引擎,别被 twizzle 能开 2D net 误导)。
 - 原生 loader 带轨道遮罩或专用外观时保留具名 puzzle id，不以裸 PuzzleGeometry 描述替换；将具名项目登记在 `twistyPuzzles.ts`，让页面与无 World 的播放控件共用判定。
+- 原生 PG 独立项目复用 `core/packages/puzzle-solvers/src/native-puzzles.ts` 的注册表、同目录 `native-puzzle-model.ts` 的模型与有界解析、`core/packages/puzzle-render-core/src/native-puzzle-svg.ts` 的完整展开图；按 [原生 PG 结构与接线](references/native-pg-puzzles.md) 核对来源、深度、方向和可见贴片，不在页面复制描述或生成器。
 - 原生播放器在首次构造前检测 WebGL 能力，不可用时直接切换同一具名模型的二维展开图；跳过全部 3D 初始化，手动按钮经原生招式回调记录，导出调用原生二维 SVG 下载。
 - 先定转动元素:**面/层**(NxN/SQ1)、**角**(绕体对角线 120°,Dino/Redi/Ivy/Rex)、**棱**(绕棱中点轴 180°,Heli)、**面**(绕面法线,Megaminx/FTO)——它定轴集 + 状态周期表 + pivot 朝向。
 - 要打乱/解法但没 solver → 先按 skill `new-substep-solver` 分流；多个运行时共用的纯模型与生成器放 `@cuberoot/puzzle-solvers` 的公开出口，再回来接渲染，client `lib/` 只保留必要适配。
-- 保立方体形的标准转才做;深切魔方的 jumble(转出非立方体形)不做。
+- 保持原多面体形状的标准转才做；深切魔方的 jumble（转出原外形）不做。
 - **没有立体形态的拼图(魔表)走「平面引擎」,别硬造 3D**:`/sim` 与 twizzle 一样只有 2D。做法 = **mesh-less 引擎**:`ClockCube` 只挂空 `THREE.Object3D` pivot 当动画载体(18 个,前后各 9 盘),真正的画面是 `_SimClockBoard.tsx` 覆在上面的 `components/InteractiveClock`(全站共用的那块 SVG 板),每帧读 `pivot.rotation.z` 经 `animOffset(dial)` 喂 SVG。等于把「引擎只算、渲染另接」这条缝显式化了 —— NxN 的 `_SimCubeNet` 平面视图是同一条路。能力门控走 `simCaps.ts` 的 `flat` 旗标(`scale`/`hint`/`dragEmpty` 一律 `!flat`),别给某拼图手写 `disabled={puzzleKind==='clock'}`。
 - **非均匀切割的 NxN 变体(镜面 / Bump)别新建引擎**:扩 `engine/nxn` —— logical 层保持均匀(转动 / twister / controller / 打乱 / 播放 / 配色全复用零改),只在 `instanced.ts` 加 mirror 模式把渲染 matrix 换成 `compose(R·center0, R, scale0)`(范本 `engine/mirror/mirrorGeometry.ts` + `new Cube(order, true)`)。**再加一个阶数只改 `CORE_OFFSET` 那张表 + 各注册表加一行**,别复制引擎。
 - 制作球块三阶时复用 `new Cube(3, 'sphere')` 与原核球面分色，保留完整球体、实际球面拾取和按实体排序的矢量导出，按 [球块三阶](references/sphere-cubies.md) 门控不适用的方形外观设置并验证转动间距。
@@ -39,7 +43,7 @@ description: "用户说造魔方模拟器、给 /sim 加魔方、新魔方类型
 - 三方合并这 5 文件后必 `typecheck` + 读关键分支/依赖数组核对(无冲突标记 ≠ 语义对)。
 
 ## 动手前(几何先查证)
-- **平面 SVG 先行(硬性)**:新模拟器 / 改轮廓几何，先出平面对比 SVG(黑=现行、绿=提议、蓝=冻结段、灰虚线=约束包络)给用户审核，再按已批准轮廓实现；已有明确批准且本轮轮廓未变时直接沿用，不重复询问。中间产物放 `core/.tmp/png/`，对外文件按当前环境的交付规则保存。
+- **平面 SVG 先行(硬性)**:新模拟器 / 改轮廓几何，先出平面对比 SVG(黑=现行、绿=提议、蓝=冻结段、灰虚线=约束包络)给用户审核，再按已批准轮廓实现；已有明确批准且本轮轮廓未变时直接沿用，不重复询问。用户明确授权自主选型、开发与发布全流程时，仍先产出并核对平面图，再按授权继续，不重复设置审批关卡。中间产物放 `core/.tmp/png/`，对外文件按当前环境的交付规则保存。
 - 轮廓修改教训(gear 2026-07-19):①只动用户点名的区段,其余顶点逐点 verbatim 冻结;②栅格追踪 / 生长算法出的轮廓必带 0.1-0.5 锯齿,交付轮廓要手工构造少顶点平滑段(斜率单调渐变),宁可让出零点几宽度换平滑;③法线外推够不到侧向角落,算真实可达域用区域法(自由格 flood + 边界追踪);④烘焙一次把占用栅格 dump 成 JSON,之后离线秒级迭代,别每轮重烤;⑤采样场余量是平面判据,3D 精细 oracle(rigid_check 类)才是终审。
 - 先 WebSearch/WebFetch(twistypuzzles wiki / Jaap's / ruwix / speedsolving)查真实切割结构:切割面形状(平面?球面?锥面?)、轴 / 转什么、每种块判据、有无永不露面的内部。
 - 先查 csTimer 是否真有该项目，再对齐其 move set 与记号；没有上游 scrambler 时，从可靠结构来源独立建模并明确 CubeRoot 的抽样策略，注册原生 provider，不伪造 csTimer key。
@@ -111,6 +115,7 @@ description: "用户说造魔方模拟器、给 /sim 加魔方、新魔方类型
 
 ## 拖拽转动(每种魔方都做,不只整体旋转)
 - 抓魔方任意位置都能转(别要求精准命中窄区);拖拽方向自动选要转的可动单元(角/面/层)。
+- 原生 PG 播放器的 tap 转动与 orbit 不代表已支持拖拽转层；复用 `core/packages/client/components/puzzle-models/gestures/pgDrag.ts`，在 `components/TwistySection.tsx` 接拾取、阈值与记录；先把世界命中点转入对象局部坐标，再按投影切向选合法层，见 [原生 PG 手势](references/native-pg-puzzles.md#原生拖拽适配)。
 - 范本:Ivy `ivyDrag.ts`(离散 120° 过阈值整步)、SQ1 `sq1Drag.ts`(连续跟手 + 松手 snap);`<x>Drag.ts` 运行时 `import * as THREE`(SimPage 保持 type-only)。
 - `<x>PickHit`:`scene.updateMatrixWorld()`→`setFromCamera`→`intersectObject(cube,true)`;命中魔方任意件都返回(命中点 + 一组候选单元),脱靶才 null→orbit;鼠标在魔方上一律不 orbit。
 - 候选单元只认 `hits[0]`,沿 parent 链读 `userData`(花瓣→它的角、中心→它 live 面相邻 2 角、缝/黑体→全部)。
@@ -136,7 +141,8 @@ description: "用户说造魔方模拟器、给 /sim 加魔方、新魔方类型
 ## 记号约定
 - “随机打乱”只生成并立即应用终态，按当前起点/终点锚定选择时间轴端点；旁边的播放按钮才从还原态播放打乱，并切回起点锚定。
 - 接入存在同名异义面的记号来源时，提供明确选项并将选择与公式一起存入 URL；切换时原子转换当前打乱与解法，渲染入口、随机输出和手动记录双向对齐，禁止猜测来源或连锁替换别名。
-- 多字母招式关闭三阶自动空格；记号转换保留分组、交换子、注释和宽层/整体转，异步打乱与延迟提交在切换拼图或记号后失效。
+- 多字母招式关闭三阶自动空格，PG 项目统一禁用 NxN 自动空格以保留 `UFR`、`FREGU` 等原生族名；记号转换保留分组、换位子、注释和宽层/整体转，异步打乱与延迟提交在切换拼图或记号后失效。
+- 原生 PG 的 setup 与 alg 都先经 `parseNativePuzzleAlg` 限制长度、嵌套和展开工作量并逐招式校验，再传给播放器构造、setter、时间轴、简化或求逆；坏输入标红并保留上次合法盘面，不能先展开再判错。
 - 手动转动遇行末注释时另起一行；无键盘驱动的渲染器不注册拦键监听，复制链接使用当前草稿与解析后的 URL 状态，不等待延迟历史写回。
 - 拿方朝向下拉顶部写明左色块是顶面、右色块是前面；每项用两枚实色色块标出顶面与前面，同时保留 `(UF)` 字母提示。
 - SQ2/SQ4 简化记号保留元组括号和逗号,只移除安全空白,避免 Square-4 两位数转角产生歧义。
@@ -159,6 +165,7 @@ description: "用户说造魔方模拟器、给 /sim 加魔方、新魔方类型
 - 干净 worktree/新 clone 在 `core/` 运行 `pnpm --filter @cuberoot/client run build:deps`，按当前 `package.json` 构建完整共享依赖链，避免只构建 shared/visualcube 后漏掉新 package 出口。
 - `pnpm --filter @cuberoot/client typecheck`(tsgo)。
 - 用当前允许的浏览器工具打开实际可达的 `/zh/sim?puzzle=x`：① solved 对账参考轮廓；② 随机打乱立即应用终态，再单独播放打乱动画；③ 拖可抓件转动并核对新增 token，拖空白转视角；中心属于可抓件时按其当前归属选合法转轴。
+- WebGL 不可用时实测二维手动按钮、记录、公式播放和分享恢复，单独报告二维证据；这些动作、原生 tap 或离线手势测试都不能写成真实 3D 拖拽验收通过。
 - 图像浮层逐个 kind 实测 solved 和打乱态与 3D 的可见面、切分数、颜色、状态一致;测试锁 `schematicPoly` 朝外绕向和可见小面数,禁只验主画布或拿一个 kind 代测。
 - 转动动画抓中间帧；需确定性逐帧检查时用持久化本地脚本调用真实引擎 `beginMove`，独立渲染至少五个进度，并记录取证方式。浏览器内只使用当前工具允许的 UI、DOM、截图与日志，不注入私有 World 句柄；离线帧不能代替浏览器拖拽验收。
 - 遮挡定位在本地引擎 fixture 中分别隐藏 body/core 对照，再用 raycast 输出最近命中的角色与颜色图，区分 moving/stationary；不要仅凭一张截图推断几何错误。

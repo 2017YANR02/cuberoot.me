@@ -6,21 +6,13 @@ import { CompCardWithRounds, wcaRoundsSeed } from '@/components/CompCardWithRoun
 import { useT } from '@/hooks/useT';
 import { loadLandingComps, type Comp } from '@/lib/comp-search';
 import { fetchCompPersonEventIds } from '@/lib/comp-wcif';
-import { fetchPersonUpcomingCompetitionIds } from '@/lib/person-upcoming';
+import { fetchPersonUpcomingCompetitionIds, selectPersonUpcomingCompetitions } from '@/lib/person-upcoming';
+import { toIsoDate } from '@/lib/wca-date';
 import './person_upcoming_comps.css';
 
 interface Props {
   wcaId: string;
   isZh: boolean;
-}
-
-function selectUpcoming(competitionIds: readonly string[], competitions: readonly Comp[]): Comp[] {
-  if (competitionIds.length === 0 || competitions.length === 0) return [];
-
-  const wantedIds = new Set(competitionIds);
-  return competitions
-    .filter((competition) => wantedIds.has(competition.id))
-    .sort((a, b) => a.start_date.localeCompare(b.start_date) || a.id.localeCompare(b.id));
 }
 
 export default function PersonUpcomingComps({ wcaId, isZh }: Props) {
@@ -34,7 +26,7 @@ export default function PersonUpcomingComps({ wcaId, isZh }: Props) {
 
     Promise.all([fetchPersonUpcomingCompetitionIds(wcaId), loadLandingComps()])
       .then(async ([competitionIds, allCompetitions]) => {
-        const upcoming = selectUpcoming(competitionIds, allCompetitions);
+        const upcoming = selectPersonUpcomingCompetitions(competitionIds, allCompetitions, toIsoDate(new Date()));
         if (cancelled) return;
         setCompetitions(upcoming);
 

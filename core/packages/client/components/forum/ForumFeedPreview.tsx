@@ -21,12 +21,12 @@ export default function ForumFeedPreview() {
   }, []);
 
   if (!ready) {
-    return <section className="forum-feed-preview" aria-busy="true" aria-label={tr({ zh: '社区动态', en: 'Community feed' })} />;
+    return <section className="forum-feed-preview" data-tour="forum" aria-busy="true" aria-label={tr({ zh: '社区动态', en: 'Community feed' })} />;
   }
   if (threads.length === 0) return null;
 
   return (
-    <section className="forum-feed-preview">
+    <section className="forum-feed-preview" data-tour="forum">
       <div className="forum-feed-preview-header">
         <h2>
           <Link href="/forum/feed" prefetch={false} className="forum-feed-preview-title-link">

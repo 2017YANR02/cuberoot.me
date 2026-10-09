@@ -1,10 +1,29 @@
 import { describe, expect, it } from 'vitest';
 import { generateSeededTimerScramble } from '@cuberoot/shared/timer/seeded/generate';
-import { TIMER_SCRAMBLE_CAPABILITIES, SCRAMBLE_222_TYPES } from '@cuberoot/shared/timer';
+import { TIMER_SCRAMBLE_CAPABILITIES, SCRAMBLE_222_TYPES, generateTimerScramble } from '@cuberoot/shared/timer';
+import { rngFor } from '@cuberoot/shared/timer/seeded/seeded_rng';
+import { generateNativePuzzleScramble } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { mergeTimerSeedProgress, consumeTimerSeed, normalizeTimerSyncSeed, resetTimerSyncSeed, timerSeedTicket } from '@cuberoot/shared/timer/sync-seed';
 import type { EventId } from '@cuberoot/shared/timer';
 
 describe('shared displayed seed sequence', () => {
+  it.each(['superz', 'dogic', 'octahedron4', 'dinoskewb'] as const)('%s shares one generator between ordinary and seeded requests', async (event) => {
+    const ticket = { seed: 'Native 中文 seed', index: 7, revision: 0 };
+    const scramble = generateNativePuzzleScramble(event, rngFor(ticket.seed, ticket.index));
+    expect(generateSeededTimerScramble({ event, ticket })).toEqual({ scramble, caseId: null });
+    await expect(generateTimerScramble(
+      { event }, { random: rngFor(ticket.seed, ticket.index) },
+    )).resolves.toEqual({
+      ok: true, event, kind: 'generated', provider: 'native-random-move', scramble,
+    });
+  });
+
+  it('sphere shares the exact seeded 3x3 sequence without changing its event identity', () => {
+    const ticket = { seed: 'sphere sequence', index: 7, revision: 0 };
+    const sphere = generateSeededTimerScramble({ event: 'sphere', ticket });
+    expect(sphere).toEqual(generateSeededTimerScramble({ event: '333', ticket }));
+    expect(sphere.scramble).toMatch(/^[URFDLB][2']?(?: [URFDLB][2']?)+$/);
+  });
   it('normalizes legacy state and invalidates the same-seed reset', () => {
     const state = normalizeTimerSyncSeed({ syncSeed: 'same', syncSeedCounter: -1 });
     const ticket = timerSeedTicket(state)!;

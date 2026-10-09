@@ -343,7 +343,7 @@ export function SubsetColorPicker({ sel, language, className, allOption, ariaLab
       </button>
 
       {open && (
-        <div ref={panelRef} className="subset-picker-panel" role="group" aria-label={pickerLabel}>
+        <div ref={panelRef} className="subset-picker-panel" data-site-surface="popover" role="group" aria-label={pickerLabel}>
           {/* 「综合」整行(仅概率视图传 allOption):横跨两列,合并全部底色档。 */}
           {allOption && (
             <button

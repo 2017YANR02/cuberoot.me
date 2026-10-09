@@ -3,7 +3,7 @@
 // Backgrounds affect the whole site; palette previews keep their local token scope.
 
 import { useEffect, useState } from 'react';
-import { Check, Play, RotateCcw, Expand, ImageOff } from 'lucide-react';
+import { Check, Play, RotateCcw, Expand } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import HeaderToggles from '@/components/HeaderToggles';
 import BoolToggle from '@/components/BoolToggle';
@@ -40,7 +40,7 @@ const CARDS: Card[] = [
 export default function AppearancePage() {
   const effectiveTheme = useEffectiveTheme();
   const [petVisible, setPetVisible] = useDeskPetVisible();
-  const [background, setBackground] = useHomeBackgroundChoice(effectiveTheme);
+  const [background, setBackground, , , backgroundEnabled, setBackgroundEnabled] = useHomeBackgroundChoice(effectiveTheme);
   const activeScene = resolveHomeBackground(background, effectiveTheme);
   const [current, setCurrent] = useState<string | null>(null);
   const [contrast, setContrast] = useState<ContrastLevel>('normal');
@@ -78,7 +78,7 @@ export default function AppearancePage() {
         <BoolToggle
           value={petVisible}
           onChange={setPetVisible}
-          label={tr({ zh: '显示桌宠', en: 'Show desk pet' })}
+          label={tr({ zh: '桌宠', en: 'Desk pet' })}
         />
       </div>
 
@@ -89,11 +89,9 @@ export default function AppearancePage() {
         </p>
         <div className="ac-background-controls">
           <div className="ac-background-modes" role="group" aria-label={tr({ zh: '背景模式', en: 'Background mode' })}>
-            <button type="button" className="ac-background-mode" aria-pressed={background === 'none'} onClick={() => setBackground('none')}>
-              <ImageOff size={16} />{tr({ zh: '无背景', en: 'No background' })}
-            </button>
+            <BoolToggle value={backgroundEnabled} onChange={setBackgroundEnabled} label={tr({ zh: '背景', en: 'Background' })} />
           </div>
-          <p className="ac-background-hint">{tr({ zh: '浅色和深色分别记住背景。默认使用雪山初晴和蓝夜远山。', en: 'Light and dark modes remember separate backgrounds, defaulting to Snowy Dawn and Moonlit Peaks.' })}</p>
+          <p className="ac-background-hint">{tr({ zh: '浅色和深色分别记住背景，默认透明无背景。', en: 'Light and dark modes remember separate backgrounds. The default is transparent with no image.' })}</p>
         </div>
         <div className="ac-background-current">
           <span role="status">{tr({ zh: '当前背景：', en: 'Current background: ' })}{activeScene ? tr(activeScene) : tr({ zh: '无背景', en: 'None' })}</span>

@@ -1,6 +1,6 @@
 import { timerSettingFieldContract, type TimerSoundSettings as Value, type TimerSettingCopy } from '@cuberoot/shared/timer';
 import { TimerBooleanSettingRow, TimerSettingRow } from './TimerTimingSettingsSections';
-import { TimerPillToggle } from './TimerPillToggle';
+import './compact-select.css';
 
 export const TIMER_SOUND_SETTING_FIELD_IDS = ['settings.sound.enabled', 'settings.sound.volume', 'settings.sound.voice-inspection'] as const;
 const VOICES: readonly { value: Value['voiceInspection']; copy: TimerSettingCopy }[] = [
@@ -19,7 +19,12 @@ export function TimerSoundSettings({ value, onChange, localize: tr, voiceAvailab
   return <>
     <TimerBooleanSettingRow field={enabled} label={tr(enabled.copy)} value={value.soundsEnabled}
       onChange={soundsEnabled => { if (soundsEnabled) onWarmup(); onChange({ soundsEnabled }); }}
-      renderBooleanControl={({ label, ...props }) => <TimerPillToggle ariaLabel={label} {...props} />} />
+      renderBooleanControl={({ label, value, onChange, disabled }) => (
+        <select className="native-select" aria-label={label} value={String(value)} disabled={disabled} onChange={event => onChange(event.currentTarget.value === 'true')}>
+          <option value="true">{tr({ zh: '开启', en: 'On' })}</option>
+          <option value="false">{tr({ zh: '关闭', en: 'Off' })}</option>
+        </select>
+      )} />
     <TimerSettingRow field={volume} label={tr(volume.copy)}>
       <input type="range" min={0} max={1} step={0.05} className="settings-row-control-input"
         aria-label={tr(volume.copy)} value={value.volume} disabled={!value.soundsEnabled}

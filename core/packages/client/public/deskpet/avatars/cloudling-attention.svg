@@ -1,0 +1,138 @@
+<svg aria-label="Cloudling happy burst animation" xmlns="http://www.w3.org/2000/svg" width="880" height="720" viewBox="-32 -24 88 72" preserveAspectRatio="xMidYMid meet">
+<style><![CDATA[
+.phase-tag {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  padding: 4px 14px;
+  border-radius: 6px;
+  background: rgba(122, 157, 255, .16);
+  color: #8ea6ff;
+  font: 700 11px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  letter-spacing: .06em;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.timeline {
+  position: absolute;
+  right: 16px;
+  bottom: 12px;
+  left: 16px;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, .06);
+}
+.timeline-fill {
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #9a8cff, #61b8ff, #58e6d4, #ff8fc6, #ffffff);
+}
+.edge-rim-tight { stroke-opacity: .08; }
+.edge-rim-soft { stroke-opacity: .06; }
+.edge-contact { stroke-opacity: .08; }
+@media (prefers-color-scheme: light) {
+.phase-tag {
+  background: rgba(57, 65, 255, .1);
+  color: #4650ff;
+}
+.timeline { background: rgba(0, 0, 0, .06); }
+.edge-rim-tight { stroke-opacity: .15; }
+.edge-rim-soft { stroke-opacity: .1; }
+.edge-contact { stroke-opacity: .18; }
+.cloud-drop-shadow { flood-opacity: .13; }
+.food-cloud-shadow { flood-opacity: .28; flood-color: #5060FF; }
+.food-cloud > path {
+  stroke: #5870E8 !important;
+  stroke-width: 1.2 !important;
+  stroke-opacity: .9 !important;
+  vector-effect: non-scaling-stroke !important;
+}
+}
+]]></style>
+    <defs>
+      <linearGradient id="bg-grad" x1="12" y1="2" x2="12" y2="22" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#fff" />
+        <stop offset=".5" stop-color="#f4f5f9" />
+        <stop offset="1" stop-color="#dee2eb" />
+      </linearGradient>
+      <linearGradient id="eye-grad" x1="12" y1="3" x2="12" y2="21" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#B1A7FF" />
+        <stop offset=".5" stop-color="#7A9DFF" />
+        <stop offset="1" stop-color="#3941FF" />
+      </linearGradient>
+      <radialGradient id="hi-grad" cx=".45" cy=".25" r=".55">
+        <stop offset="0" stop-color="#fff" stop-opacity=".9" />
+        <stop offset="1" stop-color="#fff" stop-opacity="0" />
+      </radialGradient>
+      <path id="cs" d="M9.064 3.344a4.578 4.578 0 012.285-.312c1 .115 1.891.54 2.673 1.275.01.01.024.017.037.021a.09.09 0 00.043 0 4.55 4.55 0 013.046.275l.047.022.116.057a4.581 4.581 0 012.188 2.399c.209.51.313 1.041.315 1.595a4.24 4.24 0 01-.134 1.223.123.123 0 00.03.115c.594.607.988 1.33 1.183 2.17.289 1.425-.007 2.71-.887 3.854l-.136.166a4.548 4.548 0 01-2.201 1.388.123.123 0 00-.081.076c-.191.551-.383 1.023-.74 1.494-.9 1.187-2.222 1.846-3.711 1.838-1.187-.006-2.239-.44-3.157-1.302a.107.107 0 00-.105-.024c-.388.125-.78.143-1.204.138a4.441 4.441 0 01-1.945-.466 4.544 4.544 0 01-1.61-1.335c-.152-.202-.303-.392-.414-.617a5.81 5.81 0 01-.37-.961 4.582 4.582 0 01-.014-2.298.124.124 0 00.006-.056.085.085 0 00-.027-.048 4.467 4.467 0 01-1.034-1.651 3.896 3.896 0 01-.251-1.192 5.189 5.189 0 01.141-1.6c.337-1.112.982-1.985 1.933-2.618.212-.141.413-.251.601-.33.215-.089.43-.164.646-.227a.098.098 0 00.065-.066 4.51 4.51 0 01.829-1.615 4.535 4.535 0 011.837-1.388z" />
+      <clipPath id="cp"><use href="#cs" /></clipPath>
+      <filter id="drop" x="-45%" y="-45%" width="190%" height="190%">
+        <feDropShadow class="cloud-drop-shadow" dx="0" dy=".65" stdDeviation=".8" flood-color="#3941FF" flood-opacity=".18" />
+      </filter>
+      <filter id="edge-blur" x="-45%" y="-45%" width="190%" height="190%">
+        <feGaussianBlur stdDeviation=".16" />
+      </filter>
+      <filter id="ring-glow" x="-70%" y="-70%" width="240%" height="240%">
+        <feGaussianBlur stdDeviation=".68" result="blur" />
+        <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 .52 0" result="soft" />
+        <feMerge>
+          <feMergeNode in="soft" />
+          <feMergeNode in="SourceGraphic" />
+        </feMerge>
+      </filter>
+    </defs>
+
+    <g transform="translate(12.000 12.000) rotate(0.000) scale(1.0313 1.0313) translate(-12 -12)" id="rainbowRing" filter="url(#ring-glow)">
+      <use id="halo" href="#cs" fill="none" stroke="#fff" stroke-width="10.4" stroke-linecap="round" stroke-linejoin="round" pathLength="100" stroke-dasharray="100 .01" stroke-dashoffset="0" stroke-opacity="0.040" />
+      <use id="r4" href="#cs" fill="none" stroke="#FF8FC6" stroke-width="8.3" stroke-linecap="round" stroke-linejoin="round" pathLength="100" stroke-dasharray="100 .01" stroke-dashoffset="0" stroke-opacity="0.920" />
+      <use id="r3" href="#cs" fill="none" stroke="#58E6D4" stroke-width="6.2" stroke-linecap="round" stroke-linejoin="round" pathLength="100" stroke-dasharray="100 .01" stroke-dashoffset="0" stroke-opacity="0.960" />
+      <use id="r2" href="#cs" fill="none" stroke="#61B8FF" stroke-width="4.1" stroke-linecap="round" stroke-linejoin="round" pathLength="100" stroke-dasharray="100 .01" stroke-dashoffset="0" stroke-opacity="0.980" />
+      <use id="r1" href="#cs" fill="none" stroke="#9A8CFF" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" pathLength="100" stroke-dasharray="100 .01" stroke-dashoffset="0" stroke-opacity="1.000" />
+      <use id="runnerAura" href="#cs" fill="none" stroke="#fff" stroke-width="5.8" stroke-linecap="round" stroke-linejoin="round" pathLength="100" stroke-dasharray="4.8 95.2" stroke-dashoffset="-516.00" stroke-opacity="0.000" />
+      <use id="runnerTail" href="#cs" fill="none" stroke="#DFF7FF" stroke-width="4.1" stroke-linecap="round" stroke-linejoin="round" pathLength="100" stroke-dasharray="8.5 91.5" stroke-dashoffset="-516.00" stroke-opacity="0.000" />
+      <use id="runnerCore" href="#cs" fill="none" stroke="#fff" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" pathLength="100" stroke-dasharray="2.8 97.2" stroke-dashoffset="-516.00" stroke-opacity="0.000" />
+    </g>
+
+    <g id="sparkles">
+      <circle opacity="0.000" transform="translate(1.70 2.40) rotate(62.0) scale(0.495)" class="spark" cx="0" cy="0" r=".3" fill="#F3FBFF" />
+      <path opacity="0.000" transform="translate(12.20 -1.20) rotate(96.0) scale(0.428)" class="spark" d="M0 -0.45 L0.45 0 L0 0.45 L-0.45 0 Z" fill="#58E6D4" />
+      <circle opacity="0.000" transform="translate(22.80 5.00) rotate(104.0) scale(0.450)" class="spark" cx="0" cy="0" r=".24" fill="#FF8FC6" />
+      <path opacity="0.000" transform="translate(24.30 16.80) rotate(66.0) scale(0.414)" class="spark" d="M0 -0.38 L0.38 0 L0 0.38 L-0.38 0 Z" fill="#9A8CFF" />
+      <circle opacity="0.198" transform="translate(9.70 24.10) rotate(85.6) scale(0.516)" class="spark" cx="0" cy="0" r=".22" fill="#FFFFFF" />
+      <circle opacity="0.000" transform="translate(-0.20 15.10) rotate(52.0) scale(0.369)" class="spark" cx="0" cy="0" r=".18" fill="#61B8FF" />
+    </g>
+
+    <g transform="translate(12.000 12.000) rotate(0.000) scale(1.0250 1.0250) translate(-12 -12)" id="cloudWrap">
+      <g id="edge-system">
+        <use class="edge-contact" href="#cs" fill="none" stroke="#7d8aa7" stroke-width="1.05" stroke-linejoin="round" transform="translate(0 .18)" filter="url(#edge-blur)" />
+        <use class="edge-rim-soft" href="#cs" fill="none" stroke="#7A9DFF" stroke-width=".9" stroke-linejoin="round" filter="url(#edge-blur)" />
+        <use class="edge-rim-tight" href="#cs" fill="none" stroke="#aab3c6" stroke-width=".42" stroke-linejoin="round" />
+      </g>
+      <g filter="url(#drop)">
+        <use href="#cs" fill="url(#bg-grad)" />
+        <rect x="1" y="2" width="22" height="11" fill="url(#hi-grad)" clip-path="url(#cp)" />
+      </g>
+      <g opacity="0.000" id="capsuleEye">
+        <rect id="capL" x="7.7" y="9.5" width="2.6" height="5" rx="1.3" fill="url(#eye-grad)" />
+        <rect id="capR" x="13.7" y="9.5" width="2.6" height="5" rx="1.3" fill="url(#eye-grad)" />
+      </g>
+      <g id="arcEye" opacity="1.000">
+        <path d="M 6.68 12.7 Q 8.65 10.06 10.63 12.7" id="arcL" fill="none" stroke="url(#eye-grad)" stroke-width="1.25" stroke-linecap="round" />
+        <path d="M 13.38 12.7 Q 15.35 10.06 17.32 12.7" id="arcR" fill="none" stroke="url(#eye-grad)" stroke-width="1.25" stroke-linecap="round" />
+      </g>
+    </g>
+  <g id="__cloudling-export-shims" opacity="0" pointer-events="none" style="display:none">
+<g id="debug" />
+<g id="light" />
+<g id="pause" />
+<g id="phaseTag">④ happy hold</g>
+<g id="replay" />
+<g style="width:51.1%" id="timelineFill" />
+</g>
+
+
+</svg>

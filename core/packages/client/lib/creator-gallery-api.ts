@@ -15,7 +15,7 @@ interface CreatorGalleryCaptionResponse {
 }
 
 export async function getCreatorGalleryCaptions(): Promise<CreatorGalleryCaption[]> {
-  const response = await handleApi<CreatorGalleryCaptionResponse>(await sessionFetch(BASE));
+  const response = await handleApi<CreatorGalleryCaptionResponse>(await sessionFetch(BASE, { cache: 'no-cache' }));
   return response.captions;
 }
 

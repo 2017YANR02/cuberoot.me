@@ -36,7 +36,7 @@ export interface SimMaskLayout {
 }
 
 export async function listSimMaskLayouts(): Promise<SimMaskLayout[]> {
-  return handleApi<SimMaskLayout[]>(await sessionFetch(`${BASE}/layout`, { cache: 'no-store' }));
+  return handleApi<SimMaskLayout[]>(await sessionFetch(`${BASE}/layout`, { cache: 'no-cache' }));
 }
 
 export async function saveSimMaskLayout(body: SimMaskLayout): Promise<{ ok: boolean }> {
@@ -49,7 +49,7 @@ export type SimMaskInput = Pick<SimMaskRow,
   'maskKey' | 'kind' | 'cubeSize' | 'hidden' | 'labelEn' | 'labelZh' | 'sids' | 'pick' | 'rest'>;
 
 export async function listSimMasks(): Promise<SimMaskRow[]> {
-  return handleApi<SimMaskRow[]>(await sessionFetch(BASE, { cache: 'no-store' }));
+  return handleApi<SimMaskRow[]>(await sessionFetch(BASE, { cache: 'no-cache' }));
 }
 
 /** 按 maskKey upsert(admin)。 */

@@ -28,13 +28,13 @@ export interface SiteInput {
 }
 
 export async function listSites(): Promise<Site[]> {
-  return handleApi<Site[]>(await sessionFetch(`${BASE}?v=3`, { cache: 'no-store' }));
+  return handleApi<Site[]>(await sessionFetch(`${BASE}?v=3`, { cache: 'no-cache' }));
 }
 
 const TOPICS_BASE = API_ORIGIN + '/v1/nav/topics';
 
 export async function listTopics(): Promise<string[]> {
-  return handleApi<string[]>(await sessionFetch(TOPICS_BASE, { cache: 'no-store' }));
+  return handleApi<string[]>(await sessionFetch(TOPICS_BASE, { cache: 'no-cache' }));
 }
 
 export async function saveTopic(method: 'POST' | 'PUT' | 'DELETE', tag: string, replacement?: string): Promise<void> {

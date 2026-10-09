@@ -206,7 +206,7 @@ export async function completeIdentityChoice(ticket: string, action: 'create' | 
     } else {
       const status = await addIdentity(expectedUid!, pending.provider, pending.provider_uid,
         pending.profile.wcaId, pending.profile.name, pending.profile.avatar,
-        pending.profile.countryIso2, credential, tx);
+        pending.profile.countryIso2, credential, tx, pending.profile);
       if (status !== 'ok') throw new IdentityChoiceError(status === 'has-email' ? 'ACCOUNT_HAS_EMAIL'
         : status === 'has-phone' ? 'ACCOUNT_HAS_PHONE' : 'IDENTITY_CONFLICT');
       const user = await getUserById(expectedUid!, transactionQuery(tx));

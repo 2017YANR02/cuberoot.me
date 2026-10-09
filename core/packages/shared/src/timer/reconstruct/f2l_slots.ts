@@ -190,6 +190,21 @@ const EDGE_POSITIONS: ReadonlyArray<{ top: boolean; at: ReadonlyArray<readonly [
 
 const SPEC_BY_ID = new Map<F2lSlotId, SlotSpec>(SLOT_SPECS.map(s => [s.id, s]));
 
+/** Exact pair state, with sticker colours relative to the current centres. */
+export function f2lSlotFingerprint(faces: CubeFaces, id: F2lSlotId): string | null {
+  const spec = SPEC_BY_ID.get(id);
+  if (!spec) return null;
+  const relativeColor = new Map(Object.entries(faces).map(([face, stickers]) => [stickers[4], face]));
+  const locate = (positions: typeof CORNER_POSITIONS, key: string): string | null => {
+    const index = positions.findIndex(position => colorsAt(faces, position.at) === key);
+    if (index < 0) return null;
+    return `${index}:${positions[index].at.map(([face, i]) => relativeColor.get(faces[face][i])).join('')}`;
+  };
+  const corner = locate(CORNER_POSITIONS, slotCornerKey(faces, spec));
+  const edge = locate(EDGE_POSITIONS, slotEdgeKey(faces, spec));
+  return corner != null && edge != null ? `${corner}/${edge}` : null;
+}
+
 /** Colour set of a position, as a sorted key so it compares by contents. */
 function colorsAt(faces: CubeFaces, at: ReadonlyArray<readonly [Face, number]>): string {
   return at.map(([f, i]) => faces[f][i]).slice().sort().join('');

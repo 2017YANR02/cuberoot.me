@@ -1,5 +1,7 @@
 'use client';
 
+import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
+
 import { useEffect, useMemo, useState } from 'react';
 import { tr } from '@/i18n/tr';
 import { useIsAdmin } from '@/lib/auth-store';
@@ -35,6 +37,7 @@ export default function CreatorGallery() {
   const [draft, setDraft] = useState<CreatorGalleryCaption[]>(blankCaptions);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const refreshKey = useContentRefreshKey(!editing);
   const [saveError, setSaveError] = useState('');
 
   useEffect(() => {
@@ -48,7 +51,7 @@ export default function CreatorGallery() {
       })
       .catch(() => undefined);
     return () => { active = false; };
-  }, []);
+  }, [refreshKey]);
 
   const draftByKey = useMemo(() => new Map(draft.map((caption) => [caption.imageKey, caption])), [draft]);
   const captionByKey = useMemo(

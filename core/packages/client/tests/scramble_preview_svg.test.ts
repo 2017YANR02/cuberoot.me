@@ -8,6 +8,7 @@ import { ivyApplyStandard, ivyStandardToCstimer } from '@/lib/ivy-solver';
 import { DUO_FACE_COLORS } from '@cuberoot/puzzle-render-core/duo-face';
 import { DUO_SVG_ASPECT, renderPyraminxDuoSvg } from '@cuberoot/puzzle-render-core/pyraminx-duo-svg';
 import { renderMagicSvg } from '@cuberoot/puzzle-render-core/magic-svg';
+import { renderSphereScrambleSvg } from '@cuberoot/puzzle-render-core/sphere-svg';
 
 function duoStickerColors(svg: string): Record<string, string> {
   return Object.fromEntries(Array.from(
@@ -17,6 +18,18 @@ function duoStickerColors(svg: string): Record<string, string> {
 }
 
 describe('shared scramble preview SVG renderer', () => {
+  it('renders Sphere as the same six-face net as 3x3 through the web and PDF dispatcher', () => {
+    expect(eventHasScramblePreview('sphere')).toBe(true);
+    const scramble = "R U R' F2";
+    const svg = renderScramblePreviewSvg({ event: 'sphere', scramble });
+    expect(svg).toMatch(/^<svg\b/);
+    expect(svg).toBe(renderSphereScrambleSvg(scramble));
+    expect(svg).toBe(renderScramblePreviewSvg({ event: '333', scramble }));
+    expect(svg?.match(/<rect\b/g)).toHaveLength(54);
+    expect(svg).not.toBe(renderScramblePreviewSvg({ event: 'sphere', scramble: '' }));
+    expect(renderScramblePreviewSvg({ event: 'sphere', scramble: 'R invalid' })).toBeNull();
+  });
+
   it('uses the simulator Ivy direction convention', () => {
     expect(ivyStandardToCstimer("R L'")).toBe("R' L");
     expect(ivyApplyStandard("R L'")).toEqual({

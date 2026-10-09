@@ -11,6 +11,11 @@ const page = (sources = entries, reason = 'Reviewed sign-in, linking, merging an
   `/* auth-doc-review ${JSON.stringify({ fingerprint: fingerprintAuthSources(sources), reason })} */`;
 
 describe('/dev/auth source-review drift', () => {
+  it('tracks account tour state and its homepage trigger', () => {
+    for (const path of ['apps/api/src/routes/onboarding.ts', 'apps/api/migrations/0265_home_onboarding.sql',
+      'packages/client/lib/onboarding.ts', 'packages/client/components/OnboardingGuideModal.tsx',
+      'packages/client/app/[lang]/LandingClient.tsx']) expect(isAuthDocSource(path)).toBe(true);
+  });
   it('requires the real page to acknowledge the current authentication sources', () => {
     const sources = collectAuthDocSources();
     expect(sources.length).toBeGreaterThan(20);

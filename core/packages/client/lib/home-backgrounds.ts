@@ -14,10 +14,10 @@ export const HOME_BACKGROUNDS = [
   { id: '10', zh: '沙丘之门', en: 'Dune Gateway', position: '70%', family: 'Alto × Monument Valley', description: { zh: '柔和沙海与等距拱门，结合两种风格。', en: 'Soft dunes meet an isometric arch, bringing both styles together.' } },
 ] as const;
 
-export type HomeBackgroundChoice = 'auto' | 'none' | typeof HOME_BACKGROUNDS[number]['id'];
+export type HomeBackgroundChoice = 'auto' | 'none' | 'transparent' | typeof HOME_BACKGROUNDS[number]['id'];
 
 export function isHomeBackgroundChoice(value: unknown): value is HomeBackgroundChoice {
-  return value === 'auto' || value === 'none' || HOME_BACKGROUNDS.some(scene => scene.id === value);
+  return value === 'auto' || value === 'none' || value === 'transparent' || HOME_BACKGROUNDS.some(scene => scene.id === value);
 }
 
 export function resolveHomeBackground(choice: HomeBackgroundChoice, theme: 'light' | 'dark') {

@@ -1,14 +1,14 @@
 import { createHash } from "node:crypto";
-import { beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
-const mock = vi.hoisted(() => ({ query: vi.fn(), run: vi.fn(), verify: vi.fn(), uid: vi.fn(), provider: vi.fn() }));
+const mock = vi.hoisted(() => ({ query: vi.fn(), run: vi.fn(), verify: vi.fn(), uid: vi.fn(), provider: vi.fn(), init: vi.fn() }));
 vi.mock("../src/db/connection.js", () => ({ query: mock.query, withTransaction: (fn: (run: typeof mock.run) => unknown) => fn(mock.run) }));
 vi.mock("../src/utils/session.js", () => ({ verifySession: mock.verify }));
 vi.mock("../src/utils/app_user_auth.js", () => ({ requireAppUserId: mock.uid }));
 vi.mock("../src/utils/aliyun_face.js", async importOriginal => ({
   ...await importOriginal<typeof import("../src/utils/aliyun_face.js")>(),
   faceConfiguration: () => ({ sceneId: "fixture" }), faceVerificationEnabled: () => true,
-  aliyunFaceProvider: { query: mock.provider },
+  aliyunFaceProvider: { query: mock.provider, init: mock.init },
 }));
 import { accountFaceRoutes } from "../src/routes/account_face.js";
 const hash = createHash("sha256").update("computer-session").digest("hex");
@@ -17,6 +17,34 @@ const send = (body?: unknown, token = "computer-session") => accountFaceRoutes.r
   method: body ? "POST" : "GET", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, ...(body ? { body: JSON.stringify(body) } : {}),
 });
 beforeEach(() => { vi.resetAllMocks(); mock.verify.mockReturnValue({ uid: 7 }); mock.uid.mockResolvedValue(7); mock.run.mockResolvedValue([{ id: 7 }]); });
+afterEach(() => { vi.unstubAllEnvs(); });
+it.each([
+  { own: 10, total: 10, recent: 0, expected: 200, error: undefined },
+  { own: 49, total: 49, recent: 0, expected: 200, error: undefined },
+  { own: 50, total: 50, recent: 0, expected: 429, error: "FACE_DAILY_LIMIT" },
+  { own: 51, total: 51, recent: 0, expected: 429, error: "FACE_DAILY_LIMIT" },
+  { own: 49, total: 100, recent: 0, expected: 429, error: "FACE_SITE_LIMIT" },
+  { own: 49, total: 49, recent: 1, expected: 429, error: "FACE_RETRY_SOON" },
+])("enforces the rolling quota before provider calls: $own own, $total total, $recent recent", async ({ own, total, recent, expected, error }) => {
+  vi.stubEnv("CUBEROOT_FACE_IDENTITY_PEPPER", "fixture-only-pepper");
+  mock.run.mockResolvedValueOnce([]).mockResolvedValueOnce([{ id: 7 }]).mockResolvedValueOnce([])
+    .mockResolvedValueOnce([{ own, total, recent, pending: 0 }]);
+  mock.init.mockResolvedValue({ certifyId: "fixture", certifyUrl: "https://example.test/verify" });
+  mock.query.mockResolvedValue([{ id: "fixture" }]);
+  // Synthetic checksum-valid input; the mocked provider never sends identity data.
+  const response = await send({ action: "start", consent: true, consentVersion: "2026-10-08",
+    realName: "测试姓名", idCard: "000000200001010005", metaInfo: '{"fixture":true}' });
+  expect(response.status).toBe(expected);
+  expect(mock.run.mock.calls[3][0]).toContain("created_at > NOW() - INTERVAL '24 hours'");
+  if (error) {
+    expect(await response.json()).toMatchObject({ error });
+    expect(mock.init).not.toHaveBeenCalled();
+    expect(mock.run).toHaveBeenCalledTimes(4);
+  } else {
+    expect(mock.init).toHaveBeenCalledOnce();
+    expect(mock.run.mock.calls[4][0]).toContain("INSERT INTO account_face_attempts");
+  }
+});
 it("shows a different device as non-queryable without exposing the provider ID or session hash", async () => {
   mock.query.mockResolvedValue([row()]);
   const response = await send(undefined, "phone-session");

@@ -1,0 +1,160 @@
+<svg id="svg" xmlns="http://www.w3.org/2000/svg" width="880" height="720" viewBox="-32 -24 88 72" preserveAspectRatio="xMidYMid meet">
+<style><![CDATA[
+.phase-tag {
+  position: absolute; top: 14px; left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 12px; border-radius: 6px;
+  background: rgba(255,165,107,.16); color: #FFD3B3;
+  font: 700 10px ui-monospace, monospace; letter-spacing: .05em;
+  pointer-events: none;
+}
+.timeline {
+  position: absolute; left: 16px; right: 16px; bottom: 12px;
+  height: 4px; border-radius: 2px; overflow: hidden;
+  background: rgba(255,255,255,.06);
+}
+.timeline-fill {
+  height: 100%; width: 0; border-radius: 2px;
+  background: linear-gradient(to right, #B1A7FF, #FFD3B3, #FCE3B0, #FCC9DD);
+}
+.edge-rim-tight { stroke-opacity: .08; }
+.edge-rim-soft { stroke-opacity: .06; }
+.edge-contact { stroke-opacity: .08; }
+.statusbar {
+  min-width: 760px; background: #1f1f26; color: #FFA56B;
+  border-radius: 8px; padding: 6px 14px; text-align: center;
+  font: 10px ui-monospace, monospace; letter-spacing: .05em;
+}
+@media (prefers-color-scheme: light) {
+.phase-tag { background: rgba(201,122,74,.10); color: #C97A4A; }
+.timeline { background: rgba(57,65,255,.08); }
+.edge-rim-tight { stroke-opacity: .15; }
+.edge-rim-soft { stroke-opacity: .10; }
+.edge-contact { stroke-opacity: .18; }
+.cloud-drop-shadow { flood-opacity: .13; }
+.statusbar { background: #fff; color: #C97A4A; }
+}
+]]></style>
+    <defs>
+      <linearGradient id="body-grad" x1="12" y1="2" x2="12" y2="22" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#ffffff" />
+        <stop offset="0.5" stop-color="#f4f5f9" />
+        <stop offset="1" stop-color="#dee2eb" />
+      </linearGradient>
+      <linearGradient id="eye-grad" x1="0" y1="3" x2="0" y2="21" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#B1A7FF" />
+        <stop offset="0.5" stop-color="#7A9DFF" />
+        <stop offset="1" stop-color="#3941FF" />
+      </linearGradient>
+      <radialGradient id="hi-grad" cx="0.45" cy="0.25" r="0.55">
+        <stop offset="0" stop-color="#ffffff" stop-opacity="0.9" />
+        <stop offset="1" stop-color="#ffffff" stop-opacity="0" />
+      </radialGradient>
+
+      <linearGradient id="warm-back-grad" x1="0" y1="-9" x2="0" y2="9" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#FFE3CE" />
+        <stop offset="0.5" stop-color="#FFD3B3" />
+        <stop offset="1" stop-color="#FFB89A" />
+      </linearGradient>
+      <linearGradient id="warm-front-grad" x1="0" y1="-9" x2="0" y2="9" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#FFF1CE" />
+        <stop offset="0.5" stop-color="#FCE3B0" />
+        <stop offset="1" stop-color="#F5C374" />
+      </linearGradient>
+      <radialGradient id="warm-hi" cx="32%" cy="24%" r="60%">
+        <stop offset="0" stop-color="#ffffff" stop-opacity=".62" />
+        <stop offset="1" stop-color="#ffffff" stop-opacity="0" />
+      </radialGradient>
+
+      <path id="cloud-shape" d="M9.064 3.344a4.578 4.578 0 012.285-.312c1 .115 1.891.54 2.673 1.275.01.01.024.017.037.021a.09.09 0 00.043 0 4.55 4.55 0 013.046.275l.047.022.116.057a4.581 4.581 0 012.188 2.399c.209.51.313 1.041.315 1.595a4.24 4.24 0 01-.134 1.223.123.123 0 00.03.115c.594.607.988 1.33 1.183 2.17.289 1.425-.007 2.71-.887 3.854l-.136.166a4.548 4.548 0 01-2.201 1.388.123.123 0 00-.081.076c-.191.551-.383 1.023-.74 1.494-.9 1.187-2.222 1.846-3.711 1.838-1.187-.006-2.239-.44-3.157-1.302a.107.107 0 00-.105-.024c-.388.125-.78.143-1.204.138a4.441 4.441 0 01-1.945-.466 4.544 4.544 0 01-1.61-1.335c-.152-.202-.303-.392-.414-.617a5.81 5.81 0 01-.37-.961 4.582 4.582 0 01-.014-2.298.124.124 0 00.006-.056.085.085 0 00-.027-.048 4.467 4.467 0 01-1.034-1.651 3.896 3.896 0 01-.251-1.192 5.189 5.189 0 01.141-1.6c.337-1.112.982-1.985 1.933-2.618.212-.141.413-.251.601-.33.215-.089.43-.164.646-.227a.098.098 0 00.065-.066 4.51 4.51 0 01.829-1.615 4.535 4.535 0 011.837-1.388z" />
+      <clipPath id="cloud-clip"><use href="#cloud-shape" /></clipPath>
+      <path id="warm-cloud-path" d="M-15.6 5.4c-2.4 0-4.4-1.8-4.4-4.0 0-1.9 1.5-3.6 3.5-4.0 .4-2.7 3.0-4.8 6.2-4.8 1.2 0 2.3 .3 3.3 .9 1.4-2.1 3.9-3.5 6.8-3.5 3.6 0 6.6 2.1 7.4 5.0 3.4 0 6.0 2.4 6.0 5.3 0 2.8-2.5 5.0-5.6 5.0H-15.6z" />
+
+      <filter id="cloud-shadow" x="-50%" y="-50%" width="200%" height="200%">
+        <feDropShadow class="cloud-drop-shadow" dx="0" dy="0.6" stdDeviation="0.8" flood-color="#3941FF" flood-opacity="0.18" />
+      </filter>
+      <filter id="edge-blur" x="-40%" y="-40%" width="180%" height="180%">
+        <feGaussianBlur stdDeviation="0.16" />
+      </filter>
+      <filter id="warm-shadow" x="-80%" y="-120%" width="260%" height="340%">
+        <feDropShadow dx="0" dy="0.9" stdDeviation="1.05" flood-color="#A2603C" flood-opacity=".18" />
+      </filter>
+      <filter id="soft-glow" x="-120%" y="-120%" width="340%" height="340%">
+        <feGaussianBlur stdDeviation="0.7" result="blur" />
+        <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+      </filter>
+      <filter id="q-glow" x="-80%" y="-80%" width="260%" height="260%">
+        <feGaussianBlur stdDeviation="0.28" result="b" />
+        <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+      </filter>
+
+      <symbol id="warm-back-cloud" viewBox="-22 -14 44 28">
+        <g filter="url(#warm-shadow)">
+          <use href="#warm-cloud-path" fill="url(#warm-back-grad)" stroke="#E69E78" stroke-width="0.55" stroke-opacity="0.32" stroke-linejoin="round" />
+          <ellipse cx="-3.5" cy="-4.5" rx="6" ry="2.8" fill="url(#warm-hi)" opacity=".48" />
+        </g>
+      </symbol>
+      <symbol id="warm-front-cloud" viewBox="-22 -14 44 28">
+        <g filter="url(#warm-shadow)">
+          <use href="#warm-cloud-path" fill="url(#warm-front-grad)" stroke="#D9A04F" stroke-width="0.55" stroke-opacity="0.36" stroke-linejoin="round" />
+          <ellipse cx="-3" cy="-4" rx="5.2" ry="2.4" fill="url(#warm-hi)" opacity=".55" />
+        </g>
+      </symbol>
+    </defs>
+
+    <!-- 后层暖云 (在 cloudling 后面) -->
+    <g id="warmBackLayer" filter="url(#soft-glow)" opacity="0.950">
+      <g transform="translate(12.424 16.849) rotate(-1.74) scale(1.031 0.963)" id="warmBackRoot">
+        <use href="#warm-back-cloud" x="-22" y="-14" width="44" height="28" />
+      </g>
+    </g>
+
+    <!-- cloudling 主体 -->
+    <g opacity="1.000" transform="translate(-5.691 -2.683) rotate(-8.215 12 12) translate(12 12) scale(0.9574) translate(-12 -12)" id="cloudRoot">
+      <g transform="translate(12 12) scale(1.0160 0.9834) translate(-12 -12)" id="bodyWarp">
+        <g transform="rotate(0.690 12 12)" id="cloudShape">
+          <g id="edge-system">
+            <use class="edge-contact" href="#cloud-shape" fill="none" stroke="#7d8aa7" stroke-width="1.05" stroke-linejoin="round" transform="translate(0 0.18)" filter="url(#edge-blur)" />
+            <use class="edge-rim-soft" href="#cloud-shape" fill="none" stroke="#7A9DFF" stroke-width="0.90" stroke-linejoin="round" filter="url(#edge-blur)" />
+            <use class="edge-rim-tight" href="#cloud-shape" fill="none" stroke="#aab3c6" stroke-width="0.42" stroke-linejoin="round" />
+          </g>
+          <g filter="url(#cloud-shadow)">
+            <use href="#cloud-shape" fill="url(#body-grad)" />
+            <rect x="1" y="2" width="22" height="11" fill="url(#hi-grad)" clip-path="url(#cloud-clip)" />
+          </g>
+        </g>
+      </g>
+      <g transform="translate(0.000 0.000)" id="eyeLayer">
+        <g id="capsuleEyes">
+          <rect id="capL" x="7.700" y="9.500" width="2.600" height="5.000" rx="1.300" ry="1.300" fill="url(#eye-grad)" stroke="#ffffff" stroke-width="0.08" stroke-opacity="0.7" />
+          <rect id="capR" x="13.700" y="9.500" width="2.600" height="5.000" rx="1.300" ry="1.300" fill="url(#eye-grad)" stroke="#ffffff" stroke-width="0.08" stroke-opacity="0.7" />
+        </g>
+      </g>
+    </g>
+
+    <!-- 前层暖云 (在 cloudling 前面) -->
+    <g id="warmFrontLayer" filter="url(#soft-glow)" opacity="0.950">
+      <g transform="translate(18.424 16.581) rotate(0.00) scale(0.996 1.003)" id="warmFrontRoot">
+        <use href="#warm-front-cloud" x="-22" y="-14" width="44" height="28" />
+      </g>
+    </g>
+
+    <!-- 问号 (跟着 cloudling 头顶, 默认隐藏) -->
+    <g id="questionMark" opacity="0.000" filter="url(#q-glow)">
+      <g id="qScale" transform="translate(0.31 0.37) scale(0.780)">
+        <path d="M -1.4 -1.6 Q -1.4 -3.0 0 -3.0 Q 1.4 -3.0 1.4 -1.6 Q 1.4 -0.6 0.4 0.0 Q -0.1 0.35 -0.1 1.3" fill="none" stroke="url(#eye-grad)" stroke-width="0.72" stroke-linecap="round" stroke-linejoin="round" />
+        <circle cx="-0.1" cy="2.7" r="0.44" fill="url(#eye-grad)" />
+      </g>
+    </g>
+  <g id="__cloudling-export-shims" opacity="0" pointer-events="none" style="display:none">
+<g id="btn-pause" />
+<g id="btn-reset" />
+<g id="btn-restart" />
+<g id="btn-theme" />
+<g id="phaseTag">peek-left</g>
+<g id="statusbar">phase: peek-left · loop 24.2% · cloud (-5.69, -2.68)</g>
+<g style="width:24.19%" id="timelineFill" />
+</g>
+
+
+</svg>
