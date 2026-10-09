@@ -1,5 +1,5 @@
 import { magicPoses, magicStepCount, parseMagicSetup, type MagicPuzzle } from '@cuberoot/puzzle-solvers/magic';
-import { magicArtwork, magicLayoutBounds, MAGIC_TILE_COLOR, MAGIC_TILE_EDGE } from './magic-artwork.js';
+import { magicArtwork, magicLayoutBounds, MAGIC_TILE_COLOR, MAGIC_TILE_EDGE } from './magic-artwork';
 
 const PAD = 0.07;
 const n = (value: number) => Number(value.toFixed(5));

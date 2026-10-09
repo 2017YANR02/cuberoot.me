@@ -8,10 +8,10 @@
  * rectangle -> target or target -> rectangle direction respectively.
  * Historical competition rules did not scramble these events.
  */
-import { MAGIC_EIGHT_STEPS, magicEightPoses, magicEightLayerOffsets, type MagicPose } from './magic-eight-path.js';
-import { MAGIC_TWELVE_STEPS, magicTwelvePoses, magicTwelveLayerOffsets } from './magic-twelve-path.js';
+import { MAGIC_EIGHT_STEPS, magicEightPoses, magicEightLayerOffsets, type MagicPose } from './magic-eight-path';
+import { MAGIC_TWELVE_STEPS, magicTwelvePoses, magicTwelveLayerOffsets } from './magic-twelve-path';
 
-export type { MagicPose } from './magic-eight-path.js';
+export type { MagicPose } from './magic-eight-path';
 export type MagicPuzzle = 'magic' | 'mmagic';
 export type MagicDirection = 'Forward' | 'Backward';
 export type MagicMove =

@@ -24,7 +24,8 @@
 - 新增公开 subpath 时同步所属 `package.json` 的 `exports` 和适用的运行时分类；跨包只导入公开出口，禁止私有 deep import。
 - 按实际消费者核对 Node 的 `dist` 出口与浏览器源码出口；修改 shared 后按根规则构建 shared，缺失的其他构建产物按依赖顺序补齐。
 - 让同一应用内的引擎构造器、`tweener` 与 `timing` 保持同一源码入口；不要只给新引擎添加 `node → dist` 条件而保留 World 与公共动画时钟指向 `src`，并用真实公共时钟推进中间帧验证单例一致。
-- 对承诺原生 Node 消费的纯出口实际执行构建后的 `import()`；将其相对 ESM 路径写为 `.js`，不要以 TypeScript 检查或 Vitest 的扩展名补全代替 Node 验证。
+- 对承诺原生 Node 消费的纯出口实际执行构建后的 `import()`；沿用宿主支持的构建策略，纯模块可参考 Magic 的 Node ESM bundle，保留浏览器源码路径，不要只为 Node 把源码相对路径改成 Turbopack 找不到的 `.js`。
+- 新增被 Timer/app-ui 消费的 Node `dist` 出口时，检查干净 mobile/desktop/test 构建前置是否产出该包；本地残留 dist、esbuild 成功或 typecheck 不能替代实际 Next 编译和干净消费者验证。
 
 ## 接入打乱生成页
 
