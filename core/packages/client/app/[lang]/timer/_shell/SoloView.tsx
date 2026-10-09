@@ -1359,6 +1359,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const eventAtStartRef = useRef<EventId>(event);
   const caseIdAtStartRef = useRef<string | null>(null);
   const smartCubeAttemptProducerRef = useRef(new SmartCubeAttemptProducer());
+  const abortingSmartCubeRef = useRef(false);
   const [liveSolve, setLiveSolve] = useState<Solve | null>(null);
   const [liveStageTarget, setLiveStageTarget] = useState<HTMLDivElement | null>(null);
   const autoRecapDismissGestureRef = useRef(new AutoRecapDismissGesture());
@@ -1431,7 +1432,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     submitTimerTrainingEvidence(trainingDestinationRef.current, solve);
     // 桌面在右栏展开复盘；窄屏直接进入整屏详情。两者共用 shouldAutoRecap，
     // 没有动作流或关闭开关时都不主动打断下一把流程。
-    const showRecap = shouldAutoRecap(solve, { autoRecap: settings.autoRecap });
+    const showRecap = !abortingSmartCubeRef.current && shouldAutoRecap(solve, { autoRecap: settings.autoRecap });
     autoRecapDismissGestureRef.current.reset();
     autoRecapInputBlockedRef.current = false;
     setRecapId(showRecap ? solve.id : null);
@@ -1439,7 +1440,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       autoRecapInputBlockedRef.current = true;
       setModalSolve({ s: solve, idx: solveIndex, autoRecap: true });
     }
-    const showSolution = settings.autoOpenSolution && Boolean(solve.device && solve.moves?.length);
+    const showSolution = !abortingSmartCubeRef.current && settings.autoOpenSolution && Boolean(solve.device && solve.moves?.length);
     if (showRecap || showSolution) setPanelTab(null);
     if (showSolution) setSolverOpenRequest((value) => value + 1);
     if (res.autoPenalty === 'DNF') petReact('error');
@@ -2503,6 +2504,20 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           onPressUp();
           return;
         case 'reset':
+          if (event.repeat) return;
+          if (phaseSnapshotRef.current === 'running' && smartCubeInputBlocked()) {
+            abortingSmartCubeRef.current = true;
+            try {
+              if (timerHandleRef.current.abortRun()) {
+                phaseSnapshotRef.current = 'stopped';
+                cubeStartedRef.current = false;
+                smartCubeSoloController.setRunning(false);
+              }
+            } finally {
+              abortingSmartCubeRef.current = false;
+            }
+            return;
+          }
           reset();
           return;
         case 'mark-stage':
@@ -2573,7 +2588,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
     };
-  }, [onPressDown, onPressUp, reset, updateSolve, deleteSolve, nextScramble, prevScramble,
+  }, [onPressDown, onPressUp, reset, smartCubeInputBlocked, smartCubeSoloController, updateSolve, deleteSolve, nextScramble, prevScramble,
     sheetNextScramble, sheetPrevScramble, toggleFullscreen, multiStageActive, bldMemoActive]);
 
   // 计时进行中:点屏幕任何地方都停表。计时面板内由 useGestureWheel(surfaceRef)处理,

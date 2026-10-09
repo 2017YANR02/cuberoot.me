@@ -34,6 +34,7 @@ export type TimerMachineAction =
   | { type: 'start-from-cube'; nowMs: number; atMs?: number }
   | { type: 'arm-from-cube'; nowMs: number }
   | { type: 'stop-from-cube'; nowMs: number; atMs?: number }
+  | { type: 'abort-run'; nowMs: number }
   | { type: 'cancel-arm' }
   | { type: 'reset' };
 
@@ -159,6 +160,14 @@ export function transitionTimer(
 ): TimerMachineTransition {
   if (action.type === 'reset') {
     return { state: initialTimerMachineState(), effects: ['reset'] };
+  }
+
+  if (action.type === 'abort-run') {
+    if (state.phase !== 'running') return { state, effects: [], accepted: false };
+    return {
+      ...stopRunning({ ...state, autoPenalty: 'DNF' }, normalizedNow(action.nowMs)),
+      accepted: true,
+    };
   }
 
   if (action.type === 'cancel-arm') {
