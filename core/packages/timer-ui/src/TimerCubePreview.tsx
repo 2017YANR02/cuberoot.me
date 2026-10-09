@@ -11,7 +11,7 @@
  *   pyra / skewb / sq1 / mega / clock                    → shared preview
  *   222/333/444/555/666/777 + their bld/oh/fm variants   → shared preview
  *   fto / redi / kilominx                               → shared preview
- *   sphere                                              → spherical 3x3 SVG
+ *   sphere                                              → unfolded 3x3 SVG
  *   r3 / r4 / r5                                         → 3x3 of first sub
  *   custom                                               → best-effort 3x3
  *   magic / mmagic                                      → practice start pattern
@@ -102,7 +102,7 @@ function baseNxnEvent(event: EventId): EventId | null {
 }
 
 function previewEvent(event: EventId): EventId | null {
-  // Sphere uses 3x3 moves but keeps its actual spherical preview.
+  // Keep Sphere on its shared unfolded renderer, including strict input validation.
   if (event === 'sphere') return event;
   const nxn = baseNxnEvent(event);
   if (nxn !== null) return nxn;

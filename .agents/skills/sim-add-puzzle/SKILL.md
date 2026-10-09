@@ -14,7 +14,8 @@ description: "用户说造魔方模拟器、给 /sim 加魔方、新魔方类型
 - 本文与旧范本的 `engine/` 是功能简称，不保证仍在 Web 目录；用 `rg --files` 定位并沿 re-export 找源文件。页面与浏览器手势留在 client；已迁手势见 `core/packages/client/components/puzzle-models/gestures/`，尚未迁出的适配仍按源码定位。
 - 新增独立可选魔方时，必读 [跨页面接入与验收](references/integration-and-verification.md)，以 `/sim`、`/timer`、`/scramble/gen` 三处全部可用为默认完成条件；单独修改既有外观或交互时只核对受影响入口。
 - 开工先列目标魔方的三入口接入矩阵，沿选择器、生成器、外层分发、实际预览及导出逐层核实；缺项同任务补齐，收尾逐入口写明已验、未验与限制。
-- 外观变体复用原规则的生成器，保留独立项目 ID、双语名称、球块或异形图示及计时记录；复用三阶打乱不等于只给用户普通三阶入口。
+- 外观变体复用原规则的生成器，保留独立项目 ID、双语名称与计时记录；模拟器展示真实外观，打乱预览按该拼图的平面展开方式展示完整状态。
+- 在 `/timer` 打乱预览、`/scramble/gen` 与 PDF 中使用六面或对应多面体的平面展开图；球形三阶复用三阶六面布局与比例，避免把立体场景截图用作打乱核对图。
 
 ## 先分流(动手前定这 3 件)
 - cubing.js 有 `pg()`(PuzzleGeometry,有 3D 模型)→ 走 twisty(`TwistySection`),不碰自有引擎;只有 `svg()`(仅 2D net、没注册)→ 必走自有引擎(实测:`redi_cube`/`dino` 都得自有引擎,别被 twizzle 能开 2D net 误导)。
