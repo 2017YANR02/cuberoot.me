@@ -282,7 +282,7 @@ export default function LandingPage() {
 
   // 新手引导锚点：card.id -> data-tour（OnboardingGuideModal 用
   // document.querySelector('[data-tour="..."]') + getBoundingClientRect() 定位）。
-  // 欢迎页之后依次高亮，共 12 步：
+  // 直接从计时开始依次高亮，共 12 步：
   // 1 计时 timer / 2 公式 formulas / 3 模拟 simulator / 4 复盘 replay /
   // 5 打乱 scramble / 6 比赛 competition / 7 纪录 records / 8 排名 rankings /
   // 9 统计 statistics；10~12 为下方挂件（近期打乱 / 今日复盘 / 论坛），

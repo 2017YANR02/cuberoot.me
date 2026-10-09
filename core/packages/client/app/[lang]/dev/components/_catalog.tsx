@@ -2706,8 +2706,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'OnboardingGuideModal',
     import: "import OnboardingGuideModal from '@/components/OnboardingGuideModal';",
     category: 'more',
-    zh: '首页欢迎页与功能导览；账号页可手动重看。',
-    en: 'Homepage welcome and feature tour, replayable from My account.',
+    zh: '首页功能导览，直接从第一步开始；账号页可手动重看。',
+    en: 'Homepage feature tour starting at step one, replayable from My account.',
   },
   {
     name: 'AuthPanel',

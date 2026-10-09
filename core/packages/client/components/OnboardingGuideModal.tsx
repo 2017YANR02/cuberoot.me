@@ -2,9 +2,7 @@
 
 // 新手功能引导（Element Highlighting Tooltip Tour，Driver.js / Intro.js 风格）。
 //
-// 第 0 步为全屏沉浸式欢迎页（独立前置状态 isWelcomeVisible，不计入 12 步索引）；
-// 触发后优先展示欢迎页，点击“开始导览”淡出并无缝交接给第 1 步（step 0，原逻辑不动）。
-// 第 1~12 步为 getBoundingClientRect() 动态高亮 + 吸附气泡（逻辑原封不动）。
+// 打开后直接进入第 1 步；12 步通过 getBoundingClientRect() 定位高亮与气泡。
 // 位置说明：站内没有全局 SiteHeader / TopNav，首页头部就是
 // `app/[lang]/LandingClient.tsx` 里的 `.landing-auth`，主导航是首页两排 hero
 // 卡片（`renderCard` / `renderCardGrid`，经 `SortableCard[tourKey]` 透传
@@ -38,9 +36,6 @@ import {
   X,
   type LucideIcon,
 } from 'lucide-react';
-import { HOME_BACKGROUND_ASSETS, resolveHomeBackground } from '@/lib/home-backgrounds';
-import { useHomeBackgroundChoice } from '@/hooks/useHomeBackgroundChoice';
-import { useEffectiveTheme } from '@/lib/theme';
 
 
 
@@ -218,48 +213,10 @@ export default function OnboardingGuideModal({ open, onClose }: Props) {
   const [rect, setRect] = useState<TargetRect | null>(null);
   const [viewport, setViewport] = useState({ w: 0, h: 0 });
   const dialogRef = useRef<HTMLDivElement>(null);
-  // —— 第 0 步：全屏沉浸式欢迎页（独立前置状态，不占用 step 索引 0~11）——
-  // 每次打开引导优先展示；点击“开始导览”淡出后交接给 step 0（第 1 步），
-  // 点击“跳过导览”直接关闭。欢迎页卸载后 12 步逻辑与此前完全一致。
-  const [isWelcomeVisible, setIsWelcomeVisible] = useState(true);
-  const [welcomeLeaving, setWelcomeLeaving] = useState(false);
-  const welcomeTimerRef = useRef<number | undefined>(undefined);
-  // 欢迎页背景跟随用户在外观菜单里的换背景选择（与全站 SiteBackground 同源）。
-  const effectiveTheme = useEffectiveTheme();
-  const [backgroundChoice] = useHomeBackgroundChoice(effectiveTheme);
-  const welcomeScene = resolveHomeBackground(backgroundChoice, effectiveTheme);
-
-  // 每次打开都回到欢迎页 + 第 1 步（step 索引本身保持 0 起始，不动）。
+  // 自动触发与手动重看都从第一步开始。
   useEffect(() => {
-    if (open) {
-      setStep(0);
-      setIsWelcomeVisible(true);
-      setWelcomeLeaving(false);
-    }
-  }, [open ]);
-
-  // 组件卸载 / open 关闭时清理淡出计时器，避免 setState 泄漏。
-  useEffect(() => {
-    if (!open) return;
-    return () => {
-      if (welcomeTimerRef.current !== undefined) {
-        window.clearTimeout(welcomeTimerRef.current);
-        welcomeTimerRef.current = undefined;
-      }
-    };
-  }, [open ]);
-
-  // 欢迎页主按钮：先触发淡出动画（300ms），再干净交接给第 1 步。
-  const startTour = useCallback(() => {
-    if (!isWelcomeVisible || welcomeLeaving) return;
-    setWelcomeLeaving(true);
-    welcomeTimerRef.current = window.setTimeout(() => {
-      welcomeTimerRef.current = undefined;
-      setWelcomeLeaving(false);
-      setIsWelcomeVisible(false);
-      setStep(0);
-    }, 300);
-  }, [isWelcomeVisible, welcomeLeaving]);
+    if (open) setStep(0);
+  }, [open]);
 
   const goNext = useCallback(() => {
     setStep((s) => Math.min(s + 1, total - 1));
@@ -326,9 +283,8 @@ export default function OnboardingGuideModal({ open, onClose }: Props) {
   // 切换步骤：先清空旧高亮（避免旧框残留闪线），再把目标滚入可视区，
   // 之后（分多次 + 占位替换后补测）测量，兼容 smooth 滚动动画、
   // 懒加载挂件的延迟挂载，以及 10/11 步异步数据到达时的骨架→内容替换。
-  // 欢迎页展示期间不测量、不滚动（12 步逻辑原样暂停）。
   useEffect(() => {
-    if (!open || isWelcomeVisible) return;
+    if (!open) return;
     setRect(null);
     const tour = ONBOARDING_STEPS[step]?.tour;
     if (tour) {
@@ -359,11 +315,11 @@ export default function OnboardingGuideModal({ open, onClose }: Props) {
       window.clearTimeout(t2);
       window.clearTimeout(t3);
     };
-  }, [open, step, measure, isWelcomeVisible]);
+  }, [open, step, measure]);
 
   // 监听窗口 resize / 任意滚动，保持高亮框与气泡定位准确。
   useEffect(() => {
-    if (!open || isWelcomeVisible) return;
+    if (!open) return;
     let queued = false;
     const schedule = () => {
       if (queued) return;
@@ -381,18 +337,15 @@ export default function OnboardingGuideModal({ open, onClose }: Props) {
       window.removeEventListener('scroll', schedule, true);
       window.removeEventListener('orientationchange', schedule);
     };
-  }, [open, measure, isWelcomeVisible]);
+  }, [open, measure]);
 
   // 打开期间：Esc 关闭，左右方向键切换，自动聚焦。巡游模式下不锁 body 滚动，
   // 否则 scrollIntoView 无法把目标带入可视区。
-  // 欢迎页：Enter / → 进入第 1 步，Esc 关闭；12 步内 ←/→ 照常切换。
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
-      else if (isWelcomeVisible) {
-        if (e.key === 'Enter' || e.key === 'ArrowRight') startTour();
-      } else if (e.key === 'ArrowRight') goNext();
+      else if (e.key === 'ArrowRight') goNext();
       else if (e.key === 'ArrowLeft') goPrev();
     };
     window.addEventListener('keydown', onKey);
@@ -400,7 +353,7 @@ export default function OnboardingGuideModal({ open, onClose }: Props) {
     return () => {
       window.removeEventListener('keydown', onKey);
     };
-  }, [open, onClose, goNext, goPrev, isWelcomeVisible, startTour]);
+  }, [open, onClose, goNext, goPrev]);
 
   const tooltipLayout = useMemo(() => {
     if (!rect || viewport.w === 0) return null;
@@ -420,92 +373,6 @@ export default function OnboardingGuideModal({ open, onClose }: Props) {
 
   if (!open) return null;
 
-
-  // —— 第 0 步：独立纯净雪山背景 + 中央大气玻璃卡片（独立前置状态，不占用 step 索引）——
-  // 对标设计稿：宽大通透毛玻璃卡 + 顶部悬挂图标 + 宽松呼吸感排版；背后功能网格完全不可见。
-  // 布局全部使用相对比例与响应式断点（sm/md/lg），无固定 px 数值；图标采用文档流
-  // 负 margin 重叠（而非 absolute），矮屏滚动时不再被裁剪、不会压住标题。
-  if (isWelcomeVisible) {
-    return (
-      <div
-        className={`fixed inset-0 z-50 flex items-center justify-center overflow-y-auto px-4 py-6 text-center transition-opacity duration-300 sm:px-6 sm:py-10 ${
-          welcomeLeaving ? 'opacity-0' : 'opacity-100'
-        }`}
-        role="presentation" {...backdropProps}
-      >
-        {/* 独立背景层：跟随用户的换背景选择（无背景时回落为浅色兜底），与正文完全隔离 */}
-        <span aria-hidden="true" className="pointer-events-none fixed inset-0 bg-slate-200">
-          {welcomeScene && (
-            /* eslint-disable-next-line @next/next/no-img-element -- One local precompressed decorative image. */
-            <img
-              key={welcomeScene.id}
-              src={`${HOME_BACKGROUND_ASSETS}/${welcomeScene.id}.webp`}
-              alt=""
-              className="h-full w-full object-cover"
-              style={{ objectPosition: `50% ${welcomeScene.position}` }}
-              draggable={false}
-            />
-          )}
-        </span>
-        <div
-          ref={dialogRef}
-          tabIndex={-1}
-          role="dialog"
-          aria-modal="true"
-          aria-label={t('欢迎来到 CubeRoot', 'Welcome to CubeRoot')}
-          className="relative my-auto flex w-full max-w-5xl flex-col items-center justify-center outline-none"
-        >
-          {/* 顶部悬挂图标：文档流负 margin 压住卡片上沿，无 absolute、不参与裁剪 */}
-          <div onPointerDown={(event) => event.stopPropagation()} className="relative z-10 -mb-12 rounded-3xl border border-white/60 bg-white/30 p-2.5 shadow-xl backdrop-blur-md sm:-mb-14 lg:-mb-16">
-            <div className="flex items-center justify-center overflow-hidden rounded-2xl bg-white shadow-md">
-              {/* eslint-disable-next-line @next/next/no-img-element -- One local precompressed brand image. */}
-              <img
-                src="/icons/CubeRoot.png"
-                alt="CubeRoot"
-                className="h-20 w-20 sm:h-24 sm:w-24 lg:h-28 lg:w-28"
-                draggable={false}
-              />
-            </div>
-          </div>
-
-          {/* 中央大气玻璃卡片：上内边距预留图标重叠位 */}
-          <div onPointerDown={(event) => event.stopPropagation()} className="w-full rounded-3xl border border-white/60 bg-white/30 px-6 pb-12 pt-24 shadow-2xl backdrop-blur-xl sm:px-14 sm:pb-16 sm:pt-28 lg:px-20 lg:pb-20 lg:pt-32">
-            {/* 标题：响应式阶梯，实色高对比，无渐变；字距行距放宽 */}
-            <h1 className="mb-6 text-4xl font-bold leading-snug tracking-wide text-slate-800 sm:mb-8 sm:text-5xl sm:leading-tight lg:text-7xl lg:leading-tight">
-              {t('欢迎来到 CubeRoot', 'Welcome to CubeRoot')}
-            </h1>
-
-            {/* 副标题：单行不换行，字距行距放宽；与按钮组拉开距离 */}
-            <p className="mx-auto mb-16 whitespace-nowrap text-base leading-loose tracking-wide text-slate-600 sm:mb-20 sm:text-lg sm:leading-loose lg:text-xl">
-              {t(
-                '通过沉浸式导览，快速掌握计时、公式、模拟器与核心功能，开启你的速拧进阶之旅。',
-                'Take an immersive tour to master the timer, algorithms, simulator and core features — start your speedcubing journey.',
-              )}
-            </p>
-
-            {/* 按钮组：两按钮纵向紧凑相邻 */}
-            <div className="flex flex-col items-center justify-center gap-3">
-              <button
-                type="button"
-                onClick={startTour}
-                autoFocus
-                className="inline-flex min-h-16 w-full max-w-xs items-center justify-center rounded-full bg-gradient-to-r from-orange-300 to-amber-600 px-12 py-4 text-xl font-semibold text-white shadow-xl transition-all duration-200 hover:brightness-105 active:scale-[0.98] sm:max-w-sm sm:px-14 lg:px-16 lg:text-2xl"
-              >
-                {t('开始导览', 'Start tour')}
-              </button>
-              <button
-                type="button"
-                onClick={onClose}
-                className="py-1 text-sm font-normal text-slate-400 underline decoration-slate-300 underline-offset-4 transition-colors hover:text-slate-600 hover:decoration-slate-400"
-              >
-                {t('跳过导览', 'Skip tour')}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   const StepIcon = current.Icon;
   const isFirst = step === 0;
