@@ -12,7 +12,14 @@ import type { Dataset } from './types';
 
 // JSON stays portable. The research contract is checked by cube-history.test.ts.
 const datasets = [historical, historicalBrands, historicalCollectibles, gan, ganSmart, moyu, moyuVariants, other, qiyi] as Dataset[];
-export const CUBES = datasets.flatMap(dataset => dataset.cubes);
+// Both language editions use mainland-China CNY quotes only. Filter before any
+// view, evidence filter, coverage count or JSON export consumes the catalog.
+// Keep original research observations in the datasets; never convert an
+// overseas amount or change its market to manufacture a domestic quote.
+export const CUBES = datasets.flatMap(dataset => dataset.cubes).map(cube => ({
+  ...cube,
+  prices: cube.prices.filter(price => price.region === 'CN' && price.currency === 'CNY'),
+}));
 export const SOURCES = datasets.flatMap(dataset => dataset.sources);
 export const SOURCE_BY_ID = new Map(SOURCES.map((source, index) => [source.id, { ...source, number: index + 1 }]));
 export const CUBE_ALIASES = aliases;

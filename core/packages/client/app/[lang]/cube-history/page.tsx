@@ -250,7 +250,7 @@ function CubeDetails({ cube, selected, full, onToggle, onClose, onOpen }: {
     </div>
     <div className="ch-detail-grid">
       <section><h3>{tr({ zh: '发布时间', en: 'Release evidence' })}</h3><p className="ch-detail-date">{dateText(cube)} <span className="ch-badge">{tr(RELEASE_LABELS[cube.release.basis])}</span><ReferenceLinks ids={cube.release.sourceIds} /></p><p>{tr(cube.release.note)}</p></section>
-      <section><h3>{tr({ zh: '价格', en: 'Prices' })}</h3>{cube.prices.length ? sortedPrices(cube.prices).map((price, index) => <PriceQuote key={index} price={price} />) : <p className="ch-muted">{tr({ zh: '暂未核到对应版本的首发价或当前参考价。', en: 'No verified launch or current quote for this version yet.' })}</p>}
+      <section><h3>{tr({ zh: '价格', en: 'Prices' })}</h3>{cube.prices.length ? sortedPrices(cube.prices).map((price, index) => <PriceQuote key={index} price={price} />) : <p className="ch-muted">{tr({ zh: '暂未核到对应版本的国内首发价或当前参考价。', en: 'No verified mainland-China launch or current quote for this version yet.' })}</p>}
       </section>
       <section><h3>{tr({ zh: '结构与性能参数', en: 'Mechanism and specifications' })}</h3>
         <dl className="ch-spec-list">
@@ -295,12 +295,12 @@ function Comparison({ cubes, onToggle, onBrowse }: { cubes: Cube[]; onToggle: (i
     { label: { zh: '机制', en: 'Mechanism' }, render: cube => cube.specs.mechanism.length ? cube.specs.mechanism.map(value => tr(MECHANISMS[value] ?? { zh: value, en: value })).join(' · ') : tr(UNKNOWN) },
     { label: { zh: '调节', en: 'Adjustment' }, render: cube => cube.specs.adjustment ? tr(cube.specs.adjustment) : tr(UNKNOWN) },
     { label: { zh: '亮点', en: 'Highlights' }, render: cube => <ul>{cube.highlights.map((item, index) => <li key={index}>{tr(item)}</li>)}</ul> },
-    { label: { zh: '评价', en: 'Assessment' }, render: cube => <><span className="ch-badge">{tr(cube.assessment.basis === 'review' ? { zh: '亲历评价', en: 'First-hand' } : { zh: '编辑分析', en: 'Editorial' })}</span><p>{tr(cube.assessment.summary)}</p><p>{tr(cube.assessment.tradeoffs)}</p><ReferenceLinks ids={cube.assessment.sourceIds} /></> },
+    { label: { zh: '评价', en: 'Assessment' }, render: cube => <><span className="ch-badge">{tr(cube.assessment.basis === 'review' ? { zh: '亲历评价', en: 'First-hand' } : { zh: '编辑分析' , en: 'Editorial' })}</span><p>{tr(cube.assessment.summary)}</p><p>{tr(cube.assessment.tradeoffs)}</p><ReferenceLinks ids={cube.assessment.sourceIds} /></> },
     { label: { zh: '商家页用户评分', en: 'Merchant-page user rating' }, render: cube => <MerchantRating cube={cube} /> },
     { label: { zh: '所选版本', en: 'Selected version' }, render: cube => tr(getCubeVersionLabel(cube)) },
     { label: { zh: '来源', en: 'Sources' }, render: cube => <ReferenceLinks ids={sourceIdsForCube(cube)} /> },
   ];
-  return <section><h2>{tr({ zh: '逐项比较', en: 'Compare field by field' })}</h2><p className="ch-muted">{tr({ zh: '首发价与当前价分别列出；海外报价保留原币种。', en: 'Launch and current prices are listed separately; overseas quotes keep their original currency.' })}</p><div className="sticky-scroll ch-table-wrap"><table className="sticky-thead ch-table ch-comparison">
+  return <section><h2>{tr({ zh: '逐项比较', en: 'Compare field by field' })}</h2><p className="ch-muted">{tr({ zh: '仅展示国内人民币报价，首发价与当前参考价分开列出。', en: 'Mainland-China CNY prices only; launch and current quotes are listed separately.' })}</p><div className="sticky-scroll ch-table-wrap"><table className="sticky-thead ch-table ch-comparison">
     <caption>{tr({ zh: '所选型号的参数与来源对比', en: 'Specifications and sources for the selected models' })}</caption><thead><tr><th scope="col">{tr({ zh: '项目', en: 'Field' })}</th>{cubes.map(cube => <th scope="col" key={cube.id}>{tr(cube.name)}<button type="button" className="ch-text-button" onClick={() => onToggle(cube.id)}><X size={13} />{tr({ zh: '移除', en: 'Remove' })}</button></th>)}</tr></thead><tbody>{rows.map(row => <tr key={row.label.en}><th scope="row">{tr(row.label)}</th>{cubes.map(cube => <td key={cube.id}>{row.render(cube)}</td>)}</tr>)}</tbody>
   </table></div></section>;
 }
