@@ -84,7 +84,7 @@ import type { CornerGestureCtx } from './engine/cornerTurnGesture';
 import { createCornerGestureResolver } from './engine/cornerGestureRegistry';
 import { FACE } from './engine/define';
 import { toWca as toWcaSkewb, type SkewbNotation } from '@cuberoot/shared/skewb-notation';
-import { toCubingKilominx, fromCubingKilominx, type KilominxNotation } from '@/lib/kilominx-notation';
+import { KILOMINX_FACE_MOVES, toCubingKilominx, fromCubingKilominx, type KilominxNotation } from '@/lib/kilominx-notation';
 import TwistySection from '@/components/TwistySection';
 import CutEditor from './CutEditor';
 import {
@@ -488,6 +488,9 @@ export default function SimPage() {
   const setKilominxNotation = useCallback((next: KilominxNotation, setup: string, alg: string) => {
     setQuery({ kiloNotation: next, setup: setup || null, alg: alg || null });
   }, [setQuery]);
+  const fallbackMoves = useMemo(() => puzzleParam === 'kilominx'
+    ? KILOMINX_FACE_MOVES.map((move) => ({ move, label: fromCubingKilominx(move, query.kiloNotation) }))
+    : undefined, [puzzleParam, query.kiloNotation]);
   useEffect(() => {
     if (typeof window === 'undefined') return;
     persistItem('sim.fullscreen', fullscreen ? '1' : '0');
@@ -2239,6 +2242,7 @@ export default function SimPage() {
               // 不传 — undefined = TwistySection 不接管该属性)。
               experimentalStickering={(puzzleParam === 'megaminx' || puzzleParam === 'fto') ? query.stickering : undefined}
               settings={renderSettings}
+              fallbackMoves={fallbackMoves}
               onUserMove={(moveText) => {
                 // moveText is already cubing.js canonical (`Uv`/`BL2`); pass raw
                 // to skip TwistAction parsing which would eat multi-char families.
