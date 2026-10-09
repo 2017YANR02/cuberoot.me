@@ -34,6 +34,7 @@ describe.skipIf(process.env.DRIVE_TEST_PG !== '1')('role preview (PostgreSQL)', 
       full_name TEXT, birth_date DATE, gender TEXT, country_iso2 TEXT, region_code TEXT, city_name TEXT,
       forum_banned BOOLEAN DEFAULT FALSE
     ); CREATE TABLE forum_posts (author_id TEXT, created_at TIMESTAMPTZ);
+    CREATE TABLE wca_persons (wca_id TEXT PRIMARY KEY, gender TEXT);
     CREATE FUNCTION trg_set_updated_at() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN NEW.updated_at = NOW(); RETURN NEW; END $$;`);
     for (const migration of ['0184_drive', '0189_drive_shares', '0216_drive_member_folders', '0217_role_preview', '0218_drive_compressions', '0233_role_preview_complete_profile', '0245_role_preview_expiry', '0246_user_impersonation']) {
       await sql.unsafe(await readFile(new URL(`../migrations/${migration}.sql`, import.meta.url), 'utf8'));
