@@ -31,3 +31,8 @@
 .wca-event-multi-toolbar .bool-toggle {
   font-size: 12px;
 }
+
+.pp-footer .wca-event-multi-toolbar .wca-event-category-btn,
+.pp-footer .wca-event-multi-toolbar .bool-toggle {
+  font-size: inherit;
+}
