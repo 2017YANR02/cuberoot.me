@@ -23,8 +23,8 @@
 .onboarding-guide-icon { display: grid; place-items: center; flex: 0 0 36px; height: 36px; border-radius: 11px; background: var(--accent-soft); color: var(--accent); }
 .onboarding-guide-count { flex: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: var(--muted-foreground); font-size: 12px; font-weight: 500; }
 .onboarding-guide-count span { color: var(--faint-foreground); font-variant-numeric: tabular-nums; }
-.onboarding-guide-card button { appearance: none; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; gap: 6px; margin: 0; padding: 0; border: 0; font: inherit; line-height: 1; cursor: pointer; background: transparent; color: inherit; border-radius: 10px; min-height: 40px; }
-.onboarding-guide-card button:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+.onboarding-guide-card .onboarding-guide-button { appearance: none; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; gap: 6px; margin: 0; padding: 0; border: 0; font: inherit; line-height: 1; cursor: pointer; background: transparent; color: inherit; border-radius: 10px; min-height: 40px; }
+.onboarding-guide-card .onboarding-guide-button:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
 .onboarding-guide-card .onboarding-guide-close { width: 36px; min-height: 36px; color: var(--muted-foreground); }
 .onboarding-guide-copy { margin: 18px 0 20px; }
 .onboarding-guide-copy h2 { margin: 0 0 8px; color: var(--foreground); font-size: 21px; line-height: 1.3; font-weight: 650; letter-spacing: -.025em; overflow-wrap: anywhere; }
@@ -42,7 +42,7 @@
 }
 @media (max-width: 480px) {
   .onboarding-guide-card { padding: 18px; border-radius: 18px; }
-  .onboarding-guide-card button { min-height: 44px; }
+  .onboarding-guide-card .onboarding-guide-button { min-height: 44px; }
   .onboarding-guide-copy h2 { font-size: 20px; }
 }
 @media (prefers-reduced-motion: reduce) { .onboarding-guide-progress span { transition: none; } }
