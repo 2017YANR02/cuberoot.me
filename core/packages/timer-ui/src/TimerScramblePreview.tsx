@@ -92,7 +92,7 @@ function planFor(event: string): PuzzleSpec | null {
     case 'fto':                                  return { cubingPuzzle: 'fto',       w: 16, h: 12 };
     case 'redi': case 'redi_cube':               return { cubingPuzzle: 'redi_cube', w: 16, h: 12 };
     case 'kilominx':                             return { cubingPuzzle: 'kilominx',  w: 18, h: 14 };
-    case 'sphere':                               return { cubingPuzzle: null, inlineSvg: 'sphere', w: 10, h: 10 };
+    case 'sphere':                               return { cubingPuzzle: null, inlineSvg: 'sphere', w: 12, h: 9 };
     // sq1 / mega — use our inline renderers (cubing.js 2D for sq1 is broken;
     // mega unfolded view differs from tnoodle).
     case 'sq1':                                  return { cubingPuzzle: null, inlineSvg: 'sq1',  w: 7,  h: 14 };

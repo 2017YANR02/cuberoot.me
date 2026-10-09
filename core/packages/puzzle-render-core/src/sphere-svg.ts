@@ -1,14 +1,10 @@
-import * as THREE from 'three';
 import { stripComments, tokenizeMoves } from '@cuberoot/shared/alg-notation';
-import { SIZE } from './engine/define';
 import Cube from './engine/nxn/cube';
 import { getRawCoreBorder, rawMaterial, setRawCoreBorder } from './engine/nxn/rawCore';
 import { TwistAction } from './engine/nxn/twister';
-import { HOME_SCENE_ROT } from './engine/viewControls';
-import type { RenderWorld } from './headless-world';
-import { exportSimSvg } from './scene-svg';
+import { CUBE_FILL } from './support/cube-colors';
+import { renderCubeNetSvg } from './support/cube-net-svg';
 
-const VIEWPORT = 320;
 const MAX_SCRAMBLE_LENGTH = 16_384;
 const MAX_MOVES = 1_024;
 
@@ -40,7 +36,7 @@ function sphereMoves(scramble: string): string[] | null {
 }
 
 /**
- * Square, transparent SVG of the actual 26 sphere cubies, without WebGL or DOM.
+ * Six-face unfolded SVG, using the same layout and colors as the 3x3 preview.
  * Accepts 3x3 face, wide, slice and rotation tokens, plus line comments. Empty
  * input is solved; unsupported notation or malformed tokens return null.
  */
@@ -56,33 +52,20 @@ export function renderSphereScrambleSvg(scramble: string): string | null {
   let cube: Cube | undefined;
   try {
     cube = new Cube(3, 'sphere');
-    material.opacity = 1;
-    material.transparent = false;
     // An independent cube starts solved. Instant turns avoid setup()/reset(),
     // whose global tween completion would interrupt a live simulator peer.
     for (const token of moves) {
       if (!cube.twister.twist(new TwistAction(token), true, false)) return null;
     }
 
-    const scene = new THREE.Scene();
-    scene.rotation.set(HOME_SCENE_ROT.x, HOME_SCENE_ROT.y, HOME_SCENE_ROT.z);
-    scene.add(cube);
-    scene.add(new THREE.AmbientLight(0xffffff, Math.PI * 0.75));
-    const directional = new THREE.DirectionalLight(0xffffff, Math.PI * 0.4);
-    directional.position.set(SIZE, SIZE * 3, SIZE * 2);
-    scene.add(directional);
-
-    const camera = new THREE.PerspectiveCamera(38, 1, 1, SIZE * 32);
-    camera.position.set(0, 0, SIZE * 8.75);
-    camera.lookAt(0, 0, 0);
-    const world: RenderWorld = { scene, camera, width: VIEWPORT, height: VIEWPORT };
-    return exportSimSvg({ world, maxTriangles: 80_000 });
+    // Use the actual state so slice, rotation and layer-range notation keeps
+    // working; the scramble-only net parser supports a narrower move set.
+    return renderCubeNetSvg({ serialized: cube.serialize(), order: 3, faceColors: CUBE_FILL });
   } finally {
     material.color.copy(color);
     material.opacity = opacity;
     material.transparent = transparent;
     setRawCoreBorder(border);
-    cube?.removeFromParent();
     cube?.dispose();
   }
 }
