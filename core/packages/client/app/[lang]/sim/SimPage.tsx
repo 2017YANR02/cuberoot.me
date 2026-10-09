@@ -2126,7 +2126,9 @@ export default function SimPage() {
         >
           <option value="sim">{t('模拟', 'Simulate')}</option>
           <option value="draw">{t('绘图', 'Draw')}</option>
-          <option value="image">{t('FTO 图片', 'FTO image')}</option>
+          {puzzleParam === 'fto' && (
+            <option value="image">{t('FTO 图片', 'FTO image')}</option>
+          )}
         </select>
         <div className="sim-spacer" />
         {!drawMode && !imageMode && reconHref && (
