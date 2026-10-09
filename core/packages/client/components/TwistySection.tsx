@@ -507,6 +507,7 @@ export default function TwistySection({
     pyraminx: { thresholdDeg: 120, axes: [{ name: 'U', axis: [0, 1, 0], moveCW: 'Uv', moveCCW: "Uv'" }] },
     // 校准 (.tmp/png/mega_lon-71_alg-RU vs mega_lon0_alg-RUUvi)
     megaminx: { thresholdDeg: 72, axes: [{ name: 'U', axis: [0, 1, 0], moveCW: 'Uv', moveCCW: "Uv'" }] },
+    kilominx: { thresholdDeg: 72, axes: [{ name: 'U', axis: [0, 1, 0], moveCW: 'Uv', moveCCW: "Uv'" }] },
     // skewb 走自己的 pixel-based effect (横/纵两轴 80px = 1 commit),不在这里配。
     // (this entry kept empty 以让 ROTATE_CONFIG['skewb'] 仍存在供 algToOrientation 等用)
     skewb: { thresholdDeg: 90, axes: [] },
@@ -859,7 +860,8 @@ export default function TwistySection({
         const { lat: targetLat, lon: targetLon } = quatToOrbit(targetQ);
         try {
           const curAlg = currentAlgRef.current.trim();
-          const newAlg = curAlg ? `${curAlg} ${move}` : move;
+          const sep = curAlg.slice(curAlg.lastIndexOf('\n') + 1).includes('//') ? '\n' : ' ';
+          const newAlg = curAlg ? `${curAlg}${sep}${move}` : move;
           currentAlgRef.current = newAlg;
           player.alg = newAlg;
           m.timestampRequest.set('end');
@@ -892,7 +894,7 @@ export default function TwistySection({
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const Q_DEG = puzzle === 'pyraminx' ? 120 : puzzle === 'megaminx' ? 72 : 90;
+    const Q_DEG = puzzle === 'pyraminx' ? 120 : puzzle === 'megaminx' || puzzle === 'kilominx' ? 72 : 90;
     const onUp = () => {
       if (dragEmptyRef.current !== 'rotate') return;
       const player = playerInstRef.current;

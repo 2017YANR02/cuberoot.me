@@ -16,6 +16,7 @@ description: "用户说造魔方模拟器、给 /sim 加魔方、新魔方类型
 
 ## 先分流(动手前定这 3 件)
 - cubing.js 有 `pg()`(PuzzleGeometry,有 3D 模型)→ 走 twisty(`TwistySection`),不碰自有引擎;只有 `svg()`(仅 2D net、没注册)→ 必走自有引擎(实测:`redi_cube`/`dino` 都得自有引擎,别被 twizzle 能开 2D net 误导)。
+- 原生 loader 带轨道遮罩或专用外观时保留具名 puzzle id，不以裸 PuzzleGeometry 描述替换；将具名项目登记在 `twistyPuzzles.ts`，让页面与无 World 的播放控件共用判定。
 - 先定转动元素:**面/层**(NxN/SQ1)、**角**(绕体对角线 120°,Dino/Redi/Ivy/Rex)、**棱**(绕棱中点轴 180°,Heli)、**面**(绕面法线,Megaminx/FTO)——它定轴集 + 状态周期表 + pivot 朝向。
 - 要打乱/解法但没 solver → 先按 skill `new-substep-solver` 分流；多个运行时共用的纯模型与生成器放 `@cuberoot/puzzle-solvers` 的公开出口，再回来接渲染，client `lib/` 只保留必要适配。
 - 保立方体形的标准转才做;深切魔方的 jumble(转出非立方体形)不做。
@@ -132,11 +133,14 @@ description: "用户说造魔方模拟器、给 /sim 加魔方、新魔方类型
 - **PG 表示不了的拼图走 perm 路(非-PG 置换内核)**:决策树=对称平面切多面体→PG;否则→perm。PG 做不了的两类:非对称切(ivy 只转 4 正四面体角)、带隐藏朝向被 PG 多算(rex 中心 4 重朝向)。写 `engine/<x>/<x>PermBridge.ts` 实现 `PermBridge<M>`(engine/permBridge.ts):`key`(=facts 表键)、`orbits`(`permutes:false`=定位固定只转向)、`genPerms()`(从引擎自己 state model 抬:apply 到 solved 读 slot→source,g[slot]=source)、`moveToStep/stepToMove/parse/toString/solvable`。注册 `pgBindings.PERM_BRIDGES` + `createBinding` perm 分支返 `new PermEngineBinding(bridge)`(实现共享 `GroupKernel`,与 PgEngineBinding 同 surface),facts 生成器加 `permBridges()` 轮(键=`bridge.key`)。**大 perm 群 facts 别用 permGroup(带 word 建 OOM,如 rex ~5e27)**:`computeFactsLive` 的 `!solvable` 用 vendored `schreierSims(gens.map(g=>new Perm(g)))`。闭环 oracle 就用引擎自己的 applyXxxMove。范例:ivy(solvable 29160)、rex(facts-only A₆×A₁₂³)、mirror(=`nxnPgBridge(3)` 复用 3x3 kernel+facts)、redi(PG compy cube + `factsOverEngineGens` 去 ×12 深 slice)。sq1 出局(变形群胚,无单一 |G|)。科普页 `/math/kernel` 数字全从 `PRECOMPUTED_PG_FACTS` 读,加拼图后覆盖表自动跟。
 
 ## 记号约定
-- “随机打乱”只生成并立即应用终态；打乱动画只由旁边的播放按钮触发。
+- “随机打乱”只生成并立即应用终态，按当前起点/终点锚定选择时间轴端点；旁边的播放按钮才从还原态播放打乱，并切回起点锚定。
+- 接入存在同名异义面的记号来源时，提供明确选项并将选择与公式一起存入 URL；切换时原子转换当前打乱与解法，渲染入口、随机输出和手动记录双向对齐，禁止猜测来源或连锁替换别名。
+- 多字母招式关闭三阶自动空格；记号转换保留分组、交换子、注释和宽层/整体转，异步打乱与延迟提交在切换拼图或记号后失效。
+- 手动转动遇行末注释时另起一行；无键盘驱动的渲染器不注册拦键监听，复制链接使用当前草稿与解析后的 URL 状态，不等待延迟历史写回。
 - 拿方朝向下拉顶部写明左色块是顶面、右色块是前面；每项用两枚实色色块标出顶面与前面，同时保留 `(UF)` 字母提示。
 - SQ2/SQ4 简化记号保留元组括号和逗号,只移除安全空白,避免 Square-4 两位数转角产生歧义。
 - 裸字母 = 玩家从外看的顺时针(= dir −1 / −120°);写反则玩家拖顺时针被记成带 `'`。
-- /sim 是自包含世界(自己的随机打乱 + 拖拽):显示/记录用标准记号,即便 solver(cstimer)记号非标准也别动 `lib/<x>-solver`(它喂 /scramble 打乱/预览/求解,保持 cstimer 一致)。用 WCA/cubing.js 记号,别自造(如 skewb 引擎 8 grip 别记 `UFR/UFL…`,走 cubing.js 全 8 角族 `F/U/B/D/L/R+UL/UR`,WCA 打乱只 `R/U/L/B` 4 角子集;字母↔角按面集对齐 cubing.js,裸=CW 手性通常已对;`face_hints` 标签同步)。记号功能子集(WCA 4 角)可只喂随机打乱,拖拽仍可转全部单元(记扩展 token)。范本 memory [[project_sim_skewb_wca_notation]]。
+- /sim 是自包含世界(自己的随机打乱 + 拖拽):显示/记录用已核证的标准记号,即便 solver(cstimer)记号不同也别动 `lib/<x>-solver`(它喂 /scramble 打乱/预览/求解,保持 cstimer 一致)。没有明确来源选项时用 WCA/cubing.js 记号,别自造(如 skewb 引擎 8 grip 别记 `UFR/UFL…`,走 cubing.js 全 8 角族 `F/U/B/D/L/R+UL/UR`,WCA 打乱只 `R/U/L/B` 4 角子集;字母↔角按面集对齐 cubing.js,裸=CW 手性通常已对;`face_hints` 标签同步)。记号功能子集(WCA 4 角)可只喂随机打乱,拖拽仍可转全部单元(记扩展 token)。范本 memory [[project_sim_skewb_wca_notation]]。
 - namer(`pickMove`/`<x>MoveToString`)和 /sim 自己的 parser(`parse<X>Moves`)必须成对翻转,否则录下的名字回放成反方向;物理 `beginMove`/`apply<X>Move` 用 dir 不动。
 - 五魔方 R++/D++ 绕相对的 L/U 轴正转 144°，锁定动画有向转角与中间帧，禁仅用互逆还原测试验证方向。
 - involution/对称转(Heli 180°,顺逆终态相同)动画也跟手做两方向:给 move 加 cosmetic `dir?:1|-1`(状态/记号忽略它),`<x>ResolveLive` 把 `score.dir` 烤进 move,`beginMove` 用 `(move.dir ?? sweepDir)*ANGLE` 定扫动符号。
@@ -161,4 +165,5 @@ description: "用户说造魔方模拟器、给 /sim 加魔方、新魔方类型
 - 新增公开出口、项目 provider 或验证脚本子进程时，按 [跨页面接入与验收](references/integration-and-verification.md) 同步适用契约并检查最终改动；不要用旧提交的通过记录覆盖后来新增的接线。
 - 质量门(报 done 前):① 几何/视觉放大到单弧/单贴片占屏一大块目检(正常视角藏折线/扁平);② 拿本 skill 与本次适用参考文件的每条硬要求对着实际产物逐条核(凭记忆核=漏);③ 收尾把「找茬验收」外包给 fresh-context 评审 agent(只喂硬要求 + 放大截图);④ 曲边贴片必配几何回归测试卡「每个区最大转角 < ~50°」(针刺=120-180° 反向转角;软目检会失效、CI 测试不会),红了用 2D 离线精确复刻排查(范本 `rex_2d_face`/`rex_2d_corner`)。
 - 数学/几何推导用脚本/独立重导测试锁死(范本 `tests/rex_state.test.ts` 从零重导对账;派生脚本持久化到 `scripts/<x>/`,别留 `.tmp/`);核心搭建(geometry→state→cube→twister→drag→接线)强顺序 + 踩 5 共享文件,别拆并行。
+- 检查具名 loader 的实际可见轨道后再验证状态；纯角块拼图只以可见角块判还原，勿把内部残留的棱/中心轨道或不可辨朝向算进完成判定与群阶。
 - 改完动 /sim 必回写本 skill + 相关 memory(见 [[feedback_maintain_sim_skill]]);回写一条规则一行、祈使句、只写怎么做,根因/坑的来龙去脉放 memory。
