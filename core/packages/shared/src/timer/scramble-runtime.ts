@@ -96,6 +96,7 @@ export const TIMER_SCRAMBLE_CAPABILITIES = Object.freeze({
   '333ni': { kind: 'cubing', cubingEventId: '333bf' },
   '333fm': { kind: 'cubing', cubingEventId: '333fm' },
   '333mr': { kind: 'cubing', cubingEventId: '333' },
+  sphere: { kind: 'cubing', cubingEventId: '333' },
   '444bld': { kind: 'cubing', cubingEventId: '444bf' },
   '555bld': { kind: 'cubing', cubingEventId: '555bf' },
   '666bld': { kind: 'compound', provider: 'timer-compound' },

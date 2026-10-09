@@ -6,6 +6,7 @@ import { renderMegaScrambleSvg as sharedMega } from '@cuberoot/puzzle-render-cor
 import { renderSq1ScrambleSvg as sharedSq1 } from '@cuberoot/puzzle-render-core/sq1-svg';
 import { renderPyraminxDuoSvg, DUO_SVG_ASPECT } from '@cuberoot/puzzle-render-core/pyraminx-duo-svg';
 import { renderMagicSvg, magicSvgAspect } from '@cuberoot/puzzle-render-core/magic-svg';
+import { renderSphereScrambleSvg } from '@cuberoot/puzzle-render-core/sphere-svg';
 import { TimerCubePreview, TimingSurface, timerCubePreviewAspect } from '@cuberoot/timer-ui';
 import { act, createElement, createRef } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -57,6 +58,39 @@ describe('shared timer scramble preview', () => {
     await vi.waitFor(() => expect(host.querySelector<HTMLElement>('mock-twisty-player')?.dataset.scramble).toBe(canonical));
     expect(host.querySelector<HTMLElement>('mock-twisty-player')?.dataset.puzzle).toBe('redi_cube');
     expect(host.textContent).not.toContain('no preview');
+  });
+
+  it('renders Kilominx through the named model with its csTimer face convention', async () => {
+    await act(async () => root.render(createElement(TimerCubePreview, {
+      event: 'kilominx', scramble: "R DR DL' DBL2 DBR2' U",
+    })));
+    await vi.waitFor(() => expect(host.querySelector<HTMLElement>('mock-twisty-player')?.dataset.scramble)
+      .toBe("R FR FL' DL2 DR2' U"));
+    expect(host.querySelector<HTMLElement>('mock-twisty-player')?.dataset.puzzle).toBe('kilominx');
+    expect(host.textContent).not.toContain('no preview');
+    expect(timerCubePreviewAspect('kilominx')).toBe(18 / 14);
+  });
+
+  it('keeps Sphere on its real SVG, updates state and hides invalid input', async () => {
+    const render = async (scramble: string) => act(async () => root.render(createElement(TimerCubePreview, {
+      event: 'sphere', scramble, visualization: '3D', height: 240, ariaLabel: 'Sphere state',
+    })));
+    await render('');
+    const solved = host.innerHTML;
+    await render("R U' F2");
+    const expected = document.createElement('div');
+    expected.innerHTML = renderSphereScrambleSvg("R U' F2")!;
+    const preview = host.querySelector<HTMLElement>('[aria-label="Sphere state"]');
+    expect(preview?.innerHTML).toBe(expected.innerHTML);
+    expect(preview?.style.aspectRatio).toBe('10 / 10');
+    expect(host.querySelector('svg')).not.toBeNull();
+    expect(host.querySelector('mock-twisty-player')).toBeNull();
+    expect(host.innerHTML).not.toBe(solved);
+    expect(timerCubePreviewAspect('sphere')).toBe(1);
+    await render('invalid');
+    expect(host.querySelector('svg')).toBeNull();
+    await render('R');
+    expect(host.querySelector('svg')).not.toBeNull();
   });
 
   it.each([

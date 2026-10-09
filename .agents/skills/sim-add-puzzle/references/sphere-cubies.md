@@ -9,7 +9,15 @@
 - 在 `engine/world.ts` 单独缓存球块实例并在 Web cleanup 调用 `disposeSphereCube()`；不与普通三阶共享可变盘面。
 - 在 `SimPage` 渲染阶段和 `applyPuzzle` 都固定逻辑阶数 3，覆盖从二阶切入时的首帧；群论复用 `nxnPgBridge(3)` 和已有 facts，复盘映射 `3x3`。
 - `World` 对象不变时，`setPuzzle()` 仍会换掉内部 cube；父页面完成切换和设置后发布 `activeCube` 身份，播放器核对身份与 `puzzleKind` 后重放当前 setup 和步骤。不能只给子组件 effect 加 URL 依赖：子 effect 可能先于父切换运行。切换同时停旧播放、失效旧请求，在异步 setup 返回后再次核对请求和 cube 身份，并在重放完成前阻止播放和步进；Node 同步 fallback 不能代替 deferred setup 回归。
-- 仅请求模拟器时不创建独立 Timer 或打乱页事件；其规则与普通三阶一致。
+- 同步注册独立 `sphere` 项目到 Timer 与打乱生成页；复用普通三阶生成器，不复制算法或把球形练习记录并入三阶。
+
+## 打乱与计时接线
+
+- 生成页通过 `shape-mod-scramble.ts` 的 `sphere → 333` 来源映射复用比赛、批量与输入模式，名称沿用模拟器的「球形魔方 / Sphere Cube」。
+- Timer 普通生成使用真实 `cubingEventId: '333'`，种子生成复用 `nx.scramble333`；会话、结果与选择器保留 `sphere`。
+- 网页、PDF 与 Timer 共用 `@cuberoot/puzzle-render-core/sphere-svg` 的 `renderSphereScrambleSvg`；从真实球块引擎导出，保留球面分色与正方形预览比例，非法公式返回无图而非静默忽略。
+- 在 Timer 外层分发中先保留 `sphere`，再做普通 NxN 归一；不要因逻辑阶数为 3 把球块图替换成三阶方格图。
+- csTimer 导出使用真实 `333` 类型并携带 `cuberootEvent: 'sphere'`，导入优先读该元数据，验证组名改变后仍恢复独立项目。
 
 ## 球面与颜色
 

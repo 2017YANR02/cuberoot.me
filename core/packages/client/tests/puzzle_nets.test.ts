@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { applyScramble, solvedState } from '@/lib/puzzle-group';
 import { renderNet, type PuzzleNetDef } from '@/app/[lang]/scramble/gen/_svg/_net_render';
 import { FTO } from '@/app/[lang]/scramble/gen/_svg/_nets/fto';
@@ -9,6 +9,8 @@ import { REDI_CUBE } from '@/app/[lang]/scramble/gen/_svg/_nets/redi_cube';
 import { puzzles } from 'cubing/puzzles';
 import { rediScrambleForCubing } from '@cuberoot/shared/timer';
 import { renderScramblePreviewSvg } from '@/components/scramble-preview-svg';
+import { tnoodleRandomScramble } from '@/lib/cubing-scramble';
+import { scrambleClipboardText } from '@/app/[lang]/scramble/gen/CopyAllScramblesButton';
 
 /**
  * Group-theoretic net regression for the 5 non-WCA puzzles whose scramble preview
@@ -52,6 +54,73 @@ describe('Redi generator notation and preview', () => {
     });
     const svg = renderScramblePreviewSvg({ event: 'redi_cube', scramble })!;
     expect([...svg.matchAll(/fill="([^"]+)"/g)].map(m => m[1])).toEqual(expectedFills);
+  });
+});
+
+describe('Kilominx manual notation and generated preview', () => {
+  async function expectNativeColors(scramble: string, native: string) {
+    const kp = await puzzles.kilominx.kpuzzle();
+    const corners = kp.defaultPattern().applyAlg(native).patternData.CORNERS;
+    const expected = KILOMINX.net.facelets.map((facelet) =>
+      KILOMINX.net.solvedColor.corners[corners.pieces[facelet.piece]][
+        (facelet.orient - corners.orientation[facelet.piece] + 3) % 3
+      ]);
+    const svg = renderScramblePreviewSvg({ event: 'kilominx', scramble });
+    expect(svg, scramble).not.toBeNull();
+    expect([...svg!.matchAll(/fill="([^"]+)"/g)].map((match) => match[1]), scramble).toEqual(expected);
+  }
+
+  it('renders all twelve csTimer faces and inverse double turns with the simulator named-loader state', async () => {
+    const faces = [
+      ['U', 'U'], ['R', 'R'], ['F', 'F'], ['L', 'L'], ['BL', 'BL'], ['BR', 'BR'],
+      ['DR', 'FR'], ['DL', 'FL'], ['DBL', 'DL'], ['B', 'B'], ['DBR', 'DR'], ['D', 'D'],
+    ];
+    for (const [editor, native] of faces) {
+      await expectNativeColors(editor, native);
+      await expectNativeColors(`${editor}2'`, `${native}2'`);
+    }
+    await expectNativeColors("(R U2')2 [DR, DBL'] // preserved comment\n Uv",
+      "(R U2')2 [FR, DL'] // preserved comment\n Uv");
+  });
+
+  it('renders the actual 77-move random provider and keeps R++/D++ direction intact', async () => {
+    for (const move of ['R++', 'R--', 'D++', 'D--']) await expectNativeColors(move, move);
+    const scramble = await tnoodleRandomScramble('kilominx');
+    expect(scramble).not.toBeNull();
+    expect(scramble!.trim().split(/\s+/)).toHaveLength(77);
+    expect(scramble!.split('\n')).toHaveLength(7);
+    const copied = scrambleClipboardText(scramble!);
+    expect(copied.split(/\r?\n/)).toHaveLength(1);
+    expect(copied.split(' ')).toEqual(scramble!.trim().split(/\s+/));
+    await expectNativeColors(scramble!, scramble!);
+    await expectNativeColors(copied, scramble!);
+  });
+
+  it('rejects invalid or unsupported notation instead of silently drawing solved or partial state', () => {
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      for (const scramble of ['garbage', 'R garbage', '(R U', 'x', 'R+', 'constructor', '__proto__']) {
+        expect(renderScramblePreviewSvg({ event: 'kilominx', scramble }), scramble).toBeNull();
+      }
+    } finally { warning.mockRestore(); }
+  });
+
+  it('preserves pasted comments and grouped notation when copying', () => {
+    for (const scramble of ["R // note\nU", "(R U)\n2", "R++ /* keep\ncomment */ D--\nU", "[DR, DBL']\nUv"]) {
+      expect(scrambleClipboardText(scramble)).toBe(scramble);
+    }
+  });
+
+  it('rejects excessive preview work before expanding repeated or empty groups', () => {
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      for (const scramble of [
+        'R1000000000', '(R U)1000000000', '()1000000000',
+        '('.repeat(40) + 'R' + ')'.repeat(40), 'R '.repeat(8_193),
+      ]) {
+        expect(renderScramblePreviewSvg({ event: 'kilominx', scramble })).toBeNull();
+      }
+    } finally { warning.mockRestore(); }
   });
 });
 

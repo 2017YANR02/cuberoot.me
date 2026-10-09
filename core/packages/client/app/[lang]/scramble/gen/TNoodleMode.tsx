@@ -54,7 +54,7 @@ import {
 import type { RoundSheetInput } from './_tnoodle-pdf';
 import ClockColorPicker from './ClockColorPicker';
 import ProgressButton from './ProgressButton';
-import CopyAllScramblesButton from './CopyAllScramblesButton';
+import CopyAllScramblesButton, { scrambleClipboardText } from './CopyAllScramblesButton';
 import { scrambleEventPickerGroups } from './_event-picker';
 import TranslationsPicker from './TranslationsPicker';
 import SheetView, { type AttemptScramble, type RoundSheet } from './SheetView';
@@ -1112,6 +1112,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
   const allScramblesText = useMemo(
     () => (sheets ?? []).flatMap((sh) => convSheet(sh).attempts
       .map((attempt) => attempt.displayScramble ?? attempt.scramble)
+      .map(scrambleClipboardText)
       .filter(Boolean)).join('\n'),
     [sheets, convSheet],
   );

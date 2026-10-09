@@ -4,13 +4,14 @@
  * Top-level scramble preview dispatcher.
  *
  * All puzzles route through TimerScramblePreview. It uses cubing.js for the
- * supported 2D/3D puzzles and the canonical SVG renderers for SQ1/Megaminx/Duo/Magic.
+ * supported 2D/3D puzzles and the canonical SVG renderers for SQ1/Megaminx/Duo/Magic/Sphere.
  * NxN-class events (333oh / 333bld / 333fm / 444bld / 555bld / etc.) reuse
  * their base size's scrambler. Relays show only the 3x3 sub-scramble.
  *
  *   pyra / skewb / sq1 / mega / clock                    → shared preview
  *   222/333/444/555/666/777 + their bld/oh/fm variants   → shared preview
- *   fto / redi                                           → shared preview
+ *   fto / redi / kilominx                               → shared preview
+ *   sphere                                              → spherical 3x3 SVG
  *   r3 / r4 / r5                                         → 3x3 of first sub
  *   custom                                               → best-effort 3x3
  *   magic / mmagic                                      → practice start pattern
@@ -101,11 +102,13 @@ function baseNxnEvent(event: EventId): EventId | null {
 }
 
 function previewEvent(event: EventId): EventId | null {
+  // Sphere uses 3x3 moves but keeps its actual spherical preview.
+  if (event === 'sphere') return event;
   const nxn = baseNxnEvent(event);
   if (nxn !== null) return nxn;
   switch (event) {
     case 'pyra': case 'skewb': case 'sq1': case 'mega': case 'clock':
-    case 'pyraminx_duo': case 'magic': case 'mmagic': case 'fto': case 'redi':
+    case 'pyraminx_duo': case 'magic': case 'mmagic': case 'fto': case 'redi': case 'kilominx':
       return event;
     case 'r3': case 'r4': case 'r5': case 'custom':
       return '333';

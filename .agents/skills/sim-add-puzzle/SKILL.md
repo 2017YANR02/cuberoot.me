@@ -1,18 +1,20 @@
 ---
 name: sim-add-puzzle
-description: "用户说造魔方模拟器、给 /sim 加魔方、新魔方类型、X cube simulator、拖拽转动，或给该魔方接入 /scramble/gen、/timer 与验证预览时使用。覆盖 Three.js 渲染、转动交互、共享打乱/图示接线和验收；新求解器算法走 new-substep-solver。"
+description: "用户说造魔方模拟器、给 /sim 加魔方、新魔方类型、X cube simulator、拖拽转动，或给该魔方接入 /scramble/gen、/timer 与验证预览时使用。新增魔方默认同步交付模拟器、计时器打乱与打乱生成页，覆盖共享打乱、图示和跨页面验收；新求解器算法走 new-substep-solver。"
 ---
 
 # sim-add-puzzle
 
-给 `/sim` 加新魔方类型(站内渲染 + 转角动画 + 拖拽转动)，按用户范围接入打乱页与计时器。写真「引擎类型」，复用项目页面与共享能力。
+给 `/sim` 加新魔方类型(站内渲染 + 转角动画 + 拖拽转动)时，同一任务同步完成 `/timer` 的项目与打乱，以及 `/scramble/gen` 的比赛、批量、输入模式和图示；只有用户本次明确限定范围时才缩减。写真「引擎类型」，复用项目页面与共享能力。
 新求解器算法走 skill `new-substep-solver`；本 skill 负责渲染、交互、跨页面消费与验收，不因已有求解器就自动扩张产品页面。
 
 ## 路径与接入范围
 
 - 先读文件内容与 package `exports` 确认真实实现：共享状态/纯打乱在 `core/packages/puzzle-solvers/src/`，共享几何/SVG/引擎在 `core/packages/puzzle-render-core/src/`；`core/packages/client/app/[lang]/sim/engine/world.ts` 已是宿主薄层，禁止把共享实现复制回来。
 - 本文与旧范本的 `engine/` 是功能简称，不保证仍在 Web 目录；用 `rg --files` 定位并沿 re-export 找源文件。页面与浏览器手势留在 client；已迁手势见 `core/packages/client/components/puzzle-models/gestures/`，尚未迁出的适配仍按源码定位。
-- 任务含打乱页、计时器、新公开出口或网页预览时，先读 [跨页面接入与验收](references/integration-and-verification.md)，逐项标明适用、已验或未验；不要只因 `/sim` 菜单出现项目就报全站接入完成。
+- 新增独立可选魔方时，必读 [跨页面接入与验收](references/integration-and-verification.md)，以 `/sim`、`/timer`、`/scramble/gen` 三处全部可用为默认完成条件；单独修改既有外观或交互时只核对受影响入口。
+- 开工先列目标魔方的三入口接入矩阵，沿选择器、生成器、外层分发、实际预览及导出逐层核实；缺项同任务补齐，收尾逐入口写明已验、未验与限制。
+- 外观变体复用原规则的生成器，保留独立项目 ID、双语名称、球块或异形图示及计时记录；复用三阶打乱不等于只给用户普通三阶入口。
 
 ## 先分流(动手前定这 3 件)
 - cubing.js 有 `pg()`(PuzzleGeometry,有 3D 模型)→ 走 twisty(`TwistySection`),不碰自有引擎;只有 `svg()`(仅 2D net、没注册)→ 必走自有引擎(实测:`redi_cube`/`dino` 都得自有引擎,别被 twizzle 能开 2D net 误导)。
