@@ -169,7 +169,7 @@ pnpm --filter @cuberoot/client lint
 - 全局固定按钮对齐内容右沿:`right: max(16px, calc((100vw - <content-max-width>) / 2))`。
 - chip/tab/下拉项不显示数量计数。
 - WCA 时间锚点:时间序列默认视图从 2003-08-22 起步(第 0 帧 = 1982 快照),统计聚合必含 1982 场。
-- 可为任务边界读取 `git status`/diff,仅需历史证据时读 `git log`;删除文件或配置前须取得用户批准,同一对象和动作已有明确授权不重复询问,执行仍遵循全局回收站规则。
+- 可为任务边界读取 `git status`/diff，仅需历史证据时读 `git log`；文件和配置的增删改遵守部署章节的长期授权、当次任务范围及权限边界，保留他人未提交工作，执行仍遵循全局回收站规则。
 - 报根因/"修好了"/done 前必须实证(日志/EXPLAIN/run 输出/playwright);未证实标「假设」;性能/502/OOM 先 profile 禁猜。
 - UI 验证先搜并用 Playwright MCP(可能延迟加载);fixtures 全集别采样。
 - 新路由先 grep 防撞名;路由改名/合并不为旧路径加 redirect。
