@@ -841,8 +841,14 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   const groupMatchPending = needsGroupMatch && groupMatch?.key !== groupMatchKey;
   const matchedGroup = needsGroupMatch && groupMatch?.key === groupMatchKey ? groupMatch.group : null;
   const selectableGroups = groupMatchPending ? [] : matchedGroup ? [matchedGroup] : undefined;
+  const [rejectedGroupKey, setRejectedGroupKey] = useState<string | null>(null);
   const selectGroup = (group: string) => {
-    if (groupMatchPending || (matchedGroup && group !== matchedGroup)) return;
+    if (groupMatchPending) return;
+    if (matchedGroup && group !== matchedGroup) {
+      setRejectedGroupKey(groupMatchKey);
+      return;
+    }
+    setRejectedGroupKey(null);
     setField('groupId', group);
   };
   useEffect(() => {
@@ -2061,12 +2067,12 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                           disabled={groupMatchPending}
                           className={`submit-field-select${needPick ? ' submit-input-invalid' : ''}`}
                         >
-                          {withPlaceholder && <option value="" disabled={!!matchedGroup}>{tr({ zh: '请选择', en: 'Select…' })}</option>}
-                          {opts.map(g => <option key={g} value={g} disabled={!!matchedGroup && g !== matchedGroup}>{g}</option>)}
+                          {withPlaceholder && <option value="">{tr({ zh: '请选择', en: 'Select…' })}</option>}
+                          {opts.map(g => <option key={g} value={g}>{g}</option>)}
                         </select>
-                        {matchedGroup && <span className="submit-hint">{tr({
-                          zh: `已有打乱对应 ${matchedGroup} 组，不能选择其他分组`,
-                          en: `The existing scramble matches group ${matchedGroup}; other groups cannot be selected.`,
+                        {matchedGroup && rejectedGroupKey === groupMatchKey && <span className="submit-hint submit-hint-warn" role="alert">{tr({
+                          zh: `该分组与已有打乱不符，只能选择 ${matchedGroup} 组`,
+                          en: `This group does not match the existing scramble. Only group ${matchedGroup} can be selected.`,
                         })}</span>}
                         {needPick &&
                           <span className="submit-hint submit-hint-warn">{tr({ zh: '请先选择分组', en: 'Select a group first' })}</span>}

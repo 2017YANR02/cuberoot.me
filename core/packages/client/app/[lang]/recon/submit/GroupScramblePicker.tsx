@@ -45,6 +45,8 @@ export default function GroupScramblePicker({
   const t = useT();
   const [groups, setGroups] = useState<GroupScrambles[] | null>(null);
   const [failed, setFailed] = useState(false);
+  const [rejectedSelectionKey, setRejectedSelectionKey] = useState<string | null>(null);
+  const selectionKey = JSON.stringify([compWcaId, event, round, solveNum, selectableGroups]);
 
   const backdropProps = useModalDismiss(onClose);
 
@@ -101,9 +103,9 @@ export default function GroupScramblePicker({
           ) : (
             /* .gen-page 供 SheetView 表格的 --gen-* 变量 + 明暗主题(定义在 gen.css 的 .gen-page 作用域) */
             <div className="gen-page">
-              {selectableGroups?.length === 1 && <p className="submit-hint">{tr({
-                zh: `已有打乱对应 ${selectableGroups[0]} 组，其他分组仅供查看`,
-                en: `The existing scramble matches group ${selectableGroups[0]}. Other groups are view-only.`,
+              {rejectedSelectionKey === selectionKey && selectableGroups?.length === 1 && <p className="submit-hint submit-hint-warn" role="alert">{tr({
+                zh: `该分组与已有打乱不符，只能选择 ${selectableGroups[0]} 组`,
+                en: `This group does not match the existing scramble. Only group ${selectableGroups[0]} can be selected.`,
               })}</p>}
               <SheetView
                 sheet={sheet}
@@ -113,12 +115,15 @@ export default function GroupScramblePicker({
                 analyzable={false}
                 titleSuffix={tr({ zh: `第 ${solveLabel} 把`, en: ` · scramble #${solveLabel}` })}
                 selectedLabel={currentGroup ?? null}
-                selectableLabels={selectableGroups}
+                selectableLabels={selectableGroups?.length === 0 ? selectableGroups : undefined}
                 onSelectScramble={label => {
                   // analyzable 关 → 点行只「选中」,回传该行 label(=组号);
                   // 再点当前已选组时 label 为 null,退回 currentGroup。
                   const picked = label ?? currentGroup;
-                  if (selectableGroups && (!picked || !selectableGroups.includes(picked))) return;
+                  if (selectableGroups && (!picked || !selectableGroups.includes(picked))) {
+                    setRejectedSelectionKey(selectionKey);
+                    return;
+                  }
                   if (picked) onPick(picked);
                   onClose();
                 }}

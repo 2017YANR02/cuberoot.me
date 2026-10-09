@@ -46,10 +46,12 @@ const rows = () => [...host.querySelectorAll<HTMLTableRowElement>('tbody tr')];
 it('keeps all groups visible but only permits the matched C group', async () => {
   await render(['C']);
   expect(rows()).toHaveLength(5);
-  expect(host.textContent).toContain('已有打乱对应 C 组');
+  expect(host.querySelector('[role="alert"]')).toBeNull();
+  expect(host.textContent).not.toContain('其他分组仅供查看');
   for (const row of rows().filter(row => row.textContent?.startsWith('C') === false)) {
-    expect(row.getAttribute('aria-disabled')).toBe('true');
     await act(async () => row.click());
+    expect(host.querySelector('[role="alert"]')?.textContent).toBe('该分组与已有打乱不符，只能选择 C 组');
+    expect(host.querySelector('[role="alert"]')?.classList.contains('submit-hint-warn')).toBe(true);
   }
   expect(onPick).not.toHaveBeenCalled();
   expect(onClose).not.toHaveBeenCalled();
@@ -69,9 +71,12 @@ it('blocks clicks during matching and releases the restriction when no match app
 
 it('updates the permitted group in an already-open comparison dialog', async () => {
   await render(['C']);
+  await act(async () => rows()[0].click());
   await render(['D']);
+  expect(host.querySelector('[role="alert"]')).toBeNull();
   await act(async () => rows()[2].click());
   expect(onPick).not.toHaveBeenCalled();
+  expect(host.querySelector('[role="alert"]')?.textContent).toBe('该分组与已有打乱不符，只能选择 D 组');
   await act(async () => rows()[3].click());
   expect(onPick).toHaveBeenCalledExactlyOnceWith('D');
 });
