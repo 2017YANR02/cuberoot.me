@@ -65,7 +65,7 @@ export default function NativePuzzleControls({ id, disabled, showDragDepth, dept
         <p>{id === 'superz'
           ? t('R、U、F 等表示面转，UFR、DRF 等表示角转。后缀 v 表示整体转体，例如 Rv；整体转体不使用 x、y、z。', 'R, U and F name face turns; UFR and DRF name corner turns. The v suffix rotates the whole puzzle, for example Rv. Whole rotations use v instead of x, y or z.')
           : t('以任一转轴 A 为例：A 转外层，2A 只转第二层，Aw 同时转最外两层，Av 转动整体。', 'For any move family A: A turns the outer layer, 2A turns only the second layer, Aw turns both outer layers, and Av rotates the whole puzzle.')}</p>
-        <p>{t('加撇号表示逆转，加 2 表示两步。支持分组、交换子和 // 行注释。随机打乱用于练习。', 'A prime reverses the turn; 2 means two steps. Groups, commutators and // line comments are supported. Random-move scrambles are for practice.')}</p>
+        <p>{t('加撇号表示逆转，加 2 表示两步。支持分组、换位子和 // 行注释。随机打乱用于练习。', 'A prime reverses the turn; 2 means two steps. Groups, commutators and // line comments are supported. Random-move scrambles are for practice.')}</p>
       </details>
     </div>
   );
