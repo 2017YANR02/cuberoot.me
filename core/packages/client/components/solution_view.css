@@ -27,6 +27,18 @@
   height: 11px;
 }
 
+.detail-solution-text .recon-comment-link {
+  color: inherit;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.detail-solution-text .recon-comment-link:hover,
+.detail-solution-text .recon-comment-link:focus-visible {
+  color: var(--accent);
+  text-decoration-style: solid;
+}
+
 /* 解法文本中的可视闪烁光标 */
 .detail-cursor {
   display: inline-block;
