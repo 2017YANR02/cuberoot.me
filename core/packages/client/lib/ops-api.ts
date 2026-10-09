@@ -21,7 +21,7 @@ export interface OpsCommandInput {
 }
 
 export async function listCommands<T>(): Promise<T[]> {
-  const r = await sessionFetch(BASE);
+  const r = await sessionFetch(BASE, { cache: 'no-cache' });
   return handleApi<T[]>(r);
 }
 

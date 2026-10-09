@@ -1,5 +1,7 @@
 'use client';
 
+import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
+
 // Ported from packages/client-vite/src/pages/code/OpsPage.tsx.
 
 import { useEffect, useMemo, useState } from 'react';
@@ -191,13 +193,14 @@ export default function OpsPage() {
   const [err, setErr] = useState<string | null>(null);
   const [editor, setEditor] = useState<{ mode: 'add' | 'edit'; op?: OpCommand } | null>(null);
 
+  const refreshKey = useContentRefreshKey(editor === null);
   const refresh = () => {
     setErr(null);
     listCommands<OpCommand>()
       .then((data) => setCommands(data))
       .catch((e: Error) => setErr(e.message));
   };
-  useEffect(() => { refresh(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+  useEffect(() => { refresh(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [refreshKey]);
 
   const counts = useMemo(() => {
     const m: Record<string, number> = { all: commands?.length ?? 0 };

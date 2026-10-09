@@ -136,7 +136,7 @@ articleRoutes.get('/article', async (c) => {
     return c.json({ articles: rows.map(rowToListItem) });
   }
 
-  c.header('Cache-Control', 'public, max-age=300');
+  c.header('Cache-Control', 'public, no-cache, must-revalidate');
   const author = c.req.query('author');
   if (author) {
     // 按作者过滤:仅已发布,按发布时间倒序。author 作绑定参数传入,禁拼接。
@@ -324,7 +324,7 @@ articleRoutes.get('/article/:slug', async (c) => {
     return c.json({ error: 'Not found' }, 404);
   }
 
-  c.header('Cache-Control', published ? 'public, max-age=300' : 'no-store');
+  c.header('Cache-Control', 'no-store');
   return c.json({ article: rowToArticle(row, canEdit) });
 });
 

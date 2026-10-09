@@ -51,7 +51,7 @@ let pendingNotices: Promise<PageNotice[]> | null = null;
 /** 仅合并进行中的公开请求;完成后仍使用原有浏览器缓存规则。 */
 export function fetchPageNotices(): Promise<PageNotice[]> {
   if (!pendingNotices) {
-    const request = sessionFetch(apiUrl('/v1/page-notices'))
+    const request = sessionFetch(apiUrl('/v1/page-notices'), { cache: 'no-cache' })
       .then((r) => handleApi<PageNotice[]>(r))
       .finally(() => {
         if (pendingNotices === request) pendingNotices = null;

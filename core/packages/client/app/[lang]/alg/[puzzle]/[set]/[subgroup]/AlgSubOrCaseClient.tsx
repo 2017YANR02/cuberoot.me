@@ -1,5 +1,7 @@
 'use client';
 
+import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
+
 /**
  * `/alg/<puzzle>/<set>/<seg>` 的落地分流。`<seg>` 可能是**子组**(`ur` / `u` / `a+`)
  * 也可能是**某张 case**(`ur3` / `s+b1` / `a+-eo`)—— 两者同层、slug 空间实测不撞。
@@ -37,11 +39,12 @@ export default function AlgSubOrCaseClient() {
   const puzzle = route?.puzzle ?? '';
   const set = route?.set ?? '';
   const slug = route?.slug ?? '';
+  const refreshKey = useContentRefreshKey(!route?.edit);
 
   const [data, setData] = useState<AlgFile | null>(null);
   const [error, setError] = useState(false);
+  useEffect(() => { setData(null); }, [puzzle, set, isAdmin]);
   useEffect(() => {
-    setData(null);
     setError(false);
     if (!puzzle || !set) return;
     let live = true;
@@ -49,7 +52,7 @@ export default function AlgSubOrCaseClient() {
       .then(d => { if (live) setData(d); })
       .catch(() => { if (live) setError(true); });
     return () => { live = false; };
-  }, [puzzle, set, isAdmin]);
+  }, [puzzle, set, isAdmin, refreshKey]);
 
   if (error) {
     return <div className="alg-root"><div className="alg-empty">{tr({ zh: '加载失败', en: 'Failed to load.' })}</div></div>;

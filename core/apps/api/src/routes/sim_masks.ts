@@ -141,7 +141,7 @@ simMasksRoutes.put('/sim-masks/layout', async (c) => {
 
 // GET /v1/sim-masks — 全表(public)
 simMasksRoutes.get('/sim-masks', async (c) => {
-  c.header('Cache-Control', 'public, max-age=60');
+  c.header('Cache-Control', 'public, no-cache, must-revalidate');
   const rows = await query<MaskRow>(`SELECT ${COLS} FROM sim_masks ORDER BY cube_size, position, id`);
   return c.json(rows.map(rowToJson));
 });

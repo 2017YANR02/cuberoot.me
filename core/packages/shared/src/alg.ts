@@ -516,7 +516,7 @@ export function getAlgSetMeta(puzzle: AlgPuzzle, slug: string): AlgSetMeta | und
  *
  * Source of truth lives in the `alg_sets` / `alg_cases` PG tables; the 41 JSON
  * retired local JSON files are gone. Browser caches per
- * `Cache-Control` header (1 hour by default).
+ * ETag, checking freshness on each load instead of keeping edits hidden for an hour.
  */
 // `declare const process` keeps the literal `process.env.NODE_ENV` token sequence intact
 // so Webpack/Turbopack can replace it with a string literal at build time. Wrapped in a
@@ -541,8 +541,7 @@ export async function loadAlg(puzzle: AlgPuzzle, set: string, opts?: { fresh?: b
   const base = isDev
     ? '/v1/alg/sets'  // dev: Next rewrite proxy
     : 'https://api.cuberoot.me/v1/alg/sets';  // prod: 跨域到 API 子域
-  // NOTE: fresh=true 给 admin 用,绕开 1 小时 Cache-Control。
-  // 通过 query 时间戳 cache-bust + cache:'no-cache' header,跨浏览器最稳。
+  // 每次读取都核对版本；fresh 保留管理员显式强制读取的兼容入口。
   const query = new URLSearchParams();
   // The SQ1 CS data was realigned to Squanmate's canonical 170-case table.
   // Keep this versioned query until every pre-migration one-hour cache has expired,
@@ -561,7 +560,7 @@ export async function loadAlg(puzzle: AlgPuzzle, set: string, opts?: { fresh?: b
   const oneHandedCmll = puzzle === '3x3' && set === 'cmll'
     ? loadAlg('3x3', 'oh-cmll', opts).catch(() => null)
     : null;
-  const res = await fetch(url, opts?.fresh ? { cache: 'no-cache' } : undefined);
+  const res = await fetch(url, { cache: 'no-cache' });
   if (!res.ok) {
     throw new Error(`Failed to load alg ${puzzle}/${set}: HTTP ${res.status}`);
   }

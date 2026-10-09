@@ -1,5 +1,7 @@
 'use client';
 
+import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
+
 // Landing「今日复盘」— /recon 最新录入那天的全部复盘。每次加载自动取最新一天。
 // 宽屏一行四卡、≤1080px 三卡、≤900px 两卡(复用 /recon?view=grid 的 ReconCard 竖排卡,
 // 但不显示打乱公式:showScrambleFallback={false},只有视频封面才出媒体区);
@@ -27,6 +29,7 @@ interface Props {
 
 export default function TodayRecon({ lang, pinnedRecons, pinnedOnly = false, isAdmin, savingPins, pinError, onPin }: Props) {
   const isZh = lang === 'zh';
+  const refreshKey = useContentRefreshKey(!pinnedOnly);
   const [recons, setRecons] = useState<ReconSolve[] | null>(null);
 
   // idle-defer fetch(同 RecentScrambles / OngoingComps,不阻塞首屏)
@@ -50,7 +53,7 @@ export default function TodayRecon({ lang, pinnedRecons, pinnedOnly = false, isA
       if (idleId !== null) w.cancelIdleCallback?.(idleId);
       if (timeoutId !== null) clearTimeout(timeoutId);
     };
-  }, [pinnedOnly]);
+  }, [pinnedOnly, refreshKey]);
 
   const visibleRecons = pinnedOnly ? pinnedRecons : recons;
   if (pinnedOnly && !visibleRecons?.length) return null;

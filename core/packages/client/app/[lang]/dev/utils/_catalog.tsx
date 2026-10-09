@@ -73,6 +73,14 @@ export const UCATS: { id: UtilCat; zh: string; en: string }[] = [
 
 export const CATALOG: UtilEntry[] = [
   {
+    name: 'useContentRefreshKey',
+    sig: 'useContentRefreshKey(enabled = true): number',
+    imp: "import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';",
+    category: 'hook',
+    zh: '返回页面时触发读取更新，不轮询，编辑输入或打开弹窗时暂停。',
+    en: 'Refresh read effects on return without polling; pause while editing or a dialog is open.',
+  },
+  {
     name: 'useTimerSoloCompactLayout / timerSoloModalState / useBldConfigStore / useBldConfigHydrated',
     sig: 'useTimerSoloCompactLayout(): boolean; timerSoloModalState(blocking: boolean, solverSheet: boolean)',
     imp: "import { useTimerSoloCompactLayout, timerSoloModalState } from '@cuberoot/timer-ui/TimerSoloPage'; import { useBldConfigStore, useBldConfigHydrated } from '@cuberoot/timer-ui/bld-config-store';",

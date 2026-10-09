@@ -183,7 +183,7 @@ async function validateCaseInput(puzzle: string, setSlug: string, body: AlgCaseI
 // GET /v1/alg/sets — 列所有 (puzzle, set_slug) + 每套 case 数(count)。
 // count 是 /alg/progress 学习进度页的分母(已掌握 N / count);站内搜索忽略多余字段。
 algSetsRoutes.get('/alg/sets', async (c) => {
-  c.header('Cache-Control', 'public, max-age=3600');
+  c.header('Cache-Control', 'public, no-cache, must-revalidate');
   const rows = await query<AlgSetRow & { count: number | string }>(
     `SELECT s.puzzle, s.set_slug, s.source, s.scraped_at, s.updated_at,
             COALESCE(cc.n, 0)::int AS count
@@ -205,7 +205,7 @@ algSetsRoutes.get('/alg/sets', async (c) => {
 
 // GET /v1/alg/sets/:puzzle/order — 公式库首页卡片顺序，包含 Cross / LSLL 等虚拟入口。
 algSetsRoutes.get('/alg/sets/:puzzle/order', async (c) => {
-  c.header('Cache-Control', 'public, max-age=3600');
+  c.header('Cache-Control', 'public, no-cache, must-revalidate');
   const rows = await query<AlgCatalogPositionRow>(
     `SELECT item_key FROM alg_catalog_positions
       WHERE puzzle = ? ORDER BY position, item_key`,
@@ -250,7 +250,7 @@ algSetsRoutes.put('/alg/sets/:puzzle/order', async (c) => {
 
 // GET /v1/alg/sets/:puzzle/:set — 完整 AlgFile JSON(跟旧 JSON 文件 1:1)
 algSetsRoutes.get('/alg/sets/:puzzle/:set', async (c) => {
-  c.header('Cache-Control', 'public, max-age=3600');
+  c.header('Cache-Control', 'public, no-cache, must-revalidate');
   const puzzle = c.req.param('puzzle');
   const set = c.req.param('set');
 

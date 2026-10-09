@@ -1,5 +1,7 @@
 'use client';
 
+import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
+
 /**
  * /recon/[id] — full detail page, ported from packages/client-vite/src/pages/recon/ReconDetailPage.tsx.
  * Restored features: SameRound nav, SameCompEvent table, normalized-cross block, full StatsGrid,
@@ -967,6 +969,7 @@ function SameRoundNav({ solve }: { solve: ReconSolve }) {
 
 // 关联由服务端交叉匹配各类打乱,客户端不再用优先显示的一条打乱二次过滤。
 function SameScrambleNav({ solve, initial }: { solve: ReconSolve; initial?: ReconSolve[] }) {
+  const refreshKey = useContentRefreshKey();
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   // Seeded from the server (SSR) so the section is in the initial HTML — instant,
@@ -982,7 +985,7 @@ function SameScrambleNav({ solve, initial }: { solve: ReconSolve; initial?: Reco
       })
       .catch(() => { /* keep SSR-seeded matches */ });
     return () => { cancelled = true; };
-  }, [solve.id, solve.optimalScramble, solve.wcaScramble, solve.scramble]);
+  }, [solve.id, solve.optimalScramble, solve.wcaScramble, solve.scramble, refreshKey]);
 
   if (matches.length === 0) return null;
 

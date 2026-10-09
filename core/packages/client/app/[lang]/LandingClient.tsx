@@ -1,5 +1,7 @@
 'use client';
 
+import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
+
 /** Site entrypoint — Landing page. */
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import dynamic from 'next/dynamic';
@@ -107,6 +109,7 @@ function LandingCardContent({ label, Icon, iconImg }: LandingCardContentProps) {
 type ReconSolve = Awaited<ReturnType<typeof getPinnedRecons>>[number];
 
 export default function LandingPage() {
+  const contentRefreshKey = useContentRefreshKey();
   // Title is owned by page.tsx's generateMetadata (lib/page-meta.ts, key '').
   // The useDocumentTitle('', '') call that used to live here forced the tab back
   // to the bare brand after hydration, which would now overwrite that title.
@@ -175,9 +178,8 @@ export default function LandingPage() {
         refresh();
       })
       .catch(() => { /* 焦点新闻不可阻断首页 */ });
-    window.addEventListener('focus', refresh);
-    return () => { active = false; window.clearTimeout(expiryTimer); window.removeEventListener('focus', refresh); };
-  }, []);
+    return () => { active = false; window.clearTimeout(expiryTimer); };
+  }, [contentRefreshKey]);
 
   useEffect(() => {
     let active = true;
@@ -242,7 +244,7 @@ export default function LandingPage() {
       .then((orders) => { if (active) setCardOrders(orders); })
       .catch(() => { /* 自定义顺序不可阻断首页 */ });
     return () => { active = false; };
-  }, [isAdmin]);
+  }, [isAdmin, contentRefreshKey]);
 
   const searchCards = useMemo(
     () => SEARCH_CARDS.filter((card) => (isAdmin || locksLoaded)

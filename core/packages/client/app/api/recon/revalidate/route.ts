@@ -1,6 +1,7 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
 import { revalidateTag } from 'next/cache';
 import { reconCacheTag, RECON_SAME_SCRAMBLE_TAG } from '@/lib/recon-seo';
+import { forumThreadCacheTag, FORUM_CACHE_TAG } from '@/lib/forum-seo';
 
 export const runtime = 'nodejs';
 
@@ -14,12 +15,18 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json({ error: 'Unauthorized' }, { status: 401, headers });
   }
   const body = await request.json().catch(() => null);
+  const kind = body?.kind ?? 'recon';
   const id = String(body?.id ?? '');
-  if (!/^[1-9]\d*$/.test(id) || !Number.isSafeInteger(Number(id))) {
-    return Response.json({ error: 'Invalid recon id' }, { status: 400, headers });
+  if (!['recon', 'forum'].includes(kind) ||
+    (!(kind === 'forum' && body?.id === undefined) && (!/^[1-9]\d*$/.test(id) || !Number.isSafeInteger(Number(id))))) {
+    return Response.json({ error: 'Invalid content reference' }, { status: 400, headers });
   }
   // expire: 0 also refreshes the first visitor, rather than serving one stale response.
-  revalidateTag(reconCacheTag(id), { expire: 0 });
-  revalidateTag(RECON_SAME_SCRAMBLE_TAG, { expire: 0 });
+  if (kind === 'forum') {
+    revalidateTag(id ? forumThreadCacheTag(id) : FORUM_CACHE_TAG, { expire: 0 });
+  } else {
+    revalidateTag(reconCacheTag(id), { expire: 0 });
+    revalidateTag(RECON_SAME_SCRAMBLE_TAG, { expire: 0 });
+  }
   return Response.json({ revalidated: true }, { headers });
 }

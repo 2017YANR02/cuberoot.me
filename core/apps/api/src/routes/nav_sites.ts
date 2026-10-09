@@ -1,6 +1,6 @@
 /**
  * /site 网址导航 (nav_sites) 路由。
- *   - GET    /v1/nav/sites              — 全表(1h cache),前端一次拉完
+ *   - GET    /v1/nav/sites              — 全表(条件缓存),前端一次拉完
  *   - POST   /v1/nav/sites              — admin 新增,append 到该 group 末尾
  *   - PUT    /v1/nav/sites/:id          — admin 编辑
  *   - DELETE /v1/nav/sites/:id          — admin 删
@@ -194,7 +194,7 @@ function normalize(b: NavSiteInput): {
 
 // GET /v1/nav/sites — 全表
 navSitesRoutes.get('/nav/sites', async (c) => {
-  c.header('Cache-Control', 'public, max-age=3600');
+  c.header('Cache-Control', 'public, no-cache, must-revalidate');
   const rows = await query<NavSiteRow>(
     'SELECT * FROM nav_sites ORDER BY group_id, position'
   );
@@ -222,7 +222,7 @@ navSitesRoutes.put('/nav/home-locks', async (c) => {
 });
 
 navSitesRoutes.get('/nav/home-order', async (c) => {
-  c.header('Cache-Control', 'public, max-age=60');
+  c.header('Cache-Control', 'public, no-cache, must-revalidate');
   const rows = await query<{ group_id: string; item_id: string }>(
     `SELECT group_id, item_id FROM home_card_positions
       ORDER BY group_id, position, item_id`,
