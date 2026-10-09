@@ -40,6 +40,9 @@ importers:
       '@app-foundation/account-policy':
         specifier: https://github.com/2017YANR02/app-foundation/releases/download/v0.4.0/app-foundation-account-policy-0.1.0.tgz
         version: https://github.com/2017YANR02/app-foundation/releases/download/v0.4.0/app-foundation-account-policy-0.1.0.tgz
+      '@app-foundation/face-verification':
+        specifier: https://github.com/2017YANR02/app-foundation/releases/download/v0.5.0/app-foundation-face-verification-0.1.0.tgz
+        version: https://github.com/2017YANR02/app-foundation/releases/download/v0.5.0/app-foundation-face-verification-0.1.0.tgz
       '@app-foundation/messaging':
         specifier: https://github.com/2017YANR02/app-foundation/releases/download/v0.2.0/app-foundation-messaging-0.1.0.tgz
         version: https://github.com/2017YANR02/app-foundation/releases/download/v0.2.0/app-foundation-messaging-0.1.0.tgz
@@ -1092,6 +1095,11 @@ packages:
 
   '@app-foundation/account-policy@https://github.com/2017YANR02/app-foundation/releases/download/v0.4.0/app-foundation-account-policy-0.1.0.tgz':
     resolution: {integrity: sha512-+g2x4KTZRARWEg+HaBl54k+h2SKx0HAi0QIKYqlChHy1G49HLtqB3IgwoO3N4LqEcugU1oZo2gHJRuf4A5iHnA==, tarball: https://github.com/2017YANR02/app-foundation/releases/download/v0.4.0/app-foundation-account-policy-0.1.0.tgz}
+    version: 0.1.0
+    engines: {node: '>=22'}
+
+  '@app-foundation/face-verification@https://github.com/2017YANR02/app-foundation/releases/download/v0.5.0/app-foundation-face-verification-0.1.0.tgz':
+    resolution: {integrity: sha512-MsUStGryPOtLKw5ecvd4L4Ndd9p1CZuRMxe8AzGHftdgmHd890eo56r22eZDn3SLBTayF04B4n41S23oXrpCXg==, tarball: https://github.com/2017YANR02/app-foundation/releases/download/v0.5.0/app-foundation-face-verification-0.1.0.tgz}
     version: 0.1.0
     engines: {node: '>=22'}
 
@@ -6380,6 +6388,8 @@ snapshots:
       '@capacitor/keyboard': 8.0.5(@capacitor/core@8.5.3)
 
   '@app-foundation/account-policy@https://github.com/2017YANR02/app-foundation/releases/download/v0.4.0/app-foundation-account-policy-0.1.0.tgz': {}
+
+  '@app-foundation/face-verification@https://github.com/2017YANR02/app-foundation/releases/download/v0.5.0/app-foundation-face-verification-0.1.0.tgz': {}
 
   '@app-foundation/messaging@https://github.com/2017YANR02/app-foundation/releases/download/v0.2.0/app-foundation-messaging-0.1.0.tgz': {}
 
