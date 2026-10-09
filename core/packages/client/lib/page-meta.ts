@@ -44,8 +44,8 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'cube-history': {
     title: { zh: '三阶魔方发展史与型号图鉴', en: '3×3 Cube History and Model Archive' },
     description: {
-      zh: '以中国品牌为主的三阶魔方图鉴。查阅型号、版本差异、发布日期、中国首发价、性能参数与评价。',
-      en: 'Browse 3×3 cube models, variants, release dates, China launch prices, specifications and reviews, with a focus on Chinese brands.',
+      zh: '以中国品牌为主的三阶魔方图鉴。查阅型号、版本差异、发布日期、首发价与当前参考价、性能参数及评价。',
+      en: 'Browse 3×3 cube models, variants, release dates, launch and current prices, specifications and reviews, with a focus on Chinese brands.',
     },
   },
   'wca/wc-2027': { title: WC_2027_ANNOUNCEMENT.title, description: WC_2027_ANNOUNCEMENT.summary },

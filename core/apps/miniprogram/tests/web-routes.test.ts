@@ -189,7 +189,7 @@ describe('mini program web routes', () => {
       path: '/pages/web/index?key=alg',
     });
     const routeBackedTools = listWebTools().filter((tool) => tool.key !== null);
-    expect(routeBackedTools).toHaveLength(57);
+    expect(routeBackedTools).toHaveLength(58);
     expect(routeBackedTools.every((tool) => resolveWebRouteShare(tool.key) !== null)).toBe(true);
     expect(resolveWebRouteShare('account')?.path).toBe('/pages/web/index?key=home&path=%2Fzh%2Faccount');
     expect(resolveWebRouteShare('privacy')?.path).toBe('/pages/web/index?key=home&path=%2Fzh%2Fprivacy');

@@ -1070,6 +1070,34 @@
       "url": "https://cubezz.com/goods.php?id=6863",
       "publisher": "Cubezz",
       "kind": "retailer"
+    },
+    {
+      "id": "r4-scdb-tornado-v3",
+      "title": "Tornado V3 Flagship hands-on review — Basilio Noris, October 22, 2022",
+      "url": "https://www.speedcubedb.com/reviews/X-Man_Tornado_v3",
+      "publisher": "Basilio Noris / SpeedCubeDB",
+      "kind": "review"
+    },
+    {
+      "id": "r4-scdb-tornado-v4",
+      "title": "Tornado V4 hands-on review — Basilio Noris, December 23, 2024",
+      "url": "https://speedcubedb.com/reviews/Tornado_v4",
+      "publisher": "Basilio Noris / SpeedCubeDB",
+      "kind": "review"
+    },
+    {
+      "id": "r4-qiyi-v5-review-dongjutu",
+      "title": "风五代先锋版试用反馈 — 东橘涂，奇艺官方选录，2026-04-15",
+      "url": "https://www.sina.cn/news/detail/5287928146166839.html",
+      "publisher": "东橘涂 / 奇艺官方转引",
+      "kind": "review"
+    },
+    {
+      "id": "r4-qiyi-v5-review-shuji",
+      "title": "风五代先锋版与旗舰版对比 — 属鸡的猪，奇艺官方选录，2026-04-08",
+      "url": "https://www.sina.cn/news/detail/5285428269945786.html",
+      "publisher": "属鸡的猪 / 奇艺官方转引",
+      "kind": "review"
     }
   ],
   "cubes": [
@@ -1456,14 +1484,28 @@
         "precision": "day",
         "basis": "official",
         "note": {
-          "zh": "商家页面的上架/发行日期；不等同于全球统一首发日。",
-          "en": "Retailer listing/release date; not necessarily the worldwide launch."
+          "zh": "奇艺官方发展史记载的风三代发布日期。",
+          "en": "Tornado V3 release date recorded in QiYi’s official company history."
         },
         "sourceIds": [
           "qiyi-official-history"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 32.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "X-Man Tornado V3 M Flagship 3x3 (Magnetic Core) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "qo-product-x-man-tornado-v3-m-magnetic-core"
+        }
+      ],
       "specs": {
         "size": "55.5 mm",
         "weight": "72.0 g",
@@ -1486,16 +1528,16 @@
       ],
       "assessment": {
         "summary": {
-          "zh": "V3 扩展了轴磁与磁悬浮配置，同时改进中心固定；各版本单独记录以免混淆重量和上市时间。",
-          "en": "V3 introduced core-magnetic and MagLev configurations while revising center fastening; each version has its own weight and listing record."
+          "zh": "Noris 对弹簧旗舰版的实测：转动快且可控，块体有纸感摩擦，轴磁定位清晰，容错宽容。",
+          "en": "Testing the spring Flagship, Noris found fast, controlled turning, papery friction, clear core-magnet feedback and forgiving corner cutting."
         },
         "tradeoffs": {
-          "zh": "调校丰富也意味着更多零件；未给出所有批次统一的可靠性结论。",
-          "en": "More tuning brings more components; no universal reliability conclusion is asserted for every batch."
+          "zh": "中层转动需要更多力，偶有中层后卡顿；中心盖不易拆。结论对应其测试版本与设置。",
+          "en": "Slices needed more force and occasionally led to catches; center caps were difficult to remove. These findings describe his tested version and setup."
         },
-        "basis": "editorial",
+        "basis": "review",
         "sourceIds": [
-          "qo-product-x-man-tornado-v3-m-magnetic-core"
+          "r4-scdb-tornado-v3"
         ]
       },
       "variants": [
@@ -1505,7 +1547,8 @@
         "xman-tornado-v3-retail",
         "qiyi-official-history",
         "xman-tornado-v3-official",
-        "qo-product-x-man-tornado-v3-m-magnetic-core"
+        "qo-product-x-man-tornado-v3-m-magnetic-core",
+        "r4-scdb-tornado-v3"
       ],
       "tags": [
         "magnet",
@@ -1744,7 +1787,21 @@
           "qo-product-qiyi-m-pro-3x3-v3-pioneer-uv"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 17.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "QiYi M Pro 3x3 V3 (Pioneer UV) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "qo-product-qiyi-m-pro-3x3-v3-pioneer-uv"
+        }
+      ],
       "specs": {
         "size": "55.5 mm",
         "weight": "67.22 g (SpeedCubeShop)",
@@ -1841,7 +1898,25 @@
           "qiyi-official-history"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 25.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "X-Man Tornado V2 M 3x3 — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "xman-tornado-v2-retail",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "specs": {
         "size": "55.0 mm",
         "weight": "72.0 g",
@@ -1941,7 +2016,21 @@
           "qo-product-x-man-tornado-v3-m-standard"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 24.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "X-Man Tornado V3 M Standard 3x3 — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "qo-product-x-man-tornado-v3-m-standard"
+        }
+      ],
       "specs": {
         "size": "55.5 mm",
         "weight": "69.0 g",
@@ -2039,7 +2128,21 @@
           "qo-product-qiyi-m-pro-v2-3x3-pioneer-uv"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 15.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "QiYi M Pro 3x3 V2 (Pioneer UV) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "qo-product-qiyi-m-pro-v2-3x3-pioneer-uv"
+        }
+      ],
       "specs": {
         "size": "55.5 mm",
         "weight": "76.0 g",
@@ -2213,7 +2316,25 @@
           "qo-product-qiyi-m-pro-3x3-maglev"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 13.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "QiYi M Pro 3x3 (MagLev) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "qo-product-qiyi-m-pro-3x3-maglev",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "specs": {
         "size": "55.0 mm",
         "weight": "80.0 g",
@@ -2403,7 +2524,21 @@
           "qiyi-warrior-m-retail"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 4.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "QiYi Warrior M 3x3 (Magnetic) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "qo-product-qiyi-warrior-m-3x3-magnetic"
+        }
+      ],
       "specs": {
         "size": "56.0 mm",
         "weight": "58.0 g",
@@ -3404,7 +3539,21 @@
           "xman-tornado-v4-retail"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 35.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "X-Man Tornado V4 M 3x3 (Flagship) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "xman-tornado-v4-retail"
+        }
+      ],
       "specs": {
         "size": null,
         "weight": null,
@@ -3771,7 +3920,25 @@
           "xman-tornado-early-review"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 14.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "X-Man Tornado — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "xman-tornado-retail",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "specs": {
         "size": "56.1 mm",
         "weight": null,
@@ -3862,7 +4029,21 @@
           "qo-product-x-man-tornado-v3-m-pioneer-uv-3x3"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 44.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "X-Man Tornado V3 M Pioneer UV 3x3 — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "qo-product-x-man-tornado-v3-m-pioneer-uv-3x3"
+        }
+      ],
       "specs": {
         "size": "55.5 mm",
         "weight": "82.0 g",
@@ -4117,14 +4298,28 @@
         "precision": "day",
         "basis": "official",
         "note": {
-          "zh": "商家页面的上架/发行日期；不等同于全球统一首发日。",
-          "en": "Retailer listing/release date; not necessarily the worldwide launch."
+          "zh": "奇艺官方微博于 2026-04-25 宣布风五代上市。",
+          "en": "QiYi’s official Weibo announced the Tornado V5 launch on April 25, 2026."
         },
         "sourceIds": [
           "xman-tornado-v5-official"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 44.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "X-Man Tornado V5 3x3 (Flagship UV) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "xman-tornado-v5-retail"
+        }
+      ],
       "specs": {
         "size": null,
         "weight": null,
@@ -4325,7 +4520,21 @@
           "qiyi-m-pro-v2-retail"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 9.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "QiYi M Pro 3x3 V2 (Flagship) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "qo-product-qiyi-m-pro-v2-3x3-flagship"
+        }
+      ],
       "specs": {
         "size": "55.5 mm",
         "weight": "68.0 g",
@@ -4797,7 +5006,21 @@
           "qo-product-x-man-tornado-v3-3x3-premium-flagship-uv"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 29.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "X-Man Tornado V3 3x3 Premium (Flagship UV) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "qo-product-x-man-tornado-v3-3x3-premium-flagship-uv"
+        }
+      ],
       "specs": {
         "size": null,
         "weight": null,
@@ -5274,7 +5497,21 @@
           "qo-product-qiyi-warrior-m-3x3-magnetic-uv-coated"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 7.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "QiYi Warrior M 3x3 (Magnetic + UV Coated) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "qo-product-qiyi-warrior-m-3x3-magnetic-uv-coated"
+        }
+      ],
       "specs": {
         "size": "56.0 mm",
         "weight": "59.0 g",
@@ -5548,7 +5785,21 @@
           "qo-product-x-man-tornado-v3-3x3-premium-pioneer-uv"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 42.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "X-Man Tornado V3 3x3 Premium (Pioneer UV) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "qo-product-x-man-tornado-v3-3x3-premium-pioneer-uv"
+        }
+      ],
       "specs": {
         "size": null,
         "weight": null,
@@ -6023,7 +6274,21 @@
           "qo-product-x-man-tornado-v3-3x3-premium-standard-2"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 22.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "X-Man Tornado V3 3x3 Premium (Standard) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "qo-product-x-man-tornado-v3-3x3-premium-standard-2"
+        }
+      ],
       "specs": {
         "size": null,
         "weight": null,
@@ -6543,7 +6808,25 @@
           "qo-product-qiyi-m-pro-3x3-elite"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 12.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "QiYi M Pro 3x3 Elite — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "qo-product-qiyi-m-pro-3x3-elite",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "specs": {
         "size": "56.0 mm",
         "weight": "76.0 g",
@@ -6732,7 +7015,21 @@
           "qo-product-qiyi-m-pro-3x3-art-version"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 13.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "QiYi M Pro 3x3 (Art Version) — Black",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "qo-product-qiyi-m-pro-3x3-art-version"
+        }
+      ],
       "specs": {
         "size": "56.0 mm",
         "weight": "74.0 g",
@@ -6914,7 +7211,21 @@
           "qiyi-m-pro-v3-retail"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 12.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "QiYi M Pro 3x3 V3 (Flagship) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "qo-product-qiyi-m-pro-3x3-v3-flagship"
+        }
+      ],
       "specs": {
         "size": "55.5 mm",
         "weight": "62.82 g (SpeedCubeShop / Atoutcubes)",
@@ -7002,7 +7313,25 @@
           "qo-product-qiyi-m-pro-3x3-elite-uv-coated"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 17.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "QiYi M Pro 3x3 Elite (UV Coated) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "qo-product-qiyi-m-pro-3x3-elite-uv-coated",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "specs": {
         "size": "56.0 mm",
         "weight": "76.0 g",
@@ -7177,7 +7506,25 @@
           "qo-product-x-man-tornado-v3-m-magnetic-core-maglev"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 39.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "X-Man Tornado V3 M Pioneer 3x3 (Magnetic Core + MagLev) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "qo-product-x-man-tornado-v3-m-magnetic-core-maglev",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "specs": {
         "size": "55.5 mm",
         "weight": "81.0 g",
@@ -7841,7 +8188,21 @@
           "xman-tornado-v4-pioneer"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 49.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "X-Man Tornado V4 M 3x3 (Pioneer UV) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "xman-tornado-v4-pioneer"
+        }
+      ],
       "specs": {
         "size": null,
         "weight": null,
@@ -7865,16 +8226,16 @@
       ],
       "assessment": {
         "summary": {
-          "zh": "V4 集中简化磁力调节并升级内部定位；手感仍取决于版本与个人设置。",
-          "en": "V4 consolidates magnet adjustment and revises internal positioning; feel still depends on version and setup."
+          "zh": "Noris 上手认为 V4 保留快速、宽容的转动，声音和磁力顿挫较 V3 柔和；先锋版增加棱块三磁结构。",
+          "en": "Noris found fast, forgiving turning with softer sound and less abrupt magnetic feedback than V3. The Pioneer adds triple magnets on the edges."
         },
         "tradeoffs": {
-          "zh": "限量配色或礼盒不自动意味着不同机械结构；来源未明确的配置保持待核。",
-          "en": "Limited colors or bundles do not automatically imply a different mechanism; unspecified configurations remain unverified."
+          "zh": "设置太松时容易飞棱，过紧又会显慢；中心盖仍不易拆，需要花时间找合适松紧。",
+          "en": "Loose settings produced pops, while excessive tension made it feel slow. Caps remained awkward to remove, so finding a suitable setting took care."
         },
-        "basis": "editorial",
+        "basis": "review",
         "sourceIds": [
-          "xman-tornado-v4-pioneer"
+          "r4-scdb-tornado-v4"
         ]
       },
       "variants": [
@@ -7882,7 +8243,8 @@
       ],
       "sourceIds": [
         "xman-tornado-v4-pioneer",
-        "xman-tornado-v4-official"
+        "xman-tornado-v4-official",
+        "r4-scdb-tornado-v4"
       ],
       "tags": [
         "archive-expanded",
@@ -8025,8 +8387,8 @@
         "precision": "day",
         "basis": "official",
         "note": {
-          "zh": "商家页面的上架/发行日期；不等同于全球统一首发日。",
-          "en": "Retailer listing/release date; not necessarily the worldwide launch."
+          "zh": "奇艺官方发展史记载的智能三阶发布日期。",
+          "en": "Smart-cube release date recorded in QiYi’s official company history."
         },
         "sourceIds": [
           "qiyi-official-history"
@@ -8324,7 +8686,21 @@
           "qiyi-m-pro-retail"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 9.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "QiYi M Pro 3x3 — Black",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "qo-product-qiyi-m-pro-3x3"
+        }
+      ],
       "specs": {
         "size": "55.0 mm",
         "weight": "76.0 g",
@@ -8523,7 +8899,25 @@
           "qo-product-x-man-tornado-v2-le-infinity-stone"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 34.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "X-Man Tornado V2 (LE Infinity Stone) — Default Title",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "qo-product-x-man-tornado-v2-le-infinity-stone",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "specs": {
         "size": "55.0 mm",
         "weight": "72.0 g",
@@ -8981,7 +9375,21 @@
           "qiyi-warrior-s-retail"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 4.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "QiYi Warrior S 3x3 — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "qiyi-warrior-s-retail"
+        }
+      ],
       "specs": {
         "size": "55.5 mm",
         "weight": "77.0 g",
@@ -9556,7 +9964,21 @@
           "qo-product-x-man-tornado-v5-3x3-pioneer"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 54.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "X-Man Tornado V5 3x3 (Pioneer UV) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "qo-product-x-man-tornado-v5-3x3-pioneer"
+        }
+      ],
       "specs": {
         "size": null,
         "weight": null,
@@ -9580,17 +10002,17 @@
       ],
       "assessment": {
         "summary": {
-          "zh": "V5 将核心定位与调节维度继续细分；这里按弹簧与磁悬浮版分别记录。",
-          "en": "V5 expands core positioning and tuning dimensions, with spring and MagLev versions documented separately."
+          "zh": "奇艺选录东橘涂、属鸡的猪的试用：先锋版比旗舰版更轻飘，轴磁反馈与自归位感更明显。",
+          "en": "In trial reports selected by QiYi, Dongjutu and Shujidezhu described the Pioneer as floatier than the Flagship, with more noticeable core-magnet feedback and auto-alignment."
         },
         "tradeoffs": {
-          "zh": "组合数量是调节维度的乘积，不能等同于速度提升倍数；未核得本版本净重。",
-          "en": "The combination count is a product of settings, not a speed-improvement multiplier; exact-version net weight remains unverified."
+          "zh": "这是品牌选录的个人体验，未提供同条件计时或耐久性对照；更强自归位不代表人人更快。",
+          "en": "These are brand-selected personal impressions without matched timing or durability comparisons. Stronger auto-alignment does not establish faster solves for every user."
         },
-        "basis": "editorial",
+        "basis": "review",
         "sourceIds": [
-          "qo-product-x-man-tornado-v5-3x3-pioneer",
-          "xman-tornado-v5-official"
+          "r4-qiyi-v5-review-dongjutu",
+          "r4-qiyi-v5-review-shuji"
         ]
       },
       "variants": [
@@ -9598,7 +10020,9 @@
       ],
       "sourceIds": [
         "qo-product-x-man-tornado-v5-3x3-pioneer",
-        "xman-tornado-v5-official"
+        "xman-tornado-v5-official",
+        "r4-qiyi-v5-review-dongjutu",
+        "r4-qiyi-v5-review-shuji"
       ],
       "tags": [
         "archive-expanded",
@@ -9654,7 +10078,25 @@
           "qo-product-qiyi-m-pro-3x3-ball-core-uv"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 17.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "QiYi M Pro 3x3 Ball-Core UV — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "qo-product-qiyi-m-pro-3x3-ball-core-uv",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "specs": {
         "size": "55.0 mm",
         "weight": "85.0 g",
@@ -10098,6 +10540,8 @@
   ],
   "coverageNotes": [
     "Companion to qiyi-other.json; retain the combined source index and stable model IDs.",
-    "2026-10-08 价格范围调整：按用户要求只保留有首发依据、配置明确的中国大陆人民币首发价；其他市场报价、后续零售或批发价、配置不明确的系列标价已移除。此前研究笔记描述的是早期采集过程，不代表当前价格收录范围。 / Price scope narrowed to verified mainland-China launch prices in CNY for exact configurations. Other markets, subsequent retail/wholesale quotes and unspecified family prices were removed. Earlier handover notes describe prior collection passes, not the current price scope."
+    "2026-10-08 价格范围调整：按用户要求只保留有首发依据、配置明确的中国大陆人民币首发价；其他市场报价、后续零售或批发价、配置不明确的系列标价已移除。此前研究笔记描述的是早期采集过程，不代表当前价格收录范围。 / Price scope narrowed to verified mainland-China launch prices in CNY for exact configurations. Other markets, subsequent retail/wholesale quotes and unspecified family prices were removed. Earlier handover notes describe prior collection passes, not the current price scope.",
+    "2026-10-09 现价补充：核对 TheCubicle 美国站 27 个重点配置的公开商品数据，逐一记录具体配置与配色的单件 USD 原币列示价、来源和采集日；其中 8 条不可购买选项明确标为已售罄列示价。保留有据的大陆人民币首发价，不使用汇率换算、阶梯批发价或跨版本起价。此范围更新取代此前仅收录首发价的限制。 / October 9, 2026 update: checked public TheCubicle US product data for 27 priority configurations, recording exact configuration/color, single-unit USD price, source and observation date. 8 unavailable options are explicitly marked as sold-out listings. Verified mainland CNY launch quotes remain; no currency conversion, quantity-tier prices or cross-version starting prices are used. This supersedes the earlier launch-only price scope.",
+    "2026-10-09 体验评价补充：3 条重点配置增加具名上手评测或该商品页买家反馈，标明个人体验来源；赠测样品和品牌选录反馈明确披露。未将主观手感、个人成绩或单个故障推成统一性能或可靠性结论。 / October 9, 2026 assessment update: 3 priority configurations now cite identified hands-on reviews or buyers on the exact product page. Supplied samples and brand-selected impressions are disclosed; subjective feel, individual times and isolated faults are not treated as universal performance or reliability findings."
   ]
 }
