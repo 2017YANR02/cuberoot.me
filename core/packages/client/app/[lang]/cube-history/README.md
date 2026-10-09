@@ -8,6 +8,7 @@ Evidence cutoff: **2026-10-07**. On 2026-10-08, the user narrowed the price scop
 
 | Measure | Current archive |
 | --- | ---: |
+| Model groups in the catalog | 611 |
 | Individually addressable model / configuration / named-edition records | 973 |
 | Brand / line labels, including historical trade names | 68 |
 | Unique source URLs | 1337 |
@@ -69,7 +70,11 @@ Outside the route and its dedicated tests, changes are limited to `lib/page-meta
 
 ## Browsing and review
 
-The default view is the photo catalog. Brand, calendar year, era, family, positioning, category, technology and evidence filters intersect. GAN, MoYu, QiYi and YJ lead both the image shortcuts and brand dropdown. Search is the primary entry; brand, family, year and position remain immediately visible, with secondary facets under More filters and individual active-filter removal. Search examines every record and defaults to model-name relevance; explicit chronological and natural model-name sorting remain available. Compact, full-width and bilingual queries retain generation-number boundaries and configuration names. The result bar distinguishes the complete match count from the currently rendered page, with Show all and Back to search actions below the results. Cards, the table, details and comparisons all display the source-linked product photo.
+The default view is the photo catalog. Each documented model family occupies one card or table row, with a version selector for its matching configurations. The current 973 records form 611 model groups using the existing `familyId` relationships; all exact-version IDs and evidence remain independently addressable. Selecting a version updates the photograph, name, date, specifications, China launch price, detail target and comparison target together.
+
+Filtering runs before grouping, so a search, year or flagship filter exposes only its matching versions; a chosen version that no longer matches falls back to the first current match. Pagination and result model counts operate on groups, while the version count and JSON export include all matching records.
+
+Brand, calendar year, era, family, positioning, category, technology and evidence filters intersect. GAN, MoYu, QiYi and YJ lead both the image shortcuts and brand dropdown. Search is the primary entry; brand, family, year and position remain immediately visible, with secondary facets under More filters and individual active-filter removal. Search examines every record and defaults to model-name relevance; explicit chronological and natural model-name sorting remain available. Compact, full-width and bilingual queries retain generation-number boundaries and configuration names. The result bar distinguishes the complete match count from the currently rendered page, with Show all and Back to search actions below the results. Cards, the table, details and comparisons all display the source-linked product photo.
 
 The prominent **Flagships only** switch below the search examples uses the existing `tier=flagship` URL state. It stays synchronized with the positioning dropdown and active-filter removal, preserves the other filters when toggled, and can be shared or reopened directly. It uses each record's own source-supported editorial positioning, including historical flagships and flagships whose year remains unknown; it does not inherit a parent model's positioning.
 
@@ -171,6 +176,10 @@ PR CI checks the wider client suite and repository contracts; Vercel builds the 
 
 The revision has been served through the local Next.js route in Chinese and English, including a direct GAN12 model/family URL. Browser transport was unavailable during this revision, so desktop/mobile screenshots, real touch interaction and the four theme combinations still require review in the linked preview. Automated checks and HTTP responses do not substitute for that visual inspection.
 
+## Homepage entry
+
+The current homepage has a search entry for this route, generated from `PAGE_META`; it has no dedicated fixed homepage card. On the Chinese homepage, type “魔方发展史” or “型号图鉴” and click “三阶魔方发展史与型号图鉴” under the “页面” results. Enter submits an AI question in the current homepage search, so opening the route requires clicking its page result.
+
 ## Publication
 
-The work stays on the existing draft PR against `main`. The feature-branch Vercel URL provides the review copy; approval and merge remain separate. The existing main-branch deployment workflow publishes the route after merge. No account password or personal access token needs to be shared in chat.
+The original archive was merged through PR #91. Follow-up changes use a separate review PR and feature-branch Vercel preview; merging a follow-up requires user approval. The existing main-branch deployment workflow publishes the route after merge. No account password or personal access token needs to be shared in chat.
