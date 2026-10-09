@@ -205,6 +205,7 @@ import {
   TimerAttemptSplitStatus,
   TimerSolveDetailModal,
   TimerCubePreview,
+  timerCubePreviewAspect,
   TimerDrillPicker,
   TimerManualEntryModal,
   TimerMoreMenu,
@@ -4072,6 +4073,7 @@ className: targetFeedbackClass,
 ariaLabel: copy.timer,
 colorClass: `${timerColorClass} tf-${store!.settings.timerFont}`,
 fontScale: store!.settings.timerFontScale,
+cornerAspect: smartCube.phase === 'connected' ? undefined : timerCubePreviewAspect(activeEvent, scramble),
 cornerSlot: smartCube.phase === 'connected' ? (
                   <div className="timer-live-cube">
                     <LiveCubeState
