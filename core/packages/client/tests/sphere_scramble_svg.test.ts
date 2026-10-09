@@ -1,30 +1,21 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import * as THREE from 'three';
 import Cube from '@cuberoot/puzzle-render-core/engine/nxn/cube';
-import { HOME_SCENE_ROT } from '@cuberoot/puzzle-render-core/engine/viewControls';
-import { exportSimSvg } from '@cuberoot/puzzle-render-core/scene-svg';
+import { CUBE_FILL } from '@cuberoot/puzzle-render-core/support/cube-colors';
+import { renderCubeNetSvg } from '@cuberoot/puzzle-render-core/support/cube-net-svg';
+import { renderUnfoldedSvgForEvent } from '@cuberoot/shared/cube-unfolded-svg';
 
 const require = createRequire(import.meta.url);
 
 afterEach(() => vi.unstubAllGlobals());
 
 /** The /sim setup path is independent of the public renderer's instant turns. */
-function simulatorSvg(scramble: string): string {
+function simulatorNet(scramble: string): string {
   const cube = new Cube(3, 'sphere');
   try {
     cube.twister.setup(scramble);
-    const scene = new THREE.Scene();
-    scene.rotation.set(HOME_SCENE_ROT.x, HOME_SCENE_ROT.y, HOME_SCENE_ROT.z);
-    scene.add(cube, new THREE.AmbientLight(0xffffff, Math.PI * 0.75));
-    const directional = new THREE.DirectionalLight(0xffffff, Math.PI * 0.4);
-    directional.position.set(64, 192, 128);
-    scene.add(directional);
-    const camera = new THREE.PerspectiveCamera(38, 1, 1, 2048);
-    camera.position.set(0, 0, 560);
-    camera.lookAt(0, 0, 0);
-    return exportSimSvg({ world: { scene, camera, width: 320, height: 320 } });
+    return renderCubeNetSvg({ serialized: cube.serialize(), order: 3, faceColors: CUBE_FILL });
   } finally { cube.dispose(); }
 }
 
@@ -38,18 +29,25 @@ describe('shared sphere scramble SVG', () => {
     const nodeBundle = readFileSync(require.resolve('@cuberoot/puzzle-render-core/sphere-svg'), 'utf8');
     expect(nodeBundle).not.toMatch(/new URL\([^)]*setup\.worker/);
     const { renderSphereScrambleSvg } = await import('@cuberoot/puzzle-render-core/sphere-svg');
-    expect(renderSphereScrambleSvg('')).toMatch(/^<svg\b[^>]*viewBox="0 0 320 320"/);
-    expect(renderSphereScrambleSvg('R U2')).toContain('<path');
+    expect(renderSphereScrambleSvg('')).toMatch(/^<svg\b[^>]*viewBox="0 0 13 9.8"/);
+    expect(renderSphereScrambleSvg('R U2')?.match(/<rect\b/g)).toHaveLength(54);
     expect(raf).not.toHaveBeenCalled();
+  });
+
+  it('matches the existing 3x3 net for all six faces and a full scramble', async () => {
+    const { renderSphereScrambleSvg } = await import('@cuberoot/puzzle-render-core/sphere-svg');
+    for (const scramble of ['', 'R', "L'", 'B2', 'D', 'U', 'F', "R U R' F2 D L2 U' B R2 F' U2"]) {
+      expect(renderSphereScrambleSvg(scramble), scramble).toBe(renderUnfoldedSvgForEvent('333', scramble));
+    }
   });
 
   it.each([
     "R U R' F2 D L2 U' B R2 F' U2",
     "M E' S2 r u' f2 l d2 b' x y' z2",
     "Rw Uw' Fw2 Dw' Lw Bw2 2R 3L 2-3U 2-3d 3Rw2 2Lw' m e2 s'",
-  ])('matches actual simulator colors and occlusion for %s', async (scramble) => {
+  ])('unfolds the actual simulator state without dropping supported moves: %s', async (scramble) => {
     const { renderSphereScrambleSvg } = await import('@cuberoot/puzzle-render-core/sphere-svg');
-    expect(renderSphereScrambleSvg(scramble)).toBe(simulatorSvg(scramble));
+    expect(renderSphereScrambleSvg(scramble)).toBe(simulatorNet(scramble));
   });
 
   it('keeps solved input, comments, full turns and state resets exact', async () => {

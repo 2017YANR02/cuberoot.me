@@ -15,8 +15,9 @@
 
 - 生成页通过 `shape-mod-scramble.ts` 的 `sphere → 333` 来源映射复用比赛、批量与输入模式，名称沿用模拟器的「球形魔方 / Sphere Cube」。
 - Timer 普通生成使用真实 `cubingEventId: '333'`，种子生成复用 `nx.scramble333`；会话、结果与选择器保留 `sphere`。
-- 网页、PDF 与 Timer 共用 `@cuberoot/puzzle-render-core/sphere-svg` 的 `renderSphereScrambleSvg`；从真实球块引擎导出，保留球面分色与正方形预览比例，非法公式返回无图而非静默忽略。
-- 在 Timer 外层分发中先保留 `sphere`，再做普通 NxN 归一；不要因逻辑阶数为 3 把球块图替换成三阶方格图。
+- 网页、PDF 与 Timer 打乱预览共用 `@cuberoot/puzzle-render-core/sphere-svg` 的 `renderSphereScrambleSvg`，使用与三阶相同的六面平面展开图、54 格配色与 4:3 图框；立体球块外观用于模拟器。
+- 保留有界严格解析和引擎瞬时转动，用 `cube.serialize()` 喂共享 `renderCubeNetSvg`；避免将切片、整体转、小写宽转或层范围交给仅支持标准打乱子集的解析器后被静默跳过，非法公式仍返回无图。
+- 在 Timer 外层分发中保留 `sphere` 到共享展开图入口，确保校验范围与生成页一致；图示布局复用三阶时仍保留独立项目和记录。
 - csTimer 导出使用真实 `333` 类型并携带 `cuberootEvent: 'sphere'`，导入优先读该元数据，验证组名改变后仍恢复独立项目。
 
 ## 球面与颜色
