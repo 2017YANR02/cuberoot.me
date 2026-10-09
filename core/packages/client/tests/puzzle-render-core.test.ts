@@ -39,6 +39,7 @@ const COMPATIBILITY_SHIMS = [
   'app/[lang]/sim/engine/tweener.ts',
   'app/[lang]/sim/sim_svg_export_bsp.ts',
   'app/[lang]/sim/sim_svg_export_schematic.ts',
+  'app/[lang]/sim/sim_svg_export.ts',
   'lib/cube-colors.ts',
   'lib/puzzle-geometry/colors.ts',
   'lib/puzzle-image/engine-svg.ts',

@@ -104,6 +104,7 @@ const TIMER_EVENT_PICKER_LAYOUT = [
   // Extra BLD / puzzle / relay / training modes.
   { id: '333ni', group: 'other', iconEvent: '333bld' },
   { id: '333mr', group: 'other', iconClass: 'unofficial-333_mirror_blocks' },
+  { id: 'sphere', group: 'other', textLabel: 'Sphere' },
   { id: '666bld', group: 'other', textLabel: '6BLD' },
   { id: '777bld', group: 'other', textLabel: '7BLD' },
   { id: 'r3', group: 'other', textLabel: 'R3' },
@@ -237,7 +238,7 @@ const PICKER_ITEM_BY_EVENT = new Map(
 );
 
 const THREE_BY_THREE_PREVIEW_EVENTS = new Set<EventId>([
-  '333', '333oh', '333bld', '333ni', '333fm', '333mr',
+  '333', '333oh', '333bld', '333ni', '333fm', '333mr', 'sphere',
   'cross', 'f2l', 'll', 'oll', 'pll', 'coll', 'cmll', 'zbll',
   'cll', 'ell', 'eocp', '2gll', 'ollcp', 'zzll', 'zbls', 'lse', 'l10p',
 ]);

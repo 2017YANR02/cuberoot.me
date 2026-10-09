@@ -5,6 +5,12 @@ import { mergeTimerSeedProgress, consumeTimerSeed, normalizeTimerSyncSeed, reset
 import type { EventId } from '@cuberoot/shared/timer';
 
 describe('shared displayed seed sequence', () => {
+  it('sphere shares the exact seeded 3x3 sequence without changing its event identity', () => {
+    const ticket = { seed: 'sphere sequence', index: 7, revision: 0 };
+    const sphere = generateSeededTimerScramble({ event: 'sphere', ticket });
+    expect(sphere).toEqual(generateSeededTimerScramble({ event: '333', ticket }));
+    expect(sphere.scramble).toMatch(/^[URFDLB][2']?(?: [URFDLB][2']?)+$/);
+  });
   it('normalizes legacy state and invalidates the same-seed reset', () => {
     const state = normalizeTimerSyncSeed({ syncSeed: 'same', syncSeedCounter: -1 });
     const ticket = timerSeedTicket(state)!;

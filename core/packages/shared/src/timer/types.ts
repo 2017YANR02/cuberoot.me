@@ -19,7 +19,7 @@ export type EventId =
   // NxN
   | '222' | '333' | '444' | '555' | '666' | '777'
   // 3x3 variants
-  | '333oh' | '333bld' | '333mbld' | '333ni' | '333fm' | '333mr'
+  | '333oh' | '333bld' | '333mbld' | '333ni' | '333fm' | '333mr' | 'sphere'
   // BLD
   | '444bld' | '555bld' | '666bld' | '777bld'
   // Other puzzles
@@ -215,6 +215,7 @@ export const EVENTS: EventInfo[] = [
 },
   { id: '333mr',  nameEn: 'Mirror Blocks', nameZh: '镜面',     group: 'puzzle'
 },
+  { id: 'sphere', nameEn: 'Sphere Cube', nameZh: '球形魔方', group: 'puzzle' },
   { id: 'magic',  nameEn: 'Magic',       nameZh: '八板',       group: 'puzzle' },
   { id: 'mmagic', nameEn: 'M.Magic',     nameZh: '十二板',     group: 'puzzle'
 },

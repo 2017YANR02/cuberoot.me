@@ -16,6 +16,8 @@
       "./duo-face": "runtime-neutral",
       "./pyraminx-duo-svg": "runtime-neutral",
       "./iso-svg": "mixed",
+      "./scene-svg": "mixed",
+      "./sphere-svg": "mixed",
       "./mega-svg": "runtime-neutral",
       "./sq1-svg": "runtime-neutral",
       "./bsp": "runtime-neutral",
@@ -139,6 +141,12 @@
       "node": "./dist/iso-svg.js",
       "default": "./src/iso-svg.ts"
     },
+    "./scene-svg": "./src/scene-svg.ts",
+    "./sphere-svg": {
+      "types": "./src/sphere-svg.ts",
+      "node": "./dist/sphere-svg.js",
+      "default": "./src/sphere-svg.ts"
+    },
     "./mega-svg": "./src/mega-svg.ts",
     "./sq1-svg": "./src/sq1-svg.ts",
     "./bsp": "./src/bsp.ts",
@@ -254,7 +262,7 @@
     "./engine/magic/magicDrag": "./src/engine/magic/magicDrag.ts"
   },
   "scripts": {
-    "build": "tsc -b && esbuild src/iso-svg.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/iso-svg.js && esbuild src/magic-svg.ts --bundle --packages=external --platform=node --target=node20 --format=esm --outfile=dist/magic-svg.js",
+    "build": "tsc -b && esbuild src/iso-svg.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/iso-svg.js && esbuild src/magic-svg.ts --bundle --packages=external --platform=node --target=node20 --format=esm --outfile=dist/magic-svg.js && esbuild src/sphere-svg.ts --bundle --external:three --external:@cuberoot/stack-kernel --platform=node --target=node20 --format=esm --define:Worker=undefined --minify-syntax --outfile=dist/sphere-svg.js",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

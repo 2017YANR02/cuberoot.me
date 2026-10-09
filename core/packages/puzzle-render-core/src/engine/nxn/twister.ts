@@ -650,7 +650,7 @@ export default class Twister {
     const wasmEnabled = (typeof window !== 'undefined'
       ? (window as unknown as { __STACK_KERNEL_WASM?: boolean }).__STACK_KERNEL_WASM
       : undefined) ?? true;
-    if (!STACK_KERNEL_READY || !wasmEnabled || hasSpecial) {
+    if (typeof Worker === 'undefined' || !STACK_KERNEL_READY || !wasmEnabled || hasSpecial) {
       this.setup(exp, reverse, times);
       return;
     }

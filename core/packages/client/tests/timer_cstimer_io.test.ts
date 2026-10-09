@@ -214,3 +214,62 @@ describe('Pyraminx Duo csTimer compatibility', () => {
     expect(parseCstimerExport(exported)[0].event).toBe('pyra');
   });
 });
+
+describe('Sphere Cube csTimer compatibility', () => {
+  it('keeps renamed Sphere Cube and ordinary 3x3 histories separate after export and import', () => {
+    const sphereSolve = {
+      id: 'sphere-solve', event: 'sphere' as const, timeMs: 6_543,
+      scramble: "R U2 F' L", penalty: '+2' as const, ts: 1_700_000_000_000, comment: 'practice',
+    };
+    const cubeSolve = { ...sphereSolve, id: 'cube-solve', event: '333' as const, timeMs: 12_345 };
+    const exported = exportTimerCstimerJson({ sphere: [sphereSolve], '333': [cubeSolve] });
+    expect([exported.solveCount, exported.sessionCount]).toEqual([2, 2]);
+    const outer = JSON.parse(exported.json);
+    const metadata = JSON.parse(outer.properties.sessionData);
+    expect(metadata['2']).toMatchObject({ opt: { scrType: '333' }, cuberootEvent: 'sphere' });
+    expect(metadata['1'].cuberootEvent).toBeUndefined();
+    metadata['2'].name = 'Morning practice';
+    outer.properties.sessionData = JSON.stringify(metadata);
+    const renamed = JSON.stringify(outer);
+
+    expect(parseCstimerExport(renamed)).toMatchObject([
+      { event: '333', matched: true, solves: [{ ...cubeSolve, id: expect.any(String) }] },
+      { event: 'sphere', name: 'Morning practice', matched: true, solves: [{ ...sphereSolve, id: expect.any(String) }] },
+    ]);
+    expect(importCstimerJson(renamed)).toEqual({
+      '333': [{ ...cubeSolve, id: expect.any(String) }],
+      sphere: [{ ...sphereSolve, id: expect.any(String) }],
+    });
+  });
+
+  it.each(['sphere', 'Sphere Cube', '球形魔方', '球形三阶'])(
+    'recognizes %s as a scramble-type alias or a manual session name', (alias) => {
+      const entries = [[[0, 6_543], "R U2 F' L", '', 1_700_000_000]];
+      const text = JSON.stringify({
+        session1: entries,
+        session2: entries,
+        properties: { sessionData: {
+          1: { name: 'Imported group', opt: { scrType: alias } },
+          2: { name: alias, opt: { scrType: 'input' } },
+        } },
+      });
+      expect(parseCstimerExport(text).map(({ event, matched }) => ({ event, matched }))).toEqual([
+        { event: 'sphere', matched: true },
+        { event: 'sphere', matched: true },
+      ]);
+    },
+  );
+
+  it('requires matching original-event metadata to override an explicit scramble type', () => {
+    const entries = [[[0, 6_543], 'R U', '', 1_700_000_000]];
+    const text = JSON.stringify({
+      session1: entries,
+      session2: entries,
+      properties: { sessionData: {
+        1: { name: 'Sphere Cube', opt: { scrType: '333' } },
+        2: { name: 'Sphere Cube', opt: { scrType: '222' }, cuberootEvent: 'sphere' },
+      } },
+    });
+    expect(parseCstimerExport(text).map(({ event }) => event)).toEqual(['333', '222']);
+  });
+});
