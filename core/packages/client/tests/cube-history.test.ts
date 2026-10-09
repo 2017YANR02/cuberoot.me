@@ -1,9 +1,9 @@
 import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { CUBE_ALIASES, CUBES, resolveCubeId, SOURCES } from '../app/[lang]/cube-history/_data/catalog';
-import { BRANDS, MECHANISMS, SNAPSHOT_DATE } from '../app/[lang]/cube-history/_data/labels';
+import { BRANDS, MECHANISMS, PRICE_SNAPSHOT_DATE, SNAPSHOT_DATE } from '../app/[lang]/cube-history/_data/labels';
 import { MILESTONES } from '../app/[lang]/cube-history/_data/milestones';
-import { EMPTY_FILTERS, matchesCube, normalizeSearch, selectedCubes, sortBrandKeys, sortCubes, sourceIdsForCube } from '../app/[lang]/cube-history/_data/query';
+import { EMPTY_FILTERS, getCubeModelId, groupCubesByModel, matchesCube, normalizeSearch, selectedCubes, sortBrandKeys, sortCubes, sortModelGroups, sourceIdsForCube } from '../app/[lang]/cube-history/_data/query';
 import type { Cube, LocalizedText } from '../app/[lang]/cube-history/_data/types';
 
 const cubeIds = new Set(CUBES.map(cube => cube.id));
@@ -68,17 +68,25 @@ describe('cube history research contract', () => {
     expect(byId('moyu-aolong-v6').prices).toEqual([]);
   });
 
-  it('records only verified mainland-China launch prices for exact configurations', () => {
+  it('distinguishes exact-version launch and current quotes with their own dates and markets', () => {
     for (const cube of CUBES) {
       expect('familyPrices' in cube, cube.id).toBe(false);
       for (const price of cube.prices) {
         expect(Number.isFinite(price.amount) && price.amount > 0, cube.id).toBe(true);
-        expect(price.currency, cube.id).toBe('CNY');
-        expect(price.region, cube.id).toBe('CN');
-        expect(price.kind, cube.id).toBe('launch');
+        expect(['launch', 'current'], cube.id).toContain(price.kind);
+        expect(['CNY', 'USD', 'EUR', 'GBP'], cube.id).toContain(price.currency);
+        expect(['CN', 'US', 'UK', 'EU', 'INTL'], cube.id).toContain(price.region);
+        if (price.kind === 'launch') {
+          expect(price.currency, cube.id).toBe('CNY');
+          expect(price.region, cube.id).toBe('CN');
+        } else {
+          expect(price.asOf, cube.id).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+          expect(price.variant?.trim().length, cube.id).toBeGreaterThan(0);
+        }
         expect(sourceIds.has(price.sourceId), cube.id).toBe(true);
-        if (price.asOf !== null) expect(price.asOf <= SNAPSHOT_DATE, cube.id).toBe(true);
+        if (price.asOf !== null) expect(price.asOf <= PRICE_SNAPSHOT_DATE, cube.id).toBe(true);
         expectLocalized(price.note);
+        if (price.qualifier) expectLocalized(price.qualifier);
       }
     }
     const latest = byId('gan17');
@@ -88,7 +96,7 @@ describe('cube history research contract', () => {
     expect(byId('gan2').prices).toEqual([]);
     // A current manufacturer catalog quote cannot become an exact launch price.
     const mPro = byId('qiyi-m-pro');
-    expect(mPro.prices.some(price => price.sourceId === 'qiyi-m-pro-official')).toBe(false);
+    expect(mPro.prices.some(price => price.kind === 'launch' && price.sourceId === 'qiyi-m-pro-official')).toBe(false);
   });
 
   it('provides both public languages and a readable label for every mechanism', () => {
@@ -293,6 +301,55 @@ describe('cube history exploration', () => {
     const models = ['gan17', 'gan3', 'gan12', 'gan2'].map(byId);
     expect(sortCubes(models, 'name').map(cube => cube.id)).toEqual(['gan2', 'gan3', 'gan12', 'gan17']);
     expect(models.map(cube => cube.id)).toEqual(['gan17', 'gan3', 'gan12', 'gan2']);
+  });
+
+  it('groups every archived version exactly once without replacing its original record', () => {
+    const groups = groupCubesByModel(CUBES);
+    const variants = groups.flatMap(group => group.variants);
+    expect(variants).toHaveLength(CUBES.length);
+    expect(new Set(variants)).toEqual(new Set(CUBES));
+    expect(new Set(groups.map(group => group.id)).size).toBe(groups.length);
+    for (const group of groups) {
+      for (const cube of group.variants) {
+        expect(getCubeModelId(cube), cube.id).toBe(group.id);
+        expect(cube, cube.id).toBe(byId(cube.id));
+      }
+    }
+  });
+
+  it('combines RS3 M V5 configurations without merging similarly named generations', () => {
+    const ids = ['moyu-rs3m-v5', 'moyu-rs3m-2020', 'moyu-rs3-m-v5-3x3-spring-tension',
+      'moyu-rs3-m-v5-se-3x3-magnetic-spring-tension', 'moyu-rs3m-2021', 'moyu-super-rs3m-v2'];
+    expect(groupCubesByModel(ids.map(byId)).map(group => ({ id: group.id, variants: group.variants.map(cube => cube.id) })))
+      .toEqual([
+        { id: 'moyu-rs3m-v5', variants: ['moyu-rs3m-v5', 'moyu-rs3-m-v5-3x3-spring-tension', 'moyu-rs3-m-v5-se-3x3-magnetic-spring-tension'] },
+        { id: 'moyu-rs3m-2020', variants: ['moyu-rs3m-2020'] },
+        { id: 'moyu-rs3m-2021', variants: ['moyu-rs3m-2021'] },
+        { id: 'moyu-super-rs3m-v2', variants: ['moyu-super-rs3m-v2'] },
+      ]);
+  });
+
+  it('keeps a matching child version visible without filling back excluded family members', () => {
+    const filters = { ...EMPTY_FILTERS, q: 'GAN16MAXL', family: 'gan16', year: '2026', tier: 'flagship' };
+    const matches = sortCubes(CUBES.filter(cube => matchesCube(cube, filters)), 'relevance', filters.q);
+    expect(matchesCube(byId('gan16'), filters)).toBe(false);
+    expect(groupCubesByModel(matches)).toEqual([expect.objectContaining({ id: 'gan16', variants: [byId('gan16-max-l')], representative: byId('gan16-max-l') })]);
+  });
+
+  it('sorts model chronology while keeping the preferred base version first', () => {
+    const models = Object.freeze(['gan16', 'gan13', 'gan16-max-l'].map(byId));
+    const groupedIds = (order: string) => sortModelGroups(groupCubesByModel(models), order)
+      .map(group => ({ id: group.id, variants: group.variants.map(cube => cube.id) }));
+    expect(groupedIds('newest')).toEqual([
+      { id: 'gan16', variants: ['gan16', 'gan16-max-l'] },
+      { id: 'gan13', variants: ['gan13'] },
+    ]);
+    expect(groupedIds('oldest')).toEqual([
+      { id: 'gan13', variants: ['gan13'] },
+      { id: 'gan16', variants: ['gan16', 'gan16-max-l'] },
+    ]);
+    expect(models.map(cube => cube.id)).toEqual(['gan16', 'gan13', 'gan16-max-l']);
+    expect(groupCubesByModel([])).toEqual([]);
   });
 
   it('caps shared comparisons at four valid, unique model IDs', () => {
