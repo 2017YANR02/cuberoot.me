@@ -73,6 +73,7 @@ WXML 表达式直接写 `&&` / `||`，禁 HTML 实体；改 WXML 后必须通过
 > **push = 上线(默认只 commit 不 push)**:push 即触发 Vercel + 服务器自动重建。仅以下情形 push 且先告知用户:①用户明说;②DB 迁移需线上生效;③改 nginx/systemd/服务器 env/后端 API;④bug 仅生产复现;⑤线上紧急修。
 
 - 发布授权以本节为准,Skill 中 push/上传/workflow 命令不自行授予权限;用户本次“仅本地/不 push”优先;专项规则明确要求当次授权或用户手动执行时保留该更严格边界。
+- 云工作区的终端 `git push` 缺凭据时，先核对已授权 GitHub 连接器的实际写入能力；可用则按同一发布授权继续完成提交、PR 与合并。流程见 [GitHub 提交通道](docs/troubleshooting.md#github-提交通道)。新会话重新核对能力，分别报告终端认证、远端提交和正式部署状态。
 - 主域 DNS 分线路:一路自有服务器 nginx→127.0.0.1:3002(systemd `cuberoot-next`;vhost `ops/nginx/`,改 nginx 走 `deploy_nginx.yml`);一路 Vercel(push 自动 build)。
 - `static.cuberoot.me`:服 `{tools,stats}/`,CORS:*。`next.cuberoot.me`:staging 别名,同 :3002。
 - Next standalone:`deploy_next.yml`(push client/shared/visualcube 触发)CI build→scp→原子换+健康检查+失败回滚;unit `ops/systemd/cuberoot-next.service`。
