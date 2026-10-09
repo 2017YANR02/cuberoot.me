@@ -19,15 +19,15 @@ export type EventId =
   // NxN
   | '222' | '333' | '444' | '555' | '666' | '777'
   // 3x3 variants
-  | '333oh' | '333bld' | '333mbld' | '333ni' | '333fm' | '333mr'
+  | '333oh' | '333bld' | '333mbld' | '333ni' | '333fm' | '333mr' | 'sphere'
   // BLD
   | '444bld' | '555bld' | '666bld' | '777bld'
   // Other puzzles
   | 'pyra' | 'skewb' | 'sq1' | 'mega' | 'clock'
   | 'magic' | 'mmagic'
-  // Non-WCA puzzles (scrambled by the vendored csTimer engine — see
-  // _lib/scramble/nonwca.ts for the id → scrambler-key table)
-  | 'fto' | 'kilominx' | 'gear' | 'ivy' | 'redi' | 'mpyram'
+  // Non-WCA puzzles (shared providers declare their generation capability).
+  | 'fto' | 'kilominx' | 'gear' | 'ivy' | 'redi' | 'mpyram' | 'pyraminx_duo' | 'superz'
+  | 'dogic' | 'octahedron4' | 'dinoskewb'
   // Relays
   | 'r3' | 'r4' | 'r5'
   // CFOP step training
@@ -216,6 +216,7 @@ export const EVENTS: EventInfo[] = [
 },
   { id: '333mr',  nameEn: 'Mirror Blocks', nameZh: '镜面',     group: 'puzzle'
 },
+  { id: 'sphere', nameEn: 'Sphere Cube', nameZh: '球形', group: 'puzzle' },
   { id: 'magic',  nameEn: 'Magic',       nameZh: '八板',       group: 'puzzle' },
   { id: 'mmagic', nameEn: 'M.Magic',     nameZh: '十二板',     group: 'puzzle'
 },
@@ -228,6 +229,11 @@ export const EVENTS: EventInfo[] = [
   { id: 'ivy',      nameEn: 'Ivy Cube',        nameZh: '枫叶',       group: 'nonwca', icon: 'unofficial-ivy' },
   { id: 'redi',     nameEn: 'Redi Cube',       nameZh: '热帝',       group: 'nonwca', icon: 'unofficial-redi' },
   { id: 'mpyram',   nameEn: 'Master Pyraminx', nameZh: '四阶金字塔', group: 'nonwca', icon: 'unofficial-mpyram' },
+  { id: 'pyraminx_duo', nameEn: 'Pyraminx Duo', nameZh: '二重奏', group: 'nonwca' },
+  { id: 'superz', nameEn: 'SuperZ (2×2 + Skewb)', nameZh: '二阶＋斜转', group: 'nonwca' },
+  { id: 'dogic', nameEn: 'Dogic', nameZh: 'Dogic 二十面体', group: 'nonwca' },
+  { id: 'octahedron4', nameEn: '4×4 Octahedron', nameZh: '四阶八面体', group: 'nonwca' },
+  { id: 'dinoskewb', nameEn: 'Dino Skewb', nameZh: '恐龙斜转', group: 'nonwca' },
 
   // CFOP step training
   { id: 'cross',  nameEn: 'Cross only',  nameZh: '十字',       group: 'cfop'

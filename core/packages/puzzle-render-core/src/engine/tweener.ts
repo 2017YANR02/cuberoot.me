@@ -37,6 +37,7 @@ export class Tweener {
   /** 暂停 rAF 自动推进。导出 mp4 时离线 manual tick,需要先停掉自动 update 避免冲突。 */
   paused = false;
   private lastFrameMs: number | null = null;
+  private loopStarted = false;
 
   get length(): number {
     return this.tweens.length;
@@ -44,11 +45,6 @@ export class Tweener {
 
   constructor() {
     this.tweens = [];
-    // headless 守卫(PLAN-sr-retirement Phase 1):本模块底部是 import 即执行的单例,
-    // 内核(cube/group/twister)import 它 → 无 rAF 环境(Node/服务端)构造即炸。
-    // headless 下不起自动环:调用方要么走 finish()(setup/reset 已如此,瞬时到位),
-    // 要么手动 update()(mp4 离线 tick 同款)。
-    if (typeof requestAnimationFrame !== 'undefined') requestAnimationFrame(this.loop.bind(this));
   }
 
   loop(frameMs: number): void {
@@ -62,6 +58,12 @@ export class Tweener {
   tween(begin: number, end: number, duration: number, update: (v: number) => boolean | void): Tween {
     const tween = new Tween(begin, end, duration, update);
     this.tweens.push(tween);
+    // Importing an engine for a static SVG must not start an idle animation
+    // loop. Headless consumers can still advance actual tweens with update().
+    if (!this.loopStarted && typeof requestAnimationFrame !== 'undefined') {
+      this.loopStarted = true;
+      requestAnimationFrame(this.loop.bind(this));
+    }
     return tween;
   }
 

@@ -4,9 +4,8 @@
  * Shared scramble preview component used by /timer.
  *
  * Renders a 2D scramble preview using cubing.js TwistyPlayer for most events.
- * Square-1 and Megaminx use our tnoodle-port SVG renderers (cubing.js 2D for
- * those is incomplete/inaccurate for unfolded views). Bypasses the
- * scramble-display npm package so we don't add an extra dep.
+ * Square-1, Megaminx, Pyraminx Duo and Magic use our shared SVG renderers.
+ * Bypasses the scramble-display npm package so we don't add an extra dep.
  *
  * Accepts both timer-side EventIds (mega/pyra/333bld/...) and battle/WCA-style
  * ids (minx/pyram/333bf/...).
@@ -15,7 +14,12 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { renderMegaScrambleSvg, DEFAULT_MEGA_COLORS } from '@cuberoot/puzzle-render-core/mega-svg';
 import { renderSq1ScrambleSvg, DEFAULT_SQ1_COLORS } from '@cuberoot/puzzle-render-core/sq1-svg';
-import { rediScrambleForCubing } from '@cuberoot/shared/timer';
+import { renderPyraminxDuoSvg, DUO_SVG_ASPECT } from '@cuberoot/puzzle-render-core/pyraminx-duo-svg';
+import { renderMagicSvg, magicSvgAspect } from '@cuberoot/puzzle-render-core/magic-svg';
+import { renderSphereScrambleSvg } from '@cuberoot/puzzle-render-core/sphere-svg';
+import { renderNativePuzzleSvg, nativePuzzleSvgAspect } from '@cuberoot/puzzle-render-core/native-puzzle-svg';
+import { isNativePuzzleId, type NativePuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
+import { rediScrambleForCubing, toCubingKilominx } from '@cuberoot/shared/timer';
 
 export interface TimerScramblePreviewProps {
   /** Either a timer EventId or a WCA-style id (e.g. 'minx', 'pyram'). */
@@ -31,7 +35,7 @@ export interface TimerScramblePreviewProps {
   height?: number | string;
   className?: string;
   /** TwistyPlayer visualization mode. Defaults to '2D'. Inline-SVG puzzles
-   *  (sq1 / mega) ignore this and always render 2D. */
+   *  (native puzzles, sq1 / mega / pyraminx_duo / magic / mmagic / sphere) ignore this and always render SVG. */
   visualization?: '2D' | '3D';
   ariaLabel?: string;
   /** Fill a host-owned responsive box instead of setting puzzle pixel dimensions. */
@@ -50,7 +54,9 @@ function applyScramble(
 ): void {
   host.style.visibility = 'hidden';
   try {
-    player.experimentalSetupAlg = puzzle === 'redi_cube' ? rediScrambleForCubing(scramble) : scramble;
+    player.experimentalSetupAlg = puzzle === 'redi_cube' ? rediScrambleForCubing(scramble)
+      : puzzle === 'kilominx' ? toCubingKilominx(scramble)
+      : scramble;
     host.style.visibility = '';
   } catch (err) {
     console.warn(`[TimerScramblePreview] scramble render failed for ${puzzle}`, err);
@@ -61,7 +67,7 @@ interface PuzzleSpec {
   /** cubing.js puzzle id (only used when we go through TwistyPlayer). */
   cubingPuzzle: string | null;
   /** Inline SVG renderer; overrides TwistyPlayer when present. */
-  inlineSvg?: 'sq1' | 'mega';
+  inlineSvg?: 'sq1' | 'mega' | 'pyraminx_duo' | 'magic' | 'mmagic' | 'sphere' | NativePuzzleId;
   /** Unit multipliers for width/height (units of `size`). */
   w: number;
   h: number;
@@ -73,6 +79,9 @@ interface PuzzleSpec {
  * through to the underlying NxN cube — the scramble alg is identical.
  */
 function planFor(event: string): PuzzleSpec | null {
+  if (isNativePuzzleId(event)) {
+    return { cubingPuzzle: null, inlineSvg: event, w: 9 * nativePuzzleSvgAspect(event), h: 9 };
+  }
   switch (event) {
     case '222':                                  return { cubingPuzzle: '2x2x2',     w: 8,  h: 6 };
     case '333': case '333oh': case '333fm':
@@ -88,14 +97,31 @@ function planFor(event: string): PuzzleSpec | null {
     case 'fto':                                  return { cubingPuzzle: 'fto',       w: 16, h: 12 };
     case 'redi': case 'redi_cube':               return { cubingPuzzle: 'redi_cube', w: 16, h: 12 };
     case 'kilominx':                             return { cubingPuzzle: 'kilominx',  w: 18, h: 14 };
+    case 'sphere':                               return { cubingPuzzle: null, inlineSvg: 'sphere', w: 12, h: 9 };
     // sq1 / mega — use our inline renderers (cubing.js 2D for sq1 is broken;
     // mega unfolded view differs from tnoodle).
     case 'sq1':                                  return { cubingPuzzle: null, inlineSvg: 'sq1',  w: 7,  h: 14 };
     case 'mega': case 'minx':                    return { cubingPuzzle: null, inlineSvg: 'mega', w: 17, h: 8 };
+    case 'pyraminx_duo':                         return { cubingPuzzle: null, inlineSvg: 'pyraminx_duo', w: 10 * DUO_SVG_ASPECT, h: 10 };
+    case 'magic': case 'mmagic':                return { cubingPuzzle: null, inlineSvg: event, w: 10 * magicSvgAspect(event), h: 10 };
     // Relays / custom / unknown — hide.
     case 'r3': case 'r4': case 'r5': case 'custom':
     default:                                     return null;
   }
+}
+
+/** Natural preview aspect for host layout; invalid setups have no image. */
+export function timerScramblePreviewAspect(event: string, scramble = ''): number | null {
+  const plan = planFor(event);
+  if (!plan) return null;
+  if (plan.inlineSvg === 'magic' || plan.inlineSvg === 'mmagic') {
+    try {
+      return magicSvgAspect(plan.inlineSvg, scramble);
+    } catch {
+      return null;
+    }
+  }
+  return plan.w / plan.h;
 }
 
 export function TimerScramblePreview({
@@ -108,18 +134,22 @@ export function TimerScramblePreview({
   visualization = '2D',
   fill = false,
 }: TimerScramblePreviewProps) {
-  const plan = planFor(event);
+  const plan = useMemo(() => planFor(event), [event]);
   const hostRef = useRef<HTMLDivElement | null>(null);
   const [Ctor, setCtor] = useState<TwistyPlayerCtor | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const playerRef = useRef<any>(null);
 
-  // Inline-SVG renderers — sq1/mega bypass cubing.js entirely.
+  // Inline-SVG renderers bypass cubing.js entirely.
   const portedSvg = useMemo(() => {
     if (!plan?.inlineSvg) return null;
     try {
       if (plan.inlineSvg === 'sq1')  return renderSq1ScrambleSvg(scramble ?? '', DEFAULT_SQ1_COLORS);
       if (plan.inlineSvg === 'mega') return renderMegaScrambleSvg(scramble ?? '', DEFAULT_MEGA_COLORS);
+      if (plan.inlineSvg === 'pyraminx_duo') return renderPyraminxDuoSvg(scramble ?? '');
+      if (plan.inlineSvg === 'magic' || plan.inlineSvg === 'mmagic') return renderMagicSvg(plan.inlineSvg, scramble ?? '');
+      if (plan.inlineSvg === 'sphere') return renderSphereScrambleSvg(scramble ?? '');
+      if (isNativePuzzleId(plan.inlineSvg)) return renderNativePuzzleSvg(plan.inlineSvg, scramble ?? '');
     } catch (err) {
       console.warn(`[CubingPreview] ${plan.inlineSvg} render failed`, err);
     }
@@ -192,20 +222,25 @@ export function TimerScramblePreview({
     return <div className={className} style={{ display: 'none' }} aria-hidden />;
   }
 
+  // Magic's reverse practice starts in the target shape, which has a different
+  // aspect from its rectangular start. Only parse after a valid SVG exists.
+  const previewWidth = plan.h * (timerScramblePreviewAspect(event, scramble ?? '') ?? plan.w / plan.h);
+
   // Fixed-height mode keeps every puzzle the same height; width follows the
   // puzzle's natural w:h ratio via CSS aspect-ratio (so a string height like
   // 'min(28vw,26dvh,260px)' stays fluid). Otherwise size drives both dims.
   const boxStyle: CSSProperties = fill
     ? { width: '100%', height: '100%', display: 'block' }
     : height != null
-    ? { height: typeof height === 'number' ? `${height}px` : height, aspectRatio: `${plan.w} / ${plan.h}`, display: 'block' }
-    : { width: plan.w * size, height: plan.h * size, display: 'block' };
+    ? { height: typeof height === 'number' ? `${height}px` : height, aspectRatio: `${previewWidth} / ${plan.h}`, display: 'block' }
+    : { width: previewWidth * size, height: plan.h * size, display: 'block' };
 
   if (portedSvg) {
+    // A preceding invalid Twisty alg may have hidden this reused host.
     return (
       <div
         className={className}
-        style={boxStyle}
+        style={{ ...boxStyle, visibility: 'visible' }}
         role="img"
         aria-label={ariaLabel ?? `${event} scramble preview`}
         dangerouslySetInnerHTML={{ __html: portedSvg }}

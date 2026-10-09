@@ -70,6 +70,9 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .timing-surface-cube-frame {
@@ -77,8 +80,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: min(80vw, calc(var(--cube-h) * 1.5));
+  width: min(80vw, calc(var(--cube-h) * var(--timer-cube-aspect, 1.5)));
   max-width: 100%;
+  min-width: 0;
   height: var(--cube-h);
 }
 

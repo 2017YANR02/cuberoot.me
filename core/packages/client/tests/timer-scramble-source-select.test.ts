@@ -140,6 +140,46 @@ describe('shared timer scramble-source select', () => {
     expect(onChange).toHaveBeenCalledWith('real');
   });
 
+  it('keeps practice and manual usable without a real source, then restores the default menu', () => {
+    const onChange = vi.fn<(value: 'wca' | 'random' | 'manual') => void>();
+    act(() => {
+      root.render(createElement(TimerScrambleSourceSelect<'wca'>, {
+        labels: { ...LABELS, random: 'Random moves', randomOption: 'Practice random moves' },
+        onChange,
+        realAvailable: false,
+        realValue: 'wca',
+        value: 'random',
+      }));
+    });
+    const trigger = host.querySelector<HTMLButtonElement>('.timer-scramble-source-trigger');
+    expect(trigger?.textContent).toContain('Random moves');
+    expect(onChange).not.toHaveBeenCalled();
+    act(() => trigger?.click());
+    const options = [...document.body.querySelectorAll<HTMLButtonElement>('.timer-scramble-source-option')];
+    expect(options.map((option) => option.textContent)).toEqual(['Practice random moves', 'Manual input']);
+    expect(options[0]?.getAttribute('aria-selected')).toBe('true');
+    act(() => options[1]?.click());
+    expect(onChange).toHaveBeenCalledExactlyOnceWith('manual');
+    expect(document.body.querySelector('.timer-scramble-source-popup')).toBeNull();
+
+    onChange.mockClear();
+    act(() => {
+      root.render(createElement(TimerScrambleSourceSelect<'wca'>, {
+        labels: LABELS,
+        onChange,
+        realValue: 'wca',
+        value: 'wca',
+      }));
+    });
+    expect(trigger?.textContent).toContain('Real');
+    expect(onChange).not.toHaveBeenCalled();
+    act(() => trigger?.click());
+    const restored = [...document.body.querySelectorAll<HTMLButtonElement>('.timer-scramble-source-option')];
+    expect(restored.map((option) => option.textContent)).toEqual(['WCA real', 'Random state', 'Manual input']);
+    act(() => restored[0]?.click());
+    expect(onChange).toHaveBeenCalledExactlyOnceWith('wca');
+  });
+
   it('keeps random and manual as runtime-neutral values and exposes one labelled listbox', () => {
     const onChange = vi.fn<(value: 'wca' | 'random' | 'manual') => void>();
     act(() => {

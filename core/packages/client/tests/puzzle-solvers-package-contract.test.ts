@@ -67,6 +67,10 @@ const PUBLIC_SUBPATHS = [
   'cross-trainer/xcross',
   'cross-trainer/xpair',
   'pyra',
+  'pyraminx-duo',
+  'magic',
+  'native-puzzles',
+  'native-puzzle-model',
   'sia123',
   'sia222',
   'ssq1',
@@ -109,7 +113,7 @@ describe('@cuberoot/puzzle-solvers package contract', () => {
     ])));
     expect(packageJson).not.toHaveProperty('main');
     expect(packageJson).not.toHaveProperty('types');
-    expect(packageJson.dependencies).toEqual({ cstimer_module: '^0.1.5' });
+    expect(packageJson.dependencies).toEqual({ cstimer_module: '^0.1.5', cubing: '^0.63.3' });
     expect(packageJson.sideEffects).toBe(false);
     for (const subpath of PUBLIC_SUBPATHS) {
       expect(resolvedExport(subpath).replaceAll('\\', '/')).toMatch(
@@ -202,6 +206,39 @@ describe('@cuberoot/puzzle-solvers package contract', () => {
       expect.stringMatching(/puzzle-solvers\/src\/cube-moves\.ts$/),
     ]));
     expect(inputs.some((input) => input.startsWith('node:'))).toBe(false);
+    expect(result.outputFiles).toHaveLength(1);
+  });
+
+  it('loads the native generator and geometry model through built Node subpaths', async () => {
+    const generators = await import(pathToFileURL(resolvedExport('native-puzzles')).href) as
+      typeof import('@cuberoot/puzzle-solvers/native-puzzles');
+    const models = await import(pathToFileURL(resolvedExport('native-puzzle-model')).href) as
+      typeof import('@cuberoot/puzzle-solvers/native-puzzle-model');
+    for (const id of generators.NATIVE_PUZZLE_IDS) {
+      const scramble = generators.generateNativePuzzleScramble(id, () => 0.375);
+      const puzzle = models.nativePuzzleKPuzzle(id);
+      const alg = models.parseNativePuzzleAlg(id, scramble);
+      expect(puzzle.defaultPattern().applyAlg(alg).isIdentical(puzzle.defaultPattern()), id).toBe(false);
+    }
+  });
+
+  it('keeps native scramble-only browser consumers independent of cubing geometry', async () => {
+    const result = await build({
+      stdin: {
+        contents: `import { generateNativePuzzleScramble } from '${PACKAGE_NAME}/native-puzzles'; console.log(generateNativePuzzleScramble('superz'));`,
+        resolveDir: CLIENT_ROOT,
+        sourcefile: 'native-scramble-browser-smoke.ts',
+      },
+      bundle: true,
+      metafile: true,
+      platform: 'browser',
+      write: false,
+    });
+    const inputs = Object.keys(result.metafile?.inputs ?? {}).map((input) => input.replaceAll('\\', '/'));
+    expect(inputs).toEqual(expect.arrayContaining([
+      expect.stringMatching(/puzzle-solvers\/src\/native-puzzles\.ts$/),
+    ]));
+    expect(inputs.some((input) => /native-puzzle-model|node_modules\/cubing|node:/.test(input))).toBe(false);
     expect(result.outputFiles).toHaveLength(1);
   });
 });

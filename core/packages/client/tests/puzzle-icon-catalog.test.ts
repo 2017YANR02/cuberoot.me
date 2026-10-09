@@ -26,7 +26,8 @@ it('keeps generated maps current for all original SVGs and all fixed simulator c
     expect(svg, key).not.toMatch(/NaN|Infinity|<text|<image/);
     expect(PUZZLE_ICON_NAMES[key], key).toBeDefined();
   }
-  for (const { iconClass: key } of SIM_FIXED_PUZZLE_OPTIONS) {
-    expect(SVG_BY_KEY[key], key).toContain('<svg');
+  for (const option of SIM_FIXED_PUZZLE_OPTIONS) {
+    if ('iconClass' in option) expect(SVG_BY_KEY[option.iconClass], option.iconClass).toContain('<svg');
+    else expect(option.textLabel, option.value).toBe('Sphere');
   }
 });

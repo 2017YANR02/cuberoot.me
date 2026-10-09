@@ -1,1 +1,1 @@
-export * from '@/components/puzzle-models/nxn/rawCore';
+export * from '@cuberoot/puzzle-render-core/engine/nxn/rawCore';

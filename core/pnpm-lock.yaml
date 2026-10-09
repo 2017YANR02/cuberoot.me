@@ -885,6 +885,9 @@ importers:
       globals:
         specifier: ^17.7.0
         version: 17.7.0
+      hono:
+        specifier: ^4.13.13
+        version: 4.13.13
       jsdom:
         specifier: ^30.0.1
         version: 30.0.1
@@ -934,6 +937,9 @@ importers:
       '@cuberoot/visualcube':
         specifier: workspace:*
         version: link:../visualcube
+      cubing:
+        specifier: ^0.63.3
+        version: 0.63.3(patch_hash=026724bd89e53a602c720d772bbd4c11ebe3c4040d840ba0c7df469b5244c9f6)
       three:
         specifier: ^0.183.2
         version: 0.183.2
@@ -956,7 +962,13 @@ importers:
       cstimer_module:
         specifier: ^0.1.5
         version: 0.1.5
+      cubing:
+        specifier: ^0.63.3
+        version: 0.63.3(patch_hash=026724bd89e53a602c720d772bbd4c11ebe3c4040d840ba0c7df469b5244c9f6)
     devDependencies:
+      esbuild:
+        specifier: ^0.28.2
+        version: 0.28.2
       typescript:
         specifier: ^5
         version: 5.9.3

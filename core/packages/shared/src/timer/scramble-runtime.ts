@@ -44,6 +44,7 @@ export type TimerSharedScrambleProviderId =
   | 'trainer-case'
   | 'training-state'
   | 'small-puzzle-random-state'
+  | 'native-random-move'
   | 'cstimer-nonwca';
 
 /** Runtime-neutral recipes that compose already registered child providers. */
@@ -96,6 +97,7 @@ export const TIMER_SCRAMBLE_CAPABILITIES = Object.freeze({
   '333ni': { kind: 'cubing', cubingEventId: '333bf' },
   '333fm': { kind: 'cubing', cubingEventId: '333fm' },
   '333mr': { kind: 'cubing', cubingEventId: '333' },
+  sphere: { kind: 'cubing', cubingEventId: '333' },
   '444bld': { kind: 'cubing', cubingEventId: '444bf' },
   '555bld': { kind: 'cubing', cubingEventId: '555bf' },
   '666bld': { kind: 'compound', provider: 'timer-compound' },
@@ -113,6 +115,11 @@ export const TIMER_SCRAMBLE_CAPABILITIES = Object.freeze({
   ivy: { kind: 'shared', provider: 'small-puzzle-random-state' },
   redi: { kind: 'cubing', cubingEventId: 'redi_cube' },
   mpyram: { kind: 'shared', provider: 'cstimer-nonwca' },
+  pyraminx_duo: { kind: 'shared', provider: 'small-puzzle-random-state' },
+  superz: { kind: 'shared', provider: 'native-random-move' },
+  dogic: { kind: 'shared', provider: 'native-random-move' },
+  octahedron4: { kind: 'shared', provider: 'native-random-move' },
+  dinoskewb: { kind: 'shared', provider: 'native-random-move' },
   r3: { kind: 'compound', provider: 'timer-compound' },
   r4: { kind: 'compound', provider: 'timer-compound' },
   r5: { kind: 'compound', provider: 'timer-compound' },
@@ -195,7 +202,8 @@ export type TimerHostSharedScrambleProviderId =
   | 'training-state'
   | 'wca-pocket'
   | 'cstimer-nonwca'
-  | 'small-puzzle-random-state';
+  | 'small-puzzle-random-state'
+  | 'native-random-move';
 
 export type TimerSharedScrambleGenerator = (
   provider: TimerHostSharedScrambleProviderId,
@@ -319,7 +327,18 @@ async function defaultSharedScrambleGenerator(
         const { generateIvyTimerScramble } = await import('@cuberoot/puzzle-solvers/ivy');
         return generateIvyTimerScramble(random);
       }
+      if (requestedEvent === 'pyraminx_duo') {
+        const { generatePyraminxDuoScramble } = await import('@cuberoot/puzzle-solvers/pyraminx-duo');
+        return generatePyraminxDuoScramble(random);
+      }
       throw new Error(`Small-puzzle provider cannot generate event: ${requestedEvent}`);
+    }
+    case 'native-random-move': {
+      const { generateNativePuzzleScramble, isNativePuzzleId } = await import('@cuberoot/puzzle-solvers/native-puzzles');
+      if (!isNativePuzzleId(requestedEvent)) {
+        throw new Error(`Native random-move provider cannot generate event: ${requestedEvent}`);
+      }
+      return generateNativePuzzleScramble(requestedEvent, random);
     }
     case 'cstimer-nonwca': {
       const {
@@ -440,6 +459,7 @@ export async function generateTimerScramble(
             || capability.provider === 'wca-pocket'
             || capability.provider === 'cstimer-nonwca'
             || capability.provider === 'small-puzzle-random-state'
+            || capability.provider === 'native-random-move'
           ? dependencies.generateSharedScramble
             ? dependencies.generateSharedScramble(capability.provider, request.event, request)
             : defaultSharedScrambleGenerator(

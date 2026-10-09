@@ -46,6 +46,8 @@ export interface TimerScrambleSourceSelectProps<
   labels: TimerScrambleSourceLabels;
   onChange: (value: TimerScrambleSourceValue<TReal>) => void;
   popupClassName?: string;
+  /** Hide official scrambles when the selected puzzle has no real source. */
+  realAvailable?: boolean;
   /** Canonical persisted source id. All active hosts pass `wca`. */
   realValue: TReal;
   /** Optional WCA settings shown at the second menu level. */
@@ -62,7 +64,7 @@ const POPUP_GAP_PX = 6;
 /**
  * The timer scramble-source control shared verbatim by Web, Android, and iOS.
  * Hosts own persistence and translated copy; this component owns the fixed
- * three-source menu, focus, dismissal, and viewport behavior.
+ * source menu, focus, dismissal, and viewport behavior.
  */
 export function TimerScrambleSourceSelect<
   TReal extends TimerScrambleSourceRealValue,
@@ -78,6 +80,7 @@ export function TimerScrambleSourceSelect<
   onOpenChange,
   open: controlledOpen,
   popupClassName,
+  realAvailable = true,
   realValue,
   realMenuContent,
   triggerClassName,
@@ -132,7 +135,7 @@ export function TimerScrambleSourceSelect<
   }, [groupId, submenuOpen]);
 
   const items: ReadonlyArray<{ value: CanonicalSource; label: ReactNode }> = [
-    { value: 'real', label: labels.realOption },
+    ...(realAvailable ? [{ value: 'real' as const, label: labels.realOption }] : []),
     { value: 'random', label: labels.randomOption },
     { value: 'manual', label: labels.manualOption },
   ];

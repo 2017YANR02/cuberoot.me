@@ -3,7 +3,8 @@
  * come from cubing.js / our own random-move generators). Each entry is a
  * self-contained {@link PuzzleNetDef} — a permutation group (orbits + generators
  * in cycle notation) plus net geometry — defined in _nets/*.ts and rendered by
- * the generic engine. cubing.js is NOT imported here.
+ * the generic engine. Kilominx additionally uses cubing's lightweight Alg parser
+ * for strict manual notation; no puzzle geometry, renderer or search is loaded.
  *
  * To add a puzzle: `node scripts/gen-net.mts <id>` to emit _nets/<id>.ts, then
  * register it below and in components/scramble-preview-svg.ts.
@@ -15,6 +16,7 @@ import { MASTER_TETRAMINX } from './_nets/master_tetraminx';
 import { KILOMINX } from './_nets/kilominx';
 import { REDI_CUBE } from './_nets/redi_cube';
 import { rediScrambleForCubing } from '@cuberoot/shared/timer';
+import { renderKilominxScrambleSvg } from './kilominx_svg';
 
 const REGISTRY: Record<string, PuzzleNetDef> = {
   fto: FTO,
@@ -29,6 +31,7 @@ export const BAKED_NET_EVENTS: readonly string[] = Object.keys(REGISTRY);
 
 /** Render a baked-net puzzle's scramble preview, or null if the event has none. */
 export function renderBakedNet(event: string, scramble: string): string | null {
+  if (event === 'kilominx') return renderKilominxScrambleSvg(scramble);
   const def = REGISTRY[event];
   return def ? renderNet(def, event === 'redi_cube' ? rediScrambleForCubing(scramble) : scramble) : null;
 }

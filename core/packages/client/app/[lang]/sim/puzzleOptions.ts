@@ -25,13 +25,18 @@ export const SIM_FIXED_PUZZLE_OPTIONS = [
   { value: 'ghost',    iconClass: 'unofficial-ghost', labelZh: '鬼魔', labelEn: 'Ghost Cube' },
   { value: 'mirror',   iconClass: 'unofficial-333_mirror_blocks', labelZh: '镜面', labelEn: 'Mirror' },
   { value: 'mirror2',  iconClass: 'unofficial-222_mirror_blocks', labelZh: '二阶镜面', labelEn: 'Mirror 2x2' },
+  { value: 'pyraminx_duo', iconClass: 'unofficial-pyraminx_duo', labelZh: '二重奏', labelEn: 'Pyraminx Duo' },
+  { value: 'kilominx', iconClass: 'unofficial-kilominx', labelZh: '二阶五魔', labelEn: 'Kilominx' },
+  { value: 'magic', iconClass: 'event-magic', labelZh: '八板', labelEn: 'Rubik’s Magic' },
+  { value: 'mmagic', iconClass: 'event-mmagic', labelZh: '十二板', labelEn: 'Master Magic' },
+  { value: 'sphere', textLabel: 'Sphere', labelZh: '球形', labelEn: 'Sphere Cube' },
 ] as const;
 
 // Engine puzzles above + cubing.js PuzzleGeometry puzzles (explore set, rendered
 // via TwistyPlayer — see pgCatalog.ts). The PG entries are appended at runtime so
 // the catalog stays the single source of truth.
-export const ALL_PUZZLE_TYPE_OPTIONS: { value: string; iconClass: string; labelZh: string; labelEn: string }[] = [
+export const ALL_PUZZLE_TYPE_OPTIONS: { value: string; iconClass?: string; textLabel?: string; labelZh: string; labelEn: string }[] = [
   ...SIM_FIXED_PUZZLE_OPTIONS,
-  ...PG_PUZZLES.map((p) => ({ value: p.id, iconClass: p.icon, labelZh: p.zh, labelEn: p.en })),
+  ...PG_PUZZLES.map((p) => ({ value: p.id, iconClass: p.icon || undefined, textLabel: 'textLabel' in p ? p.textLabel : undefined, labelZh: p.zh, labelEn: p.en })),
 ];
 

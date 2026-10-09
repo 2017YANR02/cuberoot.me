@@ -155,6 +155,7 @@
     "eslint": "^9.39.4",
     "fake-indexeddb": "^6.2.5",
     "globals": "^17.7.0",
+    "hono": "^4.13.13",
     "jsdom": "^30.0.1",
     "linkedom": "0.18.12",
     "svg-path-properties": "^2.1.0",

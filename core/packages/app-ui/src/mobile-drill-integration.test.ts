@@ -6,7 +6,7 @@ const moreActions = readFileSync(new URL('./mobile-more-actions.ts', import.meta
 
 describe('Mobile Timer drill integration', () => {
   it('uses the shared picker and strict shared generator without a Web fallback', () => {
-    expect(app).toContain('generateTimerDrillScramble(target)');
+    expect(app).toContain('generateTimerDrillScramble(target, Math.random, storeRef.current?.settings.cnMode)');
     expect(app).toContain('<TimerDrillPicker');
     expect(app).not.toContain('/timer?');
     expect(moreActions).toContain("'more.drill',");

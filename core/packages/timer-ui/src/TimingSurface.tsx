@@ -14,6 +14,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
   type RefObject,
+  type CSSProperties,
 } from 'react';
 
 export interface TimingSurfaceProps {
@@ -32,6 +33,8 @@ export interface TimingSurfaceProps {
   cornerSlot?: ReactNode;
   /** Content below the cube, outside its fixed-size rendering frame. */
   cubeFooter?: ReactNode;
+  /** Natural aspect of a preview filling the shared corner frame. */
+  cornerAspect?: number;
   children?: ReactNode;
   digitsCorner?: ReactNode;
   readoutLabel?: ReactNode;
@@ -59,6 +62,7 @@ export default function TimingSurface({
   scrambleAbove: placeScrambleAbove = false,
   cornerSlot,
   cubeFooter,
+  cornerAspect,
   children,
   digitsCorner,
   readoutLabel,
@@ -172,7 +176,10 @@ export default function TimingSurface({
           {!scrambleAbove && scrambleSlot && <div className="timing-surface-scramble surface-chrome">{scrambleSlot}</div>}
           {cornerSlot && <div className="timing-surface-cube surface-chrome">
             {sharedLayout
-              ? <div className="timing-surface-cube-frame" data-no-timer>{cornerSlot}</div>
+              ? <div className="timing-surface-cube-frame" data-no-timer
+                  style={cornerAspect !== undefined && Number.isFinite(cornerAspect) && cornerAspect > 0
+                    ? { '--timer-cube-aspect': cornerAspect } as CSSProperties
+                    : undefined}>{cornerSlot}</div>
               : cornerSlot}
             {cubeFooter}
           </div>}

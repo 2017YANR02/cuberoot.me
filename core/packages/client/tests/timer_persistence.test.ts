@@ -68,6 +68,24 @@ describe('shared timer persistence schema', () => {
     expect(decodeTimerStoreData({ schemaVersion: 2, database: { version: 3, sessions: [] } })).toBeNull();
   });
 
+  it.each(['pyraminx_duo', 'sphere', 'superz', 'dogic', 'octahedron4', 'dinoskewb'] as const)('retains %s as the selected event, session association and solve bucket', (event) => {
+    const data = createTimerStoreData(100, 'duo', 'zh');
+    data.settings.event = event;
+    data.database.sessions[0].event = event;
+    const solve = {
+      id: 'variant-solve', event, timeMs: 4_321,
+      scramble: "R U' L", penalty: '+2' as const, ts: 1_000,
+    };
+    data.database.dataBySession.duo[event] = [solve];
+
+    const parsed = parseTimerStoreJson(serializeTimerStoreData(data));
+    expect(parsed?.settings.event).toBe(event);
+    expect(parsed?.database.sessions[0].event).toBe(event);
+    expect(activeTimerSolves(parsed!, event)).toEqual([solve]);
+    expect(activeTimerSolves(parsed!, 'pyra')).toEqual([]);
+    expect(activeTimerSolves(parsed!, '333')).toEqual([]);
+  });
+
   it('rejects orphaned active sessions and duplicate ids', () => {
     const orphaned = createTimerStoreData(0, 'a');
     orphaned.database.activeSessionId = 'missing';

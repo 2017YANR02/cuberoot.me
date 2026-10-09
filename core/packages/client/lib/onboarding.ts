@@ -1,3 +1,4 @@
+import { persistItem } from './safe-storage';
 import { sessionFetch } from './session-fetch';
 import { apiUrl } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
@@ -15,7 +16,7 @@ function read(key: string): string | null {
 }
 
 function write(key: string, value: string): void {
-  try { localStorage.setItem(key, value); } catch { /* Server remains authoritative. */ }
+  persistItem(key, value);
 }
 
 async function save(key: string, headers: Record<string, string>): Promise<void> {
