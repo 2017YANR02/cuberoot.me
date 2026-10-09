@@ -108,7 +108,7 @@ describe('shared timer scramble preview', () => {
     expect(timerCubePreviewAspect('kilominx')).toBe(18 / 14);
   });
 
-  it('renders the six-face Sphere net, updates state and hides invalid input', async () => {
+  it('renders the circular six-face Sphere net, updates state and hides invalid input', async () => {
     const render = async (scramble: string) => act(async () => root.render(createElement(TimerCubePreview, {
       event: 'sphere', scramble, visualization: '3D', height: 240, ariaLabel: 'Sphere state',
     })));
@@ -121,7 +121,8 @@ describe('shared timer scramble preview', () => {
     expect(preview?.innerHTML).toBe(expected.innerHTML);
     expect(preview?.style.aspectRatio).toBe('12 / 9');
     expect(host.querySelector('svg')).not.toBeNull();
-    expect(host.querySelectorAll('svg rect')).toHaveLength(54);
+    expect(host.querySelectorAll('svg circle')).toHaveLength(54);
+    expect(host.querySelectorAll('svg rect')).toHaveLength(0);
     expect(host.querySelector('mock-twisty-player')).toBeNull();
     expect(host.innerHTML).not.toBe(solved);
     expect(timerCubePreviewAspect('sphere')).toBe(4 / 3);

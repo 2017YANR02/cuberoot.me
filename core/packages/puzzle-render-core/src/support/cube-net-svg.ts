@@ -11,7 +11,7 @@
 //
 // 交互式 `_SimCubeNet` 仍从这里取布局常量(单一源,与导出件逐格对齐)。
 
-import { GAP, STROKE_W, renderUnfoldedStateSvg } from '@cuberoot/shared/cube-unfolded-svg';
+import { GAP, STROKE_W, renderUnfoldedStateSvg, type UnfoldedStickerShape } from '@cuberoot/shared/cube-unfolded-svg';
 import {
   FM_REGULAR, faceletDisplayColor, type FaceletMask,
 } from '../engine/nxn/stickering';
@@ -51,6 +51,8 @@ export interface CubeNetSvgOptions {
   order: number;
   /** 面字母 → 色(引擎 settings.faceColors,单一源)。 */
   faceColors: Record<NetFaceLetter, string>;
+  /** 外观变体可选圆形色面；省略时保留标准方格。 */
+  stickerShape?: UnfoldedStickerShape;
   /** 遮罩:net index(face 块内 row*N+col,全局 = 块基址 + 局部)∈ set 的格填 maskColor。
    *  key = `${face}:${localIdx}`(localIdx = row*N+col)。 */
   mask?: { keys: ReadonlySet<string>; color: string };
@@ -89,5 +91,5 @@ export function renderCubeNetSvg(opts: CubeNetSvgOptions): string {
     if (opts.stickerMask?.selected[idx]) return opts.stickerMask.color;
     if (maskKeys?.has(`${face}:${local}`)) return maskColor!;
     return color;
-  });
+  }, opts.stickerShape);
 }

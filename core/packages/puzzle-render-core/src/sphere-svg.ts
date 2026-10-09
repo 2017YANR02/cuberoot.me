@@ -36,7 +36,8 @@ function sphereMoves(scramble: string): string[] | null {
 }
 
 /**
- * Six-face unfolded SVG, using the same layout and colors as the 3x3 preview.
+ * Six-face unfolded SVG with circular facelets for the spherical cubies,
+ * using the same layout and colors as the 3x3 preview.
  * Accepts 3x3 face, wide, slice and rotation tokens, plus line comments. Empty
  * input is solved; unsupported notation or malformed tokens return null.
  */
@@ -60,7 +61,9 @@ export function renderSphereScrambleSvg(scramble: string): string | null {
 
     // Use the actual state so slice, rotation and layer-range notation keeps
     // working; the scramble-only net parser supports a narrower move set.
-    return renderCubeNetSvg({ serialized: cube.serialize(), order: 3, faceColors: CUBE_FILL });
+    return renderCubeNetSvg({
+      serialized: cube.serialize(), order: 3, faceColors: CUBE_FILL, stickerShape: 'circle',
+    });
   } finally {
     material.color.copy(color);
     material.opacity = opacity;

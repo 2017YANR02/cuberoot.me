@@ -54,6 +54,9 @@ const STROKE_COLOR = '#000000';
 export const GAP = 0.2;           // gap between faces, in cell units (matches tnoodle 2/10)
 export const STROKE_W = 0.1;      // sticker outline, relative to 1×1 cell (matches tnoodle 1/10)
 
+/** Appearance only; face positions and state mapping stay on the same grid. */
+export type UnfoldedStickerShape = 'square' | 'circle';
+
 const PUZZLE_TO_N: Record<string, number> = {
   '2x2x2': 2, '3x3x3': 3, '4x4x4': 4, '5x5x5': 5, '6x6x6': 6, '7x7x7': 7,
 };
@@ -125,7 +128,11 @@ export function cubeStickerIdFromPosit(N: number, positIndex: number): StickerId
  * markup match by construction instead of by parallel porting.
  * `cell(f, i, j)` = fill (+ optional data-sid) for face f, drawn col i, drawn row j.
  */
-function emitUnfolded(N: number, cell: (f: number, i: number, j: number) => { color: string; sid?: string }): string {
+function emitUnfolded(
+  N: number,
+  cell: (f: number, i: number, j: number) => { color: string; sid?: string },
+  stickerShape: UnfoldedStickerShape = 'square',
+): string {
   // Tnoodle CubePuzzle layout — same width/height as before:
   //   total width  = (cubie+gap)*4 + gap = 4*N + 5*GAP
   //   total height = (cubie+gap)*3 + gap = 3*N + 4*GAP
@@ -148,8 +155,12 @@ function emitUnfolded(N: number, cell: (f: number, i: number, j: number) => { co
     for (let i = 0; i < N; i++) {
       for (let j = 0; j < N; j++) {
         const { color, sid } = cell(f, i, j);
+        // Leave a visible gap between the outlined circular facelets.
+        const shape = stickerShape === 'circle'
+          ? `<circle cx="${ox + i + 0.5}" cy="${oy + j + 0.5}" r="${0.5 - STROKE_W}"`
+          : `<rect x="${ox + i}" y="${oy + j}" width="1" height="1"`;
         parts.push(
-          `<rect x="${ox + i}" y="${oy + j}" width="1" height="1" fill="${color}"${sid ? ` data-sid="${sid}"` : ''} stroke="${STROKE_COLOR}" stroke-width="${STROKE_W}"/>`,
+          `${shape} fill="${color}"${sid ? ` data-sid="${sid}"` : ''} stroke="${STROKE_COLOR}" stroke-width="${STROKE_W}"/>`,
         );
       }
     }
@@ -186,9 +197,13 @@ export function renderUnfoldedSvg(N: number, scramble: string, opts?: MaskRender
  * State-driven unfolded net for the /sim engine companion: the caller supplies
  * the fill per drawn cell (face id f in cstimer order D L B U R F, row/col as
  * drawn in the net — row 0 top, col 0 left). Same assembler as the reference →
- * byte-identical chrome; only the fills differ by whatever state/palette the
- * engine provides.
+ * byte-identical square chrome by default; appearance variants can opt into
+ * circular facelets without changing the state/palette or grid.
  */
-export function renderUnfoldedStateSvg(N: number, colorAt: (f: number, row: number, col: number) => string): string {
-  return emitUnfolded(N, (f, i, j) => ({ color: colorAt(f, j, i) }));
+export function renderUnfoldedStateSvg(
+  N: number,
+  colorAt: (f: number, row: number, col: number) => string,
+  stickerShape?: UnfoldedStickerShape,
+): string {
+  return emitUnfolded(N, (f, i, j) => ({ color: colorAt(f, j, i) }), stickerShape);
 }

@@ -10,6 +10,18 @@ const require = createRequire(import.meta.url);
 
 afterEach(() => vi.unstubAllGlobals());
 
+/** Compare the visible cell centers and colors independently of their outline. */
+function netCells(svg: string) {
+  return Array.from(svg.matchAll(/<(rect|circle)\b([^>]*)>/g), ([, shape, attributes]) => {
+    const attrs = Object.fromEntries(Array.from(attributes.matchAll(/([\w-]+)="([^"]*)"/g), ([, key, value]) => [key, value]));
+    return {
+      x: shape === 'circle' ? Number(attrs.cx) : Number(attrs.x) + Number(attrs.width) / 2,
+      y: shape === 'circle' ? Number(attrs.cy) : Number(attrs.y) + Number(attrs.height) / 2,
+      color: attrs.fill,
+    };
+  });
+}
+
 /** The /sim setup path is independent of the public renderer's instant turns. */
 function simulatorNet(scramble: string): string {
   const cube = new Cube(3, 'sphere');
@@ -30,14 +42,16 @@ describe('shared sphere scramble SVG', () => {
     expect(nodeBundle).not.toMatch(/new URL\([^)]*setup\.worker/);
     const { renderSphereScrambleSvg } = await import('@cuberoot/puzzle-render-core/sphere-svg');
     expect(renderSphereScrambleSvg('')).toMatch(/^<svg\b[^>]*viewBox="0 0 13 9.8"/);
-    expect(renderSphereScrambleSvg('R U2')?.match(/<rect\b/g)).toHaveLength(54);
+    expect(renderSphereScrambleSvg('R U2')?.match(/<circle\b/g)).toHaveLength(54);
+    expect(renderSphereScrambleSvg('R U2')).not.toContain('<rect');
     expect(raf).not.toHaveBeenCalled();
   });
 
-  it('matches the existing 3x3 net for all six faces and a full scramble', async () => {
+  it('keeps the 3x3 cell centers and colors with circular outlines for every face and a full scramble', async () => {
     const { renderSphereScrambleSvg } = await import('@cuberoot/puzzle-render-core/sphere-svg');
     for (const scramble of ['', 'R', "L'", 'B2', 'D', 'U', 'F', "R U R' F2 D L2 U' B R2 F' U2"]) {
-      expect(renderSphereScrambleSvg(scramble), scramble).toBe(renderUnfoldedSvgForEvent('333', scramble));
+      expect(netCells(renderSphereScrambleSvg(scramble)!), scramble)
+        .toEqual(netCells(renderUnfoldedSvgForEvent('333', scramble)!));
     }
   });
 
@@ -47,7 +61,7 @@ describe('shared sphere scramble SVG', () => {
     "Rw Uw' Fw2 Dw' Lw Bw2 2R 3L 2-3U 2-3d 3Rw2 2Lw' m e2 s'",
   ])('unfolds the actual simulator state without dropping supported moves: %s', async (scramble) => {
     const { renderSphereScrambleSvg } = await import('@cuberoot/puzzle-render-core/sphere-svg');
-    expect(renderSphereScrambleSvg(scramble)).toBe(simulatorNet(scramble));
+    expect(netCells(renderSphereScrambleSvg(scramble)!)).toEqual(netCells(simulatorNet(scramble)));
   });
 
   it('keeps solved input, comments, full turns and state resets exact', async () => {

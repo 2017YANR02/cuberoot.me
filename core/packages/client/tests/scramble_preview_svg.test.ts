@@ -18,14 +18,15 @@ function duoStickerColors(svg: string): Record<string, string> {
 }
 
 describe('shared scramble preview SVG renderer', () => {
-  it('renders Sphere as the same six-face net as 3x3 through the web and PDF dispatcher', () => {
+  it('renders Sphere as a circular six-face net through the web and PDF dispatcher', () => {
     expect(eventHasScramblePreview('sphere')).toBe(true);
     const scramble = "R U R' F2";
     const svg = renderScramblePreviewSvg({ event: 'sphere', scramble });
     expect(svg).toMatch(/^<svg\b/);
     expect(svg).toBe(renderSphereScrambleSvg(scramble));
-    expect(svg).toBe(renderScramblePreviewSvg({ event: '333', scramble }));
-    expect(svg?.match(/<rect\b/g)).toHaveLength(54);
+    expect(svg).not.toBe(renderScramblePreviewSvg({ event: '333', scramble }));
+    expect(svg?.match(/<circle\b/g)).toHaveLength(54);
+    expect(svg).not.toContain('<rect');
     expect(svg).not.toBe(renderScramblePreviewSvg({ event: 'sphere', scramble: '' }));
     expect(renderScramblePreviewSvg({ event: 'sphere', scramble: 'R invalid' })).toBeNull();
   });
