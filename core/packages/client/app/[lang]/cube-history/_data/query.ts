@@ -182,6 +182,23 @@ export function sortCubes(cubes: readonly Cube[], order: string, query = ''): Cu
   });
 }
 
+export interface CubeModelGroup {
+  id: string;
+  variants: Cube[];
+}
+
+/** Group an already filtered and sorted list without restoring excluded versions. */
+export function groupCubesByModel(cubes: readonly Cube[]): CubeModelGroup[] {
+  const groups = new Map<string, CubeModelGroup>();
+  for (const cube of cubes) {
+    const id = cube.familyId ?? cube.id;
+    const group = groups.get(id);
+    if (group) group.variants.push(cube);
+    else groups.set(id, { id, variants: [cube] });
+  }
+  return [...groups.values()];
+}
+
 export function selectedCubes(cubes: readonly Cube[], ids: readonly string[]): Cube[] {
   const byId = new Map(cubes.map(cube => [cube.id, cube]));
   const result: Cube[] = [];

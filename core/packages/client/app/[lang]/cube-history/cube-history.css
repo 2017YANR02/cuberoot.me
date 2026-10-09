@@ -27,7 +27,6 @@
 .ch-eyebrow { color: var(--accent); font-size: .74rem; letter-spacing: .1em; font-weight: 650; }
 .ch-eyebrow span { margin-inline: 12px; color: var(--border-strong); }
 .ch-hero h1 { margin-block: 16px 18px; max-width: 850px; font-size: clamp(2.35rem, 4.6vw, 3.7rem); line-height: 1.12; letter-spacing: -.06em; font-weight: 760; }
-.ch-deck { max-width: 720px; font-size: clamp(.95rem, 1.5vw, 1.05rem); color: var(--muted-foreground); line-height: 1.9; }
 .ch-snapshot { margin-top: 18px !important; font-size: .74rem; color: var(--muted-foreground); }
 .ch-snapshot time { font-variant-numeric: tabular-nums; }
 .ch-glyph { width: 100%; max-width: 225px; height: auto; overflow: visible; }
@@ -45,7 +44,6 @@
 .ch-hero-metrics > div { padding: 0; border-left: 0; gap: 5px; }
 .ch-hero-metrics dd { font-size: 1.9rem; }
 .ch-hero-metrics dt { font-size: .67rem; }
-.ch-scope { max-width: 100%; padding-top: 14px; border-top: 1px solid var(--border-default); color: var(--muted-foreground); font-size: .72rem; }
 .ch-explorer { margin-top: 32px; scroll-margin-top: 20px; }
 .ch-tabs { display: flex; align-items: stretch; gap: 6px; padding-bottom: 18px; margin-bottom: 28px; border-bottom: 1px solid var(--border-default); overflow-x: auto; }
 .ch-tab-button { display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; gap: 9px; padding: 11px 17px; border: 1px solid transparent; border-radius: 12px; color: var(--muted-foreground); background: transparent; font-size: .86rem; font-weight: 560; }
@@ -150,6 +148,9 @@
 .ch-model h3 { margin-block: 10px 12px; }
 .ch-model-title-button { display: flex; align-items: flex-start; justify-content: space-between; width: 100%; gap: 10px; padding: 0; border: 0; background: transparent; color: var(--foreground); text-align: left; line-height: 1.45; font-size: 1.1rem; font-weight: 650; letter-spacing: -.025em; }
 .ch-model-title-button svg { color: var(--accent); margin-top: 3px; }
+.ch-variant-control { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px; min-width: 0; margin-bottom: 14px; }
+.ch-variant-control > span { color: var(--muted-foreground); font-size: .7rem; font-weight: 450; }
+.native-select.ch-variant-select { width: fit-content; min-width: 0; max-width: 100%; min-height: 40px; padding: 8px 10px; border-radius: 8px; font-size: .76rem; line-height: 1.45; }
 .ch-model-date { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: .71rem; color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
 .ch-model-date .ch-refs { margin: 0; }
 .ch-mechanism-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 11px; }
@@ -193,6 +194,7 @@
 .ch-table small, .ch-table th > .ch-muted, .ch-table th > .ch-text-button { display: block; margin-top: 5px; font-weight: 450; }
 .ch-table .ch-price strong { font-size: .84rem; }
 .ch-table .ch-price small { max-width: 260px; }
+.ch-table .ch-variant-control { max-width: 260px; margin-top: 12px; margin-bottom: 0; }
 .ch-comparison td { min-width: 250px; max-width: 350px; }
 .ch-comparison tbody th:first-child { min-width: 110px; max-width: 140px; }
 .ch-comparison p { margin-block: 7px; font-size: .8rem; color: var(--muted-foreground); }
@@ -246,7 +248,6 @@
   .ch-hero h1 { font-size: clamp(2rem, 8.5vw, 2.65rem); max-width: 400px; margin-block: 15px; }
   .ch-eyebrow { font-size: .64rem; letter-spacing: .04em; }
   .ch-eyebrow span { margin-inline: 5px; }
-  .ch-deck { font-size: .93rem; }
   .ch-snapshot { font-size: .66rem; }
   .ch-metrics { gap: 20px 0; grid-template-columns: repeat(2, minmax(0, 1fr)); padding-block: 20px; }
   .ch-metrics > div { padding-inline: 15px; }
@@ -257,7 +258,6 @@
   .ch-hero-metrics > div { padding-inline: 0; border-left: 0; gap: 5px; }
   .ch-hero-metrics dd { font-size: 1.55rem; }
   .ch-hero-metrics dt { font-size: .58rem; line-height: 1.5; }
-  .ch-scope { font-size: .68rem; }
   .ch-explorer { margin-top: 30px; }
   .ch-tabs { gap: 3px; margin-bottom: 26px; padding-bottom: 15px; }
   .ch-tab-button { gap: 5px; padding: 10px; font-size: .74rem; }

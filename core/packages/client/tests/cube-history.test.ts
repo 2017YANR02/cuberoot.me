@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { CUBE_ALIASES, CUBES, resolveCubeId, SOURCES } from '../app/[lang]/cube-history/_data/catalog';
 import { BRANDS, MECHANISMS, SNAPSHOT_DATE } from '../app/[lang]/cube-history/_data/labels';
 import { MILESTONES } from '../app/[lang]/cube-history/_data/milestones';
-import { EMPTY_FILTERS, matchesCube, normalizeSearch, selectedCubes, sortBrandKeys, sortCubes, sourceIdsForCube } from '../app/[lang]/cube-history/_data/query';
+import { EMPTY_FILTERS, groupCubesByModel, matchesCube, normalizeSearch, selectedCubes, sortBrandKeys, sortCubes, sourceIdsForCube } from '../app/[lang]/cube-history/_data/query';
 import type { Cube, LocalizedText } from '../app/[lang]/cube-history/_data/types';
 
 const cubeIds = new Set(CUBES.map(cube => cube.id));
@@ -293,6 +293,55 @@ describe('cube history exploration', () => {
     const models = ['gan17', 'gan3', 'gan12', 'gan2'].map(byId);
     expect(sortCubes(models, 'name').map(cube => cube.id)).toEqual(['gan2', 'gan3', 'gan12', 'gan17']);
     expect(models.map(cube => cube.id)).toEqual(['gan17', 'gan3', 'gan12', 'gan2']);
+  });
+
+  it('groups every archived version exactly once without replacing its original record', () => {
+    const groups = groupCubesByModel(CUBES);
+    const variants = groups.flatMap(group => group.variants);
+    expect(variants).toHaveLength(CUBES.length);
+    expect(new Set(variants)).toEqual(new Set(CUBES));
+    expect(new Set(groups.map(group => group.id)).size).toBe(groups.length);
+    for (const group of groups) {
+      for (const cube of group.variants) {
+        expect(cube.familyId ?? cube.id, cube.id).toBe(group.id);
+        expect(cube, cube.id).toBe(byId(cube.id));
+      }
+    }
+  });
+
+  it('combines RS3 M V5 configurations without merging similarly named generations', () => {
+    const ids = ['moyu-rs3m-v5', 'moyu-rs3m-2020', 'moyu-rs3-m-v5-3x3-spring-tension',
+      'moyu-rs3-m-v5-se-3x3-magnetic-spring-tension', 'moyu-rs3m-2021', 'moyu-super-rs3m-v2'];
+    expect(groupCubesByModel(ids.map(byId)).map(group => ({ id: group.id, variants: group.variants.map(cube => cube.id) })))
+      .toEqual([
+        { id: 'moyu-rs3m-v5', variants: ['moyu-rs3m-v5', 'moyu-rs3-m-v5-3x3-spring-tension', 'moyu-rs3-m-v5-se-3x3-magnetic-spring-tension'] },
+        { id: 'moyu-rs3m-2020', variants: ['moyu-rs3m-2020'] },
+        { id: 'moyu-rs3m-2021', variants: ['moyu-rs3m-2021'] },
+        { id: 'moyu-super-rs3m-v2', variants: ['moyu-super-rs3m-v2'] },
+      ]);
+  });
+
+  it('keeps a matching child version visible without filling back excluded family members', () => {
+    const filters = { ...EMPTY_FILTERS, q: 'GAN16MAXL', family: 'gan16', year: '2026', tier: 'flagship' };
+    const matches = sortCubes(CUBES.filter(cube => matchesCube(cube, filters)), 'relevance', filters.q);
+    expect(matchesCube(byId('gan16'), filters)).toBe(false);
+    expect(groupCubesByModel(matches)).toEqual([{ id: 'gan16', variants: [byId('gan16-max-l')] }]);
+  });
+
+  it('orders groups and their versions by first matching occurrence and handles empty results', () => {
+    const models = Object.freeze(['gan16', 'gan13', 'gan16-max-l'].map(byId));
+    const groupedIds = (order: string) => groupCubesByModel(sortCubes(models, order))
+      .map(group => ({ id: group.id, variants: group.variants.map(cube => cube.id) }));
+    expect(groupedIds('newest')).toEqual([
+      { id: 'gan16', variants: ['gan16-max-l', 'gan16'] },
+      { id: 'gan13', variants: ['gan13'] },
+    ]);
+    expect(groupedIds('oldest')).toEqual([
+      { id: 'gan13', variants: ['gan13'] },
+      { id: 'gan16', variants: ['gan16', 'gan16-max-l'] },
+    ]);
+    expect(models.map(cube => cube.id)).toEqual(['gan16', 'gan13', 'gan16-max-l']);
+    expect(groupCubesByModel([])).toEqual([]);
   });
 
   it('caps shared comparisons at four valid, unique model IDs', () => {
