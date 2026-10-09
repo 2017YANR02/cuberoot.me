@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, type CSSProperties } from 'react';
-import { Check, ImageOff } from 'lucide-react';
+import { Check, ImageOff, Layers } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useHomeBackgroundChoice } from '@/hooks/useHomeBackgroundChoice';
 import { HOME_BACKGROUND_ASSETS as ASSET_ROOT, HOME_BACKGROUNDS as SCENES, resolveHomeBackground } from '@/lib/home-backgrounds';
@@ -51,14 +51,17 @@ export default function SiteBackground({ manageDocument = true }: { manageDocume
   const scene = resolveHomeBackground(choice, theme);
   // A different choice permits retrying a previously unavailable image.
   useEffect(() => setFailedScene(null), [choice]);
-  const active = ready && !pathname?.startsWith('/auth/') && scene && failedScene !== scene.id;
+  const enabled = ready && !pathname?.startsWith('/auth/');
+  const active = enabled && scene && failedScene !== scene.id;
+  // Existing surface styles share this gate; an image is optional in transparent mode.
+  const material = active ? scene.id : enabled && choice === 'transparent' ? 'transparent' : null;
   useEffect(() => {
     // Native fullscreen needs its own scenery layer, without owning document state.
     if (!manageDocument) return;
-    if (active) document.body.dataset.siteScenery = scene.id;
+    if (material) document.body.dataset.siteScenery = material;
     else delete document.body.dataset.siteScenery;
     return () => { delete document.body.dataset.siteScenery; };
-  }, [active, scene, manageDocument]);
+  }, [material, manageDocument]);
 
   // Auth callbacks already show the returning page in their own background iframe.
   if (!active) return null;
@@ -83,7 +86,12 @@ export function SiteBackgroundControl() {
           <ImageOff size={14} aria-hidden="true" />
           {noneLabel}
         </button>
-
+        <button type="button" role="menuitemradio" aria-checked={choice === 'transparent'}
+          className="site-background-mode" onClick={() => selectBackground('transparent')}>
+          <span className="site-background-check">{choice === 'transparent' && <Check size={13} />}</span>
+          <Layers size={14} aria-hidden="true" />
+          {tr({ zh: '透明无背景', en: 'Transparent, no image' })}
+        </button>
       </div>
       <div className="site-background-grid">
         {SCENES.map(item => (

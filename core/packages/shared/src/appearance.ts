@@ -73,7 +73,7 @@ export const MINI_PROGRAM_PREFERENCES_QUERY = 'mpPreferences';
 export function decodeMiniProgramPreferences(value: unknown): MiniProgramPreferences | null {
   if (!value || typeof value !== 'object') return null;
   const p = value as MiniProgramPreferences;
-  const background = (v: unknown) => typeof v === 'string' && /^(auto|none|0[1-9]|10)$/.test(v);
+  const background = (v: unknown) => typeof v === 'string' && /^(auto|none|transparent|0[1-9]|10)$/.test(v);
   if (!['en', 'zh'].includes(p.locale) || !['system', 'light', 'dark'].includes(p.theme)
     || !(p.palette === null || (typeof p.palette === 'string' && /^[a-z][a-z0-9-]{0,40}$/.test(p.palette)))
     || !['normal', 'soft'].includes(p.contrast) || !background(p.lightBackground) || !background(p.darkBackground)) return null;
