@@ -26,11 +26,12 @@ import type { ReconSolve, ReconComment, ReconAlternative } from '@cuberoot/share
 import { cleanFtoReconAlgForPlayer, getReconScramble } from '@cuberoot/shared/recon-completion';
 import { ReconCompletionBadge } from '@/components/recon/ReconCompletionBadge';
 import {
-  getRecon, listComments, addComment, updateComment, deleteComment, pinComment, getBiliCover, getDouyinCover,
+  listComments, addComment, updateComment, deleteComment, pinComment, getBiliCover, getDouyinCover,
   listRecons, deleteAlternative, getSameScramble,
 } from '@/lib/recon-api';
 import { revalidateRecon } from '../revalidate-action';
 import { ReconCommentVotes } from './ReconCommentVotes';
+import { useReconDetailData } from './useReconDetailData';
 import {
   formatTime, isBldEvent, hasMethodOnlyReconStats,
   buildExternalLinks, FACE_COLORS, attemptsPerRound, localizeRound,
@@ -113,9 +114,9 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   // Seeded from the server-fetched recon (page.tsx) so the first paint has data
-  // (no flash of loading) and we skip the duplicate client fetch. Comments are
-  // still fetched client-side. Falls back to a client fetch if absent.
-  const [solve, setSolve] = useState<ReconSolve | null>(initialSolve ?? null);
+  // (no flash of loading), then check the API: ISR can belong to another
+  // deployment or predate an edit made while this tab was closed.
+  const { solve, loading, error } = useReconDetailData(id, initialSolve);
   const [comments, setComments] = useState<ReconComment[]>([]);
   const [commentsRevision, setCommentsRevision] = useState(0);
   const refreshComments = useCallback(() => setCommentsRevision(revision => revision + 1), []);
@@ -128,8 +129,6 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
     if (id) listComments(Number(id)).then(rows => { if (active) setComments(rows); }).catch(() => {});
     return () => { active = false; };
   }, [id, commentViewer?.uid, commentsRevision]);
-  const [loading, setLoading] = useState(!initialSolve);
-  const [error, setError] = useState<string | null>(null);
   // 全屏(隐藏头部/统计栏,player 铺满整页,与 /sim 的「全屏魔方」同款)。
   const [fullscreen, setFullscreen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
@@ -170,29 +169,6 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
     loadFlagData().then(v => { if (v !== flagVer) setFlagVer(v); });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const loadData = useCallback(async () => {
-    if (!id) return;
-    setLoading(true);
-    try {
-      const solveData = await getRecon(Number(id));
-      setSolve(solveData);
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
-
-  // When the server already handed us the recon, skip the solve refetch and just
-  // load comments. Comment mutations refresh only the comment list in place.
-  useEffect(() => {
-    if (initialSolve) {
-      return;
-    }
-    loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loadData, id]);
 
   if (loading) return <div className="recon-page"><div className="recon-loading">{t('common.loading')}</div></div>;
   // 私享复盘对非添加者本人:服务端 403 → getRecon 抛「private」→ 这里给一个体面的私享门,

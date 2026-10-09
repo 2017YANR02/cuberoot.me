@@ -16,13 +16,18 @@ function originForUrl(): string {
   return typeof window === 'undefined' ? 'http://localhost' : window.location.origin;
 }
 
-async function apiGet<T>(path: string, params: Record<string, string> = {}): Promise<T> {
+async function apiGet<T>(path: string, params: Record<string, string> = {}, cache?: RequestCache): Promise<T> {
   const url = new URL(`${API_BASE}${path}`, originForUrl());
   url.searchParams.set('v', '2');
   for (const [k, v] of Object.entries(params)) {
     if (v) url.searchParams.set(k, v);
   }
-  return handleApi<T>(await sessionFetch(url.toString(), { headers: authHeaders(false) }));
+  const response = await sessionFetch(url.toString(), { headers: authHeaders(false), cache });
+  try {
+    return await handleApi<T>(response);
+  } catch (error) {
+    throw Object.assign(error instanceof Error ? error : new Error(String(error)), { status: response.status });
+  }
 }
 
 async function apiPost<T>(path: string, body: unknown): Promise<T> {
@@ -58,7 +63,7 @@ export async function listReconsByComp(compWcaId: string): Promise<ReconSolve[]>
 }
 
 export async function getRecon(id: number): Promise<ReconSolve> {
-  return apiGet<ReconSolve>(`/${id}`);
+  return apiGet<ReconSolve>(`/${id}`, {}, 'no-store');
 }
 
 // 同一打乱串的其它复盘(轻量,只回匹配行)。详情页「相同打乱的复盘」用,
