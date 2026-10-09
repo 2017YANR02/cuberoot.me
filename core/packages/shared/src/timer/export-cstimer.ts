@@ -12,6 +12,13 @@ import { EVENTS, eventInfo } from './types';
 /** Upstream has no dedicated generator for these goals; retain our identity separately. */
 export const CSTIMER_TRAINING_FALLBACKS = { eocp: 'll', ollcp: 'll', l10p: 'cmll' } as const;
 
+/** Duo has no native csTimer generator. Use its manual-input type and retain
+ * our event identity in session metadata, just like unsupported training goals. */
+export const CSTIMER_EVENT_FALLBACKS = {
+  ...CSTIMER_TRAINING_FALLBACKS,
+  pyraminx_duo: 'input',
+} as const;
+
 /** csTimer stores DNS as DNF with a recoverable comment marker. */
 export function encodeDnsComment(comment: string | undefined): string {
   const rest = (comment ?? '').trim();
@@ -55,6 +62,7 @@ const EVENT_TO_CSTIMER_SCRTYPE: Record<EventId, string> = {
   ivy: 'ivyso',
   redi: 'redim',
   mpyram: 'mpyrso',
+  pyraminx_duo: CSTIMER_EVENT_FALLBACKS.pyraminx_duo,
   r3: 'r3',
   r4: 'r4',
   r5: 'r5',
@@ -146,7 +154,7 @@ export function exportTimerCstimerJson(byEvent: Partial<Record<EventId, Solve[]>
       name: info.nameEn,
       opt: { scrType: EVENT_TO_CSTIMER_SCRTYPE[entry.event] },
       rank: idx + 1,
-      ...(Object.prototype.hasOwnProperty.call(CSTIMER_TRAINING_FALLBACKS, entry.event) ? { cuberootEvent: entry.event } : {}),
+      ...(Object.prototype.hasOwnProperty.call(CSTIMER_EVENT_FALLBACKS, entry.event) ? { cuberootEvent: entry.event } : {}),
     };
     totalSolves += entry.solves.length;
   });

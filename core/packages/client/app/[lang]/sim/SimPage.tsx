@@ -84,6 +84,7 @@ import type { CornerGestureCtx } from './engine/cornerTurnGesture';
 import { createCornerGestureResolver } from './engine/cornerGestureRegistry';
 import { FACE } from './engine/define';
 import { toWca as toWcaSkewb, type SkewbNotation } from '@cuberoot/shared/skewb-notation';
+import { KILOMINX_FACE_MOVES, toCubingKilominx, fromCubingKilominx, type KilominxNotation } from '@/lib/kilominx-notation';
 import TwistySection from '@/components/TwistySection';
 import CutEditor from './CutEditor';
 import {
@@ -95,6 +96,7 @@ import PlayerControls, { stripHandMarks, type SimPuzzle } from './PlayerControls
 import AppLink from '@/components/AppLink';
 import { reconEventForSim, buildReconSubmitQuery } from '@/lib/sim-recon-link';
 import { PG_DEF_BY_ID, isPgPuzzleId } from './pgCatalog';
+import { isTwistyPuzzle } from './twistyPuzzles';
 import { EXPLORE_BOUND } from './engine/exploreBound';
 import AlgsPanel from './AlgsPanel';
 import PuzzleImageStudio, { type SimBridge } from '@/components/puzzle-image/PuzzleImageStudio';
@@ -135,12 +137,8 @@ const BACKVIEW_MARGIN = 8;
 
 const PuzzleDrawWorkspace = dynamic(() => import('./PuzzleDrawWorkspace'), { ssr: false });
 
-/** Twisty puzzles rendered by cubing.js (not the local cuber engine). */
-export const TWISTY_PUZZLES = ['pyraminx', 'skewb', 'megaminx', 'fto'] as const;
-export type TwistyPuzzle = typeof TWISTY_PUZZLES[number];
-export function isTwistyPuzzle(p: SimPuzzle): p is TwistyPuzzle {
-  return p === 'pyraminx' || p === 'skewb' || p === 'megaminx' || p === 'fto';
-}
+export { TWISTY_PUZZLES, isTwistyPuzzle } from './twistyPuzzles';
+export type { TwistyPuzzle } from './twistyPuzzles';
 
 /** Twisty puzzles (cubing.js by default) that ALSO have an in-house Three.js engine
  *  renderer — the user picks which one via the `renderer` toggle (skill: keep both). */
@@ -158,7 +156,7 @@ const ENGINE_TWISTY_DEF: Record<string, string> = { fto: 'o f 0.333333333333333'
  *  在引擎 ±90°(系数 1.8);上下两渲染器都是 ±90°(系数 1.8)。同一 viewAngle 字段在两渲染器
  *  下含义不同,所以换拼图 / 换渲染器时必须按目标重算这两值,不能跨拼图沿用。 */
 function defaultViewFor(kind: SimPuzzle, twisty: boolean): { viewAngle: number; viewGradient: number } {
-  const yawDeg = kind === 'megaminx' ? 0 : 30;
+  const yawDeg = kind === 'megaminx' || kind === 'kilominx' ? 0 : 30;
   const pitchDeg = kind === 'fto' ? 0 : 30;
   const yawFactor = twisty ? 3.6 : 1.8;
   return { viewAngle: 50 - yawDeg / yawFactor, viewGradient: 50 - pitchDeg / 1.8 };
@@ -210,14 +208,14 @@ const SR_ANGLE_BASE: Partial<Record<PuzzleType, {
 
 /** Engine puzzle kinds that have a PG group-theory binding (kept in sync with the
  *  pgBindings registry + GroupTheoryPanel.PG_BOUND). Gates the `renderer='group'` panel. */
-const PG_BOUND_KINDS = new Set<string>(['pyraminx', 'skewb', 'dino', 'heli', 'megaminx', 'fto', 'redi', 'ivy', 'rex', 'mirror', 'mirror2']);
+const PG_BOUND_KINDS = new Set<string>(['pyraminx', 'skewb', 'dino', 'heli', 'megaminx', 'fto', 'redi', 'ivy', 'rex', 'mirror', 'mirror2', 'sphere']);
 
 /** Narrow `world.cube` to the NxN Cube type. Returns null for every non-NxN engine puzzle.
- *  正向判断(NxN = 数字阶数 或 镜面),不再用排除法枚举 —— 旧写法漏了 'pyraminx',
+ *  正向判断(NxN = 数字阶数、镜面、球形),不再用排除法枚举 —— 旧写法漏了 'pyraminx',
  *  stickering effect 对 PyraCube 取 instancedRenderer 直接崩整页(?puzzle=pyraminx 白屏)。 */
 function asNxN(world: World): Cube | null {
   const k = world.puzzleKind;
-  return (typeof k === 'number' || k === 'mirror' || k === 'mirror2') ? (world.cube as Cube) : null;
+  return (typeof k === 'number' || k === 'mirror' || k === 'mirror2' || k === 'sphere') ? (world.cube as Cube) : null;
 }
 
 /** 3x3 sticker click rules. See Vite original for the geometry derivation. */
@@ -287,6 +285,9 @@ export default function SimPage() {
       cuts: parseAsString,
       alg: parseAsString,
       setup: parseAsString,
+      // The timer uses csTimer's face names. Share the convention with the text:
+      // DR/DL already exist in cubing.js but denote different faces there.
+      kiloNotation: parseAsStringEnum(['cstimer', 'cubing'] as const).withDefault('cstimer'),
       // Playback setup anchor. Written when the selector changes so copied links
       // reproduce whether the alg starts at setup or finishes at setup.
       anchor: parseAsStringEnum(['start', 'end'] as const),
@@ -331,12 +332,13 @@ export default function SimPage() {
     if (raw === 'rex') return 'rex';
     if (raw === 'heli') return 'heli';
     if (raw === 'gear') return 'gear';
-    if (raw === 'pyraminx' || raw === 'skewb' || raw === 'megaminx') return raw;
-    if (raw === 'fto') return 'fto';
+    if (isTwistyPuzzle(raw)) return raw;
+    if (raw === 'pyraminx_duo') return raw;
     if (raw === 'ghost') return 'ghost';
     if (raw === 'custom') return 'custom';
-    if (raw === 'mirror' || raw === 'mirror2') return raw;
+    if (raw === 'mirror' || raw === 'mirror2' || raw === 'sphere') return raw;
     if (raw === 'clock') return 'clock';
+    if (raw === 'magic' || raw === 'mmagic') return raw;
     if (isPgPuzzleId(raw)) return raw as SimPuzzle;
     const n = parseInt(raw, 10);
     if (!Number.isFinite(n) || n < NXN_ORDER_MIN || n > NXN_ORDER_MAX) return NXN_ORDER_DEFAULT;
@@ -452,7 +454,10 @@ export default function SimPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const twistyPlayerRef = useRef<any>(null);
 
-  const [order, setOrder] = useState<number>(3);
+  const [orderState, setOrder] = useState<number>(3);
+  // Pin the UI's logical order during the render that changes the URL too, before
+  // the world-sync effect runs (e.g. selecting sphere while a 2×2 is active).
+  const order = puzzleParam === 'sphere' ? 3 : orderState;
   const puzzleKind = puzzleParam;
   const [fullscreen, setFullscreen] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
@@ -475,12 +480,26 @@ export default function SimPage() {
     setSkewbNotationState(n);
     persistItem('sim.skewb.notation', n);
   }, []);
+  const toPlayerText = useCallback((text: string) => {
+    if (puzzleParam === 'skewb') return toWcaSkewb(text, skewbNotation);
+    if (puzzleParam === 'kilominx') return toCubingKilominx(text, query.kiloNotation);
+    return text;
+  }, [puzzleParam, skewbNotation, query.kiloNotation]);
+  const setKilominxNotation = useCallback((next: KilominxNotation, setup: string, alg: string) => {
+    setQuery({ kiloNotation: next, setup: setup || null, alg: alg || null });
+  }, [setQuery]);
+  const fallbackMoves = useMemo(() => puzzleParam === 'kilominx'
+    ? KILOMINX_FACE_MOVES.map((move) => ({ move, label: fromCubingKilominx(move, query.kiloNotation) }))
+    : undefined, [puzzleParam, query.kiloNotation]);
   useEffect(() => {
     if (typeof window === 'undefined') return;
     persistItem('sim.fullscreen', fullscreen ? '1' : '0');
   }, [fullscreen]);
 
   const [worldTick, setWorldTick] = useState(0);
+  // Publish only after setPuzzle + settings have completed. The URL changes before
+  // that parent effect; children must not replay the new puzzle on the old cube.
+  const [activeCube, setActiveCube] = useState<World['cube'] | null>(null);
   const [settings, setSettings] = useState<SimSettings>(() => {
     const saved = loadSettings();
     if (!query.anchor) return saved;
@@ -616,7 +635,7 @@ export default function SimPage() {
     // mis-split Sarah's UL/UR into U+L; toWcaSkewb is identity for the default WCA notation, so this
     // only changes anything for Sarah users. (No chirality translation is needed — sr and cubing.js
     // agree on R/U/L/B move semantics, verified.)
-    const applied = puzzleParam === 'skewb' ? toWcaSkewb(raw, skewbNotation) : raw;
+    const applied = toPlayerText(raw);
     const stageMask = imgPuzzle.puzzleType === 'cube'
       ? visualcubeMaskForStickering(imgPuzzle.cubeSize, query.stickering)
       : '';
@@ -630,7 +649,7 @@ export default function SimPage() {
       faceU: stageColors.U, faceR: stageColors.R, faceF: stageColors.F,
       faceD: stageColors.D, faceL: stageColors.L, faceB: stageColors.B,
     };
-  }, [settings.faceColors, setupParam, algParam, puzzleParam, skewbNotation,
+  }, [settings.faceColors, setupParam, algParam, toPlayerText,
       imgPuzzle, query.stickering, query.stickeringRot]);
   const [imgSpec, setImgSpec] = useImageSpec('img_', { puzzle: imgPuzzle, inherit: imgInherit });
   // Static/spec rendering is an exact fallback only when it can encode every visible
@@ -639,9 +658,9 @@ export default function SimPage() {
   // full puzzle before the first engine frame arrives.
   const stickeringAffectsView = query.stickering !== 'full'
     && resolveCaps(puzzleParam, query.renderer).supports.stickering;
-  const staticFallbackExact = !stickeringAffectsView
+  const staticFallbackExact = puzzleParam !== 'sphere' && (!stickeringAffectsView
     || (typeof puzzleParam === 'number'
-      && visualcubeMaskForStickering(puzzleParam, query.stickering) !== '');
+      && visualcubeMaskForStickering(puzzleParam, query.stickering) !== ''));
 
   // trans(X 光)不是单纯换张伴图,而是接管内核外观的预设:选中时内核色 / 内核不透明度
   // 由 TRANS_CORE 顶掉,3D 与伴图同吃这一份 —— 否则会出现「大魔方实心、小图半透明」。
@@ -979,7 +998,7 @@ export default function SimPage() {
     const cornerCtx: CornerGestureCtx = {
       world,
       dom: renderer.domElement,
-      settings: () => settingsRef.current,
+      settings: () => ({ ...settingsRef.current, holdPartialTurn: resolveCaps(world.puzzleKind, 'engine').supports.holdPartialTurn && settingsRef.current.holdPartialTurn }),
       pinching: () => pinching,
       emitMove: (token) => userMoveRef.current?.(token),
       orbit: orbitView,
@@ -1289,7 +1308,7 @@ export default function SimPage() {
             : world.puzzleKind === 'rex' ? world.rexHints
               : world.puzzleKind === 'heli' ? world.heliHints
                 : world.puzzleKind === 'skewb' ? world.skewbHints
-                  : world.puzzleKind === 'pyraminx' ? world.pyraHints
+                  : world.puzzleKind === 'pyraminx' || world.puzzleKind === 'pyraminx_duo' ? world.pyraHints
                     : world.puzzleKind === 'megaminx' ? world.megaHints
                       : world.puzzleKind === 'fto' ? world.ftoHints
                         : world.puzzleKind === 'ghost' ? world.ghostHints
@@ -1302,7 +1321,8 @@ export default function SimPage() {
         || (typeof world.puzzleKind === 'number'
           && settingsRef.current.pictureCube
           && countPictureFaces(settingsRef.current.pictureFaces) > 0);
-      const showLabels = settingsRef.current.faceLabels === true
+      const showLabels = resolveCaps(world.puzzleKind, 'engine').supports.faceLabels
+        && settingsRef.current.faceLabels === true
         && !world.smplxBodyOn
         && !pictureLabelsHidden;
       if (showLabels) activeHints.show(); else activeHints.hide();
@@ -1331,6 +1351,9 @@ export default function SimPage() {
         cancelAnimationFrame(raf);
         world.disposeSquareFamilyCubes();
         world.disposeGhostCube();
+        world.disposeDuoCube();
+        world.disposeMagicCubes();
+        world.disposeSphereCube();
         window.removeEventListener('resize', resize);
         ro.disconnect();
         renderer.domElement.removeEventListener('wheel', onWheel);
@@ -1374,17 +1397,20 @@ export default function SimPage() {
 
   const applyPuzzle = useCallback((kind: SimPuzzle) => {
     if (typeof kind === 'number') setOrder(kind);
-    // A Mirror Cube is an NxN under the hood — pin `order` to its logical order so the
+    // Shape variants are NxN under the hood — pin `order` to their logical order so the
     // NxN scramble/play path (which reads `order`) drives a standard 3x3 / 2x2.
-    else if (kind === 'mirror') setOrder(3);
+    else if (kind === 'mirror' || kind === 'sphere') setOrder(3);
     else if (kind === 'mirror2') setOrder(2);
     const world = worldRef.current;
     const wk = kind as PuzzleKind; // narrowed at runtime: number / sq1 / … / heli / 'skewb'
-    if (!world || world.puzzleKind === wk) return;
-    world.setPuzzle(wk);
-    wasCompleteRef.current = true;
-    ensureCubeCallback();
-    applySettings(world, renderSettingsRef.current);
+    if (!world) return;
+    if (world.puzzleKind !== wk) {
+      world.setPuzzle(wk);
+      wasCompleteRef.current = true;
+      ensureCubeCallback();
+      applySettings(world, renderSettingsRef.current);
+    }
+    setActiveCube(world.cube);
   }, [ensureCubeCallback]);
 
   // URL is the sole puzzle-state entry point. Keeping user requests separate from
@@ -1445,11 +1471,11 @@ export default function SimPage() {
     if (!cube) return;
     cube.instancedRenderer.setStickering(stickeringMaskFor(cube));
     cube.instancedRenderer.setFaceColorOverride(
-      query.stickeringRot && query.stickering !== 'full' && query.stickering !== CUSTOM_STICKERING
+      typeof puzzleParam === 'number' && query.stickeringRot && query.stickering !== 'full' && query.stickering !== CUSTOM_STICKERING
         ? orientedCubeFaceColors(query.stickeringRot, settings.faceColors)
         : null,
     );
-  }, [twisty, worldTick, stickeringMaskFor, query.stickering, query.stickeringRot, settings.faceColors]);
+  }, [twisty, worldTick, puzzleParam, stickeringMaskFor, query.stickering, query.stickeringRot, settings.faceColors]);
 
   // 自定义阶段直接使用画笔，拖拽转视角(paintMode)，避免点歪时拧动魔方。
   // 切换其他阶段后恢复正常转层。
@@ -1484,7 +1510,8 @@ export default function SimPage() {
     const world = worldRef.current;
     const canvas = rendererRef.current?.domElement;
     const cube = world && asNxN(world);
-    if (!world || !canvas || !cube || twisty || query.stickering !== CUSTOM_STICKERING) return;
+    if (!world || !canvas || !cube || twisty || typeof puzzleParam !== 'number'
+      || query.stickering !== CUSTOM_STICKERING) return;
     let lastTarget = '';
     const clear = () => {
       if (!lastTarget) return;
@@ -1701,6 +1728,17 @@ export default function SimPage() {
     setQuery({ setup: setup || null });
   }, [setQuery]);
 
+  const copySimLink = useCallback(async (setup: string, alg: string) => {
+    const url = new URL(window.location.href);
+    // nuqs updates React before flushing browser history. Merge its current state
+    // and the immediate drafts so a copy after a turn / notation switch is complete.
+    for (const [key, value] of Object.entries({ ...query, setup, alg })) {
+      if (value == null || value === '') url.searchParams.delete(key);
+      else url.searchParams.set(key, value);
+    }
+    await navigator.clipboard.writeText(url.toString());
+  }, [query]);
+
   const onStickeringChange = useCallback((stickering: string) => {
     let setup: string | null | undefined;
     if (stickering === 'Daisy' && !setupParam.trim() && !algParam.trim()) setup = DAISY_SETUP;
@@ -1712,10 +1750,10 @@ export default function SimPage() {
   }, [algParam, query.stickering, setQuery, setupParam]);
 
   useEffect(() => {
-    if (query.stickering === 'Daisy' && !setupParam.trim() && !algParam.trim()) {
+    if (typeof puzzleParam === 'number' && query.stickering === 'Daisy' && !setupParam.trim() && !algParam.trim()) {
       setQuery({ setup: DAISY_SETUP });
     }
-  }, [algParam, query.stickering, setQuery, setupParam]);
+  }, [algParam, puzzleParam, query.stickering, setQuery, setupParam]);
 
   const onAlgPick = useCallback((setup: string, alg: string) => {
     const world = worldRef.current;
@@ -1997,6 +2035,13 @@ export default function SimPage() {
         if (sig === exportedSig) return;
         exportedSig = sig;
         try {
+          // The spherical shell uses raw shader colours; the painter exporter
+          // reconstructs those colours on its real curved triangles. A flat NxN
+          // schematic or spec fallback would change the shape.
+          if (world.puzzleKind === 'sphere') {
+            setEngineSvg(exportSimSvg({ world, renderer: rendererRef.current, maxTriangles: MAX_TRIS }));
+            return;
+          }
           // 拼图带示意小面(userData.schematicPoly)→ SR 范式示意导出器:每个小面
           // 独立多边形 + 黑描边,共享棱逐比特重合;其余拼图走实模 BSP 投影。
           if (hasSchematicFacelets(world.scene)) {
@@ -2187,11 +2232,9 @@ export default function SimPage() {
             <TwistySection
               puzzle={String(puzzleParam)}
               puzzleDescription={pgDef}
-              // Skewb-only: translate Sarah → WCA so cubing.js plays the alg the
-              // user intended. URL stays in original notation; TwistyPlayer sees
-              // WCA. For pyraminx/megaminx, pass through.
-              scramble={puzzleParam === 'skewb' ? toWcaSkewb(setupParam, skewbNotation) : setupParam}
-              alg={puzzleParam === 'skewb' ? toWcaSkewb(algParam, skewbNotation) : algParam}
+              // Keep editor / URL notation intact; translate at the player boundary.
+              scramble={toPlayerText(setupParam)}
+              alg={toPlayerText(algParam)}
               fillPane
               twistOnClick
               playerRef={twistyPlayerRef}
@@ -2199,10 +2242,13 @@ export default function SimPage() {
               // 不传 — undefined = TwistySection 不接管该属性)。
               experimentalStickering={(puzzleParam === 'megaminx' || puzzleParam === 'fto') ? query.stickering : undefined}
               settings={renderSettings}
+              fallbackMoves={fallbackMoves}
               onUserMove={(moveText) => {
                 // moveText is already cubing.js canonical (`Uv`/`BL2`); pass raw
                 // to skip TwistAction parsing which would eat multi-char families.
-                userMoveRef.current?.(moveText);
+                userMoveRef.current?.(puzzleParam === 'kilominx'
+                  ? fromCubingKilominx(moveText, query.kiloNotation)
+                  : moveText);
               }}
               // wheel / pinch zoom on twisty → persist as settings.scale (the settings
               // effect re-applies cameraDistance; mirrors the NxN syncScaleToSettings).
@@ -2308,6 +2354,7 @@ export default function SimPage() {
           )}
           <PlayerControls
             world={worldRef.current}
+            activeCube={activeCube}
             clearFrozen={clearPartialFreeze}
             alg={algParam}
             setup={setupParam}
@@ -2328,6 +2375,9 @@ export default function SimPage() {
             twistyPlayerRef={twistyPlayerRef}
             skewbNotation={skewbNotation}
             onSkewbNotationChange={setSkewbNotation}
+            kilominxNotation={query.kiloNotation}
+            onKilominxNotationChange={setKilominxNotation}
+            onCopyLink={copySimLink}
             renderer={query.renderer}
             onRendererChange={handleRendererChange}
             playbackSlot={playbackSlot}

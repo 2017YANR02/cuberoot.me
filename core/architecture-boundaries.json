@@ -19,6 +19,22 @@
   },
   "manualContracts": [
     {
+      "id": "client-pyraminx-duo-geometry-proof",
+      "from": "packages/client Pyraminx Duo geometry regression test",
+      "to": "packages/client/scripts/pyraminx-duo/verify-geometry.mts",
+      "phase": "subprocess-native",
+      "mechanism": "One shell-free process.execPath spawnSync call with fixed tsx loader and proof script, repository core cwd and a 25 second deadline",
+      "owner": "client",
+      "rationale": "Verify closed meshes and continuous turn separation with the independent local geometry certificate.",
+      "replacement": "Keep test-only with fixed arguments and a bounded timeout; do not accept arbitrary executables or user-provided command arguments.",
+      "subprocessCalls": [{"file":"packages/client/tests/pyraminx-duo-geometry.test.ts","mechanism":"spawnSync","target":"<dynamic>","count":1}],
+      "evidence": [
+        {"file":"core/packages/client/tests/pyraminx-duo-geometry.test.ts","contains":"const PROOF_SCRIPT = join(CORE_ROOT, 'packages/client/scripts/pyraminx-duo/verify-geometry.mts');"},
+        {"file":"core/packages/client/tests/pyraminx-duo-geometry.test.ts","contains":"spawnSync(process.execPath, ['--import', 'tsx', PROOF_SCRIPT], {\n      cwd: CORE_ROOT,\n      encoding: 'utf8',\n      windowsHide: true,\n      timeout: 25_000,\n    })"},
+        {"file":"core/packages/client/scripts/pyraminx-duo/verify-geometry.mts"}
+      ]
+    },
+    {
       "id": "server-cubeopt-systemd-diagnostics",
       "from": "apps/api CubeOpt diagnostics",
       "to": "host systemd running service names",

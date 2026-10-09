@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@app-foundation/account-policy": "https://github.com/2017YANR02/app-foundation/releases/download/v0.4.0/app-foundation-account-policy-0.1.0.tgz",
+    "@app-foundation/face-verification": "https://github.com/2017YANR02/app-foundation/releases/download/v0.5.0/app-foundation-face-verification-0.1.0.tgz",
     "@app-foundation/messaging": "https://github.com/2017YANR02/app-foundation/releases/download/v0.2.0/app-foundation-messaging-0.1.0.tgz",
     "@app-foundation/payments": "https://github.com/2017YANR02/app-foundation/releases/download/v0.1.0/app-foundation-payments-0.1.0.tgz",
     "@app-foundation/sms": "https://github.com/2017YANR02/app-foundation/releases/download/v0.3.1/app-foundation-sms-0.1.1.tgz",

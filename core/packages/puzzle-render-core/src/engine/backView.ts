@@ -126,11 +126,13 @@ export function createBackView(
       const handsOn = world.hands?.isEnabled === true && world.puzzleKind === 3;
       const k = world.puzzleKind;
       const refHalfU = handsOn ? 3.9
-        : k === 'pyraminx' ? 2.45
+        : k === 'pyraminx' || k === 'pyraminx_duo' ? 2.45
         : isSquare ? 3.85
         : k === 'megaminx' ? 3.3
         : k === 'fto' ? 3.2
         : k === 'ghost' ? 3.3
+        : k === 'magic' ? 2.9
+        : k === 'mmagic' ? 3.8
         : (k === 'dino' || k === 'redi' || k === 'rex' || k === 'heli' || k === 'gear'
            || k === 'skewb') ? 3.6
         : 3;

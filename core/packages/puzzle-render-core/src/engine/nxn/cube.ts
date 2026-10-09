@@ -28,6 +28,8 @@ export default class Cube extends THREE.Group {
   /** Mirror Cube (Bump Cube): order-3 logic with non-uniform cuboid geometry. The
    *  logical layer stays uniform; only InstancedRenderer renders non-uniform. */
   public readonly isMirror: boolean;
+  /** Ordinary NxN turns with a complete, face-colored sphere for each cubie. */
+  public readonly isSphere: boolean;
   public callbacks: (() => void)[] = [];
   public history: History;
   public twister: Twister = new Twister(this);
@@ -46,11 +48,12 @@ export default class Cube extends THREE.Group {
   private _logoScl = new THREE.Vector3();
   private _logoRT = new THREE.Matrix4();
 
-  constructor(order: number, mirror = false) {
+  constructor(order: number, shape: boolean | 'sphere' = false) {
     super();
     const t0 = performance.now();
     this.order = order;
-    this.isMirror = mirror;
+    this.isMirror = shape === true;
+    this.isSphere = shape === 'sphere';
     this.scale.set(3 / order, 3 / order, 3 / order);
     // surfacePositions inline,直接展开循环避免 closure / generator 开销
     // N≥50 用 Cubelet.createLite (跳过 THREE.Object3D ctor 重活,~600ms 节省)
@@ -114,7 +117,7 @@ export default class Cube extends THREE.Group {
     // so the fill is non-uniform + core-pivoted like every other piece. It stays static
     // (d-check leaves exist=false → GroupTable skips it), which is what we want: a box at
     // the core, axis-aligned, never poking out.
-    if (mirror && N % 2 === 1) {
+    if (this.isMirror && N % 2 === 1) {
       const c = (N - 1) / 2;
       const centerIdx = c + c * N + c * N2;
       const center = make(centerIdx);
@@ -133,7 +136,7 @@ export default class Cube extends THREE.Group {
     this.updateMatrix();
     const t2 = performance.now();
     this.instancedRenderer = new InstancedRenderer(this);
-    if (mirror) this.instancedRenderer.enableMirror();
+    if (this.isMirror) this.instancedRenderer.enableMirror();
     const t3 = performance.now();
     this.add(this.instancedRenderer);
     if (order >= 50) {
@@ -157,7 +160,7 @@ export default class Cube extends THREE.Group {
    *  updateLogoTransform 用块的实时渲染矩阵复合定位)。 */
   setLogo(texture: THREE.Texture | null): void {
     const odd = this.order % 2 === 1;
-    if (!texture || !odd) {
+    if (!texture || !odd || this.isSphere) {
       if (this.logoMesh) this.logoMesh.visible = false;
       return;
     }
@@ -277,6 +280,7 @@ export default class Cube extends THREE.Group {
 
   public _arrow = false;
   set arrow(value: boolean) {
+    if (this.isSphere) value = false;
     this._arrow = value;
     this.instancedRenderer.arrow = value;
   }
