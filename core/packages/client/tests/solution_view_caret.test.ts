@@ -10,6 +10,12 @@ vi.mock('@cuberoot/shared/alg', async importOriginal => ({
   ...await importOriginal<typeof import('@cuberoot/shared/alg')>(),
   loadAlg: vi.fn(async () => ({ cases: [] })),
 }));
+vi.mock('@/lib/recon-f2l-links', () => ({
+  reconF2lLinks: vi.fn(async () => new Map([
+    [0, new Map([['RG', '/alg/3x3/f2l/a+']])],
+    [1, new Map([['F2L', '/alg/3x3/f2l/b+']])],
+  ])),
+}));
 
 describe('SolutionView caret mapping', () => {
   let host: HTMLDivElement;
@@ -34,12 +40,14 @@ describe('SolutionView caret mapping', () => {
       root.render(createElement(SolutionView, {
         text: "R U // RG\nR U' // F2L",
         event: '3x3',
+        scramble: "R U R' U'",
         playerRef: { current: { __kind: 'nxn-cuber', jumpToMoveCount } },
       }));
     });
     const links = host.querySelectorAll('a');
     expect(links).toHaveLength(2);
-    expect(links[0].getAttribute('href')).toBe('/alg/3x3/f2l');
+    expect(links[0].getAttribute('href')).toBe('/alg/3x3/f2l/a+');
+    expect(links[1].getAttribute('href')).toBe('/alg/3x3/f2l/b+');
     expect(links[0].parentElement?.dataset.reconTextLength).toBe('2');
     host.addEventListener('click', e => e.preventDefault(), { capture: true, once: true });
     await act(async () => {

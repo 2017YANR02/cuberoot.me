@@ -441,6 +441,8 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
               <SolutionView
                 text={displayText}
                 event={solve.event}
+                scramble={scramble}
+                sourceText={solutionText}
                 playerRef={playerRef}
                 crossLineIdx={canToggle ? crossLineIdx : -1}
                 crossNormalized={crossNormalized}

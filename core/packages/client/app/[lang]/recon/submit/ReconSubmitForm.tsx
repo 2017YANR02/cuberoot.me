@@ -2301,6 +2301,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 <SolutionView
                   text={displaySolution}
                   event={form.event}
+                  scramble={getReconScramble(form)}
+                  sourceText={form.solution || ''}
                   playerRef={playerRef}
                   crossNormalized={true}
                 />

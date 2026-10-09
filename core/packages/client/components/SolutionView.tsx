@@ -104,9 +104,11 @@ function computeHighlightRange(plainText: string, offset: number): [number, numb
   return [p.start, p.end];
 }
 
-export default function SolutionView({ text, event, playerRef, crossLineIdx = -1, crossNormalized = false, onToggleCross }: {
+export default function SolutionView({ text, event, scramble = '', sourceText = text, playerRef, crossLineIdx = -1, crossNormalized = false, onToggleCross }: {
   text: string;
   event?: string;
+  scramble?: string;
+  sourceText?: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   playerRef: MutableRefObject<any>;
   /** cross 行索引;>=0 时该行末尾渲染内联切换按钮。-1 表示不渲染 */
@@ -123,6 +125,22 @@ export default function SolutionView({ text, event, playerRef, crossLineIdx = -1
   const crossColor = useMemo(() => crossColorFromReconText(plainText), [plainText]);
   const linkComments = event === '3x3' || event === '333' || event === 'oh' || event === '333oh';
   const [commentCases, setCommentCases] = useState<ReconCommentCases>(new Map());
+  const [f2lLinks, setF2lLinks] = useState<Map<number, Map<string, string>>>(new Map());
+  useEffect(() => {
+    let cancelled = false;
+    setF2lLinks(new Map());
+    if (linkComments && scramble && sourceText.split('\n').some(line => {
+      const comment = line.indexOf('//');
+      if (comment < 0) return false;
+      const label = line.slice(comment + 2).trim();
+      return /\bF2L\b/i.test(label) || cubeColorGroups(label).some(group => group.colors.length === 2);
+    })) {
+      void import('@/lib/recon-f2l-links').then(({ reconF2lLinks }) => reconF2lLinks(scramble, sourceText))
+        .then(links => { if (!cancelled) setF2lLinks(links); })
+        .catch(() => { /* Unknown states stay as plain labels, never a guessed case. */ });
+    }
+    return () => { cancelled = true; };
+  }, [linkComments, scramble, sourceText]);
   const commentSets = useMemo(() => linkComments
     ? [...new Set(plainText.split('\n').flatMap(line => reconCommentLinks(line).map(link => link.href.split('/').pop()!)))].sort().join(',')
     : '', [plainText, linkComments]);
@@ -287,7 +305,11 @@ export default function SolutionView({ text, event, playerRef, crossLineIdx = -1
             }))
           : [];
         const colorsAt = new Map(labelColorGroups.map(group => [group.start, group.colors]));
-        const links = linkComments ? reconCommentLinks(line, commentCases) : [];
+        const links = linkComments ? reconCommentLinks(line, commentCases).flatMap(link => {
+          if (link.href !== '/alg/3x3/f2l') return [link];
+          const href = f2lLinks.get(i)?.get('F2L');
+          return href ? [{ ...link, href }] : [];
+        }) : [];
 
         // 切点:0 / 行尾 / 光标 / 高亮起止 / 色块位置 → 分段渲染。
         const cuts = new Set<number>([0, line.length]);
@@ -305,10 +327,11 @@ export default function SolutionView({ text, event, playerRef, crossLineIdx = -1
           const colors = colorsAt.get(a);
           if (colors) {
             const chip = <CubeColorChip colors={f2lDisplayColors(colors, crossColor)} className="recon-label-chip" />;
+            const f2lHref = linkComments ? f2lLinks.get(i)?.get(colors) : undefined;
             parts.push(
               <span key={`color${a}`} data-recon-text-length={colors.length}>
-                {linkComments && colors.length === 2
-                  ? <Link href="/alg/3x3/f2l" prefetch={false} className="recon-comment-link" title={tr({ en: 'Learn F2L', zh: '学习 F2L' })}>{chip}</Link>
+                {f2lHref
+                  ? <Link href={f2lHref} prefetch={false} className="recon-comment-link" title={tr({ en: 'Learn this F2L case', zh: '学习这个 F2L 情况' })}>{chip}</Link>
                   : chip}
               </span>,
             );
