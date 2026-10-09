@@ -90,12 +90,12 @@ export const CSTIMER_REDI_KEY = 'redim';
 
 export const CSTIMER_EVENTS: ReadonlyArray<CstimerEvent> = [
   // Random-state (length ignored by solver), plus csTimer's MoYu Redi mode.
-  { id: 'redi_cube', key: CSTIMER_REDI_KEY, length: 8, zh: '热帝魔方', en: 'Redi Cube', iconClass: 'unofficial-redi', family: 'twist', solvable: true },
-  { id: 'gear',    key: 'gearso',  zh: '齿轮魔方',         en: 'Gear Cube',         iconClass: 'unofficial-gear', family: 'twist',  solvable: true
+  { id: 'redi_cube', key: CSTIMER_REDI_KEY, length: 8, zh: '热帝', en: 'Redi Cube', iconClass: 'unofficial-redi', family: 'twist', solvable: true },
+  { id: 'gear',    key: 'gearso',  zh: '齿轮',         en: 'Gear Cube',         iconClass: 'unofficial-gear', family: 'twist',  solvable: true
 },
-  { id: 'ivy',     key: 'ivyso',   zh: '枫叶魔方',         en: 'Ivy Cube',          textLabel: 'Ivy',    family: 'twist',  solvable: true
+  { id: 'ivy',     key: 'ivyso',   zh: '枫叶',         en: 'Ivy Cube',          textLabel: 'Ivy',    family: 'twist',  solvable: true
 },
-  { id: 'dino',    key: 'dinoso',  zh: '恐龙魔方',         en: 'Dino Cube',         textLabel: 'Dino',   family: 'twist',  solvable: true
+  { id: 'dino',    key: 'dinoso',  zh: '恐龙',         en: 'Dino Cube',         textLabel: 'Dino',   family: 'twist',  solvable: true
 },
   { id: 'mpyrso',  key: 'mpyrso',  zh: '大金字塔(随态)',   en: 'Master Pyra (RS)',  iconClass: 'unofficial-mpyram', family: 'twist',  solvable: true
 },
@@ -130,7 +130,7 @@ export const CSTIMER_EVENTS: ReadonlyArray<CstimerEvent> = [
 },
   { id: 'cm3',     key: 'cm3',     length: 16, zh: 'Cmetrick',         en: 'Cmetrick',          textLabel: 'Cm3',  family: 'twist',  solvable: true },
   { id: 'cm2',     key: 'cm2',     length: 16, zh: 'Cmetrick Mini',    en: 'Cmetrick Mini',     textLabel: 'Cm2',  family: 'twist',  solvable: true },
-  { id: 'bic',     key: 'bic',     length: 25, zh: '联体魔方',         en: 'Bicube',            textLabel: 'Bic',  family: 'siamese', solvable: true
+  { id: 'bic',     key: 'bic',     length: 25, zh: '联体',         en: 'Bicube',            textLabel: 'Bic',  family: 'siamese', solvable: true
 },
   { id: 'sia113',  key: 'sia113',  length: 25, zh: '联体 1×1×3',       en: 'Siamese 1×1×3',     textLabel: 'Sia113', family: 'siamese'
 },

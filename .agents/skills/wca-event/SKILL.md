@@ -35,3 +35,7 @@ CSS 用 `font-size`(SVG=1em) + `color`(SVG fill=currentColor) — 现存规则�
 
 1. 拷 `D:\cube\icons\src\svg\unofficial\<name>.svg` 到 `components/EventIcon/svg/unofficial/`
 2. `utils/cubingScramble.ts` 的 `TWIZZLE_NONWCA_APPEND` 加 `{ id, iconClass: 'unofficial-<name>' }`
+
+## 项目菜单短名
+
+网站所有项目选择菜单（含分组、选中项、提示名称）不得出现「魔方」二字，例如「二重奏」「枫叶」「齿轮」。使用统一 PuzzlePicker 的展示规则，并在项目目录数据中直接写短名；不得改项目 ID、计算或保存值。此规则只约束项目菜单，不禁止文章正文等正常用词。写入守卫 `block-puzzle-menu-label.mts` 与 CI `puzzle-menu-label-guard.test.ts` 共同维护；新增菜单数据源时同步纳入检查。
