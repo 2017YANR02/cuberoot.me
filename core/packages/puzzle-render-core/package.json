@@ -10,6 +10,11 @@
       "three": "runtime-neutral"
     },
     "runtime": {
+      "./engine/duo/duoGeometry": "runtime-neutral",
+      "./engine/duo/DuoCube": "mixed",
+      "./engine/duo/DuoTwister": "mixed",
+      "./duo-face": "runtime-neutral",
+      "./pyraminx-duo-svg": "runtime-neutral",
       "./iso-svg": "mixed",
       "./mega-svg": "runtime-neutral",
       "./sq1-svg": "runtime-neutral",
@@ -116,11 +121,19 @@
       "./support/puzzle-image/masks": "mixed",
       "./engine/coreOpacity": "mixed",
       "./engine/backView": "react-dom",
-      "./support/three": "runtime-neutral"
+      "./support/three": "runtime-neutral",
+      "./magic-svg": "runtime-neutral",
+      "./engine/magic/MagicCube": "mixed",
+      "./engine/magic/magicDrag": "mixed"
     }
   },
   "sideEffects": false,
   "exports": {
+    "./engine/duo/duoGeometry": "./src/engine/duo/duoGeometry.ts",
+    "./engine/duo/DuoCube": "./src/engine/duo/DuoCube.ts",
+    "./engine/duo/DuoTwister": "./src/engine/duo/DuoTwister.ts",
+    "./duo-face": "./src/duo-face.ts",
+    "./pyraminx-duo-svg": "./src/pyraminx-duo-svg.ts",
     "./iso-svg": {
       "types": "./src/iso-svg.ts",
       "node": "./dist/iso-svg.js",
@@ -231,10 +244,17 @@
     "./support/puzzle-image/masks": "./src/support/puzzle-image/masks.ts",
     "./engine/coreOpacity": "./src/engine/coreOpacity.ts",
     "./engine/backView": "./src/engine/backView.ts",
-    "./support/three": "./src/support/three.ts"
+    "./support/three": "./src/support/three.ts",
+    "./magic-svg": {
+      "types": "./src/magic-svg.ts",
+      "node": "./dist/magic-svg.js",
+      "default": "./src/magic-svg.ts"
+    },
+    "./engine/magic/MagicCube": "./src/engine/magic/MagicCube.ts",
+    "./engine/magic/magicDrag": "./src/engine/magic/magicDrag.ts"
   },
   "scripts": {
-    "build": "tsc -b && esbuild src/iso-svg.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/iso-svg.js",
+    "build": "tsc -b && esbuild src/iso-svg.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/iso-svg.js && esbuild src/magic-svg.ts --bundle --packages=external --platform=node --target=node20 --format=esm --outfile=dist/magic-svg.js",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

@@ -100,7 +100,7 @@ export default class CubeGroup extends THREE.Group {
     // Mirror cube fills the central cavity with a real center cubie (see cube.ts), so it
     // needs no panel. The uniform panelFan/_PANEL would not match the non-uniform layer
     // (it pokes out as thin wedges in raw/single-colour mode), so skip it entirely here.
-    if (layer > 0 && layer < N - 1 && !this.cube.isMirror) {
+    if (layer > 0 && layer < N - 1 && !this.cube.isMirror && !this.cube.isSphere) {
       const S = Cubelet.SIZE;
       const span = (N - 2) * S - 1;  // 留 0.5 防 z-fight 撞 perimeter cubelet
       const thick = S - 1;

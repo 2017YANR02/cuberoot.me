@@ -748,6 +748,7 @@ jobs:
           pnpm --filter @cuberoot/puzzle-solvers build
           pnpm --filter @cuberoot/shared build
           pnpm --filter @cuberoot/visualcube build
+          pnpm --filter @cuberoot/puzzle-render-core build
 
       - name: Verify native brand assets
         if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.mobile_native == 'true' }}

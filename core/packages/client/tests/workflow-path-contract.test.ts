@@ -716,6 +716,7 @@ describe('deployment workflow path contracts', () => {
     )) as { scripts: Record<string, string> };
     const clientDepBuilds = clientPackage.scripts['build:deps'].split(' && ');
     const coreBuilds = readStepRun('deploy_core.yml', 'Build shared deps').split('\n');
+    const mobileBuilds = readStepRun('test.yml', 'Build mobile workspace dependencies').split('\n');
 
     expect(readStepRun('test.yml', 'Build shared deps')).toBe(
       'pnpm --filter @cuberoot/client build:deps',
@@ -725,6 +726,14 @@ describe('deployment workflow path contracts', () => {
     expect(clientDepBuilds).toContain(solverBuild);
     expect(coreBuilds).toContain(renderBuild);
     expect(coreBuilds).toContain(solverBuild);
+    // The app-ui timer tests resolve render-core's Node SVG exports. A local
+    // dist cannot stand in for this prerequisite in the separate mobile job.
+    expect(mobileBuilds).toEqual([
+      solverBuild,
+      'pnpm --filter @cuberoot/shared build',
+      'pnpm --filter @cuberoot/visualcube build',
+      renderBuild,
+    ]);
   });
 
   it('checks out all installed solver assets in every host build job', () => {

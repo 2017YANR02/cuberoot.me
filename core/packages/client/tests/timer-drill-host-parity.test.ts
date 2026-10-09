@@ -23,7 +23,7 @@ describe('Web and installed Timer drill parity', () => {
   });
 
   it('uses the same strict generator and picker contract as installed clients', () => {
-    expect(solo).toContain('generateTimerDrillScramble(drillTarget)');
+    expect(solo).toContain('generateTimerDrillScramble(drillTarget, Math.random, getSettings().cnMode)');
     expect(solo).toContain('language={timerLanguage}');
     expect(solo).toContain('onPick={setDrillTarget}');
   });

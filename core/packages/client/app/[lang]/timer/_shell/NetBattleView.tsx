@@ -65,6 +65,7 @@ import {
 import {
   SegmentTime,
   TimerCubePreview,
+  timerCubePreviewAspect,
   TimerDeviceCenter,
   TimerPuzzlePicker,
   TimerRoomIdentity,
@@ -1392,7 +1393,10 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
       digits: <SegmentTime text={digitsText} />,
       surfaceRef: surfaceRef,
 
-      cornerSlot: activePkLock ? ownLiveCubeSlot : selectedCubeSlot
+      cornerSlot: activePkLock ? ownLiveCubeSlot : selectedCubeSlot,
+      cornerAspect: !activePkLock && !(cubeConnected || cubeStartedRef.current) && selectedCubeSlot === ownDefaultCubeSlot
+        ? timerCubePreviewAspect(myEvent as EventId, myScr)
+        : undefined
     }, status: {
       room: room,
       currentPlayerId: pid!,

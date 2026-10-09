@@ -49,14 +49,14 @@ const PERM_BRIDGES: Record<string, PermBridge<any>> = {
 /** Fixed (non-NxN) engine puzzle kinds that have a group-theory binding (PG or perm) plus
  *  the cubing.js "explore" ids bound to a facts-only kernel. */
 export const PG_BOUND_PUZZLES = [
-  ...Object.keys(BRIDGES), ...Object.keys(PERM_BRIDGES), 'mirror', 'mirror2', ...EXPLORE_BOUND_IDS,
+  ...Object.keys(BRIDGES), ...Object.keys(PERM_BRIDGES), 'mirror', 'mirror2', 'sphere', ...EXPLORE_BOUND_IDS,
 ];
 
-/** Mirror-cube engine kinds → the NxN order they are mechanically identical to. */
-const MIRROR_ORDER: Record<string, number> = { mirror: 3, mirror2: 2 };
+/** Shape variants reuse the kernel and existing facts of their logical NxN order. */
+const NXN_VARIANT_ORDER: Record<string, number> = { mirror: 3, mirror2: 2, sphere: 3 };
 
 /** All PG (cubing.js) bridges as a flat list (fixed + NxN 2..N), for the offline facts
- *  generator. Mirror reuses nxnPgBridge(3 / 2)'s facts, so it is not listed separately. */
+ *  generator. Shape variants reuse NxN facts, so they are not listed separately. */
 export function allBridges(): MoveBridge<any>[] {
   const list: MoveBridge<any>[] = Object.values(BRIDGES);
   for (let n = NXN_PG_MIN; n <= NXN_PG_MAX; n++) list.push(nxnPgBridge(n));
@@ -82,17 +82,16 @@ function nxnOrder(puzzle: string | number): number | null {
 
 export function hasPgBinding(puzzle: string | number): boolean {
   if (typeof puzzle === 'string'
-    && (puzzle in BRIDGES || puzzle in PERM_BRIDGES || puzzle in MIRROR_ORDER || EXPLORE_BOUND.has(puzzle))) return true;
+    && (puzzle in BRIDGES || puzzle in PERM_BRIDGES || puzzle in NXN_VARIANT_ORDER || EXPLORE_BOUND.has(puzzle))) return true;
   return nxnOrder(puzzle) !== null;
 }
 
 export function createBinding(puzzle: string | number): GroupKernel | null {
   const n = nxnOrder(puzzle);
   if (n !== null) return new PgEngineBinding(nxnPgBridge(n));
-  // A Mirror Cube is mechanically the plain NxN of its order (the engine runs
-  // Cube(n, mirror=true)); reuse that order's kernel.
-  if (typeof puzzle === 'string' && puzzle in MIRROR_ORDER) {
-    return new PgEngineBinding(nxnPgBridge(MIRROR_ORDER[puzzle]));
+  // Mirror and sphere change the shape, while every move keeps its NxN permutation.
+  if (typeof puzzle === 'string' && puzzle in NXN_VARIANT_ORDER) {
+    return new PgEngineBinding(nxnPgBridge(NXN_VARIANT_ORDER[puzzle]));
   }
   if (typeof puzzle === 'string' && puzzle in PERM_BRIDGES) return new PermEngineBinding(PERM_BRIDGES[puzzle]);
   // cubing.js "explore" puzzles (no in-house engine): facts-only kernel over outer turns.

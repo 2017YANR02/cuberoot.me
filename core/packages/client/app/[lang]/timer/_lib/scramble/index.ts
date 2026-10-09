@@ -28,6 +28,7 @@ import { getSettings, updateSettings } from '../settings';
 import { resetTimerSyncSeed } from '@cuberoot/shared/timer/sync-seed';
 import { generateGearTimerScramble } from '@cuberoot/puzzle-solvers/gear';
 import { generateIvyTimerScramble } from '@cuberoot/puzzle-solvers/ivy';
+import { generatePyraminxDuoScramble } from '@cuberoot/puzzle-solvers/pyraminx-duo';
 
 // Round 1B will export these — soft import via dynamic require so absent files
 // don't break the build. We use a runtime registry instead.
@@ -49,6 +50,7 @@ const REG: Partial<Record<EventId, Gen>> = {
   '333mr': scramble333,
   gear:    generateGearTimerScramble,
   ivy:     generateIvyTimerScramble,
+  pyraminx_duo: generatePyraminxDuoScramble,
 };
 
 /**

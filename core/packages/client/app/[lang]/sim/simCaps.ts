@@ -10,6 +10,7 @@
  * per-puzzle wiring.
  */
 import type { SimPuzzle } from './PlayerControls';
+import { supportsRoomCube } from './room-themes';
 
 export type SimRenderer = 'cubing' | 'engine' | 'group';
 
@@ -40,6 +41,8 @@ export interface SimPuzzleCaps {
   flat?: boolean;
   /** Engine implements six home-face colors via setFaceColors (NxN is implicit). */
   faceColors?: boolean;
+  /** Shape variants can explicitly disable controls whose NxN surface is absent. */
+  supports?: Partial<ControlSupport>;
   /** The debug "carve" toggle hides one move's moving group to reveal the core; which
    *  element the puzzle turns sets the label:
    *  - `corner` 挖角 — corner-turn puzzles + ivy (Ivy / Dino / Redi / Rex / Skewb / Pyraminx)
@@ -63,6 +66,14 @@ export interface SimPuzzleCaps {
 // 见 SimPage 的 imageStudioEngineOnly。
 const NXN_CAPS: SimPuzzleCaps = { engine: 'always' };
 const TWISTY_CAPS: SimPuzzleCaps = { engine: 'never' };
+const MAGIC_CAPS: SimPuzzleCaps = {
+  engine: 'always',
+  supports: {
+    faceLabels: false, thickness: false, hollow: false, hint: false,
+    holdPartialTurn: false, structureColor: false, coreColor: false,
+    coreOpacity: false, coreFinish: false, faceColors: false,
+  },
+};
 
 /** Per-kind capabilities. Keyed by the string puzzle kinds; NxN (numeric kind) and
  *  PG explore puzzles fall back to NXN_CAPS / TWISTY_CAPS respectively. */
@@ -84,7 +95,9 @@ const CAPS: Record<string, SimPuzzleCaps> = {
   },
   skewb: { engine: 'engineMode', carve: 'corner' },
   pyraminx: { engine: 'engineMode', carve: 'corner' },
+  pyraminx_duo: { engine: 'always', carve: 'corner' },
   megaminx: { engine: 'engineMode', carve: 'face' },
+  kilominx: TWISTY_CAPS,
   fto: { engine: 'engineMode', carve: 'face' },
   ghost: { engine: 'always', carve: 'face', faceColors: true },
   // Mirror Cube — NxN engine (uniform logic, non-uniform geometry), order 3 / order 2.
@@ -92,10 +105,23 @@ const CAPS: Record<string, SimPuzzleCaps> = {
   // as a cube of the matching order.
   mirror: { engine: 'always' },
   mirror2: { engine: 'always' },
+  // A spherical 3×3 keeps the NxN mechanism, but its coloured shell has no flat
+  // stickers, separate visible core, artwork planes, or matching hand rig.
+  sphere: {
+    engine: 'always', faceColors: true,
+    supports: {
+      thickness: false, hollow: false, hint: false, structureColor: false,
+      coreColor: false, coreFinish: false, logo: false, arrow: false,
+      pictureCube: false, roomCube: false, hands: false, handsSkeleton: false,
+      stickering: false,
+    },
+  },
   // Rubik's Clock —— 唯一的平面拼图。自有 2D 板(拖指针改状态 / 点针脚真拧),没有 3D 场景,
   // 所以整排三维设置都不适用。cubing.js 其实自带一份 clock(kpuzzle + SVG),但它**只能播放**
   // ——拖不动指针、点不了针脚,做不成模拟器,故未接成备选渲染器。
   clock: { engine: 'always', flat: true },
+  magic: MAGIC_CAPS,
+  mmagic: MAGIC_CAPS,
 };
 
 /** Static capabilities for a puzzle kind (independent of the active renderer). */
@@ -143,8 +169,10 @@ export interface ControlSupport {
   coreFinish: boolean;
   faceColors: boolean;
   logo: boolean;
+  arrow: boolean;
   /** 六面图案贴纸:仅标准数字阶 NxN,不含镜面。 */
   pictureCube: boolean;
+  roomCube: boolean;
   carve: boolean;
   /** 隔离(只看某类块):inverse of carve. True iff the engine is active and the puzzle
    *  declares isolate kinds. The kinds themselves are in ResolvedCaps.isolate. */
@@ -237,7 +265,9 @@ export function resolveCaps(kind: SimPuzzle, renderer: SimRenderer): ResolvedCap
       // 引擎,走同一条 cube.setLogo() 路径)。偶数阶(含二阶镜面)没有 U 面正中心块,
       // setLogo 本就是空操作 → 直接灰掉。其它 engine-body 拼图无中心贴片不支持。
       logo: hasCentrePiece,
+      arrow: isNxN,
       pictureCube: isNxN,
+      roomCube: supportsRoomCube(kind),
       carve: carve !== null,
       isolate: isolate.length > 0,
       // 手指(指法演示): rig 的握持/手势按 order-3 标定,且要求 NxN 引擎的
@@ -249,6 +279,7 @@ export function resolveCaps(kind: SimPuzzle, renderer: SimRenderer): ResolvedCap
       stickering: (isNxN && (kind as number) >= 2)
         || kind === 'sq1'
         || (!engineActive && (kind === 'megaminx' || kind === 'fto')),
+      ...c.supports,
     },
   };
 }

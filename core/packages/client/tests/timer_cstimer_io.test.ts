@@ -24,6 +24,7 @@
 import { describe, it, expect } from 'vitest';
 import { parseCstimerExport } from '@/app/[lang]/timer/_lib/storage/import_cstimer';
 import { importCstimerJson } from '@/app/[lang]/timer/_lib/storage/import_export';
+import { exportTimerCstimerJson } from '@cuberoot/shared/timer';
 
 /** A minimal but genuine-shaped csTimer export: one 3x3 session, 4 solves. */
 function realCstimerExport(): string {
@@ -123,6 +124,25 @@ describe('csTimer import — regression guard on the old reversed format', () =>
 });
 
 describe('csTimer import — session structure', () => {
+  it('keeps the legacy null versus empty-session contract', () => {
+    for (const text of ['{', 'null', '[]', '{}', '{"other":[]}']) {
+      expect(importCstimerJson(text)).toBeNull();
+    }
+    expect(importCstimerJson('{"session1":[]}')).toEqual({});
+    expect(importCstimerJson('{"session1":"["}')).toEqual({});
+  });
+
+  it.each([['333ble', '333bld'], ['4ni', '444bld'], ['5ni', '555bld']] as const)(
+    'preserves the legacy %s alias in both import APIs', (scrType, event) => {
+      const text = JSON.stringify({
+        session1: JSON.stringify([[[0, 12_340], 'R U', '', 1_700_000_000]]),
+        properties: { sessionData: JSON.stringify({ 1: { opt: { scrType } } }) },
+      });
+      expect(parseCstimerExport(text)[0].event).toBe(event);
+      expect(importCstimerJson(text)?.[event]?.[0].event).toBe(event);
+    },
+  );
+
   it('preserves group names, empty groups, and the user-visible rank order', () => {
     const raw = JSON.stringify({
       session2: JSON.stringify([[[0, 2_000], 'R', '', 1_700_000_200]]),
@@ -142,5 +162,55 @@ describe('csTimer import — session structure', () => {
     expect(sessions.map(session => session.name)).toEqual(['Empty drills', 'Main 3x3', 'Second by id']);
     expect(sessions.map(session => session.event)).toEqual(['fto', '333', '222']);
     expect(sessions[0].solves).toEqual([]);
+  });
+});
+
+describe('Pyraminx Duo csTimer compatibility', () => {
+  it('uses csTimer manual input and restores renamed sessions from original-event metadata', () => {
+    const solve = {
+      id: 'duo-solve', event: 'pyraminx_duo' as const, timeMs: 4_321,
+      scramble: "R U' L B", penalty: '+2' as const, ts: 1_700_000_000_000, comment: 'practice',
+    };
+    const exported = exportTimerCstimerJson({ pyraminx_duo: [solve] });
+    const outer = JSON.parse(exported.json);
+    const metadata = JSON.parse(outer.properties.sessionData);
+    expect(metadata['1']).toMatchObject({
+      opt: { scrType: 'input' }, cuberootEvent: 'pyraminx_duo',
+    });
+    metadata['1'].name = 'Morning practice';
+    outer.properties.sessionData = JSON.stringify(metadata);
+    const renamed = JSON.stringify(outer);
+    const session = parseCstimerExport(renamed)[0];
+    expect(session.event).toBe('pyraminx_duo');
+    expect(session.solves).toHaveLength(1);
+    expect(session.solves[0]).toMatchObject({
+      event: solve.event, timeMs: solve.timeMs, scramble: solve.scramble,
+      penalty: solve.penalty, ts: solve.ts, comment: solve.comment,
+    });
+    const merged = importCstimerJson(renamed)?.pyraminx_duo;
+    expect(merged).toHaveLength(1);
+    expect(merged?.[0]).toMatchObject({ ...solve, id: expect.any(String) });
+  });
+
+  it.each(['pyraminx_duo', 'Pyraminx Duo', 'duo', '二重奏魔方', 'Session: Pyraminx Duo', 'Pyraminx-Duo practice'])(
+    'recognizes %s without treating the full name as ordinary Pyraminx', (name) => {
+      const exported = JSON.stringify({
+        session1: JSON.stringify([[[0, 4_321], "R U'", '', 1_700_000_000]]),
+        properties: { sessionData: JSON.stringify({
+          1: { name, opt: { scrType: 'input' } },
+        }) },
+      });
+      expect(parseCstimerExport(exported)[0].event).toBe('pyraminx_duo');
+    },
+  );
+
+  it('does not override an explicitly different scramble type with stale Duo metadata', () => {
+    const exported = JSON.stringify({
+      session1: JSON.stringify([[[0, 4_321], 'R U', '', 1_700_000_000]]),
+      properties: { sessionData: JSON.stringify({
+        1: { name: 'Practice', opt: { scrType: 'pyram' }, cuberootEvent: 'pyraminx_duo' },
+      }) },
+    });
+    expect(parseCstimerExport(exported)[0].event).toBe('pyra');
   });
 });
