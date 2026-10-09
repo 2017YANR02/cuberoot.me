@@ -6,8 +6,8 @@ import { renderMegaScrambleSvg as sharedMega } from '@cuberoot/puzzle-render-cor
 import { renderSq1ScrambleSvg as sharedSq1 } from '@cuberoot/puzzle-render-core/sq1-svg';
 import { renderPyraminxDuoSvg, DUO_SVG_ASPECT } from '@cuberoot/puzzle-render-core/pyraminx-duo-svg';
 import { renderMagicSvg, magicSvgAspect } from '@cuberoot/puzzle-render-core/magic-svg';
-import { TimerCubePreview } from '@cuberoot/timer-ui';
-import { act, createElement } from 'react';
+import { TimerCubePreview, TimingSurface, timerCubePreviewAspect } from '@cuberoot/timer-ui';
+import { act, createElement, createRef } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -217,5 +217,42 @@ describe('shared timer scramble preview', () => {
     } finally {
       warning.mockRestore();
     }
+  });
+
+  it.each([
+    ['magic', 'Forward', 'Backward'],
+    ['mmagic', 'M Forward', 'M Backward'],
+  ] as const)('keeps %s inside the shared frame as the starting shape changes', async (event, forward, backward) => {
+    const surfaceRef = createRef<HTMLDivElement>();
+    for (const scramble of [forward, backward]) {
+      const aspect = timerCubePreviewAspect(event, scramble);
+      await act(async () => root.render(createElement(TimingSurface, {
+        surfaceRef, layout: 'solo', phase: 'idle', colorClass: '', digits: '0.00',
+        cornerAspect: aspect,
+        cornerSlot: createElement(TimerCubePreview, { event, scramble, fill: true, ariaLabel: 'Bounded practice preview' }),
+      })));
+      const frame = host.querySelector<HTMLElement>('.timing-surface-cube-frame')!;
+      const preview = host.querySelector<HTMLElement>('[aria-label="Bounded practice preview"]')!;
+      expect(Number(frame.style.getPropertyValue('--timer-cube-aspect'))).toBe(magicSvgAspect(event, scramble));
+      expect(preview.parentElement).toBe(frame);
+      expect(preview.style.width).toBe('100%');
+      expect(preview.style.height).toBe('100%');
+      expect(preview.style.aspectRatio).toBe('');
+      expect(preview.querySelector('svg')?.getAttribute('preserveAspectRatio')).toBe('xMidYMid meet');
+      expect(preview.querySelectorAll('[data-tile]')).toHaveLength(event === 'magic' ? 8 : 12);
+    }
+    expect(timerCubePreviewAspect(event, forward)).not.toBe(timerCubePreviewAspect(event, backward));
+  });
+
+  it('keeps frame metadata aligned with actual NxN, relay and fallback routing', () => {
+    for (const event of ['333oh', '444bld', 'r3', 'r4', 'r5', 'custom'] as const) {
+      expect(timerCubePreviewAspect(event)).toBe(4 / 3);
+    }
+    expect(timerCubePreviewAspect('sq1')).toBe(0.5);
+    expect(timerCubePreviewAspect('pyraminx_duo', "R U'")).toBe(DUO_SVG_ASPECT);
+    expect(timerCubePreviewAspect('mmagic', null)).toBe(magicSvgAspect('mmagic'));
+    expect(timerCubePreviewAspect('ivy')).toBe(8 / 5);
+    expect(timerCubePreviewAspect('magic', 'M Forward')).toBe(8 / 5);
+    expect(timerCubePreviewAspect('mmagic', 'R U')).toBe(8 / 5);
   });
 });

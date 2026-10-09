@@ -101,6 +101,20 @@ function planFor(event: string): PuzzleSpec | null {
   }
 }
 
+/** Natural preview aspect for host layout; invalid setups have no image. */
+export function timerScramblePreviewAspect(event: string, scramble = ''): number | null {
+  const plan = planFor(event);
+  if (!plan) return null;
+  if (plan.inlineSvg === 'magic' || plan.inlineSvg === 'mmagic') {
+    try {
+      return magicSvgAspect(plan.inlineSvg, scramble);
+    } catch {
+      return null;
+    }
+  }
+  return plan.w / plan.h;
+}
+
 export function TimerScramblePreview({
   ariaLabel,
   event,
@@ -199,9 +213,7 @@ export function TimerScramblePreview({
 
   // Magic's reverse practice starts in the target shape, which has a different
   // aspect from its rectangular start. Only parse after a valid SVG exists.
-  const previewWidth = plan.inlineSvg === 'magic' || plan.inlineSvg === 'mmagic'
-    ? plan.h * magicSvgAspect(plan.inlineSvg, scramble ?? '')
-    : plan.w;
+  const previewWidth = plan.h * (timerScramblePreviewAspect(event, scramble ?? '') ?? plan.w / plan.h);
 
   // Fixed-height mode keeps every puzzle the same height; width follows the
   // puzzle's natural w:h ratio via CSS aspect-ratio (so a string height like
