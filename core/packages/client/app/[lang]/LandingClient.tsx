@@ -4,13 +4,15 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
-import { ArrowRight, Crown, Heart, Lightbulb, Lock, LockOpen, LogIn, User, type LucideIcon } from 'lucide-react';
+import { parseAsBoolean, useQueryState } from 'nuqs';
+import { ArrowRight, Crown, Heart, Lock, LockOpen, LogIn, User, type LucideIcon } from 'lucide-react';
 import { closestCenter, DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, rectSortingStrategy, SortableContext } from '@dnd-kit/sortable';
 import Link from '@/components/AppLink';
 import SortableCard from '@/components/SortableCard';
 import HeaderToggles from '@/components/HeaderToggles';
-import OnboardingGuideModal, { isOnboardingGuided, markOnboardingGuided } from '@/components/OnboardingGuideModal';
+import OnboardingGuideModal from '@/components/OnboardingGuideModal';
+import { isOnboardingGuided, markOnboardingGuided } from '@/lib/onboarding';
 import './home-background.css';
 import { useTranslation } from 'react-i18next';
 import { useAuthUser, nextQuery } from '@/lib/auth-store';
@@ -118,23 +120,28 @@ export default function LandingPage() {
   }, []);
 
   const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
+  const user = useAuthUser();
   const [guideOpen, setGuideOpen] = useState(false);
-  // 首次访问自动弹出：localStorage 无 cuberoot_guided 才弹；关闭/完成即标记。
+  const [replayGuide, setReplayGuide] = useQueryState('guide', parseAsBoolean.withDefault(false));
   useEffect(() => {
+    if (!mounted) return;
+    let active = true;
     let timer: number | undefined;
-    try {
-      if (!isOnboardingGuided()) {
-        timer = window.setTimeout(() => setGuideOpen(true), 600);
-      }
-    } catch {
-      /* localStorage 不可用则不打扰 */
+    setGuideOpen(false);
+    if (replayGuide) {
+      setGuideOpen(true);
+    } else {
+      void isOnboardingGuided(user).then(seen => {
+        if (active && !seen) timer = window.setTimeout(() => setGuideOpen(true), 600);
+      });
     }
-    return () => { if (timer !== undefined) window.clearTimeout(timer); };
-  }, []);
+    return () => { active = false; window.clearTimeout(timer); };
+  }, [mounted, user?.uid, user?.wcaId, replayGuide]);
   const closeGuide = useCallback(() => {
     setGuideOpen(false);
-    markOnboardingGuided();
-  }, []);
+    void markOnboardingGuided(user);
+    if (replayGuide) void setReplayGuide(null);
+  }, [user, replayGuide, setReplayGuide]);
   const [featuredNotice, setFeaturedNotice] = useState<PageNotice | null>(null);
   const [publicMembers, setPublicMembers] = useState<PublicMember[] | null>(null);
   const [memberQueries, setMemberQueries] = useState({ enterprise: '', individual: '' });
@@ -179,7 +186,7 @@ export default function LandingPage() {
 
   // 右上角 登录 / 我的 入口,两态都是真链接、都指 /account(全站无登录弹层)。useAuthUser
   // 是 hydration-safe(SSG 首帧按未登录渲染,挂载后才切到已登录),避免 SSG/CSR 错配。
-  const user = useAuthUser();
+
   const isAdmin = Boolean(user?.isAdmin || isAdminWcaId(user?.wcaId));
   const [cardOrders, setCardOrders] = useState<Record<string, string[]>>({});
   const [cardLocks, setCardLocks] = useState<Record<string, boolean>>({});
@@ -396,16 +403,6 @@ export default function LandingPage() {
     <div className="landing-page">
       <div className="landing-auth">
         <HeaderToggles />
-        <button
-          type="button"
-          onClick={() => setGuideOpen(true)}
-          className="landing-auth-btn"
-          title={tr({ zh: '新手指南', en: 'Beginner guide' })}
-          aria-label={tr({ zh: '新手指南', en: 'Beginner guide' })}
-        >
-          <Lightbulb size={16} aria-hidden="true" />
-          <span className="hidden min-[601px]:inline">{tr({ zh: '💡 新手指南', en: '💡 Guide' })}</span>
-        </button>
         <Link href="/membership" className="landing-auth-icon landing-membership-icon"
           title={tr({ zh: '会员', en: 'Membership' })}
           aria-label={tr({ zh: '会员', en: 'Membership' })} prefetch={false}>

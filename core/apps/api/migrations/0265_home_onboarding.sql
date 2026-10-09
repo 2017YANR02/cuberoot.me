@@ -1,0 +1,1 @@
+ALTER TABLE app_users ADD COLUMN home_onboarding_seen BOOLEAN NOT NULL DEFAULT FALSE;

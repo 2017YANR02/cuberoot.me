@@ -18,6 +18,9 @@ const ROOTS = [
 const EXACT = new Set([
   'apps/api/src/db/schema.pg.sql', 'apps/api/src/index.ts',
   'apps/api/src/routes/mcp.ts',
+  'apps/api/src/routes/onboarding.ts', 'apps/api/migrations/0265_home_onboarding.sql',
+  'packages/client/lib/onboarding.ts', 'packages/client/components/OnboardingGuideModal.tsx',
+  'packages/client/app/[lang]/LandingClient.tsx',
   'apps/miniprogram/src/lib/navigation.ts', 'apps/miniprogram/src/lib/web-routes.ts',
   'apps/miniprogram/src/pages/web/index.ts',
   'packages/client/components/MobileEmbedBridge.tsx', 'packages/shared/src/mobile_embed.ts',

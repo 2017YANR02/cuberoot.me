@@ -40,7 +40,7 @@ import { HOME_BACKGROUND_ASSETS, resolveHomeBackground } from '@/lib/home-backgr
 import { useHomeBackgroundChoice } from '@/hooks/useHomeBackgroundChoice';
 import { useEffectiveTheme } from '@/lib/theme';
 
-export const ONBOARDING_GUIDE_KEY = 'cuberoot_guided';
+
 
 export interface OnboardingStep {
   Icon: LucideIcon;
@@ -191,22 +191,6 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     tour: 'forum',
   },
 ];
-
-export function isOnboardingGuided(): boolean {
-  try {
-    return window.localStorage.getItem(ONBOARDING_GUIDE_KEY) === 'true';
-  } catch {
-    return true;
-  }
-}
-
-export function markOnboardingGuided(): void {
-  try {
-    window.localStorage.setItem(ONBOARDING_GUIDE_KEY, 'true');
-  } catch {
-    /* 隐私模式下 localStorage 不可用：本次会话不再打扰即可 */
-  }
-}
 
 interface Props {
   open: boolean;
