@@ -86,7 +86,7 @@ export function normalizeCreatorGalleryCaptions(
 }
 
 creatorGalleryRoutes.get('/creator-gallery/captions', async (c) => {
-  c.header('Cache-Control', 'public, max-age=60, s-maxage=300');
+  c.header('Cache-Control', 'public, no-cache, must-revalidate');
   const rows = await query<CaptionRow>(
     'SELECT image_key, caption_zh, caption_en FROM creator_gallery_captions ORDER BY image_key',
   );

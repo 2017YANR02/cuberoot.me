@@ -13,7 +13,7 @@ const BASE = 'api.cuberoot.me';
 
 type Method = 'GET' | 'HEAD' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 type Gate = 'public' | 'login' | 'admin' | 'webhook';
-type Cache = 'cdn' | 'short' | 'no-store';
+type Cache = 'cdn' | 'short' | 'no-store' | 'validate';
 
 interface Ep {
   d: string;       // domain key
@@ -325,9 +325,9 @@ const ENDPOINTS: Ep[] = [
   { d: 'live', m: 'GET', p: '/v1/cubing-zh/:wcaId', g: 'public', zh: '国内选手中文信息', en: 'CN cuber Chinese info' },
 
   // ---- alg ----
-  { d: 'alg', m: 'GET', p: '/v1/alg/sets', g: 'public', c: 'cdn', zh: '全部公式集', en: 'All alg sets' },
-  { d: 'alg', m: 'GET', p: '/v1/alg/sets/:puzzle/order', g: 'public', c: 'cdn', zh: '公式库首页卡片顺序', en: 'Alg catalog card order' },
-  { d: 'alg', m: 'GET', p: '/v1/alg/sets/:puzzle/:set', g: 'public', c: 'cdn', zh: '一套公式的全部 case', en: 'All cases of a set' },
+  { d: 'alg', m: 'GET', p: '/v1/alg/sets', g: 'public', c: 'validate', zh: '全部公式集', en: 'All alg sets' },
+  { d: 'alg', m: 'GET', p: '/v1/alg/sets/:puzzle/order', g: 'public', c: 'validate', zh: '公式库首页卡片顺序', en: 'Alg catalog card order' },
+  { d: 'alg', m: 'GET', p: '/v1/alg/sets/:puzzle/:set', g: 'public', c: 'validate', zh: '一套公式的全部 case', en: 'All cases of a set' },
   { d: 'alg', m: 'POST', p: '/v1/alg/sets/:puzzle/:set/cases', g: 'admin', zh: '新增 case', en: 'Add case' },
   { d: 'alg', m: 'PUT', p: '/v1/alg/sets/:puzzle/:set/cases/:id', g: 'admin', zh: '编辑 case', en: 'Edit case' },
   { d: 'alg', m: 'PUT', p: '/v1/alg/sets/:puzzle/order', g: 'admin', zh: '重排公式库首页卡片', en: 'Reorder alg catalog cards' },
@@ -874,7 +874,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'content', m: 'POST', p: '/v1/teachers/scripts', g: 'login', c: 'no-store', zh: '为自己的老师或机构资料创建话术', en: 'Create a script under an owned teacher or school profile' },
   { d: 'content', m: 'PUT', p: '/v1/teachers/scripts/:id', g: 'login', c: 'no-store', zh: '作者修改自己的话术,管理员可修改任意话术', en: 'Authors edit their own scripts; admins edit any' },
   { d: 'content', m: 'DELETE', p: '/v1/teachers/scripts/:id', g: 'login', c: 'no-store', zh: '作者删除自己的话术,管理员可删除任意话术', en: 'Authors delete their own scripts; admins delete any' },
-  { d: 'content', m: 'GET', p: '/v1/creator-gallery/captions', g: 'public', c: 'short', zh: '颜瑞民个人页图库说明', en: 'Captions for Ruimin Yan’s profile gallery' },
+  { d: 'content', m: 'GET', p: '/v1/creator-gallery/captions', g: 'public', c: 'validate', zh: '颜瑞民个人页图库说明', en: 'Captions for Ruimin Yan’s profile gallery' },
   { d: 'content', m: 'PUT', p: '/v1/creator-gallery/captions', g: 'admin', c: 'no-store', zh: '管理员批量保存图库双语说明', en: 'Admin replaces all bilingual gallery captions' },
   { d: 'content', m: 'GET', p: '/v1/teaching/advanced', g: 'public', c: 'no-store', zh: 'CFOP 后续三阶与二阶课程', en: 'Post-CFOP 3×3 and 2×2 lessons' },
   { d: 'content', m: 'POST', p: '/v1/teaching/advanced', g: 'admin', c: 'no-store', zh: '新增一节后续课程', en: 'Add a further-course lesson' },
@@ -892,8 +892,8 @@ const ENDPOINTS: Ep[] = [
   { d: 'content', m: 'PATCH', p: '/v1/wiki/additions/:id', g: 'admin', zh: '改补充', en: 'Edit addition' },
   { d: 'content', m: 'DELETE', p: '/v1/wiki/additions/:id', g: 'admin', zh: '删补充', en: 'Delete addition' },
   { d: 'content', m: 'GET', p: '/v1/wiki/me', g: 'login', zh: '我的术语贡献', en: 'My wiki contributions' },
-  { d: 'content', m: 'GET', p: '/v1/article', g: 'public', c: 'cdn', zh: '文章列表', en: 'Article list' },
-  { d: 'content', m: 'GET', p: '/v1/article/:slug', g: 'public', c: 'cdn', zh: '单篇文章', en: 'Single article' },
+  { d: 'content', m: 'GET', p: '/v1/article', g: 'public', c: 'validate', zh: '文章列表', en: 'Article list' },
+  { d: 'content', m: 'GET', p: '/v1/article/:slug', g: 'public', c: 'no-store', zh: '单篇文章', en: 'Single article' },
   { d: 'content', m: 'GET', p: '/v1/article/me', g: 'login', zh: '我的文章', en: 'My articles' },
   { d: 'content', m: 'GET', p: '/v1/article/img/:id', g: 'public', zh: '文章配图', en: 'Article image' },
   { d: 'content', m: 'POST', p: '/v1/article/img', g: 'login', zh: '上传配图', en: 'Upload image' },
@@ -910,12 +910,12 @@ const ENDPOINTS: Ep[] = [
   { d: 'content', m: 'DELETE', p: '/v1/colpi/words/:id', g: 'admin', zh: '删词条', en: 'Delete word' },
   { d: 'content', m: 'PUT', p: '/v1/colpi/words/:id/vote', g: 'login', zh: '给词条投票', en: 'Vote a word' },
   { d: 'content', m: 'DELETE', p: '/v1/colpi/words/:id/vote', g: 'login', zh: '撤销投票', en: 'Remove vote' },
-  { d: 'content', m: 'GET', p: '/v1/nav/sites', g: 'public', c: 'cdn', zh: '导航站点', en: 'Nav sites' },
+  { d: 'content', m: 'GET', p: '/v1/nav/sites', g: 'public', c: 'validate', zh: '导航站点', en: 'Nav sites' },
   { d: 'content', m: 'GET', p: '/v1/nav/topics', g: 'public', zh: '导航话题', en: 'Directory topics' },
   { d: 'content', m: 'POST', p: '/v1/nav/topics', g: 'admin', zh: '新增话题', en: 'Add topic' },
   { d: 'content', m: 'PUT', p: '/v1/nav/topics', g: 'admin', zh: '重命名话题及关联标签', en: 'Rename topic and associated tags' },
   { d: 'content', m: 'DELETE', p: '/v1/nav/topics', g: 'admin', zh: '删除话题及关联标签', en: 'Delete topic and associated tags' },
-  { d: 'content', m: 'GET', p: '/v1/nav/home-order', g: 'public', c: 'cdn', zh: '首页与账号页卡片顺序', en: 'Homepage and account card order' },
+  { d: 'content', m: 'GET', p: '/v1/nav/home-order', g: 'public', c: 'validate', zh: '首页与账号页卡片顺序', en: 'Homepage and account card order' },
   { d: 'content', m: 'GET', p: '/v1/pets/mine', g: 'login', c: 'no-store', zh: '我的领养宠物', en: 'My adopted pets' },
   { d: 'content', m: 'POST', p: '/v1/pets/:id/adopt', g: 'login', c: 'no-store', zh: '领养宠物', en: 'Adopt a pet' },
   { d: 'content', m: 'POST', p: '/v1/pets/:id/care', g: 'login', c: 'no-store', zh: '与领养宠物互动', en: 'Care for an adopted pet' },
@@ -928,7 +928,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'content', m: 'PUT', p: '/v1/nav/sites/reorder', g: 'admin', zh: '重排站点', en: 'Reorder sites' },
   { d: 'content', m: 'PUT', p: '/v1/nav/sites/:id', g: 'admin', zh: '改站点', en: 'Edit site' },
   { d: 'content', m: 'DELETE', p: '/v1/nav/sites/:id', g: 'admin', zh: '删站点', en: 'Delete site' },
-  { d: 'content', m: 'GET', p: '/v1/sponsors', g: 'public', c: 'cdn', zh: '赞助墙；admin=1 为管理员无缓存账号关联视图', en: 'Sponsors wall; admin=1 is an authenticated, uncached account-link view' },
+  { d: 'content', m: 'GET', p: '/v1/sponsors', g: 'public', c: 'validate', zh: '赞助墙；admin=1 为管理员无缓存账号关联视图', en: 'Sponsors wall; admin=1 is an authenticated, uncached account-link view' },
   { d: 'content', m: 'POST', p: '/v1/sponsors', g: 'admin', zh: '加赞助', en: 'Add sponsor' },
   { d: 'content', m: 'PUT', p: '/v1/sponsors/:id', g: 'admin', zh: '改赞助；userId 直接关联本站账号，null 解除，省略保留', en: 'Edit sponsor; userId links an account, null unlinks, omission preserves it' },
   { d: 'content', m: 'DELETE', p: '/v1/sponsors/:id', g: 'admin', zh: '删赞助', en: 'Delete sponsor' },
@@ -938,7 +938,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'content', m: 'DELETE', p: '/v1/sponsor-claims/:id', g: 'login', zh: '撤销待审核认领', en: 'Cancel pending supporter claim' },
   { d: 'content', m: 'GET', p: '/v1/sponsor-claims', g: 'admin', zh: '赞助认领审核列表', en: 'Supporter claim review queue' },
   { d: 'content', m: 'POST', p: '/v1/sponsor-claims/:id/review', g: 'admin', zh: '审核赞助认领', en: 'Review supporter claim' },
-  { d: 'content', m: 'GET', p: '/v1/contributors', g: 'public', c: 'cdn', zh: '贡献者名单(score 降序)', en: 'Contributors wall (by score)' },
+  { d: 'content', m: 'GET', p: '/v1/contributors', g: 'public', c: 'validate', zh: '贡献者名单(score 降序)', en: 'Contributors wall (by score)' },
   { d: 'content', m: 'POST', p: '/v1/contributors', g: 'admin', zh: '加贡献者', en: 'Add contributor' },
   { d: 'content', m: 'PUT', p: '/v1/contributors/:id', g: 'admin', zh: '改贡献者', en: 'Edit contributor' },
   { d: 'content', m: 'POST', p: '/v1/contributors/:id/bump', g: 'admin', zh: '贡献次数 +1', en: 'Bump score +1' },
@@ -1047,12 +1047,14 @@ const GATE_NOTE: Record<Gate, { zh: string; en: string }> = {
 };
 
 const CACHE_LABEL: Record<Cache, { zh: string; en: string }> = {
+  validate: { zh: '核对版本', en: 'revalidate' },
   cdn: { zh: 'CDN 可缓存', en: 'CDN cacheable' },
   short: { zh: '短缓存', en: 'short cache' },
   'no-store': { zh: '不缓存', en: 'no-store' },
 };
 
 const CACHE_NOTE: Record<Cache, { zh: string; en: string }> = {
+  validate: { zh: '每次请求核对事务版本，复用服务端内容；未变化时返回 304。定时公告每次重新核对生效时间。', en: 'Check the committed version on each request, reuse server content and return 304 when unchanged. Scheduled notices also recheck activation time.' },
   cdn: { zh: '天然不可变 / 慢变,nginx 走 s-maxage 长缓存,浏览器短缓存。', en: 'Immutable or slow-moving; long s-maxage at nginx, short browser cache.' },
   short: { zh: '会变但不急,几分钟的 max-age 就够,过期即回源。', en: 'Changes, but not urgently — a few minutes of max-age, then revalidate.' },
   'no-store': { zh: '暂态或写操作,发 no-store,从不缓存。', en: 'Transient or a write — sent no-store, never cached.' },

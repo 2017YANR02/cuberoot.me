@@ -1,5 +1,7 @@
 'use client';
 
+import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
+
 /**
  * /site — 魔方网址导航页
  * 顶部话题/项目筛选 + 列表/卡片视图;搜索用 Fuse.js;数据源 /v1/nav/sites。
@@ -616,13 +618,14 @@ function SitesPageInner() {
   const [topicName, setTopicName] = useState('');
   const [topicBusy, setTopicBusy] = useState(false);
   const [topicError, setTopicError] = useState('');
+  const refreshKey = useContentRefreshKey(!editing && !creating && !manageTopics);
 
   useEffect(() => {
     let cancelled = false;
     listTopics().then((rows) => { if (!cancelled) setTopicCatalog(rows); })
       .catch(() => { if (!cancelled) setTopicError(t('话题加载失败，请重试', 'Could not load topics. Please retry.')); });
     return () => { cancelled = true; };
-  }, [t]);
+  }, [t, refreshKey]);
 
   const editableTopics = useMemo(() => [...new Set([
     ...topicCatalog, ...(sites ?? []).flatMap((site) => site.tags ?? []),
@@ -664,7 +667,7 @@ function SitesPageInner() {
       .then((rows) => { if (!cancel) setSites(rows); })
       .catch((e) => { if (!cancel) setLoadErr(e instanceof Error ? e.message : String(e)); });
     return () => { cancel = true; };
-  }, []);
+  }, [refreshKey]);
 
   const [inputValue, setInputValue] = useState(query);
   const [composing, setComposing] = useState(false);

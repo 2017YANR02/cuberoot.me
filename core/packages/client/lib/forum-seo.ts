@@ -9,6 +9,7 @@ import { excerptFromMarkdown } from '@cuberoot/shared/forum';
 export { excerptFromMarkdown } from '@cuberoot/shared/forum';
 
 const REVALIDATE = 3600; // 1h — a thread's title/first post rarely change; replies don't affect the card
+export const FORUM_CACHE_TAG = 'forum-threads';
 
 export interface ThreadSeo {
   title: string;
@@ -22,7 +23,7 @@ interface ThreadApiResp {
   posts?: { content?: string; postNo?: number }[];
 }
 
-/** Cache tag for a thread's SEO fetch — a future thread mutation can revalidateTag() this. */
+/** Cache tag for a thread's SEO fetch — committed thread mutations revalidate this on each deployment. */
 export function forumThreadCacheTag(id: string | number): string {
   return `forum-thread-${id}`;
 }
@@ -34,7 +35,7 @@ export function forumThreadCacheTag(id: string | number): string {
 export async function fetchThreadForSeo(id: string, isZh: boolean): Promise<ThreadSeo | null> {
   try {
     const res = await fetch(apiUrl(`/v1/forum/t/${encodeURIComponent(id)}?page=1&size=1`), {
-      next: { revalidate: REVALIDATE, tags: [forumThreadCacheTag(id)] },
+      next: { revalidate: REVALIDATE, tags: [forumThreadCacheTag(id), FORUM_CACHE_TAG] },
     });
     if (!res.ok) return null;
     const data = (await res.json()) as ThreadApiResp;

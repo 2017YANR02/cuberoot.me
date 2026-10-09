@@ -29,7 +29,7 @@ describe('recon cache webhook', () => {
     expect((await POST(request('{"id":2796}'))).status).toBe(503);
     expect(revalidateTag).not.toHaveBeenCalled();
   });
-  it.each(['{', '{}', '{"id":0}', '{"id":"2796-x"}', '{"id":"1e3"}', '{"id":9007199254740992}'])(
+  it.each(['{', '{}', '{"id":0}', '{"id":"2796-x"}', '{"id":"1e3"}', '{"id":9007199254740992}', '{"kind":"other","id":1}'])(
     'rejects invalid payload %s', async body => {
       expect((await POST(request(body))).status).toBe(400);
       expect(revalidateTag).not.toHaveBeenCalled();
@@ -69,4 +69,12 @@ describe('recon cache webhook', () => {
     expect(fetcher).toHaveBeenCalledTimes(4);
     expect(revalidateTag).not.toHaveBeenCalled();
   });
+});
+
+ it('expires forum metadata for a thread and for moderation affecting multiple threads', async () => {
+  expect((await POST(request('{"kind":"forum","id":42}'))).status).toBe(200);
+  expect((await POST(request('{"kind":"forum"}'))).status).toBe(200);
+  expect(vi.mocked(revalidateTag).mock.calls).toEqual([
+    ['forum-thread-42', { expire: 0 }], ['forum-threads', { expire: 0 }],
+  ]);
 });

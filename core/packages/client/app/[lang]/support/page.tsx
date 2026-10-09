@@ -1,5 +1,7 @@
 'use client';
 
+import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
+
 /**
  * /support — 致谢 / 赞助墙。
  * 公开展示赞助者(头像 + 名字 + 金额,金额降序)与贡献者(头像 + 名字 + 贡献次数,
@@ -186,6 +188,7 @@ export default function SupportPage() {
   const [expanded, setExpanded] = useState(false);
   const [donateOpen, setDonateOpen] = useState(false);
   const [editorTarget, setEditorTarget] = useState<EditorTarget | null>(null);
+  const refreshKey = useContentRefreshKey(editorTarget === null);
   const [detailContributor, setDetailContributor] = useState<Contributor | null>(null);
 
   useEffect(() => {
@@ -198,7 +201,7 @@ export default function SupportPage() {
       .then(rows => { if (!cancel) setContributors(rows); })
       .catch(e => { if (!cancel) setContribErr(e instanceof Error ? e.message : String(e)); });
     return () => { cancel = true; };
-  }, [admin]);
+  }, [admin, refreshKey]);
 
   const total = sponsors?.length ?? 0;
   const visible = useMemo(

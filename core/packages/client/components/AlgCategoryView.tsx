@@ -1,4 +1,6 @@
 'use client';
+
+import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
 import '@cuberoot/timer-ui/compact-select.css';
 
 /**
@@ -478,6 +480,7 @@ export function categoryHeaderCaseCount(
 }
 
 export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initialData, collection }: AlgCategoryViewProps) {
+  const refreshKey = useContentRefreshKey(!initialData);
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const narrow = useIsMobile(480);
@@ -756,16 +759,13 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     return map;
   }, [submissions]);
 
+  useEffect(() => { setData(null); }, [puzzleParam, set, isAdmin]);
   useEffect(() => {
     if (!validPuzzle || !meta) { setError('unknown set'); setData(null); return; }
     let live = true;
     setError(null);
     // 哨兵壳分流已经把整份 set 拉好传下来(initialData):非 admin 直接复用,免二次 fetch。
-    setData(null);
-    // admin 必须绕开那 1 小时的 Cache-Control。他刚删掉的那条公式,DB 里确实没了,
-    // 但浏览器缓存里那份旧响应还在 —— 而 Ctrl+Shift+R 只绕文档和子资源的缓存,
-    // **绕不过页面加载后 JS 自己发的 fetch()**,那一发照样命中旧响应。结果就是:
-    // 保存成功、页面也对,一强刷,删掉的公式原地复活。fresh 就是为这个留的口子。
+    // 普通读取会核对版本；管理员保留显式 fresh 入口。
     const pending = initialData && !isAdmin ? alignAlgFile(initialData)
       : loadAlg(puzzleParam, set, { fresh: isAdmin });
     pending.then(d => {
@@ -773,7 +773,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       setData(d);
     }).catch(e => { if (live) setError(String(e)); });
     return () => { live = false; };
-  }, [puzzleParam, set, validPuzzle, meta, isAdmin, initialData]);
+  }, [puzzleParam, set, validPuzzle, meta, isAdmin, initialData, refreshKey]);
 
   useEffect(() => {
     if (!data || !validPuzzle) return;

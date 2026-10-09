@@ -5,6 +5,7 @@
 // 首屏一定是空数组(fetch 只在 effect 里发),SSG 的 hydration 输出与服务端一致 ——
 // 拉到之后再重渲染,拉不到就当没有覆盖,按代码默认清单跑。
 import { useEffect, useState } from 'react';
+import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
 import { listSimMasks, listSimMaskLayouts, type SimMaskRow, type SimMaskLayout } from '@/lib/sim-masks-api';
 
 let cache: SimMaskRow[] = [];
@@ -31,14 +32,15 @@ export function refreshSimMasks(): Promise<void> {
 }
 
 export function useSimMasks(): { rows: SimMaskRow[]; layouts: SimMaskLayout[]; reload: () => Promise<void> } {
+  const refreshKey = useContentRefreshKey();
   const [rows, setRows] = useState<SimMaskRow[]>(cache);
   const [savedLayouts, setLayouts] = useState(layouts);
   useEffect(() => {
     const onChange = () => { setRows(cache); setLayouts(layouts); };
     listeners.add(onChange);
     if (loaded) onChange();
-    else void refreshSimMasks().catch(() => {});
+    void refreshSimMasks().catch(() => {});
     return () => { listeners.delete(onChange); };
-  }, []);
+  }, [refreshKey]);
   return { rows, layouts: savedLayouts, reload: refreshSimMasks };
 }

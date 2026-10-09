@@ -1,5 +1,7 @@
 'use client';
 
+import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
+
 // 每页顶部管理员通知条(维护中 / WIP / 已知 bug)。全站注入(见 app/[lang]/layout.tsx)。
 //   - 访客:看到匹配当前页的 enabled 通知,可关闭(内容变更后重新出现)。
 //   - 管理员:从桌宠打开新增编辑器;已有通知仍可在顶部直接编辑 / 删除。
@@ -147,13 +149,16 @@ export default function PageNoticeBar() {
   const [notices, setNotices] = useState<PageNotice[]>([]);
   const [dismissed, setDismissed] = useState<Record<string, string>>({});
   const [form, setForm] = useState<FormState | null>(null);
+  const refreshKey = useContentRefreshKey(form === null);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  // enabled 通知:layout 常驻,导航不重挂 → 挂载时拉一次即可。后端挂了静默降级。
+  // layout 常驻：导航和返回页面时核对通知；后端失败时保留已有内容。
   useEffect(() => {
-    fetchPageNotices().then(setNotices).catch(() => { /* 不影响页面 */ });
-  }, []);
+    let active = true;
+    fetchPageNotices().then(rows => { if (active) setNotices(rows); }).catch(() => {});
+    return () => { active = false; };
+  }, [key, refreshKey]);
 
   // 本地「已关闭」记录(id → updatedAt;内容变更后 updatedAt 变,重新出现)。
   useEffect(() => {
@@ -163,7 +168,7 @@ export default function PageNoticeBar() {
     } catch { /* ignore */ }
   }, []);
 
-  // 写操作后用返回行就地更新(避开公开 GET 的 60s 缓存,改动即时可见)。
+  // 写操作后用返回行就地更新，改动即时可见。
   const applyResult = (row: PageNotice) => {
     setNotices((prev) => {
       const rest = prev.filter((n) => n.id !== row.id && !(

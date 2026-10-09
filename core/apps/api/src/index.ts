@@ -4,6 +4,8 @@ import { checkCompetitionAccess, requireCompetitionAccess } from './utils/compet
 import { issueCompetitionCaptcha, submitCompetitionCaptcha } from './utils/competition_captcha.js';
 import { startRecordPushSweep } from './utils/record_push.js';
 import { requestDiagnostics } from './observability/request.js';
+import { publicContentCache } from './utils/public_content_cache.js';
+import { revalidateForumMutation } from './utils/forum_revalidate.js';
 import { startRuntimeDiagnostics } from './observability/runtime.js';
 import { serve } from '@hono/node-server';
 import { createNodeWebSocket } from '@hono/node-ws';
@@ -139,6 +141,8 @@ app.use('/v1/cubing-live/*', requireCompetitionAccess);
 app.use('/v1/cubing-live-stream/*', requireCompetitionAccess);
 app.use('/v1/*', browserSessionGuard);
 app.use('/v1/*', rolePreviewGuard);
+app.use('/v1/*', publicContentCache());
+app.use('/v1/forum/*', revalidateForumMutation);
 
 // NOTE: 全局错误处理——把未捕获的 throw new Error(...) 转成 JSON 格式
 // requireAuth / requireAdmin / checkRateLimit 都用 throw，没有全局处理器会变成空 500

@@ -39,7 +39,7 @@ export async function listSponsors(fresh = false, admin = false): Promise<Sponso
   const url = fresh ? `${base}&fresh=${Date.now()}` : base;
   return handleApi<Sponsor[]>(await sessionFetch(url, admin
     ? { cache: 'no-store', headers: authHeaders() }
-    : fresh ? { cache: 'no-store' } : undefined));
+    : { cache: 'no-cache' }));
 }
 export async function createSponsor(body: SponsorInput): Promise<Sponsor> {
   return handleApi<Sponsor>(await sessionFetch(BASE, { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) }));
@@ -166,7 +166,7 @@ function normContributor(c: Contributor): Contributor {
 }
 
 export async function listContributors(): Promise<Contributor[]> {
-  return (await handleApi<Contributor[]>(await sessionFetch(CONTRIB_BASE))).map(normContributor);
+  return (await handleApi<Contributor[]>(await sessionFetch(CONTRIB_BASE, { cache: 'no-cache' }))).map(normContributor);
 }
 export async function createContributor(body: ContributorInput): Promise<Contributor> {
   return normContributor(await handleApi<Contributor>(await sessionFetch(CONTRIB_BASE, { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) })));

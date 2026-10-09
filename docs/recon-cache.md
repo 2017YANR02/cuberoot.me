@@ -45,3 +45,10 @@ The detail API returns `no-store`, including public and missing recons.
 
 Direct SQL edits bypass API notifications; maintenance that changes recon rows
 must explicitly notify both receivers after committing the data.
+
+The same authenticated receiver also accepts `{ "kind": "forum", "id": "42" }`
+to expire a forum thread's metadata, or `{ "kind": "forum" }` for moderation
+that can affect several threads. Successful forum content writes notify both
+deployments; views and reactions do not. The forum fallback ISR interval is
+one hour. See [public-content-cache.md](public-content-cache.md) for the separate
+revision-based public API response cache and its load/freshness boundaries.

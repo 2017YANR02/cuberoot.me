@@ -186,7 +186,7 @@ sponsorsRoutes.get('/sponsors', async (c) => {
   if (adminView) {
     c.header('Cache-Control', 'no-store');
     await requireAdminOrApiKey(c);
-  } else c.header('Cache-Control', 'public, max-age=3600');
+  } else c.header('Cache-Control', 'public, no-cache, must-revalidate');
   const rows = await query<SponsorRow>(
     'SELECT * FROM sponsors ORDER BY amount DESC, created_at',
   );
@@ -706,7 +706,7 @@ function validateContributor(b: ContributorInput): { error: string } | { value: 
 
 // GET /v1/contributors — 全表,score 降序
 sponsorsRoutes.get('/contributors', async (c) => {
-  c.header('Cache-Control', 'public, max-age=3600');
+  c.header('Cache-Control', 'public, no-cache, must-revalidate');
   const rows = await query<ContributorRow>(
     'SELECT * FROM contributors ORDER BY score DESC, created_at',
   );
