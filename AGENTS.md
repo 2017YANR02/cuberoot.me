@@ -70,9 +70,13 @@ WXML 表达式直接写 `&&` / `||`，禁 HTML 实体；改 WXML 后必须通过
 
 ## 部署
 
-> **push = 上线(默认只 commit 不 push)**:push 即触发 Vercel + 服务器自动重建。仅以下情形 push 且先告知用户:①用户明说;②DB 迁移需线上生效;③改 nginx/systemd/服务器 env/后端 API;④bug 仅生产复现;⑤线上紧急修。
+> **本仓库长期开发与发布授权（用户于 2026-10-09 明确授予）**：AI 执行用户交办的 `2017YANR02/cuberoot.me` 开发、修复或维护任务时，默认获准完成修改、必要验证、建分支、提交、推送、创建及修订 PR，在满足适用检查和分支保护要求后合并，并完成实际部署与验收。此授权跨会话持续有效，直到用户撤销或修改；常规步骤无需逐次确认。
 
-- 发布授权以本节为准,Skill 中 push/上传/workflow 命令不自行授予权限;用户本次“仅本地/不 push”优先;专项规则明确要求当次授权或用户手动执行时保留该更严格边界。
+- 当次明确指令优先：用户说“仅本地/不 push”“只建 PR/先别合并”“不要部署”等时按当次范围执行；仅要求分析或评审的任务不自动变成修改与发布任务。
+- 发布授权以本节和当次任务为准；Skill 中的常规 push/上传/workflow 提示不另设重复确认关卡。沿用平台和工具实际提供的权限与交互要求；本授权不授予新账号访问权，也不替代必须由用户完成的安全交接。
+- 本长期授权不包含删除仓库或生产数据、强推重写共享历史、覆盖他人未提交工作、扩大账号/凭据权限或新增付费承诺；涉及这些操作时单独取得具体授权，不绕过分支保护或检查。
+- 推送、合并会按当前 workflow 和 Vercel 路径规则触发构建与部署；先核对实际范围，完成后据实报告。纯文档等未触发应用构建的变更不要求手动制造部署。
+- 云工作区的终端 `git push` 缺凭据时，先核对已授权 GitHub 连接器的实际写入能力；可用则按同一发布授权继续完成提交、PR 与合并。流程见 [GitHub 提交通道](docs/troubleshooting.md#github-提交通道)。新会话重新核对能力，分别报告终端认证、远端提交和正式部署状态。
 - 主域 DNS 分线路:一路自有服务器 nginx→127.0.0.1:3002(systemd `cuberoot-next`;vhost `ops/nginx/`,改 nginx 走 `deploy_nginx.yml`);一路 Vercel(push 自动 build)。
 - `static.cuberoot.me`:服 `{tools,stats}/`,CORS:*。`next.cuberoot.me`:staging 别名,同 :3002。
 - Next standalone:`deploy_next.yml`(push client/shared/visualcube 触发)CI build→scp→原子换+健康检查+失败回滚;unit `ops/systemd/cuberoot-next.service`。
@@ -165,7 +169,7 @@ pnpm --filter @cuberoot/client lint
 - 全局固定按钮对齐内容右沿:`right: max(16px, calc((100vw - <content-max-width>) / 2))`。
 - chip/tab/下拉项不显示数量计数。
 - WCA 时间锚点:时间序列默认视图从 2003-08-22 起步(第 0 帧 = 1982 快照),统计聚合必含 1982 场。
-- 可为任务边界读取 `git status`/diff,仅需历史证据时读 `git log`;删除文件或配置前须取得用户批准,同一对象和动作已有明确授权不重复询问,执行仍遵循全局回收站规则。
+- 可为任务边界读取 `git status`/diff，仅需历史证据时读 `git log`；文件和配置的增删改遵守部署章节的长期授权、当次任务范围及权限边界，保留他人未提交工作，执行仍遵循全局回收站规则。
 - 报根因/"修好了"/done 前必须实证(日志/EXPLAIN/run 输出/playwright);未证实标「假设」;性能/502/OOM 先 profile 禁猜。
 - UI 验证先搜并用 Playwright MCP(可能延迟加载);fixtures 全集别采样。
 - 新路由先 grep 防撞名;路由改名/合并不为旧路径加 redirect。
