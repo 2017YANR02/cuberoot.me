@@ -1,7 +1,7 @@
 'use client';
 
 /* auth-doc-review
-{"fingerprint":"d10e31680777f1b301de06c1c02be20f88f8bd81fa101af1b63383569faedc36","reason":"复核 MCP 授权页的三个按钮：本次只给同意、拒绝和撤销按钮添加专用样式类，回调、管理员判断、OAuth 请求参数及登录回跳均未改变；共享账户排序名单补齐 mcp 入口。现有图中的 S256 PKCE、单次授权码、令牌轮换、降权失效与撤销流程仍一致，无需变更节点。ChatGPT 真人连接仍待验收。"}
+{"fingerprint":"ecc7b0d2d932363aacd1a1b7db01daca99fbc20e0cded2738afad65eec9bbddb","reason":"复核首页游客与账号独立的导览状态、鉴权读写、账号切换和失败重试；我的页新入口只回到首页重看，不改变登录、绑定或回跳。账号合并以 OR 保留已看标记，注销随 app_users 删除。新增双语流程节点并明确本地实现与部署边界。"}
 */
 
 import type { ReactNode } from 'react';
@@ -98,6 +98,17 @@ export default function AuthFlowPage() {
         ]} /><figcaption>{t('浏览器、App 安全存储、内嵌账号页是三个会话容器，不是三个账号。回跳失败时回 App 重试，不重复注册；长期登录凭据不放进网址。', 'The browser, App secure storage, and embedded account page are three session containers, not three accounts. Retry a failed handoff without registering again; long-lived credentials never enter URLs.')}</figcaption></figure>
       </section>
       <p className="auth-map-note">{t('登录成功 ≠ 计时记录已云同步。App 的计时记录、备注和设置仍在本机；账号合并也不自动收集各台设备的本地记录。', 'Successful sign-in does not mean timer data is cloud-synced. App solves, notes, and settings remain local; account merging does not gather local records from every device.')}</p>
+    </section>
+
+    <section id="home-guide" className="auth-map-section">
+      <h2>{t('首页新手指南', 'Homepage beginner guide')}</h2>
+      <Steps items={[
+        t('游客首次进入首页 → 按当前浏览器记录显示；不将游客记录当作账号记录', 'A guest’s first homepage visit → use browser-local status; guest status never substitutes for account status'),
+        t('登录后进入首页 → 查询当前账号；未看过才显示，查询失败不自动弹出', 'Visit the homepage signed in → read the current account’s status; show only if unseen, and do not auto-open after a failed lookup'),
+        t('关闭、跳过或完成 → 保存账号已看标记；同一账号换设备也不再自动显示。保存失败按账号暂存，下次进入首页重试', 'Close, skip, or finish → save the account’s seen status; other devices no longer auto-open it. Failed saves remain pending for that account and retry on the next homepage visit'),
+        t('头像 → 我的 → 新手指南 → 回到首页手动重看；合并账号时保留任一账号的已看标记', 'Avatar → My account → Beginner guide → return to the homepage to replay; merging retains either account’s seen status'),
+      ]} />
+      <p>{t('本地实现；账号跨设备同步须部署 API 与数据库迁移后生效。登录、绑定和回跳流程不变。', 'Implemented locally; cross-device account sync requires the API and database migration to be deployed. Sign-in, linking, and handoff flows are unchanged.')}</p>
     </section>
 
     <section id="mini" className="auth-map-section" aria-labelledby="mini-current-title">

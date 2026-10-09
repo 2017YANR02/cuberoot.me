@@ -10,7 +10,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryState, parseAsInteger, parseAsStringEnum } from 'nuqs';
-import { Bell, BookOpen, Building2, ChevronLeft, Crown, LockKeyhole, LogOut, Settings, Rewind, IdCard, GraduationCap, Inbox, Loader2, Upload, UserRound, Users, UserCog } from 'lucide-react';
+import { Bell, BookOpen, Building2, ChevronLeft, Crown, LockKeyhole, LogOut, Settings, Rewind, IdCard, GraduationCap, Inbox, Lightbulb, Loader2, Upload, UserRound, Users, UserCog } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import HomeLink from '@/components/HomeLink';
 import { ClearButton } from '@/components/ClearButton';
@@ -761,6 +761,12 @@ export default function AccountPage() {
   const isAdmin = hasAdminAccess(user);
   const commerceRestricted = isMiniProgramCommerceRestricted();
   const cards = [
+    {
+      key: 'onboarding',
+      href: '/?guide=true',
+      icon: <Lightbulb size={22} className="account-card-icon" />,
+      title: tr({ zh: '新手指南', en: 'Beginner guide' }),
+    },
 
     ...(wcaId ? [
       {
