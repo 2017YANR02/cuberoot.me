@@ -19,6 +19,30 @@
   },
   "manualContracts": [
     {
+      "id": "client-account-avatar-and-puzzle-icon-generation",
+      "from": "packages/client build scripts and icon regression fixtures",
+      "to": "shared avatar manifest and event-icon SVG sources",
+      "phase": "generated-artifact",
+      "mechanism": "Workspace package resolution for committed output paths; public shared account-avatar import",
+      "owner": "client",
+      "rationale": "Pet gallery and simulator geometry are the existing source of truth for deterministic cross-runtime artifacts.",
+      "replacement": "Keep output reviewed and committed; runtime consumers use public package exports, never client sources.",
+      "evidence": [
+        {
+          "file": "core/packages/client/scripts/build-account-avatars.ts",
+          "contains": "resolveWorkspacePath('@cuberoot/shared')"
+        },
+        {
+          "file": "core/packages/client/scripts/generate-puzzle-icons.mts",
+          "contains": "resolveWorkspacePath('@cuberoot/event-icon')"
+        },
+        {
+          "file": "core/packages/client/tests/puzzle-icon-catalog.test.ts",
+          "contains": "workspaceFixturePath('@cuberoot/event-icon'"
+        }
+      ]
+    },
+    {
       "id": "client-pyraminx-duo-geometry-proof",
       "from": "packages/client Pyraminx Duo geometry regression test",
       "to": "packages/client/scripts/pyraminx-duo/verify-geometry.mts",

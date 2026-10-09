@@ -5,7 +5,8 @@
  * Then: pnpm --filter @cuberoot/event-icon generate
  */
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
+import { resolveWorkspacePath } from '../../../scripts/resolve-workspace-path.mjs';
 import { getPuzzleGeometryByDesc } from 'cubing/puzzle-geometry';
 import { PG_PUZZLES } from '../app/[lang]/sim/pgCatalog.ts';
 
@@ -68,7 +69,7 @@ function glyph(def: string): string {
   });
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" fill="currentColor"><path d="${paths.join('')}"/></svg>\n`;
 }
-const out=fileURLToPath(new URL('../../event-icon/svg/puzzle/',import.meta.url));
+const out=resolve(import.meta.dirname, '../../..', resolveWorkspacePath('@cuberoot/event-icon'), 'svg/puzzle') + '/';
 const check = process.argv.includes('--check');
 if (!check) mkdirSync(out,{recursive:true});
 function save(name: string, svg: string) {

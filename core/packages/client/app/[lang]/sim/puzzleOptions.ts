@@ -13,8 +13,12 @@ export const SIM_FIXED_PUZZLE_OPTIONS = [
   { value: 'sq4',      iconClass: 'unofficial-sq4', labelZh: 'SQ4', labelEn: 'SQ4' },
   { value: 'ivy',      iconClass: 'unofficial-ivy', labelZh: '枫叶', labelEn: 'Ivy' },
   { value: 'pyraminx', iconClass: 'event-pyram', labelZh: eventDisplayName('pyram', true), labelEn: eventDisplayName('pyram', false) },
+  { value: 'pyraminx_duo', iconClass: 'unofficial-pyraminx_duo', labelZh: '二重奏', labelEn: 'Pyraminx Duo' },
   { value: 'skewb',    iconClass: 'event-skewb', labelZh: eventDisplayName('skewb', true), labelEn: eventDisplayName('skewb', false) },
   { value: 'megaminx', iconClass: 'event-minx',  labelZh: eventDisplayName('minx', true), labelEn: eventDisplayName('minx', false) },
+  { value: 'kilominx', iconClass: 'unofficial-kilominx', labelZh: '二阶五魔', labelEn: 'Kilominx' },
+  { value: 'magic', iconClass: 'event-magic', labelZh: '八板', labelEn: 'Rubik’s Magic' },
+  { value: 'mmagic', iconClass: 'event-mmagic', labelZh: '十二板', labelEn: 'Master Magic' },
   { value: 'clock',    iconClass: 'event-clock', labelZh: eventDisplayName('clock', true), labelEn: eventDisplayName('clock', false) },
   { value: 'fto',      iconClass: 'puzzle-fto', labelZh: eventDisplayName('fto', true), labelEn: eventDisplayName('fto', false) },
   { value: 'dino',     iconClass: 'unofficial-dino', labelZh: '恐龙', labelEn: 'Dino' },
@@ -25,10 +29,6 @@ export const SIM_FIXED_PUZZLE_OPTIONS = [
   { value: 'ghost',    iconClass: 'unofficial-ghost', labelZh: '鬼魔', labelEn: 'Ghost Cube' },
   { value: 'mirror',   iconClass: 'unofficial-333_mirror_blocks', labelZh: '镜面', labelEn: 'Mirror' },
   { value: 'mirror2',  iconClass: 'unofficial-222_mirror_blocks', labelZh: '二阶镜面', labelEn: 'Mirror 2x2' },
-  { value: 'pyraminx_duo', iconClass: 'unofficial-pyraminx_duo', labelZh: '二重奏', labelEn: 'Pyraminx Duo' },
-  { value: 'kilominx', iconClass: 'unofficial-kilominx', labelZh: '二阶五魔', labelEn: 'Kilominx' },
-  { value: 'magic', iconClass: 'event-magic', labelZh: '八板', labelEn: 'Rubik’s Magic' },
-  { value: 'mmagic', iconClass: 'event-mmagic', labelZh: '十二板', labelEn: 'Master Magic' },
   { value: 'sphere', textLabel: 'Sphere', labelZh: '球形', labelEn: 'Sphere Cube' },
 ] as const;
 

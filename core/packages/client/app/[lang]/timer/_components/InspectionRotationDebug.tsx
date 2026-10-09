@@ -41,7 +41,7 @@ export function InspectionRotationDebug({ enabled, onToggle, quatRef, brand, pha
   }, [enabled, observing, quatRef, brand, resetKey]);
 
   return <div className="inspection-rotation-debug" data-no-timer>
-    <button type="button" aria-pressed={enabled} onClick={onToggle}>
+    <button className="inspection-rotation-debug-toggle" type="button" aria-pressed={enabled} onClick={onToggle}>
       {enabled
         ? tr({ zh: '关闭观察转体调试', en: 'Hide inspection rotation debug' })
         : tr({ zh: '观察转体调试', en: 'Inspection rotation debug' })}

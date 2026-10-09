@@ -13,11 +13,11 @@ describe('Sphere Cube scramble generator registration', () => {
     expect(shapeModSourceEvent('sphere')).toBe('333');
     expect(CSTIMER_EVENT_IDS.has('sphere')).toBe(false);
     expect(NATIVE_SCRAMBLE_EVENT_IDS.has('sphere')).toBe(false);
-    expect(eventDisplayName('sphere', true)).toBe('球形魔方');
+    expect(eventDisplayName('sphere', true)).toBe('球形');
     expect(eventDisplayName('sphere', false)).toBe('Sphere Cube');
     const groups = scrambleEventPickerGroups([...SHAPE_MOD_EVENT_IDS], SHAPE_MOD_APPEND, true);
     expect(groups.find(({ id }) => id === 'other')?.items.find(({ id }) => id === 'sphere')).toEqual({
-      id: 'sphere', label: '球形魔方', iconClass: undefined, textLabel: 'Sphere',
+      id: 'sphere', label: '球形', iconClass: undefined, textLabel: 'Sphere',
     });
   });
 });

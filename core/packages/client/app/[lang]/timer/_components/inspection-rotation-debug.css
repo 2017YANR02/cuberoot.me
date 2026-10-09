@@ -3,7 +3,7 @@
   padding: 12px;
   text-align: center;
 }
-.inspection-rotation-debug button {
+.inspection-rotation-debug .inspection-rotation-debug-toggle {
   padding: 5px 10px;
   margin-bottom: 8px;
   border: 1px solid var(--border-default);
@@ -14,7 +14,7 @@
   font-size: 13px;
   cursor: pointer;
 }
-.inspection-rotation-debug button[aria-pressed='true'] {
+.inspection-rotation-debug .inspection-rotation-debug-toggle[aria-pressed='true'] {
   color: var(--accent);
   border-color: var(--accent);
 }
