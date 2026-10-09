@@ -655,12 +655,12 @@ export default function SimPage() {
       imgPuzzle, query.stickering, query.stickeringRot]);
   const [imgSpec, setImgSpec] = useImageSpec('img_', { puzzle: imgPuzzle, inherit: imgInherit });
   // Static/spec rendering is an exact fallback only when it can encode every visible
-  // piece of simulator state. Unsupported stage stickerings must wait for the live
-  // engine mirror; otherwise a cold/private window can export a plausible but different
-  // full puzzle before the first engine frame arrives.
+  // piece of simulator state. Engine-only puzzles and picture/room scenes have no
+  // accurate spec model. They and unsupported stage stickerings must wait for the
+  // live mirror, including after changing puzzles while an export menu is open.
   const stickeringAffectsView = query.stickering !== 'full'
     && resolveCaps(puzzleParam, query.renderer).supports.stickering;
-  const staticFallbackExact = !isNativePuzzleId(puzzleParam) && puzzleParam !== 'sphere' && (!stickeringAffectsView
+  const staticFallbackExact = !pictureImageStudioEngineOnly && (!stickeringAffectsView
     || (typeof puzzleParam === 'number'
       && visualcubeMaskForStickering(puzzleParam, query.stickering) !== ''));
 
@@ -1882,7 +1882,9 @@ export default function SimPage() {
   useEffect(() => {
     const active = imageOpen && (!srCompanionForced || pictureCubeActive || roomsActive || !staticFallbackExact);
     setEngineSvgUnavailable(false);
-    if (isNativePuzzleId(puzzleParam)) setEngineSvg(null);
+    // A restarted mirror must wait for its current source, including when
+    // leaving a native 2D puzzle for a player with no ready frame yet.
+    setEngineSvg(null);
     if (!active) { setEngineSvg(null); return; }
     // 贴纸遮罩(mask 直映):有派生表的拼图把灰化烙进镜像;没有的整程置 null,
     // PuzzleImage 落回 spec 渲染器(sr/visualcube 认 mask)—— 哪条路都不丢遮罩。
