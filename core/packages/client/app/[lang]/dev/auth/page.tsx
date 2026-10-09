@@ -1,7 +1,7 @@
 'use client';
 
 /* auth-doc-review
-{"fingerprint": "b3f966681800090a55cecf8207f39a27ef2b5586994babacceb3b288b373054f", "reason": "2026-10-09 计时器预览尺寸复核：App.tsx 仅新增 timerCubePreviewAspect 导入及 TimingSurface 的 cornerAspect 数值，读取已有项目和打乱以约束图示宽度；智能魔方实况沿用原框。已核对 useInstalledAuth、系统浏览器回跳、票据交换、安全存储、账号切换、绑定合并、退出和注销调用均未改变，保留现有双语账号生命周期节点。合入 main 的刷脸失败恢复说明和既有复核记录完整保留；本次尺寸与源码复核不代表原生登录真机验收。 2026-10-08 修复刷脸失败与跨设备恢复：区分供应商未完成和失败，保留原会话查询要求，新增同账号按流水结束认证，次数不退回且并发旧结果不能再通过；同步双语认证流程。 2026-10-08 阿里云刷脸协议抽取为 app-foundation 固定版本包；账号、会话、同意、限次、取消和结果落库仍由原 API 负责，用户流程不变，保留本次主线其他功能与说明。 2026-10-08 实名表单预填已绑定 WCA 姓名，优先中文；手动编辑和清空优先于资料刷新，切换账号清空旧草稿。单独同意、服务端核验与 WCA 绑定独立性不变，双语步骤已同步。"}
+{"fingerprint": "83dbc18c193722775ef26e47eff5b8307ee0788789ccedf84d779a1de62871b6", "reason": "2026-10-09 计时器预览尺寸复核：App.tsx 仅新增 timerCubePreviewAspect 导入及 TimingSurface 的 cornerAspect 数值，读取已有项目和打乱以约束图示宽度；智能魔方实况沿用原框。已核对 useInstalledAuth、系统浏览器回跳、票据交换、安全存储、账号切换、绑定合并、退出和注销调用均未改变，保留现有双语账号生命周期节点。合入 main 的刷脸失败恢复说明和既有复核记录完整保留；本次尺寸与源码复核不代表原生登录真机验收。 2026-10-08 修复刷脸失败与跨设备恢复：区分供应商未完成和失败，保留原会话查询要求，新增同账号按流水结束认证，次数不退回且并发旧结果不能再通过；同步双语认证流程。 2026-10-08 阿里云刷脸协议抽取为 app-foundation 固定版本包；账号、会话、同意、限次、取消和结果落库仍由原 API 负责，用户流程不变，保留本次主线其他功能与说明。 2026-10-08 实名表单预填已绑定 WCA 姓名，优先中文；手动编辑和清空优先于资料刷新，切换账号清空旧草稿。单独同意、服务端核验与 WCA 绑定独立性不变，双语步骤已同步。 2026-10-09 个人认证限额由滚动 24 小时 3 次改为 50 次，全站 100 次及重试间隔不变。超限错误不含实际次数，前端不再虚报已用次数；仅调整额度与双语文案，本人会话、单独同意、失败计次、取消及结果核验流程不变。此次发布仅包括刷脸额度和提示，不包含本地其他任务。"}
 */
 
 import type { ReactNode } from 'react';
@@ -349,7 +349,7 @@ export default function AuthFlowPage() {
         t('服务端绑定账号与当前会话，先占用每日次数，再发起认证；回跳页面不采信结果参数，只查询服务器保存的当前流水。阿里云服务端返回通过后才记录认证成功。', 'The server binds the account and current session, reserves a daily attempt, then starts verification. Return URL parameters are not trusted; the server queries its own attempt and records success only after the provider confirms it.'),
         t('实名状态独立于登录凭据与 WCA 绑定，不修改公开资料；账号合并不转移认证。完整证件号、姓名和原始人脸不在站内留存，认证记录随账号注销级联删除。', 'Identity verification is separate from login credentials and WCA linking and does not change public profile data. Merging does not transfer verification. Full identity numbers, legal names and raw facial data are not stored by CubeRoot; verification records cascade on account deletion.'),
       ]} />
-      <p>{t('发起失败会刷新当前状态；进行中、1 分钟重试间隔、滚动 24 小时限额和服务授权异常分别提示，服务端只记录安全错误码与请求编号。', 'Failed starts refresh the current status. Pending attempts, the one-minute retry interval, rolling 24-hour quotas and service permission failures have separate messages. Server diagnostics contain only safe error codes and request IDs.')}</p>
+      <p>{t('发起失败会刷新当前状态；进行中、1 分钟重试间隔、每账号滚动 24 小时 50 次限额和服务授权异常分别提示，服务端只记录安全错误码与请求编号。', 'Failed starts refresh the current status. Pending attempts, the one-minute retry interval, the 50-attempt per-account rolling 24-hour limit and service permission failures have separate messages. Server diagnostics contain only safe error codes and request IDs.')}</p>
       <p>{t('结果明确未通过后结束本次认证；未完成仍可查询。切换设备后须回原会话查询，或主动结束原认证再重试；结束操作只作用于本人指定的未完成流水，不退回次数，旧结果不能再写入通过。过期后恢复发起入口。', 'An explicit failure ends the attempt; unfinished results remain queryable. After changing devices, check in the original session or end the old attempt before retrying. Ending affects only the owner’s selected unfinished attempt, does not restore quota, and prevents late results from granting verification. Expiry restores the start form.')}</p>
       <AppLink href="/account/verify" prefetch={false}>{t('前往实名认证', 'Open identity verification')}</AppLink>
     </section>
