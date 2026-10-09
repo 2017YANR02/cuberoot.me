@@ -1,8 +1,12 @@
 'use client';
 
-import { useState, useRef, useEffect, type MutableRefObject } from 'react';
+import { useState, useRef, useEffect, useMemo, type MutableRefObject } from 'react';
 import { Move } from 'cubing/alg';
+import { parseNativePuzzleAlg } from '@cuberoot/puzzle-solvers/native-puzzle-model';
+import type { NativePuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
 import WebGL from 'three/addons/capabilities/WebGL.js';
+import NativePuzzleControls, { type NativeDragDepth } from './NativePuzzleControls';
+import { attachNativePgMoveAppend } from './puzzle-models/gestures/nativePgMoveAppend';
 import FaceOverlay, { type FaceTable } from './FaceOverlay';
 import ReconPlayOverlay from './recon/ReconPlayOverlay';
 import { applyTwistyCoreOpacity } from './twistyCoreOpacity';
@@ -118,7 +122,7 @@ export interface TwistySettings {
 
 /** Twisty 播放器区域——动态导入 cubing 库，用构造函数 API 创建（对齐 legacy） */
 export default function TwistySection({
-  puzzle, puzzleDescription, scramble, alg, playerRef, fillPane = false, twistOnClick = false, onUserMove, onScaleChange, settings, backView, playbackMode, hideControls = false, experimentalStickering, fallbackMoves,
+  puzzle, puzzleDescription, nativePuzzleId, scramble, alg, playerRef, fillPane = false, twistOnClick = false, onUserMove, onScaleChange, settings, backView, playbackMode, hideControls = false, experimentalStickering, fallbackMoves,
 }: {
   puzzle: string;
   /** cubing.js PuzzleGeometry description string (e.g. "c e 0"). When set, the
@@ -126,6 +130,8 @@ export default function TwistySection({
    *  `puzzle` — lets /sim show any PuzzleGeometry puzzle (alpha.twizzle.net/explore
    *  set) with no in-house engine. See app/[lang]/sim/pgCatalog.ts. */
   puzzleDescription?: string;
+  /** Validated native model with accessible controls and a real layer-drag adapter. */
+  nativePuzzleId?: NativePuzzleId;
   scramble: string;
   alg: string;
   /** 撑满父容器（左栏分栏模式），否则走原 inline 固定宽模式 */
@@ -147,7 +153,7 @@ export default function TwistySection({
   /** 用户在 player 上 tap/拖动产生 move 时回调。包装了 model.experimentalAddMove,
    *  press handler 走 raycast → addMove → 我们这里截到 move 文本。
    *  程序化设 alg/setup 走 model.alg.set 不经 addMove,不会误触发。 */
-  onUserMove?: (moveText: string) => void;
+  onUserMove?: (moveText: string, anchoredSetup?: { setup: string }) => string | void;
   /** wheel / 双指捏合缩放产生的新 scale (0..100) 回调 — sim 把它写回 settings.scale,
    *  让缩放持久化 + Scale 滑条同步 (对齐 NxN/engine 的 syncScaleToSettings)。 */
   onScaleChange?: (scale: number) => void;
@@ -162,6 +168,19 @@ export default function TwistySection({
   playerRef?: MutableRefObject<any>;
 }) {
   const t = useT();
+  const nativeInputValid = useMemo(() => {
+    if (!nativePuzzleId) return true;
+    try {
+      parseNativePuzzleAlg(nativePuzzleId, scramble);
+      parseNativePuzzleAlg(nativePuzzleId, alg);
+      return true;
+    } catch { return false; }
+  }, [nativePuzzleId, scramble, alg]);
+  const nativeInputValidRef = useRef(nativeInputValid);
+  useEffect(() => { nativeInputValidRef.current = nativeInputValid; }, [nativeInputValid]);
+  const [nativeDragDepth, setNativeDragDepth] = useState<NativeDragDepth>('auto');
+  const nativeDragDepthRef = useRef(nativeDragDepth);
+  useEffect(() => { nativeDragDepthRef.current = nativeDragDepth; }, [nativeDragDepth]);
   // Decide before constructing the first player: a failed 3D scene cannot provide
   // its initial-object promise, while the native SVG player needs no WebGL context.
   const [use2D, setUse2D] = useState<boolean | null>(null);
@@ -230,9 +249,9 @@ export default function TwistySection({
     const container = containerRef.current;
     container.innerHTML = '';
     const playerInit: Record<string, unknown> = {
-      experimentalSetupAlg: scramble,
-      alg,
-      controlPanel: hideControls ? 'none' : 'bottom-row',
+      experimentalSetupAlg: nativeInputValid ? scramble : '',
+      alg: nativeInputValid ? alg : '',
+      controlPanel: hideControls || !nativeInputValid ? 'none' : 'bottom-row',
     };
     if (use2D) playerInit.visualization = '2D';
     // PuzzleGeometry puzzle (explore set) → set the description and omit `puzzle`
@@ -254,14 +273,24 @@ export default function TwistySection({
     // 修饰键 → cubing.js 内置:shift = 2nd slice (wide/layer), ctrl = rotation, right-click = invert。
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const model = (player as any).experimentalModel;
-    if (model && typeof model.experimentalAddMove === 'function') {
+    const stopNativeAppend = nativePuzzleId && model
+      ? attachNativePgMoveAppend(model, nativePuzzleId, {
+        enabled: () => pointerTurnsRef.current && nativeInputValidRef.current,
+        current: () => playerInstRef.current === player,
+        onMove: (text, anchoredSetup) => {
+          if (anchoredSetup) return onUserMoveRef.current?.(text, anchoredSetup);
+          return onUserMoveRef.current?.(text);
+        },
+      })
+      : undefined;
+    if (!nativePuzzleId && model && typeof model.experimentalAddMove === 'function') {
       const orig = model.experimentalAddMove.bind(model);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       model.experimentalAddMove = (mv: any, opts?: unknown) => {
         // 手拧锁(设置面板「手拧」关):raycast 照常跑,但吞掉 move —— 拼图不动、
         // 不记步。这是 tap/拖转层的唯一入口(程序化 alg 走 model.alg.set 不经此),
         // 相机 orbit 与它无关 → 视角照常可拖。
-        if (pointerTurnsRef.current === false) return;
+        if (pointerTurnsRef.current === false || !nativeInputValidRef.current) return;
         const text = typeof mv === 'string' ? mv : (mv?.toString?.() ?? String(mv));
         try { onUserMoveRef.current?.(text); } catch { /* swallow */ }
         return orig(mv, opts);
@@ -335,6 +364,7 @@ export default function TwistySection({
       if (playerRef) playerRef.current = player;
       return () => {
         ro.disconnect();
+        stopNativeAppend?.();
         if (playerRef) playerRef.current = null;
         playerInstRef.current = null;
       };
@@ -345,6 +375,7 @@ export default function TwistySection({
       container.appendChild(player);
       if (playerRef) playerRef.current = player;
       return () => {
+        stopNativeAppend?.();
         if (playerRef) playerRef.current = null;
         playerInstRef.current = null;
       };
@@ -353,7 +384,7 @@ export default function TwistySection({
     // scramble/alg/puzzleDescription 走下面的 setter 路径,不触发重建。
     // puzzleDescription 不入 deps:改 cut 深度时原地 set(见下方 effect),不重建 player。
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [Ctor, puzzle, fillPane, twistOnClick, hideControls, use2D]);
+  }, [Ctor, puzzle, nativePuzzleId, fillPane, twistOnClick, hideControls, use2D]);
 
   // puzzleDescription 原地同步 — 改 cut 深度(Puzzle Cuts 编辑器)时不重建 player,
   // 对齐 alpha.twizzle.net/explore 的丝滑切割:只把新 description set 到已存在的 player。
@@ -403,16 +434,16 @@ export default function TwistySection({
   // → cubing.js no-op,不会拨回 timeline。
   useEffect(() => {
     const player = playerInstRef.current;
-    if (!player) return;
+    if (!player || !nativeInputValid) return;
     try { player.alg = alg; } catch { /* parser 拒绝就忽略 */ }
-  }, [alg]);
+  }, [alg, nativeInputValid]);
 
   // /sim defines TPS per expanded notation leaf, independent of turn angle.
   // cubing.js defaults a double turn to 1.5× a quarter turn, so supply a custom
   // one-second-per-leaf timeline and let tempoScale convert that baseline to TPS.
   useEffect(() => {
     const player = playerInstRef.current;
-    if (!player || !simTimingEnabled) return;
+    if (!player || !simTimingEnabled || !nativeInputValid) return;
     let current = true;
     void import('cubing/alg').then(({ Alg, Move, Pause }) => {
       if (!current || playerInstRef.current !== player) return;
@@ -423,14 +454,23 @@ export default function TwistySection({
       } catch { /* parser rejects incomplete live input */ }
     });
     return () => { current = false; };
-  }, [alg, playerNonce, simTimingEnabled]);
+  }, [alg, playerNonce, simTimingEnabled, nativeInputValid]);
 
   // setup 同步 — 同上但走 experimentalSetupAlg。
   useEffect(() => {
     const player = playerInstRef.current;
-    if (!player) return;
+    if (!player || !nativeInputValid) return;
     try { player.experimentalSetupAlg = scramble; } catch { /* ignore */ }
-  }, [scramble]);
+  }, [scramble, nativeInputValid]);
+
+  // A partial or invalid native algorithm keeps the last legal picture and cannot
+  // reach the upstream animation expander, including through its own play button.
+  useEffect(() => {
+    const player = playerInstRef.current;
+    if (!player || !nativePuzzleId) return;
+    if (!nativeInputValid) { try { player.pause(); } catch { /* disposed */ } }
+    player.controlPanel = hideControls || !nativeInputValid ? 'none' : 'bottom-row';
+  }, [nativePuzzleId, nativeInputValid, hideControls, playerNonce]);
 
   // 按阶段展示色块 — cubing.js 原生 experimentalStickering。依赖 playerNonce:
   // player 重建(换拼图)后默认回 full,非 full 值要立刻补挂。undefined = 不接管。
@@ -1213,14 +1253,49 @@ export default function TwistySection({
     };
   }, [playerNonce, puzzle, use2D]);
 
+  // Install after the pinch listener so a second finger cancels a layer gesture
+  // before the native pointer adapter can commit it. The 2D path never asks for
+  // a Three.js object or camera.
+  useEffect(() => {
+    const host = containerRef.current;
+    const player = playerInstRef.current;
+    if (use2D !== false || !nativePuzzleId || !host || !player) return;
+    let live = true;
+    let detach: (() => void) | undefined;
+    void import('./puzzle-models/gestures/nativePgPointer').then(({ attachNativePgPointer }) => {
+      if (!live || playerInstRef.current !== player) return;
+      detach = attachNativePgPointer(host, player, nativePuzzleId, {
+        enabled: () => pointerTurnsRef.current && nativeInputValidRef.current && dragEmptyRef.current !== 'view',
+        depth: () => nativeDragDepthRef.current,
+        pinching: () => pinchingRef.current,
+      });
+    });
+    return () => { live = false; detach?.(); };
+  }, [nativePuzzleId, playerNonce, puzzleDescription, use2D, backView, settings?.backView]);
+
   return (
-    <div className={`twisty-section${fillPane ? ' twisty-section--fill' : ''}${use2D ? ' twisty-section--2d' : ''}`}>
+    <div className={`twisty-section${fillPane ? ' twisty-section--fill' : ''}${use2D ? ' twisty-section--2d' : ''}${nativePuzzleId ? ' twisty-section--manual' : ''}`}>
       <div ref={containerRef} className="twisty-container" />
-      {use2D && (
+      {(use2D || nativePuzzleId) && (
         <div className="twisty-fallback">
-          <p className="twisty-fallback-notice" role="status">
+          {use2D && <p className="twisty-fallback-notice" role="status">
             {t('3D 不可用，已显示二维展开图', '3D is unavailable. Showing a 2D net.')}
-          </p>
+          </p>}
+          {!nativeInputValid && <p className="twisty-native-error" role="alert">
+            {t('记号无效或公式过长。请修正红色文本后继续。', 'Invalid notation or an oversized algorithm. Correct the highlighted text to continue.')}
+          </p>}
+          {nativePuzzleId && <NativePuzzleControls
+            id={nativePuzzleId}
+            disabled={playerNonce === 0 || !nativeInputValid || settings?.pointerTurns === false}
+            showDragDepth={use2D === false}
+            depth={nativeDragDepth}
+            onDepthChange={setNativeDragDepth}
+            onMove={(token) => {
+              const player = playerInstRef.current;
+              if (!player || !nativeInputValidRef.current || !pointerTurnsRef.current) return;
+              void Promise.resolve(player.experimentalAddMove(token)).catch(() => { /* disposed */ });
+            }}
+          />}
           {fallbackMoves && fallbackMoves.length > 0 && (
             <div className="twisty-fallback-controls" role="group" aria-label={t('手动转动', 'Manual turns')}>
               <label className="twisty-fallback-angle-label">
@@ -1259,7 +1334,7 @@ export default function TwistySection({
           )}
         </div>
       )}
-      {hideControls && alg.trim().length > 0 && (
+      {hideControls && nativeInputValid && alg.trim().length > 0 && (
         <ReconPlayOverlay
           playing={playing}
           onToggle={() => { try { playerInstRef.current?.togglePlay(); } catch { /* */ } }}

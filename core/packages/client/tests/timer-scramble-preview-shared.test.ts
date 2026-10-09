@@ -7,6 +7,8 @@ import { renderSq1ScrambleSvg as sharedSq1 } from '@cuberoot/puzzle-render-core/
 import { renderPyraminxDuoSvg, DUO_SVG_ASPECT } from '@cuberoot/puzzle-render-core/pyraminx-duo-svg';
 import { renderMagicSvg, magicSvgAspect } from '@cuberoot/puzzle-render-core/magic-svg';
 import { renderSphereScrambleSvg } from '@cuberoot/puzzle-render-core/sphere-svg';
+import { renderNativePuzzleSvg, nativePuzzleSvgAspect } from '@cuberoot/puzzle-render-core/native-puzzle-svg';
+import { generateNativePuzzleScramble } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { TimerCubePreview, TimingSurface, timerCubePreviewAspect } from '@cuberoot/timer-ui';
 import { act, createElement, createRef } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -48,6 +50,41 @@ describe('shared timer scramble preview', () => {
   it('keeps Web renderer imports as identity re-exports', () => {
     expect(webMega).toBe(sharedMega);
     expect(webSq1).toBe(sharedSq1);
+  });
+
+  it.each([
+    { event: 'superz', faces: 6 },
+    { event: 'dogic', faces: 20 },
+    { event: 'octahedron4', faces: 8 },
+    { event: 'dinoskewb', faces: 6 },
+  ] as const)('renders the complete $event net and recovers from invalid input', async ({ event, faces }) => {
+    const render = async (scramble: string) => act(async () => root.render(createElement(TimerCubePreview, {
+      event, scramble, visualization: '3D', height: 240, ariaLabel: 'Native state',
+    })));
+    await render('');
+    const solved = host.querySelector('svg')?.outerHTML;
+    const scramble = event === 'superz' ? "R UFR F' DRF' U2 UBL" : generateNativePuzzleScramble(event, () => 0.375);
+    await render(scramble);
+    const expected = document.createElement('div');
+    expected.innerHTML = renderNativePuzzleSvg(event, scramble);
+    const preview = host.querySelector<HTMLElement>('[aria-label="Native state"]');
+    expect(preview?.innerHTML).toBe(expected.innerHTML);
+    expect(preview?.style.aspectRatio).toBe(`${9 * nativePuzzleSvgAspect(event)} / 9`);
+    expect(host.querySelector('svg')?.outerHTML).not.toBe(solved);
+    expect(new Set([...host.querySelectorAll('[data-face]')].map((face) => face.getAttribute('data-face'))).size).toBe(faces);
+    expect(host.querySelector('mock-twisty-player')).toBeNull();
+    expect(timerCubePreviewAspect(event, scramble)).toBe(nativePuzzleSvgAspect(event));
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      await render('invalid');
+      expect(host.querySelector('svg')).toBeNull();
+      expect(host.querySelector('[role="img"]')).toBeNull();
+      await render(scramble);
+      expected.innerHTML = renderNativePuzzleSvg(event, scramble);
+      expect(host.querySelector('[role="img"]')?.innerHTML).toBe(expected.innerHTML);
+    } finally {
+      warning.mockRestore();
+    }
   });
 
   it.each([
@@ -98,6 +135,7 @@ describe('shared timer scramble preview', () => {
     ['sq1', '(1,0) / (0,-1)'],
     ['mega', "R++ D-- U'"],
     ['pyraminx_duo', "R U'"],
+    ['superz', 'R UFR'],
     ['magic', 'Forward'],
     ['mmagic', 'M Backward'],
   ] as const)('renders %s from the canonical installed-client component', async (event, scramble) => {
@@ -168,7 +206,7 @@ describe('shared timer scramble preview', () => {
     expect(threeD).not.toBe(twoD);
     expect(threeD.dataset.visualization).toBe('3D');
 
-    for (const [event, scramble] of [['sq1', '(1,0) /'], ['mega', 'R++'], ['pyraminx_duo', "R U'"], ['magic', 'Backward'], ['mmagic', 'M Forward']] as const) {
+    for (const [event, scramble] of [['sq1', '(1,0) /'], ['mega', 'R++'], ['pyraminx_duo', "R U'"], ['superz', 'R UFR'], ['magic', 'Backward'], ['mmagic', 'M Forward']] as const) {
       await act(async () => root.render(createElement(TimerCubePreview, {
         event,
         scramble,
@@ -285,6 +323,9 @@ describe('shared timer scramble preview', () => {
     }
     expect(timerCubePreviewAspect('sq1')).toBe(0.5);
     expect(timerCubePreviewAspect('pyraminx_duo', "R U'")).toBe(DUO_SVG_ASPECT);
+    for (const event of ['superz', 'dogic', 'octahedron4', 'dinoskewb'] as const) {
+      expect(timerCubePreviewAspect(event)).toBe(nativePuzzleSvgAspect(event));
+    }
     expect(timerCubePreviewAspect('mmagic', null)).toBe(magicSvgAspect('mmagic'));
     expect(timerCubePreviewAspect('ivy')).toBe(8 / 5);
     expect(timerCubePreviewAspect('magic', 'M Forward')).toBe(8 / 5);

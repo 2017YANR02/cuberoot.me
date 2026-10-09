@@ -68,7 +68,7 @@ describe('shared timer persistence schema', () => {
     expect(decodeTimerStoreData({ schemaVersion: 2, database: { version: 3, sessions: [] } })).toBeNull();
   });
 
-  it.each(['pyraminx_duo', 'sphere'] as const)('retains %s as the selected event, session association and solve bucket', (event) => {
+  it.each(['pyraminx_duo', 'sphere', 'superz', 'dogic', 'octahedron4', 'dinoskewb'] as const)('retains %s as the selected event, session association and solve bucket', (event) => {
     const data = createTimerStoreData(100, 'duo', 'zh');
     data.settings.event = event;
     data.database.sessions[0].event = event;

@@ -1,19 +1,22 @@
 // cubing.js PuzzleGeometry puzzles rendered via TwistyPlayer's
-// `experimentalPuzzleDescription` — no in-house Three.js engine. The `def`
-// strings are copied verbatim from cubing.js
-// `src/cubing/puzzle-geometry/pgPuzzles.ts` (data, not code): TwistyPlayer's
-// PuzzleGeometry pipeline (already shipped inside the installed `cubing` npm
-// package) turns each string into a full 3D, drag-to-turn puzzle.
+// `experimentalPuzzleDescription` — no in-house Three.js engine. Legacy `def`
+// strings come from cubing.js `src/cubing/puzzle-geometry/pgPuzzles.ts`
+// (data, not code). Newly integrated puzzles use the shared native registry.
+// TwistyPlayer's installed PuzzleGeometry pipeline provides the 3D model,
+// click-to-turn interaction and orbit controls. The simulator's native PG drag
+// adapter adds actual drag-to-turn interaction for the shared native puzzles.
 //
-// These are "twisty-class": cubing.js gives 3D + drag for free, but the
+// These are "twisty-class": cubing.js supplies the geometry and moves, but the
 // engine-only toggles (立体贴片 / 镂空 / 结构着色 / 提示贴片) do NOT apply, and
 // there's no WCA scramble (a generic random-move generator is used instead).
 //
-// Coverage = the whole alpha.twizzle.net/explore set EXCEPT the puzzles /sim
+// Coverage includes the alpha.twizzle.net/explore set EXCEPT the puzzles /sim
 // already renders with its own engine/twisty loaders (every NxNxN cube, skewb,
 // dino, helicopter, pyraminx, megaminx). Heavy near-bandwidth puzzles
 // (peta/exa/zeta/yotta-minx, royal/emperor pyraminx) are intentionally kept —
 // they render, just slowly, because cubing.js builds thousands of pieces.
+import { NATIVE_PUZZLES, NATIVE_PUZZLE_IDS } from '@cuberoot/puzzle-solvers/native-puzzles';
+
 export interface PgPuzzleDef {
   /** Stable URL/id slug (no spaces). */
   id: string;
@@ -23,13 +26,15 @@ export interface PgPuzzleDef {
   en: string;
   /** CubingIcon key (see EventIcon/svg-map.ts). */
   icon: string;
+  /** Explicit picker fallback when no matching shared icon exists. */
+  textLabel?: string;
 }
 
 // Spans all five platonic shapes — cube c / tetra t / octa o / dodeca d /
-// icosa i — plus multi-cut combos. `icon` is a real repo icon where one exists
-// (see EventIcon/svg-map.ts), else a shape-appropriate fallback so the picker
-// never renders a blank slot (icosa has no dedicated icon → reuse minx).
-// Def strings ⟵ cubing.js pgPuzzles.ts, verbatim.
+// icosa i — plus multi-cut combos. Legacy entries use matching shared icons or
+// shape-appropriate fallbacks. New shared entries without an exact icon use
+// their explicit textLabel so the picker never renders a blank slot.
+// Legacy def strings ⟵ cubing.js pgPuzzles.ts, verbatim.
 export const PG_PUZZLES = [
   // cube (c)
   { id: 'littlechop',       def: 'c e 0',                  zh: '小切',       en: 'Little Chop',       icon: 'event-333' },
@@ -90,6 +95,14 @@ export const PG_PUZZLES = [
   { id: 'cube2dinolittlechop', def: 'c f 0 v 0.577350269189626 e 0', zh: '2x2 + Dino + 小切', en: '2x2 + Dino + Little Chop', icon: 'event-333' },
   { id: 'megaminxchopasaurus', def: 'd f 0.61803398875 v 0', zh: 'Megaminx + Chopasaurus', en: 'Megaminx + Chopasaurus', icon: 'event-minx' },
   { id: 'starminxcombo',    def: 'd f 0.23606797749979 v 0.937962370425399', zh: 'Starminx Combo', en: 'Starminx Combo', icon: 'event-minx' },
+  ...NATIVE_PUZZLE_IDS.map((id) => ({
+    id,
+    def: NATIVE_PUZZLES[id].description,
+    zh: NATIVE_PUZZLES[id].zh,
+    en: NATIVE_PUZZLES[id].en,
+    icon: '',
+    textLabel: NATIVE_PUZZLES[id].textLabel,
+  })),
 ] as const satisfies readonly PgPuzzleDef[];
 
 export type PgPuzzleId = typeof PG_PUZZLES[number]['id'];
