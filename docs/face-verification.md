@@ -47,6 +47,8 @@ RAM 自定义策略仅允许 `antcloudauth:InitFaceVerify`、`antcloudauth:Descr
 
 发布核对：57f7aa338e 已推送，Test 37880370726、Deploy Core 37880370833、Deploy Next 37880370778 和 Vercel 均成功。服务器实际 API release 指向该提交，健康响应数据库 connected；网站认证路由 200，部署脚本包含新的结束认证入口。CodeQL 37880370818 已通过，真实本人刷脸与计费仍待负责人复验。
 
-### 共享协议正式版本接入（待部署）
+### 共享协议正式版本接入（已部署）
 
-已固定 app-foundation [v0.5.0](https://github.com/2017YANR02/app-foundation/releases/tag/v0.5.0) 中的 face-verification 0.1.0 资产 URL 与完整性。公开下载 SHA-256 `0094f7c3ced22f7a3e3681a1e0d730868f708ebc9aa010fb1648672392052d43` 与审阅产物一致。14 项定向测试和 API 类型检查通过；账号会话、同意、额度、取消、实名落库和配置仍由 CubeRoot 独立维护。本次接入保留最新主线的其他功能，在独立工作树完成，待 CI 部署。
+已固定 app-foundation [v0.5.0](https://github.com/2017YANR02/app-foundation/releases/tag/v0.5.0) 中的 face-verification 0.1.0 资产 URL 与完整性。公开下载 SHA-256 `0094f7c3ced22f7a3e3681a1e0d730868f708ebc9aa010fb1648672392052d43` 与审阅产物一致。14 项定向测试和 API 类型检查通过；账号会话、同意、额度、取消、实名落库和配置仍由 CubeRoot 独立维护。本次接入保留最新主线的其他功能，在独立工作树完成。
+
+发布核对：89ed44d260 已推送并上线，Test 37888767647、Deploy Core 37888767645、Deploy Next 37888767595、CodeQL 37888767673 及 Vercel 全部成功。服务器 API release 精确匹配该提交，健康响应数据库 connected；自建前端服务 active，认证页返回 200。原开发目录、其他 AI 的未提交改动和本地预览未变更；未代替负责人进行真人或计费验收。
