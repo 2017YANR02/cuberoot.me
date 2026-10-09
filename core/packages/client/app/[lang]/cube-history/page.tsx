@@ -23,9 +23,9 @@ import './cube-history.css';
 
 type View = 'timeline' | 'catalog' | 'compare' | 'sources';
 const VIEW_OPTIONS: { id: View; label: LocalizedText; Icon: typeof History }[] = [
-  { id: 'catalog', label: { zh: '型号图鉴', en: 'Model catalog' }, Icon: BookOpen },
-  { id: 'timeline', label: { zh: '发展时间线', en: 'Timeline' }, Icon: History },
-  { id: 'compare', label: { zh: '参数对比', en: 'Compare' }, Icon: Columns3 },
+  { id: 'catalog', label: { zh: '型号', en: 'Models' }, Icon: BookOpen },
+  { id: 'timeline', label: { zh: '时间线', en: 'Timeline' }, Icon: History },
+  { id: 'compare', label: { zh: '参数', en: 'Parameters' }, Icon: Columns3 },
   { id: 'sources', label: { zh: '来源与口径', en: 'Sources & method' }, Icon: Link2 },
 ];
 const brandKeys = sortBrandKeys(CUBES.map(cube => cube.brand));
