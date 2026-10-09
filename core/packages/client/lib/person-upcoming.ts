@@ -1,5 +1,19 @@
 import { statsUrl } from './stats-base';
 import { fetchUserUpcoming, WCA_ID_REGEX } from './wca-api';
+import type { Comp } from './comp-search';
+
+/** Registration indexes can lag behind the calendar; retain only ongoing/future competitions. */
+export function selectPersonUpcomingCompetitions(
+  competitionIds: readonly string[],
+  competitions: readonly Comp[],
+  todayIso: string,
+): Comp[] {
+  const wantedIds = new Set(competitionIds);
+  return competitions
+    .filter((competition) => wantedIds.has(competition.id)
+      && (competition.end_date || competition.start_date) >= todayIso)
+    .sort((a, b) => a.start_date.localeCompare(b.start_date) || a.id.localeCompare(b.id));
+}
 
 interface TopUpcomingData {
   competitions?: Array<{

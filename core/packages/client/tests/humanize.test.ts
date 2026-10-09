@@ -317,6 +317,32 @@ describe('等价性 —— 重写只换写法,不换这把', () => {
 });
 
 describe('录了姿态的把:中层不再靠时间猜,转体也写进去', () => {
+  it.each(['z', "z'", 'z2', "z2'"])('F2L rejects %s without changing subsequent face names', (token) => {
+    const moves = stamped(T("R U R' U'"), 200);
+    const core = { events: [{ tMs: 300, token, angleRad: Math.PI / 2 }] };
+    const result = humanizeStream(moves, { core, suppressZRotationsThroughMs: 800 });
+    expect(result.rotations).toEqual([]);
+    expect(result.moves.map(move => move.m)).toEqual(T("R U R' U'"));
+    expect(result.rotation).toBe('');
+    expect(core.events[0].token).toBe(token);
+  });
+
+  it('keeps z after F2L and leaves the default humanizer policy unchanged', () => {
+    const moves = stamped(T("R U R' U'"), 600);
+    const core = { events: [{ tMs: 1300, token: 'z', angleRad: Math.PI / 2 }] };
+    expect(humanizeStream(moves, { core, suppressZRotationsThroughMs: 1200 }))
+      .toEqual(humanizeStream(moves, { core }));
+    expect(humanizeStream(moves, { core }).rotations.map(turn => turn.token)).toEqual(['z']);
+  });
+
+  it('keeps F2L S slices and y turns when standalone z notation is disabled', () => {
+    const human = T("S R U R' S' y R U R'");
+    const { moves, core } = recordWithCore(human);
+    const result = humanizeStream(moves, { core, suppressZRotationsThroughMs: Infinity });
+    expect(result.moves.map(move => move.m)).toEqual(human.filter(token => token !== 'y'));
+    expect(result.rotations.map(turn => turn.token)).toEqual(['y']);
+  });
+
   // 用户 2026-08-03 报的那两条,一字不改。报告里当时印出来的是
   //   `M R L' B2 R' L U M R L' B M M B M'`  和  `R B' R' F R B R' F' …`
   // —— 前者是中层只合对了一半(ρ 从此就错了),后者是转体压根没被认出来。

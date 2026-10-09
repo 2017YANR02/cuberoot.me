@@ -118,7 +118,7 @@ function validate(b: OpsInput, opts: { requireId: boolean }): { error?: string }
 
 // GET /v1/ops/commands — 全表,按 (category, position, id) 排序
 opsRoutes.get('/ops/commands', async (c) => {
-  c.header('Cache-Control', 'public, max-age=300');
+  c.header('Cache-Control', 'public, no-cache, must-revalidate');
   const rows = await query<OpsRow>(
     'SELECT id, category, cwd, position, chips, title_zh, title_en, desc_zh, desc_en, cmd, variants FROM ops_commands ORDER BY category, position, id',
   );

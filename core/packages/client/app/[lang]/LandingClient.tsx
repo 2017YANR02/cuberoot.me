@@ -1,15 +1,20 @@
 'use client';
 
+import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
+
 /** Site entrypoint — Landing page. */
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
+import { parseAsBoolean, useQueryState } from 'nuqs';
 import { ArrowRight, Crown, Heart, Lock, LockOpen, LogIn, User, type LucideIcon } from 'lucide-react';
 import { closestCenter, DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, rectSortingStrategy, SortableContext } from '@dnd-kit/sortable';
 import Link from '@/components/AppLink';
 import SortableCard from '@/components/SortableCard';
 import HeaderToggles from '@/components/HeaderToggles';
+import OnboardingGuideModal from '@/components/OnboardingGuideModal';
+import { isOnboardingGuided, markOnboardingGuided } from '@/lib/onboarding';
 import './home-background.css';
 import { useTranslation } from 'react-i18next';
 import { useAuthUser, nextQuery } from '@/lib/auth-store';
@@ -104,6 +109,7 @@ function LandingCardContent({ label, Icon, iconImg }: LandingCardContentProps) {
 type ReconSolve = Awaited<ReturnType<typeof getPinnedRecons>>[number];
 
 export default function LandingPage() {
+  const contentRefreshKey = useContentRefreshKey();
   // Title is owned by page.tsx's generateMetadata (lib/page-meta.ts, key '').
   // The useDocumentTitle('', '') call that used to live here forced the tab back
   // to the bare brand after hydration, which would now overwrite that title.
@@ -122,6 +128,28 @@ export default function LandingPage() {
   }, []);
 
   const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
+  const user = useAuthUser();
+  const [guideOpen, setGuideOpen] = useState(false);
+  const [replayGuide, setReplayGuide] = useQueryState('guide', parseAsBoolean.withDefault(false));
+  useEffect(() => {
+    if (!mounted) return;
+    let active = true;
+    let timer: number | undefined;
+    setGuideOpen(false);
+    if (replayGuide) {
+      setGuideOpen(true);
+    } else {
+      void isOnboardingGuided(user).then(seen => {
+        if (active && !seen) timer = window.setTimeout(() => setGuideOpen(true), 600);
+      });
+    }
+    return () => { active = false; window.clearTimeout(timer); };
+  }, [mounted, user?.uid, user?.wcaId, replayGuide]);
+  const closeGuide = useCallback(() => {
+    setGuideOpen(false);
+    void markOnboardingGuided(user);
+    if (replayGuide) void setReplayGuide(null);
+  }, [user, replayGuide, setReplayGuide]);
   const [featuredNotice, setFeaturedNotice] = useState<PageNotice | null>(null);
   const [publicMembers, setPublicMembers] = useState<PublicMember[] | null>(null);
   const [memberQueries, setMemberQueries] = useState({ enterprise: '', individual: '' });
@@ -150,9 +178,8 @@ export default function LandingPage() {
         refresh();
       })
       .catch(() => { /* 焦点新闻不可阻断首页 */ });
-    window.addEventListener('focus', refresh);
-    return () => { active = false; window.clearTimeout(expiryTimer); window.removeEventListener('focus', refresh); };
-  }, []);
+    return () => { active = false; window.clearTimeout(expiryTimer); };
+  }, [contentRefreshKey]);
 
   useEffect(() => {
     let active = true;
@@ -166,7 +193,7 @@ export default function LandingPage() {
 
   // 右上角 登录 / 我的 入口,两态都是真链接、都指 /account(全站无登录弹层)。useAuthUser
   // 是 hydration-safe(SSG 首帧按未登录渲染,挂载后才切到已登录),避免 SSG/CSR 错配。
-  const user = useAuthUser();
+
   const isAdmin = Boolean(user?.isAdmin || isAdminWcaId(user?.wcaId));
   const [pinnedRecons, setPinnedRecons] = useState<ReconSolve[] | null>(null);
   const [savingPins, setSavingPins] = useState<Set<number>>(new Set());
@@ -217,7 +244,7 @@ export default function LandingPage() {
       .then((orders) => { if (active) setCardOrders(orders); })
       .catch(() => { /* 自定义顺序不可阻断首页 */ });
     return () => { active = false; };
-  }, [isAdmin]);
+  }, [isAdmin, contentRefreshKey]);
 
   const searchCards = useMemo(
     () => SEARCH_CARDS.filter((card) => (isAdmin || locksLoaded)
@@ -254,6 +281,27 @@ export default function LandingPage() {
 
   const isCardLocked = (card: CardConfig) => Boolean(card.adminOnly)
     || (cardLocks[card.id] ?? Boolean(card.lockedForNonAdmin || card.comingSoon));
+
+  // 新手引导锚点：card.id -> data-tour（OnboardingGuideModal 用
+  // document.querySelector('[data-tour="..."]') + getBoundingClientRect() 定位）。
+  // 直接从计时开始依次高亮，共 12 步：
+  // 1 计时 timer / 2 公式 formulas / 3 模拟 simulator / 4 复盘 replay /
+  // 5 打乱 scramble / 6 比赛 competition / 7 纪录 records / 8 排名 rankings /
+  // 9 统计 statistics；10~12 为下方挂件（近期打乱 / 今日复盘 / 论坛），
+  // 锚点见下方 LazyVisible 外层包裹 div。
+  // 纪录与排名为独立步骤：wca-records -> records，wca-results -> rankings。
+  const CARD_ID_TO_TOUR: Record<string, string> = {
+    timer: 'timer',               // Step 1 计时
+    algdb: 'formulas',            // Step 2 公式
+    sim: 'simulator',             // Step 3 模拟
+    recon: 'replay',              // Step 4 复盘
+    scramble: 'scramble',         // Step 5 打乱
+    competitions: 'competition',  // Step 6 比赛（WCA 比赛入口，同组）
+    'comp-sim': 'competition',    // Step 6 比赛（模拟正式比赛，直达 CTA）
+    'wca-records': 'records',     // Step 7 纪录（个人计时成绩）
+    'wca-results': 'rankings',    // Step 8 排名（全球排行榜）
+    'wca-stats': 'statistics',    // Step 9 统计
+  };
 
   const renderCard = (card: CardConfig) => {
     const locked = isCardLocked(card);
@@ -297,7 +345,12 @@ export default function LandingPage() {
       );
     }
     return (
-      <SortableCard key={card.id} id={card.id} draggable={isAdmin}>
+      <SortableCard
+        key={card.id}
+        id={card.id}
+        draggable={isAdmin}
+        tourKey={CARD_ID_TO_TOUR[card.id]}
+      >
         {renderLock(card.id, locked, card.adminOnly)}
         {cardElement}
       </SortableCard>
@@ -558,6 +611,7 @@ export default function LandingPage() {
           </a>
         </div>
       )}
+      <OnboardingGuideModal open={guideOpen} onClose={closeGuide} />
     </div>
   );
 }

@@ -20,10 +20,11 @@ import { statsUrl } from './stats-base';
 import { formatReconSingle } from './recon-utils';
 
 const REVALIDATE = 86400; // 24h
+export const RECON_SAME_SCRAMBLE_TAG = 'recon-same-scramble';
 
 /** Cache tag for a single recon's SSR/ISR data. Mutations (submit/alt edit/
- *  delete) call revalidateRecon(id) to bust this so the 24h ISR cache doesn't
- *  serve a stale detail page after an edit. */
+ *  delete) invalidate this in every production deployment through the API's
+ *  webhook; the local server action also clears the editing origin's cache. */
 export function reconCacheTag(id: string | number): string {
   return `recon-${id}`;
 }
@@ -115,7 +116,7 @@ export async function fetchReconForSeo(id: string): Promise<ReconSolve | 'privat
 export async function fetchSameScrambleForSeo(id: string): Promise<ReconSolve[]> {
   try {
     const res = await fetch(apiUrl(`/v1/recon/${encodeURIComponent(id)}/same-scramble?v=2`), {
-      next: { revalidate: REVALIDATE, tags: [reconCacheTag(id)] },
+      next: { revalidate: REVALIDATE, tags: [reconCacheTag(id), RECON_SAME_SCRAMBLE_TAG] },
     });
     if (!res.ok) return [];
     const data = (await res.json()) as ReconSolve[];

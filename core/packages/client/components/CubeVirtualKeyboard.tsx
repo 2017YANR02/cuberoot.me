@@ -1069,6 +1069,7 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
         <div
           ref={popupRef}
           className="vkb-popup"
+          data-site-surface="popover"
           style={{ left: popupPos.left, top: popupPos.top }}
         >
           {popupVariants.map(v => (
@@ -1088,6 +1089,7 @@ export default function CubeVirtualKeyboard({ target, onInput, enableMarks = fal
         <div
           ref={marksPopupRef}
           className="vkb-popup vkb-marks-popup"
+          data-site-surface="popover"
           style={{ left: marksPopupPos.left, top: marksPopupPos.top }}
         >
           {MARK_ITEMS.map(it => (

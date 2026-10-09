@@ -37,7 +37,7 @@ export function cleanForAlgCubingNet(text: string): string {
 
 /** Sync a TwistyPlayer instance to a specific move count along its current alg. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function syncPlayerToMoveCount(player: any, moveCount: number) {
+export function syncPlayerToMoveCount(player: any, moveCount: number, autoplay = false) {
   if (!player) return;
   try {
     const model = player.experimentalModel;
@@ -54,6 +54,7 @@ export function syncPlayerToMoveCount(player: any, moveCount: number) {
           } else {
             player.timestamp = indexer.indexToMoveStartTimestamp(moveCount);
           }
+          if (autoplay) player.play?.();
         }
       } catch {
         /* indexer not ready / shape mismatch */
@@ -207,19 +208,19 @@ export function findIllegalNotationChars(text: string): NotationViolation[] {
  * add/edit-alternative form via ReconPlayerPane + ReconSolutionField.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function syncReconPlayerCursorFromText(player: any, textBeforeCaret: string): void {
+export function syncReconPlayerCursorFromText(player: any, textBeforeCaret: string, autoplay = false): void {
   if (!player) return;
   if (player.__kind === 'sq1') {
-    player.jumpToMoveCount?.(parseSq1Tokens(textBeforeCaret).length);
+    player.jumpToMoveCount?.(parseSq1Tokens(textBeforeCaret).length, autoplay);
     return;
   }
   const algBefore = extractAlgFromText(textBeforeCaret);
   const moves = algBefore.trim().split(/\s+/).filter((s) => s.length > 0);
   if (player.__kind === 'nxn-cuber') {
-    player.jumpToMoveCount?.(moves.length);
+    player.jumpToMoveCount?.(moves.length, autoplay);
     return;
   }
-  syncPlayerToMoveCount(player, moves.length);
+  syncPlayerToMoveCount(player, countMovesExpanded(algBefore), autoplay);
 }
 
 export function normalizeSolutionSlashes(text: string): string {

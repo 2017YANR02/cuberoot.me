@@ -26,7 +26,13 @@ export function usePanelClamp(open: boolean, ref: RefObject<HTMLElement | null>)
       if (shift > 0) el.style.marginLeft = `${-shift}px`;
     };
     apply();
+    // Menus can expand in place (for example, opening a background gallery).
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(apply);
+    observer?.observe(el);
     window.addEventListener('resize', apply);
-    return () => window.removeEventListener('resize', apply);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', apply);
+    };
   }, [open, ref]);
 }

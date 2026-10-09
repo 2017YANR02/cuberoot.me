@@ -14,6 +14,7 @@ let nextReqId = 1;
 const pendingByReqId = new Map<number, { resolve: (v: unknown) => void; reject: (e: Error) => void }>();
 
 function ensureWorker(): Worker {
+  if (typeof Worker === 'undefined') throw new Error('Web Workers are unavailable');
   if (worker) return worker;
   // Standard Web Worker constructor with new URL — Turbopack + webpack both bundle this pattern.
   // Original Vite import was `import SetupWorker from './setup.worker.ts?worker'`.

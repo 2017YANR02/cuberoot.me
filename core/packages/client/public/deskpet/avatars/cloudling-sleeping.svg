@@ -1,0 +1,127 @@
+<svg id="stage" xmlns="http://www.w3.org/2000/svg" width="880" height="720" viewBox="-32 -24 88 72" preserveAspectRatio="xMidYMid meet">
+<style>
+.edge-rim-tight { stroke-opacity: .08; }
+.edge-rim-soft { stroke-opacity: .06; }
+.edge-contact { stroke-opacity: .08; }
+@media (prefers-color-scheme: light) {
+.edge-rim-tight { stroke-opacity: .15; }
+.edge-rim-soft { stroke-opacity: .10; }
+.edge-contact { stroke-opacity: .18; }
+.cloud-drop-shadow { flood-opacity: .13; }
+.food-cloud-shadow { flood-opacity: .28; flood-color: #5060FF; }
+.food-cloud &gt; path {
+  stroke: #5870E8 !important;
+  stroke-width: 1.2 !important;
+  stroke-opacity: .9 !important;
+  vector-effect: non-scaling-stroke !important;
+}
+}
+</style>
+<defs>
+        
+    <linearGradient id="sl-body" x1="12" y1="2" x2="12" y2="22" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff" />
+      <stop offset="0.5" stop-color="#f4f5f9" />
+      <stop offset="1" stop-color="#dee2eb" />
+    </linearGradient>
+    <linearGradient id="sl-eye" x1="0" y1="3" x2="0" y2="21" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#B1A7FF" />
+      <stop offset="0.5" stop-color="#7A9DFF" />
+      <stop offset="1" stop-color="#3941FF" />
+    </linearGradient>
+    <radialGradient id="sl-hi" cx="0.45" cy="0.25" r="0.55">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.9" />
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="sl-hat" x1="11" y1="-3" x2="14" y2="6" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7AA0FF" />
+      <stop offset="0.45" stop-color="#3941FF" />
+      <stop offset="1" stop-color="#1F2BC2" />
+    </linearGradient>
+    <linearGradient id="sl-cuff" x1="12" y1="3.0" x2="12" y2="8.0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff" />
+      <stop offset="0.5" stop-color="#fafbff" />
+      <stop offset="1" stop-color="#e8ecf6" />
+    </linearGradient>
+    <linearGradient id="sl-star-yellow" x1="0" y1="-2" x2="0" y2="2" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFE9A8" />
+      <stop offset="0.5" stop-color="#FFD360" />
+      <stop offset="1" stop-color="#F5A623" />
+    </linearGradient>
+    <filter id="sl-star-glow" x="-80%" y="-80%" width="260%" height="260%">
+      <feDropShadow dx="0" dy="0.4" stdDeviation="0.5" flood-color="#F5A623" flood-opacity="0.32" />
+    </filter>
+    <linearGradient id="sl-z-grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#B1A7FF" />
+      <stop offset="0.5" stop-color="#7A9DFF" />
+      <stop offset="1" stop-color="#3941FF" />
+    </linearGradient>
+    <filter id="sl-z-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="0.3" stdDeviation="0.35" flood-color="#7A9DFF" flood-opacity="0.45" />
+    </filter>
+    <filter id="sl-shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow class="cloud-drop-shadow" dx="0" dy="0.6" stdDeviation="0.8" flood-color="#3941FF" flood-opacity="0.18" />
+    </filter>
+    <filter id="sl-edge-blur" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="0.16" />
+    </filter>
+    <filter id="sl-soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="0.18" />
+    </filter>
+    <clipPath id="sl-clip"><path d="M9.064 3.344a4.578 4.578 0 012.285-.312c1 .115 1.891.54 2.673 1.275.01.01.024.017.037.021a.09.09 0 00.043 0 4.55 4.55 0 013.046.275l.047.022.116.057a4.581 4.581 0 012.188 2.399c.209.51.313 1.041.315 1.595a4.24 4.24 0 01-.134 1.223.123.123 0 00.03.115c.594.607.988 1.33 1.183 2.17.289 1.425-.007 2.71-.887 3.854l-.136.166a4.548 4.548 0 01-2.201 1.388.123.123 0 00-.081.076c-.191.551-.383 1.023-.74 1.494-.9 1.187-2.222 1.846-3.711 1.838-1.187-.006-2.239-.44-3.157-1.302a.107.107 0 00-.105-.024c-.388.125-.78.143-1.204.138a4.441 4.441 0 01-1.945-.466 4.544 4.544 0 01-1.61-1.335c-.152-.202-.303-.392-.414-.617a5.81 5.81 0 01-.37-.961 4.582 4.582 0 01-.014-2.298.124.124 0 00.006-.056.085.085 0 00-.027-.048 4.467 4.467 0 01-1.034-1.651 3.896 3.896 0 01-.251-1.192 5.189 5.189 0 01.141-1.6c.337-1.112.982-1.985 1.933-2.618.212-.141.413-.251.601-.33.215-.089.43-.164.646-.227a.098.098 0 00.065-.066 4.51 4.51 0 01.829-1.615 4.535 4.535 0 011.837-1.388z" /></clipPath>
+  
+        <path id="sl-cloud-shape" d="M9.064 3.344a4.578 4.578 0 012.285-.312c1 .115 1.891.54 2.673 1.275.01.01.024.017.037.021a.09.09 0 00.043 0 4.55 4.55 0 013.046.275l.047.022.116.057a4.581 4.581 0 012.188 2.399c.209.51.313 1.041.315 1.595a4.24 4.24 0 01-.134 1.223.123.123 0 00.03.115c.594.607.988 1.33 1.183 2.17.289 1.425-.007 2.71-.887 3.854l-.136.166a4.548 4.548 0 01-2.201 1.388.123.123 0 00-.081.076c-.191.551-.383 1.023-.74 1.494-.9 1.187-2.222 1.846-3.711 1.838-1.187-.006-2.239-.44-3.157-1.302a.107.107 0 00-.105-.024c-.388.125-.78.143-1.204.138a4.441 4.441 0 01-1.945-.466 4.544 4.544 0 01-1.61-1.335c-.152-.202-.303-.392-.414-.617a5.81 5.81 0 01-.37-.961 4.582 4.582 0 01-.014-2.298.124.124 0 00.006-.056.085.085 0 00-.027-.048 4.467 4.467 0 01-1.034-1.651 3.896 3.896 0 01-.251-1.192 5.189 5.189 0 01.141-1.6c.337-1.112.982-1.985 1.933-2.618.212-.141.413-.251.601-.33.215-.089.43-.164.646-.227a.098.098 0 00.065-.066 4.51 4.51 0 01.829-1.615 4.535 4.535 0 011.837-1.388z" />
+      </defs>
+      <g class="scene" transform="rotate(-6 12 12)">
+        <!-- 主层: 呼吸 group, 包住 cloudling + hat + mask 整体 scale -->
+        <g transform="translate(12 12) scale(0.9688) translate(-12 -12)" id="breath-group" style="transform-box: fill-box;">
+          
+    <g class="cloudling-base">
+      <g class="edge-system">
+        <use class="edge-contact" href="#sl-cloud-shape" fill="none" stroke="#7d8aa7" stroke-width="1.05" stroke-linejoin="round" transform="translate(0 0.18)" filter="url(#sl-edge-blur)" />
+        <use class="edge-rim-soft" href="#sl-cloud-shape" fill="none" stroke="#7A9DFF" stroke-width="0.90" stroke-linejoin="round" filter="url(#sl-edge-blur)" />
+        <use class="edge-rim-tight" href="#sl-cloud-shape" fill="none" stroke="#aab3c6" stroke-width="0.42" stroke-linejoin="round" />
+      </g>
+      <g filter="url(#sl-shadow)">
+        <use href="#sl-cloud-shape" fill="url(#sl-body)" />
+        <rect x="1" y="2" width="22" height="11" fill="url(#sl-hi)" clip-path="url(#sl-clip)" />
+      </g>
+    </g>
+  
+          <!-- 帽子: 自己的 sway transform 套在静态摆位之上 -->
+          <g id="hat-static" transform="translate(-2 -0.4) rotate(-10 12 5.4) scale(0.98)">
+            <g transform="rotate(2.000 12 5.4)" id="hat-sway" style="transform-origin: 12px 5.4px;">
+              
+    <g filter="url(#sl-shadow)">
+      <path d="M 8.5 5 Q 12 5.55 15.5 5 C 16.00 3.50 13.68 1.42 12.88 0.42 C 12.38 -0.38 10.30 -0.30 8.80 0.20 C 8.50 0.80 9.16 1.72 10.16 1.72 C 8.50 4.00 8.0 4.5 8.5 5 Z" fill="url(#sl-hat)" />
+    </g>
+    <g class="cuff-fluffy"><g filter="url(#sl-soft)"><ellipse cx="12" cy="5.4" rx="4.00" ry="1.55" fill="#7A9DFF" opacity="0.50" /><circle cx="12.00" cy="4.55" r="1.20" fill="#7A9DFF" opacity="0.50" /><circle cx="13.27" cy="4.60" r="1.37" fill="#7A9DFF" opacity="0.50" /><circle cx="14.38" cy="4.75" r="1.32" fill="#7A9DFF" opacity="0.50" /><circle cx="15.20" cy="4.98" r="1.27" fill="#7A9DFF" opacity="0.50" /><circle cx="15.64" cy="5.25" r="1.21" fill="#7A9DFF" opacity="0.50" /><circle cx="15.64" cy="5.55" r="1.15" fill="#7A9DFF" opacity="0.50" /><circle cx="15.20" cy="5.83" r="1.09" fill="#7A9DFF" opacity="0.50" /><circle cx="14.38" cy="6.05" r="1.04" fill="#7A9DFF" opacity="0.50" /><circle cx="13.27" cy="6.20" r="1.20" fill="#7A9DFF" opacity="0.50" /><circle cx="12.00" cy="6.25" r="1.16" fill="#7A9DFF" opacity="0.50" /><circle cx="10.73" cy="6.20" r="1.14" fill="#7A9DFF" opacity="0.50" /><circle cx="9.62" cy="6.05" r="1.13" fill="#7A9DFF" opacity="0.50" /><circle cx="8.80" cy="5.83" r="1.12" fill="#7A9DFF" opacity="0.50" /><circle cx="8.36" cy="5.55" r="1.12" fill="#7A9DFF" opacity="0.50" /><circle cx="8.36" cy="5.25" r="1.13" fill="#7A9DFF" opacity="0.50" /><circle cx="8.80" cy="4.98" r="1.33" fill="#7A9DFF" opacity="0.50" /><circle cx="9.62" cy="4.75" r="1.32" fill="#7A9DFF" opacity="0.50" /><circle cx="10.73" cy="4.60" r="1.31" fill="#7A9DFF" opacity="0.50" /></g><ellipse cx="12" cy="5.4" rx="3.85" ry="1.40" fill="#aab3c6" opacity="0.65" /><circle cx="12.00" cy="4.55" r="1.05" fill="#aab3c6" opacity="0.65" /><circle cx="13.27" cy="4.60" r="1.22" fill="#aab3c6" opacity="0.65" /><circle cx="14.38" cy="4.75" r="1.17" fill="#aab3c6" opacity="0.65" /><circle cx="15.20" cy="4.98" r="1.12" fill="#aab3c6" opacity="0.65" /><circle cx="15.64" cy="5.25" r="1.06" fill="#aab3c6" opacity="0.65" /><circle cx="15.64" cy="5.55" r="1.00" fill="#aab3c6" opacity="0.65" /><circle cx="15.20" cy="5.83" r="0.94" fill="#aab3c6" opacity="0.65" /><circle cx="14.38" cy="6.05" r="0.89" fill="#aab3c6" opacity="0.65" /><circle cx="13.27" cy="6.20" r="1.05" fill="#aab3c6" opacity="0.65" /><circle cx="12.00" cy="6.25" r="1.01" fill="#aab3c6" opacity="0.65" /><circle cx="10.73" cy="6.20" r="0.99" fill="#aab3c6" opacity="0.65" /><circle cx="9.62" cy="6.05" r="0.98" fill="#aab3c6" opacity="0.65" /><circle cx="8.80" cy="5.83" r="0.97" fill="#aab3c6" opacity="0.65" /><circle cx="8.36" cy="5.55" r="0.97" fill="#aab3c6" opacity="0.65" /><circle cx="8.36" cy="5.25" r="0.98" fill="#aab3c6" opacity="0.65" /><circle cx="8.80" cy="4.98" r="1.18" fill="#aab3c6" opacity="0.65" /><circle cx="9.62" cy="4.75" r="1.17" fill="#aab3c6" opacity="0.65" /><circle cx="10.73" cy="4.60" r="1.16" fill="#aab3c6" opacity="0.65" /><ellipse cx="12" cy="5.4" rx="3.70" ry="1.25" fill="url(#sl-cuff)" /><circle cx="12.00" cy="4.55" r="0.90" fill="url(#sl-cuff)" /><circle cx="13.27" cy="4.60" r="1.07" fill="url(#sl-cuff)" /><circle cx="14.38" cy="4.75" r="1.02" fill="url(#sl-cuff)" /><circle cx="15.20" cy="4.98" r="0.97" fill="url(#sl-cuff)" /><circle cx="15.64" cy="5.25" r="0.91" fill="url(#sl-cuff)" /><circle cx="15.64" cy="5.55" r="0.85" fill="url(#sl-cuff)" /><circle cx="15.20" cy="5.83" r="0.79" fill="url(#sl-cuff)" /><circle cx="14.38" cy="6.05" r="0.74" fill="url(#sl-cuff)" /><circle cx="13.27" cy="6.20" r="0.90" fill="url(#sl-cuff)" /><circle cx="12.00" cy="6.25" r="0.86" fill="url(#sl-cuff)" /><circle cx="10.73" cy="6.20" r="0.84" fill="url(#sl-cuff)" /><circle cx="9.62" cy="6.05" r="0.83" fill="url(#sl-cuff)" /><circle cx="8.80" cy="5.83" r="0.82" fill="url(#sl-cuff)" /><circle cx="8.36" cy="5.55" r="0.82" fill="url(#sl-cuff)" /><circle cx="8.36" cy="5.25" r="0.83" fill="url(#sl-cuff)" /><circle cx="8.80" cy="4.98" r="1.03" fill="url(#sl-cuff)" /><circle cx="9.62" cy="4.75" r="1.02" fill="url(#sl-cuff)" /><circle cx="10.73" cy="4.60" r="1.01" fill="url(#sl-cuff)" /><ellipse cx="12" cy="5.02" rx="2.89" ry="0.27" fill="none" stroke="#ffffff" stroke-opacity="0.55" stroke-width="0.14" /></g>
+    <g class="star-piece" filter="url(#sl-star-glow)">
+      <path d="M 8.81 -0.39 Q 9.05 -0.52 9.05 -0.25 L 9.06 -0.15 Q 9.06 0.12 9.26 0.31 L 9.33 0.37 Q 9.53 0.56 9.27 0.65 L 9.18 0.68 Q 8.92 0.77 8.81 1.01 L 8.77 1.10 Q 8.65 1.34 8.49 1.13 L 8.43 1.05 Q 8.27 0.83 8.00 0.80 L 7.90 0.79 Q 7.64 0.76 7.79 0.54 L 7.85 0.45 Q 8.00 0.23 7.95 -0.03 L 7.93 -0.13 Q 7.88 -0.39 8.14 -0.31 L 8.23 -0.29 Q 8.49 -0.21 8.73 -0.34 L 8.81 -0.39 Z" fill="url(#sl-star-yellow)" stroke="#ffffff" stroke-width="0.06" stroke-opacity="0.7" stroke-linejoin="round" />
+    </g>
+  
+            </g>
+          </g>
+          
+    <g class="sleep-mask" transform="rotate(-9 12 11.4)" filter="url(#sl-shadow)">
+      <g transform="translate(12 11.4) scale(0.03411 0.03775) translate(-258.50 -332.00)">
+    <path d="M488.728,341.587l-7.846-2.599c-0.405-16.992-7.605-47.34-48.625-70.941c-38.301-22.036-96.652-33.215-173.431-33.224c-76.822,0-135.146,11.165-173.438,33.183c-42.335,24.344-48.659,55.883-48.661,72.516c0,2.608,0.135,5.183,0.352,7.735h-2.649c-0.001,0-0.001,0-0.002,0c-9.635,0-17.446,7.811-17.448,17.445c-0.001,9.636,7.81,17.449,17.445,17.45l13,0.001c15.257,28.43,45.267,47.814,79.728,47.818c20.016-0.001,36.647-11.511,54.256-23.695c20.65-14.29,44.048-30.481,77.388-30.481c33.359,0.003,56.757,16.204,77.402,30.497c17.61,12.192,34.24,23.707,54.251,23.709h0.012c24.153,0,46.861-9.404,63.941-26.481c8.937-8.936,15.751-19.422,20.239-30.839l3.111,1.031c1.82,0.604,3.67,0.89,5.489,0.89c7.318,0,14.133-4.64,16.56-11.966C502.835,354.489,497.876,344.617,488.728,341.587Z" fill="#22305A" stroke="#000000" stroke-width="0.22" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke" />
+  </g>
+      <g transform="translate(9.00 11.15) rotate(-5.00) scale(1.180)">
+    <path d="M -1.23 0 Q 0 1.40 1.23 0" fill="none" stroke="#FFFFFF" stroke-width="0.45" stroke-linecap="round" />
+    <line x1="-0.78" y1="0.41" x2="-1.17" y2="0.95" stroke="#FFFFFF" stroke-width="0.38" stroke-linecap="round" opacity="0.92" /><line x1="0.00" y1="0.70" x2="0.00" y2="1.36" stroke="#FFFFFF" stroke-width="0.38" stroke-linecap="round" opacity="0.92" /><line x1="0.78" y1="0.41" x2="1.17" y2="0.95" stroke="#FFFFFF" stroke-width="0.38" stroke-linecap="round" opacity="0.92" />
+  </g><g transform="translate(15.00 11.15) rotate(5.00) scale(1.180)">
+    <path d="M -1.23 0 Q 0 1.40 1.23 0" fill="none" stroke="#FFFFFF" stroke-width="0.45" stroke-linecap="round" />
+    <line x1="-0.78" y1="0.41" x2="-1.17" y2="0.95" stroke="#FFFFFF" stroke-width="0.38" stroke-linecap="round" opacity="0.92" /><line x1="0.00" y1="0.70" x2="0.00" y2="1.36" stroke="#FFFFFF" stroke-width="0.38" stroke-linecap="round" opacity="0.92" /><line x1="0.78" y1="0.41" x2="1.17" y2="0.95" stroke="#FFFFFF" stroke-width="0.38" stroke-linecap="round" opacity="0.92" />
+  </g>
+    </g>
+  
+        </g>
+        <!-- 梦境层: Z 字 (在呼吸外, 不跟着主体起伏) -->
+        <g id="z-container"><g opacity="0.450" transform="translate(21.51 -0.54) scale(1.44)" class="z-particle">
+    <g filter="url(#sl-z-glow)">
+      <path d="M -1.0 -1.0 Q 0.0 -1.0 1.0 -1.0 Q 1.05 -0.85 0.6 -0.4 Q 0 0.1 -0.6 0.6 Q -1.05 0.95 -1.0 1.0 Q 0.0 1.0 1.0 1.0" fill="none" stroke="url(#sl-z-grad)" stroke-width="0.55" stroke-linecap="round" stroke-linejoin="round" />
+    </g>
+  </g></g>
+      </g>
+  </svg>

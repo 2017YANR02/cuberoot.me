@@ -9,7 +9,7 @@ const pool = createWcaScramblePool({
   apiUrl,
   difficulty: webTimerWcaDifficultyAdapter,
   loadExamples: signal => fetchPuzzleExamples(fetch, signal),
-  loadCompetition: async (id) => (await fetchWcaScrambles(id))?.map(row => ({
+  loadCompetition: async (id, signal) => (await fetchWcaScrambles(id, signal))?.map(row => ({
     eventId: row.event_id, roundTypeId: row.round_type_id, groupId: row.group_id,
     scrambleNumber: row.scramble_num, isExtra: row.is_extra, scramble: row.scramble,
     optimalScramble: row.optimal_scramble ?? null,

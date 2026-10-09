@@ -924,3 +924,24 @@ button.sml-moves:focus-visible { outline: 2px solid var(--ring); outline-offset:
   .stl-seg[data-stage='f2l'][data-shade] { --stl-c: var(--rc-stage-f2l); }
   .stl-seg[data-pause] { background: var(--stl-c); opacity: 0.26; }
 }
+
+/* Same live analysis as the side panel; one stage directly below the cube. */
+.timer-live-stage {
+  width: min(100%, 36rem);
+  min-height: 4.5em;
+  margin-top: 12px;
+  padding-inline: 12px;
+  text-align: center;
+}
+.timer-live-stage-label {
+  margin-bottom: 6px;
+  color: var(--muted-foreground);
+  font-size: 0.85rem;
+}
+.timer-live-stage .sml-moves {
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font-size: clamp(16px, 2vw, 22px);
+  line-height: 1.5;
+}

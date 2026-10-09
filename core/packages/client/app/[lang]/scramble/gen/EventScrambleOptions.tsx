@@ -67,12 +67,22 @@ export default function EventScrambleOptions({ event, isZh, onAddOrder, sq1Compa
       if (!onAddOrder) return null;
       options = <CubeModeSelect event="222" />;
       break;
+    case 'sphere':
+      if (!onAddOrder) return null;
+      options = <CubeModeSelect event="333" />;
+      break;
     case '555':
       if (!onAddOrder) return null;
       options = <CubeModeSelect event="555" />;
       break;
     case 'redi_cube':
       options = <ScrambleRediModePicker active />;
+      break;
+    case 'kilominx':
+      options = <span title={tr({
+        zh: '底面使用 DR / DL / DBL / DBR，与模拟器默认记号相同；支持 R++ / D++ 打乱。',
+        en: 'Lower faces use DR / DL / DBL / DBR, matching the simulator default; R++ / D++ scrambles are supported.',
+      })}>{tr({ zh: 'csTimer 记号', en: 'csTimer notation' })}</span>;
       break;
     case 'sq1':
       options = <select

@@ -192,6 +192,9 @@ export function fetchWcaScrambles(
     .then((payload) => {
       const rows = parse(payload);
       if (rows === null) throw new Error('invalid competition scramble response');
+      // A new competition can be published by WCA before our mirror/cache
+      // catches up. Only a non-empty server result completes this lookup.
+      if (rows.length === 0) throw new Error('competition scrambles not yet mirrored');
       return rows;
     })
     .catch((error: unknown) => {
@@ -212,7 +215,8 @@ export function fetchWcaScrambles(
   if (cacheable) {
     scrambleCache.set(compId, p);
     void p.then((rows) => {
-      if (rows === null && scrambleCache.get(compId) === p) scrambleCache.delete(compId);
+      // Empty official responses are temporary too: retry on the next lookup.
+      if (!rows?.length && scrambleCache.get(compId) === p) scrambleCache.delete(compId);
     }, () => {
       if (scrambleCache.get(compId) === p) scrambleCache.delete(compId);
     });
@@ -240,6 +244,51 @@ export async function fetchScrambleGroups(
   const groups = Array.from(new Set(inRound.map(s => s.group_id).filter(Boolean)));
   groups.sort((a, b) => a.localeCompare(b));
   return groups;
+}
+
+/** Resolve an unset recon group from its scramble state, only when the match is unique. */
+export async function fetchMatchingScrambleGroup(
+  compId: string,
+  reconEvent: string,
+  round: string,
+  solveNum: number,
+  scramble: string,
+): Promise<string | null> {
+  if (!scramble.trim() || !Number.isInteger(solveNum) || solveNum < 1) return null;
+  const all = await fetchWcaScrambles(compId);
+  const candidates = all?.filter(row => row.event_id === toWcaEventId(reconEvent)
+    && matchRoundType(round, row.round_type_id) && !row.is_extra
+    && row.scramble_num === solveNum && row.group_id);
+  if (!candidates?.length) return null;
+
+  try {
+    const [{ Alg }, { puzzles }, { checkReconCompletion, cleanReconAlgText, normalizeReconScrambleSpacing, reconPuzzleKey }, { canonicalSq1Alg }] = await Promise.all([
+      import('cubing/alg'),
+      import('cubing/puzzles'),
+      import('@cuberoot/shared/recon-completion'),
+      import('@cuberoot/shared/sq1-notation'),
+    ]);
+    // Invert the existing scramble, then use the shared puzzle validator to
+    // compare states (including optimal scrambles with different move text).
+    const text = cleanReconAlgText(normalizeReconScrambleSpacing(reconEvent, scramble));
+    const puzzle = reconPuzzleKey(reconEvent);
+    if (!text.trim() || !puzzle) return null;
+    const alg = new Alg(reconEvent === 'sq1' ? canonicalSq1Alg(text) : text);
+    // Alg parses arbitrary move names; validate them before the recon cleaner
+    // can discard unknown annotations and accidentally produce a match.
+    (await puzzles[puzzle].kpuzzle()).defaultPattern().applyAlg(alg);
+    const inverse = alg.invert().toString();
+    const matches = new Set<string>();
+    for (const row of candidates) {
+      const result = await checkReconCompletion({ event: reconEvent, scramble: row.scramble, solution: inverse });
+      if (result.status === 'solved') matches.add(row.group_id);
+      if (matches.size > 1) return null;
+    }
+    return matches.size === 1 ? [...matches][0] : null;
+  } catch {
+    // Invalid notation or unavailable puzzle code leaves manual selection available.
+    return null;
+  }
 }
 
 export interface GroupScrambles {

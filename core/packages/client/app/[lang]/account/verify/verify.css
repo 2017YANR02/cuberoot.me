@@ -1,9 +1,9 @@
 .face-verify { max-width: 680px; margin: 0 auto; padding: 24px 16px 64px; color: var(--foreground); }
 .face-verify header { margin-bottom: 24px; }
 .face-verify h1 { font-size: 1.6rem; margin: 16px 0; }
-.face-verify-panel { padding: 24px; border-radius: 16px; }
-.face-verify p { line-height: 1.7; color: var(--muted-foreground); }
-.face-verify form { display: grid; gap: 20px; }
+.face-verify-panel { padding: 24px; border-radius: 16px; display: grid; gap: 16px; }
+.face-verify p { margin: 0; line-height: 1.6; color: var(--muted-foreground); }
+.face-verify form, .face-verify-pending { display: grid; gap: 16px; }
 .face-verify label { display: grid; gap: 8px; }
 .face-verify-input { position: relative; display: flex; align-items: center; }
 .face-verify-field { width: 100%; min-width: 0; padding: 12px 44px 12px 12px; border: 1px solid var(--border-default); border-radius: 8px; background: var(--background); color: var(--foreground); font: inherit; }
@@ -11,5 +11,13 @@
 .face-verify-check { flex: none; margin-top: 5px; accent-color: var(--accent); }
 .face-verify-action { padding: 12px 20px; border: 0; border-radius: 8px; font: inherit; background: var(--accent); color: var(--accent-foreground); cursor: pointer; }
 .face-verify-action:disabled { opacity: 0.5; cursor: default; }
+.face-verify-action.face-verify-secondary { background: transparent; color: var(--muted-foreground); border: 1px solid var(--border-default); }
+.face-verify-hint, .face-verify-details, .face-verify-consent { font-size: .85rem; }
+.face-verify-details { color: var(--muted-foreground); }
+.face-verify-details summary { cursor: pointer; }
+.face-verify-details p { margin-top: 12px; }
+.face-verify-success { display: flex; align-items: center; gap: 12px; }
+.face-verify-success > svg { flex: none; color: var(--signal-success); }
+.face-verify-success p { margin-top: 4px; font-size: .85rem; }
 .face-verify :focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
 .face-verify .face-verify-error { color: var(--destructive); }

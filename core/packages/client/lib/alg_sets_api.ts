@@ -24,8 +24,8 @@ export interface AlgSetSummary {
   count: number;
 }
 
-export async function listAlgSets(fresh = false): Promise<AlgSetSummary[]> {
-  const r = await sessionFetch(API_BASE, fresh ? { cache: 'no-cache' } : undefined);
+export async function listAlgSets(_fresh = false): Promise<AlgSetSummary[]> {
+  const r = await sessionFetch(API_BASE, { cache: 'no-cache' });
   return handle<AlgSetSummary[]>(r);
 }
 
@@ -134,10 +134,10 @@ export async function reorderCases(puzzle: string, set: string, ids: number[]): 
   return handle<{ ok: boolean }>(r);
 }
 
-export async function getAlgCatalogOrder(puzzle: string, fresh = false): Promise<string[]> {
+export async function getAlgCatalogOrder(puzzle: string, _fresh = false): Promise<string[]> {
   const r = await sessionFetch(
     `${API_BASE}/${encodeURIComponent(puzzle)}/order`,
-    fresh ? { cache: 'no-cache' } : undefined,
+    { cache: 'no-cache' },
   );
   return (await handle<{ slugs: string[] }>(r)).slugs;
 }

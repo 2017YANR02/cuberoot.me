@@ -1040,5 +1040,11 @@
     "url": "https://github.com/modood/Administrative-divisions-of-China",
     "zh": "账号中国城市中文标签的行政区汉字参考该项目整理的国家统计局行政区划数据；保留原始账号地点标识，按省份核对同音地名。",
     "en": "Chinese account location labels reference National Bureau of Statistics administrative names collected by this project, preserving stored location identifiers and checking homographs by province."
+  },
+  {
+    "name": "中国行政区划公开数据 / dataxiv archive",
+    "url": "https://github.com/dataxiv/data-district",
+    "zh": "账号中国地区选项以民政部2025年末公开行政区划存档为基础，结合地方政府后续公告及港澳台官方资料校核；保留来源、存档版本和核对日期。",
+    "en": "Chinese account location options use an archived year-end 2025 MCA administrative dataset, checked against later local-government announcements and official Hong Kong, Macao and Taiwan sources, with provenance and review dates recorded."
   }
 ]

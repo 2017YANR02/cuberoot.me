@@ -160,7 +160,7 @@ function validate(b: NoticeInput): { error?: string; v?: Normalized } {
 
 // GET /v1/page-notices — enabled 行 (public)
 pageNoticesRoutes.get('/page-notices', async (c) => {
-  c.header('Cache-Control', 'public, max-age=60');
+  c.header('Cache-Control', 'public, no-cache, must-revalidate');
   const rows = await query<NoticeRow>(
     `SELECT * FROM page_notices
      WHERE enabled

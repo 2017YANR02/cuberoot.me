@@ -15,8 +15,8 @@ export async function setHomeCardLock(id: string, locked: boolean): Promise<{ ok
   }));
 }
 
-export async function getHomeCardOrders(fresh = false): Promise<Record<string, string[]>> {
-  const response = await sessionFetch(apiUrl(HOME_ORDER_PATH), fresh ? { cache: 'no-cache' } : undefined);
+export async function getHomeCardOrders(_fresh = false): Promise<Record<string, string[]>> {
+  const response = await sessionFetch(apiUrl(HOME_ORDER_PATH), { cache: 'no-cache' });
   return (await handleApi<{ orders: Record<string, string[]> }>(response)).orders;
 }
 

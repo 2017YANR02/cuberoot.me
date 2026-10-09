@@ -55,6 +55,9 @@ import { renderSia222ScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/sia222_s
 import { renderBakedNet } from '@/app/[lang]/scramble/gen/_svg/_baked_nets';
 import { renderPyraminxDuoSvg } from '@cuberoot/puzzle-render-core/pyraminx-duo-svg';
 import { renderMagicSvg } from '@cuberoot/puzzle-render-core/magic-svg';
+import { renderSphereScrambleSvg } from '@cuberoot/puzzle-render-core/sphere-svg';
+import { renderNativePuzzleSvg } from '@cuberoot/puzzle-render-core/native-puzzle-svg';
+import { NATIVE_PUZZLE_IDS, isNativePuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
 import {
   renderUnfoldedSvgForEvent,
   eventToCubeSize,
@@ -72,7 +75,8 @@ const HAS_PREVIEW: ReadonlySet<string> = new Set([
   'mirror_333', 'ivy', '133', '223', '233', '334', '335', '336', '337',
   '8p', '15p', 'sfl', 'ufo', 'cm2', 'cm3', 'heli', 'helicv', 'ctico', 'dmd',
   'gear', 'mpyrso', 'dino', 'crz3a', 'sq2', 'ssq1', 'bsq', 'bic', 'sia123', 'sia222',
-  'fto', 'baby_fto', 'master_tetraminx', 'kilominx', 'redi_cube', 'pyraminx_duo', 'magic', 'mmagic',
+  'fto', 'baby_fto', 'master_tetraminx', 'kilominx', 'redi_cube', 'pyraminx_duo', 'magic', 'mmagic', 'sphere',
+  ...NATIVE_PUZZLE_IDS,
 ]);
 
 export function eventHasScramblePreview(event: string): boolean {
@@ -100,6 +104,8 @@ export function renderScramblePreviewSvg({
   const eff = previewSource(event);
   try {
     if (event === 'mirror_333') return renderMirrorBlocksScrambleSvg(scramble);
+    if (event === 'sphere') return renderSphereScrambleSvg(scramble);
+    if (isNativePuzzleId(eff)) return renderNativePuzzleSvg(eff, scramble);
     if (eff === 'pyraminx_duo') return renderPyraminxDuoSvg(scramble);
     if (eff === 'magic' || eff === 'mmagic') return renderMagicSvg(eff, scramble);
     if (eff === 'clock') return renderClockScrambleSvg(scramble, clockColors ?? DEFAULT_CLOCK_COLORS);

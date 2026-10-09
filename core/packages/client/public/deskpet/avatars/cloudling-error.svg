@@ -1,0 +1,125 @@
+<svg id="svg" xmlns="http://www.w3.org/2000/svg" width="880" height="720" viewBox="-32 -24 88 72" preserveAspectRatio="xMidYMid meet">
+<style><![CDATA[
+.edge-rim-tight { stroke-opacity: .08; }
+.edge-rim-soft  { stroke-opacity: .06; }
+.edge-contact   { stroke-opacity: .08; }
+.statusbar, .preset {
+  font-size: 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color: #9fb2ff;
+  background: #151824;
+  border-radius: 8px;
+  padding: 6px 14px;
+  min-width: min(820px, calc(100vw - 40px));
+  text-align: center;
+  letter-spacing: 0.03em;
+}
+.preset {
+  color: rgba(224,224,230,.70);
+  text-align: left;
+  white-space: pre-wrap;
+  line-height: 1.45;
+}
+@media (prefers-color-scheme: light) {
+.edge-rim-tight { stroke-opacity: .15; }
+.edge-rim-soft  { stroke-opacity: .10; }
+.edge-contact   { stroke-opacity: .18; }
+.cloud-drop-shadow { flood-opacity: .13; }
+.statusbar, .preset { background: #fff; color: #3941FF; }
+.food-cloud-shadow { flood-opacity: .28; flood-color: #5060FF; }
+.food-cloud > path {
+  stroke: #5870E8 !important;
+  stroke-width: 1.2 !important;
+  stroke-opacity: .9 !important;
+  vector-effect: non-scaling-stroke !important;
+}
+}
+]]></style>
+    <defs>
+      <path id="cloud-shape" d="M9.064 3.344a4.578 4.578 0 012.285-.312c1 .115 1.891.54 2.673 1.275.01.01.024.017.037.021a.09.09 0 00.043 0 4.55 4.55 0 013.046.275l.047.022.116.057a4.581 4.581 0 012.188 2.399c.209.51.313 1.041.315 1.595a4.24 4.24 0 01-.134 1.223.123.123 0 00.03.115c.594.607.988 1.33 1.183 2.17.289 1.425-.007 2.71-.887 3.854l-.136.166a4.548 4.548 0 01-2.201 1.388.123.123 0 00-.081.076c-.191.551-.383 1.023-.74 1.494-.9 1.187-2.222 1.846-3.711 1.838-1.187-.006-2.239-.44-3.157-1.302a.107.107 0 00-.105-.024c-.388.125-.78.143-1.204.138a4.441 4.441 0 01-1.945-.466 4.544 4.544 0 01-1.61-1.335c-.152-.202-.303-.392-.414-.617a5.81 5.81 0 01-.37-.961 4.582 4.582 0 01-.014-2.298.124.124 0 00.006-.056.085.085 0 00-.027-.048 4.467 4.467 0 01-1.034-1.651 3.896 3.896 0 01-.251-1.192 5.189 5.189 0 01.141-1.6c.337-1.112.982-1.985 1.933-2.618.212-.141.413-.251.601-.33.215-.089.43-.164.646-.227a.098.098 0 00.065-.066 4.51 4.51 0 01.829-1.615 4.535 4.535 0 011.837-1.388z" />
+      <clipPath id="cloud-clip"><use href="#cloud-shape" /></clipPath>
+
+      <linearGradient id="body-grad" x1="12" y1="1.305" x2="12" y2="23.076" gradientUnits="userSpaceOnUse">
+        <stop id="body-top" offset="0" stop-color="#6A708E" />
+        <stop id="body-mid" offset=".44" stop-color="#333A53" />
+        <stop id="body-bottom" offset="1" stop-color="#151A30" />
+      </linearGradient>
+      <radialGradient id="body-hi" cx="9.677" cy="5.466" r="18.100" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#8B92B2" stop-opacity=".16" />
+        <stop offset=".62" stop-color="#6C7394" stop-opacity=".08" />
+        <stop offset="1" stop-color="#6C7394" stop-opacity="0" />
+      </radialGradient>
+      <radialGradient id="body-core" cx="12.622" cy="17.819" r="11.326" gradientUnits="userSpaceOnUse">
+        <stop id="core-stop-a" offset="0" stop-color="#0C1023" stop-opacity="0.20" />
+        <stop id="core-stop-b" offset=".68" stop-color="#0C1023" stop-opacity="0.08" />
+        <stop offset="1" stop-color="#0C1023" stop-opacity="0" />
+      </radialGradient>
+
+      <radialGradient id="flow-cool" cx="0.5" cy="0.5" r="0.65">
+        <stop offset="0" stop-color="#858DAE" stop-opacity=".26" />
+        <stop offset=".52" stop-color="#697290" stop-opacity=".13" />
+        <stop offset="1" stop-color="#697290" stop-opacity="0" />
+      </radialGradient>
+      <radialGradient id="flow-deep" cx="0.5" cy="0.5" r="0.60">
+        <stop offset="0" stop-color="#020514" stop-opacity=".56" />
+        <stop offset=".58" stop-color="#020514" stop-opacity=".18" />
+        <stop offset="1" stop-color="#020514" stop-opacity="0" />
+      </radialGradient>
+      <linearGradient id="flow-band-grad" x1="1" y1="0" x2="23" y2="0" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#747D9E" stop-opacity="0" />
+        <stop offset=".45" stop-color="#747D9E" stop-opacity=".16" />
+        <stop offset="1" stop-color="#747D9E" stop-opacity="0" />
+      </linearGradient>
+
+      <linearGradient id="eye-grad" x1="12" y1="9.156" x2="12" y2="16.456" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#A9BCFF" />
+        <stop offset=".54" stop-color="#6B89FF" />
+        <stop offset="1" stop-color="#3941FF" />
+      </linearGradient>
+
+      <filter id="cloud-shadow" x="-75%" y="-75%" width="250%" height="250%">
+        <feDropShadow id="hard-shadow" dx="0" dy=".8" stdDeviation="1.15" flood-color="#040611" flood-opacity="0.62" />
+        <feDropShadow id="blue-glow" dx="0" dy="0" stdDeviation="2.1" flood-color="#3941FF" flood-opacity="0.14" />
+      </filter>
+      <filter id="mist-blur" x="-30%" y="-30%" width="160%" height="160%">
+        <feGaussianBlur id="mist-blur-node" stdDeviation="0.500" />
+      </filter>
+      <filter id="ground-blur" x="-50%" y="-80%" width="200%" height="260%">
+        <feGaussianBlur stdDeviation="1" />
+      </filter>
+    </defs>
+
+    <g opacity="0.580" id="rain" display="none" stroke="#7180C2" stroke-width="0.360" stroke-linecap="round"><path opacity="0.067" d="M1.412 25.422 L0.992 26.917" fill="none" /><path opacity="0.562" d="M1.612 23.972 L1.192 25.467" fill="none" /><path opacity="0.374" d="M4.204 24.724 L3.784 26.024" fill="none" /><path opacity="0.374" d="M4.004 25.874 L3.584 27.174" fill="none" /><path opacity="0.302" d="M6.280 24.330 L5.860 25.526" fill="none" /><path opacity="0.036" d="M6.480 22.880 L6.060 24.076" fill="none" /><path opacity="0.259" d="M8.796 26.476 L8.376 27.620" fill="none" /><path opacity="0.259" d="M8.996 25.026 L8.576 26.170" fill="none" /><path opacity="0.126" d="M14.856 23.686 L14.436 24.882" fill="none" /><path opacity="0.288" d="M14.656 24.836 L14.236 26.032" fill="none" /><path opacity="0.389" d="M17.232 25.492 L16.812 26.857" fill="none" /><path opacity="0.101" d="M17.032 26.642 L16.612 28.007" fill="none" /><path opacity="0.590" d="M19.748 24.638 L19.328 26.224" fill="none" /><path opacity="0.332" d="M19.948 23.188 L19.528 24.774" fill="none" /><path opacity="0.246" d="M22.260 26.210 L21.840 27.510" fill="none" /><path opacity="0.360" d="M22.460 24.760 L22.040 26.060" fill="none" /></g>
+    <ellipse id="ground" cx="12" cy="22.9" rx="8.688" ry="1.25" fill="#030513" opacity="0.42" filter="url(#ground-blur)" />
+
+    <g transform="translate(12 12.265) rotate(0.517) scale(1.0872 1.0605) translate(-12 -12)" id="cloud-root">
+      <g filter="url(#cloud-shadow)">
+        <use href="#cloud-shape" fill="url(#body-grad)" stroke="#9CA8D8" stroke-opacity=".22" stroke-width=".34" />
+        <rect x="-3" y="-3" width="30" height="30" fill="url(#body-hi)" clip-path="url(#cloud-clip)" />
+        <rect x="-3" y="-3" width="30" height="30" fill="url(#body-core)" clip-path="url(#cloud-clip)" />
+        <g id="flow-layer" clip-path="url(#cloud-clip)" filter="url(#mist-blur)">
+          <ellipse id="flow-light" cx="10.687" cy="7.398" rx="14.8" ry="8.4" fill="url(#flow-cool)" opacity="0.280" />
+          <ellipse id="flow-dark" cx="16.463" cy="18.063" rx="13.6" ry="7.8" fill="url(#flow-deep)" opacity="0.336" />
+          <rect id="flow-band" x="-10" y="2.0" width="44" height="9.4" fill="url(#flow-band-grad)" opacity="0.129" transform="translate(-4.563 0) rotate(-12 12 12)" />
+        </g>
+      </g>
+
+      <g opacity="0.902" id="eyes" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <g id="eye-l" transform="translate(8.95 12.200) rotate(-5.000) scale(1.000)">
+          <path d="M-1.15 -1.35 L1.15 1.35 M1.15 -1.35 L-1.15 1.35" stroke="#FFFFFF" stroke-width="1.42" stroke-opacity=".18" />
+          <path d="M-1.15 -1.35 L1.15 1.35 M1.15 -1.35 L-1.15 1.35" stroke="url(#eye-grad)" stroke-width="1.08" />
+        </g>
+        <g id="eye-r" transform="translate(15.05 12.250) rotate(6.000) scale(1.000)">
+          <path d="M-1.15 -1.35 L1.15 1.35 M1.15 -1.35 L-1.15 1.35" stroke="#FFFFFF" stroke-width="1.42" stroke-opacity=".18" />
+          <path d="M-1.15 -1.35 L1.15 1.35 M1.15 -1.35 L-1.15 1.35" stroke="url(#eye-grad)" stroke-width="1.08" />
+        </g>
+      </g>
+    </g>
+  <g id="__cloudling-export-shims" opacity="0" pointer-events="none" style="display:none">
+<g id="params" />
+<g id="preset" />
+<g id="statusbar">phase 0.38 · squeeze 0.00 · rainBurst 0.00 · rebound 0.00 · sx 1.087 · sy 1.061</g>
+</g>
+
+
+</svg>

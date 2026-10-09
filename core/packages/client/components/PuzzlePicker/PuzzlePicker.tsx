@@ -83,6 +83,9 @@ interface Props {
 // 取本地化名:按 isZh 索引 [en, zh],避开 isZh 文案三元(param-isZh 仅作函数参数)。
 const nameOf = (e: CstimerEvent, isZh: boolean): string => [e.en, e.zh][Number(isZh)];
 
+// Menu display only: keep catalog IDs, callbacks and puzzle data lossless.
+const menuLabel = (label: string): string => label.replaceAll('魔方', '').replace(/(\d+)\s*[×xX]\s*(\d+)\s*[×xX]\s*(\d+)/g, '$1$2$3').trim();
+
 export default function PuzzlePicker({
   isZh = false, selectedEvent, selectedEvents, wcaEvents, availableEvents, onSelect, onToggle, linkFor,
   groups: suppliedGroups, placeholderLabel, showTriggerIcon = true, showItemIcons = true, popupFooter, itemAction, dataNoTimer,
@@ -136,8 +139,8 @@ export default function PuzzlePicker({
   const placeholder = wcaEvents ? tr({ zh: '项目', en: 'Puzzle' }) : tr({ zh: '更多', en: 'More' });
   const separator = tr({ zh: '、', en: ', ' });
   const triggerLabel = hasSelection
-    ? selectedItems.map(item => item.label).join(separator)
-    : placeholderLabel ?? (suppliedGroups ? tr({ zh: '项目', en: 'Puzzle' }) : placeholder);
+    ? selectedItems.map(item => menuLabel(item.label)).join(separator)
+    : menuLabel(placeholderLabel ?? (suppliedGroups ? tr({ zh: '项目', en: 'Puzzle' }) : placeholder));
 
   const close = (restoreFocus = false) => {
     setOpen(false);
@@ -168,7 +171,7 @@ export default function PuzzlePicker({
   const iconFor = (item: PuzzlePickerItem, trigger = false) => {
     const className = trigger ? 'pp-trigger-icon' : 'pp-item-icon';
     if (item.iconClass) return <CubingIcon icon={item.iconClass} className={className} />;
-    return <span className={`${className} pp-item-tag`}>{item.textLabel ?? item.id}</span>;
+    return <span className={`${className} pp-item-tag`}>{menuLabel(item.textLabel ?? item.id)}</span>;
   };
 
   const renderItem = (item: PuzzlePickerItem) => {
@@ -177,7 +180,7 @@ export default function PuzzlePicker({
     const inner = (
       <>
         {showItemIcons && item.id && iconFor(item)}
-        <span className="pp-item-label">{item.label}</span>
+        <span className="pp-item-label">{menuLabel(item.label)}</span>
         {item.detail && <span className="pp-item-detail">{item.detail}</span>}
       </>
     );
@@ -223,7 +226,7 @@ export default function PuzzlePicker({
         {showSelectedIcons ? (
           <span className="pp-trigger-selection" aria-hidden="true">
             {selectedItems.map(item => (
-              <span key={item.id} title={item.label}>{iconFor(item, true)}</span>
+              <span key={item.id} title={menuLabel(item.label)}>{iconFor(item, true)}</span>
             ))}
           </span>
         ) : <span className="pp-trigger-label">{triggerLabel}</span>}
@@ -233,7 +236,7 @@ export default function PuzzlePicker({
         <div ref={panelRef} className="pp-popup" id={popupId} role="menu" data-site-surface="popover">
           {groups.map((group) => (
             <div key={group.id} className="pp-group">
-              <div className="pp-group-title">{group.label}</div>
+              <div className="pp-group-title">{menuLabel(group.label)}</div>
               <div className="pp-group-items">
                 {group.items.map(item => itemAction ? (
                   <div key={item.id} className="country-pin-row">{renderItem(item)}{itemAction(item)}</div>

@@ -31,6 +31,8 @@ export interface TimingSurfaceProps {
   /** Keep the scramble above the centered readout without moving other slots. */
   scrambleAbove?: boolean;
   cornerSlot?: ReactNode;
+  /** Content below the cube, outside its fixed-size rendering frame. */
+  cubeFooter?: ReactNode;
   /** Natural aspect of a preview filling the shared corner frame. */
   cornerAspect?: number;
   children?: ReactNode;
@@ -59,6 +61,7 @@ export default function TimingSurface({
   scrambleSlot,
   scrambleAbove: placeScrambleAbove = false,
   cornerSlot,
+  cubeFooter,
   cornerAspect,
   children,
   digitsCorner,
@@ -178,6 +181,7 @@ export default function TimingSurface({
                     ? { '--timer-cube-aspect': cornerAspect } as CSSProperties
                     : undefined}>{cornerSlot}</div>
               : cornerSlot}
+            {cubeFooter}
           </div>}
         </div>
       </div>

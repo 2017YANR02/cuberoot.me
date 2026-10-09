@@ -1,0 +1,112 @@
+<svg id="svg" xmlns="http://www.w3.org/2000/svg" width="880" height="720" viewBox="-32 -24 88 72" preserveAspectRatio="xMidYMid meet">
+<style><![CDATA[
+.statusbar {
+  font-size: 10px;
+  font-family: ui-monospace, monospace;
+  color: #7A9DFF;
+  background: #1f1f26;
+  border-radius: 8px;
+  padding: 6px 14px;
+  min-width: 760px;
+  text-align: center;
+  letter-spacing: 0.05em;
+}
+.statusbar .phase-A { color: #7A9DFF; }
+.statusbar .phase-B { color: #FFA56B; font-weight: 700; }
+.statusbar .phase-C { color: #B1A7FF; }
+.edge-rim-tight { stroke-opacity: .08; }
+.edge-rim-soft { stroke-opacity: .06; }
+.edge-contact { stroke-opacity: .08; }
+@media (prefers-color-scheme: light) {
+.statusbar { background: #fff; color: #3941FF; }
+.edge-rim-tight { stroke-opacity: .15; }
+.edge-rim-soft { stroke-opacity: .10; }
+.edge-contact { stroke-opacity: .18; }
+.cloud-drop-shadow { flood-opacity: .13; }
+.food-cloud-shadow { flood-opacity: .28; flood-color: #5060FF; }
+.food-cloud > path {
+  stroke: #5870E8 !important;
+  stroke-width: 1.2 !important;
+  stroke-opacity: .9 !important;
+  vector-effect: non-scaling-stroke !important;
+}
+}
+]]></style>
+    <defs>
+      <linearGradient id="bg-grad" x1="12" y1="2" x2="12" y2="22" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#ffffff" />
+        <stop offset="0.5" stop-color="#f4f5f9" />
+        <stop offset="1" stop-color="#dee2eb" />
+      </linearGradient>
+      <radialGradient id="hg-grad" cx="0.45" cy="0.25" r="0.55">
+        <stop offset="0" stop-color="#ffffff" stop-opacity="0.9" />
+        <stop offset="1" stop-color="#ffffff" stop-opacity="0" />
+      </radialGradient>
+      <linearGradient id="eye-grad" x1="0" y1="0" x2="0" y2="24" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#B1A7FF" />
+        <stop offset="0.5" stop-color="#7A9DFF" />
+        <stop offset="1" stop-color="#3941FF" />
+      </linearGradient>
+      <linearGradient id="signal-grad" x1="-2" y1="12" x2="26" y2="12" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#B1A7FF" stop-opacity="0.10" />
+        <stop offset="0.22" stop-color="#8EA7FF" stop-opacity="0.92" />
+        <stop offset="0.78" stop-color="#7A9DFF" stop-opacity="0.92" />
+        <stop offset="1" stop-color="#3941FF" stop-opacity="0.10" />
+      </linearGradient>
+      <linearGradient id="alert-grad" x1="19" y1="4" x2="5" y2="22" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#FFD36E" stop-opacity="0.98" />
+        <stop offset="0.36" stop-color="#FFA56B" stop-opacity="0.9" />
+        <stop offset="0.72" stop-color="#8EA7FF" stop-opacity="0.74" />
+        <stop offset="1" stop-color="#3941FF" stop-opacity="0.18" />
+      </linearGradient>
+      <filter id="cloud-shadow" x="-40%" y="-40%" width="180%" height="180%">
+        <feDropShadow class="cloud-drop-shadow" dx="0" dy="0.6" stdDeviation="0.8" flood-color="#3941FF" flood-opacity="0.18" />
+      </filter>
+      <filter id="edge-blur" x="-40%" y="-40%" width="180%" height="180%">
+        <feGaussianBlur stdDeviation="0.16" />
+      </filter>
+      <filter id="pulse-glow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="0.36" result="b" />
+        <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+      </filter>
+      <filter id="alert-glow" x="-80%" y="-80%" width="260%" height="260%">
+        <feGaussianBlur stdDeviation="0.38" result="b" />
+        <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+      </filter>
+      <clipPath id="cloud-clip">
+        <path d="M9.064 3.344a4.578 4.578 0 012.285-.312c1 .115 1.891.54 2.673 1.275.01.01.024.017.037.021a.09.09 0 00.043 0 4.55 4.55 0 013.046.275l.047.022.116.057a4.581 4.581 0 012.188 2.399c.209.51.313 1.041.315 1.595a4.24 4.24 0 01-.134 1.223.123.123 0 00.03.115c.594.607.988 1.33 1.183 2.17.289 1.425-.007 2.71-.887 3.854l-.136.166a4.548 4.548 0 01-2.201 1.388.123.123 0 00-.081.076c-.191.551-.383 1.023-.74 1.494-.9 1.187-2.222 1.846-3.711 1.838-1.187-.006-2.239-.44-3.157-1.302a.107.107 0 00-.105-.024c-.388.125-.78.143-1.204.138a4.441 4.441 0 01-1.945-.466 4.544 4.544 0 01-1.61-1.335c-.152-.202-.303-.392-.414-.617a5.81 5.81 0 01-.37-.961 4.582 4.582 0 01-.014-2.298.124.124 0 00.006-.056.085.085 0 00-.027-.048 4.467 4.467 0 01-1.034-1.651 3.896 3.896 0 01-.251-1.192 5.189 5.189 0 01.141-1.6c.337-1.112.982-1.985 1.933-2.618.212-.141.413-.251.601-.33.215-.089.43-.164.646-.227a.098.098 0 00.065-.066 4.51 4.51 0 01.829-1.615 4.535 4.535 0 011.837-1.388z" />
+      </clipPath>
+    </defs>
+
+    <!-- 脉冲圈层 (在 cloudling 后面) -->
+    <g id="pulses-layer"><path d="M4.743 0.387 A13.694 13.694 0 0 1 12.955 -1.661" fill="none" stroke="url(#alert-grad)" stroke-width="0.760" stroke-linecap="round" stroke-opacity="0.037" filter="url(#pulse-glow)" /><path d="M21.337 1.630 A13.954 13.954 0 0 1 25.540 15.376" fill="none" stroke="url(#alert-grad)" stroke-width="0.760" stroke-linecap="round" stroke-opacity="0.034" filter="url(#pulse-glow)" /><path d="M22.177 21.163 A13.694 13.694 0 0 1 14.847 25.395" fill="none" stroke="url(#signal-grad)" stroke-width="0.760" stroke-linecap="round" stroke-opacity="0.030" filter="url(#pulse-glow)" /><path d="M3.030 22.690 A13.954 13.954 0 0 1 -1.540 15.376" fill="none" stroke="url(#signal-grad)" stroke-width="0.760" stroke-linecap="round" stroke-opacity="0.027" filter="url(#pulse-glow)" /><path d="M-1.486 9.622 A13.694 13.694 0 0 1 0.921 3.951" fill="none" stroke="url(#signal-grad)" stroke-width="0.760" stroke-linecap="round" stroke-opacity="0.024" filter="url(#pulse-glow)" /><path d="M6.681 0.593 A12.586 12.586 0 0 1 14.402 -0.355" fill="none" stroke="url(#alert-grad)" stroke-width="0.760" stroke-linecap="round" stroke-opacity="0.386" filter="url(#pulse-glow)" /><path d="M21.695 3.572 A12.846 12.846 0 0 1 23.993 16.604" fill="none" stroke="url(#alert-grad)" stroke-width="0.760" stroke-linecap="round" stroke-opacity="0.354" filter="url(#pulse-glow)" /><path d="M20.257 21.499 A12.586 12.586 0 0 1 13.097 24.538" fill="none" stroke="url(#signal-grad)" stroke-width="0.760" stroke-linecap="round" stroke-opacity="0.321" filter="url(#pulse-glow)" /><path d="M2.605 20.761 A12.846 12.846 0 0 1 -0.750 13.566" fill="none" stroke="url(#signal-grad)" stroke-width="0.760" stroke-linecap="round" stroke-opacity="0.288" filter="url(#pulse-glow)" /><path d="M-0.036 8.320 A12.586 12.586 0 0 1 2.795 3.416" fill="none" stroke="url(#signal-grad)" stroke-width="0.760" stroke-linecap="round" stroke-opacity="0.255" filter="url(#pulse-glow)" /><path d="M6.399 5.083 A8.900 8.900 0 0 1 11.534 3.112" fill="none" stroke="url(#alert-grad)" stroke-width="0.760" stroke-linecap="round" stroke-opacity="0.000" filter="url(#pulse-glow)" /><path d="M17.254 4.497 A9.160 9.160 0 0 1 21.092 13.116" fill="none" stroke="url(#alert-grad)" stroke-width="0.760" stroke-linecap="round" stroke-opacity="0.000" filter="url(#pulse-glow)" /><path d="M19.290 17.105 A8.900 8.900 0 0 1 14.898 20.415" fill="none" stroke="url(#signal-grad)" stroke-width="0.760" stroke-linecap="round" stroke-opacity="0.000" filter="url(#pulse-glow)" /><path d="M7.011 19.682 A9.160 9.160 0 0 1 3.448 15.283" fill="none" stroke="url(#signal-grad)" stroke-width="0.760" stroke-linecap="round" stroke-opacity="0.000" filter="url(#pulse-glow)" /><path d="M3.112 11.534 A8.900 8.900 0 0 1 4.216 7.685" fill="none" stroke="url(#signal-grad)" stroke-width="0.760" stroke-linecap="round" stroke-opacity="0.000" filter="url(#pulse-glow)" /></g>
+
+    <!-- cloudling 主体 -->
+    <g transform="translate(0 -0.329)" id="g-translate">
+      <g transform="rotate(0.352 12 12)" id="g-rotate">
+        <g transform="translate(12 12) scale(1.0468 1.0458) translate(-12 -12)" id="g-squash">
+          <g id="edge-system">
+            <path class="edge-contact" d="M9.064 3.344a4.578 4.578 0 012.285-.312c1 .115 1.891.54 2.673 1.275.01.01.024.017.037.021a.09.09 0 00.043 0 4.55 4.55 0 013.046.275l.047.022.116.057a4.581 4.581 0 012.188 2.399c.209.51.313 1.041.315 1.595a4.24 4.24 0 01-.134 1.223.123.123 0 00.03.115c.594.607.988 1.33 1.183 2.17.289 1.425-.007 2.71-.887 3.854l-.136.166a4.548 4.548 0 01-2.201 1.388.123.123 0 00-.081.076c-.191.551-.383 1.023-.74 1.494-.9 1.187-2.222 1.846-3.711 1.838-1.187-.006-2.239-.44-3.157-1.302a.107.107 0 00-.105-.024c-.388.125-.78.143-1.204.138a4.441 4.441 0 01-1.945-.466 4.544 4.544 0 01-1.61-1.335c-.152-.202-.303-.392-.414-.617a5.81 5.81 0 01-.37-.961 4.582 4.582 0 01-.014-2.298.124.124 0 00.006-.056.085.085 0 00-.027-.048 4.467 4.467 0 01-1.034-1.651 3.896 3.896 0 01-.251-1.192 5.189 5.189 0 01.141-1.6c.337-1.112.982-1.985 1.933-2.618.212-.141.413-.251.601-.33.215-.089.43-.164.646-.227a.098.098 0 00.065-.066 4.51 4.51 0 01.829-1.615 4.535 4.535 0 011.837-1.388z" fill="none" stroke="#7d8aa7" stroke-width="1.05" stroke-linejoin="round" transform="translate(0 0.18)" filter="url(#edge-blur)" />
+            <path class="edge-rim-soft" d="M9.064 3.344a4.578 4.578 0 012.285-.312c1 .115 1.891.54 2.673 1.275.01.01.024.017.037.021a.09.09 0 00.043 0 4.55 4.55 0 013.046.275l.047.022.116.057a4.581 4.581 0 012.188 2.399c.209.51.313 1.041.315 1.595a4.24 4.24 0 01-.134 1.223.123.123 0 00.03.115c.594.607.988 1.33 1.183 2.17.289 1.425-.007 2.71-.887 3.854l-.136.166a4.548 4.548 0 01-2.201 1.388.123.123 0 00-.081.076c-.191.551-.383 1.023-.74 1.494-.9 1.187-2.222 1.846-3.711 1.838-1.187-.006-2.239-.44-3.157-1.302a.107.107 0 00-.105-.024c-.388.125-.78.143-1.204.138a4.441 4.441 0 01-1.945-.466 4.544 4.544 0 01-1.61-1.335c-.152-.202-.303-.392-.414-.617a5.81 5.81 0 01-.37-.961 4.582 4.582 0 01-.014-2.298.124.124 0 00.006-.056.085.085 0 00-.027-.048 4.467 4.467 0 01-1.034-1.651 3.896 3.896 0 01-.251-1.192 5.189 5.189 0 01.141-1.6c.337-1.112.982-1.985 1.933-2.618.212-.141.413-.251.601-.33.215-.089.43-.164.646-.227a.098.098 0 00.065-.066 4.51 4.51 0 01.829-1.615 4.535 4.535 0 011.837-1.388z" fill="none" stroke="#7A9DFF" stroke-width="0.90" stroke-linejoin="round" filter="url(#edge-blur)" />
+            <path class="edge-rim-tight" d="M9.064 3.344a4.578 4.578 0 012.285-.312c1 .115 1.891.54 2.673 1.275.01.01.024.017.037.021a.09.09 0 00.043 0 4.55 4.55 0 013.046.275l.047.022.116.057a4.581 4.581 0 012.188 2.399c.209.51.313 1.041.315 1.595a4.24 4.24 0 01-.134 1.223.123.123 0 00.03.115c.594.607.988 1.33 1.183 2.17.289 1.425-.007 2.71-.887 3.854l-.136.166a4.548 4.548 0 01-2.201 1.388.123.123 0 00-.081.076c-.191.551-.383 1.023-.74 1.494-.9 1.187-2.222 1.846-3.711 1.838-1.187-.006-2.239-.44-3.157-1.302a.107.107 0 00-.105-.024c-.388.125-.78.143-1.204.138a4.441 4.441 0 01-1.945-.466 4.544 4.544 0 01-1.61-1.335c-.152-.202-.303-.392-.414-.617a5.81 5.81 0 01-.37-.961 4.582 4.582 0 01-.014-2.298.124.124 0 00.006-.056.085.085 0 00-.027-.048 4.467 4.467 0 01-1.034-1.651 3.896 3.896 0 01-.251-1.192 5.189 5.189 0 01.141-1.6c.337-1.112.982-1.985 1.933-2.618.212-.141.413-.251.601-.33.215-.089.43-.164.646-.227a.098.098 0 00.065-.066 4.51 4.51 0 01.829-1.615 4.535 4.535 0 011.837-1.388z" fill="none" stroke="#aab3c6" stroke-width="0.42" stroke-linejoin="round" />
+          </g>
+          <g id="cloud-body" filter="url(#cloud-shadow)">
+            <path d="M9.064 3.344a4.578 4.578 0 012.285-.312c1 .115 1.891.54 2.673 1.275.01.01.024.017.037.021a.09.09 0 00.043 0 4.55 4.55 0 013.046.275l.047.022.116.057a4.581 4.581 0 012.188 2.399c.209.51.313 1.041.315 1.595a4.24 4.24 0 01-.134 1.223.123.123 0 00.03.115c.594.607.988 1.33 1.183 2.17.289 1.425-.007 2.71-.887 3.854l-.136.166a4.548 4.548 0 01-2.201 1.388.123.123 0 00-.081.076c-.191.551-.383 1.023-.74 1.494-.9 1.187-2.222 1.846-3.711 1.838-1.187-.006-2.239-.44-3.157-1.302a.107.107 0 00-.105-.024c-.388.125-.78.143-1.204.138a4.441 4.441 0 01-1.945-.466 4.544 4.544 0 01-1.61-1.335c-.152-.202-.303-.392-.414-.617a5.81 5.81 0 01-.37-.961 4.582 4.582 0 01-.014-2.298.124.124 0 00.006-.056.085.085 0 00-.027-.048 4.467 4.467 0 01-1.034-1.651 3.896 3.896 0 01-.251-1.192 5.189 5.189 0 01.141-1.6c.337-1.112.982-1.985 1.933-2.618.212-.141.413-.251.601-.33.215-.089.43-.164.646-.227a.098.098 0 00.065-.066 4.51 4.51 0 01.829-1.615 4.535 4.535 0 011.837-1.388z" fill="url(#bg-grad)" />
+            <rect x="1" y="2" width="22" height="11" fill="url(#hg-grad)" clip-path="url(#cloud-clip)" />
+          </g>
+          <g id="rim-flash-layer" />
+          <!-- 眼睛层 (counter-rotate 容器) -->
+          <g transform="rotate(-0.352 12 12)" id="eyes-counter">
+            <g id="eye-left" transform="translate(9 12)"><rect x="-1.535" y="-2.524" width="3.071" height="5.049" rx="1.250" fill="url(#eye-grad)" stroke="#fff" stroke-width="0.08" stroke-opacity="0.55" transform="rotate(-3.000)" /></g>
+            <g id="eye-right" transform="translate(15 12)"><rect x="-1.535" y="-2.524" width="3.071" height="5.049" rx="1.250" fill="url(#eye-grad)" stroke="#fff" stroke-width="0.08" stroke-opacity="0.55" transform="rotate(3.000)" /></g>
+          </g>
+        </g>
+      </g>
+    </g>
+  <g id="__cloudling-export-shims" opacity="0" pointer-events="none" style="display:none">
+<g id="params" />
+<g id="statusbar">phase: <span class="phase-B">B</span> · cycle: 0 · pulses: 3 · t: 1500ms / 2600</g>
+</g>
+
+
+</svg>

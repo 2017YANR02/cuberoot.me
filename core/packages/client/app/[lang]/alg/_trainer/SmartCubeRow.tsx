@@ -18,8 +18,8 @@ import { Check, X } from 'lucide-react';
 
 import { tr } from '@/i18n/tr';
 import { TimerDeviceCenter } from '@cuberoot/timer-ui';
-import { detectBluetoothEnv, envAdvice } from '../../timer/_lib/bluetooth';
-import type { CubeStep } from '../../timer/_lib/cube/steps';
+import { detectBluetoothEnv, envAdvice } from '@/lib/bluetooth';
+import type { CubeStep } from '@cuberoot/shared/timer/reconstruct/steps';
 import type { TrainerCubeState } from './useTrainerCube';
 import TrainerCubeViewPicker from './TrainerCubeViewPicker';
 

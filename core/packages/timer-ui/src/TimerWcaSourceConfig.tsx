@@ -67,6 +67,14 @@ export interface TimerWcaSourceDataAdapter {
 }
 
 export interface TimerWcaSourceConfigProps extends TimerOverlayControlProps {
+  /** Keep suggestion portals inside an enclosing source menu for dismissal. */
+  popupContainer?: HTMLElement;
+  /** Browse competitions with host-owned time/country controls. */
+  competitionFilters?: {
+    from: string;
+    country: string;
+    render(countries: readonly string[]): ReactNode;
+  };
   adapter: TimerWcaSourceDataAdapter;
   competitionDisplayName(competitionId: string, canonicalName: string): string;
   disabled?: boolean;
@@ -175,6 +183,8 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 export function TimerWcaSourceConfig({
+  popupContainer,
+  competitionFilters,
   adapter,
   competitionDisplayName,
   disabled = false,
@@ -214,7 +224,7 @@ export function TimerWcaSourceConfig({
   const previousSuggestionsOpenRef = useRef(suggestionsOpen);
   const popupId = useId();
   const noMatchesId = `${popupId}-empty`;
-  const mode = settings.wcaScrambleMode;
+  const mode = competitionFilters ? 'comp' : settings.wcaScrambleMode;
 
   const focusAfterRender = useCallback((target: 'input' | 'selected-clear') => {
     requestAnimationFrame(() => {
@@ -294,10 +304,10 @@ export function TimerWcaSourceConfig({
   }, [closeSuggestions, disabled, mode, settings.wcaComp]);
 
   useEffect(() => {
-    if (mode === 'comp' && settings.wcaComp && competitions === null) {
+    if (mode === 'comp' && (settings.wcaComp || competitionFilters) && competitions === null) {
       void ensureCompetitions().catch(() => undefined);
     }
-  }, [competitions, ensureCompetitions, mode, settings.wcaComp]);
+  }, [competitionFilters, competitions, ensureCompetitions, mode, settings.wcaComp]);
 
   useEffect(() => {
     if (mode !== 'comp' || !settings.wcaComp || !wcaEventId) {
@@ -345,21 +355,44 @@ export function TimerWcaSourceConfig({
     }
   }, [onChange, options.groups, settings.wcaGroup]);
 
+  const filterFrom = competitionFilters?.from ?? '';
+  const filterCountry = competitionFilters?.country ?? '';
+  const hasCompetitionFilters = Boolean(competitionFilters);
+  const availableCompetitions = useMemo(() => competitions?.filter((competition) => (
+    (!competition.startDate || competition.startDate <= maxDate)
+    && (!filterFrom || (competition.endDate || competition.startDate) >= filterFrom)
+  )) ?? [], [competitions, filterFrom, maxDate]);
+  const availableCountries = useMemo(() => (
+    [...new Set(availableCompetitions.map((competition) => competition.country))].filter(Boolean)
+  ), [availableCompetitions]);
   const suggestions = useMemo(() => {
-    if (!settings.wcaCompName.trim() || !competitions) return [];
-    return searchTimerWcaCompetitions(
-      settings.wcaCompName,
-      competitions.filter((competition) => !competition.startDate || competition.startDate <= maxDate),
+    const filtered = availableCompetitions.filter((competition) => (
+      !filterCountry || competition.country.toUpperCase() === filterCountry.toUpperCase()
+    ));
+    if (settings.wcaCompName.trim()) return searchTimerWcaCompetitions(
+      settings.wcaCompName, filtered, hasCompetitionFilters ? filtered.length : 20,
     );
-  }, [competitions, maxDate, settings.wcaCompName]);
+    return hasCompetitionFilters
+      ? filtered.slice().sort((a, b) => b.startDate.localeCompare(a.startDate))
+      : [];
+  }, [availableCompetitions, hasCompetitionFilters, filterCountry, settings.wcaCompName]);
+  // Keep every match reachable without mounting the full historical index.
+  const [suggestionPage, setSuggestionPage] = useState<{ rows: readonly TimerWcaCompetition[]; count: number } | null>(null);
+  const visibleSuggestionCount = suggestionPage?.rows === suggestions ? suggestionPage.count : 40;
+  const visibleSuggestions = suggestions.slice(0, Math.max(visibleSuggestionCount, activeSuggestionIndex + 1));
+  useLayoutEffect(() => {
+    if (popupRef.current) popupRef.current.scrollTop = 0;
+    setActiveSuggestionIndex(-1);
+  }, [suggestions]);
   const selectedCompetition = useMemo(
     () => competitions?.find((competition) => competition.id === settings.wcaComp),
     [competitions, settings.wcaComp],
   );
   const hasSearchQuery = settings.wcaCompName.trim().length > 0;
-  const popupVisible = suggestionsOpen && hasSearchQuery && suggestions.length > 0;
-  const noMatchesVisible = suggestionsOpen
-    && hasSearchQuery
+  const browsing = Boolean(competitionFilters && popupContainer) && !settings.wcaComp && !disabled;
+  const showSuggestions = browsing || (suggestionsOpen && (hasSearchQuery || Boolean(competitionFilters)));
+  const popupVisible = showSuggestions && suggestions.length > 0;
+  const noMatchesVisible = showSuggestions
     && competitions !== null
     && competitionListStatus === 'idle'
     && suggestions.length === 0;
@@ -406,7 +439,7 @@ export function TimerWcaSourceConfig({
   useLayoutEffect(() => {
     const popup = popupRef.current;
     const wrap = wrapRef.current;
-    if (!popupVisible || !popup || !wrap) return;
+    if (!popupVisible || !popup || !wrap || popupContainer) return;
     const position = () => {
       popup.style.visibility = 'hidden';
       popup.style.maxHeight = 'none';
@@ -454,9 +487,10 @@ export function TimerWcaSourceConfig({
       window.visualViewport?.removeEventListener('resize', position);
       window.visualViewport?.removeEventListener('scroll', position);
     };
-  }, [popupVisible, suggestions.length]);
+  }, [popupContainer, popupVisible, suggestions.length]);
 
   const clearCompetition = () => onChange({
+    wcaScrambleMode: 'comp',
     wcaComp: '',
     wcaCompName: '',
     wcaCompCountry: '',
@@ -466,6 +500,7 @@ export function TimerWcaSourceConfig({
 
   const chooseCompetition = (competition: TimerWcaCompetition) => {
     onChange({
+      wcaScrambleMode: 'comp',
       wcaComp: competition.id,
       wcaCompName: competition.name,
       wcaCompCountry: competition.country,
@@ -504,8 +539,9 @@ export function TimerWcaSourceConfig({
 
   return (
     <div className="timer-wca-source-config" data-no-timer>
+      {!settings.wcaComp && competitionFilters?.render(availableCountries)}
       <div className="timer-wca-source-toprow">
-        <select
+        {!competitionFilters && <select
           aria-label={labels.sourceMode}
           className="timer-wca-source-select"
           disabled={disabled}
@@ -516,7 +552,7 @@ export function TimerWcaSourceConfig({
         >
           <option value="comp">{labels.comp}</option>
           <option value="date">{labels.date}</option>
-        </select>
+        </select>}
         {mode === 'date' && renderDateRange({
           ariaLabel: labels.dateRange,
           disabled,
@@ -598,17 +634,27 @@ export function TimerWcaSourceConfig({
                 {popupVisible && createPortal(
                   <div
                     aria-label={labels.competitionSearch}
-                    className="timer-wca-competition-popup"
+                    className={`timer-wca-competition-popup${popupContainer ? ' timer-wca-competition-popup--inline' : ''}`}
+                    data-site-surface="popover"
                     data-no-timer
                     id={popupId}
                     ref={popupRef}
                     role="listbox"
+                    onScroll={(event) => {
+                      const panel = event.currentTarget;
+                      if (visibleSuggestions.length < suggestions.length
+                        && panel.scrollHeight - panel.scrollTop - panel.clientHeight < 160) {
+                        setSuggestionPage({ rows: suggestions, count: visibleSuggestions.length + 40 });
+                      }
+                    }}
                   >
-                    {suggestions.map((competition, index) => {
+                    {visibleSuggestions.map((competition, index) => {
                       const active = index === activeSuggestionIndex;
                       return (
                         <button
                           aria-selected={active}
+                          aria-posinset={index + 1}
+                          aria-setsize={suggestions.length}
                           className={`timer-wca-competition-option${active ? ' is-active' : ''}`}
                           id={optionId(index)}
                           key={competition.id}
@@ -624,9 +670,9 @@ export function TimerWcaSourceConfig({
                               {competition.displayName || competition.name}
                             </span>
                             <span className="timer-wca-competition-option-meta">
-                              {competition.id}
+                              {!competitionFilters && competition.id}
                               {competition.displayCity || competition.city
-                                ? ` · ${competition.displayCity || competition.city}`
+                                ? `${competitionFilters ? '' : ' · '}${competition.displayCity || competition.city}`
                                 : ''}
                               {competition.startDate
                                 ? ` · ${formatDateRangeIso(competition.startDate, competition.endDate)}`
@@ -637,7 +683,7 @@ export function TimerWcaSourceConfig({
                       );
                     })}
                   </div>,
-                  document.body,
+                  popupContainer ?? document.body,
                 )}
               </>
             )}

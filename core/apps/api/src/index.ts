@@ -4,12 +4,15 @@ import { checkCompetitionAccess, requireCompetitionAccess } from './utils/compet
 import { issueCompetitionCaptcha, submitCompetitionCaptcha } from './utils/competition_captcha.js';
 import { startRecordPushSweep } from './utils/record_push.js';
 import { requestDiagnostics } from './observability/request.js';
+import { publicContentCache } from './utils/public_content_cache.js';
+import { revalidateForumMutation } from './utils/forum_revalidate.js';
 import { startRuntimeDiagnostics } from './observability/runtime.js';
 import { serve } from '@hono/node-server';
 import { createNodeWebSocket } from '@hono/node-ws';
 import { apiCors } from './api_cors.js';
 import { authRoutes, browserSessionGuard, rolePreviewGuard } from './routes/auth.js';
 import { accountFaceRoutes } from './routes/account_face.js';
+import { onboardingRoutes } from './routes/onboarding.js';
 import { accountAuthRoutes } from './routes/account_auth.js';
 import { progressRoutes } from './routes/progress.js';
 import { healthRoutes } from './routes/health.js';
@@ -138,6 +141,8 @@ app.use('/v1/cubing-live/*', requireCompetitionAccess);
 app.use('/v1/cubing-live-stream/*', requireCompetitionAccess);
 app.use('/v1/*', browserSessionGuard);
 app.use('/v1/*', rolePreviewGuard);
+app.use('/v1/*', publicContentCache());
+app.use('/v1/forum/*', revalidateForumMutation);
 
 // NOTE: 全局错误处理——把未捕获的 throw new Error(...) 转成 JSON 格式
 // requireAuth / requireAdmin / checkRateLimit 都用 throw，没有全局处理器会变成空 500
@@ -158,6 +163,7 @@ app.onError((err, c) => {
 // 注册路由 — 全部挂在 /v1 下，对外即 https://api.cuberoot.me/v1/*
 app.route('/v1', authRoutes);
 app.route('/v1', accountAuthRoutes);
+app.route('/v1', onboardingRoutes);
 app.route('/v1', accountFaceRoutes);
 app.route('/v1', driveRoutes);
 app.route('/v1', musicRoutes);

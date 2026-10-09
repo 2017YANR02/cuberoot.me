@@ -1,5 +1,7 @@
 'use client';
 
+import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
+
 // Landing「今日复盘」— /recon 最新录入那天的全部复盘。每次加载自动取最新一天。
 // 宽屏一行四卡、≤1080px 三卡、≤900px 两卡(复用 /recon?view=grid 的 ReconCard 竖排卡,
 // 但不显示打乱公式:showScrambleFallback={false},只有视频封面才出媒体区);
@@ -27,6 +29,7 @@ interface Props {
 
 export default function TodayRecon({ lang, pinnedRecons, pinnedOnly = false, isAdmin, savingPins, pinError, onPin }: Props) {
   const isZh = lang === 'zh';
+  const refreshKey = useContentRefreshKey(!pinnedOnly);
   const [recons, setRecons] = useState<ReconSolve[] | null>(null);
 
   // idle-defer fetch(同 RecentScrambles / OngoingComps,不阻塞首屏)
@@ -50,15 +53,15 @@ export default function TodayRecon({ lang, pinnedRecons, pinnedOnly = false, isA
       if (idleId !== null) w.cancelIdleCallback?.(idleId);
       if (timeoutId !== null) clearTimeout(timeoutId);
     };
-  }, [pinnedOnly]);
+  }, [pinnedOnly, refreshKey]);
 
   const visibleRecons = pinnedOnly ? pinnedRecons : recons;
   if (pinnedOnly && !visibleRecons?.length) return null;
-  if (visibleRecons === null) return <div className="today-recon today-recon--loading" aria-hidden="true" />;
+  if (visibleRecons === null) return <div className="today-recon today-recon--loading" data-tour="today-replay" aria-hidden="true" />;
   if (visibleRecons.length === 0) return null;
 
   return (
-    <div className="today-recon">
+    <div className="today-recon" data-tour="today-replay">
       <div className="tr-head">
         <span className="tr-title">{pinnedOnly ? tr({ zh: '置顶复盘', en: 'Pinned recons' }) : tr({ zh: '今日复盘', en: 'Recon of the Day' })}</span>
         <Link href="/recon" prefetch={false} className="tr-all">{tr({ zh: '全部', en: 'All recons' })}</Link>

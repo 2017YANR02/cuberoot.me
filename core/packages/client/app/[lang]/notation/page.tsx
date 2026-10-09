@@ -224,7 +224,7 @@ export default function NotationPage() {
           )}
         </p>
 
-        <nav className="notation-project-picker" aria-label={t('选择魔方项目与记号范围', 'Choose a puzzle and notation scope')}>
+        <nav className="notation-project-picker" aria-label={t('选择项目与记号范围', 'Choose a puzzle and notation scope')}>
           <PuzzlePicker
             isZh={isZh}
             selectedEvent={activePuzzle}
@@ -235,7 +235,7 @@ export default function NotationPage() {
             <NxNOrderInput
               value={cubeOrder}
               onCommit={nextOrder => void setOrder(nextOrder)}
-              aria-label={t('魔方阶数', 'Cube order')}
+              aria-label={t('阶数', 'Cube order')}
             />
           )}
           {activePuzzle !== 'sq1' && (

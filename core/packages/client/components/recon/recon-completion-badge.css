@@ -17,3 +17,8 @@
 .recon-completion-badge svg {
   flex: 0 0 auto;
 }
+
+.recon-completion-badge.recon-completion-badge--icon {
+  padding: 0;
+  background: none;
+}

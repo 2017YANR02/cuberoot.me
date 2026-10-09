@@ -2,9 +2,20 @@
 
 import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import SolutionView from '@/components/SolutionView';
+
+vi.mock('@cuberoot/shared/alg', async importOriginal => ({
+  ...await importOriginal<typeof import('@cuberoot/shared/alg')>(),
+  loadAlg: vi.fn(async () => ({ cases: [] })),
+}));
+vi.mock('@/lib/recon-f2l-links', () => ({
+  reconF2lLinks: vi.fn(async () => new Map([
+    [0, new Map([['RG', '/alg/3x3/f2l/a+']])],
+    [1, new Map([['F2L', '/alg/3x3/f2l/b+']])],
+  ])),
+}));
 
 describe('SolutionView caret mapping', () => {
   let host: HTMLDivElement;
@@ -21,6 +32,39 @@ describe('SolutionView caret mapping', () => {
     window.getSelection()?.removeAllRanges();
     await act(async () => root.unmount());
     host.remove();
+  });
+
+  it('links F2L chips without letting link clicks or arrow keys scrub the player', async () => {
+    const jumpToMoveCount = vi.fn();
+    await act(async () => {
+      root.render(createElement(SolutionView, {
+        text: "R U // RG\nR U' // F2L",
+        event: '3x3',
+        scramble: "R U R' U'",
+        playerRef: { current: { __kind: 'nxn-cuber', jumpToMoveCount } },
+      }));
+    });
+    const links = host.querySelectorAll('a');
+    expect(links).toHaveLength(2);
+    expect(links[0].getAttribute('href')).toBe('/alg/3x3/f2l/a+');
+    expect(links[1].getAttribute('href')).toBe('/alg/3x3/f2l/b+');
+    expect(links[0].parentElement?.dataset.reconTextLength).toBe('2');
+    host.addEventListener('click', e => e.preventDefault(), { capture: true, once: true });
+    await act(async () => {
+      links[0].dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+      links[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    });
+    expect(jumpToMoveCount).not.toHaveBeenCalled();
+    expect(host.querySelector('.recon-move-current')).toBeNull();
+  });
+
+  it('does not send other puzzles to the 3x3 library', async () => {
+    await act(async () => {
+      root.render(createElement(SolutionView, {
+        text: '(1,0) / // PLL', event: 'sq1', playerRef: { current: null },
+      }));
+    });
+    expect(host.querySelector('a')).toBeNull();
   });
 
   it('keeps the final move aligned after color labels were replaced by chips', async () => {

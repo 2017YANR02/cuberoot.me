@@ -116,7 +116,7 @@ describe('real scramble pool', () => {
     expect(new URL(vi.mocked(fetcher).mock.calls[1][0] as string).searchParams.get('optimal')).toBe('1');
   });
 
-  it('keeps a raw-only direct competition response transient in optimal mode', async () => {
+  it('keeps a raw-only direct competition occurrence explicitly non-optimal', async () => {
     const fetcher = (vi.fn()
       .mockResolvedValueOnce(new Response('proxy unavailable', { status: 503 }))
       .mockResolvedValueOnce(new Response(JSON.stringify([{
@@ -130,7 +130,7 @@ describe('real scramble pool', () => {
       scramble222Type: 'full',
       wcaScrambleMode: 'comp',
       wcaComp: 'RawOnly2026',
-    }, fetcher)).rejects.toMatchObject({ kind: 'transient-error' });
+    }, fetcher)).resolves.toMatchObject([{ scramble: 'R U F', nonOptimal: true }]);
   });
 
   it('accepts event-specific WCA notation without duplicating website parsers', async () => {

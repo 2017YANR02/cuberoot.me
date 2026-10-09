@@ -34,6 +34,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronDown, ChevronRight, ThumbsUp, ThumbsDown, Info } from 'lucide-react';
 import type { Solve, EventId } from '@cuberoot/shared/timer';
 import { effectiveMs } from '@cuberoot/shared/timer';
@@ -84,6 +85,10 @@ function methodPlaybackLines(
       kind: kinds[index] ?? 'pll',
       key: stage.key,
       moves: moves.slice(previousEnd + 1, stage.endIdx + 1).map(move => move.m),
+      moveRanges: moves.slice(previousEnd + 1, stage.endIdx + 1).map((move, offset) => ({
+        token: move.m, ts: move.ts, endTs: move.ts,
+        startIdx: previousEnd + 1 + offset, endIdx: previousEnd + 1 + offset,
+      })),
       fromIdx: previousEnd + 1,
       toIdx: stage.endIdx,
       label: isZh ? stage.zh : stage.en,
@@ -125,6 +130,8 @@ export interface ReconstructReportProps {
   hideActions?: boolean;
   /** In-progress move score, using the same segmentation and notation as the report. */
   live?: boolean;
+  /** Mirror the current stage from this same analysis stream below the live cube. */
+  liveStageTarget?: HTMLElement | null;
 }
 
 const BLD_AUTO_DETECT_EVENTS = new Set<EventId>(['333bld', '444bld', '555bld', '333mbld']);
@@ -180,7 +187,7 @@ function AccordionSection({
 }
 
 function ReconstructReportBody({
-  solve, isZh, history, onMemoApply, onUseScramble, onReconFeedback, hideDate, hideActions, live = false,
+  solve, isZh, history, onMemoApply, onUseScramble, onReconFeedback, hideDate, hideActions, live = false, liveStageTarget,
 }: ReconstructReportProps) {
   const host = useReconstructHost();
   const { localize: tr } = host;
@@ -245,9 +252,9 @@ function ReconstructReportBody({
   const core = useMemo(
     // 牌子决定记号里的轴向(`BRAND_SENSOR_BASIS`);「换没换格」与它无关。
     () => (gyroSamples.length > 0
-      ? buildCoreTrack(gyroSamples, { brand: solve.device?.model })
+      ? buildCoreTrack(gyroSamples, { brand: solve.device?.model, moves })
       : null),
-    [gyroSamples, solve.device?.model],
+    [gyroSamples, solve.device?.model, moves],
   );
   const analysisInput = useMemo<AnalysisInput | null>(() => (
     stageSegs && moves.length > 0 ? {
@@ -380,13 +387,31 @@ function ReconstructReportBody({
   }, [solve.event, solve.scramble]);
 
   if (live) {
-    return reconText ? (
+    // Use the segmentation belonging to the displayed worker snapshot, so a
+    // newer move cannot relabel an older stage while analysis is catching up.
+    const currentSegs = analysisState?.solveId === solve.id
+      ? analysisState.input.text.segs : stageSegs;
+    const stageName = currentSegs?.ollEndIdx != null ? 'PLL'
+      : currentSegs?.f2lEndIdx != null ? 'OLL'
+        : currentSegs?.crossEndIdx != null
+          ? `F2L-${Math.min(4, (reconText?.lines.filter(line => line.kind === 'f2l').length ?? 0) + 1)}`
+          : 'Cross';
+    // Completed rows stay in the side panel; only the unfinished tail belongs
+    // beneath the cube. At a boundary, show the next stage with an empty score.
+    const currentMoves = reconText?.lines.find(line => line.key === 'tail')?.moves ?? [];
+    return <>
+      {liveStageTarget && createPortal(<>
+        <div className="timer-live-stage-label">{stageName}</div>
+        <div className="sml-moves">{currentMoves.join(' ') || '…'}</div>
+      </>, liveStageTarget)}
+      {reconText ? (
       <StepMoveList recon={reconText} reference={null} slotReference={null} />
     ) : (
       <div className="sml-moves" aria-busy={analysis?.status !== 'error'}>
         {moves.map(move => move.m).join(' ')}
       </div>
-    );
+      )}
+    </>;
   }
 
   /**
@@ -565,13 +590,13 @@ function ReconstructReportBody({
           rotations={reconText?.rotations}
           gyro={solve.gyro ?? null}
           deviceModel={solve.device?.model ?? null}
-          side={playbackRecon ? ({ idx, seek }) => (
+          side={playbackRecon ? ({ idx, playFrom }) => (
             <StepMoveList
               recon={playbackRecon}
               reference={analysis?.reference ?? null}
               slotReference={analysis?.slotReference ?? null}
               currentIdx={idx}
-              onSeek={seek}
+              onSeek={playFrom}
               notice={!solve.gyro && playbackRecon.blindPairs > 0
                 ? <NoGyroNotice />
                 : undefined}

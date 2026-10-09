@@ -4,13 +4,13 @@
  */
 'use client';
 
+import '@cuberoot/timer-ui/compact-select.css';
 import { X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CUBE_FILL } from '@/lib/cube-colors';
 import GhostCube from '@cuberoot/puzzle-render-core/engine/ghost/GhostCube';
 import { GHOST_DEFAULT_FACE_COLORS, GHOST_FACE_LABELS } from '@cuberoot/puzzle-render-core/engine/ghost/ghostGeometry';
 import { persistItem } from '@/lib/safe-storage';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import World from './engine/world';
 import { puzzleCaps, resolveCaps, type IsolateKind } from './simCaps';
 import { timing } from './engine/tweenTiming';
@@ -811,12 +811,14 @@ export function OrbitPad({
 }
 
 export function Toggle({ label, value, onChange, disabled, title }: { label: string; value: boolean; onChange: (v: boolean) => void; disabled?: boolean; title?: string }) {
-  // 复用全站 PillToggle(iOS 风滑钮开关),取代原生复选框 —— 开 / 关一眼可辨。
-  // disabled = 该拼图暂不支持此功能 → 变灰 + 不可点(滑钮自身 :disabled 已置灰,这里只灰标签)。
+  // 原生菜单保留开关值；不支持此功能的拼图同时禁用菜单并置灰标签。
   return (
     <span className={'sim-toggle' + (disabled ? ' sim-toggle--disabled' : '')} title={title}>
       <span>{label}</span>
-      <PillToggle value={value} onChange={onChange} ariaLabel={label} disabled={disabled} />
+      <select className="native-select" value={String(value)} onChange={event => { onChange(event.currentTarget.value === 'true'); }} aria-label={label} disabled={disabled}>
+        <option value="true">{tr({ zh: '开启', en: 'On' })}</option>
+        <option value="false">{tr({ zh: '关闭', en: 'Off' })}</option>
+      </select>
     </span>
   );
 }

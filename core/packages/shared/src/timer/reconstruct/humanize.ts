@@ -118,7 +118,7 @@
 import { sliceSplitTable } from '../../recon_slice';
 import type { SliceSplit } from '../../recon_slice';
 
-import { coreTurnsIn } from './core_track';
+import { coreTurnsIn, CORE_EVENT_SLACK_MS } from './core_track';
 import type { CoreTrack } from './core_track';
 import type { HtmMove } from './htm';
 import { conjugateToken, facePermFor, CUBE_FACES } from './gyro_orient';
@@ -141,6 +141,10 @@ export interface HumanizeOptions {
    * 注意它只做加法:**没**实测到换格不构成「这不是中层」的证据,见文件头。
    */
   core?: CoreTrack | null;
+  /** CFOP notation policy: reject standalone z turns through the end of F2L.
+   * Slice/wide core motion remains available; rejected turns must not change
+   * the face-name frame. Infinity also covers an unfinished live F2L. */
+  suppressZRotationsThroughMs?: number;
 }
 
 /** 一次写进谱子的转体。 */
@@ -439,6 +443,28 @@ export function humanizeStream(
       ))[0];
     if (match !== undefined) claimed.add(match);
   }
+  // A fast slice sequence can settle only once in the gyro stream. Its half
+  // turn then represents the net rotation of several already-recognized M/E/S
+  // gestures, not an extra x2/y2/z2. Account for that measured interval as a
+  // whole, requiring the same axis and signed total (not just equal end poses).
+  events.forEach((event, idx) => {
+    if (claimed.has(idx) || event.wide || event.startMs === undefined) return;
+    const half = /^([xyz])2('?)$/.exec(event.token);
+    if (!half) return;
+    const pairs = [...planned].map(i => ({ a: counted[i], b: counted[i + 1] }))
+      .filter(({ a, b }) => a && b && a.ts >= event.startMs! - CORE_EVENT_SLACK_MS
+        && b.endTs <= event.tMs + CORE_EVENT_SLACK_MS)
+      .sort((left, right) => left.a.startIdx - right.a.startIdx);
+    if (pairs.length < 2 || Math.abs(pairs[0].a.ts - event.startMs) > CORE_EVENT_SLACK_MS) return;
+    let quarters = 0;
+    for (const { a, b } of pairs) {
+      const rotation = table.get(`${a.m} ${b.m}`)?.rotation ?? '';
+      const turn = /^([xyz])(2)?('?)$/.exec(rotation);
+      if (!turn || turn[1] !== half[1]) return;
+      quarters += (turn[2] ? 2 : 1) * (turn[3] ? -1 : 1);
+    }
+    if (quarters === (half[2] ? -2 : 2)) claimed.add(idx);
+  });
   const inverseToken = (token: string): string => (
     token.endsWith("2'") ? token.slice(0, -1) : token.endsWith('2') ? `${token}'`
       : token.endsWith("'") ? token.slice(0, -1) : `${token}'`
@@ -506,6 +532,9 @@ export function humanizeStream(
       // `?` = 复合转体(两次挨太近被并成一步)。宁可不写也不硬塞一个名字 —— 但 ρ
       // 也就跟着不准了,所以这里连 ρ 都不动:写错的谱子比缺一个转体的谱子更糟。
       if (!/^[xyz]/.test(token)) continue;
+      if (!event.wide && rename(token).startsWith('z')
+        && opts.suppressZRotationsThroughMs !== undefined
+        && eventTime(event) <= opts.suppressZRotationsThroughMs) continue;
       if (briefSettle.has(idx) && makesNextTurnsWorse(event, token)) continue;
       rotations.push(event.wide
         ? { tMs: eventTime(event), token: rename(token), wide: true }

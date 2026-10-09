@@ -885,12 +885,21 @@ importers:
       globals:
         specifier: ^17.7.0
         version: 17.7.0
+      hono:
+        specifier: ^4.13.13
+        version: 4.13.13
       jsdom:
         specifier: ^30.0.1
         version: 30.0.1
       linkedom:
         specifier: 0.18.12
         version: 0.18.12
+      svg-path-properties:
+        specifier: ^2.1.0
+        version: 2.1.0
+      svgpath:
+        specifier: ^2.6.0
+        version: 2.6.0
       tailwindcss:
         specifier: ^4.2.2
         version: 4.3.0
@@ -928,6 +937,9 @@ importers:
       '@cuberoot/visualcube':
         specifier: workspace:*
         version: link:../visualcube
+      cubing:
+        specifier: ^0.63.3
+        version: 0.63.3(patch_hash=026724bd89e53a602c720d772bbd4c11ebe3c4040d840ba0c7df469b5244c9f6)
       three:
         specifier: ^0.183.2
         version: 0.183.2
@@ -950,6 +962,9 @@ importers:
       cstimer_module:
         specifier: ^0.1.5
         version: 0.1.5
+      cubing:
+        specifier: ^0.63.3
+        version: 0.63.3(patch_hash=026724bd89e53a602c720d772bbd4c11ebe3c4040d840ba0c7df469b5244c9f6)
     devDependencies:
       esbuild:
         specifier: ^0.28.2
@@ -5749,6 +5764,10 @@ packages:
   supports-color@7.2.0:
     resolution: {integrity: sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw==}
     engines: {node: '>=8'}
+
+  svg-path-properties@2.1.0:
+    resolution: {integrity: sha512-Zp8IvhMTfQDeVqC8wczQQXJiF7HrafV/SFkRzjYcagchNh/FL+o/Ljbe++6vOfimkZp/bVHFJXb/V2dk51YgwA==}
+    engines: {node: '>=22.0.0'}
 
   svg-pathdata@6.0.3:
     resolution: {integrity: sha512-qsjeeq5YjBZ5eMdFuUa4ZosMLxgr5RZ+F+Y1OrDhuOCEInRMA3x74XdBtggJcj9kOeInz0WE+LgCPDkZFlBYJw==}
@@ -11347,6 +11366,8 @@ snapshots:
   supports-color@7.2.0:
     dependencies:
       has-flag: 4.0.0
+
+  svg-path-properties@2.1.0: {}
 
   svg-pathdata@6.0.3:
     optional: true

@@ -22,7 +22,7 @@ import { SHAPE_MOD_APPEND, SHAPE_MOD_EVENT_IDS, SHAPE_MOD_EVENTS, isShapeModEven
 import { NATIVE_SCRAMBLE_APPEND, NATIVE_SCRAMBLE_EVENT_IDS, NATIVE_SCRAMBLE_EVENTS, isNativeScrambleEvent, nativeScramble, nativeScramblePracticeHint } from '@/lib/native-scramble';
 import type { RoundSheetInput } from './_tnoodle-pdf';
 import ProgressButton from './ProgressButton';
-import CopyAllScramblesButton from './CopyAllScramblesButton';
+import CopyAllScramblesButton, { scrambleClipboardText } from './CopyAllScramblesButton';
 import { scrambleEventPickerGroups } from './_event-picker';
 import ScrambleLines from './ScrambleLines';
 import { displaySq1ForEvent } from '@cuberoot/shared/sq1-notation';
@@ -302,7 +302,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
   // 复制范围是本批次的全部已选项目,不是当前切到屏幕上的单个项目。
   // 每条打乱一行,不混入项目名/序号,便于直接粘进计时器或表格。
   const allScramblesText = useMemo(
-    () => eventsOrdered.flatMap((ev) => scramblesByEvent[ev] ?? []).join('\n'),
+    () => eventsOrdered.flatMap((ev) => scramblesByEvent[ev] ?? []).map(scrambleClipboardText).join('\n'),
     [eventsOrdered, scramblesByEvent],
   );
 
@@ -356,7 +356,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
 
   const copyOne = async (ev: string, idx: number, scramble: string) => {
     try {
-      await navigator.clipboard.writeText(scramble);
+      await navigator.clipboard.writeText(scrambleClipboardText(scramble));
       const key = `${ev}|${idx}`;
       setCopiedKey(key);
       setTimeout(() => setCopiedKey((curr) => (curr === key ? null : curr)), 1200);
@@ -417,7 +417,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
                 <ChevronDown size={14} />
               </button>
               {countOpen && (
-                <ul className="gen-count-combo-list" role="listbox">
+                <ul className="gen-count-combo-list" data-site-surface="popover" role="listbox">
                   {COUNT_PRESETS.map((n) => (
                     <li
                       key={n}

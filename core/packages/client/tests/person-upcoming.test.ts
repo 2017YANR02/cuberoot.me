@@ -14,6 +14,27 @@ vi.mock('@/lib/wca-api', () => ({
 }));
 
 describe('person upcoming competitions', () => {
+  it('filters stale registrations by end date, retaining ongoing and future competitions', async () => {
+    const { selectPersonUpcomingCompetitions } = await import('@/lib/person-upcoming');
+    const dates = [
+      ['BeijingAutumn2026', '2026-10-01', '2026-10-03'],
+      ['GuangzhouOpen2026', '2026-10-05', '2026-10-06'],
+      ['GuilinOpen2026', '2026-10-18', '2026-10-18'],
+      ['Ongoing2026', '2026-10-07', '2026-10-08'],
+      ['Today2026', '2026-10-08', ''],
+      ['Yesterday2026', '2026-10-07', ''],
+      ['NotRegistered2026', '2026-10-09', '2026-10-09'],
+    ];
+    const competitions = dates.map(([id, start_date, end_date]) => ({
+      id, name: id, country: 'cn', start_date, end_date,
+    }));
+    const ids = competitions.map((c) => c.id).filter((id) => id !== 'NotRegistered2026');
+    expect(selectPersonUpcomingCompetitions(ids, competitions, '2026-10-08').map((c) => c.id))
+      .toEqual(['Ongoing2026', 'Today2026', 'GuilinOpen2026']);
+    expect(selectPersonUpcomingCompetitions(ids, competitions, '2026-10-09').map((c) => c.id))
+      .toEqual(['GuilinOpen2026']);
+  });
+
   beforeEach(() => {
     vi.resetModules();
     fetchUserUpcoming.mockResolvedValue([]);

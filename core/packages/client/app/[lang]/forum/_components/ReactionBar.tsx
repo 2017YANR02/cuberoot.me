@@ -72,7 +72,7 @@ export function ReactionBar({
           <SmilePlus size={15} aria-hidden="true" />
         </button>
         {pickerOpen && (
-          <span className="forum-reaction-picker">
+          <span className="forum-reaction-picker" data-site-surface="popover">
             {REACTION_KINDS.map(kind => (
               <button
                 key={kind}

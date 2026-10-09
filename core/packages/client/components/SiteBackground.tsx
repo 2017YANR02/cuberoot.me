@@ -1,21 +1,36 @@
 'use client';
 
 import { useEffect, useState, type CSSProperties } from 'react';
-import { Check, ImageOff } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useHomeBackgroundChoice } from '@/hooks/useHomeBackgroundChoice';
-import { HOME_BACKGROUND_ASSETS as ASSET_ROOT, HOME_BACKGROUNDS as SCENES, resolveHomeBackground } from '@/lib/home-backgrounds';
+import { HOME_BACKGROUND_ASSETS as ASSET_ROOT, HOME_BACKGROUNDS as SCENES, resolveHomeBackground, type HomeBackgroundChoice } from '@/lib/home-backgrounds';
 import { tr } from '@/i18n/tr';
 import { useEffectiveTheme } from '@/lib/theme';
 import './site-background.css';
+
+const BACKGROUND_PREVIEW_EVENT = 'site-background-preview';
+type BackgroundPreview = { theme: 'light' | 'dark'; choice: HomeBackgroundChoice } | null;
+function previewBackground(value: BackgroundPreview) {
+  window.dispatchEvent(new CustomEvent(BACKGROUND_PREVIEW_EVENT, { detail: value }));
+}
+function endBackgroundPreview() { previewBackground(null); }
 
 /** One document-level landscape; preference and assets retain their existing keys. */
 export default function SiteBackground({ manageDocument = true }: { manageDocument?: boolean } = {}) {
   const [ready, setReady] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  const [choice] = useHomeBackgroundChoice(theme);
+  const [savedChoice, , transparent] = useHomeBackgroundChoice(theme);
+  const [preview, setPreview] = useState<BackgroundPreview>(null);
+  const choice = preview?.theme === theme ? preview.choice : savedChoice;
   const [failedScene, setFailedScene] = useState<string | null>(null);
   const pathname = usePathname();
+
+  useEffect(() => {
+    const sync = (event: Event) => setPreview((event as CustomEvent<BackgroundPreview>).detail);
+    window.addEventListener(BACKGROUND_PREVIEW_EVENT, sync);
+    return () => window.removeEventListener(BACKGROUND_PREVIEW_EVENT, sync);
+  }, []);
 
   useEffect(() => {
     let frame = 0;
@@ -51,14 +66,21 @@ export default function SiteBackground({ manageDocument = true }: { manageDocume
   const scene = resolveHomeBackground(choice, theme);
   // A different choice permits retrying a previously unavailable image.
   useEffect(() => setFailedScene(null), [choice]);
-  const active = ready && !pathname?.startsWith('/auth/') && scene && failedScene !== scene.id;
+  const enabled = ready && !pathname?.startsWith('/auth/');
+  const active = enabled && scene && failedScene !== scene.id;
+  // Existing surface styles share this gate; an image is optional in transparent mode.
+  const material = active ? scene.id : enabled && !scene && transparent ? 'transparent' : null;
   useEffect(() => {
     // Native fullscreen needs its own scenery layer, without owning document state.
     if (!manageDocument) return;
-    if (active) document.body.dataset.siteScenery = scene.id;
+    if (material) document.body.dataset.siteScenery = material;
     else delete document.body.dataset.siteScenery;
-    return () => { delete document.body.dataset.siteScenery; };
-  }, [active, scene, manageDocument]);
+    document.body.dataset.siteTransparency = transparent ? 'on' : 'off';
+    return () => {
+      delete document.body.dataset.siteScenery;
+      delete document.body.dataset.siteTransparency;
+    };
+  }, [material, manageDocument, transparent]);
 
   // Auth callbacks already show the returning page in their own background iframe.
   if (!active) return null;
@@ -74,21 +96,21 @@ export function SiteBackgroundControl() {
   const theme = useEffectiveTheme();
   const [choice, selectBackground] = useHomeBackgroundChoice(theme);
   const activeScene = resolveHomeBackground(choice, theme);
-  const noneLabel = tr({ zh: '无背景', en: 'No background' });
+  useEffect(() => endBackgroundPreview, [theme]);
+  const select = (value: HomeBackgroundChoice) => {
+    selectBackground(value);
+    endBackgroundPreview();
+  };
   return <div className="site-background-control" role="group" aria-label={tr({ zh: '全站背景', en: 'Site background' })}>
-      <div className="site-background-modes">
-        <button type="button" role="menuitemradio" aria-checked={choice === 'none'}
-          className="site-background-mode" onClick={() => selectBackground('none')}>
-          <span className="site-background-check">{choice === 'none' && <Check size={13} />}</span>
-          <ImageOff size={14} aria-hidden="true" />
-          {noneLabel}
-        </button>
-
-      </div>
       <div className="site-background-grid">
         {SCENES.map(item => (
           <button key={item.id} type="button" role="menuitemradio" aria-checked={activeScene?.id === item.id}
-            className="site-background-option" onClick={() => selectBackground(item.id)}>
+            className="site-background-option"
+            onPointerEnter={event => { if (event.pointerType !== 'touch') previewBackground({ theme, choice: item.id }); }}
+            onPointerLeave={endBackgroundPreview}
+            onFocus={() => previewBackground({ theme, choice: item.id })}
+            onBlur={endBackgroundPreview}
+            onClick={() => select(item.id)}>
             {/* eslint-disable-next-line @next/next/no-img-element -- Tiny local WebP thumbnails. */}
             <img src={`${ASSET_ROOT}/${item.id}-thumb.webp`} alt="" width={128} height={72} />
             <span className="site-background-caption"><span>{tr(item)}</span>

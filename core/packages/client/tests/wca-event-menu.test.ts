@@ -133,7 +133,7 @@ describe('WCA event menus', () => {
     open();
     const items = [...host.querySelectorAll<HTMLElement>('.pp-item')];
     expect(items.map(item => item.querySelector('.cubing-icon')?.className)).toEqual([
-      expect.stringContaining('unofficial-gear'),
+      expect.stringContaining('puzzle-gear'),
       expect.stringContaining('unofficial-333_mirror_blocks'),
     ]);
     expect(items.every(item => item.querySelector('svg'))).toBe(true);

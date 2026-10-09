@@ -57,7 +57,7 @@ import {
 import { computeAllStats } from '@/lib/recon-stats';
 import { normalizeIsoDate, toLocalIsoDate } from '@/lib/iso-date';
 import { revalidateRecon } from '../revalidate-action';
-import { fetchAttempts, fetchCubingAttempts, fetchResultRow, fetchCubingPrRanks, fetchCubingLiveResultInfo, fetchScrambles, fetchOptimalScrambles, fetchScrambleGroups, matchRoundType } from '@/lib/wca-results-api';
+import { fetchAttempts, fetchCubingAttempts, fetchResultRow, fetchCubingPrRanks, fetchCubingLiveResultInfo, fetchScrambles, fetchOptimalScrambles, fetchScrambleGroups, fetchMatchingScrambleGroup, matchRoundType } from '@/lib/wca-results-api';
 import { fetchAttemptPrRank } from '@/lib/recon-attempt-pr-rank';
 import { fetchPb, type PbByEvent } from '@/lib/wca-pb';
 import {
@@ -815,7 +815,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   }, [form.compWcaId]);
 
   // ── Comp / event / round change → resolve scramble groups ──
-  // 多分组 → 下拉强制选择(边框变红提醒);单分组 → 自动填入。
+  // 单分组自动填入;多分组可由已有打乱反查,无法唯一匹配时手选。
   useEffect(() => {
     if (!form.compWcaId || !form.event || !form.round) { setGroupOptions(null); return; }
     let cancelled = false;
@@ -832,6 +832,46 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     });
     return () => { cancelled = true; };
   }, [form.compWcaId, form.event, form.round]);
+
+  const groupMatchScramble = getReconScramble(form);
+  const groupMatchKey = JSON.stringify([form.compWcaId, form.event, form.round, form.solveNum, groupMatchScramble]);
+  const [groupMatch, setGroupMatch] = useState<{ key: string; group: string | null } | null>(null);
+  const needsGroupMatch = !!(form.compWcaId && form.event && form.round && form.solveNum
+    && groupMatchScramble.trim() && groupOptions && groupOptions.length > 1);
+  const groupMatchPending = needsGroupMatch && groupMatch?.key !== groupMatchKey;
+  const matchedGroup = needsGroupMatch && groupMatch?.key === groupMatchKey ? groupMatch.group : null;
+  const selectableGroups = groupMatchPending ? [] : matchedGroup ? [matchedGroup] : undefined;
+  const [rejectedGroupKey, setRejectedGroupKey] = useState<string | null>(null);
+  const selectGroup = (group: string) => {
+    if (groupMatchPending) return;
+    if (matchedGroup && group !== matchedGroup) {
+      setRejectedGroupKey(groupMatchKey);
+      return;
+    }
+    setRejectedGroupKey(null);
+    setField('groupId', group);
+  };
+  useEffect(() => {
+    const { compWcaId, event, round, solveNum } = form;
+    if (!needsGroupMatch || !compWcaId || !event || !round || !solveNum) return;
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      void fetchMatchingScrambleGroup(compWcaId, event, round, solveNum, groupMatchScramble).then(group => {
+        if (cancelled) return;
+        setGroupMatch({ key: groupMatchKey, group });
+        if (!group) return;
+        setForm(prev => {
+          // Existing selections must agree with the scramble, but stale lookups
+          // must never update a newer solve or scramble.
+          if (prev.groupId === group || prev.compWcaId !== compWcaId || prev.event !== event
+            || prev.round !== round || prev.solveNum !== solveNum
+            || getReconScramble(prev) !== groupMatchScramble) return prev;
+          return { ...prev, groupId: group };
+        });
+      });
+    }, 300);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [form.compWcaId, form.event, form.round, form.solveNum, groupMatchScramble, groupMatchKey, needsGroupMatch]);
 
   const eventRoundFormats = useMemo<RoundFormat[] | null>(() => {
     if (!compRounds || !form.event) return null;
@@ -1086,13 +1126,16 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   // own. 多分组的轮次必须先选分组,否则不自动给打乱(避免误填到错的组)。
   useEffect(() => {
     if (scrambleUserTouched) return;
+    // Resolve the existing scramble before a saved or manually selected group
+    // can replace it with that group's official scramble.
+    if (groupMatchPending || (matchedGroup && form.groupId !== matchedGroup)) return;
     if (!form.compWcaId || !form.event || !form.round || form.solveNum == null) return;
 
-    // 分组尚未解析 → 等加载;多分组且未选 → 留空等用户选(清掉自动/URL 带入的猜测打乱;
-    // 此处已过 scrambleUserTouched 守卫,wcaScramble 必非用户手输,可安全清空)。
+    // Keep loaded / URL-provided scrambles as evidence for group matching.
+    // Only discard a previous automatic fill while the new group is unresolved.
     if (groupOptions === null) return;
     if (groupOptions.length > 1 && !form.groupId) {
-      setForm(prev => prev.wcaScramble ? { ...prev, wcaScramble: '' } : prev);
+      if (scrambleAutoFilledRef.current) setForm(prev => prev.wcaScramble ? { ...prev, wcaScramble: '' } : prev);
       setScrambleAutoSource(null);
       scrambleAutoFilledRef.current = false;
       loadedScrambleKeySnapshot.current = null;
@@ -1152,7 +1195,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       }
     }, 300);
     return () => { cancelled = true; clearTimeout(timer); setScrambleLoading(false); };
-  }, [form.compWcaId, form.event, form.round, form.groupId, form.solveNum, groupOptions, scrambleUserTouched, optimalUserTouched, setField, isZh]);
+  }, [form.compWcaId, form.event, form.round, form.groupId, form.solveNum, groupOptions, groupMatchPending, matchedGroup, scrambleUserTouched, optimalUserTouched, setField, isZh]);
 
   // Resize the visible scramble textarea when its source or value changes programmatically.
   useEffect(() => {
@@ -1465,6 +1508,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   };
 
   const handleSubmit = async () => {
+    if (groupMatchPending || (matchedGroup && form.groupId !== matchedGroup)) return;
     setSubmitError(null);
     const person = form.person?.trim() ?? '';
     if (!person) {
@@ -1740,7 +1784,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 round={form.round}
                 solveNum={form.solveNum}
                 currentGroup={form.groupId || undefined}
-                onPick={g => setField('groupId', g)}
+                selectableGroups={selectableGroups}
+                onPick={selectGroup}
                 onClose={() => setGroupCompareOpen(false)}
               />
             )}
@@ -2018,12 +2063,17 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                       <>
                         <select
                           value={form.groupId || ''}
-                          onChange={e => setField('groupId', e.target.value)}
+                          onChange={e => selectGroup(e.target.value)}
+                          disabled={groupMatchPending}
                           className={`submit-field-select${needPick ? ' submit-input-invalid' : ''}`}
                         >
                           {withPlaceholder && <option value="">{tr({ zh: '请选择', en: 'Select…' })}</option>}
                           {opts.map(g => <option key={g} value={g}>{g}</option>)}
                         </select>
+                        {matchedGroup && rejectedGroupKey === groupMatchKey && <span className="submit-hint submit-hint-warn" role="alert">{tr({
+                          zh: `该分组与已有打乱不符，只能选择 ${matchedGroup} 组`,
+                          en: `This group does not match the existing scramble. Only group ${matchedGroup} can be selected.`,
+                        })}</span>}
                         {needPick &&
                           <span className="submit-hint submit-hint-warn">{tr({ zh: '请先选择分组', en: 'Select a group first' })}</span>}
                         {published && groupOptions!.length > 1 && (
@@ -2300,6 +2350,9 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
               {normalized ? (
                 <SolutionView
                   text={displaySolution}
+                  event={form.event}
+                  scramble={getReconScramble(form)}
+                  sourceText={form.solution || ''}
                   playerRef={playerRef}
                   crossNormalized={true}
                 />
@@ -2509,7 +2562,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
             {/* Submit buttons */}
             {renderSubmitError('submit')}
             <div className="submit-actions">
-              <button className="submit-btn submit-btn-primary" onClick={handleSubmit} disabled={saving || videoUploading}>
+              <button className="submit-btn submit-btn-primary" onClick={handleSubmit} disabled={saving || videoUploading || groupMatchPending}>
                 {saving
                   ? t('recon.submitting')
                   : isEditing

@@ -8,7 +8,7 @@ describe('sim compatibility entrypoints after shared renderer extraction', () =>
   // Knip excludes the sim tree, so a second compatibility hop could silently
   // keep pointing at an orphan file removed from components/puzzle-models.
   for (const [name, kind] of [
-    ['history', 'default'], ['instanced', 'default'], ['panelFan', 'named'],
+    ['history', 'default'], ['instanced', 'default'], ['panelFan', 'named'], ['rawCore', 'named'],
     ['setup_worker_client', 'named'], ['setup.worker', 'side-effect'],
   ] as const) {
     it(`routes ${name} directly through the existing renderer public export`, () => {

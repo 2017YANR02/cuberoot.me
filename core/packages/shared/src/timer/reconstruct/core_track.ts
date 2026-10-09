@@ -48,6 +48,7 @@
  */
 
 import type { GyroSample } from '../../smart_cube/gyro_track';
+import { sliceSplitTable } from '../../recon_slice';
 
 import { detectRotations } from './rotation_detect';
 import type { RotationEvent } from './rotation_detect';
@@ -65,6 +66,8 @@ export interface CoreTrack {
 export interface BuildCoreTrackOptions {
   /** 录这条流的魔方牌子。只影响记号的轴向,不影响「换没换格」,见文件头。 */
   brand?: string | null;
+  /** Raw encoder moves, in the same physical frame as the gyro samples. */
+  moves?: readonly { m: string; ts: number }[];
 }
 
 function directedRotationQuarters(token: string): { axis: string; quarters: number } | null {
@@ -98,7 +101,7 @@ export function buildCoreTrack(
 ): CoreTrack | null {
   if (samples.length === 0) return null;
   const brand = opts.brand ?? null;
-  const events = detectRotations(samples, { brand }).map(event => {
+  const convert = (event: RotationEvent): RotationEvent => {
     // GAN v4/16ui's real gyro stream has the yaw sign opposite to its face-turn
     // convention. Keep this at the reconstruction boundary: the 3D renderer's
     // absolute orientation basis is a separate concern.
@@ -107,7 +110,38 @@ export function buildCoreTrack(
     if (brand === 'gan-v4' && event.token === 'y2') return { ...event, token: "y2'" };
     if (brand === 'gan-v4' && event.token === "y2'") return { ...event, token: 'y2' };
     return event;
-  });
+  };
+  const events = detectRotations(samples, { brand }).map(convert);
+  // A long solve can drift away from the detector's initial grip reference.
+  // Recover only a closed local excursion backed by an encoder slice pair:
+  // matching axis/direction, a stable quarter-turn, then its inverse before
+  // any already-detected rotation. Never replace the global reference or
+  // infer a slice merely from two notifications arriving close together.
+  const moves = opts.moves ?? [];
+  const pairs = sliceSplitTable();
+  for (let i = 0; i + 1 < moves.length; i++) {
+    const a = moves[i], b = moves[i + 1];
+    const split = pairs.get(`${a.m} ${b.m}`);
+    if (!split || coreTurnsIn({ events }, a.ts, b.ts, split.rotation).length) continue;
+    let before = -1;
+    for (let j = 0; j < samples.length && samples[j].tMs < a.ts; j++) before = j;
+    if (before < 0 || a.ts - samples[before].tMs > CORE_EVENT_SLACK_MS) continue;
+    const next = events.find(event => event.tMs >= a.ts - CORE_EVENT_SLACK_MS);
+    const until = next ? (next.startMs ?? next.tMs) : Infinity;
+    const local = samples.slice(before).filter(sample => sample.tMs < until);
+    const recovered = detectRotations(local, { brand }).map(convert);
+    const [first, back] = recovered;
+    if (!first || !back || first.token !== split.rotation) continue;
+    if (!coreTurnsIn({ events: [first] }, a.ts, b.ts, split.rotation).length) continue;
+    const inverse = first.token.endsWith("'") ? first.token.slice(0, -1) : `${first.token}'`;
+    if (back.token !== inverse || back.tMs > (local.at(-1)?.tMs ?? 0) - 120) continue;
+    // The return must also have encoder support on this axis (a compensating
+    // outer/wide turn or the inverse slice), rather than an unrelated regrip.
+    if (!moves.some(move => Math.abs(move.ts - back.tMs) <= CORE_EVENT_SLACK_MS
+      && (move.m[0] === a.m[0] || move.m[0] === b.m[0]))) continue;
+    events.push(first, back);
+    events.sort((left, right) => left.tMs - right.tMs);
+  }
   return { events };
 }
 
@@ -130,8 +164,10 @@ export function coreTurnsIn(
     // that exact opposite-face pair. Time establishes order; it cannot turn an
     // unrelated y rotation into an M/S gesture merely because both overlapped.
     if (expectedToken !== undefined && !supportsRotation(track.events[i].token, expectedToken)) continue;
-    const t = track.events[i].tMs;
-    if (t >= lo && t <= hi) out.push(i);
+    const event = track.events[i];
+    const start = event.startMs !== undefined && event.tMs - event.startMs <= 1200
+      ? event.startMs : event.tMs;
+    if (event.tMs >= lo && start <= hi) out.push(i);
   }
   return out;
 }
