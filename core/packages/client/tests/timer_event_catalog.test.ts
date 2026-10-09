@@ -135,15 +135,15 @@ describe('shared timer event picker catalog', () => {
   });
 
   it('uses dedicated icons where available and explicit native-puzzle text badges', () => {
-    expect(cstimerEvent('gear')?.iconClass).toBe('unofficial-gear');
+    expect(cstimerEvent('gear')?.iconClass).toBe('puzzle-gear');
     expect(timerEventPickerItem('333mr').iconClass).toBe('unofficial-333_mirror_blocks');
     expect(timerEventPickerItem('333mr').textLabel).toBeUndefined();
     expect(timerEventPickerItem('pyraminx_duo')).toMatchObject({
-      nameEn: 'Pyraminx Duo', nameZh: '二重奏魔方', textLabel: 'Duo',
+      nameEn: 'Pyraminx Duo', nameZh: '二重奏', textLabel: 'Duo',
     });
     expect(timerEventPickerItem('pyraminx_duo').iconClass).toBeUndefined();
     expect(timerEventPickerItem('sphere')).toMatchObject({
-      nameEn: 'Sphere Cube', nameZh: '球形魔方', textLabel: 'Sphere',
+      nameEn: 'Sphere Cube', nameZh: '球形', textLabel: 'Sphere',
     });
     expect(timerEventPickerItem('sphere').iconClass).toBeUndefined();
     expect(timerEventPickerItem('superz')).toMatchObject({

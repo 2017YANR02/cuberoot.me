@@ -163,7 +163,7 @@ describe('mobile WCA difficulty pool integration', () => {
 
     await expect(fetchRealScrambles(spec)).rejects.toMatchObject({ kind: 'transient-error' });
     mode = 'missing-optimal';
-    await expect(fetchRealScrambles(spec)).rejects.toMatchObject({ kind: 'transient-error' });
+    await expect(fetchRealScrambles(spec)).resolves.toMatchObject([{ scramble: 'raw only', nonOptimal: true }]);
     mode = 'empty';
     await expect(fetchRealScrambles(spec)).rejects.toMatchObject({ kind: 'confirmed-empty' });
   });

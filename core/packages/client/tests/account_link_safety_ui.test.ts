@@ -23,7 +23,7 @@ vi.mock('@/i18n/tr', () => ({ useLang: () => mocks.language, tr: (copy: { en: st
 
 let root: Root;
 let host: HTMLDivElement;
-const button = (label: string) => Array.from(host.querySelectorAll('button')).find((node) => node.textContent === label)!;
+const button = (label: string) => Array.from(host.querySelectorAll('button')).find((node) => (node.getAttribute('aria-label') ?? node.textContent) === label)!;
 const render = async () => { await act(async () => root.render(createElement(AccountPanel))); };
 const enterMergeCode = async (code: string) => {
   const input = host.querySelector<HTMLInputElement>('input[aria-label="Merge code"]')!;
@@ -33,7 +33,7 @@ const enterMergeCode = async (code: string) => {
   });
 };
 const openMove = async () => {
-  await act(async () => button('Open').click());
+  await act(async () => button('Merge accounts').click());
   await act(async () => {
     const select = host.querySelector<HTMLSelectElement>('[aria-label="Choose merge direction"]')!;
     select.value = 'false';
@@ -90,14 +90,14 @@ describe('explicit mini program sign-in proof', () => {
 
 describe('explicit irreversible account merge confirmation', () => {
   it('binds code issuance to the displayed account', async () => {
-    await render(); await act(async () => button('Open').click());
+    await render(); await act(async () => button('Merge accounts').click());
     await act(async () => button('Generate merge code').click());
     expect(mocks.issueAccountMergeCode).toHaveBeenCalledExactlyOnceWith(42);
     expect(host.querySelector<HTMLInputElement>('[aria-label="Merge code"]')?.value).toBe('42-123456');
     expect(mocks.mergeAccount).not.toHaveBeenCalled();
   });
   it('does not generate a merge code after an unrendered account switch', async () => {
-    await render(); await act(async () => button('Open').click());
+    await render(); await act(async () => button('Merge accounts').click());
     mocks.user = { uid: 77, name: 'Other' };
     await act(async () => button('Generate merge code').click());
     expect(mocks.issueAccountMergeCode).not.toHaveBeenCalled();
@@ -106,7 +106,7 @@ describe('explicit irreversible account merge confirmation', () => {
   });
   it('does not display a code issued for a different account', async () => {
     mocks.issueAccountMergeCode.mockResolvedValue({ code: '99-123456', expiresInSeconds: 600 });
-    await render(); await act(async () => button('Open').click());
+    await render(); await act(async () => button('Merge accounts').click());
     await act(async () => button('Generate merge code').click());
     expect(host.querySelector('[aria-label="Merge code"]')).toBeNull();
     expect(host.textContent).toContain('Your account changed.');

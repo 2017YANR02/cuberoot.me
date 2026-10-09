@@ -34,6 +34,6 @@ describe('recon submit video upload', () => {
   });
 
   it('prevents submission while a video is still uploading', () => {
-    expect(form).toContain('disabled={saving || videoUploading}');
+    expect(form).toContain('disabled={saving || videoUploading || groupMatchPending}');
   });
 });

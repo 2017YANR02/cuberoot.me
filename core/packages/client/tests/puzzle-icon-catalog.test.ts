@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { workspaceFixturePath } from './workspace-fixture-path';
 import { expect, it } from 'vitest';
 import { SVG_BY_KEY } from '@cuberoot/event-icon/maps';
 import { SIM_FIXED_PUZZLE_OPTIONS } from '@/app/[lang]/sim/puzzleOptions';
@@ -21,7 +21,7 @@ it('keeps every PG project on its structural artwork and exposes the same SVG fo
 
 it('keeps generated maps current for all original SVGs and all fixed simulator choices resolvable', () => {
   for (const [key, svg] of Object.entries(SVG_BY_KEY).filter(([key]) => key.startsWith('puzzle-'))) {
-    const source = readFileSync(resolve('../event-icon/svg/puzzle', `${key.slice(7)}.svg`), 'utf8').trim();
+    const source = readFileSync(workspaceFixturePath('@cuberoot/event-icon', 'svg/puzzle', `${key.slice(7)}.svg`), 'utf8').trim();
     expect(svg, key).toBe(source);
     expect(svg, key).not.toMatch(/NaN|Infinity|<text|<image/);
     expect(PUZZLE_ICON_NAMES[key], key).toBeDefined();

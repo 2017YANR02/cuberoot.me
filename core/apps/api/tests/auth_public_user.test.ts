@@ -24,6 +24,7 @@ vi.mock('../src/utils/session.js', () => ({
 }));
 vi.mock('../src/utils/account_device.js', () => ({ captureAccountDevice: mocks.captureAccountDevice }));
 vi.mock('../src/utils/account.js', () => ({
+  normalizeWcaBasicProfile: () => ({ gender: null }),
   loginWithIdentity: mocks.loginWithIdentity,
   findUserByWcaId: mocks.findUserByWcaId,
   findUserForLegacyWcaSession: mocks.findUserForLegacyWcaSession,
@@ -155,6 +156,7 @@ describe('auth public user ID', () => {
       avatar: 'wca-avatar.png',
       wcaId: '2017YANR02',
       countryIso2: 'CN',
+      gender: null,
     }, undefined, { createIfMissing: false });
     expect(mocks.signSession).toHaveBeenCalledWith({
       uid: 66,
