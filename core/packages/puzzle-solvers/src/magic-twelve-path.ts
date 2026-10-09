@@ -1,4 +1,4 @@
-import type { MagicPose } from './magic-eight-path.js'
+import type { MagicPose } from './magic-eight-path'
 
 /**
  * The original-stringing Master Magic, following Stefan Pochmann's solution.

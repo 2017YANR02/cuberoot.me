@@ -13,6 +13,7 @@
 ## 复用单一模型
 
 - 使用 `@cuberoot/puzzle-solvers/magic` 的方向、步数、严格解析、状态转移和 `magicPoses`；八板与十二板的路线分别在 `magic-eight-path.ts`、`magic-twelve-path.ts`，不要在页面重新计算姿态。
+- 保留两包 `build` 中的纯 Magic Node ESM bundle，源码用当前 Turbopack 支持的相对路径；保持 MagicCube、World、tweener 源码直连，禁止把引擎也打成另一套时钟单例。
 - 保持固定板片 ID 和局部 `right/up/normal` 正交基，沿连续折叠移动整片刚体；在合法全叠状态切换铰链，保留相邻板的整边连接与闭环。
 - 将十二板的平行四边形桥接按耦合旋转与平移计算，禁止在起止矩阵之间线性插值穿过不合法中间态。
 - 将整体翻面保留为路线中的显式一步，让起止可见面与实际正反图案一致。

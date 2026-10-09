@@ -254,7 +254,7 @@
     "./engine/magic/magicDrag": "./src/engine/magic/magicDrag.ts"
   },
   "scripts": {
-    "build": "tsc -b && esbuild src/iso-svg.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/iso-svg.js",
+    "build": "tsc -b && esbuild src/iso-svg.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/iso-svg.js && esbuild src/magic-svg.ts --bundle --packages=external --platform=node --target=node20 --format=esm --outfile=dist/magic-svg.js",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { magicRoutePosition, type MagicMove } from '@cuberoot/puzzle-solvers/magic';
-import MagicCube, { magicRenderPoses } from './MagicCube.js';
+import MagicCube, { magicRenderPoses } from './MagicCube';
 
 export interface MagicPickHit { tile: number; local: THREE.Vector3 }
 

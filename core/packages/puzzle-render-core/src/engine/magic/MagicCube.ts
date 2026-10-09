@@ -4,13 +4,13 @@ import {
   magicPoses, magicRoutePosition, magicStateFromMoves, magicStepCount, parseMagicMoves,
   type MagicMove, type MagicPose, type MagicPuzzle, type MagicState,
 } from '@cuberoot/puzzle-solvers/magic';
-import { magicArtwork, MAGIC_TILE_COLOR, type MagicInk } from '../../magic-artwork.js';
-import MoveHistory from '../MoveHistory.js';
-import TweenTwister from '../TweenTwister.js';
-import tweener from '../tweener.js';
-import { timing } from '../tweenTiming.js';
-import type { PieceAnim } from '../pieceAnim.js';
-import { SIZE } from '../define.js';
+import { magicArtwork, MAGIC_TILE_COLOR, type MagicInk } from '../../magic-artwork';
+import MoveHistory from '../MoveHistory';
+import TweenTwister from '../TweenTwister';
+import tweener from '../tweener';
+import { timing } from '../tweenTiming';
+import type { PieceAnim } from '../pieceAnim';
+import { SIZE } from '../define';
 
 export const MAGIC_HALF_THICKNESS = 0.012;
 export const MAGIC_TILE_SIZE = SIZE * 1.25;

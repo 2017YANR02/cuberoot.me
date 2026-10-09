@@ -393,11 +393,12 @@
     }
   },
   "scripts": {
-    "build": "tsc -b",
+    "build": "tsc -b && esbuild src/magic.ts --bundle --packages=external --platform=node --target=node20 --format=esm --outfile=dist/magic.js",
     "typecheck": "tsc --noEmit",
     "test": "pnpm run build && vitest run"
   },
   "devDependencies": {
+    "esbuild": "^0.28.2",
     "typescript": "^5",
     "vitest": "^4.1.11"
   },
