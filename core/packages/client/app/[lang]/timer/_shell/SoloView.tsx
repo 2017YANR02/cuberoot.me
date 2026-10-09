@@ -106,6 +106,7 @@ import {
   timerShouldStopFromExternalPointer,
   timerPrintScrambleSource,
   timerScrambleAllowsEmptySlot,
+  timerScrambleCapability,
   timerScrambleClickEffect,
   timerScrambleStatus,
   timerTracksTrainerCase,
@@ -2700,6 +2701,19 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   ), [isZh]);
 
   const selectedPuzzle = event === 'eg1' || event === 'eg2' ? '222' : timerPuzzleSelection(event).puzzle;
+  const scrambleCapability = timerScrambleCapability(event);
+  const nativeRandomMoves = scrambleCapability?.kind === 'shared'
+    && scrambleCapability.provider === 'native-random-move';
+  // Retained WCA settings already use local generation for these puzzles. Show
+  // that source without changing the preference used when returning to WCA.
+  const effectiveScrambleSource = nativeRandomMoves && settings.scrambleSource === 'wca'
+    ? 'random' : settings.scrambleSource;
+  const randomSourceLabel = nativeRandomMoves
+    ? tr({ zh: '随机转动', en: 'Random moves' })
+    : tr({ zh: '随机', en: 'Random' });
+  const randomSourceOptionLabel = nativeRandomMoves
+    ? tr({ zh: '练习用随机转动', en: 'Practice random moves' })
+    : tr({ zh: '随机状态', en: 'Random state' });
   const trainingEvents: readonly string[] = selectedPuzzle === '333'
     ? TIMER_333_SCRAMBLE_TYPES.filter((type) => type.event !== '333').map((type) => type.event)
     : selectedPuzzle === '222' ? ['eg1', 'eg2'] : [];
@@ -2948,11 +2962,13 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       <TimerPrintController
         currentResult={digitsText}
         currentScramble={displayScramble}
-        currentScrambleSource={timerPrintScrambleSource(
-          settings.scrambleSource,
-          isZh ? 'zh' : 'en',
-          wcaSrcDisplay ? `${wcaSrcDisplay.name} · ${wcaSrcDisplay.meta}` : undefined,
-        )}
+        currentScrambleSource={nativeRandomMoves && effectiveScrambleSource === 'random'
+          ? randomSourceOptionLabel
+          : timerPrintScrambleSource(
+              effectiveScrambleSource,
+              isZh ? 'zh' : 'en',
+              wcaSrcDisplay ? `${wcaSrcDisplay.name} · ${wcaSrcDisplay.meta}` : undefined,
+            )}
         event={event}
         language={isZh ? 'zh' : 'en'}
         ref={printControllerRef}
@@ -2999,12 +3015,13 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
               ariaLabel: tr({ zh: '打乱类型', en: 'Scramble type' }),
               real: tr({ zh: '真题', en: 'Real' }),
               realOption: tr({ zh: 'WCA 真题', en: 'WCA real' }),
-              random: tr({ zh: '随机', en: 'Random' }),
-              randomOption: tr({ zh: '随机状态', en: 'Random state' }),
+              random: randomSourceLabel,
+              randomOption: randomSourceOptionLabel,
               manual: tr({ zh: '手动', en: 'Manual' }),
               manualOption: tr({ zh: '手动输入', en: 'Manual input' }),
             }}
-            value={settings.scrambleSource}
+            value={effectiveScrambleSource}
+            realAvailable={!nativeRandomMoves}
             trainingItems={trainingItems}
             language={timerLanguage}
             trainingValue={trainingEvents.includes(event) ? event : event === '222' && type222 !== 'full' ? type222 : undefined}
