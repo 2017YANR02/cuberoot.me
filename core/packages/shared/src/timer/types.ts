@@ -25,9 +25,8 @@ export type EventId =
   // Other puzzles
   | 'pyra' | 'skewb' | 'sq1' | 'mega' | 'clock'
   | 'magic' | 'mmagic'
-  // Non-WCA puzzles (scrambled by the vendored csTimer engine — see
-  // _lib/scramble/nonwca.ts for the id → scrambler-key table)
-  | 'fto' | 'kilominx' | 'gear' | 'ivy' | 'redi' | 'mpyram'
+  // Non-WCA puzzles (shared providers declare their generation capability).
+  | 'fto' | 'kilominx' | 'gear' | 'ivy' | 'redi' | 'mpyram' | 'pyraminx_duo'
   // Relays
   | 'r3' | 'r4' | 'r5'
   // CFOP step training
@@ -228,6 +227,7 @@ export const EVENTS: EventInfo[] = [
   { id: 'ivy',      nameEn: 'Ivy Cube',        nameZh: '枫叶',       group: 'nonwca', icon: 'unofficial-ivy' },
   { id: 'redi',     nameEn: 'Redi Cube',       nameZh: '热帝魔方',   group: 'nonwca', icon: 'unofficial-redi' },
   { id: 'mpyram',   nameEn: 'Master Pyraminx', nameZh: '四阶金字塔', group: 'nonwca', icon: 'unofficial-mpyram' },
+  { id: 'pyraminx_duo', nameEn: 'Pyraminx Duo', nameZh: '二重奏魔方', group: 'nonwca' },
 
   // CFOP step training
   { id: 'cross',  nameEn: 'Cross only',  nameZh: '十字',       group: 'cfop'

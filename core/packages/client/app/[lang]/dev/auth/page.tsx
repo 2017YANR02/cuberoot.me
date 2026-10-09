@@ -1,7 +1,7 @@
 'use client';
 
 /* auth-doc-review
-{"fingerprint": "0e62bb572408a5162bae30a7b37dc2e4404becafbfeb5f933baad79e66e4d21b", "reason": "2026-10-08 修复刷脸失败与跨设备恢复：区分供应商未完成和失败，保留原会话查询要求，新增同账号按流水结束认证，次数不退回且并发旧结果不能再通过；同步双语认证流程。"}
+{"fingerprint":"75f1861caeca1ac6309fdf7589b0ebde31fb941c3b479314d52460553c36b646","reason":"2026-10-09 计时器预览尺寸复核：App.tsx 仅新增 timerCubePreviewAspect 导入及 TimingSurface 的 cornerAspect 数值，读取已有项目和打乱以约束图示宽度；智能魔方实况沿用原框。已核对 useInstalledAuth、系统浏览器回跳、票据交换、安全存储、账号切换、绑定合并、退出和注销调用均未改变，保留现有双语账号生命周期节点。合入 main 的刷脸失败恢复说明和既有复核记录完整保留；本次尺寸与源码复核不代表原生登录真机验收。 2026-10-08 修复刷脸失败与跨设备恢复：区分供应商未完成和失败，保留原会话查询要求，新增同账号按流水结束认证，次数不退回且并发旧结果不能再通过；同步双语认证流程。"}
 */
 
 import type { ReactNode } from 'react';

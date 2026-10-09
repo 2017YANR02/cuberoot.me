@@ -163,7 +163,7 @@ export { TimerSolveDetailModal } from './TimerSolveDetailModal';
 export type { TimerSolveDetailModalProps } from './TimerSolveDetailModal';
 export { TimerReconstructMetrics } from './TimerReconstructMetrics';
 export type { TimerReconstructMetricsProps } from './TimerReconstructMetrics';
-export { TimerCubePreview } from './TimerCubePreview';
+export { TimerCubePreview, timerCubePreviewAspect } from './TimerCubePreview';
 export type { TimerCubePreviewProps } from './TimerCubePreview';
 export { TimerScramblePreview } from './TimerScramblePreview';
 export type { TimerScramblePreviewProps } from './TimerScramblePreview';

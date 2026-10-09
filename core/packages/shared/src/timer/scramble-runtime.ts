@@ -113,6 +113,7 @@ export const TIMER_SCRAMBLE_CAPABILITIES = Object.freeze({
   ivy: { kind: 'shared', provider: 'small-puzzle-random-state' },
   redi: { kind: 'cubing', cubingEventId: 'redi_cube' },
   mpyram: { kind: 'shared', provider: 'cstimer-nonwca' },
+  pyraminx_duo: { kind: 'shared', provider: 'small-puzzle-random-state' },
   r3: { kind: 'compound', provider: 'timer-compound' },
   r4: { kind: 'compound', provider: 'timer-compound' },
   r5: { kind: 'compound', provider: 'timer-compound' },
@@ -318,6 +319,10 @@ async function defaultSharedScrambleGenerator(
       if (requestedEvent === 'ivy') {
         const { generateIvyTimerScramble } = await import('@cuberoot/puzzle-solvers/ivy');
         return generateIvyTimerScramble(random);
+      }
+      if (requestedEvent === 'pyraminx_duo') {
+        const { generatePyraminxDuoScramble } = await import('@cuberoot/puzzle-solvers/pyraminx-duo');
+        return generatePyraminxDuoScramble(random);
       }
       throw new Error(`Small-puzzle provider cannot generate event: ${requestedEvent}`);
     }

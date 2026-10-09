@@ -1,9 +1,9 @@
 /**
  * Extra puzzle scrambles not covered by others.ts.
  *
- *   magic   — Rubik's Magic. cstimer convention: emit "Forward" or "Backward"
- *             for a 4-piece magic puzzle. We just pick one of those words.
- *   mmagic  — Master Magic (8-piece). Same pick, prefixed with "M ".
+ *   magic   — Rubik's Magic (8 tiles): choose "Forward" or "Backward" practice.
+ *   mmagic  — Master Magic (12 tiles): the same directions, prefixed with "M ".
+ *             These are CubeRoot's practice directions, not random scrambles.
  *   custom  — empty string; UI lets the user type their own scramble.
  */
 

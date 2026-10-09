@@ -11,231 +11,32 @@
  * No external deps; pure TS.
  */
 
-import type { EventId, Solve } from '../types';
-import { newId } from './db';
-import { applyDnsSniff } from './import_cstimer';
-
-/* ------------------------------------------------------------------ */
-/* cstimer event id → our EventId mapping                              */
-/* ------------------------------------------------------------------ */
-//
-// cstimer stores a per-session "scrType" string identifying the puzzle /
-// scramble generator. Many synonyms exist across versions, so we normalize
-// the input (lowercase, strip 'x' separators) before lookup. Anything we
-// don't recognize falls back to '333'.
-//
-// Examples observed in cstimer exports:
-//   "333", "3x3", "3"           → 333
-//   "222", "2x2", "2"           → 222
-//   "444", "4x4", "4"           → 444 ... up to 7x7
-//   "333oh", "3oh", "oh"        → 333oh
-//   "333fm", "3fm", "fm"        → 333fm
-//   "333bld", "3bld", "bld"     → 333bld
-//   "333mbld", "mbld", "3mbld"  → 333mbld
-//   "333ni", "3ni", "ni"        → 333ni
-//   "444bld", "4bld"            → 444bld
-//   "555bld", "5bld"            → 555bld
-//   "666bld", "6bld"            → 666bld
-//   "777bld", "7bld"            → 777bld
-//   "pyram", "pyra", "pyraminx" → pyra
-//   "skewb"                     → skewb
-//   "sq1", "sqr1", "square1"    → sq1
-//   "mega", "megamx", "megaminx"→ mega
-//   "clock", "clkwca"           → clock
-//   "333mr", "mirror", "mirrorblocks" → 333mr
-//   "r3", "234", "23rl", "234relay" → r3
-//   "r4", "2345", "2345relay"   → r4
-//   "r5", "23456"               → r5
-//   "pll", "pllt"               → pll
-//   "oll", "ollt"               → oll
-//   "coll", "collt"             → coll
-//   "cmll"                      → cmll
-//   "zbll", "zbllt"             → zbll
-//   "eg1"                       → eg1
-//   "eg2"                       → eg2
-//   "cross"                     → cross
-//   "f2l"                       → f2l
-//   "ll"                        → ll
-//   "magic"                     → magic
-//   "mmagic"                    → mmagic
-
-const CSTIMER_EVENT_MAP: Record<string, EventId> = {
-  // NxN
-  '222': '222', '2': '222', '22': '222',
-  '333': '333', '3': '333', '33': '333',
-  '444': '444', '4': '444', '44': '444',
-  '555': '555', '5': '555', '55': '555',
-  '666': '666', '6': '666', '66': '666',
-  '777': '777', '7': '777', '77': '777',
-  // 3x3 variants
-  '333oh': '333oh', '3oh': '333oh', 'oh': '333oh',
-  '333fm': '333fm', '3fm': '333fm', 'fm': '333fm', 'fmc': '333fm',
-  '333bld': '333bld', '3bld': '333bld', 'bld': '333bld', '333ble': '333bld',
-  '333mbld': '333mbld', '3mbld': '333mbld', 'mbld': '333mbld', 'mbo': '333mbld',
-  '333ni': '333ni', '3ni': '333ni', 'ni': '333ni',
-  '333mr': '333mr', 'mirror': '333mr', 'mirrorblocks': '333mr', 'mirblocks': '333mr',
-  // Big BLD
-  '444bld': '444bld', '4bld': '444bld', '4ni': '444bld',
-  '555bld': '555bld', '5bld': '555bld', '5ni': '555bld',
-  '666bld': '666bld', '6bld': '666bld',
-  '777bld': '777bld', '7bld': '777bld',
-  // Other puzzles
-  'pyram': 'pyra', 'pyra': 'pyra', 'pyraminx': 'pyra',
-  'skewb': 'skewb', 'skbso': 'skewb',
-  'sq1': 'sq1', 'sqr1': 'sq1', 'square1': 'sq1', 'sq1h': 'sq1', 'sq1a': 'sq1',
-  'mega': 'mega', 'megamx': 'mega', 'megaminx': 'mega', 'minx2g': 'mega', 'mgmp': 'mega',
-  'clock': 'clock', 'clkwca': 'clock',
-  // Relays
-  'r3': 'r3', '234': 'r3', '23rl': 'r3', '234relay': 'r3', 'relayw': 'r3',
-  'r4': 'r4', '2345': 'r4', '2345relay': 'r4',
-  'r5': 'r5', '23456': 'r5', '23456relay': 'r5',
-  // CFOP steps
-  'cross': 'cross', 'crs': 'cross',
-  'f2l': 'f2l', 'edges': 'f2l',
-  'll': 'll',
-  // LL training
-  'pll': 'pll', 'pllt': 'pll',
-  'oll': 'oll', 'ollt': 'oll',
-  'coll': 'coll', 'collt': 'coll',
-  'cmll': 'cmll',
-  'zbll': 'zbll', 'zbllt': 'zbll',
-  'eg1': 'eg1',
-  'eg2': 'eg2',
-  // Misc
-  'magic': 'magic',
-  'mmagic': 'mmagic',
-};
-
-/** Normalize a cstimer event-type string for lookup. */
-function normalizeCstimerEvent(raw: unknown): EventId {
-  if (typeof raw !== 'string') return '333';
-  const k = raw.toLowerCase().trim().replace(/[\s_-]/g, '');
-  if (k in CSTIMER_EVENT_MAP) return CSTIMER_EVENT_MAP[k];
-  // Strip leading '3x3' / '4x4' style 'x'
-  const noX = k.replace(/x/g, '');
-  if (noX in CSTIMER_EVENT_MAP) return CSTIMER_EVENT_MAP[noX];
-  return '333';
-}
-
-/* ------------------------------------------------------------------ */
-/* Import — cstimer JSON                                               */
-/* ------------------------------------------------------------------ */
-
-interface CstimerSessionMeta {
-  name?: string;
-  opt?: { scrType?: string };
-  rank?: number;
-  scrType?: string; // older schemas
-}
+import type { Solve } from '../types';
+import { parseCstimerExport } from './import_cstimer';
 
 /**
- * Parse a cstimer "Local backup → Export" JSON string. Returns solves grouped
- * by our EventId, or `null` if the input doesn't look like cstimer JSON
- * (no `sessionN` keys present, or top-level parse fails).
- *
- * Never throws — malformed inner structures are skipped.
+ * Flatten the canonical session parser into the legacy per-event API.
+ * Keep null for an unrecognized envelope and {} for recognized empty/malformed
+ * sessions; event aliases, metadata, penalties and solve parsing remain shared.
  */
 export function importCstimerJson(text: string): Record<string, Solve[]> | null {
-  let outer: Record<string, unknown>;
+  let outer: unknown;
   try {
-    outer = JSON.parse(text) as Record<string, unknown>;
+    outer = JSON.parse(text);
   } catch {
     return null;
   }
-  if (!outer || typeof outer !== 'object') return null;
-
-  // Parse session metadata table.
-  let sessionMeta: Record<string, CstimerSessionMeta> = {};
-  const props = outer['properties'];
-  if (props && typeof props === 'object') {
-    const sd = (props as Record<string, unknown>)['sessionData'];
-    if (typeof sd === 'string') {
-      try {
-        const parsed = JSON.parse(sd) as Record<string, CstimerSessionMeta>;
-        if (parsed && typeof parsed === 'object') sessionMeta = parsed;
-      } catch {
-        /* tolerate */
-      }
-    } else if (sd && typeof sd === 'object') {
-      sessionMeta = sd as Record<string, CstimerSessionMeta>;
-    }
-  }
+  if (!outer || typeof outer !== 'object'
+    || !Object.keys(outer).some((key) => /^session\d+$/.test(key))) return null;
 
   const byEvent: Record<string, Solve[]> = {};
-  let foundAnySession = false;
-
-  for (const key of Object.keys(outer)) {
-    const m = /^session(\d+)$/.exec(key);
-    if (!m) continue;
-    foundAnySession = true;
-    const sid = m[1];
-    const raw = outer[key];
-
-    // Each sessionN value is a JSON-encoded string (sometimes already array).
-    let entries: unknown[] = [];
-    try {
-      if (typeof raw === 'string') {
-        entries = JSON.parse(raw) as unknown[];
-      } else if (Array.isArray(raw)) {
-        entries = raw as unknown[];
-      }
-    } catch {
-      continue;
-    }
-    if (!Array.isArray(entries)) continue;
-
-    const meta = sessionMeta[sid];
-    const scrType = meta?.opt?.scrType ?? meta?.scrType;
-    const eventId = normalizeCstimerEvent(scrType);
-
-    for (const entry of entries) {
-      if (!Array.isArray(entry) || entry.length < 4) continue;
-      const time = entry[0];
-      const scramble = entry[1];
-      const comment = entry[2];
-      const dateSec = entry[3];
-
-      if (!Array.isArray(time) || time.length < 2) continue;
-      // [penalty, totalMs, ...phaseSplits] — penalty first, time in ms. See the
-      // long note in import_cstimer.ts; verified against upstream csTimer
-      // (lib/tdconverter.js:112-126 writes it, stats/stats.js:1288 reads
-      // time[0] + time[1] as the final result).
-      const pen = Number(time[0]);
-      const totalMs = Number(time[1]);
-      if (!Number.isFinite(pen) || !Number.isFinite(totalMs)) continue;
-
-      let penalty: Solve['penalty'];
-      if (pen === -1) penalty = 'DNF';
-      else if (pen === 2000) penalty = '+2';
-      else penalty = 'ok';
-      // csTimer has no DNS code — we export one as a DNF whose comment starts
-      // with "DNS". Sniff it back off here (same helper the per-session parser
-      // uses, so the two importers can never drift).
-      const sniffed = applyDnsSniff(penalty, comment);
-      const timeMs = Math.max(0, totalMs);
-
-      const ts = Number(dateSec);
-      const solve: Solve = {
-        id: newId(),
-        timeMs,
-        penalty: sniffed.penalty,
-        scramble: typeof scramble === 'string' ? scramble : '',
-        event: eventId,
-        ts: Number.isFinite(ts) ? ts * 1000 : Date.now(),
-        comment: sniffed.comment,
-      };
-
-      if (!byEvent[eventId]) byEvent[eventId] = [];
-      byEvent[eventId].push(solve);
-    }
+  for (const { event, solves } of parseCstimerExport(text)) {
+    if (solves.length === 0) continue;
+    const bucket = byEvent[event] ??= [];
+    // Import large histories without spreading them into function arguments.
+    for (const solve of solves) bucket.push(solve);
   }
-
-  if (!foundAnySession) return null;
-
-  // Sort each event's solves chronologically.
-  for (const k of Object.keys(byEvent)) {
-    byEvent[k].sort((a, b) => a.ts - b.ts);
-  }
+  for (const solves of Object.values(byEvent)) solves.sort((a, b) => a.ts - b.ts);
   return byEvent;
 }
 

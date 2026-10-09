@@ -19,6 +19,7 @@ import { TNOODLE_WCA_EVENTS, TWIZZLE_NONWCA_EVENTS, TWIZZLE_NONWCA_APPEND, tnood
 import { activeEventOf } from './_active-view';
 import { CSTIMER_NONWCA_APPEND, CSTIMER_EVENT_IDS, CSTIMER_EVENTS, cstimerScramble, isCstimerEvent } from '@/lib/cstimer-scramble';
 import { SHAPE_MOD_APPEND, SHAPE_MOD_EVENT_IDS, SHAPE_MOD_EVENTS, isShapeModEvent, shapeModSourceEvent } from '@/lib/shape-mod-scramble';
+import { NATIVE_SCRAMBLE_APPEND, NATIVE_SCRAMBLE_EVENT_IDS, NATIVE_SCRAMBLE_EVENTS, isNativeScrambleEvent, nativeScramble, nativeScramblePracticeHint } from '@/lib/native-scramble';
 import type { RoundSheetInput } from './_tnoodle-pdf';
 import ProgressButton from './ProgressButton';
 import CopyAllScramblesButton from './CopyAllScramblesButton';
@@ -28,11 +29,12 @@ import { displaySq1ForEvent } from '@cuberoot/shared/sq1-notation';
 
 const GENERATOR_TAG = 'TNoodle-WCA-1.2.3-port';
 
-// 配置菜单的完整项目顺序:WCA + twizzle 非 WCA + cstimer + shape-mod。
-const TNOODLE_EVENT_IDS = [...TNOODLE_WCA_EVENTS, ...TWIZZLE_NONWCA_EVENTS, ...CSTIMER_EVENT_IDS, ...SHAPE_MOD_EVENT_IDS];
-const APPEND_EVENTS = [...TWIZZLE_NONWCA_APPEND, ...CSTIMER_NONWCA_APPEND, ...SHAPE_MOD_APPEND];
+// 配置菜单的完整项目顺序:WCA + twizzle 非 WCA + cstimer + shape-mod + native。
+const TNOODLE_EVENT_IDS = [...TNOODLE_WCA_EVENTS, ...TWIZZLE_NONWCA_EVENTS, ...CSTIMER_EVENT_IDS, ...SHAPE_MOD_EVENT_IDS, ...NATIVE_SCRAMBLE_EVENT_IDS];
+const APPEND_EVENTS = [...TWIZZLE_NONWCA_APPEND, ...CSTIMER_NONWCA_APPEND, ...SHAPE_MOD_APPEND, ...NATIVE_SCRAMBLE_APPEND];
 const CSTIMER_EVENT_ORDER: ReadonlyArray<string> = CSTIMER_EVENTS.map((e) => e.id);
 const SHAPE_MOD_EVENT_ORDER: ReadonlyArray<string> = SHAPE_MOD_EVENTS.map((e) => e.id);
+const NATIVE_SCRAMBLE_EVENT_ORDER: ReadonlyArray<string> = NATIVE_SCRAMBLE_EVENTS.map((e) => e.id);
 const COUNT_PRESETS = [1, 5, 12, 25, 50, 100, 200, 1000];
 const COUNT_MAX = 1000;
 
@@ -115,12 +117,14 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
       ...TWIZZLE_NONWCA_EVENTS.filter((id) => events.has(id)),
       ...CSTIMER_EVENT_ORDER.filter((id) => events.has(id)),
       ...SHAPE_MOD_EVENT_ORDER.filter((id) => events.has(id)),
+      ...NATIVE_SCRAMBLE_EVENT_ORDER.filter((id) => events.has(id)),
       ...customNxN,
     ],
     [events, customNxN],
   );
   const eventsKey = eventsOrdered.join(',');
   const activeView = activeEventOf(viewedEvent, eventsOrdered);
+  const practiceHint = nativeScramblePracticeHint(activeView);
   const viewPickerGroups = useMemo(
     () => scrambleEventPickerGroups(eventsOrdered, APPEND_EVENTS, isZh),
     [eventsOrdered, isZh],
@@ -218,11 +222,13 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
         const t0 = performance.now();
         if (!(ev in evWallStart) || t0 < evWallStart[ev]) evWallStart[ev] = t0;
         promises.push(
-          (isCstimerEvent(ev) && ev !== 'redi_cube'
-            ? cstimerScramble(ev)
-            : isShapeModEvent(ev)
-              ? tnoodleRandomScramble(shapeModSourceEvent(ev)!)
-              : tnoodleRandomScramble(ev)).then((s) => {
+          (isNativeScrambleEvent(ev)
+            ? nativeScramble(ev)
+            : isCstimerEvent(ev) && ev !== 'redi_cube'
+              ? cstimerScramble(ev)
+              : isShapeModEvent(ev)
+                ? tnoodleRandomScramble(shapeModSourceEvent(ev)!)
+                : tnoodleRandomScramble(ev)).then((s) => {
             const t1 = performance.now();
             evWallEnd[ev] = !(ev in evWallEnd) || t1 > evWallEnd[ev] ? t1 : evWallEnd[ev];
             evDurations[ev].push(t1 - t0);
@@ -326,7 +332,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
         : `${sheetInputs.length}-events`;
       const blob = await generateTnoodlePdf(sheetInputs, {
         competitionTitle: `Scrambles for ${today}`,
-        generatorTag: GENERATOR_TAG,
+        generatorTag: sheetInputs.some(({ event }) => isNativeScrambleEvent(event)) ? 'CubeRoot' : GENERATOR_TAG,
         isZh,
         showPreview,
         onProgress: (done, total) => setPdfProgress({ done, total }),
@@ -526,6 +532,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
       )}
 
       {/* 当前 activeView 一个 sheet — gen 模式显示生成结果,text 模式显示已粘贴打乱的预览 */}
+      {practiceHint && <p>{t(practiceHint.zh, practiceHint.en)}</p>}
       {totalScrambles > 0 && activeView && (
         <div className="gen-tn-sheets">
           {eventsOrdered.filter((ev) => ev === activeView).map((ev) => {

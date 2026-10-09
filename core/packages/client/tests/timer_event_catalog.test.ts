@@ -34,7 +34,7 @@ const EXPECTED_WCA: EventId[] = [
 const EXPECTED_OTHER: EventId[] = [
   '333ni', '333mr', '666bld', '777bld', 'r3', 'r4', 'r5',
   'cross', 'f2l', 'll', 'oll', 'pll', 'coll', 'cmll', 'zbll', 'cll', 'ell', 'eocp', '2gll', 'ollcp', 'zzll', 'zbls', 'lse', 'l10p', 'eg1', 'eg2',
-  'custom', 'fto', 'kilominx', 'gear', 'ivy', 'redi', 'mpyram',
+  'custom', 'fto', 'kilominx', 'gear', 'ivy', 'redi', 'mpyram', 'pyraminx_duo',
 ];
 
 const EXPECTED_REAL_WCA_EVENTS = {
@@ -72,14 +72,14 @@ describe('shared timer event picker catalog', () => {
       expect(timerPuzzleSelection(id)).toEqual({ puzzle: id, scrambleType: null });
     }
   });
-  it('is a complete, duplicate-free 52-event partition in the website order', () => {
+  it('is a complete, duplicate-free 53-event partition in the website order', () => {
     expect(TIMER_EVENT_PICKER_GROUPS.map((group) => group.id)).toEqual(['wca', 'other']);
     expect(TIMER_EVENT_PICKER_GROUPS[0].items.map((item) => item.id)).toEqual(EXPECTED_WCA);
     expect(TIMER_EVENT_PICKER_GROUPS[1].items.map((item) => item.id)).toEqual(EXPECTED_OTHER);
 
     const pickerIds = TIMER_EVENT_PICKER_ITEMS.map((item) => item.id);
     const eventIds = EVENTS.map((event) => event.id);
-    expect(pickerIds).toHaveLength(52);
+    expect(pickerIds).toHaveLength(53);
     expect(new Set(pickerIds).size).toBe(pickerIds.length);
     expect(new Set(pickerIds)).toEqual(new Set(eventIds));
   });
@@ -133,10 +133,14 @@ describe('shared timer event picker catalog', () => {
     }
   });
 
-  it('uses the dedicated icons for gear and mirror blocks', () => {
+  it('uses dedicated icons where available and an explicit Duo text badge', () => {
     expect(cstimerEvent('gear')?.iconClass).toBe('unofficial-gear');
     expect(timerEventPickerItem('333mr').iconClass).toBe('unofficial-333_mirror_blocks');
     expect(timerEventPickerItem('333mr').textLabel).toBeUndefined();
+    expect(timerEventPickerItem('pyraminx_duo')).toMatchObject({
+      nameEn: 'Pyraminx Duo', nameZh: '二重奏魔方', textLabel: 'Duo',
+    });
+    expect(timerEventPickerItem('pyraminx_duo').iconClass).toBeUndefined();
   });
 
   it('publishes preview and smart-cube capabilities without a Mobile-only map', () => {

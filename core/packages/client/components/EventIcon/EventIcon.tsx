@@ -13,6 +13,7 @@ const UNOFFICIAL_ICON_CLASS: Record<string, string> = Object.fromEntries(
   [
     ...TWIZZLE_NONWCA_APPEND,
     { id: 'gear', iconClass: 'unofficial-gear' },
+    { id: 'pyraminx_duo', iconClass: 'unofficial-pyraminx_duo' },
     { id: 'mirror', iconClass: 'unofficial-333_mirror_blocks' },
     { id: 'mirror2', iconClass: 'unofficial-222_mirror_blocks' },
     { id: 'mirror_333', iconClass: 'unofficial-333_mirror_blocks' },

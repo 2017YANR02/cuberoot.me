@@ -12,7 +12,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { exportTimerCstimerJson } from '@cuberoot/shared/timer';
+import { exportTimerCstimerJson, timerEventPickerItem, timerScrambleCapability } from '@cuberoot/shared/timer';
 import {
   EVENTS,
   BATTLE_EVENT_IDS,
@@ -108,12 +108,17 @@ describe('id spelling bridge', () => {
 });
 
 describe('non-WCA puzzles', () => {
-  it('every EVENTS entry in the nonwca group has a csTimer scrambler + icon', () => {
+  it('every EVENTS entry in the nonwca group has a generator and picker presentation', () => {
     const nonWca = EVENTS.filter((e) => e.group === 'nonwca');
     expect(nonWca.length).toBeGreaterThan(0);
     for (const e of nonWca) {
-      expect(cstimerKeyForEvent(e.id), `${e.id} has no csTimer scrambler key`).toBeTruthy();
-      expect(e.icon, `${e.id} has no picker icon`).toBeTruthy();
+      const capability = timerScrambleCapability(e.id);
+      expect(['cubing', 'shared', 'compound'], `${e.id} has no automatic generator`).toContain(capability?.kind);
+      if (isNonWcaEvent(e.id)) {
+        expect(cstimerKeyForEvent(e.id), `${e.id} has no csTimer scrambler key`).toBeTruthy();
+      }
+      const picker = timerEventPickerItem(e.id);
+      expect(picker.iconClass || picker.textLabel, `${e.id} has no picker icon or text label`).toBeTruthy();
     }
   });
 

@@ -76,7 +76,7 @@ interface TimerEventPickerLayoutItem {
  * Canonical solo-timer picker order and grouping.
  *
  * Names come from `EVENTS`; WCA icon keys come through `toWcaSpelling`; the
- * layout contains internal EventIds only. Keeping the 52 entries here means a
+ * layout contains internal EventIds only. Keeping the catalog here means a
  * Web or App picker cannot silently drift into a different product catalog.
  */
 const TIMER_EVENT_PICKER_LAYOUT = [
@@ -137,6 +137,7 @@ const TIMER_EVENT_PICKER_LAYOUT = [
   { id: 'ivy', group: 'other' },
   { id: 'redi', group: 'other' },
   { id: 'mpyram', group: 'other' },
+  { id: 'pyraminx_duo', group: 'other', textLabel: 'Duo' },
 ] as const satisfies readonly TimerEventPickerLayoutItem[];
 
 function pickerItem(entry: TimerEventPickerLayoutItem): TimerEventPickerItem {
