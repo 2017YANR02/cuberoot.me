@@ -65,6 +65,37 @@ describe('mergePersonLive', () => {
 });
 
 describe('mergePersonCompetitionResults', () => {
+  it('preserves official record tags when matching competition results have empty tags', () => {
+    const official = row('GuangzhouGrandOpen2026', '333', '2', {
+      best: 274, average: 662, attempts: [657, 654, 274, 716, 675], regional_single_record: 'NR',
+      regional_average_record: 'CR',
+    });
+    const cached = { ...official, regional_single_record: null, regional_average_record: null };
+    const [merged] = mergePersonCompetitionResults([official], [cached]);
+    expect(merged.regional_single_record).toBe('NR');
+    expect(merged.regional_average_record).toBe('CR');
+    expect(merged.attempts[2]).toBe(274);
+  });
+
+  it('does not carry record tags onto changed scores or from unofficial live rows', () => {
+    const official = row('Comp2026', '333', '2', { regional_single_record: 'NR', regional_average_record: 'CR' });
+    const changed = row('Comp2026', '333', '2', { best: 650, average: 750 });
+    const [merged] = mergePersonCompetitionResults([official], [changed]);
+    expect(merged.regional_single_record).toBeNull();
+    expect(merged.regional_average_record).toBeNull();
+    const [fromLive] = mergePersonCompetitionResults([{ ...official, live: true }], [row('Comp2026', '333', '2')]);
+    expect(fromLive.regional_single_record).toBeNull();
+    expect(fromLive.regional_average_record).toBeNull();
+  });
+
+  it('keeps explicit competition record tags ahead of person record tags', () => {
+    const official = row('Comp2026', '333', '2', { regional_single_record: 'NR', regional_average_record: 'NR' });
+    const updated = { ...official, regional_single_record: 'WR', regional_average_record: 'CR' };
+    const [merged] = mergePersonCompetitionResults([official], [updated]);
+    expect(merged.regional_single_record).toBe('WR');
+    expect(merged.regional_average_record).toBe('CR');
+  });
+
   it('extracts both Maoming 3x3 rounds for the same WCA person', () => {
     const data = {
       id: 'MaomingOpen2026',
