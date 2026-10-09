@@ -34,6 +34,7 @@ import {
 } from '../utils/video_upload.js';
 import { hasActiveMembership } from '../utils/membership.js';
 import { publicUserIdsForOwnerKeys } from '../utils/account.js';
+import { revalidateReconPages } from '../utils/recon_revalidate.js';
 
 export const reconRoutes = new Hono();
 
@@ -715,6 +716,7 @@ reconRoutes.post('/recon/save-edit', async (c) => {
     }
   }
 
+  await revalidateReconPages(solveId);
   return c.json({ ok: true });
 });
 
@@ -723,6 +725,7 @@ reconRoutes.delete('/recon/edit/:id', async (c) => {
   checkRateLimit(getIp(c));
   await requireAdmin(c);
   await query('DELETE FROM edits WHERE solve_id = ?', [c.req.param('id')]);
+  await revalidateReconPages(c.req.param('id'));
   return c.json({ ok: true });
 });
 
@@ -1167,6 +1170,7 @@ reconRoutes.on('HEAD', '/recon/video/:id', (c) => serveReconVideo(c, true));
 
 // GET /v1/recon/:id — 获取单条复盘
 reconRoutes.get('/recon/:id', async (c) => {
+  c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   const id = c.req.param('id');
 
   const rows = await query('SELECT * FROM recons WHERE id = ?', [id]);
@@ -1254,6 +1258,7 @@ reconRoutes.post('/recon', async (c) => {
   const { sql, values } = buildInsert('recons', row);
   const inserted = await query<{ id: number }>(sql + ' RETURNING id', values);
   body.id = Number(inserted[0].id);
+  await revalidateReconPages(body.id as number);
   return c.json(body);
 });
 
@@ -1323,6 +1328,7 @@ reconRoutes.put('/recon/:id', async (c) => {
 
   const { sql, values } = buildUpdate('recons', row, 'id', id);
   await query(sql, values);
+  await revalidateReconPages(id);
   return c.json({ ok: true });
 });
 
@@ -1346,6 +1352,7 @@ reconRoutes.delete('/recon/:id', async (c) => {
   }
 
   await query('DELETE FROM recons WHERE id = ?', [id]);
+  await revalidateReconPages(id);
   return c.json({ ok: true });
 });
 
@@ -1384,6 +1391,7 @@ async function loadAlternatives(id: string): Promise<AlternativeEntry[] | null> 
 
 async function saveAlternatives(id: string, alts: AlternativeEntry[]): Promise<void> {
   await query('UPDATE recons SET alternatives = ? WHERE id = ?', [JSON.stringify(alts), id]);
+  await revalidateReconPages(id);
 }
 
 // POST /v1/recon/:id/alternatives — 追加一条另解
