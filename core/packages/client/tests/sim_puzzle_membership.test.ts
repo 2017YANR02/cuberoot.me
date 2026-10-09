@@ -23,14 +23,14 @@ const LEGACY_SIM_PUZZLES = [
 ] as const;
 
 describe('sim puzzle registry membership', () => {
-  it('keeps all 16 legacy puzzles in order and adds SQ2, SQ4, Duo, Magic, Master Magic, Ghost and Sphere', () => {
+  it('keeps all 16 legacy puzzles in order and adds SQ2, SQ4, Duo, Kilominx, Magic, Master Magic, Ghost and Sphere', () => {
     const actual = SIM_FIXED_PUZZLE_OPTIONS.map((option) => option.value);
     const legacy = new Set<string>(LEGACY_SIM_PUZZLES);
 
     expect(new Set(actual).size).toBe(actual.length);
     expect(actual.filter((puzzle) => legacy.has(puzzle))).toEqual(LEGACY_SIM_PUZZLES);
-    expect(actual.filter((puzzle) => !legacy.has(puzzle))).toEqual(['sq2', 'sq4', 'pyraminx_duo', 'magic', 'mmagic', 'ghost', 'sphere']);
-    expect(actual).toHaveLength(LEGACY_SIM_PUZZLES.length + 7);
+    expect(actual.filter((puzzle) => !legacy.has(puzzle))).toEqual(['sq2', 'sq4', 'pyraminx_duo', 'kilominx', 'magic', 'mmagic', 'ghost', 'sphere']);
+    expect(actual).toHaveLength(LEGACY_SIM_PUZZLES.length + 8);
   });
 
   it.each(['sq2', 'sq4', 'pyraminx_duo', 'ghost', 'sphere'] as const)('%s uses the active simulator engine', (puzzle) => {
@@ -47,7 +47,7 @@ describe('sim puzzle registry membership', () => {
     });
   });
 
-  it.each(['sq2', 'sq4', 'pyraminx_duo', 'ghost'] as const)('%s has no reconstruction event', (puzzle) => {
+  it.each(['sq2', 'sq4', 'pyraminx_duo', 'kilominx', 'ghost'] as const)('%s has no reconstruction event', (puzzle) => {
     expect(reconEventForSim(puzzle)).toBeNull();
   });
 });
