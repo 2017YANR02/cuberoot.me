@@ -178,7 +178,7 @@ The revision has been served through the local Next.js route in Chinese and Engl
 
 ## Homepage entry
 
-The current homepage has a search entry for this route, generated from `PAGE_META`; it has no dedicated fixed homepage card. On the Chinese homepage, type “魔方发展史” or “型号图鉴” and click “三阶魔方发展史与型号图鉴” under the “页面” results. Enter submits an AI question in the current homepage search, so opening the route requires clicking its page result.
+The homepage has a permanent “三阶魔方发展史” / “3×3 Cube History” card in the Learning section, alongside Wiki. Its bilingual name and destination come from the shared site directory, so the homepage, search and Mini Program use the same entry. The card is public by default and follows the existing saved card-order settings. On the Chinese homepage, scroll to “学习” and click “三阶魔方发展史”. Homepage search also finds the card through its name and the page metadata aliases; Enter submits an AI question, so opening a search result requires clicking it.
 
 ## Publication
 
