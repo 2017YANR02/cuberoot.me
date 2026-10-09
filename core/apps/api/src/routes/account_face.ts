@@ -37,9 +37,12 @@ function fields(input: Record<string, unknown>) {
   return { realName, idCard, metaInfo };
 }
 
-async function status(uid: number) {
-  const [row] = await query<Attempt>("SELECT status, verified_at, id_last4, expires_at FROM account_face_attempts WHERE user_id = ? ORDER BY created_at DESC LIMIT 1", [uid]);
-  return { enabled: faceVerificationEnabled(), consentVersion: CONSENT_VERSION,
+async function status(uid: number, sessionHash: string) {
+  const [row] = await query<Attempt>("SELECT id, session_hash, status, verified_at, id_last4, expires_at FROM account_face_attempts WHERE user_id = ? ORDER BY created_at DESC LIMIT 1", [uid]);
+  const active = Boolean(row && ["pending", "initializing"].includes(row.status) && new Date(row.expires_at).getTime() > Date.now());
+  return { attemptId: active ? row.id : null, expiresAt: active ? row.expires_at : null,
+    canCheck: active && row.status === "pending" && row.session_hash === sessionHash,
+    sessionChanged: active && row.session_hash !== sessionHash, enabled: faceVerificationEnabled(), consentVersion: CONSENT_VERSION,
     status: row?.status === "pending" || row?.status === "initializing"
       ? (new Date(row.expires_at).getTime() > Date.now() ? row.status : "expired") : row?.status ?? "none",
     verifiedAt: row?.verified_at ?? null, idLast4: row?.status === "passed" ? row.id_last4 : null };
@@ -58,8 +61,8 @@ accountFaceRoutes.onError((error, c) => {
   return c.json({ error: error instanceof FaceVerificationError ? error.code : "FACE_UNAVAILABLE", retryable: code >= 500 }, code as 400 | 401 | 403 | 409 | 429 | 503);
 });
 accountFaceRoutes.get("/auth/face", async c => {
-  const { uid } = await actor(c);
-  return c.json(await status(uid));
+  const { uid, sessionHash } = await actor(c);
+  return c.json(await status(uid, sessionHash));
 });
 accountFaceRoutes.post("/auth/face", async c => {
   const { uid, sessionHash } = await actor(c);
@@ -103,22 +106,43 @@ accountFaceRoutes.post("/auth/face", async c => {
       throw new FaceVerificationError("Provider unavailable.", 503);
     }
   }
+  if (input.action === "cancel") {
+    if (typeof input.attemptId !== "string" || !/^[a-f0-9]{32}$/u.test(input.attemptId)) throw new FaceVerificationError("Invalid attempt.");
+    // Same-account cancellation is safe across devices: it cannot verify an identity or reset quota.
+    // The explicit attempt ID prevents a stale page from cancelling a newer attempt.
+    await withTransaction(async run => {
+      await run("SELECT pg_advisory_xact_lock(82341926)");
+      const [user] = await run("SELECT id FROM app_users WHERE id = ? AND merged_into_user_id IS NULL FOR UPDATE", [uid]);
+      if (!user) throw new FaceVerificationError("Account unavailable.", 403);
+      await run("UPDATE account_face_attempts SET status = 'failed' WHERE id = ? AND user_id = ? AND status IN ('initializing','pending')", [input.attemptId, uid]);
+    });
+    return c.json(await status(uid, sessionHash));
+  }
   if (input.action !== "check") throw new FaceVerificationError("Invalid action.");
-  const current = await status(uid);
-  if (current.status === "passed") return c.json(current);
+  const current = await status(uid, sessionHash);
+  if (!["pending", "initializing"].includes(current.status)) return c.json(current);
+  if (current.sessionChanged) throw new FaceVerificationError("Use the originating session or end the attempt.", 409, "FACE_SESSION_CHANGED");
+  if (current.status === "initializing") throw new FaceVerificationError("Attempt is initializing.", 429, "FACE_PENDING");
   const [attempt] = await query<Attempt>(`UPDATE account_face_attempts SET checked_at = NOW()
     WHERE id = (SELECT id FROM account_face_attempts WHERE user_id = ? ORDER BY created_at DESC LIMIT 1)
     AND session_hash = ? AND status = 'pending' AND expires_at > NOW()
     AND (checked_at IS NULL OR checked_at < NOW() - INTERVAL '5 seconds') RETURNING *`, [uid, sessionHash]);
-  if (!attempt?.certify_id) throw new FaceVerificationError("No active attempt, session changed or request too soon.", 409);
+  if (!attempt?.certify_id) {
+    const latest = await status(uid, sessionHash);
+    if (!["pending", "initializing"].includes(latest.status)) return c.json(latest);
+    if (latest.sessionChanged) throw new FaceVerificationError("Session changed.", 409, "FACE_SESSION_CHANGED");
+    throw new FaceVerificationError("Check again after five seconds.", 429, "FACE_CHECK_TOO_SOON");
+  }
   const result = await aliyunFaceProvider.query(attempt.scene_id, attempt.certify_id);
-  // A non-passed query may precede completion; leave it retryable until the attempt expires.
-  if (result.passed) await withTransaction(async run => {
+  // Only explicit provider T is success. Unfinished RPC results remain pending; F is terminal.
+  if (result.status === "failed") await query(`UPDATE account_face_attempts SET status = 'failed'
+    WHERE id = ? AND user_id = ? AND session_hash = ? AND status = 'pending' AND expires_at > NOW()`, [attempt.id, uid, sessionHash]);
+  if (result.status === "passed") await withTransaction(async run => {
     await run("SELECT pg_advisory_xact_lock(82341926)");
     const [user] = await run("SELECT id FROM app_users WHERE id = ? AND merged_into_user_id IS NULL FOR UPDATE", [uid]);
     if (!user) throw new FaceVerificationError("Account unavailable.", 403);
     await run(`UPDATE account_face_attempts SET status = 'passed', verified_at = NOW()
       WHERE id = ? AND user_id = ? AND session_hash = ? AND status = 'pending' AND expires_at > NOW()`, [attempt.id, uid, sessionHash]);
   });
-  return c.json(await status(uid));
+  return c.json(await status(uid, sessionHash));
 });

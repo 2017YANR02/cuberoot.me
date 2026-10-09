@@ -1,6 +1,6 @@
 import { createHmac, randomUUID } from "node:crypto";
 
-export type FaceErrorCode = "FACE_UNAVAILABLE" | "FACE_PENDING" | "FACE_RETRY_SOON" | "FACE_DAILY_LIMIT" | "FACE_SITE_LIMIT" | "FACE_PROVIDER_PERMISSION" | "FACE_PROVIDER_BALANCE";
+export type FaceErrorCode = "FACE_UNAVAILABLE" | "FACE_PENDING" | "FACE_RETRY_SOON" | "FACE_DAILY_LIMIT" | "FACE_SITE_LIMIT" | "FACE_PROVIDER_PERMISSION" | "FACE_PROVIDER_BALANCE" | "FACE_SESSION_CHANGED" | "FACE_CHECK_TOO_SOON";
 export class FaceVerificationError extends Error {
   constructor(message: string, public readonly status = 400, public readonly code: FaceErrorCode = "FACE_UNAVAILABLE") { super(message); }
 }
@@ -41,6 +41,7 @@ async function rpc(action: "InitFaceVerify" | "DescribeFaceVerify", parameters: 
       body: `${canonical}&Signature=${encode(signature)}`, cache: "no-store", redirect: "error", signal: AbortSignal.timeout(15_000),
     });
     const data = await response.json();
+    if (response.ok && action === "DescribeFaceVerify" && ["403", "424"].includes(String(data?.Code))) return null;
     if (!response.ok || String(data.Code) !== "200" || !data.ResultObject) {
       // Only bounded diagnostic codes/UUIDs; never log provider messages, request bodies or results.
       const providerCode = String(data?.Code ?? "");
@@ -67,7 +68,7 @@ export const aliyunFaceProvider = {
       MetaInfo: input.metaInfo, ReturnUrl: input.returnUrl,
       VideoEvidence: "false", ProcedurePriority: "url", NeedMultiFaceCheck: "Y", RarelyCharacters: "N",
     });
-    if (typeof data.CertifyId !== "string" || !/^[A-Za-z0-9_-]{1,128}$/u.test(data.CertifyId)
+    if (!data || typeof data.CertifyId !== "string" || !/^[A-Za-z0-9_-]{1,128}$/u.test(data.CertifyId)
       || typeof data.CertifyUrl !== "string") throw new FaceVerificationError("认证服务未返回有效链接", 503);
     const url = new URL(data.CertifyUrl);
     if (url.protocol !== "https:" || url.username || url.password) throw new FaceVerificationError("认证链接无效", 503);
@@ -75,8 +76,9 @@ export const aliyunFaceProvider = {
   },
   async query(sceneId: string, certifyId: string) {
     const data = await rpc("DescribeFaceVerify", { SceneId: sceneId, CertifyId: certifyId });
+    if (data === null) return { status: "pending" as const };
     if (data.Passed !== "T" && data.Passed !== "F") throw new FaceVerificationError("认证结果暂时不可用", 503);
-    return { passed: data.Passed === "T" };
+    return { status: data.Passed === "T" ? "passed" as const : "failed" as const };
   },
 };
 export type FaceProvider = typeof aliyunFaceProvider;
