@@ -4,7 +4,7 @@
  * Top-level scramble preview dispatcher.
  *
  * All puzzles route through TimerScramblePreview. It uses cubing.js for the
- * supported 2D/3D puzzles and the canonical SVG renderers for SQ1/Megaminx.
+ * supported 2D/3D puzzles and the canonical SVG renderers for SQ1/Megaminx/Duo/Magic.
  * NxN-class events (333oh / 333bld / 333fm / 444bld / 555bld / etc.) reuse
  * their base size's scrambler. Relays show only the 3x3 sub-scramble.
  *
@@ -13,13 +13,14 @@
  *   fto / redi                                           → shared preview
  *   r3 / r4 / r5                                         → 3x3 of first sub
  *   custom                                               → best-effort 3x3
- *   magic / mmagic + the other non-WCA ids               → blank "no preview"
+ *   magic / mmagic                                      → practice start pattern
+ *   other unsupported ids                               → blank "no preview"
  */
 
 import { timerEventNxnSize, type EventId } from '@cuberoot/shared/timer';
 import type { JSX } from 'react';
 
-import { TimerScramblePreview } from './TimerScramblePreview';
+import { TimerScramblePreview, timerScramblePreviewAspect } from './TimerScramblePreview';
 
 export interface TimerCubePreviewProps {
   event: EventId;
@@ -99,6 +100,26 @@ function baseNxnEvent(event: EventId): EventId | null {
   }
 }
 
+function previewEvent(event: EventId): EventId | null {
+  const nxn = baseNxnEvent(event);
+  if (nxn !== null) return nxn;
+  switch (event) {
+    case 'pyra': case 'skewb': case 'sq1': case 'mega': case 'clock':
+    case 'pyraminx_duo': case 'magic': case 'mmagic': case 'fto': case 'redi':
+      return event;
+    case 'r3': case 'r4': case 'r5': case 'custom':
+      return '333';
+    default:
+      return null;
+  }
+}
+
+/** Same event normalization and state-dependent aspect as the actual preview. */
+export function timerCubePreviewAspect(event: EventId, scramble?: string | null): number {
+  const target = previewEvent(event);
+  return target === null ? 8 / 5 : timerScramblePreviewAspect(target, scramble ?? '') ?? 8 / 5;
+}
+
 export function TimerCubePreview(props: TimerCubePreviewProps): JSX.Element {
   const { ariaLabel, event, fill, scramble, visualization, height } = props;
   const size = props.size;
@@ -108,34 +129,12 @@ export function TimerCubePreview(props: TimerCubePreviewProps): JSX.Element {
   // (a CSS-string height can't drive the svg, so fall back to the size prop).
   const noPreviewSize = typeof height === 'number' ? Math.round(height / 5) : size;
 
-  // NxN family (incl. BLD / OH / FM / MR / NI variants) → shared preview
-  // with the matching base nxn id.
-  const baseNxn = baseNxnEvent(event);
-  if (baseNxn !== null) {
-    return <TimerScramblePreview ariaLabel={ariaLabel} event={baseNxn} fill={fill} scramble={scramble} size={size} height={height} className={className} visualization={v} />;
+  const target = previewEvent(event);
+  if (target === null) {
+    return <NoPreview ariaLabel={ariaLabel} fill={fill} size={noPreviewSize} className={className} />;
   }
-
-  switch (event) {
-    case 'pyra':
-    case 'skewb':
-    case 'sq1':
-    case 'mega':
-    case 'clock':
-    // Redi now uses cubing.js notation; the shared preview also normalizes
-    // saved MoYu R/L/x scrambles before drawing them.
-    case 'fto':
-    case 'redi':
-      return <TimerScramblePreview ariaLabel={ariaLabel} event={event} fill={fill} scramble={scramble} size={size} height={height} className={className} visualization={v} />;
-    case 'r3':
-    case 'r4':
-    case 'r5':
-      return <TimerScramblePreview ariaLabel={ariaLabel} event="333" fill={fill} scramble={firstNxnScramble(scramble)} size={size} height={height} className={className} visualization={v} />;
-    case 'custom':
-      return <TimerScramblePreview ariaLabel={ariaLabel} event="333" fill={fill} scramble={scramble} size={size} height={height} className={className} visualization={v} />;
-    case 'magic':
-    case 'mmagic':
-      return <NoPreview ariaLabel={ariaLabel} fill={fill} size={noPreviewSize} className={className} />;
-    default:
-      return <NoPreview ariaLabel={ariaLabel} fill={fill} size={noPreviewSize} className={className} />;
-  }
+  const previewScramble = event === 'r3' || event === 'r4' || event === 'r5'
+    ? firstNxnScramble(scramble)
+    : scramble;
+  return <TimerScramblePreview ariaLabel={ariaLabel} event={target} fill={fill} scramble={previewScramble} size={size} height={height} className={className} visualization={v} />;
 }

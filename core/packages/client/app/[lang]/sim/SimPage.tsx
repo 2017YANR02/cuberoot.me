@@ -210,14 +210,14 @@ const SR_ANGLE_BASE: Partial<Record<PuzzleType, {
 
 /** Engine puzzle kinds that have a PG group-theory binding (kept in sync with the
  *  pgBindings registry + GroupTheoryPanel.PG_BOUND). Gates the `renderer='group'` panel. */
-const PG_BOUND_KINDS = new Set<string>(['pyraminx', 'skewb', 'dino', 'heli', 'megaminx', 'fto', 'redi', 'ivy', 'rex', 'mirror', 'mirror2']);
+const PG_BOUND_KINDS = new Set<string>(['pyraminx', 'skewb', 'dino', 'heli', 'megaminx', 'fto', 'redi', 'ivy', 'rex', 'mirror', 'mirror2', 'sphere']);
 
 /** Narrow `world.cube` to the NxN Cube type. Returns null for every non-NxN engine puzzle.
- *  正向判断(NxN = 数字阶数 或 镜面),不再用排除法枚举 —— 旧写法漏了 'pyraminx',
+ *  正向判断(NxN = 数字阶数、镜面、球形),不再用排除法枚举 —— 旧写法漏了 'pyraminx',
  *  stickering effect 对 PyraCube 取 instancedRenderer 直接崩整页(?puzzle=pyraminx 白屏)。 */
 function asNxN(world: World): Cube | null {
   const k = world.puzzleKind;
-  return (typeof k === 'number' || k === 'mirror' || k === 'mirror2') ? (world.cube as Cube) : null;
+  return (typeof k === 'number' || k === 'mirror' || k === 'mirror2' || k === 'sphere') ? (world.cube as Cube) : null;
 }
 
 /** 3x3 sticker click rules. See Vite original for the geometry derivation. */
@@ -332,11 +332,13 @@ export default function SimPage() {
     if (raw === 'heli') return 'heli';
     if (raw === 'gear') return 'gear';
     if (raw === 'pyraminx' || raw === 'skewb' || raw === 'megaminx') return raw;
+    if (raw === 'pyraminx_duo') return raw;
     if (raw === 'fto') return 'fto';
     if (raw === 'ghost') return 'ghost';
     if (raw === 'custom') return 'custom';
-    if (raw === 'mirror' || raw === 'mirror2') return raw;
+    if (raw === 'mirror' || raw === 'mirror2' || raw === 'sphere') return raw;
     if (raw === 'clock') return 'clock';
+    if (raw === 'magic' || raw === 'mmagic') return raw;
     if (isPgPuzzleId(raw)) return raw as SimPuzzle;
     const n = parseInt(raw, 10);
     if (!Number.isFinite(n) || n < NXN_ORDER_MIN || n > NXN_ORDER_MAX) return NXN_ORDER_DEFAULT;
@@ -452,7 +454,10 @@ export default function SimPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const twistyPlayerRef = useRef<any>(null);
 
-  const [order, setOrder] = useState<number>(3);
+  const [orderState, setOrder] = useState<number>(3);
+  // Pin the UI's logical order during the render that changes the URL too, before
+  // the world-sync effect runs (e.g. selecting sphere while a 2×2 is active).
+  const order = puzzleParam === 'sphere' ? 3 : orderState;
   const puzzleKind = puzzleParam;
   const [fullscreen, setFullscreen] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
@@ -481,6 +486,9 @@ export default function SimPage() {
   }, [fullscreen]);
 
   const [worldTick, setWorldTick] = useState(0);
+  // Publish only after setPuzzle + settings have completed. The URL changes before
+  // that parent effect; children must not replay the new puzzle on the old cube.
+  const [activeCube, setActiveCube] = useState<World['cube'] | null>(null);
   const [settings, setSettings] = useState<SimSettings>(() => {
     const saved = loadSettings();
     if (!query.anchor) return saved;
@@ -639,9 +647,9 @@ export default function SimPage() {
   // full puzzle before the first engine frame arrives.
   const stickeringAffectsView = query.stickering !== 'full'
     && resolveCaps(puzzleParam, query.renderer).supports.stickering;
-  const staticFallbackExact = !stickeringAffectsView
+  const staticFallbackExact = puzzleParam !== 'sphere' && (!stickeringAffectsView
     || (typeof puzzleParam === 'number'
-      && visualcubeMaskForStickering(puzzleParam, query.stickering) !== '');
+      && visualcubeMaskForStickering(puzzleParam, query.stickering) !== ''));
 
   // trans(X 光)不是单纯换张伴图,而是接管内核外观的预设:选中时内核色 / 内核不透明度
   // 由 TRANS_CORE 顶掉,3D 与伴图同吃这一份 —— 否则会出现「大魔方实心、小图半透明」。
@@ -979,7 +987,7 @@ export default function SimPage() {
     const cornerCtx: CornerGestureCtx = {
       world,
       dom: renderer.domElement,
-      settings: () => settingsRef.current,
+      settings: () => ({ ...settingsRef.current, holdPartialTurn: resolveCaps(world.puzzleKind, 'engine').supports.holdPartialTurn && settingsRef.current.holdPartialTurn }),
       pinching: () => pinching,
       emitMove: (token) => userMoveRef.current?.(token),
       orbit: orbitView,
@@ -1289,7 +1297,7 @@ export default function SimPage() {
             : world.puzzleKind === 'rex' ? world.rexHints
               : world.puzzleKind === 'heli' ? world.heliHints
                 : world.puzzleKind === 'skewb' ? world.skewbHints
-                  : world.puzzleKind === 'pyraminx' ? world.pyraHints
+                  : world.puzzleKind === 'pyraminx' || world.puzzleKind === 'pyraminx_duo' ? world.pyraHints
                     : world.puzzleKind === 'megaminx' ? world.megaHints
                       : world.puzzleKind === 'fto' ? world.ftoHints
                         : world.puzzleKind === 'ghost' ? world.ghostHints
@@ -1302,7 +1310,8 @@ export default function SimPage() {
         || (typeof world.puzzleKind === 'number'
           && settingsRef.current.pictureCube
           && countPictureFaces(settingsRef.current.pictureFaces) > 0);
-      const showLabels = settingsRef.current.faceLabels === true
+      const showLabels = resolveCaps(world.puzzleKind, 'engine').supports.faceLabels
+        && settingsRef.current.faceLabels === true
         && !world.smplxBodyOn
         && !pictureLabelsHidden;
       if (showLabels) activeHints.show(); else activeHints.hide();
@@ -1331,6 +1340,9 @@ export default function SimPage() {
         cancelAnimationFrame(raf);
         world.disposeSquareFamilyCubes();
         world.disposeGhostCube();
+        world.disposeDuoCube();
+        world.disposeMagicCubes();
+        world.disposeSphereCube();
         window.removeEventListener('resize', resize);
         ro.disconnect();
         renderer.domElement.removeEventListener('wheel', onWheel);
@@ -1374,17 +1386,20 @@ export default function SimPage() {
 
   const applyPuzzle = useCallback((kind: SimPuzzle) => {
     if (typeof kind === 'number') setOrder(kind);
-    // A Mirror Cube is an NxN under the hood — pin `order` to its logical order so the
+    // Shape variants are NxN under the hood — pin `order` to their logical order so the
     // NxN scramble/play path (which reads `order`) drives a standard 3x3 / 2x2.
-    else if (kind === 'mirror') setOrder(3);
+    else if (kind === 'mirror' || kind === 'sphere') setOrder(3);
     else if (kind === 'mirror2') setOrder(2);
     const world = worldRef.current;
     const wk = kind as PuzzleKind; // narrowed at runtime: number / sq1 / … / heli / 'skewb'
-    if (!world || world.puzzleKind === wk) return;
-    world.setPuzzle(wk);
-    wasCompleteRef.current = true;
-    ensureCubeCallback();
-    applySettings(world, renderSettingsRef.current);
+    if (!world) return;
+    if (world.puzzleKind !== wk) {
+      world.setPuzzle(wk);
+      wasCompleteRef.current = true;
+      ensureCubeCallback();
+      applySettings(world, renderSettingsRef.current);
+    }
+    setActiveCube(world.cube);
   }, [ensureCubeCallback]);
 
   // URL is the sole puzzle-state entry point. Keeping user requests separate from
@@ -1445,11 +1460,11 @@ export default function SimPage() {
     if (!cube) return;
     cube.instancedRenderer.setStickering(stickeringMaskFor(cube));
     cube.instancedRenderer.setFaceColorOverride(
-      query.stickeringRot && query.stickering !== 'full' && query.stickering !== CUSTOM_STICKERING
+      typeof puzzleParam === 'number' && query.stickeringRot && query.stickering !== 'full' && query.stickering !== CUSTOM_STICKERING
         ? orientedCubeFaceColors(query.stickeringRot, settings.faceColors)
         : null,
     );
-  }, [twisty, worldTick, stickeringMaskFor, query.stickering, query.stickeringRot, settings.faceColors]);
+  }, [twisty, worldTick, puzzleParam, stickeringMaskFor, query.stickering, query.stickeringRot, settings.faceColors]);
 
   // 自定义阶段直接使用画笔，拖拽转视角(paintMode)，避免点歪时拧动魔方。
   // 切换其他阶段后恢复正常转层。
@@ -1484,7 +1499,8 @@ export default function SimPage() {
     const world = worldRef.current;
     const canvas = rendererRef.current?.domElement;
     const cube = world && asNxN(world);
-    if (!world || !canvas || !cube || twisty || query.stickering !== CUSTOM_STICKERING) return;
+    if (!world || !canvas || !cube || twisty || typeof puzzleParam !== 'number'
+      || query.stickering !== CUSTOM_STICKERING) return;
     let lastTarget = '';
     const clear = () => {
       if (!lastTarget) return;
@@ -1712,10 +1728,10 @@ export default function SimPage() {
   }, [algParam, query.stickering, setQuery, setupParam]);
 
   useEffect(() => {
-    if (query.stickering === 'Daisy' && !setupParam.trim() && !algParam.trim()) {
+    if (typeof puzzleParam === 'number' && query.stickering === 'Daisy' && !setupParam.trim() && !algParam.trim()) {
       setQuery({ setup: DAISY_SETUP });
     }
-  }, [algParam, query.stickering, setQuery, setupParam]);
+  }, [algParam, puzzleParam, query.stickering, setQuery, setupParam]);
 
   const onAlgPick = useCallback((setup: string, alg: string) => {
     const world = worldRef.current;
@@ -1997,6 +2013,13 @@ export default function SimPage() {
         if (sig === exportedSig) return;
         exportedSig = sig;
         try {
+          // The spherical shell uses raw shader colours; the painter exporter
+          // reconstructs those colours on its real curved triangles. A flat NxN
+          // schematic or spec fallback would change the shape.
+          if (world.puzzleKind === 'sphere') {
+            setEngineSvg(exportSimSvg({ world, renderer: rendererRef.current, maxTriangles: MAX_TRIS }));
+            return;
+          }
           // 拼图带示意小面(userData.schematicPoly)→ SR 范式示意导出器:每个小面
           // 独立多边形 + 黑描边,共享棱逐比特重合;其余拼图走实模 BSP 投影。
           if (hasSchematicFacelets(world.scene)) {
@@ -2308,6 +2331,7 @@ export default function SimPage() {
           )}
           <PlayerControls
             world={worldRef.current}
+            activeCube={activeCube}
             clearFrozen={clearPartialFreeze}
             alg={algParam}
             setup={setupParam}

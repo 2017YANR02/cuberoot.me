@@ -44,6 +44,7 @@ import { TIMER_EVENT_PICKER_GROUPS, timerEventIdFromSelector, timerEventSelector
 import {
   TimerBattleSettings,
   TimerCubePreview,
+  timerCubePreviewAspect,
   TimerPenaltyActions,
   TimerPuzzlePicker,
   TimerScrambleStrip,
@@ -415,6 +416,7 @@ export function TimerArea({ playerId, rotated, hideScramble, cellClass }: { play
         digits: <div className={timeClasses} ref={timeRef}
           dangerouslySetInnerHTML={{ __html: renderTimeContent() }} />,
         scrambleSlot: !hideScramble && <ScramblePanel ids={[playerId]} part="text" />,
+        cornerAspect: timerCubePreviewAspect(battleToTimerEvent(store.puzzleIds[playerId]), store.scrambles[playerId]),
         cornerSlot: !hideScramble && store.showImage
           ? <ScramblePanel ids={[playerId]} part="preview" imgHeight="var(--timer-cube-h)" />
           : undefined

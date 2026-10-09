@@ -79,6 +79,7 @@ import {
   TimerBattleAppearanceSettings,
   TimerBattleCubeControls,
   TimerCubePreview,
+  timerCubePreviewAspect,
   TimerLocalBattlePage,
   TimerLocalBattlePlayer,
   TimerNetBattleEvent,
@@ -655,6 +656,7 @@ export function LocalBattleMode({
           }} timing={{
             ariaLabel: copy.battlePlayer(player.id + 1),
             className: "battle-player-timer",
+            cornerAspect: timerCubePreviewAspect(player.event, player.scramble),
             cornerSlot: !cell.hideScramble && !scrambleHidden && showPreview && player.scramble ? (
               <TimerCubePreview
                 ariaLabel={copy.cubeState}
@@ -1393,6 +1395,7 @@ export function NetBattleMode({
           ariaLabel: copy.timer,
           colorClass: `${colorClass} tf-${typographySettings.timerFont}`,
           fontScale: typographySettings.timerFontScale,
+          cornerAspect: timerCubePreviewAspect(event, scramble),
           cornerSlot: scramblePreviewSettings.showCubePreview && scramble ? (
             <TimerCubePreview
               ariaLabel={copy.cubeState}

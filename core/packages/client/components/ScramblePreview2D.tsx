@@ -12,6 +12,7 @@
  */
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { renderScramblePreviewSvg } from '@/components/scramble-preview-svg';
+import { magicSvgAspect } from '@cuberoot/puzzle-render-core/magic-svg';
 // mask-core, NOT puzzle-mask: this component only parses a mask string, it never
 // expands pieces — so it must not pull the derived tables (lib/puzzle-image/data)
 // into the chunk of every page that shows a scramble preview.
@@ -81,9 +82,12 @@ export function ScramblePreview2D({
   }, [fullSizeLink, customSvg]);
 
   const isPortrait = event === 'sq1';
+  const magicAspect = customSvg && (event === 'magic' || event === 'mmagic')
+    ? magicSvgAspect(event, scramble)
+    : null;
   const hostStyle: CSSProperties = {
     width: isPortrait ? size : size * 2,
-    height: isPortrait ? size * 2 : size * 1.5,
+    height: magicAspect ? size * 2 / magicAspect : isPortrait ? size * 2 : size * 1.5,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',

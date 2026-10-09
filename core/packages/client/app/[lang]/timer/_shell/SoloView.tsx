@@ -256,6 +256,7 @@ import {
   TimerScrambleSourceSelect,
   TimerStatRail,
   TimingSurface,
+  timerCubePreviewAspect,
   browserPrintTransport,
   useGestureWheel,
   type TimerPrintControllerHandle,
@@ -1830,9 +1831,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       />
     </div>
   ) : settings.showCubePreview ? (
-    <div className="shell-corner-net-img">
-      <CubePreview event={event} scramble={previewScramble} height="var(--cube-h)" visualization={settings.prefer3D ? '3D' : '2D'} />
-    </div>
+    <CubePreview event={event} scramble={previewScramble} fill visualization={settings.prefer3D ? '3D' : '2D'} />
   ) : undefined;
 
   // ── Scramble verification and Solo timing orchestration ─────────
@@ -3221,6 +3220,7 @@ scrambleSlot: <TimerScrambleStrip
               )}
             </TimerScrambleStrip>,
 cornerSlot: centerCubeSlot,
+cornerAspect: cubeConnected || cubeStartedRef.current ? undefined : timerCubePreviewAspect(event, previewScramble),
 digitsCorner: settings.rankScopes.length > 0 && rankBadgePhase && solves.length > 0 ? (
             <RankBadge eventId={event} centis={rankCentis} type="single" country={rankCountry} isZh={isZh} scopes={settings.rankScopes} wcaId={authUser?.wcaId} />
           ) : undefined,

@@ -21,6 +21,7 @@ import {
   generateIvyTimerScramble,
   solveIvy,
 } from '@cuberoot/puzzle-solvers/ivy';
+import { generatePyraminxDuoScramble } from '@cuberoot/puzzle-solvers/pyraminx-duo';
 
 const CUBING_EVENTS: Readonly<Partial<Record<EventId, TimerCubingScrambleEventId>>> = {
   '333': '333',
@@ -67,6 +68,7 @@ const SHARED_EVENTS: Readonly<Partial<Record<EventId, TimerSharedScrambleProvide
   eg2: 'trainer-case',
   gear: 'small-puzzle-random-state',
   ivy: 'small-puzzle-random-state',
+  pyraminx_duo: 'small-puzzle-random-state',
   kilominx: 'cstimer-nonwca',
   mpyram: 'cstimer-nonwca',
 };
@@ -270,6 +272,35 @@ describe('shared timer scramble runtime', () => {
       expect(optimalDistance(result.scramble)).toBeGreaterThan(0);
     },
   );
+
+  it('routes Pyraminx Duo through its shared generator without a Pyraminx or 3x3 fallback', async () => {
+    const generateCubingScramble = vi.fn(async () => 'must not run');
+    const scramble = generatePyraminxDuoScramble(() => 0.375);
+    expect(scramble).not.toBe('');
+    await expect(generateTimerScramble(
+      { event: 'pyraminx_duo' },
+      { random: () => 0.375, generateCubingScramble },
+    )).resolves.toEqual({
+      ok: true,
+      event: 'pyraminx_duo',
+      kind: 'generated',
+      provider: 'small-puzzle-random-state',
+      scramble,
+    });
+    expect(generateCubingScramble).not.toHaveBeenCalled();
+  });
+
+  it('preserves Pyraminx Duo provider errors and empty results', async () => {
+    for (const [generateSharedScramble, code] of [
+      [async () => '   ', 'empty-result'],
+      [async () => { throw new Error('Duo worker failed'); }, 'generation-failed'],
+    ] as const) {
+      await expect(generateTimerScramble(
+        { event: 'pyraminx_duo' },
+        { generateSharedScramble },
+      )).resolves.toEqual({ ok: false, event: 'pyraminx_duo', code, retryable: true });
+    }
+  });
 
   it.each(['kilominx', 'mpyram'] as const)(
     'keeps $event identity through the shared csTimer worker seam',
