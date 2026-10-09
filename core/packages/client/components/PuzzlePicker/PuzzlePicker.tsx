@@ -84,7 +84,7 @@ interface Props {
 const nameOf = (e: CstimerEvent, isZh: boolean): string => [e.en, e.zh][Number(isZh)];
 
 // Menu display only: keep catalog IDs, callbacks and puzzle data lossless.
-const menuLabel = (label: string): string => label.replaceAll('魔方', '').trim();
+const menuLabel = (label: string): string => label.replaceAll('魔方', '').replace(/(\d+)\s*[×xX]\s*(\d+)\s*[×xX]\s*(\d+)/g, '$1$2$3').trim();
 
 export default function PuzzlePicker({
   isZh = false, selectedEvent, selectedEvents, wcaEvents, availableEvents, onSelect, onToggle, linkFor,
@@ -171,7 +171,7 @@ export default function PuzzlePicker({
   const iconFor = (item: PuzzlePickerItem, trigger = false) => {
     const className = trigger ? 'pp-trigger-icon' : 'pp-item-icon';
     if (item.iconClass) return <CubingIcon icon={item.iconClass} className={className} />;
-    return <span className={`${className} pp-item-tag`}>{item.textLabel ?? item.id}</span>;
+    return <span className={`${className} pp-item-tag`}>{menuLabel(item.textLabel ?? item.id)}</span>;
   };
 
   const renderItem = (item: PuzzlePickerItem) => {

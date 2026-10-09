@@ -20,8 +20,8 @@ export const PAIRED_GUARDS: PairedGuard[] = [
     hook: 'block-puzzle-menu-label.mts',
     test: 'puzzle-menu-label-guard.test.ts',
     baseline: '0',
-    zh: { title: '项目菜单短名', desc: '项目菜单名称不得含「魔方」。Hook 检查已登记项目目录的新增名称，CI 扫描完整目录并检查统一菜单展示规则；新增目录时同步登记。正文不受此限制。' },
-    en: { title: 'Short puzzle menu names', desc: 'Chinese puzzle menu names omit the generic cube suffix. The hook checks added names in registered catalogs; CI checks full catalogs and shared menu formatting. Register new catalogs when adding them. Article text is unrestricted.' },
+    zh: { title: '项目菜单短名', desc: '项目菜单名称不得含「魔方」，三维尺寸省略乘号（233、334），左侧文字标签同样遵守。Hook 检查已登记项目目录的新增名称，CI 扫描完整目录并检查统一菜单展示规则；新增目录时同步登记。正文不受此限制。' },
+    en: { title: 'Short puzzle menu names', desc: 'Chinese puzzle menu names omit the generic cube suffix; three-dimensional sizes use 233 or 334, including text badges. The hook checks added names in registered catalogs; CI checks full catalogs and shared menu formatting. Register new catalogs when adding them. Article text is unrestricted.' },
   },
   {
     id: 'css-position-cascade',

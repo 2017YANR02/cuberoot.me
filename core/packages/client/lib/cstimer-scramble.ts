@@ -99,8 +99,8 @@ export const CSTIMER_EVENTS: ReadonlyArray<CstimerEvent> = [
 },
   { id: 'mpyrso',  key: 'mpyrso',  zh: '大金字塔(随态)',   en: 'Master Pyra (RS)',  iconClass: 'unofficial-mpyram', family: 'twist',  solvable: true
 },
-  { id: '223',     key: '223',     zh: '2×2×3',            en: '2×2×3',             textLabel: '2×2×3',  family: 'cuboid', solvable: true },
-  { id: '133',     key: '133',     zh: '1×3×3 花型',       en: '1×3×3 Floppy',      textLabel: '1×3×3',  family: 'cuboid', solvable: true },
+  { id: '223',     key: '223',     zh: '223',            en: '223',             textLabel: '223',  family: 'cuboid', solvable: true },
+  { id: '133',     key: '133',     zh: '133 花型',       en: '133 Floppy',      textLabel: '133',  family: 'cuboid', solvable: true },
   { id: '15p',     key: '15prp',   zh: '数字华容道',       en: '15-Puzzle',         textLabel: '15',     family: 'slide',  solvable: true },
   { id: '8p',      key: '8prp',    zh: '八数码',           en: '8-Puzzle',          textLabel: '8',      family: 'slide',  solvable: true },
 
@@ -116,12 +116,12 @@ export const CSTIMER_EVENTS: ReadonlyArray<CstimerEvent> = [
   { id: 'giga',    key: 'giga',    length: 30, zh: '六阶五魔',         en: 'Gigaminx',          textLabel: 'Giga', family: 'twist'
 },
   { id: 'prcp',    key: 'prcp',    length: 70, zh: '五魔金字塔',       en: 'Pyra Crystal',      textLabel: 'PrC',  family: 'twist' },
-  { id: '233',     key: '233',     length: 25, zh: '多米诺 2×3×3',     en: '2×3×3 Domino',      textLabel: '2×3×3', family: 'cuboid', solvable: true
+  { id: '233',     key: '233',     length: 25, zh: '多米诺 233',     en: '233 Domino',      textLabel: '233', family: 'cuboid', solvable: true
 },
-  { id: '334',     key: '334',     length: 40, zh: '3×3×4',            en: '3×3×4',             textLabel: '3×3×4', family: 'cuboid', solvable: true },
-  { id: '335',     key: '335',     length: 50, zh: '3×3×5',            en: '3×3×5',             textLabel: '3×3×5', family: 'cuboid', solvable: true },
-  { id: '336',     key: '336',     length: 50, zh: '3×3×6',            en: '3×3×6',             textLabel: '3×3×6', family: 'cuboid', solvable: true },
-  { id: '337',     key: '337',     length: 60, zh: '3×3×7',            en: '3×3×7',             textLabel: '3×3×7', family: 'cuboid', solvable: true },
+  { id: '334',     key: '334',     length: 40, zh: '334',            en: '334',             textLabel: '334', family: 'cuboid', solvable: true },
+  { id: '335',     key: '335',     length: 50, zh: '335',            en: '335',             textLabel: '335', family: 'cuboid', solvable: true },
+  { id: '336',     key: '336',     length: 50, zh: '336',            en: '336',             textLabel: '336', family: 'cuboid', solvable: true },
+  { id: '337',     key: '337',     length: 60, zh: '337',            en: '337',             textLabel: '337', family: 'cuboid', solvable: true },
   { id: 'sfl',     key: 'sfl',     length: 25, zh: '超薄花型',         en: 'Super Floppy',      textLabel: 'SFl',  family: 'cuboid', solvable: true },
   { id: 'ufo',     key: 'ufo',     length: 25, zh: 'UFO',              en: 'UFO',               textLabel: 'UFO',  family: 'twist',  solvable: true },
   { id: 'ctico',   key: 'ctico',   length: 25, zh: '二十面体',         en: 'Icosamate',         textLabel: 'Ico',  family: 'twist', solvable: true
@@ -132,11 +132,11 @@ export const CSTIMER_EVENTS: ReadonlyArray<CstimerEvent> = [
   { id: 'cm2',     key: 'cm2',     length: 16, zh: 'Cmetrick Mini',    en: 'Cmetrick Mini',     textLabel: 'Cm2',  family: 'twist',  solvable: true },
   { id: 'bic',     key: 'bic',     length: 25, zh: '联体',         en: 'Bicube',            textLabel: 'Bic',  family: 'siamese', solvable: true
 },
-  { id: 'sia113',  key: 'sia113',  length: 25, zh: '联体 1×1×3',       en: 'Siamese 1×1×3',     textLabel: 'Sia113', family: 'siamese'
+  { id: 'sia113',  key: 'sia113',  length: 25, zh: '联体 113',       en: 'Siamese 113',     textLabel: 'Sia113', family: 'siamese'
 },
-  { id: 'sia123',  key: 'sia123',  length: 25, zh: '联体 1×2×3',       en: 'Siamese 1×2×3',     textLabel: 'Sia123', family: 'siamese'
+  { id: 'sia123',  key: 'sia123',  length: 25, zh: '联体 123',       en: 'Siamese 123',     textLabel: 'Sia123', family: 'siamese'
 },
-  { id: 'sia222',  key: 'sia222',  length: 12, zh: '联体 2×2×2',       en: 'Siamese 2×2×2',     iconClass: 'unofficial-333_siamese', family: 'siamese', solvable: true
+  { id: 'sia222',  key: 'sia222',  length: 12, zh: '联体 222',       en: 'Siamese 222',     iconClass: 'unofficial-333_siamese', family: 'siamese', solvable: true
 },
   { id: 'dmd',     key: 'dmdso',   zh: '钻石',             en: 'Diamond',           textLabel: 'Dmd',  family: 'twist',  solvable: true
 },
