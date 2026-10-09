@@ -65,6 +65,7 @@
   max-width: min(560px, calc(100vw - 32px));
   max-height: 70vh;
   overflow-y: auto;
+  font-size: 0.85rem;
   background: var(--popover);
   border: 1px solid var(--border-default);
   border-radius: 10px;
@@ -76,7 +77,7 @@
 .pp-group + .pp-group { margin-top: 4px; }
 .pp-group-title {
   padding: 6px 10px 3px;
-  font-size: 0.72rem;
+  font-size: inherit;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -129,10 +130,10 @@
   letter-spacing: -0.02em;
 }
 .pp-item-label { line-height: 1.2; white-space: nowrap; }
-.pp-item,
-.pp-popup .scramble-redi-rotation-toggle { font-size: 0.85rem; }
+.pp-item-icon.pp-item-tag { font-size: inherit; }
+.pp-popup .scramble-redi-rotation-toggle { font-size: inherit; }
 .pp-popup .scramble-redi-rotation-toggle { color: var(--muted-foreground); }
-.pp-item-detail { font-size: 0.75rem; white-space: nowrap; }
+.pp-item-detail { font-size: inherit; white-space: nowrap; }
 .pp-footer { padding: 8px 10px 6px; }
 
 @media (max-width: 480px) {
