@@ -12,6 +12,7 @@
     "safari 16.4"
   ],
   "scripts": {
+    "double-zbll:install": "node --import tsx scripts/install-double-zbll.mts",
     "dev": "node ../../scripts/copy-maplibre-assets.mts && node ../../scripts/build-cubing-worker.mjs packages/client/public/cubing-chunks && node scripts/predev-clean.mjs && next dev -H 127.0.0.1 -p 3000",
     "dev:clean": "node ../../scripts/copy-maplibre-assets.mts && node ../../scripts/build-cubing-worker.mjs packages/client/public/cubing-chunks && node scripts/predev-clean.mjs --wipe-next && next dev -H 127.0.0.1 -p 3000",
     "dev:safe": "node ../../scripts/copy-maplibre-assets.mts && node scripts/dev-safe.mjs",

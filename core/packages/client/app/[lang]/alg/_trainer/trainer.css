@@ -1538,3 +1538,17 @@
   width: max-content;
   min-width: 0;
 }
+
+/* Double ZBLL: a compact download control and two equal-size layer views. */
+.trainer-double-options { display: grid; gap: 12px; padding: 16px 0; border-block: 1px solid var(--border-default); }
+.trainer-double-heading { display: flex; align-items: center; gap: 8px; color: var(--accent); font-weight: 650; }
+.trainer-double-metric { margin-left: auto; padding: 3px 8px; border-radius: 6px; background: var(--accent-soft); font-size: .72rem; white-space: nowrap; }
+.trainer-double-options .bool-toggle.trainer-double-toggle { display: flex; width: 100%; justify-content: space-between; }
+.trainer-double-options p { margin: 0; color: var(--muted-foreground); font-size: .8rem; line-height: 1.6; }
+.trainer-double-options [role="alert"] { color: var(--destructive); }
+.trainer-double-offline { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.trainer-double-offline > span { font-size: .72rem; color: var(--muted-foreground); }
+.trainer-double-thumbs { display: flex; justify-content: center; gap: clamp(12px, 3vw, 24px); max-width: 100%; }
+.trainer-double-thumbs figure { display: grid; justify-items: center; gap: 8px; margin: 0; min-width: 0; }
+.trainer-double-thumbs figcaption { color: var(--muted-foreground); font-size: .75rem; white-space: nowrap; }
+.trainer-double-notice { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 12px 0; color: var(--muted-foreground); font-size: .8rem; }
