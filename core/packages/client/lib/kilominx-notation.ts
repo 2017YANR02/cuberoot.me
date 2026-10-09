@@ -1,5 +1,8 @@
 export type KilominxNotation = 'cstimer' | 'cubing';
 
+/** Native outer faces, shared by the 2D fallback's manual-turn buttons. */
+export const KILOMINX_FACE_MOVES = ['U', 'R', 'F', 'L', 'BL', 'BR', 'FR', 'FL', 'DL', 'B', 'DR', 'D'] as const;
+
 // The two systems name four lower faces differently; turn amounts are identical.
 const CSTIMER_TO_CUBING = new Map([
   ['DR', 'FR'],
