@@ -123,6 +123,8 @@ interface SheetViewProps {
   selectedLabel?: string | null;
   /** 点击某行选中 / 取消(label=null 表示取消)。整行均触发,含 SQ1 等不可分析事件。 */
   onSelectScramble?: (label: string | null) => void;
+  /** When provided, other rows remain visible but cannot be selected or expanded. */
+  selectableLabels?: readonly string[];
   /** 是否允许行内展开解法分析器(跟随顶部「分析」开关)。false 时可分析打乱点击无任何反应
    *  —— 没开「分析」就完全不出分析器画面。SQ1 等不可分析事件不受影响(本就只选中)。 */
   analyzable?: boolean;
@@ -136,7 +138,7 @@ interface SheetViewProps {
   titleSuffix?: string;
 }
 
-export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, megaColors, showPreview = true, rowDigits, metric = 'cross', variant = 'std', selectedLabel = null, onSelectScramble, analyzable = true, copyOnClick = false, headerExtra, titleSuffix = '' }: SheetViewProps) {
+export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, megaColors, showPreview = true, rowDigits, metric = 'cross', variant = 'std', selectedLabel = null, onSelectScramble, selectableLabels, analyzable = true, copyOnClick = false, headerExtra, titleSuffix = '' }: SheetViewProps) {
   const { event, roundIdx, groupIdx, attemptNumber, attempts, totalGroups } = sheet;
   const router = useRouter();
   const params = useParams();
@@ -193,6 +195,7 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
   // 仅当「分析」开 + 该打乱可解析时,额外就地展开 StageSolver。
   // 选中文字时不触发,避免误触。手风琴:再点同一条收起/取消,点别条切换。
   const onRowClick = (a: AttemptScramble, i: number) => {
+    if (selectableLabels && !selectableLabels.includes(a.label)) return;
     if (typeof window !== 'undefined' && window.getSelection()?.toString()) return;
     if (!a.scramble) return;
     if (copyOnClick) void copyAttempt(i, a.displayScramble ?? a.scramble);
@@ -237,7 +240,8 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
     const parseable = !!a.scramble && isAnalysableScramble(a.scramble);
     const canAnalyze = analyzable && parseable;
     // 有打乱就可点:点击永远选中(写深链 + 高亮);canAnalyze 时额外展开解法器。
-    const rowInteractive = !!a.scramble;
+    const rowDisabled = !!selectableLabels && !selectableLabels.includes(a.label);
+    const rowInteractive = !!a.scramble && !rowDisabled;
     // 展示用记号:有 displayScramble(最优等态打乱)时显示它,否则原打乱。徽标 / 选中仍走原打乱。
     const shownScr = a.displayScramble ?? a.scramble;
     rows.push(
@@ -245,6 +249,7 @@ export default function SheetView({ sheet, isZh, t, clockColors, sq1Colors, mega
         key={i}
         ref={isSelected ? selectedRowRef : undefined}
         className={rowCls}
+        aria-disabled={rowDisabled || undefined}
         onClick={rowInteractive ? () => onRowClick(a, i) : undefined}
         title={rowInteractive
           ? (copyOnClick
