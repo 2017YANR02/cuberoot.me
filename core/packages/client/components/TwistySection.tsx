@@ -5,6 +5,8 @@ import FaceOverlay, { type FaceTable } from './FaceOverlay';
 import ReconPlayOverlay from './recon/ReconPlayOverlay';
 import { applyTwistyCoreOpacity } from './twistyCoreOpacity';
 import { simSpeedToTps, uniformSimTimeline } from '@/lib/sim_timing';
+import { pgAlgError } from '@/lib/pg-alg-validation';
+import { tr } from '@/i18n/tr';
 import { applyFreeOrbitDelta, ORBIT_K } from '@/app/[lang]/sim/engine/viewControls';
 import './TwistySection.css';
 
@@ -195,6 +197,8 @@ export default function TwistySection({
   const freeViewObjectRef = useRef<any>(null);
   const freeViewOrientationRef = useRef<[number, number, number, number]>([1, 0, 0, 0]);
   const simTimingEnabled = settings != null;
+  const [pgInputError, setPgInputError] = useState<string | null>(null);
+  const pgInputValidRef = useRef(false);
 
   // NOTE: 自动加载 cubing 库——import 完成后 setCtor 触发重渲染
   useEffect(() => {
@@ -214,8 +218,8 @@ export default function TwistySection({
     const container = containerRef.current;
     container.innerHTML = '';
     const playerInit: Record<string, unknown> = {
-      experimentalSetupAlg: scramble,
-      alg,
+      experimentalSetupAlg: puzzleDescription ? '' : scramble,
+      alg: puzzleDescription ? '' : alg,
       controlPanel: hideControls ? 'none' : 'bottom-row',
     };
     // PuzzleGeometry puzzle (explore set) → set the description and omit `puzzle`
@@ -246,6 +250,19 @@ export default function TwistySection({
         // 相机 orbit 与它无关 → 视角照常可拖。
         if (pointerTurnsRef.current === false) return;
         const text = typeof mv === 'string' ? mv : (mv?.toString?.() ?? String(mv));
+        if (puzzleDescription) {
+          // Do not publish a pointer-generated move to the URL before validating it.
+          return model.kpuzzle.get().then((kpuzzle: { algToTransformation: (alg: string) => unknown }) => {
+            if (playerInstRef.current !== player || !pgInputValidRef.current) return;
+            const error = pgAlgError(kpuzzle, text);
+            if (error) { setPgInputError(error); return; }
+            setPgInputError(null);
+            onUserMoveRef.current?.(text);
+            return orig(mv, opts);
+          }).catch((error: unknown) => {
+            if (playerInstRef.current === player) setPgInputError(String(error));
+          });
+        }
         try { onUserMoveRef.current?.(text); } catch { /* swallow */ }
         return orig(mv, opts);
       };
@@ -356,7 +373,12 @@ export default function TwistySection({
     if (puzzleDescription === prevDescRef.current) return;
     prevDescRef.current = puzzleDescription;
     if (!puzzleDescription) return;
-    try { player.experimentalPuzzleDescription = puzzleDescription; } catch { /* parser 拒绝就忽略 */ }
+    try {
+      player.experimentalModel.animationTimelineLeavesRequest.set([]);
+      player.alg = '';
+      player.experimentalSetupAlg = '';
+      player.experimentalPuzzleDescription = puzzleDescription;
+    } catch { /* parser 拒绝就忽略 */ }
   }, [puzzleDescription, playerNonce]);
 
   // backView prop 强制接管 cubing.js 原生背面视图(recon 用)。undefined 时不碰,
@@ -386,9 +408,30 @@ export default function TwistySection({
   // → cubing.js no-op,不会拨回 timeline。
   useEffect(() => {
     const player = playerInstRef.current;
-    if (!player) return;
+    if (!player || puzzleDescription) return;
     try { player.alg = alg; } catch { /* parser 拒绝就忽略 */ }
-  }, [alg]);
+  }, [alg, puzzleDescription]);
+
+  // PG validation in cubing.js is asynchronous; catching attribute setters cannot
+  // catch CurrentPatternProp failures. Validate before publishing either input.
+  useEffect(() => {
+    const player = playerInstRef.current;
+    pgInputValidRef.current = false;
+    setPgInputError(null);
+    if (!player || !puzzleDescription) return;
+    let current = true;
+    void player.experimentalModel.kpuzzle.get().then((kpuzzle: { algToTransformation: (alg: string) => unknown }) => {
+      if (!current || playerInstRef.current !== player) return;
+      const error = pgAlgError(kpuzzle, scramble) ?? pgAlgError(kpuzzle, alg);
+      setPgInputError(error);
+      pgInputValidRef.current = !error;
+      player.experimentalSetupAlg = error ? '' : scramble;
+      player.alg = error ? '' : alg;
+    }).catch((error: unknown) => {
+      if (current && playerInstRef.current === player) setPgInputError(String(error));
+    });
+    return () => { current = false; };
+  }, [alg, scramble, puzzleDescription, playerNonce]);
 
   // /sim defines TPS per expanded notation leaf, independent of turn angle.
   // cubing.js defaults a double turn to 1.5× a quarter turn, so supply a custom
@@ -397,23 +440,28 @@ export default function TwistySection({
     const player = playerInstRef.current;
     if (!player || !simTimingEnabled) return;
     let current = true;
-    void import('cubing/alg').then(({ Alg, Move, Pause }) => {
+    void import('cubing/alg').then(async ({ Alg, Move, Pause }) => {
+      let timelineAlg = alg;
+      if (puzzleDescription) {
+        const kpuzzle = await player.experimentalModel.kpuzzle.get();
+        if (pgAlgError(kpuzzle, scramble) || pgAlgError(kpuzzle, alg)) timelineAlg = '';
+      }
       if (!current || playerInstRef.current !== player) return;
       try {
-        const leaves = [...new Alg(alg).expand().childAlgNodes()]
+        const leaves = [...new Alg(timelineAlg).expand().childAlgNodes()]
           .filter((node) => node instanceof Move || node instanceof Pause);
         player.experimentalModel.animationTimelineLeavesRequest.set(uniformSimTimeline(leaves));
       } catch { /* parser rejects incomplete live input */ }
-    });
+    }).catch(() => { /* invalid puzzle geometry is reported by input validation */ });
     return () => { current = false; };
-  }, [alg, playerNonce, simTimingEnabled]);
+  }, [alg, scramble, puzzleDescription, playerNonce, simTimingEnabled]);
 
   // setup 同步 — 同上但走 experimentalSetupAlg。
   useEffect(() => {
     const player = playerInstRef.current;
-    if (!player) return;
+    if (!player || puzzleDescription) return;
     try { player.experimentalSetupAlg = scramble; } catch { /* ignore */ }
-  }, [scramble]);
+  }, [scramble, puzzleDescription]);
 
   // 按阶段展示色块 — cubing.js 原生 experimentalStickering。依赖 playerNonce:
   // player 重建(换拼图)后默认回 full,非 full 值要立刻补挂。undefined = 不接管。
@@ -1189,6 +1237,10 @@ export default function TwistySection({
 
   return (
     <div className={`twisty-section${fillPane ? ' twisty-section--fill' : ''}`}>
+      {puzzleDescription && pgInputError && <div role="alert">
+        {tr({ zh: '公式不适用于当前项目，请修改输入。', en: 'This algorithm is not valid for the selected puzzle. Please edit the input.' })}
+        {' '}{pgInputError}
+      </div>}
       <div ref={containerRef} className="twisty-container" />
       {hideControls && alg.trim().length > 0 && (
         <ReconPlayOverlay
