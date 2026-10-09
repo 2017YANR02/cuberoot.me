@@ -19,7 +19,7 @@ import { TNOODLE_WCA_EVENTS, TWIZZLE_NONWCA_EVENTS, TWIZZLE_NONWCA_APPEND, tnood
 import { activeEventOf } from './_active-view';
 import { CSTIMER_NONWCA_APPEND, CSTIMER_EVENT_IDS, CSTIMER_EVENTS, cstimerScramble, isCstimerEvent } from '@/lib/cstimer-scramble';
 import { SHAPE_MOD_APPEND, SHAPE_MOD_EVENT_IDS, SHAPE_MOD_EVENTS, isShapeModEvent, shapeModSourceEvent } from '@/lib/shape-mod-scramble';
-import { NATIVE_SCRAMBLE_APPEND, NATIVE_SCRAMBLE_EVENT_IDS, NATIVE_SCRAMBLE_EVENTS, isNativeScrambleEvent, nativeScramble } from '@/lib/native-scramble';
+import { NATIVE_SCRAMBLE_APPEND, NATIVE_SCRAMBLE_EVENT_IDS, NATIVE_SCRAMBLE_EVENTS, isNativeScrambleEvent, nativeScramble, nativeScramblePracticeHint } from '@/lib/native-scramble';
 import type { RoundSheetInput } from './_tnoodle-pdf';
 import ProgressButton from './ProgressButton';
 import CopyAllScramblesButton from './CopyAllScramblesButton';
@@ -124,6 +124,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
   );
   const eventsKey = eventsOrdered.join(',');
   const activeView = activeEventOf(viewedEvent, eventsOrdered);
+  const practiceHint = nativeScramblePracticeHint(activeView);
   const viewPickerGroups = useMemo(
     () => scrambleEventPickerGroups(eventsOrdered, APPEND_EVENTS, isZh),
     [eventsOrdered, isZh],
@@ -531,6 +532,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
       )}
 
       {/* 当前 activeView 一个 sheet — gen 模式显示生成结果,text 模式显示已粘贴打乱的预览 */}
+      {practiceHint && <p>{t(practiceHint.zh, practiceHint.en)}</p>}
       {totalScrambles > 0 && activeView && (
         <div className="gen-tn-sheets">
           {eventsOrdered.filter((ev) => ev === activeView).map((ev) => {

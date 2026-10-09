@@ -7,6 +7,7 @@ import {
 import { ivyApplyStandard, ivyStandardToCstimer } from '@/lib/ivy-solver';
 import { DUO_FACE_COLORS } from '@cuberoot/puzzle-render-core/duo-face';
 import { DUO_SVG_ASPECT, renderPyraminxDuoSvg } from '@cuberoot/puzzle-render-core/pyraminx-duo-svg';
+import { renderMagicSvg } from '@cuberoot/puzzle-render-core/magic-svg';
 
 function duoStickerColors(svg: string): Record<string, string> {
   return Object.fromEntries(Array.from(
@@ -76,6 +77,31 @@ describe('shared scramble preview SVG renderer', () => {
       expect(renderScramblePreviewSvg({ event: 'pyraminx_duo', scramble: '' })).toBe(renderPyraminxDuoSvg(''));
     } finally {
       warn.mockRestore();
+    }
+  });
+
+  it.each([
+    ['magic', 'Forward', 'Backward'],
+    ['mmagic', 'M Forward', 'M Backward'],
+  ] as const)('uses the shared %s starting pattern for every practice direction', (event, forward, backward) => {
+    expect(eventHasScramblePreview(event)).toBe(true);
+    for (const scramble of ['', forward, backward]) {
+      const svg = renderScramblePreviewSvg({ event, scramble });
+      expect(svg).toMatch(/^<svg\b/);
+      expect(svg).toBe(renderMagicSvg(event, scramble));
+    }
+    expect(renderScramblePreviewSvg({ event, scramble: forward }))
+      .not.toBe(renderScramblePreviewSvg({ event, scramble: backward }));
+  });
+
+  it('rejects cube moves and the Master prefix on eight-tile Magic instead of drawing a false start', () => {
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      for (const [event, scramble] of [['magic', 'M Forward'], ['magic', 'R U'], ['mmagic', 'R U']] as const) {
+        expect(renderScramblePreviewSvg({ event, scramble })).toBeNull();
+      }
+    } finally {
+      warning.mockRestore();
     }
   });
 });

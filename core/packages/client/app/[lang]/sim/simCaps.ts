@@ -66,6 +66,14 @@ export interface SimPuzzleCaps {
 // 见 SimPage 的 imageStudioEngineOnly。
 const NXN_CAPS: SimPuzzleCaps = { engine: 'always' };
 const TWISTY_CAPS: SimPuzzleCaps = { engine: 'never' };
+const MAGIC_CAPS: SimPuzzleCaps = {
+  engine: 'always',
+  supports: {
+    faceLabels: false, thickness: false, hollow: false, hint: false,
+    holdPartialTurn: false, structureColor: false, coreColor: false,
+    coreOpacity: false, coreFinish: false, faceColors: false,
+  },
+};
 
 /** Per-kind capabilities. Keyed by the string puzzle kinds; NxN (numeric kind) and
  *  PG explore puzzles fall back to NXN_CAPS / TWISTY_CAPS respectively. */
@@ -111,6 +119,8 @@ const CAPS: Record<string, SimPuzzleCaps> = {
   // 所以整排三维设置都不适用。cubing.js 其实自带一份 clock(kpuzzle + SVG),但它**只能播放**
   // ——拖不动指针、点不了针脚,做不成模拟器,故未接成备选渲染器。
   clock: { engine: 'always', flat: true },
+  magic: MAGIC_CAPS,
+  mmagic: MAGIC_CAPS,
 };
 
 /** Static capabilities for a puzzle kind (independent of the active renderer). */

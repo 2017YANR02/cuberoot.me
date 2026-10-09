@@ -121,7 +121,10 @@
       "./support/puzzle-image/masks": "mixed",
       "./engine/coreOpacity": "mixed",
       "./engine/backView": "react-dom",
-      "./support/three": "runtime-neutral"
+      "./support/three": "runtime-neutral",
+      "./magic-svg": "runtime-neutral",
+      "./engine/magic/MagicCube": "mixed",
+      "./engine/magic/magicDrag": "mixed"
     }
   },
   "sideEffects": false,
@@ -241,7 +244,14 @@
     "./support/puzzle-image/masks": "./src/support/puzzle-image/masks.ts",
     "./engine/coreOpacity": "./src/engine/coreOpacity.ts",
     "./engine/backView": "./src/engine/backView.ts",
-    "./support/three": "./src/support/three.ts"
+    "./support/three": "./src/support/three.ts",
+    "./magic-svg": {
+      "types": "./src/magic-svg.ts",
+      "node": "./dist/magic-svg.js",
+      "default": "./src/magic-svg.ts"
+    },
+    "./engine/magic/MagicCube": "./src/engine/magic/MagicCube.ts",
+    "./engine/magic/magicDrag": "./src/engine/magic/magicDrag.ts"
   },
   "scripts": {
     "build": "tsc -b && esbuild src/iso-svg.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/iso-svg.js",

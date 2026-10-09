@@ -54,6 +54,7 @@ import { renderSia123ScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/sia123_s
 import { renderSia222ScrambleSvg } from '@/app/[lang]/scramble/gen/_svg/sia222_svg';
 import { renderBakedNet } from '@/app/[lang]/scramble/gen/_svg/_baked_nets';
 import { renderPyraminxDuoSvg } from '@cuberoot/puzzle-render-core/pyraminx-duo-svg';
+import { renderMagicSvg } from '@cuberoot/puzzle-render-core/magic-svg';
 import {
   renderUnfoldedSvgForEvent,
   eventToCubeSize,
@@ -71,7 +72,7 @@ const HAS_PREVIEW: ReadonlySet<string> = new Set([
   'mirror_333', 'ivy', '133', '223', '233', '334', '335', '336', '337',
   '8p', '15p', 'sfl', 'ufo', 'cm2', 'cm3', 'heli', 'helicv', 'ctico', 'dmd',
   'gear', 'mpyrso', 'dino', 'crz3a', 'sq2', 'ssq1', 'bsq', 'bic', 'sia123', 'sia222',
-  'fto', 'baby_fto', 'master_tetraminx', 'kilominx', 'redi_cube', 'pyraminx_duo',
+  'fto', 'baby_fto', 'master_tetraminx', 'kilominx', 'redi_cube', 'pyraminx_duo', 'magic', 'mmagic',
 ]);
 
 export function eventHasScramblePreview(event: string): boolean {
@@ -100,6 +101,7 @@ export function renderScramblePreviewSvg({
   try {
     if (event === 'mirror_333') return renderMirrorBlocksScrambleSvg(scramble);
     if (eff === 'pyraminx_duo') return renderPyraminxDuoSvg(scramble);
+    if (eff === 'magic' || eff === 'mmagic') return renderMagicSvg(eff, scramble);
     if (eff === 'clock') return renderClockScrambleSvg(scramble, clockColors ?? DEFAULT_CLOCK_COLORS);
     if (eff === 'sq1') return renderSq1ScrambleSvg(scramble, sq1Colors ?? DEFAULT_SQ1_COLORS);
     if (eff === 'minx') return renderMegaScrambleSvg(scramble, megaColors ?? DEFAULT_MEGA_COLORS, mask);

@@ -38,7 +38,7 @@ import { VARIANT_LABEL, VARIANT_ORDER, stageLabel, dataVariantOfStage, variantDa
 import { TNOODLE_WCA_EVENTS, TWIZZLE_NONWCA_EVENTS, TWIZZLE_NONWCA_APPEND, tnoodleRandomScramble } from '@/lib/cubing-scramble';
 import { CSTIMER_NONWCA_APPEND, CSTIMER_EVENT_IDS, CSTIMER_EVENTS, cstimerScramble, isCstimerEvent } from '@/lib/cstimer-scramble';
 import { SHAPE_MOD_APPEND, SHAPE_MOD_EVENT_IDS, SHAPE_MOD_EVENTS, isShapeModEvent, shapeModSourceEvent } from '@/lib/shape-mod-scramble';
-import { NATIVE_SCRAMBLE_APPEND, NATIVE_SCRAMBLE_EVENT_IDS, NATIVE_SCRAMBLE_EVENTS, isNativeScrambleEvent, nativeScramble } from '@/lib/native-scramble';
+import { NATIVE_SCRAMBLE_APPEND, NATIVE_SCRAMBLE_EVENT_IDS, NATIVE_SCRAMBLE_EVENTS, isNativeScrambleEvent, nativeScramble, nativeScramblePracticeHint } from '@/lib/native-scramble';
 
 // 配置菜单的完整项目顺序:WCA + twizzle 非 WCA + cstimer + shape-mod + native。
 const TNOODLE_EVENT_IDS = [...TNOODLE_WCA_EVENTS, ...TWIZZLE_NONWCA_EVENTS, ...CSTIMER_EVENT_IDS, ...SHAPE_MOD_EVENT_IDS, ...NATIVE_SCRAMBLE_EVENT_IDS];
@@ -884,6 +884,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
   }, [viewedEvent]);
   // 3x3 系列(333/oh/ft/fm/bf)cross-step 分析:跟随当前事件视图。
   const activeView = activeEventOf(viewedEvent, eventsInSheets);
+  const practiceHint = nativeScramblePracticeHint(activeView);
   const is333Family = FAMILY_333.has(activeView ?? '');
   const analysisScrambles = useMemo(() => {
     const out: string[] = [];
@@ -1526,6 +1527,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
 
       {loaded && activeView && (
         <>
+          {practiceHint && <p>{t(practiceHint.zh, practiceHint.en)}</p>}
           {is333Family && sheetsInEvent.length > 0 && (
             <div className="gen-cx-switchrow">
               {forcedCompId && <div className="gen-cx-actions-inline">{actionsNode}</div>}

@@ -338,6 +338,7 @@ export default function SimPage() {
     if (raw === 'custom') return 'custom';
     if (raw === 'mirror' || raw === 'mirror2' || raw === 'sphere') return raw;
     if (raw === 'clock') return 'clock';
+    if (raw === 'magic' || raw === 'mmagic') return raw;
     if (isPgPuzzleId(raw)) return raw as SimPuzzle;
     const n = parseInt(raw, 10);
     if (!Number.isFinite(n) || n < NXN_ORDER_MIN || n > NXN_ORDER_MAX) return NXN_ORDER_DEFAULT;
@@ -986,7 +987,7 @@ export default function SimPage() {
     const cornerCtx: CornerGestureCtx = {
       world,
       dom: renderer.domElement,
-      settings: () => settingsRef.current,
+      settings: () => ({ ...settingsRef.current, holdPartialTurn: resolveCaps(world.puzzleKind, 'engine').supports.holdPartialTurn && settingsRef.current.holdPartialTurn }),
       pinching: () => pinching,
       emitMove: (token) => userMoveRef.current?.(token),
       orbit: orbitView,
@@ -1309,7 +1310,8 @@ export default function SimPage() {
         || (typeof world.puzzleKind === 'number'
           && settingsRef.current.pictureCube
           && countPictureFaces(settingsRef.current.pictureFaces) > 0);
-      const showLabels = settingsRef.current.faceLabels === true
+      const showLabels = resolveCaps(world.puzzleKind, 'engine').supports.faceLabels
+        && settingsRef.current.faceLabels === true
         && !world.smplxBodyOn
         && !pictureLabelsHidden;
       if (showLabels) activeHints.show(); else activeHints.hide();
@@ -1339,6 +1341,7 @@ export default function SimPage() {
         world.disposeSquareFamilyCubes();
         world.disposeGhostCube();
         world.disposeDuoCube();
+        world.disposeMagicCubes();
         world.disposeSphereCube();
         window.removeEventListener('resize', resize);
         ro.disconnect();
