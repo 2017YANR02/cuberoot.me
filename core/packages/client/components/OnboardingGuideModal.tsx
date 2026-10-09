@@ -15,6 +15,7 @@
 // `--muted-foreground` / `--card` / `--accent` / `--accent-foreground` /
 // `--accent-soft` / `--border-strong`），不引入自定义色值。
 
+import './onboarding-guide.css';
 import { useModalBackdrop } from '@/hooks/useModalDismiss';
 import { useT } from '@/hooks/useT';
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
@@ -199,9 +200,9 @@ interface TargetRect {
   y: number;
   w: number;
   h: number;
+  borderRadius?: string;
 }
 
-const HIGHLIGHT_PAD = 6;
 const TOOLTIP_GAP = 12;
 const TOOLTIP_WIDTH = 360;
 
@@ -213,6 +214,7 @@ export default function OnboardingGuideModal({ open, onClose }: Props) {
   const [rect, setRect] = useState<TargetRect | null>(null);
   const [viewport, setViewport] = useState({ w: 0, h: 0 });
   const dialogRef = useRef<HTMLDivElement>(null);
+  const scrolledTarget = useRef<Element | null>(null);
   // 自动触发与手动重看都从第一步开始。
   useEffect(() => {
     if (open) setStep(0);
@@ -264,7 +266,13 @@ export default function OnboardingGuideModal({ open, onClose }: Props) {
       setRect(null);
       return;
     }
-    const r = (el as HTMLElement).getBoundingClientRect();
+    if (scrolledTarget.current !== el) {
+      scrolledTarget.current = el;
+      el.scrollIntoView({ behavior: 'instant', block: 'center', inline: 'nearest' });
+    }
+    // Card anchors live on sortable wrappers; outline the visible card itself.
+    const surface = el.querySelector(':scope > .landing-card') ?? el;
+    const r = surface.getBoundingClientRect();
     // 目标完全在视口外（滚动中途）时清空，避免遮罩算出负 height/width 闪线。
     if (
       r.width < 8 ||
@@ -277,7 +285,7 @@ export default function OnboardingGuideModal({ open, onClose }: Props) {
       setRect(null);
       return;
     }
-    setRect({ x: r.left, y: r.top, w: r.width, h: r.height });
+    setRect({ x: r.left, y: r.top, w: r.width, h: r.height, borderRadius: getComputedStyle(surface).borderRadius });
   }, [step]);
 
   // 切换步骤：先清空旧高亮（避免旧框残留闪线），再把目标滚入可视区，
@@ -285,6 +293,7 @@ export default function OnboardingGuideModal({ open, onClose }: Props) {
   // 懒加载挂件的延迟挂载，以及 10/11 步异步数据到达时的骨架→内容替换。
   useEffect(() => {
     if (!open) return;
+    scrolledTarget.current = null;
     setRect(null);
     const tour = ONBOARDING_STEPS[step]?.tour;
     if (tour) {
@@ -349,7 +358,7 @@ export default function OnboardingGuideModal({ open, onClose }: Props) {
       else if (e.key === 'ArrowLeft') goPrev();
     };
     window.addEventListener('keydown', onKey);
-    dialogRef.current?.focus();
+    dialogRef.current?.focus({ preventScroll: true });
     return () => {
       window.removeEventListener('keydown', onKey);
     };
@@ -357,7 +366,7 @@ export default function OnboardingGuideModal({ open, onClose }: Props) {
 
   const tooltipLayout = useMemo(() => {
     if (!rect || viewport.w === 0) return null;
-    const width = Math.min(TOOLTIP_WIDTH, Math.max(280, viewport.w - 16));
+    const width = Math.min(TOOLTIP_WIDTH, Math.max(0, viewport.w - 32));
     const centerX = rect.x + rect.w / 2;
     const left = Math.min(
       Math.max(8, centerX - width / 2),
@@ -379,112 +388,28 @@ export default function OnboardingGuideModal({ open, onClose }: Props) {
   const isLast = step === total - 1;
   const hasTarget = Boolean(current.tour && rect && tooltipLayout);
 
-  const cardShell =
-    'relative w-full overflow-hidden rounded-2xl border border-[var(--border-default)] bg-[var(--popover)] text-[var(--foreground)] shadow-[0_24px_60px_rgba(0,0,0,0.25)] outline-none';
-
-  const renderCardBody = (autoFocusNext: boolean) => (
+  const renderCardBody = () => (
     <>
-      {/* 顶栏：进度 + 关闭 */}
-      <div className="flex items-center justify-between gap-3 border-b border-[var(--border-default)] px-5 py-3">
-        <p className="text-xs font-medium tracking-wide text-[var(--muted-foreground)]">
-          {t(`第 ${step + 1} 步 / 共 ${total} 步`, `Step ${step + 1} of ${total}`)}
-        </p>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label={t('跳过并关闭', 'Skip and close')}
-          className="rounded-lg p-1.5 text-[var(--muted-foreground)] transition-colors hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
-        >
-          <X size={16} aria-hidden="true" />
-        </button>
+      <div className="onboarding-guide-heading">
+        <span className="onboarding-guide-icon"><StepIcon size={20} strokeWidth={1.8} aria-hidden="true" /></span>
+        <span className="onboarding-guide-count">{t('新手指南', 'Beginner guide')} <span>{step + 1} / {total}</span></span>
+        <button type="button" onClick={onClose} className="onboarding-guide-close" aria-label={t('关闭导览', 'Close tour')}><X size={18} aria-hidden="true" /></button>
       </div>
-
-      {/* 进度条 */}
-      <div
-        className="h-1 w-full bg-[var(--muted)]"
-        role="progressbar"
-        aria-valuemin={1}
-        aria-valuemax={total}
-        aria-valuenow={step + 1}
-      >
-        <div
-          className="h-full bg-[var(--accent)] transition-[width] duration-200"
-          style={{ width: `${((step + 1) / total) * 100}%` }}
-        />
+      <div className="onboarding-guide-copy" aria-live="polite" aria-atomic="true">
+        <h2>{t(current.title.zh, current.title.en)}</h2>
+        <p>{t(current.body.zh, current.body.en)}</p>
       </div>
-
-      <div className="px-5 pb-5 pt-4 sm:px-6">
-        {/* 步骤圆点（可点击跳转） */}
-        <div className="mb-4 flex items-center justify-center gap-1.5" role="group" aria-label={t('步骤导航', 'Step navigation')}>
-          {ONBOARDING_STEPS.map((s, i) => (
-            <button
-              key={s.tour + i}
-              type="button"
-              onClick={() => setStep(i)}
-              aria-label={t(`跳到第 ${i + 1} 步`, `Go to step ${i + 1}`)}
-              aria-current={i === step ? 'step' : undefined}
-              className={`h-1.5 rounded-full transition-all ${
-                i === step
-                  ? 'w-6 bg-[var(--accent)]'
-                  : i < step
-                    ? 'w-1.5 bg-[var(--accent)] opacity-50'
-                    : 'w-1.5 bg-[var(--border-strong)]'
-              }`}
-            />
-          ))}
-        </div>
-
-        {/* 步骤内容：固定标题 + 描述 */}
-        <div className="flex flex-col items-center text-center">
-          <span className="mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--accent-soft)] text-[var(--accent)]">
-            <StepIcon size={28} strokeWidth={1.8} aria-hidden="true" />
-          </span>
-          <h2 className="text-lg font-semibold leading-snug">
-            {t(current.title.zh, current.title.en)}
-          </h2>
-          <p className="mt-2 min-h-[3.5rem] text-sm leading-relaxed text-[var(--muted-foreground)]">
-            {t(current.body.zh, current.body.en)}
-          </p>
-        </div>
-
-        {/* 操作区：上一步 / 跳过导览 / 下一步·完成 */}
-        <div className="mt-5 flex items-center justify-between gap-2">
-          <button
-            type="button"
-            onClick={goPrev}
-            disabled={isFirst}
-            className="inline-flex min-h-[40px] items-center gap-1 rounded-lg border border-[var(--border-default)] bg-[var(--card)] px-4 py-2 text-sm font-medium transition-colors hover:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-[var(--border-default)]"
-          >
-            <ChevronLeft size={16} aria-hidden="true" />
-            {t('上一步', 'Back')}
+      <div className="onboarding-guide-progress" role="progressbar" aria-label={t('导览进度', 'Tour progress')} aria-valuemin={1} aria-valuemax={total} aria-valuenow={step + 1}>
+        <span style={{ width: ((step + 1) / total) * 100 + '%' }} />
+      </div>
+      <div className="onboarding-guide-actions">
+        <button type="button" onClick={onClose} className="onboarding-guide-skip">{t('跳过', 'Skip')}</button>
+        <div className="onboarding-guide-navigation">
+          {!isFirst && <button type="button" onClick={goPrev} className="onboarding-guide-back" aria-label={t('上一步', 'Previous step')}><ChevronLeft size={17} aria-hidden="true" /></button>}
+          <button type="button" onClick={isLast ? onClose : goNext} className="onboarding-guide-next">
+            {isLast ? t('完成', 'Done') : t('下一步', 'Next')}
+            {!isLast && <ChevronRight size={16} aria-hidden="true" />}
           </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="min-h-[40px] rounded-lg px-3 py-2 text-sm text-[var(--muted-foreground)] transition-colors hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
-          >
-            {t('跳过导览', 'Skip tour')}
-          </button>
-          {isLast ? (
-            <button
-              type="button"
-              onClick={onClose}
-              autoFocus={autoFocusNext}
-              className="inline-flex min-h-[40px] items-center gap-1 rounded-lg bg-[var(--accent)] px-5 py-2 text-sm font-semibold text-[var(--accent-foreground)] transition-[filter] hover:brightness-110"
-            >
-              {t('完成', 'Done')}
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={goNext}
-              autoFocus={autoFocusNext}
-              className="inline-flex min-h-[40px] items-center gap-1 rounded-lg bg-[var(--accent)] px-5 py-2 text-sm font-semibold text-[var(--accent-foreground)] transition-[filter] hover:brightness-110"
-            >
-              {t('下一步', 'Next')}
-              <ChevronRight size={16} aria-hidden="true" />
-            </button>
-          )}
         </div>
       </div>
     </>
@@ -511,16 +436,16 @@ export default function OnboardingGuideModal({ open, onClose }: Props) {
   // 不拼四块缺口遮罩，避免负 height/width 闪出横贯细线。
   if (!hasTarget || !rect || !tooltipLayout || !clampedRect) {
     return (
-      <div className="fixed inset-0 z-[1000] bg-black/55 backdrop-blur-[2px]" role="presentation" {...backdropProps}>
+      <div className="onboarding-guide-layer onboarding-guide-mask" role="presentation" {...backdropProps}>
         <div
           ref={dialogRef}
           tabIndex={-1}
           role="dialog"
           aria-modal="true"
           aria-label={t(current.title.zh, current.title.en)}
-          className={`${cardShell} fixed bottom-6 left-1/2 w-[calc(100vw-2rem)] max-w-lg -translate-x-1/2`}
+          className="onboarding-guide-card onboarding-guide-fallback" data-site-surface="popover"
         >
-          {renderCardBody(true)}
+          {renderCardBody()}
         </div>
       </div>
     );
@@ -528,11 +453,11 @@ export default function OnboardingGuideModal({ open, onClose }: Props) {
 
   // 能走到四块遮罩分支时 clampedRect 必存在（回退分支已拦截 null）。
   // 高亮缺口与描边框统一使用钳制坐标，遮罩 height/width 恒 ≥ 0。
-  const hx = clampedRect.x - HIGHLIGHT_PAD;
-  const hy = clampedRect.y - HIGHLIGHT_PAD;
-  const hw = clampedRect.w + HIGHLIGHT_PAD * 2;
-  const hh = clampedRect.h + HIGHLIGHT_PAD * 2;
-  const mask = 'fixed bg-black/55 transition-all duration-300';
+  const hx = clampedRect.x;
+  const hy = clampedRect.y;
+  const hw = clampedRect.w;
+  const hh = clampedRect.h;
+  const mask = 'onboarding-guide-mask';
   const tooltipStyle: CSSProperties =
     tooltipLayout.placement === 'below'
       ? {
@@ -547,7 +472,7 @@ export default function OnboardingGuideModal({ open, onClose }: Props) {
         };
 
   return (
-    <div className="fixed inset-0 z-[1000]" role="presentation" {...backdropProps}>
+    <div className="onboarding-guide-layer" role="presentation" {...backdropProps}>
       {/* 上 / 下 / 左 / 右四块半透明遮罩 */}
       <div className={mask} {...backdropProps} style={{ left: 0, right: 0, top: 0, height: Math.max(0, hy) }}  />
       <div
@@ -567,7 +492,7 @@ export default function OnboardingGuideModal({ open, onClose }: Props) {
       />
       {/* 高亮缺口上的透明点击拦截层：展示目标但阻止巡游中误触跳转 */}
       <div
-        className="fixed bg-transparent"
+        className="onboarding-guide-target"
         style={{ left: hx, top: hy, width: hw, height: hh }}
 
         aria-hidden="true"
@@ -575,8 +500,8 @@ export default function OnboardingGuideModal({ open, onClose }: Props) {
       {/* 高亮描边框 */}
       <div
         aria-hidden="true"
-        className="pointer-events-none fixed rounded-xl border-2 border-[var(--accent)] shadow-[0_0_0_3px_rgba(255,255,255,0.65),0_0_24px_rgba(0,0,0,0.35)] transition-all duration-300"
-        style={{ left: hx, top: hy, width: hw, height: hh }}
+        className="onboarding-guide-highlight"
+        style={{ left: hx, top: hy, width: hw, height: hh, borderRadius: rect.borderRadius }}
       />
 
       {/* 吸附气泡：定位在目标正下方（空间不足时翻到上方），小箭头指向目标 */}
@@ -586,30 +511,11 @@ export default function OnboardingGuideModal({ open, onClose }: Props) {
         role="dialog"
         aria-modal="true"
         aria-label={t(current.title.zh, current.title.en)}
-        className={`${cardShell} fixed`}
+        className="onboarding-guide-card" data-site-surface="popover"
         style={tooltipStyle}
 
       >
-        <span
-          aria-hidden="true"
-          className="absolute h-3.5 w-3.5 rotate-45 border-[var(--border-default)] bg-[var(--popover)]"
-          style={
-            tooltipLayout.placement === 'below'
-              ? {
-                  top: -7,
-                  left: tooltipLayout.arrowLeft - 7,
-                  borderLeftWidth: 1,
-                  borderTopWidth: 1,
-                }
-              : {
-                  bottom: -7,
-                  left: tooltipLayout.arrowLeft - 7,
-                  borderRightWidth: 1,
-                  borderBottomWidth: 1,
-                }
-          }
-        />
-        {renderCardBody(false)}
+        {renderCardBody()}
       </div>
     </div>
   );
