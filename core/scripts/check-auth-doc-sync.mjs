@@ -22,6 +22,7 @@ const EXACT = new Set([
   'packages/client/i18n/i18n-client.ts',
   'packages/client/app/[lang]/calendar/_components/GoogleBackupPanel.tsx',
   'apps/api/src/db/schema.pg.sql', 'apps/api/src/index.ts',
+  'apps/api/src/utils/rate_limit.ts',
   'apps/api/src/routes/mcp.ts',
   'apps/api/src/routes/onboarding.ts', 'apps/api/migrations/0265_home_onboarding.sql',
   'packages/client/lib/onboarding.ts', 'packages/client/components/OnboardingGuideModal.tsx',

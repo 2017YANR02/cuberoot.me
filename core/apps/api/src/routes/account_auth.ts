@@ -23,6 +23,7 @@ import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import { AdminActivityRangeError, resolveAdminActivityRange } from '../utils/admin_activity.js';
 import { checkRateLimit, requireAdmin } from '../utils/recon_helpers.js';
+import { RateLimitError } from '../utils/rate_limit.js';
 import { signSession, verifySession, hasFreshEmailGrant, hasFreshPhonePasswordResetGrant } from '../utils/session.js';
 import { beginIdentityLogin, beginWechatPhoneIdentityLogin, completeIdentityChoice, IdentityChoiceError, issueIdentityLinkCode, previewIdentityLinkCode } from '../utils/identity_choice.js';
 import { captureAccountDevice } from '../utils/account_device.js';
@@ -111,13 +112,14 @@ function parsePhoneCodePurpose(value: unknown): 'login' | 'password_reset' | nul
 function authRateLimitResponse(
   c: Context,
   options?: { bucket?: string; max?: number },
+  subject = getIp(c),
 ): Response | null {
   try {
-    checkRateLimit(getIp(c), options);
+    checkRateLimit(subject, options);
     return null;
   } catch (error) {
     if (!(error instanceof Error) || error.message !== 'Rate limit exceeded') throw error;
-    c.header('Retry-After', '5');
+    c.header('Retry-After', String(error instanceof RateLimitError ? error.retryAfterSeconds : 5));
     return c.json(webSessionError('RATE_LIMITED', error.message), 429);
   }
 }
@@ -569,16 +571,23 @@ accountAuthRoutes.post('/auth/douyin/miniprogram', async (c) => {
 // 服务端原子核销后重签常规会话。网页最终仍走现有 applySession/localStorage 契约。
 accountAuthRoutes.post('/auth/web-session/ticket', async (c) => {
   c.header('Cache-Control', 'no-store');
-  const rateLimited = authRateLimitResponse(c);
+  // Shared Wi-Fi must not share the small business-write quota. Authenticate
+  // before charging the per-account allowance; keep an IP ceiling for abuse.
+  const rateLimited = authRateLimitResponse(c, { bucket: 'web-session-ticket-ip', max: 600 });
   if (rateLimited) return rateLimited;
   const applicant = await ticketApplicant(c);
   if ('response' in applicant) return applicant.response;
+  const accountLimited = authRateLimitResponse(c,
+    { bucket: 'web-session-ticket-user', max: 60 }, String(applicant.uid));
+  if (accountLimited) return accountLimited;
   return c.json(await issueWebSessionTicket(applicant.uid));
 });
 
 accountAuthRoutes.post('/auth/web-session/exchange', async (c) => {
   c.header('Cache-Control', 'no-store');
-  const rateLimited = authRateLimitResponse(c);
+  // Redemption keeps its own ceiling, so issuing tickets cannot prevent them
+  // from being used. The random, 90-second ticket remains single-use.
+  const rateLimited = authRateLimitResponse(c, { bucket: 'web-session-exchange-ip', max: 600 });
   if (rateLimited) return rateLimited;
   const body = await c.req.json<{ ticket?: unknown }>().catch(() => ({ ticket: undefined }));
   const ticket = typeof body.ticket === 'string' ? body.ticket.trim() : '';

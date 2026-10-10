@@ -85,6 +85,7 @@ describe('/dev/auth source-review drift', () => {
     ['@cuberoot/client', 'app/[lang]/admin/page.tsx'],
     ['@cuberoot/client', 'app/[lang]/calendar/_components/GoogleBackupPanel.tsx'],
     ['@cuberoot/server', 'src/utils/account_delete.ts'], ['@cuberoot/server', 'src/utils/apple_login.ts'],
+    ['@cuberoot/server', 'src/utils/rate_limit.ts'],
     ['@cuberoot/server', 'src/utils/future_oauth.ts'], ['@cuberoot/server', 'migrations/0999_auth_new.sql'],
     ['@cuberoot/server', 'src/utils/password.ts'], ['@cuberoot/server', 'src/utils/credentials.ts'],
     ['@cuberoot/mobile', 'src/native/secure-token.ts'], ['@cuberoot/client', 'proxy.ts'],

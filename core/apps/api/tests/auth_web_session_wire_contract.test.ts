@@ -8,6 +8,7 @@ import {
 
 const mocks = vi.hoisted(() => ({
   query: vi.fn(),
+  getIp: vi.fn(),
   approveWechatBrowserSession: vi.fn(),
   checkRateLimit: vi.fn(),
   captureAccountDevice: vi.fn(),
@@ -40,7 +41,7 @@ vi.mock('../src/db/connection.js', () => ({
   // These wire-contract cases must never perform a real database operation.
   sql: vi.fn(() => { throw new Error('Unexpected direct database access in session contract test'); }),
 }));
-vi.mock('../src/utils/analytics_helpers.js', () => ({ getIp: () => '127.0.0.1' }));
+vi.mock('../src/utils/analytics_helpers.js', () => ({ getIp: mocks.getIp }));
 vi.mock('../src/utils/account_device.js', () => ({ captureAccountDevice: mocks.captureAccountDevice }));
 vi.mock('../src/utils/recon_helpers.js', () => ({ checkRateLimit: mocks.checkRateLimit }));
 vi.mock('../src/utils/session.js', () => ({
@@ -108,6 +109,7 @@ vi.mock('../src/utils/web_session_ticket.js', () => ({
 vi.mock('../src/utils/app_user_auth.js', () => ({ requireAppUserId: mocks.requireAppUserId }));
 
 import { accountAuthRoutes } from '../src/routes/account_auth.js';
+import { checkRateLimit as realCheckRateLimit, RateLimitError } from '../src/utils/rate_limit.js';
 import { DouyinMiniProgramError } from '../src/utils/douyin_miniprogram.js';
 import { WechatMiniProgramError } from '../src/utils/wechat_miniprogram.js';
 
@@ -135,12 +137,14 @@ const codeVerifier = 'V'.repeat(43);
 describe('auth route wire contracts', () => {
   beforeEach(() => {
     for (const mock of Object.values(mocks)) mock.mockReset();
+    mocks.getIp.mockReturnValue('127.0.0.1');
     mocks.signSession.mockReturnValue(token);
     mocks.publicUser.mockReturnValue(publicAccount);
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.useRealTimers();
   });
 
   it('does not let the legacy create flag bypass first-time phone authorization', async () => {
@@ -733,5 +737,65 @@ describe('auth route wire contracts', () => {
       message: 'Rate limit exceeded',
       error: 'Rate limit exceeded',
     });
+  });
+
+  it('keeps 40 users behind one IP independent of exhausted business quotas', async () => {
+    mocks.getIp.mockReturnValue('shared-network');
+    mocks.checkRateLimit.mockImplementation(realCheckRateLimit);
+    mocks.issueWebSessionTicket.mockResolvedValue({ ticket, expiresIn: 90 });
+    mocks.getUserById.mockImplementation(async (uid: number) => ({ ...account, id: uid }));
+    mocks.publicUser.mockImplementation((user: typeof account) => ({ ...publicAccount, uid: user.id }));
+    for (let i = 0; i < 30; i++) realCheckRateLimit('shared-network');
+    expect(() => realCheckRateLimit('shared-network')).toThrow(RateLimitError);
+    for (let uid = 100; uid < 140; uid++) {
+      mocks.requireAppUserId.mockResolvedValue(uid);
+      mocks.consumeWebSessionTicket.mockResolvedValue(uid);
+      expect((await accountAuthRoutes.request('/auth/web-session/ticket', { method: 'POST' })).status).toBe(200);
+      expect((await accountAuthRoutes.request('/auth/web-session/exchange', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ticket }),
+      })).status).toBe(200);
+    }
+    // Login cannot consume or reset the pre-existing business quota either.
+    expect(() => realCheckRateLimit('shared-network')).toThrow(RateLimitError);
+  });
+
+  it('limits one authenticated account across IPs without blocking another user or redemption', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2030-01-01T00:00:00Z'));
+    mocks.getIp.mockReturnValue('account-network-a');
+    mocks.checkRateLimit.mockImplementation(realCheckRateLimit);
+    mocks.requireAppUserId.mockResolvedValue(900);
+    mocks.issueWebSessionTicket.mockResolvedValue({ ticket, expiresIn: 90 });
+    for (let i = 0; i < 60; i++) {
+      expect((await accountAuthRoutes.request('/auth/web-session/ticket', { method: 'POST' })).status).toBe(200);
+    }
+    vi.setSystemTime(new Date('2030-01-01T00:00:05Z'));
+    mocks.getIp.mockReturnValue('account-network-b');
+    const limited = await accountAuthRoutes.request('/auth/web-session/ticket', { method: 'POST' });
+    expect(limited.status).toBe(429);
+    expect(limited.headers.get('Retry-After')).toBe('55');
+    expect(mocks.issueWebSessionTicket).toHaveBeenCalledTimes(60);
+    mocks.requireAppUserId.mockResolvedValue(901);
+    expect((await accountAuthRoutes.request('/auth/web-session/ticket', { method: 'POST' })).status).toBe(200);
+    mocks.consumeWebSessionTicket.mockResolvedValue(900);
+    mocks.getUserById.mockResolvedValue(account);
+    expect((await accountAuthRoutes.request('/auth/web-session/exchange', {
+      method: 'POST', body: JSON.stringify({ ticket }),
+    })).status).toBe(200);
+    vi.setSystemTime(new Date('2030-01-01T00:01:00Z'));
+    mocks.requireAppUserId.mockResolvedValue(900);
+    expect((await accountAuthRoutes.request('/auth/web-session/ticket', { method: 'POST' })).status).toBe(200);
+  });
+
+  it.each(['ticket', 'exchange'])('retains the independent IP ceiling before %s work', async (action) => {
+    const ip = `ceiling-${action}`;
+    mocks.getIp.mockReturnValue(ip);
+    mocks.checkRateLimit.mockImplementation(realCheckRateLimit);
+    for (let i = 0; i < 600; i++) realCheckRateLimit(ip, { bucket: `web-session-${action}-ip`, max: 600 });
+    const response = await accountAuthRoutes.request(`/auth/web-session/${action}`, { method: 'POST' });
+    expect(response.status).toBe(429);
+    expect(mocks.requireAppUserId).not.toHaveBeenCalled();
+    expect(mocks.consumeWebSessionTicket).not.toHaveBeenCalled();
+    expect(mocks.issueWebSessionTicket).not.toHaveBeenCalled();
   });
 });
