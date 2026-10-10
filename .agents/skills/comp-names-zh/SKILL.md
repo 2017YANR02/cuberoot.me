@@ -18,7 +18,7 @@ description: "Use when regenerating comp_names_zh.json, debugging 比赛名本�
 
 ## 数据：`stats/comp_names_zh.json`
 
-由 `core/jobs/stats-build/src/bin/fetch_comp_names_zh.ts` 生成（在 `core/jobs/stats-build` 下跑）。
+日常由 `fetch_upcoming_comps.ts --incremental` 复用本轮 WCA/CN 索引增量合并，保留历史映射。历史补齐仍使用 `core/jobs/stats-build/src/bin/fetch_comp_names_zh.ts`（在 `core/jobs/stats-build` 下跑），不再每天全量遍历历史。
 
 ```bash
 npx tsx src/bin/fetch_comp_names_zh.ts           # 全量
