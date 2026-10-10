@@ -28,6 +28,11 @@ const CASES = [
   { id: 'dogic', setup: 'FREGU', alg: "HIERC2 FLACR'", manual: '2NALPO', typed: "FLACRw' HIERC" },
   { id: 'octahedron4', setup: 'DBRRF', alg: "DFLBL2 DBLBBBR'", manual: '2DBRRF', typed: "DFLBLw' DBLBBBR" },
   { id: 'dinoskewb', setup: 'DRF', alg: "UFR DBR'", manual: '2DFL', typed: "DRFw' UFR" },
+  { id: 'lattice', setup: '3DRF', alg: "3DFLw UFR'", manual: '3UFR', typed: "3DRFw' DFL" },
+  { id: 'hyperx', setup: 'F', alg: 'DRFw U2', manual: '2UFR', typed: "2DRF' F" },
+  { id: 'latticex', setup: 'F', alg: '3DRFw U2', manual: '3UFRw', typed: "3DRF' UFR" },
+  { id: 'masterbrilic', setup: '1-2U', alg: '3F L2', manual: '1-3U', typed: "1-3F' 3L" },
+  { id: 'masterftov2', setup: '1-2F', alg: "D L'", manual: '2F', typed: "1-2D' L" },
 ] as const;
 type Fixture = typeof CASES[number];
 
@@ -237,24 +242,82 @@ describe('native PG simulator controls', () => {
     )).toBe(true);
   });
 
-  it.each(CASES)('$id marks invalid setup/solution text and blocks animation until corrected', async (spec) => {
+  it.each(CASES)('$id blocks animation for invalid input and random scrambles for an invalid solution until corrected', async (spec) => {
     await mount(spec);
     for (const [placeholder, invalid] of [
       ['Scramble', `${spec.setup} notAMove`],
+      ['Solution', `${spec.alg} INVALID`],
       ['Solution', `(${spec.setup})1000000000`],
     ]) {
+      const prior = { setup: player.experimentalSetupAlg, alg: player.alg, anchor: player.experimentalSetupAnchor };
       await enter(placeholder, invalid);
       expect(input(placeholder).closest('.sim-player-hlwrap')?.querySelector('.bad')?.textContent).toBe(invalid);
       expect(button('Animate scramble').disabled).toBe(true);
+      expect(button('Random scramble').disabled).toBe(placeholder === 'Solution');
+      setupChanges.mockClear();
+      algChanges.mockClear();
+      player.pause.mockClear();
+      player.jumpToStart.mockClear();
+      player.jumpToEnd.mockClear();
       await act(async () => button('Animate scramble').click());
+      if (placeholder === 'Solution') await act(async () => button('Random scramble').click());
       await nextAnimationFrame();
       await nextAnimationFrame();
       expect(player.play).not.toHaveBeenCalled();
+      expect(player.pause).not.toHaveBeenCalled();
+      expect(player.jumpToStart).not.toHaveBeenCalled();
+      expect(player.jumpToEnd).not.toHaveBeenCalled();
+      expect({ setup: player.experimentalSetupAlg, alg: player.alg, anchor: player.experimentalSetupAnchor }).toEqual(prior);
+      expect(setupChanges).not.toHaveBeenCalled();
+      expect(algChanges).not.toHaveBeenCalled();
       expect(input(placeholder).value).toBe(invalid);
       await enter(placeholder, placeholder === 'Scramble' ? spec.setup : spec.alg);
       expect(host.querySelector('.sim-player-hl .bad')).toBeNull();
       expect(button('Animate scramble').disabled).toBe(false);
+      expect(button('Random scramble').disabled).toBe(false);
     }
+    vi.spyOn(Math, 'random').mockReturnValue(0.375);
+    const scramble = generateNativePuzzleScramble(spec.id, () => 0.375);
+    setupChanges.mockClear();
+    algChanges.mockClear();
+    await act(async () => button('Random scramble').click());
+    await nextAnimationFrame();
+    await nextAnimationFrame();
+    expect(setupChanges).toHaveBeenCalledExactlyOnceWith(scramble);
+    expect(algChanges).not.toHaveBeenCalled();
+    expect(input('Scramble').value).toBe(scramble);
+    expect(input('Solution').value).toBe(spec.alg);
+    expect(player.experimentalSetupAlg).toBe(scramble);
+    expect(player.alg).toBe(spec.alg);
+    expect(player.play).not.toHaveBeenCalled();
+  });
+
+  it.each(CASES)('$id replaces an invalid setup with a random scramble while retaining its valid solution and anchor', async (spec) => {
+    await mount(spec, { playbackMode: 'algorithm' });
+    await enter('Scramble', `${spec.setup} INVALID`);
+    expect(input('Scramble').closest('.sim-player-hlwrap')?.querySelector('.bad')).not.toBeNull();
+    expect(button('Animate scramble').disabled).toBe(true);
+    expect(button('Random scramble').disabled).toBe(false);
+    expect(player.experimentalSetupAlg).toBe(spec.setup);
+    expect(player.alg).toBe(spec.alg);
+    vi.spyOn(Math, 'random').mockReturnValue(0.375);
+    const scramble = generateNativePuzzleScramble(spec.id, () => 0.375);
+    setupChanges.mockClear();
+    algChanges.mockClear();
+    await act(async () => button('Random scramble').click());
+    await nextAnimationFrame();
+    await nextAnimationFrame();
+    expect(setupChanges).toHaveBeenCalledExactlyOnceWith(scramble);
+    expect(algChanges).not.toHaveBeenCalled();
+    expect(input('Scramble').value).toBe(scramble);
+    expect(input('Solution').value).toBe(spec.alg);
+    expect(host.querySelector('.sim-player-hl .bad')).toBeNull();
+    expect(button('Animate scramble').disabled).toBe(false);
+    expect({ setup: player.experimentalSetupAlg, alg: player.alg, anchor: player.experimentalSetupAnchor })
+      .toEqual({ setup: scramble, alg: spec.alg, anchor: 'end' });
+    expect(player.jumpToEnd).toHaveBeenCalledWith({ flash: false });
+    expect(player.jumpToStart).not.toHaveBeenCalled();
+    expect(player.play).not.toHaveBeenCalled();
   });
 
   it.each(CASES)('$id inverts both fields when the setup ends with a line comment', async (spec) => {
@@ -285,6 +348,42 @@ describe('native PG simulator controls', () => {
     await nextAnimationFrame();
     expect(player.play).not.toHaveBeenCalled();
   });
+
+  it.each(['Scramble', 'Solution'].flatMap((placeholder) => [0, 1].map((elapsedFrames) => ({ placeholder, elapsedFrames }))))(
+    'cancels delayed random-scramble settling when $placeholder becomes invalid after $elapsedFrames frames without a URL echo',
+    async ({ placeholder, elapsedFrames }) => {
+      const spec = CASES.find(({ id }) => id === 'masterbrilic')!;
+      await mount(spec, { playbackMode: 'algorithm', deferUrlUpdates: true });
+      vi.spyOn(Math, 'random').mockReturnValue(0.375);
+      const scramble = generateNativePuzzleScramble(spec.id, () => 0.375);
+      await act(async () => button('Random scramble').click());
+      expect(player.experimentalSetupAlg).toBe(scramble);
+      expect(frames.size).toBeGreaterThan(0);
+      for (let frame = 0; frame < elapsedFrames; frame++) await nextAnimationFrame();
+      const prior = { setup: player.experimentalSetupAlg, alg: player.alg, anchor: player.experimentalSetupAnchor };
+      const invalid = `${input(placeholder).value} INVALID`;
+      await enter(placeholder, invalid);
+      expect(input(placeholder).closest('.sim-player-hlwrap')?.querySelector('.bad')).not.toBeNull();
+      expect(button('Random scramble').disabled).toBe(placeholder === 'Solution');
+      setupChanges.mockClear();
+      algChanges.mockClear();
+      player.pause.mockClear();
+      player.jumpToStart.mockClear();
+      player.jumpToEnd.mockClear();
+      // The queued callback must be cancelled even though the external setup/alg
+      // props still contain their old valid values. No late setter/seek may run.
+      await nextAnimationFrame();
+      await nextAnimationFrame();
+      expect({ setup: player.experimentalSetupAlg, alg: player.alg, anchor: player.experimentalSetupAnchor }).toEqual(prior);
+      expect(input(placeholder).value).toBe(invalid);
+      expect(setupChanges).not.toHaveBeenCalled();
+      expect(algChanges).not.toHaveBeenCalled();
+      expect(player.pause).not.toHaveBeenCalled();
+      expect(player.jumpToStart).not.toHaveBeenCalled();
+      expect(player.jumpToEnd).not.toHaveBeenCalled();
+      expect(player.play).not.toHaveBeenCalled();
+    },
+  );
 
   it.each([
     { id: 'superz', move: 'R', order: 4 },

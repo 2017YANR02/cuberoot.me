@@ -222,6 +222,11 @@ describe.each([
   { event: 'octahedron4', nameEn: '4×4 Octahedron', nameZh: '四阶八面体' },
   { event: 'dinoskewb', nameEn: 'Dino Skewb', nameZh: '恐龙斜转' },
   { event: 'cube3dino', nameEn: '3×3 + Dino', nameZh: '三阶＋恐龙' },
+  { event: 'lattice', nameEn: 'Lattice Cube', nameZh: 'Lattice' },
+  { event: 'hyperx', nameEn: 'Hyper X', nameZh: 'Hyper X' },
+  { event: 'latticex', nameEn: 'Lattice X', nameZh: 'Lattice X' },
+  { event: 'masterbrilic', nameEn: 'Master Brilic', nameZh: 'Master Brilic' },
+  { event: 'masterftov2', nameEn: 'Master FTO v2', nameZh: '四阶 FTO v2' },
 ] as const)('$event csTimer compatibility', ({ event, nameEn, nameZh }) => {
   it('preserves renamed sessions and mixed native notation through both import APIs', () => {
     const solve = {
@@ -282,6 +287,26 @@ describe('3×3 + Dino csTimer session names', () => {
       expect(byEvent?.['333']).toBeUndefined();
     },
   );
+});
+
+describe('compound native csTimer session names', () => {
+  it.each([
+    ['Session_Lattice_Cube', 'lattice'],
+    ['Hyper_X_Practice', 'hyperx'],
+    ['Session_Lattice_X', 'latticex'],
+    ['Lattice X_Practice', 'latticex'],
+    ['Session_Master_Brilic', 'masterbrilic'],
+    ['Session_Master_FTO_v2', 'masterftov2'],
+    ['Master FTO v2_Practice', 'masterftov2'],
+    ['练习：四阶 FTO v2', 'masterftov2'],
+  ] as const)('preserves %s as %s before trying shorter event tokens', (name, event) => {
+    const raw = JSON.stringify({
+      session1: [[[0, 8_765], 'R', '', 1_700_000_000]],
+      properties: { sessionData: { 1: { name, opt: { scrType: 'input' } } } },
+    });
+    expect(parseCstimerExport(raw)[0]).toMatchObject({ event, matched: true });
+    expect(importCstimerJson(raw)).toMatchObject({ [event]: [{ event, scramble: 'R' }] });
+  });
 });
 
 describe('Sphere Cube csTimer compatibility', () => {

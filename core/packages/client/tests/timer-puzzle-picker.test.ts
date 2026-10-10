@@ -130,7 +130,7 @@ describe('shared timer puzzle picker', () => {
     expect(host.querySelector('.pp')?.classList.contains('pp--compact')).toBe(false);
   });
 
-  it('renders all 59 canonical events with a real SVG or an explicit text badge', () => {
+  it('renders all 64 canonical events with a real SVG or an explicit text badge', () => {
     const groups = TIMER_EVENT_PICKER_GROUPS.map((group) => ({
       id: group.id,
       label: group.nameEn,
@@ -152,9 +152,9 @@ describe('shared timer puzzle picker', () => {
 
     act(() => host.querySelector<HTMLButtonElement>('.pp-trigger')?.click());
     const items = [...host.querySelectorAll<HTMLElement>('.pp-item')];
-    expect(items).toHaveLength(59);
+    expect(items).toHaveLength(64);
     expect(items.filter((item) => item.querySelector('.cubing-icon'))).toHaveLength(27);
-    expect(items.filter((item) => item.querySelector('.pp-item-tag'))).toHaveLength(32);
+    expect(items.filter((item) => item.querySelector('.pp-item-tag'))).toHaveLength(37);
     for (const item of items) {
       const icon = item.querySelector<HTMLElement>('.cubing-icon');
       const tag = item.querySelector<HTMLElement>('.pp-item-tag');
@@ -189,7 +189,7 @@ describe('shared timer puzzle picker', () => {
       expect(onSelect).toHaveBeenLastCalledWith(selectedEvent);
     }
     act(() => host.querySelector<HTMLButtonElement>('.pp-trigger')!.click());
-    expect(host.querySelectorAll('.pp-item')).toHaveLength(42);
+    expect(host.querySelectorAll('.pp-item')).toHaveLength(47);
     expect([...host.querySelectorAll('.pp-item')].some(item => item.textContent === 'ZBLL')).toBe(false);
     act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
     render('222');
@@ -239,7 +239,7 @@ describe('shared timer puzzle picker', () => {
       expect(host.querySelector('.pp-trigger')?.getAttribute('aria-label')).toBe(puzzle);
       expect(host.querySelector('[aria-label="Scramble type"]')).toBeNull();
       act(() => host.querySelector<HTMLButtonElement>('.pp-trigger')!.click());
-      expect(host.querySelectorAll('.pp-item')).toHaveLength(40);
+      expect(host.querySelectorAll('.pp-item')).toHaveLength(45);
       act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
     }
   });

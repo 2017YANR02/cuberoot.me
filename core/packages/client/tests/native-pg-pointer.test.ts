@@ -38,7 +38,8 @@ async function flushInitialization(): Promise<void> {
 
 /** No renderer/WebGL is used. Real PG surface polygons and real THREE raycasts
  * exercise the DOM adapter; the separate drag tests prove move geometry/signs. */
-async function fixture(id: NativePuzzleId = 'superz', deferred = false, shadowMode: ShadowRootMode = 'closed') {
+async function fixture(id: NativePuzzleId = 'superz', deferred = false, shadowMode: ShadowRootMode = 'closed',
+  dragDepths?: ReadonlyArray<NativePuzzleDragDepth | undefined>) {
   const host = document.createElement('div');
   document.body.appendChild(host);
   const player = document.createElement('twisty-player');
@@ -103,8 +104,8 @@ async function fixture(id: NativePuzzleId = 'superz', deferred = false, shadowMo
       const hit = raycaster.intersectObject(mesh)[0];
       if (!hit || hit.point.distanceTo(world) > 1e-6) continue;
       const local = object.worldToLocal(hit.point.clone());
-      const requiredDepths: Array<NativePuzzleDragDepth | undefined> = id === 'superz'
-        ? [undefined, 'outer'] : [undefined, 'outer', 'inner', 'wide'];
+      const requiredDepths: ReadonlyArray<NativePuzzleDragDepth | undefined> = dragDepths ?? (id === 'superz'
+        ? [undefined, 'outer'] : [undefined, 'outer', 'inner', 'wide']);
       if (requiredDepths.some((depth) => !pickNativePuzzleDrag(geometry, local, object.matrixWorld, camera, DELTA, VIEWPORT, depth))) continue;
       witness = {
         x: rect.left + (screen.x + 1) * rect.width / 2,
@@ -299,8 +300,12 @@ describe('native PG pointer adapter', () => {
     expect(f.closest).not.toHaveBeenCalled();
   });
 
-  it.each(['inner', 'wide'] as const)('SuperZ ignores a retained %s selector depth from a previous puzzle', async (selected) => {
-    const f = await fixture('superz'), point = f.views[0].witness;
+  it.each([
+    { id: 'superz', selected: 'inner' }, { id: 'superz', selected: 'wide' },
+    { id: 'superz', selected: 'inner3' }, { id: 'superz', selected: 'wide3' },
+    { id: 'hyperx', selected: 'inner3' }, { id: 'masterftov2', selected: 'wide3' },
+  ] as const)('$id ignores a retained $selected selector depth from a previous puzzle', async ({ id, selected }) => {
+    const f = await fixture(id), point = f.views[0].witness;
     f.state.depth = selected;
     for (const sign of [1, -1]) {
       f.fire('pointerdown');
@@ -326,6 +331,60 @@ describe('native PG pointer adapter', () => {
     const singleLayer = await fixture('superz');
     singleLayer.fire('pointerdown', { altKey: true }); singleLayer.fire('pointerup', { altKey: true });
     expect(singleLayer.addMove).not.toHaveBeenCalled();
+  });
+
+  it.each(['lattice', 'latticex', 'masterbrilic'] as const)('%s commits both third-layer drag depths in both directions', async (id) => {
+    for (const selected of ['inner3', 'wide3'] as const) {
+      const f = await fixture(id, false, 'closed', [selected]), point = f.views[0].witness;
+      f.state.depth = selected;
+      for (const sign of [1, -1]) {
+        f.fire('pointerdown');
+        f.fire('pointermove', { x: point.x + sign * DELTA.x, y: point.y + sign * DELTA.y });
+        f.fire('pointerup');
+      }
+      expect(f.addMove.mock.calls).toEqual([[f.expectedDrag(selected, 0, 1)], [f.expectedDrag(selected, 0, -1)]]);
+      const move = new Move(f.addMove.mock.calls[0][0]);
+      expect(move.innerLayer).toBe(3);
+      expect(move.family.endsWith('w') || move.outerLayer !== undefined).toBe(selected === 'wide3');
+      expect(f.closest).not.toHaveBeenCalled();
+    }
+  });
+
+  it.each([
+    { id: 'lattice', selected: 'inner3', token: '3DRF' },
+    { id: 'lattice', selected: 'wide3', token: '3DRFw' },
+    { id: 'masterbrilic', selected: 'inner3', token: '3U' },
+    { id: 'masterbrilic', selected: 'wide', token: '1-2U' },
+    { id: 'masterbrilic', selected: 'wide3', token: '1-3U' },
+    { id: 'masterftov2', selected: 'wide', token: '1-2F' },
+  ] as const)('$id taps use the selected $selected canonical token', async ({ id, selected, token }) => {
+    const f = await fixture(id);
+    f.state.depth = selected;
+    f.fire('pointerdown'); f.fire('pointerup');
+    f.fire('pointerdown', { button: 2 }); f.fire('pointerup', { button: 2 });
+    expect(f.addMove.mock.calls).toEqual([[`${token}'`], [token]]);
+    f.fire('pointerdown', { ctrlKey: true }); f.fire('pointerup', { ctrlKey: true });
+    expect(f.addMove.mock.calls[2]).toEqual([`${f.family}v'`]);
+  });
+
+  it.each([
+    { id: 'hyperx', selected: 'inner' },
+    { id: 'hyperx', selected: 'wide' },
+    { id: 'latticex', selected: 'inner' },
+    { id: 'latticex', selected: 'inner3' },
+    { id: 'latticex', selected: 'wide3' },
+  ] as const)('$id never substitutes an outer face tap for unsupported $selected', async ({ id, selected }) => {
+    const f = await fixture(id);
+    f.state.depth = selected;
+    f.fire('pointerdown'); f.fire('pointerup');
+    expect(f.closest).toHaveBeenCalledOnce();
+    expect(f.addMove).not.toHaveBeenCalled();
+  });
+
+  it('preserves the native Shift-tap opposite-half alias on a two-half face', async () => {
+    const f = await fixture('hyperx');
+    f.fire('pointerdown', { shiftKey: true }); f.fire('pointerup', { shiftKey: true });
+    expect(f.addMove.mock.calls).toEqual([["2F'"]]);
   });
 
   it('leaves empty-space orbit, controls, and disabled pointer turns to the original handlers', async () => {

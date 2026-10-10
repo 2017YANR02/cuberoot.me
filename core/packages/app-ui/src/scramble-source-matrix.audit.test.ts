@@ -24,6 +24,7 @@ const CURRENT_LOCAL_PROVIDERS: readonly EventId[] = [
   'pyra', 'skewb', 'sq1', 'mega', 'clock',
   'magic', 'mmagic',
   'fto', 'kilominx', 'gear', 'ivy', 'redi', 'mpyram', 'pyraminx_duo', 'superz', 'dogic', 'octahedron4', 'dinoskewb', 'cube3dino',
+  'lattice', 'hyperx', 'latticex', 'masterbrilic', 'masterftov2',
   'r3', 'r4', 'r5', 'cross', 'f2l',
   'll', 'oll', 'pll', 'coll', 'cmll', 'zbll', 'cll', 'ell', 'eocp', '2gll', 'ollcp', 'zzll', 'zbls', 'lse', 'l10p', 'eg1', 'eg2',
 ];
@@ -41,7 +42,7 @@ function currentMobileOutcome(event: EventId, source: Source): RouteOutcome {
     : 'provider-missing';
 }
 
-describe('adversarial 59 × 3 Mobile scramble-source matrix', () => {
+describe('adversarial 64 × 3 Mobile scramble-source matrix', () => {
   it('enumerates every event/source cell exactly once', () => {
     const matrix = EVENTS.flatMap(({ id }) => (
       (['real', 'random', 'manual'] as const).map((source) => ({
@@ -51,12 +52,12 @@ describe('adversarial 59 × 3 Mobile scramble-source matrix', () => {
       }))
     ));
 
-    expect(EVENTS).toHaveLength(59);
-    expect(matrix).toHaveLength(177);
-    expect(new Set(matrix.map(({ event, source }) => `${event}:${source}`))).toHaveLength(177);
+    expect(EVENTS).toHaveLength(64);
+    expect(matrix).toHaveLength(192);
+    expect(new Set(matrix.map(({ event, source }) => `${event}:${source}`))).toHaveLength(192);
   });
 
-  it('keeps the real route at 19 isolated WCA pools, 39 same-event fallbacks, and custom manual-only', () => {
+  it('keeps the real route at 19 isolated WCA pools, 44 same-event fallbacks, and custom manual-only', () => {
     const mapped = EVENTS.filter(({ id }) => currentMobileOutcome(id, 'real') === 'real-pool')
       .map(({ id }) => id);
     const local = EVENTS.filter(({ id }) => currentMobileOutcome(id, 'real') === 'same-event-local')
@@ -70,6 +71,7 @@ describe('adversarial 59 × 3 Mobile scramble-source matrix', () => {
       '666bld', '777bld', 'magic', 'mmagic', 'sphere',
       'r3', 'r4', 'r5',
       'cross', 'f2l', 'fto', 'kilominx', 'gear', 'ivy', 'redi', 'mpyram', 'pyraminx_duo', 'superz', 'dogic', 'octahedron4', 'dinoskewb', 'cube3dino',
+      'lattice', 'hyperx', 'latticex', 'masterbrilic', 'masterftov2',
       'll', 'oll', 'pll', 'coll', 'cmll', 'zbll', 'cll', 'ell', 'eocp', '2gll', 'ollcp', 'zzll', 'zbls', 'lse', 'l10p', 'eg1', 'eg2',
     ].sort());
     // Custom's empty user-supplied source remains explicit; it is never a 333
@@ -78,7 +80,7 @@ describe('adversarial 59 × 3 Mobile scramble-source matrix', () => {
       ...CURRENT_MISSING_LOCAL_PROVIDERS,
       'custom',
     ].sort());
-    expect(local).toHaveLength(39);
+    expect(local).toHaveLength(44);
     expect(missing).toHaveLength(1);
   });
 
@@ -90,7 +92,7 @@ describe('adversarial 59 × 3 Mobile scramble-source matrix', () => {
 
     expect(local.sort()).toEqual([...CURRENT_LOCAL_PROVIDERS].sort());
     expect(missing.sort()).toEqual([...CURRENT_MISSING_LOCAL_PROVIDERS, 'custom'].sort());
-    expect(local).toHaveLength(58);
+    expect(local).toHaveLength(63);
     expect(missing).toHaveLength(1);
   });
 
@@ -129,9 +131,9 @@ describe('adversarial 59 × 3 Mobile scramble-source matrix', () => {
     }
   });
 
-  it('routes manual through one queue for all 59 events, including custom and empty input', () => {
+  it('routes manual through one queue for all 64 events, including custom and empty input', () => {
     const outcomes = EVENTS.map(({ id }) => currentMobileOutcome(id, 'manual'));
-    expect(outcomes).toHaveLength(59);
+    expect(outcomes).toHaveLength(64);
     expect(new Set(outcomes)).toEqual(new Set<RouteOutcome>(['manual-queue']));
   });
 

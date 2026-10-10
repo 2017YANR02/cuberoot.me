@@ -89,6 +89,11 @@ const CSTIMER_EVENT_MAP: Record<string, EventId> = {
   'cube3dino': 'cube3dino', '3dino': 'cube3dino',
   '3×3+dino': 'cube3dino', '3x3+dino': 'cube3dino',
   '三阶＋恐龙': 'cube3dino', '三阶+恐龙': 'cube3dino',
+  'lattice': 'lattice', 'latticecube': 'lattice', 'lat': 'lattice',
+  'hyperx': 'hyperx',
+  'latticex': 'latticex', 'latx': 'latticex',
+  'masterbrilic': 'masterbrilic', 'mbrilic': 'masterbrilic',
+  'masterftov2': 'masterftov2', 'ftov2': 'masterftov2', '四阶ftov2': 'masterftov2',
 };
 
 /* ------------------------------------------------------------------ */
@@ -158,6 +163,18 @@ function nameToEvent(name: unknown): { event: EventId; matched: boolean } {
   }
   if (tokens.some((token, index) => token === 'dino' && tokens[index + 1] === 'skewb')) {
     return normalizeEventKey('dinoskewb');
+  }
+  if (tokens.some((token, index) => token === 'hyper' && tokens[index + 1] === 'x')) {
+    return normalizeEventKey('hyperx');
+  }
+  if (tokens.some((token, index) => token === 'lattice' && tokens[index + 1] === 'x')) {
+    return normalizeEventKey('latticex');
+  }
+  if (tokens.some((token, index) => token === 'master' && tokens[index + 1] === 'brilic')) {
+    return normalizeEventKey('masterbrilic');
+  }
+  if (tokens.some((token, index) => token === 'fto' && tokens[index + 1] === 'v2')) {
+    return normalizeEventKey('masterftov2');
   }
   if (/\b4\s*[x×]\s*4[\s_-]+octahedron\b/i.test(name)) {
     return normalizeEventKey('octahedron4');
