@@ -51,7 +51,7 @@ describe('catalog cover parity', () => {
     expect((await send({ kind: 'alg', id: '../timer' })).status).toBe(400);
     expect(revalidateTag).not.toHaveBeenCalled();
     expect((await send({ kind: 'alg' })).status).toBe(200);
-    expect(revalidateTag).toHaveBeenCalledWith('alg-catalog', { expire: 0 });
+    expect(revalidateTag).toHaveBeenCalledWith('alg-catalog', 'max');
     vi.unstubAllEnvs();
   });
 });
