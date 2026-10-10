@@ -1023,7 +1023,7 @@ const ENDPOINTS: Ep[] = [
 
   // ---- system ----
   { d: 'system', m: 'POST', p: '/v1/app/boot-diagnostics', g: 'public', c: 'no-store', zh: '匿名上报脱敏的页面启动错误，不保存完整 UA、IP 或账号', en: 'Report a redacted page-startup error without storing raw UA, IP, or account identity' },
-  { d: 'system', m: 'GET', p: '/v1/app/boot-diagnostics', g: 'admin', c: 'no-store', zh: '管理员按诊断编号查询最近 90 天的启动错误', en: 'Admin lookup of startup errors from the last 90 days by diagnostic code' },
+  { d: 'system', m: 'GET', p: '/v1/app/boot-diagnostics', g: 'admin', c: 'no-store', zh: '管理员查看最近 90 天的启动错误，可选按诊断编号筛选；管理后台展示最近记录', en: 'Admin lookup of startup errors from the last 90 days, optionally filtered by diagnostic code; recent reports appear in Administration' },
   { d: 'system', m: 'GET', p: '/v1/health', g: 'public', c: 'no-store', zh: '健康检查', en: 'Health check' },
   { d: 'system', m: 'GET', p: '/v1/geo/country', g: 'public', c: 'no-store', zh: '当前访客的 IP 国家代码；本地数据库查询，仅返回国家，失败返回 null，禁止共享缓存', en: 'Visitor IP country code from the local database; returns only the country, or null when unavailable; never shared-cached' },
   { d: 'system', m: 'GET', p: '/v1/visualcube.svg', g: 'public', c: 'cdn', zh: '服务端渲染魔方 SVG', en: 'Server-rendered cube SVG' },
