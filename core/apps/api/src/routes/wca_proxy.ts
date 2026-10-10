@@ -11,7 +11,7 @@ import { Hono } from 'hono';
  * 安全:这是公网端点,fail-closed + 收紧攻击面:
  *   - 服务器未配 WCA_PROXY_SECRET → 路由当作不存在(404),功能默认关闭。
  *   - 请求头 X-Proxy-Secret 必须等于该 secret,否则 403。
- *   - 仅 GET;仅放行 /api/v0/competitions 前缀(列表 / 详情 / WCIF public)——抓取脚本唯一会打的端点。
+ *   - 仅 GET;仅放行 /api/v0/competitions 前缀及 competition_index 精确路径。
  *   - 目标 host 硬编码 WCA,路径经白名单校验后再拼,杜绝 SSRF / 开放代理。
  *   - 进程级限流安全网,防脚本失控狂打 WCA。
  *   - 响应 no-store,绝不进任何缓存(每日刷新必须见到最新数据)。
@@ -20,7 +20,7 @@ const wcaProxyRoutes = new Hono();
 
 const WCA_ORIGIN = 'https://www.worldcubeassociation.org';
 // 列表 /api/v0/competitions、详情 /api/v0/competitions/:id、WCIF /api/v0/competitions/:id/wcif/public
-const ALLOW_PATH = /^\/api\/v0\/competitions(\/|$)/;
+const ALLOW_PATH = /^\/api\/v0\/(?:competitions(?:\/|$)|competition_index$)/;
 
 // 进程级限流:secret 是主门,这只是防失控的安全网。一次正常刷新(~553 场分页 + WCIF,
 // 多数 WCIF 命中本地缓存)远低于此速率。
@@ -53,9 +53,16 @@ wcaProxyRoutes.get('/wca-proxy/*', async (c) => {
   // 服务器出口被 WCA 限带宽 ~18KB/s,大 WCIF(锦标赛可达 MB)需更长预算;须 ≥ 脚本侧超时(WCIF 120s)。
   const timer = setTimeout(() => ctrl.abort(), 150_000);
   try {
+    const requestHeaders: Record<string, string> = {
+      'User-Agent': c.req.header('User-Agent') ?? 'cuberoot-wca-proxy/1.0',
+    };
+    for (const name of ['If-None-Match', 'If-Modified-Since']) {
+      const value = c.req.header(name);
+      if (value) requestHeaders[name] = value;
+    }
     const upstream = await fetch(target, {
       // 转发 runner 的 UA(与本地直连一致);secret 头不外传给 WCA。
-      headers: { 'User-Agent': c.req.header('User-Agent') ?? 'cuberoot-wca-proxy/1.0' },
+      headers: requestHeaders,
       redirect: 'manual', // WCA API 直接 200,不跟随重定向(防跟到非白名单 / 外部 Location)
       signal: ctrl.signal,
     });
@@ -63,13 +70,20 @@ wcaProxyRoutes.get('/wca-proxy/*', async (c) => {
     if (Number(upstream.headers.get('content-length') ?? 0) > 64 * 1024 * 1024) {
       return c.json({ error: 'upstream too large' }, 502);
     }
-    const body = await upstream.text();
+    const headers = new Headers({
+      'content-type': upstream.headers.get('content-type') ?? 'application/json',
+      'cache-control': 'no-store',
+    });
+    for (const name of ['etag', 'last-modified', 'retry-after']) {
+      const value = upstream.headers.get(name);
+      if (value) headers.set(name, value);
+    }
+    // 304 has no body. Validators belong to the caller's persisted snapshot;
+    // the authenticated egress proxy itself remains uncached.
+    const body = upstream.status === 304 ? null : await upstream.text();
     return new Response(body, {
       status: upstream.status,
-      headers: {
-        'content-type': upstream.headers.get('content-type') ?? 'application/json',
-        'cache-control': 'no-store',
-      },
+      headers,
     });
   } catch (e) {
     return c.json({ error: `upstream fetch failed: ${(e as Error).message}` }, 502);

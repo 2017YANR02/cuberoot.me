@@ -15,24 +15,24 @@
 //   5. 生成极简 JSON 给前端页面使用
 //
 // 用法（从 core/ 跑，或仓库根）:
-//   npx tsx src/bin/fetch_upcoming_comps.ts --refresh
+//   npx tsx src/bin/fetch_upcoming_comps.ts --incremental [--output-dir /tmp/upcoming] [--cold-limit 100]
 //   npx tsx src/bin/fetch_upcoming_comps.ts --catalog-only [--output /tmp/all_upcoming_comps.json]
 
 import {
   existsSync,
   mkdirSync,
   readFileSync,
-  readdirSync,
   statSync,
   writeFileSync,
 } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import * as readline from 'node:readline/promises';
 import { fetchCubingCompetitions, fetchCubingCompetitors } from '@cuberoot/shared/cubing-live';
 import { localizeCity } from '@cuberoot/shared/city-localize';
 import { enrichCompElevations } from '../elevation.js';
-import { fetchCompetitionPages, retainCatalogDetails } from '../upcoming_catalog.js';
+import { fetchCompetitionPages, mergeSavedCatalog } from '../upcoming_catalog.js';
+import { IncrementalJson, type JsonReply } from '../incremental_json.js';
+import { mergeCompetitionNames } from '@cuberoot/shared/cubing-competitions';
 
 // ================= Configuration ==================
 // NOTE: 位置定位仓库根（bin -> src -> stats-build -> packages -> core -> repo root，5 个 '..'），
@@ -40,26 +40,76 @@ import { fetchCompetitionPages, retainCatalogDetails } from '../upcoming_catalog
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = resolve(__dirname, '../../../../../');
 const WR_METRIC_PATH = resolve(ROOT_DIR, 'stats/wr_metric.json');
-const OUTPUT_JSON_PATH = resolve(ROOT_DIR, 'stats/upcoming_comps.json');
+function option(name: string, fallback: string): string {
+  const index = process.argv.indexOf(name);
+  if (index < 0) return fallback;
+  const value = process.argv[index + 1];
+  if (!value || value.startsWith('--')) throw new Error(`Missing value for ${name}`);
+  return value;
+}
+const OUTPUT_DIR = resolve(option('--output-dir', resolve(ROOT_DIR, 'stats')));
+const OUTPUT_JSON_PATH = resolve(OUTPUT_DIR, 'upcoming_comps.json');
 // NOTE: Globe history/upcoming 模式 + UpcomingCompsPage All 模式共用，含全球全量 upcoming
-const ALL_OUTPUT_JSON_PATH = resolve(ROOT_DIR, 'stats/all_upcoming_comps.json');
+const ALL_OUTPUT_JSON_PATH = resolve(OUTPUT_DIR, 'all_upcoming_comps.json');
 // NOTE: 中国内地比赛全员注册名单（前端"搜索选手"非 top 时,作为静态 fallback;WCA API 不覆盖 cubing.com）
-const CN_REGISTRATIONS_JSON_PATH = resolve(ROOT_DIR, 'stats/cn_upcoming_registrations.json');
+const CN_REGISTRATIONS_JSON_PATH = resolve(OUTPUT_DIR, 'cn_upcoming_registrations.json');
 // 场馆坐标 → 海拔(米)缓存,enrichCompElevations 读写;与 gen_all_comps.ts 共用同一份
-const ELEVATION_CACHE_PATH = resolve(ROOT_DIR, 'stats/comp_elevations.json');
-const CACHE_DIR = resolve(ROOT_DIR, '.upcoming_cache');
+const ELEVATION_CACHE_PATH = resolve(OUTPUT_DIR, 'comp_elevations.json');
+const CACHE_DIR = resolve(option('--cache-dir', resolve(ROOT_DIR, '.upcoming_cache')));
+const DAY_MS = 86400_000;
+const changedCatalogIds = new Set<string>();
+const catalogShortNames = new Map<string, string>();
+const catalogInfo = new Map<string, Record<string, unknown>>();
+const previousCatalog: AllComp[] = readSaved('all_upcoming_comps.json', []);
+const previousTop: { competitions: CompEntry[]; total_cubers_tracked?: number } = readSaved('upcoming_comps.json', { competitions: [] });
+const previousTopById = new Map(previousTop.competitions.map((comp) => [comp.id, comp]));
+const coldLimit = Number(option('--cold-limit', '100'));
+if (!Number.isInteger(coldLimit) || coldLimit < 0) throw new Error('--cold-limit must be a non-negative integer');
+
+function readSaved<T>(file: string, fallback: T): T {
+  const staged = resolve(OUTPUT_DIR, file);
+  const source = existsSync(staged) ? staged : resolve(ROOT_DIR, 'stats', file);
+  return existsSync(source) ? JSON.parse(readFileSync(source, 'utf8')) as T : fallback;
+}
+function writeChanged(path: string, value: unknown): void {
+  const text = JSON.stringify(value);
+  if (existsSync(path) && readFileSync(path, 'utf8') === text) return;
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, text);
+}
+async function requestSnapshot(url: string, headers: Record<string, string>): Promise<JsonReply> {
+  const response: Omit<JsonReply, 'body'> = {};
+  const body = await fetchWithRetry(url, false, 120_000, { headers, response });
+  return { ...response, body };
+}
+const infoSnapshots = new IncrementalJson(resolve(CACHE_DIR, 'info-http-v1'), requestSnapshot, coldLimit);
+const wcifSnapshots = new IncrementalJson(resolve(CACHE_DIR, 'wcif-http-v1'), requestSnapshot, coldLimit);
+let nextRequestAt = 0;
+async function paceRequest(): Promise<void> {
+  const wait = Math.max(0, nextRequestAt - Date.now());
+  nextRequestAt = Math.max(nextRequestAt, Date.now()) + 600;
+  await sleep(wait / 1000);
+}
+async function fetchCompInfo(id: string): Promise<Record<string, unknown> | undefined> {
+  if (catalogInfo.has(id)) return catalogInfo.get(id);
+  const body = await infoSnapshots.get(`${WCA_API_BASE}/competitions/${id}`,
+    (value): value is Record<string, unknown> => typeof value === 'object' && value !== null
+      && (value as { id?: unknown }).id === id && 'start_date' in value && 'cancelled_at' in value,
+    { minAgeMs: 6 * DAY_MS, forceAfterMs: 28 * DAY_MS, changed: changedCatalogIds.has(id) });
+  if (body) catalogInfo.set(id, body);
+  return body;
+}
 
 // 默认直连 WCA;CI 上被 WCA 403(GH runner IP 段),改经服务器代理:
 // WCA_API_BASE=https://api.cuberoot.me/v1/wca-proxy/api/v0 + WCA_PROXY_SECRET(密钥头)。
 const WCA_API_BASE = process.env.WCA_API_BASE || 'https://www.worldcubeassociation.org/api/v0';
 const WCA_PROXY_SECRET = process.env.WCA_PROXY_SECRET;
 // NOTE: cubing.com（粗饼网）管理中国内地比赛报名，WCA API 不返回这些比赛
-const API_DELAY_SEC = 0.5;
 const MAX_RETRIES = 3;
 // NOTE: 429 限流独立于失败重试——遵守 Retry-After 多等几次，别因限流就丢掉一场比赛
 const MAX_RATE_LIMIT_WAITS = 10;
-// NOTE: 缓存有效期（秒），默认 24 小时。用户选择刷新时会被置为 0
-let CACHE_TTL_SEC = 24 * 3600;
+// cubing.com has no validator/change feed; reuse its roster snapshots for 20 hours.
+const CACHE_TTL_SEC = 20 * 3600;
 
 // NOTE: 设为正整数可截断调试，生产环境为 null
 // NOTE: 设为 10 方便测试，全量为 null
@@ -363,24 +413,33 @@ let lastFetchFailureReason: string | null = null;
  * 小响应（列表分页 / 单 HTML / 单场详情）用默认 10s；大响应（championship WCIF 的完整
  * persons 数组可达数 MB）必须由调用方传更大的 timeoutMs，否则慢 runner 上会下到一半被 abort。
  */
-async function fetchWithRetry(url: string, raw = false, timeoutMs = 10_000): Promise<unknown> {
+async function fetchWithRetry(url: string, raw = false, timeoutMs = 10_000, options: {
+  headers?: Record<string, string>; response?: Omit<JsonReply, 'body'>;
+} = {}): Promise<unknown> {
   lastFetchFailureReason = null;
   let attempt = 0;
   let rateLimitWaits = 0;
   let lastErrorDetail = '';
   while (attempt < MAX_RETRIES) {
-    await sleep(API_DELAY_SEC);
+    await paceRequest();
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), timeoutMs);
     let text: string;
     try {
-      const headers: Record<string, string> = { 'User-Agent': USER_AGENT };
+      const headers: Record<string, string> = { 'User-Agent': USER_AGENT, ...options.headers };
       // 仅对经代理的 WCA 请求带密钥头;cubing.com 等其它 host 直连,不泄露 secret。
       if (WCA_PROXY_SECRET && url.startsWith(WCA_API_BASE)) headers['X-Proxy-Secret'] = WCA_PROXY_SECRET;
       const resp = await fetch(url, {
         headers,
         signal: ctrl.signal,
       });
+
+      if (options.response) Object.assign(options.response, {
+        status: resp.status,
+        etag: resp.headers.get('etag') ?? undefined,
+        lastModified: resp.headers.get('last-modified') ?? undefined,
+      });
+      if (resp.status === 304) { clearTimeout(timer); return undefined; }
 
       // urllib 对非 2xx 抛 HTTPError；fetch 不抛，手动按 status 分支（在读 body 前）。
       if (!resp.ok) {
@@ -517,7 +576,7 @@ async function integrateCubingChina(
     const cuberKeys = new Set(Object.keys(cubers));
     for (const comp of cnComps) {
       const alias = comp.alias;
-      // NOTE: alias 去连字符 = WCA comp ID，确保前端链接正确
+      // Use the explicit WCA id supplied by cubing.com.
       const compId = comp.wcaId;
 
       // NOTE: WCA API 可能已创建此条目，但缺少 cubing.com 独有字段
@@ -546,15 +605,7 @@ async function integrateCubingChina(
         continue;
       }
 
-      // NOTE: 从 WCA API 获取英文名、英文城市和比赛项目（带缓存）
-      const wcaCache = resolve(CACHE_DIR, `_wca_comp_${compId}.json`);
-      let wcaData: Record<string, unknown>;
-      if (isCacheValid(wcaCache)) {
-        wcaData = JSON.parse(readFileSync(wcaCache, 'utf-8')) as Record<string, unknown>;
-      } else {
-        wcaData = (await fetchWithRetry(`${WCA_API_BASE}/competitions/${compId}`)) as Record<string, unknown>;
-        writeFileSync(wcaCache, JSON.stringify(wcaData), 'utf-8');
-      }
+      const wcaData = await fetchCompInfo(compId) ?? {};
 
       // NOTE: WCA API 提供英文名和城市；cubing.com 提供中文名和城市
       const enName = (wcaData.name as string | undefined) ?? comp.name;
@@ -698,7 +749,8 @@ async function buildUpcomingCompsFromWcif(
 
   for (const comp of allComps) {
     const compId = comp.id;
-    const competitors = wcifMap[compId]?.competitors ?? [];
+    const competitors = wcifMap[compId]?.competitors
+      ?? previousTopById.get(compId)?.top_cubers.map((cuber) => cuber.id) ?? [];
     const matched = competitors.filter((w) => cuberIds.has(w));
     if (!matched.length) {
       continue;
@@ -711,6 +763,7 @@ async function buildUpcomingCompsFromWcif(
     }
 
     compsMap[compId] = {
+      ...previousTopById.get(compId),
       id: compId,
       name: comp.name ?? '',
       city: comp.city ?? '',
@@ -822,27 +875,19 @@ async function fetchWcif(compId: string): Promise<WcifEntry | Record<string, nev
   /*
    * 拉取单场比赛 WCIF 公开端点，一次性提取轮次数 + 报名选手 wcaId。
    * 返回 { rounds: {短名: rounds_count}, competitors: [wcaId, ...] }。
-   * 失败 / 无 events → {}（不缓存，下次重试）。单文件缓存（24h）。
+   * 条件请求命中时复用快照；失败保留旧值；无快照时分批补齐。
    */
   const cacheFile = resolve(CACHE_DIR, `_wcif_${compId}.json`);
-  if (isCacheValid(cacheFile)) {
-    try {
-      const cached = JSON.parse(readFileSync(cacheFile, 'utf-8'));
-      if (wcifCacheOk(cached)) {
-        return cached;
-      }
-    } catch {
-      // 缓存损坏 / 旧格式 → 重新拉
+  const data = await wcifSnapshots.get(`${WCA_API_BASE}/competitions/${compId}/wcif/public`,
+    (body): body is Record<string, unknown> => typeof body === 'object' && body !== null
+      && (body as { id?: unknown }).id === compId
+      && Array.isArray((body as { events?: unknown }).events)
+      && Array.isArray((body as { persons?: unknown }).persons),
+    { minAgeMs: 20 * 3600_000, forceAfterMs: 7 * DAY_MS, changed: changedCatalogIds.has(compId) });
+  if (!data) {
+    if (existsSync(cacheFile)) {
+      try { const old = JSON.parse(readFileSync(cacheFile, 'utf8')); if (wcifCacheOk(old)) return old; } catch { /* invalid old cache */ }
     }
-  }
-
-  const url = `${WCA_API_BASE}/competitions/${compId}/wcif/public`;
-  // WCIF persons 数组大型赛可达数 MB，给 60s 硬总超时上限（默认 10s 会下到一半 abort，丢整场报名）。
-  const data = await fetchWithRetry(url, false, 120_000);
-  // NOTE: fetchWithRetry 网络失败 / 429 重试耗尽 / 404 都返回 {}（无 events 键）。
-  //       区分"真无 events"和"fetch 失败"很重要：失败不写缓存，让下次重试；
-  //       成功（哪怕 events 列表为空）才缓存。否则一次 429 → 缓存 24h 内永远空。
-  if (typeof data !== 'object' || data === null || !('events' in data)) {
     return {};
   }
   type WcifRound = {
@@ -905,38 +950,13 @@ async function fetchWcif(compId: string): Promise<WcifEntry | Record<string, nev
 async function fetchWcifBatch(compIds: Iterable<string>): Promise<Record<string, WcifEntry>> {
   /*
    * 拉一批比赛的 WCIF（轮次 + 报名名单）。已缓存的直接读，未缓存的用有界并发池拉取
-   * (WCIF_CONCURRENCY 默认 8)——WCA 对服务器出口按每连接限带宽,并发近似线性提速。
+   * (WCIF_CONCURRENCY 默认 2，上限 4)，所有请求共用速率限制。
    * 返回 { comp_id: {rounds: {...}, competitors: [...]} }。
    */
   const out: Record<string, WcifEntry> = {};
-  const pending: string[] = [];
-  for (const cid of compIds) {
-    const cacheFile = resolve(CACHE_DIR, `_wcif_${cid}.json`);
-    if (isCacheValid(cacheFile)) {
-      try {
-        const cached = JSON.parse(readFileSync(cacheFile, 'utf-8'));
-        if (wcifCacheOk(cached)) {
-          out[cid] = cached;
-          continue;
-        }
-      } catch {
-        // 损坏 / 旧格式 → 重拉
-      }
-    }
-    pending.push(cid);
-  }
-
-  if (!pending.length) {
-    console.log(`[WCIF] 全部 ${Object.keys(out).length} 场命中缓存`);
-    return out;
-  }
-
-  console.log(`[WCIF] 缓存命中 ${Object.keys(out).length} 场，待拉取 ${pending.length} 场...`);
-  // NOTE: WCA 对经代理的服务器出口按「每连接」限带宽(实测 ~18KB/s,4 并发 ≈ 单个耗时),
-  //       串行会把 ~440 场拖到 2+ 小时。改有界并发池(WCIF_CONCURRENCY,默认 8)近似线性提速;
-  //       429 仍由 fetchWithRetry 内的自适应退避兜底(每连接独立遵守 Retry-After)。
-  //       直连 WCA(本地)单请求本就 1-2s,并发同样适用,无副作用。
-  const CONCURRENCY = Math.max(1, Number(process.env.WCIF_CONCURRENCY) || 8);
+  // New/changed rows get the first cold-read slots. Unchanged snapshots revalidate independently of roster counts.
+  const pending = [...compIds].sort((a, b) => Number(changedCatalogIds.has(b)) - Number(changedCatalogIds.has(a)));
+  const CONCURRENCY = Math.min(4, Math.max(1, Number(process.env.WCIF_CONCURRENCY) || 2));
   let done = 0;
   let next = 0;
   const worker = async (): Promise<void> => {
@@ -945,14 +965,13 @@ async function fetchWcifBatch(compIds: Iterable<string>): Promise<Record<string,
       const cid = pending[i]!;
       try {
         const r = await fetchWcif(cid);
-        out[cid] = wcifCacheOk(r) ? r : { rounds: {}, competitors: [], eventRegs: {}, roundMeta: {}, h2hEvents: [] };
+        if (wcifCacheOk(r)) out[cid] = r;
       } catch (e) {
         console.log(`[WCIF][WARN] ${cid}: ${(e as Error).message ?? e}`);
-        out[cid] = { rounds: {}, competitors: [], eventRegs: {}, roundMeta: {}, h2hEvents: [] };
       }
       done += 1;
       if (done % 50 === 0 || done === pending.length) {
-        console.log(`[WCIF] ${done}/${pending.length} 已拉取`);
+        console.log(`[WCIF] ${done}/${pending.length} 已检查`);
       }
     }
   };
@@ -960,35 +979,20 @@ async function fetchWcifBatch(compIds: Iterable<string>): Promise<Record<string,
   return out;
 }
 
-async function fetchChangeDeadline(compId: string): Promise<string | null> {
-  /*
-   * 拉单场 /competitions/:id 取 event_change_deadline_date（项目修改截止）。
-   * 列表端点不返回此字段，只能逐场拉。单文件缓存（24h），与 WCIF 同策略。
-   * 失败 / 无字段 → null（不缓存空，下次重试）。
-   */
-  const cacheFile = resolve(CACHE_DIR, `_compinfo_${compId}.json`);
-  if (isCacheValid(cacheFile)) {
-    try {
-      const cached = JSON.parse(readFileSync(cacheFile, 'utf-8')) as { ecd?: string | null };
-      if (typeof cached === 'object' && cached !== null && 'ecd' in cached) return cached.ecd ?? null;
-    } catch { /* 损坏 → 重拉 */ }
-  }
-  const data = await fetchWithRetry(`${WCA_API_BASE}/competitions/${compId}`, false, 30_000);
-  if (typeof data !== 'object' || data === null || !('id' in data)) return null;
-  const ecd = (data as { event_change_deadline_date?: unknown }).event_change_deadline_date;
-  const val = typeof ecd === 'string' && ecd ? ecd : null;
-  writeFileSync(cacheFile, JSON.stringify({ ecd: val }), 'utf-8');
-  return val;
+async function fetchChangeDeadline(compId: string): Promise<string | null | undefined> {
+  const data = await fetchCompInfo(compId);
+  if (!data) return undefined;
+  return typeof data.event_change_deadline_date === 'string' ? data.event_change_deadline_date : null;
 }
 
-async function fetchChangeDeadlineBatch(compIds: string[]): Promise<Record<string, string | null>> {
+async function fetchChangeDeadlineBatch(compIds: string[]): Promise<Record<string, string | null | undefined>> {
   /*
    * 有界并发拉一批比赛的 event_change_deadline_date。payload 小（单场 JSON 几 KB），
    * 与 WCIF 批量同 CONCURRENCY 池；429 由 fetchWithRetry 内退避兜底。
    */
-  const out: Record<string, string | null> = {};
+  const out: Record<string, string | null | undefined> = {};
   if (!compIds.length) return out;
-  const CONCURRENCY = Math.max(1, Number(process.env.WCIF_CONCURRENCY) || 8);
+  const CONCURRENCY = Math.min(4, Math.max(1, Number(process.env.WCIF_CONCURRENCY) || 2));
   let next = 0;
   let done = 0;
   const worker = async (): Promise<void> => {
@@ -998,11 +1002,11 @@ async function fetchChangeDeadlineBatch(compIds: string[]): Promise<Record<strin
         out[cid] = await fetchChangeDeadline(cid);
       } catch (e) {
         console.log(`[CHG][WARN] ${cid}: ${(e as Error).message ?? e}`);
-        out[cid] = null;
+        out[cid] = undefined;
       }
       done += 1;
       if (done % 100 === 0 || done === compIds.length) {
-        console.log(`[CHG] ${done}/${compIds.length} 修改截止已拉`);
+        console.log(`[CHG] ${done}/${compIds.length} 修改截止已检查`);
       }
     }
   };
@@ -1021,12 +1025,30 @@ function shortifyEvents(eventIds: string[]): string[] {
   return pairs.map((p) => p[1]);
 }
 
+function toCatalogEntry(c: Record<string, unknown>): AllComp {
+  return {
+    id: c.id as string,
+    name: (c.name as string | undefined) ?? '',
+    city: (c.city as string | undefined) ?? '',
+    country: (c.country_iso2 as string | undefined) ?? '',
+    start_date: (c.start_date as string | undefined) ?? '',
+    end_date: (c.end_date as string | undefined) ?? '',
+    events: shortifyEvents((c.event_ids as string[] | undefined) ?? []),
+    competitor_limit: (c.competitor_limit as number | undefined) || 0,
+    registration_open: c.registration_open ?? null,
+    registration_close: c.registration_close ?? null,
+    latitude_degrees: (c.latitude_degrees as number | undefined) ?? 0,
+    longitude_degrees: (c.longitude_degrees as number | undefined) ?? 0,
+    url: (c.url as string | undefined) ?? `https://www.worldcubeassociation.org/competitions/${c.id}`,
+  };
+}
+
 // NOTE: buildAllUpcomingComps 任一分页失败时记录具体原因，供 main() 拼出准确的 [FAIL] 通知文案。
 let wcaListFailureReason: string | null = null;
 
 async function buildAllUpcomingComps(): Promise<AllComp[] | null> {
   /*
-   * 从 WCA /competitions?ongoing_and_future=... 分页拉全球全量 upcoming 比赛。
+   * 从 WCA /competition_index 分页检查轻量比赛目录。
    * 与 top-cubers 那份 upcoming_comps.json 不同，这份不过滤选手，是"地图+日历 All 模式"的源数据。
    */
   // NOTE: cutoff 取 14 天前 —— 刚结束、还没进下一次 stats.yml(周日) dump 的比赛留在 JSON 里。
@@ -1036,7 +1058,7 @@ async function buildAllUpcomingComps(): Promise<AllComp[] | null> {
   let out: Record<string, unknown>[];
   try {
     out = await fetchCompetitionPages(async (page) => {
-      const url = `${WCA_API_BASE}/competitions?ongoing_and_future=${cutoff}&per_page=${perPage}&page=${page}`;
+      const url = `${WCA_API_BASE}/competition_index?include_cancelled=false&ongoing_and_future=${cutoff}&per_page=${perPage}&page=${page}`;
       const batch = await fetchWithRetry(url, false, 90_000);
       if (!Array.isArray(batch)) throw new Error(`page ${page}: ${lastFetchFailureReason ?? 'invalid response'}`);
       console.log(`[ALL] page ${page}: ${batch.length} 场`);
@@ -1051,29 +1073,40 @@ async function buildAllUpcomingComps(): Promise<AllComp[] | null> {
   // 分页聚合已按 id 去重；这里只过滤已取消比赛并精简字段。
   const result: AllComp[] = [];
   for (const c of out) {
+    if (typeof c.short_display_name === 'string') catalogShortNames.set(c.id as string, c.short_display_name);
     if (c.cancelled_at) {
       continue;
     }
-    result.push({
-      id: c.id as string,
-      name: (c.name as string | undefined) ?? '',
-      city: (c.city as string | undefined) ?? '',
-      country: (c.country_iso2 as string | undefined) ?? '',
-      start_date: (c.start_date as string | undefined) ?? '',
-      end_date: (c.end_date as string | undefined) ?? '',
-      events: shortifyEvents((c.event_ids as string[] | undefined) ?? []),
-      competitor_limit: (c.competitor_limit as number | undefined) || 0,
-      registration_open: c.registration_open ?? null,
-      registration_close: c.registration_close ?? null,
-      latitude_degrees: (c.latitude_degrees as number | undefined) ?? 0,
-      longitude_degrees: (c.longitude_degrees as number | undefined) ?? 0,
-      url: (c.url as string | undefined) ?? `https://www.worldcubeassociation.org/competitions/${c.id}`,
-    });
+    result.push(toCatalogEntry(c));
   }
   result.sort((a, b) =>
     a.start_date < b.start_date ? -1 : a.start_date > b.start_date ? 1 : 0,
   );
-  return result;
+  const indexCachePath = resolve(CACHE_DIR, '_index_v1.json');
+  let previousIndex: Record<string, unknown> = {};
+  try { previousIndex = JSON.parse(readFileSync(indexCachePath, 'utf8')); } catch { /* Optional accelerator. */ }
+  const nextIndex = Object.fromEntries(out.map((comp) => [comp.id as string, comp]));
+  const oldById = new Map(previousCatalog.map((comp) => [comp.id, comp]));
+  for (const comp of result) {
+    const old = oldById.get(comp.id);
+    if (!old || (previousIndex[comp.id] && JSON.stringify(previousIndex[comp.id]) !== JSON.stringify(nextIndex[comp.id])) || Object.keys(comp).some((key) => JSON.stringify(comp[key as keyof AllComp]) !== JSON.stringify(old[key as keyof AllComp]))) {
+      changedCatalogIds.add(comp.id);
+    }
+  }
+  const archived = new Set(readSaved<{ id: string }[]>('all_past_comps.json', []).map((comp) => comp.id));
+  const seen = new Set(result.map((comp) => comp.id));
+  const cancelled = new Set<string>();
+  for (const old of previousCatalog) {
+    if (seen.has(old.id) || (old.end_date < utcDate(Date.now()) && archived.has(old.id))) continue;
+    // Missing can mean pagination drift, unpublishing, or a changed date. Only positive evidence removes it.
+    changedCatalogIds.add(old.id);
+    const info = await fetchCompInfo(old.id);
+    if (info?.cancelled_at) cancelled.add(old.id);
+    else if (info) result.push(toCatalogEntry(info));
+  }
+  writeChanged(indexCachePath, nextIndex);
+  console.log(`[SYNC] index=${result.length}, new/changed=${changedCatalogIds.size}, confirmed cancellations=${cancelled.size}`);
+  return mergeSavedCatalog(result, previousCatalog, archived, cancelled, utcDate(Date.now()));
 }
 
 // Top 模式输出的比赛条目（events 已规范成短名数组）。仅用于精确控制写出 JSON 的字段集。
@@ -1095,9 +1128,7 @@ async function main(): Promise<void> {
   if (process.argv.includes('--catalog-only')) {
     const fresh = await buildAllUpcomingComps();
     if (!fresh?.length) throw new Error(wcaListFailureReason ?? 'Empty WCA catalog; existing data preserved');
-    const previous: AllComp[] = existsSync(ALL_OUTPUT_JSON_PATH)
-      ? JSON.parse(readFileSync(ALL_OUTPUT_JSON_PATH, 'utf8')) : [];
-    const catalog = retainCatalogDetails(fresh, previous);
+    const catalog = fresh;
     const outputIndex = process.argv.indexOf('--output');
     const output = outputIndex < 0 ? ALL_OUTPUT_JSON_PATH : process.argv[outputIndex + 1];
     if (!output || output.startsWith('--')) throw new Error('--output requires a file path');
@@ -1107,26 +1138,9 @@ async function main(): Promise<void> {
     return;
   }
 
-  // NOTE: 交互式询问缓存策略；CI 环境用 --refresh 参数跳过交互
   if (process.argv.includes('--refresh')) {
-    console.log('[INFO] 检测到 --refresh 参数，强制刷新缓存。');
-    CACHE_TTL_SEC = 0;
-  } else if (existsSync(CACHE_DIR) && readdirSync(CACHE_DIR).length > 0) {
-    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-    let ans: string;
-    try {
-      ans = (await rl.question('发现已有缓存，是否刷新? (y=重新拉取 / 回车=用缓存): ')).trim().toLowerCase();
-    } finally {
-      rl.close();
-    }
-    if (ans === 'y') {
-      CACHE_TTL_SEC = 0;
-      console.log('[INFO] 将重新拉取所有数据。');
-    } else {
-      console.log('[INFO] 使用已有缓存（24h 内有效）。');
-    }
+    console.log('[INFO] --refresh now uses incremental revalidation; saved snapshots are retained.');
   }
-
   // 1. 抽取白名单（含事件标签和 WR 标记）
   const cubers = extractTopCubers();
   if (!Object.keys(cubers).length) {
@@ -1140,6 +1154,7 @@ async function main(): Promise<void> {
   // 2. 先拉全量 upcoming（Globe + All 模式），同时作 Top 模式的比赛来源
   console.log('\n[ALL] 开始拉取 WCA 全球全量 upcoming 比赛...');
   const allComps = await buildAllUpcomingComps();
+  if (!allComps?.length) throw new Error(wcaListFailureReason ?? 'Empty catalog; saved files preserved');
 
   // 3. 批量拉每场 WCIF（轮次 + 报名名单）。
   // NOTE: WCA /users/:id?upcoming_competitions=true 现返回 403（端点级限流，非 IP 段封）。
@@ -1178,89 +1193,88 @@ async function main(): Promise<void> {
   // 覆盖,满员判定才准(comp id = cubing.com alias 去横线)。已缓存,二次调用近免费。
   const cnRegById = new Map<string, number>();
   for (const cn of await fetchCubingChinaComps()) {
-    if (typeof cn.registered_competitors === 'number') cnRegById.set(cn.alias.replace(/-/g, ''), cn.registered_competitors);
+    if (typeof cn.registered_competitors === 'number') cnRegById.set(cn.wcaId, cn.registered_competitors);
   }
   const regOf = (id: string | undefined): number =>
     Math.max(wcifMap[id ?? '']?.competitors?.length ?? 0, (id && cnRegById.get(id)) || 0);
   for (const c of compsData) {
+    if (cnRegById.has(c.id!)) c.registered = cnRegById.get(c.id!);
+    if (!wcifMap[c.id!]) continue;
     c.rounds = wcifMap[c.id!]?.rounds ?? {};
     c.event_regs = wcifMap[c.id!]?.eventRegs ?? {};
     c.registered = regOf(c.id);
     c.round_meta = wcifMap[c.id!]?.roundMeta ?? {};
     const de = dualEventsOf(wcifMap[c.id!], c.start_date);
-    if (de.length) c.dual_events = de;
+    if (de.length) c.dual_events = de; else delete c.dual_events;
     const he = wcifMap[c.id!]?.h2hEvents ?? [];
-    if (he.length) c.h2h_events = he;
+    if (he.length) c.h2h_events = he; else delete c.h2h_events;
   }
   if (allComps) {
     for (const c of allComps) {
+      if (cnRegById.has(c.id)) c.registered = cnRegById.get(c.id);
+      if (!wcifMap[c.id]) continue;
       c.rounds = wcifMap[c.id]?.rounds ?? {};
       c.event_regs = wcifMap[c.id]?.eventRegs ?? {};
       c.registered = regOf(c.id);
       c.round_meta = wcifMap[c.id]?.roundMeta ?? {};
       const de = dualEventsOf(wcifMap[c.id], c.start_date);
-      if (de.length) c.dual_events = de;
+      if (de.length) c.dual_events = de; else delete c.dual_events;
       const he = wcifMap[c.id]?.h2hEvents ?? [];
-      if (he.length) c.h2h_events = he;
+      if (he.length) c.h2h_events = he; else delete c.h2h_events;
     }
   }
 
   // 5b. 拉每场「项目修改截止」（event_change_deadline_date）—— 列表端点不含，逐场单拉（小 payload）。
   if (allComps && allComps.length) {
     console.log(`\n[CHG] 拉取 ${allComps.length} 场修改截止...`);
-    const chgMap = await fetchChangeDeadlineBatch(allComps.map((c) => c.id));
+    const chgMap = await fetchChangeDeadlineBatch(allComps.map((c) => c.id).sort((a, b) => Number(changedCatalogIds.has(b)) - Number(changedCatalogIds.has(a))));
     for (const c of allComps) {
-      c.event_change_deadline = chgMap[c.id] ?? null;
+      if (chgMap[c.id] !== undefined) c.event_change_deadline = chgMap[c.id];
     }
   }
 
-  // 6 + 7. 写出 Top 模式 / All 模式 JSON
-  // GUARD: allComps 为 null/空 = WCA /competitions 列表拉不到(CI 的 Azure IP 被 WCA/Cloudflare
-  // 403,本机/服务器 IP 不受影响)。此时 compsData 也为空 —— 绝不能用空结果覆盖线上已有的好数据,
-  // 否则 upcoming_comps.json 被清空,Top 模式 + 选手筛选的 top_cubers 全没(2026-06-13 真实事故)。
-  // 与 comp_names_zh "拉失败保留已有,跳过本次更新" 同策略:跳过写入,git add 自然无 diff,线上保持
-  // 上一份好数据。CN 注册名单(下方 step 8)走 cubing.com 不受影响,照常更新。
-  let wcaListUnavailable = false;
-  if (!allComps || allComps.length === 0) {
-    wcaListUnavailable = true;
-    console.log('[GUARD] WCA all_comps 不可用,保留已有 upcoming_comps.json / all_upcoming_comps.json,跳过写入(绝不写空);本次将以非零码退出标红 CI');
-  } else {
-    // 场馆海拔(经纬度反查 DEM):缓存命中免请求,只有新场馆走 API;失败仅缺字段不崩
-    await enrichCompElevations(allComps, ELEVATION_CACHE_PATH);
-    const outputObj = {
-      updated_at: utcIsoSeconds(new Date()),
-      total_cubers_tracked: !DEBUG_LIMIT ? Object.keys(cubers).length : DEBUG_LIMIT,
-      competitions: compsData as CompOut[],
-    };
-    mkdirSync(dirname(OUTPUT_JSON_PATH), { recursive: true });
-    writeFileSync(OUTPUT_JSON_PATH, JSON.stringify(outputObj), 'utf-8');
-    console.log(`\n[INFO] 成功！共找到 ${compsData.length} 场即将举行的比赛。`);
-    console.log(`[INFO] 数据已写入: ${relToRoot(OUTPUT_JSON_PATH)}`);
+  // Publish only after a complete index; failed enrichments retain their saved fields.
+  // 场馆海拔(经纬度反查 DEM):缓存命中免请求,只有新场馆走 API;失败仅缺字段不崩
+  if (!existsSync(ELEVATION_CACHE_PATH)) writeChanged(ELEVATION_CACHE_PATH, readSaved('comp_elevations.json', {}));
+  await enrichCompElevations(allComps, ELEVATION_CACHE_PATH);
+  const outputObj = {
+    updated_at: utcIsoSeconds(new Date()),
+    total_cubers_tracked: !DEBUG_LIMIT ? Object.keys(cubers).length : DEBUG_LIMIT,
+    competitions: compsData as CompOut[],
+  };
+  mkdirSync(dirname(OUTPUT_JSON_PATH), { recursive: true });
+  if (!existsSync(OUTPUT_JSON_PATH) || previousTop.total_cubers_tracked !== outputObj.total_cubers_tracked
+    || JSON.stringify(previousTop.competitions) !== JSON.stringify(outputObj.competitions)) writeChanged(OUTPUT_JSON_PATH, outputObj);
+  console.log(`\n[INFO] 成功！共找到 ${compsData.length} 场即将举行的比赛。`);
+  console.log(`[INFO] 数据已写入: ${relToRoot(OUTPUT_JSON_PATH)}`);
 
-    mkdirSync(dirname(ALL_OUTPUT_JSON_PATH), { recursive: true });
-    writeFileSync(ALL_OUTPUT_JSON_PATH, JSON.stringify(allComps), 'utf-8');
-    console.log(`[ALL] 共 ${allComps.length} 场 → ${relToRoot(ALL_OUTPUT_JSON_PATH)}`);
-  }
+  mkdirSync(dirname(ALL_OUTPUT_JSON_PATH), { recursive: true });
+  writeChanged(ALL_OUTPUT_JSON_PATH, allComps);
+  console.log(`[ALL] 共 ${allComps.length} 场 → ${relToRoot(ALL_OUTPUT_JSON_PATH)}`);
 
   // 8. 写出 CN 全员注册名单（前端搜选手非 top 时的静态兜底）
   console.log('\n[CN-REG] 开始构建中国内地比赛全员注册名单...');
   const cnReg = await buildCnRegistrations();
   if (Object.keys(cnReg).length) {
     mkdirSync(dirname(CN_REGISTRATIONS_JSON_PATH), { recursive: true });
-    writeFileSync(CN_REGISTRATIONS_JSON_PATH, JSON.stringify(cnReg), 'utf-8');
+    writeChanged(CN_REGISTRATIONS_JSON_PATH, cnReg);
     console.log(`[CN-REG] 写入 ${relToRoot(CN_REGISTRATIONS_JSON_PATH)}`);
   }
 
-  console.log(`[INFO] 总耗时: ${((Date.now() - startTime) / 1000).toFixed(2)} 秒`);
-
-  // 拉不到 WCA 列表时:旧数据已保留(上面 guard 不写空),但这里主动非零退出让本次 CI 标红,
-  // 这样会收到 GitHub Actions 失败通知 —— 数据默默变旧不可接受,要让人知道。
-  // 具体原因(403 拒绝 / 429 限流耗尽 / 网络异常等)已在 wcaListFailureReason 里记录,直接报出来,
-  // 别笼统猜"IP 被封"——429 限流耗尽绝大多数是临时高峰,几分钟到次日就自愈,只有连续 403 才真指向封禁。
-  if (wcaListUnavailable) {
-    console.error(`[FAIL] WCA upcoming 列表本次拉取失败(${wcaListFailureReason ?? '未知原因'}):已保留上一份好数据(未写空),但主动失败本次 CI 以触发通知。`);
-    process.exit(1);
+  const nameUpdates: Record<string, string> = {};
+  const allById = new Map(allComps.map((comp) => [comp.id, comp]));
+  for (const cn of await fetchCubingChinaComps()) {
+    const comp = allById.get(cn.wcaId);
+    if (!comp || !cn.name) continue;
+    nameUpdates[comp.name] = cn.name;
+    const short = catalogInfo.get(cn.wcaId)?.short_name ?? catalogShortNames.get(cn.wcaId);
+    if (typeof short === 'string') nameUpdates[short] = cn.name;
   }
+  writeChanged(resolve(OUTPUT_DIR, 'comp_names_zh.json'), mergeCompetitionNames(readSaved('comp_names_zh.json', {}), nameUpdates));
+  console.log('[SYNC] WCIF ' + JSON.stringify(wcifSnapshots.counts));
+  console.log('[SYNC] detail ' + JSON.stringify(infoSnapshots.counts));
+  if (wcifSnapshots.counts.failed + infoSnapshots.counts.failed) console.warn('::warning::Some WCA details could not be refreshed; saved data retained.');
+  console.log(`[INFO] 总耗时: ${((Date.now() - startTime) / 1000).toFixed(2)} 秒`);
 }
 
 main().catch((e) => {
