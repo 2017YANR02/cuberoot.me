@@ -1,3 +1,6 @@
+// Keep this entry, CSS and worker entrypoints in package.json sideEffects.
+// Other modules can be dropped when unused: importing one shared hook must
+// not eagerly load online video, statistics or reconstruction workspaces.
 import './timing-surface.css';
 import './timer-chrome.css';
 import './timer-stage-layout.css';

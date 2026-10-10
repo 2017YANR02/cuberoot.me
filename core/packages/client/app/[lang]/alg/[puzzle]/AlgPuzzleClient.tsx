@@ -21,7 +21,10 @@ import { ALG_CATALOG, ALG_CATALOG_SECTIONS, ALG_PUZZLES, type AlgCase, type AlgP
 import AlgPuzzlePicker from '@/components/AlgPuzzlePicker';
 import BackHome from '@/components/BackHome';
 import { CaseThumb } from '@/components/CaseThumb';
-import { commonCaseSetup, loadAlg } from '@/lib/alg_case_alignment';
+import { prepareAlgCatalog, type PreparedAlgCatalog } from '@/lib/alg-catalog';
+import type { AlgCatalogSnapshot } from '@cuberoot/shared/alg';
+import { apiUrl } from '@/lib/api-base';
+import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
 import { VisualCube } from '@/components/VisualCube';
 import AlgCard from '@/components/AlgCard';
 import BoolToggle from '@/components/BoolToggle';
@@ -37,7 +40,7 @@ import { tr } from '@/i18n/tr';
 import { parseAsBoolean, useQueryState } from 'nuqs';
 import Sq1ToolNav from '@/components/Sq1ToolNav';
 import SortableCard from '@/components/SortableCard';
-import { getAlgCatalogOrder, reorderAlgCatalog } from '@/lib/alg_sets_api';
+import { reorderAlgCatalog } from '@/lib/alg_sets_api';
 import { useIsAdmin } from '@/lib/auth-store';
 
 /** Old single-segment 3x3 set slugs we used to live at /alg/<slug>. Redirect to /alg/3x3/<slug>. */
@@ -182,7 +185,23 @@ function isPuzzle(s: string): s is AlgPuzzle {
   return (ALG_PUZZLES as readonly string[]).includes(s);
 }
 
-export default function AlgPuzzleClient() {
+// Share only concurrent reads, so dev Strict Mode cannot duplicate the request.
+// Every later visit still validates the server revision.
+const catalogRequests = new Map<string, Promise<PreparedAlgCatalog>>();
+function loadCatalog(puzzle: string) {
+  const existing = catalogRequests.get(puzzle);
+  if (existing) return existing;
+  const pending = fetch(apiUrl(`/v1/alg/sets/${puzzle}/catalog?v=1`), { cache: 'no-cache' })
+    .then(async response => {
+      if (!response.ok) throw new Error(`Catalog HTTP ${response.status}`);
+      return prepareAlgCatalog(await response.json() as AlgCatalogSnapshot);
+    })
+    .finally(() => { catalogRequests.delete(puzzle); });
+  catalogRequests.set(puzzle, pending);
+  return pending;
+}
+
+export default function AlgPuzzleClient({ initialCatalog = null }: { initialCatalog?: PreparedAlgCatalog | null }) {
   const params = useParams<{ puzzle: string | string[] }>();
   const puzzle = Array.isArray(params?.puzzle) ? params.puzzle[0] : (params?.puzzle ?? '');
   const router = useRouter();
@@ -193,8 +212,11 @@ export default function AlgPuzzleClient() {
   const thumbSize = narrow ? 60 : 96;
   const isAdmin = useIsAdmin();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
-  const [counts, setCounts] = useState<Record<string, number>>({});
-  const [firstCases, setFirstCases] = useState<Record<string, AlgCase | null>>({});
+  const [catalog, setCatalog] = useState(initialCatalog);
+  const activeCatalog = catalog?.puzzle === puzzle ? catalog : null;
+  const counts = useMemo(() => Object.fromEntries(activeCatalog?.sets.map(s => [s.slug, s.count]) ?? []), [activeCatalog]);
+  const firstCases = useMemo(() => Object.fromEntries(activeCatalog?.sets.map(s => [s.slug, s.first]) ?? []), [activeCatalog]);
+  const thumbnailSetups = useMemo(() => Object.fromEntries(activeCatalog?.sets.map(s => [s.slug, s.thumbnailSetup]) ?? []), [activeCatalog]);
   const [setOrder, setSetOrder] = useState<string[]>([]);
   const [sq1BlackTop, setSq1BlackTop] = useQueryState(
     'black',
@@ -203,6 +225,7 @@ export default function AlgPuzzleClient() {
 
   // 合练:开着的时候卡片从「点了进去」变成「点了勾选」,选够两套底部出条开始
   const [picking, setPicking] = useState(false);
+  const refreshKey = useContentRefreshKey(!picking);
   const [picked, setPicked] = useState<string[]>([]);
   const [mixName, setMixName] = useState('');
   const savedMixes = useSavedMixes(s => s.list);
@@ -226,7 +249,10 @@ export default function AlgPuzzleClient() {
     order.splice(zbllIndex < 0 ? order.length : zbllIndex + 1, 0, LSLL_CARD_ID);
     return order;
   }, [puzzle, sets]);
-  const effectiveOrder = setOrder.length > 0 ? setOrder : fallbackOrder;
+  const savedOrder = setOrder.length > 0 ? setOrder : activeCatalog?.order ?? [];
+  const effectiveOrder = savedOrder.length > 0
+    ? [...savedOrder.filter(slug => fallbackOrder.includes(slug)), ...fallbackOrder.filter(slug => !savedOrder.includes(slug))]
+    : fallbackOrder;
   const orderedSets = useMemo(() => {
     const rank = new Map(effectiveOrder.map((slug, index) => [slug, index]));
     return [...sets].sort((a, b) => (rank.get(a.slug) ?? sets.length) - (rank.get(b.slug) ?? sets.length));
@@ -261,38 +287,12 @@ export default function AlgPuzzleClient() {
   useEffect(() => {
     if (!valid) return;
     let cancelled = false;
-    setSetOrder(fallbackOrder);
-    getAlgCatalogOrder(puzzle, isAdmin).then(savedOrder => {
-      if (cancelled) return;
-      const known = new Set(fallbackOrder);
-      const saved = savedOrder.filter(slug => known.has(slug));
-      const savedSet = new Set(saved);
-      setSetOrder([...saved, ...fallbackOrder.filter(slug => !savedSet.has(slug))]);
-    }).catch(() => undefined);
+    setSetOrder([]);
+    loadCatalog(puzzle).then(next => {
+      if (!cancelled) setCatalog(next);
+    }).catch(error => console.error('alg catalog refresh failed', error));
     return () => { cancelled = true; };
-  }, [fallbackOrder, isAdmin, puzzle, valid]);
-
-  useEffect(() => {
-    if (!valid) return;
-    let cancelled = false;
-    // 换魔方阶要先清空:slug 在不同阶之间会重名(2x2 与 megaminx 都有 eo/co/cp/ep),
-    // 留着上一阶的条目会让新页面读到别人的封面和数量。
-    setCounts({});
-    setFirstCases({});
-    // 一套一落地,不等最慢的那一套 —— 一张卡片的封面不该被另一套的请求挡着。
-    for (const s of sets) {
-      if (HIDDEN_CATALOG_SET_SLUGS.has(s.slug)) continue;
-      loadAlg(puzzle, s.slug, { fresh: isAdmin })
-        .then(d => ({ count: d.cases.length, first: d.cases[0] ?? null as AlgCase | null }))
-        .catch(() => ({ count: -1, first: null as AlgCase | null }))
-        .then(({ count, first }) => {
-          if (cancelled) return;
-          setCounts(prev => ({ ...prev, [s.slug]: count }));
-          setFirstCases(prev => ({ ...prev, [s.slug]: first }));
-        });
-    }
-    return () => { cancelled = true; };
-  }, [isAdmin, puzzle, sets, valid]);
+  }, [puzzle, valid, refreshKey]);
 
   if (legacyRedirect) {
     return <div className="alg-root"><div className="alg-empty">{tr({ zh: '跳转中…', en: 'Redirecting…'
@@ -338,7 +338,7 @@ export default function AlgPuzzleClient() {
             /* 每阶最多二十来张、全在首屏附近,本地渲染实测 19 张 26ms —— 图与数量同帧出现,
                不再各自等一次跨域请求。渲染器本来就静态 import 进了 bundle,不额外增体积。
                长 case 网格不能照抄这条,那边走 loading="lazy",见 AlgCategoryView。 */
-            <CaseThumb puzzle={puzzle} set={s.slug} sticker={first.sticker} alg={firstAlg} setup={commonCaseSetup(puzzle, s.slug, first)} size={puzzle === 'sq1' ? 144 : thumbSize} local sq1BlackTop={sq1BlackTop} sq1SideBySide={puzzle === 'sq1'} />
+            <CaseThumb puzzle={puzzle} set={s.slug} sticker={first.sticker} alg={firstAlg} setup={thumbnailSetups[s.slug]} size={puzzle === 'sq1' ? 144 : thumbSize} local sq1BlackTop={sq1BlackTop} sq1SideBySide={puzzle === 'sq1'} />
           )}
           title={title}
         />
