@@ -1,5 +1,12 @@
 # CubeRoot 五端 App 完整路线图
 
+### 2026-10-09：旧版微信工具页账号同步循环（网站兼容修复已部署）
+
+- 网站修复提交 `e554ac8a86`：旧小程序偏好协议 2 不接受 `transparent` 时改用既有外观/语言消息，不再导航偏好中转页并循环重开工具、申请登录票据；新壳通过协议 3 声明透明背景支持。账号、凭据和票据校验保持不变。详见小程序 README 的故障证据。
+- 本地：修复前源码复现回归失败；修复后 99 项网站定向检查、870 项小程序检查、网站类型检查及微信/抖音构建通过。当前开发目录已同步修复并刷新微信 dist。
+- 线上：Deploy Next 38025264774 成功，服务器 `.deploy-sha` 与提交一致、服务 active；Vercel 提交状态 success。`cuberoot.me/auth/miniprogram` 与 `next.cuberoot.me/auth/miniprogram` 均 HTTP 200，页面均包含新协议分支。网站热修已生效；未上传、审核或发布新小程序包，用户设备复测仍待确认。
+- Test 38025264811 未全绿：通用 Knip 检查仍报 alg-build 的 vm_stat/sysctl/ps 未列入工具清单，另一分片报 MonacoOpen2027 城市译名缺失；两者均不涉及本次改动。通过的定向检查与部署成功不替代真机验收。
+
 ### 2026-10-07：Capacitor 与宿主构建依赖安全升级（构建通过，安装包未发布）
 
 - Android/iOS 的 Capacitor core、CLI 和两平台运行时统一从 8.5.0 升至 8.5.3，包含 GHSA-rvm3-566m-v7fv 的内部 HTTP 代理导航修复；Android Gradle 引用、iOS SPM 配置及解析锁同步到相同版本。
