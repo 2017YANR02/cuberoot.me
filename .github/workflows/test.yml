@@ -369,6 +369,8 @@ jobs:
             /.node-version
             /core/
             /solver/Cargo.toml
+            /solver/333opt/solve_h10.mts
+            /docs/double-zbll-trainer.md
             /docs/generated-artifacts.json
             /docs/platform-capability-manifest.json
             /docs/platform-unification-plan.md
@@ -617,6 +619,8 @@ jobs:
             /.node-version
             /core/
             /solver/Cargo.toml
+            /solver/333opt/solve_h10.mts
+            /docs/double-zbll-trainer.md
             /docs/generated-artifacts.json
             /docs/platform-capability-manifest.json
             /docs/platform-unification-plan.md
