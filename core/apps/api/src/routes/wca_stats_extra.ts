@@ -1280,9 +1280,14 @@ wcaStatsExtraRoutes.get('/wca/success-rate', async (c) => {
   if (!cn.ok) return c.json({ error: cn.err }, 400);
 
   const offset = (page - 1) * size;
-  const whereCountry = cn.id ? 'AND sr.country_id = ?' : '';
+  const scope = cn.continentId ? 'continent' : cn.id ? 'country' : 'world';
+  const whereCountry = scope === 'continent'
+    ? 'AND sr.country_id IN (SELECT id FROM wca_countries WHERE continent_id = ?)'
+    : scope === 'country'
+      ? 'AND sr.country_id = ?'
+      : '';
   const params: unknown[] = [event, minAttempted];
-  if (cn.id) params.push(cn.id);
+  if (scope !== 'world') params.push(cn.continentId ?? cn.id);
   const totalParams = [...params];
   params.push(size, offset);
 
@@ -1316,7 +1321,7 @@ wcaStatsExtraRoutes.get('/wca/success-rate', async (c) => {
 
   c.header('Cache-Control', CACHE_HEADER);
   return c.json({
-    event, country: cn.id, minAttempted, page, size, total,
+    event, country: cn.continentId ?? cn.id, scope, minAttempted, page, size, total,
     rows: rows.map(r => ({
       wcaId: r.wca_id, name: r.person_name,
       countryId: r.country_id, iso2: r.iso2,
