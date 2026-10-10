@@ -14,11 +14,18 @@ const CASES = [
   { id: 'dogic', stickers: 80, moves: 36, outer: 12, inner: 12, wide: 12 },
   { id: 'octahedron4', stickers: 32, moves: 18, outer: 6, inner: 6, wide: 6 },
   { id: 'dinoskewb', stickers: 72, moves: 24, outer: 8, inner: 8, wide: 8 },
+  { id: 'lattice', stickers: 72, moves: 40, outer: 8, inner: 8, wide: 8, inner3: 8, wide3: 8 },
+  { id: 'hyperx', stickers: 120, moves: 30, outer: 14, inner: 8, wide: 8 },
+  { id: 'latticex', stickers: 96, moves: 46, outer: 14, inner: 8, wide: 8, inner3: 8, wide3: 8 },
+  { id: 'masterbrilic', stickers: 360, moves: 60, outer: 12, inner: 12, wide: 12, inner3: 12, wide3: 12 },
+  { id: 'masterftov2', stickers: 152, moves: 24, outer: 8, inner: 8, wide: 8 },
 ] as const;
 const VIEWPORT = { width: 960, height: 720 };
 
 function moveDepth(move: Move): NativePuzzleDragDepth {
-  return move.family.endsWith('w') ? 'wide' : move.innerLayer === 2 ? 'inner' : 'outer';
+  const wide = move.family.endsWith('w') || move.outerLayer !== undefined;
+  if (wide) return move.innerLayer === 3 ? 'wide3' : 'wide';
+  return move.innerLayer === 3 ? 'inner3' : move.innerLayer === 2 ? 'inner' : 'outer';
 }
 
 /** Expected direction comes from an actual infinitesimal clockwise rotation,
@@ -64,7 +71,8 @@ function fixture(id: NativePuzzleId) {
 }
 
 describe('Native PG drag selection', () => {
-  it.each(CASES)('$id has all real visible regions and all legal layer choices', ({ id, stickers, moves, outer, inner, wide }) => {
+  it.each(CASES)('$id has all real visible regions and all legal layer choices', (spec) => {
+    const { id, stickers, moves, outer, inner, wide } = spec;
     const geometry = createNativePuzzleDragGeometry(id);
     expect(createNativePuzzleDragGeometry(id)).toBe(geometry);
     expect(geometry.stickers.length).toBe(stickers);
@@ -72,6 +80,8 @@ describe('Native PG drag selection', () => {
     expect(geometry.moves.filter((m) => m.depth === 'outer').length).toBe(outer);
     expect(geometry.moves.filter((m) => m.depth === 'inner').length).toBe(inner);
     expect(geometry.moves.filter((m) => m.depth === 'wide').length).toBe(wide);
+    expect(geometry.moves.filter((m) => m.depth === 'inner3').length).toBe('inner3' in spec ? spec.inner3 : 0);
+    expect(geometry.moves.filter((m) => m.depth === 'wide3').length).toBe('wide3' in spec ? spec.wide3 : 0);
     const puzzle = nativePuzzleKPuzzle(id);
     for (const move of geometry.moves) {
       expect(() => puzzle.moveToTransformation(move.move)).not.toThrow();
@@ -103,9 +113,9 @@ describe('Native PG drag selection', () => {
           const delta = clockwiseDelta(point, normal, world, camera);
           if (!delta) continue;
           const token = pickNativePuzzleDrag(geometry, point, world, camera, delta, VIEWPORT, depth);
-          // With three physical layers the middle slice has two equivalent
-          // names: 2F = 2B'. Either name records the same directed motion.
-          const middleAlias = id === 'cube3dino' && depth === 'inner' && token !== null
+          // A central slice can have equivalent names from opposite sides
+          // (2F = 2B' or 3DRF = 3UBL'). Compare its directed transformation.
+          const middleAlias = (depth === 'inner' || depth === 'inner3') && token !== null
             && puzzle.moveToTransformation(token).isIdentical(puzzle.moveToTransformation(parsed));
           if (token !== move && !middleAlias) continue;
           const reversed = pickNativePuzzleDrag(geometry, point, world, camera, { x: -delta.x, y: -delta.y }, VIEWPORT, depth);
@@ -139,6 +149,7 @@ describe('Native PG drag selection', () => {
         expect(token, `No auto slice for ${id} ${sticker.orbit}:${sticker.ord}`).not.toBeNull();
         const move = new Move(token!);
         expect(move.family.endsWith('w')).toBe(false);
+        expect(move.outerLayer).toBeUndefined();
         const orbit = puzzle.moveToTransformation(move).transformationData[sticker.orbit];
         expect(orbit.permutation[sticker.ord] !== sticker.ord || orbit.orientationDelta[sticker.ord] !== 0).toBe(true);
         selected++;

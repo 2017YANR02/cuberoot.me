@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { Move } from 'cubing/alg';
-import { NATIVE_PUZZLES, type NativePuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
+import { nativePuzzleMoves, type NativePuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { nativePuzzleKPuzzle } from '@cuberoot/puzzle-solvers/native-puzzle-model';
 import {
   createNativePuzzleDragGeometry, pickNativePuzzleDrag,
@@ -180,9 +180,9 @@ export function attachNativePgPointer(
     if (event.altKey) return 'wide';
     if (event.shiftKey) return 'inner';
     const selected = opts.depth();
-    // A single-depth puzzle has no depth selector. A saved depth from a
-    // previously selected two-depth puzzle must not disable its surface grips.
-    return selected === 'auto' || NATIVE_PUZZLES[id].layers === 1 ? undefined : selected;
+    // Ignore a stale depth if this model does not offer it (for example a third
+    // layer selected before switching to a puzzle with only two layer depths).
+    return selected === 'auto' || !geometry?.moves.some((move) => move.depth === selected) ? undefined : selected;
   };
   const canTurn = (): boolean => current() && opts.enabled() && !opts.pinching() && unsettled.size === 0;
   const commit = (active: Gesture, move: string | Move): void => {
@@ -217,7 +217,16 @@ export function attachNativePgPointer(
       });
       if (!closest) return;
       let move = new Move(closest.move.toString());
-      if (!whole && selected === 'wide') move = move.modified({ family: `${move.family}w` });
+      if (!whole && (selected === 'inner3' || selected === 'wide' || selected === 'wide3'
+        || (selected === 'inner' && !event.shiftKey))) {
+        // The external family may use a layer range (1-2U), and a third-layer
+        // selection must never silently fall back to an outer turn on taps.
+        // Explicit second-layer selection also follows per-axis capabilities;
+        // preserve the native Shift-tap shortcut's valid opposite-layer aliases.
+        const choice = nativePuzzleMoves(id).find((entry) => entry.family === move.family && entry.depth === selected);
+        if (!choice) return;
+        move = new Move(choice.move).modified({ amount: move.amount });
+      }
       commit(active, move);
     } catch { /* A slice or wide alias may not exist for this puzzle. */ }
   };

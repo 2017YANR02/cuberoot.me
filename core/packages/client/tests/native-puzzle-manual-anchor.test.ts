@@ -5,11 +5,20 @@ import { TwistyPlayer } from 'cubing/twisty';
 import { NATIVE_PUZZLES, type NativePuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { attachNativePgMoveAppend } from '@/components/puzzle-models/gestures/nativePgMoveAppend';
 
+const ADDED_CASES = [
+  { id: 'lattice', setup: 'DRF', alg: "DFL UFR'", moves: ['3DRF', "3DFLw'"], invalid: '6DRF' },
+  { id: 'hyperx', setup: 'F', alg: 'DRF U2', moves: ['2UFR', "DRFw'"], invalid: 'Fw' },
+  { id: 'latticex', setup: 'F', alg: 'DRF U2', moves: ['3UFR', "3DRFw'"], invalid: 'Fw' },
+  { id: 'masterbrilic', setup: 'U', alg: 'F L2', moves: ['3U', "1-3F'"], invalid: 'Uw' },
+  { id: 'masterftov2', setup: 'F', alg: "D L'", moves: ['2F', "1-2D'"], invalid: 'Fw' },
+] as const;
+
 const CASES = [
   { id: 'superz', setup: 'R', alg: 'UFR F2', moves: ['DRF', "UBL'"] },
   { id: 'dogic', setup: 'FREGU', alg: "HIERC2 FLACR'", moves: ['2NALPO', "FLACRw'"] },
   { id: 'octahedron4', setup: 'DBRRF', alg: "DFLBL2 DBLBBBR'", moves: ['2DBRRF', "DFLBLw'"] },
   { id: 'dinoskewb', setup: 'DRF', alg: "UFR DBR'", moves: ['2DFL', "DRFw'"] },
+  ...ADDED_CASES,
 ] as const;
 type Anchor = 'start' | 'end';
 
@@ -117,6 +126,25 @@ describe('native manual turns with a real detached TwistyPlayer model', () => {
       expect((await model.alg.get()).alg.toString()).toBe(priorAlg);
       expect((await finishedPattern(player, 'end')).isIdentical(before)).toBe(true);
     }
+    expect(onMove).not.toHaveBeenCalled();
+  });
+
+  it.each(ADDED_CASES)('$id preserves the real board and both algorithm fields when an unsupported layer spelling is appended', async ({ id, setup, alg, moves, invalid }) => {
+    const player = createPlayer(id, setup, alg, 'end');
+    const model = player.experimentalModel;
+    const { onMove } = attach(player, id);
+    expect(await model.experimentalAddMove(moves[0])).toBe(true);
+    const beforeEnd = await finishedPattern(player, 'end');
+    const beforeStart = await finishedPattern(player, 'start');
+    const priorSetup = (await model.setupAlg.get()).alg.toString();
+    const priorAlg = (await model.alg.get()).alg.toString();
+    onMove.mockClear();
+    expect(await model.experimentalAddMove(invalid)).toBe(false);
+    expect((await model.setupAlg.get()).alg.toString()).toBe(priorSetup);
+    expect((await model.alg.get()).alg.toString()).toBe(priorAlg);
+    expect(await model.setupAnchor.get()).toBe('end');
+    expect((await finishedPattern(player, 'end')).isIdentical(beforeEnd)).toBe(true);
+    expect((await finishedPattern(player, 'start')).isIdentical(beforeStart)).toBe(true);
     expect(onMove).not.toHaveBeenCalled();
   });
 

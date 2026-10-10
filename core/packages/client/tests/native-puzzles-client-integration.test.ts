@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { NATIVE_PUZZLES, NATIVE_PUZZLE_IDS, generateNativePuzzleScramble } from '@cuberoot/puzzle-solvers/native-puzzles';
+import { NATIVE_PUZZLES, NATIVE_PUZZLE_IDS, generateNativePuzzleScramble, nativePuzzleMoves } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { parseNativePuzzleAlg } from '@cuberoot/puzzle-solvers/native-puzzle-model';
 import { nativePuzzleSvgAspect, renderNativePuzzleSvg } from '@cuberoot/puzzle-render-core/native-puzzle-svg';
 import { PG_DEF_BY_ID, PG_IDS, PG_PUZZLES } from '@/app/[lang]/sim/pgCatalog';
@@ -88,9 +88,11 @@ describe('native puzzle client integration', () => {
     const spec = NATIVE_PUZZLES[id];
     const base = spec.axes[0][0];
     const next = spec.axes[1][0];
-    const fullNotation = spec.layers === 1
-      ? `[${base}, ${next}] (${base} ${base}')2 // comment\n${next}`
-      : `[${base}, ${next}w] (2${base} 2${base}')2 // comment\n${next}w`;
+    // Mixed-axis puzzles have different layer counts per axis, and polyhedral
+    // wide turns use ranges. Exercise every actual button spelling plus syntax
+    // expansion without inventing unsupported face-wide or third-layer moves.
+    const allMoves = nativePuzzleMoves(id).map(({ move }) => move).join(' ');
+    const fullNotation = `[${base}, ${next}] (${base} ${base}')2 // comment\n${allMoves}`;
     const random = await nativeScramble(id, randomFromSeed(2026));
     for (const scramble of ['', random, fullNotation]) {
       const svg = renderScramblePreviewSvg({ event: id, scramble });

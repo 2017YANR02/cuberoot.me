@@ -10,6 +10,11 @@ const CASES = [
   { id: 'dogic', scramble: "FREGU HIERCw' 2FLACR FREGUv", facelets: 80 },
   { id: 'octahedron4', scramble: "DBRRF DFLBLw' 2DBLBBBR DBRRFv", facelets: 32 },
   { id: 'dinoskewb', scramble: "DRF DFLw' 2DBR DRFv", facelets: 72 },
+  { id: 'lattice', scramble: "DRF 2DFL 3DBR' DLBw 3UFRw' UBLv", facelets: 72 },
+  { id: 'hyperx', scramble: "F U' 2DRF DFLw' R2 UFRv", facelets: 120 },
+  { id: 'latticex', scramble: "F UFR 2DFL 3DBR' DLBw 3UFRw' Rv", facelets: 96 },
+  { id: 'masterbrilic', scramble: "U 2F 3BL' 1-2R 1-3BR2' Dv", facelets: 360 },
+  { id: 'masterftov2', scramble: "F 2U' 1-2BL Rv", facelets: 152 },
 ] as const;
 
 describe.each(CASES)('$id canonical SVG and native 3D sticker correspondence', ({ id, scramble, facelets }) => {

@@ -183,6 +183,10 @@ export default function TwistySection({
   const [nativeDragDepth, setNativeDragDepth] = useState<NativeDragDepth>('auto');
   const nativeDragDepthRef = useRef(nativeDragDepth);
   useEffect(() => { nativeDragDepthRef.current = nativeDragDepth; }, [nativeDragDepth]);
+  useEffect(() => {
+    setNativeDragDepth('auto');
+    nativeDragDepthRef.current = 'auto';
+  }, [nativePuzzleId]);
   // Decide before constructing the first player: a failed 3D scene cannot provide
   // its initial-object promise, while the native SVG player needs no WebGL context.
   const [use2D, setUse2D] = useState<boolean | null>(null);

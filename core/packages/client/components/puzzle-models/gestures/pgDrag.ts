@@ -1,11 +1,11 @@
 import * as THREE from 'three';
 import { Move } from 'cubing/alg';
 import { getPuzzleGeometryByDesc } from 'cubing/puzzle-geometry';
-import { NATIVE_PUZZLES, nativePuzzleMoves, type NativePuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
+import { NATIVE_PUZZLES, nativePuzzleMoves, type NativePuzzleId, type NativePuzzleMoveDepth } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { nativePuzzleKPuzzle } from '@cuberoot/puzzle-solvers/native-puzzle-model';
 import { scoreCornerTwist } from './cuberDrag';
 
-export type NativePuzzleDragDepth = 'outer' | 'inner' | 'wide';
+export type NativePuzzleDragDepth = NativePuzzleMoveDepth;
 
 interface DragSticker {
   readonly vertices: readonly THREE.Vector3[];
@@ -57,9 +57,9 @@ export function createNativePuzzleDragGeometry(id: NativePuzzleId): NativePuzzle
     }
     return { vertices, orbit: sticker.orbit, slot: sticker.ord };
   });
-  const moves = nativePuzzleMoves(id).map(({ move }): DragMove => {
+  const moves = nativePuzzleMoves(id).map(({ move, family, depth }): DragMove => {
     const parsed = new Move(move);
-    const axis = axes.get(parsed.family.replace(/w$/, ''));
+    const axis = axes.get(family);
     if (!axis) throw new Error(`Missing native drag axis for ${id}: ${move}`);
     // This also rejects a mistyped registry family or an unsupported slice/wide
     // alias before it can become a dead manual gesture.
@@ -70,8 +70,7 @@ export function createNativePuzzleDragGeometry(id: NativePuzzleId): NativePuzzle
       if (orbit.permutation[sticker.slot] !== sticker.slot || orbit.orientationDelta[sticker.slot] !== 0) movingStickers.add(index);
     });
     return {
-      move, axis, movingStickers,
-      depth: parsed.family.endsWith('w') ? 'wide' : parsed.innerLayer === 2 ? 'inner' : 'outer',
+      move, axis, movingStickers, depth,
     };
   });
   const geometry = { id, stickers, moves, radius };
@@ -121,7 +120,7 @@ export function pickNativePuzzleDrag(
   if (minimum > (geometry.radius * 0.01) ** 2) return null;
   const slots = distances.flatMap((distance, index) => distance <= minimum + 1e-12 ? [index] : []);
   const candidates = geometry.moves.flatMap((move, index) => (
-    (depth ? move.depth === depth : move.depth !== 'wide')
+    (depth ? move.depth === depth : !move.depth.startsWith('wide'))
       && slots.some((slot) => move.movingStickers.has(slot)) ? [index] : []
   ));
   if (candidates.length === 0) return null;

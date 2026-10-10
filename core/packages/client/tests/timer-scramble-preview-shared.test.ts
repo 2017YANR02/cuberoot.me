@@ -58,6 +58,11 @@ describe('shared timer scramble preview', () => {
     { event: 'octahedron4', faces: 8 },
     { event: 'dinoskewb', faces: 6 },
     { event: 'cube3dino', faces: 6 },
+    { event: 'lattice', faces: 6 },
+    { event: 'hyperx', faces: 6 },
+    { event: 'latticex', faces: 6 },
+    { event: 'masterbrilic', faces: 12 },
+    { event: 'masterftov2', faces: 8 },
   ] as const)('renders the complete $event net and recovers from invalid input', async ({ event, faces }) => {
     const render = async (scramble: string) => act(async () => root.render(createElement(TimerCubePreview, {
       event, scramble, visualization: '3D', height: 240, ariaLabel: 'Native state',
@@ -325,7 +330,10 @@ describe('shared timer scramble preview', () => {
     }
     expect(timerCubePreviewAspect('sq1')).toBe(0.5);
     expect(timerCubePreviewAspect('pyraminx_duo', "R U'")).toBe(DUO_SVG_ASPECT);
-    for (const event of ['superz', 'dogic', 'octahedron4', 'dinoskewb', 'cube3dino'] as const) {
+    for (const event of [
+      'superz', 'dogic', 'octahedron4', 'dinoskewb', 'cube3dino',
+      'lattice', 'hyperx', 'latticex', 'masterbrilic', 'masterftov2',
+    ] as const) {
       expect(timerCubePreviewAspect(event)).toBe(nativePuzzleSvgAspect(event));
     }
     expect(timerCubePreviewAspect('mmagic', null)).toBe(magicSvgAspect('mmagic'));

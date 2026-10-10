@@ -225,11 +225,40 @@ describe('TwistySection without WebGL', () => {
     expect(vantages).not.toHaveBeenCalled();
   });
 
+  const addedNativeCases = [
+    {
+      id: 'lattice', setup: 'DRF', alg: '3DFLw', move: '3DRF', order: 3,
+      controls: [{ move: '3DRF', order: 3 }, { move: '3DFLw', order: 3 }],
+      invalid: '6DRF', absent: ['6DRF'],
+    },
+    {
+      id: 'hyperx', setup: 'F', alg: 'DRFw', move: '2UFR', order: 3,
+      controls: [{ move: 'F', order: 4 }, { move: '2DRF', order: 3 }, { move: 'UFRw', order: 3 }],
+      invalid: 'Fw', absent: ['2F', 'Fw', '2D', 'Dw', '2L', 'Lw'],
+    },
+    {
+      id: 'latticex', setup: 'F', alg: '3DRFw', move: '3UFRw', order: 3,
+      controls: [{ move: 'F', order: 4 }, { move: '3DRF', order: 3 }, { move: '3UFRw', order: 3 }],
+      invalid: 'Fw', absent: ['2F', '3F', 'Fw', '3Fw', '2D', '3D', 'Dw', '3Dw', '2L', '3L', 'Lw', '3Lw'],
+    },
+    {
+      id: 'masterbrilic', setup: 'U', alg: '1-3F', move: '3U', order: 5,
+      controls: [{ move: '3U', order: 5 }, { move: '1-2F', order: 5 }, { move: '1-3L', order: 5 }],
+      invalid: 'Uw', absent: ['Uw', '3Uw', 'Fw', '3Fw'],
+    },
+    {
+      id: 'masterftov2', setup: 'F', alg: '1-2D', move: '1-2F', order: 3,
+      controls: [{ move: '2F', order: 3 }, { move: '1-2D', order: 3 }],
+      invalid: 'Fw', absent: ['Fw', 'Dw'],
+    },
+  ] as const;
+
   const nativeCases = [
     { id: 'superz', setup: 'R', alg: 'UFR', move: 'UFR', order: 3 },
     { id: 'dogic', setup: 'FREGU', alg: 'HIERCw', move: '2FLACR', order: 5 },
     { id: 'octahedron4', setup: 'DBRRF', alg: 'DFLBLw', move: '2DBLBBBR', order: 4 },
     { id: 'dinoskewb', setup: 'DRF', alg: 'UFRw', move: '2DFL', order: 3 },
+    ...addedNativeCases,
   ] as const;
 
   async function mountNative(spec: typeof nativeCases[number], options: {
@@ -301,6 +330,7 @@ describe('TwistySection without WebGL', () => {
     for (const options of [
       { scramble: 'notAMove', alg: spec.alg },
       { scramble: spec.setup, alg: `(${spec.alg})1000000000` },
+      ...('invalid' in spec ? [{ scramble: spec.setup, alg: `${spec.alg} ${spec.invalid}` }] : []),
     ]) {
       await mountNative(spec, options);
       expect(probe.construct).toHaveBeenCalledOnce();
@@ -326,6 +356,39 @@ describe('TwistySection without WebGL', () => {
     expect(player.controlPanel).toBe('bottom-row');
     expect(host.querySelector('[role="alert"]')).toBeNull();
     expect(host.querySelector<HTMLButtonElement>('.twisty-native-controls .twisty-fallback-move')!.disabled).toBe(false);
+  });
+
+  it.each(addedNativeCases)('$id exposes its supported layer notation and sends each selected inverse through the actual controls', async (spec) => {
+    await mountNative(spec);
+    const move = host.querySelector<HTMLSelectElement>('select[aria-label="Move notation"]')!;
+    const angle = host.querySelector<HTMLSelectElement>('select[aria-label="Turn angle"]')!;
+    const available = [...move.options].map(({ value }) => value);
+    for (const absent of spec.absent) expect(available).not.toContain(absent);
+    // These spellings are independent fixtures, so the public move catalog and
+    // the component cannot agree on an incorrect third-layer or range spelling.
+    probe.algWrite.mockClear();
+    probe.setupWrite.mockClear();
+    for (const expected of spec.controls) {
+      expect(available).toContain(expected.move);
+      await act(async () => {
+        move.value = expected.move;
+        move.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+      expect(angle.options[0].textContent).toBe(`${360 / expected.order}°`);
+      await act(async () => {
+        angle.value = '-1';
+        angle.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+      const turn = host.querySelector<HTMLButtonElement>('.twisty-native-controls .twisty-fallback-move')!;
+      expect(turn.textContent).toBe(`Turn ${expected.move}'`);
+      await act(async () => turn.click());
+    }
+    const expectedMoves = spec.controls.map(({ move: notation }) => `${notation}'`);
+    expect(probe.publicAddMove.mock.calls.map(([notation]) => notation)).toEqual(expectedMoves);
+    expect(probe.modelAddMove.mock.calls.map(([notation]) => notation)).toEqual(expectedMoves);
+    expect(onUserMove.mock.calls.map(([notation]) => notation)).toEqual(expectedMoves);
+    expect(probe.algWrite).not.toHaveBeenCalled();
+    expect(probe.setupWrite).not.toHaveBeenCalled();
   });
 
   it.each(nativeCases)('$id keeps oversized initial input out of constructor options and overlay playback, then recovers', async (spec) => {

@@ -2177,6 +2177,9 @@ export default function PlayerControls({
   }, [kbVariant, keymap, applyMove, isTwistyMode]);
 
   const handleScramble = useCallback(async () => {
+    // A new setup may replace an invalid setup draft, but keep the last valid
+    // board intact while the solution is invalid instead of publishing half a state.
+    if (!nativeAlgValid) return;
     ++twistyReplayReqIdRef.current;
     const reqId = ++scrambleReqIdRef.current;
     // Twisty puzzles (pyraminx/skewb/megaminx) — no cuber world. Route to
@@ -2299,7 +2302,7 @@ export default function PlayerControls({
     }
     setSetupDraft(scramble);
     onSetupChange(scramble);
-  }, [world, activeCube, clearFrozen, order, isSq1, squareFamilySpec, isIvy, corner, isTwistyMode, puzzleKind, squareFormat, kilominxNotation, playbackMode, onSetupChange, twistyPlayerRef]);
+  }, [world, activeCube, clearFrozen, order, isSq1, squareFamilySpec, isIvy, corner, isTwistyMode, puzzleKind, squareFormat, kilominxNotation, playbackMode, nativeAlgValid, onSetupChange, twistyPlayerRef]);
 
   // ▶ Play button: animate the CURRENT scramble (the text already in the box) from
   // solved, on demand. This is the explicit animation entry point for a normal random scramble:
@@ -2521,6 +2524,7 @@ export default function PlayerControls({
           type="button"
           className="sim-player-scramble"
           onClick={handleScramble}
+          disabled={!nativeAlgValid}
           title={t('随机打乱', 'Random scramble')}
           aria-label={t('随机打乱', 'Random scramble')}
         >

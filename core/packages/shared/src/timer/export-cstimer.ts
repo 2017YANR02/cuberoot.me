@@ -22,6 +22,11 @@ export const CSTIMER_EVENT_FALLBACKS = {
   octahedron4: 'input',
   dinoskewb: 'input',
   cube3dino: 'input',
+  lattice: 'input',
+  hyperx: 'input',
+  latticex: 'input',
+  masterbrilic: 'input',
+  masterftov2: 'input',
   sphere: '333',
 } as const;
 
@@ -75,6 +80,11 @@ const EVENT_TO_CSTIMER_SCRTYPE: Record<EventId, string> = {
   octahedron4: CSTIMER_EVENT_FALLBACKS.octahedron4,
   dinoskewb: CSTIMER_EVENT_FALLBACKS.dinoskewb,
   cube3dino: CSTIMER_EVENT_FALLBACKS.cube3dino,
+  lattice: CSTIMER_EVENT_FALLBACKS.lattice,
+  hyperx: CSTIMER_EVENT_FALLBACKS.hyperx,
+  latticex: CSTIMER_EVENT_FALLBACKS.latticex,
+  masterbrilic: CSTIMER_EVENT_FALLBACKS.masterbrilic,
+  masterftov2: CSTIMER_EVENT_FALLBACKS.masterftov2,
   r3: 'r3',
   r4: 'r4',
   r5: 'r5',
