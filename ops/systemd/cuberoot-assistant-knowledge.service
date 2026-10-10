@@ -1,0 +1,18 @@
+[Unit]
+Description=CubeRoot public assistant knowledge index
+After=network-online.target postgresql.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/root/core-api
+ExecStart=/usr/bin/env node --max-old-space-size=192 --env-file=/root/core-api/.env /root/core-api/dist/index-assistant-knowledge.mjs
+Environment=NODE_ENV=production
+TimeoutStartSec=16min
+Nice=15
+CPUQuota=100%
+MemoryMax=384M
+TasksMax=32
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only

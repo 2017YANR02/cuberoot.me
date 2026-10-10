@@ -9158,3 +9158,6 @@ CREATE TABLE IF NOT EXISTS wca_person_teams (
   team_id INTEGER NOT NULL REFERENCES wca_teams(id),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Public assistant knowledge passages (pgvector extension provisioned separately).
+\ir schema_assistant_knowledge.pg.sql

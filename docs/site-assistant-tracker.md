@@ -1,5 +1,287 @@
 # CubeRoot site assistant
 
+## Release integration (2026-10-10)
+
+The owner authorized completing isolated acceptance and release after clarifying
+that the no-swap rule applies to the local computer only. Integration uses the
+current main branch in the attached `assistant-rag-release` checkout; unrelated
+training-workspace, team and enterprise-verification work is excluded. The public
+timer help is rendered in the existing timer settings and describes the current
+timer and algorithm-library routes, rather than unpublished training menus.
+
+The deployed PostgreSQL 13 development package exposes `pg_server_config`, not
+`pg_config`; provisioning now detects that real path. Extension files were built
+and installed without restarting PostgreSQL or enabling them in the business
+database. Full-index acceptance uses `cuberoot_assistant_acceptance_20261010` via
+the optional `SITE_ASSISTANT_KNOWLEDGE_DB_NAME` override. Production defaults to
+the ordinary application database. Background batches have a 30-second deadline
+and at most two SDK retries; interactive query embeddings retain eight seconds
+and no retries. Native answer streaming now parses the final `answer` field;
+old custom JSON tool-plan framing is no longer part of the transport.
+
+## Earlier local implementation and acceptance (2026-10-10)
+
+At this earlier checkpoint, the changes were **not committed, pushed or deployed**. The only production
+configuration mutation in this task was the explicitly confirmed Bailian model
+allowlist change: retain Qwen3.8-Flash and add text-embedding-v4. A real request
+now returns one 512-dimensional vector; the previous 403 was reproduced before
+that change. No keys or raw reasoning are included in this document.
+
+- Native tool calling uses Vercel AI SDK with DeepSeek and OpenAI-compatible
+  provider adapters. Tool schemas come from the existing strict executor schema;
+  native call IDs, tool results and private reasoning round-trip within one
+  request. The existing four-round/ten-call limits, authorization, cancellation,
+  evidence review and restricted SQL projections remain in place. Thinking is
+  automatic: low normally, high for analysis/repair, off for simple navigation.
+  This is an application policy, not a proven general difficulty classifier.
+- Public pages retain paragraph boundaries and are split with LangChain's
+  recursive splitter (1,400 characters, 180 overlap). Metadata/loading shells
+  are not content evidence. The training workspace and the index share one
+  bilingual product explanation. Other client-only tools still need their own
+  canonical public help to achieve comparable coverage.
+- Retrieval uses ICU Chinese/English word segmentation, PostgreSQL full-text
+  search and pgvector cosine distance, fused by reciprocal rank (k=60). Up to six
+  passages are returned with stable IDs and canonical source links. Exact vector
+  search is deliberate for a corpus capped at 30,000 passages; ANN should follow
+  measured latency/recall needs. MiniSearch provides lexical fallback if vector
+  service, database or snapshot freshness is unavailable. No cross-encoder
+  reranker, private documents, arbitrary URLs or agent-authored SQL were added.
+- The offline worker embeds batches of at most ten, reuses content fingerprints,
+  stages complete corpus generations and publishes one atomic snapshot pointer.
+  Failed batches leave the old snapshot intact; retries reuse completed vectors.
+  Deleted/edited content cannot match a newer source corpus hash. The worker
+  accepts only the fixed public artifact, caps it at 8 MB and defaults to 2,000
+  new embeddings per run; source build version 2 is required. An unchanged corpus
+  costs no new document embeddings. Model/endpoint/dimension changes invalidate
+  reuse. Provider keys stay on the API host.
+- Deployment code provisions pinned pgvector v0.8.7 and the restricted reader
+  before migrations 0267/0270. The refresh timer follows the API's active release
+  and checks for new website content every 15 minutes. It has a 192 MB Node heap,
+  384 MB cgroup memory limit and a 15-minute application deadline. Server swap
+  follows the existing host policy; cgroup v1 and v2 are both supported. The
+  maintainer clarified that the no-swap requirement applies only to their local
+  computer, not remote servers or CI. Full indexing remains blocked on the Mac.
+
+### Validation and release boundary
+
+Local PostgreSQL 16 + pgvector 0.8.7 fixtures verified Chinese/semantic retrieval,
+source/language filters, failed-publication preservation, vector reuse, edits and
+deletions. The separate public-analysis fixtures verified read-only permissions,
+query cancellation/timeouts, monthly deduplication, joins, attempts and windows.
+Native SDK tests verified reasoning stays out of UI callbacks and is retained in
+provider tool continuations. Assistant, content-index and deployment-contract
+checks passed; API typecheck and bundle passed. Client typecheck initially hit a
+tsgo native crash, then passed with GOMAXPROCS=2. No Next build was run while the
+development server was active.
+
+Real-model diagnostics used a **small local bilingual help corpus**, real Bailian
+embeddings and local pgvector, with real public APIs for WCA data. The final
+training explanation read a passage and cited it (7.8 seconds); the authenticated
+subject was supplied from the already-known test identity, not revalidated by
+this in-process harness. The 2026 participation answer returned 26 unique
+competitions from imported results (11.3 seconds, import timestamp supplied).
+These checks are not a site-wide quality benchmark or a deployed browser test.
+The local Chinese training page visibly renders the shared help paragraphs.
+
+After the no-swap scope correction, the actual Alibaba Cloud Linux 3/systemd 239
+host accepted the updated unit files. A temporary, isolated service with the
+same 192 MB heap / 384 MB memory budget and hardening read the currently published
+3,768,474-byte artifact: 1,460 pages, 1,334 with text. Together with the two new
+canonical training help documents, it produced 3,318 passages. Peak process RSS
+was 130.8 MiB after splitting and 201.7 MiB after building/searching the bilingual
+lexical index. The first lexical lookup took 4.4 seconds including index creation;
+warm lookups took 122–135 ms. Chinese and English training questions both ranked
+the shared help document first; the regulation query returned regulation pages.
+Two real embeddings requested from that server returned 512 dimensions each.
+This capacity check used the existing published corpus plus the new help, not a
+new version 2 site build, and did not write a production database or install a
+persistent service. Database-inclusive indexing memory remains unmeasured.
+A separate transient-service probe read an effective cgroup v1 memory limit of
+402,653,184 bytes (384 MiB), with the existing host swap policy retained.
+The refreshed worker bundle and API typecheck passed, as did all 21 existing
+workflow path-contract checks. The Mac worker stopped at its server preflight
+before fetching or indexing documents.
+
+**Full-corpus indexing has not run.** Read-only production inspection found
+PostgreSQL 13.23 without pgvector and a cgroup v1/systemd 239 host. The mistaken
+server no-swap gate has been removed following the owner's scope clarification;
+this host does not need a cgroup upgrade for indexing. This task did not change
+the host boot mode, kernel, swap settings or production database. Production
+semantic retrieval still requires a release: the workflow provisions pgvector,
+applies the migrations and installs the bounded refresh timer; the version 2
+website artifact must also be deployed, followed by indexing and production
+acceptance. Until that snapshot is ready, retrieval falls back to lexical search.
+
+Configuration: SITE_ASSISTANT_KNOWLEDGE_ENABLED=0 explicitly disables vector
+retrieval/indexing. Embedding key/base default to the existing Bailian settings;
+SITE_ASSISTANT_EMBEDDING_MODEL defaults to text-embedding-v4. Optional dedicated
+credentials and job limits are documented in apps/api/.env.example. No separate
+Dify service or knowledge-admin product is required for this developer-maintained
+content workflow.
+
+## Mainstream architecture decision (research, 2026-10-10)
+
+The owner confirmed that the development team will maintain knowledge together
+with website features. Recommended direction: **Vercel AI SDK + native tool
+calling + hybrid document retrieval**, retaining Hono, PostgreSQL, DeepSeek and
+the existing authorized data tools. The research below records the pre-implementation observations.
+The local implementation and its acceptance boundary are recorded above.
+
+### Evidence from maintained products and repositories
+
+These are verified public capabilities and engineering guidance, not claims
+about undisclosed company internals or a market-share ranking. Sources were
+checked on 2026-10-10; GitHub maintenance and package versions can change.
+
+| Reference | Verified approach | Decision for CubeRoot |
+| --- | --- | --- |
+| [OpenAI File Search](https://developers.openai.com/api/docs/guides/tools-file-search) | Hosted retrieval combines semantic and keyword search and is exposed as a model tool. | Follow the retrieval-as-a-tool pattern. Moving our model and documents to this hosted product is not required. |
+| [Google RAG Engine](https://docs.cloud.google.com/gemini-enterprise-agent-platform/build/rag-engine/rag-overview) | Document ingestion, transformation/chunking, embedding, indexing, retrieval and generation are separate stages. | Build the complete document lifecycle, including updates and deletion, instead of only improving the answer prompt. |
+| [Microsoft Azure AI Search](https://learn.microsoft.com/en-us/azure/search/hybrid-search-overview) | Full-text and vector retrieval run together, with RRF result fusion and optional semantic reranking. Exact identifiers and specialist terms benefit from keyword retrieval. | Use hybrid retrieval for WCA IDs, algorithm names, Chinese terminology and paraphrased questions; measure reranking before enabling it globally. |
+| [Anthropic Contextual Retrieval](https://www.anthropic.com/engineering/contextual-retrieval) | Evaluates contextualized chunks, lexical/embedding retrieval and reranking together. | Preserve each passage's document title, heading and source context; verify improvements on our own questions. Their experimental gains are not CubeRoot results. |
+| [Vercel AI SDK](https://github.com/vercel/ai), [tool loop](https://ai-sdk.dev/docs/agents/loop-control), [DeepSeek provider](https://ai-sdk.dev/providers/ai-sdk-providers/deepseek) | Maintained TypeScript SDK provides provider adapters, typed tools, streaming and bounded multi-step execution. DeepSeek exposes thinking and reasoning effort. | Preferred application SDK. It fits the existing Node/Hono stack and can use the provider directly without adopting a gateway or moving hosting. |
+| [Dify](https://github.com/langgenius/dify), [retrieval settings](https://docs.dify.ai/en/cloud/use-dify/knowledge/create-knowledge/setting-indexing-methods) | A separate application platform with visual workflows, knowledge management, chunking and vector/full-text/hybrid retrieval. | Useful if non-developers must manage knowledge and workflows. The confirmed maintenance model favors integration with the existing application. Its license includes terms beyond unmodified Apache 2.0. |
+| [LangGraph JS](https://github.com/langchain-ai/langgraphjs), [overview](https://docs.langchain.com/oss/javascript/langgraph/overview) | Durable execution, state, persistence and human interaction for long-running workflows. | Reconsider when resumable jobs or approval workflows are required. A short request with bounded read tools does not currently need this additional runtime. |
+| [RAGFlow](https://github.com/infiniflow/ragflow) | A document-processing and RAG platform with rich parsing/OCR and additional deployment services. Its README recommends starting with 4 CPU cores, 16 GB RAM and 50 GB disk. | Stronger candidate for large PDF/scanned-document collections. Our first gap is usable website documentation; deploying this platform is not justified by that gap. No local service or large computation was started. |
+| [Haystack](https://github.com/deepset-ai/haystack), [pipelines](https://docs.haystack.deepset.ai/docs/creating-pipelines) | Python components and pipelines for retrieval and agents. | A valid ecosystem, but adding a Python service is unnecessary for this TypeScript application. |
+| [LlamaIndexTS](https://github.com/run-llama/LlamaIndexTS) | The TypeScript repository is archived and read-only, marked archived April 30, 2026. | Exclude this TS package from a new integration. This finding does not mean the separate Python project is archived. |
+
+The npm registry returned `ai@7.0.137` and `@ai-sdk/deepseek@3.0.63`, both
+requiring Node >=22, matching the API's Node 22 bundle target. The Vercel AI SDK
+license text is Apache 2.0. Repository stars were inspected only as context;
+runtime fit, provider behavior, maintenance and operating cost determine this
+recommendation. No dependencies were installed during this research.
+
+### What actually needs to change
+
+Current-source observations are distinct from hypotheses about answer quality:
+
+- `build-assistant-index.ts` primarily extracts prerendered public HTML; sitemap
+  discovery can contribute a destination with an empty body. Client-only
+  features may contribute metadata or loading placeholders instead of usage
+  instructions. The earlier real-model timer comparison failed to retrieve
+  the needed explanation with thinking both off and on.
+- `site_assistant.ts` currently searches using substring matches and short
+  Chinese tokens, takes four page hits and the first 10,000 characters per page.
+  It does not perform semantic passage retrieval or reranking. A useful passage
+  near the end of a long page can be missed.
+- Tool requests are currently JSON embedded in ordinary model text, parsed by
+  application code. Replacing this transport with native tool calls removes
+  custom protocol handling; it is not evidence that all existing failures were
+  caused by the protocol. Existing authorization and result validation remain
+  application responsibilities.
+- Thinking alone does not supply missing documentation or establish the validity
+  of a statistical interpretation. The small diagnostic below is not a general
+  quality benchmark. The automatic effort rule is an application heuristic,
+  not a provider feature that has been proven to classify question difficulty.
+
+```mermaid
+flowchart TD
+  Q[Question and recent conversation] --> A[Verified server identity and time context]
+  A --> M[AI SDK and DeepSeek]
+  M --> D[Existing read-only data and calculation tools]
+  M --> K[Document retrieval tool]
+  D --> E[Verified results and sources]
+  K --> E
+  E --> M
+  M --> R[Answer with citations, tables and destination links]
+  S[Published documentation and canonical feature content] --> C[Versioned passages and incremental indexing]
+  C --> K
+```
+
+For "how many competitions this year", the model selects a data tool and the
+database computes from results. For "how does training mode work", it retrieves
+published instructions. If a mixed question needs both, the same bounded tool
+loop can do both. RAG means retrieving relevant material before generating an
+answer; it does not require prewriting every answer or embedding every result
+row. Missing raw data must remain distinguishable from a computed zero.
+
+### Implementation sequence and acceptance
+
+1. **Standardize model integration.** Use AI SDK and its DeepSeek adapter for
+   native tools and streaming. Derive tool input schemas from the existing Zod
+   contracts; preserve server identity, read-only limits, sources, cancellation,
+   quotas and the overall deadline. Review the separately published generic
+   analysis implementation when integrating: it is absent from this current
+   checkout, so this checkout alone cannot establish combined acceptance.
+2. **Fix knowledge coverage at its source.** Index public documentation and
+   canonical feature descriptions with stable document/passage IDs, headings,
+   language, source URL, content hash and actual revision metadata. Reuse the
+   content rendered by the website; do not maintain an independent AI FAQ for
+   every feature. Reject empty/loading-only bodies as content evidence. Keep
+   navigation labels searchable separately. Update only changed content and
+   remove deleted/unpublished passages. Private repository/administration data
+   must not enter the public document pipeline.
+3. **Add hybrid passage retrieval.** Prefer
+   [pgvector](https://github.com/pgvector/pgvector) in the existing PostgreSQL
+   deployment, plus a mature lexical search path. Verify extension availability
+   before making a migration depend on it. Chinese tokenization must be tested;
+   plain English PostgreSQL full-text search is insufficient.
+   [PGroonga](https://pgroonga.github.io/overview/) is one verified multilingual
+   extension candidate, not an already selected or installed dependency.
+   Compare lexical, vector and hybrid recall on the same corpus. Use standard
+   result fusion; enable a reranker if measured gains justify its latency/cost.
+   An embedding provider/model, dimensions and revision strategy still need
+   verification; the chat-model credential alone does not establish embedding
+   availability. Embedding and reranking must not require a local model runtime.
+4. **Measure the whole answer path.** Reuse the existing assistant benchmark
+   entry and saved questions. Check expected source passages, correct tool
+   selection, exact computed answers and citations separately from fluent prose.
+   Cover identity, relative dates, Chinese/English paraphrases, WCA IDs, feature
+   instructions, multi-step calculations, follow-ups and unavailable data.
+   Record latency, tool failures and token cost; include known failures and
+   questions not used to tune prompts. Adopt framework/retrieval changes only
+   after comparison, without claiming accuracy from three smoke questions.
+
+DeepSeek's [thinking tool-call contract](https://api-docs.deepseek.com/guides/thinking_mode/)
+requires reasoning content to be passed back when native `tools` are used.
+The SDK's [message converter](https://github.com/vercel/ai/blob/main/packages/deepseek/src/chat/convert-to-deepseek-chat-messages.ts)
+handles reasoning parts. During migration, retain the required provider state
+inside the server-side loop while excluding it from public UI and ordinary logs;
+do not carry over the current no-native-tools rule of discarding all reasoning.
+Keep a single default automatic user experience. Tune effort and token budgets
+against answer quality and latency; no user-facing thinking selector is required
+to complete this integration.
+
+## Adaptive DeepSeek thinking (local, 2026-10-10)
+
+- The backend enables DeepSeek thinking with `reasoning_effort: low` for model
+  planning. Existing deterministic answers still bypass the model. Once the
+  retrieved evidence consists only of navigation results, the next response
+  uses non-thinking mode; statistical/analysis tools, multiple factual reads,
+  or rejected plans raise effort to `high`. This follows selected work, not a
+  hard-coded Chinese/English question classifier. There is no new user toggle.
+- Thinking requests allow 8,192 total output tokens, or 16,384 at high effort,
+  including reasoning. Non-thinking requests retain the existing 1,200 limit.
+  Non-streaming transport allows up to 384,000 bytes when thinking is enabled.
+  `finish_reason: length` triggers the existing single bounded repair attempt;
+  the shared request deadline, quota and tool-call limits remain unchanged.
+  Reasoning text is never forwarded to UI events, evidence, logs or later
+  prompts. The other provider's configuration is unchanged.
+- API typecheck and 83 focused grounding/streaming/resilience checks passed,
+  including actual request options, navigation downgrade, statistical effort,
+  truncated-output repair and exclusion of reasoning text in both transports.
+- Six sequential real-provider requests compared thinking off with auto on the
+  same three questions and public sources. Reasoning token usage confirmed the
+  feature is active. One sample per condition is diagnostic, not a quality or
+  latency benchmark; provider caching was uncontrolled.
+
+| Question | Off | Auto | Observation |
+| --- | ---: | ---: | --- |
+| Open frame counting | 2.48 s | 2.30 s | Both found the correct destination; auto used low effort, then disabled thinking. |
+| Compare two competitors' 3x3 PBs and discuss stability | 2.85 s | 2.87 s | Both compared PBs correctly. Auto added a weak inference from single/average PB gaps; thinking did not guarantee sound interpretation. |
+| Explain timer training mode versus ordinary timing | 4.59 s | 10.66 s | Neither retrieved the necessary feature description. Auto performed more reads but still encountered page metadata/loading content and nearby tools. |
+
+The next priority is usable feature-level documentation in retrieval, followed
+by stronger analysis interpretation checks. These observations do not establish
+a general accuracy improvement. The diagnostic used this current checkout,
+which does not contain the separately published generic analysis implementation;
+combined production acceptance remains outstanding. No code was committed,
+pushed or deployed for this local change. Temporary diagnostic execution did
+not replace the running API.
+
+Provider contract: [DeepSeek thinking mode](https://api-docs.deepseek.com/guides/thinking_mode/).
+
 ## WC 2027 announcement (local, 2026-10-02)
 
 - Added bilingual `/wca/wc-2027` summarizing the WCA July 2025 host-city

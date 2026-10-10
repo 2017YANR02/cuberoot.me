@@ -4,6 +4,7 @@ import { partialAssistantAnswer } from '../src/utils/site_assistant_stream.js';
 import { answerSiteQuestion } from '../src/utils/site_assistant.js';
 import { createSiteAssistantRoutes } from '../src/routes/site_assistant.js';
 import { AssistantFailure } from '../src/utils/site_assistant_diagnostics.js';
+import { chunkKnowledge } from '../src/utils/site_assistant_knowledge.js';
 
 beforeEach(() => { vi.spyOn(console, 'log').mockImplementation(() => {}); vi.spyOn(console, 'warn').mockImplementation(() => {}); });
 afterEach(() => vi.restoreAllMocks());
@@ -22,34 +23,42 @@ describe('assistant streaming', () => {
     expect(values).toEqual(['中文\nsecond', '[DONE]']);
   });
 
-  it('only exposes answer strings after calls:[] and waits for complete escapes', () => {
+  it('only exposes native final-answer strings and waits for complete escapes', () => {
     expect(partialAssistantAnswer('{"calls":[{"tool":"pages"}],"answer":"secret')).toBeUndefined();
-    expect(partialAssistantAnswer('{"answer":"unverified')).toBeUndefined();
-    expect(partialAssistantAnswer('{"calls":[],"answer":"中文\\n\\"ok\\"\\u4e')).toBe('中文\n"ok"');
-    expect(partialAssistantAnswer('{"calls":[],"answer":"\\uD83D')).toBe('');
-    expect(partialAssistantAnswer('{"calls":[],"answer":"\\uD83D\\uDE00"')).toBe('😀');
+    expect(partialAssistantAnswer('{"tool":"pages","query":"private')).toBeUndefined();
+    expect(partialAssistantAnswer('{"answer":"中文\\n\\"ok\\"\\u4e')).toBe('中文\n"ok"');
+    expect(partialAssistantAnswer('{"answer":"\\uD83D')).toBe('');
+    expect(partialAssistantAnswer('{"answer":"\\uD83D\\uDE00"')).toBe('😀');
   });
 
   it('delivers provider answer text before the provider finishes and cites only retrieved pages', async () => {
+    const corpus={version:2,updated:'2026-10-10T00:00:00.000Z',pages:[{lang:'zh' as const,href:'/frame-count',title:'数帧',text:'逐帧查看视频。'}]};
+    const [passage]=await chunkKnowledge(corpus);
+    const source={id:passage.id,title:'数帧',href:'/frame-count',read:true};
+    const chunk=(delta:object,finish_reason:string|null=null)=>frame({id:'test',object:'chat.completion.chunk',created:1,model:'fixture',choices:[{index:0,delta,finish_reason}]});
     let provider!: ReadableStreamDefaultController<Uint8Array>;
     const events: AssistantStreamEvent[] = [];
     const fetcher = vi.fn<typeof fetch>().mockImplementation(async (url, init) => {
       if (String(url).endsWith('/stats/index.json')) return Response.json({ categories: [] });
-      if (String(url).endsWith('/assistant/pages.json')) return Response.json({ pages: [{ lang: 'zh', href: '/frame-count', title: '数帧', text: '逐帧查看视频。' }] });
+      if (String(url).endsWith('/assistant/pages.json')) return Response.json(corpus);
       const body = JSON.parse(String(init?.body));
       expect(body.stream).toBe(true);
-      if (JSON.parse(body.messages[1].content).round === 0) return Response.json({ choices: [{ message: { content: JSON.stringify({ calls: [{ tool: 'pages', query: '数帧', pageIds: [] }] }) } }] });
+      if (JSON.parse(body.messages[1].content).round === 0) return new Response(new ReadableStream({start(c){
+        c.enqueue(chunk({role:'assistant',tool_calls:[{index:0,id:'pages-1',type:'function',function:{name:'pages',arguments:JSON.stringify({query:'数帧',pageIds:[]})}}]}));
+        c.enqueue(chunk({},'tool_calls'));c.enqueue(frame('[DONE]'));c.close();
+      }}),{headers:{'Content-Type':'text/event-stream'}});
       return new Response(new ReadableStream({ start(c) { provider = c; } }), { headers: { 'Content-Type': 'text/event-stream' } });
     });
     let finished = false;
     const answer = answerSiteQuestion('怎么数帧？', 'zh', config, AbortSignal.timeout(5000), fetcher, [], undefined, async event => { events.push(event); }).then(value => { finished = true; return value; });
     await vi.waitFor(() => expect(provider).toBeDefined());
-    provider.enqueue(frame({ choices: [{ delta: { content: '{"calls":[],"answer":"打开数帧页面。' } }] }));
-    await vi.waitFor(() => expect(events).toContainEqual({ type: 'answer', answer: '打开数帧页面。', sources: [{ id: 'page:/frame-count', title: '数帧', href: '/frame-count', read: true }] }));
+    provider.enqueue(chunk({role:'assistant',content:'{"answer":"打开数帧页面。'}));
+    await vi.waitFor(() => expect(events).toContainEqual({ type: 'answer', answer: '打开数帧页面。', sources: [source] }));
     expect(finished).toBe(false);
-    provider.enqueue(frame({ choices: [{ delta: { content: ' [[page:/frame-count]] [[fake]]","sourceIds":["page:/frame-count"]}' } }] }));
+    provider.enqueue(chunk({content:` [[${passage.id}]] [[fake]]","sourceIds":["${passage.id}"]}`}));
+    provider.enqueue(chunk({},'stop'));
     provider.enqueue(frame('[DONE]')); provider.close();
-    expect((await answer).answer).toBe('打开数帧页面。 [[page:/frame-count]] ');
+    expect((await answer).answer).toBe(`打开数帧页面。 [[${passage.id}]] `);
     expect(events).toContainEqual({ type: 'status', status: { phase: 'querying', tool: 'pages' } });
   });
 

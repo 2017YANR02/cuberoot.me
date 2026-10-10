@@ -1,3 +1,4 @@
+import { modelResponse } from './fixtures/site_assistant_model.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createSiteAssistantRoutes as createRoutes } from '../src/routes/site_assistant.js';
 import { answerSiteQuestion, assistantConfig, pageText, requestedAssistantLimit } from '../src/utils/site_assistant.js';
@@ -11,7 +12,7 @@ const createSiteAssistantRoutes = (deps: Omit<Parameters<typeof createRoutes>[0]
 const config = { key: 'test-secret', baseUrl: 'https://model.example/v1', model: 'qwen3.8-flash' };
 beforeEach(()=>{vi.spyOn(console,'log').mockImplementation(()=>{});vi.spyOn(console,'warn').mockImplementation(()=>{});});
 afterEach(()=>{vi.restoreAllMocks();vi.unstubAllEnvs();vi.useRealTimers();});
-const modelResponse = (value: unknown) => Response.json({ choices: [{ message: { content: JSON.stringify(value) } }] });
+
 const ask = () => new Request('https://api.example/site-assistant', {
   method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Real-IP': '127.0.0.1' },
   body: JSON.stringify({ question: '怎么数帧？', lang: 'zh' }),
@@ -51,7 +52,7 @@ describe('site assistant grounding', () => {
       .mockResolvedValueOnce(modelResponse({answer:'Computed counts and differences are below.',sourceIds:['analysis:complete']}));
     const result=await answerSiteQuestion('Compare monthly counts and differences','en',config,AbortSignal.timeout(5000),withCatalog(model));
     const review=JSON.parse(String(model.mock.calls[3][1]?.body));
-    expect(JSON.parse(review.messages.at(-1).content).draftAnswer).toBe('Both months have no predecessor.');
+    expect(JSON.parse(review.messages[1].content).draftAnswer).toBe('Both months have no predecessor.');
     expect(review.messages[0].content).toContain('Every requested calculated measure');
     expect(runAnalysisQuery).toHaveBeenCalledTimes(2);
     expect(result.artifacts).toEqual([{kind:'table',title:call.title,columns:['Month','Count','Difference'],rows:[['1','1','—'],['2','1','0']]}]);
@@ -303,15 +304,61 @@ describe('site assistant grounding', () => {
     vi.stubEnv('SITE_ASSISTANT_PROVIDER', 'bailian');
     expect(assistantConfig()).toEqual({key:'bailian-test-key',baseUrl:'https://dashscope.aliyuncs.com/compatible-mode/v1',model:'qwen3.8-flash'});
   });
-  it('disables DeepSeek thinking using its official parameter and keeps JSON tool planning', async () => {
-    const fetcher=vi.fn<typeof fetch>().mockResolvedValue(modelResponse({answer:'请提供要查询的选手。'}));
+  it('enables bounded DeepSeek thinking without changing the other provider', async () => {
+    const fetcher=vi.fn<typeof fetch>().mockImplementation(async()=>modelResponse({answer:'请提供要查询的选手。'}));
     await answerSiteQuestion('查选手','zh',{key:'deepseek-test-key',baseUrl:'https://api.deepseek.com',model:'deepseek-flash'},AbortSignal.timeout(5000),withCatalog(fetcher));
     const [url,init]=fetcher.mock.calls[0];
     expect(url).toBe('https://api.deepseek.com/chat/completions');
-    expect(init?.headers).toMatchObject({Authorization:'Bearer deepseek-test-key'});
+    expect(new Headers(init?.headers).get('authorization')).toBe('Bearer deepseek-test-key');
     const body=JSON.parse(String(init?.body));
-    expect(body).toMatchObject({model:'deepseek-flash',thinking:{type:'disabled'},response_format:{type:'json_object'},max_tokens:1200});
+    expect(body).toMatchObject({model:'deepseek-flash',thinking:{type:'enabled'},reasoning_effort:'low',response_format:{type:'json_object'},max_tokens:8192});
     expect(body).not.toHaveProperty('enable_thinking');
+    expect(body).not.toHaveProperty('temperature');
+    await answerSiteQuestion('查选手','zh',config,AbortSignal.timeout(5000),withCatalog(fetcher));
+    const other=JSON.parse(String(fetcher.mock.calls.at(-1)?.[1]?.body));
+    expect(other).toMatchObject({enable_thinking:false,temperature:0,max_tokens:1200});
+    expect(other).not.toHaveProperty('thinking');
+  });
+  it('uses the fast final response after a navigation-only lookup',async()=>{
+    const bodies:any[]=[];
+    const fetcher:typeof fetch=async(url,init)=>{
+      if(String(url).endsWith('/assistant/pages.json'))return Response.json({pages:[],destinations:[]});
+      const body=JSON.parse(String(init?.body));bodies.push(body);
+      return modelResponse(bodies.length===1?{calls:[{tool:'navigation',query:'数帧',pageIds:[]}]}:{answer:'打开数帧页面。',sourceIds:['frame-count']});
+    };
+    await answerSiteQuestion('打开数帧','zh',{...config,baseUrl:'https://api.deepseek.com'},AbortSignal.timeout(5000),withCatalog(fetcher));
+    expect(bodies).toHaveLength(2);
+    expect(bodies[0]).toMatchObject({thinking:{type:'enabled'},reasoning_effort:'low'});
+    expect(bodies[1]).toMatchObject({thinking:{type:'disabled'},max_tokens:1200});
+    expect(bodies[1]).not.toHaveProperty('reasoning_effort');
+  });
+  it('raises reasoning effort after statistical evidence without trusting its labels',async()=>{
+    const bodies:any[]=[];
+    const fetcher:typeof fetch=async(url,init)=>{
+      if(String(url).endsWith('/stats/index.json'))return Response.json({categories:[{stats:[{id:'example',titleZh:'样例统计',titleEn:'Example'}]}]});
+      if(String(url).endsWith('/example.json'))return Response.json({header:[{key:'count',label:'Count'}],rows:[[9]]});
+      bodies.push(JSON.parse(String(init?.body)));
+      return modelResponse(bodies.length===1?{calls:[{tool:'statistics',id:'example',limit:5}]}:{answer:'结果如下。',sourceIds:['stat:example']});
+    };
+    await answerSiteQuestion('分析样例统计','zh',{...config,baseUrl:'https://api.deepseek.com'},AbortSignal.timeout(5000),fetcher);
+    expect(bodies[1]).toMatchObject({thinking:{type:'enabled'},reasoning_effort:'high',max_tokens:16384});
+  });
+  it.each([false,true])('repairs truncated thinking output and never exposes reasoning (stream=%s)',async stream=>{
+    const events:unknown[]=[],bodies:any[]=[];
+    const privateReasoning='private-reasoning-'.repeat(4500);
+    const fetcher:typeof fetch=async(_url,init)=>{
+      const body=JSON.parse(String(init?.body));bodies.push(body);
+      const content=JSON.stringify({calls:[],answer:bodies.length===1?'incomplete':'请提供选手姓名。',sourceIds:[]});
+      const finish=bodies.length===1?'length':'stop';
+      if(!stream)return Response.json({choices:[{message:{content,reasoning_content:privateReasoning},finish_reason:finish}]});
+      const chunks=[{choices:[{delta:{reasoning_content:privateReasoning}}]},{choices:[{delta:{content},finish_reason:finish}]}];
+      return new Response(chunks.map(c=>`data: ${JSON.stringify(c)}\n\n`).join('')+'data: [DONE]\n\n',{headers:{'Content-Type':'text/event-stream'}});
+    };
+    const result=await answerSiteQuestion('查选手','zh',{...config,baseUrl:'https://api.deepseek.com'},AbortSignal.timeout(5000),withCatalog(fetcher),[],undefined,stream?async event=>{events.push(event);}:undefined);
+    expect(result.answer).toBe('请提供选手姓名。');
+    expect(bodies).toHaveLength(2);
+    expect(bodies[1]).toMatchObject({thinking:{type:'enabled'},reasoning_effort:'high',max_tokens:16384});
+    expect(JSON.stringify({result,events,bodies,logs:vi.mocked(console.log).mock.calls})).not.toContain('private-reasoning');
   });
   it('keeps tabular statistics factual when the final model prose contradicts the actual value',async()=>{
     const model=vi.fn().mockResolvedValueOnce(modelResponse({calls:[{tool:'statistics',id:'example',limit:5}]})).mockResolvedValueOnce(modelResponse({answer:'占据前三席',sourceIds:['stat:example']}))
@@ -492,6 +539,19 @@ describe('site assistant grounding', () => {
     expect(fetcher.mock.calls.filter(([url])=>String(url).startsWith(config.baseUrl))).toHaveLength(3);
     const data=JSON.parse(JSON.parse(String(fetcher.mock.calls[0][1]?.body)).messages[1].content);
     expect(data.history).toEqual(history);
+  });
+
+  it('requires content evidence before explaining a navigation destination',async()=>{
+    const corpus={version:2,updated:'2026-10-10T00:00:00.000Z',pages:[{lang:'zh',href:'/timer',title:'计时器训练',text:'打开训练菜单，选择公式集，再选择要练习的情况。'}]};
+    const responses=[modelResponse({calls:[{tool:'navigation',query:'计时器训练',kind:'all',pageIds:['timer']}]}),modelResponse({answer:'Unsupported navigation-only instructions.',sourceIds:['timer']}),modelResponse({answer:'打开训练菜单，选择公式集，再选择要练习的情况。',sourceIds:[]})];
+    const model=vi.fn<typeof fetch>(async input=>String(input).endsWith('/assistant/pages.json')?Response.json(corpus):responses.shift()!);
+    const answer=await answerSiteQuestion('计时器训练怎么用？','zh',config,AbortSignal.timeout(5000),withCatalog(model));
+    expect(answer.answer).not.toContain('Unsupported');
+    expect(answer.sources.some(source=>source.read && source.id.startsWith('passage:'))).toBe(true);
+    expect(answer.answer).toContain('[[passage:');
+  });
+  it('does not treat a loading shell and metadata as page evidence',()=>{
+    expect(pageText('<html><head><meta name="description" content="A full training tool"></head><body><main>Loading...</main></body></html>')).toBe('');
   });
 
   it('excludes chrome and injected scripts from source text', () => {

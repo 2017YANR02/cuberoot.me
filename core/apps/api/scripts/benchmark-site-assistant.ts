@@ -4,19 +4,22 @@ import { createSiteAssistantRoutes, requireAssistantUser } from '../src/routes/s
 import { answerSiteQuestion, assistantConfig } from '../src/utils/site_assistant.js';
 import { getUserById } from '../src/utils/account.js';
 import { signSession } from '../src/utils/session.js';
+import { knowledgeIndexSchema } from '../src/utils/site_assistant_knowledge.js';
 
-export interface BenchmarkCase { id:string; category:string; question:string; expected:string; statId?:string }
+export interface BenchmarkCase { id:string; category:string; question:string; expected:string; statId?:string; lang?:'zh'|'en' }
 export function parseBenchmarkQuestions(markdown:string): BenchmarkCase[] {
   return markdown.split('\n').filter(line=>/^\| [RDS]\d+ \|/.test(line)).map(line=>{
-    const [id,category,question,expected,statId]=line.split('|').slice(1,-1).map(cell=>cell.trim());
+    const [id,category,question,expected,statId,lang]=line.split('|').slice(1,-1).map(cell=>cell.trim());
     if(!id || !question || question.length>500) throw new Error('Invalid benchmark question');
-    return {id,category,question,expected,...(statId && statId!=='—'?{statId}:{})};
+    return {id,category,question,expected,...(statId && statId!=='—'?{statId}:{}),...(lang==='en'?{lang:'en' as const}:{})};
   });
 }
 
-export async function runAssistantBenchmark(cases:BenchmarkCase[], accountId:number, expectedWcaId:string) {
+export async function runAssistantBenchmark(cases:BenchmarkCase[], accountId:number, expectedWcaId:string, publicIndexPath?:string) {
   if(cases.length<1 || cases.length>100 || new Set(cases.map(c=>c.id)).size!==cases.length) throw new Error('Expected 1–100 unique cases');
   const config = assistantConfig();
+  const publicIndex=publicIndexPath ? JSON.parse(readFileSync(publicIndexPath,'utf8')) : undefined;
+  if(publicIndex) knowledgeIndexSchema.parse(publicIndex);
   if(!config) throw new Error('Configure the existing server-side assistant provider before benchmarking');
   const account=await getUserById(accountId);
   if(account?.wca_id!==expectedWcaId) throw new Error('Benchmark account mismatch');
@@ -38,13 +41,15 @@ export async function runAssistantBenchmark(cases:BenchmarkCase[], accountId:num
   for(const item of cases) {
     const modelSteps:unknown[]=[];
     const fetcher:typeof fetch=async(input,init)=>{
+      if(publicIndex && String(input)==='https://next.cuberoot.me/assistant/pages.json') return Response.json(publicIndex);
       const started=performance.now();
       const response=await fetch(input,init);
       if(String(input).endsWith('/chat/completions')) {
         const payload=await response.clone().json().catch(()=>null);
         const content=payload?.choices?.[0]?.message?.content;
         let parsed;try{parsed=JSON.parse(content);}catch{}
-        modelSteps.push({ms:Math.round(performance.now()-started),status:response.status,model:payload?.model,hasReasoning:!!payload?.choices?.[0]?.message?.reasoning_content,usage:payload?.usage,finish:payload?.choices?.[0]?.finish_reason,calls:parsed?.calls,unexpectedShape:parsed && !Array.isArray(parsed.calls)?parsed:undefined,decodeFailure:parsed?undefined:String(content).slice(0,500)});
+        const calls=payload?.choices?.[0]?.message?.tool_calls?.map((call:any)=>({tool:call.function?.name,arguments:call.function?.arguments}));
+        modelSteps.push({ms:Math.round(performance.now()-started),status:response.status,model:payload?.model,hasReasoning:!!payload?.choices?.[0]?.message?.reasoning_content,usage:payload?.usage,finish:payload?.choices?.[0]?.finish_reason,calls:calls ?? parsed?.calls});
       }
       return response;
     };
@@ -54,7 +59,7 @@ export async function runAssistantBenchmark(cases:BenchmarkCase[], accountId:num
       answer:(q,l,c,s,_f,h,v)=>answerSiteQuestion(q,l,c,s,fetcher,h,v)});
     const history=item.id==='D08'?[{role:'user',content:'我想看 2009ZEMD01 的三阶成绩'},{role:'assistant',content:'我们正在查看 2009ZEMD01 的三阶成绩。'}]:[];
     const started=performance.now();
-    const response=await route.request('/site-assistant',{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({question:item.question,lang:'zh',history})});
+    const response=await route.request('/site-assistant',{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({question:item.question,lang:item.lang ?? 'zh',history,timeZone:'America/Los_Angeles'})});
     const result=await response.json();
     console.log(JSON.stringify({benchmark:true,id:item.id,question:item.question,statId:item.statId,durationMs:Math.round(performance.now()-started),status:response.status,result,modelSteps,rssMb:Math.round(process.memoryUsage().rss/1048576)}));
     if(response.status===429) break;
@@ -67,6 +72,6 @@ if(process.argv.includes('--run')) {
   const value=(name:string)=>process.argv.find(arg=>arg.startsWith(`--${name}=`))?.slice(name.length+3);
   const file=value('questions'), accountId=Number(value('account-id')), wcaId=value('wca-id');
   if(!file || !Number.isSafeInteger(accountId) || accountId<1 || !wcaId || !/^\d{4}[A-Z]{4}\d{2}$/.test(wcaId)) throw new Error('Required: --run --questions=path.md --account-id=N --wca-id=YYYYXXXXNN');
-  await runAssistantBenchmark(parseBenchmarkQuestions(readFileSync(file,'utf8')),accountId,wcaId);
+  await runAssistantBenchmark(parseBenchmarkQuestions(readFileSync(file,'utf8')),accountId,wcaId,value('content-index'));
   process.exit(0);
 }

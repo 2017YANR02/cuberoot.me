@@ -1,5 +1,29 @@
 [
   {
+    "name": "AI SDK / Vercel",
+    "url": "https://github.com/vercel/ai",
+    "zh": "助手通过 Apache-2.0 许可的 AI SDK 使用标准模型工具调用及服务端流式响应。",
+    "en": "The assistant uses the Apache-2.0 AI SDK for native model tools and server-side streaming."
+  },
+  {
+    "name": "LangChain text splitters",
+    "url": "https://github.com/langchain-ai/langchainjs",
+    "zh": "公开资料通过 MIT 许可的 LangChain 文本分段器按段落拆分。",
+    "en": "Public documents are split into passages with MIT-licensed LangChain text splitters."
+  },
+  {
+    "name": "MiniSearch / Luca Ongaro",
+    "url": "https://github.com/lucaong/minisearch",
+    "zh": "公开资料使用 MIT 许可的 MiniSearch 提供中文分词后的关键词检索与降级检索。",
+    "en": "Public documents use MIT-licensed MiniSearch for tokenized lexical search and retrieval fallback."
+  },
+  {
+    "name": "pgvector",
+    "url": "https://github.com/pgvector/pgvector",
+    "zh": "公开资料向量检索使用 PostgreSQL 许可的 pgvector 扩展。",
+    "en": "Public document vector retrieval uses the PostgreSQL-licensed pgvector extension."
+  },
+  {
     "name": "WeChat emoji / Tencent · xxk8",
     "url": "https://github.com/xxk8/wechat-emojis",
     "zh": "微信表情图片版权归腾讯；非官方整理来自 xxk8/wechat-emojis。授权尚未确认，素材已移出公开资源和聊天清单，来源与声明仅保留在归档中。",
