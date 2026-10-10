@@ -265,7 +265,9 @@ describe('Web statistics adapters', () => {
     const stats = readFileSync(new URL('./TimerStatsPanel.tsx', timerUiEntry), 'utf8');
     const compactWrapper = readFileSync('components/CompactSelect.tsx', 'utf8');
     const timerCss = readFileSync('app/[lang]/timer/timer.css', 'utf8');
-    expect(solo).toContain("import { TimerStatisticsWorkspace, timerStatsPanelLabels } from '@cuberoot/timer-ui'");
+    expect(solo).toContain("import { timerStatsPanelLabels } from '@cuberoot/timer-ui'");
+    expect(solo).toContain("dynamic(() => import('@cuberoot/timer-ui').then(m => m.TimerStatisticsWorkspace)");
+    expect(solo).not.toMatch(/import\s*\{[^}]*\bTimerStatisticsWorkspace\b[^}]*\}\s*from/);
     expect(solo).toContain('<TimerStatisticsWorkspace');
     expect(solo).toContain('rollingColumns={settings.statsRollingColumns}');
     expect(solo).toContain('onRollingColumnsChange={statsRollingColumns => updateSettings({statsRollingColumns})}');

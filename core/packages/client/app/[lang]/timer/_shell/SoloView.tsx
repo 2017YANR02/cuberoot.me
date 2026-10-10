@@ -6,11 +6,10 @@ import { timerSeedTicket } from '@cuberoot/shared/timer/sync-seed';
 import type { TimerSeedRequest } from '@cuberoot/shared/timer/seeded/generate';
 import { nextSeededScramble } from '../_lib/scramble/sync-seed';
 import { commitTimerSeed } from '../_lib/settings';
-import { TimerReplayImportModal } from '@cuberoot/timer-ui';
 import { readTimerReplay } from '@cuberoot/shared/timer/replay-client';
 import { apiUrl as replayApiUrl } from '@/lib/api-base';
 
-import { TimerStatisticsWorkspace, timerStatsPanelLabels } from '@cuberoot/timer-ui';
+import { timerStatsPanelLabels } from '@cuberoot/timer-ui';
 import { loadAllSessionData, deleteSessionSolves } from '../_lib/storage/db';
 import { TIMER_DEVICE_CENTER_LABELS } from '@cuberoot/timer-ui';
 import { SCRAMBLE_222_TYPE_CATALOG, isScramble222Type, TIMER_333_SCRAMBLE_TYPES, timerPuzzleSelection, timerHidesRunningUi, upsertNetRecordedSolve } from '@cuberoot/shared/timer';
@@ -157,9 +156,7 @@ import { compFlagIso2, loadFlagData, flagDataVersion } from '@/lib/country-flags
 import { localizeCompName } from '@/lib/comp-localize';
 import { compSourceLine } from '@/lib/comp-schedule';
 import { useAuthStore, useIsAdmin } from '@/lib/auth-store';
-import { InspectionRotationDebug } from '../_components/InspectionRotationDebug';
 import AppLink from '@/components/AppLink';
-import { CompetitionVideoRoom } from '@/components/platform/CompetitionVideoRoom';
 import { useCompetitionAttempt } from './competition-attempt';
 import '@/components/platform/online-competitions.css';
 import { cloudOptimalScramble } from '@/lib/cloud-optimal-scramble';
@@ -233,7 +230,6 @@ import HistoryPanel from '../_components/HistoryPanel';
 import { decodeReplayParam, solveFromReplay } from '../_lib/share/decode';
 
 import { fetchServerReplayShare } from '../_lib/share/server';
-import SettingsPanel from '../_components/SettingsPanel';
 import GoalProgress from '../_components/GoalProgress';
 import RoundPanel from '../_components/RoundPanel';
 
@@ -287,6 +283,13 @@ import '../_components/charts/practice_heatmap.css';
 // 用户一次也不会打开它们。ssr:false —— 本文件已经在一个 ssr:false 的动态边界里(page.tsx
 // 只在客户端拉 TimerShell),弹层再声明一次只是显式表态,不新增行为。
 const SolveModal = dynamic(() => import('../_components/SolveModal'), { ssr: false });
+// Optional workspaces must not hold the ordinary keyboard timer behind their
+// video SDK, charts or configuration UI. Their existing render gates own loading.
+const CompetitionVideoRoom = dynamic(() => import('@/components/platform/CompetitionVideoRoom').then(m => m.CompetitionVideoRoom), { ssr: false });
+const SettingsPanel = dynamic(() => import('../_components/SettingsPanel'), { ssr: false });
+const InspectionRotationDebug = dynamic(() => import('../_components/InspectionRotationDebug').then(m => m.InspectionRotationDebug), { ssr: false });
+const TimerReplayImportModal = dynamic(() => import('@cuberoot/timer-ui').then(m => m.TimerReplayImportModal), { ssr: false });
+const TimerStatisticsWorkspace = dynamic(() => import('@cuberoot/timer-ui').then(m => m.TimerStatisticsWorkspace), { ssr: false });
 const ReconstructModal = dynamic(() => import('../_components/ReconstructModal'), { ssr: false });
 const BluetoothModal = dynamic(() => import('../_components/BluetoothModal'), { ssr: false });
 const BluetoothTimerModal = dynamic(() => import('../_components/BluetoothTimerModal'), { ssr: false });

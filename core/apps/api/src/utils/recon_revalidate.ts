@@ -4,7 +4,7 @@ export async function revalidateReconPages(id: string | number): Promise<void> {
   return revalidateContentPages('recon', id);
 }
 
-export async function revalidateContentPages(kind: 'recon' | 'forum', id?: string | number): Promise<void> {
+export async function revalidateContentPages(kind: 'recon' | 'forum' | 'alg', id?: string | number): Promise<void> {
   const secret = process.env.RECON_REVALIDATE_SECRET;
   const urls = (process.env.RECON_REVALIDATE_URLS ?? '').split(',').map(s => s.trim()).filter(Boolean);
   if (!secret || urls.length === 0) {

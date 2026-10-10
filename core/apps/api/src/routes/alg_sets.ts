@@ -22,8 +22,15 @@ import {
   startsWithYRotation,
 } from '@cuberoot/shared/alg-notation';
 import { validateRequiredAlgCaseSetup } from '../utils/alg_case_setup.js';
+import { revalidateContentPages } from '../utils/recon_revalidate.js';
 
 export const algSetsRoutes = new Hono();
+algSetsRoutes.use('/alg/sets/*', async (c, next) => {
+  await next();
+  if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(c.req.method) && c.res.ok) {
+    await revalidateContentPages('alg');
+  }
+});
 algSetsRoutes.onError((error, c) => {
   if (error instanceof HTTPException) return c.json({ error: error.message }, error.status);
   throw error;
@@ -246,6 +253,40 @@ algSetsRoutes.put('/alg/sets/:puzzle/order', async (c) => {
   );
 
   return c.json({ ok: true });
+});
+
+// One row per set, including empty sets; never transfer the full case collection
+// merely to display a cover. Ordering matches the detail endpoint.
+algSetsRoutes.get('/alg/sets/:puzzle/catalog', async (c) => {
+  c.header('Cache-Control', 'public, no-cache, must-revalidate');
+  const puzzle = c.req.param('puzzle');
+  const rows = await query<AlgCaseRow & { catalog_slug: string; case_count: string }>(
+    `SELECT s.set_slug AS catalog_slug, counts.case_count, first_case.*
+       FROM alg_sets s
+       CROSS JOIN LATERAL (
+         SELECT COUNT(*)::text AS case_count FROM alg_cases
+          WHERE puzzle = s.puzzle AND set_slug = s.set_slug
+       ) counts
+       LEFT JOIN LATERAL (
+         SELECT * FROM alg_cases
+          WHERE puzzle = s.puzzle AND set_slug = s.set_slug
+          ORDER BY position ASC, id ASC LIMIT 1
+       ) first_case ON TRUE
+      WHERE s.puzzle = ? ORDER BY s.set_slug`,
+    [puzzle],
+  );
+  const order = await query<AlgCatalogPositionRow>(
+    'SELECT item_key FROM alg_catalog_positions WHERE puzzle = ? ORDER BY position, item_key',
+    [puzzle],
+  );
+  return c.json({
+    puzzle,
+    order: order.map(row => row.item_key),
+    sets: rows.map(row => ({
+      slug: row.catalog_slug, count: Number(row.case_count),
+      first: row.id == null ? null : caseRowToJson(row),
+    })),
+  });
 });
 
 // GET /v1/alg/sets/:puzzle/:set — 完整 AlgFile JSON(跟旧 JSON 文件 1:1)
