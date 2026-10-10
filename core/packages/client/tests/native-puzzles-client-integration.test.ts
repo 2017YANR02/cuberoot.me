@@ -38,7 +38,7 @@ function randomFromSeed(seed: number): () => number {
 }
 
 describe('native puzzle client integration', () => {
-  it('keeps simulator catalog IDs unique while adding all four shared definitions', () => {
+  it('keeps simulator catalog IDs unique for every shared definition', () => {
     expect(new Set(PG_PUZZLES.map(({ id }) => id)).size).toBe(PG_PUZZLES.length);
     for (const id of NATIVE_PUZZLE_IDS) {
       expect(PG_IDS.has(id)).toBe(true);
@@ -145,7 +145,7 @@ describe('native puzzle client integration', () => {
     expect(embed).toHaveBeenCalledTimes(7);
     for (const [, element, , , width, height] of embed.mock.calls) {
       expect(element.outerHTML).toBe(expectedSvg);
-      // Seven rows put all four nets below the sheet's maximum image-column
+      // Seven rows put these nets below the sheet's maximum image-column
       // cap. Include the existing 4pt padding on each side when checking shape.
       expect((width + 8) / (height + 8)).toBeCloseTo(nativePuzzleSvgAspect(id), 10);
     }

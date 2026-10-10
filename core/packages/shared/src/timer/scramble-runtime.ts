@@ -120,6 +120,7 @@ export const TIMER_SCRAMBLE_CAPABILITIES = Object.freeze({
   dogic: { kind: 'shared', provider: 'native-random-move' },
   octahedron4: { kind: 'shared', provider: 'native-random-move' },
   dinoskewb: { kind: 'shared', provider: 'native-random-move' },
+  cube3dino: { kind: 'shared', provider: 'native-random-move' },
   r3: { kind: 'compound', provider: 'timer-compound' },
   r4: { kind: 'compound', provider: 'timer-compound' },
   r5: { kind: 'compound', provider: 'timer-compound' },

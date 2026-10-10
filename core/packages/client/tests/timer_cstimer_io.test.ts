@@ -221,6 +221,7 @@ describe.each([
   { event: 'dogic', nameEn: 'Dogic', nameZh: 'Dogic 二十面体' },
   { event: 'octahedron4', nameEn: '4×4 Octahedron', nameZh: '四阶八面体' },
   { event: 'dinoskewb', nameEn: 'Dino Skewb', nameZh: '恐龙斜转' },
+  { event: 'cube3dino', nameEn: '3×3 + Dino', nameZh: '三阶＋恐龙' },
 ] as const)('$event csTimer compatibility', ({ event, nameEn, nameZh }) => {
   it('preserves renamed sessions and mixed native notation through both import APIs', () => {
     const solve = {
@@ -263,6 +264,24 @@ describe.each([
     });
     expect(parseCstimerExport(raw)[0].event).toBe(importedEvent);
   });
+});
+
+describe('3×3 + Dino csTimer session names', () => {
+  it.each([
+    '3Dino', 'Session: cube3dino', '3x3 + Dino practice', 'Session: 3×3 ＋ Dino', '练习：三阶＋恐龙',
+    'Session_3x3 + Dino', '3x3 + Dino_Practice',
+  ])(
+    'recognizes %s before considering ordinary 3x3 tokens', (name) => {
+      const raw = JSON.stringify({
+        session1: [[[0, 8_765], "R UFR' 2F DRFw", '', 1_700_000_000]],
+        properties: { sessionData: { 1: { name, opt: { scrType: 'input' } } } },
+      });
+      expect(parseCstimerExport(raw)[0]).toMatchObject({ event: 'cube3dino', matched: true });
+      const byEvent = importCstimerJson(raw);
+      expect(byEvent?.cube3dino?.[0].event).toBe('cube3dino');
+      expect(byEvent?.['333']).toBeUndefined();
+    },
+  );
 });
 
 describe('Sphere Cube csTimer compatibility', () => {

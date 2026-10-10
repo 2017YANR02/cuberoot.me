@@ -6,6 +6,7 @@ import { renderNativePuzzleSvg } from '@cuberoot/puzzle-render-core/native-puzzl
 
 const CASES = [
   { id: 'superz', scramble: "F DRF R' UBL D2 UFR' L DFL' B2 URB", facelets: 48 },
+  { id: 'cube3dino', scramble: "F DRF Rw' 2UBL D2 UFRw' 2L DFL' Bv URB", facelets: 96 },
   { id: 'dogic', scramble: "FREGU HIERCw' 2FLACR FREGUv", facelets: 80 },
   { id: 'octahedron4', scramble: "DBRRF DFLBLw' 2DBLBBBR DBRRFv", facelets: 32 },
   { id: 'dinoskewb', scramble: "DRF DFLw' 2DBR DRFv", facelets: 72 },

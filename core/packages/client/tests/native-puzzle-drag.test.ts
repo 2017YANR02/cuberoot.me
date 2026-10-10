@@ -10,6 +10,7 @@ import {
 
 const CASES = [
   { id: 'superz', stickers: 48, moves: 14, outer: 14, inner: 0, wide: 0 },
+  { id: 'cube3dino', stickers: 96, moves: 42, outer: 14, inner: 14, wide: 14 },
   { id: 'dogic', stickers: 80, moves: 36, outer: 12, inner: 12, wide: 12 },
   { id: 'octahedron4', stickers: 32, moves: 18, outer: 6, inner: 6, wide: 6 },
   { id: 'dinoskewb', stickers: 72, moves: 24, outer: 8, inner: 8, wide: 8 },
@@ -102,9 +103,17 @@ describe('Native PG drag selection', () => {
           const delta = clockwiseDelta(point, normal, world, camera);
           if (!delta) continue;
           const token = pickNativePuzzleDrag(geometry, point, world, camera, delta, VIEWPORT, depth);
-          if (token !== move) continue;
-          expect(pickNativePuzzleDrag(geometry, point, world, camera, { x: -delta.x, y: -delta.y }, VIEWPORT, depth)).toBe(`${move}'`);
-          expect(puzzle.moveToTransformation(token).isIdentical(puzzle.moveToTransformation(parsed))).toBe(true);
+          // With three physical layers the middle slice has two equivalent
+          // names: 2F = 2B'. Either name records the same directed motion.
+          const middleAlias = id === 'cube3dino' && depth === 'inner' && token !== null
+            && puzzle.moveToTransformation(token).isIdentical(puzzle.moveToTransformation(parsed));
+          if (token !== move && !middleAlias) continue;
+          const reversed = pickNativePuzzleDrag(geometry, point, world, camera, { x: -delta.x, y: -delta.y }, VIEWPORT, depth);
+          if (middleAlias) {
+            expect(reversed).not.toBeNull();
+            expect(puzzle.moveToTransformation(reversed!).isIdentical(puzzle.moveToTransformation(parsed.invert()))).toBe(true);
+          } else expect(reversed).toBe(`${move}'`);
+          expect(puzzle.moveToTransformation(token!).isIdentical(puzzle.moveToTransformation(parsed))).toBe(true);
           selected.add(move);
           witness = true;
           break;
