@@ -175,8 +175,8 @@
         "stats/comp_names_zh.json",
         "stats/comp_elevations.json"
       ],
-      "verification": ["the daily update_upcoming workflow regenerates and commits all five files"],
-      "driftPolicy": "This daily pipeline is intentionally separate from stats.wca; do not move these outputs into the main statistics owner."
+      "verification": ["the daily update_upcoming workflow regenerates and commits all five files; catalog_only refreshes only all_upcoming_comps.json after complete pagination"],
+      "driftPolicy": "Published snapshots remain available independently of daily refresh success. Incomplete pagination must fail without replacing the catalog. catalog_only refreshes official fields while preserving existing enrichment. This daily pipeline is intentionally separate from stats.wca; do not move these outputs into the main statistics owner."
     },
     {
       "id": "stats.world-bests",

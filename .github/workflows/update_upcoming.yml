@@ -7,6 +7,16 @@ on:
     # UTC 20:00
     - cron: '0 20 * * *'
   workflow_dispatch:
+    inputs:
+      catalog_only:
+        description: 'Refresh the official competition catalog without fetching registration details'
+        type: boolean
+        default: false
+
+# Keep concurrent manual/scheduled refreshes from overwriting each other.
+concurrency:
+  group: update-upcoming
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -51,9 +61,16 @@ jobs:
         env:
           WCA_API_BASE: https://api.cuberoot.me/v1/wca-proxy/api/v0
           WCA_PROXY_SECRET: ${{ secrets.WCA_PROXY_SECRET }}
-        run: npx tsx src/bin/fetch_upcoming_comps.ts --refresh
+          CATALOG_ONLY: ${{ inputs.catalog_only }}
+        run: |
+          if [ "$CATALOG_ONLY" = "true" ]; then
+            npx tsx src/bin/fetch_upcoming_comps.ts --catalog-only
+          else
+            npx tsx src/bin/fetch_upcoming_comps.ts --refresh
+          fi
 
       - name: Update comp names zh
+        if: ${{ !inputs.catalog_only }}
         working-directory: core/${{ steps.workspace.outputs.stats }}
         env:
           WCA_API_BASE: https://api.cuberoot.me/v1/wca-proxy/api/v0

@@ -47,3 +47,10 @@ description: "Use when touching WCA competition JSON (upcoming_comps/all_past_co
 - **WCA `/competitions` 分页会出现跨页重复**：分页中途 WCA API 排序会漂移（新增 / cancel 状态改变），同一 id 跨页重复。`build_all_upcoming_comps` 必须按 id 去重（已在 `fetch_upcoming_comps.ts` 处理）。新写任何分页聚合 WCA 数据的脚本都要记得这一点。
 - **单个 JSON 内不应该有同 id 重复**：如果 upcoming / past JSON 自身出现同 id 多条，**这就是上游数据 bug**，去生成脚本修，**不要在前端兜底** —— 前端静默去重会盖住 bug、让下次再出同类问题无从察觉。
 - **upcoming 和 past 数据源间的同 id 重叠是正常的**：年初刚结束 / 即将开赛的比赛在两个 JSON 里都出现 —— 这是两份独立数据源的自然交集，不是 bug。前端合并两源时按 id 去重（以 upcoming 为准）是合理行为，见 GlobePage `upcomingGeojson` 里的 `upcomingIds` 逻辑。
+
+## 比赛目录的持久化与恢复
+
+- 前端读取已提交并发布到 static 的 JSON；每日 CI 是刷新机制，页面展示不依赖当日 CI 成功。
+- 公示后的比赛仍可能改期、取消或更新报名信息；保留每日同步以发现新增与变更。任一分页失败、重复页、空目录或达到安全页数上限时，禁止用部分结果覆盖已有文件，CI 必须失败。
+- 仅恢复日历目录：手动运行 `update_upcoming.yml`，传 `catalog_only=true`。它只刷新 `all_upcoming_comps.json` 的官方基本字段，并保留现有报名/轮次等补充字段，不依赖逐场 WCIF。
+- 本地审阅新目录：在 `core/` 运行 `pnpm --filter @cuberoot/stats-build exec tsx src/bin/fetch_upcoming_comps.ts --catalog-only --output /tmp/all_upcoming_comps.json`；正式数据必须由生成器产生，不能手补单场比赛。
