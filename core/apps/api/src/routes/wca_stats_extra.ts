@@ -1313,8 +1313,8 @@ wcaStatsExtraRoutes.get('/wca/success-rate', async (c) => {
   );
 
   const totalRow = await query<{ n: string }>(
-    `SELECT COUNT(*) AS n FROM wca_success_rate
-     WHERE event_id = ? AND attempted >= ? ${whereCountry}`,
+    `SELECT COUNT(*) AS n FROM wca_success_rate sr
+     WHERE sr.event_id = ? AND sr.attempted >= ? ${whereCountry}`,
     totalParams,
   );
   const total = totalRow[0] ? parseInt(totalRow[0].n, 10) : 0;
