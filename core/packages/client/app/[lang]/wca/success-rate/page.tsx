@@ -59,16 +59,20 @@ function SuccessRatePageInner() {
   const countries = useCountries();
 
   useEffect(() => {
-    setLoading(true); setError(null);
+    const controller = new AbortController();
+    setLoading(true); setError(null); setData(null);
     const qs = new URLSearchParams();
     qs.set('event', event);
     qs.set('minAttempted', String(minAttempted));
     qs.set('page', String(page));
     qs.set('size', String(size));
     if (country) qs.set('country', country);
-    fetch(apiUrl(`/v1/wca/success-rate?${qs.toString()}`))
+    fetch(apiUrl(`/v1/wca/success-rate?${qs.toString()}`), { signal: controller.signal })
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-      .then(setData).catch(e => setError(e.message)).finally(() => setLoading(false));
+      .then(j => { if (!controller.signal.aborted) setData(j); })
+      .catch(e => { if (!controller.signal.aborted) setError(e.message); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
   }, [event, country, minAttempted, page, size]);
 
   const totalPages = data ? Math.max(1, Math.ceil(data.total / size)) : 1;
