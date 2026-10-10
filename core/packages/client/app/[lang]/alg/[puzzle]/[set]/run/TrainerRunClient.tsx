@@ -1507,7 +1507,6 @@ export default function TrainerRunClient() {
                 </select>
                 {!isMemo && (
                   <>
-                    <span className="trainer-opts-label">{tr({ zh: '出题', en: 'Draw' })}</span>
                     <select
                       disabled={splitActive}
                       value={String(mode === 'recap')}
