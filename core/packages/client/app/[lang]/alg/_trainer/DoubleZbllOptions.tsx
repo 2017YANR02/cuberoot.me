@@ -20,14 +20,14 @@ export default function DoubleZbllOptions() {
     finally { setBusy(false); setProgress(''); }
   };
   const label = busy ? (progress || tr({ zh: '正在加载…', en: 'Loading…' }))
-    : offline ? tr({ zh: '已下载', en: 'Downloaded' }) : tr({ zh: '下载离线包', en: 'Download for offline use' });
+    : offline ? tr({ zh: '已可离线使用', en: 'Available offline' }) : tr({ zh: '保存供离线使用', en: 'Save for offline use' });
   return (
     <>
       <button type="button" className="trainer-quick-btn" title={label} aria-label={label}
         onClick={() => void download()} disabled={busy || timerState !== TimerState.NOT_RUNNING}>
         {busy ? label : offline ? <Check size={15} aria-hidden /> : <Download size={15} aria-hidden />}
       </button>
-      {error && <span role="alert">{tr({ zh: '下载失败，请重试', en: 'Download failed. Retry.' })}</span>}
+      {error && <span role="alert">{tr({ zh: '保存失败，请重试', en: 'Save failed. Retry.' })}</span>}
     </>
   );
 }
