@@ -1,5 +1,5 @@
-# 每天刷新 Upcoming Comps 数据（WCA + cubing.com CN 比赛）
-# 约 15 分钟，月耗 450 分钟
+# Daily lightweight index + persisted conditional detail snapshots.
+# Published JSON remains usable even when this job fails.
 name: Update Upcoming Comps
 
 on:
@@ -21,6 +21,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     permissions:
       contents: write
       actions: write
@@ -54,6 +55,13 @@ jobs:
           stats="$(node scripts/resolve-workspace-path.mjs @cuberoot/stats-build)"
           echo "stats=$stats" >> "$GITHUB_OUTPUT"
 
+      - name: Restore incremental snapshots
+        uses: actions/cache/restore@v4
+        with:
+          path: .upcoming_cache
+          key: upcoming-http-v1-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: upcoming-http-v1-
+
       # WCA 对 GH runner IP 段返 403;经自有服务器代理出网(IP 未被封)。
       # 见 @cuberoot/server 的 src/routes/wca_proxy.ts;secret 存 repo secret WCA_PROXY_SECRET。
       - name: Fetch upcoming comps (WCA + CN)
@@ -66,16 +74,16 @@ jobs:
           if [ "$CATALOG_ONLY" = "true" ]; then
             npx tsx src/bin/fetch_upcoming_comps.ts --catalog-only
           else
-            npx tsx src/bin/fetch_upcoming_comps.ts --refresh
+            npx tsx src/bin/fetch_upcoming_comps.ts --incremental
           fi
 
-      - name: Update comp names zh
-        if: ${{ !inputs.catalog_only }}
-        working-directory: core/${{ steps.workspace.outputs.stats }}
-        env:
-          WCA_API_BASE: https://api.cuberoot.me/v1/wca-proxy/api/v0
-          WCA_PROXY_SECRET: ${{ secrets.WCA_PROXY_SECRET }}
-        run: npx tsx src/bin/fetch_comp_names_zh.ts --refresh
+      # Bodies and validators are written atomically, including successful progress before a failure.
+      - name: Save incremental snapshots
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .upcoming_cache
+          key: upcoming-http-v1-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Commit and push
         env:

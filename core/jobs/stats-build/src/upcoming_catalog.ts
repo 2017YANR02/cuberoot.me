@@ -41,3 +41,17 @@ export function retainCatalogDetails<T extends {
     return merged;
   });
 }
+
+/** Absence is not cancellation. Retire only after explicit cancellation or history handoff. */
+export function mergeSavedCatalog<T extends {
+  id: string; latitude_degrees: number; longitude_degrees: number; elevation?: number;
+  start_date: string; end_date: string;
+}>(fresh: T[], previous: T[], archived: Set<string>, cancelled: Set<string>, today: string): T[] {
+  const seen = new Set(fresh.map((comp) => comp.id));
+  return [
+    ...retainCatalogDetails(fresh, previous),
+    ...previous.filter((comp) => !seen.has(comp.id)),
+  ].filter((comp) => !cancelled.has(comp.id)
+    && !(comp.end_date < today && archived.has(comp.id)))
+    .sort((a, b) => a.start_date.localeCompare(b.start_date) || a.id.localeCompare(b.id));
+}
