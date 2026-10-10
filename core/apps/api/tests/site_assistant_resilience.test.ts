@@ -4,14 +4,15 @@ import { SITE_ASSISTANT_TIMEOUT_MS } from '@cuberoot/shared/site-assistant';
 import { answerSiteQuestion } from '../src/utils/site_assistant.js';
 import { createSiteAssistantRoutes as createRoutes } from '../src/routes/site_assistant.js';
 import { AssistantFailure } from '../src/utils/site_assistant_diagnostics.js';
+import { modelResponse as model } from './fixtures/site_assistant_model.js';
+import { chunkKnowledge } from '../src/utils/site_assistant_knowledge.js';
 
 const config={key:'private-model-key',baseUrl:'https://model.example/v1',model:'test'};
 const createSiteAssistantRoutes = (deps: Omit<Parameters<typeof createRoutes>[0], 'authenticate'>) => createRoutes({ authenticate: async () => ({ uid: 1, wcaId: '2017YANR02' }), ...deps });
 const secret='test-only-service-signing-secret-32-chars';
-const model=(value:unknown)=>Response.json({choices:[{message:{content:JSON.stringify(value)}}]});
 afterEach(()=>{vi.restoreAllMocks();vi.unstubAllEnvs();});
 describe('assistant resilience',()=>{
-  it('accepts the observed root-array tool plan without retry, while still validating every tool',async()=>{
+  it('accepts native tool calls without retry, while still validating every tool',async()=>{
     const fetcher=vi.fn<typeof fetch>()
       .mockResolvedValueOnce(model([{tool:'statistics',id:'example',limit:5}]))
       .mockResolvedValueOnce(model({answer:'Please choose a listed statistic.'}));
@@ -57,13 +58,15 @@ describe('assistant resilience',()=>{
     expect(fetcher).toHaveBeenCalledTimes(3);
   });
   it('retains real indexed evidence when an additional selected page is unavailable',async()=>{
+    const corpus={version:2,updated:'2026-10-10T00:00:00.000Z',pages:[{lang:'en' as const,href:'/recognize/pll',title:'PLL',text:'Recognize bars and headlights.'}]};
+    const [passage]=await chunkKnowledge(corpus);
     const fetcher=vi.fn<typeof fetch>()
-      .mockResolvedValueOnce(model({calls:[{tool:'pages',query:'PLL',pageIds:['frame-count']}]}))
-      .mockResolvedValueOnce(Response.json({pages:[{lang:'en',href:'/recognize/pll',title:'PLL',text:'Recognize bars and headlights.'}]}))
+      .mockResolvedValueOnce(model({calls:[{tool:'pages',query:'PLL',pageIds:['frame-count','page:/recognize/pll']}]}))
+      .mockResolvedValueOnce(Response.json(corpus))
       .mockResolvedValueOnce(new Response('',{status:404}))
-      .mockResolvedValueOnce(model({answer:'Look for bars.',sourceIds:['page:/recognize/pll']}));
+      .mockResolvedValueOnce(model({answer:'Look for bars.',sourceIds:[passage.id]}));
     const result=await answerSiteQuestion('PLL','en',config,AbortSignal.timeout(5000), withCatalog(fetcher));
-    expect(result.sources).toEqual([{id:'page:/recognize/pll',title:'PLL',href:'/recognize/pll',read:true}]);
+    expect(result.sources).toEqual([{id:passage.id,title:'PLL',href:'/recognize/pll',read:true}]);
     const context=JSON.parse(JSON.parse(String(fetcher.mock.calls[3][1]?.body)).messages[1].content);
     expect(context.evidence[0].data.pages).toHaveLength(1);
   });

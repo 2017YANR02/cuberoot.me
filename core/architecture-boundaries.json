@@ -19,6 +19,40 @@
   },
   "manualContracts": [
     {
+      "id": "assistant-vector-deployment-preflight",
+      "from": "apps/api deployment-only PostgreSQL extension preflight",
+      "to": "fixed Linux package manager, pinned pgvector source and PostgreSQL owner CLI",
+      "phase": "subprocess-native",
+      "mechanism": "Shell-free execFileSync with repository-owned executable names and arguments; never imported by the HTTP application",
+      "owner": "api deployment",
+      "rationale": "Alibaba Cloud Linux 3 has no compatible pgvector package; build the pinned official extension before schema migrations.",
+      "replacement": "Use the distribution pgvector package when available; keep installation restricted to the deployment workflow.",
+      "subprocessCalls": [
+        {
+          "file": "apps/api/scripts/provision-assistant-vector.ts",
+          "mechanism": "execFileSync",
+          "target": "<dynamic>",
+          "count": 2
+        },
+        {
+          "file": "apps/api/scripts/provision-assistant-vector.ts",
+          "mechanism": "execFileSync",
+          "target": "git",
+          "count": 1
+        }
+      ],
+      "evidence": [
+        {
+          "file": "core/apps/api/scripts/provision-assistant-vector.ts",
+          "contains": "revision!=='f37c13f68b57d2c3472b2214fbcff699d6d34876'"
+        },
+        {
+          "file": ".github/workflows/deploy_core.yml",
+          "contains": "provision-assistant-vector.mjs"
+        }
+      ]
+    },
+    {
       "id": "alg-build-double-zbll-native",
       "from": "jobs/alg-build Double ZBLL offline builder",
       "to": "existing native H48 h10 runner and read-only macOS memory diagnostics",

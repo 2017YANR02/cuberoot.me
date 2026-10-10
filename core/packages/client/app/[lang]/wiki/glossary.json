@@ -1046,11 +1046,11 @@
         },
         {
           "head": "Conj (Conjugate) 共轭子",
-          "body": "A: B = [A: B] = A B A', where A is setup, B is inverse. Example: (R U2 R') (R' F R F') (R U2 R').",
+          "body": "[A: B] = A B A': A is the setup, B is the algorithm being applied, and A' is the inverse of A, which undoes the setup. Example: [R U: F] = R U F U' R'.\n[A: B] = A B A'：A 是预设步骤，B 是要执行的公式，A' 是 A 的逆操作，用于撤销预设步骤。例如：[R U: F] = R U F U' R'。",
           "headEn": "Conj (Conjugate)",
           "headZh": "共轭子",
-          "bodyEn": "A: B = [A: B] = A B A', where A is setup, B is inverse. Example: (R U2 R') (R' F R F') (R U2 R').",
-          "bodyZh": "",
+          "bodyEn": "[A: B] = A B A': A is the setup, B is the algorithm being applied, and A' is the inverse of A, which undoes the setup. Example: [R U: F] = R U F U' R'.",
+          "bodyZh": "[A: B] = A B A'：A 是预设步骤，B 是要执行的公式，A' 是 A 的逆操作，用于撤销预设步骤。例如：[R U: F] = R U F U' R'。",
           "source": "seed"
         },
         {

@@ -1,7 +1,7 @@
-/** Read only an answer following an empty calls array. Never expose planning JSON.
+/** Native tools carry planning separately. Read only the final answer field.
  * Incomplete JSON escapes (including surrogate pairs) wait for the next chunk. */
 export function partialAssistantAnswer(json: string): string | undefined {
-  const prefix = /^\s*\{\s*"calls"\s*:\s*\[\s*\]\s*,\s*"answer"\s*:\s*"/.exec(json);
+  const prefix = /^\s*\{\s*"answer"\s*:\s*"/.exec(json);
   if (!prefix) return;
   let value = '';
   for (let i = prefix[0].length; i < json.length; i++) {

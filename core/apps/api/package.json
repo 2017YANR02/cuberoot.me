@@ -11,7 +11,7 @@
     "dev:local": "tsx ../../../scripts/local/dev-api.ts",
     "seed:local": "tsx ../../../scripts/local/seed-api.ts",
     "seed:local-alg": "tsx ../../../scripts/local/seed-api.ts alg_sets alg_cases",
-    "build:bundle": "node ../../scripts/build-cubing-worker.mjs apps/api/dist && esbuild src/index.ts --bundle --platform=node --target=node22 --format=esm --loader:.webp=dataurl --loader:.ttf=dataurl --loader:.woff2=dataurl --outfile=dist/server.bundle.js --sourcemap --banner:js=\"import { createRequire } from 'module'; const require = createRequire(import.meta.url);\" && esbuild src/cubeopt/solve-daemon.mjs --bundle --platform=node --target=node22 --format=esm --outfile=dist/cubeopt/solve-daemon.mjs && esbuild scripts/prepare-cubeopt-artifact.mjs --bundle --platform=node --target=node22 --format=esm --outfile=dist/cubeopt/prepare.mjs && esbuild scripts/provision-cubeopt-artifact.mjs --bundle --platform=node --target=node22 --format=esm --outfile=dist/cubeopt/provision.mjs && esbuild scripts/verify-cubeopt-artifact.mjs --bundle --platform=node --target=node22 --format=esm --outfile=dist/cubeopt/verify.mjs && esbuild scripts/promote-cubeopt-artifact.mjs --bundle --platform=node --target=node22 --format=esm --outfile=dist/cubeopt/promote.mjs && esbuild src/tools/cubeopt_smoke.ts --bundle --platform=node --target=node22 --format=esm --outfile=dist/cubeopt/smoke.mjs && esbuild src/tools/drive_video.ts --bundle --platform=node --target=node22 --format=esm --outfile=dist/drive-video.mjs",
+    "build:bundle": "node ../../scripts/build-cubing-worker.mjs apps/api/dist && esbuild src/index.ts --bundle --platform=node --target=node22 --format=esm --loader:.webp=dataurl --loader:.ttf=dataurl --loader:.woff2=dataurl --outfile=dist/server.bundle.js --sourcemap --banner:js=\"import { createRequire } from 'module'; const require = createRequire(import.meta.url);\" && esbuild src/cubeopt/solve-daemon.mjs --bundle --platform=node --target=node22 --format=esm --outfile=dist/cubeopt/solve-daemon.mjs && esbuild scripts/prepare-cubeopt-artifact.mjs --bundle --platform=node --target=node22 --format=esm --outfile=dist/cubeopt/prepare.mjs && esbuild scripts/provision-cubeopt-artifact.mjs --bundle --platform=node --target=node22 --format=esm --outfile=dist/cubeopt/provision.mjs && esbuild scripts/verify-cubeopt-artifact.mjs --bundle --platform=node --target=node22 --format=esm --outfile=dist/cubeopt/verify.mjs && esbuild scripts/promote-cubeopt-artifact.mjs --bundle --platform=node --target=node22 --format=esm --outfile=dist/cubeopt/promote.mjs && esbuild src/tools/cubeopt_smoke.ts --bundle --platform=node --target=node22 --format=esm --outfile=dist/cubeopt/smoke.mjs && esbuild src/tools/drive_video.ts --bundle --platform=node --target=node22 --format=esm --outfile=dist/drive-video.mjs && esbuild src/tools/index_assistant_knowledge.ts --bundle --platform=node --target=node22 --format=esm --outfile=dist/index-assistant-knowledge.mjs --banner:js=\"import { createRequire } from 'module'; const require = createRequire(import.meta.url);\" && esbuild scripts/provision-assistant-vector.ts --bundle --platform=node --target=node22 --format=esm --outfile=dist/provision-assistant-vector.mjs",
     "start": "node dist/server.bundle.js",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
@@ -22,7 +22,8 @@
     "cubeopt:provision": "node scripts/provision-cubeopt-artifact.mjs",
     "cubeopt:verify": "node scripts/verify-cubeopt-artifact.mjs",
     "cubeopt:promote": "node scripts/promote-cubeopt-artifact.mjs",
-    "cubeopt:smoke": "node scripts/smoke-cubeopt-daemon.mjs"
+    "cubeopt:smoke": "node scripts/smoke-cubeopt-daemon.mjs",
+    "assistant:index": "tsx src/tools/index_assistant_knowledge.ts"
   },
   "dependencies": {
     "@app-foundation/account-policy": "https://github.com/2017YANR02/app-foundation/releases/download/v0.4.0/app-foundation-account-policy-0.1.0.tgz",
@@ -58,7 +59,12 @@
     "qrcode": "^1.5.4",
     "sanitize-html": "^2.18.0",
     "yjs": "^13.6.32",
-    "zod": "^4.4.3"
+    "zod": "^4.4.3",
+    "ai": "7.0.137",
+    "@ai-sdk/deepseek": "3.0.63",
+    "@ai-sdk/openai-compatible": "^3.0.67",
+    "@langchain/textsplitters": "^1.0.2",
+    "minisearch": "^7.2.0"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.0",

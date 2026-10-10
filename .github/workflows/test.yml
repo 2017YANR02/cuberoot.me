@@ -308,7 +308,7 @@ jobs:
     timeout-minutes: 20
     services:
       postgres:
-        image: ${{ (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.server == 'true' || needs.changes.outputs.stats == 'true') && 'postgres:13' || '' }}
+        image: ${{ (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.server == 'true' || needs.changes.outputs.stats == 'true') && 'pgvector/pgvector:0.8.7-pg13' || '' }}
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -440,7 +440,7 @@ jobs:
         working-directory: core/${{ steps.workspace.outputs.api }}
         env:
           PGPASSWORD: postgres
-        run: psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U postgres -d cuberoot_test -f src/db/schema.pg.sql
+        run: psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U postgres -d cuberoot_test -c 'CREATE EXTENSION IF NOT EXISTS vector' -f src/db/schema.pg.sql -f src/db/schema_assistant_knowledge.pg.sql
 
       - name: Platform account deletion PostgreSQL 13 upgrade regression
         if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.server == 'true' }}
@@ -500,7 +500,8 @@ jobs:
           PGPASSWORD: postgres
         run: |
           createdb -h 127.0.0.1 -U postgres assistant_analysis_test
-          pnpm --filter @cuberoot/server exec vitest run tests/site_assistant_analysis_pg.test.ts
+          psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U postgres -d assistant_analysis_test -c 'CREATE EXTENSION vector'
+          pnpm --filter @cuberoot/server exec vitest run tests/site_assistant_analysis_pg.test.ts tests/site_assistant_knowledge_pg.test.ts
 
       - name: Verify stats-build producer contracts
         if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.stats == 'true' }}
