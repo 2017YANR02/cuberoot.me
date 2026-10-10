@@ -25,7 +25,7 @@ export default function DoubleZbllOptions() {
     <>
       <button type="button" className="trainer-quick-btn" title={label} aria-label={label}
         onClick={() => void download()} disabled={busy || timerState !== TimerState.NOT_RUNNING}>
-        {busy ? label : offline ? <Check size={15} aria-hidden /> : <Download size={15} aria-hidden />}
+        {busy ? <span className="trainer-offline-progress">{label}</span> : offline ? <Check size={15} aria-hidden /> : <Download size={15} aria-hidden />}
       </button>
       {error && <span role="alert">{tr({ zh: '保存失败，请重试', en: 'Save failed. Retry.' })}</span>}
     </>

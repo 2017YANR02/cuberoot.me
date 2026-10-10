@@ -262,6 +262,14 @@
 }
 .trainer-brush-select .list-select-label { font-size: inherit; }
 .trainer-brush-select .list-select-item { font-size: 12px; }
+.trainer-offline-progress {
+  display: inline-block;
+  inline-size: 11ch;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  white-space: nowrap;
+}
 .trainer-quick-btn {
   appearance: none; -webkit-appearance: none;
   font: inherit; font-size: 0.82rem; color: var(--foreground);
