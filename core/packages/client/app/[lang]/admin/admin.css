@@ -23,8 +23,8 @@
 .admin-boot { margin-top: 48px; }
 .admin-boot__heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .admin-boot__heading h2 { margin: 0; font-size: 1.4rem; }
-.admin-boot__heading button { appearance: none; font: inherit; padding: 6px 12px; background: var(--background); color: var(--foreground); border: 1px solid var(--border-default); border-radius: 8px; cursor: pointer; }
-.admin-boot__heading button:disabled { opacity: .5; cursor: wait; }
+.admin-boot__refresh { appearance: none; font: inherit; padding: 6px 12px; background: var(--background); color: var(--foreground); border: 1px solid var(--border-default); border-radius: 8px; cursor: pointer; }
+.admin-boot__refresh:disabled { opacity: .5; cursor: wait; }
 .admin-boot__event { padding: 16px 0; border-bottom: 1px solid var(--border-default); overflow-wrap: anywhere; }
 .admin-boot__event summary { cursor: pointer; }
 .admin-boot__event summary > span,

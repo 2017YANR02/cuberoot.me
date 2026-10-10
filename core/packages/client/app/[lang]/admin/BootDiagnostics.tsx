@@ -46,7 +46,7 @@ export default function BootDiagnostics() {
     <section className="admin-boot" aria-labelledby="admin-boot-title">
       <div className="admin-boot__heading">
         <h2 id="admin-boot-title">{t('最近启动错误', 'Recent startup errors')}</h2>
-        <button type="button" disabled={loading} onClick={() => setRevision(value => value + 1)}>
+        <button type="button" className="admin-boot__refresh" disabled={loading} onClick={() => setRevision(value => value + 1)}>
           {t('刷新', 'Refresh')}
         </button>
       </div>
