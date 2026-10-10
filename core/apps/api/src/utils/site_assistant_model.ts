@@ -47,6 +47,7 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
     async complete(options: {
       system: string; context: unknown; finalOnly: boolean; thinking: boolean;
       effort: 'low' | 'high'; maxTokens: number; onText?: (text: string) => Promise<void>;
+      followUp?: string;
     }) {
       if (pending.length) {
         transcript.push({ role: 'tool', content: pending.map(call => ({
@@ -55,6 +56,7 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
         })) });
         pending = [];
       }
+      if(options.followUp) transcript.push({role:'user',content:options.followUp});
       const request = {
         model, tools, toolChoice: options.finalOnly ? 'none' as const : 'auto' as const,
         system: options.system,

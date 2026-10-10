@@ -1,4 +1,5 @@
-import { embedMany } from 'ai';
+import { APICallError, embedMany } from 'ai';
+import { setTimeout as delay } from 'node:timers/promises';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { KNOWLEDGE_DIMENSIONS } from './site_assistant_knowledge.js';
 
@@ -28,8 +29,21 @@ export async function embedKnowledge(texts: string[], signal: AbortSignal, fetch
     } })), { status: response.status, headers: response.headers });
   };
   const provider = createOpenAICompatible({ name: 'bailian', apiKey: config.key, baseURL: config.baseUrl, fetch: boundedFetch });
-  const result = await embedMany({ model: provider.embeddingModel(config.model), values: texts, dimensions: KNOWLEDGE_DIMENSIONS,
-    maxRetries: options.maxRetries ?? 0, maxParallelCalls: 1, abortSignal: AbortSignal.any([signal, AbortSignal.timeout(options.timeoutMs ?? 8000)]) });
-  if (result.embeddings.length !== texts.length || result.embeddings.some(vector => vector.length !== KNOWLEDGE_DIMENSIONS || vector.some(value => !Number.isFinite(value)) || !vector.some(value => value !== 0))) throw new Error('Invalid embedding vector');
-  return result.embeddings;
+  const retries=options.maxRetries ?? 0;
+  for(let attempt=0; ; attempt++) {
+    signal.throwIfAborted();
+    try {
+      const result = await embedMany({ model: provider.embeddingModel(config.model), values: texts, dimensions: KNOWLEDGE_DIMENSIONS,
+        maxRetries: 0, maxParallelCalls: 1, abortSignal: AbortSignal.any([signal, AbortSignal.timeout(options.timeoutMs ?? 8000)]) });
+      if (result.embeddings.length !== texts.length || result.embeddings.some(vector => vector.length !== KNOWLEDGE_DIMENSIONS || vector.some(value => !Number.isFinite(value)) || !vector.some(value => value !== 0))) throw new Error('Invalid embedding vector');
+      return result.embeddings;
+    } catch(error) {
+      signal.throwIfAborted();
+      // Per-attempt timeouts are transient offline failures, but caller cancellation
+      // and access/validation errors must never be retried. One shared retry budget.
+      const retryable=APICallError.isInstance(error) ? error.isRetryable : error instanceof Error && error.name==='TimeoutError';
+      if(attempt>=retries || !retryable) throw error;
+      await delay(250 * 2**attempt,undefined,{signal});
+    }
+  }
 }

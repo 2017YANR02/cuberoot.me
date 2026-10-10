@@ -54,6 +54,8 @@ describe('site assistant grounding', () => {
     const review=JSON.parse(String(model.mock.calls[3][1]?.body));
     expect(JSON.parse(review.messages[1].content).draftAnswer).toBe('Both months have no predecessor.');
     expect(review.messages[0].content).toContain('Every requested calculated measure');
+    expect(review.messages.at(-1)).toMatchObject({role:'user'});
+    expect(review.messages.at(-1).content).toContain('Every requested calculated measure');
     expect(runAnalysisQuery).toHaveBeenCalledTimes(2);
     expect(result.artifacts).toEqual([{kind:'table',title:call.title,columns:['Month','Count','Difference'],rows:[['1','1','—'],['2','1','0']]}]);
     expect(result.answer).not.toContain('no predecessor');
@@ -255,6 +257,12 @@ describe('site assistant grounding', () => {
     expect(result.answer).toContain('颜瑞民在 2 个国家或地区参赛');
     expect(result.artifacts).toEqual([{kind:'table',title:'参赛国家和地区',columns:['国家或地区','比赛数'],rows:[['CN','1'],['JP','1']],links:undefined,columnKinds:['country','text']}]);
     expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+  it.each(['我去年去了哪些国家参加比赛？每个国家多少场？','Which countries did I compete in during 2025?'])('preserves temporal constraints for the analytical planner: %s',async question=>{
+    const fetcher=vi.fn<typeof fetch>().mockResolvedValue(modelResponse({answer:'A date-filtered analysis is required.'}));
+    await answerSiteQuestion(question,'en',config,AbortSignal.timeout(5000),withCatalog(fetcher),[],'2017YANR02');
+    expect(fetcher.mock.calls[0][0]).toBe('https://model.example/v1/chat/completions');
+    expect(JSON.parse(String(fetcher.mock.calls[0][1]?.body)).messages[1].content).toContain(question);
   });
   it('asks for identity when personal countries are requested without a linked WCA ID',async()=>{
     const fetcher=vi.fn<typeof fetch>();

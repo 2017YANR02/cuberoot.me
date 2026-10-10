@@ -96,7 +96,7 @@ analysis_query {title,description,query}: compute a new analysis from those publ
 records {event:"333",region:"world" or ISO2}: current single/average record VALUES, all tied holders. This cannot answer record counts, streaks or how long records stood; use statistics for those questions and do not substitute current holders.
 find_person {query:name}: resolve name to WCA IDs. Never guess an ID. Ask which person if ambiguous.
 person {wcaId,event:"333" or "all",progress:false,view:"records"|"profile"}: Use view:"profile" for competition totals, medals or profile facts without a PB table. Competition totals are lifetime totals, not counts for a specific year, event or country. Default view:"records" returns selected-event PRs, medals, historical record-breaking counts (NOT currently held records). For all official PBs/PRs across events use event:"all" in ONE call; the table includes every event with results. progress:true requires ONE specific event and generates single AND average PR charts. For comparison call person for each identified person.
-person_countries {wcaId}: complete countries/regions where ONE person has officially competed, grouped by competition host location. Use for personal travel/participation questions, never substitute a global most_visited_countries leaderboard or personal bests.
+person_countries {wcaId}: LIFETIME countries/regions where ONE person has officially competed, grouped by competition host location. This tool has no date or event filters: ANY year/date/event restriction requires analysis_schema and analysis_query joining results to competitions. Never substitute lifetime countries, a global leaderboard or personal bests for a filtered question.
 person_competitions {wcaId,from?:ISO date,to?:ISO date}: count ONE person's distinct competitions from their complete imported results, optionally within an inclusive range of competition START dates, with calendar-year counts ONLY. Use for this/last/specific year, date ranges or year-by-year participation; never substitute lifetime totals or annualized-average leaderboards. Monthly/weekly grouping, event filters and calculated changes require analysis_schema and analysis_query; a year total does not answer them. Use timeContext for relative dates. Missing dates are reported separately, not counted as zero. This covers published participation, not future registrations.
 rankings {event,type:"single"|"average",country:"" or ISO2 or _Asia/_Europe/_Africa/_North America/_South America/_Oceania,year?:number,limit:1..20}: current or year-end rankings.
 competitions {query:"",country:"" or ISO2,upcoming:true,from?:ISO date,to?:ISO date,limit:1..20}: find competitions and IDs; query matches name/city/id. from/to filter competitions overlapping an inclusive date range. Use English place/name keywords for this index.
@@ -183,7 +183,7 @@ export async function answerSiteQuestion(
   }
   // This explicit personal question has a fixed public data source. Resolve
   // "I" from the verified identity before any planner can select a leaderboard.
-  if (asksForPersonalCountries) {
+  if (asksForPersonalCountries && /^(?:我(?:去过哪些国家比赛|参加过哪些国家的比赛)|Which countries have I competed in)[?？。!！\s]*$/i.test(question.trim())) {
     if (!selfWcaId) return {answer:{zh:'请提供你的 WCA ID 或选手姓名，我才能查询你在哪些国家或地区参加过比赛。',en:'Please provide your WCA ID or competitor name so I can look up the countries or regions where you competed.'}[lang],sources:[],artifacts:[]};
     await emit?.({type:'status',status:{phase:'querying',tool:'person_countries'}});
     const result=await assistantStage('tool',()=>runDataTool({tool:'person_countries',wcaId:selfWcaId},lang,read),0);
@@ -212,7 +212,7 @@ export async function answerSiteQuestion(
   const factualSummaries = new Map<string,Set<string>>();
   const artifacts: Array<{sourceIds:string[]; artifact:NonNullable<AssistantAnswer['artifacts']>[number]}> = [];
   const called=new Set<string>();
-  const explanationRequested=/怎么|如何|区别|解释|原理|步骤|\b(?:how|why|explain|difference)\b/i.test(question);
+  const explanationRequested=/怎么|如何|区别|解释|原理|步骤|比较|差值|变化|口径|分母|分析|建议|\b(?:how|why|explain|difference|compare|change|methodology|scope|denominator|analy[sz]e)\b/i.test(question);
   let navigationReadRequired=false;
   let attemptedCalls=0;
   let analysisReviewed=false;
@@ -239,6 +239,9 @@ export async function answerSiteQuestion(
       system: `You are CubeRoot's public cubing assistant. Answer in ${lang === 'zh' ? 'Simplified Chinese' : 'English'}. ${TOOL_GUIDE}${artifacts.some(a=>a.artifact.kind==='table') ? '\nThe UI already renders the retrieved rows as tables below your answer. Your answer must now be only 1-2 short sentences summarizing the result. Do not list individual table rows.' : ''}${finalOnly ? '\nNo further reads are available. Answer from existing evidence. If a scope choice is required, ask the user; if published data is unavailable, say so. Do not invent missing results.' : ''}${reviewInstruction}${formatRepair}`,
       context: {question,draftAnswer,timeContext,viewerWcaId,history:history.slice(-6).map(m=>({...m,content:m.content.slice(0,2000)})),now:timeContext.today,round,remainingCalls:10-attemptedCalls,statisticsCatalog,announcementCatalog:SITE_ANNOUNCEMENTS.map(a=>({id:a.id,title:a.title[lang],aliases:a.aliases})),evidence,sources:[...sources.values()],finalRound:finalOnly}, finalOnly, thinking, effort,
       maxTokens: !thinking && analysisSchemaRead ? 3200 : maxTokens,
+      // A completed assistant message needs a new user turn for a real review;
+      // changing an earlier context message alone can merely continue that answer.
+      ...(draftAnswer !== undefined ? {followUp: JSON.stringify({originalQuestion:question,draftAnswer})+reviewInstruction} : {}),
       ...(emit ? {onText: async (content: string) => {
         const forcedRead = round === 0 && (requestedReconId || requestedAnnouncements.length || explicitStatistics.length === 1);
         const partial = !forcedRead && !factualSummaries.size && !analysisSchemaRead && !(explanationRequested && ![...sources.values()].some(source=>source.read)) ? partialAssistantAnswer(content) : undefined;
@@ -354,8 +357,8 @@ export async function answerSiteQuestion(
       const cited=selected.length?selected:[...sources.values()].filter(source=>source.read).slice(0,12);
       const citedIds=new Set(cited.map(source=>source.id));
       const partial=analysisIncomplete && cited.some(s=>s.id.startsWith('analysis:')) ? {zh:'部分计算未完成，以下仅展示已取得的结果。',en:'Some calculations could not be completed. Only the available results are shown below.'}[lang]+' '+cited.filter(s=>s.id.startsWith('analysis:')).map(s=>`[[${s.id}]]`).join(' ') : undefined;
-      const factual=cited.length>0 && cited.every(s=>factualSummaries.has(s.id)) && !/为什么|原因|解释|分析|建议|如何|\bwhy\b|\bhow to\b|\bexplain\b|\banaly[sz]e\b/i.test(question) ? [...new Set(cited.flatMap(s=>[...factualSummaries.get(s.id)!]))].map(text=>text+' '+cited.filter(s=>factualSummaries.get(s.id)!.has(text)).map(s=>`[[${s.id}]]`).join(' ')).join('\n\n') : undefined;
-      return {answer:partial || factual || (step.answer ? step.answer.replace(/\[\[([^\]\n]+)\]\]/g,(marker,id)=>sources.has(id)?marker:'') + (!inlineIds.length && cited.length ? ' '+cited.filter(source=>source.read || !cited.some(item=>item.read)).map(source=>`[[${source.id}]]`).join(' ') : '') : '') || {zh:'本次没有取得足够的数据，请缩小问题范围后重试。',en:'There was not enough evidence. Please narrow the question and retry.'}[lang],sources:cited,actions:selected.filter(s=>/^\/(?!\/)/.test(s.href) && !/[\\\r\n]/.test(s.href)).map(s=>navigationActions.get(s.id) ?? {id:s.id,title:s.title,href:s.href}),artifacts:artifacts.filter(a=>a.sourceIds.some(id=>citedIds.has(id))).map(a=>a.artifact)};
+      const factual=cited.length>0 && cited.every(s=>factualSummaries.has(s.id)) && !explanationRequested && !/为什么|原因/i.test(question) ? [...new Set(cited.flatMap(s=>[...factualSummaries.get(s.id)!]))].map(text=>text+' '+cited.filter(s=>factualSummaries.get(s.id)!.has(text)).map(s=>`[[${s.id}]]`).join(' ')).join('\n\n') : undefined;
+      return {answer:partial || factual || (step.answer ? step.answer.replace(/\[\[([^\]\n]+)\]\]/g,(marker,id)=>sources.has(id)?marker:'') + (!inlineIds.length && cited.length ? ' '+cited.filter(source=>source.read || !cited.some(item=>item.read)).map(source=>`[[${source.id}]]`).join(' ') : '') : '') || {zh:'本次没有取得足够的数据，请缩小问题范围后重试。',en:'There was not enough evidence. Please narrow the question and retry.'}[lang],sources:cited,actions:selected.filter(s=>/^\/(?!\/)/.test(s.href) && !/[\\\r\n]/.test(s.href)).map(s=>navigationActions.get(s.id) ?? {id:s.id,title:s.title,href:s.href}),artifacts:[...new Map(artifacts.filter(a=>a.sourceIds.some(id=>citedIds.has(id))).map(a=>[JSON.stringify(a.artifact),a.artifact])).values()]};
   };
   const reviewAnalysis = async(step:z.infer<typeof stepSchema>,round:number,finalOnly:boolean) => {
     // One independent check before publishing a calculated answer. It can use

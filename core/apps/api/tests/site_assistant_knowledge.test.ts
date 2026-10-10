@@ -1,4 +1,5 @@
-import { describe,it,expect } from 'vitest';
+import { afterEach,describe,it,expect,vi } from 'vitest';
+import { embedKnowledge } from '../src/utils/site_assistant_embedding.js';
 import { chunkKnowledge, knowledgeIndexSchema, knowledgeTokens, lexicalKnowledge, knowledgeGeneration } from '../src/utils/site_assistant_knowledge.js';
 const index = {updated:'2026-10-10T00:00:00.000Z',pages:[
   {lang:'zh' as const,href:'/timer?training=home',title:'计时器训练',text:'打开计时器训练菜单，选择项目与公式集。\n\n选择要练习的情况，再开始公式训练。'},
@@ -6,6 +7,22 @@ const index = {updated:'2026-10-10T00:00:00.000Z',pages:[
   {lang:'en' as const,href:'/timer',title:'Timer training',text:'Choose cases before starting algorithm practice.'},
   {lang:'zh' as const,href:'/empty',title:'只有导航',text:''},
 ]};
+afterEach(()=>vi.unstubAllEnvs());
+it('retries an offline timeout but not access denial or caller cancellation',async()=>{
+  vi.stubEnv('SITE_ASSISTANT_EMBEDDING_API_KEY','fixture');
+  vi.stubEnv('SITE_ASSISTANT_EMBEDDING_BASE_URL','https://dashscope.aliyuncs.com/compatible-mode/v1');
+  const vector=Array.from({length:512},(_,i)=>i===0?1:0);
+  const fetcher=vi.fn<typeof fetch>().mockRejectedValueOnce(new DOMException('timed out','TimeoutError'))
+    .mockResolvedValueOnce(Response.json({data:[{embedding:vector,index:0}],usage:{prompt_tokens:1,total_tokens:1}}));
+  expect(await embedKnowledge(['公开资料'],AbortSignal.timeout(2000),fetcher,{maxRetries:2})).toEqual([vector]);
+  expect(fetcher).toHaveBeenCalledTimes(2);
+  const denied=vi.fn<typeof fetch>().mockResolvedValue(Response.json({error:{message:'denied'}},{status:403}));
+  await expect(embedKnowledge(['公开资料'],AbortSignal.timeout(2000),denied,{maxRetries:2})).rejects.toThrow();
+  expect(denied).toHaveBeenCalledTimes(1);
+  const aborted=vi.fn<typeof fetch>();
+  await expect(embedKnowledge(['公开资料'],AbortSignal.abort(),aborted,{maxRetries:2})).rejects.toThrow();
+  expect(aborted).not.toHaveBeenCalled();
+});
 describe('assistant public knowledge retrieval',()=>{
   it('segments Chinese words, restricts language, and keeps source citations',async()=>{
     expect(knowledgeTokens('计时器训练','zh')).toContain('训练');

@@ -160,7 +160,9 @@ export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'
       basis:'Distinct competition IDs with imported official results, grouped/filtered by competition start date. DNF participation is included. Not a count of rounds, events, registrations or an annualized average. Missing years have zero imported competitions only when unknownDateCompetitions is zero. Coverage ends at the import timestamp, not today.'};
     out.sources.push(source(`person-competitions:${call.wcaId}:${call.from ?? 'all'}:${call.to ?? 'all'}`,title,`/wca/persons/${call.wcaId}`));
     const period = call.from && call.to ? formatDateRangeIso(call.from,call.to) : call.from ? label(`${call.from} 起`,`since ${call.from}`) : call.to ? label(`截至 ${call.to}`,`through ${call.to}`) : label('全部年份','all years');
-    out.factualSummary = label(`按已导入的 WCA 官方成绩，${title}在 ${period} 参加过 ${count} 场比赛，以比赛开始日期计。`,`Imported official WCA results show ${count} competitions for ${title} (${period}), counted by competition start date.`)
+    out.factualSummary = (call.from && call.from>today
+      ? label(`${period} 尚未发生，当前没有该期间的正式比赛成绩，无法提供未来的确切成绩。`,`The period ${period} is in the future. Official results do not exist yet, so exact future results are unavailable.`)
+      : label(`按已导入的 WCA 官方成绩，${title}在 ${period} 参加过 ${count} 场比赛，以比赛开始日期计。`,`Imported official WCA results show ${count} competitions for ${title} (${period}), counted by competition start date.`))
       + (updated ? label(`数据导入时间：${updated}。`,` Data imported: ${updated}.`) : '')
       + (unknownDateCompetitions ? label(`另有 ${unknownDateCompetitions} 场比赛缺少有效日期，未计入，以上数量可能不完整。`,` ${unknownDateCompetitions} competitions lack valid dates and are excluded; this count may be incomplete.`) : '');
     if (byYear.length) table(label('按年参赛数','Competitions by year'),[label('年份','Year'),label('比赛数','Competitions')],byYear.map(row=>[row.year,String(row.competitions)]));
@@ -260,6 +262,8 @@ export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'
     // A deliberate public field projection: never pass author/account fields to the model.
     out.evidence=Object.fromEntries(['id','person','event','value','rawTime','method','date','comp','official','compWcaId','stm','tps','scramble','optimalScramble','wcaScramble','solution','reconstruction','note','oll','pll'].filter(k=>r[k]!=null).map(k=>[k,r[k]]));
     if (typeof r.solution === 'string') {
+      Object.assign(out.evidence as object,{solutionLineCount:r.solution.split('\n').filter(Boolean).length,
+        annotationMeaning:'The oll/pll legacy storage fields may contain ZBLS/ZBLL or other method labels. They do not establish an OLL/PLL classification. Quote the recorded label without reclassifying it.'});
       out.reconstructionAnnotations=r.solution.split('\n').flatMap((line:string)=>line.includes('//')?[line.slice(line.indexOf('//')+2).trim()]:[]).filter(Boolean);
       table(label('原始复盘步骤','Original reconstruction'),[label('步骤','Step'),label('原始记号与注释','Original notation and annotations')],r.solution.split('\n').filter(Boolean).map((line:string,i:number)=>[String(i+1),line]));
     }
