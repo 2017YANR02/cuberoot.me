@@ -276,7 +276,11 @@ export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'
   } else if (call.tool === 'algorithms') {
     const path=call.set ? `${api}/alg/sets/${call.puzzle}/${call.set}` : `${api}/alg/sets`;
     const data=await read(path);
-    out.evidence=call.set ? {...data,cases:data.cases?.slice(0,72)} : data;
+    out.evidence=call.set ? {...data,cases:data.cases?.slice(0,72)} : {
+      puzzle:call.puzzle,
+      sets:data.filter((set:any)=>set.puzzle===call.puzzle).map((set:any)=>({puzzle:set.puzzle,setSlug:set.setSlug,count:set.count,updatedAt:set.updatedAt})),
+      instruction:'Complete catalog for this puzzle. count is the number of cases, not formulas. Use these counts for catalog questions; do not reread the catalog or fetch individual formula content to answer them. For other aggregates use analysis_schema / analysis_query.',
+    };
     out.sources.push(source('algorithms',label('公式库','Algorithms'),call.set ? `/alg/${call.puzzle}/${call.set}` : '/alg'));
   }
   return out;
