@@ -511,3 +511,33 @@
     background: var(--glass-dialog-bg);
   }
 }
+.settings-modal .timer-settings-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
+  gap: 8px;
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-default);
+}
+.settings-modal .timer-settings-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.settings-modal .timer-settings-action svg { flex: none; color: var(--muted-foreground); }
+.settings-modal .timer-settings-action:hover:not(:disabled) { background: var(--muted); }
+.settings-modal .timer-settings-action:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.settings-modal .timer-settings-action:disabled { opacity: .45; cursor: not-allowed; }
+.settings-modal .timer-settings-action-danger { width: 100%; color: var(--destructive); }
