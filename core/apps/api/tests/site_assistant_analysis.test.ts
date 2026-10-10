@@ -29,6 +29,14 @@ describe('assistant analysis compiler',()=>{
     let expr:any=col('r.best');for(let i=0;i<30;i++)expr={fn:'abs',args:[expr]};
     expect(()=>compileAnalysis({...base,select:[{as:'x',label:'x',expr}]})).toThrow('too complex');
   });
+  it('identifies the malformed nested window field so the planner can repair it',()=>{
+    expect(()=>compileAnalysis({...base,select:[{as:'previous',label:'Previous',expr:{fn:'lag',args:[col('r.best')],over:{orderBy:[{col:'r.comp_date',direction:'asc'}]}}}]})).toThrow('select.0.expr.over.orderBy.0.expr: Expected an expression object');
+  });
+  it('does not require unused intermediate display labels but still requires final labels',()=>{
+    const intermediate={...base,select:base.select.map(({label,...column})=>column)};
+    expect(()=>compileAnalysis({steps:[{name:'totals',query:intermediate}],from:{dataset:'totals',as:'t'},select:[{as:'n',label:'Count',expr:col('t.count')}]})).not.toThrow();
+    expect(()=>compileAnalysis(intermediate)).toThrow('Final output columns require display labels');
+  });
   it('marks truncation, blocks invented identities and keeps errors out of evidence',async()=>{
     const execute=vi.fn().mockResolvedValue({rows:[{count:'1'},{count:'2'}],importedAt:'2026-10-10'});
     const call={title:'Count',description:'Distinct competitions',query:{...base,limit:1}};
