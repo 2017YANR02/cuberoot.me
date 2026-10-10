@@ -7,32 +7,10 @@ on:
   # Weekly full run catches runner/toolchain drift that path filters cannot see.
   schedule:
     - cron: '17 9 * * 1'
+  # Required PR checks must exist even for documentation-only changes.
   pull_request:
     paths:
-      - '.node-version'
-      - 'core/**'
-      - '!core/packages/platform/**'
-      - 'docs/platform-capability-manifest.json'
-      - 'docs/platform-unification-plan.md'
-      - 'sync_upstream.ts'
-      - '.sync/**'
-      - 'scripts/upstream/**'
-      - 'ops/nginx/**'
-      - 'ops/vercel-ban-relay/competition-rule.json'
-      - 'ops/systemd/cuberoot-drive-compression.service'
-      - 'ops/bin/pg-dump-recon.sh'
-      - 'ops/systemd/pg-dump-recon.service'
-      - '.github/workflows/backup_recon.yml'
-      - '.github/workflows/best2x2_drift.yml'
-      - '.github/workflows/deploy_core.yml'
-      - '.github/workflows/deploy_next.yml'
-      - '.github/workflows/elev_backfill.yml'
-      - '.github/workflows/icons_drift.yml'
-      - '.github/workflows/regulation_drift.yml'
-      - '.github/workflows/sq1_pbl_drift.yml'
-      - '.github/workflows/stats.yml'
-      - '.github/workflows/test.yml'
-      - '.github/workflows/update_upcoming.yml'
+      - '**'
   push:
     branches: [main]
     paths:
@@ -1001,3 +979,27 @@ jobs:
       - name: Analyzer worker regression
         working-directory: core
         run: pnpm --filter @cuberoot/client test:slow
+
+  # Keep this dependency list complete: the workflow contract test guards drift.
+  pr-checks:
+    name: PR checks
+    if: ${{ always() }}
+    needs: [changes, test, client-tests, mobile, desktop-ui, desktop, analyzer-worker]
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions: {}
+    steps:
+      - name: Require successful affected checks
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
+        run: |
+          node --input-type=module <<'NODE'
+          const jobs = JSON.parse(process.env.NEEDS_JSON);
+          for (const [name, { result }] of Object.entries(jobs)) {
+            console.log(name + ': ' + result);
+          }
+          const failed = jobs.changes.result !== 'success'
+            || jobs.test.result !== 'success'
+            || Object.values(jobs).some(({ result }) => !['success', 'skipped'].includes(result));
+          if (failed) process.exit(1);
+          NODE

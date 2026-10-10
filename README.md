@@ -50,6 +50,10 @@ cuberoot.me/
 
 ## Local development
 
+Contributions follow the [PR submission and self-review guide](./CONTRIBUTING.md).
+Authors with write access may merge their own PRs after self-review and required
+checks pass; another person's approval is not required.
+
 Use the Node version in [`.node-version`](./.node-version) and the pnpm version
 declared by [`core/package.json`](./core/package.json).
 

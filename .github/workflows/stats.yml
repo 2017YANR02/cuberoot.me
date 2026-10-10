@@ -87,6 +87,9 @@ jobs:
           df -h /
 
       - uses: actions/checkout@v4
+        with:
+          # Repository deploy key preserves automated data pushes through PR rules.
+          ssh-key: ${{ secrets.AUTOMATION_PUSH_SSH_KEY }}
 
       - name: Activate MySQL
         run: sudo systemctl start mysql.service

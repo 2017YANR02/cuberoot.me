@@ -16,6 +16,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Repository deploy key preserves automated data pushes through PR rules.
+          ssh-key: ${{ secrets.AUTOMATION_PUSH_SSH_KEY }}
 
       - uses: actions/setup-node@v4
         with:
