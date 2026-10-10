@@ -121,7 +121,6 @@ export function DoubleZbllThumb({ top, bottom, scramble, size = 112, compact = f
       <figure key={label}>
         {/* Full-state plan view: a single-layer LL mask would hide all bottom pieces after x2. */}
         <VisualCube view="plan" setup={setup} scheme={visualCubeSchemeForOrientation(DEFAULT_ALG_CUBE_ORIENTATION)} size={size} local alt={label} />
-        {!compact && <figcaption>{label}</figcaption>}
         {!compact && <CaseMarkBar k={caseKey(c)} />}
       </figure>
     ))}
