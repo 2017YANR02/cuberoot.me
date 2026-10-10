@@ -86,6 +86,9 @@ const CSTIMER_EVENT_MAP: Record<string, EventId> = {
   'dogic': 'dogic', 'dogic二十面体': 'dogic',
   'octahedron4': 'octahedron4', '4×4octahedron': 'octahedron4', '4x4octahedron': 'octahedron4', '四阶八面体': 'octahedron4',
   'dinoskewb': 'dinoskewb', '恐龙斜转': 'dinoskewb',
+  'cube3dino': 'cube3dino', '3dino': 'cube3dino',
+  '3×3+dino': 'cube3dino', '3x3+dino': 'cube3dino',
+  '三阶＋恐龙': 'cube3dino', '三阶+恐龙': 'cube3dino',
 };
 
 /* ------------------------------------------------------------------ */
@@ -158,6 +161,10 @@ function nameToEvent(name: unknown): { event: EventId; matched: boolean } {
   }
   if (/\b4\s*[x×]\s*4[\s_-]+octahedron\b/i.test(name)) {
     return normalizeEventKey('octahedron4');
+  }
+  // Recognize the hybrid before its 3x3 token can resolve to ordinary 333.
+  if (/(?:^|[^a-z0-9])3[\s_-]*[x×][\s_-]*3[\s_-]*[+＋][\s_-]*dino(?:$|[^a-z0-9])|三阶[\s_-]*[+＋][\s_-]*恐龙/i.test(name)) {
+    return normalizeEventKey('cube3dino');
   }
   for (const t of tokens) {
     const tried = normalizeEventKey(t);

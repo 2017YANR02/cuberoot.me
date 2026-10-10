@@ -4,14 +4,16 @@
  * https://github.com/cubing/cubing.js/issues/127
  * Original Dino Skewb: https://www.tomvanderzanden.nl/puzzle.php?puz=Dino+Skewb
  * Its two vertex cut depths are the existing Dino and Skewb planes combined.
+ * 3x3 + Dino: https://www.tomvanderzanden.nl/puzzle.php?puz=3x3x3+Dino+Cube
+ * Combines the uniform 3x3 face cuts with Dino's face diagonals.
  * These are bounded random-move practice scrambles, not uniform random states.
  */
-const SUPERZ_AXES = [
+const CUBE_FACE_CORNER_AXES = [
   ['F', 'B'], ['D', 'U'], ['L', 'R'],
   ['DRF', 'UBL'], ['DFL', 'URB'], ['DBR', 'ULF'], ['DLB', 'UFR'],
 ] as const;
 
-const CORNER_AXES = SUPERZ_AXES.slice(3);
+const CORNER_AXES = CUBE_FACE_CORNER_AXES.slice(3);
 const DOGIC_AXES = [
   ['FREGU', 'OKBDN'], ['HIERC', 'MKOPQ'], ['FLACR', 'BKMJS'],
   ['NALPO', 'JGEIS'], ['FUQPL', 'IHDBS'], ['UGJMQ', 'DHCAN'],
@@ -23,7 +25,11 @@ const OCTAHEDRON_AXES = [
 export const NATIVE_PUZZLES = {
   superz: {
     description: 'c f 0 v 0', zh: '二阶＋斜转', en: 'SuperZ (2×2 + Skewb)', textLabel: 'SuperZ',
-    axes: SUPERZ_AXES, order: 0, layers: 1, scrambleLength: 40, aspect: 4 / 3, visibleFacelets: 48,
+    axes: CUBE_FACE_CORNER_AXES, order: 0, layers: 1, scrambleLength: 40, aspect: 4 / 3, visibleFacelets: 48,
+  },
+  cube3dino: {
+    description: 'c f 0.333333333333333 v 0.577350269189626', zh: '三阶＋恐龙', en: '3×3 + Dino', textLabel: '3Dino',
+    axes: CUBE_FACE_CORNER_AXES, order: 0, layers: 2, scrambleLength: 40, aspect: 4 / 3, visibleFacelets: 96,
   },
   dogic: {
     description: 'i v 0.562777422255239 v 0.9105929973100289', zh: 'Dogic 二十面体', en: 'Dogic', textLabel: 'Dogic',
@@ -50,7 +56,8 @@ export function isNativePuzzleId(id: unknown): id is NativePuzzleId {
 export function nativePuzzleMoves(id: NativePuzzleId): { move: string; label: string; order: number }[] {
   const spec = NATIVE_PUZZLES[id];
   return spec.axes.flatMap((pair, axis) => pair.flatMap((family) => {
-    const order = id === 'superz' ? axis < 3 ? 4 : 3 : spec.order;
+    // order 0 denotes this cube's face (first three axes) + corner mechanisms.
+    const order = spec.order === 0 ? axis < 3 ? 4 : 3 : spec.order;
     const moves = spec.layers === 1 ? [family] : [family, `2${family}`, `${family}w`];
     return moves.map((move) => ({ move, label: move, order }));
   }));
@@ -64,20 +71,24 @@ export function generateNativePuzzleScramble(id: NativePuzzleId, random: () => n
     return Math.floor(value * size);
   };
   const out: string[] = [];
+  const mixedOrder = spec.order === 0;
   let previousAxis = -1;
   for (let i = 0; i < spec.scrambleLength; i++) {
     // Alternate mechanism classes so even an extreme deterministic source exercises
     // both cuts. Choose uniformly among axes in each class, then half and power.
-    const faceTurn = id === 'superz' && i % 2 === 0;
-    const axisCount = id === 'superz' ? faceTurn ? 3 : 4 : spec.axes.length;
-    const candidates = Array.from({ length: axisCount }, (_, j) => j + (id === 'superz' && !faceTurn ? 3 : 0))
+    const faceTurn = mixedOrder && i % 2 === 0;
+    const axisCount = mixedOrder ? faceTurn ? 3 : 4 : spec.axes.length;
+    const candidates = Array.from({ length: axisCount }, (_, j) => j + (mixedOrder && !faceTurn ? 3 : 0))
       .filter((axis) => axis !== previousAxis);
     const axis = candidates[pick(candidates.length)];
     const family = spec.axes[axis][pick(2)];
     // Alternate the shallow and deep cuts. A wide move turns both layers together;
     // single inner slices remain available for manual algorithms and dragging.
-    const move = spec.layers > 1 && i % 2 === 1 ? `${family}w` : family;
-    const order = id === 'superz' ? faceTurn ? 4 : 3 : spec.order;
+    // Mixed mechanisms alternate depth every pair, so both face and corner
+    // turns exercise both cuts instead of coupling depth to mechanism parity.
+    const wide = spec.layers > 1 && (mixedOrder ? Math.floor(i / 2) : i) % 2 === 1;
+    const move = wide ? `${family}w` : family;
+    const order = mixedOrder ? faceTurn ? 4 : 3 : spec.order;
     const suffixes = order === 3 ? ['', "'"] : order === 4 ? ['', '2', "'"] : ['', '2', "2'", "'"];
     out.push(move + suffixes[pick(suffixes.length)]);
     previousAxis = axis;

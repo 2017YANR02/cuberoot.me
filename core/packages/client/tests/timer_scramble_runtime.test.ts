@@ -75,6 +75,7 @@ const SHARED_EVENTS: Readonly<Partial<Record<EventId, TimerSharedScrambleProvide
   dogic: 'native-random-move',
   octahedron4: 'native-random-move',
   dinoskewb: 'native-random-move',
+  cube3dino: 'native-random-move',
   kilominx: 'cstimer-nonwca',
   mpyram: 'cstimer-nonwca',
 };
@@ -303,7 +304,7 @@ describe('shared timer scramble runtime', () => {
     expect(generateCubingScramble).not.toHaveBeenCalled();
   });
 
-  it.each(['superz', 'dogic', 'octahedron4', 'dinoskewb'] as const)('routes %s through its native generator and the shared worker seam', async (event) => {
+  it.each(['superz', 'dogic', 'octahedron4', 'dinoskewb', 'cube3dino'] as const)('routes %s through its native generator and the shared worker seam', async (event) => {
     const scramble = generateNativePuzzleScramble(event, () => 0.375);
     const generateCubingScramble = vi.fn(async () => 'must not run');
     const expected = { ok: true, event, kind: 'generated', provider: 'native-random-move', scramble };
@@ -320,7 +321,7 @@ describe('shared timer scramble runtime', () => {
     expect(generateCubingScramble).not.toHaveBeenCalled();
   });
 
-  it.each(['pyraminx_duo', 'superz', 'dogic', 'octahedron4', 'dinoskewb'] as const)('preserves %s provider errors and empty results', async (event) => {
+  it.each(['pyraminx_duo', 'superz', 'dogic', 'octahedron4', 'dinoskewb', 'cube3dino'] as const)('preserves %s provider errors and empty results', async (event) => {
     for (const [generateSharedScramble, code] of [
       [async () => '   ', 'empty-result'],
       [async () => { throw new Error('Native worker failed'); }, 'generation-failed'],

@@ -27,7 +27,7 @@ export type EventId =
   | 'magic' | 'mmagic'
   // Non-WCA puzzles (shared providers declare their generation capability).
   | 'fto' | 'kilominx' | 'gear' | 'ivy' | 'redi' | 'mpyram' | 'pyraminx_duo' | 'superz'
-  | 'dogic' | 'octahedron4' | 'dinoskewb'
+  | 'dogic' | 'octahedron4' | 'dinoskewb' | 'cube3dino'
   // Relays
   | 'r3' | 'r4' | 'r5'
   // CFOP step training
@@ -234,6 +234,7 @@ export const EVENTS: EventInfo[] = [
   { id: 'dogic', nameEn: 'Dogic', nameZh: 'Dogic 二十面体', group: 'nonwca' },
   { id: 'octahedron4', nameEn: '4×4 Octahedron', nameZh: '四阶八面体', group: 'nonwca' },
   { id: 'dinoskewb', nameEn: 'Dino Skewb', nameZh: '恐龙斜转', group: 'nonwca' },
+  { id: 'cube3dino', nameEn: '3×3 + Dino', nameZh: '三阶＋恐龙', group: 'nonwca' },
 
   // CFOP step training
   { id: 'cross',  nameEn: 'Cross only',  nameZh: '十字',       group: 'cfop'

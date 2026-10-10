@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { Move } from 'cubing/alg';
-import type { NativePuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
+import { NATIVE_PUZZLES, type NativePuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { nativePuzzleKPuzzle } from '@cuberoot/puzzle-solvers/native-puzzle-model';
 import {
   createNativePuzzleDragGeometry, pickNativePuzzleDrag,
@@ -180,9 +180,9 @@ export function attachNativePgPointer(
     if (event.altKey) return 'wide';
     if (event.shiftKey) return 'inner';
     const selected = opts.depth();
-    // SuperZ has one cut per axis and no depth selector. A saved depth from a
+    // A single-depth puzzle has no depth selector. A saved depth from a
     // previously selected two-depth puzzle must not disable its surface grips.
-    return selected === 'auto' || id === 'superz' ? undefined : selected;
+    return selected === 'auto' || NATIVE_PUZZLES[id].layers === 1 ? undefined : selected;
   };
   const canTurn = (): boolean => current() && opts.enabled() && !opts.pinching() && unsettled.size === 0;
   const commit = (active: Gesture, move: string | Move): void => {

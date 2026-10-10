@@ -7,7 +7,7 @@ import { mergeTimerSeedProgress, consumeTimerSeed, normalizeTimerSyncSeed, reset
 import type { EventId } from '@cuberoot/shared/timer';
 
 describe('shared displayed seed sequence', () => {
-  it.each(['superz', 'dogic', 'octahedron4', 'dinoskewb'] as const)('%s shares one generator between ordinary and seeded requests', async (event) => {
+  it.each(['superz', 'dogic', 'octahedron4', 'dinoskewb', 'cube3dino'] as const)('%s shares one generator between ordinary and seeded requests', async (event) => {
     const ticket = { seed: 'Native 中文 seed', index: 7, revision: 0 };
     const scramble = generateNativePuzzleScramble(event, rngFor(ticket.seed, ticket.index));
     expect(generateSeededTimerScramble({ event, ticket })).toEqual({ scramble, caseId: null });

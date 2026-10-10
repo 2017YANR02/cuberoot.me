@@ -52,7 +52,7 @@ describe('Timer source controls follow puzzle capabilities', () => {
     act(() => root.render(createElement(ScrambleSourceBar, { event, isZh: false })));
   }
 
-  it.each(['superz', 'dogic', 'octahedron4', 'dinoskewb'] as const)(
+  it.each(['superz', 'dogic', 'octahedron4', 'dinoskewb', 'cube3dino'] as const)(
     'hides competition controls for %s and restores them on returning to 333 without changing settings',
     (event) => {
       render('333');
