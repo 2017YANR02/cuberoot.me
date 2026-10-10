@@ -59,7 +59,14 @@ export async function syncMiniProgramAppearance(): Promise<void> {
     const api = await loadMiniProgramNavigationApi();
     if (!api?.postMessage || !await confirmMiniProgramEnvironment(api)) return;
     const locale = normalizeAppLang(i18n.language);
-    const immediate = sessionStorage.getItem('cuberoot.native-preferences') === '2';
+    const protocol = sessionStorage.getItem('cuberoot.native-preferences');
+    const lightBackground = readHomeBackgroundChoice('light');
+    const darkBackground = readHomeBackgroundChoice('dark');
+    // Protocol 2 rejects transparent choices. Navigating to its preference page
+    // would discard the Tools WebView and repeat login on every return.
+    // Keep the existing postMessage fallback without changing the saved choice.
+    const immediate = protocol === '3' || (protocol === '2'
+      && lightBackground !== 'transparent' && darkBackground !== 'transparent');
     if (!immediate && locale !== lastLocale) {
       api.postMessage({ data: { type: 'cuberoot:locale', locale } });
       lastLocale = locale;
@@ -86,8 +93,7 @@ export async function syncMiniProgramAppearance(): Promise<void> {
     if (immediate) {
       const preferences: MiniProgramPreferences = { locale,
         theme: savedTheme === 'light' || savedTheme === 'dark' ? savedTheme : 'system',
-        palette, contrast: readContrast(), lightBackground: readHomeBackgroundChoice('light'),
-        darkBackground: readHomeBackgroundChoice('dark') };
+        palette, contrast: readContrast(), lightBackground, darkBackground };
       const payload = JSON.stringify({ preferences, appearance: message });
       if (payload === lastPreferences) return;
       const previous = lastPreferences;

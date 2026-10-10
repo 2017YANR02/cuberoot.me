@@ -4,6 +4,14 @@ import { THEME_BOOTSTRAP } from '@/lib/theme-bootstrap';
 const preferences = { locale: 'en', theme: 'dark', palette: 'hantan', contrast: 'soft', lightBackground: '07', darkBackground: '08' };
 beforeEach(() => { localStorage.clear(); sessionStorage.clear(); vi.stubGlobal('matchMedia', () => ({ matches: false })); });
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+it.each([undefined, 2, 3])('negotiates native preference protocol %s before and after the auth redirect', (version) => {
+  window.history.replaceState(null, '', '/auth/miniprogram?mpPreferences=' + encodeURIComponent(JSON.stringify({ version, preferences: null, nonce: 1 })));
+  window.eval(THEME_BOOTSTRAP);
+  expect(sessionStorage.getItem('cuberoot.native-preferences')).toBe(version === 3 ? '3' : '2');
+  window.history.replaceState(null, '', '/zh');
+  window.eval(THEME_BOOTSTRAP);
+  expect(sessionStorage.getItem('cuberoot.native-preferences')).toBe(version === 3 ? '3' : '2');
+});
 it('restores all native settings before paint even in an empty WebView store', () => {
   window.history.replaceState(null, '', '/timer?mpPreferences=' + encodeURIComponent(JSON.stringify({ preferences, nonce: 1 })));
   window.eval(THEME_BOOTSTRAP);

@@ -17,9 +17,9 @@ export const THEME_BOOTSTRAP = `(() => {
   try {
     var incoming = new URLSearchParams(location.search).get('${MINI_PROGRAM_PREFERENCES_QUERY}');
     if (incoming) {
-      sessionStorage.setItem('cuberoot.native-preferences', '2');
+      var snapshot = JSON.parse(incoming);
+      sessionStorage.setItem('cuberoot.native-preferences', snapshot.version === 3 ? '3' : '2');
       if (sessionStorage.getItem('cuberoot.native-preferences.applied') !== incoming) {
-        var snapshot = JSON.parse(incoming);
         if (['tools', 'timer', 'web'].includes(snapshot.tab)) sessionStorage.setItem('cuberoot.native-tab', snapshot.tab);
         var preferences = (${decodeMiniProgramPreferences.toString()})(snapshot.preferences);
         if (preferences) {

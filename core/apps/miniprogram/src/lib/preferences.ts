@@ -32,6 +32,7 @@ export function withNativePreferences(url: string, tab?: 'tools' | 'timer' | 'we
   const base = (index < 0 ? url : url.slice(0, index)).replace(/([?&])lang=[^&]*&?/g, '$1').replace(/[?&]$/, '');
   const hash = index < 0 ? '' : url.slice(index);
   const preferences = readNativePreferences();
-  const payload = encodeURIComponent(JSON.stringify({ preferences, tab, nonce: Date.now() }));
+  // Protocol 3 accepts the transparent background choice; older shells reject it.
+  const payload = encodeURIComponent(JSON.stringify({ version: 3, preferences, tab, nonce: Date.now() }));
   return `${base}${base.includes('?') ? '&' : '?'}lang=${preferences?.locale ?? getMiniProgramLocale()}&${MINI_PROGRAM_PREFERENCES_QUERY}=${payload}${hash}`;
 }
