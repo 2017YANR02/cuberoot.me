@@ -1531,11 +1531,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
           {is333Family && sheetsInEvent.length > 0 && (
             <div className="gen-cx-switchrow">
               {forcedCompId && <div className="gen-cx-actions-inline">{actionsNode}</div>}
-              <span className="gen-sq1-format-label">{t('分析', 'Analysis')}</span>
-              <select className="native-select" value={String(showCross)} onChange={event => { setShowCross(event.currentTarget.value === 'true'); }} aria-label={t('显示十字步数分析', 'Show cross analysis')}>
-                <option value="true">{t('开启', 'On')}</option>
-                <option value="false">{t('关闭', 'Off')}</option>
-              </select>
+              <BoolToggle label={t('分析', 'Analysis')} value={showCross} onChange={setShowCross} ariaLabel={t('显示十字步数分析', 'Show cross analysis')} />
               {showCross && roundIdxsInEvent.length > 1 && (
                 <select
                   value={String(analysisAll)}

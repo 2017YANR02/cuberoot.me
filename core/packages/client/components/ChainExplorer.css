@@ -72,7 +72,7 @@
   opacity: 0.45;
   pointer-events: none;
 }
-.chx-fr-enable {
+.bool-toggle.chx-fr-enable {
   display: flex;
   align-items: center;
   gap: 9px;
@@ -185,16 +185,22 @@
 }
 
 /* ── NISS 双开关 ── */
-.chx-niss-row {
+.bool-toggle.chx-niss-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 14px;
   max-width: 340px;
+  width: 100%;
   padding: 5px 0;
   font-size: 13px;
   color: var(--foreground);
   cursor: pointer;
+}
+.chx-niss-row .bool-toggle-label {
+  min-width: 0;
+  white-space: normal;
+  text-align: start;
 }
 .chx-niss-row.is-pending {
   cursor: default;
@@ -463,7 +469,7 @@
   }
 }
 @media (max-width: 480px) {
-  .chx-niss-row {
+  .bool-toggle.chx-niss-row {
     max-width: 100%;
   }
 }

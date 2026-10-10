@@ -1,3 +1,4 @@
+import BoolToggle from './BoolToggle';
 import './compact-select.css';
 import {
   normalizeTimerWcaDifficultySettings,
@@ -177,10 +178,7 @@ export function TimerWcaDifficultyConfig({
         <TimerDifficultyHelp content={labels.mergeHelp} hover label={labels.merge} question />
       </span>
       <span className="settings-row-control">
-        <select className="native-select" value={String(savedSettings.wcaDiffMerged)} onChange={event => { const wcaDiffMerged = event.currentTarget.value === 'true'; persist({ wcaDiffMerged }); }} aria-label={labels.mergeAriaLabel} disabled={disabled}>
-          <option value="true">{{ zh: '开启', en: 'On' }[language]}</option>
-          <option value="false">{{ zh: '关闭', en: 'Off' }[language]}</option>
-        </select>
+        <BoolToggle label="" value={savedSettings.wcaDiffMerged} onChange={wcaDiffMerged => persist({ wcaDiffMerged })} ariaLabel={labels.mergeAriaLabel} disabled={disabled} />
       </span>
     </span>
   ) : null;
