@@ -378,6 +378,12 @@ export default function Top10HistoryPage({
 
   const dateIso = msToIso(Math.floor(dateMs));
 
+  const [todayIso, setTodayIso] = useState(() => msToIso(Date.now()));
+  useEffect(() => {
+    const t = setInterval(() => setTodayIso(msToIso(Date.now())), 60000);
+    return () => clearInterval(t);
+  }, []);
+
   const replay = useMemo(() => {
     if (events.length === 0) return null;
     const idx = findEventIdxByDate(events, dateIso);
@@ -408,8 +414,10 @@ export default function Top10HistoryPage({
   }, [axis]);
 
   const top1Person = replay?.top1Pid ? (activePersons[replay.top1Pid] ?? null) : null;
+  const atEnd = Math.floor(dateMs) >= endMs - 1;
+  const displayIso = atEnd && todayIso > dateIso ? todayIso : dateIso;
   const top1DurationDays = replay?.top1SinceDate
-    ? Math.max(0, Math.floor((isoToMs(dateIso) - isoToMs(replay.top1SinceDate)) / DAY_MS))
+    ? Math.max(0, Math.floor((isoToMs(displayIso) - isoToMs(replay.top1SinceDate)) / DAY_MS))
     : 0;
 
   // NOTE: 优先用父级 metric label(与左侧 metric 选择器一致),fallback 到本地 single/average 短词
@@ -579,7 +587,7 @@ export default function Top10HistoryPage({
                 })()}
               </span>
             </div>
-            <div className="t10h-bigdate">{dateIso}</div>
+            <div className="t10h-bigdate">{displayIso}</div>
           </div>
         </div>
 
