@@ -551,8 +551,16 @@ describe('site assistant grounding', () => {
 
   it('requires content evidence before explaining a navigation destination',async()=>{
     const corpus={version:2,updated:'2026-10-10T00:00:00.000Z',pages:[{lang:'zh',href:'/timer',title:'计时器训练',text:'打开训练菜单，选择公式集，再选择要练习的情况。'}]};
-    const responses=[modelResponse({calls:[{tool:'navigation',query:'计时器训练',kind:'all',pageIds:['timer']}]}),modelResponse({answer:'Unsupported navigation-only instructions.',sourceIds:['timer']}),modelResponse({answer:'打开训练菜单，选择公式集，再选择要练习的情况。',sourceIds:[]})];
-    const model=vi.fn<typeof fetch>(async input=>String(input).endsWith('/assistant/pages.json')?Response.json(corpus):responses.shift()!);
+    const responses=[modelResponse({calls:[{tool:'navigation',query:'计时器训练',kind:'all',pageIds:['timer']}]}),modelResponse({answer:'Unsupported navigation-only instructions.',sourceIds:['timer']}),modelResponse({answer:'Read but cited only navigation.',sourceIds:['timer']})];
+    const model=vi.fn<typeof fetch>(async (input,init)=>{
+      if(String(input).endsWith('/assistant/pages.json'))return Response.json(corpus);
+      if(responses.length)return responses.shift()!;
+      const messages=JSON.parse(String(init?.body)).messages;
+      expect(messages.at(-1).role).toBe('user');
+      expect(messages.at(-1).content).toContain('actual passage IDs');
+      const passage=JSON.parse(messages[1].content).sources.find((source:{read?:boolean})=>source.read);
+      return modelResponse({answer:'打开训练菜单，选择公式集，再选择要练习的情况。',sourceIds:[passage.id]});
+    });
     const answer=await answerSiteQuestion('计时器训练怎么用？','zh',config,AbortSignal.timeout(5000),withCatalog(model));
     expect(answer.answer).not.toContain('Unsupported');
     expect(answer.sources.some(source=>source.read && source.id.startsWith('passage:'))).toBe(true);

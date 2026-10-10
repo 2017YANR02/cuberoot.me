@@ -219,8 +219,10 @@ export async function answerSiteQuestion(
   let analysisIncomplete=false;
   let evidenceCharacters=0;
   const model = createAssistantModel(config, fetcher, signal, TOOL_GUIDE);
-  const complete = async (round: number, finalOnly = false, draftAnswer?:string) => assistantStage('model',async()=>{
-    const reviewInstruction=draftAnswer===undefined?'':'\nIndependently review the draft against the ORIGINAL question, actual query predicates and returned cells. Every requested calculated measure (rates, differences, ranks, denominators, etc.) must be present in the query result, not mentally filled into prose. Labels/descriptions are not proof. Check granularity, filtering, zero vs NULL and predecessor ordering. If any requested measure is missing or inconsistent, call analysis_query to return a complete corrected table when reads remain. Do not accept the draft merely because execution succeeded. If no reads remain, explicitly state which requested measure was not calculated. When complete, give only a brief introduction to the correct table, without repeating its rows. Cite only sources supporting that final result.';
+  const complete = async (round: number, finalOnly = false, draftAnswer?:string, reviewKind:'analysis'|'content'='analysis') => assistantStage('model',async()=>{
+    const reviewInstruction=draftAnswer===undefined?'':reviewKind==='content'
+      ? '\nReview the explanation against the retrieved readable passages. The draft cites only navigation labels, which cannot support usage instructions. Use the actual passage IDs marked read:true in sources for the supported factual sentences and sourceIds. Remove claims unsupported by those passages. Navigation IDs may accompany links, but cannot be the only citations for an explanation. Do not perform further reads.'
+      : '\nIndependently review the draft against the ORIGINAL question, actual query predicates and returned cells. Every requested calculated measure (rates, differences, ranks, denominators, etc.) must be present in the query result, not mentally filled into prose. Labels/descriptions are not proof. Check granularity, filtering, zero vs NULL and predecessor ordering. If any requested measure is missing or inconsistent, call analysis_query to return a complete corrected table when reads remain. Do not accept the draft merely because execution succeeded. If no reads remain, explicitly state which requested measure was not calculated. When complete, give only a brief introduction to the correct table, without repeating its rows. Cite only sources supporting that final result.';
     let formatRepair = '';
     for(let attempt=0;attempt<2;attempt++) {
     try {
@@ -373,7 +375,7 @@ export async function answerSiteQuestion(
   for (let round=0;round<=4;round++) {
     await emit?.({type:'status',status:{phase:'planning'}});
     const finalOnly=round===4 || attemptedCalls>=10;
-    const step=await reviewAnalysis(await complete(round,finalOnly),round,finalOnly);
+    let step=await reviewAnalysis(await complete(round,finalOnly),round,finalOnly);
     // A directory match establishes a destination, never its usage instructions.
     // If the planner stops after navigation on an explanatory question, require
     // a real content read before releasing prose (also enforced while streaming).
@@ -381,6 +383,12 @@ export async function answerSiteQuestion(
       if(navigationReadRequired || finalOnly) throw new AssistantFailure('source_unavailable');
       navigationReadRequired=true;
       step.calls=[{tool:'pages',query:question,pageIds:[]}];
+    }
+    const citesRead=(answer:z.infer<typeof stepSchema>)=>[...answer.sourceIds,...[...answer.answer.matchAll(/\[\[([^\]\n]+)\]\]/g)].map(match=>match[1])].some(id=>sources.get(id)?.read);
+    if(!step.calls.length && explanationRequested && [...sources.values()].some(source=>source.read) && !citesRead(step)) {
+      await emit?.({type:'answer',answer:'',sources:[...sources.values()]});
+      step=await complete(round,true,step.answer,'content');
+      if(!citesRead(step)) throw new AssistantFailure('source_unavailable');
     }
     // An explicit resource number must be read before a model can reinterpret
     // it as a solve duration or claim the original solution is unavailable.
