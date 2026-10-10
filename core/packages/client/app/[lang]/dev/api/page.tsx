@@ -69,11 +69,13 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   chat comp_follows creator_gallery cube cubeopt_solve cubing_live documents drive feedback forum friends geo health historical_ranks pb private_vault
 //   membership membership_benefits membership_apple membership_google membership_subscriptions music nav_sites pets nemesizer notifications ops page_notices paint pattern_examples platform_catalog platform_commerce platform_content platform_learning platform_qr progress quiz recon recon_ground_truth scramble_555 teacher_directory teaching teaching_saas
 //   scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
-//   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wechat_jssdk wechat_pc_opensdk wiki
+//   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wca_teams wechat_jssdk wechat_pc_opensdk wiki
 //   platform_competitions platform_competition_attempts platform_competition_evidence platform_competition_settlements platform_competition_device_reports platform_organizer_applications platform_refunds
 //   mcp mcp_oauth onboarding timer_replay_shares site_assistant cube_agents
 // ─ covers-routes-end ─
 const ENDPOINTS: Ep[] = [
+  { d: 'wca-data', m: 'GET', p: '/v1/wca/teams', g: 'public', c: 'no-store', zh: '战队目录及选手战队批量查询', en: 'Team directory and batch cuber assignments' },
+  { d: 'wca-data', m: 'PUT', p: '/v1/wca/teams/:wcaId', g: 'admin', zh: '管理员选择、自定义或清除选手战队', en: 'Admin assigns, creates, or clears a cuber team' },
   { m: 'GET', p: '/v1/auth/onboarding', d: 'auth', g: 'login', c: 'no-store', zh: '读取当前账号的首页导览已看标记；不缓存', en: 'Read the signed-in account’s homepage tour status; no cache' },
   { m: 'PUT', p: '/v1/auth/onboarding', d: 'auth', g: 'login', c: 'no-store', zh: '将当前账号标记为已看导览；幂等，不接受其他账号 ID', en: 'Mark the current account’s tour as seen; idempotent, accepts no target account ID' },
   { d: 'membership', m: 'GET', p: '/v1/membership/google/me', g: 'login', c: 'no-store', zh: 'Google Play 混淆账号标识', en: 'Google Play obfuscated account identifier' },

@@ -15,6 +15,7 @@ import Link from '@/components/AppLink';
 import HomeLink from '@/components/HomeLink';
 import { UnofficialMark } from '@/components/UnofficialMark';
 import dynamic from 'next/dynamic';
+import { WcaTeamCell, useWcaTeams } from './_components/WcaTeamCell';
 import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, HelpCircle, ChevronDown, ChevronRight } from 'lucide-react';
@@ -418,6 +419,7 @@ function AllResultsPageInner() {
     if (mode === 'single') return [singleEvent];
     return RANK_EVENTS.filter((eventId) => selectedSet.has(eventId));
   }, [view, mode, singleEvent, selectedSet]);
+  const teamDirectory = useWcaTeams(teacherStudentIds);
   const teacherDirectory = useWcaTeachers(teacherStudentIds, teacherEventIds);
   const visibleTeacherName = useMemo(() => {
     if (!visibleTeacherWcaId) return '';
@@ -849,6 +851,7 @@ function AllResultsPageInner() {
                       <th className="wse-rank-col">#</th>
                       <th>{tr({ zh: '选手', en: 'Person' })}</th>
                       <WcaTeacherColumnHeader />
+                      <th>{tr({ zh: '战队', en: 'Team' })}</th>
                       <th className="wse-value-col">{isZh ? (effType === 'single' ? '单次' : '平均') : (effType === 'single' ? 'Single' : 'Average')}{isMbldAvg && effType === 'average' && <UnofficialMark />}</th>
                       <th>{tr({ zh: '日期', en: 'Date' })}</th>
                       <th>{tr({ zh: '比赛', en: 'Competition' })}</th>
@@ -864,6 +867,7 @@ function AllResultsPageInner() {
                           <Link prefetch={false} href={personHref(r.wcaId)}>{displayCuberName(r.name, isZh)}</Link>
                         </td>
                         <td><WcaTeacherCell studentWcaId={r.wcaId} eventIds={teacherEventIds} directory={teacherDirectory} isZh={isZh} visibleTeacherWcaId={visibleTeacherWcaId || undefined} /></td>
+                        <td><WcaTeamCell wcaId={r.wcaId} directory={teamDirectory} /></td>
                         <td className="wse-value-col">
                           <span className="record-num-cell">
                             {formatWcaResult(r.value, singleEvent, effType)}
@@ -893,6 +897,7 @@ function AllResultsPageInner() {
                       <th className="wse-rank-col">#</th>
                       <th>{tr({ zh: '选手', en: 'Person' })}</th>
                       <WcaTeacherColumnHeader />
+                      <th>{tr({ zh: '战队', en: 'Team' })}</th>
                       <th className="wse-value-col">{isZh ? (effType === 'single' ? '单次' : '平均') : (effType === 'single' ? 'Single' : 'Average')}{isMbldAvg && effType === 'average' && <UnofficialMark />}</th>
                       <th>{tr({ zh: '日期', en: 'Date' })}</th>
                       <th>{tr({ zh: '比赛', en: 'Competition' })}</th>
@@ -908,6 +913,7 @@ function AllResultsPageInner() {
                           <Link prefetch={false} href={personHref(r.wcaId)}>{displayCuberName(r.name, isZh)}</Link>
                         </td>
                         <td><WcaTeacherCell studentWcaId={r.wcaId} eventIds={teacherEventIds} directory={teacherDirectory} isZh={isZh} visibleTeacherWcaId={visibleTeacherWcaId || undefined} /></td>
+                        <td><WcaTeamCell wcaId={r.wcaId} directory={teamDirectory} /></td>
                         <td className="wse-value-col">{r.value != null ? formatWcaResult(r.value, singleEvent, effType) : '—'}</td>
                         <td className="wse-detail-cell">{r.compDate ?? ''}</td>
                         <td>{r.compId ? <Link {...compLinkProps(r.compId)}><CompCell compId={r.compId} compName={r.compName} isZh={isZh} date={r.compDate ?? null} /></Link> : ''}</td>
@@ -994,6 +1000,7 @@ function AllResultsPageInner() {
                       <th className="wse-rank-col">#</th>
                       <th>{tr({ zh: '选手', en: 'Person' })}</th>
                       <WcaTeacherColumnHeader />
+                      <th>{tr({ zh: '战队', en: 'Team' })}</th>
                       <th className="wse-value-col">
                         <button type="button" className="wse-th-sort" onClick={() => setSorSort('total')}>
                           {tr({ zh: '名次总和', en: 'Total' })}
@@ -1031,6 +1038,7 @@ function AllResultsPageInner() {
                           </span>
                         </td>
                         <td><WcaTeacherCell studentWcaId={r.wcaId} eventIds={teacherEventIds} directory={teacherDirectory} isZh={isZh} visibleTeacherWcaId={visibleTeacherWcaId || undefined} /></td>
+                        <td><WcaTeamCell wcaId={r.wcaId} directory={teamDirectory} /></td>
                         <td className="wse-value-col">{r.subsetTotal != null ? r.subsetTotal : isCountryMode ? r.totalCountryRank : r.totalWorldRank}</td>
                         {showBest && (
                           <td className="wse-value-col"
