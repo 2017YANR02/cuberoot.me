@@ -59,9 +59,9 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
       if(options.followUp) transcript.push({role:'user',content:options.followUp});
       const request = {
         model, tools, toolChoice: options.finalOnly ? 'none' as const : 'auto' as const,
-        system: options.system,
+        system: options.system + '\nAll prose and presentation instructions apply inside the answer string. The final response must be one JSON object with answer and sourceIds, without Markdown fences or text outside that object.',
         messages: [{ role: 'user' as const, content: JSON.stringify(options.context) }, ...transcript],
-        output: Output.json(),
+        output: deepseek ? Output.object({schema:answerSchema}) : Output.json(),
         maxOutputTokens: options.maxTokens, maxRetries: 0, abortSignal: signal,
         ...(options.thinking ? {} : { temperature: 0 }),
         providerOptions: { [deepseek ? 'deepseek' : 'bailian']: deepseek
@@ -90,8 +90,10 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
         pending = result.toolCalls.map((call, index) => ({ raw: calls[index], id: call.toolCallId, name: call.toolName }));
         return { calls, answer: '', sourceIds: [] as string[] };
       }
-      const final = answerSchema.parse(JSON.parse(result.text));
+      // Retain even a malformed final response so the bounded repair is a new
+      // user turn, with the provider's reasoning preserved in its own transcript.
       transcript.push(...result.response.messages);
+      const final = answerSchema.parse(JSON.parse(result.text));
       return { calls: [] as unknown[], ...final };
     },
   };

@@ -243,7 +243,7 @@ export async function answerSiteQuestion(
       maxTokens: !thinking && analysisSchemaRead ? 3200 : maxTokens,
       // A completed assistant message needs a new user turn for a real review;
       // changing an earlier context message alone can merely continue that answer.
-      ...(draftAnswer !== undefined ? {followUp: JSON.stringify({originalQuestion:question,draftAnswer})+reviewInstruction} : {}),
+      ...(draftAnswer !== undefined || formatRepair ? {followUp: [draftAnswer !== undefined ? JSON.stringify({originalQuestion:question,draftAnswer})+reviewInstruction : '',formatRepair].filter(Boolean).join('\n')} : {}),
       ...(emit ? {onText: async (content: string) => {
         const forcedRead = round === 0 && (requestedReconId || requestedAnnouncements.length || explicitStatistics.length === 1);
         const partial = !forcedRead && !factualSummaries.size && !analysisSchemaRead && !(explanationRequested && ![...sources.values()].some(source=>source.read)) ? partialAssistantAnswer(content) : undefined;
