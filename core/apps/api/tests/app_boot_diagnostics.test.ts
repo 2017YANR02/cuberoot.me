@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { HTTPException } from 'hono/http-exception';
 import {
   createAppBootDiagnosticRoutes,
   type AppBootDiagnosticStore,
@@ -35,6 +36,21 @@ function validBody() {
 }
 
 describe('app boot diagnostics API', () => {
+  it('lists recent reports without a code, but still requires administrator access', async () => {
+    const store = fakeStore();
+    const authorizeAdmin = vi.fn(async () => {});
+    const routes = createAppBootDiagnosticRoutes({ store, authorizeAdmin });
+    const response = await routes.request('/app/boot-diagnostics?limit=50&v=2');
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Cache-Control')).toBe('no-store');
+    expect(store.find).toHaveBeenCalledWith(null, 50);
+    expect(authorizeAdmin).toHaveBeenCalledTimes(1);
+    expect((await routes.request('/app/boot-diagnostics?limit=101')).status).toBe(400);
+    authorizeAdmin.mockImplementation(async () => { throw new HTTPException(403); });
+    expect((await routes.request('/app/boot-diagnostics')).status).toBe(403);
+    expect(store.find).toHaveBeenCalledTimes(1);
+  });
+
   it('stores only bounded, redacted diagnostics and coarse runtime dimensions', async () => {
     const store = fakeStore();
     const routes = createAppBootDiagnosticRoutes({ store, identifyIp: () => 'test', rateLimit: () => {} });

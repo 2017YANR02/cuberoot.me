@@ -32,6 +32,7 @@ describe('TimerBootstrap', () => {
   beforeEach(() => {
     (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     vi.useFakeTimers();
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(null, { status: 204 })));
     consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
     window.__timerBootDiagnostic = undefined;
     telemetryReport = vi.fn<TimerBootTelemetryReporter['report']>();
@@ -53,6 +54,7 @@ describe('TimerBootstrap', () => {
     window.__timerBootTelemetry = undefined;
     window.__startTimerBootTelemetry = undefined;
     vi.useRealTimers();
+    vi.unstubAllGlobals();
     consoleError.mockRestore();
     vi.restoreAllMocks();
   });
@@ -109,6 +111,23 @@ describe('TimerBootstrap', () => {
     expect(host.querySelector('code')?.textContent).toMatch(/^TMR-CHUNK-/);
     expect(window.__timerBootDiagnostic?.kind).toBe('chunk');
     expect(host.textContent).toContain(TIMER_BOOT_COPY.message.en);
+    expect(host.textContent).toContain(TIMER_BOOT_COPY.reported.en);
+    expect(host.textContent).not.toContain(TIMER_BOOT_COPY.copy.en);
+  });
+
+  it('offers copying only after the server fails to acknowledge the error', async () => {
+    let resolve!: (response: Response) => void;
+    vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>(done => { resolve = done; })));
+    await act(async () => {
+      root.render(createElement(TimerBootstrap, {
+        loadTimerShell: async () => { throw new Error('ChunkLoadError'); },
+      }));
+    });
+    expect(host.textContent).toContain(TIMER_BOOT_COPY.reporting.en);
+    expect(host.textContent).not.toContain(TIMER_BOOT_COPY.copy.en);
+    await act(async () => resolve(new Response(null, { status: 503 })));
+    expect(host.textContent).toContain(TIMER_BOOT_COPY.reportFailed.en);
+    expect(host.textContent).toContain(TIMER_BOOT_COPY.copy.en);
   });
 
   it('does not promise that opening an old Android system browser will help', async () => {
@@ -231,6 +250,7 @@ describe('buildTimerBootDiagnostic', () => {
 
 describe('app bootstrap early guard', () => {
   let sendBeacon: ReturnType<typeof vi.fn>;
+  let diagnosticRequests: { request: XMLHttpRequest; body: string }[];
 
   beforeEach(() => {
     vi.useFakeTimers();
@@ -242,6 +262,14 @@ describe('app bootstrap early guard', () => {
     window.__appBootEarly = undefined;
     window.__timerBootTelemetry = undefined;
     window.__startTimerBootTelemetry = undefined;
+    diagnosticRequests = [];
+    vi.spyOn(XMLHttpRequest.prototype, 'open').mockImplementation(() => {});
+    vi.spyOn(XMLHttpRequest.prototype, 'setRequestHeader').mockImplementation(() => {});
+    vi.spyOn(XMLHttpRequest.prototype, 'status', 'get').mockReturnValue(204);
+    vi.spyOn(XMLHttpRequest.prototype, 'send').mockImplementation(function (this: XMLHttpRequest, body) {
+      diagnosticRequests.push({ request: this, body: String(body) });
+      this.onload?.(new ProgressEvent('load'));
+    });
     sendBeacon = vi.fn(() => true);
     Object.defineProperty(window.navigator, 'sendBeacon', {
       configurable: true,
@@ -273,7 +301,8 @@ describe('app bootstrap early guard', () => {
     expect(document.documentElement.getAttribute('data-app-boot-guard')).toBe('stopped');
     expect(shell.getAttribute('role')).toBe('alert');
     expect(shell.querySelector('code')?.textContent).toMatch(/^TMR-TIMEOUT-/);
-    expect(shell.querySelectorAll('button')).toHaveLength(2);
+    expect(shell.querySelectorAll('button')).toHaveLength(1);
+    expect(shell.textContent).toContain(TIMER_BOOT_COPY.reported.en);
     expect(window.__timerBootDiagnostic?.kind).toBe('timeout');
   });
 
@@ -301,8 +330,8 @@ describe('app bootstrap early guard', () => {
     }));
     vi.advanceTimersByTime(0);
 
-    const diagnostic = JSON.parse(String(sendBeacon.mock.calls[1]?.[1])) as Record<string, unknown>;
-    expect(sendBeacon.mock.calls[1]?.[0]).toMatch(/\/v1\/app\/boot-diagnostics$/);
+    const diagnostic = JSON.parse(diagnosticRequests[0]!.body) as Record<string, unknown>;
+    expect(XMLHttpRequest.prototype.open).toHaveBeenCalledWith('POST', expect.stringMatching(/\/v1\/app\/boot-diagnostics$/), true);
     expect(diagnostic).toMatchObject({
       version: 1,
       code: window.__timerBootDiagnostic?.code,
@@ -312,14 +341,14 @@ describe('app bootstrap early guard', () => {
     expect(diagnostic.eventId).toMatch(/^[0-9a-f-]{36}$/);
     expect(diagnostic).not.toHaveProperty('userAgent');
 
-    const failure = JSON.parse(String(sendBeacon.mock.calls[2]?.[1])) as Record<string, unknown>;
-    expect(sendBeacon.mock.calls[2]?.[0]).toMatch(/\/v1\/timer\/boot-events$/);
+    const failure = JSON.parse(String(sendBeacon.mock.calls[1]?.[1])) as Record<string, unknown>;
+    expect(sendBeacon.mock.calls[1]?.[0]).toMatch(/\/v1\/timer\/boot-events$/);
     expect(failure).toMatchObject({
       bootId: attempt.bootId,
       outcome: 'failure',
       failureKind: 'chunk',
     });
-    expect(sendBeacon).toHaveBeenCalledTimes(3);
+    expect(sendBeacon).toHaveBeenCalledTimes(2);
   });
 
   it('shows the outdated WeChat guidance before React hydrates', () => {
@@ -384,8 +413,7 @@ describe('app bootstrap early guard', () => {
     expect(alert?.textContent).toContain(APP_BOOT_COPY.outdatedWechatMessage.zh);
     expect(alert?.querySelector('code')?.textContent).toMatch(/^APP-CHUNK-/);
     expect(window.__appBootDiagnostic?.kind).toBe('chunk');
-    const diagnosticCall = sendBeacon.mock.calls.find(([url]) => String(url).endsWith('/v1/app/boot-diagnostics'));
-    const diagnostic = JSON.parse(String(diagnosticCall?.[1])) as Record<string, unknown>;
+    const diagnostic = JSON.parse(diagnosticRequests[0]!.body) as Record<string, unknown>;
     expect(diagnostic).toMatchObject({
       code: alert?.querySelector('code')?.textContent,
       kind: 'chunk',
@@ -404,5 +432,27 @@ describe('app bootstrap early guard', () => {
     expect(document.documentElement.getAttribute('data-app-boot-guard')).toBe('stopped');
     expect(document.querySelector('[data-app-bootstrap="error"]')).toBeNull();
     expect(window.__appBootDiagnostic).toBeUndefined();
+  });
+
+  it.each(['http', 'network', 'timeout'] as const)('offers copying when early reporting fails: %s', failure => {
+    vi.mocked(XMLHttpRequest.prototype.send).mockImplementation(function (this: XMLHttpRequest) {
+      // Wait for an explicit completion; a queued request is not a receipt.
+      diagnosticRequests.push({ request: this, body: '' });
+    });
+    window.eval(APP_BOOT_EARLY_SCRIPT);
+    vi.advanceTimersByTime(20_000);
+    const alert = document.querySelector('[data-app-bootstrap="error"]')!;
+    expect(alert.textContent).toContain(TIMER_BOOT_COPY.reporting.en);
+    expect(alert.querySelectorAll('button')).toHaveLength(1);
+    const request = diagnosticRequests[0]!.request;
+    expect(request.timeout).toBe(8_000);
+    if (failure === 'http') {
+      vi.mocked(Object.getOwnPropertyDescriptor(XMLHttpRequest.prototype, 'status')!.get!).mockReturnValue(500);
+      request.onload?.(new ProgressEvent('load'));
+    } else if (failure === 'network') request.onerror?.(new ProgressEvent('error'));
+    else request.ontimeout?.(new ProgressEvent('timeout'));
+    expect(alert.textContent).toContain(TIMER_BOOT_COPY.reportFailed.en);
+    expect(alert.textContent).not.toContain(TIMER_BOOT_COPY.reported.en);
+    expect(alert.querySelectorAll('button')).toHaveLength(2);
   });
 });

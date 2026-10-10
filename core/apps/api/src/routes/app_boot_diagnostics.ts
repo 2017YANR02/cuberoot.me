@@ -40,7 +40,7 @@ export interface AppBootDiagnosticEvent {
 export interface AppBootDiagnosticStore {
   record(event: AppBootDiagnosticEvent, dimensions: UserAgentDimensions): Promise<void>;
   cleanupExpired(): Promise<void>;
-  find(code: string, limit: number): Promise<unknown[]>;
+  find(code: string | null, limit: number): Promise<unknown[]>;
 }
 
 export interface AppBootDiagnosticRouteOptions {
@@ -160,10 +160,11 @@ export const appBootDiagnosticStore: AppBootDiagnosticStore = {
       `SELECT event_id, diagnostic_code, kind, path, online, error_name, error_message, evidence,
               device_type, browser_family, browser_major, os_family, os_major, received_at
          FROM app_boot_diagnostics
-        WHERE diagnostic_code = ?
+        WHERE received_at >= NOW() - INTERVAL '${RETENTION_DAYS} days'
+          ${code === null ? '' : 'AND diagnostic_code = ?'}
         ORDER BY received_at DESC
         LIMIT ?`,
-      [code, limit],
+      code === null ? [limit] : [code, limit],
     );
     return rows.map((row) => ({
       eventId: row.event_id,
@@ -221,10 +222,10 @@ export function createAppBootDiagnosticRoutes(options: AppBootDiagnosticRouteOpt
   routes.get('/app/boot-diagnostics', async (c) => {
     c.header('Cache-Control', 'no-store');
     await authorizeAdmin(c);
-    const code = c.req.query('code') ?? '';
+    const code = c.req.query('code') ?? null;
     const rawLimit = c.req.query('limit') ?? '20';
     const limit = Number(rawLimit);
-    if (!CODE_RE.test(code)) return c.json({ error: 'valid diagnostic code required' }, 400);
+    if (code !== null && !CODE_RE.test(code)) return c.json({ error: 'valid diagnostic code required' }, 400);
     if (!Number.isInteger(limit) || limit < 1 || limit > 100 || String(limit) !== rawLimit) {
       return c.json({ error: 'limit must be an integer from 1 to 100' }, 400);
     }
