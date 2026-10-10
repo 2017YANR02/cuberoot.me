@@ -1476,8 +1476,8 @@ export default function TrainerRunClient() {
                         disabled={doubleLoading || timerState !== TimerState.NOT_RUNNING}
                         aria-label={tr({ zh: '打乱类型', en: 'Scramble type' })}
                       >
+                        {doubleAvailable && <option value="double-zbll" disabled={!!room || isMemo || splitActive}>{tr({ zh: '双底最优 HTM', en: 'Double ZBLL optimal HTM' })}</option>}
                         {kinds.map(k => <option key={k.id} value={k.id}>{k.label()}</option>)}
-                        {doubleAvailable && <option value="double-zbll" disabled={!!room || isMemo || splitActive}>{tr({ zh: '双底', en: 'Double ZBLL' })}</option>}
                       </select>
                       {doubleZbll && <DoubleZbllOptions />}
                     </div>
