@@ -176,7 +176,7 @@ export default function TimingSurface({
           {!scrambleAbove && scrambleSlot && <div className="timing-surface-scramble surface-chrome">{scrambleSlot}</div>}
           {cornerSlot && <div className="timing-surface-cube surface-chrome">
             {sharedLayout
-              ? <div className="timing-surface-cube-frame" data-no-timer
+              ? <div className="timing-surface-cube-frame"
                   style={cornerAspect !== undefined && Number.isFinite(cornerAspect) && cornerAspect > 0
                     ? { '--timer-cube-aspect': cornerAspect } as CSSProperties
                     : undefined}>{cornerSlot}</div>
