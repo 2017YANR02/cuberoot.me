@@ -1,5 +1,45 @@
 # CubeRoot site assistant
 
+## Production acceptance (2026-10-10)
+
+The release is live. PR [#125](https://github.com/2017YANR02/cuberoot.me/pull/125)
+supplies the frontend and native-tool/RAG integration (`2f122eb672`); the final
+API source is `d542ab7afa`, including streaming-format recovery. Next and Vercel
+deployments passed. Core run `38075609424` and Test run `38075609427` passed.
+The active API release path and public database health were verified directly.
+
+The actual production version 2 corpus published **2,514 passages** from 767
+public entries (641 with text, 126 on-demand links). Its current table footprint
+is 45.1 MiB, including staging/storage overhead. Corpus SHA-256 is
+`3458cabeabbc82318772488cac78a170c47b1ef2235fc2bf7325227f0d036e3c`.
+The installed service resumed saved vectors after a deadline and published the
+complete generation atomically; an unchanged service rerun succeeded with zero
+new embeddings. The refresh timer is active and the effective cgroup memory
+limit is 384 MiB. The remote server's existing swap policy was not changed.
+
+Final acceptance used the authenticated **public HTTPS endpoint**, the actual
+account binding and the production index:
+
+- The current-year question returned **26 competitions** in 3.2 seconds, with
+  the imported-results timestamp and source. Monthly analysis returned the
+  independently verified nine nonzero months, totaling 26, in 7.5 seconds.
+- English training help cited the readable canonical timer passage. The answer
+  streamed in 18 events, first answer at 7.2 seconds and completion at 7.8 seconds.
+  Chinese conjugation correctly explained A B A' and streamed in 13 events.
+  Numeric/table answers may wait for evidence review before their final result.
+- Separate production probes explicitly generated real 512-dimensional query
+  vectors and retrieved Chinese/English passages in 306/155 ms; these were not
+  fallback-only checks. The relevant timer passage was present in both results.
+- Missing authentication returned 401. A request for user emails and server
+  credentials was refused. The existing CubeOpt route was enabled and ready;
+  an authenticated one-move solve returned the exact result in 54 ms.
+
+The disposable acceptance database was dumped and removed after verification.
+Its private evidence and restore dump are archived on the server under
+`/var/backups/cuberoot-assistant-acceptance-20261010` (owner-only access).
+RAG remains dependent on source accuracy and coverage; these observations do
+not establish universal answer accuracy or future-data availability.
+
 ## Release integration (2026-10-10)
 
 The owner authorized completing isolated acceptance and release after clarifying
@@ -75,7 +115,7 @@ and sends the bounded format repair as a new user turn. DeepSeek's SDK uses
 schema prompt compatibility here, not server-enforced JSON Schema. Three real
 streamed monthly-query runs returned correct tables; one exercised successful
 format recovery. The 83 focused model/stream/assistant checks and API typecheck
-passed. This transport correction requires its own final production release.
+passed. The final production release and public acceptance are recorded above.
 
 ## Earlier local implementation and acceptance (2026-10-10)
 
