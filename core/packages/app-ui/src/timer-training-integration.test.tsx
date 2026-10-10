@@ -71,11 +71,10 @@ describe('shared training settings and persisted runtime', () => {
     expect(snapshot.targetMsByEvent['333']).toBe(62_500);
     expect(input.value).toBe('1:02.50');
     expect(container.querySelector('[data-setting-id="settings.training.round-format"]')).toBeNull();
-    await act(async () => {
-      const select = container.querySelector<HTMLSelectElement>('[data-setting-id="settings.training.round-enabled"] select')!;
-      select.value = 'true';
-      select.dispatchEvent(new Event('change', { bubbles: true }));
-    });
+    const enabled = container.querySelector<HTMLButtonElement>('[data-setting-id="settings.training.round-enabled"] [role="switch"]')!;
+    expect(enabled.getAttribute('aria-checked')).toBe('false');
+    await act(async () => enabled.click());
+    expect(enabled.getAttribute('aria-checked')).toBe('true');
     expect(snapshot.round.on).toBe(true);
     expect(container.querySelectorAll('[data-setting-id^="settings.training.round-"]')).toHaveLength(5);
     expect(parseTargetTime('')).toBeNull();

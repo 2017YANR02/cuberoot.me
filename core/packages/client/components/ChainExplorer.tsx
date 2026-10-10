@@ -16,6 +16,7 @@
  * → Exclude Solutions 标签(排除某步解重算)。共用一个 3D 播放器。
  */
 
+import BoolToggle from '@/components/BoolToggle';
 import '@cuberoot/timer-ui/compact-select.css';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Ban, X, Play, ChevronDown, Plus } from 'lucide-react';
@@ -513,20 +514,8 @@ export default function ChainExplorer({ scramble, lang }: Props) {
     return (
       <div className="chx-field-block">
         <div className="chx-field-label">NISS</div>
-        <label className="chx-niss-row">
-          <span>{t('段前允许切换', 'Allow switching before step')}</span>
-          <select className="native-select" value={String(s.nissBefore)} onChange={event => { const v = event.currentTarget.value === 'true'; setStage(key, { nissBefore: v, nissDuring: v ? s.nissDuring : false }); }} aria-label="NISS before" disabled={disabled}>
-            <option value="true">{t('开启', 'On')}</option>
-            <option value="false">{t('关闭', 'Off')}</option>
-          </select>
-        </label>
-        <label className="chx-niss-row">
-          <span>{t('段内允许切换', 'Allow switching during step')}</span>
-          <select className="native-select" value={String(s.nissDuring)} onChange={event => { const v = event.currentTarget.value === 'true'; setStage(key, { nissDuring: v, nissBefore: v ? true : s.nissBefore }); }} aria-label="NISS during" disabled={disabled}>
-            <option value="true">{t('开启', 'On')}</option>
-            <option value="false">{t('关闭', 'Off')}</option>
-          </select>
-        </label>
+        <BoolToggle className="chx-niss-row" label={<span>{t('段前允许切换', 'Allow switching before step')}</span>} value={s.nissBefore} onChange={v => { setStage(key, { nissBefore: v, nissDuring: v ? s.nissDuring : false }); }} ariaLabel="NISS before" disabled={disabled} />
+        <BoolToggle className="chx-niss-row" label={<span>{t('段内允许切换', 'Allow switching during step')}</span>} value={s.nissDuring} onChange={v => { setStage(key, { nissDuring: v, nissBefore: v ? true : s.nissBefore }); }} ariaLabel="NISS during" disabled={disabled} />
       </div>
     );
   };
@@ -537,13 +526,7 @@ export default function ChainExplorer({ scramble, lang }: Props) {
     return (
       <div className={`chx-panel${disabled ? ' is-off' : ''}`}>
         {key === 'fr' && (
-          <label className="chx-fr-enable">
-            <span>{t('启用 FR', 'Enable FR')}</span>
-            <select className="native-select" value={String(frEnabled)} onChange={event => { setFrEnabled(event.currentTarget.value === 'true'); }} aria-label="enable FR">
-              <option value="true">{t('开启', 'On')}</option>
-              <option value="false">{t('关闭', 'Off')}</option>
-            </select>
-          </label>
+          <BoolToggle className="chx-fr-enable" label={<span>{t('启用 FR', 'Enable FR')}</span>} value={frEnabled} onChange={v => { setFrEnabled(v); }} ariaLabel="enable FR" />
         )}
         {key === 'rzp' && !useTriggers && (
           <div className="chx-axes-note">
@@ -576,13 +559,7 @@ export default function ChainExplorer({ scramble, lang }: Props) {
           <>
             <div className="chx-field-block">
               <div className="chx-field-label">Triggers</div>
-              <label className="chx-niss-row">
-                <span>{t('强制 trigger 结尾(经 RZP)', 'Enforce triggers (via RZP)')}</span>
-                <select className="native-select" value={String(enforceTriggers)} onChange={event => { setEnforceTriggers(event.currentTarget.value === 'true'); }} aria-label="enforce triggers">
-                  <option value="true">{t('开启', 'On')}</option>
-                  <option value="false">{t('关闭', 'Off')}</option>
-                </select>
-              </label>
+              <BoolToggle className="chx-niss-row" label={<span>{t('强制 trigger 结尾(经 RZP)', 'Enforce triggers (via RZP)')}</span>} value={enforceTriggers} onChange={v => { setEnforceTriggers(v); }} ariaLabel="enforce triggers" />
               <div className="chx-chips">
                 {triggers.map((tr) => (
                   <span key={tr} className="chx-chip">
@@ -642,24 +619,12 @@ export default function ChainExplorer({ scramble, lang }: Props) {
 
         {key === 'fin' && (
           <div className="chx-field-block">
-            <label className="chx-niss-row">
-              <span>{t('留中层(leave slice)', 'Leave slice')}</span>
-              <select className="native-select" value={String(leaveSlice)} onChange={event => { setLeaveSlice(event.currentTarget.value === 'true'); }} aria-label="leave slice">
-                <option value="true">{t('开启', 'On')}</option>
-                <option value="false">{t('关闭', 'Off')}</option>
-              </select>
-            </label>
+            <BoolToggle className="chx-niss-row" label={<span>{t('留中层(leave slice)', 'Leave slice')}</span>} value={leaveSlice} onChange={v => { setLeaveSlice(v); }} ariaLabel="leave slice" />
             {!frEnabled && (
-              <label className="chx-niss-row">
-                <span>
+              <BoolToggle className="chx-niss-row" label={<span>
                   {t('允许破坏 HTR 收尾', 'Allow HTR-breaking finish')}
                   <small className="chx-hint">{t('(需 ~10GB 表,服务器未启用)', '(needs a ~10GB table; not enabled on this server)')}</small>
-                </span>
-                <select className="native-select" value={String(htrBreaking)} onChange={event => { setHtrBreaking(event.currentTarget.value === 'true'); }} aria-label="htr breaking">
-                  <option value="true">{t('开启', 'On')}</option>
-                  <option value="false">{t('关闭', 'Off')}</option>
-                </select>
-              </label>
+                </span>} value={htrBreaking} onChange={v => { setHtrBreaking(v); }} ariaLabel="htr breaking" />
             )}
           </div>
         )}

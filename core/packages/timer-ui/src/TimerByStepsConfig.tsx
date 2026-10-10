@@ -1,3 +1,4 @@
+import BoolToggle from './BoolToggle';
 import './compact-select.css';
 import {
   stepMetricsFor,
@@ -59,11 +60,7 @@ export function TimerByStepsConfig({
       <div className="timer-by-steps-top-row settings-row wca-src-toprow">
         {extraTopRow}
         <span className="timer-by-steps-toggle-group settings-row-tight-group">
-          <span className="timer-by-steps-label settings-row-label">{labels.bySteps}</span>
-          <select className="native-select" value={String(settings.genByStepsOn)} onChange={event => { const genByStepsOn = event.currentTarget.value === 'true'; onChange({ genByStepsOn }); }} aria-label={labels.byStepsAriaLabel} disabled={disabled}>
-            <option value="true">{labels.on}</option>
-            <option value="false">{labels.off}</option>
-          </select>
+          <BoolToggle label={labels.bySteps} value={settings.genByStepsOn} onChange={genByStepsOn => onChange({ genByStepsOn })} ariaLabel={labels.byStepsAriaLabel} disabled={disabled} />
         </span>
         {settings.genByStepsOn && (
           <select

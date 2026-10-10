@@ -184,6 +184,16 @@
   color: var(--foreground);
 }
 
+.sim-toggle > .bool-toggle {
+  width: 100%;
+  min-width: 0;
+}
+.sim-toggle .bool-toggle-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* 该拼图暂不支持此功能 → 灰标签 + 不可点。滑钮自身 :disabled 已置灰(不再叠 opacity,
    避免双重变淡);select 行用原生 disabled + 灰化。 */
 .sim-toggle--disabled { cursor: not-allowed; }

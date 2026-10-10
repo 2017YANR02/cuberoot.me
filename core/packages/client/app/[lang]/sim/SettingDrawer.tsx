@@ -4,6 +4,7 @@
  */
 'use client';
 
+import BoolToggle from '@/components/BoolToggle';
 import '@cuberoot/timer-ui/compact-select.css';
 import { X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -811,14 +812,9 @@ export function OrbitPad({
 }
 
 export function Toggle({ label, value, onChange, disabled, title }: { label: string; value: boolean; onChange: (v: boolean) => void; disabled?: boolean; title?: string }) {
-  // 原生菜单保留开关值；不支持此功能的拼图同时禁用菜单并置灰标签。
   return (
-    <span className={'sim-toggle' + (disabled ? ' sim-toggle--disabled' : '')} title={title}>
-      <span>{label}</span>
-      <select className="native-select" value={String(value)} onChange={event => { onChange(event.currentTarget.value === 'true'); }} aria-label={label} disabled={disabled}>
-        <option value="true">{tr({ zh: '开启', en: 'On' })}</option>
-        <option value="false">{tr({ zh: '关闭', en: 'Off' })}</option>
-      </select>
+    <span className="sim-toggle" title={title}>
+      <BoolToggle label={label} value={value} onChange={onChange} disabled={disabled} />
     </span>
   );
 }
