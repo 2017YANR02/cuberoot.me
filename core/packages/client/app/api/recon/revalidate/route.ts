@@ -22,10 +22,12 @@ export async function POST(request: Request): Promise<Response> {
       (!(kind === 'forum' && body?.id === undefined) && (!/^[1-9]\d*$/.test(id) || !Number.isSafeInteger(Number(id)))))) {
     return Response.json({ error: 'Invalid content reference' }, { status: 400, headers });
   }
-  // expire: 0 also refreshes the first visitor, rather than serving one stale response.
   if (kind === 'alg') {
-    revalidateTag('alg-catalog', { expire: 0 });
+    // Public covers stay visible while refreshing; the browser separately
+    // checks the current revision. A brief API outage must not blank the page.
+    revalidateTag('alg-catalog', 'max');
   } else if (kind === 'forum') {
+    // Moderation/privacy changes must also refresh the first visitor.
     revalidateTag(id ? forumThreadCacheTag(id) : FORUM_CACHE_TAG, { expire: 0 });
   } else {
     revalidateTag(reconCacheTag(id), { expire: 0 });

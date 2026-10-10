@@ -54,13 +54,15 @@ one hour. See [public-content-cache.md](public-content-cache.md) for the separat
 revision-based public API response cache and its load/freshness boundaries.
 
 The receiver also accepts `{ "kind": "alg" }` without an ID. Successful writes
-under `/v1/alg/sets/*` expire the `alg-catalog` tag on both deployments. Puzzle
+under `/v1/alg/sets/*` mark the `alg-catalog` tag stale on both deployments. Puzzle
 catalog HTML includes its SVG covers from `/v1/alg/sets/:puzzle/catalog?v=1`:
 one first case and count per set, plus the catalog order. The catalog uses a
 60-second ISR fallback; the browser conditionally revalidates the compact
 snapshot on mount and return-to-page events, retaining covers during outages.
+Catalog invalidation uses the `max` stale-while-revalidate profile, so the first
+paint may use the previous snapshot while the browser checks the latest revision.
 Failed production ISR refreshes throw so Next retains the last successful HTML;
 only initial builds and development may fall back to the browser-loaded shell.
-Direct SQL changes update the API revision but still need a webhook to expire
-cached HTML immediately. This does not cache complete formula sets in the
+Direct SQL changes update the API revision but still need a webhook to trigger
+HTML refresh promptly. This does not cache complete formula sets in the
 catalog or change their detail-page loading contract.
