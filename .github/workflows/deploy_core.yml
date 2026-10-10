@@ -318,17 +318,22 @@ jobs:
           pending_link=''
           legacy_moved=''
           switched=0
+          cubeopt_enabled="$(node --env-file="$root/.env" -p 'process.env.CUBEOPT_SOLVE_ENABLED === "1" ? "1" : "0"')"
           cubeopt_warm_on_boot="$(node --env-file="$root/.env" -p 'process.env.CUBEOPT_SOLVE_ENABLED === "1" && process.env.CUBEOPT_WARM_ON_BOOT === "1" ? "1" : "0"')"
           if [ "$disk_only" = true ]; then cubeopt_warm_on_boot=0; fi
+          # Disabling boot warm-up alone still allows a live request to load a
+          # second multi-GB table while the standalone release smoke is running.
+          cubeopt_during_smoke="$cubeopt_enabled"
+          if [ "$disk_only" != true ]; then cubeopt_during_smoke=0; fi
 
           reload_core_with_cubeopt_warm() {
-            CUBEOPT_WARM_ON_BOOT="$cubeopt_warm_on_boot" pm2 reload core-api --update-env 2>/dev/null || \
-              CUBEOPT_WARM_ON_BOOT="$cubeopt_warm_on_boot" pm2 start dist/server.bundle.js --name core-api --node-args="--env-file=.env"
+            CUBEOPT_SOLVE_ENABLED="$cubeopt_enabled" CUBEOPT_WARM_ON_BOOT="$cubeopt_warm_on_boot" pm2 reload core-api --update-env 2>/dev/null || \
+              CUBEOPT_SOLVE_ENABLED="$cubeopt_enabled" CUBEOPT_WARM_ON_BOOT="$cubeopt_warm_on_boot" pm2 start dist/server.bundle.js --name core-api --node-args="--env-file=.env"
           }
 
           reload_core_without_cubeopt_warm() {
-            CUBEOPT_WARM_ON_BOOT=0 pm2 reload core-api --update-env 2>/dev/null || \
-              CUBEOPT_WARM_ON_BOOT=0 pm2 start dist/server.bundle.js --name core-api --node-args="--env-file=.env"
+            CUBEOPT_SOLVE_ENABLED="$cubeopt_during_smoke" CUBEOPT_WARM_ON_BOOT=0 pm2 reload core-api --update-env 2>/dev/null || \
+              CUBEOPT_SOLVE_ENABLED="$cubeopt_during_smoke" CUBEOPT_WARM_ON_BOOT=0 pm2 start dist/server.bundle.js --name core-api --node-args="--env-file=.env"
           }
 
           rollback() {
@@ -435,8 +440,11 @@ jobs:
             echo "CubeOpt production manager smoke skipped: disabled or disk dashboard only release"
           fi
 
-          if [ "$cubeopt_warm_on_boot" = 1 ]; then
+          # Restore request admission even when the normal policy is lazy load.
+          if [ "$cubeopt_during_smoke" != "$cubeopt_enabled" ]; then
             reload_core_with_cubeopt_warm
+          fi
+          if [ "$cubeopt_warm_on_boot" = 1 ]; then
             cubeopt_ready=0
             for attempt in $(seq 1 180); do
               if curl -fsS http://127.0.0.1:3001/v1/scramble/optimal-solve/ready | node -e 'let s="";process.stdin.on("data",c=>s+=c).on("end",()=>{const x=JSON.parse(s);process.exit(x.ready===true?0:1)})'; then

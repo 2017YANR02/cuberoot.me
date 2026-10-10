@@ -923,6 +923,11 @@ describe('deployment workflow path contracts', () => {
     expect(residentReady).toBeGreaterThan(residentReloaded);
     expect(run).toContain('CUBEOPT_WARM_ON_BOOT=0 pm2 reload core-api --update-env');
     expect(run).toContain('CUBEOPT_WARM_ON_BOOT="$cubeopt_warm_on_boot" pm2 reload core-api --update-env');
+    expect(run).toContain('CUBEOPT_SOLVE_ENABLED="$cubeopt_during_smoke" CUBEOPT_WARM_ON_BOOT=0 pm2 reload');
+    expect(run).toContain('CUBEOPT_SOLVE_ENABLED="$cubeopt_enabled" CUBEOPT_WARM_ON_BOOT="$cubeopt_warm_on_boot" pm2 reload');
+    expect(run).toContain('cubeopt_during_smoke="$cubeopt_enabled"');
+    expect(run).toContain('if [ "$disk_only" != true ]; then cubeopt_during_smoke=0; fi');
+    expect(run).toContain('if [ "$cubeopt_during_smoke" != "$cubeopt_enabled" ]; then\n  reload_core_with_cubeopt_warm\nfi\nif [ "$cubeopt_warm_on_boot" = 1 ]; then');
     expect(run).toContain('if [ "$disk_only" = true ]; then cubeopt_warm_on_boot=0; fi');
     expect(run).toContain('if [ "${{ inputs.clear_api_cache }}" = true ]; then');
     const scope = readStepRun('deploy_core.yml', 'Identify disk dashboard only release');

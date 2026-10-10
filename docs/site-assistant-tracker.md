@@ -49,6 +49,18 @@ changed entry. The example `[R U: F] = R U F U' R'` was checked with cubing.js
 Source quality remains part of maintaining RAG; retrieval alone cannot correct
 erroneous reference content.
 
+PR #125 merged as `2f122eb672`. Its required checks and Vercel/Next deployments
+passed. The first Core release run `38074014587` rolled back during the existing
+CubeOpt smoke: at 18:05:02 UTC the standalone test spawned PID 2339231; a real
+request at 18:05:05 spawned API child 2339282. Both loaded the multi-GB table,
+leaving 248 MiB available against the loader's 256 MiB floor. The AI migration
+succeeded and the old API health check remained healthy after rollback.
+Deployment now temporarily disables CubeOpt request admission during its
+standalone smoke, then restores the original enabled/warm policy on success or
+rollback, including lazy-load configurations. Disk-only releases preserve their
+existing behavior. The 22 deployment-contract checks passed; production recovery
+is verified separately. No memory threshold or system swap policy was relaxed.
+
 ## Earlier local implementation and acceptance (2026-10-10)
 
 At this earlier checkpoint, the changes were **not committed, pushed or deployed**. The only production
