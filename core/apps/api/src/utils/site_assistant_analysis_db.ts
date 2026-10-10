@@ -76,7 +76,7 @@ export async function runAnalysisQuery(call:{title:string;description:string;que
     return {sources:[{id,title:call.title,href:ANALYSIS_DATASETS[compiled.datasets[0]].href,read:true}],
       artifacts:[{kind:'table',title:call.title,columns:compiled.columns.map(c=>c.label),rows}],
       evidence:{description:call.description,datasets:compiled.datasets,importedAt:result.importedAt,columns:compiled.columns,rows,truncated,returnedRows:rows.length,
-        basis:label,instruction:'These rows were computed from the full filtered public datasets before output limiting. Description is the requested method, not independently verified interpretation. State actual filters, units and denominator; imported WCA data is not live. Never aggregate truncated rows or treat NULL as zero. Empty rows alone are not a zero count. Cite this analysis source; do not claim broader coverage than these projections.'},
+        basis:label,instruction:'Review the actual query predicates and these rows against the question before finalizing. Description and column headings were authored by you; they do not prove the query implements that method. If a displayed total/denominator contradicts its components, correct the query and use only the corrected source ID; NEVER silently fix the number in prose while leaving a wrong table. Include derived rates/differences in the database query. These rows were computed before output limiting. State actual filters, units and denominator; imported WCA data is not live. Never aggregate truncated rows or treat NULL as zero. Empty rows alone are not a zero count. Cite this analysis source; do not claim broader coverage than these projections.'},
     };
   } catch(error) {
     signal.throwIfAborted();
