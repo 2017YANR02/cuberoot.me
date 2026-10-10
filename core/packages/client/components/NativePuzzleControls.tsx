@@ -9,7 +9,7 @@ export type NativeDragDepth = 'auto' | 'outer' | 'inner' | 'wide';
 
 const NOTES: Record<NativePuzzleId, readonly [string, string]> = {
   superz: ['面转 90°，角转 120°；例如 R UFR F\'。', 'Face turns are 90°; corner turns are 120°. Try R UFR F\'.'],
-  cube3dino: ['三阶面转 90°，恐龙角转 120°；可混合外层、内层与宽转。', '3×3 face turns are 90°; Dino corner turns are 120°. Mix outer, inner and wide turns.'],
+  cube3dino: ['三阶＋恐龙：面转 90°，角转 120°；可混合外层、内层与宽转。', '3×3 + Dino: face turns are 90°; corner turns are 120°. Mix outer, inner and wide turns.'],
   dogic: ['二十色 Dogic，每步绕顶点转动 72°。', 'Twenty-color Dogic, with 72° turns around its vertices.'],
   octahedron4: ['每步绕顶点转动 90°，可以分别转动两层。', '90° vertex turns, with two independently movable layers.'],
   dinoskewb: ['外层为恐龙转，宽转为斜转；每步 120°。', 'Outer turns use the Dino cut; wide turns use the Skewb cut. Each step is 120°.'],

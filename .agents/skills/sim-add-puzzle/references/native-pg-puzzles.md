@@ -23,7 +23,8 @@
 | 页面手势 | `packages/client/components/puzzle-models/gestures/pgDrag.ts`：`createNativePuzzleDragGeometry`、`pickNativePuzzleDrag`；`nativePgPointer.ts`：`attachNativePgPointer` |
 | 手动追加与锚点 | `packages/client/components/puzzle-models/gestures/nativePgMoveAppend.ts`：`attachNativePgMoveAppend`，校验并同步记录、终点状态及原生补间动画 |
 
-- 从注册表派生选择器和生成器分支，保留已有项目 ID；没有专用图标时沿用 `textLabel`，不要借用无关图标或伪造键。
+- 从注册表派生选择器和生成器分支，保留已有项目 ID；沿用 `packages/client/scripts/generate-puzzle-icons.mts` 为 `/sim` 的 PG 目录项目生成同切割结构的 SVG 与共享图标映射，并运行 `puzzle-icon-catalog.test.ts` 验证菜单和下载目录。
+- 仅在消费端未传入 `iconClass` 时依赖 `textLabel` 文字徽标；不要用非空但不存在的图标键盖住文本回退，也不要借用无关图标。
 - 经 package 的公开 subpath 导入模型和 SVG；让模型、SVG 和手势统一使用 `allMoves: true`、`orientCenters: true`、`addRotations: true` 及原生 `ExperimentalPGNotation`，保持与描述播放器一致。
 - 让普通与种子打乱共用注入随机源的纯生成器，只读取注册表，不在生成路径构建几何、DOM 或图示；说明有界随机转动策略，不宣称均匀随机状态或伪造 csTimer 项目键。
 - Timer 来源显示按 `timerScrambleCapability(event)` 的实际 provider 派生：`native-random-move` 即使沿用全局 WCA 偏好，也显示练习用随机转动并同步打印文案，保留手动来源，不改全局偏好；来源菜单隐藏不可用 WCA 选项，比赛配置按 `timerSupportsRealWcaScrambles(event)` 门控。核对重新进入页面、切回 WCA 项目与训练子项目，不能只验证公式和 SVG 正确。
@@ -112,3 +113,4 @@
 - 用 `native-puzzle-manual-anchor.test.ts` 读取未挂载真实 TwistyPlayer 的 `currentPattern`，核对双锚点下快速追加的盘面、记录和分享重建，以及编辑打断与卸载后的过期取消。
 - 用 `sim-native-companion-lifecycle.test.ts` 挂载真实页面、播放器控件与图像面板，覆盖原生→通用 PG→原生：旧伴图清空，等待精确帧时复制、下载及已打开的导出菜单禁用，返回后恢复当前原生 SVG；仅验证独立镜像 helper 的清理不覆盖页面保留上一帧的问题。
 - 在浏览器分别记录模型显示、手动操作、随机打乱、公式播放、记录与分享恢复；WebGL 不可用时验证二维按钮和展开图，明确保留 3D 动画与拖拽未验，不把 tap、静态几何或离线手势测试当成 3D 浏览器验收。
+- 展开记号说明后核对项目名称与全部文字可读，并为画布上的背景等浮层保留空间，避免浮层遮挡手动控件和说明。

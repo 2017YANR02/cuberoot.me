@@ -240,6 +240,11 @@
   z-index: 9;
 }
 .sim-bg-overlay:empty { display: none; }
+/* Native/manual controls share the canvas with the background picker. Reserve
+   its bottom row so the picker cannot cover expanded notation or turn buttons. */
+.sim-canvas-wrap .twisty-fallback {
+  padding-bottom: 48px;
+}
 .sim-bg-overlay-inner {
   display: inline-flex;
   align-items: center;
