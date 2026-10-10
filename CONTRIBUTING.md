@@ -34,8 +34,9 @@
 - 人工提交必须经过 PR，必需检查通过；审批人数为 **0**，不要求 Code Owner 或最新推送者以外的人审批。
 - 必需检查绑定 GitHub Actions 来源，禁止用同名个人状态替代；管理员不设人工绕过例外。
 - 不强制每次合并前同步最新 main，避免统计自动更新反复使已通过检查过期；有冲突或基础实现变化影响本 PR 时，作者应同步 main 并重新验证。
-- 经维护者确认，现有 GitHub Actions 统计、比赛列表和备份任务保留直接更新 main 的能力。该例外基于 **GitHub Actions 应用身份**，不是按文件或工作流名称限制；不得借它代发人工代码绕过 PR。
+- 经维护者确认，现有 GitHub Actions 统计、比赛列表和备份任务保留直接更新 main 的能力。四个工作流（`stats.yml`、`update_upcoming.yml`、`elev_backfill.yml`、`backup_recon.yml`）使用仓库专用 Deploy Key，私钥保存在 Actions secret `AUTOMATION_PUSH_SSH_KEY`，不进入 Git。GitHub 的 Deploy Key 绕过规则覆盖仓库所有 Deploy Key，不按单个密钥、文件或工作流名称限制；当前只配置这一个自动推送密钥，后续新增可写密钥须同时评估其绕过权限，不得借它代发人工代码。
 - 禁止删除 main 和强推的现有规则独立保留，自动任务同样不能绕过。维护规则时不要把自动任务例外加到这两条规则上。
-- 自动任务使用 GITHUB_TOKEN 推送后，不应假设会继续触发其他工作流；保留现有显式部署/同步步骤。
+- 自动任务继续使用 `[skip ci]` 提交生成物，并保留现有显式部署/同步步骤；Git 推送用 Deploy Key，GitHub API 操作继续用 GITHUB_TOKEN。Deploy Key 推送可能触发 push 工作流，不能再依赖 GITHUB_TOKEN 的递归触发抑制。
+- 轮换自动推送密钥时，同步更新仓库 Deploy Key 和 `AUTOMATION_PUSH_SSH_KEY`，验证后移除旧密钥。撤销自动直推例外前，先把这些任务迁为 PR 流程，避免定时发布失败。
 
 实际配置以仓库 [Rules](https://github.com/2017YANR02/cuberoot.me/rules) 为准；修改 CI 任务时同步维护 `PR checks` 的依赖列表与工作流契约测试。必需检查的路径过滤与 `always()` 原则见 [GitHub 官方说明](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/troubleshooting-required-status-checks)。
