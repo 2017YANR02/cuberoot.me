@@ -51,7 +51,7 @@ import {
   startTrainingEvidenceOutbox,
   submitTrainingEvidence,
 } from '@/lib/training-evidence';
-import MoreMenu, { type MoreMenuItem } from '../_components/MoreMenu';
+import type { MoreMenuItem } from '../_components/MoreMenu';
 import { syncLangToUrl } from '@/i18n/i18n-client';
 
 import { createRandomScrambleClient } from '@cuberoot/timer-ui/random-scramble';
@@ -363,8 +363,6 @@ function useMediaQuery(query: string): boolean {
   return matches;
 }
 
-// 工具收进顶栏 MoreMenu；齿轮只保留持久设置，避免工具动作再叠一层弹窗。
-//
 // 三档各答一个问题,名字就是答案:**成绩**是这些把本身(会话 + 那张单子),**统计**
 // 是从它们算出来的数(当前/最佳、σ、阈值占比、完整统计),**图表**是画出来的。
 // 原来成绩那一档从当前/最佳一路铺到阈值占比再到历史,要滚很久才够到自己刚拧的那把。
@@ -2609,7 +2607,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     return () => document.removeEventListener('pointerdown', onDocDown);
   }, [onPressDown]);
 
-  // ── External devices + More menu items ──────────────────────────
+  // Canonical tool effects are grouped into the settings panel by the Web host.
   const moreItems = useMemo<MoreMenuItem[]>(() => visibleTimerMoreActions({
     compactViewport: isMobile,
     drillActive: drillTarget !== null,
@@ -3083,8 +3081,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           actions: (
           <>
           {presenceControl}
-          <MoreMenu items={moreItems} />
-          <button type="button" className="tb-btn" onClick={() => setSettingsOpen(true)} title={tr({ zh: '设置', en: 'Settings'
+          <button type="button" className="tb-btn" aria-haspopup="dialog" aria-expanded={settingsOpen} onClick={() => setSettingsOpen(true)} title={tr({ zh: '设置', en: 'Settings'
         })}>
             <SettingsIcon size={14} />
           </button>
@@ -3450,7 +3447,7 @@ children: <>
         />
       )}
 
-      {settingsOpen && <SettingsPanel event={event} mergeSlotRef={setMergeSlot} onClose={closeSettings} onDataReplaced={() => { trainingRound.reset(); setByEvent(loadAll()); }} />}
+      {settingsOpen && <SettingsPanel event={event} actions={moreItems} mergeSlotRef={setMergeSlot} onClose={closeSettings} onDataReplaced={() => { trainingRound.reset(); setByEvent(loadAll()); }} />}
 
       {infoToast && (
         <TimerInfoToast
