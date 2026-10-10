@@ -378,8 +378,9 @@ export default function Top10HistoryPage({
 
   const dateIso = msToIso(Math.floor(dateMs));
 
-  const [todayIso, setTodayIso] = useState(() => msToIso(Date.now()));
+  const [todayIso, setTodayIso] = useState<string | null>(null);
   useEffect(() => {
+    setTodayIso(msToIso(Date.now()));
     const t = setInterval(() => setTodayIso(msToIso(Date.now())), 60000);
     return () => clearInterval(t);
   }, []);
@@ -415,7 +416,7 @@ export default function Top10HistoryPage({
 
   const top1Person = replay?.top1Pid ? (activePersons[replay.top1Pid] ?? null) : null;
   const atEnd = Math.floor(dateMs) >= endMs - 1;
-  const displayIso = atEnd && todayIso > dateIso ? todayIso : dateIso;
+  const displayIso = atEnd && todayIso && todayIso > dateIso ? todayIso : dateIso;
   const top1DurationDays = replay?.top1SinceDate
     ? Math.max(0, Math.floor((isoToMs(displayIso) - isoToMs(replay.top1SinceDate)) / DAY_MS))
     : 0;
