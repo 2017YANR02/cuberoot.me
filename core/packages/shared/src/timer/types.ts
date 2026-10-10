@@ -28,6 +28,7 @@ export type EventId =
   // Non-WCA puzzles (shared providers declare their generation capability).
   | 'fto' | 'kilominx' | 'gear' | 'ivy' | 'redi' | 'mpyram' | 'pyraminx_duo' | 'superz'
   | 'dogic' | 'octahedron4' | 'dinoskewb' | 'cube3dino'
+  | 'lattice' | 'hyperx' | 'latticex' | 'masterbrilic' | 'masterftov2'
   // Relays
   | 'r3' | 'r4' | 'r5'
   // CFOP step training
@@ -235,6 +236,11 @@ export const EVENTS: EventInfo[] = [
   { id: 'octahedron4', nameEn: '4×4 Octahedron', nameZh: '四阶八面体', group: 'nonwca' },
   { id: 'dinoskewb', nameEn: 'Dino Skewb', nameZh: '恐龙斜转', group: 'nonwca' },
   { id: 'cube3dino', nameEn: '3×3 + Dino', nameZh: '三阶＋恐龙', group: 'nonwca' },
+  { id: 'lattice', nameEn: 'Lattice Cube', nameZh: 'Lattice', group: 'nonwca' },
+  { id: 'hyperx', nameEn: 'Hyper X', nameZh: 'Hyper X', group: 'nonwca' },
+  { id: 'latticex', nameEn: 'Lattice X', nameZh: 'Lattice X', group: 'nonwca' },
+  { id: 'masterbrilic', nameEn: 'Master Brilic', nameZh: 'Master Brilic', group: 'nonwca' },
+  { id: 'masterftov2', nameEn: 'Master FTO v2', nameZh: '四阶 FTO v2', group: 'nonwca' },
 
   // CFOP step training
   { id: 'cross',  nameEn: 'Cross only',  nameZh: '十字',       group: 'cfop'

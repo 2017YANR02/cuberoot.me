@@ -36,6 +36,7 @@ const EXPECTED_OTHER: EventId[] = [
   'cross', 'f2l', 'll', 'oll', 'pll', 'coll', 'cmll', 'zbll', 'cll', 'ell', 'eocp', '2gll', 'ollcp', 'zzll', 'zbls', 'lse', 'l10p', 'eg1', 'eg2',
   'custom', 'fto', 'kilominx', 'gear', 'ivy', 'redi', 'mpyram', 'pyraminx_duo',
   'superz', 'dogic', 'octahedron4', 'dinoskewb', 'cube3dino',
+  'lattice', 'hyperx', 'latticex', 'masterbrilic', 'masterftov2',
 ];
 
 const EXPECTED_REAL_WCA_EVENTS = {
@@ -73,14 +74,14 @@ describe('shared timer event picker catalog', () => {
       expect(timerPuzzleSelection(id)).toEqual({ puzzle: id, scrambleType: null });
     }
   });
-  it('is a complete, duplicate-free 59-event partition in the website order', () => {
+  it('is a complete, duplicate-free 64-event partition in the website order', () => {
     expect(TIMER_EVENT_PICKER_GROUPS.map((group) => group.id)).toEqual(['wca', 'other']);
     expect(TIMER_EVENT_PICKER_GROUPS[0].items.map((item) => item.id)).toEqual(EXPECTED_WCA);
     expect(TIMER_EVENT_PICKER_GROUPS[1].items.map((item) => item.id)).toEqual(EXPECTED_OTHER);
 
     const pickerIds = TIMER_EVENT_PICKER_ITEMS.map((item) => item.id);
     const eventIds = EVENTS.map((event) => event.id);
-    expect(pickerIds).toHaveLength(59);
+    expect(pickerIds).toHaveLength(64);
     expect(new Set(pickerIds).size).toBe(pickerIds.length);
     expect(new Set(pickerIds)).toEqual(new Set(eventIds));
   });
@@ -155,6 +156,11 @@ describe('shared timer event picker catalog', () => {
       ['octahedron4', '4×4 Octahedron', '四阶八面体', 'Octa4'],
       ['dinoskewb', 'Dino Skewb', '恐龙斜转', 'DinoSk'],
       ['cube3dino', '3×3 + Dino', '三阶＋恐龙', '3Dino'],
+      ['lattice', 'Lattice Cube', 'Lattice', 'Lat'],
+      ['hyperx', 'Hyper X', 'Hyper X', 'HyperX'],
+      ['latticex', 'Lattice X', 'Lattice X', 'LatX'],
+      ['masterbrilic', 'Master Brilic', 'Master Brilic', 'MBrilic'],
+      ['masterftov2', 'Master FTO v2', '四阶 FTO v2', 'FTOv2'],
     ] as const) {
       expect(timerEventPickerItem(event)).toMatchObject({ nameEn, nameZh, textLabel });
       expect(timerEventPickerItem(event).iconClass).toBeUndefined();
