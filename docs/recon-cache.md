@@ -20,10 +20,14 @@ not configure or invalidate production caches.
   `/etc/cuberoot-next.env` for the standalone systemd service. Never use a
   `NEXT_PUBLIC_` variable or commit the secret.
 - In the Hono environment set `RECON_REVALIDATE_URLS` to a comma-separated list
-  of the two HTTPS webhook URLs: the project's stable production `vercel.app`
-  domain plus `https://next.cuberoot.me/api/recon/revalidate`. Use the actual
-  Vercel project domain, not the geographically routed main domain: otherwise
-  both notifications could reach the same cache. Do not use a preview URL.
+  of the two HTTPS webhook URLs: `https://google-api.cuberoot.me/api/recon/revalidate`
+  (the existing Vercel-only production alias) plus
+  `https://next.cuberoot.me/api/recon/revalidate`. Verify reachability from the
+  API host, not only the maintainer's browser: the default `vercel.app` hostname
+  timed out from that host during the 2026-10-10 rollout, while the dedicated
+  alias returned an authenticated success in 702 ms. Do not use the
+  geographically routed main domain (both notifications could reach the same
+  cache) or a preview deployment URL.
 - Deploy through the existing workflows after release authorization. Ensure
   the systemd unit is refreshed and both Next receivers are live before
   enabling the API sender. Vercel environment changes require a redeploy.
