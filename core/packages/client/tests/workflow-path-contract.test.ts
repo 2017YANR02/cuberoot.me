@@ -1,7 +1,7 @@
-import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { runInNewContext } from 'node:vm';
 import { describe, expect, it } from 'vitest';
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
@@ -603,10 +603,17 @@ describe('deployment workflow path contracts', () => {
     const run = readStepRun('test.yml', 'Require successful affected checks');
     const script = run.split('\n').slice(1, -1).join('\n');
     const pass = Object.fromEntries(dependencies!.map(name => [name, { result: 'success' }]));
-    const execute = (jobs: Record<string, { result: string }>) => spawnSync(process.execPath, ['--input-type=module', '-e', script], {
-      env: { ...process.env, NEEDS_JSON: JSON.stringify(jobs) },
-      encoding: 'utf8',
-    }).status;
+    const execute = (jobs: Record<string, { result: string }>) => {
+      let status = 0;
+      runInNewContext(script, {
+        process: {
+          env: { NEEDS_JSON: JSON.stringify(jobs) },
+          exit: (code: number) => { status = code; },
+        },
+        console: { log: () => {} },
+      });
+      return status;
+    };
     expect(execute(pass)).toBe(0);
     const docsOnly = Object.fromEntries(dependencies!.map(name => [name, {
       result: ['changes', 'test'].includes(name) ? 'success' : 'skipped',
