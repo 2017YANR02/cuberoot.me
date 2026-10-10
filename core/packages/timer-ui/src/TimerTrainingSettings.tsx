@@ -1,3 +1,4 @@
+import BoolToggle from './BoolToggle';
 import './compact-select.css';
 
 import { useEffect, useState } from 'react';
@@ -129,15 +130,12 @@ export function TimerRoundSettings({ value: s, onChange, localize: tr }: Omit<Pr
           title={tr({ zh: '轮次模拟', en: 'Round simulation' })}
           headerControl={
             <span data-setting-id="settings.training.round-enabled">
-              <select
-                value={String(s.round.on)}
-                onChange={event => { const v = event.currentTarget.value === 'true'; onChange({ on: v }); }}
-                aria-label={settingLabel('settings.training.round-enabled')}
-                className="native-select"
-              >
-                <option value="true">{tr({ zh: '开启', en: 'On' })}</option>
-                <option value="false">{tr({ zh: '关闭', en: 'Off' })}</option>
-              </select>
+              <BoolToggle
+                label=""
+                value={s.round.on}
+                onChange={on => onChange({ on })}
+                ariaLabel={settingLabel('settings.training.round-enabled')}
+              />
             </span>
           }
         >
