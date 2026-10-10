@@ -27,6 +27,7 @@ it('persists a validated snapshot atomically and sends it to a newly opened WebV
   expect(url.hash).toBe('#section');
   expect(url.searchParams.get('players')).toBe('2');
   expect(JSON.parse(url.searchParams.get('mpPreferences')!).preferences).toEqual(preferences);
+  expect(JSON.parse(url.searchParams.get('mpPreferences')!).version).toBe(3);
   expect(url.searchParams.get('lang')).toBe('en');
   expect(publicPageSharePath(url.href)).toBe('/timer?players=2&lang=en#section');
   expect(new URL(withNativePreferences('https://cuberoot.me/zh/timer?lang=zh&players=2')).searchParams.get('lang')).toBe('en');
