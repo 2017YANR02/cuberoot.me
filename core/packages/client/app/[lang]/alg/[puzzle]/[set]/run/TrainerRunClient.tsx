@@ -307,6 +307,7 @@ export default function TrainerRunClient() {
   const scrambleKind = useTrainerStore(s => s.scrambleKind);
   const doubleZbll = useTrainerStore(s => s.doubleZbll);
   const [doubleRestoreError, setDoubleRestoreError] = useState(false);
+  const [doubleLoading, setDoubleLoading] = useState(false);
   const setScrambleKind = useTrainerStore(s => s.setScrambleKind);
   const storePuzzle = useTrainerStore(s => s.puzzle);
   const storeSet = useTrainerStore(s => s.set);
@@ -1304,6 +1305,21 @@ export default function TrainerRunClient() {
     && hist.list.some((_, index) => index !== hist.idx);
   // 三块各自成列:上一个在左、统计在右、历史铺满底部。哪块空了哪列就不占宽。
   const leftShown = showPrevCard;
+  const doubleAvailable = puzzle === '3x3' && setSlug === 'zbll' && !isMix;
+  const changeScrambleType = async (value: string) => {
+    setDoubleRestoreError(false);
+    if (value === 'double-zbll') {
+      setDoubleLoading(true);
+      try {
+        await loadDoubleZbll();
+        useTrainerStore.getState().setDoubleZbll(true);
+      } catch { setDoubleRestoreError(true); }
+      finally { setDoubleLoading(false); }
+    } else {
+      useTrainerStore.getState().setDoubleZbll(false);
+      setScrambleKind(value as ScrambleKind);
+    }
+  };
 
   // AUF 开关只对「顶层 case + U 可作 AUF」的场景有意义(F2L 类打乱前加 U 会换 case)
   // 合练:任一成员是 F2L 类就整场关掉(给 F2L 打乱前加 U 会换成另一个 case)
@@ -1413,7 +1429,7 @@ export default function TrainerRunClient() {
               {virtual && <div className="trainer-opts-hint">{tr(virtual.note)}</div>}
               {/* 公式集与打乱类型共用一行,空间不足时由 trainer-opts-row 自然换行。一起练的成员
                   用可点的链接删(中键能新开),加走下拉(可选项十几套,不适合摊成 chip)。 */}
-              {(addableSets.length > 0 || kinds.length > 1) && (
+              {(addableSets.length > 0 || kinds.length > 1 || doubleAvailable) && (
                 <div className="trainer-opts-row">
                   {addableSets.length > 0 && (
                     <>
@@ -1450,19 +1466,21 @@ export default function TrainerRunClient() {
                     </select>
                     </>
                   )}
-                  {!doubleZbll && kinds.length > 1 && (
-                    <>
+                  {(kinds.length > 1 || doubleAvailable) && (
+                    <div className="trainer-opts-row">
                       <span className="trainer-opts-label">{tr({ zh: '打乱', en: 'Scramble' })}</span>
                       <select
                         className="trainer-scramble-kind"
-                        value={scrambleKind}
-                        onChange={e => setScrambleKind(e.target.value as ScrambleKind)}
-                        disabled={timerState !== TimerState.NOT_RUNNING}
+                        value={doubleZbll ? 'double-zbll' : scrambleKind}
+                        onChange={e => void changeScrambleType(e.target.value)}
+                        disabled={doubleLoading || timerState !== TimerState.NOT_RUNNING}
                         aria-label={tr({ zh: '打乱类型', en: 'Scramble type' })}
                       >
                         {kinds.map(k => <option key={k.id} value={k.id}>{k.label()}</option>)}
+                        {doubleAvailable && <option value="double-zbll" disabled={!!room || isMemo || splitActive}>{tr({ zh: '双底', en: 'Double ZBLL' })}</option>}
                       </select>
-                    </>
+                      {doubleZbll && <DoubleZbllOptions />}
+                    </div>
                   )}
                 </div>
               )}
@@ -1474,7 +1492,7 @@ export default function TrainerRunClient() {
                   })}
                 </div>
               )}
-              {puzzle === '3x3' && setSlug === 'zbll' && !isMix && <DoubleZbllOptions incompatible={!!room || isMemo || splitActive} />}
+              {doubleRestoreError && <span role="alert">{tr({ zh: '双底加载失败，请重试', en: 'Double ZBLL failed to load. Retry.' })}</span>}
               <div className="trainer-opts-row">
                 <select
                   className="trainer-scramble-kind trainer-mode-select"
@@ -1996,8 +2014,6 @@ export default function TrainerRunClient() {
           </div>
 
           <div className="trainer-stage-body">
-          {doubleRestoreError && !doubleZbll && <p className="trainer-double-notice" role="alert">{tr({ zh: '双底题库未能加载。请在训练设置中重新下载；当前为单层训练。', en: 'Double ZBLL could not load. Download it again in settings; single-layer training is currently active.' })}</p>}
-          {doubleZbll && <div className="trainer-double-notice">{tr({ zh: '双底 · 先顶层，再翻转 · 最优 HTM', en: 'Double ZBLL · solve, flip, solve · optimal HTM' })}</div>}
           {/* 当前这道题的 case 图 + 一左一右夹着它的标记条(与「上一个」卡片同一个排法):
               图从「实际打乱」渲染(含 pre/post-AUF),与下方打乱公式朝向一致。
               标记条只出两个图标、不带 case 名:训练模式下答案还不能露。数字键 1、2、4 打的仍是
