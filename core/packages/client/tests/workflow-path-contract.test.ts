@@ -221,6 +221,8 @@ const CORE_PATHS = [
   corePath('scripts', 'resolve-workspace-path.mjs'),
   repoPath('ops', 'systemd', 'cuberoot-drive-compression.service'),
   repoPath('ops', 'bin', 'provision-assistant-reader.sql'),
+  repoPath('ops', 'systemd', 'cuberoot-assistant-knowledge.service'),
+  repoPath('ops', 'systemd', 'cuberoot-assistant-knowledge.timer'),
   repoPath('.github', 'workflows', 'deploy_core.yml'),
 ] as const;
 

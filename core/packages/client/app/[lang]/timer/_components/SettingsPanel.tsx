@@ -44,6 +44,7 @@ import { CountryInput } from '@/components/CountryInput';
 import SharedBoolToggle from '@/components/BoolToggle';
 import { TimerResetSettings, TimerExportSettings } from '@cuberoot/timer-ui';
 import { tr } from '@/i18n/tr';
+import { TIMER_TRAINING_HELP } from '@/lib/timer-training-help';
 
 
 // .settings-row* 原语来自 wca-source.css(现已提取到共享 components/)—— 以前靠
@@ -308,6 +309,10 @@ export default function SettingsPanel({ onClose, event, actions, mergeSlotRef, o
           activeCategory={activeCategory}
           title={tr({ zh: '目标与分段', en: 'Goals and splits' })}
         >
+          <details>
+            <summary>{tr(TIMER_TRAINING_HELP.title)}</summary>
+            {TIMER_TRAINING_HELP.paragraphs.map((paragraph) => <p key={paragraph.en}>{tr(paragraph)}</p>)}
+          </details>
           <TimerAttemptSplitSettings
             bldVisible={settingState('settings.training.bld-memo-split').visible}
             localize={tr}

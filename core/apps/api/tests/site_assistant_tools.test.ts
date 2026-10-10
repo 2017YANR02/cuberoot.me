@@ -31,6 +31,11 @@ describe('assistant public data adapters',()=>{
     expect(result.evidence).toMatchObject({count:0,byYear:[],unknownDateCompetitions:0});
     expect(result.factualSummary).toContain('0 competitions');
   });
+  it('does not describe future missing results as a completed zero-attendance year',async()=>{
+    const result=await runDataTool({tool:'person_competitions',wcaId:'2017YANR02',from:'2027-01-01',to:'2027-12-31'},'en',async url=>url.includes('/meta')?{lastImportedAt:'2026-10-10'}:{profile:{person:{name:'Ruimin Yan'}},results:[],comps:[]},undefined,'2026-10-10');
+    expect(result.factualSummary).toContain('Official results do not exist yet');
+    expect(result.factualSummary).not.toContain('show 0 competitions');
+  });
   it('retains ranking competition IDs separately from the competitor country',async()=>{
     const rows=[
       {rank:1,name:'One',wcaId:'2017WANY29',value:1271,iso2:'CN',compId:'Hefei2026',compName:'Hefei 2026',compDate:'2026-05-10'},

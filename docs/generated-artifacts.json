@@ -89,7 +89,7 @@
         "tests/assistant_content_index.test.ts",
         "Production GET /assistant/pages.json contains non-empty pages and build timestamp"
       ],
-      "driftPolicy": "Generated after next build on both deployment paths. Excludes noindex, account/admin and dynamic placeholders; structured live content is queried through public API adapters."
+      "driftPolicy": "Generated after next build on both deployment paths. Version 2 preserves paragraphs and includes shared public product help; metadata-only and loading pages are navigation, not evidence. Excludes noindex HTML, account/admin and dynamic placeholders. A separate API worker updates pgvector snapshots incrementally; structured live data uses public read tools."
     },
     {
       "id": "space.blender-scenes",

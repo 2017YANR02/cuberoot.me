@@ -8,6 +8,7 @@ import { CSTIMER_EVENTS } from '../lib/cstimer-scramble';
 import { EVENT_NAME_TO_ID } from '../lib/event-constants';
 import { PAGE_META } from '../lib/page-meta';
 import { PLATFORM_ROUTES } from '../lib/platform-routes';
+import { TIMER_TRAINING_HELP } from '../lib/timer-training-help';
 const restricted=SITE_DIRECTORY_GROUPS.flatMap(g=>g.entries.filter(e=>('adminOnly' in e && e.adminOnly)||('lockedForNonAdmin' in e && e.lockedForNonAdmin)).map(e=>e.href));
 
 
@@ -23,13 +24,14 @@ export function indexPublicHtml(route: string, html: string) {
   const { document } = parseHTML(html);
   if (document.querySelector('meta[name="robots"]')?.getAttribute('content')?.includes('noindex')) return null;
   const title = document.querySelector('title')?.textContent ?? route;
-  const description=document.querySelector('meta[name="description"]')?.getAttribute('content') ?? '';
   document.querySelectorAll('div[hidden][id]').forEach(n=>{if (/^S:[0-9a-f]+$/i.test(n.id)) n.removeAttribute('hidden');});
   document.querySelectorAll('header,footer').forEach(n=>{if(!n.closest('main,article'))n.remove();});
   document.querySelectorAll('script,style,nav,form,button,[hidden],[aria-hidden="true"]').forEach(n=>n.remove());
+  // Preserve paragraphs/headings so retrieval can cite a relevant section.
+  document.querySelectorAll('h1,h2,h3,h4,p,li,pre,tr,section,article').forEach(node=>node.appendChild(document.createTextNode('\n\n')));
   const body=(document.querySelector('main') ?? document.body)?.textContent ?? '';
-  const text=[description,body].join(' ').replace(/\s+/g,' ').trim();
-  if (text.length<80 && description.length<20) return null;
+  const text=body.replace(/[^\S\n]+/g,' ').replace(/ *\n */g,'\n').replace(/\n{3,}/g,'\n\n').trim();
+  if (text.length<80) return null;
   return { lang:route.startsWith('/zh/')?'zh':'en', href:route.replace(/^\/(en|zh)/,''),title,text:text.slice(0,60000) };
 }
 
@@ -171,8 +173,16 @@ async function main() {
   const xml=sitemapFile?await readFile(sitemapFile,'utf8'):'';
   const discovered=discoverPublicPages(xml,labels,rendered);
   pages.push(...discovered);
+  for(const lang of ['zh','en'] as const) {
+    const href='/timer';
+    const text=TIMER_TRAINING_HELP.paragraphs.map(p=>p[lang]).join('\n\n');
+    const existing=pages.find(page=>page.lang===lang && page.href===href);
+    if(existing) existing.text=[existing.text,text].filter(Boolean).join('\n\n');
+    else pages.push({lang,href,title:TIMER_TRAINING_HELP.title[lang],text});
+    destinations.set(lang+href,{lang,href,title:TIMER_TRAINING_HELP.title[lang]});
+  }
   await mkdir('public/assistant',{recursive:true});
-  await writeFile('public/assistant/pages.json',JSON.stringify({updated:new Date().toISOString(),pages,destinations:[...destinations.values()]}));
+  await writeFile('public/assistant/pages.json',JSON.stringify({version:2,updated:new Date().toISOString(),pages,destinations:[...destinations.values()]}));
   console.log(`Assistant content index: ${pages.length} public pages (${discovered.length} read on demand)`);
 }
 if (path.basename(process.argv[1] ?? '')==='build-assistant-index.ts') {

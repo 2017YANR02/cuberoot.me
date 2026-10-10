@@ -9158,3 +9158,7 @@ CREATE TABLE IF NOT EXISTS wca_person_teams (
   team_id INTEGER NOT NULL REFERENCES wca_teams(id),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Public assistant knowledge passages: schema_assistant_knowledge.pg.sql (0270).
+-- Apply that extension-dependent snapshot after the deployment pgvector preflight.
+-- Keep this base snapshot executable as plain SQL by driver-based fixtures.
