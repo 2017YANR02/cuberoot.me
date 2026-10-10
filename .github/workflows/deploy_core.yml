@@ -30,6 +30,7 @@ on:
       - 'core/scripts/build-cubing-worker.mjs'
       - 'core/scripts/resolve-workspace-path.mjs'
       - 'ops/systemd/cuberoot-drive-compression.service'
+      - 'ops/bin/provision-assistant-reader.sql'
       - '.github/workflows/deploy_core.yml'
 
 permissions:
@@ -261,6 +262,13 @@ jobs:
             echo "CubeOpt artifact preflight skipped: disabled or disk dashboard only release"
           fi
           CUBEOPT_PREFLIGHT
+
+          # The application role cannot CREATE ROLE. Bootstrap only the fixed
+          # NOLOGIN reader with the DB administrator; views/ACLs remain migrations.
+          ssh -T -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            "root@${{ secrets.DEPLOY_HOST }}" \
+            'runuser -u postgres -- psql -X -v ON_ERROR_STOP=1 -d cuberoot_db && runuser -u postgres -- psql -X -v ON_ERROR_STOP=1 -d cuberoot_db -c "GRANT cuberoot_assistant_reader TO recon_user"' \
+            < ops/bin/provision-assistant-reader.sql
 
           # migrations/ — schema 改动放这里,apply_migrations.sh 自动跑没跑过的
           # 必须在 pm2 restart 之前!否则新代码部上去查不到列 → /api/* 全 500

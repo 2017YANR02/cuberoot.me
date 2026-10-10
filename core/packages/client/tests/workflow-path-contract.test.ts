@@ -220,6 +220,7 @@ const CORE_PATHS = [
   corePath('scripts', 'build-cubing-worker.mjs'),
   corePath('scripts', 'resolve-workspace-path.mjs'),
   repoPath('ops', 'systemd', 'cuberoot-drive-compression.service'),
+  repoPath('ops', 'bin', 'provision-assistant-reader.sql'),
   repoPath('.github', 'workflows', 'deploy_core.yml'),
 ] as const;
 
@@ -262,6 +263,7 @@ const TEST_PATHS = [
   repoPath('ops', 'vercel-ban-relay', 'competition-rule.json'),
   repoPath('ops', 'systemd', 'cuberoot-drive-compression.service'),
   repoPath('ops', 'bin', 'pg-dump-recon.sh'),
+  repoPath('ops', 'bin', 'provision-assistant-reader.sql'),
   repoPath('ops', 'systemd', 'pg-dump-recon.service'),
   repoPath('.github', 'workflows', 'backup_recon.yml'),
   repoPath('.github', 'workflows', 'best2x2_drift.yml'),

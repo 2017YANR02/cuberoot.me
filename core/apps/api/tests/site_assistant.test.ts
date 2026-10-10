@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createSiteAssistantRoutes as createRoutes } from '../src/routes/site_assistant.js';
 import { answerSiteQuestion, assistantConfig, pageText, requestedAssistantLimit } from '../src/utils/site_assistant.js';
 import { cubeAgentConfig } from '../src/utils/cube_agents.js';
+import { runAnalysisQuery } from '../src/utils/site_assistant_analysis_db.js';
+vi.mock('../src/utils/site_assistant_analysis_db.js',async importOriginal=>({...(await importOriginal<object>()),runAnalysisQuery:vi.fn()}));
 vi.mock('../src/utils/site_assistant_people.js',()=>({findAssistantPeople:vi.fn(async()=>[{wcaId:'2012PARK03',name:'Max Park',country:'USA'}])}));
 
 const createSiteAssistantRoutes = (deps: Omit<Parameters<typeof createRoutes>[0], 'reserve' | 'authenticate'> & { reserve?: () => Promise<{ allowed: boolean; retryAfter: number }> }) => createRoutes({ authenticate: async () => ({ uid: 1, wcaId: '2017YANR02' }), reserve: async () => ({ allowed: true, retryAfter: 60 }), ...deps });
@@ -16,6 +18,25 @@ const ask = () => new Request('https://api.example/site-assistant', {
 });
 
 describe('site assistant grounding', () => {
+  it('requires schema discovery and retries a failed analysis without treating the failure as evidence',async()=>{
+    const call={tool:'analysis_query',title:'Monthly competitions',description:'Distinct competition IDs by month',query:{}};
+    vi.mocked(runAnalysisQuery).mockReset()
+      .mockResolvedValueOnce({sources:[],artifacts:[],evidence:{error:'Correct the grouping',notEvidence:true}})
+      .mockResolvedValueOnce({sources:[{id:'analysis:test',title:call.title,href:'/wca/results',read:true}],artifacts:[{kind:'table',title:call.title,columns:['Count'],rows:[['2']]}],evidence:{rows:[['2']]}});
+    const model=vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(modelResponse({calls:[call]}))
+      .mockResolvedValueOnce(modelResponse({calls:[{tool:'analysis_schema',datasets:['results']},call]}))
+      .mockResolvedValueOnce(modelResponse({calls:[call]}))
+      .mockResolvedValueOnce(modelResponse({answer:'Computed from the imported results.',sourceIds:['analysis:test']}));
+    const answer=await answerSiteQuestion('Compare my competition counts by month','en',config,AbortSignal.timeout(5000),withCatalog(model),[],'2017YANR02');
+    expect(runAnalysisQuery).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(runAnalysisQuery).mock.calls[0][3]).toEqual(new Set(['2017YANR02']));
+    expect(JSON.parse(String(model.mock.calls[1][1]?.body)).messages[1].content).toContain('Call analysis_schema');
+    const repair=JSON.parse(String(model.mock.calls[2][1]?.body));
+    expect(repair.messages[1].content).toContain('Correct the grouping');
+    expect(repair.max_tokens).toBe(3200);
+    expect(answer.artifacts).toHaveLength(1);expect(answer.sources.map(s=>s.id)).toEqual(['analysis:test']);
+  });
   it('passes visitor-local time to every model round and applies the resolved competition interval',async()=>{
     vi.useFakeTimers();vi.setSystemTime(new Date('2027-01-01T01:00:00Z'));
     const fetcher=vi.fn<typeof fetch>().mockImplementation(async input=>{

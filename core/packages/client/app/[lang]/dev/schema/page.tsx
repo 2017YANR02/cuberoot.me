@@ -823,6 +823,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 264, slug: 'face_verification', desc: { zh: '独立实名认证流水，保存同意与服务端核验结果，不留存明文证件及人脸。', en: 'Separate identity verification attempts with consent and provider results; no raw identity number or facial data.' } },
   { n: 261, slug: 'recon_comment_votes', desc: { zh: '复盘评论与回复支持互斥的点赞和点踩，按账号持久保存。', en: 'Persistent, mutually exclusive likes and dislikes on reconstruction comments and replies.' } },
   { n: 266, slug: 'public_content_revisions', desc: { zh: '可编辑公开内容的事务版本号，让浏览器核对更新并复用服务端缓存。', en: 'Transactional versions for editable public content, conditional requests, and server cache reuse.' } },
+  { n: 267, slug: 'assistant_public_analysis', desc: { zh: '助手现场分析使用的公开数据视图与只读权限，隔离账号和私有内容。', en: 'Public data projections and read-only permissions for assistant analysis, excluding accounts and private content.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
