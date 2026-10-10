@@ -8,6 +8,7 @@ import { PLACE_CITY_ZH, PLACE_ADMIN_ZH } from './data/place_zh';
 
 // 手维护补充表(覆盖层 / 无 iso2 调用时的兜底 / 台湾等 CN_PLACE_ZH 未覆盖处)。
 const CITY_ZH: Record<string, string> = {
+  'Monaco': '摩纳哥',
   'Airdrie': '艾尔德里',
   'North Lanarkshire': '北拉纳克郡',
   'Asker': '阿斯克尔',
