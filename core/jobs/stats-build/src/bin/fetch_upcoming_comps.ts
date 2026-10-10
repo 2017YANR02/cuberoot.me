@@ -16,6 +16,7 @@
 //
 // 用法（从 core/ 跑，或仓库根）:
 //   npx tsx src/bin/fetch_upcoming_comps.ts --refresh
+//   npx tsx src/bin/fetch_upcoming_comps.ts --catalog-only [--output /tmp/all_upcoming_comps.json]
 
 import {
   existsSync,
@@ -31,6 +32,7 @@ import * as readline from 'node:readline/promises';
 import { fetchCubingCompetitions, fetchCubingCompetitors } from '@cuberoot/shared/cubing-live';
 import { localizeCity } from '@cuberoot/shared/city-localize';
 import { enrichCompElevations } from '../elevation.js';
+import { fetchCompetitionPages, retainCatalogDetails } from '../upcoming_catalog.js';
 
 // ================= Configuration ==================
 // NOTE: 位置定位仓库根（bin -> src -> stats-build -> packages -> core -> repo root，5 个 '..'），
@@ -400,10 +402,10 @@ async function fetchWithRetry(url: string, raw = false, timeoutMs = 10_000): Pro
             return {};
           }
           const retryAfter = resp.headers.get('Retry-After');
-          // 仅采信非负整数秒；其余(空/非数字/负数)落回 2s，并至少等 1s 防 busy-retry。
+          // 仅采信非负整数秒；其余(空/非数字/负数)指数退避 5..60s，并至少等 1s 防 busy-retry。
           const wait = Math.max(1, retryAfter !== null && /^\s*\d+\s*$/.test(retryAfter)
             ? parseInt(retryAfter, 10)
-            : 2);
+            : Math.min(60, 5 * 2 ** rateLimitWaits));
           console.log(`[WARN] 触发 429 限制，等待 ${wait} 秒...`);
           await sleep(wait);
           rateLimitWaits += 1;
@@ -1019,7 +1021,7 @@ function shortifyEvents(eventIds: string[]): string[] {
   return pairs.map((p) => p[1]);
 }
 
-// NOTE: buildAllUpcomingComps 首页失败时记录具体原因，供 main() 拼出准确的 [FAIL] 通知文案。
+// NOTE: buildAllUpcomingComps 任一分页失败时记录具体原因，供 main() 拼出准确的 [FAIL] 通知文案。
 let wcaListFailureReason: string | null = null;
 
 async function buildAllUpcomingComps(): Promise<AllComp[] | null> {
@@ -1031,44 +1033,27 @@ async function buildAllUpcomingComps(): Promise<AllComp[] | null> {
   // time.strftime("%Y-%m-%d", time.gmtime(time.time() - 14*86400)) 等价（UTC）。
   const cutoff = utcDate(Date.now() - 14 * 86400 * 1000);
   const perPage = 100;
-  const out: Record<string, unknown>[] = [];
-  for (let page = 1; page < 21; page += 1) {
-    // 20 * 100 = 2000 上限
-    const url =
-      `${WCA_API_BASE}/competitions` +
-      `?ongoing_and_future=${cutoff}&per_page=${perPage}&page=${page}`;
-    // per_page=100 的 list 响应可达 ~725KB;经代理走服务器出口(被 WCA 限带宽 ~18KB/s)时
-    // 单页可能要 ~40s,默认 10s 必 abort → 给 90s。直连(本地)仍 1-2s,不受影响。
-    const batch = await fetchWithRetry(url, false, 90_000);
-    // NOTE: fetchWithRetry 404/失败时返回 {}；list 端点正常返回 list
-    if (!Array.isArray(batch)) {
-      if (page === 1) {
-        wcaListFailureReason = lastFetchFailureReason;
-        console.log(`[ALL] 第一页就拿不到 list，放弃生成 all_upcoming_comps.json（原因：${wcaListFailureReason ?? '未知'}）`);
-        return null;
-      }
-      break;
-    }
-    out.push(...(batch as Record<string, unknown>[]));
-    if (batch.length < perPage) {
-      break;
-    }
-    console.log(`[ALL] 已取 ${out.length} 场（page ${page}）`);
+  let out: Record<string, unknown>[];
+  try {
+    out = await fetchCompetitionPages(async (page) => {
+      const url = `${WCA_API_BASE}/competitions?ongoing_and_future=${cutoff}&per_page=${perPage}&page=${page}`;
+      const batch = await fetchWithRetry(url, false, 90_000);
+      if (!Array.isArray(batch)) throw new Error(`page ${page}: ${lastFetchFailureReason ?? 'invalid response'}`);
+      console.log(`[ALL] page ${page}: ${batch.length} 场`);
+      return batch;
+    }, perPage);
+  } catch (error) {
+    wcaListFailureReason = (error as Error).message;
+    console.error(`[ALL] 列表未完整取得，保留已有文件：${wcaListFailureReason}`);
+    return null;
   }
 
-  // 过滤已取消 + 精简字段 + 按 id 去重
-  // NOTE: WCA API 分页期间排序可能漂移（新增 / cancel 状态变化），同一 id 会跨页重复出现
+  // 分页聚合已按 id 去重；这里只过滤已取消比赛并精简字段。
   const result: AllComp[] = [];
-  const seenIds = new Set<string>();
   for (const c of out) {
     if (c.cancelled_at) {
       continue;
     }
-    const cid = c.id as string;
-    if (seenIds.has(cid)) {
-      continue;
-    }
-    seenIds.add(cid);
     result.push({
       id: c.id as string,
       name: (c.name as string | undefined) ?? '',
@@ -1104,6 +1089,23 @@ function relToRoot(p: string): string {
 async function main(): Promise<void> {
   console.log('=== 开始构建 Top Cubers 近期比赛追踪数据 ===');
   const startTime = Date.now();
+
+  // Official catalog recovery does not depend on WCIF/registration enrichment.
+  // --output supports a staged artifact for inspection before publication.
+  if (process.argv.includes('--catalog-only')) {
+    const fresh = await buildAllUpcomingComps();
+    if (!fresh?.length) throw new Error(wcaListFailureReason ?? 'Empty WCA catalog; existing data preserved');
+    const previous: AllComp[] = existsSync(ALL_OUTPUT_JSON_PATH)
+      ? JSON.parse(readFileSync(ALL_OUTPUT_JSON_PATH, 'utf8')) : [];
+    const catalog = retainCatalogDetails(fresh, previous);
+    const outputIndex = process.argv.indexOf('--output');
+    const output = outputIndex < 0 ? ALL_OUTPUT_JSON_PATH : process.argv[outputIndex + 1];
+    if (!output || output.startsWith('--')) throw new Error('--output requires a file path');
+    mkdirSync(dirname(resolve(output)), { recursive: true });
+    writeFileSync(output, JSON.stringify(catalog), 'utf8');
+    console.log(`[ALL] 完整目录 ${catalog.length} 场 → ${output}`);
+    return;
+  }
 
   // NOTE: 交互式询问缓存策略；CI 环境用 --refresh 参数跳过交互
   if (process.argv.includes('--refresh')) {
