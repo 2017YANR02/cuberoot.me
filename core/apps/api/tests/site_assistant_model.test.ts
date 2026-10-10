@@ -23,3 +23,17 @@ it('streams answer text without sending reasoning to the UI callback',async()=>{
   const result=await createAssistantModel(config,fetcher,AbortSignal.timeout(2000),'').complete({...options,onText});
   expect(result.answer).toBe('已找到训练说明');expect(onText).toHaveBeenCalledWith(content);expect(JSON.stringify(onText.mock.calls)).not.toContain('private');
 });
+it('keeps a malformed streamed final for a new repair turn and requests the answer schema',async()=>{
+  const delta=(content:string)=>'data: '+JSON.stringify({id:'test',object:'chat.completion.chunk',created:1,model:config.model,choices:[{index:0,delta:{role:'assistant',content},finish_reason:'stop'}]})+'\n\ndata: [DONE]\n\n';
+  const fetcher=vi.fn<typeof fetch>()
+    .mockResolvedValueOnce(new Response(delta('A plain answer instead of JSON.'),{headers:{'content-type':'text/event-stream'}}))
+    .mockResolvedValueOnce(response({content:JSON.stringify({answer:'A valid answer.',sourceIds:[]})}));
+  const model=createAssistantModel(config,fetcher,AbortSignal.timeout(2000),'');
+  await expect(model.complete({...options,onText:async()=>{}})).rejects.toThrow();
+  const result=await model.complete({...options,followUp:'Repair the previous final response as the required JSON object.'});
+  expect(result.answer).toBe('A valid answer.');
+  const request=JSON.parse(String(fetcher.mock.calls[1][1]?.body));
+  expect(request.messages.some((message:any)=>message.role==='assistant'&&message.content==='A plain answer instead of JSON.')).toBe(true);
+  expect(request.messages.at(-1)).toMatchObject({role:'user',content:'Repair the previous final response as the required JSON object.'});
+  expect(request.messages.some((message:any)=>message.role==='system'&&message.content.includes('"sourceIds"'))).toBe(true);
+});

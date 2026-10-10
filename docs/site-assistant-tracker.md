@@ -61,6 +61,22 @@ rollback, including lazy-load configurations. Disk-only releases preserve their
 existing behavior. The 22 deployment-contract checks passed; production recovery
 is verified separately. No memory threshold or system swap policy was relaxed.
 
+Recovery commit `45357f0939` passed CI and Core run `38074649161`. During the
+smoke, the live route reported disabled and exactly one table process was
+present. After restoration, the authenticated public solve returned the exact
+one-move result in 50 ms. The production version 2 artifact has 767 public page
+entries (369 Chinese, 398 English; 126 on-demand links), 3,649,043 bytes. Unlike
+the old fixture, it excludes metadata-only/loading shells from factual content.
+
+Public SSE acceptance exposed occasional plain-text final answers despite JSON
+mode. The model adapter now supplies the answer schema, explicitly scopes prose
+instructions to the `answer` field, retains malformed assistant turns privately,
+and sends the bounded format repair as a new user turn. DeepSeek's SDK uses
+schema prompt compatibility here, not server-enforced JSON Schema. Three real
+streamed monthly-query runs returned correct tables; one exercised successful
+format recovery. The 83 focused model/stream/assistant checks and API typecheck
+passed. This transport correction requires its own final production release.
+
 ## Earlier local implementation and acceptance (2026-10-10)
 
 At this earlier checkpoint, the changes were **not committed, pushed or deployed**. The only production
