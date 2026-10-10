@@ -9,6 +9,7 @@ import {
   trainerSetScrambleFeatures, type F2LFinalAdjustment,
   type F2LSlot, type ScrambleKind,
 } from './trainer-scramble';
+import { doubleZbllScramble, doubleZbllSupports } from './double-zbll';
 import { caseKey, findCaseByKey } from './trainer-case-key';
 import {
   isSq1CsTarget,
@@ -65,6 +66,7 @@ export interface TrainerSolve {
   i: number;
   caseKey: string;
   caseName: string;
+  bottomKey?: string;
   scramble: string;
   ms: number;
   penalty: TrainerPenalty;
@@ -77,10 +79,11 @@ export interface TrainerHistEntry {
   scramble: string;
   /** 覆盖模式为这条题预排的 F2L AUF × y；重出打乱时复用，避免预抽组合被丢掉。 */
   f2lFinalAdjustment?: F2LFinalAdjustment;
+  bottomKey?: string;
   /** recap 模式下该条在本轮的位置(1 起)/ 本轮总数 —— 进度条随「当前题」而非预抽的
    *  下一题走:store 的 recapPos 是「已抽到第几格」,因预抽 peek/peek2 最多领先当前题两格。
    *  凡是要问「用户刷到第几个了」的地方,一律读这里,别读 recapPos。 */
-  recap?: { pos: number; total: number };
+  recap?: { pos: number; total: number; count?: number };
 }
 
 /** 把当前题的 1-based 位置换成「已经练完几题」；确认轮末后才计入最后一题。 */
@@ -90,7 +93,7 @@ export function completedRecapCount(
 ): number {
   if (!recap || !Number.isInteger(recap.pos) || !Number.isInteger(recap.total) || recap.total <= 0) return 0;
   if (roundCompleted) return recap.total;
-  return Math.min(recap.total, Math.max(0, recap.pos - 1));
+  return Math.min(recap.total, Math.max(0, recap.pos - (recap.count ?? 1)));
 }
 
 interface PersistedSession {
@@ -354,6 +357,8 @@ interface TrainerState {
   hist: ScrambleHist<TrainerHistEntry>;
   /** 出题用哪一种打乱。非 `inv` 的几套来自站长 1LLL 表的 meta,只有部分 set 有。 */
   scrambleKind: ScrambleKind;
+  doubleZbll: boolean;
+  setDoubleZbll: (enabled: boolean) => void;
   timerState: TimerState;
   timerStarted: number;
   observingIdx: number;
@@ -759,10 +764,11 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     if (pool.length === 0 || !st.puzzle) return null;
 
     let key: string;
+    let bottomKey: string | undefined;
     let recapQueue = st.recapQueue;
     let recapPos = st.recapPos;
     let recapSig = st.recapSig;
-    let entryRecap: { pos: number; total: number } | undefined;
+    let entryRecap: TrainerHistEntry['recap'];
 
     if (st.mode === 'recap') {
       const sig = [...pool].sort().join('|');
@@ -783,6 +789,11 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       recapQueue = q;
       recapPos = pos + 1;
       recapSig = sig;
+      if (st.doubleZbll) {
+        bottomKey = q[pos + 1] ?? key;
+        recapPos = Math.min(q.length, pos + 2);
+        entryRecap = { pos: recapPos, total: q.length, count: recapPos - pos };
+      }
     } else if (st.probMode === 'real') {
       // 真实概率:权重 = 轨道大小(16/cn)。无 meta 的 case 当权重 16(≈无对称)。
       const weights = pool.map(k => {
@@ -801,12 +812,18 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       key = pool[Math.floor(Math.random() * pool.length)];
     }
 
+    if (st.doubleZbll && !bottomKey) {
+      const weights = pool.map(k => st.probMode === 'real' ? (caseOrbit(findCaseByKey(st.cases, k)!) ?? 16) : 1);
+      let r = Math.random() * weights.reduce((a, b) => a + b, 0);
+      bottomKey = pool[pool.length - 1];
+      for (let i = 0; i < pool.length; i++) { r -= weights[i]; if (r < 0) { bottomKey = pool[i]; break; } }
+    }
     const c = findCaseByKey(st.cases, key);
     if (!c) return null;
     const f2lFinalAdjustment = c.sticker.kind === 'f2l' ? nextF2LFinalAdjustment(st) : undefined;
-    const scramble = generateTrainerScramble(c, st, f2lFinalAdjustment);
+    const scramble = bottomKey ? doubleZbllScramble(key, bottomKey) : generateTrainerScramble(c, st, f2lFinalAdjustment);
     return {
-      entry: { key, name: c.name, scramble, recap: entryRecap, f2lFinalAdjustment },
+      entry: { key, name: c.name, scramble, recap: entryRecap, f2lFinalAdjustment, bottomKey },
       recapQueue,
       recapPos,
       recapSig,
@@ -1159,7 +1176,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
         : entry.f2lFinalAdjustment;
       return {
         ...entry,
-        scramble: generateTrainerScramble(entryCase, st, f2lFinalAdjustment),
+        scramble: entry.bottomKey ? doubleZbllScramble(entry.key, entry.bottomKey) : generateTrainerScramble(entryCase, st, f2lFinalAdjustment),
         f2lFinalAdjustment,
       };
     };
@@ -1199,6 +1216,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     }
     set({
       puzzle,
+      doubleZbll: false,
       set: sessionId,
       sets,
       cases,
@@ -1258,6 +1276,18 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     hist: EMPTY_HIST,
     // 默认 H*(最优 HTM 打乱);case/set 没有这列时组件的回退 effect 会落回 `inv`
     scrambleKind: 'htm',
+    doubleZbll: false,
+    setDoubleZbll: (enabled) => {
+      const st = get();
+      if (st.timerState !== TimerState.NOT_RUNNING || st.doubleZbll === enabled) return;
+      if (enabled && (st.puzzle !== '3x3' || st.set !== 'zbll' || st.room || st.mode === 'memo' || !doubleZbllSupports(st.cases))) return;
+      persistItem('trainer:double-zbll', enabled ? '1' : '0');
+      const solves = loadPersisted(st.puzzle!, enabled ? 'zbll:double' : st.set!).solves;
+      set({ doubleZbll: enabled, scrambleKind: enabled ? 'htm' : st.scrambleKind, solves,
+        observingIdx: Math.max(0, solves.length - 1), observingPinned: false,
+        hist: EMPTY_HIST, recapQueue: [], recapPos: 0, recapSig: '', peek: null, peek2: null });
+      pickFresh();
+    },
     timerState: TimerState.NOT_RUNNING,
     timerStarted: 0,
     observingIdx: 0,
@@ -1286,24 +1316,37 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     // 换打乱类型立刻重出当前这道题 —— 不然要等下一次出题才生效,
     // 用户会以为没起作用。计时中不换(会把手上正在做的题换掉)。
     setScrambleKind: (k) => {
+      if (get().doubleZbll && k !== 'htm') return;
       set({ scrambleKind: k });
       regenCurrent();
     },
 
     setSelected: (keys) => {
-      const { puzzle, set: setSlug, solves } = get();
+      const { puzzle, set: setSlug, solves, selected, doubleZbll } = get();
       if (!puzzle || !setSlug) return;
-      persist(puzzle, setSlug, { selected: keys, solves });
+      if (get().doubleZbll) presetSessionSelection(puzzle, setSlug, keys);
+      persist(puzzle, get().doubleZbll ? `${setSlug}:double` : setSlug, { selected: keys, solves });
       set({ selected: keys });
+      if (doubleZbll && (keys.length !== selected.length || keys.some(k => !selected.includes(k)))) {
+        set({ hist: EMPTY_HIST, recapQueue: [], recapPos: 0, recapSig: '', peek: null, peek2: null });
+        pickFresh();
+      }
     },
 
     setScope: (keys) => {
+      const previousPool = trainerPool(get().selected, get().scope);
       set({ scope: keys });
       // 当前题落在范围外(或还没有题)⟹ 清掉历史、立刻按新范围出一道
       const st = get();
       if (st.room) return; // 房间模式题面由服务端领取,scope 不本地出题
       const pool = trainerPool(st.selected, st.scope);
-      if (pool.length > 0 && (!st.currentKey || !pool.includes(st.currentKey))) {
+      if (st.doubleZbll && st.timerState === TimerState.NOT_RUNNING
+        && (pool.length !== previousPool.length || pool.some(k => !previousPool.includes(k)))) {
+        set({ hist: EMPTY_HIST, recapQueue: [], recapPos: 0, recapSig: '', peek: null, peek2: null });
+        pickFresh();
+        return;
+      }
+      if (pool.length > 0 && (!st.currentKey || !pool.includes(st.currentKey) || (st.doubleZbll && !pool.includes(st.hist.list[st.hist.idx]?.bottomKey ?? '')))) {
         if (st.timerState === TimerState.NOT_RUNNING) {
           set({ hist: EMPTY_HIST });
           pickFresh();
@@ -1379,6 +1422,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       persistPrefs(prefsOf(get()));
     },
     setMode: (m) => {
+      if (get().doubleZbll && m === 'memo') return;
       if (get().room) return; // 房间是复习专用,离开房间才切模式
       resetF2LAdjustmentBag();
       set({ mode: m, recapSig: '' }); // 清 sig ⟹ 下一题重洗队列
@@ -1552,6 +1596,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
 
     createRoom: async () => {
       const st = get();
+      if (st.doubleZbll) return { ok: false, error: 'Double ZBLL uses a local pair queue' };
       if (!st.puzzle || !st.set) return { ok: false, error: 'no set loaded' };
       const pool = new Set(trainerPool(st.selected, st.scope));
       const poolKeys = st.cases.map(caseKey).filter(k => pool.has(k)); // 规范序全集
@@ -1594,6 +1639,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
 
     joinRoom: async (rawCode) => {
       const st = get();
+      if (st.doubleZbll) return { ok: false, error: 'Double ZBLL uses a local pair queue' };
       const code = rawCode.trim();
       if (!/^\d{4}$/.test(code)) return { ok: false, error: 'invalid code' };
       if (!st.puzzle || !st.set) return { ok: false, error: 'no set loaded' };
@@ -1671,12 +1717,13 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
         i: solves.length,
         caseKey: currentKey,
         caseName: currentName,
+        bottomKey: get().hist.list[get().hist.idx]?.bottomKey,
         scramble: currentScramble || '',
         ms,
         penalty: 'ok',
       };
       const newSolves = [...solves, newSolve];
-      persist(puzzle, setSlug, { selected: get().selected, solves: newSolves });
+      persist(puzzle, get().doubleZbll ? `${setSlug}:double` : setSlug, { selected: get().selected, solves: newSolves });
       set({
         solves: newSolves,
         timerState: TimerState.STOPPING,
@@ -1701,7 +1748,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       if (!puzzle || !setSlug) return;
       if (idx < 0 || idx >= solves.length) return;
       const newSolves = solves.map((s, j) => j === idx ? { ...s, penalty } : s);
-      persist(puzzle, setSlug, { selected, solves: newSolves });
+      persist(puzzle, get().doubleZbll ? `${setSlug}:double` : setSlug, { selected, solves: newSolves });
       set({ solves: newSolves });
     },
 
@@ -1710,7 +1757,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       if (!puzzle || !setSlug) return;
       const newSolves = solves.filter((_, j) => j !== idx)
         .map((s, j) => ({ ...s, i: j }));
-      persist(puzzle, setSlug, { selected, solves: newSolves });
+      persist(puzzle, get().doubleZbll ? `${setSlug}:double` : setSlug, { selected, solves: newSolves });
       set({
         solves: newSolves,
         observingIdx: Math.max(0, newSolves.length - 1),
@@ -1721,7 +1768,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     clearSolves: () => {
       const { puzzle, set: setSlug, selected } = get();
       if (!puzzle || !setSlug) return;
-      persist(puzzle, setSlug, { selected, solves: [] });
+      persist(puzzle, get().doubleZbll ? `${setSlug}:double` : setSlug, { selected, solves: [] });
       set({ solves: [], observingIdx: 0, observingPinned: false });
     },
   };

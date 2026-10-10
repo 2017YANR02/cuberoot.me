@@ -6,6 +6,7 @@ import { Gift, HardDrive, HeartHandshake, Inbox, MessageSquare, ShieldCheck, Use
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
 import { loginHref, useAuthStore, useIsAdmin } from '@/lib/auth-store';
+import BootDiagnostics from './BootDiagnostics';
 import './admin.css';
 
 interface AdminDestination {
@@ -68,6 +69,7 @@ export default function AdminPage() {
           </AppLink>
         ))}
       </nav>
+      <BootDiagnostics />
     </main>
   );
 }

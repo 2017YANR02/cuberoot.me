@@ -7,6 +7,40 @@
   },
   "artifacts": [
     {
+      "id": "trainer.double-zbll",
+      "kind": "local-heavy-artifact",
+      "source": {
+        "locator": "Frozen 472-case ZBLL catalog plus deterministic per-pair AUF phases",
+        "paths": [
+          "core/jobs/alg-build/src/double-zbll.ts",
+          "core/packages/shared/src/double_zbll.ts"
+        ],
+        "snapshot": ".tmp/double-zbll-v1/source.json"
+      },
+      "license": {
+        "spdx": "LicenseRef-CubeRoot",
+        "evidence": "Algorithm catalog attribution retained in cases JSON; native solver license remains in solver/vendor/nissy-core"
+      },
+      "owner": ["core/jobs/alg-build/src/double-zbll.ts", "core/packages/client/scripts/install-double-zbll.mts"],
+      "workingDirectory": "core",
+      "command": "pnpm --filter @cuberoot/alg-build double-zbll, then pnpm --filter @cuberoot/client double-zbll:install",
+      "outputs": [
+        "core/packages/client/public/data/double-zbll/manifest.json",
+        "core/packages/client/public/data/double-zbll/pairs-*.bin",
+        "core/packages/client/public/data/double-zbll/cases-*.json"
+      ],
+      "transientOutputs": [
+        ".tmp/double-zbll-v1/**"
+      ],
+      "verification": [
+        "Every one of 222784 records matches its target cube state, has valid HTM moves and an optimal native H48 solution",
+        "tests/double-zbll.test.ts",
+        "tests/trainer-double-zbll.test.ts",
+        "Offline reload and selection after downloading both page shells"
+      ],
+      "driftPolicy": "Generate locally with an existing H48 h10 table; never recompute during CI or browser startup. Preserve source identity and append-only solve checkpoints. Publish manifest last after full verification. Hash-named assets are immutable."
+    },
+    {
       "id": "client.maplibre-worker",
       "kind": "build-generated",
       "source": {

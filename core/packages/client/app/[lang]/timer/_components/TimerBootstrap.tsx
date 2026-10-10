@@ -216,7 +216,6 @@ export function buildTimerBootDiagnostic(
 function persistDiagnostic(diagnostic: TimerBootDiagnostic): void {
   if (typeof window === 'undefined') return;
   window.__timerBootTelemetry?.report('failure', diagnostic.kind);
-  reportAppBootDiagnostic(diagnostic);
   try {
     window.__timerBootDiagnostic = diagnostic;
   } catch {
@@ -286,6 +285,16 @@ function TimerBootFailurePanel({
   onRetry: () => void;
 }) {
   const [copied, setCopied] = useState(false);
+  const [reportState, setReportState] = useState<'reporting' | 'reported' | 'reportFailed'>('reporting');
+  useEffect(() => {
+    let active = true;
+    setReportState('reporting');
+    setCopied(false);
+    void reportAppBootDiagnostic(diagnostic).then(recorded => {
+      if (active) setReportState(recorded ? 'reported' : 'reportFailed');
+    });
+    return () => { active = false; };
+  }, [diagnostic]);
 
   return (
     <main className="timer-bootstrap timer-bootstrap-error" data-timer-bootstrap="error" role="alert">
@@ -295,6 +304,7 @@ function TimerBootFailurePanel({
       <p className="timer-bootstrap-message">
         {tr(failureMessage(diagnostic))}
       </p>
+      <p className="timer-bootstrap-message" role="status">{tr(TIMER_BOOT_COPY[reportState])}</p>
       <p className="timer-bootstrap-diagnostic">
         <span>{tr(TIMER_BOOT_COPY.diagnosticCode)}</span>
         <code>{diagnostic.code}</code>
@@ -303,7 +313,7 @@ function TimerBootFailurePanel({
         <button type="button" className="timer-bootstrap-button timer-bootstrap-button-primary" onClick={onRetry}>
           {tr(TIMER_BOOT_COPY.retry)}
         </button>
-        <button
+        {reportState === 'reportFailed' && <button
           type="button"
           className="timer-bootstrap-button"
           onClick={() => {
@@ -311,7 +321,7 @@ function TimerBootFailurePanel({
           }}
         >
           {tr(TIMER_BOOT_COPY.copy)}
-        </button>
+        </button>}
       </div>
       {copied && (
         <p className="timer-bootstrap-copied" role="status">

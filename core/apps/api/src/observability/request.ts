@@ -71,7 +71,7 @@ export const requestDiagnostics: MiddlewareHandler = async (c, next) => {
       clearTimeout(slowTimer);
       const durationMs = Math.round(performance.now() - start);
       const route = routePath(c) || 'unmatched';
-      if (durationMs >= 1000 || c.res.status >= 500 || ['/v1/nav/home-locks', '/v1/auth/me', '/v1/auth/profile'].includes(route)) {
+      if (durationMs >= 1000 || c.res.status >= 500 || ['/v1/nav/home-locks', '/v1/auth/me', '/v1/auth/profile', '/v1/auth/web-session/ticket', '/v1/auth/web-session/exchange'].includes(route)) {
         diagnosticLog('api_request', {
           ...trace, route, method: c.req.method, status: c.res.status, durationMs,
         }, durationMs >= 1000 || c.res.status >= 500);

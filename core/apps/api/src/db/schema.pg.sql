@@ -1,4 +1,6 @@
 -- PostgreSQL schema for cuberoot_db (生产真实 schema 的 PG 等价版,2026-05-06 实测对账)
+-- Assistant public-analysis views/ACLs: schema_assistant.pg.sql (0267).
+-- Apply after the WCA mirror schemas; the core-only snapshot does not create those mirrors.
 -- 设计原则: 最保守翻译,server 代码 0 改动
 --   tinyint(1)         → SMALLINT  (不转 BOOLEAN,jsonToRow 仍写 0/1)
 --   longtext+json_valid → TEXT     (server 代码已经用 JSON.parse 兜底,沿用)

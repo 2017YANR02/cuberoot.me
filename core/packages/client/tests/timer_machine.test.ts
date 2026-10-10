@@ -24,6 +24,18 @@ function apply(
 }
 
 describe('shared timer machine', () => {
+  it('records an aborted smart-cube run once with its actual time and inspection', () => {
+    const armed = apply(initialTimerMachineState(), { type: 'arm-from-cube', nowMs: 100 }, inspection);
+    const started = apply(armed.state, { type: 'start-from-cube', nowMs: 15500, atMs: 15480 }, inspection);
+    const aborted = apply(started.state, { type: 'abort-run', nowMs: 18000 }, inspection);
+    expect(aborted.accepted).toBe(true);
+    expect(aborted.state.phase).toBe('stopped');
+    expect(aborted.solve).toEqual({ timeMs: 2520, inspectionMs: 15380, autoPenalty: 'DNF' });
+    expect(aborted.effects).toEqual(['run-stopped']);
+    expect(apply(aborted.state, { type: 'abort-run', nowMs: 19000 }).solve).toBeUndefined();
+    expect(apply(aborted.state, { type: 'stop-from-cube', nowMs: 19000 }).accepted).toBe(false);
+    expect(apply(armed.state, { type: 'abort-run', nowMs: 19000 }).accepted).toBe(false);
+  });
   it('arms a smart cube directly into ready without a manual hold delay', () => {
     const step = apply(initialTimerMachineState(), { type: 'arm-from-cube', nowMs: 100 });
     expect(step.state.phase).toBe('ready');

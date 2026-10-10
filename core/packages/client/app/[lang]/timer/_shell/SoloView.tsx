@@ -6,11 +6,10 @@ import { timerSeedTicket } from '@cuberoot/shared/timer/sync-seed';
 import type { TimerSeedRequest } from '@cuberoot/shared/timer/seeded/generate';
 import { nextSeededScramble } from '../_lib/scramble/sync-seed';
 import { commitTimerSeed } from '../_lib/settings';
-import { TimerReplayImportModal } from '@cuberoot/timer-ui';
 import { readTimerReplay } from '@cuberoot/shared/timer/replay-client';
 import { apiUrl as replayApiUrl } from '@/lib/api-base';
 
-import { TimerStatisticsWorkspace, timerStatsPanelLabels } from '@cuberoot/timer-ui';
+import { timerStatsPanelLabels } from '@cuberoot/timer-ui';
 import { loadAllSessionData, deleteSessionSolves } from '../_lib/storage/db';
 import { TIMER_DEVICE_CENTER_LABELS } from '@cuberoot/timer-ui';
 import { SCRAMBLE_222_TYPE_CATALOG, isScramble222Type, TIMER_333_SCRAMBLE_TYPES, timerPuzzleSelection, timerHidesRunningUi, upsertNetRecordedSolve } from '@cuberoot/shared/timer';
@@ -52,7 +51,7 @@ import {
   startTrainingEvidenceOutbox,
   submitTrainingEvidence,
 } from '@/lib/training-evidence';
-import MoreMenu, { type MoreMenuItem } from '../_components/MoreMenu';
+import type { MoreMenuItem } from '../_components/MoreMenu';
 import { syncLangToUrl } from '@/i18n/i18n-client';
 
 import { createRandomScrambleClient } from '@cuberoot/timer-ui/random-scramble';
@@ -157,9 +156,7 @@ import { compFlagIso2, loadFlagData, flagDataVersion } from '@/lib/country-flags
 import { localizeCompName } from '@/lib/comp-localize';
 import { compSourceLine } from '@/lib/comp-schedule';
 import { useAuthStore, useIsAdmin } from '@/lib/auth-store';
-import { InspectionRotationDebug } from '../_components/InspectionRotationDebug';
 import AppLink from '@/components/AppLink';
-import { CompetitionVideoRoom } from '@/components/platform/CompetitionVideoRoom';
 import { useCompetitionAttempt } from './competition-attempt';
 import '@/components/platform/online-competitions.css';
 import { cloudOptimalScramble } from '@/lib/cloud-optimal-scramble';
@@ -233,7 +230,6 @@ import HistoryPanel from '../_components/HistoryPanel';
 import { decodeReplayParam, solveFromReplay } from '../_lib/share/decode';
 
 import { fetchServerReplayShare } from '../_lib/share/server';
-import SettingsPanel from '../_components/SettingsPanel';
 import GoalProgress from '../_components/GoalProgress';
 import RoundPanel from '../_components/RoundPanel';
 
@@ -287,6 +283,13 @@ import '../_components/charts/practice_heatmap.css';
 // 用户一次也不会打开它们。ssr:false —— 本文件已经在一个 ssr:false 的动态边界里(page.tsx
 // 只在客户端拉 TimerShell),弹层再声明一次只是显式表态,不新增行为。
 const SolveModal = dynamic(() => import('../_components/SolveModal'), { ssr: false });
+// Optional workspaces must not hold the ordinary keyboard timer behind their
+// video SDK, charts or configuration UI. Their existing render gates own loading.
+const CompetitionVideoRoom = dynamic(() => import('@/components/platform/CompetitionVideoRoom').then(m => m.CompetitionVideoRoom), { ssr: false });
+const SettingsPanel = dynamic(() => import('../_components/SettingsPanel'), { ssr: false });
+const InspectionRotationDebug = dynamic(() => import('../_components/InspectionRotationDebug').then(m => m.InspectionRotationDebug), { ssr: false });
+const TimerReplayImportModal = dynamic(() => import('@cuberoot/timer-ui').then(m => m.TimerReplayImportModal), { ssr: false });
+const TimerStatisticsWorkspace = dynamic(() => import('@cuberoot/timer-ui').then(m => m.TimerStatisticsWorkspace), { ssr: false });
 const ReconstructModal = dynamic(() => import('../_components/ReconstructModal'), { ssr: false });
 const BluetoothModal = dynamic(() => import('../_components/BluetoothModal'), { ssr: false });
 const BluetoothTimerModal = dynamic(() => import('../_components/BluetoothTimerModal'), { ssr: false });
@@ -360,8 +363,6 @@ function useMediaQuery(query: string): boolean {
   return matches;
 }
 
-// 工具收进顶栏 MoreMenu；齿轮只保留持久设置，避免工具动作再叠一层弹窗。
-//
 // 三档各答一个问题,名字就是答案:**成绩**是这些把本身(会话 + 那张单子),**统计**
 // 是从它们算出来的数(当前/最佳、σ、阈值占比、完整统计),**图表**是画出来的。
 // 原来成绩那一档从当前/最佳一路铺到阈值占比再到历史,要滚很久才够到自己刚拧的那把。
@@ -1359,6 +1360,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const eventAtStartRef = useRef<EventId>(event);
   const caseIdAtStartRef = useRef<string | null>(null);
   const smartCubeAttemptProducerRef = useRef(new SmartCubeAttemptProducer());
+  const abortingSmartCubeRef = useRef(false);
   const [liveSolve, setLiveSolve] = useState<Solve | null>(null);
   const [liveStageTarget, setLiveStageTarget] = useState<HTMLDivElement | null>(null);
   const autoRecapDismissGestureRef = useRef(new AutoRecapDismissGesture());
@@ -1431,7 +1433,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     submitTimerTrainingEvidence(trainingDestinationRef.current, solve);
     // 桌面在右栏展开复盘；窄屏直接进入整屏详情。两者共用 shouldAutoRecap，
     // 没有动作流或关闭开关时都不主动打断下一把流程。
-    const showRecap = shouldAutoRecap(solve, { autoRecap: settings.autoRecap });
+    const showRecap = !abortingSmartCubeRef.current && shouldAutoRecap(solve, { autoRecap: settings.autoRecap });
     autoRecapDismissGestureRef.current.reset();
     autoRecapInputBlockedRef.current = false;
     setRecapId(showRecap ? solve.id : null);
@@ -1439,7 +1441,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       autoRecapInputBlockedRef.current = true;
       setModalSolve({ s: solve, idx: solveIndex, autoRecap: true });
     }
-    const showSolution = settings.autoOpenSolution && Boolean(solve.device && solve.moves?.length);
+    const showSolution = !abortingSmartCubeRef.current && settings.autoOpenSolution && Boolean(solve.device && solve.moves?.length);
     if (showRecap || showSolution) setPanelTab(null);
     if (showSolution) setSolverOpenRequest((value) => value + 1);
     if (res.autoPenalty === 'DNF') petReact('error');
@@ -2503,6 +2505,20 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           onPressUp();
           return;
         case 'reset':
+          if (event.repeat) return;
+          if (phaseSnapshotRef.current === 'running' && smartCubeInputBlocked()) {
+            abortingSmartCubeRef.current = true;
+            try {
+              if (timerHandleRef.current.abortRun()) {
+                phaseSnapshotRef.current = 'stopped';
+                cubeStartedRef.current = false;
+                smartCubeSoloController.setRunning(false);
+              }
+            } finally {
+              abortingSmartCubeRef.current = false;
+            }
+            return;
+          }
           reset();
           return;
         case 'mark-stage':
@@ -2573,7 +2589,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
     };
-  }, [onPressDown, onPressUp, reset, updateSolve, deleteSolve, nextScramble, prevScramble,
+  }, [onPressDown, onPressUp, reset, smartCubeInputBlocked, smartCubeSoloController, updateSolve, deleteSolve, nextScramble, prevScramble,
     sheetNextScramble, sheetPrevScramble, toggleFullscreen, multiStageActive, bldMemoActive]);
 
   // 计时进行中:点屏幕任何地方都停表。计时面板内由 useGestureWheel(surfaceRef)处理,
@@ -2591,7 +2607,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     return () => document.removeEventListener('pointerdown', onDocDown);
   }, [onPressDown]);
 
-  // ── External devices + More menu items ──────────────────────────
+  // Canonical tool effects are grouped into the settings panel by the Web host.
   const moreItems = useMemo<MoreMenuItem[]>(() => visibleTimerMoreActions({
     compactViewport: isMobile,
     drillActive: drillTarget !== null,
@@ -3065,8 +3081,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           actions: (
           <>
           {presenceControl}
-          <MoreMenu items={moreItems} />
-          <button type="button" className="tb-btn" onClick={() => setSettingsOpen(true)} title={tr({ zh: '设置', en: 'Settings'
+          <button type="button" className="tb-btn" aria-haspopup="dialog" aria-expanded={settingsOpen} onClick={() => setSettingsOpen(true)} title={tr({ zh: '设置', en: 'Settings'
         })}>
             <SettingsIcon size={14} />
           </button>
@@ -3432,7 +3447,7 @@ children: <>
         />
       )}
 
-      {settingsOpen && <SettingsPanel event={event} mergeSlotRef={setMergeSlot} onClose={closeSettings} onDataReplaced={() => { trainingRound.reset(); setByEvent(loadAll()); }} />}
+      {settingsOpen && <SettingsPanel event={event} actions={moreItems} mergeSlotRef={setMergeSlot} onClose={closeSettings} onDataReplaced={() => { trainingRound.reset(); setByEvent(loadAll()); }} />}
 
       {infoToast && (
         <TimerInfoToast

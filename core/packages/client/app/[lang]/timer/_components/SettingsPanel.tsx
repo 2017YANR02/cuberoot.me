@@ -6,6 +6,10 @@ import { TimerSyncSeedSettings, TimerRankSettings, TimerBackupSettings, TimerImp
  */
 
 import { useEffect, useId, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
+import { ChevronRight } from 'lucide-react';
+import AppLink from '@/components/AppLink';
+import type { MoreMenuItem } from './MoreMenu';
 import { getSettings, resetSettings, updateSettings, useSettings } from '../_lib/settings';
 import { TimerKeymapSettings, TimerGoalSettings, TimerRoundSettings, TimerSettingsPanel, TimerTypographySettings } from '@cuberoot/timer-ui';
 import { warmupSound, play, playInspectionBeep } from '../_lib/sound';
@@ -48,12 +52,30 @@ import '@/components/wca-source.css';
 
 interface Props {
   onClose: () => void;
+  actions: readonly MoreMenuItem[];
   /** Current event — target-time setting applies to this event. */
   event: EventId;
   mergeSlotRef: (element: HTMLDivElement | null) => void;
   /** Called after the local DB is wholesale-replaced (cloud restore) so the host can refresh. */
   onDataReplaced?: () => void;
 }
+
+// Keep every existing action in its natural settings category; visibility,
+// availability and effects still come from the canonical timer action registry.
+const ACTION_CATEGORY = {
+  'more.marks': 'scramble',
+  'more.stats-mobile': 'data',
+  'more.language-mobile': 'appearance',
+  'more.drill': 'training',
+  'more.bld-helper': 'training',
+  'more.fullscreen': 'appearance',
+  'more.manual-entry': 'data',
+  'more.replay': 'training',
+  'more.solver': 'training',
+  'more.bulk': 'scramble',
+  'more.print': 'data',
+  'more.clear-event': 'data',
+} satisfies Record<MoreMenuItem['id'], TimerSettingCategoryId>;
 
 interface SettingsSectionProps {
   category: TimerSettingCategoryId;
@@ -78,7 +100,7 @@ function SettingsSection({ category, activeCategory, title, children, headerCont
   );
 }
 
-export default function SettingsPanel({ onClose, event, mergeSlotRef, onDataReplaced }: Props) {
+export default function SettingsPanel({ onClose, event, actions, mergeSlotRef, onDataReplaced }: Props) {
   const s = useSettings();
   const optimalUser = useAuthStore((st) => st.user);
   const metro = useMetronome();
@@ -221,6 +243,27 @@ export default function SettingsPanel({ onClose, event, mergeSlotRef, onDataRepl
   return (
     <TimerSettingsPanel language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'}
       activeCategory={activeCategory} onCategoryChange={setActiveCategory} onClose={onClose}>
+        {actions.some(action => action.visible && !action.danger && ACTION_CATEGORY[action.id] === activeCategory) && (
+          <div className="timer-settings-actions" aria-label={tr({ en: 'Tools', zh: '工具' })}>
+            {actions.filter(action => action.visible && !action.danger && ACTION_CATEGORY[action.id] === activeCategory).map(action => {
+              const label = action.id === 'more.fullscreen' && action.active
+                ? tr({ en: 'Exit fullscreen', zh: '退出全屏' }) : action.label;
+              const content = <><span>{label}</span><ChevronRight size={16} aria-hidden="true" /></>;
+              return action.href && !action.disabled ? (
+                <AppLink key={action.id} className="timer-settings-action" href={action.href} prefetch={false} onClick={onClose}>{content}</AppLink>
+              ) : (
+                <button key={action.id} type="button" className="timer-settings-action"
+                  disabled={action.disabled || !action.onSelect}
+                  onClick={() => {
+                    // Unmount the dialog before prompts/print or opening another
+                    // tool, while preserving fullscreen's user activation.
+                    flushSync(onClose);
+                    action.onSelect?.();
+                  }}>{content}</button>
+              );
+            })}
+          </div>
+        )}
             {activeCategory === 'appearance' && (
               <div
                 className="settings-appearance-preview"
@@ -420,6 +463,15 @@ export default function SettingsPanel({ onClose, event, mergeSlotRef, onDataRepl
           <TimerKeymapSettings value={s.keymap} onChange={update => updateSettings({ keymap: update(getSettings().keymap) })} localize={tr} />
           <TimerResetSettings onReset={resetSettings} confirmReset={message => confirm(message)} localize={tr} />
         </SettingsSection>
+        {actions.filter(action => action.visible && action.danger && ACTION_CATEGORY[action.id] === activeCategory).map(action => (
+          <div className="settings-reset-row" key={action.id}>
+            <button type="button" className="timer-settings-action timer-settings-action-danger"
+              disabled={action.disabled || !action.onSelect}
+              onClick={() => { flushSync(onClose); action.onSelect?.(); }}>
+              <span>{action.label}</span><ChevronRight size={16} aria-hidden="true" />
+            </button>
+          </div>
+        ))}
     </TimerSettingsPanel>
   );
 }

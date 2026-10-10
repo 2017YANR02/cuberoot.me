@@ -36,6 +36,8 @@ export interface TimerHandle {
   /** Cancel a pointer press while preserving an active inspection. */
   cancelPress: () => void;
   reset: () => void;
+  /** End the running attempt once, preserving elapsed time and recording DNF. */
+  abortRun: () => boolean;
   /** Start immediately for a synchronized countdown, optionally backdated. */
   startNow: (elapsedMs?: number) => void;
   /** Stop at an exact time measured by an external hardware timer. */
@@ -228,6 +230,10 @@ export function useTimer(
     dispatch({ type: 'reset' });
   }, [dispatch]);
 
+  const abortRun = useCallback(() => {
+    return dispatch({ type: 'abort-run', nowMs: performance.now() }).accepted === true;
+  }, [dispatch]);
+
   const cancelArm = useCallback(() => {
     dispatch({ type: 'cancel-arm' });
   }, [dispatch]);
@@ -247,6 +253,7 @@ export function useTimer(
     onPressUp,
     cancelPress,
     reset,
+    abortRun,
     startNow,
     stopExternal,
     startFromCube,

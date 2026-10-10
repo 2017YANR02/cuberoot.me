@@ -9,6 +9,7 @@ import { roundChronologicalOrder } from '@cuberoot/shared/wca-round';
 import { mergeCompetitionIndexes } from '@cuberoot/shared/competition-index';
 import type { AssistantArtifact, AssistantSource, AssistantTable } from '@cuberoot/shared/site-assistant';
 import { findAssistantPeople } from './site_assistant_people.js';
+import { analysisSchemaCall, analysisQueryCall } from './site_assistant_analysis.js';
 
 const id = z.string().regex(/^[A-Za-z0-9_-]{1,100}$/);
 const competitionId = id.refine(value=>!/^\d{4}[A-Z]{4}\d{2}$/.test(value),'This is a person WCA ID; use wcaId, not compId.');
@@ -16,9 +17,12 @@ const event = z.enum(WCA_EVENT_ORDER).default('333');
 const query = z.string().trim().min(1).max(100);
 const date=z.string().refine(isValidIsoDate,'Expected an ISO calendar date');
 export const toolCallSchema = z.discriminatedUnion('tool', [
+  analysisSchemaCall,
+  analysisQueryCall,
   z.object({ tool: z.literal('records'), event, region: z.string().regex(/^(world|[A-Z]{2})$/).default('world') }).strict(),
   z.object({ tool: z.literal('find_person'), query }).strict(),
   z.object({ tool: z.literal('person_countries'), wcaId: z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/) }).strict(),
+  z.object({ tool: z.literal('person_competitions'), wcaId: z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/), from: date.optional(), to: date.optional() }).strict().refine(value=>!value.from || !value.to || value.from<=value.to,{message:'Date range is reversed'}),
   z.object({ tool: z.literal('person'), wcaId: z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/), event: z.enum([...WCA_EVENT_ORDER, 'all']).default('333'), progress: z.boolean().default(false), view: z.enum(['records','profile']).optional() }).strict().refine(value=>value.event!=='all' || !value.progress,{path:['event'],message:'Progress charts require one event; use all only for current personal bests.'}),
   z.object({ tool: z.literal('rankings'), event, type: z.enum(['single','average']).default('single'), country: z.string().regex(/^([A-Z]{2}|_Asia|_Europe|_Africa|_North America|_South America|_Oceania)?$/).default(''), year: z.number().int().min(2003).max(2100).optional(), limit: z.number().int().min(1).max(20).default(10) }).strict(),
   z.object({ tool: z.literal('competitions'), query: z.string().max(100).default(''), country: z.string().regex(/^([A-Z]{2})?$/).default(''), upcoming: z.boolean().default(true), from:date.optional(),to:date.optional(), limit: z.number().int().min(1).max(20).default(10) }).strict().refine(value=>!value.from || !value.to || value.from<=value.to,{message:'Date range is reversed'}),
@@ -51,7 +55,7 @@ const url = (path: string, params: Record<string, string | number | undefined>) 
 const source = (id: string, title: string, href: string): AssistantSource => ({ id, title, href, read: true });
 
 /** Only fixed public origins/endpoints. Never forwards cookies or credentials. */
-export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'|'navigation'}>, lang: 'zh'|'en', read: JsonReader, findPeople = findAssistantPeople,today=new Date().toISOString().slice(0,10)): Promise<ToolResult> {
+export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'|'navigation'|'analysis_schema'|'analysis_query'}>, lang: 'zh'|'en', read: JsonReader, findPeople = findAssistantPeople,today=new Date().toISOString().slice(0,10)): Promise<ToolResult> {
   const label = (zh: string, en: string) => ({ zh, en })[lang];
   const name = (raw: string) => displayCuberName(raw, lang === 'zh');
   const compNames = lang === 'zh' && ['records','rankings','competitions'].includes(call.tool) ? await read(`${stat}/comp_names_zh.json`).catch(() => ({})) : {};
@@ -133,6 +137,33 @@ export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'
     const rows = await findPeople(call.query);
     out.evidence = rows;
     out.sources = rows.map(r => source(`person:${r.wcaId}`, name(r.name), `/wca/persons/${r.wcaId}`));
+  } else if (call.tool === 'person_competitions') {
+    const [data, updated] = await Promise.all([read(url(`${api}/wca/person-page`, {wcaId:call.wcaId})), freshness()]);
+    const title = name(data.profile.person.name);
+    // Results contain multiple events/rounds per competition. Count each ID
+    // once, including DNF results; unrelated competition metadata is not attendance.
+    const attended = new Set<string>(data.results.map((r:any)=>r.competition_id));
+    const dates = new Map<string,string>(data.comps.map((c:any)=>[c.id,c.start_date]));
+    const years = new Map<string,number>();
+    let count = 0, unknownDateCompetitions = 0;
+    for (const compId of attended) {
+      const parsedDate = date.safeParse(dates.get(compId));
+      if (!parsedDate.success) { unknownDateCompetitions++; continue; }
+      const start = parsedDate.data;
+      if ((call.from && start<call.from) || (call.to && start>call.to)) continue;
+      count++;
+      const year = start.slice(0,4);
+      years.set(year,(years.get(year) ?? 0)+1);
+    }
+    const byYear = [...years].sort(([a],[b])=>a.localeCompare(b)).map(([year,competitions])=>({year,competitions}));
+    out.evidence = {updated,wcaId:call.wcaId,name:title,from:call.from,to:call.to,count,byYear,unknownDateCompetitions,
+      basis:'Distinct competition IDs with imported official results, grouped/filtered by competition start date. DNF participation is included. Not a count of rounds, events, registrations or an annualized average. Missing years have zero imported competitions only when unknownDateCompetitions is zero. Coverage ends at the import timestamp, not today.'};
+    out.sources.push(source(`person-competitions:${call.wcaId}:${call.from ?? 'all'}:${call.to ?? 'all'}`,title,`/wca/persons/${call.wcaId}`));
+    const period = call.from && call.to ? formatDateRangeIso(call.from,call.to) : call.from ? label(`${call.from} 起`,`since ${call.from}`) : call.to ? label(`截至 ${call.to}`,`through ${call.to}`) : label('全部年份','all years');
+    out.factualSummary = label(`按已导入的 WCA 官方成绩，${title}在 ${period} 参加过 ${count} 场比赛，以比赛开始日期计。`,`Imported official WCA results show ${count} competitions for ${title} (${period}), counted by competition start date.`)
+      + (updated ? label(`数据导入时间：${updated}。`,` Data imported: ${updated}.`) : '')
+      + (unknownDateCompetitions ? label(`另有 ${unknownDateCompetitions} 场比赛缺少有效日期，未计入，以上数量可能不完整。`,` ${unknownDateCompetitions} competitions lack valid dates and are excluded; this count may be incomplete.`) : '');
+    if (byYear.length) table(label('按年参赛数','Competitions by year'),[label('年份','Year'),label('比赛数','Competitions')],byYear.map(row=>[row.year,String(row.competitions)]));
   } else if (call.tool === 'person_countries') {
     const [data, updated] = await Promise.all([read(url(`${api}/wca/person-page`, {wcaId:call.wcaId})), freshness()]);
     const title = name(data.profile.person.name);
@@ -245,7 +276,11 @@ export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'
   } else if (call.tool === 'algorithms') {
     const path=call.set ? `${api}/alg/sets/${call.puzzle}/${call.set}` : `${api}/alg/sets`;
     const data=await read(path);
-    out.evidence=call.set ? {...data,cases:data.cases?.slice(0,72)} : data;
+    out.evidence=call.set ? {...data,cases:data.cases?.slice(0,72)} : {
+      puzzle:call.puzzle,
+      sets:data.filter((set:any)=>set.puzzle===call.puzzle).map((set:any)=>({puzzle:set.puzzle,setSlug:set.setSlug,count:set.count,updatedAt:set.updatedAt})),
+      instruction:'Complete catalog for this puzzle. count is the number of cases, not formulas. Use these counts for catalog questions; do not reread the catalog or fetch individual formula content to answer them. For other aggregates use analysis_schema / analysis_query.',
+    };
     out.sources.push(source('algorithms',label('公式库','Algorithms'),call.set ? `/alg/${call.puzzle}/${call.set}` : '/alg'));
   }
   return out;

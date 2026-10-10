@@ -28,8 +28,9 @@ interface FollowRow { comp_id: string }
 
 compFollowsRoutes.get('/comp/follows', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
-  checkRateLimit(getIp(c));
+  checkRateLimit(getIp(c), { bucket: 'comp-follows-read-ip', max: 600 });
   const authUser = await requireAuth(c);
+  checkRateLimit(authUser.wcaId, { bucket: 'comp-follows-read-user', max: 120 });
   const rows = await query<FollowRow>(
     'SELECT comp_id FROM comp_follows WHERE wca_id = ? ORDER BY created_at DESC',
     [authUser.wcaId],

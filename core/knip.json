@@ -75,7 +75,8 @@
       ]
     },
     "{packages/alg-build,jobs/alg-build}": {
-      "entry": ["*.{mjs,mts,ts}", "src/**/*.{mjs,mts,ts}"]
+      "entry": ["*.{mjs,mts,ts}", "src/**/*.{mjs,mts,ts}"],
+      "ignoreBinaries": ["vm_stat", "sysctl", "ps"]
     },
     "{packages/scramble-stats-build,jobs/scramble-stats-build}": {
       "entry": ["*.{mjs,ts,mts}", "src/**/*.{mjs,ts,mts}", "tests/**/*.test.ts"]

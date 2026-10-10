@@ -7,32 +7,10 @@ on:
   # Weekly full run catches runner/toolchain drift that path filters cannot see.
   schedule:
     - cron: '17 9 * * 1'
+  # Required PR checks must exist even for documentation-only changes.
   pull_request:
     paths:
-      - '.node-version'
-      - 'core/**'
-      - '!core/packages/platform/**'
-      - 'docs/platform-capability-manifest.json'
-      - 'docs/platform-unification-plan.md'
-      - 'sync_upstream.ts'
-      - '.sync/**'
-      - 'scripts/upstream/**'
-      - 'ops/nginx/**'
-      - 'ops/vercel-ban-relay/competition-rule.json'
-      - 'ops/systemd/cuberoot-drive-compression.service'
-      - 'ops/bin/pg-dump-recon.sh'
-      - 'ops/systemd/pg-dump-recon.service'
-      - '.github/workflows/backup_recon.yml'
-      - '.github/workflows/best2x2_drift.yml'
-      - '.github/workflows/deploy_core.yml'
-      - '.github/workflows/deploy_next.yml'
-      - '.github/workflows/elev_backfill.yml'
-      - '.github/workflows/icons_drift.yml'
-      - '.github/workflows/regulation_drift.yml'
-      - '.github/workflows/sq1_pbl_drift.yml'
-      - '.github/workflows/stats.yml'
-      - '.github/workflows/test.yml'
-      - '.github/workflows/update_upcoming.yml'
+      - '**'
   push:
     branches: [main]
     paths:
@@ -48,6 +26,7 @@ on:
       - 'ops/vercel-ban-relay/competition-rule.json'
       - 'ops/systemd/cuberoot-drive-compression.service'
       - 'ops/bin/pg-dump-recon.sh'
+      - 'ops/bin/provision-assistant-reader.sql'
       - 'ops/systemd/pg-dump-recon.service'
       - '.github/workflows/backup_recon.yml'
       - '.github/workflows/best2x2_drift.yml'
@@ -211,6 +190,7 @@ jobs:
               - 'core/scripts/resolve-workspace-path.mjs'
               - '.github/workflows/deploy_core.yml'
               - 'ops/systemd/cuberoot-drive-compression.service'
+              - 'ops/bin/provision-assistant-reader.sql'
             stats:
               - '.node-version'
               - 'core/package.json'
@@ -369,6 +349,8 @@ jobs:
             /.node-version
             /core/
             /solver/Cargo.toml
+            /solver/333opt/solve_h10.mts
+            /docs/double-zbll-trainer.md
             /docs/generated-artifacts.json
             /docs/platform-capability-manifest.json
             /docs/platform-unification-plan.md
@@ -382,6 +364,7 @@ jobs:
             /ops/vercel-ban-relay/competition-rule.json
             /ops/systemd/cuberoot-drive-compression.service
             /ops/bin/pg-dump-recon.sh
+            /ops/bin/provision-assistant-reader.sql
             /tools/cstimer-scramble/
             /tools/solver/rust-cross/cross-solver-worker.js
             /tools/blddb/data/cornerManmade.json
@@ -504,6 +487,21 @@ jobs:
           createdb -h 127.0.0.1 -U postgres identity_choice_test
           pnpm --filter @cuberoot/server exec vitest run tests/identity_choice_pg.test.ts
 
+      - name: Assistant analysis PostgreSQL 13 isolation
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.server == 'true' }}
+        working-directory: core
+        env:
+          ASSISTANT_ANALYSIS_PG_TEST: '1'
+          DB_HOST: 127.0.0.1
+          DB_PORT: '5432'
+          DB_USER: postgres
+          DB_PASS: postgres
+          DB_NAME: assistant_analysis_test
+          PGPASSWORD: postgres
+        run: |
+          createdb -h 127.0.0.1 -U postgres assistant_analysis_test
+          pnpm --filter @cuberoot/server exec vitest run tests/site_assistant_analysis_pg.test.ts
+
       - name: Verify stats-build producer contracts
         if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.stats == 'true' }}
         working-directory: core
@@ -617,6 +615,8 @@ jobs:
             /.node-version
             /core/
             /solver/Cargo.toml
+            /solver/333opt/solve_h10.mts
+            /docs/double-zbll-trainer.md
             /docs/generated-artifacts.json
             /docs/platform-capability-manifest.json
             /docs/platform-unification-plan.md
@@ -997,3 +997,27 @@ jobs:
       - name: Analyzer worker regression
         working-directory: core
         run: pnpm --filter @cuberoot/client test:slow
+
+  # Keep this dependency list complete: the workflow contract test guards drift.
+  pr-checks:
+    name: PR checks
+    if: ${{ always() }}
+    needs: [changes, test, client-tests, mobile, desktop-ui, desktop, analyzer-worker]
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions: {}
+    steps:
+      - name: Require successful affected checks
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
+        run: |
+          node --input-type=module <<'NODE'
+          const jobs = JSON.parse(process.env.NEEDS_JSON);
+          for (const [name, { result }] of Object.entries(jobs)) {
+            console.log(name + ': ' + result);
+          }
+          const failed = jobs.changes.result !== 'success'
+            || jobs.test.result !== 'success'
+            || Object.values(jobs).some(({ result }) => !['success', 'skipped'].includes(result));
+          if (failed) process.exit(1);
+          NODE

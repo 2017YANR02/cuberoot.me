@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { runInNewContext } from 'node:vm';
 import { describe, expect, it } from 'vitest';
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
@@ -219,6 +220,7 @@ const CORE_PATHS = [
   corePath('scripts', 'build-cubing-worker.mjs'),
   corePath('scripts', 'resolve-workspace-path.mjs'),
   repoPath('ops', 'systemd', 'cuberoot-drive-compression.service'),
+  repoPath('ops', 'bin', 'provision-assistant-reader.sql'),
   repoPath('.github', 'workflows', 'deploy_core.yml'),
 ] as const;
 
@@ -261,6 +263,7 @@ const TEST_PATHS = [
   repoPath('ops', 'vercel-ban-relay', 'competition-rule.json'),
   repoPath('ops', 'systemd', 'cuberoot-drive-compression.service'),
   repoPath('ops', 'bin', 'pg-dump-recon.sh'),
+  repoPath('ops', 'bin', 'provision-assistant-reader.sql'),
   repoPath('ops', 'systemd', 'pg-dump-recon.service'),
   repoPath('.github', 'workflows', 'backup_recon.yml'),
   repoPath('.github', 'workflows', 'best2x2_drift.yml'),
@@ -573,8 +576,8 @@ describe('deployment workflow path contracts', () => {
 
   it('runs cross-layer contract tests when their nginx evidence changes', () => {
     expect(testPushPaths).toEqual(TEST_PATHS);
-    expect(testPullRequestPaths).toEqual(TEST_PATHS);
-    for (const paths of [testPushPaths, testPullRequestPaths]) {
+    expect(testPullRequestPaths).toEqual(['**']);
+    for (const paths of [testPushPaths]) {
       expect(workflowTriggers(paths, [repoPath('ops', 'nginx', 'www.cuberoot.me.conf')])).toBe(true);
       expect(workflowTriggers(paths, [repoPath('ops', 'nginx', 'api.cuberoot.me.conf')])).toBe(true);
       expect(workflowTriggers(paths, [repoPath('ops', 'vercel-ban-relay', 'competition-rule.json')])).toBe(true);
@@ -585,6 +588,46 @@ describe('deployment workflow path contracts', () => {
       expect(workflowTriggers(paths, [repoPath('scripts', 'upstream', 'sync-all.ts')])).toBe(true);
       expect(workflowTriggers(paths, [packagePath('platform', 'README.md')])).toBe(false);
       expect(workflowTriggers(paths, [packagePath('server', 'src', 'index.ts')])).toBe(true);
+    }
+  });
+
+  it('always reports PR checks and includes every test job in its gate', () => {
+    const workflow = readWorkflow('test.yml');
+    const jobSource = workflow.slice(workflow.indexOf('\njobs:\n'));
+    const jobIds = [...jobSource.matchAll(/^  ([a-z][a-z0-9-]*):$/gm)].map(match => match[1]);
+    const gate = jobSource.slice(jobSource.indexOf('\n  pr-checks:\n'));
+    const dependencies = gate.match(/needs: \[([^\]]+)\]/)?.[1].split(',').map(name => name.trim());
+    expect(dependencies?.sort()).toEqual(jobIds.filter(id => id !== 'pr-checks').sort());
+    expect(gate).toContain('if: ${{ always() }}');
+    expect(testPullRequestPaths).toEqual(['**']);
+    expect(workflowTriggers(testPullRequestPaths, ['CONTRIBUTING.md'])).toBe(true);
+
+    const run = readStepRun('test.yml', 'Require successful affected checks');
+    const script = run.split('\n').slice(1, -1).join('\n');
+    const pass = Object.fromEntries(dependencies!.map(name => [name, { result: 'success' }]));
+    const execute = (jobs: Record<string, { result: string }>) => {
+      let status = 0;
+      runInNewContext(script, {
+        process: {
+          env: { NEEDS_JSON: JSON.stringify(jobs) },
+          exit: (code: number) => { status = code; },
+        },
+        console: { log: () => {} },
+      });
+      return status;
+    };
+    expect(execute(pass)).toBe(0);
+    const docsOnly = Object.fromEntries(dependencies!.map(name => [name, {
+      result: ['changes', 'test'].includes(name) ? 'success' : 'skipped',
+    }]));
+    expect(execute(docsOnly)).toBe(0);
+    for (const name of dependencies!) {
+      for (const result of ['failure', 'cancelled']) {
+        expect(execute({ ...pass, [name]: { result } }), name + ': ' + result).toBe(1);
+      }
+    }
+    for (const name of ['changes', 'test']) {
+      expect(execute({ ...docsOnly, [name]: { result: 'skipped' } }), name).toBe(1);
     }
   });
 

@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createSiteAssistantRoutes as createRoutes } from '../src/routes/site_assistant.js';
 import { answerSiteQuestion, assistantConfig, pageText, requestedAssistantLimit } from '../src/utils/site_assistant.js';
 import { cubeAgentConfig } from '../src/utils/cube_agents.js';
+import { runAnalysisQuery } from '../src/utils/site_assistant_analysis_db.js';
+vi.mock('../src/utils/site_assistant_analysis_db.js',async importOriginal=>({...(await importOriginal<object>()),runAnalysisQuery:vi.fn()}));
 vi.mock('../src/utils/site_assistant_people.js',()=>({findAssistantPeople:vi.fn(async()=>[{wcaId:'2012PARK03',name:'Max Park',country:'USA'}])}));
 
 const createSiteAssistantRoutes = (deps: Omit<Parameters<typeof createRoutes>[0], 'reserve' | 'authenticate'> & { reserve?: () => Promise<{ allowed: boolean; retryAfter: number }> }) => createRoutes({ authenticate: async () => ({ uid: 1, wcaId: '2017YANR02' }), reserve: async () => ({ allowed: true, retryAfter: 60 }), ...deps });
@@ -16,6 +18,61 @@ const ask = () => new Request('https://api.example/site-assistant', {
 });
 
 describe('site assistant grounding', () => {
+  it('requires schema discovery and retries a failed analysis without treating the failure as evidence',async()=>{
+    const call={tool:'analysis_query',title:'Monthly competitions',description:'Distinct competition IDs by month',query:{}};
+    vi.mocked(runAnalysisQuery).mockReset()
+      .mockResolvedValueOnce({sources:[],artifacts:[],evidence:{error:'Correct the grouping',notEvidence:true}})
+      .mockResolvedValueOnce({sources:[{id:'analysis:test',title:call.title,href:'/wca/results',read:true}],artifacts:[{kind:'table',title:call.title,columns:['Count'],rows:[['2']]}],evidence:{rows:[['2']]}});
+    const model=vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(modelResponse({calls:[call]}))
+      .mockResolvedValueOnce(modelResponse({calls:[{tool:'analysis_schema',datasets:['results']},call]}))
+      .mockResolvedValueOnce(modelResponse({calls:[call]}))
+      .mockResolvedValueOnce(modelResponse({answer:'Computed from the imported results.',sourceIds:['analysis:test']}))
+      .mockResolvedValueOnce(modelResponse({answer:'Computed from the imported results.',sourceIds:['analysis:test']}));
+    const answer=await answerSiteQuestion('Compare my competition counts by month','en',config,AbortSignal.timeout(5000),withCatalog(model),[],'2017YANR02');
+    expect(runAnalysisQuery).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(runAnalysisQuery).mock.calls[0][3]).toEqual(new Set(['2017YANR02']));
+    expect(JSON.parse(String(model.mock.calls[1][1]?.body)).messages[1].content).toContain('Call analysis_schema');
+    const repair=JSON.parse(String(model.mock.calls[2][1]?.body));
+    expect(repair.messages[1].content).toContain('Correct the grouping');
+    expect(repair.max_tokens).toBe(3200);
+    expect(answer.artifacts).toHaveLength(1);expect(answer.sources.map(s=>s.id)).toEqual(['analysis:test']);
+  });
+  it('reviews a computed draft and executes the missing derived measure before returning it',async()=>{
+    const call={tool:'analysis_query',title:'Monthly comparison',description:'Counts and differences',query:{}};
+    vi.mocked(runAnalysisQuery).mockReset()
+      .mockResolvedValueOnce({sources:[{id:'analysis:counts',title:'Counts',href:'/wca/results',read:true}],artifacts:[{kind:'table',title:'Counts',columns:['Month','Count'],rows:[['1','1'],['2','1']]}],evidence:{rows:[['1','1'],['2','1']]}})
+      .mockResolvedValueOnce({sources:[{id:'analysis:complete',title:call.title,href:'/wca/results',read:true}],artifacts:[{kind:'table',title:call.title,columns:['Month','Count','Difference'],rows:[['1','1','—'],['2','1','0']]}],evidence:{rows:[['1','1','—'],['2','1','0']]}});
+    const model=vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(modelResponse({calls:[{tool:'analysis_schema',datasets:['results']}]}))
+      .mockResolvedValueOnce(modelResponse({calls:[call]}))
+      .mockResolvedValueOnce(modelResponse({answer:'Both months have no predecessor.',sourceIds:['analysis:counts']}))
+      .mockResolvedValueOnce(modelResponse({calls:[{...call,query:{corrected:true}}]}))
+      .mockResolvedValueOnce(modelResponse({answer:'Computed counts and differences are below.',sourceIds:['analysis:complete']}));
+    const result=await answerSiteQuestion('Compare monthly counts and differences','en',config,AbortSignal.timeout(5000),withCatalog(model));
+    const review=JSON.parse(String(model.mock.calls[3][1]?.body));
+    expect(JSON.parse(review.messages.at(-1).content).draftAnswer).toBe('Both months have no predecessor.');
+    expect(review.messages[0].content).toContain('Every requested calculated measure');
+    expect(runAnalysisQuery).toHaveBeenCalledTimes(2);
+    expect(result.artifacts).toEqual([{kind:'table',title:call.title,columns:['Month','Count','Difference'],rows:[['1','1','—'],['2','1','0']]}]);
+    expect(result.answer).not.toContain('no predecessor');
+  });
+  it('marks partial calculation after an unrecovered query failure even if the model claims completion',async()=>{
+    const call={tool:'analysis_query',title:'Comparison',description:'Counts and change',query:{step:1}};
+    vi.mocked(runAnalysisQuery).mockReset()
+      .mockResolvedValueOnce({sources:[{id:'analysis:partial',title:'Counts',href:'/wca/results',read:true}],factualSummary:'Computed results.',artifacts:[{kind:'table',title:'Counts',columns:['Count'],rows:[['1']]}],evidence:{rows:[['1']]}})
+      .mockResolvedValueOnce({sources:[],artifacts:[],evidence:{error:'Invalid comparison',notEvidence:true}});
+    const model=vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(modelResponse({calls:[{tool:'analysis_schema',datasets:['results']}]}))
+      .mockResolvedValueOnce(modelResponse({calls:[call]}))
+      .mockResolvedValueOnce(modelResponse({calls:[{...call,query:{step:2}}]}))
+      .mockResolvedValueOnce(modelResponse({answer:'All measures are complete.',sourceIds:['analysis:partial']}))
+      .mockResolvedValueOnce(modelResponse({answer:'All measures are complete.',sourceIds:['analysis:partial']}));
+    const result=await answerSiteQuestion('Compare the counts and changes','en',config,AbortSignal.timeout(5000),withCatalog(model));
+    expect(result.answer).toContain('Some calculations could not be completed');
+    expect(result.answer).not.toContain('All measures are complete');
+    expect(result.artifacts).toHaveLength(1);
+  });
   it('passes visitor-local time to every model round and applies the resolved competition interval',async()=>{
     vi.useFakeTimers();vi.setSystemTime(new Date('2027-01-01T01:00:00Z'));
     const fetcher=vi.fn<typeof fetch>().mockImplementation(async input=>{
@@ -222,6 +279,7 @@ describe('site assistant grounding', () => {
     const fetcher=vi.fn<typeof fetch>()
       .mockResolvedValueOnce(modelResponse({calls:[{tool:'recons',limit:5}]}))
       .mockResolvedValueOnce(Response.json([{id:1,person:'One',rawTime:5,comp:'Competition'}, {id:2,person:'Two',value:6,comp:'Home'}]))
+      .mockResolvedValueOnce(modelResponse({answer:'两条均为练习复盘',sourceIds:['recon:1','recon:2']}))
       .mockResolvedValueOnce(modelResponse({answer:'两条均为练习复盘',sourceIds:['recon:1','recon:2']}));
     const result=await answerSiteQuestion('最近五条公开复盘','zh',config,AbortSignal.timeout(5000),withCatalog(fetcher));
     expect(result.answer).toBe('已列出 2 条公开复盘。比赛或练习场景以表格中的原始记录为准。 [[recon:1]] [[recon:2]]');
@@ -256,7 +314,8 @@ describe('site assistant grounding', () => {
     expect(body).not.toHaveProperty('enable_thinking');
   });
   it('keeps tabular statistics factual when the final model prose contradicts the actual value',async()=>{
-    const model=vi.fn().mockResolvedValueOnce(modelResponse({calls:[{tool:'statistics',id:'example',limit:5}]})).mockResolvedValueOnce(modelResponse({answer:'占据前三席',sourceIds:['stat:example']}));
+    const model=vi.fn().mockResolvedValueOnce(modelResponse({calls:[{tool:'statistics',id:'example',limit:5}]})).mockResolvedValueOnce(modelResponse({answer:'占据前三席',sourceIds:['stat:example']}))
+      .mockResolvedValueOnce(modelResponse({answer:'占据前三席',sourceIds:['stat:example']}));
     const fetcher:typeof fetch=async url=>String(url).endsWith('/index.json')?Response.json({categories:[{stats:[{id:'example',titleZh:'屠榜',titleEn:'Dominance'}]}]}):String(url).endsWith('/example.json')?Response.json({titleZh:'屠榜',header:[{key:'count',label:'Count',labelZh:'次数'}],rows:[[1]]}):model();
     const result=await answerSiteQuestion('查询屠榜前五项','zh',config,AbortSignal.timeout(5000),fetcher);
     expect(result.answer).toBe('已列出“屠榜”的 1 项查询结果。 [[stat:example]]');
@@ -310,6 +369,7 @@ describe('site assistant grounding', () => {
       .mockResolvedValueOnce(modelResponse({calls:[call]}))
       .mockResolvedValueOnce(modelResponse({calls:[{tool:'find_person',query:'Max Park'}]}))
       .mockResolvedValueOnce(modelResponse({calls:[call]}))
+      .mockResolvedValueOnce(modelResponse({answer:'Only 3x3 is available.',sourceIds:['person:2012PARK03']}))
       .mockResolvedValueOnce(modelResponse({answer:'Only 3x3 is available.',sourceIds:['person:2012PARK03']}));
     const read=vi.fn(async(input:Parameters<typeof fetch>[0],init?:RequestInit)=>{
       if(String(input).startsWith(config.baseUrl))return model(input,init);
@@ -321,7 +381,7 @@ describe('site assistant grounding', () => {
       {role:'user',content:'查看 Max Park 的成绩'},
       {role:'assistant',content:'选手是 Max Park（2012PARK03）。'},
     ],'2017YANR02');
-    expect(model).toHaveBeenCalledTimes(4);
+    expect(model).toHaveBeenCalledTimes(5);
     expect(read.mock.calls.filter(([url])=>String(url).includes('/person-page'))).toHaveLength(1);
     expect(result.artifacts).toHaveLength(1);
     expect(result.artifacts[0]).toMatchObject({kind:'table',rows:[
@@ -355,14 +415,35 @@ describe('site assistant grounding', () => {
     expect(result.artifacts).toHaveLength(1);
     expect(result.artifacts?.[0]).toMatchObject({kind:'table',rows:[['Single','2.80','Test Person','2023TEST01','Test','2026-01-01']]});
   });
-  it('does not substitute the viewer for a third-person follow-up', async () => {
-    for(const [question,expected] of [['他的平均成绩呢？',undefined],['我的平均成绩呢？','2017YANR02']]) {
+  it('keeps verified viewer identity available across wording without removing the conversation subject', async () => {
+    for(const question of ['他的平均成绩呢？','我的平均成绩呢？','我今年参加了多少场 wca','我已经登录了 你知道我的','How many competitions did I attend this year?']) {
       const fetcher=vi.fn<typeof fetch>().mockResolvedValue(modelResponse({answer:'answer'}));
-      await answerSiteQuestion(question!,'zh',config,AbortSignal.timeout(5000), withCatalog(fetcher),[{role:'user',content:'看看耿暄一的三阶成绩'}],'2017YANR02');
-      const context=JSON.parse(JSON.parse(String(fetcher.mock.calls[0][1]?.body)).messages[1].content);
-      expect(context.viewerWcaId).toBe(expected);
+      await answerSiteQuestion(question,'zh',config,AbortSignal.timeout(5000), withCatalog(fetcher),[{role:'user',content:'看看耿暄一的三阶成绩'}],'2017YANR02');
+      const request=JSON.parse(String(fetcher.mock.calls[0][1]?.body));
+      const context=JSON.parse(request.messages[1].content);
+      expect(context.viewerWcaId).toBe('2017YANR02');
       expect(context.history[0].content).toContain('耿暄一');
+      expect(request.messages[0].content).toContain('never to replace an explicitly named person or a third-person subject from history');
     }
+  });
+  it('answers the reported annual question using verified identity and the visitor-local year',async()=>{
+    vi.useFakeTimers();vi.setSystemTime(new Date('2027-01-01T01:00:00Z'));
+    const fetcher=vi.fn<typeof fetch>().mockImplementation(async(input,options)=>{
+      if(String(input).includes('/meta'))return Response.json({lastImportedAt:'2026-12-30'});
+      if(String(input).includes('/person-page')) {
+        expect(String(input)).toContain('wcaId=2017YANR02');
+        return Response.json({profile:{person:{name:'Ruimin Yan (颜瑞民)'},competition_count:113},results:[{competition_id:'A'},{competition_id:'A'},{competition_id:'B'}],comps:[{id:'A',start_date:'2026-06-01'},{id:'B',start_date:'2025-06-01'}]});
+      }
+      const context=JSON.parse(JSON.parse(String(options?.body)).messages[1].content);
+      expect(context.viewerWcaId).toBe('2017YANR02');
+      if(!context.evidence.length)return modelResponse({calls:[{tool:'person_competitions',wcaId:context.viewerWcaId}]});
+      expect(context.evidence[0].data).toMatchObject({from:'2026-01-01',to:'2026-12-31',count:1});
+      return modelResponse({answer:'查到了。',sourceIds:[context.sources[0].id]});
+    });
+    const result=await answerSiteQuestion('我今年参加了多少场 wca','zh',config,AbortSignal.timeout(5000),withCatalog(fetcher),[], '2017YANR02',undefined,'America/Los_Angeles');
+    expect(result.answer).toContain('参加过 1 场比赛');
+    expect(result.answer).toContain('2026-12-30');
+    expect(result.artifacts?.[0]).toMatchObject({rows:[['2026','1']]});
   });
 
   it('reads the canonical English page when the content index is unavailable', async () => {

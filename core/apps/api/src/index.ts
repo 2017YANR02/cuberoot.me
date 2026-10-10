@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { RateLimitError } from './utils/rate_limit.js';
 import { bodyLimit } from 'hono/body-limit';
 import { checkCompetitionAccess, requireCompetitionAccess } from './utils/competition_access.js';
 import { issueCompetitionCaptcha, submitCompetitionCaptcha } from './utils/competition_captcha.js';
@@ -156,7 +157,7 @@ app.onError((err, c) => {
   else if (msg.includes('Validation') || msg.includes('No valid')) status = 400;
   console.error(`[${status}] ${msg} ${c.req.method} ${c.req.path}`);
   // 限流窗口是 60s 滑动窗口 —— 明确告诉客户端多久后重试,别让它当成业务失败
-  if (status === 429) c.header('Retry-After', '5');
+  if (status === 429) c.header('Retry-After', String(err instanceof RateLimitError ? err.retryAfterSeconds : 5));
   return c.json({ error: msg }, status);
 });
 

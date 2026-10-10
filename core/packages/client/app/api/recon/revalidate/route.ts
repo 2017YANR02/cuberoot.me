@@ -17,12 +17,17 @@ export async function POST(request: Request): Promise<Response> {
   const body = await request.json().catch(() => null);
   const kind = body?.kind ?? 'recon';
   const id = String(body?.id ?? '');
-  if (!['recon', 'forum'].includes(kind) ||
-    (!(kind === 'forum' && body?.id === undefined) && (!/^[1-9]\d*$/.test(id) || !Number.isSafeInteger(Number(id))))) {
+  if (!['recon', 'forum', 'alg'].includes(kind) ||
+    (kind === 'alg' ? body?.id !== undefined :
+      (!(kind === 'forum' && body?.id === undefined) && (!/^[1-9]\d*$/.test(id) || !Number.isSafeInteger(Number(id)))))) {
     return Response.json({ error: 'Invalid content reference' }, { status: 400, headers });
   }
-  // expire: 0 also refreshes the first visitor, rather than serving one stale response.
-  if (kind === 'forum') {
+  if (kind === 'alg') {
+    // Public covers stay visible while refreshing; the browser separately
+    // checks the current revision. A brief API outage must not blank the page.
+    revalidateTag('alg-catalog', 'max');
+  } else if (kind === 'forum') {
+    // Moderation/privacy changes must also refresh the first visitor.
     revalidateTag(id ? forumThreadCacheTag(id) : FORUM_CACHE_TAG, { expire: 0 });
   } else {
     revalidateTag(reconCacheTag(id), { expire: 0 });

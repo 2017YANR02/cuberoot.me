@@ -1538,3 +1538,8 @@
   width: max-content;
   min-width: 0;
 }
+
+/* Double ZBLL: a compact download control and two equal-size layer views. */
+.trainer-double-thumbs { display: flex; justify-content: center; gap: clamp(12px, 3vw, 24px); max-width: 100%; }
+.trainer-double-thumbs figure { display: grid; justify-items: center; gap: 8px; margin: 0; min-width: 0; }
+.trainer-double-thumbs figcaption { color: var(--muted-foreground); font-size: .75rem; white-space: nowrap; }

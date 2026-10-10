@@ -6,6 +6,13 @@ afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers(); });
 const id = '11111111-1111-4111-8111-111111111111';
 
 describe('API request diagnostics', () => {
+  it.each(['/v1/auth/web-session/ticket', '/v1/auth/web-session/exchange'])('records fast sync failures on %s without credentials', async (path) => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const app = new Hono().use('*', requestDiagnostics).post(path, c => c.json({}, 429));
+    await app.request(path, { method: 'POST', headers: { Authorization: 'Bearer private-session' }, body: JSON.stringify({ ticket: 'private-ticket' }) });
+    expect(JSON.parse(log.mock.calls[0][0])).toMatchObject({ event: 'api_request', route: path, status: 429 });
+    expect(JSON.stringify(log.mock.calls)).not.toContain('private-');
+  });
   it('separates concurrent requests and records database timing without leaking data', async () => {
     const log = vi.spyOn(console, 'log').mockImplementation(() => {});
     let release!: () => void;

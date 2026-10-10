@@ -152,6 +152,13 @@ export interface AlgCase {
   srcSet?: string;
 }
 
+/** Lightweight catalog read model; source cases remain owned by the algorithm DB. */
+export interface AlgCatalogSnapshot {
+  puzzle: AlgPuzzle;
+  order: string[];
+  sets: { slug: string; count: number; first: AlgCase | null }[];
+}
+
 export interface AlgFile {
   scrapedAt: string;
   source: string;

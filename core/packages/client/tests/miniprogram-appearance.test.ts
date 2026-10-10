@@ -44,9 +44,11 @@ it('publishes language changes outside the tools home and deduplicates repeated 
   expect(postMessage).toHaveBeenCalledWith({ data: { type: 'cuberoot:locale', locale: 'en' } });
 });
 
-it('immediately syncs committed settings outside home and retries after navigation failure', async () => {
+it.each(['2', '3'])('immediately syncs supported settings with protocol %s and retries after navigation failure', async (version) => {
   window.history.replaceState(null, '', '/zh/appearance');
-  sessionStorage.setItem('cuberoot.native-preferences', '2');
+  sessionStorage.setItem('cuberoot.native-preferences', version);
+  localStorage.setItem('home-background.v1.light', 'none');
+  localStorage.setItem('home-background.v1.dark', 'none');
   localStorage.setItem('theme', 'dark');
   document.documentElement.dataset.theme = 'dark';
   document.documentElement.removeAttribute('data-palette');
@@ -71,4 +73,43 @@ it('immediately syncs committed settings outside home and retries after navigati
   localStorage.setItem('home-background.v1.dark', '08');
   await syncMiniProgramAppearance();
   expect(navigateTo).toHaveBeenCalledTimes(3);
+});
+
+it.each(['light', 'dark'])('keeps transparent %s backgrounds out of the old native navigation loop', async (scheme) => {
+  window.history.replaceState(null, '', '/zh');
+  sessionStorage.setItem('cuberoot.native-preferences', '2');
+  localStorage.setItem('theme', 'dark');
+  localStorage.setItem('home-background.v1.light', 'none');
+  localStorage.setItem('home-background.v1.dark', 'none');
+  localStorage.setItem(`home-background.v1.${scheme}`, 'transparent');
+  document.documentElement.dataset.theme = 'dark';
+  document.documentElement.removeAttribute('data-palette');
+  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
+    clearRect() {}, fillRect() {}, getImageData: () => ({ data: [23, 23, 23, 255] }),
+  } as never);
+  const { syncMiniProgramAppearance } = await import('@/lib/miniprogram-appearance');
+  await syncMiniProgramAppearance();
+  await syncMiniProgramAppearance();
+  expect(navigateTo).not.toHaveBeenCalled();
+  expect(postMessage.mock.calls.filter(([message]) => message.data.type === 'cuberoot:appearance')).toHaveLength(1);
+  expect(postMessage.mock.calls.some(([message]) => message.data.type === 'cuberoot:locale')).toBe(true);
+  expect(localStorage.getItem(`home-background.v1.${scheme}`)).toBe('transparent');
+});
+
+it('sends default transparent choices unchanged when the native shell advertises protocol 3', async () => {
+  window.history.replaceState(null, '', '/zh');
+  sessionStorage.setItem('cuberoot.native-preferences', '3');
+  localStorage.setItem('theme', 'dark');
+  document.documentElement.dataset.theme = 'dark';
+  document.documentElement.removeAttribute('data-palette');
+  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
+    clearRect() {}, fillRect() {}, getImageData: () => ({ data: [23, 23, 23, 255] }),
+  } as never);
+  const { syncMiniProgramAppearance } = await import('@/lib/miniprogram-appearance');
+  await syncMiniProgramAppearance();
+  expect(navigateTo).toHaveBeenCalledTimes(1);
+  const payload = JSON.parse(decodeURIComponent(navigateTo.mock.lastCall![0].url.split('?value=')[1]));
+  expect(payload.preferences.lightBackground).toBe('transparent');
+  expect(payload.preferences.darkBackground).toBe('transparent');
+  expect(postMessage).not.toHaveBeenCalled();
 });

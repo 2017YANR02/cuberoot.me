@@ -67,8 +67,8 @@ function diagnosticEventId(): string {
   });
 }
 
-export function reportAppBootDiagnostic(report: BootDiagnosticReport): void {
-  if (typeof navigator === 'undefined') return;
+export async function reportAppBootDiagnostic(report: BootDiagnosticReport): Promise<boolean> {
+  if (typeof fetch !== 'function') return false;
   const url = `${BROWSER_API_ORIGIN}${APP_BOOT_DIAGNOSTIC_PATH}`;
   const payload = JSON.stringify({
     version: 1,
@@ -81,18 +81,22 @@ export function reportAppBootDiagnostic(report: BootDiagnosticReport): void {
     errorMessage: report.errorMessage,
     evidence: report.evidence,
   });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8_000);
   try {
-    if (navigator.sendBeacon?.(url, payload)) return;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+      body: payload,
+      keepalive: true,
+      signal: controller.signal,
+    });
+    return response.status === 204;
   } catch {
-    // Fall through to keepalive fetch.
+    return false;
+  } finally {
+    clearTimeout(timeout);
   }
-  if (typeof fetch !== 'function') return;
-  void fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
-    body: payload,
-    keepalive: true,
-  }).catch(() => {});
 }
 
 declare global {
@@ -102,11 +106,18 @@ declare global {
   }
 }
 
+const REPORT_COPY = {
+  reporting: { zh: '正在记录错误…', en: 'Recording the error…' },
+  reported: { zh: '错误已自动记录，无需发送诊断信息。', en: 'The error has been recorded automatically. You do not need to send diagnostic information.' },
+  reportFailed: { zh: '未能确认错误已记录。如需帮助，请复制诊断信息并发给管理员。', en: 'We could not confirm that the error was recorded. For help, copy the diagnostic information and send it to an administrator.' },
+} as const;
+
 export const APP_BOOT_COPY = {
+  ...REPORT_COPY,
   title: { zh: '页面未能启动', en: 'Page failed to start' },
   message: {
-    zh: '请检查网络后重试。如果仍然失败，请把下面的诊断信息发给我们。',
-    en: 'Check your connection and retry. If it still fails, send us the diagnostic information below.',
+    zh: '请检查网络后重试。',
+    en: 'Check your connection and retry.',
   },
   outdatedWechatMessage: {
     zh: `${MINIMUM_VERSION_COPY.chromium.zh}当前微信内置浏览器内核过旧，无法打开此页面。请改用并确认已更新的现代浏览器；仅选择“在系统浏览器打开”不一定有效。无法更新浏览器时，请暂用另一台设备。`,
@@ -127,11 +138,12 @@ export const APP_BOOT_COPY = {
 } as const;
 
 export const TIMER_BOOT_COPY = {
+  ...REPORT_COPY,
   loading: { zh: '正在加载计时器…', en: 'Loading timer…' },
   title: { zh: '计时器未能启动', en: 'Timer failed to start' },
   message: {
-    zh: '请检查网络后重试。如果仍然失败，请把下面的诊断信息发给我们。',
-    en: 'Check your connection and retry. If it still fails, send us the diagnostic information below.',
+    zh: '请检查网络后重试。',
+    en: 'Check your connection and retry.',
   },
   outdatedWechatMessage: {
     zh: `${MINIMUM_VERSION_COPY.chromium.zh}当前微信内置浏览器内核过旧，无法启动计时器。请改用并确认已更新的现代浏览器；仅选择“在系统浏览器打开”不一定有效。无法更新浏览器时，请暂用另一台设备。`,
@@ -279,7 +291,7 @@ export const APP_BOOT_EARLY_SCRIPT = `(function () {
     reporter.report('attempt');
     return reporter;
   }
-  function reportBootDiagnostic(report) {
+  function reportBootDiagnostic(report, done) {
     var payload = JSON.stringify({
       version: 1,
       eventId: createBootId(),
@@ -292,14 +304,14 @@ export const APP_BOOT_EARLY_SCRIPT = `(function () {
       evidence: report.evidence
     });
     try {
-      if (navigator.sendBeacon && navigator.sendBeacon(${APP_BOOT_DIAGNOSTIC_URL_JSON}, payload)) return;
-    } catch (_) {}
-    try {
       var request = new XMLHttpRequest();
       request.open('POST', ${APP_BOOT_DIAGNOSTIC_URL_JSON}, true);
       request.setRequestHeader('Content-Type', 'text/plain;charset=UTF-8');
+      request.timeout = 8000;
+      request.onload = function () { done(request.status === 204); };
+      request.onerror = request.ontimeout = request.onabort = function () { done(false); };
       request.send(payload);
-    } catch (_) {}
+    } catch (_) { done(false); }
   }
   try { window.__startTimerBootTelemetry = startTimerBootTelemetry; } catch (_) {}
   if (isTimer) startTimerBootTelemetry();
@@ -487,7 +499,6 @@ export const APP_BOOT_EARLY_SCRIPT = `(function () {
       try { window.__timerBootDiagnostic = report; } catch (_) {}
     }
     try { window.sessionStorage.setItem(isTimer ? '${STORAGE_KEY}' : '${APP_STORAGE_KEY}', JSON.stringify(report)); } catch (_) {}
-    reportBootDiagnostic(report);
     if (window.console && console.error) console.error(isTimer ? '[timer-bootstrap]' : '[app-bootstrap]', report);
     if (isTimer && window.__timerBootTelemetry) window.__timerBootTelemetry.report('failure', kind);
 
@@ -507,6 +518,8 @@ export const APP_BOOT_EARLY_SCRIPT = `(function () {
     root.setAttribute('role', 'alert');
     append('h1', 'app-startup-title', label('title'));
     append('p', 'app-startup-message', label(messageKey(report)));
+    var reportStatus = append('p', 'app-startup-message', label('reporting'));
+    reportStatus.setAttribute('role', 'status');
     var diagnostic = append('p', 'app-startup-diagnostic', '');
     var diagnosticLabel = document.createElement('span');
     diagnosticLabel.textContent = label('diagnosticCode');
@@ -530,7 +543,10 @@ export const APP_BOOT_EARLY_SCRIPT = `(function () {
         if (copied && !root.querySelector('.app-startup-copied')) append('p', 'app-startup-copied', label('copied'));
       });
     };
-    actions.appendChild(copyButton);
+    reportBootDiagnostic(report, function (recorded) {
+      reportStatus.textContent = label(recorded ? 'reported' : 'reportFailed');
+      if (!recorded && !copyButton.parentNode) actions.appendChild(copyButton);
+    });
   }
   window.addEventListener('error', onError, true);
   window.addEventListener('unhandledrejection', onRejection);

@@ -2,6 +2,35 @@ import {describe,it,expect,vi} from 'vitest';
 import {runDataTool,toolCallSchema} from '../src/utils/site_assistant_tools.js';
 
 describe('assistant public data adapters',()=>{
+  it('keeps the complete requested-puzzle case-count catalog within the evidence budget',async()=>{
+    const data=[...Array.from({length:80},(_,i)=>({puzzle:'2x2',setSlug:'other'+i,count:40,source:'x'.repeat(300)})),{puzzle:'3x3',setSlug:'oll',count:57,updatedAt:'2026-10-10',source:'upstream'},{puzzle:'3x3',setSlug:'pll',count:21,updatedAt:'2026-10-10',source:'upstream'}];
+    const result=await runDataTool({tool:'algorithms',puzzle:'3x3'},'en',async()=>data);
+    expect(result.evidence).toMatchObject({puzzle:'3x3',sets:[{setSlug:'oll',count:57},{setSlug:'pll',count:21}]});
+    expect(JSON.stringify(result.evidence).length).toBeLessThan(14000);
+    expect(JSON.stringify(result.evidence)).not.toContain('other79');
+  });
+  it('counts calendar-year participation from distinct result-bearing competitions before filtering',async()=>{
+    const read=async(url:string)=>url.includes('/meta')?{lastImportedAt:'2026-10-01'}:{
+      profile:{person:{name:'Ruimin Yan (颜瑞民)'},competition_count:113},
+      results:[{competition_id:'Previous'},{competition_id:'A'},{competition_id:'A'},{competition_id:'B',best:-1},{competition_id:'Next'},{competition_id:'Missing'},{competition_id:'Invalid'}],
+      comps:[{id:'Previous',start_date:'2025-12-31',end_date:'2026-01-01'},{id:'A',start_date:'2026-01-01'},{id:'B',start_date:'2026-12-31'},{id:'Next',start_date:'2027-01-01'},{id:'Unattended',start_date:'2026-07-01'},{id:'Invalid',start_date:'2026-02-30'}],
+    };
+    const result=await runDataTool({tool:'person_competitions',wcaId:'2017YANR02',from:'2026-01-01',to:'2026-12-31'},'zh',read);
+    expect(result.evidence).toMatchObject({count:2,byYear:[{year:'2026',competitions:2}],unknownDateCompetitions:2,updated:'2026-10-01'});
+    expect(result.artifacts[0]).toMatchObject({rows:[['2026','2']]});
+    expect(result.factualSummary).toContain('以上数量可能不完整');
+    const all=await runDataTool({tool:'person_competitions',wcaId:'2017YANR02'},'en',read);
+    expect(all.evidence).toMatchObject({count:4,byYear:[{year:'2025',competitions:1},{year:'2026',competitions:2},{year:'2027',competitions:1}]});
+    expect(toolCallSchema.safeParse({tool:'person_competitions',wcaId:'2017YANR02',from:'2026-02-30'}).success).toBe(false);
+    expect(toolCallSchema.safeParse({tool:'person_competitions',wcaId:'2017YANR02',from:'2026-12-31',to:'2026-01-01'}).success).toBe(false);
+  });
+  it('returns a genuine zero for a year with no imported participation and complete dates',async()=>{
+    const result=await runDataTool({tool:'person_competitions',wcaId:'2017YANR02',from:'2026-01-01',to:'2026-12-31'},'en',async url=>url.includes('/meta')?{}:{
+      profile:{person:{name:'Ruimin Yan'}},results:[{competition_id:'Previous'}],comps:[{id:'Previous',start_date:'2025-01-01'}],
+    });
+    expect(result.evidence).toMatchObject({count:0,byYear:[],unknownDateCompetitions:0});
+    expect(result.factualSummary).toContain('0 competitions');
+  });
   it('retains ranking competition IDs separately from the competitor country',async()=>{
     const rows=[
       {rank:1,name:'One',wcaId:'2017WANY29',value:1271,iso2:'CN',compId:'Hefei2026',compName:'Hefei 2026',compDate:'2026-05-10'},
