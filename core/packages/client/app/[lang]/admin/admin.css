@@ -20,6 +20,17 @@
 .admin-hub__status { margin: 16px 0; color: var(--muted-foreground); }
 .admin-hub__account-link { color: var(--accent); }
 
+.admin-boot { margin-top: 48px; }
+.admin-boot__heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.admin-boot__heading h2 { margin: 0; font-size: 1.4rem; }
+.admin-boot__refresh { appearance: none; font: inherit; padding: 6px 12px; background: var(--background); color: var(--foreground); border: 1px solid var(--border-default); border-radius: 8px; cursor: pointer; }
+.admin-boot__refresh:disabled { opacity: .5; cursor: wait; }
+.admin-boot__event { padding: 16px 0; border-bottom: 1px solid var(--border-default); overflow-wrap: anywhere; }
+.admin-boot__event summary { cursor: pointer; }
+.admin-boot__event summary > span,
+.admin-boot__event summary > time { display: block; margin-top: 6px; font-size: .85rem; color: var(--muted-foreground); }
+.admin-boot__event p { font-size: .85rem; }
+
 @media (max-width: 640px) {
   .admin-hub { width: calc(100% - 28px); padding-top: 38px; }
   .admin-hub__heading { margin-bottom: 26px; }
