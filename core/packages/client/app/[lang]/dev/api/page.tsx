@@ -326,6 +326,7 @@ const ENDPOINTS: Ep[] = [
 
   // ---- alg ----
   { d: 'alg', m: 'GET', p: '/v1/alg/sets', g: 'public', c: 'validate', zh: '全部公式集', en: 'All alg sets' },
+  { d: 'alg', m: 'GET', p: '/v1/alg/sets/:puzzle/catalog', g: 'public', c: 'validate', zh: '公式集目录摘要与封面状态', en: 'Alg catalog summaries and cover states' },
   { d: 'alg', m: 'GET', p: '/v1/alg/sets/:puzzle/order', g: 'public', c: 'validate', zh: '公式库首页卡片顺序', en: 'Alg catalog card order' },
   { d: 'alg', m: 'GET', p: '/v1/alg/sets/:puzzle/:set', g: 'public', c: 'validate', zh: '一套公式的全部 case', en: 'All cases of a set' },
   { d: 'alg', m: 'POST', p: '/v1/alg/sets/:puzzle/:set/cases', g: 'admin', zh: '新增 case', en: 'Add case' },

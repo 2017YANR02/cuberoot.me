@@ -244,7 +244,12 @@
     "./TimerSoloPage": "./src/TimerSoloPage.tsx",
     "./timer-solo-page.css": "./src/timer-solo-page.css"
   },
-  "sideEffects": true,
+  "sideEffects": [
+    "./src/index.ts",
+    "**/*.css",
+    "**/*.worker.ts",
+    "./src/TimerTimingSettingsSections.tsx"
+  ],
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
