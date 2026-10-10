@@ -355,14 +355,35 @@ describe('site assistant grounding', () => {
     expect(result.artifacts).toHaveLength(1);
     expect(result.artifacts?.[0]).toMatchObject({kind:'table',rows:[['Single','2.80','Test Person','2023TEST01','Test','2026-01-01']]});
   });
-  it('does not substitute the viewer for a third-person follow-up', async () => {
-    for(const [question,expected] of [['他的平均成绩呢？',undefined],['我的平均成绩呢？','2017YANR02']]) {
+  it('keeps verified viewer identity available across wording without removing the conversation subject', async () => {
+    for(const question of ['他的平均成绩呢？','我的平均成绩呢？','我今年参加了多少场 wca','我已经登录了 你知道我的','How many competitions did I attend this year?']) {
       const fetcher=vi.fn<typeof fetch>().mockResolvedValue(modelResponse({answer:'answer'}));
-      await answerSiteQuestion(question!,'zh',config,AbortSignal.timeout(5000), withCatalog(fetcher),[{role:'user',content:'看看耿暄一的三阶成绩'}],'2017YANR02');
-      const context=JSON.parse(JSON.parse(String(fetcher.mock.calls[0][1]?.body)).messages[1].content);
-      expect(context.viewerWcaId).toBe(expected);
+      await answerSiteQuestion(question,'zh',config,AbortSignal.timeout(5000), withCatalog(fetcher),[{role:'user',content:'看看耿暄一的三阶成绩'}],'2017YANR02');
+      const request=JSON.parse(String(fetcher.mock.calls[0][1]?.body));
+      const context=JSON.parse(request.messages[1].content);
+      expect(context.viewerWcaId).toBe('2017YANR02');
       expect(context.history[0].content).toContain('耿暄一');
+      expect(request.messages[0].content).toContain('never to replace an explicitly named person or a third-person subject from history');
     }
+  });
+  it('answers the reported annual question using verified identity and the visitor-local year',async()=>{
+    vi.useFakeTimers();vi.setSystemTime(new Date('2027-01-01T01:00:00Z'));
+    const fetcher=vi.fn<typeof fetch>().mockImplementation(async(input,options)=>{
+      if(String(input).includes('/meta'))return Response.json({lastImportedAt:'2026-12-30'});
+      if(String(input).includes('/person-page')) {
+        expect(String(input)).toContain('wcaId=2017YANR02');
+        return Response.json({profile:{person:{name:'Ruimin Yan (颜瑞民)'},competition_count:113},results:[{competition_id:'A'},{competition_id:'A'},{competition_id:'B'}],comps:[{id:'A',start_date:'2026-06-01'},{id:'B',start_date:'2025-06-01'}]});
+      }
+      const context=JSON.parse(JSON.parse(String(options?.body)).messages[1].content);
+      expect(context.viewerWcaId).toBe('2017YANR02');
+      if(!context.evidence.length)return modelResponse({calls:[{tool:'person_competitions',wcaId:context.viewerWcaId}]});
+      expect(context.evidence[0].data).toMatchObject({from:'2026-01-01',to:'2026-12-31',count:1});
+      return modelResponse({answer:'查到了。',sourceIds:[context.sources[0].id]});
+    });
+    const result=await answerSiteQuestion('我今年参加了多少场 wca','zh',config,AbortSignal.timeout(5000),withCatalog(fetcher),[], '2017YANR02',undefined,'America/Los_Angeles');
+    expect(result.answer).toContain('参加过 1 场比赛');
+    expect(result.answer).toContain('2026-12-30');
+    expect(result.artifacts?.[0]).toMatchObject({rows:[['2026','1']]});
   });
 
   it('reads the canonical English page when the content index is unavailable', async () => {
