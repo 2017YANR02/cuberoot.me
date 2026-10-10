@@ -15,9 +15,39 @@ and installed without restarting PostgreSQL or enabling them in the business
 database. Full-index acceptance uses `cuberoot_assistant_acceptance_20261010` via
 the optional `SITE_ASSISTANT_KNOWLEDGE_DB_NAME` override. Production defaults to
 the ordinary application database. Background batches have a 30-second deadline
-and at most two SDK retries; interactive query embeddings retain eight seconds
+and at most two explicit transient-failure retries (including per-attempt
+timeouts); interactive query embeddings retain eight seconds
 and no retries. Native answer streaming now parses the final `answer` field;
 old custom JSON tool-plan framing is no longer part of the transport.
+
+The isolated full-corpus run completed with **3,316 passages**, approximately
+34.4 MiB database size and 152.7 MiB peak process RSS in the final resumed run.
+This fixture uses the published corpus plus the release's canonical help, not
+the future version 2 build artifact. Completed vectors survived timeouts and
+were reused; the unchanged rerun required zero document embeddings. Real
+Chinese/English hybrid retrieval took 267–349 ms in three probes. Failure before
+publication preserved the old snapshot; an edit and deletion published
+atomically, stale-corpus retrieval returned no passages, and restoring the
+fixture succeeded. Production indexing remains a separate release acceptance.
+
+The 20-case real-model suite validates the actual account binding against the
+database, then exercises the authenticated Hono handler with DeepSeek Flash,
+public data and Bailian embeddings. Independent SQL confirmed 2026 attendance
+26, 2025 attendance 30, 2026 3x3 competitions 24 and 3x3 DNF attempts 2/220.
+Year-filtered host countries were China 27 and Malaysia/Singapore/Vietnam 1 each
+in 2025. Regression fixes preserve these scopes, requested comparisons and
+denominators, future-data limitations, original reconstruction labels, and
+readable passage citations. Correct answers are assessed from sources and
+returned cells, not merely HTTP success. A correct year difference can still be
+computed in model prose; this is not proof that every derived measure used SQL.
+
+The suite also exposed an erroneous public glossary definition saying B was the
+inverse in A B A'. The existing authenticated wiki editor API corrected term
+115 in both languages; the normal `gen-glossary` exporter synchronized its sole
+changed entry. The example `[R U: F] = R U F U' R'` was checked with cubing.js
+`Alg.expand()` and its [official notation documentation](https://js.cubing.net/cubing/alg/).
+Source quality remains part of maintaining RAG; retrieval alone cannot correct
+erroneous reference content.
 
 ## Earlier local implementation and acceptance (2026-10-10)
 
