@@ -2,6 +2,13 @@ import {describe,it,expect,vi} from 'vitest';
 import {runDataTool,toolCallSchema} from '../src/utils/site_assistant_tools.js';
 
 describe('assistant public data adapters',()=>{
+  it('keeps the complete requested-puzzle case-count catalog within the evidence budget',async()=>{
+    const data=[...Array.from({length:80},(_,i)=>({puzzle:'2x2',setSlug:'other'+i,count:40,source:'x'.repeat(300)})),{puzzle:'3x3',setSlug:'oll',count:57,updatedAt:'2026-10-10',source:'upstream'},{puzzle:'3x3',setSlug:'pll',count:21,updatedAt:'2026-10-10',source:'upstream'}];
+    const result=await runDataTool({tool:'algorithms',puzzle:'3x3'},'en',async()=>data);
+    expect(result.evidence).toMatchObject({puzzle:'3x3',sets:[{setSlug:'oll',count:57},{setSlug:'pll',count:21}]});
+    expect(JSON.stringify(result.evidence).length).toBeLessThan(14000);
+    expect(JSON.stringify(result.evidence)).not.toContain('other79');
+  });
   it('counts calendar-year participation from distinct result-bearing competitions before filtering',async()=>{
     const read=async(url:string)=>url.includes('/meta')?{lastImportedAt:'2026-10-01'}:{
       profile:{person:{name:'Ruimin Yan (颜瑞民)'},competition_count:113},
