@@ -92,7 +92,7 @@ records {event:"333",region:"world" or ISO2}: current single/average record VALU
 find_person {query:name}: resolve name to WCA IDs. Never guess an ID. Ask which person if ambiguous.
 person {wcaId,event:"333" or "all",progress:false,view:"records"|"profile"}: Use view:"profile" for competition totals, medals or profile facts without a PB table. Competition totals are lifetime totals, not counts for a specific year, event or country. Default view:"records" returns selected-event PRs, medals, historical record-breaking counts (NOT currently held records). For all official PBs/PRs across events use event:"all" in ONE call; the table includes every event with results. progress:true requires ONE specific event and generates single AND average PR charts. For comparison call person for each identified person.
 person_countries {wcaId}: complete countries/regions where ONE person has officially competed, grouped by competition host location. Use for personal travel/participation questions, never substitute a global most_visited_countries leaderboard or personal bests.
-person_competitions {wcaId,from?:ISO date,to?:ISO date}: count ONE person's distinct competitions from their complete imported results, optionally within an inclusive range of competition START dates, with calendar-year counts. Use for this/last/specific year, date ranges or year-by-year participation; never substitute lifetime totals or annualized-average leaderboards. Use timeContext for relative dates. Missing dates are reported separately, not counted as zero. This covers published participation, not future registrations.
+person_competitions {wcaId,from?:ISO date,to?:ISO date}: count ONE person's distinct competitions from their complete imported results, optionally within an inclusive range of competition START dates, with calendar-year counts ONLY. Use for this/last/specific year, date ranges or year-by-year participation; never substitute lifetime totals or annualized-average leaderboards. Monthly/weekly grouping, event filters and calculated changes require analysis_schema and analysis_query; a year total does not answer them. Use timeContext for relative dates. Missing dates are reported separately, not counted as zero. This covers published participation, not future registrations.
 rankings {event,type:"single"|"average",country:"" or ISO2 or _Asia/_Europe/_Africa/_North America/_South America/_Oceania,year?:number,limit:1..20}: current or year-end rankings.
 competitions {query:"",country:"" or ISO2,upcoming:true,from?:ISO date,to?:ISO date,limit:1..20}: find competitions and IDs; query matches name/city/id. from/to filter competitions overlapping an inclusive date range. Use English place/name keywords for this index.
 timeContext is computed from the server clock in the visitor's time zone. Use its concrete periods for relative years/days/weeks/months across ALL topics, never your training cutoff or a date in old conversation history. Weeks start Monday. Use from/to for dated competition queries and upcoming:false for historical periods. Time resolution is not factual evidence: still read the appropriate tools. Multiple periods, weekday-qualified weeks, rolling durations or dates relative to another event require careful interpretation; do not silently substitute one period or the current clock for an explicit event anchor. Ask a brief clarification if ambiguous.
@@ -208,8 +208,11 @@ export async function answerSiteQuestion(
   const artifacts: Array<{sourceIds:string[]; artifact:NonNullable<AssistantAnswer['artifacts']>[number]}> = [];
   const called=new Set<string>();
   let attemptedCalls=0;
+  let analysisReviewed=false;
+  let analysisIncomplete=false;
   let evidenceCharacters=0;
-  const complete = async (round: number, finalOnly = false) => assistantStage('model',async()=>{
+  const complete = async (round: number, finalOnly = false, draftAnswer?:string) => assistantStage('model',async()=>{
+    const reviewInstruction=draftAnswer===undefined?'':'\nIndependently review the draft against the ORIGINAL question, actual query predicates and returned cells. Every requested calculated measure (rates, differences, ranks, denominators, etc.) must be present in the query result, not mentally filled into prose. Labels/descriptions are not proof. Check granularity, filtering, zero vs NULL and predecessor ordering. If any requested measure is missing or inconsistent, call analysis_query to return a complete corrected table when reads remain. Do not accept the draft merely because execution succeeded. If no reads remain, explicitly state which requested measure was not calculated. When complete, give only a brief introduction to the correct table, without repeating its rows. Cite only sources supporting that final result.';
     let formatRepair = '';
     for(let attempt=0;attempt<2;attempt++) {
     try {
@@ -218,8 +221,8 @@ export async function answerSiteQuestion(
       body:JSON.stringify({model:config.model, ...(emit ? {stream:true} : {}),
         ...(new URL(config.baseUrl).origin === 'https://api.deepseek.com' ? {thinking:{type:'disabled'}} : {enable_thinking:false}),
         temperature:0,max_tokens:analysisSchemaRead?3200:1200,response_format:{type:'json_object'},messages:[
-        {role:'system',content:`You are CubeRoot's public cubing assistant. Answer in ${lang === 'zh' ? 'Simplified Chinese' : 'English'}. ${TOOL_GUIDE}${artifacts.some(a=>a.artifact.kind==='table') ? '\nThe UI already renders the retrieved rows as tables below your answer. Your answer must now be only 1-2 short sentences summarizing the result. Do not list individual table rows.' : ''}${finalOnly ? '\nNo further reads are available. Return calls:[] and answer from existing evidence. If a scope choice is required, ask the user; if published data is unavailable, say so. Do not invent missing results.' : ''}${formatRepair}`},
-        {role:'user',content:JSON.stringify({question,timeContext,viewerWcaId,history:history.slice(-6).map(m=>({...m,content:m.content.slice(0,2000)})),now:timeContext.today,round,remainingCalls:10-attemptedCalls,statisticsCatalog,announcementCatalog:SITE_ANNOUNCEMENTS.map(a=>({id:a.id,title:a.title[lang],aliases:a.aliases})),evidence,sources:[...sources.values()],finalRound:round===4})},
+        {role:'system',content:`You are CubeRoot's public cubing assistant. Answer in ${lang === 'zh' ? 'Simplified Chinese' : 'English'}. ${TOOL_GUIDE}${artifacts.some(a=>a.artifact.kind==='table') ? '\nThe UI already renders the retrieved rows as tables below your answer. Your answer must now be only 1-2 short sentences summarizing the result. Do not list individual table rows.' : ''}${finalOnly ? '\nNo further reads are available. Return calls:[] and answer from existing evidence. If a scope choice is required, ask the user; if published data is unavailable, say so. Do not invent missing results.' : ''}${reviewInstruction}${formatRepair}`},
+        {role:'user',content:JSON.stringify({question,draftAnswer,timeContext,viewerWcaId,history:history.slice(-6).map(m=>({...m,content:m.content.slice(0,2000)})),now:timeContext.today,round,remainingCalls:10-attemptedCalls,statisticsCatalog,announcementCatalog:SITE_ANNOUNCEMENTS.map(a=>({id:a.id,title:a.title[lang],aliases:a.aliases})),evidence,sources:[...sources.values()],finalRound:finalOnly})},
       ]}),
     });
     checkAssistantResponse(response,'model');
@@ -237,7 +240,7 @@ export async function answerSiteQuestion(
         // Explicit resources must first be read; adapter-authored facts remain
         // canonical and are emitted at finish rather than overwritten model prose.
         const forcedRead = round === 0 && (requestedReconId || requestedAnnouncements.length || explicitStatistics.length === 1);
-        const partial = !forcedRead && !factualSummaries.size ? partialAssistantAnswer(content) : undefined;
+        const partial = !forcedRead && !factualSummaries.size && !analysisSchemaRead ? partialAssistantAnswer(content) : undefined;
         if (partial !== undefined && partial !== previous && (!previous || partial.length - previous.length >= 24)) {
           if (!previous) await emit({type:'status',status:{phase:'writing'}});
           previous = partial;
@@ -354,12 +357,24 @@ export async function answerSiteQuestion(
       const selected=[...new Set([...step.sourceIds,...inlineIds])].flatMap(id=>sources.has(id)?[sources.get(id)!]:[]);
       const cited=selected.length?selected:[...sources.values()].slice(0,12);
       const citedIds=new Set(cited.map(source=>source.id));
+      const partial=analysisIncomplete && cited.some(s=>s.id.startsWith('analysis:')) ? {zh:'部分计算未完成，以下仅展示已取得的结果。',en:'Some calculations could not be completed. Only the available results are shown below.'}[lang]+' '+cited.filter(s=>s.id.startsWith('analysis:')).map(s=>`[[${s.id}]]`).join(' ') : undefined;
       const factual=cited.length>0 && cited.every(s=>factualSummaries.has(s.id)) && !/为什么|原因|解释|分析|建议|如何|\bwhy\b|\bhow to\b|\bexplain\b|\banaly[sz]e\b/i.test(question) ? [...new Set(cited.flatMap(s=>[...factualSummaries.get(s.id)!]))].map(text=>text+' '+cited.filter(s=>factualSummaries.get(s.id)!.has(text)).map(s=>`[[${s.id}]]`).join(' ')).join('\n\n') : undefined;
-      return {answer:factual || (step.answer ? step.answer.replace(/\[\[([^\]\n]+)\]\]/g,(marker,id)=>sources.has(id)?marker:'') + (!inlineIds.length && cited.length===1 ? ` [[${cited[0].id}]]` : '') : '') || {zh:'本次没有取得足够的数据，请缩小问题范围后重试。',en:'There was not enough evidence. Please narrow the question and retry.'}[lang],sources:cited,actions:selected.filter(s=>/^\/(?!\/)/.test(s.href) && !/[\\\r\n]/.test(s.href)).map(s=>navigationActions.get(s.id) ?? {id:s.id,title:s.title,href:s.href}),artifacts:artifacts.filter(a=>a.sourceIds.some(id=>citedIds.has(id))).map(a=>a.artifact)};
+      return {answer:partial || factual || (step.answer ? step.answer.replace(/\[\[([^\]\n]+)\]\]/g,(marker,id)=>sources.has(id)?marker:'') + (!inlineIds.length && cited.length===1 ? ` [[${cited[0].id}]]` : '') : '') || {zh:'本次没有取得足够的数据，请缩小问题范围后重试。',en:'There was not enough evidence. Please narrow the question and retry.'}[lang],sources:cited,actions:selected.filter(s=>/^\/(?!\/)/.test(s.href) && !/[\\\r\n]/.test(s.href)).map(s=>navigationActions.get(s.id) ?? {id:s.id,title:s.title,href:s.href}),artifacts:artifacts.filter(a=>a.sourceIds.some(id=>citedIds.has(id))).map(a=>a.artifact)};
+  };
+  const reviewAnalysis = async(step:z.infer<typeof stepSchema>,round:number,finalOnly:boolean) => {
+    // One independent check before publishing a calculated answer. It can use
+    // the remaining normal tool budget to fill missing measures or repair the
+    // query; successful SQL execution alone does not establish semantic coverage.
+    if(!step.calls.length && !analysisReviewed && (factualSummaries.size>0 || [...sources.keys()].some(id=>id.startsWith('analysis:')))) {
+      analysisReviewed=true;
+      step=await complete(round,finalOnly,step.answer);
+    }
+    return step;
   };
   for (let round=0;round<=4;round++) {
     await emit?.({type:'status',status:{phase:'planning'}});
-    const step=await complete(round,round===4);
+    const finalOnly=round===4 || attemptedCalls>=10;
+    const step=await reviewAnalysis(await complete(round,finalOnly),round,finalOnly);
     // An explicit resource number must be read before a model can reinterpret
     // it as a solve duration or claim the original solution is unavailable.
     if(round===0 && requestedReconId) step.calls=[{tool:'recon',id:requestedReconId}];
@@ -397,6 +412,7 @@ export async function answerSiteQuestion(
           if(parsed.data.tool==='analysis_query') return analysisSchemaRead ? runAnalysisQuery(parsed.data,lang,signal,resolvedPeople) : {sources:[],artifacts:[],evidence:{error:'Call analysis_schema before constructing a query.',notEvidence:true}};
           return parsed.data.tool==='navigation' ? navigation(parsed.data) : parsed.data.tool==='pages' ? pages(parsed.data) : runDataTool(parsed.data,lang,read,undefined,timeContext.today);
         },round);
+        if(parsed.data.tool==='analysis_query')analysisIncomplete=!!(result.evidence && typeof result.evidence==='object' && 'notEvidence' in result.evidence);
         // Rejected or unresolved calls have not read any evidence. They must
         // remain eligible after the planner repairs arguments or resolves a name.
         if(!(result.evidence && typeof result.evidence==='object' && 'notEvidence' in result.evidence)) called.add(key);
@@ -438,7 +454,7 @@ export async function answerSiteQuestion(
     signal.throwIfAborted();
     if(duplicates===calls.length) {
       if(step.answer.trim() && sources.size) return finish(step);
-      const final=await complete(round+1,true);
+      const final=await reviewAnalysis(await complete(round+1,true),round+1,true);
       if(final.calls.length || !final.answer.trim()) throw new AssistantFailure('model_unavailable');
       return finish(final);
     }
