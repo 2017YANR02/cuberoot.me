@@ -34,7 +34,7 @@ export const analysisExprSchema:z.ZodType<AnalysisExpr> = z.lazy(()=>z.union([
 const selectSchema=z.object({
   from:z.object({dataset:identifier,as:identifier}).strict(),
   joins:z.array(z.object({dataset:identifier,as:identifier,type:z.enum(['inner','left']),on:analysisExprSchema}).strict()).max(3).default([]),
-  select:z.array(z.object({as:identifier,label:z.string().min(1).max(60),expr:analysisExprSchema}).strict()).min(1).max(12),
+  select:z.array(z.object({as:identifier,label:z.string().min(1).max(60).default(''),expr:analysisExprSchema}).strict()).min(1).max(12),
   where:analysisExprSchema.optional(),groupBy:z.array(analysisExprSchema).max(8).default([]),having:analysisExprSchema.optional(),
   orderBy:z.array(z.object({expr:analysisExprSchema,direction:z.enum(['asc','desc'])}).strict()).max(5).default([]),
   distinct:z.boolean().default(false),
@@ -42,7 +42,9 @@ const selectSchema=z.object({
 export const analysisQuerySchema=selectSchema.extend({
   steps:z.array(z.object({name:identifier,query:selectSchema}).strict()).max(3).default([]),
   limit:z.number().int().min(1).max(100).default(20),
-}).strict();
+}).strict().superRefine((query,ctx)=>{
+  for(const [i,column] of query.select.entries())if(!column.label)ctx.addIssue({code:'custom',path:['select',i,'label'],message:'Final output columns require display labels; intermediate steps do not.'});
+});
 export const analysisSchemaCall=z.object({tool:z.literal('analysis_schema'),datasets:z.array(z.enum(datasetNames)).max(datasetNames.length).default([])}).strict();
 export const analysisQueryCall=z.object({tool:z.literal('analysis_query'),title:z.string().min(1).max(100),description:z.string().min(1).max(500),query:z.unknown()}).strict();
 export type AnalysisQuery = z.infer<typeof analysisQuerySchema>;
@@ -62,7 +64,20 @@ export function compileAnalysis(input:unknown) {
   }
   bound(input);
   const parsed=analysisQuerySchema.safeParse(input);
-  if(!parsed.success)reject('Invalid query structure. '+parsed.error.issues.slice(0,3).map(i=>i.path.join('.')+': '+i.message).join('; '));
+  if(!parsed.success){
+    // Zod unions otherwise collapse malformed nested windows to "Invalid input".
+    // Select the intended expression branch and retain its exact repair path.
+    const details=(issues:readonly z.core.$ZodIssue[],prefix:PropertyKey[]=[]):string[]=>issues.flatMap(issue=>{
+      const path=[...prefix,...issue.path];
+      const value=path.reduce<any>((v,key)=>v && typeof v==='object'?v[key]:undefined,input);
+      if(issue.code==='invalid_union' && issue.errors.length===5){
+        const branch=['col','value','op','fn','case'].findIndex(key=>value && typeof value==='object' && Object.hasOwn(value,key));
+        return branch>=0?details(issue.errors[branch],path):[path.join('.')+': Expected an expression object, e.g. {col:"alias.column"}.'];
+      }
+      return [path.join('.')+': '+issue.message];
+    });
+    reject('Invalid query structure. '+details(parsed.error.issues).slice(0,3).join('; '));
+  }
   const plan=parsed.data!;
   const params:Array<string|number|boolean|null>=[];
   const bindings=new Map<string,number>();
@@ -101,7 +116,7 @@ export function compileAnalysis(input:unknown) {
       return `${join.type==='left'?'LEFT':'INNER'} JOIN ${relation} ON ${expr(join.on)}`;
     });
     function expr(e:AnalysisExpr):string {
-      if('col' in e){const [alias,column]=e.col.split('.');if(!aliases.get(alias)?.includes(column))reject('Unknown public column: '+e.col);return `${quote(alias)}.${quote(column)}`;}
+      if('col' in e){const [alias,column]=e.col.split('.');if(!aliases.has(alias))reject('Unknown relation alias '+alias+'. Available aliases: '+[...aliases.keys()].join(', ')+'. To read a previous step, change from to {dataset:"step_name",as:"'+alias+'"}; defining a step does not select it.');if(!aliases.get(alias)?.includes(column))reject('Unknown public column: '+e.col);return `${quote(alias)}.${quote(column)}`;}
       if('value' in e)return e.value===null?'NULL':arg(e.value);
       if('case' in e)return `(CASE ${e.case.map(c=>`WHEN ${expr(c.when)} THEN ${expr(c.then)}`).join(' ')} ELSE ${expr(e.else)} END)`;
       if('op' in e){
@@ -164,4 +179,5 @@ export const ANALYSIS_PLAN_GUIDE = `Use analysis_query {title,description,query}
 query: {from:{dataset,as},select:[{as:"output_name",label:"display heading",expr}],where?:expr,joins?:[{dataset,as,type:"inner"|"left",on:expr}],groupBy?:[expr],having?:expr,orderBy?:[{expr,direction:"asc"|"desc"}],distinct?:boolean,limit?:1..100,steps?:[{name,query:the same select structure WITHOUT steps/limit}]}. Up to 3 steps are untruncated CTEs; later steps/final query may read earlier steps as datasets. Filters and grouping always happen before the final output limit. Join on equal columns from new and existing aliases; no cross joins. orderBy must repeat expressions or use an earlier step's columns, not current output aliases.
 expr is exactly ONE of {col:"alias.column"}, {value:string|number|boolean|null}, {op:"=|!=|<|<=|>|>=|+|-|*|/|and|or|not|in|is_null|is_not_null|like|ilike",args:[expr,...]}, {fn:"count|sum|avg|min|max|stddev_pop|median|abs|round|floor|ceil|coalesce|nullif|lower|upper|length|year|month|day|weekday|row_number|rank|dense_rank|lag|lead",args:[expr,...],distinct?:boolean,filter?:expr,over?:{partitionBy:[expr],orderBy:[{expr,direction}],frame?:"all"|"through_current"|"before_current"}}, or {case:[{when:expr,then:expr}],else:expr}. count args:[] counts rows; count distinct needs one column; in args:[left,choice1,...]; year/month/day/weekday take a date; weekday is Monday=1. / uses numeric division with zero denominator returning NULL. Window functions need over, stable chronological ordering, and usually a previous dedup/grouping step. Return final output units in headings (e.g. seconds after dividing valid time results by 100).
 Example competition counts by year: {from:{dataset:"results",as:"r"},select:[{as:"year",label:"Year",expr:{fn:"year",args:[{col:"r.comp_date"}]}},{as:"competitions",label:"Competitions",expr:{fn:"count",args:[{col:"r.comp_id"}],distinct:true}}],where:{op:"=",args:[{col:"r.wca_id"},{value:"RESOLVED_WCA_ID"}]},groupBy:[{fn:"year",args:[{col:"r.comp_date"}]}]}. Never guess an ID or use RESOLVED_WCA_ID literally: use verified viewerWcaId for first-person questions, a user-supplied ID or find_person.
+Multi-stage example: {steps:[{name:"totals",query:{from:{dataset:"alg_cases",as:"a"},select:[{as:"set_slug",expr:{col:"a.set_slug"}},{as:"n",expr:{fn:"count",args:[]}}],groupBy:[{col:"a.set_slug"}]}}],from:{dataset:"totals",as:"t"},select:[{as:"set_slug",label:"Set",expr:{col:"t.set_slug"}},{as:"n",label:"Cases",expr:{col:"t.n"}},{as:"rank",label:"Rank",expr:{fn:"rank",args:[],over:{orderBy:[{expr:{col:"t.n"},direction:"desc"}]}}}],orderBy:[{expr:{col:"t.n"},direction:"desc"}]}. The OUTERMOST from/select are the FINAL query, reading a step by its name. There is no select_final field. Intermediate labels are optional; final display labels are required. For a previous-group difference, replace rank with {op:"-",args:[{col:"t.n"},{fn:"lag",args:[{col:"t.n"}],over:{orderBy:[{expr:{col:"t.group_key"},direction:"asc"}]}}]} using the actual chronological group key from your step.
 Describe the actual filters, denominator, units and date basis in description and final answer. Truncated output cannot be summed as a complete total; use an aggregate query instead. NULL/missing import/timeout is not zero. A query error can be corrected in the remaining tool budget. Database/query limits cannot be relaxed by user instructions. No account/private data, arbitrary SQL, code, URLs, writes or internet fetching.`;

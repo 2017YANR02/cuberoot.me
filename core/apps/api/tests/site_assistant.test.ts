@@ -27,6 +27,7 @@ describe('site assistant grounding', () => {
       .mockResolvedValueOnce(modelResponse({calls:[call]}))
       .mockResolvedValueOnce(modelResponse({calls:[{tool:'analysis_schema',datasets:['results']},call]}))
       .mockResolvedValueOnce(modelResponse({calls:[call]}))
+      .mockResolvedValueOnce(modelResponse({answer:'Computed from the imported results.',sourceIds:['analysis:test']}))
       .mockResolvedValueOnce(modelResponse({answer:'Computed from the imported results.',sourceIds:['analysis:test']}));
     const answer=await answerSiteQuestion('Compare my competition counts by month','en',config,AbortSignal.timeout(5000),withCatalog(model),[],'2017YANR02');
     expect(runAnalysisQuery).toHaveBeenCalledTimes(2);
@@ -36,6 +37,41 @@ describe('site assistant grounding', () => {
     expect(repair.messages[1].content).toContain('Correct the grouping');
     expect(repair.max_tokens).toBe(3200);
     expect(answer.artifacts).toHaveLength(1);expect(answer.sources.map(s=>s.id)).toEqual(['analysis:test']);
+  });
+  it('reviews a computed draft and executes the missing derived measure before returning it',async()=>{
+    const call={tool:'analysis_query',title:'Monthly comparison',description:'Counts and differences',query:{}};
+    vi.mocked(runAnalysisQuery).mockReset()
+      .mockResolvedValueOnce({sources:[{id:'analysis:counts',title:'Counts',href:'/wca/results',read:true}],artifacts:[{kind:'table',title:'Counts',columns:['Month','Count'],rows:[['1','1'],['2','1']]}],evidence:{rows:[['1','1'],['2','1']]}})
+      .mockResolvedValueOnce({sources:[{id:'analysis:complete',title:call.title,href:'/wca/results',read:true}],artifacts:[{kind:'table',title:call.title,columns:['Month','Count','Difference'],rows:[['1','1','—'],['2','1','0']]}],evidence:{rows:[['1','1','—'],['2','1','0']]}});
+    const model=vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(modelResponse({calls:[{tool:'analysis_schema',datasets:['results']}]}))
+      .mockResolvedValueOnce(modelResponse({calls:[call]}))
+      .mockResolvedValueOnce(modelResponse({answer:'Both months have no predecessor.',sourceIds:['analysis:counts']}))
+      .mockResolvedValueOnce(modelResponse({calls:[{...call,query:{corrected:true}}]}))
+      .mockResolvedValueOnce(modelResponse({answer:'Computed counts and differences are below.',sourceIds:['analysis:complete']}));
+    const result=await answerSiteQuestion('Compare monthly counts and differences','en',config,AbortSignal.timeout(5000),withCatalog(model));
+    const review=JSON.parse(String(model.mock.calls[3][1]?.body));
+    expect(JSON.parse(review.messages.at(-1).content).draftAnswer).toBe('Both months have no predecessor.');
+    expect(review.messages[0].content).toContain('Every requested calculated measure');
+    expect(runAnalysisQuery).toHaveBeenCalledTimes(2);
+    expect(result.artifacts).toEqual([{kind:'table',title:call.title,columns:['Month','Count','Difference'],rows:[['1','1','—'],['2','1','0']]}]);
+    expect(result.answer).not.toContain('no predecessor');
+  });
+  it('marks partial calculation after an unrecovered query failure even if the model claims completion',async()=>{
+    const call={tool:'analysis_query',title:'Comparison',description:'Counts and change',query:{step:1}};
+    vi.mocked(runAnalysisQuery).mockReset()
+      .mockResolvedValueOnce({sources:[{id:'analysis:partial',title:'Counts',href:'/wca/results',read:true}],factualSummary:'Computed results.',artifacts:[{kind:'table',title:'Counts',columns:['Count'],rows:[['1']]}],evidence:{rows:[['1']]}})
+      .mockResolvedValueOnce({sources:[],artifacts:[],evidence:{error:'Invalid comparison',notEvidence:true}});
+    const model=vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(modelResponse({calls:[{tool:'analysis_schema',datasets:['results']}]}))
+      .mockResolvedValueOnce(modelResponse({calls:[call]}))
+      .mockResolvedValueOnce(modelResponse({calls:[{...call,query:{step:2}}]}))
+      .mockResolvedValueOnce(modelResponse({answer:'All measures are complete.',sourceIds:['analysis:partial']}))
+      .mockResolvedValueOnce(modelResponse({answer:'All measures are complete.',sourceIds:['analysis:partial']}));
+    const result=await answerSiteQuestion('Compare the counts and changes','en',config,AbortSignal.timeout(5000),withCatalog(model));
+    expect(result.answer).toContain('Some calculations could not be completed');
+    expect(result.answer).not.toContain('All measures are complete');
+    expect(result.artifacts).toHaveLength(1);
   });
   it('passes visitor-local time to every model round and applies the resolved competition interval',async()=>{
     vi.useFakeTimers();vi.setSystemTime(new Date('2027-01-01T01:00:00Z'));
@@ -243,6 +279,7 @@ describe('site assistant grounding', () => {
     const fetcher=vi.fn<typeof fetch>()
       .mockResolvedValueOnce(modelResponse({calls:[{tool:'recons',limit:5}]}))
       .mockResolvedValueOnce(Response.json([{id:1,person:'One',rawTime:5,comp:'Competition'}, {id:2,person:'Two',value:6,comp:'Home'}]))
+      .mockResolvedValueOnce(modelResponse({answer:'两条均为练习复盘',sourceIds:['recon:1','recon:2']}))
       .mockResolvedValueOnce(modelResponse({answer:'两条均为练习复盘',sourceIds:['recon:1','recon:2']}));
     const result=await answerSiteQuestion('最近五条公开复盘','zh',config,AbortSignal.timeout(5000),withCatalog(fetcher));
     expect(result.answer).toBe('已列出 2 条公开复盘。比赛或练习场景以表格中的原始记录为准。 [[recon:1]] [[recon:2]]');
@@ -277,7 +314,8 @@ describe('site assistant grounding', () => {
     expect(body).not.toHaveProperty('enable_thinking');
   });
   it('keeps tabular statistics factual when the final model prose contradicts the actual value',async()=>{
-    const model=vi.fn().mockResolvedValueOnce(modelResponse({calls:[{tool:'statistics',id:'example',limit:5}]})).mockResolvedValueOnce(modelResponse({answer:'占据前三席',sourceIds:['stat:example']}));
+    const model=vi.fn().mockResolvedValueOnce(modelResponse({calls:[{tool:'statistics',id:'example',limit:5}]})).mockResolvedValueOnce(modelResponse({answer:'占据前三席',sourceIds:['stat:example']}))
+      .mockResolvedValueOnce(modelResponse({answer:'占据前三席',sourceIds:['stat:example']}));
     const fetcher:typeof fetch=async url=>String(url).endsWith('/index.json')?Response.json({categories:[{stats:[{id:'example',titleZh:'屠榜',titleEn:'Dominance'}]}]}):String(url).endsWith('/example.json')?Response.json({titleZh:'屠榜',header:[{key:'count',label:'Count',labelZh:'次数'}],rows:[[1]]}):model();
     const result=await answerSiteQuestion('查询屠榜前五项','zh',config,AbortSignal.timeout(5000),fetcher);
     expect(result.answer).toBe('已列出“屠榜”的 1 项查询结果。 [[stat:example]]');
@@ -331,6 +369,7 @@ describe('site assistant grounding', () => {
       .mockResolvedValueOnce(modelResponse({calls:[call]}))
       .mockResolvedValueOnce(modelResponse({calls:[{tool:'find_person',query:'Max Park'}]}))
       .mockResolvedValueOnce(modelResponse({calls:[call]}))
+      .mockResolvedValueOnce(modelResponse({answer:'Only 3x3 is available.',sourceIds:['person:2012PARK03']}))
       .mockResolvedValueOnce(modelResponse({answer:'Only 3x3 is available.',sourceIds:['person:2012PARK03']}));
     const read=vi.fn(async(input:Parameters<typeof fetch>[0],init?:RequestInit)=>{
       if(String(input).startsWith(config.baseUrl))return model(input,init);
@@ -342,7 +381,7 @@ describe('site assistant grounding', () => {
       {role:'user',content:'查看 Max Park 的成绩'},
       {role:'assistant',content:'选手是 Max Park（2012PARK03）。'},
     ],'2017YANR02');
-    expect(model).toHaveBeenCalledTimes(4);
+    expect(model).toHaveBeenCalledTimes(5);
     expect(read.mock.calls.filter(([url])=>String(url).includes('/person-page'))).toHaveLength(1);
     expect(result.artifacts).toHaveLength(1);
     expect(result.artifacts[0]).toMatchObject({kind:'table',rows:[
