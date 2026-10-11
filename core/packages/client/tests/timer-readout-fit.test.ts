@@ -2,7 +2,7 @@
 import { act, createElement, createRef } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { TimingSurface, SegmentTime } from '@cuberoot/timer-ui';
+import { TimingSurface, SegmentTime, shouldIgnoreTimerTarget } from '@cuberoot/timer-ui';
 
 describe('shared timer complete-readout fitting', () => {
   let host: HTMLDivElement, root: Root;
@@ -34,12 +34,15 @@ describe('shared timer complete-readout fitting', () => {
   const fit = () => Number(host.querySelector<HTMLElement>('.timer-display-value')!.style.getPropertyValue('--timer-readout-fit')) || 1;
   const resize = async () => act(async () => { notify([], {} as ResizeObserver); const pending = frames.splice(0); pending.forEach((callback) => callback(0)); });
 
-  it.each(['solo', 'net', 'local'] as const)('owns %s scramble order, shared font scale and an input-safe stable preview frame', async (layout) => {
+  it.each(['solo', 'net', 'local'] as const)('owns %s scramble order, shared font scale and a timing-enabled stable preview frame', async (layout) => {
     const surfaceRef = createRef<HTMLDivElement>();
     const draw = (live: boolean) => act(async () => root.render(createElement(TimingSurface, {
       layout, phase: 'idle', colorClass: '', surfaceRef, fontScale: 1.2,
       digits: '0.00', scrambleSlot: createElement('span', null, 'R U'),
-      cornerSlot: createElement('div', null, live ? 'live cube' : 'scramble preview'),
+      cornerSlot: createElement('div', null, live ? 'live cube' : 'scramble preview',
+        createElement('button', { type: 'button', 'aria-label': 'Preview control' }),
+        createElement('input', { 'aria-label': 'Preview input' }),
+        createElement('span', { 'data-no-timer': true })),
     })));
     await draw(false);
     const surface = surfaceRef.current!;
@@ -49,7 +52,12 @@ describe('shared timer complete-readout fitting', () => {
     expect(surface.firstElementChild?.classList.contains('timing-surface-scramble-top')).toBe(true);
     expect(host.querySelector<HTMLElement>('.timer-display')!.style.fontSize)
       .toContain(layout === 'local' ? 'clamp(40px, 8vw, 80px)' : 'clamp(48px, 10vw, 132px)');
-    expect(frame?.hasAttribute('data-no-timer')).toBe(true);
+    expect(frame).not.toBeNull();
+    expect(shouldIgnoreTimerTarget(frame)).toBe(false);
+    expect(shouldIgnoreTimerTarget(frame!.firstElementChild)).toBe(false);
+    for (const control of frame!.querySelectorAll('button, input, [data-no-timer]')) {
+      expect(shouldIgnoreTimerTarget(control)).toBe(true);
+    }
     await draw(true);
     expect(host.querySelector('.timing-surface-core')).toBe(core);
     expect(host.querySelector('.timing-surface-cube-frame')).toBe(frame);

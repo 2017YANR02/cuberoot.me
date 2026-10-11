@@ -190,9 +190,16 @@ describe('component reuse rule registry', () => {
     const timer = join(ROOT, 'app', '[lang]', 'timer', '_shell', 'SoloView.tsx');
     const timerSource = readFileSync(timer, 'utf8');
     expect(timerSource, relative(ROOT, timer)).toContain("from '@cuberoot/timer-ui'");
-    expect(timerSource, relative(ROOT, timer)).toContain('<TimerPuzzlePicker');
+    expect(timerSource, relative(ROOT, timer)).toContain("from './TimerTrainingMenu'");
+    expect(timerSource, relative(ROOT, timer)).toMatch(/<TimerTrainingMenu\b[^>]*\bshowProject\b/);
     expect(timerSource, relative(ROOT, timer)).toContain('<TimerScrambleSourceSelect');
     expect(timerSource, relative(ROOT, timer)).not.toContain("from '@/components/CompactSelect'");
+
+    const trainingMenu = join(dirname(timer), 'TimerTrainingMenu.tsx');
+    const trainingMenuSource = readFileSync(trainingMenu, 'utf8');
+    expect(trainingMenuSource, relative(ROOT, trainingMenu)).toContain("import { TimerPuzzlePicker } from '@cuberoot/timer-ui'");
+    expect(trainingMenuSource, relative(ROOT, trainingMenu)).toContain('<TimerPuzzlePicker');
+    expect(trainingMenuSource, relative(ROOT, trainingMenu)).toContain('groups={TIMER_EVENT_PICKER_GROUPS.map(');
   });
 
   it('keeps the shared selected-puzzle trigger icon-only by default and frameless', () => {

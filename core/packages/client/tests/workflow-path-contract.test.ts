@@ -766,7 +766,12 @@ describe('deployment workflow path contracts', () => {
     expect(readStepRun('test.yml', 'Build shared deps')).toBe(
       'pnpm --filter @cuberoot/client build:deps',
     );
-    expect(clientPackage.scripts.build).toMatch(/^pnpm run build:deps && /);
+    // Cube-history uses only Node built-ins and local sources; workspace exports
+    // must still be built before every following client build consumer.
+    expect(clientPackage.scripts.build.split(' && ').slice(0, 2)).toEqual([
+      'node --import tsx scripts/build-cube-history.ts',
+      'pnpm run build:deps',
+    ]);
     expect(clientDepBuilds).toContain(renderBuild);
     expect(clientDepBuilds).toContain(solverBuild);
     expect(coreBuilds).toContain(renderBuild);

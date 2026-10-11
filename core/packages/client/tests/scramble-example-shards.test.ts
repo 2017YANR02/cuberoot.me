@@ -4,7 +4,23 @@ import { tmpdir } from 'node:os';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
-import { splitExampleSet, type ExampleSet, type ExampleShard } from '../../../jobs/scramble-stats-build/src/build_example_shards';
+import { pathToFileURL } from 'node:url';
+import { workspaceFixturePath } from './workspace-fixture-path';
+
+// Artifact fixture contract; the generator remains the only implementation.
+interface ExampleSet {
+  variants: Record<string, Record<string, Record<string, Record<string, [string, string, string, string?][]>>>>;
+  comps?: Record<string, [string, string]>;
+  idMeta?: Record<string, [string, string, number, string, string, (0 | 1)?]>;
+}
+interface ExampleShard extends ExampleSet {
+  meta: { content_hash: string };
+}
+const { splitExampleSet } = await import(pathToFileURL(
+  workspaceFixturePath('@cuberoot/scramble-stats-build', 'src', 'build_example_shards.ts'),
+).href) as {
+  splitExampleSet(source: ExampleSet): Array<{ variant: string; stage: string; shard: ExampleShard }>;
+};
 
 const root = resolve(import.meta.dirname, '../../../../stats/scramble');
 const read = (file: string) => JSON.parse(readFileSync(resolve(root, file), 'utf8'));

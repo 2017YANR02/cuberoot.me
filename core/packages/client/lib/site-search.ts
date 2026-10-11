@@ -5,7 +5,6 @@
 // 调整路径到 client 别名 + 不依赖 react-router)。
 import { useState, useEffect, useMemo, useRef, useDeferredValue } from 'react';
 import { loadPersonsIndex, searchLocalPersons } from '@cuberoot/shared/persons-index';
-import type { WcaPerson, ReconSolve } from '@cuberoot/shared';
 import { loadComps, searchComps, type Comp } from '@/lib/comp-search';
 import { statsUrl } from '@/lib/stats-base';
 import { listRecons } from '@/lib/recon-api';
@@ -16,6 +15,9 @@ import { API_ORIGIN, apiUrl } from '@/lib/api-base';
 import type { StackToolMeta } from '@/app/[lang]/dev/stack/_lib/stack_meta';
 import { WR_METRICS, resultsQueryForMetric } from '@/lib/wr-metrics';
 import { ALG_CATALOG } from '@cuberoot/shared/alg';
+
+type WcaPerson = NonNullable<ReturnType<typeof searchLocalPersons>>[number];
+type ReconSolve = Awaited<ReturnType<typeof listRecons>>[number];
 
 export interface SiteSearchCard {
   id: string;

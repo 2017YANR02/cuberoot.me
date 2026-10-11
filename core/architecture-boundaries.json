@@ -19,6 +19,97 @@
   },
   "manualContracts": [
     {
+      "id": "server-gallery-thumbnail-ffmpeg",
+      "from": "apps/api gallery image requests",
+      "to": "API-owned FFmpeg executable in DRIVE_FFMPEG_BIN_DIR",
+      "phase": "subprocess-native",
+      "mechanism": "One shell-free spawn of the fixed ffmpeg binary with pipe input/output, fixed WebP widths, single-thread encoding and a 2.5 second deadline",
+      "owner": "api gallery",
+      "rationale": "The existing thumbnail adapter preserves originals and only returns smaller static WebP derivatives; it caps input/output bytes, two concurrent encoders and eight one-second waiters.",
+      "replacement": "Keep this bounded HTTP adapter separate from the Drive compression worker contract; do not accept executable names, shell commands or arbitrary conversion parameters from requests.",
+      "subprocessCalls": [
+        {
+          "file": "apps/api/src/utils/image_thumbnail.ts",
+          "mechanism": "spawn",
+          "target": "<dynamic>",
+          "count": 1
+        }
+      ],
+      "evidence": [
+        {
+          "file": "core/apps/api/src/utils/image_thumbnail.ts",
+          "contains": "spawn(join(binaryDirectory, 'ffmpeg'), ["
+        },
+        {
+          "file": "core/apps/api/src/utils/image_thumbnail.ts",
+          "contains": "const binaryDirectory = process.env.DRIVE_FFMPEG_BIN_DIR ?? '';"
+        },
+        {
+          "file": "core/apps/api/src/utils/image_thumbnail.ts",
+          "contains": "{ shell: false, stdio: ['pipe', 'pipe', 'ignore'] }"
+        },
+        {
+          "file": "core/apps/api/src/utils/image_thumbnail.ts",
+          "contains": "const timer = setTimeout(() => { failed = true; child.kill('SIGKILL'); }, 2500);"
+        },
+        {
+          "file": "core/apps/api/tests/image_thumbnail.test.ts",
+          "contains": "merges identical work, caches success and caps concurrent native encoders at two"
+        }
+      ]
+    },
+    {
+      "id": "client-scramble-preview-shard-contract",
+      "from": "packages/client static scramble preview regression fixtures",
+      "to": "jobs/scramble-stats-build preview shard generator",
+      "phase": "test-contract",
+      "mechanism": "Workspace package resolution and test-only dynamic import of the existing pure splitExampleSet function",
+      "owner": "client tests and scramble-stats-build",
+      "rationale": "Verify every committed preview sample, metadata record and content hash against the single generator without copying its algorithm or running the solver.",
+      "replacement": "Keep this artifact contract test-only and package-location independent; do not import job source in browser code or write production statistics from fixtures.",
+      "evidence": [
+        {
+          "file": "core/packages/client/tests/scramble-example-shards.test.ts",
+          "contains": "workspaceFixturePath('@cuberoot/scramble-stats-build', 'src', 'build_example_shards.ts')"
+        },
+        {
+          "file": "core/jobs/scramble-stats-build/src/build_example_shards.ts",
+          "contains": "export function splitExampleSet(source: ExampleSet)"
+        }
+      ]
+    },
+    {
+      "id": "client-scramble-preview-injection-fixture",
+      "from": "packages/client scramble preview injection regression test",
+      "to": "repository-owned inject.mjs copied into a disposable synthetic fixture directory",
+      "phase": "subprocess-native",
+      "mechanism": "One shell-free process.execPath execFileSync call with a fixed injection script, temporary input/output paths and a five-second deadline",
+      "owner": "client tests and scramble-stats-build",
+      "rationale": "Verify preview pointer invalidation with one synthetic result row without invoking a solver or changing committed statistics.",
+      "replacement": "Keep test-only with disposable fixtures and fixed executable/script selection; never target production data or accept arbitrary commands.",
+      "subprocessCalls": [
+        {
+          "file": "packages/client/tests/scramble-example-shards.test.ts",
+          "mechanism": "execFileSync",
+          "target": "<dynamic>",
+          "count": 1
+        }
+      ],
+      "evidence": [
+        {
+          "file": "core/packages/client/tests/scramble-example-shards.test.ts",
+          "contains": "execFileSync(process.execPath, [resolve(dir, 'inject.mjs')], {\n      timeout: 5000,"
+        },
+        {
+          "file": "core/packages/client/tests/scramble-example-shards.test.ts",
+          "contains": "const dir = mkdtempSync(resolve(tmpdir(), 'cuberoot-preview-inject-'));"
+        },
+        {
+          "file": "solver/333opt/inject.mjs"
+        }
+      ]
+    },
+    {
       "id": "assistant-vector-deployment-preflight",
       "from": "apps/api deployment-only PostgreSQL extension preflight",
       "to": "fixed Linux package manager, pinned pgvector source and PostgreSQL owner CLI",
@@ -1435,15 +1526,6 @@
     {
       "file": "packages/client/lib/recon-store.ts",
       "importKind": "type-only",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
-      "file": "packages/client/lib/site-search.ts",
-      "importKind": "runtime",
       "mechanism": "static-import",
       "sourceKind": "runtime",
       "specifier": "@cuberoot/shared",
