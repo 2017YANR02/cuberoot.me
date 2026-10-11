@@ -23,6 +23,7 @@
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useParams } from 'next/navigation';
 import { ChevronDown } from 'lucide-react';
+import { TimerPuzzlePicker } from '@cuberoot/timer-ui/puzzle-picker';
 import AppLink from '../AppLink';
 import { CubingIcon } from '../EventIcon/EventIcon';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
@@ -33,6 +34,7 @@ import {
 import { ALL_EVENT_IDS } from '@/lib/event-constants';
 import { eventDisplayName } from '@/lib/wca-events';
 import { tr } from '@/i18n/tr';
+import '@cuberoot/timer-ui/puzzle-picker.css';
 import './puzzle_picker.css';
 import '../country-pins.css';
 
@@ -42,6 +44,8 @@ export interface PuzzlePickerItem {
   iconClass?: string;
   textLabel?: string;
   detail?: ReactNode;
+  /** Single-select callback menus may reuse the shared two-level picker. */
+  children?: readonly Omit<PuzzlePickerItem, 'children'>[];
 }
 
 export interface PuzzlePickerGroup {
@@ -132,7 +136,7 @@ export default function PuzzlePicker({
 
   const isMulti = selectedEvents !== undefined && onToggle !== undefined;
   const selectedItems = groups
-    .flatMap((group) => group.items)
+    .flatMap((group) => group.items.flatMap(item => item.children?.length ? item.children : [item]))
     .filter((item) => isMulti ? selectedEvents?.has(item.id) : item.id === selectedEvent);
   const hasSelection = selectedItems.length > 0;
   const showSelectedIcons = showTriggerIcon && showItemIcons && hasSelection && selectedItems.every(item => item.id);
@@ -167,6 +171,35 @@ export default function PuzzlePicker({
   }, [open]);
 
   if (groups.length === 0 && !popupFooter) return null;
+
+  // Keep one implementation of submenu navigation, focus restoration, touch
+  // layout and viewport clamping. Flat/link/multiselect catalogs retain their
+  // existing renderer; the simulator supplies the same lossless leaf IDs here.
+  if (groups.some(group => group.items.some(item => item.children?.length))
+    && onSelect && !isMulti && !linkFor && !itemAction && !popupFooter) {
+    const normalize = (item: Omit<PuzzlePickerItem, 'children'>) => ({
+      id: item.id,
+      label: menuLabel(item.label),
+      iconClass: item.iconClass,
+      textLabel: item.textLabel && menuLabel(item.textLabel),
+    });
+    return <TimerPuzzlePicker
+      groups={groups.map(group => ({
+        id: group.id,
+        label: menuLabel(group.label),
+        items: group.items.map(item => ({
+          ...normalize(item),
+          children: item.children?.map(normalize),
+        })),
+      }))}
+      selectedEvent={selectedEvent ?? ''}
+      onSelect={onSelect}
+      puzzleLabel={menuLabel(placeholderLabel ?? tr({ zh: '项目', en: 'Puzzle' }))}
+      triggerLabel={showTriggerIcon && showItemIcons ? undefined : triggerLabel}
+      showItemIcons={showItemIcons}
+      dataNoTimer={dataNoTimer}
+    />;
+  }
 
   const iconFor = (item: PuzzlePickerItem, trigger = false) => {
     const className = trigger ? 'pp-trigger-icon' : 'pp-item-icon';
@@ -238,7 +271,7 @@ export default function PuzzlePicker({
             <div key={group.id} className="pp-group">
               <div className="pp-group-title">{menuLabel(group.label)}</div>
               <div className="pp-group-items">
-                {group.items.map(item => itemAction ? (
+                {group.items.flatMap(item => item.children?.length ? item.children : [item]).map(item => itemAction ? (
                   <div key={item.id} className="country-pin-row">{renderItem(item)}{itemAction(item)}</div>
                 ) : renderItem(item))}
               </div>
