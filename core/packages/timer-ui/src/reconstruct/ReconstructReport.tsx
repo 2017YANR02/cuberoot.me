@@ -212,8 +212,10 @@ function ReconstructReportBody({
     [gyroSamples, solve.device?.model],
   );
   const view = useMemo(
-    () => normalizeSolve(solve.scramble, moves, { preferredRotation: recordedViewRotation }),
-    [solve.scramble, moves, recordedViewRotation],
+    () => normalizeSolve(solve.scramble, moves, {
+      preferredRotation: recordedViewRotation, measuredGrip: gyroSamples[0]?.frame === 'scramble',
+    }),
+    [solve.scramble, moves, recordedViewRotation, gyroSamples],
   );
   // Recognition/execution split (Cubeast definitions — see step_metrics.ts).
   // 3x3-shaped events only: the stage walker underneath models a 3x3.

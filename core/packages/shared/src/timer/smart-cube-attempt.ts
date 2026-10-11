@@ -3,6 +3,14 @@ import { TimerSmartCubeMoveRecorder } from './smart-cube-move-recorder';
 import type { Solve, SolveMove } from './types';
 import { stageSegmentsFor } from './stage-segments-producer';
 import type { Quat } from '../smart_cube/orientation';
+import { applyOrientation, mirrorForBrand, quatMul, sensorBasisForBrand } from '../smart_cube/orientation';
+import { notationQuaternion } from './reconstruct/gyro_orient';
+
+export interface SmartCubeStartingGrip {
+  reference: Quat;
+  initial: Quat;
+  orientation?: string;
+}
 
 export interface SmartCubeAttemptDevice {
   model: string;
@@ -26,12 +34,15 @@ export class SmartCubeAttemptProducer {
   private readonly gyro = new GyroRecorder();
   private device: SmartCubeAttemptDevice | undefined;
   private active = false;
+  private grip: SmartCubeStartingGrip | undefined;
 
-  begin(startedAtMs: number, device?: SmartCubeAttemptDevice): void {
+  begin(startedAtMs: number, device?: SmartCubeAttemptDevice, grip?: SmartCubeStartingGrip): void {
     this.moves.begin(startedAtMs);
     this.gyro.reset();
     this.device = device ? { model: device.model, name: device.name } : undefined;
     this.active = true;
+    this.grip = grip ? { ...grip, reference: { ...grip.reference }, initial: { ...grip.initial } } : undefined;
+    if (grip) this.recordGyro(grip.initial, 0);
   }
 
   recordMove(move: string, timestamp: number): boolean {
@@ -40,7 +51,12 @@ export class SmartCubeAttemptProducer {
 
   /** Gyro time is relative to the host's start clock, not the device move clock. */
   recordGyro(quaternion: Quat, timestamp: number): boolean {
-    return this.active && this.gyro.push(quaternion, timestamp);
+    if (!this.active) return false;
+    const pose = this.grip ? quatMul(notationQuaternion(this.grip.orientation ?? ''),
+      applyOrientation(quaternion, this.grip.reference, {
+        basis: sensorBasisForBrand(this.device?.model), mirror: mirrorForBrand(this.device?.model),
+      })) : quaternion;
+    return this.gyro.push(pose, timestamp);
   }
 
   snapshotMoves(): SolveMove[] {
@@ -53,17 +69,18 @@ export class SmartCubeAttemptProducer {
     return {
       moves,
       device: moves.length > 0 && this.device ? { ...this.device } : undefined,
-      gyro: moves.length > 0 ? encodeGyroTrack(this.gyro.snapshot()) : null,
+      gyro: moves.length > 0 ? encodeGyroTrack(this.gyro.snapshot(), this.grip ? 'scramble' : undefined) : null,
     };
   }
 
   finish(): SmartCubeAttemptResult {
     const moves = this.moves.take();
     const samples = this.gyro.take();
-    const gyro = moves.length > 0 ? encodeGyroTrack(samples) : null;
+    const gyro = moves.length > 0 ? encodeGyroTrack(samples, this.grip ? 'scramble' : undefined) : null;
     const device = moves.length > 0 ? this.device : undefined;
     this.device = undefined;
     this.active = false;
+    this.grip = undefined;
     return { device, gyro, moves };
   }
 
@@ -82,6 +99,7 @@ export class SmartCubeAttemptProducer {
   }
 
   reset(): void {
+    this.grip = undefined;
     this.moves.reset();
     this.gyro.reset();
     this.device = undefined;
