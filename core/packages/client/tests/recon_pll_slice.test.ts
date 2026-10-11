@@ -26,8 +26,12 @@ const samples = decodeGyroTrack(recording.gyro);
       physical: { scramble, moves }, viewRotation: view.rotation,
     });
     expect(result.lines.find(line => line.kind === 'pll')?.moves.join(' '))
-      .toBe("U M2' U2 M U M2' U M2' U M U'");
+      .toBe("U M2' U2 M U M2' U M2' U M U U U");
     const pll = result.lines.find(line => line.kind === 'pll')!;
+    // The final three U turns remain visible as one waste group instead of U'.
+    const finalWasteGroups = pll.wasteGroups!.slice(-3);
+    expect(finalWasteGroups[0]).not.toBeNull();
+    expect(new Set(finalWasteGroups).size).toBe(1);
     expect(pll.moveRanges?.map(range => range.token)).toEqual(pll.moves);
     // M2 is one displayed/clickable action, spanning the entire half-turn.
     const firstM2 = pll.moveRanges![1];

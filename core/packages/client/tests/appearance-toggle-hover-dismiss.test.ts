@@ -3,6 +3,10 @@ import { act, createElement, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ replace: vi.fn() }),
+  usePathname: () => '/en',
+}));
 vi.mock('@/lib/safe-storage', () => ({ persistItem: vi.fn() }));
 vi.mock('@/lib/theme', () => ({
   THEME_KEY: 'theme',
