@@ -1,6 +1,5 @@
 'use client';
 
-import TrainingStatsPanel from '@/components/TrainingStatsPanel';
 import { useTrainingStats } from '@/hooks/useTrainingStats';
 
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
@@ -16,6 +15,7 @@ import {
 import TrainingFeedbackOverlay from '@/components/TrainingFeedbackOverlay';
 import TrainingNavButton from '@/components/TrainingNavButton';
 import TrainingSettings, { useTrainingAutoAdvance } from '@/components/TrainingSettings';
+import '@/components/training-stats.css';
 import { useSpaceShortcut } from '@/hooks/useSpaceShortcut';
 import { tr, useLang } from '@/i18n/tr';
 import {
@@ -28,6 +28,7 @@ import ColorSwatch from '../_components/ColorSwatch';
 import {
   ALL_POSITION_QUESTIONS,
   buildPositionRound,
+  positionQuestionsForTop,
   sideOrderForTop,
   type PositionQuestion,
   type SideFace,
@@ -93,6 +94,94 @@ function Result({ score, topFace, showColorNames, onPrevious, onRestart }: {
   );
 }
 
+const seconds = (ms: number) => `${(ms / 1000).toFixed(2)} s`;
+
+function ColorStatsRow({ face }: { face: CubeFace }) {
+  const { stats, reset } = useTrainingStats(`color:positions:${face}`);
+  const [confirmReset, setConfirmReset] = useState(false);
+  const graded = stats.correct + stats.wrong;
+  return (
+    <>
+      <tr>
+        <td>
+          <span className="color-stats-face">
+            <i style={{ '--color-fill': CUBE_FILL[face] } as CSSProperties} />
+            <span>{tr(CUBE_COLOR_NAMES[face])}</span>
+          </span>
+        </td>
+        <td>{stats.total}</td>
+        <td>{stats.correct} / {stats.wrong}</td>
+        <td>{graded ? `${Math.round(stats.correct / graded * 100)}%` : '—'}</td>
+        <td>{stats.timed ? seconds(stats.totalMs / stats.timed) : '—'}</td>
+        <td>{stats.bestMs === null ? '—' : seconds(stats.bestMs)}</td>
+        <td>
+          {confirmReset ? (
+            <span className="color-stats-confirm">
+              <button className="color-stats-reset" type="button" onClick={() => { reset(); setConfirmReset(false); }}>
+                {tr({ zh: '确认', en: 'Confirm' })}
+              </button>
+              <button className="color-stats-cancel" type="button" onClick={() => setConfirmReset(false)}>
+                {tr({ zh: '取消', en: 'Cancel' })}
+              </button>
+            </span>
+          ) : (
+            stats.total > 0 && (
+              <button className="color-stats-reset" type="button" onClick={() => setConfirmReset(true)}>
+                {tr({ zh: '重置', en: 'Reset' })}
+              </button>
+            )
+          )}
+        </td>
+      </tr>
+      {stats.recent.length > 0 && (
+        <tr className="color-stats-history-row">
+          <td colSpan={7}>
+            <details className="color-stats-details">
+              <summary>{tr({ zh: '最近记录', en: 'Recent attempts' })}</summary>
+              <ol className="color-stats-history">{[...stats.recent].reverse().map(attempt => (
+                <li key={attempt.id}>
+                  <time dateTime={new Date(attempt.at).toISOString()}>{new Date(attempt.at).toLocaleString()}</time>
+                  <span>{attempt.correct === null ? tr({ zh: '已完成', en: 'Completed' }) : attempt.correct ? tr({ zh: '正确', en: 'Correct' }) : tr({ zh: '错误', en: 'Wrong' })}</span>
+                  <span>{attempt.durationMs === undefined ? '—' : seconds(attempt.durationMs)}</span>
+                </li>
+              ))}</ol>
+            </details>
+          </td>
+        </tr>
+      )}
+    </>
+  );
+}
+
+function ColorStatsTable({ colors }: { colors: readonly ColorLetter[] }) {
+  const faces = colors.map(letter => CUBE_FACE_FOR_COLOR_LETTER[letter]);
+  return (
+    <section className="training-stats" data-site-surface="panel" aria-label={tr({ zh: '训练统计', en: 'Training statistics' })}>
+      <div className="training-stats-heading">
+        <strong>{tr({ zh: '训练统计', en: 'Training statistics' })}</strong>
+      </div>
+      <div className="color-stats-table-wrap">
+        <table className="color-stats-table">
+          <thead>
+            <tr>
+              <th>{tr({ zh: '顶色', en: 'Top' })}</th>
+              <th>{tr({ zh: '累计完成', en: 'Completed' })}</th>
+              <th>{tr({ zh: '正确 / 错误', en: 'Correct / Wrong' })}</th>
+              <th>{tr({ zh: '正确率', en: 'Accuracy' })}</th>
+              <th>{tr({ zh: '平均用时', en: 'Mean time' })}</th>
+              <th>{tr({ zh: '最快用时', en: 'Best time' })}</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody>
+            {faces.map(face => <ColorStatsRow key={face} face={face} />)}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
 export default function ColorPositionsPage() {
   const isZh = useLang() === 'zh';
   const topSelection = useSubsetSelection('single', 'Y');
@@ -101,13 +190,14 @@ export default function ColorPositionsPage() {
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Array<SideFace | null>>([]);
   const [showColorNames, setShowColorNames] = useState(true);
+  const [shuffleTopPerQuestion, setShuffleTopPerQuestion] = useState(false);
+  const topFacePerIndex = useRef(new Map<number, CubeFace>());
   const autoAdvance = useTrainingAutoAdvance();
   const question = round[index];
   const statsGroup = `color:positions:${topFace}`;
   const { record } = useTrainingStats(statsGroup);
   const startedAt = useRef(0);
   const recorded = useRef(new Set<number>());
-  useEffect(() => { recorded.current.clear(); }, [round]);
   useEffect(() => { startedAt.current = Date.now(); }, [round, index]);
   const selected = answers[index] ?? null;
   const score = answers.reduce((total, answer, answerIndex) => (
@@ -119,6 +209,8 @@ export default function ColorPositionsPage() {
     setRound(buildPositionRound(nextTop));
     setIndex(0);
     setAnswers([]);
+    recorded.current.clear();
+    topFacePerIndex.current = new Map([[0, nextTop]]);
     autoAdvance.cancel();
   }, [autoAdvance.cancel]);
 
@@ -127,6 +219,30 @@ export default function ColorPositionsPage() {
   useEffect(() => {
     startRound(randomTopFace(topSelection.selectedColors));
   }, [startRound, topSelection.selectedColors]);
+
+  const toggleShuffle = useCallback((value: boolean) => {
+    setShuffleTopPerQuestion(value);
+    startRound(randomTopFace(topSelection.selectedColors));
+  }, [topSelection.selectedColors, startRound]);
+
+  const shuffleForIndex = useCallback((newIndex: number) => {
+    if (!shuffleTopPerQuestion || newIndex >= round.length) return;
+    if (recorded.current.has(newIndex)) {
+      const savedTop = topFacePerIndex.current.get(newIndex);
+      if (savedTop !== undefined) setTopFace(savedTop);
+    } else {
+      const newTop = randomTopFace(topSelection.selectedColors);
+      const pool = positionQuestionsForTop(newTop);
+      const newQuestion = pool[Math.floor(Math.random() * pool.length)]!;
+      topFacePerIndex.current.set(newIndex, newTop);
+      setTopFace(newTop);
+      setRound(prev => {
+        const arr = [...prev];
+        arr[newIndex] = newQuestion;
+        return arr;
+      });
+    }
+  }, [shuffleTopPerQuestion, topSelection.selectedColors, round.length]);
 
   const answer = (face: SideFace) => {
     if (!question || selected) return;
@@ -138,19 +254,25 @@ export default function ColorPositionsPage() {
       next[index] = face;
       return next;
     });
-    if (face === question.answer) autoAdvance.schedule(() => setIndex((value) => value + 1));
+    if (face === question.answer) autoAdvance.schedule(() => { shuffleForIndex(index + 1); setIndex(index + 1); });
   };
 
   const next = useCallback(() => {
     if (!selected) return;
     autoAdvance.cancel();
-    setIndex((value) => value + 1);
-  }, [autoAdvance.cancel, selected]);
+    shuffleForIndex(index + 1);
+    setIndex(index + 1);
+  }, [autoAdvance.cancel, selected, index, shuffleForIndex]);
 
   const previous = useCallback(() => {
     autoAdvance.cancel();
-    setIndex((value) => Math.max(0, value - 1));
-  }, [autoAdvance.cancel]);
+    const newIndex = Math.max(0, index - 1);
+    if (shuffleTopPerQuestion) {
+      const savedTop = topFacePerIndex.current.get(newIndex);
+      if (savedTop !== undefined) setTopFace(savedTop);
+    }
+    setIndex(newIndex);
+  }, [autoAdvance.cancel, index, shuffleTopPerQuestion]);
 
   useSpaceShortcut(next, selected !== null);
 
@@ -176,7 +298,13 @@ export default function ColorPositionsPage() {
             onChange={setShowColorNames}
             label={tr({ zh: '颜色文字', en: 'Colour names' })}
           />
-          <TrainingSettings value={autoAdvance.enabled} onChange={autoAdvance.setEnabled} />
+          <TrainingSettings value={autoAdvance.enabled} onChange={autoAdvance.setEnabled}>
+            <BoolToggle
+              value={shuffleTopPerQuestion}
+              onChange={toggleShuffle}
+              label={tr({ zh: '每题换顶色', en: 'Shuffle top per question' })}
+            />
+          </TrainingSettings>
         </div>
       </header>
 
@@ -188,6 +316,11 @@ export default function ColorPositionsPage() {
           </div>
           <div className="color-quiz-progress" aria-hidden="true">
             <i style={{ width: `${((index + (selected ? 1 : 0)) / round.length) * 100}%` }} />
+          </div>
+
+          <div className="position-top-indicator">
+            <span>{tr({ zh: '顶面', en: 'Top face' })}</span>
+            <ColorSwatch face={topFace} compact showLabel={showColorNames} />
           </div>
 
           <h2 id="position-question">
@@ -283,7 +416,7 @@ export default function ColorPositionsPage() {
           onRestart={restart}
         />
       )}
-      <TrainingStatsPanel group={statsGroup} />
+      <ColorStatsTable colors={topSelection.selectedColors} />
     </main>
   );
 }
