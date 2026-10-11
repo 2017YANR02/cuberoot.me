@@ -18,10 +18,12 @@
 在服务器 API 环境设置该令牌，在 Mac 的进程环境提供同值，然后从 `core/` 运行：
 
 ```bash
-node apps/api/scripts/remote-access-host.ts --install
+mkdir -p "$HOME/.local/share/cuberoot-remote"
+pnpm exec esbuild apps/api/scripts/remote-access-host.ts --bundle --platform=node --format=esm --outfile="$HOME/.local/share/cuberoot-remote/host.mjs"
+node "$HOME/.local/share/cuberoot-remote/host.mjs" --install
 ```
 
-安装器先核验本机账号、SSH 主机指纹、API 认证和授权文件写入，再注册 `me.cuberoot.remote-access` LaunchAgent。令牌写入 `~/.config/cuberoot-remote/host.json`（0600），不写 plist、仓库或浏览器。Node 路径和仓库脚本路径改变后须重新安装。无需新增公网端口。未重启验收时不得宣称已验证重启。
+安装器先核验本机账号、SSH 主机指纹、API 认证和授权文件写入，再注册 `me.cuberoot.remote-access` LaunchAgent。令牌写入 `~/.config/cuberoot-remote/host.json`（0600），不写 plist、仓库或浏览器。后台运行独立打包副本，不从 Documents 工作目录执行或读取未发布的共享代码。升级时重新打包并安装；Node 路径改变后须重新安装。无需新增公网端口。未重启验收时不得宣称已验证重启。
 
 验收：真实员工申请 → 负责人审批 → Mac 写入并确认 → 员工端 SSH 与 App 实际打开项目；再撤销测试申请并确认阻止新连接。不得把界面或模拟测试当作员工电脑验收。
 
