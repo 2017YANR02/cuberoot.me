@@ -42,6 +42,10 @@ pnpm --filter @cuberoot/client dev
 
 本地 Web 的 `/v1/*` 通过 Next rewrites 代理线上 API；`/tools/`、`/stats/` 使用现役 Next route handler，静态资源的发布边界见 `.github/workflows/sync_toolkit.yml`。
 
+## 智能魔方复盘验证
+
+CFOP 步骤文本保留冗余动作并用括号标记：`U' U' U'` 显示为 `(U' U' U')`，`U U'` 显示为 `(U U')`，普通半转 `U U` 仍合并为 `U2`。括号与回放动作索引分离，复制文本保留括号；净效果非零的冗余段只增加展示标记，不把整段时间计入原有净零废步评分。末层执行前 EO 已完成、执行后只剩 EPLL 时标注 `COLL`，执行前 EO 未完成则标注 `OLL(CP)`。对应回归为 `tests/recon-waste-coll.test.ts`。
+
 ## 上游同步脚本
 
 ### Solver（or18/RubiksSolverDemo）
