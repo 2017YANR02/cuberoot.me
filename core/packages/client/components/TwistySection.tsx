@@ -12,6 +12,7 @@ import ReconPlayOverlay from './recon/ReconPlayOverlay';
 import { applyTwistyCoreOpacity } from './twistyCoreOpacity';
 import { simSpeedToTps, uniformSimTimeline } from '@/lib/sim_timing';
 import { pgAlgError } from '@/lib/pg-alg-validation';
+import type { TwistyPlaybackPlayer } from '@/lib/twisty-playback';
 import { tr } from '@/i18n/tr';
 import { applyFreeOrbitDelta, ORBIT_K } from '@/app/[lang]/sim/engine/viewControls';
 import { useT } from '@/hooks/useT';
@@ -124,7 +125,7 @@ export interface TwistySettings {
 
 /** Twisty 播放器区域——动态导入 cubing 库，用构造函数 API 创建（对齐 legacy） */
 export default function TwistySection({
-  puzzle, puzzleDescription, nativePuzzleId, scramble, alg, playerRef, fillPane = false, twistOnClick = false, onUserMove, onScaleChange, settings, backView, playbackMode, hideControls = false, experimentalStickering, fallbackMoves,
+  puzzle, puzzleDescription, nativePuzzleId, scramble, alg, playerRef, onPlayerChange, fillPane = false, twistOnClick = false, onUserMove, onScaleChange, settings, backView, playbackMode, hideControls = false, externalControls = false, experimentalStickering, fallbackMoves,
 }: {
   puzzle: string;
   /** cubing.js PuzzleGeometry description string (e.g. "c e 0"). When set, the
@@ -146,6 +147,11 @@ export default function TwistySection({
   /** 隐藏 cubing.js 原生底部控制条(controlPanel:'none'),改用画面内播放/暂停浮层。
    *  嵌成绩弹窗预览时用,详情/提交页默认 false(保留原生 scrubber/play)。 */
   hideControls?: boolean;
+  /** /sim supplies the shared PlaybackBar and paints the canvas background.
+   *  Unlike hideControls, this mode does not add a preview play overlay. */
+  externalControls?: boolean;
+  /** Publish replacements as well as initial readiness to external controls. */
+  onPlayerChange?: (player: TwistyPlaybackPlayer | null) => void;
   /** 启用 tap-to-twist:cubing.js 默认 movePressInput="auto" 实际关闭点击转面;
    *  传 true 改成 "basic",DragTracker → raycastMove → experimentalAddMove 链路接通。
    *  对齐 alpha.twizzle.net/explore 行为。 */
@@ -208,6 +214,8 @@ export default function TwistySection({
   const [playerNonce, setPlayerNonce] = useState(0);
   // hideControls(成绩弹窗预览)时用画面内浮层按钮播放,playing 由 cubing.js playingInfo 同步。
   const [playing, setPlaying] = useState(false);
+  const onPlayerChangeRef = useRef(onPlayerChange);
+  useEffect(() => { onPlayerChangeRef.current = onPlayerChange; }, [onPlayerChange]);
   const onUserMoveRef = useRef(onUserMove);
   useEffect(() => { onUserMoveRef.current = onUserMove; }, [onUserMove]);
   const onScaleChangeRef = useRef(onScaleChange);
@@ -259,8 +267,9 @@ export default function TwistySection({
     const playerInit: Record<string, unknown> = {
       experimentalSetupAlg: (puzzleDescription && !nativePuzzleId) || !nativeInputValid ? '' : scramble,
       alg: (puzzleDescription && !nativePuzzleId) || !nativeInputValid ? '' : alg,
-      controlPanel: hideControls || !nativeInputValid ? 'none' : 'bottom-row',
+      controlPanel: externalControls || hideControls || !nativeInputValid ? 'none' : 'bottom-row',
     };
+    if (externalControls) playerInit.background = 'none';
     if (use2D) playerInit.visualization = '2D';
     // PuzzleGeometry puzzle (explore set) → set the description and omit `puzzle`
     // entirely (mirrors alpha.twizzle.net/explore's `delete config.puzzle`).
@@ -270,8 +279,9 @@ export default function TwistySection({
     const player = new Ctor(playerInit);
     playerInstRef.current = player;
     setPlayerNonce((n) => n + 1);
-    // NOTE: light colorScheme 让 scrubber 轨道右侧渲染为白色（对齐 legacy 图2样式）
-    player.style.colorScheme = 'light';
+    // Legacy native controls keep their existing appearance. /sim inherits the
+    // page theme and lets its canvas container own every background choice.
+    if (!externalControls) player.style.colorScheme = 'light';
 
 
     // onUserMove hook: 包 model.experimentalAddMove。cubing.js 的 press handler
@@ -383,10 +393,12 @@ export default function TwistySection({
       ro.observe(container);
       container.appendChild(player);
       if (playerRef) playerRef.current = player;
+      onPlayerChangeRef.current?.(player);
       return () => {
         ro.disconnect();
         stopNativeAppend?.();
         if (playerRef) playerRef.current = null;
+        onPlayerChangeRef.current?.(null);
         playerInstRef.current = null;
       };
     } else {
@@ -395,9 +407,11 @@ export default function TwistySection({
       player.style.margin = '12px 0';
       container.appendChild(player);
       if (playerRef) playerRef.current = player;
+      onPlayerChangeRef.current?.(player);
       return () => {
         stopNativeAppend?.();
         if (playerRef) playerRef.current = null;
+        onPlayerChangeRef.current?.(null);
         playerInstRef.current = null;
       };
     }
@@ -405,7 +419,7 @@ export default function TwistySection({
     // scramble/alg/puzzleDescription 走下面的 setter 路径,不触发重建。
     // puzzleDescription 不入 deps:改 cut 深度时原地 set(见下方 effect),不重建 player。
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [Ctor, puzzle, nativePuzzleId, fillPane, twistOnClick, hideControls, use2D]);
+  }, [Ctor, puzzle, nativePuzzleId, fillPane, twistOnClick, hideControls, externalControls, use2D]);
 
   // puzzleDescription 原地同步 — 改 cut 深度(Puzzle Cuts 编辑器)时不重建 player,
   // 对齐 alpha.twizzle.net/explore 的丝滑切割:只把新 description set 到已存在的 player。
@@ -521,8 +535,8 @@ export default function TwistySection({
     const player = playerInstRef.current;
     if (!player || !nativePuzzleId) return;
     if (!nativeInputValid) { try { player.pause(); } catch { /* disposed */ } }
-    player.controlPanel = hideControls || !nativeInputValid ? 'none' : 'bottom-row';
-  }, [nativePuzzleId, nativeInputValid, hideControls, playerNonce]);
+    player.controlPanel = externalControls || hideControls || !nativeInputValid ? 'none' : 'bottom-row';
+  }, [nativePuzzleId, nativeInputValid, hideControls, externalControls, playerNonce]);
 
   // 按阶段展示色块 — cubing.js 原生 experimentalStickering。依赖 playerNonce:
   // player 重建(换拼图)后默认回 full,非 full 值要立刻补挂。undefined = 不接管。
@@ -1390,7 +1404,7 @@ export default function TwistySection({
           )}
         </div>
       )}
-      {hideControls && nativeInputValid && alg.trim().length > 0 && (
+      {hideControls && !externalControls && nativeInputValid && alg.trim().length > 0 && (
         <ReconPlayOverlay
           playing={playing}
           onToggle={() => { try { playerInstRef.current?.togglePlay(); } catch { /* */ } }}

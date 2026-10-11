@@ -113,6 +113,7 @@ description: "用户说造魔方模拟器、给 /sim 加魔方、新魔方类型
 播放循环用 `twist(action,false,false)` + 仅 `started===true` 才推进 step(完成才接下一步);别用 `force=true`+固定 `setInterval`(会在缓动结束前砍掉 120° 转动);NxN 分支先 `if(cube.busy) return`。
 所有显隐/能力走 `simCaps` 单一 registry,别写 `isTwistyLocal`/`isCornerLocal`/`isIvyLocal` 布尔链或 `puzzleKind!=='megaminx'` 单点补丁。
 让项目选择器直接读取 URL 的拼图状态；从无 World 的渲染器切回默认 NxN 时，即使新 World 已是该拼图，也同步逻辑阶数。
+让所有 `/sim` 拼图共用 `PlaybackBar` 与 `boardBg`；Twisty 路径使用外部控制模式和透明背景，按真实 indexer 同步步数与播放状态，并在播放器替换、无效输入和卸载时释放订阅。
 
 ## 拖拽转动(每种魔方都做,不只整体旋转)
 - 抓魔方任意位置都能转(别要求精准命中窄区);拖拽方向自动选要转的可动单元(角/面/层)。

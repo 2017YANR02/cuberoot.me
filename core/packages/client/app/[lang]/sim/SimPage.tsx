@@ -103,6 +103,7 @@ import AlgsPanel from './AlgsPanel';
 import PuzzleImageStudio, { type SimBridge } from '@/components/puzzle-image/PuzzleImageStudio';
 import type { DrawExport } from '@/components/puzzle-draw/types';
 import type { TwistyPlayerLike } from '@/components/puzzle-image/SimCaptureGroup';
+import type { TwistyPlaybackPlayer } from '@/lib/twisty-playback';
 import { attachNative2DCompanion, type Native2DCompanionPlayer } from '@/lib/puzzle-image/native-2d-companion';
 import { useImageSpec } from '@/components/puzzle-image/useImageSpec';
 import { rotationDefaultsFor } from '@/lib/puzzle-image/defaults';
@@ -455,6 +456,7 @@ export default function SimPage() {
   // to jumpToStart + play during animateScramble.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const twistyPlayerRef = useRef<any>(null);
+  const [twistyPlaybackPlayer, setTwistyPlaybackPlayer] = useState<TwistyPlaybackPlayer | null>(null);
 
   const [orderState, setOrder] = useState<number>(3);
   // Pin the UI's logical order during the render that changes the URL too, before
@@ -2283,6 +2285,8 @@ export default function SimPage() {
               fillPane
               twistOnClick
               playerRef={twistyPlayerRef}
+              onPlayerChange={setTwistyPlaybackPlayer}
+              externalControls
               // 按阶段展示色块:cubing.js 原生支持的拼图直接透传阶段名(其余拼图
               // 不传 — undefined = TwistySection 不接管该属性)。
               experimentalStickering={(puzzleParam === 'megaminx' || puzzleParam === 'fto') ? query.stickering : undefined}
@@ -2418,6 +2422,7 @@ export default function SimPage() {
             onResetKeymap={() => setKeymap(resetKeymapStorage())}
             userMoveRef={userMoveRef}
             twistyPlayerRef={twistyPlayerRef}
+            twistyPlaybackPlayer={twistyPlaybackPlayer}
             skewbNotation={skewbNotation}
             onSkewbNotationChange={setSkewbNotation}
             kilominxNotation={query.kiloNotation}

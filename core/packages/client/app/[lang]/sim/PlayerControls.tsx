@@ -194,6 +194,10 @@ export { SIM_FIXED_PUZZLE_OPTIONS } from './puzzleOptions';
 import { simSpeedToTps, simTpsToSpeed } from '@/lib/sim_timing';
 import AlgInput from '@/components/AlgInput';
 import PlaybackBar from '@/components/PlaybackBar';
+import {
+  createTwistyPlayback, EMPTY_TWISTY_PLAYBACK_STATE,
+  type TwistyPlaybackPlayer, type TwistyPlaybackState,
+} from '@/lib/twisty-playback';
 import BoolToggle from '@/components/BoolToggle';
 import NxNOrderInput from '@/components/NxNOrderInput';
 import './player-controls.css';
@@ -969,6 +973,8 @@ interface Props {
    *  scramble play button to drive jumpToStart + play after the alg is set. */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   twistyPlayerRef?: RefObject<any>;
+  /** Reactive player identity for the shared playback bar; refs alone miss rebuilds. */
+  twistyPlaybackPlayer?: TwistyPlaybackPlayer | null;
   /** Skewb-only: Sarah vs WCA notation. Owner SimPage persists in localStorage. */
   skewbNotation?: SkewbNotation;
   onSkewbNotationChange?: (n: SkewbNotation) => void;
@@ -1026,7 +1032,7 @@ export default function PlayerControls({
   order, onOrderChange, puzzleKind, onPuzzleChange,
   settings, onSettingsChange, canUseCustomLogo, transCore = null,
   keymap, onKeymapChange, onResetKeymap,
-  userMoveRef, twistyPlayerRef,
+  userMoveRef, twistyPlayerRef, twistyPlaybackPlayer = null,
   skewbNotation, onSkewbNotationChange,
   kilominxNotation = 'cstimer', onKilominxNotationChange,
   onCopyLink,
@@ -1149,6 +1155,8 @@ export default function PlayerControls({
   const [setupDraft, setSetupDraft] = useState(() => formatIncomingSquareText(setup ?? ''));
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(false);
+  const [twistyPlayback, setTwistyPlayback] = useState<TwistyPlaybackState>(EMPTY_TWISTY_PLAYBACK_STATE);
+  const twistyPlaybackRef = useRef<ReturnType<typeof createTwistyPlayback> | null>(null);
   // Caret char offset in the solution box while the user is navigating text (click
   // / arrow keys / typing) — drives the "current move" highlight the twizzle way
   // (highlight the move the caret is *on*, not the last one fully behind it).
@@ -1342,6 +1350,23 @@ export default function PlayerControls({
     try { parseNativePuzzleAlg(puzzleKind, algDraft); return true; } catch { return false; }
   }, [puzzleKind, algDraft]);
 
+  useEffect(() => {
+    setTwistyPlayback(EMPTY_TWISTY_PLAYBACK_STATE);
+    if (!isTwistyMode || !twistyPlaybackPlayer) return;
+    // Invalid drafts must not play the previous legal picture while the URL is
+    // still waiting for its debounced update. TwistySection keeps that picture.
+    if (!nativeSetupValid || !nativeAlgValid) {
+      twistyPlaybackPlayer.pause();
+      return;
+    }
+    const controls = createTwistyPlayback(twistyPlaybackPlayer, setTwistyPlayback);
+    twistyPlaybackRef.current = controls;
+    return () => {
+      controls.dispose();
+      if (twistyPlaybackRef.current === controls) twistyPlaybackRef.current = null;
+    };
+  }, [isTwistyMode, twistyPlaybackPlayer, nativeSetupValid, nativeAlgValid]);
+
   const squareFamilyAlgMoves = useMemo<SquareFamilyMove[] | null>(() => {
     if (!squareFamilySpec) return null;
     return tryParseSquareFamilyMoves(algDraft, squareFamilySpec);
@@ -1477,7 +1502,9 @@ export default function PlayerControls({
   );
   const showAlgOverlay = !!algValidationSpans || !!highlightRange;
 
-  const totalSteps = isSquarePuzzle
+  const totalSteps = isTwistyMode
+    ? (nativeSetupValid && nativeAlgValid && twistyPlayback.ready ? twistyPlayback.total : 0)
+    : isSquarePuzzle
     ? (squareFamilyCanPlay ? squareActions.length : 0)
     : isIvy
       ? (ivyCanPlay ? ivyActions.length : 0)
@@ -1486,6 +1513,10 @@ export default function PlayerControls({
         : nxnItems.length;
 
   const jumpToStep = useCallback(async (n: number) => {
+    if (isTwistyMode) {
+      await twistyPlaybackRef.current?.seek(n);
+      return;
+    }
     if (!world || !engineReady || world.cube !== activeCube) return;
     const replayRequest = ++replayRequestRef.current;
     replayPendingRef.current = false; // non-NxN replay paths below are synchronous
@@ -1601,7 +1632,7 @@ export default function PlayerControls({
       hands.setGrips(g.R, g.L);
     }
     setStep(target);
-  }, [world, activeCube, engineReady, clearFrozen, setupDraft, algDraft, nxnItems, squareActions, squareFamilyAlgMoves, squareFamilySpec, squareFamilyCanPlay, ivyActions, cornerActions, corner, toEngineText, isSquarePuzzle, isSq1, isIvy, ivyCanPlay, cornerCanPlay, playbackMode]);
+  }, [world, activeCube, engineReady, clearFrozen, setupDraft, algDraft, nxnItems, squareActions, squareFamilyAlgMoves, squareFamilySpec, squareFamilyCanPlay, ivyActions, cornerActions, corner, toEngineText, isSquarePuzzle, isSq1, isIvy, isTwistyMode, ivyCanPlay, cornerCanPlay, playbackMode]);
 
   // Notation guide (engine skewb): play ONE token on the main cube from solved so the
   // user sees which corner a letter turns. It only borrows the cube — setup/alg text is
@@ -1749,6 +1780,11 @@ export default function PlayerControls({
   // 目前只走 NxN(SQ1/Ivy/角转引擎仍瞬切):cube 状态恒等于 setup+前 step 项,
   // 正向 twist 第 step 项 / 反向 twist 第 step-1 项的逆,状态保持一致。
   const stepForward = useCallback(() => {
+    if (isTwistyMode) {
+      setCaretChar(null);
+      void twistyPlaybackRef.current?.stepForward(settings.animatePlayback !== false);
+      return;
+    }
     if (!engineReady || world?.cube !== activeCube || replayPendingRef.current) return;
     clearFrozen();
     setCaretChar(null); // hand the highlight back to the playback position
@@ -1773,9 +1809,14 @@ export default function PlayerControls({
       return;
     }
     jumpToStep(step + 1);
-  }, [activeCube, engineReady, clearFrozen, jumpToStep, step, settings.animatePlayback, settings.speed, playbackFrames, isSquarePuzzle, isIvy, corner, world, nxnItems]);
+  }, [activeCube, engineReady, clearFrozen, jumpToStep, step, settings.animatePlayback, settings.speed, playbackFrames, isSquarePuzzle, isIvy, isTwistyMode, corner, world, nxnItems]);
 
   const stepBack = useCallback(() => {
+    if (isTwistyMode) {
+      setCaretChar(null);
+      void twistyPlaybackRef.current?.stepBack(settings.animatePlayback !== false);
+      return;
+    }
     if (!engineReady || world?.cube !== activeCube || replayPendingRef.current) return;
     clearFrozen();
     setCaretChar(null); // hand the highlight back to the playback position
@@ -1812,12 +1853,17 @@ export default function PlayerControls({
       return;
     }
     jumpToStep(step - 1);
-  }, [activeCube, engineReady, clearFrozen, jumpToStep, step, settings.animatePlayback, settings.speed, playbackFrames, isSquarePuzzle, isIvy, corner, world, nxnItems]);
+  }, [activeCube, engineReady, clearFrozen, jumpToStep, step, settings.animatePlayback, settings.speed, playbackFrames, isSquarePuzzle, isIvy, isTwistyMode, corner, world, nxnItems]);
 
   // Play/pause toggle for the shared PlaybackBar. Pausing is instant; starting
   // from the end first复位到第 0 步(并同步 stepRef,否则播放轮询读到 step≥total
   // 会立刻停),复位完成后再开播 — 与旧内联 handler 行为一致。
   const handleTogglePlay = useCallback(async () => {
+    if (isTwistyMode) {
+      setCaretChar(null);
+      await twistyPlaybackRef.current?.togglePlay();
+      return;
+    }
     if (playing) { setPlaying(false); return; }
     if (!engineReady || world?.cube !== activeCube || replayPendingRef.current) return;
     clearFrozen();
@@ -1828,7 +1874,7 @@ export default function PlayerControls({
       stepRef.current = 0;
     }
     setPlaying(true);
-  }, [activeCube, engineReady, world, playing, step, totalSteps, jumpToStep, clearFrozen]);
+  }, [activeCube, engineReady, world, playing, step, totalSteps, jumpToStep, clearFrozen, isTwistyMode]);
 
   useEffect(() => {
     if (!playing || !engineReady) {
@@ -2736,13 +2782,13 @@ export default function PlayerControls({
       )}
 
       {(() => {
-      const playbackBar = !isTwistyMode ? (
+      const playbackBar = (
       // 播放控制排:twizzle alpha.twizzle.net/edit 同款两排布局(进度条在上、传输按钮在下),
       // 与 /recon 播放条共用同一份 <PlaybackBar>。stickering / 锚点两个下拉挂在按钮排两端。
       <PlaybackBar
-        step={step}
+        step={isTwistyMode ? (totalSteps > 0 ? twistyPlayback.step : 0) : step}
         total={totalSteps}
-        playing={playing}
+        playing={isTwistyMode ? totalSteps > 0 && twistyPlayback.playing : playing}
         onScrub={(n) => { setCaretChar(null); jumpToStep(n); }}
         onSkipStart={() => { setCaretChar(null); jumpToStep(0); }}
         onStepBack={stepBack}
@@ -2761,13 +2807,6 @@ export default function PlayerControls({
           scrub: t('拖动播放进度', 'Scrub playback'),
         }}
       />
-      ) : (
-      // Twisty puzzles (pyraminx/skewb/megaminx/fto/PG explore — cubing.js TwistyPlayer,
-      // alpha.twizzle.net/edit's actual engine) already show a native play/pause/scrub bar
-      // (TwistySection's bottom-row controlPanel); only the anchor select is ours to add —
-      // TwistySection already reads playbackMode into experimentalSetupAnchor, it
-      // just had no control to change it in this mode.
-      <div className="sim-player-row">{imageButton}{fullscreenButton}{stickeringSelect}{anchorSelect}{backViewButton}</div>
       );
       return playbackSlot ? createPortal(playbackBar, playbackSlot) : playbackBar;
       })()}
