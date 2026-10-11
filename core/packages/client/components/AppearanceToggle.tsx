@@ -290,6 +290,7 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
               <label className="appearance-background-row">
                 <span>{t('底图', 'Backdrop')}</span>
                 <select
+                  className="appearance-background-select"
                   value={showBackgrounds ? 'image' : 'solid'}
                   onChange={(event) => setBackgroundEnabled(event.target.value === 'image')}
                 >

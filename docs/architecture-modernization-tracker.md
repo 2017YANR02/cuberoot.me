@@ -416,6 +416,7 @@ Platform RET 不进入上述实施流水线。RET-01/03 的完成状态来自已
 
 | 日期 | 变更 | 证据 |
 | --- | --- | --- |
+| 2026-10-10 | 发布整合后的依赖边界修复 | 搜索类型使用公开 WCA 子入口及既有 API 返回型，日历测试从公开月窗口契约取元素类型；移除一条 shared 根入口旧债。分片回归移至所属 job 并保留全量样本核对；图片缩略图和临时注入 CLI 分别登记精确子进程调用、资源限制和失败边界，不修改扫描器或扩大旧债豁免。原生编码器实现未变；CI 与实际部署状态按本次发布另行记录 |
 | 2026-08-31 | 五端已安装客户端单一产品层与三宿主边界落地 | 19 个活跃 workspace package（5 apps、4 jobs、10 libraries）受现有 fail-closed 守卫约束；`@cuberoot/app-ui` 为唯一 React 产品层，Capacitor/Tauri/Harmony 三宿主只接系统能力。生成物 ledger 当前为 38 项，新增 Desktop、Harmony 与双语 Timer PDF 的唯一 owner/输出边界。macOS `.app` 已启动、未签名 DMG 经 `hdiutil verify`；Harmony unsigned HAP `BUILD SUCCESSFUL` 但 `hdc` 无设备；Windows CI 定义未实跑。本地 API/Web Tauri origins 未 push/部署，整体仍未完成 |
 | 2026-08-25 | LAY2-13 FMC Cargo app 归位及发布验收完成 | 根 `fmc/` 的 72 个 tracked 文件完整迁至 `core/apps/fmc-solver/`；专用 workflow 的触发、稀疏检出、工作目录和制品路径同步，忽略项、系统地图与运行说明更新。Cargo workspace、线上 `/v1/fmc/*` 和远端运行目标不变，14 个 pnpm workspace 不增不减；浮动 nightly 漂移已改为锁定验证版本，Test、Deploy Next、Deploy FMC solver 与服务健康检查全部成功；本地未运行重计算或测试 |
 | 2026-08-25 | Reconer 独立研发项目归位 | 经单独授权将根目录 `reconer/` 完整迁至 `research/reconer/`；项目仍保留自己的 Node、uv、测试与本地素材边界，不纳入 Core workspace，也未改算法或运行视频计算。根系统地图、README、Core onboarding 与迁移历史同步到新路径 |

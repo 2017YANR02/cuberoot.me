@@ -43,6 +43,11 @@ node packages/client/scripts/build-tnoodle-i18n.mjs --input <tnoodle-i18n-dir> -
   workflows rebuild them together. Existing complete catalogs still back global
   lists/search and recover missing or mismatched slices. All month fixtures are
   checked, including adjacent days, source overlap, and 1982.
+- Scramble preview shard and synthetic injection checks belong to
+  `core/jobs/scramble-stats-build/tests/scramble-example-shards.test.ts` and run
+  with the producer's CI aggregation checks. They verify every committed sample;
+  the injection fixture copies the existing CLI into a temporary directory,
+  uses one solved row, and never invokes a solver or writes published files.
 - Cube history retains all research fields in a generated dictionary; source
   citations, domestic-price policy, details, comparisons and JSON export are
   unchanged. After editing research JSON during an open dev session, run
@@ -54,6 +59,11 @@ node packages/client/scripts/build-tnoodle-i18n.mjs --input <tnoodle-i18n-dir> -
   ICC/EXIF/XMP is eligible; other images retain their original response. At most
   two single-thread encoders run, eight requests may wait up to one second,
   encoding stops after 2.5 seconds, and the process cache holds at most 16 MiB.
+  The native subprocess is registered separately from Drive video compression
+  in `core/architecture-boundaries.json`; its 8 MiB input, 4 MiB output,
+  8-megapixel decode and 32 MiB per-allocation limits do not constitute a
+  process-wide RSS or no-swap guarantee. The API deployment owns the existing
+  FFmpeg artifact and its absolute `DRIVE_FFMPEG_BIN_DIR` configuration.
   Failures return original bytes with `no-store`; successful immutable variants
   use dimension paths and version query parameters. An older API returns 404 for
   the new route; the gallery then loads the original URL instead. This prevents

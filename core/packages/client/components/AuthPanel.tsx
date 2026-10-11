@@ -16,6 +16,7 @@ import AppLink from '@/components/AppLink';
 import { PasswordInput } from '@/components/PasswordInput';
 import { ClearButton } from '@/components/ClearButton';
 import { useAuthStore, applySession } from '@/lib/auth-store';
+import { persistItem } from '@/lib/safe-storage';
 import { useLang } from '@/i18n/tr';
 import { useT } from '@/hooks/useT';
 import {
@@ -44,7 +45,7 @@ function readRememberedLogin(channel: Channel): string {
 function rememberLogin(channel: Channel, value: string): void {
   try {
     const key = 'cuberoot_login_' + channel;
-    if (value.trim()) localStorage.setItem(key, value.trim());
+    if (value.trim()) persistItem(key, value.trim());
     else localStorage.removeItem(key);
   } catch { /* Remembering an account is optional; sign-in still succeeds. */ }
 }

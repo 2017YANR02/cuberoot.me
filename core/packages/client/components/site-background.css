@@ -76,7 +76,7 @@ html[data-contrast='soft'] .site-scenery img {
   width: 100%;
 }
 
-.appearance-background-row select {
+.appearance-background-row .appearance-background-select {
   width: fit-content;
   padding: 3px 6px;
   border: 1px solid var(--border-default);

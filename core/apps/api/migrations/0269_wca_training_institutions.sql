@@ -15,10 +15,27 @@ CREATE TABLE wca_student_institutions (
 );
 
 -- Maintainer-requested institution and one-time assignment of existing students.
--- Do not infer future affiliations from a teacher or grant tenant access here.
-INSERT INTO organizations (slug, name)
-SELECT 'shanghai-cuberoot-training', '上海魔方根科技有限公司'
-WHERE NOT EXISTS (SELECT 1 FROM organizations WHERE name = '上海魔方根科技有限公司');
+-- Existing organizations retain their membership. A new organization must have
+-- its real maintainer as an active owner before the deferred guard runs at COMMIT.
+DO $$
+DECLARE
+  owner_user_id BIGINT;
+  institution_id UUID;
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM organizations WHERE name = '上海魔方根科技有限公司') THEN
+    SELECT id INTO STRICT owner_user_id
+    FROM app_users
+    WHERE wca_id = '2017YANR02' AND merged_into_user_id IS NULL;
+
+    INSERT INTO organizations (slug, name, created_by_user_id)
+    VALUES ('shanghai-cuberoot-training', '上海魔方根科技有限公司', owner_user_id)
+    RETURNING id INTO institution_id;
+    INSERT INTO organization_members (organization_id, user_id, role, status, joined_at)
+    VALUES (institution_id, owner_user_id, 'owner', 'active', NOW());
+  END IF;
+END;
+$$;
+-- Do not infer future affiliations or grant students tenant access.
 INSERT INTO wca_training_institutions (organization_id)
 SELECT id FROM organizations WHERE name = '上海魔方根科技有限公司'
 ORDER BY created_at, id LIMIT 1

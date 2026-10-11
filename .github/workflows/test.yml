@@ -17,6 +17,8 @@ on:
       - '.node-version'
       - 'core/**'
       - '!core/packages/platform/**'
+      - 'solver/333opt/inject.mjs'
+      - 'solver/333opt/data_paths.mjs'
       - 'docs/platform-capability-manifest.json'
       - 'docs/platform-unification-plan.md'
       - 'sync_upstream.ts'
@@ -213,6 +215,8 @@ jobs:
               - 'core/packages/puzzle-solvers/**'
               - 'core/packages/client/tests/clock_solver.test.ts'
             scramble_stats:
+              - 'solver/333opt/inject.mjs'
+              - 'solver/333opt/data_paths.mjs'
               - '.node-version'
               - 'core/package.json'
               - 'core/pnpm-lock.yaml'
@@ -538,7 +542,7 @@ jobs:
       - name: Verify stage statistics aggregation and intake
         if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.scramble_stats == 'true' }}
         working-directory: core
-        run: pnpm --filter @cuberoot/scramble-stats-build exec vitest run tests/aggregate_variant.test.ts tests/incremental.test.ts tests/no_bar.test.ts tests/puzzle_examples.test.ts
+        run: pnpm --filter @cuberoot/scramble-stats-build exec vitest run tests/aggregate_variant.test.ts tests/incremental.test.ts tests/no_bar.test.ts tests/puzzle_examples.test.ts tests/scramble-example-shards.test.ts
 
       - name: Verify SQ2 sampled builder runtime
         if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.scramble_stats == 'true' }}

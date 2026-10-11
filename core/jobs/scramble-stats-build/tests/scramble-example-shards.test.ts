@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
-import { splitExampleSet, type ExampleSet, type ExampleShard } from '../../../jobs/scramble-stats-build/src/build_example_shards';
+import { splitExampleSet, type ExampleSet, type ExampleShard } from '../src/build_example_shards';
 
 const root = resolve(import.meta.dirname, '../../../../stats/scramble');
 const read = (file: string) => JSON.parse(readFileSync(resolve(root, file), 'utf8'));
@@ -57,6 +57,9 @@ it('standalone optimal-result injection invalidates only the changed preview poi
     writeFileSync(resolve(dir, 'corpus.txt'), '1,R\n');
     execFileSync(process.execPath, [resolve(dir, 'inject.mjs')], {
       timeout: 5000,
+      maxBuffer: 64 * 1024,
+      cwd: dir,
+      shell: false,
       env: { ...process.env, DIST: resolve(dir, 'dist.json'), EX: resolve(dir, 'examples.json'), CORPUS: resolve(dir, 'corpus.txt'), META: resolve(dir, 'absent.csv'), COMPS: resolve(dir, 'absent.tsv') },
     });
     const updated = JSON.parse(readFileSync(resolve(dir, 'dist.json'), 'utf8'));

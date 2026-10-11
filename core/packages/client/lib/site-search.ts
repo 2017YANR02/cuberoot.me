@@ -5,7 +5,7 @@
 // 调整路径到 client 别名 + 不依赖 react-router)。
 import { useState, useEffect, useMemo, useRef, useDeferredValue } from 'react';
 import { loadPersonsIndex, searchLocalPersons } from '@cuberoot/shared/persons-index';
-import type { WcaPerson, ReconSolve } from '@cuberoot/shared';
+import type { WcaPerson } from '@cuberoot/shared/wca-search';
 import { loadComps, searchComps, type Comp } from '@/lib/comp-search';
 import { statsUrl } from '@/lib/stats-base';
 import { listRecons } from '@/lib/recon-api';
@@ -209,6 +209,7 @@ function cachedEntries<T>(load: () => Promise<T>): () => Promise<T> {
 const loadGlossaryEntries = cachedEntries(() => import('@/app/[lang]/wiki/glossary.json').then(data => glossaryRecords(data.default)));
 const loadStackEntries = cachedEntries(() => import('@/app/[lang]/dev/stack/_lib/stack_meta').then(data => stackRecords(data.STACK_TOOLS_META)));
 
+type ReconSolve = Awaited<ReturnType<typeof listRecons>>[number];
 interface ReconRecord { hit: ReconHit; hay: string }
 
 // 与详情页头部 (recon/[id]/page.tsx) 口径一致:展示单次 (value ?? rawTime),average 仅兜底

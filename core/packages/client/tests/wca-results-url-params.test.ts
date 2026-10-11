@@ -134,10 +134,14 @@ describe('/wca/results — 老师分享视图', () => {
   });
 
   it('按项目明确区分有老师、自学和尚未填写', () => {
-    expect(teacherCellSrc).toContain("<option value=\"true\">{tr({ zh: '有老师', en: 'Teacher' })}</option>");
-    expect(teacherCellSrc).toContain("<option value=\"false\">{tr({ zh: '自学', en: 'Self-taught' })}</option>");
+    expect(teacherCellSrc).toContain("value={isSelfTaught ? 'self' : noTeacher ? 'none' : 'teacher'}");
+    expect(teacherCellSrc).toContain("<option value=\"none\">{tr({ zh: '未登记老师', en: 'No teacher recorded' })}</option>");
+    expect(teacherCellSrc).toContain("<option value=\"teacher\">{tr({ zh: '有老师', en: 'Teacher' })}</option>");
+    expect(teacherCellSrc).toContain("<option value=\"self\">{tr({ zh: '自学', en: 'Self-taught' })}</option>");
     expect(teacherCellSrc).toContain('relation.isSelfTaught');
     expect(teacherCellSrc).toContain('directory.save(studentWcaId, eventId, undefined, true)');
+    expect(teacherCellSrc).toContain('directory.save(studentWcaId, eventId, selected.id)');
+    expect(teacherCellSrc).toContain('directory.remove(studentWcaId, eventId)');
     expect(teacherApiSrc).toContain('selfTaught ? { selfTaught: true }');
   });
 });

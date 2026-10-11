@@ -19,6 +19,42 @@
   },
   "manualContracts": [
     {
+      "id": "server-gallery-thumbnail-ffmpeg",
+      "from": "apps/api public article-image thumbnail adapter",
+      "to": "API-owned ffmpeg executable from the absolute DRIVE_FFMPEG_BIN_DIR",
+      "phase": "subprocess-native",
+      "mechanism": "One shell-free spawn call with fixed pipe-only WebP arguments and 512/1024 widths; two single-thread encoders, eight waiters with a one-second deadline, 2.5-second kill deadline, 8 MiB input, 4 MiB output and 16 MiB cache",
+      "owner": "api deployment",
+      "rationale": "Reuse the already provisioned encoder for bounded runtime gallery derivatives; preserve originals and fall back without caching failed conversions.",
+      "replacement": "Keep the executable name and argument allowlist fixed. The 32 MiB per-allocation and 8-megapixel decode limits are not a process RSS or no-swap guarantee; deployment retains ownership of native artifacts and resource isolation.",
+      "subprocessCalls": [{"file":"apps/api/src/utils/image_thumbnail.ts","mechanism":"spawn","target":"<dynamic>","count":1}],
+      "evidence": [
+        {"file":"core/apps/api/src/utils/image_thumbnail.ts","contains":"spawn(join(binaryDirectory, 'ffmpeg'), ["},
+        {"file":"core/apps/api/src/utils/image_thumbnail.ts","contains":"{ shell: false, stdio: ['pipe', 'pipe', 'ignore'] }"},
+        {"file":"core/apps/api/src/utils/image_thumbnail.ts","contains":"const timer = setTimeout(() => { failed = true; child.kill('SIGKILL'); }, 2500);"},
+        {"file":"core/apps/api/src/utils/image_thumbnail.ts","contains":"if (active < 2)"},
+        {"file":"core/apps/api/src/utils/image_thumbnail.ts","contains":"if (waiters.size >= 8)"},
+        {"file":"docs/generated-artifacts.md","contains":"Gallery thumbnails are runtime derivatives"}
+      ]
+    },
+    {
+      "id": "scramble-preview-injection-fixture",
+      "from": "jobs/scramble-stats-build preview artifact regression",
+      "to": "repository-owned solver/333opt/inject.mjs copied into a disposable fixture directory",
+      "phase": "subprocess-native",
+      "mechanism": "One shell-free process.execPath execFileSync call, five-second timeout and 64 KiB output bound; one synthetic solved row and all data paths confined to the temporary directory",
+      "owner": "scramble-stats-build",
+      "rationale": "Verify standalone result injection invalidates obsolete preview pointers without running a solver or writing committed statistics.",
+      "replacement": "Keep this producer-owned test limited to the existing injection CLI and synthetic input; never point it at the real corpus, solver tables or published output.",
+      "subprocessCalls": [{"file":"jobs/scramble-stats-build/tests/scramble-example-shards.test.ts","mechanism":"execFileSync","target":"<dynamic>","count":1}],
+      "evidence": [
+        {"file":"core/jobs/scramble-stats-build/tests/scramble-example-shards.test.ts","contains":"execFileSync(process.execPath, [resolve(dir, 'inject.mjs')], {"},
+        {"file":"core/jobs/scramble-stats-build/tests/scramble-example-shards.test.ts","contains":"timeout: 5000,\n      maxBuffer: 64 * 1024,\n      cwd: dir,\n      shell: false,"},
+        {"file":"core/jobs/scramble-stats-build/tests/scramble-example-shards.test.ts","contains":"DIST: resolve(dir, 'dist.json'), EX: resolve(dir, 'examples.json'), CORPUS: resolve(dir, 'corpus.txt'), META: resolve(dir, 'absent.csv'), COMPS: resolve(dir, 'absent.tsv')"},
+        {"file":"solver/333opt/inject.mjs","contains":"delete dist.meta?.example_shards?.wca?.['333'];"}
+      ]
+    },
+    {
       "id": "assistant-vector-deployment-preflight",
       "from": "apps/api deployment-only PostgreSQL extension preflight",
       "to": "fixed Linux package manager, pinned pgvector source and PostgreSQL owner CLI",
@@ -1435,15 +1471,6 @@
     {
       "file": "packages/client/lib/recon-store.ts",
       "importKind": "type-only",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
-      "file": "packages/client/lib/site-search.ts",
-      "importKind": "runtime",
       "mechanism": "static-import",
       "sourceKind": "runtime",
       "specifier": "@cuberoot/shared",

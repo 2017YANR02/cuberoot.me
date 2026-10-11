@@ -189,8 +189,13 @@ describe('component reuse rule registry', () => {
 
     const timer = join(ROOT, 'app', '[lang]', 'timer', '_shell', 'SoloView.tsx');
     const timerSource = readFileSync(timer, 'utf8');
+    const trainingMenu = join(dirname(timer), 'TimerTrainingMenu.tsx');
+    const trainingSource = readFileSync(trainingMenu, 'utf8');
     expect(timerSource, relative(ROOT, timer)).toContain("from '@cuberoot/timer-ui'");
-    expect(timerSource, relative(ROOT, timer)).toContain('<TimerPuzzlePicker');
+    expect(timerSource, relative(ROOT, timer)).toContain("from './TimerTrainingMenu'");
+    expect(timerSource, relative(ROOT, timer)).toMatch(/<TimerTrainingMenu\b[^>]*\bshowProject\b/);
+    expect(trainingSource, relative(ROOT, trainingMenu)).toContain("from '@cuberoot/timer-ui'");
+    expect(trainingSource, relative(ROOT, trainingMenu)).toContain('<TimerPuzzlePicker');
     expect(timerSource, relative(ROOT, timer)).toContain('<TimerScrambleSourceSelect');
     expect(timerSource, relative(ROOT, timer)).not.toContain("from '@/components/CompactSelect'");
   });
