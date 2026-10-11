@@ -5,11 +5,12 @@ import { z } from 'zod';
 import { getIp } from '../utils/analytics_helpers.js';
 import { answerSiteQuestion, assistantConfig } from '../utils/site_assistant.js';
 import { reserveAssistantQuestion } from '../utils/site_assistant_quota.js';
-import { SITE_ASSISTANT_TIMEOUT_MS, type AssistantStreamEvent } from '@cuberoot/shared/site-assistant';
+import { SITE_ASSISTANT_TIMEOUT_MS, SITE_ASSISTANT_MAX_IMAGES, SITE_ASSISTANT_IMAGE_BYTES, SITE_ASSISTANT_BODY_BYTES, type AssistantStreamEvent } from '@cuberoot/shared/site-assistant';
 import { AssistantFailure, assistantDeadline, assistantFailureCode, assistantStage } from '../utils/site_assistant_diagnostics.js';
 import { requireAuth } from '../utils/recon_helpers.js';
 import { getUserById } from '../utils/account.js';
 import { BANNED_WCA_IDS } from '@cuberoot/shared/admin';
+import { rasterImageMime } from '../utils/raster_image.js';
 import { verifySession } from '../utils/session.js';
 
 export async function requireAssistantUser(c: Context): Promise<{ uid: number; wcaId: string }> {
@@ -35,7 +36,25 @@ export async function requireAssistantUser(c: Context): Promise<{ uid: number; w
   return { uid: account.id, wcaId: account.wca_id };
 }
 
-const inputSchema = z.object({ question: z.string().trim().min(1).max(500), lang: z.enum(['zh', 'en']), timeZone:z.string().max(100).refine(zone=>{try{new Intl.DateTimeFormat('en',{timeZone:zone});return true;}catch{return false;}},'Invalid time zone').optional(), viewerWcaId: z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/).optional(), history: z.array(z.object({ role: z.enum(['user', 'assistant']), content: z.string().max(6000) }).strict()).max(10).default([]) }).strict();
+const imageSchema = z.object({
+  mediaType: z.enum(['image/png', 'image/jpeg', 'image/webp']),
+  data: z.string().min(4).max(4 * Math.ceil(SITE_ASSISTANT_IMAGE_BYTES / 3)),
+}).strict().refine(image => {
+  // Reject URLs, noncanonical base64, forged MIME and excessive pixel dimensions.
+  const bytes = Buffer.from(image.data, 'base64');
+  return bytes.length <= SITE_ASSISTANT_IMAGE_BYTES && bytes.toString('base64') === image.data
+    && rasterImageMime(bytes) === image.mediaType;
+});
+const imagesSchema = z.array(imageSchema).max(SITE_ASSISTANT_MAX_IMAGES);
+const inputSchema = z.object({
+  question: z.string().trim().max(500), lang: z.enum(['zh', 'en']),
+  images: imagesSchema.optional(),
+  timeZone: z.string().max(100).refine(zone => { try { new Intl.DateTimeFormat('en', { timeZone: zone }); return true; } catch { return false; } }, 'Invalid time zone').optional(),
+  viewerWcaId: z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/).optional(),
+  history: z.array(z.object({ role: z.enum(['user', 'assistant']), content: z.string().max(6000), images: imagesSchema.optional() }).strict()
+    .refine(message => message.role === 'user' || !message.images?.length, { path: ['images'] })).max(10).default([]),
+}).strict().refine(input => input.question.length > 0 || !!input.images?.length)
+  .refine(input => (input.images?.length ?? 0) + input.history.reduce((count, message) => count + (message.images?.length ?? 0), 0) <= SITE_ASSISTANT_MAX_IMAGES, { path: ['images'] });
 
 // Burst limits are per process; the daily shared limit is atomic and durable.
 export function createSiteAssistantRoutes(deps = { answer: answerSiteQuestion, config: assistantConfig, now: Date.now, reserve: reserveAssistantQuestion, authenticate: requireAssistantUser }) {
@@ -45,15 +64,16 @@ export function createSiteAssistantRoutes(deps = { answer: answerSiteQuestion, c
   let minuteCount = 0;
   const clients = new Map<string, number>();
   routes.use('/site-assistant', async (c, next) => { await next(); c.header('Cache-Control', 'no-store'); });
-  routes.use('/site-assistant', bodyLimit({ maxSize: 70000, onError: c => c.json({ error: 'invalid_question' }, 413) }));
+  routes.use('/site-assistant', bodyLimit({ maxSize: SITE_ASSISTANT_BODY_BYTES, onError: c => c.json({ error: 'invalid_image' }, 413) }));
   routes.post('/site-assistant', async c => {
     const parsed = inputSchema.safeParse(await c.req.json().catch(error => {
       if (error instanceof SyntaxError) return null;
       throw error;
     }));
-    if (!parsed.success) return c.json({ error: 'invalid_question' }, 400);
-    const config = deps.config();
-    if (!config) return c.json({ error: 'unavailable' }, 503);
+    if (!parsed.success) return c.json({ error: parsed.error.issues.some(issue => issue.path.includes('images')) ? 'invalid_image' : 'invalid_question' }, 400);
+    const hasImages = !!parsed.data.images?.length || parsed.data.history.some(message => !!message.images?.length);
+    const config = deps.config(hasImages);
+    if (!config) return c.json({ error: hasImages ? 'vision_unavailable' : 'unavailable' }, 503);
     // Authentication is part of the same total deadline and precedes quota/model work.
     const disconnect = new AbortController();
     const signal = AbortSignal.any([disconnect.signal, c.req.raw.signal, AbortSignal.timeout(SITE_ASSISTANT_TIMEOUT_MS - 2000)]);
@@ -92,14 +112,14 @@ export function createSiteAssistantRoutes(deps = { answer: answerSiteQuestion, c
           };
           try {
             await emit({ type: 'status', status: { phase: 'planning' } });
-            const result = await assistantStage('total', () => assistantDeadline(() => deps.answer(parsed.data.question, parsed.data.lang, config, signal, undefined, parsed.data.history, user.wcaId, emit, parsed.data.timeZone), signal));
+            const result = await assistantStage('total', () => assistantDeadline(() => deps.answer(parsed.data.question, parsed.data.lang, config, signal, undefined, parsed.data.history, user.wcaId, emit, parsed.data.timeZone, parsed.data.images), signal));
             await emit({ type: 'done', result });
           } catch (error) {
             if (!disconnect.signal.aborted) await stream.writeSSE({ data: JSON.stringify({ type: 'error', error: assistantFailureCode(error) }) });
           } finally { disconnect.abort(); active--; }
         });
       }
-      return c.json(await deps.answer(parsed.data.question, parsed.data.lang, config, signal, undefined, parsed.data.history, user.wcaId,undefined,parsed.data.timeZone));
+      return c.json(await deps.answer(parsed.data.question, parsed.data.lang, config, signal, undefined, parsed.data.history, user.wcaId,undefined,parsed.data.timeZone,parsed.data.images));
     },signal)); } catch(error) {
       // Provider bodies can contain request details. Never expose them to clients/logs.
       const code=assistantFailureCode(error);

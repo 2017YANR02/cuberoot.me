@@ -70,6 +70,11 @@
 .site-assistant-latest { position:absolute; bottom:12px; left:50%; transform:translateX(-50%); width:36px; height:36px; padding:0; border-radius:50%; background:var(--background); box-shadow:0 2px 10px color-mix(in srgb,var(--foreground) 10%,transparent); }
 .site-assistant-compose-hint { margin-right:auto; padding-left:4px; font-size:11px; color:var(--faint-foreground); }
 .site-assistant-input:focus-within { border-color:var(--border-strong); }
+.site-assistant-images { display:flex; flex-wrap:wrap; gap:10px; padding:4px; max-width:100%; }
+.site-assistant-image { display:flex; align-items:flex-start; gap:4px; min-width:0; max-width:100%; }
+.site-assistant-image img { width:100px; height:100px; max-width:100%; object-fit:contain; border:1px solid var(--border-default); border-radius:12px; background:var(--card); }
+.site-assistant-image .site-assistant-action { padding:4px; border-radius:50%; }
+.site-assistant-question .site-assistant-image img { width:200px; height:160px; }
 .site-assistant-edit { padding:16px; margin-bottom:24px; border:1px solid var(--border-default); border-radius:18px; background:var(--muted); }
 .site-assistant-edit-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:12px; }
 .site-assistant-edit-actions .site-assistant-action { border-radius:20px; padding:8px 16px; }

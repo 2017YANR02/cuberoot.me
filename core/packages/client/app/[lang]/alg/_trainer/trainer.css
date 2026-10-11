@@ -1149,7 +1149,6 @@
   color: var(--foreground);
   margin: 24px 0 12px;
   padding-bottom: 8px;
-  border-bottom: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
 }
 .trainer-set-card.is-recognize:hover {
   background: color-mix(in srgb, var(--tr-sel) 8%, transparent);

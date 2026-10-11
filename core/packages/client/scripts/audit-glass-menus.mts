@@ -11,7 +11,7 @@ mkdirSync(output, { recursive: true });
 
 type Fixture = { name: string; path: string; panel: string; open: (page: Page) => Promise<unknown> };
 const fixtures: Fixture[] = [
-  { name: 'appearance', path: '/zh', panel: '.appearance-menu', open: p => p.locator('button[title="外观"]').first().click() },
+  { name: 'appearance', path: '/zh', panel: '.appearance-menu', open: p => p.getByRole('button', { name: '设置', exact: true }).first().click() },
   ...['calendar', 'list'].flatMap(view => [
     { name: `competition-${view}-countries`, path: `/zh/wca/comp?year=2026&month=10&view=${view}`, panel: '.region-picker-popup', open: (p: Page) => p.locator('.toolbar .region-picker-trigger').click() },
     { name: `competition-${view}-filters`, path: `/zh/wca/comp?year=2026&month=10&view=${view}`, panel: '.comp-filters-panel', open: (p: Page) => p.locator('.comp-filters-btn').click() },

@@ -1,3 +1,4 @@
+import { SITE_ASSISTANT_BODY_BYTES } from '@cuberoot/shared/site-assistant';
 import { modelResponse } from './fixtures/site_assistant_model.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createSiteAssistantRoutes as createRoutes } from '../src/routes/site_assistant.js';
@@ -497,7 +498,7 @@ describe('site assistant grounding', () => {
     });
     const result=await answerSiteQuestion('我今年参加了多少场 wca','zh',config,AbortSignal.timeout(5000),withCatalog(fetcher),[], '2017YANR02',undefined,'America/Los_Angeles');
     expect(result.answer).toContain('参加过 1 场比赛');
-    expect(result.answer).toContain('2026-12-30');
+    expect(result.answer).not.toContain('数据导入时间');
     expect(result.artifacts?.[0]).toMatchObject({rows:[['2026','1']]});
   });
 
@@ -621,7 +622,7 @@ describe('site assistant authenticated route', () => {
     for (const body of ['not json', JSON.stringify({ question: 'x'.repeat(501), lang: 'zh' }), JSON.stringify({ question: 'hello', lang: 'en', url: 'http://localhost' })]) {
       expect((await route.request('/site-assistant', { method: 'POST', body })).status).toBe(400);
     }
-    expect((await route.request('/site-assistant', { method: 'POST', body: 'x'.repeat(70001) })).status).toBe(413);
+    expect((await route.request('/site-assistant', { method: 'POST', body: 'x'.repeat(SITE_ASSISTANT_BODY_BYTES + 1) })).status).toBe(413);
     expect(answer).not.toHaveBeenCalled();
   });
 

@@ -65,8 +65,8 @@ export interface TimerSettings extends
   /** 0..1 master volume. */
   volume: number;
 
-  /** Show the development-only fake-cube entry in the device menu. */
-  showDevFakeCube: boolean;
+  /** Show the admin-only fake-cube entry in the device menu. */
+  showAdminFakeCube: boolean;
 
   /** Scale factor for the big timer display (0.5..2). */
   timerFontScale: number;
@@ -260,7 +260,8 @@ export const DEFAULTS: TimerSettings = {
   soundsEnabled: false,
   volume: 0.5,
   ...DEFAULT_TIMER_SCRAMBLE_PREVIEW_SETTINGS,
-  showDevFakeCube: true,
+  // A new key keeps legacy development defaults from enabling the production tool.
+  showAdminFakeCube: false,
   ...DEFAULT_TIMER_TYPOGRAPHY,
   compactScramble: false,
   preScr: '',    // (UF)

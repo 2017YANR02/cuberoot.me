@@ -16,6 +16,9 @@ describe('/dev/auth source-review drift', () => {
       'packages/client/lib/onboarding.ts', 'packages/client/components/OnboardingGuideModal.tsx',
       'packages/client/app/[lang]/LandingClient.tsx']) expect(isAuthDocSource(path)).toBe(true);
   });
+  it('tracks the complete remote SSH enrollment boundary', () => {
+    for (const path of [...['src/routes/remote_access.ts', 'migrations/0272_remote_access.sql', 'scripts/remote-access-host.ts'].map(file => relative(CORE_ROOT, workspaceFixturePath('@cuberoot/server', file))), relative(CORE_ROOT, workspaceFixturePath('@cuberoot/shared', 'src/remote-access.ts')), 'packages/client/lib/remote-access-key.ts']) expect(isAuthDocSource(path)).toBe(true);
+  });
   it('requires the real page to acknowledge the current authentication sources', () => {
     const sources = collectAuthDocSources();
     expect(sources.length).toBeGreaterThan(20);

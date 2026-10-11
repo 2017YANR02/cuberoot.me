@@ -35,6 +35,7 @@
       "./friends": "runtime-neutral",
       "./competition-access": "runtime-neutral",
       "./dev-preview": "runtime-neutral",
+      "./remote-access": "runtime-neutral",
       "./timer/reconstruct/recap": "runtime-neutral",
       "./timer/replay-decode": "runtime-neutral",
       "./timer/replay-input": "runtime-neutral",
@@ -313,6 +314,10 @@
     "./competition-access": {
       "node": "./dist/competition-access.js",
       "default": "./src/competition-access.ts"
+    },
+    "./remote-access": {
+      "node": "./dist/remote-access.js",
+      "default": "./src/remote-access.ts"
     },
     "./dev-preview": {
       "node": "./dist/dev-preview.js",

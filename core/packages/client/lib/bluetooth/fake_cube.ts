@@ -1,5 +1,5 @@
 /**
- * Dev-only fake smart cube.
+ * Administrator-only fake smart cube, explicitly enabled by the timer.
  *
  * We own no physical smart cube, so without this nothing downstream of the BLE
  * layer — scramble verification, auto-stop, the live cube view, per-move
@@ -13,7 +13,7 @@
  * the facelets snapshot. Anything that works here works on hardware modulo the
  * radio itself.
  *
- * Usage from the browser console on a dev build:
+ * Usage after enabling the administrator setting:
  *
  *     __cuberootFakeCube.arm()          // next "connect cube" attaches to this
  *     // ...click Connect in the UI...
@@ -23,10 +23,10 @@
  *     __cuberootFakeCube.dropNext(2)    // swallow the next 2 notifications
  *     __cuberootFakeCube.state()        // facelet string, for assertions
  *
- * Compiled out of production builds: every entry point is behind a
- * `process.env.NODE_ENV !== 'production'` check, and `installFakeCube()` is
- * only ever called from the dev branch of the connect path.
+ * Installation and connection both require administrator access.
  */
+
+import { isAdmin } from '@/lib/auth-store';
 
 import {
   applyCubieAlg, cubieStateToWire, cubieToFacelets, solvedCubie, type CubieState,
@@ -144,6 +144,7 @@ interface FakeSession {
 
 class FakeCube {
   armed = false;
+  device: BluetoothDevice | null = null;
   private state: CubieState = solvedCubie();
   /** Local time at power-on, the reference the device clock advances from. */
   private readonly bootLocal = Date.now();
@@ -196,6 +197,7 @@ class FakeCube {
       gatt: { value: gatt },
       watchAdvertisements: { value: async () => {} },
     });
+    this.device = device;
     return device;
   }
 
@@ -321,11 +323,11 @@ declare global {
 }
 
 /**
- * Publish the console API. Safe to call repeatedly; a no-op in production and
- * outside the browser.
+ * Publish the console API for an explicitly enabled administrator session.
+ * Cleanup revokes the device and console API.
  */
-export function installFakeCube(getScramble: () => string): void {
-  if (process.env.NODE_ENV === 'production') return;
+export function installFakeCube(getScramble: () => string, enabled = false): (() => void) | undefined {
+  if (!enabled || !isAdmin()) return;
   if (typeof window === 'undefined') return;
   const cube = (singleton ??= new FakeCube());
   window.__cuberootFakeCube = {
@@ -339,6 +341,17 @@ export function installFakeCube(getScramble: () => string): void {
     state: () => cube.facelets(),
     announce: () => cube.announce(),
   };
+  return () => {
+    cube.armed = false;
+    const device = cube.device;
+    if (device?.gatt?.connected) {
+      device.gatt.disconnect();
+      device.dispatchEvent(new Event('gattserverdisconnected'));
+    }
+    singleton = null;
+    delete window.__cuberootFakeCube;
+    delete window.__cuberootFakeQuat;
+  };
 }
 
 /**
@@ -346,7 +359,7 @@ export function installFakeCube(getScramble: () => string): void {
  * touching `navigator.bluetooth`.
  */
 export function armedFakeCube(): { device: BluetoothDevice; mac: string } | null {
-  if (process.env.NODE_ENV === 'production') return null;
+  if (!isAdmin()) return null;
   if (!singleton?.armed) return null;
   return { device: singleton.makeDevice(), mac: singleton.mac };
 }

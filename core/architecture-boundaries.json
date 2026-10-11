@@ -19,6 +19,25 @@
   },
   "manualContracts": [
     {
+      "id": "remote-access-mac-host",
+      "from": "apps/api/scripts/remote-access-host.ts on the registered maintainer Mac",
+      "to": "macOS launchctl and OpenSSH ssh-keygen",
+      "phase": "subprocess-native",
+      "mechanism": "Shell-free execFileSync with fixed commands and ten-second timeouts; installation registers only me.cuberoot.remote-access; fingerprint check reads only the public host key",
+      "owner": "remote access host operator",
+      "rationale": "Apply explicitly approved employee public keys locally without exposing an inbound app-server or distributing the host credential.",
+      "replacement": "Retain local operator-controlled startup and strict host fingerprint validation; never invoke this installer from the HTTP application.",
+      "subprocessCalls": [
+        {"file":"apps/api/scripts/remote-access-host.ts","mechanism":"execFileSync","target":"launchctl","count":2},
+        {"file":"apps/api/scripts/remote-access-host.ts","mechanism":"execFileSync","target":"ssh-keygen","count":1}
+      ],
+      "evidence": [
+        {"file":"core/apps/api/scripts/remote-access-host.ts","contains":"timeout: 10000"},
+        {"file":"core/apps/api/scripts/remote-access-host.ts","contains":"if (fingerprint !== REMOTE_CONNECTION.fingerprint)"},
+        {"file":"core/apps/api/scripts/remote-access-host.ts","contains":"me.cuberoot.remote-access"}
+      ]
+    },
+    {
       "id": "server-gallery-thumbnail-ffmpeg",
       "from": "apps/api public article-image thumbnail adapter",
       "to": "API-owned ffmpeg executable from the absolute DRIVE_FFMPEG_BIN_DIR",

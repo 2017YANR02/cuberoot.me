@@ -1,7 +1,26 @@
 import {describe,it,expect,vi} from 'vitest';
-import {requestSiteAssistant} from '@/lib/site-assistant-request';
+import {requestSiteAssistant,assistantImageHistory} from '@/lib/site-assistant-request';
+import type {AssistantImage} from '@cuberoot/shared/site-assistant';
 
 const request={question:'明年世锦赛在哪里办',lang:'zh' as const,timeZone:'America/Los_Angeles',history:[]};
+const image:AssistantImage={mediaType:'image/png',data:'fixture'};
+it('retains complete recent image groups and marks older omitted images',()=>{
+  const history=assistantImageHistory([
+    {role:'user',content:'old',images:[image,image]}, {role:'assistant',content:'old reply'},
+    {role:'user',content:'new',images:[image]},
+  ],[image]);
+  expect(history[0].images).toBeUndefined();
+  expect(history[0].content).toContain('omitted');
+  expect(history[1].content).toBe('old reply');
+  expect(history[2].images).toEqual([image]);
+});
+it('never retries or silently discards an image on an older API',async()=>{
+  for(const body of [{...request,images:[image]},{...request,history:[{role:'user' as const,content:'photo',images:[image]}]}]){
+    const fetcher=vi.fn<typeof fetch>().mockResolvedValue(Response.json({error:'invalid_question'},{status:400}));
+    expect(await (await requestSiteAssistant('/v1/site-assistant',body,{},fetcher)).json()).toEqual({error:'vision_unavailable'});
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  }
+});
 describe('assistant rolling deployment compatibility',()=>{
   it('retries an old schema exactly once without losing question, history, auth or streaming',async()=>{
     const done=new Response('stream',{status:200,headers:{'Content-Type':'text/event-stream'}});
