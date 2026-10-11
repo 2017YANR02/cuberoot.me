@@ -37,6 +37,7 @@ const EXPECTED_OTHER: EventId[] = [
   'custom', 'fto', 'kilominx', 'gear', 'ivy', 'redi', 'mpyram', 'pyraminx_duo',
   'superz', 'dogic', 'octahedron4', 'dinoskewb', 'cube3dino',
   'lattice', 'hyperx', 'latticex', 'masterbrilic', 'masterftov2',
+  'quadx', 'dinoocta', 'fto5', 'eto', 'radiocrystal',
 ];
 
 const EXPECTED_REAL_WCA_EVENTS = {
@@ -74,14 +75,14 @@ describe('shared timer event picker catalog', () => {
       expect(timerPuzzleSelection(id)).toEqual({ puzzle: id, scrambleType: null });
     }
   });
-  it('is a complete, duplicate-free 64-event partition in the website order', () => {
+  it('is a complete, duplicate-free 69-event partition in the website order', () => {
     expect(TIMER_EVENT_PICKER_GROUPS.map((group) => group.id)).toEqual(['wca', 'other']);
     expect(TIMER_EVENT_PICKER_GROUPS[0].items.map((item) => item.id)).toEqual(EXPECTED_WCA);
     expect(TIMER_EVENT_PICKER_GROUPS[1].items.map((item) => item.id)).toEqual(EXPECTED_OTHER);
 
     const pickerIds = TIMER_EVENT_PICKER_ITEMS.map((item) => item.id);
     const eventIds = EVENTS.map((event) => event.id);
-    expect(pickerIds).toHaveLength(64);
+    expect(pickerIds).toHaveLength(69);
     expect(new Set(pickerIds).size).toBe(pickerIds.length);
     expect(new Set(pickerIds)).toEqual(new Set(eventIds));
   });
@@ -161,6 +162,11 @@ describe('shared timer event picker catalog', () => {
       ['latticex', 'Lattice X', 'Lattice X', 'LatX'],
       ['masterbrilic', 'Master Brilic', 'Master Brilic', 'MBrilic'],
       ['masterftov2', 'Master FTO v2', '四阶 FTO v2', 'FTOv2'],
+      ['quadx', 'Quad-X', 'Quad-X', 'QuadX'],
+      ['dinoocta', 'Dino Octa', '恐龙八面体', 'DinoOct'],
+      ['fto5', '5-layer FTO', '五阶 FTO', 'FTO5'],
+      ['eto', "Eitan's ETO", 'ETO 棱转八面体', 'ETO'],
+      ['radiocrystal', 'Radio Crystal', 'Radio Crystal', 'RadioCr'],
     ] as const) {
       expect(timerEventPickerItem(event)).toMatchObject({ nameEn, nameZh, textLabel });
       expect(timerEventPickerItem(event).iconClass).toBeUndefined();

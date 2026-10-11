@@ -7,6 +7,7 @@ import { Alg } from 'cubing/alg';
 import TwistySection from '@/components/TwistySection';
 import SimCaptureGroup from '@/components/puzzle-image/SimCaptureGroup';
 import { NATIVE_PUZZLES } from '@cuberoot/puzzle-solvers/native-puzzles';
+import { nativePuzzleKPuzzle } from '@cuberoot/puzzle-solvers/native-puzzle-model';
 
 const probe = vi.hoisted(() => ({
   webglAvailable: vi.fn(() => false),
@@ -251,6 +252,31 @@ describe('TwistySection without WebGL', () => {
       controls: [{ move: '2F', order: 3 }, { move: '1-2D', order: 3 }],
       invalid: 'Fw', absent: ['Fw', 'Dw'],
     },
+    {
+      id: 'quadx', setup: 'UF', alg: '2UF', move: 'UFw', order: 2,
+      controls: [{ move: 'UF', order: 2 }, { move: '2UF', order: 2 }, { move: 'UFw', order: 2 }],
+      invalid: '4UF', absent: ['3UF', '3UFw'],
+    },
+    {
+      id: 'dinoocta', setup: 'F', alg: '1-2D', move: '2F', order: 3,
+      controls: [{ move: 'F', order: 3 }, { move: '2F', order: 3 }, { move: '1-2F', order: 3 }],
+      invalid: 'Fw', absent: ['Fw', 'Dw', '3F'],
+    },
+    {
+      id: 'fto5', setup: 'F', alg: '1-3D', move: '3F', order: 3,
+      controls: [{ move: '2F', order: 3 }, { move: '3F', order: 3 }, { move: '1-2F', order: 3 }, { move: '1-3F', order: 3 }],
+      invalid: 'Fw', absent: ['Fw', '3Fw'],
+    },
+    {
+      id: 'eto', setup: 'FD', alg: '2FD', move: 'FDw', order: 2,
+      controls: [{ move: 'FD', order: 2 }, { move: '2FD', order: 2 }, { move: 'FDw', order: 2 }],
+      invalid: '4FD', absent: ['3FD', '3FDw'],
+    },
+    {
+      id: 'radiocrystal', setup: 'R', alg: '2R', move: 'Rw', order: 3,
+      controls: [{ move: 'R', order: 3 }, { move: '2R', order: 3 }, { move: 'Rw', order: 3 }],
+      invalid: '4R', absent: ['3R', '3Rw'],
+    },
   ] as const;
 
   const nativeCases = [
@@ -307,19 +333,49 @@ describe('TwistySection without WebGL', () => {
     });
     expect(angle.options[0].textContent).toBe(`${360 / spec.order}°`);
     await act(async () => {
-      angle.value = '-2';
+      angle.value = spec.order === 2 ? '-1' : '-2';
       angle.dispatchEvent(new Event('change', { bubbles: true }));
     });
     const turn = host.querySelector<HTMLButtonElement>('.twisty-native-controls .twisty-fallback-move')!;
-    expect(turn.textContent).toBe(`Turn ${spec.move}2'`);
+    const token = `${spec.move}${spec.order === 2 ? '' : '2'}'`;
+    expect(turn.textContent).toBe(`Turn ${token}`);
     probe.algWrite.mockClear();
     probe.setupWrite.mockClear();
     await act(async () => turn.click());
-    expect(probe.publicAddMove).toHaveBeenCalledExactlyOnceWith(`${spec.move}2'`);
-    expect(probe.modelAddMove).toHaveBeenCalledExactlyOnceWith(`${spec.move}2'`, undefined);
-    expect(onUserMove).toHaveBeenCalledExactlyOnceWith(`${spec.move}2'`);
+    expect(probe.publicAddMove).toHaveBeenCalledExactlyOnceWith(token);
+    expect(probe.modelAddMove).toHaveBeenCalledExactlyOnceWith(token, undefined);
+    expect(onUserMove).toHaveBeenCalledExactlyOnceWith(token);
     expect(probe.algWrite).not.toHaveBeenCalled();
     expect(probe.setupWrite).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { id: 'eto', move: 'FDw', amount: 2 },
+    { id: 'eto', move: 'FDw', amount: -2 },
+    { id: 'quadx', move: 'UFw', amount: 2 },
+    { id: 'quadx', move: 'UFw', amount: -2 },
+  ] as const)('normalizes a retained $amount-step angle to a real $id half-turn after switching puzzles', async ({ id, move: selectedMove, amount }) => {
+    await mountNative(nativeCases.find(({ id }) => id === 'fto5')!);
+    const priorAngle = host.querySelector<HTMLSelectElement>('select[aria-label="Turn angle"]')!;
+    await act(async () => {
+      priorAngle.value = String(amount);
+      priorAngle.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    await mountNative(nativeCases.find(candidate => candidate.id === id)!);
+    const angle = host.querySelector<HTMLSelectElement>('select[aria-label="Turn angle"]')!;
+    expect([...angle.options].map(option => option.textContent)).toEqual(['180°', '-180°']);
+    expect(angle.value).toBe(amount < 0 ? '-1' : '1');
+    const move = host.querySelector<HTMLSelectElement>('select[aria-label="Move notation"]')!;
+    await act(async () => {
+      move.value = selectedMove;
+      move.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    const token = `${selectedMove}${amount < 0 ? "'" : ''}`;
+    const turn = host.querySelector<HTMLButtonElement>('.twisty-native-controls .twisty-fallback-move')!;
+    expect(turn.textContent).toBe(`Turn ${token}`);
+    await act(async () => turn.click());
+    expect(onUserMove).toHaveBeenCalledExactlyOnceWith(token);
+    expect(nativePuzzleKPuzzle(id).moveToTransformation(token).isIdentityTransformation()).toBe(false);
   });
 
   it.each(nativeCases)('$id quarantines invalid updates from setters/timeline and retains its last valid player state', async (spec) => {

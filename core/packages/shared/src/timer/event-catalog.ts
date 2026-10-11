@@ -149,6 +149,11 @@ const TIMER_EVENT_PICKER_LAYOUT = [
   { id: 'latticex', group: 'other', textLabel: 'LatX' },
   { id: 'masterbrilic', group: 'other', textLabel: 'MBrilic' },
   { id: 'masterftov2', group: 'other', textLabel: 'FTOv2' },
+  { id: 'quadx', group: 'other', textLabel: 'QuadX' },
+  { id: 'dinoocta', group: 'other', textLabel: 'DinoOct' },
+  { id: 'fto5', group: 'other', textLabel: 'FTO5' },
+  { id: 'eto', group: 'other', textLabel: 'ETO' },
+  { id: 'radiocrystal', group: 'other', textLabel: 'RadioCr' },
 ] as const satisfies readonly TimerEventPickerLayoutItem[];
 
 function pickerItem(entry: TimerEventPickerLayoutItem): TimerEventPickerItem {

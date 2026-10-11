@@ -63,6 +63,11 @@ describe('shared timer scramble preview', () => {
     { event: 'latticex', faces: 6 },
     { event: 'masterbrilic', faces: 12 },
     { event: 'masterftov2', faces: 8 },
+    { event: 'quadx', faces: 6 },
+    { event: 'dinoocta', faces: 8 },
+    { event: 'fto5', faces: 8 },
+    { event: 'eto', faces: 8 },
+    { event: 'radiocrystal', faces: 20 },
   ] as const)('renders the complete $event net and recovers from invalid input', async ({ event, faces }) => {
     const render = async (scramble: string) => act(async () => root.render(createElement(TimerCubePreview, {
       event, scramble, visualization: '3D', height: 240, ariaLabel: 'Native state',
@@ -333,6 +338,7 @@ describe('shared timer scramble preview', () => {
     for (const event of [
       'superz', 'dogic', 'octahedron4', 'dinoskewb', 'cube3dino',
       'lattice', 'hyperx', 'latticex', 'masterbrilic', 'masterftov2',
+      'quadx', 'dinoocta', 'fto5', 'eto', 'radiocrystal',
     ] as const) {
       expect(timerCubePreviewAspect(event)).toBe(nativePuzzleSvgAspect(event));
     }

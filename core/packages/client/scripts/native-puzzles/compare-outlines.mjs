@@ -1,18 +1,72 @@
 // Reproducible pre-implementation face-cut review. Build puzzle-solvers first,
 // then run this script from any directory; QA output stays outside watched src.
+// No arguments: reproduce the original five-puzzle review.
+// --set=2026-10: review the next five before their registry entries are built.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { getPuzzleGeometryByDesc } from 'cubing/puzzle-geometry';
 import { NATIVE_PUZZLES } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { Vector3 } from 'three';
-const rows = [
-  { id: 'lattice', prior: 'c v 0.577350269189626' },
-  { id: 'hyperx', prior: 'c v 0.275' },
-  { id: 'latticex', prior: 'c v 0.577350269189626 v 1.154700538379252' },
-  { id: 'masterbrilic', prior: 'd f 0.447213595499989' },
-  { id: 'masterftov2', prior: 'o f 0 f 0.5' },
-];
+
+const reviewSets = {
+  original: {
+    basename: 'native-five-outlines',
+    rows: [
+      { id: 'lattice', prior: 'c v 0.577350269189626', priorLabel: 'Dino' },
+      { id: 'hyperx', prior: 'c v 0.275', priorLabel: 'Master Skewb' },
+      { id: 'latticex', prior: 'c v 0.577350269189626 v 1.154700538379252', priorLabel: 'Lattice' },
+      { id: 'masterbrilic', prior: 'd f 0.447213595499989', priorLabel: 'Pyraminx Crystal' },
+      { id: 'masterftov2', prior: 'o f 0 f 0.5', priorLabel: 'Master FTO' },
+    ],
+  },
+  '2026-10': {
+    basename: 'native-five-2026-10-outlines',
+    // Proposal data intentionally precedes registry implementation. Once built,
+    // a matching entry is checked below so this review cannot silently drift.
+    rows: [
+      {
+        id: 'quadx', en: 'Quad-X',
+        description: 'c e 0.47140452079103173', visibleFacelets: 126,
+        prior: 'c e 0.7071067811865476', priorLabel: 'Helicopter (planar geometry reference)',
+        notes: ['Edge-normal cuts at h = sqrt(2)/3, with cube half-edge 1.', 'Shape-preserving 180-degree edge turns; Helicopter is a geometric comparison.'],
+      },
+      {
+        id: 'dinoocta', en: 'Dino Octa',
+        description: 'o f 0.5', visibleFacelets: 80,
+        prior: 'o f 0.333333333333333', priorLabel: 'FTO (three layers)',
+        notes: ['Face-normal cuts at h = 1/2 give ten regions per triangular face.', 'Compared with the existing FTO; the black cuts are not retained.'],
+      },
+      {
+        id: 'fto5', en: '5-layer FTO',
+        description: 'o f 0.2 f 0.6', visibleFacelets: 200,
+        prior: 'o f 0.333333333333333', priorLabel: 'FTO (three layers)',
+        notes: ['Five equal edge divisions: cut depths h = 1/5 and 3/5.', 'Regular idealized construction; 25 triangles per face.'],
+      },
+      {
+        id: 'eto', en: "Eitan's ETO",
+        description: 'o e 0.6123724356957945', visibleFacelets: 104,
+        prior: 'o f 0.333333333333333', priorLabel: 'FTO (shape reference)',
+        notes: ['Edge-normal cuts at h = sqrt(6)/4, with shell inradius 1.', 'Shape-preserving 180-degree edge turns; no jumbling.'],
+      },
+      {
+        id: 'radiocrystal', en: 'Radio Crystal',
+        description: 'i f 0.3333333333333333', visibleFacelets: 300,
+        prior: 'i f 0', priorLabel: 'Radio Chop',
+        notes: ['Face-normal cuts at h = 1/3; 15 triangles per face.', 'Cut planes pass through six other face centers; no fixed face center.'],
+      },
+    ],
+  },
+};
+const args = process.argv.slice(2);
+if (args.length > 1 || (args[0] && !args[0].startsWith('--set='))) {
+  throw new Error('Usage: node compare-outlines.mjs [--set=original|2026-10]');
+}
+const setName = args[0]?.slice('--set='.length) ?? 'original';
+if (!Object.hasOwn(reviewSets, setName)) throw new Error(`Unknown review set: ${setName}`);
+const review = reviewSets[setName];
+const pgOptions = { allMoves: true, orientCenters: true, addRotations: true };
+
 function faceEdges(desc) {
-  const pg = getPuzzleGeometryByDesc(desc, {allMoves:true,orientCenters:true,addRotations:true});
+  const pg = getPuzzleGeometryByDesc(desc, pgOptions);
   const data = pg.get3d();
   const face = data.faces[0];
   const vertices=Array.from({length:face.coords.length/3},(_,i)=>new Vector3().fromArray(face.coords,i*3));
@@ -33,22 +87,77 @@ function faceEdges(desc) {
   }
   return { edges, pg, boundary:vertices.map(project), faces:data.faces.length, count: data.stickers.filter(s=>!s.isDup).length };
 }
-let svg='<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1420" viewBox="0 0 1200 1420"><rect width="1200" height="1420" fill="white"/><style>text{font-family:Arial,sans-serif;fill:#222}</style>';
-rows.forEach((row,index)=>{
-  const spec=NATIVE_PUZZLES[row.id];
-  const old=faceEdges(row.prior), next=faceEdges(spec.description), x=index%3*400;
-  svg+=`<g transform="translate(0 ${Math.floor(index/3)*710})">`;
-  const line=(a,b,color,width=1.5)=>`<line x1="${x+200+a[0]*125}" y1="${220-a[1]*125}" x2="${x+200+b[0]*125}" y2="${220-b[1]*125}" stroke="${color}" stroke-width="${width}"/>`;
-  svg+=`<text x="${x+200}" y="35" text-anchor="middle" font-size="22">${spec.en}</text><text x="${x+200}" y="59" text-anchor="middle" font-size="13">${next.count/next.faces} regions per face / ${next.count} visible stickers</text><rect x="${x+66}" y="86" width="268" height="268" fill="none" stroke="#999" stroke-dasharray="6 5"/>`;
-  for(const [a,b] of old.edges.values()) svg+=line(a,b,'#111',1.1);
-  for(const [key,[a,b]] of next.edges) if(!old.edges.has(key)) svg+=line(a,b,'#12a348',2);
-  svg+=`<polygon points="${next.boundary.map(p=>`${x+200+p[0]*125},${220-p[1]*125}`).join(' ')}" fill="none" stroke="#2869d8" stroke-width="2"/>`;
-  svg+=next.pg.generatesvg().replace('<svg ',`<svg x="${x+10}" y="380" width="380" height="250" `);
-  svg+=`<text x="${x+200}" y="658" text-anchor="middle" font-size="13">Idealized symmetric cuts; not commercial measurements</text>`;
-  svg+='</g>';
-});
-svg+='<text x="600" y="694" text-anchor="middle" font-size="14">Black: previous cuts · Green: proposed partition · Blue: fixed boundary · Gray dashed: envelope</text></svg>';
+
+const escapeXml = value => String(value).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' })[ch]);
+const text = (x, y, size, value, anchor = 'start') => `<text x="${x}" y="${y}" font-size="${size}" text-anchor="${anchor}">${escapeXml(value)}</text>`;
+const page = (content, height) => `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="${height}" viewBox="0 0 1200 ${height}"><rect width="1200" height="${height}" fill="white"/><style>text{font-family:Arial,sans-serif;fill:#222}</style>${content}</svg>`;
+const legend = y => text(28, y, 15, 'Black: reference cuts   Green: proposed cuts   Blue: fixed shell boundary   Gray dashed: face envelope');
+
+// Exact endpoint matching mislabels an existing cut when new intersections
+// merely split its edge into shorter segments. Subtract collinear reference
+// coverage so green marks only genuinely new parts of the partition.
+function uncoveredEdge(a, b, reference) {
+  const dx = b[0] - a[0], dy = b[1] - a[1], length2 = dx * dx + dy * dy;
+  const cross = p => dx * (p[1] - a[1]) - dy * (p[0] - a[0]);
+  const project = p => ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / length2;
+  const tolerance = 1e-7;
+  const intervals = [];
+  for (const [c, d] of reference.values()) {
+    if (Math.abs(cross(c)) > tolerance * Math.sqrt(length2) || Math.abs(cross(d)) > tolerance * Math.sqrt(length2)) continue;
+    const start = Math.max(0, Math.min(project(c), project(d)));
+    const end = Math.min(1, Math.max(project(c), project(d)));
+    if (end - start > tolerance) intervals.push([start, end]);
+  }
+  intervals.sort((left, right) => left[0] - right[0]);
+  let cursor = 0;
+  const visible = [];
+  const point = t => [a[0] + t * dx, a[1] + t * dy];
+  for (const [start, end] of intervals) {
+    if (start > cursor + tolerance) visible.push([point(cursor), point(start)]);
+    cursor = Math.max(cursor, end);
+  }
+  if (cursor < 1 - tolerance) visible.push([point(cursor), b]);
+  return visible;
+}
+
+function renderRow(row) {
+  const registered = NATIVE_PUZZLES[row.id];
+  const spec = row.description ? row : registered;
+  if (!spec) throw new Error(`Missing registry entry for ${row.id}; build puzzle-solvers first.`);
+  if (row.description && registered && (row.description !== registered.description || row.visibleFacelets !== registered.visibleFacelets)) {
+    throw new Error(`Proposal no longer matches the built registry: ${row.id}`);
+  }
+  const old = faceEdges(row.prior), next = faceEdges(spec.description);
+  if (next.count !== spec.visibleFacelets) throw new Error(`${row.id}: expected ${spec.visibleFacelets} visible stickers, got ${next.count}`);
+  const line = (a, b, color, width = 1.5) => `<line x1="${220 + a[0] * 166}" y1="${310 - a[1] * 166}" x2="${220 + b[0] * 166}" y2="${310 - b[1] * 166}" stroke="${color}" stroke-width="${width}"/>`;
+  let svg = text(28, 34, 25, spec.en) + text(28, 61, 15, `${next.count / next.faces} regions per face / ${next.faces} faces / ${next.count} visible stickers`);
+  svg += text(28, 87, 14, `Reference: ${row.priorLabel} (${row.prior})`);
+  svg += text(28, 109, 14, `Proposal: ${spec.description}`);
+  svg += '<rect x="44" y="134" width="352" height="352" fill="none" stroke="#999" stroke-dasharray="6 5"/>';
+  for (const [a, b] of old.edges.values()) svg += line(a, b, '#111', 1.1);
+  for (const [a, b] of next.edges.values()) {
+    for (const [start, end] of uncoveredEdge(a, b, old.edges)) svg += line(start, end, '#12a348', 2);
+  }
+  svg += `<polygon points="${next.boundary.map(p => `${220 + p[0] * 166},${310 - p[1] * 166}`).join(' ')}" fill="none" stroke="#2869d8" stroke-width="2.2"/>`;
+  svg += text(805, 117, 15, 'Complete solved net · actual PuzzleGeometry output', 'middle');
+  // Preserve the engine's full SVG and viewBox, and namespace its IDs when
+  // embedding several nets on one sheet. No face is substituted or redrawn.
+  svg += next.pg.generatesvg()
+    .replace('<svg ', '<svg x="438" y="128" width="734" height="390" ')
+    .replace(/\bid="([^"]+)"/g, (_, id) => `id="${row.id}-${id}"`);
+  const notes = row.notes ?? ['Idealized symmetric cut geometry.', 'Cut depths are not commercial measurements.'];
+  notes.forEach((note, index) => { svg += text(28, 545 + index * 23, 15, note); });
+  console.log(`${row.id}: ${next.faces} faces, ${next.count / next.faces} regions per face, ${next.count} visible stickers`);
+  return svg;
+}
+
 const outputDir = new URL('../../../../.tmp/png/', import.meta.url);
 mkdirSync(outputDir, { recursive: true });
-writeFileSync(new URL('native-five-outlines.svg', outputDir), svg);
-console.log('Wrote core/.tmp/png/native-five-outlines.svg');
+let content = text(28, 37, 27, 'Native puzzle cut review') + legend(69);
+review.rows.forEach((row, index) => {
+  const rendered = renderRow(row);
+  content += `<g transform="translate(0 ${100 + index * 600})">${rendered}</g>`;
+  writeFileSync(new URL(`${review.basename}-${row.id}.svg`, outputDir), page(`${legend(28)}<g transform="translate(0 50)">${rendered}</g>`, 650));
+});
+writeFileSync(new URL(`${review.basename}.svg`, outputDir), page(content, 100 + review.rows.length * 600));
+console.log(`Wrote core/.tmp/png/${review.basename}.svg and one enlarged SVG per puzzle`);

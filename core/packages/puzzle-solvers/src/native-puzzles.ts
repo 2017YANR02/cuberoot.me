@@ -8,6 +8,8 @@
  * Combines the uniform 3x3 face cuts with Dino's face diagonals.
  * Lattice, Hyper X, Lattice X, Master Brilic and Master FTO v2 sources and
  * independently checked idealized cuts: sim-add-puzzle/references/native-pg-puzzles.md.
+ * Quad-X, Dino Octa, 5-layer FTO, ETO and Radio Crystal use the same
+ * reference's independent plane constructions and shape-preserving moves.
  * These are bounded random-move practice scrambles, not uniform random states.
  */
 const CUBE_FACE_CORNER_AXES = [
@@ -16,6 +18,10 @@ const CUBE_FACE_CORNER_AXES = [
 ] as const;
 
 const CORNER_AXES = CUBE_FACE_CORNER_AXES.slice(3);
+const CUBE_EDGE_AXES = [
+  ['DF', 'UB'], ['FL', 'BR'], ['DB', 'UF'],
+  ['DL', 'UR'], ['BL', 'FR'], ['UL', 'DR'],
+] as const;
 const DOGIC_AXES = [
   ['FREGU', 'OKBDN'], ['HIERC', 'MKOPQ'], ['FLACR', 'BKMJS'],
   ['NALPO', 'JGEIS'], ['FUQPL', 'IHDBS'], ['UGJMQ', 'DHCAN'],
@@ -25,6 +31,14 @@ const OCTAHEDRON_AXES = [
 ] as const;
 const OCTAHEDRON_FACE_AXES = [
   ['F', 'B'], ['D', 'U'], ['L', 'BR'], ['BL', 'R'],
+] as const;
+const OCTAHEDRON_EDGE_AXES = [
+  ['FD', 'UBB'], ['FL', 'BRBB'], ['BLD', 'UR'],
+  ['FR', 'BLBB'], ['UL', 'BRD'], ['BLL', 'BRR'],
+] as const;
+const ICOSAHEDRON_FACE_AXES = [
+  ['R', 'K'], ['L', 'S'], ['G', 'N'], ['U', 'D'], ['H', 'Q'],
+  ['C', 'M'], ['I', 'P'], ['O', 'E'], ['F', 'B'], ['A', 'J'],
 ] as const;
 const DODECAHEDRON_FACE_AXES = [
   ['U', 'D'], ['F', 'B'], ['L', 'DR'], ['BL', 'FR'], ['BR', 'FL'], ['R', 'DL'],
@@ -74,6 +88,28 @@ export const NATIVE_PUZZLES = {
     description: 'o f 0 f 0.4', zh: '四阶 FTO v2', en: 'Master FTO v2', textLabel: 'FTOv2',
     axes: OCTAHEDRON_FACE_AXES, order: 3, layers: 2, rangeWide: true,
     scrambleLength: 40, aspect: 4 / 3, visibleFacelets: 152,
+  },
+  quadx: {
+    description: 'c e 0.47140452079103173', zh: 'Quad-X', en: 'Quad-X', textLabel: 'QuadX',
+    axes: CUBE_EDGE_AXES, order: 2, layers: 2, scrambleLength: 60, aspect: 4 / 3, visibleFacelets: 126,
+  },
+  dinoocta: {
+    description: 'o f 0.5', zh: '恐龙八面体', en: 'Dino Octa', textLabel: 'DinoOct',
+    axes: OCTAHEDRON_FACE_AXES, order: 3, layers: 2, rangeWide: true,
+    scrambleLength: 40, aspect: 4 / 3, visibleFacelets: 80,
+  },
+  fto5: {
+    description: 'o f 0.2 f 0.6', zh: '五阶 FTO', en: '5-layer FTO', textLabel: 'FTO5',
+    axes: OCTAHEDRON_FACE_AXES, order: 3, layers: 3, rangeWide: true,
+    scrambleLength: 60, aspect: 4 / 3, visibleFacelets: 200,
+  },
+  eto: {
+    description: 'o e 0.6123724356957945', zh: 'ETO 棱转八面体', en: "Eitan's ETO", textLabel: 'ETO',
+    axes: OCTAHEDRON_EDGE_AXES, order: 2, layers: 2, scrambleLength: 60, aspect: 4 / 3, visibleFacelets: 104,
+  },
+  radiocrystal: {
+    description: 'i f 0.3333333333333333', zh: 'Radio Crystal', en: 'Radio Crystal', textLabel: 'RadioCr',
+    axes: ICOSAHEDRON_FACE_AXES, order: 3, layers: 2, scrambleLength: 60, aspect: 8 / 5, visibleFacelets: 300,
   },
 } as const;
 
@@ -140,7 +176,8 @@ export function generateNativePuzzleScramble(id: NativePuzzleId, random: () => n
     const layer = 1 + (mixedOrder ? Math.floor(i / 2) : i) % axisLayerCount(spec, axis);
     const move = layer === 1 ? family : wideMove(spec, family, layer);
     const order = mixedOrder ? faceTurn ? 4 : 3 : spec.order;
-    const suffixes = order === 3 ? ['', "'"] : order === 4 ? ['', '2', "'"] : ['', '2', "2'", "'"];
+    // Half-turn axes retain both animation directions but never a 360° identity.
+    const suffixes = order === 2 || order === 3 ? ['', "'"] : order === 4 ? ['', '2', "'"] : ['', '2', "2'", "'"];
     out.push(move + suffixes[pick(suffixes.length)]);
     previousAxis = axis;
   }

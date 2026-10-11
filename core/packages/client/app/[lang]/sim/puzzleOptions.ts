@@ -79,16 +79,16 @@ const SIM_PUZZLE_FAMILIES: readonly SimPuzzleFamily[] = [
   },
   {
     id: 'edge-turning', labelZh: '直升机与棱转', labelEn: 'Helicopter & edge-turning',
-    values: ['heli', 'curvycopter', 'littlechop'],
+    values: ['heli', 'curvycopter', 'quadx', 'littlechop'],
   },
   {
     id: 'octahedron', labelZh: 'FTO 与八面体', labelEn: 'FTO & octahedra',
-    values: ['fto', 'masterfto', 'masterftov2', 'skewbdiamond', 'christophersjewel',
-      'trajbersoctahedron', 'octahedron4', 'octastar'],
+    values: ['fto', 'masterfto', 'masterftov2', 'fto5', 'skewbdiamond', 'christophersjewel',
+      'trajbersoctahedron', 'octahedron4', 'dinoocta', 'eto', 'octastar'],
   },
   {
     id: 'icosahedron', labelZh: '二十面体', labelEn: 'Icosahedra',
-    values: ['radiochop', 'eitansstar', 'icosamate', 'astrominx', 'astrominxbigchop',
+    values: ['radiochop', 'radiocrystal', 'eitansstar', 'icosamate', 'astrominx', 'astrominxbigchop',
       'icosaminx', 'redicosahedron', 'redicosahedroncenters', 'dogic'],
   },
   {
