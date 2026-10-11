@@ -32,6 +32,7 @@ import {
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useT } from '@/hooks/useT';
+import { tr } from '@/i18n/tr';
 import {
   Play,
   FlipHorizontal2, FlipVertical2, Eraser,
@@ -188,8 +189,8 @@ import {
 } from '@cuberoot/shared/fto-notation';
 import { stripFtnBlocks, FTN_TOKEN, parseFtnPin } from './engine/hands/ftn';
 import { ClearButton } from '@/components/ClearButton';
-import PuzzlePicker, { type PuzzlePickerGroup } from '@/components/PuzzlePicker/PuzzlePicker';
-import { ALL_PUZZLE_TYPE_OPTIONS } from './puzzleOptions';
+import PuzzlePicker, { type PuzzlePickerGroup, type PuzzlePickerItem } from '@/components/PuzzlePicker/PuzzlePicker';
+import { groupSimPuzzleOptions, type SimPuzzleTypeOption } from './puzzleOptions';
 export { SIM_FIXED_PUZZLE_OPTIONS } from './puzzleOptions';
 import { simSpeedToTps, simTpsToSpeed } from '@/lib/sim_timing';
 import AlgInput from '@/components/AlgInput';
@@ -355,22 +356,31 @@ export function PuzzleTypeSelect({ value, onChange, isZh, allowedValues }: {
   /** Optional subset for another /sim tool that shares this selector. */
   allowedValues?: readonly string[];
 }) {
-  const options = (() => {
-    if (!allowedValues) return ALL_PUZZLE_TYPE_OPTIONS;
-    const allowed = new Set(allowedValues);
-    return ALL_PUZZLE_TYPE_OPTIONS.filter((option) => allowed.has(option.value));
-  })();
+  const catalog = groupSimPuzzleOptions(allowedValues);
+  const options = catalog.flatMap(group => group.options);
   const current = options.find((option) => option.value === value) ?? options[0];
-  const groups: readonly PuzzlePickerGroup[] = [{
-    id: 'sim-puzzles',
-    label: ['Puzzles', '项目'][Number(isZh)],
-    items: options.map((option) => ({
+  const toItem = (option: SimPuzzleTypeOption): PuzzlePickerItem => ({
       id: option.value,
       label: [option.labelEn, option.labelZh][Number(isZh)],
       iconClass: option.iconClass,
       textLabel: option.textLabel,
+  });
+  const families = catalog.filter(group => group.submenu);
+  const groups: PuzzlePickerGroup[] = [];
+  const wca = catalog.find(group => group.id === 'wca');
+  if (wca) groups.push({ id: wca.id, label: [wca.labelEn, wca.labelZh][Number(isZh)], items: wca.options.map(toItem) });
+  if (families.length) groups.push({
+    id: 'sim-families', label: tr({ en: 'Series', zh: '系列' }),
+    items: families.map(group => ({
+      id: `sim-family:${group.id}`,
+      label: [group.labelEn, group.labelZh][Number(isZh)],
+      iconClass: group.options[0].iconClass,
+      textLabel: group.options[0].textLabel,
+      children: group.options.map(toItem),
     })),
-  }];
+  });
+  const other = catalog.find(group => group.id === 'other');
+  if (other) groups.push({ id: other.id, label: [other.labelEn, other.labelZh][Number(isZh)], items: other.options.map(toItem) });
 
   return (
     <PuzzlePicker
