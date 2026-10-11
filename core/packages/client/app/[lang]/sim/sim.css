@@ -397,6 +397,14 @@
 .sim-playback-under:empty {
   display: none;
 }
+/* Fill the simulator stage instead of the shared bar's compact preview width. */
+.sim-playback-under .playback-bar {
+  width: 100%;
+  min-width: 0;
+}
+.sim-playback-under .playback-bar-controls {
+  justify-content: space-between;
+}
 
 .sim-side {
   width: 50%;
