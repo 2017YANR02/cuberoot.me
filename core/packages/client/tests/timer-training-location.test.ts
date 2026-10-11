@@ -110,11 +110,8 @@ describe('practice menu availability and transitions', () => {
     if (gear.getAttribute('aria-expanded') !== 'true') await act(async () => gear.click());
   }
   async function choosePractice(value: 'memo' | 'action') {
-    await openSettings();
-    await act(async () => {
-      practiceType().value = value;
-      practiceType().dispatchEvent(new Event('change', { bubbles: true }));
-    });
+    await act(async () => trigger('练习方式', 'Practice method').click());
+    await act(async () => option(value === 'memo' ? '记忆' : '训练', value === 'memo' ? 'Recall' : 'Training').click());
     await vi.waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
     return onUrlUpdate.mock.lastCall![0].searchParams;
   }
@@ -125,6 +122,29 @@ describe('practice menu availability and transitions', () => {
     await vi.waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
     return onUrlUpdate.mock.lastCall![0].searchParams as URLSearchParams;
   }
+
+  it('offers training, recognition and recall in one menu and omits unavailable methods', async () => {
+    await renderMenu(null);
+    await act(async () => trigger('练习方式', 'Practice method').click());
+    expect([...document.querySelectorAll('[role="option"]')].map(item => item.textContent)).toEqual([
+      label('训练', 'Training'), label('识别', 'Recognition'), label('记忆', 'Recall'),
+    ]);
+    await renderMenu('/alg/2x2/eg1/select', { event: 'eg1' });
+    await act(async () => trigger('练习方式', 'Practice method').click());
+    expect(option('记忆', 'Recall')).toBeDefined();
+    expect(option('识别', 'Recognition')).toBeUndefined();
+    await renderMenu(null, { event: '333' });
+    expect(trigger('练习方式', 'Practice method')).toBeNull();
+  });
+
+  it('chooses training explicitly after recognition even when the last method was recall', async () => {
+    useTrainerStore.setState({ mode: 'memo' });
+    await renderMenu('/recognize/oll', { 'train.mode': 'memo', 'train.draw': 'train' });
+    const next = await choosePractice('action');
+    expect(next.get('training')).toBe('/alg/3x3/oll/run');
+    expect(next.get('train.mode')).toBe('train');
+    expect(next.has('train.draw')).toBe(false);
+  });
 
   it.each([
     { path: '/alg/3x3/oll/run', wide: false, count: 2, locked: false },
@@ -137,7 +157,7 @@ describe('practice menu availability and transitions', () => {
     await renderMenu(row.path, { 'train.split': '1' });
     expect(trigger('练习方式', 'Practice method').disabled).toBe(row.locked);
     await openSettings();
-    expect(practiceType().disabled).toBe(row.locked);
+    expect(practiceType()).toBeNull();
     expect(trigger('计时', 'Timing').disabled).toBe(row.locked);
     expect(trigger('出题来源', 'Question source').disabled).toBe(false);
     const next = await chooseSource('选定情况', 'Selected cases');
@@ -156,7 +176,7 @@ describe('practice menu availability and transitions', () => {
     expect(option('识别', 'Recognition').disabled).toBe(false);
     await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
     await openSettings();
-    expect(practiceType().disabled).toBe(false);
+    expect(practiceType()).toBeNull();
   });
 
   it('allows selection after a failed room invite but protects an active room and timer', async () => {
@@ -169,7 +189,7 @@ describe('practice menu availability and transitions', () => {
     await renderMenu('/alg/3x3/oll/run', { 'train.room': '1234' });
     await openSettings();
     expect(trigger('出题来源', 'Question source').disabled).toBe(true);
-    expect(practiceType().disabled).toBe(true);
+    expect(practiceType()).toBeNull();
     expect(trigger('练习方式', 'Practice method').disabled).toBe(true);
     expect(trigger('计时', 'Timing').disabled).toBe(false);
     await act(async () => useTrainerStore.setState({ room: null, timerState: TimerState.RUNNING }));
@@ -184,7 +204,7 @@ describe('practice menu availability and transitions', () => {
     await renderMenu('/alg/3x3/zbll/run', { event: 'zbll' });
     await openSettings();
     expect(trigger('出题来源', 'Question source').disabled).toBe(false);
-    expect(practiceType().disabled).toBe(true);
+    expect(trigger('练习方式', 'Practice method').disabled).toBe(true);
     expect(trigger('计时', 'Timing').disabled).toBe(false);
   });
 
@@ -249,7 +269,7 @@ describe('practice menu availability and transitions', () => {
     expect(document.querySelectorAll(`button[aria-label="${label('训练设置', 'Training settings')}"]`)).toHaveLength(1);
     await openSettings();
     expect(settingsPortal.querySelector('[data-existing-setting]')).not.toBeNull();
-    expect(settingsPortal.contains(practiceType())).toBe(true);
+    expect(practiceType()).toBeNull();
     await act(async () => trigger('出题来源', 'Question source').click());
     const cases = option('选定情况', 'Selected cases');
     await act(async () => cases.dispatchEvent(new Event('pointerdown', { bubbles: true })));

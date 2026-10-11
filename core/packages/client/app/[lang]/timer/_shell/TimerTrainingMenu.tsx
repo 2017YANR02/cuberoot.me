@@ -180,15 +180,6 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
   ];
 
   const practiceSettings = hasPractice && method !== 'recognize' && <div className="timer-practice-settings">
-    {content?.runPath && <label className="timer-practice-settings__row">
-      <span>{tr({ zh: '练习', en: 'Practice' })}</span>
-      <select className="native-select" aria-label={tr({ zh: '练习内容', en: 'Practice type' })}
-        value={method === 'memo' ? 'memo' : 'action'} disabled={methodLocked || restrictMethod}
-        onChange={e => chooseMethod(e.target.value === 'memo' ? 'memo' : actualTiming ? 'timed' : 'untimed')}>
-        <option value="action">{tr({ zh: '动作练习', en: 'Execution' })}</option>
-        <option value="memo">{tr({ zh: '公式记忆', en: 'Algorithm recall' })}</option>
-      </select>
-    </label>}
     {method !== 'memo' && <BoolToggle label={tr({ zh: '计时', en: 'Timing' })}
       value={method === 'timed'} disabled={methodLocked}
       onChange={timed => chooseMethod(timed ? 'timed' : 'untimed')} />}
@@ -252,20 +243,21 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
         onSelect={chooseContent}
       />
     </span>
-    {hasPractice && <span className="timer-practice-control">
-      {content?.recognizePath ? <CompactSelect<'train' | 'recognize'>
+    {hasPractice && (content?.runPath || content?.recognizePath) && <span className="timer-practice-control">
+      <CompactSelect<'train' | 'recognize' | 'memo'>
         variant="plain" showArrow={false} disabled={methodLocked || restrictMethod} dataNoTimer
         ariaLabel={tr({ zh: '练习方式', en: 'Practice method' })}
-        label={method === 'recognize' ? tr({ zh: '识别', en: 'Recognition' }) : tr({ zh: '训练', en: 'Training' })}
-        value={method === 'recognize' ? 'recognize' : 'train'}
+        label={method === 'recognize' ? tr({ zh: '识别', en: 'Recognition' })
+          : method === 'memo' ? tr({ zh: '记忆', en: 'Recall' }) : tr({ zh: '训练', en: 'Training' })}
+        value={method === 'recognize' || method === 'memo' ? method : 'train'}
         items={[
           { value: 'train', label: tr({ zh: '训练', en: 'Training' }) },
-          { value: 'recognize', label: tr({ zh: '识别', en: 'Recognition' }) },
+          ...(content?.recognizePath ? [{ value: 'recognize' as const, label: tr({ zh: '识别', en: 'Recognition' }) }] : []),
+          ...(content?.runPath ? [{ value: 'memo' as const, label: tr({ zh: '记忆', en: 'Recall' }) }] : []),
         ]} onChange={task => {
-          if (task === 'recognize') chooseMethod('recognize');
-          else if (method === 'recognize') chooseMethod(actualMode === 'memo' ? 'memo' : actualTiming ? 'timed' : 'untimed');
+          chooseMethod(task === 'train' ? actualTiming ? 'timed' : 'untimed' : task);
         }}
-      /> : <span>{tr({ zh: '训练', en: 'Training' })}</span>}
+      />
     </span>}
     {practiceSettings && !isRun && <SettingsPopover label={tr({ zh: '训练设置', en: 'Training settings' })}
       open={settingsOpen} onOpenChange={changeSettingsOpen} ignoreTimer>
