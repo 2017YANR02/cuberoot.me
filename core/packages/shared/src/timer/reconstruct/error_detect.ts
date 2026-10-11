@@ -61,6 +61,40 @@ export interface ErrorDetectResult {
   totalWastedMs: number;
 }
 
+/** Display-only waste ranges. Unlike zero-effect loops, over-turns still make
+ * progress, so they must not charge their entire duration to the waste score. */
+export function wastedDisplaySpans(scramble: string, moves: SolveMove[]): Array<{ fromIdx: number; toIdx: number }> {
+  const ranges: Array<{ fromIdx: number; toIdx: number }> = [...(detectWastedWork(scramble, moves)?.spans ?? [])];
+  for (let from = 0; from < moves.length;) {
+    const first = /^([UDFBLRMESudfblr])(2?)('?)$/.exec(moves[from].m);
+    if (!first) { from++; continue; }
+    let to = from;
+    let signed = 0;
+    let travelled = 0;
+    while (to < moves.length) {
+      const turn = /^([UDFBLRMESudfblr])(2?)('?)$/.exec(moves[to].m);
+      if (!turn || turn[1] !== first[1]) break;
+      const amount = turn[2] ? 2 : 1;
+      travelled += amount;
+      signed += turn[3] ? -amount : amount;
+      to++;
+    }
+    const net = ((signed % 4) + 4) % 4;
+    if (travelled > Math.min(net, 4 - net)) {
+      ranges.push({ fromIdx: from, toIdx: to - 1 });
+    }
+    from = to;
+  }
+  ranges.sort((a, b) => a.fromIdx - b.fromIdx);
+  const merged: Array<{ fromIdx: number; toIdx: number }> = [];
+  for (const range of ranges) {
+    const prev = merged.at(-1);
+    if (prev && range.fromIdx <= prev.toIdx) prev.toIdx = Math.max(prev.toIdx, range.toIdx);
+    else merged.push({ fromIdx: range.fromIdx, toIdx: range.toIdx });
+  }
+  return merged;
+}
+
 export function detectWastedWork(
   scramble: string,
   moves: SolveMove[],

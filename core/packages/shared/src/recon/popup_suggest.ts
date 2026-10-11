@@ -480,10 +480,12 @@ export async function buildCommentSuggestions(args: SuggestArgs): Promise<string
       return out;
     }
     const ollLabel = ollName ? `// OLL-${ollName}` : '// OLL';
-    // 仅当这把 OLL 之后只剩 EPLL(角已归位)时,它才是 OLL(CP) → 加该选项并置顶;
-    // 否则(后面是普通 PLL)根本不显示 OLL(CP)。
+    // 只剩 EPLL(角已归位)时优先标注角块完成；起始 EO 已完成用 COLL，
+    // 否则用 OLL(CP)。后面是普通 PLL 时仍保留普通 OLL 标签。
     const pllNext = await recognizePllCase(currPattern);
-    if (pllNext != null && isEpll(pllNext)) out.push('// OLL(CP)');
+    if (pllNext != null && isEpll(pllNext)) {
+      out.push(topEdgesOriented(prev.canonicalPattern) ? '// COLL' : '// OLL(CP)');
+    }
     if (!out.includes(ollLabel)) out.push(ollLabel);
     return out;
   }

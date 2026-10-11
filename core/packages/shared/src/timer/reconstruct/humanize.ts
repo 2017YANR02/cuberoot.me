@@ -133,6 +133,8 @@ export interface HumanizeOptions {
    * 旋转乘积要抵消,见文件头。
    */
   boundaries?: ReadonlySet<number>;
+  /** Keep redundant turns visible for parenthesized reconstruction notation. */
+  preserveMoves?: ReadonlySet<number>;
   /**
    * 这把的核心轨迹(姿态流)。给了它:实测到核心换格的相对面对成为增量候选,只有能
    * 比纯代数方案认出更多中层时才采用；转体也一并写进谱子。不给 = 没录姿态,中层
@@ -571,6 +573,8 @@ export function humanizeStream(
     const before = prev ? familyToken(prev.m) : null;
     const joinable = prev !== undefined && cur !== null && before !== null
       && before.family === cur.family
+      && !opts.preserveMoves?.has(prev.endIdx)
+      && !opts.preserveMoves?.has(move.startIdx)
       && out.length - 1 >= noJoinBefore
       && !(boundaries?.has(prev.endIdx) ?? false);
     if (!joinable || !cur || !before || !prev) { out.push(move); return; }

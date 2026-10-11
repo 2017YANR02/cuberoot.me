@@ -62,6 +62,7 @@ import { conjugateCoreTrack, coreTurnsIn } from './core_track';
 import type { CoreTrack } from './core_track';
 import { htmMoves, quarterMoves } from './htm';
 import { humanizeStream } from './humanize';
+import { wastedDisplaySpans } from './error_detect';
 import type { HumanRotation } from './humanize';
 import type { F2lSlotsResult } from './f2l_slots';
 import { facePermFor } from './gyro_orient';
@@ -78,10 +79,12 @@ export interface ReconTextLine {
   /** 和 `StepAnalysis` 的列 key 同名(`cross` / `slot-FR` / `f2l` / `oll` / `pll`),
    *  这样点表里某一列能高亮文字里对应那一行。 */
   key: string;
-  /** 这一行的动作,已按 HTM 合并(和表里的步数格同一口径)。 */
+  /** 显示动作；普通同面动作合并，废步保留原始转动，括号由 wasteGroups 提供。 */
   moves: string[];
   /** Display gestures mapped to lossless encoder ranges/timestamps for playback. */
   moveRanges?: RangeMoveItem[];
+  /** Waste group per display token; null denotes an ordinary move. */
+  wasteGroups?: Array<number | null>;
   /** 在原始动作流里的闭区间。 */
   fromIdx: number;
   toIdx: number;
@@ -271,9 +274,20 @@ function timeSuffix(line: ReconTextLine): string {
 
 /** 一行渲染成 `<动作> // <标签> (<时间>)`。标签缺席时只留动作。 */
 export function formatReconLine(line: ReconTextLine): string {
-  const moves = line.moves.join(' ');
+  const moves = formattedReconMoves(line).join(' ');
   if (!line.label) return moves;
   return `${moves} // ${line.label}${timeSuffix(line)}`;
+}
+
+/** Keep one token per playback range; parentheses never become extra moves. */
+export function formattedReconMoves(line: ReconTextLine): string[] {
+  return line.moves.map((move, i) => {
+    const group = line.wasteGroups?.[i];
+    if (group == null) return move;
+    const open = i === 0 || line.wasteGroups?.[i - 1] !== group;
+    const close = i === line.moves.length - 1 || line.wasteGroups?.[i + 1] !== group;
+    return `${open ? '(' : ''}${move}${close ? ')' : ''}`;
+  });
 }
 
 export interface ReconTextInput {
@@ -584,11 +598,23 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
     endIdx: snappedEnd(span),
   }));
   const spans = snappedSpans.filter((span, i) => i === 0 || span.endIdx > snappedSpans[i - 1].endIdx);
-  const humanized = humanizeStream(quarterMoves(moves), {
+  const wasteSpans = wastedDisplaySpans(scramble, moves);
+  const preserveMoves = new Set<number>();
+  for (const span of wasteSpans) {
+    for (let i = span.fromIdx; i <= span.toIdx; i++) preserveMoves.add(i);
+  }
+  const humanizeOptions = {
     core,
     boundaries: new Set(spans.map(span => span.endIdx)),
     suppressZRotationsThroughMs: segs.f2lEndIdx == null ? Infinity
       : (moves[spans.filter(span => span.kind === 'cross' || span.kind === 'f2l').at(-1)?.endIdx ?? -1]?.ts ?? f2lEndMs),
+  };
+  const countedHumanized = humanizeStream(quarterMoves(moves), humanizeOptions);
+  const humanized = preserveMoves.size === 0 ? countedHumanized
+    : humanizeStream(quarterMoves(moves), { ...humanizeOptions, preserveMoves });
+  const wasteGroupsFor = (items: WovenItem[]) => items.map(item => {
+    const group = wasteSpans.findIndex(span => item.startIdx >= span.fromIdx && item.endIdx <= span.toIdx);
+    return group < 0 ? null : group;
   });
   const rotations = humanized.rotations;
   const absorbedRotations = new Set<number>();
@@ -686,6 +712,7 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
       key: span.key,
       moves: lineMoves.map(item => item.token),
       moveRanges: playbackRanges(lineMoves),
+      wasteGroups: wasteGroupsFor(lineMoves),
       fromIdx: from,
       toIdx: span.endIdx,
       label,
@@ -710,6 +737,7 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
       lines.push({
         kind: 'pll', key: 'tail', moves: tail.map(item => item.token),
         moveRanges: playbackRanges(tail),
+        wasteGroups: wasteGroupsFor(tail),
         fromIdx: prevEnd + 1, toIdx: moves.length - 1,
         label: null, recognitionMs: null, executionMs: null, stepMs: null,
       });
@@ -724,9 +752,8 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
     inspection: viewRot,
     lines,
     turns,
-    // 数出来的,不是减出来的:一个中层吃掉两手、一次同面合并也吃掉一手,
-    // `turns - merges` 只算得清前者。谱子上写着几个记号,这里就是几。
-    stm: humanized.moves.length,
+    // 保持合并后的 STM 口径；废步为了展示而展开，不增加原有计数。
+    stm: countedHumanized.moves.length,
     seconds,
     tps: seconds > 0 ? turns / seconds : null,
     // 观察那一手是谱子的第一行,不是附注:少了它,原始打乱配下面这些动作对不上。
@@ -790,6 +817,7 @@ export function applyReconTextOverride(
     lines: auto.lines.map((line, i) => ({
       ...line,
       moves: parsed[i]!.moves,
+      wasteGroups: undefined,
       label: parsed[i]!.label,
     })),
     text: lines.join('\n'),
