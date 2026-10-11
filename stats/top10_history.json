@@ -16745,7 +16745,7 @@
       "iso2": "PH"
     },
     "2021SREC01": {
-      "name": "Jakov Srečković",
+      "name": "Srećko Srečković",
       "country": "Croatia",
       "iso2": "HR"
     },
@@ -48569,6 +48569,9 @@
     "KarnanOpen2026": {
       "name": "Kärnan Open 2026"
     },
+    "UMBCFall2026": {
+      "name": "UMBC Fall 2026"
+    },
     "FredericiaOpen2011": {
       "name": "Fredericia Open 2011"
     },
@@ -49388,6 +49391,9 @@
     "NutiEstonianChampionship2026": {
       "name": "Nuti Estonian Championship 2026"
     },
+    "AvenidaChileXXXVIII2026": {
+      "name": "Avenida Chile XXXVIII 2026"
+    },
     "WinchesterWeeknightsI2023": {
       "name": "Winchester Weeknights I 2023"
     },
@@ -49577,11 +49583,20 @@
     "WideBayCubing2025": {
       "name": "Wide Bay Cubing 2025"
     },
+    "Funza2025": {
+      "name": "Funza 2025"
+    },
+    "AvenidaChileXXVI2025": {
+      "name": "Avenida Chile XXVI 2025"
+    },
     "MichiganMini382025": {
       "name": "Michigan Mini 38 2025"
     },
     "U24TetianaDayKyiv2026": {
       "name": "U24 Tetiana Day Kyiv 2026"
+    },
+    "EdenBogotaVI2026": {
+      "name": "Edén Bogotá VI 2026"
     },
     "OlsztynSpringOpen2026": {
       "name": "Olsztyn Spring Open 2026"
@@ -51166,9 +51181,6 @@
     },
     "TitanPlazaBogota2025": {
       "name": "Titan Plaza Bogotá 2025"
-    },
-    "AvenidaChileXXVI2025": {
-      "name": "Avenida Chile XXVI 2025"
     },
     "AMLIITGandhinagarOpen2025": {
       "name": "AML IIT Gandhinagar Open 2025"
@@ -53083,6 +53095,9 @@
     },
     "PuzzlesinPittsford2026": {
       "name": "Puzzles in Pittsford 2026"
+    },
+    "IvanoFrankivskOpen2026": {
+      "name": "Ivano Frankivsk Open 2026"
     },
     "CubeandoAndoCojedes2015": {
       "name": "Cubeando Ando Cojedes 2015"

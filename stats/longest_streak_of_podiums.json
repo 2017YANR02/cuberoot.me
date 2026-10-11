@@ -143,17 +143,17 @@
       "[DFW Megacomp 2024](https://www.worldcubeassociation.org/competitions/DFWMegacomp2024)"
     ],
     [
-      72,
-      "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
-      "7x7x7 Cube",
-      "[SacCubing II 2017](https://www.worldcubeassociation.org/competitions/SacCubingII2017)",
+      73,
+      "[Lev Golub (Лев Голуб)](https://www.worldcubeassociation.org/persons/2014HOLU01)",
+      "Skewb",
+      "[Ukrainian Nationals 2017](https://www.worldcubeassociation.org/competitions/UkrainianNationals2017)",
       null
     ],
     [
       72,
-      "[Lev Golub (Лев Голуб)](https://www.worldcubeassociation.org/persons/2014HOLU01)",
-      "Skewb",
-      "[Ukrainian Nationals 2017](https://www.worldcubeassociation.org/competitions/UkrainianNationals2017)",
+      "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+      "7x7x7 Cube",
+      "[SacCubing II 2017](https://www.worldcubeassociation.org/competitions/SacCubingII2017)",
       null
     ],
     [
@@ -255,7 +255,7 @@
       null
     ],
     [
-      57,
+      58,
       "[Hassan Khanani](https://www.worldcubeassociation.org/persons/2018KHAN26)",
       "Square-1",
       "[Bethesda Summer Showdown 2024](https://www.worldcubeassociation.org/competitions/BethesdaSummerShowdown2024)",
@@ -585,6 +585,13 @@
     ],
     [
       42,
+      "[Lev Golub (Лев Голуб)](https://www.worldcubeassociation.org/persons/2014HOLU01)",
+      "3x3x3 Cube",
+      "[U24 Open October 2022](https://www.worldcubeassociation.org/competitions/U24OpenOctober2022)",
+      null
+    ],
+    [
+      42,
       "[Zayn Khanani](https://www.worldcubeassociation.org/persons/2018KHAN28)",
       "2x2x2 Cube",
       "[Buccaneer Bonanza 2022](https://www.worldcubeassociation.org/competitions/BuccaneerBonanza2022)",
@@ -617,13 +624,6 @@
       "6x6x6 Cube",
       "[SacCubing IV 2018](https://www.worldcubeassociation.org/competitions/SacCubingIV2018)",
       "[WCA World Championship 2023](https://www.worldcubeassociation.org/competitions/WC2023)"
-    ],
-    [
-      41,
-      "[Lev Golub (Лев Голуб)](https://www.worldcubeassociation.org/persons/2014HOLU01)",
-      "3x3x3 Cube",
-      "[U24 Open October 2022](https://www.worldcubeassociation.org/competitions/U24OpenOctober2022)",
-      null
     ],
     [
       41,
@@ -683,6 +683,13 @@
     ],
     [
       40,
+      "[Juan Miguel Saboya Soto](https://www.worldcubeassociation.org/persons/2021SOTO01)",
+      "3x3x3 Cube",
+      "[Motavita Boyacá 2024](https://www.worldcubeassociation.org/competitions/MotavitaBoyaca2024)",
+      null
+    ],
+    [
+      40,
       "[Manuel Francisco Beltrán](https://www.worldcubeassociation.org/persons/2023BELT07)",
       "Pyraminx",
       "[Edén Bogotá 2025](https://www.worldcubeassociation.org/competitions/EdenBogota2025)",
@@ -729,13 +736,6 @@
       "3x3x3 One-Handed",
       "[Santa Fe Primavera 2019](https://www.worldcubeassociation.org/competitions/SantaFePrimavera2019)",
       "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025)"
-    ],
-    [
-      39,
-      "[Juan de Dios Noriega Sánchez](https://www.worldcubeassociation.org/persons/2017SANC24)",
-      "4x4x4 Cube",
-      "[Fénix México 2022](https://www.worldcubeassociation.org/competitions/FenixMexico2022)",
-      null
     ]
   ]
 }
