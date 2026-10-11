@@ -403,8 +403,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
-  background: var(--background);
-  border-bottom: 1px solid var(--border-default);
+  background: transparent;
 }
 
 /* Tabs */
@@ -489,7 +488,6 @@
   gap: 0.55rem;
   margin-bottom: 0.9rem;
   padding-bottom: 0.6rem;
-  border-bottom: 1px solid var(--border-default);
 }
 
 .wca-stats-index-section-header svg {

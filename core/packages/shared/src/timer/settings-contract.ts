@@ -105,7 +105,7 @@ export interface TimerSettingValueContract {
 
 export type TimerSettingVisibility =
   | 'always'
-  | 'development-only'
+  | 'admin-only'
   | 'event-not-222'
   | 'wca-source'
   | 'stage-split-event'
@@ -272,7 +272,7 @@ export const TIMER_SETTING_FIELD_CONTRACTS = [
   { id: 'settings.timer.result-precision', category: 'timer', copy: { en: 'Result precision', zh: '成绩精度' }, storagePath: 'precision', value: { kind: 'enum', values: [2, 3] }, visibility: 'always', disabledWhen: 'never', effect: 'persist-result-precision' },
 
   // Smart cube
-  { id: 'settings.smart-cube.fake-cube', category: 'smart-cube', copy: { en: 'Virtual cube', zh: '虚拟魔方' }, storagePath: 'showDevFakeCube', value: bool, visibility: 'development-only', disabledWhen: 'never', effect: 'persist-development-fake-cube-controls' },
+  { id: 'settings.smart-cube.fake-cube', category: 'smart-cube', copy: { en: 'Fake cube', zh: '假魔方' }, storagePath: 'showAdminFakeCube', value: bool, visibility: 'admin-only', disabledWhen: 'never', effect: 'persist-admin-fake-cube-controls' },
   { id: 'settings.smart-cube.gyro', category: 'smart-cube', copy: { en: 'Gyroscope', zh: '陀螺仪' }, storagePath: 'gyroEnabled', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-live-cube-gyro' },
   { id: 'settings.smart-cube.auto-ready', category: 'smart-cube', copy: { en: 'Smart-cube auto-ready', zh: '智能魔方自动预备' }, storagePath: 'bluetoothAutoReady', value: { kind: 'enum', values: TIMER_SMART_CUBE_AUTO_READY_MODES }, visibility: 'always', disabledWhen: 'never', effect: 'persist-smart-cube-auto-ready' },
   { id: 'settings.smart-cube.live-view', category: 'smart-cube', copy: { en: 'Live cube', zh: '实况魔方' }, storagePath: 'liveCubeView', value: { kind: 'enum', values: TIMER_SMART_CUBE_LIVE_VIEWS }, visibility: 'always', disabledWhen: 'never', effect: 'persist-live-cube-view' },
@@ -364,6 +364,7 @@ export interface TimerSettingFieldContext {
   event: EventId;
   source: TimerScrambleSourceKind;
   development: boolean;
+  admin?: boolean;
   signedIn: boolean;
   optimalAvailable: boolean;
   roundEnabled: boolean;
@@ -402,7 +403,7 @@ function settingVisible(
 ): boolean {
   switch (visibility) {
     case 'always': return true;
-    case 'development-only': return context.development;
+    case 'admin-only': return context.admin === true;
     case 'event-not-222': return context.event !== '222';
     case 'wca-source': return context.source === 'wca';
     case 'stage-split-event': return timerSupportsStageSplits(context.event);

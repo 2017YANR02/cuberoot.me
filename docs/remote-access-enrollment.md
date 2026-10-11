@@ -1,0 +1,41 @@
+# 员工远程连接申请
+
+入口：`/zh/account/get-started`。申请是否启用以页面状态和主机同步心跳为准。
+
+## 使用
+
+1. 员工登录 CubeRoot，点「申请连接」。浏览器用 Web Crypto 生成 Ed25519 密钥，下载 OpenSSH 私钥文件；只把公钥发送给 API。网页关闭后不再保存私钥，文件丢失需要新申请。
+2. 负责人在同页核对账号 ID、姓名及设备，点击批准。仅 `2017YANR02` 的真实管理员会话有此权限；普通管理员、角色预览、API 管理密钥和主机同步令牌不能审批。
+3. Mac 每 30 秒出站同步一次批准清单，写入后确认，页面才显示「已生效」。员工点「复制给 AI 配置」，让本机 AI 安装下载文件、核验主机指纹、配置 SSH 与 App。浏览器不会直接写员工的 `~/.ssh`。
+4. 负责人可撤销新连接权限。Mac 离线时显示等待移除；已经打开的 SSH 会话不自动终止。旧的手动添加公钥不受该功能管理。
+
+浏览器需要支持 Web Crypto Ed25519（HTTPS 或 localhost）。账号、设备与审批记录仅本人及负责人可见。密钥下载文件属于凭据，不上传给网站或聊天。
+
+## 首次启用（维护者 AI）
+
+发布遵循 AGENTS.md；先发布 0272 migration、API 与前端。没有配置专用 `REMOTE_ACCESS_HOST_TOKEN` 时，API 关闭申请入口。该随机令牌至少 32 字符，与普通 ADMIN_API_KEY 完全分离，仅 API 和这台 Mac 保存。
+
+在服务器 API 环境设置该令牌，在 Mac 的进程环境提供同值，然后从 `core/` 运行：
+
+```bash
+mkdir -p "$HOME/.local/share/cuberoot-remote"
+pnpm exec esbuild apps/api/scripts/remote-access-host.ts --bundle --platform=node --format=esm --outfile="$HOME/.local/share/cuberoot-remote/host.mjs"
+node "$HOME/.local/share/cuberoot-remote/host.mjs" --install
+```
+
+安装器先核验本机账号、SSH 主机指纹、API 认证和授权文件写入，再注册 `me.cuberoot.remote-access` LaunchAgent。令牌写入 `~/.config/cuberoot-remote/host.json`（0600），不写 plist、仓库或浏览器。后台运行独立打包副本，不从 Documents 工作目录执行或读取未发布的共享代码。升级时重新打包并安装；Node 路径改变后须重新安装。无需新增公网端口。未重启验收时不得宣称已验证重启。
+
+验收：真实员工申请 → 负责人审批 → Mac 写入并确认 → 员工端 SSH 与 App 实际打开项目；再撤销测试申请并确认阻止新连接。不得把界面或模拟测试当作员工电脑验收。
+
+## 同步保护
+
+- 只管理 `authorized_keys` 中 `BEGIN/END CUBEROOT REMOTE ACCESS` 区块，保留旧授权；首次写入前备份，使用临时文件替换。
+- 严格校验 Ed25519 格式、UUID、重复项；拒绝注入选项、多行公钥、格式不完整的管理区块、符号链接及管理区外同名密钥。
+- API 或网络错误不清空现有授权；快照变更时不确认旧结果，下次重新同步。主机令牌只能消费批准清单和确认，不能自行批准。
+- 员工注销账号会级联移除申请，下次成功同步移除密钥。已撤销的请求仍保留审计，直到账号注销。
+- 日志：`~/.config/cuberoot-remote/sync.log`。若异常退出遗留 `~/.ssh/.cuberoot-remote.lock`，核对文件记录的 PID 已退出后才移走锁文件；不自动跳过锁。
+- 当前仍是 `eula` 账号级访问；不是按项目隔离，也不是独立系统用户。负责人批准页明确展示该权限。
+
+## 验证边界
+
+本地针对普通管理员越权、角色预览、主机令牌、过期快照、公钥注入和原有授权保留进行测试；使用隔离 PostgreSQL 验证迁移与账号删除级联，使用 ssh-keygen 核验生成文件。不自动提交、推送或改服务器环境。

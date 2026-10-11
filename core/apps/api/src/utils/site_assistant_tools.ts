@@ -163,7 +163,6 @@ export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'
     out.factualSummary = (call.from && call.from>today
       ? label(`${period} 尚未发生，当前没有该期间的正式比赛成绩，无法提供未来的确切成绩。`,`The period ${period} is in the future. Official results do not exist yet, so exact future results are unavailable.`)
       : label(`按已导入的 WCA 官方成绩，${title}在 ${period} 参加过 ${count} 场比赛，以比赛开始日期计。`,`Imported official WCA results show ${count} competitions for ${title} (${period}), counted by competition start date.`))
-      + (updated ? label(`数据导入时间：${updated}。`,` Data imported: ${updated}.`) : '')
       + (unknownDateCompetitions ? label(`另有 ${unknownDateCompetitions} 场比赛缺少有效日期，未计入，以上数量可能不完整。`,` ${unknownDateCompetitions} competitions lack valid dates and are excluded; this count may be incomplete.`) : '');
     if (byYear.length) table(label('按年参赛数','Competitions by year'),[label('年份','Year'),label('比赛数','Competitions')],byYear.map(row=>[row.year,String(row.competitions)]));
   } else if (call.tool === 'person_countries') {

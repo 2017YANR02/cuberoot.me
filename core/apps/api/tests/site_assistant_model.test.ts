@@ -2,7 +2,29 @@ import {it,expect,vi} from 'vitest';
 import {createAssistantModel} from '../src/utils/site_assistant_model.js';
 const config={key:'fixture',baseUrl:'https://api.deepseek.com',model:'deepseek-flash'};
 const options={system:'Use JSON for the answer.',context:{question:'question'},finalOnly:false,thinking:true,effort:'low' as const,maxTokens:2048};
+it('sends actual image parts in their original turns through the compatible provider',async()=>{
+  const image={mediaType:'image/png' as const,data:'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a0u8AAAAASUVORK5CYII='};
+  const fetcher=vi.fn<typeof fetch>().mockResolvedValue(response({content:JSON.stringify({answer:'A visible number.',sourceIds:[]})}));
+  const model=createAssistantModel({...config,baseUrl:'https://bailian.example/v1',model:'qwen3.8-flash'},fetcher,AbortSignal.timeout(2000),'',[
+    {role:'user',content:'First image',images:[image]},{role:'assistant',content:'First answer'},
+  ],[image]);
+  await model.complete({...options,thinking:false});
+  const request=JSON.parse(String(fetcher.mock.calls[0][1]?.body));
+  const users=request.messages.filter((message:any)=>message.role==='user');
+  expect(users).toHaveLength(2);
+  expect(users[0].content[0]).toEqual({type:'text',text:'First image'});
+  for(const user of users)expect(user.content[1]).toMatchObject({type:'image_url',image_url:{url:`data:image/png;base64,${image.data}`}});
+  expect(users[1].content[0].text).not.toContain(image.data);
+  expect(request.messages.some((message:any)=>message.role==='assistant'&&message.content==='First answer')).toBe(true);
+});
 const response=(message:object,finish='stop')=>Response.json({id:'test',created:1,model:config.model,choices:[{index:0,finish_reason:finish,message:{role:'assistant',...message}}],usage:{prompt_tokens:1,completion_tokens:1,total_tokens:2}});
+it.each(['```json\n%s\n```','\n%s\n```'])('accepts a compatible vision JSON fence but retains schema validation: %s',async wrapper=>{
+  const fetcher=vi.fn<typeof fetch>().mockResolvedValue(response({content:wrapper.replace('%s',JSON.stringify({answer:'12.34',sourceIds:[]}))}));
+  const model=createAssistantModel({...config,baseUrl:'https://bailian.example/v1'},fetcher,AbortSignal.timeout(2000),'');
+  expect((await model.complete({...options,thinking:false})).answer).toBe('12.34');
+  fetcher.mockResolvedValue(response({content:'Intro '+JSON.stringify({answer:'12.34',sourceIds:[]})}));
+  await expect(model.complete({...options,thinking:false})).rejects.toThrow();
+});
 it('round trips native tool IDs and reasoning only through the provider transcript',async()=>{
   const fetcher=vi.fn<typeof fetch>().mockResolvedValueOnce(response({content:null,reasoning_content:'provider-private-reasoning',tool_calls:[{id:'native-id',type:'function',function:{name:'navigation',arguments:JSON.stringify({query:'timer',kind:'all',pageIds:[]})}}]},'tool_calls'))
     .mockResolvedValueOnce(response({content:JSON.stringify({answer:'Open timer',sourceIds:['timer']})}));

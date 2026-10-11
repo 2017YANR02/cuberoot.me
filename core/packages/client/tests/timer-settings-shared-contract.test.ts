@@ -261,6 +261,12 @@ describe('canonical timer settings surface manifest', () => {
     expect(regionVisible({ rankEnabled: false })).toBe(false);
     expect(timerSettingFieldStates({ ...BASE_CONTEXT, development: false })
       .find((field) => field.id === 'settings.smart-cube.fake-cube')?.visible).toBe(false);
+    for (const development of [false, true]) {
+      for (const admin of [false, true]) {
+        expect(timerSettingFieldStates({ ...BASE_CONTEXT, development, admin })
+          .find((field) => field.id === 'settings.smart-cube.fake-cube')?.visible).toBe(admin);
+      }
+    }
     const stageEvents = new Set(['222', '333', '444', '555', '666', '777', '333oh', '333fm']);
     const bldEvents = new Set(['333bld', '333mbld', '333ni', '444bld', '555bld', '666bld', '777bld']);
     const colorNeutralEvents = new Set(['oll', 'pll', 'coll', 'cmll', 'zbll', 'eg1', 'eg2', 'cross', 'll', 'f2l', 'cll', 'ell', 'eocp', '2gll', 'ollcp', 'zzll', 'zbls']);
