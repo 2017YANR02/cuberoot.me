@@ -332,7 +332,7 @@ function TimerBootFailurePanel({
   );
 }
 
-class TimerRuntimeBoundary extends Component<TimerRuntimeBoundaryProps, TimerRuntimeBoundaryState> {
+export class TimerRuntimeBoundary extends Component<TimerRuntimeBoundaryProps, TimerRuntimeBoundaryState> {
   state: TimerRuntimeBoundaryState = { diagnostic: null };
 
   static getDerivedStateFromError(error: unknown): TimerRuntimeBoundaryState {

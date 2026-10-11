@@ -70,7 +70,7 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
   const pointerTypeRef = useRef('mouse');
   const eff = useEffectiveTheme();
   const [petVisible, setPetVisible] = useDeskPetVisible();
-  const [, , transparent, setTransparent, showBackgrounds, setBackgroundEnabled] = useHomeBackgroundChoice(eff);
+  const [, , showBackgrounds, setBackgroundEnabled] = useHomeBackgroundChoice(eff);
 
   const cancelHoverClose = () => {
     if (hoverCloseTimerRef.current === null) return;
@@ -230,7 +230,7 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
             if (!event.currentTarget.contains(event.relatedTarget as Node | null)) endPreview();
           }}
           >
-          <div className="appearance-settings">
+          {!showBackgrounds && <div className="appearance-color-options">
             <div className="appearance-schemes" style={{ display: 'flex', flexFlow: 'row nowrap', gap: 0 }}>
               {(['dark', 'light'] as const).map((choice) => {
                 const Icon = choice === 'light' ? Sun : Moon;
@@ -278,23 +278,26 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
                 </button>
               );
             })}
+          </div>}
 
-            <div className="appearance-sec-label appearance-sec-div" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div className="appearance-settings">
+            <div className="appearance-sec-label" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <BoolToggle
                 value={petVisible}
                 onChange={setPetVisible}
                 label={t('桌宠', 'Desk pet')}
               />
-              <BoolToggle
-                value={transparent}
-                onChange={setTransparent}
-                label={t('透明', 'Transparency')}
-              />
-              <BoolToggle
-                value={showBackgrounds}
-                onChange={setBackgroundEnabled}
-                label={t('背景', 'Background')}
-              />
+              <label className="appearance-background-row">
+                <span>{t('底图', 'Backdrop')}</span>
+                <select
+                  className="appearance-background-select"
+                  value={showBackgrounds ? 'image' : 'solid'}
+                  onChange={(event) => setBackgroundEnabled(event.target.value === 'image')}
+                >
+                  <option value="solid">{t('纯色', 'Solid color')}</option>
+                  <option value="image">{t('背景', 'Image')}</option>
+                </select>
+              </label>
               <BoolToggle
                 value={contrast === 'soft'}
                 onChange={(enabled) => pickContrast(enabled ? 'soft' : 'normal')}

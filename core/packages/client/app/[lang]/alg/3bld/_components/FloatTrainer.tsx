@@ -22,6 +22,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type JSX,
 } from 'react';
@@ -97,6 +98,7 @@ export function FloatTrainer({ piece }: FloatTrainerProps): JSX.Element {
   const [scrambles, setScrambles] = useState<string[]>([]);
   const [info, setInfo] = useState('');
   const [busy, setBusy] = useState(false);
+  const requestId = useRef(0);
 
   // Timer handoff popup (edge only).
   const [jumpOpen, setJumpOpen] = useState(false);
@@ -107,10 +109,11 @@ export function FloatTrainer({ piece }: FloatTrainerProps): JSX.Element {
 
   useEffect(() => {
     prewarm();
+    return () => { requestId.current++; };
   }, []);
 
   // ── normalfloat ──────────────────────────────────────────────────────────
-  const normalfloat = useCallback(async (): Promise<string[]> => {
+  const normalfloat = useCallback(async (request: number): Promise<string[]> => {
     // Upstream splits the float order to a char array and concatenates with the
     // eject string; algSetGenerator works on the resulting string verbatim.
     const bufferList = (isEdge ? floatOrder.toLowerCase() : floatOrder.toUpperCase()).split('');
@@ -214,6 +217,7 @@ export function FloatTrainer({ piece }: FloatTrainerProps): JSX.Element {
       state = codeTrans(codes[1], state);
       state = codeTrans(codes[0], state);
       const scr = await m2pSolve(state);
+      if (request !== requestId.current) return [];
       out.push(scr);
       setScrambles([...out]);
       times += 1;
@@ -229,7 +233,7 @@ export function FloatTrainer({ piece }: FloatTrainerProps): JSX.Element {
   }, [isEdge, floatOrder, ejectPos, oppScramble, parityMode, isZh]);
 
   // ── ejectfloat ───────────────────────────────────────────────────────────
-  const ejectfloat = useCallback(async (): Promise<string[]> => {
+  const ejectfloat = useCallback(async (request: number): Promise<string[]> => {
     const ejectList = (isEdge ? ejectPos.toLowerCase() : ejectPos.toUpperCase()).split('');
     const out: string[] = [];
 
@@ -253,6 +257,7 @@ export function FloatTrainer({ piece }: FloatTrainerProps): JSX.Element {
         const state = mergeState(state2, state1);
         out.push(await m2pSolve(state));
       }
+      if (request !== requestId.current) return [];
       setScrambles([...out]);
     }
 
@@ -264,17 +269,20 @@ export function FloatTrainer({ piece }: FloatTrainerProps): JSX.Element {
   }, [isEdge, ejectPos, oppScramble, parityMode, isZh]);
 
   const generate = useCallback(async () => {
+    const request = ++requestId.current;
     setBusy(true);
     setScrambles([]);
     setInfo('');
     try {
       if (floatOrder.trim() === '') {
-        await ejectfloat();
+        await ejectfloat(request);
       } else {
-        await normalfloat();
+        await normalfloat(request);
       }
+    } catch (error) {
+      if (request === requestId.current) throw error;
     } finally {
-      setBusy(false);
+      if (request === requestId.current) setBusy(false);
     }
   }, [floatOrder, ejectfloat, normalfloat]);
 
@@ -290,7 +298,7 @@ export function FloatTrainer({ piece }: FloatTrainerProps): JSX.Element {
   // Build the final scramble list: pad with `otherNum` non-training-set scrambles
   // so the training set is `percent`% of the total, then shuffle. Verbatim
   // edgefloat.js #gotoTimer handler. Writes to localStorage; caller navigates.
-  const buildAndStoreTimerList = useCallback(async (): Promise<number> => {
+  const buildAndStoreTimerList = useCallback(async (request: number): Promise<number | null> => {
     const perc = percent;
     const otherNum = perc > 0 ? Math.trunc((scrambles.length / perc) * (100 - perc)) : 0;
     const padded = [...scrambles];
@@ -305,8 +313,10 @@ export function FloatTrainer({ piece }: FloatTrainerProps): JSX.Element {
       else if (parity) state2 = codeTrans('ag', state2);
       const state = mergeState(state1, state2);
       padded.push(await m2pSolve(state));
+      if (request !== requestId.current) return null;
     }
 
+    if (request !== requestId.current) return null;
     const finalList = shuffle(padded);
     persistItem(BLD_TIMER_SCRAMBLES_KEY, JSON.stringify(finalList));
     return finalList.length;
@@ -314,13 +324,17 @@ export function FloatTrainer({ piece }: FloatTrainerProps): JSX.Element {
 
   const [navReady, setNavReady] = useState(false);
   const confirmJump = useCallback(async () => {
+    const request = ++requestId.current;
     setBusy(true);
     try {
-      await buildAndStoreTimerList();
+      await buildAndStoreTimerList(request);
+      if (request !== requestId.current) return;
       setJumpOpen(false);
       setNavReady(true);
+    } catch (error) {
+      if (request === requestId.current) throw error;
     } finally {
-      setBusy(false);
+      if (request === requestId.current) setBusy(false);
     }
   }, [buildAndStoreTimerList]);
 

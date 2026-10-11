@@ -309,6 +309,7 @@ async function main(): Promise<void> {
       await writeFile(stageBuildStamp, await stageSourceSnapshot());
     });
     if (willInject) await step('333opt', async () => { optChanged = await run333(options, true); });
+    if (optChanged) await step('example-shards', () => runPnpm(['--filter', '@cuberoot/scramble-stats-build', 'build:example-shards'], coreDir, buildEnv));
     // OH/FMC/BLD recent rows join out.0.csv, so refresh after its optimal solves finish.
     await refreshRecentEvents();
     if (nNew > 0 || variantChanged || optChanged) await step('recent-333', () => runPnpm(['--filter', '@cuberoot/scramble-stats-build', 'build:recent-scrambles'], coreDir, buildEnv));

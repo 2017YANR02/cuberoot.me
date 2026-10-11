@@ -7,6 +7,66 @@
   },
   "artifacts": [
     {
+      "id": "client.cube-history-catalog",
+      "kind": "build-generated",
+      "source": {
+        "locator": "Nine complete research datasets assembled by catalog-source.ts",
+        "paths": [
+          "core/packages/client/app/[lang]/cube-history/_data/gan.json",
+          "core/packages/client/app/[lang]/cube-history/_data/gan-smart.json",
+          "core/packages/client/app/[lang]/cube-history/_data/moyu-yj.json",
+          "core/packages/client/app/[lang]/cube-history/_data/moyu-yj-variants.json",
+          "core/packages/client/app/[lang]/cube-history/_data/qiyi-other.json",
+          "core/packages/client/app/[lang]/cube-history/_data/qiyi-xman.json",
+          "core/packages/client/app/[lang]/cube-history/_data/historical.json",
+          "core/packages/client/app/[lang]/cube-history/_data/historical-brands.json",
+          "core/packages/client/app/[lang]/cube-history/_data/historical-collectibles.json",
+          "core/packages/client/app/[lang]/cube-history/_data/catalog-source.ts"
+        ]
+      },
+      "license": {
+        "spdx": "LicenseRef-CubeRoot",
+        "evidence": "Source citations and research provenance retained unchanged"
+      },
+      "owner": "core/packages/client/scripts/build-cube-history.ts",
+      "workingDirectory": "core",
+      "command": "pnpm --filter @cuberoot/client build:cube-history",
+      "outputs": [
+        "core/packages/client/app/[lang]/cube-history/_data/catalog.compact.json"
+      ],
+      "verification": [
+        "tests/cube-history-compact.test.ts compares every field and rejects stale output",
+        "pnpm --filter @cuberoot/client check:cube-history"
+      ],
+      "driftPolicy": "Regenerate after research edits, including during an existing dev session. Dev startup and production build also regenerate. Never edit the compact dictionary by hand."
+    },
+    {
+      "id": "stats.competition-calendar",
+      "kind": "build-generated",
+      "source": {
+        "locator": "Complete published past and upcoming competition directories",
+        "paths": [
+          "stats/all_past_comps.json",
+          "stats/all_upcoming_comps.json"
+        ]
+      },
+      "license": {
+        "spdx": "LicenseRef-WCA-Data",
+        "evidence": "Same WCA competition data and attribution as source indexes"
+      },
+      "owner": "core/jobs/stats-build/src/bin/build_calendar_comps.ts",
+      "workingDirectory": "core",
+      "command": "node --import tsx jobs/stats-build/src/bin/build_calendar_comps.ts",
+      "outputs": [
+        "stats/comp_calendar/*.json"
+      ],
+      "verification": [
+        "tests/competition-calendar.test.ts checks all month windows and global summary",
+        "tests/competition-calendar-loader.test.ts verifies stale/missing-file fallback signals"
+      ],
+      "driftPolicy": "Regenerate after each daily upcoming or weekly historical update. Preserve full source files. Publish index last; hash mismatches fall back to full catalogs."
+    },
+    {
       "id": "trainer.double-zbll",
       "kind": "local-heavy-artifact",
       "source": {
@@ -203,7 +263,7 @@
       "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE" },
       "owner": ["core/jobs/scramble-stats-build", "solver"],
       "workingDirectory": "core",
-      "command": "pnpm --filter @cuberoot/scramble-stats-build build:<target>; use the matching runbook or skill for the complete heavy pipeline",
+      "command": "pnpm --filter @cuberoot/scramble-stats-build build:<target>; build:example-shards only splits existing JSON without solvers; use the matching runbook or skill for the complete heavy pipeline",
       "outputs": ["stats/scramble/**"],
       "verification": ["fixture, schema, numeric-baseline, and committed-result tests for the selected target"],
       "driftPolicy": "Ordinary CI does not recompute local heavy tables. Verify schema and exact numeric baselines, and never hand-edit generated numbers."

@@ -2,6 +2,7 @@
 'use client';
 
 import { useCallback, useEffect } from 'react';
+import { shouldIgnoreTimerTarget } from '@/lib/timer-ignore-target';
 
 const NOT_RUNNING = 0;
 const AWAITING_READY = 1;
@@ -33,7 +34,7 @@ export function useSpaceHoldTimer(opts: SpaceHoldTimerOptions): SpaceHoldTimerHa
   } = opts;
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (!enabled) return;
+    if (!enabled || shouldIgnoreTimerTarget(e.target)) return;
     if (e.code === 'Space') {
       e.preventDefault();
       if (e.repeat) return;
@@ -48,7 +49,7 @@ export function useSpaceHoldTimer(opts: SpaceHoldTimerOptions): SpaceHoldTimerHa
   }, [enabled, state, delayMs, getTimerReady, stopTimer, onOtherKeyDown]);
 
   const handleKeyUp = useCallback((e: KeyboardEvent) => {
-    if (!enabled) return;
+    if (!enabled || shouldIgnoreTimerTarget(e.target)) return;
     if (e.code !== 'Space') return;
     e.preventDefault();
     if (state === READY) {

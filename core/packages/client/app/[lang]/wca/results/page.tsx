@@ -15,7 +15,7 @@ import Link from '@/components/AppLink';
 import HomeLink from '@/components/HomeLink';
 import { UnofficialMark } from '@/components/UnofficialMark';
 import dynamic from 'next/dynamic';
-import { WcaTeamCell, useWcaTeams } from './_components/WcaTeamCell';
+import { WcaPersonRelationCells, useWcaTeams } from './_components/WcaTeamCell';
 import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, HelpCircle, ChevronDown, ChevronRight } from 'lucide-react';
@@ -31,6 +31,7 @@ import { ClearButton } from '@/components/ClearButton';
 import { AttemptHeaderCells, AttemptCells } from '@/components/wca-results/AttemptsGrid';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { displayCuberName } from '@/lib/cuber-name-display';
+import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import { RecordBadge } from '@/components/RecordBadge';
 import { apiUrl } from '@/lib/api-base';
 import { compLinkProps } from '@/lib/comp-link';
@@ -47,7 +48,6 @@ import '../_wca_stats_extra.css';
 import { tr } from '@/i18n/tr';
 import '@/i18n/i18n-client';
 import {
-  WcaTeacherCell,
   WcaTeacherColumnHeader,
   useWcaTeachers,
 } from '@/components/WcaTeacherCell';
@@ -802,7 +802,7 @@ function AllResultsPageInner() {
                         <td>
                           {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
                           <span className="ns-person-wrap">
-                            <Link prefetch={false} href={personHref(r.wcaId)}>{nameByMode(r.name, pname)}</Link>
+                            <Link prefetch={false} href={personHref(r.wcaId)}>{nameByMode(r.name, pname)}<WcaPersonTeamBadge wcaId={r.wcaId} /></Link>
                             {pname === 'aka' && <FormerNames former={r.former} />}
                           </span>
                         </td>
@@ -866,8 +866,7 @@ function AllResultsPageInner() {
                           {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
                           <Link prefetch={false} href={personHref(r.wcaId)}>{displayCuberName(r.name, isZh)}</Link>
                         </td>
-                        <td><WcaTeacherCell studentWcaId={r.wcaId} eventIds={teacherEventIds} directory={teacherDirectory} isZh={isZh} visibleTeacherWcaId={visibleTeacherWcaId || undefined} /></td>
-                        <td><WcaTeamCell wcaId={r.wcaId} directory={teamDirectory} /></td>
+                        <WcaPersonRelationCells wcaId={r.wcaId} eventIds={teacherEventIds} teacherDirectory={teacherDirectory} teamDirectory={teamDirectory} isZh={isZh} visibleTeacherWcaId={visibleTeacherWcaId || undefined} />
                         <td className="wse-value-col">
                           <span className="record-num-cell">
                             {formatWcaResult(r.value, singleEvent, effType)}
@@ -912,8 +911,7 @@ function AllResultsPageInner() {
                           {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}{' '}
                           <Link prefetch={false} href={personHref(r.wcaId)}>{displayCuberName(r.name, isZh)}</Link>
                         </td>
-                        <td><WcaTeacherCell studentWcaId={r.wcaId} eventIds={teacherEventIds} directory={teacherDirectory} isZh={isZh} visibleTeacherWcaId={visibleTeacherWcaId || undefined} /></td>
-                        <td><WcaTeamCell wcaId={r.wcaId} directory={teamDirectory} /></td>
+                        <WcaPersonRelationCells wcaId={r.wcaId} eventIds={teacherEventIds} teacherDirectory={teacherDirectory} teamDirectory={teamDirectory} isZh={isZh} visibleTeacherWcaId={visibleTeacherWcaId || undefined} />
                         <td className="wse-value-col">{r.value != null ? formatWcaResult(r.value, singleEvent, effType) : '—'}</td>
                         <td className="wse-detail-cell">{r.compDate ?? ''}</td>
                         <td>{r.compId ? <Link {...compLinkProps(r.compId)}><CompCell compId={r.compId} compName={r.compName} isZh={isZh} date={r.compDate ?? null} /></Link> : ''}</td>
@@ -972,6 +970,7 @@ function AllResultsPageInner() {
                             <span className="sor-census-rank">{r.rank}</span>
                             {r.iso2 && <Flag iso2={r.iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
                             <Link prefetch={false} href={personHref(r.wcaId)}>{displayCuberName(r.name, isZh)}</Link>
+                            <WcaPersonTeamBadge wcaId={r.wcaId} />
                             <span className="sor-census-share">{share < 0.1 ? share.toFixed(3) : share.toFixed(1)}%</span>
                           </li>
                         );
@@ -1037,8 +1036,7 @@ function AllResultsPageInner() {
                             <Link prefetch={false} href={personHref(r.wcaId)}>{displayCuberName(r.name, isZh)}</Link>
                           </span>
                         </td>
-                        <td><WcaTeacherCell studentWcaId={r.wcaId} eventIds={teacherEventIds} directory={teacherDirectory} isZh={isZh} visibleTeacherWcaId={visibleTeacherWcaId || undefined} /></td>
-                        <td><WcaTeamCell wcaId={r.wcaId} directory={teamDirectory} /></td>
+                        <WcaPersonRelationCells wcaId={r.wcaId} eventIds={teacherEventIds} teacherDirectory={teacherDirectory} teamDirectory={teamDirectory} isZh={isZh} visibleTeacherWcaId={visibleTeacherWcaId || undefined} />
                         <td className="wse-value-col">{r.subsetTotal != null ? r.subsetTotal : isCountryMode ? r.totalCountryRank : r.totalWorldRank}</td>
                         {showBest && (
                           <td className="wse-value-col"

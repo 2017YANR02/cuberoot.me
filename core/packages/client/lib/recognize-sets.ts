@@ -21,18 +21,17 @@ import {
   D_TURN_OPTIONS,
 } from './pll-helpers';
 import { displayOllName, displayPllName, OLL_NAME_BY_NUMBER } from './alg_case_display';
-import { DB_RECOGNIZE_SETS, isDbRecognizeSetId, type DbRecognizeSetId } from './recognize-db-sets';
+import { DB_RECOGNIZE_SETS } from './recognize-db-sets';
 import {
   SQ1_SHAPE_RECOGNIZE_ID,
   SQ1_SHAPE_SET,
-  type Sq1ShapeRecognizeId,
 } from './recognize-sq1-shapes';
 import type { AlgSticker } from '@cuberoot/shared';
+import { RECOGNITION_TRAINING_SETS, type RecognizeSetId } from './training-set-metadata';
+export type { RecognizeSetId } from './training-set-metadata';
 
 const typedOllMap = ollMap as Record<string, { name: string; alg: string }>;
 const typedPllMap = pllMap as Record<string, Record<string, string>>;
-
-export type RecognizeSetId = 'pll' | 'oll' | DbRecognizeSetId | Sq1ShapeRecognizeId;
 
 /** 敲一下键之后该干嘛。`pending` 是还没凑齐的前缀(`G_` / `1_`),显示在提示行上。 */
 export type KeyStep =
@@ -198,7 +197,7 @@ export const RECOGNIZE_SETS: Record<RecognizeSetId, RecognizeSet> = {
 };
 
 export const isRecognizeSetId = (v: string): v is RecognizeSetId =>
-  v === 'pll' || v === 'oll' || v === SQ1_SHAPE_RECOGNIZE_ID || isDbRecognizeSetId(v);
+  Object.prototype.hasOwnProperty.call(RECOGNITION_TRAINING_SETS, v);
 
 /** 不认识的 set 一律当 PLL —— 路由只预渲染 RECOGNIZE_SETS 里那几个,兜底不该炸页面。 */
 export const recognizeSetFor = (id: string): RecognizeSet =>

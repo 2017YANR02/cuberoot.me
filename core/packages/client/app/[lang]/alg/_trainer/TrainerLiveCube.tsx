@@ -51,7 +51,7 @@ export default function TrainerLiveCube({
   idle: ReactNode;
 }) {
   const [calibrateNonce, setCalibrateNonce] = useState(0);
-  const { cube, moves, quatRef, view } = state;
+  const { cube, moves, quatRef, view, practiceMode, physicalMoves } = state;
   const visual = pickTrainerLiveVisual(view, !!cube.facelets);
   const flatView = visual === 'qcube' || visual === 'qlast' || visual === 'q2look'
     ? visual
@@ -66,8 +66,8 @@ export default function TrainerLiveCube({
   // 打乱作为日志第一段。拆不拆词无所谓 —— SimCubeView 里最终是 join(' ') 成一条式子的,
   // 但拆开来第二段之后的每一手才算「纯追加」,那是能播动画的前提(见 sim_log.ts)。
   const log = useMemo(
-    () => [...scramble.trim().split(/\s+/).filter(Boolean), ...moves],
-    [scramble, moves],
+    () => practiceMode === 'manual' ? [...(physicalMoves ?? [])] : [...scramble.trim().split(/\s+/).filter(Boolean), ...moves],
+    [scramble, moves, practiceMode, physicalMoves],
   );
 
   return (
@@ -79,7 +79,10 @@ export default function TrainerLiveCube({
           size={140}
           alt={tr({ zh: '智能魔方实时状态', en: 'Live smart-cube state' })}
         />
-      ) : visual === 'idle' ? idle : (
+      ) : visual === 'idle' ? idle : practiceMode === 'manual' && physicalMoves === null ? (
+        cube.facelets ? <FaceletsCube fd={cube.facelets.toLowerCase()} size={140}
+          alt={tr({ zh: '智能魔方实时状态', en: 'Live smart-cube state' })} /> : null
+      ) : (
         <SimCubeView
           moves={log}
           quatRef={quatRef}

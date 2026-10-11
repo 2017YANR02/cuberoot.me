@@ -60,22 +60,25 @@ export default function TodayRecon({ lang, pinnedRecons, pinnedOnly = false, isA
   if (visibleRecons === null) return <div className="today-recon today-recon--loading" data-tour="today-replay" aria-hidden="true" />;
   if (visibleRecons.length === 0) return null;
 
+  const cards = visibleRecons.map((s) => {
+    const pinned = pinnedRecons?.some(item => item.id === s.id) ?? false;
+    return (
+      <CuratedReconCard key={s.id} solve={s} isZh={isZh} href={`/recon/${reconPathSeg(s)}`} showScrambleFallback={false}
+        pin={isAdmin ? { active: pinned, disabled: pinnedRecons === null || savingPins.has(s.id), onToggle: () => void onPin(s, !pinned) } : undefined} />
+    );
+  });
+  if (pinnedOnly) return <>{cards}{isAdmin && pinError && <p role="alert">{pinError}</p>}</>;
+
   return (
     <div className="today-recon" data-tour="today-replay">
       <div className="tr-head">
-        <span className="tr-title">{pinnedOnly ? tr({ zh: '置顶复盘', en: 'Pinned recons' }) : tr({ zh: '今日复盘', en: 'Recon of the Day' })}</span>
+        <span className="tr-title">{tr({ zh: '今日复盘', en: 'Recon of the Day' })}</span>
         <Link href="/recon" prefetch={false} className="tr-all">{tr({ zh: '全部', en: 'All recons' })}</Link>
       </div>
 
       {isAdmin && pinError && <p role="alert">{pinError}</p>}
       <div className="tr-cards scroll-panel scroll-panel--hover-lift">
-        {visibleRecons.map((s) => {
-          const pinned = pinnedRecons?.some(item => item.id === s.id) ?? false;
-          return (
-            <CuratedReconCard key={s.id} solve={s} isZh={isZh} href={`/recon/${reconPathSeg(s)}`} showScrambleFallback={false}
-              pin={isAdmin ? { active: pinned, disabled: pinnedRecons === null || savingPins.has(s.id), onToggle: () => void onPin(s, !pinned) } : undefined} />
-          );
-        })}
+        {cards}
       </div>
     </div>
   );

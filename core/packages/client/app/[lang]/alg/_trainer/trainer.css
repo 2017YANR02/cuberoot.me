@@ -262,6 +262,14 @@
 }
 .trainer-brush-select .list-select-label { font-size: inherit; }
 .trainer-brush-select .list-select-item { font-size: 12px; }
+.trainer-offline-progress {
+  display: inline-block;
+  inline-size: 11ch;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  white-space: nowrap;
+}
 .trainer-quick-btn {
   appearance: none; -webkit-appearance: none;
   font: inherit; font-size: 0.82rem; color: var(--foreground);
@@ -988,6 +996,10 @@
   grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
   gap: 8px 4px;
 }
+/* Paired results need room for both 40px layers, their gap and button padding. */
+.trainer-stats-list:has(.trainer-double-thumbs) {
+  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+}
 .trainer-stat-item {
   appearance: none;
   -webkit-appearance: none;
@@ -1031,6 +1043,9 @@
   /* 列宽贴着 56px 的图 + 内边距:一行能摆下的图尽量多,不留成排的空白 */
   grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
   gap: 10px;
+}
+.trainer-hist-grid:has(.trainer-double-thumbs) {
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
 }
 /* 不套框也不铺底:一格就是一张图,层次交给间距。当前所在那条才上一层底色 —— 只有它需要
    被一眼认出来。 */
@@ -1543,3 +1558,5 @@
 .trainer-double-thumbs { display: flex; justify-content: center; gap: clamp(12px, 3vw, 24px); max-width: 100%; }
 .trainer-double-thumbs figure { display: grid; justify-items: center; gap: 8px; margin: 0; min-width: 0; }
 .trainer-double-thumbs figcaption { color: var(--muted-foreground); font-size: .75rem; white-space: nowrap; }
+.trainer-double-thumbs.is-compact { gap: 4px; flex-shrink: 0; max-width: none; }
+.trainer-double-thumbs.is-compact figure { flex: 0 0 auto; }

@@ -13,7 +13,8 @@ import TrainingStatsPanel, { TrainingSelfPractice } from '@/components/TrainingS
 import React, { useEffect, useReducer, useRef, useState } from 'react';
 import { Info, Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useQueryState, parseAsStringEnum } from 'nuqs';
+import { parseAsStringEnum } from 'nuqs';
+import { useTrainingQueryState as useQueryState } from '@/lib/training-host';
 import ReactMarkdown from 'react-markdown';
 
 import { reducer, getInitialState } from '@/lib/roux/reducers/Reducer';

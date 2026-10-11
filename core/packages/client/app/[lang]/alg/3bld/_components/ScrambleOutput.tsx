@@ -3,7 +3,7 @@
 // Numbered read-only list of generated scrambles + copy-all + stats line + busy spinner.
 
 import { useEffect, useRef, useState, type JSX } from 'react';
-import { usePathname } from 'next/navigation';
+import { useTrainingPathname as usePathname } from '@/lib/training-host';
 import TrainingStatsPanel, { TrainingSelfCheck } from '@/components/TrainingStatsPanel';
 import { useTrainingStats } from '@/hooks/useTrainingStats';
 import { Copy, Check } from 'lucide-react';

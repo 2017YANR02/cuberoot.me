@@ -10,7 +10,8 @@ import {
 } from 'react';
 import type { AlgSticker } from '@cuberoot/shared';
 import { Check, Copy } from 'lucide-react';
-import { parseAsString, useQueryState } from 'nuqs';
+import { parseAsString } from 'nuqs';
+import { useTrainingQueryState as useQueryState } from '@/lib/training-host';
 import AlgPlayer from '@/components/AlgPlayer';
 import AppLink from '@/components/AppLink';
 import { CaseThumb } from '@/components/CaseThumb';

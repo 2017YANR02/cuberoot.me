@@ -17,6 +17,8 @@ on:
       - '.node-version'
       - 'core/**'
       - '!core/packages/platform/**'
+      - 'solver/333opt/inject.mjs'
+      - 'solver/333opt/data_paths.mjs'
       - 'docs/platform-capability-manifest.json'
       - 'docs/platform-unification-plan.md'
       - 'sync_upstream.ts'
@@ -213,6 +215,8 @@ jobs:
               - 'core/packages/puzzle-solvers/**'
               - 'core/packages/client/tests/clock_solver.test.ts'
             scramble_stats:
+              - 'solver/333opt/inject.mjs'
+              - 'solver/333opt/data_paths.mjs'
               - '.node-version'
               - 'core/package.json'
               - 'core/pnpm-lock.yaml'
@@ -382,6 +386,7 @@ jobs:
             /.github/workflows/
             /.githooks/pre-commit
             /stats/all_past_comps.json
+            /stats/comp_calendar/
             /stats/all_upcoming_comps.json
             /stats/comp_names_zh.json
             # Validate every gendered country record against its generated manifest and world/continent feeds.
@@ -396,6 +401,11 @@ jobs:
             /stats/scramble/no_bar.json
             # scramble_exact_dist.test.ts 拿它当「WCA 那套菜单」的真源逐项比对(420KB)。
             /stats/scramble/distribution.json
+            /stats/scramble/examples.json
+            /stats/scramble/examples_wca_*.json
+            /stats/scramble/examples_stage/
+            /solver/333opt/inject.mjs
+            /solver/333opt/data_paths.mjs
           filter: blob:none
 
       - uses: pnpm/action-setup@v6
@@ -532,7 +542,7 @@ jobs:
       - name: Verify stage statistics aggregation and intake
         if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.scramble_stats == 'true' }}
         working-directory: core
-        run: pnpm --filter @cuberoot/scramble-stats-build exec vitest run tests/aggregate_variant.test.ts tests/incremental.test.ts tests/no_bar.test.ts tests/puzzle_examples.test.ts
+        run: pnpm --filter @cuberoot/scramble-stats-build exec vitest run tests/aggregate_variant.test.ts tests/incremental.test.ts tests/no_bar.test.ts tests/puzzle_examples.test.ts tests/scramble-example-shards.test.ts
 
       - name: Verify SQ2 sampled builder runtime
         if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.scramble_stats == 'true' }}
@@ -646,6 +656,7 @@ jobs:
             /.github/workflows/
             /.githooks/pre-commit
             /stats/all_past_comps.json
+            /stats/comp_calendar/
             /stats/all_upcoming_comps.json
             /stats/comp_names_zh.json
             /stats/records/history/gender/
@@ -656,6 +667,11 @@ jobs:
             /stats/scramble/puzzle_distribution.json
             /stats/scramble/recent_scrambles.json
             /stats/scramble/distribution.json
+            /stats/scramble/examples.json
+            /stats/scramble/examples_wca_*.json
+            /stats/scramble/examples_stage/
+            /solver/333opt/inject.mjs
+            /solver/333opt/data_paths.mjs
           filter: blob:none
 
       - uses: pnpm/action-setup@v6

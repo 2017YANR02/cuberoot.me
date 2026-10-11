@@ -1,6 +1,7 @@
 'use client';
 
 import { Flag } from '@/components/Flag';
+import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import { displayCuberName } from '@/lib/cuber-name-display';
 
 interface PersonLike {
@@ -19,7 +20,7 @@ export default function PersonCell({ person, isZh }: Props) {
   return (
     <span>
       <Flag iso2={person.countryIso2} className="nemesizer-flag-icon" />
-      {displayCuberName(person.name, isZh)}
+      {displayCuberName(person.name, isZh)}<WcaPersonTeamBadge wcaId={person.wcaId} />
     </span>
   );
 }

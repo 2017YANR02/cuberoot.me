@@ -38,7 +38,7 @@ html[data-contrast='soft'] .site-scenery img {
   left: 0;
   right: auto;
   display: grid;
-  grid-template-columns: max-content;
+  grid-template-columns: max-content max-content;
   align-items: start;
   column-gap: 12px;
   width: max-content;
@@ -58,13 +58,42 @@ html[data-contrast='soft'] .site-scenery img {
   display: contents;
 }
 
+.appearance-menu[data-backgrounds] .appearance-settings {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.appearance-color-options {
+  display: flex;
+  flex-direction: column;
+}
+
+.appearance-background-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.appearance-background-row .appearance-background-select {
+  width: fit-content;
+  padding: 3px 6px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: var(--popover);
+  color: var(--foreground);
+  font: inherit;
+  cursor: pointer;
+}
+
 .appearance-menu[data-backgrounds] .palette-menu-more {
   grid-column: 1;
   grid-row: 2;
   margin-top: 4px;
 }
 
-.appearance-menu[data-backgrounds] .site-background-grid {
+.appearance-menu[data-backgrounds] :is(.site-background-grid, .appearance-color-options) {
   grid-column: 2;
   grid-row: 1 / span 2;
 }
@@ -141,7 +170,7 @@ html[data-contrast='soft'] .site-scenery img {
     grid-column: 1 / -1;
   }
 
-  .appearance-menu[data-backgrounds] :is(.palette-menu-more, .site-background-grid) {
+  .appearance-menu[data-backgrounds] :is(.palette-menu-more, .site-background-grid, .appearance-color-options) {
     grid-column: 1;
     grid-row: auto;
   }

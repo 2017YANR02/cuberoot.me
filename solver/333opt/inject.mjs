@@ -78,6 +78,11 @@ dist.sets.wca.variants['333'] = {
   stages: ['333'],
   data: { '333': { ALL: { min, max, counts, counts_qtm: {}, example_bins: [] } } },
 };
+// Standalone injection must not keep a pointer to samples from the previous solve run.
+// The normal pipeline regenerates the small shards afterwards; standalone callers fall back
+// to the freshly injected full examples until build:example-shards runs.
+delete dist.meta?.example_shards?.wca?.['333'];
+delete dist.meta?.example_shards?.wca?.std?.['333'];
 writeFileSync(DIST, JSON.stringify(dist));
 
 // ---- 4. 每步数 bin 取 PER_BIN 个 id 当示例 ----

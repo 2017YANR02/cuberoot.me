@@ -8,6 +8,7 @@
   "type": "module",
   "scripts": {
     "incremental": "tsx src/incremental.ts",
+    "build:example-shards": "tsx src/build_example_shards.ts",
     "build": "tsx src/build.ts",
     "build:group-avg": "tsx src/build_group_avg.ts",
     "build:group-avg-examples": "tsx src/build_group_avg_examples.ts",

@@ -1,15 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { Pencil } from 'lucide-react';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
 import { useAuthUser } from '@/lib/auth-store';
-import { listWcaTeams, saveWcaTeam, type WcaTeamsResponse } from '@/lib/wca-teams-api';
-import { useModalBackdrop } from '@/hooks/useModalDismiss';
+import type { WcaTeamsResponse } from '@/lib/wca-teams-api';
+import { fetchWcaTeamDirectory, saveWcaPersonTeam } from '@/lib/wca-team-directory';
+import { WcaTeacherCell, type WcaTeacherDirectory } from '@/components/WcaTeacherCell';
+import { ListSelect } from '@/components/ListSelect';
+import { CubingBrandLabel } from '@/components/CubingBrandLabel';
 import { SearchInput } from '@/components/SearchInput';
 import { tr } from '@/i18n/tr';
 import '@/components/wca-teacher-cell.css';
+import './wca-team-cell.css';
 
 export function useWcaTeams(wcaIds: string[]) {
   const user = useAuthUser();
@@ -29,7 +31,7 @@ export function useWcaTeams(wcaIds: string[]) {
     }
     const ids = key.split(',');
     const requests = [];
-    for (let i = 0; i < ids.length; i += 100) requests.push(listWcaTeams(ids.slice(i, i + 100)));
+    for (let i = 0; i < ids.length; i += 100) requests.push(fetchWcaTeamDirectory(ids.slice(i, i + 100)));
     Promise.all(requests).then(groups => {
       if (cancelled) return;
       setData({ teams: groups[0].teams, assignments: groups.flatMap(group => group.assignments) });
@@ -44,7 +46,7 @@ export function useWcaTeams(wcaIds: string[]) {
     isAdmin: isAdminWcaId(user?.wcaId),
     retry: () => setRevision(value => value + 1),
     save: async (wcaId: string, name: string) => {
-      const { team } = await saveWcaTeam(wcaId, name);
+      const { team } = await saveWcaPersonTeam(wcaId, name);
       setData(current => ({
         teams: team && !current.teams.some(item => item.id === team.id) ? [...current.teams, team] : current.teams,
         assignments: [
@@ -56,48 +58,53 @@ export function useWcaTeams(wcaIds: string[]) {
   };
 }
 
-export function WcaTeamCell({ wcaId, directory }: { wcaId: string; directory: ReturnType<typeof useWcaTeams> }) {
-  const [editing, setEditing] = useState(false);
+export function WcaPersonRelationCells({ wcaId, eventIds, teacherDirectory, teamDirectory, isZh, visibleTeacherWcaId }: {
+  wcaId: string;
+  eventIds: readonly string[];
+  teacherDirectory: WcaTeacherDirectory;
+  teamDirectory: ReturnType<typeof useWcaTeams>;
+  isZh: boolean;
+  visibleTeacherWcaId?: string;
+}) {
   const [selected, setSelected] = useState('');
   const [custom, setCustom] = useState('');
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState(false);
-  const backdropProps = useModalBackdrop(() => setEditing(false), saving);
-  const teamId = directory.assignments.find(item => item.wcaId === wcaId)?.teamId;
-  const team = directory.teams.find(item => item.id === teamId);
-  const name = selected === 'custom' ? custom.trim() : directory.teams.find(item => String(item.id) === selected)?.name ?? '';
-  const title = tr({ zh: '编辑战队', en: 'Edit team' });
-  const save = async () => {
-    setSaving(true);
-    setError(false);
-    try {
-      await directory.save(wcaId, name);
-      setEditing(false);
-    } catch { setError(true); }
-    finally { setSaving(false); }
-  };
-  return <div className="wca-teacher-cell">
-    <span className="wca-teacher-value" title={directory.ready ? team?.name : undefined}>
-      {directory.failed ? <button type="button" className="wca-teacher-action" onClick={directory.retry}>{tr({ zh: '加载失败，重试', en: 'Load failed, retry' })}</button> : directory.ready ? team?.name ?? '—' : '…'}
-    </span>
-    {directory.isAdmin && directory.ready && <button type="button" className="wca-teacher-action wca-teacher-edit-action" aria-label={title} title={title} onClick={() => {
-      setSelected(team ? String(team.id) : ''); setCustom(''); setError(false); setEditing(true);
-    }}><Pencil size={14} aria-hidden="true" /></button>}
-    {editing && createPortal(<div className="wca-teacher-dialog-layer" {...backdropProps}>
-      <dialog open aria-modal="true" aria-labelledby={`team-title-${wcaId}`} className="wca-teacher-dialog" onKeyDown={event => { if (event.key === 'Escape' && !saving) setEditing(false); }}>
-        <h2 id={`team-title-${wcaId}`}>{title}</h2>
-        <select className="native-select" aria-label={tr({ zh: '战队', en: 'Team' })} value={selected} disabled={saving} onChange={event => setSelected(event.target.value)}>
-          <option value="">{tr({ zh: '未设置', en: 'Not set' })}</option>
-          {directory.teams.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
-          <option value="custom">{tr({ zh: '添加战队…', en: 'Add team…' })}</option>
-        </select>
-        {selected === 'custom' && <SearchInput value={custom} onChange={setCustom} maxLength={80} disabled={saving} autoFocus placeholder={tr({ zh: '战队名称', en: 'Team name' })} ariaLabel={tr({ zh: '战队名称', en: 'Team name' })} />}
-        {error && <p role="alert" className="wca-teacher-dialog-error">{tr({ zh: '保存失败，请重试', en: 'Save failed. Please try again.' })}</p>}
-        <div className="wca-teacher-dialog-actions">
-          <button type="button" className="wca-teacher-dialog-action" disabled={saving || (selected === 'custom' && !name)} onClick={() => void save()}>{saving ? tr({ zh: '保存中…', en: 'Saving…' }) : tr({ zh: '保存', en: 'Save' })}</button>
-          <button type="button" className="wca-teacher-dialog-action" disabled={saving} onClick={() => setEditing(false)}>{tr({ zh: '取消', en: 'Cancel' })}</button>
-        </div>
-      </dialog>
-    </div>, document.body)}
-  </div>;
+  const [teamChanged, setTeamChanged] = useState(false);
+  const teamId = teamDirectory.assignments.find(item => item.wcaId === wcaId)?.teamId;
+  const team = teamDirectory.teams.find(item => item.id === teamId);
+  const selectedValue = teamChanged ? selected : team ? String(team.id) : '';
+  const name = selectedValue === 'custom' ? custom.trim() : teamDirectory.teams.find(item => String(item.id) === selectedValue)?.name ?? '';
+  return <>
+    <td><WcaTeacherCell studentWcaId={wcaId} eventIds={eventIds} directory={teacherDirectory} isZh={isZh} visibleTeacherWcaId={visibleTeacherWcaId}
+      additionalEditor={teamDirectory.isAdmin ? {
+        title: tr({ zh: '编辑老师、培训机构和战队', en: 'Edit teacher, institution and team' }),
+        onOpen: () => { setSelected(team ? String(team.id) : ''); setCustom(''); setTeamChanged(false); },
+        canSave: teamDirectory.ready && (selectedValue !== 'custom' || !!name),
+        save: async () => { if (teamChanged && name !== (team?.name ?? '')) await teamDirectory.save(wcaId, name); },
+        render: saving => <div className="wca-teacher-mode-picker">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span>{tr({ zh: '战队', en: 'Team' })}</span>
+            <ListSelect
+              className="wca-team-select"
+              ariaLabel={tr({ zh: '战队', en: 'Team' })}
+              allLabel={tr({ zh: '未设置', en: 'Not set' })}
+              clearable={false}
+              value={selectedValue}
+              disabled={saving || !teamDirectory.ready}
+              onChange={value => { setSelected(value); setTeamChanged(true); }}
+              items={[
+                { value: '', label: tr({ zh: '未设置', en: 'Not set' }) },
+                ...teamDirectory.teams.map(item => ({ value: String(item.id), label: item.name, icon: <CubingBrandLabel name={item.name} logoOnly /> })),
+                { value: 'custom', label: tr({ zh: '添加战队…', en: 'Add team…' }) },
+              ]}
+            />
+          </div>
+          {selectedValue === 'custom' && <SearchInput value={custom} onChange={setCustom} maxLength={80} disabled={saving} autoFocus placeholder={tr({ zh: '战队名称', en: 'Team name' })} ariaLabel={tr({ zh: '战队名称', en: 'Team name' })} />}
+          {teamDirectory.failed && <button type="button" className="wca-teacher-action" onClick={teamDirectory.retry}>{tr({ zh: '加载失败，重试', en: 'Load failed, retry' })}</button>}
+        </div>,
+      } : undefined}
+    /></td>
+    <td><div className="wca-teacher-cell"><span className="wca-teacher-value" title={teamDirectory.ready ? team?.name : undefined}>
+      {teamDirectory.failed ? <button type="button" className="wca-teacher-action" onClick={teamDirectory.retry}>{tr({ zh: '加载失败，重试', en: 'Load failed, retry' })}</button> : teamDirectory.ready ? team ? <CubingBrandLabel name={team.name} logoOnly fallbackToName /> : '—' : '…'}
+    </span></div></td>
+  </>;
 }

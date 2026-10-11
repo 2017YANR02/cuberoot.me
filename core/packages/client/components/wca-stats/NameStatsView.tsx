@@ -1,4 +1,5 @@
 'use client';
+import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import '@cuberoot/timer-ui/compact-select.css';
 
 // name_stats 专属可视化:词数 / 字符长度 双 tab。
@@ -32,7 +33,7 @@ function PersonLink({ p, mode }: { p: PersonItem; mode: NameMode }) {
     <span className="ns-person-wrap">
       <Link className="ns-person" href={`/wca/persons/${p.id}`} prefetch={false}>
         {iso2 && <Flag iso2={iso2} spanClassName="country-flag" imgClassName="country-flag-ct" />}
-        {nameByMode(p.n, mode)}
+        {nameByMode(p.n, mode)}<WcaPersonTeamBadge wcaId={p.id} />
       </Link>
       {/* 含曾用名:现名后跟弱化的曾用名标签,拆开避免一串连读 */}
       {mode === 'aka' && <FormerNames former={p.former} />}

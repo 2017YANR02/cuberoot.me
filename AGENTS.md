@@ -70,15 +70,13 @@ WXML 表达式直接写 `&&` / `||`，禁 HTML 实体；改 WXML 后必须通过
 
 ## 部署
 
-人工改动遵循 [PR 提交与合并规范](CONTRIBUTING.md)：必须通过 PR 和 `PR checks`，作者自查后可自行合并，不要求其他成员审批。现有 GitHub Actions 自动数据/备份更新通过专用 Deploy Key 保留直推例外；不得借自动任务代发人工代码。main 禁删与禁强推规则独立保留。
-
-> **用户长期执行授权（2026-10-09 明确要求“永久授权”“不限范围”）**：对用户明确交办的任务，AI 默认自主完成达到目标所需的工作，不额外加上“仅本仓库”或“仅常规开发”的授权范围限制。本仓库开发任务包括修改、必要验证、建分支、提交、推送、创建及修订 PR，在满足适用检查和分支保护要求后合并，并完成实际部署与验收。此授权跨会话持续有效，直到用户撤销或修改；已获授权的步骤无需逐次确认。
+> **维护者政策（2026-10-10）**：默认只改本地，不自动提交或推送。用户要求发布时，维护者 `2017YANR02` 及使用其已授权账号的 AI 可通过 GitHub 已配置的豁免直接 commit → push main，无需 PR；其他贡献者走 PR。保留必要验证、CI、部署验收及禁止强推、禁止删除主分支的保护，不夹带他人改动。当次指令优先。
 
 - 当次明确指令优先：用户说“仅本地/不 push”“只建 PR/先别合并”“不要部署”等时按当次范围执行；仅要求分析或评审的任务不自动变成修改与发布任务。
 - 发布授权以本节和当次任务为准；Skill 中的常规 push/上传/workflow 提示不另设重复确认关卡。沿用平台和工具实际提供的权限与交互要求；本授权不授予新账号访问权，也不替代必须由用户完成的安全交接。
-- 充分使用用户已经授予且实际可用的权限，按当前生效的系统、平台和工具要求执行。具体动作确实要求当次确认、用户亲自操作，或缺少无法从任务确定的必要信息时，说明具体原因和所需的一步；不能用长期授权跳过这些要求或绕过分支保护与适用检查。
+- 充分使用用户已经授予且实际可用的权限；维护者直推使用已配置的豁免，不擅自扩大权限。需要用户亲自操作或缺少必要信息时，说明具体原因和所需的一步。
 - 推送、合并会按当前 workflow 和 Vercel 路径规则触发构建与部署；先核对实际范围，完成后据实报告。纯文档等未触发应用构建的变更不要求手动制造部署。
-- 云工作区的终端 `git push` 缺凭据时，先核对已授权 GitHub 连接器的实际写入能力；可用则按同一发布授权继续完成提交、PR 与合并。流程见 [GitHub 提交通道](docs/troubleshooting.md#github-提交通道)。新会话重新核对能力，分别报告终端认证、远端提交和正式部署状态。
+- 云工作区的终端 `git push` 缺凭据时，先核对已授权 GitHub 连接器的实际写入能力；可用则按维护者直推政策或用户指定的 PR 流程继续。流程见 [GitHub 提交通道](docs/troubleshooting.md#github-提交通道)。新会话重新核对能力，分别报告终端认证、远端提交和正式部署状态。
 - 主域 DNS 分线路:一路自有服务器 nginx→127.0.0.1:3002(systemd `cuberoot-next`;vhost `ops/nginx/`,改 nginx 走 `deploy_nginx.yml`);一路 Vercel(push 自动 build)。
 - `static.cuberoot.me`:服 `{tools,stats}/`,CORS:*。`next.cuberoot.me`:staging 别名,同 :3002。
 - Next standalone:`deploy_next.yml`(push client/shared/visualcube 触发)CI build→scp→原子换+健康检查+失败回滚;unit `ops/systemd/cuberoot-next.service`。
@@ -112,6 +110,7 @@ WXML 表达式直接写 `&&` / `||`，禁 HTML 实体；改 WXML 后必须通过
 改 `core/packages/shared/src/**` 后完成前必须在 `core/` 运行 `pnpm --filter @cuberoot/shared build` 刷新 `dist`;“不用检查”只跳过测试/校验,不跳过该构建。
 
 - shell 路径相对 `core/` 写(`packages/...`),禁加 `core/` 前缀(会变 `core/core/`)。含 `[lang]` 等方括号的路径一律单引号,必要时 `git add ':(literal)packages/.../[lang]/x.tsx'`。
+- **工作树默认策略（维护者要求，2026-10-10）**：默认在当前工作目录直接开发和验证，不主动创建或切换到 Git worktree。存在其他任务的未提交修改本身不构成使用 worktree 的理由，应限定改动范围并保留他人修改。仅在用户明确要求，或确有无法在当前目录安全完成的隔离需求时使用；后者须先说明具体原因。使用时保持一个任务只有一份实际编辑来源，确保验证与提交来自同一份目录，不在主目录和工作树之间手工维护两份相同改动。
 - 临时验证目录 / worktree 禁用 Junction / SymbolicLink 复用正式 `node_modules` 或 `packages`;各自运行 `pnpm install --offline --frozen-lockfile`。
 
 ```bash
@@ -142,6 +141,7 @@ pnpm --filter @cuberoot/client lint
 - 一旦出现新增 swap-out、内存压力异常、触及任务自身 RSS 上限，或保守可用内存余量低于 **2 GiB**，停止本任务计算，保留完整结果与断点并报告。更严格的已有任务门槛继续有效，不因这条规则降低。
 - 交换保护触发后不得通过重设基线自动重启；先查清资源变化并重新核对安全条件。同一系统启动期间，续算应核对上次保护记录，不能把已增长的计数当成没有发生过。
 - 已有运行时资源监控继续作为额外停止保护，不能替代系统级防换出机制。
+- 启动拦截由 `.codex/hooks/block-unprotected-memory-compute.mts` 接入 `Bash` PreToolUse，覆盖已登记的双底 ZBLL、H48 求解/建表、部分大表分析器及打乱统计入口；当前没有通过核验的系统级防交换启动器，这些计算入口默认拒绝，`NO_SWAP=1` 不能豁免。统计只读 `--plan` 和普通开发命令不受影响。新增大内存入口须同步守卫及回归用例；hook 不解析任意别名或生成脚本，也不控制手动终端、已运行进程或操作系统，不能把安装 hook 当成系统已经禁用 swap。修改 hook 定义后须在新会话信任配置并验证实际拦截。
 - 不把项目约束自动扩大为整台电脑的系统设置修改；不擅自关闭 macOS 的交换机制、修改系统服务或禁用系统保护。
 
 ## 测试
@@ -223,6 +223,8 @@ pnpm --filter @cuberoot/client lint
 写任何 CSS 色值前调 `theme-tokens` skill(token 表 + dark-locked 页清单 + color-mix 规则);禁 `#888 #aaa` 等硬码灰阶。
 
 透明背景材质只在 `glass-material.css` 定义，旧样式由 `site-surfaces.css` 适配；新表面复用 `data-site-surface="panel|popover|heading"`，禁页面另造透明度/blur，保留状态色和无障碍回退，详 `theme-tokens` skill。
+
+- 按钮/链接的短悬停提示统一使用 `components/Tooltip`（`<Tooltip content={tr({zh,en})}>{(tip) => <button {...tip}>…</button>}</Tooltip>`），禁止另写页面级提示气泡或用 native `title` 代替需要设计样式的提示。触发属性放在实际按钮上；已有同名事件须组合调用。写入 Hook 和 CI 共用材质扫描器拦截 `content: attr(data-tooltip/data-tip/title)` 伪元素气泡（不覆盖任意 JSX 或动态样式）；组件负责 hover/focus、Escape、可移入提示、Portal 和视口钳制，页面不再定义 blur/透明度。可交互内容不放 Tooltip，点击展开的说明继续用 InfoTooltip。Portal 继承全站主题；局部配色预览须单独核验。
 
 ## i18n(繁体已移除)
 

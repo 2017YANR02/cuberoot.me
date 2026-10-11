@@ -9,6 +9,45 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const PAGE = 'app/[lang]/example/example.css';
 
 describe('site materials have one definition and shared scenery tokens', () => {
+  it.each([
+    '.calendar-page .toolbar',
+    'body[data-site-scenery] .calendar-page :is(.calendar, .toolbar)',
+    ':where(.sor-race-bar, .shell-topbar):hover',
+    '.viz-page .toolbar:has(.wca-pp-results)',
+    '.space-top-tools > *',
+    '.space-top-tools > .space-row',
+  ])('rejects a backdrop root on the menu host %s', selector => {
+    for (const property of ['backdrop-filter', '-webkit-backdrop-filter']) {
+      const hits = scanSiteMaterial(`${selector} { ${property}: var(--glass-filter); }`, 'components/site-surfaces.css');
+      expect(hits).toEqual([expect.objectContaining({ reason: 'menu-backdrop-root' })]);
+    }
+  });
+
+  it('allows sibling glass, menu glass, unrelated selectors and host resets', () => {
+    expect(scanSiteMaterial(`
+      .toolbar::before, .space-top-tools > *::before { backdrop-filter: var(--glass-filter); }
+      .toolbar .region-picker-popup { backdrop-filter: var(--glass-filter); }
+      .toolbar:has(.menu) { backdrop-filter: none !important; }
+      .toolbar-button { backdrop-filter: var(--glass-filter); }
+      .panel:not(.toolbar) { backdrop-filter: var(--glass-filter); }
+    `, PAGE)).toEqual([]);
+  });
+
+  it('reconstructs a property-only edit from the original adapted patch', () => {
+    const before = '.calendar-page .toolbar {\n  backdrop-filter: none;\n}';
+    const patch = `*** Begin Patch\n*** Update File: core/packages/client/${PAGE}\n@@\n-  backdrop-filter: none;\n+  backdrop-filter: var(--glass-filter);\n*** End Patch`;
+    expect(violationsFromHookPayload({
+      original_tool_input: { command: patch },
+      tool_input: { file_path: PAGE, content: '  backdrop-filter: var(--glass-filter);' },
+    }, () => before)).toEqual([expect.objectContaining({ reason: 'menu-backdrop-root' })]);
+  });
+
+  it('does not block unrelated edits for a pre-existing violation', () => {
+    const before = '.toolbar { backdrop-filter: var(--glass-filter); }';
+    expect(violationsFromHookPayload({ tool_input: { file_path: `core/packages/client/${PAGE}`, content: `${before}\n.other { display: flex; }` } }, () => before)).toEqual([]);
+    expect(violationsFromHookPayload({})).toEqual([]);
+  });
+
   it('keeps layered simulator and OTP inputs transparent', () => {
     const css = readFileSync(join(ROOT, 'components/site-surfaces.css'), 'utf8');
     const transparentCompositeRule = css.match(
@@ -74,6 +113,27 @@ describe('site materials have one definition and shared scenery tokens', () => {
     expect(violationsFromHookPayload({ tool_input: { file_path: `D:\\cube\\cuberoot.me\\core\\packages\\client\\${PAGE}`, edits: [{ new_string: content }] } })).toHaveLength(1);
     expect(scanSiteMaterial(content, 'tests/fixture.css')).toEqual([]);
     expect(scanSiteMaterial('backdrop-filter: blur(20px);', PAGE)).toEqual([]); // Fragment lacks selector; CI checks the full file.
+  });
+
+  it.each(['data-tooltip', 'data-tip', 'title'])('rejects duplicate hover labels from %s in both CI and proposed writes', attribute => {
+    const css = `.button::after { content: attr(${attribute}); }`;
+    expect(scanSiteMaterial(css, PAGE)).toEqual([expect.objectContaining({ reason: 'tooltip-reimplementation' })]);
+    const patch = `*** Begin Patch\n*** Add File: core/packages/client/${PAGE}\n+${css}\n*** End Patch`;
+    expect(violationsFromHookPayload({ tool_input: { command: patch } }, () => '')).toEqual(scanSiteMaterial(css, PAGE));
+  });
+
+  it('allows unrelated generated labels and explicit material exceptions', () => {
+    expect(scanSiteMaterial('.cell::before { content: attr(data-label); }', PAGE)).toEqual([]);
+    expect(scanSiteMaterial('.input::before { content: attr(data-placeholder); }', PAGE)).toEqual([]);
+    expect(scanSiteMaterial('.sample::after { content: attr(title); /* allow-site-material: educational CSS example */ }', PAGE)).toEqual([]);
+  });
+
+  it('reconstructs tooltip declaration edits without blocking unrelated legacy edits', () => {
+    const before = '.button::after {\n  content: none;\n}';
+    const patch = `*** Begin Patch\n*** Update File: core/packages/client/${PAGE}\n@@\n-  content: none;\n+  content: attr(data-tooltip);\n*** End Patch`;
+    expect(violationsFromHookPayload({ original_tool_input: { command: patch } }, () => before)).toEqual([expect.objectContaining({ reason: 'tooltip-reimplementation' })]);
+    const legacy = '.button::after { content: attr(data-tip); }';
+    expect(violationsFromHookPayload({ tool_input: { file_path: `core/packages/client/${PAGE}`, content: legacy + '\n.other { display: flex; }' } }, () => legacy)).toEqual([]);
   });
 
   it('finds no unreviewed material overrides across all client CSS', () => {

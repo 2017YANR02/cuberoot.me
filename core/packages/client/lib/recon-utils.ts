@@ -1,4 +1,4 @@
-export { formatRecord, getRecordClass } from '@cuberoot/shared/timer';
+export { formatRecord, getRecordClass } from '@cuberoot/shared/timer/record-badge';
 // Port from packages/client-vite/src/utils/recon_utils.ts.
 import { ISO2_TO_CONTINENT } from './continent';
 import { wcaToReconEvent } from './wca-events';

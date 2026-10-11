@@ -5,13 +5,14 @@ import { useParams } from 'next/navigation';
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
 import { getTeachingOrganizationSummary, type TeachingOrganizationSummary } from '@/lib/teaching-saas-api';
+import EnterpriseVerification from '../_components/EnterpriseVerification';
 import OrgWorkspace from '../_components/OrgWorkspace';
 import { MutationMessage, teachingErrorMessage } from '../_components/OrgUi';
 
 export default function OrganizationOverviewPage() {
   const params = useParams<{ orgSlug: string }>();
   const orgSlug = params.orgSlug;
-  return <OrgWorkspace orgSlug={orgSlug}>{() => <OrganizationOverviewContent orgSlug={orgSlug} />}</OrgWorkspace>;
+  return <OrgWorkspace orgSlug={orgSlug}>{organization => <><OrganizationOverviewContent orgSlug={orgSlug} />{['owner', 'admin'].includes(organization.role) && <EnterpriseVerification orgSlug={orgSlug} name={organization.name} />}</>}</OrgWorkspace>;
 }
 
 function OrganizationOverviewContent({ orgSlug }: { orgSlug: string }) {

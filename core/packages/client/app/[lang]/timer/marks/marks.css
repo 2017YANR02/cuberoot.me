@@ -26,6 +26,7 @@
 
 .scrmarks-search {
   position: relative;
+  isolation: isolate;
   display: flex;
   align-items: center;
   margin-bottom: 12px;
@@ -33,6 +34,8 @@
 }
 .scrmarks-search-icon {
   position: absolute;
+  /* Paint above the input's glass backdrop, within this search field. */
+  z-index: 1;
   left: 10px;
   color: var(--faint-foreground);
   pointer-events: none;

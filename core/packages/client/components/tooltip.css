@@ -1,0 +1,16 @@
+/* Portal to body avoids clipping and ancestor backdrop roots; Tooltip clamps both axes. */
+.site-tooltip {
+  position: fixed;
+  z-index: 10000;
+  max-width: calc(100vw - 16px);
+  box-sizing: border-box;
+  padding: 7px 12px;
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  color: var(--popover-foreground);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  pointer-events: auto;
+}

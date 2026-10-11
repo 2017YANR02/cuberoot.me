@@ -1,1 +1,15 @@
 @import '../../../components/teaching/teaching.css';
+
+/* Enterprise materials and long authorization labels must fit narrow screens. */
+.enterprise-verification > * + * { margin-top: 16px; }
+.enterprise-verification .bool-toggle { width: 100%; }
+.enterprise-verification .bool-toggle-label { white-space: normal; text-align: left; min-width: 0; }
+.enterprise-verification .bool-toggle > :last-child { flex-shrink: 0; }
+.enterprise-verification dl { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 12px; }
+.enterprise-verification dt { font-weight: 600; }
+.enterprise-verification dd { margin: 0; overflow-wrap: anywhere; }
+.enterprise-verification select.org-form-control { width: fit-content; max-width: 100%; }
+@media (max-width: 600px) {
+  .enterprise-verification dl { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .enterprise-verification dd { margin-bottom: 8px; }
+}

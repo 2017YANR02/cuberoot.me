@@ -1,0 +1,10 @@
+.wca-person-team-badge {
+  display: inline-flex;
+  vertical-align: middle;
+  align-items: center;
+  margin-inline-start: 0.35em;
+  font-size: 0.8em;
+  font-weight: normal;
+  line-height: 1;
+  text-decoration: none;
+}

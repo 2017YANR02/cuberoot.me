@@ -15,6 +15,15 @@ export interface PairedGuard {
 
 export const PAIRED_GUARDS: PairedGuard[] = [
   {
+    id: 'unprotected-memory-compute',
+    scope: 'project',
+    hook: 'block-unprotected-memory-compute.mts',
+    test: 'codex_hook_adapters.test.ts',
+    baseline: '0',
+    zh: { title: '大内存计算防交换启动检查', desc: '拦截尚无系统级防交换保护的已登记计算入口，包括双底 ZBLL、H48 求解与建表、大表分析器和打乱统计。环境变量与轮询监控不构成豁免；统计只读计划和普通开发命令可用。CI 验证命令分类与注册，不能证明系统禁用了 swap。新会话须信任 hook 定义；不覆盖手动终端、已运行进程或任意间接脚本。' },
+    en: { title: 'No-swap startup check for large computations', desc: 'Blocks registered double ZBLL, H48 solving and table generation, large-table analyzers and scramble statistics without verified OS-enforced swap protection. Environment flags and polling are not exemptions. Read-only plans and ordinary development remain available. CI checks classification and registration, not OS swap enforcement. Trust the hook definition in a new session; manual terminals, existing processes and arbitrary indirect scripts are outside its coverage.' },
+  },
+  {
     id: 'puzzle-menu-label',
     scope: 'project',
     hook: 'block-puzzle-menu-label.mts',
@@ -47,8 +56,8 @@ export const PAIRED_GUARDS: PairedGuard[] = [
     hook: 'hook-detect-site-material.mjs',
     test: 'site-material-guard.test.ts',
     baseline: '0',
-    zh: { title: '背景材质统一复用', desc: '玻璃材质参数只在 glass-material.css 定义；场景下的中性色背景和模糊复用共享 token，公共适配放 site-surfaces.css。保留首页无障碍回退和主动开启的诊断参数；独立语义须在声明同一行写 allow-site-material 及理由。Hook 检查完整新增 CSS 规则，CI 用同一扫描器检查全部 CSS；零碎编辑由 CI 兜底。' },
-    en: { title: 'Shared background materials', desc: 'Define glass material parameters only in glass-material.css; scenery fills and blur consume shared tokens, with common adapters in site-surfaces.css. Preserve homepage accessibility fallbacks and opt-in diagnostics; intentional exceptions require an inline allow-site-material reason. The hook checks complete added CSS rules and CI uses the same scanner over all CSS, including partial edits.' },
+    zh: { title: '背景材质统一复用', desc: '玻璃材质参数只在 glass-material.css 定义；公共适配放 site-surfaces.css。承载菜单的工具栏禁止直接加 backdrop-filter，玻璃放在独立伪元素层，避免截断菜单背景。Hook 重建修改后的 CSS，CI 用同一扫描器检查全部 CSS；audit-glass-menus.mts 验证真实展开菜单。Hook 与 CI 同源禁止用 content: attr(data-tooltip/data-tip/title) 重造短提示，统一使用 Tooltip。静态规则覆盖已登记的工具栏，动态或新增容器仍须浏览器复核。独立语义须同一行注明 allow-site-material 及理由。' },
+    en: { title: 'Shared background materials', desc: 'Define glass parameters only in glass-material.css and common adapters in site-surfaces.css. Menu-hosting toolbars must paint glass on a separate pseudo-element, since filtering the host cuts off menu backdrops. The hook reconstructs proposed CSS and CI scans all CSS with the same rules; audit-glass-menus.mts checks opened menus in a browser. The hook and CI share the rule rejecting CSS content: attr(data-tooltip/data-tip/title) hover labels in favor of Tooltip. Static rules cover registered toolbars; dynamic or new hosts still require browser review. Intentional exceptions need an inline allow-site-material reason.' },
   },
   {
     id: 'modal-dismiss',

@@ -38,6 +38,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
   { key: 'nemesizer', zh: '宿敌分析', en: 'Nemesizer' },
   { key: 'live', zh: '实时成绩', en: 'Live results' },
   { key: 'alg', zh: '公式库与训练', en: 'Algs & training' },
+  { key: 'enterprise-verification', zh: '企业认证', en: 'Enterprise verification' },
   { key: 'teaching-saas', zh: '教学机构', en: 'Teaching organizations' },
   { key: 'platform', zh: 'Platform 课程与交易', en: 'Platform learning & commerce' },
   { key: 'membership', zh: '会员', en: 'Membership' },
@@ -69,11 +70,25 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   chat comp_follows creator_gallery cube cubeopt_solve cubing_live documents drive feedback forum friends geo health historical_ranks pb private_vault
 //   membership membership_benefits membership_apple membership_google membership_subscriptions music nav_sites pets nemesizer notifications ops page_notices paint pattern_examples platform_catalog platform_commerce platform_content platform_learning platform_qr progress quiz recon recon_ground_truth scramble_555 teacher_directory teaching teaching_saas
 //   scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
-//   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wca_teams wechat_jssdk wechat_pc_opensdk wiki
+//   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wca_teams wca_training_institutions wechat_jssdk wechat_pc_opensdk wiki
 //   platform_competitions platform_competition_attempts platform_competition_evidence platform_competition_settlements platform_competition_device_reports platform_organizer_applications platform_refunds
+//   enterprise_verification
 //   mcp mcp_oauth onboarding timer_replay_shares site_assistant cube_agents
 // ─ covers-routes-end ─
 const ENDPOINTS: Ep[] = [
+  { d: 'enterprise-verification', m: 'POST', p: '/v1/enterprise-verification/admin/applications/:id/receipt', g: 'admin', c: 'no-store', zh: '登记实际银行到账，包含异常或过期来款，不授予认证', en: 'Record actual bank receipts, including mismatches and late transfers, without granting certification' },
+  { d: 'enterprise-verification', m: 'GET', p: '/v1/enterprise-verification/organizations/:slug', g: 'login', c: 'no-store', zh: '读取企业认证状态', en: 'Read enterprise verification' },
+  { d: 'enterprise-verification', m: 'POST', p: '/v1/enterprise-verification/organizations/:slug', g: 'login', c: 'no-store', zh: '申请对公账户认证', en: 'Apply for corporate account verification' },
+  { d: 'enterprise-verification', m: 'POST', p: '/v1/enterprise-verification/organizations/:slug/:id/submit', g: 'login', c: 'no-store', zh: '申报已打款', en: 'Declare transfer sent' },
+  { d: 'enterprise-verification', m: 'GET', p: '/v1/enterprise-verification/admin/settings', g: 'admin', c: 'no-store', zh: '读取收款设置', en: 'Read recipient settings' },
+  { d: 'enterprise-verification', m: 'PUT', p: '/v1/enterprise-verification/admin/settings', g: 'admin', c: 'no-store', zh: '设置对公收款账户', en: 'Configure recipient account' },
+  { d: 'enterprise-verification', m: 'GET', p: '/v1/enterprise-verification/admin/applications', g: 'admin', c: 'no-store', zh: '认证审核列表', en: 'List verification applications' },
+  { d: 'enterprise-verification', m: 'GET', p: '/v1/enterprise-verification/admin/applications/:id', g: 'admin', c: 'no-store', zh: '审阅私密材料并记录访问', en: 'Read private materials with access audit' },
+  { d: 'enterprise-verification', m: 'POST', p: '/v1/enterprise-verification/admin/applications/:id/review', g: 'admin', c: 'no-store', zh: '核对工商资料及银行流水', en: 'Review registry and bank evidence' },
+  { d: 'enterprise-verification', m: 'POST', p: '/v1/enterprise-verification/admin/applications/:id/refund', g: 'admin', c: 'no-store', zh: '登记实际完成的原路退款', en: 'Record completed bank refund' },
+  { d: 'enterprise-verification', m: 'POST', p: '/v1/enterprise-verification/admin/applications/:id/revoke', g: 'admin', c: 'no-store', zh: '撤销认证', en: 'Revoke enterprise verification' },
+  { d: 'wca-data', m: 'GET', p: '/v1/wca/training-institutions', g: 'public', c: 'no-store', zh: '公开培训机构目录及学生机构归属，支持未参赛学生', en: 'Public training institutions and WCA/named student affiliations' },
+  { d: 'wca-data', m: 'PUT', p: '/v1/wca/training-institutions/:studentKey', g: 'admin', zh: '管理员独立设置或清除学生培训机构，不修改老师或战队', en: 'Admin sets or clears an institution independently of teacher and team' },
   { d: 'wca-data', m: 'GET', p: '/v1/wca/teams', g: 'public', c: 'no-store', zh: '战队目录及选手战队批量查询', en: 'Team directory and batch cuber assignments' },
   { d: 'wca-data', m: 'PUT', p: '/v1/wca/teams/:wcaId', g: 'admin', zh: '管理员选择、自定义或清除选手战队', en: 'Admin assigns, creates, or clears a cuber team' },
   { m: 'GET', p: '/v1/auth/onboarding', d: 'auth', g: 'login', c: 'no-store', zh: '读取当前账号的首页导览已看标记；不缓存', en: 'Read the signed-in account’s homepage tour status; no cache' },
@@ -899,6 +914,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'content', m: 'GET', p: '/v1/article/:slug', g: 'public', c: 'no-store', zh: '单篇文章', en: 'Single article' },
   { d: 'content', m: 'GET', p: '/v1/article/me', g: 'login', zh: '我的文章', en: 'My articles' },
   { d: 'content', m: 'GET', p: '/v1/article/img/:id', g: 'public', zh: '文章配图', en: 'Article image' },
+  { d: 'content', m: 'GET', p: '/v1/article/img/:id/thumb/:width', g: 'public', zh: '图库缩略图（512/1024，v=1），暂时失败返回原图', en: 'Gallery thumbnail (512/1024, v=1), with original fallback' },
   { d: 'content', m: 'POST', p: '/v1/article/img', g: 'login', zh: '上传配图', en: 'Upload image' },
   { d: 'content', m: 'POST', p: '/v1/article', g: 'login', zh: '发表文章', en: 'Publish article' },
   { d: 'content', m: 'PATCH', p: '/v1/article/:slug', g: 'login', zh: '编辑文章', en: 'Edit article' },

@@ -331,9 +331,6 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   cursor: pointer;
 }
 
-.scramble-strip .scramble-move[data-hint='done'] { color: var(--faint-foreground); }
-.scramble-strip .scramble-move[data-hint='pending'] { color: var(--scramble-fg); }
-.scramble-strip .scramble-move[data-hint='current'] { color: var(--accent); }
 
 .scramble-verify {
   flex: none;
@@ -370,7 +367,6 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   cursor: default;
 }
 
-.scramble-copied-tail { position: relative; white-space: nowrap; }
 .scramble-copied-check {
   position: absolute;
   left: 100%;

@@ -161,6 +161,8 @@
       "./timer/reconstruct/orient": "runtime-neutral",
       "./timer/reconstruct/solve-metrics": "runtime-neutral",
       "./timer/reconstruct/state": "runtime-neutral",
+      "./timer/record-badge": "runtime-neutral",
+      "./timer/metronome-settings": "runtime-neutral",
       "./timer/by-steps": "runtime-neutral",
       "./timer/scramble-variants": "runtime-neutral",
       "./timer/worker-rpc": "runtime-neutral",
@@ -206,128 +208,447 @@
       "./pinned-countries": "runtime-neutral",
       "./country-search": "runtime-neutral",
       "./timer/rank-client": "runtime-neutral",
-      "./double-zbll": "runtime-neutral"
+      "./double-zbll": "runtime-neutral",
+      "./competition-calendar": "runtime-neutral"
     }
   },
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
-    "./double-zbll": { "node": "./dist/double_zbll.js", "default": "./src/double_zbll.ts" },
-    "./bld/read-engine": { "types": "./src/bld/read-engine.ts", "node": "./dist/bld/read-engine.js", "default": "./src/bld/read-engine.ts" },
-    "./bld/lettering": { "types": "./src/bld/lettering.ts", "node": "./dist/bld/lettering.js", "default": "./src/bld/lettering.ts" },
-    "./bld/facelet-model": { "types": "./src/bld/facelet-model.ts", "node": "./dist/bld/facelet-model.js", "default": "./src/bld/facelet-model.ts" },
-    "./bld/types": { "types": "./src/bld/types.ts", "node": "./dist/bld/types.js", "default": "./src/bld/types.ts" },
-    "./timer/random-scramble-pool": { "node": "./dist/timer/random-scramble-pool.js", "default": "./src/timer/random-scramble-pool.ts" },
-    "./sq1-metrics": { "types": "./src/sq1-metrics.ts", "node": "./dist/sq1-metrics.js", "default": "./src/sq1-metrics.ts" },
-    "./video-camera": {"types":"./src/video-camera.ts","node":"./dist/video-camera.js","default":"./src/video-camera.ts"},
-    "./video": {"types":"./src/video.ts","node":"./dist/video.js","default":"./src/video.ts"},
-    "./timer/seeded/generate": {"types":"./src/timer/seeded/generate.ts","node":"./dist/timer/seeded/generate.js","default":"./src/timer/seeded/generate.ts"},
-    "./timer/sync-seed": {"types":"./src/timer/sync-seed.ts","node":"./dist/timer/sync-seed.js","default":"./src/timer/sync-seed.ts"},
-    "./timer/seeded/nxnxn": {"types":"./src/timer/seeded/nxnxn.ts","node":"./dist/timer/seeded/nxnxn.js","default":"./src/timer/seeded/nxnxn.ts"},
-    "./timer/seeded/bld": {"types":"./src/timer/seeded/bld.ts","node":"./dist/timer/seeded/bld.js","default":"./src/timer/seeded/bld.ts"},
-    "./timer/seeded/others": {"types":"./src/timer/seeded/others.ts","node":"./dist/timer/seeded/others.js","default":"./src/timer/seeded/others.ts"},
-    "./timer/seeded/sq1_rs": {"types":"./src/timer/seeded/sq1_rs.ts","node":"./dist/timer/seeded/sq1_rs.js","default":"./src/timer/seeded/sq1_rs.ts"},
-    "./timer/seeded/scramble_444_rs": {"types":"./src/timer/seeded/scramble_444_rs.ts","node":"./dist/timer/seeded/scramble_444_rs.js","default":"./src/timer/seeded/scramble_444_rs.ts"},
-    "./timer/seeded/seeded_rng": {"types":"./src/timer/seeded/seeded_rng.ts","node":"./dist/timer/seeded/seeded_rng.js","default":"./src/timer/seeded/seeded_rng.ts"},
-    "./meeting": { "node": "./dist/meeting.js", "default": "./src/meeting.ts" },
-    "./chat": { "node": "./dist/chat/index.js", "default": "./src/chat/index.ts" },
-    "./friends": { "node": "./dist/friends.js", "default": "./src/friends.ts" },
-    "./competition-access": { "node": "./dist/competition-access.js", "default": "./src/competition-access.ts" },
-    "./dev-preview": { "node": "./dist/dev-preview.js", "default": "./src/dev-preview.ts" },
-    "./timer/reconstruct/recap": { "node": "./dist/timer/reconstruct/recap.js", "default": "./src/timer/reconstruct/recap.ts" },
-    "./timer/replay-decode": { "node": "./dist/timer/replay-decode.js", "default": "./src/timer/replay-decode.ts" },
-    "./timer/replay-input": { "node": "./dist/timer/replay-input.js", "default": "./src/timer/replay-input.ts" },
-    "./timer/replay-verified": { "node": "./dist/timer/replay-verified.js", "default": "./src/timer/replay-verified.ts" },
-    "./timer/replay-client": { "node": "./dist/timer/replay-client.js", "default": "./src/timer/replay-client.ts" },
-    "./timer/import-timer": { "node": "./dist/timer/import-timer.js", "default": "./src/timer/import-timer.ts" },
-    "./timer/import-cstimer": { "node": "./dist/timer/import-cstimer.js", "default": "./src/timer/import-cstimer.ts" },
-    "./timer/import-dctimer": { "node": "./dist/timer/import-dctimer.js", "default": "./src/timer/import-dctimer.ts" },
-    "./timer/backup-client": { "node": "./dist/timer/backup-client.js", "default": "./src/timer/backup-client.ts" },
-    "./timer/replay-encode": { "node": "./dist/timer/replay_encode.js", "default": "./src/timer/replay_encode.ts" },
-    "./smart-cube/orientation": { "node": "./dist/smart_cube/orientation.js", "default": "./src/smart_cube/orientation.ts" },
-    "./smart-cube/gyro-track": { "node": "./dist/smart_cube/gyro_track.js", "default": "./src/smart_cube/gyro_track.ts" },
-    "./timer/sim-log": { "node": "./dist/timer/sim_log.js", "default": "./src/timer/sim_log.ts" },
-    "./timer/reconstruct/steps": { "node": "./dist/timer/reconstruct/steps.js", "default": "./src/timer/reconstruct/steps.ts" },
-    "./cube-facelet": { "node": "./dist/cube_facelet.js", "default": "./src/cube_facelet.ts" },
-    "./sim-mask-paint": { "node": "./dist/sim-mask-paint.js", "default": "./src/sim-mask-paint.ts" },
-    "./recon/cube3": { "node": "./dist/recon/cube3.js", "default": "./src/recon/cube3.ts" },
-    "./recon/stage-detect": { "node": "./dist/recon/stage_detect.js", "default": "./src/recon/stage_detect.ts" },
-    "./recon/popup-suggest": { "node": "./dist/recon/popup_suggest.js", "default": "./src/recon/popup_suggest.ts" },
-    "./recon/sticker-tables": { "node": "./dist/recon/sticker_tables.js", "default": "./src/recon/sticker_tables.ts" },
-    "./recon/oll-lookup": { "node": "./dist/recon/oll_lookup.js", "default": "./src/recon/oll_lookup.ts" },
-    "./recon/pll-lookup": { "node": "./dist/recon/pll_lookup.js", "default": "./src/recon/pll_lookup.ts" },
-    "./recon/zbll-lookup": { "node": "./dist/recon/zbll_lookup.js", "default": "./src/recon/zbll_lookup.ts" },
-    "./recon/f2l-lookup": { "node": "./dist/recon/f2l_lookup.js", "default": "./src/recon/f2l_lookup.ts" },
-    "./recon/alg-case-display": { "node": "./dist/recon/alg_case_display.js", "default": "./src/recon/alg_case_display.ts" },
-    "./recon/build-yield": { "node": "./dist/recon/build-yield.js", "default": "./src/recon/build-yield.ts" },
-    "./timer/reconstruct/step-metrics": { "node": "./dist/timer/reconstruct/step_metrics.js", "default": "./src/timer/reconstruct/step_metrics.ts" },
-    "./timer/reconstruct/error-detect": { "node": "./dist/timer/reconstruct/error_detect.js", "default": "./src/timer/reconstruct/error_detect.ts" },
-    "./timer/reconstruct/f2l-slots": { "node": "./dist/timer/reconstruct/f2l_slots.js", "default": "./src/timer/reconstruct/f2l_slots.ts" },
-    "./timer/reconstruct/methods": { "node": "./dist/timer/reconstruct/methods.js", "default": "./src/timer/reconstruct/methods.ts" },
-    "./timer/reconstruct/method-walk": { "node": "./dist/timer/reconstruct/method_walk.js", "default": "./src/timer/reconstruct/method_walk.ts" },
-    "./timer/reconstruct/reference": { "node": "./dist/timer/reconstruct/reference.js", "default": "./src/timer/reconstruct/reference.ts" },
-    "./timer/reconstruct/quality": { "node": "./dist/timer/reconstruct/quality.js", "default": "./src/timer/reconstruct/quality.ts" },
-    "./timer/reconstruct/rotation-detect": { "node": "./dist/timer/reconstruct/rotation_detect.js", "default": "./src/timer/reconstruct/rotation_detect.ts" },
-    "./timer/reconstruct/core-track": { "node": "./dist/timer/reconstruct/core_track.js", "default": "./src/timer/reconstruct/core_track.ts" },
-    "./timer/reconstruct/humanize": { "node": "./dist/timer/reconstruct/humanize.js", "default": "./src/timer/reconstruct/humanize.ts" },
-    "./timer/reconstruct/recon-text": { "node": "./dist/timer/reconstruct/recon_text.js", "default": "./src/timer/reconstruct/recon_text.ts" },
-    "./timer/reconstruct/slice": { "node": "./dist/timer/reconstruct/slice.js", "default": "./src/timer/reconstruct/slice.ts" },
-    "./timer/reconstruct/stage-segments": { "node": "./dist/timer/reconstruct/stage_segments.js", "default": "./src/timer/reconstruct/stage_segments.ts" },
-    "./timer/reconstruct/gyro-orient": { "node": "./dist/timer/reconstruct/gyro_orient.js", "default": "./src/timer/reconstruct/gyro_orient.ts" },
-    "./timer/reconstruct/bld-helper": { "node": "./dist/timer/reconstruct/bld_helper.js", "default": "./src/timer/reconstruct/bld_helper.ts" },
+    "./double-zbll": {
+      "node": "./dist/double_zbll.js",
+      "default": "./src/double_zbll.ts"
+    },
+    "./bld/read-engine": {
+      "types": "./src/bld/read-engine.ts",
+      "node": "./dist/bld/read-engine.js",
+      "default": "./src/bld/read-engine.ts"
+    },
+    "./bld/lettering": {
+      "types": "./src/bld/lettering.ts",
+      "node": "./dist/bld/lettering.js",
+      "default": "./src/bld/lettering.ts"
+    },
+    "./bld/facelet-model": {
+      "types": "./src/bld/facelet-model.ts",
+      "node": "./dist/bld/facelet-model.js",
+      "default": "./src/bld/facelet-model.ts"
+    },
+    "./bld/types": {
+      "types": "./src/bld/types.ts",
+      "node": "./dist/bld/types.js",
+      "default": "./src/bld/types.ts"
+    },
+    "./timer/random-scramble-pool": {
+      "node": "./dist/timer/random-scramble-pool.js",
+      "default": "./src/timer/random-scramble-pool.ts"
+    },
+    "./sq1-metrics": {
+      "types": "./src/sq1-metrics.ts",
+      "node": "./dist/sq1-metrics.js",
+      "default": "./src/sq1-metrics.ts"
+    },
+    "./video-camera": {
+      "types": "./src/video-camera.ts",
+      "node": "./dist/video-camera.js",
+      "default": "./src/video-camera.ts"
+    },
+    "./video": {
+      "types": "./src/video.ts",
+      "node": "./dist/video.js",
+      "default": "./src/video.ts"
+    },
+    "./timer/seeded/generate": {
+      "types": "./src/timer/seeded/generate.ts",
+      "node": "./dist/timer/seeded/generate.js",
+      "default": "./src/timer/seeded/generate.ts"
+    },
+    "./timer/sync-seed": {
+      "types": "./src/timer/sync-seed.ts",
+      "node": "./dist/timer/sync-seed.js",
+      "default": "./src/timer/sync-seed.ts"
+    },
+    "./timer/seeded/nxnxn": {
+      "types": "./src/timer/seeded/nxnxn.ts",
+      "node": "./dist/timer/seeded/nxnxn.js",
+      "default": "./src/timer/seeded/nxnxn.ts"
+    },
+    "./timer/seeded/bld": {
+      "types": "./src/timer/seeded/bld.ts",
+      "node": "./dist/timer/seeded/bld.js",
+      "default": "./src/timer/seeded/bld.ts"
+    },
+    "./timer/seeded/others": {
+      "types": "./src/timer/seeded/others.ts",
+      "node": "./dist/timer/seeded/others.js",
+      "default": "./src/timer/seeded/others.ts"
+    },
+    "./timer/seeded/sq1_rs": {
+      "types": "./src/timer/seeded/sq1_rs.ts",
+      "node": "./dist/timer/seeded/sq1_rs.js",
+      "default": "./src/timer/seeded/sq1_rs.ts"
+    },
+    "./timer/seeded/scramble_444_rs": {
+      "types": "./src/timer/seeded/scramble_444_rs.ts",
+      "node": "./dist/timer/seeded/scramble_444_rs.js",
+      "default": "./src/timer/seeded/scramble_444_rs.ts"
+    },
+    "./timer/seeded/seeded_rng": {
+      "types": "./src/timer/seeded/seeded_rng.ts",
+      "node": "./dist/timer/seeded/seeded_rng.js",
+      "default": "./src/timer/seeded/seeded_rng.ts"
+    },
+    "./meeting": {
+      "node": "./dist/meeting.js",
+      "default": "./src/meeting.ts"
+    },
+    "./chat": {
+      "node": "./dist/chat/index.js",
+      "default": "./src/chat/index.ts"
+    },
+    "./friends": {
+      "node": "./dist/friends.js",
+      "default": "./src/friends.ts"
+    },
+    "./competition-access": {
+      "node": "./dist/competition-access.js",
+      "default": "./src/competition-access.ts"
+    },
+    "./dev-preview": {
+      "node": "./dist/dev-preview.js",
+      "default": "./src/dev-preview.ts"
+    },
+    "./timer/reconstruct/recap": {
+      "node": "./dist/timer/reconstruct/recap.js",
+      "default": "./src/timer/reconstruct/recap.ts"
+    },
+    "./timer/replay-decode": {
+      "node": "./dist/timer/replay-decode.js",
+      "default": "./src/timer/replay-decode.ts"
+    },
+    "./timer/replay-input": {
+      "node": "./dist/timer/replay-input.js",
+      "default": "./src/timer/replay-input.ts"
+    },
+    "./timer/replay-verified": {
+      "node": "./dist/timer/replay-verified.js",
+      "default": "./src/timer/replay-verified.ts"
+    },
+    "./timer/replay-client": {
+      "node": "./dist/timer/replay-client.js",
+      "default": "./src/timer/replay-client.ts"
+    },
+    "./timer/import-timer": {
+      "node": "./dist/timer/import-timer.js",
+      "default": "./src/timer/import-timer.ts"
+    },
+    "./timer/import-cstimer": {
+      "node": "./dist/timer/import-cstimer.js",
+      "default": "./src/timer/import-cstimer.ts"
+    },
+    "./timer/import-dctimer": {
+      "node": "./dist/timer/import-dctimer.js",
+      "default": "./src/timer/import-dctimer.ts"
+    },
+    "./timer/backup-client": {
+      "node": "./dist/timer/backup-client.js",
+      "default": "./src/timer/backup-client.ts"
+    },
+    "./timer/replay-encode": {
+      "node": "./dist/timer/replay_encode.js",
+      "default": "./src/timer/replay_encode.ts"
+    },
+    "./smart-cube/orientation": {
+      "node": "./dist/smart_cube/orientation.js",
+      "default": "./src/smart_cube/orientation.ts"
+    },
+    "./smart-cube/gyro-track": {
+      "node": "./dist/smart_cube/gyro_track.js",
+      "default": "./src/smart_cube/gyro_track.ts"
+    },
+    "./timer/sim-log": {
+      "node": "./dist/timer/sim_log.js",
+      "default": "./src/timer/sim_log.ts"
+    },
+    "./timer/reconstruct/steps": {
+      "node": "./dist/timer/reconstruct/steps.js",
+      "default": "./src/timer/reconstruct/steps.ts"
+    },
+    "./cube-facelet": {
+      "node": "./dist/cube_facelet.js",
+      "default": "./src/cube_facelet.ts"
+    },
+    "./sim-mask-paint": {
+      "node": "./dist/sim-mask-paint.js",
+      "default": "./src/sim-mask-paint.ts"
+    },
+    "./recon/cube3": {
+      "node": "./dist/recon/cube3.js",
+      "default": "./src/recon/cube3.ts"
+    },
+    "./recon/stage-detect": {
+      "node": "./dist/recon/stage_detect.js",
+      "default": "./src/recon/stage_detect.ts"
+    },
+    "./recon/popup-suggest": {
+      "node": "./dist/recon/popup_suggest.js",
+      "default": "./src/recon/popup_suggest.ts"
+    },
+    "./recon/sticker-tables": {
+      "node": "./dist/recon/sticker_tables.js",
+      "default": "./src/recon/sticker_tables.ts"
+    },
+    "./recon/oll-lookup": {
+      "node": "./dist/recon/oll_lookup.js",
+      "default": "./src/recon/oll_lookup.ts"
+    },
+    "./recon/pll-lookup": {
+      "node": "./dist/recon/pll_lookup.js",
+      "default": "./src/recon/pll_lookup.ts"
+    },
+    "./recon/zbll-lookup": {
+      "node": "./dist/recon/zbll_lookup.js",
+      "default": "./src/recon/zbll_lookup.ts"
+    },
+    "./recon/f2l-lookup": {
+      "node": "./dist/recon/f2l_lookup.js",
+      "default": "./src/recon/f2l_lookup.ts"
+    },
+    "./recon/alg-case-display": {
+      "node": "./dist/recon/alg_case_display.js",
+      "default": "./src/recon/alg_case_display.ts"
+    },
+    "./recon/build-yield": {
+      "node": "./dist/recon/build-yield.js",
+      "default": "./src/recon/build-yield.ts"
+    },
+    "./timer/reconstruct/step-metrics": {
+      "node": "./dist/timer/reconstruct/step_metrics.js",
+      "default": "./src/timer/reconstruct/step_metrics.ts"
+    },
+    "./timer/reconstruct/error-detect": {
+      "node": "./dist/timer/reconstruct/error_detect.js",
+      "default": "./src/timer/reconstruct/error_detect.ts"
+    },
+    "./timer/reconstruct/f2l-slots": {
+      "node": "./dist/timer/reconstruct/f2l_slots.js",
+      "default": "./src/timer/reconstruct/f2l_slots.ts"
+    },
+    "./timer/reconstruct/methods": {
+      "node": "./dist/timer/reconstruct/methods.js",
+      "default": "./src/timer/reconstruct/methods.ts"
+    },
+    "./timer/reconstruct/method-walk": {
+      "node": "./dist/timer/reconstruct/method_walk.js",
+      "default": "./src/timer/reconstruct/method_walk.ts"
+    },
+    "./timer/reconstruct/reference": {
+      "node": "./dist/timer/reconstruct/reference.js",
+      "default": "./src/timer/reconstruct/reference.ts"
+    },
+    "./timer/reconstruct/quality": {
+      "node": "./dist/timer/reconstruct/quality.js",
+      "default": "./src/timer/reconstruct/quality.ts"
+    },
+    "./timer/reconstruct/rotation-detect": {
+      "node": "./dist/timer/reconstruct/rotation_detect.js",
+      "default": "./src/timer/reconstruct/rotation_detect.ts"
+    },
+    "./timer/reconstruct/core-track": {
+      "node": "./dist/timer/reconstruct/core_track.js",
+      "default": "./src/timer/reconstruct/core_track.ts"
+    },
+    "./timer/reconstruct/humanize": {
+      "node": "./dist/timer/reconstruct/humanize.js",
+      "default": "./src/timer/reconstruct/humanize.ts"
+    },
+    "./timer/reconstruct/recon-text": {
+      "node": "./dist/timer/reconstruct/recon_text.js",
+      "default": "./src/timer/reconstruct/recon_text.ts"
+    },
+    "./timer/reconstruct/slice": {
+      "node": "./dist/timer/reconstruct/slice.js",
+      "default": "./src/timer/reconstruct/slice.ts"
+    },
+    "./timer/reconstruct/stage-segments": {
+      "node": "./dist/timer/reconstruct/stage_segments.js",
+      "default": "./src/timer/reconstruct/stage_segments.ts"
+    },
+    "./timer/reconstruct/gyro-orient": {
+      "node": "./dist/timer/reconstruct/gyro_orient.js",
+      "default": "./src/timer/reconstruct/gyro_orient.ts"
+    },
+    "./timer/reconstruct/bld-helper": {
+      "node": "./dist/timer/reconstruct/bld_helper.js",
+      "default": "./src/timer/reconstruct/bld_helper.ts"
+    },
     "./build-account-location-requirements": "./scripts/account-location-artifact.mjs",
     ".": "./src/index.ts",
-    "./nemesizer-format": { "node": "./dist/nemesizer_format.js", "default": "./src/nemesizer_format.ts" },
-    "./wca-events": { "node": "./dist/wca_events.js", "default": "./src/wca_events.ts" },
-    "./record-notifications": { "node": "./dist/record_notifications.js", "default": "./src/record_notifications.ts" },
-    "./scramble-length": { "node": "./dist/scramble_length.js", "default": "./src/scramble_length.ts" },
-    "./comp-schedule": { "node": "./dist/comp_schedule.js", "default": "./src/comp_schedule.ts" },
+    "./nemesizer-format": {
+      "node": "./dist/nemesizer_format.js",
+      "default": "./src/nemesizer_format.ts"
+    },
+    "./wca-events": {
+      "node": "./dist/wca_events.js",
+      "default": "./src/wca_events.ts"
+    },
+    "./record-notifications": {
+      "node": "./dist/record_notifications.js",
+      "default": "./src/record_notifications.ts"
+    },
+    "./scramble-length": {
+      "node": "./dist/scramble_length.js",
+      "default": "./src/scramble_length.ts"
+    },
+    "./comp-schedule": {
+      "node": "./dist/comp_schedule.js",
+      "default": "./src/comp_schedule.ts"
+    },
     "./comp-localize": "./src/comp_localize.ts",
     "./city-localize": "./src/city_localize.ts",
     "./competition-index": "./src/competition_index.ts",
     "./alg": "./src/alg.ts",
-    "./alg-notation": { "node": "./dist/alg_notation.js", "default": "./src/alg_notation.ts" },
-    "./alg-html": { "node": "./dist/alg-html.js", "default": "./src/alg-html.ts" },
-    "./normalize-wca-scramble": { "node": "./dist/normalize_wca_scramble.js", "default": "./src/normalize_wca_scramble.ts" },
-    "./alg-transform": { "node": "./dist/alg_transform.js", "default": "./src/alg_transform.ts" },
-    "./alg-mirror": { "node": "./dist/alg_mirror.js", "default": "./src/alg_mirror.ts" },
-    "./skewb-pyramid-svg": { "node": "./dist/skewb_pyramid_svg.js", "default": "./src/skewb_pyramid_svg.ts" },
-    "./skewb-notation": { "node": "./dist/skewb_notation.js", "default": "./src/skewb_notation.ts" },
-    "./sq1-notation": { "node": "./dist/sq1_notation.js", "default": "./src/sq1_notation.ts" },
-    "./sq1-shapes": { "node": "./dist/sq1_shapes.js", "default": "./src/sq1_shapes.ts" },
-    "./sr-rotations": { "node": "./dist/sr_rotations.js", "default": "./src/sr_rotations.ts" },
-    "./admin": { "node": "./dist/admin.js", "default": "./src/admin.ts" },
-    "./account": { "node": "./dist/account.js", "default": "./src/account.ts" },
+    "./alg-notation": {
+      "node": "./dist/alg_notation.js",
+      "default": "./src/alg_notation.ts"
+    },
+    "./alg-html": {
+      "node": "./dist/alg-html.js",
+      "default": "./src/alg-html.ts"
+    },
+    "./normalize-wca-scramble": {
+      "node": "./dist/normalize_wca_scramble.js",
+      "default": "./src/normalize_wca_scramble.ts"
+    },
+    "./alg-transform": {
+      "node": "./dist/alg_transform.js",
+      "default": "./src/alg_transform.ts"
+    },
+    "./alg-mirror": {
+      "node": "./dist/alg_mirror.js",
+      "default": "./src/alg_mirror.ts"
+    },
+    "./skewb-pyramid-svg": {
+      "node": "./dist/skewb_pyramid_svg.js",
+      "default": "./src/skewb_pyramid_svg.ts"
+    },
+    "./skewb-notation": {
+      "node": "./dist/skewb_notation.js",
+      "default": "./src/skewb_notation.ts"
+    },
+    "./sq1-notation": {
+      "node": "./dist/sq1_notation.js",
+      "default": "./src/sq1_notation.ts"
+    },
+    "./sq1-shapes": {
+      "node": "./dist/sq1_shapes.js",
+      "default": "./src/sq1_shapes.ts"
+    },
+    "./sr-rotations": {
+      "node": "./dist/sr_rotations.js",
+      "default": "./src/sr_rotations.ts"
+    },
+    "./admin": {
+      "node": "./dist/admin.js",
+      "default": "./src/admin.ts"
+    },
+    "./account": {
+      "node": "./dist/account.js",
+      "default": "./src/account.ts"
+    },
     "./account-avatar": "./src/account_avatar.ts",
-    "./deskpet": { "node": "./dist/deskpet.js", "default": "./src/deskpet.ts" },
-    "./auth/web-session": { "node": "./dist/auth/web_session.js", "default": "./src/auth/web_session.ts" },
+    "./deskpet": {
+      "node": "./dist/deskpet.js",
+      "default": "./src/deskpet.ts"
+    },
+    "./auth/web-session": {
+      "node": "./dist/auth/web_session.js",
+      "default": "./src/auth/web_session.ts"
+    },
     "./installed-content": "./src/installed-content.ts",
     "./apple-membership": "./src/apple_membership.ts",
     "./google-membership": "./src/google_membership.ts",
-    "./google-play-relay": { "node": "./dist/google-play-relay.js", "default": "./src/google-play-relay.ts" },
+    "./google-play-relay": {
+      "node": "./dist/google-play-relay.js",
+      "default": "./src/google-play-relay.ts"
+    },
     "./mobile-embed": "./src/mobile_embed.ts",
-    "./result-penalty": { "node": "./dist/result_penalty.js", "default": "./src/result_penalty.ts" },
-    "./recon-ground-truth": { "node": "./dist/recon_ground_truth.js", "default": "./src/recon_ground_truth.ts" },
-    "./recon-completion": { "node": "./dist/recon_completion.js", "default": "./src/recon_completion.ts" },
-    "./fto-notation": { "node": "./dist/fto_notation.js", "default": "./src/fto_notation.ts" },
-    "./recon-slice": { "node": "./dist/recon_slice.js", "default": "./src/recon_slice.ts" },
-    "./cubing-competitions": { "node": "./dist/cubing_competitions.js", "default": "./src/cubing_competitions.ts" },
-    "./cubing-live": { "node": "./dist/cubing_live.js", "default": "./src/cubing_live.ts" },
-    "./cubing-slug": { "node": "./dist/cubing_slug.js", "default": "./src/cubing_slug.ts" },
+    "./result-penalty": {
+      "node": "./dist/result_penalty.js",
+      "default": "./src/result_penalty.ts"
+    },
+    "./recon-ground-truth": {
+      "node": "./dist/recon_ground_truth.js",
+      "default": "./src/recon_ground_truth.ts"
+    },
+    "./recon-completion": {
+      "node": "./dist/recon_completion.js",
+      "default": "./src/recon_completion.ts"
+    },
+    "./fto-notation": {
+      "node": "./dist/fto_notation.js",
+      "default": "./src/fto_notation.ts"
+    },
+    "./recon-slice": {
+      "node": "./dist/recon_slice.js",
+      "default": "./src/recon_slice.ts"
+    },
+    "./cubing-competitions": {
+      "node": "./dist/cubing_competitions.js",
+      "default": "./src/cubing_competitions.ts"
+    },
+    "./cubing-live": {
+      "node": "./dist/cubing_live.js",
+      "default": "./src/cubing_live.ts"
+    },
+    "./cubing-slug": {
+      "node": "./dist/cubing_slug.js",
+      "default": "./src/cubing_slug.ts"
+    },
     "./comp-series": "./src/comp_series.ts",
     "./comp-city-identity": "./src/comp_city_identity.ts",
     "./record-places": "./src/record_places.ts",
     "./persons-index": "./src/api/persons_index.ts",
-    "./wca-search": { "node": "./dist/api/wca_search.js", "default": "./src/api/wca_search.ts" },
-    "./membership-benefits": { "node": "./dist/membership-benefits.js", "default": "./src/membership-benefits.ts" },
-    "./wca-comp-link": { "node": "./dist/wca_comp_link.js", "default": "./src/wca_comp_link.ts" },
-    "./wca-round": { "node": "./dist/wca_round.js", "default": "./src/wca_round.ts" },
-    "./kinch": { "node": "./dist/kinch.js", "default": "./src/kinch.ts" },
-    "./pr-streak": { "node": "./dist/pr_streak.js", "default": "./src/pr_streak.ts" },
-    "./pb": { "node": "./dist/pb.js", "default": "./src/pb.ts" },
-    "./payment": { "node": "./dist/payment.js", "default": "./src/payment.ts" },
-    "./teaching": { "node": "./dist/teaching.js", "default": "./src/teaching.ts" },
-    "./quiz": { "node": "./dist/quiz.js", "default": "./src/quiz.ts" },
+    "./wca-search": {
+      "node": "./dist/api/wca_search.js",
+      "default": "./src/api/wca_search.ts"
+    },
+    "./membership-benefits": {
+      "node": "./dist/membership-benefits.js",
+      "default": "./src/membership-benefits.ts"
+    },
+    "./wca-comp-link": {
+      "node": "./dist/wca_comp_link.js",
+      "default": "./src/wca_comp_link.ts"
+    },
+    "./wca-round": {
+      "node": "./dist/wca_round.js",
+      "default": "./src/wca_round.ts"
+    },
+    "./kinch": {
+      "node": "./dist/kinch.js",
+      "default": "./src/kinch.ts"
+    },
+    "./pr-streak": {
+      "node": "./dist/pr_streak.js",
+      "default": "./src/pr_streak.ts"
+    },
+    "./pb": {
+      "node": "./dist/pb.js",
+      "default": "./src/pb.ts"
+    },
+    "./payment": {
+      "node": "./dist/payment.js",
+      "default": "./src/payment.ts"
+    },
+    "./teaching": {
+      "node": "./dist/teaching.js",
+      "default": "./src/teaching.ts"
+    },
+    "./quiz": {
+      "node": "./dist/quiz.js",
+      "default": "./src/quiz.ts"
+    },
     "./forum": "./src/forum.ts",
     "./drive": "./src/drive.ts",
     "./platform": "./src/platform.ts",
@@ -335,24 +656,57 @@
     "./site-assistant": "./src/site_assistant.ts",
     "./site-announcements": "./src/site_announcements.ts",
     "./cube-agents": "./src/cube_agents.ts",
-    "./wca-format-result": { "node": "./dist/wca_format_result.js", "default": "./src/wca_format_result.ts" },
-    "./record-news": { "node": "./dist/record_news.js", "default": "./src/record_news.ts" },
-    "./wca-records": { "node": "./dist/wca_records.js", "default": "./src/wca_records.ts" },
+    "./wca-format-result": {
+      "node": "./dist/wca_format_result.js",
+      "default": "./src/wca_format_result.ts"
+    },
+    "./record-news": {
+      "node": "./dist/record_news.js",
+      "default": "./src/record_news.ts"
+    },
+    "./wca-records": {
+      "node": "./dist/wca_records.js",
+      "default": "./src/wca_records.ts"
+    },
     "./page-share": "./src/page_share.ts",
-    "./contact": { "node": "./dist/contact.js", "default": "./src/contact.ts" },
-    "./cube-unfolded-svg": { "node": "./dist/cube_unfolded_svg.js", "default": "./src/cube_unfolded_svg.ts" },
-    "./nnn-sim": { "node": "./dist/nnn_sim.js", "default": "./src/nnn_sim.ts" },
-    "./tz": { "node": "./dist/tz.js", "default": "./src/tz.ts" },
-    "./recur": { "node": "./dist/recur.js", "default": "./src/recur.ts" },
-    "./calendar": { "node": "./dist/calendar.js", "default": "./src/calendar.ts" },
+    "./contact": {
+      "node": "./dist/contact.js",
+      "default": "./src/contact.ts"
+    },
+    "./cube-unfolded-svg": {
+      "node": "./dist/cube_unfolded_svg.js",
+      "default": "./src/cube_unfolded_svg.ts"
+    },
+    "./nnn-sim": {
+      "node": "./dist/nnn_sim.js",
+      "default": "./src/nnn_sim.ts"
+    },
+    "./tz": {
+      "node": "./dist/tz.js",
+      "default": "./src/tz.ts"
+    },
+    "./recur": {
+      "node": "./dist/recur.js",
+      "default": "./src/recur.ts"
+    },
+    "./calendar": {
+      "node": "./dist/calendar.js",
+      "default": "./src/calendar.ts"
+    },
     "./iso-date": "./src/iso-date.ts",
     "./country-flag": "./src/country_flag.ts",
     "./cuber-name-display": "./src/cuber_name_display.ts",
     "./wca-person": "./src/wca_person.ts",
     "./timer": "./src/timer/index.ts",
     "./timer/smart-cube-training": "./src/timer/smart-cube-training.ts",
-    "./timer/smart-cube-attempt": { "node": "./dist/timer/smart-cube-attempt.js", "default": "./src/timer/smart-cube-attempt.ts" },
-    "./timer/device-contract": { "node": "./dist/timer/device-contract.js", "default": "./src/timer/device-contract.ts" },
+    "./timer/smart-cube-attempt": {
+      "node": "./dist/timer/smart-cube-attempt.js",
+      "default": "./src/timer/smart-cube-attempt.ts"
+    },
+    "./timer/device-contract": {
+      "node": "./dist/timer/device-contract.js",
+      "default": "./src/timer/device-contract.ts"
+    },
     "./timer/reconstruct/apply-token": "./src/timer/reconstruct/apply-token.ts",
     "./timer/reconstruct/cfop-detect": "./src/timer/reconstruct/cfop-detect.ts",
     "./timer/reconstruct/cfop-recognize": "./src/timer/reconstruct/cfop-recognize.ts",
@@ -360,6 +714,8 @@
     "./timer/reconstruct/orient": "./src/timer/reconstruct/orient.ts",
     "./timer/reconstruct/solve-metrics": "./src/timer/reconstruct/solve-metrics.ts",
     "./timer/reconstruct/state": "./src/timer/reconstruct/state.ts",
+    "./timer/record-badge": "./src/timer/record-badge.ts",
+    "./timer/metronome-settings": "./src/timer/metronome-settings.ts",
     "./timer/by-steps": "./src/timer/by-steps.ts",
     "./timer/scramble-variants": "./src/timer/scramble-variants.ts",
     "./timer/worker-rpc": "./src/timer/worker-rpc.ts",
@@ -386,7 +742,10 @@
     "./data/pll.json": "./data/pll.json",
     "./data/zbll.json": "./data/zbll.json",
     "./data/zbls.json": "./data/zbls.json",
-    "./deskpet-care": { "node": "./dist/deskpet-care.js", "default": "./src/deskpet-care.ts" },
+    "./deskpet-care": {
+      "node": "./dist/deskpet-care.js",
+      "default": "./src/deskpet-care.ts"
+    },
     "./timer/external/types": "./src/timer/external/types.ts",
     "./timer/external/crc": "./src/timer/external/crc.ts",
     "./timer/external/qiyi-mac": "./src/timer/external/qiyi-mac.ts",
@@ -400,11 +759,27 @@
     "./timer/external/session": "./src/timer/external/session.ts",
     "./smart-cube/device-reset": "./src/smart_cube/device-reset.ts",
     "./smart-cube/legacy-session": "./src/smart_cube/legacy-session.ts",
-    "./continent": { "node": "./dist/continent.js", "default": "./src/continent.ts" },
-    "./country-name": { "node": "./dist/country-name.js", "default": "./src/country-name.ts" },
-    "./pinned-countries": { "node": "./dist/pinned-countries.js", "default": "./src/pinned-countries.ts" },
-    "./country-search": { "node": "./dist/country-search.js", "default": "./src/country-search.ts" },
-    "./timer/rank-client": { "node": "./dist/timer/rank-client.js", "default": "./src/timer/rank-client.ts" }
+    "./continent": {
+      "node": "./dist/continent.js",
+      "default": "./src/continent.ts"
+    },
+    "./country-name": {
+      "node": "./dist/country-name.js",
+      "default": "./src/country-name.ts"
+    },
+    "./pinned-countries": {
+      "node": "./dist/pinned-countries.js",
+      "default": "./src/pinned-countries.ts"
+    },
+    "./country-search": {
+      "node": "./dist/country-search.js",
+      "default": "./src/country-search.ts"
+    },
+    "./timer/rank-client": {
+      "node": "./dist/timer/rank-client.js",
+      "default": "./src/timer/rank-client.ts"
+    },
+    "./competition-calendar": "./src/competition_calendar.ts"
   },
   "scripts": {
     "build": "tsc -b",

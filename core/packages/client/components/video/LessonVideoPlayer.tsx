@@ -1,5 +1,6 @@
 'use client';
 
+import { Tooltip } from '@/components/Tooltip';
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type SyntheticEvent } from 'react';
 import { AudioLines, Bug, Check, ChevronLeft, ChevronRight, CircleHelp, Code, Gauge, Info, Keyboard, Link, Maximize, Minimize, Moon, Pause, PictureInPicture2, Play, RectangleHorizontal, Repeat2, Settings, SlidersHorizontal, Subtitles, Volume1, Volume2, VolumeX } from 'lucide-react';
 import { browserClipboardTransport } from '@cuberoot/timer-ui';
@@ -434,9 +435,9 @@ export function LessonVideoPlayer({ src, poster, onError, onLoadedMetadata, auto
       </div>
       <div className="lesson-video-toolbar">
         <div className="lesson-video-left">
-          <button type="button" className="lesson-video-button lesson-video-icon" data-tooltip={playing ? t('暂停 (k)', 'Pause (k)') : t('播放 (k)', 'Play (k)')} aria-label={playing ? t('暂停', 'Pause') : t('播放', 'Play')} onClick={() => void togglePlay()}>{playing ? <Pause fill="currentColor" /> : <Play fill="currentColor" />}</button>
+          <Tooltip content={playing ? t('暂停 (k)', 'Pause (k)') : t('播放 (k)', 'Play (k)')}>{(tip) => <button {...tip} type="button" className="lesson-video-button lesson-video-icon"  aria-label={playing ? t('暂停', 'Pause') : t('播放', 'Play')} onClick={() => void togglePlay()}>{playing ? <Pause fill="currentColor" /> : <Play fill="currentColor" />}</button>}</Tooltip>
           <div className="lesson-video-volume">
-            <button type="button" className="lesson-video-button lesson-video-icon" data-tooltip={muted ? t('取消静音 (m)', 'Unmute (m)') : t('静音 (m)', 'Mute (m)')} aria-label={muted ? t('取消静音', 'Unmute') : t('静音', 'Mute')} onClick={toggleMute}>{muted || volume === 0 ? <VolumeX /> : volume < 0.5 ? <Volume1 /> : <Volume2 />}</button>
+            <Tooltip content={muted ? t('取消静音 (m)', 'Unmute (m)') : t('静音 (m)', 'Mute (m)')}>{(tip) => <button {...tip} type="button" className="lesson-video-button lesson-video-icon"  aria-label={muted ? t('取消静音', 'Unmute') : t('静音', 'Mute')} onClick={toggleMute}>{muted || volume === 0 ? <VolumeX /> : volume < 0.5 ? <Volume1 /> : <Volume2 />}</button>}</Tooltip>
             <input className="lesson-video-range" type="range" aria-label={t('音量', 'Volume')} min={0} max={1} step={0.05} value={muted ? 0 : volume}
               style={{ '--volume': `${(muted ? 0 : volume) * 100}%` } as CSSProperties}
               onChange={event => { if (video.current) { video.current.volume = Number(event.target.value); video.current.muted = false; } }} />
@@ -444,15 +445,15 @@ export function LessonVideoPlayer({ src, poster, onError, onLoadedMetadata, auto
           <span className="lesson-video-time">{timeLabel(current)} / {timeLabel(duration)}</span>
         </div>
         <div className="lesson-video-right">
-          <button type="button" className="lesson-video-button lesson-video-capture" onClick={screenshot} disabled={!resolution} data-tooltip={t('截图', 'Screenshot')}>Screenshot</button>
-          {onAutoContinueChange && <span className="lesson-video-autoplay" data-tooltip={autoContinue ? t('自动播放模式已开启', 'Autoplay is on') : t('自动播放模式已关闭', 'Autoplay is off')}>
+          <Tooltip content={t('截图', 'Screenshot')}>{(tip) => <button {...tip} type="button" className="lesson-video-button lesson-video-capture" onClick={screenshot} disabled={!resolution} >Screenshot</button>}</Tooltip>
+          {onAutoContinueChange && <Tooltip content={autoContinue ? t('自动播放模式已开启', 'Autoplay is on') : t('自动播放模式已关闭', 'Autoplay is off')}>{(tip) => <span {...tip} className="lesson-video-autoplay" >
             <BoolToggle value={autoContinue} onChange={onAutoContinueChange} ariaLabel={t('自动播放下一课', 'Autoplay next lesson')} label={autoContinue ? <Play size={10} fill="currentColor" /> : <Pause size={10} fill="currentColor" />} />
-          </span>}
+          </span>}</Tooltip>}
           <button type="button" className="lesson-video-button lesson-video-icon" aria-label={t('字幕不可用', 'Subtitles unavailable')} disabled title={t('此视频没有字幕', 'This video has no subtitles')}><Subtitles /></button>
-          <button ref={settingsButton} type="button" className={`lesson-video-button lesson-video-icon lesson-video-settings${menu ? ' is-open' : ''}`} aria-label={t('设置', 'Settings')} aria-expanded={menu !== null} aria-haspopup="dialog" data-tooltip={t('设置', 'Settings')} onClick={() => setMenu(menu ? null : 'main')}><Settings /></button>
-          {canPip && <button type="button" className="lesson-video-button lesson-video-icon lesson-video-pip" aria-label={t('画中画', 'Picture-in-picture')} aria-pressed={pip} data-tooltip={t('画中画', 'Picture-in-picture')} onClick={() => void togglePip()}><PictureInPicture2 /></button>}
-          <button type="button" className="lesson-video-button lesson-video-icon lesson-video-theater" aria-label={t('影院模式', 'Theater mode')} aria-pressed={theater} data-tooltip={t('影院模式 (t)', 'Theater mode (t)')} onClick={() => setTheater(!theater)}><RectangleHorizontal /></button>
-          <button type="button" className="lesson-video-button lesson-video-icon" aria-label={fullscreen ? t('退出全屏', 'Exit fullscreen') : t('全屏', 'Fullscreen')} data-tooltip={fullscreen ? t('退出全屏 (f)', 'Exit fullscreen (f)') : t('全屏 (f)', 'Fullscreen (f)')} onClick={() => void toggleFullscreen()}>{fullscreen ? <Minimize /> : <Maximize />}</button>
+          <Tooltip content={t('设置', 'Settings')}>{(tip) => <button {...tip} ref={settingsButton} type="button" className={`lesson-video-button lesson-video-icon lesson-video-settings${menu ? ' is-open' : ''}`} aria-label={t('设置', 'Settings')} aria-expanded={menu !== null} aria-haspopup="dialog"  onClick={() => setMenu(menu ? null : 'main')}><Settings /></button>}</Tooltip>
+          {canPip && <Tooltip content={t('画中画', 'Picture-in-picture')}>{(tip) => <button {...tip} type="button" className="lesson-video-button lesson-video-icon lesson-video-pip" aria-label={t('画中画', 'Picture-in-picture')} aria-pressed={pip}  onClick={() => void togglePip()}><PictureInPicture2 /></button>}</Tooltip>}
+          <Tooltip content={t('影院模式 (t)', 'Theater mode (t)')}>{(tip) => <button {...tip} type="button" className="lesson-video-button lesson-video-icon lesson-video-theater" aria-label={t('影院模式', 'Theater mode')} aria-pressed={theater}  onClick={() => setTheater(!theater)}><RectangleHorizontal /></button>}</Tooltip>
+          <Tooltip content={fullscreen ? t('退出全屏 (f)', 'Exit fullscreen (f)') : t('全屏 (f)', 'Fullscreen (f)')}>{(tip) => <button {...tip} type="button" className="lesson-video-button lesson-video-icon" aria-label={fullscreen ? t('退出全屏', 'Exit fullscreen') : t('全屏', 'Fullscreen')}  onClick={() => void toggleFullscreen()}>{fullscreen ? <Minimize /> : <Maximize />}</button>}</Tooltip>
         </div>
       </div>
     </div>

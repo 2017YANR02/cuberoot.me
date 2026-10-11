@@ -308,7 +308,7 @@ describe('installed app multiplayer modes', () => {
     } finally { fetcher.mockRestore(); }
     expect(host.textContent).toContain('1234');
     expect(host.querySelectorAll('.timer-room-player')).toHaveLength(1);
-    const preview = host.querySelector<HTMLElement>('.timing-surface-cube-frame[data-no-timer]');
+    const preview = host.querySelector<HTMLElement>('.timing-surface-cube-frame');
     expect(preview).not.toBeNull();
     expect(preview?.querySelector('[role="img"]')?.getAttribute('aria-label')).toBe(COPY.en.cubeState);
     await vi.waitFor(() => {
@@ -323,15 +323,18 @@ describe('installed app multiplayer modes', () => {
       .toContain('clamp(48px, 10vw, 132px)');
     const postNetStatus = vi.mocked(client.postNetStatus);
     await act(async () => {
-      dispatchPointer(surface, 'pointerdown', 1);
+      dispatchPointer(preview!, 'pointerdown', 1);
     });
     expect(surface.querySelector('.timer-display')?.classList).toContain('holding');
+    expect(surface.hasPointerCapture(1)).toBe(true);
+    const scrambleStrip = surface.querySelector<HTMLElement>('.scramble-strip')!;
     await act(async () => {
-      dispatchPointer(preview!, 'pointerdown', 2);
+      dispatchPointer(scrambleStrip, 'pointerdown', 2);
       dispatchPointer(surface, 'pointerup', 2);
       dispatchPointer(surface, 'pointercancel', 2);
     });
     expect(surface.querySelector('.timer-display')?.classList).toContain('holding');
+    expect(surface.hasPointerCapture(2)).toBe(false);
     expect(postNetStatus).not.toHaveBeenCalled();
     expect(writeClipboardText).not.toHaveBeenCalled();
     await act(async () => dispatchPointer(surface, 'pointercancel', 1));

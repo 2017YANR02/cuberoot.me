@@ -69,6 +69,7 @@ import '@/components/wca-results/attempts-grid.css';
 import Link from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
 import MoreToggle from '@/components/MoreToggle';
+import { Tooltip } from '@/components/Tooltip';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import { TeX } from '@/components/math/Tex';
 import { UnofficialMark } from '@/components/UnofficialMark';
@@ -860,10 +861,10 @@ export const CATALOG: ComponentEntry[] = [
   },
   {
     name: 'SiteBackground',
-    import: "import SiteBackground, { SiteBackgroundControl } from '@/components/SiteBackground';",
+    import: "import SiteBackground, { SiteBackgroundControl, previewBackground, endBackgroundPreview } from '@/components/SiteBackground';",
     category: 'more',
-    zh: '全站唯一风景层与共享外观选择器，复用背景偏好并跟随页面实际明暗。',
-    en: 'One site landscape and shared appearance picker, preserving preferences and following the rendered page scheme.',
+    zh: '全站唯一风景层与共享外观选择器，跟随页面实际明暗。外观页与菜单复用 previewBackground / endBackgroundPreview 临时预览，不改已保存的背景。',
+    en: 'One site landscape and shared appearance picker following the rendered page scheme. The appearance page and menu share previewBackground / endBackgroundPreview without changing the saved background.',
   },
   {
     name: 'ScrollDiagnostics',
@@ -1529,8 +1530,16 @@ export const CATALOG: ComponentEntry[] = [
     name: 'TimerPuzzlePicker',
     import: "import { TimerPuzzlePicker } from '@cuberoot/timer-ui';",
     category: 'more',
-    zh: 'Web 与 App 共用的项目选择器。传 scrambleTypeLabel 后将三阶专项移入独立打乱类型下拉，默认 WCA；目录与旧成绩标识映射来自 shared，类型菜单复用 CompactSelect。省略此属性时保留全部存储模式，供数据导入使用。项目菜单支持 open/onOpenChange、焦点恢复、Escape、点外关闭和视口钳制。',
-    en: 'The shared Web/App puzzle picker. Passing scrambleTypeLabel moves 3×3 training modes into a separate scramble-type dropdown, defaulting to WCA. Shared owns the catalog and legacy solve identities; CompactSelect renders the type menu. Omitting the prop retains all storage modes for data import. The puzzle menu supports open/onOpenChange, focus restoration, Escape, outside dismissal, and viewport clamping.',
+    zh: 'Web 与 App 共用的项目选择器。传 scrambleTypeLabel 后将三阶专项移入独立打乱类型下拉，默认 WCA；目录与旧成绩标识映射来自 shared，类型菜单复用 CompactSelect。省略此属性时保留全部存储模式，供数据导入使用。项目菜单支持 open/onOpenChange、焦点恢复、Escape、点外关闭和视口钳制；传 children 可复用项目 → 公式二级菜单，triggerLabel 支持文字触发器。',
+    en: 'The shared Web/App puzzle picker. Passing scrambleTypeLabel moves 3×3 training modes into a separate scramble-type dropdown, defaulting to WCA. Shared owns the catalog and legacy solve identities; CompactSelect renders the type menu. Omitting the prop retains all storage modes for data import. The puzzle menu supports open/onOpenChange, focus restoration, Escape, outside dismissal, and viewport clamping. Pass children for puzzle → algorithm submenus and triggerLabel for a text trigger.',
+  },
+  {
+    name: 'TimerTrainingMenu',
+    import: "import TimerTrainingMenu from '@/app/[lang]/timer/_shell/TimerTrainingMenu';",
+    category: 'more',
+    zh: '计时器与训练工作区共用的模式菜单。左侧唯一项目选择器决定训练范围，右侧仅显示计时、该项目公式及专项；按钮显示当前模式，选中项带勾。复用 TimerPuzzlePicker 与完整训练目录。',
+    en: 'Mode menu shared by timing and training. One puzzle picker determines the available algorithms and drills; the mode menu shows Timer or the active training with a selected checkmark. Reuses TimerPuzzlePicker and the full training directory.',
+    note: { zh: '需计时器 URL 状态。', en: 'Requires timer URL state.' },
   },
   {
     name: 'TimerDrillPicker',
@@ -2176,6 +2185,14 @@ export const CATALOG: ComponentEntry[] = [
     Demo: TeXDemo,
   },
   {
+    name: 'Tooltip',
+    import: "import { Tooltip } from '@/components/Tooltip';",
+    category: 'display',
+    zh: '按钮或链接的短提示：悬停和焦点显示，Escape 关闭；Portal 避免玻璃嵌套失效，自动钳制视口，复用全站材质。',
+    en: 'Short button/link labels with hover, focus, Escape, viewport clamping and portaled site glass material.',
+    Demo: () => <Tooltip content={tr({ zh: '听写', en: 'Dictate' })}>{(tip) => <button type="button" {...tip}>{tr({ zh: '悬停或聚焦', en: 'Hover or focus' })}</button>}</Tooltip>,
+  },
+  {
     name: 'InfoTooltip',
     import: "import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';",
     category: 'display',
@@ -2206,6 +2223,29 @@ export const CATALOG: ComponentEntry[] = [
     zh: `按事件 id 渲染打乱预览图,NxN / pyra / skewb / clock 走 cubing.js TwistyPlayer,SQ1 / megaminx 走自有 SVG,用在计时器 / 对战展示当前打乱。`,
     en: `Renders a scramble preview by event id (TwistyPlayer for NxN/pyra/skewb/clock, in-house SVG for SQ1/megaminx); use in /timer to show the current scramble.`,
     note: { zh: `未知事件渲染为空;cubing.js 按需懒加载。`, en: `Unknown events render nothing; cubing.js is lazy-loaded.` },
+  },
+  {
+    name: 'WcaPersonTeamBadge',
+    import: "import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';",
+    category: 'display',
+    zh: '按 WCA ID 显示当前战队的彩色 logo，自定义战队显示名称；批量请求、缓存及编辑后同步由共享目录处理。PersonLink 默认附带此标志。',
+    en: 'Shows the recorded current team by WCA ID with a color logo or custom team name. Shared directory batches requests, caches results and synchronizes edits. Included in PersonLink by default.',
+    usage: '<WcaPersonTeamBadge wcaId="2023GENG02" />',
+  },
+  {
+    name: 'WcaInstitutionSelect',
+    import: "import { WcaInstitutionSelect } from '@/components/WcaInstitutionSelect';",
+    category: 'input',
+    zh: '学生培训机构选择器，独立于老师与战队；批量目录来自 useWcaInstitutions。',
+    en: 'Select a student’s training institution independently of teacher and team, using useWcaInstitutions.',
+  },
+  {
+    name: 'CubingBrandLabel',
+    import: "import { CubingBrandLabel } from '@/components/CubingBrandLabel';",
+    category: 'display',
+    zh: '魔方厂商品牌图标与名称。GAN、魔域、奇艺共用公共素材，自定义名称保持纯文字，图标保留品牌原色。',
+    en: 'Cubing manufacturer logo and name. GAN, MoYu and QiYi use shared public assets; custom names remain text-only. Logos retain their original brand colors.',
+    usage: '<CubingBrandLabel name="GAN" />',
   },
   {
     name: 'CubeRootLogo',

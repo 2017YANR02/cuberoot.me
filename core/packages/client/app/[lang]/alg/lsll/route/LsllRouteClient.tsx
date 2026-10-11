@@ -8,7 +8,8 @@
  * 而那正是三类不能拿 mid-AUF 再商一次的原因(/math/lsll §3)。
  */
 import { useMemo } from 'react';
-import { useQueryState, parseAsString } from 'nuqs';
+import { parseAsString } from 'nuqs';
+import { useTrainingQueryState as useQueryState } from '@/lib/training-host';
 import Link from '@/components/AppLink';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';

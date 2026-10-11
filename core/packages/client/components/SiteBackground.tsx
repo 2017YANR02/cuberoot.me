@@ -11,16 +11,16 @@ import './site-background.css';
 
 const BACKGROUND_PREVIEW_EVENT = 'site-background-preview';
 type BackgroundPreview = { theme: 'light' | 'dark'; choice: HomeBackgroundChoice } | null;
-function previewBackground(value: BackgroundPreview) {
+export function previewBackground(value: BackgroundPreview) {
   window.dispatchEvent(new CustomEvent(BACKGROUND_PREVIEW_EVENT, { detail: value }));
 }
-function endBackgroundPreview() { previewBackground(null); }
+export function endBackgroundPreview() { previewBackground(null); }
 
 /** One document-level landscape; preference and assets retain their existing keys. */
 export default function SiteBackground({ manageDocument = true }: { manageDocument?: boolean } = {}) {
   const [ready, setReady] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  const [savedChoice, , transparent] = useHomeBackgroundChoice(theme);
+  const [savedChoice] = useHomeBackgroundChoice(theme);
   const [preview, setPreview] = useState<BackgroundPreview>(null);
   const choice = preview?.theme === theme ? preview.choice : savedChoice;
   const [failedScene, setFailedScene] = useState<string | null>(null);
@@ -68,19 +68,17 @@ export default function SiteBackground({ manageDocument = true }: { manageDocume
   useEffect(() => setFailedScene(null), [choice]);
   const enabled = ready && !pathname?.startsWith('/auth/');
   const active = enabled && scene && failedScene !== scene.id;
-  // Existing surface styles share this gate; an image is optional in transparent mode.
-  const material = active ? scene.id : enabled && !scene && transparent ? 'transparent' : null;
+  // All site surfaces use the shared material, with or without a background image.
+  const material = active ? scene.id : enabled ? 'transparent' : null;
   useEffect(() => {
     // Native fullscreen needs its own scenery layer, without owning document state.
     if (!manageDocument) return;
     if (material) document.body.dataset.siteScenery = material;
     else delete document.body.dataset.siteScenery;
-    document.body.dataset.siteTransparency = transparent ? 'on' : 'off';
     return () => {
       delete document.body.dataset.siteScenery;
-      delete document.body.dataset.siteTransparency;
     };
-  }, [material, manageDocument, transparent]);
+  }, [material, manageDocument]);
 
   // Auth callbacks already show the returning page in their own background iframe.
   if (!active) return null;

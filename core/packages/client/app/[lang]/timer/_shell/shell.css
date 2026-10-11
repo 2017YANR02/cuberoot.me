@@ -87,6 +87,42 @@
 .shell-topbar-diff .settings-row-tight-group { font-size: 13px; }
 /* 品牌 logo:占第 1 列贴左(与对战 middle-bar 的 logo 同一份资源 + 主页链接). */
 .shell-topbar-brand img { height: 24px; width: auto; display: block; }
+
+/* The solo device chooser sits beside settings instead of in the stage footer. */
+.shell-device-center.shell-topbar-device-center {
+  position: relative;
+  inset: auto;
+  transform: none;
+  translate: none;
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  flex-basis: 36px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+}
+
+.shell-topbar-device-center .shell-device-center-trigger {
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+}
+
+.shell-topbar-device-center .shell-device-center-menu,
+.shell-topbar-device-center .devcube {
+  /* anchored-panel: clamped (both device panels retain usePanelClamp) */
+  top: calc(100% + 6px);
+  bottom: auto;
+  left: 0;
+  right: auto;
+}
+
+.shell-topbar-device-center .shell-device-center-menu {
+  width: max-content;
+  min-width: 0;
+  max-width: calc(100vw - 16px);
+}
 /* ── Main column ────────────────────────────────────────── */
 
 /* Default surfaces outside the shared solo/net/local layouts. */

@@ -136,6 +136,7 @@ import {
 } from '@/lib/battle-room-logic';
 
 // BluetoothModal 与打乱条(.scramble-strip / .timer-modal*)的样式都在 timer.css。
+import TimerTrainingMenu from './TimerTrainingMenu';
 import '../timer.css';
 import './net.css';
 import './shell.css';
@@ -1196,6 +1197,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
         onSelect: changeEvent
       }} locked={!!myResult || !inRoundRoster} />}
       {playersControl}
+      <TimerTrainingMenu currentEvent={netEventToSelectorId(room ? myEvent : lobbyEvent)} />
     </>,
     actions: presenceControl
   };

@@ -1,5 +1,6 @@
 'use client';
 
+import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
 
 /**
@@ -243,7 +244,7 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
                       href={i === 0 ? personLinkForSolve(solve, isZh) : personHref(c.id, isZh)}
                       className="detail-person-link"
                     >
-                      {displayCuberName(c.name, isZh)}
+                      {displayCuberName(c.name, isZh)}<WcaPersonTeamBadge wcaId={c.id} />
                     </Link>
                   ) : displayCuberName(c.name, isZh)}
                 </span>
@@ -1001,7 +1002,7 @@ function SameScrambleNav({ solve, initial }: { solve: ReconSolve; initial?: Reco
               {s.event && <EventIcon event={s.event} title={eventDisplayName(s.event, isZh)} />}
               <span className="ss-name">
                 {s.personId && <Flag iso2={personFlagIso2(s.personId)} className="yt-comment-flag" />}
-                {displayCuberName(s.person ?? '', isZh)}
+                {displayCuberName(s.person ?? '', isZh)}<WcaPersonTeamBadge wcaId={s.personId} />
               </span>
               {s.method && <span className="ss-method">{s.method}</span>}
             </Link>

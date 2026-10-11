@@ -17,6 +17,7 @@ const DELETE_FIXTURE = join(HERE, 'fixtures/block-rm-use-trash-fixture.mjs');
 const WEBKIT_FIXTURE = join(HERE, 'fixtures/block-webkit-no-webrtc-fixture.mjs');
 const ARCHITECTURE_HOOK = join(REPO_ROOT, 'core/scripts/check-architecture-boundaries.mjs');
 const RAW_CHECKBOX_HOOK = join(REPO_ROOT, 'core/packages/client/scripts/hook-detect-raw-checkbox.mjs');
+const MEMORY_COMPUTE_HOOK = join(HOOKS, 'block-unprotected-memory-compute.mts');
 
 function runProcess(command: string, args: string[], cwd: string, input: string, shell = false) {
   return spawnSync(command, args, {
@@ -36,6 +37,94 @@ function runAdapter(adapter: string, target: string | string[], payload: object)
     JSON.stringify(payload),
   );
 }
+
+describe('unprotected memory computation command guard', () => {
+  it.each([
+    'pnpm --filter @cuberoot/alg-build double-zbll',
+    'NO_SWAP=1 pnpm --filter @cuberoot/alg-build double-zbll --limit 1',
+    'cd core && pnpm --filter @cuberoot/alg-build double-zbll',
+    'node --import tsx core/jobs/alg-build/src/double-zbll.ts',
+    'node solver/333opt/solve_h10.mts --no-counts',
+    'nohup caffeinate -i node solver/333opt/solve_h10.mts > run.log &',
+    'cargo run --release --bin table_generator -- --only h48-h10',
+    'cargo run --bin=table_generator',
+    './solver/target/release/table_generator --help',
+    './solver/target/release/f2leo_analyzer input.csv',
+    './solver/333opt/solve_h48_h10',
+    './solver/target/release/solve_h48_h10_16',
+    './solver/target/release/solve_h48_h10_16.exe',
+    'node .tmp/double-zbll-1000/run.mts',
+    'pnpm stats:scramble:local',
+    'pnpm stats:scramble --jobs 333opt',
+    'tsx ../scripts/stats/update-local.ts',
+    'tsx ../scripts/stats/update-published.ts --publish',
+    'pnpm stats:scramble:local --plan; pnpm stats:scramble:local',
+    'pnpm --filter @cuberoot/alg-build double-zbll --plan',
+    'bash -lc "pnpm --filter @cuberoot/alg-build double-zbll"',
+    'node -e "require(\'node:child_process\').spawnSync(\'node\', [\'solver/333opt/solve_h10.mts\'])"',
+    'echo $(pnpm --filter @cuberoot/alg-build double-zbll)',
+    'pnpm --filter @cuberoot/alg-build \\\n double-zbll',
+  ])('denies without executing the computation: %s', command => {
+    const result = runAdapter(COMMAND_ADAPTER, MEMORY_COMPUTE_HOOK, {
+      cwd: REPO_ROOT, tool_input: { command },
+    });
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe('');
+    const output = JSON.parse(result.stdout).hookSpecificOutput;
+    expect(output.permissionDecision).toBe('deny');
+    expect(output.permissionDecisionReason).toContain('系统级防交换保护');
+  });
+
+  it.each([
+    'pnpm --filter @cuberoot/client dev',
+    'pnpm --filter @cuberoot/client typecheck',
+    'pnpm --filter @cuberoot/alg-build typecheck',
+    'pnpm stats:scramble:local --plan',
+    'tsx ../scripts/stats/update-local.ts --plan',
+    'pnpm stats:scramble:publish --publish --publish-only',
+    "rg -n 'double-zbll|table_generator' .codex",
+    'cat solver/333opt/solve_h10.mts',
+    'ls solver/target/release/solve_h48_h10_16',
+    'git diff -- solver/src/bin/table_generator.rs',
+    'cargo build --release --bin table_generator',
+    'node .tmp/double-zbll-expanded-benchmark/prepare.mts',
+    '# pnpm --filter @cuberoot/alg-build double-zbll\nnode --version',
+  ])('allows ordinary development and inspection: %s', command => {
+    const result = runAdapter(COMMAND_ADAPTER, MEMORY_COMPUTE_HOOK, {
+      cwd: REPO_ROOT, tool_input: { command },
+    });
+    expect(result.status).toBe(0);
+    expect(result.stdout).toBe('');
+  });
+
+  it('supports cmd payloads and honors tool workdir for scope', () => {
+    for (const cwd of [CORE_ROOT, '/tmp']) {
+      const result = runAdapter(COMMAND_ADAPTER, MEMORY_COMPUTE_HOOK, {
+        cwd: REPO_ROOT, tool_input: { cmd: 'pnpm stats:scramble:local', workdir: cwd },
+      });
+      expect(result.status).toBe(0);
+      if (cwd === CORE_ROOT) expect(JSON.parse(result.stdout).hookSpecificOutput.permissionDecision).toBe('deny');
+      else expect(result.stdout).toBe('');
+    }
+  });
+
+  it('fails open for missing or malformed payloads', () => {
+    for (const input of ['bad JSON', '{}', '{"tool_input":null}']) {
+      const result = runProcess(process.execPath, [MEMORY_COMPUTE_HOOK], CORE_ROOT, input);
+      expect(result.status).toBe(0);
+      expect(result.stdout).toBe('');
+    }
+  });
+
+  it('registers the guard through the shared adapter on both hosts', () => {
+    const config = JSON.parse(readFileSync(HOOK_CONFIG, 'utf8'));
+    const entry = config.hooks.PreToolUse.find((group: { matcher: string }) => group.matcher === '^Bash$');
+    for (const field of ['command', 'commandWindows']) {
+      expect(entry.hooks.some((hook: Record<string, string>) => hook[field]?.includes('adapt-codex-command-payload.mts')
+        && hook[field]?.includes('block-unprotected-memory-compute.mts'))).toBe(true);
+    }
+  });
+});
 
 describe('Codex hook payload adapters', () => {
   it('passes full search patches directly and preserves deny/fail-open output', () => {

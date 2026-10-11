@@ -9,7 +9,8 @@ import { CaseThumb } from '@/components/CaseThumb';
 import { LEVEL2_PICKER_MASK, DEFAULT_ALG_CUBE_ORIENTATION } from '@/lib/alg_thumb_plan';
 import { visualCubeSchemeForOrientation } from '@/lib/cube-orientation';
 import { VisualCube } from '@/components/VisualCube';
-import { SegmentTime } from '@cuberoot/timer-ui';
+import { SegmentTime, TimerScrambleHintText, type TimerScrambleHint } from '@cuberoot/timer-ui';
+import '@cuberoot/timer-ui/timer-workspace.css';
 import { TimerState } from '@/lib/trainer-store';
 import type { TrainerSolve, TrainerPenalty, TrainerHistEntry } from '@/lib/trainer-store';
 import { effectiveMs, type ScrambleHist } from '@cuberoot/shared/timer';
@@ -59,17 +60,21 @@ export function TimerDisplay({
 }
 
 /** 打乱正文。label(如「已复制」反馈)可选 —— 没有就只渲染打乱本身。 */
-export function ScrambleHeader({ scramble, label, font = 'sans', placeholder }: {
+export function ScrambleHeader({ scramble, label, font = 'sans', placeholder, hint, concealed = false }: {
   scramble: string;
+  hint?: TimerScrambleHint | null;
+  concealed?: boolean;
   label?: string;
   font?: string;
   /** 打乱还没有时摆什么(虚拟集的打乱是现算的,要等上一两秒 —— 空着一条杠像坏了)。 */
   placeholder?: string;
 }) {
   return (
-    <div>
-      {label && <div className="trainer-scramble-label">{label}</div>}
-      <div className={`trainer-scramble-text sf-${font}`}>{scramble || placeholder || '—'}</div>
+    <div data-timer-hide-ui={concealed ? '' : undefined}>
+      {label && <div className="trainer-scramble-label" data-timer-hide-while-running>{label}</div>}
+      <div className={`trainer-scramble-text sf-${font}`} data-timer-hide-while-running>
+        {hint ? <TimerScrambleHintText hint={hint} /> : scramble || placeholder || '—'}
+      </div>
     </div>
   );
 }
@@ -115,13 +120,12 @@ export function CaseThumbAction({
 
 /** Both views come from the exact combined state; x2 brings the bottom to the top. */
 export function DoubleZbllThumb({ top, bottom, scramble, size = 112, compact = false }: { top: AlgCase; bottom: AlgCase; scramble: string; size?: number; compact?: boolean }) {
-  return <div className="trainer-double-thumbs">
+  return <div className={`trainer-double-thumbs${compact ? ' is-compact' : ''}`}>
     {[{ c: top, setup: scramble, label: tr({ zh: '顶层', en: 'Top' }) },
       { c: bottom, setup: `${scramble} x2`, label: tr({ zh: '底层 · 翻转后', en: 'Bottom · after flipping' }) }].map(({ c, setup, label }) => (
       <figure key={label}>
         {/* Full-state plan view: a single-layer LL mask would hide all bottom pieces after x2. */}
         <VisualCube view="plan" setup={setup} scheme={visualCubeSchemeForOrientation(DEFAULT_ALG_CUBE_ORIENTATION)} size={size} local alt={label} />
-        {!compact && <figcaption>{label}</figcaption>}
         {!compact && <CaseMarkBar k={caseKey(c)} />}
       </figure>
     ))}
@@ -224,6 +228,7 @@ export function StatsList({
 }) {
   return (
     <div className={`trainer-stats-card${solves.length > 0 ? ' has-clear' : ''}`}>
+      {solves.length === 0 && <div className="trainer-stats-empty">{tr({ zh: '暂无成绩', en: 'No solves yet' })}</div>}
       {solves.length > 0 && (
         <button type="button" className="trainer-icon-btn trainer-stats-clear" onClick={onClear}
           title={tr({ zh: '清空', en: 'Clear' })} aria-label={tr({ zh: '清空', en: 'Clear' })}>
@@ -470,7 +475,7 @@ interface TopGroup {
 }
 
 export function CaseTreePicker({
-  puzzle, set, cases, selected, onChange, marks, brush, onPaint,
+  puzzle, set, cases, selected, onChange, marks, brush, onPaint, showSetName = true,
 }: {
   puzzle: AlgPuzzle;
   set: string;
@@ -478,6 +483,8 @@ export function CaseTreePicker({
   selected: Set<string>;
   onChange: (next: Set<string>) => void;
   isZh: boolean;
+  /** Omit a repeated prefix when the host already labels this set. */
+  showSetName?: boolean;
   /** per-case 学习标记(角标显示)。 */
   marks?: CaseMarks;
   /** 画笔模式:非空时,点 cell / 组头 = 涂标记而不是改选择(由 onPaint 落地)。 */
@@ -608,7 +615,7 @@ export function CaseTreePicker({
                 >
                   <TriCheckbox checked={topAll} indeterminate={!topAll && !topNone} />
                   <TopThumb g={top} />
-                  <span>{set.toUpperCase()} {set === 'zbll' ? displayZbllToken(top.label) : top.label}</span>
+                  <span>{showSetName && `${set.toUpperCase()} `}{set === 'zbll' ? displayZbllToken(top.label) : top.label}</span>
                   <span style={{ color: 'var(--muted-foreground)', fontWeight: 400, fontSize: '0.85rem' }}>
                     ({topSelectedCount}/{top.allCases.length})
                   </span>

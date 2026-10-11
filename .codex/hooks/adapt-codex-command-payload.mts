@@ -21,9 +21,12 @@ export function commandsFromPayload(payload: any): string[] {
   if (input && typeof input === 'object' && typeof input.command === 'string') {
     return [input.command];
   }
+  if (input && typeof input === 'object' && typeof input.cmd === 'string') {
+    return [input.cmd];
+  }
   if (typeof input !== 'string') return [];
   const commands = [];
-  const commandLiteral = /\bcommand\s*:\s*("(?:\\.|[^"\\])*"|`(?:\\.|[^`\\])*`)/gs;
+  const commandLiteral = /\b(?:command|cmd)\s*:\s*("(?:\\.|[^"\\])*"|`(?:\\.|[^`\\])*`)/gs;
   for (const match of input.matchAll(commandLiteral)) {
     const command = parseStringLiteral(match[1]);
     if (command) commands.push(command);
@@ -59,7 +62,7 @@ function run() {
     let payload;
     try { payload = JSON.parse(raw || '{}'); } catch { return; }
     const commands = commandsFromPayload(payload);
-    const cwd = String(payload.cwd || process.cwd());
+    const cwd = String(payload.tool_input?.workdir || payload.tool_input?.cwd || payload.cwd || process.cwd());
     for (const command of commands) {
       const adapted = JSON.stringify({
         ...payload,

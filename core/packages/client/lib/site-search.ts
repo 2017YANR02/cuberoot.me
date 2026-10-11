@@ -4,7 +4,8 @@
 // Ported from packages/client-vite/src/utils/site_search.ts (1:1 data layer,
 // 调整路径到 client 别名 + 不依赖 react-router)。
 import { useState, useEffect, useMemo, useRef, useDeferredValue } from 'react';
-import { loadPersonsIndex, searchLocalPersons, type WcaPerson, type ReconSolve } from '@cuberoot/shared';
+import { loadPersonsIndex, searchLocalPersons } from '@cuberoot/shared/persons-index';
+import type { WcaPerson } from '@cuberoot/shared/wca-search';
 import { loadComps, searchComps, type Comp } from '@/lib/comp-search';
 import { statsUrl } from '@/lib/stats-base';
 import { listRecons } from '@/lib/recon-api';
@@ -12,8 +13,7 @@ import { loadCachedSolves, saveCachedSolves } from '@/lib/recon-cache';
 import { compNameZh, loadFlagData } from '@/lib/country-flags';
 import { formatTime, formatAvg, expandContinentRecord } from '@/lib/recon-utils';
 import { API_ORIGIN, apiUrl } from '@/lib/api-base';
-import { STACK_TOOLS_META, type StackToolMeta } from '@/app/[lang]/dev/stack/_lib/stack_meta';
-import GLOSSARY_DATA from '@/app/[lang]/wiki/glossary.json';
+import type { StackToolMeta } from '@/app/[lang]/dev/stack/_lib/stack_meta';
 import { WR_METRICS, resultsQueryForMetric } from '@/lib/wr-metrics';
 import { ALG_CATALOG } from '@cuberoot/shared/alg';
 
@@ -152,8 +152,7 @@ function slugifyHead(head: string): string {
   return head.toLowerCase().replace(/[^a-z0-9一-龥]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
 }
 interface GlossaryRecord { head: string; body: string; slug: string; hay: string }
-const GLOSSARY_ENTRIES: GlossaryRecord[] = ((): GlossaryRecord[] => {
-  const root = GLOSSARY_DATA as unknown as GlossaryRoot;
+function glossaryRecords(root: GlossaryRoot): GlossaryRecord[] {
   const out: GlossaryRecord[] = [];
   for (const sec of root.sections ?? []) {
     for (const e of sec.entries ?? []) {
@@ -166,7 +165,7 @@ const GLOSSARY_ENTRIES: GlossaryRecord[] = ((): GlossaryRecord[] => {
     }
   }
   return out;
-})();
+}
 
 interface AboutRecord { id: string; titleZh: string; titleEn: string; hay: string
  }
@@ -190,16 +189,27 @@ function loadAboutEntries(): Promise<AboutRecord[]> {
       }));
       return aboutEntriesCache;
     })
-    .catch(() => { aboutEntriesPending = null; return [] as AboutRecord[]; });
+    .catch(error => { aboutEntriesPending = null; throw error; });
   return aboutEntriesPending;
 }
 
 interface StackRecord { meta: StackToolMeta; hay: string }
-const STACK_ENTRIES: StackRecord[] = STACK_TOOLS_META.map(m => ({
+function stackRecords(entries: StackToolMeta[]): StackRecord[] { return entries.map(m => ({
   meta: m,
   hay: `${m.slug}\n${m.name}\n${m.zh.tagline}\n${m.zh.role}\n${m.en.tagline}\n${m.en.role}`.toLowerCase(),
-}));
+})); }
 
+// Keep search input and keyboard focus eager; load data only after actual input.
+interface LocalEntries { glossary: GlossaryRecord[]; stack: StackRecord[]; about: AboutRecord[] }
+const localEntriesCache: Partial<LocalEntries> = {};
+function cachedEntries<T>(load: () => Promise<T>): () => Promise<T> {
+  let pending: Promise<T> | null = null;
+  return () => pending ??= load().catch(error => { pending = null; throw error; });
+}
+const loadGlossaryEntries = cachedEntries(() => import('@/app/[lang]/wiki/glossary.json').then(data => glossaryRecords(data.default)));
+const loadStackEntries = cachedEntries(() => import('@/app/[lang]/dev/stack/_lib/stack_meta').then(data => stackRecords(data.STACK_TOOLS_META)));
+
+type ReconSolve = Awaited<ReturnType<typeof listRecons>>[number];
 interface ReconRecord { hit: ReconHit; hay: string }
 
 // 与详情页头部 (recon/[id]/page.tsx) 口径一致:展示单次 (value ?? rawTime),average 仅兜底
@@ -351,6 +361,8 @@ export interface SiteSearchResult {
   qRaw: string;
   xSearchEnabled: boolean;
   xLoaded: boolean;
+  localSearchPending: boolean;
+  localSearchError: boolean;
   cardMatches: SiteSearchCard[];
   toolMatches: ToolItem[];
   lookupMatches: LookupItem[];
@@ -390,7 +402,8 @@ export function useSiteSearch(
   const algSetsRef = useRef<AlgSetRecord[] | null>(null);
   const [xLoaded, setXLoaded] = useState(false);
 
-  const [aboutEntries, setAboutEntries] = useState<AboutRecord[]>(() => aboutEntriesCache ?? []);
+  const [localEntries, setLocalEntries] = useState<Partial<LocalEntries>>(() => ({ ...localEntriesCache }));
+  const [localSearchError, setLocalSearchError] = useState(false);
 
   const deferredRawQuery = useDeferredValue(query);
   const q = deferredRawQuery.trim().toLowerCase();
@@ -419,13 +432,22 @@ export function useSiteSearch(
     loadStatIndex().then(j => { if (j) setStatIndex(j); });
   }, [prefetch, xSearchEnabled]);
 
-  // 敲下第一个字才把 about 注册表拉进来(见 loadAboutEntries)。
   useEffect(() => {
-    if (q === '' || aboutEntries.length > 0) return;
+    if (q === '') return;
     let cancelled = false;
-    void loadAboutEntries().then(list => { if (!cancelled) setAboutEntries(list); });
+    setLocalSearchError(false);
+    // Publish each category immediately: a slow or failed category cannot hold the others.
+    const receive = <K extends keyof LocalEntries>(key: K, entries: LocalEntries[K]) => {
+      localEntriesCache[key] = entries;
+      if (!cancelled) setLocalEntries(previous => ({ ...previous, [key]: entries }));
+    };
+    void Promise.allSettled([
+      loadGlossaryEntries().then(entries => receive('glossary', entries)),
+      loadStackEntries().then(entries => receive('stack', entries)),
+      loadAboutEntries().then(entries => receive('about', entries)),
+    ]).then(results => { if (!cancelled) setLocalSearchError(results.some(result => result.status === 'rejected')); });
     return () => { cancelled = true; };
-  }, [q, aboutEntries.length]);
+  }, [q]);
 
   useEffect(() => {
     if (xLoaded) return;
@@ -542,38 +564,38 @@ export function useSiteSearch(
   const glossaryMatches = useMemo(() => {
     if (q === '' || tokens.length === 0) return [] as GlossaryHit[];
     const out: GlossaryHit[] = [];
-    for (const e of GLOSSARY_ENTRIES) {
+    for (const e of localEntries?.glossary ?? []) {
       if (allTokensIn(e.hay, tokens)) {
         out.push({ head: e.head, body: e.body, slug: e.slug });
         if (out.length >= MATCH_HARD_CAP) break;
       }
     }
     return out;
-  }, [q, tokens]);
+  }, [q, tokens, localEntries]);
 
   const aboutMatches = useMemo(() => {
     if (q === '' || tokens.length === 0) return [] as AboutHit[];
     const out: AboutHit[] = [];
-    for (const e of aboutEntries) {
+    for (const e of localEntries?.about ?? []) {
       if (allTokensIn(e.hay, tokens)) {
         out.push({ id: e.id, titleZh: e.titleZh, titleEn: e.titleEn });
         if (out.length >= MATCH_HARD_CAP) break;
       }
     }
     return out;
-  }, [q, tokens]);
+  }, [q, tokens, localEntries]);
 
   const stackMatches = useMemo(() => {
     if (q === '' || tokens.length === 0) return [] as StackHit[];
     const out: StackHit[] = [];
-    for (const e of STACK_ENTRIES) {
+    for (const e of localEntries?.stack ?? []) {
       if (allTokensIn(e.hay, tokens)) {
         out.push(e.meta);
         if (out.length >= MATCH_HARD_CAP) break;
       }
     }
     return out;
-  }, [q, tokens]);
+  }, [q, tokens, localEntries]);
 
   // 纯 4 位年份(1982~2099)→ 让调用方置顶「该年比赛日历」直达,并把选手沉底
   const yearMatch = useMemo(() => {
@@ -597,6 +619,7 @@ export function useSiteSearch(
 
   return {
     q, qRaw, xSearchEnabled, xLoaded,
+    localSearchPending: q !== '' && (!localEntries.glossary || !localEntries.stack || !localEntries.about) && !localSearchError, localSearchError,
     cardMatches, toolMatches, lookupMatches, statMatches,
     personMatches, compMatches,
     reconMatches, glossaryMatches, aboutMatches, stackMatches, algSetMatches,

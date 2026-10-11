@@ -13,11 +13,11 @@
   ],
   "scripts": {
     "double-zbll:install": "node --import tsx scripts/install-double-zbll.mts",
-    "dev": "node ../../scripts/copy-maplibre-assets.mts && node ../../scripts/build-cubing-worker.mjs packages/client/public/cubing-chunks && node scripts/predev-clean.mjs && next dev -H 127.0.0.1 -p 3000",
-    "dev:clean": "node ../../scripts/copy-maplibre-assets.mts && node ../../scripts/build-cubing-worker.mjs packages/client/public/cubing-chunks && node scripts/predev-clean.mjs --wipe-next && next dev -H 127.0.0.1 -p 3000",
-    "dev:safe": "node ../../scripts/copy-maplibre-assets.mts && node scripts/dev-safe.mjs",
+    "dev": "node --import tsx scripts/build-cube-history.ts && node ../../scripts/copy-maplibre-assets.mts && node ../../scripts/build-cubing-worker.mjs packages/client/public/cubing-chunks && node scripts/predev-clean.mjs && next dev -H 127.0.0.1 -p 3000",
+    "dev:clean": "node --import tsx scripts/build-cube-history.ts && node ../../scripts/copy-maplibre-assets.mts && node ../../scripts/build-cubing-worker.mjs packages/client/public/cubing-chunks && node scripts/predev-clean.mjs --wipe-next && next dev -H 127.0.0.1 -p 3000",
+    "dev:safe": "node --import tsx scripts/build-cube-history.ts && node ../../scripts/copy-maplibre-assets.mts && node scripts/dev-safe.mjs",
     "build:deps": "pnpm --filter @cuberoot/shared build && pnpm --filter @cuberoot/visualcube build && pnpm --filter @cuberoot/vendor-sr-puzzlegen build && pnpm --filter @cuberoot/puzzle-render-core build && pnpm --filter @cuberoot/puzzle-solvers build",
-    "build": "pnpm run build:deps && node ../../scripts/copy-maplibre-assets.mts && node ../../scripts/build-cubing-worker.mjs packages/client/public/cubing-chunks && next build && pnpm run typecheck && tsx scripts/build-assistant-index.ts",
+    "build": "pnpm run build:deps && node --import tsx scripts/build-cube-history.ts && node ../../scripts/copy-maplibre-assets.mts && node ../../scripts/build-cubing-worker.mjs packages/client/public/cubing-chunks && next build && pnpm run typecheck && tsx scripts/build-assistant-index.ts",
     "start": "next start -H 127.0.0.1 -p 3000",
     "typecheck": "tsgo --noEmit",
     "typecheck:tsc": "tsc --noEmit",
@@ -34,7 +34,9 @@
     "audit:overflow": "node scripts/mobile-overflow-audit.cjs",
     "audit:svg": "node scripts/audit-sim-svg.mjs",
     "lint": "eslint .",
-    "build:account-avatars": "node --import tsx scripts/build-account-avatars.ts"
+    "build:account-avatars": "node --import tsx scripts/build-account-avatars.ts",
+    "build:cube-history": "node --import tsx scripts/build-cube-history.ts",
+    "check:cube-history": "node --import tsx scripts/build-cube-history.ts --check"
   },
   "dependencies": {
     "@airwallex/components-sdk": "^1.35.1",
