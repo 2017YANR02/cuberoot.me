@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { act, createElement } from 'react';
+import { act, createElement, type ComponentProps } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Alg } from 'cubing/alg';
@@ -263,6 +263,9 @@ describe('TwistySection without WebGL', () => {
 
   async function mountNative(spec: typeof nativeCases[number], options: {
     scramble?: string; alg?: string; hideControls?: boolean; pointerTurns?: boolean;
+    externalControls?: boolean;
+    fillPane?: boolean;
+    onPlayerChange?: ComponentProps<typeof TwistySection>['onPlayerChange'];
   } = {}) {
     await act(async () => root.render(createElement(TwistySection, {
       puzzle: spec.id,
@@ -271,6 +274,9 @@ describe('TwistySection without WebGL', () => {
       scramble: options.scramble ?? spec.setup,
       alg: options.alg ?? spec.alg,
       hideControls: options.hideControls,
+      externalControls: options.externalControls,
+      fillPane: options.fillPane,
+      onPlayerChange: options.onPlayerChange,
       twistOnClick: true,
       onUserMove,
       settings: {
@@ -356,6 +362,60 @@ describe('TwistySection without WebGL', () => {
     expect(player.controlPanel).toBe('bottom-row');
     expect(host.querySelector('[role="alert"]')).toBeNull();
     expect(host.querySelector<HTMLButtonElement>('.twisty-native-controls .twisty-fallback-move')!.disabled).toBe(false);
+  });
+
+  it.each([false, true])('keeps external playback exclusive through invalid input and recovery (hideControls=%s)', async (hideControls) => {
+    const spec = nativeCases[0];
+    host.style.colorScheme = 'dark';
+    await mountNative(spec, { externalControls: true, hideControls });
+    const player = host.querySelector('.twisty-container')!.firstElementChild as HTMLElement & {
+      controlPanel: string;
+    };
+    expect(probe.construct).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
+      controlPanel: 'none', background: 'none',
+    }));
+    expect(player.controlPanel).toBe('none');
+    expect(player.style.colorScheme).toBe('');
+    expect(host.querySelector('.recon-play-overlay')).toBeNull();
+
+    await mountNative(spec, { externalControls: true, hideControls, alg: 'notAMove' });
+    expect(host.querySelector('[role="alert"]')).not.toBeNull();
+    expect(player.controlPanel).toBe('none');
+    expect(host.querySelector('.recon-play-overlay')).toBeNull();
+
+    await mountNative(spec, { externalControls: true, hideControls, alg: `${spec.alg}'` });
+    expect(host.querySelector('[role="alert"]')).toBeNull();
+    expect(probe.construct).toHaveBeenCalledOnce();
+    expect(player.controlPanel).toBe('none');
+    expect(host.querySelector('.recon-play-overlay')).toBeNull();
+    expect(probe.togglePlay).not.toHaveBeenCalled();
+  });
+
+  it.each([false, true])('publishes attached replacements and clears them on unmount (fillPane=%s)', async (fillPane) => {
+    const observer = { observe: vi.fn(), disconnect: vi.fn() };
+    vi.stubGlobal('ResizeObserver', vi.fn(function () { return observer; }));
+    const onPlayerChange = vi.fn<NonNullable<ComponentProps<typeof TwistySection>['onPlayerChange']>>((player) => {
+      if (player) expect(host.querySelector('.twisty-container')!.firstElementChild).toBe(player);
+    });
+    const options = { externalControls: true, onPlayerChange, fillPane };
+    await mountNative(nativeCases[0], options);
+    const firstPlayer = host.querySelector('.twisty-container')!.firstElementChild!;
+    expect(onPlayerChange.mock.calls).toEqual([[firstPlayer]]);
+
+    await mountNative(nativeCases[0], { ...options, alg: `${nativeCases[0].alg}'` });
+    expect(onPlayerChange.mock.calls).toEqual([[firstPlayer]]);
+
+    await mountNative(nativeCases[1], options);
+    const secondPlayer = host.querySelector('.twisty-container')!.firstElementChild!;
+    expect(secondPlayer).not.toBe(firstPlayer);
+    expect(firstPlayer.isConnected).toBe(false);
+    expect(onPlayerChange.mock.calls).toEqual([[firstPlayer], [null], [secondPlayer]]);
+    expect(probe.construct).toHaveBeenCalledTimes(2);
+
+    await act(async () => root.render(null));
+    expect(onPlayerChange.mock.calls).toEqual([[firstPlayer], [null], [secondPlayer], [null]]);
+    expect(secondPlayer.isConnected).toBe(false);
+    expect(observer.disconnect).toHaveBeenCalledTimes(fillPane ? 2 : 0);
   });
 
   it.each(addedNativeCases)('$id exposes its supported layer notation and sends each selected inverse through the actual controls', async (spec) => {
