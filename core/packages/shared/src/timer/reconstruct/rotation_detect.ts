@@ -55,7 +55,13 @@
  *
  * 手性(`BRAND_MIRROR`)同理:镜像不是旋转,更消不掉;标错时计数仍对,`y` 读成 `y'`。
  *
- * ## 噪声怎么挡
+ * ## 新录像与实时调试
+ *
+ * 已标定的 v2 姿态按角度立即换格，不要求保持时间。新格须进入 35° 范围，
+ * 因此单轴前进在 55° 换格，回摆到 35° 才退回；中间保留已确认朝向。
+ * 原始换格完整保留，连续半转和双层动作在记谱层整理。
+ *
+ * ## 旧 v1 录像的噪声怎么挡（以下保持时长仅适用于旧算法）
  *
  * 人拧的时候魔方一直在手里晃 —— 二三十度的倾斜是常态,那不是转体。两道:
  *
@@ -94,7 +100,7 @@ export const ENTER_RAD = (35 * Math.PI) / 180;
 const RELAXED_ENTER_RAD = Math.PI / 4;
 /** 真机一次 0.8s 的转体因手持倾斜落在 35.7°;宽松候选用更长保持挡住短暂漂移。 */
 const RELAXED_HOLD_MS = 500;
-/** 新格子要连续保持这么久才算一次转体(毫秒)。 */
+/** Legacy uncalibrated recordings retain their existing hold threshold (ms). */
 export const HOLD_MS = 120;
 
 export interface RotationEvent {
@@ -110,9 +116,13 @@ export interface RotationEvent {
   wide?: boolean;
   /** Rotation token to weave beside the compensating outer face. */
   wideToken?: string;
+  /** Last encoder move consumed by a matched wide gesture. */
+  wideEndIdx?: number;
 }
 
 export interface DetectRotationsOptions {
+  /** Live raw-sensor debug opts into the same angular policy as calibrated recordings. */
+  mode?: 'angular';
   enterRad?: number;
   holdMs?: number;
   /**
@@ -324,10 +334,44 @@ function detectRotationsPass(
   return out;
 }
 
+/** Snap immediately; disjoint acceptance regions provide angular hysteresis. */
+function detectAngularRotations(samples: readonly GyroSample[], opts: DetectRotationsOptions): RotationEvent[] {
+  if (samples.length === 0) return [];
+  const basis = opts.brand ? sensorBasisForBrand(opts.brand) : 'identity';
+  const mirror = opts.brand ? mirrorForBrand(opts.brand) : false;
+  const pose = (q: Quat) => applyOrientation(q, null, { basis, mirror });
+  let ref = quatNormalize(pose(samples[0].q));
+  const out: RotationEvent[] = [];
+  // Always leave a gap between adjacent cells, even with a caller override.
+  const enterRad = Math.min(opts.enterRad ?? ENTER_RAD, ENTER_RAD);
+  for (const sample of samples.slice(1)) {
+    const rel = quatNormalize(quatMul(quatConjugate(ref), pose(sample.q)));
+    const near = nearestCubeOrientation(rel);
+    if (near.angleRad > enterRad || quatAngleTo(QUAT_IDENTITY, near.quat) < 1e-3) continue;
+    const single = tokenForRelative(near.quat, rel);
+    // Sparse packets can skip an intermediate grip. All 24 poses have a path
+    // of at most two axis tokens; keep the endpoint exact instead of emitting '?'.
+    let tokens = single ? [single] : [];
+    if (!single) {
+      for (const a of ROTATION_TOKENS) {
+        const b = ROTATION_TOKENS.find(b => quatAngleTo(quatMul(a.quat, b.quat), near.quat) < 1e-3);
+        if (b) { tokens = [a.token, b.token]; break; }
+      }
+    }
+    for (const token of tokens) out.push({
+      startMs: sample.tMs, tMs: sample.tMs, token,
+      angleRad: token.includes('2') ? Math.PI : Math.PI / 2,
+    });
+    ref = quatNormalize(quatMul(ref, near.quat));
+  }
+  return out;
+}
+
 export function detectRotations(
   samples: readonly GyroSample[],
   opts: DetectRotationsOptions = {},
 ): RotationEvent[] {
+  if (samples[0]?.frame === 'scramble' || opts.mode === 'angular') return detectAngularRotations(samples, opts);
   const strict = detectRotationsPass(
     samples,
     opts,
@@ -337,7 +381,7 @@ export function detectRotations(
   );
   // Explicit thresholds are a caller's complete policy. The narrow recovery
   // is only the default-path fallback for a real recording that found no grid
-  // change at all under the established 35°/120ms detector.
+  // change at all under the strict 35° detector.
   if (strict.length > 0 || opts.enterRad !== undefined || opts.holdMs !== undefined) return strict;
   return detectRotationsPass(samples, opts, RELAXED_ENTER_RAD, RELAXED_HOLD_MS, true);
 }

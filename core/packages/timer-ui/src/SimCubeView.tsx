@@ -62,7 +62,7 @@
  * that header records what it cost to learn.
  */
 
-import { useEffect, useRef, useState, type JSX } from 'react';
+import { useEffect, useMemo, useRef, useState, type JSX } from 'react';
 
 import './live-cube.css';
 import type World from '@cuberoot/puzzle-render-core/engine/world';
@@ -80,6 +80,9 @@ import {
   calibrate,
   mirrorForBrand,
   quatAngleTo,
+  quatConjugate,
+  quatMul,
+  QUAT_IDENTITY,
   sensorBasisForBrand,
   SLICE_ORIENTATION_FOLLOW_MS,
   SLICE_ORIENTATION_TAU_MS,
@@ -87,6 +90,7 @@ import {
   type Quat,
   type SensorBasisName,
 } from '@cuberoot/shared/smart-cube/orientation';
+import { rotationQuaternionForToken } from '@cuberoot/shared/timer/reconstruct/rotation-detect';
 
 /** Below this the pose is "unchanged" and we skip the render entirely. */
 const STILL_EPS_RAD = 1e-4;
@@ -188,6 +192,8 @@ export interface SimCubeViewProps {
    * costs you the animation. See _lib/cube/sim_log.ts.
    */
   pose?: string;
+  /** Fixed grip already applied to the model; express gyro axes in that grip. */
+  gyroOrientation?: string;
   /** Latest orientation sample, or null/omitted when none has arrived. */
   quat?: Quat | null;
   /**
@@ -271,6 +277,7 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
     allowViewDrag = false,
     moves,
     pose = '',
+    gyroOrientation = '',
     quat,
     quatRef,
     calibrateToken = 0,
@@ -314,6 +321,13 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
   // A ref to the caller's ref — the mount effect runs once, so it must not
   // close over whichever box happened to be passed on the first render.
   const externalQuatRef = useRef(quatRef);
+  const gyroFrame = useMemo(() => gyroOrientation.trim().split(/\s+/).reduce((q, token) => {
+    const rotation = rotationQuaternionForToken(token);
+    // The renderer uses clockwise (negative right-handed) notation and applies
+    // successive written rotations in world order, unlike the detector's table.
+    return rotation ? quatMul(quatConjugate(rotation), q) : q;
+  }, QUAT_IDENTITY), [gyroOrientation]);
+  const gyroFrameRef = useRef(gyroFrame);
 
   // Effect order matters and follows declaration order: the sample lands before
   // the calibration arming below can consume it.
@@ -328,6 +342,7 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
     mirrorRef.current = mirror;
     onReadyRef.current = onReady;
     externalQuatRef.current = quatRef;
+    gyroFrameRef.current = gyroFrame;
   });
 
   // Calibration: capture the live sample the moment the token changes. If none
@@ -393,7 +408,10 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
           // Match DCTimer-BLE: always follow the latest measured pose and use
           // SLERP only to bridge the gaps between BLE samples. Snapping gradual
           // motion to a whole orientation makes the live cube feel stuck.
-          const target = measured;
+          // The child model already contains O. Applying Q directly produces
+          // Q·O and reverses X/Y under z2. Use O·Q·O⁻¹ so the result is O·Q.
+          const frame = gyroFrameRef.current;
+          const target = quatMul(quatMul(frame, measured), quatConjugate(frame));
           // BLE lands at 20-50 Hz, under the 60 fps loop — ease between samples
           // so the cube glides instead of stepping. A slice turn is the one
           // exception that moves the sensor-bearing core itself; keep SLERP but

@@ -59,6 +59,7 @@ import { decodeGyroTrack, sampleGyroAt } from '@cuberoot/shared/smart-cube/gyro-
 import { mirrorForBrand, sensorBasisForBrand } from '@cuberoot/shared/smart-cube/orientation';
 import type { Quat } from '@cuberoot/shared/smart-cube/orientation';
 import { rotationPoseAt } from '@cuberoot/shared/timer/reconstruct/rotation-detect';
+import { buildCoreTrack, coreTrackPoseAt } from '@cuberoot/shared/timer/reconstruct/core-track';
 import type { HumanRotation } from '@cuberoot/shared/timer/reconstruct/humanize';
 import type { ReconTextLine } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import type { SolveMove } from '@cuberoot/shared/timer/reconstruct/stage-segments';
@@ -124,11 +125,16 @@ export default function PlaybackPanel({
   // 解一次就够,别每帧解。空录像 → 没开关。
   const gyroTrack = useMemo(() => decodeGyroTrack(gyro), [gyro]);
   const hasGyro = gyroTrack.length > 0;
+  const calibrated = gyroTrack[0]?.frame === 'scramble';
+  const recordedCore = useMemo(() => calibrated ? buildCoreTrack(gyroTrack, { moves }) : null,
+    [calibrated, gyroTrack, moves]);
   const poseAt = useMemo(() => (
     gyroOn && hasGyro
       ? (tMs: number) => sampleGyroAt(gyroTrack, tMs)
-      : (tMs: number) => rotationPoseAt(rotations ?? [], tMs)
-  ), [gyroOn, hasGyro, gyroTrack, rotations]);
+      : calibrated
+        ? (tMs: number) => coreTrackPoseAt(recordedCore, viewRotation ?? '', tMs)
+        : (tMs: number) => rotationPoseAt(rotations ?? [], tMs)
+  ), [gyroOn, hasGyro, gyroTrack, rotations, calibrated, viewRotation, recordedCore]);
 
   useEffect(() => {
     playbackQuatRef.current = poseAt(playFromRef.current);
@@ -271,7 +277,7 @@ export default function PlaybackPanel({
     ],
     [scramble, moves, idx],
   );
-  const simPose = !posed && viewRotation ? viewRotation : '';
+  const simPose = !calibrated && !posed && viewRotation ? viewRotation : '';
 
   const playLabel = playing
     ? tr({ zh: '暂停', en: 'Pause' })
@@ -322,8 +328,8 @@ export default function PlaybackPanel({
               moves={simMoves}
               pose={simPose}
               quatRef={playbackQuatRef}
-              sensorBasis={posed ? sensorBasisForBrand(deviceModel) : 'identity'}
-              mirror={posed ? mirrorForBrand(deviceModel) : false}
+              sensorBasis={posed && !calibrated ? sensorBasisForBrand(deviceModel) : 'identity'}
+              mirror={posed && !calibrated ? mirrorForBrand(deviceModel) : false}
               // 播放 / 下一步是纯追加,那几手会转给你看;拖时间轴、上一步是跳,瞬切。
               animate={idx !== seekIdx}
               moveDurationTicks={moveDurationTicks}
