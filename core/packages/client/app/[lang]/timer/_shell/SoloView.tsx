@@ -480,6 +480,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       .withOptions({ history: 'replace', clearOnDefault: false }),
   );
   const event: EventId = competition.enabled ? '333' : queryEvent;
+  const supportsSmartCube = timerSupportsSmartCubeAutoTiming(event);
   // 裸 /timer(无 ?event=)→ 用 localStorage 记的上次项目补齐并强制写回 URL;
   // 有 ?event= 时(分享链接 / 收藏)以 URL 为准。
   useEffect(() => {
@@ -1449,7 +1450,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     const history = scrambleHistRef.current;
     const entry = competitionRef.current.enabled ? competitionScrambleEntry : history.list[history.idx];
     if (entry) {
-      scrambleAtStartRef.current = bluetoothCubeRef.current?.status.connected
+      scrambleAtStartRef.current = supportsSmartCube && bluetoothCubeRef.current?.status.connected
         ? timerSmartCubeAttemptScramble(event, entry.scramble, getSettings().preScrT)
         : entry.scramble;
       wcaAtStartRef.current = entry.wca;
@@ -1504,7 +1505,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // ── Bluetooth smart cube ────────────────────────────────────────
   const phaseSnapshotRef = useRef(timer.phase);
   useEffect(() => { phaseSnapshotRef.current = timer.phase; }, [timer.phase]);
-  const smartCubeInputBlocked = useCallback(() => Boolean(bluetoothCubeRef.current?.status.connected || cubeStartedRef.current), []);
+  const smartCubeInputBlocked = useCallback(() => Boolean(
+    (supportsSmartCube && bluetoothCubeRef.current?.status.connected) || cubeStartedRef.current
+  ), [supportsSmartCube]);
   const onPressDown = useCallback((withWarmup = false): boolean => {
     if (competitionRef.current.enabled) return false;
     if (!timerCanHandleAttemptPress(
@@ -1751,7 +1754,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   }), []);
   liveAnchorRef.current = liveAnchor;
   useEffect(() => () => liveAnchor.setConnection(null), [liveAnchor]);
-  const cubeConnected = bluetoothCube.status.connected;
+  const cubeConnected = supportsSmartCube && bluetoothCube.status.connected;
   useEffect(() => {
     if (!cubeConnected) gyroQuatRef.current = null;
     liveAnchor.setConnection(cubeConnected ? bluetoothCube.status.deviceId || bluetoothCube.status.deviceName || 'cube' : null);
@@ -2346,7 +2349,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
 
   // Preserve the user gesture: requestDevice starts in this click handler.
   const connectExternalBluetooth = useCallback(() => {
-    if (mayUseMiniProgramBridge()) {
+    if (!supportsSmartCube || mayUseMiniProgramBridge()) {
       setBluetoothTimerOpen(true);
       const attempt = bluetoothTimer.connect();
       setBluetoothTimerConnectAttempt(attempt);
@@ -2362,15 +2365,22 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     const attempt = connectFromBluetoothModal();
     setBluetoothConnectAttempt(attempt);
     void attempt.catch(() => undefined); // The status dialog displays failures.
-  }, [bluetoothTimer.connect, bluetoothTimer.status.connected, bluetoothCube.status.connected, connectFromBluetoothModal]);
+  }, [supportsSmartCube, bluetoothTimer.connect, bluetoothTimer.status.connected, bluetoothCube.status.connected, connectFromBluetoothModal]);
 
   const connectSmartCubeCenter = useCallback(() => {
+    if (!supportsSmartCube) return;
     setBluetoothOpen(true);
     if (bluetoothCube.status.connected || bluetoothConnectingRef.current) return;
     const attempt = bluetoothCube.connect();
     setBluetoothConnectAttempt(attempt);
     void attempt.catch(() => undefined);
-  }, [bluetoothCube]);
+  }, [supportsSmartCube, bluetoothCube]);
+
+  useEffect(() => {
+    if (supportsSmartCube) return;
+    setBluetoothOpen(false);
+    setDevFakeCubeOpen(false);
+  }, [supportsSmartCube]);
 
   const connectStackmat = useCallback(() => {
     setStackmatOpen(true);
@@ -2440,7 +2450,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     enabled: !competition.enabled && settings.timingEnabled && attemptCanStart && !anyModalOpen
       && (timer.phase === 'idle' || timer.phase === 'inspecting' || timer.phase === 'stopped')
       && (settings.bluetoothAutoReady === 'still' || settings.bluetoothAutoReady === 'double-flick')
-      && bluetoothCube.status.connected,
+      && cubeConnected,
     mode: settings.bluetoothAutoReady === 'double-flick' ? 'double-flick' : 'still',
     onReady: () => {
       if (!getSettings().timingEnabled || anyModalOpenRef.current) return;
@@ -2889,7 +2899,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     scrambleStatus?.retryable === true,
   );
 
-  const bluetoothDialog = bluetoothOpen && (
+  const bluetoothDialog = supportsSmartCube && bluetoothOpen && (
     <BluetoothModal isZh={isZh} cube={bluetoothCube} connectAttempt={bluetoothConnectAttempt}
       onResetGyro={() => setCalibrateNonce(n => n + 1)}
       allowDeviceCalibration={timer.phase === 'idle' || timer.phase === 'stopped'}
@@ -3022,7 +3032,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           <TimerDeviceCenter
             className="shell-topbar-device-center"
             ariaLabel={tr(TIMER_DEVICE_CENTER_LABELS['title'])}
-            items={[...WEB_TIMER_DEVICE_REGISTRY.list().map((device) => device.kind === 'smart-cube'
+            items={[...WEB_TIMER_DEVICE_REGISTRY.list()
+              .filter(device => device.kind !== 'smart-cube' || supportsSmartCube)
+              .map((device) => device.kind === 'smart-cube'
               ? {
                   active: bluetoothCube.status.connected,
                   detail: bluetoothCube.status.connected
@@ -3054,7 +3066,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
                     label: tr(TIMER_DEVICE_CENTER_LABELS['stackmat']),
                     onSelect: connectStackmat,
                   }),
-              ...(DEV_PANEL && settings.showDevFakeCube ? [{
+              ...(supportsSmartCube && DEV_PANEL && settings.showDevFakeCube ? [{
                 id: 'dev-fake-cube',
                 icon: <Box aria-hidden="true" size={15} />,
                 label: tr({ zh: '假魔方', en: 'Fake cube' }),
@@ -3064,7 +3076,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
             menuLabel={tr(TIMER_DEVICE_CENTER_LABELS['menu'])}
             triggerLabel={tr(TIMER_DEVICE_CENTER_LABELS['trigger'])}
           >
-            {DEV_PANEL && settings.showDevFakeCube && (
+            {supportsSmartCube && DEV_PANEL && settings.showDevFakeCube && (
               <DevFakeCubePanel
                 open={devFakeCubeOpen}
                 onClose={() => setDevFakeCubeOpen(false)}
