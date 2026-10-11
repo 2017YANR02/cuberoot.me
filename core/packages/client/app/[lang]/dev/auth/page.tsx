@@ -1,7 +1,7 @@
 'use client';
 
 /* auth-doc-review
-{"fingerprint":"a684804cc07dd0b9fd64655dd3f4e47bbd4be8cef16e60dd4167a067ead896a8","reason":"2026-10-11 新员工入门页与 SSH 申请发布：注册/登录沿用同语言 next 与现有会话，显示本人 UID；网页生成设备密钥，仅提交公钥。仅真实负责人 2017YANR02 能审批，拒绝普通管理员和角色预览；主机专用令牌只读取批准清单与确认生效。Mac 保留旧授权并更新管理区，离线等待；撤销或账号注销在下一次同步移除密钥，既有 SSH 会话不自动终止。新增双语流程说明，保留原账号生命周期。本次按发布清单计算指纹，未包含其他任务的图片问答与计时器修改。 主机系统工具调用新增十秒超时与显式架构契约；不改变批准、授权或移除语义。"}
+{"fingerprint":"4f7d64dc7e1bcdc8ce2501fc18168263fa119d2dbc1d53dfa2f8645ecd0cda53","reason":"开发网址接入复核：本人接入码绑定独立公钥，真实负责人审批，独立工作凭据消费批准队列；域名就绪和电脑在线分开，注销网站账号不代替隧道撤销。已有注册登录、会话及远程 Mac 接入逻辑不变。 2026-10-11 新员工入门页与 SSH 申请发布：注册/登录沿用同语言 next 与现有会话，显示本人 UID；网页生成设备密钥，仅提交公钥。仅真实负责人 2017YANR02 能审批，拒绝普通管理员和角色预览；主机专用令牌只读取批准清单与确认生效。Mac 保留旧授权并更新管理区，离线等待；撤销或账号注销在下一次同步移除密钥，既有 SSH 会话不自动终止。新增双语流程说明，保留原账号生命周期。本次按发布清单计算指纹，未包含其他任务的图片问答与计时器修改。 主机系统工具调用新增十秒超时与显式架构契约；不改变批准、授权或移除语义。"}
 */
 
 import type { ReactNode } from 'react';
@@ -350,6 +350,12 @@ export default function AuthFlowPage() {
           t('成功 → 删除站内账号与对应私有数据、推送设备绑定和队列、解除登录方式；失败 → 展示原因，不宣称已注销', 'Success → delete the site account, covered private data, push device bindings and queues, and sign-in methods. Failure → show the reason, never claim deletion succeeded'),
         ]} /><figcaption>{t('源码已实现立即注销、无恢复期。App 与小程序复用网站入口，不另造删除表单；各端真实注销与会话清理仍须分别验收。', 'Source implements immediate deletion with no grace period. App and Mini Program reuse the website entry, not separate deletion forms; real deletion and session cleanup require per-platform testing.')}</figcaption></figure></section>
       </div>
+      <section aria-labelledby="dev-preview-title"><h3 id="dev-preview-title">{t('开发网址接入', 'Development preview enrollment')}</h3><Steps items={[
+        t('本人登录申请 → 一次性接入码交给本机 AI → 本机生成公钥并绑定申请。', 'Sign in → pass the scoped enrollment ticket to local AI → generate and bind the device public key.'),
+        t('仅真实负责人可批准，角色预览及普通管理员不能批准；独立工作服务令牌只执行已批准队列。', 'Only the real owner can approve; role previews and other admins cannot. A separate worker credential processes only approved requests.'),
+        t('域名和证书发布完成 → 本机取得连接配置 → cuberoot 前台启动 → 另行验收真实网页。网址已配置不等于电脑已连接。', 'Domain and certificate deployed → device receives its profile → cuberoot starts in the foreground → verify the real page. Provisioned does not mean connected.'),
+        t('开发隧道仅可转发分配端口，不授予服务器命令权限。停用电脑须由负责人执行现有 revoke；网站账号注销不代替服务器隧道撤销。', 'The tunnel can only forward its allocated port, with no server shell. The owner uses the existing revoke command to retire a computer; website account deletion does not replace tunnel revocation.'),
+      ]}/></section>
       <section aria-labelledby="remote-access-title"><h3 id="remote-access-title">{t('员工 SSH 接入', 'Staff SSH access')}</h3><Steps items={[
         t('登录入门页 → 浏览器生成设备 Ed25519 密钥并下载私钥；只提交公钥，员工不需要复制密钥。', 'Sign in on onboarding → generate a device Ed25519 key and download the private key; submit only the public key.'),
         t('等待负责人 2017YANR02 明确批准；普通管理员、角色预览与主机同步令牌不能批准。', 'Wait for explicit approval by host owner 2017YANR02; ordinary admins, role previews and the host sync credential cannot approve.'),

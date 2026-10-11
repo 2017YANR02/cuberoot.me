@@ -141,3 +141,17 @@ SSH 限制依据：[OpenSSH sshd_config](https://man.openbsd.org/sshd_config)、
 ### 2026-09-24 实机证据
 
 在管理员 Mac Mini 生成一次性独立密钥，通过真实服务器的 7199 回环端口接回本机 CubeRoot：网页 HTTP 200；shell 请求、其他远端端口 7198、本地转发到服务器 3001 均被拒绝。revoke 后 7199 监听立即关闭，旧密钥重新连接收到 Permission denied。测试客户端已停止，临时私钥/连接文件已清理；服务器保留已撤销的验收账号和 7199 端口记录。未新增测试 DNS，不改变现有三台 FRP。
+
+## 网页申请与自动开通
+
+新员工在 `/zh/account/get-started` 登录后填写姓名/设备标识，点击申请，复制一次配置指令给本机 AI。AI 先按仓库版本检查 Git、Node、pnpm、OpenSSH 和项目依赖，再在 `core/` 执行页面提供的 `node scripts/dev-preview/enroll.ts --ticket …`。接入码仅用于这一台电脑，首次绑定有效期 24 小时；未绑定时可在页面重新生成，旧码立即失效。密钥仍由现有 client.ts 生成，私钥不离开电脑。
+
+绑定公钥后，负责人在同页批准。工作服务复用 cli.ts，按登记→独立 SSH 授权→DNS→HTTP 发布→证书→HTTPS/API/Next 发布执行。设备自动领取公开连接配置并更新同一仓库的 cuberoot 登记，不再传两个 JSON 文件。失败在页面明确显示，负责人可重试；不能因失败更换密钥或绕过审批。注册账号不自动获得审批权。
+
+日常 `cuberoot` 使用前台 runner：终端显示服务日志，网址就绪后打开，Ctrl+C 只停止该次创建的服务。为避免重复启动，这条新接入路径不另装登录自启。原有手动 install 入口仅供明确需要后台常驻的电脑使用。已存在服务不会被擅自关闭；若旧快捷方式启动了后台服务，应由本机 AI 核对所属启动器后迁移。
+
+负责人端：在独立、无其他开发改动的 checkout 运行 `core/scripts/dev-preview/provision.ts`，每次处理一项批准请求。配置文件为 `~/.config/cuberoot-preview/host.json`，权限 600，字段 `checkout`、`token`、`aliyun`（阿里云 CLI 绝对路径）、`dnsProfile`。工作令牌与 API 的 `DEV_PREVIEW_HOST_TOKEN` 对应，不能使用网站会话或普通管理员密钥替代。配置前必须验证该 DNS profile 可管理 **cuberoot.me**；Mira 的 OAuth 身份不能自动视为有权限。
+
+专用 checkout 需要现有管理 SSH、GitHub 推送和 Actions 读取权限。只提交机器清单和两份生成物，保留其他应用改动；运行锁阻止重复执行。必须通过 Actions 发布 nginx/API/Next。失败留下当前申请和部署检查点，先恢复当前申请再处理其他申请；遇到 Git 冲突或已有不同 DNS/密钥时停止，不能强推或覆盖。
+
+启用前须实际验证 DNS 权限、工作服务和 API 令牌。未就绪时不设置生产 `DEV_PREVIEW_HOST_TOKEN`，页面显示“自动开通服务正在准备”，不接受假的开通申请。启用后状态 ready 只表示服务器配置已发布；同事电脑在线启动及网页/JS/CORS 验收仍分别记录。注销网站账号不代替设备撤销，离职需先按现有 revoke 流程停用隧道。

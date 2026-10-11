@@ -24,6 +24,8 @@ const EXACT = new Set([
   'apps/api/src/db/schema.pg.sql', 'apps/api/src/index.ts',
   'apps/api/src/utils/rate_limit.ts',
   'apps/api/src/routes/mcp.ts',
+  'apps/api/src/routes/dev_preview.ts', 'apps/api/migrations/0273_dev_preview_requests.sql',
+  'scripts/dev-preview/enroll.ts', 'scripts/dev-preview/provision.ts',
   'apps/api/src/routes/remote_access.ts', 'apps/api/migrations/0272_remote_access.sql',
   'apps/api/scripts/remote-access-host.ts', 'packages/shared/src/remote-access.ts',
   'packages/client/lib/remote-access-key.ts',

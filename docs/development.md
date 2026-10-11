@@ -92,3 +92,11 @@ pnpm upstream:sync --only algtrainers
 同步 30 个训练器目录 + `src/` + `style/`，为每个训练器注入 `i18n.js`。
 
 > 训练器的 `main.js` 用 `body.outerHTML` 替换 body，MutationObserver 失效。解决方案：注入 `setInterval` 轮询。
+
+### 新同事电脑：交给 AI 安装
+
+让能操作本机的 AI 检查现有安装，只补缺少的项目：Git、仓库根 `.node-version` 指定的 Node.js、`core/package.json` 的 `packageManager` 指定的 pnpm、OpenSSH 客户端（ssh / ssh-keygen）、项目及其 pnpm 依赖。Git 缺失时先用官方安装渠道安装，再克隆仓库；已有仓库保留本地修改。Windows 可使用 Git for Windows 和系统 OpenSSH，Mac 按需安装命令行工具。版本以仓库事实源为准，不抄手册固定值。
+
+AI App 需具备终端和本地文件操作能力；账号登录、系统管理员确认由本人完成，不向 AI 提供密码。普通网页开发不默认安装 Docker、数据库、Rust、完整 Xcode 或 Android Studio；需要原生端/求解器等具体任务时再补。默认开发 API 连接线上。
+
+配置后在新终端输入 `cuberoot`：启动过程和服务日志留在当前终端，服务就绪后打开网址。尚未批准开发域名时使用本地网址；开发网址申请完成后，enroll.ts 自动将同一 checkout 的登记切换为专属网址及前台隧道 runner。不能把“直接打开旧后台服务并返回命令行”当作首次启动验收。已有后台服务需先核对归属，不强制清理其他进程。
