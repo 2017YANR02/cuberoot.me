@@ -6,7 +6,6 @@ import { TIMER_EVENT_PICKER_GROUPS, timerEventIdFromSelector, type EventId } fro
 import { useSearchParams } from 'next/navigation';
 import { parseAsString, useQueryState, useQueryStates } from 'nuqs';
 import { CompactSelect } from '@/components/CompactSelect';
-import BoolToggle from '@/components/BoolToggle';
 import { SettingsPopover } from '@/components/TrainingSettings';
 import { useTrainerSplitScreen } from '@/hooks/useTrainerSplitScreen';
 import { tr } from '@/i18n/tr';
@@ -19,7 +18,7 @@ import { virtualTrainingSessionId } from '@/lib/training-set-metadata';
 import { useSettings, updateSettings } from '../_lib/settings';
 import { selectSessionForEvent } from '../_lib/storage/db';
 
-type PracticeMethod = 'timed' | 'untimed' | 'memo' | 'recognize';
+type PracticeMethod = 'train' | 'memo' | 'recognize';
 
 /** One content identity, with existing timer/trainer engines as its practice methods. */
 export default function TimerTrainingMenu({ currentEvent, disabled = false, showProject = false, onTimerEventChange, sourceControl, settingsOnly = false, onAdvancedSettings, onSettingsOpenChange }: {
@@ -53,7 +52,6 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
   const storePuzzle = useTrainerStore(s => s.puzzle);
   const storeSet = useTrainerStore(s => s.set);
   const storeMode = useTrainerStore(s => s.mode);
-  const storeTiming = useTrainerStore(s => s.timing);
   const storeTimerState = useTrainerStore(s => s.timerState);
   const selectedCount = useTrainerStore(s => trainerPool(s.selected, s.scope).length);
   const room = useTrainerStore(s => s.room);
@@ -79,11 +77,8 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
   // Split/double practice can return to selection just like the trainer's own back link.
   const sourceLocked = navigationDisabled || roomLocked;
   const actualMode = ownsSession && target?.kind === 'alg-run' ? storeMode : params.get('train.mode');
-  const actualTiming = ownsSession && target?.kind === 'alg-run' ? storeTiming
-    : params.has('train.timing') ? params.get('train.timing') === '1' : settings.timingEnabled;
   const method: PracticeMethod = target?.kind === 'recognize' || target?.kind === 'recognize-guide' ? 'recognize'
-    : training && actualMode === 'memo' ? 'memo'
-      : (training ? actualTiming : settings.timingEnabled) ? 'timed' : 'untimed';
+    : training && actualMode === 'memo' ? 'memo' : 'train';
 
   const queryParsers = useMemo(() => {
     const keys = new Set(['training', 'event', 'train.mode', 'train.draw', 'train.timing', 'train.split', 'train.room', 'train.multi']);
@@ -110,10 +105,10 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
     void setNavigation(next);
   };
 
-  const startTimer = (entry: TimerPracticeContent, nextMethod: PracticeMethod, sameContent = true, source?: 'random' | 'manual') => {
+  const startTimer = (entry: TimerPracticeContent, sameContent = true, source?: 'random' | 'manual') => {
     if (!entry.timer) return;
     if (entry.timer.type222) setType222(entry.timer.type222);
-    updateSettings({ timingEnabled: nextMethod !== 'untimed', ...(source ? { scrambleSource: source } : entry.id !== 'solve' ? { scrambleSource: 'random' as const } : {}) });
+    updateSettings({ ...(source ? { scrambleSource: source } : entry.id !== 'solve' ? { scrambleSource: 'random' as const } : {}) });
     navigate(null, entry.timer.event, sameContent);
   };
 
@@ -126,9 +121,9 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
     const nextMode = nextMethod === 'memo' ? 'memo' : drawMode;
     navigate(href, entry.timer?.event ?? event, sameContent, {
       // These belong to the run surface, not its selector, guide or recognition task.
-      'train.split': null, 'train.room': null, 'train.multi': null,
+      'train.split': null, 'train.room': null, 'train.multi': null, 'train.timing': null,
       ...(nextMethod === 'recognize' ? {} : {
-        'train.mode': nextMode, 'train.timing': (nextMethod === 'memo' ? actualTiming : nextMethod === 'timed') ? '1' : '0',
+        'train.mode': nextMode,
         // Recall has its own queue; remember the action drill's draw preference.
         'train.draw': nextMethod === 'memo' ? drawMode : null,
       }),
@@ -139,33 +134,24 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
     const entry = contents.find(item => item.id === id);
     if (!entry) return;
     if (entry.id === content?.id && (!training || isTrainer || target?.kind === 'recognize')) return;
-    const executionMethod = actualTiming ? 'timed' : 'untimed';
-    if (entry.id === 'solve') return startTimer(entry, executionMethod, false);
+    if (entry.id === 'solve') return startTimer(entry, false);
     if (method === 'recognize' && entry.recognizePath) return startTraining(entry, 'recognize', false);
     if (method === 'memo' && entry.runPath) return startTraining(entry, 'memo', false);
-    if (entry.timer && onTimerEventChange) return startTimer(entry, executionMethod, false);
-    if (entry.runPath) return startTraining(entry, executionMethod, false, true);
-    if (entry.timer) return startTimer(entry, executionMethod, false);
+    if (entry.timer && onTimerEventChange) return startTimer(entry, false);
+    if (entry.runPath) return startTraining(entry, 'train', false, true);
+    if (entry.timer) return startTimer(entry, false);
     navigate(entry.path ?? entry.recognizePath ?? null, event, false);
   };
   const chooseMethod = (nextMethod: PracticeMethod) => {
     if (!content || (nextMethod === method && (!training || isTrainer || target?.kind === 'recognize'))) return;
-    if (ownsSession && target?.kind === 'alg-run' && (nextMethod === 'timed' || nextMethod === 'untimed')) {
-      useTrainerStore.getState().setTiming(nextMethod === 'timed');
-      // Rooms/double-bottom keep their own draw mode; timing remains switchable.
-      if (restrictMethod) {
-        void setNavigation({ 'train.timing': nextMethod === 'timed' ? '1' : '0' });
-        return;
-      }
-    }
     if (nextMethod === 'recognize' || nextMethod === 'memo') return startTraining(content, nextMethod, true);
     if (!training && content.timer) {
-      updateSettings({ timingEnabled: nextMethod === 'timed' });
+      startTimer(content);
     } else if (content.runPath) {
       const needsSelection = (target?.kind === 'recognize' || target?.kind === 'recognize-guide')
         && (!ownsSession || selectedCount === 0);
       startTraining(content, nextMethod, true, target?.kind === 'alg-select' || needsSelection);
-    } else startTimer(content, nextMethod);
+    } else startTimer(content);
   };
   const hasPractice = !!(content?.runPath || content?.timer);
   const specialGroups = [...new Map(contents.filter(item => item.group).map(item => [item.group!.id, item.group!])).values()];
@@ -180,9 +166,6 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
   ];
 
   const practiceSettings = hasPractice && method !== 'recognize' && <div className="timer-practice-settings">
-    {method !== 'memo' && <BoolToggle label={tr({ zh: '计时', en: 'Timing' })}
-      value={method === 'timed'} disabled={methodLocked}
-      onChange={timed => chooseMethod(timed ? 'timed' : 'untimed')} />}
     {method === 'memo' && content?.selectPath ? <button type="button" className="timer-practice-settings__action"
       disabled={sourceLocked} onClick={() => startTraining(content, method, true, true)}>
       {tr({ zh: '选择情况', en: 'Choose cases' })}
@@ -200,7 +183,7 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
           onChange={source => {
             if (!content) return;
             if (source === 'cases') startTraining(content, method, true, true);
-            else startTimer(content, method, true, source === 'manual' ? 'manual' : 'random');
+            else startTimer(content, true, source === 'manual' ? 'manual' : 'random');
           }} />}
     </div>}
     {onAdvancedSettings && <button type="button" className="timer-practice-settings__action" onClick={() => {
@@ -255,7 +238,7 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
           ...(content?.recognizePath ? [{ value: 'recognize' as const, label: tr({ zh: '识别', en: 'Recognition' }) }] : []),
           ...(content?.runPath ? [{ value: 'memo' as const, label: tr({ zh: '记忆', en: 'Recall' }) }] : []),
         ]} onChange={task => {
-          chooseMethod(task === 'train' ? actualTiming ? 'timed' : 'untimed' : task);
+          chooseMethod(task);
         }}
       />
     </span>}

@@ -281,6 +281,7 @@ export default function SettingsPanel({ onClose, event, actions, mergeSlotRef, o
             )}
 
         <TimerTimingSettingsSections
+          timingRequired
           active={activeCategory === 'timer'}
           localize={tr}
           onChange={updateSettings}

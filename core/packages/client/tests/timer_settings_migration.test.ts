@@ -36,6 +36,21 @@ async function freshSettings() {
   return import('@/app/[lang]/timer/_lib/settings');
 }
 
+it('keeps Web training timed after loading or updating an old untimed preference', async () => {
+  const mem = installStorage({ [KEY]: JSON.stringify({ timingEnabled: false }) });
+  try {
+    const settings = await freshSettings();
+    expect(settings.getSettings().timingEnabled).toBe(true);
+    expect(JSON.parse(mem.get(KEY)!).timingEnabled).toBe(true);
+    settings.updateSettings({ timingEnabled: false, holdMs: 600 });
+    expect(settings.getSettings().timingEnabled).toBe(true);
+    expect(settings.getSettings().holdMs).toBe(600);
+    expect((await freshSettings()).getSettings().timingEnabled).toBe(true);
+  } finally {
+    vi.unstubAllGlobals();
+  }
+});
+
 it('does not consume a seed position until it is durably stored', async () => {
   const mem = installStorage();
   try {

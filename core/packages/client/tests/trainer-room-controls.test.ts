@@ -72,6 +72,7 @@ let originalKeyboardActions: Pick<ReturnType<typeof useTrainerStore.getState>, '
 const onUrlUpdate = vi.fn();
 let replaceInvite: (code: string | null) => Promise<URLSearchParams>;
 let changePractice: (mode: string, timing: string) => Promise<URLSearchParams>;
+let changeSplit: (value: string | null) => Promise<URLSearchParams>;
 
 beforeEach(() => {
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -108,10 +109,12 @@ async function renderTrainer(hosted: boolean, invite?: string, multi = false, st
   window.history.replaceState({}, '', `${navigation.pathname}?${initial}`);
   function QueryControl() {
     const [, setRoom] = useQueryState(key, parseAsString);
+    const [, setSplit] = useQueryState(trainingQueryKey('split', hosted), parseAsString);
     const [, setPractice] = useQueryStates({ mode: parseAsString, timing: parseAsString }, {
       urlKeys: { mode: trainingQueryKey('mode', hosted), timing: trainingQueryKey('timing', hosted) },
     });
     replaceInvite = setRoom;
+    changeSplit = setSplit;
     changePractice = (mode, timing) => setPractice({ mode, timing });
     return null;
   }
@@ -135,13 +138,40 @@ it('changes hosted practice method in place without replacing the session or its
   const solves = before.solves;
   await act(async () => { await changePractice('memo', '0'); });
   expect(useTrainerStore.getState().mode).toBe('memo');
-  expect(useTrainerStore.getState().timing).toBe(false);
+  expect(useTrainerStore.getState().timing).toBe(true);
   await act(async () => { await changePractice('recap', '1'); });
   expect(useTrainerStore.getState().mode).toBe('recap');
   expect(useTrainerStore.getState().timing).toBe(true);
   expect(useTrainerStore.getState().set).toBe('pll');
   expect(useTrainerStore.getState().selected).toEqual(selected);
   expect(useTrainerStore.getState().solves).toBe(solves);
+});
+
+it('normalizes restored untimed formula training and ignores legacy timing links', async () => {
+  useTrainerStore.getState().setTiming(false);
+  useTrainerStore.getState().setMultiScramble(true);
+  await renderTrainer(true);
+  expect(useTrainerStore.getState().timing).toBe(true);
+  expect(useTrainerStore.getState().multiScramble).toBe(false);
+  await act(async () => { await changePractice('train', '0'); });
+  await vi.waitFor(() => expect(onUrlUpdate.mock.lastCall![0].searchParams.has('train.timing')).toBe(false));
+  expect(useTrainerStore.getState().mode).toBe('train');
+  expect(useTrainerStore.getState().timing).toBe(true);
+  expect(container.querySelector('button[aria-label="Timing"]')).toBeNull();
+  expect(container.querySelector('button[aria-label="计时"]')).toBeNull();
+});
+
+it('leaves completion to split view and restores timed training when leaving it', async () => {
+  vi.stubGlobal('matchMedia', () => ({ matches: true, addEventListener() {}, removeEventListener() {} }));
+  const splitCases = [...cases, { ...cases[0], name: 'B' }];
+  useTrainerStore.getState().loadSession('3x3', 'pll', splitCases);
+  useTrainerStore.getState().setSelected(splitCases.map(caseKey));
+  await renderTrainer(true);
+  expect(useTrainerStore.getState().timing).toBe(true);
+  await act(async () => { await changeSplit('1'); });
+  expect(useTrainerStore.getState().timing).toBe(false);
+  await act(async () => { await changeSplit(null); });
+  expect(useTrainerStore.getState().timing).toBe(true);
 });
 
 it('pauses keyboard timing, next-case shortcuts and formula recall while settings are open', async () => {
@@ -185,11 +215,11 @@ it('pauses keyboard timing, next-case shortcuts and formula recall while setting
   expect(memoryRendered.mock.lastCall?.[0].paused).toBe(false);
 });
 
-it('does not override an active room with a hosted memory or timing request', async () => {
+it('keeps hosted rooms timed without allowing a memory request to replace the room mode', async () => {
   await renderTrainer(true, '0123', true);
   await act(async () => { await changePractice('memo', '1'); });
   expect(useTrainerStore.getState().mode).toBe('recap');
-  expect(useTrainerStore.getState().timing).toBe(false);
+  expect(useTrainerStore.getState().timing).toBe(true);
   expect(useTrainerStore.getState().room?.code).toBe('0123');
 });
 
@@ -232,8 +262,8 @@ it.each([false, true])('joins a four-digit code from the actual input, copies an
 it.each([false, true])('automatically joins each invite when the room changes on the same training page (hosted=%s)', async hosted => {
   await renderTrainer(hosted, '0123', true);
   expect(useTrainerStore.getState().room?.code).toBe('0123');
-  expect(useTrainerStore.getState().timing).toBe(false);
-  expect(useTrainerStore.getState().multiScramble).toBe(true);
+  expect(useTrainerStore.getState().timing).toBe(hosted);
+  expect(useTrainerStore.getState().multiScramble).toBe(!hosted);
   await act(async () => {
     useTrainerStore.getState().setTiming(true);
     useTrainerStore.getState().setMultiScramble(false);
@@ -243,8 +273,8 @@ it.each([false, true])('automatically joins each invite when the room changes on
   await act(async () => { await replaceInvite('4567'); });
   expect(roomApi.getRoom).toHaveBeenLastCalledWith('4567');
   expect(useTrainerStore.getState().room?.code).toBe('4567');
-  expect(useTrainerStore.getState().timing).toBe(false);
-  expect(useTrainerStore.getState().multiScramble).toBe(true);
+  expect(useTrainerStore.getState().timing).toBe(hosted);
+  expect(useTrainerStore.getState().multiScramble).toBe(!hosted);
   expect(roomApi.getRoom).toHaveBeenCalledTimes(2);
 });
 
@@ -263,7 +293,7 @@ it.each([false, true])('retries a warm-session invitation after the StrictMode e
   expect(roomApi.getRoom).toHaveBeenCalledTimes(2);
   expect(roomApi.claimRoomBatch).toHaveBeenCalledOnce();
   expect(useTrainerStore.getState().room?.code).toBe('0123');
-  expect(useTrainerStore.getState().timing).toBe(false);
-  expect(useTrainerStore.getState().multiScramble).toBe(true);
+  expect(useTrainerStore.getState().timing).toBe(hosted);
+  expect(useTrainerStore.getState().multiScramble).toBe(!hosted);
   expect(container.textContent).not.toMatch(/Joining room|正在加入房间/);
 });

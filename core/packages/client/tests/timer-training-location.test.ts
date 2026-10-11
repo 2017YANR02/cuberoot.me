@@ -158,7 +158,7 @@ describe('practice menu availability and transitions', () => {
     expect(trigger('练习方式', 'Practice method').disabled).toBe(row.locked);
     await openSettings();
     expect(practiceType()).toBeNull();
-    expect(trigger('计时', 'Timing').disabled).toBe(row.locked);
+    expect(trigger('计时', 'Timing')).toBeNull();
     expect(trigger('出题来源', 'Question source').disabled).toBe(false);
     const next = await chooseSource('选定情况', 'Selected cases');
     expect(next.get('training')).toBe('/alg/3x3/oll/select');
@@ -191,7 +191,7 @@ describe('practice menu availability and transitions', () => {
     expect(trigger('出题来源', 'Question source').disabled).toBe(true);
     expect(practiceType()).toBeNull();
     expect(trigger('练习方式', 'Practice method').disabled).toBe(true);
-    expect(trigger('计时', 'Timing').disabled).toBe(false);
+    expect(trigger('计时', 'Timing')).toBeNull();
     await act(async () => useTrainerStore.setState({ room: null, timerState: TimerState.RUNNING }));
     await renderMenu('/alg/3x3/oll/run');
     await openSettings();
@@ -205,17 +205,17 @@ describe('practice menu availability and transitions', () => {
     await openSettings();
     expect(trigger('出题来源', 'Question source').disabled).toBe(false);
     expect(trigger('练习方式', 'Practice method').disabled).toBe(true);
-    expect(trigger('计时', 'Timing').disabled).toBe(false);
+    expect(trigger('计时', 'Timing')).toBeNull();
   });
 
-  it.each([true, false])('enters recall without selected cases and retains the timing preference (%s)', async timing => {
+  it.each([true, false])('enters recall without selected cases and discards legacy timing preferences (%s)', async timing => {
     useTrainerStore.setState({ selected: [], timing });
     updateSettings({ timingEnabled: timing });
     await renderMenu(null);
     const entered = await choosePractice('memo');
     expect(entered.get('training')).toBe('/alg/3x3/oll/run');
     expect(entered.get('train.mode')).toBe('memo');
-    expect(entered.get('train.timing')).toBe(timing ? '1' : '0');
+    expect(entered.has('train.timing')).toBe(false);
 
     await act(async () => useTrainerStore.setState({ mode: 'memo' }));
     await renderMenu('/alg/3x3/oll/run', { 'train.mode': 'memo', 'train.timing': timing ? '1' : '0' });
@@ -225,8 +225,8 @@ describe('practice menu availability and transitions', () => {
     const returned = await choosePractice('action');
     expect(returned.get('training')).toBe('/alg/3x3/oll/run');
     expect(returned.get('train.mode')).toBe('recap');
-    expect(returned.get('train.timing')).toBe(timing ? '1' : '0');
-    expect(getSettings().timingEnabled).toBe(timing);
+    expect(returned.has('train.timing')).toBe(false);
+    expect(getSettings().timingEnabled).toBe(true);
   });
 
   it.each(['train', 'recap'] as const)('restores the original draw mode after recall (%s)', async mode => {
@@ -257,7 +257,7 @@ describe('practice menu availability and transitions', () => {
     expect(next.get('trainingAssignment')).toBe('homework');
     expect([...next.keys()].filter(key => key === 'training' || key.startsWith('train.'))).toEqual([]);
     expect(getSettings().scrambleSource).toBe('manual');
-    expect(getSettings().timingEnabled).toBe(false);
+    expect(getSettings().timingEnabled).toBe(true);
   });
 
   it('keeps hosted settings, original controls and dismissal reachable from one toolbar gear', async () => {
