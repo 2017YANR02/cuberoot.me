@@ -65,7 +65,6 @@
     font-weight: 650;
     margin: 0 0 0.75rem;
     padding-bottom: 0.4rem;
-    border-bottom: 1px solid var(--border-default);
 }
 .wcif-section > h3 {
     font-family: 'Roboto Mono', ui-monospace, monospace;

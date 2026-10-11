@@ -6,9 +6,6 @@
   flex-wrap: wrap;
   margin-bottom: 12px;
   padding: 10px 12px;
-  background: var(--card);
-  border: 1px solid var(--border-default);
-  border-radius: 8px;
 }
 
 /* RegionPicker 跟随主题(亮色页是白底),但本控制条 + 舞台是固定深色广播台风格,

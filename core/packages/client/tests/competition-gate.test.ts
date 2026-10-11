@@ -8,6 +8,27 @@ import { safeCompetitionReturn } from '@/lib/competition-return';
 import { COMPETITION_ACCESS_COOKIE, COMPETITION_SERVICE_HEADER, createCompetitionProof, verifyCompetitionProof } from '@cuberoot/shared/competition-access';
 const secret = 'test-only-secret-with-more-than-32-characters';
 afterEach(() => { vi.unstubAllEnvs(); vi.mocked(trafficDefenseEnabled).mockResolvedValue(true); });
+it('redirects old verification links on the server in open mode with a safe uncached destination', async () => {
+  vi.mocked(trafficDefenseEnabled).mockResolvedValue(false);
+  for (const prefix of ['', '/zh', '/en']) {
+    for (const suffix of ['', '/']) {
+      for (const [returnTo, expected] of [
+        ['/zh/timer?event=333#settings', '/zh/timer?event=333#settings'],
+        ['//evil.example', '/'],
+        ['/zh/competition-verify', '/'],
+        ['/api/comp/A', '/'],
+        ['', '/'],
+      ]) {
+        const response = await competitionGate(new NextRequest(`https://cuberoot.me${prefix}/competition-verify${suffix}?returnTo=${encodeURIComponent(returnTo)}`));
+        expect(response?.status).toBe(307);
+        expect(response?.headers.get('location')).toBe('https://cuberoot.me' + expected);
+        expect(response?.headers.get('cache-control')).toBe('private, no-store');
+      }
+    }
+  }
+  vi.mocked(trafficDefenseEnabled).mockResolvedValue(true);
+  expect(await competitionGate(new NextRequest('https://cuberoot.me/zh/competition-verify?returnTo=%2Fzh'))).toBeNull();
+});
 it('opens pages and cached competition proxies without a browser proof when incident protection is off', async () => {
   vi.stubEnv('COMPETITION_ACCESS_SECRET', secret); vi.stubEnv('VERCEL', '1');
   vi.mocked(trafficDefenseEnabled).mockResolvedValue(false);

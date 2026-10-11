@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * 假魔方调试面板 —— dev 专用,生产构建里整个不存在。
+ * 假魔方调试面板 —— 仅管理员主动开启后可用。
  *
  * `_lib/bluetooth/fake_cube.ts` 立起来的那颗假 GAN v4 一直只有控制台入口
  * (`window.__cuberootFakeCube.apply("R U")`)。能用,但每验一件事都要背命令、切
@@ -123,7 +123,7 @@ export default function DevFakeCubePanel(props: DevFakeCubePanelProps): JSX.Elem
    */
   const connect = async () => {
     const f = api();
-    if (!f) { setErr(tr({ zh: '假魔方没装上(生产构建里没有它)', en: 'fake cube not installed (absent in production builds)' })); return; }
+    if (!f) { setErr(tr({ zh: '假魔方未启用', en: 'fake cube is not enabled' })); return; }
     f.arm();
     setConnecting(true);
     setErr(null);

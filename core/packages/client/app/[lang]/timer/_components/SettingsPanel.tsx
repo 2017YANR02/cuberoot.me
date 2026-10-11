@@ -22,7 +22,7 @@ import { exportJson, exportSpeedstacks, importJson, inspectImportJson, listBacku
 import { exportCstimerJson } from '../_lib/storage/export_cstimer';
 import { exportSolvesCsv } from '../_lib/storage/export_csv';
 import { uploadBackup, restoreFromCloud, fetchBackupMeta } from '../_lib/storage/cloud';
-import { getSessionToken, useAuthStore } from '@/lib/auth-store';
+import { getSessionToken, useAuthStore, useIsAdmin } from '@/lib/auth-store';
 import { useRankCountry } from '../_shared/use-rank-country';
 import { reanalyzeAll } from '../_lib/storage/reanalyze';
 import { type EventId } from '../_lib/types';
@@ -120,6 +120,7 @@ export default function SettingsPanel({ onClose, event, actions, mergeSlotRef, o
   const ioMsgTimerRef = useRef<number | null>(null);
 
   // ── Cloud backup state ──
+  const isAdmin = useIsAdmin();
   const user = useAuthStore((st) => st.user);
   const { accountCountry: rankAccountCountry } = useRankCountry();
   const login = useAuthStore((st) => st.login);
@@ -217,6 +218,7 @@ export default function SettingsPanel({ onClose, event, actions, mergeSlotRef, o
     event,
     source: s.scrambleSource,
     development: process.env.NODE_ENV !== 'production',
+    admin: isAdmin,
     signedIn: !!user,
     optimalAvailable,
     roundEnabled: s.round.on,
@@ -297,8 +299,8 @@ export default function SettingsPanel({ onClose, event, actions, mergeSlotRef, o
           {settingState('settings.smart-cube.fake-cube').visible && (
             <BooleanSettingRow
               id="settings.smart-cube.fake-cube"
-              value={s.showDevFakeCube}
-              onChange={(v) => updateSettings({ showDevFakeCube: v })}
+              value={s.showAdminFakeCube}
+              onChange={(v) => updateSettings({ showAdminFakeCube: v })}
             />
           )}
           <TimerSmartCubeSettingsFields value={s} localize={tr} onChange={updateSettings} renderBooleanControl={renderTimingBooleanControl} />

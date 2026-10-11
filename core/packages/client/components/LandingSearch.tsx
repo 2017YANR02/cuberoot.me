@@ -20,7 +20,7 @@ import Link from '@/components/AppLink';
 import { useRouter, useParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import {
-  Plus, Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin,
+  ImagePlus, Plus, Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin,
   CalendarDays, LayoutGrid, Wrench, ArrowRight, ArrowUp, X, Square, Search, Clipboard,
   ScanSearch, BookA, BookOpen, Library, Code as CodeIcon, Mic, Sparkles, type LucideIcon,
 } from 'lucide-react';
@@ -48,9 +48,9 @@ import { useAuthUser, useAuthStore } from '@/lib/auth-store';
 import { authHeaders } from '@/lib/admin-api';
 import { apiUrl } from '@/lib/api-base';
 import SiteAssistantDialog, { SiteAssistantAnswerText, type AssistantTurn } from '@/components/SiteAssistantDialog';
-import { SITE_ASSISTANT_TIMEOUT_MS, readAssistantEvents, type AssistantStreamEvent, type AssistantStatus, type AssistantAnswer, type AssistantErrorCode } from '@cuberoot/shared/site-assistant';
+import { SITE_ASSISTANT_TIMEOUT_MS, readAssistantEvents, type AssistantStreamEvent, type AssistantStatus, type AssistantAnswer, type AssistantErrorCode, type AssistantImage } from '@cuberoot/shared/site-assistant';
 import { ASSISTANT_ERROR_TEXT, assistantResponseError } from '@/lib/site-assistant-errors';
-import { requestSiteAssistant } from '@/lib/site-assistant-request';
+import { requestSiteAssistant, assistantImageHistory } from '@/lib/site-assistant-request';
 import { ALG_PUZZLES, type AlgCase } from '@cuberoot/shared/alg';
 
 // EventIcon inlines all WCA event SVGs (~68KB gzip);only used in recon hits.
@@ -240,6 +240,7 @@ export default function LandingSearch({
   const wrapRef = useRef<HTMLDivElement>(null);
   const [assistantDialog, setAssistantDialog] = useState(false);
   const [assistantDraft, setAssistantDraft] = useState('');
+  const [assistantImages, setAssistantImages] = useState<AssistantImage[]>([]);
   const [assistantTurns, setAssistantTurns] = useState<AssistantTurn[]>([]);
   const assistantRequest = useRef<AbortController | null>(null);
   const [assistantBusy, setAssistantBusy] = useState(false);
@@ -253,6 +254,7 @@ export default function LandingSearch({
     setAssistantBusy(false);
     setAssistantTurns([]);
     setAssistantDraft('');
+    setAssistantImages([]);
     setAssistantAnswer(null);
     setAssistantError(null);
   }, [assistantUser?.uid, assistantUser?.wcaId]);
@@ -268,11 +270,13 @@ export default function LandingSearch({
 
   const stopAssistant = () => { assistantRequest.current?.abort(); assistantRequest.current = null; setAssistantBusy(false); };
   const closeAssistant = useCallback(() => { assistantRequest.current?.abort(); assistantRequest.current = null; setAssistantBusy(false); setAssistantDialog(false); }, []);
-  const askAssistant = async (question = query, replaceLast = false) => {
+  const askAssistant = async (question = query, replaceLast = false, images: AssistantImage[] = []) => {
     question = question.trim();
-    if (!question || question.length > 500 || assistantRequest.current) return;
-    const previous = (replaceLast ? assistantTurns.slice(0, -1) : assistantTurns).filter(turn => turn.result);
-    const nextTurns = [...previous, { question }];
+    if ((!question && !images.length) || question.length > 500 || assistantRequest.current) return;
+    const completed = (replaceLast ? assistantTurns.slice(0, -1) : assistantTurns).filter(turn => turn.result);
+    // Release older attachment bytes without erasing the visible conversation.
+    const previous = completed.map((turn, index) => index < completed.length - 9 && turn.images?.length ? { ...turn, images: undefined, imagesExpired: true } : turn);
+    const nextTurns = [...previous, { question, images }];
     setAssistantTurns(nextTurns);
     setAssistantDialog(true);
     micStop();
@@ -291,8 +295,8 @@ export default function LandingSearch({
     const timeout = setTimeout(() => controller.abort(), SITE_ASSISTANT_TIMEOUT_MS);
     try {
       const response = await requestSiteAssistant(apiUrl('/v1/site-assistant'), {
-        question, lang, timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone,
-        history: previous.filter(turn => !turn.partial).slice(-5).flatMap(turn => [{ role: 'user', content: turn.question }, { role: 'assistant', content: turn.result!.answer }]),
+        question, lang, ...(images.length ? {images} : {}), timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone,
+        history: assistantImageHistory(previous.filter(turn => !turn.partial).slice(-5).flatMap(turn => [{ role: 'user', content: turn.question, ...(turn.images?.length ? {images:turn.images} : {}) }, { role: 'assistant', content: turn.result!.answer }]), images),
       }, {headers: { ...authHeaders(), Accept: 'text/event-stream' },signal: controller.signal});
       if (!response.ok) {
         const failure = await response.json().catch(() => null);
@@ -304,7 +308,7 @@ export default function LandingSearch({
         if (assistantRequest.current !== controller) return;
         const result: AssistantAnswer = { answer: data.answer, actions: data.actions?.filter(action => typeof action.href === 'string' && /^\/(?!\/)/.test(action.href)), artifacts: Array.isArray(data.artifacts) ? data.artifacts : [], sources: data.sources.filter(source => typeof source.href === 'string' && /^\/(?!\/)/.test(source.href)) };
         if (!partial) setAssistantAnswer(result);
-        setAssistantTurns([...previous, { question, result, partial }]);
+        setAssistantTurns([...previous, { question, images, result, partial }]);
       };
       if (response.headers?.get('content-type')?.includes('text/event-stream')) {
         if (!response.body) throw new Error('missing stream');
@@ -578,6 +582,7 @@ export default function LandingSearch({
             aria-label={tr({ zh: '全站搜索', en: 'Site search' })}
           />
 
+          <Tooltip content={tr({zh:'图片提问',en:'Ask with images'})}>{tip=><button {...tip} type="button" className="landing-search-mic" aria-label={tr({zh:'图片提问',en:'Ask with images'})} onClick={()=>{setAssistantDraft(query);setAssistantDialog(true);setPlusMenuOpen(false);}}><ImagePlus size={18}/></button>}</Tooltip>
           {/* allow-manual-search: Dictation only fills speech text; typed search still updates through onChange. */}
           <Tooltip content={tr({ zh: '听写', en: 'Dictate' })}>{(tip) => <button {...tip}
             type="button"
@@ -617,7 +622,7 @@ export default function LandingSearch({
         </p>
       )}
 
-      {assistantDialog && <SiteAssistantDialog lang={lang} draft={assistantDraft} onDraftChange={setAssistantDraft} turns={assistantTurns} status={assistantStatus} busy={assistantBusy} error={assistantError} onAsk={(question, replaceLast) => void askAssistant(question, replaceLast)} onStop={stopAssistant} onClose={closeAssistant} onNew={() => { stopAssistant(); setAssistantDraft(''); setAssistantTurns([]); setAssistantAnswer(null); setAssistantError(null); }} />}
+      {assistantDialog && <SiteAssistantDialog key={`${assistantUser?.uid ?? "guest"}:${assistantUser?.wcaId ?? ""}`} images={assistantImages} onImagesChange={setAssistantImages} lang={lang} draft={assistantDraft} onDraftChange={setAssistantDraft} turns={assistantTurns} status={assistantStatus} busy={assistantBusy} error={assistantError} onAsk={(question, replaceLast, images) => void askAssistant(question, replaceLast, images)} onStop={stopAssistant} onClose={closeAssistant} onNew={() => { stopAssistant(); setAssistantDraft(''); setAssistantImages([]); setAssistantTurns([]); setAssistantAnswer(null); setAssistantError(null); }} />}
 
       {showDropdown && !assistantDialog && (
         <div className="landing-search-panel">

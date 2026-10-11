@@ -250,6 +250,7 @@ export default function DeskPet() {
   // so it survives client-side navigation and keeps ticking across pages.
   const [metronomeOpen, setMetronomeOpen] = useState(false);
   const pathname = usePathname();
+  const showSearch = !/^\/(?:zh|en)?\/?$/.test(pathname || '/');
   const user = useAuthStore((s) => s.user);
   const fbUnread = useFeedbackUnread();
   const isAdmin = hasAdminAccess(user);
@@ -1210,13 +1211,13 @@ export default function DeskPet() {
       {/* Keyboard primer — focused inside the tap gesture so iOS/Android raise
           the soft keyboard before the (async) search input mounts. Must stay a
           real, non-readonly, non-display:none input or the keyboard won't show. */}
-      <input
+      {showSearch && <input
         ref={kbdRef}
         aria-hidden
         tabIndex={-1}
         inputMode="search"
         style={{ position: 'fixed', bottom: 0, left: 0, width: 1, height: 1, opacity: 0, padding: 0, margin: 0, border: 0, fontSize: 16, background: 'transparent', pointerEvents: 'none', zIndex: -1 }}
-      />
+      />}
       <div className={`clawd-deskpet${searchOpen ? ' pet-front' : ''}${touchActionsVisible ? ' touch-actions' : ''}`} data-size={size} data-char={character} data-original={ORIGINAL_CHARACTERS.some(pet => pet.id === character)} data-pixel={THEMES[character].pixel} ref={rootRef}>
         <style>{CSS}</style>
         <AdminTools centerX={VC[character][0]} />
@@ -1284,7 +1285,7 @@ export default function DeskPet() {
           className="clawd-deskpet-hit"
           ref={hitRef}
           aria-hidden
-          title={t('点我搜索 / 拖动', 'click to search · drag')}
+          title={showSearch ? t('点我搜索 / 拖动', 'click to search · drag') : t('点我打开工具栏 / 拖动', 'click for tools · drag')}
           onContextMenu={(e) => e.preventDefault()}
         />
       </div>
@@ -1292,6 +1293,7 @@ export default function DeskPet() {
       {searchOpen && (
         <DeskPetSearch
           lang={curLang}
+          showSearch={showSearch}
           origin={searchOriginRef.current}
           onClose={() => setSearchOpen(false)}
           onOpenPetHome={() => { setSearchOpen(false); setTouchActionsVisible(false); window.location.assign(`${curLang === 'zh' ? '/zh' : ''}/pets?pet=${character}`); }}

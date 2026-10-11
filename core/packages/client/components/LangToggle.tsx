@@ -14,7 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { changeAppLanguage, normalizeAppLang, persistAppLanguage, syncLangToUrl, type AppLang } from '@/i18n/i18n-client';
 
 interface LangToggleProps {
-  variant?: 'inline' | 'fixed';
+  variant?: 'inline' | 'fixed' | 'menu';
   className?: string;
   /** Switch language in place without a route navigation, so a host overlay
    *  (e.g. an open modal) keeps its React state. The choice still persists via
@@ -82,7 +82,7 @@ export default function LangToggle({ variant = 'inline', className, soft = false
     toggle();
   };
 
-  const cls = ['lang-toggle', variant === 'fixed' ? 'lang-toggle--fixed' : '', className ?? '']
+  const cls = [variant === 'menu' ? 'lang-menu-item lang-menu-language' : 'lang-toggle', variant === 'fixed' ? 'lang-toggle--fixed' : '', className ?? '']
     .filter(Boolean)
     .join(' ');
 
@@ -91,12 +91,14 @@ export default function LangToggle({ variant = 'inline', className, soft = false
       <a
         href={targetHref}
         className={cls}
+        role={variant === 'menu' ? 'menuitem' : undefined}
         onClick={onLinkClick}
         title="Language / 语言"
         aria-label={next === 'zh' ? '切换到简体中文' : 'Switch to English'}
       >
-        <TranslateIcon size={14} />
+        {variant !== 'menu' && <TranslateIcon size={14} />}
         {showLabel && <span className="toolbar-label">{tr({ zh: '语言', en: 'Language' })}</span>}
+        {variant === 'menu' && <TranslateIcon size={14} />}
       </a>
     </div>
   );
