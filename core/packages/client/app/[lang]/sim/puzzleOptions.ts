@@ -35,8 +35,101 @@ export const SIM_FIXED_PUZZLE_OPTIONS = [
 // Engine puzzles above + cubing.js PuzzleGeometry puzzles (explore set, rendered
 // via TwistyPlayer — see pgCatalog.ts). The PG entries are appended at runtime so
 // the catalog stays the single source of truth.
-export const ALL_PUZZLE_TYPE_OPTIONS: { value: string; iconClass?: string; textLabel?: string; labelZh: string; labelEn: string }[] = [
+export interface SimPuzzleTypeOption {
+  value: string;
+  iconClass?: string;
+  textLabel?: string;
+  labelZh: string;
+  labelEn: string;
+}
+
+export const ALL_PUZZLE_TYPE_OPTIONS: SimPuzzleTypeOption[] = [
   ...SIM_FIXED_PUZZLE_OPTIONS,
   ...PG_PUZZLES.map((p) => ({ value: p.id, iconClass: p.icon || undefined, textLabel: 'textLabel' in p ? p.textLabel : undefined, labelZh: p.zh, labelEn: p.en })),
 ];
+
+interface SimPuzzleFamily {
+  id: string;
+  labelZh: string;
+  labelEn: string;
+  values: readonly string[];
+}
+
+// Presentation order only. Labels, icons and selection values still come from
+// ALL_PUZZLE_TYPE_OPTIONS. Current WCA choices keep their original relative order.
+const SIM_WCA_PUZZLES = ['nxn', 'sq1', 'pyraminx', 'skewb', 'megaminx', 'clock'] as const;
+
+const SIM_PUZZLE_FAMILIES: readonly SimPuzzleFamily[] = [
+  {
+    id: 'minx', labelZh: '五魔系列', labelEn: 'Minx family',
+    values: ['kilominx', 'gigaminx', 'teraminx', 'petaminx', 'examinx', 'zetaminx', 'yottaminx',
+      'pentultimate', 'masterpentultimate', 'elitepentultimate', 'starminx', 'starminx2',
+      'starminxcombo', 'pyraminxcrystal', 'masterbrilic', 'chopasaurus', 'megaminxchopasaurus', 'bigchop'],
+  },
+  {
+    id: 'tetrahedron', labelZh: '金字塔与魔金', labelEn: 'Tetrahedral puzzles',
+    values: ['masterpyraminx', 'professorpyraminx', 'royalpyraminx', 'emperorpyraminx',
+      'pyraminx_duo', 'jingpyraminx', 'tetraminx', 'mastertetraminx', 'professortetraminx',
+      'royaltetraminx', 'emperortetraminx', 'pyramorphix', 'mastermorphix', 'masterpyramorphix'],
+  },
+  { id: 'square', labelZh: 'Square 系列', labelEn: 'Square family', values: ['sq2', 'sq4'] },
+  {
+    id: 'corner-turning', labelZh: '斜转与角转', labelEn: 'Skewb & corner-turning',
+    values: ['masterskewb', 'professorskewb', 'ivy', 'dino', 'redi', 'rex', 'compycube', 'dinoskewb', 'lattice'],
+  },
+  {
+    id: 'edge-turning', labelZh: '直升机与棱转', labelEn: 'Helicopter & edge-turning',
+    values: ['heli', 'curvycopter', 'littlechop'],
+  },
+  {
+    id: 'octahedron', labelZh: 'FTO 与八面体', labelEn: 'FTO & octahedra',
+    values: ['fto', 'masterfto', 'masterftov2', 'skewbdiamond', 'christophersjewel',
+      'trajbersoctahedron', 'octahedron4', 'octastar'],
+  },
+  {
+    id: 'icosahedron', labelZh: '二十面体', labelEn: 'Icosahedra',
+    values: ['radiochop', 'eitansstar', 'icosamate', 'astrominx', 'astrominxbigchop',
+      'icosaminx', 'redicosahedron', 'redicosahedroncenters', 'dogic'],
+  },
+  {
+    id: 'shape-mods', labelZh: '镜面与外形', labelEn: 'Mirror & shape mods',
+    values: ['mirror2', 'mirror', 'ghost', 'sphere'],
+  },
+  {
+    id: 'hybrid-cuts', labelZh: '组合切割', labelEn: 'Combined cuts',
+    values: ['cube2dino', 'cube3dino', 'cube2littlechop', 'dinolittlechop',
+      'cube2dinolittlechop', 'superz', 'hyperx', 'latticex'],
+  },
+  { id: 'magic', labelZh: '连板', labelEn: 'Magic family', values: ['magic', 'mmagic'] },
+];
+
+export interface SimPuzzleMenuGroup {
+  id: string;
+  labelZh: string;
+  labelEn: string;
+  submenu: boolean;
+  options: SimPuzzleTypeOption[];
+}
+
+/** Filter the real catalog first, then omit empty families. New uncategorized
+ * entries stay reachable under Other instead of silently disappearing. */
+export function groupSimPuzzleOptions(allowedValues?: readonly string[]): SimPuzzleMenuGroup[] {
+  const allowed = allowedValues && new Set(allowedValues);
+  const options = ALL_PUZZLE_TYPE_OPTIONS.filter(option => !allowed || allowed.has(option.value));
+  const byId = new Map(options.map(option => [option.value, option]));
+  const take = (values: readonly string[]) => values.flatMap(value => {
+    const option = byId.get(value);
+    return option ? [option] : [];
+  });
+  const groups: SimPuzzleMenuGroup[] = [
+    { id: 'wca', labelZh: 'WCA 项目', labelEn: 'WCA events', submenu: false, options: take(SIM_WCA_PUZZLES) },
+    ...SIM_PUZZLE_FAMILIES.map(({ values, ...family }) => ({ ...family, submenu: true, options: take(values) })),
+  ];
+  const categorized = new Set(groups.flatMap(group => group.options.map(option => option.value)));
+  groups.push({
+    id: 'other', labelZh: '其他', labelEn: 'Other', submenu: false,
+    options: options.filter(option => !categorized.has(option.value)),
+  });
+  return groups.filter(group => group.options.length > 0);
+}
 

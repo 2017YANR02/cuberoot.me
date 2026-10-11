@@ -1,0 +1,81 @@
+// @vitest-environment jsdom
+
+import { act, createElement } from 'react';
+import { createRoot, type Root } from 'react-dom/client';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import PuzzlePicker, { type PuzzlePickerGroup } from '@/components/PuzzlePicker/PuzzlePicker';
+
+vi.mock('next/navigation', () => ({ useParams: () => ({ lang: 'en' }) }));
+vi.mock('@/i18n/tr', () => ({ tr: (message: { en: string }) => message.en }));
+
+const groups: PuzzlePickerGroup[] = [
+  { id: 'wca', label: 'WCA events', items: [{ id: 'nxn', label: 'NxN', iconClass: 'event-333' }] },
+  { id: 'families', label: 'Series', items: [{
+    id: 'minx-family', label: 'Minx family', iconClass: 'event-minx', children: [
+      { id: 'kilominx', label: 'Kilominx', iconClass: 'unofficial-kilominx' },
+      { id: 'gigaminx', label: 'Gigaminx', iconClass: 'puzzle-gigaminx' },
+    ],
+  }] },
+];
+
+let host: HTMLDivElement;
+let root: Root;
+beforeEach(() => {
+  (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+  vi.spyOn(window, 'requestAnimationFrame').mockImplementation(callback => { callback(0); return 1; });
+  host = document.createElement('div');
+  document.body.appendChild(host);
+  root = createRoot(host);
+});
+afterEach(async () => {
+  await act(async () => root.unmount());
+  host.remove();
+  vi.restoreAllMocks();
+});
+
+it('uses the shared submenu for families while WCA choices remain directly selectable', () => {
+  const onSelect = vi.fn();
+  act(() => root.render(createElement(PuzzlePicker, { groups, selectedEvent: 'nxn', onSelect })));
+  const trigger = host.querySelector<HTMLButtonElement>('.pp-trigger')!;
+  act(() => trigger.click());
+  const parentItems = [...host.querySelectorAll<HTMLButtonElement>('.pp-cascade-column > .pp-group .pp-item')];
+  expect(parentItems.map(item => item.textContent)).toEqual(['NxN', 'Minx family']);
+  expect(host.querySelector('.pp-cascade-options')).toBeNull();
+  act(() => parentItems[1].click());
+  expect(onSelect).not.toHaveBeenCalled();
+  const child = [...host.querySelectorAll<HTMLButtonElement>('.pp-cascade-options .pp-item')]
+    .find(item => item.textContent?.includes('Gigaminx'))!;
+  act(() => child.click());
+  expect(onSelect).toHaveBeenCalledExactlyOnceWith('gigaminx');
+  expect(host.querySelector('.pp-popup')).toBeNull();
+  expect(document.activeElement).toBe(trigger);
+  act(() => trigger.click());
+  act(() => host.querySelector<HTMLButtonElement>('.pp-item')!.click());
+  expect(onSelect).toHaveBeenLastCalledWith('nxn');
+});
+
+it('shows the selected leaf and returns from the second level before closing the menu', () => {
+  act(() => root.render(createElement(PuzzlePicker, { groups, selectedEvent: 'kilominx', onSelect: vi.fn() })));
+  const trigger = host.querySelector<HTMLButtonElement>('.pp-trigger')!;
+  expect(trigger.getAttribute('aria-label')).toBe('Kilominx');
+  act(() => trigger.click());
+  const family = host.querySelector<HTMLButtonElement>('.pp-item[aria-haspopup="menu"]')!;
+  act(() => family.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })));
+  expect(host.querySelector('.pp-cascade-options')).not.toBeNull();
+  act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+  expect(host.querySelector('.pp-cascade-options')).toBeNull();
+  expect(host.querySelector('.pp-popup')).not.toBeNull();
+  expect(document.activeElement).toBe(family);
+  act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+  expect(host.querySelector('.pp-popup')).toBeNull();
+  expect(document.activeElement).toBe(trigger);
+});
+
+it('preserves a text-only trigger when the caller disables item icons', () => {
+  act(() => root.render(createElement(PuzzlePicker, {
+    groups, selectedEvent: 'kilominx', onSelect: vi.fn(), showItemIcons: false,
+  })));
+  const trigger = host.querySelector<HTMLButtonElement>('.pp-trigger')!;
+  expect(trigger.querySelector('.pp-trigger-label')?.textContent).toBe('Kilominx');
+  expect(trigger.querySelector('.pp-trigger-icon')).toBeNull();
+});

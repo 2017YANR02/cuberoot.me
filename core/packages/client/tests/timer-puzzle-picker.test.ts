@@ -81,6 +81,66 @@ describe('shared timer puzzle picker', () => {
     expect(document.activeElement).toBe(trigger);
   });
 
+  it('shows the selected child icon and name while keeping its family active', () => {
+    const onSelect = vi.fn();
+    const groups = [{ id: 'families', label: 'Families', items: [{
+      id: 'minxes', label: 'Minxes', iconClass: 'event-minx', children: [
+        { id: 'kilominx', label: 'Kilominx', iconClass: 'unofficial-kilominx' },
+        { id: 'master-kilominx', label: 'Master Kilominx', textLabel: '4×4' },
+      ],
+    }] }];
+    const render = (selectedEvent: string, showItemIcons = true) => act(() => root.render(createElement(TimerPuzzlePicker, {
+      groups, selectedEvent, onSelect, showItemIcons, puzzleLabel: 'Puzzle',
+    })));
+    render('kilominx');
+    const trigger = host.querySelector<HTMLButtonElement>('.pp-trigger')!;
+    expect(trigger.getAttribute('aria-label')).toBe('Kilominx');
+    expect(trigger.querySelector('.unofficial-kilominx svg')).not.toBeNull();
+    expect(trigger.querySelector('.event-minx')).toBeNull();
+
+    act(() => trigger.click());
+    const family = host.querySelector<HTMLButtonElement>('.pp-item')!;
+    expect(family.classList.contains('pp-item--active')).toBe(true);
+    expect(family.getAttribute('aria-current')).toBe('page');
+    act(() => family.click());
+    expect(onSelect).not.toHaveBeenCalled();
+    const options = host.querySelectorAll<HTMLButtonElement>('.pp-cascade-options button');
+    expect(options[0].querySelector('.unofficial-kilominx svg')).not.toBeNull();
+    expect(options[0].getAttribute('aria-current')).toBe('page');
+    expect(options[1].querySelector('.pp-item-tag')?.textContent).toBe('4×4');
+    act(() => options[1].click());
+    expect(onSelect).toHaveBeenCalledExactlyOnceWith('master-kilominx');
+    expect(host.querySelector('.pp-popup')).toBeNull();
+    expect(document.activeElement).toBe(trigger);
+
+    render('master-kilominx', false);
+    expect(trigger.getAttribute('aria-label')).toBe('Master Kilominx');
+    expect(trigger.querySelector('.pp-item-tag')?.textContent).toBe('4×4');
+    act(() => trigger.click());
+    act(() => host.querySelector<HTMLButtonElement>('.pp-item')!.click());
+    expect(host.querySelectorAll('.pp-cascade-options .pp-item-icon')).toHaveLength(0);
+  });
+
+  it('uses a child name without inventing an icon from its formula path', () => {
+    act(() => root.render(createElement(TimerPuzzlePicker, {
+      groups: [{ id: 'training', label: 'Puzzle', items: [{
+        id: '333', label: '3×3', children: [
+          { id: '/alg/3x3/oll/select', label: 'OLL' },
+        ],
+      }] }],
+      onSelect: vi.fn(), puzzleLabel: 'Puzzle', selectedEvent: '/alg/3x3/oll/select',
+    })));
+    const trigger = host.querySelector<HTMLButtonElement>('.pp-trigger')!;
+    expect(trigger.getAttribute('aria-label')).toBe('OLL');
+    expect(trigger.querySelector('.pp-trigger-label')?.textContent).toBe('OLL');
+    expect(trigger.querySelector('.pp-item-tag')).toBeNull();
+    act(() => trigger.click());
+    act(() => host.querySelector<HTMLButtonElement>('.pp-item')!.click());
+    const choice = host.querySelector('.pp-cascade-options .pp-item')!;
+    expect(choice.textContent).toBe('OLL');
+    expect(choice.querySelector('.pp-item-icon')).toBeNull();
+  });
+
   it('opens formula choices without selecting the project and restores focus between levels', () => {
     const onSelect = vi.fn();
     act(() => root.render(createElement(TimerPuzzlePicker, {
@@ -95,15 +155,19 @@ describe('shared timer puzzle picker', () => {
       triggerLabel: 'Training',
       submenuLabel: 'Algorithms',
       showItemIcons: false,
-      selectedEvent: '',
+      selectedEvent: '/alg/3x3/pll/select',
     })));
     const trigger = host.querySelector<HTMLButtonElement>('.pp-trigger')!;
+    expect(trigger.getAttribute('aria-label')).toBe('Training');
+    expect(trigger.querySelector('.pp-trigger-label')?.textContent).toBe('Training');
+    expect(trigger.querySelector('.pp-trigger-icon')).toBeNull();
     act(() => trigger.click());
     const puzzle = host.querySelector<HTMLButtonElement>('.pp-item')!;
     act(() => puzzle.click());
     expect(onSelect).not.toHaveBeenCalled();
     expect(puzzle.getAttribute('aria-expanded')).toBe('true');
     expect(document.activeElement?.textContent).toBe('OLL');
+    expect(host.querySelectorAll('.pp-cascade-options .pp-item-icon')).toHaveLength(0);
     act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
     expect(host.querySelector('.pp-cascade-options')).toBeNull();
     expect(host.querySelector('.pp-popup')).not.toBeNull();
