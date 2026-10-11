@@ -322,6 +322,7 @@ it('keeps Dino Octa and uniform five-layer FTO distinct from existing FTO varian
 
 type Position = Awaited<ReturnType<TwistyPlayer['experimentalModel']['legacyPosition']['get']>>;
 type PlayerObject = Awaited<ReturnType<TwistyPlayer['experimentalCurrentThreeJSPuzzleObject']>>;
+type PlayerVantage = Awaited<ReturnType<TwistyPlayer['experimentalCurrentVantages']>> extends Iterable<infer Vantage> ? Vantage : never;
 type AnimatedPG = PlayerObject & {
   movingObj: Pick<PlayerObject, 'quaternion'>;
   onPositionChange(position: Position): void;
@@ -330,14 +331,52 @@ type AnimatedPG = PlayerObject & {
 };
 const players: TwistyPlayer[] = [];
 const animations: AnimatedPG[] = [];
+const detachedVantages: PlayerVantage[] = [];
 const originalAdoptedStyleSheets = Object.getOwnPropertyDescriptor(ShadowRoot.prototype, 'adoptedStyleSheets');
-afterEach(() => {
-  for (const player of players.splice(0)) { player.pause(); player.remove(); }
+afterEach(async () => {
+  const retiredPlayers = players.splice(0);
+  for (const player of retiredPlayers) { player.pause(); player.remove(); }
+  const scenes = new Set<NonNullable<PlayerVantage['scene']>>();
+  for (const vantage of detachedVantages.splice(0)) {
+    const scene = vantage.scene;
+    expect(scene).not.toBeNull();
+    if (!scene) continue;
+    // Removing DOM nodes does not remove these views from the scene's render
+    // list. removeVantage also disconnects the real puzzle wrapper's listeners.
+    scene.removeVantage(vantage);
+    scenes.add(scene);
+  }
+  for (const scene of scenes) {
+    scene.disconnect();
+    expect([...scene.experimentalVantages()]).toHaveLength(0);
+  }
   for (const animation of animations.splice(0)) animation.dispose();
   if (originalAdoptedStyleSheets) Object.defineProperty(ShadowRoot.prototype, 'adoptedStyleSheets', originalAdoptedStyleSheets);
   else delete (ShadowRoot.prototype as Partial<ShadowRoot>).adoptedStyleSheets;
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
+  if (retiredPlayers.length) {
+    // Exercise late model notifications with the real RAF restored. The old
+    // teardown reproduced the CI rejection here: an orphaned vantage attempted
+    // to create WebGL after its player's test had already passed.
+    const getContext = vi.spyOn(HTMLCanvasElement.prototype, 'getContext');
+    try {
+      for (const player of retiredPlayers) {
+        player.hintFacelets = 'none';
+        player.backView = 'top-right';
+        await Promise.all([
+          player.experimentalModel.twistySceneModel.hintFacelet.get(),
+          player.experimentalModel.backView.get(),
+        ]);
+      }
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      for (const scene of scenes) expect([...scene.experimentalVantages()]).toHaveLength(0);
+      expect(getContext).not.toHaveBeenCalled();
+    } finally {
+      getContext.mockRestore();
+    }
+  }
 });
 
 it.each([CASES[0], CASES[3]])('$id renders opposite half-turn paths at the real middle frame', async (spec) => {
@@ -361,7 +400,10 @@ it.each([CASES[0], CASES[3]])('$id renders opposite half-turn paths at the real 
   });
   const appendChild = Node.prototype.appendChild;
   vi.spyOn(Node.prototype, 'appendChild').mockImplementation(function<T extends Node>(this: Node, child: T): T {
-    if (child instanceof Element && child.localName === 'twisty-3d-vantage') return child;
+    if (child instanceof Element && child.localName === 'twisty-3d-vantage') {
+      detachedVantages.push(child as unknown as PlayerVantage);
+      return child;
+    }
     return appendChild.call(this, child) as T;
   });
   const player = new TwistyPlayer({ experimentalPuzzleDescription: NATIVE_PUZZLES[spec.id].description, controlPanel: 'none' });
