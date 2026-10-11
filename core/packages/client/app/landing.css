@@ -28,7 +28,7 @@
     flex-direction: column;
     align-items: center;
     /* PWA standalone 下顶/左/右让位刘海/灵动岛,见 index.css 的 --sat/--sar/--sal */
-    padding: calc(4rem + var(--sat)) max(2rem, var(--sar)) calc(2rem + var(--sab)) max(2rem, var(--sal));
+    padding: calc(4rem + var(--sat)) max(2rem, var(--sar)) calc(7rem + var(--sab)) max(2rem, var(--sal));
     box-sizing: border-box;
     position: relative;   /* 锚定右上角 auth 入口 */
 }
@@ -222,6 +222,19 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
 /* ── full-width hero 卡片(顶层入口,在 SECTIONS 之上) ── */
 /* hero 卡由同一个外壳统一排布。两个子分组不生成盒子，
    卡片直接成为外壳的格子项。 */
+.landing-page .landing-training-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    width: 100%;
+    max-width: 1100px;
+    margin-bottom: 2rem;
+}
+@media (max-width: 900px) {
+    .landing-page .landing-training-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
 .landing-page .hero-grids {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -231,12 +244,37 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     margin-bottom: 3rem;
 }
 
-/* 搜索框下方的首页焦点新闻。数据复用 page_notices；整行是真链接，便于中键新开。 */
-.landing-page .landing-search:has(+ .landing-featured-news) {
-    margin-bottom: 0.7rem;
+/* Homepage search floats above the bottom safe area; other search hosts keep
+   their own layout. Reserve page padding so the footer remains reachable. */
+.landing-page > .landing-search {
+    position: fixed;
+    inset: auto max(16px, var(--sar)) calc(2.5rem + var(--sab)) max(16px, var(--sal));
+    z-index: 30;
+    width: auto;
+    max-width: 600px;
+    margin: 0 auto;
 }
-.landing-page .landing-search:has(+ .wp-upcoming-card) {
-    margin-bottom: 1rem;
+
+/* Keep microphone/error messages out of the bottom-anchored bar's height. */
+.landing-page > .landing-search .landing-search-speech-status {
+    /* anchored-panel: safe (2rem message + 0.5rem gap fit the 2.5rem bottom inset). */
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    left: 1rem;
+    right: 1rem;
+    margin: 0;
+    max-height: 2rem;
+    overflow-y: auto;
+    overflow-wrap: anywhere;
+}
+
+.landing-page > .landing-search .landing-search-panel,
+.landing-page > .landing-search .landing-search-plus-menu {
+    /* anchored-panel: safe (bottom-fixed host; panels open upward within the viewport). */
+    top: auto;
+    bottom: calc(100% + 0.5rem);
+    max-height: min(60dvh, calc(100dvh - 10rem - var(--sat) - var(--sab)));
+    overflow-y: auto;
 }
 .landing-page > .wp-upcoming-card {
     width: 100%;
@@ -726,7 +764,7 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
 
 @media (max-width: 640px) {
     .landing-page {
-        padding: 3rem 1rem 1.5rem;
+        padding: 3rem max(1rem, var(--sar)) calc(7rem + var(--sab)) max(1rem, var(--sal));
     }
     .landing-page .cards-container {
         grid-template-columns: repeat(2, 1fr);

@@ -11,7 +11,8 @@
  * (zbls 集 / zbll+pll 集)——单一数据源,这里不复制公式。
  */
 import { useMemo } from 'react';
-import { useQueryState, parseAsInteger, parseAsString } from 'nuqs';
+import { parseAsInteger, parseAsString } from 'nuqs';
+import { useTrainingQueryState as useQueryState } from '@/lib/training-host';
 import Link from '@/components/AppLink';
 import { tr, T } from '@/i18n/tr';
 import { FaceletsCube } from '@/components/FaceletsCube';

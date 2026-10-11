@@ -8,11 +8,12 @@ import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
  *
  * 本路由是**静态哨兵壳**(page.tsx 只预渲染 `_/_/_`,next.config rewrite 把所有真实
  * URL 引到它),所以 `useParams` 拿到的是 `_` 占位,真实 puzzle/set/seg 从 window.location 读。
+ * 计时器宿主提供原训练路径及标准化参数；项目别名以宿主解析结果为准。
  * 整个 set 只加载一次:是子组就交给 {@link AlgCategoryView}(把已加载的数据当 initialData 传下去,
  * 不再拉),是 case 就交给 {@link AlgCaseView}。
  */
 import { useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { useTrainingPathname as usePathname, useTrainingHost } from '@/lib/training-host';
 import type { AlgFile, AlgPuzzle } from '@cuberoot/shared/alg';
 import { loadAlg } from '@/lib/alg_case_alignment';
 import AlgCategoryView from '@/components/AlgCategoryView';
@@ -23,19 +24,27 @@ import { tr } from '@/i18n/tr';
 import { useIsAdmin } from '@/lib/auth-store';
 import '../../../alg.css';
 
+function firstParam(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
+
 export default function AlgSubOrCaseClient() {
   const pathname = usePathname();
+  const trainingHost = useTrainingHost();
+  const hostPuzzle = firstParam(trainingHost?.params.puzzle);
+  const hostSet = firstParam(trainingHost?.params.set);
+  const hostSubgroup = firstParam(trainingHost?.params.subgroup);
   const isAdmin = useIsAdmin();
   const [route, setRoute] = useState<{ puzzle: string; set: string; slug: string; edit: boolean } | null>(null);
   useEffect(() => {
-    const m = window.location.pathname.match(/\/alg\/([^/]+)\/([^/]+)\/([^/?#]+)(?:\/(edit))?\/?$/);
+    const m = (trainingHost?.path ?? window.location.pathname).match(/\/alg\/([^/]+)\/([^/]+)\/([^/?#]+)(?:\/(edit))?\/?$/);
     setRoute(m ? {
-      puzzle: decodeURIComponent(m[1]),
-      set: decodeURIComponent(m[2]),
-      slug: decodeURIComponent(m[3]),
+      puzzle: hostPuzzle ?? decodeURIComponent(m[1]),
+      set: hostSet ?? decodeURIComponent(m[2]),
+      slug: hostSubgroup ?? decodeURIComponent(m[3]),
       edit: m[4] === 'edit',
     } : null);
-  }, [pathname]);
+  }, [pathname, trainingHost?.path, hostPuzzle, hostSet, hostSubgroup]);
   const puzzle = route?.puzzle ?? '';
   const set = route?.set ?? '';
   const slug = route?.slug ?? '';

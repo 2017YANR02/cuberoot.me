@@ -4,7 +4,7 @@
  * 模型 (migration 0026):
  *   - article:        markdown + 自定义指令正文 (source of record)。published_at NULL = 草稿;
  *                     deleted_at = 软删。owner_wca_id/owner_name 创建时快照。
- *   - article_image:  配图 BYTEA,经 GET /article/img/:id 公开服务 (immutable + nginx cache)。
+ *   - article_image:  配图 BYTEA,经 GET /article/img/:id 公开服务 (immutable browser cache)。
  *
  * 鉴权:
  *   - 列表/单篇读已发布 = 公开;草稿仅 owner/admin。
@@ -14,10 +14,11 @@
  * 错误经 throw new Error(msg);全局 onError 按关键词推 HTTP code
  * (Authentication→401, Cannot→403, Rate limit→429, Validation/invalid→400)。
  */
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
 import { getIp } from '../utils/analytics_helpers.js';
 import { bodyLimit } from 'hono/body-limit';
 import { query } from '../db/connection.js';
+import { canThumbnailWebp, imageThumbnail, THUMBNAIL_WIDTHS } from '../utils/image_thumbnail.js';
 import { apiOrigin } from '../utils/api_origin.js';
 import {
   requireAuth,
@@ -174,9 +175,15 @@ articleRoutes.get('/article/me', async (c) => {
   });
 });
 
-// GET /v1/article/img/:id — 公开服务 bytea (no auth)。immutable 长缓存。
+// GET /v1/article/img/:id — 公开服务 bytea (no auth)。原图/稳定缩略图 immutable；临时转换失败 no-store。
 // NOTE: 放在 /article/:slug 之前,否则 '/article/img/:id' 会被 :slug 吞掉。
-articleRoutes.get('/article/img/:id', async (c) => {
+async function serveArticleImage(c: Context) {
+  const widthParam = c.req.param('width');
+  const width = Number(widthParam);
+  if (widthParam !== undefined && (!THUMBNAIL_WIDTHS.has(width) || c.req.query('v') !== '1')) {
+    c.header('Cache-Control', 'no-store');
+    return c.json({ error: 'Unsupported thumbnail variant' }, 404);
+  }
   const id = Number(c.req.param('id'));
   if (!Number.isFinite(id)) return c.json({ error: 'invalid id' }, 400);
 
@@ -188,10 +195,21 @@ articleRoutes.get('/article/img/:id', async (c) => {
 
   const r = rows[0];
   const buf = r.data instanceof Uint8Array ? r.data : Uint8Array.from(r.data as unknown as number[]);
+  if (THUMBNAIL_WIDTHS.has(width) && c.req.query('v') === '1' && canThumbnailWebp(Buffer.from(buf), r.mime)) {
+    const thumbnail = await imageThumbnail(id, Buffer.from(buf), r.mime, width);
+    c.header('Content-Type', thumbnail ? 'image/webp' : r.mime);
+    // A busy/missing encoder is temporary; never cache that fallback for a year.
+    c.header('Cache-Control', thumbnail ? 'public, max-age=31536000, immutable' : 'no-store');
+    return c.body((thumbnail ?? buf) as unknown as ArrayBuffer);
+  }
   c.header('Content-Type', r.mime);
   c.header('Cache-Control', 'public, max-age=31536000, immutable');
   return c.body(buf as unknown as ArrayBuffer);
-});
+}
+articleRoutes.get('/article/img/:id', serveArticleImage);
+// A distinct URL makes an older API return 404 instead of caching an unresized
+// original under a future thumbnail URL for a year during a rolling release.
+articleRoutes.get('/article/img/:id/thumb/:width', serveArticleImage);
 
 // GET /v1/article/reports — admin 审核列表 (requireAdmin)。
 // NOTE: 必须在 /article/:slug 之前注册,否则 'reports' 会被当成 slug 命中。

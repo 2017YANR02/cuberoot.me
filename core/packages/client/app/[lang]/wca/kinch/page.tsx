@@ -1,5 +1,6 @@
 'use client';
 
+import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { parseAsString, useQueryStates } from 'nuqs';
 import type { WcaPersonLite } from '@/lib/wca-api';
@@ -229,7 +230,7 @@ function KinchPageInner() {
                       href={`/wca/kinch?wcaId=${encodeURIComponent(row.wcaId)}${country ? `&country=${encodeURIComponent(country)}` : ''}`}
                       prefetch={false}
                     >
-                      {displayCuberName(row.name, isZh)}
+                      {displayCuberName(row.name, isZh)}<WcaPersonTeamBadge wcaId={row.wcaId} />
                     </AppLink>
                     <span className="kinch-person-id">{row.wcaId}</span>
                   </td>

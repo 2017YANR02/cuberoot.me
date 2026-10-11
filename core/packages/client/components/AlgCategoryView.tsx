@@ -15,7 +15,8 @@ import '@cuberoot/timer-ui/compact-select.css';
  * per-case ori cycle, grouped case sections, sticker/setup/HTML alg rendering.
  */
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
-import { useQueryState, useQueryStates, parseAsBoolean, parseAsInteger, parseAsStringEnum } from 'nuqs';
+import { parseAsBoolean, parseAsInteger, parseAsStringEnum } from 'nuqs';
+import { useTrainingQueryState as useQueryState, useTrainingQueryStates as useQueryStates } from '@/lib/training-host';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Copy, Check, Shuffle, Plus, ShieldCheck, AlertTriangle, HelpCircle, Pin } from 'lucide-react';

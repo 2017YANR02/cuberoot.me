@@ -648,6 +648,7 @@
 /* ── 顶栏地点搜索 ── */
 .globe-page .globe-search {
     position: relative;
+    isolation: isolate;
     display: inline-flex;
     align-items: center;
     width: 320px;
@@ -656,6 +657,8 @@
 }
 .globe-page .globe-search-icon {
     position: absolute;
+    /* Paint above the input's glass backdrop, within this search field. */
+    z-index: 1;
     left: 10px;
     top: 50%;
     transform: translateY(-50%);

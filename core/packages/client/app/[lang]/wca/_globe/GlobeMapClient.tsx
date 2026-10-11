@@ -49,6 +49,7 @@ import {
 import { ClearButton } from '@/components/ClearButton';
 import { YearMonthPickerPopover } from '@/components/YearMonthPickerPopover';
 import { displayCuberName } from '@/lib/cuber-name-display';
+import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import { formatDateRangeIso } from '@/lib/wca-date';
 import { Flag, flagHtml } from '@/components/Flag';
 import { compHref, prefetchComp } from '@/lib/comp-link';
@@ -3008,7 +3009,7 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
             {cuber && (
               <div className="cuber-chip">
                 {flagIso2 && <Flag iso2={flagIso2} className="cuber-flag" />}
-                <span className="cuber-name">{displayCuberName(cuber.name, isZh)}</span>
+                <span className="cuber-name">{displayCuberName(cuber.name, isZh)}<WcaPersonTeamBadge wcaId={cuber.wcaId} /></span>
                 <ClearButton onClick={clearCuber} isZh={isZh} variant="standalone" preserveFocus />
               </div>
             )}
@@ -3222,7 +3223,7 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
                   <button key={`u${p.wcaId}`} className="globe-search-item" onClick={() => goToPerson(p)}>
                     <span className="globe-search-item-main globe-search-item-person">
                       <Flag iso2={p.iso2} className="globe-search-person-flag" />
-                      <span>{displayCuberName(p.name, isZh)}</span>
+                      <span>{displayCuberName(p.name, isZh)}<WcaPersonTeamBadge wcaId={p.wcaId} /></span>
                     </span>
                     <span className="globe-search-item-sub">{p.wcaId}</span>
                   </button>

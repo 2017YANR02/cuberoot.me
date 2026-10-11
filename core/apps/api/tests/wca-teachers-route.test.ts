@@ -7,7 +7,10 @@ const mocks = vi.hoisted(() => ({
   hasActiveMembership: vi.fn(),
 }));
 
-vi.mock('../src/db/connection.js', () => ({ query: mocks.query }));
+vi.mock('../src/db/connection.js', () => ({
+  query: mocks.query,
+  withTransaction: async (run: (query: typeof mocks.query) => unknown) => run(mocks.query),
+}));
 vi.mock('../src/utils/recon_helpers.js', () => ({
   ADMIN_WCA_IDS: ['2017YANR02'],
   requireAuth: mocks.requireAuth,
@@ -461,6 +464,25 @@ describe('DELETE /v1/wca/teachers/:studentId/:eventId', () => {
 
     expect(response.status).toBe(403);
     expect(await response.json()).toEqual({ error: 'active membership required' });
+    expect(mocks.query).toHaveBeenCalledTimes(1);
+  });
+
+  it('transfers a named student institution before removing the named entry, without overwriting a WCA affiliation', async () => {
+    mocks.requireAuth.mockResolvedValueOnce({ wcaId: '2017YANR02', isAdmin: false });
+    mocks.query.mockResolvedValueOnce([{}]).mockResolvedValueOnce([]).mockResolvedValueOnce([{ id: '11111111-1111-4111-8111-111111111111' }]);
+    const response = await app.request('/v1/wca/teachers/2017YANR02/named-students/11111111-1111-4111-8111-111111111111?replacement=2023GENG02', { method: 'DELETE' });
+    expect(response.status).toBe(200);
+    expect(mocks.query.mock.calls[0][1]).toEqual(['2023GENG02', '2017YANR02']);
+    expect(mocks.query.mock.calls[1][0]).toContain('ON CONFLICT (student_wca_id) DO NOTHING');
+    expect(mocks.query.mock.calls[1][1]).toEqual(['2023GENG02', '11111111-1111-4111-8111-111111111111', '2017YANR02']);
+    expect(mocks.query.mock.calls[2][0]).toMatch(/^DELETE FROM wca_teacher_named_students/);
+  });
+
+  it('rejects a replacement outside the teacher roster without deleting the named student', async () => {
+    mocks.requireAuth.mockResolvedValueOnce({ wcaId: '2017YANR02', isAdmin: false });
+    mocks.query.mockResolvedValueOnce([]);
+    const response = await app.request('/v1/wca/teachers/2017YANR02/named-students/11111111-1111-4111-8111-111111111111?replacement=2023GENG02', { method: 'DELETE' });
+    expect(response.status).toBe(400);
     expect(mocks.query).toHaveBeenCalledTimes(1);
   });
 });

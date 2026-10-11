@@ -35,3 +35,29 @@ node packages/client/scripts/build-tnoodle-i18n.mjs --input <tnoodle-i18n-dir> -
 新增受治理生成物时，先在 JSON 中登记唯一 ID、owner、source、license、command、outputs 和 verification，再增加生成入口。新增 vendored 条目还必须登记 ref、patch owner 与 version record；禁止把本机绝对路径或手抄 commit 写入生成文件。
 
 不产出稳定源码输出的 build/runtime 临时目录继续由所属 package、workflow 或专题 runbook 管理，不在本页建立第二份 artifact 明细表。
+
+### Page-load data slices
+
+- Competition calendars use `stats/comp_calendar/index.json` for global filters
+  and versioned month windows for display. The daily upcoming and weekly history
+  workflows rebuild them together. Existing complete catalogs still back global
+  lists/search and recover missing or mismatched slices. All month fixtures are
+  checked, including adjacent days, source overlap, and 1982.
+- Cube history retains all research fields in a generated dictionary; source
+  citations, domestic-price policy, details, comparisons and JSON export are
+  unchanged. After editing research JSON during an open dev session, run
+  `pnpm --filter @cuberoot/client build:cube-history` from `core/`. Startup/build
+  also regenerate it; CI compares the entire decoded catalog against the source.
+- Gallery thumbnails are runtime derivatives, not committed assets. Original
+  image URLs/data remain unchanged. Fixed `/v1/article/img/:id/thumb/512|1024?v=1` variants reuse
+  `DRIVE_FFMPEG_BIN_DIR` with q90 WebP and no upscaling. Only static WebP without
+  ICC/EXIF/XMP is eligible; other images retain their original response. At most
+  two single-thread encoders run, eight requests may wait up to one second,
+  encoding stops after 2.5 seconds, and the process cache holds at most 16 MiB.
+  Failures return original bytes with `no-store`; successful immutable variants
+  use dimension paths and version query parameters. An older API returns 404 for
+  the new route; the gallery then loads the original URL instead. This prevents
+  an old API from caching original bytes as a future thumbnail. Deployment must preserve the query
+  string in proxy cache keys. No database migration or new paid service is used.
+  The local frontend proxies the live API, so thumbnail delivery only changes
+  after the API implementation is separately released (or a local API is used).

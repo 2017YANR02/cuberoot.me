@@ -13,7 +13,8 @@
 // 这里是「每个 case 挑一条背」,加起来 235KB。
 
 import { useEffect, useMemo, useState, type JSX } from 'react';
-import { useQueryState, parseAsStringEnum } from 'nuqs';
+import { parseAsStringEnum } from 'nuqs';
+import { useTrainingQueryState as useQueryState } from '@/lib/training-host';
 import { Check } from 'lucide-react';
 import Link from '@/components/AppLink';
 import { Spinner } from '@/components/Spinner/Spinner';

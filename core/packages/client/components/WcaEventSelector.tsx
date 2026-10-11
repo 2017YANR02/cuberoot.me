@@ -2,6 +2,7 @@
 
 // Ported from packages/client-vite/src/components/WcaEventSelector.tsx.
 
+import { Tooltip } from '@/components/Tooltip';
 import { useMemo, useState, type ReactNode } from 'react';
 import { useParams } from 'next/navigation';
 import { X, Search } from 'lucide-react';
@@ -187,13 +188,13 @@ export default function WcaEventSelector({
     if (link) {
       const aria = isActive ? 'page' : undefined;
       return link.hard ? (
-        <a key={id} href={`${prefix}${link.href}`} className={cls} data-tooltip={tooltip} data-event={id} aria-label={tooltip} aria-current={aria}>
+        <Tooltip key={id} content={tooltip} disabled={isDisabled}>{(tip) => <a {...tip}  href={`${prefix}${link.href}`} className={cls}  data-event={id} aria-label={tooltip} aria-current={aria}>
           {inner}
-        </a>
+        </a>}</Tooltip>
       ) : (
-        <AppLink key={id} href={link.href} className={cls} data-tooltip={tooltip} data-event={id} aria-label={tooltip} aria-current={aria}>
+        <Tooltip key={id} content={tooltip} disabled={isDisabled}>{(tip) => <AppLink {...tip}  href={link.href} className={cls}  data-event={id} aria-label={tooltip} aria-current={aria}>
           {inner}
-        </AppLink>
+        </AppLink>}</Tooltip>
       );
     }
 
@@ -201,9 +202,9 @@ export default function WcaEventSelector({
       ? undefined
       : () => (isMulti ? onToggle!(id) : onSelect?.(id));
     return (
-      <button key={id} className={cls} data-tooltip={tooltip} data-event={id} aria-label={tooltip} onClick={handleClick}>
+      <Tooltip key={id} content={tooltip} disabled={isDisabled}>{(tip) => <button {...tip}  className={cls}  data-event={id} aria-label={tooltip} onClick={handleClick}>
         {inner}
-      </button>
+      </button>}</Tooltip>
     );
   };
 
@@ -227,26 +228,26 @@ export default function WcaEventSelector({
     if (link) {
       const aria = isActive ? 'page' : undefined;
       return link.hard ? (
-        <a key={id} href={`${prefix}${link.href}`} className={cls} data-tooltip={tooltip} data-event={id} aria-label={tooltip} aria-current={aria}>
+        <Tooltip key={id} content={tooltip}>{(tip) => <a {...tip}  href={`${prefix}${link.href}`} className={cls}  data-event={id} aria-label={tooltip} aria-current={aria}>
           {inner}
-        </a>
+        </a>}</Tooltip>
       ) : (
-        <AppLink key={id} href={link.href} className={cls} data-tooltip={tooltip} data-event={id} aria-label={tooltip} aria-current={aria}>
+        <Tooltip key={id} content={tooltip}>{(tip) => <AppLink {...tip}  href={link.href} className={cls}  data-event={id} aria-label={tooltip} aria-current={aria}>
           {inner}
-        </AppLink>
+        </AppLink>}</Tooltip>
       );
     }
 
     return (
-      <button
-        key={id}
+      <Tooltip key={id} content={tooltip}>{(tip) => <button {...tip}
+
         className={cls}
-        data-tooltip={tooltip}
+
         data-event={id}
         onClick={() => (isMulti ? onToggle!(id) : onSelect?.(id))}
       >
         {inner}
-      </button>
+      </button>}</Tooltip>
     );
   };
 
@@ -259,22 +260,22 @@ export default function WcaEventSelector({
   ) : (
     <>
       {allowAll && !isMulti && (
-        <button
+        <Tooltip content={renderedAllLabel}>{(tip) => <button {...tip}
           type="button"
           className={`event-btn event-btn-all${selectedEvent === '' ? ' active' : ''}`}
-          data-tooltip={renderedAllLabel}
+
           aria-label={renderedAllLabel}
           onClick={() => onSelect?.('')}
         >
           <span className="event-all-label">{renderedAllLabel}</span>
-        </button>
+        </button>}</Tooltip>
       )}
       {officialIds.map(renderWcaButton)}
       {showToggle && (
-        <button
+        <Tooltip content={toggleTip}>{(tip) => <button {...tip}
           type="button"
           className={`event-btn event-btn-more${expanded ? ' active' : ''}`}
-          data-tooltip={toggleTip}
+
           onClick={() => {
             const next = !expanded;
             setExpanded(next);
@@ -282,7 +283,7 @@ export default function WcaEventSelector({
           }}
         >
           <span className="event-more-arrow">{expanded ? '▴' : '▾'}</span>
-        </button>
+        </button>}</Tooltip>
       )}
       {showHidden && cancelledIds.map(renderWcaButton)}
       {showHidden && hiddenAppend.map(renderAppendButton)}

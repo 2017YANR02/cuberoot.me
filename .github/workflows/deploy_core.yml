@@ -266,6 +266,7 @@ jobs:
           fi
           CUBEOPT_PREFLIGHT
 
+          # Extension and restricted reader prerequisites run before schema migrations.
           # The application role cannot CREATE ROLE. Bootstrap only the fixed
           # NOLOGIN reader with the DB administrator; views/ACLs remain migrations.
           ssh -T -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \

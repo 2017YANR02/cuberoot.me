@@ -1,9 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import EnterpriseVerificationAdmin from './_components/EnterpriseVerificationAdmin';
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
-import { getSessionToken, nextQuery, useAuthUser } from '@/lib/auth-store';
+import { getSessionToken, nextQuery, useAuthUser, hasAdminAccess } from '@/lib/auth-store';
 import {
   createTeachingOrganization,
   listTeachingOrganizations,
@@ -74,7 +75,7 @@ export default function OrganizationsPage() {
   return (
     <main className="org-page">
       <h1>{t('企业信息', 'Enterprise')}</h1>
-      <p className="org-lead">{t('创建并管理你的企业信息；创建者会自动成为企业所有者。', 'Create and manage your enterprise profile; its creator automatically becomes the owner.')}</p>
+      <p className="org-lead">{t('创建并管理你的企业信息；创建者成为工作区所有者。企业认证需另行申请。', 'Create and manage your enterprise profile; its creator becomes the workspace owner. Enterprise verification requires a separate application.')}</p>
 
       <section className="org-section">
         <h2>{t('我的企业', 'My enterprises')}</h2>
@@ -91,6 +92,8 @@ export default function OrganizationsPage() {
           </div>
         )}
       </section>
+
+      {hasAdminAccess(user) && <EnterpriseVerificationAdmin />}
 
       <section className="org-section">
         <h2>{t('创建企业信息', 'Create enterprise profile')}</h2>

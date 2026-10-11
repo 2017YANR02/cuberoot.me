@@ -3,8 +3,8 @@
 // Ported from packages/client-vite/src/pages/trainer/TrainerSelectPage.tsx
 import { useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
-import { useRouter, useParams } from 'next/navigation';
-import { useQueryState, parseAsStringEnum } from 'nuqs';
+import { parseAsStringEnum } from 'nuqs';
+import { useTrainingRouter as useRouter, useTrainingParams as useParams, useTrainingQueryState as useQueryState, useTrainingHost } from '@/lib/training-host';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Eraser, MousePointer2 } from 'lucide-react';
 import { getAlgSetMeta, type AlgCase } from '@cuberoot/shared/alg';
@@ -35,6 +35,10 @@ const MARK_FILTERS = ['all', 'none', 'learning', 'mastered'] as const;
 type MarkFilter = (typeof MARK_FILTERS)[number];
 
 export default function TrainerSetClient() {
+  const trainingHost = useTrainingHost();
+  const [modeParam] = useQueryState('mode');
+  const [timingParam] = useQueryState('timing');
+  const [drawParam] = useQueryState('draw');
   const params = useParams<{ lang: string; puzzle: string; set: string }>();
   const puzzleParam = (Array.isArray(params?.puzzle) ? params.puzzle[0] : params?.puzzle) ?? '';
   const setSlug = (Array.isArray(params?.set) ? params.set[0] : params?.set) ?? '';
@@ -72,6 +76,10 @@ export default function TrainerSetClient() {
     [isMix, puzzle, setsParam],
   );
   const mixKey = mixSets.join(',');
+  const sessionId = isMix ? mixSessionId(mixKey.split(',').filter(Boolean)) : setSlug;
+  useEffect(() => useTrainerStore.getState().activateSessionScope(), [puzzle, sessionId]);
+  const [sessionLoadError, setSessionLoadError] = useState(false);
+  const [loadRetry, setLoadRetry] = useState(0);
   const mixReady = mounted && isMix && mixSets.length >= MIX_MIN_SETS;
   // 必须 memo:合练的 meta 是现造的字面量,身份每次 render 都变,而它进了装载 effect 的
   // 依赖 —— 不 memo 就是「effect → set state → 新 meta → effect」的死循环。
@@ -116,19 +124,24 @@ export default function TrainerSetClient() {
 
   useEffect(() => {
     if (!puzzle || !meta) return;
-    const sessionId = isMix ? mixSessionId(mixKey.split(',').filter(Boolean)) : setSlug;
     if (storePuzzle === puzzle && storeSet === sessionId && cases.length > 0) return;
+    let active = true;
+    setSessionLoadError(false);
+    const failed = (error: unknown) => {
+      if (active) { setSessionLoadError(true); console.error('[trainer] session load failed', error); }
+    };
     if (isMix) {
       const sets = mixKey.split(',').filter(Boolean);
       loadMixCases(puzzle, sets)
-        .then(all => loadMixSession(puzzle, sets, all))
-        .catch(e => console.error('[trainer] loadMixCases failed', e));
-      return;
+        .then(all => { if (active) loadMixSession(puzzle, sets, all); })
+        .catch(failed);
+      return () => { active = false; };
     }
     loadAlg(puzzle, setSlug)
-      .then(d => loadSession(puzzle, setSlug, d.cases))
-      .catch(e => console.error('[trainer] loadAlg failed', e));
-  }, [puzzle, setSlug, meta, isMix, mixKey, storePuzzle, storeSet, cases.length, loadSession, loadMixSession]);
+      .then(d => { if (active) loadSession(puzzle, setSlug, d.cases); })
+      .catch(failed);
+    return () => { active = false; };
+  }, [puzzle, setSlug, sessionId, meta, isMix, mixKey, storePuzzle, storeSet, cases.length, loadSession, loadMixSession, loadRetry]);
 
   // scope 内的 case(与 run 页同一套 top/sub 两级 slug 匹配);无 scope 或 slug 落空 = 全部。
   // 顺序和公式库一致(ZBLL / COLL 把角块已成型和对角换提到组内最前),否则同一批 case
@@ -178,6 +191,9 @@ export default function TrainerSetClient() {
     );
   }
 
+  if (sessionLoadError) return <div className="trainer-root"><p role="alert">{tr({ zh: '训练加载失败，请重试。', en: 'Training could not load. Please retry.' })}</p><button type="button" onClick={() => setLoadRetry(value => value + 1)}>{tr({ zh: '重试', en: 'Retry' })}</button></div>;
+  if (storePuzzle !== puzzle || storeSet !== sessionId) return <div className="trainer-root" role="status">{tr({ zh: '加载中…', en: 'Loading…' })}</div>;
+
   const selectedSet = new Set(selected);
   const scopedSelectedCount = scopedCases.filter(c => selectedSet.has(caseKey(c))).length;
   const canStart = scopedSelectedCount > 0;
@@ -203,9 +219,16 @@ export default function TrainerSetClient() {
   const selectBase = isMix
     ? mixHref(puzzleParam, mixSets, 'select')
     : `/alg/${puzzleParam}/${setSlug}/select${scopeQuery}`;
-  const runBase = isMix
+  const originalRunBase = isMix
     ? mixHref(puzzleParam, mixSets, 'run')
     : `/alg/${puzzleParam}/${setSlug}/run${scopeQuery}`;
+  const runUrl = new URL(originalRunBase, 'https://training.invalid');
+  if (trainingHost) {
+    if (modeParam) runUrl.searchParams.set('mode', modeParam);
+    if (timingParam) runUrl.searchParams.set('timing', timingParam);
+    if (modeParam === 'memo' && drawParam) runUrl.searchParams.set('draw', drawParam);
+  }
+  const runBase = `${runUrl.pathname}${runUrl.search}`;
   const backHref = isMix
     ? `/alg/${puzzleParam}`
     : (scopeSlug ? `/alg/${puzzleParam}/${setSlug}/${scopeSlug}` : `/alg/${puzzleParam}/${setSlug}`);
@@ -253,25 +276,27 @@ export default function TrainerSetClient() {
         >
           <ArrowLeft size={14} />
         </Link>
-        <span style={{ fontSize: '1.1rem', fontWeight: 600 }}>
-          {puzzle} · {tr(meta)}{scopeSlug ? ` · ${setSlug === 'zbll' ? displayZbllToken(scopeSlug) : scopeSlug.toUpperCase()}` : ''}
-        </span>
+        {(!trainingHost || scopeSlug) && <span style={{ fontSize: '1.1rem', fontWeight: 600 }}>
+          {!trainingHost && `${puzzle} · ${tr(meta)}`}
+          {scopeSlug && `${trainingHost ? '' : ' · '}${setSlug === 'zbll' ? displayZbllToken(scopeSlug) : scopeSlug.toUpperCase()}`}
+        </span>}
         {/* 记忆模式按整套排期,不依赖勾选 —— 真 <a>,中键可新开标签页 */}
-        <Link
+        {!trainingHost && <Link
           href={`${runBase}${runBase.includes('?') ? '&' : '?'}mode=memo`}
           className="trainer-memo-btn"
           prefetch={false}
           title={tr({ zh: '看图回忆公式,按记忆强度排期', en: 'Recall from the picture, scheduled by memory strength' })}
         >
           {tr({ zh: '记忆', en: 'Memory' })}
-        </Link>
+        </Link>}
         <button
           className={`trainer-start-btn${!canStart ? ' is-disabled' : ''}`}
           onClick={() => router.push(`${langPrefix}${runBase}`) /* allow-button-nav: disabled 门控(canStart)的开始按钮,选 case 后才跳 /run */}
           disabled={!canStart}
         >
-          {tr({ zh: '训练', en: 'Train'
-        })} ({scopedSelectedCount})
+          {trainingHost
+            ? tr({ zh: '开始', en: 'Start' })
+            : `${tr({ zh: '训练', en: 'Train' })} (${scopedSelectedCount})`}
         </button>
       </div>
 
@@ -330,6 +355,7 @@ export default function TrainerSetClient() {
                   <span>{own.filter(c => selectedSet.has(caseKey(c))).length}/{own.length}</span>
                 </h2>
                 <CaseTreePicker
+                  showSetName={!trainingHost}
                   puzzle={puzzle}
                   set={slug}
                   cases={own}
@@ -344,6 +370,7 @@ export default function TrainerSetClient() {
             );
           }) : (
             <CaseTreePicker
+              showSetName={!trainingHost}
               puzzle={puzzle}
               set={setSlug}
               cases={visibleCases}

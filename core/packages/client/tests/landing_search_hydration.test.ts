@@ -86,6 +86,8 @@ describe('LandingSearch placeholder hydration', () => {
     expect(fetcher).toHaveBeenCalledTimes(1);
     expect(fetcher.mock.calls[0][1].headers.Authorization).toBe('Bearer session-test');
     expect(JSON.parse(fetcher.mock.calls[0][1].body)).toEqual({ question: '视频怎么数帧', lang: 'zh', timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone, history: [] });
+    // The dialog and its controls render immediately; formatting arrives in its own chunk.
+    await act(async () => { await import('react-markdown'); });
     expect(document.querySelector('.site-assistant-prose')?.textContent).toBe('打开数帧页面。数帧');
     expect(host.textContent).not.toContain('未找到匹配项');
     expect(document.querySelector('.site-assistant-prose a.site-assistant-citation')?.getAttribute('href')).toBe('/zh/frame-count');

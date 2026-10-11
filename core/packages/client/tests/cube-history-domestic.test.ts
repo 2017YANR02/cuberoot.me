@@ -60,7 +60,7 @@ describe('cube history domestic-price publication policy', () => {
       const published = publicById.get(raw.id)!;
       const expected = domesticPrices(raw);
       expect(published.prices, raw.id).toEqual(expected);
-      for (const quote of published.prices) expect(raw.prices, raw.id).toContain(quote);
+      for (const quote of published.prices) expect(raw.prices, raw.id).toContainEqual(quote);
     }
     const gan17 = publicById.get('gan17')!;
     expect(gan17.prices).toContainEqual(expect.objectContaining({

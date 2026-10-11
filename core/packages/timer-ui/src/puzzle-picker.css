@@ -118,3 +118,42 @@
    modern range media-query syntax emitted by the Mobile production build. */
 .pp--compact .pp-popup { max-width: calc(100vw - 32px); }
 .pp--compact .pp-group-items { grid-template-columns: 1fr; }
+
+/* Both levels stay inside the same clamped panel, including on touch screens. */
+.pp-popup.pp-popup--nested {
+  display: flex;
+  overflow: hidden;
+}
+
+.pp-popup--nested .pp-cascade-column {
+  min-width: 0;
+  max-width: min(16rem, calc((100vw - 48px) / 2));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.pp-popup--nested .pp-group-items {
+  display: flex;
+  flex-direction: column;
+}
+
+.pp-popup--nested .pp-cascade-options {
+  margin-left: 6px;
+  padding-left: 6px;
+  border-left: 1px solid var(--border-default);
+}
+
+.pp-popup--nested .pp-item {
+  min-height: 36px;
+}
+
+.pp-popup--nested .pp-item-label {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.pp-submenu-arrow,
+.pp-item-check {
+  margin-left: auto;
+  flex-shrink: 0;
+}

@@ -19,7 +19,8 @@
 // 按成绩筛)在 _store/blddb-prefs-store.ts,对齐上游 /settings。
 
 import { useCallback, useEffect, useMemo, useState, type JSX } from 'react';
-import { useQueryState, parseAsStringEnum } from 'nuqs';
+import { parseAsStringEnum } from 'nuqs';
+import { useTrainingQueryState as useQueryState } from '@/lib/training-host';
 import { useTranslation } from 'react-i18next';
 import { Check, Copy, ExternalLink, Users, Video } from 'lucide-react';
 import Link from '@/components/AppLink';

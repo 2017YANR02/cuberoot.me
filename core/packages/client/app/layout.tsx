@@ -1,7 +1,6 @@
 import InstalledContentBoundary from "@/components/InstalledContentBoundary";
 import { MOBILE_EMBED_FRAME_NAMES } from '@cuberoot/shared/mobile-embed';
 import type { Metadata } from "next";
-import { Analytics } from "@vercel/analytics/next";
 import { THEME_BOOTSTRAP, LANG_BOOTSTRAP } from "@/lib/theme-bootstrap";
 import DeskPet from "@/components/DeskPet";
 import AuthRouteBridge from "@/components/AuthRouteBridge";
@@ -128,7 +127,6 @@ export default function RootLayout({
           <ScreenWakeLock />
           <MobileEmbedBridge />
         </AppNuqsAdapter>
-        <Analytics />
       </body>
     </html>
   );

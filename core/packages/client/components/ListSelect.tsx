@@ -35,6 +35,8 @@ export interface ListSelectItem {
 }
 
 interface ListSelectProps {
+  disabled?: boolean;
+  ariaLabel?: string;
   pinCountries?: boolean;
   items: ListSelectItem[];
   value: string;
@@ -51,7 +53,7 @@ interface ListSelectProps {
   searchPlaceholder?: string;
 }
 
-export function ListSelect({ items, value, onChange, allLabel, className, searchable, clearable = true, maxVisible, searchPlaceholder, pinCountries = false }: ListSelectProps) {
+export function ListSelect({ items, value, onChange, allLabel, className, searchable, clearable = true, maxVisible, searchPlaceholder, pinCountries = false, disabled = false, ariaLabel }: ListSelectProps) {
   const [pins, togglePin] = usePinnedCountries();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -133,6 +135,8 @@ export function ListSelect({ items, value, onChange, allLabel, className, search
       <button
         type="button"
         className="list-select-trigger"
+        disabled={disabled}
+        aria-label={ariaLabel}
         onClick={() => setOpen(o => !o)}
       >
         <span className="list-select-current">
@@ -159,7 +163,7 @@ export function ListSelect({ items, value, onChange, allLabel, className, search
         )}
         <ChevronDown size={14} className="list-select-chevron" />
       </button>
-      {open && (
+      {open && !disabled && (
         <div ref={panelRef} className="list-select-popup" data-site-surface="popover">
           {searchable && (
             <input

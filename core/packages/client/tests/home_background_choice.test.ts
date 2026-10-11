@@ -150,10 +150,10 @@ describe('shared homepage background choice', () => {
     }
   });
 
-  it.each([
-    [null, true], ['transparent', true], ['none', false], ['03', true],
-  ] as const)('keeps transparency independent of background selection from %s', async (saved, initialTransparency) => {
+  it.each([null, 'transparent', 'none', '03'] as const)('retires transparency preferences without changing background %s', async (saved) => {
     if (saved) localStorage.setItem(`${HOME_BACKGROUND_KEY}.dark`, saved);
+    localStorage.setItem(`${HOME_BACKGROUND_KEY}.transparency.light`, 'false');
+    localStorage.setItem(`${HOME_BACKGROUND_KEY}.transparency.dark`, 'false');
     let state: ReturnType<typeof useHomeBackgroundChoice>;
     function Preferences() {
       state = useHomeBackgroundChoice('dark');
@@ -162,17 +162,12 @@ describe('shared homepage background choice', () => {
     const root = createRoot(document.createElement('div'));
     try {
       await act(async () => root.render(createElement(Preferences)));
-      expect(state![2]).toBe(initialTransparency);
-      for (const enabled of [false, true]) {
-        const previousChoice = state![0];
-        await act(async () => state![3](enabled));
-        expect(state![0]).toBe(previousChoice);
-        for (const choice of ['07', 'none'] as const) {
-          await act(async () => state![1](choice));
-          expect(state![0]).toBe(choice);
-          expect(state![2]).toBe(enabled);
-          expect(localStorage.getItem(`${HOME_BACKGROUND_KEY}.transparency.dark`)).toBe(String(enabled));
-        }
+      expect(state![0]).toBe(saved ?? 'transparent');
+      for (const choice of ['07', 'none'] as const) {
+        await act(async () => state![1](choice));
+        expect(state![0]).toBe(choice);
+        expect(localStorage.getItem(`${HOME_BACKGROUND_KEY}.transparency.light`)).toBeNull();
+        expect(localStorage.getItem(`${HOME_BACKGROUND_KEY}.transparency.dark`)).toBeNull();
       }
     } finally {
       await act(async () => root.unmount());
@@ -193,26 +188,22 @@ describe('shared homepage background choice', () => {
     try {
       for (const [theme, image] of [['light', '07'], ['dark', '08']] as const) {
         await show(theme);
-        expect(state![4]).toBe(false);
-        expect(state![2]).toBe(true);
-        await act(async () => state![5](true));
+        expect(state![2]).toBe(false);
+        await act(async () => state![3](true));
         expect(resolveHomeBackground(state![0], theme)?.id).toBe(theme === 'dark' ? '03' : '01');
         await act(async () => state![1](image));
-        await act(async () => state![5](false));
-        expect(state![4]).toBe(false);
+        await act(async () => state![3](false));
+        expect(state![2]).toBe(false);
         expect(resolveHomeBackground(state![0], theme)).toBeUndefined();
-        expect(state![2]).toBe(true);
       }
       await act(async () => root.unmount());
       root = createRoot(host);
       for (const [theme, image] of [['light', '07'], ['dark', '08']] as const) {
         await show(theme);
-        expect(state![4]).toBe(false);
-        await act(async () => state![3](false));
-        await act(async () => state![5](true));
-        expect(state![0]).toBe(image);
-        expect(state![4]).toBe(true);
         expect(state![2]).toBe(false);
+        await act(async () => state![3](true));
+        expect(state![0]).toBe(image);
+        expect(state![2]).toBe(true);
       }
     } finally {
       await act(async () => root.unmount());

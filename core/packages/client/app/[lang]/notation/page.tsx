@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, type ReactNode } from 'react';
-import { useParams } from 'next/navigation';
-import { parseAsBoolean, parseAsInteger, parseAsStringEnum, useQueryState } from 'nuqs';
+import { useTrainingParams as useParams, useTrainingQueryState as useQueryState } from '@/lib/training-host';
+import { parseAsBoolean, parseAsInteger, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import AlgNotationStyleSelect from '@/components/AlgNotationStyleSelect';
 import BoolToggle from '@/components/BoolToggle';

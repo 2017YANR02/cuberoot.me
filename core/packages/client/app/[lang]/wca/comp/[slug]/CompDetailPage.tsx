@@ -1,4 +1,5 @@
 'use client';
+import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import { competitionFetch, ensureCompetitionAccess } from '@/lib/competition-access';
 
 /**
@@ -2733,7 +2734,7 @@ const ResultsTableRow = memo(function ResultsTableRow({
           className="cuber-name cuber-link"
           title={`${fullCuberName}\n${regionDisplay(u.region, isZh)}`}
         >
-          {cuberName}
+          {cuberName}<WcaPersonTeamBadge wcaId={u.wcaid} />
         </Link>
         {/* 行级编辑铅笔已移除:管理员经点成绩弹窗里的「编辑变更记录…」打开整条变更编辑器。 */}
       </td>
@@ -2966,7 +2967,7 @@ function CompRecordsView({ groups, users, isZh, onClickCuber }: CompRecordsViewP
                         <td className="td-person">
                           <Flag iso2={iso2} className="comp-flag" />
                           <span className="cuber-name" title={regionDisplay(u.region, isZh)}>
-                            {displayCuberName(u.name, isZh)}
+                            {displayCuberName(u.name, isZh)}<WcaPersonTeamBadge wcaId={u.wcaid} />
                           </span>
                         </td>
                         <td className="td-best">
@@ -3116,7 +3117,7 @@ function CombinedDualRoundsTable({ data, ev, r1, r2, isZh, pbMap, compIso2, memb
                       <span className="dual-person-inner">
                         <Flag iso2={regionToIso2(u.region)} className="comp-flag" />
                         <span className="cuber-name" title={`${fullCuberName}\n${regionDisplay(u.region, isZh)}`}>
-                          {cuberName}
+                          {cuberName}<WcaPersonTeamBadge wcaId={u.wcaid} />
                         </span>
                       </span>
                     </td>
@@ -3155,7 +3156,7 @@ function CuberNameLink({ u, isZh }: { u: User; isZh: boolean }) {
         title={title}
         onClick={e => e.stopPropagation()}
       >
-        {name}
+        {name}<WcaPersonTeamBadge wcaId={u.wcaid} />
       </Link>
     );
   }
@@ -3640,7 +3641,7 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, personal = false, lo
                 href={`/wca/persons/${u.wcaid}`}
                 className="cuber-link-modal"
               >
-                {displayCuberName(u.name, isZh)}
+                {displayCuberName(u.name, isZh)}<WcaPersonTeamBadge wcaId={u.wcaid} />
               </Link>
             ) : (
               <span className="cuber-link-static">{u ? displayCuberName(u.name, isZh) : ''}</span>
@@ -4044,7 +4045,7 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
                 href={`/wca/persons/${u.wcaid}`}
                 className="cuber-link-modal"
               >
-                {displayCuberName(u.name, isZh)}
+                {displayCuberName(u.name, isZh)}<WcaPersonTeamBadge wcaId={u.wcaid} />
               </Link>
             ) : (
               <span>{displayCuberName(u.name, isZh)}</span>

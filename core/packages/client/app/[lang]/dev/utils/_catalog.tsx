@@ -73,6 +73,46 @@ export const UCATS: { id: UtilCat; zh: string; en: string }[] = [
 
 export const CATALOG: UtilEntry[] = [
   {
+    name: 'useWcaInstitutions',
+    sig: 'useWcaInstitutions(studentKeys: string[])',
+    imp: "import { useWcaInstitutions } from '@/hooks/useWcaInstitutions';",
+    category: 'hook',
+    zh: '批量加载公开培训机构及学生归属，支持 WCA ID 和 named:UUID；保存与师生关系独立。',
+    en: 'Batch-load public training institutions and affiliations for WCA IDs and named:UUID keys, independently of teacher relations.',
+  },
+  {
+    name: 'Training host navigation',
+    sig: 'TrainingHostProvider({ value, children }: { value: TrainingHost; children: ReactNode })',
+    imp: "import { TrainingHostProvider, useTrainingHost, useTrainingParams, useTrainingPathname, useTrainingRouter, useTrainingSearchParams, useTrainingHref, useTrainingQueryState, useTrainingQueryStates } from '@/lib/training-host';",
+    category: 'util',
+    zh: '复用训练页面的路由与查询状态；在计时器宿主内隔离训练参数，独立训练页保持原有行为。',
+    en: 'Reuse trainer routing and query state inside the timer with isolated parameters, retaining standalone trainer behavior.',
+  },
+  {
+    name: 'Timer training directory',
+    sig: 'trainingDirectoryForEvent(event: string): readonly TrainingDirectoryGroup[]',
+    imp: "import { TRAINING_DIRECTORY, resolveTrainingTarget, trainingDirectoryForEvent, trainingEventForTarget, trainingPuzzleForEvent } from '@/lib/timer-training-catalog';",
+    category: 'cube',
+    zh: '完整训练目录与项目归属。按唯一项目选择器筛选公式和专项，统一 WCA 与计时器项目代号，跨项目工具保持可达。',
+    en: 'Complete training directory and puzzle ownership. Filters algorithms and drills by the single project picker, normalizes WCA/timer IDs, and keeps cross-project tools available.',
+  },
+  {
+    name: 'Timer training location',
+    sig: 'timerTrainingHref(href: string, options: TimerTrainingHrefOptions): string',
+    imp: "import { timerTrainingHref, timerTrainingExitHref, trainingSearchParams, trainingQueryKey } from '@/lib/timer-training-location';",
+    category: 'util',
+    zh: '映射训练链接与查询参数，并在退出训练时保留原计时器项目、房间及分享状态。',
+    en: 'Map trainer links and query keys while preserving the timer event, room and solve share when leaving training.',
+  },
+  {
+    name: 'Timer practice content',
+    sig: 'timerPracticeContents(event: string): readonly TimerPracticeContent[]',
+    imp: "import { timerPracticeContents, selectedTimerPracticeContent } from '@/lib/timer-practice-navigation';\nimport { virtualTrainingSessionId } from '@/lib/training-set-metadata';",
+    category: 'cube',
+    zh: '把原计时打乱、公式选题和识别路由合为唯一内容入口，保留各引擎的项目与成绩身份。',
+    en: 'Join timer scrambles, selected-case training and recognition into one content entry while retaining engine and result identities.',
+  },
+  {
     name: 'Double ZBLL corpus',
     sig: 'decodeDoubleZbll(data: Uint8Array, caseCount: number, top: number, bottom: number): string',
     imp: "import { decodeDoubleZbll } from '@cuberoot/shared/double-zbll';",
@@ -191,11 +231,11 @@ export const CATALOG: UtilEntry[] = [
   },
   {
     name: 'useHomeBackgroundChoice',
-    sig: 'useHomeBackgroundChoice(theme: EffectiveTheme): readonly [choice, setChoice, transparent, setTransparent, backgroundEnabled, setBackgroundEnabled]',
+    sig: 'useHomeBackgroundChoice(theme: EffectiveTheme): readonly [choice, setChoice, backgroundEnabled, setBackgroundEnabled]',
     imp: "import { useHomeBackgroundChoice } from '@/hooks/useHomeBackgroundChoice';",
     category: 'hook',
-    zh: '按深浅主题保存背景与透明偏好；关闭背景保留选图，开启恢复。同步外观菜单和其他标签页，服务端快照固定为透明无背景。',
-    en: 'Per-theme background and transparency preferences. Disabling the background keeps the last image for re-enabling. Synced across menus and tabs, with a stable transparent, image-free server snapshot.',
+    zh: '按深浅主题保存背景偏好；关闭背景保留选图，开启恢复。全站材质固定透明，同步外观菜单和其他标签页，服务端快照固定为无背景图。',
+    en: 'Per-theme background preferences. Disabling the background keeps the last image for re-enabling. Site materials stay transparent; background choices sync across menus and tabs, with a stable image-free server snapshot.',
   },
   {
     name: 'useAlgTextField',
@@ -295,6 +335,15 @@ export const CATALOG: UtilEntry[] = [
     category: 'hook',
     zh: '窄屏检测(matchMedia),SSR 安全,自动监听断点变化。',
     en: 'Viewport-width detection (matchMedia), SSR-safe with a live listener.',
+  },
+  {
+    name: 'useTrainerSplitScreen',
+    sig: 'useTrainerSplitScreen(options): { available: boolean; eligible: boolean }',
+    imp: "import { useTrainerSplitScreen } from '@/hooks/useTrainerSplitScreen';",
+    usage: 'const { eligible } = useTrainerSplitScreen({ requested, sessionReady, doubleZbll, room: !!room, caseCount });',
+    category: 'hook',
+    zh: '训练器与计时器菜单共用分屏条件，检查视口、当前会话、题数以及房间和双底限制，避免仅凭 URL 参数禁用菜单。',
+    en: 'Shared split-view eligibility for the trainer and timer menu: checks viewport, session, case count, rooms and double ZBLL rather than locking menus from a URL flag alone.',
   },
   {
     name: 'usePanelClamp',
@@ -486,6 +535,14 @@ export const CATALOG: UtilEntry[] = [
   },
 
   // ── wca ───────────────────────────────────
+  {
+    name: 'requestWcaPersonTeam / saveWcaPersonTeam',
+    sig: 'requestWcaPersonTeam(wcaId: string): void; saveWcaPersonTeam(wcaId: string, name: string): Promise<{ team: WcaTeam | null }>',
+    imp: "import { requestWcaPersonTeam, saveWcaPersonTeam } from '@/lib/wca-team-directory';",
+    category: 'wca',
+    zh: '战队标志共享缓存：合并同一批选手请求，每次最多 100 人，缓存一分钟；保存成功立即同步已挂载标志。展示优先用 WcaPersonTeamBadge。',
+    en: 'Shared team cache: batch up to 100 people per request, cache for one minute, and notify mounted badges after a successful save. Prefer WcaPersonTeamBadge for display.',
+  },
   {
     name: 'toWcaEventId',
     sig: 'toWcaEventId(input: string | null | undefined): string',

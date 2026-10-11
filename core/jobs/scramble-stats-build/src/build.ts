@@ -3,6 +3,7 @@ import path from 'node:path';
 import readline from 'node:readline';
 import { fileURLToPath } from 'node:url';
 import YAML from 'yaml';
+import { writeExampleShards } from './build_example_shards';
 import { taskProgress } from './task_progress.js';
 import { makeRng } from './prng';
 import { dateDisplay } from './comp_date';
@@ -727,6 +728,7 @@ async function main() {
 
   const exPath = path.join(outDir, 'examples.json');
   fs.writeFileSync(exPath, JSON.stringify(examplesFile));
+  writeExampleShards(outDir);
   const exSizeKB = (fs.statSync(exPath).size / 1024).toFixed(1);
   console.log(`Wrote ${exPath} (${exSizeKB} KB)`);
 

@@ -36,6 +36,19 @@ const ICON = 16;
 const CODE_LEN = 6;
 type Channel = 'email' | 'phone';
 
+// A convenience hint only: never store passwords, codes or authorization here.
+function readRememberedLogin(channel: Channel): string {
+  try { return localStorage.getItem('cuberoot_login_' + channel) ?? ''; }
+  catch { return ''; }
+}
+function rememberLogin(channel: Channel, value: string): void {
+  try {
+    const key = 'cuberoot_login_' + channel;
+    if (value.trim()) localStorage.setItem(key, value.trim());
+    else localStorage.removeItem(key);
+  } catch { /* Remembering an account is optional; sign-in still succeeds. */ }
+}
+
 /** Login and identity-linking share one cancellable redirect lifecycle. */
 function useSocialRedirect() {
   const [busy, setBusy] = useState<RedirectAuthProvider | null>(null);
@@ -230,6 +243,9 @@ function authErrorText(raw: string, t: (zh: string, en: string) => string): stri
 function CodeFlow({ channel, mode, onDone }: { channel: Channel; mode: 'login' | 'link' | 'replace' | 'reset'; onDone: OnSignedIn }) {
   const t = useT();
   const [target, setTarget] = useState('');
+  useEffect(() => {
+    if (mode === 'login' || mode === 'reset') setTarget(readRememberedLogin(channel));
+  }, [channel, mode]);
   const [code, setCode] = useState('');
   const [step, setStep] = useState<'input' | 'code'>('input');
   const [busy, setBusy] = useState(false);
@@ -276,11 +292,13 @@ function CodeFlow({ channel, mode, onDone }: { channel: Channel; mode: 'login' |
         const r = await verifyPhonePasswordResetCode(target, code, controller.signal);
         if (controller.signal.aborted) return;
         if (!(await applySession(r.token, r.user))) throw new Error('session storage failed');
+        rememberLogin(channel, target);
         onDone();
       } else {
         const r = channel === 'email' ? await verifyEmailCode(target, code, { signal: controller.signal }) : await verifyPhoneCode(target, code, { signal: controller.signal });
         if (controller.signal.aborted) return;
         if (!(await applySession(r.token, r.user))) throw new Error('session storage failed');
+        rememberLogin(channel, target);
         onDone({ isNew: r.isNew, hasWca: !!r.user.wcaId });
       }
     } catch (e) {
@@ -308,6 +326,7 @@ function CodeFlow({ channel, mode, onDone }: { channel: Channel; mode: 'login' |
       className="auth-input"
       type={channel === 'email' ? 'email' : 'tel'}
       value={target}
+      autoComplete={channel === 'email' ? 'email' : 'tel-national'}
       autoFocus
       placeholder={placeholder}
       onChange={(e) => setTarget(e.target.value)}
@@ -322,12 +341,15 @@ function CodeFlow({ channel, mode, onDone }: { channel: Channel; mode: 'login' |
           <label className="auth-label">{label}</label>
           {/* 手机号框挂一个 +86 前缀:只支持中国大陆号,这事该在输入前就说,而不是等人填完
               国外号码再回一句错误。前缀纯装饰,不进 target —— normalizePhone 认裸 11 位。 */}
-          {channel === 'phone' ? (
-            <div className="auth-phonefield">
-              <span className="auth-phoneprefix">+86</span>
-              {input}
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {channel === 'phone' ? (
+              <div className="auth-phonefield" style={{ flex: 1, minWidth: 0 }}>
+                <span className="auth-phoneprefix">+86</span>
+                {input}
+              </div>
           ) : input}
+          {target && !busy && <ClearButton variant="standalone" ariaLabel={t('清除并忘记账号', 'Clear and forget account')} onClick={() => { setTarget(''); if (mode === 'login' || mode === 'reset') rememberLogin(channel, ''); }} />}
+          </div>
           {error && <p className="auth-error">{error}</p>}
           <button className="auth-primary" disabled={!target || busy} onClick={() => void send()}>
             {busy ? <Loader2 size={ICON} className="auth-spin" /> : null}
@@ -391,6 +413,7 @@ function EmailCodeFlow({ email, setEmail, onDone, toPassword, reset }: {
       const r = await verifyEmailCode(email, code, { existingOnly: reset, signal: controller.signal });
       if (controller.signal.aborted) return;
       if (!(await applySession(r.token, r.user))) throw new Error('session storage failed');
+      rememberLogin('email', email);
       onDone({ isNew: r.isNew, hasWca: !!r.user.wcaId });
     } catch (e) {
       if (controller.signal.aborted) return;
@@ -437,15 +460,19 @@ function EmailCodeFlow({ email, setEmail, onDone, toPassword, reset }: {
         </p>
       )}
       <label className="auth-label">{t('邮箱', 'Email')}</label>
-      <input
-        className="auth-input"
-        type="email"
-        value={email}
-        autoFocus
-        autoComplete="email"
-        onChange={(e) => setEmail(e.target.value)}
-        onKeyDown={(e) => { if (e.key === 'Enter' && email && !busy) void send(); }}
-      />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <input
+          className="auth-input"
+          type="email"
+          style={{ minWidth: 0 }}
+          value={email}
+          autoFocus
+          autoComplete="email"
+          onChange={(e) => setEmail(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter' && email && !busy) void send(); }}
+        />
+        {email && !busy && <ClearButton variant="standalone" ariaLabel={t('清除并忘记账号', 'Clear and forget account')} onClick={() => { setEmail(''); rememberLogin('email', ''); }} />}
+      </div>
       {error && <p className="auth-error">{error}</p>}
       <button className="auth-primary" disabled={!email || busy} onClick={() => void send()}>
         {busy ? <Loader2 size={ICON} className="auth-spin" /> : null}
@@ -475,6 +502,7 @@ function EmailPasswordFlow({ email, setEmail, onDone, toCode, onForgot }: {
     try {
       const r = await loginPassword(email, pw);
       if (!(await applySession(r.token, r.user))) throw new Error('session storage failed');
+      rememberLogin('email', email);
       onDone();
     } catch (e) {
       setError(authErrorText(e instanceof Error ? e.message : String(e), t));
@@ -487,14 +515,18 @@ function EmailPasswordFlow({ email, setEmail, onDone, toCode, onForgot }: {
   return (
     <div className="auth-flow">
       <label className="auth-label">{t('邮箱', 'Email')}</label>
-      <input
-        className="auth-input"
-        type="email"
-        value={email}
-        autoFocus
-        autoComplete="username"
-        onChange={(e) => setEmail(e.target.value)}
-      />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <input
+          className="auth-input"
+          type="email"
+          style={{ minWidth: 0 }}
+          value={email}
+          autoFocus
+          autoComplete="username"
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        {email && !busy && <ClearButton variant="standalone" ariaLabel={t('清除并忘记账号', 'Clear and forget account')} onClick={() => { setEmail(''); rememberLogin('email', ''); }} />}
+      </div>
       <label className="auth-label">{t('密码', 'Password')}</label>
       <PasswordInput
         className="auth-input"
@@ -526,6 +558,7 @@ function EmailAuth({ onDone }: { onDone: OnSignedIn }) {
   const lang = useLang();
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
   const [email, setEmail] = useState('');
+  useEffect(() => { setEmail(readRememberedLogin('email')); }, []);
   const [mode, setMode] = useState<'code' | 'password' | 'reset'>('code');
   const [newPw, setNewPw] = useState(false); // 重置流验证通过,待设新密码
 
@@ -1507,9 +1540,9 @@ export function AccountPanel({ expectedAppleUid, miniProgramLogin = false }: { e
             <>
               <p className="auth-hint">{t('输入保留账号生成的合并码。确认后当前账号会并入对方。', 'Enter the code generated by the account you want to keep. This account will be merged into it.')}</p>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <input className="auth-input" style={{ minWidth: 0 }} disabled={mergeBusy} value={mergeCode} onChange={(event) => { setMergeCode(event.target.value); setConfirmMerge(false); }} placeholder="330-123456" autoComplete="off" aria-label={t('合并码', 'Merge code')} />
-                {mergeCode && !mergeBusy && <ClearButton variant="standalone" onClick={() => { setMergeCode(''); setConfirmMerge(false); }} />}
-              </div>
+                  <input className="auth-input" style={{ minWidth: 0 }} disabled={mergeBusy} value={mergeCode} onChange={(event) => { setMergeCode(event.target.value); setConfirmMerge(false); }} placeholder="330-123456" autoComplete="off" aria-label={t('合并码', 'Merge code')} />
+                  {mergeCode && !mergeBusy && <ClearButton variant="standalone" onClick={() => { setMergeCode(''); setConfirmMerge(false); }} />}
+                </div>
               {confirmMerge ? <>
                 <p className="auth-error" role="alert">{t(`当前账号 ID ${currentUid ?? ''} 将并入合并码指定的账号。确认后不可撤销。`, `Account ID ${currentUid ?? ''} will be merged into the account specified by the merge code. This cannot be undone.`)}</p>
                 <button type="button" className="auth-primary" disabled={mergeBusy || !mergeCode.trim()} onClick={() => void submitMerge()}>{mergeBusy ? <Loader2 size={ICON} className="auth-spin" /> : t('确认不可撤销的合并', 'Confirm irreversible merge')}</button>

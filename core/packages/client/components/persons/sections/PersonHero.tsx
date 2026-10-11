@@ -1,6 +1,7 @@
 // 顶部 hero:头像 + (国旗 + 姓名 + 性别图标) + 名字下方小字 WCA ID + 奖牌 / 纪录 / 统计信息。
 // 头像居中,国旗在名字左侧,WCA ID 左缘与名字左缘对齐.
 
+import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Mars, Venus } from 'lucide-react';
 import AppLink from '@/components/AppLink';
@@ -192,7 +193,7 @@ export default function PersonHero({
           </span>
           <div className="wp-hero-name-line">
             <h1 className="wp-hero-name">
-              <a href={wcaUrl} target="_blank" rel="noopener noreferrer" className="wp-hero-name-link" title="WCA">{displayName}</a>
+              <a href={wcaUrl} target="_blank" rel="noopener noreferrer" className="wp-hero-name-link" title="WCA">{displayName}</a><WcaPersonTeamBadge wcaId={p.wca_id} />
             </h1>
           </div>
           {former && former.length > 0 && (

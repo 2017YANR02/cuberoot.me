@@ -45,6 +45,10 @@ opt in per domain with `LOCAL_DOMAINS`.
 
    Hono comes up on `http://127.0.0.1:3001`; only the domains you pick below use it.
 
+   The local launcher reads only `ENTERPRISE_VERIFICATION_KEY` from the ignored
+   `core/apps/api/.env`, unless already supplied by the environment. Other `.env`
+   settings are not imported; the local database and session defaults stay local.
+
 2. Start (or restart) the frontend with the domains you're editing:
 
    ```sh

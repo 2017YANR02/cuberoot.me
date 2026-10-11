@@ -8,8 +8,10 @@ import WcaAuth from '@/components/WcaAuth';
 import { T, tr, useLang } from '@/i18n/tr';
 import { useAuthUser, useIsAdmin } from '@/lib/auth-store';
 import { createDocument, fetchDocuments, type CollaborativeDocument } from '@/lib/document-api';
-import { parseSpreadsheetFile } from '@/lib/spreadsheet-export';
 import '../docs/docs.css';
+
+const loadSpreadsheetImport = () => import('@/lib/spreadsheet-export');
+const warmSpreadsheetImport = () => { void loadSpreadsheetImport().catch(() => {}); };
 
 function localDate(value: string, lang: 'en' | 'zh'): string {
   return new Intl.DateTimeFormat(lang === 'zh' ? 'zh-CN' : 'en', {
@@ -47,6 +49,7 @@ export default function SpreadsheetsPage() {
     if (!file) return;
     setWorking(true); setError('');
     try {
+      const { parseSpreadsheetFile } = await loadSpreadsheetImport();
       const sheets = await parseSpreadsheetFile(file);
       const title = file.name.replace(/\.(xlsx|xls|csv)$/i, '') || tr({ zh: '导入的表格', en: 'Imported spreadsheet' });
       openCreated((await createDocument(title, 'spreadsheet', { sheets })).id);
@@ -60,7 +63,7 @@ export default function SpreadsheetsPage() {
       <div className="docs-header-actions">
         {isAdmin && <>
           <button type="button" className="docs-button" onClick={() => void createBlank()} disabled={working}><FilePlus2 size={17} /><T zh="新建" en="New" /></button>
-          <button type="button" className="docs-button docs-button-primary" onClick={() => inputRef.current?.click()} disabled={working}><Upload size={17} /><T zh="导入 Excel" en="Import Excel" /></button>
+          <button type="button" className="docs-button docs-button-primary" onPointerEnter={warmSpreadsheetImport} onFocus={warmSpreadsheetImport} onClick={() => { warmSpreadsheetImport(); inputRef.current?.click(); }} disabled={working}><Upload size={17} /><T zh="导入 Excel" en="Import Excel" /></button>
           <input ref={inputRef} type="file" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" hidden onChange={(event) => void importXlsx(event)} />
         </>}
         <WcaAuth />

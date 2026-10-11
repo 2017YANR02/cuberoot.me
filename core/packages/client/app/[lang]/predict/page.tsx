@@ -27,7 +27,8 @@ import { useTrainingStats } from '@/hooks/useTrainingStats';
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { useQueryState, parseAsStringEnum, parseAsInteger, parseAsString, parseAsBoolean } from 'nuqs';
+import { parseAsStringEnum, parseAsInteger, parseAsString, parseAsBoolean } from 'nuqs';
+import { useTrainingQueryState as useQueryState, useTrainingSearchParams } from '@/lib/training-host';
 import { Check, ExternalLink } from 'lucide-react';
 import AlgInput from '@/components/AlgInput';
 import BackHome from '@/components/BackHome';
@@ -176,7 +177,7 @@ const clock = (seconds: number): string => {
 };
 
 function PredictPageInner() {
-
+  const trainingSearch = useTrainingSearchParams();
   const [puzzleId, setPuzzleId] = useQueryState('puzzle',
     parseAsStringEnum<PredictPuzzleId>([...PREDICT_PUZZLE_IDS]).withDefault('3').withOptions({ history: 'replace', scroll: false }));
   const [mode, setMode] = useQueryState('mode',
@@ -407,10 +408,10 @@ function PredictPageInner() {
   }, [puzzleId, mode, track, source, moveCount]);
 
   useEffect(() => {
-    const destination = parseTrainingAssignmentDestination(window.location.search);
+    const destination = parseTrainingAssignmentDestination(trainingSearch?.toString() ?? '');
     trainingDestinationRef.current = destination;
     return startTrainingEvidenceOutbox(destination);
-  }, []);
+  }, [trainingSearch]);
   useEffect(() => {
     setPast([]);
     setFuture([]);

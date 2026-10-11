@@ -11,7 +11,7 @@
  *   DELETE /v1/wca/teachers/:studentId/:eventId    — 老师本人、有效会员学生本人或管理员撤销学习来源
  */
 import { Hono } from 'hono';
-import { query } from '../db/connection.js';
+import { query, withTransaction } from '../db/connection.js';
 import { requireAuth } from '../utils/recon_helpers.js';
 import { hasActiveMembership } from '../utils/membership.js';
 import {
@@ -282,10 +282,25 @@ wcaTeacherRoutes.delete('/wca/teachers/:teacherId/named-students/:namedStudentId
   if (!isAdmin && actorWcaId !== teacherWcaId) {
     return c.json({ error: 'only the teacher can manage this roster' }, 403);
   }
-  const rows = await query<{ id: string }>(
-    'DELETE FROM wca_teacher_named_students WHERE id = ? AND teacher_wca_id = ? RETURNING id',
-    [namedStudentId, teacherWcaId],
-  );
+  const replacementRaw = c.req.query('replacement');
+  const replacement = replacementRaw ? normalizeWcaId(replacementRaw) : null;
+  if (replacementRaw && !replacement) return c.json({ error: 'invalid replacement' }, 400);
+  if (replacement && !(await query('SELECT 1 FROM wca_teachers WHERE student_wca_id = ? AND teacher_wca_id = ? LIMIT 1', [replacement, teacherWcaId])).length) {
+    return c.json({ error: 'replacement must be a student of this teacher' }, 400);
+  }
+  const removeNamed = async (runQuery: typeof query) => {
+    if (replacement) {
+      // Preserve the explicit institution when a named student gains a WCA ID.
+      // Never overwrite an affiliation already recorded for that WCA person.
+      await runQuery(`INSERT INTO wca_student_institutions (student_wca_id, organization_id)
+        SELECT ?, relation.organization_id FROM wca_student_institutions relation
+        JOIN wca_teacher_named_students student ON student.id = relation.named_student_id
+        WHERE student.id = ? AND student.teacher_wca_id = ?
+        ON CONFLICT (student_wca_id) DO NOTHING`, [replacement, namedStudentId, teacherWcaId]);
+    }
+    return runQuery<{ id: string }>('DELETE FROM wca_teacher_named_students WHERE id = ? AND teacher_wca_id = ? RETURNING id', [namedStudentId, teacherWcaId]);
+  };
+  const rows = replacement ? await withTransaction(removeNamed) : await removeNamed(query);
   if (!rows.length) return c.json({ error: 'student not found' }, 404);
   return c.json({ ok: true });
 });

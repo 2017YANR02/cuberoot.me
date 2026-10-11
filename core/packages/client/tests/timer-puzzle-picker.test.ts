@@ -81,6 +81,40 @@ describe('shared timer puzzle picker', () => {
     expect(document.activeElement).toBe(trigger);
   });
 
+  it('opens formula choices without selecting the project and restores focus between levels', () => {
+    const onSelect = vi.fn();
+    act(() => root.render(createElement(TimerPuzzlePicker, {
+      groups: [{ id: 'training', label: 'Puzzle', items: [{
+        id: '333', label: '3×3', children: [
+          { id: '/alg/3x3/oll/select', label: 'OLL' },
+          { id: '/alg/3x3/pll/select', label: 'PLL' },
+        ],
+      }] }],
+      onSelect,
+      puzzleLabel: 'Puzzle',
+      triggerLabel: 'Training',
+      submenuLabel: 'Algorithms',
+      showItemIcons: false,
+      selectedEvent: '',
+    })));
+    const trigger = host.querySelector<HTMLButtonElement>('.pp-trigger')!;
+    act(() => trigger.click());
+    const puzzle = host.querySelector<HTMLButtonElement>('.pp-item')!;
+    act(() => puzzle.click());
+    expect(onSelect).not.toHaveBeenCalled();
+    expect(puzzle.getAttribute('aria-expanded')).toBe('true');
+    expect(document.activeElement?.textContent).toBe('OLL');
+    act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+    expect(host.querySelector('.pp-cascade-options')).toBeNull();
+    expect(host.querySelector('.pp-popup')).not.toBeNull();
+    expect(document.activeElement).toBe(puzzle);
+    act(() => puzzle.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })));
+    act(() => host.querySelector<HTMLButtonElement>('.pp-cascade-options button')!.click());
+    expect(onSelect).toHaveBeenCalledExactlyOnceWith('/alg/3x3/oll/select');
+    expect(host.querySelector('.pp-popup')).toBeNull();
+    expect(document.activeElement).toBe(trigger);
+  });
+
   it('supports host-controlled close without changing the uncontrolled Web behavior', () => {
     const onOpenChange = vi.fn();
     const render = (open: boolean) => root.render(createElement(TimerPuzzlePicker, {

@@ -7,7 +7,7 @@ import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'r
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { parseAsBoolean, useQueryState } from 'nuqs';
-import { ArrowRight, Crown, Heart, Lock, LockOpen, LogIn, User, type LucideIcon } from 'lucide-react';
+import { ArrowRight, Blocks, Crown, Heart, Layers3, Lock, LockOpen, LogIn, User, type LucideIcon } from 'lucide-react';
 import { closestCenter, DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, rectSortingStrategy, SortableContext } from '@dnd-kit/sortable';
 import Link from '@/components/AppLink';
@@ -64,6 +64,7 @@ import { isAdminWcaId } from '@cuberoot/shared/admin';
 import { fetchPageNotices, type PageNotice } from '@/lib/page-notices-api';
 import { colorFor, iconFor } from '@/lib/page-notice-visuals';
 import { displayCuberName } from '@/lib/cuber-name-display';
+import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import { listPublicMembers, type PublicMember } from '@/lib/membership-api';
 import { getHomeCardLocks, getHomeCardOrders, reorderHomeCards, setHomeCardLock } from '@/lib/home-card-order-api';
 import { getPinnedRecons, setReconHomePin } from '@/lib/recon-api';
@@ -423,7 +424,7 @@ export default function LandingPage() {
                 {member.avatarUrl
                   ? <img src={member.avatarUrl} alt="" className="landing-member-avatar" />
                   : <User size={24} aria-hidden="true" />}
-                <span>{displayCuberName(member.name, lang === 'zh')}{member.vipId ? ` ${fmtVipId(member.vipId)}` : ''}</span>
+                <span>{displayCuberName(member.name, lang === 'zh')}<WcaPersonTeamBadge wcaId={member.wcaId} />{member.vipId ? ` ${fmtVipId(member.vipId)}` : ''}</span>
               </Link>
             ))}
           </div>
@@ -510,7 +511,15 @@ export default function LandingPage() {
             );
       })()}
 
-      {!!pinnedRecons?.length && <TodayRecon {...reconProps} pinnedOnly />}
+      <div className="landing-training-grid">
+        <Link href="/alg/3x3/zbll/run" className="landing-card" data-site-surface="panel" prefetch={false}>
+          <LandingCardContent label={tr({ zh: 'ZBLL 训练', en: 'ZBLL Training' })} Icon={Layers3} />
+        </Link>
+        <Link href="/alg/3x3/lsll/run" className="landing-card" data-site-surface="panel" prefetch={false}>
+          <LandingCardContent label={tr({ zh: 'LSLL 训练', en: 'LSLL Training' })} Icon={Blocks} />
+        </Link>
+        {!!pinnedRecons?.length && <TodayRecon {...reconProps} pinnedOnly />}
+      </div>
 
       {/* 两行 hero 的共同外壳。桌面是 5 + 4 两个独立网格;手机端外壳自己变成 3 列网格、
           两个子网格 display:contents,9 张卡直接排成 3 行 3 个(见 landing.css)。 */}

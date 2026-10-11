@@ -3,6 +3,7 @@
 // 复盘卡片(卡片视图单卡)——/recon?view=grid 与首页「今日复盘」共用。
 // 整张卡是一个 <a>(AppLink,支持中键新开),故内部名字/比赛只渲染纯文本,禁套 <a>。
 // 从 app/[lang]/recon/page.tsx 提取,样式见 ./recon_card.css。
+import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import { useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import { Video, Link2, Lock } from 'lucide-react';
@@ -92,8 +93,8 @@ export function ReconCard({ solve, isZh, href, horizontal = false, showScrambleF
   solve: ReconSolve; isZh: boolean; href: string; horizontal?: boolean; showScrambleFallback?: boolean;
 }) {
   const cubers = [
-    { name: solve.person || '', country: solve.personCountry },
-    ...(solve.coPersons ?? []).map(c => ({ name: c.name, country: c.country })),
+    { name: solve.person || '', id: solve.personId, country: solve.personCountry },
+    ...(solve.coPersons ?? []).map(c => ({ name: c.name, id: c.id, country: c.country })),
   ].filter(c => c.name);
   const single = formatReconSingle(solve.event, solve.value, solve.rawTime);
   const compName = localizeCompName(solve.compWcaId ?? '', solve.comp || '', isZh);
@@ -124,7 +125,7 @@ export function ReconCard({ solve, isZh, href, horizontal = false, showScrambleF
               <span key={i}>
                 {i > 0 ? <span className="recon-cuber-sep"> &amp; </span> : null}
                 {c.country ? <><Flag iso2={c.country} className="recon-inline-flag" />{' '}</> : null}
-                {displayCuberName(c.name, isZh)}
+                {displayCuberName(c.name, isZh)}<WcaPersonTeamBadge wcaId={c.id} />
               </span>
             ))}
           </span>

@@ -174,9 +174,9 @@ export default function MembershipPage() {
   const enterprisePlans = oneTimePlans.filter((plan) => plan.slug.startsWith('enterprise_'));
   const personalPlans = oneTimePlans.filter((plan) => !plan.slug.startsWith('enterprise_'));
   const showAutoRenew = autoRenewPlans.length > 0;
-  const universalPerks = benefits.items.filter(item => item.group === 'common' && item.enabled).map(item => item.id);
+  const universalPerks = benefits.items.filter(item => item.group === 'common').map(item => item.id);
   const universalPerkSet = new Set(benefits.items.filter(item => item.group === 'common').map(item => item.id));
-  const enterpriseSharedPerks = benefits.items.filter(item => item.group === 'enterprise' && item.enabled).map(item => item.id);
+  const enterpriseSharedPerks = benefits.items.filter(item => item.group === 'enterprise').map(item => item.id);
   const enterpriseSharedPerkSet = new Set(benefits.items.filter(item => item.group === 'enterprise').map(item => item.id));
 
   const handlePlanUpdated = useCallback((updatedPlan: MembershipPlan) => {
@@ -208,15 +208,16 @@ export default function MembershipPage() {
     );
   }
 
-  function renderPerks(perks: string[]) {
-    if (perks.length === 0) return null;
-    return (
+  function renderPerks(perks: string[], group?: 'common' | 'enterprise', heading?: { id: string; text: string }) {
+    if (perks.length === 0 && !(admin && group) && !heading) return null;
+    const list = (
       <ul className="mem-plan-perks">
-        {perks.filter(perk => benefitMap.get(perk)?.enabled !== false).map((perk) => (
+        {perks.map((perk) => (
           <li key={perk}><Check size={13} /> {tr(benefitMap.has(perk) ? benefitCopy(benefitMap.get(perk)!) : { zh: perk, en: perk })}</li>
         ))}
       </ul>
     );
+    return admin && (group || perks.some(perk => benefitMap.has(perk))) ? <BenefitsEditor onSaved={setBenefits} group={group} benefitIds={perks} language={isZh ? 'zh' : 'en'} heading={heading}>{list}</BenefitsEditor> : <>{heading && <h2 id={heading.id} className="mem-plan-section-title">{heading.text}</h2>}{list}</>;
   }
 
   function renderOneTimePlan(plan: MembershipPlan, sectionPerks: Set<string> = new Set()) {
@@ -307,7 +308,6 @@ export default function MembershipPage() {
       )}
 
       {/* 套餐 */}
-      {admin && <BenefitsEditor onSaved={setBenefits} />}
 
       {loadErr ? (
         <div className="mem-empty">{tr({ zh: '加载失败', en: 'Failed to load'
@@ -321,10 +321,7 @@ export default function MembershipPage() {
       ) : (
         <div className="mem-plan-sections">
           <section className="mem-plan-section" aria-labelledby="universal-perks-title">
-            <h2 id="universal-perks-title" className="mem-plan-section-title">
-              {tr({ zh: '所有会员共有权益', en: 'Benefits included with every membership' })}
-            </h2>
-            {renderPerks(universalPerks)}
+            {renderPerks(universalPerks, 'common', { id: 'universal-perks-title', text: tr({ zh: '所有会员共有权益', en: 'Benefits included with every membership' }) })}
           </section>
 
           <section className="mem-plan-section" aria-labelledby="personal-plans-title">
@@ -358,7 +355,7 @@ export default function MembershipPage() {
                       <li><CalendarClock size={13} /> {tr(copy.cadence)}</li>
                       <li><Check size={13} /> {tr({ zh: '扣费前发送通知', en: 'Notice before every charge' })}</li>
                       <li><Check size={13} /> {tr({ zh: '可随时关闭自动续费', en: 'Cancel anytime' })}</li>
-                      {plan.perks.filter((perk) => !universalPerkSet.has(perk) && benefitMap.get(perk)?.enabled !== false).map((p) => (
+                      {plan.perks.filter((perk) => !universalPerkSet.has(perk)).map((p) => (
                         <li key={p}><Check size={13} /> {tr(benefitMap.has(p) ? benefitCopy(benefitMap.get(p)!) : { zh: p, en: p })}</li>
                       ))}
                     </ul>
@@ -373,10 +370,7 @@ export default function MembershipPage() {
           </section>
 
           <section className="mem-plan-section" aria-labelledby="enterprise-plans-title">
-            <h2 id="enterprise-plans-title" className="mem-plan-section-title">
-              {tr({ zh: '企业用户', en: 'Enterprise' })}
-            </h2>
-            {renderPerks(enterpriseSharedPerks)}
+            {renderPerks(enterpriseSharedPerks, 'enterprise', { id: 'enterprise-plans-title', text: tr({ zh: '企业用户', en: 'Enterprise' }) })}
             <div className="mem-plans">
               {enterprisePlans.map((plan) => renderOneTimePlan(plan, enterpriseSharedPerkSet))}
             </div>

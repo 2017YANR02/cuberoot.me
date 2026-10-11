@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'next/navigation';
-import { parseAsBoolean, useQueryState } from 'nuqs';
+import { useTrainingParams as useParams, useTrainingQueryState as useQueryState } from '@/lib/training-host';
+import { parseAsBoolean } from 'nuqs';
 import { loadAlg, type AlgCase, type AlgFile } from '@cuberoot/shared';
 import Link from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';

@@ -131,7 +131,7 @@ export default function PersonStudents({ teacherWcaId, teacherCountryIso2, isZh,
     student.wcaId ? [[student.wcaId, student.eventIds] as const] : []
   ))), [studentSeeds]);
   const studentIdsKey = studentIds.join(',');
-  const teacherDirectory = useWcaTeachers(studentIds, ALL_EVENT_IDS);
+  const teacherDirectory = useWcaTeachers(studentIds, ALL_EVENT_IDS, (namedStudents ?? []).map(student => student.id));
 
   useEffect(() => {
     if (mode !== 'manage') {
@@ -394,6 +394,7 @@ export default function PersonStudents({ teacherWcaId, teacherCountryIso2, isZh,
                       </>
                     )}
                   </span>
+                  <div>{teacherDirectory.institutions.get(student.wcaId || `named:${student.namedStudent?.id}`)?.name}</div>
                 </td>
                 <td className="wp-cell-student-events">
                   {selectedEventId ? (

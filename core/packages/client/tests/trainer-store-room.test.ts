@@ -58,6 +58,7 @@ vi.mock('@/lib/trainer-room-api', () => ({
 
 const { useTrainerStore } = await import('@/lib/trainer-store');
 const { caseKey } = await import('@/lib/trainer-case-key');
+const { getRoom, claimRoomBatch } = await import('@/lib/trainer-room-api');
 type AlgCase = import('@cuberoot/shared').AlgCase;
 
 const mkCase = (name: string): AlgCase => ({
@@ -92,6 +93,41 @@ const curRecap = () => {
 
 describe('trainer-store online room', () => {
   beforeEach(() => { g.localStorage = makeLocalStorage(); sim.round = 1; sim.idx = 0; claimFail = 0; });
+
+  it('不匹配的自动邀请在未选题时也写入错误态,不领取其他公式集题目', async () => {
+    useTrainerStore.getState().leaveRoom();
+    boot(['A']);
+    useTrainerStore.getState().setSelected([]);
+    vi.mocked(getRoom).mockResolvedValueOnce({
+      code: '0427', puzzle: '3x3', set: 'oll', order: 'seq',
+      round: 1, total: 57, claimed: 0, done: false,
+    });
+    vi.mocked(claimRoomBatch).mockClear();
+
+    const result = await useTrainerStore.getState().joinRoom('0427');
+
+    expect(result).toEqual({ ok: false, error: 'room is for 3x3/oll' });
+    expect(useTrainerStore.getState().roomError).toBe('room is for 3x3/oll');
+    expect(useTrainerStore.getState().roomBusy).toBe(false);
+    expect(useTrainerStore.getState().room).toBeNull();
+    expect(claimRoomBatch).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { code: '12345', doubleZbll: false, error: 'invalid code' },
+    { code: '0427', doubleZbll: true, error: 'Double ZBLL uses a local pair queue' },
+  ])('入房前拒绝也写入错误态: $error', async ({ code, doubleZbll, error }) => {
+    useTrainerStore.getState().leaveRoom();
+    boot(['A']);
+    useTrainerStore.setState({ doubleZbll });
+    vi.mocked(getRoom).mockClear();
+
+    expect(await useTrainerStore.getState().joinRoom(code)).toEqual({ ok: false, error });
+    expect(useTrainerStore.getState().roomError).toBe(error);
+    expect(useTrainerStore.getState().roomBusy).toBe(false);
+    expect(getRoom).not.toHaveBeenCalled();
+    useTrainerStore.setState({ doubleZbll: false });
+  });
 
   it('建房 → 领题 → 领完弹本轮结束 → 继续下一轮 → 离开', async () => {
     boot(['A', 'B', 'C']);
