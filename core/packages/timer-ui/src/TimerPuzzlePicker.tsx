@@ -17,7 +17,7 @@ export interface TimerPuzzlePickerItem {
   iconClass?: string;
   textLabel?: string;
   /** Optional second level, such as formula sets belonging to this puzzle. */
-  children?: readonly { id: string; label: string }[];
+  children?: readonly Pick<TimerPuzzlePickerItem, 'id' | 'label' | 'iconClass' | 'textLabel'>[];
 }
 
 export interface TimerPuzzlePickerGroup {
@@ -106,6 +106,10 @@ export function TimerPuzzlePicker({
   const selectedItem = groups
     .flatMap((group) => group.items)
     .find((item) => item.id === selectedPuzzle || item.children?.some(child => child.id === selectedPuzzle));
+  const selectedChild = selectedItem?.children?.find(item => item.id === selectedPuzzle);
+  const selectedChoice = selectedChild ?? selectedItem;
+  const triggerText = triggerLabel ?? (selectedChild && !selectedChild.iconClass && !selectedChild.textLabel
+    ? selectedChild.label : undefined);
 
   const close = useCallback((reason: TimerOverlayOpenReason, restoreFocus = false) => {
     setSubmenuId(null);
@@ -205,16 +209,16 @@ export function TimerPuzzlePicker({
         aria-controls={open ? popupId : undefined}
         aria-expanded={open}
         aria-haspopup="menu"
-        aria-label={triggerLabel ?? selectedItem?.label ?? puzzleLabel}
+        aria-label={triggerLabel ?? selectedChoice?.label ?? puzzleLabel}
         className={`pp-trigger${selectedItem ? ' pp-trigger--active' : ''}`}
         disabled={disabled}
         onClick={() => { setActiveMenu('puzzle'); setSubmenuId(null); changeOpen(!open, 'trigger'); }}
         ref={triggerRef}
         type="button"
       >
-        {triggerLabel ? <span className="pp-trigger-label">{triggerLabel}</span> : <>
-          {selectedItem ? renderIcon(selectedItem, true) : <Boxes className="pp-trigger-icon" size={15} />}
-          {!selectedItem && <span className="pp-trigger-label">{puzzleLabel}</span>}
+        {triggerText ? <span className="pp-trigger-label">{triggerText}</span> : <>
+          {selectedChoice ? renderIcon(selectedChoice, true) : <Boxes className="pp-trigger-icon" size={15} />}
+          {!selectedChoice && <span className="pp-trigger-label">{puzzleLabel}</span>}
         </>}
         {showArrow && <ChevronDown className="pp-trigger-chevron" size={14} />}
       </button>
@@ -274,6 +278,7 @@ export function TimerPuzzlePicker({
                 aria-current={item.id === selectedPuzzle ? 'page' : undefined}
                 className={`pp-item${item.id === selectedPuzzle ? ' pp-item--active' : ''}`}
                 onClick={() => { onSelect(item.id); close('select', true); }}>
+                {showItemIcons && (item.iconClass || item.textLabel) && renderIcon(item)}
                 <span className="pp-item-label">{item.label}</span>
                 {item.id === selectedPuzzle && <Check className="pp-item-check" size={14} aria-hidden="true" />}
               </button>

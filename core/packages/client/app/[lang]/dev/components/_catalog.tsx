@@ -1516,8 +1516,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'PuzzlePicker',
     import: "import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';",
     category: 'more',
-    zh: '网站通用魔方项目下拉：首页近期打乱、预判、模拟器、求解与打乱统计共用同一套图标 + 名称菜单。传 wcaEvents 使用数据驱动的 WCA + csTimer 家族目录;页面有自己的可用集时传 groups。linkFor 保留中键新开,onSelect 用于页内状态。计时器必须改用跨端 TimerPuzzlePicker，禁止页面内自写项目菜单。',
-    en: 'General website puzzle dropdown shared by Recent Scrambles, Predict, Sim, Solver, and Scramble Stats. Pass wcaEvents for the data-driven WCA + csTimer family catalog, or groups for a page-specific available set. linkFor preserves middle-click navigation; onSelect updates in-page state. Timer surfaces must use the cross-platform TimerPuzzlePicker. Do not hand-roll page-local puzzle menus.',
+    zh: '网站通用魔方项目下拉：首页近期打乱、预判、模拟器、求解与打乱统计共用同一套图标 + 名称菜单。传 wcaEvents 使用数据驱动的 WCA + csTimer 家族目录;页面有自己的可用集时传 groups。单选回调的项目可传 children，复用 TimerPuzzlePicker 的系列 → 项目两级菜单；WCA 仍可置顶直达。linkFor 保留中键新开,onSelect 用于页内状态。计时器必须改用跨端 TimerPuzzlePicker，禁止页面内自写项目菜单。',
+    en: 'General website puzzle dropdown shared by Recent Scrambles, Predict, Sim, Solver, and Scramble Stats. Pass wcaEvents for the data-driven WCA + csTimer family catalog, or groups for a page-specific available set. Single-select callback items may supply children to reuse TimerPuzzlePicker for family → puzzle submenus while keeping WCA entries directly accessible. linkFor preserves middle-click navigation; onSelect updates in-page state. Timer surfaces must use the cross-platform TimerPuzzlePicker. Do not hand-roll page-local puzzle menus.',
   },
   {
     name: 'AlgPuzzlePicker',
