@@ -86,7 +86,6 @@
     "@tiptap/react": "^3.30.5",
     "@tiptap/starter-kit": "^3.30.5",
     "@uiw/react-codemirror": "^4.25.10",
-    "@vercel/analytics": "^2.0.1",
     "@vercel/oidc": "^4.0.0",
     "comlink": "^4.4.2",
     "cropperjs": "^1.6.2",
