@@ -68,7 +68,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   then add the file stem to this list.
 //   account_auth account_face admin_disk alg alg_lsll alg_marks alg_preferred_algs alg_srs alg_sets alg_sweep alg_time_attack_order announced_comps app_boot_diagnostics article auth battle_rooms calendar cn_comp_names colpi
 //   chat comp_follows creator_gallery cube cubeopt_solve cubing_live documents drive feedback forum friends geo health historical_ranks pb private_vault
-//   membership membership_benefits membership_apple membership_google membership_subscriptions music nav_sites pets nemesizer notifications ops page_notices paint pattern_examples platform_catalog platform_commerce platform_content platform_learning platform_qr progress quiz recon recon_ground_truth scramble_555 teacher_directory teaching teaching_saas
+//   membership membership_benefits membership_apple membership_google membership_subscriptions music nav_sites pets nemesizer notifications ops remote_access page_notices paint pattern_examples platform_catalog platform_commerce platform_content platform_learning platform_qr progress quiz recon recon_ground_truth scramble_555 teacher_directory teaching teaching_saas
 //   scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
 //   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wca_teams wca_training_institutions wechat_jssdk wechat_pc_opensdk wiki
 //   platform_competitions platform_competition_attempts platform_competition_evidence platform_competition_settlements platform_competition_device_reports platform_organizer_applications platform_refunds
@@ -962,6 +962,11 @@ const ENDPOINTS: Ep[] = [
   { d: 'content', m: 'PUT', p: '/v1/contributors/:id', g: 'admin', zh: '改贡献者', en: 'Edit contributor' },
   { d: 'content', m: 'POST', p: '/v1/contributors/:id/bump', g: 'admin', zh: '贡献次数 +1', en: 'Bump score +1' },
   { d: 'content', m: 'DELETE', p: '/v1/contributors/:id', g: 'admin', zh: '删贡献者', en: 'Delete contributor' },
+  { d: 'content', m: 'GET', p: '/v1/remote-access/requests', g: 'login', zh: '远程申请与负责人审核列表', en: 'Own remote requests and host-owner review' },
+  { d: 'content', m: 'POST', p: '/v1/remote-access/requests', g: 'login', zh: '提交设备公钥申请', en: 'Request access for a device key' },
+  { d: 'content', m: 'POST', p: '/v1/remote-access/requests/:id/decision', g: 'admin', zh: '仅 Mac 负责人批准、拒绝或撤销', en: 'Mac owner only: approve, decline or revoke' },
+  { d: 'content', m: 'GET', p: '/v1/remote-access/host/keys', g: 'admin', zh: '专用主机令牌读取已批准公钥', en: 'Host credential: read approved keys' },
+  { d: 'content', m: 'POST', p: '/v1/remote-access/host/applied', g: 'admin', zh: '专用主机令牌确认生效', en: 'Host credential: acknowledge application' },
   { d: 'content', m: 'GET', p: '/v1/ops/commands', g: 'public', zh: '运维命令手册', en: 'Ops runbook commands' },
   { d: 'content', m: 'POST', p: '/v1/ops/commands', g: 'admin', zh: '加命令', en: 'Add command' },
   { d: 'content', m: 'PUT', p: '/v1/ops/commands/reorder', g: 'admin', zh: '重排命令', en: 'Reorder commands' },
