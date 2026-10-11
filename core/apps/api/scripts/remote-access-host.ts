@@ -42,7 +42,7 @@ export async function syncHost(configPath = join(homedir(), '.config/cuberoot-re
   const config = JSON.parse(await readFile(configPath, 'utf8'));
   if (typeof config.token !== 'string' || config.token.length < 32) throw Error('Missing host token');
   if (config.api !== 'https://api.cuberoot.me') throw Error('Unexpected API origin');
-  const fingerprint = execFileSync('ssh-keygen', ['-lf', '/etc/ssh/ssh_host_ed25519_key.pub'], { encoding: 'utf8' }).split(/\s+/)[1];
+  const fingerprint = execFileSync('ssh-keygen', ['-lf', '/etc/ssh/ssh_host_ed25519_key.pub'], { encoding: 'utf8', timeout: 10000, maxBuffer: 65536 }).split(/\s+/)[1];
   if (fingerprint !== REMOTE_CONNECTION.fingerprint) throw Error('Wrong SSH host');
   const folder = join(homedir(), '.ssh');
   await mkdir(folder, { recursive: true, mode: 0o700 });
@@ -107,8 +107,8 @@ async function install() {
 <key>StandardOutPath</key><string>${xml(log)}</string><key>StandardErrorPath</key><string>${xml(log)}</string>
 </dict></plist>`, { mode: 0o600 });
   const domain = `gui/${process.getuid!()}`;
-  try { execFileSync('launchctl', ['bootout', `${domain}/me.cuberoot.remote-access`], { stdio: 'ignore' }); } catch { /* First installation. */ }
-  execFileSync('launchctl', ['bootstrap', domain, plist]);
+  try { execFileSync('launchctl', ['bootout', `${domain}/me.cuberoot.remote-access`], { stdio: 'ignore', timeout: 10000 }); } catch { /* First installation. */ }
+  execFileSync('launchctl', ['bootstrap', domain, plist], { timeout: 10000 });
   console.log('Login startup registered; reboot not tested.');
 }
 
