@@ -37,7 +37,7 @@ function ensureDns(id:string){
 const artifacts=['ops/dev-preview/machines.json','ops/nginx/dev-machines.conf','core/packages/shared/src/dev-preview.ts'];
 function publish(id:string,phase:string){
   const checkpoint=join(state,`${id}-${phase}.sha`);
-  const changed=git('status','--porcelain','--untracked-files=no').split('\n').filter(Boolean).map(s=>s.slice(3));
+  const changed=run('git',['status','--porcelain','--untracked-files=no']).split('\n').filter(Boolean).map(s=>s.slice(3));
   if(changed.some(f=>!artifacts.includes(f)))throw Error('Unexpected changed files in provisioning checkout');
   git('add','--',...artifacts);
   const changedIndex=git('diff','--cached','--name-only');
