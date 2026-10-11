@@ -201,7 +201,7 @@ export default function TrainerRunClient() {
   // 深链模式:进度总览页的「复习 N」直接带 ?mode=memo 进来。只应用一次,之后用户自己切不再被覆盖。
   const [modeParam, setModeParam] = useQueryState('mode');
   const [drawParam] = useQueryState('draw');
-  const [timingParam] = useQueryState('timing');
+  const [timingParam, setTimingParam] = useQueryState('timing');
   // 进度清单的「专练」:case key 已预置在独立会话里,虚拟集按 key 反建这批 case。
   const [drillParam] = useQueryState('drill');
   const modeApplied = useRef(false);
@@ -581,11 +581,11 @@ export default function TrainerRunClient() {
   // 而非已建立的 room —— 必须在自动 join 的 roomAdvance 领题之前就把视图就绪,否则会先按单条领题、
   // 切成三条一屏后 peek/peek2 为空只剩一条。每个房间仅应用一次，之后用户自己改不再被覆盖。
   useEffect(() => {
-    if (!sessionReady || viewApplied.current === roomParam || multiParam !== '1' || !roomParam) return;
+    if (trainingHost || !sessionReady || viewApplied.current === roomParam || multiParam !== '1' || !roomParam) return;
     viewApplied.current = roomParam;
     setTiming(false);
     setMultiScramble(true);
-  }, [sessionReady, multiParam, roomParam, setTiming, setMultiScramble]);
+  }, [trainingHost, sessionReady, multiParam, roomParam, setTiming, setMultiScramble]);
 
   useEffect(() => {
     if (!sessionReady || trainingHost || modeApplied.current) return;
@@ -605,10 +605,19 @@ export default function TrainerRunClient() {
     if ((modeParam === 'memo' || modeParam === 'train' || modeParam === 'recap') && state.mode !== modeParam) {
       state.setMode(modeParam);
     }
-    if ((timingParam === '1' || timingParam === '0') && state.timing !== (timingParam === '1')) {
-      state.setTiming(timingParam === '1');
-    }
-  }, [hosted, sessionReady, modeParam, timingParam, roomParam, splitEligible]);
+  }, [hosted, sessionReady, modeParam, roomParam, splitEligible]);
+
+  // Timer-hosted execution always records time, including direct links, restored
+  // preferences and room invitations. Split view owns its separate completion
+  // controls; it must not start the single-player clock behind those controls.
+  useEffect(() => {
+    if (!hosted) return;
+    if (timingParam !== null) void setTimingParam(null);
+    if (!sessionReady || splitEligible || timerState !== TimerState.NOT_RUNNING) return;
+    if (!timing) setTiming(true);
+    if (multiScramble) setMultiScramble(false);
+  }, [hosted, sessionReady, splitEligible, timerState, timing, multiScramble,
+      timingParam, setTimingParam, setTiming, setMultiScramble]);
 
   // scope slug → 该组全部 case key(与 AlgCategoryView 的 top/sub 两级匹配同一套约定)
   const scopedKeys = useMemo(() => {
@@ -1177,7 +1186,6 @@ export default function TrainerRunClient() {
   const selectUrl = new URL(originalSelectHref, 'https://training.invalid');
   if (trainingHost) {
     selectUrl.searchParams.set('mode', mode);
-    selectUrl.searchParams.set('timing', timing ? '1' : '0');
     if (mode === 'memo' && drawParam) selectUrl.searchParams.set('draw', drawParam);
   }
   const selectHref = `${selectUrl.pathname}${selectUrl.search}`;

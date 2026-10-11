@@ -48,17 +48,20 @@ describe('shared Timer Timing settings UI', () => {
 
   async function render({
     active = true,
+    timingRequired = false,
     localize = localizeEn,
     onChange = vi.fn<(patch: Partial<TimerTimingSettings>) => void>(),
     value = DEFAULT_TIMER_TIMING_SETTINGS,
   }: {
     active?: boolean;
+    timingRequired?: boolean;
     localize?: (copy: TimerSettingCopy) => string;
     onChange?: (patch: Partial<TimerTimingSettings>) => void;
     value?: TimerTimingSettings;
   } = {}) {
     await act(async () => root.render(createElement(TimerTimingSettingsSections, {
       active,
+      timingRequired,
       localize,
       onChange,
       renderBooleanControl: renderWebBooleanControl,
@@ -66,6 +69,13 @@ describe('shared Timer Timing settings UI', () => {
     })));
     return onChange;
   }
+
+  it('omits the timing switch for mandatory-timing hosts while retaining inspection and display controls', async () => {
+    await render({ timingRequired: true });
+    expect(host.querySelector('[data-setting-id="settings.timer.enabled"]')).toBeNull();
+    expect([...host.querySelectorAll<HTMLElement>('[data-setting-id]')].map(row => row.dataset.settingId))
+      .toEqual(TIMER_TIMING_SETTING_FIELD_IDS.filter(id => id !== 'settings.timer.enabled'));
+  });
 
   it.each([
     ['Web', BoolToggle],
