@@ -30,7 +30,7 @@ async function api(path:string,body?:unknown){
 function dns(action:string,args:string[]){return JSON.parse(run(config.aliyun,['alidns',action,'--profile',config.dnsProfile,...args],45000));}
 function ensureDns(id:string){
   const rr=`dev-${id}`;
-  const records=dns('DescribeDomainRecords',['--DomainName','cuberoot.me','--RRKeyWord',rr,'--SearchMode','EXACT','--PageSize','500']).DomainRecords?.Record??[];
+  const records=dns('DescribeDomainRecords',['--DomainName','cuberoot.me','--RRKeyWord',rr,'--SearchMode','COMBINATION','--PageSize','500']).DomainRecords?.Record??[];
   if(records.length){if(records.length!==1||records[0].RR!==rr||records[0].Type!=='A'||records[0].Value!=='47.97.30.181'||records[0].Line!=='default'||records[0].Status!=='ENABLE')throw Error('Existing DNS conflicts; inspect without overwriting');return;}
   dns('AddDomainRecord',['--DomainName','cuberoot.me','--RR',rr,'--Type','A','--Value','47.97.30.181','--Line','default','--TTL','600']);
 }
