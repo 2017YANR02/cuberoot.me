@@ -34,7 +34,7 @@
       "evidence": [
         {"file":"core/apps/api/scripts/remote-access-host.ts","contains":"timeout: 10000"},
         {"file":"core/apps/api/scripts/remote-access-host.ts","contains":"if (fingerprint !== REMOTE_CONNECTION.fingerprint)"},
-        {"file":"docs/remote-access-enrollment.md","contains":"me.cuberoot.remote-access"}
+        {"file":"core/apps/api/scripts/remote-access-host.ts","contains":"me.cuberoot.remote-access"}
       ]
     },
     {
