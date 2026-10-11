@@ -10,9 +10,9 @@ Solvers, trainers, analytics, and statistics for the Rubik's Cube — all in the
 
 </div>
 
-**新同事先读：[新人入门 / PR 提交规范](./CONTRIBUTING.md) · [项目开发约定](./AGENTS.md)**
+**新同事先读：[新人入门 / 提交规范](./CONTRIBUTING.md) · [项目开发约定](./AGENTS.md)**
 
-内部员工在本仓库建立功能分支并提交 PR；作者自查、必要检查通过后可自行合并，不要求他人审批。
+所有有仓库写入权限的成员均可在自查和必要验证后直接推送 `main`，无需 PR 或他人审批；推送后确认 CI 和部署结果。需要预览或讨论时可按需提 PR。
 
 ---
 
@@ -54,9 +54,10 @@ cuberoot.me/
 
 ## Local development
 
-Contributions follow the [PR submission and self-review guide](./CONTRIBUTING.md).
-Authors with write access may merge their own PRs after self-review and required
-checks pass; another person's approval is not required.
+Contributions follow the [submission and self-review guide](./CONTRIBUTING.md).
+All contributors with write access may push directly to `main` after self-review
+and necessary validation, then verify CI and deployment results. PRs are optional;
+another person's approval is not required. Force pushes and main deletion remain blocked.
 
 Use the Node version in [`.node-version`](./.node-version) and the pnpm version
 declared by [`core/package.json`](./core/package.json).
