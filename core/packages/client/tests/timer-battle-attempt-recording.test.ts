@@ -1,4 +1,4 @@
-import { NetBattleAttemptRecorder, netAttemptSolveId, type NetRecordedAttempt } from '@cuberoot/shared/timer';
+import { NetBattleAttemptRecorder, netAttemptSolveId, timerSupportsNetBattleSmartCube, type NetRecordedAttempt } from '@cuberoot/shared/timer';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import ts from 'typescript';
@@ -114,6 +114,7 @@ describe('online battle shared attempt', () => {
     const appendSolves = vi.fn(async (_record: NetRecordedAttempt, _upload: boolean) => undefined);
     const context = {
       netAttemptSolveId,
+      timerSupportsNetBattleSmartCube, myEvent: '333',
       getNetRoom: vi.fn(),
       roomRef, pidRef: ref('self'), credentialsRef: ref({ playerId: 'self', playerToken: 'token' }),
       attemptAuthRef: ref(null), getActiveSessionId: () => 'original-session',

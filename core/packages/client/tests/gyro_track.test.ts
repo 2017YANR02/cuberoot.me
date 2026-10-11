@@ -117,7 +117,7 @@ describe('encode / decode', () => {
     expect(decodeGyroTrack('!!!not base64!!!')).toEqual([]);
     expect(decodeGyroTrack(btoa('xx'))).toEqual([]);                 // 太短
     expect(decodeGyroTrack(btoa('\x00\x01\x00\x01'))).toEqual([]);   // magic 不对
-    expect(decodeGyroTrack(btoa('\x47\x02\x00\x01'))).toEqual([]);   // 版本不对
+    expect(decodeGyroTrack(btoa('\x47\x03\x00\x01'))).toEqual([]);   // 版本不对
     expect(decodeGyroTrack(btoa('\x47\x01\x00\x09'))).toEqual([]);   // 说有 9 个,实际没有
   });
 });

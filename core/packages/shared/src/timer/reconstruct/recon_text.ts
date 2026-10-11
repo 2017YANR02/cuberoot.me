@@ -62,6 +62,7 @@ import { conjugateCoreTrack, coreTurnsIn } from './core_track';
 import type { CoreTrack } from './core_track';
 import { htmMoves, quarterMoves } from './htm';
 import { humanizeStream } from './humanize';
+import { wastedDisplaySpans } from './error_detect';
 import type { HumanRotation } from './humanize';
 import type { F2lSlotsResult } from './f2l_slots';
 import { facePermFor } from './gyro_orient';
@@ -78,10 +79,12 @@ export interface ReconTextLine {
   /** 和 `StepAnalysis` 的列 key 同名(`cross` / `slot-FR` / `f2l` / `oll` / `pll`),
    *  这样点表里某一列能高亮文字里对应那一行。 */
   key: string;
-  /** 这一行的动作,已按 HTM 合并(和表里的步数格同一口径)。 */
+  /** 显示动作；普通同面动作合并，废步保留原始转动，括号由 wasteGroups 提供。 */
   moves: string[];
   /** Display gestures mapped to lossless encoder ranges/timestamps for playback. */
   moveRanges?: RangeMoveItem[];
+  /** Waste group per display token; null denotes an ordinary move. */
+  wasteGroups?: Array<number | null>;
   /** 在原始动作流里的闭区间。 */
   fromIdx: number;
   toIdx: number;
@@ -271,9 +274,20 @@ function timeSuffix(line: ReconTextLine): string {
 
 /** 一行渲染成 `<动作> // <标签> (<时间>)`。标签缺席时只留动作。 */
 export function formatReconLine(line: ReconTextLine): string {
-  const moves = line.moves.join(' ');
+  const moves = formattedReconMoves(line).join(' ');
   if (!line.label) return moves;
   return `${moves} // ${line.label}${timeSuffix(line)}`;
+}
+
+/** Keep one token per playback range; parentheses never become extra moves. */
+export function formattedReconMoves(line: ReconTextLine): string[] {
+  return line.moves.map((move, i) => {
+    const group = line.wasteGroups?.[i];
+    if (group == null) return move;
+    const open = i === 0 || line.wasteGroups?.[i - 1] !== group;
+    const close = i === line.moves.length - 1 || line.wasteGroups?.[i + 1] !== group;
+    return `${open ? '(' : ''}${move}${close ? ')' : ''}`;
+  });
 }
 
 export interface ReconTextInput {
@@ -364,26 +378,68 @@ function inverseRotationToken(token: string): string | null {
 /**
  * A 3x3 wide turn rotates the sensor-bearing core and compensates with the
  * opposite outer face. The gyro therefore resembles a whole-cube rotation,
- * but it must not be treated like a whole-cube regrip. Exact, simultaneous
- * pair candidates are only trusted when an inverse event later closes the
- * frame; weave their inverse rotations back so the outer notifications compact
- * to `r/l/u/d/f/b`.
+ * but it must not be treated like a whole-cube regrip. Calibrated recordings
+ * match direction, turn amount and timing; legacy sensor-frame recordings
+ * retain their existing inverse-pair convention below.
  */
+const WIDE_TURN_SLACK_MS = 120;
+
+/** Do not collapse separate same-face gestures before matching their gyro events. */
+function wideGestureMoves(moves: SolveMove[]): ReturnType<typeof htmMoves> {
+  const out: ReturnType<typeof htmMoves> = [];
+  let from = 0;
+  for (let i = 1; i <= moves.length; i++) {
+    if (i < moves.length && moves[i].ts - moves[i - 1].ts <= WIDE_TURN_SLACK_MS) continue;
+    out.push(...htmMoves(moves.slice(from, i)).map(move => ({
+      ...move, startIdx: move.startIdx + from, endIdx: move.endIdx + from,
+    })));
+    from = i;
+  }
+  return out;
+}
+
 function markWideCoreEvents(
-  core: CoreTrack | null,
+  inputCore: CoreTrack | null,
   counted: ReturnType<typeof htmMoves>,
 ): CoreTrack | null {
-  if (!core) return null;
+  if (!inputCore) return null;
+  let core: CoreTrack = inputCore;
   const slicePairs = sliceSplitTable();
   const candidates: number[] = [];
   const wideTokens = new Map<number, string>();
   const wideMoveTimes = new Map<number, number>();
+  const wideMoveEnds = new Map<number, number>();
+  const claimedOuter = new Set<number>();
   const belongsToSlice = (idx: number): boolean => counted.some((move, moveIdx) => {
     const next = counted[moveIdx + 1];
     const split = next ? slicePairs.get(`${move.m} ${next.m}`) : undefined;
-    return !!next && !!split
+    return !!next && !!split && (core.frame !== 'scramble' || next.endTs - move.ts <= WIDE_TURN_SLACK_MS)
       && coreTurnsIn(core, move.ts, next.endTs, split.rotation).includes(idx);
   });
+  if (core.frame === 'scramble') {
+    // An immediate angular detector observes both quarters of a gradual half
+    // turn. Group them only when one matching encoder half gesture supports it;
+    // keep the source track and its intermediate playback poses untouched.
+    const grouped: CoreTrack['events'][number][] = [];
+    for (let i = 0; i < core.events.length; i++) {
+      const a = core.events[i], b = core.events[i + 1];
+      const half = `${a.token[0]}2${a.token.endsWith("'") ? "'" : ''}`;
+      const match = b && a.token === b.token && /^[xyz]'?$/.test(a.token)
+        && !belongsToSlice(i) && !belongsToSlice(i + 1)
+        && counted.some((move, moveIdx) => {
+          if (!WIDE_PAIRS.has(`${move.m} ${half}`)) return false;
+          const distance = (t: number) => Math.min(Math.abs(move.ts - t), Math.abs(move.endTs - t));
+          const from = Math.min(move.ts, a.tMs), to = Math.max(move.endTs, b.tMs);
+          return distance(a.tMs) <= WIDE_TURN_SLACK_MS && distance(b.tMs) <= WIDE_TURN_SLACK_MS
+            && !counted.some((other, idx) => idx !== moveIdx && other.ts > from && other.ts < to);
+        });
+      if (match) {
+        grouped.push({ ...a, tMs: b.tMs, token: half, angleRad: Math.PI });
+        i++;
+      } else grouped.push(a);
+    }
+    core = { ...core, events: grouped };
+  }
   core.events.forEach((event, idx) => {
     const inverse = inverseRotationToken(event.token);
     if (!inverse) return;
@@ -391,6 +447,28 @@ function markWideCoreEvents(
       ? event.startMs
       : event.tMs;
     if (belongsToSlice(idx)) return;
+
+    if (core.frame === 'scramble') {
+      // Calibrated recordings already use physical WCA directions. Pair one
+      // nearby encoder gesture with one core event, regardless of arrival order.
+      // Anchor both at the encoder time so a stage cut cannot split the gesture.
+      const nearest = counted.map((move, moveIdx) => ({ move, moveIdx,
+        distance: Math.min(Math.abs(move.ts - event.tMs), Math.abs(move.endTs - event.tMs)),
+      })).filter(({ move, moveIdx, distance }) => {
+        if (claimedOuter.has(moveIdx) || distance > WIDE_TURN_SLACK_MS
+          || !WIDE_PAIRS.has(`${move.m} ${event.token}`)) return false;
+        const from = Math.min(move.ts, event.tMs), to = Math.max(move.endTs, event.tMs);
+        return !counted.some((other, otherIdx) => otherIdx !== moveIdx
+          && other.ts > from && other.ts < to);
+      }).sort((a, b) => a.distance - b.distance || a.moveIdx - b.moveIdx)[0];
+      if (nearest) {
+        claimedOuter.add(nearest.moveIdx);
+        wideTokens.set(idx, event.token);
+        wideMoveTimes.set(idx, nearest.move.ts);
+        wideMoveEnds.set(idx, nearest.move.endIdx);
+      }
+      return;
+    }
 
     // A lone wide turn has no later inverse event to close the frame. In that
     // case require much stronger evidence: the core must settle at virtually
@@ -432,9 +510,11 @@ function markWideCoreEvents(
     }
   }
   return {
+    ...core,
     events: core.events.map((event, idx) => {
       const wideToken = wideTokens.get(idx);
-      return wideToken ? { ...event, startMs: wideMoveTimes.get(idx) ?? event.startMs, wide: true, wideToken } : event;
+      return wideToken ? { ...event, startMs: wideMoveTimes.get(idx) ?? event.startMs,
+        wide: true, wideToken, wideEndIdx: wideMoveEnds.get(idx) } : event;
     }),
   };
 }
@@ -546,7 +626,7 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
   const measuredCore = input.core
     ? conjugateCoreTrack(input.core, facePermFor(input.viewRotation ?? ''))
     : null;
-  const core = markWideCoreEvents(measuredCore, counted);
+  const core = markWideCoreEvents(measuredCore, measuredCore?.frame === 'scramble' ? wideGestureMoves(moves) : counted);
   // 中层还原 + 转体。魔方按「相对中心核」报手法,所以一个 `S` 到这里是一对相对面 +
   // 后面每一手都被换了名 —— 那行谱子于是不像任何公式。转体同理,而且它和中层改的是
   // 同一个 ρ,所以一趟走完。只重写**写出来的记号**:计步、识别、参考解仍然吃
@@ -559,7 +639,7 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
   // cuts have been moved out of the middle of any discovered gesture.
   const f2lEndMs = segs.f2lEndIdx == null ? Infinity : (moves[segs.f2lEndIdx]?.ts ?? -Infinity);
   const roughHumanized = humanizeStream(quarterMoves(moves), {
-    core, suppressZRotationsThroughMs: f2lEndMs,
+    core, suppressZRotationsThroughMs: core?.frame === 'scramble' ? undefined : f2lEndMs,
   });
   // A slice/wide gesture reaches the protocol as multiple outer-face events.
   // Stage detection can therefore fire after the first event, in the middle of
@@ -584,11 +664,23 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
     endIdx: snappedEnd(span),
   }));
   const spans = snappedSpans.filter((span, i) => i === 0 || span.endIdx > snappedSpans[i - 1].endIdx);
-  const humanized = humanizeStream(quarterMoves(moves), {
+  const wasteSpans = wastedDisplaySpans(scramble, moves);
+  const preserveMoves = new Set<number>();
+  for (const span of wasteSpans) {
+    for (let i = span.fromIdx; i <= span.toIdx; i++) preserveMoves.add(i);
+  }
+  const humanizeOptions = {
     core,
     boundaries: new Set(spans.map(span => span.endIdx)),
-    suppressZRotationsThroughMs: segs.f2lEndIdx == null ? Infinity
+    suppressZRotationsThroughMs: core?.frame === 'scramble' ? undefined : segs.f2lEndIdx == null ? Infinity
       : (moves[spans.filter(span => span.kind === 'cross' || span.kind === 'f2l').at(-1)?.endIdx ?? -1]?.ts ?? f2lEndMs),
+  };
+  const countedHumanized = humanizeStream(quarterMoves(moves), humanizeOptions);
+  const humanized = preserveMoves.size === 0 ? countedHumanized
+    : humanizeStream(quarterMoves(moves), { ...humanizeOptions, preserveMoves });
+  const wasteGroupsFor = (items: WovenItem[]) => items.map(item => {
+    const group = wasteSpans.findIndex(span => item.startIdx >= span.fromIdx && item.endIdx <= span.toIdx);
+    return group < 0 ? null : group;
   });
   const rotations = humanized.rotations;
   const absorbedRotations = new Set<number>();
@@ -686,6 +778,7 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
       key: span.key,
       moves: lineMoves.map(item => item.token),
       moveRanges: playbackRanges(lineMoves),
+      wasteGroups: wasteGroupsFor(lineMoves),
       fromIdx: from,
       toIdx: span.endIdx,
       label,
@@ -710,6 +803,7 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
       lines.push({
         kind: 'pll', key: 'tail', moves: tail.map(item => item.token),
         moveRanges: playbackRanges(tail),
+        wasteGroups: wasteGroupsFor(tail),
         fromIdx: prevEnd + 1, toIdx: moves.length - 1,
         label: null, recognitionMs: null, executionMs: null, stepMs: null,
       });
@@ -724,9 +818,8 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
     inspection: viewRot,
     lines,
     turns,
-    // 数出来的,不是减出来的:一个中层吃掉两手、一次同面合并也吃掉一手,
-    // `turns - merges` 只算得清前者。谱子上写着几个记号,这里就是几。
-    stm: humanized.moves.length,
+    // 保持合并后的 STM 口径；废步为了展示而展开，不增加原有计数。
+    stm: countedHumanized.moves.length,
     seconds,
     tps: seconds > 0 ? turns / seconds : null,
     // 观察那一手是谱子的第一行,不是附注:少了它,原始打乱配下面这些动作对不上。
@@ -790,6 +883,7 @@ export function applyReconTextOverride(
     lines: auto.lines.map((line, i) => ({
       ...line,
       moves: parsed[i]!.moves,
+      wasteGroups: undefined,
       label: parsed[i]!.label,
     })),
     text: lines.join('\n'),

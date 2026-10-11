@@ -213,6 +213,7 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
         allowViewDrag
         ariaLabel={tr({ zh: '智能魔方实时三维状态', en: 'Live 3D smart-cube state' })}
         moves={displayMoves!}
+        gyroOrientation={displayOrientation}
         quat={liveQuat}
         quatRef={useGyro ? quatRef : undefined}
         calibrateToken={calibrateToken}

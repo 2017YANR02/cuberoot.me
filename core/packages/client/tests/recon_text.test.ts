@@ -374,7 +374,7 @@ describe('用户那把 15.269s(2026-08-04)', () => {
     "d' R U R' U R U' R2' U R // RB",
     "U FS' R U' R' S U' F' // GO",
     "U2 y L' U' L U' S L' U L S' // OB/ZBLS",
-    "U' R U R' U R U L' U R' U' L // OLL(CP)",
+    "U' R U R' U R U L' U R' U' L // COLL",
     "M2' U2 M U M2' U M2' U M U2 // PLL-Z",
   ];
   const mvU = TOK_U.map((m, i) => ({ m, ts: TS_U[i] }));

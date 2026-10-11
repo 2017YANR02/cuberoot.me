@@ -16,10 +16,12 @@ it('keeps the environment anchor fixed and animates only a separate surface', ()
   expect(source).not.toContain('toggleOffset');
 });
 
-it('reserves the expanded footprint before hover rather than moving the anchor during expansion', () => {
+it('limits the toolbar width without moving the horizontal anchor during expansion', () => {
   const clamp = source.slice(source.indexOf('const clamp = () =>'), source.indexOf('const preview ='));
-  expect(clamp).toContain('actions.left - 5');
-  expect(clamp).toContain('actions.right + 5');
+  expect(clamp).toContain('toolbar.style.maxWidth = `${viewportWidth - 32}px`');
+  expect(clamp).toContain('moveTo(rect.top + dy)');
+  expect(clamp).not.toContain('actions.left');
+  expect(clamp).not.toContain('actions.right');
   expect(clamp).not.toContain('expanded');
 });
 

@@ -133,6 +133,8 @@ export interface HumanizeOptions {
    * 旋转乘积要抵消,见文件头。
    */
   boundaries?: ReadonlySet<number>;
+  /** Keep redundant turns visible for parenthesized reconstruction notation. */
+  preserveMoves?: ReadonlySet<number>;
   /**
    * 这把的核心轨迹(姿态流)。给了它:实测到核心换格的相对面对成为增量候选,只有能
    * 比纯代数方案认出更多中层时才采用；转体也一并写进谱子。不给 = 没录姿态,中层
@@ -373,6 +375,12 @@ export function humanizeStream(
       && coreTurnsIn(core, a.ts, b.endTs, split.rotation).length > 0;
   });
   const eligible = counted.map(() => true);
+  if (core?.frame === 'scramble') {
+    for (let i = 0; i + 1 < counted.length; i++) {
+      if (core.events.some(e => e.wide && e.wideEndIdx !== undefined
+        && e.wideEndIdx >= counted[i].startIdx && e.wideEndIdx <= counted[i + 1].endIdx)) eligible[i] = false;
+    }
+  }
   // Cross algorithms often contain two unrelated opposite-face turns whose
   // implied centre rotations happen to cancel algebraically. With a recorded
   // core track, require positive physical evidence before rewriting such a pair
@@ -463,7 +471,7 @@ export function humanizeStream(
       if (!turn || turn[1] !== half[1]) return;
       quarters += (turn[2] ? 2 : 1) * (turn[3] ? -1 : 1);
     }
-    if (quarters === (half[2] ? -2 : 2)) claimed.add(idx);
+    if (quarters * (core?.frame === 'scramble' ? -1 : 1) === (half[2] ? -2 : 2)) claimed.add(idx);
   });
   const inverseToken = (token: string): string => (
     token.endsWith("2'") ? token.slice(0, -1) : token.endsWith('2') ? `${token}'`
@@ -476,7 +484,7 @@ export function humanizeStream(
   for (let i = 0; i + 1 < leftover.length; i += 1) {
     const a = leftover[i], b = leftover[i + 1];
     if (a.event.wide || b.event.wide) continue;
-    if (b.event.tMs - a.event.tMs <= 750 && inverseToken(a.event.token) === b.event.token) {
+    if (core?.frame !== 'scramble' && b.event.tMs - a.event.tMs <= 750 && inverseToken(a.event.token) === b.event.token) {
       suppressed.add(a.idx);
       suppressed.add(b.idx);
       i += 1;
@@ -535,7 +543,7 @@ export function humanizeStream(
       if (!event.wide && rename(token).startsWith('z')
         && opts.suppressZRotationsThroughMs !== undefined
         && eventTime(event) <= opts.suppressZRotationsThroughMs) continue;
-      if (briefSettle.has(idx) && makesNextTurnsWorse(event, token)) continue;
+      if (core?.frame !== 'scramble' && briefSettle.has(idx) && makesNextTurnsWorse(event, token)) continue;
       rotations.push(event.wide
         ? { tMs: eventTime(event), token: rename(token), wide: true }
         : { tMs: eventTime(event), token: rename(token) });
@@ -569,8 +577,15 @@ export function humanizeStream(
     const prev = out[out.length - 1];
     const cur = familyToken(move.m);
     const before = prev ? familyToken(prev.m) : null;
+    // Retaining waste must not split the two encoder quarters of one measured
+    // wide half turn. The resulting gesture keeps their complete index span.
+    const sameWideGesture = prev !== undefined && events.some(event => event.wide
+      && event.wideEndIdx !== undefined && move.endIdx <= event.wideEndIdx
+      && prev.ts >= eventTime(event));
     const joinable = prev !== undefined && cur !== null && before !== null
       && before.family === cur.family
+      && (sameWideGesture || (!opts.preserveMoves?.has(prev.endIdx)
+        && !opts.preserveMoves?.has(move.startIdx)))
       && out.length - 1 >= noJoinBefore
       && !(boundaries?.has(prev.endIdx) ?? false);
     if (!joinable || !cur || !before || !prev) { out.push(move); return; }
@@ -624,9 +639,21 @@ export function humanizeStream(
     }
     writeRotationsBefore(a.ts);
     pushMove(rot === '' ? a : { ...a, m: rename(a.m) });
+    if (events.some(event => event.wideEndIdx === a.endIdx)) noJoinBefore = out.length;
   }
   // 最后一手之后还有转体:拧完把魔方摆正。照写 —— 那也是这把发生过的事。
   writeRotationsBefore(Infinity);
 
+  // Only compact notation: the raw core track still retains every intermediate
+  // pose for playback. Never merge over an encoder action, including a slice.
+  if (core?.frame === 'scramble') {
+    for (let i = 1; i < rotations.length; i++) {
+      const a = rotations[i - 1], b = rotations[i];
+      if (a.wide || b.wide || a.token !== b.token || !/^[xyz]'?$/.test(a.token)
+        || counted.some(move => move.ts >= a.tMs && move.ts <= b.tMs)) continue;
+      rotations.splice(i - 1, 2, { ...a, token: `${a.token[0]}2${a.token.endsWith("'") ? "'" : ''}` });
+      i--;
+    }
+  }
   return { moves: out, merges, rotation: rot, rotations, blindPairs };
 }

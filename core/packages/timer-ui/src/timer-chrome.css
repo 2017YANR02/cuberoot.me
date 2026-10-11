@@ -182,6 +182,7 @@
 }
 
 .shell-device-center-trigger {
+  --bluetooth-blue: #0082fc;
   display: grid;
   place-items: center;
   height: 40px;
@@ -192,7 +193,7 @@
   border: 0;
   border-radius: inherit;
   background: transparent;
-  color: inherit;
+  color: var(--bluetooth-blue);
   cursor: pointer;
   font: inherit;
   font-size: 13px;

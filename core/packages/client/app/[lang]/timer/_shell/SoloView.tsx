@@ -1464,9 +1464,13 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       multiStage: settings.multiStage && timerSupportsStageSplits(eventAtStartRef.current),
     });
     const bt = bluetoothCubeRef.current?.status;
+    gyroStartRef.current = performance.now();
     // begin resets both streams; later start handlers must preserve this recording.
     smartCubeAttemptProducerRef.current.begin(startedAtMs, bt?.connected
       ? { model: bt.brand, name: bt.deviceName }
+      : undefined, settings.recordGyro && bt?.connected && scrambleGyroRef.current && gyroQuatRef.current
+      ? { reference: scrambleGyroRef.current, initial: gyroQuatRef.current,
+        orientation: timerSmartCubeTrainingOrientation(event, getSettings().preScrT) }
       : undefined);
     setLiveSolve(null);
   });
@@ -1488,9 +1492,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       eventAtStartRef.current = event;
       caseIdAtStartRef.current = currentScrambleEntry.caseId
         ?? (timerTracksTrainerCase(event) ? getLastPickedCase(event as TrainerKind) : null);
-    } else if (!cubeStartedRef.current) {
-      const startedAtMs = performance.now();
-      gyroStartRef.current = startedAtMs;
     }
   }, [
     timer.phase,
@@ -1546,6 +1547,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // loop, so the value lives in a ref: putting it in state would re-render this
   // entire shell at gyro cadence for a number nothing here reads.
   const gyroQuatRef = useRef<Quat | null>(null);
+  const scrambleGyroRef = useRef<Quat | null>(null);
   const [calibrateNonce, setCalibrateNonce] = useState(0);
   // 姿态流录制。样本时刻用 performance.now() 而不是动作 recorder 的起点 ——
   // 「魔方起表」那条路用的是**设备时钟**,而陀螺仪回调根本不带时间戳,两个
@@ -1556,6 +1558,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const liveAnchorRef = useRef<LiveSmartCubeAnchor | null>(null);
   const trainingOrientation = timerSmartCubeTrainingOrientation(event, settings.preScrT);
   const previousTrainingOrientationRef = useRef(trainingOrientation);
+  useLayoutEffect(() => { scrambleGyroRef.current = null; }, [scramble, trainingOrientation]);
   useLayoutEffect(() => {
     if (previousTrainingOrientationRef.current !== trainingOrientation) {
       previousTrainingOrientationRef.current = trainingOrientation;
@@ -1576,7 +1579,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     armFromCube: () => {
       warmupSound();
       const armed = timerHandleRef.current.armFromCube();
-      if (armed) phaseSnapshotRef.current = getSettings().inspectionSec > 0 ? 'inspecting' : 'ready';
+      if (armed) {
+        phaseSnapshotRef.current = getSettings().inspectionSec > 0 ? 'inspecting' : 'ready';
+        if (!scrambleGyroRef.current && gyroQuatRef.current) scrambleGyroRef.current = { ...gyroQuatRef.current };
+      }
       return armed;
     },
     autoReadyOnScramble: () => !competitionRef.current.enabled
@@ -1620,7 +1626,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       if (!timerHandleRef.current.startFromCube(timestamp)) return false;
       phaseSnapshotRef.current = 'running';
       cubeStartedRef.current = true;
-      gyroStartRef.current = performance.now();
       return true;
     },
     stopFromCube: (timestamp) => {
@@ -1643,12 +1648,14 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
    */
   useEffect(() => {
     if (!fakeCubeEnabled) return;
-    if (!settings.recordGyro || timer.phase !== 'running') return;
+    if (!settings.recordGyro) return;
     const id = setInterval(() => {
       const q = readDevQuatSource(performance.now());
       if (!q) return;
       gyroQuatRef.current = q;
-      smartCubeAttemptProducerRef.current.recordGyro(q, performance.now() - gyroStartRef.current);
+      if (phaseSnapshotRef.current === 'running') {
+        smartCubeAttemptProducerRef.current.recordGyro(q, performance.now() - gyroStartRef.current);
+      }
     }, 40);
     return () => clearInterval(id);
   }, [fakeCubeEnabled, settings.recordGyro, timer.phase]);
@@ -1660,7 +1667,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     onGyro: (settings.gyroEnabled || settings.recordGyro || inspectionDebugEnabled)
       ? (q) => {
         gyroQuatRef.current = q;
-        // 只在真的在计时的时候录:观察阶段和拧完之后的姿态不属于这一把。
+        // The scramble reference and current sample recover the net inspection grip at start.
         if (settings.recordGyro && phaseSnapshotRef.current === 'running') {
           smartCubeAttemptProducerRef.current.recordGyro(q, performance.now() - gyroStartRef.current);
         }
@@ -1668,7 +1675,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       : undefined,
     onMove: (move: string, ts: number, facelets: string, metadata?: CubeMoveMetadata) => {
       liveAnchorRef.current?.move(move);
-      smartCubeSoloController.move({ facelets, metadata, move, timestamp: ts });
+      const outcome = smartCubeSoloController.move({ facelets, metadata, move, timestamp: ts });
+      if (outcome.guidanceCompleted && gyroQuatRef.current) scrambleGyroRef.current = { ...gyroQuatRef.current };
     },
     onSolved: (atMs) => {
       competitionSolvedRef.current = competitionRef.current.enabled && atMs !== undefined;
@@ -1755,7 +1763,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   useEffect(() => () => liveAnchor.setConnection(null), [liveAnchor]);
   const cubeConnected = supportsSmartCube && bluetoothCube.status.connected;
   useEffect(() => {
-    if (!cubeConnected) gyroQuatRef.current = null;
+    if (!cubeConnected) { gyroQuatRef.current = null; scrambleGyroRef.current = null; }
     liveAnchor.setConnection(cubeConnected ? bluetoothCube.status.deviceId || bluetoothCube.status.deviceName || 'cube' : null);
   }, [liveAnchor, cubeConnected, bluetoothCube.status.deviceId, bluetoothCube.status.deviceName]);
   useEffect(() => {
@@ -2458,6 +2466,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       if (ph === 'idle' || ph === 'stopped') {
         warmupSound();
         timer.armFromCube();
+        if (!scrambleGyroRef.current && gyroQuatRef.current) scrambleGyroRef.current = { ...gyroQuatRef.current };
         phaseSnapshotRef.current = getSettings().inspectionSec > 0 ? 'inspecting' : 'ready';
       }
     },
@@ -3226,6 +3235,7 @@ cubeFooter: <>
     quatRef={gyroQuatRef}
     brand={bluetoothCube.status.brand}
     phase={timer.phase}
+    displayOrientation={trainingOrientation}
     resetKey={`${bluetoothCube.status.deviceId}:${currentScrambleEntry.id}`}
   />}
   {timer.phase === 'running' && liveSolve && <div ref={setLiveStageTarget} className="timer-live-stage" data-no-timer />}

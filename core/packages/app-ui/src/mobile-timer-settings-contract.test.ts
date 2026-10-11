@@ -76,7 +76,7 @@ describe('Mobile timer settings parity ledger', () => {
     expect(TIMER_SETTING_CATEGORY_IDS.map((category) => (
       TIMER_SETTING_FIELD_CONTRACTS.filter((field) => (
         field.category === category
-        && field.visibility !== 'development-only'
+        && field.visibility !== 'admin-only'
         && !parity.has(field.id)
       )).length
     ))).toEqual([8, 7, 4, 9, 11, 6, 15, 5]);

@@ -8,7 +8,7 @@
  *
  *       U R' F R' B2 L                    // Y cross
  *
- *       第 1 组  最优  U F2 R' F2 U2 R     // BR
+ *       最优  U F2 R' F2 U2 R             // BR  F1
  *       ...
  *       最优  U2 F U R U' R' F'           // OLL-P+
  *
@@ -16,7 +16,7 @@
  *
  * 阶段名和阶段用时(「十字 [4.02]」)**不在这里**(2026-08-04 用户提的):同一屏左边
  * 那根带游标的轴已经把四段的名字和用时画出来了,这里再写一遍是同一件事说两次。分组
- * 本身留着 —— 组与组之间的空白就是它,而每一行右边的标注(`// Y cross`、`第 1 组`、
+ * 本身留着 —— 组与组之间的空白就是它,而每一行右边的标注(`// Y cross`、`F1`、
  * `// OLL-P+`)本来就说得出自己是谁。
  *
  * 三样东西在这一块里第一次凑齐:**动作**(以前要点开表头才看得到一列)、
@@ -43,7 +43,7 @@ import CubeColorChip, {
 import { useReconstructHost, type ReconstructLocalize } from './ReconstructHost';
 
 import type { ReconTextResult, ReconTextLine } from '@cuberoot/shared/timer/reconstruct/recon-text';
-import { reconTextForClipboard } from '@cuberoot/shared/timer/reconstruct/recon-text';
+import { formattedReconMoves, reconTextForClipboard } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import { gradeForDelta } from '@cuberoot/shared/timer/reconstruct/reference';
 import type { ReferenceResult, SlotReference } from '@cuberoot/shared/timer/reconstruct/reference';
 
@@ -185,16 +185,12 @@ export default function StepMoveList({
               // 收尾行(recon_text 的 `tail`)没有参考,标了也是空的。
               const grade = g.key === 'f2l' || g.lines.length === 1 ? gradeFor(line) : null;
               const st = stateOf(line);
+              const displayMoves = formattedReconMoves(line);
               return (
                 <div key={line.key} className="sml-line" data-state={st ?? undefined}>
                   {/* 「第 n 对」和它的徽章跟动作同一行 —— 一对 F2L 是一件事,
                       拆两行读起来是两件,四对就白占四行。窄屏由 flex-wrap 兜。 */}
                   <div className="sml-body">
-                    {g.key === 'f2l' && line.key.startsWith('slot-') && (
-                      <span className="sml-sub-name">
-                        {`F2L-${i + 1}`}
-                      </span>
-                    )}
                     {grade && <span className={`sa-grade ${grade}`}>{gradeLabel(tr)}</span>}
                     {onSeek ? (
                       <button
@@ -202,9 +198,9 @@ export default function StepMoveList({
                         className="sml-moves is-seek"
                         onClick={(event) => {
                           if (!line.moveRanges || event.detail === 0) { onSeek(line.fromIdx); return; }
-                          const text = line.moves.join(' ');
+                          const text = displayMoves.join(' ');
                           let start = 0;
-                          const positions = line.moves.map(token => {
+                          const positions = displayMoves.map(token => {
                             const position = { start, end: start + token.length, text: token };
                             start = position.end + 1;
                             return position;
@@ -220,10 +216,10 @@ export default function StepMoveList({
                         }}
                         title={tr({ zh: '从点击的动作开始播放', en: 'Play from the clicked move' })}
                       >
-                        {line.moves.join(' ')}
+                        {displayMoves.join(' ')}
                       </button>
                     ) : (
-                      <span className="sml-moves">{line.moves.join(' ')}</span>
+                      <span className="sml-moves">{displayMoves.join(' ')}</span>
                     )}
                     {line.label && (() => {
                       const colors = leadingCubeColors(line.label);
@@ -238,6 +234,11 @@ export default function StepMoveList({
                         </span>
                       );
                     })()}
+                    {g.key === 'f2l' && line.key.startsWith('slot-') && (
+                      <span className="sml-sub-name">
+                        {`F${i + 1}`}
+                      </span>
+                    )}
                   </div>
                 </div>
               );

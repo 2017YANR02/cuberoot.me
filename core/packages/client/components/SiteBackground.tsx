@@ -80,7 +80,7 @@ export default function SiteBackground({ manageDocument = true }: { manageDocume
     };
   }, [material, manageDocument]);
 
-  // Auth callbacks already show the returning page in their own background iframe.
+  // Auth callbacks own their full-screen status surface; no scenery is needed.
   if (!active) return null;
   return <div className="site-scenery" aria-hidden="true"
     style={{ '--site-scene-position': scene.position } as CSSProperties}>
