@@ -32,4 +32,23 @@ describe('simulator puzzle families', () => {
       .toEqual(['clock', 'kilominx', 'gigaminx', 'hyperx', 'custom']);
     expect(groupSimPuzzleOptions([])).toEqual([]);
   });
+
+  it('places each new native puzzle in its geometric family and keeps the FTO order sequence', () => {
+    const groups = groupSimPuzzleOptions();
+    for (const [puzzle, family] of [
+      ['quadx', 'edge-turning'],
+      ['dinoocta', 'octahedron'],
+      ['fto5', 'octahedron'],
+      ['eto', 'octahedron'],
+      ['radiocrystal', 'icosahedron'],
+    ]) {
+      const containing = groups.filter(group => group.options.some(option => option.value === puzzle));
+      expect(containing.map(group => group.id)).toEqual([family]);
+      expect(containing[0].submenu).toBe(true);
+    }
+    expect(groups.find(group => group.id === 'octahedron')?.options.slice(0, 4).map(option => option.value))
+      .toEqual(['fto', 'masterfto', 'masterftov2', 'fto5']);
+    expect(groups.find(group => group.id === 'icosahedron')?.options.slice(0, 2).map(option => option.value))
+      .toEqual(['radiochop', 'radiocrystal']);
+  });
 });

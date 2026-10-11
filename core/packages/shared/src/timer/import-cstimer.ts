@@ -94,6 +94,11 @@ const CSTIMER_EVENT_MAP: Record<string, EventId> = {
   'latticex': 'latticex', 'latx': 'latticex',
   'masterbrilic': 'masterbrilic', 'mbrilic': 'masterbrilic',
   'masterftov2': 'masterftov2', 'ftov2': 'masterftov2', '四阶ftov2': 'masterftov2',
+  'quadx': 'quadx',
+  'dinoocta': 'dinoocta', 'dinooct': 'dinoocta', '恐龙八面体': 'dinoocta',
+  'fto5': 'fto5', '5layerfto': 'fto5', '5×5fto': 'fto5', '5x5fto': 'fto5', '五阶fto': 'fto5',
+  'eto': 'eto', 'eitanseto': 'eto', "eitan'seto": 'eto', 'eitan’seto': 'eto', 'eto棱转八面体': 'eto',
+  'radiocrystal': 'radiocrystal', 'radiocr': 'radiocrystal',
 };
 
 /* ------------------------------------------------------------------ */
@@ -163,6 +168,19 @@ function nameToEvent(name: unknown): { event: EventId; matched: boolean } {
   }
   if (tokens.some((token, index) => token === 'dino' && tokens[index + 1] === 'skewb')) {
     return normalizeEventKey('dinoskewb');
+  }
+  if (tokens.some((token, index) => token === 'quad' && tokens[index + 1] === 'x')) {
+    return normalizeEventKey('quadx');
+  }
+  if (tokens.some((token, index) => token === 'dino' && tokens[index + 1] === 'octa')) {
+    return normalizeEventKey('dinoocta');
+  }
+  if (tokens.some((token, index) => token === 'radio' && tokens[index + 1] === 'crystal')) {
+    return normalizeEventKey('radiocrystal');
+  }
+  // Preserve the FTO order before the standalone 5/FTO tokens resolve to 555/fto.
+  if (/(?:^|[^a-z0-9])5(?:[\s_-]+layer|\s*[x×]\s*5)[\s_-]+fto(?:$|[^a-z0-9])|五阶[\s_-]*fto/i.test(name)) {
+    return normalizeEventKey('fto5');
   }
   if (tokens.some((token, index) => token === 'hyper' && tokens[index + 1] === 'x')) {
     return normalizeEventKey('hyperx');

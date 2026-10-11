@@ -27,6 +27,11 @@ export const CSTIMER_EVENT_FALLBACKS = {
   latticex: 'input',
   masterbrilic: 'input',
   masterftov2: 'input',
+  quadx: 'input',
+  dinoocta: 'input',
+  fto5: 'input',
+  eto: 'input',
+  radiocrystal: 'input',
   sphere: '333',
 } as const;
 
@@ -85,6 +90,11 @@ const EVENT_TO_CSTIMER_SCRTYPE: Record<EventId, string> = {
   latticex: CSTIMER_EVENT_FALLBACKS.latticex,
   masterbrilic: CSTIMER_EVENT_FALLBACKS.masterbrilic,
   masterftov2: CSTIMER_EVENT_FALLBACKS.masterftov2,
+  quadx: CSTIMER_EVENT_FALLBACKS.quadx,
+  dinoocta: CSTIMER_EVENT_FALLBACKS.dinoocta,
+  fto5: CSTIMER_EVENT_FALLBACKS.fto5,
+  eto: CSTIMER_EVENT_FALLBACKS.eto,
+  radiocrystal: CSTIMER_EVENT_FALLBACKS.radiocrystal,
   r3: 'r3',
   r4: 'r4',
   r5: 'r5',

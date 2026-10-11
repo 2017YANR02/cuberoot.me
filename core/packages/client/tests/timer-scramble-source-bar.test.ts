@@ -55,6 +55,7 @@ describe('Timer source controls follow puzzle capabilities', () => {
   it.each([
     'superz', 'dogic', 'octahedron4', 'dinoskewb', 'cube3dino',
     'lattice', 'hyperx', 'latticex', 'masterbrilic', 'masterftov2',
+    'quadx', 'dinoocta', 'fto5', 'eto', 'radiocrystal',
   ] as const)(
     'hides competition controls for %s and restores them on returning to 333 without changing settings',
     (event) => {

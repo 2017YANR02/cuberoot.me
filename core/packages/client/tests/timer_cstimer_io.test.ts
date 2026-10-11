@@ -227,6 +227,11 @@ describe.each([
   { event: 'latticex', nameEn: 'Lattice X', nameZh: 'Lattice X' },
   { event: 'masterbrilic', nameEn: 'Master Brilic', nameZh: 'Master Brilic' },
   { event: 'masterftov2', nameEn: 'Master FTO v2', nameZh: '四阶 FTO v2' },
+  { event: 'quadx', nameEn: 'Quad-X', nameZh: 'Quad-X' },
+  { event: 'dinoocta', nameEn: 'Dino Octa', nameZh: '恐龙八面体' },
+  { event: 'fto5', nameEn: '5-layer FTO', nameZh: '五阶 FTO' },
+  { event: 'eto', nameEn: "Eitan's ETO", nameZh: 'ETO 棱转八面体' },
+  { event: 'radiocrystal', nameEn: 'Radio Crystal', nameZh: 'Radio Crystal' },
 ] as const)('$event csTimer compatibility', ({ event, nameEn, nameZh }) => {
   it('preserves renamed sessions and mixed native notation through both import APIs', () => {
     const solve = {
@@ -299,6 +304,14 @@ describe('compound native csTimer session names', () => {
     ['Session_Master_FTO_v2', 'masterftov2'],
     ['Master FTO v2_Practice', 'masterftov2'],
     ['练习：四阶 FTO v2', 'masterftov2'],
+    ['Session_Quad_X', 'quadx'],
+    ['Quad-X_Practice', 'quadx'],
+    ['Session_Dino_Octa', 'dinoocta'],
+    ['Session_5-layer_FTO', 'fto5'],
+    ['5-layer FTO_Practice', 'fto5'],
+    ['练习：五阶 FTO', 'fto5'],
+    ["Session_Eitan's_ETO", 'eto'],
+    ['Radio_Crystal_Practice', 'radiocrystal'],
   ] as const)('preserves %s as %s before trying shorter event tokens', (name, event) => {
     const raw = JSON.stringify({
       session1: [[[0, 8_765], 'R', '', 1_700_000_000]],

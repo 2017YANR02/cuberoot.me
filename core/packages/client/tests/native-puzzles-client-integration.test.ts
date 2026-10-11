@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
+import { Move } from 'cubing/alg';
 import { NATIVE_PUZZLES, NATIVE_PUZZLE_IDS, generateNativePuzzleScramble, nativePuzzleMoves } from '@cuberoot/puzzle-solvers/native-puzzles';
-import { parseNativePuzzleAlg } from '@cuberoot/puzzle-solvers/native-puzzle-model';
+import { nativePuzzleKPuzzle, parseNativePuzzleAlg } from '@cuberoot/puzzle-solvers/native-puzzle-model';
 import { nativePuzzleSvgAspect, renderNativePuzzleSvg } from '@cuberoot/puzzle-render-core/native-puzzle-svg';
 import { PG_DEF_BY_ID, PG_IDS, PG_PUZZLES } from '@/app/[lang]/sim/pgCatalog';
 import { scrambleEventPickerGroups } from '@/app/[lang]/scramble/gen/_event-picker';
@@ -106,6 +107,17 @@ describe('native puzzle client integration', () => {
     }
     expect(renderScramblePreviewSvg({ event: id, scramble: random }))
       .not.toBe(renderScramblePreviewSvg({ event: id, scramble: '' }));
+  });
+
+  it.each(['quadx', 'eto'] as const)('never spends a %s scramble step on a full-circle identity', (id) => {
+    const puzzle = nativePuzzleKPuzzle(id);
+    for (const random of [() => 0, () => 0.999999, randomFromSeed(2026)]) {
+      const scramble = generateNativePuzzleScramble(id, random);
+      for (const token of scramble.split(/\s+/)) {
+        expect(Math.abs(new Move(token).amount), token).toBe(1);
+        expect(puzzle.moveToTransformation(token).repetitionOrder(), token).toBe(2);
+      }
+    }
   });
 
   it.each(NATIVE_PUZZLE_IDS)('rejects illegal or unbounded %s input instead of showing a false solved preview', (id) => {

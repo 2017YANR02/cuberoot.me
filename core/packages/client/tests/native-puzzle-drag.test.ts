@@ -19,6 +19,11 @@ const CASES = [
   { id: 'latticex', stickers: 96, moves: 46, outer: 14, inner: 8, wide: 8, inner3: 8, wide3: 8 },
   { id: 'masterbrilic', stickers: 360, moves: 60, outer: 12, inner: 12, wide: 12, inner3: 12, wide3: 12 },
   { id: 'masterftov2', stickers: 152, moves: 24, outer: 8, inner: 8, wide: 8 },
+  { id: 'quadx', stickers: 126, moves: 36, outer: 12, inner: 12, wide: 12 },
+  { id: 'dinoocta', stickers: 80, moves: 24, outer: 8, inner: 8, wide: 8 },
+  { id: 'fto5', stickers: 200, moves: 40, outer: 8, inner: 8, wide: 8, inner3: 8, wide3: 8 },
+  { id: 'eto', stickers: 104, moves: 36, outer: 12, inner: 12, wide: 12 },
+  { id: 'radiocrystal', stickers: 300, moves: 60, outer: 20, inner: 20, wide: 20 },
 ] as const;
 const VIEWPORT = { width: 960, height: 720 };
 

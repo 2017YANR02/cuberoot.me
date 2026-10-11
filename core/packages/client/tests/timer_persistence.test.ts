@@ -71,6 +71,7 @@ describe('shared timer persistence schema', () => {
   it.each([
     'pyraminx_duo', 'sphere', 'superz', 'dogic', 'octahedron4', 'dinoskewb', 'cube3dino',
     'lattice', 'hyperx', 'latticex', 'masterbrilic', 'masterftov2',
+    'quadx', 'dinoocta', 'fto5', 'eto', 'radiocrystal',
   ] as const)('retains %s as the selected event, session association and solve bucket', (event) => {
     const data = createTimerStoreData(100, 'duo', 'zh');
     data.settings.event = event;

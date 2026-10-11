@@ -33,6 +33,11 @@ const CASES = [
   { id: 'latticex', setup: 'F', alg: '3DRFw U2', manual: '3UFRw', typed: "3DRF' UFR" },
   { id: 'masterbrilic', setup: '1-2U', alg: '3F L2', manual: '1-3U', typed: "1-3F' 3L" },
   { id: 'masterftov2', setup: '1-2F', alg: "D L'", manual: '2F', typed: "1-2D' L" },
+  { id: 'quadx', setup: 'UFw', alg: "FL DR'", manual: '2UF', typed: "FLw' DR", reducedTyped: 'FLw DR' },
+  { id: 'dinoocta', setup: '1-2F', alg: "D L'", manual: '2F', typed: "1-2D' L" },
+  { id: 'fto5', setup: '1-3F', alg: "3D L'", manual: '3F', typed: "1-3D' L" },
+  { id: 'eto', setup: 'FDw', alg: "FL BLD'", manual: '2FD', typed: "FLw' BLD", reducedTyped: 'FLw BLD' },
+  { id: 'radiocrystal', setup: 'Rw', alg: "G U'", manual: '2R', typed: "Gw' U" },
 ] as const;
 type Fixture = typeof CASES[number];
 
@@ -201,12 +206,25 @@ describe('native PG simulator controls', () => {
     await act(async () => { returned = userMoveRef.current?.(spec.manual); });
     const latest = input('Solution').value;
     expect(returned).toBe(latest);
-    expect(latest.trimEnd()).toBe(`${typed}\n${spec.manual}`);
+    // With live reduction enabled an order-two inverse has canonical amount 1.
+    const reduced = 'reducedTyped' in spec ? `${spec.reducedTyped} // retained note` : typed;
+    expect(latest.trimEnd()).toBe(`${reduced}\n${spec.manual}`);
     expect(algChanges).not.toHaveBeenCalled();
     expect(() => parseNativePuzzleAlg(spec.id, latest)).not.toThrow();
     await act(async () => button('Copy this page link (with scramble / solution)').click());
     expect(copyLinks).toHaveBeenCalledExactlyOnceWith(draftSetup, latest);
     expect(writeText).not.toHaveBeenCalled();
+  });
+
+  it.each(CASES.filter(({ id }) => id === 'quadx' || id === 'eto'))('$id preserves the chosen half-turn directions when live reduction is off', async (spec) => {
+    const typed = `${spec.typed} // keep turn direction`;
+    await mount(spec, { alg: typed, liveReduce: false });
+    await act(async () => { userMoveRef.current?.(`${spec.manual}'`); });
+    const latest = input('Solution').value;
+    expect(latest.trimEnd()).toBe(`${typed}\n${spec.manual}'`);
+    expect(nativePuzzleKPuzzle(spec.id).algToTransformation(latest).isIdentical(
+      nativePuzzleKPuzzle(spec.id).algToTransformation(`${spec.typed} ${spec.manual}'`),
+    )).toBe(true);
   });
 
   it.each(CASES)('$id immediately commits and shares both updated fields after an end-anchored manual turn', async (spec) => {
@@ -391,6 +409,8 @@ describe('native PG simulator controls', () => {
     { id: 'dogic', move: 'FREGU', order: 5 },
     { id: 'octahedron4', move: 'DBRRF', order: 4 },
     { id: 'dinoskewb', move: 'DRF', order: 3 },
+    { id: 'quadx', move: 'UF', order: 2 },
+    { id: 'eto', move: 'FD', order: 2 },
   ] satisfies { id: NativePuzzleId; move: string; order: number }[])('$id $move live cancellation uses its physical order $order and inversion preserves state', async ({ id, move, order }) => {
     const spec = CASES.find((candidate) => candidate.id === id)!;
     await mount(spec, { setup: '', alg: '', liveReduce: true });

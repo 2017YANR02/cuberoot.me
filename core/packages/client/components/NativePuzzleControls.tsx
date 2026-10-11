@@ -18,6 +18,11 @@ const NOTES: Record<NativePuzzleId, readonly [string, string]> = {
   latticex: ['Lattice X：二阶面转 90°，Lattice 角转 120°；角轴支持三种层深。', 'Lattice X: 90° two-half face turns and 120° Lattice corner turns, with three corner-layer depths.'],
   masterbrilic: ['Master Brilic：十二面体，每步面转 72°，支持三种层深。', 'Master Brilic: a dodecahedron with 72° face turns and three layer depths.'],
   masterftov2: ['四阶 FTO v2：八面体，每步面转 120°，外切比普通四阶 FTO 更深。', 'Master FTO v2: an octahedron with 120° face turns and deeper outer cuts than the standard Master FTO.'],
+  quadx: ['Quad-X：每步棱转 180°，支持外层、内层和宽转；当前仅支持保形转动，不含 jumbling。', 'Quad-X: 180° edge turns with outer, inner and wide layers. Currently supports shape-preserving turns only, without jumbling.'],
+  dinoocta: ['恐龙八面体：每步面转 120°，支持外层、第二层与两层宽转。', 'Dino Octa: 120° face turns, with outer, second-layer and two-layer wide turns.'],
+  fto5: ['五阶 FTO：每步面转 120°，支持外层、第二层、第三层和宽转。', '5-layer FTO: 120° face turns, with outer, second, third and wide layers.'],
+  eto: ['ETO 棱转八面体：每步棱转 180°，采用保形标准转动，不含 jumbling。', "Eitan's ETO: 180° edge turns using the standard moves that preserve the octahedral shape, without jumbling."],
+  radiocrystal: ['Radio Crystal：二十面体，每步面转 120°，采用保形标准转动，不含 jumbling。', 'Radio Crystal: an icosahedron with 120° face turns using the standard moves that preserve its shape, without jumbling.'],
 };
 
 /** The same native tokens drive 3D gestures, accessible manual input and 2D. */
@@ -36,7 +41,10 @@ export default function NativePuzzleControls({ id, disabled, showDragDepth, dept
   const [selected, setSelected] = useState('');
   const [amount, setAmount] = useState(1);
   const current = moves.find((move) => move.move === selected) ?? moves[0];
-  const token = new Move(current.move).modified({ amount }).toString();
+  const powers = [1, -1, 2, -2].filter((power) => power % current.order !== 0);
+  // A previous puzzle's double turn must not become an identity on a half-turn axis.
+  const turnAmount = powers.includes(amount) ? amount : amount < 0 ? -1 : 1;
+  const token = new Move(current.move).modified({ amount: turnAmount }).toString();
   return (
     <div className="twisty-native-controls">
       <p className="twisty-fallback-notice">{t(...NOTES[id])}</p>
@@ -49,8 +57,8 @@ export default function NativePuzzleControls({ id, disabled, showDragDepth, dept
         </label>
         <label className="twisty-fallback-angle-label">
           <span>{t('角度', 'Angle')}</span>
-          <select className="btn-secondary twisty-fallback-angle" aria-label={t('转动角度', 'Turn angle')} value={amount} onChange={(e) => setAmount(Number(e.target.value))}>
-            {[1, -1, 2, -2].map((power) => <option key={power} value={power}>{power * 360 / current.order}°</option>)}
+          <select className="btn-secondary twisty-fallback-angle" aria-label={t('转动角度', 'Turn angle')} value={turnAmount} onChange={(e) => setAmount(Number(e.target.value))}>
+            {powers.map((power) => <option key={power} value={power}>{power * 360 / current.order}°</option>)}
           </select>
         </label>
         <button className="btn-secondary twisty-fallback-move" type="button" disabled={disabled} onClick={() => onMove(token)}>
@@ -77,7 +85,9 @@ export default function NativePuzzleControls({ id, disabled, showDragDepth, dept
           ? <p>{t('以面轴 A 为例：A 转外层，2A 只转第二层，1-2A 同时转最外两层，Av 转动整体。宽转使用层号范围，不使用 Aw。', 'For a face axis A: A turns the outer layer, 2A turns only the second layer, 1-2A turns both outer layers, and Av rotates the whole puzzle. Wide turns use a layer range, not Aw.')}</p>
           : <p>{t('对支持内层的转轴 A：A 转外层，2A 只转第二层，Aw 同时转最外两层，Av 转动整体。', 'For an axis A with inner layers: A turns the outer layer, 2A turns only the second layer, Aw turns both outer layers, and Av rotates the whole puzzle.')}</p>)}
         {spec.layers > 2 && <p>{t('3A 只转第三层；三层宽转写作 ', '3A turns only the third layer; a three-layer wide turn is written ')}{'rangeWide' in spec ? '1-3A' : '3Aw'}{t('。仅在该转轴支持时可用。', '. These apply only to axes that support the depth.')}</p>}
-        <p>{t('加撇号表示逆转，加 2 表示两步。支持分组、换位子和 // 行注释。随机打乱用于练习。', 'A prime reverses the turn; 2 means two steps. Groups, commutators and // line comments are supported. Random-move scrambles are for practice.')}</p>
+        <p>{spec.order === 2
+          ? t('加撇号改变转动方向；同一招式连续转动两次回到原状态。支持分组、换位子和 // 行注释。随机打乱用于练习。', 'A prime reverses the turn direction; two identical turns return to the original state. Groups, commutators and // line comments are supported. Random-move scrambles are for practice.')
+          : t('加撇号表示逆转，加 2 表示两步。支持分组、换位子和 // 行注释。随机打乱用于练习。', 'A prime reverses the turn; 2 means two steps. Groups, commutators and // line comments are supported. Random-move scrambles are for practice.')}</p>
       </details>
     </div>
   );
