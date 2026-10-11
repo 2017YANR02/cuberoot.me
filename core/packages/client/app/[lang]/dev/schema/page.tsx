@@ -42,8 +42,13 @@ const DOMAINS: { key: DomainKey; dot: string; name: Bi; sub: Bi }[] = [
 ];
 
 const TABLES: Table[] = [
+  { name: 'dev_preview_requests', domain: 'community', origin: '0273', purpose: { zh: '开发电脑接入申请及开通状态', en: 'Development computer enrollment and provisioning state' } },
+  { name: 'dev_preview_events', domain: 'community', origin: '0273', purpose: { zh: '开发网址审批与执行审计', en: 'Preview approval and provisioning audit' } },
   { name: 'site_assistant_knowledge_state', domain: 'community', origin: '0270', purpose: { zh: '当前完整公开知识库快照与来源版本', en: 'Current complete public knowledge snapshot and source revision' } },
   { name: 'site_assistant_knowledge_chunks', domain: 'community', origin: '0270', purpose: { zh: '公开资料段落、关键词与向量索引', en: 'Public passages with lexical and vector indexes' } },
+  { name: 'remote_access_requests', domain: 'community', origin: '0272', purpose: { zh: '设备公钥申请及授权状态', en: 'Device key requests and authorization state' } },
+  { name: 'remote_access_events', domain: 'community', origin: '0272', purpose: { zh: '远程授权审核与生效审计', en: 'Remote approval and application audit' } },
+  { name: 'remote_access_host', domain: 'community', origin: '0272', purpose: { zh: 'Mac 授权同步心跳', en: 'Mac authorization sync heartbeat' } },
   { name: 'enterprise_verification_settings', domain: 'teaching', origin: '0271', purpose: { zh: '加密的对公收款配置及申请开放状态', en: 'Encrypted recipient settings and application availability' } },
   { name: 'enterprise_verification_applications', domain: 'teaching', origin: '0271', purpose: { zh: '独立企业认证、加密证照、银行流水及退款记录，不授予企业归属', en: 'Independent enterprise verification, encrypted documents, bank receipts and refunds without granting ownership' } },
   { name: 'enterprise_verification_events', domain: 'teaching', origin: '0271', purpose: { zh: '认证材料访问、审核、到账和退款的操作审计', en: 'Audit of document access, review, receipts and refunds' } },
@@ -835,6 +840,8 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 269, slug: 'wca_training_institutions', desc: { zh: '独立培训机构归属；预置上海魔方根科技有限公司并关联颜瑞民现有学生。', en: 'Independent training affiliations; seed Shanghai CubeRoot and associate Yan Ruimin’s existing students.' } },
   { n: 270, slug: 'assistant_knowledge', desc: { zh: '公开资料分段、中文全文与向量混合检索，索引原子更新。', en: 'Public passages with Chinese lexical and vector retrieval and atomic index publication.' } },
   { n: 271, slug: 'enterprise_verification', desc: { zh: '企业对公打款认证、私密材料、到账复核及退款审计。', en: 'Corporate transfer verification, encrypted documents, receipt review and refund audit.' } },
+  { n: 273, slug: 'dev_preview_requests', desc: { zh: '开发网址一键申请、负责人批准与自动接入。', en: 'Preview enrollment, owner approval and automatic device setup.' } },
+  { n: 272, slug: 'remote_access', desc: { zh: '员工远程连接申请、负责人审批及主机同步确认。', en: 'Employee remote access requests, host-owner approval and host acknowledgements.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

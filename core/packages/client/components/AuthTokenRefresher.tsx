@@ -82,15 +82,14 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
     document.addEventListener('pointermove', onMove);
     return () => { document.removeEventListener('pointermove', onMove); cancelCollapse(); };
   }, [expanded, cancelCollapse]);
-  // The pet owns the position; viewport clamping moves that same root.
-  const moveTo = useCallback((left: number, top: number) => {
+  // The pet owns horizontal positioning; only keep the toolbar in vertical reach.
+  const moveTo = useCallback((top: number) => {
     const toolbar = toolbarRef.current;
     const root = toolbar?.parentElement;
     if (!toolbar || !root) return;
     const rect = toolbar.getBoundingClientRect();
     const anchor = getComputedStyle(root);
-    const right = parseFloat(anchor.right), bottom = parseFloat(anchor.bottom);
-    root.style.right = `${right - (left - rect.left)}px`;
+    const bottom = parseFloat(anchor.bottom);
     root.style.bottom = `${bottom - (top - rect.top)}px`;
   }, []);
   useEffect(() => { setReady(true); }, []);
@@ -99,8 +98,8 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
     const root = toolbar?.parentElement;
     const hit = root?.querySelector('.clawd-deskpet-hit');
     if (!toolbar || !root || !hit) return;
-    // Reserve the FULL footprint even while collapsed. Hover must never move
-    // the pet/anchor to make room for the expanding background.
+    // Let the expanded toolbar overflow horizontally instead of pushing the
+    // pet away from the edge, including while the toolbar is collapsed.
     const clamp = () => {
       // A hidden App iframe has no layout boxes. Moving its anchor cannot
       // change those zero rectangles and would retrigger our own observer
@@ -111,14 +110,10 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
       if (viewportWidth <= 0) return;
       toolbar.style.maxWidth = `${viewportWidth - 32}px`;
       const rect = toolbar.getBoundingClientRect();
-      const actions = actionsRef.current?.getBoundingClientRect() ?? rect;
       const pet = hit.getBoundingClientRect();
-      const left = Math.min(rect.left, actions.left - 5, pet.left);
-      const right = Math.max(rect.right, actions.right + 5, pet.right);
       const top = Math.min(rect.top, pet.top), bottom = Math.max(rect.bottom, pet.bottom);
-      const dx = Math.max(16 - left, Math.min(0, viewportWidth - 16 - right));
       const dy = Math.max(16 - top, Math.min(0, window.innerHeight - 16 - bottom));
-      if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) moveTo(rect.left + dx, rect.top + dy);
+      if (Math.abs(dy) > 0.5) moveTo(rect.top + dy);
     };
     const resize = new ResizeObserver(clamp);
     resize.observe(toolbar); resize.observe(root);

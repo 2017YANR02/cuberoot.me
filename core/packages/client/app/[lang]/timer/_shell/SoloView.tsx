@@ -308,9 +308,7 @@ const SolveRecap = dynamic(() => import('../_components/SolveRecap'), {
   loading: SolveRecapPlaceholder,
 });
 const LiveReconstructReport = dynamic(() => import('../_components/ReconstructReport'), { ssr: false });
-/** 假魔方调试面板只在 dev 存在;判断提到模块级,好让打包器把整个分支和它的
- *  chunk 一起消掉(见 DevFakeCubePanel.tsx)。 */
-const DEV_PANEL = process.env.NODE_ENV !== 'production';
+/** Administrator-only fake-cube panel, loaded on demand. */
 const DevFakeCubePanel = dynamic(() => import('../_components/DevFakeCubePanel'), { ssr: false });
 import './shell.css';
 import { tr } from '@/i18n/tr';
@@ -411,6 +409,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const [inspectionDebugOn, setInspectionDebugOn] = useState(false);
   const inspectionDebugEnabled = isAdmin && inspectionDebugOn;
   const competition = useCompetitionAttempt();
+  const fakeCubeEnabled = isAdmin && settings.showAdminFakeCube && !competition.enabled;
   const competitionRef = useRef(competition);
   competitionRef.current = competition;
   const competitionSolvedRef = useRef(false);
@@ -480,6 +479,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       .withOptions({ history: 'replace', clearOnDefault: false }),
   );
   const event: EventId = competition.enabled ? '333' : queryEvent;
+  const supportsSmartCube = timerSupportsSmartCubeAutoTiming(event);
   // 裸 /timer(无 ?event=)→ 用 localStorage 记的上次项目补齐并强制写回 URL;
   // 有 ?event= 时(分享链接 / 收藏)以 URL 为准。
   useEffect(() => {
@@ -1449,7 +1449,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     const history = scrambleHistRef.current;
     const entry = competitionRef.current.enabled ? competitionScrambleEntry : history.list[history.idx];
     if (entry) {
-      scrambleAtStartRef.current = bluetoothCubeRef.current?.status.connected
+      scrambleAtStartRef.current = supportsSmartCube && bluetoothCubeRef.current?.status.connected
         ? timerSmartCubeAttemptScramble(event, entry.scramble, getSettings().preScrT)
         : entry.scramble;
       wcaAtStartRef.current = entry.wca;
@@ -1505,7 +1505,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // ── Bluetooth smart cube ────────────────────────────────────────
   const phaseSnapshotRef = useRef(timer.phase);
   useEffect(() => { phaseSnapshotRef.current = timer.phase; }, [timer.phase]);
-  const smartCubeInputBlocked = useCallback(() => Boolean(bluetoothCubeRef.current?.status.connected || cubeStartedRef.current), []);
+  const smartCubeInputBlocked = useCallback(() => Boolean(
+    (supportsSmartCube && bluetoothCubeRef.current?.status.connected) || cubeStartedRef.current
+  ), [supportsSmartCube]);
   const onPressDown = useCallback((withWarmup = false): boolean => {
     if (competitionRef.current.enabled) return false;
     if (!timerCanHandleAttemptPress(
@@ -1634,7 +1636,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   }), [attemptSplitRecorder]);
 
   /**
-   * dev 专用:没有真魔方时把**录制**这条路走通。
+   * 管理员假魔方:没有真魔方时把**录制**这条路走通。
    *
    * 假魔方(`__cuberootFakeCube`)立的是 GAN v4 的 GATT,但它不发姿态帧,所以
    * `onGyro` 永远不会响 —— 3D 实况那边靠的是 `LiveCubeState` 自己轮询
@@ -1642,10 +1644,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
    * 蓝牙层,录制器就看不见。这里按同样的节奏、同样的来源补一路,让录制在没有
    * 硬件的时候也能被真的验一遍。
    *
-   * 生产构建里整段被 `NODE_ENV` 判断消掉,和它模仿的那个 hook 一样。
+   * 仅在管理员主动开启假魔方时采样。
    */
   useEffect(() => {
-    if (process.env.NODE_ENV === 'production') return;
+    if (!fakeCubeEnabled) return;
     if (!settings.recordGyro) return;
     const id = setInterval(() => {
       const q = readDevQuatSource(performance.now());
@@ -1656,10 +1658,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       }
     }, 40);
     return () => clearInterval(id);
-  }, [settings.recordGyro, timer.phase]);
+  }, [fakeCubeEnabled, settings.recordGyro, timer.phase]);
 
   const bluetoothCube = useBluetoothCube({
-    allowSimulated: !competition.enabled,
+    allowSimulated: fakeCubeEnabled,
     // Passing onGyro is what turns the stream on at all (MoYu32 has an explicit
     // enable opcode), so ask for it when the live view, replay, or admin debug uses it.
     onGyro: (settings.gyroEnabled || settings.recordGyro || inspectionDebugEnabled)
@@ -1740,7 +1742,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // to be exercised without hardware. No-op in production builds.
   const scrambleForFakeRef = useRef(scramble);
   scrambleForFakeRef.current = timerSmartCubeAttemptScramble(event, scramble, settings.preScrT);
-  useEffect(() => { if (!competition.enabled) installFakeCube(() => scrambleForFakeRef.current); }, [competition.enabled]);
+  useEffect(() => { if (fakeCubeEnabled) return installFakeCube(() => scrambleForFakeRef.current, true); }, [fakeCubeEnabled]);
 
   // ── Live cube-state mirror ──────────────────────────────────────
   // The flat views read `bluetoothCube.facelets` (the cube's own state)
@@ -1759,7 +1761,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   }), []);
   liveAnchorRef.current = liveAnchor;
   useEffect(() => () => liveAnchor.setConnection(null), [liveAnchor]);
-  const cubeConnected = bluetoothCube.status.connected;
+  const cubeConnected = supportsSmartCube && bluetoothCube.status.connected;
   useEffect(() => {
     if (!cubeConnected) { gyroQuatRef.current = null; scrambleGyroRef.current = null; }
     liveAnchor.setConnection(cubeConnected ? bluetoothCube.status.deviceId || bluetoothCube.status.deviceName || 'cube' : null);
@@ -1827,6 +1829,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       title={tr({ zh: '智能魔方实时状态（每次拧动同步）', en: 'Live smart-cube state (updates per move)' })}
     >
       <LiveCubeState
+        enableDevSource={fakeCubeEnabled}
         key={bluetoothCube.status.deviceId || bluetoothCube.status.deviceName}
         facelets={bluetoothCube.facelets}
         moves={[...liveMoves]}
@@ -2354,7 +2357,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
 
   // Preserve the user gesture: requestDevice starts in this click handler.
   const connectExternalBluetooth = useCallback(() => {
-    if (mayUseMiniProgramBridge()) {
+    if (!supportsSmartCube || mayUseMiniProgramBridge()) {
       setBluetoothTimerOpen(true);
       const attempt = bluetoothTimer.connect();
       setBluetoothTimerConnectAttempt(attempt);
@@ -2370,15 +2373,22 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     const attempt = connectFromBluetoothModal();
     setBluetoothConnectAttempt(attempt);
     void attempt.catch(() => undefined); // The status dialog displays failures.
-  }, [bluetoothTimer.connect, bluetoothTimer.status.connected, bluetoothCube.status.connected, connectFromBluetoothModal]);
+  }, [supportsSmartCube, bluetoothTimer.connect, bluetoothTimer.status.connected, bluetoothCube.status.connected, connectFromBluetoothModal]);
 
   const connectSmartCubeCenter = useCallback(() => {
+    if (!supportsSmartCube) return;
     setBluetoothOpen(true);
     if (bluetoothCube.status.connected || bluetoothConnectingRef.current) return;
     const attempt = bluetoothCube.connect();
     setBluetoothConnectAttempt(attempt);
     void attempt.catch(() => undefined);
-  }, [bluetoothCube]);
+  }, [supportsSmartCube, bluetoothCube]);
+
+  useEffect(() => {
+    if (supportsSmartCube) return;
+    setBluetoothOpen(false);
+    setDevFakeCubeOpen(false);
+  }, [supportsSmartCube]);
 
   const connectStackmat = useCallback(() => {
     setStackmatOpen(true);
@@ -2448,7 +2458,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     enabled: !competition.enabled && settings.timingEnabled && attemptCanStart && !anyModalOpen
       && (timer.phase === 'idle' || timer.phase === 'inspecting' || timer.phase === 'stopped')
       && (settings.bluetoothAutoReady === 'still' || settings.bluetoothAutoReady === 'double-flick')
-      && bluetoothCube.status.connected,
+      && cubeConnected,
     mode: settings.bluetoothAutoReady === 'double-flick' ? 'double-flick' : 'still',
     onReady: () => {
       if (!getSettings().timingEnabled || anyModalOpenRef.current) return;
@@ -2898,7 +2908,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     scrambleStatus?.retryable === true,
   );
 
-  const bluetoothDialog = bluetoothOpen && (
+  const bluetoothDialog = supportsSmartCube && bluetoothOpen && (
     <BluetoothModal isZh={isZh} cube={bluetoothCube} connectAttempt={bluetoothConnectAttempt}
       onResetGyro={() => setCalibrateNonce(n => n + 1)}
       allowDeviceCalibration={timer.phase === 'idle' || timer.phase === 'stopped'}
@@ -3031,7 +3041,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           <TimerDeviceCenter
             className="shell-topbar-device-center"
             ariaLabel={tr(TIMER_DEVICE_CENTER_LABELS['title'])}
-            items={[...WEB_TIMER_DEVICE_REGISTRY.list().map((device) => device.kind === 'smart-cube'
+            items={[...WEB_TIMER_DEVICE_REGISTRY.list()
+              .filter(device => device.kind !== 'smart-cube' || supportsSmartCube)
+              .map((device) => device.kind === 'smart-cube'
               ? {
                   active: bluetoothCube.status.connected,
                   detail: bluetoothCube.status.connected
@@ -3063,7 +3075,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
                     label: tr(TIMER_DEVICE_CENTER_LABELS['stackmat']),
                     onSelect: connectStackmat,
                   }),
-              ...(DEV_PANEL && settings.showDevFakeCube ? [{
+              ...(supportsSmartCube && fakeCubeEnabled ? [{
                 id: 'dev-fake-cube',
                 icon: <Box aria-hidden="true" size={15} />,
                 label: tr({ zh: '假魔方', en: 'Fake cube' }),
@@ -3073,7 +3085,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
             menuLabel={tr(TIMER_DEVICE_CENTER_LABELS['menu'])}
             triggerLabel={tr(TIMER_DEVICE_CENTER_LABELS['trigger'])}
           >
-            {DEV_PANEL && settings.showDevFakeCube && (
+            {supportsSmartCube && fakeCubeEnabled && (
               <DevFakeCubePanel
                 open={devFakeCubeOpen}
                 onClose={() => setDevFakeCubeOpen(false)}

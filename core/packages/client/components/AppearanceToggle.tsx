@@ -11,7 +11,7 @@
 // 通过太阳 / 月亮图标选择,选中态跟随当前实际明暗。
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Sun, Moon, Check } from 'lucide-react';
+import { Sun, Moon, Check, Settings } from 'lucide-react';
 import { persistItem } from '@/lib/safe-storage';
 import {
   THEME_KEY,
@@ -32,6 +32,7 @@ import { PALETTES, type PaletteId } from '@/lib/palettes';
 import { SiteBackgroundControl } from '@/components/SiteBackground';
 import AppLink from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
+import LangToggle from '@/components/LangToggle';
 import { useDeskPetVisible } from '@/hooks/useDeskPetVisible';
 import { useHomeBackgroundChoice } from '@/hooks/useHomeBackgroundChoice';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
@@ -51,7 +52,7 @@ function Swatch({ color }: { color: string }) {
 export default function AppearanceToggle({ className, showLabel = false, menuContent }: { className?: string; showLabel?: boolean; menuContent?: ReactNode }) {
   const t = useT();
   const L = {
-    title: t('外观', 'Appearance'),
+    title: t('设置', 'Settings'),
     light: t('浅色', 'Light'),
     dark: t('深色', 'Dark'),
     lowContrast: t('低对比度', 'Low contrast'),
@@ -176,14 +177,13 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
 
   if (!mounted) {
     return (
-      <button type="button" className={cls} aria-label="Appearance" suppressHydrationWarning>
+      <button type="button" className={cls} aria-label={L.title} suppressHydrationWarning>
         <span style={{ display: 'inline-block', width: 14, height: 14 }} />
       </button>
     );
   }
 
   const onScheme = palette === null; // 当前在经典明暗(无配色)
-  const ButtonIcon = eff === 'dark' ? Moon : Sun;
 
   return (
     <div className="lang-toggle-wrap" ref={ref}>
@@ -212,7 +212,7 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
         aria-haspopup="menu"
         aria-expanded={open}
       >
-        <ButtonIcon size={14} />
+        <Settings size={14} />
         {showLabel && <span className="toolbar-label">{L.title}</span>}
       </button>
       {open && (
@@ -282,6 +282,7 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
 
           <div className="appearance-settings">
             <div className="appearance-sec-label" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <LangToggle variant="menu" showLabel />
               <BoolToggle
                 value={petVisible}
                 onChange={setPetVisible}

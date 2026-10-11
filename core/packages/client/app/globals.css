@@ -680,7 +680,7 @@ html[data-appearance-preview] body {
   margin-top: 4px;
   padding: 7px 10px;
   border-top: 1px solid var(--border-default);
-  color: var(--muted-foreground);
+  color: var(--foreground);
   font-size: 0.8rem;
   white-space: nowrap;
 }
@@ -698,7 +698,7 @@ html[data-appearance-preview] body {
 .appearance-sec-label {
   padding: 6px 10px 3px;
   font-size: 0.7rem;
-  color: var(--muted-foreground);
+  color: var(--foreground);
   white-space: nowrap;
 }
 .appearance-sec-div {

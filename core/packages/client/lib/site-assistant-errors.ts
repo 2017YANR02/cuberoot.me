@@ -1,6 +1,8 @@
 import { SITE_ASSISTANT_DAILY_LIMIT, type AssistantErrorCode } from '@cuberoot/shared/site-assistant';
 
 export const ASSISTANT_ERROR_TEXT: Record<AssistantErrorCode, { zh: string; en: string }> = {
+  invalid_image: { zh: '图片无法发送。请使用 JPG、PNG 或 WebP，每次最多 3 张，并尝试缩小图片。', en: 'Images could not be sent. Use up to 3 JPG, PNG or WebP images and try reducing their size.' },
+  vision_unavailable: { zh: '图片识别暂时不可用，请稍后重试。', en: 'Image understanding is temporarily unavailable. Please try again later.' },
   login_required: { zh: '请先登录并绑定 WCA 账号，再使用 AI 问答。普通搜索仍可使用。', en: 'Sign in and link your WCA account to use AI. Regular search is still available.' },
   wca_link_required: { zh: '请在账号页绑定 WCA 账号，再使用 AI 问答。普通搜索仍可使用。', en: 'Link your WCA account on the account page to use AI. Regular search is still available.' },
   account_forbidden: { zh: '当前账号无法使用 AI 问答。', en: 'AI questions are unavailable for this account.' },

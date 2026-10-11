@@ -100,7 +100,6 @@ body[data-site-scenery] .calendar-page .weekday-header {
 
 /* Labels and toolbars share their surrounding panel's material. */
 body[data-site-scenery] .wp-bycomp-group-row > th,
-body[data-site-scenery] .wca-stats-index-toolbar,
 body[data-site-scenery] .calendar-page .event-chips--list-header,
 body[data-site-scenery] .wca-stats-event-selector .event-btn-badge,
 body[data-site-scenery] .calendar-page .event-chip-rounds {
@@ -386,8 +385,7 @@ body[data-site-scenery] .sor-race .sor-race-bar {
 }
 
 body[data-site-scenery] .timer-shell .shell-topbar::before,
-body[data-site-scenery] .calendar-page .toolbar::before,
-body[data-site-scenery] .sor-race .sor-race-bar::before {
+body[data-site-scenery] .calendar-page .toolbar::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -399,8 +397,7 @@ body[data-site-scenery] .sor-race .sor-race-bar::before {
   backdrop-filter: var(--glass-filter);
 }
 
-body[data-site-scenery] .calendar-page .toolbar::before,
-body[data-site-scenery] .sor-race .sor-race-bar::before {
+body[data-site-scenery] .calendar-page .toolbar::before {
   background: var(--glass-surface-bg);
 }
 

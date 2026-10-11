@@ -21,6 +21,7 @@ import { SEARCH_CARDS, isLandingSearchCardVisible } from '@/lib/landing-sections
 import { isAdmin } from '@/lib/auth-store';
 import { useFeedbackUnread, refreshFeedbackUnread } from '@/lib/feedback-unread';
 import { tr } from '@/i18n/tr';
+import { useModalBackdrop } from '@/hooks/useModalDismiss';
 
 const CSS = `
 .deskpet-search-backdrop{position:fixed;left:0;right:0;top:0;height:100dvh;z-index:100010;display:flex;
@@ -117,6 +118,7 @@ const CSS = `
 
 export default function DeskPetSearch({
   lang,
+  showSearch,
   origin,
   onClose,
   character,
@@ -134,6 +136,7 @@ export default function DeskPetSearch({
   onOpenPetHome,
 }: {
   lang: 'zh' | 'en';
+  showSearch: boolean;
   origin?: { x: number; y: number } | null;
   onClose: () => void;
   character: string;
@@ -157,6 +160,7 @@ export default function DeskPetSearch({
   const searchCards = SEARCH_CARDS.filter((card) => isLandingSearchCardVisible(card, isAdmin()));
   const backdropRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
+  const backdropProps = useModalBackdrop(onClose);
   const [donateOpen, setDonateOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const fbUnread = useFeedbackUnread();
@@ -287,13 +291,13 @@ export default function DeskPetSearch({
     <div
       className="deskpet-search-backdrop"
       ref={backdropRef}
-      onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      {...backdropProps}
     >
       <style>{CSS}</style>
-      <div className="deskpet-search-box" ref={boxRef}>
+      {showSearch && <div className="deskpet-search-box" ref={boxRef}>
         <LandingSearch cards={searchCards} lang={lang} />
-      </div>
-      <div className="deskpet-toolbar">
+      </div>}
+      <div className="deskpet-toolbar" ref={showSearch ? undefined : boxRef}>
         <HomeLink className="icon-only" prefetch={false} onClick={onClose}
           title={t('主页', 'Home')} aria-label={t('主页', 'Home')}>
           <Home size={16} />

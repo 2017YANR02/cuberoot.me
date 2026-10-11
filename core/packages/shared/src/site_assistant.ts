@@ -1,7 +1,11 @@
 export const SITE_ASSISTANT_DAILY_LIMIT = 1000;
 export { resolveAssistantTime, resolveAssistantYears } from './site_assistant_time';
 export const SITE_ASSISTANT_TIMEOUT_MS = 30_000;
-export type AssistantErrorCode = 'login_required' | 'wca_link_required' | 'account_forbidden' | 'daily_limit' | 'busy' | 'verification_required' | 'source_verification_required' | 'timeout' | 'network' | 'model_unavailable' | 'source_unavailable' | 'unavailable';
+export const SITE_ASSISTANT_MAX_IMAGES = 3;
+export const SITE_ASSISTANT_IMAGE_BYTES = 768 * 1024;
+export const SITE_ASSISTANT_BODY_BYTES = 3_300_000;
+export interface AssistantImage { mediaType: 'image/png' | 'image/jpeg' | 'image/webp'; data: string }
+export type AssistantErrorCode = 'invalid_image' | 'vision_unavailable' | 'login_required' | 'wca_link_required' | 'account_forbidden' | 'daily_limit' | 'busy' | 'verification_required' | 'source_verification_required' | 'timeout' | 'network' | 'model_unavailable' | 'source_unavailable' | 'unavailable';
 export interface AssistantSource { id: string; title: string; href: string; read: boolean }
 export interface AssistantTable {
   kind: 'table'; title: string; columns: string[]; rows: string[][];
@@ -22,7 +26,7 @@ export interface AssistantAnswer {
   /** Verified destinations selected from site catalogs or public data adapters. */
   actions?: Array<{ id: string; title: string; href: string }>;
 }
-export interface AssistantMessage { role: 'user' | 'assistant'; content: string }
+export interface AssistantMessage { role: 'user' | 'assistant'; content: string; images?: AssistantImage[] }
 
 export type AssistantStatus = { phase: 'planning' | 'querying' | 'writing'; tool?: string };
 export type AssistantStreamEvent =

@@ -5,13 +5,15 @@ const Markdown = lazy(() => import('react-markdown').catch(() => ({ default: ({ 
 const WrHistoryChart = lazy(() => import('@/components/wca-stats/WrHistoryChart').catch(() => ({ default: () => null })));
 import { useCopy } from '@/hooks/useCopy';
 import { createPortal } from 'react-dom';
-import { ArrowUp, ArrowDown, Check, Copy, Pencil, RotateCcw, Maximize2, Minimize2, Search, LoaderCircle, MessageSquarePlus, Mic, Square, X } from 'lucide-react';
-import type { AssistantAnswer, AssistantChart, AssistantStatus, AssistantErrorCode } from '@cuberoot/shared/site-assistant';
+import { ArrowUp, ArrowDown, Check, Copy, Pencil, RotateCcw, Maximize2, Minimize2, Search, LoaderCircle, MessageSquarePlus, ImagePlus, Mic, Square, X } from 'lucide-react';
+import { SITE_ASSISTANT_MAX_IMAGES, type AssistantImage, type AssistantAnswer, type AssistantChart, type AssistantStatus, type AssistantErrorCode } from '@cuberoot/shared/site-assistant';
 import { ASSISTANT_ERROR_TEXT } from '@/lib/site-assistant-errors';
 import { useAuthStore } from '@/lib/auth-store';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { useModalDismiss } from '@/hooks/useModalDismiss';
 import { useSpeechToText } from '@/hooks/useSpeechToText';
+import { Tooltip } from '@/components/Tooltip';
+import { prepareAssistantImage } from '@/lib/site-assistant-images';
 import { ClearButton } from '@/components/ClearButton';
 import Link from '@/components/AppLink';
 import { Flag } from '@/components/Flag';
@@ -21,11 +23,12 @@ import { countryName } from '@/lib/country-name';
 import { tr } from '@/i18n/tr';
 import './site_assistant.css';
 
-export interface AssistantTurn { question:string; result?:AssistantAnswer; partial?:boolean }
+export interface AssistantTurn { question:string; images?:AssistantImage[]; imagesExpired?:boolean; result?:AssistantAnswer; partial?:boolean }
 interface Props {
   turns:AssistantTurn[]; status?:AssistantStatus; busy:boolean; error:AssistantErrorCode|null; lang:'zh'|'en';
+  images:AssistantImage[]; onImagesChange:(images:AssistantImage[])=>void;
   draft:string; onDraftChange:(draft:string)=>void;
-  onAsk:(question:string,replaceLast?:boolean)=>void; onStop:()=>void; onClose:()=>void; onNew:()=>void;
+  onAsk:(question:string,replaceLast?:boolean,images?:AssistantImage[])=>void; onStop:()=>void; onClose:()=>void; onNew:()=>void;
 }
 const QUERY_LABELS: Record<string, {zh:string;en:string}> = {
   navigation:{zh:'正在查找功能入口',en:'Finding site tools'},
@@ -81,7 +84,36 @@ function Progress({chart}:{chart:AssistantChart}) {
     <details><summary>{tr({zh:'查看成绩数据',en:'View result data'})}</summary><div className="site-assistant-table"><table><thead><tr><th>{tr({zh:'日期',en:'Date'})}</th><th>{tr({zh:'成绩',en:'Result'})}</th></tr></thead><tbody>{chart.points.map((p,i)=><tr key={i}><td>{p.date}</td><td>{formatWcaResult(p.value,chart.event,chart.metric)}</td></tr>)}</tbody></table></div></details>
   </section>;
 }
-export default function SiteAssistantDialog({turns,draft,onDraftChange:setDraft,status={phase:'planning'},busy,error,lang,onAsk,onStop,onClose,onNew}:Props) {
+export default function SiteAssistantDialog({turns,draft,images,onImagesChange:setImages,onDraftChange:setDraft,status={phase:'planning'},busy,error,lang,onAsk,onStop,onClose,onNew}:Props) {
+  const [imageError,setImageError]=useState<string|null>(null);
+  const [processingImages,setProcessingImages]=useState(false);
+  const imageInput=useRef<HTMLInputElement>(null);
+  const imageJob=useRef(0);
+  const processing=useRef(false);
+  useEffect(()=>()=>{imageJob.current++;},[]);
+  const addImages=async(files:File[])=>{
+    if(busy || processing.current || editing!==null || !files.length)return;
+    setImageError(null);
+    if(images.length+files.length>SITE_ASSISTANT_MAX_IMAGES){setImageError(tr({zh:'每次最多添加 3 张图片。',en:'Add up to 3 images per message.'}));return;}
+    const job=++imageJob.current;
+    processing.current=true;setProcessingImages(true);
+    try {
+      const prepared:AssistantImage[]=[];
+      for(const file of files){
+        prepared.push(await prepareAssistantImage(file));
+        if(job!==imageJob.current)return;
+      }
+      setImages([...images,...prepared]);
+    } catch {
+      if(job===imageJob.current)setImageError(tr({zh:'图片无法读取。请选择 10 MB 以内的 JPG、PNG 或 WebP；图片过大时请先裁剪。',en:'Could not read the image. Choose a JPG, PNG or WebP under 10 MB; crop large images first.'}));
+    } finally {if(job===imageJob.current){processing.current=false;setProcessingImages(false);}}
+  };
+  const renderImages=(items:AssistantImage[],removable=false)=><div className="site-assistant-images">{items.map((image,index)=><div className="site-assistant-image" key={index}>
+    {/* Data URLs stay in conversation memory; never upload private attachments to public article storage. */}
+    {/* eslint-disable-next-line @next/next/no-img-element */}
+    <img src={`data:${image.mediaType};base64,${image.data}`} alt={tr({zh:`附图 ${index+1}`,en:`Attachment ${index+1}`})}/>
+    {removable && <Tooltip content={tr({zh:'移除图片',en:'Remove image'})}>{tip=><button {...tip} type="button" className="site-assistant-action" disabled={processingImages} aria-label={tr({zh:`移除图片 ${index+1}`,en:`Remove image ${index+1}`})} onClick={()=>{setImages(images.filter((_,i)=>i!==index));setImageError(null);}}><X size={14}/></button>}</Tooltip>}
+  </div>)}</div>;
   const [expanded,setExpanded]=useState(false);
   const [showLatest,setShowLatest]=useState(false);
   const [editing,setEditing]=useState<string|null>(null);
@@ -124,7 +156,7 @@ export default function SiteAssistantDialog({turns,draft,onDraftChange:setDraft,
     const tables=(result.artifacts ?? []).map(a=>a.kind==='table' ? [a.title,a.columns.join('\t'),...a.rows.map(row=>row.join('\t'))].join('\n') : [a.title,...a.points.map(p=>`${p.date}\t${formatWcaResult(p.value,a.event,a.metric)}`)].join('\n'));
     copy([text,...tables].join('\n\n'),key);
   };
-  const submit=()=>{if(!busy && editing===null && draft.trim() && draft.trim().length<=500){stop();onAsk(draft.trim());setDraft('');}};
+  const submit=()=>{if(!busy && !processing.current && editing===null && (draft.trim() || images.length) && draft.trim().length<=500){stop();onAsk(draft.trim(),false,images);setDraft('');setImages([]);setImageError(null);}};
   return createPortal(<div className="site-assistant-backdrop" {...backdrop}>
     <div ref={dialog} className={`site-assistant-dialog${expanded ? ' is-expanded' : ''}`} role="dialog" aria-modal="true" aria-labelledby="site-assistant-title" data-site-surface="panel" onKeyDown={event=>{
       if(event.key!=='Tab')return;
@@ -135,7 +167,7 @@ export default function SiteAssistantDialog({turns,draft,onDraftChange:setDraft,
       else if(!event.shiftKey && document.activeElement===last){event.preventDefault();first.focus();}
     }}>
       <header className="site-assistant-header"><div><h2 id="site-assistant-title">{tr({zh:'问 CubeRoot',en:'Ask CubeRoot'})}</h2><p>{tr({zh:'查成绩、找工具、学公式',en:'Results, tools and algorithms'})}</p></div>
-        <button className="site-assistant-action" type="button" onClick={()=>{stop();onNew();setEditing(null);setDraft('');input.current?.focus();}} title={tr({zh:'新对话',en:'New conversation'})}><MessageSquarePlus size={20}/></button>
+        <button className="site-assistant-action" type="button" onClick={()=>{imageJob.current++;processing.current=false;setProcessingImages(false);setImageError(null);stop();onNew();setEditing(null);setDraft('');input.current?.focus();}} title={tr({zh:'新对话',en:'New conversation'})}><MessageSquarePlus size={20}/></button>
         <button className="site-assistant-action site-assistant-expand" type="button" onClick={()=>setExpanded(value=>!value)} title={tr(expanded?{zh:'退出全屏',en:'Exit full screen'}:{zh:'全屏',en:'Full screen'})}>{expanded?<Minimize2 size={19}/>:<Maximize2 size={19}/>}</button>
         <button className="site-assistant-action" type="button" onClick={onClose} title={tr({zh:'关闭',en:'Close'})}><X size={22}/></button>
       </header>
@@ -156,10 +188,10 @@ export default function SiteAssistantDialog({turns,draft,onDraftChange:setDraft,
             if(!/^\/(?!\/)/.test(action.href) || tableLinks.has(action.href) || seenActions.has(action.href))return false;
             seenActions.add(action.href);return true;
           }) ?? [];
-          return <section className="site-assistant-turn" key={i}>{editing!==null && i===turns.length-1 ? <form className="site-assistant-edit" onSubmit={event=>{event.preventDefault();if(editing.trim()&&!busy){onAsk(editing.trim(),true);setEditing(null);}}}>
-          <textarea ref={editInput} className="site-assistant-draft" aria-label={tr({zh:'编辑问题',en:'Edit question'})} value={editing} maxLength={500} rows={3} onChange={event=>setEditing(event.target.value)}/>
-          <div className="site-assistant-edit-actions">{editing && <ClearButton onClick={()=>setEditing('')}/>}<button type="button" className="site-assistant-action" onClick={()=>setEditing(null)}>{tr({zh:'取消',en:'Cancel'})}</button><button type="submit" className="site-assistant-action site-assistant-send" disabled={busy||!editing.trim()}>{tr({zh:'发送',en:'Send'})}</button></div>
-        </form> : <div className="site-assistant-question"><h3>{turn.question}</h3><div className="site-assistant-question-actions"><button className="site-assistant-action" type="button" onClick={()=>{if(navigator.clipboard)copy(turn.question,`question-${i}`);}} title={tr(copiedKey===`question-${i}`?{zh:'已复制',en:'Copied'}:{zh:'复制问题',en:'Copy question'})}>{copiedKey===`question-${i}`?<Check size={15}/>:<Copy size={15}/>}</button>{i===turns.length-1 && <button className="site-assistant-action" type="button" disabled={busy} onClick={()=>{stop();setEditing(turn.question);}} title={tr({zh:'编辑问题',en:'Edit question'})}><Pencil size={15}/></button>}</div></div>}
+          return <section className="site-assistant-turn" key={i}>{editing!==null && i===turns.length-1 ? <form className="site-assistant-edit" onSubmit={event=>{event.preventDefault();if((editing.trim()||turn.images?.length)&&!busy){onAsk(editing.trim(),true,turn.images);setEditing(null);}}}>
+          {!!turn.images?.length && renderImages(turn.images)}<textarea ref={editInput} className="site-assistant-draft" aria-label={tr({zh:'编辑问题',en:'Edit question'})} value={editing} maxLength={500} rows={3} onChange={event=>setEditing(event.target.value)}/>
+          <div className="site-assistant-edit-actions">{editing && <ClearButton onClick={()=>setEditing('')}/>}<button type="button" className="site-assistant-action" onClick={()=>setEditing(null)}>{tr({zh:'取消',en:'Cancel'})}</button><button type="submit" className="site-assistant-action site-assistant-send" disabled={busy||(!editing.trim()&&!turn.images?.length)}>{tr({zh:'发送',en:'Send'})}</button></div>
+        </form> : <div className="site-assistant-question">{turn.imagesExpired && <p className="site-assistant-note">{tr({zh:'较早的图片已释放，需要时请重新添加。',en:'Earlier images have been released. Attach them again if needed.'})}</p>}{!!turn.images?.length && renderImages(turn.images)}{turn.question && <h3>{turn.question}</h3>}<div className="site-assistant-question-actions"><button className="site-assistant-action" type="button" onClick={()=>{if(navigator.clipboard)copy(turn.question,`question-${i}`);}} title={tr(copiedKey===`question-${i}`?{zh:'已复制',en:'Copied'}:{zh:'复制问题',en:'Copy question'})}>{copiedKey===`question-${i}`?<Check size={15}/>:<Copy size={15}/>}</button>{i===turns.length-1 && <button className="site-assistant-action" type="button" disabled={busy} onClick={()=>{stop();setEditing(turn.question);}} title={tr({zh:'编辑问题',en:'Edit question'})}><Pencil size={15}/></button>}</div></div>}
           {busy && i===turns.length-1 && <div className="site-assistant-status" role="status"><span className="site-assistant-status-icon" aria-hidden="true">{status.phase==='querying'?<Search size={16}/>:<LoaderCircle size={16}/>}</span><span>{statusLabel(status)}</span><span className="site-assistant-status-dots" aria-hidden="true">···</span></div>}
           {turn.result && <div className="site-assistant-response"><SiteAssistantAnswerText result={turn.result} partial={turn.partial}/>
           {!turn.partial && !!actions.length && <div className="site-assistant-response-actions site-assistant-navigation">{actions.map(action=><Link key={action.id} className="site-assistant-action" href={action.href} onClick={openSolverDocument} prefetch={false}>{tr({zh:`打开 ${action.title}`,en:`Open ${action.title}`})}</Link>)}</div>}
@@ -172,21 +204,27 @@ export default function SiteAssistantDialog({turns,draft,onDraftChange:setDraft,
             return <td key={c} className={kind==='date' ? 'site-assistant-date' : kind==='country' ? 'site-assistant-country' : undefined}>{href?.startsWith('/') && !href.startsWith('//') ? <Link prefetch={false} href={href}>{content}</Link> : content}</td>;
           })}</tr>)}</tbody></table></div></section>)}
         </div>}
-          {turn.result && !(busy && i===turns.length-1) && <div className="site-assistant-response-actions"><button className="site-assistant-action" type="button" onClick={()=>copyAnswer(turn.result!,`answer-${i}`)} title={tr(copiedKey===`answer-${i}`?{zh:'已复制',en:'Copied'}:{zh:'复制回答',en:'Copy answer'})}>{copiedKey===`answer-${i}`?<Check size={16}/>:<Copy size={16}/>}</button>{i===turns.length-1 && !error && <button className="site-assistant-action" type="button" disabled={busy||editing!==null} onClick={()=>onAsk(turn.question,true)} title={tr({zh:'重新生成',en:'Regenerate'})}><RotateCcw size={16}/></button>}<span role="status">{copiedKey===`answer-${i}` && tr({zh:'已复制',en:'Copied'})}</span></div>}
+          {turn.result && !(busy && i===turns.length-1) && <div className="site-assistant-response-actions"><button className="site-assistant-action" type="button" onClick={()=>copyAnswer(turn.result!,`answer-${i}`)} title={tr(copiedKey===`answer-${i}`?{zh:'已复制',en:'Copied'}:{zh:'复制回答',en:'Copy answer'})}>{copiedKey===`answer-${i}`?<Check size={16}/>:<Copy size={16}/>}</button>{i===turns.length-1 && !error && <button className="site-assistant-action" type="button" disabled={busy||editing!==null} onClick={()=>onAsk(turn.question,true,turn.images)} title={tr({zh:'重新生成',en:'Regenerate'})}><RotateCcw size={16}/></button>}<span role="status">{copiedKey===`answer-${i}` && tr({zh:'已复制',en:'Copied'})}</span></div>}
           {turn.partial && !(busy && i===turns.length-1) && <p className="site-assistant-incomplete">{tr({zh:'回答未完成',en:'Answer incomplete'})}</p>}
         </section>;})}
-        {error && <div role="alert"><p>{tr(ASSISTANT_ERROR_TEXT[error])}</p>{error==='login_required'||error==='wca_link_required' ? <button className="site-assistant-action" type="button" onClick={()=>useAuthStore.getState().login()}>{tr({zh:'前往账号页',en:'Go to account'})}</button> : error==='verification_required' ? <Link href={`/competition-verify?returnTo=${encodeURIComponent(lang==='zh'?'/zh':'/')}`} prefetch={false}>{tr({zh:'完成访问验证',en:'Verify access'})}</Link> : error!=='daily_limit' && error!=='account_forbidden' && turns.length>0 && <button className="site-assistant-action" type="button" disabled={busy||editing!==null} onClick={()=>onAsk(turns[turns.length-1].question,true)}>{tr({zh:'重试',en:'Retry'})}</button>}</div>}
+        {error && <div role="alert"><p>{tr(ASSISTANT_ERROR_TEXT[error])}</p>{error==='login_required'||error==='wca_link_required' ? <button className="site-assistant-action" type="button" onClick={()=>useAuthStore.getState().login()}>{tr({zh:'前往账号页',en:'Go to account'})}</button> : error==='verification_required' ? <Link href={`/competition-verify?returnTo=${encodeURIComponent(lang==='zh'?'/zh':'/')}`} prefetch={false}>{tr({zh:'完成访问验证',en:'Verify access'})}</Link> : error!=='daily_limit' && error!=='account_forbidden' && turns.length>0 && <button className="site-assistant-action" type="button" disabled={busy||editing!==null} onClick={()=>onAsk(turns[turns.length-1].question,true,turns[turns.length-1].images)}>{tr({zh:'重试',en:'Retry'})}</button>}</div>}
       </div>
       {showLatest && <button className="site-assistant-action site-assistant-latest" type="button" onClick={scrollLatest} title={tr({zh:'回到最新消息',en:'Jump to latest'})}><ArrowDown size={18}/></button>}</div>
-      <form className="site-assistant-compose" onSubmit={e=>{e.preventDefault();submit();}}><div className="site-assistant-input">
-        <textarea className="site-assistant-draft" ref={input} aria-label={tr({zh:'继续提问',en:'Ask a follow-up'})} placeholder={tr({zh:'随心输入',en:'Type anything'})} maxLength={500} rows={1} disabled={editing!==null} value={draft} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.nativeEvent.isComposing&&!window.matchMedia?.('(pointer: coarse)').matches){e.preventDefault();submit();}}}/>
+      <form className="site-assistant-compose" onDragOver={event=>{if(event.dataTransfer.types.includes('Files'))event.preventDefault();}} onDrop={event=>{event.preventDefault();void addImages(Array.from(event.dataTransfer.files));}} onSubmit={e=>{e.preventDefault();submit();}}><div className="site-assistant-input">
+        <input ref={imageInput} type="file" accept="image/png,image/jpeg,image/webp" multiple hidden onChange={event=>{const files=Array.from(event.target.files ?? []);event.target.value='';void addImages(files);}}/>
+        {!!images.length && renderImages(images,true)}
+        <textarea className="site-assistant-draft" onPaste={event=>{const files=Array.from(event.clipboardData.files);if(files.length){event.preventDefault();void addImages(files);}}} ref={input} aria-label={tr({zh:'继续提问',en:'Ask a follow-up'})} placeholder={tr({zh:'随心输入',en:'Type anything'})} maxLength={500} rows={1} disabled={editing!==null} value={draft} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.nativeEvent.isComposing&&!window.matchMedia?.('(pointer: coarse)').matches){e.preventDefault();submit();}}}/>
         <div className="site-assistant-input-actions">
+          <Tooltip content={tr({zh:'添加图片，可粘贴或拖入',en:'Add images, or paste or drop them here'})}>{tip=><button {...tip} type="button" className="site-assistant-action" disabled={busy||editing!==null||processingImages||images.length>=SITE_ASSISTANT_MAX_IMAGES} aria-label={tr({zh:'添加图片',en:'Add images'})} onClick={()=>imageInput.current?.click()}><ImagePlus size={19}/></button>}</Tooltip>
           {draft && <ClearButton onClick={()=>setDraft('')}/>}
           <span className="site-assistant-compose-hint">{draft.length>=450?`${draft.length}/500`:tr({zh:'Shift + Enter 换行',en:'Shift + Enter for a new line'})}</span>
           <button className="site-assistant-action site-assistant-mic" type="button" disabled={busy||editing!==null} onClick={()=>listening?stop():void start()} title={tr({zh:'语音输入',en:'Voice input'})} aria-pressed={listening}><Mic size={19}/></button>
-          {busy?<button className="site-assistant-action site-assistant-send" type="button" onClick={onStop} title={tr({zh:'停止',en:'Stop'})}><Square size={16}/></button>:<button className="site-assistant-action site-assistant-send" type="submit" disabled={!draft.trim()||draft.trim().length>500||editing!==null} title={tr({zh:'发送',en:'Send'})}><ArrowUp size={20}/></button>}
+          {busy?<button className="site-assistant-action site-assistant-send" type="button" onClick={onStop} title={tr({zh:'停止',en:'Stop'})}><Square size={16}/></button>:<button className="site-assistant-action site-assistant-send" type="submit" disabled={(!draft.trim()&&!images.length)||draft.trim().length>500||editing!==null||processingImages} title={tr({zh:'发送',en:'Send'})}><ArrowUp size={20}/></button>}
         </div>
-      </div>{micError && <p role="status">{tr({zh:'语音未能识别，请检查麦克风权限，或使用键盘听写。',en:'Voice recognition failed. Check microphone permissions or use keyboard dictation.'})}</p>}
+      </div>{processingImages && <p role="status">{tr({zh:'正在处理图片…',en:'Preparing images…'})}</p>}
+      {imageError && <p role="alert">{imageError}</p>}
+      {!!images.length && <p className="site-assistant-note">{tr({zh:'发送后，图片将交给 AI 识别。追问可参考最近 3 张图片。',en:'Sent images are processed by AI. Follow-ups can reference the latest 3 images.'})}</p>}
+      {micError && <p role="status">{tr({zh:'语音未能识别，请检查麦克风权限，或使用键盘听写。',en:'Voice recognition failed. Check microphone permissions or use keyboard dictation.'})}</p>}
       <p className="site-assistant-note">{tr({zh:'AI 回答可能有误，请核对来源。WCA 数据以最近导入为准。',en:'AI can make mistakes. Check sources. WCA data reflects the latest import.'})}</p></form>
     </div>
   </div>,document.body);

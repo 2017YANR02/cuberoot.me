@@ -3,6 +3,7 @@
   "private": true,
   "packageManager": "pnpm@12.6.0",
   "scripts": {
+    "setup:local": "pnpm --filter @cuberoot/client build:deps && node scripts/setup-local.ts",
     "audit:boundaries": "node scripts/check-architecture-boundaries.mjs",
     "solver:build-wasm": "tsx ../solver/scripts/build_wasm.mts",
     "solver:verify": "tsx ../solver/scripts/verify.mts",

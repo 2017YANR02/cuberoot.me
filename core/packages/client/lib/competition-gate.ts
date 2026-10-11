@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { trafficDefenseEnabled } from './traffic-defense';
+import { safeCompetitionReturn } from './competition-return';
 import { competitionCookie, verifyCompetitionProof, COMPETITION_SERVICE_HEADER } from '@cuberoot/shared/competition-access';
 
 // Explicit delivery endpoints and known asset trees stay reachable. A file-like
@@ -21,6 +22,14 @@ export function isDevelopmentLoopback(req: Request): boolean {
 
 export async function competitionGate(req: NextRequest) {
   const path = req.nextUrl.pathname;
+  // Retired challenge links should not need hydration or a browser API request
+  // to get back to public content after incident protection is turned off.
+  if (/^\/(?:zh\/|en\/)?competition-verify\/?$/.test(path)) {
+    if (await trafficDefenseEnabled()) return null;
+    return NextResponse.redirect(new URL(safeCompetitionReturn(req.nextUrl.searchParams.get('returnTo')), req.nextUrl.origin), {
+      status: 307, headers: { 'cache-control': 'private, no-store' },
+    });
+  }
   if (!protectedPath.test(path)) return null;
   if (isDevelopmentLoopback(req)) return null;
   if (process.env.NODE_ENV !== 'production' && !process.env.COMPETITION_ACCESS_SECRET) return null;

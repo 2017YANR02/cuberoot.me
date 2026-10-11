@@ -46,14 +46,14 @@ describe('architecture boundary guard', () => {
   it('pins the complete current dependency baseline by exact finding identity', () => {
     expect(MANIFEST.legacyFindings).toHaveLength(194);
     expect(compareFindings(uncontractedFindings(CURRENT, MANIFEST.manualContracts), MANIFEST.legacyFindings)).toEqual({ additions: [], stale: [] });
-    // Reviewed native adapters, isolated fixtures, diagnostics, geometry/solver proofs and deployment-only pgvector provisioning.
-    expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length + 16);
+    // Reviewed native adapters, isolated fixtures, diagnostics, geometry/solver proofs and deployment-only pgvector provisioning and two registered remote-access host commands.
+    expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length + 18);
     expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'shared-root-import')).toHaveLength(146);
     expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'cross-package-alias-import')).toHaveLength(0);
   });
 
   it('keeps every semantic edge contract tied to live repository evidence', () => {
-    expect(MANIFEST.manualContracts).toHaveLength(25);
+    expect(MANIFEST.manualContracts).toHaveLength(26);
     expect(validateManifestSchema(MANIFEST)).toEqual([]);
     expect(validateManualContracts(MANIFEST.manualContracts)).toEqual([]);
     expect(new Set(MANIFEST.manualContracts.map((item: { phase: string }) => item.phase))).toEqual(new Set([

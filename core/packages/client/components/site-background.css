@@ -76,6 +76,16 @@ html[data-contrast='soft'] .site-scenery img {
   width: 100%;
 }
 
+.appearance-settings .lang-menu-language {
+  justify-content: space-between;
+  padding: 7px 0;
+  font: inherit;
+}
+
+.appearance-settings .lang-menu-language .toolbar-label {
+  font: inherit;
+}
+
 .appearance-background-row .appearance-background-select {
   width: fit-content;
   padding: 3px 6px;

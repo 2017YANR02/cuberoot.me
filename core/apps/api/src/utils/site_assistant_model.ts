@@ -2,6 +2,7 @@ import { generateText, streamText, Output, tool, type ModelMessage, type ToolSet
 import { createDeepSeek } from '@ai-sdk/deepseek';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { z } from 'zod';
+import type { AssistantImage, AssistantMessage } from '@cuberoot/shared/site-assistant';
 import { toolCallSchema } from './site_assistant_tools.js';
 import { AssistantFailure, checkAssistantResponse } from './site_assistant_diagnostics.js';
 import type { AssistantConfig } from './site_assistant.js';
@@ -9,7 +10,7 @@ import type { AssistantConfig } from './site_assistant.js';
 const answerSchema = z.object({ answer: z.string().max(6000), sourceIds: z.array(z.string()).max(100) });
 
 /** One provider conversation per HTTP request. Reasoning stays here, never in UI/logs. */
-export function createAssistantModel(config: AssistantConfig, fetcher: typeof fetch, signal: AbortSignal, guide: string) {
+export function createAssistantModel(config: AssistantConfig, fetcher: typeof fetch, signal: AbortSignal, guide: string, history: AssistantMessage[] = [], images: AssistantImage[] = []) {
   const deepseek = new URL(config.baseUrl).origin === 'https://api.deepseek.com';
   const boundedFetch: typeof fetch = async (input, init) => {
     const response = await fetcher(input, { ...init, signal, redirect: 'error' });
@@ -37,6 +38,15 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
       inputSchema: z.strictObject(schema.shape).omit({ tool: true }),
     });
   }
+  // Binary image parts go through the provider's multimodal API, never JSON text,
+  // logs, public uploads or the knowledge index. Preserve the original turn order.
+  const imageParts = (items: AssistantImage[]) => items.map(image => ({
+    type: 'file' as const, data: image.data, mediaType: image.mediaType,
+  }));
+  const visualHistory: ModelMessage[] = images.length || history.some(message => message.images?.length)
+    ? history.map(message => message.role === 'user'
+      ? { role: 'user', content: [{ type: 'text', text: message.content }, ...imageParts(message.images ?? [])] }
+      : { role: 'assistant', content: message.content }) : [];
   const transcript: ModelMessage[] = [];
   let pending: Array<{ raw: object; id: string; name: string; result?: unknown }> = [];
   return {
@@ -60,13 +70,15 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
       const request = {
         model, tools, toolChoice: options.finalOnly ? 'none' as const : 'auto' as const,
         system: options.system + '\nAll prose and presentation instructions apply inside the answer string. The final response must be one JSON object with answer and sourceIds, without Markdown fences or text outside that object.',
-        messages: [{ role: 'user' as const, content: JSON.stringify(options.context) }, ...transcript],
-        output: deepseek ? Output.object({schema:answerSchema}) : Output.json(),
+        messages: [...visualHistory, { role: 'user' as const, content: images.length ? [{ type: 'text' as const, text: JSON.stringify(options.context) }, ...imageParts(images)] : JSON.stringify(options.context) }, ...transcript],
+        ...(deepseek ? { output: Output.object({schema:answerSchema}) } : {}),
         maxOutputTokens: options.maxTokens, maxRetries: 0, abortSignal: signal,
         ...(options.thinking ? {} : { temperature: 0 }),
         providerOptions: { [deepseek ? 'deepseek' : 'bailian']: deepseek
           ? { thinking: { type: options.thinking ? 'enabled' : 'disabled' }, ...(options.thinking ? { reasoningEffort: options.effort } : {}) }
-          : { enable_thinking: false } },
+          // Keep JSON mode on the wire, then validate the compatible response
+          // below. SDK eager JSON parsing cannot handle the provider's fences.
+          : { enable_thinking: false, response_format: { type: 'json_object' } } },
       };
       const response = options.onText ? streamText(request) : generateText(request);
       let result;
@@ -93,7 +105,11 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
       // Retain even a malformed final response so the bounded repair is a new
       // user turn, with the provider's reasoning preserved in its own transcript.
       transcript.push(...result.response.messages);
-      const final = answerSchema.parse(JSON.parse(result.text));
+      // Some compatible vision endpoints append a Markdown fence even in JSON
+      // mode. Accept only that wrapper; arbitrary prose or invalid fields still
+      // fail the same schema and enter the existing bounded repair turn.
+      const json = result.text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+      const final = answerSchema.parse(JSON.parse(json));
       return { calls: [] as unknown[], ...final };
     },
   };

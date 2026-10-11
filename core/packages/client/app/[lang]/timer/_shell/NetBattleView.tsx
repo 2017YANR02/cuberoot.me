@@ -704,6 +704,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
    */
   const startFromCubeRef = useRef<(ts: number) => void>(() => { });
   startFromCubeRef.current = (ts: number) => {
+    if (!timerSupportsNetBattleSmartCube(myEvent)) return;
     if (gateRef.current || startAtRef.current !== null || !canSolveRef.current) return;
     if (!timer.startFromCube(ts)) return;
     // useTimer has already begun the producer synchronously in onStart.
@@ -717,6 +718,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
       if (settings.recordGyro && phaseRef.current === 'running') netAttemptRef.current.recordGyro(q, performance.now());
     } : undefined,
     onMove: (move, ts, _facelets, metadata) => {
+      if (!timerSupportsNetBattleSmartCube(myEvent)) return;
       // 双方都交卷后，自己的下一次转动才切到下一轮；另一台设备继续保留结算画面。
       if (myResult && roundSettled && !roomController.isAdvancing) advance(false);
       // 先起表,后广播:如果这一手就是起表那一手,下面的录制订阅必须已经看到
@@ -731,6 +733,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     // 随手把魔方拧回还原不会替你交卷。结算使用最后一手的校准时刻,同时起表
     // (startNow 起的表)和普通起表仍落在同一条 useTimer 路径上。
     onSolved: (atMs) => {
+      if (!timerSupportsNetBattleSmartCube(myEvent)) return;
       if (phaseRef.current === 'running' && timer.stopFromCube(atMs)) {
         phaseRef.current = 'stopped';
       }
@@ -752,13 +755,17 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     },
   });
   const connectSmartCubeCenter = useCallback(() => {
+    if (!timerSupportsNetBattleSmartCube(myEvent)) return;
     setBluetoothOpen(true);
     if (bluetoothCube.status.connected) return;
     const attempt = bluetoothCube.connect();
     setBluetoothConnectAttempt(attempt);
     void attempt.catch(() => undefined);
-  }, [bluetoothCube]);
-  const cubeConnected = bluetoothCube.status.connected;
+  }, [myEvent, bluetoothCube]);
+  const cubeConnected = timerSupportsNetBattleSmartCube(myEvent) && bluetoothCube.status.connected;
+  useEffect(() => {
+    if (!timerSupportsNetBattleSmartCube(myEvent)) setBluetoothOpen(false);
+  }, [myEvent]);
   useEffect(() => {
     onPresenceChange?.({
       ...(cubeConnected ? { normal: 0, smart: 1 } : { normal: 1, smart: 0 }),
@@ -806,7 +813,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   // 由下面的打乱校验那段直接触发预备。两条路的房间态门控是同一套。
   const autoReadyEnabled =
     (settings.bluetoothAutoReady === 'still' || settings.bluetoothAutoReady === 'double-flick')
-    && bluetoothCube.status.connected
+    && cubeConnected
     && canSolve
     && !gate.gated
     && startAt === null;
@@ -1014,10 +1021,10 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings.bluetoothAutoReady]);
   useEffect(() => {
-    if (bluetoothCube.status.connected) return;
+    if (cubeConnected) return;
     setScrambleMatch(null);
     setScrambleHint(null);
-  }, [bluetoothCube.status.connected]);
+  }, [cubeConnected]);
 
   // ── 按压接线(pointer 在计时面板 + 空格全局)────────────────────
   const pressDown = useCallback(() => {
@@ -1415,13 +1422,13 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   return <TimerNetBattlePage language={isZh ? 'zh' : 'en'} className="timer-shell net-shell" mainClassName="shell-main timer-workspace-main"
     solving={timer.phase === 'running'} topbar={topbar} video={video}
     room={{
-      devices: <TimerDeviceCenter ariaLabel={tr({ en: 'Timer devices', zh: '计时设备' })}
+      devices: timerSupportsNetBattleSmartCube(myEvent) ? <TimerDeviceCenter ariaLabel={tr({ en: 'Timer devices', zh: '计时设备' })}
         menuLabel={tr({ en: 'Timer devices', zh: '计时设备' })} triggerLabel={tr({ en: 'Devices', zh: '设备' })}
         items={[{
           id: 'smart-cube', kind: 'smart-cube', active: cubeConnected,
           label: tr({ en: 'Smart cube', zh: '智能魔方' }), detail: bluetoothCube.status.deviceName ?? undefined,
           onSelect: connectSmartCubeCenter
-        }]} />, toolbar: {
+        }]} /> : null, toolbar: {
           language: isZh ? 'zh' : 'en',
           code: room.code,
           round: room.round,

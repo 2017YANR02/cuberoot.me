@@ -635,3 +635,45 @@ The requested primary reference is ChatGPT. This is an original CubeRoot impleme
 - Live diagnosis: POST with the newly added timeZone returned 400 invalid_question, while the identical legacy body reached authentication (401 login_required without credentials). The production API health and database were healthy. The generic client fallback mislabeled the schema rejection as assistant unavailability.
 - The client now retries exactly once without timeZone only for 400 invalid_question. Accepted requests, authentication/quota failures, model failures and other 400 bodies are never retried. Both attempts preserve question/history, auth headers, streaming Accept and cancellation. Schema rejection occurs before authentication/quota/model work.
 - Targeted transport fixtures passed (8), and client typecheck passed. New API deployments continue receiving the visitor time zone; the fallback uses the older API's existing date behavior and does not claim that unpublished relative-time/announcement changes are available online.
+
+## 2026-10-11 — Image chat (local implementation, not deployed)
+
+- Homepage image entry and assistant composer support file selection, screenshot
+  paste and drag/drop. JPG/PNG/WebP, 10 MiB input per file, at most three images
+  per message; reuse the article image preparation helper to re-encode and strip
+  metadata, without publishing to article storage. Compression uses at most
+  1920 px and retries smaller sizes to fit 768 KiB per image.
+- Image-only messages, retry, text edits and regeneration retain attachments.
+  Model requests keep up to five prior completed turns and the nearest whole
+  image groups within a three-image budget. Omitted image groups are marked in
+  model context. The UI retains attachment bytes for at most ten recent turns,
+  preserving older conversation text with a notice when its images are released.
+  New conversations and account/WCA changes clear attachments, and pending
+  conversions are cancelled.
+- API accepts bounded inline base64 raster files only (no URLs/SVG/GIF), verifies
+  canonical encoding, MIME signature and pixel dimensions via the raster-header
+  parser shared with chat stickers, and limits the whole body to 3,300,000 bytes.
+  Account, current WCA link, quota, concurrency and timeout checks remain active.
+  No image content is persisted in our database, RAG index or diagnostic logs.
+- A request containing current or historical images selects `qwen3.8-flash` by
+  default. `SITE_ASSISTANT_VISION_{MODEL,API_KEY,BASE_URL}` can override it; omitted
+  vision key/base reuse existing Bailian settings. Text-only requests keep the
+  configured text provider. Vision credentials never fall back to DeepSeek.
+- Native AI SDK multimodal file parts preserve image/turn association, alongside
+  the existing tools. Image content is untrusted material; visible observations
+  need no invented website citation, while official facts still require reads.
+- Compatible JSON mode remains enabled on the wire. The provider was observed
+  returning valid answer JSON followed by a Markdown fence. The adapter removes
+  only a surrounding fence and validates the existing answer schema; arbitrary
+  prose and malformed fields still fail and enter bounded repair.
+- Real local calls to the configured Bailian endpoint read `12.34` from a synthetic
+  timer image and identified `CubeRoot Timer` on a subsequent text-only follow-up.
+  A separate real streaming request also returned `12.34` with answer chunks.
+  Browser checks confirmed selection, preview, removal, three-image bounds and
+  screenshot paste. API, model/history and component regressions are covered.
+- Deployment must include API, Web and the exact `/v1/site-assistant` nginx
+  location (4 MiB transport ceiling, request buffering/cache disabled). No new
+  dependency, migration, permission grant or production configuration was needed
+  for the local provider check. Production release is still pending.
+
+Provider reference: https://help.aliyun.com/zh/model-studio/qwen3-8-flash
