@@ -1,15 +1,15 @@
 /** Regression coverage for visible waste notation and last-layer classification. */
 import { describe, expect, it, vi } from 'vitest';
-import { wastedDisplaySpans } from '../../shared/src/timer/reconstruct/error_detect';
-import { buildReconText, formattedReconMoves, reconTextForClipboard } from '../../shared/src/timer/reconstruct/recon_text';
-import { computeStageSegments } from '../../shared/src/timer/stage-segments-producer';
-import { patternFromAlg, invertAlg } from '../../shared/src/recon/cube3';
-import { buildCommentSuggestions } from '../../shared/src/recon/popup_suggest';
-import { detectStage, topEdgesOriented } from '../../shared/src/recon/stage_detect';
+import { wastedDisplaySpans } from '@cuberoot/shared/timer/reconstruct/error-detect';
+import { buildReconText, formattedReconMoves, reconTextForClipboard } from '@cuberoot/shared/timer/reconstruct/recon-text';
+import { computeStageSegments } from '@cuberoot/shared/timer';
+import { patternFromAlg, invertAlg } from '@cuberoot/shared/recon/cube3';
+import { buildCommentSuggestions } from '@cuberoot/shared/recon/popup-suggest';
+import { detectStage, topEdgesOriented } from '@cuberoot/shared/recon/stage-detect';
 
 // Case-name lookup is external data; stage/EO detection uses real cube states.
-vi.mock('../../shared/src/recon/oll_lookup', () => ({ lookupOllAlgs: async () => [{ caseName: 'OLL 27' }] }));
-vi.mock('../../shared/src/recon/pll_lookup', () => ({ lookupPllAlgs: async () => [{ caseName: 'Ua' }] }));
+vi.mock('@cuberoot/shared/recon/oll-lookup', () => ({ lookupOllAlgs: async () => [{ caseName: 'OLL 27' }] }));
+vi.mock('@cuberoot/shared/recon/pll-lookup', () => ({ lookupPllAlgs: async () => [{ caseName: 'Ua' }] }));
 
 const timed = (tokens: string[]) => tokens.map((m, i) => ({ m, ts: 100 + i * 100 }));
 
