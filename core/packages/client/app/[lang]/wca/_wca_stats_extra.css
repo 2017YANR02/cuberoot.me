@@ -165,6 +165,11 @@
    居中表头本就压在成绩上,保持居中。 */
 .wse-table.wse-multi-event th.wse-attempts-col { text-align: right; }
 .wse-table.wse-multi-event th.wse-attempts-col::after { content: ")"; opacity: 0; }
+/* 4 号:排名单项表格整体水平居中展示(页宽锁死,超宽表格横滚,表在框内居中) */
+.wse-page:has(.wse-attempts-col) { width: 100%; }
+.wse-page:has(.wse-attempts-col) .wse-table-wrapper { width: 100%; max-width: 100%; overflow-x: auto; }
+.wse-page:has(.wse-attempts-col) .wse-table-wrapper > .wse-table { margin-left: auto; margin-right: auto; width: 100%; }
+.wse-table-wrapper > .wse-result-meta { text-align: center; }
 .wse-state {
   padding: 40px;
   text-align: center;
