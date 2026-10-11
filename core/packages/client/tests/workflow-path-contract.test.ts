@@ -256,6 +256,8 @@ const TEST_PATHS = [
   repoPath('.node-version'),
   corePath('**'),
   `!${packagePath('platform', '**')}`,
+  repoPath('solver', '333opt', 'inject.mjs'),
+  repoPath('solver', '333opt', 'data_paths.mjs'),
   repoPath('docs', 'platform-capability-manifest.json'),
   repoPath('docs', 'platform-unification-plan.md'),
   'sync_upstream.ts',

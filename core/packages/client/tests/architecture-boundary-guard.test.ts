@@ -44,16 +44,16 @@ function rules(file: string, content: string): string[] {
 
 describe('architecture boundary guard', () => {
   it('pins the complete current dependency baseline by exact finding identity', () => {
-    expect(MANIFEST.legacyFindings).toHaveLength(195);
+    expect(MANIFEST.legacyFindings).toHaveLength(194);
     expect(compareFindings(uncontractedFindings(CURRENT, MANIFEST.manualContracts), MANIFEST.legacyFindings)).toEqual({ additions: [], stale: [] });
     // Reviewed native adapters, isolated fixtures, diagnostics, geometry/solver proofs and deployment-only pgvector provisioning.
-    expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length + 14);
-    expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'shared-root-import')).toHaveLength(147);
+    expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length + 16);
+    expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'shared-root-import')).toHaveLength(146);
     expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'cross-package-alias-import')).toHaveLength(0);
   });
 
   it('keeps every semantic edge contract tied to live repository evidence', () => {
-    expect(MANIFEST.manualContracts).toHaveLength(23);
+    expect(MANIFEST.manualContracts).toHaveLength(25);
     expect(validateManifestSchema(MANIFEST)).toEqual([]);
     expect(validateManualContracts(MANIFEST.manualContracts)).toEqual([]);
     expect(new Set(MANIFEST.manualContracts.map((item: { phase: string }) => item.phase))).toEqual(new Set([
@@ -139,6 +139,22 @@ describe('architecture boundary guard', () => {
     expect(rules(testFile, call + " spawn('psql', args);")).toContain('subprocess-call');
     expect(rules(testFile, "import { spawn } from 'node:child_process'; spawn('other-command');")).toContain('subprocess-call');
     expect(rules(SERVER_PROBE, call)).toContain('subprocess-call');
+  });
+
+  it('limits thumbnail encoding and preview injection to their exact adapters', () => {
+    const thumbnailFile = ['core', 'apps', 'api/src/utils/image_thumbnail.ts'].join('/');
+    const thumbnailCall = "import { spawn } from 'node:child_process'; spawn(join(binaryDirectory, 'ffmpeg'), args);";
+    expect(rules(thumbnailFile, thumbnailCall)).toEqual([]);
+    expect(rules(thumbnailFile, thumbnailCall + " spawn(join(binaryDirectory, 'ffmpeg'), args);")).toContain('subprocess-call');
+    expect(rules(thumbnailFile, "import { spawn } from 'node:child_process'; spawn('other-command');")).toContain('subprocess-call');
+    expect(rules(SERVER_PROBE, thumbnailCall)).toContain('subprocess-call');
+
+    const fixtureFile = ['core', 'jobs', 'scramble-stats-build/tests/scramble-example-shards.test.ts'].join('/');
+    const fixtureCall = "import { execFileSync } from 'node:child_process'; execFileSync(process.execPath, [resolve(dir, 'inject.mjs')]);";
+    expect(rules(fixtureFile, fixtureCall)).toEqual([]);
+    expect(rules(fixtureFile, fixtureCall + " execFileSync(process.execPath, [resolve(dir, 'inject.mjs')]);")).toContain('subprocess-call');
+    expect(rules(fixtureFile, fixtureCall.replace('process.execPath', "'other-command'"))).toContain('subprocess-call');
+    expect(rules(CLIENT_TEST_PROBE, fixtureCall)).toContain('subprocess-call');
   });
 
   it('allows explicit public subpaths and ignores comments or display text', () => {

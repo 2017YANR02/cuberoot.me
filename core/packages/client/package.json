@@ -17,7 +17,7 @@
     "dev:clean": "node --import tsx scripts/build-cube-history.ts && node ../../scripts/copy-maplibre-assets.mts && node ../../scripts/build-cubing-worker.mjs packages/client/public/cubing-chunks && node scripts/predev-clean.mjs --wipe-next && next dev -H 127.0.0.1 -p 3000",
     "dev:safe": "node --import tsx scripts/build-cube-history.ts && node ../../scripts/copy-maplibre-assets.mts && node scripts/dev-safe.mjs",
     "build:deps": "pnpm --filter @cuberoot/shared build && pnpm --filter @cuberoot/visualcube build && pnpm --filter @cuberoot/vendor-sr-puzzlegen build && pnpm --filter @cuberoot/puzzle-render-core build && pnpm --filter @cuberoot/puzzle-solvers build",
-    "build": "node --import tsx scripts/build-cube-history.ts && pnpm run build:deps && node ../../scripts/copy-maplibre-assets.mts && node ../../scripts/build-cubing-worker.mjs packages/client/public/cubing-chunks && next build && pnpm run typecheck && tsx scripts/build-assistant-index.ts",
+    "build": "pnpm run build:deps && node --import tsx scripts/build-cube-history.ts && node ../../scripts/copy-maplibre-assets.mts && node ../../scripts/build-cubing-worker.mjs packages/client/public/cubing-chunks && next build && pnpm run typecheck && tsx scripts/build-assistant-index.ts",
     "start": "next start -H 127.0.0.1 -p 3000",
     "typecheck": "tsgo --noEmit",
     "typecheck:tsc": "tsc --noEmit",
