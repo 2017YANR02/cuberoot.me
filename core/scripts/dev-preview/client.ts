@@ -10,7 +10,7 @@ import { launchAgentXml, taskXml } from './autostart.ts';
 
 interface Profile { version: number; id: string; host: string; sshPort: number; sshUser: string; localPort: number; remotePort: number; url: string; hostKey: string; publicKey: string; repo: string }
 const { values: v, positionals } = parseArgs({ allowPositionals: true, options: {
-  id: { type: 'string' }, profile: { type: 'string' }, repo: { type: 'string' }, state: { type: 'string' },
+  open: { type: 'boolean' }, id: { type: 'string' }, profile: { type: 'string' }, repo: { type: 'string' }, state: { type: 'string' },
 } });
 const command = positionals[0] ?? 'help';
 const id = v.id ? slug(v.id, 59) : '';
@@ -54,7 +54,7 @@ async function localCheck(p: Profile) {
 }
 function child(command: string, args: string[], cwd?: string) {
   const fd = openSync(logPath, 'a', 0o600);
-  const p = spawn(command, args, { cwd, stdio: ['ignore', fd, fd], windowsHide: true, detached: process.platform !== 'win32' });
+  const p = spawn(command, args, { cwd, stdio: v.open ? 'inherit' : ['ignore', fd, fd], windowsHide: true, detached: process.platform !== 'win32' });
   closeSync(fd); return p;
 }
 function stopChild(p?: ChildProcess) {
@@ -83,7 +83,11 @@ async function run() {
       const core = join(p.repo, 'core'), client = join(core, 'packages', 'client');
       const next = join(client, 'node_modules', 'next', 'dist', 'bin', 'next');
       if (!existsSync(next)) throw Error('Dependencies missing: run pnpm install in core first');
-      execFileSync(process.execPath, [join(core, 'scripts', 'build-cubing-worker.mjs'), 'packages/client/public/cubing-chunks'], { cwd: core, stdio: 'pipe', timeout: 120_000 });
+      for (const args of [
+        ['--import','tsx','packages/client/scripts/build-cube-history.ts'],
+        ['scripts/copy-maplibre-assets.mts'],
+        ['scripts/build-cubing-worker.mjs','packages/client/public/cubing-chunks'],
+      ]) execFileSync(process.execPath,args,{cwd:core,stdio:v.open?'inherit':'pipe',timeout:120000});
       // Bypass predev-clean: this runner must never kill an existing port owner.
       dev = child(process.execPath, [next, 'dev', '-H', '127.0.0.1', '-p', String(p.localPort)], client);
       dev.on('error', e => log(`Next failed: ${e.message}`));
@@ -94,6 +98,20 @@ async function run() {
       dev.once('exit', () => { if (!stopped) { log('Managed Next exited; stopping tunnel'); cleanup(); process.exit(1); } });
     }
     await localCheck(p); log(`Local service ready. Connecting ${p.url}`);
+    if (v.open) void (async () => {
+      for (let i=0;i<120&&!stopped;i++) {
+        try {
+          const response=await fetch(p.url,{signal:AbortSignal.timeout(5000)});
+          if(response.ok&&(await response.text()).includes('CubeRoot')) {
+            if(stopped)return;
+            const browser=process.platform==='darwin'?spawn('open',[p.url],{stdio:'ignore'}):spawn('rundll32.exe',['url.dll,FileProtocolHandler',p.url],{stdio:'ignore'});
+            browser.on('error',()=>log(`Open ${p.url} in your browser.`)); return;
+          }
+        } catch { /* Wait for the tunnel and Next compilation. */ }
+        await delay(1000);
+      }
+      if(!stopped)log(`Preview is not ready yet: ${p.url}`);
+    })();
     while (!stopped) {
       tunnel = child('ssh', sshArgs(p));
       const code = await new Promise<number | null>(resolve => {
