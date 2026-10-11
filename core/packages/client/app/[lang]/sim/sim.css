@@ -245,6 +245,12 @@
 .sim-canvas-wrap .twisty-fallback {
   padding-bottom: 48px;
 }
+/* Status, errors and manual controls remain on the page surface. Explicit board
+   colors can contrast with the active theme, while this UI uses theme tokens. */
+.sim-canvas-wrap .twisty-fallback,
+.sim-canvas-wrap .twisty-section > [role="alert"] {
+  background-color: var(--background);
+}
 .sim-bg-overlay-inner {
   display: inline-flex;
   align-items: center;
