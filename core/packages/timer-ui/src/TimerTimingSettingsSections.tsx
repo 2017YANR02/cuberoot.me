@@ -22,6 +22,8 @@ export interface TimerBooleanControlProps {
 export interface TimerTimingSettingsSectionsProps {
   /** False keeps non-Timing settings categories out of the DOM, like Web SettingsPanel. */
   active?: boolean;
+  /** Hosts with mandatory timing omit the legacy untimed-practice control. */
+  timingRequired?: boolean;
   localize: (copy: TimerSettingCopy) => string;
   onChange: (patch: Partial<TimerTimingSettings>) => void;
   /** Platform visual primitive; this shared component owns the row and setting behavior. */
@@ -183,6 +185,7 @@ export function TimerBooleanSettingRow({
  */
 export function TimerTimingSettingsSections({
   active = true,
+  timingRequired = false,
   localize,
   onChange,
   renderBooleanControl,
@@ -195,13 +198,13 @@ export function TimerTimingSettingsSections({
   return (
     <>
       <TimerSettingsSection>
-        <TimerBooleanSettingRow
+        {!timingRequired && <TimerBooleanSettingRow
           field={TIMING_FIELDS.timingEnabled}
           label={label(TIMING_FIELDS.timingEnabled)}
           onChange={(timingEnabled) => onChange({ timingEnabled })}
           renderBooleanControl={renderBooleanControl}
           value={settings.timingEnabled}
-        />
+        />}
         <TimerBooleanSettingRow
           field={TIMING_FIELDS.inspectionSec}
           label={label(TIMING_FIELDS.inspectionSec)}

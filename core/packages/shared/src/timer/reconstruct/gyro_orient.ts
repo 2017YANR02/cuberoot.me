@@ -17,6 +17,7 @@ import {
   type Quat,
 } from '../../smart_cube/orientation';
 import type { GyroSample } from '../../smart_cube/gyro_track';
+import { rotationQuaternionForToken } from './rotation_detect';
 
 export * from './orient';
 
@@ -70,13 +71,23 @@ const ROTATION_BY_PERM = (() => {
 
 const INITIAL_POSE_MAX_ERROR_RAD = Math.PI / 4;
 
+/** WCA rotations use clockwise angles and compose in the current viewer frame. */
+export function notationQuaternion(rotation: string): Quat {
+  let pose: Quat = { w: 1, x: 0, y: 0, z: 0 };
+  for (const token of rotation.trim().split(/\s+/).filter(Boolean)) {
+    const delta = rotationQuaternionForToken(token);
+    if (delta) pose = quatMul(quatConjugate(delta), pose);
+  }
+  return pose;
+}
+
 export function initialPoseRotation(
   samples: readonly GyroSample[],
   brand?: string | null,
 ): string | null {
   const first = samples[0];
   if (!first) return null;
-  const posed = applyOrientation(first.q, null, {
+  const posed = first.frame === 'scramble' ? first.q : applyOrientation(first.q, null, {
     basis: sensorBasisForBrand(brand),
     mirror: mirrorForBrand(brand),
   });

@@ -52,13 +52,15 @@ import { sliceSplitTable } from '../../recon_slice';
 
 import { detectRotations } from './rotation_detect';
 import type { RotationEvent } from './rotation_detect';
-import { conjugateToken } from './gyro_orient';
+import { conjugateToken, notationQuaternion } from './gyro_orient';
 import type { FacePerm } from './gyro_orient';
+import { quatMul, type Quat } from '../../smart_cube/orientation';
 
 /** 时间窗前后各放宽这么多毫秒,见文件头。 */
 export const CORE_EVENT_SLACK_MS = 250;
 
 export interface CoreTrack {
+  frame?: 'scramble';
   /** 姿态流里认下来的每一次核心换格,按时刻。中层带的那些也在里面。 */
   events: readonly RotationEvent[];
 }
@@ -70,6 +72,15 @@ export interface BuildCoreTrackOptions {
   moves?: readonly { m: string; ts: number }[];
 }
 
+/** Raw encoder playback needs all core motion, including motion absorbed into M/E/S. */
+export function coreTrackPoseAt(track: CoreTrack | null, initialRotation: string, tMs: number): Quat {
+  let pose = notationQuaternion(initialRotation);
+  for (const event of track?.events ?? []) {
+    if ((event.startMs ?? event.tMs) <= tMs) pose = quatMul(pose, notationQuaternion(event.token));
+  }
+  return pose;
+}
+
 function directedRotationQuarters(token: string): { axis: string; quarters: number } | null {
   const match = /^([xyz])(2)?(')?$/.exec(token);
   if (!match) return null;
@@ -77,6 +88,10 @@ function directedRotationQuarters(token: string): { axis: string; quarters: numb
     axis: match[1],
     quarters: (match[2] ? 2 : 1) * (match[3] ? -1 : 1),
   };
+}
+
+function inverseRotation(token: string): string {
+  return token.endsWith("'") ? token.slice(0, -1) : `${token}'`;
 }
 
 /** One detected half-turn can physically back two adjacent quarter-turn pairs. */
@@ -100,8 +115,12 @@ export function buildCoreTrack(
   opts: BuildCoreTrackOptions = {},
 ): CoreTrack | null {
   if (samples.length === 0) return null;
-  const brand = opts.brand ?? null;
+  const calibrated = samples[0].frame === 'scramble';
+  const brand = calibrated ? null : opts.brand ?? null;
   const convert = (event: RotationEvent): RotationEvent => {
+    if (calibrated && event.token !== '?') return {
+      ...event, token: event.token.endsWith("'") ? event.token.slice(0, -1) : `${event.token}'`,
+    };
     // GAN v4/16ui's real gyro stream has the yaw sign opposite to its face-turn
     // convention. Keep this at the reconstruction boundary: the 3D renderer's
     // absolute orientation basis is a separate concern.
@@ -122,7 +141,7 @@ export function buildCoreTrack(
   for (let i = 0; i + 1 < moves.length; i++) {
     const a = moves[i], b = moves[i + 1];
     const split = pairs.get(`${a.m} ${b.m}`);
-    if (!split || coreTurnsIn({ events }, a.ts, b.ts, split.rotation).length) continue;
+    if (!split || coreTurnsIn({ events, ...(calibrated ? { frame: 'scramble' as const } : {}) }, a.ts, b.ts, split.rotation).length) continue;
     let before = -1;
     for (let j = 0; j < samples.length && samples[j].tMs < a.ts; j++) before = j;
     if (before < 0 || a.ts - samples[before].tMs > CORE_EVENT_SLACK_MS) continue;
@@ -131,8 +150,8 @@ export function buildCoreTrack(
     const local = samples.slice(before).filter(sample => sample.tMs < until);
     const recovered = detectRotations(local, { brand }).map(convert);
     const [first, back] = recovered;
-    if (!first || !back || first.token !== split.rotation) continue;
-    if (!coreTurnsIn({ events: [first] }, a.ts, b.ts, split.rotation).length) continue;
+    if (!first || !back || first.token !== (calibrated ? inverseRotation(split.rotation) : split.rotation)) continue;
+    if (!coreTurnsIn({ events: [first], ...(calibrated ? { frame: 'scramble' as const } : {}) }, a.ts, b.ts, split.rotation).length) continue;
     const inverse = first.token.endsWith("'") ? first.token.slice(0, -1) : `${first.token}'`;
     if (back.token !== inverse || back.tMs > (local.at(-1)?.tMs ?? 0) - 120) continue;
     // The return must also have encoder support on this axis (a compensating
@@ -142,7 +161,7 @@ export function buildCoreTrack(
     events.push(first, back);
     events.sort((left, right) => left.tMs - right.tMs);
   }
-  return { events };
+  return { events, ...(calibrated ? { frame: 'scramble' as const } : {}) };
 }
 
 /**
@@ -163,7 +182,11 @@ export function coreTurnsIn(
     // A core change only belongs to a slice when it is the rotation required by
     // that exact opposite-face pair. Time establishes order; it cannot turn an
     // unrelated y rotation into an M/S gesture merely because both overlapped.
-    if (expectedToken !== undefined && !supportsRotation(track.events[i].token, expectedToken)) continue;
+    // Slice tables store the encoder frame compensation, the inverse of the
+    // physical core motion recorded by calibrated v2 tracks.
+    if (expectedToken !== undefined && track.frame === 'scramble' && track.events[i].wide) continue;
+    if (expectedToken !== undefined && !supportsRotation(track.events[i].token,
+      track.frame === 'scramble' ? inverseRotation(expectedToken) : expectedToken)) continue;
     const event = track.events[i];
     const start = event.startMs !== undefined && event.tMs - event.startMs <= 1200
       ? event.startMs : event.tMs;
@@ -184,6 +207,7 @@ export function coreTurnsIn(
  */
 export function conjugateCoreTrack(track: CoreTrack, perm: FacePerm): CoreTrack {
   return {
+    ...track,
     events: track.events.map(e => ({ ...e, token: conjugateToken(e.token, perm) ?? e.token })),
   };
 }

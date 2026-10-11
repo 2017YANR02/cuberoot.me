@@ -24,17 +24,17 @@
  * 一把 40 个样本 ≈ 340 字节,和一条打乱一个量级 —— 这才敢默认打开的成本。
  * 上面还有一道 `MAX_SAMPLES` 硬闸,防的是「传感器抽风狂报」把一条成绩撑成 1MB。
  *
- * ## 为什么存**原始**四元数
+ * ## 姿态参照与兼容
  *
- * 存的是魔方报上来的原始朝向,**不含校准、不含品牌传感器基**。因为那两样都还没
- * 验过(`BRAND_SENSOR_BASIS` / `BRAND_MIRROR` 全表 UNVERIFIED),而它们是**显示**
- * 的事:哪天标定对了,历史录像跟着一起变对。反过来,把当时那套没验过的变换烤进
- * 数据里,就永远是错的了。
+ * v1 保留传感器原始朝向,没有打乱结束参照,按历史路径读取。
+ * v2 使用打乱结束姿态校准、折算品牌传感器基,并包含专项默认握持。第一个样本
+ * 在起表时刻写入,表示观察结束的净朝向;之后仍按计时时间录制。两版载荷布局相同,
+ * v2 只改变版本字节和姿态含义,不得再次应用品牌基或首次采样校准。
  *
  * ## 格式
  *
  *   byte 0        magic 'G' (0x47)
- *   byte 1        version = 1
+ *   byte 1        version = 1 (原始传感器) / 2 (打乱参照下的魔方姿态)
  *   byte 2..3     样本数 (uint16, 大端)
  *   之后每 6 字节 一个样本:
  *     byte 0..1   距上一个样本的毫秒 (uint16, 大端);第一个样本是距起表
@@ -61,6 +61,8 @@ const HEADER_BYTES = 4;
 const SAMPLE_BYTES = 6;
 
 export interface GyroSample {
+  /** v2: calibrated cube pose relative to scramble completion, including training grip. */
+  frame?: 'scramble';
   /** 距起表的毫秒。 */
   tMs: number;
   q: Quat;
@@ -148,12 +150,12 @@ function base64ToBytes(s: string): Uint8Array {
 }
 
 /** 编码成 base64。空数组 → `null`(「没录到」和「录了个空的」是两回事)。 */
-export function encodeGyroTrack(samples: GyroSample[]): string | null {
+export function encodeGyroTrack(samples: GyroSample[], frame?: 'scramble'): string | null {
   if (samples.length === 0) return null;
   const n = Math.min(samples.length, MAX_SAMPLES);
   const buf = new Uint8Array(HEADER_BYTES + n * SAMPLE_BYTES);
   buf[0] = MAGIC;
-  buf[1] = VERSION;
+  buf[1] = frame === 'scramble' || samples[0].frame === 'scramble' ? 2 : VERSION;
   buf[2] = (n >> 8) & 0xff;
   buf[3] = n & 0xff;
   let prevT = 0;
@@ -181,7 +183,7 @@ export function decodeGyroTrack(encoded: string | null | undefined): GyroSample[
   let buf: Uint8Array;
   try { buf = base64ToBytes(encoded); } catch { return []; }
   if (buf.length < HEADER_BYTES) return [];
-  if (buf[0] !== MAGIC || buf[1] !== VERSION) return [];
+  if (buf[0] !== MAGIC || (buf[1] !== VERSION && buf[1] !== 2)) return [];
   const n = (buf[2] << 8) | buf[3];
   if (n <= 0 || buf.length < HEADER_BYTES + n * SAMPLE_BYTES) return [];
   const out: GyroSample[] = [];
@@ -192,7 +194,7 @@ export function decodeGyroTrack(encoded: string | null | undefined): GyroSample[
     const i8 = (b: number) => (b > 127 ? b - 256 : b) / 127;
     const q = { w: i8(buf[o + 2]), x: i8(buf[o + 3]), y: i8(buf[o + 4]), z: i8(buf[o + 5]) };
     // 定点化把模长打偏了,不归一化 slerp 会漂。
-    out.push({ tMs: t, q: quatNormalize(q) });
+    out.push({ tMs: t, q: quatNormalize(q), ...(buf[1] === 2 ? { frame: 'scramble' as const } : {}) });
   }
   return out;
 }

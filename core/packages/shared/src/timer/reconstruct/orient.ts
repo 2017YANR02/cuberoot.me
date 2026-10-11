@@ -262,6 +262,8 @@ function unchanged(scramble: string, moves: SolveMove[], crossFace: CubeFace | n
  * 幂等:对结果再调一次,`crossFace` 是 `'D'`,`changed` 是 false。
  */
 export interface NormalizeSolveOptions {
+  /** A scramble-relative recorded grip takes precedence over cross inference. */
+  measuredGrip?: boolean;
   /** Absolute physical → viewer grip recovered from the first gyro sample. It
    * is accepted only when it also puts the detected cross face on D. */
   preferredRotation?: string | null;
@@ -274,13 +276,14 @@ export function normalizeSolve(
 ): NormalizedSolve {
   if (!moves || moves.length === 0) return unchanged(scramble, moves, null);
   const face = pickCrossFace(scanCrossFaces(scramble, moves));
-  if (face === null) return unchanged(scramble, moves, face);
+  if (face === null && !opts.measuredGrip) return unchanged(scramble, moves, face);
 
   const preferred = opts.preferredRotation;
   const preferredPerm = preferred !== undefined && preferred !== null
     ? facePermFor(preferred)
     : null;
-  const rotation = preferredPerm?.[face] === 'D' ? preferred! : ROTATION_TO_D[face];
+  const rotation = preferredPerm && (opts.measuredGrip || (face && preferredPerm[face] === 'D'))
+    ? preferred! : face ? ROTATION_TO_D[face] : '';
   if (rotation === '') return unchanged(scramble, moves, face);
 
   const perm = facePermFor(rotation);

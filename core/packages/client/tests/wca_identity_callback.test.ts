@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { act, createElement, StrictMode } from 'react';
+import { readFileSync } from 'node:fs';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import Callback from '@/app/auth/callback/page';
@@ -39,6 +40,31 @@ afterEach(async () => { await act(async () => root.unmount()); host.remove(); cl
 const render = async () => { await act(async () => root.render(createElement(StrictMode, null, createElement(Callback)))); };
 
 describe('WCA canonical-only first identity callback', () => {
+  it('leaves no background login iframe after returning to the account page', async () => {
+    // Reproduce the document bootstrap before React owns the callback route.
+    // Executing the real body scripts catches DOM inserted outside the React root.
+    const layout = readFileSync('app/layout.tsx', 'utf8');
+    const body = layout.slice(layout.indexOf('<body'), layout.indexOf('</body>'));
+    expect(body).toContain('<AppNuqsAdapter>');
+    sessionStorage.setItem('wca_return_url', '/zh/account');
+    for (const match of body.matchAll(/__html:\s*`([^`]*)`/g)) window.eval(match[1]);
+
+    let complete!: (value: unknown) => void;
+    mocks.loginWca.mockImplementation(() => new Promise(resolve => { complete = resolve; }));
+    try {
+      await render();
+      expect(host.querySelector('[role="status"]')?.textContent).toContain('Signing in to WCA');
+      await act(async () => complete({ token: 'canonical', user: { uid: 42, wcaId: '2017YANR02' } }));
+      expect(mocks.replace).toHaveBeenCalledExactlyOnceWith('/zh/account');
+      await act(async () => root.render(createElement('main', { 'data-account': true }, 'My account')));
+      expect(host.querySelector('[data-account]')?.textContent).toBe('My account');
+      expect(host.querySelector('.auth-callback-status')).toBeNull();
+      expect(document.body.querySelectorAll('iframe')).toHaveLength(0);
+    } finally {
+      document.body.querySelectorAll('iframe').forEach(frame => frame.remove());
+    }
+  });
+
   it('preserves Chinese from the initiating page after a new WCA identity', async () => {
     sessionStorage.setItem('wca_return_url', '/zh/account?next=%2Fzh%2Frecon');
     mocks.loginWca.mockRejectedValue(new AccountChoiceRequired({ ticket: 'a'.repeat(43), provider: 'wca', expiresInSeconds: 900 }));

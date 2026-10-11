@@ -43,6 +43,7 @@ describe('Web solo attempt recording lifecycle', () => {
       attemptStartedAtRef: ref(0),
       attemptSplitRecorder: { begin: vi.fn() },
       event: '333',
+      supportsSmartCube: true,
       settings: { bldMemo: false, multiStage: false },
       getSettings: () => ({ preScrT: 'z2' }),
       timerSmartCubeAttemptScramble,
@@ -64,7 +65,7 @@ describe('Web solo attempt recording lifecycle', () => {
       && node.name.getText(source) === 'startFromCube' ? node.initializer : undefined, context);
     const runningEffect = callback(node => ts.isCallExpression(node)
       && node.expression.getText(source) === 'useEffect'
-      && node.arguments[0]?.getText(source).includes('else if (!cubeStartedRef.current)')
+      && node.arguments[0]?.getText(source).includes('cubeStartedRef.current = false')
       ? node.arguments[0] : undefined, context);
 
     for (const startedAt of [1_000, 2_000]) {
