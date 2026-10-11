@@ -186,10 +186,10 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
             else startTimer(content, true, source === 'manual' ? 'manual' : 'random');
           }} />}
     </div>}
-    {onAdvancedSettings && <button type="button" className="timer-practice-settings__action" onClick={() => {
+    {onAdvancedSettings && <button type="button" className="timer-practice-settings__action timer-practice-settings__more" onClick={() => {
       changeSettingsOpen(false);
       onAdvancedSettings();
-    }}>{tr({ zh: '更多设置', en: 'More settings' })}</button>}
+    }}>{tr({ zh: '更多', en: 'More' })}</button>}
   </div>;
 
   if (settingsOnly) return practiceSettings;
@@ -212,9 +212,9 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
         }}
       />
     </span>}
-    <span className="timer-practice-control">
+    <span className="timer-practice-control timer-practice-control--content">
       <TimerPuzzlePicker
-        showArrow={false}
+        showArrow
         disabled={navigationDisabled} puzzleLabel={tr({ zh: '内容', en: 'Content' })}
         triggerLabel={contentLabel} selectedEvent={content?.id ?? ''} showSubmenuHeading={false}
         showItemIcons={false} dataNoTimer

@@ -135,7 +135,7 @@ export function SettingsPopover({
           >
             {settingsHost?.practiceSettings}
             {settingsHost ? <details className="timer-practice-advanced">
-              <summary>{tr({ zh: '更多设置', en: 'More settings' })}</summary>
+              <summary>{tr({ zh: '更多', en: 'More' })}</summary>
               <div className="timer-practice-advanced__content">{children}</div>
             </details> : children}
           </div>

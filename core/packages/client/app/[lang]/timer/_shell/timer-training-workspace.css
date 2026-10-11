@@ -50,6 +50,14 @@
   font-size: inherit;
 }
 
+.timer-practice-control--content .pp-trigger {
+  color: var(--foreground);
+}
+
+.timer-practice-control--content .pp-trigger-label {
+  font-weight: 500;
+}
+
 .timer-practice-settings {
   display: flex;
   flex-direction: column;
@@ -97,11 +105,27 @@
   outline-offset: 4px;
 }
 
+.timer-practice-settings__action.timer-practice-settings__more {
+  align-self: flex-end;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.timer-practice-settings__action.timer-practice-settings__more:hover {
+  color: var(--foreground);
+}
+
 .timer-practice-advanced {
   width: 100%;
 }
 
 .timer-practice-advanced > summary {
+  width: fit-content;
+  margin-inline-start: auto;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  font-weight: 400;
   cursor: pointer;
   list-style: none;
 }
@@ -111,7 +135,7 @@
 }
 
 .timer-practice-advanced > summary:hover {
-  color: var(--accent);
+  color: var(--foreground);
 }
 
 .timer-practice-advanced__content {
