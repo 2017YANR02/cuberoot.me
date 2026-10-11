@@ -108,6 +108,7 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'pets': { title: { zh: '领养宠物', en: 'Adopt a companion' }, description: { zh: '领养根号兽、螃蟹、三花猫或云宝。喂食、互动，点亮星星、月亮与太阳，一起长大。', en: 'Adopt a Root Beast, Clawd, Calico, or Cloud. Feed, play, and grow a friendship from little stars to suns.' } },
   'pets/gallery': { title: { zh: '宠物图鉴', en: 'Companion gallery' }, description: { zh: '探索 CubeRoot 小伙伴的动作与表情，播放喜欢的片段，分享给朋友。', en: 'Explore CubeRoot companion animations and expressions. Play your favorite moments and share them with friends.' } },
   'account': { title: { zh: '账号', en: 'Account' } },
+  'account/get-started': { title: { zh: '新员工入门', en: 'Getting Started for Staff' }, description: { zh: '注册或登录 CubeRoot，复制账号 ID 并联系负责人开通管理员权限。', en: 'Register or sign in to CubeRoot, copy your account ID and contact your team lead for administrator access.' } },
   'account/verify': { title: { zh: '实名认证', en: 'Identity Verification' } },
   'account/mcp': { title: { zh: 'ChatGPT 只读连接', en: 'ChatGPT Read-only Connection' } },
   'admin': {
