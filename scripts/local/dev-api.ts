@@ -1,11 +1,18 @@
 import { spawn } from 'node:child_process';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parseEnv } from 'node:util';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const apiDir = resolve(repoRoot, 'core/apps/api');
+const envFile = resolve(apiDir, '.env');
+// Load only the local enterprise key; do not activate unrelated services from .env.
+const enterpriseKey = process.env.ENTERPRISE_VERIFICATION_KEY
+  ?? (existsSync(envFile) ? parseEnv(readFileSync(envFile, 'utf8')).ENTERPRISE_VERIFICATION_KEY : undefined);
 const env = {
   ...process.env,
+  ...(enterpriseKey ? { ENTERPRISE_VERIFICATION_KEY: enterpriseKey } : {}),
   DB_HOST: '127.0.0.1',
   DB_PORT: '5433',
   DB_USER: 'postgres',

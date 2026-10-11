@@ -193,6 +193,7 @@ const redraw_cube = function (cube: FaceletCubeT, config: ConfigT ) {
     let greyMaterial: THREE.MeshBasicMaterial
 
     const geos : THREE.BufferGeometry[] = []; // new THREE.PlaneGeometry(0.89 * mag * 2, 0.89 * mag * 2)
+    const cubeMaterials: THREE.Material[] = [];
     const geo_border = new THREE.PlaneGeometry(2.0, 2.0)//1.0 * mag * 2, 1.0 * mag * 2)
 
     let materials_border = new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.FrontSide })
@@ -233,6 +234,7 @@ const redraw_cube = function (cube: FaceletCubeT, config: ConfigT ) {
         let materials = Array(7).fill(0).map((_, i) => {
             let mat = new THREE.MeshBasicMaterial({ color: colorScheme[i], side: THREE.DoubleSide });
             mat.alphaTest = alpha;
+            cubeMaterials.push(mat)
             return mat
         })
 
@@ -249,6 +251,7 @@ const redraw_cube = function (cube: FaceletCubeT, config: ConfigT ) {
 
         // Create obscured stickers with grey fill and colored border
         greyMaterial = new THREE.MeshBasicMaterial({ color: colorScheme[6], side: THREE.DoubleSide, alphaTest: alpha })
+        cubeMaterials.push(greyMaterial)
 
         obscured_stickers_tmpl = materials.map((mat) => {
             return rounded_patterns.map(pattern => {
@@ -284,6 +287,7 @@ const redraw_cube = function (cube: FaceletCubeT, config: ConfigT ) {
                 : mixHexLrgb(colorScheme[i], '#000000', 0.35)
 
             let mat = new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide });
+            cubeMaterials.push(mat)
 
             let geo = roundedFace([1,1,1,1], corner_radius)
             geos.push(geo)
@@ -383,9 +387,15 @@ const redraw_cube = function (cube: FaceletCubeT, config: ConfigT ) {
     }
     animate()
 
-    const updateCubeAndColor = (cube: FaceletCubeT, colorScheme: Array<string>) => {
+    const clearCube = () => {
         scene.remove(cubeG)
         cubeG.clear()
+        geos.splice(0).forEach(g => g.dispose())
+        cubeMaterials.splice(0).forEach(material => material.dispose())
+    }
+
+    const updateCubeAndColor = (cube: FaceletCubeT, colorScheme: Array<string>) => {
+        clearCube()
         cubeG = drawCube(cube, colorScheme)
         scene.add(cubeG)
         renderer.render(scene, camera)
@@ -393,12 +403,12 @@ const redraw_cube = function (cube: FaceletCubeT, config: ConfigT ) {
     }
 
     const cleanup = () => {
-        geos.forEach(g => g.dispose())
+        cancelAnimationFrame(frameID)
+        clearCube()
         materials_border.dispose()
         geo_border.dispose()
-        greyMaterial.dispose()
-        scene.remove(cubeG)
-        cancelAnimationFrame(frameID)
+        controls.dispose()
+        renderer.dispose()
     }
     return {
         updateCubeAndColor,
@@ -436,7 +446,14 @@ let drawCube = (function(){
             return painter!
         }
     }
-    return func
+    return {
+        draw: func,
+        cleanup: () => {
+            painter?.cleanupFunc()
+            painter = null
+            config_cache = null
+        }
+    }
 })
 
 type Painter = {
@@ -459,10 +476,6 @@ function CubeSim(props: Config) {
     // canvas only, so dragging rotates the cube while page scroll still works
     // anywhere outside it. Mobile users asked to be able to spin the cube.
     const enableControl = true
-
-    let painter = cubePainter(props.cube, {
-            width, height, colorScheme, faces: facesToReveal, theme, hintDistance, enableControl,
-            cameraState, obscureNonLR: obscureNonLR, obscureStickerWidth: obscureStickerWidth, obscureCornerMask: obscureCornerMask})
 
     useEffect( () => {
         let dom = window //painter.getRenderer().domElement
@@ -498,17 +511,24 @@ function CubeSim(props: Config) {
         dom.addEventListener('keyup', upHandler);
         return () => {
             dom.removeEventListener('keydown', downHandler);
-            dom.addEventListener('keyup', upHandler);
+            dom.removeEventListener('keyup', upHandler);
         };
-    });
+    }, []);
 
+    // Create WebGL resources only after commit. Rendering may be abandoned or
+    // repeated by React; neither may leave a detached animation loop behind.
     useEffect( () => {
         let dom = mount.current!
+        const painter = cubePainter.draw(props.cube, {
+            width, height, colorScheme, faces: facesToReveal, theme, hintDistance, enableControl,
+            cameraState, obscureNonLR, obscureStickerWidth, obscureCornerMask})
         dom.appendChild(painter.getRenderer().domElement) //renderer.domElement)
         return () => {
             dom.removeChild(painter.getRenderer().domElement)
         }
     })
+
+    useEffect(() => () => cubePainter.cleanup(), [cubePainter])
 
     return <div
         ref={mount}

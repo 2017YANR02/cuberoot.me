@@ -2,13 +2,13 @@
 
 // Backgrounds affect the whole site; palette previews keep their local token scope.
 
-import { useEffect, useState } from 'react';
-import { Check, Play, RotateCcw, Expand } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Check, Play, RotateCcw } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import HeaderToggles from '@/components/HeaderToggles';
-import BoolToggle from '@/components/BoolToggle';
-import { useDeskPetVisible } from '@/hooks/useDeskPetVisible';
+import { previewBackground, endBackgroundPreview } from '@/components/SiteBackground';
 import { useHomeBackgroundChoice } from '@/hooks/useHomeBackgroundChoice';
+import { useModalDismiss } from '@/hooks/useModalDismiss';
 import { HOME_BACKGROUNDS, HOME_BACKGROUND_ASSETS, resolveHomeBackground } from '@/lib/home-backgrounds';
 import {
   CONTRAST_LEVELS,
@@ -37,13 +37,37 @@ const CARDS: Card[] = [
   ...PALETTES.map((p) => ({ id: p.id, scope: p.id, zh: p.zh, en: p.en, scheme: p.scheme })),
 ];
 
+function BackgroundPreview({ scene, onClose }: { scene: (typeof HOME_BACKGROUNDS)[number]; onClose: () => void }) {
+  const ref = useRef<HTMLDialogElement>(null);
+  const backdropProps = useModalDismiss(onClose);
+  useEffect(() => {
+    const dialog = ref.current;
+    dialog?.showModal();
+    return () => dialog?.close();
+  }, []);
+  return (
+    <dialog ref={ref} className="ac-image-dialog" aria-label={tr(scene)} {...backdropProps}
+      onCancel={(event) => { event.preventDefault(); onClose(); }}>
+      <figure className="ac-image-preview" data-site-surface="popover">
+        {/* eslint-disable-next-line @next/next/no-img-element -- Original landscape loads only when the preview opens. */}
+        <img src={`${HOME_BACKGROUND_ASSETS}/original/${scene.id}.png`} alt={tr(scene)} width={1672} height={941}
+          onError={(event) => {
+            const fallback = `${HOME_BACKGROUND_ASSETS}/${scene.id}.webp`;
+            if (event.currentTarget.src !== fallback) event.currentTarget.src = fallback;
+          }} />
+      </figure>
+    </dialog>
+  );
+}
+
 export default function AppearancePage() {
   const effectiveTheme = useEffectiveTheme();
-  const [petVisible, setPetVisible] = useDeskPetVisible();
-  const [background, setBackground, , , backgroundEnabled, setBackgroundEnabled] = useHomeBackgroundChoice(effectiveTheme);
+  const [background, setBackground] = useHomeBackgroundChoice(effectiveTheme);
+  const [preview, setPreview] = useState<(typeof HOME_BACKGROUNDS)[number] | null>(null);
   const activeScene = resolveHomeBackground(background, effectiveTheme);
   const [current, setCurrent] = useState<string | null>(null);
   const [contrast, setContrast] = useState<ContrastLevel>('normal');
+  useEffect(() => endBackgroundPreview, [effectiveTheme]);
   useEffect(() => {
     const r = () => {
       setCurrent(readPalette());
@@ -66,33 +90,9 @@ export default function AppearancePage() {
         <h1 className="ac-h1">{tr({ zh: '外观', en: 'Appearance' })}</h1>
         <HeaderToggles />
       </header>
-      <p className="ac-lead">
-        {tr({ zh: '选一处喜欢的风景，配一套舒服的颜色。', en: 'Find a landscape you love and a palette that feels right.' })}
-      </p>
-      <nav className="ac-nav" aria-label={tr({ zh: '外观设置', en: 'Appearance settings' })}>
-        <AppLink href="/appearance#backgrounds">{tr({ zh: '全站背景', en: 'Site backgrounds' })}</AppLink>
-        <AppLink href="/appearance#palettes">{tr({ zh: '配色主题', en: 'Color themes' })}</AppLink>
-      </nav>
-
-      <div className="ac-background-controls" style={{ display: 'flex', flexDirection: 'column' }}>
-        <BoolToggle
-          value={petVisible}
-          onChange={setPetVisible}
-          label={tr({ zh: '桌宠', en: 'Desk pet' })}
-        />
-      </div>
 
       <section id="backgrounds" className="ac-section" aria-labelledby="ac-background-title">
         <h2 id="ac-background-title" className="ac-h2">{tr({ zh: '全站背景', en: 'Site backgrounds' })}</h2>
-        <p className="ac-lead">
-          {tr({ zh: '山海之间，奇境之中。雪山、沙漠与不可能建筑，全站相伴。点击图片查看原图。', en: 'Quiet worlds of snowy peaks, deserts and impossible architecture, across the whole site. Open any image to see the original.' })}
-        </p>
-        <div className="ac-background-controls">
-          <div className="ac-background-modes" role="group" aria-label={tr({ zh: '背景模式', en: 'Background mode' })}>
-            <BoolToggle value={backgroundEnabled} onChange={setBackgroundEnabled} label={tr({ zh: '背景', en: 'Background' })} />
-          </div>
-          <p className="ac-background-hint">{tr({ zh: '浅色和深色分别记住背景，默认透明无背景。', en: 'Light and dark modes remember separate backgrounds. The default is transparent with no image.' })}</p>
-        </div>
         <div className="ac-background-current">
           <span role="status">{tr({ zh: '当前背景：', en: 'Current background: ' })}{activeScene ? tr(activeScene) : tr({ zh: '无背景', en: 'None' })}</span>
           <AppLink href="/">{tr({ zh: '查看主页效果', en: 'See it on your homepage' })}</AppLink>
@@ -102,19 +102,23 @@ export default function AppearancePage() {
           {HOME_BACKGROUNDS.map((scene) => {
             const selected = activeScene?.id === scene.id;
             return <article key={scene.id} className={`ac-background-item${selected ? ' is-current' : ''}`}>
-              <a className="ac-background-image" href={`${HOME_BACKGROUND_ASSETS}/original/${scene.id}.png`} target="_blank" rel="noopener noreferrer"
-                aria-label={tr({ zh: `查看原图：${scene.zh}（新标签页）`, en: `View original: ${scene.en} (new tab)` })}>
+              <button type="button" className="ac-background-image"
+                onPointerEnter={(event) => { if (event.pointerType !== 'touch') previewBackground({ theme: effectiveTheme, choice: scene.id }); }}
+                onPointerLeave={endBackgroundPreview}
+                onFocus={() => previewBackground({ theme: effectiveTheme, choice: scene.id })}
+                onBlur={endBackgroundPreview}
+                onClick={() => { endBackgroundPreview(); setPreview(scene); }} aria-haspopup="dialog"
+                aria-label={tr({ zh: `放大预览：${scene.zh}`, en: `Preview: ${scene.en}` })}>
                 {/* eslint-disable-next-line @next/next/no-img-element -- Existing compact WebP previews; originals load only on demand. */}
                 <img src={`${HOME_BACKGROUND_ASSETS}/${scene.id}.webp`} alt={tr(scene)} width={1672} height={941} loading="lazy" />
-                <span className="ac-background-expand" aria-hidden="true"><Expand size={16} /></span>
-              </a>
+              </button>
               <div className="ac-background-caption">
                 <h3>{tr(scene)}</h3>
                 <button type="button" className="ac-background-apply" aria-pressed={selected}
-                  aria-label={tr({ zh: `应用背景：${scene.zh}`, en: `Apply background: ${scene.en}` })}
+                  aria-label={tr({ zh: `应用：${scene.zh}`, en: `Apply: ${scene.en}` })}
                   onClick={() => setBackground(scene.id)}>
                   {selected && <Check size={14} />}
-                  {selected ? tr({ zh: '已应用', en: 'Applied' }) : tr({ zh: '应用背景', en: 'Apply background' })}
+                  {selected ? tr({ zh: '已应用', en: 'Applied' }) : tr({ zh: '应用', en: 'Apply' })}
                 </button>
               </div>
               <p className="ac-background-family">{scene.family}</p>
@@ -230,6 +234,7 @@ export default function AppearancePage() {
         })}
       </div>
       </section>
+      {preview && <BackgroundPreview scene={preview} onClose={() => setPreview(null)} />}
     </div>
   );
 }

@@ -11,7 +11,8 @@ import '@cuberoot/timer-ui/compact-select.css';
  * 三类不是二类的商(mid-AUF 不作用在局面上),推导见 /math/lsll §3、lib/lsll/class3.ts。
  */
 import { useEffect, useMemo, useState } from 'react';
-import { useQueryState, parseAsStringEnum } from 'nuqs';
+import { parseAsStringEnum } from 'nuqs';
+import { useTrainingQueryState as useQueryState } from '@/lib/training-host';
 import Link from '@/components/AppLink';
 import { ArrowLeft } from 'lucide-react';
 import { tr, T } from '@/i18n/tr';

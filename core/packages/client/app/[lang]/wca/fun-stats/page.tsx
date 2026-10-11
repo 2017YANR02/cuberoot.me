@@ -1,4 +1,5 @@
 'use client';
+import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import '@cuberoot/timer-ui/compact-select.css';
 
 // /wca/fun-stats 趣味统计 — port of cubingchina /results/statistics.
@@ -333,7 +334,7 @@ function FunStatTable({ stat, rows, resp, isZh, kind, event, personHref }: {
   const personCell = (r: any) => (
     <span className="fun-cell-person">
       <Flag iso2={r.iso2 ?? ''} spanClassName="country-flag" imgClassName="country-flag-ct" />
-      <Link prefetch={false} href={personHref(r.wcaId)}>{displayCuberName(r.name ?? '', isZh)}</Link>
+      <Link prefetch={false} href={personHref(r.wcaId)}>{displayCuberName(r.name ?? '', isZh)}<WcaPersonTeamBadge wcaId={r.wcaId} /></Link>
     </span>
   );
   const compCell = (r: any) => (
@@ -523,7 +524,7 @@ function FunStatTable({ stat, rows, resp, isZh, kind, event, personHref }: {
                 <td>{fmtAvg(r.sumValue)}</td>
                 {r.podium?.map((p: any) => (
                   <td key={p.pos}>
-                    {p.wcaId ? <Link prefetch={false} href={personHref(p.wcaId)}>{displayCuberName(p.name ?? '', isZh)}</Link> : '—'}
+                    {p.wcaId ? <Link prefetch={false} href={personHref(p.wcaId)}>{displayCuberName(p.name ?? '', isZh)}<WcaPersonTeamBadge wcaId={p.wcaId} /></Link> : '—'}
                     {p.wcaId && <span className="fun-cell-sub"> {fmtBP(p.value)}</span>}
                   </td>
                 ))}

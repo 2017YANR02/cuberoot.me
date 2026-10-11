@@ -1,0 +1,29 @@
+.cubing-brand-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+/* Preserve source brand colors in every theme. */
+.cubing-brand-logo {
+  display: inline-block;
+  width: 1.8em;
+  height: 1.5em;
+  flex: 0 0 auto;
+  object-fit: contain;
+}
+
+/* The supplied QiYi artwork has a centered yellow disc on a white canvas.
+   Show the disc without the surrounding canvas; preserve the source colors. */
+.cubing-brand-logo.cubing-brand-logo--circle {
+  width: 1.5em;
+  object-fit: cover;
+  clip-path: circle(47%);
+}
+
+.list-select-icon:has(.cubing-brand-label) {
+  width: auto;
+  height: auto;
+}

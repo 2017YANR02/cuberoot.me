@@ -645,6 +645,7 @@
 }
 .bld-comm-search-wrap {
   position: relative;
+  isolation: isolate;
   display: flex;
   align-items: center;
   flex: 1 1 200px;
@@ -653,6 +654,8 @@
 }
 .bld-comm-search-wrap .bld-comm-search-icon {
   position: absolute;
+  /* Paint above the input's glass backdrop, within this search field. */
+  z-index: 1;
   left: 10px;
   display: inline-flex;
   color: var(--faint-foreground);

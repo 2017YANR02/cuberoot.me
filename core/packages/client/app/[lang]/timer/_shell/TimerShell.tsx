@@ -18,28 +18,32 @@
  *
  * SSG note: useQueryState calls useSearchParams, but app/[lang]/layout.tsx wraps
  * pages in <Suspense>, so static generation does not bail. To avoid an SSR /
- * hydration mismatch (server prerenders with empty searchParams → SoloView) we
- * keep a `mounted` gate on the BattleView render: first client paint is always
- * SoloView, and we only swap to BattleView after mount once nuqs has read the
- * real URL param.
+ * hydration mismatch, wait until mount before choosing a view. Training deep
+ * links must not briefly mount the ordinary timer and its input listeners.
  */
 
 import { TimerNetOutboxNotice } from '@cuberoot/timer-ui';
 import { netRecordingOutbox } from '../_lib/storage/db';
 import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { useQueryState, createParser } from 'nuqs';
+import { useQueryState, createParser, parseAsString } from 'nuqs';
 import SoloView from './SoloView';
+import TimerTrainingMenu from './TimerTrainingMenu';
 import { tr } from '@/i18n/tr';
 import { useIsAdmin } from '@/lib/auth-store';
 import TimerPresencePanel from '../_components/TimerPresencePanel';
 import { useTimerPresence, type TimerPresenceReport } from '../_lib/presence';
 import { TimerPlayersSelect, type TimerPlayersValue } from '@cuberoot/timer-ui';
+import './timer-training-workspace.css';
+import { ClientLoadStatus } from '@/components/StartupStatus';
 
-// 首帧恒 Solo(见下面的 mounted gate),对战两个视图连同 _battle 引擎和 battle.css
+// 对战两个视图连同 _battle 引擎和 battle.css
 // 只在真的切到 players>=2 / net 时才下载 —— 静态 import 会把它们焊进首屏那个 chunk。
 const BattleView = dynamic(() => import('./BattleView'), { ssr: false });
 const NetBattleView = dynamic(() => import('./NetBattleView'), { ssr: false });
+const TimerTrainingWorkspace = dynamic(() => import('./TimerTrainingWorkspace'), {
+  ssr: false, loading: () => <ClientLoadStatus />,
+});
 
 type PlayersMode = number | 'net';
 
@@ -54,6 +58,7 @@ const parseAsPlayers = createParser<PlayersMode>({
 });
 
 export default function TimerShell() {
+  const [training] = useQueryState('training', parseAsString.withOptions({ history: 'push' }));
   const notice = <TimerNetOutboxNotice outbox={netRecordingOutbox} language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} />;
   const [mounted, setMounted] = useState(false);
   const [presenceReport, setPresenceReport] = useState<TimerPresenceReport>({
@@ -72,7 +77,7 @@ export default function TimerShell() {
   );
   // ?room=CODE 邀请链接:没带 players 也进联机模式(链接可能被裁剪只剩 room)
   const [roomParam, setRoomParam] = useQueryState('room');
-  const isNet = playersParam === 'net' || (!!roomParam && typeof playersParam === 'number' && playersParam === 1);
+  const isNet = !training && (playersParam === 'net' || (!!roomParam && typeof playersParam === 'number' && playersParam === 1));
   const playerCount = typeof playersParam === 'number' ? Math.max(1, Math.min(4, playersParam)) : 1;
 
   // 联机模式下 ?event= 没有意义(项目属于房间,各人在房里各自切)—— 清掉 Solo / Battle
@@ -94,6 +99,7 @@ export default function TimerShell() {
 
   const playersControl = (
     <TimerPlayersSelect
+      className="timer-practice-players"
       value={(isNet ? 'net' : playerCount) as TimerPlayersValue}
       onChange={(value) => {
         // 切离联机模式顺手清 ?room(否则 room 参数会把 players=1 又拽回联机);
@@ -106,12 +112,20 @@ export default function TimerShell() {
       onlineLabel={tr({ zh: '联机', en: 'Online' })}
     />
   );
+  const trainingControl = <TimerTrainingMenu />;
   const presenceSnapshot = useTimerPresence(presenceReport, canViewPresence);
   const presenceControl = canViewPresence
     ? <TimerPresencePanel snapshot={presenceSnapshot} />
     : null;
 
-  // First paint is always Solo (mounted gate keeps SSG calm). After mount, if
+  // A training deep link must never briefly mount Solo/Battle: those views own
+  // keyboard and device listeners. Training has its own sole input owner.
+  if (!mounted) return <ClientLoadStatus />;
+  if (training) {
+    return <TimerTrainingWorkspace />;
+  }
+
+  // After mount, if
   // ?players=net we render <NetBattleView/>, ?players>=2 renders <BattleView/>;
   // the players select is injected into each view's chrome. Switching never
   // remounts the page — each view owns its own engine state.
@@ -129,7 +143,7 @@ export default function TimerShell() {
     return (
       <>{notice}<BattleView
         playerCount={playerCount}
-        playersControl={playersControl}
+        playersControl={<>{playersControl}{trainingControl}</>}
         presenceControl={presenceControl}
         onPresenceChange={setPresenceReport}
       /></>

@@ -77,9 +77,9 @@ export async function updateWcaNamedStudent(
   return data.student;
 }
 
-export async function removeWcaNamedStudent(teacherWcaId: string, studentId: string): Promise<void> {
+export async function removeWcaNamedStudent(teacherWcaId: string, studentId: string, replacementWcaId?: string): Promise<void> {
   await handleApi<{ ok: true }>(await sessionFetch(
-    `${BASE}/${encodeURIComponent(teacherWcaId)}/named-students/${encodeURIComponent(studentId)}`,
+    `${BASE}/${encodeURIComponent(teacherWcaId)}/named-students/${encodeURIComponent(studentId)}${replacementWcaId ? `?replacement=${encodeURIComponent(replacementWcaId)}` : ''}`,
     { method: 'DELETE', headers: authHeaders(false) },
   ));
 }

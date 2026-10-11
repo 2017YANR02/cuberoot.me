@@ -13,6 +13,7 @@
 //     没绑 WCA 的账号是合成 `u<uid>`,/wca/persons/u144 查无此人 → 不该出链接。
 
 import type { ReactNode } from 'react';
+import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import AppLink from '@/components/AppLink';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { isWcaIdFormat } from '@cuberoot/shared/account';
@@ -32,10 +33,12 @@ interface Props {
   prefetch?: boolean;
   title?: string;
   children?: ReactNode;
+  /** Disable when the row already has a dedicated team column. */
+  showTeam?: boolean;
 }
 
 export default function PersonLink({
-  wcaId, name, isZh = false, className, prefetch = false, title, children,
+  wcaId, name, isZh = false, className, prefetch = false, title, children, showTeam = true,
 }: Props) {
   const body = children ?? (name != null ? displayCuberName(name, isZh) : wcaId);
   if (!isWcaIdFormat(wcaId)) {
@@ -43,7 +46,7 @@ export default function PersonLink({
   }
   return (
     <AppLink href={personHref(wcaId)} prefetch={prefetch} className={className} title={title}>
-      {body}
+      {body}{showTeam && <WcaPersonTeamBadge wcaId={wcaId} />}
     </AppLink>
   );
 }

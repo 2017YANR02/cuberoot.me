@@ -47,14 +47,13 @@ body[data-site-scenery] :is(
   .t10h-stage,
   .t10h-metric-toggle,
   .t10h-speed,
-  .sor-race-bar,
   .wcaa-stat,
   .wcaa-formula,
   .wcaa-code,
   .comp-gate-input,
   .comp-gate-rules
 ),
-body[data-site-scenery] .calendar-page :is(.toolbar, .calendar, .view-toggle, .mode-toggle),
+body[data-site-scenery] .calendar-page :is(.calendar, .view-toggle, .mode-toggle),
 body[data-site-scenery] .deskpet-story .deskpet-story-art {
   background: var(--glass-surface-bg);
   -webkit-backdrop-filter: var(--glass-filter);
@@ -322,9 +321,29 @@ body[data-site-scenery] :is(
   .t10h-export-btn:not(:hover),
   .calendar-page .nav-btn:not(:hover),
   .calendar-page .nav-today:not(:hover),
-  .calendar-page .comp-filters-btn:not(.is-active):not(:hover),
-  .landing-search-input:not(.is-drag-over)
+  .calendar-page .comp-filters-btn:not(.is-active):not(:hover)
 ) {
+  background: var(--glass-surface-bg);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+}
+
+/* Keep the search control itself out of the backdrop-root chain so its
+   dictation tooltips can blur page content outside the input's bounds. */
+body[data-site-scenery] .landing-search-input:not(.is-drag-over) {
+  isolation: isolate;
+  background: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+body[data-site-scenery] .landing-search-input:not(.is-drag-over)::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
   background: var(--glass-surface-bg);
   -webkit-backdrop-filter: var(--glass-filter);
   backdrop-filter: var(--glass-filter);
@@ -358,13 +377,17 @@ body[data-site-scenery] .solver-sheet {
 
 /* Keep toolbar glass on a sibling paint layer: filtering the toolbar itself
    creates a backdrop root that prevents its dropdowns from blurring the page. */
-body[data-site-scenery] .timer-shell .shell-topbar {
+body[data-site-scenery] .timer-shell .shell-topbar,
+body[data-site-scenery] .calendar-page .toolbar,
+body[data-site-scenery] .sor-race .sor-race-bar {
   background: transparent;
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
 
-body[data-site-scenery] .timer-shell .shell-topbar::before {
+body[data-site-scenery] .timer-shell .shell-topbar::before,
+body[data-site-scenery] .calendar-page .toolbar::before,
+body[data-site-scenery] .sor-race .sor-race-bar::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -374,6 +397,25 @@ body[data-site-scenery] .timer-shell .shell-topbar::before {
   background: var(--glass-popover-bg);
   -webkit-backdrop-filter: var(--glass-filter);
   backdrop-filter: var(--glass-filter);
+}
+
+body[data-site-scenery] .calendar-page .toolbar::before,
+body[data-site-scenery] .sor-race .sor-race-bar::before {
+  background: var(--glass-surface-bg);
+}
+
+/* Keep the country menu above the chart's own glass stacking context. */
+body[data-site-scenery] .sor-race .sor-race-bar {
+  position: relative;
+  z-index: 2;
+}
+
+/* Anchor the paint layer in list view without trapping dropdowns below its
+   sticky event header in a toolbar stacking context. */
+body[data-site-scenery] .calendar-page.calendar-page--list .toolbar {
+  position: relative;
+  top: auto;
+  z-index: auto;
 }
 
 body[data-site-scenery] .timer-history-columns-head,
@@ -409,6 +451,19 @@ body[data-site-scenery] :is(
   .timer-room-dialog
 ) {
   background: var(--glass-dialog-bg);
+}
+
+/* The compact difficulty editor uses the same frosted surface as menus.
+   Keep its dismiss layer clear: the legacy foreground tint turns white in dark mode. */
+body .timer-room-overlay:has(> .timer-difficulty-dialog) {
+  background: transparent;
+}
+
+body[data-site-scenery] .timer-room-dialog.timer-difficulty-dialog {
+  background: var(--glass-popover-bg);
+  border-color: var(--glass-border);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
 }
 
 /* Nested sections use the existing shell's blur, without another opaque mat. */

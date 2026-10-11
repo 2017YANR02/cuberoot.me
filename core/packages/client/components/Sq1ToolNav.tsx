@@ -1,7 +1,7 @@
 'use client';
 
 import { useLayoutEffect, useRef } from 'react';
-import { usePathname } from 'next/navigation';
+import { useTrainingPathname as usePathname } from '@/lib/training-host';
 import Link from '@/components/AppLink';
 import { tr } from '@/i18n/tr';
 import styles from './Sq1ToolNav.module.css';

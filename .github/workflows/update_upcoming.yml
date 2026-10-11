@@ -100,6 +100,16 @@ jobs:
             # 故 push 后显式触发 sync_toolkit 把新 stats/*.json rsync 到静态服务器。
             git commit -m "chore: update upcoming comps + comp names zh [skip ci]"
             git pull --rebase origin main
+            # Merge source changes from both writers before deriving the shared month index.
+            (cd core && node --import tsx "${{ steps.workspace.outputs.stats }}/src/bin/build_calendar_comps.ts")
+            git add stats/comp_calendar/
+            if ! git diff --cached --quiet; then
+              if [ "$(git rev-list --count origin/main..HEAD)" -gt 0 ]; then
+                git commit --amend --no-edit
+              else
+                git commit -m "chore: refresh competition calendar [skip ci]"
+              fi
+            fi
             git push
             gh workflow run sync_toolkit.yml
           fi

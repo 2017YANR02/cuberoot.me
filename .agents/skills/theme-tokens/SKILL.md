@@ -71,13 +71,18 @@ background: color-mix(in srgb, var(--accent) 12%, transparent); /* tag 弱化 */
 
 ## 全站透明材质
 
+- 已迁移首页听写、WcaEventSelector 图标提示、LessonVideoPlayer 按钮提示和复盘列表截断文本提示；后者使用 `onlyWhenOverflow`，播放器全屏由组件自动选择 Portal 容器。写入 Hook 与 CI `site-material-guard.test.ts` 共用 `scanSiteMaterial`，禁止重新引入 `content: attr(data-tooltip/data-tip/title)` 气泡。原生 title、图表坐标提示与点击说明属于不同用途，不做机械替换。
+- 按钮/链接的短悬停提示统一使用 `components/Tooltip`（`<Tooltip content={tr({zh,en})}>{(tip) => <button {...tip}>…</button>}</Tooltip>`），禁止另写页面级提示气泡或用 native `title` 代替需要设计样式的提示。触发属性放在实际按钮上；已有同名事件须组合调用。组件负责 hover/focus、Escape、可移入提示、Portal 和视口钳制，页面不再定义 blur/透明度。可交互内容不放 Tooltip，点击展开的说明继续用 InfoTooltip。Portal 继承全站主题；局部配色预览须单独核验。
+
 - 唯一材质源 `core/packages/client/components/glass-material.css`；场景开关由 `SiteBackground` 管理 `body[data-site-scenery]`，旧样式集中接入 `site-surfaces.css`。
 - 新面板/菜单/吸顶头在实际表面声明 `data-site-surface="panel|popover|heading"`（选一个值）；复用已有元素，不加包装组件、不标遮罩、不用内联实底盖它。
 - ListSelect、CompactSelect、成绩浮层已接材质；标准表格沿用 `<table className="sticky-thead">`，非标准表头声明 `heading`，禁止页面重复定义玻璃色值、透明度或 blur。
 - 浮层和表头共用 `--glass-popover-bg` + `--glass-filter` 保可读；普通面板用 `--glass-surface-bg`；只在唯一材质源调整浓度。
 - 保留 hover/选中/危险状态、纪录标记、魔方色块和媒体画布；原生 option/optgroup 无法透出页面，保留系统实底。
 - 保留无背景/图片失败时的主题实底，以及不支持 backdrop-filter、减少透明效果、打印的统一回退；内层实底或父级 backdrop-filter 会遮挡场景，须实测。
-- 写入与 CI 共用 `scripts/hook-detect-site-material.mjs`，测试 `tests/site-material-guard.test.ts`；主题四格之外还验 390px、展开菜单、滚动吸顶、无背景及减少透明效果。
+- 承载非 portal 菜单的工具栏不能直接加 `backdrop-filter`，也不能在该容器上标记会加 blur 的表面角色；它会成为 backdrop root，菜单超出工具栏的部分无法模糊底下页面。工具栏玻璃画在不承载菜单的 `::before` 层，并检查菜单高于后面的图表；参考 `site-surfaces.css` 的比赛工具栏与成绩汇总工具栏。全屏遮罩和菜单完全处于其内的对话框不等同于这种越界问题。
+- 写入与 CI 共用 `scripts/hook-detect-site-material.mjs`，测试 `tests/site-material-guard.test.ts`；hook 重建完整 CSS 后检查，包含单行编辑。静态守卫覆盖已登记的工具栏类；新容器、动态样式仍需浏览器复核。
+- 展开菜单回归：复用运行中的预览服务，在 `core/` 运行 `pnpm --filter @cuberoot/client exec node scripts/audit-glass-menus.mts`。遍历全部 fixture 的主题四格、390px、图片背景，检查实际模糊、祖先 backdrop root、遮挡与横向溢出；报告和截图写系统临时目录。另验滚动吸顶、无背景及减少透明效果，详 `docs/glass-menu-regression.md`。
 
 ## Light/dark 反盖 (写新 :root token 才用)
 

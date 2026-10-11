@@ -5,6 +5,7 @@
  * 汇总某选手参与的全部 recon:作为选手 / 合作者 / 复盘者 / 添加者,角色 tab 过滤。
  * 数据走 GET /v1/recon/person/:wcaId(含 addedBy/addedById,LIST_COLUMNS 没有)。
  */
+import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from '@/components/AppLink';
 import PersonLink from '@/components/PersonLink';
@@ -294,7 +295,7 @@ export default function ReconPersonClient() {
                               {i > 0 ? <span className="recon-cuber-sep"> &amp; </span> : null}
                               {c.country ? <><Flag iso2={c.country} className="recon-inline-flag" />{' '}</> : null}
                               {c.id
-                                ? <Link href={`/recon/person/${c.id}`}>{displayCuberName(c.name, isZh)}</Link>
+                                ? <Link href={`/recon/person/${c.id}`}>{displayCuberName(c.name, isZh)}<WcaPersonTeamBadge wcaId={c.id} /></Link>
                                 : displayCuberName(c.name, isZh)}
                             </span>
                           ))}

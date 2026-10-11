@@ -53,6 +53,7 @@ export interface TimerScrambleSourceSelectProps<
   /** Optional WCA settings shown at the second menu level. */
   realMenuContent?: ReactNode;
   triggerClassName?: string;
+  showArrow?: boolean;
   value: TimerScrambleSourceValue<TReal>;
 }
 
@@ -84,6 +85,7 @@ export function TimerScrambleSourceSelect<
   realValue,
   realMenuContent,
   triggerClassName,
+  showArrow = true,
   value,
 }: TimerScrambleSourceSelectProps<TReal>) {
   const [open, changeOpen] = useTimerOverlayControl({
@@ -251,12 +253,12 @@ export function TimerScrambleSourceSelect<
         type="button"
       >
         <span className="timer-scramble-source-current">{currentLabel}</span>
-        <ChevronDown
+        {showArrow && <ChevronDown
           aria-hidden="true"
           className={`timer-scramble-source-arrow${open ? ' open' : ''}`}
           size={14}
           strokeWidth={2}
-        />
+        />}
       </button>
 
       {open && !disabled && createPortal(
@@ -352,7 +354,7 @@ export function TimerScrambleSourceSelect<
             ))}
           </div>}
         </div>,
-        document.body,
+        triggerRef.current?.closest('dialog, [role="dialog"]') ?? document.body,
       )}
     </div>
   );

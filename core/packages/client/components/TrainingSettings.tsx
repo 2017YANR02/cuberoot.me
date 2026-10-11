@@ -1,12 +1,14 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { Settings } from 'lucide-react';
 import BoolToggle from '@/components/BoolToggle';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
 import { usePopoverDismiss } from '@/hooks/usePopoverDismiss';
 import { tr } from '@/i18n/tr';
 import { persistItem } from '@/lib/safe-storage';
+import { useTrainingHost } from '@/lib/training-host';
 import './training-settings.css';
 
 const STORAGE_KEY = 'training-auto-advance';
@@ -72,6 +74,7 @@ export function SettingsPopover({
   open: controlledOpen,
   onOpenChange,
   ignoreTimer = false,
+  hosted = false,
   children,
 }: {
   label: string;
@@ -84,8 +87,12 @@ export function SettingsPopover({
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   ignoreTimer?: boolean;
+  /** Explicit opt-in: specialized trainers keep their own settings placement. */
+  hosted?: boolean;
   children?: ReactNode;
 }) {
+  const trainingHost = useTrainingHost();
+  const settingsHost = hosted ? trainingHost : null;
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const open = controlledOpen ?? uncontrolledOpen;
   const setOpen = useCallback((next: boolean) => {
@@ -98,13 +105,13 @@ export function SettingsPopover({
   usePanelClamp(open, panelRef);
   usePopoverDismiss(open, () => setOpen(false), rootRef, triggerRef);
 
-  return (
+  const popover = (
     <div
       ref={rootRef}
       className={`settings-popover${className ? ` ${className}` : ''}`}
       data-no-timer={ignoreTimer || undefined}
     >
-      {triggerPrefix}
+      {!settingsHost && triggerPrefix}
       <button
         ref={triggerRef}
         type="button"
@@ -116,20 +123,35 @@ export function SettingsPopover({
       >
         <Settings size={iconSize} aria-hidden="true" />
       </button>
-      {triggerSuffix}
+      {!settingsHost && triggerSuffix}
       {open && (
-        <div
-          ref={panelRef}
-          className={`settings-popover-panel${panelClassName ? ` ${panelClassName}` : ''}`}
-          role="dialog"
-          aria-label={label}
-          data-site-surface="popover"
-        >
-          {children}
+        // Nested fixed menus portal into this unfiltered dialog boundary, so
+        // outside dismissal and viewport coordinates both remain correct.
+        <div role="dialog" aria-label={label}>
+          <div
+            ref={panelRef}
+            className={`settings-popover-panel${panelClassName ? ` ${panelClassName}` : ''}`}
+            data-site-surface="popover"
+          >
+            {settingsHost?.practiceSettings}
+            {settingsHost ? <details className="timer-practice-advanced">
+              <summary>{tr({ zh: '更多设置', en: 'More settings' })}</summary>
+              <div className="timer-practice-advanced__content">{children}</div>
+            </details> : children}
+          </div>
         </div>
       )}
     </div>
   );
+
+  if (!settingsHost) return popover;
+  return <>
+    {(triggerPrefix || triggerSuffix) && <div className="settings-popover-context" data-no-timer={ignoreTimer || undefined}>
+      {triggerPrefix}
+      {triggerSuffix}
+    </div>}
+    {settingsHost.settingsPortal ? createPortal(popover, settingsHost.settingsPortal) : null}
+  </>;
 }
 
 export default function TrainingSettings({ value, onChange, className, children }: {

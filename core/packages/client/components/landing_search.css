@@ -45,6 +45,7 @@
 }
 
 .landing-search-input {
+  --landing-search-action-size: 36px;
   position: relative;
   display: flex;
   align-items: center;
@@ -73,6 +74,80 @@
   border-color: var(--border-strong);
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
+
+.landing-search-input.landing-search-voice {
+  padding: 8px;
+  gap: 8px;
+}
+
+.landing-search-voice .landing-search-voice-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--muted);
+  color: var(--foreground);
+  cursor: pointer;
+}
+
+.landing-search-voice .landing-search-voice-button:hover {
+  background: color-mix(in srgb, var(--foreground) 12%, var(--muted));
+}
+
+.landing-search-voice .landing-search-voice-button > svg {
+  transform: scale(0.82);
+}
+
+.landing-search-voice .landing-search-voice-send {
+  background: var(--destructive-foreground);
+  color: light-dark(var(--foreground), var(--primary-foreground));
+  border-color: transparent;
+}
+
+.landing-search-voice .landing-search-voice-send:hover:not(:disabled) {
+  background: var(--destructive-foreground);
+  opacity: 0.85;
+}
+
+.landing-search-voice .landing-search-voice-button.landing-search-voice-send:disabled {
+  opacity: 1;
+}
+
+.landing-search-voice .landing-search-voice-button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.landing-search-wave {
+  flex: 1;
+  min-width: 0;
+  height: 32px;
+  overflow: hidden;
+  color: var(--muted-foreground);
+  mask-image: linear-gradient(to right, color-mix(in srgb, currentColor 8%, transparent), currentColor);
+}
+
+.landing-search-wave-track {
+  display: grid;
+  grid-template-columns: repeat(96, minmax(0, 1fr));
+  align-items: center;
+  justify-items: center;
+  /* One extra cell enters from the right as the other 95 slide left. */
+  width: calc(100% * 96 / 95);
+  height: 100%;
+  will-change: transform;
+}
+
+.landing-search-wave-track > span {
+  width: 3px;
+  max-width: 70%;
+  height: 3px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
 
 /* 拖视频文件到搜索框上 */
 .landing-search-input.is-drag-over {
@@ -169,7 +244,7 @@
   border: none;
   border-radius: 50%;
   cursor: pointer;
-  color: var(--faint-foreground);
+  color: light-dark(var(--foreground), var(--destructive-foreground));
   transition: color 0.12s, background 0.12s, transform 0.12s;
 }
 
@@ -226,6 +301,47 @@
 .landing-search-mic:hover {
   color: var(--accent);
   background: var(--accent-soft);
+}
+
+.landing-search-input > .landing-search-mic:not(.landing-search-send) {
+  color: var(--foreground);
+}
+
+.landing-search-mic.landing-search-send {
+  margin: -4px -8px -4px 0;
+  background: color-mix(in srgb, var(--signal-info) 78%, black);
+  color: var(--destructive-foreground);
+}
+
+.landing-search-input .landing-search-voice-button,
+.landing-search-mic.landing-search-dictation,
+.landing-search-mic.landing-search-send {
+  box-sizing: border-box;
+  flex: 0 0 var(--landing-search-action-size);
+  width: var(--landing-search-action-size);
+  height: var(--landing-search-action-size);
+}
+
+.landing-search-mic.landing-search-dictation {
+  position: relative;
+  margin: -4px 0;
+}
+
+.landing-search-voice .landing-search-voice-stop {
+  position: relative;
+}
+
+.landing-search-mic.landing-search-dictation:hover,
+.landing-search-mic.landing-search-dictation:focus-visible {
+  background: var(--muted);
+}
+
+.landing-search-mic.landing-search-send:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--signal-info) 88%, black);
+}
+
+.landing-search-mic.landing-search-send:disabled {
+  cursor: default;
 }
 
 .landing-search-mic.is-listening {

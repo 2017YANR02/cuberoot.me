@@ -382,6 +382,7 @@ jobs:
             /.github/workflows/
             /.githooks/pre-commit
             /stats/all_past_comps.json
+            /stats/comp_calendar/
             /stats/all_upcoming_comps.json
             /stats/comp_names_zh.json
             # Validate every gendered country record against its generated manifest and world/continent feeds.
@@ -396,6 +397,11 @@ jobs:
             /stats/scramble/no_bar.json
             # scramble_exact_dist.test.ts 拿它当「WCA 那套菜单」的真源逐项比对(420KB)。
             /stats/scramble/distribution.json
+            /stats/scramble/examples.json
+            /stats/scramble/examples_wca_*.json
+            /stats/scramble/examples_stage/
+            /solver/333opt/inject.mjs
+            /solver/333opt/data_paths.mjs
           filter: blob:none
 
       - uses: pnpm/action-setup@v6
@@ -646,6 +652,7 @@ jobs:
             /.github/workflows/
             /.githooks/pre-commit
             /stats/all_past_comps.json
+            /stats/comp_calendar/
             /stats/all_upcoming_comps.json
             /stats/comp_names_zh.json
             /stats/records/history/gender/
@@ -656,6 +663,11 @@ jobs:
             /stats/scramble/puzzle_distribution.json
             /stats/scramble/recent_scrambles.json
             /stats/scramble/distribution.json
+            /stats/scramble/examples.json
+            /stats/scramble/examples_wca_*.json
+            /stats/scramble/examples_stage/
+            /solver/333opt/inject.mjs
+            /solver/333opt/data_paths.mjs
           filter: blob:none
 
       - uses: pnpm/action-setup@v6

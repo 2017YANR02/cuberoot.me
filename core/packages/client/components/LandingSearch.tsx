@@ -13,13 +13,15 @@
  *  - EventIcon lazy-loaded via next/dynamic (was React.lazy in Vite)
  *  - Browser speech recognition and smart paste reuse the shared hooks/utilities.
  */
+import { Tooltip } from '@/components/Tooltip';
+import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import Link from '@/components/AppLink';
 import { useRouter, useParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import {
   Plus, Trophy, BarChart3, Medal, UserRound, Tent, Globe2, Pin,
-  CalendarDays, LayoutGrid, Wrench, ArrowRight, Search, Clipboard,
+  CalendarDays, LayoutGrid, Wrench, ArrowRight, ArrowUp, X, Square, Search, Clipboard,
   ScanSearch, BookA, BookOpen, Library, Code as CodeIcon, Mic, Sparkles, type LucideIcon,
 } from 'lucide-react';
 import { Flag } from '@/components/Flag';
@@ -215,9 +217,14 @@ export default function LandingSearch({
     onQueryChange?.(value);
   }, [controlledQuery, onQueryChange]);
   const [open, setOpen] = useState(false);
-  const { listening, status: micStatus, error: micError, microphone, start: micStart, stop: micStop } = useSpeechToText({
+  const [voiceMode, setVoiceMode] = useState(false);
+  const [voiceText, setVoiceText] = useState('');
+  const [voiceAction, setVoiceAction] = useState<'stop' | 'send' | null>(null);
+  const { listening, waveform, waveformOffset, status: micStatus, error: micError, microphone, start: micStart, stop: micStop, cancel: micCancel } = useSpeechToText({
+    visualizeAudio: true,
+    continuous: true,
     lang: isZh ? 'zh-CN' : 'en-US',
-    onResult: (text) => { setQuery(text); setOpen(true); },
+    onResult: (text) => { setVoiceText(text); },
   });
   const [plusMenuOpen, setPlusMenuOpen] = useState(false);
   const plusMenuRef = useRef<HTMLDivElement>(null);
@@ -328,7 +335,7 @@ export default function LandingSearch({
   }, []);
 
   const {
-    q, xSearchEnabled, xLoaded,
+    q, xSearchEnabled, xLoaded, localSearchPending, localSearchError,
     cardMatches, toolMatches, lookupMatches, statMatches,
     personMatches, compMatches,
     reconMatches, glossaryMatches, aboutMatches, stackMatches, algSetMatches,
@@ -355,7 +362,23 @@ export default function LandingSearch({
     return () => document.removeEventListener('mousedown', onDown);
   }, [open]);
 
-  const showDropdown = (persistentResults || open) && q !== '';
+  // Wait for stop() to deliver its final transcript before editing or sending.
+  useEffect(() => {
+    if (!voiceMode || listening) return;
+    if (micError) {
+      setVoiceMode(false);
+      setVoiceAction(null);
+      if (voiceText) setQuery(voiceText);
+      return;
+    }
+    if (!voiceAction) return;
+    setVoiceMode(false);
+    setVoiceAction(null);
+    if (voiceAction === 'send') void askAssistant(voiceText);
+    else { setQuery(voiceText); setOpen(true); }
+  });
+
+  const showDropdown = !voiceMode && (persistentResults || open) && q !== '';
 
   // Prepend [lang] segment to internal paths. Vite uses ?lang= query;
   // Next uses /<lang>/* path prefix.
@@ -468,7 +491,7 @@ export default function LandingSearch({
           >
             <Flag iso2={p.iso2} className="country-flag" />
             <span className="landing-search-item-main">
-              <span className="landing-search-item-name">{displayCuberName(p.name, isZh)}</span>
+              <span className="landing-search-item-name">{displayCuberName(p.name, isZh)}<WcaPersonTeamBadge wcaId={p.wcaId} /></span>
               <span className="landing-search-item-meta">{p.wcaId}</span>
             </span>
           </Link>
@@ -480,7 +503,31 @@ export default function LandingSearch({
   return (
     <div className={`landing-search${persistentResults ? ' landing-search--page' : ''}`} ref={wrapRef}>
       <div className="landing-search-controls">
-        <div
+        {voiceMode ? (
+          <div className="landing-search-input landing-search-voice" onKeyDown={event => {
+            if (event.key === 'Escape') { micCancel(); setVoiceMode(false); setVoiceAction(null); }
+          }}>
+            <button type="button" className="landing-search-voice-button" aria-label={tr({ zh: '取消语音输入', en: 'Cancel voice input' })}
+              onClick={() => { micCancel(); setVoiceMode(false); setVoiceAction(null); setVoiceText(''); }}><X size={22} /></button>
+            <div className="landing-search-wave" role="status"
+              aria-label={micStatus === 'starting' ? tr({ zh: '正在启动语音输入', en: 'Starting voice input' })
+                : micStatus === 'stopping' ? tr({ zh: '正在识别', en: 'Transcribing' })
+                : listening ? tr({ zh: '正在聆听', en: 'Listening' }) : tr({ zh: '语音输入已结束', en: 'Voice input finished' })}>
+              <div className="landing-search-wave-track" aria-hidden="true" style={{ transform: `translateX(${-waveformOffset * 100 / waveform.length}%)` }}>
+                {waveform.map((amplitude, index) => <span key={index} style={{ height: `${3 + amplitude * 25}px` }} />)}
+              </div>
+            </div>
+            <Tooltip content={tr({ zh: '停止听写', en: 'Stop dictation' })}>{(tip) => <button {...tip} type="button" className="landing-search-voice-button landing-search-voice-stop" disabled={voiceAction !== null}
+              aria-label={tr({ zh: '停止并编辑文字', en: 'Stop and edit text' })}
+              onClick={() => { setVoiceAction('stop'); micStop(); }}>
+              <Square size={15} fill="currentColor" />
+            </button>}</Tooltip>
+            <button type="button" className="landing-search-voice-button landing-search-voice-send"
+              disabled={voiceAction !== null || !voiceText.trim() || voiceText.trim().length > 500 || assistantBusy}
+              aria-label={tr({ zh: '发送语音提问', en: 'Send voice question' })}
+              onClick={() => { setVoiceAction('send'); micStop(); }}><ArrowUp size={24} /></button>
+          </div>
+        ) : <div
           className="landing-search-input"
           onMouseDown={e => {
             // 点击容器自身(上下 padding / 元素间 gap 死区)→ 聚焦输入框
@@ -531,29 +578,23 @@ export default function LandingSearch({
             aria-label={tr({ zh: '全站搜索', en: 'Site search' })}
           />
 
-          <button
+          {/* allow-manual-search: Dictation only fills speech text; typed search still updates through onChange. */}
+          <Tooltip content={tr({ zh: '听写', en: 'Dictate' })}>{(tip) => <button {...tip}
             type="button"
-            className={`landing-search-mic${listening ? ' is-listening' : ''}`}
+            className="landing-search-mic landing-search-dictation"
             aria-pressed={listening}
             disabled={micStatus === 'stopping'}
-            onClick={() => { if (listening) micStop(); else { setOpen(true); micStart(); } }}
-            title={listening
-              ? tr({ zh: '停止录音', en: 'Stop' })
-              : tr({ zh: '语音输入', en: 'Voice input' })}
-            aria-label={listening
-              ? tr({ zh: '停止录音', en: 'Stop' })
-              : tr({ zh: '语音输入', en: 'Voice input' })}
+            onClick={() => { setVoiceText(''); setVoiceAction(null); setVoiceMode(true); setOpen(false); setPlusMenuOpen(false); micStart(); }}
+            aria-label={tr({ zh: '听写', en: 'Dictate' })}
           >
             <Mic size={16} strokeWidth={1.75} />
-          </button>
-          {query.trim() && (
-            <button type="button" className="landing-search-mic" disabled={assistantBusy || query.trim().length > 500}
+          </button>}</Tooltip>
+            <button type="button" className="landing-search-mic landing-search-send" disabled={assistantBusy || !query.trim() || query.trim().length > 500}
               onClick={() => void askAssistant()}
               aria-label={tr({ zh: '提问', en: 'Ask' })} title={tr({ zh: '提问（回车）', en: 'Ask (Enter)' })}>
-              <ArrowRight size={18} strokeWidth={1.75} />
+              <ArrowUp size={20} strokeWidth={1.75} />
             </button>
-          )}
-        </div>
+        </div>}
         {plusMenuOpen && (
           <div ref={plusMenuRef} className="landing-search-plus-menu" data-site-surface="popover" role="menu">
             <button type="button" className="landing-search-plus-menu-btn" role="menuitem" onClick={onSmartPaste}>
@@ -580,6 +621,7 @@ export default function LandingSearch({
 
       {showDropdown && !assistantDialog && (
         <div className="landing-search-panel">
+          {(assistantBusy || assistantError || assistantAnswer || query.trim().length > 500) && (
           <section className="landing-search-section landing-search-answer" aria-live="polite" aria-busy={assistantBusy}>
             {assistantBusy ? <p>{tr({ zh: '正在查找相关页面…', en: 'Finding relevant pages…' })}</p>
               : assistantError ? <>
@@ -590,10 +632,9 @@ export default function LandingSearch({
                 <div className="landing-search-answer-text"><SiteAssistantAnswerText result={assistantAnswer}/></div>
                 <button type="button" className="landing-search-item" onClick={() => setAssistantDialog(true)}>{tr({zh:'继续对话',en:'Continue conversation'})}</button>
 
-              </> : <p>{query.trim().length > 500
-                ? tr({ zh: '请把问题缩短到 500 字以内。', en: 'Please keep your question within 500 characters.' })
-                : tr({ zh: '按回车提问，或直接打开搜索结果。', en: 'Press Enter to ask, or open a search result.' })}</p>}
+              </> : <p>{tr({ zh: '请把问题缩短到 500 字以内。', en: 'Please keep your question within 500 characters.' })}</p>}
           </section>
+          )}
           {yearMatch && (
             <section className="landing-search-section">
               <div className="landing-search-section-header">
@@ -957,13 +998,14 @@ export default function LandingSearch({
 
           {yearMatch && personsSection}
 
-          {!assistantAnswer && !assistantBusy && totalCount === 0 && !pasteIntent && !yearMatch && (xLoaded || !xSearchEnabled) && (
+          {localSearchError && <div className="landing-search-empty" role="status">{tr({zh:'部分搜索资料加载失败，请重新输入以重试。',en:'Some search data could not load. Edit your search to retry.'})}</div>}
+          {!assistantAnswer && !assistantBusy && totalCount === 0 && !pasteIntent && !yearMatch && (xLoaded || !xSearchEnabled) && !localSearchPending && !localSearchError && (
             <div className="landing-search-empty">
               {tr({ zh: '未找到匹配项', en: 'No matches found.'
             })}
             </div>
           )}
-          {!assistantAnswer && !assistantBusy && totalCount === 0 && !pasteIntent && !yearMatch && xSearchEnabled && !xLoaded && (
+          {!assistantAnswer && !assistantBusy && totalCount === 0 && !pasteIntent && !yearMatch && (localSearchPending || (xSearchEnabled && !xLoaded)) && (
             <div className="landing-search-empty">
               {tr({ zh: '搜索中…', en: 'Searching…'
             })}

@@ -11,8 +11,11 @@ self.addEventListener('fetch', event => {
     event.respondWith(caches.open(DATA_CACHE).then(async cache => (await cache.match(request)) || fetch(request)));
     return;
   }
-  const page = request.mode === 'navigate' && url.href.startsWith(self.registration.scope)
-    && /\/(run|select)\/?$/.test(url.pathname);
+  const scopePath = new URL(self.registration.scope).pathname;
+  const timerScope = /^\/(?:zh\/)?timer$/.test(scopePath);
+  const page = request.mode === 'navigate' && (timerScope
+    ? url.pathname === scopePath && /^\/alg\/(?:3x3|333)\/zbll\/(?:run|select)\/?$/.test(url.searchParams.get('training') || '')
+    : url.href.startsWith(self.registration.scope) && /\/(run|select)\/?$/.test(url.pathname));
   const asset = /^\/(?:_next\/static\/|fonts\/|cubing-chunks\/)/.test(url.pathname);
   if (!page && !asset) return;
   event.respondWith((async () => {

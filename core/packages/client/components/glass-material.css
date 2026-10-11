@@ -10,17 +10,13 @@
   --glass-border: color-mix(in srgb, var(--foreground) 22%, transparent);
   --glass-edge: var(--glass-border);
   --glass-filter: blur(10px);
-  --glass-shadow: 0 8px 26px color-mix(in srgb, var(--foreground) 10%, transparent);
+  --glass-shadow: none;
 }
-body[data-site-transparency='off'],
-body[data-site-transparency='off'] :is(.palette-scope, .contrast-scope) {
-  --glass-surface-bg: var(--card);
-  --glass-popover-bg: var(--popover);
-  --glass-menu-bg: var(--popover);
-  --glass-dialog-bg: var(--popover);
-  --glass-menu-filter: none;
-  --glass-background: var(--card);
-  --glass-filter: none;
+/* A solid backdrop has nothing to refract. SVG displacement can pull the
+   surface's light edge into an otherwise uniform dark card. Keep the shared
+   CSS blur: menus still need to obscure page content beneath them. */
+body:not([data-site-scenery]),
+body[data-site-scenery='transparent'] {
   --site-glass-refraction: none !important;
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {

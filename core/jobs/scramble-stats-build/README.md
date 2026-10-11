@@ -95,3 +95,9 @@ pnpm exec tsx ../solver/scripts/generate_and_build_stats.mts
 每次 CSV 更新后重跑 build；日常从 `core/` 运行 `pnpm stats:scramble` 完成全流程并自动发布。只在本地计算时用 `pnpm stats:scramble:local`。
 
 已有本地产物需要补发布时运行 `pnpm stats:scramble --publish-only`，会灌线上 PG、上传 static 并推送统计文件，不重复计算。底层入口 `pnpm stats:scramble:publish --publish` 可只灌 PG 和上传 static；加 `--push` 才包含 Git 推送。静态清单的只读差异预览：`pnpm exec tsx ../scripts/stats/publish-static.ts --dry-run`。
+
+## Preview payloads
+
+The normal build also derives `examples_stage/<set>/<variant>__<stage>.json` from the existing reservoirs. `distribution.meta.example_shards` stores a content-versioned URL for every view. All colors and bins stay together; only unreferenced competition metadata is omitted. The original full files and downloads remain available.
+
+To refresh these lightweight assets without any solver or CSV aggregation, run `pnpm --filter @cuberoot/scramble-stats-build build:example-shards` from `core/`. The client verifies the version and falls back to the original full file when assets and code are deployed separately. Standalone 333opt injection invalidates its old pointer; the normal update pipeline rebuilds the shards afterwards. Publish the distribution and the entire `examples_stage/` tree together through the existing static workflow. The complete fixture check is `pnpm --filter @cuberoot/client exec vitest run tests/scramble-example-shards.test.ts`.

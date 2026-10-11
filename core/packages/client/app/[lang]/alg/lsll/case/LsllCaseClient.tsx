@@ -9,7 +9,8 @@
  * 所以贴到页面上的图直接能用,不用再补 AUF。
  */
 import { useEffect, useMemo, useState } from 'react';
-import { useQueryState, parseAsString } from 'nuqs';
+import { parseAsString } from 'nuqs';
+import { useTrainingQueryState as useQueryState } from '@/lib/training-host';
 import Link from '@/components/AppLink';
 import { ArrowLeft } from 'lucide-react';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';

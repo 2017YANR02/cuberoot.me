@@ -2,6 +2,7 @@
 import NextLink from 'next/link';
 import { useParams } from 'next/navigation';
 import type { ComponentProps } from 'react';
+import { useTrainingHref } from '@/lib/training-host';
 
 type Props = ComponentProps<typeof NextLink>;
 
@@ -16,6 +17,7 @@ const NO_PREFIX = /^\/(v1|api|auth|callback\.html|stats|tools|cubing-chunks|cube
 // away first.
 export default function AppLink({ href, ...props }: Props) {
   const params = useParams();
+  const trainingHref = useTrainingHref();
   const lang = params?.lang;
   const prefix = lang === 'zh' ? '/zh' : '';
   let h = href;
@@ -28,5 +30,5 @@ export default function AppLink({ href, ...props }: Props) {
     const bare = href.replace(/^\/(en|zh)(?=\/|$)/, '') || '/';
     h = prefix ? `${prefix}${bare === '/' ? '' : bare}` : bare;
   }
-  return <NextLink href={h} {...props} />;
+  return <NextLink href={typeof h === 'string' ? trainingHref(h) : h} {...props} />;
 }

@@ -1,5 +1,7 @@
 'use client';
 
+import './scramble-hint.css';
+
 import { Check } from 'lucide-react';
 import type { SmartCubeScrambleHint } from '@cuberoot/shared/smart-cube/scramble-hint';
 import type { TimerScrambleStatusKind } from '@cuberoot/shared/timer';

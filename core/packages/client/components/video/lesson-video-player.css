@@ -50,11 +50,6 @@
 .lesson-video-player .pill-toggle.is-on .pill-toggle-dot { left: calc(100% - 18px); }
 .lesson-video-autoplay .bool-toggle-label { position: absolute; inset: 2px auto 2px 2px; padding: 0; width: 16px; height: 16px; pointer-events: none; display: grid; place-items: center; color: var(--player-base); }
 .lesson-video-autoplay:has([aria-checked=true]) .bool-toggle-label { left: auto; right: 2px; }
-.lesson-video-player [data-tooltip] { position: relative; }
-/* anchored-panel: safe (tooltips stay inside the toolbar; edge items align inward). */
-.lesson-video-player [data-tooltip]::after { content: attr(data-tooltip); position: absolute; bottom: calc(100% + 16px); right: 0; padding: 7px 9px; border-radius: 4px; background: color-mix(in srgb, var(--player-base) 85%, transparent); color: var(--player-ink); font-size: 12px; white-space: nowrap; opacity: 0; pointer-events: none; }
-.lesson-video-left [data-tooltip]::after { left: 0; right: auto; }
-.lesson-video-player [data-tooltip]:hover::after, .lesson-video-player [data-tooltip]:focus-visible::after { opacity: 1; }
 .lesson-video-settings.is-open::after { display: none; }
 /* anchored-panel: clamped; also bounded by the player to avoid its clipping parent. */
 .lesson-video-menu { position: absolute; right: 12px; bottom: 76px; width: max-content; max-width: calc(100% - 24px); max-height: calc(100% - 88px); overflow-y: auto; overscroll-behavior: contain; padding: 8px 0; border-radius: 12px; background: color-mix(in srgb, var(--player-base) 72%, transparent); backdrop-filter: blur(20px); z-index: 2; scrollbar-width: thin; }

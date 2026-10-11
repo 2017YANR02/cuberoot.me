@@ -187,6 +187,22 @@ export default function PredictBoard({
         },
       });
       mountRef.current = mount;
+      const disposers: (() => void)[] = [];
+      let disposed = false;
+      // Own the world immediately, including while a painter import is pending.
+      cleanup = () => {
+        if (disposed) return;
+        disposed = true;
+        try {
+          for (const dispose of disposers) dispose();
+        } finally {
+          mount.dispose();
+          if (mountRef.current === mount) {
+            mountRef.current = null;
+            painterRef.current = null;
+          }
+        }
+      };
       const world: World = mount.world;
       // 题面方位字母是 HUD:可见面整枚压在最上层,背面按朝向整枚隐藏。
       // 不再交给深度缓冲逐像素切字,否则斜视时灰色块身会“啃掉” F 等字母。
@@ -194,8 +210,6 @@ export default function PredictBoard({
       // World 的构造函数只知道立方体那个姿势(它还没被 setPuzzle 过),开局要摆的是**这个
       // 拼图**的姿态 —— 五魔方在立方体角度下是一条棱正对镜头,12 个面全是斜的。
       resetSceneView(world);
-
-      const disposers: (() => void)[] = [];
 
       // Toucher 是 NxN controller 的输入口(它把指针事件翻成 controller 的 TouchAction)。
       // 别的拼图没有 controller,`controller.touch` 是 undefined —— 照装的话 Toucher 会拿
@@ -208,9 +222,11 @@ export default function PredictBoard({
         disposers.push(() => toucher.destroy());
       }
 
-      painterRef.current = order > 0
+      const painter = order > 0
         ? await mountNxnPainter(world, order, mount, onStickerRef, disposers)
-        : await mountSolidPainter(puzzle, world, mount, onStickerRef, disposers, frameTicks);
+        : await mountSolidPainter(puzzle, world, mount, onStickerRef, disposers, frameTicks, () => cancelled);
+      if (cancelled || !painter) { cleanup(); return; }
+      painterRef.current = painter;
       applyPuzzleTransparency(world.cube, transparent);
       // NxN 的 frame 材质是模块级共享;离开题板前还原,避免同一页稍后挂的引擎
       // 在自己的设置 effect 落地前闪过透明首帧。
@@ -218,23 +234,18 @@ export default function PredictBoard({
 
       const onContextMenu = (e: MouseEvent) => e.preventDefault();
       mount.renderer.domElement.addEventListener('contextmenu', onContextMenu);
+      disposers.push(() => mount.renderer.domElement.removeEventListener('contextmenu', onContextMenu));
 
       // 转速是引擎的模块级全局(/sim 的约定是用完还回去)。
       const prevFrames = timing.frames;
       timing.frames = PLAY_FRAMES;
+      disposers.push(() => { timing.frames = prevFrames; });
 
       setReady(true); // 触发下面的贴纸同步 effect
-
-      cleanup = () => {
-        timing.frames = prevFrames;
-        for (const d of disposers) d();
-        mount.renderer.domElement.removeEventListener('contextmenu', onContextMenu);
-        mount.dispose();
-        mountRef.current = null;
-        painterRef.current = null;
-      };
-      if (cancelled) cleanup();
-    })();
+    })().catch((error: unknown) => {
+      cleanup?.();
+      if (!cancelled) console.error('Prediction board initialization failed', error);
+    });
 
     return () => { cancelled = true; cleanup?.(); };
     // 换拼图 = 页面换 key 整块重挂,所以这里只在首挂跑一次。
@@ -395,7 +406,8 @@ async function mountSolidPainter(
   onStickerRef: React.RefObject<(slot: number) => void>,
   disposers: (() => void)[],
   frameTicks: ((dt: number) => boolean)[],
-): Promise<Painter> {
+  isCancelled: () => boolean,
+): Promise<Painter | null> {
   const [three, gesture, slotMap, outline, hintsMod, define] = await Promise.all([
     import('three'),
     import('@/components/sim-embed/orbitTapGesture'),
@@ -404,6 +416,7 @@ async function mountSolidPainter(
     import('@/app/[lang]/sim/engine/face_hints'),
     import('@/app/[lang]/sim/engine/define'),
   ]);
+  if (isCancelled()) return null;
 
   const meshes = slotMap.collectStickerMeshes(puzzle, world.cube);
   // 引擎的 stickerMat 按颜色缓存 + 共享 → 必须逐张 clone,否则改一张串一片。

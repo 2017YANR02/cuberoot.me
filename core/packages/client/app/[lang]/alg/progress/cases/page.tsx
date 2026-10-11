@@ -15,7 +15,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from '@/components/AppLink';
 import { ArrowLeft, Loader2, Dumbbell } from 'lucide-react';
-import { useQueryState, parseAsStringEnum } from 'nuqs';
+import { parseAsStringEnum } from 'nuqs';
+import { useTrainingQueryState as useQueryState } from '@/lib/training-host';
 import { useTranslation } from 'react-i18next';
 import { ALG_PUZZLES, type AlgPuzzle, type AlgCase } from '@cuberoot/shared/alg';
 import { loadAlg, caseAlgIssue } from '@/lib/alg_case_alignment';

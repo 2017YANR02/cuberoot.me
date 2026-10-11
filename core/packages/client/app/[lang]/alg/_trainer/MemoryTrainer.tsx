@@ -1,5 +1,7 @@
 'use client';
 
+import { shouldIgnoreTimerTarget } from '@/lib/timer-ignore-target';
+
 /**
  * 记忆模式 —— 公式的「看图回忆」闪卡训练,背后是间隔重复调度(lib/alg-srs.ts)。
  *
@@ -247,8 +249,7 @@ export default function MemoryTrainer({
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (pausedRef.current) return;   // 详情弹窗盖着:Esc 归弹窗,别在背后揭示/记账
-      const t = e.target as HTMLElement | null;
-      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
+      if (shouldIgnoreTimerTarget(e.target)) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.code === 'KeyU' && !e.repeat) { e.preventDefault(); doUndo(); return; }
       if (doneRef.current) return;

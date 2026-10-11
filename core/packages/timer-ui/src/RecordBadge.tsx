@@ -1,4 +1,4 @@
-import { formatRecord } from '@cuberoot/shared/timer';
+import { formatRecord } from '@cuberoot/shared/timer/record-badge';
 import './record-badge.css';
 export function RecordBadge({record: expanded,variant='standalone'}: {record?:string|null;variant?:'inline'|'standalone'}) {
   // 带名次的个人最好成绩(PR2 / PB10 …)是「第 n 好」而非纪录,不给方框,只作小角标;

@@ -14,6 +14,7 @@ class Recognition {
   onstart: (() => void) | null = null;
   onend: (() => void) | null = null;
   onspeechend: (() => void) | null = null;
+  onspeechstart: (() => void) | null = null;
   onerror: ((event: { error: string }) => void) | null = null;
   onresult: ((event: { resultIndex: number; results: Array<{ 0: { transcript: string }; isFinal: boolean; length: number }> }) => void) | null = null;
   start = vi.fn((_track?: MediaStreamTrack) => { if (Recognition.startError) throw Recognition.startError; });
@@ -30,7 +31,9 @@ describe('browser speech recognition lifecycle', () => {
   let host: HTMLDivElement;
   let speech: ReturnType<typeof useSpeechToText>;
   const onResult = vi.fn();
+  function AudioProbe() { speech = useSpeechToText({ lang: 'zh-CN', onResult, visualizeAudio: true }); return null; }
   function Probe() { speech = useSpeechToText({ lang: 'zh-CN', onResult }); return null; }
+  function ContinuousProbe() { speech = useSpeechToText({ lang: 'zh-CN', onResult, continuous: true }); return null; }
   const current = () => Recognition.instances.at(-1)!;
 
   beforeEach(async () => {
@@ -49,6 +52,93 @@ describe('browser speech recognition lifecycle', () => {
     await act(async () => root.unmount());
     vi.unstubAllGlobals();
     vi.useRealTimers();
+  });
+
+  it('keeps listening across sentence boundaries, long pauses and browser restarts', async () => {
+    await act(async () => root.render(createElement(ContinuousProbe)));
+    await act(async () => speech.start());
+    expect(current().continuous).toBe(true);
+    await act(async () => current().onstart?.());
+    await act(async () => { current().result([['第一句。', true]]); current().onspeechend?.(); });
+    await act(async () => vi.advanceTimersByTime(60_000));
+    expect(speech.status).toBe('listening');
+    expect(current().stop).not.toHaveBeenCalled();
+    await act(async () => { current().onerror?.({ error: 'no-speech' }); current().onend?.(); });
+    await act(async () => vi.advanceTimersByTime(300));
+    expect(current().start).toHaveBeenCalledTimes(2);
+    await act(async () => { current().onstart?.(); current().result([['第二句', false]]); });
+    expect(onResult).toHaveBeenLastCalledWith('第一句。第二句', false);
+    await act(async () => speech.stop());
+    await act(async () => current().result([['第二句。', true]]));
+    expect(onResult).toHaveBeenLastCalledWith('第一句。第二句。', true);
+    expect(speech.status).toBe('idle');
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it.each(['stop', 'cancel'] as const)('does not restart continuous recognition after %s during a restart delay', async action => {
+    await act(async () => root.render(createElement(ContinuousProbe)));
+    await act(async () => speech.start());
+    await act(async () => { current().onstart?.(); current().onend?.(); });
+    await act(async () => speech[action]());
+    await act(async () => vi.advanceTimersByTime(1_000));
+    expect(current().start).toHaveBeenCalledOnce();
+    expect(speech.status).toBe('idle');
+  });
+
+  it('scrolls measured PCM peaks left, appends silence, and releases audio on cancel', async () => {
+    let sampleFrame: FrameRequestCallback = () => {};
+    let amplitude = 0;
+    const track = { readyState: 'live', label: 'Test input', stop: vi.fn(), onended: null };
+    const stream = { getTracks: () => [track], getAudioTracks: () => [track] };
+    const source = { connect: vi.fn(), disconnect: vi.fn() };
+    const analyser = { fftSize: 2048, disconnect: vi.fn(), getFloatTimeDomainData: (data: Float32Array) => data.fill(amplitude) };
+    const close = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal('AudioContext', class {
+      resume = vi.fn().mockResolvedValue(undefined);
+      close = close;
+      createMediaStreamSource = vi.fn(() => source);
+      createAnalyser = vi.fn(() => analyser);
+    });
+    vi.stubGlobal('requestAnimationFrame', vi.fn(callback => { sampleFrame = callback; return 1; }));
+    vi.stubGlobal('cancelAnimationFrame', vi.fn());
+    vi.stubGlobal('navigator', { userAgent: 'Safari', mediaDevices: { getUserMedia: vi.fn().mockResolvedValue(stream) } });
+    await act(async () => root.render(createElement(AudioProbe)));
+    await act(async () => speech.start());
+    await act(async () => sampleFrame(0));
+    expect(speech.waveform).toEqual(Array(96).fill(0));
+    await act(async () => sampleFrame(50));
+    expect(speech.waveform).toEqual(Array(96).fill(0));
+    expect(speech.waveformOffset).toBe(0.5);
+    amplitude = 0.125;
+    await act(async () => sampleFrame(100));
+    expect(speech.waveform).toEqual([...Array(95).fill(0), 0.5]);
+    expect(speech.waveformOffset).toBe(0);
+    amplitude = 0;
+    await act(async () => sampleFrame(200));
+    expect(speech.waveform).toEqual([...Array(94).fill(0), 0.5, 0]);
+    await act(async () => {
+      for (let tick = 3; tick <= 97; tick++) sampleFrame(tick * 100);
+    });
+    expect(speech.waveform).toEqual(Array(96).fill(0));
+    expect(source.connect).toHaveBeenCalledExactlyOnceWith(analyser);
+    expect(current().start).toHaveBeenCalledExactlyOnceWith();
+    await act(async () => speech.cancel());
+    expect(close).toHaveBeenCalledOnce();
+    expect(track.stop).toHaveBeenCalledOnce();
+    expect(source.disconnect).toHaveBeenCalledOnce();
+    expect(cancelAnimationFrame).toHaveBeenCalledWith(1);
+  });
+
+  it('cancels speech without delivering a late transcript and clears activity', async () => {
+    await act(async () => speech.start());
+    await act(async () => { current().onstart?.(); current().onspeechstart?.(); });
+    expect(speech.speaking).toBe(true);
+    await act(async () => speech.cancel());
+    await act(async () => current().result([['discard this', true]]));
+    expect(speech.status).toBe('idle');
+    expect(speech.speaking).toBe(false);
+    expect(onResult).not.toHaveBeenCalled();
+    expect(current().abort).toHaveBeenCalledOnce();
   });
 
   it.each(['network', 'not-allowed', 'audio-capture', 'service-not-allowed', 'language-not-supported'])('surfaces %s and releases the microphone', async (error) => {

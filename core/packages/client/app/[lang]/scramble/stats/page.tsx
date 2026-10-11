@@ -95,7 +95,7 @@ interface SetData {
 }
 
 interface DistributionJson {
-  meta: { generated_at: string; subset_keys: string[] };
+  meta: { generated_at: string; subset_keys: string[]; example_shards?: Record<string, Record<string, Record<string, string>>> };
   sets: Record<string, SetData>;
 }
 
@@ -400,11 +400,9 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
   const [optMetric, setOptMetric] = useState<'htm' | 'qtm'>('htm');
   // 长度 tab 第二计步口径(钮在顶栏):3x3-family HTM/QTM、sq1 WCA/slash;sq1 默认 slash。
   const [lenMetric, setLenMetric] = useState<'htm' | 'qtm'>('htm');
-  const [examples, setExamples] = useState<ExamplesJson | null>(null);
-  // per-event 示例分片缓存:setKey(wca_333oh 等)→ 该项目自己的 reservoir 示例
-  const [evExamples, setEvExamples] = useState<Record<string, ExamplesSet | null>>({});
-  const [examplesLoading, setExamplesLoading] = useState(false);
-  const [examplesError, setExamplesError] = useState<string | null>(null);
+  const [exampleViews, setExampleViews] = useState<Record<string, { value?: ExamplesSet; error?: string; loading?: boolean }>>({});
+  const exampleRequests = useRef(new Set<string>());
+  const legacyExamples = useRef(new Map<string, Promise<ExamplesJson | ExamplesSet>>());
   const [selectedBin, setSelectedBin] = useState<number | null>(null);
   // 选中某国(country_id)→ 客户端筛预览 + 服务端筛全量真题;各国计数由示例面板按 bin 拉 facet。
   const [filterCountry, setFilterCountry] = useState<string | null>(null);
@@ -675,31 +673,55 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
     [isExact, stage, slot, exactFull, subsetKey],
   );
 
-  // per-event 选择时示例走独立分片(该项目自己的 reservoir);合并池/xcross 走 examples.json
+  // Each view loads all its colors/bins together, so changing a bar stays instant.
   const isPerEvent = dataset === 'wca' && scrambleSet !== 'wca';
+  const exampleShard = data?.meta.example_shards?.[scrambleSet]?.[sourceVariant]?.[sourceStage];
+  const exampleKey = JSON.stringify([scrambleSet, sourceVariant, sourceStage, data?.meta.generated_at, exampleShard]);
+  const exampleView = exampleViews[exampleKey];
+  const examplesLoading = exampleView?.loading ?? false;
+  const examplesError = exampleView?.error ?? null;
   const ensureExamplesLoaded = () => {
-    if (isPerEvent) {
-      if (scrambleSet in evExamples) return;
-      setEvExamples((m) => ({ ...m, [scrambleSet]: null }));
-      setExamplesLoading(true);
-      fetch(statsUrl(`/stats/scramble/examples_${scrambleSet}.json`), { cache: 'no-store' })
-        .then((r) => {
+    if (!data || exampleView?.value || exampleRequests.current.has(exampleKey)) return;
+    exampleRequests.current.add(exampleKey);
+    setExampleViews(m => ({ ...m, [exampleKey]: { loading: true } }));
+    const loadLegacy = async (): Promise<ExamplesSet> => {
+      const url = statsUrl(isPerEvent ? `/stats/scramble/examples_${scrambleSet}.json` : '/stats/scramble/examples.json');
+      let request = legacyExamples.current.get(url);
+      if (!request) {
+        request = fetch(url, { cache: 'no-store' }).then(r => {
           if (!r.ok) throw new Error(`HTTP ${r.status}`);
-          return r.json();
-        })
-        .then((j) => { setEvExamples((m) => ({ ...m, [scrambleSet]: j })); setExamplesLoading(false); })
-        .catch((e) => { setExamplesError(String(e)); setExamplesLoading(false); });
-      return;
-    }
-    if (examples || examplesLoading) return;
-    setExamplesLoading(true);
-    fetch(statsUrl('/stats/scramble/examples.json'), { cache: 'no-store' })
-      .then((r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
-      })
-      .then((j) => { setExamples(j); setExamplesLoading(false); })
-      .catch((e) => { setExamplesError(String(e)); setExamplesLoading(false); });
+          return r.json() as Promise<ExamplesJson | ExamplesSet>;
+        });
+        legacyExamples.current.set(url, request);
+        void request.catch(() => { legacyExamples.current.delete(url); });
+      }
+      const legacy = await request;
+      const value = isPerEvent ? legacy as ExamplesSet : (legacy as ExamplesJson).sets[dataset];
+      if (!value) throw new Error('Missing example dataset');
+      return value;
+    };
+    const load = async (): Promise<ExamplesSet> => {
+      if (exampleShard) {
+        try {
+          const response = await fetch(statsUrl(`/stats/scramble/${exampleShard}`));
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const shard = await response.json() as ExamplesSet & { meta?: { content_hash?: string } };
+          const version = new URLSearchParams(exampleShard.split('?')[1]).get('v');
+          if (!version || shard.meta?.content_hash !== version || !shard.variants?.[sourceVariant]?.[sourceStage]) {
+            throw new Error('Example shard version mismatch');
+          }
+          return shard;
+        } catch {
+          // A client and the static data can deploy independently; keep the old source usable.
+        }
+      }
+      return loadLegacy();
+    };
+    void load().then(value => {
+      setExampleViews(m => ({ ...m, [exampleKey]: { value } }));
+    }).catch(error => {
+      setExampleViews(m => ({ ...m, [exampleKey]: { error: String(error) } }));
+    }).finally(() => { exampleRequests.current.delete(exampleKey); });
   };
 
   const handleBarClick = (bin: number) => {
@@ -738,10 +760,9 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
       setSelectedBin(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scrambleSet, variant, stage, effectiveSubset, optMetric, previewBins.length, avgOn]);
+  }, [exampleKey, effectiveSubset, optMetric, previewBins.length, avgOn]);
 
-  // 当前示例来源:per-event 选择 → 该项目的分片;否则 examples.json 的顶级 set。
-  const exSet = isPerEvent ? (evExamples[scrambleSet] ?? null) : (examples?.sets[dataset] ?? null);
+  const exSet = exampleView?.value ?? null;
   const currentSamples = useMemo<ExampleSample[] | null>(() => {
     if (selectedBin === null) return null;
     if (isFirstLayerSolved) {

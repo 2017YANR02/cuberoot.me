@@ -5,7 +5,8 @@ import { useTrainingStats } from '@/hooks/useTrainingStats';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { loadAlg, type AlgCase } from '@cuberoot/shared';
-import { parseAsInteger, parseAsString, useQueryState } from 'nuqs';
+import { parseAsInteger, parseAsString } from 'nuqs';
+import { useTrainingQueryState as useQueryState } from '@/lib/training-host';
 import BoolToggle from '@/components/BoolToggle';
 import { CaseThumb } from '@/components/CaseThumb';
 import Link from '@/components/AppLink';

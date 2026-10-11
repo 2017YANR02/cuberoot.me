@@ -77,65 +77,104 @@ export async function cachedDoubleZbllCases(): Promise<AlgFile | undefined> {
   catch { return undefined; }
 }
 
-export function doubleZbllScope(): string {
-  return `${location.pathname.startsWith('/zh/') ? '/zh' : ''}/alg/3x3/zbll/`;
+export function doubleZbllOfflinePages(pathname: string): { scope: string; pages: string[]; marker: string } {
+  const prefix = pathname.startsWith('/zh/') ? '/zh' : '';
+  if (pathname === `${prefix}/timer`) {
+    const scope = `${prefix}/timer`;
+    // The timer has one public shell; training state is read from the URL after hydration.
+    return { scope, pages: [scope], marker: scope + '?double-zbll-offline-ready=1' };
+  }
+  const scope = `${prefix}/alg/3x3/zbll/`;
+  return { scope, pages: [scope + 'run', scope + 'select'], marker: scope + '__offline_ready' };
 }
 
-/** Cache the two public page shells and their own assets; never cache account/API responses. */
+export function doubleZbllScope(): string {
+  return doubleZbllOfflinePages(location.pathname).scope;
+}
+
+/** Cache the public trainer shell(s) and their assets; never cache account/API responses. */
 export async function installDoubleZbllOffline(onProgress: (done: number, total: number) => void): Promise<void> {
-  await loadDoubleZbll();
-  if (!('serviceWorker' in navigator) || typeof caches === 'undefined') throw new Error('Offline storage unavailable');
-  const scope = doubleZbllScope();
-  const registration = await navigator.serviceWorker.register('/double-zbll-sw.js', { scope });
-  const worker = registration.installing ?? registration.waiting;
-  if (worker && worker.state !== 'activated') await new Promise<void>((resolve, reject) => {
-    const timeout = setTimeout(() => reject(new Error('Offline worker activation timed out')), 30000);
-    const check = () => {
-      if (worker.state === 'activated' || worker.state === 'redundant') {
-        clearTimeout(timeout); worker.removeEventListener('statechange', check);
-        if (worker.state === 'activated') resolve(); else reject(new Error('Offline worker failed'));
-      }
-    };
-    worker.addEventListener('statechange', check); check();
-  });
-  const cache = await caches.open(DOUBLE_ZBLL_APP_CACHE);
-  const queue = new Set<string>([scope + 'run', scope + 'select']);
+  const { scope, pages, marker } = doubleZbllOfflinePages(location.pathname);
+  const queue = new Set<string>(pages);
   const allowed = (url: URL) => url.origin === location.origin && /^\/(?:_next\/static\/|fonts\/|cubing-chunks\/)/.test(url.pathname);
-  for (const entry of performance.getEntriesByType('resource')) {
-    const url = new URL(entry.name);
+  const collect = (entries: PerformanceEntry[]) => {
+    for (const entry of entries) {
+      const url = new URL(entry.name);
+      if (allowed(url)) queue.add(url.href);
+    }
+  };
+  collect(performance.getEntriesByType('resource'));
+  // Capture lazy preloads even if the browser's resource timing buffer fills up.
+  let observer: PerformanceObserver | undefined;
+  try {
+    observer = new PerformanceObserver(list => collect(list.getEntries()));
+    observer.observe({ type: 'resource', buffered: true });
+  } catch { observer?.disconnect(); observer = undefined; }
+  for (const element of document.querySelectorAll<HTMLScriptElement | HTMLLinkElement>('script[src], link[href]')) {
+    const url = new URL(element instanceof HTMLScriptElement ? element.src : element.href, location.href);
     if (allowed(url)) queue.add(url.href);
   }
-  let done = 0;
-  // HTML exposes route chunks even when the selection page has not been visited yet.
-  for (const path of queue) {
-    const response = await fetch(path, { cache: 'reload', signal: AbortSignal.timeout(30000) });
-    if (!response.ok) throw new Error('Could not download an offline resource');
-    const type = response.headers.get('content-type') ?? '';
-    if (type.includes('text/html') || type.includes('text/css')) {
-      const content = await response.clone().text();
-      const refs = type.includes('text/html')
-        ? Array.from(content.matchAll(/(?:src|href)=["']([^"']+)["']/g), m => m[1])
-        : Array.from(content.matchAll(/url\(["']?([^"')]+)["']?\)/g), m => m[1]);
-      for (const ref of refs) { const url = new URL(ref, new URL(path, location.href)); if (allowed(url)) queue.add(url.href); }
+  try {
+    await loadDoubleZbll();
+    if (!('serviceWorker' in navigator) || typeof caches === 'undefined') throw new Error('Offline storage unavailable');
+    if (pages.length === 1) {
+      // A direct timer/run entry may never have loaded the selector's lazy chunk.
+      // Warm the existing modules without mounting them or starting another session.
+      await Promise.all([
+        import('@/app/[lang]/alg/[puzzle]/[set]/run/TrainerRunClient'),
+        import('@/app/[lang]/alg/[puzzle]/[set]/select/TrainerSetClient'),
+      ]);
     }
-    await cache.put(path, response);
-    onProgress(++done, queue.size);
+    const registration = await navigator.serviceWorker.register('/double-zbll-sw.js', { scope });
+    const worker = registration.installing ?? registration.waiting;
+    if (worker && worker.state !== 'activated') await new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('Offline worker activation timed out')), 30000);
+      const check = () => {
+        if (worker.state === 'activated' || worker.state === 'redundant') {
+          clearTimeout(timeout); worker.removeEventListener('statechange', check);
+          if (worker.state === 'activated') resolve(); else reject(new Error('Offline worker failed'));
+        }
+      };
+      worker.addEventListener('statechange', check); check();
+    });
+    const cache = await caches.open(DOUBLE_ZBLL_APP_CACHE);
+    collect(observer?.takeRecords() ?? []);
+    let done = 0;
+    // HTML exposes route chunks even when the selection page has not been visited yet.
+    for (const path of queue) {
+      const response = await fetch(path, { cache: 'reload', signal: AbortSignal.timeout(30000) });
+      if (!response.ok) throw new Error('Could not download an offline resource');
+      const type = response.headers.get('content-type') ?? '';
+      if (type.includes('text/html') || type.includes('text/css')) {
+        const content = await response.clone().text();
+        const refs = type.includes('text/html')
+          ? Array.from(content.matchAll(/(?:src|href)=["']([^"']+)["']/g), m => m[1])
+          : Array.from(content.matchAll(/url\(["']?([^"')]+)["']?\)/g), m => m[1]);
+        for (const ref of refs) { const url = new URL(ref, new URL(path, location.href)); if (allowed(url)) queue.add(url.href); }
+      }
+      await cache.put(path, response);
+      // Set iteration also visits entries added by HTML/CSS parsing or the observer.
+      collect(observer?.takeRecords() ?? []);
+      onProgress(++done, queue.size);
+    }
+    await cache.put(marker, new Response(JSON.stringify({ savedAt: Date.now(), version: corpus!.manifest.version, resources: [...queue] })));
+    void navigator.storage?.persist?.();
+  } finally {
+    observer?.disconnect();
   }
-  await cache.put(scope + '__offline_ready', new Response(JSON.stringify({ savedAt: Date.now(), version: corpus!.manifest.version, resources: [...queue] })));
-  void navigator.storage?.persist?.();
 }
 
 export async function doubleZbllOfflineReady(): Promise<boolean> {
   if (typeof caches === 'undefined' || !('serviceWorker' in navigator)) return false;
-  const scope = doubleZbllScope();
+  const { scope, pages, marker: markerPath } = doubleZbllOfflinePages(location.pathname);
   const [cache, registration] = await Promise.all([caches.open(DOUBLE_ZBLL_APP_CACHE), navigator.serviceWorker.getRegistration(scope)]);
-  const marker = await cache.match(scope + '__offline_ready');
+  const marker = await cache.match(markerPath);
   if (!marker) return false;
   const saved = await marker.json() as { resources?: string[] };
   if (!Array.isArray(saved.resources) || !saved.resources.length) return false;
   const resourcesPresent = (await Promise.all(saved.resources.map(path => cache.match(path)))).every(Boolean);
   return resourcesPresent && !!registration?.active && registration.scope === new URL(scope, location.href).href
     && registration.active.scriptURL === new URL('/double-zbll-sw.js', location.href).href
-    && !!await cache.match(scope + '__offline_ready')
-    && !!await cache.match(scope + 'run') && !!await cache.match(scope + 'select') && !!await cachedDoubleZbllCases();
+    && (await Promise.all(pages.map(path => cache.match(path)))).every(Boolean)
+    && !!await cachedDoubleZbllCases();
 }

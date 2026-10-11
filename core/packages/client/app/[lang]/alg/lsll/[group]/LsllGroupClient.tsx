@@ -13,8 +13,8 @@ import '@cuberoot/timer-ui/compact-select.css';
  * 算好一个贴一个;算过的进模块级缓存,翻回来不重算。
  */
 import { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'next/navigation';
-import { useQueryState, parseAsInteger, parseAsStringEnum } from 'nuqs';
+import { useTrainingParams as useParams, useTrainingQueryState as useQueryState } from '@/lib/training-host';
+import { parseAsInteger, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import { ArrowLeft } from 'lucide-react';
 import { tr, T } from '@/i18n/tr';

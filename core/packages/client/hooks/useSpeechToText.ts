@@ -26,6 +26,7 @@ interface SRInstance extends EventTarget {
   onend: (() => void) | null;
   onstart: (() => void) | null;
   onspeechend: (() => void) | null;
+  onspeechstart: (() => void) | null;
 }
 interface SRConstructor { new(): SRInstance }
 
@@ -47,15 +48,20 @@ function canSelectSpeechMicrophone(): boolean {
 
 interface Options {
   lang: 'zh-CN' | 'en-US';
+  visualizeAudio?: boolean;
+  continuous?: boolean;
   /** 每次有新文本(含中途 interim)时回调。isFinal=true 表示这是最终结果。 */
   onResult?: (text: string, isFinal: boolean) => void;
 }
 
-export function useSpeechToText({ lang, onResult }: Options) {
+export function useSpeechToText({ lang, onResult, visualizeAudio = false, continuous = false }: Options) {
   const [supported, setSupported] = useState(false);
   const [status, setStatus] = useState<'idle' | 'starting' | 'listening' | 'stopping'>('idle');
   const [error, setError] = useState<string | null>(null);
   const [microphone, setMicrophone] = useState<string | null>(null);
+  const [speaking, setSpeaking] = useState(false);
+  const [waveform, setWaveform] = useState<number[]>(() => Array(96).fill(0));
+  const [waveformOffset, setWaveformOffset] = useState(0);
   const sessionRef = useRef<{ cancel: () => void; stop: () => void } | null>(null);
   const onResultRef = useRef(onResult);
   useEffect(() => { onResultRef.current = onResult; }, [onResult]);
@@ -65,11 +71,23 @@ export function useSpeechToText({ lang, onResult }: Options) {
     sessionRef.current?.stop();
   }, []);
 
+  const cancel = useCallback(() => {
+    sessionRef.current?.cancel();
+    setStatus('idle');
+    setSpeaking(false);
+    setWaveform(Array(96).fill(0));
+    setWaveformOffset(0);
+    setError(null);
+  }, []);
+
   const start = useCallback(() => {
     const SR = getSR();
     sessionRef.current?.cancel();
     setError(null);
     setMicrophone(null);
+    setWaveform(Array(96).fill(0));
+    setWaveformOffset(0);
+    setSpeaking(false);
     if (!SR) { setStatus('idle'); setError('unsupported'); return; }
     let rec: SRInstance;
     try { rec = new SR(); } catch {
@@ -79,11 +97,21 @@ export function useSpeechToText({ lang, onResult }: Options) {
     let receivedText = false;
     let stopping = false;
     let started = false;
+    let previousText = '';
+    let currentText = '';
     let stream: MediaStream | null = null;
+    let audioContext: AudioContext | null = null;
+    let audioSource: MediaStreamAudioSourceNode | null = null;
+    let analyser: AnalyserNode | null = null;
+    let frame = 0;
     const active = () => sessionRef.current === session;
     const cancel = () => {
       clearTimeout(timer);
-      rec.onstart = rec.onend = rec.onerror = rec.onresult = rec.onspeechend = null;
+      cancelAnimationFrame(frame);
+      audioSource?.disconnect();
+      analyser?.disconnect();
+      if (audioContext) void audioContext.close().catch(() => {});
+      rec.onstart = rec.onend = rec.onerror = rec.onresult = rec.onspeechend = rec.onspeechstart = null;
       if (active()) sessionRef.current = null;
       try { rec.abort(); } catch { /* Already ended. */ }
       stream?.getTracks().forEach(track => { track.onended = null; track.stop(); });
@@ -92,6 +120,9 @@ export function useSpeechToText({ lang, onResult }: Options) {
       if (!active()) return;
       cancel();
       setStatus('idle');
+      setSpeaking(false);
+      setWaveform(Array(96).fill(0));
+      setWaveformOffset(0);
       if (reason) setError(reason);
     };
     const deadline = (ms: number) => {
@@ -119,17 +150,35 @@ export function useSpeechToText({ lang, onResult }: Options) {
     };
     sessionRef.current = session;
     rec.lang = lang;
-    rec.continuous = false;
+    rec.continuous = continuous;
     rec.interimResults = true;
     rec.maxAlternatives = 1;
     rec.onstart = () => {
       if (!active() || stopping) return;
       setStatus('listening');
-      deadline(15_000);
+      if (continuous) clearTimeout(timer);
+      else deadline(15_000);
     };
-    rec.onend = () => finish(receivedText ? undefined : 'no-speech');
-    rec.onerror = (e) => finish(e.error);
-    rec.onspeechend = () => { if (active()) session.stop(); };
+    rec.onend = () => {
+      if (!active()) return;
+      if (!continuous || stopping) { finish(receivedText ? undefined : 'no-speech'); return; }
+      // Browsers may end even continuous recognition after silence. Keep capture
+      // alive and retain this run's transcript before starting a fresh result list.
+      previousText += currentText;
+      currentText = '';
+      started = false;
+      setSpeaking(false);
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        if (active() && !stopping) startRecognition(trackRecognition ? stream?.getAudioTracks()[0] : undefined);
+      }, 300);
+    };
+    rec.onerror = (e) => {
+      if (continuous && !stopping && e.error === 'no-speech') return;
+      finish(e.error);
+    };
+    rec.onspeechstart = () => { if (active()) setSpeaking(true); };
+    rec.onspeechend = () => { if (active()) { setSpeaking(false); if (!continuous) session.stop(); } };
     rec.onresult = (e: SREvent) => {
       if (!active()) return;
       let text = '';
@@ -142,9 +191,10 @@ export function useSpeechToText({ lang, onResult }: Options) {
       }
       if (text.trim()) {
         receivedText = true;
-        onResultRef.current?.(text, isFinal);
-        if (isFinal) finish();
-        else if (!stopping) deadline(15_000);
+        currentText = text;
+        onResultRef.current?.(previousText + text, isFinal);
+        if (isFinal && (!continuous || stopping)) finish();
+        else if (!stopping && !continuous) deadline(15_000);
       }
     };
     setStatus('starting');
@@ -159,12 +209,21 @@ export function useSpeechToText({ lang, onResult }: Options) {
           ? 'not-allowed' : 'service-not-allowed');
       }
     };
-    if (canSelectSpeechMicrophone()) {
+    const trackRecognition = canSelectSpeechMicrophone();
+    if (visualizeAudio) {
+      // Create/resume within the user gesture, before microphone permission resolves.
+      try {
+        audioContext = new AudioContext();
+        void audioContext.resume().catch(() => finish('audio-capture'));
+      } catch { finish('audio-capture'); return; }
+    }
+    if (trackRecognition || visualizeAudio) {
       deadline(30_000);
       // Chromium's literal "default" follows the OS input, whereas omitting
       // deviceId can select a saved browser device (including a silent virtual
       // driver). Do not enumerate or automatically open unrelated microphones.
-      void navigator.mediaDevices.getUserMedia({ audio: { deviceId: { exact: 'default' } } })
+      if (!navigator.mediaDevices?.getUserMedia) { finish('audio-capture'); return; }
+      void navigator.mediaDevices.getUserMedia({ audio: trackRecognition ? { deviceId: { exact: 'default' } } : true })
         .then(captured => {
           if (!active()) { captured.getTracks().forEach(track => track.stop()); return; }
           stream = captured;
@@ -172,7 +231,33 @@ export function useSpeechToText({ lang, onResult }: Options) {
           if (!track || track.readyState !== 'live') { finish('audio-capture'); return; }
           setMicrophone(track.label || null);
           track.onended = () => finish('audio-capture');
-          startRecognition(track);
+          if (audioContext) {
+            audioSource = audioContext.createMediaStreamSource(captured);
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 2048;
+            audioSource.connect(analyser);
+            // Never connect microphone audio to speakers. Append one measured PCM
+            // peak per tick: newest audio on the right, older audio moving left.
+            const samples = new Float32Array(analyser.fftSize);
+            let lastPaint = -Infinity;
+            const sample = (now: number) => {
+              if (!active() || !analyser) return;
+              if (now - lastPaint >= 100) {
+                analyser.getFloatTimeDomainData(samples);
+                let peak = 0;
+                for (const value of samples) peak = Math.max(peak, Math.abs(value));
+                const amplitude = Math.min(1, peak * 4);
+                setWaveform(history => [...history.slice(1), amplitude]);
+                lastPaint = now;
+              }
+              // Translate between sample ticks, including silence. At the next
+              // tick the history shifts by one cell and translation starts over.
+              setWaveformOffset((now - lastPaint) / 100);
+              frame = requestAnimationFrame(sample);
+            };
+            frame = requestAnimationFrame(sample);
+          }
+          startRecognition(trackRecognition ? track : undefined);
         })
         .catch(cause => {
           finish(cause instanceof DOMException && (cause.name === 'NotAllowedError' || cause.name === 'SecurityError')
@@ -182,12 +267,12 @@ export function useSpeechToText({ lang, onResult }: Options) {
       // Safari, Android and older engines keep their native capture path.
       startRecognition();
     }
-  }, [lang]);
+  }, [lang, visualizeAudio, continuous]);
 
   // 卸载时停掉
   useEffect(() => {
     return () => { sessionRef.current?.cancel(); };
   }, []);
 
-  return { supported, listening: status !== 'idle', status, error, microphone, start, stop };
+  return { supported, listening: status !== 'idle', speaking, waveform, waveformOffset, status, error, microphone, start, stop, cancel };
 }

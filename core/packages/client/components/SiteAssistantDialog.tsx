@@ -1,7 +1,8 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import type { MouseEvent } from 'react';
-import Markdown from 'react-markdown';
+const Markdown = lazy(() => import('react-markdown').catch(() => ({ default: ({ children }: { children?: string | null }) => <>{children}</> })));
+const WrHistoryChart = lazy(() => import('@/components/wca-stats/WrHistoryChart').catch(() => ({ default: () => null })));
 import { useCopy } from '@/hooks/useCopy';
 import { createPortal } from 'react-dom';
 import { ArrowUp, ArrowDown, Check, Copy, Pencil, RotateCcw, Maximize2, Minimize2, Search, LoaderCircle, MessageSquarePlus, Mic, Square, X } from 'lucide-react';
@@ -17,7 +18,6 @@ import { Flag } from '@/components/Flag';
 import { CompCell } from '@/components/CompCell/CompCell';
 import { loadFlagData } from '@/lib/country-flags';
 import { countryName } from '@/lib/country-name';
-import WrHistoryChart from '@/components/wca-stats/WrHistoryChart';
 import { tr } from '@/i18n/tr';
 import './site_assistant.css';
 
@@ -64,20 +64,20 @@ export function SiteAssistantAnswerText({result,partial}:{result:AssistantAnswer
     const index=sources.findIndex(source=>source.id===id);
     return index<0 ? '' : `[${index+1}](#assistant-source-${index})`;
   });
-  return <div className="site-assistant-prose"><Markdown skipHtml
+  return <div className="site-assistant-prose"><Suspense fallback={<p>{text.replace(/\[\[[^\]\n]+\]\]/g, '')}</p>}><Markdown skipHtml
     allowedElements={['p','strong','em','code','pre','ul','ol','li','blockquote','h1','h2','h3','h4','hr','br','a']}
     components={{a:({href,children})=>{
       const match=/^#assistant-source-(\d+)$/.exec(href ?? '');
       const source=match ? sources[Number(match[1])] : undefined;
       return source ? <Link className="site-assistant-citation" href={source.href} onClick={openSolverDocument} prefetch={false} title={source.title} aria-label={tr({zh:`来源：${source.title}`,en:`Source: ${source.title}`})}>{source.title}</Link> : <>{children}</>;
-    }}}>{markdown}</Markdown></div>;
+    }}}>{markdown}</Markdown></Suspense></div>;
 
 }
 function Progress({chart}:{chart:AssistantChart}) {
   // Raw WCA values drive geometry; formatted labels are only for display.
   const points=chart.points.map(p=>({date:p.date,y:chart.event==='333fm' && chart.metric==='single' ? p.value : chart.event==='333mbf' || chart.event==='333mbo' ? p.value : p.value/100,person:p.person,label:p.label}));
   return <section className="site-assistant-chart"><h4>{chart.title}</h4>
-    {chart.event!=='333mbf' && chart.event!=='333mbo' && <WrHistoryChart rawPoints={points} />}
+    {chart.event!=='333mbf' && chart.event!=='333mbo' && <Suspense fallback={null}><WrHistoryChart rawPoints={points} /></Suspense>}
     <details><summary>{tr({zh:'查看成绩数据',en:'View result data'})}</summary><div className="site-assistant-table"><table><thead><tr><th>{tr({zh:'日期',en:'Date'})}</th><th>{tr({zh:'成绩',en:'Result'})}</th></tr></thead><tbody>{chart.points.map((p,i)=><tr key={i}><td>{p.date}</td><td>{formatWcaResult(p.value,chart.event,chart.metric)}</td></tr>)}</tbody></table></div></details>
   </section>;
 }

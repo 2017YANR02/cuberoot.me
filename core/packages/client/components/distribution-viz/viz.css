@@ -100,8 +100,9 @@ html body[data-site-scenery] .viz-page.wp-distviz {
 }
 
 body[data-site-scenery] .viz-page :is(
-  .canvas-wrapper, .stats-bar, .controls, .ridgeline-wrapper, .toolbar
-) {
+  .canvas-wrapper, .stats-bar, .controls, .ridgeline-wrapper
+),
+body[data-site-scenery] .viz-page .toolbar::before {
   background: var(--glass-surface-bg);
   border-color: var(--glass-border);
   -webkit-backdrop-filter: var(--glass-filter);
@@ -463,10 +464,15 @@ body[data-site-scenery] .viz-page :is(
     padding: 6px 8px;
   }
   /* NOTE: 手机端搜索框独占一行 */
-  .viz-page .toolbar-search {
+  .viz-page.wp-distviz .toolbar-search {
     flex-basis: 100%;
     min-width: 0;
     max-width: none;
+  }
+  /* anchored-panel: safe (full-row search stays inside the padded toolbar) */
+  .viz-page.wp-distviz .wca-pp-inline .wca-pp-results {
+    width: 100%;
+    box-sizing: border-box;
   }
 }
 
@@ -477,13 +483,25 @@ body[data-site-scenery] .viz-page :is(
   gap: 8px;
   margin-bottom: 16px;
   padding: 8px 12px;
-  background: var(--bg-glass);
+  background: transparent;
   border: 1px solid var(--border-subtle);
   border-radius: 10px;
-  backdrop-filter: blur(12px);
   /* NOTE: 创建 stacking context，让内部 dropdown (z-index:1000) 浮于 canvas 之上 */
   position: relative;
   z-index: 100;
+}
+
+/* Filtering the host would cut off the search menu's backdrop at the toolbar. */
+.viz-page .toolbar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: inherit;
+  background: var(--bg-glass);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
 }
 
 .viz-page .toolbar-btn {

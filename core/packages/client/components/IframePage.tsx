@@ -8,6 +8,8 @@
  * Ported 1:1 from packages/client-vite/src/pages/IframePage.tsx
  */
 import { ExternalLink } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { useTrainingHref, useTrainingRouter } from '@/lib/training-host';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { T, type Msg } from '@/i18n/tr';
 import { TrainingManualPractice } from '@/components/TrainingStatsPanel';
@@ -40,6 +42,10 @@ export default function IframePage({
   syncDocumentTitle = true,
   trainingGroup,
 }: IframePageProps) {
+  const trainingHref = useTrainingHref();
+  const router = useTrainingRouter();
+  const releaseLinks = useRef<(() => void) | null>(null);
+  useEffect(() => () => releaseLinks.current?.(), []);
   return (
     <div style={{
       display: 'flex',
@@ -92,6 +98,8 @@ export default function IframePage({
         // NOTE: 允许 iframe 中的脚本和表单操作，同时允许通过 target="_top" 导航顶层窗口
         sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals allow-downloads allow-top-navigation allow-top-navigation-by-user-activation"
         onLoad={(e) => {
+          releaseLinks.current?.();
+          releaseLinks.current = null;
           // 独立应用是跨域页面，浏览器本就不允许读取其 DOM；直接跳过同源链接修正。
           if (!src.startsWith('/')) return;
           try {
@@ -104,12 +112,29 @@ export default function IframePage({
               // basePath /tools/blddb/…）—— 打 _top 会把整个站跳出去，且 next/link 见到
               // target 就放弃客户端路由，站内导航直接废掉。
               const links = iframeDoc.querySelectorAll('a');
+              const hostedLinks = new Set<HTMLAnchorElement>();
               links.forEach(a => {
                 const href = a.getAttribute('href');
                 if (href && href.startsWith('/') && !href.startsWith(src)) {
                   a.target = '_top';
+                  const mapped = trainingHref(href);
+                  if (mapped !== href) {
+                    a.setAttribute('href', mapped);
+                    hostedLinks.add(a);
+                  }
                 }
               });
+              // Keep links between existing legacy trainers in the same host.
+              // Modified clicks still use the real href, including new-tab navigation.
+              const navigate = (event: MouseEvent) => {
+                if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                const anchor = (event.target as Element | null)?.closest?.('a');
+                if (!anchor || !hostedLinks.has(anchor)) return;
+                event.preventDefault();
+                router.push(anchor.getAttribute('href')!);
+              };
+              iframeDoc.addEventListener('click', navigate);
+              releaseLinks.current = () => iframeDoc.removeEventListener('click', navigate);
             }
           } catch (err) {
             console.warn('Failed to intercept iframe links:', err);

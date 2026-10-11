@@ -70,7 +70,8 @@ import {
 } from '@/lib/sq1-pbl-notation';
 import { SCRAMBLE_KINDS, type ScrambleKind } from '@/lib/trainer-scramble';
 import { CUBE_ORIENTATIONS } from '@/lib/cube-orientation';
-import { parseAsBoolean, parseAsStringEnum, useQueryState } from 'nuqs';
+import { parseAsBoolean, parseAsStringEnum } from 'nuqs';
+import { useTrainingQueryState as useQueryState } from '@/lib/training-host';
 
 const F2L_DETAIL_ORIENTATION_ORDER = new Map([
   ['FR', 0],

@@ -10,6 +10,7 @@
  * 「加一套」就会去 `loadAlg` 拉一个不存在的库表。只有 run 路由认它。
  */
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
+import { LSLL_ALG_SET_METADATA } from './training-set-metadata';
 import { LISTED_CASES } from './lsll/model';
 import {
   LSLL_ROUNDS, LSLL_TRAINER_NOTE, lsllCaseKeyString, lsllNextRoundScope, lsllRoundLabel, lsllRoundScope,
@@ -76,9 +77,7 @@ export interface VirtualAlgSet {
 
 const REGISTRY: VirtualAlgSet[] = [
   {
-    puzzle: '3x3',
-    slug: 'lsll',
-    meta: { en: 'LSLL', zh: 'LSLL' },
+    ...LSLL_ALG_SET_METADATA,
     note: LSLL_TRAINER_NOTE,
     totalCases: LISTED_CASES,
     loadCases: loadLsllCases,
@@ -105,5 +104,4 @@ export function virtualAlgSet(puzzle: AlgPuzzle, slug: string): VirtualAlgSet | 
 }
 
 /** run 路由的 `generateStaticParams` 要把虚拟集也预渲染出来(它们不在 ALG_CATALOG 里)。 */
-export const VIRTUAL_ALG_SET_PARAMS: ReadonlyArray<{ puzzle: string; set: string }> =
-  REGISTRY.map(v => ({ puzzle: v.puzzle, set: v.slug }));
+export { VIRTUAL_ALG_SET_PARAMS } from './training-set-metadata';

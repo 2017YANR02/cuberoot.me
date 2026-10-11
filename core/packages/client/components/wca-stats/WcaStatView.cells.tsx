@@ -2,6 +2,7 @@
 
 // Pure cell / markdown rendering + row helpers for the WCA stat renderer.
 // Extracted verbatim from WcaStatView.tsx — no component state, no hooks.
+import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import React from 'react';
 import Link from '@/components/AppLink';
 import {
@@ -145,7 +146,7 @@ function renderLinkedSegment(segment: string, segIdx: number, isZh: boolean | un
       compId && internalHref
         ? <Link key={`${segIdx}-${match.index}`} href={internalHref} onMouseEnter={prefetch} onFocus={prefetch} onTouchStart={prefetch}>{displayText}</Link>
         : internalHref
-          ? <Link key={`${segIdx}-${match.index}`} href={internalHref} prefetch={false}>{displayText}</Link>
+          ? <Link key={`${segIdx}-${match.index}`} href={internalHref} prefetch={false}>{displayText}<WcaPersonTeamBadge wcaId={wcaId} /></Link>
           : <a key={`${segIdx}-${match.index}`} href={url} target="_blank" rel="noopener noreferrer">{displayText}</a>
     );
     lastIndex = match.index + match[0].length;

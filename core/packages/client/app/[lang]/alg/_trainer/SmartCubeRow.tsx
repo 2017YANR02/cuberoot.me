@@ -20,7 +20,7 @@ import { tr } from '@/i18n/tr';
 import { TimerDeviceCenter } from '@cuberoot/timer-ui';
 import { detectBluetoothEnv, envAdvice } from '@/lib/bluetooth';
 import type { CubeStep } from '@cuberoot/shared/timer/reconstruct/steps';
-import type { TrainerCubeState } from './useTrainerCube';
+import type { TrainerCubePracticeMode, TrainerCubeState } from './useTrainerCube';
 import TrainerCubeViewPicker from './TrainerCubeViewPicker';
 
 /** What each finish line is called, in the words the alg library already uses. */
@@ -50,7 +50,7 @@ interface Props {
 }
 
 export default function SmartCubeRow({ enabled, onEnabledChange, state, supported }: Props) {
-  const { cube, stopStep, reason, view, setView, connect, macPrompt, submitMac, cancelMac } = state;
+  const { cube, stopStep, reason, view, setView, connect, macPrompt, submitMac, cancelMac, practiceMode, setPracticeMode } = state;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mac, setMac] = useState('');
@@ -114,6 +114,12 @@ export default function SmartCubeRow({ enabled, onEnabledChange, state, supporte
           menuLabel={tr({ zh: '可用计时设备', en: 'Available timer devices' })}
           triggerLabel={tr({ zh: '设备', en: 'Devices' })}
         />
+        <select className="native-select" aria-label={tr({ zh: '智能魔方打乱方式', en: 'Smart cube scramble mode' })}
+          value={practiceMode} disabled={reason === 'running'}
+          onChange={event => setPracticeMode(event.target.value as TrainerCubePracticeMode)}>
+          <option value="virtual">{tr({ zh: '免打乱', en: 'Virtual scramble' })}</option>
+          <option value="manual">{tr({ zh: '手动打乱', en: 'Manual scramble' })}</option>
+        </select>
       </div>
 
       {cube.status.connected && (
@@ -172,7 +178,12 @@ export default function SmartCubeRow({ enabled, onEnabledChange, state, supporte
 
       {reason !== 'off' && (
         <div className="trainer-opts-hint">
-          {reason === 'disconnected'
+          {practiceMode === 'manual'
+          ? tr({
+              zh: reason === 'ready' ? '打乱已就绪，下一步转动开始还原' : reason === 'running' ? `还原中，${stepLabel(stopStep ?? 'solved')}后进入下一题` : '按打乱公式转动实体魔方，匹配后才开始训练；打乱过程不计时',
+              en: reason === 'ready' ? 'Scramble ready — turn to begin solving' : reason === 'running' ? `Solving — next case after ${stepLabel(stopStep ?? 'solved')}` : 'Apply the scramble to your physical cube. Training starts after it matches; scrambling is not timed',
+            })
+          : reason === 'disconnected'
           ? tr({
               zh: '连上蓝牙魔方后,每题由魔方直接「变成」那个 case —— 不用照打乱拧,拧完自动判定、自动下一题。练的是这一套的收尾动作,魔方本体越练越乱,不用管',
               en: 'Connect a bluetooth cube and each case is handed to you on the cube itself — no scramble to apply, and the clock starts and stops on its own. The cube in your hands drifts further from solved every rep, which never matters',

@@ -44,6 +44,11 @@ const DOMAINS: { key: DomainKey; dot: string; name: Bi; sub: Bi }[] = [
 const TABLES: Table[] = [
   { name: 'site_assistant_knowledge_state', domain: 'community', origin: '0270', purpose: { zh: '当前完整公开知识库快照与来源版本', en: 'Current complete public knowledge snapshot and source revision' } },
   { name: 'site_assistant_knowledge_chunks', domain: 'community', origin: '0270', purpose: { zh: '公开资料段落、关键词与向量索引', en: 'Public passages with lexical and vector indexes' } },
+  { name: 'enterprise_verification_settings', domain: 'teaching', origin: '0271', purpose: { zh: '加密的对公收款配置及申请开放状态', en: 'Encrypted recipient settings and application availability' } },
+  { name: 'enterprise_verification_applications', domain: 'teaching', origin: '0271', purpose: { zh: '独立企业认证、加密证照、银行流水及退款记录，不授予企业归属', en: 'Independent enterprise verification, encrypted documents, bank receipts and refunds without granting ownership' } },
+  { name: 'enterprise_verification_events', domain: 'teaching', origin: '0271', purpose: { zh: '认证材料访问、审核、到账和退款的操作审计', en: 'Audit of document access, review, receipts and refunds' } },
+  { name: 'wca_training_institutions', domain: 'derived', origin: '0269', purpose: { zh: '公开培训机构目录，复用 organizations 身份，不开放私有机构数据', en: 'Opt-in public training directory reusing organization identities without exposing private tenants' } },
+  { name: 'wca_student_institutions', domain: 'derived', origin: '0269', purpose: { zh: '学生独立的培训机构归属，支持 WCA 与未参赛学生', en: 'Independent institution affiliations for WCA and named students' } },
   { name: 'account_face_attempts', domain: 'account', origin: '0264', purpose: { zh: '实名活体流水、会话绑定、独立同意与证件摘要；账号注销级联删除，不随合并转移', en: 'Identity/liveness attempts, session binding, consent and identity digests; cascade on account deletion, never transfer on merge' } },
   { name: 'google_membership_accounts', domain: 'commerce', origin: '0256', purpose: { zh: 'Google 随机账号标识；合并保留，注销置空', en: 'Google obfuscated account identifiers, preserved on merge and tombstoned on deletion' } },
   { name: 'google_membership_subscriptions', domain: 'commerce', origin: '0256', purpose: { zh: 'Google 服务端核验的订阅状态、替换关系及权益', en: 'Server-verified Google subscription state, replacement chains and grants' } },
@@ -826,8 +831,10 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 261, slug: 'recon_comment_votes', desc: { zh: '复盘评论与回复支持互斥的点赞和点踩，按账号持久保存。', en: 'Persistent, mutually exclusive likes and dislikes on reconstruction comments and replies.' } },
   { n: 266, slug: 'public_content_revisions', desc: { zh: '可编辑公开内容的事务版本号，让浏览器核对更新并复用服务端缓存。', en: 'Transactional versions for editable public content, conditional requests, and server cache reuse.' } },
   { n: 267, slug: 'assistant_public_analysis', desc: { zh: '助手现场分析使用的公开数据视图与只读权限，隔离账号和私有内容。', en: 'Public data projections and read-only permissions for assistant analysis, excluding accounts and private content.' } },
-  { n: 270, slug: 'assistant_knowledge', desc: { zh: '公开资料分段、中文全文与向量混合检索，索引原子更新。', en: 'Public passages with Chinese lexical and vector retrieval and atomic index publication.' } },
   { n: 268, slug: 'wca_teams', desc: { zh: '选手战队及可复用的自定义战队目录。', en: 'Cuber team assignments and a reusable custom team directory.' } },
+  { n: 269, slug: 'wca_training_institutions', desc: { zh: '独立培训机构归属；预置上海魔方根科技有限公司并关联颜瑞民现有学生。', en: 'Independent training affiliations; seed Shanghai CubeRoot and associate Yan Ruimin’s existing students.' } },
+  { n: 270, slug: 'assistant_knowledge', desc: { zh: '公开资料分段、中文全文与向量混合检索，索引原子更新。', en: 'Public passages with Chinese lexical and vector retrieval and atomic index publication.' } },
+  { n: 271, slug: 'enterprise_verification', desc: { zh: '企业对公打款认证、私密材料、到账复核及退款审计。', en: 'Corporate transfer verification, encrypted documents, receipt review and refund audit.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

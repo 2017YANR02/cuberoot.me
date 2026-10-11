@@ -4,6 +4,8 @@
  * /recon — list page. Full port of packages/client-vite/src/pages/recon/ReconListPage.tsx
  * (per-column filters, record badges, WCA auth, comp localize/links).
  */
+import { Tooltip } from '@/components/Tooltip';
+import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import {
   cloneElement, useEffect, useMemo, useState, useRef, useCallback, useContext,
 } from 'react';
@@ -790,7 +792,7 @@ export default function ReconListPage() {
                 {c.country ? <><Flag iso2={c.country} className="recon-inline-flag" />{' '}</> : null}
                 {c.id ? (
                   <Link href={`/recon/person/${c.id}`} onClick={(e) => e.stopPropagation()}>
-                    {displayCuberName(c.name, isZh)}
+                    {displayCuberName(c.name, isZh)}<WcaPersonTeamBadge wcaId={c.id} />
                   </Link>
                 ) : displayCuberName(c.name, isZh)}
               </span>
@@ -1102,25 +1104,11 @@ export default function ReconListPage() {
                         ? [solve.person, ...(solve.coPersons?.map(c => c.name) ?? [])].filter(Boolean).join(' & ')
                         : col.key === 'comp' ? localizeCompName(solve.compWcaId ?? '', solve.comp || '', isZh, { date: solve.date }) : '';
                       return (
-                        <td
-                          key={col.key || col.labelKey}
+                        <Tooltip key={col.key || col.labelKey} content={tipText} disabled={!needsTip} onlyWhenOverflow>{(tip) => <td {...tip}
                           className={col.className || ''}
-                          {...(needsTip ? { 'data-tip': tipText } : {})}
-                          onMouseOver={needsTip ? (e) => {
-                            // NOTE: 溢出检测——scrollWidth > clientWidth 时才显示
-                            const td = e.currentTarget;
-                            if (td.scrollWidth > td.clientWidth) {
-                              td.setAttribute('data-tip-show', '');
-                            } else {
-                              td.removeAttribute('data-tip-show');
-                            }
-                          } : undefined}
-                          onMouseLeave={needsTip ? (e) => {
-                            e.currentTarget.removeAttribute('data-tip-show');
-                          } : undefined}
                         >
                           {renderCell(col, solve)}
-                        </td>
+                        </td>}</Tooltip>
                       );
                     })}
                   </tr>

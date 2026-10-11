@@ -487,28 +487,6 @@ img.recon-inline-flag {
   text-decoration: underline;
 }
 
-/* --- Tooltip --- */
-td[data-tip] {
-  position: relative;
-}
-
-td[data-tip-show]:hover::after {
-  content: attr(data-tip);
-  position: absolute;
-  left: 0;
-  bottom: 100%;
-  z-index: 100;
-  padding: 4px 8px;
-  background: var(--popover);
-  color: var(--foreground);
-  border: 1px solid color-mix(in srgb, var(--foreground) 15%, transparent);
-  border-radius: 4px;
-  font-size: 0.78rem;
-  white-space: nowrap;
-  pointer-events: none;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-}
-
 /* --- 社区标记 --- */
 .community-row td:first-child {
   border-left: 2px solid color-mix(in srgb, var(--accent) 40%, transparent);

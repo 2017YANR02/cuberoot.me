@@ -166,28 +166,6 @@
 .wca-stats-event-selector .event-btn-more:hover .event-more-arrow { color: var(--evbtn-icon-hover); }
 .wca-stats-event-selector .event-btn-more.active .event-more-arrow { color: var(--foreground); }
 
-/* tooltip */
-.wca-stats-event-selector .event-btn::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--popover);
-  color: var(--foreground);
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 13px;
-  white-space: nowrap;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.15s;
-  z-index: 100;
-}
-.wca-stats-event-selector .event-btn:hover::after { opacity: 1; }
-.wca-stats-event-selector .event-btn.disabled::after { display: none; }
-
 /* 可搜索模式:搜索框 + 图标网格垂直堆叠 */
 .wca-evsel-with-search { display: flex; flex-direction: column; }
 .wca-evsel-search {

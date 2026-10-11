@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { parseAsString, useQueryState } from 'nuqs';
+import { parseAsString } from 'nuqs';
+import { useTrainingQueryState as useQueryState } from '@/lib/training-host';
 import Link from '@/components/AppLink';
 import { Sq1StateSvg } from '@/components/Sq1StateSvg';
 import { tr } from '@/i18n/tr';

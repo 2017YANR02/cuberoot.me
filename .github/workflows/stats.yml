@@ -413,6 +413,16 @@ jobs:
               done
               GIT_EDITOR=true git rebase --continue
             fi
+            # Merge source changes from both writers before deriving the shared month index.
+            (cd core && node --import tsx "${{ steps.workspace.outputs.stats }}/src/bin/build_calendar_comps.ts")
+            git add stats/comp_calendar/
+            if ! git diff --cached --quiet; then
+              if [ "$(git rev-list --count origin/main..HEAD)" -gt 0 ]; then
+                git commit --amend --no-edit
+              else
+                git commit -m "chore: refresh competition calendar [skip ci]"
+              fi
+            fi
             git push
             # commit 带 [skip ci](避开 deploy_next/test 等重 workflow),但这样也掐死了靠 push+stats/**
             # 触发的 sync_toolkit → 日更 stats 永远上不了 static(过去比赛双轮等数据隔天才同步)。

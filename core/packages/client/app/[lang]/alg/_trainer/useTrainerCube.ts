@@ -29,7 +29,7 @@
  *     living in a different store rather than by suppressing a write.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
 
 import { useBluetoothCube, type BluetoothCubeHandle } from '@/lib/bluetooth';
@@ -39,15 +39,26 @@ import type { Quat } from '@cuberoot/shared/smart-cube/orientation';
 import { persistItem } from '@/lib/safe-storage';
 import { TimerState, useTrainerStore } from '@/lib/trainer-store';
 import { autoStopStep, caseTargetFacelets, puzzleHasSmartCube } from './smartcube';
+import { toFaceletString } from '@cuberoot/shared/timer/reconstruct/state';
+import { LiveSmartCubeAnchor, type LiveSmartCubeAnchorSnapshot } from '@cuberoot/shared/smart-cube/anchor';
+import { hintSmartCubeScramble, type SmartCubeScrambleHint } from '@cuberoot/shared/smart-cube/scramble-hint';
+import { purifyScramble } from '@/lib/trainer-scramble';
 
 export type TrainerCubeReason =
   | 'off' | 'unsupported-puzzle' | 'disconnected'
   | 'no-case' | 'unreadable-case' | 'not-aimed'
-  | 'settling' | 'ready' | 'running';
+  | 'settling' | 'scrambling' | 'ready' | 'running';
+
+export type TrainerCubePracticeMode = 'virtual' | 'manual';
 
 export type TrainerCubeView = 'none' | '3d' | 'qcube' | 'qlast' | 'q2look';
 
 export interface TrainerCubeState {
+  scrambleHint: SmartCubeScrambleHint | null;
+  practiceMode: TrainerCubePracticeMode;
+  setPracticeMode(mode: TrainerCubePracticeMode): void;
+  /** Verified move log for the physical cube; null until an anchor is ready. */
+  physicalMoves: readonly string[] | null;
   cube: BluetoothCubeHandle;
   /** True while the cube is presenting the current case and driving the clock. */
   armed: boolean;
@@ -112,6 +123,8 @@ export interface UseTrainerCubeOpts {
   currentScramble: string | null;
   /** Identity of the case on screen — a re-draw of the SAME case must re-aim. */
   currentKey: string | null;
+  /** Stable history entry identity, including repeated draws of the same pair. */
+  currentAttempt?: object;
 }
 
 /** Epoch ms for a `performance.now()` reading, so device times can reach the store. */
@@ -140,15 +153,31 @@ function toEpochMs(perfMs: number): number {
  */
 const SETTLE_MS = 500;
 const VIEW_KEY = 'trainer:smart-cube-view';
+const PRACTICE_KEY = 'trainer:smart-cube-practice';
 
 export function useTrainerCube(opts: UseTrainerCubeOpts): TrainerCubeState {
-  const { enabled, timing, puzzle, sessionSet, currentCase, currentScramble, currentKey } = opts;
+  const { enabled, timing, puzzle, sessionSet, currentCase, currentScramble, currentKey, currentAttempt } = opts;
 
   const startTimer = useTrainerStore((s) => s.startTimer);
   const stopTimer = useTrainerStore((s) => s.stopTimer);
   const setTimerState = useTrainerStore((s) => s.setTimerState);
   const nextScramble = useTrainerStore((s) => s.nextScramble);
   const timerState = useTrainerStore((s) => s.timerState);
+  const [practiceMode, setPracticeModeState] = useState<TrainerCubePracticeMode>('manual');
+  const [practiceLoaded, setPracticeLoaded] = useState(false);
+  const practiceRef = useRef(practiceMode);
+  practiceRef.current = practiceMode;
+  const manualRunningRef = useRef(false);
+  const [manualRunning, setManualRunning] = useState(false);
+  const [physical, setPhysical] = useState<LiveSmartCubeAnchorSnapshot>({ moves: [], algAnchored: false });
+  const physicalAnchor = useMemo(() => new LiveSmartCubeAnchor({
+    solve: async state => (await import('@/lib/kociemba/random_state')).solve333(state),
+    onChange: setPhysical,
+  }), []);
+  useEffect(() => {
+    try { if (localStorage.getItem(PRACTICE_KEY) === 'virtual') setPracticeModeState('virtual'); } catch { /* Storage unavailable. */ }
+    setPracticeLoaded(true);
+  }, []);
 
   const target = puzzleHasSmartCube(puzzle) ? caseTargetFacelets(currentScramble) : null;
   const stopStep = autoStopStep(puzzle, sessionSet, currentCase, target);
@@ -163,7 +192,7 @@ export function useTrainerCube(opts: UseTrainerCubeOpts): TrainerCubeState {
   // The move and solved callbacks fire from a BLE notification, outside React's
   // world, so everything they read comes from a ref.
   const enabledRef = useRef(enabled);
-  enabledRef.current = enabled;
+  enabledRef.current = enabled && practiceLoaded;
   const timingRef = useRef(timing);
   timingRef.current = timing;
   const [armed, setArmed] = useState(false);
@@ -228,12 +257,24 @@ export function useTrainerCube(opts: UseTrainerCubeOpts): TrainerCubeState {
   const cancelMac = useCallback(() => answerMac(null), [answerMac]);
 
   const cube = useBluetoothCube({
+    solvedStep: judgeStep,
     onNeedMac,
     // Orientation is a firehose and nothing here reacts to it — straight into
     // the box the 3D mirror's frame loop reads.
     onGyro: (q) => { quatRef.current = q; },
-    onMove: (move, ts) => {
+    onMove: (move, ts, facelets) => {
       lastMoveEpochRef.current = toEpochMs(ts);
+      if (practiceRef.current === 'manual') {
+        physicalAnchor.move(move);
+        physicalAnchor.observeFacelets(facelets);
+        if (!enabledRef.current || !aimRef.current) return;
+        if (!armedRef.current) {
+          if (facelets === aimRef.current.target) setAimed(true);
+          return; // The final scramble turn must never start the clock.
+        }
+        manualRunningRef.current = true;
+        setManualRunning(true);
+      }
       if (!enabledRef.current || !armedRef.current) return;
       // Still settling: this turn is the tail of the last rep, not the start of
       // this one. Re-aim so the case stays presented despite it, and give the
@@ -256,8 +297,14 @@ export function useTrainerCube(opts: UseTrainerCubeOpts): TrainerCubeState {
         startTimer(lastMoveEpochRef.current);
       }
     },
-    onSolved: () => {
+    onSolved: (ts) => {
       if (!enabledRef.current || !armedRef.current) return;
+      if (practiceRef.current === 'manual') {
+        if (!manualRunningRef.current || ts === undefined) return;
+        manualRunningRef.current = false;
+        setManualRunning(false);
+        setAimed(false);
+      }
       if (!timingRef.current) {
         // Not timing: finishing a case just moves the drill on. Nothing is
         // recorded, which is the whole point of having the clock off.
@@ -281,6 +328,12 @@ export function useTrainerCube(opts: UseTrainerCubeOpts): TrainerCubeState {
     armedRef.current = on;
     setArmed(on);
   }, []);
+  const setPracticeMode = useCallback((next: TrainerCubePracticeMode) => {
+    if (useTrainerStore.getState().timerState === TimerState.RUNNING || manualRunningRef.current) return;
+    setAimed(false);
+    setPracticeModeState(next);
+    persistItem(PRACTICE_KEY, next);
+  }, [setAimed]);
 
   /**
    * Aim the cube at the case on screen.
@@ -292,7 +345,22 @@ export function useTrainerCube(opts: UseTrainerCubeOpts): TrainerCubeState {
    */
   const connected = cube.status.connected;
   useEffect(() => {
-    if (!enabled || !connected || !target) {
+    physicalAnchor.setConnection(connected && enabled && practiceMode === 'manual'
+      ? cube.status.deviceId || cube.status.deviceName || 'cube' : null);
+    return () => physicalAnchor.setConnection(null);
+  }, [physicalAnchor, connected, enabled, practiceMode, cube.status.deviceId, cube.status.deviceName]);
+  useEffect(() => {
+    if (practiceMode !== 'manual' || cube.hijacked) return;
+    physicalAnchor.observeFacelets(cube.facelets);
+    if (enabled && connected && !manualRunningRef.current && aimRef.current) {
+      setAimed(cube.facelets === aimRef.current.target);
+    }
+  }, [physicalAnchor, practiceMode, cube.facelets, cube.hijacked, enabled, connected, setAimed]);
+  useEffect(() => {
+    manualRunningRef.current = false;
+    setManualRunning(false);
+    if (!practiceLoaded || !enabled || !connected || !target) {
+      aimRef.current = null;
       if (armedRef.current) {
         setAimed(false);
         aimRef.current = null;
@@ -303,10 +371,21 @@ export function useTrainerCube(opts: UseTrainerCubeOpts): TrainerCubeState {
     }
     if (useTrainerStore.getState().timerState === TimerState.RUNNING) return;
     aimRef.current = { target, step: judgeStep };
+    if (practiceMode === 'manual') {
+      setAimed(false);
+      cubeRef.current.clearHijack();
+      if (settleTimerRef.current !== null) clearTimeout(settleTimerRef.current);
+      settlingRef.current = false;
+      setSettling(false);
+      const faces = cubeRef.current.getFaces();
+      setAimed(!!faces && toFaceletString(faces) === target);
+      setMoves([]);
+      return;
+    }
     setAimed(cubeRef.current.hijackTo(target, judgeStep));
     setMoves([]);
     beginSettle();
-  }, [enabled, connected, target, judgeStep, currentKey, setAimed, beginSettle]);
+  }, [enabled, connected, target, judgeStep, currentKey, currentAttempt, practiceMode, practiceLoaded, setAimed, beginSettle]);
 
   /**
    * Dev-only: publish the fake-cube console API with the trainer's own scramble,
@@ -332,12 +411,21 @@ export function useTrainerCube(opts: UseTrainerCubeOpts): TrainerCubeState {
     : !connected ? 'disconnected'
     : !currentScramble ? 'no-case'
     : !target ? 'unreadable-case'
-    : timerState === TimerState.RUNNING ? 'running'
+    : timerState === TimerState.RUNNING || manualRunning ? 'running'
+    : practiceMode === 'manual' && !armed ? 'scrambling'
     : !armed ? 'not-aimed'
     : settling ? 'settling'
     : 'ready';
 
+  const scrambleHint = useMemo(() => {
+    if (!enabled || !connected || practiceMode !== 'manual' || cube.hijacked
+      || !currentScramble || !cube.facelets || reason === 'running') return null;
+    return hintSmartCubeScramble(purifyScramble('3x3', currentScramble), cube.facelets);
+  }, [enabled, connected, practiceMode, cube.hijacked, currentScramble, cube.facelets, reason]);
+
   return {
+    scrambleHint,
+    practiceMode, setPracticeMode, physicalMoves: physical.algAnchored ? physical.moves : null,
     cube, armed, moves, quatRef, view, setView,
     stopStep, reason, connect, macPrompt, submitMac, cancelMac,
   };

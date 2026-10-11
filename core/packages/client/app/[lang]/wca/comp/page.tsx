@@ -1,4 +1,5 @@
 'use client';
+import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import '@cuberoot/timer-ui/compact-select.css';
 
 /**
@@ -15,6 +16,8 @@ import { Suspense, useState, useEffect, useMemo, useCallback, useRef, useReducer
 import type { CSSProperties } from 'react';
 import { useQueryState, useQueryStates, parseAsStringEnum, parseAsInteger, parseAsString, parseAsArrayOf, parseAsBoolean } from 'nuqs';
 import Link from '@/components/AppLink';
+import { loadCalendarManifest, loadCalendarMonth } from '@/lib/competition-calendar';
+import type { CalendarManifest } from '@cuberoot/shared/competition-calendar';
 import HomeLink from '@/components/HomeLink';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, Star, Earth as GlobeIcon, List, LayoutGrid, BarChart3, CalendarDays, CalendarRange, HelpCircle, Users, Gauge, Percent, CaseSensitive, MapPin, Mountain, MoveVertical, MoveHorizontal, ArrowDownAZ, ArrowDownZA, X as XIcon } from 'lucide-react';
@@ -538,7 +541,7 @@ function CompModal({ comp, isZh, onClose, t, cancelled, loggedIn, followed, onTo
                     <span className="record-value mono">{formatWcaResult(r.v, r.e, r.k === 's' ? 'single' : 'average')}</span>
                     <Link prefetch={false} href={`/wca/persons/${r.p}`} className="record-person">
                       <SharedFlag iso2={personFlagIso2(r.p)} />
-                      <span>{displayCuberName(r.n, isZh)}</span>
+                      <span>{displayCuberName(r.n, isZh)}<WcaPersonTeamBadge wcaId={r.p} /></span>
                     </Link>
                   </li>
                 ))}
@@ -1399,6 +1402,10 @@ function CalendarPageInner() {
   const [mode, setMode] = useState<'top' | 'all'>('all');
   const [allComps, setAllComps] = useState<Competition[] | null>(null);
   const [allLoading, setAllLoading] = useState(false);
+  const [calendarManifest, setCalendarManifest] = useState<CalendarManifest | null>(null);
+  const [monthComps, setMonthComps] = useState<{ month: string; rows: Competition[] } | null>(null);
+  const calendarMonth = viewDate.getFullYear() + '-' + String(viewDate.getMonth() + 1).padStart(2, '0');
+  const globalSummary = mode === 'all' && !allComps ? calendarManifest : null;
   const [allError, setAllError] = useState<string | null>(null);
   // 权威双轮标记（dump rounds.linked_round_id → stats/comp_dual.json，键=完整 WCA event id）。
   // 列表的 dual 筛选/标记本吃 all_past_comps.json 烘焙的 dual_events，但那份由每日 stats CI 重生成、
@@ -1571,36 +1578,52 @@ function CalendarPageInner() {
       .catch(() => {});
   }, []);
 
-  // NOTE: All 模式懒加载 — 切到 All 且还没数据时读预生成 JSON（upcoming + past 合并，按 id 去重以 upcoming 为准）
+  // Calendar/cards download a complete visible window; list and recovery retain the full source.
   useEffect(() => {
-    if (mode !== 'all' || allComps || allLoading || !data) return;
+    if (allComps) { setAllLoading(false); return; }
+    if (mode !== 'all' || !data) return;
+    let cancelled = false;
     setAllLoading(true);
     setAllError(null);
-    const topMap = new Map(data.competitions.map((c) => [c.id, c.top_cubers]));
-    Promise.all([fetchAllUpcomingCompsJson(), fetchAllPastCompsJson()])
-      .then(([upcoming, past]) => {
-        const upcomingIds = new Set(upcoming.map((c) => c.id));
-        const merged: Competition[] = [
-          ...upcoming.map((w) => adaptAllComp(w, topMap)),
-          ...past.filter((p) => !upcomingIds.has(p.id)).map(adaptPastComp),
-        ];
-        setAllComps(merged);
-      })
-      .catch(() => setAllError(t('upcoming.allLoadFailed')))
-      .finally(() => setAllLoading(false));
-  }, [mode, allComps, allLoading, data, t]);
+    const topMap = new Map(data.competitions.map(c => [c.id, c.top_cubers]));
+    const loadFull = async () => {
+      const [upcoming, past] = await Promise.all([fetchAllUpcomingCompsJson(), fetchAllPastCompsJson()]);
+      const upcomingIds = new Set(upcoming.map(c => c.id));
+      if (!cancelled) setAllComps([
+        ...upcoming.map(c => adaptAllComp(c, topMap)),
+        ...past.filter(c => !upcomingIds.has(c.id)).map(adaptPastComp),
+      ]);
+    };
+    const load = async () => {
+      if (viewMode === 'list') return loadFull();
+      try {
+        const manifest = await loadCalendarManifest();
+        if (viewMode === 'globe') {
+          if (!cancelled) setCalendarManifest(manifest);
+          return;
+        }
+        const rows = await loadCalendarMonth(manifest, calendarMonth);
+        if (!cancelled) {
+          setCalendarManifest(manifest);
+          setMonthComps({ month: calendarMonth, rows: [...rows.upcoming.map(c => adaptAllComp(c, topMap)), ...rows.past.map(adaptPastComp)] });
+        }
+      } catch { if (!cancelled) await loadFull(); }
+    };
+    void load().catch(() => { if (!cancelled) setAllError(t('upcoming.allLoadFailed')); })
+      .finally(() => { if (!cancelled) setAllLoading(false); });
+    return () => { cancelled = true; };
+  }, [mode, allComps, data, viewMode, calendarMonth, t]);
 
-  // NOTE: 当前激活的比赛列表——All 模式下数据未到时暂用 Top 数据
   const activeComps: Competition[] = useMemo(() => {
-    const base = mode === 'all' && allComps ? allComps : (data?.competitions ?? []);
+    const base = mode === 'all' ? (allComps ?? (monthComps?.month === calendarMonth && viewMode !== 'list' ? monthComps.rows : [])) : (data?.competitions ?? []);
     if (Object.keys(compDual).length === 0) return base;
-    // 权威 comp_dual.json（完整 event id）→ 短码，覆盖 dual_events（含未结束比赛、不受 stats CI 滞后影响）
-    return base.map((c) => {
+    return base.map(c => {
       const full = compDual[c.id];
-      if (!full) return c;
-      return { ...c, dual_events: full.map((e) => WCA_EVENT_ID_TO_SHORT[e] ?? e) };
+      return full ? { ...c, dual_events: full.map(e => WCA_EVENT_ID_TO_SHORT[e] ?? e) } : c;
     });
-  }, [mode, allComps, data, compDual]);
+  }, [mode, allComps, monthComps, calendarMonth, viewMode, data, compDual]);
+
+  const competitionDataReady = mode !== 'all' || Boolean(allComps) || (viewMode !== 'list' && monthComps?.month === calendarMonth);
 
   // NOTE: 选中国家时整段隐藏其他国家（不是变淡）；country picker / yearMonthsMap 仍用 activeComps
   // 多选 token: 国家 iso2(小写) 或大洲 code(大写)。expandCountrySelection 把大洲展开为下属国家。
@@ -1614,6 +1637,7 @@ function CalendarPageInner() {
   // 每个项目在 activeComps 里实际出现过的最大轮次数。chip 循环时按这个上限截断，
   // 例如 FMC 最多 3 轮就只到 3，避免选出"FMC=4"这种永远空的过滤。
   const maxRoundsByEid = useMemo(() => {
+    if (globalSummary) return Object.fromEntries(Object.entries(globalSummary.maxRounds).map(([key, n]) => [SHORT_TO_EVENT_ID[key] ?? key, n]));
     const m: Record<string, number> = {};
     for (const c of activeComps) {
       if (!c.rounds) continue;
@@ -1623,25 +1647,27 @@ function CalendarPageInner() {
       }
     }
     return m;
-  }, [activeComps]);
+  }, [activeComps, globalSummary]);
 
   // 比赛天数过滤的循环上限：取数据里实际最长持续天数，封顶 6（>6 天的比赛在 WCA 几乎不存在，
   // 避免脏 end_date 把循环拉长）。chip 单击在 1..cap 间循环。
   const maxDays = useMemo(() => {
+    if (globalSummary) return globalSummary.maxDays;
     let m = 1;
     for (const c of activeComps) {
       const d = daysBetween(parseLocalDate(c.start_date), parseLocalDate(c.end_date || c.start_date)) + 1;
       if (d > m) m = d;
     }
     return Math.min(m, 6);
-  }, [activeComps]);
+  }, [activeComps, globalSummary]);
 
   // RegionPicker 国家列表(出现过的 iso2,按 count desc),组件保留传入顺序
   const countryOptions = useMemo(() => {
+    if (globalSummary) return globalSummary.countryOptions;
     const counts: Record<string, number> = {};
     for (const c of activeComps) counts[c.country] = (counts[c.country] || 0) + 1;
     return Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([iso2]) => iso2);
-  }, [activeComps]);
+  }, [activeComps, globalSummary]);
 
   // ── 选手静态索引 ────────────────────────────────────────────
   // personIndex: WCA ID → comp ID set;来自 top_cubers (~205) ∪ cn_upcoming_registrations (~1000)
@@ -1712,6 +1738,12 @@ function CalendarPageInner() {
   // 'event' 模式下顺带记下每场比赛具体是哪些项目的首秀(debutEventsByComp)，供列表行给对应项目格子标记。
   const { debutIds, debutEventsByComp } = useMemo(() => {
     if (debutMode === 'off') return { debutIds: null, debutEventsByComp: null };
+    if (globalSummary) {
+      const first = debutMode === 'country' ? globalSummary.firstCountry : globalSummary.firstEvent;
+      const byComp = debutMode === 'event' ? new Map<string, string[]>() : null;
+      for (const [event, id] of Object.entries(first)) if (byComp) byComp.set(id, [...byComp.get(id) ?? [], event]);
+      return { debutIds: new Set(Object.values(first)), debutEventsByComp: byComp };
+    }
     const first = new Map<string, Competition>();
     const isEarlier = (c: Competition, ex: Competition | undefined) =>
       !ex || c.start_date < ex.start_date || (c.start_date === ex.start_date && c.id < ex.id);
@@ -1736,7 +1768,7 @@ function CalendarPageInner() {
       }
     }
     return { debutIds: ids, debutEventsByComp: byComp };
-  }, [debutMode, activeComps]);
+  }, [debutMode, activeComps, globalSummary]);
 
   // NOTE: 不匹配的比赛直接从日历中消失（不再"变淡"），所以 displayedComps 走完整过滤链
   const isMatch = useCallback(
@@ -1841,6 +1873,7 @@ function CalendarPageInner() {
 
   // NOTE: year → months with at least one comp；年月滚筒仅从这里取可选项，空年/空月天然不出
   const yearMonthsMap = useMemo(() => {
+    if (globalSummary) return new Map(Object.entries(globalSummary.yearMonths).map(([year, months]) => [Number(year), new Set(months)]));
     const map = new Map<number, Set<number>>();
     for (const c of activeComps) {
       const d = parseLocalDate(c.start_date);
@@ -1851,7 +1884,7 @@ function CalendarPageInner() {
       set.add(mo);
     }
     return map;
-  }, [activeComps]);
+  }, [activeComps, globalSummary]);
 
   // NOTE: 当月摘要（基于开始日期在本月的比赛）
   const monthStats = useMemo(() => {
@@ -2291,7 +2324,7 @@ function CalendarPageInner() {
               />
             )}
             <span className="date-range-summary">
-              {(isZh
+              {!competitionDataReady ? '—' : (isZh
                                           ? `共 ${displayedComps.length.toLocaleString()} 场`
                                           : `${displayedComps.length.toLocaleString()} comps`)}
             </span>
@@ -2501,11 +2534,12 @@ function CalendarPageInner() {
         })()}
       </div>
 
+      {allLoading && mode === 'all' && viewMode !== 'globe' && <div className="mode-status" role="status">{t('upcoming.loading')}</div>}
       {allError && mode === 'all' && (
         <div className="mode-status is-error">{allError}</div>
       )}
 
-      {viewMode === 'list' && (
+      {viewMode === 'list' && competitionDataReady && (
         <CompList
           comps={displayedComps}
           isZh={isZh}
@@ -2523,7 +2557,7 @@ function CalendarPageInner() {
         />
       )}
 
-      {viewMode === 'card' && (
+      {viewMode === 'card' && competitionDataReady && (
         <div className="comp-card-view">
           {cardComps.length === 0 ? (
             <div className="comp-card-empty">{tr({ zh: '本月没有比赛', en: 'No competitions this month' })}</div>
@@ -2830,7 +2864,7 @@ function CalendarPageInner() {
         />
       )}
 
-      {(viewMode === 'calendar' || viewMode === 'card') && (
+      {(viewMode === 'calendar' || viewMode === 'card') && competitionDataReady && (
         <div className="legend">
           {viewMode === 'calendar' && calLayout === 'comp' && (
             <>

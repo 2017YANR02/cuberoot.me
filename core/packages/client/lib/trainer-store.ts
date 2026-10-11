@@ -306,6 +306,10 @@ const shuffle = <T,>(arr: T[]): T[] => {
 };
 
 interface TrainerState {
+  /** Mount one training surface; its cleanup cancels runtime work without saving a solve. */
+  activateSessionScope: () => () => void;
+  /** Consume a completed recap round once, including across surface remounts. */
+  claimRecapSweep: () => boolean;
   puzzle: AlgPuzzle | null;
   /** 会话 id:单集 = set slug;合练 = `mix:pll+zbll`(勾选 / 成绩按它单独存)。 */
   set: string | null;
@@ -557,6 +561,42 @@ export const trainerPool = (selected: string[], scope: string[] | null): string[
 const EMPTY_HIST: ScrambleHist<TrainerHistEntry> = { list: [], idx: -1 };
 
 export const useTrainerStore = create<TrainerState>((set, get) => {
+  // The store is shared by the legacy and timer-hosted surfaces. A released
+  // surface must not finish a request or a delayed timer action in its successor.
+  let scopeOwner: symbol | null = null;
+  let sessionActive = true;
+  let sessionEpoch = 0;
+  let roomEpoch = 0;
+  let roomRefilling = false;
+  let roomPendingSteps = 0;
+  let readyTimer: ReturnType<typeof setTimeout> | null = null;
+  let advanceTimer: ReturnType<typeof setTimeout> | null = null;
+  let recapSweepClaimed = false;
+  const completeRecapRound = () => {
+    if (get().recapRoundDone) return;
+    recapSweepClaimed = false;
+    set({ recapRoundDone: true });
+  };
+  const ownsSession = (epoch: number) => sessionActive && epoch === sessionEpoch;
+  const ownsRoomWork = (session: number, room: number) => ownsSession(session) && room === roomEpoch;
+  const cancelTimerWork = () => {
+    if (readyTimer !== null) clearTimeout(readyTimer);
+    if (advanceTimer !== null) clearTimeout(advanceTimer);
+    readyTimer = null;
+    advanceTimer = null;
+  };
+  const invalidateRoomWork = () => {
+    roomEpoch++;
+    roomRefilling = false;
+    roomPendingSteps = 0;
+  };
+  const invalidateSessionWork = () => {
+    sessionEpoch++;
+    invalidateRoomWork();
+    cancelTimerWork();
+    cstimerToken++;
+    resolving = new WeakMap();
+  };
   // 覆盖模式把 F2L 的 AUF × y 当成一个洗牌袋。袋内每种组合恰好一次；抽空再洗，
   // 避免原先两次独立 Math.random 在短期内反复撞到同一组合。
   let f2lAdjustmentBag: F2LFinalAdjustment[] = [];
@@ -574,14 +614,16 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
    */
   let cstimerToken = 0;
   const cstimerize = () => {
+    if (!sessionActive) return;
     const st = get();
     if (st.scrambleKind !== 'cstimer' || st.puzzle !== '3x3') return;
     const placeholder = st.currentScramble;
     const forKey = st.currentKey;
     if (!placeholder || !forKey) return;
     const token = ++cstimerToken;
+    const epoch = sessionEpoch;
     cstimerStyleScramble(placeholder).then(scr => {
-      if (!scr || token !== cstimerToken) return;
+      if (!ownsSession(epoch) || !scr || token !== cstimerToken) return;
       const cur = get();
       // 已换题 / 打乱已被重出 → 这条解作废;计时准备/进行中不换题面
       if (cur.currentKey !== forKey || cur.currentScramble !== placeholder) return;
@@ -598,15 +640,18 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
    */
   // 按本场的 case 对象去重,不要只按 key:离开旧会话时尚未结束的任务可能与新会话同 key,
   // 若共用一条 Promise,新页面会永远等旧页面的 resolver,甚至被旧结果串场。
-  const resolving = new WeakMap<AlgCase, Promise<void>>();
+  let resolving = new WeakMap<AlgCase, Promise<void>>();
   const fillCase = (c: AlgCase): Promise<void> => {
+    if (!sessionActive) return Promise.resolve();
     const resolver = get().caseResolver;
     if (!resolver || c.setup.trim()) return Promise.resolve();
     const k = caseKey(c);
     const hit = resolving.get(c);
     if (hit) return hit;
+    const epoch = sessionEpoch;
     const p = resolver(c)
       .then(r => {
+        if (!ownsSession(epoch)) return;
         if (!r) {
           set(st => ({ caseResolveErrors: { ...st.caseResolveErrors, [k]: true } }));
           return;
@@ -622,10 +667,11 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
         });
       })
       .catch(() => {
+        if (!ownsSession(epoch)) return;
         // 算不出就留空并显式报错:UI 给重试入口,绝不编一条假的或偷偷跳题。
         set(st => ({ caseResolveErrors: { ...st.caseResolveErrors, [k]: true } }));
       })
-      .finally(() => { resolving.delete(c); });
+      .finally(() => { if (resolving.get(c) === p) resolving.delete(c); });
     resolving.set(c, p);
     return p;
   };
@@ -739,13 +785,17 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
 
   /** 屏上这三条(当前 + 预抽两条)里打乱还空着的,解出来补上。 */
   const fillPending = () => {
-    if (!get().caseResolver) return;
+    if (!sessionActive || !get().caseResolver) return;
+    const epoch = sessionEpoch;
     const st = get();
     const keys = [st.currentKey, st.peek?.key, st.peek2?.key].filter((k): k is string => !!k);
     for (const key of new Set(keys)) {
       const c = findCaseByKey(st.cases, key);
       if (!c) continue;
-      void fillCase(c).then(() => { patchScramble(key); cstimerize(); });
+      void fillCase(c).then(() => {
+        if (!ownsSession(epoch)) return;
+        patchScramble(key); cstimerize();
+      });
     }
   };
 
@@ -941,11 +991,6 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
 
   const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
 
-  /** 后台补领在途(闭包态:不进 state,免得为它多渲一次)。 */
-  let roomRefilling = false;
-  /** 阻塞领取在途时又点了几下 —— 回包后接着走,别把点击吞掉。 */
-  let roomPendingSteps = 0;
-
   /**
    * 一次原子领取最多 count 题,转成条目数组;只更新 roomClaimed / room 元信息,不落
    * current/peek/history。三条一屏一次占三格 = 一次网络往返 + 一次限流额度(旧后端只回单格,
@@ -954,24 +999,30 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
    */
   const roomClaimBatch = async (
     count: number,
-  ): Promise<{ cases: TrainerHistEntry[]; terminal?: 'done' | 'advanced' | 'error' }> => {
+  ): Promise<{ cases: TrainerHistEntry[]; terminal?: 'done' | 'advanced' | 'error' | 'stale' }> => {
     const st = get();
-    if (!st.room || !st.puzzle || count <= 0) return { cases: [] };
+    if (!sessionActive || !st.room || !st.puzzle || count <= 0) return { cases: [] };
+    const epoch = sessionEpoch;
+    const roomGeneration = roomEpoch;
+    const isCurrent = () => ownsRoomWork(epoch, roomGeneration)
+      && get().room?.code === st.room!.code && get().room?.round === st.room!.round;
     // 429(限流)/ 网络抖动是暂态失败,退避重试一次再认输 —— 认输也只报错,绝不能当「本轮领完」
     let res;
     for (let attempt = 0; ; attempt++) {
       try { res = await claimRoomBatch(st.room.code, st.room.round, count); break; }
       catch (e) {
+        if (!isCurrent()) return { cases: [], terminal: 'stale' };
         const msg = (e as Error).message;
         if (attempt === 0 && /rate limit|429|fetch|network|load failed/i.test(msg)) {
           await sleep(1500);
-          if (!get().room) return { cases: [], terminal: 'error' };
+          if (!isCurrent()) return { cases: [], terminal: 'stale' };
           continue;
         }
         set({ roomError: msg });
         return { cases: [], terminal: 'error' };
       }
     }
+    if (!isCurrent()) return { cases: [], terminal: 'stale' };
     const st2 = get();
     if (!st2.room || !st2.puzzle) return { cases: [], terminal: 'error' };
     if (res.kind === 'advanced') {
@@ -1052,7 +1103,9 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
    * setMultiScramble 开三条一屏后也调它:当前这屏立刻凑满,不必先切一次。
    */
   const roomRefill = async (): Promise<void> => {
-    if (roomRefilling) return;
+    if (!sessionActive || roomRefilling) return;
+    const epoch = sessionEpoch;
+    const roomGeneration = roomEpoch;
     const st = get();
     if (!st.room || st.roomBusy || st.currentKey == null) return;
     if (histForward(st.hist)) return;   // 回看历史中段:peek 恒代表队尾之后,不动
@@ -1063,6 +1116,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     roomRefilling = true;
     try {
       const { cases, terminal } = await roomClaimBatch(gap);
+      if (!ownsRoomWork(epoch, roomGeneration) || terminal === 'stale') return;
       const now = get();
       if (!now.room || now.room.code !== code) return;   // 期间退了房 / 换了房
       // 别人已开新一轮 ⟹ 手上这些是上一轮的,作废;下次点击照常领新一轮的
@@ -1071,7 +1125,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       if (terminal) { set({ roomError: prevError }); return; }
       set(spreadAhead([...roomAheadList(now), ...cases]));
     } finally {
-      roomRefilling = false;
+      if (ownsRoomWork(epoch, roomGeneration)) roomRefilling = false;
     }
   };
 
@@ -1083,7 +1137,9 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
    */
   const roomAdvance = async (steps: number): Promise<void> => {
     const st0 = get();
-    if (!st0.room) return;
+    if (!sessionActive || !st0.room) return;
+    const epoch = sessionEpoch;
+    const roomGeneration = roomEpoch;
     if (st0.timerState !== TimerState.NOT_RUNNING && st0.timerState !== TimerState.STOPPING) return;
 
     let need = steps;
@@ -1114,6 +1170,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
         // 于是这次会多领几条 —— 只是预取变深一点,下次 refill 自然不再补,不会失控。
         const toClaim = need + roomAheadTarget(st) - roomAheadList(st).length;
         const { cases: fresh, terminal } = await roomClaimBatch(Math.max(1, toClaim));
+        if (!ownsRoomWork(epoch, roomGeneration) || terminal === 'stale') return;
         if (terminal === 'advanced') { set({ peek: null, peek2: null, roomBuf: [] }); continue; }
         // 领取失败(限流 / 断网 / 后端出错)绝不能冒充「本轮结束」—— 那个弹窗会骗用户点「继续
         // 下一轮」,而下一轮是真的会把全队进度重置的。只报错,题面原地不动,用户重试即可。
@@ -1127,24 +1184,31 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
           set(spreadAhead(ahead));
           return;
         }
-        if (!roomTake(need, ahead)) set({ recapRoundDone: true });
+        if (!roomTake(need, ahead)) completeRecapRound();
         return;
       }
     } finally {
-      set({ roomBusy: false });
-      const pending = roomPendingSteps;
-      roomPendingSteps = 0;
-      if (pending > 0) void roomAdvance(pending);
+      if (ownsRoomWork(epoch, roomGeneration)) {
+        set({ roomBusy: false });
+        const pending = roomPendingSteps;
+        roomPendingSteps = 0;
+        if (pending > 0) void roomAdvance(pending);
+      }
     }
   };
 
   /** 房间模式「继续下一轮」:请求开新一轮(CAS,第一个真开,其余读到已开的轮)→ 领第一题。 */
   const roomContinue = async (): Promise<void> => {
     const st0 = get();
-    if (!st0.room || st0.roomBusy) return;
+    if (!sessionActive || !st0.room || st0.roomBusy) return;
+    // Any background refill still belongs to the previous round.
+    invalidateRoomWork();
+    const epoch = sessionEpoch;
+    const roomGeneration = roomEpoch;
     set({ roomBusy: true, roomError: null });
     try {
       const res = await nextRoundRoom(st0.room.code, st0.room.round);
+      if (!ownsRoomWork(epoch, roomGeneration)) return;
       const st = get();
       if (!st.room) return;
       set({
@@ -1157,6 +1221,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       });
       void roomAdvance(1);
     } catch (e) {
+      if (!ownsRoomWork(epoch, roomGeneration)) return;
       set({ roomBusy: false, roomError: (e as Error).message });
     }
   };
@@ -1204,6 +1269,8 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       roundEndPromptRequired?: boolean;
     },
   ) => {
+    if (!sessionActive) return;
+    invalidateSessionWork();
     resetF2LAdjustmentBag();
     const persisted = loadPersisted(puzzle, sessionId);
     const prefs = loadPrefs();
@@ -1257,6 +1324,37 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
   };
 
   return {
+    claimRecapSweep: () => {
+      if (!sessionActive || !get().recapRoundDone || recapSweepClaimed) return false;
+      recapSweepClaimed = true;
+      return true;
+    },
+    activateSessionScope: () => {
+      const owner = Symbol('trainer-surface');
+      // Acquiring a new surface also makes an overlapping old cleanup harmless.
+      invalidateSessionWork();
+      scopeOwner = owner;
+      sessionActive = true;
+      set({ timerState: TimerState.NOT_RUNNING, timerStarted: 0, roomBusy: false });
+      afterDraw();
+      return () => {
+        if (scopeOwner !== owner) return;
+        scopeOwner = null;
+        invalidateSessionWork();
+        sessionActive = false;
+        const st = get();
+        const resume = st.room ? resumeRoundFromHist(st) : null;
+        set({
+          timerState: TimerState.NOT_RUNNING, timerStarted: 0,
+          room: null, roomBusy: false, roomClaimed: 0, roomError: null, roomBuf: [],
+          ...(st.room ? {
+            hist: EMPTY_HIST, currentKey: null, currentName: null, currentScramble: null,
+            peek: null, peek2: null, recapRoundDone: false,
+            ...(resume ?? { recapQueue: [], recapPos: 0, recapSig: '' }),
+          } : {}),
+        });
+      };
+    },
     puzzle: null,
     set: null,
     sets: null,
@@ -1306,7 +1404,12 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
 
     loadSession: (puzzle, setSlug, cases, opts) => startSession(puzzle, setSlug, null, cases, opts),
 
-    resolveCase: (c) => fillCase(c).then(() => { patchScramble(caseKey(c)); }),
+    resolveCase: (c) => {
+      const epoch = sessionEpoch;
+      return fillCase(c).then(() => {
+        if (ownsSession(epoch)) patchScramble(caseKey(c));
+      });
+    },
 
     loadMixSession: (puzzle, sets, cases) => {
       const members = [...sets].sort();
@@ -1525,6 +1628,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     },
 
     nextScramble: () => {
+      if (!sessionActive) return;
       const st = get();
       // 计时进行中 / 蓄力中不换题;STOPPING 放行(stopTimer 收尾就是在这个状态里出下一题)
       if (st.timerState !== TimerState.NOT_RUNNING && st.timerState !== TimerState.STOPPING) return;
@@ -1548,7 +1652,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       //(「先不了」= acked,停在原地不再弹,再点一下直接进新一轮)。
       if (!st.recapRoundAcked && atRoundTail(st)) {
         if (st.showRecapRoundEnd || st.roundEndPromptRequired) {
-          set({ recapRoundDone: true });
+          completeRecapRound();
           return;
         }
       }
@@ -1559,6 +1663,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     },
 
     continueRecapRound: () => {
+      if (!sessionActive) return;
       if (!get().recapRoundDone) return;
       if (get().room) { void roomContinue(); return; } // 房间:请求开新一轮再领第一题
       // 单机:预抽的 peek 已经是新一轮的第 1 个(draw 在队列走完时就重洗了),扶正即可。
@@ -1595,6 +1700,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     },
 
     createRoom: async () => {
+      if (!sessionActive) return { ok: false, error: 'cancelled' };
       const st = get();
       if (st.doubleZbll) return { ok: false, error: 'Double ZBLL uses a local pair queue' };
       if (!st.puzzle || !st.set) return { ok: false, error: 'no set loaded' };
@@ -1618,10 +1724,14 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       const order: RoomOrder = useQueue ? 'seq' : st.recapOrder;
       const start = useQueue ? Math.min(curPos - 1, keys.length - 1) : 0;
       if (keys.length === 0) return { ok: false, error: 'empty pool' };
+      invalidateRoomWork();
+      const epoch = sessionEpoch;
+      const roomGeneration = roomEpoch;
       set({ roomBusy: true, roomError: null });
       try {
         // 房间只收 [A-Za-z0-9_-] 的 set id;合练 id 走 roomSetId 净化(建/加入同一函数)
         const info = await apiCreateRoom(st.puzzle, roomSetId(st.set), order, keys, start);
+        if (!ownsRoomWork(epoch, roomGeneration)) return { ok: false, error: 'cancelled' };
         set({
           mode: 'recap',
           room: { code: info.code, order: info.order, round: info.round, total: info.total },
@@ -1632,25 +1742,39 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
         void roomAdvance(1);
         return { ok: true, code: info.code };
       } catch (e) {
+        if (!ownsRoomWork(epoch, roomGeneration)) return { ok: false, error: 'cancelled' };
         set({ roomBusy: false, roomError: (e as Error).message });
         return { ok: false, error: (e as Error).message };
       }
     },
 
     joinRoom: async (rawCode) => {
+      if (!sessionActive) return { ok: false, error: 'cancelled' };
       const st = get();
-      if (st.doubleZbll) return { ok: false, error: 'Double ZBLL uses a local pair queue' };
+      if (st.doubleZbll) {
+        const error = 'Double ZBLL uses a local pair queue';
+        set({ roomError: error });
+        return { ok: false, error };
+      }
       const code = rawCode.trim();
-      if (!/^\d{4}$/.test(code)) return { ok: false, error: 'invalid code' };
+      if (!/^\d{4}$/.test(code)) {
+        set({ roomError: 'invalid code' });
+        return { ok: false, error: 'invalid code' };
+      }
       if (!st.puzzle || !st.set) return { ok: false, error: 'no set loaded' };
+      invalidateRoomWork();
+      const epoch = sessionEpoch;
+      const roomGeneration = roomEpoch;
       set({ roomBusy: true, roomError: null });
       try {
         const info = await apiGetRoom(code);
+        if (!ownsRoomWork(epoch, roomGeneration)) return { ok: false, error: 'cancelled' };
         // 房间绑定 (puzzle,set):不同集不能混(领来的 case_key 不在本集里)。
         // 合练房间的 set 是净化后的合练 id ⟹ 成员集合不同的两场自然对不上,不会串。
         if (info.puzzle !== st.puzzle || info.set !== roomSetId(st.set)) {
-          set({ roomBusy: false });
-          return { ok: false, error: `room is for ${info.puzzle}/${info.set}` };
+          const error = `room is for ${info.puzzle}/${info.set}`;
+          set({ roomBusy: false, roomError: error });
+          return { ok: false, error };
         }
         set({
           mode: 'recap',
@@ -1662,23 +1786,27 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
         void roomAdvance(1);
         return { ok: true };
       } catch (e) {
+        if (!ownsRoomWork(epoch, roomGeneration)) return { ok: false, error: 'cancelled' };
         set({ roomBusy: false, roomError: (e as Error).message });
         return { ok: false, error: (e as Error).message };
       }
     },
 
     leaveRoom: () => {
+      invalidateRoomWork();
+      cancelTimerWork();
       const st = get();
       // 房间里刷过的不该白刷:退房后接着本机这一轮走(见 resumeRoundFromHist)。
       // 不在房间里时(测试 / UI 复位调它)照旧整轮重来。
       const resume = st.room ? resumeRoundFromHist(st) : null;
       set({
+        timerState: TimerState.NOT_RUNNING, timerStarted: 0,
         room: null, roomBusy: false, roomClaimed: 0, roomError: null, recapRoundDone: false, roomBuf: [],
         hist: EMPTY_HIST, currentKey: null, currentName: null, currentScramble: null, peek: null, peek2: null,
         ...(resume ?? { recapQueue: [], recapPos: 0, recapSig: '' }),
       });
       // 回本机模式:按当前选择重新出题
-      if (trainerPool(get().selected, get().scope).length > 0 && get().timerState === TimerState.NOT_RUNNING) {
+      if (sessionActive && trainerPool(get().selected, get().scope).length > 0) {
         pickFresh();
       }
     },
@@ -1686,11 +1814,14 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     roomAdvance,
 
     getTimerReady: (delayMs) => {
-      if (get().timerState !== TimerState.NOT_RUNNING) return;
+      if (!sessionActive || get().timerState !== TimerState.NOT_RUNNING) return;
+      const epoch = sessionEpoch;
+      if (readyTimer !== null) clearTimeout(readyTimer);
       if (delayMs > 0) {
         set({ timerState: TimerState.AWAITING_READY });
-        setTimeout(() => {
-          if (get().timerState === TimerState.AWAITING_READY) {
+        readyTimer = setTimeout(() => {
+          readyTimer = null;
+          if (ownsSession(epoch) && get().timerState === TimerState.AWAITING_READY) {
             set({ timerState: TimerState.READY });
           }
         }, delayMs);
@@ -1700,10 +1831,14 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     },
 
     startTimer: (at) => {
+      if (!sessionActive) return;
+      if (readyTimer !== null) clearTimeout(readyTimer);
+      readyTimer = null;
       set({ timerStarted: at ?? Date.now(), timerState: TimerState.RUNNING });
     },
 
     stopTimer: (at) => {
+      if (!sessionActive || get().timerState !== TimerState.RUNNING) return;
       const { puzzle, set: setSlug, solves, currentKey, currentName, currentScramble, timerStarted } = get();
       if (!puzzle || !setSlug) return;
       // Never negative: a device clock that disagrees with ours by more than the
@@ -1734,10 +1869,22 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       // 停表即自动出下一题(cstimer 式):把预抽的下一题(peek)扶正为 current 再预抽一条。
       // 主屏随之显示「下一个要 solve 的把 + 它的图」,计时数字停留在刚做完这把的成绩 ——
       // 不然连续 solve 时 current/peek 都不动,屏上冻住。
-      setTimeout(() => get().nextScramble(), 0);
+      const epoch = sessionEpoch;
+      if (advanceTimer !== null) clearTimeout(advanceTimer);
+      advanceTimer = setTimeout(() => {
+        advanceTimer = null;
+        if (ownsSession(epoch)) get().nextScramble();
+      }, 0);
     },
 
-    setTimerState: (s) => set({ timerState: s }),
+    setTimerState: (s) => {
+      if (!sessionActive && s !== TimerState.NOT_RUNNING) return;
+      if (s !== TimerState.AWAITING_READY && readyTimer !== null) {
+        clearTimeout(readyTimer);
+        readyTimer = null;
+      }
+      set({ timerState: s });
+    },
 
     setObservingIdx: (i) => set({ observingIdx: i }),
 

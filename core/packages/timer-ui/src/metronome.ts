@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react';
-import { clampBpm, DEFAULT_METRONOME_STATE as DEFAULTS, type MetronomeState } from '@cuberoot/shared/timer';
+import { clampBpm, DEFAULT_METRONOME_STATE as DEFAULTS, type MetronomeState } from '@cuberoot/shared/timer/metronome-settings';
 export interface BeatEvent { index: number; accent: boolean }
 
 /** One audio-clock scheduler per host; persistence and mounting stay with the host. */

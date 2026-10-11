@@ -9,7 +9,8 @@
 // 不是我们自己维护的名单 —— 要加自己的表得去上游 nbwzx/blddb 提。
 
 import { useEffect, useMemo, useState, type JSX } from 'react';
-import { useQueryState, parseAsStringEnum } from 'nuqs';
+import { parseAsStringEnum } from 'nuqs';
+import { useTrainingQueryState as useQueryState } from '@/lib/training-host';
 import { ExternalLink } from 'lucide-react';
 import Link from '@/components/AppLink';
 import { SearchInput } from '@/components/SearchInput';

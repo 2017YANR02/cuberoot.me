@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
-import { usePathname } from 'next/navigation';
-import { parseAsString, parseAsStringEnum, useQueryStates } from 'nuqs';
+import { useTrainingPathname as usePathname, useTrainingQueryStates as useQueryStates, useTrainingHref } from '@/lib/training-host';
+import { parseAsString, parseAsStringEnum } from 'nuqs';
 import {
   DndContext,
   KeyboardSensor,
@@ -110,6 +110,7 @@ function SortableCase({
 export default function AlgTimeAttackPage() {
   const { i18n } = useTranslation();
   const pathname = usePathname();
+  const trainingHref = useTrainingHref();
   const user = useAuthUser();
   const [{ puzzle, set: requestedSetSlug, scope }, setQuery] = useQueryStates({
     puzzle: parseAsStringEnum<AlgPuzzle>([...ALG_PUZZLES]).withDefault('3x3'),
@@ -262,7 +263,7 @@ export default function AlgTimeAttackPage() {
     saved: tr({ zh: '已保存', en: 'Saved' }),
     error: tr({ zh: '本机已保存，云同步失败', en: 'Saved locally; cloud sync failed' }),
   };
-  const returnPath = `${pathname}?puzzle=${encodeURIComponent(puzzle)}&set=${encodeURIComponent(setSlug)}${scope ? `&scope=${encodeURIComponent(scope)}` : ''}`;
+  const returnPath = trainingHref(`${pathname}?puzzle=${encodeURIComponent(puzzle)}&set=${encodeURIComponent(setSlug)}${scope ? `&scope=${encodeURIComponent(scope)}` : ''}`);
 
   return (
     <main className="alg-root alg-time-attack-page">

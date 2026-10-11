@@ -12,7 +12,7 @@
  */
 import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from '@/components/AppLink';
-import { useParams, useRouter } from 'next/navigation';
+import { useTrainingParams as useParams, useTrainingRouter as useRouter, useTrainingQueryState as useQueryState } from '@/lib/training-host';
 import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
@@ -37,7 +37,7 @@ import { FaceletsCube } from '@/components/FaceletsCube';
 import { categoryCardFacelets } from '@/lib/lsll/model';
 import '../alg.css';
 import { tr } from '@/i18n/tr';
-import { parseAsBoolean, useQueryState } from 'nuqs';
+import { parseAsBoolean } from 'nuqs';
 import Sq1ToolNav from '@/components/Sq1ToolNav';
 import SortableCard from '@/components/SortableCard';
 import { reorderAlgCatalog } from '@/lib/alg_sets_api';

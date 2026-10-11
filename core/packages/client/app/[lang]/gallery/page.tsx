@@ -4,14 +4,17 @@ import { useCallback, useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import AppLink from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
-import MemberProfileEditor from '@/components/MemberProfileEditor';
+import dynamic from 'next/dynamic';
 import { useMembership } from '@/hooks/useMembership';
 import { tr, useLang } from '@/i18n/tr';
 import { nextQuery, useAuthStore } from '@/lib/auth-store';
 import { displayCuberName } from '@/lib/cuber-name-display';
+import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import { uploadedImageUrl } from '@/lib/image-upload';
 import { getPublicMemberProfile, listPublicMembers } from '@/lib/membership-api';
 import './gallery.css';
+
+const MemberProfileEditor = dynamic(() => import('@/components/MemberProfileEditor'));
 
 interface GalleryPhoto {
   id: number;
@@ -104,11 +107,20 @@ export default function GalleryPage() {
                   <AppLink href={`/wca/persons/${photo.wcaId}`} prefetch={false}>
                     <img
                       src={uploadedImageUrl(photo.id)}
+                      srcSet={`${uploadedImageUrl(photo.id)}/thumb/512?v=1 512w, ${uploadedImageUrl(photo.id)}/thumb/1024?v=1 1024w`}
+                      onError={event => {
+                        const image = event.currentTarget;
+                        if (image.srcset) {
+                          image.removeAttribute('srcset');
+                          image.src = uploadedImageUrl(photo.id);
+                        }
+                      }}
+                      sizes="(max-width: 520px) calc((100vw - 40px) / 2), (max-width: 715px) calc((100vw - 44px) / 2), (max-width: 947px) calc((100vw - 56px) / 3), 263px"
                       alt={`${name} ${photo.index + 1}`}
                       loading="lazy"
                       decoding="async"
                     />
-                    <figcaption>{name}</figcaption>
+                    <figcaption>{name}<WcaPersonTeamBadge wcaId={photo.wcaId} /></figcaption>
                   </AppLink>
                 </figure>
               );

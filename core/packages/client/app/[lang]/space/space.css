@@ -29,7 +29,9 @@
 .space-modes > .space-control[aria-pressed="true"] { color: var(--accent); background: var(--accent-soft); }
 .space-row { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
 .space-top-tools { position: absolute; top: 12px; left: 32px; right: 32px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; pointer-events: none; }
-.space-top-tools > * { pointer-events: auto; background: var(--space-surface); backdrop-filter: blur(12px); border-radius: 6px; }
+.space-top-tools > * { pointer-events: auto; position: relative; z-index: 0; border-radius: 6px; }
+/* Paint glass beside the puzzle menu, never on its ancestor. */
+.space-top-tools > *::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; border-radius: inherit; background: var(--space-surface); -webkit-backdrop-filter: var(--glass-filter); backdrop-filter: var(--glass-filter); }
 .cube-space .space-add { color: var(--accent); }
 .space-top-tools { z-index: 3; }
 .space-inspector { z-index: 2; }

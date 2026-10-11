@@ -1,6 +1,6 @@
 'use client';
 
-import { useParams } from 'next/navigation';
+import { useTrainingParams as useParams } from '@/lib/training-host';
 import AlgCategoryView from '@/components/AlgCategoryView';
 import '../../alg.css';
 

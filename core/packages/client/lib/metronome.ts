@@ -1,7 +1,7 @@
 import { createMetronome } from '@cuberoot/timer-ui/metronome';
-import { ACCENT_CHOICES, clampBpm, DEFAULT_METRONOME_STATE as DEFAULTS, type MetronomeState } from '@cuberoot/shared/timer';
+import { ACCENT_CHOICES, clampBpm, DEFAULT_METRONOME_STATE as DEFAULTS, type MetronomeState } from '@cuberoot/shared/timer/metronome-settings';
 import { persistItem } from '@/lib/safe-storage';
-export { BPM_MIN, BPM_MAX, ACCENT_CHOICES, clampBpm, bpmToTps, tpsToBpm, type MetronomeState } from '@cuberoot/shared/timer';
+export { BPM_MIN, BPM_MAX, ACCENT_CHOICES, clampBpm, bpmToTps, tpsToBpm, type MetronomeState } from '@cuberoot/shared/timer/metronome-settings';
 export type { BeatEvent } from '@cuberoot/timer-ui/metronome';
 const KEY = 'cuberoot.metronome.v1';
 /**

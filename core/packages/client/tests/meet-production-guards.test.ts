@@ -17,7 +17,7 @@ const server = readFileSync(SERVER, 'utf8');
 const css = readFileSync(join(MEET, 'meet.css'), 'utf8');
 const controls = readFileSync(join(MEET, 'MeetControlBar.tsx'), 'utf8');
 const stage = readFileSync(join(MEET, 'MeetStage.tsx'), 'utf8');
-const page = readFileSync(join(MEET, 'page.tsx'), 'utf8');
+const page = readFileSync(join(MEET, 'MeetClient.tsx'), 'utf8');
 
 describe('/meet production invariants', () => {
   it('puts the hard participant cap in the token instead of pre-creating empty rooms', () => {

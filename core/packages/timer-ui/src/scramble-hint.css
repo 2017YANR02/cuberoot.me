@@ -1,0 +1,5 @@
+/* Shared by the timer strip and algorithm trainer via TimerScrambleHintText. */
+.scramble-move[data-hint='done'] { color: var(--faint-foreground); }
+.scramble-move[data-hint='pending'] { color: var(--scramble-fg, var(--foreground)); }
+.scramble-move[data-hint='current'] { color: var(--accent); }
+.scramble-copied-tail { position: relative; white-space: nowrap; }

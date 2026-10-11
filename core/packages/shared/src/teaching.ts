@@ -1580,3 +1580,66 @@ export interface TeachingPlatformAssertionV1 {
   exp: number;
   jti: string;
 }
+
+// Enterprise verification is independent of tenant membership and brand authorization.
+export type EnterpriseVerificationStatus = 'awaiting_transfer' | 'pending_review' | 'verified' | 'rejected' | 'expired' | 'revoked';
+export interface EnterpriseBankRecipient {
+  enabled: boolean;
+  accountName: string;
+  bankName: string;
+  accountNumber: string;
+  refundNotice: string;
+}
+export interface EnterpriseVerificationDraft {
+  legalName: string;
+  creditCode: string;
+  representative: string;
+  contactName: string;
+  contactPhone: string;
+  payerAccount: string;
+  payerBank: string;
+  licenseDataUrl: string;
+  declaration: true;
+}
+export interface EnterpriseVerificationApplication {
+  id: string;
+  organizationId: string;
+  organizationSlug: string;
+  legalName: string;
+  creditCode: string;
+  status: EnterpriseVerificationStatus;
+  amountMinor: number;
+  transferReference: string;
+  expiresAt: string;
+  createdAt: string;
+  reviewNote: string | null;
+  refundedAt: string | null;
+  receivedAt: string | null;
+  recipient?: EnterpriseBankRecipient;
+}
+export interface EnterpriseVerificationState {
+  available: boolean;
+  application: EnterpriseVerificationApplication | null;
+}
+export interface EnterpriseVerificationReviewDetails extends EnterpriseVerificationDraft {
+  recipient: EnterpriseBankRecipient;
+  receipt?: EnterpriseBankReceipt;
+  refundReference?: string;
+  reviewEvidence?: { decision: string; note: string; registryChecked: boolean; licenseChecked: boolean; authorizationChecked: boolean };
+}
+export interface EnterpriseBankReceipt {
+  transactionId: string;
+  payerName: string;
+  payerAccount: string;
+  amountMinor: number;
+  reference: string;
+  receivedAt: string;
+}
+export interface EnterpriseVerificationReview {
+  decision: 'verify' | 'reject';
+  note: string;
+  registryChecked: boolean;
+  licenseChecked: boolean;
+  authorizationChecked: boolean;
+  receipt?: EnterpriseBankReceipt;
+}

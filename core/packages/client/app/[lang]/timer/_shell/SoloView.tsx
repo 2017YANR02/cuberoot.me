@@ -12,7 +12,7 @@ import { apiUrl as replayApiUrl } from '@/lib/api-base';
 import { timerStatsPanelLabels } from '@cuberoot/timer-ui';
 import { loadAllSessionData, deleteSessionSolves } from '../_lib/storage/db';
 import { TIMER_DEVICE_CENTER_LABELS } from '@cuberoot/timer-ui';
-import { SCRAMBLE_222_TYPE_CATALOG, isScramble222Type, TIMER_333_SCRAMBLE_TYPES, timerPuzzleSelection, timerHidesRunningUi, upsertNetRecordedSolve } from '@cuberoot/shared/timer';
+import { timerHidesRunningUi, upsertNetRecordedSolve } from '@cuberoot/shared/timer';
 import { useTimerRound, TimerTargetTime, useTimerTargetFeedback } from '@cuberoot/timer-ui';
 
 import { TimerWorkspace, useTimerWideLayout } from '@cuberoot/timer-ui';
@@ -38,7 +38,6 @@ import { isMiniProgramWebView } from '@/lib/miniprogram-bridge';
 import { useTranslation } from 'react-i18next';
 import { useQueryState, parseAsBoolean, parseAsString, parseAsStringEnum } from 'nuqs';
 import {
-  Settings as SettingsIcon,
   AlertTriangle,
   ArrowLeft,
   Box,
@@ -78,6 +77,7 @@ import { preScrambleFor } from '../_lib/scramble/pre_scramble';
 import { timerSmartCubeTrainingOrientation, timerSmartCubeAttemptScramble } from '@cuberoot/shared/timer';
 import { applyOrientationPrefix } from '@/lib/cube-orientation';
 import { use222Mode, use222Type } from '@/lib/scramble-222-mode';
+import TimerTrainingMenu from './TimerTrainingMenu';
 import {
   isCube222StateType,
   resolveTimerWcaSourceCore,
@@ -106,6 +106,7 @@ import {
   timerPrintScrambleSource,
   timerScrambleAllowsEmptySlot,
   timerScrambleCapability,
+  timerSupportsRealWcaScrambles,
   timerScrambleClickEffect,
   timerScrambleStatus,
   timerTracksTrainerCase,
@@ -184,9 +185,7 @@ import {
 import {
   parseManualScrambleQueue,
   takeManualScramble,
-  TIMER_EVENT_PICKER_GROUPS,
   SmartCubeAttemptProducer,
-  timerEventIdFromSelector,
 } from '@cuberoot/shared/timer';
 import { AutoRecapDismissGesture, shouldAutoRecap } from '../_lib/reconstruct/recap';
 import {
@@ -246,7 +245,6 @@ import {
   TimerDeviceCenter,
   TimerInfoToast,
   TimerAttemptSplitStatus,
-  TimerPuzzlePicker,
   TimerPrintController,
   TimerScrambleStrip,
   TimerWcaScrambleProgress,
@@ -258,7 +256,6 @@ import {
   browserPrintTransport,
   useGestureWheel,
   type TimerPrintControllerHandle,
-  type TimerPuzzlePickerGroup,
 } from '@cuberoot/timer-ui';
 import SolveRecapPlaceholder from '@cuberoot/timer-ui/solve-recap-placeholder';
 import '@cuberoot/timer-ui/solve-recap.css';
@@ -569,7 +566,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // 2x2 口径(WCA 11 步 ↔ 最优/Q|H):与 /scramble/gen 同一个全站设置(Scramble222ModePicker)。
   // 真题:optimal → 服务端 God's-number 最优等态(复用 optimal_scramble);随机状态 → 见 scramble222。
   const [mode222] = use222Mode();
-  const [type222, setType222] = use222Type();
+  const [type222] = use222Type();
   const wca222Type = event === '222' && settings.scrambleSource === 'wca'
     && isCube222StateType(type222) ? type222 : undefined;
   const wca222TypeSig = wca222Type ?? '';
@@ -2292,6 +2289,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const handlePasteReplay = useCallback(() => setReplayImportOpen(true), []);
 
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [practiceSettingsOpen, setPracticeSettingsOpen] = useState(false);
   const closeSettings = useCallback(() => setSettingsOpen(false), []);
   const [bluetoothOpen, setBluetoothOpen] = useState(false);
   const [bluetoothConnectAttempt, setBluetoothConnectAttempt] = useState<Promise<void> | null>(null);
@@ -2432,7 +2430,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     return () => window.removeEventListener('keydown', onKey);
   }, [panelFullscreen, sessionSwitcherOpen]);
 
-  const anyModalOpen = otherModalOpen || hintsSheetOpen;
+  const anyModalOpen = otherModalOpen || hintsSheetOpen || practiceSettingsOpen;
   const anyModalOpenRef = useRef(anyModalOpen);
   useEffect(() => { anyModalOpenRef.current = anyModalOpen; }, [anyModalOpen]);
   useAutoReady({
@@ -2708,43 +2706,20 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     return Math.round(ms / 10);
   }, [rankBadgePhase, timer.lastMs, lastPenalty, settings.timingEnabled]);
 
-  const eventPickerGroups = useMemo<readonly TimerPuzzlePickerGroup[]>(() => (
-    TIMER_EVENT_PICKER_GROUPS.map((group) => ({
-      id: group.id,
-      label: [group.nameEn, group.nameZh][Number(isZh)],
-      items: group.items.map((item) => ({
-        id: item.id,
-        label: [item.nameEn, item.nameZh][Number(isZh)],
-        iconClass: item.iconClass,
-        textLabel: item.textLabel,
-      })),
-    }))
-  ), [isZh]);
-
-  const selectedPuzzle = event === 'eg1' || event === 'eg2' ? '222' : timerPuzzleSelection(event).puzzle;
   const scrambleCapability = timerScrambleCapability(event);
   const nativeRandomMoves = scrambleCapability?.kind === 'shared'
     && scrambleCapability.provider === 'native-random-move';
-  // Retained WCA settings already use local generation for these puzzles. Show
-  // that source without changing the preference used when returning to WCA.
-  const effectiveScrambleSource = nativeRandomMoves && settings.scrambleSource === 'wca'
+  const realSourceAvailable = timerSupportsRealWcaScrambles(event) && !(event === '222' && type222 === '3gen');
+  const effectiveScrambleSource = !realSourceAvailable && settings.scrambleSource === 'wca'
     ? 'random' : settings.scrambleSource;
-  const randomSourceLabel = nativeRandomMoves
-    ? tr({ zh: '随机转动', en: 'Random moves' })
-    : tr({ zh: '随机', en: 'Random' });
+  useEffect(() => {
+    // A formula deep link cannot consume an official pool that does not exist.
+    // Keep its content identity and make all source consumers use the real fallback.
+    if (!realSourceAvailable && settings.scrambleSource === 'wca') updateSettings({ scrambleSource: 'random' });
+  }, [realSourceAvailable, settings.scrambleSource]);
   const randomSourceOptionLabel = nativeRandomMoves
     ? tr({ zh: '练习用随机转动', en: 'Practice random moves' })
     : tr({ zh: '随机状态', en: 'Random state' });
-  const trainingEvents: readonly string[] = selectedPuzzle === '333'
-    ? TIMER_333_SCRAMBLE_TYPES.filter((type) => type.event !== '333').map((type) => type.event)
-    : selectedPuzzle === '222' ? ['eg1', 'eg2'] : [];
-  const trainingItems = selectedPuzzle === '222'
-    ? SCRAMBLE_222_TYPE_CATALOG.filter((item) => item.id !== 'full').map((item) => ({ value: item.id, label: tr(item.label) }))
-    : trainingEvents.flatMap((id) => {
-    const item = eventPickerGroups.flatMap((group) => group.items).find((item) => item.id === id);
-    return item ? [{ value: id, label: item.label }] : [];
-  });
-
   // 「难度」开关的挂点。开关的可用性归打乱来源那两个配置组件(只有它们知道当前项目 / 当前
   // 比赛能不能按难度筛),但它属于顶栏这排常驻控件 —— 所以状态留在原处,DOM 用 portal 送上来。
   // 用 state 而非 ref:portal 的目标必须在子组件渲染时已存在,ref.current 那一帧还是 null。
@@ -3014,90 +2989,38 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           controls: (
           <>
           {playersControl}
-          <TimerPuzzlePicker
-            disabled={!sourceControlsEnabled}
-            selectedEvent={event}
-            groups={eventPickerGroups}
-            onSelect={(id) => {
-              const nextEvent = timerEventIdFromSelector(id);
-              if (nextEvent) selectEvent(nextEvent);
-            }}
-            puzzleLabel={tr({ zh: '项目', en: 'Puzzle' })}
-            scrambleTypeLabel={tr({ zh: '打乱类型', en: 'Scramble type' })}
-            combineScrambleTypes
-            dataNoTimer
-          />
-          {/* 收起态用短名称,菜单保留完整名称。放在项目选择器右侧,和「人数」下拉同一组。 */}
+          <TimerTrainingMenu currentEvent={event} onTimerEventChange={selectEvent}
+            disabled={!sourceControlsEnabled} showProject
+            onAdvancedSettings={() => setSettingsOpen(true)}
+            onSettingsOpenChange={setPracticeSettingsOpen}
+            sourceControl={onSelectCases => <span className="timer-practice-control">
           <TimerScrambleSourceSelect
+            showArrow={false}
             disabled={!sourceControlsEnabled}
             className="shell-scramble-source-select"
             triggerClassName="shell-players-select"
             popupClassName="shell-scramble-source-popup"
             labels={{
-              ariaLabel: tr({ zh: '打乱类型', en: 'Scramble type' }),
+              ariaLabel: tr({ zh: '出题来源', en: 'Question source' }),
               real: tr({ zh: '真题', en: 'Real' }),
               realOption: tr({ zh: 'WCA 真题', en: 'WCA real' }),
-              random: randomSourceLabel,
+              random: randomSourceOptionLabel,
               randomOption: randomSourceOptionLabel,
               manual: tr({ zh: '手动', en: 'Manual' }),
               manualOption: tr({ zh: '手动输入', en: 'Manual input' }),
             }}
             value={effectiveScrambleSource}
-            realAvailable={!nativeRandomMoves}
-            trainingItems={trainingItems}
-            language={timerLanguage}
-            trainingValue={trainingEvents.includes(event) ? event : event === '222' && type222 !== 'full' ? type222 : undefined}
-            onTrainingChange={(id) => {
-              if (selectedPuzzle === '222' && isScramble222Type(id)) {
-                setType222(id === 'eg1' || id === 'eg2' ? 'full' : id);
-                updateSettings({ scrambleSource: 'random' });
-                selectEvent(id === 'eg1' || id === 'eg2' ? id : '222');
-                return;
-              }
-              const nextEvent = timerEventIdFromSelector(id);
-              if (!nextEvent) return;
-              updateSettings({ scrambleSource: 'random' });
-              selectEvent(nextEvent);
-            }}
-            onChange={(scrambleSource) => {
-              if (scrambleSource !== 'manual') {
-                if (selectedPuzzle === '222') setType222('full');
-                selectEvent(selectedPuzzle);
-              }
-              updateSettings({ scrambleSource });
-            }}
+            realAvailable={realSourceAvailable}
+            trainingItems={onSelectCases ? [{ value: 'cases', label: tr({ zh: '选定情况', en: 'Selected cases' }) }] : []}
+            onTrainingChange={onSelectCases}
+            onChange={(scrambleSource) => updateSettings({ scrambleSource })}
             realValue="wca"
             realMenuContent={<div ref={setWcaSourceSlot} />}
           />
-          {/* 「难度」开关的落点(内容由 ScrambleSourceBar 里的两个配置组件 portal 过来)。
-              摆在「解法」左边,和来源下拉同一组:难度讲的就是这条打乱怎么来的。
-              data-no-timer 得挂在这儿 —— 开关已经不在打乱来源条里,借不到那块的豁免。 */}
-          <span className="shell-topbar-diff" data-no-timer ref={setDiffSlot} />
-          {/* 解法提示(手机形态)。桌面同一个组件挂在左侧 .shell-rail 里(见下),
-              这里是二选一 —— 两处同时挂就有两个实例抢同一个 ?hints。 */}
-
-          </>
-        ),
-          actions: (
-          <>
-          {presenceControl}
-          <button type="button" className="tb-btn" aria-haspopup="dialog" aria-expanded={settingsOpen} onClick={() => setSettingsOpen(true)} title={tr({ zh: '设置', en: 'Settings'
-        })}>
-            <SettingsIcon size={14} />
-          </button>
-          </>
-        )}}
-        stage={{
-          className: "shell-main",
-          fullscreen: fullscreen,
-          source: <ScrambleSourceBar disabled={!sourceControlsEnabled} event={event} isZh={isZh} diffSlot={diffSlot} mergeSlot={mergeSlot} wcaSourceSlot={wcaSourceSlot} />,
-          statistics: <TimerStatRail
-            ariaExpanded={panelTab != null}
-            language={timerLanguage}
-            summary={stats}
-            onClick={() => setPanelTab(t => (t ? null : 'times'))}
-          />,
-          devices: <TimerDeviceCenter
+            </span>}
+          />
+          <TimerDeviceCenter
+            className="shell-topbar-device-center"
             ariaLabel={tr(TIMER_DEVICE_CENTER_LABELS['title'])}
             items={[...WEB_TIMER_DEVICE_REGISTRY.list().map((device) => device.kind === 'smart-cube'
               ? {
@@ -3152,7 +3075,32 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
                 scramble={timerSmartCubeAttemptScramble(event, scramble, settings.preScrT)}
               />
             )}
-          </TimerDeviceCenter>}}
+          </TimerDeviceCenter>
+          {/* 「难度」开关的落点(内容由 ScrambleSourceBar 里的两个配置组件 portal 过来)。
+              摆在「解法」左边,和来源下拉同一组:难度讲的就是这条打乱怎么来的。
+              data-no-timer 得挂在这儿 —— 开关已经不在打乱来源条里,借不到那块的豁免。 */}
+          <span className="shell-topbar-diff" data-no-timer ref={setDiffSlot} />
+          {/* 解法提示(手机形态)。桌面同一个组件挂在左侧 .shell-rail 里(见下),
+              这里是二选一 —— 两处同时挂就有两个实例抢同一个 ?hints。 */}
+
+          </>
+        ),
+          actions: (
+          <>
+          {presenceControl}
+          </>
+        )}}
+        stage={{
+          className: "shell-main",
+          fullscreen: fullscreen,
+          source: <ScrambleSourceBar disabled={!sourceControlsEnabled} event={event} isZh={isZh} diffSlot={diffSlot} mergeSlot={mergeSlot} wcaSourceSlot={wcaSourceSlot} />,
+          statistics: <TimerStatRail
+            ariaExpanded={panelTab != null}
+            language={timerLanguage}
+            summary={stats}
+            onClick={() => setPanelTab(t => (t ? null : 'times'))}
+          />,
+        }}
         solver={solverHintPanel}
         timing={{
 phase: timer.phase,

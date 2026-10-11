@@ -348,6 +348,22 @@ describe('what the sets structurally are', () => {
 });
 
 describe('autoStopStep', () => {
+  it('keeps Double ZBLL running after the first layer and finishes after flipping and solving the second', () => {
+    const top = "R U R' U R U2 R'";
+    const bottom = "R U2 R' U' R U' R'";
+    const start = caseTargetFacelets(`${top} x2 ${bottom} x2`)!;
+    const step = autoStopStep('3x3', 'zbll', null, start)!;
+    expect(step).toBe('solved');
+    expect(stepSolved(step, start)).toBe(false);
+    const firstLayerDone = turn(start, invert(top))!;
+    expect(firstLayerDone).not.toBeNull();
+    expect(stepSolved(step, firstLayerDone)).toBe(false);
+    const flipped = turn(firstLayerDone, 'x2')!;
+    expect(stepSolved(step, flipped)).toBe(false);
+    const finished = turn(flipped, invert(bottom))!;
+    expect(stepSolved(step, finished)).toBe(true);
+  });
+
   it('is the set’s step for an ordinary case', () => {
     const start = caseTargetFacelets("R U R' U' R' F R2 U' R' U' R U R' F'")!;
     expect(autoStopStep('3x3', 'pll', null, start)).toBe('solved');
