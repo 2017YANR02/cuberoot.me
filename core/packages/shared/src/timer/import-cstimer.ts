@@ -99,6 +99,14 @@ const CSTIMER_EVENT_MAP: Record<string, EventId> = {
   'fto5': 'fto5', '5layerfto': 'fto5', '5×5fto': 'fto5', '5x5fto': 'fto5', '五阶fto': 'fto5',
   'eto': 'eto', 'eitanseto': 'eto', "eitan'seto": 'eto', 'eitan’seto': 'eto', 'eto棱转八面体': 'eto',
   'radiocrystal': 'radiocrystal', 'radiocr': 'radiocrystal',
+  'cube3skewb': 'cube3skewb', '3skewb': 'cube3skewb',
+  '3×3+skewb': 'cube3skewb', '3x3+skewb': 'cube3skewb',
+  '三阶＋斜转': 'cube3skewb', '三阶+斜转': 'cube3skewb',
+  'heliskewb': 'heliskewb', 'helisk': 'heliskewb', 'helicopterskewb': 'heliskewb', '直升机斜转': 'heliskewb',
+  'comboctahedron': 'comboctahedron', 'combo': 'comboctahedron',
+  'circoradiolarian': 'circoradiolarian', 'circo': 'circoradiolarian',
+  'icosababyface': 'icosababyface', 'icosa': 'icosababyface',
+  'deepcuticosahedron': 'icosababyface', '深切角转二十面体': 'icosababyface',
 };
 
 /* ------------------------------------------------------------------ */
@@ -178,6 +186,13 @@ function nameToEvent(name: unknown): { event: EventId; matched: boolean } {
   if (tokens.some((token, index) => token === 'radio' && tokens[index + 1] === 'crystal')) {
     return normalizeEventKey('radiocrystal');
   }
+  // Hybrid names must be recognized before the standalone Skewb/3x3 tokens.
+  if (tokens.some((token, index) => token === 'helicopter' && tokens[index + 1] === 'skewb') || name.includes('直升机斜转')) {
+    return normalizeEventKey('heliskewb');
+  }
+  if (tokens.some((token, index) => token === 'deep' && tokens[index + 1] === 'cut' && tokens[index + 2] === 'icosahedron') || name.includes('深切角转二十面体')) {
+    return normalizeEventKey('icosababyface');
+  }
   // Preserve the FTO order before the standalone 5/FTO tokens resolve to 555/fto.
   if (/(?:^|[^a-z0-9])5(?:[\s_-]+layer|\s*[x×]\s*5)[\s_-]+fto(?:$|[^a-z0-9])|五阶[\s_-]*fto/i.test(name)) {
     return normalizeEventKey('fto5');
@@ -200,6 +215,9 @@ function nameToEvent(name: unknown): { event: EventId; matched: boolean } {
   // Recognize the hybrid before its 3x3 token can resolve to ordinary 333.
   if (/(?:^|[^a-z0-9])3[\s_-]*[x×][\s_-]*3[\s_-]*[+＋][\s_-]*dino(?:$|[^a-z0-9])|三阶[\s_-]*[+＋][\s_-]*恐龙/i.test(name)) {
     return normalizeEventKey('cube3dino');
+  }
+  if (/(?:^|[^a-z0-9])3[\s_-]*[x×][\s_-]*3[\s_-]*[+＋][\s_-]*skewb(?:$|[^a-z0-9])|三阶[\s_-]*[+＋][\s_-]*斜转/i.test(name)) {
+    return normalizeEventKey('cube3skewb');
   }
   for (const t of tokens) {
     const tried = normalizeEventKey(t);

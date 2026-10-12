@@ -10,6 +10,8 @@
  * independently checked idealized cuts: sim-add-puzzle/references/native-pg-puzzles.md.
  * Quad-X, Dino Octa, 5-layer FTO, ETO and Radio Crystal use the same
  * reference's independent plane constructions and shape-preserving moves.
+ * 3×3 + Skewb, Helicopter Skewb, Comboctahedron, Circo-Radiolarian and
+ * Deep-Cut Icosahedron use the reference's full mixed-axis/deep-cut models.
  * These are bounded random-move practice scrambles, not uniform random states.
  */
 const CUBE_FACE_CORNER_AXES = [
@@ -31,6 +33,13 @@ const OCTAHEDRON_AXES = [
 ] as const;
 const OCTAHEDRON_FACE_AXES = [
   ['F', 'B'], ['D', 'U'], ['L', 'BR'], ['BL', 'R'],
+] as const;
+// Adding FTO face cuts activates FaceRenamingMapper for all Comboctahedron
+// axes. Keep its canonical separators: raw BB becomes external B, and the
+// drag adapter looks up the complete mapped family, not an unseparated alias.
+const COMBOCTAHEDRON_AXES = [
+  ...OCTAHEDRON_FACE_AXES,
+  ['D_BR_R_F', 'U_B_BL_L'], ['D_F_L_BL', 'U_R_BR_B'], ['D_BL_B_BR', 'U_L_F_R'],
 ] as const;
 const OCTAHEDRON_EDGE_AXES = [
   ['FD', 'UBB'], ['FL', 'BRBB'], ['BLD', 'UR'],
@@ -111,6 +120,32 @@ export const NATIVE_PUZZLES = {
     description: 'i f 0.3333333333333333', zh: 'Radio Crystal', en: 'Radio Crystal', textLabel: 'RadioCr',
     axes: ICOSAHEDRON_FACE_AXES, order: 3, layers: 2, scrambleLength: 60, aspect: 8 / 5, visibleFacelets: 300,
   },
+  cube3skewb: {
+    description: 'c f 0.333333333333333 v 0', zh: '三阶＋斜转', en: '3×3 + Skewb', textLabel: '3Skewb',
+    axes: CUBE_FACE_CORNER_AXES, order: 0, axisOrders: [4, 4, 4, 3, 3, 3, 3],
+    layers: 2, axisLayers: [2, 2, 2, 1, 1, 1, 1],
+    scrambleLength: 40, aspect: 4 / 3, visibleFacelets: 126,
+  },
+  heliskewb: {
+    description: 'c v 0 e 0.7071067811865476', zh: '直升机斜转', en: 'Helicopter Skewb', textLabel: 'HeliSk',
+    axes: [...CORNER_AXES, ...CUBE_EDGE_AXES], order: 0, axisOrders: [3, 3, 3, 3, 2, 2, 2, 2, 2, 2],
+    layers: 2, axisLayers: [1, 1, 1, 1, 2, 2, 2, 2, 2, 2],
+    scrambleLength: 60, aspect: 4 / 3, visibleFacelets: 48,
+  },
+  comboctahedron: {
+    description: 'o f 0.333333333333333 v 0.5773502691896258 v 1.1547005383792517', zh: 'Comboctahedron', en: 'Comboctahedron', textLabel: 'Combo',
+    axes: COMBOCTAHEDRON_AXES, order: 0, axisOrders: [3, 3, 3, 3, 4, 4, 4],
+    layers: 3, axisLayers: [2, 2, 2, 2, 3, 3, 3], rangeWide: true,
+    scrambleLength: 60, aspect: 4 / 3, visibleFacelets: 72,
+  },
+  circoradiolarian: {
+    description: 'i f 0.7453559924999299', zh: 'Circo-Radiolarian', en: 'Circo-Radiolarian', textLabel: 'Circo',
+    axes: ICOSAHEDRON_FACE_AXES, order: 3, layers: 2, scrambleLength: 60, aspect: 8 / 5, visibleFacelets: 300,
+  },
+  icosababyface: {
+    description: 'i v 0.562777422255239', zh: '深切角转二十面体', en: 'Deep-Cut Icosahedron', textLabel: 'Icosa',
+    axes: DOGIC_AXES, order: 5, layers: 2, scrambleLength: 40, aspect: 8 / 5, visibleFacelets: 20,
+  },
 } as const;
 
 export type NativePuzzleId = keyof typeof NATIVE_PUZZLES;
@@ -127,6 +162,24 @@ function axisLayerCount(spec: NativePuzzleSpec, axis: number): number {
   return 'axisLayers' in spec ? spec.axisLayers[axis] : spec.layers;
 }
 
+function axisTurnOrder(spec: NativePuzzleSpec, axis: number): number {
+  if ('axisOrders' in spec) return spec.axisOrders[axis];
+  // Preserve the original face/corner convention for existing mixed cubes.
+  return spec.order === 0 ? axis < 3 ? 4 : 3 : spec.order;
+}
+
+/** Cycle the distinct mechanisms in catalog order, independently of axis count. */
+function scrambleAxisGroups(spec: NativePuzzleSpec): number[][] {
+  const groups = new Map<number, number[]>();
+  spec.axes.forEach((_, axis) => {
+    const order = axisTurnOrder(spec, axis);
+    const group = groups.get(order);
+    if (group) group.push(axis);
+    else groups.set(order, [axis]);
+  });
+  return [...groups.values()];
+}
+
 function wideMove(spec: NativePuzzleSpec, family: string, layers: number): string {
   // FaceRenamingMapper accepts explicit ranges for FTO/dodecahedral faces,
   // while a suffixed w is not a valid external family on those native models.
@@ -139,8 +192,7 @@ export function nativePuzzleMoves(id: NativePuzzleId): {
 }[] {
   const spec = NATIVE_PUZZLES[id];
   return spec.axes.flatMap((pair, axis) => pair.flatMap((family) => {
-    // order 0 denotes this cube's face (first three axes) + corner mechanisms.
-    const order = spec.order === 0 ? axis < 3 ? 4 : 3 : spec.order;
+    const order = axisTurnOrder(spec, axis);
     const choices: { move: string; depth: NativePuzzleMoveDepth }[] = [{ move: family, depth: 'outer' }];
     const layers = axisLayerCount(spec, axis);
     for (let layer = 2; layer <= layers; layer++) {
@@ -159,23 +211,20 @@ export function generateNativePuzzleScramble(id: NativePuzzleId, random: () => n
     return Math.floor(value * size);
   };
   const out: string[] = [];
-  const mixedOrder = spec.order === 0;
+  const axisGroups = scrambleAxisGroups(spec);
   let previousAxis = -1;
   for (let i = 0; i < spec.scrambleLength; i++) {
     // Alternate mechanism classes so even an extreme deterministic source exercises
     // both cuts. Choose uniformly among axes in each class, then half and power.
-    const faceTurn = mixedOrder && i % 2 === 0;
-    const axisCount = mixedOrder ? faceTurn ? 3 : 4 : spec.axes.length;
-    const candidates = Array.from({ length: axisCount }, (_, j) => j + (mixedOrder && !faceTurn ? 3 : 0))
-      .filter((axis) => axis !== previousAxis);
+    const candidates = axisGroups[i % axisGroups.length].filter((axis) => axis !== previousAxis);
     const axis = candidates[pick(candidates.length)];
     const family = spec.axes[axis][pick(2)];
     // Cycle every supported cut depth within each mechanism class. Hybrid cubes
     // can have only two face halves but three/five corner layers; never offer a
     // face-wide move there. Existing one/two-depth puzzles retain their sequence.
-    const layer = 1 + (mixedOrder ? Math.floor(i / 2) : i) % axisLayerCount(spec, axis);
+    const layer = 1 + Math.floor(i / axisGroups.length) % axisLayerCount(spec, axis);
     const move = layer === 1 ? family : wideMove(spec, family, layer);
-    const order = mixedOrder ? faceTurn ? 4 : 3 : spec.order;
+    const order = axisTurnOrder(spec, axis);
     // Half-turn axes retain both animation directions but never a 360° identity.
     const suffixes = order === 2 || order === 3 ? ['', "'"] : order === 4 ? ['', '2', "'"] : ['', '2', "2'", "'"];
     out.push(move + suffixes[pick(suffixes.length)]);

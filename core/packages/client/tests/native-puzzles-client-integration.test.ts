@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
 import { Move } from 'cubing/alg';
 import { NATIVE_PUZZLES, NATIVE_PUZZLE_IDS, generateNativePuzzleScramble, nativePuzzleMoves } from '@cuberoot/puzzle-solvers/native-puzzles';
@@ -69,6 +70,30 @@ describe('native puzzle client integration', () => {
       zh: `练习打乱：${NATIVE_PUZZLES[id].scrambleLength} 步随机转动。`,
       en: `Practice scramble: ${NATIVE_PUZZLES[id].scrambleLength} random moves.`,
     });
+  });
+
+  // Captured from main before generalizing the old face/corner generator.
+  // Keep established seeded sessions reproducible when new axis types are added.
+  it.each([
+    ['superz', 'c2f0ce6aee5cc08742e87068e32be99ad584a6d88adbb8558843bc09f0addfeb'],
+    ['cube3dino', 'c05c6b35e1367248b2de39aaabe45831d4306ea05c1ce15199ffabe07ffac9b9'],
+    ['dogic', 'abf39fba0adf932a5de71bafad60e79d6ed4d9dac36095c40d185e6a0059b5c1'],
+    ['octahedron4', 'ac2e1fd7333897df183c073d7dba4df615ef8f1732cc14f32c89f81132433249'],
+    ['dinoskewb', '643c6a92307dcc4649c77e793f9a058f3605aef03fd07c79c607908c7504c83c'],
+    ['lattice', '03a0407dd689bb40e6dd67e24e29b6903ac9bd261dd0ed94a339244029007272'],
+    ['hyperx', '4231dd813c4e399d07ca19ab483687d8eac901f1eb0b0c94a0fecc2c6ff49e73'],
+    ['latticex', '29b953c2c135e4b886a0391727fbc45dee13c9d1a5db9ed97a7a1ac8b60afc24'],
+    ['masterbrilic', '3ef2cbdad44f885ff9ea29790f29daa0a52f4802521c59ca1c2de5e6da2c1b9f'],
+    ['masterftov2', 'f1824e60a9e65bff679e01589f5c7e3cb02def9b5b478cd65edb088e4890cc77'],
+    ['quadx', '61e448182a5e212ff5ccd3bfc8b758ca601283e80a7198d7e6213bb0347c7311'],
+    ['dinoocta', 'f1824e60a9e65bff679e01589f5c7e3cb02def9b5b478cd65edb088e4890cc77'],
+    ['fto5', '9dd543232606018256c1a3068cac5e00eeb51f6435ecec64fe2f6443fbcc82aa'],
+    ['eto', '39e6483f42b8318ba62c2a041c56738b81cedf99403a444cc22951ed124e8591'],
+    ['radiocrystal', '62edb8c2c929bf641cbf7600913b4d01d2502928bfb664ea2dd8127fbc5aa03e'],
+  ] as const)('preserves pre-mixed-axis seeded %s scrambles', (id, expectedHash) => {
+    const scrambles = [0, 1, 42, 424242, 0xffffffff]
+      .map((seed) => generateNativePuzzleScramble(id, randomFromSeed(seed))).join('\n');
+    expect(createHash('sha256').update(scrambles).digest('hex')).toBe(expectedHash);
   });
 
   it.each(NATIVE_PUZZLE_IDS)('uses the same bounded %s generator with deterministic and invalid random sources', async (id) => {

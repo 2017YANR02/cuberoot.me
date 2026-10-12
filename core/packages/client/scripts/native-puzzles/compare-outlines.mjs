@@ -2,6 +2,7 @@
 // then run this script from any directory; QA output stays outside watched src.
 // No arguments: reproduce the original five-puzzle review.
 // --set=2026-10: review the next five before their registry entries are built.
+// --set=2026-10-12: review the mixed-axis and icosahedral additions.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { getPuzzleGeometryByDesc } from 'cubing/puzzle-geometry';
 import { NATIVE_PUZZLES } from '@cuberoot/puzzle-solvers/native-puzzles';
@@ -55,10 +56,45 @@ const reviewSets = {
       },
     ],
   },
+  '2026-10-12': {
+    basename: 'native-five-2026-10-12-outlines',
+    rows: [
+      {
+        id: 'cube3skewb', en: '3×3 + Skewb',
+        description: 'c f 0.333333333333333 v 0', visibleFacelets: 126,
+        prior: 'c f 0.333333333333333', priorLabel: '3×3',
+        notes: ['Combine uniform third-depth face cuts with four central Skewb planes.', 'Face turns: 90 degrees; corner turns: 120 degrees.'],
+      },
+      {
+        id: 'heliskewb', en: 'Helicopter Skewb',
+        description: 'c v 0 e 0.7071067811865476', visibleFacelets: 48,
+        prior: 'c e 0.7071067811865476', priorLabel: 'Helicopter',
+        notes: ['Add central corner cuts to the Helicopter edge cuts at h = sqrt(2)/2.', 'The visible face partition is unchanged; corner and edge turns are independent.'],
+      },
+      {
+        id: 'comboctahedron', en: 'Comboctahedron',
+        description: 'o f 0.333333333333333 v 0.5773502691896258 v 1.1547005383792517', visibleFacelets: 72,
+        prior: 'o f 0.333333333333333', priorLabel: 'FTO',
+        notes: ['Retain FTO face cuts; add the corner-axis cuts at h = 1/sqrt(3) and 2/sqrt(3).', 'Extra corner cuts follow existing face edges, retaining 72 visible triangles.'],
+      },
+      {
+        id: 'circoradiolarian', en: 'Circo-Radiolarian',
+        description: 'i f 0.7453559924999299', visibleFacelets: 300,
+        prior: 'i f 0.61803398874989', priorLabel: "Eitan's Star",
+        notes: ['Face-normal cuts at h = sqrt(5)/3 pass through adjacent face centers.', 'Nine triangles and six quadrilaterals per face; no central facelet.'],
+      },
+      {
+        id: 'icosababyface', en: 'Deep-Cut Icosahedron',
+        description: 'i v 0.562777422255239', visibleFacelets: 20,
+        prior: 'i v 0.562777422255239 v 0.9105929973100289', priorLabel: 'Dogic',
+        notes: ['Retain only the deep vertex-normal cut; its planes pass through adjacent vertices.', 'Twenty whole triangular facelets; rotate five around a vertex by 72 degrees.'],
+      },
+    ],
+  },
 };
 const args = process.argv.slice(2);
 if (args.length > 1 || (args[0] && !args[0].startsWith('--set='))) {
-  throw new Error('Usage: node compare-outlines.mjs [--set=original|2026-10]');
+  throw new Error('Usage: node compare-outlines.mjs [--set=original|2026-10|2026-10-12]');
 }
 const setName = args[0]?.slice('--set='.length) ?? 'original';
 if (!Object.hasOwn(reviewSets, setName)) throw new Error(`Unknown review set: ${setName}`);
@@ -132,7 +168,7 @@ function renderRow(row) {
   const line = (a, b, color, width = 1.5) => `<line x1="${220 + a[0] * 166}" y1="${310 - a[1] * 166}" x2="${220 + b[0] * 166}" y2="${310 - b[1] * 166}" stroke="${color}" stroke-width="${width}"/>`;
   let svg = text(28, 34, 25, spec.en) + text(28, 61, 15, `${next.count / next.faces} regions per face / ${next.faces} faces / ${next.count} visible stickers`);
   svg += text(28, 87, 14, `Reference: ${row.priorLabel} (${row.prior})`);
-  svg += text(28, 109, 14, `Proposal: ${spec.description}`);
+  svg += text(28, 109, spec.description.length > 60 ? 12 : 14, `Proposal: ${spec.description}`);
   svg += '<rect x="44" y="134" width="352" height="352" fill="none" stroke="#999" stroke-dasharray="6 5"/>';
   for (const [a, b] of old.edges.values()) svg += line(a, b, '#111', 1.1);
   for (const [a, b] of next.edges.values()) {
