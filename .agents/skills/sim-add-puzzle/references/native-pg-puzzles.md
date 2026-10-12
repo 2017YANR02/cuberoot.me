@@ -50,6 +50,11 @@
 | `fto5` | 五阶 FTO / 5-layer FTO | `o f 0.2 f 0.6` | 从正八面体每条边五等分独立构造均匀五阶 FTO：内切球半径 1 时，面法向切深 ±1/5、±3/5，每面 25 个等面积三角形；不声称测量复刻特定厂牌，也不使用未经核证的商品别名。 |
 | `eto` | ETO 棱转八面体 / Eitan's ETO | `o e 0.6123724356957945` | 按 [Eitan Cher 原作说明](https://twistypuzzles.com/forum/viewtopic.php?f=15&t=19666)核对与 FTRD 的关系及隐藏中心；正八面体内切球半径 1 时，棱中点沿棱轴投影 √(3/2)，取其一半 √6/4。只支持保形 180° 棱转，不包含 jumbling。 |
 | `radiocrystal` | Radio Crystal | `i f 0.3333333333333333` | 按 [Jason Smith 的 Radiolarian 9 原作](https://www.puzzleforge.com/wp/2012/12/)核对深切恰好穿过另一组六个面中心；二十个单位面法向中，与任意固定法向内积 1/3 的恰有六个，取该切深使中心消失。保形面转为 120°，不包含 jumbling。 |
+| `cube3skewb` | 三阶＋斜转 / 3×3 + Skewb | `c f 0.333333333333333 v 0` | 按 [TwistyPuzzles 分类论文 §2.2](https://twistypuzzles.com/articles/other-classification/PieceSignature.pdf)的 Skewb 3x3x3／HF2C1 机制组合标准三阶面切与 Skewb 穿心角切；以立方体半边长 1 独立构造 ±1/3 与 0 切面，不声称测量复刻某个商品或读过尚未取得的原作者发布帖。 |
+| `heliskewb` | 直升机斜转 / Helicopter Skewb | `c v 0 e 0.7071067811865476` | 按 [Tom van der Zanden 原作](https://www.tomvanderzanden.nl/puzzle.php?puz=Helicopter+Skewb)组合 Skewb 角切与 Helicopter 棱切；半边长 1 时角切过中心、棱切深 √2/2，分别支持保形 120° 与 180° 转动，不包含 jumbling。 |
+| `comboctahedron` | Comboctahedron | `o f 0.333333333333333 v 0.5773502691896258 v 1.1547005383792517` | 按 [Hyperspeedcube 的面／角转实现](https://github.com/HactarCE/Hyperspeedcube/blob/main/lua/puzzles/fcto.lua)和 [CTO 角层定义](https://github.com/HactarCE/Hyperspeedcube/blob/main/lua/puzzles/cto.lua)组合面切 ±1/3 与顶点切 ±1/√3、±2/√3；第二组角切不增加可见片数，但保留独立角尖转动，不能省略。 |
+| `circoradiolarian` | Circo-Radiolarian | `i f 0.7453559924999299` | 按 [Jason Smith 的 Radiolarian 2 原作](https://www.puzzleforge.com/wp/2010/01/11/radiolarian-2-12010/)及 [Hyperspeedcube 的 radio02 实现](https://github.com/HactarCE/Hyperspeedcube/blob/main/lua/puzzles/ft_icosahedra.lua)，取直线面切 1−(1−1/φ)×2/3=√5/3；保留三角形及四边形表面分区，仅支持保形 120° 面转。 |
+| `icosababyface` | 深切角转二十面体 / Deep-Cut Icosahedron | `i v 0.562777422255239` | 使用 [cubing.js 维护者列出的单层深角切描述](https://github.com/cubing/cubing.js/issues/127)，以外接球半径 r 推导切深 r/√5，使每个切面经过五个邻接顶点；只采用 Dogic 的深切族，不添加小角片。上游昵称带问号，显示名使用明确结构名称。 |
 
 把拼图描述视为几何数据；Dino Skewb 与 3×3 + Dino 的组合描述由已核证的两类切面推导，不标注成上游预设中逐字复制的条目。
 
@@ -72,11 +77,17 @@
 | 五阶 FTO | 8 | 25（三角形） | 200 | 6 四贴片角块、24+12 棱块、四组各 24 个中心块、8 个面中心 | 面轴 120° |
 | ETO | 8 | 13（10 三角形、3 四边形） | 104 | 6 四贴片角块、24 棱块、24+8 个中心块 | 棱轴 180° |
 | Radio Crystal | 20 | 15（三角形） | 300 | 12 五贴片角块、60+30 棱块、60 个中心块 | 面轴 120° |
+| 3×3 + Skewb | 6 | 21（12 三角形、8 五边形、1 正方形） | 126 | 8 角块、24 棱块、两组各 24 个中心块、6 个面中心 | 面轴 90°、体对角轴 120° |
+| Helicopter Skewb | 6 | 8（三角形） | 48 | 8 三贴片角块、24 单贴片中心块 | 体对角轴 120°、棱轴 180° |
+| Comboctahedron | 8 | 9（三角形） | 72 | 6 四贴片角块、12 棱块、24 个中心块 | 面轴 120°、顶点轴 90° |
+| Circo-Radiolarian | 20 | 15（9 三角形、6 四边形） | 300 | 12 五贴片角块、60+30 棱块、60 个中心块 | 面轴 120° |
+| Deep-Cut Icosahedron | 20 | 1（完整三角形） | 20 | 20 个完整单面块 | 顶点轴 72° |
 
 - 从 `get3d()` 的 `isDup` 排除只为表示朝向而重复的贴片，再统计可见几何；开启 `orientCenters` 后 Dogic 和四阶八面体会分别返回 120、48 条贴片数据，不要把它们当成实际贴片数。
 - 对 Master FTO v2 去掉 168 条原始数据中的 16 个朝向重复片，保持 152 个真实贴片；核对普通 Master FTO 为 128 片、86 块，新版为 152 片、110 块，不把版本差异只实现为名称或配色。
 - 对 Master Brilic 用独立切线交点锁定每面的 10 个小棱三角形；拒绝用 0.8 代替 4/√5−1，即使两者都返回 360 片，前者也会将这 10 片变成带微小第四边的四边形。
 - 对 Quad-X、Dino Octa、五阶 FTO、ETO 分别从 144、96、216、120 条原始 PG 数据去除面中心朝向重复片，保留 126、80、200、104 个可见区域；Radio Crystal 的 300 片无面中心重复，不得补入小中心片。
+- 对 3×3 + Skewb 和深切角转二十面体分别从 144、60 条原始数据去除朝向重复片，保留 126、20 个真实区域；后者每个还原面是完整三角形，不把同色三角面的不可辨自转算成未还原。
 - 解析原生 SVG 时，先保存所有 `orbit/piece/orientation` 的颜色查找项，再按面名和多边形顶点集合去重重合轮廓；只去重输出几何，不删除朝向颜色，否则转动后的单色中心会取不到颜色。
 - 用注册表 `visibleFacelets` 核对去重后的物理片数，按完整展开图包络与 `nativePuzzleSvgAspect` 排版；同时检查还原态和发生中心朝向变化的打乱态，没有重复片、缺色或面被裁掉。
 - 保留原生二十色、八色与六色方案，使每个还原面颜色一致；先核对 Dogic 二十个面确实使用二十种不同颜色。
@@ -115,6 +126,9 @@
 - 对 Quad-X 与 ETO 只生成 ±1 个 180° 基本转角，过滤 ±2 个基本角的整圈空动作；切入两阶转轴时将残留角度按方向归一到 ±1，关闭实时消步时保留输入的正反方向。
 - 对穿过中心的同一内层，用实际轨道变换识别反向别名；3×3 + Dino 的 `2F = 2B'`、`2UFR = 2DLB'` 是同一动作，不以文字不相同判定拖动错误，并继续独立核对旋转方向。
 - 对混合机制的练习打乱，在每类机制内部按该轴支持的层深轮换；保留已有一／二层项目的随机源调用与序列，确保 Lattice X 覆盖面外层与角轴的三种深度，不强行给面半体生成宽转。
+- 用 `axisOrders` 表达实际混合轴周期，按机制组轮换打乱；分别保留三阶＋斜转的 90°/120°、直升机斜转的 120°/180° 与 Comboctahedron 的 120°/90°，不要假定前三轴永远为 90° 面轴。
+- 对三阶＋斜转提供面轴两种独立深度与角半体，对直升机斜转提供角半体与棱轴两种独立深度；同一拼图内切换到 180° 轴时也须把残留 ±2 步归一到 ±1。
+- 对 Comboctahedron 使用外部规范面族 `F/B/D/U/L/BR/BL/R` 与带下划线的顶点族（如 `D_BR_R_F`），面轴提供两种独立深度、顶点轴提供三种；宽转只用 `1-2A/1-3A`，整体转用 `Av`，不要用 `Aw` 或内部族名替代菜单与拖拽匹配。
 - 从原生招式校验后提取可转轴；开启 `addRotations` 时，`get3d().axis` 还含只能整体转体的面轴和棱轴，不能直接把每一项都展示为局部转动按钮。
 - 为 PG 项目关闭三阶自动空格，保留多字母族名、前置层号、宽转与整体转；只让 `nativePuzzleMoves` 决定手动按钮，完整输入范围交给原生记号校验，不拿按钮列表限制公式。
 
@@ -147,6 +161,7 @@
 - 构建 puzzle-solvers 后运行 `packages/client/scripts/native-puzzles/compare-outlines.mjs` 复现五项目的切线对比和完整展开图，输出到 `core/.tmp/png/native-five-outlines.svg`；该图供轮廓核对，独立推导与选层正确性仍由上述测试证明。
 - 传入 `--set=2026-10` 复现 Quad-X、Dino Octa、五阶 FTO、ETO、Radio Crystal 的切线对比与单款放大 SVG，输出到 `core/.tmp/png/native-five-2026-10-outlines*.svg`；允许注册前使用提议数据，注册后校验描述与物理片数一致。
 - 用 `native-five-geometry.test.ts` 独立构造三种正多面体外法向和切面，逐面核对分区、全轴层选择、正反转、五个进度隔离面与真实 PG3D 半转矩阵；使用真实 SVG 回归确认物理面中心只绘制一次。
+- 传入 `--set=2026-10-12` 复现三阶＋斜转、直升机斜转、Comboctahedron、Circo-Radiolarian、深切角转二十面体的对比和放大 SVG；用 `native-mixed-puzzles-geometry.test.ts` 独立核对完整分区、块归属、全轴层深、五个进度与独立角尖，用 `native-puzzles-client-integration.test.ts` 的改前散列锁定旧项目固定种子序列。
 - 用 `native-puzzle-drag.test.ts` 核对真实几何上的拾取与方向，用 `native-puzzle-svg.test.ts` 和 `native-puzzles-client-integration.test.ts` 核对有界输入、完整记号、原生颜色、确定性生成、共享 SVG 和 PDF 比例；这些文件同在 `packages/client/tests/`。
 - 用 `native-puzzle-manual-anchor.test.ts` 读取未挂载真实 TwistyPlayer 的 `currentPattern`，核对双锚点下快速追加的盘面、记录和分享重建，以及编辑打断与卸载后的过期取消。
 - 用 `sim-native-companion-lifecycle.test.ts` 挂载真实页面、播放器控件与图像面板，覆盖原生→通用 PG→原生：旧伴图清空，等待精确帧时复制、下载及已打开的导出菜单禁用，返回后恢复当前原生 SVG；仅验证独立镜像 helper 的清理不覆盖页面保留上一帧的问题。
@@ -158,3 +173,4 @@
 - 2026-10 新增候选中，Compy Skewb 被排除。[原作者页面](https://www.tomvanderzanden.nl/puzzle.php?puz=Compy+Skewb)及[详细发布帖](https://twistypuzzles.com/forum/viewtopic.php?f=15&t=18117)说明角尖与内部 Skewb 联动，浅层 Compy 转动时角尖固定。直接组合 `c v 0 v 0.915641442663986` 虽能生成相似切线，却会在浅层转动时扭动 `CORNERS`，无法表达原作联动，不能将该纯 PG 描述命名为 Compy Skewb。
 - Quad-X 与 ETO 是此注册表首批基本周期为 2 的项目。旧生成器把所有非 3/4 周期都按 5 周期提供 `2` 后缀，旧控件也固定显示 ±1/±2，导致 360° 单位动作。以实际周期过滤整圈，同时保留相反动画方向；实时消步开启时原生规范化可将半转逆向写法归一为正向，关闭时保留原文。
 - 原生 `orientCenters` 使用重合轮廓表示单色中心朝向。预实现原始 SVG 中 Quad-X 的方中心有四份、三种八面体的三角中心有三份，这不是四块或三块可见贴片；下游 `renderNativePuzzleSvg` 保存完整颜色表后去重，勿通过关闭朝向模型消除这些内部数据。
+- Comboctahedron 的浅顶点切 ±2/√3 与既有面切在表面交线重合，省略后仍得到 72 个三角贴片，却失去独立尖角转动。通过单尖只改一角朝向、两层宽转与单尖不等的独立回归核对完整机制；仅凭外轮廓及片数相同不足以认定模型等价。

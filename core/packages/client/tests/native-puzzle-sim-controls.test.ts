@@ -38,6 +38,11 @@ const CASES = [
   { id: 'fto5', setup: '1-3F', alg: "3D L'", manual: '3F', typed: "1-3D' L" },
   { id: 'eto', setup: 'FDw', alg: "FL BLD'", manual: '2FD', typed: "FLw' BLD", reducedTyped: 'FLw BLD' },
   { id: 'radiocrystal', setup: 'Rw', alg: "G U'", manual: '2R', typed: "Gw' U" },
+  { id: 'cube3skewb', setup: 'F', alg: "DRF U'", manual: '2U', typed: "Lw' UFR" },
+  { id: 'heliskewb', setup: 'DRF', alg: "DF UFR'", manual: '2DF', typed: "FLw' UFR", reducedTyped: 'FLw UFR' },
+  { id: 'comboctahedron', setup: 'F', alg: "D_BR_R_F B'", manual: '2D_F_L_BL', typed: "1-3U_B_BL_L' D" },
+  { id: 'circoradiolarian', setup: 'Rw', alg: "G U'", manual: '2R', typed: "Gw' U" },
+  { id: 'icosababyface', setup: 'FREGU', alg: "HIERC2 FLACR'", manual: '2NALPO', typed: "FLACRw' HIERC" },
 ] as const;
 type Fixture = typeof CASES[number];
 
@@ -216,7 +221,7 @@ describe('native PG simulator controls', () => {
     expect(writeText).not.toHaveBeenCalled();
   });
 
-  it.each(CASES.filter(({ id }) => id === 'quadx' || id === 'eto'))('$id preserves the chosen half-turn directions when live reduction is off', async (spec) => {
+  it.each(CASES.filter(({ id }) => id === 'quadx' || id === 'eto' || id === 'heliskewb'))('$id preserves the chosen half-turn directions when live reduction is off', async (spec) => {
     const typed = `${spec.typed} // keep turn direction`;
     await mount(spec, { alg: typed, liveReduce: false });
     await act(async () => { userMoveRef.current?.(`${spec.manual}'`); });
@@ -411,6 +416,14 @@ describe('native PG simulator controls', () => {
     { id: 'dinoskewb', move: 'DRF', order: 3 },
     { id: 'quadx', move: 'UF', order: 2 },
     { id: 'eto', move: 'FD', order: 2 },
+    { id: 'cube3skewb', move: 'F', order: 4 },
+    { id: 'cube3skewb', move: 'DRF', order: 3 },
+    { id: 'heliskewb', move: 'DRF', order: 3 },
+    { id: 'heliskewb', move: 'DF', order: 2 },
+    { id: 'comboctahedron', move: 'F', order: 3 },
+    { id: 'comboctahedron', move: 'D_BR_R_F', order: 4 },
+    { id: 'circoradiolarian', move: 'R', order: 3 },
+    { id: 'icosababyface', move: 'FREGU', order: 5 },
   ] satisfies { id: NativePuzzleId; move: string; order: number }[])('$id $move live cancellation uses its physical order $order and inversion preserves state', async ({ id, move, order }) => {
     const spec = CASES.find((candidate) => candidate.id === id)!;
     await mount(spec, { setup: '', alg: '', liveReduce: true });

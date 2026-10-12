@@ -14,8 +14,8 @@
 .staff-start-development h3 { margin-top: 24px; }
 .staff-start-preview-form { display: grid; gap: 16px; }
 .staff-start-preview-form label { display: grid; gap: 6px; min-width: 0; }
-.staff-start-preview-form input, .staff-start-preview-form select { box-sizing: border-box; width: 100%; min-width: 0; min-height: 44px; padding: 10px 12px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--background); color: var(--foreground); font: inherit; }
-.staff-start-preview-form input:focus-visible, .staff-start-preview-form select:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.staff-start-preview-control { box-sizing: border-box; width: 100%; min-width: 0; min-height: 44px; padding: 10px 12px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--background); color: var(--foreground); font: inherit; }
+.staff-start-preview-control:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 .staff-start-development pre { max-width: 100%; overflow-x: auto; padding: 12px; border: 1px solid var(--border-default); border-radius: 8px; font-size: .85rem; }
 @media (max-width: 480px) { .staff-start { padding: 36px 16px; } }
 
