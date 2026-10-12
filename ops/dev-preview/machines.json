@@ -54,7 +54,7 @@
       "device": "y9000p",
       "os": "windows",
       "transport": "ssh",
-      "status": "pending",
+      "status": "active",
       "localPort": 3000,
       "remotePort": 7105,
       "certificate": "dev-czy-y9000p",
