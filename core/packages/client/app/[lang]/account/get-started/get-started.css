@@ -47,7 +47,7 @@
 .staff-start-development button:not(.staff-start-action):not(.clear-button) { cursor: pointer; font: inherit; text-decoration: underline; text-underline-offset: 3px; }
 .staff-start-preview-form { display: grid; gap: 16px; }
 .staff-start-preview-form label { display: grid; gap: 6px; min-width: 0; }
-.staff-start-preview-form input, .staff-start-preview-form select { box-sizing: border-box; width: 100%; min-width: 0; min-height: 44px; padding: 10px 12px; border: 1px solid var(--input); border-radius: 12px; background: var(--background); color: var(--foreground); font: inherit; }
+.staff-start-preview-control { box-sizing: border-box; width: 100%; min-width: 0; min-height: 44px; padding: 10px 12px; border: 1px solid var(--input); border-radius: 12px; background: var(--background); color: var(--foreground); font: inherit; }
 .staff-start pre { max-width: 100%; overflow-x: auto; padding: 16px; border: 1px solid var(--border-default); border-radius: 12px; font-size: .78rem; line-height: 1.65; }
 .staff-start .staff-start-prompt { white-space: pre-wrap; overflow-wrap: anywhere; color: var(--muted-foreground); }
 @media (max-width: 760px) { .staff-start { padding: 40px 20px 64px; } .staff-start-header { margin-bottom: 28px; } .staff-start-modules { grid-template-columns: minmax(0, 1fr); gap: 20px; } }

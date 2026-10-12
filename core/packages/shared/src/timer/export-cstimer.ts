@@ -32,6 +32,11 @@ export const CSTIMER_EVENT_FALLBACKS = {
   fto5: 'input',
   eto: 'input',
   radiocrystal: 'input',
+  cube3skewb: 'input',
+  heliskewb: 'input',
+  comboctahedron: 'input',
+  circoradiolarian: 'input',
+  icosababyface: 'input',
   sphere: '333',
 } as const;
 
@@ -95,6 +100,11 @@ const EVENT_TO_CSTIMER_SCRTYPE: Record<EventId, string> = {
   fto5: CSTIMER_EVENT_FALLBACKS.fto5,
   eto: CSTIMER_EVENT_FALLBACKS.eto,
   radiocrystal: CSTIMER_EVENT_FALLBACKS.radiocrystal,
+  cube3skewb: CSTIMER_EVENT_FALLBACKS.cube3skewb,
+  heliskewb: CSTIMER_EVENT_FALLBACKS.heliskewb,
+  comboctahedron: CSTIMER_EVENT_FALLBACKS.comboctahedron,
+  circoradiolarian: CSTIMER_EVENT_FALLBACKS.circoradiolarian,
+  icosababyface: CSTIMER_EVENT_FALLBACKS.icosababyface,
   r3: 'r3',
   r4: 'r4',
   r5: 'r5',

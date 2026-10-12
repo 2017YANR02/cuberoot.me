@@ -24,6 +24,11 @@ const CASES = [
   { id: 'fto5', stickers: 200, moves: 40, outer: 8, inner: 8, wide: 8, inner3: 8, wide3: 8 },
   { id: 'eto', stickers: 104, moves: 36, outer: 12, inner: 12, wide: 12 },
   { id: 'radiocrystal', stickers: 300, moves: 60, outer: 20, inner: 20, wide: 20 },
+  { id: 'cube3skewb', stickers: 126, moves: 26, outer: 14, inner: 6, wide: 6 },
+  { id: 'heliskewb', stickers: 48, moves: 44, outer: 20, inner: 12, wide: 12 },
+  { id: 'comboctahedron', stickers: 72, moves: 54, outer: 14, inner: 14, wide: 14, inner3: 6, wide3: 6 },
+  { id: 'circoradiolarian', stickers: 300, moves: 60, outer: 20, inner: 20, wide: 20 },
+  { id: 'icosababyface', stickers: 20, moves: 36, outer: 12, inner: 12, wide: 12 },
 ] as const;
 const VIEWPORT = { width: 960, height: 720 };
 

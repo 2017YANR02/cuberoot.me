@@ -84,12 +84,12 @@ const SIM_PUZZLE_FAMILIES: readonly SimPuzzleFamily[] = [
   {
     id: 'octahedron', labelZh: 'FTO 与八面体', labelEn: 'FTO & octahedra',
     values: ['fto', 'masterfto', 'masterftov2', 'fto5', 'skewbdiamond', 'christophersjewel',
-      'trajbersoctahedron', 'octahedron4', 'dinoocta', 'eto', 'octastar'],
+      'trajbersoctahedron', 'octahedron4', 'dinoocta', 'eto', 'comboctahedron', 'octastar'],
   },
   {
     id: 'icosahedron', labelZh: '二十面体', labelEn: 'Icosahedra',
-    values: ['radiochop', 'radiocrystal', 'eitansstar', 'icosamate', 'astrominx', 'astrominxbigchop',
-      'icosaminx', 'redicosahedron', 'redicosahedroncenters', 'dogic'],
+    values: ['radiochop', 'radiocrystal', 'circoradiolarian', 'eitansstar', 'icosamate', 'astrominx', 'astrominxbigchop',
+      'icosaminx', 'redicosahedron', 'redicosahedroncenters', 'dogic', 'icosababyface'],
   },
   {
     id: 'shape-mods', labelZh: '镜面与外形', labelEn: 'Mirror & shape mods',
@@ -98,7 +98,7 @@ const SIM_PUZZLE_FAMILIES: readonly SimPuzzleFamily[] = [
   {
     id: 'hybrid-cuts', labelZh: '组合切割', labelEn: 'Combined cuts',
     values: ['cube2dino', 'cube3dino', 'cube2littlechop', 'dinolittlechop',
-      'cube2dinolittlechop', 'superz', 'hyperx', 'latticex'],
+      'cube2dinolittlechop', 'superz', 'hyperx', 'latticex', 'cube3skewb', 'heliskewb'],
   },
   { id: 'magic', labelZh: '连板', labelEn: 'Magic family', values: ['magic', 'mmagic'] },
 ];
