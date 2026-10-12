@@ -1486,7 +1486,7 @@
   font-size: 0.85rem;
 }
 
-.recon-image-font select {
+.recon-image-font-select {
   width: fit-content;
   max-width: 100%;
   font: inherit;
