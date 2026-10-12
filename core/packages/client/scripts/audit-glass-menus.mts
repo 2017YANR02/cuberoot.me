@@ -11,7 +11,12 @@ mkdirSync(output, { recursive: true });
 
 type Fixture = { name: string; path: string; panel: string; open: (page: Page) => Promise<unknown> };
 const fixtures: Fixture[] = [
-  { name: 'appearance', path: '/zh', panel: '.appearance-menu', open: p => p.getByRole('button', { name: '设置', exact: true }).first().click() },
+  { name: 'appearance', path: '/zh', panel: '.appearance-menu', open: async p => {
+    // The server placeholder has the same label but no handlers or menu role.
+    const button = p.locator('button[aria-label="设置"][aria-haspopup="menu"]').first();
+    await button.focus();
+    await button.press('Enter');
+  } },
   ...['calendar', 'list'].flatMap(view => [
     { name: `competition-${view}-countries`, path: `/zh/wca/comp?year=2026&month=10&view=${view}`, panel: '.region-picker-popup', open: (p: Page) => p.locator('.toolbar .region-picker-trigger').click() },
     { name: `competition-${view}-filters`, path: `/zh/wca/comp?year=2026&month=10&view=${view}`, panel: '.comp-filters-panel', open: (p: Page) => p.locator('.comp-filters-btn').click() },
@@ -83,12 +88,26 @@ try {
         const response = await page.goto(base + fixture.path, { waitUntil: 'domcontentloaded' });
         if (!response?.ok()) throw new Error(`HTTP ${response?.status()}`);
         await page.waitForFunction(() => !!document.body.dataset.siteScenery);
+        if (fixture.name.startsWith('competition-')) {
+          const hasToolbarSurface = await page.locator('.calendar-page .toolbar').evaluate(element =>
+            [null, '::before', '::after'].some(pseudo => {
+              const style = getComputedStyle(element, pseudo);
+              if (pseudo && (style.content === 'none' || style.content === 'normal')) return false;
+              return style.backgroundColor !== 'rgba(0, 0, 0, 0)' || style.backgroundImage !== 'none'
+                || style.boxShadow !== 'none' || style.backdropFilter !== 'none'
+                || [style.borderTopWidth, style.borderRightWidth, style.borderBottomWidth, style.borderLeftWidth].some(width => parseFloat(width) > 0);
+            }),
+          );
+          if (hasToolbarSurface) row.issues.push('Competition toolbar has an extra decorative surface');
+        }
         await fixture.open(page);
         const panel = page.locator(fixture.panel);
         await panel.waitFor({ state: 'visible' });
         // Let menu transitions and clamp layout settle before hit testing.
         await page.waitForTimeout(250);
-        Object.assign(row, await panel.evaluate(inspectMenu));
+        const inspection = await panel.evaluate(inspectMenu);
+        row.blur = inspection.blur;
+        row.issues.push(...inspection.issues);
         if (mode.name === 'explicit-dark' || row.issues.length) {
           await page.screenshot({ path: join(output, `${mode.name}-${fixture.name}.png`) });
         }

@@ -16,6 +16,13 @@ interface Card {
 
 const CARDS: Card[] = [
   {
+    href: '/account/get-started',
+    glyph: '→',
+    accent: 'var(--accent)',
+    zh: { title: '新员工入门', sub: '交给 AI · 由自己完成', tagline: '软件安装、环境配置与接入申请', meta: 'AI 带练 / 协作基础' },
+    en: { title: 'Staff onboarding', sub: 'Delegate to AI · Do yourself', tagline: 'Install apps, set up your environment and request access', meta: 'AI coaching / collaboration basics' },
+  },
+  {
     href: '/dev/dns-routing',
     glyph: '⌁',
     accent: 'var(--signal-info)',

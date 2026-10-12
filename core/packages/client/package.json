@@ -32,6 +32,7 @@
     "test:solvers": "node scripts/test-solvers.mjs",
     "verify:clock-distribution": "pnpm --filter @cuberoot/puzzle-solvers build && tsx scripts/clock/verify_distribution.mts",
     "audit:overflow": "node scripts/mobile-overflow-audit.cjs",
+    "audit:surfaces": "node scripts/audit-site-surfaces.mts",
     "audit:svg": "node scripts/audit-sim-svg.mjs",
     "lint": "eslint .",
     "build:account-avatars": "node --import tsx scripts/build-account-avatars.ts",

@@ -11,6 +11,41 @@ const PAGE = 'app/[lang]/example/example.css';
 describe('site materials have one definition and shared scenery tokens', () => {
   it.each([
     '.calendar-page .toolbar',
+    'body[data-site-scenery] .calendar-page .toolbar::before',
+    '.wca-stats-index-toolbar::after',
+    ':is(.sor-race-bar, .unrelated)',
+    '.viz-page .toolbar:hover',
+    '.sim-header',
+  ])('rejects reintroduced layout paint on %s', selector => {
+    for (const declaration of ['background: var(--card)', 'background-image: linear-gradient(var(--card), transparent)', 'border: 1px solid var(--border-default)', 'box-shadow: 0 0 4px var(--card)']) {
+      expect(scanSiteMaterial(`${selector} { ${declaration}; }`, PAGE)).toContainEqual(expect.objectContaining({ reason: 'unframed-surface' }));
+    }
+  });
+
+  it('distinguishes decorative heading lines from controls, focus rings and resets', () => {
+    expect(scanSiteMaterial('.wca-stats-index-section-header { border-bottom: 1px solid var(--border-default); }', PAGE)).toContainEqual(expect.objectContaining({ reason: 'unframed-surface' }));
+    expect(scanSiteMaterial('.wca-stats-index-section-header::after { border-bottom: 1px solid var(--border-default); }', PAGE)).toContainEqual(expect.objectContaining({ reason: 'unframed-surface' }));
+    expect(scanSiteMaterial(`
+      .calendar-page .toolbar { background: transparent; border: 0; box-shadow: none; }
+      .calendar-page .toolbar .region-picker-trigger { background: var(--card); border: 1px solid var(--input); }
+      .other:not(.sim-header) { background: var(--card); }
+      .other:has(.sim-header) { background: var(--card); }
+      .sim-header-button { background: var(--card); }
+      .wca-stats-index-section-header { background: var(--accent-soft); }
+      .new-toolbar { background: var(--card); border: 1px solid var(--border-default); }
+      .sim-header:focus-visible { outline: 2px solid var(--ring); }
+      .sim-header { background: var(--card); /* allow-site-material: visual documentation sample */ }
+    `, PAGE)).toEqual([]);
+  });
+
+  it('rejects a single-property restoration of the old toolbar rectangle', () => {
+    const before = '.calendar-page .toolbar::before {\n  background: transparent;\n}';
+    const patch = `*** Begin Patch\n*** Update File: core/packages/client/${PAGE}\n@@\n-  background: transparent;\n+  background: var(--glass-surface-bg);\n*** End Patch`;
+    expect(violationsFromHookPayload({ tool_input: { command: patch } }, () => before)).toContainEqual(expect.objectContaining({ reason: 'unframed-surface' }));
+  });
+
+  it.each([
+    '.calendar-page .toolbar',
     'body[data-site-scenery] .calendar-page :is(.calendar, .toolbar)',
     ':where(.sor-race-bar, .shell-topbar):hover',
     '.viz-page .toolbar:has(.wca-pp-results)',

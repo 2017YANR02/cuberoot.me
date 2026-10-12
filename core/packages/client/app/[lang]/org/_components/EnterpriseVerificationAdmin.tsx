@@ -11,9 +11,17 @@ import { MutationMessage } from './OrgUi';
 export default function EnterpriseVerificationAdmin() {
   const t = useT();
   const [opened, setOpened] = useState(false);
-  return <section className="org-section enterprise-verification">
-    <div className="org-form"><button type="button" className="org-form-button" aria-expanded={opened} onClick={() => setOpened(!opened)}>{t('企业认证审核与收款设置', 'Enterprise verification review and bank settings')}</button></div>
-    {opened && <AdminContent />}
+  useEffect(() => {
+    const reveal = () => { if (window.location.hash === '#enterprise-admin') { setOpened(true); document.getElementById('enterprise-admin')?.scrollIntoView({ block: 'start' }); } };
+    reveal(); window.addEventListener('hashchange', reveal);
+    return () => window.removeEventListener('hashchange', reveal);
+  }, []);
+  return <section id="enterprise-admin" className="org-section enterprise-verification org-admin-panel" data-site-surface="panel">
+    <p className="org-eyebrow">{t('仅平台管理员可见', 'Platform administrators only')}</p>
+    <h2>{t('平台收款与认证审核', 'Platform receiving account and verification review')}</h2>
+    <p className="org-lead">{t('这里设置所有申请企业向平台打款的收款账户，并审核各企业的申请。为你自己的企业申请认证，请进入上方企业。', 'Set the platform account that receives verification transfers and review enterprise applications here. To apply for your own enterprise, open it above.')}</p>
+    <button type="button" className="org-secondary-button" aria-expanded={opened} aria-controls="enterprise-admin-content" onClick={() => setOpened(!opened)}>{opened ? t('收起平台管理', 'Collapse platform management') : t('打开平台收款设置与审核', 'Open platform receiving settings and reviews')}</button>
+    {opened && <div id="enterprise-admin-content"><AdminContent /></div>}
   </section>;
 }
 function AdminContent() {
@@ -29,6 +37,10 @@ function AdminContent() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const loadSettings = useCallback(async () => {
+    const result = await getEnterpriseBankSettings();
+    setSettings(result.settings); setEnabled(result.settings?.enabled ?? false); setKeyReady(result.keyReady); setLoaded(true);
+  }, []);
   const loadRows = useCallback(async () => { const result = await listEnterpriseApplications(offset); setRows(result.applications); setMore(result.hasMore); }, [offset]);
   useEffect(() => { let active = true; void getEnterpriseBankSettings().then(result => { if (!active) return; setSettings(result.settings); setEnabled(result.settings?.enabled ?? false); setKeyReady(result.keyReady); setLoaded(true); }).catch(reason => { if (active) setError(verificationError(reason, t)); }); return () => { active = false; }; }, [t]);
   useEffect(() => { let active = true; void listEnterpriseApplications(offset).then(result => { if (active) { setRows(result.applications); setMore(result.hasMore); } }).catch(reason => { if (active) setError(verificationError(reason, t)); }); return () => { active = false; }; }, [offset, t]);
@@ -42,12 +54,18 @@ function AdminContent() {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     const value = (name: string) => String(data.get(name) ?? '').trim();
-    void run(() => saveEnterpriseBankSettings({ enabled, accountName: value('accountName'), bankName: value('bankName'), accountNumber: value('accountNumber'), refundNotice: value('refundNotice') }), t('收款设置已保存；已生成的申请继续使用原收款信息。', 'Bank settings saved. Existing applications retain their original recipient details.'));
+    void run(async () => { await saveEnterpriseBankSettings({ enabled, accountName: value('accountName'), bankName: value('bankName'), accountNumber: value('accountNumber'), refundNotice: value('refundNotice') }); await loadSettings(); }, enabled ? t('已保存并开放认证。进入「我的企业」，选择企业后即可提交认证资料。', 'Saved and opened verification. Select your enterprise under My enterprises to submit its documents.') : t('收款设置已保存，新申请保持关闭。已有申请仍使用原收款信息，请继续处理到账及退款。', 'Settings saved. New applications are closed. Continue processing receipts and refunds for existing applications using their original receiving details.'));
   }
   return <>
-    <h2>{t('平台企业认证管理', 'Platform enterprise verification')}</h2>
+    <h3>{t('先完成平台准备，再接受企业申请', 'Prepare the platform before accepting applications')}</h3>
     <MutationMessage message={error || message} error={!!error} />
-    {loaded && !keyReady && <p>{t('尚未配置企业材料加密密钥，认证不能开放。请由运维配置后再保存收款信息。', 'The document encryption key is not configured. Verification cannot open until operations configures it.')}</p>}
+    {!loaded && !error && <p aria-busy="true">{t('正在检查平台准备情况…', 'Checking platform setup…')}</p>}
+    {loaded && <ol className="org-admin-checklist">
+      <li><strong>{t('材料安全保护', 'Document protection')}</strong><span>{keyReady ? t('已就绪', 'Ready') : t('待运维配置：服务器尚未提供有效的材料加密密钥。完成后点击下方「重新检查平台准备情况」。', 'Operations action required: the server has no valid document encryption key. Recheck setup below after configuration.')}</span></li>
+      <li><strong>{t('平台收款账户', 'Platform receiving account')}</strong><span>{settings ? t('已保存，可在下方核对或修改', 'Saved; check or edit below') : t('待管理员填写：企业户名、开户支行、对公账号及退款时限', 'Administrator action required: enter recipient name, branch, corporate account and refund time frame')}</span></li>
+      <li><strong>{t('开放认证申请', 'Open verification applications')}</strong><span>{settings?.enabled && keyReady ? t('已开放，企业可以开始提交资料', 'Open; enterprises can submit their details') : t('尚未开放：完成前两项，打开下方开关并保存', 'Closed: complete the first two items, turn on the switch below and save')}</span></li>
+    </ol>}
+    <button type="button" className="org-secondary-button" disabled={busy} onClick={() => void run(loadSettings, '')}>{busy ? t('正在处理…', 'Working…') : t('重新检查平台准备情况', 'Recheck platform setup')}</button>
     {loaded && <form className="org-form" onSubmit={save}>
       <fieldset disabled={busy || !keyReady}>
         <label>{t('收款企业全称', 'Recipient legal name')}<input className="org-form-control" name="accountName" defaultValue={settings?.accountName ?? '上海魔方根科技有限公司'} required maxLength={160} /></label>
@@ -55,15 +73,18 @@ function AdminContent() {
         <label>{t('对公收款账号', 'Corporate recipient account')}<input className="org-form-control" name="accountNumber" defaultValue={settings?.accountNumber ?? ''} inputMode="numeric" required maxLength={40} /></label>
         <label className="org-field-wide">{t('退款说明（向申请人展示，说明处理时限）', 'Refund notice (visible to applicants, include processing time)')}<textarea className="org-form-control org-form-textarea" name="refundNotice" defaultValue={settings?.refundNotice ?? ''} required maxLength={1000} /></label>
         <div className="org-field-wide"><BoolToggle value={enabled} onChange={setEnabled} label={t('开放新的对公验证申请', 'Accept new corporate verification applications')} /></div>
-        <div className="org-form-actions"><button className="org-form-button">{t('保存收款设置', 'Save bank settings')}</button></div>
+        <p className="org-help org-field-wide">{t('修改在点击保存后生效。关闭新申请不会取消已有申请，仍需核对其到账并退款。', 'Changes take effect after saving. Closing new applications does not cancel existing ones; their receipts and refunds still need to be processed.')}</p>
+        <div className="org-form-actions"><button className="org-form-button">{busy ? t('正在保存…', 'Saving…') : enabled ? t('保存收款账户并开放认证', 'Save receiving account and open verification') : settings?.enabled ? t('保存并暂停新的认证申请', 'Save and pause new verification applications') : t('保存收款设置，保持申请关闭', 'Save settings with applications closed')}</button></div>
       </fieldset>
     </form>}
-    <h3>{t('认证申请', 'Applications')}</h3>
-    <div className="org-form"><button type="button" className="org-form-button" disabled={busy} onClick={() => void run(loadRows, '')}>{t('刷新申请', 'Refresh applications')}</button></div>
+    <h3>{t('处理企业申请', 'Process enterprise applications')}</h3>
+    <p className="org-help">{t('处理顺序：查看材料 → 查银行并登记到账 → 保存审核结果 → 在银行退款并登记。申请人及本企业成员不能审核自己的企业。', 'Order: review documents → check the bank and record receipt → save the decision → refund through the bank and record it. Applicants and enterprise members cannot approve their own enterprise.')}</p>
+    <button type="button" className="org-secondary-button" disabled={busy} onClick={() => void run(loadRows, '')}>{t('重新查询申请列表', 'Reload applications')}</button>
     <div className="org-table-wrap"><table className="org-table">
       <thead><tr><th>{t('企业', 'Enterprise')}</th><th>{t('认证状态', 'Verification')}</th><th>{t('验证款', 'Transfer')}</th><th>{t('操作', 'Action')}</th></tr></thead>
       <tbody>{rows.map(row => <tr key={row.id}><td>{row.legalName}</td><td>{verificationStatus(row.status, t)}</td><td>{row.refundedAt ? t('已退款', 'Refund recorded') : row.receivedAt ? t('已核实到账，待退款', 'Received; refund pending') : t('未核实到账', 'Receipt not confirmed')}</td><td><button type="button" className="org-table-control" disabled={busy} onClick={() => { setSelected(null); void run(async () => setSelected(await getEnterpriseApplicationMaterials(row.id)), ''); }}>{t('查看材料', 'Review materials')}</button></td></tr>)}</tbody>
     </table></div>
+    {loaded && !error && rows.length === 0 && <p className="org-empty">{t('当前没有待显示的认证申请。企业提交资料后会出现在这里。', 'There are no applications to display. Submitted enterprise applications will appear here.')}</p>}
     <div className="org-form"><div className="org-form-actions">
       <button type="button" className="org-form-button" disabled={offset === 0 || busy} onClick={() => { setSelected(null); setOffset(Math.max(0, offset - 50)); }}>{t('上一页', 'Previous')}</button>
       <button type="button" className="org-form-button" disabled={!more || busy} onClick={() => { setSelected(null); setOffset(offset + 50); }}>{t('下一页', 'Next')}</button>

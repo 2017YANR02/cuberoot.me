@@ -46,6 +46,60 @@ const QUERY_LABELS: Record<string, {zh:string;en:string}> = {
   algorithms:{zh:'正在查询公式库',en:'Searching algorithms'},
   statistics:{zh:'正在查询统计数据',en:'Looking up statistics'},
 };
+const QUESTION_EXAMPLES = [
+  {id:'learn-algorithms',title:{zh:'学习公式',en:'Learn algorithms'},questions:[
+    {zh:'我想学 CFOP 公式，帮我找到对应页面。',en:'I want to learn CFOP algorithms. Show me the relevant pages.'},
+    {zh:'我想学 F2L，打开三阶 F2L 公式库。',en:'I want to learn F2L. Show me the 3x3 F2L library.'},
+    {zh:'我想学习完整的 OLL 公式。',en:'I want to learn the full OLL algorithm set.'},
+    {zh:'我想学习完整的 PLL 公式。',en:'I want to learn the full PLL algorithm set.'},
+    {zh:'先学简单一点的，帮我找到 2 步 OLL 和 2 步 PLL。',en:'Start with something simpler. Show me 2-look OLL and 2-look PLL.'},
+    {zh:'我想学桥式的 CMLL 公式。',en:'I want to learn CMLL algorithms for Roux.'},
+  ]},
+  {id:'practice',title:{zh:'专项训练',en:'Targeted practice'},questions:[
+    {zh:'我想练习 PLL 公式，带我去选择训练情况。',en:'I want to practise PLL algorithms. Take me to case selection.'},
+    {zh:'我想练习 OLL 公式，打开对应训练页面。',en:'I want to practise OLL algorithms. Show me the trainer.'},
+    {zh:'我想练习 PLL 识别，打开识别训练。',en:'I want to practise PLL recognition. Show me the recognition trainer.'},
+    {zh:'我想练习 ZBLL，打开训练页面。',en:'I want to practise ZBLL. Show me the trainer.'},
+    {zh:'我想练习十字最优解，去哪里训练？',en:'I want to practise optimal cross solutions. Where is the trainer?'},
+    {zh:'我想练习桥式，帮我打开对应训练器。',en:'I want to practise Roux. Show me the trainer.'},
+  ]},
+  {id:'tools',title:{zh:'用好网站',en:'Using CubeRoot'},questions:[
+    {zh:'计时器的普通计时和公式训练有什么区别？',en:'What is the difference between normal timing and algorithm training?'},
+    {zh:'怎样只练习我选中的 PLL 情况？',en:'How can I practise only the PLL cases I select?'},
+    {zh:'在哪里可以给复盘视频数帧？',en:'Where can I count frames in a solve video?'},
+    {zh:'帮我找到二阶魔方求解器。',en:'Help me find the 2x2 cube solver.'},
+  ]},
+  {id:'learning',title:{zh:'学公式与原理',en:'Algorithms and concepts'},questions:[
+    {zh:'OLL 和 PLL 分别解决什么问题？',en:'What do OLL and PLL each solve?'},
+    {zh:'换位子和共轭子有什么区别？',en:'What is the difference between a commutator and a conjugate?'},
+    {zh:'群论能怎么解释魔方的转动？',en:'How does group theory explain cube moves?'},
+    {zh:'网站有哪些三阶魔方公式集？',en:'Which 3x3 algorithm sets are available on CubeRoot?'},
+  ]},
+  {id:'rules',title:{zh:'了解比赛规则',en:'Competition rules'},questions:[
+    {zh:'WCA 比赛观察时间超过 15 秒会怎样？',en:'What happens if inspection exceeds 15 seconds in a WCA competition?'},
+    {zh:'+2 和 DNF 分别在什么情况下判罚？',en:'When does a solve receive a +2 penalty or a DNF?'},
+    {zh:'三阶平均成绩怎样计算，DNF 怎样处理？',en:'How is a 3x3 average calculated, and how are DNFs handled?'},
+    {zh:'停表后魔方还差一点没对齐，规则怎么判？',en:'How do the rules handle a cube that is slightly misaligned when the timer stops?'},
+  ]},
+  {id:'results',title:{zh:'查成绩与比赛',en:'Results and competitions'},questions:[
+    {zh:'我今年参加了多少场 WCA 比赛？',en:'How many WCA competitions have I competed in this year?'},
+    {zh:'看看耿暄一的三阶成绩是怎么进步的。',en:'Show me Xuanyi Geng’s progress in 3x3.'},
+    {zh:'找找接下来在中国举行的比赛。',en:'Find upcoming competitions in China.'},
+    {zh:'目前三阶魔方的单次和平均世界纪录是多少？',en:'What are the current 3x3 single and average world records?'},
+  ]},
+  {id:'analysis',title:{zh:'按条件做统计',en:'Custom statistics'},questions:[
+    {zh:'把我去年的参赛次数按月份统计。',en:'Break down my competition count last year by month.'},
+    {zh:'我去年和前年的参赛次数相差多少？',en:'How did my competition count change between last year and the year before?'},
+    {zh:'我去年三阶比赛中每次还原的 DNF 比例是多少？',en:'What percentage of my 3x3 attempts last year were DNFs?'},
+    {zh:'我去年在哪些国家或地区参加过比赛？分别多少场？',en:'Which countries or regions did I compete in last year, and how many competitions in each?'},
+  ]},
+  {id:'images',title:{zh:'看图与复盘',en:'Images and reconstructions'},note:{zh:'图片问题请先添加图片。',en:'For image questions, attach an image first.'},questions:[
+    {zh:'帮我读出这张成绩截图里的项目和成绩。',en:'Read the events and results in this screenshot.'},
+    {zh:'识别图片里的公式，保留原始转动符号。',en:'Read the algorithm in this image, preserving the original move notation.'},
+    {zh:'解释这张统计图的坐标轴和变化趋势。',en:'Explain the axes and trends in this chart.'},
+    {zh:'找找耿暄一最近的三阶公开复盘。',en:'Find Xuanyi Geng’s latest public 3x3 reconstructions.'},
+  ]},
+];
 function statusLabel(status:AssistantStatus) {
   if(status.phase==='querying') return tr(QUERY_LABELS[status.tool ?? ''] ?? {zh:'正在查询资料',en:'Looking up sources'});
   return tr(status.phase==='writing' ? {zh:'正在生成回答',en:'Writing answer'} : {zh:'正在思考',en:'Thinking'});
@@ -138,7 +192,7 @@ export default function SiteAssistantDialog({turns,draft,images,onImagesChange:s
   useEffect(()=>{
     if(turns.length!==turnCount.current) { follow.current=true; turnCount.current=turns.length; }
     const node=messages.current;
-    if(node && follow.current) node.scrollTop=node.scrollHeight;
+    if(node && follow.current) node.scrollTop=turns.length ? node.scrollHeight : 0;
   },[turns,busy,error,status]);
   useEffect(()=>{
     const node=input.current;
@@ -171,16 +225,16 @@ export default function SiteAssistantDialog({turns,draft,images,onImagesChange:s
         <button className="site-assistant-action site-assistant-expand" type="button" onClick={()=>setExpanded(value=>!value)} title={tr(expanded?{zh:'退出全屏',en:'Exit full screen'}:{zh:'全屏',en:'Full screen'})}>{expanded?<Minimize2 size={19}/>:<Maximize2 size={19}/>}</button>
         <button className="site-assistant-action" type="button" onClick={onClose} title={tr({zh:'关闭',en:'Close'})}><X size={22}/></button>
       </header>
-      <div className="site-assistant-body"><div ref={messages} onScroll={()=>{const node=messages.current;if(node){follow.current=node.scrollHeight-node.scrollTop-node.clientHeight<80;setShowLatest(!follow.current);}}} className="site-assistant-messages" role="log" aria-live="polite">
-        {!turns.length && <div className="site-assistant-examples"><p>{tr({zh:'你想了解什么？',en:'What would you like to know?'})}</p>{[
-          {zh:'三阶魔方世界纪录',en:'Current 3x3 world records'},
-          {zh:'看看耿暄一的三阶成绩是怎么进步的',en:'Explore Xuanyi Geng’s progress in 3x3'},
-          {zh:'找找接下来在中国举行的比赛',en:'Find upcoming competitions in China'},
-          {zh:'怎样在 CubeRoot 练习 PLL 识别？',en:'How can I practise PLL recognition on CubeRoot?'},
-          {zh:'我要学习三阶 OLL 和 PLL 公式',en:'I want to learn 3x3 OLL and PLL algorithms'},
-          {zh:'我需要一个二阶魔方求解器',en:'I need a 2x2 cube solver'},
-          {zh:'群论能怎么解释魔方的转动？',en:'How does group theory explain cube moves?'},
-        ].map(example=><button className="site-assistant-action" type="button" key={example.en} onClick={()=>onAsk(tr(example))}>{tr(example)}</button>)}</div>}
+      <div className="site-assistant-body"><div ref={messages} onScroll={()=>{const node=messages.current;if(node && turns.length){follow.current=node.scrollHeight-node.scrollTop-node.clientHeight<80;setShowLatest(!follow.current);}}} className="site-assistant-messages" role="log" aria-live="polite">
+        {!turns.length && <div className="site-assistant-examples">
+          <h3>{tr({zh:'你想了解什么？',en:'What would you like to know?'})}</h3>
+          <p className="site-assistant-examples-intro">{tr({zh:'点击示例填入问题，可修改后发送。',en:'Choose a question to edit and send.'})}</p>
+          <div className="site-assistant-example-groups">{QUESTION_EXAMPLES.map(group=><section className="site-assistant-example-group" key={group.id} aria-labelledby={`assistant-examples-${group.id}`}>
+            <h4 id={`assistant-examples-${group.id}`}>{tr(group.title)}</h4>
+            {group.note && <p className="site-assistant-examples-intro">{tr(group.note)}</p>}
+            {group.questions.map(example=><button className="site-assistant-action" type="button" key={example.en} onClick={()=>{stop();setDraft(tr(example));input.current?.focus();}}>{tr(example)}</button>)}
+          </section>)}</div>
+        </div>}
         {turns.map((turn,i)=>{
           const tableLinks=new Set(turn.result?.artifacts?.flatMap(a=>a.kind==='table' ? [...a.links ?? [],...a.cellLinks?.flat() ?? []] : []) ?? []);
           const seenActions=new Set<string>();
@@ -209,7 +263,7 @@ export default function SiteAssistantDialog({turns,draft,images,onImagesChange:s
         </section>;})}
         {error && <div role="alert"><p>{tr(ASSISTANT_ERROR_TEXT[error])}</p>{error==='login_required'||error==='wca_link_required' ? <button className="site-assistant-action" type="button" onClick={()=>useAuthStore.getState().login()}>{tr({zh:'前往账号页',en:'Go to account'})}</button> : error==='verification_required' ? <Link href={`/competition-verify?returnTo=${encodeURIComponent(lang==='zh'?'/zh':'/')}`} prefetch={false}>{tr({zh:'完成访问验证',en:'Verify access'})}</Link> : error!=='daily_limit' && error!=='account_forbidden' && turns.length>0 && <button className="site-assistant-action" type="button" disabled={busy||editing!==null} onClick={()=>onAsk(turns[turns.length-1].question,true,turns[turns.length-1].images)}>{tr({zh:'重试',en:'Retry'})}</button>}</div>}
       </div>
-      {showLatest && <button className="site-assistant-action site-assistant-latest" type="button" onClick={scrollLatest} title={tr({zh:'回到最新消息',en:'Jump to latest'})}><ArrowDown size={18}/></button>}</div>
+      {showLatest && turns.length>0 && <button className="site-assistant-action site-assistant-latest" type="button" onClick={scrollLatest} title={tr({zh:'回到最新消息',en:'Jump to latest'})}><ArrowDown size={18}/></button>}</div>
       <form className="site-assistant-compose" onDragOver={event=>{if(event.dataTransfer.types.includes('Files'))event.preventDefault();}} onDrop={event=>{event.preventDefault();void addImages(Array.from(event.dataTransfer.files));}} onSubmit={e=>{e.preventDefault();submit();}}><div className="site-assistant-input">
         <input ref={imageInput} type="file" accept="image/png,image/jpeg,image/webp" multiple hidden onChange={event=>{const files=Array.from(event.target.files ?? []);event.target.value='';void addImages(files);}}/>
         {!!images.length && renderImages(images,true)}

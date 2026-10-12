@@ -71,7 +71,6 @@
     padding: 12px 1.5rem 0;
     display: flex;
     gap: 4px;
-    border-bottom: 1px solid var(--cmt-border);
     overflow-x: auto;
 }
 

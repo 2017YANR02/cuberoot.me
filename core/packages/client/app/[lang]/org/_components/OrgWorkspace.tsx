@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useState, type ReactNode } from 'react';
+import { usePathname } from 'next/navigation';
+import { Building2, ChevronRight } from 'lucide-react';
 import { hasTeachingPermission, type TeachingPermission } from '@cuberoot/shared/teaching';
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
 import { getSessionToken, nextQuery, useAuthUser } from '@/lib/auth-store';
 import { getTeachingOrganization, type TeachingOrganizationAccess } from '@/lib/teaching-saas-api';
-import { teachingErrorMessage } from './OrgUi';
+import { teachingErrorMessage, teachingRoleLabel } from './OrgUi';
 
 interface Props {
   orgSlug: string;
@@ -16,6 +18,7 @@ interface Props {
 export default function OrgWorkspace({ orgSlug, children }: Props) {
   const t = useT();
   const user = useAuthUser();
+  const pathname = usePathname().replace(/^\/zh(?=\/|$)/, '');
   const [mounted, setMounted] = useState(false);
   const [organization, setOrganization] = useState<TeachingOrganizationAccess | null>(null);
   const [error, setError] = useState('');
@@ -62,16 +65,17 @@ export default function OrgWorkspace({ orgSlug, children }: Props) {
 
   return (
     <main className="org-page">
-      <header className="org-header">
-        <AppLink className="org-eyebrow" href="/org" prefetch={false}>{t('教学管理', 'Teaching')}</AppLink>
+      <header className="org-header org-workspace-header">
+        <AppLink className="org-eyebrow org-breadcrumb" href="/org" prefetch={false}><Building2 size={16} aria-hidden="true" />{t('我的企业', 'My enterprises')}<ChevronRight size={14} aria-hidden="true" /></AppLink>
         <div className="org-heading-row">
           <h1>{organization.name}</h1>
-          <span className="org-role">{organization.role}</span>
+          <span className="org-role">{teachingRoleLabel(organization.role, t)}</span>
         </div>
+        <p className="org-lead">{t('企业认证、学员与教学事务，在这里统一管理。', 'Manage verification, students and teaching in one place.')}</p>
       </header>
       <nav className="org-nav" aria-label={t('机构导航', 'Organization navigation')}>
         {links.filter((link) => !link.permission || hasTeachingPermission(organization.role, link.permission)).map((link) => (
-          <AppLink key={link.href} href={link.href} prefetch={false}>{link.label}</AppLink>
+          <AppLink key={link.href} href={link.href} aria-current={(link.href === `/org/${organization.slug}` ? pathname === link.href : pathname === link.href || pathname.startsWith(`${link.href}/`)) ? 'page' : undefined} prefetch={false}>{link.label}</AppLink>
         ))}
       </nav>
       <div className="org-content">{children(organization)}</div>

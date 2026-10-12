@@ -64,6 +64,7 @@ import { applyOneToken, computeStageSegments } from './stage_segments';
 import type { SolveMove, StageSegments } from './stage_segments';
 import { normalizeSolve } from './gyro_orient';
 import { metricForRange } from './step_metrics';
+import { isCross } from './cfop-detect';
 
 /** The four F2L slots, named by the two side faces that bound them. */
 export type F2lSlotId = 'FR' | 'FL' | 'BR' | 'BL';
@@ -353,7 +354,11 @@ export function computeF2lSlots(
   const SETTLED_GAP_MS = 900;
   for (let i = crossEndIdx + 1; i <= horizon; i++) {
     const cur = standing(i);
-    if (cur.length > peak) {
+    // A pair can reach its slot before an insertion restores the cross, e.g.
+    // L' B U B' L. Keep that final restoration with the pair. Still observe
+    // slot dips below so the existing pass-through recovery remains intact.
+    const crossRestored = isCross(states[i + 1]);
+    if (cur.length > peak && crossRestored) {
       for (const id of currentLevel) frozen.add(id);
       peak = cur.length;
       currentLevel = cur.filter(id => !frozen.has(id));
@@ -367,6 +372,7 @@ export function computeF2lSlots(
     }
     const nextTs = moves[i + 1]?.ts ?? totalMs;
     if (dipped
+      && crossRestored
       && nextTs - moves[i].ts >= SETTLED_GAP_MS
       && [...frozen].every(id => cur.includes(id))) {
       for (const id of currentLevel) closedAt.delete(id);

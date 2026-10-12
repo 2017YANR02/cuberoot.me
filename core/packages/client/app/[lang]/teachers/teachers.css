@@ -64,7 +64,6 @@
   align-items: end;
   gap: 14px;
   padding-bottom: 18px;
-  border-bottom: 1px solid var(--border-default);
 }
 .directory-search { width: min(360px, 100%); }
 .directory-search-input,

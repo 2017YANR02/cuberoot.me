@@ -43,7 +43,6 @@ body[data-site-scenery] :is(
   .vc-api-doc,
   .ns-dist-card,
   .ns-stat-cell,
-  .t10h-controls,
   .t10h-stage,
   .t10h-metric-toggle,
   .t10h-speed,
@@ -384,8 +383,7 @@ body[data-site-scenery] .sor-race .sor-race-bar {
   backdrop-filter: none;
 }
 
-body[data-site-scenery] .timer-shell .shell-topbar::before,
-body[data-site-scenery] .calendar-page .toolbar::before {
+body[data-site-scenery] .timer-shell .shell-topbar::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -397,22 +395,10 @@ body[data-site-scenery] .calendar-page .toolbar::before {
   backdrop-filter: var(--glass-filter);
 }
 
-body[data-site-scenery] .calendar-page .toolbar::before {
-  background: var(--glass-surface-bg);
-}
-
 /* Keep the country menu above the chart's own glass stacking context. */
 body[data-site-scenery] .sor-race .sor-race-bar {
   position: relative;
   z-index: 2;
-}
-
-/* Anchor the paint layer in list view without trapping dropdowns below its
-   sticky event header in a toolbar stacking context. */
-body[data-site-scenery] .calendar-page.calendar-page--list .toolbar {
-  position: relative;
-  top: auto;
-  z-index: auto;
 }
 
 body[data-site-scenery] .timer-history-columns-head,

@@ -1,9 +1,58 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { doubleZbllOfflinePages } from '@/lib/double-zbll';
 const script = readFileSync(fileURLToPath(new URL('../public/double-zbll-sw.js', import.meta.url)), 'utf8');
+
+describe('Double ZBLL corpus version refresh', () => {
+  afterEach(() => { vi.unstubAllGlobals(); vi.resetModules(); });
+  async function fixture() {
+    vi.resetModules();
+    const { DOUBLE_ZBLL_MOVES } = await import('@cuberoot/shared/double-zbll');
+    const root = '/data/double-zbll/';
+    const digest = (value: string | Uint8Array) => createHash('sha256').update(value).digest('hex');
+    const cases = JSON.stringify({ cases: Array.from({ length: 472 }, (_, i) => ({ name: `case-${i}`, subgroup: 'U' })) });
+    const casesSha256 = digest(cases), casesFile = `cases-${casesSha256.slice(0, 16)}.json`;
+    function version(length: number) {
+      const data = new Uint8Array(222784 * 21);
+      for (let i = 0; i < 222784; i++) data[i * 21] = length;
+      const dataSha256 = digest(data), dataFile = `pairs-${dataSha256.slice(0, 16)}.bin`;
+      const manifest = { schema: 1, version: dataSha256.slice(0, 16), caseCount: 472, pairCount: 222784, recordBytes: 21, metric: 'HTM', moves: DOUBLE_ZBLL_MOVES, dataBytes: data.length, dataSha256, dataFile, casesFile, casesSha256 };
+      return { data, manifest };
+    }
+    const old = version(2), fresh = version(1);
+    const saved = new Map<string, Response>([
+      [root + 'manifest.json', new Response(JSON.stringify(old.manifest))],
+      [root + old.manifest.dataFile, new Response(old.data)],
+      [root + casesFile, new Response(cases)],
+    ]);
+    vi.stubGlobal('caches', { open: async () => ({ match: async (path: string) => saved.get(path)?.clone(), put: async (path: string, response: Response) => { saved.set(path, response.clone()); } }) });
+    return { root, old, fresh, saved };
+  }
+  it('replaces an old cached corpus only after verifying the new complete corpus', async () => {
+    const { root, fresh, saved } = await fixture();
+    const fetcher = vi.fn(async (path: string) => path.endsWith('manifest.json?check=1')
+      ? new Response(JSON.stringify(fresh.manifest)) : new Response(fresh.data));
+    vi.stubGlobal('fetch', fetcher);
+    const { loadDoubleZbll } = await import('@/lib/double-zbll');
+    expect((await loadDoubleZbll()).manifest.dataSha256).toBe(fresh.manifest.dataSha256);
+    expect((await saved.get(root + 'manifest.json')!.json()).dataSha256).toBe(fresh.manifest.dataSha256);
+    await loadDoubleZbll();
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+  it.each(['offline', 'corrupt'])('keeps the verified offline corpus when the update is %s', async failure => {
+    const { root, old, fresh, saved } = await fixture();
+    vi.stubGlobal('fetch', async (path: string) => {
+      if (failure === 'offline') throw new TypeError('Offline');
+      return path.endsWith('manifest.json?check=1') ? new Response(JSON.stringify(fresh.manifest)) : new Response('corrupt data');
+    });
+    const { loadDoubleZbll } = await import('@/lib/double-zbll');
+    expect((await loadDoubleZbll()).manifest.dataSha256).toBe(old.manifest.dataSha256);
+    expect((await saved.get(root + 'manifest.json')!.json()).dataSha256).toBe(old.manifest.dataSha256);
+  });
+});
 
 function worker(scope = 'https://example.com/zh/alg/3x3/zbll/') {
   const listeners = new Map<string, (event: unknown) => void>();

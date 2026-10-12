@@ -20,8 +20,8 @@ export const PAIRED_GUARDS: PairedGuard[] = [
     hook: 'block-unprotected-memory-compute.mts',
     test: 'codex_hook_adapters.test.ts',
     baseline: '0',
-    zh: { title: '大内存计算防交换启动检查', desc: '拦截尚无系统级防交换保护的已登记计算入口，包括双底 ZBLL、H48 求解与建表、大表分析器和打乱统计。环境变量与轮询监控不构成豁免；统计只读计划和普通开发命令可用。CI 验证命令分类与注册，不能证明系统禁用了 swap。新会话须信任 hook 定义；不覆盖手动终端、已运行进程或任意间接脚本。' },
-    en: { title: 'No-swap startup check for large computations', desc: 'Blocks registered double ZBLL, H48 solving and table generation, large-table analyzers and scramble statistics without verified OS-enforced swap protection. Environment flags and polling are not exemptions. Read-only plans and ordinary development remain available. CI checks classification and registration, not OS swap enforcement. Trust the hook definition in a new session; manual terminals, existing processes and arbitrary indirect scripts are outside its coverage.' },
+    zh: { title: '大内存计算防交换启动检查', desc: '默认拦截尚无系统级防交换保护的已登记计算入口，包括双底 ZBLL、H48 求解与建表、大表分析器和打乱统计。环境变量与轮询监控不能自行豁免；2026-10-11 用户明确接受运行时监控的 AUF 长期任务，仅按精确命令、代码 hash 与期限放行。统计只读计划和普通开发命令可用。CI 验证分类与注册，不能证明系统禁用了 swap；不覆盖手动终端、已运行进程或任意间接脚本。' },
+    en: { title: 'No-swap startup check for large computations', desc: 'Blocks registered double ZBLL, H48 solving and table generation, large-table analyzers and scramble statistics without verified OS-enforced swap protection by default. Flags and polling cannot grant an exemption. On 2026-10-11 the user explicitly accepted runtime monitoring for the AUF long-running task; only its exact command and code hashes qualify within the specified time window. Read-only plans and ordinary development remain available. CI checks classification and registration, not OS swap enforcement; manual terminals, existing processes and arbitrary indirect scripts are outside coverage.' },
   },
   {
     id: 'puzzle-menu-label',
@@ -56,8 +56,8 @@ export const PAIRED_GUARDS: PairedGuard[] = [
     hook: 'hook-detect-site-material.mjs',
     test: 'site-material-guard.test.ts',
     baseline: '0',
-    zh: { title: '背景材质统一复用', desc: '玻璃材质参数只在 glass-material.css 定义；公共适配放 site-surfaces.css。承载菜单的工具栏禁止直接加 backdrop-filter，玻璃放在独立伪元素层，避免截断菜单背景。Hook 重建修改后的 CSS，CI 用同一扫描器检查全部 CSS；audit-glass-menus.mts 验证真实展开菜单。Hook 与 CI 同源禁止用 content: attr(data-tooltip/data-tip/title) 重造短提示，统一使用 Tooltip。静态规则覆盖已登记的工具栏，动态或新增容器仍须浏览器复核。独立语义须同一行注明 allow-site-material 及理由。' },
-    en: { title: 'Shared background materials', desc: 'Define glass parameters only in glass-material.css and common adapters in site-surfaces.css. Menu-hosting toolbars must paint glass on a separate pseudo-element, since filtering the host cuts off menu backdrops. The hook reconstructs proposed CSS and CI scans all CSS with the same rules; audit-glass-menus.mts checks opened menus in a browser. The hook and CI share the rule rejecting CSS content: attr(data-tooltip/data-tip/title) hover labels in favor of Tooltip. Static rules cover registered toolbars; dynamic or new hosts still require browser review. Intentional exceptions need an inline allow-site-material reason.' },
+    zh: { title: '背景材质统一复用', desc: '玻璃材质在 glass-material.css 定义，公共适配放 site-surfaces.css。底框规则仅针对 site-surface-policy.mts 中已确认的布局容器，标题只约束分隔边线；复用现有 Hook 和 CI 扫描，不增加独立检查任务。audit:surfaces 和菜单巡检按需运行，不作为日常提交门槛。新候选先人工确认，正常卡片、控件和焦点边界不禁用。承载菜单的外层不能直接加模糊，短提示复用 Tooltip。静态检查不覆盖任意动态样式，例外沿用同一行 allow-site-material 及具体理由。' },
+    en: { title: 'Shared background materials', desc: 'Define glass materials in glass-material.css and adapters in site-surfaces.css. Frame rules cover only reviewed layout containers in site-surface-policy.mts; headings only prohibit separator borders. Reuse the existing hook and CI scan without a separate job. Surface and menu browser audits run on demand, not on every commit. Review new candidates manually; preserve normal cards, controls and focus outlines. Do not filter menu hosts; reuse Tooltip for short hints. Static checks do not cover arbitrary dynamic styles. Exceptions use an inline allow-site-material reason.' },
   },
   {
     id: 'modal-dismiss',
