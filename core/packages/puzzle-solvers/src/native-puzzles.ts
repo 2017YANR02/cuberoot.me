@@ -12,6 +12,8 @@
  * reference's independent plane constructions and shape-preserving moves.
  * 3×3 + Skewb, Helicopter Skewb, Comboctahedron, Circo-Radiolarian and
  * Deep-Cut Icosahedron use the reference's full mixed-axis/deep-cut models.
+ * 3×3 + Helicopter combines uniform third-depth face cuts with the planar
+ * Helicopter cuts through adjacent face centers (Jaap's helicopter.htm).
  * These are bounded random-move practice scrambles, not uniform random states.
  */
 const CUBE_FACE_CORNER_AXES = [
@@ -145,6 +147,12 @@ export const NATIVE_PUZZLES = {
   icosababyface: {
     description: 'i v 0.562777422255239', zh: '深切角转二十面体', en: 'Deep-Cut Icosahedron', textLabel: 'Icosa',
     axes: DOGIC_AXES, order: 5, layers: 2, scrambleLength: 40, aspect: 8 / 5, visibleFacelets: 20,
+  },
+  cube3heli: {
+    description: 'c f 0.333333333333333 e 0.7071067811865476', zh: '三阶＋直升机', en: '3×3 + Helicopter', textLabel: '3Heli',
+    axes: [...CUBE_FACE_CORNER_AXES.slice(0, 3), ...CUBE_EDGE_AXES],
+    order: 0, axisOrders: [4, 4, 4, 2, 2, 2, 2, 2, 2],
+    layers: 2, scrambleLength: 60, aspect: 4 / 3, visibleFacelets: 168,
   },
 } as const;
 
