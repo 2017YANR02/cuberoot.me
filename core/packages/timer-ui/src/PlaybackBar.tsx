@@ -1,7 +1,7 @@
 'use client';
 
 import { type ReactNode } from 'react';
-import { Play, Pause, SkipBack, SkipForward, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, ChevronLeft, ChevronRight, PictureInPicture2 } from 'lucide-react';
 import PlaybackScrubber from './PlaybackScrubber';
 import './PlaybackBar.css';
 
@@ -12,8 +12,8 @@ import './PlaybackBar.css';
  * the transport buttons underneath. All surfaces render this exact bar so they
  * stay pixel-identical — don't hand-roll a per-page control row.
  *
- * `leading` / `trailing` slot extra controls into the button row (used by /sim
- * for the stickering + anchor selects); recon passes neither.
+ * `leading` / `trailing` slot the shared stage, anchor and back-view controls
+ * into the button row for both /sim and reconstruction playback.
  */
 
 export interface PlaybackBarLabels {
@@ -36,10 +36,30 @@ const DEFAULT_LABELS: PlaybackBarLabels = {
   scrub: 'Scrub',
 };
 
+/** Shared simulator/reconstruction anchor and back-view controls. */
+export function PlaybackAnchorSelect({ atEnd, onChange, disabled, label, startLabel, endLabel }: {
+  atEnd: boolean; onChange(atEnd: boolean): void; disabled?: boolean;
+  label: string; startLabel: string; endLabel: string;
+}) {
+  return <select className="playback-bar-anchor" value={atEnd ? 'algorithm' : 'moves'} disabled={disabled}
+    aria-label={label} onChange={event => onChange(event.target.value === 'algorithm')}>
+    <option value="moves">{startLabel}</option><option value="algorithm">{endLabel}</option>
+  </select>;
+}
+
+export function PlaybackBackViewButton({ visible, toggle = true, onClick, showLabel, hideLabel }: {
+  visible: boolean; toggle?: boolean; onClick(): void; showLabel: string; hideLabel: string;
+}) {
+  return <button type="button" className="playback-bar-btn" aria-pressed={toggle ? visible : undefined}
+    onClick={onClick} aria-label={visible ? hideLabel : showLabel}>
+    <PictureInPicture2 size={14} />
+  </button>;
+}
+
 export default function PlaybackBar({
   step, total, playing,
   onScrub, onSkipStart, onStepBack, onTogglePlay, onStepForward, onSkipEnd,
-  leading, trailing, labels,
+  leading, trailing, labels, layout = 'compact',
 }: {
   step: number;
   total: number;
@@ -50,6 +70,7 @@ export default function PlaybackBar({
   onTogglePlay: () => void;
   onStepForward: () => void;
   onSkipEnd: () => void;
+  layout?: 'compact' | 'wide';
   leading?: ReactNode;
   trailing?: ReactNode;
   labels?: Partial<PlaybackBarLabels>;
@@ -63,7 +84,7 @@ export default function PlaybackBar({
   // calc offsets by the thumb width so the label tracks the thumb centre exactly).
   const frac = step / Math.max(total, 1);
   return (
-    <div className="playback-bar">
+    <div className={`playback-bar${layout === 'wide' ? ' playback-bar--wide' : ''}`}>
       <div className="playback-bar-scrub">
         <span
           className="playback-bar-bubble"

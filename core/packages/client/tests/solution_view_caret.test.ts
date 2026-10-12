@@ -5,16 +5,17 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import SolutionView from '@/components/SolutionView';
+import { reconInspectionOrientations } from '@/lib/recon-alg-utils';
 
 vi.mock('@cuberoot/shared/alg', async importOriginal => ({
   ...await importOriginal<typeof import('@cuberoot/shared/alg')>(),
   loadAlg: vi.fn(async () => ({ cases: [] })),
 }));
 vi.mock('@/lib/recon-f2l-links', () => ({
-  reconF2lLinks: vi.fn(async () => new Map([
+  reconF2lAnnotations: vi.fn(async () => ({ links: new Map([
     [0, new Map([['RG', '/alg/3x3/f2l/a+']])],
     [1, new Map([['F2L', '/alg/3x3/f2l/b+']])],
-  ])),
+  ]), diagrams: new Map() })),
 }));
 
 describe('SolutionView caret mapping', () => {
@@ -34,6 +35,46 @@ describe('SolutionView caret mapping', () => {
     host.remove();
   });
 
+  it.each(['OLL', 'PLL', 'COLL', 'ZBLL', 'EPLL', 'ZBLS'])('shows an actual-state plan for %s without requiring a case number', async label => {
+    await act(async () => {
+      root.render(createElement(SolutionView, {
+        text: `R U // ${label}`, event: '3x3', scramble: "R U2 R'",
+        playerRef: { current: null },
+      }));
+    });
+    const diagram = host.querySelector('.recon-case-diagram');
+    expect(diagram?.getAttribute('data-recon-text-length')).toBe('0');
+    expect(diagram?.querySelector('svg')).not.toBeNull();
+    expect(diagram?.querySelector('button')).not.toBeNull();
+    expect(host.querySelector('.recon-comment-link')?.getAttribute('href')).toBe(`/alg/3x3/${label === 'EPLL' ? 'pll' : label.toLowerCase()}`);
+    const before = diagram?.querySelector('svg')?.outerHTML;
+    await act(async () => diagram?.querySelector('button')?.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })));
+    // Top-layer views rotate the same flat drawing, never rebuild it as an isometric cube.
+    expect(diagram?.querySelector('svg')?.outerHTML).toBe(before);
+    const rotated = diagram?.querySelector('button > span') as HTMLSpanElement;
+    expect(rotated.style.transform).toMatch(/^rotate\([\d.]+deg\)$/);
+    await act(async () => diagram?.querySelector('button')?.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true })));
+    expect(rotated.style.transform).toBe('rotate(0deg)');
+    expect(host.querySelector('.detail-cursor')).toBeNull();
+    await act(async () => diagram?.querySelector('button')?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+    expect(diagram?.querySelector('svg')?.outerHTML).toBe(before);
+    expect(rotated.style.transform).toBe('');
+  });
+
+  it('shows inspection U/F colors without changing source text or caret offsets', async () => {
+    const text = "x' z' // insp\nU R' // F2L2";
+    expect(reconInspectionOrientations(text)).toEqual([{ line: 0, offset: 13, colors: 'RW' }]);
+    expect(reconInspectionOrientations("// insp")).toEqual([{ line: 0, offset: 7, colors: 'WG' }]);
+    expect(reconInspectionOrientations("R U\nx // insp")).toEqual([]);
+    await act(async () => {
+      root.render(createElement(SolutionView, { text, playerRef: { current: null } }));
+    });
+    const chip = host.querySelector('.recon-inspection-chip');
+    expect(chip?.getAttribute('data-recon-text-length')).toBe('0');
+    expect(chip?.querySelector('.cube-orientation-chip')?.getAttribute('aria-label')).toBe('Red White');
+    expect(host.querySelector('pre')?.textContent).toBe(text);
+  });
+
   it('links F2L chips without letting link clicks or arrow keys scrub the player', async () => {
     const jumpToMoveCount = vi.fn();
     await act(async () => {
@@ -44,7 +85,7 @@ describe('SolutionView caret mapping', () => {
         playerRef: { current: { __kind: 'nxn-cuber', jumpToMoveCount } },
       }));
     });
-    const links = host.querySelectorAll('a');
+    const links = host.querySelectorAll('a.recon-comment-link');
     expect(links).toHaveLength(2);
     expect(links[0].getAttribute('href')).toBe('/alg/3x3/f2l/a+');
     expect(links[1].getAttribute('href')).toBe('/alg/3x3/f2l/b+');

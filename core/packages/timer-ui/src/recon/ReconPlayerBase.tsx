@@ -23,7 +23,7 @@ import {
 import type World from '@cuberoot/puzzle-render-core/engine/world';
 import type { BackView } from '@cuberoot/puzzle-render-core/engine/backView';
 import ReconPlayOverlay from './ReconPlayOverlay';
-import PlaybackBar from '../PlaybackBar';
+import PlaybackBar, { type PlaybackBarLabels } from '../PlaybackBar';
 import './recon-player.css';
 
 const PLAY_INTERVAL_MS = 520;
@@ -71,7 +71,7 @@ export interface ReconPlayerAdapter<M> {
 }
 
 export default function ReconPlayerBase<M>({
-  scramble, alg, adapter, fillPane = false, hideControls = false, playerRef, fullscreenButton, ariaLabel,
+  scramble, alg, adapter, fillPane = false, hideControls = false, playerRef, fullscreenButton, ariaLabel, leadingControls, trailingControls, controlLabels,
 }: {
   scramble: string;
   alg: string;
@@ -85,6 +85,9 @@ export default function ReconPlayerBase<M>({
    *  (与 /sim 的 <PlaybackBar> 同款位置)。 */
   fullscreenButton?: ReactNode;
   ariaLabel?: string;
+  leadingControls?: ReactNode;
+  trailingControls?: ReactNode;
+  controlLabels?: Partial<PlaybackBarLabels>;
 }) {
   // Latest adapter — the mount effect / loops run once but must always call the
   // current puzzle closures (which close over the latest order / props).
@@ -154,14 +157,14 @@ export default function ReconPlayerBase<M>({
         // 看图页要满像素比(贴纸边界 / 方位字母都要清楚),不吃默认的 2× 上限。
         pixelRatioCap: Number.POSITIVE_INFINITY,
         // 右下角小窗跟着主视图一起画(只在真渲染了那一帧)。
-        onRendered: (w) => { backViewRef.current?.render(w); },
+        onRendered: (w) => { if (adapterRef.current.backView) backViewRef.current?.render(w); },
       });
       const world = mount.world;
       adapterRef.current.setupPuzzle(world);
       worldRef.current = world;
       rendererRef.current = mount.renderer;
 
-      if (wantBackView) {
+      if (adapterRef.current.faceHints ?? wantBackView) {
         const bv = backMod.createBackView(three, defineMod.SIZE, 120);
         backViewRef.current = bv;
         backFrameRef.current?.appendChild(bv.domElement);
@@ -301,7 +304,7 @@ export default function ReconPlayerBase<M>({
   return (
     <div className={`recon-player${fillPane ? ' recon-player--fill' : ''}`}>
       <div ref={hostRef} className="recon-player-canvas" role={ariaLabel ? 'img' : undefined} aria-label={ariaLabel}>
-        {adapter.backView && <div ref={backFrameRef} className="recon-player-backview" aria-hidden />}
+        {(adapter.faceHints ?? adapter.backView) && <div ref={backFrameRef} className="recon-player-backview" style={{ display: adapter.backView ? undefined : 'none' }} aria-hidden />}
         {hideControls && total > 0 && (
           <ReconPlayOverlay
             playing={playing}
@@ -311,7 +314,7 @@ export default function ReconPlayerBase<M>({
       </div>
       {!hideControls && (
       <div className="recon-player-controls">
-        <PlaybackBar
+        <PlaybackBar layout={fillPane ? 'wide' : 'compact'}
           step={step}
           total={total}
           playing={playing}
@@ -321,8 +324,9 @@ export default function ReconPlayerBase<M>({
           onTogglePlay={() => { if (atEnd) jumpToStep(0); setPlaying(p => !p); }}
           onStepForward={() => jumpToStep(step + 1)}
           onSkipEnd={() => jumpToStep(total)}
-          leading={fullscreenButton}
-          labels={{ scrub: 'Scrub solution' }}
+          leading={<>{fullscreenButton}{leadingControls}</>}
+          trailing={trailingControls}
+          labels={{ scrub: 'Scrub solution', ...controlLabels }}
         />
       </div>
       )}

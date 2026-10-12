@@ -11,19 +11,16 @@ import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
 import { useEffect, useState, useCallback, useMemo, useRef, Fragment, type ReactNode } from 'react';
 import Link from '@/components/AppLink';
 import { createPortal } from 'react-dom';
-import { ClearButton } from '@/components/ClearButton';
-import { useModalDismiss } from '@/hooks/useModalDismiss';
-import '@/components/wechat-pc-share-modal.css';
 import { copyPageLink } from '@/lib/page-share';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import {
   Box, PenLine, Calendar, UserPlus, StickyNote,
-  ChartColumn, Video, TriangleAlert,
+  Video, TriangleAlert,
   Pencil, Trash2, Pin, PinOff, Plus, Key,
   ChevronDown, ChevronUp,
   ArrowLeft, Copy, Check, Maximize2, Minimize2,
-  Lock, Link2, LogIn, ExternalLink, Share2,
+  Lock, Link2, LogIn, ExternalLink, Share2, Download,
 } from 'lucide-react';
 import type { ReconSolve, ReconComment, ReconAlternative } from '@cuberoot/shared';
 import { cleanFtoReconAlgForPlayer, getReconScramble } from '@cuberoot/shared/recon-completion';
@@ -86,6 +83,11 @@ import './recon_detail.css';
 import '@/components/wca-results/attempts-grid.css';
 import { AvgDec } from '@/components/wca-results/AvgDec';
 import { tr } from '@/i18n/tr';
+import { loadIpCountry } from '@/lib/ip-country';
+import { Tooltip } from '@/components/Tooltip';
+import { CompactSelect } from '@/components/CompactSelect';
+import { saveBlob } from '@/lib/puzzle-image/image-export';
+import { exportReconImages, type ReconImageFont, type ReconImageStyle } from './export-recon-image';
 import { buildSimQuery, simPuzzleForReconEvent } from '@/lib/sim-recon-link';
 
 const YOUTUBE_LOGO = '/assets/youtube_logo.svg';
@@ -134,8 +136,7 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
   }, [id, commentViewer?.uid, commentsRevision]);
   // 全屏(隐藏头部/统计栏,player 铺满整页,与 /sim 的「全屏魔方」同款)。
   const [fullscreen, setFullscreen] = useState(false);
-  const [shareOpen, setShareOpen] = useState(false);
-  const closeShare = useCallback(() => setShareOpen(false), []);
+  const [shareTarget, setShareTarget] = useState<HTMLSpanElement | null>(null);
   const fullscreenButton = (
     <button
       type="button"
@@ -253,10 +254,7 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
             {' '}
             {solve.method && <span className="detail-method-badge" title={t('recon.method')}>{solve.method}</span>}
             {' '}
-            {solutionText && <button type="button" className="recon-btn detail-title-edit" aria-haspopup="dialog" onClick={() => setShareOpen(true)}>
-              <Share2 size={15} aria-hidden="true" />
-              {tr({ zh: '分享', en: 'Share' })}
-            </button>}
+            {solutionText && <span className="detail-share-target" ref={setShareTarget} />}
             {' '}
             <Link href={`/recon/submit/${solve.id}`} className="recon-btn recon-btn-edit detail-title-edit" title={t('recon.edit')} aria-label={t('recon.edit')}>
               <Pencil size={14} />
@@ -303,14 +301,13 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
         onUpdate={refreshComments}
         initialSameScramble={initialSameScramble}
         fullscreenButton={fullscreenButton}
-        shareOpen={shareOpen}
-        onShareClose={closeShare}
+        shareTarget={shareTarget}
       />
     </div>
   );
 }
 
-function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, initialSameScramble, fullscreenButton, shareOpen, onShareClose }: {
+function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, initialSameScramble, fullscreenButton, shareTarget }: {
   scramble: string;
   solutionText: string;
   solve: ReconSolve;
@@ -318,8 +315,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
   onUpdate: () => void;
   initialSameScramble?: ReconSolve[];
   fullscreenButton?: ReactNode;
-  shareOpen: boolean;
-  onShareClose: () => void;
+  shareTarget: HTMLSpanElement | null;
 }) {
   const [sameCompHasRows, setSameCompHasRows] = useState(false);
   const [sameSessionHasRows, setSameSessionHasRows] = useState(false);
@@ -328,6 +324,12 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const playerRef = useRef<any>(null);
   const [crossNormalized, setCrossNormalized] = useState(false);
+  const imageRef = useRef<HTMLDivElement>(null);
+  const downloadImage = async (style: ReconImageStyle | 'both', font: ReconImageFont) => {
+    if (!imageRef.current) throw new Error('Reconstruction image unavailable');
+    const images = await exportReconImages(imageRef.current, style === 'both' ? ['black', 'white'] : [style], font);
+    for (const { color, blob } of images) saveBlob(blob, `recon-${solve.id}-${color}${font === 'original' ? '' : '-roboto-condensed'}.png`);
+  };
   const [alts, setAlts] = useState<ReconAlternative[]>(solve.alternatives ?? []);
 
   const canToggle = useMemo(
@@ -405,11 +407,11 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
       }
       <div className="detail-content-pane">
         {solutionText && (
-          <ExternalLinks event={solve.event} scramble={playerScramble} alg={solutionText} solveId={solve.id} copyText={fullCopyText} shareOpen={shareOpen} onClose={onShareClose} />
+          <ExternalLinks event={solve.event} scramble={playerScramble} alg={solutionText} solveId={solve.id} copyText={fullCopyText} shareTarget={shareTarget} onDownload={solve.recordType !== 'timing' ? downloadImage : undefined} />
         )}
 
         {solve.recordType !== 'timing' && (scramble || solutionText) && (
-          <div className="detail-section detail-scramble-solution">
+          <div className="detail-section detail-scramble-solution" ref={imageRef}>
             {captionHeader && (
               <div className="detail-caption-header">{captionHeader}</div>
             )}
@@ -520,9 +522,10 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
   );
 }
 
-function ExternalLinks({ event, scramble, alg, solveId, copyText, shareOpen, onClose }: {
+function ExternalLinks({ event, scramble, alg, solveId, copyText, shareTarget, onDownload }: {
   event: string; scramble: string; alg: string; solveId: number; copyText: string;
-  shareOpen: boolean; onClose: () => void;
+  shareTarget: HTMLSpanElement | null;
+  onDownload?: (style: ReconImageStyle | 'both', font: ReconImageFont) => Promise<void>;
 }) {
   const { t } = useTranslation();
   // Preserve the existing admin-only external debugging links.
@@ -532,6 +535,18 @@ function ExternalLinks({ event, scramble, alg, solveId, copyText, shareOpen, onC
   const simPuzzle = simPuzzleForReconEvent(event);
   const simHref = simPuzzle ? `/sim?${buildSimQuery(simPuzzle, scramble, alg)}` : null;
   const [copyResult, setCopyResult] = useState<{ target: 'link' | 'recon'; success: boolean } | null>(null);
+  const [imageStatus, setImageStatus] = useState<'idle' | 'busy' | 'error'>('idle');
+  const [imageFont, setImageFont] = useState<ReconImageFont>('original');
+  const download = async (imageStyle: ReconImageStyle | 'both') => {
+    if (!onDownload || imageStatus === 'busy') return;
+    setImageStatus('busy');
+    try {
+      await onDownload(imageStyle, imageFont);
+      setImageStatus('idle');
+    } catch {
+      setImageStatus('error');
+    }
+  };
   const copyResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if (copyResetRef.current) clearTimeout(copyResetRef.current); }, []);
 
@@ -547,12 +562,20 @@ function ExternalLinks({ event, scramble, alg, solveId, copyText, shareOpen, onC
       return copyResult.success ? t('recon.copied') : tr({ zh: '复制失败，请重试', en: 'Copy failed, retry' });
     }
     return target === 'link'
-      ? tr({ zh: '复制链接', en: 'Copy link' })
-      : tr({ zh: '复制复盘', en: 'Copy reconstruction' });
+      ? tr({ zh: '链接', en: 'Link' })
+      : tr({ zh: '复盘', en: 'Reconstruction' });
   };
 
-  return shareOpen ? (
-      <ReconShareDialog onClose={onClose}>
+  return shareTarget ? createPortal(
+    <CompactSelect
+      ariaLabel={tr({ zh: '分享', en: 'Share' })}
+      label={<span className="recon-png-label"><Share2 size={15} aria-hidden="true" />{tr({ zh: '分享', en: 'Share' })}</span>}
+      triggerClassName="recon-btn detail-title-edit"
+      popupClassName="recon-share-menu"
+      showArrow={false}
+      items={[]}
+      onChange={() => {}}
+      panelContent={<div className="recon-share-menu-content">
         {(isAdminUser || simHref) && (
           <div className="recon-navigation-links">
             {simHref && <Link href={simHref} prefetch={false}>{tr({ zh: '模拟器', en: 'Simulator' })}</Link>}
@@ -575,39 +598,36 @@ function ExternalLinks({ event, scramble, alg, solveId, copyText, shareOpen, onC
               <span aria-live="polite">{copyLabel('recon')}</span>
             </button>
           )}
+          {onDownload && <CompactSelect<ReconImageStyle | 'both'>
+            triggerClassName="recon-copy-action"
+            ariaLabel="PNG"
+            disabled={imageStatus === 'busy'}
+            label={<span className="recon-png-label"><Download size={15} aria-hidden="true" />
+              <span aria-live="polite">{imageStatus === 'busy'
+                ? tr({ zh: '正在生成…', en: 'Generating…' })
+                : imageStatus === 'error'
+                  ? tr({ zh: '下载失败，点击重试', en: 'Download failed, retry' })
+                  : 'PNG'}</span>
+            </span>}
+            items={[
+              { value: 'both', label: tr({ zh: '黑白两版', en: 'Black & white versions' }) },
+              { value: 'black', label: tr({ zh: '黑字', en: 'Black text' }) },
+              { value: 'white', label: tr({ zh: '白字', en: 'White text' }) },
+              { value: 'white-outline', label: tr({ zh: '白字黑边', en: 'White text, black outline' }) },
+            ]}
+            onChange={style => { void download(style); }}
+            footer={() => <label className="recon-image-font">
+              <span>{tr({ zh: '字体', en: 'Font' })}</span>
+              <select value={imageFont} onChange={e => setImageFont(e.target.value as ReconImageFont)}>
+                <option value="original">{tr({ zh: '原始字体', en: 'Original font' })}</option>
+                <option value="roboto-condensed">Roboto Condensed Regular</option>
+              </select>
+            </label>}
+          />}
         </div>
-      </ReconShareDialog>
+      </div>}
+    />, shareTarget,
   ) : null;
-}
-
-function ReconShareDialog({ onClose, children }: { onClose: () => void; children: ReactNode }) {
-  const backdropProps = useModalDismiss(onClose);
-  const dialogRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const previous = document.activeElement;
-    dialogRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
-    return () => { if (previous instanceof HTMLElement && previous.isConnected) previous.focus(); };
-  }, []);
-  return createPortal(
-    <div className="wechat-pc-share-backdrop" {...backdropProps}>
-      <div className="wechat-pc-share-modal" data-site-surface="panel" role="dialog" aria-modal="true"
-        aria-label={tr({ zh: '分享', en: 'Share' })} ref={dialogRef}
-        onKeyDown={event => {
-          if (event.key !== 'Tab') return;
-          const items = dialogRef.current?.querySelectorAll<HTMLElement>('a[href], button:not([disabled])');
-          if (!items?.length) return;
-          const first = items[0];
-          const last = items[items.length - 1];
-          if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
-          else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
-        }}>
-        <ClearButton variant="standalone" className="wechat-pc-share-close" onClick={onClose}
-          ariaLabel={tr({ zh: '关闭', en: 'Close' })} />
-        <h2>{tr({ zh: '分享', en: 'Share' })}</h2>
-        <div style={{ display: 'grid', gap: 16, marginTop: 20 }}>{children}</div>
-      </div>
-    </div>, document.body,
-  );
 }
 
 const CROSS_LABELS: Record<number, string> = { 0: 'cross', 1: 'xcross', 2: 'xxcross', 3: 'xxxcross', 4: 'xxxxcross' };
@@ -668,7 +688,6 @@ function StatsGrid({ solve }: { solve: ReconSolve }) {
 
   return (
     <div className="detail-section">
-      <div className="detail-section-label"><ChartColumn size={14} /> {t('recon.statistics')}</div>
       <div className="detail-stats-grid">
         {validItems.map(([label, value]) => (
           <div key={label} className="stat-item">
@@ -681,8 +700,7 @@ function StatsGrid({ solve }: { solve: ReconSolve }) {
   );
 }
 
-function VideoSection({ videoUrl }: { videoUrl: string }) {
-  const { t } = useTranslation();
+export function VideoSection({ videoUrl }: { videoUrl: string }) {
   const urls = videoUrl.split('\n').map(u => u.trim()).filter(u => u);
 
   const ytUrls: string[] = [];
@@ -696,33 +714,49 @@ function VideoSection({ videoUrl }: { videoUrl: string }) {
     else otherUrls.push(u);
   }
 
-  const host = typeof window !== 'undefined' ? window.location.hostname : '';
-  const isLocal = process.env.NODE_ENV === 'development';
-  const isCN = /(?:^|\.)cuberoot\.me$/.test(host);
+  const [country, setCountry] = useState<string | null>(null);
+  const [selectedUrl, setSelectedUrl] = useState<string | null>(null);
+  const sources = [
+    { url: ytUrls[0], platform: 'youtube', label: 'YouTube', logo: YOUTUBE_LOGO },
+    { url: biliUrls[0], platform: 'bilibili', label: tr({ zh: 'B 站', en: 'Bilibili' }), logo: BILIBILI_LOGO },
+    { url: douyinUrls[0], platform: 'douyin', label: tr({ zh: '抖音', en: 'Douyin' }), logo: DOUYIN_LOGO },
+  ].filter(source => source.url);
+  const hasChoice = sources.length > 1;
+  useEffect(() => {
+    if (!hasChoice) return;
+    let cancelled = false;
+    void loadIpCountry().then(value => { if (!cancelled) setCountry(value); });
+    return () => { cancelled = true; };
+  }, [hasChoice]);
 
-  let embedUrls: string[];
-  let linkUrls: string[];
-  if (isLocal) {
-    embedUrls = [...ytUrls, ...biliUrls, ...douyinUrls];
-    linkUrls = otherUrls;
-  } else {
-    // 国内优先 B 站/抖音(YouTube 被墙),海外优先 YouTube;选首个非空平台内嵌,其余降级为链接。
-    const priority = isCN ? [biliUrls, douyinUrls, ytUrls] : [ytUrls, biliUrls, douyinUrls];
-    const chosen = priority.find(b => b.length > 0) ?? [];
-    embedUrls = chosen;
-    linkUrls = [...ytUrls, ...biliUrls, ...douyinUrls, ...otherUrls].filter(u => !chosen.includes(u));
-  }
-
-  if (embedUrls.length === 0 && linkUrls.length === 0) return null;
+  const priority = country === 'cn' ? ['bilibili', 'douyin', 'youtube'] : ['youtube', 'bilibili', 'douyin'];
+  const preferred = sources.find(source => source.platform === priority.find(platform => sources.some(item => item.platform === platform)));
+  // Wait for the bounded IP lookup before loading either platform's cover. A manual
+  // choice takes precedence and is never replaced by a late region response.
+  const active = sources.find(source => source.url === selectedUrl)
+    ?? (!hasChoice || country !== null ? preferred : undefined);
+  const linkUrls = [...ytUrls.slice(1), ...biliUrls.slice(1), ...douyinUrls.slice(1), ...otherUrls];
+  if (!sources.length && !linkUrls.length) return null;
 
   return (
     <div className="detail-section">
-      <div className="detail-section-label">{t('recon.video')}</div>
-      <div className="detail-video-row">
-        {embedUrls.map((url, i) => (
-          <VideoEmbed key={`e${i}`} url={url} />
-        ))}
-      </div>
+      {sources.length > 0 && <div className="detail-video-row">
+        <div className="detail-video-player">
+          {active ? <VideoEmbed key={active.url} url={active.url} /> : <div className="detail-video-wrap" aria-busy="true" />}
+          {hasChoice && <div className="detail-video-switches">
+            {sources.filter(source => source !== active).map(source => {
+              const label = tr({ zh: `切换到 ${source.label}`, en: `Switch to ${source.label}` });
+              return <Tooltip key={source.platform} content={label}>{tip => (
+                <button {...tip} type="button" className="detail-video-switch"
+                  aria-label={label} onClick={() => setSelectedUrl(source.url)}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={source.logo} alt="" width={26} height={26} />
+                </button>
+              )}</Tooltip>;
+            })}
+          </div>}
+        </div>
+      </div>}
       {linkUrls.map((url, i) => (
         <a key={`l${i}`} href={url} target="_blank" rel="noopener noreferrer" className="detail-video-link">
           <Video size={16} /> {url}

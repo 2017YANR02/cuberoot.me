@@ -41,6 +41,13 @@ const SEP = ' — ';
 const SHARE_IMAGE = '/icons/CubeRoot.png';
 
 export const PAGE_META: Record<string, PageMetaEntry> = {
+  'alg/double-zbll-about': {
+    title: { zh: '双底 ZBLL：对称与最短解', en: 'Double ZBLL: Symmetry and Shortest Solutions' },
+    description: {
+      zh: '从 62,220,544 个组合到 7,555,446 个代表状态：双底 ZBLL 如何利用 AUF 去重、顶底互换和旋转对称，保留全局最优 HTM 解。',
+      en: 'From 62,220,544 combinations to 7,555,446 representatives: AUF deduplication and rotational symmetry preserve globally optimal HTM solutions for double ZBLL.',
+    },
+  },
   'cube-history': {
     title: { zh: '三阶魔方发展史与型号图鉴', en: '3×3 Cube History and Model Archive' },
     description: {

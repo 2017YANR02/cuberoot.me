@@ -79,3 +79,16 @@
   min-width: 30px;
   padding-inline: 6px;
 }
+
+/* Full-width simulator and reconstruction panes share their control layout. */
+.playback-bar.playback-bar--wide { width: 100%; min-width: 0; }
+.playback-bar--wide .playback-bar-controls { justify-content: space-between; }
+.playback-bar-anchor {
+  font-size: 12px;
+  background: var(--background);
+  color: var(--foreground);
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+  padding: 2px 4px;
+  max-width: 100%;
+}

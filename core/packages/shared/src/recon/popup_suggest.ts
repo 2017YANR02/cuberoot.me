@@ -235,7 +235,7 @@ const SLOT_FACE_ORDER: Record<F2lSlotId, [number, number]> = {
   BL: [4, 3],  // B, L
 };
 
-function slotColors(p: KPattern, slotId: F2lSlotId): { pair: string; full: string } {
+function slotColors(p: KPattern, slotId: F2lSlotId): { pair: string; full: string; intrinsicPair: string } {
   // Find the actual edge piece sitting at this slot in the canonical pattern.
   const def = F2L_SLOT_DEFS.find(d => d.id === slotId)!;
   const piece = p.patternData.EDGES.pieces[def.edgeSlot];
@@ -258,6 +258,8 @@ function slotColors(p: KPattern, slotId: F2lSlotId): { pair: string; full: strin
 
   return {
     pair: `${COLOR_LETTER[cA] ?? '?'}${COLOR_LETTER[cB] ?? '?'}`,
+    // Stable W/R/G/O/B/Y color order, independent of sticker orientation.
+    intrinsicPair: [piecePri, pieceSec].sort((a, b) => a - b).map(c => COLOR_LETTER[c]).join(''),
     full: `${COLOR_BY_PIECE[cA] ?? '?'} ${COLOR_BY_PIECE[cB] ?? '?'}`,
   };
 }
@@ -322,6 +324,8 @@ export interface CrossCancelCand {
   stage: 'cross' | 'xcross' | 'xxcross' | 'xxxcross' | 'xxxxcross';
   colorLetter?: string;
   pairs: string[];
+  /** Hypothetical completion, for comparing pairs without consuming the next line. */
+  pattern: KPattern;
 }
 
 /** detectStage 的阶段名 → cross 家族 cancel-into 展示用的阶段名(f2l = 一步到位建好 cross+4
@@ -350,7 +354,7 @@ export async function crossFamilyCancelInto(prev: StageInfo, currPattern: KPatte
       const key = `${stage}:${info.crossColor?.letter}:${pairs.join(',')}`;
       if (seen.has(key)) return;
       seen.add(key);
-      out.push({ stage, colorLetter: info.crossColor?.letter, pairs });
+      out.push({ stage, colorLetter: info.crossColor?.letter, pairs, pattern: p });
     };
     if (depth === 1) {
       for (const m of MOVES_18) {
@@ -379,6 +383,8 @@ export async function crossFamilyCancelInto(prev: StageInfo, currPattern: KPatte
  * Each entry includes both bare and `(N)` variants where N = move count of the line.
  */
 export interface SuggestArgs {
+  /** The preceding line explicitly labels a cancelled cross-family stage. */
+  continuesCancelledCross?: boolean;
   /** Cube pattern at end of previous labeled line (or default if first line). */
   prevPattern: KPattern;
   /** Cube pattern at end of current line. */
@@ -496,6 +502,12 @@ export async function buildCommentSuggestions(args: SuggestArgs): Promise<string
     return out;
   }
   if (t.kind === 'pair') {
+    if (args.continuesCancelledCross && ['xxcross', 'xxxcross'].includes(curr.stage)) {
+      // Continuation labels identify newly completed cubies, independent of
+      // the canonical slot's orientation (RG remains RG after a rotation).
+      const pairs = t.slots.map(s => slotColors(curr.canonicalPattern, s).intrinsicPair);
+      pushPair(`${curr.stage} (${pairs.join('+')})`);
+    }
     // Two label variants only: F2L<N> ordinal and 2-letter color-pair.
     // (Full-name, "1st pair", and "Pair" suffix variants were dropped.)
     // Suffix convention (mutually exclusive — curr 是 oll 还是 f2l 二选一):

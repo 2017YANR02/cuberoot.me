@@ -67,6 +67,9 @@ export function simSceneSignature(world: SimSvgView): string {
     const mesh = object as THREE.Mesh;
     if (!mesh.isMesh) return;
     for (const value of mesh.matrixWorld.elements) mix(value);
+    for (const material of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) {
+      mix(material.userData.simStickerEmission ?? 0);
+    }
     const instanced = mesh as THREE.InstancedMesh;
     if (instanced.isInstancedMesh) mix(instanced.instanceMatrix.version);
     // cubing.js PG3D mutates vertex attributes instead of object transforms.
@@ -333,6 +336,7 @@ function solveAffine(
 }
 
 interface MaterialLike {
+  userData?: { simStickerEmission?: number };
   visible?: boolean;
   color?: THREE.Color;
   opacity?: number;
@@ -720,6 +724,7 @@ export function exportSimSvg(opts: SimSvgExportOptions): string {
         const unlit = mat.isMeshBasicMaterial === true;
         const matR = mat.color?.r ?? 1, matG = mat.color?.g ?? 1, matB = mat.color?.b ?? 1;
         const emR = mat.emissive?.r ?? 0, emG = mat.emissive?.g ?? 0, emB = mat.emissive?.b ?? 0;
+        const fillLight = mat.userData?.simStickerEmission ?? 0;
         const tex = mat.map ? textureEntry(mat.map, texCache) : null;
         const affineTex = !!(tex && uvAttr && triTotal <= AFFINE_TEX_TRI_LIMIT);
         const sampleTex = !!(tex && tex.pixels && uvAttr && !affineTex);
@@ -867,7 +872,11 @@ export function exportSimSvg(opts: SimSvgExportOptions): string {
                 if (alpha <= 0.01) continue;
               }
             }
-            const fill = hexOf(r * lr + emR, g * lg + emG, b * lb + emB, srgbOut);
+            const fill = hexOf(
+              r * (lr + fillLight) + emR,
+              g * (lg + fillLight) + emG,
+              b * (lb + fillLight) + emB, srgbOut,
+            );
             for (const sp of proj.pieces) {
               pushVisiblePieces(sp.pts, ro, fill, alpha, 0, planeKey);
             }

@@ -162,6 +162,12 @@ export function CompactSelect<T extends string | number>({
       setGeometry(null);
       return;
     }
+    // Dialog filters create a containing block and can clip fixed descendants.
+    // The top layer preserves viewport positioning while keeping modal focus.
+    const popup = panelRef.current;
+    if (popup?.hasAttribute('popover') && typeof popup.showPopover === 'function' && !popup.matches(':popover-open')) {
+      popup.showPopover();
+    }
     const positionPanel = () => {
       const trigger = triggerRef.current;
       const panel = panelRef.current;
@@ -278,6 +284,7 @@ export function CompactSelect<T extends string | number>({
         <div
           ref={panelRef}
           className={['compact-select-popup', popupClassName].filter(Boolean).join(' ')}
+          popover={triggerRef.current?.closest('dialog, [role="dialog"]') ? 'manual' : undefined}
           data-site-surface="popover"
           role={hasPanelContent ? 'dialog' : 'listbox'}
           aria-multiselectable={!hasPanelContent && selectedValues ? true : undefined}

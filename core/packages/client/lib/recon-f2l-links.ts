@@ -1,5 +1,6 @@
 import { loadAlg } from '@cuberoot/shared/alg';
-import { CUBE_ORIENTATIONS } from '@cuberoot/shared/timer';
+import { CUBE_ORIENTATIONS, orientedFaceColors } from '@cuberoot/shared/timer';
+import { AllFaces, CubeData, Face, makeMasking, Masking, parseAlgorithm } from '@cuberoot/visualcube';
 import { cubeColorGroups, crossColorFromReconText } from '@cuberoot/timer-ui/CubeColorChip';
 import { applyMoves, applyScramble, type CubeFaces } from '@cuberoot/shared/timer/reconstruct/state';
 import { parseScramble } from '@cuberoot/puzzle-solvers/cube-moves';
@@ -13,10 +14,38 @@ const color = (face: keyof CubeFaces) => FACE_COLOR_KEY[face][0].toUpperCase();
 const rotate = (state: CubeFaces, alg: string) => applyMoves(state, 3, parseScramble(alg));
 const slots = ['FR', 'FL', 'BR', 'BL'] as const;
 
+/** Reuse the single-pair mask (cross + FR pair), mapped to this pair's actual cubies. */
+function maskedF2lFacelets(setup: string, canonical: CubeFaces): string | undefined {
+  const maskRotation = CUBE_ORIENTATIONS.find(option => {
+    const shown = orientedFaceColors(option.value);
+    return shown[canonical.D[4]] === 'D' && shown[canonical.F[4]] === 'F' && shown[canonical.R[4]] === 'R';
+  });
+  if (!maskRotation) return;
+  const mask = new CubeData(3, makeMasking(Masking.PAIR, 3));
+  for (const turn of parseAlgorithm(maskRotation.value)) mask.turn(turn);
+  const cube = new CubeData(3, Object.fromEntries(AllFaces.map(face => [face,
+    mask.faces[face].map(visible => visible ? color(Face[face] as keyof CubeFaces).toLowerCase() : 'd'),
+  ])));
+  // Canonical orientation identifies the masked cubies only. Display the actual
+  // pre-line grip, so the adjacent moves still refer to the pictured faces.
+  for (const turn of parseAlgorithm(setup)) cube.turn(turn);
+  return AllFaces.map(face => cube.faces[face].join('')).join('');
+}
+
+export interface ReconF2lAnnotations {
+  links: Map<number, Map<string, string>>;
+  diagrams: Map<number, { colors: string; facelets: string }[]>;
+}
+
 /** Per-line, per-colour-pair links derived from the actual pre-line cube state. */
 export async function reconF2lLinks(scramble: string, text: string): Promise<Map<number, Map<string, string>>> {
+  return (await reconF2lAnnotations(scramble, text)).links;
+}
+
+export async function reconF2lAnnotations(scramble: string, text: string): Promise<ReconF2lAnnotations> {
   const links = new Map<number, Map<string, string>>();
-  if (!scramble.trim()) return links;
+  const diagrams: ReconF2lAnnotations['diagrams'] = new Map();
+  if (!scramble.trim()) return { links, diagrams };
   const file = await loadAlg('3x3', 'f2l');
   const slugs = buildCaseSlugMap(file.cases, 'f2l');
   const hrefByState = new Map<string, Set<string>>();
@@ -34,16 +63,19 @@ export async function reconF2lLinks(scramble: string, text: string): Promise<Map
     }
   }
   let state = applyScramble(3, cleanForPlayer(scramble));
+  let setup = cleanForPlayer(scramble);
   const explicitCross = crossColorFromReconText(text);
   for (const [lineIndex, line] of text.split(/\r?\n/).entries()) {
     const before = state;
+    const beforeSetup = setup;
+    setup = `${setup} ${cleanForPlayer(line)}`;
     state = rotate(state, cleanForPlayer(line));
     const comment = line.indexOf('//');
     if (comment < 0) continue;
     const label = line.slice(comment + 2).trim();
-    if (/\bx*cross\b/i.test(label)) continue;
+    const crossLine = /\bx*cross\b/i.test(label);
     const pairs = cubeColorGroups(label).filter(group => group.colors.length === 2).map(group => group.colors);
-    const genericF2l = /^F2L\s*$/i.test(label);
+    const genericF2l = /^F2L(?:[1-4])?\b/i.test(label);
     if (!pairs.length && !genericF2l) continue;
     const orientations = CUBE_ORIENTATIONS.map(({ value }) => ({ value, faces: rotate(before, value) }));
     const cross = explicitCross ?? orientations.filter(({ faces }) => isCross(faces))
@@ -61,8 +93,14 @@ export async function reconF2lLinks(scramble: string, text: string): Promise<Map
     }
     const lineLinks = new Map<string, string>();
     for (const pair of new Set(pairs)) {
-      const canonical = orientations.find(({ faces }) => color(faces.D[4]) === cross &&
-        pair.includes(color(faces.F[4])) && pair.includes(color(faces.R[4])))?.faces;
+      const orientation = orientations.find(({ faces }) => color(faces.D[4]) === cross &&
+        pair.includes(color(faces.F[4])) && pair.includes(color(faces.R[4])));
+      const canonical = orientation?.faces;
+      if (orientation) {
+        const facelets = maskedF2lFacelets(beforeSetup, orientation.faces);
+        if (facelets) diagrams.set(lineIndex, [...(diagrams.get(lineIndex) ?? []), { colors: pair, facelets }]);
+      }
+      if (crossLine) continue;
       if (!canonical || isSlotSolved(canonical, 'FR')) continue;
       const key = f2lSlotFingerprint(canonical, 'FR');
       const hrefs = key ? hrefByState.get(key) : undefined;
@@ -71,5 +109,5 @@ export async function reconF2lLinks(scramble: string, text: string): Promise<Map
     if (genericF2l && pairs.length === 1 && lineLinks.size === 1) lineLinks.set('F2L', [...lineLinks.values()][0]);
     if (lineLinks.size) links.set(lineIndex, lineLinks);
   }
-  return links;
+  return { links, diagrams };
 }

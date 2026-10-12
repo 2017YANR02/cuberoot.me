@@ -1,9 +1,10 @@
 /** Poll public REST rounds; preserve record and watched-person PR deduplication. */
 import { fetchCubingCompetitions, fetchCubingJson, normalizeCubingRound, type CubingCompetition as CubingComp, type CubingRound, type CubingResult } from '@cuberoot/shared/cubing-live';
 import { fetchCubingMeta } from '../utils/cubing_live.js';
+import { resolveRecordResult } from '../routes/cubing_live.js';
 import { sendBark } from './bark.js';
 import { getPushedSet, markPushed, type MonitorId } from './state.js';
-import { RECORD_TAGS, NR_COUNTRIES, POLL_INTERVAL_MS, siteCompUrlFromCubingAlias, isChineseRegion } from './config.js';
+import { RECORD_TAGS, NR_COUNTRIES, POLL_INTERVAL_MS, SITE_BASE } from './config.js';
 import { COUNTRY_EN_MAP, isContinentalTag } from './region.js';
 import { getWatchedMatchKeys } from './watched.js';
 import { startPoller } from './poll.js';
@@ -43,6 +44,7 @@ interface InternalEvent {
   roundId: string;
   personNumber?: number;
   roundNumber?: number; // 本站 1-based 轮次序号(深链 ?round=N);缺失时链接只带 event
+  personWcaId?: string;
   personName: string;
   personRegion: string;
   compIso2: string;
@@ -137,6 +139,7 @@ function iterRecordEvents(rows: LiveRow[], users: Record<number, WsUser>, comp: 
         roundId: row.r,
         personNumber: row.n,
         roundNumber: roundNumByKey.get(`${row.e}|${row.r}`),
+        personWcaId: user.wcaid,
         personName: user.name || '',
         personRegion: user.region || '',
         compIso2: cIso2,
@@ -185,7 +188,7 @@ function iterPrEvents(prRows: PrRow[], comp: CubingComp, roundNumByKey: Map<stri
     const field = recType === 'single' ? 'nb' : 'na';
     out.push({
       uid: `cubing-${row.i}-${field}`,
-      groupKey: `cubing-pr-${wcaid}-${eventId}`,
+      groupKey: `cubing-pr-${comp.alias}-${row.r}-${wcaid}-${eventId}`,
       tag: 'PR',
       recType,
       attemptResult: value,
@@ -193,6 +196,7 @@ function iterPrEvents(prRows: PrRow[], comp: CubingComp, roundNumByKey: Map<stri
       roundId: row.r || '',
       personNumber: row.n,
       roundNumber: roundNumByKey.get(`${eventId}|${row.r || ''}`),
+      personWcaId: row._wcaid,
       personName: row._name || '',
       personRegion: row._region || 'China',
       compIso2: cIso2,
@@ -266,8 +270,14 @@ export async function scanComp(comp: CubingComp, watchedKeys: Set<string>): Prom
 // ─── 过滤 + 聚合 + 推送 ─────────────────────────────────────────────────────
 
 /** 内部 event → RecordEvent(供 formatRecords)。 */
-function toRecordEvent(ev: InternalEvent): RecordEvent {
+export async function toRecordEvent(ev: InternalEvent): Promise<RecordEvent> {
+  const iso2 = COUNTRY_EN_MAP[ev.personRegion] || ev.personRegion.toUpperCase();
+  const destination = ev.compType === 'WCA' ? await resolveRecordResult(ev.wcaCompetitionId || ev.slug.replace(/-/g, ''), {
+    eventId: ev.eventId, roundId: ev.roundId, roundNumber: ev.roundNumber,
+    personWcaId: ev.personWcaId, personName: ev.personName, type: ev.recType, value: ev.attemptResult,
+  }, ev.tag, iso2) : null;
   return {
+    tied: destination?.tied,
     tag: ev.tag,
     rec_type: ev.recType,
     attempt_result: ev.attemptResult,
@@ -280,12 +290,9 @@ function toRecordEvent(ev: InternalEvent): RecordEvent {
     comp_name_en: ev.compNameEn,
     comp_iso2: ev.compIso2,
     // WCA 认证赛用本站轮次 ID + 选手编号直接打开成绩弹窗。
-    // 选手编号缺失时保留项目/轮次页链接;
-    // 中国比赛落 /zh;alias 缺失 / 民间赛(type≠'WCA',自有站无该比赛页)回退 cubing.com live 页。
+    // Resolve against the page source; non-WCA competitions retain their external live page.
     url:
-      siteCompUrlFromCubingAlias(ev.slug, ev.compType, ev.eventId, ev.roundNumber ?? null, isChineseRegion(ev.compIso2), ev.wcaCompetitionId,
-        ev.personNumber ? { eventId: ev.eventId, roundId: ev.roundId, number: ev.personNumber } : undefined)
-      ?? `https://cubing.com/competition/${ev.slug}/live?eventId=${encodeURIComponent(ev.eventId)}&roundNumber=${ev.roundNumber ?? 1}`,
+      destination ? SITE_BASE + destination.href : `https://cubing.com/competition/${ev.slug}/live?eventId=${encodeURIComponent(ev.eventId)}&roundNumber=${ev.roundNumber ?? 1}`,
   };
 }
 
@@ -324,7 +331,7 @@ async function processEvents(events: InternalEvent[]): Promise<void> {
     group.sort((a, b) => (a.recType === 'single' ? 0 : 1) - (b.recType === 'single' ? 0 : 1));
     const uids = group.map((e) => e.uid);
     try {
-      const { cn, en, url } = await formatRecords(group.map(toRecordEvent));
+      const { cn, en, url } = await formatRecords(await Promise.all(group.map(toRecordEvent)));
       console.log(`[cubing-record] 🆕 新纪录${group.length > 1 ? '(合并)' : ''}: ${cn}`);
       if (await sendBark({ title: cn, body: en, url, group: 'WCA Records', sound: 'multiwayinvitation' })) {
         await markPushed(MONITOR, uids);

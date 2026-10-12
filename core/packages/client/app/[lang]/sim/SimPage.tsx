@@ -30,7 +30,6 @@ import {
   Maximize2, Minimize2,
   ArrowLeftRight,
   ImagePlus,
-  PictureInPicture2,
   X,
 } from 'lucide-react';
 import World, { type PuzzleKind } from './engine/world';
@@ -92,6 +91,7 @@ import {
   TRANS_CORE, withCustomLogoAccess, withTransCore,
   mapOrbitK, mapTurnDragFactor, type SimSettings,
 } from './SettingDrawer';
+import { PlaybackBackViewButton } from '@/components/PlaybackBar';
 import PlayerControls, { stripHandMarks, type SimPuzzle } from './PlayerControls';
 import AppLink from '@/components/AppLink';
 import { reconEventForSim, buildReconSubmitQuery } from '@/lib/sim-recon-link';
@@ -758,6 +758,10 @@ export default function SimPage() {
       antialias: true, alpha: true, preserveDrawingBuffer: true,
     });
     renderer.autoClear = false;
+    // cuber bf18e8d: explicit display colour pipeline (room themes restore it on exit).
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.NoToneMapping;
+    renderer.toneMappingExposure = 1;
     renderer.setClearColor(0xffffff, 0);
     // Render at ≥2× device pixels (supersampled) so high-contrast tilted edges — e.g. the
     // megaminx's bold black seams against white/colour faces — don't stairstep on 1× displays
@@ -2464,18 +2468,9 @@ export default function SimPage() {
                  所以这里必须常驻并且是真开关,否则 settings.backView 在这条路径上
                  一个入口都没有 —— 侧栏那个「小窗」toggle 已经删掉了。 */
             backViewButton={!flatMode && (twisty || !settings.backView) ? (
-              <button
-                type="button"
-                className="playback-bar-btn"
-                aria-pressed={twisty ? settings.backView : undefined}
-                onClick={() => setSettings((prev) => ({
-                  ...prev, backView: twisty ? !prev.backView : true,
-                }))}
-                title={twisty && settings.backView ? t('关闭小窗', 'Hide back view') : t('显示小窗', 'Show back view')}
-                aria-label={twisty && settings.backView ? t('关闭小窗', 'Hide back view') : t('显示小窗', 'Show back view')}
-              >
-                <PictureInPicture2 size={14} />
-              </button>
+              <PlaybackBackViewButton visible={twisty ? settings.backView : false} toggle={twisty}
+                onClick={() => setSettings(prev => ({ ...prev, backView: twisty ? !prev.backView : true }))}
+                showLabel={t('显示小窗', 'Show back view')} hideLabel={t('关闭小窗', 'Hide back view')} />
             ) : null}
             stickering={query.stickering}
             onStickeringChange={onStickeringChange}

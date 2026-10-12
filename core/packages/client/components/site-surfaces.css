@@ -442,6 +442,13 @@ body .timer-room-overlay:has(> .timer-difficulty-dialog) {
   background: transparent;
 }
 
+/* Unframed cube previews keep the artwork clear above the shared glass backdrop. */
+body .timer-room-overlay:has(> .visualcube-preview) {
+  background: var(--glass-surface-bg);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+}
+
 body[data-site-scenery] .timer-room-dialog.timer-difficulty-dialog {
   background: var(--glass-popover-bg);
   border-color: var(--glass-border);

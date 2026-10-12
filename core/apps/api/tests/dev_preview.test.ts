@@ -16,3 +16,30 @@ it('rejects invalid identifiers before SQL',async()=>{expect((await post('reques
 it('a device ticket cannot approve its own request',async()=>{expect((await post('requests/id/decision',{decision:'approved'},'a'.repeat(64))).status).toBe(403);});
 it('does not replace an already bound key',async()=>{mock.query.mockResolvedValue([{id:'id',owner_slug:'a',device_slug:'b',public_key:'existing',status:'pending'}]);const key='ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILX0ASs3XktuhMw0kwIYLoLbRGQZLuQq9hkafwCqDB8C';expect((await post('device',{publicKey:key},'a'.repeat(64))).status).toBe(403);expect(mock.query).toHaveBeenCalledTimes(1);});
 it('rejects worker readiness for an unclaimed approval',async()=>{mock.query.mockResolvedValue([{id:'id',owner_slug:'a',device_slug:'b',status:'approved'}]);expect((await post('host/id',{status:'ready',profile:{}},'x'.repeat(40))).status).toBe(409);expect(mock.query).toHaveBeenCalledTimes(1);});
+it('a device cannot certify its own connectivity',async()=>{
+  mock.query.mockResolvedValue([{owner_slug:'a',device_slug:'b',status:'ready',profile:{},verified_at:null}]);
+  const r=await post('device',{connected:true},'a'.repeat(64));
+  expect((await r.json()).connected).toBe(false);
+  expect(mock.query).toHaveBeenCalledTimes(1);
+  expect((await post('host/id/health',{connected:true},'a'.repeat(64))).status).toBe(401);
+});
+it('expires old connectivity evidence even when infrastructure is ready',async()=>{
+  mock.query.mockResolvedValue([{owner_slug:'a',device_slug:'b',status:'ready',profile:{},verified_at:new Date(Date.now()-301000)}]);
+  expect((await (await post('device',{},'a'.repeat(64))).json()).connected).toBe(false);
+  mock.query.mockResolvedValue([{owner_slug:'a',device_slug:'b',status:'ready',profile:{},verified_at:new Date()}]);
+  expect((await (await post('device',{},'a'.repeat(64))).json()).connected).toBe(true);
+});
+it('health reports are restricted to already provisioned requests and outages clear evidence',async()=>{
+  mock.query.mockResolvedValue([{id:'id'}]);
+  expect((await post('host/id/health',{connected:false},'x'.repeat(40))).status).toBe(200);
+  expect(mock.query.mock.calls[0][0]).toContain("status='ready'");
+  expect(mock.query.mock.calls[0][0]).toContain('ELSE NULL');
+  expect(mock.query.mock.calls[0][1]).toEqual([false,'id']);
+  mock.query.mockResolvedValue([]);
+  expect((await post('host/id/health',{connected:true},'x'.repeat(40))).status).toBe(409);
+});
+it('health queue and employee list require fresh independent evidence',async()=>{
+  await app.request('/v1/dev-preview/host/health-next',{headers:{Authorization:`Bearer ${'x'.repeat(40)}`}});
+  expect(mock.query.mock.calls[0][0]).toContain('ORDER BY health_checked_at NULLS FIRST');
+  expect(mock.query.mock.calls[0][0]).toContain("INTERVAL '5 minutes'");
+});

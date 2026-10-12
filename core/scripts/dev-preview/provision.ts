@@ -5,6 +5,7 @@ import {join,resolve} from 'node:path';
 import {homedir} from 'node:os';
 import {execFileSync} from 'node:child_process';
 import {slug,publicKey} from './model.ts';
+import {retryable,retryDelay,RetryableError} from './retry.ts';
 const root=resolve(import.meta.dirname,'../../..');
 const config=JSON.parse(readFileSync(join(homedir(),'.config/cuberoot-preview/host.json'),'utf8'));
 if(root!==resolve(config.checkout)||root===resolve(homedir(),'Documents/cuberoot.me'))throw Error('Use the dedicated provisioning checkout.');
@@ -41,12 +42,22 @@ function publish(id:string,phase:string){
   if(changed.some(f=>!artifacts.includes(f)))throw Error('Unexpected changed files in provisioning checkout');
   git('add','--',...artifacts);
   const changedIndex=git('diff','--cached','--name-only');
-  if(!changedIndex && existsSync(checkpoint)) return readFileSync(checkpoint,'utf8');
+  if(!changedIndex && existsSync(checkpoint)) {
+    const sha=readFileSync(checkpoint,'utf8').trim();
+    git('fetch','origin','main');
+    // A push may have succeeded even if its acknowledgement was lost.
+    try { git('merge-base','--is-ancestor',sha,'origin/main'); return sha; }
+    catch { if(git('rev-parse','HEAD')!==sha)throw Error('Unpublished checkpoint conflicts with checkout'); }
+    git('rebase','origin/main');
+    const resumed=git('rev-parse','HEAD');writeFileSync(checkpoint,resumed,{mode:0o600});
+    git('push','origin','HEAD:refs/heads/main');return resumed;
+  }
   if(!changedIndex) throw Error('No deployment checkpoint; inspect existing machine before onboarding');
   git('commit','-m',`ops: provision development preview ${id}`);
+  writeFileSync(checkpoint,git('rev-parse','HEAD'),{mode:0o600});
   git('fetch','origin','main');git('rebase','origin/main');
   const sha=git('rev-parse','HEAD');
-  git('push','origin','HEAD:refs/heads/main');writeFileSync(checkpoint,sha,{mode:0o600});return sha;
+  writeFileSync(checkpoint,sha,{mode:0o600});git('push','origin','HEAD:refs/heads/main');return sha;
 }
 async function deployments(sha:string,names:string[]){
   for(let i=0;i<120;i++){
@@ -55,7 +66,7 @@ async function deployments(sha:string,names:string[]){
     if(runs.some((r:{name:string;status:string;conclusion:string})=>names.includes(r.name)&&r.status==='completed'&&r.conclusion!=='success'))throw Error('Deployment failed; inspect GitHub Actions before retry');
     await delay(15000);
   }
-  throw Error('Deployment still pending; owner can retry after inspecting Actions');
+  throw new RetryableError('Deployment still pending');
 }
 async function provision(r:{id:string;owner_slug:string;device_slug:string;os:string;public_key:string}){
   const owner=slug(r.owner_slug,25),device=slug(r.device_slug,25),id=`${owner}-${device}`;
@@ -66,7 +77,11 @@ async function provision(r:{id:string;owner_slug:string;device_slug:string;os:st
   const active=join(state,'active-request');
   if(existsSync(active)&&readFileSync(active,'utf8')!==r.id)throw Error('Previous provisioning needs repair before another request');
   writeFileSync(active,r.id,{mode:0o600});
-  if(!git('status','--porcelain')){git('fetch','origin','main');git('merge','--ff-only','origin/main');}
+  if(!git('status','--porcelain')){
+    git('fetch','origin','main');
+    // A previous commit may be awaiting its push; publish() resumes that checkpoint.
+    if(git('rev-list','--count','origin/main..HEAD')==='0')git('merge','--ff-only','origin/main');
+  }
   cli('register','--owner',owner,'--device',device,'--os',r.os);
   cli('authorize','--id',id,'--request',request,'--out',profile);
   ensureDns(id);
@@ -85,10 +100,36 @@ async function provision(r:{id:string;owner_slug:string;device_slug:string;os:st
   unlinkSync(active);
 }
 try{
-  const request=await api('next');
+  const active=join(state,'active-request');
+  let canProvision=true;
+  if(existsSync(active)){
+    const completed=await api(readFileSync(active,'utf8').trim());
+    if(completed?.status==='ready')unlinkSync(active);
+    else if(!completed||['failed','rejected'].includes(completed.status))canProvision=false;
+  }
+  const request=canProvision?await api('next'):null;
   if(request){
-    await api(request.id,{status:'provisioning'});
-    try{await provision(request);console.log(`Provisioned ${request.id}`);}
-    catch(error){await api(request.id,{status:'failed'});throw error;}
+    const checkpoint=join(state,`${request.id}.retry.json`);
+    const previous=existsSync(checkpoint)?JSON.parse(readFileSync(checkpoint,'utf8')):{attempt:0,nextAt:0};
+    if(Date.now()>=previous.nextAt){
+      await api(request.id,{status:'provisioning'});
+      try{
+        await provision(request);if(existsSync(checkpoint))unlinkSync(checkpoint);
+        console.log(`Provisioned ${request.id}`);
+      }catch(error){
+        if(retryable(error)){
+          const ms=retryDelay(previous.attempt);
+          writeFileSync(checkpoint,JSON.stringify({attempt:previous.attempt+1,nextAt:Date.now()+ms}),{mode:0o600});
+          console.log(`Temporary failure for ${request.id}; retry in ${ms/1000}s`);
+        }else{await api(request.id,{status:'failed'});throw error;}
+      }
+    }
+  }
+  const health=await api('health-next');
+  if(health){
+    const id=`${slug(health.owner_slug,25)}-${slug(health.device_slug,25)}`;
+    let connected=false;
+    try{cli('verify','--id',id);connected=true;}catch{/* Unreachable is not an enrollment failure. */}
+    await api(`${health.id}/health`,{connected});
   }
 }finally{unlinkSync(lock);}

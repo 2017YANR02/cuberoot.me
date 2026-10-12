@@ -7,6 +7,7 @@ import { parseArgs } from 'node:util';
 import { createConnection } from 'node:net';
 import { publicKey, slug } from './model.ts';
 import { launchAgentXml, taskXml } from './autostart.ts';
+import { retryable } from './retry.ts';
 
 interface Profile { version: number; id: string; host: string; sshPort: number; sshUser: string; localPort: number; remotePort: number; url: string; hostKey: string; publicKey: string; repo: string }
 const { values: v, positionals } = parseArgs({ allowPositionals: true, options: {
@@ -52,9 +53,9 @@ async function localCheck(p: Profile) {
   const r = await fetch(`http://127.0.0.1:${p.localPort}/zh`, { signal: AbortSignal.timeout(45_000) });
   if (r.status !== 200 || !(await r.text()).includes('CubeRoot')) throw Error('Port 3000 is not serving a healthy CubeRoot page; existing service was not touched');
 }
-function child(command: string, args: string[], cwd?: string) {
+function child(command: string, args: string[], cwd?: string, captureErrors = false) {
   const fd = openSync(logPath, 'a', 0o600);
-  const p = spawn(command, args, { cwd, stdio: v.open ? 'inherit' : ['ignore', fd, fd], windowsHide: true, detached: process.platform !== 'win32' });
+  const p = spawn(command, args, { cwd, stdio: v.open ? ['inherit', 'inherit', captureErrors ? 'pipe' : 'inherit'] : ['ignore', fd, captureErrors ? 'pipe' : fd], windowsHide: true, detached: process.platform !== 'win32' });
   closeSync(fd); return p;
 }
 function stopChild(p?: ChildProcess) {
@@ -99,7 +100,7 @@ async function run() {
     }
     await localCheck(p); log(`Local service ready. Connecting ${p.url}`);
     if (v.open) void (async () => {
-      for (let i=0;i<120&&!stopped;i++) {
+      while (!stopped) {
         try {
           const response=await fetch(p.url,{signal:AbortSignal.timeout(5000)});
           if(response.ok&&(await response.text()).includes('CubeRoot')) {
@@ -108,23 +109,26 @@ async function run() {
             browser.on('error',()=>log(`Open ${p.url} in your browser.`)); return;
           }
         } catch { /* Wait for the tunnel and Next compilation. */ }
-        await delay(1000);
+        await delay(5000);
       }
       if(!stopped)log(`Preview is not ready yet: ${p.url}`);
     })();
     while (!stopped) {
-      tunnel = child('ssh', sshArgs(p));
+      let sshError='';
+      tunnel = child('ssh', sshArgs(p), undefined, true);
+      tunnel.stderr?.on('data', chunk => { sshError=(sshError+String(chunk)).slice(-8192); log(String(chunk).trim()); });
       const code = await new Promise<number | null>(resolve => {
-        tunnel!.once('error', e => { log(`SSH error: ${e.message}`); resolve(1); });
+        tunnel!.once('error', e => { sshError=e.message;log(`SSH error: ${e.message}`); resolve(1); });
         tunnel!.once('exit', resolve);
       });
+      if (!stopped && code !== 0 && !retryable({message:sshError})) throw Error(`SSH needs attention: ${sshError || `exit ${code}`}`);
       if (!stopped) { log(`SSH exited (${code}); retrying in 10 seconds`); await delay(10_000); }
     }
   } finally { cleanup(); }
 }
 function install() {
   const p = profile();
-  for (const f of ['client.ts', 'model.ts', 'autostart.ts']) {
+  for (const f of ['client.ts', 'model.ts', 'autostart.ts', 'retry.ts']) {
     const source = join(dirname(fileURLToPath(import.meta.url)), f), dest = join(dir, f);
     if (resolve(source) !== resolve(dest)) copyFileSync(source, dest);
   }
@@ -182,4 +186,4 @@ async function main() {
   }
   throw Error(`Unknown command: ${command}`);
 }
-main().catch(error => { console.error(error.message); process.exitCode = 1; });
+main().catch(error => { console.error(error.message); process.exitCode = retryable(error) ? 75 : 1; });

@@ -103,13 +103,15 @@ function StageThumbnail({ order, getMask, faceColors }: {
 }
 
 export default function StickeringSelect({
-  puzzleKind, value, onChange, orientation = '', onOrientationChange,
+  puzzleKind, value, onChange, orientation = '', onOrientationChange, editable = true,
   faceColors = CUBE_FILL,
   mask = '', onMaskClear, grain = 'sticker', onGrainChange,
   pick = 'regular', onPickChange, rest = 'ignored', onRestChange,
   onUndo, onRedo, canUndo = false, canRedo = false,
 }: {
   puzzleKind: SimPuzzle;
+  /** Read-only previews consume saved masks without offering sticker painting. */
+  editable?: boolean;
   value: string;
   onChange: (v: string) => void;
   /** 配色朝向(整体转前缀,lib/cube-orientation 的 24 档):阶段位置固定,只重贴六面颜色。
@@ -135,7 +137,8 @@ export default function StickeringSelect({
   const t = useT();
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');   // 仅作 maskLabelOverride 的取值参数
-  const isAdmin = useIsAdmin();
+  const admin = useIsAdmin();
+  const isAdmin = admin && editable;
   const { rows, layouts, reload } = useSimMasks();
   const [adminOpen, setAdminOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -230,7 +233,7 @@ export default function StickeringSelect({
             ...(isAdmin && order > 0 && g.group === 'Stickering' ? [] : [
               { value: `group:${g.group}`, disabled: true, label: <span className="sim-stage-group">{groupLabel(g.group, t)}</span> },
             ]),
-            ...g.items.map(name => ({
+            ...g.items.filter(name => editable || name !== CUSTOM_STICKERING).map(name => ({
               value: name,
               label: (
                 <span className="sim-stage-option">

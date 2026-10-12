@@ -2,6 +2,20 @@ import { describe, it, expect } from 'vitest';
 import { patternFromAlg, countMoves } from '@/lib/cube3';
 import { movesOnly, resolveEffectivePrev, resolveCommentPopupState } from '@/lib/recon_autofill_core';
 import { buildCommentSuggestions } from '@/lib/popup_suggest';
+import { detectStage } from '@/lib/stage_detect';
+
+it('continues a cancelled xcross with a new RG pair', async () => {
+  const scramble = "U' L F L2 U' F L2 U R2 D B' F D' U2 R D R'";
+  const value = "x' z' // insp\nU' r' R2 U' R2' D' R2 // W xcross (OB) cancel into\nU R' U'D'";
+  const state = await resolveCommentPopupState(scramble, value, value.length);
+  expect((await detectStage(state.prevPattern)).stage).toBe('xcross');
+  expect((await detectStage(state.currPattern)).stage).toBe('xxcross');
+  const suggestions = await buildCommentSuggestions({ ...state, explicit: true });
+  expect(suggestions).toEqual([
+    '// xxcross (RG)', '// xxcross (RG) (4)',
+    '// GR', '// GR (4)', '// F2L2', '// F2L2 (4)',
+  ]);
+});
 
 // 用户真实复盘(image #34):合肥 League 3x3 III 2026, 3x3 决赛
 const SCRAMBLE = "L' D' L2 B2 D F2 U B2 U2 F2 L U F2 D' R2 D2 B' F' D R2";

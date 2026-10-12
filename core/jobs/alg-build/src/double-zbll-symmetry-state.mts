@@ -32,11 +32,35 @@ export function claimOwner(path: string): boolean {
   } finally { rmdirSync(claim); }
 }
 export interface Memory { boot: string; swapouts: number; pressure: number; available: number; disk: number }
-export interface Baseline { boot: string; baselineSwapouts: number; status?: string }
+export interface Baseline { boot: string; baselineSwapouts: number; status?: string; reason?: string }
+
+/** Read only this launch's bounded log tail, including failures before progress.json exists. */
+export function batchFailureReason(log: string, start: number, code: number | null): string {
+  const fallback = `批次退出 ${code}，查看 ${log}`;
+  let fd: number | undefined;
+  try {
+    const end = statSync(log).size;
+    if (!Number.isSafeInteger(start) || start < 0 || end <= start) return fallback;
+    const offset = Math.max(start, end - 16 * 1024), tail = Buffer.alloc(end - offset);
+    fd = openSync(log, 'r');
+    const bytes = readSync(fd, tail, 0, tail.length, offset);
+    const error = [...tail.subarray(0, bytes).toString('utf8').matchAll(/^Error: ([^\r\n]+)$/gm)].at(-1)?.[1];
+    if (!error) return fallback;
+    if (error.startsWith('Insufficient resources: ')) {
+      const m = JSON.parse(error.slice('Insufficient resources: '.length));
+      if (Number.isFinite(m.available) && Number.isFinite(m.pressure)) {
+        const cause = m.pressure !== 1 ? '系统内存压力异常' : `可回收内存 ${ (m.available / GiB).toFixed(2) } GiB，低于启动门槛 34 GiB`;
+        return `本批未启动：${cause}。已保存结果与断点保留；需要复核资源后恢复。`;
+      }
+    }
+    return `批次退出 ${code}：${error.slice(0, 800)}\n日志：${log}`;
+  } catch { return fallback; }
+  finally { if (fd !== undefined) closeSync(fd); }
+}
 
 export function guard(m: Memory, baseline: Baseline, rss: number, starting = false): string | null {
   if (![m.swapouts, m.pressure, m.available, m.disk, rss, baseline.baselineSwapouts].every(Number.isFinite)) return '资源数据读取失败，停止。';
-  if (baseline.status === 'protected-stop') return '上次已触发资源保护，需要检查后才能恢复，不能自动重设基线。';
+  if (baseline.status === 'protected-stop') return `上次已触发资源保护，需要检查后才能恢复，不能自动重设基线。${baseline.reason ? '\n上次原因：' + baseline.reason : ''}`;
   if (m.boot !== baseline.boot) return '电脑已重新启动，需要核对上次停止原因和新的换出基线后再恢复。';
   if (m.swapouts !== baseline.baselineSwapouts) return `系统换出计数变化：${baseline.baselineSwapouts} → ${m.swapouts}。禁止自动重启。`;
   if (m.pressure !== 1) return '系统内存压力异常。';

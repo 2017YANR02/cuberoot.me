@@ -11,8 +11,8 @@ const owner = (u: WcaUser) => u.isAdmin && u.realWcaId === '2017YANR02';
 const enabled = () => (process.env.DEV_PREVIEW_HOST_TOKEN?.length ?? 0) >= 32;
 const hash = (s: string) => createHash('sha256').update(s).digest('hex');
 const slug = (s: unknown): s is string => typeof s === 'string' && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(s) && s.length <= 25;
-const fields = 'id,user_id,user_name,owner_slug,device_slug,os,public_key,status,profile,created_at,updated_at';
-type Request = {id: string; user_id: number; owner_slug: string; device_slug: string; os: string; status: string; public_key: string | null; profile: unknown};
+const fields = "id,user_id,user_name,owner_slug,device_slug,os,public_key,status,profile,created_at,updated_at,verified_at,COALESCE(status='ready' AND verified_at>NOW()-INTERVAL '5 minutes',FALSE) AS connected";
+type Request = {id: string; user_id: number; owner_slug: string; device_slug: string; os: string; status: string; public_key: string | null; profile: unknown; verified_at?: string | Date | null};
 
 devPreviewRoutes.use('/dev-preview/*', bodyLimit({maxSize: 8192}));
 devPreviewRoutes.use('/dev-preview/*', async (c,next) => { c.header('Cache-Control','no-store'); await next(); });
@@ -81,7 +81,7 @@ devPreviewRoutes.post('/dev-preview/device',async c=>{
         r.public_key=key;r.status='pending';
       }
     }
-    return {id:`${r.owner_slug}-${r.device_slug}`,os:r.os,status:r.status,profile:r.status==='ready'?r.profile:null};
+    return {id:`${r.owner_slug}-${r.device_slug}`,os:r.os,status:r.status,profile:r.status==='ready'?r.profile:null,connected:r.status==='ready'&&!!r.verified_at&&new Date(r.verified_at).getTime()>Date.now()-300_000};
   });
   return result?c.json(result):c.json({error:'Invalid, expired or mismatched device ticket'},403);
 });
@@ -94,6 +94,22 @@ devPreviewRoutes.get('/dev-preview/host/next',async c=>{
   const [r]=await query(`SELECT ${fields} FROM dev_preview_requests WHERE status IN ('approved','provisioning') ORDER BY CASE WHEN status='provisioning' THEN 0 ELSE 1 END,created_at LIMIT 1`);
   return c.json(r??null);
 });
+// Only the trusted worker can report page + assets + CORS verification. A device
+// ticket cannot certify itself. Rotate fairly and expire evidence if the worker stops.
+devPreviewRoutes.get('/dev-preview/host/health-next',async c=>{
+  const [r]=await query(`SELECT ${fields} FROM dev_preview_requests WHERE status='ready' AND (health_checked_at IS NULL OR health_checked_at<NOW()-INTERVAL '60 seconds') ORDER BY health_checked_at NULLS FIRST,created_at LIMIT 1`);
+  return c.json(r??null);
+});
+devPreviewRoutes.get('/dev-preview/host/:id',async c=>{
+  const [r]=await query('SELECT status FROM dev_preview_requests WHERE id::text=?',[c.req.param('id')]);
+  return c.json(r??null);
+});
+devPreviewRoutes.post('/dev-preview/host/:id/health',async c=>{
+  const b=await c.req.json().catch(()=>null);
+  if(typeof b?.connected!=='boolean')return c.json({error:'Invalid health result'},400);
+  const rows=await query("UPDATE dev_preview_requests SET verified_at=CASE WHEN ? THEN NOW() ELSE NULL END,health_checked_at=NOW() WHERE id::text=? AND status='ready' RETURNING id",[b.connected,c.req.param('id')]);
+  return rows.length?c.json({ok:true}):c.json({error:'Request is not provisioned'},409);
+});
 devPreviewRoutes.post('/dev-preview/host/:id',async c=>{
   const b=await c.req.json().catch(()=>null);
   if(!['provisioning','ready','failed'].includes(b?.status))return c.json({error:'Invalid state'},400);
@@ -105,7 +121,7 @@ devPreviewRoutes.post('/dev-preview/host/:id',async c=>{
       if(r.status!=='provisioning'||p?.version!==1||p.id!==`${r.owner_slug}-${r.device_slug}`||p.publicKey!==r.public_key||p.host!=='47.97.30.181'||p.sshPort!==22||p.localPort!==3000||!Number.isInteger(p.remotePort)||p.remotePort<7105||p.remotePort>7198||!/^crdev-[a-f0-9]{12}$/.test(p.sshUser)||p.url!==`https://dev-${p.id}.cuberoot.me/zh`)return false;
       try{normalizeRemoteKey(p.hostKey);}catch{return false;}
     }
-    await q('UPDATE dev_preview_requests SET status=?,profile=?,updated_at=NOW() WHERE id=?',[b.status,b.status==='ready'?b.profile:null,r.id]);
+    await q('UPDATE dev_preview_requests SET status=?,profile=?,verified_at=NULL,health_checked_at=NULL,updated_at=NOW() WHERE id=?',[b.status,b.status==='ready'?b.profile:null,r.id]);
     await q('INSERT INTO dev_preview_events(request_id,action) VALUES(?,?)',[r.id,b.status]);return true;
   });
   return ok?c.json({ok:true}):c.json({error:'Invalid transition or profile'},409);

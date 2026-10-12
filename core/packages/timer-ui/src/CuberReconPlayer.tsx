@@ -17,9 +17,10 @@ import { type ReactNode, type RefObject } from 'react';
 import type World from '@cuberoot/puzzle-render-core/engine/world';
 import { applyPuzzleTransparency } from '@cuberoot/puzzle-render-core/engine/coreOpacity';
 import type NxnCube from '@cuberoot/puzzle-render-core/engine/nxn/cube';
-import { mergeStickeringMaskFns, stickeringMaskFn } from '@cuberoot/puzzle-render-core/engine/nxn/stickering';
+import { mergeStickeringMaskFns, stickeringMaskFn, type StickeringMaskFn } from '@cuberoot/puzzle-render-core/engine/nxn/stickering';
 import { resolveStageMaskFn } from '@cuberoot/puzzle-render-core/engine/nxn/vcStageMask';
 import ReconPlayerBase, { type ReconPlayerAdapter } from './recon/ReconPlayerBase';
+import type { PlaybackBarLabels } from './PlaybackBar';
 import { invertAlg } from '@cuberoot/shared/recon/cube3';
 import { mirrorFaces } from '@cuberoot/puzzle-render-core/engine/mirror/mirrorGeometry';
 
@@ -32,7 +33,7 @@ function tokenize(alg: string): string[] {
 export default function CuberReconPlayer({
   scramble, alg, order, fillPane = false, playerRef, hideControls = false, fullscreenButton,
   backView = true, anchorAtEnd = false, mirror = false, stickering = '', stickeringOrientation = '',
-  stickeringMasks, transparent = false, ariaLabel,
+  stickeringMasks, transparent = false, ariaLabel, leadingControls, trailingControls, controlLabels, stickeringOverride,
 }: {
   scramble: string;
   alg: string;
@@ -59,6 +60,10 @@ export default function CuberReconPlayer({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   playerRef?: RefObject<any>;
   fullscreenButton?: ReactNode;
+  leadingControls?: ReactNode;
+  trailingControls?: ReactNode;
+  controlLabels?: Partial<PlaybackBarLabels>;
+  stickeringOverride?: StickeringMaskFn | null;
 }) {
   const puzzleKind = mirror ? (order === 2 ? 'mirror2' : 'mirror') : order;
   const adapter: ReconPlayerAdapter<string> = {
@@ -68,7 +73,7 @@ export default function CuberReconPlayer({
     deps: [
       order, mirror, anchorAtEnd, stickering, stickeringOrientation,
       stickeringMasks?.map(({ name, orientation }) => `${name}:${orientation ?? ''}`).join('|') ?? '',
-      transparent,
+      transparent, stickeringOverride, backView,
     ],
     parseMoves: tokenize,
     setupPuzzle: (world: World) => {
@@ -82,7 +87,7 @@ export default function CuberReconPlayer({
           ?? resolveStageMaskFn(order, name, orientation)
       )));
       const cube = world.cube as NxnCube;
-      cube.instancedRenderer.setStickering(mask);
+      cube.instancedRenderer.setStickering(stickeringOverride === undefined ? mask : stickeringOverride);
       cube.instancedRenderer.setFaceColorOverride(mirror ? mirrorFaces() : null);
       applyPuzzleTransparency(cube, transparent);
       world.dirty = true;
@@ -120,6 +125,9 @@ export default function CuberReconPlayer({
       playerRef={playerRef}
       fullscreenButton={fullscreenButton}
       ariaLabel={ariaLabel}
+      leadingControls={leadingControls}
+      trailingControls={trailingControls}
+      controlLabels={controlLabels}
     />
   );
 }

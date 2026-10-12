@@ -53,7 +53,7 @@ function materialOpacity(
 export function applyCoreOpacity(root: THREE.Object3D, percent: number): void {
   const opacity = Math.min(1, Math.max(0, Number.isFinite(percent) ? percent / 100 : 1));
   const nxn = root as THREE.Object3D & {
-    instancedRenderer?: { xray: boolean };
+    instancedRenderer?: { xray: boolean; setCoreOpacity?: (opacity: number) => void };
   };
 
   if (nxn.instancedRenderer) {
@@ -64,6 +64,7 @@ export function applyCoreOpacity(root: THREE.Object3D, percent: number): void {
       material.needsUpdate = true;
     }
     setRawMaterialOpacity(opacity);
+    nxn.instancedRenderer.setCoreOpacity?.(opacity);
     nxn.instancedRenderer.xray = opacity < 1;
     return;
   }

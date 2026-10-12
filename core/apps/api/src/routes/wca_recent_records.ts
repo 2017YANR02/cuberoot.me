@@ -237,7 +237,7 @@ export async function formatInferred(rec: InferredRecord): Promise<{ cn: string;
   const companion = rec.companionPr;
   const events = [event];
   if (companion) events.push({
-    ...event, tag: 'PR', rec_type: companion.type,
+    ...event, tag: 'PR', rec_type: companion.type, tied: undefined,
     attempt_result: companion.attemptResult, pr_rank: 1,
   });
   return renderCached(`${rec.id}|${rec.tied ? 'tied' : 'untied'}|${JSON.stringify(companion ?? null)}`, events);

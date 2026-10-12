@@ -18,7 +18,7 @@ const result: Result = {
 function records(overrides: Partial<Result> = {}, includePersonalRecords = false, fwrBaseline?: number) {
   const data: CompData = {
     slug: 'WuhanCrimsonAutumn2026', name: 'Wuhan Crimson Autumn 2026', source: 'wca',
-    compId: 0, type: 'WCA', events: [], fetchedAt: 0,
+    compId: 0, type: 'WCA', events: [{ i: '333', name: '333', rs: [{ i: 'f', e: '333', f: 'a', co: 0, tl: 0, n: 0, s: 1, rn: 1, tt: 1, name: 'Final' }] }], fetchedAt: 0,
     users: { '4': { number: 4, name: 'Yunzhi Lian (连允之)', wcaid: '2025LIAN01', region: 'cn' } },
     resultsByRound: { '333:f': [{ ...result, ...overrides }] },
     membersByFilter: { females: [4], children: [], newcomers: [] },
@@ -28,6 +28,9 @@ function records(overrides: Partial<Result> = {}, includePersonalRecords = false
 }
 
 describe('same-round personal record in recent records and Bark', () => {
+  it('retains the source competitor number for single and average result links', () => {
+    expect(records({ sr: 'FWR' }).map(r => [r.type, r.personNumber, r.roundNumber])).toEqual([['single', 4, 1], ['average', 4, 1]]);
+  });
   it('includes non-regional PRs in ranking candidates without promoting them to regional news', () => {
     const data: CompData = {
       slug: 'WuhanCrimsonAutumn2026', name: 'Wuhan Crimson Autumn 2026', source: 'wca',
@@ -58,6 +61,7 @@ describe('same-round personal record in recent records and Bark', () => {
     const inferred = collectInferred(data, '2026-09-12');
     expect(new Set(inferred.map(r => r.id)).size).toBe(2);
     expect(inferred.map(r => r.newcomerSource)).toEqual(['1st-solve', '1st-comp']);
+    expect(inferred.map(r => r.personNumber)).toEqual([4, 4]);
     const formatted = await Promise.all(inferred.map(formatInferred));
     expect(formatted[0].cn).toContain('平均新人世界纪录（首次还原）NWR');
     expect(formatted[0].en).toContain('(1st solve: first-round average)');
@@ -66,6 +70,7 @@ describe('same-round personal record in recent records and Bark', () => {
     data.users['77'] = data.users['4'];
     data.newcomerRecords = data.newcomerRecords!.map(record => ({ ...record, personNumber: 77, roundId: 'd' }));
     expect(collectInferred(data, '2026-09-12').map(r => r.id)).toEqual(inferred.map(r => r.id));
+    expect(collectInferred(data, '2026-09-12').map(r => r.personNumber)).toEqual([77, 77]);
   });
   it('includes confirmed standalone PRs only for personal subscriptions', () => {
     expect(records({ ar: '' })).toEqual([]);

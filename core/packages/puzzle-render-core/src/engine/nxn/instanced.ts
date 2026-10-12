@@ -112,6 +112,8 @@ export default class InstancedRenderer extends THREE.Group {
 
   private stickerMaterial: THREE.MeshLambertMaterial | THREE.MeshBasicMaterial;
   private movingStickerMaterial: THREE.MeshLambertMaterial | THREE.MeshBasicMaterial;
+  private readonly stickerEmissionUniform = { value: 0 };
+  private coreMaterial = Cubelet.CORE;
 
   /** X 光(内核不透明度 < 100)下的「背面贴纸」道次 —— 详见 setXray 的注释。挂在
    *  static/movingSticker 底下当子节点(共用 matrixWorld + instanceMatrix + instanceColor),
@@ -322,6 +324,22 @@ export default class InstancedRenderer extends THREE.Group {
     this.movingStickerMaterial = isSuperOrderForSticker ? new THREE.MeshBasicMaterial() : new THREE.MeshLambertMaterial();
     this.outlineColor = injectStickerOutline([this.stickerMaterial, this.movingStickerMaterial]);
     this.pictureUniforms = injectPictureCube([this.stickerMaterial, this.movingStickerMaterial], this.cube.order);
+    // Adapt cuber bf18e8d's coloured emission to instancing: use the FINAL diffuse
+    // colour (including masks, outlines and pictures), never a shared white glow.
+    // Upstream Lambert semantics: lit diffuse + face colour × emissiveIntensity.
+    for (const material of [this.stickerMaterial, this.movingStickerMaterial]) {
+      const compile = material.onBeforeCompile;
+      const cacheKey = material.customProgramCacheKey.bind(material);
+      material.onBeforeCompile = (shader, renderer) => {
+        compile(shader, renderer);
+        shader.uniforms.uStickerEmission = this.stickerEmissionUniform;
+        shader.fragmentShader = shader.fragmentShader
+          .replace('#include <common>', '#include <common>\nuniform float uStickerEmission;')
+          .replace('#include <opaque_fragment>',
+            'outgoingLight += diffuseColor.rgb * uStickerEmission;\n#include <opaque_fragment>');
+      };
+      material.customProgramCacheKey = () => `${cacheKey()}|sticker-emission`;
+    }
     this.outlineFlags = new THREE.InstancedBufferAttribute(new Float32Array(this.stickerSlots.length), 1);
     this.pictureAttrs = buildPictureSlotAttributes(this.stickerSlots, this.cube.order);
     this.staticSticker = this.makeStickerMesh(this.stickerSlots.length, false);
@@ -464,7 +482,7 @@ export default class InstancedRenderer extends THREE.Group {
 
   private makeFrameMesh(count: number, moving: boolean): THREE.InstancedMesh {
     const isSuperOrder = this.cube.order >= __PERF_FLAGS.superOrderThreshold;
-    const mat = isSuperOrder ? Cubelet.CORE_BASIC : Cubelet.CORE;
+    const mat = isSuperOrder ? Cubelet.CORE_BASIC : this.coreMaterial;
     const geo = this.frameGeometry;
     const m = new THREE.InstancedMesh(geo, mat, count);
     m.frustumCulled = false;
@@ -479,7 +497,7 @@ export default class InstancedRenderer extends THREE.Group {
 
   private makeInnerMesh(count: number, moving: boolean): THREE.InstancedMesh {
     const isSuperOrder = this.cube.order >= __PERF_FLAGS.superOrderThreshold;
-    const mat = isSuperOrder ? Cubelet.CORE_BASIC : Cubelet.CORE;
+    const mat = isSuperOrder ? Cubelet.CORE_BASIC : this.coreMaterial;
     const m = new THREE.InstancedMesh(INNER_BOX, mat, count);
     m.frustumCulled = false;
     m.userData.simRole = 'core'; // structure-coloring debug overlay (debugColors.ts)
@@ -569,6 +587,40 @@ export default class InstancedRenderer extends THREE.Group {
     this.cube.dirty = true;
   }
   get stickerGap(): number { return 1 - this._stickerScale * (1 - STICKER_GAP_DEFAULT); }
+
+  /** Additive coloured emission, matching upstream's emissiveIntensity.
+   * Per renderer, so changing /sim cannot alter another embedded cube. */
+  set stickerEmission(value: number) {
+    const emission = this.stickerMaterial instanceof THREE.MeshBasicMaterial ? 0
+      : Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0;
+    this.stickerEmissionUniform.value = emission;
+    for (const material of [this.stickerMaterial, this.movingStickerMaterial]) {
+      material.userData.simStickerEmission = emission; // CPU SVG mirrors the shader.
+      const toneMapped = emission === 0;
+      if (material.toneMapped !== toneMapped) {
+        material.toneMapped = toneMapped;
+        material.needsUpdate = true;
+      }
+    }
+    this.cube.dirty = true;
+  }
+  get stickerEmission(): number { return this.stickerEmissionUniform.value; }
+
+  /** Scope /sim's plastic colour/specular to this cube, including moving pieces. */
+  setCoreAppearance(color: string, specular: string): void {
+    if (this.coreMaterial === Cubelet.CORE) this.coreMaterial = Cubelet.CORE.clone();
+    this.coreMaterial.color.set(color);
+    this.coreMaterial.specular.set(specular);
+    this.cube.dirty = true;
+  }
+
+  setCoreOpacity(opacity: number): void {
+    if (this.coreMaterial === Cubelet.CORE) return; // handled by the shared opacity path
+    if (this.coreMaterial.opacity === opacity && this.coreMaterial.transparent === (opacity < 1)) return;
+    this.coreMaterial.opacity = opacity;
+    this.coreMaterial.transparent = opacity < 1;
+    this.coreMaterial.needsUpdate = true;
+  }
 
   /** 贴纸不透明度(0~1)。**深度照写**:半透的东西一旦停写深度,同一个 InstancedMesh 里
    *  几十上百枚贴纸就按提交顺序(而非远近)互相叠,前后贴纸、贴片挤出体的正反面全糊在一起
@@ -1069,7 +1121,7 @@ export default class InstancedRenderer extends THREE.Group {
     this._hollow = value;
     // 原核激活时块身材质由 setRawCore 接管(applySettings 在 hollow 之后调 setRawCore,
     // 会覆盖回 raw 材质);这里照常写,raw-off 时即恢复正确的 CORE/TRANS。
-    const mat = value ? Cubelet.TRANS : Cubelet.CORE;
+    const mat = value ? Cubelet.TRANS : this.coreMaterial;
     this.staticFrame.material = mat;
     this.movingFrame.material = mat;
     if (this.hasInner) {
@@ -1116,7 +1168,7 @@ export default class InstancedRenderer extends THREE.Group {
     } else if (this._rawCore) {
       // 恢复默认几何 + 材质(尊重当前 hollow;超高阶 unlit Basic,其余 Phong)
       const frameGeo = this.frameGeometry;
-      const mat = this._hollow ? Cubelet.TRANS : (isSuper ? Cubelet.CORE_BASIC : Cubelet.CORE);
+      const mat = this._hollow ? Cubelet.TRANS : (isSuper ? Cubelet.CORE_BASIC : this.coreMaterial);
       this.staticFrame.geometry = frameGeo;
       this.movingFrame.geometry = frameGeo;
       this.staticFrame.material = mat;
@@ -1450,6 +1502,7 @@ export default class InstancedRenderer extends THREE.Group {
   }
 
   dispose(): void {
+    if (this.coreMaterial !== Cubelet.CORE) this.coreMaterial.dispose();
     this.staticFrame.dispose();
     this.movingFrame.dispose();
     this.staticInner.dispose();

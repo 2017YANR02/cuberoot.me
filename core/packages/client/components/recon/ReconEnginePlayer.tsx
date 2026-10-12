@@ -96,7 +96,7 @@ export default function ReconEnginePlayer({
   }
   if (NXN_RE.test(puzzleId) || puzzleId === 'mirror' || puzzleId === 'mirror2') {
     return (
-      <CuberReconPlayer
+      <CuberReconPlayer showPlaybackOptions
         scramble={scramble}
         alg={cleanForPlayer(solution)}
         anchorAtEnd={anchorAtEnd}

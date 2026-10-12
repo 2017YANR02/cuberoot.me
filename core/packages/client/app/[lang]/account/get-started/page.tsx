@@ -1,24 +1,27 @@
 'use client';
 
+import { useEffect } from 'react';
+import { Check, ChevronDown, Sparkles, UserRound } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import { UserIdLabel } from '@/components/UserIdLabel';
 import { useCopy } from '@/hooks/useCopy';
 import { useT } from '@/hooks/useT';
-import { useLang } from '@/i18n/tr';
-import { useAuthUser } from '@/lib/auth-store';
+import { useAuthUser, useAuthStore } from '@/lib/auth-store';
 import './get-started.css';
 import RemoteAccess from './RemoteAccess';
 import DevPreview from './DevPreview';
 
 export default function GetStartedPage() {
   const t = useT();
-  const lang = useLang();
   const user = useAuthUser();
   const { copiedKey, copy } = useCopy();
-  const returnPath = `${lang === 'zh' ? '/zh' : ''}/account/get-started`;
+  useEffect(() => {
+    // Read the hydrated store inside the effect; useAuthUser is null on the first render.
+    if (!useAuthStore.getState().user) useAuthStore.getState().login();
+  }, [user]);
   const hasId = Number.isSafeInteger(user?.uid) && (user?.uid ?? 0) > 0;
 
-  const softwarePrompt = t("请帮我安装 CubeRoot 入职必备软件。先检查系统、芯片架构和已有安装，保留原配置，只补缺少的软件：所有员工安装微信输入法（https://z.weixin.qq.com/）；Windows 安装 ShareX（https://getsharex.com/）和 v2rayN（https://github.com/2dust/v2rayN/releases）；Mac 安装小火箭 Shadowrocket（https://apps.apple.com/app/id932747118）。从官方渠道核对当前系统兼容性和下载，版本不写死；无法安装时说明原因，不自行换软件。App Store 登录、购买以及系统要求本人确认的权限由我完成。代理配置使用负责人提供或本人已有的订阅，不找公共订阅，不输出订阅地址或凭据；没有配置时说明待配置，不把安装完成说成已联网。验证输入法能切换和输入，Windows 验证 ShareX 能截图，默认不自动上传截图。最后只报告已安装与未完成项。", "Install the required CubeRoot staff software. Check the OS, architecture and existing installations; preserve settings and install only missing apps. Everyone needs WeChat Input (https://z.weixin.qq.com/). Windows needs ShareX (https://getsharex.com/) and v2rayN (https://github.com/2dust/v2rayN/releases). Mac needs Shadowrocket (https://apps.apple.com/app/id932747118). Check current compatibility and downloads through official sources without pinning versions. Report incompatibility instead of substituting apps. I will handle App Store sign-in, purchases and required system confirmations. Use only my existing proxy subscription or one provided by the lead; do not obtain public subscriptions or print credentials. If none is available, report configuration as pending, not connected. Verify input switching and typing, and ShareX capture on Windows; do not enable automatic screenshot uploads. Report only installed apps and unfinished work.");
+  const softwarePrompt = t("请帮我安装 CubeRoot 入职必备软件。先检查系统、芯片架构和已有安装，保留原配置，只补缺少的软件：所有员工安装微信输入法（https://z.weixin.qq.com/）和网易 UU远程（从网易官方渠道核验并下载）；Windows 安装 ShareX（https://getsharex.com/）和 v2rayN（https://github.com/2dust/v2rayN/releases）；Mac 安装小火箭 Shadowrocket（https://apps.apple.com/app/id932747118）。从官方渠道核对当前系统兼容性和下载，版本不写死；无法安装时说明原因，不自行换软件。App Store 登录、购买以及系统要求本人确认的权限由我完成。代理配置使用负责人提供或本人已有的订阅，不找公共订阅，不输出订阅地址或凭据；没有配置时说明待配置，不把安装完成说成已联网。验证 UU远程能正常启动；本人完成登录，远程控制授权按实际需要由本人确认，不分享访问密码或自动开启无人值守控制。验证输入法能切换和输入，Windows 验证 ShareX 能截图，默认不自动上传截图。最后只报告已安装与未完成项。", "Install the required CubeRoot staff software. Check the OS, architecture and existing installations; preserve settings and install only missing apps. Everyone needs WeChat Input (https://z.weixin.qq.com/) and NetEase UU Remote (verify and download through official NetEase channels). Windows needs ShareX (https://getsharex.com/) and v2rayN (https://github.com/2dust/v2rayN/releases). Mac needs Shadowrocket (https://apps.apple.com/app/id932747118). Check current compatibility and downloads through official sources without pinning versions. Report incompatibility instead of substituting apps. I will handle App Store sign-in, purchases and required system confirmations. Use only my existing proxy subscription or one provided by the lead; do not obtain public subscriptions or print credentials. If none is available, report configuration as pending, not connected. Verify UU Remote launches; I handle sign-in and any required remote-control authorization. Do not share access passwords or automatically enable unattended access. Verify input switching and typing, and ShareX capture on Windows; do not enable automatic screenshot uploads. Report only installed apps and unfinished work.");
 
   const aiPrompt = t(
     '请直接帮我完成 CubeRoot 本地开发环境配置，目标是在终端输入 cuberoot 就能启动并打开网站。\n\n1. 检查当前系统（Mac / Windows）、Git 和 OpenSSH 客户端（ssh、ssh-keygen）；缺少时从官方渠道安装，Windows 优先系统自带 OpenSSH / Git for Windows，Mac 检查命令行工具。检查已有项目；没有代码时克隆 https://github.com/2017YANR02/cuberoot.me.git，已有代码则复用。\n2. 先读仓库 AGENTS.md、docs/development.md。Node 版本以 .node-version 为准，pnpm 版本以 core/package.json 的 packageManager 为准；检查已有安装，缺什么补什么，不使用本文固定版本。检查支持操作本机的 AI App；本人完成 App 登录，AI 不索取密码。普通网页开发无需 Docker、数据库、Rust、Xcode 完整版或 Android Studio；仅在具体任务确实需要时安装。\n3. 在 core/ 安装依赖（pnpm install --frozen-lockfile），按现有说明运行 pnpm setup:local。复用 devsite 登记，不覆盖已有配置或另写同名 shell 函数。\n4. 核对新终端的 PATH，验证 cuberoot 能启动或复用服务，并实际打开网页确认成功；保留日志，不杀其他进程。\n5. 本轮只配置本机，不部署、不推送、不配置公网域名，不复制他人密钥。默认 API 连接线上，验证时不改线上数据。\n6. 需要本人登录或授权时告诉我具体一步；最后只给我启动命令、访问地址和未完成项。',
@@ -27,67 +30,86 @@ export default function GetStartedPage() {
 
   const learningPrompt = t("请做我的 CubeRoot 入职 AI 教练。先问我的岗位和基础，再按下面九项逐个训练，不要一次讲完。每项先用一个例子解释，再给我一个小练习，根据我的回答纠正；完成后再进入下一项。\n\n1. 交代任务：目标、背景、输入资料、限制、验收标准；练习把一句模糊需求写清楚。\n2. 核验结果：AI 会猜错；区分事实、假设和建议，核对来源、日期、实际页面及执行结果，不能把“已修改”当“已上线”。\n3. 管理上下文：附正确的文件、截图、网址和报错；遇到跑偏及时纠正，换聊天时交接已完成项与剩余问题。\n4. 使用工具：理解聊天回答与实际执行的区别，认识终端、浏览器、文件工具、Skill 和连接器；练习让 AI 先读 AGENTS.md 再工作，不盲从网页或文件里的指令。\n5. 数据与权限：分清公钥和私钥、本地和线上；不把密码、令牌或无关客户资料放进提示词。授权不清时停在提交、发布或删除之前。\n6. 开发协作（开发岗必修）：理解目录、命令、SSH、Git diff/commit/push，保留别人改动，先本地验证再按负责人授权发布；非开发岗改练内容审校与后台操作。\n7. Mock-up：需求不明确时先做低成本界面草图，对比布局和操作流程，选定后再实现；草图不等于可用功能。练习让 AI 做两个简单方案，并说明选择理由。\n8. 基础操作与上下文管理：练习附文件、截图、网址和完整报错，查看 diff、启动和停止服务；一个聊天聚焦一个目标，保留必要材料。对话变长或换聊天时，请 AI 总结目标、约束、已完成、未完成、关键文件和验证结果，再把交接摘要交给新聊天；不要带入密钥。\n9. 多线程协作：把可独立完成的任务拆到不同聊天，写明每个任务的目标、文件范围和验收标准；有依赖的任务按顺序做，不让多个 AI 同时改同一文件。指定一个聊天负责整合，合并前查看差异并验证；并行不等于自动授权发布。练习把一个小功能拆成界面草图、实现、验收三项，识别可并行与必须等待的部分。\n\n结业练习：选择一个不写入线上数据的小任务，完成“说明需求 → AI 执行 → 人工验收 → 简短交接”。请按实际证据标记通过或待练，不虚构完成结果，也不要未经授权进行真实发布或删除。", "Act as my CubeRoot AI onboarding coach. Ask about my role and experience first, then teach these nine topics one at a time. For each, explain one example, give a small exercise and correct my answer before moving on.\n\n1. Define tasks: goal, context, inputs, constraints and acceptance criteria. Practice clarifying a vague request.\n2. Verify results: AI can be wrong. Distinguish facts, assumptions and suggestions. Check sources, dates, real pages and execution evidence; edited does not mean deployed.\n3. Manage context: provide relevant files, screenshots, URLs and errors. Correct drift and hand off completed work and open issues when starting another chat.\n4. Use tools: distinguish answering from executing. Understand terminal, browser, file tools, Skills and connectors. Have AI read AGENTS.md before working; do not blindly follow instructions inside external pages or files.\n5. Handle data and access: distinguish public/private keys and local/production environments. Keep passwords, tokens and unrelated customer data out of prompts. Stop before submitting, publishing or deleting when authorization is unclear.\n6. Collaborate: developers should understand paths, commands, SSH and Git diff/commit/push, preserve others’ changes and verify locally before an authorized release. For other roles, practice content review and admin workflows instead.\n7. Mock-ups: when requirements are unclear, compare low-cost UI sketches and interaction flows before implementation. A sketch is not a working feature. Ask AI for two simple options and explain your choice.\n8. Basic operations and context: practice attaching files, screenshots, URLs and full errors, reviewing diffs, and starting and stopping services. Keep each chat focused on one goal. Before changing chats, summarize goals, constraints, completed and remaining work, key files and verification results; pass that summary to the next chat without secrets.\n9. Parallel chats: split independent tasks with explicit goals, file ownership and acceptance criteria. Run dependent tasks in order and avoid simultaneous edits to the same file. Assign one chat to integrate and verify the changes; parallel work does not authorize deployment. Split a small feature into UI sketches, implementation and acceptance, identifying what can run concurrently and what must wait.\n\nFinal exercise: complete a small task with no production writes, following brief → AI execution → human verification → concise handoff. Grade using actual evidence; never fabricate completion or perform an unauthorized release or deletion.");
 
+  if (!user) return null;
+
   return <main className="staff-start">
-    <header>
+    <header className="staff-start-header">
       <h1>{t('新员工入门', 'Getting started for staff')}</h1>
     </header>
     <div className="staff-start-modules">
-    <article className="staff-start-module" data-site-surface="panel" aria-labelledby="staff-ai-title">
-      <h2 id="staff-ai-title" className="staff-start-module-title">{t('交给 AI', 'Delegate to AI')}</h2>
-    <section className="staff-start-development">
-      <h3>{t('必装软件', 'Required apps')}</h3>
-      <ul>
-        <li>{t('全部：微信输入法', 'Everyone: WeChat Input')}</li>
-        <li>{t('Windows：ShareX、v2rayN', 'Windows: ShareX, v2rayN')}</li>
-        <li>{t('Mac：小火箭（Shadowrocket）', 'Mac: Shadowrocket')}</li>
-      </ul>
-      <button type="button" className="staff-start-action" onClick={() => copy(softwarePrompt, 'ai-software')}>
-        {copiedKey === 'ai-software' ? t('已复制', 'Copied') : t('复制给 AI 安装', 'Copy for AI installation')}
-      </button>
-      <details><summary>{t('查看 AI 指令', 'View AI instructions')}</summary><pre className="staff-start-prompt">{softwarePrompt}</pre></details>
-    </section>
-    <section className="staff-start-development">
-      <h3>{t('配置本地环境', 'Set up the local environment')}</h3>
-      <button type="button" className="staff-start-action" onClick={() => copy(aiPrompt, 'ai-setup')}>
-        {copiedKey === 'ai-setup' ? t('已复制', 'Copied') : t('复制给 AI', 'Copy for AI')}
-      </button>
-      <details><summary>{t('查看 AI 指令', 'View AI instructions')}</summary><pre className="staff-start-prompt">{aiPrompt}</pre></details>
-      <p>{t('配好后：输入 cuberoot 启动，Ctrl+C 停止。', 'Once set up: run cuberoot to start; Ctrl+C to stop.')}</p>
-    </section>
-    <RemoteAccess />
-    <DevPreview />
-    <section className="staff-start-development">
-      <h3>{t('AI 带练', 'AI coaching')}</h3>
-
-      <button type="button" className="staff-start-action" onClick={() => copy(learningPrompt, 'ai-learning')}>
-        {copiedKey === 'ai-learning' ? t('已复制', 'Copied') : t('复制给 AI', 'Copy for AI')}
-      </button>
-      <details><summary>{t('查看带练指令', 'View coaching instructions')}</summary><pre className="staff-start-prompt">{learningPrompt}</pre></details>
-    </section>
-    </article>
-    <article className="staff-start-module" data-site-surface="panel" aria-labelledby="staff-self-title">
-      <h2 id="staff-self-title" className="staff-start-module-title">{t('由自己完成', 'Do yourself')}</h2>
-    <ol className="staff-start-steps">
-      <li>
-        <h3>{t('1. 注册或登录账号', '1. Register or sign in')}</h3>
-        {user ? <p role="status">{t('已登录', 'Signed in.')}</p> : <>
-          <AppLink className="staff-start-action" href={`/account?next=${encodeURIComponent(returnPath)}`} prefetch={false}>{t('注册 / 登录', 'Register / sign in')}</AppLink>
-        </>}
-      </li>
-      <li>
-        <h3>{t('2. 把 CubeRoot ID 发给负责人', '2. Send your CubeRoot ID to your team lead')}</h3>
-        {hasId ? <>
-          <div className="staff-start-id"><UserIdLabel userId={user!.uid} full /></div>
-          <button type="button" className="staff-start-action" onClick={() => copy(String(user!.uid), String(user!.uid))}>
-            {copiedKey === String(user!.uid) ? t('已复制', 'Copied') : t('复制 CubeRoot ID', 'Copy CubeRoot ID')}
-          </button>
-        </> : <p>{user
-          ? t('当前会话没有账号 ID，请到账号页重新登录后再试。', 'This session has no account ID. Sign in again on the account page and retry.')
-          : t('登录后，这里会显示你自己的账号 ID。', 'Your account ID will appear here after you sign in.')}</p>}
-      </li>
-      <li>
-        <h3>{t('3. 学习 AI 与代码基础', '3. Learn AI and coding basics')}</h3>
-        <p>{t('自行查资料或问 AI：', 'Research online or ask AI:')}</p>
+      <article className="staff-start-module" data-site-surface="panel" aria-labelledby="staff-ai-title">
+        <Sparkles className="staff-start-module-icon" size={28} strokeWidth={1.5} aria-hidden="true" />
+        <h2 id="staff-ai-title" className="staff-start-module-title">{t('交给 AI', 'Delegate to AI')}</h2>
+        <section className="staff-start-task">
+          <div className="staff-start-row">
+            <h3>{t('安装必备软件', 'Install required apps')}</h3>
+            <button type="button" className="staff-start-action" onClick={() => copy(softwarePrompt, 'ai-software')}>
+              {copiedKey === 'ai-software' ? t('已复制', 'Copied') : t('复制指令', 'Copy prompt')}
+            </button>
+          </div>
+          <details className="staff-start-instructions">
+            <summary>{t('软件与指令', 'Apps and instructions')}<ChevronDown size={14} aria-hidden="true" /></summary>
+            <ul className="staff-start-apps">
+              <li>{t('全部：微信输入法、UU远程', 'Everyone: WeChat Input, UU Remote')}</li>
+              <li>{t('Windows：ShareX、v2rayN', 'Windows: ShareX, v2rayN')}</li>
+              <li>{t('Mac：小火箭（Shadowrocket）', 'Mac: Shadowrocket')}</li>
+            </ul>
+            <pre className="staff-start-prompt">{softwarePrompt}</pre>
+          </details>
+        </section>
+        <section className="staff-start-task">
+          <div className="staff-start-row">
+            <h3>{t('配置本地环境', 'Set up locally')}</h3>
+            <button type="button" className="staff-start-action" onClick={() => copy(aiPrompt, 'ai-setup')}>
+              {copiedKey === 'ai-setup' ? t('已复制', 'Copied') : t('复制指令', 'Copy prompt')}
+            </button>
+          </div>
+          <details className="staff-start-instructions">
+            <summary>{t('查看指令', 'View instructions')}<ChevronDown size={14} aria-hidden="true" /></summary>
+            <p>{t('输入 cuberoot 启动，Ctrl+C 停止。', 'Run cuberoot to start; Ctrl+C to stop.')}</p>
+            <pre className="staff-start-prompt">{aiPrompt}</pre>
+          </details>
+        </section>
+        <section className="staff-start-task">
+          <div className="staff-start-row">
+            <h3>{t('AI 带练', 'AI coaching')}</h3>
+            <button type="button" className="staff-start-action" onClick={() => copy(learningPrompt, 'ai-learning')}>
+              {copiedKey === 'ai-learning' ? t('已复制', 'Copied') : t('复制指令', 'Copy prompt')}
+            </button>
+          </div>
+          <details className="staff-start-instructions">
+            <summary>{t('查看指令', 'View instructions')}<ChevronDown size={14} aria-hidden="true" /></summary>
+            <pre className="staff-start-prompt">{learningPrompt}</pre>
+          </details>
+        </section>
+        <details className="staff-start-disclosure">
+          <summary>{t('远程连接', 'Remote access')}<ChevronDown size={18} aria-hidden="true" /></summary>
+          <RemoteAccess />
+        </details>
+        <details className="staff-start-disclosure">
+          <summary>{t('开发网址', 'Development URL')}<ChevronDown size={18} aria-hidden="true" /></summary>
+          <DevPreview />
+        </details>
+      </article>
+      <article className="staff-start-module" data-site-surface="panel" aria-labelledby="staff-self-title">
+        <UserRound className="staff-start-module-icon" size={28} strokeWidth={1.5} aria-hidden="true" />
+        <h2 id="staff-self-title" className="staff-start-module-title">{t('由自己完成', 'Do yourself')}</h2>
+        <div className="staff-start-row staff-start-account">
+          <h3>{t('登录账号', 'Sign in')}</h3>
+          <span className="staff-start-complete" role="status"><Check size={15} aria-hidden="true" />{t('已完成', 'Done')}</span>
+        </div>
+        <section className="staff-start-identity">
+          <h3>{t('把 ID 发给负责人', 'Send your ID to your lead')}</h3>
+          {hasId ? <div className="staff-start-row">
+            <div className="staff-start-id"><UserIdLabel userId={user.uid} full /></div>
+            <button type="button" className="staff-start-action" onClick={() => copy(String(user.uid), String(user.uid))}>
+              {copiedKey === String(user.uid) ? t('已复制', 'Copied') : t('复制 ID', 'Copy ID')}
+            </button>
+          </div> : <p>{t('请到账号页重新登录以获取 ID。', 'Sign in again on the account page to retrieve your ID.')}</p>}
+        </section>
+        <details className="staff-start-disclosure">
+          <summary>{t('学习 AI 与代码基础', 'Learn AI and coding basics')}<ChevronDown size={18} aria-hidden="true" /></summary>
+          <p className="staff-start-note">{t('自行查资料或问 AI。', 'Research online or ask AI.')}</p>
         <ul className="staff-start-knowledge">
           <li><strong>{t('AI 使用', 'Using AI')}</strong><p>{t('提示词、上下文、工具、Skill、结果核验。', 'Prompts, context, tools, Skills and verification.')}</p></li>
           <li><strong>{t('代码基础', 'Coding basics')}</strong><p>{t('文件、变量、函数；HTML、CSS、JavaScript / TypeScript。', 'Files, variables, functions; HTML, CSS, JavaScript / TypeScript.')}</p></li>
@@ -99,10 +121,9 @@ export default function GetStartedPage() {
           <li><strong>{t('上下文管理', 'Context management')}</strong><p>{t('附文件与报错；聚焦目标，换聊天先交接。', 'Attach files and errors; stay focused and hand off before switching chats.')}</p></li>
           <li><strong>{t('多线程协作', 'Parallel chats')}</strong><p>{t('独立任务分开做，同一文件不同时改，最后统一验收。', 'Split independent tasks, avoid editing the same file concurrently, then verify together.')}</p></li>
         </ul>
-      </li>
-    </ol>
-    <AppLink href="/account" prefetch={false}>{t('查看我的账号', 'View my account')}</AppLink>
-    </article>
+        </details>
+        <AppLink className="staff-start-account-link" href="/account" prefetch={false}>{t('我的账号', 'My account')}</AppLink>
+      </article>
     </div>
   </main>;
 }

@@ -147,9 +147,10 @@ import { toWca as toWcaSkewb, type SkewbNotation } from '@cuberoot/shared/skewb-
 import SkewbNotationGuide from './SkewbNotationGuide';
 import {
   Slider, ValueField, OrbitPad, Toggle, KeymapModal, resetWorldView, mapFrames,
-  DEFAULT_SETTINGS, DEFAULT_FACE_COLORS, MIRROR_DEFAULT_COLOR, persistPictureFaces, saveSettings,
+  DEFAULT_SETTINGS, DEFAULT_FACE_COLORS, MIRROR_DEFAULT_COLOR, persistPictureFaces, saveSettings, cuberLightingActive,
   type SimSettings, type SimBoardBg, type SliderUnit,
 } from './SettingDrawer';
+import { CUBER_APPEARANCE } from './engine/define';
 import { KEYBOARD_ROWS, keyLabel, displayMove, type KeyMove } from './keymap';
 import CubeVirtualKeyboard from '@/components/CubeVirtualKeyboard';
 import ResetDefaultsButton from '@/components/ResetDefaultsButton';
@@ -194,7 +195,7 @@ import { groupSimPuzzleOptions, type SimPuzzleTypeOption } from './puzzleOptions
 export { SIM_FIXED_PUZZLE_OPTIONS } from './puzzleOptions';
 import { simSpeedToTps, simTpsToSpeed } from '@/lib/sim_timing';
 import AlgInput from '@/components/AlgInput';
-import PlaybackBar from '@/components/PlaybackBar';
+import PlaybackBar, { PlaybackAnchorSelect } from '@/components/PlaybackBar';
 import {
   createTwistyPlayback, EMPTY_TWISTY_PLAYBACK_STATE,
   type TwistyPlaybackPlayer, type TwistyPlaybackState,
@@ -2519,18 +2520,12 @@ export default function PlayerControls({
   // reads as the target/solved state the moves resolve to). Shared by both render paths
   // below — the engine path also shows step/play controls, twisty mode (cubing.js
   // TwistyPlayer) has its own native scrubber and only needs this select.
-  const anchorSelect = (
-    <select
-      className="sim-player-mode"
-      value={playbackMode}
-      disabled={corner?.endAnchor === false}
-      onChange={(e) => onSettingsChange({ ...settings, playbackMode: e.target.value as 'moves' | 'algorithm' })}
-      title={t('锚点:回放固定打乱起点还是解法终点', 'Anchor: keep the scramble start or the solve end fixed')}
-    >
-      <option value="moves">{t('锚定起点', 'Anchored at start')}</option>
-      <option value="algorithm">{t('锚定终点', 'Anchored at end')}</option>
-    </select>
-  );
+  const anchorSelect = <PlaybackAnchorSelect
+    atEnd={playbackMode === 'algorithm'} disabled={corner?.endAnchor === false}
+    onChange={atEnd => onSettingsChange({ ...settings, playbackMode: atEnd ? 'algorithm' : 'moves' })}
+    label={t('锚点:回放固定打乱起点还是解法终点', 'Anchor: keep the scramble start or the solve end fixed')}
+    startLabel={t('锚定起点', 'Anchored at start')} endLabel={t('锚定终点', 'Anchored at end')}
+  />;
 
   // 按阶段展示色块(twizzle edit 同款,issue #27)— 播放条最左。支持面走 simCaps
   // (NxN 引擎 ≥2 阶 / cubing.js megaminx·fto),不支持的拼图整个隐藏。
@@ -2795,7 +2790,7 @@ export default function PlayerControls({
       const playbackBar = (
       // 播放控制排:twizzle alpha.twizzle.net/edit 同款两排布局(进度条在上、传输按钮在下),
       // 与 /recon 播放条共用同一份 <PlaybackBar>。stickering / 锚点两个下拉挂在按钮排两端。
-      <PlaybackBar
+      <PlaybackBar layout="wide"
         step={isTwistyMode ? (totalSteps > 0 ? twistyPlayback.step : 0) : step}
         total={totalSteps}
         playing={isTwistyMode ? totalSteps > 0 && twistyPlayback.playing : playing}
@@ -3003,6 +2998,8 @@ const FACE_COLOR_PRESETS: string[] = dedupeColors([
   DEFAULT_FACE_COLORS.R, DEFAULT_FACE_COLORS.B, DEFAULT_FACE_COLORS.D,
   ...MEGAMINX_COLORS,
 ]);
+
+const CUBER_FACE_COLORS = CUBER_APPEARANCE.faces;
 
 // 甲油预设(经典美甲色系:正红 / 酒红 / 粉 / 裸 / 白 / 黑 / 蓝 / 薄荷 / 丁香 / 金;
 // 物理甲油色,非主题灰阶)。底色与渐变第二色共用同一板。
@@ -3963,6 +3960,9 @@ function PuzzleSettings({
   const isMirror = puzzleKind === 'mirror' || puzzleKind === 'mirror2';
   const faceColorsKey = puzzleKind === 'ghost' ? 'ghostFaceColors' : 'faceColors';
   const faceColors = settings[faceColorsKey] ?? GHOST_DEFAULT_FACE_COLORS;
+  const matchesPalette = (palette: typeof DEFAULT_FACE_COLORS) => Object.entries(palette)
+    .every(([face, color]) => faceColors[face as keyof typeof faceColors]?.toLowerCase() === color.toLowerCase());
+  const facePreset = matchesPalette(DEFAULT_FACE_COLORS) ? 'wca' : matchesPalette(CUBER_FACE_COLORS) ? 'cuber' : 'custom';
   // 灰掉「该拼图暂不支持」的控件时,hover 给出统一说明。engineMode 拼图(斜转/金字塔/五魔/FTO)
   // 在 cubing.js 渲染下引擎特性不生效,但切到「群论内核」即点亮 → 附一句提示往哪切;PG 探索
   // 拼图切渲染也不会启用(引擎未建),只给通用说明。
@@ -4459,6 +4459,14 @@ function PuzzleSettings({
             title={hint(caps.supports.coreFinish)}
           />
           <PercentRow
+            label={t('贴纸自发光', 'Sticker emission')}
+            value={settings.stickerEmission}
+            onChange={(v) => set('stickerEmission', v)}
+            disabled={!caps.supports.coreFinish || !cuberLightingActive(puzzleKind, settings.coreStyle)}
+            title={hint(caps.supports.coreFinish && cuberLightingActive(puzzleKind, settings.coreStyle))
+              ?? t('按贴纸原色增加自发光，上游默认强度为 50%', 'Add emission in each sticker’s own color; upstream defaults to 50%')}
+          />
+          <PercentRow
             label={t('黑边', 'Gap')}
             value={settings.stickerGap}
             min={0}
@@ -4469,6 +4477,22 @@ function PuzzleSettings({
             title={hint(caps.supports.coreFinish)
               ?? t('贴纸之间那条缝有多宽(占小面的百分比)', 'Width of the gap between stickers, as a % of one facelet')}
           />
+          <label className="sim-toggle">
+            <span>{t('配色预设', 'Color preset')}</span>
+            <select
+              aria-label={t('配色预设', 'Color preset')}
+              disabled={!caps.supports.faceColors}
+              value={facePreset}
+              onChange={(event) => {
+                if (event.target.value === 'custom') return;
+                set(faceColorsKey, { ...(event.target.value === 'cuber' ? CUBER_FACE_COLORS : DEFAULT_FACE_COLORS) });
+              }}
+            >
+              <option value="wca">WCA</option>
+              <option value="cuber">{t('柔和', 'Soft')}</option>
+              <option value="custom" disabled>{t('自定义', 'Custom')}</option>
+            </select>
+          </label>
           <ColorRow
             label={t('面色', 'Face colors')}
             disabled={!caps.supports.faceColors}

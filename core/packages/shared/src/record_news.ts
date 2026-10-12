@@ -334,8 +334,8 @@ export function formatRecordMessage(ev: RecordEvent, getRank: RankFn): Formatted
   let crAbbr: string | null = null;
 
   if (tag === 'WR') {
-    cn = `纪录快讯! ${timeStr}${cnEvent}${typeCn}世界纪录WR ${cnName}${personFlag}| ${cnCompLabel}`;
-    en = `BREAKING NEWS! ${timeStr} ${enEvent} WR ${tEn} ${enName}${personFlag}| ${enCompLabel}`;
+    cn = `纪录快讯! ${timeStr}${cnEvent}${typeCn}世界纪录WR${tiedCn} ${cnName}${personFlag}| ${cnCompLabel}`;
+    en = `BREAKING NEWS! ${timeStr} ${enEvent} WR${tiedEn} ${tEn} ${enName}${personFlag}| ${enCompLabel}`;
   } else if (tag === 'NWR') {
     if (ev.newcomer_source !== '1st-solve' && ev.newcomer_source !== '1st-comp') {
       throw new Error('NWR requires a newcomer source');
@@ -349,8 +349,8 @@ export function formatRecordMessage(ev: RecordEvent, getRank: RankFn): Formatted
     en = `BREAKING NEWS! ${timeStr} ${enEvent} FWR${tiedEn} ${tEn} ${enName}${personFlag}| ${enCompLabel}`;
   } else if (tag === 'NR') {
     const countryCn = COUNTRY_CN_MAP[person_iso2] ?? (ev.person_country_en || person_iso2);
-    cn = `纪录快讯! ${timeStr}${cnEvent}${typeCn}${countryCn}纪录${personFlag}NR ${cnName} | ${cnCompLabel}`;
-    en = `Breaking News! ${timeStr} ${enEvent}${personFlag}NR ${tEn} ${enName} | ${enCompLabel}`;
+    cn = `纪录快讯! ${timeStr}${cnEvent}${typeCn}${countryCn}纪录${personFlag}NR${tiedCn} ${cnName} | ${cnCompLabel}`;
+    en = `Breaking News! ${timeStr} ${enEvent}${personFlag}NR${tiedEn} ${tEn} ${enName} | ${enCompLabel}`;
   } else if (tag === 'PR') {
     if (prRank && prRank > 1) {
       // 非真破 PR(历史第 N 快):走"成绩快讯/Result News"模板
@@ -364,8 +364,8 @@ export function formatRecordMessage(ev: RecordEvent, getRank: RankFn): Formatted
   } else {
     crAbbr = tag in CR_ABBR_CN ? tag : (ISO2_TO_CR[person_iso2] ?? 'CR');
     const crCn = CR_ABBR_CN[crAbbr] ?? '洲际纪录';
-    cn = `纪录快讯! ${timeStr}${cnEvent}${typeCn}${crCn}${crAbbr} ${cnName}${personFlag}| ${cnCompLabel}`;
-    en = `Breaking News! ${timeStr} ${enEvent} ${crAbbr} ${tEn} ${enName}${personFlag}| ${enCompLabel}`;
+    cn = `纪录快讯! ${timeStr}${cnEvent}${typeCn}${crCn}${crAbbr}${tiedCn} ${cnName}${personFlag}| ${cnCompLabel}`;
+    en = `Breaking News! ${timeStr} ${enEvent} ${crAbbr}${tiedEn} ${tEn} ${enName}${personFlag}| ${enCompLabel}`;
   }
 
   // 追加 /WRxx(WR 已含"世界纪录"不叠加;PR<rank> 非真破也跳过)
@@ -380,16 +380,16 @@ export function formatRecordMessage(ev: RecordEvent, getRank: RankFn): Formatted
         cn = replaceFirst(cn, `FWR${tiedCn}`, `FWR${tiedCn}${suffix}`);
         en = replaceFirst(en, `FWR${tiedEn}`, `FWR${tiedEn}${tied ? '/WR' : suffix}`);
       } else if (tag === 'NR') {
-        cn = replaceFirst(cn, 'NR', `NR${suffix}`);
-        en = replaceFirst(en, 'NR', `NR${suffix}`);
+        cn = replaceFirst(cn, `NR${tiedCn}`, `NR${tiedCn}${suffix}`);
+        en = replaceFirst(en, `NR${tiedEn}`, `NR${tiedEn}${suffix}`);
       } else if (tag === 'PR') {
         const anchorCn = `个人纪录PR${tiedCn}`;
         const anchorEn = `${enEvent} PR${tiedEn}`;
         cn = replaceFirst(cn, anchorCn, `${anchorCn}${suffix}`);
         en = replaceFirst(en, anchorEn, `${anchorEn}${suffix}`);
       } else if (crAbbr) {
-        cn = replaceFirst(cn, crAbbr, `${crAbbr}${suffix}`);
-        en = replaceFirst(en, crAbbr, `${crAbbr}${suffix}`);
+        cn = replaceFirst(cn, `${crAbbr}${tiedCn}`, `${crAbbr}${tiedCn}${suffix}`);
+        en = replaceFirst(en, `${crAbbr}${tiedEn}`, `${crAbbr}${tiedEn}${suffix}`);
       }
     }
   }
@@ -433,8 +433,8 @@ export function formatCombinedRecords(events: RecordEvent[], getRank: RankFn): F
     throw new Error(`formatCombinedRecords expects 1 or 2 events, got ${events.length}`);
   }
   const [e0, e1] = events;
-  // Newcomer scopes must remain explicit even when paired with another record.
-  if (events.some(event => event.tag === 'NWR')) {
+  // Preserve each achievement’s newcomer scope and tie marker when pairing records.
+  if (events.some(event => event.tag === 'NWR' || event.tied)) {
     const formatted = events.map(event => formatRecordMessage(event, getRank));
     return { cn: formatted.map(event => event.cn).join('\n'), en: formatted.map(event => event.en).join('\n'), url: formatted[0]!.url };
   }
