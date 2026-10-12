@@ -9,6 +9,8 @@ afterEach(() => {
 
 describe('Bark language-neutral links', () => {
   it.each([
+    ['https://cuberoot.me/zh/wca/comp/MeathForMegaSpeed2026/result/minx/d/87', 'https://cuberoot.me/wca/comp/MeathForMegaSpeed2026/result/minx/d/87'],
+    ['https://cuberoot.me/wca/comp/MeathForMegaSpeed2026/result/minx/d/87', 'https://cuberoot.me/wca/comp/MeathForMegaSpeed2026/result/minx/d/87'],
     ['https://cuberoot.me/zh/wca/comp/WuhanCrimsonAutumn2026?event=333&round=2', 'https://cuberoot.me/wca/comp/WuhanCrimsonAutumn2026?event=333&round=2'],
     ['https://cuberoot.me/en/wca/comp/WuhanCrimsonAutumn2026?view=result#round', 'https://cuberoot.me/wca/comp/WuhanCrimsonAutumn2026?view=result#round'],
     ['https://cuberoot.me/wca/comp/WuhanCrimsonAutumn2026', 'https://cuberoot.me/wca/comp/WuhanCrimsonAutumn2026'],

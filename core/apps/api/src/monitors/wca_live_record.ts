@@ -6,11 +6,12 @@
  * 仅纪录检测路径。关注选手 PR 扫描(scan_pr / watched_ids / pr_cache)是 Phase 4,本文件不实现。
  * 邮件(Python WR 发邮件)整块跳过 —— 邮件是留在 Python 的本地工具,不在本移植范围。
  */
-import { extractInferredRecords } from '../routes/cubing_live.js';
+import { compResultHref } from '@cuberoot/shared/wca-comp-link';
+import { extractInferredRecords, resolveRecordResult } from '../routes/cubing_live.js';
 import { formatInferred } from '../routes/wca_recent_records.js';
 import { sendBark } from './bark.js';
 import { countPushed, getPushedSet, markPushed, type MonitorId } from './state.js';
-import { RECORD_TAGS, NR_COUNTRIES, POLL_INTERVAL_MS, siteCompUrl, isChineseRegion } from './config.js';
+import { RECORD_TAGS, NR_COUNTRIES, POLL_INTERVAL_MS, SITE_BASE } from './config.js';
 import { startPoller } from './poll.js';
 import { enrichName } from './names.js';
 import { formatRecords } from '../routes/wca_format.js';
@@ -133,14 +134,19 @@ function groupKey(r: RecentRecord): string {
 }
 
 /** 单条 GraphQL record → RecordEvent(对应 Python _record_to_kwargs)。 */
-async function recordToEvent(r: RecentRecord): Promise<RecordEvent> {
+export async function recordToEvent(r: RecentRecord): Promise<RecordEvent> {
   const { person, round } = r.result;
   const ev = round.competitionEvent.event;
   const competition = round.competitionEvent.competition;
   const venues = competition.venues ?? [];
+  const destination = competition.wcaId ? await resolveRecordResult(competition.wcaId, {
+    eventId: ev.id, roundNumber: round.number, personWcaId: person.wcaId, personName: person.name,
+    type: r.type, value: r.attemptResult,
+  }, r.tag, person.country.iso2) : null;
   const compIso2 = (venues[0]?.country?.iso2 || person.country.iso2).toUpperCase();
   return {
     tag: r.tag,
+    tied: destination?.tied,
     rec_type: r.type,
     attempt_result: r.attemptResult,
     event_id: ev.id,
@@ -153,10 +159,9 @@ async function recordToEvent(r: RecentRecord): Promise<RecordEvent> {
     comp_name: competition.name,
     comp_name_en: competition.name,
     comp_iso2: compIso2,
-    // 比赛链接指向自有站(带 event+round 深链);中国比赛落 /zh;未关联 WCA id 时回退 WCA Live。
+    // Match the page’s actual round and competitor; unresolved results remain eligible for retry.
     url:
-      siteCompUrl(competition.wcaId, ev.id, round.number, isChineseRegion(compIso2))
-      ?? `https://live.worldcubeassociation.org/competitions/${competition.id}/rounds/${round.id}`,
+      destination ? SITE_BASE + destination.href : `https://live.worldcubeassociation.org/competitions/${competition.id}/rounds/${round.id}`,
   };
 }
 
@@ -171,7 +176,7 @@ export async function pushFemaleRecords(firstRun: boolean): Promise<void> {
   for (const r of records) {
     if (pushed.has(r.id)) continue;
     const text = await formatInferred(r);
-    const url = `${siteCompUrl(r.compId, r.eventId, null, isChineseRegion(r.personIso2))}&view=result&round=${encodeURIComponent(r.roundId)}`;
+    const url = `${SITE_BASE}${compResultHref(r.compId, { eventId: r.eventId, roundId: r.roundId, number: r.personNumber })}`;
     if (await sendBark({ title: text.cn, body: text.en, url, group: 'WCA Records', sound: 'multiwayinvitation' })) {
       await markPushed(MONITOR, [r.id]);
     }

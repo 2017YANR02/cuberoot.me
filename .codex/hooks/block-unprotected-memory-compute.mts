@@ -95,11 +95,11 @@ async function main() {
     && Date.now() < Date.parse('2026-12-01T00:00:00Z')) {
     // Reviewed local shortcut: fixed coordinator and exact audited dependencies.
     const files = {
-      'core/jobs/alg-build/src/double-zbll-symmetry.mts': 'a66b3cc038bf4d6f3fffdac50a6b2729d805602a6fa4954b554b7a403dd5b335',
+      'core/jobs/alg-build/src/double-zbll-symmetry.mts': '7f370676166e64ed920e6b641c8750fd3985491c0970a7fe62f0c5b308a65fe4',
       'core/jobs/alg-build/src/double-zbll-selection.mts': '0de647807f60be78c8386fe2ea1243af6768c88399f6128e1a067b645d433439',
       'core/jobs/alg-build/src/double-zbll-dashboard.mts': '3bc736cd299d346e297eeeea4a7c42f11744c9175f622660a4f905d65ebc8541',
       'core/jobs/alg-build/src/double-zbll-website-stats.mts': '1909aa32d3794c45c64490cd0e56ec27efa79cd4de805f4d3c362f6dfd098143',
-      'core/jobs/alg-build/src/double-zbll-symmetry-state.mts': '759a609da080669b705c47da611f44efb804fb99edc56552aa13cdd0d1854702',
+      'core/jobs/alg-build/src/double-zbll-symmetry-state.mts': '0d711527d648f0cad32f9f9b832e142fb7060b50e481c3301880f0da4b60c864',
       '.tmp/double-zbll-symmetry-v2/model.mts': 'ec36d0ba647796b8c979863aa81ab9cb7162a7083398fa898f7b17b76cf4f3a1',
       '.tmp/double-zbll-auf-20261011/run.mts': 'cba0a6c888532ab1c606af9bd0c7d811f4afe786c220a0daa2c3c84e80f3e8b0',
       'solver/333opt/solve_h10.mts': 'da19c38379216c58e8599b54c014ad9278605decbfa0c4fc220b5ebae8248836',

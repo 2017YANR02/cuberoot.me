@@ -1,0 +1,19 @@
+.timer-room-overlay > .timer-room-dialog.visualcube-preview {
+  width: min(100%, 360px);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.visualcube-preview .timer-room-dialog-head {
+  display: none;
+}
+
+.visualcube-preview-body {
+  display: grid;
+  place-items: center;
+  padding-block: 36px;
+}

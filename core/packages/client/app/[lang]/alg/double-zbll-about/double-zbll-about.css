@@ -1,0 +1,40 @@
+.dz-about { max-width: 1040px; margin: 0 auto; padding: 48px 24px 96px; color: var(--foreground); }
+.dz-about-hero { max-width: 790px; padding: 24px 0 48px; }
+.dz-about-topline { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.dz-about-eyebrow { display: inline-flex; align-items: center; gap: 10px; color: var(--accent); font-weight: 650; letter-spacing: .12em; }
+.dz-about h1 { font-size: clamp(32px, 5vw, 54px); line-height: 1.18; letter-spacing: -.035em; margin: 20px 0; text-wrap: balance; }
+.dz-about p { line-height: 1.85; margin: 14px 0; }
+.dz-about-hero p { font-size: 18px; color: var(--muted-foreground); }
+.dz-about-start { display: inline-block; margin-top: 12px; color: var(--accent); font-weight: 600; }
+.dz-about-section-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.dz-about h2 { font-size: 24px; line-height: 1.4; margin: 0 0 12px; }
+.dz-about h3 { font-size: 19px; margin: 28px 0 8px; }
+.dz-about-muted { color: var(--muted-foreground); font-size: 14px; }
+.dz-about-counts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 24px; }
+.dz-about-counts article { min-width: 0; padding: 24px 20px; border: 1px solid var(--border-default); border-radius: 16px; display: flex; flex-direction: column; gap: 16px; }
+.dz-about-counts span { color: var(--muted-foreground); font-size: 14px; }
+.dz-about-counts strong { font-size: clamp(22px, 3vw, 34px); font-variant-numeric: tabular-nums; letter-spacing: -.04em; }
+.dz-about-counts code { font-size: 13px; white-space: normal; }
+.dz-about-counts .dz-about-result { border-color: var(--accent); }
+.dz-about-result strong { color: var(--accent); }
+.dz-about-prose { max-width: 790px; margin-top: 64px; }
+.dz-about-equation { padding: 22px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; }
+.dz-about-equation code { overflow-wrap: anywhere; line-height: 1.6; }
+.dz-about-equation strong { color: var(--accent); font-size: 28px; font-variant-numeric: tabular-nums; }
+.dz-about-demo { padding: 24px; border-radius: 16px; margin: 24px 0; }
+.dz-about-demo label { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; color: var(--muted-foreground); }
+.dz-about-demo select { width: fit-content; border: 1px solid var(--border-default); border-radius: 8px; padding: 8px 12px; background: var(--background); color: var(--foreground); font: inherit; }
+.dz-about-demo select:focus-visible, .dz-about-start:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
+.dz-about-turns { display: flex; gap: 24px; align-items: center; justify-content: center; padding: 28px 0 14px; color: var(--accent); }
+.dz-about-turns code { font-size: clamp(20px, 3vw, 30px); }
+.dz-about-demo p { font-size: 14px; color: var(--muted-foreground); }
+.dz-about-evidence { padding-top: 28px; border-top: 1px solid var(--border-default); }
+@media (max-width: 640px) {
+  .dz-about { padding: 24px 18px 64px; }
+  .dz-about-hero { padding-top: 12px; }
+  .dz-about-counts { grid-template-columns: 1fr; }
+  .dz-about-counts article { gap: 10px; }
+  .dz-about-counts strong { font-size: 32px; }
+  .dz-about-prose { margin-top: 44px; }
+  .dz-about-turns { gap: 14px; }
+}

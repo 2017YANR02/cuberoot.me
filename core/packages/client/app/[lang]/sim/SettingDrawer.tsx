@@ -19,7 +19,8 @@ import { SIM_DEFAULT_TPS, simSpeedToTicks, simTpsToSpeed } from '@/lib/sim_timin
 import Cubelet from './engine/nxn/cubelet';
 import { MIRROR_DEFAULT_COLOR, mirrorFaces } from '@/components/puzzle-models/mirror/mirrorGeometry';
 export { MIRROR_DEFAULT_COLOR } from '@/components/puzzle-models/mirror/mirrorGeometry';
-import { STICKER_GAP_DEFAULT } from './engine/define';
+import { COLORS, CUBER_APPEARANCE, STICKER_GAP_DEFAULT } from './engine/define';
+import { __PERF_FLAGS } from './engine/nxn/instanced';
 import { applyDebugStructureColors, applyEngineBodyOverlay } from './engine/debugColors';
 import { applyCoreOpacity } from './engine/coreOpacity';
 import { applyStickerThickness } from './engine/stickerThickness';
@@ -43,6 +44,7 @@ import { normalizeRoomTheme, roomCubeActive, type RoomThemeSetting } from './roo
 export type SimBoardBg = 'auto' | 'white' | 'dark' | 'checkerDark' | 'checkerLight';
 
 export interface SimSettings {
+  cuberAppearanceVersion: number;
   sensitivity: number;
   scale: number;
   perspective: number;
@@ -118,6 +120,8 @@ export interface SimSettings {
   coreOpacity: number;
   /** 贴纸不透明度 0~100(伴图导出器 stickerOpacity 的引擎侧等价)。 */
   stickerOpacity: number;
+  /** 上游 cuber 的贴纸自发光强度(0~100)。 */
+  stickerEmission: number;
   /** 黑边:相邻两枚贴纸间深色带宽占小面的比例(%),3D 与示意伴图共用同一个数。
    *  默认 = 引擎出厂缝宽 STICKER_GAP_DEFAULT×100 = 12.5。仅 NxN。 */
   stickerGap: number;
@@ -197,6 +201,7 @@ export const DEFAULT_FACE_COLORS: { U: string; D: string; L: string; R: string; 
 };
 
 export const DEFAULT_SETTINGS: SimSettings = {
+  cuberAppearanceVersion: 1,
   sensitivity: 50,
   scale: 50,
   perspective: 50,
@@ -207,6 +212,7 @@ export const DEFAULT_SETTINGS: SimSettings = {
   viewGradient: 100 / 3,
   speed: simTpsToSpeed(SIM_DEFAULT_TPS),
   thickness: true,
+  stickerEmission: CUBER_APPEARANCE.emission * 100,
   hollow: false,
   arrow: false,
   hint: false,
@@ -225,11 +231,11 @@ export const DEFAULT_SETTINGS: SimSettings = {
   debugCarve: 'off',
   debugIsolate: 'off',
   debugIsolateIndex: -1,
-  coreColor: '#202020',
+  coreColor: CUBER_APPEARANCE.core,
   coreOpacity: 100,
   stickerOpacity: 100,
   stickerGap: STICKER_GAP_DEFAULT * 100,
-  faceColors: { ...DEFAULT_FACE_COLORS },
+  faceColors: { ...CUBER_APPEARANCE.faces },
   coreStyle: 'normal',
   mirrorColorMode: 'single',
   mirrorColor: MIRROR_DEFAULT_COLOR,
@@ -300,6 +306,18 @@ export function loadSettings(): SimSettings {
     if (!raw) return { ...DEFAULT_SETTINGS, pictureFaces };
     const parsed = JSON.parse(raw) as Partial<SimSettings> & { checkeredBg?: boolean };
     const merged = { ...DEFAULT_SETTINGS, ...parsed, pictureFaces };
+    // Upgrade the previous untouched defaults once; preserve custom colours and
+    // explicit WCA selections made after the upgrade.
+    if (parsed.cuberAppearanceVersion !== DEFAULT_SETTINGS.cuberAppearanceVersion) {
+      if (Object.entries(DEFAULT_FACE_COLORS).every(([face, color]) =>
+        parsed.faceColors?.[face as keyof typeof DEFAULT_FACE_COLORS]?.toLowerCase() === color.toLowerCase())) {
+        merged.faceColors = { ...CUBER_APPEARANCE.faces };
+      }
+      if (parsed.coreColor?.toLowerCase() === '#202020') merged.coreColor = CUBER_APPEARANCE.core;
+      merged.cuberAppearanceVersion = DEFAULT_SETTINGS.cuberAppearanceVersion;
+    }
+    merged.stickerEmission = typeof merged.stickerEmission === 'number' && Number.isFinite(merged.stickerEmission)
+      ? Math.max(0, Math.min(100, merged.stickerEmission)) : DEFAULT_SETTINGS.stickerEmission;
     const ghostColors = parsed.ghostFaceColors;
     merged.ghostFaceColors = { ...GHOST_DEFAULT_FACE_COLORS };
     for (const face of GHOST_FACE_LABELS) {
@@ -403,8 +421,20 @@ export function mapFrames(v: number): number { return simSpeedToTicks(v); }
  *  (立体贴片 / 镂空 / structure colors) are applied generically off userData tags. */
 const ENGINE_BODY_PUZZLES = new Set<string>(['sq1', 'sq2', 'sq4', 'ivy', 'dino', 'redi', 'rex', 'heli', 'gear', 'skewb', 'pyraminx', 'pyraminx_duo', 'megaminx', 'fto', 'ghost', 'magic', 'mmagic']);
 
+/** Upstream cuber has ordinary stickered NxN cubes; other puzzle surfaces retain their rig. */
+export function cuberLightingActive(puzzle: string | number, coreStyle: SimSettings['coreStyle']): boolean {
+  return typeof puzzle === 'number' && puzzle < __PERF_FLAGS.superOrderThreshold && coreStyle === 'normal';
+}
+
 export function applySettings(world: World, s: SimSettings, prev?: SimSettings): void {
   const supports = resolveCaps(world.puzzleKind, 'engine').supports;
+  const roomsActive = supports.roomCube && roomCubeActive(world.puzzleKind, s.roomTheme);
+  const cuberLighting = cuberLightingActive(world.puzzleKind, s.coreStyle) && !roomsActive;
+  // Room themes temporarily own lighting; their cleanup restores these lights.
+  if (!roomsActive) {
+    world.ambient.intensity = cuberLighting ? CUBER_APPEARANCE.ambient : Math.PI * 0.75;
+    world.directional.intensity = cuberLighting ? CUBER_APPEARANCE.directional : Math.PI * 0.4;
+  }
   // 手指(指法演示):意愿写进 world,实际显隐由 world.syncHands 按拼图门控
   // (仅 3x3);内部已含 resize,所以放最前,后面的 resize 拿到的取景已是最终值。
   // 手模资产先于开关:切资产要销毁重建 rig,先设好再 syncHands 免得建完又拆。
@@ -457,7 +487,6 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
   if (!ENGINE_BODY_PUZZLES.has(world.puzzleKind as string)) {
     // NxN: sticker thickness / hollow / hint / face colors live on the InstancedRenderer.
     const cube = world.cube as import('./engine/nxn/cube').default;
-    const roomsActive = supports.roomCube && roomCubeActive(world.puzzleKind, s.roomTheme);
     const pictureActive = supports.pictureCube
       && !roomsActive
       && s.pictureCube === true
@@ -466,11 +495,14 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
     // 「动画」关 → 撤销/重做也瞬切(手动转/拖/单击各自路径已 fast)。
     cube.twister.instantTurns = !s.animatePlayback;
     cube.instancedRenderer.thickness = supports.thickness && s.thickness;
+    cube.instancedRenderer.stickerEmission = cuberLighting
+      ? s.stickerEmission / 100 : 0;
+    const coreColor = supports.coreColor ? s.coreColor : DEFAULT_SETTINGS.coreColor;
+    cube.instancedRenderer.setCoreAppearance(coreColor, cuberLighting ? CUBER_APPEARANCE.specular : COLORS.Gray);
     cube.instancedRenderer.hollow = supports.hollow && s.hollow;
     cube.instancedRenderer.hint = supports.hint && s.hint && !roomsActive;
     if (hintBg) cube.instancedRenderer.setHintBackdrop(hintBg);
     // 内核色: frame (CORE + CORE_BASIC,前者 Phong 后者 Basic) + 内层 slice 填充板共享
-    const coreColor = supports.coreColor ? s.coreColor : DEFAULT_SETTINGS.coreColor;
     Cubelet.CORE.color.set(coreColor);
     Cubelet.CORE_BASIC.color.set(coreColor);
     Cubelet._PANEL_MAT.color.set(coreColor);

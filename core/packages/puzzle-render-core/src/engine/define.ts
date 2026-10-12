@@ -31,6 +31,16 @@ export const STICKER_CORNER_RADIUS = STICKER_INNER / 8;
  *  滑块默认取这里,3D 出厂观感不变,伴图跟着 3D 走。 */
 export const STICKER_GAP_DEFAULT = (SIZE - STICKER_INNER) / SIZE;
 
+/** huazhechen/cuber bf18e8d/c3858e3 appearance. Opt-in for /sim; site WCA colours stay shared. */
+export const CUBER_APPEARANCE = {
+  faces: { U: '#F7FAFC', D: '#FFD84D', F: '#18A35D', B: '#2F6FEB', L: '#FF8A2A', R: '#E6483D' },
+  core: '#17181C',
+  specular: '#8A94A6',
+  ambient: 0.9,
+  directional: 0.25,
+  emission: 0.5,
+} as const;
+
 // 标准 WCA 6 面色取自全站单一来源 lib/cube-colors;Core/Gray/High 是 sim 专属。
 import { CUBE_FILL } from "../support/cube-colors";
 export const COLORS: { [key: string]: string } = {

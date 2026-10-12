@@ -35,4 +35,4 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - run: node --test core/scripts/dev-preview/model.test.ts
+      - run: node --test core/scripts/dev-preview/model.test.ts core/scripts/dev-preview/retry.test.ts core/scripts/dev-preview/enroll.test.ts

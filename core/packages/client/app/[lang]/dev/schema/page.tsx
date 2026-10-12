@@ -841,6 +841,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 270, slug: 'assistant_knowledge', desc: { zh: '公开资料分段、中文全文与向量混合检索，索引原子更新。', en: 'Public passages with Chinese lexical and vector retrieval and atomic index publication.' } },
   { n: 271, slug: 'enterprise_verification', desc: { zh: '企业对公打款认证、私密材料、到账复核及退款审计。', en: 'Corporate transfer verification, encrypted documents, receipt review and refund audit.' } },
   { n: 273, slug: 'dev_preview_requests', desc: { zh: '开发网址一键申请、负责人批准与自动接入。', en: 'Preview enrollment, owner approval and automatic device setup.' } },
+  { n: 274, slug: 'dev_preview_health', desc: { zh: '独立记录开发网址的连通验收与检查时间，过期不显示可用。', en: 'Track independent preview connectivity checks; stale evidence does not imply availability.' } },
   { n: 272, slug: 'remote_access', desc: { zh: '员工远程连接申请、负责人审批及主机同步确认。', en: 'Employee remote access requests, host-owner approval and host acknowledgements.' } },
 ];
 

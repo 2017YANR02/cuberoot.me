@@ -3,10 +3,27 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, writeFileSync, readFileSync, readdirSync, mkdirSync, appendFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { guard, GiB, repairTail, atomicJson, readJson, selectBatch, claimOwner, selectPairBatch, pairGroup, CsvTail, askSolverThreads } from './double-zbll-symmetry-state.mjs';
+import { guard, GiB, repairTail, atomicJson, readJson, selectBatch, claimOwner, selectPairBatch, pairGroup, CsvTail, askSolverThreads, batchFailureReason } from './double-zbll-symmetry-state.mjs';
 
 const baseline = { boot: 'same-boot', baselineSwapouts: 10 };
 const normal = { boot: 'same-boot', swapouts: 10, pressure: 1, available: 40 * GiB, disk: 100 * GiB };
+test('early batch failure reports its resource cause without borrowing an older launch error', () => {
+  const log = join(mkdtempSync(join(tmpdir(), 'zbll-failure-')), 'run.log');
+  const previous = 'Error: previous unrelated failure\n';
+  writeFileSync(log, previous);
+  assert.match(batchFailureReason(log, Buffer.byteLength(previous), 1), /查看/);
+  appendFileSync(log, 'if(before.available<34*2**30)throw Error(...);\nError: Insufficient resources: {"available":36479139840,"swapouts":0,"pressure":1}\n    at runner:72\nNode.js v24.21.0\n');
+  const reason = batchFailureReason(log, Buffer.byteLength(previous), 1);
+  assert.match(reason, /33.97 GiB.*34 GiB/);
+  assert.match(guard(normal, { ...baseline, status: 'protected-stop', reason }, 0)!, /上次原因：本批未启动/);
+  assert.match(guard(normal, { ...baseline, status: 'protected-stop', reason }, 0)!, /不能自动重设/);
+  writeFileSync(log, 'Error: Insufficient resources: {"available":40000000000,"pressure":2}\n');
+  assert.match(batchFailureReason(log, 0, 1), /内存压力异常/);
+  writeFileSync(log, 'Error: State verification failed 123\n');
+  assert.match(batchFailureReason(log, 0, 1), /State verification failed 123/);
+  writeFileSync(log, 'Error: Insufficient resources: invalid JSON\n');
+  assert.match(batchFailureReason(log, 0, 1), /查看/);
+});
 test('thread prompt waits for input, rejects invalid counts, defaults safely and propagates cancellation', async () => {
   assert.equal(await askSolverThreads(18, async()=>''),16);
   assert.equal(await askSolverThreads(8, async()=>''),8);

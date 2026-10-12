@@ -17,12 +17,12 @@ import { sendBark } from './bark.js';
 import { countPushed, getPushedSet, markPushed, type MonitorId } from './state.js';
 import { getWatchedWcaIds } from './watched.js';
 import { setPr, isNewPr, reconcilePr, warmBaseline } from './pr_baseline.js';
-import { POLL_INTERVAL_MS, siteCompUrl, isChineseRegion } from './config.js';
+import { POLL_INTERVAL_MS, SITE_BASE } from './config.js';
 import { startPoller } from './poll.js';
 import { enrichName } from './names.js';
 import { formatRecords } from '../routes/wca_format.js';
 import type { RecordEvent } from '../utils/record_format.js';
-import { extractInferredRecords, type InferredRecord } from '../routes/cubing_live.js';
+import { extractInferredRecords, resolveRecordResult, type InferredRecord } from '../routes/cubing_live.js';
 
 const MONITOR: MonitorId = 'wca_live_pr';
 const WCA_LIVE_API = 'https://live.worldcubeassociation.org/api';
@@ -135,7 +135,7 @@ export function findInferredRecordForPr(
     record.tag !== 'PR'
     && record.compId === candidate.compWcaId
     && record.eventId === candidate.eventId
-    && record.roundId === String(candidate.roundNumber)
+    && (record.roundNumber ?? (/^[1-9][0-9]*$/.test(record.roundId) ? Number(record.roundId) : null)) === candidate.roundNumber
     && record.personWcaId === candidate.wcaid
     && record.type === candidate.recType
     && record.attemptResult === candidate.value
@@ -274,13 +274,17 @@ function prUid(c: Candidate): string {
   return `wcalive-pr-${c.resultId}-${c.recType}`;
 }
 
-/** 合并分组:同选手同事件的 single + average 合并为一条推送。 */
+/** Only merge single/average achievements from the same competition and round. */
 function groupKey(c: Candidate): string {
-  return `wcalive-pr-${c.wcaid}-${c.eventId}`;
+  return `wcalive-pr-${c.compId}-${c.roundId}-${c.wcaid}-${c.eventId}`;
 }
 
 /** candidate → RecordEvent(对应 Python _to_format_kwargs)。显式传 tied;不传 previous_pr。 */
-async function toFormatEvent(c: Candidate): Promise<RecordEvent> {
+export async function toFormatEvent(c: Candidate): Promise<RecordEvent> {
+  const destination = c.compWcaId ? await resolveRecordResult(c.compWcaId, {
+    eventId: c.eventId, roundNumber: c.roundNumber, personWcaId: c.wcaid, personName: c.name,
+    type: c.recType, value: c.value,
+  }, 'PR', c.personIso2) : null;
   return {
     tag: 'PR',
     rec_type: c.recType,
@@ -292,11 +296,10 @@ async function toFormatEvent(c: Candidate): Promise<RecordEvent> {
     person_country_en: c.personCountryEn,
     comp_name: c.compName,
     comp_iso2: c.compIso2.toUpperCase(),
-    tied: c.tied,
-    // 比赛链接指向自有站(带 event+round 深链);中国比赛落 /zh;未关联 WCA id 时回退 WCA Live。
+    tied: c.tied || destination?.tied,
+    // Match the page’s actual round and competitor; unresolved results remain eligible for retry.
     url:
-      siteCompUrl(c.compWcaId, c.eventId, c.roundNumber, isChineseRegion(c.compIso2))
-      ?? `https://live.worldcubeassociation.org/competitions/${c.compId}/rounds/${c.roundId}`,
+      destination ? SITE_BASE + destination.href : `https://live.worldcubeassociation.org/competitions/${c.compId}/rounds/${c.roundId}`,
   };
 }
 

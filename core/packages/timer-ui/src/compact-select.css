@@ -136,6 +136,12 @@
   gap: 2px;
 }
 
+/* Keep viewport positioning instead of the browser's centered popover defaults. */
+.compact-select-popup[popover] {
+  inset: auto;
+  margin: 0;
+}
+
 .compact-select-header {
   position: sticky;
   top: 0;
@@ -146,12 +152,6 @@
   font-size: 12px;
   line-height: 1.4;
   white-space: nowrap;
-}
-
-.ccc-chip.cube-orientation-chip {
-  flex-direction: column;
-  width: 13px;
-  height: 16px;
 }
 
 .compact-select-option {

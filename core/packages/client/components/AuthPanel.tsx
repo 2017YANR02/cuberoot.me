@@ -461,7 +461,7 @@ function EmailCodeFlow({ email, setEmail, onDone, toPassword, reset }: {
         </p>
       )}
       <label className="auth-label">{t('邮箱', 'Email')}</label>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div className="auth-clearfield">
         <input
           className="auth-input"
           type="email"
@@ -472,7 +472,7 @@ function EmailCodeFlow({ email, setEmail, onDone, toPassword, reset }: {
           onChange={(e) => setEmail(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && email && !busy) void send(); }}
         />
-        {email && !busy && <ClearButton variant="standalone" ariaLabel={t('清除并忘记账号', 'Clear and forget account')} onClick={() => { setEmail(''); rememberLogin('email', ''); }} />}
+        {email && !busy && <ClearButton ariaLabel={t('清除并忘记账号', 'Clear and forget account')} onClick={() => { setEmail(''); rememberLogin('email', ''); }} />}
       </div>
       {error && <p className="auth-error">{error}</p>}
       <button className="auth-primary" disabled={!email || busy} onClick={() => void send()}>
@@ -516,7 +516,7 @@ function EmailPasswordFlow({ email, setEmail, onDone, toCode, onForgot }: {
   return (
     <div className="auth-flow">
       <label className="auth-label">{t('邮箱', 'Email')}</label>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div className="auth-clearfield">
         <input
           className="auth-input"
           type="email"
@@ -526,7 +526,7 @@ function EmailPasswordFlow({ email, setEmail, onDone, toCode, onForgot }: {
           autoComplete="username"
           onChange={(e) => setEmail(e.target.value)}
         />
-        {email && !busy && <ClearButton variant="standalone" ariaLabel={t('清除并忘记账号', 'Clear and forget account')} onClick={() => { setEmail(''); rememberLogin('email', ''); }} />}
+        {email && !busy && <ClearButton ariaLabel={t('清除并忘记账号', 'Clear and forget account')} onClick={() => { setEmail(''); rememberLogin('email', ''); }} />}
       </div>
       <label className="auth-label">{t('密码', 'Password')}</label>
       <PasswordInput

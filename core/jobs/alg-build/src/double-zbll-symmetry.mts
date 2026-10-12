@@ -1,12 +1,12 @@
 /** Local-only coordinator: audited symmetry model + existing guarded H48 runner. */
-import { createReadStream, readFileSync, existsSync, mkdirSync, openSync, closeSync, writeFileSync, fsyncSync, unlinkSync, statfsSync, appendFileSync, readdirSync } from 'node:fs';
+import { createReadStream, readFileSync, existsSync, mkdirSync, openSync, closeSync, writeFileSync, fsyncSync, unlinkSync, statfsSync, statSync, appendFileSync, readdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { spawn, execFileSync, type ChildProcess } from 'node:child_process';
 import { createInterface } from 'node:readline';
 import { createInterface as createPrompt } from 'node:readline/promises';
 import { availableParallelism } from 'node:os';
 import { resolve } from 'node:path';
-import { atomicJson, maybeJson, readJson, repairTail, guard, TOTAL, GiB, selectPairBatch, pairGroup, CsvTail, claimOwner, askSolverThreads, type Memory, type PairGroup } from './double-zbll-symmetry-state.mjs';
+import { atomicJson, maybeJson, readJson, repairTail, guard, TOTAL, GiB, selectPairBatch, pairGroup, CsvTail, claimOwner, askSolverThreads, batchFailureReason, type Memory, type PairGroup } from './double-zbll-symmetry-state.mjs';
 import { activeOwner, watchDashboard, renderDashboard, TerminalDashboard, REFRESH_MS } from './double-zbll-dashboard.mjs';
 import { WebsiteStatistics } from './double-zbll-website-stats.mjs';
 import { PairSelection } from './double-zbll-selection.mjs';
@@ -271,6 +271,7 @@ try {
       stage = '求解中'; atomicJson(progressPath, snapshot('running')); show(true);
       if (bp?.status !== 'complete') {
         const logFd = openSync(log, 'a');
+        const logStart = statSync(log).size;
         child = spawn(process.execPath, ['--max-old-space-size=512', '--import', resolve(root, 'core/node_modules/tsx/dist/loader.mjs'),
           resolve(root, '.tmp/double-zbll-auf-20261011/run.mts'), '--solve', `--symmetry-batch=${String(activeBatch).padStart(6, '0')}`],
         { cwd: root, detached: true, env: { ...process.env, THREADS: String(solverThreads), AUF_EXPECTED_BOOT: baseline.boot, AUF_EXPECTED_SWAPOUTS: String(baseline.baselineSwapouts) }, stdio: ['ignore', logFd, logFd] }); closeSync(logFd);
@@ -282,7 +283,7 @@ try {
         clearInterval(interval); interval = undefined; bp = batchProgress();
         verifyLive();
         if (code !== 0 || interrupted || bp?.status !== 'complete') {
-          if (!reason) stop(bp?.reason || bp?.error || `批次退出 ${code}，查看 ${log}`, !bp?.reason?.startsWith('Interrupted'));
+          if (!reason) stop(bp?.reason || bp?.error || batchFailureReason(log, logStart, code), !bp?.reason?.startsWith('Interrupted'));
           throw Error(reason);
         }
       }
@@ -305,5 +306,5 @@ try {
   if (!reason) reason = String(e);
   stage = protectedStop ? '资源保护停止' : '已停止';
   if (solve) atomicJson(progressPath, { ...snapshot(protectedStop ? 'protected-stop' : 'stopped'), verified: Math.max(verified, prior?.verified ?? seed.unique) });
-  show(true, protectedStop ? 'protected-stop' : 'stopped'); screen.close(); console.error(reason); process.exitCode = 1;
+  show(true, protectedStop ? 'protected-stop' : 'stopped'); screen.close(); console.error(`${reason}\n已保存 ${Math.max(verified, prior?.verified ?? seed.unique).toLocaleString()} 个结果，断点保留。`); process.exitCode = 1;
 } finally { screen.close(); if (interval) clearInterval(interval); if (fd !== undefined) closeSync(fd); if (pairFd !== undefined) { fsyncSync(pairFd); closeSync(pairFd); } }

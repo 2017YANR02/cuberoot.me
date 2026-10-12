@@ -570,6 +570,19 @@ export default function LandingSearch({
               if (e.key === 'Escape') {
                 setOpen(false);
                 (e.target as HTMLInputElement).blur();
+              } else if (e.key === 'ArrowRight' && !query && !e.nativeEvent.isComposing && e.keyCode !== 229
+                && !e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey
+                && !listening && micStatus !== 'starting' && micStatus !== 'stopping') {
+                e.preventDefault();
+                const input = e.currentTarget;
+                const suggestion = rotatingPlaceholder(isZh, placeholderDay);
+                setQuery(suggestion);
+                setOpen(true);
+                requestAnimationFrame(() => {
+                  if (document.activeElement === input && input.value === suggestion) {
+                    input.setSelectionRange(suggestion.length, suggestion.length);
+                  }
+                });
               } else if (e.key === 'Enter' && !e.nativeEvent.isComposing && e.keyCode !== 229) {
                 e.preventDefault();
                 if (yearMatch || pasteIntent) goFirstResult();

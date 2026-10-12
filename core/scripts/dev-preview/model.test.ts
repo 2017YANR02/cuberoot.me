@@ -9,21 +9,24 @@ import { allocate, authorizeScript, hostOf, nginx, origins, publicKey, sshBlock,
 import { launchAgentXml, taskXml } from './autostart.ts';
 
 const registry = (): Registry => JSON.parse(readFileSync(new URL('../../../ops/dev-preview/machines.json', import.meta.url), 'utf8'));
+// Behavioral fixtures must not depend on newly enrolled production devices.
+const fixture = (): Registry => ({ ...registry(), machines: [] });
 const candidate = (): Machine => ({ owner: 'xiaoming', device: 'macbook-pro', os: 'mac', transport: 'ssh', status: 'pending', localPort: 3000, remotePort: 7105, certificate: 'dev-xiaoming-macbook-pro', aliases: [] });
 test('allocation preserves existing, live, and revoked reservations', () => {
-  const r = registry(); assert.equal(allocate(r), 7105);
+  const r = fixture(); assert.equal(allocate(r), 7105);
+  r.machines.push({ ...candidate(), owner: 'existing', remotePort: 7106 });
   const m = candidate(); m.status = 'revoked'; r.machines.push(m);
   assert.equal(allocate(r, [7106, 7107]), 7108);
 });
 test('rejects injection, ambiguous identities, invalid ports and duplicate hostnames', () => {
   for (const value of ['A', '../name', 'a;id', 'a\nb', '-x', '张三']) {
-    const r = registry(); const m = candidate(); m.owner = value; r.machines.push(m); assert.throws(() => validate(r));
+    const r = fixture(); const m = candidate(); m.owner = value; r.machines.push(m); assert.throws(() => validate(r));
   }
-  const r = registry(); r.machines.push({ ...candidate(), remotePort: 7102 }); assert.throws(() => validate(r));
-  const r2 = registry(); r2.machines.push({ ...candidate(), aliases: ['dev.cuberoot.me'] }); assert.throws(() => validate(r2));
+  const r = fixture(); r.machines.push({ ...candidate(), remotePort: 7102 }); assert.throws(() => validate(r));
+  const r2 = fixture(); r2.machines.push({ ...candidate(), owner: 'existing', remotePort: 7108, aliases: ['dev.cuberoot.me'] }); r2.machines.push({ ...candidate(), aliases: ['dev.cuberoot.me'] }); assert.throws(() => validate(r2));
 });
 test('pending machines expose only certificate validation; activation and revocation affect all artifacts', () => {
-  const r = registry(), m = candidate(); r.machines.push(m); validate(r);
+  const r = fixture(), m = candidate(); r.machines.push(m); validate(r);
   assert.match(nginx(r), /dev-xiaoming-macbook-pro\.cuberoot\.me/);
   assert.ok(!nginx(r).includes('/live/dev-xiaoming-macbook-pro/'));
   assert.ok(!origins(r).includes('xiaoming'));

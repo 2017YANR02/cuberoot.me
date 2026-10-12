@@ -22,7 +22,7 @@ const inferred: InferredRecord = {
   tag: 'FWR',
   attemptResult: 427,
   personName: 'Yunzhi Lian',
-  personWcaId: '2023LIAN05',
+  personNumber: 4, personWcaId: '2023LIAN05',
   personIso2: 'CN',
   startDate: '2026-09-15',
 };
@@ -42,6 +42,10 @@ describe('WCA Live PR inferred-record exclusion', () => {
     expect(findInferredRecordForPr(different, [inferred])).toBeUndefined();
   });
 
+  it.each(['f', 'd'])('matches canonical %s rounds by chronological position', roundId => {
+    expect(findInferredRecordForPr(candidate, [{ ...inferred, roundId, roundNumber: 3 }])).toEqual({ ...inferred, roundId, roundNumber: 3 });
+    expect(findInferredRecordForPr(candidate, [{ ...inferred, roundId, roundNumber: 2 }])).toBeUndefined();
+  });
   it('does not treat a plain inferred PR as a regional record', () => {
     expect(findInferredRecordForPr(candidate, [{ ...inferred, tag: 'PR' }])).toBeUndefined();
   });

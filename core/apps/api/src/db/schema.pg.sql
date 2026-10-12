@@ -9266,6 +9266,8 @@ CREATE TABLE IF NOT EXISTS dev_preview_requests (
   public_key TEXT UNIQUE,
   status TEXT NOT NULL DEFAULT 'preparing' CHECK(status IN ('preparing','pending','approved','provisioning','ready','failed','rejected')),
   profile JSONB,
+  verified_at TIMESTAMPTZ,
+  health_checked_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   approved_by BIGINT REFERENCES app_users(id) ON DELETE SET NULL,

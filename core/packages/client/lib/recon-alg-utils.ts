@@ -4,6 +4,8 @@
  */
 import { etm } from '@cuberoot/shared/alg-notation';
 import { parseSq1Tokens } from '@cuberoot/shared/sq1-notation';
+import { orientedFaceColors } from '@/lib/cube-orientation';
+import { CUBE_COLOR_LETTER_FOR_FACE } from '@/lib/cube-colors';
 import {
   cleanReconAlgForPlayer,
   expandReconGroupRepeats,
@@ -33,6 +35,27 @@ export function cleanForPlayer(text: string): string {
 export function cleanForAlgCubingNet(text: string): string {
   const cleaned = cleanForPlayer(text);
   return cleaned.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+/** Display-only U/F colors after initial inspection rotations; never change source text. */
+export function reconInspectionOrientations(text: string): { line: number; offset: number; colors: string }[] {
+  const result: { line: number; offset: number; colors: string }[] = [];
+  let rotations = '';
+  let offset = 0;
+  for (const [line, content] of text.split('\n').entries()) {
+    const moves = cleanForAlgCubingNet(content);
+    // Once solving begins, a later "insp" label is not an initial orientation.
+    if (moves && !/^(?:[xyz](?:2'?|')?\s*)+$/.test(moves)) break;
+    rotations += ` ${moves.replace(/2'/g, '2')}`;
+    const label = /\/\/\s*insp\s*$/i.exec(content);
+    if (label) {
+      const shown = orientedFaceColors(rotations);
+      result.push({ line, offset: offset + content.trimEnd().length,
+        colors: `${CUBE_COLOR_LETTER_FOR_FACE[shown.U]}${CUBE_COLOR_LETTER_FOR_FACE[shown.F]}` });
+    }
+    offset += content.length + 1;
+  }
+  return result;
 }
 
 /** Sync a TwistyPlayer instance to a specific move count along its current alg. */

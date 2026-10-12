@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { defaultRecordNotificationPreferences, matchesRecordNotification, parseRecordNotificationPreferences,
   type RecordNotificationPreferences } from '@cuberoot/shared/record-notifications';
 import { query, withTransaction } from '../db/connection.js';
-import type { InferredRecord } from '../routes/cubing_live.js';
+import { resolveRecordResult, type InferredRecord } from '../routes/cubing_live.js';
 import { formatInferred } from '../routes/wca_recent_records.js';
 import { ISO2_TO_CR } from './record_format.js';
 import { notify } from './notify.js';
@@ -64,14 +64,18 @@ export async function deliverRecordNotifications(compId: string): Promise<void> 
     });
     if (recipients.length) {
       // Each achievement has its own dedupe key; the other PR is delivered from its own event.
-      const formatted = await formatInferred({ ...record, companionPr: undefined });
+      const destination = await resolveRecordResult(record.compId, {
+        eventId: record.eventId, roundId: record.roundId, roundNumber: record.roundNumber,
+        personWcaId: record.personWcaId, personName: record.personName, type: record.type, value: record.attemptResult,
+      }, record.tag, record.personIso2);
+      const formatted = await formatInferred({ ...record, tied: record.tied || destination.tied, companionPr: undefined });
       if (!formatted.cn || !formatted.en) throw new Error(`Empty record notification: ${item.event_key}`);
       for (const user of recipients) {
         const excerpt = user.lang === 'zh' ? formatted.cn : user.lang === 'en' ? formatted.en : `${formatted.cn}\n${formatted.en}`;
         await notify({
           recipients: [user.wca_id || `u${user.id}`], kind: 'wca_record', actorKey: '', actorName: '',
           title: record.compNameEn, excerpt, dedupeKey: item.event_key,
-          link: `/wca/comp/${encodeURIComponent(record.compId)}?event=${encodeURIComponent(record.eventId)}`,
+          link: destination.href,
         });
       }
     }

@@ -13,7 +13,7 @@ import Link from '@/components/AppLink';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { useQueryState, parseAsBoolean, parseAsStringEnum } from 'nuqs';
-import { Plus, HelpCircle, TriangleAlert, LayoutGrid, List, TestTube2, Check } from 'lucide-react';
+import { CirclePlus, HelpCircle, TriangleAlert, LayoutGrid, List, TestTube2, Check } from 'lucide-react';
 import type { ReconSolve } from '@cuberoot/shared';
 import { useReconStore, type SortKey, type SortDir } from '@/lib/recon-store';
 import {
@@ -898,7 +898,7 @@ export default function ReconListPage() {
           <h1>
             {t('recon.title')}
             <Link href="/recon/submit" className="recon-add-btn" title={t('recon.add')} aria-label={t('recon.add')}>
-              <Plus size={18} />
+              <CirclePlus size={18} />
             </Link>
             <Link
               href="/recon-about"

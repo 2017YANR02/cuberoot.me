@@ -6,12 +6,15 @@
  * label and any wrapping (submit-field/submit-block), so this only renders the
  * input trio.
  */
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import AlgInput from './AlgInput';
 import ReconAutofill from './ReconAutofill';
 import CubeKeyboardSection from './CubeKeyboardSection';
-import { normalizeSolutionSlashes } from '@/lib/recon-alg-utils';
+import { normalizeSolutionSlashes, reconInspectionOrientations } from '@/lib/recon-alg-utils';
 import { normalizeReconMoveSuffixOrder } from '@cuberoot/shared/recon-completion';
+import CubeColorChip from './CubeColorChip/CubeColorChip';
+import { getCaretRect } from '@/lib/textarea_caret';
+import './solution_view.css';
 
 export interface ReconSolutionFieldHandle {
   /** Imperatively overwrite the textarea's DOM value (for async edit-mode loads
@@ -44,6 +47,22 @@ const ReconSolutionField = forwardRef<ReconSolutionFieldHandle, Props>(function 
   mobileKeyboardVisible, onFocusField, onBlurField, autoFocus, placeholder,
 }, ref) {
   const elRef = useRef<HTMLTextAreaElement | null>(null);
+  const inspections = useMemo(() => reconInspectionOrientations(value), [value]);
+  const [inspectionChips, setInspectionChips] = useState<{ left: number; top: number; colors: string }[]>([]);
+
+  useEffect(() => {
+    const el = elRef.current;
+    if (!el) return;
+    const update = () => setInspectionChips(inspections.map(item => {
+      const rect = getCaretRect(el, item.offset);
+      return { colors: item.colors, left: rect.left + 6, top: rect.top + (rect.lineHeight - 16) / 2 };
+    }));
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    el.addEventListener('scroll', update);
+    return () => { observer.disconnect(); el.removeEventListener('scroll', update); };
+  }, [inspections]);
 
   const writeNormalizedText = useCallback((text: string): string => {
     const next = normalizeReconMoveSuffixOrder(text);
@@ -88,6 +107,7 @@ const ReconSolutionField = forwardRef<ReconSolutionFieldHandle, Props>(function 
 
   return (
     <>
+      <div className="recon-solution-input">
       <AlgInput
         elementRef={elRef as React.RefObject<HTMLTextAreaElement | HTMLDivElement | null>}
         initialText={value}
@@ -116,6 +136,12 @@ const ReconSolutionField = forwardRef<ReconSolutionFieldHandle, Props>(function 
           }
         }}
       />
+      {inspectionChips.map((chip, i) => (
+        <span key={i} className="recon-inspection-overlay" style={{ left: chip.left, top: chip.top }}>
+          <CubeColorChip colors={chip.colors} className="cube-orientation-chip" />
+        </span>
+      ))}
+      </div>
       <ReconAutofill
         textareaRef={elRef}
         value={value}

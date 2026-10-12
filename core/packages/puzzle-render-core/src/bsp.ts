@@ -194,6 +194,7 @@ interface SceneLightAmb { mask: number; r: number; g: number; b: number; }
 interface SceneLightDir extends SceneLightAmb { dx: number; dy: number; dz: number; }
 
 interface MaterialLike {
+  userData?: { simStickerEmission?: number };
   visible?: boolean;
   color?: THREE.Color;
   opacity?: number;
@@ -413,6 +414,7 @@ export function exportSimSvgBspWithDebug(opts: BspSvgExportOptions): { svg: stri
         const unlit = mat.isMeshBasicMaterial === true;
         const matR = mat.color?.r ?? 1, matG = mat.color?.g ?? 1, matB = mat.color?.b ?? 1;
         const emR = mat.emissive?.r ?? 0, emG = mat.emissive?.g ?? 0, emB = mat.emissive?.b ?? 0;
+        const fillLight = mat.userData?.simStickerEmission ?? 0;
 
         const triStart = Math.floor(range.start / 3);
         const triEnd = Math.floor((range.start + range.count) / 3);
@@ -461,7 +463,11 @@ export function exportSimSvgBspWithDebug(opts: BspSvgExportOptions): { svg: stri
             g *= (colAttr.getY(i0) + colAttr.getY(i1) + colAttr.getY(i2)) / 3;
             b *= (colAttr.getZ(i0) + colAttr.getZ(i1) + colAttr.getZ(i2)) / 3;
           }
-          const fill = forcedColor ?? hexOf(r * lr + emR, g * lg + emG, b * lb + emB, srgbOut);
+          const fill = forcedColor ?? hexOf(
+            r * (lr + fillLight) + emR,
+            g * (lg + fillLight) + emG,
+            b * (lb + fillLight) + emB, srgbOut,
+          );
           if (polys.length >= maxTris) throw new Error(`SVG_TOO_COMPLEX:${polys.length}`);
           polys.push({ pts, nx, ny, nz, d, fill, opacity, ro, seq: polys.length });
         }

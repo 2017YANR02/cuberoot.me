@@ -124,6 +124,14 @@ export async function resolveEffectivePrev(
     // 能首次成立),否则不算 cancel 场景,原样返回。
     const crossCands = await crossFamilyCancelInto(beforePrevInfo, prevPattern);
     if (crossCands.length === 0) return prevPattern;
+    // Match the preceding annotation to its hypothetical completion. Consuming
+    // this line until the cross returns can also consume a newly solved pair.
+    const label = lb.substring(lastNl + 1).split('//')[1]?.trim();
+    const labelled = crossCands.find(c => {
+      const suffix = c.pairs.length ? ` (${c.pairs.join('+')})` : '';
+      return label === `${c.colorLetter ? `${c.colorLetter} ` : ''}${c.stage}${suffix} cancel into`;
+    });
+    if (labelled) return labelled.pattern;
   }
 
   // cancel-into:并入当前行前缀,直到 cross 复原(被 cancel 的那把就在此刻补完)。
@@ -136,6 +144,7 @@ export async function resolveEffectivePrev(
 }
 
 export interface CommentPopupState {
+  continuesCancelledCross: boolean;
   prevPattern: KPattern;
   currPattern: KPattern;
   lineMovesText: string;
@@ -178,7 +187,9 @@ export async function resolveCommentPopupState(
   const prevPattern = await resolveEffectivePrev(scramble, prevMoves, lineMovesText, linesBefore);
   const currPattern = await patternFromAlg(currAlg);
 
-  return { prevPattern, currPattern, lineMovesText, prevMovesText: prevMoves, moveCount, replaceFrom };
+  const previousLine = linesBefore.trimEnd().split('\n').at(-1) ?? '';
+  const continuesCancelledCross = /\/\/\s*(?:[WYROBG]\s+)?x*cross\b.*\bcancel into\s*$/.test(previousLine);
+  return { prevPattern, currPattern, lineMovesText, prevMovesText: prevMoves, moveCount, replaceFrom, continuesCancelledCross };
 }
 
 export interface AlgSuggestion {

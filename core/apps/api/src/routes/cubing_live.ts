@@ -6,6 +6,7 @@
  *
  * Cache: in-memory 60s。比赛实时刷新但 60s 粒度够看。
  */
+import { recordResultHref, tiedInEarlierRound, type RecordResultTarget } from '../utils/record_result_link.js';
 import { Hono } from 'hono';
 import { fetchCubingLiveRound, fetchCubingCompetitors } from '@cuberoot/shared/cubing-live';
 import { streamSSE } from 'hono/streaming';
@@ -1504,6 +1505,12 @@ async function loadComp(wcaId: string, choice: SourceChoice = 'auto', onProgress
   return data;
 }
 
+/** Read notification destinations without re-entering notification observation. */
+export async function resolveRecordResult(compId: string, target: RecordResultTarget, tag: string, iso2: string) {
+  const data = await loadCompInner(compId);
+  return { href: recordResultHref(data, target), tied: tiedInEarlierRound(data, target, tag, iso2) };
+}
+
 async function loadCompInner(wcaId: string, choice: SourceChoice = 'auto', onProgress?: ProgressFn): Promise<CompData> {
   // wca_db fast-path: 命中即独占,不发外部 probe.单次 PG 查直接出全部数据.
   if (choice === 'auto' || choice === 'wca_db') {
@@ -1872,6 +1879,8 @@ export interface InferredRecord {
   tag: string;           // WR | CR | NR(format_cli 按 personIso2 把 CR 渲成 AsR/ER/...)
   attemptResult: number; // centiseconds
   personName: string;    // 原始(可能 "English (中文)")
+  roundNumber?: number; // Chronological position, including finals and combined rounds.
+  personNumber: number; // 当前比赛数据源的选手编号，用于成绩详情深链
   personWcaId: string;   // 可能为空(新人);排名 overlay 按它去重
   personIso2: string;    // 大写
   startDate: string | null;
@@ -1923,6 +1932,10 @@ function inInferredWindow(startDate: string | null): boolean {
 export function collectInferred(data: CompData, startDate: string | null, includePersonalRecords = false): InferredRecord[] {
   const out: InferredRecord[] = [];
   const compNameEn = decodeHtmlEntities(data.name);
+  const roundNumberFor = (eventId: string, roundId: string) => {
+    const index = data.events.find(e => e.i === eventId)?.rs.findIndex(r => r.i === roundId) ?? -1;
+    return index >= 0 ? index + 1 : undefined;
+  };
   for (const [key, list] of Object.entries(data.resultsByRound)) {
     const roundId = key.slice(key.indexOf(':') + 1);
     for (const r of list) {
@@ -1936,16 +1949,16 @@ export function collectInferred(data: CompData, startDate: string | null, includ
       const personIso2 = resolvePersonIso2(u.region, u.countryId).toUpperCase();
       if (wantS) out.push({
         id: `inferred|${data.slug}|${r.e}|${roundId}|single|${r.n}|${sr}|${r.b}`,
-        compId: data.slug, compNameEn, eventId: r.e, roundId, type: 'single',
-        tag: sr, attemptResult: r.b, personName: u.name, personWcaId: u.wcaid ?? '', personIso2, startDate,
+        compId: data.slug, compNameEn, eventId: r.e, roundId, roundNumber: roundNumberFor(r.e, roundId), type: 'single',
+        tag: sr, attemptResult: r.b, personNumber: r.n, personName: u.name, personWcaId: u.wcaid ?? '', personIso2, startDate,
         ...(sr === 'FWR' && r.b === data.currentRecords?.fwr?.[`${r.e}|0`] ? { tied: true } : {}),
         ...(!wantA && !ar && r.a > 0 && r.pA === 1
           ? { companionPr: { type: 'average' as const, attemptResult: r.a } } : {}),
       });
       if (wantA) out.push({
         id: `inferred|${data.slug}|${r.e}|${roundId}|average|${r.n}|${ar}|${r.a}`,
-        compId: data.slug, compNameEn, eventId: r.e, roundId, type: 'average',
-        tag: ar, attemptResult: r.a, personName: u.name, personWcaId: u.wcaid ?? '', personIso2, startDate,
+        compId: data.slug, compNameEn, eventId: r.e, roundId, roundNumber: roundNumberFor(r.e, roundId), type: 'average',
+        tag: ar, attemptResult: r.a, personNumber: r.n, personName: u.name, personWcaId: u.wcaid ?? '', personIso2, startDate,
         ...(ar === 'FWR' && r.a === data.currentRecords?.fwr?.[`${r.e}|1`] ? { tied: true } : {}),
         ...(!wantS && !sr && r.b > 0 && r.pS === 1
           ? { companionPr: { type: 'single' as const, attemptResult: r.b } } : {}),
@@ -1959,10 +1972,17 @@ export function collectInferred(data: CompData, startDate: string | null, includ
       // Competitor numbers and round IDs change between live and official sources.
       id: `inferred|${data.slug}|${record.eventId}|${record.type}|${u.wcaid || u.name}|NWR|${record.source}|${record.value}`,
       compId: data.slug, compNameEn, eventId: record.eventId, roundId: record.roundId,
+      roundNumber: roundNumberFor(record.eventId, record.roundId),
       type: record.type, tag: 'NWR', newcomerSource: record.source, attemptResult: record.value,
-      personName: u.name, personWcaId: u.wcaid ?? '',
+      personNumber: record.personNumber, personName: u.name, personWcaId: u.wcaid ?? '',
       personIso2: resolvePersonIso2(u.region, u.countryId).toUpperCase(), startDate,
     });
+  }
+  for (const record of out) {
+    if (record.tag !== 'NWR') record.tied ||= tiedInEarlierRound(data, {
+      eventId: record.eventId, roundId: record.roundId, personWcaId: record.personWcaId,
+      personName: record.personName, type: record.type, value: record.attemptResult,
+    }, record.tag, record.personIso2);
   }
   return out;
 }

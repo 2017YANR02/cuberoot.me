@@ -5,10 +5,26 @@ import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { parseArgs } from 'node:util';
 import { Resolver } from 'node:dns/promises';
+import { retryable } from './retry.ts';
 
 // Local proxies can synthesize 198.18/15 addresses. Verify public DNS independently.
 const dns = new Resolver({ timeout: 5000, tries: 2 });
 dns.setServers(['223.5.5.5', '1.1.1.1']);
+async function resolvePublicIPv4(host: string): Promise<string[]> {
+  try { return await dns.resolve4(host); }
+  catch (error) {
+    // Some administrator networks block direct DNS traffic. Keep verification
+    // independent of local proxy DNS, using authenticated HTTPS instead.
+    if (!['ECONNREFUSED', 'ETIMEOUT', 'ESERVFAIL'].includes((error as NodeJS.ErrnoException).code ?? '')) throw error;
+    const response = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(host)}&type=A`, { signal: AbortSignal.timeout(15_000) });
+    if (!response.ok) throw Error(`Public DNS HTTPS failed: ${response.status}`);
+    const result = await response.json() as { Status: number; Answer?: { type: number; data: string }[] };
+    if (result.Status !== 0) throw Error(`Public DNS response failed: ${result.Status}`);
+    const addresses = (result.Answer ?? []).filter(a => a.type === 1).map(a => a.data);
+    if (!addresses.length) throw Error('Public DNS returned no IPv4 address');
+    return addresses;
+  }
+}
 import { allocate, authorizeScript, hostOf, idOf, nginx, origins, publicKey, sh, slug, userOf, validate, type Machine, type Registry } from './model.ts';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -84,7 +100,7 @@ async function main() {
     }
     case 'certificate': {
       const m = machine(); if (m.status === 'revoked') throw Error('Device revoked');
-      const host = hostOf(r, m), addresses = await dns.resolve4(host);
+      const host = hostOf(r, m), addresses = await resolvePublicIPv4(host);
       if (!addresses.includes(r.server) || addresses.some(a => a !== r.server)) throw Error('DNS does not point exclusively to the preview server');
       const hosts = r.machines.filter(x => x.certificate === m.certificate && x.status !== 'revoked').flatMap(x => [hostOf(r, x), ...x.aliases.filter(a => a !== 'dev.cuberoot.me')]);
       console.log(ssh(`set -eu\nnginx -t\ncertbot certonly --webroot -w /www/wwwroot/cuberoot-spa --non-interactive --cert-name ${sh(m.certificate)} --expand --keep-until-expiring ${hosts.map(h => '-d ' + sh(h)).join(' ')}\n`)); return;
@@ -104,17 +120,17 @@ async function main() {
     case 'verify': {
       const m = machine(), host = hostOf(r, m);
       if (m.status !== 'active') throw Error('Registry is not active');
-      const addresses = await dns.resolve4(host);
-      if (!addresses.includes(r.server)) throw Error('DNS mismatch');
+      const addresses = await resolvePublicIPv4(host);
+      if (!addresses.includes(r.server) || addresses.some(a => a !== r.server)) throw Error('DNS mismatch');
       const htmlResponse = await fetch(`https://${host}/zh`, { signal: AbortSignal.timeout(45_000) });
       const html = await htmlResponse.text();
-      if (htmlResponse.status !== 200 || !html.includes('CubeRoot')) throw Error(`Page failed: ${htmlResponse.status}`);
+      if (htmlResponse.status !== 200 || new URL(htmlResponse.url).origin !== `https://${host}` || !html.includes('CubeRoot')) throw Error(`Page failed: ${htmlResponse.status}`);
       const scripts = [...html.matchAll(/<script\b[^>]*\bsrc="([^"]+)"/g)].map(x => new URL(x[1].replaceAll('&amp;', '&'), `https://${host}`)).filter(u => u.origin === `https://${host}` && u.pathname.startsWith('/_next/'));
       if (!scripts.length) throw Error('No Next startup scripts found');
       // Bounded concurrency; check every script advertised by this HTML response.
       for (let i = 0; i < scripts.length; i += 4) await Promise.all(scripts.slice(i, i + 4).map(async url => {
         const response = await fetch(url, { signal: AbortSignal.timeout(45_000) });
-        if (response.status !== 200 || !response.headers.get('content-type')?.includes('javascript')) throw Error(`Startup script failed: ${url} ${response.status}`);
+        if (response.status !== 200 || new URL(response.url).origin !== `https://${host}` || !response.headers.get('content-type')?.includes('javascript')) throw Error(`Startup script failed: ${url} ${response.status}`);
         await response.arrayBuffer();
       }));
       const api = await fetch('https://api.cuberoot.me/v1/health', { method: 'OPTIONS', headers: { Origin: `https://${host}`, 'Access-Control-Request-Method': 'GET' }, signal: AbortSignal.timeout(15_000) });
@@ -124,4 +140,4 @@ async function main() {
     default: throw Error(`Unknown command: ${command}`);
   }
 }
-main().catch(error => { console.error(error.message); process.exitCode = 1; });
+main().catch(error => { console.error(error.message); process.exitCode = retryable(error) ? 75 : 1; });

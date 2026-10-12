@@ -2,15 +2,16 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { defaultRecordNotificationPreferences, matchesRecordNotification, parseRecordNotificationPreferences } from '@cuberoot/shared/record-notifications';
 import type { InferredRecord } from '../src/routes/cubing_live';
 
-const mocks = vi.hoisted(() => ({ query: vi.fn(), tx: vi.fn(), notify: vi.fn() }));
+const mocks = vi.hoisted(() => ({ query: vi.fn(), tx: vi.fn(), notify: vi.fn(), resolve: vi.fn() }));
 vi.mock('../src/db/connection.js', () => ({ query: mocks.query, withTransaction: (fn: (tx: unknown) => unknown) => fn(mocks.tx) }));
+vi.mock('../src/routes/cubing_live.js', () => ({ resolveRecordResult: mocks.resolve }));
 vi.mock('../src/utils/notify.js', () => ({ notify: mocks.notify }));
 vi.mock('../src/routes/wca_recent_records.js', () => ({ formatInferred: async () => ({ cn: '4.52 三阶平均纪录', en: '4.52 3x3 record' }) }));
 import { deliverRecordNotifications, observeRecordNotifications, recordNotificationKey } from '../src/utils/record_notifications';
 
 const record: InferredRecord = { id: 'source-id', compId: 'WuhanCrimsonAutumn2026', compNameEn: 'Wuhan Crimson Autumn 2026',
   eventId: '333', roundId: 'f', type: 'average', tag: 'FWR', attemptResult: 452,
-  personWcaId: '2025LIAN01', personName: 'Yunzhi Lian', personIso2: 'CN', startDate: '2026-09-13' };
+  personNumber: 4, personWcaId: '2025LIAN01', personName: 'Yunzhi Lian', personIso2: 'CN', startDate: '2026-09-13' };
 
 describe('record subscription rules', () => {
   const prefs = { ...defaultRecordNotificationPreferences(), levels: ['CR'] as const, events: ['333'], types: ['average'] as const, regions: ['AS'] };
@@ -47,7 +48,7 @@ describe('record subscription rules', () => {
 });
 
 describe('record notification ledger', () => {
-  beforeEach(() => { vi.clearAllMocks(); mocks.query.mockResolvedValue([]); mocks.tx.mockResolvedValue([]); mocks.notify.mockResolvedValue(undefined); });
+  beforeEach(() => { vi.clearAllMocks(); mocks.query.mockResolvedValue([]); mocks.tx.mockResolvedValue([]); mocks.notify.mockResolvedValue(undefined); mocks.resolve.mockResolvedValue({ href: '/wca/comp/WuhanCrimsonAutumn2026/result/333/f/4', tied: false }); });
   it('deduplicates by achievement across source IDs and record marker changes', () => {
     expect(recordNotificationKey({ ...record, id: 'another-source', tag: 'WR' })).toBe(recordNotificationKey(record));
     expect(recordNotificationKey({ ...record, attemptResult: 451 })).not.toBe(recordNotificationKey(record));
@@ -72,7 +73,7 @@ describe('record notification ledger', () => {
         { ...user, id: 5, wca_id: null }]);
     await deliverRecordNotifications(record.compId);
     expect(mocks.notify).toHaveBeenCalledTimes(2);
-    expect(mocks.notify.mock.calls[0][0]).toMatchObject({ recipients: [record.personWcaId], kind: 'wca_record', actorKey: '', dedupeKey: 'key', excerpt: '4.52 三阶平均纪录' });
+    expect(mocks.notify.mock.calls[0][0]).toMatchObject({ recipients: [record.personWcaId], kind: 'wca_record', link: '/wca/comp/WuhanCrimsonAutumn2026/result/333/f/4', actorKey: '', dedupeKey: 'key', excerpt: '4.52 三阶平均纪录' });
     expect(mocks.notify.mock.calls[1][0]).toMatchObject({ recipients: ['u2'], excerpt: '4.52 3x3 record' });
     expect(mocks.query.mock.calls[2][0]).toContain('delivered = TRUE');
   });

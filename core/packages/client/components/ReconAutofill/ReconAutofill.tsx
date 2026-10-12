@@ -166,7 +166,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
   const buildCommentPopup = useCallback(async (caret: number, explicit = false): Promise<CommentPopup | null> => {
     const ta = textareaRef.current;
     if (!ta) return null;
-    const { prevPattern, currPattern, lineMovesText, prevMovesText, moveCount, replaceFrom } =
+    const { prevPattern, currPattern, lineMovesText, prevMovesText, moveCount, replaceFrom, continuesCancelledCross } =
       await resolveCommentPopupState(scramble, value, caret);
 
     const entries = await buildCommentSuggestions({
@@ -176,6 +176,7 @@ export default function ReconAutofill({ textareaRef, value, setValue, scramble, 
       prevMovesText,
       moveCount,
       explicit,
+      continuesCancelledCross,
     });
 
     if (entries.length === 0) return null;

@@ -172,6 +172,7 @@
 
 /* ── 打乱 + 解法 合并框 ─────────────────────────────────────── */
 .detail-scramble-solution {
+  --recon-diagram-indent: 32px;
   background: transparent;
 }
 .detail-scramble-solution .detail-scramble-line {
@@ -187,6 +188,10 @@
   border: none;
   border-radius: 0;
   padding: 0;
+}
+.detail-scramble-solution:has(.recon-case-diagram) > .detail-caption-header,
+.detail-scramble-solution:has(.recon-case-diagram) > .detail-scramble-line {
+  padding-inline-start: var(--recon-diagram-indent);
 }
 .detail-caption-header {
   font-family: 'Roboto Mono', monospace;
@@ -277,6 +282,38 @@
   margin-bottom: 8px;
 }
 
+.detail-video-player {
+  position: relative;
+  width: 360px;
+  max-width: 100%;
+}
+.detail-video-player > .detail-video-wrap {
+  width: 100%;
+  padding-top: 56.25%;
+  margin-bottom: 0;
+}
+.detail-video-switches {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 6px;
+}
+.detail-video-switch {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 6px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+.detail-video-switch img {
+  display: block;
+  object-fit: contain;
+}
+
 .detail-video-facade {
   cursor: pointer;
   width: 360px;
@@ -347,6 +384,24 @@
   background: color-mix(in srgb, var(--destructive) 12%, transparent) !important;
 }
 
+.detail-share-target {
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+.compact-select-trigger.recon-btn.detail-title-edit {
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: normal;
+}
+
+.recon-share-menu-content {
+  display: grid;
+  gap: 12px;
+  padding: 8px;
+  font-size: 0.9rem;
+}
+
 /* Navigation stays text-based; clipboard actions are separate outlined buttons. */
 .recon-external-links,
 .recon-navigation-links,
@@ -375,7 +430,8 @@
   color: var(--foreground);
 }
 
-.recon-copy-action {
+.recon-copy-action,
+.compact-select-trigger.recon-copy-action {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -393,6 +449,12 @@
 .recon-copy-action:hover {
   border-color: var(--accent);
   color: var(--accent);
+}
+
+.recon-png-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 /* --- 元数据区 --- */
@@ -1406,4 +1468,26 @@
   body[data-site-scenery] .yt-comment-menu {
     background: var(--glass-popover-bg);
   }
+}
+/* Fontsource Roboto Condensed 5.3.0, OFL-1.1; loaded only when selected for export. */
+@font-face {
+  font-family: 'Roboto Condensed';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/roboto-condensed-latin-400-normal.woff2') format('woff2');
+}
+
+.recon-image-font {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  font-size: 0.85rem;
+}
+
+.recon-image-font select {
+  width: fit-content;
+  max-width: 100%;
+  font: inherit;
 }

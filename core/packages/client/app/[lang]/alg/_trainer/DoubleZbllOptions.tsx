@@ -1,6 +1,8 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Check, Download } from 'lucide-react';
+import { Check, Download, HelpCircle } from 'lucide-react';
+import AppLink from '@/components/AppLink';
+import { Tooltip } from '@/components/Tooltip';
 import { tr } from '@/i18n/tr';
 import { useTrainerStore, TimerState } from '@/lib/trainer-store';
 import { doubleZbllOfflineReady, installDoubleZbllOffline } from '@/lib/double-zbll';
@@ -23,10 +25,16 @@ export default function DoubleZbllOptions() {
     : offline ? tr({ zh: '已可离线使用', en: 'Available offline' }) : tr({ zh: '保存供离线使用', en: 'Save for offline use' });
   return (
     <>
-      <button type="button" className="trainer-quick-btn" title={label} aria-label={label}
+      <Tooltip content={label}>{tip => <button {...tip} type="button" className="trainer-quick-btn" aria-label={label}
         onClick={() => void download()} disabled={busy || timerState !== TimerState.NOT_RUNNING}>
         {busy ? <span className="trainer-offline-progress">{label}</span> : offline ? <Check size={15} aria-hidden /> : <Download size={15} aria-hidden />}
-      </button>
+      </button>}</Tooltip>
+      <Tooltip content={tr({ zh: '双底原理与对称去重', en: 'Double ZBLL symmetry explained' })}>{tip =>
+        <AppLink {...tip} href="/alg/double-zbll-about" prefetch={false} className="trainer-quick-btn"
+          aria-label={tr({ zh: '双底原理与对称去重', en: 'Double ZBLL symmetry explained' })}>
+          <HelpCircle size={18} strokeWidth={1.75} aria-hidden />
+        </AppLink>
+      }</Tooltip>
       {error && <span role="alert">{tr({ zh: '保存失败，请重试', en: 'Save failed. Retry.' })}</span>}
     </>
   );

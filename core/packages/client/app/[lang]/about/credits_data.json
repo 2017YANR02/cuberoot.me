@@ -1,5 +1,11 @@
 [
   {
+    "name": "Roboto Condensed / Google · Fontsource",
+    "url": "https://fontsource.org/fonts/roboto-condensed",
+    "zh": "复盘 PNG 可选 Roboto Condensed Regular 字体；通过 Fontsource 5.3.0 分发，遵循 SIL OFL 1.1 许可。",
+    "en": "Reconstruction PNG exports offer Roboto Condensed Regular, distributed through Fontsource 5.3.0 under SIL OFL 1.1."
+  },
+  {
     "name": "AI SDK / Vercel",
     "url": "https://github.com/vercel/ai",
     "zh": "助手通过 Apache-2.0 许可的 AI SDK 使用标准模型工具调用及服务端流式响应。",
@@ -818,7 +824,7 @@
     "url": "https://github.com/huazhechen/cuber",
     "zh": "/sim 与 /space 共用的 three.js 魔方引擎(原 Vue + Vuetify,已 port 为 React)",
     "en": "Shared three.js cube engine for /sim and /space (originally Vue + Vuetify, ported to React)",
-    "long_en": "virtual cube engine (Three.js cube/cubelet/group/twister/controller core) ported to React for `/sim`; its cube models are also reused in `/space`; original UI was Vue + Vuetify"
+    "long_en": "Virtual cube engine (Three.js cube/cubelet/group/twister/controller core), MIT, Copyright (c) 2018 huazhechen, ported to React for /sim and reused in /space. Reviewed upstream through 3750b892691c4d7582fc13c857c3b79542bba4af on 2026-10-12. Ordinary stickered NxN cubes in /sim use bf18e8d's additive coloured emission, 0.9 ambient / 0.25 directional lighting and sRGB/NoToneMapping pipeline, with c3858e3's face, plastic and specular defaults. Emission is adapted to instancing, masks, pictures and SVG export. Custom colours, the WCA palette, high-order rendering and other puzzle rigs are retained. The original UI was Vue + Vuetify; upstream's later React/Vite UI is not imported."
   },
   {
     "name": "cubing/cubing.js",

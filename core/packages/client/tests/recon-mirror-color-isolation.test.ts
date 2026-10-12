@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import CuberReconPlayer from '@/components/CuberReconPlayer';
+import CuberReconPlayer from '@cuberoot/timer-ui/CuberReconPlayer';
 import type { ReconPlayerAdapter } from '@/components/recon/ReconPlayerBase';
 import type World from '@/app/[lang]/sim/engine/world';
 import Cube from '@/app/[lang]/sim/engine/nxn/cube';

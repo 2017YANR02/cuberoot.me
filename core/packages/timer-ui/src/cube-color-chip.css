@@ -16,3 +16,10 @@
   flex: 0 0 auto;
 }
 .ccc-chip > span { flex: 1 1 0; min-width: 0; }
+
+/* 上色在上、前色在下；朝向菜单和复盘共用。 */
+.ccc-chip.cube-orientation-chip {
+  flex-direction: column;
+  width: 13px;
+  height: 16px;
+}

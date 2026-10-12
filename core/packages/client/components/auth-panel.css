@@ -106,6 +106,15 @@
   font-size: 12px;
   color: var(--muted-foreground);
 }
+.auth-clearfield {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+}
+.auth-clearfield .auth-input { padding-right: 34px; }
+.auth-clearfield > .clear-btn { z-index: 1; }
+
 .auth-input {
   width: 100%;
   padding: 10px 12px;

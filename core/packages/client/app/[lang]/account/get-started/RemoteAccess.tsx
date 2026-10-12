@@ -25,6 +25,7 @@ export default function RemoteAccess() {
   const [bundle, setBundle] = useState<Awaited<ReturnType<typeof createRemoteAccessKey>> | null>(null);
   const { copy, copiedKey } = useCopy();
   const uid = user?.uid;
+  const requestGroups = Object.groupBy(data?.requests ?? [], r => JSON.stringify([r.user_id, r.device]));
   const refresh = async () => {
     setData(await loadRequests());
   };
@@ -92,14 +93,18 @@ export default function RemoteAccess() {
         <button type="button" onClick={() => download(bundle)}>{t('重新下载密钥', 'Download key again')}</button>{' '}
         <button type="button" className="staff-start-action" onClick={() => copy(setupFor(bundle.filename), 'remote-setup')}>{copiedKey === 'remote-setup' ? t('已复制', 'Copied') : t('复制给 AI 配置', 'Copy setup for AI')}</button>
       </>}
-      <ul className="staff-start-steps">{data?.requests.map(r => <li key={r.id}>
-        <strong>{r.user_name} · ID {r.user_id} · {r.device}</strong>
+      <ul className="staff-start-steps">{Object.entries(requestGroups).map(([key, requests]) => requests && <li key={key}>
+        <details>
+          <summary>{requests[0].user_name} · ID {requests[0].user_id} · {requests[0].device}</summary>
+          <ul className="staff-start-steps">{requests.map(r => <li key={r.id}>
         <p>{r.status === 'revoked' && !r.removed_at ? t('已申请撤销，等待 Mac 移除密钥', 'Revocation requested; waiting for the Mac') : labels[r.status]}</p>
         {Number(r.user_id) === uid && ['pending', 'approved', 'active'].includes(r.status) && <p><button type="button" onClick={() => copy(setupFor(remoteKeyFilename(r.public_key)), r.id)}>{copiedKey === r.id ? t('已复制', 'Copied') : t('复制给 AI 配置', 'Copy setup for AI')}</button></p>}
-        {data.canApprove && <>
-          {r.status === 'pending' && <><button type="button" className="staff-start-action" disabled={busy} onClick={() => void decide(r.id, 'approved')}>{t('批准', 'Approve')}</button>{' '}<button type="button" disabled={busy} onClick={() => void decide(r.id, 'rejected')}>{t('拒绝', 'Decline')}</button></>}
+        {data?.canApprove && <>
+          {r.status === 'pending' && <><button type="button" className="staff-start-action" disabled={busy} onClick={() => void decide(r.id, 'approved')}>{t('批准', 'Approve')}</button>{' '}<button type="button" className="staff-start-action" disabled={busy} onClick={() => void decide(r.id, 'rejected')}>{t('拒绝', 'Decline')}</button></>}
           {['approved', 'active'].includes(r.status) && <button type="button" disabled={busy} onClick={() => void decide(r.id, 'revoked')}>{t('撤销新连接权限', 'Revoke new connections')}</button>}
         </>}
+      </li>)}</ul>
+        </details>
       </li>)}</ul>
     </>}
   </section>;

@@ -12,6 +12,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
 import { ArrowRightLeft } from 'lucide-react';
+import { VisualCube } from '@/components/VisualCube';
 import Link from '@/components/AppLink';
 import { loadAlg } from '@cuberoot/shared/alg';
 import { reconCommentCaseIndex, reconCommentLinks, type ReconCommentCases } from '@/lib/recon-comment-links';
@@ -21,7 +22,7 @@ import CubeColorChip, {
   cubeColorGroups,
   f2lDisplayColors,
 } from '@/components/CubeColorChip/CubeColorChip';
-import { findTokenPositions, syncReconPlayerCursorFromText } from '@/lib/recon-alg-utils';
+import { cleanForPlayer, findTokenPositions, syncReconPlayerCursorFromText, reconInspectionOrientations } from '@/lib/recon-alg-utils';
 import { getTextOffsetInElement, snapCaretToLine } from '@cuberoot/timer-ui/recon/text-cursor';
 import './solution_view.css';
 
@@ -68,22 +69,37 @@ export default function SolutionView({ text, event, scramble = '', sourceText = 
   const [cursorOffset, setCursorOffset] = useState<number | null>(null);
   const [hlRange, setHlRange] = useState<[number, number] | null>(null);
   const plainText = useMemo(() => text.replace(/\r\n?/g, '\n'), [text]);
+  const inspectionColors = useMemo(() => new Map(reconInspectionOrientations(plainText).map(item => [item.line, item.colors])), [plainText]);
+  const lineSetups = useMemo(() => {
+    let setup = cleanForPlayer(scramble);
+    return sourceText.replace(/\r\n?/g, '\n').split('\n').map(line => {
+      const before = setup;
+      setup = [setup, cleanForPlayer(line)].filter(Boolean).join(' ');
+      return before;
+    });
+  }, [scramble, sourceText]);
   const crossColor = useMemo(() => crossColorFromReconText(plainText), [plainText]);
   const linkComments = event === '3x3' || event === '333' || event === 'oh' || event === '333oh';
   const [commentCases, setCommentCases] = useState<ReconCommentCases>(new Map());
   const [f2lLinks, setF2lLinks] = useState<Map<number, Map<string, string>>>(new Map());
+  const [f2lDiagrams, setF2lDiagrams] = useState<Map<number, { colors: string; facelets: string }[]>>(new Map());
+  const [f2lLoading, setF2lLoading] = useState(false);
   useEffect(() => {
     let cancelled = false;
     setF2lLinks(new Map());
+    setF2lDiagrams(new Map());
+    setF2lLoading(false);
     if (linkComments && scramble && sourceText.split('\n').some(line => {
       const comment = line.indexOf('//');
       if (comment < 0) return false;
       const label = line.slice(comment + 2).trim();
-      return /\bF2L\b/i.test(label) || cubeColorGroups(label).some(group => group.colors.length === 2);
+      return /\bF2L[1-4]?\b/i.test(label) || cubeColorGroups(label).some(group => group.colors.length === 2);
     })) {
-      void import('@/lib/recon-f2l-links').then(({ reconF2lLinks }) => reconF2lLinks(scramble, sourceText))
-        .then(links => { if (!cancelled) setF2lLinks(links); })
-        .catch(() => { /* Unknown states stay as plain labels, never a guessed case. */ });
+      setF2lLoading(true);
+      void import('@/lib/recon-f2l-links').then(({ reconF2lAnnotations }) => reconF2lAnnotations(scramble, sourceText))
+        .then(({ links, diagrams }) => { if (!cancelled) { setF2lLinks(links); setF2lDiagrams(diagrams); } })
+        .catch(() => { /* Unknown states stay as plain labels, never a guessed case. */ })
+        .finally(() => { if (!cancelled) setF2lLoading(false); });
     }
     return () => { cancelled = true; };
   }, [linkComments, scramble, sourceText]);
@@ -120,7 +136,7 @@ export default function SolutionView({ text, event, scramble = '', sourceText = 
 
   // NOTE: 点击解法文本——计算偏移 → 磁吸到 token 边界 → 更新光标 + 高亮 + 同步 player
   const handleClick = useCallback((e: React.MouseEvent) => {
-    if ((e.target as Element).closest('a, button')) return;
+    if (!e.currentTarget.contains(e.target as Node) || (e.target as Element).closest('a, button')) return;
     const el = preRef.current;
     if (!el) return;
     let offset = getTextOffsetInElement(el, { x: e.clientX, y: e.clientY });
@@ -192,6 +208,7 @@ export default function SolutionView({ text, event, scramble = '', sourceText = 
       key={crossNormalized ? 'normalized' : 'original'}
       ref={preRef}
       className="detail-solution-text"
+      aria-busy={f2lLoading}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       tabIndex={0}
@@ -239,6 +256,19 @@ export default function SolutionView({ text, event, scramble = '', sourceText = 
           const href = f2lLinks.get(i)?.get('F2L');
           return href ? [{ ...link, href }] : [];
         }) : [];
+        const topLayerLink = scramble.trim() && links.find(link =>
+          /^\/alg\/3x3\/(?:oll|pll|coll|zbll|zbls)(?:\/|$)/.test(link.href));
+        const isF2lLine = linkComments && scramble.trim() && !topLayerLink && (
+          labelColorGroups.some(group => group.colors.length === 2)
+          || (labelStart >= 0 && /^F2L(?:[1-4])?\b/i.test(line.slice(labelStart)))
+        );
+        const diagram = topLayerLink && lineSetups[i] ? (
+          <VisualCube setup={lineSetups[i]} view="plan" size={28} local interactive enlargeable
+            alt={tr({ zh: '执行此行前的顶层状态', en: 'Last-layer state before this line' })} />
+        ) : isF2lLine && f2lDiagrams.has(i) ? <>{f2lDiagrams.get(i)!.map(({ colors, facelets }) => {
+          return <VisualCube key={colors} faceletColors={facelets} view="iso" size={28} local interactive enlargeable
+            alt={tr({ zh: `执行此行前的 ${colors} F2L 状态`, en: `${colors} F2L state before this line` })} />;
+        })}</> : null;
 
         // 切点:0 / 行尾 / 光标 / 高亮起止 / 色块位置 → 分段渲染。
         const cuts = new Set<number>([0, line.length]);
@@ -282,7 +312,19 @@ export default function SolutionView({ text, event, scramble = '', sourceText = 
         if (localCursor === line.length) parts.push(<span key="cend" className="detail-cursor" />);
 
         const content = isComment ? <span className="recon-step-label">{parts}</span> : parts;
-        return <span key={i}>{nl}{content}{toggle}</span>;
+        const lineContent = <>{content}{inspectionColors.has(i) && (
+          <span className="recon-inspection-chip" data-recon-text-length="0">
+            <CubeColorChip colors={inspectionColors.get(i)!} className="cube-orientation-chip" />
+          </span>
+        )}{toggle}</>;
+        return <span key={i}>{nl}{diagram ? (
+          <span className="recon-case-line">
+            <span className="recon-case-diagram" data-recon-text-length="0">
+              {diagram}
+            </span>
+            <span className="recon-case-line-text">{lineContent}</span>
+          </span>
+        ) : <span className="recon-plain-line">{lineContent}</span>}</span>;
       })}
     </pre>
   );
