@@ -31,6 +31,7 @@ import { useFrameBuffer, IS_MOBILE } from './useFrameBuffer';
 import { VideoInfoButton, DecodeErrorCard, LoadingProgressOverlay } from './VideoInfoPanels';
 import { FrameCountDiag } from './FrameCountDiag';
 import { consumePendingVideo } from '@/lib/pending-video';
+import { isVideoFileName, matchesVideoFile, parseSplits, serializeSplits, type Solve, type StartFrameMethod } from './splits-file';
 
 import './frame-count.css';
 import { tr } from '@/i18n/tr';
@@ -111,19 +112,6 @@ const IconExport = () => (
 );
 
 // ── 类型定义 ──────────────────────────────────────────────────────────────
-
-interface Mark {
-  frame: number;
-}
-
-interface Solve {
-  name: string;
-  marks: Mark[];
-  time: string;
-}
-
-
-
 
 /** 旋转角度循环: 0 → 90 → 180 → 270 → 0 */
 type RotationDeg = 0 | 90 | 180 | 270;
@@ -365,11 +353,18 @@ export default function FrameCountPage() {
   const [activeSolveIdx, setActiveSolveIdx] = useState(0);
   const [selectedMarkIdx, setSelectedMarkIdx] = useState<number | null>(null);
 
-  // File System Access — 通过 Folder 入口加载时,持有目录句柄以便自动读写 .splits.txt
-  const dirHandleRef = useRef<FileSystemDirectoryHandle | null>(null);
-  const videoNameInDirRef = useRef<string | null>(null);
-  const [folderPickerVideos, setFolderPickerVideos] = useState<{ name: string; handle: FileSystemFileHandle }[] | null>(null);
-  const folderPickerDirRef = useRef<FileSystemDirectoryHandle | null>(null);
+  // The target belongs to an exact loaded File, never to whichever video happens to render later.
+  const [saveTarget, setSaveTarget] = useState<{ dir: FileSystemDirectoryHandle; file: File } | null>(null);
+  const [readyFile, setReadyFile] = useState<File | null>(null);
+  const [saveStatus, setSaveStatus] = useState<'permission' | 'saving' | 'saved' | 'error'>('permission');
+  const loadSequenceRef = useRef(0);
+  const loadedSolvesRef = useRef<Solve[] | null>(null);
+  const loadedMethodRef = useRef<StartFrameMethod>('fps');
+  const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const currentProjectRef = useRef({ file: videoFile, solves, fps: videoFps, method: startFrameMethod, readyFile });
+  useEffect(() => {
+    currentProjectRef.current = { file: videoFile, solves, fps: videoFps, method: startFrameMethod, readyFile };
+  }, [videoFile, solves, videoFps, startFrameMethod, readyFile]);
   // 持久化记忆的目录句柄列表(IndexedDB,MRU 顺序)。拖放/选文件时遍历查找同名视频。
   const rememberedDirsRef = useRef<FileSystemDirectoryHandle[]>([]);
 
@@ -446,8 +441,13 @@ export default function FrameCountPage() {
     const mx = e.clientX - (rect.left + rect.width / 2) + curPan.x;
     const my = e.clientY - (rect.top + rect.height / 2) + curPan.y;
 
-    const factor = e.deltaY > 0 ? 1 / 1.18 : 1.18;
+    // Magic Mouse / 触控板会连续发送很小的像素增量，不能每个事件都固定缩放。
+    // 与站内画布一致，先统一滚动单位，再按距离缩放；大幅滚动单次最多约 10%。
+    const delta = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? target.clientHeight : 1);
+    if (!Number.isFinite(delta) || delta === 0) return;
+    const factor = Math.exp(-Math.max(-100, Math.min(100, delta)) * 0.001);
     const newZoom = Math.max(1, Math.min(8, curZoom * factor));
+    if (newZoom === curZoom) return;
 
     if (newZoom <= 1) {
       zoomRef.current = 1;
@@ -1197,7 +1197,11 @@ export default function FrameCountPage() {
 
   // ── 文件加载 ──
 
-  const loadFile = useCallback(async (file: File, initialSolves?: Solve[], initialFps?: number) => {
+  const loadFile = useCallback(async (file: File, initialSolves?: Solve[], initialFps?: number,
+    method: StartFrameMethod = 'fps', hasTimes = false) => {
+    const sequence = ++loadSequenceRef.current;
+    setReadyFile(null);
+    setStartFrameMethod(method);
     if (videoSrc) URL.revokeObjectURL(videoSrc);
     const url = URL.createObjectURL(file);
     // 同步重置: 在 setVideoFile 同一批次里把 firstFrameReady 设为 false,
@@ -1224,8 +1228,10 @@ export default function FrameCountPage() {
     }
 
     const finalSolves = initialSolves && initialSolves.length > 0
-      ? initialSolves.map((s, i) => i === 0 && !s.time ? { ...s, time: defaultTime } : s)
+      ? initialSolves.map((s, i) => i === 0 && !hasTimes && !s.time ? { ...s, time: defaultTime } : s)
       : [{ name: 'Solve 1', marks: [], time: defaultTime }];
+    loadedSolvesRef.current = finalSolves;
+    loadedMethodRef.current = method;
     setSolves(finalSolves);
     setActiveSolveIdx(0);
     setSelectedMarkIdx(null);
@@ -1233,162 +1239,105 @@ export default function FrameCountPage() {
       setVideoFps(initialFps);
     } else {
       const detected = await detectFpsFromFile(file);
-      if (detected && detected > 0) setVideoFps(detected);
+      if (sequence !== loadSequenceRef.current) return;
+      setVideoFps(detected && detected > 0 ? detected : 60);
     }
+    setReadyFile(file);
   }, [videoSrc]);
 
-  // ── splits.txt 序列化 / 反序列化 ──
-  // 格式:
-  //   fps:59.94
-  //   Solve 1:867:1164:1179:1300
-  //   Solve 2:1580:1713:1845
-  const serializeSplits = useCallback((solvesArr: Solve[], fps: number): string => {
-    const lines: string[] = [];
-    if (fps > 0) lines.push(`fps:${fps}`);
-    for (const s of solvesArr) {
-      const frames = s.marks.map(m => m.frame).join(':');
-      lines.push(`${s.name}:${frames}`);
-    }
-    return lines.join('\n') + '\n';
+  const rememberDirectory = useCallback(async (dir: FileSystemDirectoryHandle) => {
+    const promoted = await fsPromoteDir(rememberedDirsRef.current, dir);
+    rememberedDirsRef.current = promoted;
+    fsSaveDirs(promoted).catch(e => console.warn('[FS] save dirs failed', e));
   }, []);
 
-  const parseSplits = useCallback((text: string): { solves: Solve[]; fps: number | null } => {
-    const out: Solve[] = [];
-    let fps: number | null = null;
-    for (const raw of text.split(/\r?\n/)) {
-      const line = raw.trim();
-      if (!line) continue;
-      const colonIdx = line.indexOf(':');
-      if (colonIdx <= 0) continue;
-      const key = line.slice(0, colonIdx);
-      const rest = line.slice(colonIdx + 1);
-      if (key === 'fps') {
-        const v = parseFloat(rest);
-        if (isFinite(v) && v > 0) fps = v;
-      } else {
-        // 兼容旧格式 `splits:...` → 名字降级为 Solve N;新格式直接用 key 作为 name
-        const name = key === 'splits' ? `Solve ${out.length + 1}` : key;
-        // 兼容旧的 `|` 分隔写法
-        const frames = rest.split(/[:|]/).map(s => s.trim()).filter(s => s.length > 0).map(Number).filter(n => isFinite(n));
-        out.push({ name, marks: frames.map(f => ({ frame: f })), time: '' });
-      }
-    }
-    return { solves: out, fps };
-  }, []);
-
-  // 写 splits.txt 到当前目录(若有授权)
-  const writeSplitsFile = useCallback(async (solvesArr: Solve[], fps: number) => {
-    const dir = dirHandleRef.current;
-    const name = videoNameInDirRef.current;
-    if (!dir || !name) return;
-    try {
-      const fh = await dir.getFileHandle(name + '.splits.txt', { create: true });
-      const writable = await fh.createWritable();
-      await writable.write(serializeSplits(solvesArr, fps));
-      await writable.close();
-    } catch (e) {
-      console.warn('[Splits] write failed:', e);
-    }
-  }, [serializeSplits]);
-
-  // 选完目录中的某个视频后:加载视频 + 同目录 splits.txt
+  // Read before enabling writes: a corrupt/unreadable sidecar must never be overwritten.
   const loadFromDirectoryEntry = useCallback(async (
     dir: FileSystemDirectoryHandle,
     videoEntry: { name: string; handle: FileSystemFileHandle },
+    droppedFile?: File,
   ) => {
-    const file = await videoEntry.handle.getFile();
-    dirHandleRef.current = dir;
-    videoNameInDirRef.current = videoEntry.name;
-
-    let loadedSolves: Solve[] | undefined;
-    let loadedFps: number | undefined;
-    try {
-      const sh = await dir.getFileHandle(videoEntry.name + '.splits.txt');
-      const sf = await sh.getFile();
-      const parsed = parseSplits(await sf.text());
-      if (parsed.solves.length > 0) loadedSolves = parsed.solves;
-      if (parsed.fps && parsed.fps > 0) loadedFps = parsed.fps;
-    } catch { /* splits 文件不存在,跳过 */ }
-
-    await loadFile(file, loadedSolves, loadedFps);
-    if (loadedSolves) showToast(t('frameCount.toast.splitsLoaded', { count: loadedSolves.length }));
-  }, [loadFile, parseSplits, showToast, t]);
-
-  // Folder 按钮:选目录 → 列视频 → (单选自动加载 / 多选弹 modal) + 持久化记忆
-  const openFromFolder = useCallback(async () => {
-    if (!('showDirectoryPicker' in window)) {
-      showToast(t('frameCount.toast.folderNotSupported'));
+    const file = droppedFile ?? await videoEntry.handle.getFile();
+    const current = currentProjectRef.current;
+    // Authorizing the current video keeps every mark already entered on screen.
+    if (current.file && current.readyFile === current.file
+      && (current.solves.some(s => s.marks.length > 0)
+        || current.solves !== loadedSolvesRef.current || current.method !== loadedMethodRef.current)
+      && await matchesVideoFile(current.file, file)) {
+      setSaveTarget({ dir, file: current.file });
       return;
     }
+    let parsed: ReturnType<typeof parseSplits> | undefined;
     try {
-      const dir = await (window as unknown as { showDirectoryPicker: (o?: { mode?: string }) => Promise<FileSystemDirectoryHandle> })
-        .showDirectoryPicker({ mode: 'readwrite' });
-      const videos: { name: string; handle: FileSystemFileHandle }[] = [];
-      for await (const [name, handle] of (dir as unknown as { entries(): AsyncIterable<[string, FileSystemHandle]> }).entries()) {
-        if (handle.kind === 'file' && /\.(mp4|mov|webm|mkv|avi|m4v)$/i.test(name)) {
-          videos.push({ name, handle: handle as FileSystemFileHandle });
-        }
-      }
-      if (videos.length === 0) {
-        showToast(t('frameCount.toast.noVideoInFolder'));
+      const handle = await dir.getFileHandle(videoEntry.name + '.splits.txt');
+      parsed = parseSplits(await (await handle.getFile()).text());
+    } catch (error) {
+      if ((error as { name?: string }).name !== 'NotFoundError') {
+        showToast(tr({ zh: '无法读取标记文件，已停止自动保存以免覆盖。', en: 'Could not read the splits file. Auto-save stopped to avoid overwriting it.' }));
         return;
       }
-      // 加入 MRU 列表(去重,提到头)
-      const promoted = await fsPromoteDir(rememberedDirsRef.current, dir);
-      rememberedDirsRef.current = promoted;
-      fsSaveDirs(promoted).catch(e => console.warn('[FS] save dirs failed', e));
-      videos.sort((a, b) => a.name.localeCompare(b.name));
-      if (videos.length === 1) {
-        await loadFromDirectoryEntry(dir, videos[0]);
-      } else {
-        folderPickerDirRef.current = dir;
-        setFolderPickerVideos(videos);
-      }
-    } catch (e) {
-      if ((e as { name?: string })?.name !== 'AbortError') console.warn(e);
     }
-  }, [loadFromDirectoryEntry, showToast, t]);
+    setSaveTarget(null);
+    await loadFile(file, parsed?.solves, parsed?.fps ?? undefined, parsed?.startFrameMethod, parsed?.hasTimes);
+    setSaveTarget({ dir, file });
+    if (parsed) showToast(t('frameCount.toast.splitsLoaded', { count: parsed.solves.length }));
+  }, [loadFile, showToast, t]);
 
-  // 拖放/选择文件时,遍历记忆目录列表(最近优先),找第一个含同名视频的目录
-  // 策略:
-  //  Pass 1 — 已 granted 的目录直接试匹配(无 prompt,瞬时)
-  //  Pass 2 — 未 granted 的目录里,只对最近一个 prompt 一次,避免连弹多框
-  const tryLoadViaRememberedDir = useCallback(async (file: File): Promise<boolean> => {
-    const dirs = rememberedDirsRef.current;
-    if (dirs.length === 0) return false;
-
-    const tryMatch = async (dir: FileSystemDirectoryHandle): Promise<boolean> => {
+  // First import requests its parent directory. Browsers cannot derive/write the parent from a File.
+  const chooseVideoDirectory = useCallback(async (file: File) => {
+    if (!('showDirectoryPicker' in window)) {
+      showToast(t('frameCount.toast.folderNotSupported'));
+      return false;
+    }
+    try {
+      const dir = await (window as unknown as { showDirectoryPicker: (o: { mode: string }) => Promise<FileSystemDirectoryHandle> })
+        .showDirectoryPicker({ mode: 'readwrite' });
+      let handle: FileSystemFileHandle;
       try {
-        const fh = await dir.getFileHandle(file.name);
-        // 命中:把该目录提到列表头持久化
-        const promoted = await fsPromoteDir(dirs, dir);
-        rememberedDirsRef.current = promoted;
-        fsSaveDirs(promoted).catch(e => console.warn('[FS] save dirs failed', e));
-        await loadFromDirectoryEntry(dir, { name: file.name, handle: fh });
-        return true;
+        handle = await dir.getFileHandle(file.name);
+        if (!await matchesVideoFile(file, await handle.getFile())) throw new Error('Video mismatch');
       } catch {
+        showToast(tr({ zh: '请选择刚才导入的视频所在文件夹；该目录中的视频不匹配，未写入文件。', en: 'Choose the imported video’s folder. No matching video was found; no file was written.' }));
         return false;
       }
-    };
-
-    // Pass 1: 已 granted 的目录
-    for (const dir of dirs) {
-      if (await fsEnsurePermission(dir, false)) {
-        if (await tryMatch(dir)) return true;
+      await rememberDirectory(dir);
+      await loadFromDirectoryEntry(dir, { name: file.name, handle }, file);
+      return true;
+    } catch (error) {
+      if ((error as { name?: string }).name !== 'AbortError') {
+        console.warn('[Splits] directory permission:', error);
+        showToast(tr({ zh: '请点击“选择视频所在文件夹”，授权后自动生成标记文件。', en: 'Click “Choose video folder” to allow automatic splits saving.' }));
       }
+      return false;
     }
+  }, [loadFromDirectoryEntry, rememberDirectory, showToast, t]);
 
-    // Pass 2: 对最近一个未授权目录 prompt 一次
-    for (const dir of dirs) {
-      const queryOnly = await fsEnsurePermission(dir, false);
-      if (queryOnly) continue; // Pass 1 已试过
-      const granted = await fsEnsurePermission(dir, true);
-      if (!granted) return false; // 用户拒绝
-      return await tryMatch(dir); // 不管是否命中都不再 prompt 其他目录
+  const tryLoadViaRememberedDir = useCallback(async (file: File): Promise<boolean> => {
+    for (const dir of rememberedDirsRef.current) {
+      try {
+        // No surprise permission prompts for unrelated remembered folders.
+        if (!await fsEnsurePermission(dir, false)) continue;
+        const handle = await dir.getFileHandle(file.name);
+        if (!await matchesVideoFile(file, await handle.getFile())) continue;
+        await rememberDirectory(dir);
+        await loadFromDirectoryEntry(dir, { name: file.name, handle }, file);
+        return true;
+      } catch { /* Disconnected/revoked directories are not save targets. */ }
     }
-
     return false;
-  }, [loadFromDirectoryEntry]);
+  }, [loadFromDirectoryEntry, rememberDirectory]);
+
+  const importVideo = useCallback(async (file: File, requestDirectory = true) => {
+    if (!isVideoFileName(file.name) && !file.type.startsWith('video/')) return;
+    if (file.name.startsWith('._')) return;
+    await saveQueueRef.current;
+    if (await tryLoadViaRememberedDir(file)) return;
+    setSaveTarget(null);
+    setSaveStatus('permission');
+    // Request before slow FPS detection consumes the browser's transient user activation.
+    if (requestDirectory && await chooseVideoDirectory(file)) return;
+    await loadFile(file);
+  }, [chooseVideoDirectory, loadFile, tryLoadViaRememberedDir]);
 
   // 启动时恢复记忆的目录列表(不 prompt 权限,等用户操作时再请求)
   useEffect(() => {
@@ -1420,45 +1369,46 @@ export default function FrameCountPage() {
     e.preventDefault(); e.stopPropagation(); setDragging(false);
   }, []);
 
-  const handleDrop = useCallback(async (e: React.DragEvent) => {
+  const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault(); e.stopPropagation(); setDragging(false);
     const file = e.dataTransfer.files[0];
-    if (!file || !file.type.startsWith('video/')) return;
-    // 优先用记忆的目录(如果同名文件存在,可自动读写 splits)
-    if (await tryLoadViaRememberedDir(file)) return;
-    // fallback: 普通加载,无目录权限
-    dirHandleRef.current = null;
-    videoNameInDirRef.current = null;
-    loadFile(file);
-  }, [loadFile, tryLoadViaRememberedDir]);
+    if (file) void importVideo(file);
+  }, [importVideo]);
 
-  const handleFileSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    if (await tryLoadViaRememberedDir(file)) return;
-    dirHandleRef.current = null;
-    videoNameInDirRef.current = null;
-    loadFile(file);
-  }, [loadFile, tryLoadViaRememberedDir]);
+    e.target.value = '';
+    if (file) void importVideo(file);
+  }, [importVideo]);
 
-  // 落地页 + 按钮 / 拖入搜索框时塞进 pending_video,本页挂载消费 → 自动加载
   useEffect(() => {
     const pending = consumePendingVideo();
-    if (!pending) return;
-    (async () => {
-      if (await tryLoadViaRememberedDir(pending)) return;
-      dirHandleRef.current = null;
-      videoNameInDirRef.current = null;
-      loadFile(pending);
-    })();
-  }, [loadFile, tryLoadViaRememberedDir]);
+    // Route navigation has no picker user activation; the visible permission button handles it.
+    if (pending) void importVideo(pending, false);
+  }, [importVideo]);
 
-  // solves / fps 变更时,自动写回 splits.txt(只有通过 Folder 入口加载时才生效)
+  // Snapshot + serialize writes: switching videos cannot redirect a pending save to a new file.
   useEffect(() => {
-    if (!dirHandleRef.current || !videoNameInDirRef.current) return;
-    const t = setTimeout(() => writeSplitsFile(solves, videoFps), 200);
-    return () => clearTimeout(t);
-  }, [solves, videoFps, writeSplitsFile]);
+    if (!saveTarget || readyFile !== videoFile || saveTarget.file !== videoFile) return;
+    const { dir, file } = saveTarget;
+    const text = serializeSplits(solves, videoFps, startFrameMethod);
+    let active = true;
+    setSaveStatus('saving');
+    const write = async () => {
+      try {
+        const handle = await dir.getFileHandle(file.name + '.splits.txt', { create: true });
+        const writable = await handle.createWritable();
+        try { await writable.write(text); await writable.close(); }
+        catch (error) { await writable.abort().catch(() => {}); throw error; }
+        if (active) setSaveStatus('saved');
+      } catch (error) {
+        console.warn('[Splits] write failed:', error);
+        if (active) setSaveStatus('error');
+      }
+    };
+    saveQueueRef.current = saveQueueRef.current.then(write, write);
+    return () => { active = false; };
+  }, [saveTarget, readyFile, videoFile, solves, videoFps, startFrameMethod]);
 
   // ── 快捷键 ──
 
@@ -2201,6 +2151,17 @@ export default function FrameCountPage() {
         </a>
       </header>
 
+      {videoFile && (saveTarget?.file !== videoFile || saveStatus === 'error') && (
+        <div role="status">
+          {saveTarget?.file === videoFile
+            ? tr({ zh: '标记保存失败。请重新选择视频所在文件夹以重试。', en: 'Saving failed. Choose the video folder again to retry.' })
+            : tr({ zh: '尚未保存标记：首次需授权视频所在文件夹，之后自动生成和更新 .splits.txt。', en: 'Marks not saved: allow access to the video folder once to create and update .splits.txt automatically.' })}
+          <button type="button" className="fc-tab-btn" onClick={() => { void chooseVideoDirectory(videoFile); }}>
+            {tr({ zh: '选择视频所在文件夹', en: 'Choose video folder' })}
+          </button>
+        </div>
+      )}
+
       {/* ── 主体：视频 + 右侧面板 ── */}
       <div className="fc-main">
         {/* 左侧：视频区域 */}
@@ -2275,11 +2236,6 @@ export default function FrameCountPage() {
                     <circle cx="9" cy="9" r="8" stroke="currentColor" strokeWidth="1.5"/>
                     <line x1="9" y1="5" x2="9" y2="13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                     <line x1="5" y1="9" x2="13" y2="9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                  </svg>
-                </button>
-                <button className="fc-change-video fc-folder-btn fc-new-btn" onClick={openFromFolder} title={t('frameCount.toolbar.folder')}>
-                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M2 5a1 1 0 0 1 1-1h4l1.5 2H15a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
                   </svg>
                 </button>
                 <div className="fc-export-wrap" ref={exportMenuRef}>
@@ -2743,32 +2699,6 @@ export default function FrameCountPage() {
 
       {/* Toast */}
       {toast && <div className="fc-toast">{toast}</div>}
-
-      {/* Folder 选视频弹窗(目录中有多个视频时) */}
-      {folderPickerVideos && (
-        <div className="fc-modal-overlay" onClick={() => setFolderPickerVideos(null)}>
-          <div className="fc-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="fc-modal-close" onClick={() => setFolderPickerVideos(null)}>✕</button>
-            <h2>{t('frameCount.folderModal.title')}</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '60vh', overflowY: 'auto' }}>
-              {folderPickerVideos.map((v) => (
-                <button
-                  key={v.name}
-                  className="fc-tab-btn"
-                  style={{ justifyContent: 'flex-start', textAlign: 'left' }}
-                  onClick={async () => {
-                    const dir = folderPickerDirRef.current;
-                    setFolderPickerVideos(null);
-                    if (dir) await loadFromDirectoryEntry(dir, v);
-                  }}
-                >
-                  {v.name}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* 快捷键弹窗 */}
       {showShortcuts && (

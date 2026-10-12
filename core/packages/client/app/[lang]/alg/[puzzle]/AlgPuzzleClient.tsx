@@ -17,7 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
-import { ALG_CATALOG, ALG_CATALOG_SECTIONS, ALG_PUZZLES, type AlgCase, type AlgPuzzle } from '@cuberoot/shared/alg';
+import { ALG_CATALOG, ALG_CATALOG_SECTIONS, ALG_PUZZLES, CFOP_SET_SLUGS, type AlgCase, type AlgPuzzle } from '@cuberoot/shared/alg';
 import AlgPuzzlePicker from '@/components/AlgPuzzlePicker';
 import BackHome from '@/components/BackHome';
 import { CaseThumb } from '@/components/CaseThumb';
@@ -52,7 +52,6 @@ const ROUX_SET_SLUGS = new Set([
 ]);
 
 const LAYER_BY_LAYER_SET_SLUGS = new Set(['2-look-oll', '2-look-pll']);
-const CFOP_SET_SLUGS = new Set(['f2l', 'oll', 'pll']);
 const ZB_SET_SLUGS = new Set(['zbls', 'zbll']);
 const CROSS_CARD_ID = 'cross';
 const LSLL_CARD_ID = 'lsll';

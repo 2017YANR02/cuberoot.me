@@ -303,9 +303,6 @@
   gap: 12px;
   margin-top: 12px;
   padding: 10px 12px;
-  background: var(--card);
-  border: 1px solid var(--border-default);
-  border-radius: 8px;
   flex-wrap: wrap;
 }
 .t10h-play {

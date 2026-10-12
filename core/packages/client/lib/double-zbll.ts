@@ -9,6 +9,7 @@ export const DOUBLE_ZBLL_APP_CACHE = 'cuberoot-double-zbll-app-v1';
 interface Corpus { manifest: DoubleZbllManifest; file: AlgFile; data: Uint8Array; indices: Map<string, number> }
 let corpus: Corpus | undefined;
 let pending: Promise<Corpus> | undefined;
+let checkedVersion = false;
 
 async function digest(bytes: ArrayBuffer): Promise<string> {
   return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)), b => b.toString(16).padStart(2, '0')).join('');
@@ -44,27 +45,44 @@ export function doubleZbllScramble(top: string, bottom: string): string {
   return decodeDoubleZbll(corpus.data, corpus.manifest.caseCount, corpus.indices.get(top) ?? -1, corpus.indices.get(bottom) ?? -1);
 }
 
-/** Cache-first: offline readers keep the complete, verified version they downloaded. */
+/** Check for a new version once per page load; retain the verified offline copy on failure. */
 export async function loadDoubleZbll(): Promise<Corpus> {
-  if (corpus) return corpus;
+  if (corpus && checkedVersion) return corpus;
   if (pending) return pending;
   pending = (async () => {
     const cache = typeof caches === 'undefined' ? undefined : await caches.open(CACHE);
-    if (cache) {
-      try { corpus = await readCorpus(path => cache.match(path)); return corpus; } catch { /* absent or evicted: fetch a complete version */ }
+    let saved = corpus;
+    if (!saved && cache) {
+      try { saved = await readCorpus(path => cache.match(path)); } catch { /* absent or evicted */ }
     }
     const responses = new Map<string, Response>();
-    const result = await readCorpus(async path => {
-      const response = await fetch(path, { cache: 'no-cache', signal: AbortSignal.timeout(60000) });
-      responses.set(path, response.clone());
-      return response;
-    });
+    let result: Corpus;
+    try {
+      // The query also bypasses manifest entries held by an older cache-first
+      // service worker. Only publish the canonical cache key after validation.
+      const fresh = await fetch(`${ROOT}manifest.json?check=1`, { cache: 'no-store', signal: AbortSignal.timeout(5000) });
+      if (!fresh.ok) throw new Error('Double ZBLL version unavailable');
+      const version = await fresh.clone().json() as DoubleZbllManifest;
+      if (saved && version.dataSha256 === saved.manifest.dataSha256 && version.casesSha256 === saved.manifest.casesSha256) {
+        corpus = saved; checkedVersion = true; return saved;
+      }
+      result = await readCorpus(async path => {
+        const response = path.endsWith('/manifest.json') ? fresh.clone()
+          : (await cache?.match(path)) ?? await fetch(path, { cache: 'no-cache', signal: AbortSignal.timeout(60000) });
+        responses.set(path, response.clone());
+        return response;
+      });
+    } catch (error) {
+      if (!saved) throw error;
+      corpus = saved; checkedVersion = true; return saved;
+    }
     // Publish the manifest last, after both immutable resources are safely stored.
     if (cache) {
       for (const [path, response] of responses) if (!path.endsWith('/manifest.json')) await cache.put(path, response);
       await cache.put(`${ROOT}manifest.json`, responses.get(`${ROOT}manifest.json`)!);
     }
     corpus = result;
+    checkedVersion = true;
     return result;
   })().finally(() => { pending = undefined; });
   return pending;

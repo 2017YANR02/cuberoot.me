@@ -22,6 +22,9 @@ import {
 } from '@/app/[lang]/timer/_lib/reconstruct/f2l_slots';
 import { computeStageSegments } from '@/app/[lang]/timer/_lib/reconstruct/stage_segments';
 import { applyScramble, solved } from '@/app/[lang]/timer/_lib/cube/state';
+import { isCross } from '@/app/[lang]/timer/_lib/cube/cfop_detect';
+import { buildReconText } from '@/app/[lang]/timer/_lib/reconstruct/recon_text';
+import { computeStepMetrics } from '@/app/[lang]/timer/_lib/reconstruct/step_metrics';
 
 const SCRAMBLE = "D R' D' R B' U' R' F2 L' F2 D' U2 L' D2 F L' B R'";
 const SOLUTION = [
@@ -102,6 +105,43 @@ describe('computeF2lSlots', () => {
     expect(computeF2lSlots(SCRAMBLE, [], 1000)).toBeNull();
     // 打乱后随便拧两手,十字没成 → 没有 F2L 阶段可分。
     expect(computeF2lSlots(SCRAMBLE, timed(['R', 'U']), 1000)).toBeNull();
+  });
+});
+
+describe('F2L completion waits for cross restoration', () => {
+  // 2026-10-11 timer screenshot: BR is solved after B', but L is still needed
+  // to restore the cross. The displayed 4/6 split must instead be 5/5.
+  const scramble = "U F2 L' D L' D' R' F2 L D2 L' R2 F2 L2 D B R2 D2 z2";
+  const tokens = "D' R2' F D L' B U B' L U2 F' L2 F L2'".split(' ');
+  const moves = timed(tokens);
+  const totalMs = moves.at(-1)!.ts;
+
+  it('keeps the final L with F1 in both metrics and reconstruction text', async () => {
+    const beforeL = applyScramble(3, `${scramble} ${tokens.slice(0, 8).join(' ')}`);
+    expect(isSlotSolved(beforeL, 'BR')).toBe(true);
+    expect(isCross(beforeL)).toBe(false);
+    expect(isCross(applyScramble(3, `${scramble} ${tokens.slice(0, 9).join(' ')}`))).toBe(true);
+
+    const segs = computeStageSegments(scramble, moves, totalMs)!;
+    const slots = computeF2lSlots(scramble, moves, totalMs, segs)!;
+    expect(slots.slots.slice(0, 2).map(s => s.endIdx)).toEqual([8, 13]);
+    expect(slots.slots.slice(0, 2).map(s => s.turns)).toEqual([5, 5]);
+    expect(slots.slots.slice(0, 2).map(s => s.stepMs)).toEqual([1000, 1000]);
+    expect(slots.slots.slice(0, 2).map(s => s.cumulativeMs)).toEqual([1800, 2800]);
+
+    const metrics = computeStepMetrics(scramble, moves, totalMs)!;
+    const text = await buildReconText({ scramble, moves, totalMs, segs, metrics, slots });
+    const pairs = text.lines.filter(line => line.kind === 'f2l');
+    expect(pairs.map(line => line.moves.join(' '))).toEqual(["L' B U B' L", "U2 F' L2 F L2'"]);
+    expect(pairs.map(line => [line.fromIdx, line.toIdx])).toEqual([[4, 8], [9, 13]]);
+    expect(pairs.some(line => line.label?.includes('cancel into'))).toBe(false);
+  });
+
+  it('does not count an unfinished insertion even after a long pause', () => {
+    const partial = moves.slice(0, 8);
+    const slots = computeF2lSlots(scramble, partial, partial.at(-1)!.ts + 1500)!;
+    expect(slots.freeCount).toBe(0);
+    expect(slots.slots.map(s => s.endIdx)).toEqual([null, null, null, null]);
   });
 });
 

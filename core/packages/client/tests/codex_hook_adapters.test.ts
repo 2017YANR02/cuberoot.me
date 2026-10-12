@@ -60,6 +60,8 @@ describe('unprotected memory computation command guard', () => {
     'tsx ../scripts/stats/update-published.ts --publish',
     'pnpm stats:scramble:local --plan; pnpm stats:scramble:local',
     'pnpm --filter @cuberoot/alg-build double-zbll --plan',
+    'node .tmp/double-zbll-auf-20261011/run.mts --solve',
+    'node .tmp/double-zbll-auf-20261011/full.mts --run',
     'bash -lc "pnpm --filter @cuberoot/alg-build double-zbll"',
     'node -e "require(\'node:child_process\').spawnSync(\'node\', [\'solver/333opt/solve_h10.mts\'])"',
     'echo $(pnpm --filter @cuberoot/alg-build double-zbll)',

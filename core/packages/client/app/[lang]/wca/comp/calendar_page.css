@@ -78,11 +78,9 @@
     gap: 0.5rem;
     position: sticky;
     top: 0;
-    background: var(--bg);
     padding: calc(0.75rem + var(--sat)) 0 0.75rem;
     margin-bottom: 0.5rem;
     z-index: 10;
-    border-bottom: 1px solid transparent;
 }
 /* 列表模式下 toolbar 不 sticky —— 它的 stacking context 会困住国家下拉，让 chip 行 z:11 把它挡掉。
  * chip 行本身就是列表的持久表头，toolbar 滚出视口对功能无影响。 */

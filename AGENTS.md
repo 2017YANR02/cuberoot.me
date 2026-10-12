@@ -134,6 +134,8 @@ pnpm --filter @cuberoot/client lint
 
 ### 项目硬性约束：禁止使用交换空间（仅本地电脑；维护者要求，2026-10-10）
 
+- **单项授权更新（2026-10-11）**：维护者了解无法保证零换出后明确授权双底 AUF 样本测试，并要求有效则继续长期计算。本项允许使用现有 H48 引擎加持续运行时监控；仍须在新增换出、压力异常或保守余量不足 2 GiB 时停止，禁止重设基线自动重启。此例外仅限 `docs/double-zbll-trainer.md` 的 AUF 长期任务及其固定脚本，hook 用命令与代码 hash 限定，不解除其他大内存任务的默认拦截；仍不代表操作系统禁用了 swap。
+
 - **适用范围仅为维护者本地电脑（当前为这台 Mac）上运行的项目任务，包括本地子进程、容器和虚拟机；不适用于阿里云等远程服务器或远程 CI。** 远程服务器允许按其现有系统配置使用 swap，不得把本节当作服务器上线必须禁用 swap 或升级到 cgroup v2 的条件。服务器任务仍应设置合理的内存、并发、批次和超时上限；不因此擅自修改服务器的全局 swap 设置。
 - 以下交换保护要求均针对本地电脑。本地项目任务禁止使用 swap，不得把“少用”“尽量不用”或“发生后停止”当作满足要求。内存不足时缩小批次、降低任务内存占用或停止，禁止通过交换空间继续运行。
 - 必须区分行为规范与操作系统强制保证：MD、启动 hook、定时读取换出计数都不能阻止内核第一次换出。没有核验覆盖任务及其子进程的系统级防换出机制，不得宣称已实现项目完全禁用 swap；不得启动或续跑大内存求解、建表、批量计算，先说明执行环境限制。
@@ -225,6 +227,8 @@ pnpm --filter @cuberoot/client lint
 写任何 CSS 色值前调 `theme-tokens` skill(token 表 + dark-locked 页清单 + color-mix 规则);禁 `#888 #aaa` 等硬码灰阶。
 
 透明背景材质只在 `glass-material.css` 定义，旧样式由 `site-surfaces.css` 适配；新表面复用 `data-site-surface="panel|popover|heading"`，禁页面另造透明度/blur，保留状态色和无障碍回退，详 `theme-tokens` skill。
+
+多余底框只约束已确认的位置，复用现有材质 Hook/CI；截图巡检按需运行，不作为日常开发或提交的额外门槛，不凭候选自动扩大禁用范围，详 `docs/glass-menu-regression.md`。
 
 - 按钮/链接的短悬停提示统一使用 `components/Tooltip`（`<Tooltip content={tr({zh,en})}>{(tip) => <button {...tip}>…</button>}</Tooltip>`），禁止另写页面级提示气泡或用 native `title` 代替需要设计样式的提示。触发属性放在实际按钮上；已有同名事件须组合调用。写入 Hook 和 CI 共用材质扫描器拦截 `content: attr(data-tooltip/data-tip/title)` 伪元素气泡（不覆盖任意 JSX 或动态样式）；组件负责 hover/focus、Escape、可移入提示、Portal 和视口钳制，页面不再定义 blur/透明度。可交互内容不放 Tooltip，点击展开的说明继续用 InfoTooltip。Portal 继承全站主题；局部配色预览须单独核验。
 

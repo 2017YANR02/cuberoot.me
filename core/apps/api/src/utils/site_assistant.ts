@@ -9,7 +9,7 @@ import { describeAnalysis, runAnalysisQuery } from './site_assistant_analysis_db
 import { resolveAssistantTime, type AssistantStreamEvent, type AssistantAnswer, type AssistantMessage, type AssistantImage } from '@cuberoot/shared/site-assistant';
 export type { AssistantSource, AssistantAnswer } from '@cuberoot/shared/site-assistant';
 import { SITE_DIRECTORY_GROUPS, SITE_DIRECTORY_TEXTS } from '@cuberoot/shared/site-directory';
-import { ALG_CATALOG } from '@cuberoot/shared/alg';
+import { ALG_CATALOG, CFOP_SET_SLUGS } from '@cuberoot/shared/alg';
 import { SITE_ANNOUNCEMENTS, findSiteAnnouncements } from '@cuberoot/shared/site-announcements';
 import { createCompetitionProof, COMPETITION_SERVICE_HEADER } from '@cuberoot/shared/competition-access';
 import { AssistantFailure, assistantFailureCode, assistantStage, checkAssistantResponse } from './site_assistant_diagnostics.js';
@@ -333,15 +333,16 @@ export async function answerSiteQuestion(
     for (const a of SITE_ANNOUNCEMENTS) add(a.id,a.title[lang],a.href,`${a.summary[lang]} ${a.aliases.join(' ')}`);
     for (const [puzzle, sets] of Object.entries(ALG_CATALOG)) for (const set of sets) {
       const title = `${puzzle} ${set[lang]}`;
-      add(`alg:${puzzle}:${set.slug}`,title,`/alg/${puzzle}/${set.slug}`);
-      add(`train:${puzzle}:${set.slug}`,`${title} — ${{zh:'公式训练',en:'Algorithm practice'}[lang]}`,`/alg/${puzzle}/${set.slug}/select`);
+      const method = puzzle==='3x3' && CFOP_SET_SLUGS.has(set.slug) ? 'CFOP' : '';
+      add(`alg:${puzzle}:${set.slug}`,title,`/alg/${puzzle}/${set.slug}`,method);
+      add(`train:${puzzle}:${set.slug}`,`${title} — ${{zh:'公式训练',en:'Algorithm practice'}[lang]}`,`/alg/${puzzle}/${set.slug}/select`,method);
     }
     try {
       const index = await read(`${contentOrigin}/assistant/pages.json`);
       // Navigation metadata includes tools excluded from SEO/content indexing.
       for (const p of [...(index.destinations ?? []),...index.pages]) if (p.lang===lang) {
         const existing=entries.get(p.href);
-        if(existing) { existing.description=p.description || existing.description; existing.access=p.access; }
+        if(existing) { existing.description=[existing.description,p.description].filter(Boolean).join(' '); existing.access=p.access; }
         else add(`page:${p.href}`,p.title,p.href,p.description || '',p.access);
       }
     } catch { signal.throwIfAborted(); /* The shared catalogs remain available. */ }
@@ -352,7 +353,7 @@ export async function answerSiteQuestion(
     // Keep the visitor's actual topic when a planner paraphrases it too broadly.
     const questionTerms = tokenize(question).filter(term=>!['公式','训练','生成','需要','学习','我要','我想','打开','查看','网站'].includes(term));
     const matches = [...entries.values()]
-      .filter(p=>call.kind==='all' || (call.kind==='algorithms' ? p.id.startsWith('alg:') : call.kind==='training' ? p.id.startsWith('train:') || /^\/(recognize|predict|memo|color-test|alg-trainers|timer|cstimer|comp-sim|quiz)(?:\/|$)/.test(p.href) : /^\/(?:scramble\/solver|solver)(?:\?|$)/.test(p.href)))
+      .filter(p=>call.kind==='all' || (call.kind==='algorithms' ? p.id.startsWith('alg:') : call.kind==='training' ? p.id.startsWith('train:') || /^\/(recognize|predict|memo|color-test|alg-trainers|timer|cstimer|comp-sim|quiz)(?:\/|$)/.test(p.href) || (p.href.startsWith('/alg/') && /训练|练习|trainer|training|practice|drill/i.test(p.title)) : /^\/(?:scramble\/solver|solver)(?:\?|$)/.test(p.href)))
       .map(p=>({p,score:terms.reduce((n,t)=>n+(p.title.toLowerCase().includes(t)?8:0)+(p.href.toLowerCase().includes(t)?2:0)+(p.description.toLowerCase().includes(t)?1:0),0)
         + questionTerms.reduce((n,t)=>n+(p.title.toLowerCase().includes(t)?16:0)+(p.href.toLowerCase().includes(t)?4:0)+(p.description.toLowerCase().includes(t)?1:0),0)}))
       .filter(r=>call.pageIds.length ? call.pageIds.includes(r.p.id) : r.score>0)

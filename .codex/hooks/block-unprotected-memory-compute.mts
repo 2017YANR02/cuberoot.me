@@ -3,6 +3,8 @@
 // registered yet: polling vm_stat, env flags and a small batch are not exemptions.
 import { dirname, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const native = /^(?:table_generator(?:_high_memory)?|solve_h48_h10(?:_\d+)?|(?:pseudo_f2leo|f2leo|pseudo_pair|pair|std)_analyzer)(?:\.exe)?$/;
@@ -37,6 +39,8 @@ function segments(command: string): string[][] {
 }
 
 export function blockedCompute(command: string, depth = 0): string | undefined {
+  if (command.includes('double-zbll-auf-20261011/run.mts') && command.includes('--solve')) return '双底 AUF 小样本';
+  if (command.includes('double-zbll-auf-20261011/full.mts') && command.includes('--run')) return '双底 AUF 长期计算';
   if (depth > 8) return undefined;
   for (const words of segments(command)) {
     const first = base(words.find(word => !/^[\w]+=.*/.test(word)) ?? '');
@@ -80,6 +84,17 @@ async function main() {
   try { request = JSON.parse(raw || '{}'); } catch { return; }
   const command = request?.tool_input?.command;
   if (typeof command !== 'string') return;
+  // User explicitly accepted monitoring on 2026-10-11, then authorized this
+  // long-running task. Only this fixed coordinator and its guarded batch code
+  // qualify; other commands remain blocked. Never treat this as OS no-swap.
+  if (command === 'node --import ./core/node_modules/tsx/dist/loader.mjs .tmp/double-zbll-auf-20261011/full.mts --run'
+    && Date.now() < Date.parse('2026-12-01T00:00:00Z')) {
+    try {
+      const digest = (file: string) => createHash('sha256').update(readFileSync(resolve(repoRoot, '.tmp/double-zbll-auf-20261011', file))).digest('hex');
+      if (digest('full.mts') === '2323368ecb756f54776844db3d40289d6f840a76a1e4e3264424a523c825e9bf'
+        && digest('run.mts') === 'dae9e46d66678afc2c9b7c0f34e02f650e3934fdffee702b8e3439741b3535ef') return;
+    } catch { /* Missing or changed task code is not authorized. */ }
+  }
   const cwd = request?.tool_input?.workdir ?? request?.tool_input?.cwd ?? request?.cwd;
   const root = repoRoot.toLowerCase();
   const directory = typeof cwd === 'string' ? resolve(cwd).toLowerCase() : '';

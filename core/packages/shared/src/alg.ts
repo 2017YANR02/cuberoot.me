@@ -342,6 +342,9 @@ export interface AlgSetMeta {
   umbrella?: boolean;
 }
 
+/** Core 3x3 CFOP formula sets, shared by the catalog grouping and assistant navigation. */
+export const CFOP_SET_SLUGS = new Set(['f2l', 'oll', 'pll']);
+
 export const ALG_CATALOG: Record<AlgPuzzle, AlgSetMeta[]> = {
   '2x2': [
     { slug: 'ortega-oll', scd: 'OrtegaOLL', short: 'OLL', en: 'Ortega OLL', zh: 'Ortega OLL', umbrella: true },

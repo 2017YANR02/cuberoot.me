@@ -3,6 +3,7 @@
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { prospectiveWritesFromHookPayload } from './hook-detect-nested-links.mjs';
+import { unframedSurfaces } from './site-surface-policy.mts';
 
 const MATERIAL_FILE = 'components/glass-material.css';
 const REPO_ROOT = fileURLToPath(new URL('../../../../', import.meta.url));
@@ -15,6 +16,12 @@ const LEGACY_OVERRIDES = {
 // otherwise the browser stops sampling the page at the ancestor backdrop root.
 // Unknown/dynamic containers are covered by audit-glass-menus.mts in a browser.
 const MENU_HOST = /\.(?:toolbar|shell-topbar|sor-race-bar|space-top-tools)(?![\w-])/;
+// Compile once per process; reuse the existing CSS pass, without extra file IO.
+const UNFRAMED_RULES = unframedSurfaces.map(policy => ({
+  kind: policy.kind,
+  parts: policy.selector.split(/[\s>+~]+/).filter(Boolean).map(token => token.startsWith('.')
+    ? new RegExp(`\\${token}(?![\\w-])`) : new RegExp(`^${token}$`)),
+}));
 
 function splitSelectors(value) {
   const parts = [];
@@ -54,6 +61,20 @@ function filtersMenuHost(selector) {
   });
 }
 
+function unframedKind(selector) {
+  for (let value of expandedSelectors(selector)) {
+    // Do not mistake :not(.known) / :has(.known) for the element being painted.
+    while (/\([^()]*\)/.test(value)) value = value.replace(/\([^()]*\)/g, '');
+    value = value.replace(/::?[\w-]+/g, '').trim();
+    const parts = value.split(/[\s>+~]+/);
+    for (const policy of UNFRAMED_RULES) {
+      if (!policy.parts.at(-1).test(parts.at(-1) ?? '')) continue;
+      if (policy.parts.slice(0, -1).every(pattern => parts.slice(0, -1).some(part => pattern.test(part)))) return policy.kind;
+    }
+  }
+  return null;
+}
+
 export function scanSiteMaterial(source, filePath) {
   const path = String(filePath).replaceAll('\\', '/').replace(/^.*packages\/client\//, '');
   if (!/^(app|components)\/.+\.css$/.test(path) || path === MATERIAL_FILE) return [];
@@ -61,12 +82,19 @@ export function scanSiteMaterial(source, filePath) {
   const hits = [];
   for (const rule of clean.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
     const selector = rule[1].trim();
+    const unframed = unframedKind(selector);
     const bodyStart = rule.index + rule[0].indexOf('{') + 1;
     for (const decl of rule[2].matchAll(/(?:^|;)\s*([\w-]+)\s*:\s*([^;{}]+)/g)) {
       const property = decl[1], value = decl[2].trim();
       const index = bodyStart + decl.index + decl[0].indexOf(property);
       const line = source.slice(source.lastIndexOf('\n', index) + 1, source.indexOf('\n', index + 1) < 0 ? source.length : source.indexOf('\n', index + 1));
       if (/\/\*\s*allow-site-material:\s*[^*\s][^*]+\*\//.test(line)) continue;
+      const neutral = /^(?:none|transparent|initial|unset|0(?:px)?)(?:\s*!important)?$/.test(value);
+      const visibleBorder = /^border(?:-(?:top|right|bottom|left))?(?:-(?:color|width|style))?$/.test(property)
+        && !neutral && !/\btransparent\b/.test(value) && !/^0(?:px)?(?:\s|$)/.test(value);
+      const shellPaint = unframed === 'container' && (/^background(?:-color|-image)?$|^box-shadow$/.test(property)
+        || (/^(?:-webkit-)?backdrop-filter$/.test(property) && !filtersMenuHost(selector))) && !neutral;
+      if (unframed && (visibleBorder || shellPaint)) hits.push({ selector, property, value, reason: 'unframed-surface' });
       if (property === 'content' && /\battr\(\s*(?:data-(?:tooltip|tip)|title)\s*\)/i.test(value)) {
         hits.push({ selector, property, value, reason: 'tooltip-reimplementation' });
       }
@@ -120,7 +148,9 @@ if (process.argv[1] && resolve(process.argv[1]).toLowerCase() === fileURLToPath(
     if (violations.length) process.stdout.write(JSON.stringify({
       hookSpecificOutput: {
         hookEventName: 'PreToolUse', permissionDecision: 'deny',
-        permissionDecisionReason: violations.some(hit => hit.reason === 'tooltip-reimplementation')
+        permissionDecisionReason: violations.some(hit => hit.reason === 'unframed-surface')
+          ? '已确认的布局外层或分类标题不应重新加底框/装饰线，伪元素也一样。请保留控件、卡片和弹窗自身的材质；透明容器清单见 scripts/site-surface-policy.mts。独立语义须在声明同一行注明 allow-site-material 及具体理由；CI 使用同一扫描器。'
+          : violations.some(hit => hit.reason === 'tooltip-reimplementation')
           ? '不要用 content: attr(data-tooltip/data-tip/title) 重造悬停气泡。请复用 components/Tooltip，组件统一处理毛玻璃、Portal、焦点和视口钳制。独立语义须在声明同一行注明 /* allow-site-material: 具体理由 */；CI 使用同一扫描器。'
           : '复用 glass-material.css 的材质 token；承载菜单的工具栏不能直接设置 backdrop-filter，否则菜单无法模糊栏外内容。把工具栏材质画在不承载菜单的 ::before 上，并核对菜单层级。独立语义须在声明同一行注明 /* allow-site-material: 具体理由 */；CI 使用同一扫描器。',
       },

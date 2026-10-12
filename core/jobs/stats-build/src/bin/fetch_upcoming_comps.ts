@@ -26,7 +26,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { fetchCubingCompetitions, fetchCubingCompetitors } from '@cuberoot/shared/cubing-live';
 import { localizeCity } from '@cuberoot/shared/city-localize';
 import { enrichCompElevations } from '../elevation.js';
@@ -235,7 +235,7 @@ function sumValues(nums: number[]): number {
 
 // ----------------------------------
 
-function extractTopCubers(): CuberData {
+export function extractTopCubers(): CuberData {
   /*
    * 从 wr_metric.json 的 single/average × ranking/history 面板中提取选手。
    * - ranking 面板: 当前各项目 Top 10（最高名次的选手 = current WR holder，含并列）
@@ -560,111 +560,57 @@ async function fetchCubingChinaCompetitors(alias: string): Promise<Set<string>> 
 async function integrateCubingChina(
   compsMap: Record<string, CompEntry>,
   cubers: CuberData,
+  cnComps: CnComp[],
+  registrations: Record<string, string[]>,
+  allComps: AllComp[],
 ): Promise<void> {
-  /*
-   * 集成 cubing.com 上的中国内地比赛到 compsMap。
-   * 只有当比赛中有 top cubers 参赛时才加入（与 WCA 数据逻辑一致）。
-   * 整体 try/except 保护：失败时优雅降级，不影响 WCA 数据。
-   */
-  try {
-    const cnComps = await fetchCubingChinaComps();
-    if (!cnComps.length) {
-      return;
+  const allById = new Map(allComps.map(comp => [comp.id, comp]));
+  for (const comp of cnComps) {
+    const compId = comp.wcaId;
+    // A complete cubing.com roster is authoritative, including withdrawals and empty lists.
+    const ids = registrations[compId];
+    if (!ids) throw new Error('Missing cubing.com registration snapshot: ' + compId);
+    const matched = [...new Set(ids)].filter(id => cubers[id]);
+    if (!matched.length) {
+      delete compsMap[compId];
+      continue;
     }
-
-    let cnAdded = 0;
-    const cuberKeys = new Set(Object.keys(cubers));
-    for (const comp of cnComps) {
-      const alias = comp.alias;
-      // Use the explicit WCA id supplied by cubing.com.
-      const compId = comp.wcaId;
-
-      // NOTE: WCA API 可能已创建此条目，但缺少 cubing.com 独有字段
-      if (compId in compsMap) {
-        // NOTE: 补充中文名、中文城市、cubing.com 链接
-        compsMap[compId]!.name_zh = comp.name;
-        compsMap[compId]!.city_zh = localizeCity(compsMap[compId]!.city, true, 'CN');
-        compsMap[compId]!.cubing_china_url = `https://cubing.com/competition/${alias}`;
-        continue;
-      }
-
-      if (!isRegistrationOpen(comp)) {
-        continue;
-      }
-      const competitorIds = await fetchCubingChinaCompetitors(alias);
-      if (competitorIds.size === 0) {
-        continue;
-      }
-
-      // NOTE: 与 top cubers 名单交叉匹配
-      const matched: string[] = [];
-      for (const id of competitorIds) {
-        if (cuberKeys.has(id)) matched.push(id);
-      }
-      if (!matched.length) {
-        continue;
-      }
-
-      const wcaData = await fetchCompInfo(compId) ?? {};
-
-      // NOTE: WCA API 提供英文名和城市；cubing.com 提供中文名和城市
-      const enName = (wcaData.name as string | undefined) ?? comp.name;
-      const enCity = (wcaData.city as string | undefined) ?? comp.city;
-      const eventIds = new Set<string>((wcaData.event_ids as string[] | undefined) ?? []);
-
-      // 创建比赛条目
-      compsMap[compId] = {
-        id: compId,
-        name: enName,
-        name_zh: comp.name,
-        city: enCity,
-        city_zh: localizeCity(enCity, true, 'CN'),
-        country: 'CN',
-        start_date: comp.start_date,
-        end_date: comp.end_date,
-        events: eventIds,
-        competitor_limit: comp.competitor_limit,
-        registration_open: wcaData.registration_open ?? null,
-        registration_close: wcaData.registration_close ?? null,
-        // NOTE: 中国内地比赛链接跳转粗饼网而非 WCA 官网
-        cubing_china_url: `https://cubing.com/competition/${alias}`,
-        top_cubers: [],
-      };
-
-      for (const wcaId of matched) {
-        compsMap[compId]!.top_cubers.push({
-          id: wcaId,
-          name: cubers[wcaId]!.name,
-          events: buildEventTags(cubers[wcaId]!),
-        });
-      }
-
-      cnAdded += 1;
-    }
-
-    if (cnAdded > 0) {
-      console.log(`[CN] 成功集成 ${cnAdded} 场中国内地比赛`);
-    } else {
-      console.log('[CN] 未找到有 top cubers 参赛的中国内地比赛');
-    }
-  } catch (e) {
-    // NOTE: 优雅降级 — CN 集成失败不影响 WCA 数据
-    console.log(`[CN][WARN] cubing.com 集成失败，已跳过: ${(e as Error).message ?? e}`);
+    const existing = compsMap[compId];
+    const catalog = allById.get(compId);
+    const wcaData = existing || catalog ? {} : await fetchCompInfo(compId) ?? {};
+    const enName = existing?.name ?? catalog?.name ?? (wcaData.name as string | undefined) ?? comp.name;
+    const enCity = existing?.city ?? catalog?.city ?? (wcaData.city as string | undefined) ?? comp.city;
+    const events = existing?.events ?? new Set(catalog
+      ? catalog.events.map(event => SHORT_TO_EVENT_ID[event] ?? event)
+      : (wcaData.event_ids as string[] | undefined) ?? []);
+    compsMap[compId] = {
+      ...catalog,
+      ...existing,
+      id: compId,
+      name: enName,
+      name_zh: comp.name,
+      city: enCity,
+      city_zh: localizeCity(enCity, true, 'CN'),
+      country: 'CN',
+      start_date: comp.start_date,
+      end_date: comp.end_date,
+      events,
+      competitor_limit: comp.competitor_limit,
+      registration_open: existing?.registration_open ?? catalog?.registration_open ?? wcaData.registration_open ?? null,
+      registration_close: existing?.registration_close ?? catalog?.registration_close ?? wcaData.registration_close ?? null,
+      cubing_china_url: 'https://cubing.com/competition/' + comp.alias,
+      top_cubers: matched.map(id => ({ id, name: cubers[id]!.name, events: buildEventTags(cubers[id]!) })),
+    };
   }
 }
 
-async function buildCnRegistrations(): Promise<Record<string, string[]>> {
+
+export async function buildCnRegistrations(cnComps: CnComp[], loadRoster = fetchCubingChinaCompetitors): Promise<Record<string, string[]>> {
   /*
    * 抓 cubing.com 上每场即将举行的中国比赛的全员注册 WCA ID 名单。
    * 返回 {comp_id: [wca_id, ...]}（已排序）。
    */
   const out: Record<string, string[]> = {};
-  let cnComps: CnComp[];
-  try {
-    cnComps = await fetchCubingChinaComps();
-  } catch (e) {
-    throw new Error('cubing.com competition list refresh failed', { cause: e });
-  }
   if (!cnComps.length) {
     return out;
   }
@@ -682,7 +628,7 @@ async function buildCnRegistrations(): Promise<Record<string, string[]>> {
       continue;
     }
     try {
-      const ids = await fetchCubingChinaCompetitors(alias);
+      const ids = await loadRoster(alias);
       // Python sorted(set) 按 Unicode code point；WCA ID 为 ASCII，JS 默认 sort 等价。
       out[compId] = [...ids].sort();
       totalIds += ids.size;
@@ -734,10 +680,12 @@ function dualEventsOf(entry: WcifEntry | undefined, startDate: string): string[]
   return out;
 }
 
-async function buildUpcomingCompsFromWcif(
+export async function buildUpcomingCompsFromWcif(
   cubers: CuberData,
   allComps: AllComp[],
   wcifMap: Record<string, WcifEntry>,
+  cnComps: CnComp[],
+  registrations: Record<string, string[]>,
 ): Promise<CompEntry[]> {
   /*
    * WCA 限制 /users/:id?upcoming_competitions=true（返回 403）后的替代方案。
@@ -788,8 +736,8 @@ async function buildUpcomingCompsFromWcif(
 
   console.log(`[REG] ${Object.keys(compsMap).length} 场比赛有 top cubers 参赛`);
 
-  // 集成 cubing.com CN 比赛（不在 WCA all_comps 里）
-  await integrateCubingChina(compsMap, cubers);
+  // Refresh every cubing.com competition, including entries restored from saved/WCA data.
+  await integrateCubingChina(compsMap, cubers, cnComps, registrations, allComps);
 
   // NOTE: 过滤太遥远的比赛（仅到明年底），排除占位赛事如 2028 年欧锦赛
   // datetime.now().year 用本地年份。
@@ -1168,13 +1116,17 @@ async function main(): Promise<void> {
     wcifMap = {};
   }
 
+  // Fetch once before publishing anything; both indexes must use the same roster snapshot.
+  const cnComps = await fetchCubingChinaComps();
+  const cnReg = await buildCnRegistrations(cnComps);
+
   // 4. 用 WCIF 报名名单与 top cubers 交叉匹配，构建 Top 模式
   let compsData: CompEntry[];
   if (allComps) {
     console.log(
       `\n[REG] WCIF 报名名单匹配（${allComps.length} 场 × top ${Object.keys(cubers).length} 名选手）...`,
     );
-    compsData = await buildUpcomingCompsFromWcif(cubers, allComps, wcifMap);
+    compsData = await buildUpcomingCompsFromWcif(cubers, allComps, wcifMap, cnComps, cnReg);
   } else {
     console.log('[WARN] all_comps 为空，Top 模式无数据源');
     compsData = [];
@@ -1190,13 +1142,13 @@ async function main(): Promise<void> {
     Object.assign(wcifMap, await fetchWcifBatch(cnOnlyIds));
   }
   // CN 内地比赛的报名走 cubing.com,WCA WCIF 多为 0;用 cubing.com 的 registered_competitors(含新人)
-  // 覆盖,满员判定才准(comp id = cubing.com alias 去横线)。已缓存,二次调用近免费。
+  // 覆盖,满员判定才准；关联使用 cubing.com 的显式 WCA ID。
   const cnRegById = new Map<string, number>();
-  for (const cn of await fetchCubingChinaComps()) {
+  for (const cn of cnComps) {
     if (typeof cn.registered_competitors === 'number') cnRegById.set(cn.wcaId, cn.registered_competitors);
   }
   const regOf = (id: string | undefined): number =>
-    Math.max(wcifMap[id ?? '']?.competitors?.length ?? 0, (id && cnRegById.get(id)) || 0);
+    cnRegById.get(id ?? '') ?? wcifMap[id ?? '']?.competitors?.length ?? 0;
   for (const c of compsData) {
     if (cnRegById.has(c.id!)) c.registered = cnRegById.get(c.id!);
     if (!wcifMap[c.id!]) continue;
@@ -1253,17 +1205,13 @@ async function main(): Promise<void> {
   console.log(`[ALL] 共 ${allComps.length} 场 → ${relToRoot(ALL_OUTPUT_JSON_PATH)}`);
 
   // 8. 写出 CN 全员注册名单（前端搜选手非 top 时的静态兜底）
-  console.log('\n[CN-REG] 开始构建中国内地比赛全员注册名单...');
-  const cnReg = await buildCnRegistrations();
-  if (Object.keys(cnReg).length) {
-    mkdirSync(dirname(CN_REGISTRATIONS_JSON_PATH), { recursive: true });
-    writeChanged(CN_REGISTRATIONS_JSON_PATH, cnReg);
-    console.log(`[CN-REG] 写入 ${relToRoot(CN_REGISTRATIONS_JSON_PATH)}`);
-  }
+  mkdirSync(dirname(CN_REGISTRATIONS_JSON_PATH), { recursive: true });
+  writeChanged(CN_REGISTRATIONS_JSON_PATH, cnReg);
+  console.log(`[CN-REG] 写入 ${relToRoot(CN_REGISTRATIONS_JSON_PATH)}`);
 
   const nameUpdates: Record<string, string> = {};
   const allById = new Map(allComps.map((comp) => [comp.id, comp]));
-  for (const cn of await fetchCubingChinaComps()) {
+  for (const cn of cnComps) {
     const comp = allById.get(cn.wcaId);
     if (!comp || !cn.name) continue;
     nameUpdates[comp.name] = cn.name;
@@ -1277,7 +1225,7 @@ async function main(): Promise<void> {
   console.log(`[INFO] 总耗时: ${((Date.now() - startTime) / 1000).toFixed(2)} 秒`);
 }
 
-main().catch((e) => {
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) main().catch((e) => {
   console.error(e);
   process.exit(1);
 });

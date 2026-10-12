@@ -80,8 +80,9 @@ background: color-mix(in srgb, var(--accent) 12%, transparent); /* tag 弱化 */
 - 浮层和表头共用 `--glass-popover-bg` + `--glass-filter` 保可读；普通面板用 `--glass-surface-bg`；只在唯一材质源调整浓度。
 - 保留 hover/选中/危险状态、纪录标记、魔方色块和媒体画布；原生 option/optgroup 无法透出页面，保留系统实底。
 - 保留无背景/图片失败时的主题实底，以及不支持 backdrop-filter、减少透明效果、打印的统一回退；内层实底或父级 backdrop-filter 会遮挡场景，须实测。
-- 承载非 portal 菜单的工具栏不能直接加 `backdrop-filter`，也不能在该容器上标记会加 blur 的表面角色；它会成为 backdrop root，菜单超出工具栏的部分无法模糊底下页面。工具栏玻璃画在不承载菜单的 `::before` 层，并检查菜单高于后面的图表；参考 `site-surfaces.css` 的比赛工具栏与成绩汇总工具栏。全屏遮罩和菜单完全处于其内的对话框不等同于这种越界问题。
+- 承载非 portal 菜单的工具栏不能直接加 `backdrop-filter`，也不能在该容器上标记会加 blur 的表面角色；它会成为 backdrop root，菜单超出工具栏的部分无法模糊底下页面。比赛、成绩汇总和分布图工具栏外层保持透明，不加额外底框。确实需要底色时，玻璃画在不承载菜单的 `::before` 层，并检查菜单高于后面的图表；参考 `site-surfaces.css` 的计时器工具栏。全屏遮罩和菜单完全处于其内的对话框不等同于这种越界问题。
 - 写入与 CI 共用 `scripts/hook-detect-site-material.mjs`，测试 `tests/site-material-guard.test.ts`；hook 重建完整 CSS 后检查，包含单行编辑。静态守卫覆盖已登记的工具栏类；新容器、动态样式仍需浏览器复核。
+- 多余底框：仅将已确认的问题登记到 `scripts/site-surface-policy.mts`，复用现有 Hook/CI；容器约束装饰底框，标题仅约束分隔边线。`audit:surfaces` 为按需排查工具，不加日常检查门槛、不自动扩充规则；范围、例外与用法见 `docs/glass-menu-regression.md`。
 - 展开菜单回归：复用运行中的预览服务，在 `core/` 运行 `pnpm --filter @cuberoot/client exec node scripts/audit-glass-menus.mts`。遍历全部 fixture 的主题四格、390px、图片背景，检查实际模糊、祖先 backdrop root、遮挡与横向溢出；报告和截图写系统临时目录。另验滚动吸顶、无背景及减少透明效果，详 `docs/glass-menu-regression.md`。
 
 ## Light/dark 反盖 (写新 :root token 才用)

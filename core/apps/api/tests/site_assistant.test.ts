@@ -183,6 +183,29 @@ describe('site assistant grounding', () => {
     const result=await answerSiteQuestion('学习 OLL 和 PLL','zh',config,AbortSignal.timeout(5000),withCatalog(fetcher));
     expect(result.actions?.map(a=>a.href)).toEqual(['/alg/3x3/oll','/alg/3x3/pll']);
   });
+  it.each([
+    {question:'我想学 CFOP 公式',lang:'zh' as const,kind:'algorithms',query:'CFOP',ids:['alg:3x3:f2l','alg:3x3:oll','alg:3x3:pll'],hrefs:['/alg/3x3/f2l','/alg/3x3/oll','/alg/3x3/pll']},
+    {question:'I want to learn CFOP algorithms',lang:'en' as const,kind:'algorithms',query:'CFOP',ids:['alg:3x3:f2l','alg:3x3:oll','alg:3x3:pll'],hrefs:['/alg/3x3/f2l','/alg/3x3/oll','/alg/3x3/pll']},
+    {question:'我想练习 CFOP 公式',lang:'zh' as const,kind:'training',query:'CFOP',ids:['train:3x3:f2l','train:3x3:oll','train:3x3:pll'],hrefs:['/alg/3x3/f2l/select','/alg/3x3/oll/select','/alg/3x3/pll/select']},
+    {question:'我想训练十字',lang:'zh' as const,kind:'training',query:'十字',ids:['page:/alg/3x3/cross'],hrefs:['/alg/3x3/cross']},
+    {question:'I want to practise Roux',lang:'en' as const,kind:'training',query:'Roux',ids:['page:/alg/roux'],hrefs:['/alg/roux']},
+    {question:'我想练习 PLL 识别',lang:'zh' as const,kind:'training',query:'PLL 识别',ids:['page:/recognize/pll'],hrefs:['/recognize/pll']},
+  ])('returns verified learning or training destinations for $question',async({question,lang,kind,query,ids,hrefs})=>{
+    const fetcher=vi.fn<typeof fetch>().mockImplementation(async input=>{
+      if(String(input).includes('/assistant/pages.json')) return Response.json({pages:[],destinations:[
+        {lang:'zh',href:'/alg/3x3/cross',title:'十字最优训练'},
+        {lang:'en',href:'/alg/roux',title:'Roux Trainer'},
+        {lang:'zh',href:'/recognize/pll',title:'PLL 识别训练'},
+        // Page metadata must enrich, rather than erase, the canonical method label.
+        {lang,href:'/alg/3x3/oll',title:'OLL',description:'Last layer algorithms'},
+      ]});
+      const count=fetcher.mock.calls.filter(([url])=>String(url).includes('/chat/completions')).length;
+      return modelResponse(count===1 ? {calls:[{tool:'navigation',kind,query}]} : {answer:'Open the matching pages.',sourceIds:ids});
+    });
+    const result=await answerSiteQuestion(question,lang,config,AbortSignal.timeout(5000),withCatalog(fetcher));
+    expect(result.actions?.map(action=>action.href)).toEqual(hrefs);
+    expect(fetcher.mock.calls.filter(([url])=>!String(url).includes('/assistant/pages.json') && !String(url).includes('/chat/completions'))).toEqual([]);
+  });
   it('opens existing OLL/PLL libraries and trainers without trusting model URLs',async()=>{
     const fetcher=vi.fn<typeof fetch>().mockImplementation(async input=>{
       if(String(input).includes('/assistant/pages.json')) return Response.json({pages:[]});
