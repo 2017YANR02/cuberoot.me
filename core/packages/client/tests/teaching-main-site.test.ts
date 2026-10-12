@@ -38,10 +38,13 @@ describe('main-site teaching architecture', () => {
 
   it('links teaching users to canonical main-site tools', () => {
     const overview = readClient('app/[lang]/org/[orgSlug]/page.tsx');
-    for (const href of ['/timer', '/predict', '/alg', '/sim']) {
-      expect(overview).toContain(`['${href}'`);
-    }
-    expect(overview).toContain('<AppLink');
+    // The route contract does not depend on tuple versus object tool entries.
+    const toolHrefs = Array.from(
+      overview.matchAll(/(['"])(\/(?:timer|predict|alg|sim))\1/g),
+      (match) => match[2],
+    );
+    expect(toolHrefs.sort()).toEqual(['/alg', '/predict', '/sim', '/timer']);
+    expect(overview).toMatch(/<AppLink\b[^>]*\bhref=\{href\}/);
     expect(overview).not.toContain('packages/platform');
   });
 

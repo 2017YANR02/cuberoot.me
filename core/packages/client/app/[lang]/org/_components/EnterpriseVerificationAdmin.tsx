@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import type { EnterpriseBankRecipient, EnterpriseVerificationApplication, EnterpriseVerificationReviewDetails, EnterpriseVerificationReview } from '@cuberoot/shared/teaching';
 import BoolToggle from '@/components/BoolToggle';
+import { useHashHighlight } from '@/hooks/useHashHighlight';
 import { useT } from '@/hooks/useT';
 import { getEnterpriseBankSettings, saveEnterpriseBankSettings, listEnterpriseApplications, getEnterpriseApplicationMaterials, reviewEnterpriseApplication, recordEnterpriseRefund, recordEnterpriseReceipt, revokeEnterpriseVerification } from '@/lib/enterprise-verification-api';
 import { verificationError, verificationStatus } from './EnterpriseVerification';
@@ -11,11 +12,20 @@ import { MutationMessage } from './OrgUi';
 export default function EnterpriseVerificationAdmin() {
   const t = useT();
   const [opened, setOpened] = useState(false);
-  useEffect(() => {
-    const reveal = () => { if (window.location.hash === '#enterprise-admin') { setOpened(true); document.getElementById('enterprise-admin')?.scrollIntoView({ block: 'start' }); } };
-    reveal(); window.addEventListener('hashchange', reveal);
-    return () => window.removeEventListener('hashchange', reveal);
-  }, []);
+  const { setHash } = useHashHighlight({
+    block: 'start',
+    linger: 0, // Handle each visit once so the panel can still be collapsed.
+    resolve: hash => hash === '#enterprise-admin' ? document.getElementById('enterprise-admin') : null,
+    reveal: hash => {
+      if (hash !== '#enterprise-admin') {
+        // A later return to this panel must count as a new anchor visit.
+        setHash(hash, { markActed: true });
+        return false;
+      }
+      if (!opened) { setOpened(true); return false; }
+    },
+    deps: [opened],
+  });
   return <section id="enterprise-admin" className="org-section enterprise-verification org-admin-panel" data-site-surface="panel">
     <p className="org-eyebrow">{t('仅平台管理员可见', 'Platform administrators only')}</p>
     <h2>{t('平台收款与认证审核', 'Platform receiving account and verification review')}</h2>
