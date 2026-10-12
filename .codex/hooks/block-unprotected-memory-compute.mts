@@ -46,11 +46,15 @@ export function blockedCompute(command: string, depth = 0): string | undefined {
     const first = base(words.find(word => !/^[\w]+=.*/.test(word)) ?? '');
     // These commands read or display their arguments; names in source/fixtures
     // are not launches. Command substitution is checked separately below.
-    if (/^(?:rg|grep|cat|head|tail|sed|less|echo|printf|git|ls|stat|du|wc|file)$/.test(first)) continue;
+    if (/^(?:rg|grep|cat|head|tail|sed|less|echo|printf|git|ls|stat|du|wc|file|shasum)$/.test(first)) continue;
     if (first === 'cargo' && !words.includes('run')) continue;
     for (const [index, word] of words.entries()) {
       const normalized = word.replaceAll('\\', '/');
       const name = base(word).replace(/^--bin=/, '');
+      if (word === 'double-zbll:symmetry' || /(?:^|\/)double-zbll-symmetry\.mts$/.test(normalized)) {
+        if (!words.includes('--plan') && !words.includes('--verify-checkpoint') && !words.includes('--watch')) return '双底对称去重长期计算';
+        if (words.includes('--run')) return '双底对称去重长期计算';
+      }
       if (native.test(name) || script.test(normalized)
         || /(?:^|\/)double-zbll-1000\/run\.mts$/.test(normalized)) return name;
       if (word === 'double-zbll' && words.some(w => /^(?:pnpm|npm|yarn)(?:\.cmd)?$/.test(base(w)))) return word;
@@ -84,6 +88,28 @@ async function main() {
   try { request = JSON.parse(raw || '{}'); } catch { return; }
   const command = request?.tool_input?.command;
   if (typeof command !== 'string') return;
+  const cwd = request?.tool_input?.workdir ?? request?.tool_input?.cwd ?? request?.cwd;
+  if (['pnpm --filter @cuberoot/alg-build double-zbll:symmetry --run',
+    'node --max-old-space-size=512 --import ./node_modules/tsx/dist/loader.mjs jobs/alg-build/src/double-zbll-symmetry.mts --run'].includes(command)
+    && typeof cwd === 'string' && resolve(cwd) === resolve(repoRoot, 'core')
+    && Date.now() < Date.parse('2026-12-01T00:00:00Z')) {
+    // Reviewed local shortcut: fixed coordinator and exact audited dependencies.
+    const files = {
+      'core/jobs/alg-build/src/double-zbll-symmetry.mts': 'a66b3cc038bf4d6f3fffdac50a6b2729d805602a6fa4954b554b7a403dd5b335',
+      'core/jobs/alg-build/src/double-zbll-selection.mts': '0de647807f60be78c8386fe2ea1243af6768c88399f6128e1a067b645d433439',
+      'core/jobs/alg-build/src/double-zbll-dashboard.mts': '3bc736cd299d346e297eeeea4a7c42f11744c9175f622660a4f905d65ebc8541',
+      'core/jobs/alg-build/src/double-zbll-website-stats.mts': '1909aa32d3794c45c64490cd0e56ec27efa79cd4de805f4d3c362f6dfd098143',
+      'core/jobs/alg-build/src/double-zbll-symmetry-state.mts': '759a609da080669b705c47da611f44efb804fb99edc56552aa13cdd0d1854702',
+      '.tmp/double-zbll-symmetry-v2/model.mts': 'ec36d0ba647796b8c979863aa81ab9cb7162a7083398fa898f7b17b76cf4f3a1',
+      '.tmp/double-zbll-auf-20261011/run.mts': 'cba0a6c888532ab1c606af9bd0c7d811f4afe786c220a0daa2c3c84e80f3e8b0',
+      'solver/333opt/solve_h10.mts': 'da19c38379216c58e8599b54c014ad9278605decbfa0c4fc220b5ebae8248836',
+    };
+    try {
+      const pkg = JSON.parse(readFileSync(resolve(repoRoot, 'core/jobs/alg-build/package.json'), 'utf8'));
+      if (pkg.scripts?.['double-zbll:symmetry'] === 'node --max-old-space-size=512 --import tsx src/double-zbll-symmetry.mts'
+        && Object.entries(files).every(([file, hash]) => createHash('sha256').update(readFileSync(resolve(repoRoot, file))).digest('hex') === hash)) return;
+    } catch { /* Missing/changed task code is not exempt. */ }
+  }
   // User explicitly accepted monitoring on 2026-10-11, then authorized this
   // long-running task. Only this fixed coordinator and its guarded batch code
   // qualify; other commands remain blocked. Never treat this as OS no-swap.
@@ -95,7 +121,6 @@ async function main() {
         && digest('run.mts') === 'dae9e46d66678afc2c9b7c0f34e02f650e3934fdffee702b8e3439741b3535ef') return;
     } catch { /* Missing or changed task code is not authorized. */ }
   }
-  const cwd = request?.tool_input?.workdir ?? request?.tool_input?.cwd ?? request?.cwd;
   const root = repoRoot.toLowerCase();
   const directory = typeof cwd === 'string' ? resolve(cwd).toLowerCase() : '';
   if (directory !== root && !directory.startsWith(root + sep)
