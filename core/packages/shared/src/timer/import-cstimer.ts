@@ -107,6 +107,9 @@ const CSTIMER_EVENT_MAP: Record<string, EventId> = {
   'circoradiolarian': 'circoradiolarian', 'circo': 'circoradiolarian',
   'icosababyface': 'icosababyface', 'icosa': 'icosababyface',
   'deepcuticosahedron': 'icosababyface', '深切角转二十面体': 'icosababyface',
+  'cube3heli': 'cube3heli', '3heli': 'cube3heli',
+  '3×3+helicopter': 'cube3heli', '3x3+helicopter': 'cube3heli',
+  '三阶＋直升机': 'cube3heli', '三阶+直升机': 'cube3heli',
 };
 
 /* ------------------------------------------------------------------ */
@@ -218,6 +221,9 @@ function nameToEvent(name: unknown): { event: EventId; matched: boolean } {
   }
   if (/(?:^|[^a-z0-9])3[\s_-]*[x×][\s_-]*3[\s_-]*[+＋][\s_-]*skewb(?:$|[^a-z0-9])|三阶[\s_-]*[+＋][\s_-]*斜转/i.test(name)) {
     return normalizeEventKey('cube3skewb');
+  }
+  if (/(?:^|[^a-z0-9])3[\s_-]*[x×][\s_-]*3[\s_-]*[+＋][\s_-]*helicopter(?:$|[^a-z0-9])|三阶[\s_-]*[+＋][\s_-]*直升机/i.test(name)) {
+    return normalizeEventKey('cube3heli');
   }
   for (const t of tokens) {
     const tried = normalizeEventKey(t);

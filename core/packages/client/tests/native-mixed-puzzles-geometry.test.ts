@@ -13,9 +13,13 @@ import { nativePuzzleKPuzzle, parseNativePuzzleAlg } from '@cuberoot/puzzle-solv
 // axis list and selected-piece sets. Scale is the uncut body's inradius = 1.
 // 3x3 + Skewb combines x/y/z = +/-1/3 with the four through-center corner planes.
 // Helicopter Skewb adds the usual helicopter edge planes, at sqrt(2)/2.
+// 3x3 + Helicopter independently combines the uniform third-depth face planes
+// with those standard edge planes, without claiming a particular retail shape.
 // The two icosahedral models use face cuts sqrt(5)/3 and vertex cuts r/sqrt(5),
 // respectively. The latter planes pass through all five neighboring vertices.
 // Sources, checked separately from PG's generated data:
+// Standard 3x3 and Helicopter cut families (combined independently below):
+// https://github.com/cubing/cubing.js/blob/main/src/cubing/puzzle-geometry/pgPuzzles.ts
 // Helicopter Skewb: https://www.tomvanderzanden.nl/puzzle.php?puz=Helicopter+Skewb
 // Comboctahedron: https://github.com/HactarCE/Hyperspeedcube/blob/main/lua/puzzles/fcto.lua
 // Its CTO layers: https://github.com/HactarCE/Hyperspeedcube/blob/main/lua/puzzles/cto.lua
@@ -120,6 +124,16 @@ const CASES: readonly Spec[] = [
     ],
     faces: 6, perFace: 8, raw: 48, visible: 48, pieces: 32,
     shapes: { 3: 8 }, orbits: [['CORNERS', 8, 3], ['CENTERS', 24, 1]],
+  },
+  {
+    id: 'cube3heli', faceNormals: cubeNormals,
+    axes: [
+      { pairs: cubeFacePairs, normals: cubeNormals, cuts: [1 / 3], order: 4 },
+      { pairs: cubeEdgePairs, normals: cubeAxisNormals(cubeEdgePairs), cuts: [Math.SQRT1_2], order: 2 },
+    ],
+    faces: 6, perFace: 28, raw: 168, visible: 168, pieces: 128,
+    shapes: { 3: 12, 4: 12, 5: 4 },
+    orbits: [['CORNERS', 8, 3], ['EDGES', 24, 2], ['CENTERS', 24, 1], ['CENTERS2', 24, 1], ['CENTERS3', 24, 1], ['CENTERS4', 24, 1]],
   },
   {
     id: 'comboctahedron', faceNormals: octaNormals,
@@ -345,6 +359,66 @@ describe.each(CASES)('$id independent physical model', (spec) => {
   });
 });
 
+it('keeps 3x3 + Helicopter pieces rigid through interleaved face, edge, slice, wide and whole turns', () => {
+  const spec = CASES.find(({ id }) => id === 'cube3heli')!;
+  const { stickers, byPolygon, puzzle } = fixture(spec);
+  // Track physical source stickers geometrically; PG only supplies the state
+  // being checked, never the next moving set or expected destination.
+  const live = stickers.map((sticker) => ({ ...sticker, vertices: sticker.vertices.map((p) => p.clone()) }));
+  const sequence = [
+    { move: 'F', family: 'F', axis: 0, first: 1, last: 1, amount: 1 },
+    { move: "UF'", family: 'UF', axis: 1, first: 1, last: 1, amount: -1 },
+    { move: "2R'", family: 'R', axis: 0, first: 2, last: 2, amount: -1 },
+    { move: 'DFw', family: 'DF', axis: 1, first: 1, last: 2, amount: 1 },
+    { move: 'Fv', family: 'F', axis: 0, first: 1, last: 3, amount: 1 },
+    { move: "2BL'", family: 'BL', axis: 1, first: 2, last: 2, amount: -1 },
+    { move: "Bw'", family: 'B', axis: 0, first: 1, last: 2, amount: -1 },
+  ];
+  let pattern = puzzle.defaultPattern();
+  for (const step of sequence) {
+    const axisSpec = spec.axes[step.axis], axis = axisSpec.normals[step.family];
+    const bounds = [Infinity, ...boundaries(axisSpec), -Infinity];
+    const high = bounds[step.first - 1], low = bounds[step.last];
+    const angle = -step.amount * 2 * Math.PI / axisSpec.order;
+    const pieces = new Map<string, typeof live>();
+    for (const sticker of live) {
+      const key = `${sticker.orbit}:${sticker.ord}`;
+      pieces.set(key, [...(pieces.get(key) ?? []), sticker]);
+    }
+    for (const [key, piece] of pieces) {
+      const points = piece.flatMap((sticker) => sticker.vertices);
+      const q = center(points).dot(axis), moving = q > low + EPS && q < high - EPS;
+      const distances = points.map((p) => p.dot(axis));
+      const below = Math.max(...distances) <= low + EPS, above = Math.min(...distances) >= high - EPS;
+      expect(moving || below || above, `${step.move} live unsplit piece ${key}`).toBe(true);
+      if (!moving) continue;
+      for (const point of points) {
+        for (const progress of [0, 0.2, 0.5, 0.8, 1]) {
+          const rotated = point.clone().applyAxisAngle(axis, angle * progress);
+          expect(rotated.dot(axis), `${step.move} live slab at ${progress}`).toBeCloseTo(point.dot(axis), 10);
+          expect(rotated.dot(axis), `${step.move} lower separation`).toBeGreaterThanOrEqual(low - EPS);
+          expect(rotated.dot(axis), `${step.move} upper separation`).toBeLessThanOrEqual(high + EPS);
+        }
+        point.applyAxisAngle(axis, angle);
+      }
+    }
+    pattern = pattern.applyAlg(parseNativePuzzleAlg(spec.id, step.move));
+    for (const source of live) {
+      const target = byPolygon.get(polygonKey(source.vertices));
+      expect(target, `${step.move} live destination`).toBeDefined();
+      expect(target!.orbit, `${step.move} orbit`).toBe(source.orbit);
+      expect(pattern.patternData[target!.orbit].pieces[target!.ord], `${step.move} live piece`).toBe(source.ord);
+      const orientations = spec.orbits.find(([name]) => name === source.orbit)![2];
+      expect((target!.ori - pattern.patternData[target!.orbit].orientation[target!.ord] + orientations) % orientations,
+        `${step.move} live sticker orientation`).toBe(source.ori);
+    }
+  }
+  expect(puzzle.algToTransformation('F UF').isIdentical(puzzle.algToTransformation('UF F')),
+    'face and edge turns genuinely interact').toBe(false);
+  const alg = parseNativePuzzleAlg(spec.id, sequence.map(({ move }) => move).join(' '));
+  expect(pattern.applyAlg(alg.invert()).isIdentical(puzzle.defaultPattern())).toBe(true);
+});
+
 it('derives Baby Face cuts through five neighboring vertices and preserves exactly twenty whole triangular faces', () => {
   const vertices = Object.values(icoVertexNormals).map((normal) => normal.clone().multiplyScalar(ICO_RADIUS));
   for (const axis of Object.values(icoVertexNormals)) {
@@ -434,7 +508,7 @@ afterEach(async () => {
   }
 });
 
-it('animates both Helicopter Skewb half-turn directions with the real PG3D middle matrix and selected pieces', async () => {
+it.each(['heliskewb', 'cube3heli'] as const)('animates %s mixed-axis moves in both directions with the real PG3D middle matrix and selected pieces', async (id) => {
   // This is a local renderer fixture, not browser interaction evidence. The
   // real TwistyPlayer creates its real PG3D; only DOM camera attachment and
   // scheduling are suppressed because jsdom has no display or GPU.
@@ -460,7 +534,7 @@ it('animates both Helicopter Skewb half-turn directions with the real PG3D middl
     }
     return appendChild.call(this, child) as T;
   });
-  const spec = CASES.find(({ id }) => id === 'heliskewb')!;
+  const spec = CASES.find((candidate) => candidate.id === id)!;
   const player = new TwistyPlayer({ experimentalPuzzleDescription: NATIVE_PUZZLES[spec.id].description, controlPanel: 'none' });
   player.experimentalSetFlashLevel('none');
   players.push(player);
@@ -470,7 +544,7 @@ it('animates both Helicopter Skewb half-turn directions with the real PG3D middl
   expect(object.movingObj).toBeDefined();
   const { pieces } = fixture(spec);
   const puzzle = await (await player.experimentalModel.puzzleLoader.get()).kpuzzle();
-  for (const choice of manualChoices(spec).filter(({ order }) => order === 2)) {
+  for (const choice of manualChoices(spec)) {
     const axis = choice.axis.normals[choice.family];
     const bounds = [Infinity, ...boundaries(choice.axis), -Infinity];
     const low = bounds[choice.last], high = bounds[choice.first - 1];
@@ -484,17 +558,17 @@ it('animates both Helicopter Skewb half-turn directions with the real PG3D middl
         expect(object.stickers[orbit][0][Number(ord)].twistVal, `${move} renderer selection ${key}`).toBe(Number(moving));
         if (!moving) continue;
         for (const point of points) {
-          const expected = point.clone().applyAxisAngle(axis, -direction * amount * Math.PI / 2);
+          const expected = point.clone().applyAxisAngle(axis, -direction * amount * Math.PI / choice.order);
           const actual = point.clone().applyQuaternion(object.movingObj.quaternion);
-          const wrong = point.clone().applyAxisAngle(axis, direction * amount * Math.PI / 2);
+          const wrong = point.clone().applyAxisAngle(axis, direction * amount * Math.PI / choice.order);
           expect(actual.distanceTo(expected), `${move} middle frame direction ${direction}`).toBeLessThan(EPS);
           expect(actual.dot(axis), `${move} middle frame slab`).toBeCloseTo(point.dot(axis), 10);
           signWitness = Math.max(signWitness, wrong.distanceTo(actual));
         }
       }
     }
-    expect(signWitness, `${choice.move} opposite signs have different 90-degree paths`).toBeGreaterThan(0.1);
-    expect(puzzle.moveToTransformation(choice.move).isIdentical(puzzle.moveToTransformation(`${choice.move}'`))).toBe(true);
+    expect(signWitness, `${choice.move} opposite signs have different middle frames`).toBeGreaterThan(0.1);
+    expect(puzzle.moveToTransformation(choice.move).isIdentical(puzzle.moveToTransformation(`${choice.move}'`))).toBe(choice.order === 2);
   }
 });
 

@@ -127,7 +127,7 @@ describe.each<MagicPuzzle>(['magic', 'mmagic'])('%s player controls', (puzzle) =
   it('loads the whole route, waits for real folds to finish, and gives each practice direction its own start', async () => {
     const count = magicStepCount(puzzle);
     await mount(setupFor('Forward'), 'F F', { animatePlayback: true, playbackMode: 'algorithm' });
-    const anchor = host.querySelector<HTMLSelectElement>('select[title="Anchor: keep the scramble start or the solve end fixed"]')!;
+    const anchor = host.querySelector<HTMLSelectElement>('select[aria-label="Anchor: keep the scramble start or the solve end fixed"]')!;
     expect(anchor.disabled).toBe(true);
     expect(anchor.value).toBe('moves');
     expect(cube.state).toEqual({ direction: 'Forward', step: 0 });

@@ -11,7 +11,7 @@
   "ignoreDependencies": ["tsx"],
   "workspaces": {
     ".": {
-      "entry": ["scripts/build-shanghai-space.mjs", "scripts/vercel-ignore-build.ts", "scripts/traffic-monitor.ts", "scripts/traffic-monitor.test.mjs", "scripts/traffic-guard.ts", "scripts/traffic-guard.test.mjs", "scripts/dev-preview/cli.ts", "scripts/dev-preview/client.ts", "scripts/dev-preview/model.test.ts", "scripts/local-dev.ts", "scripts/dev-preview/enroll.ts", "scripts/dev-preview/provision.ts"]
+      "entry": ["scripts/build-shanghai-space.mjs", "scripts/vercel-ignore-build.ts", "scripts/traffic-monitor.ts", "scripts/traffic-monitor.test.mjs", "scripts/traffic-guard.ts", "scripts/traffic-guard.test.mjs", "scripts/dev-preview/cli.ts", "scripts/dev-preview/client.ts", "scripts/dev-preview/model.test.ts", "scripts/local-dev.ts", "scripts/dev-preview/enroll.ts", "scripts/dev-preview/enroll.test.ts", "scripts/dev-preview/retry.test.ts", "scripts/dev-preview/provision.ts", "scripts/mac-memory-menu.mts", "scripts/mac-system-recorder.mts", "scripts/mac-system-recorder.test.mts"]
     },
     "{packages/client,apps/web}": {
       "entry": [
@@ -76,7 +76,7 @@
     },
     "{packages/alg-build,jobs/alg-build}": {
       "entry": ["*.{mjs,mts,ts}", "src/**/*.{mjs,mts,ts}"],
-      "ignoreBinaries": ["vm_stat", "sysctl", "ps"]
+      "ignoreBinaries": ["vm_stat", "sysctl", "ps", "caffeinate"]
     },
     "{packages/scramble-stats-build,jobs/scramble-stats-build}": {
       "entry": ["*.{mjs,ts,mts}", "src/**/*.{mjs,ts,mts}", "tests/**/*.test.ts"]

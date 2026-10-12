@@ -159,6 +159,7 @@ const TIMER_EVENT_PICKER_LAYOUT = [
   { id: 'comboctahedron', group: 'other', textLabel: 'Combo' },
   { id: 'circoradiolarian', group: 'other', textLabel: 'Circo' },
   { id: 'icosababyface', group: 'other', textLabel: 'Icosa' },
+  { id: 'cube3heli', group: 'other', textLabel: '3Heli' },
 ] as const satisfies readonly TimerEventPickerLayoutItem[];
 
 function pickerItem(entry: TimerEventPickerLayoutItem): TimerEventPickerItem {

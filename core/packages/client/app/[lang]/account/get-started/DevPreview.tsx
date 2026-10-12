@@ -42,7 +42,7 @@ export default function DevPreview(){
       </form>}
       {ticket&&<p><button type="button" className="staff-start-action" onClick={()=>copy(prompt,'preview-setup')}>{copiedKey==='preview-setup'?t('已复制','Copied'):t('复制给 AI，自动接入','Copy for AI setup')}</button></p>}
       <ul className="staff-start-steps">{data?.requests.map(r=><li key={r.id}><strong>{r.user_name} · dev-{r.owner_slug}-{r.device_slug}.cuberoot.me</strong>{!(data.canApprove&&r.status==='pending')&&<p>{r.status==='ready'&&r.connected?t('已连通，可用','Connected and available'):labels[r.status]}</p>}
-        {r.status==='preparing'&&Number(r.user_id)===user.uid&&<button type="button" disabled={busy} onClick={()=>void send(`requests/${r.id}/ticket`,{})}>{t('重新生成配置指令','Regenerate setup instructions')}</button>}
+        {r.status==='preparing'&&Number(r.user_id)===user.uid&&<button type="button" className="staff-start-inline-action" disabled={busy} onClick={()=>void send(`requests/${r.id}/ticket`,{})}>{t('重新生成配置指令','Regenerate setup instructions')}</button>}
         {r.status==='ready'&&r.connected&&<a href={`https://dev-${r.owner_slug}-${r.device_slug}.cuberoot.me/zh`} target="_blank" rel="noreferrer">{t('打开开发网址','Open preview')}</a>}
         {data.canApprove&&['pending','failed'].includes(r.status)&&<><button type="button" className="staff-start-action" disabled={busy} onClick={()=>void send(`requests/${r.id}/decision`,{decision:'approved'})}>{r.status==='failed'?t('重试开通','Retry'):t('批准','Approve')}</button>{' '}<button type="button" className="staff-start-action" disabled={busy} onClick={()=>void send(`requests/${r.id}/decision`,{decision:'rejected'})}>{t('拒绝','Decline')}</button></>}
       </li>)}</ul>

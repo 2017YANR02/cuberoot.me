@@ -25,6 +25,7 @@ const CASES = [
   { id: 'comboctahedron', scramble: "F B 2U 1-2BL D_BR_R_F 2D_F_L_BL 3U_L_F_R' 1-3U_B_BL_L D_BR_R_Fv", facelets: 72 },
   { id: 'circoradiolarian', scramble: "R 2L' Gw Uv", facelets: 300 },
   { id: 'icosababyface', scramble: "FREGU 2HIERC' FLACRw NALPOv", facelets: 20 },
+  { id: 'cube3heli', scramble: "F DF 2U' FLw Rw2 2UB' Fv DFv", facelets: 168 },
 ] as const;
 
 describe.each(CASES)('$id canonical SVG and native 3D sticker correspondence', ({ id, scramble, facelets }) => {

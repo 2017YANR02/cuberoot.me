@@ -3,12 +3,24 @@
 // No arguments: reproduce the original five-puzzle review.
 // --set=2026-10: review the next five before their registry entries are built.
 // --set=2026-10-12: review the mixed-axis and icosahedral additions.
+// --set=cube3heli: review the uniform 3x3 / Helicopter combination.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { getPuzzleGeometryByDesc } from 'cubing/puzzle-geometry';
 import { NATIVE_PUZZLES } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { Vector3 } from 'three';
 
 const reviewSets = {
+  cube3heli: {
+    basename: 'cube3heli-outlines',
+    rows: [
+      {
+        id: 'cube3heli', en: '3×3 + Helicopter',
+        description: 'c f 0.333333333333333 e 0.7071067811865476', visibleFacelets: 168,
+        prior: 'c f 0.333333333333333', priorLabel: '3×3',
+        notes: ['Combine uniform face cuts at h = 1/3 with edge cuts at h = sqrt(2)/2.', '90-degree face turns and 180-degree edge turns; 28 regions per face.'],
+      },
+    ],
+  },
   original: {
     basename: 'native-five-outlines',
     rows: [
@@ -94,7 +106,7 @@ const reviewSets = {
 };
 const args = process.argv.slice(2);
 if (args.length > 1 || (args[0] && !args[0].startsWith('--set='))) {
-  throw new Error('Usage: node compare-outlines.mjs [--set=original|2026-10|2026-10-12]');
+  throw new Error('Usage: node compare-outlines.mjs [--set=original|2026-10|2026-10-12|cube3heli]');
 }
 const setName = args[0]?.slice('--set='.length) ?? 'original';
 if (!Object.hasOwn(reviewSets, setName)) throw new Error(`Unknown review set: ${setName}`);
