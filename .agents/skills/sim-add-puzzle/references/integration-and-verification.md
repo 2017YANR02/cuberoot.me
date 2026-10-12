@@ -101,6 +101,7 @@
 | app-ui 来源消费 | 仅影响该消费者时检查 `packages/app-ui/src/scramble-source-contract.test.ts`、`scramble-source-matrix.audit.test.ts` |
 | 原生生成页接入 | 参考 `packages/client/tests/pyraminx-duo-native-scramble.test.ts` 的 native 路由、选择器和公开名称契约 |
 | 原生 PG 模型、手势与图示 | 按差异选择 `packages/client/tests/superz_geometry.test.ts`、`additional-puzzles-native-geometry.test.ts`、`native-puzzle-drag.test.ts`、`native-puzzle-svg.test.ts`；跨入口与 PDF 契约见 `native-puzzles-client-integration.test.ts` |
+| 原生混合转轴与独立角尖 | 用 `native-mixed-puzzles-geometry.test.ts` 独立核对不同周期、全层深、朝向重复片及不增加表面切分的角尖；用 `native-puzzle-sim-controls.test.ts` 核对同一拼图内切到 180° 轴的角度归一 |
 | 新增脚本子进程 | `architecture-boundaries.json` 的 `manualContracts` 与 `packages/client/tests/architecture-boundary-guard.test.ts` |
 
 - 更新公开出口列表和合法来源类型，保留严格断言；不要伪造 provider、添加无效图标或放宽断言来让旧契约通过。

@@ -16,6 +16,11 @@ const ADDED_CASES = [
   { id: 'fto5', setup: 'F', alg: "3D L'", moves: ['3F', "1-3D'"], invalid: 'Fw' },
   { id: 'eto', setup: 'FD', alg: "FL BLD'", moves: ['2FD', "FLw'"], invalid: 'F' },
   { id: 'radiocrystal', setup: 'R', alg: "G U'", moves: ['2R', "Gw'"], invalid: 'FREGU' },
+  { id: 'cube3skewb', setup: 'F', alg: "DRF U'", moves: ['2U', "Lw'"], invalid: 'DRFw' },
+  { id: 'heliskewb', setup: 'DRF', alg: "DF UFR'", moves: ['2DF', "FLw'"], invalid: 'DRFw' },
+  { id: 'comboctahedron', setup: 'F', alg: "D_BR_R_F B'", moves: ['2D_F_L_BL', "1-3U_B_BL_L'"], invalid: 'D_BR_R_Fw' },
+  { id: 'circoradiolarian', setup: 'R', alg: "G U'", moves: ['2R', "Gw'"], invalid: '4R' },
+  { id: 'icosababyface', setup: 'FREGU', alg: "HIERC2 FLACR'", moves: ['2NALPO', "FLACRw'"], invalid: '4FREGU' },
 ] as const;
 
 const CASES = [

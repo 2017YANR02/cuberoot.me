@@ -154,6 +154,11 @@ const TIMER_EVENT_PICKER_LAYOUT = [
   { id: 'fto5', group: 'other', textLabel: 'FTO5' },
   { id: 'eto', group: 'other', textLabel: 'ETO' },
   { id: 'radiocrystal', group: 'other', textLabel: 'RadioCr' },
+  { id: 'cube3skewb', group: 'other', textLabel: '3Skewb' },
+  { id: 'heliskewb', group: 'other', textLabel: 'HeliSk' },
+  { id: 'comboctahedron', group: 'other', textLabel: 'Combo' },
+  { id: 'circoradiolarian', group: 'other', textLabel: 'Circo' },
+  { id: 'icosababyface', group: 'other', textLabel: 'Icosa' },
 ] as const satisfies readonly TimerEventPickerLayoutItem[];
 
 function pickerItem(entry: TimerEventPickerLayoutItem): TimerEventPickerItem {

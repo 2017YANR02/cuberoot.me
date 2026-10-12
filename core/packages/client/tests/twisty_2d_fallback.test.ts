@@ -277,6 +277,34 @@ describe('TwistySection without WebGL', () => {
       controls: [{ move: 'R', order: 3 }, { move: '2R', order: 3 }, { move: 'Rw', order: 3 }],
       invalid: '4R', absent: ['3R', '3Rw'],
     },
+    {
+      id: 'cube3skewb', setup: 'F', alg: 'DRF', move: '2U', order: 4,
+      controls: [{ move: 'F', order: 4 }, { move: '2U', order: 4 }, { move: 'Lw', order: 4 }, { move: 'DRF', order: 3 }],
+      invalid: 'DRFw', absent: ['2DRF', 'DRFw', '3F', '3Fw'],
+    },
+    {
+      id: 'heliskewb', setup: 'DRF', alg: '2DF', move: 'DFw', order: 2,
+      controls: [{ move: 'DRF', order: 3 }, { move: 'DF', order: 2 }, { move: '2FL', order: 2 }, { move: 'DBw', order: 2 }],
+      invalid: 'DRFw', absent: ['2DRF', 'DRFw', 'F', '3DF', '3DFw'],
+    },
+    {
+      id: 'comboctahedron', setup: 'F', alg: 'D_BR_R_F', move: '1-3D_BR_R_F', order: 4,
+      controls: [
+        { move: 'F', order: 3 }, { move: 'B', order: 3 }, { move: '2U', order: 3 }, { move: '1-2BL', order: 3 },
+        { move: 'D_BR_R_F', order: 4 }, { move: '2D_F_L_BL', order: 4 }, { move: '3U_L_F_R', order: 4 }, { move: '1-3U_B_BL_L', order: 4 },
+      ],
+      invalid: 'D_BR_R_Fw', absent: ['BB', 'DBRRF', 'Fw', 'D_BR_R_Fw', '3F', '1-3F'],
+    },
+    {
+      id: 'circoradiolarian', setup: 'R', alg: '2R', move: 'Rw', order: 3,
+      controls: [{ move: 'R', order: 3 }, { move: '2R', order: 3 }, { move: 'Rw', order: 3 }],
+      invalid: '4R', absent: ['3R', '3Rw'],
+    },
+    {
+      id: 'icosababyface', setup: 'FREGU', alg: 'HIERCw', move: '2FLACR', order: 5,
+      controls: [{ move: 'FREGU', order: 5 }, { move: '2HIERC', order: 5 }, { move: 'FLACRw', order: 5 }],
+      invalid: '4FREGU', absent: ['F', '3FREGU', '3FREGUw'],
+    },
   ] as const;
 
   const nativeCases = [
@@ -376,6 +404,34 @@ describe('TwistySection without WebGL', () => {
     await act(async () => turn.click());
     expect(onUserMove).toHaveBeenCalledExactlyOnceWith(token);
     expect(nativePuzzleKPuzzle(id).moveToTransformation(token).isIdentityTransformation()).toBe(false);
+  });
+
+  it.each([2, -2])('keeps a real half-turn after switching Helicopter Skewb from a %i-step corner turn to an edge turn', async (amount) => {
+    await mountNative(nativeCases.find(({ id }) => id === 'heliskewb')!);
+    const move = host.querySelector<HTMLSelectElement>('select[aria-label="Move notation"]')!;
+    const angle = host.querySelector<HTMLSelectElement>('select[aria-label="Turn angle"]')!;
+    await act(async () => {
+      move.value = 'DRF';
+      move.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    expect(angle.options[0].textContent).toBe('120°');
+    await act(async () => {
+      angle.value = String(amount);
+      angle.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    await act(async () => {
+      move.value = 'DFw';
+      move.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    expect([...angle.options].map(option => option.textContent)).toEqual(['180°', '-180°']);
+    expect(angle.value).toBe(amount < 0 ? '-1' : '1');
+    const token = `DFw${amount < 0 ? "'" : ''}`;
+    const turn = host.querySelector<HTMLButtonElement>('.twisty-native-controls .twisty-fallback-move')!;
+    expect(turn.textContent).toBe(`Turn ${token}`);
+    await act(async () => turn.click());
+    expect(probe.publicAddMove).toHaveBeenCalledExactlyOnceWith(token);
+    expect(onUserMove).toHaveBeenCalledExactlyOnceWith(token);
+    expect(nativePuzzleKPuzzle('heliskewb').moveToTransformation(token).repetitionOrder()).toBe(2);
   });
 
   it.each(nativeCases)('$id quarantines invalid updates from setters/timeline and retains its last valid player state', async (spec) => {
@@ -491,6 +547,8 @@ describe('TwistySection without WebGL', () => {
         move.dispatchEvent(new Event('change', { bubbles: true }));
       });
       expect(angle.options[0].textContent).toBe(`${360 / expected.order}°`);
+      expect([...angle.options].map(option => option.value))
+        .toEqual(expected.order === 2 ? ['1', '-1'] : ['1', '-1', '2', '-2']);
       await act(async () => {
         angle.value = '-1';
         angle.dispatchEvent(new Event('change', { bubbles: true }));

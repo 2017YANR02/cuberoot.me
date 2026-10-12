@@ -6,5 +6,6 @@ export const DEV_PREVIEW_HOSTS: readonly string[] = [
   "dev-ruimin-alienware.cuberoot.me",
   "dev-alienware.cuberoot.me",
   "dev-ruimin-macbook-pro.cuberoot.me",
-  "dev-macbook-pro.cuberoot.me"
+  "dev-macbook-pro.cuberoot.me",
+  "dev-czy-y9000p.cuberoot.me"
 ];
