@@ -618,7 +618,7 @@ function ExternalLinks({ event, scramble, alg, solveId, copyText, shareTarget, o
             onChange={style => { void download(style); }}
             footer={() => <label className="recon-image-font">
               <span>{tr({ zh: '字体', en: 'Font' })}</span>
-              <select value={imageFont} onChange={e => setImageFont(e.target.value as ReconImageFont)}>
+              <select className="recon-image-font-select" value={imageFont} onChange={e => setImageFont(e.target.value as ReconImageFont)}>
                 <option value="original">{tr({ zh: '原始字体', en: 'Original font' })}</option>
                 <option value="roboto-condensed">Roboto Condensed Regular</option>
               </select>

@@ -7,6 +7,7 @@ import { GHOST_ALIGN, parseGhostMoves } from '@cuberoot/puzzle-render-core/engin
 import World from '@/app/[lang]/sim/engine/world';
 import { attachInteraction } from '@/app/[lang]/sim/worldInteraction';
 import { applySettings, DEFAULT_FACE_COLORS, DEFAULT_SETTINGS, loadSettings, saveSettings } from '@/app/[lang]/sim/SettingDrawer';
+import { CUBER_APPEARANCE } from '@/app/[lang]/sim/engine/define';
 import { applyHintFacelets } from '@/app/[lang]/sim/engine/hintFacelets';
 import { applyEngineBodyOverlay } from '@/app/[lang]/sim/engine/debugColors';
 import { deriveRawFaces } from '@/app/[lang]/sim/engine/rawBody';
@@ -160,7 +161,7 @@ describe('Ghost shell face colors', () => {
     for (const fn of disposed) expect(fn).toHaveBeenCalledTimes(1);
   });
 
-  it('migrates old, partial and invalid saved palettes without changing NxN and persists edits', () => {
+  it('migrates old, partial and invalid Ghost palettes with the NxN defaults upgrade and persists edits', () => {
     const values = new Map<string, string>();
     const localStorage = {
       getItem: (k: string) => values.get(k) ?? null,
@@ -173,14 +174,15 @@ describe('Ghost shell face colors', () => {
       for (const palette of [undefined, null, false, '#ff0000', { U: '#123456', D: 'garbage', R: 17, B: '#abc' }]) {
         values.set('sim.settings', JSON.stringify({ faceColors: DEFAULT_FACE_COLORS, ghostFaceColors: palette }));
         const s = loadSettings();
-        expect(s.faceColors).toEqual(DEFAULT_FACE_COLORS);
+        // Unversioned untouched NxN defaults upgrade independently of Ghost colors.
+        expect(s.faceColors).toEqual(CUBER_APPEARANCE.faces);
         expect(s.ghostFaceColors).toEqual(palette && typeof palette === 'object'
           ? { ...GHOST_DEFAULT_FACE_COLORS, U: '#123456', B: '#abc' } : GHOST_DEFAULT_FACE_COLORS);
       }
       const edited = { ...DEFAULT_SETTINGS, ghostFaceColors: { ...DEFAULT_FACE_COLORS, U: '#8800ff' } };
       expect(saveSettings(edited)).toBe(true);
       expect(loadSettings().ghostFaceColors).toEqual(edited.ghostFaceColors);
-      expect(loadSettings().faceColors).toEqual(DEFAULT_FACE_COLORS);
+      expect(loadSettings().faceColors).toEqual(CUBER_APPEARANCE.faces);
     } finally { vi.unstubAllGlobals(); }
   });
 });

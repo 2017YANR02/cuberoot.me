@@ -177,7 +177,7 @@ describe('Kilominx simulator controls', () => {
   }
 
   function anchorSelect() {
-    const select = host.querySelector<HTMLSelectElement>('select[title="Anchor: keep the scramble start or the solve end fixed"]');
+    const select = host.querySelector<HTMLSelectElement>('select[aria-label="Anchor: keep the scramble start or the solve end fixed"]');
     expect(select).not.toBeNull();
     return select!;
   }

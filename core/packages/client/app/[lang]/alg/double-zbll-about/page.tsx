@@ -58,7 +58,7 @@ export default function DoubleZbllAbout() {
       <p>{t('保持顶底轴不变，有四种绕轴方向；再加上顶底互换后的四种方向，共八种。对状态和解法做同一套转动记号转换，就能复用计算结果。', 'There are four orientations around the top–bottom axis, plus four with the top and bottom exchanged. Applying the same face-turn relabeling to the state and its solution lets them share the computed result.')}</p>
       <div className="dz-about-demo" data-site-surface="panel">
         <label>{t('选择对称变换', 'Choose a symmetry')}
-          <select value={rotation} onChange={e => setRotation(Number(e.target.value))}>
+          <select className="dz-about-symmetry-select" value={rotation} onChange={e => setRotation(Number(e.target.value))}>
             {rotations.map((r, i) => <option key={i} value={i}>{r || t('原方向', 'Original orientation')}</option>)}
           </select>
         </label>

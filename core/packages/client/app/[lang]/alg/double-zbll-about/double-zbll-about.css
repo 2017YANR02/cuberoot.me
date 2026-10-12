@@ -23,8 +23,8 @@
 .dz-about-equation strong { color: var(--accent); font-size: 28px; font-variant-numeric: tabular-nums; }
 .dz-about-demo { padding: 24px; border-radius: 16px; margin: 24px 0; }
 .dz-about-demo label { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; color: var(--muted-foreground); }
-.dz-about-demo select { width: fit-content; border: 1px solid var(--border-default); border-radius: 8px; padding: 8px 12px; background: var(--background); color: var(--foreground); font: inherit; }
-.dz-about-demo select:focus-visible, .dz-about-start:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
+.dz-about-symmetry-select { width: fit-content; border: 1px solid var(--border-default); border-radius: 8px; padding: 8px 12px; background: var(--background); color: var(--foreground); font: inherit; }
+.dz-about-symmetry-select:focus-visible, .dz-about-start:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
 .dz-about-turns { display: flex; gap: 24px; align-items: center; justify-content: center; padding: 28px 0 14px; color: var(--accent); }
 .dz-about-turns code { font-size: clamp(20px, 3vw, 30px); }
 .dz-about-demo p { font-size: 14px; color: var(--muted-foreground); }
