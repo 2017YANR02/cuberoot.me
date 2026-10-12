@@ -232,6 +232,11 @@ describe.each([
   { event: 'fto5', nameEn: '5-layer FTO', nameZh: '五阶 FTO' },
   { event: 'eto', nameEn: "Eitan's ETO", nameZh: 'ETO 棱转八面体' },
   { event: 'radiocrystal', nameEn: 'Radio Crystal', nameZh: 'Radio Crystal' },
+  { event: 'cube3skewb', nameEn: '3×3 + Skewb', nameZh: '三阶＋斜转' },
+  { event: 'heliskewb', nameEn: 'Helicopter Skewb', nameZh: '直升机斜转' },
+  { event: 'comboctahedron', nameEn: 'Comboctahedron', nameZh: 'Comboctahedron' },
+  { event: 'circoradiolarian', nameEn: 'Circo-Radiolarian', nameZh: 'Circo-Radiolarian' },
+  { event: 'icosababyface', nameEn: 'Deep-Cut Icosahedron', nameZh: '深切角转二十面体' },
 ] as const)('$event csTimer compatibility', ({ event, nameEn, nameZh }) => {
   it('preserves renamed sessions and mixed native notation through both import APIs', () => {
     const solve = {
@@ -312,6 +317,15 @@ describe('compound native csTimer session names', () => {
     ['练习：五阶 FTO', 'fto5'],
     ["Session_Eitan's_ETO", 'eto'],
     ['Radio_Crystal_Practice', 'radiocrystal'],
+    ['Session_3x3_+_Skewb', 'cube3skewb'],
+    ['3×3 + Skewb_Practice', 'cube3skewb'],
+    ['练习：三阶＋斜转', 'cube3skewb'],
+    ['Session_Helicopter_Skewb', 'heliskewb'],
+    ['练习：直升机斜转', 'heliskewb'],
+    ['Comboctahedron_Practice', 'comboctahedron'],
+    ['Circo-Radiolarian_Practice', 'circoradiolarian'],
+    ['Deep-Cut_Icosahedron_Practice', 'icosababyface'],
+    ['练习：深切角转二十面体', 'icosababyface'],
   ] as const)('preserves %s as %s before trying shorter event tokens', (name, event) => {
     const raw = JSON.stringify({
       session1: [[[0, 8_765], 'R', '', 1_700_000_000]],

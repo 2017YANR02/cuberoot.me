@@ -41,6 +41,11 @@ describe('simulator puzzle families', () => {
       ['fto5', 'octahedron'],
       ['eto', 'octahedron'],
       ['radiocrystal', 'icosahedron'],
+      ['cube3skewb', 'hybrid-cuts'],
+      ['heliskewb', 'hybrid-cuts'],
+      ['comboctahedron', 'octahedron'],
+      ['circoradiolarian', 'icosahedron'],
+      ['icosababyface', 'icosahedron'],
     ]) {
       const containing = groups.filter(group => group.options.some(option => option.value === puzzle));
       expect(containing.map(group => group.id)).toEqual([family]);

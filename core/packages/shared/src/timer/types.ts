@@ -30,6 +30,7 @@ export type EventId =
   | 'dogic' | 'octahedron4' | 'dinoskewb' | 'cube3dino'
   | 'lattice' | 'hyperx' | 'latticex' | 'masterbrilic' | 'masterftov2'
   | 'quadx' | 'dinoocta' | 'fto5' | 'eto' | 'radiocrystal'
+  | 'cube3skewb' | 'heliskewb' | 'comboctahedron' | 'circoradiolarian' | 'icosababyface'
   // Relays
   | 'r3' | 'r4' | 'r5'
   // CFOP step training
@@ -247,6 +248,11 @@ export const EVENTS: EventInfo[] = [
   { id: 'fto5', nameEn: '5-layer FTO', nameZh: '五阶 FTO', group: 'nonwca' },
   { id: 'eto', nameEn: "Eitan's ETO", nameZh: 'ETO 棱转八面体', group: 'nonwca' },
   { id: 'radiocrystal', nameEn: 'Radio Crystal', nameZh: 'Radio Crystal', group: 'nonwca' },
+  { id: 'cube3skewb', nameEn: '3×3 + Skewb', nameZh: '三阶＋斜转', group: 'nonwca' },
+  { id: 'heliskewb', nameEn: 'Helicopter Skewb', nameZh: '直升机斜转', group: 'nonwca' },
+  { id: 'comboctahedron', nameEn: 'Comboctahedron', nameZh: 'Comboctahedron', group: 'nonwca' },
+  { id: 'circoradiolarian', nameEn: 'Circo-Radiolarian', nameZh: 'Circo-Radiolarian', group: 'nonwca' },
+  { id: 'icosababyface', nameEn: 'Deep-Cut Icosahedron', nameZh: '深切角转二十面体', group: 'nonwca' },
 
   // CFOP step training
   { id: 'cross',  nameEn: 'Cross only',  nameZh: '十字',       group: 'cfop'
