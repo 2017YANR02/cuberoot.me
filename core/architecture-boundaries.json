@@ -163,6 +163,27 @@
       ]
     },
     {
+      "id": "alg-build-double-zbll-symmetry-native",
+      "from": "jobs/alg-build symmetry coordinator",
+      "to": "audited local AUF batch runner and macOS resource diagnostics",
+      "phase": "subprocess-native",
+      "mechanism": "Fixed Node batch script, caffeinate tied to owner PID, and read-only vm_stat/sysctl/ps. No shell command interpolation.",
+      "owner": "alg-build",
+      "rationale": "Reviewed for the user-requested 7555446-state local shortcut: retains boot/swap baseline, verifies checkpoints, monitors the process tree, never publishes or commits.",
+      "replacement": "Keep native execution in this offline job. UI consumes only verified artifacts.",
+      "subprocessCalls": [
+        { "file": "jobs/alg-build/src/double-zbll-symmetry.mts", "mechanism": "spawn", "target": "<dynamic>", "count": 1 },
+        { "file": "jobs/alg-build/src/double-zbll-symmetry.mts", "mechanism": "spawn", "target": "caffeinate", "count": 1 },
+        { "file": "jobs/alg-build/src/double-zbll-symmetry.mts", "mechanism": "execFileSync", "target": "vm_stat", "count": 1 },
+        { "file": "jobs/alg-build/src/double-zbll-symmetry.mts", "mechanism": "execFileSync", "target": "sysctl", "count": 2 },
+        { "file": "jobs/alg-build/src/double-zbll-symmetry.mts", "mechanism": "execFileSync", "target": "ps", "count": 2 }
+      ],
+      "evidence": [
+        { "file": "docs/double-zbll-trainer.md", "contains": "7,555,446" },
+        { "file": "solver/333opt/solve_h10.mts" }
+      ]
+    },
+    {
       "id": "client-account-avatar-and-puzzle-icon-generation",
       "from": "packages/client build scripts and icon regression fixtures",
       "to": "shared avatar manifest and event-icon SVG sources",
