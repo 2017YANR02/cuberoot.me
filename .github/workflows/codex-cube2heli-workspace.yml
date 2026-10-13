@@ -3,34 +3,137 @@ name: Cube2Heli verification workspace
 on:
   push:
     branches: [codex/sim-cube2heli-20261013]
-    paths: [.github/workflows/codex-cube2heli-workspace.yml]
+    paths:
+      - .github/workflows/codex-cube2heli-workspace.yml
+      - .github/cube2heli-*.patch
+      - .github/cube2heli-browser.spec.mts
 
 permissions:
-  contents: read
-  actions: read
+  contents: write
+
+concurrency:
+  group: cube2heli-acceptance-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  workspace:
+  verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v6
         with:
-          name: cube2heli-workspace
-          run-id: 38373025016
-          github-token: ${{ github.token }}
-          path: /tmp/cube2heli-download
-      - name: Split the existing credential-free source and dependency snapshot
-        run: split -b 350M /tmp/cube2heli-download/cube2heli-workspace.tar.gz /tmp/cube2heli-part-
-      - uses: actions/upload-artifact@v4
+          ref: codex/sim-cube2heli-20261013
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /.node-version
+            /AGENTS.md
+            /.agents/
+            /.github/
+            /.codex/
+            /.githooks/
+            /core/
+            !/core/packages/platform/
+            /docs/
+            /ops/
+            /scripts/
+            /.sync/
+            /sync_upstream.ts
+            /tools/cstimer-scramble/
+            /solver/333opt/inject.mjs
+            /solver/333opt/data_paths.mjs
+      - name: Apply the reviewed feature patches only on this branch
+        shell: bash
+        run: |
+          test "$(git branch --show-current)" = 'codex/sim-cube2heli-20261013'
+          if ! grep -q '  cube2heli: {' core/packages/puzzle-solvers/src/native-puzzles.ts; then
+            git apply --check --unidiff-zero .github/cube2heli-implementation.patch
+            git apply --unidiff-zero .github/cube2heli-implementation.patch
+            git apply --check --unidiff-zero .github/cube2heli-integration.patch
+            git apply --unidiff-zero .github/cube2heli-integration.patch
+          fi
+      - uses: pnpm/action-setup@v6
         with:
-          name: cube2heli-part-aa
-          path: /tmp/cube2heli-part-aa
-          retention-days: 1
-          compression-level: 0
-      - uses: actions/upload-artifact@v4
+          package_json_file: core/package.json
+      - uses: actions/setup-node@v6
         with:
-          name: cube2heli-part-ab
-          path: /tmp/cube2heli-part-ab
-          retention-days: 1
-          compression-level: 0
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: core/pnpm-lock.yaml
+      - name: Install and build shared dependencies
+        working-directory: core
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm --filter @cuberoot/client build:deps
+      - name: Generate matching structural icons and commit feature changes
+        working-directory: core
+        shell: bash
+        run: |
+          node packages/client/scripts/generate-puzzle-icons.mts
+          pnpm --filter @cuberoot/event-icon generate
+          cd ..
+          git diff --check
+          git add -- .agents/skills/sim-add-puzzle/SKILL.md .agents/skills/sim-add-puzzle/references/native-pg-puzzles.md core/packages/puzzle-solvers/src/native-puzzles.ts core/packages/shared/src/timer/{types,event-catalog,scramble-runtime,export-cstimer,import-cstimer}.ts core/packages/client/components/NativePuzzleControls.tsx 'core/packages/client/app/[lang]/sim/puzzleOptions.ts' core/packages/client/scripts/native-puzzles/compare-outlines.mjs core/packages/client/tests/{native-mixed-puzzles-geometry,native-puzzle-drag,native-puzzle-sim-controls,native-puzzle-manual-anchor,native-puzzle-svg,native-puzzles-client-integration,sim-puzzle-menu,timer-drill-contract-shared,timer-puzzle-picker,timer-scramble-preview-shared,timer-scramble-source-bar,timer-sync-seed,timer_cstimer_io,timer_event_catalog,timer_persistence,timer_scramble_runtime,twisty_2d_fallback}.test.ts core/packages/app-ui/src/scramble-source-matrix.audit.test.ts core/packages/event-icon/svg/puzzle/cube2heli.svg core/packages/event-icon/src/svg-map-puzzle.ts
+          if ! git diff --cached --quiet; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git commit -m 'feat(sim): add native 2x2 + Helicopter across simulator, Timer and scramble sheets'
+            git push origin HEAD:codex/sim-cube2heli-20261013
+          fi
+          git rev-parse HEAD
+      - name: Typecheck the complete client
+        id: typecheck
+        continue-on-error: true
+        working-directory: core
+        env:
+          GOMEMLIMIT: 5GiB
+        run: pnpm --filter @cuberoot/client typecheck
+      - name: Run geometry and all affected integration fixtures
+        id: tests
+        continue-on-error: true
+        working-directory: core
+        run: |
+          pnpm --filter @cuberoot/client exec vitest run tests/native-mixed-puzzles-geometry.test.ts tests/native-puzzle-drag.test.ts tests/native-puzzle-sim-controls.test.ts tests/native-puzzles-client-integration.test.ts tests/native-puzzle-svg.test.ts tests/puzzle-icon-catalog.test.ts tests/timer_battle_event_sync.test.ts tests/timer_nonwca_scramble.test.ts tests/timer_cstimer_io.test.ts tests/twisty_2d_fallback.test.ts tests/timer_event_catalog.test.ts tests/timer_scramble_runtime.test.ts tests/timer-sync-seed.test.ts tests/timer_persistence.test.ts tests/timer-scramble-preview-shared.test.ts tests/timer-scramble-source-bar.test.ts tests/native-puzzle-manual-anchor.test.ts tests/sim-puzzle-menu.test.ts tests/timer-puzzle-picker.test.ts tests/timer-drill-contract-shared.test.ts
+          pnpm --filter @cuberoot/app-ui exec vitest run src/scramble-source-matrix.audit.test.ts
+      - name: Install browser
+        working-directory: core
+        run: pnpm --filter @cuberoot/client exec playwright install --with-deps chromium
+      - name: Run actual browser acceptance
+        id: browser
+        continue-on-error: true
+        working-directory: core
+        shell: bash
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+          NEXT_TELEMETRY_DISABLED: '1'
+        run: |
+          mkdir -p packages/client/.tmp/cube2heli .tmp/cube2heli-browser
+          cp ../.github/cube2heli-browser.spec.mts packages/client/.tmp/cube2heli/acceptance.spec.mts
+          cat > packages/client/.tmp/cube2heli/playwright.config.mts <<'EOF'
+          import { defineConfig } from '@playwright/test';
+          export default defineConfig({ testDir: '.', testMatch: '**/*.spec.mts', workers: 1, retries: 0, timeout: 180000, expect: { timeout: 15000 }, outputDir: '../../../../.tmp/cube2heli-browser/results', reporter: [['line'], ['html', { outputFolder: '../../../../.tmp/cube2heli-browser/report', open: 'never' }]], use: { browserName: 'chromium', headless: true, launchOptions: { args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] }, trace: 'retain-on-failure', screenshot: 'only-on-failure' } });
+          EOF
+          node scripts/build-cubing-worker.mjs packages/client/public/cubing-chunks
+          cd packages/client
+          node node_modules/next/dist/bin/next dev -H 127.0.0.1 -p 3000 > ../../.tmp/cube2heli-browser/next.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          for i in $(seq 1 90); do
+            if curl --max-time 3 --silent --output /dev/null http://127.0.0.1:3000/; then break; fi
+            sleep 2
+          done
+          pnpm exec playwright test --config .tmp/cube2heli/playwright.config.mts
+      - name: Upload acceptance evidence without credentials
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cube2heli-browser-evidence
+          path: core/.tmp/cube2heli-browser
+          retention-days: 7
+      - name: Require every verification stage to succeed
+        if: always()
+        env:
+          TYPECHECK: ${{ steps.typecheck.outcome }}
+          TESTS: ${{ steps.tests.outcome }}
+          BROWSER: ${{ steps.browser.outcome }}
+        run: test "$TYPECHECK" = success && test "$TESTS" = success && test "$BROWSER" = success
