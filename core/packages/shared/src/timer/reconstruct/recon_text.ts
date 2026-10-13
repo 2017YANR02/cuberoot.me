@@ -689,14 +689,15 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
     endIdx: snappedEnd(span),
   }));
   const spans = snappedSpans.filter((span, i) => span.endIdx >= 0 && (i === 0 || span.endIdx > snappedSpans[i - 1].endIdx));
-  const wasteSpans = wastedDisplaySpans(scramble, moves);
+  const boundaries = new Set(spans.map(span => span.endIdx));
+  const wasteSpans = wastedDisplaySpans(scramble, moves, boundaries);
   const preserveMoves = new Set<number>();
   for (const span of wasteSpans) {
     for (let i = span.fromIdx; i <= span.toIdx; i++) preserveMoves.add(i);
   }
   const humanizeOptions = {
     core,
-    boundaries: new Set(spans.map(span => span.endIdx)),
+    boundaries,
     suppressZRotationsThroughMs: !isCfop || core?.frame === 'scramble' ? undefined : segs.f2lEndIdx == null ? Infinity
       : (moves[spans.filter(span => span.kind === 'cross' || span.kind === 'f2l').at(-1)?.endIdx ?? -1]?.ts ?? f2lEndMs),
   };

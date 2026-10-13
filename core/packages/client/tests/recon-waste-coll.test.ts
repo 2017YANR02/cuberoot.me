@@ -50,6 +50,16 @@ describe.each(['cfop', 'roux', 'zz'] as const)('%s waste notation', method => {
     expect(wastedDisplaySpans('', timed(["U'", "U'", "U'"]))).toEqual([{ fromIdx: 0, toIdx: 2 }]);
   });
 
+  it('never groups waste across a completed stage but retains loops within the next stage', () => {
+    const moves = timed(['R', "R'", 'U', "U'"]);
+    expect(wastedDisplaySpans('', moves, new Set([0])))
+      .toEqual([{ fromIdx: 2, toIdx: 3 }]);
+    expect(wastedDisplaySpans('', timed(["U'", "U'", "U'"]), new Set([0])))
+      .toEqual([]);
+    expect(wastedDisplaySpans('', timed(['R', 'U', "U'", "R'"]), new Set([0])))
+      .toEqual([{ fromIdx: 1, toIdx: 2 }]);
+  });
+
   it('closes brackets at line boundaries and keeps adjacent waste groups distinct', () => {
     expect(formattedReconMoves({ moves: ['R', "R'", 'U', "U'"], wasteGroups: [0, 0, 1, 1] } as Parameters<typeof formattedReconMoves>[0]))
       .toEqual(['(R', "R')", '(U', "U')"]);
@@ -66,6 +76,17 @@ describe.each(['cfop', 'roux', 'zz'] as const)('%s waste notation', method => {
 });
 
 describe('COLL versus OLL(CP)', () => {
+  it('keeps a cross-ending turn and its reversal in the next stage out of waste brackets', async () => {
+    const moves = ["F'", 'F', 'U', "U'"].map((m, i) => ({ m, ts: 100 + i * 500 }));
+    const segs = computeStageSegments('F', moves, 2200)!;
+    const result = await buildReconText({ scramble: 'F', moves, totalMs: 2200, segs, metrics: null, slots: null });
+    const cross = result.lines.find(line => line.kind === 'cross')!;
+    expect(cross.toIdx).toBe(0);
+    expect(formattedReconMoves(cross)).toEqual(["F'"]);
+    const following = result.lines.filter(line => line !== cross).flatMap(formattedReconMoves).join(' ');
+    expect(following).toBe("F (U U')");
+  });
+
   const epll = "R U' R U R U R U' R' U' R2";
   it.each([
     ["R U R' U R U2 R'", true, '// COLL'],
