@@ -46,8 +46,10 @@ import type { ReconTextResult, ReconTextLine } from '@cuberoot/shared/timer/reco
 import { formattedReconMoves, reconTextForClipboard } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import { gradeForDelta } from '@cuberoot/shared/timer/reconstruct/reference';
 import type { ReferenceResult, SlotReference } from '@cuberoot/shared/timer/reconstruct/reference';
+import { METHODS, type MethodId } from '@cuberoot/shared/timer/reconstruct/methods';
 
 export interface StepMoveListProps {
+  method?: MethodId;
   recon: ReconTextResult | null;
   /** 每阶段参考步数(十字 / OLL / PLL 的徽章从这里来)。 */
   reference: ReferenceResult | null;
@@ -70,10 +72,10 @@ interface Group {
   lines: ReconTextLine[];
 }
 
-function groupLines(lines: ReconTextLine[]): Group[] {
+function groupLines(lines: ReconTextLine[], method: MethodId): Group[] {
   const out: Group[] = [];
   for (const line of lines) {
-    const key = line.kind === 'f2l' ? 'f2l' : line.kind;
+    const key = method === 'cfop' ? line.kind : line.key === 'tail' ? METHODS[method].stages.at(-1)!.key : line.key;
     const last = out[out.length - 1];
     if (last && last.key === key) last.lines.push(line);
     else out.push({ key, lines: [line] });
@@ -86,17 +88,18 @@ function gradeLabel(tr: ReconstructLocalize): string {
 }
 
 export default function StepMoveList({
-  recon, reference, slotReference, currentIdx, onSeek, notice, feedback,
+  method = 'cfop', recon, reference, slotReference, currentIdx, onSeek, notice, feedback,
 }: StepMoveListProps) {
   const { localize: tr, writeClipboardText } = useReconstructHost();
   const [copied, setCopied] = useState(false);
 
   if (!recon || recon.lines.length === 0) return null;
-  const groups = groupLines(recon.lines);
+  const groups = groupLines(recon.lines, method);
   const crossColor = crossColorFromLabels(recon.lines.map(line => line.label));
 
   /** 这一行的徽章。槽走 slotReference,其余走 stages。 */
   const gradeFor = (line: ReconTextLine): 'optimal' | null => {
+    if (method !== 'cfop') return null;
     if (line.key.startsWith('slot-')) {
       const slot = line.key.slice(5);
       const sr = slotReference?.find(s => s.slot === slot) ?? null;
@@ -178,7 +181,7 @@ export default function StepMoveList({
       )}
 
       {groups.map(g => (
-          <section key={g.key} className="sml-group">
+          <section key={g.key} className="sml-group" data-stage={g.key}>
             {g.lines.map((line, i) => {
               // 徽章:F2L 一组一个。十字 / OLL / PLL 的以前挂在组标题上,标题去掉
               // 之后跟着它那一行走 —— 但只在这一组确实只有一行时,PLL 后面那条

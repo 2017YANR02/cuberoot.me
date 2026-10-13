@@ -31,6 +31,8 @@ devsite add cuberoot "C:/实际项目目录/core" http://127.0.0.1:3000/zh -- "C
 
 ## 多方法复盘的公共动作重建
 
+回放时间轴和动作列表跟随当前方法：Roux 使用 FB / SB / CMLL / LSE，ZZ 使用 EOLine / 左块 / 右块 / 顶层。阶段标识与配色分离，沿用阶段顺序配色；收尾动作归入末阶段，点击跳转和高亮使用重建后的原始动作区间。组件回归见 `timer-full-reconstruct-shared.test.ts`。
+
 CFOP、Roux、ZZ 的分步文字统一经过 `buildReconText`，共享中层、双层、转体、废步分组与原始动作区间。方法只提供阶段边界；边界落在同一物理手势内部时顺延到手势末尾，废步跨行时分别闭合括号，纯转体保留时间但不占编码器动作索引。复制文本与点击回放使用同一重建结果。
 
 Roux、ZZ 仍沿用现有阶段粒度，不新增 CMLL/ZBLL case 或参考解法分析；CFOP 的早期 Z 转体抑制和 Cross AUF 边界规则不应用于它们。不同方法、语言的异步分析缓存隔离，CFOP 手工文字覆盖不套用到其他方法。验证包括 `recon-method-gestures`、`recon-wide-timing`、`recon-waste-coll`、`reconstruct-worker` 测试及复盘 ground-truth 门禁。

@@ -537,6 +537,7 @@ function ReconstructReportBody({
 
       {playbackAvailable && (
         <PlaybackPanel
+          method={method}
           event={solve.event}
           scramble={solve.scramble}
           moves={moves}
@@ -549,6 +550,7 @@ function ReconstructReportBody({
           deviceModel={solve.device?.model ?? null}
           side={playbackRecon ? ({ idx, playFrom }) => (
             <StepMoveList
+              method={method}
               recon={playbackRecon}
               reference={analysis?.reference ?? null}
               slotReference={analysis?.slotReference ?? null}
