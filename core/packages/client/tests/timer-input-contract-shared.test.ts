@@ -41,6 +41,20 @@ function down(
 }
 
 describe('shared timer keyboard manifest', () => {
+  it.each([
+    key('ControlLeft', { ctrlKey: true }),
+    key('KeyC', { ctrlKey: true }),
+    key('MetaLeft', { metaKey: true }),
+    key('KeyC', { metaKey: true }),
+  ])('preserves browser copy gestures while running: %j', input => {
+    expect(down(input, { phase: 'running' })).toMatchObject({
+      command: { id: 'none' }, preventDefault: false,
+    });
+    expect(down(key('KeyC'), { phase: 'running' })).toMatchObject({
+      command: { id: 'press-down' }, preventDefault: true,
+    });
+  });
+
   it('locks the exact action set, display order, and default bindings', () => {
     expect(shared.TIMER_ACTION_IDS).toEqual([
       'delete-last',

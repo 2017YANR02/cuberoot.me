@@ -860,6 +860,11 @@ button.stl-track:focus-visible { outline: 2px solid var(--ring); outline-offset:
 /* ── 分步动作列表 ─────────────────────────────────────────────────────
    动作 + 标注 + 徽章。没有卡片框,层级全靠留白和字重。 */
 .sml { position: relative; }
+.sml, .timer-live-stage {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
 .sml-head { display: flex; justify-content: flex-end; }
 .sml-copy {
   appearance: none; cursor: pointer;
