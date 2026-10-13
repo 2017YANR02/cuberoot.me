@@ -1,0 +1,69 @@
+name: Radio Web acceptance
+
+on:
+  push:
+    branches: [codex/sim-radio-web-20261013]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: radio-web-acceptance-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: core
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout: |
+            core
+            .agents/skills/sim-add-puzzle
+            .codex
+            docs
+            ops/nginx
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: core/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: core/pnpm-lock.yaml
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile --filter @cuberoot/client...
+      - name: Build runtime dependencies
+        run: pnpm --filter @cuberoot/client build:deps
+      - name: Generate structural icons
+        run: |
+          pnpm --filter @cuberoot/client exec node scripts/generate-puzzle-icons.mts
+          pnpm --filter @cuberoot/event-icon generate
+      - name: Native model and integration contracts
+        run: pnpm --filter @cuberoot/client exec vitest run tests/native-puzzle-svg.test.ts tests/native-puzzle-drag.test.ts tests/native-puzzles-client-integration.test.ts tests/native-puzzle-sim-controls.test.ts tests/radio-web-native-geometry.test.ts
+      - name: Typecheck client
+        run: pnpm --filter @cuberoot/client typecheck
+      - name: Browser acceptance
+        if: ${{ hashFiles('core/packages/client/scripts/radio-web-browser-acceptance.mts') != '' }}
+        run: |
+          pnpm --filter @cuberoot/client exec playwright install --with-deps chromium
+          pnpm --filter @cuberoot/client exec node --import tsx scripts/radio-web-browser-acceptance.mts
+      - name: Collect review artifacts
+        if: always()
+        run: |
+          mkdir -p .tmp/radio-web-evidence
+          git diff -- packages/event-icon > .tmp/radio-web-evidence/generated-icons.patch
+          tar -czf .tmp/radio-web-evidence/review-source.tar.gz --exclude=node_modules --exclude=dist --exclude=.next packages/puzzle-solvers/src/native-puzzles.ts packages/puzzle-solvers/src/native-puzzle-model.ts packages/puzzle-render-core/src/native-puzzle-svg.ts packages/shared/src/timer packages/timer-ui/src packages/client/app/'[lang]'/sim packages/client/app/'[lang]'/scramble/gen packages/client/components/NativePuzzleControls.tsx packages/client/components/TwistySection.tsx packages/client/components/scramble-preview-svg.ts packages/client/components/puzzle-models/gestures packages/client/lib/native-scramble.ts packages/client/tests packages/event-icon
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: radio-web-evidence
+          path: core/.tmp/radio-web-evidence/
+          retention-days: 7
