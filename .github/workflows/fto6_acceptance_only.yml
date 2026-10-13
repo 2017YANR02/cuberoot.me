@@ -1,0 +1,64 @@
+# Isolated acceptance branch only; not part of the feature PR or main.
+name: FTO acceptance audit
+on:
+  push:
+    branches: [codex/fto6-acceptance-20261013]
+permissions:
+  contents: read
+concurrency:
+  group: fto6-isolated-acceptance
+  cancel-in-progress: true
+jobs:
+  browser:
+    if: github.repository == '2017YANR02/cuberoot.me' && github.ref == 'refs/heads/codex/fto6-acceptance-20261013'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: codex/add-six-layer-fto-20261013
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /.node-version
+            /core/
+            /docs/generated-artifacts.json
+            /docs/platform-capability-manifest.json
+            /tools/cstimer-scramble/
+      - uses: pnpm/action-setup@v6
+        with:
+          package_json_file: core/package.json
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: core/pnpm-lock.yaml
+      - name: Build exact feature checkout
+        working-directory: core
+        run: |
+          mkdir -p .tmp/fto6-browser
+          git rev-parse HEAD > .tmp/fto6-browser/tested-sha.txt
+          pnpm install --frozen-lockfile
+          pnpm --filter @cuberoot/client build:deps
+          pnpm --filter @cuberoot/client typecheck
+          pnpm --filter @cuberoot/client exec playwright install --with-deps chromium
+      - name: Public browser acceptance
+        working-directory: core
+        shell: bash
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+        run: |
+          pnpm --filter @cuberoot/client dev > .tmp/fto6-browser/dev.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          for n in {1..120}; do
+            if curl -fsS http://127.0.0.1:3000/zh/sim > /dev/null; then break; fi
+            sleep 2
+          done
+          pnpm --filter @cuberoot/client exec node scripts/native-puzzles/verify-fto6.mts
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fto6-browser-acceptance
+          path: core/.tmp/fto6-browser/
+          retention-days: 7
