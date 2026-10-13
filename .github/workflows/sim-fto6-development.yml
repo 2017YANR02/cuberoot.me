@@ -1,16 +1,12 @@
 name: FTO6 development verification
-
 on:
   push:
     branches: [codex/sim-fto6-20261013]
-
 permissions:
   contents: write
-
 concurrency:
   group: fto6-development-${{ github.ref }}
   cancel-in-progress: true
-
 jobs:
   verify:
     if: github.ref == 'refs/heads/codex/sim-fto6-20261013'
@@ -28,8 +24,8 @@ jobs:
             core
             docs
             ops
-      - name: Apply reviewed feature changes to this branch only
-        run: node .github/fto6-apply.mjs
+      - name: Apply reviewed tests
+        run: node .github/fto6-review.mjs
       - uses: pnpm/action-setup@v4
         with:
           package_json_file: core/package.json
@@ -44,51 +40,53 @@ jobs:
       - name: Build shared dependencies
         working-directory: core
         run: pnpm --filter @cuberoot/client build:deps
-      - name: Generate exact outline and structural icon
-        working-directory: core
-        run: |
-          pnpm --filter @cuberoot/client exec node scripts/native-puzzles/compare-outlines.mjs --set=fto6
-          pnpm --filter @cuberoot/client exec node scripts/generate-puzzle-icons.mts
-          pnpm --filter @cuberoot/event-icon generate
-      - name: Commit generated feature to development branch
+      - name: Commit reviewed tests to development branch
         run: |
           git diff --check
-          git add .agents/skills/sim-add-puzzle core/packages/puzzle-solvers/src/native-puzzles.ts core/packages/shared/src/timer core/packages/client/components/NativePuzzleControls.tsx core/packages/client/scripts/native-puzzles/compare-outlines.mjs core/packages/client/tests core/packages/event-icon
+          git add core/packages/client/tests
           if ! git diff --cached --quiet; then
             git config user.name 'github-actions[bot]'
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git commit -m 'feat(sim): add six-layer FTO across simulator, scramble and timer'
+            git commit -m 'test(sim): independently verify six-layer FTO cuts and all layer aliases'
             git push origin HEAD:codex/sim-fto6-20261013
           fi
           git rev-parse HEAD | tee /tmp/fto6-tested-sha.txt
-          git diff-tree --no-commit-id --name-only -r HEAD -z | tar --null -T - -czf /tmp/fto6-changed-source.tgz
-      - name: Inspect geometry metadata
-        working-directory: core/packages/client
-        run: |
-          node --input-type=module <<'JS' | tee /tmp/fto6-geometry.json
-          import {getPuzzleGeometryByDesc} from 'cubing/puzzle-geometry';
-          import {nativePuzzleKPuzzle} from '@cuberoot/puzzle-solvers/native-puzzle-model';
-          import {NATIVE_PUZZLES} from '@cuberoot/puzzle-solvers/native-puzzles';
-          const pg = getPuzzleGeometryByDesc(NATIVE_PUZZLES.fto6.description, {allMoves:true, orientCenters:true, addRotations:true});
-          const g = pg.get3d(), visible = g.stickers.filter(s=>!s.isDup);
-          const face = visible.filter(s=>s.face===visible[0].face);
-          const groups = {};
-          for(const s of face){const k=s.orbit+','+s.coords.length/3;groups[k]=(groups[k]??0)+1;}
-          console.log(JSON.stringify({faces:g.faces.length, perFace:pg.stickersPerFace, raw:g.stickers.length, visible:visible.length, pieces:new Set(visible.map(s=>s.orbit+':'+s.ord)).size, faceOrbits:groups, orbits:nativePuzzleKPuzzle('fto6').definition.orbits},null,2));
-          JS
+          tar -czf /tmp/fto6-tested-source.tgz core/packages/client/tests/browser core/packages/client/tests/native-five-geometry.test.ts core/packages/client/tests/timer_event_catalog.test.ts
       - name: Run native and Timer regression tests
         working-directory: core
-        run: pnpm --filter @cuberoot/client exec vitest run tests/native-puzzle-drag.test.ts tests/native-puzzle-manual-anchor.test.ts tests/native-puzzle-sim-controls.test.ts tests/native-puzzle-svg.test.ts tests/native-puzzles-client-integration.test.ts tests/native-pg-pointer.test.ts tests/native-2d-image-studio.test.ts tests/timer_scramble_runtime.test.ts tests/timer_event_catalog.test.ts tests/timer_cstimer_io.test.ts tests/timer_persistence.test.ts tests/timer-sync-seed.test.ts tests/timer-scramble-preview-shared.test.ts tests/timer-scramble-source-bar.test.ts tests/puzzle-icon-catalog.test.ts
+        run: pnpm --filter @cuberoot/client exec vitest run tests/native-five-geometry.test.ts tests/native-puzzle-drag.test.ts tests/native-puzzle-manual-anchor.test.ts tests/native-puzzle-sim-controls.test.ts tests/native-puzzle-svg.test.ts tests/native-puzzles-client-integration.test.ts tests/native-pg-pointer.test.ts tests/native-2d-image-studio.test.ts tests/timer_scramble_runtime.test.ts tests/timer_event_catalog.test.ts tests/timer_cstimer_io.test.ts tests/timer_persistence.test.ts tests/timer-sync-seed.test.ts tests/timer-scramble-preview-shared.test.ts tests/timer-scramble-source-bar.test.ts tests/puzzle-icon-catalog.test.ts
       - name: Typecheck client
         working-directory: core
         run: pnpm --filter @cuberoot/client typecheck
+      - name: Install Chromium
+        working-directory: core
+        run: pnpm --filter @cuberoot/client exec playwright install --with-deps chromium
+      - name: Exercise real page flows in Chromium
+        working-directory: core
+        env:
+          NODE_OPTIONS: --max-old-space-size=6144
+        run: |
+          pnpm --filter @cuberoot/client dev > /tmp/fto6-dev.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          ready=0
+          for attempt in $(seq 1 120); do
+            if curl --fail --silent --max-time 3 http://127.0.0.1:3000/zh/sim -o /dev/null; then ready=1; break; fi
+            sleep 2
+          done
+          test "$ready" = 1 || { tail -100 /tmp/fto6-dev.log; exit 1; }
+          pnpm --filter @cuberoot/client exec playwright test --config tests/browser/playwright.config.ts
+      - name: Collect verification artifacts
+        if: always()
+        run: |
+          mkdir -p /tmp/fto6-artifacts
+          cp /tmp/fto6-tested-* /tmp/fto6-artifacts/ 2>/dev/null || true
+          cp /tmp/fto6-dev.log /tmp/fto6-artifacts/ 2>/dev/null || true
+          cp core/.tmp/fto6-browser-report.json /tmp/fto6-artifacts/ 2>/dev/null || true
+          cp -r core/packages/client/.tmp/fto6-browser /tmp/fto6-artifacts/ 2>/dev/null || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: fto6-verification
-          path: |
-            /tmp/fto6-changed-source.tgz
-            /tmp/fto6-tested-sha.txt
-            /tmp/fto6-geometry.json
-            core/.tmp/png/fto6-*.svg
+          path: /tmp/fto6-artifacts
           retention-days: 7
