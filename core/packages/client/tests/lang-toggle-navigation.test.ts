@@ -1,12 +1,14 @@
 // @vitest-environment jsdom
 
-import { act, createElement, Fragment } from 'react';
+import { act, createElement, Fragment, Suspense, useLayoutEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import i18n from '@/i18n/i18n-client';
 import LangToggle from '@/components/LangToggle';
 import I18nProvider from '@/i18n/I18nProvider';
+import { useT } from '@/hooks/useT';
+import { T, tr } from '@/i18n/tr';
 
 const navigation = vi.hoisted(() => ({ replace: vi.fn() }));
 vi.mock('next/navigation', () => ({
@@ -76,4 +78,54 @@ it('changes the route locale after commit without updating mounted subscribers d
   } finally {
     errors.mockRestore();
   }
+});
+
+it.each(['en', 'zh'] as const)('notifies a newly mounted %s route after its language subscriptions are installed', async (initialLang) => {
+  await i18n.changeLanguage(initialLang === 'en' ? 'zh' : 'en');
+  function PageText() {
+    const t = useT();
+    return createElement('p', null, t('中文', 'English'), '|', tr({ zh: '中文', en: 'English' }));
+  }
+  function NamespaceText() {
+    const { i18n: instance } = useTranslation();
+    return createElement('span', null, instance.language);
+  }
+  await act(async () => root.render(createElement(I18nProvider, {
+    initialLang,
+    children: createElement(Fragment, null,
+      createElement(PageText), createElement(NamespaceText), createElement(T, { zh: '中文', en: 'English' })),
+  })));
+  expect(i18n.language).toBe(initialLang);
+  expect(host.textContent).toBe(initialLang === 'en' ? 'English|EnglishenEnglish' : '中文|中文zh中文');
+});
+
+it.each(['en', 'zh'] as const)('rechecks %s language after a Suspense subtree renders but before it subscribes', async (initialLang) => {
+  const previousLang = initialLang === 'en' ? 'zh' : 'en';
+  await i18n.changeLanguage(previousLang);
+  function PageText() {
+    const t = useT();
+    const [count, setCount] = useState(0);
+    return createElement('button', { onClick: () => setCount(value => value + 1) },
+      t('中文', 'English'), '|', tr({ zh: '中文', en: 'English' }), '|', count);
+  }
+  function RouteCommit() {
+    // Simulate the router committing its locale after child render but before
+    // that new subtree's passive subscription. The provider then sees an
+    // already-correct singleton and has no second event to emit.
+    useLayoutEffect(() => { void i18n.changeLanguage(initialLang); }, []);
+    return null;
+  }
+  await act(async () => root.render(createElement(I18nProvider, {
+    initialLang,
+    children: createElement(Fragment, null,
+      createElement(Suspense, { fallback: 'loading' }, createElement(PageText), createElement(T, { zh: '中文', en: 'English' })),
+      createElement(RouteCommit)),
+  })));
+  const expected = initialLang === 'en' ? 'English|English|0English' : '中文|中文|0中文';
+  expect(i18n.language).toBe(initialLang);
+  expect(host.textContent).toBe(expected);
+  await act(async () => host.querySelector('button')!.click());
+  await act(async () => { await i18n.changeLanguage(previousLang); });
+  // A language change updates text without remounting the page or losing state.
+  expect(host.textContent).toBe(previousLang === 'en' ? 'English|English|1English' : '中文|中文|1中文');
 });
