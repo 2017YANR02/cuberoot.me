@@ -63,8 +63,8 @@ export interface ErrorDetectResult {
 
 /** Display-only waste ranges. Unlike zero-effect loops, over-turns still make
  * progress, so they must not charge their entire duration to the waste score. */
-export function wastedDisplaySpans(scramble: string, moves: SolveMove[]): Array<{ fromIdx: number; toIdx: number }> {
-  const ranges: Array<{ fromIdx: number; toIdx: number }> = [...(detectWastedWork(scramble, moves)?.spans ?? [])];
+export function wastedDisplaySpans(scramble: string, moves: SolveMove[], boundaries?: ReadonlySet<number>): Array<{ fromIdx: number; toIdx: number }> {
+  const ranges: Array<{ fromIdx: number; toIdx: number }> = [...(detectWastedWork(scramble, moves, boundaries)?.spans ?? [])];
   for (let from = 0; from < moves.length;) {
     const first = /^([UDFBLRMESudfblr])(2?)('?)$/.exec(moves[from].m);
     if (!first) { from++; continue; }
@@ -72,6 +72,7 @@ export function wastedDisplaySpans(scramble: string, moves: SolveMove[]): Array<
     let signed = 0;
     let travelled = 0;
     while (to < moves.length) {
+      if (to > from && boundaries?.has(to - 1)) break;
       const turn = /^([UDFBLRMESudfblr])(2?)('?)$/.exec(moves[to].m);
       if (!turn || turn[1] !== first[1]) break;
       const amount = turn[2] ? 2 : 1;
@@ -98,6 +99,7 @@ export function wastedDisplaySpans(scramble: string, moves: SolveMove[]): Array<
 export function detectWastedWork(
   scramble: string,
   moves: SolveMove[],
+  boundaries?: ReadonlySet<number>,
 ): ErrorDetectResult | null {
   if (!moves || moves.length === 0) return null;
 
@@ -126,6 +128,9 @@ export function detectWastedWork(
     const key = toFaceletString(state);
     const prev = seen.get(key);
     if (prev !== undefined) raw.push([prev + 1, i]);
+    // A completed stage starts a new display grouping, even if a later move
+    // returns to a state visited before that stage was completed.
+    if (boundaries?.has(i)) seen.clear();
     seen.set(key, i);
   }
 
