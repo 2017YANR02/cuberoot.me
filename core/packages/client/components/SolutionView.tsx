@@ -11,7 +11,7 @@
  * 否则该行第一个招式(光标落在行首 `(` 等分隔符前时,高亮本行首招而非上一行末招)。
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
-import { ArrowRightLeft } from 'lucide-react';
+import { ReconCrossToggle } from '@cuberoot/timer-ui';
 import { VisualCube } from '@/components/VisualCube';
 import Link from '@/components/AppLink';
 import { loadAlg } from '@cuberoot/shared/alg';
@@ -219,15 +219,8 @@ export default function SolutionView({ text, event, scramble = '', sourceText = 
         const nl = i > 0 ? '\n' : '';
         const lineStart = lineStarts[i];
         const toggle = i === crossLineIdx && onToggleCross ? (
-          <button
-            type="button"
-            className={`recon-cross-toggle${crossNormalized ? ' active' : ''}`}
-            onClick={(e) => { e.stopPropagation(); onToggleCross(); }}
-            title={crossNormalized ? 'Show original' : 'Normalize cross'}
-            tabIndex={-1}
-          >
-            <ArrowRightLeft size={12} />
-          </button>
+          <ReconCrossToggle normalized={crossNormalized} onToggle={onToggleCross}
+            label={crossNormalized ? 'Show original' : 'Normalize cross'} tabIndex={-1} />
         ) : null;
 
         // 行内局部位置:光标(空 span 占位)与当前招式高亮区间。

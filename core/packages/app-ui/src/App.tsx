@@ -3169,6 +3169,13 @@ export function App({ host }: { host: InstalledAppHost }) {
 
   const reconstructionHost = {
     localize: <T,>(text: { en: T; zh: T }) => text[language],
+    renderCaseLink: (path: string, label: string, className: string) => {
+      const href = SITE_ORIGIN + (language === 'zh' ? '/zh' : '') + path;
+      return <a href={href} className={className} onClick={event => {
+        event.preventDefault();
+        void host.openExternal(href);
+      }}>{label}</a>;
+    },
     writeClipboardText: host.writeClipboardText,
     replayUrl: async (solve: Solve) => {
       const base = SITE_ORIGIN + (language === 'zh' ? '/zh' : '') + '/timer';

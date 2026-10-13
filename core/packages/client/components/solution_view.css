@@ -119,26 +119,3 @@
 }
 
 /* Cross 行就地切换图标(标准化/原始) */
-.recon-cross-toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  vertical-align: middle;
-  background: transparent;
-  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
-  border-radius: 4px;
-  color: var(--faint-foreground);
-  cursor: pointer;
-  padding: 1px 4px;
-  margin-left: 6px;
-  user-select: none;
-}
-.recon-cross-toggle:hover {
-  color: var(--accent);
-  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
-}
-.recon-cross-toggle.active {
-  color: var(--accent);
-  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
-  background: color-mix(in srgb, var(--accent) 8%, transparent);
-}
