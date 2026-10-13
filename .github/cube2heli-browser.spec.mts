@@ -2,7 +2,7 @@ import { chromium, test, expect, type Page, type TestInfo } from '@playwright/te
 
 const origin = process.env.CUBE2HELI_BASE_URL ?? 'http://127.0.0.1:3000';
 test.use({ viewport: { width: 1440, height: 1000 }, permissions: ['clipboard-read', 'clipboard-write'] });
-test.setTimeout(180_000);
+test.setTimeout(120_000);
 
 async function evidence(page: Page, info: TestInfo, name: string) {
   await info.attach(`${name}-dom`, { body: await page.locator('body').ariaSnapshot(), contentType: 'text/plain' });
@@ -15,7 +15,6 @@ test.afterEach(async ({ page }, info) => {
 });
 
 async function chooseGeneratorPuzzle(page: Page) {
-  // Inactive panels remain mounted; wait for hydration before opening a picker.
   const trigger = page.locator('.gen-config-toolbar:visible .pp-trigger:visible').first();
   await expect(trigger).toBeVisible({ timeout: 90_000 });
   await expect(async () => {
@@ -25,9 +24,10 @@ async function chooseGeneratorPuzzle(page: Page) {
   const chosen = page.locator('.pp-item:visible').filter({ hasText: '二阶＋直升机' });
   await expect(chosen).toHaveCount(1);
   if (await chosen.getAttribute('aria-checked') !== 'true') await chosen.click();
-  for (const other of await page.locator('.pp-item[aria-checked="true"]:visible').all()) {
-    if (!(await other.innerText()).includes('二阶＋直升机')) await other.click();
-  }
+  // Locators are live. Recompute the checked collection after each toggle;
+  // pre-enumerated nth() locators move when an item becomes unchecked.
+  const others = page.locator('.pp-item[aria-checked="true"]:visible').filter({ hasNotText: '二阶＋直升机' });
+  while (await others.count()) await others.first().click();
   await expect(chosen).toHaveAttribute('aria-checked', 'true');
   await page.keyboard.press('Escape');
   await expect(trigger).toHaveAttribute('aria-expanded', 'false');
@@ -59,13 +59,13 @@ test('3D simulator: manual moves, playback, history and exact share restoration'
   for (const token of ['Fw', '3DFw']) expect(options).not.toContain(token);
   await moves.selectOption('F');
   await page.getByRole('button', { name: '转动 F', exact: true }).click();
-  await expect(solution).toHaveValue('F');
+  await expect(solution).toHaveValue(/^F\s*$/);
   await page.waitForTimeout(1200);
   await evidence(page, info, 'manual-face-terminal');
   await moves.selectOption('DF');
   expect(await page.getByLabel('转动角度', { exact: true }).locator('option').allTextContents()).toEqual(['180°', '-180°']);
   await page.getByRole('button', { name: '转动 DF', exact: true }).click();
-  await expect(solution).toHaveValue(/F DF/);
+  await expect(solution).toHaveValue(/^F DF\s*$/);
   await page.waitForTimeout(1200);
   await evidence(page, info, 'manual-edge-terminal');
   await page.getByRole('button', { name: '随机打乱', exact: true }).click();
@@ -74,7 +74,6 @@ test('3D simulator: manual moves, playback, history and exact share restoration'
   expect(setup.trim().split(/\s+/)).toHaveLength(60);
   await evidence(page, info, 'random-terminal');
   await page.getByRole('button', { name: '动画展示打乱', exact: true }).click();
-  // This action transfers setup into the playable algorithm track.
   await expect(scramble).toHaveValue('');
   await expect(solution).toHaveValue(setup);
   await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible();
@@ -105,12 +104,10 @@ test('3D surface pointer drag appends a genuine layer move', async ({ page }, in
   await expect(page.getByLabel('拖转层', { exact: true })).toBeVisible({ timeout: 90_000 });
   await page.waitForTimeout(1500);
   await expect(solution).toHaveValue('');
-  const host = page.locator('.twisty-container');
-  await evidence(page, info, 'drag-before');
-  const box = await host.boundingBox();
-  expect(box).not.toBeNull();
+  const box = await page.locator('.twisty-container').boundingBox();
   if (!box) throw new Error('Missing visible native player');
-  // Ordinary pointer input on the front-face sticker region, not model access.
+  await evidence(page, info, 'drag-before');
+  // Ordinary pointer input at a visible front-face sticker, not model access.
   await page.mouse.move(box.x + box.width * 0.65, box.y + box.height * 0.62);
   await page.mouse.down();
   await page.mouse.move(box.x + box.width * 0.80, box.y + box.height * 0.52, { steps: 16 });
@@ -142,9 +139,9 @@ for (const mode of ['comp', 'batch', 'paste'] as const) {
       count = 2;
     }
     await assertNets(page, count);
-    const tokens = await page.locator('.gen-tn-sheets:visible code').allTextContents();
-    expect(tokens.length).toBeGreaterThan(0);
-    if (mode !== 'paste') expect(tokens[0].trim().split(/\s+/)).toHaveLength(60);
+    const codes = page.locator('.gen-tn-sheets:visible code');
+    await expect(codes.first()).toBeVisible();
+    if (mode !== 'paste') await expect.poll(async () => (await codes.first().innerText()).trim().split(/\s+/).length).toBe(60);
     await evidence(page, info, `${mode}-native-nets`);
   });
 }
@@ -156,7 +153,7 @@ test('Timer retains the event and renders a 48-sticker random scramble net', asy
   await expect(net.locator('polygon[data-face]')).toHaveCount(48);
   await expect(page.locator('.pp-trigger:visible').first()).toContainText('2Heli');
   const scramble = page.locator('.scramble-text:visible').first();
-  expect((await scramble.innerText()).trim().split(/\s+/)).toHaveLength(60);
+  await expect.poll(async () => (await scramble.innerText()).trim().split(/\s+/).length, { timeout: 30_000 }).toBe(60);
   await evidence(page, info, 'timer-native');
   await page.reload({ waitUntil: 'domcontentloaded' });
   await expect(page.locator('.pp-trigger:visible').first()).toContainText('2Heli', { timeout: 60_000 });
@@ -175,7 +172,7 @@ test('No WebGL: mobile English fallback remains usable without claiming 3D', asy
     await expect(moves).toBeEnabled();
     await moves.selectOption('DFw');
     await page.getByRole('button', { name: 'Turn DFw', exact: true }).click();
-    await expect(page.getByPlaceholder('Solution', { exact: true })).toHaveValue('DFw');
+    await expect(page.getByPlaceholder('Solution', { exact: true })).toHaveValue(/^DFw\s*$/);
     await evidence(page, info, 'mobile-english-2d');
   } finally {
     await evidence(page, info, 'fallback-final').catch(() => {});
