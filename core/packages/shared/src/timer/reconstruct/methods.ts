@@ -30,7 +30,7 @@ import { faceletToCubie } from '../../cube_facelet';
 import { detectCfopStage, stageRank } from './cfop-detect';
 import type { CubeFaces } from './state';
 import { toFaceletString } from './state';
-import { stepSolved } from './steps';
+import { stepSolvedInFrame as stepSolved } from './steps';
 
 export type MethodId = 'cfop' | 'roux' | 'zz';
 
@@ -108,8 +108,8 @@ const ZZ: SolveMethod = {
     },
     // The two halves of ZZ's F2L are exactly Roux's blocks — same five pieces a
     // side — so they reuse the same verified masks rather than a second copy.
-    { key: 'zzleft',  zh: '左块', en: 'Left block',  done: (_f, s) => stepSolved('fb', s) },
-    { key: 'zzright', zh: '右块', en: 'Right block', done: (_f, s) => stepSolved('sb', s) },
+    { key: 'zzleft',  zh: '左块', en: 'Left block',  done: (f, s) => lineSolved(f) && allEdgesOriented(s) && stepSolved('fb', s) },
+    { key: 'zzright', zh: '右块', en: 'Right block', done: (f, s) => lineSolved(f) && allEdgesOriented(s) && stepSolved('sb', s) },
     { key: 'll',      zh: '顶层', en: 'Last layer',  done: (_f, s) => stepSolved('solved', s) },
   ],
 };
