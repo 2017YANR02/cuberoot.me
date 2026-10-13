@@ -138,10 +138,18 @@
 .timer-battle-layout-controls:empty { display: none; }
 .battle-readout-label { font-size: 12px; line-height: 1.4; }
 
-/* Explicit battle scope retains the centered mode control on narrow screens. */
-.shell-topbar.timer-battle-toolbar { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+/* Center when space permits; let either action group claim its full width
+   before shifting the middle controls. Include the home variant explicitly
+   so the shared chrome rule cannot override this through stylesheet order. */
+.shell-topbar.timer-battle-toolbar,
+.shell-topbar.timer-battle-toolbar:has(.shell-topbar-home) {
+  grid-template-columns: minmax(max-content, 1fr) max-content minmax(max-content, 1fr);
+}
 .timer-battle-toolbar .shell-topbar-left { grid-column: 2; grid-row: 1; justify-self: center; justify-content: center; flex-wrap: nowrap; }
 .timer-battle-toolbar .shell-topbar-right { grid-column: 3; grid-row: 1; }
+.timer-battle-toolbar .timer-room-actions { flex-wrap: nowrap; }
+.timer-battle-toolbar .timer-room-actions > * { flex-shrink: 0; }
+.timer-battle-toolbar .timer-room-actions > button { white-space: nowrap; }
 .timer-battle-toolbar > .middle-logo { grid-column: 1; grid-row: 1; }
 @media (max-width: 480px) {
   .shell-topbar.timer-battle-toolbar { gap: 2px; padding-inline: 6px; }
