@@ -152,6 +152,7 @@ const TIMER_EVENT_PICKER_LAYOUT = [
   { id: 'quadx', group: 'other', textLabel: 'QuadX' },
   { id: 'dinoocta', group: 'other', textLabel: 'DinoOct' },
   { id: 'fto5', group: 'other', textLabel: 'FTO5' },
+  { id: 'fto6', group: 'other', textLabel: 'FTO6' },
   { id: 'eto', group: 'other', textLabel: 'ETO' },
   { id: 'radiocrystal', group: 'other', textLabel: 'RadioCr' },
   { id: 'cube3skewb', group: 'other', textLabel: '3Skewb' },

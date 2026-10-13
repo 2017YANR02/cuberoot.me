@@ -117,6 +117,11 @@ export const NATIVE_PUZZLES = {
     axes: OCTAHEDRON_FACE_AXES, order: 3, layers: 3, rangeWide: true,
     scrambleLength: 60, aspect: 4 / 3, visibleFacelets: 200,
   },
+  fto6: {
+    description: 'o f 0 f 0.3333333333333333 f 0.6666666666666666', zh: '六阶 FTO', en: '6-layer FTO', textLabel: 'FTO6',
+    axes: OCTAHEDRON_FACE_AXES, order: 3, layers: 3, rangeWide: true,
+    scrambleLength: 72, aspect: 4 / 3, visibleFacelets: 288,
+  },
   eto: {
     description: 'o e 0.6123724356957945', zh: 'ETO 棱转八面体', en: "Eitan's ETO", textLabel: 'ETO',
     axes: OCTAHEDRON_EDGE_AXES, order: 2, layers: 2, scrambleLength: 60, aspect: 4 / 3, visibleFacelets: 104,
