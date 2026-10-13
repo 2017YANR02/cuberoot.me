@@ -345,6 +345,9 @@ export function timerKeyDownDecision(context: TimerKeyDownContext): TimerKeyboar
   }
 
   if (phase === 'running') {
+    // Browser copy shortcuts (including the modifier keydown itself) must not
+    // become a stop command when selected live text leaves focus on the body.
+    if (input.ctrlKey || input.metaKey) return decision();
     return decision({ id: 'press-down', warmupSound: false }, true);
   }
   if (phase === 'holding' || phase === 'ready' || phase === 'inspecting') {
