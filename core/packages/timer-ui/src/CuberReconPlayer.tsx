@@ -33,10 +33,11 @@ function tokenize(alg: string): string[] {
 export default function CuberReconPlayer({
   scramble, alg, order, fillPane = false, playerRef, hideControls = false, fullscreenButton,
   backView = true, anchorAtEnd = false, mirror = false, stickering = '', stickeringOrientation = '',
-  stickeringMasks, transparent = false, ariaLabel, leadingControls, trailingControls, controlLabels, stickeringOverride,
+  stickeringMasks, transparent = false, ariaLabel, leadingControls, trailingControls, controlLabels, stickeringOverride, segmentEnds,
 }: {
   scramble: string;
   alg: string;
+  segmentEnds?: readonly number[];
   /** Start from alg inverse and finish at the setup state. */
   anchorAtEnd?: boolean;
   /** NxN order (2..7). */
@@ -119,6 +120,7 @@ export default function CuberReconPlayer({
     <ReconPlayerBase
       scramble={scramble}
       alg={alg}
+      segmentEnds={segmentEnds}
       adapter={adapter}
       fillPane={fillPane}
       hideControls={hideControls}

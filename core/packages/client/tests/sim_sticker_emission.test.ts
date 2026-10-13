@@ -96,13 +96,16 @@ describe('upstream cuber appearance', () => {
     } finally { world.controller.stop(); world.cube.dispose(); if (world.cube !== initialCube) initialCube.dispose(); other.dispose(); }
   });
 
-  it('migrates old defaults once and retains custom or subsequently selected WCA colours', () => {
+  it('defaults to WCA and preserves saved face colours during core migration', () => {
     const read = (settings: object) => {
       vi.stubGlobal('window', { localStorage: { getItem: (key: string) => key === 'sim.settings' ? JSON.stringify(settings) : null } });
       return loadSettings();
     };
     try {
-      expect(read({ faceColors: DEFAULT_FACE_COLORS, coreColor: '#202020' }).faceColors).toEqual(CUBER_APPEARANCE.faces);
+      expect(DEFAULT_SETTINGS.faceColors).toEqual(DEFAULT_FACE_COLORS);
+      expect(read({}).faceColors).toEqual(DEFAULT_FACE_COLORS);
+      expect(read({ faceColors: DEFAULT_FACE_COLORS, coreColor: '#202020' }).faceColors).toEqual(DEFAULT_FACE_COLORS);
+      expect(read({ faceColors: CUBER_APPEARANCE.faces }).faceColors).toEqual(CUBER_APPEARANCE.faces);
       const custom = { ...DEFAULT_FACE_COLORS, U: '#abc123' };
       const migrated = read({ faceColors: custom, coreColor: '#123456' });
       expect(migrated.faceColors).toEqual(custom);

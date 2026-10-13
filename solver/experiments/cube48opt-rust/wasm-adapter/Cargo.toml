@@ -1,0 +1,21 @@
+[package]
+name = "cube48opt-rust-wasm"
+version = "0.1.0"
+edition = "2021"
+publish = false
+license = "GPL-3.0-or-later"
+description = "Single-threaded memory64 WebAssembly adapter for the Rust Opt1–9 research kernel"
+
+[workspace]
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+cube48opt-research = { path = "..", default-features = false }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"

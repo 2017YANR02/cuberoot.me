@@ -1,4 +1,5 @@
 import type { Context } from 'hono';
+import { ORDER_CASH_FLOW_SQL } from '../platform/cash_flow.js';
 import { requirePlatformAdmin } from '../platform/auth.js';
 import {
   isPostgresConflict,
@@ -397,10 +398,9 @@ platformContentRoutes.get('/platform/admin/analytics', async (c) => {
       COALESCE(SUM(total_amount_minor) FILTER(WHERE paid_at IS NOT NULL),0)::text AS "paidAmountMinor"
       FROM platform_orders WHERE created_at>=NOW()-make_interval(days=>$1)
       GROUP BY date,currency ORDER BY date,currency`,[days]),
-    platformQuery(platformDb(),`SELECT currency,SUM(paid)::text AS "paidAmountMinor",SUM(refunded)::text AS "refundedAmountMinor" FROM (
-      SELECT currency,total_amount_minor AS paid,0::bigint AS refunded FROM platform_orders WHERE paid_at>=NOW()-make_interval(days=>$1)
-      UNION ALL SELECT currency,0::bigint,amount_minor FROM platform_refunds WHERE status='succeeded' AND succeeded_at>=NOW()-make_interval(days=>$1)
-    ) flow GROUP BY currency ORDER BY currency`,[days]),
+    platformQuery(platformDb(),`WITH bounds AS (SELECT NOW()-make_interval(days=>$1) AS start_at, 'infinity'::timestamptz AS end_at)
+      SELECT currency,SUM(paid)::text AS "paidAmountMinor",SUM(refunded)::text AS "refundedAmountMinor"
+      FROM (${ORDER_CASH_FLOW_SQL}) flow GROUP BY currency ORDER BY currency`,[days]),
     platformQuery(platformDb(),`SELECT id::text AS id,order_number AS "orderNumber",status,currency,total_amount_minor AS "totalAmountMinor",created_at AS "createdAt" FROM platform_orders ORDER BY created_at DESC LIMIT 10`),
     platformQuery(platformDb(),`SELECT status,COUNT(*)::int AS count FROM platform_orders WHERE created_at>=NOW()-make_interval(days=>$1) GROUP BY status ORDER BY status`,[days]),
   ]);

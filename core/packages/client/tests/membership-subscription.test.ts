@@ -81,6 +81,22 @@ describe('membership subscription cancellation', () => {
     expect(host.textContent).toContain('已购买权益可使用至已付服务期结束');
     expect([...host.querySelectorAll('button')].some((item) => item.textContent === '取消自动续费')).toBe(false);
   });
+  it('dismisses a backdrop tap without cancellation and preserves inside-to-outside drags', async () => {
+    await render(); await click('取消自动续费');
+    const dialog = host.querySelector('dialog')!;
+    const body = host.querySelector('.mem-cancel-body')!;
+    await act(async () => {
+      body.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, button: 0 }));
+      dialog.click();
+    });
+    expect(host.querySelector('dialog')).not.toBeNull();
+    await act(async () => {
+      dialog.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, button: 0 }));
+      dialog.click();
+    });
+    expect(host.querySelector('dialog')).toBeNull();
+    expect(mocks.cancel).not.toHaveBeenCalled();
+  });
   it('does not report a 202 pending cancellation as success and allows retry', async () => {
     const pending = { ...active, cancellationRequested: true, syncStatus: 'unavailable' as const };
     mocks.cancel.mockResolvedValue({ subscription: pending });

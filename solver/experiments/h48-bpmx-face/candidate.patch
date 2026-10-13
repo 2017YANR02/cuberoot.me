@@ -1,0 +1,198 @@
+diff --git a/src/solvers/h48/solve.h b/src/solvers/h48/solve.h
+index 36fefa1705..1bb47e4595 100644
+--- a/src/solvers/h48/solve.h
++++ b/src/solvers/h48/solve.h
+@@ -6,6 +6,9 @@
+ #define H48_SORT_TASKS_MIN_DEPTH 16
+ #define H48_LOG_PROGRESS_MIN_DEPTH 15
+ 
++/* Experiment switch is snapshotted once per solve, before starting workers. */
++STATIC _Atomic bool h48_bpmx_enabled = false;
++
+ typedef struct {
+ 	cube_t cube;
+ 	uint8_t moves[H48_STARTING_MOVES];
+@@ -35,6 +38,10 @@ typedef struct {
+ 	uint64_t nodes_visited;
+ 	uint64_t table_fallbacks;
+ 	uint64_t table_lookups;
++	bool bpmx_enabled;
++	uint64_t bpmx_cuts;
++	uint64_t bpmx_skipped;
++	uint64_t face_cuts;
+ 	int8_t threads;
+ 	int ntasks;
+ 	solve_h48_task_t *tasks;
+@@ -68,7 +75,11 @@ STATIC long long solve_h48_dispatch(oriented_cube_t, const char *, unsigned,
+     unsigned, unsigned, unsigned, unsigned, unsigned, unsigned long long,
+     const unsigned char *, unsigned, char *,
+     long long [SIZE(NISSY_SIZE_SOLVE_STATS)], int (*)(void *), void *);
+-STATIC_INLINE void h48_prune_pipeline(dfsarg_solve_h48_t [NON_NULL],
++STATIC_INLINE void h48_face_cut(dfsarg_solve_h48_t [NON_NULL],
++    h48_prune_t [SIZE(NMOVES)], uint8_t, uint8_t, uint8_t);
++STATIC_INLINE bool h48_bpmx_cut(dfsarg_solve_h48_t [NON_NULL],
++    h48_prune_t [SIZE(NMOVES)], uint8_t, uint8_t, uint8_t);
++STATIC_INLINE bool h48_prune_pipeline(dfsarg_solve_h48_t [NON_NULL],
+     h48_prune_t [SIZE(NMOVES)], uint8_t, bool);
+ STATIC_INLINE uint8_t h48_prune_lookup(
+     uint64_t, cube_t, dfsarg_solve_h48_t [NON_NULL]);
+@@ -155,6 +166,53 @@ h48_prune_lookup_nocoord(
+ }
+ 
+ STATIC_INLINE void
++h48_face_cut(
++	dfsarg_solve_h48_t arg[NON_NULL],
++	h48_prune_t prune[SIZE(NMOVES)],
++	uint8_t bound,
++	uint8_t target,
++	uint8_t witness
++)
++{
++	uint8_t first, m;
++
++	/* The three children reached by turning one face are pairwise one
++	 * HTM move apart. A fresh bound >= target + 2 excludes that face.
++	 * The caller checks the stronger whole-parent BPMX cut first. */
++	if (!arg->bpmx_enabled || bound < (unsigned)target + 2U)
++		return;
++
++	arg->face_cuts++;
++	first = witness - witness % 3;
++	for (m = first; m < first + 3; m++)
++		prune[m].stop = 1;
++}
++
++STATIC_INLINE bool
++h48_bpmx_cut(
++	dfsarg_solve_h48_t arg[NON_NULL],
++	h48_prune_t prune[SIZE(NMOVES)],
++	uint8_t bound,
++	uint8_t target,
++	uint8_t witness
++)
++{
++	uint8_t m;
++
++	/* Parent remaining budget is target + 1.  One-step reverse
++	 * propagation gives parent lower bound >= bound - 1. */
++	if (!arg->bpmx_enabled || bound <= (unsigned)target + 2U)
++		return false;
++
++	arg->bpmx_cuts++;
++	prune[witness].stop = 1;
++	for (m = 0; m < NMOVES; m++)
++		if (!prune[m].stop)
++			arg->bpmx_skipped++;
++	return true;
++}
++
++STATIC_INLINE bool
+ h48_prune_pipeline(
+ 	dfsarg_solve_h48_t arg[NON_NULL],
+ 	h48_prune_t prune[SIZE(NMOVES)],
+@@ -198,7 +256,7 @@ h48_prune_pipeline(
+ 
+ 	/* We'll never get a bound higher than base + 3 */
+ 	if (target > arg->base + 3)
+-		return;
++		return false;
+ 
+ 	/* Stage 1: cdata and prefetch inverse */
+ 	for (m = 0; m < NMOVES; m++) {
+@@ -206,6 +264,9 @@ h48_prune_pipeline(
+ 			continue;
+ 
+ 		p = get_h48_cdata(prune[m].inverse, arg->cocsepdata, &cdata);
++		if (h48_bpmx_cut(arg, prune, p, target, m))
++			return true;
++		h48_face_cut(arg, prune, p, target, m);
+ 		if (p > target) {
+ 			prune[m].stop = 1;
+ 			continue;
+@@ -226,6 +287,9 @@ h48_prune_pipeline(
+ 		if (prune[m].pi == 0) {
+ 			prune[m].pi = h48_prune_lookup(
+ 			    prune[m].coord, prune[m].inverse, arg);
++			if (h48_bpmx_cut(arg, prune, prune[m].pi, target, m))
++				return true;
++			h48_face_cut(arg, prune, prune[m].pi, target, m);
+ 			if (prune[m].pi > target) {
+ 				prune[m].stop = 1;
+ 				continue;
+@@ -233,6 +297,9 @@ h48_prune_pipeline(
+ 		}
+ 
+ 		p = get_h48_cdata(prune[m].cube, arg->cocsepdata, &cdata);
++		if (h48_bpmx_cut(arg, prune, p, target, m))
++			return true;
++		h48_face_cut(arg, prune, p, target, m);
+ 		if (p > target) {
+ 			prune[m].stop = 1;
+ 			continue;
+@@ -250,8 +317,12 @@ h48_prune_pipeline(
+ 
+ 		prune[m].pn = h48_prune_lookup(
+ 		    prune[m].coord, prune[m].cube, arg);
++		if (h48_bpmx_cut(arg, prune, prune[m].pn, target, m))
++			return true;
++		h48_face_cut(arg, prune, prune[m].pn, target, m);
+ 		prune[m].stop = prune[m].pn > target;
+ 	}
++	return false;
+ }
+ 
+ STATIC_INLINE void
+@@ -348,7 +419,8 @@ solve_h48_dfs(dfsarg_solve_h48_t arg[NON_NULL])
+ 
+ 	ret = 0;
+ 	if (popcount_u64(mm_normal) <= popcount_u64(mm_inverse)) {
+-		h48_prune_pipeline(arg, prune, target, true);
++		if (h48_prune_pipeline(arg, prune, target, true))
++			return 0;
+ 		arg->solution_moves->nmoves++;
+ 		for (m = 0; m < NMOVES; m++) {
+ 			if (prune[m].stop)
+@@ -363,7 +435,8 @@ solve_h48_dfs(dfsarg_solve_h48_t arg[NON_NULL])
+ 		}
+ 		arg->solution_moves->nmoves--;
+ 	} else {
+-		h48_prune_pipeline(arg, prune, target, false);
++		if (h48_prune_pipeline(arg, prune, target, false))
++			return 0;
+ 		arg->solution_moves->npremoves++;
+ 		for (m = 0; m < NMOVES; m++) {
+ 			if (prune[m].stop)
+@@ -571,6 +644,7 @@ solve_h48(
+ {
+ 	int i, ntasks;
+ 	bool td;
++	const bool bpmx_enabled = atomic_load(&h48_bpmx_enabled);
+ 	wrapthread_atomic int status, prev_status;
+ 	size_t lastused;
+ 	int8_t d;
+@@ -590,6 +664,7 @@ solve_h48(
+ 	wrapthread_define_var_thread_t(thread[THREADS]);
+ 	wrapthread_define_var_mutex_t(solutions_mutex);
+ 
++	stats[6] = stats[7] = stats[8] = 0;
+ 	if (!solution_list_init(&sollist, solutions_size, solutions))
+ 		goto solve_h48_error_solutions_buffer;
+ 
+@@ -633,6 +708,7 @@ solve_h48(
+ 			.nodes_visited = 0,
+ 			.table_fallbacks = 0,
+ 			.table_lookups = 0,
++			.bpmx_enabled = bpmx_enabled,
+ 			.threads = threads,
+ 			.thread_id = i,
+ 			.solutions_mutex = &solutions_mutex,
+@@ -738,6 +814,9 @@ solve_h48_done:
+ 		nodes_visited += arg[i].nodes_visited;
+ 		table_fallbacks += arg[i].table_fallbacks;
+ 		table_lookups += arg[i].table_lookups;
++		stats[6] += arg[i].face_cuts;
++		stats[7] += arg[i].bpmx_cuts;
++		stats[8] += arg[i].bpmx_skipped;
+ 	}
+ 
+ 	stats[0] = nodes_visited;

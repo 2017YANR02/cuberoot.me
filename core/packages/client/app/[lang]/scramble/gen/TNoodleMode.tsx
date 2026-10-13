@@ -52,6 +52,7 @@ import {
   type EventConfig, type WcaFormat,
 } from './_wca-round';
 import type { RoundSheetInput } from './_tnoodle-pdf';
+import ScrambleImageDownload from '@/components/ScrambleImageDownload';
 import ClockColorPicker from './ClockColorPicker';
 import ProgressButton from './ProgressButton';
 import CopyAllScramblesButton, { scrambleClipboardText } from './CopyAllScramblesButton';
@@ -1306,6 +1307,11 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
             {showPreview ? <ImageIcon size={14} /> : <ImageOff size={14} />}
           </button>
           {loaded && <CopyAllScramblesButton text={allScramblesText} t={t} />}
+          {loaded && <ScrambleImageDownload className="gen-btn" sheets={(sheets ?? []).map(sheet => ({
+            event: sheet.event,
+            title: `${loadedCompId ? localizeCompName(loadedCompId, loadedCompName || loadedCompId, isZh) : compInput.trim() || 'CubeRoot'} · ${eventDisplayName(sheet.event, isZh)} · ${sheet.roundIdx + 1} / ${sheet.groupIdx + 1}`,
+            rows: sheet.attempts.map(attempt => ({ label: attempt.label, scramble: attempt.scramble })),
+          }))} />}
           {loaded && (
             <ProgressButton
               icon={<Download size={14} className={pdfBuilding ? 'gen-spin' : ''} />}

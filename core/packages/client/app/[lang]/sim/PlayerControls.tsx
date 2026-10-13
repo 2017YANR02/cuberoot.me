@@ -195,6 +195,7 @@ import { groupSimPuzzleOptions, type SimPuzzleTypeOption } from './puzzleOptions
 export { SIM_FIXED_PUZZLE_OPTIONS } from './puzzleOptions';
 import { simSpeedToTps, simTpsToSpeed } from '@/lib/sim_timing';
 import AlgInput from '@/components/AlgInput';
+import ReconAutofill from '@/components/ReconAutofill';
 import PlaybackBar, { PlaybackAnchorSelect } from '@/components/PlaybackBar';
 import {
   createTwistyPlayback, EMPTY_TWISTY_PLAYBACK_STATE,
@@ -2698,6 +2699,20 @@ export default function PlayerControls({
             }}
             onCaretChange={handleCaretSync}
           />
+          {is3x3 && <ReconAutofill
+            textareaRef={algElRef}
+            value={algDraft}
+            scramble={playbackMode === 'algorithm'
+              ? `${setupDraft} ${invertAlg(stripHandMarks(algDraft))}`.trim()
+              : setupDraft}
+            setValue={text => {
+              const el = algElRef.current;
+              if (el) { el.value = text; autosize(el); }
+              skipAutoResetRef.current = false;
+              setAlgDraft(text);
+              onAlgChange(text);
+            }}
+          />}
         </div>
         {is3x3 && algStm > 0 && (
           <output

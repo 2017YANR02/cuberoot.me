@@ -12,7 +12,7 @@ import { MINI_PROGRAM_WEB_MARKER, isDouyinMiniProgram } from './platform';
 import { publicPageSharePath, type PageShareMessage } from '@cuberoot/shared/page-share';
 
 type DiscoveryRouteKey = Exclude<SiteDirectoryEntryId, 'algdb' | 'alg' | 'github'> | 'alg';
-export type WebRouteKey = DiscoveryRouteKey | 'home' | 'account' | 'account-link' | 'privacy' | 'logout';
+export type WebRouteKey = DiscoveryRouteKey | 'home' | 'training' | 'account' | 'account-link' | 'privacy' | 'logout';
 
 interface WebRouteDefinition {
   title: string;
@@ -110,6 +110,13 @@ function createWebRoutes(): Record<WebRouteKey, WebRouteDefinition> {
 
   return {
     ...discoveryRoutes,
+    training: {
+      title: tr({ en: 'Daily training', zh: '每日训练' }),
+      description: tr({ en: 'Class assignments, daily check-in and ranking', zh: '班级任务、每日打卡与排名' }),
+      path: localizedWebsitePath('/learn'),
+      publicEntry: false,
+      nativeTabPath: '/pages/training/index',
+    },
     home: {
       title: tr({ en: 'Cube Tools', zh: '魔方工具' }),
       description: tr({ en: 'CubeRoot website home', zh: 'CubeRoot 网站主页' }),

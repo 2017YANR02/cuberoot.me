@@ -6,7 +6,8 @@ import { createInterface } from 'node:readline';
 import { createInterface as createPrompt } from 'node:readline/promises';
 import { availableParallelism } from 'node:os';
 import { resolve } from 'node:path';
-import { atomicJson, maybeJson, readJson, repairTail, guard, TOTAL, GiB, selectPairBatch, pairGroup, CsvTail, claimOwner, askSolverThreads, batchFailureReason, type Memory, type PairGroup } from './double-zbll-symmetry-state.mjs';
+import { setTimeout as delay } from 'node:timers/promises';
+import { atomicJson, maybeJson, readJson, repairTail, guard, TOTAL, GiB, selectPairBatch, pairGroup, CsvTail, claimOwner, askSolverThreads, batchFailure, recoverableStartupStop, waitForStartupMemory, type Memory, type PairGroup } from './double-zbll-symmetry-state.mjs';
 import { activeOwner, watchDashboard, renderDashboard, TerminalDashboard, REFRESH_MS } from './double-zbll-dashboard.mjs';
 import { WebsiteStatistics } from './double-zbll-website-stats.mjs';
 import { PairSelection } from './double-zbll-selection.mjs';
@@ -17,6 +18,8 @@ const path = (name: string) => resolve(work, name);
 const args = process.argv.slice(2);
 if (args.length !== 1 || !['--plan', '--run', '--verify-checkpoint', '--watch'].includes(args[0])) throw Error('使用 --plan 查看，--run 开始或续算，--verify-checkpoint 只验证断点，--watch 只看面板。');
 const solve = args[0] === '--run';
+const solverEngine = process.env.DOUBLE_ZBLL_ENGINE ?? (existsSync(path('rust-h10-acceptance.json')) ? 'rust' : 'c');
+if (!['c', 'rust'].includes(solverEngine)) throw Error('DOUBLE_ZBLL_ENGINE 必须为 c 或 rust');
 let solverThreads: number | undefined;
 // A viewer never loads tables, checks startup resources or owns the job.
 if (args[0] === '--watch' || (solve && activeOwner(work))) {
@@ -35,7 +38,12 @@ const memory = (): Memory => {
     available: (n('Pages free') + n('File-backed pages')) * page, disk: disk.bavail * disk.bsize };
 };
 // Reuse the verified migration's boot/swap baseline on first launch.
-const baseline = prior ?? seed;
+const previousLog = path('run.log');
+const recoveredStartup = prior?.status === 'protected-stop' && existsSync(previousLog)
+  && recoverableStartupStop(prior, batchFailure(previousLog, Math.max(0, statSync(previousLog).size - 16384), 1),
+    existsSync(path(`batches/${String(prior.activeBatch).padStart(6, '0')}/progress.json`)));
+// Only the old pre-table startup rejection is reclassified. Never reset boot or swap.
+const baseline = recoveredStartup ? { ...prior, status: 'stopped' } : prior ?? seed;
 let current = memory();
 const count = prior?.verified ?? seed.unique;
 if (args[0] === '--plan') {
@@ -43,7 +51,8 @@ if (args[0] === '--plan') {
   process.exit(0);
 }
 if (solve && Date.now() >= Date.parse('2026-12-01T00:00:00Z')) throw Error('本任务运行授权已到期，需要重新核对。');
-const preflight = guard(current, baseline, 0, solve);
+// Low startup memory now waits; all actual runtime violations still fail closed.
+const preflight = guard(current, baseline, 0);
 if (preflight) {
   console.error(`\n暂未启动计算\n${preflight}\n已有 ${count.toLocaleString()} 个结果和断点均保留。`);
   if (current.available < 34 * GiB && current.pressure === 1 && current.boot === baseline.boot && current.swapouts === baseline.baselineSwapouts && baseline.status !== 'protected-stop') {
@@ -82,6 +91,7 @@ const finishedGroups = new Set<number>();
 let finishedPairs = 0, comparedPairs = 0, finishedBefore = 0, finishedAfter = 0;
 let activeVerified = 0;
 let computeStarted = 0, lastRender = 0, sessionNewStart = 0, sessionActiveStart = 0;
+let waitedMs = 0, waitingSince = 0;
 const journal = path('solutions.csv'), log = path('run.log');
 const stop = (why: string, protection = false) => {
   if (reason) return;
@@ -89,15 +99,16 @@ const stop = (why: string, protection = false) => {
   if (child && child.exitCode === null) child.kill('SIGTERM');
 };
 for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP'] as const) process.on(signal, () => stop('已手动停止，断点已保留。'));
-const elapsed = () => (prior?.computeSeconds ?? 0) + (computeStarted ? (Date.now() - computeStarted) / 1000 : 0);
+const sessionSeconds = () => computeStarted ? Math.max(0, ((waitingSince || Date.now()) - computeStarted - waitedMs) / 1000) : 0;
+const elapsed = () => (prior?.computeSeconds ?? 0) + sessionSeconds();
 function ratePerSecond() {
-  const seconds = computeStarted ? (Date.now() - computeStarted) / 1000 : 0;
+  const seconds = sessionSeconds();
   return seconds > 0 ? Math.max(0, newCount - sessionNewStart + activeCompleted - activeVerified - sessionActiveStart) / seconds : 0;
 }
 function snapshot(status: string) {
   return { status, updatedAt: new Date().toISOString(), boot: baseline.boot, baselineSwapouts: baseline.baselineSwapouts,
     total: TOTAL, verified, imported: seed.unique, newlyVerified: newCount, activeBatch, activeCompleted, activeTotal,
-    stage, activeVerified, solverThreads, ratePerSecond: ratePerSecond(), memoryPressure: current.pressure, diskGiB: current.disk / GiB,
+    stage, activeVerified, solverThreads, solverEngine, ratePerSecond: ratePerSecond(), memoryPressure: current.pressure, diskGiB: current.disk / GiB,
     computeSeconds: elapsed(), currentSwapouts: current.swapouts, currentRssGiB: currentRss / GiB,
     peakRssGiB: peak, minimumHeadroomGiB: min, availableGiB: current.available / GiB,
     histogram, meanHtm: verified ? sum / verified : null, reason: reason || undefined,
@@ -130,6 +141,7 @@ function show(force = false, status = 'running') {
   screen.render(text);
 }
 function checkResources() {
+  if (solve && Date.now() >= Date.parse('2026-12-01T00:00:00Z')) { stop('本任务运行授权已到期，需要重新核对。', true); throw Error(reason); }
   current = memory();
   const list = execFileSync('ps', ['-axo', 'pid,ppid,rss'], { encoding: 'utf8', timeout: 5000 }).trim().split('\n').slice(1).map(s => s.trim().split(/\s+/).map(Number));
   const family = new Set([process.pid]);
@@ -140,6 +152,19 @@ function checkResources() {
   if (violation) { stop(violation, true); throw Error(violation); }
   if (!computeStarted && currentRss > 768 * 2 ** 20) { stop('断点核验内存超过 768 MiB。', true); throw Error(reason); }
   if (interrupted) throw Error(reason);
+}
+async function awaitStartupMemory() {
+  const previousStage = stage;
+  if (computeStarted) waitingSince = Date.now();
+  try {
+    await waitForStartupMemory(baseline, () => { checkResources(); return { memory: current, rss: currentRss }; }, (m, stable) => {
+      stage = stable ? `内存已达标 · 稳定确认 ${stable}/3` : `等待内存 ${(m.available / GiB).toFixed(1)} / 34 GiB · 自动续算`;
+      atomicJson(progressPath, snapshot('waiting-memory')); show(true, 'waiting-memory');
+    }, () => delay(5000));
+  } finally {
+    if (waitingSince) { waitedMs += Date.now() - waitingSince; waitingSince = 0; }
+    stage = previousStage;
+  }
 }
 async function hashFile(file: string) {
   const hash = createHash('sha256'); for await (const chunk of createReadStream(file)) hash.update(chunk); return hash.digest('hex');
@@ -179,6 +204,7 @@ async function ingest(batchDir: string, inputs: { id: number; setup: string }[])
 }
 try {
   checkResources(); show(true);
+  if (solve && recoveredStartup) atomicJson(path(`startup-memory-recovery-${Date.now()}.json`), { previous: prior, checked: current, action: 'Reclassify pre-table startup memory rejection; original boot and swap baseline retained' });
   if (await hashFile(path('representatives.csv')) !== integrity.sha256) throw Error('迁移结果 hash 不符，原结果保留。');
   model = await import(path('model.mts'));
   if (model.orbitCount !== TOTAL || model.N !== 7772 || model.cases.length !== 493) throw Error('模型口径改变。');
@@ -193,8 +219,7 @@ try {
     screen.close(); console.log(`逐条核验通过：${verified.toLocaleString()} 个；迁移文件 SHA-256 ${integrity.sha256}`);
   } else {
     checkResources();
-    const violation = guard(current, baseline, currentRss, true); if (violation) throw Error(violation);
-    if (execFileSync('ps', ['-axo', 'comm'], { encoding: 'utf8' }).split('\n').some(s => /solve_h48_h10|table_generator/.test(s))) throw Error('已有求解器或建表任务，禁止重复启动。');
+    if (existsSync(resolve(root, '.tmp/cubeopt-reverse/compute.lock')) || execFileSync('ps', ['-axo', 'comm'], { encoding: 'utf8' }).split('\n').some(s => /solve_h48_h10|cube48opt-research|table_generator/.test(s))) throw Error('已有求解器、研究锁或建表任务，禁止重复启动。');
     fd = openSync(journal, 'a');
     let cursor = checkpoint?.cursor ?? 0, pass = checkpoint?.pass ?? 0;
     if (checkpoint?.scheduler !== scheduler) {
@@ -227,7 +252,7 @@ try {
     atomicJson(path('selected-pairs.json'), selection.snapshot());
     const wake = spawn('caffeinate', ['-i', '-w', String(process.pid)], { stdio: 'ignore' }); wake.unref();
     sessionNewStart = newCount; computeStarted = Date.now();
-    appendFileSync(log, `\n${new Date().toISOString()} 开始/续算，已验证 ${verified}，求解线程 ${solverThreads}\n`);
+    appendFileSync(log, `\n${new Date().toISOString()} 开始/续算，已验证 ${verified}，引擎 ${solverEngine}，求解线程 ${solverThreads}\n`);
     while (pass < 2) {
       checkResources();
       const batchDir = path('batches/' + String(activeBatch).padStart(6, '0'));
@@ -268,13 +293,14 @@ try {
         fsyncSync(pairFd!);
       };
       verifyLive();
-      stage = '求解中'; atomicJson(progressPath, snapshot('running')); show(true);
-      if (bp?.status !== 'complete') {
+      while (bp?.status !== 'complete') {
+        await awaitStartupMemory();
+        stage = '求解中'; atomicJson(progressPath, snapshot('running')); show(true);
         const logFd = openSync(log, 'a');
         const logStart = statSync(log).size;
         child = spawn(process.execPath, ['--max-old-space-size=512', '--import', resolve(root, 'core/node_modules/tsx/dist/loader.mjs'),
           resolve(root, '.tmp/double-zbll-auf-20261011/run.mts'), '--solve', `--symmetry-batch=${String(activeBatch).padStart(6, '0')}`],
-        { cwd: root, detached: true, env: { ...process.env, THREADS: String(solverThreads), AUF_EXPECTED_BOOT: baseline.boot, AUF_EXPECTED_SWAPOUTS: String(baseline.baselineSwapouts) }, stdio: ['ignore', logFd, logFd] }); closeSync(logFd);
+        { cwd: root, detached: true, env: { ...process.env, H10_ENGINE: solverEngine, THREADS: String(solverThreads), AUF_EXPECTED_BOOT: baseline.boot, AUF_EXPECTED_SWAPOUTS: String(baseline.baselineSwapouts) }, stdio: ['ignore', logFd, logFd] }); closeSync(logFd);
         interval = setInterval(() => {
           try { checkResources(); bp = batchProgress(); activeCompleted = bp?.completed ?? 0; verifyLive(); atomicJson(progressPath, snapshot('running')); show(); }
           catch (e) { stop(String(e), true); }
@@ -283,7 +309,14 @@ try {
         clearInterval(interval); interval = undefined; bp = batchProgress();
         verifyLive();
         if (code !== 0 || interrupted || bp?.status !== 'complete') {
-          if (!reason) stop(bp?.reason || bp?.error || batchFailureReason(log, logStart, code), !bp?.reason?.startsWith('Interrupted'));
+          const failure = batchFailure(log, logStart, code);
+          if (!interrupted && failure.startupMemory?.swapouts === baseline.baselineSwapouts) {
+            // The child refused before loading tables; repeat the guarded wait,
+            // preserving this batch and every saved result. No baseline changes.
+            appendFileSync(log, `${new Date().toISOString()} 启动内存波动，返回等待；原基线和本批断点保留。\n`);
+            continue;
+          }
+          if (!reason) stop(bp?.reason || bp?.error || failure.reason, !bp?.reason?.startsWith('Interrupted'));
           throw Error(reason);
         }
       }

@@ -12,8 +12,8 @@ const native = /^(?:table_generator(?:_high_memory)?|(?:pseudo_f2leo|f2leo|pseud
 const script = /(?:^|\/)(?:double-zbll\.ts|gen-table\.mjs|backfill_xcross_variant\.[cm]?[jt]s)$/;
 const base = (word: string) => word.replaceAll('\\', '/').split('/').pop() ?? '';
 const cubeoptRoot = resolve(repoRoot, 'solver/experiments/cube48opt-rust');
-const cubeoptLabel = 'cube48opt Opt1–9 / Rust H0–H10 研究计算';
-const cubeoptComputations = ['validate.mjs', 'benchmark.mjs', 'verify-h10.mjs', 'validate-h10.mjs', 'h10-benchmark.mjs'];
+const cubeoptLabel = 'cube48opt Opt1–9 / Rust Opt10 / Rust H0–H10 研究计算';
+const cubeoptComputations = ['validate.mjs', 'benchmark.mjs', 'wasm-benchmark.mjs', 'verify-h10.mjs', 'validate-h10.mjs', 'h10-benchmark.mjs', 'zbll-benchmark.mjs'];
 
 // Only the actual interpreter entrypoint can authorize its child arguments.
 // Merely mentioning guard.mts after oracle.mjs must not grant an exemption.
@@ -56,6 +56,8 @@ function blockedCubeopt(words: string[], cwd: string): boolean {
       return ['generate', 'query', 'solve'].includes(words[invocation.index + 1]);
     if (cubeoptComputations.some(name => entry === resolve(cubeoptRoot, name))) return true;
   }
+  if (words.includes('--verify-opt1') && words.some(word =>
+      base(word) === 'verify_opt10_generation' || word === '--example=verify_opt10_generation')) return true;
   // A lookalike wrapper is not the authorized guard, even when its arguments
   // visibly name the real computation entrypoint.
   for (const [index, word] of words.entries()) {
@@ -128,6 +130,15 @@ export function blockedCompute(command: string, depth = 0, cwd = repoRoot): stri
     if (first === 'cp') continue;
     if (first === 'cargo' && !words.includes('run')) continue;
     if (blockedCubeopt(words, cwd)) return cubeoptLabel;
+    // H9-only generation was explicitly authorized on 2026-10-13. The guard
+    // validates the exact target, directory, threads and process-tree budget.
+    const guarded = interpreterScript(words);
+    if (guarded && resolve(cwd, words[guarded.index]) === resolve(cubeoptRoot, 'guard.mts')) {
+      const args = words.slice(guarded.index + 1);
+      if (args.length === 4 && words.includes('CUBEOPT_BACKEND=h9gen')
+          && resolve(cwd, args[1]) === resolve(repoRoot, 'solver/target/release/table_generator')
+          && args[2] === '--only' && args[3] === 'h48-h9') continue;
+    }
     for (const [index, word] of words.entries()) {
       const normalized = word.replaceAll('\\', '/');
       const name = base(word).replace(/^--bin=/, '');
@@ -152,7 +163,7 @@ export function blockedCompute(command: string, depth = 0, cwd = repoRoot): stri
         if (/spawn|exec|subprocess|Start-Process/.test(nested)
           && /table_generator|double-zbll|stats:scramble|scripts[\\/]stats[\\/]update-/.test(nested)) return '内联脚本中的大内存计算';
         if (/spawn|exec|subprocess|Start-Process/.test(nested)
-          && /cube48opt-research|cube48opt-rust[\\/](?:oracle|validate|benchmark|verify-h10|validate-h10|h10-benchmark)\.mjs/.test(nested)) return cubeoptLabel;
+          && /cube48opt-research|cube48opt-rust[\\/](?:oracle|validate|benchmark|wasm-benchmark|verify-h10|validate-h10|h10-benchmark)\.mjs/.test(nested)) return cubeoptLabel;
       }
     }
   }
@@ -171,20 +182,26 @@ async function main() {
   const command = request?.tool_input?.command;
   if (typeof command !== 'string') return;
   const cwd = request?.tool_input?.workdir ?? request?.tool_input?.cwd ?? request?.cwd;
+  // Some code-mode harnesses supply the repository cwd instead of the nested
+  // exec workdir. This exact absolute entry is unambiguous in either directory;
+  // it receives the same source-hash and runtime-guard checks as the shortcut.
+  const absoluteSymmetryCommand = `node --max-old-space-size=512 --import ${resolve(repoRoot, 'core/node_modules/tsx/dist/loader.mjs')} ${resolve(repoRoot, 'core/jobs/alg-build/src/double-zbll-symmetry.mts')} --run`;
   if (['pnpm --filter @cuberoot/alg-build double-zbll:symmetry --run',
-    'node --max-old-space-size=512 --import ./node_modules/tsx/dist/loader.mjs jobs/alg-build/src/double-zbll-symmetry.mts --run'].includes(command)
-    && typeof cwd === 'string' && resolve(cwd) === resolve(repoRoot, 'core')
+    'node --max-old-space-size=512 --import ./node_modules/tsx/dist/loader.mjs jobs/alg-build/src/double-zbll-symmetry.mts --run', absoluteSymmetryCommand].includes(command)
+    && (command === absoluteSymmetryCommand || typeof cwd === 'string' && resolve(cwd) === resolve(repoRoot, 'core'))
     && Date.now() < Date.parse('2026-12-01T00:00:00Z')) {
     // Reviewed local shortcut: fixed coordinator and exact audited dependencies.
     const files = {
-      'core/jobs/alg-build/src/double-zbll-symmetry.mts': '7f370676166e64ed920e6b641c8750fd3985491c0970a7fe62f0c5b308a65fe4',
-      'core/jobs/alg-build/src/double-zbll-selection.mts': '0de647807f60be78c8386fe2ea1243af6768c88399f6128e1a067b645d433439',
-      'core/jobs/alg-build/src/double-zbll-dashboard.mts': '3bc736cd299d346e297eeeea4a7c42f11744c9175f622660a4f905d65ebc8541',
-      'core/jobs/alg-build/src/double-zbll-website-stats.mts': '1909aa32d3794c45c64490cd0e56ec27efa79cd4de805f4d3c362f6dfd098143',
-      'core/jobs/alg-build/src/double-zbll-symmetry-state.mts': '0d711527d648f0cad32f9f9b832e142fb7060b50e481c3301880f0da4b60c864',
-      '.tmp/double-zbll-symmetry-v2/model.mts': 'ec36d0ba647796b8c979863aa81ab9cb7162a7083398fa898f7b17b76cf4f3a1',
-      '.tmp/double-zbll-auf-20261011/run.mts': 'cba0a6c888532ab1c606af9bd0c7d811f4afe786c220a0daa2c3c84e80f3e8b0',
-      'solver/333opt/solve_h10.mts': 'da19c38379216c58e8599b54c014ad9278605decbfa0c4fc220b5ebae8248836',
+      "solver/experiments/cube48opt-rust/guard.mts": "659929576edeea6421b62e8278fb3dc8180d4527aa827f83dba3ca8f21d58191",
+      "solver/333opt/rust-h10-adapter.mts": "bfb3ae07fc4dd86f88ba5d540b08cdda23b7b699ccf1c7de5583820d4e8e019d",
+      "core/jobs/alg-build/src/double-zbll-symmetry.mts": "74fa8d827a18a3fecd0c7e870db90cf84e3fb1945272253f7e233b0df505ea95",
+      "core/jobs/alg-build/src/double-zbll-selection.mts": "0de647807f60be78c8386fe2ea1243af6768c88399f6128e1a067b645d433439",
+      "core/jobs/alg-build/src/double-zbll-dashboard.mts": "fdda9d09c104170d81547cb6d26d8b998747ad1a4358ad18435bc52e0cd97e23",
+      "core/jobs/alg-build/src/double-zbll-website-stats.mts": "1909aa32d3794c45c64490cd0e56ec27efa79cd4de805f4d3c362f6dfd098143",
+      "core/jobs/alg-build/src/double-zbll-symmetry-state.mts": "50561cb176c7c9e5776ac7d76ce970e982325ab7f8933a296ac6562137802e5a",
+      ".tmp/double-zbll-symmetry-v2/model.mts": "ec36d0ba647796b8c979863aa81ab9cb7162a7083398fa898f7b17b76cf4f3a1",
+      ".tmp/double-zbll-auf-20261011/run.mts": "cba0a6c888532ab1c606af9bd0c7d811f4afe786c220a0daa2c3c84e80f3e8b0",
+      "solver/333opt/solve_h10.mts": "ae894eab51504aacd0d0a15881d0ce26a425788ff26ef212db0fb00a51b4e0a8",
     };
     try {
       const pkg = JSON.parse(readFileSync(resolve(repoRoot, 'core/jobs/alg-build/package.json'), 'utf8'));
@@ -211,7 +228,9 @@ async function main() {
   if (!blocked) return;
   process.stdout.write(JSON.stringify({ hookSpecificOutput: {
     hookEventName: 'PreToolUse', permissionDecision: 'deny',
-    permissionDecisionReason: blocked === cubeoptLabel
+    permissionDecisionReason: blocked === '双底对称去重长期计算'
+      ? `双底任务已授权，但受保护入口登记未匹配：工作目录=${String(cwd)}；请核对 core 工作目录、完整命令和登记源码 hash。保留断点，不得绕过运行时资源保护。`
+      : blocked === cubeoptLabel
       ? `禁止直接启动 ${blocked}：本轮授权仅适用于 solver/experiments/cube48opt-rust/guard.mts。请经 node --experimental-strip-types solver/experiments/cube48opt-rust/guard.mts LABEL EXECUTABLE [ARGS] 启动，由入口按 CUBEOPT_VARIANT=1..9、显式 CUBEOPT_BACKEND=h10，或 CUBEOPT_BACKEND=h48 加 CUBEOPT_H=0..10 核对预算。H48 档位必须匹配 CLI、实际表大小和表头；H11 仅实现代码，不允许运行，即使通过 guard 也拒绝。持续监控进程树 RSS、内存压力、同次系统启动的 Swapouts 与至少 2 GiB 余量，H10 基准仅允许顺序单表驻留。保护触发后不得重设基线自动重启。inspect、small、verify-small 和小表坐标校验可直接运行；此授权不是操作系统禁用 swap。`
       : `禁止启动 ${blocked}：尚无经核验、覆盖进程及其子进程的系统级防交换保护。现有轮询监控、NO_SWAP 环境变量及缩小批次不能保证零换出。保留结果和断点，先配置并核验系统级保护，再登记受保护入口；不要重设基线或绕过 hook。只读查看统计计划可用 pnpm stats:scramble:local --plan。见 AGENTS.md「本地计算内存与交换保护」；H10 独立求解已按新规则放行，此限制仍适用于上述其他计算。`,
   } }));

@@ -3,10 +3,45 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, writeFileSync, readFileSync, readdirSync, mkdirSync, appendFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { guard, GiB, repairTail, atomicJson, readJson, selectBatch, claimOwner, selectPairBatch, pairGroup, CsvTail, askSolverThreads, batchFailureReason } from './double-zbll-symmetry-state.mjs';
+import { guard, GiB, repairTail, atomicJson, readJson, selectBatch, claimOwner, selectPairBatch, pairGroup, CsvTail, askSolverThreads, batchFailureReason, batchFailure, recoverableStartupStop, waitForStartupMemory } from './double-zbll-symmetry-state.mjs';
 
 const baseline = { boot: 'same-boot', baselineSwapouts: 10 };
 const normal = { boot: 'same-boot', swapouts: 10, pressure: 1, available: 40 * GiB, disk: 100 * GiB };
+test('startup memory waits for three consecutive ready samples without weakening runtime guards', async () => {
+  const samples = [33,34,34,33,34,34,34], states: number[] = [];
+  let sleeps = 0;
+  await waitForStartupMemory(baseline, () => ({ memory: { ...normal, available: samples.shift()! * GiB }, rss: GiB }),
+    (_m, stable) => states.push(stable), async () => { sleeps++; });
+  assert.deepEqual(states, [0,1,2,0,1,2]); assert.equal(sleeps,6); assert.equal(samples.length,0);
+  for (const [change, message] of [
+    [{ swapouts: 11 }, /换出/], [{ boot: 'reboot' }, /重新启动/], [{ pressure: 2 }, /压力/],
+    [{ available: 2 * GiB }, /2 GiB/], [{ disk: 29 * GiB }, /磁盘/],
+  ] as const) {
+    let calls = 0;
+    await assert.rejects(waitForStartupMemory(baseline, () => ({ memory: { ...normal, available: 33 * GiB, ...(calls++ ? change : {}) }, rss: GiB }),
+      () => {}, async () => {}), message);
+    assert.equal(calls,2);
+  }
+  await assert.rejects(waitForStartupMemory({ ...baseline, status: 'protected-stop' }, () => ({ memory: normal, rss: 0 }), () => {}, async () => {}), /不能自动/);
+  await assert.rejects(waitForStartupMemory(baseline, () => ({ memory: normal, rss: 33 * GiB }), () => {}, async () => {}), /32 GiB/);
+  await assert.rejects(waitForStartupMemory(baseline, () => { throw Error('cancelled'); }, () => {}, async () => {}), /cancelled/);
+});
+test('only a proven pre-table memory rejection is recoverable, never a hard protected stop', () => {
+  const log = join(mkdtempSync(join(tmpdir(), 'zbll-startup-')), 'run.log');
+  writeFileSync(log, 'Error: Insufficient resources: {"available":36214128640,"swapouts":10,"pressure":1}\n');
+  const failure = batchFailure(log,0,1);
+  const p = { ...baseline, status: 'protected-stop', reason: failure.reason, currentSwapouts: 10, memoryPressure: 1,
+    activeCompleted: 0, activeVerified: 0, currentRssGiB: 0.27 };
+  assert.equal(recoverableStartupStop(p,failure,false),true);
+  assert.equal(recoverableStartupStop(p,failure,true),false);
+  for (const change of [{ currentSwapouts: 11 }, { reason: 'New swap-out detected' }, { activeCompleted: 1 }, { currentRssGiB: 29 }, { memoryPressure: 2 }])
+    assert.equal(recoverableStartupStop({ ...p,...change },failure,false),false);
+  for (const text of ['{"available":36214128640,"swapouts":10,"pressure":2}', '{"available":36214128640,"pressure":1}', 'bad JSON']) {
+    writeFileSync(log, 'Error: Insufficient resources: '+text+'\n');
+    assert.equal(batchFailure(log,0,1).startupMemory,undefined);
+  }
+  assert.equal(p.baselineSwapouts,10); assert.equal(p.status,'protected-stop');
+});
 test('early batch failure reports its resource cause without borrowing an older launch error', () => {
   const log = join(mkdtempSync(join(tmpdir(), 'zbll-failure-')), 'run.log');
   const previous = 'Error: previous unrelated failure\n';

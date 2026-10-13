@@ -20,6 +20,54 @@
 .admin-hub__status { margin: 16px 0; color: var(--muted-foreground); }
 .admin-hub__account-link { color: var(--accent); }
 
+.admin-hub.admin-hub--dashboard { width: min(1240px, calc(100% - 32px)); }
+.admin-dashboard { margin-bottom: 40px; }
+.admin-dashboard h2, .admin-dashboard h3, .admin-dashboard h4 { margin: 0 0 12px; font-weight: 600; }
+.admin-dashboard h2 { font-size: 1.25rem; }
+.admin-dashboard h3 { font-size: 1.1rem; }
+.admin-dashboard h4 { margin-top: 24px; font-size: .95rem; }
+.admin-dashboard p { color: var(--muted-foreground); font-size: .82rem; line-height: 1.65; }
+.admin-dashboard__toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 20px; }
+.admin-dashboard__toolbar > div { flex: 1 1 360px; }
+.admin-dashboard__toolbar p { margin: 0; }
+.admin-dashboard label { font-size: .85rem; color: var(--muted-foreground); }
+.admin-dashboard select { width: fit-content; max-width: 100%; padding: 7px 10px; border: 1px solid var(--border-default); border-radius: 8px; background: var(--background); color: var(--foreground); font: inherit; }
+.admin-dashboard .admin-boot__refresh { display: inline-flex; align-items: center; gap: 8px; }
+.admin-dashboard__metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 20px; }
+.admin-dashboard__metrics > * { display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 20px; border: 1px solid var(--border-default); border-radius: 14px; color: var(--foreground); text-decoration: none; }
+.admin-dashboard__metrics span { font-size: .85rem; }
+.admin-dashboard__metrics strong { font-size: clamp(1.7rem, 3vw, 2.4rem); font-weight: 560; font-variant-numeric: tabular-nums; }
+.admin-dashboard__metrics small { color: var(--muted-foreground); font-size: .75rem; line-height: 1.5; }
+.admin-dashboard__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: start; }
+.admin-dashboard__panel { min-width: 0; padding: 24px; border: 1px solid var(--border-default); border-radius: 14px; }
+.admin-dashboard__panel > a { display: inline-block; margin-top: 16px; color: var(--accent); font-size: .85rem; }
+.admin-dashboard__chart { width: 100%; height: 280px; margin-top: 20px; }
+.admin-dashboard__table { font-size: .78rem; color: var(--muted-foreground); }
+.admin-dashboard__table summary { cursor: pointer; padding: 10px 0; }
+.admin-dashboard__table-scroll { overflow-x: auto; max-height: 280px; }
+.admin-dashboard__table table { width: 100%; border-collapse: collapse; }
+.admin-dashboard__table td, .admin-dashboard__table th { padding: 8px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--border-default); }
+.admin-dashboard__table th:first-child { text-align: left; }
+.admin-dashboard__empty { display: grid; place-items: center; min-height: 120px; text-align: center; }
+.admin-dashboard__cash { display: flex; flex-wrap: wrap; gap: 16px; margin: 16px 0; font-size: .85rem; }
+.admin-dashboard__cash span { display: grid; gap: 6px; color: var(--muted-foreground); }
+.admin-dashboard__cash strong { color: var(--foreground); font-variant-numeric: tabular-nums; }
+.admin-dashboard__todos { margin: 20px 0 0; padding: 0; list-style: none; }
+.admin-dashboard__todos a { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--border-default); color: var(--foreground); text-decoration: none; font-size: .9rem; }
+.admin-dashboard__todos a:hover { color: var(--accent); }
+.admin-dashboard__notice { padding: 12px 16px; border-left: 3px solid var(--signal-warning); background: var(--muted); }
+.admin-dashboard__updated { margin-top: 20px; }
+.admin-dashboard__tools-title { margin: 36px 0 12px; font-size: 1.25rem; }
+@media (max-width: 900px) {
+  .admin-dashboard__metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .admin-dashboard__grid { grid-template-columns: 1fr; }
+  .admin-dashboard__metrics { gap: 10px; }
+  .admin-dashboard__metrics > * { padding: 14px; }
+  .admin-dashboard__panel { padding: 18px; }
+}
+
 .admin-boot { margin-top: 48px; }
 .admin-boot__heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .admin-boot__heading h2 { margin: 0; font-size: 1.4rem; }

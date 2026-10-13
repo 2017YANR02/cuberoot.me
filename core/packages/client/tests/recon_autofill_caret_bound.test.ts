@@ -50,6 +50,6 @@ describe('recon autofill comment popup is bounded by the caret, not the line end
       moveCount: state.moveCount,
       explicit: true,
     });
-    expect(suggestions).toEqual(['// RG', '// RG (8)', '// F2L1', '// F2L1 (8)']);
+    expect(suggestions).toEqual(['// RG']);
   });
 });

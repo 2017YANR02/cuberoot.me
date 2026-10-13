@@ -90,7 +90,7 @@ interface ReconStoreActions {
   resetSort: () => void;
   loadMore: () => void;
   resetPaging: () => void;
-  getFilteredSolves: () => ReconSolve[];
+  getFilteredSolves: (source?: ReconSolve[]) => ReconSolve[];
   getAvailableEvents: () => string[];
   getAvailableMethods: () => { name: string; count: number }[];
   /** 按频率排序的选手列表;wcaId 取该选手第一条非空 personId */
@@ -203,9 +203,9 @@ export const useReconStore = create<ReconStoreState & ReconStoreActions>()((set,
 
   resetPaging: () => set({ displayCount: PAGE_SIZE }),
 
-  getFilteredSolves: () => {
+  getFilteredSolves: (source) => {
     const { allSolves, filters, sortKey, sortDir } = get();
-    let result = [...allSolves];
+    let result = [...(source ?? allSolves)];
 
     // NOTE: 筛选
     if (filters.event) {

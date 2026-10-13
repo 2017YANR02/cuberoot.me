@@ -4,16 +4,15 @@ import { movesOnly, resolveEffectivePrev, resolveCommentPopupState } from '@/lib
 import { buildCommentSuggestions } from '@/lib/popup_suggest';
 import { detectStage } from '@/lib/stage_detect';
 
-it('continues a cancelled xcross with a new RG pair', async () => {
+it('continues a cancelled pseudo xcross with a new RG pair', async () => {
   const scramble = "U' L F L2 U' F L2 U R2 D B' F D' U2 R D R'";
-  const value = "x' z' // insp\nU' r' R2 U' R2' D' R2 // W xcross (OB) cancel into\nU R' U'D'";
+  const value = "x' z' // insp\nU' r' R2 U' R2' D' R2 // W psxcross (OB) cancel into\nU R' U'D'";
   const state = await resolveCommentPopupState(scramble, value, value.length);
-  expect((await detectStage(state.prevPattern)).stage).toBe('xcross');
+  expect((await detectStage(state.prevPattern)).stage).toBe('pscross');
   expect((await detectStage(state.currPattern)).stage).toBe('xxcross');
   const suggestions = await buildCommentSuggestions({ ...state, explicit: true });
   expect(suggestions).toEqual([
-    '// xxcross (RG)', '// xxcross (RG) (4)',
-    '// GR', '// GR (4)', '// F2L2', '// F2L2 (4)',
+    '// xxcross (RG)', '// GR',
   ]);
 });
 
@@ -61,7 +60,7 @@ describe('cancel-into 前瞻(差 ≤2 步补完某 pair)', () => {
       prevPattern, currPattern, lineMovesText: lineMoves, moveCount: countMoves(lineMoves), explicit: false,
     });
     expect(sug.some(s => /xxcross/.test(s))).toBe(false);   // 不再把 RG 重复计进来
-    expect(sug.some(s => /F2L2/.test(s))).toBe(true);       // 这是第 2 把
+    expect(sug.some(s => /F2L\d|\(\d+\)/.test(s))).toBe(false);       // 不提供编号或步数候选
   });
 });
 
@@ -140,7 +139,7 @@ describe('cross 家族自身的 cancel-into(GH issue #15)', () => {
       prevPattern: effPrevPattern, currPattern, lineMovesText: lineMoves, moveCount: countMoves(lineMoves), explicit: false,
     });
     expect(sug.some(s => /xxcross/.test(s))).toBe(false);  // 不再把 xcross 那把重复计进来
-    expect(sug.some(s => /F2L2/.test(s))).toBe(true);      // 这是第 2 把
+    expect(sug.some(s => /F2L\d|\(\d+\)/.test(s))).toBe(false);      // 不提供编号或步数候选
 
     // 不折算的话(旧逻辑直接放弃,用未折算的 prev)会把 xcross 那把也算进这一行,
     // 误判成「一步到位建好 xxcross」——正是这条 fix 要防止的回归。
@@ -150,4 +149,19 @@ describe('cross 家族自身的 cancel-into(GH issue #15)', () => {
     });
     expect(sugWithoutFix.some(s => /xxcross/.test(s))).toBe(true);
   });
+});
+
+it('recognizes the real pseudo xcross and prioritizes its cancelled boundary', async () => {
+  const scramble = "U' L F L2 U' F L2 U R2 D B' F D' U2 R D R'";
+  const prefix = "x' z' // insp\nU' r' R2 U' R2' D' R2";
+  const cancelled = await resolveCommentPopupState(scramble, prefix, prefix.length);
+  expect(await buildCommentSuggestions({ ...cancelled, explicit: true })).toEqual(['// W psxcross (OB) cancel into']);
+  const completed = `${prefix} R'`;
+  const state = await resolveCommentPopupState(scramble, completed, completed.length);
+  expect(await buildCommentSuggestions({ ...state, explicit: true })).toEqual([
+    '// W psxcross (OB)',
+  ]);
+  const next = `${prefix} // W psxcross (OB) cancel into\nU R' U'D'`;
+  const continued = await resolveCommentPopupState(scramble, next, next.length);
+  expect((await buildCommentSuggestions({ ...continued, explicit: true }))[0]).toBe('// xxcross (RG)');
 });

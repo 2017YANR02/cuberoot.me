@@ -13,6 +13,9 @@ default = ["neon-moves", "h10-fast-coord", "h10-prefetch"]
 neon-moves = []
 h10-fast-coord = []
 h10-prefetch = []
+# Only the dedicated target/opt10 build opts in; local execution requires the
+# Opt10 guard budget and a matching complete small-table generator proof.
+opt10-runtime = []
 
 [profile.release]
 opt-level = 3

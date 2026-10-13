@@ -1,0 +1,128 @@
+diff --git a/src/solvers/h48/solve.h b/src/solvers/h48/solve.h
+--- a/src/solvers/h48/solve.h
++++ b/src/solvers/h48/solve.h
+@@ -5,6 +5,17 @@
+ #define H48_STARTING_CUBES 43254
+ #define H48_SORT_TASKS_MIN_DEPTH 16
+ #define H48_LOG_PROGRESS_MIN_DEPTH 15
++
++/* Optional, independently validated complete-corner lower bound. */
++typedef struct {
++	const unsigned char *coord_data;
++	const unsigned char *ptable;
++} h48_corners_context_t;
++
++typedef struct {
++	uint64_t lookups;
++	uint64_t prunes;
++} h48_corners_stats_t;
+ 
+ typedef struct {
+ 	cube_t cube;
+@@ -30,6 +41,9 @@
+ 	const uint32_t *cocsepdata;
+ 	const unsigned char *h48data;
+ 	const unsigned char *eoesepdata;
++	const h48_corners_context_t *corners;
++	uint64_t corner_lookups;
++	uint64_t corner_prunes;
+ 	uint64_t movemask_normal;
+ 	uint64_t movemask_inverse;
+ 	uint64_t nodes_visited;
+@@ -68,6 +82,7 @@
+     unsigned, unsigned, unsigned, unsigned, unsigned, unsigned long long,
+     const unsigned char *, unsigned, char *,
+     long long [SIZE(NISSY_SIZE_SOLVE_STATS)], int (*)(void *), void *);
++STATIC_INLINE bool h48_prune_corners(dfsarg_solve_h48_t [NON_NULL], uint8_t);
+ STATIC_INLINE void h48_prune_pipeline(dfsarg_solve_h48_t [NON_NULL],
+     h48_prune_t [SIZE(NMOVES)], uint8_t, bool);
+ STATIC_INLINE uint8_t h48_prune_lookup(
+@@ -87,7 +102,8 @@
+ STATIC int solve_h48_compare_tasks(const void *, const void *);
+ STATIC int64_t solve_h48(oriented_cube_t, uint8_t, uint8_t, uint64_t, uint8_t,
+     uint8_t, uint64_t, const unsigned char *, size_t, char *,
+-    long long [SIZE(NISSY_SIZE_SOLVE_STATS)], int (*)(void *), void *);
++    long long [SIZE(NISSY_SIZE_SOLVE_STATS)], int (*)(void *), void *,
++    const h48_corners_context_t *, h48_corners_stats_t *);
+ 
+ STATIC long long solve_h48_dispatch(
+ 	oriented_cube_t oc,
+@@ -117,7 +133,26 @@
+ 	return solve_h48(oc, (uint8_t)minmoves, (uint8_t)maxmoves,
+ 	    (uint8_t)maxsols, (uint8_t)optimal, (uint8_t)threads,
+ 	    data_size, data, sols_size, sols, stats,
+-	    poll_status, poll_status_data);
++	    poll_status, poll_status_data, NULL, NULL);
++}
++
++STATIC_INLINE bool
++h48_prune_corners(dfsarg_solve_h48_t arg[NON_NULL], uint8_t remaining)
++{
++	uint64_t coord;
++	uint8_t bound;
++
++	if (arg->corners == NULL || remaining >= 11)
++		return false;
++
++	arg->corner_lookups++;
++	coord = coordinate_corners_coord(arg->cube, arg->corners->coord_data);
++	bound = get_coord_pval(&coordinate_corners, arg->corners->ptable, coord);
++	if (bound <= remaining)
++		return false;
++
++	arg->corner_prunes++;
++	return true;
+ }
+ 
+ STATIC_INLINE uint8_t
+@@ -318,6 +353,10 @@
+ 	nn = arg->solution_moves->nmoves;
+ 	ni = arg->solution_moves->npremoves;
+ 	nm = nn + ni;
++	/* This bound is independent of the H48 half-turn/NISS invariants.
++	 * Never propagate it into lb_normal/lb_inverse or the move masks. */
++	if (h48_prune_corners(arg, arg->target_depth - nm))
++		return 0;
+ 	target = arg->target_depth - (nm + 1);
+ 	mm_normal = arg->movemask_normal;
+ 	mm_inverse = arg->movemask_inverse;
+@@ -566,7 +605,9 @@
+ 	char *solutions,
+ 	long long stats[SIZE(NISSY_SIZE_SOLVE_STATS)],
+ 	int (*poll_status)(void *),
+-	void *poll_status_data
++	void *poll_status_data,
++	const h48_corners_context_t *corners,
++	h48_corners_stats_t *corner_stats
+ )
+ {
+ 	int i, ntasks;
+@@ -590,6 +631,9 @@
+ 	wrapthread_define_var_thread_t(thread[THREADS]);
+ 	wrapthread_define_var_mutex_t(solutions_mutex);
+ 
++	if (corner_stats != NULL)
++		*corner_stats = (h48_corners_stats_t) {0};
++
+ 	if (!solution_list_init(&sollist, solutions_size, solutions))
+ 		goto solve_h48_error_solutions_buffer;
+ 
+@@ -627,6 +671,7 @@
+ 			.cocsepdata = cocsepdata,
+ 			.h48data = h48data,
+ 			.eoesepdata = eoesep,
++			.corners = corners,
+ 			.solution_moves = &solution_moves[i],
+ 			.solution_settings = &settings,
+ 			.solution_list = &sollist,
+@@ -738,6 +783,10 @@
+ 		nodes_visited += arg[i].nodes_visited;
+ 		table_fallbacks += arg[i].table_fallbacks;
+ 		table_lookups += arg[i].table_lookups;
++		if (corner_stats != NULL) {
++			corner_stats->lookups += arg[i].corner_lookups;
++			corner_stats->prunes += arg[i].corner_prunes;
++		}
+ 	}
+ 
+ 	stats[0] = nodes_visited;

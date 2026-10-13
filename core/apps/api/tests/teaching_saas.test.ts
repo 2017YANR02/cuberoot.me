@@ -16,6 +16,7 @@ const ACTOR: TeachingActor = {
 
 function repository(): TeachingSaasRepository {
   return {
+    getTrainingDailyBoard: vi.fn().mockResolvedValue({ rows: [], total: 0 }),
     listOrganizations: vi.fn().mockResolvedValue([]),
     getOrganization: vi.fn().mockResolvedValue({ id: 'org-1', slug: 'demo' }),
     getOrganizationSummary: vi.fn().mockResolvedValue({
@@ -204,6 +205,38 @@ describe('teaching SaaS routes', () => {
 
   beforeEach(() => {
     repo = repository();
+  });
+
+  it('keeps staff and learner daily boards separate and private', async () => {
+    const app = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
+    const id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+    for (const learner of [false, true]) {
+      const response = await app.request(`/teaching/organizations/demo/${learner ? 'me/' : ''}training/assignments/${id}/daily?date=2026-10-12&page=2&pageSize=50`);
+      expect(response.status).toBe(200);
+      expect(response.headers.get('Cache-Control')).toBe('no-store');
+      expect(repo.getTrainingDailyBoard).toHaveBeenLastCalledWith(ACTOR, 'demo', id, '2026-10-12', learner, { page: 2, pageSize: 50, offset: 50 }, expect.any(String), null);
+    }
+    expect((await app.request(`/teaching/organizations/demo/me/training/assignments/${id}/daily?rankEvent=333`)).status).toBe(200);
+    expect(vi.mocked(repo.getTrainingDailyBoard).mock.lastCall?.[7]).toBe('333');
+  });
+
+  it('rejects impossible dates and unrecognized daily board filters before querying data', async () => {
+    const app = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
+    const base = '/teaching/organizations/demo/me/training/assignments/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/daily';
+    for (const query of ['date=2026-02-30', 'date=0000-01-01', 'date=bad', 'date=2026-10-12&studentId=other', 'rankEvent=333%27']) {
+      expect((await app.request(`${base}?${query}`)).status).toBe(400);
+    }
+    expect(repo.getTrainingDailyBoard).not.toHaveBeenCalled();
+  });
+
+  it('does not expose a daily board to a guest or a denied learner', async () => {
+    const path = '/teaching/organizations/demo/me/training/assignments/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/daily';
+    const guest = createTeachingSaasRoutes({ authenticate: async () => { throw new TeachingApiException('UNAUTHENTICATED', 401, 'Sign in'); }, repository: repo });
+    expect((await guest.request(path)).status).toBe(401);
+    expect(repo.getTrainingDailyBoard).not.toHaveBeenCalled();
+    vi.mocked(repo.getTrainingDailyBoard).mockRejectedValue(new TeachingApiException('RESOURCE_NOT_FOUND', 404, 'Not found'));
+    const signedIn = createTeachingSaasRoutes({ authenticate: async () => ACTOR, repository: repo });
+    expect((await signedIn.request(path)).status).toBe(404);
   });
 
   it('registers the frozen staff and learner leave/makeup routes with strict bodies', async () => {

@@ -135,7 +135,7 @@ function classifyTransition(
 
   // Pscross: cube is one D move away from cross. Only meaningful when prev
   // wasn't already at this state or further along.
-  if (curr.stage === 'pscross' && prev.stage !== 'pscross' && prev.stage !== 'cross'
+  if (curr.stage === 'pscross' && (prev.stage !== 'pscross' || curr.solvedSlots.length > prev.solvedSlots.length) && prev.stage !== 'cross'
       && prev.stage !== 'xcross' && prev.stage !== 'xxcross' && prev.stage !== 'xxxcross'
       && prev.stage !== 'f2l' && prev.stage !== 'oll' && prev.stage !== 'pll'
       && prev.stage !== 'solved') {
@@ -321,7 +321,7 @@ async function cancelIntoCandidates(prev: StageInfo, currPattern: KPattern): Pro
 }
 
 export interface CrossCancelCand {
-  stage: 'cross' | 'xcross' | 'xxcross' | 'xxxcross' | 'xxxxcross';
+  stage: 'cross' | 'xcross' | 'xxcross' | 'xxxcross' | 'xxxxcross' | 'psxcross';
   colorLetter?: string;
   pairs: string[];
   /** Hypothetical completion, for comparing pairs without consuming the next line. */
@@ -348,7 +348,8 @@ export async function crossFamilyCancelInto(prev: StageInfo, currPattern: KPatte
     const seen = new Set<string>();
     const consider = async (p: KPattern) => {
       const info = await detectStage(p);
-      const stage = CROSS_FAMILY_STAGE_NAME[info.stage];
+      const stage = info.stage === 'pscross' && info.solvedSlots.length === 1
+        ? 'psxcross' : CROSS_FAMILY_STAGE_NAME[info.stage];
       if (!stage) return;
       const pairs = info.solvedSlots.map(s => slotColors(info.canonicalPattern, s).pair);
       const key = `${stage}:${info.crossColor?.letter}:${pairs.join(',')}`;
@@ -380,7 +381,7 @@ export async function crossFamilyCancelInto(prev: StageInfo, currPattern: KPatte
 
 /**
  * Build suggestion strings for a given stage transition.
- * Each entry includes both bare and `(N)` variants where N = move count of the line.
+ * Only stage and colour-pair labels are offered; counts and ordinal aliases are omitted.
  */
 export interface SuggestArgs {
   /** The preceding line explicitly labels a cancelled cross-family stage. */
@@ -404,7 +405,7 @@ export interface SuggestArgs {
 }
 
 export async function buildCommentSuggestions(args: SuggestArgs): Promise<string[]> {
-  const { prevPattern, currPattern, lineMovesText, prevMovesText, moveCount, explicit } = args;
+  const { prevPattern, currPattern, lineMovesText, prevMovesText, explicit } = args;
   const prev = await detectStage(prevPattern);
   const curr = await detectStage(currPattern);
   const hasMovesBefore = (prevMovesText ?? '').trim().length > 0;
@@ -416,7 +417,6 @@ export async function buildCommentSuggestions(args: SuggestArgs): Promise<string
     if (cands.length > 0) {
       const out: string[] = [];
       for (const c of cands) out.push(`// ${c.pair} cancel into`);
-      if (cands.length === 1) out.push(`// F2L${cands[0].ordinal} cancel into`);
       return out;
     }
     // cross 家族自身(cross/xcross/xxcross/xxxcross/xxxxcross)差 ≤2 步补完的 cancel-into。
@@ -431,12 +431,10 @@ export async function buildCommentSuggestions(args: SuggestArgs): Promise<string
     return out;
   }
 
-  const N = moveCount;
   const out: string[] = [];
 
-  const pushPair = (bare: string) => {
+  const pushLabel = (bare: string) => {
     out.push(`// ${bare}`);
-    out.push(`// ${bare} (${N})`);
   };
 
   if (t.kind === 'inspection') {
@@ -448,13 +446,14 @@ export async function buildCommentSuggestions(args: SuggestArgs): Promise<string
   // letter (W/Y/R/O/B/G). 既不输出无色前缀的 `// cross`, 也不输出 `// Green cross`。
   const colorLetter = curr.crossColor?.letter;
   if (t.kind === 'pscross') {
-    if (colorLetter) pushPair(`${colorLetter} pscross`);
-    else pushPair('pscross');
+    const pairs = curr.solvedSlots.map(s => slotColors(curr.canonicalPattern, s).pair);
+    const label = pairs.length === 1 ? `psxcross (${pairs[0]})` : 'pscross';
+    pushLabel(colorLetter ? `${colorLetter} ${label}` : label);
     return out;
   }
   if (t.kind === 'cross') {
-    if (colorLetter) pushPair(`${colorLetter} cross`);
-    else pushPair('cross');
+    if (colorLetter) pushLabel(`${colorLetter} cross`);
+    else pushLabel('cross');
     return out;
   }
   // xcross / xxcross / xxxcross: append the included F2L pair colors as a
@@ -464,8 +463,8 @@ export async function buildCommentSuggestions(args: SuggestArgs): Promise<string
     const pairs = curr.solvedSlots.map(s => slotColors(curr.canonicalPattern, s).pair);
     const suffix = pairs.length > 0 ? ` (${pairs.join('+')})` : '';
     const stageName = t.kind;
-    if (colorLetter) pushPair(`${colorLetter} ${stageName}${suffix}`);
-    else pushPair(`${stageName}${suffix}`);
+    if (colorLetter) pushLabel(`${colorLetter} ${stageName}${suffix}`);
+    else pushLabel(`${stageName}${suffix}`);
     return out;
   }
   if (t.kind === 'oll') {
@@ -506,10 +505,9 @@ export async function buildCommentSuggestions(args: SuggestArgs): Promise<string
       // Continuation labels identify newly completed cubies, independent of
       // the canonical slot's orientation (RG remains RG after a rotation).
       const pairs = t.slots.map(s => slotColors(curr.canonicalPattern, s).intrinsicPair);
-      pushPair(`${curr.stage} (${pairs.join('+')})`);
+      pushLabel(`${curr.stage} (${pairs.join('+')})`);
     }
-    // Two label variants only: F2L<N> ordinal and 2-letter color-pair.
-    // (Full-name, "1st pair", and "Pair" suffix variants were dropped.)
+    // Identify pairs by their colours, without redundant numbered aliases.
     // Suffix convention (mutually exclusive — curr 是 oll 还是 f2l 二选一):
     //   - OLL skipped on the completing pair → `/OLL Skip`.
     //   - 最后一把同时把 LL 棱朝向(EO 完)= ZBLS/EOLS → 合并成 `/ZBLS`(如 `OB/ZBLS`),
@@ -517,17 +515,13 @@ export async function buildCommentSuggestions(args: SuggestArgs): Promise<string
     const sfx = t.ollSkip ? '/OLL Skip' : t.eoDone ? '/ZBLS' : '';
     if (t.slots.length === 1) {
       const colors = slotColors(curr.canonicalPattern, t.slots[0]);
-      pushPair(`${colors.pair}${sfx}`);
-      pushPair(`F2L${t.ordinalIndex}${sfx}`);
+      pushLabel(`${colors.pair}${sfx}`);
       return out;
     }
     if (t.slots.length === 2) {
-      const i1 = t.ordinalIndex;
-      const i2 = t.ordinalIndex + 1;
       const c1 = slotColors(curr.canonicalPattern, t.slots[0]);
       const c2 = slotColors(curr.canonicalPattern, t.slots[1]);
-      pushPair(`${c1.pair}+${c2.pair}${sfx}`);
-      pushPair(`F2L${i1}+F2L${i2}${sfx}`);
+      pushLabel(`${c1.pair}+${c2.pair}${sfx}`);
       return out;
     }
   }

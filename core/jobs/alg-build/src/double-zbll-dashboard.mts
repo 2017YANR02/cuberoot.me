@@ -12,6 +12,7 @@ export interface DashboardProgress {
   ratePerSecond?: number; reason?: string;
   activeVerified?: number; memoryPressure?: number; diskGiB?: number;
   solverThreads?: number;
+  solverEngine?: string;
   website?: WebsiteSummary;
   pairs?: { finishedPairs: number; meanBefore: number | null; meanAfter: number | null;
     latest?: { top: string; bottom: string; before: number | null; best: number; states: number;
@@ -80,7 +81,7 @@ export function renderDashboard(p: DashboardProgress, options: { now?: number; r
     return left + ' '.repeat(Math.max(2, 34 - [...plain].length - 1)) + (right ? histogramRow(right, 6) : '');
   }) : histogram.map(row => histogramRow(row, Math.max(8, width - 27)));
   const rows = [
-    accent('  双底 ZBLL') + muted('  /  最优 HTM · 含 PLL · 旋转去重'),
+    accent('  双底 ZBLL') + muted(`  /  ${p.solverEngine === 'rust' ? 'Rust H10' : '最优 HTM'} · 含 PLL · 旋转去重`),
     paint(`  ${p.status === 'running' ? '●' : '○'} ${p.stage}`, good ? '32' : '33') + (p.solverThreads ? accent(`  ·  ${p.solverThreads} 线程`) : '') + muted(options.viewer ? '  ·  只读面板' : '  ·  断点续算'), ...(compact ? [] : [muted(line)]),
     accent('━'.repeat(filled)) + muted('─'.repeat(barWidth - filled)) + accent(`  ${(100 * count / p.total).toFixed(2)}%`),
     `已计算   ${paint(number(count), '1')} / ${number(p.total)}  ·  剩余 ${number(p.total - count)}`,
@@ -92,7 +93,7 @@ export function renderDashboard(p: DashboardProgress, options: { now?: number; r
       `所选解   HTM ${accent(String(latest.best))}   ·   QTM ${accent(String(latest.qtm))}   ·   Generators ${accent(String(latest.generators))}`,
     ] : [`最近完成 ${latest.top} × ${latest.bottom}  ·  ${latest.before === null ? '' : latest.before + ' → '}${accent(String(latest.best))} 步`] : []),
     ...(compact ? [] : ['']),
-    accent(`预计剩余   ${p.status === 'complete' ? '已完成' : p.status !== 'running' ? '计算停止，暂不估算' : stale ? '数据暂未更新，暂停估算' : humanTime(eta)}`),
+    accent(`预计剩余   ${p.status === 'complete' ? '已完成' : p.status === 'waiting-memory' ? '等待内存，达标后自动续算' : p.status !== 'running' ? '计算停止，暂不估算' : stale ? '数据暂未更新，暂停估算' : humanTime(eta)}`),
     `计算速度   ${rate && !stale ? rate.toFixed(2) + ' 个 / 秒' : '正在采集'}  ·  累计 ${humanTime(p.computeSeconds)}`,
     ...(compact && hasSelectionMetrics ? [] : [muted(line)]),
     `计算内存   ${gib(p.currentRssGiB)} GiB   ·   峰值 ${gib(p.peakRssGiB)} GiB`,

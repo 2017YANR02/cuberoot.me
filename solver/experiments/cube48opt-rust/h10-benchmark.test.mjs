@@ -59,3 +59,13 @@ test('backend mismatch is rejected before memory observation or child spawn', { 
     assert.match(result.stderr, /H10 entries require CUBEOPT_BACKEND=h10/);
   }
 });
+
+test('WCA benchmark uses all 100 original records without trimming or reordering', () => {
+  const file = path.resolve(here, '../../testdata/benchmarks/wca-first100.json');
+  const config = parseArguments(['rust', 'c', 'table', 'out', '--cases', file]);
+  const cases = loadCases(config.casesFile, true);
+  assert.equal(cases.length, 100);
+  assert.equal(cases[0].id, '22001');
+  assert.equal(cases[99].id, '273001');
+  assert.deepEqual(cases.map(c => c.sourceLine), Array.from({length: 100}, (_, i) => i + 1));
+});

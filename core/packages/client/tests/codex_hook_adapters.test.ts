@@ -73,7 +73,8 @@ describe('unprotected memory computation command guard', () => {
     expect(result.stderr).toBe('');
     const output = JSON.parse(result.stdout).hookSpecificOutput;
     expect(output.permissionDecision).toBe('deny');
-    expect(output.permissionDecisionReason).toContain('系统级防交换保护');
+    expect(output.permissionDecisionReason).toContain(/double-zbll(?:-symmetry|:symmetry)/.test(command)
+      ? '受保护入口登记未匹配' : '系统级防交换保护');
   });
 
   it.each([
@@ -118,6 +119,8 @@ describe('unprotected memory computation command guard', () => {
     'env CUBEOPT_BACKEND=h10 ./solver/experiments/cube48opt-rust/target/release/cube48opt-research query-h10 table.dat',
     'CUBEOPT_BACKEND=h10 node solver/experiments/cube48opt-rust/h10-benchmark.mjs rust c table out --probe',
     'node solver/experiments/cube48opt-rust/verify-h10.mjs rust c table out',
+    'node solver/experiments/cube48opt-rust/zbll-benchmark.mjs out',
+    './solver/experiments/cube48opt-rust/target/zbll/release/cube48opt-research solve-h10 table 8 20 0',
     'CUBEOPT_BACKEND=h10 node solver/experiments/cube48opt-rust/validate-h10.mjs rust c table out',
     'CUBEOPT_BACKEND=h10 node solver/experiments/cube48opt-rust/guard.mts first node solver/experiments/cube48opt-rust/verify-h10.mjs c rust table fixture out; node solver/experiments/cube48opt-rust/validate-h10.mjs rust c table other',
     'node /tmp/guard.mts h10 node solver/experiments/cube48opt-rust/h10-benchmark.mjs rust c table out',
@@ -168,6 +171,7 @@ describe('unprotected memory computation command guard', () => {
     'CUBEOPT_BACKEND=h10 node solver/experiments/cube48opt-rust/guard.mts h10 node solver/experiments/cube48opt-rust/verify-h10.mjs rust c table out',
     'CUBEOPT_BACKEND=h10 node solver/experiments/cube48opt-rust/guard.mts h10 node solver/experiments/cube48opt-rust/validate-h10.mjs rust c table out',
     'node --check solver/experiments/cube48opt-rust/h10-benchmark.mjs',
+    'CUBEOPT_BACKEND=h10 node solver/experiments/cube48opt-rust/guard.mts double-zbll-batch ./solver/experiments/cube48opt-rust/target/zbll/release/cube48opt-research solve-h10 table 8 20 0',
     'node --check solver/experiments/cube48opt-rust/verify-h10.mjs',
     'CUBEOPT_VARIANT=9 node --experimental-strip-types solver/experiments/cube48opt-rust/guard.mts opt9 node solver/experiments/cube48opt-rust/oracle.mjs generate out',
     'node --import ./core/node_modules/tsx/dist/loader.mjs solver/experiments/cube48opt-rust/guard.mts opt2 ./solver/experiments/cube48opt-rust/target/release/cube48opt-research solve small.bin table.dat',

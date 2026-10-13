@@ -40,6 +40,7 @@ jobs:
           scp -i ~/.ssh/id core/scripts/traffic-monitor.ts \
             "$DEPLOY_USER@$DEPLOY_HOST:/tmp/cuberoot-traffic-monitor.ts"
           ssh -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' > traffic-report.json <<'REMOTE'
+          set -euo pipefail
           files=()
           for file in /www/wwwlogs/www.cuberoot.me.log*; do
             [ -f "$file" ] && files+=(--nginx "$file")
@@ -51,8 +52,15 @@ jobs:
             [ -f "$file" ] && files+=(--api "$file")
           done
           [ "${#files[@]}" -gt 0 ] || exit 1
+          mkdir -p /root/core-api/data
+          snapshot=$(mktemp /root/core-api/data/traffic-report.XXXXXX)
+          trap 'rm -f "$snapshot"' EXIT
           node --experimental-strip-types /tmp/cuberoot-traffic-monitor.ts "${files[@]}" \
-            --maintenance-state /etc/nginx/cuberoot-maintenance-state.conf
+            --maintenance-state /etc/nginx/cuberoot-maintenance-state.conf > "$snapshot"
+          node -e 'const r=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")); if(!r.sources?.length) process.exit(1)' "$snapshot"
+          chmod 600 "$snapshot"
+          mv "$snapshot" /root/core-api/data/traffic-report.json
+          cat /root/core-api/data/traffic-report.json
           REMOTE
           # shellcheck disable=SC2016
           node -e 'const r=require("./traffic-report.json"); if(!r.sources?.length) process.exit(1); console.log(`${r.windowStart} ${r.sources.map(s=>`${s.source}:${s.coverage}:${s.requests}`).join(" ")}`)'

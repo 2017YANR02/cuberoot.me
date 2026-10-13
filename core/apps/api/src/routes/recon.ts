@@ -163,6 +163,45 @@ const TODAY_COLUMNS = LIST_COLUMNS + ', wca_scramble, created_at';
 // + video_url/caption 给「复用以前的填写」选择器做视频缩略图 + 标题(个人页忽略多余列)。
 const PERSON_COLUMNS = LIST_COLUMNS + ', added_by, added_by_id, video_url, caption';
 
+// Personal saves use the same session and visibility rules as reconstruction reads.
+reconRoutes.get('/recon/favorites', async (c) => {
+  c.header('Cache-Control', 'private, no-store');
+  const user = await requireAuth(c);
+  if (!user.uid) return c.json({ error: 'Please sign in again' }, 401);
+  const rows = await query<Record<string, unknown>>(
+    `SELECT ${TODAY_COLUMNS} FROM recons
+     WHERE id IN (SELECT recon_id FROM recon_favorites WHERE user_id = ?)
+       AND (visibility IS DISTINCT FROM 'private' OR added_by_id = ? OR ?)
+     ORDER BY (SELECT created_at FROM recon_favorites WHERE recon_id = recons.id AND user_id = ?) DESC`,
+    [user.uid, user.wcaId, Boolean(user.isAdmin), user.uid],
+  );
+  return c.json(await reconRowsToJson(rows));
+});
+
+reconRoutes.put('/recon/:id/favorite', async (c) => {
+  c.header('Cache-Control', 'private, no-store');
+  const user = await requireAuth(c);
+  if (!user.uid) return c.json({ error: 'Please sign in again' }, 401);
+  const id = Number(c.req.param('id'));
+  const body = await c.req.json<{ active?: unknown }>();
+  if (!Number.isSafeInteger(id) || id <= 0 || typeof body?.active !== 'boolean') {
+    return c.json({ error: 'Invalid favorite request' }, 400);
+  }
+  if (body.active) {
+    const rows = await query(
+      `INSERT INTO recon_favorites (user_id, recon_id)
+       SELECT ?, id FROM recons WHERE id = ?
+         AND (visibility IS DISTINCT FROM 'private' OR added_by_id = ? OR ?)
+       ON CONFLICT (user_id, recon_id) DO UPDATE SET recon_id = EXCLUDED.recon_id RETURNING recon_id`,
+      [user.uid, id, user.wcaId, Boolean(user.isAdmin)],
+    );
+    if (!rows.length) return c.json({ error: 'Reconstruction not found' }, 404);
+  } else {
+    await query('DELETE FROM recon_favorites WHERE user_id = ? AND recon_id = ?', [user.uid, id]);
+  }
+  return c.json({ ok: true });
+});
+
 // Fixed server-owned identifiers only; both collections share the same public/admin boundary.
 for (const collection of [
   { list: 'pinned', action: 'home-pin', table: 'recon_home_pins', date: 'pinned_at', field: 'pinned' },

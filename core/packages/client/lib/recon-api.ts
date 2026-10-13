@@ -323,3 +323,11 @@ export async function getFeaturedRecons(): Promise<ReconSolve[]> {
 export async function setReconFeatured(id: number, featured: boolean): Promise<{ ok: boolean }> {
   return apiPut<{ ok: boolean }>(`/${id}/featured`, { featured });
 }
+
+/** Personal favorites, scoped by the authenticated account. */
+export function getReconFavorites(): Promise<ReconSolve[]> {
+  return apiGet('/favorites', {}, 'no-store');
+}
+export function setReconFavorite(id: number, active: boolean): Promise<{ ok: boolean }> {
+  return apiPut(`/${id}/favorite`, { active });
+}

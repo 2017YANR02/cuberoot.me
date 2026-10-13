@@ -66,7 +66,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   equals the set mounted via app.route('/v1', …) in apps/api/src/index.ts.
 //   CI red here = a newly-mounted route is undocumented: add its endpoints below,
 //   then add the file stem to this list.
-//   account_auth account_face admin_disk alg alg_lsll alg_marks alg_preferred_algs alg_srs alg_sets alg_sweep alg_time_attack_order announced_comps app_boot_diagnostics article auth battle_rooms calendar cn_comp_names colpi
+//   account_auth account_face admin_dashboard admin_disk alg alg_lsll alg_marks alg_preferred_algs alg_srs alg_sets alg_sweep alg_time_attack_order announced_comps app_boot_diagnostics article auth battle_rooms calendar cn_comp_names colpi
 //   chat comp_follows creator_gallery cube cubeopt_solve cubing_live documents downloads drive feedback forum friends geo health historical_ranks pb private_vault
 //   membership membership_benefits membership_apple membership_google membership_subscriptions music nav_sites pets nemesizer notifications ops remote_access dev_preview page_notices paint pattern_examples platform_catalog platform_commerce platform_content platform_learning platform_qr progress quiz recon recon_ground_truth scramble_555 teacher_directory teaching teaching_saas
 //   scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
@@ -115,6 +115,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'auth', m: 'POST', p: '/v1/mcp/oauth/revoke', g: 'public', c: 'no-store', zh: '凭 MCP 令牌撤销对应授权', en: 'Revoke a grant using its MCP token' },
   { d: 'auth', m: 'GET', p: '/v1/mcp/oauth/connections', g: 'admin', c: 'no-store', zh: '本人有效的 MCP 授权', en: 'Own active MCP grants' },
   { d: 'auth', m: 'POST', p: '/v1/mcp/oauth/connections/revoke', g: 'admin', c: 'no-store', zh: '撤销本人指定的 MCP 授权', en: 'Revoke a specific MCP grant owned by the administrator' },
+  { d: 'system', m: 'GET', p: '/v1/admin/dashboard', g: 'admin', c: 'no-store', zh: '只读汇总待办、分币种收款与退款、累计赞助和最近小时流量快照；days=7/30/90，UTC', en: 'Read-only pending counts, receipts/refunds by currency, lifetime sponsorship and latest hourly traffic snapshot; days=7/30/90, UTC' },
   { d: 'system', m: 'GET', p: '/v1/admin/disk', g: 'admin', c: 'no-store', zh: '根磁盘容量与目录占用；path 选择目录，refresh=1 请求后台刷新', en: 'Root disk capacity and directory usage; path selects a directory, refresh=1 requests a background scan' },
   { d: 'platform', m: 'POST', p: '/v1/platform/organizer-applications', g: 'login', c: 'no-store', zh: '提交主办方申请，可关联已有组织', en: 'Apply to host competitions using a new or existing organization' },
   { d: 'platform', m: 'GET', p: '/v1/platform/organizer-applications/me', g: 'login', c: 'no-store', zh: '读取本人申请与获准办赛的组织', en: 'Read own applications and eligible organizer organizations' },
@@ -264,6 +265,8 @@ const ENDPOINTS: Ep[] = [
   // ---- recon ----
   { d: 'recon', m: 'GET', p: '/v1/recon/list', g: 'public', c: 'cdn', zh: '复盘列表', en: 'Recon list' },
   { d: 'recon', m: 'GET', p: '/v1/recon/latest', g: 'public', zh: '最新复盘', en: 'Latest recons' },
+  { d: 'recon', m: 'GET', p: '/v1/recon/favorites', g: 'login', zh: '当前账号收藏的复盘', en: 'Current account reconstruction favorites' },
+  { d: 'recon', m: 'PUT', p: '/v1/recon/:id/favorite', g: 'login', zh: '收藏或取消收藏复盘', en: 'Save or unsave a reconstruction' },
   { d: 'recon', m: 'GET', p: '/v1/recon/featured', g: 'public', zh: '精选复盘', en: 'Featured solves' },
   { d: 'recon', m: 'PUT', p: '/v1/recon/:id/featured', g: 'admin', zh: '添加或取消精选复盘', en: 'Feature or unfeature a solve' },
   { d: 'recon', m: 'GET', p: '/v1/recon/pinned', g: 'public', zh: '首页置顶复盘', en: 'Pinned homepage recons' },
@@ -412,6 +415,8 @@ const ENDPOINTS: Ep[] = [
   { d: 'teaching-saas', m: 'POST', p: '/v1/teaching/me/guardian-account-binding/preview', g: 'login', c: 'no-store', zh: '当前登录账号仅按口令哈希预览机构、学员、监护关系和到期时间；不可用口令统一返回 404', en: 'Preview the organization, student, guardian relationship, and expiry by token hash only; unavailable tokens uniformly return 404' },
   { d: 'teaching-saas', m: 'POST', p: '/v1/teaching/me/guardian-account-binding/consume', g: 'login', c: 'no-store', zh: '用户确认预览后，通过口令原子绑定当前账号与监护关系；相同账号重试可安全复用结果', en: 'After preview confirmation, atomically bind the signed-in account to the guardian relationship with safe same-account replay' },
   { d: 'teaching-saas', m: 'GET', p: '/v1/teaching/organizations/:orgSlug/me/training/assignments', g: 'login', c: 'no-store', zh: '读取当前登录账号在指定机构绑定学员的训练任务快照', en: 'List training assignment snapshots for the student bound to the signed-in account in the specified organization' },
+  { d: 'teaching-saas', m: 'GET', p: '/v1/teaching/organizations/:orgSlug/me/training/assignments/:assignmentId/daily', g: 'login', c: 'no-store', zh: '学员按任务时区查看每日完成情况，仅限本人及当前同班任务成员；默认按次数排名，rankEvent 按指定项目最佳成绩排名', en: 'Daily completion for self and current classmates assigned the task, in assignment timezone; rank by attempts, or daily best in rankEvent' },
+  { d: 'teaching-saas', m: 'GET', p: '/v1/teaching/organizations/:orgSlug/training/assignments/:assignmentId/daily', g: 'login', c: 'no-store', zh: '教师查看授权学员每日训练和分项目成绩；按 date、rankEvent 选择日期与成绩榜，在权限筛选和排名后分页', en: 'Authorized learner daily training and per-event results; date and rankEvent select the day and result ranking, with pagination after authorization and ranking' },
   { d: 'teaching-saas', m: 'POST', p: '/v1/teaching/organizations/:orgSlug/me/training/evidence', g: 'login', c: 'no-store', zh: '提交当前绑定学员的自报训练证据；身份、机构、可信等级和本地日期均由服务端派生', en: 'Submit self-reported evidence for the currently bound student; identity, organization, trust level, and local date are server-derived' },
   { d: 'teaching-saas', m: 'GET', p: '/v1/teaching/organizations/:orgSlug/me/students/:studentId/weekly-reports', g: 'login', c: 'no-store', zh: '按当前学员或监护关系分页读取可见的已发布周报，并按身份裁剪反馈聚合', en: 'List visible published weekly reports for the current learner or guardian relationship with role-filtered feedback aggregates' },
   { d: 'teaching-saas', m: 'GET', p: '/v1/teaching/organizations/:orgSlug/me/students/:studentId/weekly-reports/:reportId', g: 'login', c: 'no-store', zh: '读取当前学员或监护关系可见的已发布周报详情，并隐藏内部与账号字段', en: 'Read a published weekly report visible to the current learner or guardian relationship while omitting internal and account fields' },
@@ -720,6 +725,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'membership', m: 'POST', p: '/v1/membership/notify/xunhupay', g: 'webhook', c: 'no-store', zh: '虎皮椒回调(验签)', en: 'Xunhupay notify (signed)' },
   { d: 'membership', m: 'POST', p: '/v1/membership/admin/grant', g: 'admin', zh: '手动开通会员', en: 'Manually grant membership' },
   { d: 'membership', m: 'GET', p: '/v1/membership/admin/list', g: 'admin', zh: '会员列表', en: 'Member list' },
+  { d: 'membership', m: 'GET', p: '/v1/membership/admin/renewal-readiness', g: 'admin', c: 'no-store', zh: '代扣接入预检：仅返回配置是否存在，不返回密钥、不调用微信、不证明审核或交易成功', en: 'Renewal configuration diagnostics only; no secrets, provider calls or claims of approval or successful transactions' },
   { d: 'membership', m: 'DELETE', p: '/v1/membership/admin/member/:wcaId', g: 'admin', zh: '删除会员', en: 'Remove member' },
   { d: 'membership', m: 'PUT', p: '/v1/membership/admin/plans/:slug', g: 'admin', zh: '改套餐', en: 'Edit plan' },
 

@@ -2,7 +2,7 @@
 import * as THREE from "three";
 import Cube from "./cube";
 import Cubelet from "./cubelet";
-import tweener, { type Tween } from "@cuberoot/puzzle-render-core/engine/tweener";
+import tweener, { type Tween, type TweenEasing } from "@cuberoot/puzzle-render-core/engine/tweener";
 import { timing } from "@cuberoot/puzzle-render-core/engine/tweenTiming";
 import initStackKernel, { apply_rotates as stackKernelApplyRotates, apply_rotates_no_flat as stackKernelApplyRotatesNoFlat } from "@cuberoot/stack-kernel";
 import { ensureWorkerInit, workerApply } from "./setup_worker_client";
@@ -363,7 +363,7 @@ export class TwistNode {
 
 export default class Twister {
   private cube: Cube;
-  private queue: Array<{ action: TwistAction; formulaDurationTicks?: number }> = [];
+  private queue: Array<{ action: TwistAction; formulaDurationTicks?: number; easing?: TweenEasing }> = [];
   private pauseTween: Tween | undefined;
   private catchingUpRealtime = false;
   // 在 undo / redo 内部 twist 时为 true,避免误清空 redo 栈
@@ -420,6 +420,24 @@ export default class Twister {
    *  mirror needs the active layer too or it under-counts every queue by one. */
   get backlog(): number {
     return this.queue.length + (this.cube.busy ? 1 : 0);
+  }
+
+  /** Conservative serial work estimate; same-axis layers can finish together. */
+  get remainingTicks(): number {
+    let active = 0;
+    for (const groups of Object.values(this.cube.table.groups)) {
+      for (const group of groups) active = Math.max(active, group.remainingTicks);
+    }
+    return active + this.queue.reduce((sum, entry) => sum + (entry.formulaDurationTicks ?? timing.frames), 0);
+  }
+
+  accelerateRealtime(ticks: number): void {
+    for (const groups of Object.values(this.cube.table.groups)) {
+      for (const group of groups) group.accelerateRealtime(ticks);
+    }
+    for (const entry of this.queue) {
+      entry.formulaDurationTicks = Math.min(entry.formulaDurationTicks ?? timing.frames, ticks);
+    }
   }
 
   finish(): void {
@@ -744,14 +762,14 @@ export default class Twister {
     };
   }
 
-  push(exp: string, reverse = false, times = 1, formulaDurationTicks?: number): void {
+  push(exp: string, reverse = false, times = 1, formulaDurationTicks?: number, easing: TweenEasing = 'ease-out'): void {
     const node = new TwistNode(exp, reverse, times);
     const list = node.parse();
     if (list.length == 0) {
       return;
     }
     for (const action of list) {
-      this.queue.push({ action, formulaDurationTicks });
+      this.queue.push({ action, formulaDurationTicks, easing });
     }
     this.update();
   }
@@ -766,6 +784,7 @@ export default class Twister {
     exp: string,
     fallbackExp: string,
     formulaDurationTicks = timing.frames,
+    easing: TweenEasing = 'ease-out',
   ): void {
     const tokens = exp.trim().split(/\s+/).filter(Boolean);
     const incoming = new TwistNode(exp).parse();
@@ -824,7 +843,7 @@ export default class Twister {
       return;
     }
 
-    this.queue.push({ action: latest, formulaDurationTicks });
+    this.queue.push({ action: latest, formulaDurationTicks, easing });
     this.update();
     if (!this.cube.busy || this.queue.length > 0) {
       this.queue.length = 0;
@@ -844,6 +863,7 @@ export default class Twister {
         false,
         false,
         queued.formulaDurationTicks,
+        queued.easing,
       );
       if (!success) {
         this.queue.unshift(queued);
@@ -857,6 +877,7 @@ export default class Twister {
     fast: boolean,
     force: boolean,
     formulaDurationTicks = timing.frames,
+    easing: TweenEasing = 'ease-out',
   ): boolean {
     let success = false;
     if (action.sign == "#") {
@@ -909,6 +930,7 @@ export default class Twister {
         fast,
         true,
         formulaDurationTicks,
+        easing,
       );
       // force = instant sync (playback jumpToStep etc.). If the target layer can't lock
       // because a perpendicular layer is stranded holding with no tween (e.g. a drag's
@@ -923,6 +945,7 @@ export default class Twister {
           fast,
           true,
           formulaDurationTicks,
+          easing,
         );
       }
       if (!success && force) console.warn('[sim] twister.twist(force): layer never locked, skipped');

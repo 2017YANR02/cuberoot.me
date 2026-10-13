@@ -85,3 +85,17 @@ describe('shared live smart-cube anchor', () => {
     expect(anchor.getSnapshot()).toEqual({ moves: ['L'], algAnchored: true });
   });
 });
+
+it('delivers every timestamped display move before React notification, including the solved boundary', () => {
+  const order: string[] = [];
+  const anchor = new LiveSmartCubeAnchor({ solve: vi.fn(), onChange: () => order.push('react') });
+  anchor.setConnection('test'); anchor.observeFacelets(SOLVED_3X3);
+  const commands: unknown[] = [];
+  const unsubscribe = anchor.subscribe(event => { order.push('display'); commands.push([event.move, event.timestamp, event.snapshot.moves]); });
+  order.length = 0;
+  anchor.move('R', 100); anchor.move("R'", 150);
+  expect(order).toEqual(['display', 'react', 'display', 'react']);
+  expect(commands).toEqual([['R', 100, ['R']], ["R'", 150, []]]);
+  unsubscribe(); anchor.move('U', 200);
+  expect(commands).toHaveLength(2);
+});

@@ -15,6 +15,14 @@ use std::{
 
 fn run() -> Result<(), String> {
     let args: Vec<String> = env::args().collect();
+    if matches!(args.get(1).map(String::as_str), Some("generate-opt10" | "solve-opt10")) {
+        // Default builds reject before reading a table or allocating a PDB.
+        // The dedicated Opt10 build is launched through its budgeted guard.
+        if !cfg!(feature = "opt10-runtime") {
+            return Err("Opt10 large-table execution is disabled in this build; code and bounded validation only".into());
+        }
+        return opt10_command(&args);
+    }
     if args.len() < 3
         || !matches!(
             args[1].as_str(),
@@ -80,6 +88,46 @@ fn run() -> Result<(), String> {
         PruningTable::load_variant(Path::new(pdb_path), variant)?,
     )?;
     run_solver(&oracle, options(&args[4..])?)
+}
+
+fn opt10_command(args: &[String]) -> Result<(), String> {
+    use cube48opt_research::{opt10::{Opt10Coordinates, Opt10Solver},
+        opt10_generate::{generate, GenerationConfig}, opt10_table::{AtomicOpt10Table, DEFAULT_BASE}};
+    // The dedicated Opt10 guard has its own budget and validates the completed
+    // small-table generator proof. Do not silently use an Opt1/H10 budget.
+    if env::var("CUBEOPT_BACKEND").as_deref() != Ok("opt10") {
+        return Err("Opt10 requires its own guarded backend; existing Opt1–9/H10 budgets do not apply".into());
+    }
+    let generation = args[1] == "generate-opt10";
+    if generation && !(args.len() == 4 || args.len() == 5) || !generation && !(4..=7).contains(&args.len()) {
+        return Err("generate-opt10 OPT9_SMALL NEW_TABLE [THREADS] | solve-opt10 OPT9_SMALL TABLE [CONTEXTS MAX_DEPTH MAX_NODES]".into());
+    }
+    let threads = if generation {
+        let threads: usize = args.get(4).map(|s| s.parse()).transpose().map_err(|_| "invalid generation threads")?.unwrap_or(16);
+        let available = std::thread::available_parallelism().map_err(|e| e.to_string())?.get();
+        if threads == 0 || threads > 16 || threads > available { return Err(format!("generation threads must be 1..{}", available.min(16))); }
+        threads
+    } else { 1 };
+    let search_options = if !generation { Some(options(&args[4..])?) } else { None };
+    let path = Path::new(&args[3]);
+    if generation && (path.exists() || std::path::PathBuf::from(format!("{}.partial", path.display())).exists()) {
+        return Err("Opt10 output or partial already exists; refusing to overwrite".into());
+    }
+    if fs::metadata(&args[2]).map_err(|e| e.to_string())?.len() != 818_008 {
+        return Err("Opt10 expects an 818008-byte Opt9 small snapshot".into());
+    }
+    let snapshot = fs::read(&args[2]).map_err(|e| e.to_string())?;
+    if !generation { return run_solver(&Opt10Solver::open(&snapshot, path)?, search_options.unwrap()); }
+    let coordinates = Opt10Coordinates::from_opt9_snapshot(&snapshot)?;
+    let table = AtomicOpt10Table::new(DEFAULT_BASE)?;
+    let result = generate(&coordinates, &table, GenerationConfig { threads, ..GenerationConfig::default() }, |progress| {
+        eprintln!("Opt10 {:?}: depth={} short={} seeds={}/{} expanded={} elapsed={:.1}s",
+            progress.stage, progress.depth, progress.short_states, progress.seeds_done,
+            progress.seeds_total, progress.expanded, progress.seconds);
+    })?;
+    let header = table.write_complete(path, &snapshot, result.completed_depth)?;
+    eprintln!("Opt10 complete: depth={}, expanded={}, payload={} bytes", header.completed_depth, result.expanded, table.byte_len());
+    Ok(())
 }
 
 struct H48Request<'a> {
@@ -162,10 +210,13 @@ fn options(args: &[String]) -> Result<SearchOptions, String> {
     })
 }
 
-fn run_solver<O: PruningOracle>(oracle: &O, options: SearchOptions) -> Result<(), String> {
+fn run_solver<O: PruningOracle + Sync>(oracle: &O, options: SearchOptions) -> Result<(), String> {
     let contexts = options.contexts;
-    for line in io::stdin().lock().lines() {
-        let line = line.map_err(|e| e.to_string())?;
+    let threads = env::var("CUBEOPT_SOLVE_THREADS").unwrap_or_else(|_| "1".into())
+        .parse::<usize>().map_err(|_| "invalid CUBEOPT_SOLVE_THREADS")?;
+    let maximum = std::thread::available_parallelism().map_err(|e| e.to_string())?.get();
+    if threads == 0 || threads > maximum { return Err(format!("threads must be 1..{maximum}")); }
+    cube48opt_research::batch::run(io::BufReader::new(io::stdin()), io::stdout(), threads, |line| {
         let (id, scramble) = input(&line)?;
         let cube = Cube::from_scramble(scramble)?;
         let started = Instant::now();
@@ -197,10 +248,9 @@ fn run_solver<O: PruningOracle>(oracle: &O, options: SearchOptions) -> Result<()
             .map(|v| v.to_string())
             .unwrap_or("null".into());
         let s = result.stats;
-        println!("{{\"id\":\"{id}\",\"solution\":{solution_json},\"length\":{length},\"seconds\":{seconds:.9},\"completed_depth\":{completed},\"cancelled\":{},\"contexts\":{contexts},\"nodes\":{},\"probes\":{},\"inverse_probes\":{},\"cache_reuses\":{},\"splits\":{},\"face_prunes\":{},\"face_siblings_removed\":{}}}",
-            result.cancelled, s.nodes, s.probes, s.inverse_probes, s.cache_reuses, s.splits, s.face_prunes, s.face_siblings_removed);
-    }
-    Ok(())
+        Ok(format!("{{\"id\":\"{id}\",\"solution\":{solution_json},\"length\":{length},\"seconds\":{seconds:.9},\"completed_depth\":{completed},\"cancelled\":{},\"contexts\":{contexts},\"nodes\":{},\"probes\":{},\"inverse_probes\":{},\"cache_reuses\":{},\"splits\":{},\"face_prunes\":{},\"face_siblings_removed\":{}}}",
+            result.cancelled, s.nodes, s.probes, s.inverse_probes, s.cache_reuses, s.splits, s.face_prunes, s.face_siblings_removed))
+    })
 }
 
 fn input(line: &str) -> Result<(&str, &str), String> {

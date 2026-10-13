@@ -71,10 +71,11 @@ export interface ReconPlayerAdapter<M> {
 }
 
 export default function ReconPlayerBase<M>({
-  scramble, alg, adapter, fillPane = false, hideControls = false, playerRef, fullscreenButton, ariaLabel, leadingControls, trailingControls, controlLabels,
+  scramble, alg, adapter, fillPane = false, hideControls = false, playerRef, fullscreenButton, ariaLabel, leadingControls, trailingControls, controlLabels, segmentEnds,
 }: {
   scramble: string;
   alg: string;
+  segmentEnds?: readonly number[];
   adapter: ReconPlayerAdapter<M>;
   fillPane?: boolean;
   /** 隐藏底部完整控制条,改用画面内居中播放/暂停浮层(嵌成绩弹窗预览时用)。 */
@@ -109,6 +110,9 @@ export default function ReconPlayerBase<M>({
   const [total, setTotal] = useState(movesRef.current.length);
   const [playing, setPlaying] = useState(false);
   const [playbackRun, setPlaybackRun] = useState(0);
+  // A user pause persists across text/caret seeks; reaching the end does not
+  // disable the default text-driven autoplay. Explicit Play enables it again.
+  const userPausedRef = useRef(false);
 
   const setStep = useCallback((n: number) => {
     stepRef.current = n;
@@ -127,6 +131,21 @@ export default function ReconPlayerBase<M>({
     const target = applyStep(n);
     if (target != null) setStep(target);
   }, [applyStep, setStep]);
+
+  const play = useCallback(() => {
+    userPausedRef.current = false;
+    if (stepRef.current >= movesRef.current.length) jumpToStep(0);
+    setPlaying(true);
+  }, [jumpToStep]);
+
+  const togglePlay = useCallback(() => {
+    if (playing) {
+      userPausedRef.current = true;
+      jumpToStep(stepRef.current);
+    } else {
+      play();
+    }
+  }, [playing, jumpToStep, play]);
 
   // ── Mount: 共享的 /sim 嵌入生命周期(mountSimWorld:渲染器 / 尺寸 / 只在脏时渲染的
   //    rAF / 卸载)+ 共享的拖拽手势(attachOrbitTap,钳 pitch 的看图档),本文件只留
@@ -285,21 +304,16 @@ export default function ReconPlayerBase<M>({
       __kind: kind,
       jumpToMoveCount: (n: number, autoplay = false) => {
         jumpToStep(n);
-        if (autoplay) {
+        if (autoplay && !userPausedRef.current) {
           setPlaybackRun(run => run + 1);
           setPlaying(n < movesRef.current.length);
         }
       },
-      play: () => {
-        if (stepRef.current >= movesRef.current.length) jumpToStep(0);
-        setPlaying(true);
-      },
+      play,
     };
     playerRef.current = handle;
     return () => { if (playerRef.current?.__kind === kind) playerRef.current = null; };
-  }, [playerRef, jumpToStep]);
-
-  const atEnd = step >= total;
+  }, [playerRef, jumpToStep, play]);
 
   return (
     <div className={`recon-player${fillPane ? ' recon-player--fill' : ''}`}>
@@ -308,7 +322,7 @@ export default function ReconPlayerBase<M>({
         {hideControls && total > 0 && (
           <ReconPlayOverlay
             playing={playing}
-            onToggle={() => { if (atEnd) jumpToStep(0); setPlaying(p => !p); }}
+            onToggle={togglePlay}
           />
         )}
       </div>
@@ -316,12 +330,13 @@ export default function ReconPlayerBase<M>({
       <div className="recon-player-controls">
         <PlaybackBar layout={fillPane ? 'wide' : 'compact'}
           step={step}
+          segmentEnds={segmentEnds}
           total={total}
           playing={playing}
           onScrub={jumpToStep}
           onSkipStart={() => jumpToStep(0)}
           onStepBack={() => jumpToStep(step - 1)}
-          onTogglePlay={() => { if (atEnd) jumpToStep(0); setPlaying(p => !p); }}
+          onTogglePlay={togglePlay}
           onStepForward={() => jumpToStep(step + 1)}
           onSkipEnd={() => jumpToStep(total)}
           leading={<>{fullscreenButton}{leadingControls}</>}

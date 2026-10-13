@@ -180,8 +180,8 @@ export interface AdminOrder {
   paidAt: string | null;
 }
 
-export async function listPlans(): Promise<{ plans: MembershipPlan[]; payEnabled: boolean; channels?: PayChannels }> {
-  return handleApi(await sessionFetch(`${BASE}/plans`));
+export async function listPlans(): Promise<{ plans: MembershipPlan[]; renewalPlans?: MembershipPlan[]; payEnabled: boolean; channels?: PayChannels }> {
+  return handleApi(await sessionFetch(`${BASE}/plans?v=2`));
 }
 
 export async function listPublicMembers(signal?: AbortSignal): Promise<PublicMember[]> {
@@ -268,6 +268,20 @@ export interface AdminMembership extends Membership {
 
 export async function adminList(): Promise<{ members: AdminMembership[]; plans?: MembershipPlan[]; orders: AdminOrder[] }> {
   return handleApi(await sessionFetch(`${BASE}/admin/list?v=2`, { headers: authHeaders(false) }));
+}
+
+export interface RenewalReadiness {
+  scope: 'server_configuration_only';
+  readyForProduction: false;
+  managementConfigured: boolean;
+  syncEnabled: boolean;
+  checks: { name: string; status: 'present' | 'missing' | 'invalid' }[];
+}
+
+export async function adminRenewalReadiness(signal?: AbortSignal): Promise<RenewalReadiness> {
+  return handleApi(await sessionFetch(apiUrl('/v1/membership/admin/renewal-readiness'), {
+    headers: authHeaders(false), cache: 'no-store', signal,
+  }));
 }
 
 export async function adminRevoke(wcaId: string): Promise<{ ok: boolean }> {

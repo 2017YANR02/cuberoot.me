@@ -22,7 +22,8 @@ import CubeColorChip, {
   cubeColorGroups,
   f2lDisplayColors,
 } from '@/components/CubeColorChip/CubeColorChip';
-import { cleanForPlayer, findTokenPositions, syncReconPlayerCursorFromText, reconInspectionOrientations } from '@/lib/recon-alg-utils';
+import { cleanForPlayer, findTokenPositions, syncReconPlayerCursorFromText, reconInspectionOrientations, reconWasteBrackets } from '@/lib/recon-alg-utils';
+import { visualCubeSchemeForOrientation } from '@/lib/cube-orientation';
 import { getTextOffsetInElement, snapCaretToLine } from '@cuberoot/timer-ui/recon/text-cursor';
 import './solution_view.css';
 
@@ -51,11 +52,12 @@ function computeHighlightRange(plainText: string, offset: number): [number, numb
   return [p.start, p.end];
 }
 
-export default function SolutionView({ text, event, scramble = '', sourceText = text, playerRef, crossLineIdx = -1, crossNormalized = false, onToggleCross }: {
+export default function SolutionView({ text, event, scramble = '', sourceText = text, playerRef, crossLineIdx = -1, crossNormalized = false, onToggleCross, autoWaste = false }: {
   text: string;
   event?: string;
   scramble?: string;
   sourceText?: string;
+  autoWaste?: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   playerRef: MutableRefObject<any>;
   /** cross 行索引;>=0 时该行末尾渲染内联切换按钮。-1 表示不渲染 */
@@ -80,6 +82,8 @@ export default function SolutionView({ text, event, scramble = '', sourceText = 
   }, [scramble, sourceText]);
   const crossColor = useMemo(() => crossColorFromReconText(plainText), [plainText]);
   const linkComments = event === '3x3' || event === '333' || event === 'oh' || event === '333oh';
+  const wasteBrackets = useMemo(() => autoWaste && linkComments
+    ? reconWasteBrackets(plainText, scramble) : new Map<number, string>(), [autoWaste, linkComments, plainText, scramble]);
   const [commentCases, setCommentCases] = useState<ReconCommentCases>(new Map());
   const [f2lLinks, setF2lLinks] = useState<Map<number, Map<string, string>>>(new Map());
   const [f2lDiagrams, setF2lDiagrams] = useState<Map<number, { colors: string; facelets: string }[]>>(new Map());
@@ -96,7 +100,7 @@ export default function SolutionView({ text, event, scramble = '', sourceText = 
       return /\bF2L[1-4]?\b/i.test(label) || cubeColorGroups(label).some(group => group.colors.length === 2);
     })) {
       setF2lLoading(true);
-      void import('@/lib/recon-f2l-links').then(({ reconF2lAnnotations }) => reconF2lAnnotations(scramble, sourceText))
+      void import('@/lib/recon-f2l-links').then(({ reconF2lAnnotations }) => reconF2lAnnotations(scramble, sourceText, diagrams => { if (!cancelled) setF2lDiagrams(diagrams); }))
         .then(({ links, diagrams }) => { if (!cancelled) { setF2lLinks(links); setF2lDiagrams(diagrams); } })
         .catch(() => { /* Unknown states stay as plain labels, never a guessed case. */ })
         .finally(() => { if (!cancelled) setF2lLoading(false); });
@@ -244,6 +248,23 @@ export default function SolutionView({ text, event, scramble = '', sourceText = 
             }))
           : [];
         const colorsAt = new Map(labelColorGroups.map(group => [group.start, group.colors]));
+        const hiddenBrackets = new Set<number>();
+        for (const match of line.matchAll(/\(([^()]*)\)/g)) {
+          const start = match.index!;
+          const end = start + match[0].length - 1;
+          const groups = labelColorGroups.filter(group => group.start > start && group.end <= end);
+          if (!groups.length) continue;
+          let remainder = line.slice(start + 1, end);
+          for (const group of [...groups].reverse()) {
+            remainder = remainder.slice(0, group.start - start - 1) + remainder.slice(group.end - start - 1);
+          }
+          if (/^[\s+]*$/.test(remainder)) {
+            hiddenBrackets.add(start); hiddenBrackets.add(end);
+            for (let offset = start + 1; offset < end; offset++) {
+              if (line[offset] === '+') hiddenBrackets.add(offset);
+            }
+          }
+        }
         const links = linkComments ? reconCommentLinks(line, commentCases).flatMap(link => {
           if (link.href !== '/alg/3x3/f2l') return [link];
           const href = f2lLinks.get(i)?.get('F2L');
@@ -256,7 +277,7 @@ export default function SolutionView({ text, event, scramble = '', sourceText = 
           || (labelStart >= 0 && /^F2L(?:[1-4])?\b/i.test(line.slice(labelStart)))
         );
         const diagram = topLayerLink && lineSetups[i] ? (
-          <VisualCube setup={lineSetups[i]} view="plan" size={28} local interactive enlargeable
+          <VisualCube setup={lineSetups[i]} scheme={visualCubeSchemeForOrientation('')} view="plan" size={28} local interactive enlargeable
             alt={tr({ zh: '执行此行前的顶层状态', en: 'Last-layer state before this line' })} />
         ) : isF2lLine && f2lDiagrams.has(i) ? <>{f2lDiagrams.get(i)!.map(({ colors, facelets }) => {
           return <VisualCube key={colors} faceletColors={facelets} view="iso" size={28} local interactive enlargeable
@@ -265,6 +286,10 @@ export default function SolutionView({ text, event, scramble = '', sourceText = 
 
         // 切点:0 / 行尾 / 光标 / 高亮起止 / 色块位置 → 分段渲染。
         const cuts = new Set<number>([0, line.length]);
+        for (const offset of wasteBrackets.keys()) {
+          if (offset >= lineStart && offset <= lineStart + line.length) cuts.add(offset - lineStart);
+        }
+        for (const offset of hiddenBrackets) { cuts.add(offset); cuts.add(offset + 1); }
         if (localCursor != null) cuts.add(localCursor);
         if (hasHl) { cuts.add(Math.max(0, hlS)); cuts.add(Math.min(line.length, hlE)); }
         for (const group of labelColorGroups) {
@@ -276,6 +301,13 @@ export default function SolutionView({ text, event, scramble = '', sourceText = 
         const parts: React.ReactNode[] = [];
         for (let s = 0; s < sorted.length - 1; s++) {
           const a = sorted[s], b = sorted[s + 1];
+          if (wasteBrackets.has(lineStart + a)) parts.push(
+            <span key={`waste${a}`} data-recon-text-length={0}>{wasteBrackets.get(lineStart + a)}</span>,
+          );
+          if (hiddenBrackets.has(a)) {
+            parts.push(<span key={`bracket${a}`} data-recon-text-length={1}>{line[a] === '+' ? ' ' : null}</span>);
+            continue;
+          }
           const colors = colorsAt.get(a);
           if (colors) {
             const chip = <CubeColorChip colors={f2lDisplayColors(colors, crossColor)} className="recon-label-chip" />;
@@ -302,6 +334,9 @@ export default function SolutionView({ text, event, scramble = '', sourceText = 
           else if (link) parts.push(<Link key={`link${a}`} href={link.href} prefetch={false} className="recon-comment-link">{seg}</Link>);
           else parts.push(seg);
         }
+        if (wasteBrackets.has(lineStart + line.length)) parts.push(
+          <span key="wasteEnd" data-recon-text-length={0}>{wasteBrackets.get(lineStart + line.length)}</span>,
+        );
         if (localCursor === line.length) parts.push(<span key="cend" className="detail-cursor" />);
 
         const content = isComment ? <span className="recon-step-label">{parts}</span> : parts;

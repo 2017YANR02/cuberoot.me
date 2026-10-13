@@ -128,6 +128,32 @@ export type LiveSimPlan = SimLogPlan | LiveSimCatchUpPlan;
 /** At most one active turn plus one pending turn may remain visually behind. */
 export const MAX_LIVE_ANIMATION_BACKLOG = 2;
 
+/** Tune live animation in milliseconds, independently of display refresh rate. */
+export const LIVE_VISUAL_BUDGET_MS = 140;
+export class LiveTurnCadence {
+  private previousMs: number | null = null;
+  private intervalMs = 110 / 0.8;
+
+  reset(): void { this.previousMs = null; this.intervalMs = 110 / 0.8; }
+
+  durationMs(timestamp: number | undefined, receivedAtMs: number): number {
+    const now = timestamp !== undefined && Number.isFinite(timestamp) ? timestamp : receivedAtMs;
+    const delta = this.previousMs === null ? null : now - this.previousMs;
+    if (delta !== null && delta > 0 && delta < 1000) {
+      // React quickly to speeding up, relax slowly when the input gets slower.
+      this.intervalMs = delta < this.intervalMs ? delta : this.intervalMs * 0.7 + delta * 0.3;
+    } else if (delta !== null && delta >= 1000) {
+      this.intervalMs = 110 / 0.8;
+    }
+    if (this.previousMs === null || now > this.previousMs) this.previousMs = now;
+    return Math.max(35, Math.min(110, this.intervalMs * 0.8));
+  }
+}
+
+export function liveSimNeedsCatchUp(remainingMs: number, incomingCount: number, durationMs: number): boolean {
+  return incomingCount > 8 || remainingMs + incomingCount * durationMs > LIVE_VISUAL_BUDGET_MS;
+}
+
 /** `T` 和 `ρ` 拼成实际喂给引擎的那条串。两边都可能是空的。 */
 function composed(s: SimLogState): string {
   if (!s.pose) return s.turns;
@@ -178,6 +204,7 @@ export function planLiveSimUpdate(
   animate: boolean,
   currentBacklog: number,
   hasRenderedState = false,
+  timing?: { remainingMs: number; durationMs: number },
 ): LiveSimPlan {
   let ordinary = planSimUpdate(prev, next, animate);
   // The canonical live log rebases to an empty string at solved. Once the cube
@@ -194,7 +221,9 @@ export function planLiveSimUpdate(
   if (ordinary.mode !== 'push') return ordinary;
 
   const incomingCount = ordinary.exp.trim().split(/\s+/).filter(Boolean).length;
-  if (currentBacklog + incomingCount <= MAX_LIVE_ANIMATION_BACKLOG) return ordinary;
+  if (timing
+    ? !liveSimNeedsCatchUp(timing.remainingMs, incomingCount, timing.durationMs)
+    : currentBacklog + incomingCount <= MAX_LIVE_ANIMATION_BACKLOG) return ordinary;
 
   return {
     mode: 'catch-up',

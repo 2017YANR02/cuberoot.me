@@ -5,3 +5,18 @@
   flex: 1;
   min-width: 60px;
 }
+
+/* Playback shortcuts keep focus on the scrubber without enlarging its thumb. */
+input[type='range'].playback-scrubber:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--foreground) 30%, transparent);
+}
+input[type='range'].playback-scrubber:focus-visible::-moz-range-thumb {
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--foreground) 30%, transparent);
+}
+
+input[type='range'].playback-scrubber.playback-scrubber::-webkit-slider-runnable-track {
+  background-image: var(--segment-gaps), linear-gradient(to right, var(--accent) 0%, var(--accent) var(--pct, 0%), color-mix(in srgb, var(--foreground) 15%, transparent) var(--pct, 0%), color-mix(in srgb, var(--foreground) 15%, transparent) 100%);
+}
+input[type='range'].playback-scrubber.playback-scrubber::-moz-range-track {
+  background-image: var(--segment-gaps), linear-gradient(to right, var(--accent) 0%, var(--accent) var(--pct, 0%), color-mix(in srgb, var(--foreground) 15%, transparent) var(--pct, 0%), color-mix(in srgb, var(--foreground) 15%, transparent) 100%);
+}

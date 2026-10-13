@@ -28,6 +28,7 @@
 
 import * as THREE from 'three';
 import World, { type PuzzleKind } from '../engine/world';
+import tweener from '../engine/tweener';
 import { attachInteraction } from './worldInteraction';
 
 export interface SimMountOpts<W extends World = World> {
@@ -57,6 +58,8 @@ export interface SimMountOpts<W extends World = World> {
    *  2x for crisp cube edges; an explicit cap below 2 opts out for a cheaper
    *  overlay. */
   pixelRatioCap?: number;
+  /** Capture/export callers retain the previous default; live mirrors opt out. */
+  preserveDrawingBuffer?: boolean;
   /**
    * Per-frame hook, called before the dirty check with the ms since the last
    * frame. Return true to mark the world dirty (i.e. "I changed something,
@@ -120,6 +123,7 @@ export function mountSimWorld<W extends World = World>(opts: SimMountOpts<W>): S
     perspective,
     sceneRot,
     pixelRatioCap = 2,
+    preserveDrawingBuffer = true,
     onFrame,
     onRendered,
     measure,
@@ -159,7 +163,7 @@ export function mountSimWorld<W extends World = World>(opts: SimMountOpts<W>): S
     const renderer = new THREE.WebGLRenderer({
       antialias: true,
       alpha: true,
-      preserveDrawingBuffer: true,
+      preserveDrawingBuffer,
     });
     cleanups.push(() => renderer.forceContextLoss?.());
     cleanups.push(() => renderer.dispose());
@@ -197,11 +201,14 @@ export function mountSimWorld<W extends World = World>(opts: SimMountOpts<W>): S
     // setPuzzle() can replace an NxN renderer without changing the theme.
     let hintRenderer: HintBackdropRenderer | null = null;
     let hintBackdrop = '';
+    let hintBackdropDirty = true;
     const syncHintBackdrop = (): void => {
-      const backdrop = getComputedStyle(host).getPropertyValue('--background').trim();
       const current = typeof world.puzzleKind === 'number'
         ? (world.cube as { instancedRenderer?: HintBackdropRenderer }).instancedRenderer ?? null
         : null;
+      if (!hintBackdropDirty && current === hintRenderer) return;
+      const backdrop = getComputedStyle(host).getPropertyValue('--background').trim();
+      hintBackdropDirty = false;
       if (current === hintRenderer && backdrop === hintBackdrop) return;
       const synced = syncSimHintBackdrop(world.puzzleKind, world.cube, backdrop);
       if (!synced) return;
@@ -210,27 +217,23 @@ export function mountSimWorld<W extends World = World>(opts: SimMountOpts<W>): S
     };
 
     const invalidateHintBackdrop = (): void => {
-      hintRenderer = null;
+      hintBackdropDirty = true;
       world.dirty = true;
     };
     const themeObserver = new MutationObserver(invalidateHintBackdrop);
     cleanups.push(() => themeObserver.disconnect());
-    themeObserver.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['data-theme', 'data-palette', 'data-contrast'],
-    });
+    // Local theme wrappers and host classes can override the inherited token.
+    for (let element: HTMLElement | null = host; element; element = element.parentElement) {
+      themeObserver.observe(element, {
+        attributes: true,
+        attributeFilter: ['data-theme', 'data-palette', 'data-contrast', 'class', 'style'],
+      });
+    }
     const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
     cleanups.push(() => darkQuery.removeEventListener('change', invalidateHintBackdrop));
     darkQuery.addEventListener('change', invalidateHintBackdrop);
 
-    let raf = 0;
-    cleanups.push(() => cancelAnimationFrame(raf));
-    let lastFrameAt = performance.now();
-
-    const loop = (): void => {
-      const now = performance.now();
-      const dt = now - lastFrameAt;
-      lastFrameAt = now;
+    const loop = (_frameMs: number, dt: number): void => {
       if (onFrame?.(world, dt)) world.dirty = true;
       // Orientation letters fade in/out over several frames of their own.
       if (faceHints && world.faceHints.tick(dt, world.camera)) world.dirty = true;
@@ -244,9 +247,8 @@ export function mountSimWorld<W extends World = World>(opts: SimMountOpts<W>): S
         world.dirty = false;
         world.cube.dirty = false;
       }
-      raf = requestAnimationFrame(loop);
     };
-    raf = requestAnimationFrame(loop);
+    cleanups.push(tweener.subscribeFrame(loop));
 
     return {
       world,

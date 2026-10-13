@@ -85,3 +85,26 @@ describe('SmartCubeAttemptProducer', () => {
       .toEqual({ moves: [{ m: 'R', ts: 100 }] });
   });
 });
+
+it('publishes immutable incremental gyro samples without encoding and preserves the final track', () => {
+  const producer = new SmartCubeAttemptProducer();
+  const q = { w: 1, x: 0, y: 0, z: 0 };
+  producer.begin(0, { model: 'gan-v4', name: 'test' }, { reference: q, initial: q });
+  producer.recordMove('R', 10);
+  const first = producer.snapshotLive();
+  expect(first.gyroSamples[0].frame).toBe('scramble');
+  expect(Object.isFrozen(first.gyroSamples[0].q)).toBe(true);
+  expect(producer.snapshotLive().gyroSamples).toBe(first.gyroSamples);
+  producer.recordGyro({ w: Math.SQRT1_2, x: Math.SQRT1_2, y: 0, z: 0 }, 20);
+  producer.recordMove('U', 30);
+  const next = producer.snapshotLive();
+  expect(first.gyroSamples).toHaveLength(1);
+  expect(next.gyroSamples).toHaveLength(2);
+  expect(next.gyroSamples[0]).toBe(first.gyroSamples[0]);
+  const saved = producer.snapshot();
+  expect(producer.finish()).toEqual(saved);
+  expect(decodeGyroTrack(saved.gyro)).toHaveLength(2);
+  producer.begin(100);
+  producer.recordMove('F', 110);
+  expect(producer.snapshotLive().gyroSamples).toEqual([]);
+});

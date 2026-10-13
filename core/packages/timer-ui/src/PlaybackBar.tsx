@@ -59,10 +59,11 @@ export function PlaybackBackViewButton({ visible, toggle = true, onClick, showLa
 export default function PlaybackBar({
   step, total, playing,
   onScrub, onSkipStart, onStepBack, onTogglePlay, onStepForward, onSkipEnd,
-  leading, trailing, labels, layout = 'compact',
+  leading, trailing, labels, layout = 'compact', segmentEnds,
 }: {
   step: number;
   total: number;
+  segmentEnds?: readonly number[];
   playing: boolean;
   onScrub: (n: number) => void;
   onSkipStart: () => void;
@@ -92,7 +93,7 @@ export default function PlaybackBar({
         >
           {step}
         </span>
-        <PlaybackScrubber step={step} total={total} onScrub={onScrub} disabled={empty} ariaLabel={L.scrub} />
+        <PlaybackScrubber step={step} total={total} segmentEnds={segmentEnds} onScrub={onScrub} disabled={empty} ariaLabel={L.scrub} />
       </div>
       <div className="playback-bar-controls">
         {leading}

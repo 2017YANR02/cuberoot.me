@@ -1,111 +1,138 @@
 // Ported from huazhechen/cuber (MIT) — src/cuber/tweener.ts
 import { elapsedMsToSimTicks } from '../support/sim-timing';
 
+export type TweenEasing = 'ease-out' | 'linear';
+type FrameListener = (frameMs: number, dtMs: number) => void;
+
 export class Tween {
-  begin: number;
-  end: number;
-  duration: number;
-  callback: (v: number) => boolean | void;
-  value: number;
-  constructor(begin: number, end: number, duration: number, callback: (v: number) => boolean | void) {
-    this.begin = begin;
-    this.end = end;
-    this.duration = duration;
-    this.callback = callback;
+  value = 0;
+  private current: number;
+  private lastUpdateMs: number;
+
+  constructor(
+    public begin: number,
+    public end: number,
+    public duration: number,
+    public callback: (v: number) => boolean | void,
+    public easing: TweenEasing = 'ease-out',
+    startedAtMs = performance.now(),
+  ) {
+    this.current = begin;
+    this.lastUpdateMs = startedAtMs;
+  }
+
+  finish(): void { this.callback(this.end); }
+
+  /** Wall time belongs to this animation, never to an earlier global frame. */
+  updateAt(frameMs: number, paused = false): boolean {
+    const elapsed = Math.max(0, frameMs - this.lastUpdateMs);
+    this.lastUpdateMs = Math.max(frameMs, this.lastUpdateMs);
+    return !paused && this.update(elapsedMsToSimTicks(elapsed));
+  }
+
+  get remainingTicks(): number { return Math.max(0, this.duration - this.value); }
+
+  /** Shorten the remaining path without changing the currently displayed angle. */
+  shortenRemaining(ticks: number): void {
+    if (!Number.isFinite(ticks) || ticks <= 0 || ticks >= this.remainingTicks) return;
+    this.begin = this.current;
+    this.duration = ticks;
     this.value = 0;
+    this.lastUpdateMs = performance.now();
   }
 
-  finish(): void {
-    this.callback(this.end);
-  }
-
+  /** Deterministic manual ticks remain available to headless/video exporters. */
   update(deltaTicks = 1): boolean {
     if (!Number.isFinite(deltaTicks) || deltaTicks <= 0) return false;
     this.value += deltaTicks;
-    let elapsed = this.value / this.duration;
-    elapsed = elapsed > 1 ? 1 : elapsed;
-    elapsed = elapsed < 0 ? 0 : elapsed;
-    elapsed = elapsed - 1;
-    elapsed = 1 - elapsed * elapsed;
-    const value = elapsed == 1 ? this.end : this.begin + (this.end - this.begin) * elapsed;
-    return this.callback(value) === true;
+    const progress = Math.max(0, Math.min(1, this.value / this.duration));
+    const eased = this.easing === 'linear' ? progress : 1 - (1 - progress) ** 2;
+    this.current = progress === 1 ? this.end : this.begin + (this.end - this.begin) * eased;
+    return this.callback(this.current) === true;
   }
 }
 
 export class Tweener {
-  tweens: Tween[];
-  /** 暂停 rAF 自动推进。导出 mp4 时离线 manual tick,需要先停掉自动 update 避免冲突。 */
+  tweens: Tween[] = [];
+  /** Exporters pause wall-clock advancement while driving manual ticks. */
   paused = false;
+  private raf: number | null = null;
   private lastFrameMs: number | null = null;
-  private loopStarted = false;
+  private readonly frames = new Set<FrameListener>();
 
-  get length(): number {
-    return this.tweens.length;
+  get length(): number { return this.tweens.length; }
+
+  /** One coordinator advances every tween once, then updates/draws each view. */
+  subscribeFrame(listener: FrameListener): () => void {
+    this.frames.add(listener);
+    this.wake();
+    return () => { this.frames.delete(listener); this.stopIfIdle(); };
   }
 
-  constructor() {
-    this.tweens = [];
+  private wake(): void {
+    if (this.raf !== null || typeof requestAnimationFrame === 'undefined') return;
+    this.raf = requestAnimationFrame(this.loop);
   }
 
-  loop(frameMs: number): void {
-    requestAnimationFrame(this.loop.bind(this));
-    const deltaTicks = this.lastFrameMs === null ? 0 : elapsedMsToSimTicks(frameMs - this.lastFrameMs);
+  private stopIfIdle(): void {
+    if (this.tweens.length || this.frames.size) return;
+    if (this.raf !== null && typeof cancelAnimationFrame !== 'undefined') cancelAnimationFrame(this.raf);
+    this.raf = null;
+    this.lastFrameMs = null;
+  }
+
+  loop = (frameMs: number): void => {
+    this.raf = null;
+    const dtMs = this.lastFrameMs === null ? 0 : Math.max(0, frameMs - this.lastFrameMs);
     this.lastFrameMs = frameMs;
-    if (this.paused) return;
-    this.update(deltaTicks);
-  }
-
-  tween(begin: number, end: number, duration: number, update: (v: number) => boolean | void): Tween {
-    const tween = new Tween(begin, end, duration, update);
-    this.tweens.push(tween);
-    // Importing an engine for a static SVG must not start an idle animation
-    // loop. Headless consumers can still advance actual tweens with update().
-    if (!this.loopStarted && typeof requestAnimationFrame !== 'undefined') {
-      this.loopStarted = true;
-      requestAnimationFrame(this.loop.bind(this));
+    // Snapshot: finishing a layer can enqueue the next one. That new animation
+    // must not inherit the elapsed interval of the layer which just finished.
+    try {
+      this.advance(tween => tween.updateAt(frameMs, this.paused));
+      for (const listener of this.frames) listener(frameMs, dtMs);
+    } finally {
+      if (this.tweens.length || this.frames.size) this.wake();
+      else this.stopIfIdle();
     }
+  };
+
+  tween(begin: number, end: number, duration: number, update: (v: number) => boolean | void,
+    easing: TweenEasing = 'ease-out'): Tween {
+    const tween = new Tween(begin, end, duration, update, easing);
+    this.tweens.push(tween);
+    this.wake();
     return tween;
   }
 
-  update(deltaTicks = 1): boolean {
-    if (this.tweens.length === 0) return false;
-    let i = 0;
-    let len = this.tweens.length;
-    while (i < len) {
-      if (this.tweens[i].update(deltaTicks)) {
-        this.tweens.splice(i, 1);
-        len--;
-      } else {
-        i++;
-      }
+  private advance(update: (tween: Tween) => boolean): boolean {
+    const active = this.tweens.slice();
+    for (const tween of active) {
+      if (!this.tweens.includes(tween) || !update(tween)) continue;
+      const index = this.tweens.indexOf(tween);
+      if (index !== -1) this.tweens.splice(index, 1);
     }
-    return true;
+    return active.length > 0;
   }
 
-  finish(tween: Tween | undefined = undefined): void {
-    if (tween) {
-      for (let i = 0; i < this.tweens.length; i++) {
-        if (this.tweens[i] == tween) {
-          tween.finish();
-          this.tweens.splice(i, 1);
-          return;
-        }
-      }
-    } else {
-      const tweens = this.tweens.splice(0, this.tweens.length);
-      for (const t of tweens) {
-        t.finish();
-      }
+  update(deltaTicks = 1): boolean {
+    const advanced = this.advance(tween => tween.update(deltaTicks));
+    this.stopIfIdle();
+    return advanced;
+  }
+
+  finish(tween?: Tween): void {
+    const finishing = tween ? (this.tweens.includes(tween) ? [tween] : []) : this.tweens.slice();
+    for (const current of finishing) {
+      this.cancel(current);
+      current.finish();
     }
+    this.stopIfIdle();
   }
 
   cancel(tween: Tween): void {
-    for (let i = 0; i < this.tweens.length; i++) {
-      if (this.tweens[i] == tween) {
-        this.tweens.splice(i, 1);
-        return;
-      }
-    }
+    const index = this.tweens.indexOf(tween);
+    if (index !== -1) this.tweens.splice(index, 1);
+    this.stopIfIdle();
   }
 }
 

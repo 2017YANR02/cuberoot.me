@@ -11,6 +11,7 @@ import {
   type TeachingTrainingAssignmentTarget,
 } from '@cuberoot/shared/teaching';
 import AppLink from '@/components/AppLink';
+import TrainingDailyBoard from '@/components/teaching/TrainingDailyBoard';
 import { useT } from '@/hooks/useT';
 import {
   closeTeachingTrainingAssignment,
@@ -179,6 +180,7 @@ function AssignmentContent({ orgSlug, assignmentId, page, role, language }: {
         </div>
       )}
       <MutationMessage message={mutationError || message} error={!!mutationError} />
+      {assignment.status !== 'draft' && assignment.scheduleKind === 'daily' && <TrainingDailyBoard orgSlug={orgSlug} assignmentId={assignmentId} />}
 
       <section className="org-section">
         <h2>{t('任务目标', 'Assignment targets')}</h2>

@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { parseAsInteger, useQueryState } from 'nuqs';
+import { parseAsInteger, parseAsString, useQueryState } from 'nuqs';
+import TrainingDailyBoard from '@/components/teaching/TrainingDailyBoard';
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
 import { getSessionToken, nextQuery, useAuthUser } from '@/lib/auth-store';
@@ -18,6 +19,7 @@ export default function LearnerTrainingPage() {
   const user = useAuthUser();
   const [mounted, setMounted] = useState(false);
   const [rawPage] = useQueryState('page', parseAsInteger.withDefault(1));
+  const [assignmentId, setAssignmentId] = useQueryState('assignment', parseAsString.withOptions({ history: 'push' }));
   useEffect(() => { setMounted(true); }, []);
   const page = Math.max(1, rawPage);
   const loader = useCallback(() => listSelfTeachingTrainingAssignments(params.orgSlug, page, PAGE_SIZE), [page, params.orgSlug]);
@@ -26,12 +28,13 @@ export default function LearnerTrainingPage() {
 
   if (!mounted) return <main className="org-page" aria-busy="true" />;
   if (!user || !getSessionToken()) {
-    return <main className="org-page org-centered"><h1>{t('我的训练任务', 'My training assignments')}</h1><p>{t('登录后查看老师安排的任务。', 'Sign in to view assignments from your teacher.')}</p><AppLink className="org-primary-link" href={`/account${nextQuery(window.location.pathname)}`} prefetch={false}>{t('登录', 'Sign in')}</AppLink></main>;
+    return <main className="org-page org-centered"><h1>{t('我的训练任务', 'My training assignments')}</h1><p>{t('登录后查看老师安排的任务。', 'Sign in to view assignments from your teacher.')}</p><AppLink className="org-primary-link" href={`/account${nextQuery(window.location.pathname + window.location.search)}`} prefetch={false}>{t('登录', 'Sign in')}</AppLink></main>;
   }
 
   return (
     <main className="org-page">
       <header className="org-header"><AppLink className="org-eyebrow" href="/account" prefetch={false}>{t('我的账号', 'My account')}</AppLink><h1>{t('我的训练任务', 'My training assignments')}</h1></header>
+      {assignmentId && <TrainingDailyBoard key={assignmentId} orgSlug={params.orgSlug} assignmentId={assignmentId} learner />}
       {assignments.loading ? <p aria-busy="true">{t('正在加载任务…', 'Loading assignments…')}</p> : assignments.error ? <MutationMessage message={assignments.error} error /> : !assignments.result?.items.length ? <p className="org-empty">{t('当前没有已发布的训练任务。', 'There are no published training assignments.')}</p> : (
         <div className="org-list">
           {assignments.result.items.map((item) => (
@@ -43,7 +46,8 @@ export default function LearnerTrainingPage() {
                 {!!item.goals.length && <div className="org-compact-list">{item.goals.map((goal) => <span key={goal.id}>{formatTrainingGoal(goal, language)}</span>)}</div>}
                 <p className="org-help">{t(`已回传 ${item.target.evidenceCount} 条证据`, `${item.target.evidenceCount} evidence records submitted`)}</p>
               </div>
-              <AppLink className="org-primary-link" href={trainingToolHref(item.templateVersion.source, params.orgSlug, item.assignment.id)} prefetch={false}>{t('开始训练', 'Start training')}</AppLink>
+              {item.assignment.scheduleKind === 'daily' && <button type="button" className="org-secondary-button" onClick={() => void setAssignmentId(item.assignment.id)}>{t('每日打卡与排名', 'Daily check-in and ranking')}</button>}
+              {item.assignment.status === 'published' && <AppLink className="org-primary-link" href={trainingToolHref(item.templateVersion.source, params.orgSlug, item.assignment.id)} prefetch={false}>{t('开始训练', 'Start training')}</AppLink>}
             </section>
           ))}
         </div>

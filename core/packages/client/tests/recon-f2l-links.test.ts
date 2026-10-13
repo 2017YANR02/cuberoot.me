@@ -71,3 +71,30 @@ describe('F2L comment state recognition', () => {
     expect((await reconF2lLinks('U', 'U\' // GR')).size).toBe(0);
   });
 });
+
+it('unions both 2796 pair masks into exactly one pre-line cube', async () => {
+  const scramble = "F' L' B R' B2 U L2 B2 U2 F2 D R D L F' U L B'";
+  const diagramsFor = async (pairs: string) => (await reconF2lAnnotations(scramble,
+    `x'z' // insp\nr' F R2 r' U r D F2 // W xxcross (${pairs})`)).diagrams.get(1)!;
+  const [combined, br, ob] = await Promise.all([diagramsFor('BR+OB'), diagramsFor('BR'), diagramsFor('OB')]);
+  expect(combined).toHaveLength(1);
+  expect(combined[0].colors).toBe('BR+OB');
+  expect(combined[0].facelets).toBe([...br[0].facelets].map((c, i) => c === 'd' ? ob[0].facelets[i] : c).join(''));
+});
+
+it('publishes all F2L images before the formula-library request settles', async () => {
+  const { loadAlg } = await import('@cuberoot/shared/alg');
+  let release!: (value: Awaited<ReturnType<typeof loadAlg>>) => void;
+  vi.mocked(loadAlg).mockImplementationOnce(() => new Promise(resolve => { release = resolve; }));
+  const ready = vi.fn();
+  const started = performance.now();
+  const pending = reconF2lAnnotations("F' L' B R' B2 U L2 B2 U2 F2 D R D L F' U L B'", [
+    "x'z' // insp", "r' F R2 r' U r D F2 // W xxcross (BR+OB)",
+    "(U' U' U') R' U R // GO", "U' R U R' // GR",
+  ].join('\n'), ready);
+  expect(ready).toHaveBeenCalledTimes(1);
+  expect([...ready.mock.calls[0][0].values()].map(rows => rows.length)).toEqual([1, 1, 1]);
+  console.info(`F2L diagrams ready before network response: ${(performance.now() - started).toFixed(2)}ms`);
+  release({ cases } as Awaited<ReturnType<typeof loadAlg>>);
+  await pending;
+});

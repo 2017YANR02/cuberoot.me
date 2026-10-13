@@ -23,6 +23,12 @@ export interface SmartCubeAttemptResult {
   moves: SolveMove[];
 }
 
+export interface LiveSmartCubeAttemptResult {
+  device?: SmartCubeAttemptDevice;
+  gyroSamples: readonly GyroSample[];
+  moves: SolveMove[];
+}
+
 /**
  * Owns the per-attempt smart-cube producer shared by Web and installed App.
  * Hosts still decide when a timer attempt starts and where the result is
@@ -35,10 +41,12 @@ export class SmartCubeAttemptProducer {
   private device: SmartCubeAttemptDevice | undefined;
   private active = false;
   private grip: SmartCubeStartingGrip | undefined;
+  private liveGyro: readonly GyroSample[] = [];
 
   begin(startedAtMs: number, device?: SmartCubeAttemptDevice, grip?: SmartCubeStartingGrip): void {
     this.moves.begin(startedAtMs);
     this.gyro.reset();
+    this.liveGyro = [];
     this.device = device ? { model: device.model, name: device.name } : undefined;
     this.active = true;
     this.grip = grip ? { ...grip, reference: { ...grip.reference }, initial: { ...grip.initial } } : undefined;
@@ -63,7 +71,20 @@ export class SmartCubeAttemptProducer {
     return this.moves.snapshot();
   }
 
-  /** Live reconstruction reads exactly the fields finish will persist. */
+  /** Live reconstruction consumes samples directly, without a storage round trip. */
+  snapshotLive(): LiveSmartCubeAttemptResult {
+    const moves = this.snapshotMoves();
+    if (this.liveGyro.length !== this.gyro.length) {
+      const added = this.gyro.snapshot(this.liveGyro.length).map(sample => Object.freeze({
+        ...sample, q: Object.freeze(sample.q), ...(this.grip ? { frame: 'scramble' as const } : {}),
+      }));
+      this.liveGyro = Object.freeze([...this.liveGyro, ...added]);
+    }
+    return { moves, gyroSamples: moves.length ? this.liveGyro : [],
+      device: moves.length > 0 && this.device ? { ...this.device } : undefined };
+  }
+
+  /** Explicit persisted-format snapshot; do not call this on the live move path. */
   snapshot(): SmartCubeAttemptResult {
     const moves = this.snapshotMoves();
     return {
@@ -81,6 +102,7 @@ export class SmartCubeAttemptProducer {
     this.device = undefined;
     this.active = false;
     this.grip = undefined;
+    this.liveGyro = [];
     return { device, gyro, moves };
   }
 
@@ -99,6 +121,7 @@ export class SmartCubeAttemptProducer {
   }
 
   reset(): void {
+    this.liveGyro = [];
     this.grip = undefined;
     this.moves.reset();
     this.gyro.reset();

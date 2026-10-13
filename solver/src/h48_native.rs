@@ -129,7 +129,7 @@ fn mark_failed_progress(table_path: &Path) {
 }
 
 pub fn generate(threads: usize, dataid: &str) -> Result<(bool, u64, u64), String> {
-    if dataid != "h48h7" && dataid != "h48h10" {
+    if dataid != "h48h7" && dataid != "h48h9" && dataid != "h48h10" {
         return Err(format!("unsupported H48 table: {dataid}"));
     }
     let path = crate::move_tables::table_dir().join(format!("h48-nissy-core/{dataid}.dat"));
@@ -157,6 +157,9 @@ pub fn generate(threads: usize, dataid: &str) -> Result<(bool, u64, u64), String
         .ok_or_else(|| format!("H48 {dataid} did not report its expected size: {info_text}"))?;
     if dataid == "h48h10" && expected != H10_BYTES {
         return Err(format!("H48 h10 size changed: expected {H10_BYTES}, got {expected}"));
+    }
+    if dataid == "h48h9" && expected != 15_169_187_432 {
+        return Err(format!("H48 h9 size changed: {expected}"));
     }
     if std::fs::metadata(&path).is_ok_and(|m| m.len() == expected) {
         eprintln!("[SKIP] {} ({} bytes)", path.display(), expected);

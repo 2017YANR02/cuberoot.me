@@ -35,8 +35,9 @@ export interface Memory { boot: string; swapouts: number; pressure: number; avai
 export interface Baseline { boot: string; baselineSwapouts: number; status?: string; reason?: string }
 
 /** Read only this launch's bounded log tail, including failures before progress.json exists. */
-export function batchFailureReason(log: string, start: number, code: number | null): string {
-  const fallback = `批次退出 ${code}，查看 ${log}`;
+export interface BatchFailure { reason: string; startupMemory?: { available: number; swapouts: number; pressure: number } }
+export function batchFailure(log: string, start: number, code: number | null): BatchFailure {
+  const fallback = { reason: `批次退出 ${code}，查看 ${log}` };
   let fd: number | undefined;
   try {
     const end = statSync(log).size;
@@ -50,12 +51,40 @@ export function batchFailureReason(log: string, start: number, code: number | nu
       const m = JSON.parse(error.slice('Insufficient resources: '.length));
       if (Number.isFinite(m.available) && Number.isFinite(m.pressure)) {
         const cause = m.pressure !== 1 ? '系统内存压力异常' : `可回收内存 ${ (m.available / GiB).toFixed(2) } GiB，低于启动门槛 34 GiB`;
-        return `本批未启动：${cause}。已保存结果与断点保留；需要复核资源后恢复。`;
+        const startupMemory = code === 1 && m.pressure === 1 && m.available >= 0 && m.available < 34 * GiB
+          && Number.isSafeInteger(m.swapouts) && m.swapouts >= 0 ? m : undefined;
+        return { reason: `本批未启动：${cause}。已保存结果与断点保留；需要复核资源后恢复。`, startupMemory };
       }
     }
-    return `批次退出 ${code}：${error.slice(0, 800)}\n日志：${log}`;
+    return { reason: `批次退出 ${code}：${error.slice(0, 800)}\n日志：${log}` };
   } catch { return fallback; }
   finally { if (fd !== undefined) closeSync(fd); }
+}
+export const batchFailureReason = (log: string, start: number, code: number | null) => batchFailure(log, start, code).reason;
+
+// Migrate only the old coordinator's exact pre-table memory rejection. Other
+// protected stops remain locked; the caller still checks the original boot/swap.
+export function recoverableStartupStop(p: any, failure: BatchFailure, hasBatchProgress: boolean): boolean {
+  const m = failure.startupMemory;
+  return !!m && !hasBatchProgress && p?.status === 'protected-stop' && p.reason === failure.reason
+    && p.activeCompleted === 0 && p.activeVerified === 0 && p.memoryPressure === 1
+    && p.currentSwapouts === p.baselineSwapouts && m.swapouts === p.baselineSwapouts
+    && Number.isFinite(p.currentRssGiB) && p.currentRssGiB < 0.75;
+}
+
+/** Wait without a native solver. Every sample retains the full runtime guard. */
+export async function waitForStartupMemory(baseline: Baseline,
+  sample: () => { memory: Memory; rss: number }, waiting: (m: Memory, stable: number) => void,
+  sleep: () => Promise<void>) {
+  let stable = 0;
+  for (;;) {
+    const { memory, rss } = sample(), violation = guard(memory, baseline, rss);
+    if (violation) throw Error(violation);
+    stable = memory.available >= 34 * GiB ? stable + 1 : 0;
+    if (stable === 3) return;
+    waiting(memory, stable);
+    await sleep();
+  }
 }
 
 export function guard(m: Memory, baseline: Baseline, rss: number, starting = false): string | null {
