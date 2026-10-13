@@ -2,6 +2,18 @@ import groovy.json.JsonSlurper
 
 apply plugin: 'com.android.application'
 
+// Native-only selection: changing the website or Vite environment cannot change billing.
+def mobileDistribution = providers.gradleProperty('mobileDistribution').getOrElse('play')
+if (!(mobileDistribution in ['play', 'direct'])) {
+    throw new GradleException('mobileDistribution must be play or direct')
+}
+if (mobileDistribution == 'direct') {
+    layout.buildDirectory = file('build/direct')
+    if (gradle.startParameter.taskNames.any { it.toLowerCase().contains('bundle') }) {
+        throw new GradleException('Direct distribution produces APKs only; build Play bundles with mobileDistribution=play')
+    }
+}
+
 def mobilePackage = new JsonSlurper().parse(file('../../package.json'))
 def versionParts = mobilePackage.version.toString().tokenize('.')
 if (versionParts.size() != 3 || !versionParts.every { part -> part ==~ /\d+/ }) {
@@ -40,6 +52,7 @@ android {
     namespace = "me.cuberoot.app"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
+        buildConfigField 'String', 'DISTRIBUTION', groovy.json.JsonOutput.toJson(mobileDistribution)
         manifestPlaceholders.GETUI_APPID = ''
         buildConfigField 'String', 'GETUI_APP_ID', '""'
         applicationId "me.cuberoot.app"

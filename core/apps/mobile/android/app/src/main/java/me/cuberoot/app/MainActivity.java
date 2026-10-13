@@ -22,7 +22,8 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(ScreenAwakePlugin.class);
         registerPlugin(RecordPushPlugin.class);
         registerPlugin(SmartCubePickerPlugin.class);
-        registerPlugin(GoogleMembershipPlugin.class);
+        registerPlugin(DistributionPlugin.class);
+        if ("play".equals(BuildConfig.DISTRIBUTION)) registerPlugin(GoogleMembershipPlugin.class);
         super.onCreate(savedInstanceState);
     }
 

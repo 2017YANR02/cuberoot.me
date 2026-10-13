@@ -34,6 +34,7 @@ import './membership.css';
 import AppleMembership from './AppleMembership';
 import { isIosMembershipSurface, useAppleMembershipAvailable } from '@/lib/apple-membership-bridge';
 import { installedMembershipStore, useStoreMembershipAvailable } from '@/lib/store-membership-bridge';
+import { useWebMembershipAvailable } from '@/lib/web-membership-bridge';
 
 
 function intersectPerks(plans: MembershipPlan[]): string[] {
@@ -67,6 +68,7 @@ export default function MembershipPage() {
   const appleAvailable = useAppleMembershipAvailable();
   const appleSurface = mounted && (appleAvailable || isIosMembershipSurface());
   const googleAvailable = useStoreMembershipAvailable('google');
+  const directApp = useWebMembershipAvailable();
   const googleSurface = mounted && (googleAvailable || installedMembershipStore() === 'google');
   const admin = mounted && isAdmin();
   const loggedIn = mounted && !!user;
@@ -257,8 +259,14 @@ export default function MembershipPage() {
       </header>
 
       <p className="mem-sub" role="status">
-        {tr({ zh: '会员服务暂未正式开放，正在测试中。现有单次购买使用真实支付，请勿用于测试扣款；自动续费尚未开放。', en: 'Membership is being tested and is not officially launched. One-time purchases use real payments, not test transactions. Auto-renewal is unavailable.' })}
+        {directApp
+          ? tr({ zh: '支付宝和微信支付为单次购买，不会自动续费。当前使用真实支付，请勿用于测试扣款。', en: 'Alipay and WeChat Pay are one-time purchases without automatic renewal. These are real payments, not test transactions.' })
+          : tr({ zh: '会员服务暂未正式开放，正在测试中。现有单次购买使用真实支付，请勿用于测试扣款；自动续费尚未开放。', en: 'Membership is being tested and is not officially launched. One-time purchases use real payments, not test transactions. Auto-renewal is unavailable.' })}
       </p>
+      {directApp && <p className="mem-note">
+        {tr({ zh: '已有商店订阅仍由原商店自动续费，切换安装渠道不会取消。网站、Apple 与 Google Play 会员期并存，取较晚到期日，不叠加时长；购买前请核对原订阅。', en: 'Existing store subscriptions continue renewing in their original store; switching app distribution does not cancel them. Website, Apple and Google Play memberships run concurrently, using the latest expiry without adding durations. Check existing subscriptions before buying.' })}
+        {' '}<a href="https://play.google.com/store/account/subscriptions?package=me.cuberoot.app" target="_blank" rel="noopener noreferrer">{tr({ zh: '管理 Google Play 订阅', en: 'Manage Google Play subscriptions' })}</a>
+      </p>}
 
       <p className="mem-sub">
         {tr({ zh: 'CubeRoot 魔方根提供魔方公式、训练、计时与解法复盘服务。会员可使用下列专属权益；具体服务与额度以所选套餐为准。', en: 'CubeRoot provides cubing algorithms, training, timing, and solve reconstructions. Membership includes the benefits below, subject to the selected plan and its allowances.' })}

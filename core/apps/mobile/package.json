@@ -19,6 +19,8 @@
     "cap:sync:ios": "pnpm build && cap sync ios",
     "android:open": "cap open android",
     "android:run": "pnpm cap:sync:android && cap run android",
+    "android:apk:direct": "pnpm cap:sync:android && node scripts/build-android.ts direct",
+    "android:apk:play": "pnpm cap:sync:android && node scripts/build-android.ts play",
     "ios:doctor": "node ../../scripts/mobile-ios-toolchain.mjs doctor",
     "ios:build": "pnpm cap:sync:ios && node ../../scripts/mobile-ios-toolchain.mjs build",
     "ios:open": "cap open ios",

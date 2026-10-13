@@ -1,4 +1,5 @@
 import type { GanCubeStatus } from './smart-cube/gan-cube';
+import type { WebMembershipRequest, WebMembershipResult } from '@cuberoot/shared/mobile-embed';
 import type { LegacyCubeStatus } from './smart-cube/legacy-cube';
 import type { BleTransport } from './smart-cube/transport';
 import type { StackmatMicSource } from '@cuberoot/shared/timer/external/stackmat-state';
@@ -98,6 +99,7 @@ export interface InstalledAppHost {
   createStackmatSource?(): StackmatMicSource;
   appleMembership?(request: AppleMembershipRequest, session: WebSession): Promise<Omit<AppleMembershipResult, 'type' | 'requestId'>>;
   googleMembership?(request: GoogleMembershipRequest, session: WebSession): Promise<Omit<GoogleMembershipResult, 'type' | 'requestId'>>;
+  webMembership?(request: WebMembershipRequest, session: WebSession): Promise<Omit<WebMembershipResult, 'type' | 'requestId'>>;
   addBackButtonListener?(listener: () => void): Promise<InstalledAppListener>;
   addNetworkListener(listener: (connected: boolean) => void): Promise<InstalledAppListener>;
   exitApp?(): Promise<void>;

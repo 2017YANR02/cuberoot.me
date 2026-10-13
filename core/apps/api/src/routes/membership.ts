@@ -425,7 +425,7 @@ membershipRoutes.post('/membership/orders', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c));
   const user = await requireAuth(c);
-  const b = await c.req.json<{ plan?: string; channel?: string; clientType?: string; language?: string }>();
+  const b = await c.req.json<{ plan?: string; channel?: string; clientType?: string; language?: string; checkoutContext?: string }>();
 
   const planSlug = String(b.plan || '');
   if (!PLAN_SLUG_RE.test(planSlug)) return c.json({ error: 'invalid plan' }, 400);
@@ -448,6 +448,11 @@ membershipRoutes.post('/membership/orders', async (c) => {
   const clientType: 'pc' | 'wap' = b.clientType === 'wap' ? 'wap' : 'pc';
   const language: 'zh' | 'en' = b.language === 'zh' ? 'zh' : 'en';
   const provider = providerForChannel(channel, clientType);
+  const directApp = b.checkoutContext === 'android-direct';
+  // Direct Android uses only the official mobile website cashiers, not card SDKs or QR fallbacks.
+  if (directApp && (clientType !== 'wap' || !['alipay', 'wechat'].includes(channel) || provider !== channel)) {
+    return c.json({ error: 'official mobile checkout is unavailable' }, 400);
+  }
   if (!provider) {
     // 该渠道未配置(官方/虎皮椒都没开):不下单,提示走打赏 + 联系站长手动开通。
     return c.json({ error: 'payment not configured', payEnabled: false }, 503);
@@ -461,7 +466,7 @@ membershipRoutes.post('/membership/orders', async (c) => {
   );
 
   try {
-    const pay = await createPaymentOrder({ provider, channel, clientType, language, outTradeNo, plan, ip: getIp(c) });
+    const pay = await createPaymentOrder({ provider, channel, clientType, language, directApp, outTradeNo, plan, ip: getIp(c) });
     if (pay.hostedCheckout?.intentId) {
       await query(
         `UPDATE membership_orders SET provider_txn = ? WHERE out_trade_no = ? AND status = 'pending'`,
@@ -497,6 +502,7 @@ async function createPaymentOrder(opts: {
   channel: PayChannel;
   clientType: 'pc' | 'wap';
   language: 'zh' | 'en';
+  directApp?: boolean;
   outTradeNo: string;
   plan: PlanRow;
   ip: string;
@@ -504,7 +510,8 @@ async function createPaymentOrder(opts: {
   const title = `CubeRoot ${opts.plan.name_zh}`;
   const notifyBase = `${PUBLIC_API_ORIGIN}/v1/membership/notify`;
   const membershipPath = opts.language === 'zh' ? '/zh/membership' : '/membership';
-  const returnUrl = `${SITE_ORIGIN}${membershipPath}?paid=${opts.outTradeNo}`;
+  const returnUrl = opts.directApp ? `${SITE_ORIGIN}${membershipPath}/checkout?returned=1`
+    : `${SITE_ORIGIN}${membershipPath}?paid=${opts.outTradeNo}`;
 
   if (opts.provider === 'alipay') {
     const url = alipay.createAlipayCheckoutUrl({
@@ -524,6 +531,11 @@ async function createPaymentOrder(opts: {
         outTradeNo: opts.outTradeNo, amountCents: opts.plan.price_cents,
         description: title, notifyUrl: `${notifyBase}/wechat`, payerClientIp: opts.ip,
       });
+      if (opts.directApp) {
+        const checkout = new URL(url);
+        checkout.searchParams.set('redirect_url', returnUrl);
+        return { url: checkout.href };
+      }
       return { url };
     }
     const codeUrl = await wechat.createWechatNative({

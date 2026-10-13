@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { mobileEmbedSurfaceFromFrameName } from '@cuberoot/shared/mobile-embed';
+import { webMembershipAvailable } from './web-membership-bridge';
 import { decodeAppleMembershipResult, type AppleMembershipRequest, type AppleMembershipResult } from '@cuberoot/shared/apple-membership';
 import { decodeGoogleMembershipResult, type GoogleMembershipRequest, type GoogleMembershipResult } from '@cuberoot/shared/google-membership';
 
@@ -27,7 +28,10 @@ export function useStoreMembershipAvailable(store: MembershipStore) {
 }
 export function installedMembershipStore(): MembershipStore | null {
   if (typeof window === 'undefined' || window.parent === window || !mobileEmbedSurfaceFromFrameName(window.name)) return null;
-  if (bridges.google.enabled || /Android/.test(navigator.userAgent)) return 'google';
+  if (bridges.google.enabled) return 'google';
+  if (bridges.apple.enabled) return 'apple';
+  if (webMembershipAvailable()) return null;
+  if (/Android/.test(navigator.userAgent)) return 'google';
   if (bridges.apple.enabled || /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) return 'apple';
   return null;
 }

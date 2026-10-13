@@ -63,6 +63,18 @@ pnpm --filter @cuberoot/mobile ios:run
 
 `cap:sync` remains the Android-compatible entry point. The platform-specific sync commands build the same web app and copy it into the selected native project. Run the matching command after changing React or shared code and before making a native build.
 
+### Android payment distributions
+
+One source tree and one Web bundle serve both channels. Gradle `-PmobileDistribution=play` (the default) enables Google Play Billing; `-PmobileDistribution=direct` exposes the existing website Alipay/WeChat H5 checkout through the native Browser adapter. The native `Distribution` plugin reads `BuildConfig.DISTRIBUTION`; URL parameters, user agents and Vite environment variables cannot switch channels. Missing/unknown native configuration fails closed to Play. iOS keeps its Apple adapter.
+
+From `core/`, `pnpm --filter @cuberoot/mobile android:apk:direct` and `android:apk:play` build/sync the shared bundle and run the corresponding release APK build. Both require the existing four `MOBILE_UPLOAD_*` signing variables. They never silently produce a distributable unsigned APK. Direct APKs are under `android/app/build/direct/outputs/apk/release/`; Play keeps `android/app/build/outputs/apk/release/`. Direct AAB builds are rejected. For local debug checks, sync first and run `./gradlew.bat assembleDebug -PmobileDistribution=direct` from the Android directory (use `./gradlew` outside Windows). Use JDK 21 as required by Capacitor.
+
+The application ID remains `me.cuberoot.app`. Confirm the installed app-signing certificate, package ID and monotonically increasing `MOBILE_VERSION_CODE` before distributing updates. A Play **upload** key is not necessarily the Play **app-signing** key; matching package IDs alone do not allow cross-channel upgrades. Do not reuse a debug/CI certificate for public downloads.
+
+Direct checkout creates the normal authenticated website order, then opens an allowlisted official cashier through the merchant-origin `/membership/checkout` page. This establishes the Referer required for WeChat H5 without transferring an account session to the external browser. Closing the browser/returning to the app triggers a fresh authenticated order query; only server settlement grants membership. Polling also supports a manual retry. Alipay/WeChat purchases are one-time, while existing store subscriptions remain managed in their original store. Direct does not register or synchronize Play Billing; the shared Android dependency remains packaged but inactive.
+
+Deploy the compatible website (including the checkout relay) and API before distributing a direct APK. Verify merchant H5 domain configuration, real-device wallet launch/cancel/return, offline recovery and account switching separately from unit tests. No payment SDK credentials belong in the app or repository.
+
 ## Android emulator on macOS
 
 An Android phone is not required for ordinary UI development. Use the official Android Studio AVD for installation, startup, layout, timing, persistence and basic lifecycle checks. From Android Studio, open **Tools > Device Manager**, start an available virtual device, then run this from `core/`:

@@ -24,6 +24,7 @@ import { tr } from '@/i18n/tr';
 import { installedContentUnavailable } from '@cuberoot/shared/installed-content';
 import { setAppleMembershipBridge, receiveAppleMembershipResult } from '@/lib/apple-membership-bridge';
 import { setStoreMembershipBridge } from '@/lib/store-membership-bridge';
+import { setWebMembershipBridge, receiveWebMembershipResult } from '@/lib/web-membership-bridge';
 import { setInstalledBleBridge } from '@/lib/installed-ble-bridge';
 
 const MOBILE_PARENT_ORIGINS = new Set([
@@ -163,11 +164,13 @@ export default function MobileEmbedBridge() {
         setInstalledBleBridge(surface === 'tools' && init.bluetooth === true ? event.origin : null);
         setAppleMembershipBridge(init.appleMembership === true, postToParent);
         setStoreMembershipBridge('google', init.googleMembership === true, postToParent);
+        setWebMembershipBridge(init.webMembership === true && !init.googleMembership && !init.appleMembership, postToParent);
         postNavigation();
         return;
       }
       if (event.origin !== parentOrigin) return;
       receiveAppleMembershipResult(event.data);
+      receiveWebMembershipResult(event.data);
       const managementResult = decodeMobileEmbedAccountManageResult(event.data);
       if (surface === 'account' && managementResult) {
         if (pendingManagement?.requestId !== managementResult.requestId) return;
@@ -231,6 +234,7 @@ export default function MobileEmbedBridge() {
       setInstalledBleBridge(null);
       setAppleMembershipBridge(false);
       setStoreMembershipBridge('google', false);
+      setWebMembershipBridge(false);
       invalidateWebSession();
       recordRouteRef.current = null;
       if (pendingManagement) window.clearTimeout(pendingManagement.timeout);

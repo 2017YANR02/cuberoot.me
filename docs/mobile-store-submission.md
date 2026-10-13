@@ -1,5 +1,7 @@
 # CubeRoot 移动端商店提交资料
 
+> 支付渠道增量（2026-10-13，源码）：Android `play` 保留 Google Play Billing；官网 `direct` 包复用网站支付宝／微信 H5 单次购买。原生读取包内渠道配置，direct 不注册或同步 Billing（当前依赖仍打包），通过系统浏览器经商户域名收银中转页支付，回到 App 后查服务端订单；不传递账号登录凭据，不把回跳当成支付成功。订单、金额、支付方交易记录与必要网络信息的数据流已补入网站隐私政策。既有 Play 订阅须在 Play 管理，换包不取消。此增量不代表 direct 已签名、发布或完成真机支付；证据和阻塞仅在路线图记账。
+
 > 当前发行状态（2026-10-13）：所有者确认 Google Play 已成功上架。下方是旧构建的提交资料快照，其中 `NOT SUBMISSION READY` 及 `versionCode 1000` 不代表当前 Google Play 发行状态或线上版本。正式送审增量和发布证据以 [路线图](./mobile-app-roadmap.md) 为准；本次未重新核验 Console。iOS 和后续新版本仍须按最终包独立复核。中国大陆 Android 渠道另见 [分发调研](./china-android-distribution.md)。
 
 最后核对：2026-09-15（新增纪录通知源码；最终发布包仍待复核）

@@ -884,6 +884,15 @@ jobs:
           grep -A1 -F 'android:name="android.permission.ACCESS_FINE_LOCATION"' "$manifest_xml" | grep -Fq 'android:maxSdkVersion="30"'
           grep -A1 -F 'android:name="android.permission.BLUETOOTH_SCAN"' "$manifest_xml" | grep -Fq 'android:usesPermissionFlags="neverForLocation"'
 
+          # Both distributions share the Web bundle; billing is selected by native BuildConfig.
+          grep -Fq 'DISTRIBUTION = "play"' app/build/generated/source/buildConfig/release/me/cuberoot/app/BuildConfig.java
+          ./gradlew assembleRelease -PmobileDistribution=direct --no-daemon --max-workers=2
+          direct_apk=app/build/direct/outputs/apk/release/app-release.apk
+          "$build_tools/apksigner" verify --verbose "$direct_apk"
+          test "$("$analyzer" manifest application-id "$direct_apk")" = 'me.cuberoot.app'
+          test "$("$analyzer" manifest version-code "$direct_apk")" = "$expected_version_code"
+          grep -Fq 'DISTRIBUTION = "direct"' app/build/direct/generated/source/buildConfig/release/me/cuberoot/app/BuildConfig.java
+
   desktop-ui:
     name: Desktop UI
     needs: changes
