@@ -144,7 +144,7 @@ describe('SolutionView color labels', () => {
       playerRef: { current: null },
     }));
 
-    expect(html.match(/data-recon-text-length=/g)).toHaveLength(5);
+    expect(html.match(/data-recon-text-length="[12]"><span[^>]*recon-label-chip/g)).toHaveLength(5);
     expect(html).not.toContain('>W xcross');
     expect(html).not.toContain('>GO<');
     expect(html).not.toContain('>BR<');

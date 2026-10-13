@@ -121,7 +121,7 @@ export default function Dashboard() {
   return <section className="admin-dashboard" aria-label={t('运营总览', 'Operations overview')} aria-busy={loading}>
     <div className="admin-dashboard__toolbar">
       <div><h2>{t('运营总览', 'Operations overview')}</h2><p>{t('增长与收退款按 UTC 日期统计；今日数据尚未结束。', 'Growth and cash flow use UTC dates; today is still in progress.')}</p></div>
-      <label>{t('趋势范围', 'Trend period')} <select aria-label={t('趋势范围', 'Trend period')} value={range} onChange={event => { const value = event.target.value; if (value === '7' || value === '30' || value === '90') void setRange(value); }}>
+      <label>{t('趋势范围', 'Trend period')} <select className="admin-dashboard-select" aria-label={t('趋势范围', 'Trend period')} value={range} onChange={event => { const value = event.target.value; if (value === '7' || value === '30' || value === '90') void setRange(value); }}>
         <option value="7">{t('最近 7 天', 'Last 7 days')}</option><option value="30">{t('最近 30 天', 'Last 30 days')}</option><option value="90">{t('最近 90 天', 'Last 90 days')}</option>
       </select></label>
       <button type="button" className="admin-boot__refresh" disabled={loading} onClick={() => setRefresh(value => value + 1)}><RefreshCw size={15} />{t('刷新', 'Refresh')}</button>
@@ -142,7 +142,7 @@ export default function Dashboard() {
         <AppLink href="/admin/users" prefetch={false}>{t('查看用户与增长', 'View users and growth')}</AppLink>
       </section>
       <section className="admin-dashboard__panel" data-site-surface="panel"><h3>{t('收入 · 订单收退款', 'Revenue · order cash flow')}</h3><p>{t('按实际收款与成功退款日期统计，未扣手续费、分成及拒付，不代表利润。', 'By receipt and successful refund date, before fees, revenue shares and chargebacks. Not profit.')}</p>
-        {currencies.length > 0 && <label>{t('币种', 'Currency')} <select aria-label={t('币种', 'Currency')} value={selectedCurrency} onChange={event => setCurrency(event.target.value)}>{currencies.map(code => <option key={code}>{code}</option>)}</select></label>}
+        {currencies.length > 0 && <label>{t('币种', 'Currency')} <select className="admin-dashboard-select" aria-label={t('币种', 'Currency')} value={selectedCurrency} onChange={event => setCurrency(event.target.value)}>{currencies.map(code => <option key={code}>{code}</option>)}</select></label>}
         {data?.revenue == null ? <p className="admin-dashboard__empty">{unavailable}</p> : !precise ? <p>{t('金额超出图表安全精度，请查看订单明细。', 'Amounts exceed chart precision. Please review order records.')}</p> : !currencies.length ? <p className="admin-dashboard__empty">{t('所选日期内无收款或成功退款记录。', 'No receipts or successful refunds in this period.')}</p> : <>
           <div className="admin-dashboard__cash"><span>{t('收款', 'Receipts')} <strong>{cash(Number(received) / 100, selectedCurrency)}</strong></span><span>{t('退款', 'Refunds')} <strong>{cash(Number(refunded) / 100, selectedCurrency)}</strong></span></div>
           <DashboardChart integer={false} label={`${t('每日收款与退款', 'Daily receipts and refunds')} · ${selectedCurrency}`} labels={dates} series={[
