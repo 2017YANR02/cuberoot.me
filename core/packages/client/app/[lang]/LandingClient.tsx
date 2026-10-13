@@ -7,12 +7,13 @@ import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'r
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { parseAsBoolean, useQueryState } from 'nuqs';
-import { ArrowRight, Blocks, Crown, Heart, Layers3, Lock, LockOpen, LogIn, User, type LucideIcon } from 'lucide-react';
+import { ArrowRight, Blocks, Crown, Download, Heart, Layers3, Lock, LockOpen, LogIn, User, type LucideIcon } from 'lucide-react';
 import { closestCenter, DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, rectSortingStrategy, SortableContext } from '@dnd-kit/sortable';
 import Link from '@/components/AppLink';
 import SortableCard from '@/components/SortableCard';
 import HeaderToggles from '@/components/HeaderToggles';
+import { Tooltip } from '@/components/Tooltip';
 import OnboardingGuideModal from '@/components/OnboardingGuideModal';
 import { isOnboardingGuided, markOnboardingGuided } from '@/lib/onboarding';
 import './home-background.css';
@@ -437,6 +438,12 @@ export default function LandingPage() {
     <div className="landing-page">
       <div className="landing-auth">
         <HeaderToggles />
+        {isAdmin && <Tooltip content={tr({ zh: '下载', en: 'Download' })}>
+          {(tip) => <Link {...tip} href="/download" className="landing-auth-icon"
+            aria-label={tr({ zh: '下载', en: 'Download' })} prefetch={false}>
+            <Download size={16} aria-hidden="true" />
+          </Link>}
+        </Tooltip>}
         <Link href="/membership" className="landing-auth-icon landing-membership-icon"
           title={tr({ zh: '会员', en: 'Membership' })}
           aria-label={tr({ zh: '会员', en: 'Membership' })} prefetch={false}>
@@ -444,7 +451,7 @@ export default function LandingPage() {
         </Link>
         <Link
           href={SUPPORT_FOOTER_ENTRY.href}
-          className="landing-auth-icon"
+          className="landing-auth-icon landing-support-icon"
           title={t(SUPPORT_FOOTER_ENTRY.nameKey)}
           aria-label={t(SUPPORT_FOOTER_ENTRY.nameKey)}
           prefetch={false}

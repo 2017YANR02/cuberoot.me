@@ -41,6 +41,13 @@ const SEP = ' — ';
 const SHARE_IMAGE = '/icons/CubeRoot.png';
 
 export const PAGE_META: Record<string, PageMetaEntry> = {
+  'download': {
+    title: { zh: '下载', en: 'Download' },
+    description: {
+      zh: '下载 CubeRoot Android 应用，查看其他平台的发布状态。',
+      en: 'Get CubeRoot for Android and check availability on other platforms.',
+    },
+  },
   'alg/double-zbll-about': {
     title: { zh: '双底 ZBLL：对称与最短解', en: 'Double ZBLL: Symmetry and Shortest Solutions' },
     description: {
