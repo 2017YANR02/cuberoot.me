@@ -81,6 +81,27 @@ it.each(['', 'z2'].flatMap(grip => ['y', "y'"].map(turn => ({ grip, turn }))))(
   },
 );
 
+it.each([false, true])('keeps observation and final pauses out of turn duration (reconstructed=%s)', async rebuilt => {
+  const moves = ['R', 'U', 'F'].map((m, i) => ({ m, ts: [100, 150, 3150][i] }));
+  const mapped = [{ ...lines[0], fromIdx: 0, toIdx: 2, moves: moves.map(move => move.m),
+    moveRanges: moves.map((move, i) => ({ token: move.m, ts: move.ts, endTs: move.ts, startIdx: i, endIdx: i })),
+  }];
+  await act(async () => root.render(createElement(PlaybackPanel, {
+    event: '333', scramble: 'B', moves, totalMs: 8000, isZh: false, lines: rebuilt ? mapped : undefined,
+  })));
+  await vi.waitFor(() => expect(shown()).not.toBeNull());
+  await click('Step forward');
+  expect(Number(shown()?.getAttribute('data-duration'))).toBe(3); // 50 ms gap.
+  await click('Step forward');
+  expect(Number(shown()?.getAttribute('data-duration'))).toBe(30); // Normal 500 ms, not 3 seconds.
+  expect(container.querySelector('.reconstruct-playback-counter')?.textContent).toBe('0.15 / 8.00');
+  await act(async () => [...container.querySelectorAll('button')].find(button => button.textContent === '2x')!.click());
+  expect(Number(shown()?.getAttribute('data-duration'))).toBe(15);
+  await click('Step forward');
+  expect(Number(shown()?.getAttribute('data-duration'))).toBe(15); // Final put-down pause is capped too.
+  expect(container.querySelector('.reconstruct-playback-counter')?.textContent).toBe('3.15 / 8.00');
+});
+
 async function mount(withLines = true) {
   await act(async () => root.render(createElement(PlaybackPanel, {
     event: '333', method: 'roux', scramble: 'B', moves: raw, totalMs: 500, isZh: false,

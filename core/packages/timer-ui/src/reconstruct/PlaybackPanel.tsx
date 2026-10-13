@@ -184,14 +184,13 @@ export default function PlaybackPanel({
   const elapsedMs = tsOf(idx);
   const lastTs = total > 0 ? Math.max(moves[total - 1].endTs, rawMoves.at(-1)?.ts ?? 0) : 0;
 
-  // SimCubeView starts a move when its timestamp is reached. Its animation
-  // therefore has to occupy the interval until the next move (or solve end),
-  // rather than the engine's generic 500 ms default. Otherwise short gaps
-  // accumulate in the twister queue and the cube visibly trails the clock.
+  // Keep the engine's normal 500 ms duration across observation/put-down pauses.
+  // Shorter gaps still shorten the animation to prevent a backlog; the clock
+  // retains the full recorded gap and leaves the finished cube still.
   const moveDurationTicks = idx > 0
     ? Math.max(
       1,
-      (((idx < total ? moves[idx].ts : totalMs) - moves[idx - 1].ts) * 60) /
+      (Math.min(500, (idx < total ? moves[idx].ts : totalMs) - moves[idx - 1].ts) * 60) /
         (1000 * speedMult),
     )
     : undefined;

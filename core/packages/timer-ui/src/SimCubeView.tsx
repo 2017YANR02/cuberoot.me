@@ -231,7 +231,7 @@ export interface SimCubeViewProps {
   animate?: boolean;
   /**
    * Duration of the next appended move in the engine's nominal 60 Hz ticks.
-   * Replay uses this to match the interval until the following recorded move;
+   * Replay caps this at normal turn speed and shortens it for dense moves;
    * live mirrors leave it unset and use their own catch-up timings.
    */
   moveDurationTicks?: number;
