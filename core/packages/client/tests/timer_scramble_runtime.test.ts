@@ -92,6 +92,7 @@ const SHARED_EVENTS: Readonly<Partial<Record<EventId, TimerSharedScrambleProvide
   circoradiolarian: 'native-random-move',
   icosababyface: 'native-random-move',
   cube3heli: 'native-random-move',
+  radiojewel: 'native-random-move',
   kilominx: 'cstimer-nonwca',
   mpyram: 'cstimer-nonwca',
 };
@@ -325,7 +326,7 @@ describe('shared timer scramble runtime', () => {
     'lattice', 'hyperx', 'latticex', 'masterbrilic', 'masterftov2',
     'quadx', 'dinoocta', 'fto5', 'eto', 'radiocrystal',
     'cube3skewb', 'heliskewb', 'comboctahedron', 'circoradiolarian', 'icosababyface',
-    'cube3heli',
+    'cube3heli', 'radiojewel',
   ] as const)('routes %s through its native generator and the shared worker seam', async (event) => {
     const scramble = generateNativePuzzleScramble(event, () => 0.375);
     const generateCubingScramble = vi.fn(async () => 'must not run');
@@ -348,7 +349,7 @@ describe('shared timer scramble runtime', () => {
     'lattice', 'hyperx', 'latticex', 'masterbrilic', 'masterftov2',
     'quadx', 'dinoocta', 'fto5', 'eto', 'radiocrystal',
     'cube3skewb', 'heliskewb', 'comboctahedron', 'circoradiolarian', 'icosababyface',
-    'cube3heli',
+    'cube3heli', 'radiojewel',
   ] as const)('preserves %s provider errors and empty results', async (event) => {
     for (const [generateSharedScramble, code] of [
       [async () => '   ', 'empty-result'],

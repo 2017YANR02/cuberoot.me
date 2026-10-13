@@ -3,7 +3,7 @@ import { act, createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 import { expect, it, vi } from 'vitest';
 import StepMoveList from '@cuberoot/timer-ui/reconstruct/StepMoveList';
-import { ReconstructHostContext } from '../../timer-ui/src/reconstruct/ReconstructHost';
+import { ReconstructHostContext } from '@cuberoot/timer-ui/reconstruct/ReconstructHost';
 import { buildNormalizedSolution } from '@cuberoot/shared/recon-ground-truth';
 import { formatReconLine, type ReconTextLine, type ReconTextResult } from '@cuberoot/shared/timer/reconstruct/recon-text';
 
