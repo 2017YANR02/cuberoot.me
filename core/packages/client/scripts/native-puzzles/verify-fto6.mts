@@ -1,7 +1,7 @@
-/** Browser acceptance using only public UI, DOM, clipboard and screenshots.
- * Start the existing client dev server separately, then run this script from
- * packages/client. BASE_URL may target a deployed build. No account is signed in.
- * WebGL dragging and deliberately disabled-WebGL fallback are separate cases.
+/** Public-UI acceptance. Start the client separately, then run from packages/client:
+ * node scripts/native-puzzles/verify-fto6.mts
+ * BASE_URL / OUTPUT_DIR override the server and evidence directory.
+ * Software-WebGL pointer dragging and forced 2D fallback are separate tests.
  */
 import { chromium, expect, type Browser, type Page } from '@playwright/test';
 import { Move } from 'cubing/alg';
@@ -31,7 +31,6 @@ async function check(name: string, browser: Browser, action: (page: Page) => Pro
   catch (error) { row.passed = false; row.error = String(error); }
   finally {
     row.pageErrors = errors; row.url = page.url();
-    writeFileSync(resolve(out, `${name}-svg.json`), JSON.stringify(await page.locator('svg').evaluateAll(nodes => nodes.map(node => node.outerHTML)).catch(() => [])));
     writeFileSync(resolve(out, `${name}.html`), await page.content().catch(() => ''));
     await page.screenshot({ path: resolve(out, `${name}.png`), fullPage: true }).catch(() => {});
     writeFileSync(resolve(out, `${name}.txt`), await page.locator('body').innerText().catch(() => 'Page unavailable'));
@@ -42,23 +41,45 @@ async function check(name: string, browser: Browser, action: (page: Page) => Pro
   }
 }
 const net = (page: Page) => page.locator('svg[aria-label="fto6"]').filter({ visible: true }).first();
-async function colors(page: Page): Promise<string[]> {
-  if (await page.locator('.twisty-section--2d').count()) {
-    // cubing.js owns a closed shadow root here. Compare the rendered net,
-    // not private renderer state; the shared SVG contract separately locks 288 facelets.
-    const image = await page.locator('.twisty-container').screenshot({ animations: 'disabled' });
-    return [image.toString('base64')];
-  }
+async function nativeNet(page: Page): Promise<void> {
   await expect(net(page).locator('polygon[data-piece]')).toHaveCount(288);
-  return net(page).locator('polygon[data-piece]').evaluateAll(nodes => nodes.map(node => node.getAttribute('fill') ?? ''));
+}
+// cubing.js owns a closed shadow root: inspect rendered pixels, never private model state.
+const captureNet = async (page: Page): Promise<string> =>
+  (await page.locator('.twisty-container').screenshot({ animations: 'disabled' })).toString('base64');
+async function sameNet(page: Page, reference: string): Promise<boolean> {
+  const current = await captureNet(page);
+  return page.evaluate(async ([a, b]) => {
+    const decode = async (png: string) => {
+      const image = new Image(); image.src = `data:image/png;base64,${png}`;
+      await image.decode();
+      const canvas = document.createElement('canvas');
+      canvas.width = image.naturalWidth; canvas.height = image.naturalHeight;
+      const context = canvas.getContext('2d')!;
+      context.drawImage(image, 0, 0);
+      return { width: canvas.width, height: canvas.height, data: context.getImageData(0, 0, canvas.width, canvas.height).data };
+    };
+    const [left, right] = await Promise.all([decode(a), decode(b)]);
+    if (left.width !== right.width || left.height !== right.height) return false;
+    // Repeated SVG rasterization varied by <=7 levels at only five edge pixels.
+    // Permit tiny antialiasing differences, but not any changed sticker interior.
+    let changed = 0;
+    for (let i = 0; i < left.data.length; i += 4) {
+      if (Math.max(...[0, 1, 2].map(c => Math.abs(left.data[i + c] - right.data[i + c]))) > 12) changed++;
+    }
+    return changed <= 10;
+  }, [reference, current]);
 }
 async function selectGenerator(page: Page): Promise<void> {
-  await page.locator('.gen-config-toolbar .pp-trigger:visible').click();
+  const trigger = page.locator('.gen-config-toolbar .pp-trigger:visible');
   const fto = page.getByRole('menuitemcheckbox', { name: /六阶 FTO/ });
-  await fto.waitFor();
+  // A server-rendered enabled button can precede hydration. Re-open through public UI.
+  await expect(async () => {
+    if (!await fto.isVisible()) await trigger.click();
+    await expect(fto).toBeVisible({ timeout: 1500 });
+  }).toPass({ timeout: 20_000, intervals: [300, 700] });
   if (await fto.getAttribute('aria-checked') !== 'true') await fto.click();
-  // Never briefly leave the auto-generating batch/competition menu empty:
-  // it reinstates the default 333 event and remounts/closes its picker.
+  // Select the new event before removing defaults; an empty selection resets the picker.
   const others = page.getByRole('menuitemcheckbox', { checked: true }).filter({ hasNotText: '六阶 FTO' });
   while (await others.count()) await others.first().click();
   await page.keyboard.press('Escape');
@@ -96,7 +117,7 @@ try {
         }
         if (recorded) break;
       }
-      expect(recorded, `${depth}: real pointer drag must append a move, not merely orbit`).not.toBe('');
+      expect(recorded, `${depth}: pointer drag must append a move, not merely orbit`).not.toBe('');
       const move = new Move(recorded.split(/\s+/).at(-1)!);
       const actualDepth = move.outerLayer !== undefined || move.family.endsWith('w')
         ? move.innerLayer === 3 ? 'wide3' : 'wide'
@@ -112,28 +133,28 @@ try {
     await go(page, '/zh/sim?puzzle=fto6');
     await page.locator('.twisty-section--2d').waitFor();
     await page.waitForTimeout(1000);
-    const solved = await colors(page);
+    const solved = await captureNet(page);
     const alg = page.getByPlaceholder('解法', { exact: true });
     await page.getByLabel('转动记号', { exact: true }).selectOption('3F');
     await page.locator('.twisty-fallback-move').click();
     await expect.poll(async () => (await alg.inputValue()).trim()).toBe('3F');
-    await expect.poll(() => colors(page)).not.toEqual(solved);
+    await expect.poll(() => sameNet(page, solved), { message: 'Manual move changes the rendered net' }).toBe(false);
     await page.getByLabel('转动角度', { exact: true }).selectOption('-1');
     await page.locator('.twisty-fallback-move').click();
     await expect(alg).toHaveValue('');
-    await expect.poll(() => colors(page)).toEqual(solved);
+    await expect.poll(() => sameNet(page, solved), { message: 'Inverse restores the rendered net' }).toBe(true);
     await alg.fill(sequence); await alg.blur();
     await page.locator('.playback-bar-anchor').selectOption('moves');
     await page.getByLabel('播放', { exact: true }).click();
     await expect(page.locator('.playback-bar-bubble')).toHaveText('5', { timeout: 20_000 });
-    const terminal = await colors(page);
-    expect(terminal).not.toEqual(solved);
+    const terminal = await captureNet(page);
+    expect(await sameNet(page, solved)).toBe(false);
     await page.getByLabel('回到起点', { exact: true }).click();
-    await expect.poll(() => colors(page)).toEqual(solved);
+    await expect.poll(() => sameNet(page, solved), { message: 'Rewind restores solved net' }).toBe(true);
     await page.getByLabel('下一步', { exact: true }).click();
     await expect(page.locator('.playback-bar-bubble')).toHaveText('1');
     await page.getByLabel('跳到末尾', { exact: true }).click();
-    await expect.poll(() => colors(page)).toEqual(terminal);
+    await expect.poll(() => sameNet(page, terminal), { message: 'End seeks to the same net' }).toBe(true);
     await page.getByTitle('复制本页链接(含打乱 / 解法)', { exact: true }).click();
     const shared = await page.evaluate(() => navigator.clipboard.readText());
     expect(new URL(shared).searchParams.get('puzzle')).toBe('fto6');
@@ -142,7 +163,7 @@ try {
     await page.locator('.twisty-section--2d').waitFor();
     await expect(page.getByPlaceholder('解法', { exact: true })).toHaveValue(sequence);
     await page.getByLabel('跳到末尾', { exact: true }).click();
-    await expect.poll(() => colors(page)).toEqual(terminal);
+    await expect.poll(() => sameNet(page, terminal), { message: 'Share restores same net' }).toBe(true);
     await page.getByLabel('随机打乱', { exact: true }).click();
     const setup = page.getByPlaceholder('打乱', { exact: true });
     await expect.poll(async () => (await setup.inputValue()).trim().split(/\s+/).length).toBe(72);
@@ -150,7 +171,7 @@ try {
     await page.getByLabel('动画展示打乱', { exact: true }).click();
     await expect(page.getByLabel('暂停', { exact: true })).toBeVisible();
     await page.getByLabel('暂停', { exact: true }).click();
-    return { facelets: 288, manualInverse: true, playbackSteps: 5, shareRestoredSameNet: true, scrambleLength: 72, explicitlyStartedScrambleAnimation: true };
+    return { renderedNet: 'pixel-verified', manualInverse: true, playbackSteps: 5, shareRestoredSameNet: true, scrambleLength: 72, explicitlyStartedScrambleAnimation: true };
   });
   await check('english-controls', webgl, async page => {
     await go(page, '/sim?puzzle=fto6');
@@ -162,13 +183,13 @@ try {
   await check('timer-event-preview', webgl, async page => {
     await go(page, '/zh/timer?event=fto6');
     await expect(page.getByLabel('六阶 FTO', { exact: true })).toBeVisible();
-    await colors(page);
+    await nativeNet(page);
     const text = (await page.locator('.scramble-moves').innerText()).trim();
     expect(text.split(/\s+/)).toHaveLength(72);
     expect(text).toContain('1-2'); expect(text).toContain('1-3');
     await page.reload({ waitUntil: 'domcontentloaded' });
     await expect(page.getByLabel('六阶 FTO', { exact: true })).toBeVisible();
-    await colors(page);
+    await nativeNet(page);
     expect(new URL(page.url()).searchParams.get('event')).toBe('fto6');
     return { event: 'fto6', scrambleLength: 72, fullEightFaceNet: true, retainedOnReload: true };
   });
@@ -179,9 +200,8 @@ try {
       if (mode === 'batch') {
         const count = page.getByLabel('每项打乱数', { exact: true });
         await count.fill('2'); await count.press('Enter');
-      } else if (mode === 'paste') {
-        await page.locator('.gen-tn-paste-area').fill(`1. ${sequence}\n2) 3F 2BR' 1-3U`);
-      } else await page.getByTitle('生成打乱', { exact: true }).click();
+      } else if (mode === 'paste') await page.locator('.gen-tn-paste-area').fill(`1. ${sequence}\n2) 3F 2BR' 1-3U`);
+      else await page.getByTitle('生成打乱', { exact: true }).click();
       await expect(net(page)).toBeVisible({ timeout: 90_000 });
       const nets = page.locator('svg[aria-label="fto6"]:visible');
       const expectedCount = mode === 'comp' ? 7 : 2;
@@ -200,7 +220,5 @@ try {
       return { mode, attemptCount: expectedCount, faceletsPerPreview: 288, pdfDownloaded: true };
     });
   }
-} finally {
-  await webgl.close(); await fallback.close();
-}
+} finally { await webgl.close(); await fallback.close(); }
 if (results.some(row => row.passed !== true)) process.exitCode = 1;
