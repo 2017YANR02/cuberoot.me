@@ -82,7 +82,8 @@ describe('Mobile capability surface guard', () => {
     expect(controller).toContain('smartCubeAttemptProducerRef.current.recordMove(move, timestamp)');
     expect(controller).toContain('attemptSplitRecorder.observeMoves');
     expect(controller).toContain('smartCubeMoveSubscribersRef.current');
-    expect(app).toContain('smartCubeAttemptProducerRef.current.begin(startedAtMs, connectedSmartCubeRef.current)');
+    expect(app).toContain('smartCubeAttemptProducerRef.current.begin(startedAtMs, connectedSmartCubeRef.current,');
+    expect(app).toMatch(/smartCubeAttemptProducerRef\.current\.begin\(startedAtMs, connectedSmartCubeRef\.current,\s*storeRef\.current\?\.settings\.recordGyro && reference && initial\s*\? \{ reference, initial, orientation: timerSmartCubeTrainingOrientation\(activeEvent, storeRef\.current\?\.settings\.preScrT\) \}\s*: undefined\)/);
     expect(app).toContain('new SmartCubeSoloTimerController');
     expect(app).toContain('id: currentScrambleEntry.id');
     expect(app).toContain('smartCubeSoloController.setConnected(connected)');
