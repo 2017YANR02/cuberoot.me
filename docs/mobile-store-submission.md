@@ -1,10 +1,12 @@
 # CubeRoot 移动端商店提交资料
 
+> 当前发行状态（2026-10-13）：所有者确认 Google Play 已成功上架。下方是旧构建的提交资料快照，其中 `NOT SUBMISSION READY` 及 `versionCode 1000` 不代表当前 Google Play 发行状态或线上版本。正式送审增量和发布证据以 [路线图](./mobile-app-roadmap.md) 为准；本次未重新核验 Console。iOS 和后续新版本仍须按最终包独立复核。中国大陆 Android 渠道另见 [分发调研](./china-android-distribution.md)。
+
 最后核对：2026-09-15（新增纪录通知源码；最终发布包仍待复核）
 适用构建：`@cuberoot/mobile` `0.1.0`，Android `versionCode 1000`
 应用标识：`me.cuberoot.app`
 
-提交状态：`DRAFT — NOT SUBMISSION READY`。当前已完成 iPhone 开发签名、覆盖安装和局部 UI 验证；门户已有会员有效期和开发者协议证据。4.8 登录 E2E、iOS BLE、会员 IAP、Paid Apps Agreement/税务/收款、全球含中国大陆材料、最终 archive 隐私报告、完整真机矩阵和商店素材仍待关闭。开发签名不等于分发签名、上传或审核完成；进度唯一账本仍是 `docs/mobile-app-roadmap.md`。
+快照原始提交状态：`DRAFT — NOT SUBMISSION READY`（历史状态，Google Play 已被上方发行记录覆盖）。该快照已完成 iPhone 开发签名、覆盖安装和局部 UI 验证；门户已有会员有效期和开发者协议证据。快照中 4.8 登录 E2E、iOS BLE、会员 IAP、Paid Apps Agreement/税务/收款、全球含中国大陆材料、最终 archive 隐私报告、完整真机矩阵和商店素材仍待关闭。开发签名不等于分发签名、上传或审核完成；进度唯一账本仍是 `docs/mobile-app-roadmap.md`。
 
 适用范围仅为 `core/apps/mobile` 的 Android Google Play 与 iOS App Store 提交。`@cuberoot/app-ui` 虽由五端共用，Windows/macOS Tauri 和 HarmonyOS NEXT 的安装包、签名、公证、分发渠道与商店资料必须按各自平台另行验收；本文件、macOS 本地 DMG 或 Harmony unsigned HAP 都不能证明那些平台已可发布。
 
