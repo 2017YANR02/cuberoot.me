@@ -29,6 +29,7 @@ const CASES = [
   { id: 'comboctahedron', stickers: 72, moves: 54, outer: 14, inner: 14, wide: 14, inner3: 6, wide3: 6 },
   { id: 'circoradiolarian', stickers: 300, moves: 60, outer: 20, inner: 20, wide: 20 },
   { id: 'radiojewel', stickers: 320, moves: 60, outer: 20, inner: 20, wide: 20 },
+  { id: 'radioweb', stickers: 440, moves: 60, outer: 20, inner: 20, wide: 20 },
   { id: 'icosababyface', stickers: 20, moves: 36, outer: 12, inner: 12, wide: 12 },
   { id: 'cube3heli', stickers: 168, moves: 54, outer: 18, inner: 18, wide: 18 },
 ] as const;

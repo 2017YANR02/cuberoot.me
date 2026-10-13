@@ -39,7 +39,7 @@ const EXPECTED_OTHER: EventId[] = [
   'lattice', 'hyperx', 'latticex', 'masterbrilic', 'masterftov2',
   'quadx', 'dinoocta', 'fto5', 'eto', 'radiocrystal',
   'cube3skewb', 'heliskewb', 'comboctahedron', 'circoradiolarian', 'icosababyface',
-  'cube3heli', 'radiojewel',
+  'cube3heli', 'radiojewel', 'radioweb',
 ];
 
 const EXPECTED_REAL_WCA_EVENTS = {
@@ -176,6 +176,7 @@ describe('shared timer event picker catalog', () => {
       ['icosababyface', 'Deep-Cut Icosahedron', '深切角转二十面体', 'Icosa'],
       ['cube3heli', '3×3 + Helicopter', '三阶＋直升机', '3Heli'],
       ['radiojewel', 'Radio Jewel', 'Radio Jewel', 'Jewel'],
+      ['radioweb', 'Radio Web', 'Radio Web', 'Web'],
     ] as const) {
       expect(timerEventPickerItem(event)).toMatchObject({ nameEn, nameZh, textLabel });
       expect(timerEventPickerItem(event).iconClass).toBeUndefined();
