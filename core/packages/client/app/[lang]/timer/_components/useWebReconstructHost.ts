@@ -12,7 +12,10 @@ export function useWebReconstructHost(): ReconstructHost {
   const settings = useSettings();
   return {
     localize: tr,
-    renderCaseLink: (href, label, className) => createElement(AppLink, { href, className }, label),
+    // Keep the timer mounted so visiting a case does not dispose its Bluetooth session.
+    renderCaseLink: (href, label, className) => createElement(AppLink, {
+      href, className, target: '_blank', rel: 'noopener noreferrer',
+    }, label),
     writeClipboardText: (text) => navigator.clipboard.writeText(text),
     replayUrl: async (solve) => {
       const id = await createServerReplayShare(solve);
