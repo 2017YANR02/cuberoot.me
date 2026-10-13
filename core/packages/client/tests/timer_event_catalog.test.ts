@@ -77,14 +77,14 @@ describe('shared timer event picker catalog', () => {
       expect(timerPuzzleSelection(id)).toEqual({ puzzle: id, scrambleType: null });
     }
   });
-  it('is a complete, duplicate-free 76-event partition in the website order', () => {
+  it('is a complete, duplicate-free 77-event partition in the website order', () => {
     expect(TIMER_EVENT_PICKER_GROUPS.map((group) => group.id)).toEqual(['wca', 'other']);
     expect(TIMER_EVENT_PICKER_GROUPS[0].items.map((item) => item.id)).toEqual(EXPECTED_WCA);
     expect(TIMER_EVENT_PICKER_GROUPS[1].items.map((item) => item.id)).toEqual(EXPECTED_OTHER);
 
     const pickerIds = TIMER_EVENT_PICKER_ITEMS.map((item) => item.id);
     const eventIds = EVENTS.map((event) => event.id);
-    expect(pickerIds).toHaveLength(76);
+    expect(pickerIds).toHaveLength(77);
     expect(new Set(pickerIds).size).toBe(pickerIds.length);
     expect(new Set(pickerIds)).toEqual(new Set(eventIds));
   });
