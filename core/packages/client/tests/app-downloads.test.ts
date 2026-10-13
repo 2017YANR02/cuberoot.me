@@ -4,9 +4,11 @@ import { ANDROID_APK_URL, GOOGLE_PLAY_URL, trackDownload } from '../lib/app-down
 describe('official download links and independent click reporting', () => {
   afterEach(() => vi.unstubAllGlobals());
 
-  it('uses the published package and keeps the unsigned APK unavailable', () => {
+  it('uses the published package and a versioned HTTPS APK on the official static host', () => {
     expect(new URL(GOOGLE_PLAY_URL).searchParams.get('id')).toBe('me.cuberoot.app');
-    expect(ANDROID_APK_URL).toBeNull();
+    const apk = new URL(ANDROID_APK_URL!);
+    expect(apk.origin).toBe('https://static.cuberoot.me');
+    expect(apk.pathname).toMatch(/^\/downloads\/android\/CubeRoot-\d+\.\d+\.\d+-\d+\.apk$/);
   });
 
   it('sends only the selected channel and language without credentials', () => {
