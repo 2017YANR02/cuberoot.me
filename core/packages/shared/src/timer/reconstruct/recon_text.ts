@@ -707,7 +707,7 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
     const endIdx = snappedSpans.find(span => span.key === stage.key)?.endIdx ?? stage.endIdx;
     if (endIdx === null) return stage;
     if (endIdx <= metricEnd) return { ...stage, endIdx, skipped: true, turns: 0, tps: null,
-      recognitionMs: 0, executionMs: 0, stepMs: 0, cumulativeMs: metricTs };
+      recognitionMs: 0, executionMs: 0, stepMs: 0, cumulativeMs: endIdx < 0 ? 0 : metricTs };
     const metric = metricForRange(moves, counted, metricEnd, metricTs, endIdx);
     const turns = countedHumanized.moves.filter(move => move.startIdx > metricEnd && move.startIdx <= endIdx).length;
     metricEnd = endIdx; metricTs = metric.cumulativeMs;

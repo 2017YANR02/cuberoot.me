@@ -34,6 +34,10 @@ const moves = SOLUTION.map((m, i) => ({ m, ts: (i + 1) * 200 }));
 const totalMs = moves[moves.length - 1].ts + 300;
 
 describe('walkMethod', () => {
+  it.each(['roux', 'zz'] as const)('%s preserves measured grip before reaching its first stage', method => {
+    const frame = methodFrame(method, 'R U F L D B', [{ m: 'U', ts: 100 }], 'x');
+    expect(frame.rotation).toBe('x');
+  });
   it.each(['roux', 'zz'] as const)('%s keeps a single method frame under rotated recordings', method => {
     const base = methodFrame(method, SCRAMBLE, moves);
     for (const rotation of ['x', 'y', 'z2']) {

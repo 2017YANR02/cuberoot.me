@@ -8,6 +8,19 @@ import { normalizeSolve, initialPoseRotation } from '@cuberoot/shared/timer/reco
 import { applyScramble } from '@cuberoot/shared/timer/reconstruct/state';
 import { applyOneToken } from '@cuberoot/shared/timer/reconstruct/apply-token';
 
+it.each(['roux', 'zz'] as const)('%s keeps stages already solved in the scramble at zero time', async method => {
+  const moves = [{ m: "U'", ts: 100 }];
+  const result = await buildReconText({ method, scramble: 'U', moves, totalMs: 200,
+    segs: computeStageSegments('U', moves, 200)!, metrics: null, slots: null });
+  const skipped = result.methodStages!.filter(stage => stage.endIdx === -1);
+  expect(skipped.length).toBeGreaterThan(0);
+  for (const stage of skipped) {
+    expect(stage.cumulativeMs).toBe(0);
+    expect(stage.turns).toBe(0);
+    expect(stage.stepMs).toBe(0);
+  }
+});
+
 it.each(['roux', 'zz'] as const)('%s assigns an unfinished tail to the current stage', async method => {
   const scramble = "R U F L D B";
   const moves = [{ m: 'U', ts: 100 }];
