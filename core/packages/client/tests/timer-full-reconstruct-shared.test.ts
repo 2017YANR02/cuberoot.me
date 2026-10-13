@@ -72,6 +72,17 @@ function button(label: string): HTMLButtonElement {
 }
 
 describe('the complete shared reconstruction report', () => {
+  it('backfills Roux history and shows a stage comparison after five recordings', async () => {
+    localStorage.setItem('cuberoot.reconstruction.method', 'roux');
+    const history = Array.from({ length: 5 }, (_, i) => ({ ...solve, id: `previous-${i}`, ts: solve.ts - i - 1 }));
+    await act(async () => root.render(createElement(ReconstructReport, { solve, history, isZh: false, host })));
+    await vi.waitFor(async () => {
+      await act(async () => undefined);
+      expect(container.querySelector('.sa-row-avg')?.textContent).toContain('vs recent stage mean');
+    });
+    expect(localStorage.getItem('cuberoot.reconstruction.stage-cache.v1')).toContain('previous-4');
+  });
+
   it.each(['roux', 'zz'] as const)('remembers %s for live stages and the next report', async method => {
     const stageTarget = document.createElement('div');
     await act(async () => root.render(createElement(ReconstructReport, { solve, isZh: false, host, live: true, liveStageTarget: stageTarget })));

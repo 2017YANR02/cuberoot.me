@@ -57,6 +57,7 @@ import type { AnalysisInput, AnalysisSnapshot } from './analysis-protocol';
 import StepAnalysis from './StepAnalysis';
 import MethodPicker from './MethodPicker';
 import { useReconstructionMethod } from './method-preference';
+import { rememberMethodStages, useMethodHistory } from './method-history';
 import StepMoveList from './StepMoveList';
 import ReconstructActions from './ReconstructActions';
 
@@ -272,6 +273,10 @@ function ReconstructReportBody({
   const reconText = useMemo(() => analysis?.text
     ? method === 'cfop' ? applyReconTextOverride(analysis.text, solve.reconstruction) : analysis.text
     : null, [analysis?.text, solve.reconstruction, method]);
+  useEffect(() => {
+    if (!live && !analysis?.provisional && reconText?.methodStages) rememberMethodStages(solve, method, reconText.methodStages);
+  }, [live, analysis?.provisional, reconText?.methodStages, solve, method]);
+  const methodAverages = useMethodHistory(method, solve, history, !live && analysis?.status === 'complete');
 
   // Personal stage averages computed from the caller-provided history.
   // We exclude the current solve so a fresh solve isn't compared against
@@ -405,6 +410,8 @@ function ReconstructReportBody({
           slotReference={analysis?.slotReference ?? null}
           ao12={stageAvgs?.ao12 ?? null}
           walk={walk}
+          methodAverages={methodAverages}
+          reconLines={reconText?.lines}
           moves={moves}
           // 转体和谱子里那些是同一份 —— 表里数的和文字里写的必须是一回事。
           rotations={reconText?.rotations ?? []}
