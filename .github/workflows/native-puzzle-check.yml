@@ -1,0 +1,48 @@
+name: Native puzzle verification
+
+on:
+  push:
+    branches: [codex/native-puzzle-20261013]
+    paths:
+      - '.github/workflows/native-puzzle-check.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  sources:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            core/packages/client
+            core/packages/shared
+            core/packages/puzzle-solvers
+            core/packages/puzzle-render-core
+            core/packages/event-icon
+            core/packages/timer-ui
+            core/scripts
+            .agents/skills/sim-add-puzzle
+            .agents/skills/wca-event
+            .github/workflows
+            docs
+      - name: Collect tracked source for the isolated development environment
+        shell: bash
+        run: |
+          mkdir -p /tmp/native-puzzle-source
+          git ls-files -z -- '*.ts' '*.tsx' '*.mts' '*.mjs' '*/package.json' '*AGENTS.md' '.agents/skills/sim-add-puzzle/*' '.agents/skills/sim-add-puzzle/references/*' '.agents/skills/wca-event/*' '.github/workflows/*' 'core/pnpm-workspace.yaml' 'core/tsconfig.base.json' 'core/packages/event-icon/svg/puzzle/*' | while IFS= read -r -d '' path; do
+            if [[ -f "$path" ]]; then
+              cp --parents "$path" /tmp/native-puzzle-source/
+            fi
+          done
+          git rev-parse HEAD > /tmp/native-puzzle-source/COMMIT.txt
+          tar -czf native-puzzle-source.tar.gz -C /tmp/native-puzzle-source .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-puzzle-source
+          path: native-puzzle-source.tar.gz
+          retention-days: 2
+          if-no-files-found: error
