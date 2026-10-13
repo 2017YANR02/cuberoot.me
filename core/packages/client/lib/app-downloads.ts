@@ -2,7 +2,7 @@
 import { apiUrl } from './api-base';
 
 export const GOOGLE_PLAY_URL = 'https://play.google.com/store/apps/details?id=me.cuberoot.app';
-export const ANDROID_APK_URL: string | null = null;
+export const ANDROID_APK_URL: string | null = 'https://static.cuberoot.me/downloads/android/CubeRoot-0.1.0-1004.apk';
 
 /** Best-effort click counts; the ordinary link remains independent of this request. */
 export function trackDownload(channel: 'play' | 'apk', language: 'en' | 'zh'): void {

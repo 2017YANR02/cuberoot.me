@@ -1,0 +1,20 @@
+[package]
+name = "cube48opt-research"
+version = "0.1.0"
+edition = "2021"
+publish = false
+license = "GPL-3.0-or-later"
+description = "Native Rust optimal cube search with cube48opt and nissy-core H0–H11 table backends"
+
+[workspace]
+
+[features]
+default = ["neon-moves", "h10-fast-coord", "h10-prefetch"]
+neon-moves = []
+h10-fast-coord = []
+h10-prefetch = []
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
