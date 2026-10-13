@@ -42,6 +42,7 @@ import { gradeForDelta } from '@cuberoot/shared/timer/reconstruct/reference';
 import type { F2lSlotsResult } from '@cuberoot/shared/timer/reconstruct/f2l-slots';
 import type { MethodWalkResult } from '@cuberoot/shared/timer/reconstruct/method-walk';
 import MethodPicker from './MethodPicker';
+import { formattedReconMoves, type ReconTextLine } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import type { MethodId } from '@cuberoot/shared/timer/reconstruct/methods';
 import { rotationsByStep, stepTimeBounds } from '@cuberoot/shared/timer/reconstruct/rotation-detect';
 
@@ -63,6 +64,8 @@ export interface StepAnalysisProps {
   ao12: StageAverages | null;
   /** Any method: the generic walk. Used directly when the method isn't CFOP. */
   walk: MethodWalkResult | null;
+  methodAverages?: Record<string, number>;
+  reconLines?: ReconTextLine[];
   /** The raw turn stream, for the per-step sequences. */
   moves: SolveMove[];
   /**
@@ -232,7 +235,7 @@ function buildCfopColumns(
   return cols;
 }
 
-function buildWalkColumns(walk: MethodWalkResult, isZh: boolean): Col[] {
+function buildWalkColumns(walk: MethodWalkResult, isZh: boolean, averages?: Record<string, number>): Col[] {
   return walk.stages.map((s, i) => ({
     key: s.key,
     label: isZh ? s.zh : s.en,
@@ -247,7 +250,7 @@ function buildWalkColumns(walk: MethodWalkResult, isZh: boolean): Col[] {
     refUserTurns: null,
     refDelta: null,
     refSolution: null,
-    avgMs: null,
+    avgMs: averages?.[s.key] ?? null,
     skipped: s.skipped,
     endIdx: s.endIdx,
   }));
@@ -264,9 +267,9 @@ export default function StepAnalysis(props: StepAnalysisProps) {
     if (method === 'cfop' && segs) {
       return buildCfopColumns(segs, stepMetrics, slots, reference, slotReference, ao12);
     }
-    if (walk) return buildWalkColumns(walk, isZh);
+    if (walk) return buildWalkColumns(walk, isZh, props.methodAverages);
     return [];
-  }, [method, segs, stepMetrics, slots, reference, slotReference, ao12, walk, isZh, tr]);
+  }, [method, segs, stepMetrics, slots, reference, slotReference, ao12, walk, isZh, tr, props.methodAverages]);
 
   /**
    * 每列几次转体。转体**没有动作下标** —— 它压根不在动作流里,只有时刻,所以列界
@@ -314,6 +317,13 @@ export default function StepAnalysis(props: StepAnalysisProps) {
   // on — so the step after it still starts where the last real one ended.
   const sequences = useMemo(() => {
     const out = new Map<string, string[]>();
+    if (method !== 'cfop' && props.reconLines) {
+      for (const line of props.reconLines) {
+        const key = line.stageKey ?? line.key;
+        out.set(key, [...(out.get(key) ?? []), ...formattedReconMoves(line)]);
+      }
+      return out;
+    }
     if (moves.length === 0) return out;
     const counted = htmMoves(moves);
     let prev = -1;
@@ -323,7 +333,7 @@ export default function StepAnalysis(props: StepAnalysisProps) {
       prev = c.endIdx;
     }
     return out;
-  }, [cols, moves]);
+  }, [cols, moves, method, props.reconLines]);
 
   const openCol = cols.find(c => c.key === openKey) ?? null;
 
@@ -485,7 +495,7 @@ export default function StepAnalysis(props: StepAnalysisProps) {
             )}
             {hasAvg && (
               <tr className="sa-row-avg">
-                <th scope="row" className="sa-rowhead">{tr({ zh: '对比 ao12', en: 'vs ao12' })}</th>
+                <th scope="row" className="sa-rowhead">{method === 'cfop' ? tr({ zh: '对比 ao12', en: 'vs ao12' }) : tr({ zh: '对比近期阶段均值', en: 'vs recent stage mean' })}</th>
                 {cols.map(c => {
                   const open = openKey === c.key ? '' : undefined;
                   if (c.avgMs === null || c.stepMs === null || c.avgMs <= 0) {

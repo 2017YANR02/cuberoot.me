@@ -12,9 +12,8 @@
  *
  *   CFOP — `cube/cfop_detect.ts`, the detector the rest of the timer already
  *     uses, so the report and the stored `stageSegments` cannot disagree.
- *   Roux — `cube/steps.ts`'s masks (`fb` / `sb` / `cmll`), a csTimer port that
- *     is already rotation-invariant across all 24 orientations. That matters
- *     more here than for CFOP: nobody agrees which side the first block goes on.
+ *   Roux — `cube/steps.ts`'s masks (`fb` / `sb` / `cmll`), evaluated in the
+ *     single solve frame selected by `method_frame.ts` across 24 orientations.
  *   ZZ   — the line and the two blocks are mask work, but EOLine also needs
  *     every edge ORIENTED, which no colour-equality mask can express. That
  *     comes from `faceletToCubie`'s `eo`, the solver's own decoding, rather
