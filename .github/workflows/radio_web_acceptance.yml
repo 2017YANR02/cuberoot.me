@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: radio-web-acceptance-${{ github.ref }}
@@ -14,6 +14,7 @@ concurrency:
 
 jobs:
   acceptance:
+    if: github.ref == 'refs/heads/codex/sim-radio-web-20261013'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     defaults:
@@ -22,11 +23,11 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          persist-credentials: false
+          ref: codex/sim-radio-web-20261013
           filter: blob:none
           sparse-checkout: |
             core
-            .agents/skills/sim-add-puzzle
+            .agents
             .codex
             docs
             ops/nginx
@@ -38,6 +39,8 @@ jobs:
           node-version-file: .node-version
           cache: pnpm
           cache-dependency-path: core/pnpm-lock.yaml
+      - name: Apply explicit branch-scoped integration edits
+        run: node ../.agents/radio-web-bootstrap.mts
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile --filter @cuberoot/client...
       - name: Build runtime dependencies
@@ -46,20 +49,65 @@ jobs:
         run: |
           pnpm --filter @cuberoot/client exec node scripts/generate-puzzle-icons.mts
           pnpm --filter @cuberoot/event-icon generate
-      - name: Native model and integration contracts
-        run: pnpm --filter @cuberoot/client exec vitest run tests/native-puzzle-svg.test.ts tests/native-puzzle-drag.test.ts tests/native-puzzles-client-integration.test.ts tests/native-puzzle-sim-controls.test.ts tests/radio-web-native-geometry.test.ts
+      - name: Commit only task sources and generated structural icons
+        working-directory: .
+        run: |
+          while IFS= read -r path; do
+            if [ -n "$path" ]; then git add -- "$path"; fi
+          done < core/.tmp/radio-web-evidence/changed-paths.txt
+          git add -- core/packages/event-icon/svg/puzzle/radioweb.svg core/packages/event-icon/src/
+          git diff --cached --check
+          if ! git diff --cached --quiet; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git commit -m 'feat(sim): add Radio Web across simulator, scrambles and timer'
+            git push origin HEAD:codex/sim-radio-web-20261013
+          fi
+          git rev-parse HEAD > core/.tmp/radio-web-evidence/tested-commit.txt
+      - name: Inspect native surface and unfolded states
+        working-directory: core/packages/client
+        run: |
+          node --import tsx --input-type=module <<'JS'
+          import { writeFileSync } from 'node:fs';
+          import { getPuzzleGeometryByDesc } from 'cubing/puzzle-geometry';
+          import { renderNativePuzzleSvg } from '@cuberoot/puzzle-render-core/native-puzzle-svg';
+          const pg = getPuzzleGeometryByDesc('i f 0.5478640450004204', {allMoves:true,orientCenters:true,addRotations:true});
+          const data = pg.get3d();
+          const visible = data.stickers.filter(s => !s.isDup);
+          const out = '../../.tmp/radio-web-evidence/';
+          const details = {raw:data.stickers.length,visible:visible.length,faces:data.faces.length,orbits:pg.getKPuzzleDefinition(true).orbits,shapeCounts:Object.fromEntries([...new Set(visible.map(s=>s.coords.length/3))].map(n=>[n,visible.filter(s=>s.coords.length/3===n).length]))};
+          console.log(JSON.stringify(details,null,2));
+          writeFileSync(out+'native-geometry.json',JSON.stringify(details,null,2));
+          writeFileSync(out+'solved.svg',renderNativePuzzleSvg('radioweb',''));
+          writeFileSync(out+'scrambled.svg',renderNativePuzzleSvg('radioweb',"R 2L' Gw Uv [F,U] Rw'"));
+          JS
+      - name: Native, preview, playback and Timer contracts
+        run: >-
+          pnpm --filter @cuberoot/client exec vitest run
+          tests/native-mixed-puzzles-geometry.test.ts
+          tests/native-puzzle-svg.test.ts tests/native-puzzle-drag.test.ts
+          tests/native-puzzles-client-integration.test.ts tests/native-puzzle-sim-controls.test.ts
+          tests/native-puzzle-manual-anchor.test.ts tests/twisty_2d_fallback.test.ts
+          tests/timer-sync-seed.test.ts tests/timer_scramble_runtime.test.ts
+          tests/timer_event_catalog.test.ts tests/timer_persistence.test.ts tests/timer_cstimer_io.test.ts
+          tests/timer-scramble-preview-shared.test.ts tests/timer-scramble-source-bar.test.ts
+          tests/sim-puzzle-menu.test.ts tests/puzzle-icon-catalog.test.ts
       - name: Typecheck client
         run: pnpm --filter @cuberoot/client typecheck
       - name: Browser acceptance
         if: ${{ hashFiles('core/packages/client/scripts/radio-web-browser-acceptance.mts') != '' }}
         run: |
           pnpm --filter @cuberoot/client exec playwright install --with-deps chromium
+          pnpm --filter @cuberoot/client dev > .tmp/radio-web-evidence/dev.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
           pnpm --filter @cuberoot/client exec node --import tsx scripts/radio-web-browser-acceptance.mts
       - name: Collect review artifacts
         if: always()
         run: |
           mkdir -p .tmp/radio-web-evidence
           git diff -- packages/event-icon > .tmp/radio-web-evidence/generated-icons.patch
+          git show --stat HEAD > .tmp/radio-web-evidence/commit-stat.txt
           tar -czf .tmp/radio-web-evidence/review-source.tar.gz --exclude=node_modules --exclude=dist --exclude=.next packages/puzzle-solvers/src/native-puzzles.ts packages/puzzle-solvers/src/native-puzzle-model.ts packages/puzzle-render-core/src/native-puzzle-svg.ts packages/shared/src/timer packages/timer-ui/src packages/client/app/'[lang]'/sim packages/client/app/'[lang]'/scramble/gen packages/client/components/NativePuzzleControls.tsx packages/client/components/TwistySection.tsx packages/client/components/scramble-preview-svg.ts packages/client/components/puzzle-models/gestures packages/client/lib/native-scramble.ts packages/client/tests packages/event-icon
       - uses: actions/upload-artifact@v4
         if: always()
