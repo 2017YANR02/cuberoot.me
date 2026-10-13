@@ -39,6 +39,23 @@ afterEach(async () => {
 });
 
 describe('the single live/replay 3D failure surface', () => {
+  it('uses the captured calibration sample even if the gyro advances before the next frame', async () => {
+    const reference = { w: 1, x: 0, y: 0, z: 0 };
+    const quatRef = { current: reference };
+    const draw = (calibrateToken: number) => act(async () => root.render(createElement(LiveCubeState, {
+      mode: '3d', algAnchored: true, moves: [], facelets: null, quatRef,
+      sensorBasis: 'identity', mirror: false, calibrateToken, calibrationReference: reference,
+    })));
+    await draw(0);
+    await vi.waitFor(() => expect(state.mount).toHaveBeenCalledOnce());
+    await draw(1);
+    quatRef.current = { w: Math.SQRT1_2, x: 0, y: Math.SQRT1_2, z: 0 };
+    state.mount.mock.calls[0][0].onFrame(state.mount.mock.results[0].value.world, 16);
+    const [, y, , w] = state.setQuaternion.mock.calls.at(-1)!;
+    expect(Math.abs(y)).toBeCloseTo(Math.SQRT1_2);
+    expect(Math.abs(w)).toBeCloseTo(Math.SQRT1_2);
+  });
+
   it('uses the elevated three-face view without gyro and switches on the first valid sample', async () => {
     const quatRef: { current: { w: number; x: number; y: number; z: number } | null } = { current: null };
     await act(async () => root.render(createElement(LiveCubeState, {

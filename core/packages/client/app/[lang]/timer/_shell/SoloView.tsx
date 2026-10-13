@@ -1549,6 +1549,14 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const gyroQuatRef = useRef<Quat | null>(null);
   const scrambleGyroRef = useRef<Quat | null>(null);
   const [calibrateNonce, setCalibrateNonce] = useState(0);
+  const calibrationReferenceRef = useRef<Quat | null>(null);
+  const resetSmartCubeOrientation = () => {
+    calibrationReferenceRef.current = gyroQuatRef.current ? { ...gyroQuatRef.current } : null;
+    if (phaseSnapshotRef.current !== 'running' && gyroQuatRef.current) {
+      scrambleGyroRef.current = { ...gyroQuatRef.current };
+    }
+    setCalibrateNonce(n => n + 1);
+  };
   // 姿态流录制。样本时刻用 performance.now() 而不是动作 recorder 的起点 ——
   // 「魔方起表」那条路用的是**设备时钟**,而陀螺仪回调根本不带时间戳,两个
   // 时钟相减出来的是垃圾。这里自己记一个本地起点。
@@ -1676,7 +1684,12 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     onMove: (move: string, ts: number, facelets: string, metadata?: CubeMoveMetadata) => {
       liveAnchorRef.current?.move(move);
       const outcome = smartCubeSoloController.move({ facelets, metadata, move, timestamp: ts });
-      if (outcome.guidanceCompleted && gyroQuatRef.current) scrambleGyroRef.current = { ...gyroQuatRef.current };
+      if (outcome.guidancePenultimate && getSettings().autoCalibrateGyro && gyroQuatRef.current) {
+        resetSmartCubeOrientation();
+      }
+      if (outcome.guidanceCompleted && !scrambleGyroRef.current && gyroQuatRef.current) {
+        scrambleGyroRef.current = { ...gyroQuatRef.current };
+      }
     },
     onSolved: (atMs) => {
       competitionSolvedRef.current = competitionRef.current.enabled && atMs !== undefined;
@@ -1763,7 +1776,11 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   useEffect(() => () => liveAnchor.setConnection(null), [liveAnchor]);
   const cubeConnected = supportsSmartCube && bluetoothCube.status.connected;
   useEffect(() => {
-    if (!cubeConnected) { gyroQuatRef.current = null; scrambleGyroRef.current = null; }
+    if (!cubeConnected) {
+      gyroQuatRef.current = null;
+      scrambleGyroRef.current = null;
+      calibrationReferenceRef.current = null;
+    }
     liveAnchor.setConnection(cubeConnected ? bluetoothCube.status.deviceId || bluetoothCube.status.deviceName || 'cube' : null);
   }, [liveAnchor, cubeConnected, bluetoothCube.status.deviceId, bluetoothCube.status.deviceName]);
   useEffect(() => {
@@ -1842,6 +1859,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         useGyro={settings.gyroEnabled}
         quatRef={settings.gyroEnabled ? gyroQuatRef : undefined}
         calibrateToken={calibrateNonce}
+        calibrationReference={calibrationReferenceRef.current}
         sensorBasis={sensorBasisForBrand(bluetoothCube.status.brand)}
         mirror={mirrorForBrand(bluetoothCube.status.brand)}
       />
@@ -2910,7 +2928,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
 
   const bluetoothDialog = supportsSmartCube && bluetoothOpen && (
     <BluetoothModal isZh={isZh} cube={bluetoothCube} connectAttempt={bluetoothConnectAttempt}
-      onResetGyro={() => setCalibrateNonce(n => n + 1)}
+      onResetGyro={resetSmartCubeOrientation}
       allowDeviceCalibration={timer.phase === 'idle' || timer.phase === 'stopped'}
       macPrompt={macPrompt} onSubmitMac={mac => resolveMac(mac)} onCancelMac={() => resolveMac(null)}
       onClose={() => {

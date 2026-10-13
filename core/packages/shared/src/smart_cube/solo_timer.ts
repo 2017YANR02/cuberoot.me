@@ -35,6 +35,7 @@ export interface SmartCubeSoloMoveOutcome {
   delivered: boolean;
   futureHistory: boolean;
   guidanceCompleted: boolean;
+  guidancePenultimate: boolean;
   recorded: boolean;
   started: boolean;
 }
@@ -59,6 +60,7 @@ const EMPTY_OUTCOME: SmartCubeSoloMoveOutcome = {
   delivered: false,
   futureHistory: false,
   guidanceCompleted: false,
+  guidancePenultimate: false,
   recorded: false,
   started: false,
 };
@@ -84,6 +86,7 @@ export class SmartCubeSoloTimerController<
   private runningOrientations: readonly string[] = [''];
   private lastFacelets: string | null = null;
   private trainingComplete: boolean | null = null;
+  private penultimateObserved = false;
   private readonly guidance: ReturnType<typeof createSmartCubeGuidanceController>;
 
   constructor(private readonly options: SmartCubeSoloTimerControllerOptions<Metadata>) {
@@ -114,6 +117,7 @@ export class SmartCubeSoloTimerController<
       && this.context?.targetFacelets === context?.targetFacelets
     )) return;
     this.context = context;
+    this.penultimateObserved = false;
     this.contextRevision++;
     this.guidance.setContext(context?.targetFacelets ? {
       id: context.id,
@@ -180,6 +184,12 @@ export class SmartCubeSoloTimerController<
         || contextRevision !== this.contextRevision) return outcome;
       const observation = this.guidance.observe(event.facelets);
       outcome.guidanceCompleted = observation.completedNow;
+      const hint = observation.state.hint;
+      if (!this.penultimateObserved && hint && !hint.complete
+        && hint.done.length > 0 && hint.current !== null && hint.pending.length === 0) {
+        this.penultimateObserved = true;
+        outcome.guidancePenultimate = true;
+      }
       if (observation.completedNow
         && contextRevision === this.contextRevision
         && timerSmartCubeStartsAttemptOnTurn(context.event)

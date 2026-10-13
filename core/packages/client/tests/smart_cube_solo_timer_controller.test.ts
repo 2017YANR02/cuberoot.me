@@ -69,6 +69,30 @@ function harness(initialContext: SmartCubeSoloTimerContext = {
 }
 
 describe('SmartCubeSoloTimerController', () => {
+  it('signals the penultimate completed move once per scramble, including split half turns', () => {
+    const context = { event: '333' as const, id: 1, scramble: 'R U2 F', targetFacelets: target('R U2 F') };
+    const { controller, setPhase } = harness(context);
+    expect(controller.move({ facelets: target('R'), move: 'R', timestamp: 1 }).guidancePenultimate).toBe(false);
+    expect(controller.move({ facelets: target('R U'), move: 'U', timestamp: 2 }).guidancePenultimate).toBe(false);
+    expect(controller.move({ facelets: target('R U2'), move: 'U', timestamp: 3 }).guidancePenultimate).toBe(true);
+    expect(controller.move({ facelets: target('R U2'), move: 'U', timestamp: 4 }).guidancePenultimate).toBe(false);
+    const finish = controller.move({ facelets: context.targetFacelets, move: 'F', timestamp: 5 });
+    expect(finish.guidanceCompleted).toBe(true);
+    expect(finish.guidancePenultimate).toBe(false);
+    controller.setContext({ ...context, id: 2 });
+    controller.setRunning(false);
+    setPhase('idle');
+    expect(controller.move({ facelets: target('R U2'), move: 'U', timestamp: 6 }).guidancePenultimate).toBe(true);
+  });
+
+  it('does not calibrate from history, state sync, or a running attempt', () => {
+    const { controller, setPhase } = harness({ event: '333', id: 1, scramble: 'R U F', targetFacelets: target('R U F') });
+    controller.syncFacelets(target('R U'));
+    expect(controller.move({ facelets: target('R U'), move: 'U', timestamp: 1, metadata: { futureHistory: true } }).guidancePenultimate).toBe(false);
+    setPhase('running');
+    expect(controller.move({ facelets: target('R U'), move: 'U', timestamp: 2 }).guidancePenultimate).toBe(false);
+  });
+
   it('freezes the opposite-color OLL goal through settings changes and stops before PLL', () => {
     const sune = "R U R' U R U2 R'";
     const pll = "R U' R U R U R U' R' U' R2";
@@ -177,6 +201,7 @@ describe('SmartCubeSoloTimerController', () => {
       delivered: true,
       futureHistory: false,
       guidanceCompleted: false,
+      guidancePenultimate: false,
       recorded: true,
       started: true,
     });

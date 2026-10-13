@@ -39,6 +39,7 @@ const LIVE_VIEW_COPY = {
 export function TimerSmartCubeSettingsFields({ value, localize, onChange, renderBooleanControl }: TimerSmartCubeSettingsFieldsProps) {
   const settings = normalizeTimerSmartCubeSettings(value);
   const gyro = field('gyroEnabled');
+  const calibration = field('autoCalibrateGyro');
   const autoReady = field('bluetoothAutoReady');
   const liveView = field('liveCubeView');
   const orientation = field('recordGyro');
@@ -48,6 +49,9 @@ export function TimerSmartCubeSettingsFields({ value, localize, onChange, render
     <>
       <TimerBooleanSettingRow field={gyro} label={localize(gyro.copy)} value={settings.gyroEnabled}
         onChange={(gyroEnabled) => onChange({ gyroEnabled })} renderBooleanControl={renderBooleanControl} />
+      <TimerBooleanSettingRow field={calibration} label={localize(calibration.copy)} value={settings.autoCalibrateGyro}
+        onChange={(autoCalibrateGyro) => onChange({ autoCalibrateGyro })} renderBooleanControl={renderBooleanControl}
+        hint={localize({ zh: '完成倒数第二步后，按当前训练朝向握好魔方；同时校准实况和本次复盘基准。', en: 'Hold the cube in the training orientation as you finish the penultimate move. Calibrates both the live view and the next replay reference.' })} />
       <TimerSettingRow field={autoReady} label={localize(autoReady.copy)}>
         <select className="settings-row-control-select" aria-label={localize(autoReady.copy)} value={settings.bluetoothAutoReady}
           onChange={(event) => onChange({ bluetoothAutoReady: normalizeTimerSmartCubeSettings({ bluetoothAutoReady: event.target.value }).bluetoothAutoReady })}>

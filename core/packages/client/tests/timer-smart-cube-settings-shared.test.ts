@@ -12,7 +12,7 @@ import { useAutoReady as webAutoReady } from '@/app/[lang]/timer/_lib/bluetooth/
 
 describe('one smart-cube settings persistence contract', () => {
   it('supplies the exact Web defaults to new and old installed stores', () => {
-    expect(DEFAULT_TIMER_SMART_CUBE_SETTINGS).toEqual({ bluetoothAutoReady: 'scrambled', liveCubeView: '3d', gyroEnabled: true, recordGyro: true, autoRecap: true, autoOpenSolution: true });
+    expect(DEFAULT_TIMER_SMART_CUBE_SETTINGS).toEqual({ bluetoothAutoReady: 'scrambled', liveCubeView: '3d', gyroEnabled: true, autoCalibrateGyro: true, recordGyro: true, autoRecap: true, autoOpenSolution: true });
     const old = createTimerStoreData(0, 'session');
     for (const key of Object.keys(DEFAULT_TIMER_SMART_CUBE_SETTINGS)) delete (old.settings as unknown as Record<string, unknown>)[key];
     expect(decodeTimerStoreData(old)?.settings).toMatchObject(DEFAULT_TIMER_SMART_CUBE_SETTINGS);
@@ -28,7 +28,7 @@ describe('one smart-cube settings persistence contract', () => {
                 const data = createTimerStoreData(0, 'session');
                 Object.assign(data.settings, choice);
                 expect(parseTimerStoreJson(serializeTimerStoreData(data))?.settings).toMatchObject(choice);
-                expect(normalizeTimerSmartCubeSettings(choice)).toEqual(choice);
+                expect(normalizeTimerSmartCubeSettings(choice)).toEqual({ ...choice, autoCalibrateGyro: true });
               });
             }
           }
@@ -36,7 +36,13 @@ describe('one smart-cube settings persistence contract', () => {
       }
     }
   }
-  it.each([{ bluetoothAutoReady: 'other' }, { liveCubeView: 'other' }, { gyroEnabled: 'false' }, { recordGyro: 'false' }, { autoRecap: 0 }, { autoRecap: null }, { autoOpenSolution: 0 }, { autoOpenSolution: null }])('rejects explicit corrupt imported choices %j', (bad) => {
+  it.each([false, true])('round-trips auto calibration=%s', autoCalibrateGyro => {
+    const data = createTimerStoreData(0, 'session');
+    data.settings.autoCalibrateGyro = autoCalibrateGyro;
+    expect(parseTimerStoreJson(serializeTimerStoreData(data))?.settings.autoCalibrateGyro).toBe(autoCalibrateGyro);
+    expect(normalizeTimerSmartCubeSettings({ autoCalibrateGyro }).autoCalibrateGyro).toBe(autoCalibrateGyro);
+  });
+  it.each([{ bluetoothAutoReady: 'other' }, { liveCubeView: 'other' }, { gyroEnabled: 'false' }, { autoCalibrateGyro: 'false' }, { recordGyro: 'false' }, { autoRecap: 0 }, { autoRecap: null }, { autoOpenSolution: 0 }, { autoOpenSolution: null }])('rejects explicit corrupt imported choices %j', (bad) => {
     const data = createTimerStoreData(0, 'session');
     Object.assign(data.settings, bad);
     expect(decodeTimerStoreData(data)).toBeNull();
@@ -72,11 +78,12 @@ describe('shared smart-cube controls and auto-ready subscription', () => {
       await act(async () => { view.value = value; view.dispatchEvent(new Event('change', { bubbles: true })); });
       expect(onChange).toHaveBeenLastCalledWith({ liveCubeView: value });
     }
-    const [viewGyro, recordGyro, recap, solution] = [...host.querySelectorAll('button')];
+    const [viewGyro, calibration, recordGyro, recap, solution] = [...host.querySelectorAll('button')];
     expect(host.textContent).toContain(lang === 'zh'
       ? '仅桌面窗口自动展开，移动端请手动打开解法。'
       : 'Auto-opens on desktop only; open solutions manually on mobile.');
     await act(async () => viewGyro.click()); expect(onChange).toHaveBeenLastCalledWith({ gyroEnabled: false });
+    await act(async () => calibration.click()); expect(onChange).toHaveBeenLastCalledWith({ autoCalibrateGyro: false });
     await act(async () => recordGyro.click()); expect(onChange).toHaveBeenLastCalledWith({ recordGyro: false });
     await act(async () => recap.click()); expect(onChange).toHaveBeenLastCalledWith({ autoRecap: false });
     await act(async () => solution.click()); expect(onChange).toHaveBeenLastCalledWith({ autoOpenSolution: false });

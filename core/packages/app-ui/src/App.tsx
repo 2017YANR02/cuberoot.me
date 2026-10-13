@@ -2297,7 +2297,16 @@ export function App({ host }: { host: InstalledAppHost }) {
   const smartCubeAttemptProducerRef = useRef(new SmartCubeAttemptProducer());
   const smartCubeMoveSubscribersRef = useRef(new Set<(move: string, timestamp: number) => void>());
   const smartCubeQuatRef = useRef<Quat | null>(null);
+  const smartCubeReferenceRef = useRef<Quat | null>(null);
   const [smartCubeCalibration, setSmartCubeCalibration] = useState(0);
+  const calibrationReferenceRef = useRef<Quat | null>(null);
+  const resetSmartCubeOrientation = () => {
+    calibrationReferenceRef.current = smartCubeQuatRef.current ? { ...smartCubeQuatRef.current } : null;
+    if (timerPhaseRef.current !== 'running' && smartCubeQuatRef.current) {
+      smartCubeReferenceRef.current = { ...smartCubeQuatRef.current };
+    }
+    setSmartCubeCalibration(value => value + 1);
+  };
   const [smartCubeRenderedView, setSmartCubeRenderedView] = useState('net');
   const connectedSmartCubeRef = useRef<Solve['device']>(undefined);
   const [attemptSplitState, setAttemptSplitState] = useState<TimerAttemptSplitState>({ stages: {} });
@@ -2429,7 +2438,12 @@ export function App({ host }: { host: InstalledAppHost }) {
         multiStage: (storeRef.current?.settings.multiStage ?? false)
           && timerSupportsStageSplits(entry.event),
       });
-      smartCubeAttemptProducerRef.current.begin(startedAtMs, connectedSmartCubeRef.current);
+      const reference = smartCubeReferenceRef.current;
+      const initial = smartCubeQuatRef.current;
+      smartCubeAttemptProducerRef.current.begin(startedAtMs, connectedSmartCubeRef.current,
+        storeRef.current?.settings.recordGyro && reference && initial
+          ? { reference, initial, orientation: timerSmartCubeTrainingOrientation(activeEvent, storeRef.current?.settings.preScrT) }
+          : undefined);
       if (storeRef.current?.settings.recordGyro && smartCubeQuatRef.current) {
         smartCubeAttemptProducerRef.current.recordGyro(smartCubeQuatRef.current, 0);
       }
@@ -2508,6 +2522,7 @@ export function App({ host }: { host: InstalledAppHost }) {
 
   const trainingOrientation = timerSmartCubeTrainingOrientation(activeEvent, store?.settings.preScrT);
   const previousTrainingOrientationRef = useRef(trainingOrientation);
+  useLayoutEffect(() => { smartCubeReferenceRef.current = null; }, [scramble, trainingOrientation]);
   useLayoutEffect(() => {
     if (previousTrainingOrientationRef.current !== trainingOrientation) {
       previousTrainingOrientationRef.current = trainingOrientation;
@@ -2580,7 +2595,13 @@ export function App({ host }: { host: InstalledAppHost }) {
         if (!futureHistory) battleSmartCubeHandlersRef.current?.onMove(move, timestamp, facelets);
         return;
       }
-      smartCubeSoloController.move({ facelets, metadata, move, timestamp });
+      const outcome = smartCubeSoloController.move({ facelets, metadata, move, timestamp });
+      if (outcome.guidancePenultimate && storeRef.current?.settings.autoCalibrateGyro && smartCubeQuatRef.current) {
+        resetSmartCubeOrientation();
+      }
+      if (outcome.guidanceCompleted && !smartCubeReferenceRef.current && smartCubeQuatRef.current) {
+        smartCubeReferenceRef.current = { ...smartCubeQuatRef.current };
+      }
     },
     onSolved: (timestamp) => {
       if (timerModeRef.current !== 1) {
@@ -2638,6 +2659,8 @@ export function App({ host }: { host: InstalledAppHost }) {
     if (!connected) {
       timer.cancelArm();
       smartCubeQuatRef.current = null;
+      smartCubeReferenceRef.current = null;
+      calibrationReferenceRef.current = null;
     }
     return () => smartCubeSoloController.setConnected(false);
   }, [smartCube.phase, smartCubeSoloController, timer.cancelArm]);
@@ -4082,6 +4105,7 @@ cornerSlot: smartCube.phase === 'connected' ? (
                       algAnchored={smartCubeAnchor.algAnchored}
                       displayOrientation={trainingOrientation}
                       calibrateToken={smartCubeCalibration}
+                      calibrationReference={calibrationReferenceRef.current}
                       facelets={smartCube.facelets || null}
                       language={language}
                       mode={store!.settings.liveCubeView}
@@ -4857,7 +4881,7 @@ children: <>
           onClose={closeSmartCubeDevice}
           onConnect={connectSmartCube}
           onDisconnect={disconnectSmartCube}
-          onResetGyro={smartCube.quaternion ? () => setSmartCubeCalibration((value) => value + 1) : undefined}
+          onResetGyro={smartCube.quaternion ? resetSmartCubeOrientation : undefined}
           onResetState={smartCube.resetState ? resetSmartCubeState : undefined}
           onScan={smartCube.scanDevices ? scanSmartCubes : undefined}
           scanning={smartCube.scanning}

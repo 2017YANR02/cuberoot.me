@@ -364,6 +364,7 @@ function decodeSettings(value: unknown): TimerStoreSettings | null {
     'showCubePreview',
     'prefer3D',
     'gyroEnabled',
+    'autoCalibrateGyro',
     'recordGyro',
     'autoRecap',
     'autoOpenSolution',
