@@ -435,7 +435,11 @@ describe('training host hooks and links', () => {
       .find(item => item.textContent === 'OLL')!;
     expect(trigger).toBeDefined();
     await act(async () => trigger.click());
-    const selected = container.querySelector('.pp-item[aria-current="page"]')!;
+    const selectedGroup = container.querySelector<HTMLButtonElement>('.pp-item[aria-current="page"]')!;
+    expect(selectedGroup.textContent).toBe('CFOP');
+    expect(selectedGroup.getAttribute('aria-haspopup')).toBe('menu');
+    await act(async () => selectedGroup.click());
+    const selected = container.querySelector('.pp-cascade-options .pp-item[aria-current="page"]')!;
     expect(selected.textContent).toBe('OLL');
     expect(selected.querySelector('.pp-item-check')).not.toBeNull();
     expect(container.querySelector('.pp-popup .cubing-icon')).toBeNull();

@@ -104,6 +104,16 @@ const KEYS = pageMetaKeys();
 const SOURCES = new Map(ROUTES.map((r) => [r.route, ownSource(r.dir)]));
 
 describe('every route owns its page metadata', () => {
+  it('localizes checkout metadata without changing its privacy or payment referrer policy', async () => {
+    const { generateMetadata } = await import('../app/[lang]/membership/checkout/layout');
+    for (const [lang, title] of [['en', 'Membership payment'], ['zh', '会员支付']]) {
+      const metadata = await generateMetadata({ params: Promise.resolve({ lang }) });
+      expect(metadata.title).toBe(title);
+      expect(metadata.robots).toEqual({ index: false, follow: false });
+      expect(metadata.referrer).toBe('origin');
+    }
+  });
+
   it('scans a plausible number of routes (guard against a broken walk)', () => {
     expect(ROUTES.length).toBeGreaterThan(200);
     expect(KEYS.size).toBeGreaterThan(150);
