@@ -14,6 +14,9 @@
  * Deep-Cut Icosahedron use the reference's full mixed-axis/deep-cut models.
  * 3×3 + Helicopter combines uniform third-depth face cuts with the planar
  * Helicopter cuts through adjacent face centers (Jaap's helicopter.htm).
+ * Radio Jewel (Radiolarian 7): Jason Smith's original face-turning icosahedron,
+ * with exact depth 5 - 2 sqrt(5), independently specified in Hyperspeedcube.
+ * See the native-pg-puzzles reference for the sources and non-jumbling scope.
  * These are bounded random-move practice scrambles, not uniform random states.
  */
 const CUBE_FACE_CORNER_AXES = [
@@ -153,6 +156,11 @@ export const NATIVE_PUZZLES = {
     axes: [...CUBE_FACE_CORNER_AXES.slice(0, 3), ...CUBE_EDGE_AXES],
     order: 0, axisOrders: [4, 4, 4, 2, 2, 2, 2, 2, 2],
     layers: 2, scrambleLength: 60, aspect: 4 / 3, visibleFacelets: 168,
+  },
+  radiojewel: {
+    description: 'i f 0.5278640450004204', zh: 'Radio Jewel', en: 'Radio Jewel', textLabel: 'Jewel',
+    axes: ICOSAHEDRON_FACE_AXES, order: 3, layers: 2,
+    scrambleLength: 60, aspect: 8 / 5, visibleFacelets: 320,
   },
 } as const;
 

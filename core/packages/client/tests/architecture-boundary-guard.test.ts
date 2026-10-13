@@ -44,18 +44,18 @@ function rules(file: string, content: string): string[] {
 
 describe('architecture boundary guard', () => {
   it('pins the complete current dependency baseline by exact finding identity', () => {
-    expect(MANIFEST.legacyFindings).toHaveLength(194);
+    expect(MANIFEST.legacyFindings).toHaveLength(193);
     expect(compareFindings(uncontractedFindings(CURRENT, MANIFEST.manualContracts), MANIFEST.legacyFindings)).toEqual({ additions: [], stale: [] });
-    // Reviewed native adapters, isolated fixtures, diagnostics, geometry/solver proofs,
+    // Reviewed native adapters, the Android release build, isolated fixtures, diagnostics, geometry/solver proofs,
     // deployment-only pgvector provisioning and remote-access host commands, plus
     // five exact offline symmetry-coordinator identities (Node, caffeinate, vm_stat, sysctl and ps).
-    expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length + 23);
-    expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'shared-root-import')).toHaveLength(146);
+    expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length + 24);
+    expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'shared-root-import')).toHaveLength(145);
     expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'cross-package-alias-import')).toHaveLength(0);
   });
 
   it('keeps every semantic edge contract tied to live repository evidence', () => {
-    expect(MANIFEST.manualContracts).toHaveLength(27);
+    expect(MANIFEST.manualContracts).toHaveLength(28);
     expect(validateManifestSchema(MANIFEST)).toEqual([]);
     expect(validateManualContracts(MANIFEST.manualContracts)).toEqual([]);
     expect(new Set(MANIFEST.manualContracts.map((item: { phase: string }) => item.phase))).toEqual(new Set([
@@ -110,6 +110,16 @@ describe('architecture boundary guard', () => {
     expect(rules(backupFile, backupCall)).toEqual([]);
     expect(rules(backupFile, backupCall + " spawnSync('bash', args);")).toContain('subprocess-call');
     expect(rules(SERVER_PROBE, backupCall)).toContain('subprocess-call');
+  });
+
+  it('limits the Android release contract to one wrapper call in its exact build script', () => {
+    const buildFile = ['core', 'apps', 'mobile/scripts/build-android.ts'].join('/');
+    const source = readFileSync(join(REPO_ROOT, buildFile), 'utf8');
+    expect(rules(buildFile, source)).toEqual([]);
+    expect(rules(buildFile, source + " spawnSync(process.execPath, []);")).toContain('subprocess-call');
+    expect(rules(buildFile, "import { spawnSync } from 'node:child_process'; spawnSync('other-command');")).toContain('subprocess-call');
+    expect(rules(SERVER_PROBE, source)).toContain('subprocess-call');
+    expect(rules(buildFile, source + " import '@cuberoot/shared';")).toContain('shared-root-import');
   });
 
   it('limits the Duo geometry proof to one Node adapter in its exact test file', () => {

@@ -6,7 +6,7 @@ import PlaybackPanel from '@cuberoot/timer-ui/reconstruct/PlaybackPanel';
 import type { ReconTextLine } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import { encodeGyroTrack } from '@cuberoot/shared/smart-cube/gyro-track';
 import { notationQuaternion } from '@cuberoot/shared/timer/reconstruct/gyro-orient';
-import { reconstructedTrack, playbackIndexForRaw } from '../../timer-ui/src/reconstruct/playback-track';
+import { reconstructedTrack, playbackIndexForRaw } from '@cuberoot/timer-ui/reconstruct/playback-track';
 import Cube from '@cuberoot/puzzle-render-core/engine/nxn/cube';
 import tweener from '@cuberoot/puzzle-render-core/engine/tweener';
 import { planSimUpdate } from '@cuberoot/shared/timer/sim-log';
