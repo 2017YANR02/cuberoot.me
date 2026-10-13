@@ -28,6 +28,8 @@ import type { SolveMove } from './stage_segments';
 import { metricForRange } from './step_metrics';
 import { facesToFacelets, methodById } from './methods';
 import type { MethodId, SolveMethod } from './methods';
+import { methodFrame } from './method_frame';
+export { methodFrame } from './method_frame';
 
 export interface MethodStageMetric {
   key: string;
@@ -65,9 +67,15 @@ export function walkMethod(
   scramble: string,
   moves: SolveMove[],
   totalMs: number,
+  preferredRotation?: string | null,
 ): MethodWalkResult | null {
   if (!moves || moves.length === 0) return null;
   const method = methodById(methodId);
+  if (method.id !== 'cfop') {
+    const frame = methodFrame(method.id, scramble, moves, preferredRotation);
+    scramble = frame.scramble;
+    moves = frame.moves;
+  }
 
   let state: CubeFaces;
   try {

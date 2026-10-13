@@ -46,7 +46,7 @@ import type { StepMetricsResult } from '@cuberoot/shared/timer/reconstruct/step-
 import { detectWastedWork } from '@cuberoot/shared/timer/reconstruct/error-detect';
 import type { ReferenceResult, StageReference } from '@cuberoot/shared/timer/reconstruct/reference';
 import { computeF2lSlots } from '@cuberoot/shared/timer/reconstruct/f2l-slots';
-import { walkMethod } from '@cuberoot/shared/timer/reconstruct/method-walk';
+import { walkMethod, methodFrame } from '@cuberoot/shared/timer/reconstruct/method-walk';
 import type { MethodId } from '@cuberoot/shared/timer/reconstruct/methods';
 
 import { decodeGyroTrack } from '@cuberoot/shared/smart-cube/gyro-track';
@@ -157,6 +157,7 @@ function ReconstructReportBody({
   const host = useReconstructHost();
   const { localize: tr } = host;
   const moves = solve.moves ?? [];
+  const [method, setMethod] = useState<MethodId>('cfop');
   const slices = useMemo(
     () => sliceReconstruction(moves, solve.timeMs, solve.bld?.memoMs),
     [moves, solve.timeMs, solve.bld?.memoMs],
@@ -177,10 +178,10 @@ function ReconstructReportBody({
     [gyroSamples, solve.device?.model],
   );
   const view = useMemo(
-    () => normalizeSolve(solve.scramble, moves, {
+    () => method !== 'cfop' ? methodFrame(method, solve.scramble, moves, recordedViewRotation) : normalizeSolve(solve.scramble, moves, {
       preferredRotation: recordedViewRotation, measuredGrip: gyroSamples[0]?.frame === 'scramble',
     }),
-    [solve.scramble, moves, recordedViewRotation, gyroSamples],
+    [method, solve.scramble, moves, recordedViewRotation, gyroSamples],
   );
   // Recognition/execution split (Cubeast definitions — see step_metrics.ts).
   // 3x3-shaped events only: the stage walker underneath models a 3x3.
@@ -224,7 +225,6 @@ function ReconstructReportBody({
     [gyroSamples, solve.device?.model, moves],
   );
   // Reader preference only; changing methods never rewrites the stored solve.
-  const [method, setMethod] = useState<MethodId>('cfop');
   const analysisInput = useMemo<AnalysisInput | null>(() => (
     stageSegs && moves.length > 0 ? {
       scoreable: scoreable && method === 'cfop',
@@ -286,8 +286,8 @@ function ReconstructReportBody({
   }, [history, solve.id]);
 
   const walk = useMemo(
-    () => (method === 'cfop' ? null : walkMethod(method, solve.scramble, moves, solve.timeMs)),
-    [method, solve.scramble, moves, solve.timeMs],
+    () => (method === 'cfop' ? null : walkMethod(method, solve.scramble, moves, solve.timeMs, view.rotation)),
+    [method, solve.scramble, moves, solve.timeMs, view.rotation],
   );
   const playbackLines = reconText?.lines ?? [];
   const playbackRecon = reconText;

@@ -13,7 +13,8 @@
  */
 import { describe, it, expect } from 'vitest';
 
-import { walkMethod } from '@/app/[lang]/timer/_lib/reconstruct/method_walk';
+import { walkMethod, methodFrame } from '@/app/[lang]/timer/_lib/reconstruct/method_walk';
+import { conjugateSequence, conjugateToken, facePermFor } from '@cuberoot/shared/timer/reconstruct/gyro-orient';
 import { computeStepMetrics } from '@/app/[lang]/timer/_lib/reconstruct/step_metrics';
 import { allEdgesOriented, METHOD_ORDER, methodById } from '@/app/[lang]/timer/_lib/reconstruct/methods';
 import { applyScramble, toFaceletString, solved } from '@/app/[lang]/timer/_lib/cube/state';
@@ -33,6 +34,18 @@ const moves = SOLUTION.map((m, i) => ({ m, ts: (i + 1) * 200 }));
 const totalMs = moves[moves.length - 1].ts + 300;
 
 describe('walkMethod', () => {
+  it.each(['roux', 'zz'] as const)('%s keeps a single method frame under rotated recordings', method => {
+    const base = methodFrame(method, SCRAMBLE, moves);
+    for (const rotation of ['x', 'y', 'z2']) {
+      const perm = facePermFor(rotation);
+      const rotatedScramble = conjugateSequence(SCRAMBLE, perm)!;
+      const rotatedMoves = moves.map(move => ({ ...move, m: conjugateToken(move.m, perm)! }));
+      const inverse = rotation.endsWith('2') ? rotation : `${rotation}'`;
+      const framed = methodFrame(method, rotatedScramble, rotatedMoves, `${inverse} ${base.rotation}`);
+      expect(walkMethod(method, framed.scramble, framed.moves, totalMs, '')!.stages.map(s => s.endIdx))
+        .toEqual(walkMethod(method, base.scramble, base.moves, totalMs, '')!.stages.map(s => s.endIdx));
+    }
+  });
   it('CFOP 走新路和走老路给出同一批边界和同一批时间', () => {
     const walk = walkMethod('cfop', SCRAMBLE, moves, totalMs)!;
     const old = computeStepMetrics(SCRAMBLE, moves, totalMs)!;

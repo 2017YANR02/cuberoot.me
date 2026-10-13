@@ -627,7 +627,7 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
   const { scramble, moves, totalMs, segs, metrics, slots } = input;
   const isCfop = !input.method || input.method === 'cfop';
   const physical = input.physical ?? input;
-  const methodWalk = isCfop ? null : walkMethod(input.method!, physical.scramble, physical.moves, totalMs);
+  const methodWalk = isCfop ? null : walkMethod(input.method!, physical.scramble, physical.moves, totalMs, input.viewRotation);
   const kinds = ['cross', 'f2l', 'oll', 'pll'] as const;
   const sourceSpans: Span[] = isCfop ? stepSpans(segs, metrics, slots, moves)
     : (methodWalk?.stages ?? []).flatMap((stage, index) => stage.endIdx === null ? [] : [{
