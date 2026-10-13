@@ -48,13 +48,11 @@ import type { ReferenceResult, StageReference } from '@cuberoot/shared/timer/rec
 import { computeF2lSlots } from '@cuberoot/shared/timer/reconstruct/f2l-slots';
 import { walkMethod } from '@cuberoot/shared/timer/reconstruct/method-walk';
 import type { MethodId } from '@cuberoot/shared/timer/reconstruct/methods';
-import type { SolveMove } from '@cuberoot/shared/timer/reconstruct/stage-segments';
 
 import { decodeGyroTrack } from '@cuberoot/shared/smart-cube/gyro-track';
 import { buildCoreTrack } from '@cuberoot/shared/timer/reconstruct/core-track';
 import { applyReconTextOverride } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import { initialPoseRotation, normalizeSolve } from '@cuberoot/shared/timer/reconstruct/gyro-orient';
-import type { ReconTextResult } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import { createLiveReconstructionStream, reconstructionAnalyzer } from './analysis-client';
 import type { AnalysisInput, AnalysisSnapshot } from './analysis-protocol';
 import StepAnalysis from './StepAnalysis';
@@ -67,39 +65,6 @@ import PlaybackPanel from './PlaybackPanel';
 import './reconstruct.css';
 import { ReconstructHostContext, useReconstructHost, type ReconstructHost, type ReconstructLocalize } from './ReconstructHost';
 export type { ReconstructHost } from './ReconstructHost';
-
-function methodPlaybackLines(
-  method: MethodId,
-  walk: ReturnType<typeof walkMethod>,
-  moves: readonly SolveMove[],
-  isZh: boolean,
-): ReconTextResult['lines'] {
-  if (method === 'cfop' || !walk) return [];
-
-  const kinds = ['cross', 'f2l', 'oll', 'pll'] as const;
-  const lines: ReconTextResult['lines'] = [];
-  let previousEnd = -1;
-  for (const [index, stage] of walk.stages.entries()) {
-    if (stage.endIdx === null || stage.endIdx <= previousEnd) continue;
-    lines.push({
-      kind: kinds[index] ?? 'pll',
-      key: stage.key,
-      moves: moves.slice(previousEnd + 1, stage.endIdx + 1).map(move => move.m),
-      moveRanges: moves.slice(previousEnd + 1, stage.endIdx + 1).map((move, offset) => ({
-        token: move.m, ts: move.ts, endTs: move.ts,
-        startIdx: previousEnd + 1 + offset, endIdx: previousEnd + 1 + offset,
-      })),
-      fromIdx: previousEnd + 1,
-      toIdx: stage.endIdx,
-      label: isZh ? stage.zh : stage.en,
-      recognitionMs: stage.recognitionMs,
-      executionMs: stage.executionMs,
-      stepMs: stage.stepMs,
-    });
-    previousEnd = stage.endIdx;
-  }
-  return lines;
-}
 
 export interface ReconstructReportProps {
   solve: Solve;
@@ -258,16 +223,19 @@ function ReconstructReportBody({
       : null),
     [gyroSamples, solve.device?.model, moves],
   );
+  // Reader preference only; changing methods never rewrites the stored solve.
+  const [method, setMethod] = useState<MethodId>('cfop');
   const analysisInput = useMemo<AnalysisInput | null>(() => (
     stageSegs && moves.length > 0 ? {
-      scoreable,
+      scoreable: scoreable && method === 'cfop',
       text: {
+        method, language: isZh ? 'zh' : 'en',
         scramble: view.scramble, moves: view.moves, totalMs: solve.timeMs,
         segs: stageSegs, metrics: stepMx, slots, core,
         physical: { scramble: solve.scramble, moves }, viewRotation: view.rotation,
       },
     } : null
-  ), [stageSegs, moves, scoreable, view, solve.timeMs, solve.scramble, stepMx, slots, core]);
+  ), [stageSegs, moves, scoreable, view, solve.timeMs, solve.scramble, stepMx, slots, core, method, isZh]);
   const [analysisState, setAnalysisState] = useState<{
     solveId: string; input: AnalysisInput; snapshot: AnalysisSnapshot;
   } | null>(null);
@@ -296,11 +264,13 @@ function ReconstructReportBody({
   // Never display the previous solve's result while the new effect subscribes.
   // Live updates retain the latest completed snapshot of this attempt while
   // the worker catches up, rather than flashing an empty list at every turn.
-  const analysis = analysisState?.solveId === solve.id && (live || analysisState.input === analysisInput)
+  const analysis = analysisState?.solveId === solve.id && (analysisState.input === analysisInput
+    || (live && analysisState.input.text.method === method
+      && analysisState.input.text.language === (isZh ? 'zh' : 'en')))
     ? analysisState.snapshot : analysisInput && !live ? reconstructionAnalyzer.peek(analysisInput, solve.id) : null;
   const reconText = useMemo(() => analysis?.text
-    ? applyReconTextOverride(analysis.text, solve.reconstruction)
-    : null, [analysis?.text, solve.reconstruction]);
+    ? method === 'cfop' ? applyReconTextOverride(analysis.text, solve.reconstruction) : analysis.text
+    : null, [analysis?.text, solve.reconstruction, method]);
 
   // Personal stage averages computed from the caller-provided history.
   // We exclude the current solve so a fresh solve isn't compared against
@@ -315,28 +285,12 @@ function ReconstructReportBody({
     return { ao12, ao100 };
   }, [history, solve.id]);
 
-  // Which method the report is read as. Not persisted on the solve: it is a
-  // property of the READER, not of the solve, and a Roux solver switching once
-  // should not rewrite what a CFOP solver stored.
-  const [method, setMethod] = useState<MethodId>('cfop');
   const walk = useMemo(
     () => (method === 'cfop' ? null : walkMethod(method, solve.scramble, moves, solve.timeMs)),
     [method, solve.scramble, moves, solve.timeMs],
   );
-  const playbackLines = useMemo(() => {
-    if (method === 'cfop') return reconText?.lines ?? [];
-    return methodPlaybackLines(method, walk, moves, isZh);
-  }, [method, reconText, walk, moves, isZh]);
-  const playbackRecon = useMemo(() => {
-    if (!reconText || method === 'cfop') return reconText;
-    return {
-      ...reconText,
-      lines: playbackLines,
-      text: playbackLines
-        .map(line => `${line.moves.join(' ')}${line.label ? ` // ${line.label}` : ''}`)
-        .join('\n'),
-    };
-  }, [method, reconText, playbackLines]);
+  const playbackLines = reconText?.lines ?? [];
+  const playbackRecon = reconText;
 
   // 回放固定展示；折叠只留给「参考解法」和「原始动作序列」这类附加内容。
   const [moveListExpanded, setMoveListExpanded] = useState(false);

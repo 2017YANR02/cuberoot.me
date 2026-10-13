@@ -64,6 +64,8 @@ import { htmMoves, quarterMoves } from './htm';
 import { humanizeStream } from './humanize';
 import { wastedDisplaySpans } from './error_detect';
 import type { HumanRotation } from './humanize';
+import { walkMethod } from './method_walk';
+import type { MethodId } from './methods';
 import type { F2lSlotsResult } from './f2l_slots';
 import { facePermFor } from './gyro_orient';
 import type { SolveMove, StageSegments } from './stage_segments';
@@ -149,6 +151,7 @@ export interface ReconTextResult {
 
 /** 一行要切在哪、时间是多少。纯数据,不碰魔方。 */
 interface Span {
+  label?: string;
   kind: ReconLineKind;
   key: string;
   endIdx: number;
@@ -291,6 +294,8 @@ export function formattedReconMoves(line: ReconTextLine): string[] {
 }
 
 export interface ReconTextInput {
+  method?: MethodId;
+  language?: 'zh' | 'en';
   scramble: string;
   moves: SolveMove[];
   totalMs: number;
@@ -620,6 +625,16 @@ function weaveRotations(
  */
 export async function buildReconText(input: ReconTextInput): Promise<ReconTextResult> {
   const { scramble, moves, totalMs, segs, metrics, slots } = input;
+  const isCfop = !input.method || input.method === 'cfop';
+  const physical = input.physical ?? input;
+  const methodWalk = isCfop ? null : walkMethod(input.method!, physical.scramble, physical.moves, totalMs);
+  const kinds = ['cross', 'f2l', 'oll', 'pll'] as const;
+  const sourceSpans: Span[] = isCfop ? stepSpans(segs, metrics, slots, moves)
+    : (methodWalk?.stages ?? []).flatMap((stage, index) => stage.endIdx === null ? [] : [{
+      kind: kinds[index] ?? 'pll', key: stage.key, endIdx: stage.endIdx,
+      label: input.language === 'zh' ? stage.zh : stage.en,
+      recognitionMs: stage.recognitionMs, executionMs: stage.executionMs, stepMs: stage.stepMs,
+    }]);
   const counted = htmMoves(moves);
   // 姿态流是魔方自己配色系里的,而 `moves` 已经被 `orient.ts` 转进「十字朝下」——
   // 转体的记号得跟着换,不然谱子里的 `x` 和它旁边的动作不是一个系的。
@@ -639,7 +654,7 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
   // cuts have been moved out of the middle of any discovered gesture.
   const f2lEndMs = segs.f2lEndIdx == null ? Infinity : (moves[segs.f2lEndIdx]?.ts ?? -Infinity);
   const roughHumanized = humanizeStream(quarterMoves(moves), {
-    core, suppressZRotationsThroughMs: core?.frame === 'scramble' ? undefined : f2lEndMs,
+    core, suppressZRotationsThroughMs: !isCfop || core?.frame === 'scramble' ? undefined : f2lEndMs,
   });
   // A slice/wide gesture reaches the protocol as multiple outer-face events.
   // Stage detection can therefore fire after the first event, in the middle of
@@ -657,9 +672,9 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
         end = move.endIdx;
       }
     }
-    return span.kind === 'cross' ? snapCrossAufBeforePause(end, counted, totalMs) : end;
+    return isCfop && span.kind === 'cross' ? snapCrossAufBeforePause(end, counted, totalMs) : end;
   };
-  const snappedSpans = stepSpans(segs, metrics, slots, moves).map(span => ({
+  const snappedSpans = sourceSpans.map(span => ({
     ...span,
     endIdx: snappedEnd(span),
   }));
@@ -672,7 +687,7 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
   const humanizeOptions = {
     core,
     boundaries: new Set(spans.map(span => span.endIdx)),
-    suppressZRotationsThroughMs: core?.frame === 'scramble' ? undefined : segs.f2lEndIdx == null ? Infinity
+    suppressZRotationsThroughMs: !isCfop || core?.frame === 'scramble' ? undefined : segs.f2lEndIdx == null ? Infinity
       : (moves[spans.filter(span => span.kind === 'cross' || span.kind === 'f2l').at(-1)?.endIdx ?? -1]?.ts ?? f2lEndMs),
   };
   const countedHumanized = humanizeStream(quarterMoves(moves), humanizeOptions);
@@ -734,40 +749,44 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
 
     let label: string | null = null;
     try {
-      let effectivePrev = prevPattern;
-      const prevInfo = await detectStage(prevPattern);
-      if (!crossIsDone(prevInfo.stage)) {
-        const beforePrevPattern = patternHistory.at(-2) ?? patternHistory[0];
-        const beforePrevInfo = await detectStage(beforePrevPattern);
-        const isCancelInto = crossIsDone(beforePrevInfo.stage)
-          || (await crossFamilyCancelInto(beforePrevInfo, prevPattern)).length > 0;
-        if (isCancelInto) {
-          const prefix = phys.moves.slice(from, span.endIdx + 1);
-          for (let k = 1; k <= prefix.length; k += 1) {
-            const through = prefix[k - 1].m;
-            const candidate = await patternFromAlg(alg(
-              phys.scramble,
-              rawUpTo(from - 1),
-              prefix.slice(0, k - 1).map(move => move.m).join(' '),
-              through,
-              viewRot,
-            ));
-            if (crossIsDone((await detectStage(candidate)).stage)) {
-              effectivePrev = candidate;
-              break;
+      if (!isCfop) {
+        label = span.label ?? null;
+      } else {
+        let effectivePrev = prevPattern;
+        const prevInfo = await detectStage(prevPattern);
+        if (!crossIsDone(prevInfo.stage)) {
+          const beforePrevPattern = patternHistory.at(-2) ?? patternHistory[0];
+          const beforePrevInfo = await detectStage(beforePrevPattern);
+          const isCancelInto = crossIsDone(beforePrevInfo.stage)
+            || (await crossFamilyCancelInto(beforePrevInfo, prevPattern)).length > 0;
+          if (isCancelInto) {
+            const prefix = phys.moves.slice(from, span.endIdx + 1);
+            for (let k = 1; k <= prefix.length; k += 1) {
+              const through = prefix[k - 1].m;
+              const candidate = await patternFromAlg(alg(
+                phys.scramble,
+                rawUpTo(from - 1),
+                prefix.slice(0, k - 1).map(move => move.m).join(' '),
+                through,
+                viewRot,
+              ));
+              if (crossIsDone((await detectStage(candidate)).stage)) {
+                effectivePrev = candidate;
+                break;
+              }
             }
           }
         }
+        label = firstLabel(await buildCommentSuggestions({
+          prevPattern: effectivePrev,
+          currPattern,
+          // 局面是真颜色的,喂给它的动作也必须是同一系的原始记号。
+          lineMovesText: tokensForRange(phys.moves, physCounted, from, span.endIdx).join(' '),
+          prevMovesText: prevEnd >= 0 ? rawUpTo(prevEnd) : '',
+          moveCount: turnTokens.length,
+          explicit: true,
+        }));
       }
-      label = firstLabel(await buildCommentSuggestions({
-        prevPattern: effectivePrev,
-        currPattern,
-        // 局面是真颜色的,喂给它的动作也必须是同一系的原始记号。
-        lineMovesText: tokensForRange(phys.moves, physCounted, from, span.endIdx).join(' '),
-        prevMovesText: prevEnd >= 0 ? rawUpTo(prevEnd) : '',
-        moveCount: turnTokens.length,
-        explicit: true,
-      }));
     } catch (err) {
       console.warn('[recon-text] label failed for', span.key, err);
     }

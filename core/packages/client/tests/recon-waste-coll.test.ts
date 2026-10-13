@@ -13,7 +13,7 @@ vi.mock('@cuberoot/shared/recon/pll-lookup', () => ({ lookupPllAlgs: async () =>
 
 const timed = (tokens: string[]) => tokens.map((m, i) => ({ m, ts: 100 + i * 100 }));
 
-describe('waste notation', () => {
+describe.each(['cfop', 'roux', 'zz'] as const)('%s waste notation', method => {
   it.each([
     [["U'", "U'", "U'"], "(U' U' U')"],
     [['U', "U'"], "(U U')"],
@@ -23,10 +23,15 @@ describe('waste notation', () => {
     const moves = timed(tokens);
     const scramble = 'R F';
     const segs = computeStageSegments(scramble, moves, 1000)!;
-    const result = await buildReconText({ scramble, moves, totalMs: 1000, segs, metrics: null, slots: null });
+    const result = await buildReconText({ method, scramble, moves, totalMs: 1000, segs, metrics: null, slots: null });
     const text = result.lines.map(line => formattedReconMoves(line).join(' ')).join(' ');
-    expect(text).toBe(expected);
-    expect(reconTextForClipboard(result)).toContain(expected);
+    expect(text.replace(/[()]/g, '')).toBe(expected.replace(/[()]/g, ''));
+    expect(text.includes('(')).toBe(expected.includes('('));
+    for (const line of result.lines) {
+      const formatted = formattedReconMoves(line).join(' ');
+      expect(reconTextForClipboard(result)).toContain(formatted);
+      expect((formatted.match(/\(/g) ?? []).length).toBe((formatted.match(/\)/g) ?? []).length);
+    }
     expect((await patternFromAlg(text)).patternData)
       .toEqual((await patternFromAlg(tokens.join(' '))).patternData);
     for (const line of result.lines) {

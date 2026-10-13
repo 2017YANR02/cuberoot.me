@@ -62,7 +62,7 @@ describe('reconstruction worker lifecycle', () => {
     expect(analyzer.peek(corrected, 'saved-1').text).toBeNull();
   });
 
-  it.each(['scramble', 'timestamp', 'move', 'orientation', 'attempt'] as const)('rejects unrelated live steps (%s)', change => {
+  it.each(['scramble', 'timestamp', 'move', 'orientation', 'attempt', 'method', 'language'] as const)('rejects unrelated live steps (%s)', change => {
     const { analyzer } = setup();
     const live = { ...input(), scoreable: false };
     analyzer.rememberLive('live-1', live, { text: recognizedText, reference: null, slotReference: null, status: 'complete' });
@@ -72,6 +72,8 @@ describe('reconstruction worker lifecycle', () => {
     if (change === 'timestamp') final.text.moves[0].ts++;
     if (change === 'move') final.text.moves[0].m = 'F';
     if (change === 'orientation') final.text.viewRotation = 'x';
+    if (change === 'method') final.text.method = 'roux';
+    if (change === 'language') final.text.language = 'zh';
     expect(analyzer.peek(final, change === 'attempt' ? 'saved-2' : 'saved-1').text).toBeNull();
   });
 
