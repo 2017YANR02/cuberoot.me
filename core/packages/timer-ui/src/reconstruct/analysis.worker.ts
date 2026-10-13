@@ -10,7 +10,7 @@ self.onmessage = async ({ data }: MessageEvent<AnalysisRequest>) => {
   const failed = (error: unknown) => send({ error: String(error) });
   try {
     // The visible move list must not wait for the optional reference searches.
-    send({ patch: { text: await buildReconText(text) } });
+    if (!data.skipText) send({ patch: { text: await buildReconText(text) } });
   } catch (error) { failed(error); }
   const physical = text.physical ?? text;
   if (scoreable && text.metrics) {
