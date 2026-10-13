@@ -11,14 +11,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Collect immutable baseline and feature test logs
+      - name: Collect immutable main changes and baseline logs
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p /tmp/cube2heli-diagnostics
+          gh api -H 'Accept: application/vnd.github.v3.diff' repos/2017YANR02/cuberoot.me/compare/30e8a8038b70de016697251572727392a05ffda0...632d2f85be09b23a57821ff413f215e460fbf39a > /tmp/cube2heli-diagnostics/main.patch
           gh api repos/2017YANR02/cuberoot.me/actions/runs/38371277937 > /tmp/cube2heli-diagnostics/main-run.json
           gh api repos/2017YANR02/cuberoot.me/actions/runs/38371277937/logs > /tmp/cube2heli-diagnostics/main-logs.zip
-          gh api repos/2017YANR02/cuberoot.me/actions/runs/38378637065/jobs --paginate > /tmp/cube2heli-diagnostics/test-jobs.json
           gh api repos/2017YANR02/cuberoot.me/actions/runs/38378637065/logs > /tmp/cube2heli-diagnostics/test-logs.zip
       - uses: actions/upload-artifact@v4
         with:
