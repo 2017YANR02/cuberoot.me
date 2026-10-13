@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Vector3 } from 'three';
+import { Move } from 'cubing/alg';
 import { getPuzzleGeometryByDesc } from 'cubing/puzzle-geometry';
 import { NATIVE_PUZZLES, generateNativePuzzleScramble, nativePuzzleMoves } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { nativePuzzleKPuzzle, parseNativePuzzleAlg } from '@cuberoot/puzzle-solvers/native-puzzle-model';
@@ -90,7 +91,8 @@ describe('six-layer FTO native model', () => {
   it('matches all 40 native moves to independent clockwise 120-degree rigid rotations', () => {
     const { geometry, centroids, puzzle } = fixture();
     for (const { move, family } of nativePuzzleMoves(id)) {
-      const grip = geometry.axis.find((axis) => axis.quantumMove.toString() === family)!;
+      const grip = geometry.axis.find((axis) => geometry.notationMapper
+        .notationToExternal(new Move(axis.quantumMove.toString()))?.family === family)!;
       expect(grip.order).toBe(3);
       const axis = new Vector3().fromArray(grip.coordinates).normalize();
       let error = 0;

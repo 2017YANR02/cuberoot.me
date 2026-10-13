@@ -201,6 +201,10 @@ function nameToEvent(name: unknown): { event: EventId; matched: boolean } {
   if (tokens.some((token, index) => token === 'deep' && tokens[index + 1] === 'cut' && tokens[index + 2] === 'icosahedron') || name.includes('深切角转二十面体')) {
     return normalizeEventKey('icosababyface');
   }
+  // Match the complete six-layer name before generic 6/FTO tokens.
+  if (/(?:^|[^a-z0-9])6(?:[\s_-]+layer|\s*[x×]\s*6)[\s_-]+fto(?:$|[^a-z0-9])|六阶[\s_-]*fto/i.test(name)) {
+    return normalizeEventKey('fto6');
+  }
   // Preserve the FTO order before the standalone 5/FTO tokens resolve to 555/fto.
   if (/(?:^|[^a-z0-9])5(?:[\s_-]+layer|\s*[x×]\s*5)[\s_-]+fto(?:$|[^a-z0-9])|五阶[\s_-]*fto/i.test(name)) {
     return normalizeEventKey('fto5');
