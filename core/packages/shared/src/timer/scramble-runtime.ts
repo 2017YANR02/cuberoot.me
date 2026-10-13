@@ -136,6 +136,7 @@ export const TIMER_SCRAMBLE_CAPABILITIES = Object.freeze({
   comboctahedron: { kind: 'shared', provider: 'native-random-move' },
   circoradiolarian: { kind: 'shared', provider: 'native-random-move' },
   icosababyface: { kind: 'shared', provider: 'native-random-move' },
+  cube2heli: { kind: 'shared', provider: 'native-random-move' },
   cube3heli: { kind: 'shared', provider: 'native-random-move' },
   radiojewel: { kind: 'shared', provider: 'native-random-move' },
   r3: { kind: 'compound', provider: 'timer-compound' },

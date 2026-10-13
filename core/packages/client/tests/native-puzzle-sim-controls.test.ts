@@ -44,6 +44,7 @@ const CASES = [
   { id: 'circoradiolarian', setup: 'Rw', alg: "G U'", manual: '2R', typed: "Gw' U" },
   { id: 'radiojewel', setup: 'Rw', alg: "G U'", manual: '2R', typed: "Gw' U" },
   { id: 'icosababyface', setup: 'FREGU', alg: "HIERC2 FLACR'", manual: '2NALPO', typed: "FLACRw' HIERC" },
+  { id: 'cube2heli', setup: 'F', alg: "DF U'", manual: '2DF', typed: "FLw' U", reducedTyped: 'FLw U' },
   { id: 'cube3heli', setup: 'F', alg: "DF U'", manual: '2DF', typed: "FLw' U", reducedTyped: 'FLw U' },
 ] as const;
 type Fixture = typeof CASES[number];
@@ -223,7 +224,7 @@ describe('native PG simulator controls', () => {
     expect(writeText).not.toHaveBeenCalled();
   });
 
-  it.each(CASES.filter(({ id }) => id === 'quadx' || id === 'eto' || id === 'heliskewb' || id === 'cube3heli'))('$id preserves the chosen half-turn directions when live reduction is off', async (spec) => {
+  it.each(CASES.filter(({ id }) => id === 'quadx' || id === 'eto' || id === 'heliskewb' || id === 'cube2heli' || id === 'cube3heli'))('$id preserves the chosen half-turn directions when live reduction is off', async (spec) => {
     const typed = `${spec.typed} // keep turn direction`;
     await mount(spec, { alg: typed, liveReduce: false });
     await act(async () => { userMoveRef.current?.(`${spec.manual}'`); });
@@ -427,6 +428,8 @@ describe('native PG simulator controls', () => {
     { id: 'circoradiolarian', move: 'R', order: 3 },
     { id: 'icosababyface', move: 'FREGU', order: 5 },
     { id: 'radiojewel', move: 'R', order: 3 },
+    { id: 'cube2heli', move: 'F', order: 4 },
+    { id: 'cube2heli', move: 'DF', order: 2 },
     { id: 'cube3heli', move: 'F', order: 4 },
     { id: 'cube3heli', move: 'DF', order: 2 },
   ] satisfies { id: NativePuzzleId; move: string; order: number }[])('$id $move live cancellation uses its physical order $order and inversion preserves state', async ({ id, move, order }) => {

@@ -151,6 +151,16 @@ export const NATIVE_PUZZLES = {
     description: 'i v 0.562777422255239', zh: '深切角转二十面体', en: 'Deep-Cut Icosahedron', textLabel: 'Icosa',
     axes: DOGIC_AXES, order: 5, layers: 2, scrambleLength: 40, aspect: 8 / 5, visibleFacelets: 20,
   },
+  // A planar 2x2 / Helicopter combination, not a curved retail reproduction.
+  // Central face cuts add legal half-cube turns without new visible seams.
+  cube2heli: {
+    description: 'c f 0 e 0.7071067811865476',
+    zh: '二阶＋直升机', en: '2×2 + Helicopter', textLabel: '2Heli',
+    axes: [...CUBE_FACE_CORNER_AXES.slice(0, 3), ...CUBE_EDGE_AXES], order: 0,
+    axisOrders: [4, 4, 4, 2, 2, 2, 2, 2, 2],
+    layers: 2, axisLayers: [1, 1, 1, 2, 2, 2, 2, 2, 2],
+    scrambleLength: 40, aspect: 4 / 3, visibleFacelets: 48,
+  },
   cube3heli: {
     description: 'c f 0.333333333333333 e 0.7071067811865476', zh: '三阶＋直升机', en: '3×3 + Helicopter', textLabel: '3Heli',
     axes: [...CUBE_FACE_CORNER_AXES.slice(0, 3), ...CUBE_EDGE_AXES],
