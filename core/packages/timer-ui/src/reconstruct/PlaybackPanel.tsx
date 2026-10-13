@@ -28,19 +28,10 @@
  * 魔方本身走 `SimCubeView`(/sim 引擎),和计时页上那颗实时魔方是同一个组件:
  * 同一个站里不该有两种三维魔方长相。非 NxN 的项目没有 sim 魔方,退回打乱预览。
  *
- * ## 朝向:转整颗魔方,不换记号
- *
- * `scramble`/`moves` 是魔方自己配色系里的原始那对,`viewRotation` 是把十字转到
- * 下面的那个整体旋转(见 `orient.ts`),作为 `pose` 单独给引擎 —— 它接在动作末尾
- * 生效,但**不混进动作数组**(理由见 `_lib/cube/sim_log.ts`)。
- *
- * 为什么是接一个旋转而不是喂换过名的记号:换名会把颜色也换掉 —— 白面被叫成 D,
- * 而 D 在标准配色里是黄,屏幕上就成了「黄十字朝下」。接一个真旋转是把整颗魔方转
- * 过去,颜色跟着块走,白十字还是白的。
- *
- * 开陀螺仪时不接 —— 姿态流本来就是在魔方自己那个系里测的,朝向由它说了算。
- * 关闭时则用文字复盘已经确认的离散转体驱动 cube transform；开关只决定姿态来源，
- * 不决定 `x/y/z` 是否可见。 */
+ * 关闭陀螺仪:原始打乱 + 观察朝向 + 重建动作,中层、双层和转体直接交给引擎。
+ * 开启陀螺仪:原始打乱 + 编码器动作,同时应用录制姿态。
+ * 重建已解析姿态,不能再叠加核心转体。两种流通过原始动作区间与时间戳映射游标。
+ */
 
 
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
@@ -59,13 +50,13 @@ import { decodeGyroTrack, sampleGyroAt } from '@cuberoot/shared/smart-cube/gyro-
 import { mirrorForBrand, sensorBasisForBrand } from '@cuberoot/shared/smart-cube/orientation';
 import type { Quat } from '@cuberoot/shared/smart-cube/orientation';
 import { rotationPoseAt } from '@cuberoot/shared/timer/reconstruct/rotation-detect';
-import { buildCoreTrack, coreTrackPoseAt } from '@cuberoot/shared/timer/reconstruct/core-track';
 import type { HumanRotation } from '@cuberoot/shared/timer/reconstruct/humanize';
 import type { ReconTextLine } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import type { SolveMove } from '@cuberoot/shared/timer/reconstruct/stage-segments';
 import type { MethodId } from '@cuberoot/shared/timer/reconstruct/methods';
 import SolveTimeline from './SolveTimeline';
 import type { SolveTimelineHandle } from './SolveTimeline';
+import { reconstructedTrack, playbackIndexAt, playbackIndexForRaw, type PlaybackMove } from './playback-track';
 
 // WebGL + the /sim engine. The panel stays visible; the cube itself mounts only
 // when it nears the viewport (see cubeNear below).
@@ -106,13 +97,11 @@ function formatSec(ms: number, digits = 2): string {
 }
 
 export default function PlaybackPanel({
-  method, event, scramble, moves, totalMs, lines, rotations, side, gyro, deviceModel, viewRotation,
+  method, event, scramble, moves: rawMoves, totalMs, lines, rotations, side, gyro, deviceModel, viewRotation,
 }: Props) {
   const { localize: tr, BoolToggle = DefaultBoolToggle } = useReconstructHost();
   // /sim 只画 NxN;这里只有 3x3 会有动作流(智能魔方就这一种),别的项目退回预览图。
   const isNxn3 = nxnSizeForEvent(event) === 3;
-  const total = moves.length;
-  const [idx, setIdx] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [playbackRun, setPlaybackRun] = useState(0);
   const [seekIdx, setSeekIdx] = useState(0);
@@ -128,15 +117,29 @@ export default function PlaybackPanel({
   const gyroTrack = useMemo(() => decodeGyroTrack(gyro), [gyro]);
   const hasGyro = gyroTrack.length > 0;
   const calibrated = gyroTrack[0]?.frame === 'scramble';
-  const recordedCore = useMemo(() => calibrated ? buildCoreTrack(gyroTrack, { moves }) : null,
-    [calibrated, gyroTrack, moves]);
+  const posed = gyroOn && hasGyro;
+  const rebuilt = useMemo(() => reconstructedTrack(lines, rawMoves), [lines, rawMoves]);
+  const useRebuilt = !posed && rebuilt !== null;
+  const moves = useMemo<PlaybackMove[]>(() => useRebuilt ? rebuilt! : rawMoves.map((move, i) => ({
+    ...move, endTs: move.ts, rawAfter: i + 1,
+  })), [useRebuilt, rebuilt, rawMoves]);
+  const total = moves.length;
+  // Track identity prevents interpreting a raw encoder cursor as a gesture cursor
+  // for even one render when the gyro mode or reconstruction changes.
+  const [position, setPosition] = useState<{ track: PlaybackMove[] | null; index: number }>({ track: null, index: 0 });
+  const indexForTrack = () => playFromRef.current > 0 ? playbackIndexAt(moves, playFromRef.current) : 0;
+  const idx = position.track === moves ? Math.min(total, position.index) : indexForTrack();
+  const setIdx = (next: number | ((index: number) => number)) => setPosition(previous => {
+    const index = typeof next === 'function' ? next(previous.track === moves ? previous.index : indexForTrack()) : next;
+    return previous.track === moves && previous.index === index ? previous : { track: moves, index };
+  });
+  const rawIdx = idx > 0 ? moves[idx - 1].rawAfter : 0;
   const poseAt = useMemo(() => (
-    gyroOn && hasGyro
+    posed
       ? (tMs: number) => sampleGyroAt(gyroTrack, tMs)
-      : calibrated
-        ? (tMs: number) => coreTrackPoseAt(recordedCore, viewRotation ?? '', tMs)
+      : useRebuilt ? () => null
         : (tMs: number) => rotationPoseAt(rotations ?? [], tMs)
-  ), [gyroOn, hasGyro, gyroTrack, rotations, calibrated, viewRotation, recordedCore]);
+  ), [posed, useRebuilt, gyroTrack, rotations]);
 
   useEffect(() => {
     playbackQuatRef.current = poseAt(playFromRef.current);
@@ -169,6 +172,9 @@ export default function PlaybackPanel({
   useEffect(() => {
     if (idx > total) setIdx(total);
   }, [total, idx]);
+  useEffect(() => {
+    if (!playing) timelineRef.current?.setPlayhead(playFromRef.current);
+  }, [playing, idx, moves]);
 
   const composed = idx > 0
     ? `${scramble} ${moves.slice(0, idx).map(m => m.m).join(' ')}`
@@ -176,7 +182,7 @@ export default function PlaybackPanel({
 
   const tsOf = (i: number) => (i <= 0 ? 0 : (moves[Math.min(i, total) - 1]?.ts ?? 0));
   const elapsedMs = tsOf(idx);
-  const lastTs = total > 0 ? moves[total - 1].ts : 0;
+  const lastTs = total > 0 ? Math.max(moves[total - 1].endTs, rawMoves.at(-1)?.ts ?? 0) : 0;
 
   // SimCubeView starts a move when its timestamp is reached. Its animation
   // therefore has to occupy the interval until the next move (or solve end),
@@ -239,9 +245,16 @@ export default function PlaybackPanel({
   // A notation row starts playback, unlike scrubbing/stepping. Restart the
   // wall clock even when already playing or clicking the same row again.
   const playFrom = (i: number, atMs?: number) => {
-    seek(i, atMs);
+    const at = atMs ?? (i > 0 ? rawMoves[i - 1]?.ts ?? 0 : 0);
+    const target = playbackIndexForRaw(moves, i, at);
+    seek(target, at);
     setPlaybackRun(run => run + 1);
-    setPlaying(total > 0 && i < total);
+    setPlaying(total > 0 && target < total);
+  };
+  const seekRaw = (i: number) => {
+    const at = i > 0 ? rawMoves[i - 1]?.ts ?? 0 : 0;
+    const target = playbackIndexForRaw(moves, i, at);
+    seek(target);
   };
   // 上一步 / 下一步走**函数式**更新,不能写成 `seek(idx + 1)`:idx 是这一帧闭包里的
   // 值,连点五下会算出同一个目标,只前进一步。绝对跳转(时间轴、点某一步)没有这
@@ -268,18 +281,17 @@ export default function PlaybackPanel({
     setPlaying(p => !p);
   };
 
-  // SimCubeView 是 alg 驱动的,必须从**复原态**起算 —— 喂给它的是「打乱 + 已播
-  // 的这几手」。视角旋转**不进这个数组**:它是姿态不是动作,混进来的话每多播一手
-  // 都插在它前面 = 不是追加 = 逐手动画全没了(见 _lib/cube/sim_log.ts)。
-  const posed = gyroOn && hasGyro;
+  // The inspection rotation is a fixed prefix before reconstructed notation.
+  // New gestures append after it; recorded playback instead gets external pose.
   const simMoves = useMemo(
     () => [
       ...scramble.trim().split(/\s+/).filter(Boolean),
+      ...(useRebuilt ? (viewRotation ?? '').trim().split(/\s+/).filter(Boolean) : []),
       ...moves.slice(0, idx).map(m => m.m),
     ],
-    [scramble, moves, idx],
+    [scramble, moves, idx, useRebuilt, viewRotation],
   );
-  const simPose = !calibrated && !posed && viewRotation ? viewRotation : '';
+  const simPose = !useRebuilt && !posed && viewRotation ? viewRotation : '';
 
   const playLabel = playing
     ? tr({ zh: '暂停', en: 'Pause' })
@@ -317,19 +329,19 @@ export default function PlaybackPanel({
         {/* 3D 而不是展开图:回放是「看别人拧」,展开图看不出这是一次转动还是
             三次。展开图留给打乱预览那种「一眼扫全六面」的场合。
 
-            开启连续陀螺仪就跟原始姿态流，关闭时跟已识别的离散转体；一条转体
-            都没有才保持固定等轴视角。同一个组件,不为姿态来源换一套渲染。 */}
+            开启陀螺仪跟原始动作和姿态流，关闭时直接执行重建谱子。 */}
         <div ref={cubeBoxRef} className={`reconstruct-playback-cube${gyroOn ? ' is-gyro' : ''}`}>
           {isNxn3 ? (cubeNear ? (
             <Suspense fallback={<div className="timer-live-cube-3d" aria-hidden />}><SimCubeView
               language={tr({ en: 'en' as const, zh: 'zh' as const })}
               moves={simMoves}
               pose={simPose}
-              quatRef={playbackQuatRef}
+              key={useRebuilt ? `rebuilt:${viewRotation ?? ''}` : 'recorded'}
+              quatRef={useRebuilt ? undefined : playbackQuatRef}
               sensorBasis={posed && !calibrated ? sensorBasisForBrand(deviceModel) : 'identity'}
               mirror={posed && !calibrated ? mirrorForBrand(deviceModel) : false}
               // 播放 / 下一步是纯追加,那几手会转给你看;拖时间轴、上一步是跳,瞬切。
-              animate={idx !== seekIdx}
+              animate={position.track === moves && idx !== seekIdx}
               moveDurationTicks={moveDurationTicks}
               ariaLabel={tr({
                 zh: '这把的三维回放',
@@ -354,12 +366,12 @@ export default function PlaybackPanel({
         <SolveTimeline
           method={method}
           ref={timelineRef}
-          moves={moves}
+          moves={rawMoves}
           totalMs={totalMs}
           lines={lines ?? []}
           showLabels
-          currentIdx={idx}
-          onSeek={seek}
+          currentIdx={rawIdx}
+          onSeek={seekRaw}
         />
 
         <div className="reconstruct-playback-buttons">
@@ -405,7 +417,7 @@ export default function PlaybackPanel({
         </div>
       </div>
 
-      {side && <div className="reconstruct-playback-side">{side({ idx, seek, playFrom })}</div>}
+      {side && <div className="reconstruct-playback-side">{side({ idx: rawIdx, seek: seekRaw, playFrom })}</div>}
     </div>
   );
 }

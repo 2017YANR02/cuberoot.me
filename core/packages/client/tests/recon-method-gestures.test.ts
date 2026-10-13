@@ -7,6 +7,7 @@ import { computeStageSegments } from '@cuberoot/shared/timer/reconstruct/stage-s
 import { normalizeSolve, initialPoseRotation } from '@cuberoot/shared/timer/reconstruct/gyro-orient';
 import { applyScramble } from '@cuberoot/shared/timer/reconstruct/state';
 import { applyOneToken } from '@cuberoot/shared/timer/reconstruct/apply-token';
+import { reconstructedTrack } from '../../timer-ui/src/reconstruct/playback-track';
 
 it.each(['roux', 'zz'] as const)('%s keeps stages already solved in the scramble at zero time', async method => {
   const moves = [{ m: "U'", ts: 100 }];
@@ -43,6 +44,9 @@ it.each(['roux', 'zz'] as const)('%s preserves slice gestures, pose and complete
     core: buildCoreTrack(samples, { brand, moves }), physical: { scramble, moves }, viewRotation: view.rotation,
   });
   const items = result.lines.flatMap(line => line.moveRanges!);
+  const playback = reconstructedTrack(result.lines, moves);
+  expect(playback).not.toBeNull();
+  expect(playback!.map(move => move.m)).toEqual(items.map(item => item.token));
   expect(result.methodStages!.reduce((sum, stage) => sum + (stage.turns ?? 0), 0)).toBe(result.stm);
   for (const line of result.lines.filter(line => line.key !== 'tail')) {
     const stage = result.methodStages!.find(stage => stage.key === line.key)!;
