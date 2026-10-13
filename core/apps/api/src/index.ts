@@ -56,6 +56,7 @@ import { wcaTrainingInstitutionRoutes } from './routes/wca_training_institutions
 import { wcaTeacherRoutes } from './routes/wca_teachers.js';
 import { timerBackupsRoutes } from './routes/timer_backups.js';
 import { timerBootTelemetryRoutes } from './routes/timer_boot_telemetry.js';
+import { downloadRoutes } from './routes/downloads.js';
 import { appBootDiagnosticRoutes } from './routes/app_boot_diagnostics.js';
 import { timerPresenceRoutes } from './routes/timer_presence.js';
 import { timerReplaySharesRoutes } from './routes/timer_replay_shares.js';
@@ -215,6 +216,7 @@ app.route('/v1', wcaTeamRoutes);
 app.route('/v1', wcaTrainingInstitutionRoutes);
 app.route('/v1', timerBackupsRoutes);
 app.route('/v1', timerBootTelemetryRoutes);
+app.route('/v1', downloadRoutes);
 app.route('/v1', appBootDiagnosticRoutes);
 app.route('/v1', timerPresenceRoutes);
 app.route('/v1', timerReplaySharesRoutes);

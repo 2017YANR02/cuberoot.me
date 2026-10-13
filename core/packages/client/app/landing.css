@@ -850,7 +850,7 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
 }
 
 /* 致谢链接的爱心:站内统一爱心红(DeskPet .heart-icon 同款),hover 时仍保持红色 */
-.landing-page .landing-auth-icon:not(.landing-membership-icon) svg,
+.landing-page .landing-auth-icon.landing-support-icon svg,
 .landing-page .footer-credits svg {
     color: #ff5a5f;
     fill: #ff5a5f;

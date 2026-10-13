@@ -22,6 +22,7 @@
 | --- | --- | --- | --- |
 | 架构现代化 | [architecture-modernization-tracker.md](./architecture-modernization-tracker.md) | `ACTIVE` | 决策、批次、验收和审核记录 |
 | 新人入门与提交 | [CONTRIBUTING.md](../CONTRIBUTING.md) | `REFERENCE` | 权限开通、直接推送 main、自查验证及可选 PR 流程 |
+| 下载页与安装包分发 | [app-downloads.md](./app-downloads.md) | `REFERENCE` | 官网下载入口、APK 启用条件与匿名点击日志汇总 |
 | 好友轻量聊天 | [friend-chat-design.md](./friend-chat-design.md) | `ACTIVE` | 设计提案：跨端共享、一对一文字、权限与持久化；尚未实现或部署 |
 | 音乐播放器 | [music-player-tracker.md](./music-player-tracker.md) | `ACTIVE` | `/music`、DeskPet 悬浮音频中心、曲库转码与静态媒体发布 |
 | 后台与增长监控 | [admin-observability-tracker.md](./admin-observability-tracker.md) | `ACTIVE` | `/admin` 首页、用户注册与会员增长的口径、实施和验收 |

@@ -1,0 +1,49 @@
+/* Quiet utility page; inherit the site's typography, palette and appearance. */
+.download-page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: max(24px, var(--sat)) max(20px, var(--sar)) 80px max(20px, var(--sal));
+  color: var(--foreground);
+}
+.download-nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 36px; }
+.download-home { display: inline-flex; align-items: center; gap: 8px; color: var(--muted-foreground); text-decoration: none; }
+.download-home:hover { color: var(--foreground); }
+.download-page h1 { margin: 0 0 32px; font-size: 1.7rem; font-weight: 700; }
+.download-app { display: flex; align-items: center; gap: 20px; margin-bottom: 36px; }
+.download-app-icon { width: 80px; height: 80px; flex-shrink: 0; border-radius: 18px; }
+.download-app-name { margin: 0 0 6px; font-size: 1.3rem; font-weight: 600; }
+.download-app-description { margin: 0; color: var(--muted-foreground); line-height: 1.6; }
+.download-page h2 { margin: 0 0 8px; font-size: 1.2rem; font-weight: 600; }
+.download-android > p { margin: 0; color: var(--muted-foreground); line-height: 1.6; }
+.download-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-top: 12px; }
+/* Keep the official artwork intact, including its clear space and aspect ratio. */
+.download-play-badge { display: inline-flex; flex-shrink: 0; padding: 12px; border-radius: 6px; }
+.download-play-badge img { display: block; width: 180px; height: auto; }
+.download-play-badge:active { transform: translateY(1px); }
+.download-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 18px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  font-size: .9rem;
+  text-decoration: none;
+  cursor: pointer;
+}
+.download-button:hover { border-color: var(--foreground); }
+.download-button:active:not(:disabled) { transform: translateY(1px); }
+.download-button:focus-visible, .download-home:focus-visible, .download-play-badge:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+.download-button:disabled { color: var(--faint-foreground); border-color: var(--border-default); cursor: not-allowed; }
+.download-android > .download-note { margin-top: 12px; font-size: .85rem; }
+.download-upcoming { margin-top: 40px; border-top: 1px solid var(--border-default); padding-top: 16px; }
+.download-platform { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px 24px; padding: 12px 0; color: var(--muted-foreground); font-size: .9rem; }
+.download-platform > :last-child { color: var(--faint-foreground); }
+@media (max-width: 420px) {
+  .download-actions { flex-direction: column; align-items: flex-start; }
+}
