@@ -821,6 +821,19 @@ describe('deployment workflow path contracts', () => {
     }
   });
 
+  it('materializes the research hook working directory in sparse client test jobs', () => {
+    const workflow = readWorkflow('test.yml');
+    for (const job of ['test', 'client-tests']) {
+      const start = workflow.indexOf(`\n  ${job}:\n`);
+      expect(start, job).toBeGreaterThan(-1);
+      const next = workflow.slice(start + 1).search(/\n  [a-z][a-z-]*:\n/);
+      const block = workflow.slice(start, next < 0 ? undefined : start + 1 + next);
+      // spawnSync needs a real cwd even though the hook classifies commands
+      // without executing the solver. One tracked text fixture is sufficient.
+      expect(block, job).toMatch(/^\s+\/solver\/experiments\/cube48opt-rust\/README\.md\s*$/m);
+    }
+  });
+
   it('checks out ancestor Git ignore rules for native Cargo fingerprinting', () => {
     const workflow = readWorkflow('test.yml');
     const start = workflow.indexOf('\n  desktop:\n');
