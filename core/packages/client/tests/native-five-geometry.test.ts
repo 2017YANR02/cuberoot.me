@@ -15,8 +15,11 @@ import { nativePuzzleKPuzzle, parseNativePuzzleAlg } from '@cuberoot/puzzle-solv
 // Dino Octa: https://twistypuzzles.com/app/museum/museum_showitem.php?pkey=%3D2673
 // Eitan's ETO: https://twistypuzzles.com/forum/viewtopic.php?f=15&t=19666
 // Radio Crystal: https://www.puzzleforge.com/wp/2012/12/ (Jason Smith's original article).
-// FTO5 is a uniform five-layer FTO, not a dimensional copy of a particular toy.
-// With body inradius 1, its equally spaced cuts are +/-1/5 and +/-3/5.
+// FTO5/FTO6 are uniform FTO extensions, not dimensional copies of particular toys.
+// For FTO6, divide each edge into sixths: cuts 0, +/-1/3, +/-2/3.
+// The original equal-layer FTO mechanism is documented by Jaap:
+// https://www.jaapsch.net/puzzles/octaface.htm
+// With body inradius 1, FTO5's equally spaced cuts are +/-1/5 and +/-3/5.
 // Quad-X uses the symmetric three-slab idealization along a cube edge axis:
 // the two outer edge midpoints are at +/-sqrt(2), so cuts are +/-sqrt(2)/3.
 // ETO's cut is halfway to its octahedral edge midpoint: sqrt(3/2)/2 = sqrt(6)/4.
@@ -111,6 +114,13 @@ const CASES = [
     faces: 20, perFace: 15, raw: 300, visible: 300, pieces: 162, shapes: { 3: 15 }, unmarkedOrbit: '',
     faceOrbits: [['EDGES', 3, 6], ['C5RNER', 3, 3], ['CENTERS', 3, 3], ['EDGES2', 3, 3]],
     orbits: [['EDGES', 60, 2], ['C5RNER', 12, 5], ['CENTERS', 60, 1], ['EDGES2', 30, 2]],
+  },
+  {
+    id: 'fto6', faceNormals: octaNormals, turnNormals: octaNormals, pairs: octaPairs,
+    cuts: [0, 1 / 3, 2 / 3], boundaries: [2 / 3, 1 / 3, 0, -1 / 3, -2 / 3], layers: 3, rangeWide: true, order: 3,
+    faces: 8, perFace: 36, raw: 288, visible: 288, pieces: 222, shapes: { 3: 36 }, unmarkedOrbit: '',
+    faceOrbits: [['CENTERS', 3, 3], ['EDGES', 3, 6], ['CENTERS2', 3, 3], ['EDGES2', 3, 6], ['CENTERS3', 3, 3], ['CENTERS4', 3, 3], ['CENTERS5', 3, 3], ['CENTERS6', 3, 3], ['CENTERS7', 3, 3], ['C4RNER', 3, 3]],
+    orbits: [['CENTERS', 24, 1], ['EDGES', 24, 2], ['CENTERS2', 24, 1], ['EDGES2', 24, 2], ['CENTERS3', 24, 1], ['CENTERS4', 24, 1], ['CENTERS5', 24, 1], ['CENTERS6', 24, 1], ['CENTERS7', 24, 1], ['C4RNER', 6, 4]],
   },
 ] as const;
 type Spec = typeof CASES[number];
@@ -295,6 +305,22 @@ describe.each(CASES)('$id independent physical model', (spec) => {
       for (const token of invalid) expect(() => parseNativePuzzleAlg(spec.id, token), token).toThrow();
     }
   });
+});
+
+it('keeps all sixth-grid stickers congruent and the opposite third layers independent', () => {
+  const spec = CASES.find((entry) => entry.id === 'fto6')!;
+  const { stickers, puzzle } = fixture(spec);
+  // Shell edge sqrt(6), face area 3*sqrt(3)/2, divided into 36 congruent triangles.
+  for (const { vertices: [a, b, c] } of stickers) {
+    expect(b.clone().sub(a).cross(c.clone().sub(a)).length() / 2).toBeCloseTo(Math.sqrt(3) / 24, 10);
+    expect(a.distanceTo(b)).toBeCloseTo(Math.sqrt(6) / 6, 10);
+    expect(b.distanceTo(c)).toBeCloseTo(Math.sqrt(6) / 6, 10);
+    expect(c.distanceTo(a)).toBeCloseTo(Math.sqrt(6) / 6, 10);
+  }
+  for (const [a, b] of octaPairs) {
+    expect(puzzle.moveToTransformation(`3${a}`).isIdentical(puzzle.moveToTransformation(`3${b}'`))).toBe(false);
+    expect(puzzle.algToTransformation(`1-3${a} 1-3${b}'`).isIdentical(puzzle.moveToTransformation(`${a}v`))).toBe(true);
+  }
 });
 
 it('places Radio Crystal cuts at exactly six other face centers and removes the central facelet', () => {
