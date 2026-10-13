@@ -36,6 +36,7 @@ const CASES = [
   { id: 'quadx', setup: 'UFw', alg: "FL DR'", manual: '2UF', typed: "FLw' DR", reducedTyped: 'FLw DR' },
   { id: 'dinoocta', setup: '1-2F', alg: "D L'", manual: '2F', typed: "1-2D' L" },
   { id: 'fto5', setup: '1-3F', alg: "3D L'", manual: '3F', typed: "1-3D' L" },
+  { id: 'fto6', setup: '1-3F', alg: "3D L'", manual: '3F', typed: "1-3D' L" },
   { id: 'eto', setup: 'FDw', alg: "FL BLD'", manual: '2FD', typed: "FLw' BLD", reducedTyped: 'FLw BLD' },
   { id: 'radiocrystal', setup: 'Rw', alg: "G U'", manual: '2R', typed: "Gw' U" },
   { id: 'cube3skewb', setup: 'F', alg: "DRF U'", manual: '2U', typed: "Lw' UFR" },

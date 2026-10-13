@@ -129,6 +129,7 @@ export const TIMER_SCRAMBLE_CAPABILITIES = Object.freeze({
   quadx: { kind: 'shared', provider: 'native-random-move' },
   dinoocta: { kind: 'shared', provider: 'native-random-move' },
   fto5: { kind: 'shared', provider: 'native-random-move' },
+  fto6: { kind: 'shared', provider: 'native-random-move' },
   eto: { kind: 'shared', provider: 'native-random-move' },
   radiocrystal: { kind: 'shared', provider: 'native-random-move' },
   cube3skewb: { kind: 'shared', provider: 'native-random-move' },

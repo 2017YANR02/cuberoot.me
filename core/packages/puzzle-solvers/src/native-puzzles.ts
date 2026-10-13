@@ -18,6 +18,9 @@
  * with exact depth 5 - 2 sqrt(5), independently specified in Hyperspeedcube.
  * See the native-pg-puzzles reference for the sources and non-jumbling scope.
  * These are bounded random-move practice scrambles, not uniform random states.
+ * Six-layer FTO extends Jaap's equal-layer FTO by dividing each edge into sixths:
+ * https://www.jaapsch.net/puzzles/octaface.htm . Its idealized cuts are
+ * 0, +/-1/3 and +/-2/3 for body inradius 1 (not measured retail dimensions).
  */
 const CUBE_FACE_CORNER_AXES = [
   ['F', 'B'], ['D', 'U'], ['L', 'R'],
@@ -116,6 +119,11 @@ export const NATIVE_PUZZLES = {
     description: 'o f 0.2 f 0.6', zh: '五阶 FTO', en: '5-layer FTO', textLabel: 'FTO5',
     axes: OCTAHEDRON_FACE_AXES, order: 3, layers: 3, rangeWide: true,
     scrambleLength: 60, aspect: 4 / 3, visibleFacelets: 200,
+  },
+  fto6: {
+    description: 'o f 0 f 0.3333333333333333 f 0.6666666666666666', zh: '六阶 FTO', en: '6-layer FTO', textLabel: 'FTO6',
+    axes: OCTAHEDRON_FACE_AXES, order: 3, layers: 3, rangeWide: true,
+    scrambleLength: 80, aspect: 4 / 3, visibleFacelets: 288,
   },
   eto: {
     description: 'o e 0.6123724356957945', zh: 'ETO 棱转八面体', en: "Eitan's ETO", textLabel: 'ETO',

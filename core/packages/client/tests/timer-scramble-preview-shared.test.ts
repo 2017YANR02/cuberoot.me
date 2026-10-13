@@ -66,6 +66,7 @@ describe('shared timer scramble preview', () => {
     { event: 'quadx', faces: 6 },
     { event: 'dinoocta', faces: 8 },
     { event: 'fto5', faces: 8 },
+    { event: 'fto6', faces: 8 },
     { event: 'eto', faces: 8 },
     { event: 'radiocrystal', faces: 20 },
     { event: 'cube3skewb', faces: 6 },
@@ -345,7 +346,7 @@ describe('shared timer scramble preview', () => {
     for (const event of [
       'superz', 'dogic', 'octahedron4', 'dinoskewb', 'cube3dino',
       'lattice', 'hyperx', 'latticex', 'masterbrilic', 'masterftov2',
-      'quadx', 'dinoocta', 'fto5', 'eto', 'radiocrystal',
+      'quadx', 'dinoocta', 'fto5', 'fto6', 'eto', 'radiocrystal',
       'cube3skewb', 'heliskewb', 'comboctahedron', 'circoradiolarian', 'icosababyface',
       'cube3heli', 'radiojewel',
     ] as const) {

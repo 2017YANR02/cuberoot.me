@@ -14,6 +14,7 @@ const ADDED_CASES = [
   { id: 'quadx', setup: 'UF', alg: "FL DR'", moves: ['2UF', "FLw'"], invalid: 'F' },
   { id: 'dinoocta', setup: 'F', alg: "D L'", moves: ['2F', "1-2D'"], invalid: 'Fw' },
   { id: 'fto5', setup: 'F', alg: "3D L'", moves: ['3F', "1-3D'"], invalid: 'Fw' },
+  { id: 'fto6', setup: 'F', alg: "3D L'", moves: ['3F', "1-3D'"], invalid: 'Fw' },
   { id: 'eto', setup: 'FD', alg: "FL BLD'", moves: ['2FD', "FLw'"], invalid: 'F' },
   { id: 'radiocrystal', setup: 'R', alg: "G U'", moves: ['2R', "Gw'"], invalid: 'FREGU' },
   { id: 'cube3skewb', setup: 'F', alg: "DRF U'", moves: ['2U', "Lw'"], invalid: 'DRFw' },

@@ -37,7 +37,7 @@ const EXPECTED_OTHER: EventId[] = [
   'custom', 'fto', 'kilominx', 'gear', 'ivy', 'redi', 'mpyram', 'pyraminx_duo',
   'superz', 'dogic', 'octahedron4', 'dinoskewb', 'cube3dino',
   'lattice', 'hyperx', 'latticex', 'masterbrilic', 'masterftov2',
-  'quadx', 'dinoocta', 'fto5', 'eto', 'radiocrystal',
+  'quadx', 'dinoocta', 'fto5', 'fto6', 'eto', 'radiocrystal',
   'cube3skewb', 'heliskewb', 'comboctahedron', 'circoradiolarian', 'icosababyface',
   'cube3heli', 'radiojewel',
 ];
@@ -167,6 +167,7 @@ describe('shared timer event picker catalog', () => {
       ['quadx', 'Quad-X', 'Quad-X', 'QuadX'],
       ['dinoocta', 'Dino Octa', '恐龙八面体', 'DinoOct'],
       ['fto5', '5-layer FTO', '五阶 FTO', 'FTO5'],
+      ['fto6', '6-layer FTO', '六阶 FTO', 'FTO6'],
       ['eto', "Eitan's ETO", 'ETO 棱转八面体', 'ETO'],
       ['radiocrystal', 'Radio Crystal', 'Radio Crystal', 'RadioCr'],
       ['cube3skewb', '3×3 + Skewb', '三阶＋斜转', '3Skewb'],

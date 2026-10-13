@@ -18,6 +18,7 @@ const CASES = [
   { id: 'quadx', scramble: "UF 2FL' DRw UBv", facelets: 126 },
   { id: 'dinoocta', scramble: "F 2U' 1-2BL Rv", facelets: 80 },
   { id: 'fto5', scramble: "F 2U' 3L 1-2BL 1-3D' Rv", facelets: 200 },
+  { id: 'fto6', scramble: "F 2U' 3L 1-2BL 1-3D' Rv", facelets: 288 },
   { id: 'eto', scramble: "FD 2FL' BLDw URv", facelets: 104 },
   { id: 'radiocrystal', scramble: "R 2L' Gw Uv", facelets: 300 },
   { id: 'cube3skewb', scramble: "F DRF 2U Lw' UFRv", facelets: 126 },

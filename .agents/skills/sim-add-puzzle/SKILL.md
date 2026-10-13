@@ -22,6 +22,7 @@ description: "用户说造魔方模拟器、给 /sim 加魔方、新魔方类型
 - 原生 loader 带轨道遮罩或专用外观时保留具名 puzzle id，不以裸 PuzzleGeometry 描述替换；将具名项目登记在 `twistyPuzzles.ts`，让页面与无 World 的播放控件共用判定。
 - 原生 PG 独立项目复用 `core/packages/puzzle-solvers/src/native-puzzles.ts` 的注册表、同目录 `native-puzzle-model.ts` 的模型与有界解析、`core/packages/puzzle-render-core/src/native-puzzle-svg.ts` 的完整展开图；按 [原生 PG 结构与接线](references/native-pg-puzzles.md) 核对来源、深度、方向和可见贴片，不在页面复制描述或生成器。
 - 按注册表的逐轴层数派生混合转角与深度能力，保留第二／第三单层及宽转；让按钮、拖转和点击共用规范族名与层深元数据，按原生映射选择 `Aw` 或 `1-2A`，不要拼接不存在的面宽转。
+- 偶数阶 FTO 的穿心切面不能省略：六阶用 `0, ±1/3, ±2/3`，两侧第三层互不等价。独立核对每面等面积三角形、完整六层的相对面别名与三层宽转，不以五阶中层等价关系代替。轮廓复现见 `compare-outlines.mjs --set=fto6`。
 - 按逐轴 `axisOrders` 处理混合机制，保留 FaceRenamingMapper 的完整外部族名，并独立核对不增加表面分区的角尖切面与旧种子打乱兼容性。
 - 对 Radio Jewel 等恰有小块消失的临界切深保留解析精度，独立核对面分区、可见块数及切深两侧的负例，并在双语说明中写明保形转动与 jumbling 的支持边界。
 - 原生播放器在首次构造前检测 WebGL 能力，不可用时直接切换同一具名模型的二维展开图；跳过全部 3D 初始化，手动按钮经原生招式回调记录，导出调用原生二维 SVG 下载。

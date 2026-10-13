@@ -21,6 +21,7 @@ const NOTES: Record<NativePuzzleId, readonly [string, string]> = {
   quadx: ['Quad-X：每步棱转 180°，支持外层、内层和宽转；当前仅支持保形转动，不含 jumbling。', 'Quad-X: 180° edge turns with outer, inner and wide layers. Currently supports shape-preserving turns only, without jumbling.'],
   dinoocta: ['恐龙八面体：每步面转 120°，支持外层、第二层与两层宽转。', 'Dino Octa: 120° face turns, with outer, second-layer and two-layer wide turns.'],
   fto5: ['五阶 FTO：每步面转 120°，支持外层、第二层、第三层和宽转。', '5-layer FTO: 120° face turns, with outer, second, third and wide layers.'],
+  fto6: ['六阶 FTO：每面 36 个三角形，每步面转 120°；支持外层、第二层、第三层和宽转。相对两面的第三层各自独立。', '6-layer FTO: 36 triangles per face and 120° face turns, with outer, second, third and wide layers. The third layers of opposite faces are independent.'],
   eto: ['ETO 棱转八面体：每步棱转 180°，采用保形标准转动，不含 jumbling。', "Eitan's ETO: 180° edge turns using the standard moves that preserve the octahedral shape, without jumbling."],
   radiocrystal: ['Radio Crystal：二十面体，每步面转 120°，采用保形标准转动，不含 jumbling。', 'Radio Crystal: an icosahedron with 120° face turns using the standard moves that preserve its shape, without jumbling.'],
   cube3skewb: ['三阶＋斜转：面转 90°，角转 120°，两种切割可以混合转动。', '3×3 + Skewb: combine 90° face turns with 120° corner turns.'],

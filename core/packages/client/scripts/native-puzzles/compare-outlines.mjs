@@ -5,12 +5,22 @@
 // --set=2026-10-12: review the mixed-axis and icosahedral additions.
 // --set=cube3heli: review the uniform 3x3 / Helicopter combination.
 // --set=radiojewel: review Radio Jewel's exact face-cut depth.
+// --set=fto6: review six equal FTO layers, including the central cut.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { getPuzzleGeometryByDesc } from 'cubing/puzzle-geometry';
 import { NATIVE_PUZZLES } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { Vector3 } from 'three';
 
 const reviewSets = {
+  fto6: {
+    basename: 'fto6-outlines',
+    rows: [{
+      id: 'fto6', en: '6-layer FTO',
+      description: 'o f 0 f 0.3333333333333333 f 0.6666666666666666', visibleFacelets: 288,
+      prior: 'o f 0.333333333333333', priorLabel: 'FTO (three layers; original cuts retained)',
+      notes: ['Six equal edge divisions: 36 triangles per face; depths 0, +/-1/3, +/-2/3.', 'Opposite third layers are distinct. Idealized construction, not measured retail dimensions.'],
+    }],
+  },
   radiojewel: {
     basename: 'radiojewel-outlines',
     rows: [
