@@ -56,6 +56,7 @@
 | `circoradiolarian` | Circo-Radiolarian | `i f 0.7453559924999299` | 按 [Jason Smith 的 Radiolarian 2 原作](https://www.puzzleforge.com/wp/2010/01/11/radiolarian-2-12010/)及 [Hyperspeedcube 的 radio02 实现](https://github.com/HactarCE/Hyperspeedcube/blob/main/lua/puzzles/ft_icosahedra.lua)，取直线面切 1−(1−1/φ)×2/3=√5/3；保留三角形及四边形表面分区，仅支持保形 120° 面转。 |
 | `icosababyface` | 深切角转二十面体 / Deep-Cut Icosahedron | `i v 0.562777422255239` | 使用 [cubing.js 维护者列出的单层深角切描述](https://github.com/cubing/cubing.js/issues/127)，以外接球半径 r 推导切深 r/√5，使每个切面经过五个邻接顶点；只采用 Dogic 的深切族，不添加小角片。上游昵称带问号，显示名使用明确结构名称。 |
 | `cube3heli` | 三阶＋直升机 / 3×3 + Helicopter | `c f 0.333333333333333 e 0.7071067811865476` | 根据 [cubing.js 官方 pgPuzzles.ts](https://github.com/cubing/cubing.js/blob/main/src/cubing/puzzle-geometry/pgPuzzles.ts) 的独立 `3x3x3`、`helicopter` 预设及 [Jaap 的平面棱转说明](https://www.jaapsch.net/puzzles/helicopter.htm)，组合均匀三阶面切与 Helicopter 棱切；以立方体半边长 1 推导面切 ±1/3、棱切 ±√2/2。支持保形 90° 面转及 180° 棱转，不包含 jumbling，不宣称精确复刻 Grégoire Pfennig 的 Helicopter 3×3 实物切深。 |
+| `radiojewel` | Radio Jewel / Radio Jewel | `i f 0.5278640450004204` | 按 [Jason Smith 的 Radiolarian 7 原作](https://www.puzzleforge.com/wp/2012/11/06/radiolarian-7-radio-jewel-112012/)和 [Hyperspeedcube 的 radio07 实现](https://github.com/HactarCE/Hyperspeedcube/blob/main/lua/puzzles/ft_icosahedra.lua)，取内切球半径 1、面切深 5−2√5；核对原作照片的中央六边形与十五个三角形，以及[实体规格的 242 个外露块](https://cubein.cn/products/radio-jewel-radiolarian-7)。保留二十色和保形 120° 面转，不包含实物的两种 jumbling，不宣称测量复刻商品尺寸。 |
 
 把拼图描述视为几何数据；Dino Skewb、3×3 + Dino 与 3×3 + Helicopter 的组合描述由已核证的两类切面推导，不标注成上游预设中逐字复制的条目。
 
@@ -84,10 +85,12 @@
 | Circo-Radiolarian | 20 | 15（9 三角形、6 四边形） | 300 | 12 五贴片角块、60+30 棱块、60 个中心块 | 面轴 120° |
 | Deep-Cut Icosahedron | 20 | 1（完整三角形） | 20 | 20 个完整单面块 | 顶点轴 72° |
 | 3×3 + Helicopter | 6 | 28（12 三角形、12 四边形、4 五边形） | 168 | 8 个三贴片角块、24 个双贴片棱块、四组各 24 个单贴片中心块，共 128 块 | 面轴 90°、棱轴 180° |
+| Radio Jewel | 20 | 16（15 三角形、1 六边形） | 320 | 12 个五贴片角块、30 个双贴片棱块、三组各 60 个三角中心块、20 个六边形中心块，共 242 块 | 面轴 120° |
 
 - 从 `get3d()` 的 `isDup` 排除只为表示朝向而重复的贴片，再统计可见几何；开启 `orientCenters` 后 Dogic 和四阶八面体会分别返回 120、48 条贴片数据，不要把它们当成实际贴片数。
 - 对 Master FTO v2 去掉 168 条原始数据中的 16 个朝向重复片，保持 152 个真实贴片；核对普通 Master FTO 为 128 片、86 块，新版为 152 片、110 块，不把版本差异只实现为名称或配色。
 - 对 Master Brilic 用独立切线交点锁定每面的 10 个小棱三角形；拒绝用 0.8 代替 4/√5−1，即使两者都返回 360 片，前者也会将这 10 片变成带微小第四边的四边形。
+- 对 Radio Jewel 保留 5−2√5 的临界切深，从 360 条原始数据中去掉 40 个六边形中心朝向重复片，输出 320 片；以独立半空间分割核对每面 15 个三角形及一个六边形，并检查切深 ±0.0001 两侧均重新出现额外小片。
 - 对 Quad-X、Dino Octa、五阶 FTO、ETO 分别从 144、96、216、120 条原始 PG 数据去除面中心朝向重复片，保留 126、80、200、104 个可见区域；Radio Crystal 的 300 片无面中心重复，不得补入小中心片。
 - 对 3×3 + Skewb 和深切角转二十面体分别从 144、60 条原始数据去除朝向重复片，保留 126、20 个真实区域；后者每个还原面是完整三角形，不把同色三角面的不可辨自转算成未还原。
 - 解析原生 SVG 时，先保存所有 `orbit/piece/orientation` 的颜色查找项，再按面名和多边形顶点集合去重重合轮廓；只去重输出几何，不删除朝向颜色，否则转动后的单色中心会取不到颜色。
@@ -126,6 +129,7 @@
 - 对 Master Brilic 的五个物理层提供三个独立层深，对 Master FTO v2 的四个物理层提供两个独立层深；保留对侧深层别名和合法范围输入，用 `Av` 表示整体旋转，拒绝全层范围冒充局部宽转。
 - 对五阶 FTO 的五个物理层提供 `A`、`2A`、`3A`、`1-2A`、`1-3A`，保留中层对侧别名；Dino Octa 同样使用面族范围宽转，不接受 `Aw`。
 - 对 Quad-X、ETO 和 Radio Crystal 使用原生 `A/2A/Aw/Av`；只把前两者的棱轴或 Radio Crystal 的二十个面轴注册为局部转动，不误收 `addRotations` 的其他整体转轴。
+- 对 Radio Jewel 的二十个面向提供 `A/2A/Aw/Av`，核对 `Rw = R 2R`、`Rv = R 2R K'` 和 `2R = 2K'`，拒绝不存在的 `3Rw`；复用 60 步原生随机转动生成器，不伪造 csTimer 项目或宣称均匀随机状态。
 - 对 Quad-X 与 ETO 只生成 ±1 个 180° 基本转角，过滤 ±2 个基本角的整圈空动作；切入两阶转轴时将残留角度按方向归一到 ±1，关闭实时消步时保留输入的正反方向。
 - 对穿过中心的同一内层，用实际轨道变换识别反向别名；3×3 + Dino 的 `2F = 2B'`、`2UFR = 2DLB'` 是同一动作，不以文字不相同判定拖动错误，并继续独立核对旋转方向。
 - 对混合机制的练习打乱，在每类机制内部按该轴支持的层深轮换；保留已有一／二层项目的随机源调用与序列，确保 Lattice X 覆盖面外层与角轴的三种深度，不强行给面半体生成宽转。
@@ -166,6 +170,7 @@
 - 用 `native-five-geometry.test.ts` 独立构造三种正多面体外法向和切面，逐面核对分区、全轴层选择、正反转、五个进度隔离面与真实 PG3D 半转矩阵；使用真实 SVG 回归确认物理面中心只绘制一次。
 - 传入 `--set=2026-10-12` 复现三阶＋斜转、直升机斜转、Comboctahedron、Circo-Radiolarian、深切角转二十面体的对比和放大 SVG；用 `native-mixed-puzzles-geometry.test.ts` 独立核对完整分区、块归属、全轴层深、五个进度与独立角尖，用 `native-puzzles-client-integration.test.ts` 的改前散列锁定旧项目固定种子序列。
 - 构建 puzzle-solvers 后，从 `core/` 运行 `node packages/client/scripts/native-puzzles/compare-outlines.mjs --set=cube3heli`，生成 `core/.tmp/png/cube3heli-outlines.svg` 与 `cube3heli-outlines-cube3heli.svg`；核对黑色三阶原切线、绿色新增棱切线、蓝色冻结轮廓、灰色约束包络及六面完整展开图。
+- 对 Radio Jewel 先运行同一轮廓脚本的 `--set=radiojewel`，对照原作照片核对六边形中心和三角形星状分区；将黑色 Radio Crystal 线仅作对比，不保留为新模型切面，并以独立几何、真实 PG3D 中间矩阵及三入口交互分别记录验证范围。
 - 用 `native-mixed-puzzles-geometry.test.ts` 的 3×3 + Helicopter 样本锁定每面 28 区、168 贴片和 128 块；连续交错执行 `F UF' 2R' DFw Fv 2BL' Bw'`，从当前刚体顶点独立选层，在每步的五个进度核对切面分离，并将片位与朝向逐步对照 PG 状态；用真实 TwistyPlayer 创建的 PG3D 对全部手动层深检查 50% 进度的被选块、正反 amount 和正反播放方向，明确这属于本地渲染器测试，不替代浏览器拖拽实测。
 - 用 `native-puzzle-drag.test.ts` 核对真实几何上的拾取与方向，用 `native-puzzle-svg.test.ts` 和 `native-puzzles-client-integration.test.ts` 核对有界输入、完整记号、原生颜色、确定性生成、共享 SVG 和 PDF 比例；这些文件同在 `packages/client/tests/`。
 - 用 `native-puzzle-manual-anchor.test.ts` 读取未挂载真实 TwistyPlayer 的 `currentPattern`，核对双锚点下快速追加的盘面、记录和分享重建，以及编辑打断与卸载后的过期取消。

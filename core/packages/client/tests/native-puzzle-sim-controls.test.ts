@@ -42,6 +42,7 @@ const CASES = [
   { id: 'heliskewb', setup: 'DRF', alg: "DF UFR'", manual: '2DF', typed: "FLw' UFR", reducedTyped: 'FLw UFR' },
   { id: 'comboctahedron', setup: 'F', alg: "D_BR_R_F B'", manual: '2D_F_L_BL', typed: "1-3U_B_BL_L' D" },
   { id: 'circoradiolarian', setup: 'Rw', alg: "G U'", manual: '2R', typed: "Gw' U" },
+  { id: 'radiojewel', setup: 'Rw', alg: "G U'", manual: '2R', typed: "Gw' U" },
   { id: 'icosababyface', setup: 'FREGU', alg: "HIERC2 FLACR'", manual: '2NALPO', typed: "FLACRw' HIERC" },
   { id: 'cube3heli', setup: 'F', alg: "DF U'", manual: '2DF', typed: "FLw' U", reducedTyped: 'FLw U' },
 ] as const;
@@ -425,6 +426,7 @@ describe('native PG simulator controls', () => {
     { id: 'comboctahedron', move: 'D_BR_R_F', order: 4 },
     { id: 'circoradiolarian', move: 'R', order: 3 },
     { id: 'icosababyface', move: 'FREGU', order: 5 },
+    { id: 'radiojewel', move: 'R', order: 3 },
     { id: 'cube3heli', move: 'F', order: 4 },
     { id: 'cube3heli', move: 'DF', order: 2 },
   ] satisfies { id: NativePuzzleId; move: string; order: number }[])('$id $move live cancellation uses its physical order $order and inversion preserves state', async ({ id, move, order }) => {

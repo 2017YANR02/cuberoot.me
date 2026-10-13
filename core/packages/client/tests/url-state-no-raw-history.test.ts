@@ -19,6 +19,7 @@ const SCAN_DIRS = ['app', 'components', 'lib', 'hooks', 'i18n'];
 const ALLOWLIST = new Set([
   'i18n/i18n-client.ts',                              // 全局 i18n infra:非 React、无 hook,改语言在 render 之外跑
   'components/teaching/TeachingAccountBindingPage.tsx', // 一次性秘密放在 fragment；消费后无请求、无导航地清除
+  'app/[lang]/membership/checkout/page.tsx',          // 一次性收银台 fragment；跳转前同步清除，不是页内 query 状态
   'app/[lang]/wca/_globe/GlobeMapClient.tsx',         // 重型 maplibre:URL 同步 + history.back 返回件刻意手写
   'app/[lang]/calc/_components/stores/calc_store.ts', // zustand store(无法用 hook)+ t0/t1.. 动态键成绩序列化,data-blob 例外
   'app/[lang]/recon/submit/ReconSubmitForm.tsx',      // cubedb 自定义编码(encodeUrlAlg)+ 编辑/?from 模式门控,nuqs 声明式 hook 无法复刻
@@ -62,6 +63,18 @@ describe('URL state convention — no raw history.* / popstate (use nuqs)', () =
 
   it('scans a meaningful number of source files', () => {
     expect(files.length).toBeGreaterThan(50);
+  });
+
+  it('limits the checkout exception to clearing its one-time fragment before navigation', () => {
+    const src = readFileSync(join(ROOT, 'app/[lang]/membership/checkout/page.tsx'), 'utf8');
+    const cleanup = "window.history.replaceState(null, '', window.location.pathname + '?returned=1');";
+    expect(src).toContain(cleanup);
+    for (const forbidden of FORBIDDEN) {
+      expect(src.replace(cleanup, ''), forbidden.name).not.toMatch(forbidden.re);
+    }
+    expect(src.indexOf(cleanup)).toBeLessThan(src.indexOf('window.location.replace(checkout)'));
+    expect(src).toContain('allow-raw-history:');
+    expect(src).toContain('eslint-disable-next-line no-restricted-syntax, no-restricted-globals');
   });
 
   it('has no raw history URL mutation outside the allowlist', () => {
