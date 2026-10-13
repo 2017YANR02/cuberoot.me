@@ -57,11 +57,11 @@ describe('adversarial 76 × 3 Mobile scramble-source matrix', () => {
     ));
 
     expect(EVENTS).toHaveLength(76);
-    expect(matrix).toHaveLength(225);
-    expect(new Set(matrix.map(({ event, source }) => `${event}:${source}`))).toHaveLength(225);
+    expect(matrix).toHaveLength(228);
+    expect(new Set(matrix.map(({ event, source }) => `${event}:${source}`))).toHaveLength(228);
   });
 
-  it('keeps the real route at 19 isolated WCA pools, 55 same-event fallbacks, and custom manual-only', () => {
+  it('keeps the real route at 19 isolated WCA pools, 56 same-event fallbacks, and custom manual-only', () => {
     const mapped = EVENTS.filter(({ id }) => currentMobileOutcome(id, 'real') === 'real-pool')
       .map(({ id }) => id);
     const local = EVENTS.filter(({ id }) => currentMobileOutcome(id, 'real') === 'same-event-local')
@@ -88,7 +88,7 @@ describe('adversarial 76 × 3 Mobile scramble-source matrix', () => {
       ...CURRENT_MISSING_LOCAL_PROVIDERS,
       'custom',
     ].sort());
-    expect(local).toHaveLength(55);
+    expect(local).toHaveLength(56);
     expect(missing).toHaveLength(1);
   });
 
@@ -100,7 +100,7 @@ describe('adversarial 76 × 3 Mobile scramble-source matrix', () => {
 
     expect(local.sort()).toEqual([...CURRENT_LOCAL_PROVIDERS].sort());
     expect(missing.sort()).toEqual([...CURRENT_MISSING_LOCAL_PROVIDERS, 'custom'].sort());
-    expect(local).toHaveLength(74);
+    expect(local).toHaveLength(75);
     expect(missing).toHaveLength(1);
   });
 
