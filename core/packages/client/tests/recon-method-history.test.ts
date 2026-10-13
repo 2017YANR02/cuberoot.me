@@ -2,7 +2,7 @@
 import { beforeEach, expect, it } from 'vitest';
 import type { Solve } from '@cuberoot/shared/timer';
 import { walkMethod } from '@cuberoot/shared/timer/reconstruct/method-walk';
-import { cachedMethodStages, rememberMethodStages, methodHistoryWindow, methodStageAverages } from '../../timer-ui/src/reconstruct/method-history';
+import { cachedMethodStages, rememberMethodStages, methodHistoryWindow, methodStageAverages } from '@cuberoot/timer-ui/reconstruct/method-history';
 
 const solve: Solve = { id: 'one', event: '333', ts: 100, timeMs: 1000, penalty: 'ok', scramble: 'R', moves: [{ m: "R'", ts: 500 }] };
 beforeEach(() => localStorage.clear());
