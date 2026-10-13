@@ -239,6 +239,7 @@ describe.each([
   { event: 'icosababyface', nameEn: 'Deep-Cut Icosahedron', nameZh: '深切角转二十面体' },
   { event: 'cube3heli', nameEn: '3×3 + Helicopter', nameZh: '三阶＋直升机' },
   { event: 'radiojewel', nameEn: 'Radio Jewel', nameZh: 'Radio Jewel' },
+  { event: 'radioweb', nameEn: 'Radio Web', nameZh: 'Radio Web' },
 ] as const)('$event csTimer compatibility', ({ event, nameEn, nameZh }) => {
   it('preserves renamed sessions and mixed native notation through both import APIs', () => {
     const solve = {
@@ -322,6 +323,9 @@ describe('compound native csTimer session names', () => {
     ['Radio_Jewel_Practice', 'radiojewel'],
     ['Session_Radio-Jewel', 'radiojewel'],
     ['Jewel practice', 'radiojewel'],
+    ['Radio_Web_Practice', 'radioweb'],
+    ['Session_Radio-Web', 'radioweb'],
+    ['Radiolarian 6 practice', 'radioweb'],
     ['Session_3x3_+_Skewb', 'cube3skewb'],
     ['3×3 + Skewb_Practice', 'cube3skewb'],
     ['练习：三阶＋斜转', 'cube3skewb'],

@@ -58,6 +58,9 @@ const DODECAHEDRON_FACE_AXES = [
   ['U', 'D'], ['F', 'B'], ['L', 'DR'], ['BL', 'FR'], ['BR', 'FL'], ['R', 'DL'],
 ] as const;
 
+// Radio Web (Radiolarian 6): Jason Smith's original face-turning icosahedron.
+// Hyperspeedcube's idealized depth is 5 - 2 sqrt(5) + 0.02; unlike Radio Jewel,
+// its wing stickers remain visible. See the Radio Web skill reference.
 export const NATIVE_PUZZLES = {
   superz: {
     description: 'c f 0 v 0', zh: '二阶＋斜转', en: 'SuperZ (2×2 + Skewb)', textLabel: 'SuperZ',
@@ -161,6 +164,11 @@ export const NATIVE_PUZZLES = {
     description: 'i f 0.5278640450004204', zh: 'Radio Jewel', en: 'Radio Jewel', textLabel: 'Jewel',
     axes: ICOSAHEDRON_FACE_AXES, order: 3, layers: 2,
     scrambleLength: 60, aspect: 8 / 5, visibleFacelets: 320,
+  },
+  radioweb: {
+    description: 'i f 0.5478640450004204', zh: 'Radio Web', en: 'Radio Web', textLabel: 'Web',
+    axes: ICOSAHEDRON_FACE_AXES, order: 3, layers: 2,
+    scrambleLength: 60, aspect: 8 / 5, visibleFacelets: 440,
   },
 } as const;
 

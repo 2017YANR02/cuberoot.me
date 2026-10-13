@@ -30,6 +30,7 @@ const NOTES: Record<NativePuzzleId, readonly [string, string]> = {
   icosababyface: ['深切角转二十面体：每步绕顶点转动 72°，二十个面各保留一个可见色块。', 'Deep-Cut Icosahedron: 72° vertex turns, with one visible colored region on each of its twenty faces.'],
   cube3heli: ['三阶＋直升机：面转 90°，棱转 180°，支持外层、第二层与宽转；当前仅支持保形转动，不含 jumbling。', '3×3 + Helicopter: 90° face turns and 180° edge turns, with outer, second and wide layers. Supports shape-preserving turns only, without jumbling.'],
   radiojewel: ['Radio Jewel（Radiolarian 7）：二十面体，每面十五个三角形和一个六边形，每步面转 120°，支持外层、第二层与宽转；当前仅支持保形转动，不含 jumbling。', 'Radio Jewel (Radiolarian 7): an icosahedron with fifteen triangles and one hexagon per face. Turns are 120°, with outer, second and wide layers. Supports shape-preserving turns only, without jumbling.'],
+  radioweb: ['Radio Web（Radiolarian 6）：二十面体，每步面转 120°，支持外层、第二层与宽转。每面保留 22 个色块，包括细小翼块；当前仅支持保形转动，不含 jumbling。', 'Radio Web (Radiolarian 6): an icosahedron with 120° face turns and outer, second and wide layers. Each face retains 22 stickers, including the small wings. Supports shape-preserving turns only, without jumbling.'],
 };
 
 /** The same native tokens drive 3D gestures, accessible manual input and 2D. */
