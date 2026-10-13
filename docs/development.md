@@ -29,6 +29,12 @@ pnpm setup:local
 devsite add cuberoot "C:/实际项目目录/core" http://127.0.0.1:3000/zh -- "C:/实际Node目录/node.exe" "C:/实际项目目录/core/scripts/local-dev.ts"
 ```
 
+## Turbopack 开发缓存恢复
+
+若 `next dev` 显示 Ready，但访问页面后持续出现 `conflicting effects for the same key`，先保存 panic 日志并停止该项目的开发服务。将 `core/packages/client/.next/dev/cache/turbopack` 改名备份，再从 `core/` 运行 `pnpm --filter @cuberoot/client dev`，让 Turbopack 重建开发缓存；使用自定义 `NEXT_DEV_DIST_DIR` 时，对应调整缓存路径。
+
+恢复后实际请求出错页面，并重启一次确认新缓存可复用，不能只看 Ready 或 HTTP 200，还要检查终端是否继续报告 panic。若新缓存下仍复现，继续排查编译器或源码触发条件，不要反复清缓存。无需删除依赖、生产构建缓存或修改业务逻辑。
+
 ## WCA 统计用 MySQL
 
 统计 job 使用 `wca_developer_database`。连接信息由 `MYSQL_HOST`、`MYSQL_USER`、`MYSQL_PASS`、`MYSQL_DB` 环境变量或本机 `core/jobs/stats-build/database.yml` 提供；必需表清单以 [`database.ts`](../core/jobs/stats-build/src/core/database.ts) 的 `REQUIRED_TABLES` 为准。MySQL 服务名和 dump 所在目录随开发电脑而异，不使用旧 Windows 绝对路径。
