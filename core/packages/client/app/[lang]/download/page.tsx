@@ -43,6 +43,9 @@ export default function DownloadPage() {
             </button>
           )}
         </div>
+        {ANDROID_APK_URL && <p className="download-note">
+          {tr({ zh: '0.1.0 (1004) · Android 8.0 及以上。官网 APK 与 Google Play 签名不同；Play 用户请继续通过 Play 更新，请勿卸载以免丢失本地记录。', en: '0.1.0 (1004) · Android 8.0 or later. This APK uses a different signing certificate from Google Play. Play users should update through Play; uninstalling can erase local records.' })}
+        </p>}
         {!ANDROID_APK_URL && <p className="download-note" id="download-apk-status">
           {tr({ zh: 'APK 下载准备中，可先通过 Google Play 安装。', en: 'APK download is being prepared. Install through Google Play for now.' })}
         </p>}

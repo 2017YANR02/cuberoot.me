@@ -6,11 +6,21 @@
 
 - 页面复用 `/icons/icon-512.png` 的现有 App 图标；Google Play 入口使用本地托管的官方中英文徽章，素材来源见 `core/packages/client/public/badges/README.md`。
 - `core/packages/client/lib/app-downloads.ts` 集中维护官网分发链接。Google Play 指向公开的 `me.cuberoot.app` 商品页。
-- `ANDROID_APK_URL` 当前为 `null`，页面显示禁用的「下载 APK」与准备中说明，不发送点击事件。2026-10-13 本机签名预检：四项 `MOBILE_UPLOAD_*` 发布签名环境变量均未配置；按所有者要求暂缓正式 APK 构建和托管，未生成或上传分发包。
+- `ANDROID_APK_URL` 指向官网正式签名包 `https://static.cuberoot.me/downloads/android/CubeRoot-0.1.0-1004.apk`，页面提供「下载 APK」并保留独立点击统计。
 - Windows、iOS、macOS、HarmonyOS NEXT 仅显示「即将发布」。
-- 启用 APK 前，先核对当前代码、版本号、发布签名与 Play 安装覆盖升级兼容性，完成实际安装验证。不得把 debug、unsigned 或 CI 临时签名包用于官网分发。
-- 将验证后的包上传到受控 HTTPS 静态存储，使用带版本号的不可变地址；确认响应、文件大小、SHA-256、续传和国内访问后再填写 `ANDROID_APK_URL`。安装包不提交源码 Git，不经业务 API 转发。当前任务未新增静态托管配置或自动上传流程。
+- 官网 APK 使用维护者长期正式上传密钥，不能覆盖 Google Play 不同签名的安装版。页面明确提示 Play 用户继续通过 Play 更新，避免卸载丢失本地记录；本轮没有连接真机，未完成安装/升级及真实业务验收。不得把 debug、unsigned 或 CI 临时签名包用于官网分发。
+- 将验证后的包上传到受控 HTTPS 静态存储，使用带版本号的不可变地址；确认响应、文件大小、SHA-256、续传和国内访问后再填写 `ANDROID_APK_URL`。安装包不提交源码 Git，不经业务 API 转发。静态文件位于服务器 `/www/wwwroot/toolkit/downloads/android/`，由 `ops/nginx/static.cuberoot.me.conf` 提供附件下载与单段 Range；nginx 配置仍通过 `deploy_nginx.yml` 发布。
 - 发布新包先完成文件校验，再切换链接；撤回时改回已验证旧版或置 `null`，不覆盖同名版本文件。
+
+## 官网 Android 0.1.0 (1004) 发布记录
+
+- 构建源码 `5cb2a4b970`，保留其他任务本地改动，Mobile/shared/app-ui/timer-ui 无未提交业务修改。shared build、Mobile typecheck、49 项测试、Web build 与 Android sync 通过。
+- JDK 21 Release 包，`me.cuberoot.app`，versionCode `1004`，minSdk 26、targetSdk 36、不可调试；18 项权限与 CI 白名单一致，16 KB ZIP 对齐和 APK v2/v3 签名验证通过。
+- APK：`CubeRoot-0.1.0-1004.apk`，12,145,509 字节。SHA-256：`759c2796bd88d79bcd29740a3abf7dfeda8292babf61d279ddfc3ea433eac67b`。
+- 签名证书 SHA-256：`fe511914cc90c6f31af71d0d4f86015a3a289a598fb1298845e7b5396e492ee2`，与历史正式上传证书一致。密钥与密码保留本机受保护目录及 macOS 钥匙串，不进入仓库、日志或服务器。
+- 文件经暂存上传与 SHA-256 校验后原子放置，远端哈希与本地一致。版本文件禁止覆盖；下次发布必须使用新版本号/地址。
+- 静态配置部署 `38351160024` 成功；公网完整下载及国内服务器 HTTPS 下载的 SHA-256 均一致，响应 200、APK MIME、附件头及长度正确；Range `1024-2047` 返回 206，内容与原包对应片段一致。下载页中英文 6 项定向测试和 client typecheck 通过。
+- 官网分发不代表 Play 商店版本已更新，也不代表真机安装、覆盖升级或业务功能已验收。
 
 ## 基础统计
 
