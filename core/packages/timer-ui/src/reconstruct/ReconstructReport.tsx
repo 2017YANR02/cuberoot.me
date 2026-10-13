@@ -47,7 +47,6 @@ import { detectWastedWork } from '@cuberoot/shared/timer/reconstruct/error-detec
 import type { ReferenceResult, StageReference } from '@cuberoot/shared/timer/reconstruct/reference';
 import { computeF2lSlots } from '@cuberoot/shared/timer/reconstruct/f2l-slots';
 import { walkMethod, methodFrame } from '@cuberoot/shared/timer/reconstruct/method-walk';
-import type { MethodId } from '@cuberoot/shared/timer/reconstruct/methods';
 
 import { decodeGyroTrack } from '@cuberoot/shared/smart-cube/gyro-track';
 import { buildCoreTrack } from '@cuberoot/shared/timer/reconstruct/core-track';
@@ -56,6 +55,8 @@ import { initialPoseRotation, normalizeSolve } from '@cuberoot/shared/timer/reco
 import { createLiveReconstructionStream, reconstructionAnalyzer } from './analysis-client';
 import type { AnalysisInput, AnalysisSnapshot } from './analysis-protocol';
 import StepAnalysis from './StepAnalysis';
+import MethodPicker from './MethodPicker';
+import { useReconstructionMethod } from './method-preference';
 import StepMoveList from './StepMoveList';
 import ReconstructActions from './ReconstructActions';
 
@@ -157,7 +158,7 @@ function ReconstructReportBody({
   const host = useReconstructHost();
   const { localize: tr } = host;
   const moves = solve.moves ?? [];
-  const [method, setMethod] = useState<MethodId>('cfop');
+  const [method, setMethod] = useReconstructionMethod();
   const slices = useMemo(
     () => sliceReconstruction(moves, solve.timeMs, solve.bld?.memoMs),
     [moves, solve.timeMs, solve.bld?.memoMs],
@@ -354,7 +355,7 @@ function ReconstructReportBody({
     // newer move cannot relabel an older stage while analysis is catching up.
     const currentSegs = analysisState?.solveId === solve.id
       ? analysisState.input.text.segs : stageSegs;
-    const stageName = currentSegs?.ollEndIdx != null ? 'PLL'
+    const stageName = method !== 'cfop' ? reconText?.currentStage ? tr(reconText.currentStage) : '…' : currentSegs?.ollEndIdx != null ? 'PLL'
       : currentSegs?.f2lEndIdx != null ? 'OLL'
         : currentSegs?.crossEndIdx != null
           ? `F2L-${Math.min(4, (reconText?.lines.filter(line => line.kind === 'f2l').length ?? 0) + 1)}`
@@ -363,12 +364,13 @@ function ReconstructReportBody({
     // beneath the cube. At a boundary, show the next stage with an empty score.
     const currentMoves = reconText?.lines.find(line => line.key === 'tail')?.moves ?? [];
     return <>
+      <MethodPicker method={method} onChange={setMethod} />
       {liveStageTarget && createPortal(<>
         <div className="timer-live-stage-label">{stageName}</div>
         <div className="sml-moves">{currentMoves.join(' ') || '…'}</div>
       </>, liveStageTarget)}
       {reconText ? (
-      <StepMoveList recon={reconText} reference={null} slotReference={null} />
+      <StepMoveList method={method} recon={reconText} reference={null} slotReference={null} />
     ) : (
       <div className="sml-moves" aria-busy={analysis?.status !== 'error'}>
         {moves.map(move => move.m).join(' ')}

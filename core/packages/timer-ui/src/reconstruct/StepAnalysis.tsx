@@ -41,7 +41,7 @@ import type { ReferenceResult, SlotReference } from '@cuberoot/shared/timer/reco
 import { gradeForDelta } from '@cuberoot/shared/timer/reconstruct/reference';
 import type { F2lSlotsResult } from '@cuberoot/shared/timer/reconstruct/f2l-slots';
 import type { MethodWalkResult } from '@cuberoot/shared/timer/reconstruct/method-walk';
-import { METHOD_ORDER, METHODS } from '@cuberoot/shared/timer/reconstruct/methods';
+import MethodPicker from './MethodPicker';
 import type { MethodId } from '@cuberoot/shared/timer/reconstruct/methods';
 import { rotationsByStep, stepTimeBounds } from '@cuberoot/shared/timer/reconstruct/rotation-detect';
 
@@ -337,18 +337,7 @@ export default function StepAnalysis(props: StepAnalysisProps) {
     <section className="sa">
       <div className="sa-head">
         <h3 className="sa-title">{tr({ zh: '分步分析', en: 'Step analysis' })}</h3>
-        <label className="sa-method">
-          <select
-            className="sa-method-select"
-            value={method}
-            onChange={(e) => onMethodChange(e.target.value as MethodId)}
-            aria-label={tr({ zh: '还原方法', en: 'Method' })}
-          >
-            {METHOD_ORDER.map(id => (
-              <option key={id} value={id}>{isZh ? METHODS[id].zh : METHODS[id].en}</option>
-            ))}
-          </select>
-        </label>
+        <MethodPicker method={method} onChange={onMethodChange} />
       </div>
 
       {barTotal > 0 && !hideBar && (

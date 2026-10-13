@@ -35,6 +35,7 @@ const host: ReconstructHost = {
 };
 
 beforeEach(() => {
+  localStorage.clear();
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
   // Component behavior is deterministic offline; reference recognition has its
   // own fixture suite. Never depend on the live algorithm API in a UI test.
@@ -71,6 +72,24 @@ function button(label: string): HTMLButtonElement {
 }
 
 describe('the complete shared reconstruction report', () => {
+  it.each(['roux', 'zz'] as const)('remembers %s for live stages and the next report', async method => {
+    const stageTarget = document.createElement('div');
+    await act(async () => root.render(createElement(ReconstructReport, { solve, isZh: false, host, live: true, liveStageTarget: stageTarget })));
+    const select = container.querySelector<HTMLSelectElement>('.sa-method-select')!;
+    await act(async () => {
+      select.value = method;
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    await vi.waitFor(async () => {
+      await act(async () => undefined);
+      expect(stageTarget.textContent).toContain(method === 'roux' ? 'LSE' : 'Last layer');
+    });
+    await act(async () => root.render(null));
+    await act(async () => root.render(createElement(ReconstructReport, { solve, isZh: false, host })));
+    expect(container.querySelector<HTMLSelectElement>('.sa-method-select')?.value).toBe(method);
+    expect(localStorage.getItem('cuberoot.reconstruction.method')).toBe(method);
+  });
+
   it.each(['roux', 'zz'] as const)('adapts playback stages and seeking when switching to %s', async method => {
     const value = { ...solve, timeMs: 500, moves: ['R', 'U', "U'", "R'"].map((m, i) => ({ m, ts: (i + 1) * 100 })) };
     vi.mocked(reconstructionAnalyzer.subscribe).mockImplementation((input, notify) => {
