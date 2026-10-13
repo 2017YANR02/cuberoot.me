@@ -285,10 +285,16 @@ function ReconstructReportBody({
     return { ao12, ao100 };
   }, [history, solve.id]);
 
-  const walk = useMemo(
+  const rawWalk = useMemo(
     () => (method === 'cfop' ? null : walkMethod(method, solve.scramble, moves, solve.timeMs, view.rotation)),
     [method, solve.scramble, moves, solve.timeMs, view.rotation],
   );
+  const walk = useMemo(() => rawWalk && reconText?.methodStages ? {
+    ...rawWalk, stages: reconText.methodStages,
+    totalTurns: reconText.methodStages.reduce((sum, stage) => sum + (stage.turns ?? 0), 0),
+    totalRecognitionMs: reconText.methodStages.reduce((sum, stage) => sum + (stage.recognitionMs ?? 0), 0),
+    totalExecutionMs: reconText.methodStages.reduce((sum, stage) => sum + (stage.executionMs ?? 0), 0),
+  } : rawWalk, [rawWalk, reconText?.methodStages]);
   const playbackLines = reconText?.lines ?? [];
   const playbackRecon = reconText;
 
