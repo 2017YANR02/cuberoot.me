@@ -228,6 +228,8 @@ export interface CubeDriverStartResult {
 }
 
 export interface CubeDriverContext {
+  /** A validated battery notification; may arrive during or after start(). */
+  onBattery?: (level: number) => void;
   /**
    * Resolved cube MAC as "XX:XX:XX:XX:XX:XX" (upper-case, colon-separated), or
    * null if it could not be determined. GAN / MoYu / QiYi drivers derive their
