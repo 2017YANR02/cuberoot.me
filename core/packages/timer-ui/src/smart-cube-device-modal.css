@@ -11,6 +11,18 @@
   overscroll-behavior: contain;
 }
 
+.timer-smart-cube-device__anchor { display: contents; }
+
+/* anchored-panel: clamped (usePanelClamp plus visualViewport vertical bounds). */
+.timer-smart-cube-device__modal.timer-smart-cube-device__popover {
+  position: fixed;
+  z-index: 100;
+  width: min(300px, calc(100vw - 16px));
+  max-height: calc(100dvh - 16px);
+  padding: 12px;
+}
+.timer-smart-cube-device__popover h2 { font-size: 14px; }
+
 .timer-smart-cube-device__modal {
   position: relative;
   width: min(100%, 520px);

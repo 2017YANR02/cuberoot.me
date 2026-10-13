@@ -6,8 +6,8 @@
  * Two roles:
  *  - When neither Web Bluetooth nor the Mini Program native bridge is
  *    available, show the platform advice from `envAdvice()`.
- *  - When connected, show the live status (brand / battery / last move /
- *    solved indicator) and a "reset state" + "disconnect" button.
+ *  - Share the anchored connection panel, device name, battery and combined
+ *    cube reset action with installed apps.
  */
 
 import { TimerSmartCubeDeviceModal } from '@cuberoot/timer-ui';
@@ -15,7 +15,7 @@ import {
   createTimerDeviceRegistry,
   SMART_CUBE_TIMER_DEVICE_REGISTRATIONS,
 } from '@cuberoot/shared/timer/device-contract';
-import { useEffect, useState, useSyncExternalStore, type CSSProperties } from 'react';
+import { useEffect, useState, useSyncExternalStore, type CSSProperties, type RefObject } from 'react';
 import { installedBleAvailable, subscribeInstalledBleBridge } from '@/lib/installed-ble-bridge';
 import {
   BluetoothConnectError,
@@ -31,6 +31,7 @@ import { ExternalLink } from 'lucide-react';
 import { tr } from '@/i18n/tr';
 
 interface Props {
+  anchorRef?: RefObject<HTMLButtonElement | null>;
   isZh: boolean;
   cube: BluetoothCubeHandle;
   onClose: () => void;
@@ -116,7 +117,7 @@ function ConnectFailure() {
   );
 }
 
-export default function BluetoothModal({ isZh, cube, onClose, onConnect, connectAttempt, macPrompt, onSubmitMac, onCancelMac, onResetGyro }: Props) {
+export default function BluetoothModal({ anchorRef, isZh, cube, onClose, onConnect, connectAttempt, macPrompt, onSubmitMac, onCancelMac, onResetGyro }: Props) {
   useSyncExternalStore(subscribeInstalledBleBridge, installedBleAvailable, () => false);
   const [connecting, setConnecting] = useState(Boolean(connectAttempt) && !cube.status.connected);
   const [connectError, setConnectError] = useState<{ stage: ConnectStage | null; detail: string } | null>(null);
@@ -233,6 +234,7 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect, connect
 
   return (
     <TimerSmartCubeDeviceModal
+      anchorRef={anchorRef}
       capabilities={{
         ...WEB_TIMER_DEVICE_REGISTRY.get('smart-cube')?.capabilities,
         gyro: Boolean(onResetGyro),

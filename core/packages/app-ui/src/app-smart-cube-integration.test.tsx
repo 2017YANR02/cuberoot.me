@@ -279,7 +279,7 @@ describe('installed App GAN lifecycle integration', () => {
     expect(dialog).not.toBeNull();
     expect(disconnect).not.toHaveBeenCalled();
     const reset = [...dialog.querySelectorAll<HTMLButtonElement>('button')]
-      .find((button) => button.textContent?.includes('Reset state'))!;
+      .find((button) => button.textContent?.includes('Reset cube'))!;
     await act(async () => reset.click());
     expect(resetState).toHaveBeenCalledOnce();
     await act(async () => backListener?.());
@@ -335,18 +335,18 @@ describe('installed App GAN lifecycle integration', () => {
 
     const dialog = document.querySelector<HTMLElement>('.timer-smart-cube-device__modal')!;
     expect(dialog.textContent).toContain('GAN16ui');
-    expect(dialog.textContent).toContain('Connected, unsolved');
+    expect(dialog.textContent).not.toContain('Connected, unsolved');
     expect(dialog.textContent).toContain('72%');
-    expect(dialog.textContent).toContain('gan-v4');
+    expect(dialog.textContent).not.toContain('gan-v4');
     expect(dialog.textContent).not.toContain('Last move');
     const button = (label: string) => [...dialog.querySelectorAll<HTMLButtonElement>('button')]
       .find((candidate) => candidate.textContent?.includes(label))!;
 
-    await act(async () => button('Reset state').click());
+    await act(async () => button('Reset cube').click());
     expect(resetDeviceState).toHaveBeenCalledOnce();
     expect(resetState).not.toHaveBeenCalled();
     expect(requestState).not.toHaveBeenCalled();
-    expect(button('Reset gyroscope').disabled).toBe(false);
+    expect(dialog.textContent).not.toContain('Reset gyroscope');
 
     await act(async () => button('Disconnect').click());
     expect(disconnect).toHaveBeenCalledOnce();
@@ -559,7 +559,7 @@ it('records one exact Stackmat reading with its starting scramble and keeps the 
   await act(async () => item.click());
   const dialog = document.querySelector<HTMLElement>('.stackmat-modal')!;
   expect(dialog).not.toBeNull();
-  expect(dialog.textContent).not.toContain('Reset state');
+  expect(dialog.textContent).not.toContain('Reset cube');
   expect(dialog.textContent).toContain('Stop listening');
   await act(async () => { for(const listener of stackmatListeners) listener({state:'RUNNING'}); });
   expect(phase).toBe('running');

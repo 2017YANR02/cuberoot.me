@@ -74,8 +74,8 @@ describe('BluetoothModal direct connection attempt', () => {
     const props = { isZh: false, cube: connected, onClose: vi.fn(), onConnect: vi.fn(async () => {}) };
     await act(async () => root.render(createElement(BluetoothModal, props)));
     const find = (text: string) => Array.from(modal().querySelectorAll('button')).find(button => button.textContent?.includes(text))!;
-    expect(find('Reset state').disabled).toBe(false);
-    await act(async () => find('Reset state').click());
+    expect(find('Reset cube').disabled).toBe(false);
+    await act(async () => find('Reset cube').click());
     expect(resetDeviceState).toHaveBeenCalledOnce();
     expect(resetState).not.toHaveBeenCalled();
     expect(modal().textContent).toContain('State reset');
@@ -173,7 +173,7 @@ describe('BluetoothModal direct connection attempt', () => {
     expect(modal().textContent).toContain('Connecting…');
     expect(modal().textContent).not.toContain('GAN356');
     expect(modal().querySelector('.bt-connected-summary')).not.toBeNull();
-    const reset = Array.from(modal().querySelectorAll('button')).find(button => button.textContent?.includes('Reset state'))!;
+    const reset = Array.from(modal().querySelectorAll('button')).find(button => button.textContent?.includes('Reset cube'))!;
     expect(reset.disabled).toBe(true);
     expect(modal().querySelector('.bt-connect-btn')).toBeNull();
 
@@ -231,28 +231,27 @@ describe('BluetoothModal direct connection attempt', () => {
     });
 
     const content = modal().textContent ?? '';
-    expect(content).toContain('Connected');
-    expect(content).toContain('GAN16ui_ (C2:AF)');
-    expect(content).toContain('gan-v4');
+    expect(content).not.toContain('Connected');
+    expect(content).toContain('GAN16ui_');
+    expect(content).not.toContain('(C2:AF)');
+    expect(content).not.toContain('gan-v4');
     expect(content).toContain('72%');
-    expect(content).toContain('solved');
+    expect(content).not.toContain('solved');
     expect(content).not.toContain('Last move');
     expect(content).not.toContain("R'");
     expect(content).not.toContain('Connection diagnostic');
     expect(content).not.toContain('Out of sync?');
-    expect(content).toContain('Reset state');
+    expect(content).toContain('Reset cube');
     expect(content).toContain('Disconnect');
-    const stateResetButton = Array.from(modal().querySelectorAll('button')).find(button => button.textContent?.includes('Reset state'))!;
-    const gyroButton = Array.from(modal().querySelectorAll('button')).find(button => button.textContent?.includes('Reset gyroscope'))!;
+    const stateResetButton = Array.from(modal().querySelectorAll('button')).find(button => button.textContent?.includes('Reset cube'))!;
     expect(stateResetButton.querySelector('svg')).toBeNull();
-    expect(gyroButton.querySelector('svg')).toBeNull();
-    await act(async () => gyroButton.click());
+    await act(async () => stateResetButton.click());
     expect(resetGyro).toHaveBeenCalledOnce();
-    expect(connectedCube.resetState).not.toHaveBeenCalled();
+    expect(connectedCube.resetState).toHaveBeenCalledOnce();
     expect(modal().querySelector('button[aria-label="Close"]')).not.toBeNull();
   });
 
-  it('keeps three mobile device actions on one wrapping row while their labels fit', async () => {
+  it('keeps the combined reset and disconnect actions on one wrapping row', async () => {
     window.matchMedia = ((query: string) => ({
       matches: query === '(max-width: 480px)',
       media: query,
@@ -287,8 +286,7 @@ describe('BluetoothModal direct connection attempt', () => {
     const actions = modal().querySelector<HTMLElement>('.bt-connected-actions')!;
     const buttons = [...actions.querySelectorAll<HTMLButtonElement>('button')];
     expect(buttons.map(button => button.textContent?.trim())).toEqual([
-      'Reset state',
-      'Reset gyroscope',
+      'Reset cube',
       'Disconnect',
     ]);
     expect(actions.style.flexDirection).toBe('');

@@ -1,5 +1,5 @@
 import { Bluetooth, Mic, Timer } from 'lucide-react';
-import { useRef, useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode, type RefObject } from 'react';
 
 import type { TimerDeviceKind } from '@cuberoot/shared/timer/device-contract';
 import { usePopoverDismiss } from './usePopoverDismiss';
@@ -30,6 +30,7 @@ export interface TimerDeviceCenterItem {
 }
 
 export interface TimerDeviceCenterProps {
+  triggerRef?: RefObject<HTMLButtonElement | null>;
   ariaLabel: string;
   className?: string;
   /** Host-owned panels anchored to the same device trigger. */
@@ -51,6 +52,7 @@ export interface TimerDeviceCenterProps {
  * it does not know about BLE, microphones or platform permissions.
  */
 export function TimerDeviceCenter({
+  triggerRef: suppliedTriggerRef,
   ariaLabel,
   className,
   children,
@@ -59,7 +61,8 @@ export function TimerDeviceCenter({
   menuLabel,
 }: TimerDeviceCenterProps) {
   const [open, setOpen] = useState(false);
-  const triggerRef = useRef<HTMLButtonElement>(null);
+  const ownTriggerRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = suppliedTriggerRef ?? ownTriggerRef;
   const panelRef = useRef<HTMLDivElement>(null);
   usePopoverDismiss(open, () => setOpen(false), panelRef, triggerRef);
   usePanelClamp(open, panelRef);

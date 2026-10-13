@@ -2320,6 +2320,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const [practiceSettingsOpen, setPracticeSettingsOpen] = useState(false);
   const closeSettings = useCallback(() => setSettingsOpen(false), []);
   const [bluetoothOpen, setBluetoothOpen] = useState(false);
+  const bluetoothButtonRef = useRef<HTMLButtonElement>(null);
   const [bluetoothConnectAttempt, setBluetoothConnectAttempt] = useState<Promise<void> | null>(null);
   const bluetoothRequestIdRef = useRef(0);
   const bluetoothConnectingRef = useRef(false);
@@ -2926,7 +2927,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   );
 
   const bluetoothDialog = supportsSmartCube && bluetoothOpen && (
-    <BluetoothModal isZh={isZh} cube={bluetoothCube} connectAttempt={bluetoothConnectAttempt}
+    <BluetoothModal anchorRef={bluetoothButtonRef} isZh={isZh} cube={bluetoothCube} connectAttempt={bluetoothConnectAttempt}
       onResetGyro={resetSmartCubeOrientation}
       allowDeviceCalibration={timer.phase === 'idle' || timer.phase === 'stopped'}
       macPrompt={macPrompt} onSubmitMac={mac => resolveMac(mac)} onCancelMac={() => resolveMac(null)}
@@ -3056,6 +3057,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
             </span>}
           />
           <TimerDeviceCenter
+            triggerRef={bluetoothButtonRef}
             className="shell-topbar-device-center"
             ariaLabel={tr(TIMER_DEVICE_CENTER_LABELS['title'])}
             items={[...WEB_TIMER_DEVICE_REGISTRY.list()

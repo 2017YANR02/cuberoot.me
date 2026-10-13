@@ -1,16 +1,20 @@
-import { Bluetooth, Check, RefreshCw, X } from 'lucide-react';
+import { Bluetooth, RefreshCw, X } from 'lucide-react';
 import {
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
   type ReactNode,
+  type RefObject,
 } from 'react';
 import { createPortal } from 'react-dom';
 
 import { normalizeMac } from '@cuberoot/shared/timer/external/mac';
 import { useModalBackdrop } from './useModalDismiss';
 import { ClearButton } from './ClearButton';
+import { usePanelClamp } from './usePanelClamp';
+import { usePopoverDismiss } from './usePopoverDismiss';
 
 import { modalFocusableElements } from './modal-focus';
 import type { TimerUiLanguage } from './TimerColorSubsetPicker';
@@ -28,6 +32,7 @@ export type TimerSmartCubeDeviceSnapshot = TimerDeviceSnapshot;
 export type TimerSmartCubeAvailableDevice = TimerDeviceAvailableDevice;
 
 export interface TimerSmartCubeDeviceModalProps {
+  anchorRef?: RefObject<HTMLButtonElement | null>;
   availableDevices?: readonly TimerSmartCubeAvailableDevice[];
   capabilities?: TimerDeviceCapabilities;
   className?: string;
@@ -64,9 +69,6 @@ const COPY = {
     cancel: 'Cancel',
     close: 'Close',
     connect: 'Connect',
-    connected: (solved: boolean | null | undefined) => solved === null || solved === undefined
-      ? 'Connected'
-      : `Connected, ${solved ? 'solved' : 'unsolved'}`,
     connecting: 'Connecting…',
     connectionFailed: 'Connection failed',
     deviceFallback: 'Smart cube',
@@ -74,11 +76,9 @@ const COPY = {
     lastMove: 'Last move',
     notConnected: 'Not connected',
     noDevices: 'No supported smart cubes found',
-    protocol: 'Protocol',
     resetFailed: 'Software state was reset, but writing to the device failed. Check the connection and retry.',
-    resetGyro: 'Reset gyroscope',
-    resetGyroHint: 'Hold white on top and green in front, then reset the gyroscope',
-    resetState: 'Reset state',
+    resetGyroHint: 'Solve the cube and hold white on top and green in front, then reset the cube',
+    resetState: 'Reset cube',
     retry: 'Retry connection',
     scanAgain: 'Scan again',
     scanning: 'Scanning…',
@@ -99,9 +99,6 @@ const COPY = {
     cancel: '取消',
     close: '关闭',
     connect: '连接',
-    connected: (solved: boolean | null | undefined) => solved === null || solved === undefined
-      ? '已连接'
-      : `已连接，${solved ? '已还原' : '未还原'}`,
     connecting: '连接中…',
     connectionFailed: '连接失败',
     deviceFallback: '智能魔方',
@@ -109,11 +106,9 @@ const COPY = {
     lastMove: '最近一步',
     notConnected: '未连接',
     noDevices: '未发现支持的智能魔方',
-    protocol: '协议',
     resetFailed: '软件状态已重置，但设备回写失败，请检查连接后重试',
-    resetGyro: '重置陀螺仪',
-    resetGyroHint: '按白顶绿前握好魔方，再重置陀螺仪',
-    resetState: '重置状态',
+    resetGyroHint: '还原魔方并按白顶绿前握好，再重置魔方',
+    resetState: '重置魔方',
     retry: '重新连接',
     scanAgain: '重新扫描',
     scanning: '正在扫描…',
@@ -129,6 +124,7 @@ type DeviceAction = 'connect' | 'disconnect' | 'reset' | null;
 
 /** Shared smart-cube status and recovery surface. Hosts only provide transport actions. */
 export function TimerSmartCubeDeviceModal({
+  anchorRef,
   availableDevices,
   capabilities,
   className,
@@ -162,6 +158,7 @@ export function TimerSmartCubeDeviceModal({
   onCloseRef.current = onClose;
 
   const connected = snapshot.phase === 'connected';
+  const anchored = Boolean(anchorRef?.current);
   const canConnect = capabilities ? capabilities.connect === true : onConnect !== undefined;
   const canDisconnect = capabilities ? capabilities.disconnect === true : onDisconnect !== undefined;
   const canReset = capabilities ? capabilities.reset === true : onResetState !== undefined;
@@ -174,6 +171,35 @@ export function TimerSmartCubeDeviceModal({
   const closeBlocked = action === 'disconnect' || action === 'reset';
   closeBlockedRef.current = closeBlocked;
   const backdropProps = useModalBackdrop(() => onCloseRef.current(), closeBlocked);
+  usePopoverDismiss(anchored && !closeBlocked, () => onCloseRef.current(), dialogRef, anchorRef);
+  useLayoutEffect(() => {
+    if (!anchored) return;
+    const position = () => {
+      const panel = dialogRef.current;
+      const anchor = anchorRef?.current;
+      if (!panel || !anchor) return;
+      const rect = anchor.getBoundingClientRect();
+      const viewport = window.visualViewport;
+      const bottom = viewport ? viewport.offsetTop + viewport.height : window.innerHeight;
+      panel.style.left = `${Math.max(8, Math.min(rect.left, document.documentElement.clientWidth - panel.offsetWidth - 8))}px`;
+      const below = bottom - rect.bottom - 14;
+      panel.style.maxHeight = `${Math.max(80, below >= 160 ? below : rect.top - 14)}px`;
+      panel.style.top = `${below >= 160 ? rect.bottom + 6 : Math.max(8, rect.top - panel.offsetHeight - 6)}px`;
+    };
+    position();
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(position);
+    if (dialogRef.current) observer?.observe(dialogRef.current);
+    window.addEventListener('resize', position);
+    window.addEventListener('scroll', position, true);
+    window.visualViewport?.addEventListener('resize', position);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', position);
+      window.removeEventListener('scroll', position, true);
+      window.visualViewport?.removeEventListener('resize', position);
+    };
+  }, [anchored, anchorRef]);
+  usePanelClamp(anchored, dialogRef);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -187,6 +213,7 @@ export function TimerSmartCubeDeviceModal({
       (autofocus ?? modalFocusableElements(dialog)[0] ?? dialog).focus();
     };
     const onKeyDown = (event: KeyboardEvent) => {
+      if (anchored) return;
       if (event.key === 'Escape') {
         if (closeBlockedRef.current) return;
         event.preventDefault();
@@ -216,6 +243,7 @@ export function TimerSmartCubeDeviceModal({
       }
     };
     const onFocusIn = (event: FocusEvent) => {
+      if (anchored) return;
       const dialog = dialogRef.current;
       if (dialog && event.target instanceof Node && !dialog.contains(event.target)) focusFirst();
     };
@@ -226,10 +254,10 @@ export function TimerSmartCubeDeviceModal({
       mountedRef.current = false;
       window.removeEventListener('keydown', onKeyDown);
       document.removeEventListener('focusin', onFocusIn);
-      const previousFocus = previousFocusRef.current;
+      const previousFocus = anchorRef?.current ?? previousFocusRef.current;
       if (previousFocus?.isConnected) previousFocus.focus();
     };
-  }, []);
+  }, [anchored]);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -269,11 +297,13 @@ export function TimerSmartCubeDeviceModal({
   };
 
   const resetState = async () => {
-    if (!onResetState || action !== null) return;
+    if (action !== null) return;
     setFeedback(null);
     setAction('reset');
     try {
-      await onResetState();
+      // Calibrate even if writing the solved state back to the device fails.
+      if (canResetGyro && snapshot.hasGyro) onResetGyro?.();
+      if (canReset) await onResetState?.();
       if (mountedRef.current) setFeedback(copy.stateReset);
     } catch {
       if (mountedRef.current) setFeedback(copy.resetFailed);
@@ -298,27 +328,20 @@ export function TimerSmartCubeDeviceModal({
 
   const stateText = connecting
     ? copy.connecting
-    : connected
-      ? copy.connected(snapshot.solved)
-      : snapshot.phase === 'error' || connectionFailure
+    : snapshot.phase === 'error' || connectionFailure
         ? copy.connectionFailed
         : copy.notConnected;
-  const stateClass = connected && snapshot.solved === true
-    ? ' is-ok'
-    : connected && snapshot.solved === false
-      ? ' is-error'
-      : '';
-
   if (typeof document === 'undefined') return null;
   return createPortal(
     <div
-      className="timer-smart-cube-device__overlay"
-      {...backdropProps}
+      className={anchored ? 'timer-smart-cube-device__anchor' : 'timer-smart-cube-device__overlay'}
+      {...(anchored ? {} : backdropProps)}
     >
       <div
         aria-labelledby={titleId}
-        aria-modal="true"
-        className={`timer-smart-cube-device__modal${className ? ` ${className}` : ''}`}
+        aria-modal={anchored ? undefined : true}
+        className={`timer-smart-cube-device__modal${anchored ? ' timer-smart-cube-device__popover' : ''}${className ? ` ${className}` : ''}`}
+        data-no-timer
         data-site-surface="popover"
         onClick={(event) => event.stopPropagation()}
         ref={dialogRef}
@@ -363,25 +386,22 @@ export function TimerSmartCubeDeviceModal({
           </form>
         ) : overrideBody ?? (
           <>
-            {intro}
+            {!connected && intro}
             {(connected || !listMode) && <section className="timer-smart-cube-device__summary bt-connected-summary modal-section">
               <div className="timer-smart-cube-device__primary bt-connected-primary">
                 <strong className="timer-smart-cube-device__name bt-connected-device">
-                  {snapshot.deviceName || copy.deviceFallback}
+                  {snapshot.deviceName?.replace(/\s*[（(][^()（）]*[)）]/g, '').trim() || copy.deviceFallback}
                 </strong>
-                <span
+                {!connected && <span
                   aria-live="polite"
-                  className={`timer-smart-cube-device__state bt-connected-state bt-value${stateClass}`}
+                  className="timer-smart-cube-device__state bt-connected-state bt-value"
                   role="status"
                 >
-                  {connected && snapshot.solved === true && <Check aria-hidden="true" size={13} />}
-                  {connected && snapshot.solved === false && <X aria-hidden="true" size={13} />}
                   {stateText}
-                </span>
+                </span>}
               </div>
               <div className="timer-smart-cube-device__facts bt-connected-meta">
                 <DeviceFact label={copy.battery} value={snapshot.battery === null || snapshot.battery === undefined ? '—' : `${snapshot.battery}%`} />
-                <DeviceFact label={copy.protocol} value={connected ? snapshot.protocol || '—' : '—'} />
               </div>
             </section>}
 
@@ -449,25 +469,15 @@ export function TimerSmartCubeDeviceModal({
             {feedback && <p className="timer-smart-cube-device__feedback" role="status">{feedback}</p>}
             {(canReset && onResetState || canResetGyro && onResetGyro || canDisconnect && onDisconnect) && (
               <div className="timer-smart-cube-device__actions bt-connected-actions modal-actions">
-                {canReset && onResetState && (
+                {(canReset && onResetState || canResetGyro && onResetGyro && snapshot.hasGyro) && (
                   <button
                     className="timer-smart-cube-device__action modal-action-btn"
                     disabled={action !== null || !connected || connecting}
                     onClick={() => { void resetState(); }}
+                    title={canResetGyro && snapshot.hasGyro ? copy.resetGyroHint : undefined}
                     type="button"
                   >
                     {copy.resetState}
-                  </button>
-                )}
-                {canResetGyro && onResetGyro && (
-                  <button
-                    className="timer-smart-cube-device__action modal-action-btn"
-                    disabled={action !== null || !connected || connecting || !snapshot.hasGyro}
-                    onClick={onResetGyro}
-                    title={copy.resetGyroHint}
-                    type="button"
-                  >
-                    {copy.resetGyro}
                   </button>
                 )}
                 {canDisconnect && onDisconnect && (
