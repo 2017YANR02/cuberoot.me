@@ -29,6 +29,12 @@ pnpm setup:local
 devsite add cuberoot "C:/实际项目目录/core" http://127.0.0.1:3000/zh -- "C:/实际Node目录/node.exe" "C:/实际项目目录/core/scripts/local-dev.ts"
 ```
 
+## 多方法复盘的公共动作重建
+
+CFOP、Roux、ZZ 的分步文字统一经过 `buildReconText`，共享中层、双层、转体、废步分组与原始动作区间。方法只提供阶段边界；边界落在同一物理手势内部时顺延到手势末尾，废步跨行时分别闭合括号，纯转体保留时间但不占编码器动作索引。复制文本与点击回放使用同一重建结果。
+
+Roux、ZZ 仍沿用现有阶段粒度，不新增 CMLL/ZBLL case 或参考解法分析；CFOP 的早期 Z 转体抑制和 Cross AUF 边界规则不应用于它们。不同方法、语言的异步分析缓存隔离，CFOP 手工文字覆盖不套用到其他方法。验证包括 `recon-method-gestures`、`recon-wide-timing`、`recon-waste-coll`、`reconstruct-worker` 测试及复盘 ground-truth 门禁。
+
 ## Turbopack 开发缓存恢复
 
 若 `next dev` 显示 Ready，但访问页面后持续出现 `conflicting effects for the same key`，先保存 panic 日志并停止该项目的开发服务。将 `core/packages/client/.next/dev/cache/turbopack` 改名备份，再从 `core/` 运行 `pnpm --filter @cuberoot/client dev`，让 Turbopack 重建开发缓存；使用自定义 `NEXT_DEV_DIST_DIR` 时，对应调整缓存路径。

@@ -48,6 +48,8 @@ export function createReconstructionAnalyzer(createWorker: () => AnalysisWorker)
     if (before.scramble !== after.scramble || !before.moves.length
       || before.moves.length > after.moves.length
       || live.input.text.viewRotation !== input.text.viewRotation
+      || live.input.text.method !== input.text.method
+      || live.input.text.language !== input.text.language
       || !before.moves.every((move, i) => move.m === after.moves[i].m && move.ts === after.moves[i].ts)) return emptyAnalysis();
     live.targetKey = key;
     return { ...emptyAnalysis(), text: live.text, provisional: true };

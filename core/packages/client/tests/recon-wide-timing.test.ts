@@ -1,4 +1,4 @@
-import { expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { buildReconText } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import { computeStageSegments } from '@cuberoot/shared/timer/reconstruct/stage-segments';
 import { buildCoreTrack, type CoreTrack } from '@cuberoot/shared/timer/reconstruct/core-track';
@@ -7,6 +7,7 @@ import type { GyroSample } from '@cuberoot/shared/smart-cube/gyro-track';
 import { applyScramble } from '@/app/[lang]/timer/_lib/cube/state';
 import { applyOneToken } from '@/app/[lang]/timer/_lib/cube/apply_token';
 
+describe.each(['cfop', 'roux', 'zz'] as const)('%s gesture reconstruction', method => {
 it.each([1, 5, 10, 19, 20, 30, 40, 60, 80])('recognizes a wide-turn excursion held for %ims', async holdMs => {
   const samples: GyroSample[] = [
     { tMs: 0, q: notationQuaternion(''), frame: 'scramble' },
@@ -17,7 +18,7 @@ it.each([1, 5, 10, 19, 20, 30, 40, 60, 80])('recognizes a wide-turn excursion he
   const core = buildCoreTrack(samples, { moves });
   expect(core?.events.map(event => event.token)).toEqual(['x', "x'"]);
   const scramble = "L F' L'";
-  const result = await buildReconText({ scramble, moves, totalMs: 300,
+  const result = await buildReconText({ method, scramble, moves, totalMs: 300,
     segs: computeStageSegments(scramble, moves, 300)!, metrics: null, slots: null, core });
   expect(result.lines.flatMap(line => line.moves)).toEqual(['r', 'U', "r'"]);
   expect(result.rotations).toEqual([]);
@@ -29,7 +30,7 @@ async function report(outer: string, token: string, offset: number, extra?: { m:
   const scramble = moves.map(m => inverse(m.m)).reverse().join(' ');
   const core: CoreTrack = { frame: 'scramble', events: [{ token, tMs: 500 + offset, startMs: 500 + offset, angleRad: Math.PI / 2 }] };
   if (secondRotationMs !== undefined) core.events = [...core.events, { token, tMs: secondRotationMs, angleRad: Math.PI / 2 }];
-  const result = await buildReconText({ scramble, moves, totalMs: 2000,
+  const result = await buildReconText({ method, scramble, moves, totalMs: 2000,
     segs: computeStageSegments(scramble, moves, 2000)!, metrics: null, slots: null, core });
   // Playback consumes lossless move tokens, not the waste-group parentheses.
   const tokens = result.lines.flatMap(line => line.moves);
@@ -97,7 +98,7 @@ it.each(cases.filter(([, outer]) => !outer.includes('2')))(
       { tMs: 530, q: notationQuaternion(`${rotation} ${rotation}`), frame: 'scramble' },
     ], { moves });
     expect(core?.events).toHaveLength(2);
-    const result = await buildReconText({ scramble, moves, totalMs: 2000,
+    const result = await buildReconText({ method, scramble, moves, totalMs: 2000,
       segs: computeStageSegments(scramble, moves, 2000)!, metrics: null, slots: null, core });
     const tokens = result.lines.flatMap(line => line.moves);
     expect(tokens[0]).toBe(`${wide[0]}2${wide.endsWith("'") ? "'" : ''}`);
@@ -117,4 +118,6 @@ it('consumes an encoder gesture only once', async () => {
 it.each(['y', 'x2'])('does not merge a mismatched axis or turn amount: L + %s', async rotation => {
   const { tokens } = await report('L', rotation, 100);
   expect(tokens.some(t => /^[rludfb]/.test(t))).toBe(false);
+});
+
 });
