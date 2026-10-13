@@ -1,0 +1,26 @@
+name: Cube2Heli raw verification diagnostics
+on:
+  push:
+    branches: [codex/sim-cube2heli-20261013]
+    paths: [.github/workflows/codex-cube2heli-diagnostics.yml]
+permissions:
+  actions: read
+  contents: read
+jobs:
+  logs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Collect this branch's completed test logs and job metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/cube2heli-diagnostics
+          gh api repos/2017YANR02/cuberoot.me/actions/runs/38378637065/jobs --paginate > /tmp/cube2heli-diagnostics/test-jobs.json
+          gh api repos/2017YANR02/cuberoot.me/actions/runs/38378637065/logs > /tmp/cube2heli-diagnostics/test-logs.zip
+          gh api repos/2017YANR02/cuberoot.me/actions/runs/38379369601/jobs --paginate > /tmp/cube2heli-diagnostics/browser-jobs.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cube2heli-raw-diagnostics
+          path: /tmp/cube2heli-diagnostics
+          retention-days: 2
