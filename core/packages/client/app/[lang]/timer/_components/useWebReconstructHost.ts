@@ -1,5 +1,7 @@
 import type { ReconstructHost } from '@cuberoot/timer-ui/reconstruct-report';
 import BoolToggle from '@/components/BoolToggle';
+import AppLink from '@/components/AppLink';
+import { createElement } from 'react';
 import { tr } from '@/i18n/tr';
 import { useSettings, updateSettings } from '../_lib/settings';
 import { encodeReplayUrl } from '../_lib/share/encode';
@@ -10,6 +12,7 @@ export function useWebReconstructHost(): ReconstructHost {
   const settings = useSettings();
   return {
     localize: tr,
+    renderCaseLink: (href, label, className) => createElement(AppLink, { href, className }, label),
     writeClipboardText: (text) => navigator.clipboard.writeText(text),
     replayUrl: async (solve) => {
       const id = await createServerReplayShare(solve);

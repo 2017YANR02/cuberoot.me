@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import type { ComponentType } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import type { Solve } from '@cuberoot/shared/timer';
 import BoolToggle, { type BoolToggleProps } from '../BoolToggle';
 
@@ -10,6 +10,7 @@ export interface ReconstructHost {
   localize: ReconstructLocalize;
   writeClipboardText: (text: string) => Promise<void>;
   replayUrl: (solve: Solve) => string | Promise<string>;
+  renderCaseLink?: (href: string, label: string, className: string) => ReactNode;
   recordGyro: boolean;
   onEnableGyro?: () => void;
   BoolToggle?: ComponentType<BoolToggleProps>;

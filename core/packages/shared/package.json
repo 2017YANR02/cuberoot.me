@@ -61,6 +61,8 @@
       "./recon/zbll-lookup": "mixed",
       "./recon/f2l-lookup": "mixed",
       "./recon/alg-case-display": "mixed",
+      "./recon/alg-case-link": "mixed",
+      "./recon/comment-links": "mixed",
       "./recon/build-yield": "runtime-neutral",
       "./timer/reconstruct/step-metrics": "runtime-neutral",
       "./timer/reconstruct/error-detect": "runtime-neutral",
@@ -422,6 +424,14 @@
     "./recon/alg-case-display": {
       "node": "./dist/recon/alg_case_display.js",
       "default": "./src/recon/alg_case_display.ts"
+    },
+    "./recon/alg-case-link": {
+      "node": "./dist/recon/alg_case_link.js",
+      "default": "./src/recon/alg_case_link.ts"
+    },
+    "./recon/comment-links": {
+      "node": "./dist/recon/comment_links.js",
+      "default": "./src/recon/comment_links.ts"
     },
     "./recon/build-yield": {
       "node": "./dist/recon/build-yield.js",

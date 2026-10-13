@@ -369,3 +369,4 @@ export { TimerLocalBattlePage, TimerLocalBattlePlayer, type TimerLocalBattlePage
 export { TimerNetBattlePage, TimerNetBattleStage, TimerNetBattleEvent, type TimerNetBattlePageProps, type TimerNetBattleStageProps } from './TimerNetBattlePage';
 
 export { TimerDifficultyDialog } from './TimerDifficultyDialog';
+export { ReconCrossToggle } from './recon/ReconCrossToggle';
