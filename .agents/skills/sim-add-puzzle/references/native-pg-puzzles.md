@@ -55,6 +55,7 @@
 | `comboctahedron` | Comboctahedron | `o f 0.333333333333333 v 0.5773502691896258 v 1.1547005383792517` | 按 [Hyperspeedcube 的面／角转实现](https://github.com/HactarCE/Hyperspeedcube/blob/main/lua/puzzles/fcto.lua)和 [CTO 角层定义](https://github.com/HactarCE/Hyperspeedcube/blob/main/lua/puzzles/cto.lua)组合面切 ±1/3 与顶点切 ±1/√3、±2/√3；第二组角切不增加可见片数，但保留独立角尖转动，不能省略。 |
 | `circoradiolarian` | Circo-Radiolarian | `i f 0.7453559924999299` | 按 [Jason Smith 的 Radiolarian 2 原作](https://www.puzzleforge.com/wp/2010/01/11/radiolarian-2-12010/)及 [Hyperspeedcube 的 radio02 实现](https://github.com/HactarCE/Hyperspeedcube/blob/main/lua/puzzles/ft_icosahedra.lua)，取直线面切 1−(1−1/φ)×2/3=√5/3；保留三角形及四边形表面分区，仅支持保形 120° 面转。 |
 | `icosababyface` | 深切角转二十面体 / Deep-Cut Icosahedron | `i v 0.562777422255239` | 使用 [cubing.js 维护者列出的单层深角切描述](https://github.com/cubing/cubing.js/issues/127)，以外接球半径 r 推导切深 r/√5，使每个切面经过五个邻接顶点；只采用 Dogic 的深切族，不添加小角片。上游昵称带问号，显示名使用明确结构名称。 |
+| `cube2heli` | 二阶＋直升机 / 2×2 + Helicopter | `c f 0 e 0.7071067811865476` | 根据 [Jaap 的平面 Helicopter 切割说明](https://www.jaapsch.net/puzzles/helicopter.htm)组合独立二阶穿心面切；[Rob 的实物收藏目录](https://www.robspuzzlepage.com/rearrangement.htm)列有 Helicopter + 2x2x2。以立方体半边长 1 独立构造面切 0、棱切 ±√2/2，保留 90° 面转及 180° 棱转；不包含 jumbling，不冒充带角转或曲面切割的量产 Corner Helicopter。 |
 | `cube3heli` | 三阶＋直升机 / 3×3 + Helicopter | `c f 0.333333333333333 e 0.7071067811865476` | 根据 [cubing.js 官方 pgPuzzles.ts](https://github.com/cubing/cubing.js/blob/main/src/cubing/puzzle-geometry/pgPuzzles.ts) 的独立 `3x3x3`、`helicopter` 预设及 [Jaap 的平面棱转说明](https://www.jaapsch.net/puzzles/helicopter.htm)，组合均匀三阶面切与 Helicopter 棱切；以立方体半边长 1 推导面切 ±1/3、棱切 ±√2/2。支持保形 90° 面转及 180° 棱转，不包含 jumbling，不宣称精确复刻 Grégoire Pfennig 的 Helicopter 3×3 实物切深。 |
 
 把拼图描述视为几何数据；Dino Skewb、3×3 + Dino 与 3×3 + Helicopter 的组合描述由已核证的两类切面推导，不标注成上游预设中逐字复制的条目。
@@ -83,6 +84,7 @@
 | Comboctahedron | 8 | 9（三角形） | 72 | 6 四贴片角块、12 棱块、24 个中心块 | 面轴 120°、顶点轴 90° |
 | Circo-Radiolarian | 20 | 15（9 三角形、6 四边形） | 300 | 12 五贴片角块、60+30 棱块、60 个中心块 | 面轴 120° |
 | Deep-Cut Icosahedron | 20 | 1（完整三角形） | 20 | 20 个完整单面块 | 顶点轴 72° |
+| 2×2 + Helicopter | 6 | 8（三角形） | 48 | 8 三贴片角块、24 单贴片中心块 | 面轴 90°、棱轴 180° |
 | 3×3 + Helicopter | 6 | 28（12 三角形、12 四边形、4 五边形） | 168 | 8 个三贴片角块、24 个双贴片棱块、四组各 24 个单贴片中心块，共 128 块 | 面轴 90°、棱轴 180° |
 
 - 从 `get3d()` 的 `isDup` 排除只为表示朝向而重复的贴片，再统计可见几何；开启 `orientCenters` 后 Dogic 和四阶八面体会分别返回 120、48 条贴片数据，不要把它们当成实际贴片数。
@@ -120,6 +122,7 @@
 - 保留合法内层单转；它可以由宽转与外层逆转组合得到，不要把 `2A` 错当成宽转。
 - 对 SuperZ 分别提供六个面向的 90° 转和八个角向的 120° 转，不添加不存在的独立内层/宽层按钮；原生 `2R = L'`、`2DRF = UBL'`，整体转写作 `Rv = R L'`、`DRFv = DRF UBL'`，不要套用该模型不支持的 `Rw` 或 `x/y/z`。
 - 对 3×3 + Dino 同时提供面轴与角轴的外层、独立内层和两层宽转；核对 `Fw = F 2F`、`UFRw = UFR 2UFR`、`Fv = F 2F B'` 和 `UFRv = UFR 2UFR DLB'`，拒绝超深的 `3Fw`、`3UFRw` 与该原生模型不支持的 `x/y/z`。
+- 对 2×2 + Helicopter 的面轴使用单独半体、棱轴使用外层／中层／两层宽转；核对 `Fv = F B'`、`2F = B'`、`DFw = DF 2DF`，拒绝不存在的 `Fw` 和 `3DFw`，不要因为每面仍为八个三角形而省略穿心面切。
 - 对 3×3 + Helicopter 的六个面向与十二个棱向提供 `A/2A/Aw/Av`；每轴三个物理层只需两种独立深度，核对 `Fw = F 2F`、`DFw = DF 2DF`、`Fv = F 2F B'`、`DFv = DF 2DF UB'`，拒绝全层宽转 `3Fw/3DFw`。使用 `axisOrders` 的 90°/180° 周期，生成 60 步交替面转与棱转的练习打乱，并在各机制内部轮换外层与两层宽转；棱轴只生成 ±1 步，不宣称均匀随机状态。
 - 对 Lattice 与 Lattice X 的五个物理角层提供 `A`、`2A`、`3A`、`Aw`、`3Aw`；保留 `5A = O'`、`4A = 2O'`、`3A = 3O'` 的对侧轴 O 别名，完整输入仍接受合法四层宽转。
 - 对 Hyper X 的三个物理角层提供 `A`、`2A`、`Aw`；对 Hyper X／Lattice X 的两个面半体只提供外层按钮，使用逐轴 `axisLayers`，拒绝不存在的面 `Fw`，但保留合法的对侧 `2F = B'` 输入。
@@ -166,6 +169,7 @@
 - 用 `native-five-geometry.test.ts` 独立构造三种正多面体外法向和切面，逐面核对分区、全轴层选择、正反转、五个进度隔离面与真实 PG3D 半转矩阵；使用真实 SVG 回归确认物理面中心只绘制一次。
 - 传入 `--set=2026-10-12` 复现三阶＋斜转、直升机斜转、Comboctahedron、Circo-Radiolarian、深切角转二十面体的对比和放大 SVG；用 `native-mixed-puzzles-geometry.test.ts` 独立核对完整分区、块归属、全轴层深、五个进度与独立角尖，用 `native-puzzles-client-integration.test.ts` 的改前散列锁定旧项目固定种子序列。
 - 构建 puzzle-solvers 后，从 `core/` 运行 `node packages/client/scripts/native-puzzles/compare-outlines.mjs --set=cube3heli`，生成 `core/.tmp/png/cube3heli-outlines.svg` 与 `cube3heli-outlines-cube3heli.svg`；核对黑色三阶原切线、绿色新增棱切线、蓝色冻结轮廓、灰色约束包络及六面完整展开图。
+- 从 `core/` 运行 `node packages/client/scripts/native-puzzles/compare-outlines.mjs --set=cube2heli`，核对 48 片、32 块和与 Helicopter 重合的表面切线；用 `native-mixed-puzzles-geometry.test.ts` 分别验证保留的面转自由度、不同轴层数、交错操作后的刚体状态及真实 PG3D 中间帧。
 - 用 `native-mixed-puzzles-geometry.test.ts` 的 3×3 + Helicopter 样本锁定每面 28 区、168 贴片和 128 块；连续交错执行 `F UF' 2R' DFw Fv 2BL' Bw'`，从当前刚体顶点独立选层，在每步的五个进度核对切面分离，并将片位与朝向逐步对照 PG 状态；用真实 TwistyPlayer 创建的 PG3D 对全部手动层深检查 50% 进度的被选块、正反 amount 和正反播放方向，明确这属于本地渲染器测试，不替代浏览器拖拽实测。
 - 用 `native-puzzle-drag.test.ts` 核对真实几何上的拾取与方向，用 `native-puzzle-svg.test.ts` 和 `native-puzzles-client-integration.test.ts` 核对有界输入、完整记号、原生颜色、确定性生成、共享 SVG 和 PDF 比例；这些文件同在 `packages/client/tests/`。
 - 用 `native-puzzle-manual-anchor.test.ts` 读取未挂载真实 TwistyPlayer 的 `currentPattern`，核对双锚点下快速追加的盘面、记录和分享重建，以及编辑打断与卸载后的过期取消。

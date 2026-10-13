@@ -250,9 +250,9 @@ describe('shared timer puzzle picker', () => {
 
     act(() => host.querySelector<HTMLButtonElement>('.pp-trigger')?.click());
     const items = [...host.querySelectorAll<HTMLElement>('.pp-item')];
-    expect(items).toHaveLength(75);
+    expect(items).toHaveLength(76);
     expect(items.filter((item) => item.querySelector('.cubing-icon'))).toHaveLength(27);
-    expect(items.filter((item) => item.querySelector('.pp-item-tag'))).toHaveLength(48);
+    expect(items.filter((item) => item.querySelector('.pp-item-tag'))).toHaveLength(49);
     for (const item of items) {
       const icon = item.querySelector<HTMLElement>('.cubing-icon');
       const tag = item.querySelector<HTMLElement>('.pp-item-tag');
@@ -287,7 +287,7 @@ describe('shared timer puzzle picker', () => {
       expect(onSelect).toHaveBeenLastCalledWith(selectedEvent);
     }
     act(() => host.querySelector<HTMLButtonElement>('.pp-trigger')!.click());
-    expect(host.querySelectorAll('.pp-item')).toHaveLength(58);
+    expect(host.querySelectorAll('.pp-item')).toHaveLength(59);
     expect([...host.querySelectorAll('.pp-item')].some(item => item.textContent === 'ZBLL')).toBe(false);
     act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
     render('222');
@@ -337,7 +337,7 @@ describe('shared timer puzzle picker', () => {
       expect(host.querySelector('.pp-trigger')?.getAttribute('aria-label')).toBe(puzzle);
       expect(host.querySelector('[aria-label="Scramble type"]')).toBeNull();
       act(() => host.querySelector<HTMLButtonElement>('.pp-trigger')!.click());
-      expect(host.querySelectorAll('.pp-item')).toHaveLength(56);
+      expect(host.querySelectorAll('.pp-item')).toHaveLength(57);
       act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
     }
   });

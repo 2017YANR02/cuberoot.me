@@ -57,6 +57,7 @@ describe('Timer source controls follow puzzle capabilities', () => {
     'lattice', 'hyperx', 'latticex', 'masterbrilic', 'masterftov2',
     'quadx', 'dinoocta', 'fto5', 'eto', 'radiocrystal',
     'cube3skewb', 'heliskewb', 'comboctahedron', 'circoradiolarian', 'icosababyface',
+    'cube2heli',
     'cube3heli',
   ] as const)(
     'hides competition controls for %s and restores them on returning to 333 without changing settings',

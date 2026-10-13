@@ -28,6 +28,7 @@ const NOTES: Record<NativePuzzleId, readonly [string, string]> = {
   comboctahedron: ['Comboctahedron：面转 120°，顶点转 90°；顶点轴支持外层、第二层、第三层和宽转。', 'Comboctahedron: face turns are 120° and vertex turns are 90°. Vertex axes support outer, second, third and wide layers.'],
   circoradiolarian: ['Circo-Radiolarian：二十面体，每步面转 120°；当前支持保形标准转动，不含 jumbling。', 'Circo-Radiolarian: an icosahedron with 120° face turns. The current standard moves preserve its shape, without jumbling.'],
   icosababyface: ['深切角转二十面体：每步绕顶点转动 72°，二十个面各保留一个可见色块。', 'Deep-Cut Icosahedron: 72° vertex turns, with one visible colored region on each of its twenty faces.'],
+  cube2heli: ['二阶＋直升机：面转 90°，棱转 180°；只有棱轴支持第二层与宽转。当前仅支持保形转动，不含 jumbling。', '2×2 + Helicopter: 90° face turns and 180° edge turns. Only edge axes support second and wide layers. Supports shape-preserving turns only, without jumbling.'],
   cube3heli: ['三阶＋直升机：面转 90°，棱转 180°，支持外层、第二层与宽转；当前仅支持保形转动，不含 jumbling。', '3×3 + Helicopter: 90° face turns and 180° edge turns, with outer, second and wide layers. Supports shape-preserving turns only, without jumbling.'],
 };
 

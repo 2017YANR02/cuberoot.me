@@ -27,6 +27,7 @@ const CURRENT_LOCAL_PROVIDERS: readonly EventId[] = [
   'lattice', 'hyperx', 'latticex', 'masterbrilic', 'masterftov2',
   'quadx', 'dinoocta', 'fto5', 'eto', 'radiocrystal',
   'cube3skewb', 'heliskewb', 'comboctahedron', 'circoradiolarian', 'icosababyface',
+  'cube2heli',
   'cube3heli',
   'r3', 'r4', 'r5', 'cross', 'f2l',
   'll', 'oll', 'pll', 'coll', 'cmll', 'zbll', 'cll', 'ell', 'eocp', '2gll', 'ollcp', 'zzll', 'zbls', 'lse', 'l10p', 'eg1', 'eg2',
@@ -45,7 +46,7 @@ function currentMobileOutcome(event: EventId, source: Source): RouteOutcome {
     : 'provider-missing';
 }
 
-describe('adversarial 75 × 3 Mobile scramble-source matrix', () => {
+describe('adversarial 76 × 3 Mobile scramble-source matrix', () => {
   it('enumerates every event/source cell exactly once', () => {
     const matrix = EVENTS.flatMap(({ id }) => (
       (['real', 'random', 'manual'] as const).map((source) => ({
@@ -55,7 +56,7 @@ describe('adversarial 75 × 3 Mobile scramble-source matrix', () => {
       }))
     ));
 
-    expect(EVENTS).toHaveLength(75);
+    expect(EVENTS).toHaveLength(76);
     expect(matrix).toHaveLength(225);
     expect(new Set(matrix.map(({ event, source }) => `${event}:${source}`))).toHaveLength(225);
   });
@@ -77,6 +78,7 @@ describe('adversarial 75 × 3 Mobile scramble-source matrix', () => {
       'lattice', 'hyperx', 'latticex', 'masterbrilic', 'masterftov2',
       'quadx', 'dinoocta', 'fto5', 'eto', 'radiocrystal',
       'cube3skewb', 'heliskewb', 'comboctahedron', 'circoradiolarian', 'icosababyface',
+      'cube2heli',
       'cube3heli',
       'll', 'oll', 'pll', 'coll', 'cmll', 'zbll', 'cll', 'ell', 'eocp', '2gll', 'ollcp', 'zzll', 'zbls', 'lse', 'l10p', 'eg1', 'eg2',
     ].sort());
@@ -137,9 +139,9 @@ describe('adversarial 75 × 3 Mobile scramble-source matrix', () => {
     }
   });
 
-  it('routes manual through one queue for all 75 events, including custom and empty input', () => {
+  it('routes manual through one queue for all 76 events, including custom and empty input', () => {
     const outcomes = EVENTS.map(({ id }) => currentMobileOutcome(id, 'manual'));
-    expect(outcomes).toHaveLength(75);
+    expect(outcomes).toHaveLength(76);
     expect(new Set(outcomes)).toEqual(new Set<RouteOutcome>(['manual-queue']));
   });
 

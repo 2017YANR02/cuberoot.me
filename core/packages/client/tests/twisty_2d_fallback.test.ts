@@ -306,6 +306,11 @@ describe('TwistySection without WebGL', () => {
       invalid: '4FREGU', absent: ['F', '3FREGU', '3FREGUw'],
     },
     {
+      id: 'cube2heli', setup: 'F', alg: '2DF', move: 'DFw', order: 2,
+      controls: [{ move: 'F', order: 4 }, { move: 'U', order: 4 }, { move: 'DF', order: 2 }, { move: '2FL', order: 2 }, { move: 'DBw', order: 2 }],
+      invalid: 'Fw', absent: ['UFR', '2F', 'Fw', '3F', '3Fw', '3DF', '3DFw'],
+    },
+    {
       id: 'cube3heli', setup: 'F', alg: '2DF', move: 'DFw', order: 2,
       controls: [{ move: 'F', order: 4 }, { move: '2U', order: 4 }, { move: 'Rw', order: 4 }, { move: 'DF', order: 2 }, { move: '2FL', order: 2 }, { move: 'DBw', order: 2 }],
       invalid: 'UFR', absent: ['UFR', '3F', '3Fw', '3DF', '3DFw'],

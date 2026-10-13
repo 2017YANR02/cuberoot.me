@@ -237,6 +237,7 @@ describe.each([
   { event: 'comboctahedron', nameEn: 'Comboctahedron', nameZh: 'Comboctahedron' },
   { event: 'circoradiolarian', nameEn: 'Circo-Radiolarian', nameZh: 'Circo-Radiolarian' },
   { event: 'icosababyface', nameEn: 'Deep-Cut Icosahedron', nameZh: '深切角转二十面体' },
+  { event: 'cube2heli', nameEn: '2×2 + Helicopter', nameZh: '二阶＋直升机' },
   { event: 'cube3heli', nameEn: '3×3 + Helicopter', nameZh: '三阶＋直升机' },
 ] as const)('$event csTimer compatibility', ({ event, nameEn, nameZh }) => {
   it('preserves renamed sessions and mixed native notation through both import APIs', () => {
@@ -327,8 +328,11 @@ describe('compound native csTimer session names', () => {
     ['Circo-Radiolarian_Practice', 'circoradiolarian'],
     ['Deep-Cut_Icosahedron_Practice', 'icosababyface'],
     ['练习：深切角转二十面体', 'icosababyface'],
+    ['Session_2x2_+_Helicopter', 'cube2heli'],
     ['Session_3x3_+_Helicopter', 'cube3heli'],
+    ['2×2 + Helicopter_Practice', 'cube2heli'],
     ['3×3 + Helicopter_Practice', 'cube3heli'],
+    ['练习：二阶＋直升机', 'cube2heli'],
     ['练习：三阶＋直升机', 'cube3heli'],
   ] as const)('preserves %s as %s before trying shorter event tokens', (name, event) => {
     const raw = JSON.stringify({
@@ -337,6 +341,22 @@ describe('compound native csTimer session names', () => {
     });
     expect(parseCstimerExport(raw)[0]).toMatchObject({ event, matched: true });
     expect(importCstimerJson(raw)).toMatchObject({ [event]: [{ event, scramble: 'R' }] });
+  });
+});
+
+describe('2×2 + Helicopter csTimer session names', () => {
+  it.each([
+    '2Heli', 'Session: cube2heli', '2x2 + Helicopter practice', 'Session: 2×2 ＋ Helicopter',
+    '练习：二阶+直升机', 'Session_2x2 + Helicopter', '2x2 + Helicopter_Practice',
+  ])('recognizes %s before considering ordinary 2x2 tokens', (name) => {
+    const raw = JSON.stringify({
+      session1: [[[0, 8_765], "R DF' U2 FL", '', 1_700_000_000]],
+      properties: { sessionData: { 1: { name, opt: { scrType: 'input' } } } },
+    });
+    expect(parseCstimerExport(raw)[0]).toMatchObject({ event: 'cube2heli', matched: true });
+    const byEvent = importCstimerJson(raw);
+    expect(byEvent?.cube2heli?.[0].event).toBe('cube2heli');
+    expect(byEvent?.['222']).toBeUndefined();
   });
 });
 

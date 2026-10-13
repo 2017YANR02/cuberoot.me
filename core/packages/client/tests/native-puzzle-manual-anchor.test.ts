@@ -21,6 +21,7 @@ const ADDED_CASES = [
   { id: 'comboctahedron', setup: 'F', alg: "D_BR_R_F B'", moves: ['2D_F_L_BL', "1-3U_B_BL_L'"], invalid: 'D_BR_R_Fw' },
   { id: 'circoradiolarian', setup: 'R', alg: "G U'", moves: ['2R', "Gw'"], invalid: '4R' },
   { id: 'icosababyface', setup: 'FREGU', alg: "HIERC2 FLACR'", moves: ['2NALPO', "FLACRw'"], invalid: '4FREGU' },
+  { id: 'cube2heli', setup: 'F', alg: "DF U'", moves: ['2DF', "R'"], invalid: 'UFR' },
   { id: 'cube3heli', setup: 'F', alg: "DF U'", moves: ['2DF', "Rw'"], invalid: 'UFR' },
 ] as const;
 

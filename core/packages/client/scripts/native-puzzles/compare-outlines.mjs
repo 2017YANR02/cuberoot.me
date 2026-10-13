@@ -10,6 +10,17 @@ import { NATIVE_PUZZLES } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { Vector3 } from 'three';
 
 const reviewSets = {
+  cube2heli: {
+    basename: 'cube2heli-outlines',
+    rows: [
+      {
+        id: 'cube2heli', en: '2×2 + Helicopter',
+        description: 'c f 0 e 0.7071067811865476', visibleFacelets: 48,
+        prior: 'c e 0.7071067811865476', priorLabel: 'Helicopter',
+        notes: ['Add central face cuts to edge cuts at h = sqrt(2)/2; eight triangles per face.', 'The surface seams coincide; retain independent 90-degree face and 180-degree edge turns.'],
+      },
+    ],
+  },
   cube3heli: {
     basename: 'cube3heli-outlines',
     rows: [
@@ -106,7 +117,7 @@ const reviewSets = {
 };
 const args = process.argv.slice(2);
 if (args.length > 1 || (args[0] && !args[0].startsWith('--set='))) {
-  throw new Error('Usage: node compare-outlines.mjs [--set=original|2026-10|2026-10-12|cube3heli]');
+  throw new Error('Usage: node compare-outlines.mjs [--set=original|2026-10|2026-10-12|cube2heli|cube3heli]');
 }
 const setName = args[0]?.slice('--set='.length) ?? 'original';
 if (!Object.hasOwn(reviewSets, setName)) throw new Error(`Unknown review set: ${setName}`);

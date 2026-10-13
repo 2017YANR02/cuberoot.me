@@ -37,6 +37,7 @@ export const CSTIMER_EVENT_FALLBACKS = {
   comboctahedron: 'input',
   circoradiolarian: 'input',
   icosababyface: 'input',
+  cube2heli: 'input',
   cube3heli: 'input',
   sphere: '333',
 } as const;
@@ -106,6 +107,7 @@ const EVENT_TO_CSTIMER_SCRTYPE: Record<EventId, string> = {
   comboctahedron: CSTIMER_EVENT_FALLBACKS.comboctahedron,
   circoradiolarian: CSTIMER_EVENT_FALLBACKS.circoradiolarian,
   icosababyface: CSTIMER_EVENT_FALLBACKS.icosababyface,
+  cube2heli: CSTIMER_EVENT_FALLBACKS.cube2heli,
   cube3heli: CSTIMER_EVENT_FALLBACKS.cube3heli,
   r3: 'r3',
   r4: 'r4',

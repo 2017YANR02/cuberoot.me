@@ -126,6 +126,15 @@ const CASES: readonly Spec[] = [
     shapes: { 3: 8 }, orbits: [['CORNERS', 8, 3], ['CENTERS', 24, 1]],
   },
   {
+    id: 'cube2heli', faceNormals: cubeNormals,
+    axes: [
+      { pairs: cubeFacePairs, normals: cubeNormals, cuts: [0], order: 4 },
+      { pairs: cubeEdgePairs, normals: cubeAxisNormals(cubeEdgePairs), cuts: [Math.SQRT1_2], order: 2 },
+    ],
+    faces: 6, perFace: 8, raw: 48, visible: 48, pieces: 32,
+    shapes: { 3: 8 }, orbits: [['CENTERS', 24, 1], ['CORNERS', 8, 3]],
+  },
+  {
     id: 'cube3heli', faceNormals: cubeNormals,
     axes: [
       { pairs: cubeFacePairs, normals: cubeNormals, cuts: [1 / 3], order: 4 },
@@ -359,8 +368,9 @@ describe.each(CASES)('$id independent physical model', (spec) => {
   });
 });
 
-it('keeps 3x3 + Helicopter pieces rigid through interleaved face, edge, slice, wide and whole turns', () => {
-  const spec = CASES.find(({ id }) => id === 'cube3heli')!;
+it.each(['cube2heli', 'cube3heli'] as const)('keeps %s pieces rigid through interleaved face, edge, slice, wide and whole turns', (id) => {
+  const spec = CASES.find((candidate) => candidate.id === id)!;
+  const faceLayers = boundaries(spec.axes[0]).length + 1;
   const { stickers, byPolygon, puzzle } = fixture(spec);
   // Track physical source stickers geometrically; PG only supplies the state
   // being checked, never the next moving set or expected destination.
@@ -370,9 +380,9 @@ it('keeps 3x3 + Helicopter pieces rigid through interleaved face, edge, slice, w
     { move: "UF'", family: 'UF', axis: 1, first: 1, last: 1, amount: -1 },
     { move: "2R'", family: 'R', axis: 0, first: 2, last: 2, amount: -1 },
     { move: 'DFw', family: 'DF', axis: 1, first: 1, last: 2, amount: 1 },
-    { move: 'Fv', family: 'F', axis: 0, first: 1, last: 3, amount: 1 },
+    { move: 'Fv', family: 'F', axis: 0, first: 1, last: faceLayers, amount: 1 },
     { move: "2BL'", family: 'BL', axis: 1, first: 2, last: 2, amount: -1 },
-    { move: "Bw'", family: 'B', axis: 0, first: 1, last: 2, amount: -1 },
+    { move: faceLayers === 2 ? "B'" : "Bw'", family: 'B', axis: 0, first: 1, last: faceLayers - 1, amount: -1 },
   ];
   let pattern = puzzle.defaultPattern();
   for (const step of sequence) {
@@ -417,6 +427,22 @@ it('keeps 3x3 + Helicopter pieces rigid through interleaved face, edge, slice, w
     'face and edge turns genuinely interact').toBe(false);
   const alg = parseNativePuzzleAlg(spec.id, sequence.map(({ move }) => move).join(' '));
   expect(pattern.applyAlg(alg.invert()).isIdentical(puzzle.defaultPattern())).toBe(true);
+});
+
+it('retains independent 2x2 face turns when their cuts leave the Helicopter outline unchanged', () => {
+  const spec = CASES.find(({ id }) => id === 'cube2heli')!;
+  const edgeOnly: Spec = { ...spec, axes: [spec.axes[1]] };
+  for (const normal of Object.values(cubeNormals)) {
+    expect(expectedFace(spec, normal).map(polygonKey).sort())
+      .toEqual(expectedFace(edgeOnly, normal).map(polygonKey).sort());
+  }
+  const puzzle = nativePuzzleKPuzzle(spec.id);
+  for (const face of Object.keys(cubeNormals)) {
+    const turn = puzzle.moveToTransformation(face);
+    expect(turn.repetitionOrder()).toBe(4);
+    expect(turn.transformationData.CORNERS.permutation.filter((piece, index) => piece !== index)).toHaveLength(4);
+    expect(() => parseNativePuzzleAlg(spec.id, `${face}w`)).toThrow();
+  }
 });
 
 it('derives Baby Face cuts through five neighboring vertices and preserves exactly twenty whole triangular faces', () => {
@@ -508,7 +534,7 @@ afterEach(async () => {
   }
 });
 
-it.each(['heliskewb', 'cube3heli'] as const)('animates %s mixed-axis moves in both directions with the real PG3D middle matrix and selected pieces', async (id) => {
+it.each(['heliskewb', 'cube2heli', 'cube3heli'] as const)('animates %s mixed-axis moves in both directions with the real PG3D middle matrix and selected pieces', async (id) => {
   // This is a local renderer fixture, not browser interaction evidence. The
   // real TwistyPlayer creates its real PG3D; only DOM camera attachment and
   // scheduling are suppressed because jsdom has no display or GPU.

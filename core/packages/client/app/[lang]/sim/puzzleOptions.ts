@@ -98,7 +98,7 @@ const SIM_PUZZLE_FAMILIES: readonly SimPuzzleFamily[] = [
   {
     id: 'hybrid-cuts', labelZh: '组合切割', labelEn: 'Combined cuts',
     values: ['cube2dino', 'cube3dino', 'cube2littlechop', 'dinolittlechop',
-      'cube2dinolittlechop', 'superz', 'hyperx', 'latticex', 'cube3skewb', 'heliskewb', 'cube3heli'],
+      'cube2dinolittlechop', 'superz', 'hyperx', 'latticex', 'cube3skewb', 'heliskewb', 'cube2heli', 'cube3heli'],
   },
   { id: 'magic', labelZh: '连板', labelEn: 'Magic family', values: ['magic', 'mmagic'] },
 ];

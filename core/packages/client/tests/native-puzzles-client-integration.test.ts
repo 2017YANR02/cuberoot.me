@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
 import { Move } from 'cubing/alg';
+import { EVENTS, timerScrambleCapability, timerEventPickerItem } from '@cuberoot/shared/timer';
 import { NATIVE_PUZZLES, NATIVE_PUZZLE_IDS, generateNativePuzzleScramble, nativePuzzleMoves } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { nativePuzzleKPuzzle, parseNativePuzzleAlg } from '@cuberoot/puzzle-solvers/native-puzzle-model';
 import { nativePuzzleSvgAspect, renderNativePuzzleSvg } from '@cuberoot/puzzle-render-core/native-puzzle-svg';
@@ -66,6 +67,10 @@ describe('native puzzle client integration', () => {
       });
       expect(eventDisplayName(id, isZh)).toBe(NATIVE_PUZZLES[id][isZh ? 'zh' : 'en']);
     }
+    // A PG entry alone must not leave Timer silently defaulting to ordinary 3x3.
+    expect(EVENTS.some((event) => event.id === id)).toBe(true);
+    expect(timerEventPickerItem(id).id).toBe(id);
+    expect(timerScrambleCapability(id)).toMatchObject({ kind: 'shared', provider: 'native-random-move' });
     expect(nativeScramblePracticeHint(id)).toEqual({
       zh: `练习打乱：${NATIVE_PUZZLES[id].scrambleLength} 步随机转动。`,
       en: `Practice scramble: ${NATIVE_PUZZLES[id].scrambleLength} random moves.`,
@@ -145,10 +150,10 @@ describe('native puzzle client integration', () => {
     }
   });
 
-  it('mixes real face and edge turns in 3×3 + Helicopter practice scrambles without full-circle edge moves', () => {
-    const puzzle = nativePuzzleKPuzzle('cube3heli');
+  it.each(['cube2heli', 'cube3heli'] as const)('mixes real face and edge turns in %s practice scrambles without full-circle edge moves', (id) => {
+    const puzzle = nativePuzzleKPuzzle(id);
     for (const random of [() => 0, () => 0.999999, randomFromSeed(2026)]) {
-      const moves = [...parseNativePuzzleAlg('cube3heli', generateNativePuzzleScramble('cube3heli', random)).childAlgNodes()] as Move[];
+      const moves = [...parseNativePuzzleAlg(id, generateNativePuzzleScramble(id, random)).childAlgNodes()] as Move[];
       expect(moves).toHaveLength(60);
       for (const [index, move] of moves.entries()) {
         const family = move.family.replace(/w$/, '');
