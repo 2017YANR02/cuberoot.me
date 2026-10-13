@@ -373,6 +373,7 @@
 
 .reconstruct-playback-top {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
@@ -391,10 +392,14 @@
 }
 
 .reconstruct-playback-controls {
-  width: 100%;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  margin-left: auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  white-space: nowrap;
 }
 
 .reconstruct-playback-buttons {
@@ -884,13 +889,17 @@ button.stl-track:focus-visible { outline: 2px solid var(--ring); outline-offset:
 /* 「第 n 对」和动作同一行(见 StepMoveList.tsx),所以它自己带小字号和弱化色,
    不再靠一个包住整行的 .sml-sub 容器。 */
 .sml-sub-name { font-size: 11px; color: var(--muted-foreground); }
-.sml-body { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+/* Inline text keeps the trailing stage comment on the same clipboard line. */
+.sml-body { display: block; }
+.sml-body > * + * { margin-inline-start: 8px; }
 .sml-moves {
   font-family: var(--font-mono); font-size: 13px; line-height: 1.7;
   color: var(--foreground); word-break: break-word;
   text-align: left;
 }
 button.sml-moves {
+  display: inline;
+  max-width: 100%;
   appearance: none; background: transparent; border: 0; padding: 0;
   cursor: pointer;
 }
