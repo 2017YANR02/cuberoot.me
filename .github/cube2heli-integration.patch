@@ -1,0 +1,226 @@
+diff --git a/core/packages/app-ui/src/scramble-source-matrix.audit.test.ts b/core/packages/app-ui/src/scramble-source-matrix.audit.test.ts
+index e96a23e..cfaf08b 100644
+--- a/core/packages/app-ui/src/scramble-source-matrix.audit.test.ts
++++ b/core/packages/app-ui/src/scramble-source-matrix.audit.test.ts
+@@ -29,0 +30 @@
++  'cube2heli',
+@@ -48 +49 @@
+-describe('adversarial 75 × 3 Mobile scramble-source matrix', () => {
++describe('adversarial 76 × 3 Mobile scramble-source matrix', () => {
+@@ -58 +59 @@
+-    expect(EVENTS).toHaveLength(75);
++    expect(EVENTS).toHaveLength(76);
+@@ -79,0 +81 @@
++      'cube2heli',
+@@ -140 +142 @@
+-  it('routes manual through one queue for all 75 events, including custom and empty input', () => {
++  it('routes manual through one queue for all 76 events, including custom and empty input', () => {
+@@ -142 +144 @@
+-    expect(outcomes).toHaveLength(75);
++    expect(outcomes).toHaveLength(76);
+diff --git a/core/packages/client/app/[lang]/sim/puzzleOptions.ts b/core/packages/client/app/[lang]/sim/puzzleOptions.ts
+index 5ef319e..567004f 100644
+--- a/core/packages/client/app/[lang]/sim/puzzleOptions.ts
++++ b/core/packages/client/app/[lang]/sim/puzzleOptions.ts
+@@ -101 +101 @@
+-      'cube2dinolittlechop', 'superz', 'hyperx', 'latticex', 'cube3skewb', 'heliskewb', 'cube3heli'],
++      'cube2dinolittlechop', 'superz', 'hyperx', 'latticex', 'cube3skewb', 'heliskewb', 'cube2heli', 'cube3heli'],
+diff --git a/core/packages/client/components/NativePuzzleControls.tsx b/core/packages/client/components/NativePuzzleControls.tsx
+index 40e3ba0..a0d5c03 100644
+--- a/core/packages/client/components/NativePuzzleControls.tsx
++++ b/core/packages/client/components/NativePuzzleControls.tsx
+@@ -30,0 +31 @@
++  cube2heli: ['二阶＋直升机：面转 90°，棱转 180°；只有棱轴支持第二层与宽转。当前仅支持保形转动，不含 jumbling。', '2×2 + Helicopter: 90° face turns and 180° edge turns. Only edge axes support second and wide layers. Supports shape-preserving turns only, without jumbling.'],
+diff --git a/core/packages/client/tests/native-puzzle-manual-anchor.test.ts b/core/packages/client/tests/native-puzzle-manual-anchor.test.ts
+index d60d4c8..9eaa7f1 100644
+--- a/core/packages/client/tests/native-puzzle-manual-anchor.test.ts
++++ b/core/packages/client/tests/native-puzzle-manual-anchor.test.ts
+@@ -23,0 +24 @@
++  { id: 'cube2heli', setup: 'F', alg: "DF U'", moves: ['2DF', "R'"], invalid: 'UFR' },
+diff --git a/core/packages/client/tests/native-puzzle-sim-controls.test.ts b/core/packages/client/tests/native-puzzle-sim-controls.test.ts
+index 7999dfd..f125601 100644
+--- a/core/packages/client/tests/native-puzzle-sim-controls.test.ts
++++ b/core/packages/client/tests/native-puzzle-sim-controls.test.ts
+@@ -226 +226 @@
+-  it.each(CASES.filter(({ id }) => id === 'quadx' || id === 'eto' || id === 'heliskewb' || id === 'cube3heli'))('$id preserves the chosen half-turn directions when live reduction is off', async (spec) => {
++  it.each(CASES.filter(({ id }) => id === 'quadx' || id === 'eto' || id === 'heliskewb' || id === 'cube2heli' || id === 'cube3heli'))('$id preserves the chosen half-turn directions when live reduction is off', async (spec) => {
+@@ -428,0 +429,2 @@
++    { id: 'cube2heli', move: 'F', order: 4 },
++    { id: 'cube2heli', move: 'DF', order: 2 },
+diff --git a/core/packages/client/tests/native-puzzle-svg.test.ts b/core/packages/client/tests/native-puzzle-svg.test.ts
+index 9be8e0d..bfe6639 100644
+--- a/core/packages/client/tests/native-puzzle-svg.test.ts
++++ b/core/packages/client/tests/native-puzzle-svg.test.ts
+@@ -27,0 +28 @@
++  { id: 'cube2heli', scramble: "F DF U' FLw R2 2UB' Fv DFv", facelets: 48 },
+diff --git a/core/packages/client/tests/native-puzzles-client-integration.test.ts b/core/packages/client/tests/native-puzzles-client-integration.test.ts
+index 519234d..d9f3e26 100644
+--- a/core/packages/client/tests/native-puzzles-client-integration.test.ts
++++ b/core/packages/client/tests/native-puzzles-client-integration.test.ts
+@@ -3,0 +4 @@
++import { EVENTS, timerScrambleCapability, timerEventPickerItem } from '@cuberoot/shared/timer';
+@@ -68,0 +70,4 @@
++    // A PG entry alone must not leave Timer silently defaulting to ordinary 3x3.
++    expect(EVENTS.some((event) => event.id === id)).toBe(true);
++    expect(timerEventPickerItem(id).id).toBe(id);
++    expect(timerScrambleCapability(id)).toMatchObject({ kind: 'shared', provider: 'native-random-move' });
+diff --git a/core/packages/client/tests/sim-puzzle-menu.test.ts b/core/packages/client/tests/sim-puzzle-menu.test.ts
+index 62387a9..fe05028 100644
+--- a/core/packages/client/tests/sim-puzzle-menu.test.ts
++++ b/core/packages/client/tests/sim-puzzle-menu.test.ts
+@@ -48,0 +49 @@
++      ['cube2heli', 'hybrid-cuts'],
+diff --git a/core/packages/client/tests/timer-drill-contract-shared.test.ts b/core/packages/client/tests/timer-drill-contract-shared.test.ts
+index 80dfc90..d4f9fe6 100644
+--- a/core/packages/client/tests/timer-drill-contract-shared.test.ts
++++ b/core/packages/client/tests/timer-drill-contract-shared.test.ts
+@@ -79 +79 @@
+-    expect(EVENTS).toHaveLength(75);
++    expect(EVENTS).toHaveLength(76);
+diff --git a/core/packages/client/tests/timer-puzzle-picker.test.ts b/core/packages/client/tests/timer-puzzle-picker.test.ts
+index 0c1f6f0..1b8b39d 100644
+--- a/core/packages/client/tests/timer-puzzle-picker.test.ts
++++ b/core/packages/client/tests/timer-puzzle-picker.test.ts
+@@ -253 +253 @@
+-    expect(items).toHaveLength(75);
++    expect(items).toHaveLength(76);
+@@ -255 +255 @@
+-    expect(items.filter((item) => item.querySelector('.pp-item-tag'))).toHaveLength(48);
++    expect(items.filter((item) => item.querySelector('.pp-item-tag'))).toHaveLength(49);
+@@ -290 +290 @@
+-    expect(host.querySelectorAll('.pp-item')).toHaveLength(58);
++    expect(host.querySelectorAll('.pp-item')).toHaveLength(59);
+@@ -340 +340 @@
+-      expect(host.querySelectorAll('.pp-item')).toHaveLength(56);
++      expect(host.querySelectorAll('.pp-item')).toHaveLength(57);
+diff --git a/core/packages/client/tests/timer-scramble-preview-shared.test.ts b/core/packages/client/tests/timer-scramble-preview-shared.test.ts
+index c8f1e18..13215ea 100644
+--- a/core/packages/client/tests/timer-scramble-preview-shared.test.ts
++++ b/core/packages/client/tests/timer-scramble-preview-shared.test.ts
+@@ -75,0 +76 @@
++    { event: 'cube2heli', faces: 6 },
+@@ -348,0 +350 @@
++      'cube2heli',
+diff --git a/core/packages/client/tests/timer-scramble-source-bar.test.ts b/core/packages/client/tests/timer-scramble-source-bar.test.ts
+index f0faa39..7545f27 100644
+--- a/core/packages/client/tests/timer-scramble-source-bar.test.ts
++++ b/core/packages/client/tests/timer-scramble-source-bar.test.ts
+@@ -59,0 +60 @@
++    'cube2heli',
+diff --git a/core/packages/client/tests/timer-sync-seed.test.ts b/core/packages/client/tests/timer-sync-seed.test.ts
+index 79c5377..3b6c6ae 100644
+--- a/core/packages/client/tests/timer-sync-seed.test.ts
++++ b/core/packages/client/tests/timer-sync-seed.test.ts
+@@ -14,0 +15 @@
++    'cube2heli',
+diff --git a/core/packages/client/tests/timer_cstimer_io.test.ts b/core/packages/client/tests/timer_cstimer_io.test.ts
+index 592b627..5fa899d 100644
+--- a/core/packages/client/tests/timer_cstimer_io.test.ts
++++ b/core/packages/client/tests/timer_cstimer_io.test.ts
+@@ -239,0 +240 @@
++  { event: 'cube2heli', nameEn: '2×2 + Helicopter', nameZh: '二阶＋直升机' },
+@@ -329,0 +331 @@
++    ['Session_2x2_+_Helicopter', 'cube2heli'],
+@@ -330,0 +333 @@
++    ['2×2 + Helicopter_Practice', 'cube2heli'],
+@@ -331,0 +335 @@
++    ['练习：二阶＋直升机', 'cube2heli'],
+@@ -342,0 +347,16 @@
++describe('2×2 + Helicopter csTimer session names', () => {
++  it.each([
++    '2Heli', 'Session: cube2heli', '2x2 + Helicopter practice', 'Session: 2×2 ＋ Helicopter',
++    '练习：二阶+直升机', 'Session_2x2 + Helicopter', '2x2 + Helicopter_Practice',
++  ])('recognizes %s before considering ordinary 2x2 tokens', (name) => {
++    const raw = JSON.stringify({
++      session1: [[[0, 8_765], "R DF' U2 FL", '', 1_700_000_000]],
++      properties: { sessionData: { 1: { name, opt: { scrType: 'input' } } } },
++    });
++    expect(parseCstimerExport(raw)[0]).toMatchObject({ event: 'cube2heli', matched: true });
++    const byEvent = importCstimerJson(raw);
++    expect(byEvent?.cube2heli?.[0].event).toBe('cube2heli');
++    expect(byEvent?.['222']).toBeUndefined();
++  });
++});
++
+diff --git a/core/packages/client/tests/timer_event_catalog.test.ts b/core/packages/client/tests/timer_event_catalog.test.ts
+index 94921d1..87066b9 100644
+--- a/core/packages/client/tests/timer_event_catalog.test.ts
++++ b/core/packages/client/tests/timer_event_catalog.test.ts
+@@ -41,0 +42 @@
++  'cube2heli',
+@@ -80 +81 @@
+-  it('is a complete, duplicate-free 75-event partition in the website order', () => {
++  it('is a complete, duplicate-free 76-event partition in the website order', () => {
+@@ -87 +88 @@
+-    expect(pickerIds).toHaveLength(75);
++    expect(pickerIds).toHaveLength(76);
+@@ -176,0 +178 @@
++      ['cube2heli', '2×2 + Helicopter', '二阶＋直升机', '2Heli'],
+diff --git a/core/packages/client/tests/timer_persistence.test.ts b/core/packages/client/tests/timer_persistence.test.ts
+index 8e0e77c..b853781 100644
+--- a/core/packages/client/tests/timer_persistence.test.ts
++++ b/core/packages/client/tests/timer_persistence.test.ts
+@@ -75,0 +76 @@
++    'cube2heli',
+diff --git a/core/packages/client/tests/timer_scramble_runtime.test.ts b/core/packages/client/tests/timer_scramble_runtime.test.ts
+index a684a37..defe110 100644
+--- a/core/packages/client/tests/timer_scramble_runtime.test.ts
++++ b/core/packages/client/tests/timer_scramble_runtime.test.ts
+@@ -93,0 +94 @@
++  cube2heli: 'native-random-move',
+@@ -327,0 +329 @@
++    'cube2heli',
+@@ -350,0 +353 @@
++    'cube2heli',
+diff --git a/core/packages/client/tests/twisty_2d_fallback.test.ts b/core/packages/client/tests/twisty_2d_fallback.test.ts
+index e9b8392..1603bb0 100644
+--- a/core/packages/client/tests/twisty_2d_fallback.test.ts
++++ b/core/packages/client/tests/twisty_2d_fallback.test.ts
+@@ -307,0 +308,5 @@
++    {
++      id: 'cube2heli', setup: 'F', alg: '2DF', move: 'DFw', order: 2,
++      controls: [{ move: 'F', order: 4 }, { move: 'U', order: 4 }, { move: 'DF', order: 2 }, { move: '2FL', order: 2 }, { move: 'DBw', order: 2 }],
++      invalid: 'Fw', absent: ['UFR', '2F', 'Fw', '3F', '3Fw', '3DF', '3DFw'],
++    },
+diff --git a/core/packages/shared/src/timer/event-catalog.ts b/core/packages/shared/src/timer/event-catalog.ts
+index fbe3b2a..d0b7107 100644
+--- a/core/packages/shared/src/timer/event-catalog.ts
++++ b/core/packages/shared/src/timer/event-catalog.ts
+@@ -161,0 +162 @@
++  { id: 'cube2heli', group: 'other', textLabel: '2Heli' },
+diff --git a/core/packages/shared/src/timer/export-cstimer.ts b/core/packages/shared/src/timer/export-cstimer.ts
+index aa95656..326835f 100644
+--- a/core/packages/shared/src/timer/export-cstimer.ts
++++ b/core/packages/shared/src/timer/export-cstimer.ts
+@@ -39,0 +40 @@
++  cube2heli: 'input',
+@@ -108,0 +110 @@
++  cube2heli: CSTIMER_EVENT_FALLBACKS.cube2heli,
+diff --git a/core/packages/shared/src/timer/import-cstimer.ts b/core/packages/shared/src/timer/import-cstimer.ts
+index fa59d3b..b84fe9c 100644
+--- a/core/packages/shared/src/timer/import-cstimer.ts
++++ b/core/packages/shared/src/timer/import-cstimer.ts
+@@ -109,0 +110 @@
++  'cube2heli': 'cube2heli', '2heli': 'cube2heli',
+@@ -110,0 +112 @@
++  '2×2+helicopter': 'cube2heli', '2x2+helicopter': 'cube2heli',
+@@ -111,0 +114 @@
++  '二阶＋直升机': 'cube2heli', '二阶+直升机': 'cube2heli',
+@@ -224,0 +228,3 @@
++  if (/(?:^|[^a-z0-9])2[\s_-]*[x×][\s_-]*2[\s_-]*[+＋][\s_-]*helicopter(?:$|[^a-z0-9])|二阶[\s_-]*[+＋][\s_-]*直升机/i.test(name)) {
++    return normalizeEventKey('cube2heli');
++  }
+diff --git a/core/packages/shared/src/timer/scramble-runtime.ts b/core/packages/shared/src/timer/scramble-runtime.ts
+index 7cc0f9e..2ead984 100644
+--- a/core/packages/shared/src/timer/scramble-runtime.ts
++++ b/core/packages/shared/src/timer/scramble-runtime.ts
+@@ -138,0 +139 @@
++  cube2heli: { kind: 'shared', provider: 'native-random-move' },
+diff --git a/core/packages/shared/src/timer/types.ts b/core/packages/shared/src/timer/types.ts
+index ca639b2..19299f6 100644
+--- a/core/packages/shared/src/timer/types.ts
++++ b/core/packages/shared/src/timer/types.ts
+@@ -33,0 +34 @@
++  | 'cube2heli'
+@@ -256,0 +258 @@
++  { id: 'cube2heli', nameEn: '2×2 + Helicopter', nameZh: '二阶＋直升机', group: 'nonwca' },
