@@ -9224,6 +9224,11 @@
       "country": "Colombia",
       "iso2": "CO"
     },
+    "2021ELIA01": {
+      "name": "Niklas Aasen Eliasson",
+      "country": "Norway",
+      "iso2": "NO"
+    },
     "2011DWYE02": {
       "name": "Nathan Dwyer",
       "country": "USA",
@@ -9298,11 +9303,6 @@
       "name": "Jack Lee",
       "country": "Canada",
       "iso2": "CA"
-    },
-    "2021ELIA01": {
-      "name": "Niklas Aasen Eliasson",
-      "country": "Norway",
-      "iso2": "NO"
     },
     "2022JOKS01": {
       "name": "Tino Joksch",
@@ -16359,6 +16359,11 @@
       "country": "USA",
       "iso2": "US"
     },
+    "2022WANG06": {
+      "name": "Daniel Wang",
+      "country": "Australia",
+      "iso2": "AU"
+    },
     "2014UKEY01": {
       "name": "Mayur Ukey",
       "country": "India",
@@ -16563,11 +16568,6 @@
       "name": "Cedric Meysing",
       "country": "Germany",
       "iso2": "DE"
-    },
-    "2022WANG06": {
-      "name": "Daniel Wang",
-      "country": "Australia",
-      "iso2": "AU"
     },
     "2023WILL26": {
       "name": "Felix Williams",
@@ -35834,6 +35834,9 @@
     "ElmsfordExtravaganzaIII2026": {
       "name": "Elmsford Extravaganza III 2026"
     },
+    "Cube4funLublinAutumn2026": {
+      "name": "Cube4fun Lublin Autumn 2026"
+    },
     "Vastervik2008": {
       "name": "Västervik 2008"
     },
@@ -36910,6 +36913,9 @@
     },
     "CubingSummerRybnik2026": {
       "name": "Cubing Summer Rybnik 2026"
+    },
+    "ImaginaireQuebec2026": {
+      "name": "Imaginaire Québec 2026"
     },
     "ShaastraOpen2010": {
       "name": "Shaastra Cube Open 2010"
@@ -39773,6 +39779,9 @@
     "CouffoulEvents2026": {
       "name": "Couffoul'Events 2026"
     },
+    "BergenOpen2026": {
+      "name": "Bergen Open 2026"
+    },
     "MetepecOpen2012": {
       "name": "Metepec Open 2012"
     },
@@ -41039,6 +41048,9 @@
     "TorontoWeeknightsI2026": {
       "name": "Toronto Weeknights I 2026"
     },
+    "TokaiAutumn2026": {
+      "name": "Tokai Autumn 2026"
+    },
     "Morelia2016": {
       "name": "Argetlam 2016"
     },
@@ -41410,6 +41422,9 @@
     },
     "OberlinBigCubes2025": {
       "name": "Oberlin Big Cubes 2025"
+    },
+    "NewmarketSideEvents2026": {
+      "name": "Newmarket Side Events 2026"
     },
     "VicenteTaaca2013": {
       "name": "VTMS 2013"
@@ -42929,6 +42944,9 @@
     "SzokolyaOpen2026": {
       "name": "Szokolya Open 2026"
     },
+    "BigCubesMadrid2026": {
+      "name": "Big Cubes Madrid 2026"
+    },
     "BeijingFebruary2011": {
       "name": "Beijing February 2011"
     },
@@ -44221,6 +44239,9 @@
     },
     "KukulcanQuetzaltenango2026": {
       "name": "Kukulcán Quetzaltenango 2026"
+    },
+    "LjubljanaBigBlind2026": {
+      "name": "Ljubljana Big & Blind 2026"
     },
     "SkarupLastChance2011": {
       "name": "Skårup Last Chance 2011"
@@ -45824,6 +45845,9 @@
     "QuanzhouFMCAutumn2026": {
       "name": "Quanzhou FMC Autumn 2026"
     },
+    "FMCEurope2026": {
+      "name": "FMC Europe 2026"
+    },
     "ChinaFMZhengzhou2011": {
       "name": "China FM Zhengzhou 2011"
     },
@@ -45989,6 +46013,9 @@
     "CampeonatodoCerrado2025": {
       "name": "Campeonato do Cerrado 2025"
     },
+    "NorwegianFMChampionship2025": {
+      "name": "Norwegian FM Championship 2025"
+    },
     "QuietSeattleNovember2025": {
       "name": "Quiet Seattle November 2025"
     },
@@ -46003,6 +46030,9 @@
     },
     "OberlinChallengeI2026": {
       "name": "Oberlin Challenge I 2026"
+    },
+    "FMCNorway2026": {
+      "name": "FMC Norway 2026"
     },
     "NewYorkMultimatePBQV2026": {
       "name": "New York Multimate PBQ V 2026"
@@ -46097,9 +46127,6 @@
     "FMCEurope2025": {
       "name": "FMC Europe 2025"
     },
-    "NorwegianFMChampionship2025": {
-      "name": "Norwegian FM Championship 2025"
-    },
     "FMCpaGKV2025": {
       "name": "FMC på GKV 2025"
     },
@@ -46108,9 +46135,6 @@
     },
     "FMCLoversFurth2026": {
       "name": "FMC Lovers Fürth 2026"
-    },
-    "FMCNorway2026": {
-      "name": "FMC Norway 2026"
     },
     "SlovenianFMCNationals2026": {
       "name": "Slovenian FMC Nationals 2026"
@@ -48572,6 +48596,9 @@
     "UMBCFall2026": {
       "name": "UMBC Fall 2026"
     },
+    "CubetchaMN2026": {
+      "name": "Cubetcha MN 2026"
+    },
     "FredericiaOpen2011": {
       "name": "Fredericia Open 2011"
     },
@@ -48966,7 +48993,7 @@
       "name": "Manhattan Megaminx Mayhem 2 2025"
     },
     "BellevueCubingAfternoon2025": {
-      "name": " Bellevue Cubing Afternoon 2025"
+      "name": "Bellevue Cubing Afternoon 2025"
     },
     "BeniciaOpen2025": {
       "name": "Benicia Open 2025"
@@ -50254,6 +50281,9 @@
     },
     "ChorzowCubingDays2026": {
       "name": "Chorzów Cubing Days 2026"
+    },
+    "MeathForMegaSpeed2026": {
+      "name": "Meath For Mega Speed 2026"
     },
     "LasLomas2013": {
       "name": "Las Lomas 2013"
@@ -53146,6 +53176,9 @@
     },
     "NerjaChanqueteOpen2026": {
       "name": "Nerja Chanquete Open 2026"
+    },
+    "TurnBacktheClockMiami2026": {
+      "name": "Turn Back the Clock Miami 2026"
     },
     "TorneoJorgeTadeoLozano2017": {
       "name": "Tadeo 2017"
