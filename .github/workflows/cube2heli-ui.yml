@@ -1,0 +1,76 @@
+name: Cube2Heli Chromium final
+on:
+  push:
+    branches: [codex/cube2heli-acceptance-20261013]
+    paths: ['.github/workflows/cube2heli-ui.yml']
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: codex/cube2heli-acceptance-20261013
+          path: qa
+          persist-credentials: false
+          sparse-checkout: .github
+      - uses: actions/checkout@v6
+        with:
+          ref: codex/native-puzzle-20261013
+          path: work
+          persist-credentials: false
+          filter: blob:none
+          sparse-checkout: |
+            core
+            .github
+            .codex
+            .githooks
+            docs
+            tools/cstimer-scramble
+      - uses: pnpm/action-setup@v6
+        with:
+          package_json_file: work/core/package.json
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: work/.node-version
+          cache: pnpm
+          cache-dependency-path: work/core/pnpm-lock.yaml
+      - name: Install and build dependencies
+        working-directory: work/core
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm --filter @cuberoot/client build:deps
+      - name: Prepare the same public-UI assertions
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import textwrap
+          s = Path('qa/.github/workflows/native-puzzle-check.yml').read_text()
+          s = s.split('      - name: Prepare public-UI browser acceptance\n', 1)[1]
+          s = s.split('      - name: Chromium acceptance\n', 1)[0]
+          script = textwrap.dedent(s.split('        run: |\n', 1)[1])
+          Path('/tmp/prepare-cube2heli-browser.sh').write_text(script)
+          PY
+          bash /tmp/prepare-cube2heli-browser.sh
+          mkdir -p /tmp/native-puzzle-browser
+          git -C work rev-parse HEAD > /tmp/native-puzzle-browser/COMMIT.txt
+      - name: Real Chromium UI and pointer acceptance
+        working-directory: work/core/packages/client
+        run: |
+          pnpm exec playwright install --with-deps chromium
+          pnpm dev > /tmp/native-puzzle-dev.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          node .cube2heli-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cube2heli-chromium-final
+          path: |
+            /tmp/native-puzzle-browser
+            /tmp/native-puzzle-dev.log
+            work/core/packages/client/.cube2heli-browser.mjs
+          include-hidden-files: true
+          retention-days: 7
