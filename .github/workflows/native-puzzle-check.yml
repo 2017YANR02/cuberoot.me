@@ -5,44 +5,110 @@ on:
     branches: [codex/native-puzzle-20261013]
     paths:
       - '.github/workflows/native-puzzle-check.yml'
+      - '.github/cube2heli-browser.mjs'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  sources:
+  verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
         with:
-          persist-credentials: false
+          ref: codex/native-puzzle-20261013
+          filter: blob:none
           sparse-checkout: |
-            core/packages/client
-            core/packages/shared
-            core/packages/puzzle-solvers
-            core/packages/puzzle-render-core
-            core/packages/event-icon
-            core/packages/timer-ui
-            core/scripts
+            core
             .agents/skills/sim-add-puzzle
-            .agents/skills/wca-event
-            .github/workflows
+            .github
             docs
-      - name: Collect tracked source for the isolated development environment
-        shell: bash
+            .codex
+            .githooks
+            tools/cstimer-scramble
+      - name: Apply reviewed source changes once
         run: |
-          mkdir -p /tmp/native-puzzle-source
-          git ls-files -z -- '*.ts' '*.tsx' '*.mts' '*.mjs' '*/package.json' '*AGENTS.md' '.agents/skills/sim-add-puzzle/*' '.agents/skills/sim-add-puzzle/references/*' '.agents/skills/wca-event/*' '.github/workflows/*' 'core/pnpm-workspace.yaml' 'core/tsconfig.base.json' 'core/packages/event-icon/svg/puzzle/*' | while IFS= read -r -d '' path; do
-            if [[ -f "$path" ]]; then
-              cp --parents "$path" /tmp/native-puzzle-source/
-            fi
-          done
-          git rev-parse HEAD > /tmp/native-puzzle-source/COMMIT.txt
-          tar -czf native-puzzle-source.tar.gz -C /tmp/native-puzzle-source .
-      - uses: actions/upload-artifact@v4
+          if ! grep -q '  cube2heli: {' core/packages/puzzle-solvers/src/native-puzzles.ts; then
+            python .github/cube2heli-edit.py
+          fi
+      - uses: pnpm/action-setup@v6
         with:
-          name: native-puzzle-source
-          path: native-puzzle-source.tar.gz
-          retention-days: 2
-          if-no-files-found: error
+          package_json_file: core/package.json
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: core/pnpm-lock.yaml
+      - name: Install locked dependencies
+        working-directory: core
+        run: pnpm install --frozen-lockfile
+      - name: Build shared dependencies and generate canonical icons
+        working-directory: core
+        run: |
+          pnpm --filter @cuberoot/client build:deps
+          pnpm --filter @cuberoot/client exec node scripts/generate-puzzle-icons.mts
+          pnpm --filter @cuberoot/event-icon generate
+          pnpm --filter @cuberoot/client exec node scripts/native-puzzles/compare-outlines.mjs --set=cube2heli
+      - name: Commit only reviewed source and generated puzzle icon
+        run: |
+          if [[ -f /tmp/cube2heli-files.txt ]]; then
+            while IFS= read -r path; do git add -- "$path"; done < /tmp/cube2heli-files.txt
+          fi
+          git add core/packages/event-icon/svg/puzzle/cube2heli.svg core/packages/event-icon/src/svg-map-puzzle.ts
+          git diff --cached --check
+          if ! git diff --cached --quiet; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git commit -m 'feat(sim): add native 2x2 + Helicopter across simulator, scrambles and timer'
+            git push origin HEAD:codex/native-puzzle-20261013
+          fi
+          git rev-parse HEAD
+      - name: Typecheck
+        working-directory: core
+        run: pnpm --filter @cuberoot/client typecheck
+      - name: Model, notation, gestures, playback and cross-page regressions
+        working-directory: core
+        run: |
+          pnpm --filter @cuberoot/client exec vitest run \
+            tests/native-mixed-puzzles-geometry.test.ts \
+            tests/native-puzzle-drag.test.ts \
+            tests/native-puzzle-svg.test.ts \
+            tests/native-puzzle-manual-anchor.test.ts \
+            tests/native-puzzle-sim-controls.test.ts \
+            tests/twisty_2d_fallback.test.ts \
+            tests/native-puzzles-client-integration.test.ts \
+            tests/timer-scramble-preview-shared.test.ts \
+            tests/timer-scramble-source-bar.test.ts \
+            tests/timer_scramble_runtime.test.ts \
+            tests/timer_persistence.test.ts \
+            tests/timer_cstimer_io.test.ts \
+            tests/timer_battle_event_sync.test.ts \
+            tests/timer_nonwca_scramble.test.ts \
+            tests/puzzle-icon-catalog.test.ts \
+            tests/sim-puzzle-menu.test.ts \
+            --reporter=default --reporter=json --outputFile=/tmp/native-puzzle-tests.json
+      - name: Verify generated icons do not drift
+        working-directory: core
+        run: pnpm --filter @cuberoot/client exec node scripts/generate-puzzle-icons.mts --check
+      - name: Browser acceptance
+        if: ${{ hashFiles('.github/cube2heli-browser.mjs') != '' }}
+        working-directory: core/packages/client
+        run: |
+          pnpm exec playwright install --with-deps chromium
+          pnpm dev > /tmp/native-puzzle-dev.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          cp ../../../.github/cube2heli-browser.mjs .cube2heli-browser.mjs
+          node .cube2heli-browser.mjs
+      - name: Collect verification artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-puzzle-verification
+          path: |
+            /tmp/native-puzzle-tests.json
+            /tmp/native-puzzle-browser
+            /tmp/native-puzzle-dev.log
+            core/.tmp/png/cube2heli-outlines*.svg
+          retention-days: 7
