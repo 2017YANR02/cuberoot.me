@@ -1,0 +1,93 @@
+name: Cube2Heli final regression fixes
+on:
+  push:
+    branches: [codex/cube2heli-acceptance-20261013]
+    paths: ['.github/workflows/cube2heli-finish.yml']
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: codex/native-puzzle-20261013
+          filter: blob:none
+          sparse-checkout: |
+            core
+            .github
+            .codex
+            .githooks
+            docs
+            tools/cstimer-scramble
+      - name: Apply exact reviewed fixes
+        run: |
+          mkdir -p /tmp/cube2heli-finish
+          python - <<'PY'
+          from pathlib import Path
+          edits = {
+            'core/packages/client/tests/timer-puzzle-picker.test.ts': [
+              ("expect(host.querySelectorAll('.pp-item')).toHaveLength(59);", "expect(host.querySelectorAll('.pp-item')).toHaveLength(60);"),
+              ("expect(host.querySelectorAll('.pp-item')).toHaveLength(57);", "expect(host.querySelectorAll('.pp-item')).toHaveLength(58);"),
+            ],
+            'core/apps/miniprogram/scripts/build-tab-icons.mjs': [
+              ("  ['pages/tools/index', 'layout-grid'],", "  ['pages/tools/index', 'layout-grid'],\n  ['pages/training/index', 'dumbbell'],"),
+            ],
+            'core/apps/miniprogram/tests/build-tab-icons.test.mjs': [
+              ('generates all six local PNGs', 'generates all eight local PNGs'),
+              ('expect(tabs).toHaveLength(3);', "expect(tabs).toHaveLength(4);\n    expect(tabs.find((tab) => tab.pagePath === 'pages/training/index')).toMatchObject({\n      iconPath: 'assets/tabbar/dumbbell.png',\n      selectedIconPath: 'assets/tabbar/dumbbell-selected.png',\n    });"),
+              ('expect(paths.size).toBe(6);', 'expect(paths.size).toBe(8);'),
+            ],
+          }
+          for path, replacements in edits.items():
+              p = Path(path)
+              text = p.read_text()
+              for old, new in replacements:
+                  assert text.count(old) == 1, (path, old, text.count(old))
+                  text = text.replace(old, new)
+              p.write_text(text)
+          Path('/tmp/cube2heli-finish-files.txt').write_text('\n'.join(edits))
+          PY
+          git diff --check
+          git diff | tee /tmp/cube2heli-finish/changes.patch
+          while IFS= read -r path || [[ -n "$path" ]]; do git add -- "$path"; done < /tmp/cube2heli-finish-files.txt
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix: complete picker fixtures and restore training tab icon generation'
+          git push origin HEAD:codex/native-puzzle-20261013
+          git rev-parse HEAD > /tmp/cube2heli-finish/COMMIT.txt
+      - uses: pnpm/action-setup@v6
+        with:
+          package_json_file: core/package.json
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: core/pnpm-lock.yaml
+      - name: Install and build
+        working-directory: core
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm --filter @cuberoot/client build:deps
+      - name: Verify full picker and seeded-native contracts
+        id: picker
+        continue-on-error: true
+        working-directory: core
+        run: pnpm --filter @cuberoot/client exec vitest run tests/timer-puzzle-picker.test.ts tests/timer_event_catalog.test.ts tests/timer-drill-contract-shared.test.ts tests/timer-sync-seed.test.ts > /tmp/cube2heli-finish/client.log 2>&1
+      - name: Verify all Mini Program tests including actual generated PNGs
+        id: mini
+        continue-on-error: true
+        working-directory: core
+        run: pnpm --filter @cuberoot/miniprogram test > /tmp/cube2heli-finish/miniprogram.log 2>&1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cube2heli-final-fixes
+          path: /tmp/cube2heli-finish
+          retention-days: 7
+      - name: Require both suites
+        if: always()
+        run: |
+          test '${{ steps.picker.outcome }}' = success
+          test '${{ steps.mini.outcome }}' = success
