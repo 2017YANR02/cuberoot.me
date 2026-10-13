@@ -197,10 +197,11 @@ describe('关闭连续陀螺仪仍回放已识别转体', () => {
     expect(report).toMatch(/<PlaybackPanel[\s\S]{0,500}rotations=\{reconText\?\.rotations\}/);
   });
 
-  it('开关只切换姿态来源，关闭时走离散转体并在每帧更新时间', () => {
-    expect(pb).toMatch(/gyroOn && hasGyro[\s\S]{0,180}sampleGyroAt[\s\S]{0,180}rotationPoseAt/);
+  it('关闭时执行重建动作，开启时读取原始姿态', () => {
+    expect(pb).toContain('reconstructedTrack(lines, rawMoves)');
+    expect(pb).toContain('useRebuilt ? () => null');
     expect(pb).toMatch(/playbackQuatRef\.current = poseAt\(at\)/);
-    expect(pb).toMatch(/quatRef=\{playbackQuatRef\}/);
+    expect(pb).toMatch(/quatRef=\{useRebuilt \? undefined : playbackQuatRef\}/);
   });
 });
 
@@ -223,9 +224,10 @@ describe('打乱是谱子的第一行', () => {
   });
 
   it('观察那一手印在打乱下面 —— 少了它两边接不上', () => {
-    expect(src).toMatch(/\{recon\.inspection\}/);
+    expect(src).toMatch(/const displayInspection = .*: recon\.inspection;/);
+    expect(src).toMatch(/\{displayInspection\}/);
     const scramble = src.indexOf('sml-scramble');
-    const insp = src.indexOf('{recon.inspection}');
+    const insp = src.indexOf('{displayInspection}');
     expect(insp).toBeGreaterThan(scramble);
     expect(insp).toBeLessThan(src.indexOf('{groups.map('));
     // 剪贴板那一份也得带上,否则粘出去的谱子照着拧是错的。
