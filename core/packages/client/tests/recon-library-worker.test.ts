@@ -9,7 +9,7 @@ afterEach(() => { vi.unstubAllGlobals(); vi.resetAllMocks(); vi.resetModules(); 
 async function worker() {
   const host = { postMessage: vi.fn(), onmessage: null as null | ((event: unknown) => Promise<void>) };
   vi.stubGlobal('self', host);
-  await import('../../timer-ui/src/reconstruct/analysis.worker');
+  await import('@cuberoot/timer-ui/reconstruct/analysis.worker');
   return host;
 }
 const request = { data: { id: 1, input: { text: {}, scoreable: false } } };
