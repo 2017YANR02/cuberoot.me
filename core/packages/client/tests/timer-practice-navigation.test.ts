@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SCRAMBLE_222_TYPE_CATALOG, TIMER_333_SCRAMBLE_TYPES } from '@cuberoot/shared/timer';
+import { SCRAMBLE_222_TYPE_CATALOG, TIMER_333_SCRAMBLE_TYPES, TIMER_333_TRAINING_GROUPS } from '@cuberoot/shared/timer';
 import {
   TRAINING_DIRECTORY, resolveTrainingTarget, trainingEventForTarget,
 } from '@/lib/timer-training-catalog';
@@ -24,6 +24,14 @@ describe('timer practice content navigation', () => {
     for (const type of TIMER_333_SCRAMBLE_TYPES) {
       expect(entries.filter(entry => entry.timer?.event === type.event), type.event).toHaveLength(1);
     }
+    for (const group of TIMER_333_TRAINING_GROUPS) {
+      for (const event of group.events) {
+        expect(entries.find(entry => entry.timer?.event === event)?.group, event)
+          .toEqual({ id: group.id, title: group.label });
+      }
+    }
+    expect(entries[0].group).toBeUndefined();
+    expect(entries.filter(entry => entry.set && !entry.timer).every(entry => entry.group?.id === 'other-formulas')).toBe(true);
     for (const path of ['/alg/333/oll/select', '/alg/3x3/oll/run', '/alg/333/oll/one', '/recognize/oll', '/recognize/oll/guide']) {
       expect(selectedTimerPracticeContent(entries, '333', 'full', resolveTrainingTarget(path)), path).toBe(oll);
     }

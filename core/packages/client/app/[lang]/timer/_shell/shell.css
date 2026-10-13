@@ -34,7 +34,9 @@
   flex: 1 0 auto;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto minmax(min-content, 1fr);
+  grid-template-rows: auto auto;
+  align-content: center;
+  row-gap: clamp(12px, 2dvh, 24px);
   align-items: stretch;
 }
 .timer-shell :is(.timing-surface--solo, .timing-surface--net) .timing-surface-scramble-top {
@@ -65,18 +67,27 @@
   overflow: visible;
 }
 
-/* Scrambles, results and recaps expand with the document. The solution panel
-   keeps its independent scrolling; full-screen results use one outer scroller. */
-.timer-shell :is(.timer-workspace-panel, .timer-workspace-panel-body,
-  .shell-recap, .shell-recap-body, .history-panel, .history-list,
+/* Sidebars must not contribute their content height to the timer's grid.
+   Only the main content may grow the document on short screens. */
+@media (min-width: 1024px) {
+  .timer-shell.timer-workspace.timer-workspace {
+    grid-template-rows: auto minmax(min-content, 1fr);
+  }
+  .timer-shell .timer-workspace-panel {
+    contain: size;
+    max-height: calc(100dvh - var(--page-notice-h, 0px));
+    overflow: hidden;
+  }
+}
+
+/* Keep one outer scroller in each sidebar, with its content fully expanded. */
+.timer-shell :is(.history-panel, .history-list,
   .stats-panel, .case-stats-panel, .case-stats-scroll,
   .reconstruct-move-list, .reconstruct-playback-side) {
   height: auto;
   max-height: none;
   overflow: visible;
 }
-.timer-shell .shell-recap { flex: 0 0 auto; }
-.timer-shell .shell-recap-rail > .shell-recap { height: auto; }
 
 /* ── Topbar ─────────────────────────────────────────────── */
 /* 「难度」开关的挂点。内容由打乱来源条里的 WcaSourceConfig / GenDiffConfig portal 过来

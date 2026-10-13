@@ -1,6 +1,6 @@
 import type { AlgPuzzle } from '@cuberoot/shared/alg';
 import {
-  SCRAMBLE_222_TYPE_CATALOG, TIMER_333_SCRAMBLE_TYPES, eventInfo,
+  SCRAMBLE_222_TYPE_CATALOG, TIMER_333_SCRAMBLE_TYPES, TIMER_333_TRAINING_GROUPS, eventInfo,
   isScramble222Type, timerEventIdFromSelector,
   type EventId, type Scramble222Type,
 } from '@cuberoot/shared/timer';
@@ -104,6 +104,18 @@ export function timerPracticeContents(event: string): readonly TimerPracticeCont
       addTimer(`timer:222:${type.id}`, type.label, '2x2', formulaSetForTimer('222', type.id), {
         event: separateEvent ? type.id : '222', type222: separateEvent ? 'full' : type.id,
       });
+    }
+  }
+
+  // Reuse the app's training categories after joining timer and formula entries.
+  // Grouping must not replace their route, provider or session identity.
+  if (puzzle === '333') {
+    for (const entry of [...formulas, ...randomOnly]) {
+      const group = TIMER_333_TRAINING_GROUPS.find(group =>
+        (group.events as readonly string[]).includes(entry.timer?.event ?? ''));
+      entry.group = group
+        ? { id: group.id, title: group.label }
+        : { id: 'other-formulas', title: { zh: '其他公式', en: 'Other formulas' } };
     }
   }
 
