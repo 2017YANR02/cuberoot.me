@@ -1,4 +1,5 @@
 import { buildReconText } from '@cuberoot/shared/timer/reconstruct/recon-text';
+import { correctReconFromLibrary } from '@cuberoot/shared/timer/reconstruct/library-correction';
 import { computeStageReferences, computeF2lSlotReferences } from '@cuberoot/shared/timer/reconstruct/reference';
 import type { AnalysisRequest, AnalysisResponse } from './analysis-protocol';
 
@@ -10,7 +11,12 @@ self.onmessage = async ({ data }: MessageEvent<AnalysisRequest>) => {
   const failed = (error: unknown) => send({ error: String(error) });
   try {
     // The visible move list must not wait for the optional reference searches.
-    if (!data.skipText) send({ patch: { text: await buildReconText(text) } });
+    if (!data.skipText) {
+      const original = await buildReconText(text);
+      send({ patch: { text: original } });
+      const corrected = await correctReconFromLibrary(original).catch(() => original);
+      if (corrected !== original) send({ patch: { text: corrected } });
+    }
   } catch (error) { failed(error); }
   const physical = text.physical ?? text;
   if (scoreable && text.metrics) {

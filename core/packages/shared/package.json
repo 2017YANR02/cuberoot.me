@@ -75,6 +75,7 @@
       "./timer/reconstruct/core-track": "runtime-neutral",
       "./timer/reconstruct/humanize": "runtime-neutral",
       "./timer/reconstruct/recon-text": "mixed",
+      "./timer/reconstruct/library-correction": "mixed",
       "./timer/reconstruct/slice": "runtime-neutral",
       "./timer/reconstruct/stage-segments": "runtime-neutral",
       "./timer/reconstruct/gyro-orient": "runtime-neutral",
@@ -480,6 +481,10 @@
     "./timer/reconstruct/recon-text": {
       "node": "./dist/timer/reconstruct/recon_text.js",
       "default": "./src/timer/reconstruct/recon_text.ts"
+    },
+    "./timer/reconstruct/library-correction": {
+      "node": "./dist/timer/reconstruct/library_correction.js",
+      "default": "./src/timer/reconstruct/library_correction.ts"
     },
     "./timer/reconstruct/slice": {
       "node": "./dist/timer/reconstruct/slice.js",

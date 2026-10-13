@@ -90,6 +90,11 @@ export interface ReconTextLine {
   moveRanges?: RangeMoveItem[];
   /** Waste group per display token; null denotes an ordinary move. */
   wasteGroups?: Array<number | null>;
+  /** Library presentation groups, separate from physically observed waste loops. */
+  algorithmGroups?: Array<{ from: number; to: number }>;
+  /** Derived correction only; the original notation and timing remain recoverable. */
+  libraryCorrection?: { algorithm: string; originalMoves: string[]; originalRanges: RangeMoveItem[];
+    implicitAuf?: { before: string; after: string } };
   /** 在原始动作流里的闭区间。 */
   fromIdx: number;
   toIdx: number;
@@ -291,6 +296,9 @@ export function formatReconLine(line: ReconTextLine): string {
 /** Keep one token per playback range; parentheses never become extra moves. */
 export function formattedReconMoves(line: ReconTextLine): string[] {
   return line.moves.map((move, i) => {
+    const opens = line.algorithmGroups?.filter(group => group.from === i).length ?? 0;
+    const closes = line.algorithmGroups?.filter(group => group.to === i + 1).length ?? 0;
+    move = `${'('.repeat(opens)}${move}${')'.repeat(closes)}`;
     const group = line.wasteGroups?.[i];
     if (group == null) return move;
     const open = i === 0 || line.wasteGroups?.[i - 1] !== group;
@@ -935,6 +943,7 @@ export function applyReconTextOverride(
       ...line,
       moves: parsed[i]!.moves,
       wasteGroups: undefined,
+      algorithmGroups: undefined,
       label: parsed[i]!.label,
     })),
     text: lines.join('\n'),
