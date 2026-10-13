@@ -10,10 +10,15 @@ import { reconstructedTrack, playbackIndexForRaw } from '../../timer-ui/src/reco
 import Cube from '@cuberoot/puzzle-render-core/engine/nxn/cube';
 import tweener from '@cuberoot/puzzle-render-core/engine/tweener';
 import { planSimUpdate } from '@cuberoot/shared/timer/sim-log';
+import { Quaternion, Vector3 } from 'three';
+
+const sim = vi.hoisted(() => ({ quatRef: undefined as { current: { x: number; y: number; z: number; w: number } | null } | undefined }));
 
 vi.mock('@cuberoot/timer-ui/SimCubeView', () => ({
-  default: ({ moves, quatRef, pose, moveDurationTicks }: { moves: string[]; quatRef?: unknown; pose?: string; moveDurationTicks?: number }) =>
-    createElement('div', { 'data-moves': moves.join(' '), 'data-quat': !!quatRef, 'data-pose': pose, 'data-duration': moveDurationTicks }),
+  default: ({ moves, quatRef, pose, moveDurationTicks }: { moves: string[]; quatRef?: typeof sim.quatRef; pose?: string; moveDurationTicks?: number }) => {
+    sim.quatRef = quatRef;
+    return createElement('div', { 'data-moves': moves.join(' '), 'data-quat': !!quatRef, 'data-pose': pose, 'data-duration': moveDurationTicks });
+  },
 }));
 
 const raw = ['R', "L'", 'U', 'F'].map((m, i) => ({ m, ts: [100, 120, 300, 400][i] }));
@@ -44,6 +49,48 @@ async function click(label: string) {
   await act(async () => button.click());
 }
 function shown() { return container.querySelector('[data-moves]'); }
+it.each(['y', "y'"])('uses displayed-frame %s even before range mapping is available', async turn => {
+  await act(async () => root.render(createElement(PlaybackPanel, {
+    event: '333', scramble: 'B', moves: [{ m: 'U', ts: 300 }], totalMs: 500, isZh: false,
+    viewRotation: 'z2', rotations: [{ token: turn, tMs: 100 }],
+  })));
+  await vi.waitFor(() => expect(shown()).not.toBeNull());
+  await click('Step forward');
+  expect(shown()!.getAttribute('data-pose')).toBe('z2');
+  const pose = sim.quatRef!.current!;
+  // Pose is applied outside the already posed model: its current right/left
+  // vector must rotate to front, regardless of which colour is on top.
+  const direction = new Vector3(turn === 'y' ? 1 : -1, 0, 0)
+    .applyQuaternion(new Quaternion(pose.x, pose.y, pose.z, pose.w));
+  expect(direction.z).toBeCloseTo(1);
+  expect(direction.x).toBeCloseTo(0);
+});
+
+it('keeps reconstructed rotations after commuting opposite faces reorder encoder ranges', async () => {
+  const moves = ['U', 'D', 'R'].map((m, i) => ({ m, ts: [100, 120, 400][i] }));
+  const mapped = [{ ...lines[0], fromIdx: 0, toIdx: 2, moves: ['D', 'U', 'y', 'R'], moveRanges: [
+    { token: 'D', ts: 120, endTs: 120, startIdx: 1, endIdx: 1 },
+    { token: 'U', ts: 100, endTs: 100, startIdx: 0, endIdx: 0 },
+    { token: 'y', ts: 300, endTs: 300, startIdx: 2, endIdx: 1 },
+    { token: 'R', ts: 400, endTs: 400, startIdx: 2, endIdx: 2 },
+  ] }];
+  await act(async () => root.render(createElement(PlaybackPanel, {
+    event: '333', scramble: 'B U B2 D U L F', moves, totalMs: 500, isZh: false,
+    lines: mapped, viewRotation: 'z2', rotations: [{ token: 'y', tMs: 300 }],
+  })));
+  await vi.waitFor(() => expect(shown()).not.toBeNull());
+  expect(shown()!.getAttribute('data-quat')).toBe('false');
+  await click('Step forward');
+  await click('Step forward');
+  await click('Step forward');
+  expect(shown()!.getAttribute('data-moves')).toBe('B U B2 D U L F z2 D U y');
+  const track = reconstructedTrack(mapped, moves)!;
+  expect(track.map(move => move.rawAfter)).toEqual([2, 2, 2, 3]);
+  expect(playbackIndexForRaw(track, 1, 120)).toBe(0);
+  expect(playbackIndexForRaw(track, 2, 300)).toBe(3);
+  expect(reconstructedTrack([{ ...mapped[0], moveRanges: [...mapped[0].moveRanges, mapped[0].moveRanges[0]] }], moves)).toBeNull();
+});
+
 it.each(['', 'z2'].flatMap(grip => ['y', "y'"].map(turn => ({ grip, turn }))))(
   'rotates $turn relative to the displayed grip ($grip), in both animation and seek', async ({ grip, turn }) => {
     const moves = [{ m: 'U', ts: 300 }];

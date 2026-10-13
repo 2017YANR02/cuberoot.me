@@ -11,18 +11,27 @@ export interface PlaybackMove extends SolveMove {
 export function reconstructedTrack(lines: ReconTextLine[] | undefined, raw: SolveMove[]): PlaybackMove[] | null {
   if (!lines?.length) return null;
   const out: PlaybackMove[] = [];
+  const covered = new Set<number>();
   let consumed = 0;
   for (const line of lines) {
     if (!line.moveRanges) return null;
     for (const range of line.moveRanges) {
       const rotation = range.endIdx < range.startIdx;
-      if (!rotation && (range.startIdx !== consumed || range.endIdx >= raw.length)) return null;
-      if (!rotation) consumed = range.endIdx + 1;
+      if (!rotation) {
+        if (range.startIdx < 0 || range.endIdx >= raw.length) return null;
+        // Opposite faces commute and notation may reorder their encoder ranges.
+        // Require complete, unique coverage, not strictly increasing indices.
+        for (let i = range.startIdx; i <= range.endIdx; i++) {
+          if (covered.has(i)) return null;
+          covered.add(i);
+        }
+        consumed = Math.max(consumed, range.endIdx + 1);
+      }
       const ts = Math.max(out.at(-1)?.ts ?? 0, range.ts);
       out.push({ m: range.token, ts, endTs: Math.max(ts, range.endTs), rawAfter: consumed });
     }
   }
-  return consumed === raw.length && out.length > 0 ? out : null;
+  return covered.size === raw.length && out.length > 0 ? out : null;
 }
 
 export function playbackIndexAt(moves: PlaybackMove[], ms: number): number {

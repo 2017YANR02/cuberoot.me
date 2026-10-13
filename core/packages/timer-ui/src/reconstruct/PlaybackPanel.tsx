@@ -49,7 +49,7 @@ import { timerEventNxnSize as nxnSizeForEvent } from '@cuberoot/shared/timer';
 import { decodeGyroTrack, sampleGyroAt } from '@cuberoot/shared/smart-cube/gyro-track';
 import { mirrorForBrand, sensorBasisForBrand } from '@cuberoot/shared/smart-cube/orientation';
 import type { Quat } from '@cuberoot/shared/smart-cube/orientation';
-import { rotationPoseAt } from '@cuberoot/shared/timer/reconstruct/rotation-detect';
+import { notationQuaternion } from '@cuberoot/shared/timer/reconstruct/gyro-orient';
 import type { HumanRotation } from '@cuberoot/shared/timer/reconstruct/humanize';
 import type { ReconTextLine } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import type { SolveMove } from '@cuberoot/shared/timer/reconstruct/stage-segments';
@@ -138,7 +138,10 @@ export default function PlaybackPanel({
     posed
       ? (tMs: number) => sampleGyroAt(gyroTrack, tMs)
       : useRebuilt ? () => null
-        : (tMs: number) => rotationPoseAt(rotations ?? [], tMs)
+        // Written rotations are clockwise in the displayed frame. The detector's
+        // body-frame quaternion uses the opposite sign and composition order.
+        : (tMs: number) => notationQuaternion((rotations ?? [])
+          .filter(rotation => rotation.tMs <= tMs).map(rotation => rotation.token).join(' '))
   ), [posed, useRebuilt, gyroTrack, rotations]);
 
   useEffect(() => {
