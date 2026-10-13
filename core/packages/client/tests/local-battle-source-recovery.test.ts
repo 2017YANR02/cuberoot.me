@@ -1,21 +1,37 @@
 // @vitest-environment jsdom
 import { beforeEach, expect, it, vi } from 'vitest';
+import type { TimerWcaSourceSettings } from '@cuberoot/shared/timer';
+import type { WcaSourceSpec } from '@/app/[lang]/timer/_lib/scramble/wca_pool';
 import { initialLocalBattleState, transitionLocalBattle, createLocalBattleRound, requestLocalBattleScramble,
   normalizeTimerWcaSourceSettings, defaultLocalBattlePreferences, readLocalBattlePreferences, saveLocalBattlePreferences } from '@cuberoot/shared/timer';
-const source = vi.hoisted(() => ({ kind: 'wca', available: true, random: 'R', next: null as (() => Promise<unknown>) | null }));
-vi.mock('@/app/[lang]/timer/_lib/settings', () => ({ getSettings: () => ({ ...normalizeTimerWcaSourceSettings({}), scrambleSource: source.kind }) }));
+const source = vi.hoisted(() => ({ kind: 'wca', available: true, random: 'R', settings: {} as Partial<TimerWcaSourceSettings>, next: null as ((spec: WcaSourceSpec) => Promise<unknown>) | null }));
+vi.mock('@/app/[lang]/timer/_lib/settings', () => ({ getSettings: () => ({ ...normalizeTimerWcaSourceSettings(source.settings), scrambleSource: source.kind }) }));
 vi.mock('@cuberoot/timer-ui/random-scramble', () => ({ createRandomScrambleClient: () => ({ generate: async ({ event }: { event: string }) => ({ ok: true, kind: 'generated', event, scramble: source.random }) }) }));
 vi.mock('@/app/[lang]/timer/_battle/engine/engine_loader', () => ({ isScrambleEngineReady: () => true, loadScrambleEngine: async () => {} }));
 vi.mock('@/app/[lang]/timer/_battle/engine/scramble_engine', () => ({ generateScramble: () => source.random, generateScrambleImageUrl: () => null }));
 vi.mock('@/app/[lang]/timer/_lib/scramble/wca_pool', () => ({
-  hasWcaSource: () => source.available, peekWcaRow: () => null, nextWcaRow: () => source.next?.() ?? Promise.resolve(null), prefetchWca: () => {},
+  hasWcaSource: () => source.available, peekWcaRow: () => null, nextWcaRow: (spec: WcaSourceSpec) => source.next?.(spec) ?? Promise.resolve(null), prefetchWca: () => {},
 }));
 const { useBattleStore } = await import('@/app/[lang]/timer/_battle/engine/battle_store');
 beforeEach(() => {
-  localStorage.clear(); source.kind = 'wca'; source.available = true; source.random = 'R'; source.next = null;
+  localStorage.clear(); source.kind = 'wca'; source.available = true; source.random = 'R'; source.settings = {}; source.next = null;
   const s = useBattleStore.getState();
   useBattleStore.setState({ mode: '1v1', playerCount: 2, puzzleIds: ['333', '333', '333', '333'], scrambleRows: [null, null, null, null], scrambleErrors: [false, false, false, false],
     players: s.players.map(player => ({ ...player, isTiming: false, isReady: false, isInspecting: false, canStart: false, hasFinished: false, timerState: undefined, timerResult: undefined })) });
+});
+it.each([
+  { name: 'unpicked competition', settings: {}, expected: { mode: 'date', comp: '', round: '', group: '', from: '', to: '' } },
+  { name: 'cleared competition with stale filters', settings: { wcaRound: 'f', wcaGroup: 'A', wcaDateFrom: '2026-01-01', wcaDateTo: '2026-02-01' }, expected: { mode: 'date', comp: '', round: '', group: '', from: '', to: '' } },
+  { name: 'selected competition', settings: { wcaComp: 'Example2026', wcaCompName: 'Example', wcaRound: 'f', wcaGroup: 'A' }, expected: { mode: 'comp', comp: 'Example2026', compName: 'Example', round: 'f', group: 'A' } },
+  { name: 'date range', settings: { wcaScrambleMode: 'date' as const, wcaDateFrom: '2026-01-01', wcaDateTo: '2026-02-01' }, expected: { mode: 'date', from: '2026-01-01', to: '2026-02-01' } },
+])('resolves the multiplayer WCA source for $name', async ({ settings, expected }) => {
+  source.settings = settings;
+  const next = vi.fn(async (_spec: WcaSourceSpec) => ({ scramble: "R U R'", slot: 'official-slot', meta: null }));
+  source.next = next;
+  useBattleStore.getState().loadNewScramble();
+  await vi.waitFor(() => expect(useBattleStore.getState().scrambles.slice(0, 2)).toEqual(["R U R'", "R U R'"]));
+  expect(next).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ event: '333', ...expected }));
+  expect(useBattleStore.getState().scrambleErrors.slice(0, 2)).toEqual([false, false]);
 });
 it('does not turn missing real data, incomplete selection or random error text into a playable scramble', async () => {
   for (const mode of ['missing', 'incomplete', 'random-error']) {

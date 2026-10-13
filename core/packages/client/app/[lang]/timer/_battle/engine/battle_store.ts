@@ -1,4 +1,4 @@
-import { timerSupportsRealWcaScrambles, readLocalBattlePreferences, requestLocalBattleScramble, type LocalBattleScramble, summarizeLocalBattleRounds } from '@cuberoot/shared/timer';
+import { resolveTimerWcaSourceCore, timerSupportsRealWcaScrambles, readLocalBattlePreferences, requestLocalBattleScramble, type LocalBattleScramble, summarizeLocalBattleRounds } from '@cuberoot/shared/timer';
 /**
  * Battle 模块 Zustand Store
  * 1:1 翻译自 battle.js state 对象 + 全部 action 函数
@@ -64,15 +64,16 @@ export const keyToPlayer = localBattlePlayerForKey;
  *  settings (scramble source config is shared across Solo + Duo). */
 function wcaSpecFor(puzzleId: string): WcaSourceSpec {
   const st = getSettings();
+  const source = resolveTimerWcaSourceCore(st);
   return {
     event: battleToTimerEvent(puzzleId),
-    mode: st.wcaScrambleMode,
-    comp: st.wcaComp,
-    compName: st.wcaCompName,
-    round: st.wcaRound,
-    group: st.wcaGroup,
-    from: st.wcaDateFrom,
-    to: st.wcaDateTo,
+    mode: source.mode,
+    comp: source.comp,
+    compName: source.compName,
+    round: source.round,
+    group: source.group,
+    from: source.from,
+    to: source.to,
     optimal: st.wcaUseOptimal,
   };
 }
