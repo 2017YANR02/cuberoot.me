@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import '@cuberoot/app-ui/app.css';
 
 import { capacitorHost } from './capacitor-host';
+import { initializeDistribution } from './distribution';
 
 const App = lazy(async () => {
   const module = await import('@cuberoot/app-ui');
@@ -16,10 +17,10 @@ if (!root) {
   throw new Error('Missing #root mount point');
 }
 
-createRoot(root).render(
+void initializeDistribution().then(() => createRoot(root).render(
   <StrictMode>
     <Suspense fallback={<main className="loading-screen"><strong>CubeRoot</strong></main>}>
       <App host={capacitorHost} />
     </Suspense>
   </StrictMode>,
-);
+));

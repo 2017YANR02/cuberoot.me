@@ -1,6 +1,7 @@
 import { Capacitor } from '@capacitor/core';
 import { handleAppleMembership, listenForAppleMembership } from '../apple-membership';
 import { handleGoogleMembership, listenForGoogleMembership } from '../google-membership';
+import { usesGooglePayments } from '../distribution';
 import { App as CapacitorApp } from '@capacitor/app';
 import { useCallback, useEffect } from 'react';
 import {
@@ -46,7 +47,7 @@ export function useMobileAuth(language: SupportedLanguage) {
   }, [auth.loading, auth.session]);
   useEffect(() => {
     const session = auth.session;
-    if (Capacitor.getPlatform() !== 'android' || !session?.user.uid || auth.loading) return;
+    if (!usesGooglePayments() || !session?.user.uid || auth.loading) return;
     let running = false;
     const sync = () => {
       if (running) return;

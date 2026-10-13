@@ -68,6 +68,8 @@ APP 备案、网站 ICP 备案、经营性许可和软件著作权是不同事�
 
 ## 4. 官网直链 APK：可以做，但要维护完整升级链路
 
+仓库现提供 `play`／`direct` 原生构建配置，官网 APK 使用 `direct`，复用网站支付宝／微信手机收银台；Play 包继续用 Play Billing。构建命令、产物路径、签名与升级约束见 [Mobile README](../core/apps/mobile/README.md#android-payment-distributions)，实现验证状态以 [路线图](./mobile-app-roadmap.md) 为准。这个配置不自动表示任一国内商店已批准相同支付方式，也不等于 APK 已发布。
+
 官网分发适合作为基础渠道。建议下载页列出发布者、版本、大小、最低系统要求、更新说明、隐私/权限信息、APP 备案号，以及版本固定的 HTTPS APK 链接和 SHA-256。优先使用大陆实测可达的现有域名和文件服务；本轮没有测试运营商线路，不能直接宣称某个现有域名已适合大文件分发。
 
 安装流程是下载 APK、允许浏览器或文件管理器安装该来源应用，再由系统确认安装。安全提示、商店引导和企业设备限制可能增加步骤；不要求用户整体关闭安全防护。网站分发也不会自动获得商店的更新能力，应确定后续版本提示和下载入口。[Android 分发说明](https://developer.android.com/distribute/marketing-tools/alternative-distribution)

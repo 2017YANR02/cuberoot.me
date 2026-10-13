@@ -3,6 +3,8 @@ import { createStackmatMicSource } from '@cuberoot/timer-ui/external';
 import { NativeBleTransport } from './bluetooth/native-ble-transport';
 import { handleAppleMembership } from './apple-membership';
 import { handleGoogleMembership } from './google-membership';
+import { usesDirectPayments, usesGooglePayments } from './distribution';
+import { handleWebMembership } from './web-membership';
 import { App as NativeApp } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
 import { Clipboard } from '@capacitor/clipboard';
@@ -24,7 +26,8 @@ export const capacitorHost: InstalledAppHost = {
   createBleTransport: () => new NativeBleTransport(),
   createStackmatSource: createStackmatMicSource,
   appleMembership: Capacitor.getPlatform() === 'ios' ? handleAppleMembership : undefined,
-  googleMembership: Capacitor.getPlatform() === 'android' ? handleGoogleMembership : undefined,
+  get googleMembership() { return usesGooglePayments() ? handleGoogleMembership : undefined; },
+  get webMembership() { return usesDirectPayments() ? handleWebMembership : undefined; },
   addBackButtonListener: (listener) => NativeApp.addListener('backButton', listener),
   addNetworkListener: (listener) => Network.addListener(
     'networkStatusChange',

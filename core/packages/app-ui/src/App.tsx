@@ -68,6 +68,7 @@ import {
 } from '@cuberoot/shared/mobile-embed';
 import { MOBILE_AUTH_PROVIDERS } from '@cuberoot/shared/auth/web-session';
 import { openInstalledAccountManagement } from './auth/account-management';
+import { decodeWebMembershipRequest } from '@cuberoot/shared/mobile-embed';
 import { toLocalIsoDate } from '@cuberoot/shared/iso-date';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import {
@@ -1767,7 +1768,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     clearWebSurfaceHandshake(surface);
     if (connection !== 'online') return;
     const postInit = () => webFrameRefs.current[surface]?.contentWindow?.postMessage(
-      mobileEmbedInitMessage(surface, { authProviders: MOBILE_AUTH_PROVIDERS, accountManagement: true, appleMembership: Boolean(host.appleMembership), googleMembership: Boolean(host.googleMembership), bluetooth: surface === 'tools' && Boolean(host.createBleTransport) }),
+      mobileEmbedInitMessage(surface, { authProviders: MOBILE_AUTH_PROVIDERS, accountManagement: true, appleMembership: Boolean(host.appleMembership), googleMembership: Boolean(host.googleMembership), webMembership: Boolean(host.webMembership), bluetooth: surface === 'tools' && Boolean(host.createBleTransport) }),
       SITE_ORIGIN,
     );
     webHandshakeRetryRef.current[surface] = startWebSurfaceHandshake(
@@ -2013,7 +2014,7 @@ export function App({ host }: { host: InstalledAppHost }) {
       const accountFrame = webFrameRefs.current.account;
       const accountSource = Boolean(accountFrame && event.source === accountFrame.contentWindow);
 
-      const purchase = decodeAppleMembershipRequest(event.data) ?? decodeGoogleMembershipRequest(event.data);
+      const purchase = decodeAppleMembershipRequest(event.data) ?? decodeGoogleMembershipRequest(event.data) ?? decodeWebMembershipRequest(event.data);
       if (purchase) {
         const frame = webFrameRefs.current[purchase.surface];
         if (!frame || event.source !== frame.contentWindow) return;
@@ -2024,7 +2025,9 @@ export function App({ host }: { host: InstalledAppHost }) {
           reply({ status: 'error' }); return;
         }
         const operation = purchase.type === 'cuberoot:mobile:apple-membership'
-          ? host.appleMembership?.(purchase, session) : host.googleMembership?.(purchase, session);
+          ? host.appleMembership?.(purchase, session)
+          : purchase.type === 'cuberoot:mobile:google-membership'
+            ? host.googleMembership?.(purchase, session) : host.webMembership?.(purchase, session);
         if (!operation) { reply({ status: 'error' }); return; }
         void operation.then(reply).catch(() => reply({ status: 'error' }));
         return;

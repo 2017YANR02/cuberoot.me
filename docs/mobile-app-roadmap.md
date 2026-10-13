@@ -1,5 +1,12 @@
 # CubeRoot 五端 App 完整路线图
 
+### 2026-10-13：官网 Android 直链版支付渠道（本地实现，未发布）
+
+- 单一源码和 Web bundle，原生 Gradle `mobileDistribution=play|direct`（默认 Play）决定支付能力。direct 产物在 `app/build/direct/`，不覆盖 Play；正式 APK scripts 强制既有发布签名，direct 不产 AAB。包名保持不变，跨渠道升级仍须核对 app-signing 证书和更高 versionCode，不能把 Play upload key 当成相同安装签名。
+- direct 不注册或同步 Play Billing，复用网站订单、支付宝／微信官方 H5 收银台与服务端验单。宿主校验消息源、账号及收银 URL，经商户域名中转页在系统浏览器打开；返回／取消仅触发查单，支持轮询和手动查询。没有新增支付 SDK、账号体系或数据库结构；Android 现有 Billing 依赖仍打包但不启用。Play、Apple 能力保持原路径。补充原商店自动续费管理提示，网站／商店权益并存不叠加。
+- 本地验证：shared build；client、app-ui、mobile、API 类型检查；16 项 mobile 渠道／支付 adapter 用例、30 项网站桥／支付弹窗／既有 Apple 认证桥用例、5 项 app-ui Web surface 用例、17 项 API 下单／结算用例通过（26 项数据库集成用例因未配置测试库跳过）。新增 checkout 路由后通过 `next typegen` 刷新路由声明再验 client 类型。Mobile Vite build + Capacitor Android sync 通过。JDK 17 下 direct `:app:generateDebugBuildConfig` 通过并确认为 `direct`；完整 assembleDebug 在 Capacitor Java 21 源码编译处失败。另有本机 JBR 25，但 Gradle 8.14.3 不支持其 class version 69，未变更系统 Java 配置。
+- 未完成：JDK 21 下原生完整编译、正式签名 APK、真机支付宝／微信 H5 Referer 与钱包唤起／取消／返回、弱网与进程恢复、最终发布包隐私核对。四项 `MOBILE_UPLOAD_*` 当前均未配置；未生成或接入正式下载包，未部署或推送。CI 已增加 direct release 构建、签名和渠道检查，尚未运行。
+
 ### 2026-10-13：Google Play 已上架；中国大陆 Android 分发调研
 
 - 所有者确认 CubeRoot 已在 Google Play 成功上架，当前发行状态由“已提交审核”更新为“已上架”。2026-10-13 是本次确认日期，不作为首次上架日期；本次未登录 Console 核验正式版本号、实际开放地区或放量比例，不将此前送审的 `0.1.0 (1003)` 自动认定为当前线上版本。

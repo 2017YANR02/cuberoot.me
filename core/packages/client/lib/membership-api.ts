@@ -237,11 +237,12 @@ export async function createOrder(
   channel: PaymentChannel,
   clientType: 'pc' | 'wap',
   language: 'zh' | 'en',
+  checkoutContext?: 'android-direct',
 ): Promise<OrderInfo> {
   return handleApi(await sessionFetch(`${BASE}/orders`, {
     method: 'POST',
     headers: authHeaders(),
-    body: JSON.stringify({ plan, channel, clientType, language }),
+    body: JSON.stringify({ plan, channel, clientType, language, checkoutContext }),
   }));
 }
 
