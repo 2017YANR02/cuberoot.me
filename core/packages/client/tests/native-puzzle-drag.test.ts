@@ -22,6 +22,7 @@ const CASES = [
   { id: 'quadx', stickers: 126, moves: 36, outer: 12, inner: 12, wide: 12 },
   { id: 'dinoocta', stickers: 80, moves: 24, outer: 8, inner: 8, wide: 8 },
   { id: 'fto5', stickers: 200, moves: 40, outer: 8, inner: 8, wide: 8, inner3: 8, wide3: 8 },
+  { id: 'fto6', stickers: 288, moves: 40, outer: 8, inner: 8, wide: 8, inner3: 8, wide3: 8 },
   { id: 'eto', stickers: 104, moves: 36, outer: 12, inner: 12, wide: 12 },
   { id: 'radiocrystal', stickers: 300, moves: 60, outer: 20, inner: 20, wide: 20 },
   { id: 'cube3skewb', stickers: 126, moves: 26, outer: 14, inner: 6, wide: 6 },
