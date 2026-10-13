@@ -792,10 +792,16 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
 
       // Re-run the driver handshake to resume the move stream. Re-arm the
       // gyro sink too, or orientation would silently die after any drop.
+      let notifiedBattery: number | null = null;
       started = await driver.start(server, (move, deviceTs, metadata) => {
         if (isCurrentSession()) session.move(move, deviceTs, metadata);
       }, {
         mac: macRef.current,
+        onBattery: (level) => {
+          if (!isCurrentSession() || !session.isCurrent()) return;
+          notifiedBattery = level;
+          setStatus(s => ({ ...s, battery: level }));
+        },
         onState: (nextFacelets) => {
           if (isCurrentSession()) adoptCubeState(session, nextFacelets);
         },
@@ -816,7 +822,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       setStatus({
         connected: true,
         brand: driver.brand,
-        battery: null,
+        battery: notifiedBattery,
         deviceName: prettyDeviceName(device),
         deviceId: device.id,
         hasGyro: driver.hasGyro === true || gyroSeenRef.current,
@@ -824,7 +830,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
 
       void started.battery().then(b => {
         if (isCurrentSession() && session.isCurrent() && deviceRef.current === device) {
-          setStatus(s => ({ ...s, battery: b }));
+          setStatus(s => ({ ...s, battery: notifiedBattery ?? b }));
         }
       }).catch(() => {});
 
@@ -1122,11 +1128,17 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       activeSession = session;
 
       let started: Awaited<ReturnType<CubeDriver['start']>>;
+      let notifiedBattery: number | null = null;
       try {
         started = await driver!.start(server, (move, deviceTs, metadata) => {
           if (isCurrentSession()) session.move(move, deviceTs, metadata);
         }, {
           mac: macToUse,
+          onBattery: (level) => {
+            if (!isCurrentSession() || !session.isCurrent()) return;
+            notifiedBattery = level;
+            setStatus(s => ({ ...s, battery: level }));
+          },
           onKeyError: () => {
             if (isCurrentSession() && session.isCurrent()) handleKeyError();
           },
@@ -1157,7 +1169,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       setStatus({
         connected: true,
         brand: driver!.brand,
-        battery: null,
+        battery: notifiedBattery,
         deviceName: prettyDeviceName(device),
         deviceId: device.id,
         hasGyro: driver!.hasGyro === true || gyroSeenRef.current,
@@ -1165,7 +1177,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       // Read battery in the background; failures fall back to null silently.
       void started.battery().then(b => {
         if (isCurrentSession() && session.isCurrent() && deviceRef.current === device) {
-          setStatus(s => ({ ...s, battery: b }));
+          setStatus(s => ({ ...s, battery: notifiedBattery ?? b }));
         }
       }).catch(() => {});
     };

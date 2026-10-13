@@ -148,6 +148,7 @@ export const ganV4Driver: CubeDriver = {
     });
     let keyErrorFired = false;
     let cleaned = false;
+    let batteryRetry: ReturnType<typeof setTimeout> | undefined;
     const idleStateChecks = createGanV4IdleStateChecks({
       schedule: (callback, delay) => setTimeout(callback, delay),
       cancel: (handle) => clearTimeout(handle),
@@ -155,6 +156,7 @@ export const ganV4Driver: CubeDriver = {
     });
 
     const onChar = (ev: Event): void => {
+      if (cleaned) return;
       const target = ev.target as BluetoothRemoteGATTCharacteristic;
       const dv = target.value;
       if (!dv) return;
@@ -166,6 +168,10 @@ export const ganV4Driver: CubeDriver = {
         return;
       }
       const moves = decodeGanV4Frame(pt, decState, ctx?.onGyro);
+      if (pt[0] === 0xef && decState.badFrames === 0 && decState.battery !== null) {
+        clearTimeout(batteryRetry);
+        ctx?.onBattery?.(decState.battery);
+      }
       for (const mv of moves) {
         if (mv.estimatedTime) onMove(mv.mv, mv.ts, { estimatedTime: true });
         else onMove(mv.mv, mv.ts);
@@ -216,6 +222,15 @@ export const ganV4Driver: CubeDriver = {
       await sendCmd(createGanV4HardwareInfoCommand());
       await sendCmd(createGanV4FaceletsCommand());
       await sendCmd(createGanV4BatteryCommand());
+      // DCTimer-BLE: retry the initial request once after 1 s without a reply.
+      if (decState.battery === null) {
+        batteryRetry = setTimeout(() => {
+          if (!cleaned && decState.battery === null) {
+            void sendCmd(createGanV4BatteryCommand(), false,
+              () => !cleaned && decState.battery === null);
+          }
+        }, 1000);
+      }
     }
 
     calibration = createDeviceStateReset({
@@ -227,6 +242,7 @@ export const ganV4Driver: CubeDriver = {
     const cleanup = (): void => {
       if (cleaned) return;
       cleaned = true;
+      clearTimeout(batteryRetry);
       calibration?.dispose();
       idleStateChecks.dispose();
       notifyChar.removeEventListener('characteristicvaluechanged', onChar);

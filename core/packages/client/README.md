@@ -34,4 +34,6 @@ dev server 运行时不要同时执行 `next build`，两者共用 `.next/`。Vi
 
 `tests/next-only-frontend.test.ts` 会阻止旧网站包、Vite 配置、Vite 运行时依赖和 `import.meta.env` 回流到现役网站代码。
 
+Web GAN v4 电量按通知更新：连接握手后的 `0xEF` 回复通过驱动 `onBattery` 回调刷新状态，首次请求 1 秒未收到有效回复时重试一次（对齐 DCTimer-BLE）。连接和重连保留握手期间已收到的电量，异步读取不能覆盖较新的通知；断开后清理重试并忽略旧会话回调。回归测试见 `tests/bluetooth_cube_reconnect.test.ts`。
+
 稳定的跨端契约和纯逻辑进 `@cuberoot/shared` 的显式 subpath；不从 server、mobile、miniprogram 或已退役 `packages/platform` 导入应用源码。

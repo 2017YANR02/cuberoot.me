@@ -17,8 +17,76 @@ import type { CubeDriverContext } from '@/app/[lang]/timer/_lib/bluetooth/driver
 import { clearMac, savedMac, saveMac } from '@/app/[lang]/timer/_lib/bluetooth/mac';
 import { applyMoves, solved, toFaceletString } from '@/app/[lang]/timer/_lib/cube/state';
 import { parseScramble } from '@/app/[lang]/timer/_lib/cube/moves';
+import { makeFakeGatt } from './_fake_gatt';
+import {
+  createGanV4Cipher, GAN_V4_SERVICE_UUID, GAN_V4_NOTIFY_CHARACTERISTIC_UUID,
+  GAN_V4_WRITE_CHARACTERISTIC_UUID,
+} from '@cuberoot/shared/smart-cube/gan-v4';
 
 const SCRAMBLED = toFaceletString(applyMoves(solved(3), 3, parseScramble('R U')));
+
+describe('GAN v4 battery notifications', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  async function rig() {
+    const gatt = makeFakeGatt('GAN14', {
+      [GAN_V4_SERVICE_UUID]: [GAN_V4_NOTIFY_CHARACTERISTIC_UUID, GAN_V4_WRITE_CHARACTERISTIC_UUID],
+    });
+    const onBattery = vi.fn();
+    const session = await ganV4Driver.start(gatt.asServer, vi.fn(), { onBattery });
+    const cipher = createGanV4Cipher(new Uint8Array(6));
+    return {
+      gatt, session, onBattery,
+      batteryRequests: () => gatt.writes.filter(w => cipher.decrypt(Uint8Array.from(w.bytes))[3] === 0xef),
+      emit(level: number) {
+        const frame = new Uint8Array(20);
+        frame.set([0xef, 1, level]);
+        gatt.char(GAN_V4_SERVICE_UUID, GAN_V4_NOTIFY_CHARACTERISTIC_UUID).emit(cipher.encrypt(frame));
+      },
+    };
+  }
+
+  it('publishes delayed valid replies including zero and cancels the retry', async () => {
+    const r = await rig();
+    await expect(r.session.battery()).resolves.toBeNull();
+    await vi.advanceTimersByTimeAsync(300);
+    r.emit(101);
+    expect(r.onBattery).not.toHaveBeenCalled();
+    r.emit(73);
+    expect(r.onBattery).toHaveBeenLastCalledWith(73);
+    r.emit(0);
+    expect(r.onBattery).toHaveBeenLastCalledWith(0);
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(r.batteryRequests()).toHaveLength(1);
+    await expect(r.session.battery()).resolves.toBe(0);
+    r.session.cleanup();
+    r.emit(50);
+    expect(r.onBattery).toHaveBeenCalledTimes(2);
+  });
+
+  it('retries once after one second and still accepts a late reply', async () => {
+    const r = await rig();
+    await vi.advanceTimersByTimeAsync(999);
+    expect(r.batteryRequests()).toHaveLength(1);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(r.batteryRequests()).toHaveLength(2);
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(r.batteryRequests()).toHaveLength(2);
+    r.emit(64);
+    expect(r.onBattery).toHaveBeenLastCalledWith(64);
+    r.session.cleanup();
+  });
+
+  it('cancels pending battery work on cleanup', async () => {
+    const r = await rig();
+    r.session.cleanup();
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(r.batteryRequests()).toHaveLength(1);
+    r.emit(64);
+    expect(r.onBattery).not.toHaveBeenCalled();
+  });
+});
 
 interface Deferred<T> {
   promise: Promise<T>;
@@ -115,6 +183,28 @@ describe('smart-cube reconnect ownership', () => {
     });
     vi.useRealTimers();
     vi.restoreAllMocks();
+  });
+
+  it('keeps battery notifications through handshake, delayed reads and reconnects', async () => {
+    const rig = fakeGattRig('battery');
+    const contexts: CubeDriverContext[] = [];
+    const read = deferred<number | null>();
+    vi.spyOn(gocubeDriver, 'start').mockImplementation(async (_server, _move, ctx) => {
+      contexts.push(ctx!);
+      ctx?.onBattery?.(80);
+      return { battery: () => read.promise, cleanup: vi.fn() };
+    });
+    await act(async () => { await cube.connectDevice(rig.device); });
+    expect(cube.status.battery).toBe(80);
+    await act(async () => { contexts[0].onBattery?.(79); read.resolve(null); });
+    expect(cube.status.battery).toBe(79);
+    await act(async () => rig.drop());
+    await act(async () => { await vi.advanceTimersByTimeAsync(1_000); });
+    expect(contexts).toHaveLength(2);
+    await act(async () => { contexts[1].onBattery?.(78); contexts[0].onBattery?.(10); });
+    expect(cube.status.battery).toBe(78);
+    await act(async () => { cube.disconnect(); contexts[1].onBattery?.(9); });
+    expect(cube.status.battery).toBeNull();
   });
 
   it('does not report a solve when device calibration confirms solved facelets', async () => {
