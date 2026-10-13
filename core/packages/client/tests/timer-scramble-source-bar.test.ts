@@ -55,7 +55,7 @@ describe('Timer source controls follow puzzle capabilities', () => {
   it.each([
     'superz', 'dogic', 'octahedron4', 'dinoskewb', 'cube3dino',
     'lattice', 'hyperx', 'latticex', 'masterbrilic', 'masterftov2',
-    'quadx', 'dinoocta', 'fto5', 'eto', 'radiocrystal',
+    'quadx', 'dinoocta', 'fto5', 'fto6', 'eto', 'radiocrystal',
     'cube3skewb', 'heliskewb', 'comboctahedron', 'circoradiolarian', 'icosababyface',
     'cube3heli', 'radiojewel',
   ] as const)(

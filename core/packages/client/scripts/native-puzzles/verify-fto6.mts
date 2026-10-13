@@ -31,6 +31,8 @@ async function check(name: string, browser: Browser, action: (page: Page) => Pro
   catch (error) { row.passed = false; row.error = String(error); }
   finally {
     row.pageErrors = errors; row.url = page.url();
+    writeFileSync(resolve(out, `${name}-svg.json`), JSON.stringify(await page.locator('svg').evaluateAll(nodes => nodes.map(node => node.outerHTML)).catch(() => [])));
+    writeFileSync(resolve(out, `${name}.html`), await page.content().catch(() => ''));
     await page.screenshot({ path: resolve(out, `${name}.png`), fullPage: true }).catch(() => {});
     writeFileSync(resolve(out, `${name}.txt`), await page.locator('body').innerText().catch(() => 'Page unavailable'));
     results.push(row);
@@ -41,6 +43,11 @@ async function check(name: string, browser: Browser, action: (page: Page) => Pro
 }
 const net = (page: Page) => page.locator('svg[aria-label="fto6"]').filter({ visible: true }).first();
 async function colors(page: Page): Promise<string[]> {
+  if (await page.locator('.twisty-section--2d').count()) {
+    const facelets = page.locator('.twisty-section--2d svg').locator('polygon, path');
+    await expect.poll(() => facelets.count()).toBeGreaterThanOrEqual(288);
+    return facelets.evaluateAll(nodes => nodes.map(node => getComputedStyle(node).fill));
+  }
   await expect(net(page).locator('polygon[data-piece]')).toHaveCount(288);
   return net(page).locator('polygon[data-piece]').evaluateAll(nodes => nodes.map(node => node.getAttribute('fill') ?? ''));
 }
@@ -48,7 +55,7 @@ async function selectGenerator(page: Page): Promise<void> {
   await page.locator('.gen-config-toolbar .pp-trigger:visible').click();
   const selected = page.getByRole('menuitemcheckbox', { checked: true });
   while (await selected.count()) await selected.first().click();
-  await page.getByRole('menuitemcheckbox', { name: '六阶 FTO', exact: true }).click();
+  await page.getByRole('menuitemcheckbox', { name: /六阶 FTO/ }).click();
   await page.keyboard.press('Escape');
 }
 const sequence = "F 2U 3BR 1-2L 1-3D'";
@@ -60,7 +67,7 @@ try {
     const alg = page.getByPlaceholder('解法', { exact: true });
     await page.getByLabel('转动记号', { exact: true }).selectOption('3F');
     await page.locator('.twisty-fallback-move').click();
-    await expect(alg).toHaveValue('3F');
+    await expect.poll(async () => (await alg.inputValue()).trim()).toBe('3F');
     const reduce = page.getByRole('switch', { name: '消步', exact: true });
     if (await reduce.getAttribute('aria-checked') === 'true') await reduce.click();
     const dragged: Record<string, string> = {};
@@ -103,7 +110,7 @@ try {
     const alg = page.getByPlaceholder('解法', { exact: true });
     await page.getByLabel('转动记号', { exact: true }).selectOption('3F');
     await page.locator('.twisty-fallback-move').click();
-    await expect(alg).toHaveValue('3F');
+    await expect.poll(async () => (await alg.inputValue()).trim()).toBe('3F');
     await expect.poll(() => colors(page)).not.toEqual(solved);
     await page.getByLabel('转动角度', { exact: true }).selectOption('-1');
     await page.locator('.twisty-fallback-move').click();
