@@ -27,7 +27,7 @@ beforeEach(() => {
     return { dispose: () => { state.dispose(); canvas.remove(); }, invalidate() {}, world: {
     puzzleKind: 3,
     controller: { turnsLocked: false, dragEmpty: 'orbit', onOrbit: null, touch: vi.fn(() => true) },
-    scene: { rotation: { set() {} }, updateMatrix() {} },
+    scene: { rotation: { x: 0.4, y: -0.6, z: 0, set(x: number, y: number, z: number) { Object.assign(this, { x, y, z }); } }, updateMatrix() {} },
     cube: { quaternion: { set: state.setQuaternion }, updateMatrix() {}, twister: { push: state.push, setup: state.setup, backlog: 0 }, instancedRenderer: { setStickering() {} } },
     } };
   });
@@ -39,6 +39,37 @@ afterEach(async () => {
 });
 
 describe('the single live/replay 3D failure surface', () => {
+  it.each(['pointerup', 'pointercancel', 'lostpointercapture'])('restores preview orbit on %s without rewinding moves or gyro', async release => {
+    const quatRef = { current: { w: 1, x: 0, y: 0, z: 0 } };
+    const draw = (moves: string[]) => act(async () => root.render(createElement(SimCubeView, {
+      allowViewDrag: true, resetViewOnRelease: true, moves, quatRef, sensorBasis: 'identity', mirror: false,
+    })));
+    await draw(['R']);
+    await vi.waitFor(() => expect(state.mount).toHaveBeenCalledOnce());
+    const world = state.mount.mock.results[0].value.world;
+    const { x, y, z } = world.scene.rotation;
+    const view = host.querySelector<HTMLElement>('.timer-live-cube-3d')!;
+    const pointer = (type: string) => {
+      const event = new MouseEvent(type, { bubbles: true, cancelable: true, button: 0, clientX: 20, clientY: 30 });
+      Object.defineProperties(event, { pointerId: { value: 1 }, pointerType: { value: 'mouse' } });
+      view.dispatchEvent(event);
+    };
+    pointer('pointerdown');
+    world.controller.onOrbit(40, 20);
+    expect(world.scene.rotation.y).not.toBe(y);
+    expect(world.controller.turnsLocked).toBe(true);
+    await draw(['R', 'U']);
+    quatRef.current = { w: Math.SQRT1_2, x: 0, y: Math.SQRT1_2, z: 0 };
+    state.mount.mock.calls[0][0].onFrame(world, 16);
+    const poseWrites = state.setQuaternion.mock.calls.length;
+    const movesWritten = state.push.mock.calls.length;
+    pointer(release);
+    expect(world.scene.rotation).toMatchObject({ x, y, z });
+    expect(state.setQuaternion).toHaveBeenCalledTimes(poseWrites);
+    expect(state.push).toHaveBeenCalledTimes(movesWritten);
+    expect(state.mount).toHaveBeenCalledOnce();
+  });
+
   it('uses the captured calibration sample even if the gyro advances before the next frame', async () => {
     const reference = { w: 1, x: 0, y: 0, z: 0 };
     const quatRef = { current: reference };
