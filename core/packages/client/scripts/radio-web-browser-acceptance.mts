@@ -133,6 +133,8 @@ await check('sim-2d-playback-history-share', page, async () => {
   await expect.poll(() => setup(page).inputValue()).not.toBe('');
   expect((await setup(page).inputValue()).trim().split(/\s+/)).toHaveLength(60);
   await solution(page).fill("R 2L' Gw [F,U]");
+  // At anchor=start, start is correctly disabled; seek to end first.
+  await end(page).click();
   await page.getByRole('button', { name: '回到起点', exact: true }).click();
   const initial = await pattern(page);
   await page.getByRole('button', { name: '下一步', exact: true }).click();
@@ -181,8 +183,13 @@ async function chooseWeb(p: Page) {
   const trigger = p.locator('.gen-config-toolbar .pp-trigger:visible').first();
   const menu = p.locator('.pp-popup:visible').first();
   async function openMenu() {
-    if (!await menu.count()) await trigger.click();
-    await expect(menu).toBeVisible();
+    // The competition panel hydrates after its first SSR paint. Retry the
+    // public trigger only while collapsed, never toggle an already open menu.
+    await expect.poll(async () => {
+      if (await menu.count()) return true;
+      if (await trigger.getAttribute('aria-expanded') !== 'true') await trigger.click();
+      return await menu.count() > 0;
+    }, { timeout: 30_000, intervals: [500, 1000] }).toBe(true);
   }
   await openMenu();
   const web = menu.locator('.pp-item').filter({ has: p.locator('.pp-item-label', { hasText: /^Radio Web$/ }) });
