@@ -276,6 +276,7 @@ function ReconstructReportBody({
     if (!live) return;
     const stream = createLiveReconstructionStream((input, snapshot) => {
       if (snapshot.text || snapshot.status === 'error') {
+        reconstructionAnalyzer.rememberLive(solve.id, input, snapshot);
         setAnalysisState({ solveId: solve.id, input, snapshot });
       }
     });
@@ -290,13 +291,13 @@ function ReconstructReportBody({
     }
     return reconstructionAnalyzer.subscribe(analysisInput, snapshot => {
       setAnalysisState({ solveId: solve.id, input: analysisInput, snapshot });
-    });
+    }, solve.id);
   }, [analysisInput, live, solve.id]);
   // Never display the previous solve's result while the new effect subscribes.
   // Live updates retain the latest completed snapshot of this attempt while
   // the worker catches up, rather than flashing an empty list at every turn.
   const analysis = analysisState?.solveId === solve.id && (live || analysisState.input === analysisInput)
-    ? analysisState.snapshot : null;
+    ? analysisState.snapshot : analysisInput && !live ? reconstructionAnalyzer.peek(analysisInput, solve.id) : null;
   const reconText = useMemo(() => analysis?.text
     ? applyReconTextOverride(analysis.text, solve.reconstruction)
     : null, [analysis?.text, solve.reconstruction]);
@@ -610,22 +611,31 @@ function ReconstructReportBody({
         />
       )}
 
-      {analysisInput && analysis?.status !== 'complete' && (
+      {analysisInput && (!analysis?.text || analysis.provisional) && analysis?.status !== 'complete' && (
         <p role="status">{analysis?.status === 'error'
           ? tr({ zh: '部分复盘分析未能加载，请重新打开重试。', en: 'Some analysis could not load. Reopen this report to retry.' })
+          : analysis?.provisional
+          ? tr({ zh: '正在补齐最后的步骤…', en: 'Updating the final steps…' })
           : tr({ zh: '正在分析复盘…', en: 'Analyzing solve…' })}</p>
       )}
 
       {analysisBlock}
 
-      {analysis?.reference && (
+      {(scoreable || analysis?.reference) && (
         <AccordionSection
           title={tr({ zh: '参考解法', en: 'Reference lines' })}
           collapsible
           expanded={referenceExpanded}
           onToggle={() => setReferenceExpanded(v => !v)}
         >
-          <ReferenceList reference={analysis.reference} />
+          {analysis?.reference && <ReferenceList reference={analysis.reference} />}
+          {(!analysis?.reference || analysis.status === 'error') && (
+            <p role="status">{analysis?.status === 'error'
+              ? tr({ zh: '参考解法未能加载，请重新打开重试。', en: 'Reference lines could not load. Reopen this report to retry.' })
+              : analysis?.status === 'complete'
+              ? tr({ zh: '暂无参考解法。', en: 'No reference lines available.' })
+              : tr({ zh: '正在计算参考解法…', en: 'Computing reference lines…' })}</p>
+          )}
         </AccordionSection>
       )}
 

@@ -17,12 +17,15 @@ interface Job {
   listeners: Set<Listener>;
   snapshot: AnalysisSnapshot;
   failed: boolean;
+  skipText: boolean;
 }
 
-/** A single reusable worker preserves solver tables between solves. Only
- * completed, successful results enter the bounded content-keyed LRU cache. */
+/** A single reusable worker preserves solver tables between solves. Text is
+ * cached independently of reference scoring; full snapshots require success. */
 export function createReconstructionAnalyzer(createWorker: () => AnalysisWorker) {
   const cache = new Map<string, AnalysisSnapshot>();
+  const textCache = new Map<string, NonNullable<AnalysisSnapshot['text']>>();
+  const liveResults = new Map<string, { input: AnalysisInput; text: NonNullable<AnalysisSnapshot['text']>; targetKey?: string }>();
   const jobs = new Map<string, Job>();
   let worker: AnalysisWorker | null = null;
   let active: Job | null = null;
@@ -30,6 +33,25 @@ export function createReconstructionAnalyzer(createWorker: () => AnalysisWorker)
   let pumpTimer: ReturnType<typeof setTimeout> | undefined;
   let deadline: ReturnType<typeof setTimeout> | undefined;
   let idleTimer: ReturnType<typeof setTimeout> | undefined;
+
+  function initialSnapshot(input: AnalysisInput, attemptId?: string): AnalysisSnapshot {
+    const exact = textCache.get(JSON.stringify(input.text));
+    if (exact) return { ...emptyAnalysis(), text: exact };
+    const live = attemptId ? liveResults.get(attemptId) : undefined;
+    if (!live) return emptyAnalysis();
+    const key = JSON.stringify(input);
+    if (live.targetKey && live.targetKey !== key) return emptyAnalysis();
+    const before = live.input.text.physical ?? live.input.text;
+    const after = input.text.physical ?? input.text;
+    // Only an explicit same-attempt handoff can reuse a prefix. Edits, another
+    // scramble, changed timestamps or a different viewing frame cannot use it.
+    if (before.scramble !== after.scramble || !before.moves.length
+      || before.moves.length > after.moves.length
+      || live.input.text.viewRotation !== input.text.viewRotation
+      || !before.moves.every((move, i) => move.m === after.moves[i].m && move.ts === after.moves[i].ts)) return emptyAnalysis();
+    live.targetKey = key;
+    return { ...emptyAnalysis(), text: live.text, provisional: true };
+  }
 
   function terminate() {
     clearTimeout(deadline);
@@ -81,19 +103,43 @@ export function createReconstructionAnalyzer(createWorker: () => AnalysisWorker)
           job.failed = true;
           console.warn('[reconstruct] worker analysis failed:', data.error);
         }
-        if (data.patch) job.snapshot = { ...job.snapshot, ...data.patch };
+        if (data.patch) {
+          job.snapshot = { ...job.snapshot, ...data.patch };
+          if (data.patch.text) {
+            job.snapshot.provisional = false;
+            const textKey = JSON.stringify(job.input.text);
+            textCache.delete(textKey);
+            textCache.set(textKey, data.patch.text);
+            if (textCache.size > 8) textCache.delete(textCache.keys().next().value!);
+          }
+        }
         if (data.done) finish(job);
         else notify(job);
       };
       worker.onerror = () => { if (active === job) fail(job); };
       worker.onmessageerror = () => { if (active === job) fail(job); };
       deadline = setTimeout(() => { if (active === job) fail(job); }, 60_000);
-      worker.postMessage({ id: job.id, input: job.input });
+      worker.postMessage({ id: job.id, input: job.input, skipText: job.skipText });
     } catch { fail(job); }
   }
 
   return {
-    subscribe(input: AnalysisInput, listener: Listener): () => void {
+    rememberLive(attemptId: string, input: AnalysisInput, snapshot: AnalysisSnapshot) {
+      if (!snapshot.text || snapshot.provisional) return;
+      liveResults.delete(attemptId);
+      liveResults.set(attemptId, { input, text: snapshot.text });
+      if (liveResults.size > 8) liveResults.delete(liveResults.keys().next().value!);
+    },
+    handoff(fromAttemptId: string, toSolveId: string) {
+      const live = liveResults.get(fromAttemptId);
+      liveResults.delete(fromAttemptId);
+      liveResults.delete(toSolveId);
+      if (live) liveResults.set(toSolveId, live);
+    },
+    peek(input: AnalysisInput, attemptId?: string): AnalysisSnapshot {
+      return cache.get(JSON.stringify(input)) ?? initialSnapshot(input, attemptId);
+    },
+    subscribe(input: AnalysisInput, listener: Listener, attemptId?: string): () => void {
       // Include all physical moves, timestamps, orientation and metric inputs;
       // a corrected solve must never reuse the old solve's analysis.
       const key = JSON.stringify(input);
@@ -106,7 +152,9 @@ export function createReconstructionAnalyzer(createWorker: () => AnalysisWorker)
       }
       let job = jobs.get(key);
       if (!job) {
-        job = { id: ++nextId, key, input, listeners: new Set(), snapshot: emptyAnalysis(), failed: false };
+        const snapshot = initialSnapshot(input, attemptId);
+        job = { id: ++nextId, key, input, listeners: new Set(), snapshot, failed: false,
+          skipText: Boolean(snapshot.text && !snapshot.provisional) };
         jobs.set(key, job);
       }
       // Each subscription owns its cleanup even if a callback is reused.
@@ -131,6 +179,8 @@ export function createReconstructionAnalyzer(createWorker: () => AnalysisWorker)
       active = null;
       jobs.clear();
       cache.clear();
+      textCache.clear();
+      liveResults.clear();
     },
   };
 }

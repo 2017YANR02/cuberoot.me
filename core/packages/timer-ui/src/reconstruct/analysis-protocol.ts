@@ -11,9 +11,11 @@ export interface AnalysisSnapshot {
   reference: ReferenceResult | null;
   slotReference: SlotReference[] | null;
   status: 'pending' | 'complete' | 'error';
+  /** Live steps remain visible while the final move stream is reconciled. */
+  provisional?: boolean;
 }
 
-export interface AnalysisRequest { id: number; input: AnalysisInput }
+export interface AnalysisRequest { id: number; input: AnalysisInput; skipText?: boolean }
 export interface AnalysisResponse {
   id: number;
   patch?: Partial<Omit<AnalysisSnapshot, 'status'>>;

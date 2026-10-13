@@ -58,6 +58,7 @@ afterEach(async () => {
   container.remove();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
+  reconstructionAnalyzer.dispose();
 });
 
 function button(label: string): HTMLButtonElement {
@@ -69,6 +70,42 @@ function button(label: string): HTMLButtonElement {
 }
 
 describe('the complete shared reconstruction report', () => {
+  it('keeps live steps visible across final remount while collapsed references load separately', async () => {
+    const live = { ...solve, id: 'live-attempt' };
+    await act(async () => root.render(createElement(ReconstructReport, { solve: live, isZh: false, host, live: true })));
+    await vi.waitFor(() => expect(container.querySelector('.sml-line')).not.toBeNull());
+    const lines = container.querySelector('.sml-moves')?.textContent;
+    reconstructionAnalyzer.handoff(live.id, solve.id);
+    await act(async () => root.render(null));
+    let publish: Parameters<typeof reconstructionAnalyzer.subscribe>[1] | undefined;
+    let initial: ReturnType<typeof reconstructionAnalyzer.peek> | undefined;
+    vi.mocked(reconstructionAnalyzer.subscribe).mockImplementation((input, notify, attemptId) => {
+      initial = reconstructionAnalyzer.peek(input, attemptId);
+      notify(initial);
+      publish = notify;
+      return () => {};
+    });
+    await act(async () => root.render(createElement(ReconstructReport, { solve, isZh: false, host })));
+    expect(container.querySelector('.sml-moves')?.textContent).toBe(lines);
+    expect(container.textContent).not.toContain('Analyzing solve…');
+    expect(container.textContent).not.toContain('Computing reference lines…');
+    expect(initial?.text).not.toBeNull();
+    await act(async () => publish!({ ...initial!, provisional: false }));
+    expect(container.textContent).not.toContain('Updating the final steps…');
+    await act(async () => publish!({ ...initial!, provisional: false, status: 'error' }));
+    expect(container.textContent).not.toContain('Some analysis could not load');
+    expect(container.textContent).not.toContain('Reference lines could not load');
+    await act(async () => publish!({ ...initial!, provisional: false }));
+    const referenceToggle = [...container.querySelectorAll('button')].find(element => element.textContent?.includes('Reference lines'))!;
+    expect(referenceToggle).toBeDefined();
+    await act(async () => referenceToggle.click());
+    expect(container.textContent).toContain('Computing reference lines…');
+    expect(container.querySelector('.sml-moves')?.textContent).toBe(lines);
+    await act(async () => publish!({ ...initial!, provisional: false, reference: { stages: [], refTurns: 1, userTurns: 2, delta: 1 }, status: 'complete' }));
+    expect(container.textContent).not.toContain('Computing reference lines…');
+    expect(container.querySelector('.sml-moves')?.textContent).toBe(lines);
+  });
+
   it('renders identical move lines in live and final modes and clears them for a new attempt', async () => {
     const render = async (value: Solve, live: boolean) => {
       await act(async () => {

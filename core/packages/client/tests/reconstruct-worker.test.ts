@@ -22,6 +22,10 @@ const input = (scramble = 'R'): AnalysisInput => ({
   },
 });
 const disposers: Array<() => void> = [];
+const recognizedText = {
+  scramble: 'R', inspection: '', lines: [], turns: 1, stm: 1,
+  seconds: 1, tps: 1, text: "R'", rotations: [], blindPairs: 0,
+};
 function setup() {
   vi.useFakeTimers();
   const workers: FakeWorker[] = [];
@@ -37,6 +41,55 @@ afterEach(() => {
 });
 
 describe('reconstruction worker lifecycle', () => {
+  it('hands the same attempt prefix to a remounted final report before any worker reply', () => {
+    const { analyzer, workers } = setup();
+    const live = { ...input(), scoreable: false };
+    analyzer.rememberLive('live-1', live, { text: recognizedText, reference: null, slotReference: null, status: 'complete' });
+    analyzer.handoff('live-1', 'saved-1');
+    const final = input();
+    final.text = { ...final.text, moves: [...final.text.moves, { m: 'U', ts: 1200 }], totalMs: 1200 };
+    const listener = vi.fn();
+    analyzer.subscribe(final, listener, 'saved-1');
+    expect(listener).toHaveBeenLastCalledWith(expect.objectContaining({ text: recognizedText, provisional: true, status: 'pending' }));
+    expect(workers).toHaveLength(0);
+    vi.advanceTimersByTime(1);
+    expect(workers[0].requests[0].skipText).toBe(false);
+    const completed = { ...recognizedText, text: "R' U", turns: 2 };
+    workers[0].reply({ patch: { text: completed } });
+    expect(listener).toHaveBeenLastCalledWith(expect.objectContaining({ text: completed, provisional: false }));
+    expect(analyzer.peek(final, 'other-solve').provisional).not.toBe(true);
+    const corrected = { ...final, text: { ...final.text, totalMs: 1500 } };
+    expect(analyzer.peek(corrected, 'saved-1').text).toBeNull();
+  });
+
+  it.each(['scramble', 'timestamp', 'move', 'orientation', 'attempt'] as const)('rejects unrelated live steps (%s)', change => {
+    const { analyzer } = setup();
+    const live = { ...input(), scoreable: false };
+    analyzer.rememberLive('live-1', live, { text: recognizedText, reference: null, slotReference: null, status: 'complete' });
+    analyzer.handoff('live-1', 'saved-1');
+    const final = input();
+    if (change === 'scramble') final.text.scramble = 'F';
+    if (change === 'timestamp') final.text.moves[0].ts++;
+    if (change === 'move') final.text.moves[0].m = 'F';
+    if (change === 'orientation') final.text.viewRotation = 'x';
+    expect(analyzer.peek(final, change === 'attempt' ? 'saved-2' : 'saved-1').text).toBeNull();
+  });
+
+  it('reuses exact recognized text when only final reference scoring changes', () => {
+    const { analyzer, workers } = setup();
+    const live = { ...input(), scoreable: false };
+    analyzer.subscribe(live, () => {});
+    vi.advanceTimersByTime(1);
+    workers[0].reply({ patch: { text: recognizedText }, done: true });
+    const listener = vi.fn();
+    analyzer.subscribe(input(), listener);
+    expect(listener).toHaveBeenLastCalledWith(expect.objectContaining({ text: recognizedText, reference: null, status: 'pending' }));
+    vi.advanceTimersByTime(1);
+    expect(workers[0].requests.at(-1)?.skipText).toBe(true);
+    workers[0].reply({ patch: { reference: { stages: [], refTurns: 1, userTurns: 1, delta: 0 } }, done: true });
+    expect(listener).toHaveBeenLastCalledWith(expect.objectContaining({ text: recognizedText, status: 'complete' }));
+  });
+
   it('coalesces live turns without cancelling active recognition and cancels on attempt exit', () => {
     const { analyzer, workers } = setup();
     const listener = vi.fn();

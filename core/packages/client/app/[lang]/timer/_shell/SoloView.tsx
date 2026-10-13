@@ -188,6 +188,7 @@ import {
   SmartCubeAttemptProducer,
 } from '@cuberoot/shared/timer';
 import { AutoRecapDismissGesture, shouldAutoRecap } from '../_lib/reconstruct/recap';
+import { reconstructionAnalyzer } from '@cuberoot/timer-ui/reconstruct-analysis';
 import {
   nextCube222SpecialScramble,
   prefetchCube222SpecialScramble,
@@ -1398,6 +1399,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     if (bld) solve.bld = bld;
     if (caseIdAtStartRef.current) solve.caseId = caseIdAtStartRef.current;
     Object.assign(solve, smartCubeAttemptProducerRef.current.finishSolveFields(solve));
+    reconstructionAnalyzer.handoff(`live-${attemptStartedAtRef.current}`, solve.id);
     // Inspection actually used (0 when inspection was off / never entered).
     if (res.inspectionMs > 0) solve.inspectionMs = Math.round(res.inspectionMs);
     setLastPenalty(res.autoPenalty);
