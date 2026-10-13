@@ -1,6 +1,6 @@
 'use client';
-import { useTranslation } from 'react-i18next';
 import { useCallback } from 'react';
+import { useLang } from '@/i18n/tr';
 
 /**
  * 共享双语翻译器。取代全站各组件手抄的私有 `t(zh, en)`:isZh ? zh : en。
@@ -8,7 +8,6 @@ import { useCallback } from 'react';
  * isZh 来自 prop / 自定义 lang 的组件保留各自局部定义。
  */
 export function useT() {
-  const { i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
+  const isZh = useLang() === 'zh';
   return useCallback((zh: string, en: string) => (isZh ? zh : en), [isZh]);
 }
