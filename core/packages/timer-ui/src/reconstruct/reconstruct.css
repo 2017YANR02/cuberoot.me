@@ -811,7 +811,7 @@
   /* button 复位:这条轨道本身就是 seek 的点击区 */
   appearance: none; border: 0; padding: 0; display: block;
 }
-button.stl-track { cursor: pointer; }
+button.stl-track { cursor: ew-resize; touch-action: none; user-select: none; }
 button.stl-track:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 .stl-seg {
   position: absolute; top: 0; bottom: 0;

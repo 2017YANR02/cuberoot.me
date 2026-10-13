@@ -118,7 +118,7 @@ function hasValidOrientation(q: Quat | null | undefined): q is Quat {
     && Math.hypot(q.w, q.x, q.y, q.z) > 1e-6;
 }
 
-function attachPointerController(host: HTMLElement, controller: Controller): () => void {
+function attachPointerController(host: HTMLElement, controller: Controller, preview?: { start(): void; end(): void }): () => void {
   let activePointerId: number | null = null;
   const previousTouchAction = host.style.touchAction;
   host.style.touchAction = 'none';
@@ -143,6 +143,7 @@ function attachPointerController(host: HTMLElement, controller: Controller): () 
     if (activePointerId !== null) return;
     if (event.pointerType === 'mouse' && event.button !== 0) return;
     activePointerId = event.pointerId;
+    preview?.start();
     try { host.setPointerCapture(event.pointerId); } catch { /* unsupported WebView */ }
     send('mousedown', event);
     event.preventDefault();
@@ -157,8 +158,9 @@ function attachPointerController(host: HTMLElement, controller: Controller): () 
   const onPointerUp = (event: PointerEvent) => {
     if (event.pointerId !== activePointerId) return;
     send('mouseup', event);
-    release(event.pointerId);
     activePointerId = null;
+    preview?.end();
+    release(event.pointerId);
     event.preventDefault();
   };
 
@@ -166,13 +168,15 @@ function attachPointerController(host: HTMLElement, controller: Controller): () 
   host.addEventListener('pointermove', onPointerMove, { passive: false });
   host.addEventListener('pointerup', onPointerUp, { passive: false });
   host.addEventListener('pointercancel', onPointerUp, { passive: false });
+  host.addEventListener('lostpointercapture', onPointerUp);
 
   return () => {
     host.removeEventListener('pointerdown', onPointerDown);
     host.removeEventListener('pointermove', onPointerMove);
     host.removeEventListener('pointerup', onPointerUp);
     host.removeEventListener('pointercancel', onPointerUp);
-    if (activePointerId !== null) release(activePointerId);
+    host.removeEventListener('lostpointercapture', onPointerUp);
+    if (activePointerId !== null) { preview?.end(); release(activePointerId); }
     host.style.touchAction = previousTouchAction;
     activePointerId = null;
   };
@@ -182,6 +186,8 @@ export interface SimCubeViewProps {
   language?: 'en' | 'zh';
   /** Allow dragging the cube area to orbit the view without turning layers. */
   allowViewDrag?: boolean;
+  /** Temporarily orbit while held, restoring the viewer angle on release. */
+  resetViewOnRelease?: boolean;
   /** Moves since the cube was last known SOLVED — see the note above. */
   moves: string[];
   /**
@@ -277,6 +283,7 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
   const {
     language = 'en',
     allowViewDrag = false,
+    resetViewOnRelease = false,
     moves,
     pose = '',
     gyroOrientation = '',
@@ -443,7 +450,20 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
         controller.turnsLocked = true;
         controller.dragEmpty = 'view';
         controller.onOrbit = (dx, dy) => orbitScene(nextMount.world, dx, dy, ORBIT_K);
-        const detachPointerController = attachPointerController(host, controller);
+        let savedView: { x: number; y: number; z: number } | null = null;
+        const detachPointerController = attachPointerController(host, controller, resetViewOnRelease ? {
+          start() {
+            const { x, y, z } = nextMount.world.scene.rotation;
+            savedView = { x, y, z };
+          },
+          end() {
+            if (!savedView) return;
+            nextMount.world.scene.rotation.set(savedView.x, savedView.y, savedView.z);
+            nextMount.world.scene.updateMatrix();
+            nextMount.invalidate();
+            savedView = null;
+          },
+        } : undefined);
         const originalDispose = nextMount.dispose;
         nextMount.dispose = () => {
           detachPointerController();
@@ -473,7 +493,7 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
       mount?.dispose();
       mountRef.current = null;
     };
-  }, [allowViewDrag, attempt]);
+  }, [allowViewDrag, resetViewOnRelease, attempt]);
 
   // Update the viewing angle without remounting the cube or altering its moves.
   useEffect(() => {

@@ -184,7 +184,7 @@ export default function PlaybackPanel({
     : scramble;
 
   const tsOf = (i: number) => (i <= 0 ? 0 : (moves[Math.min(i, total) - 1]?.ts ?? 0));
-  const elapsedMs = tsOf(idx);
+  const elapsedMs = playFromRef.current;
   const lastTs = total > 0 ? Math.max(moves[total - 1].endTs, rawMoves.at(-1)?.ts ?? 0) : 0;
 
   // Keep the engine's normal 500 ms duration across observation/put-down pauses.
@@ -241,7 +241,7 @@ export default function PlaybackPanel({
     playbackQuatRef.current = poseAt(playFromRef.current);
     setIdx(j);
     setSeekIdx(j);
-    timelineRef.current?.setPlayhead(null);
+    timelineRef.current?.setPlayhead(playFromRef.current);
     if (counterRef.current) counterRef.current.textContent = formatSec(playFromRef.current);
   };
   // A notation row starts playback, unlike scrubbing/stepping. Restart the
@@ -253,10 +253,10 @@ export default function PlaybackPanel({
     setPlaybackRun(run => run + 1);
     setPlaying(total > 0 && target < total);
   };
-  const seekRaw = (i: number) => {
-    const at = i > 0 ? rawMoves[i - 1]?.ts ?? 0 : 0;
-    const target = playbackIndexForRaw(moves, i, at);
-    seek(target);
+  const seekRaw = (i: number, atMs?: number) => {
+    const at = atMs ?? (i > 0 ? rawMoves[i - 1]?.ts ?? 0 : 0);
+    const target = atMs === undefined ? playbackIndexForRaw(moves, i, at) : playbackIndexAt(moves, at);
+    seek(target, atMs);
   };
   // 上一步 / 下一步走**函数式**更新,不能写成 `seek(idx + 1)`:idx 是这一帧闭包里的
   // 值,连点五下会算出同一个目标,只前进一步。绝对跳转(时间轴、点某一步)没有这
@@ -336,6 +336,8 @@ export default function PlaybackPanel({
           {isNxn3 ? (cubeNear ? (
             <Suspense fallback={<div className="timer-live-cube-3d" aria-hidden />}><SimCubeView
               language={tr({ en: 'en' as const, zh: 'zh' as const })}
+              allowViewDrag
+              resetViewOnRelease
               moves={simMoves}
               pose={simPose}
               key={useRebuilt ? `rebuilt:${viewRotation ?? ''}` : 'recorded'}

@@ -50,7 +50,7 @@ export interface SolveTimelineProps {
   /** 已经播了几手。null / 省略 = 不画游标。 */
   currentIdx?: number | null;
   /** 点轴上某处 → 跳到那一手。省略则整条不可点。 */
-  onSeek?: (idx: number) => void;
+  onSeek?: (idx: number, atMs?: number) => void;
   /** 播放时钟的把手(见文件头注)。 */
   ref?: React.Ref<SolveTimelineHandle>;
 }
@@ -100,6 +100,7 @@ export default function SolveTimeline({
   const cursorRef = useRef<HTMLSpanElement | null>(null);
   /** 播放时钟接管时的位置(ms);null = 没人接管,听 `currentIdx` 的。 */
   const playheadRef = useRef<number | null>(null);
+  const pointerRef = useRef<number | null>(null);
 
   // 一行两段:识别(暗)+ 执行(亮)。识别数缺席时整行都算执行 —— 不为它编一个停顿。
   const segs = useMemo<Seg[]>(() => {
@@ -148,11 +149,11 @@ export default function SolveTimeline({
     if (!onSeek) return;
     const rect = e.currentTarget.getBoundingClientRect();
     if (rect.width <= 0) return;
-    const at = ((e.clientX - rect.left) / rect.width) * span;
+    const at = Math.max(0, Math.min(span, ((e.clientX - rect.left) / rect.width) * span));
     // 落在哪一手之后就跳到哪一手之后 —— 游标语义是「已经播了几手」。
     let idx = 0;
     while (idx < moves.length && moves[idx].ts <= at) idx++;
-    onSeek(idx);
+    onSeek(idx, at);
   };
 
   const cursorMs = currentIdx === null || currentIdx === undefined
@@ -196,7 +197,37 @@ export default function SolveTimeline({
         {...(onSeek
           ? {
             type: 'button' as const,
-            onClick: seek,
+            onPointerDown: (e: React.PointerEvent<HTMLElement>) => {
+              if (pointerRef.current !== null || e.button !== 0) return;
+              pointerRef.current = e.pointerId;
+              e.currentTarget.setPointerCapture(e.pointerId);
+              seek(e);
+              e.preventDefault();
+            },
+            onPointerMove: (e: React.PointerEvent<HTMLElement>) => {
+              if (pointerRef.current === e.pointerId) seek(e);
+            },
+            onPointerUp: (e: React.PointerEvent<HTMLElement>) => {
+              if (pointerRef.current !== e.pointerId) return;
+              seek(e);
+              pointerRef.current = null;
+              e.currentTarget.releasePointerCapture(e.pointerId);
+            },
+            onPointerCancel: () => { pointerRef.current = null; },
+            onLostPointerCapture: () => { pointerRef.current = null; },
+            onKeyDown: (e: React.KeyboardEvent<HTMLElement>) => {
+              const index = currentIdx ?? 0;
+              const next = e.key === 'Home' ? 0 : e.key === 'End' ? moves.length
+                : e.key === 'ArrowLeft' ? Math.max(0, index - 1)
+                  : e.key === 'ArrowRight' ? Math.min(moves.length, index + 1) : null;
+              if (next === null) return;
+              e.preventDefault();
+              onSeek(next);
+            },
+            role: 'slider',
+            'aria-valuemin': 0,
+            'aria-valuemax': moves.length,
+            'aria-valuenow': currentIdx ?? 0,
             'aria-label': tr({ zh: '跳到时间轴上的某一手', en: 'Seek on the timeline' }),
           }
           : { role: 'img', 'aria-label': tr({ zh: '每一步的观察与执行用时', en: 'Recognition and execution time per step' }) })}
