@@ -206,6 +206,8 @@ export interface SimCubeViewProps {
   quatRef?: { current: Quat | null };
   /** Bump to capture the current sample as the upright reference. */
   calibrateToken?: number;
+  /** Exact host sample shared with the replay reference; avoids a later-frame capture. */
+  calibrationReference?: Quat | null;
   /**
    * Per-brand sensor axis remap — see orientation.ts.
    *
@@ -281,6 +283,7 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
     quat,
     quatRef,
     calibrateToken = 0,
+    calibrationReference,
     sensorBasis = sensorBasisForBrand(null),
     mirror = mirrorForBrand(null),
     animate = false,
@@ -304,7 +307,7 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
   // ── Live values the rAF hook reads. Refs, not state: the frame loop must not
   //    re-subscribe (and the component must not re-render) per BLE sample. ──
   const rawRef = useRef<Quat | null>(null);
-  const referenceRef = useRef<Quat | null>(null);
+  const referenceRef = useRef<Quat | null>(calibrationReference ? calibrate(calibrationReference) : null);
   const smoothedRef = useRef<Quat | null>(null);
   const appliedRef = useRef<Quat | null>(null);
   const pendingCalibrationRef = useRef(false);
@@ -352,12 +355,13 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
   useEffect(() => {
     if (seenTokenRef.current === calibrateToken) return;
     seenTokenRef.current = calibrateToken;
-    pendingCalibrationRef.current = true;
+    if (calibrationReference) referenceRef.current = calibrate(calibrationReference);
+    pendingCalibrationRef.current = !calibrationReference;
     // Re-derive from the new reference rather than easing out of a pose that no
     // longer means anything.
     smoothedRef.current = null;
     sliceFollowUntilRef.current = 0;
-  }, [calibrateToken]);
+  }, [calibrateToken, calibrationReference]);
 
   // ── Mount: lazy-load the shared embed lifecycle (which pulls in three + the
   //    /sim engine), then drive the cube's own transform every frame. ──

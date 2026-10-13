@@ -27,6 +27,19 @@ const faceAt = (face: keyof typeof directions, q: Quaternion) => Object.entries(
   .sort(([, a], [, b]) => b.dot(directions[face].clone().applyQuaternion(q)) - a.dot(directions[face].clone().applyQuaternion(q)))[0][0];
 
 describe('scramble-relative reconstruction', () => {
+  it('pins the replay reference at start even if a later calibration mutates the host snapshot', () => {
+    const reference = raw(new Quaternion());
+    const initial = raw(notationPose('y'));
+    const producer = new SmartCubeAttemptProducer();
+    producer.begin(0, { model: 'qiyi', name: 'test' }, { reference, initial });
+    Object.assign(reference, raw(notationPose('x')));
+    producer.recordMove('R', 0);
+    producer.recordGyro(initial, 100);
+    const samples = decodeGyroTrack(producer.finish().gyro);
+    expect(facePermFor(initialPoseRotation(samples)!)).toEqual(facePermFor('y'));
+    expect(buildCoreTrack(samples, { brand: 'qiyi' })?.events).toEqual([]);
+  });
+
   it.each(['', 'z2'])('captures the starting grip in training frame %s without recording inspection detours', orientation => {
     const baseline = pose('z', 0.37).multiply(pose('x', 0.52));
     const start = baseline.clone().multiply(pose('y', -Math.PI / 2));

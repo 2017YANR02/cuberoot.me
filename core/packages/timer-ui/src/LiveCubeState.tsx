@@ -137,6 +137,7 @@ export interface LiveCubeStateProps {
   quatRef?: { current: Quat | null };
   /** Bump to capture the current sample as the upright reference. */
   calibrateToken?: number;
+  calibrationReference?: Quat | null;
   /** Per-brand sensor axis remap — see _lib/bluetooth/orientation.ts. */
   sensorBasis?: SensorBasisName;
   /** Reverse the sense of rotation (handedness fix; calibration cannot do it). */
@@ -165,6 +166,7 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
     quat = null,
     quatRef,
     calibrateToken = 0,
+    calibrationReference,
     // 漏传不等于 identity —— 见 SimCubeView 里同名 prop 的注释。
     sensorBasis = sensorBasisForBrand(null),
     mirror = mirrorForBrand(null),
@@ -217,6 +219,7 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
         quat={liveQuat}
         quatRef={useGyro ? quatRef : undefined}
         calibrateToken={calibrateToken}
+        calibrationReference={calibrationReference}
         sensorBasis={sensorBasis}
         mirror={mirror}
         // Match DCTimer-BLE: elevated front with live gyro, three faces without.

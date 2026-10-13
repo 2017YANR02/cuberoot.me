@@ -186,6 +186,7 @@ export interface TimerSmartCubeSettings {
   liveCubeView: (typeof TIMER_SMART_CUBE_LIVE_VIEWS)[number];
   /** Whether the live virtual cube consumes the device gyroscope pose. */
   gyroEnabled: boolean;
+  autoCalibrateGyro: boolean;
   recordGyro: boolean;
   autoRecap: boolean;
   autoOpenSolution: boolean;
@@ -195,6 +196,7 @@ export const DEFAULT_TIMER_SMART_CUBE_SETTINGS: TimerSmartCubeSettings = {
   bluetoothAutoReady: 'scrambled',
   liveCubeView: '3d',
   gyroEnabled: true,
+  autoCalibrateGyro: true,
   recordGyro: true,
   autoRecap: true,
   autoOpenSolution: true,
@@ -207,6 +209,7 @@ export function normalizeTimerSmartCubeSettings(value: Partial<Record<keyof Time
     liveCubeView: TIMER_SMART_CUBE_LIVE_VIEWS.includes(value.liveCubeView as TimerSmartCubeSettings['liveCubeView'])
       ? value.liveCubeView as TimerSmartCubeSettings['liveCubeView'] : DEFAULT_TIMER_SMART_CUBE_SETTINGS.liveCubeView,
     gyroEnabled: normalizedBoolean(value.gyroEnabled, DEFAULT_TIMER_SMART_CUBE_SETTINGS.gyroEnabled),
+    autoCalibrateGyro: normalizedBoolean(value.autoCalibrateGyro, DEFAULT_TIMER_SMART_CUBE_SETTINGS.autoCalibrateGyro),
     recordGyro: normalizedBoolean(value.recordGyro, DEFAULT_TIMER_SMART_CUBE_SETTINGS.recordGyro),
     autoRecap: normalizedBoolean(value.autoRecap, DEFAULT_TIMER_SMART_CUBE_SETTINGS.autoRecap),
     autoOpenSolution: normalizedBoolean(value.autoOpenSolution, DEFAULT_TIMER_SMART_CUBE_SETTINGS.autoOpenSolution),
@@ -274,6 +277,7 @@ export const TIMER_SETTING_FIELD_CONTRACTS = [
   // Smart cube
   { id: 'settings.smart-cube.fake-cube', category: 'smart-cube', copy: { en: 'Fake cube', zh: '假魔方' }, storagePath: 'showAdminFakeCube', value: bool, visibility: 'admin-only', disabledWhen: 'never', effect: 'persist-admin-fake-cube-controls' },
   { id: 'settings.smart-cube.gyro', category: 'smart-cube', copy: { en: 'Gyroscope', zh: '陀螺仪' }, storagePath: 'gyroEnabled', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-live-cube-gyro' },
+  { id: 'settings.smart-cube.auto-calibrate', category: 'smart-cube', copy: { en: 'Auto-reset orientation before the last scramble move', zh: '打乱剩最后一步时自动重置朝向' }, storagePath: 'autoCalibrateGyro', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-auto-calibrate-gyro' },
   { id: 'settings.smart-cube.auto-ready', category: 'smart-cube', copy: { en: 'Smart-cube auto-ready', zh: '智能魔方自动预备' }, storagePath: 'bluetoothAutoReady', value: { kind: 'enum', values: TIMER_SMART_CUBE_AUTO_READY_MODES }, visibility: 'always', disabledWhen: 'never', effect: 'persist-smart-cube-auto-ready' },
   { id: 'settings.smart-cube.live-view', category: 'smart-cube', copy: { en: 'Live cube', zh: '实况魔方' }, storagePath: 'liveCubeView', value: { kind: 'enum', values: TIMER_SMART_CUBE_LIVE_VIEWS }, visibility: 'always', disabledWhen: 'never', effect: 'persist-live-cube-view' },
   { id: 'settings.smart-cube.record-orientation', category: 'smart-cube', copy: { en: 'Record orientation for replay', zh: '记录姿态用于回放' }, storagePath: 'recordGyro', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-record-orientation' },
