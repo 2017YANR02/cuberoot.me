@@ -1,56 +1,30 @@
-// Temporary branch-only patch transport; removed before merge.
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+// Temporary branch-only edit transport; removed before merge.
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
 const root = resolve(import.meta.dirname, '..');
-const path = 'core/packages/client/scripts/radio-web-browser-acceptance.mts';
-const original = readFileSync(resolve(root, path), 'utf8');
-let source = original;
-function edit(before: string, after: string) {
-  if (source.split(before).length !== 2) throw new Error(`Unexpected browser patch: ${before}`);
-  source = source.replace(before, after);
+const changed = new Set<string>();
+function edit(path: string, before: string, after: string) {
+  const filename = resolve(root, path), source = readFileSync(filename, 'utf8');
+  if (source.includes(after)) return;
+  if (source.split(before).length !== 2) throw new Error(`Unexpected patch: ${path}: ${before}`);
+  writeFileSync(filename, source.replace(before, after));
+  changed.add(path);
 }
-if (!source.includes('expect as baseExpect')) {
-  edit('chromium, expect, type BrowserContext', 'chromium, expect as baseExpect, type BrowserContext');
-  edit('expect.configure({ timeout: 30_000 });', 'const expect = baseExpect.configure({ timeout: 30_000 });');
-  edit("viewport: { width: 1440, height: 1100 }, permissions:", "viewport: { width: 1440, height: 1100 }, locale: 'en-US', permissions:");
-  edit("const canvas = sim.locator('twisty-player canvas').first();", "// cubing.js renders inside closed shadow roots. The public host bounds enclose\n  // the visible canvas; pointer events below hit the actual rendered stickers.\n  const canvas = sim.locator('twisty-player').first();");
-  edit("  const recorded: string[] = [];", "  await canvas.screenshot({ path: resolve(out, 'sim-3d-solved.png') });\n  const recorded: string[] = [];");
-  edit('    recorded.push(token);', "    await canvas.screenshot({ path: resolve(out, `sim-3d-${depth}.png`) });\n    recorded.push(token);");
-  edit("await expect(page.locator('twisty-player svg').first()).toBeVisible();", "// Closed shadow content is verified through actual screenshots and the public\n  // TwistyPlayer pattern API, not by piercing private renderer handles.\n  await expect(page.locator('twisty-player')).toBeVisible();\n  await page.locator('twisty-player').screenshot({ path: resolve(out, 'sim-2d-solved.png') });");
-  edit("await check('sim-english-mobile', page, async () => {", "// A fresh context prevents the prior Chinese locale cookie redirecting /sim.\nconst englishPage = await (await context(true)).newPage();\nawait check('sim-english-mobile', englishPage, async () => {\n  const page = englishPage;");
-  const begin = source.indexOf('async function chooseWeb(p: Page) {');
-  const finish = source.indexOf('async function preview(p: Page)', begin);
-  if (begin < 0 || finish < 0) throw new Error('Missing picker helper');
-  source = source.slice(0, begin) + `async function chooseWeb(p: Page) {
-  // All three mode panels remain mounted. Only interact with the visible one.
-  const trigger = p.locator('.gen-config-toolbar .pp-trigger:visible').first();
-  const menu = p.locator('.pp-popup:visible').first();
-  async function openMenu() {
-    if (!await menu.count()) await trigger.click();
-    await expect(menu).toBeVisible();
-  }
-  await openMenu();
-  const web = menu.locator('.pp-item').filter({ has: p.locator('.pp-item-label', { hasText: /^Radio Web$/ }) });
-  if (await web.getAttribute('aria-checked') !== 'true') await web.click();
-  await openMenu();
-  const otherActive = menu.locator('.pp-item--active').filter({ hasNot: p.locator('.pp-item-label', { hasText: /^Radio Web$/ }) });
-  for (let count = await otherActive.count(); count > 0; count--) {
-    await otherActive.first().click();
-    await openMenu();
-  }
-  await expect(web).toHaveAttribute('aria-checked', 'true');
-  await p.keyboard.press('Escape');
+const browser = 'core/packages/client/scripts/radio-web-browser-acceptance.mts';
+edit(browser, "  await solution(page).fill(\"R 2L' Gw [F,U]\");\n  await page.getByRole('button', { name: '回到起点', exact: true }).click();", "  await solution(page).fill(\"R 2L' Gw [F,U]\");\n  // At anchor=start, start is correctly disabled; seek to end first.\n  await end(page).click();\n  await page.getByRole('button', { name: '回到起点', exact: true }).click();");
+edit(browser, "    if (!await menu.count()) await trigger.click();\n    await expect(menu).toBeVisible();", "    // The competition panel hydrates after its first SSR paint. Retry the\n    // public trigger only while collapsed, never toggle an already open menu.\n    await expect.poll(async () => {\n      if (await menu.count()) return true;\n      if (await trigger.getAttribute('aria-expanded') !== 'true') await trigger.click();\n      return await menu.count() > 0;\n    }, { timeout: 30_000, intervals: [500, 1000] }).toBe(true);");
+edit('core/packages/client/tests/timer-drill-contract-shared.test.ts', 'expect(EVENTS).toHaveLength(76);', 'expect(EVENTS).toHaveLength(77);');
+edit('core/packages/client/tests/timer-puzzle-picker.test.ts', 'expect(items).toHaveLength(76);', 'expect(items).toHaveLength(77);');
+const out = resolve(root, 'core/.tmp/radio-web-evidence');
+mkdirSync(out, { recursive: true });
+writeFileSync(resolve(out, 'changed-paths.txt'), [...changed].join('\n') + '\n');
+// Review tracked source only; never runner credentials, generated runtime files or secrets.
+const tracked = execFileSync('git', ['ls-files', 'core/apps/miniprogram', 'core/packages/app-ui', 'core/packages/client/scripts', '.github/workflows/test.yml'], { cwd: root, encoding: 'utf8' }).trim().split('\n');
+const sources: Record<string, string> = {};
+for (const path of tracked) if (/\.(?:ts|tsx|mts|mjs|json|yml)$/.test(path) && existsSync(resolve(root, path))) {
+  const text = readFileSync(resolve(root, path), 'utf8');
+  if (text.length < 300_000) sources[path] = text;
 }
-` + source.slice(finish);
-  edit("p.locator('.gen-tn-attempt-preview svg[aria-label=\"radioweb\"]').first()", "p.locator('.gen-tn-attempt-preview svg[aria-label=\"radioweb\"]:visible').first()");
-  edit("await page.locator('.gen-tn-paste-area').fill", "await page.locator('.gen-tn-paste-area:visible').fill");
-  const oldCount = "page.getByRole('spinbutton', { name: '每项打乱数' })";
-  if (source.split(oldCount).length !== 3) throw new Error('Unexpected count controls');
-  source = source.replaceAll(oldCount, "page.locator('input[aria-label=\"每项打乱数\"]:visible')");
-  edit("    const texts = await page.locator('.gen-tn-attempt-scramble').allTextContents();", "    if (mode !== 'comp') await expect(page.locator('.gen-tn-attempt-scramble:visible')).toHaveCount(2);\n    const texts = await page.locator('.gen-tn-attempt-scramble:visible').allTextContents();");
-  edit("page.locator('button[title=\"下载 PDF\"]')", "page.locator('button[title=\"下载 PDF\"]:visible')");
-}
-writeFileSync(resolve(root, path), source);
-mkdirSync(resolve(root, 'core/.tmp/radio-web-evidence'), { recursive: true });
-writeFileSync(resolve(root, 'core/.tmp/radio-web-evidence/changed-paths.txt'), source === original ? '\n' : path + '\n');
-console.log(source === original ? 'Browser patches already applied.' : 'Applied observed browser selector fixes.');
+writeFileSync(resolve(out, 'cross-platform-review.json'), JSON.stringify(sources));
+console.log(`Applied ${changed.size} exact source updates; exported ${Object.keys(sources).length} tracked review files.`);
