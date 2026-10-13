@@ -134,7 +134,7 @@ const CASES: readonly Spec[] = [
       { pairs: cubeEdgePairs, normals: cubeAxisNormals(cubeEdgePairs), cuts: [Math.SQRT1_2], order: 2 },
     ],
     faces: 6, perFace: 8, raw: 48, visible: 48, pieces: 32,
-    shapes: { 3: 8 }, orbits: [['CORNERS', 8, 3], ['CENTERS', 24, 1]],
+    shapes: { 3: 8 }, orbits: [['CENTERS', 24, 1], ['CORNERS', 8, 3]],
   },
   {
     id: 'cube3heli', faceNormals: cubeNormals,
