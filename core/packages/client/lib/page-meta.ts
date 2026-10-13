@@ -439,6 +439,10 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'dev/ops': { title: { zh: '运维', en: 'Ops' } },
   'dev/schema': { title: { zh: '数据库 Schema', en: 'Database schema' } },
   'dev/solvers': { title: { zh: '求解器', en: 'Solvers' } },
+  'dev/solvers/compare': {
+    title: { zh: '三阶最优求解器对比', en: 'Optimal 3×3 Solver Comparison' },
+    description: { zh: '对比 cube48opt、Nissy 与 CubeRoot Rust 的 EO 档位、表数据、原生内存和同条件实测性能，明确已实现与已验证的边界。', en: 'Compare cube48opt, Nissy and CubeRoot Rust by EO tier, table data, native memory and matched benchmarks, with implementation and validation status kept distinct.' },
+  },
   'dev/stack': { title: { zh: '技术栈', en: 'Stack' } },
   'dev/tokens': { title: { zh: '设计令牌', en: 'Design Tokens' } },
   'dev/utils': { title: { zh: '速查', en: 'Hooks & Utils' } },

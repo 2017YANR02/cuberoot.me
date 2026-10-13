@@ -1,8 +1,18 @@
 # AGENTS.md
 
+H48 h10 求解及算法对照按根 `AGENTS.md` 的 2026-10-12 更新执行：允许原版与实验版在持续运行时监控下启动，无需系统级防换出机制或单次 hash 许可；新增换出、压力异常、RSS 超限或保守余量不足 2 GiB 即停止并保留结果。H10/H11 大表重建仍受原启动限制。算法探索记录见 `../docs/h48-algorithm-research.md`，保留原版源码、程序和主表，候选通过独立补丁构建。
+
+cube48opt Opt1–9 Rust 独立研究按根 `AGENTS.md` 的 2026-10-12 专项授权执行：建表、查表、求解、验证与基准必须由 `experiments/cube48opt-rust/guard.mts` 启动，`CUBEOPT_VARIANT=1..9` 选择档位；入口按模式设置预算，持续检查进程树 RSS、内存压力、同次系统启动的 Swapouts 及至少 2 GiB 余量，保护触发后保留结果且不得重设基线自动重启。不得直接启动该研究原生程序的 `solve`、`oracle.mjs generate|query|solve`、`validate.mjs` 或 `benchmark.mjs`；静态 `inspect`、`small`、`verify-small` 和小表坐标校验可直接运行。这是独立研究入口，不替换下述日常 H10 统计与统一建表流程，不授权 H10/H11 大表重建，也不代表操作系统已禁用 swap。
+
+Rust H10 融合研究同样使用该 guard：`CUBEOPT_BACKEND=h10` 显式选择已有 30,336,314,216 字节 H10 表，`solve-h10` / `query-h10` / `h10-benchmark.mjs` 的大表运行必须受监控；C 与 Rust 顺序运行，一次只驻留一份大表。小型 `verify-h10.mjs` 坐标检查仅读取辅助段。此授权来自维护者要求接入 H10 并同内存对照，不授权大表重建；原 Opt1–9 通过默认 `CUBEOPT_BACKEND=opt` 保留。
+
+Rust H48 泛化研究按根 `AGENTS.md` 的 2026-10-13 更新执行：`solve-h48 H TABLE [CONTEXTS MAX_DEPTH MAX_NODES]` / `query-h48 H TABLE` 本机仅开放 H0–H10，必须经 `experiments/cube48opt-rust/guard.mts` 并显式设置 `CUBEOPT_BACKEND=h48`、与 CLI 一致的 `CUBEOPT_H=0..10`。guard 核对实际表文件大小和主表头档位、布局，按单表大小及预留内存设预算；沿用研究锁、时限、同次系统启动的 Swapouts 基线和停止记录，新增换出、压力异常、RSS 超限或保守余量不足 2 GiB 即停止，不得并行驻留多份大表或重设基线自动续跑。此更新限于已授权研究范围内的现有表查表和求解，不新增 Nissy H48 建表授权，不替换日常 H10 统计，也不自动授权其他批量或长期计算。旧 Opt1–9、H10 专用入口及根规则中的 AUF 例外保持。
+
+H11 只实现代码：允许静态检查和不接触 H11 表文件的小数据算术/单元测试；本机禁止 H11 建表、表文件加载或映射、查表、求解及基准。guard 与 CLI 在表文件读取前拒绝明确的 H11 请求，无环境变量豁免；不得通过改名程序、表路径或其他入口绕过。H11 格式支持、内存预算充足或更换硬件都不等于获得运行授权。
+
 求解器磁盘表的唯一日常生成入口是 `cargo run --release --bin table_generator`（CWD=`solver/`）；仅补 SQ1/H48 h10 分别追加 `-- --only sq1` / `-- --only h48-h10`。小档位建表验证追加 `-- --only h48-h7`，H7 不替代统计所需的 H10。三阶整解离线统计使用 `333opt/solve_h10.mts` 读取 H10，不再生成 cubeopt9。不要让后续 AI 直接跑 ignored 建表测试、`333opt/gen-table.mjs` 或上游 nissy-core 工具。表目录由 `CUBE_TABLE_DIR` 控制，生成器自动记录逐表耗时与峰值内存；H48 h10 的 RSS 警戒线 57 GiB，线程默认使用可用并行度。完整命令、源码入口、进度查看与验收记录见 [HIGH_MEMORY_TABLE_PROFILE.md](HIGH_MEMORY_TABLE_PROFILE.md)。
 
-H48 建表禁止用 file-backed mmap / MAP_SHARED 将输出 `.tmp` 当工作内存。先在进程内存生成，调用 `nissy_checkdata` 校验，顺序写 `.tmp` 并同步后原子改名；不可因旧 H11 内存事故直接退回文件映射。本机实测该映射方式慢几个数量级。已完成表在求解时只读映射是另一条路径。当前生成器与进度查看器支持 H7/H10，原生求解器和 TS 统计入口使用 H10；nissy-core 此版本 64 位 `H48_HMAX=11`，H11 表为 60,670,567,784 字节（56.50 GiB），H12 不能只改数字，须先有上游算法支持。未来升级 H11 时同步各入口、表大小、内存预算、进度和文档，不得只替换单个常量后宣称可用。
+H48 建表禁止用 file-backed mmap / MAP_SHARED 将输出 `.tmp` 当工作内存。先在进程内存生成，调用 `nissy_checkdata` 校验，顺序写 `.tmp` 并同步后原子改名；不可因旧 H11 内存事故直接退回文件映射。本机实测该映射方式慢几个数量级。已完成表在求解时只读映射是另一条路径，仍须遵守上述 H11 禁令。当前生成器与进度查看器支持 H7/H10，日常原生求解器和 TS 统计入口使用 H10，独立 Rust 研究入口另按上述 H0–H10 规则执行；nissy-core 此版本 64 位 `H48_HMAX=11`，H11 表为 60,670,567,784 字节（56.50 GiB），H12 不能只改数字，须先有上游算法支持。未来若明确授权运行 H11，仍须同步各入口、表大小、内存预算、进度和文档，不得只替换单个常量后宣称可用。
 
 修改 H48 遍历或进度前，先读 [vendor/nissy-core/VENDOR.md](vendor/nissy-core/VENDOR.md)：保留固定上游的短状态遍历边界及分布校验基准，不得为凑进度 100% 多处理最后一个哈希槽，或修改期望分布掩盖差异。计算路径有改动时先用统一入口完成 H7 建表与上游校验，再重新生成 H10；H7 成功不能代替 H10 自身验收。
 

@@ -1,0 +1,358 @@
+//! Opt1--9 padded H48 coordinates, recovered from WASM functions 37, 97, 100.
+//! Only the small, non-PDB lookup snapshot is imported. Opt1 omits EO; Opt2--9
+//! retain the highest 2--9 bits of the conjugated eleven-bit edge orientation.
+
+pub use crate::cube::Cube;
+
+pub const SNAPSHOT_BYTES: usize = 816_856;
+pub const CORNER_RAW_COUNT: usize = 70 * 2187;
+pub const CORNER_CLASSES: u32 = 3393;
+pub const EDGE_STRIDE: u32 = 70 * 512;
+pub const COORDINATE_COUNT: u32 = CORNER_CLASSES * EDGE_STRIDE;
+pub const PDB_BYTES: usize = COORDINATE_COUNT as usize / 4;
+
+// The constants above and legacy u32 methods describe Opt1 only.
+// Opt8/9 use memory64 in WASM, but the imported LUT elements remain u8/u16/u32.
+fn layout(variant: u8) -> Result<(usize, usize), String> {
+    match variant {
+        1 => Ok((0, 0)),
+        2..=7 => Ok((96, 96)),
+        8..=9 => Ok((1152, 832)),
+        _ => Err("cube48opt variant must be 1..9".into()),
+    }
+}
+
+pub fn snapshot_bytes(variant: u8) -> Result<usize, String> {
+    Ok(SNAPSHOT_BYTES + layout(variant)?.0)
+}
+
+pub struct CoordTables {
+    variant: u8,
+    corner_class: Box<[u32]>,
+    symmetries: [[u8; 20]; 48],
+    symmetry_inverse: [u8; 48],
+    separation8: [u8; 128],
+    separation12: Box<[u16]>,
+    edge_sources: [[u8; 16]; 48],
+    edge_identities: [[u8; 16]; 48],
+    edge_source_flips: [[u8; 16]; 48],
+    edge_inverse_cubies: [[u8; 16]; 48],
+    outer_complement: Box<[[u8; 8]]>,
+}
+
+impl CoordTables {
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self, String> {
+        Self::from_variant_bytes(bytes, 1)
+    }
+
+    pub fn from_variant_bytes(bytes: &[u8], variant: u8) -> Result<Self, String> {
+        let (delta, separation_delta) = layout(variant)?;
+        let snapshot_bytes = SNAPSHOT_BYTES + delta;
+        if bytes.len() != snapshot_bytes {
+            return Err(format!(
+                "opt{variant} small-table snapshot must be {snapshot_bytes} bytes"
+            ));
+        }
+        let corner_class = bytes[204_496 + delta..snapshot_bytes]
+            .chunks_exact(4)
+            .map(|b| u32::from_le_bytes(b.try_into().unwrap()))
+            .collect::<Vec<_>>()
+            .into_boxed_slice();
+        if corner_class
+            .iter()
+            .any(|&v| v >> 6 >= CORNER_CLASSES || v & 63 >= 48)
+            || corner_class.iter().map(|v| v >> 6).max() != Some(CORNER_CLASSES - 1)
+        {
+            return Err("invalid/uninitialized corner class table".into());
+        }
+        let mut symmetries = [[0u8; 20]; 48];
+        for (i, symmetry) in symmetries.iter_mut().enumerate() {
+            symmetry.copy_from_slice(&bytes[189_856 + delta + 20 * i..189_876 + delta + 20 * i]);
+            // Symmetry corners can encode mirrors (orientation 3..5).
+            if symmetry[..8].iter().any(|&v| v >= 48) || symmetry[8..].iter().any(|&v| v >= 24) {
+                return Err("invalid symmetry cubie".into());
+            }
+        }
+        let symmetry_inverse: [u8; 48] =
+            bytes[195_792 + delta..195_840 + delta].try_into().unwrap();
+        if symmetry_inverse.iter().any(|&v| v >= 48) {
+            return Err("invalid symmetry inverse".into());
+        }
+        let separation8 = bytes[6_560 + separation_delta..6_688 + separation_delta]
+            .try_into()
+            .unwrap();
+        let separation12 = bytes[6_688 + separation_delta..10_784 + separation_delta]
+            .chunks_exact(2)
+            .map(|b| u16::from_le_bytes(b.try_into().unwrap()))
+            .collect::<Vec<_>>()
+            .into_boxed_slice();
+        let outer_complement = bytes[13_632 + delta..30_016 + delta]
+            .chunks_exact(8)
+            .map(|b| b.try_into().unwrap())
+            .collect::<Vec<[u8; 8]>>()
+            .into_boxed_slice();
+        let mut edge_sources = [[0x80u8; 16]; 48];
+        let mut edge_identities = [[0u8; 16]; 48];
+        let mut edge_source_flips = [[0u8; 16]; 48];
+        let mut edge_inverse_cubies = [[0u8; 16]; 48];
+        for s in 0..48 {
+            for i in 0..12 {
+                edge_sources[s][i] = symmetries[s][8 + i] >> 1;
+                edge_identities[s][i] = symmetries[symmetry_inverse[s] as usize][8 + i] >> 1;
+                edge_source_flips[s][i] = symmetries[s][8 + i] & 1;
+                edge_inverse_cubies[s][i] = symmetries[symmetry_inverse[s] as usize][8 + i];
+            }
+        }
+        let tables = Self {
+            variant,
+            corner_class,
+            symmetries,
+            symmetry_inverse,
+            separation8,
+            separation12,
+            edge_sources,
+            edge_identities,
+            edge_source_flips,
+            edge_inverse_cubies,
+            outer_complement,
+        };
+        // Independently recreate the small padded combination mapping.
+        let mut rank8 = 0u8;
+        let mut rank12 = 2u16;
+        for mask in (0u16..4096).rev().filter(|m| m.count_ones() == 4) {
+            if mask < 256 {
+                if tables.separation8[(mask & 127) as usize] != rank8 {
+                    return Err("4-of-8 mapping differs".into());
+                }
+                rank8 += 1;
+            }
+            if tables.separation12[(mask & 2047) as usize] != rank12 {
+                return Err("padded 4-of-12 mapping differs".into());
+            }
+            let complement = (0u8..12)
+                .filter(|i| mask & (1 << i) == 0)
+                .collect::<Vec<_>>();
+            if tables.outer_complement[(mask & 2047) as usize].as_slice() != complement {
+                return Err("edge complement lookup differs".into());
+            }
+            rank12 += 1;
+            if rank12 & 63 == 0 {
+                rank12 += 2;
+            }
+        }
+        for (m, expected) in crate::cube::MOVES.iter().enumerate() {
+            if bytes[190_816 + delta + 20 * m..190_836 + delta + 20 * m] != expected.to_bytes() {
+                return Err("snapshot move definitions differ".into());
+            }
+        }
+        Ok(tables)
+    }
+
+    pub fn variant(&self) -> u8 {
+        self.variant
+    }
+
+    /// Retained EO bits; the published family has no one-bit member.
+    pub fn orientation_bits(&self) -> u8 {
+        if self.variant == 1 {
+            0
+        } else {
+            self.variant
+        }
+    }
+
+    pub fn coordinate_count(&self) -> u64 {
+        u64::from(COORDINATE_COUNT) << self.orientation_bits()
+    }
+
+    #[inline]
+    fn pack_index(&self, orbit: u32, eo: u16) -> u64 {
+        let bits = self.orientation_bits();
+        ((u64::from(orbit) & !511) << bits)
+            | (u64::from(eo >> (11 - bits)) << 9)
+            | u64::from(orbit & 511)
+    }
+
+    /// The variant is bound to this table object, so callers cannot mix an
+    /// Opt1 index with an Opt9 table by passing a different per-query option.
+    #[inline]
+    pub fn index64(&self, cube: &Cube) -> u64 {
+        if self.variant == 1 {
+            return u64::from(self.index(cube));
+        }
+        #[cfg(target_arch = "aarch64")]
+        let (orbit, eo) = unsafe { self.coordinate_parts_neon::<true>(cube) };
+        #[cfg(not(target_arch = "aarch64"))]
+        let (orbit, eo) = self.coordinate_parts_slow::<true>(cube);
+        self.pack_index(orbit, eo)
+    }
+
+    /// Scalar specification of the full, variant-bound coordinate.
+    pub fn index64_slow(&self, cube: &Cube) -> u64 {
+        let (orbit, eo) = self.coordinate_parts_slow::<true>(cube);
+        self.pack_index(orbit, eo)
+    }
+
+    /// Raw corner orientation (little-endian base 3) and tetrad separation.
+    #[inline]
+    pub fn raw_corner(&self, cube: &Cube) -> usize {
+        let mut co = 0usize;
+        let mut pow = 1usize;
+        let mut mask = 0usize;
+        for (i, &corner) in cube.corners.iter().enumerate() {
+            if i < 7 {
+                co += (corner >> 3) as usize * pow;
+                pow *= 3;
+            }
+            mask |= ((corner as usize >> 2) & 1) << i;
+        }
+        co * 70 + self.separation8[mask & 127] as usize
+    }
+
+    #[inline]
+    pub fn index(&self, cube: &Cube) -> u32 {
+        assert_eq!(
+            self.variant, 1,
+            "u32 index() is only valid for Opt1; use index64()"
+        );
+        #[cfg(target_arch = "aarch64")]
+        // AArch64 always provides NEON. This function only loads within Cube
+        // and the validated, fixed-size small tables owned by self.
+        unsafe {
+            self.coordinate_parts_neon::<false>(cube).0
+        }
+        #[cfg(not(target_arch = "aarch64"))]
+        self.index_slow(cube)
+    }
+
+    /// Straight scalar specification retained for full differential checks.
+    pub fn index_slow(&self, cube: &Cube) -> u32 {
+        assert_eq!(
+            self.variant, 1,
+            "u32 index_slow() is only valid for Opt1; use index64_slow()"
+        );
+        self.coordinate_parts_slow::<false>(cube).0
+    }
+
+    fn coordinate_parts_slow<const WITH_EO: bool>(&self, cube: &Cube) -> (u32, u16) {
+        let entry = self.corner_class[self.raw_corner(cube)];
+        let symmetry = &self.symmetries[(entry & 63) as usize];
+        let inverse = &self.symmetries[self.symmetry_inverse[(entry & 63) as usize] as usize];
+        let mut outer = 0usize;
+        let mut inner = 0usize;
+        let mut inner_position = 0;
+        let mut eo = 0;
+        for position in 0..12 {
+            // edge_conj, with orientations omitted because opt1 ignores EO.
+            let source = (symmetry[8 + position] >> 1) as usize;
+            let identity = (cube.edges[source] >> 1) as usize;
+            let transformed = inverse[8 + identity] >> 1;
+            if WITH_EO {
+                let flip =
+                    (cube.edges[source] ^ symmetry[8 + position] ^ inverse[8 + identity]) & 1;
+                eo |= u16::from(flip) << position;
+            }
+            if transformed & 8 != 0 {
+                outer |= 1 << position;
+            } else {
+                inner |= ((transformed as usize >> 2) & 1) << inner_position;
+                inner_position += 1;
+            }
+        }
+        debug_assert_eq!(inner_position, 8);
+        let orbit = (entry >> 6) * EDGE_STRIDE
+            + (self.separation8[inner & 127] as u32) * 512
+            + self.separation12[outer & 2047] as u32;
+        (orbit, eo & 2047)
+    }
+
+    /// Native version of the WASM's two byte-table lookups and complement
+    /// shuffle. No per-edge branch or conjugated Cube is needed in this path.
+    #[cfg(target_arch = "aarch64")]
+    #[inline]
+    unsafe fn coordinate_parts_neon<const WITH_EO: bool>(&self, cube: &Cube) -> (u32, u16) {
+        use std::arch::aarch64::*;
+        let corners = vld1_u8(cube.corners.as_ptr());
+        let orientation = vmovl_u8(vshr_n_u8::<3>(corners));
+        let co = vaddvq_u16(vmulq_u16(
+            orientation,
+            vld1q_u16([1u16, 3, 9, 27, 81, 243, 729, 0].as_ptr()),
+        )) as usize;
+        let weights = vld1_u8([1u8, 2, 4, 8, 16, 32, 64, 128].as_ptr());
+        let corner_mask = vaddv_u8(vmul_u8(
+            vand_u8(vshr_n_u8::<2>(corners), vdup_n_u8(1)),
+            weights,
+        )) as usize;
+        let entry = self.corner_class[co * 70 + self.separation8[corner_mask & 127] as usize];
+        let s = (entry & 63) as usize;
+        // repr(C) Cube is exactly 20 bytes: this load spans bytes 4..20,
+        // then discards the four remaining corner bytes. No over-read.
+        let tail = vld1q_u8((cube as *const Cube).cast::<u8>().add(4));
+        let edges = vextq_u8::<4>(tail, vdupq_n_u8(0));
+        let source_values = vqtbl1q_u8(edges, vld1q_u8(self.edge_sources[s].as_ptr()));
+        let (identities, eo) = if WITH_EO {
+            let transformed = veorq_u8(
+                vqtbl1q_u8(
+                    vld1q_u8(self.edge_inverse_cubies[s].as_ptr()),
+                    vshrq_n_u8::<1>(source_values),
+                ),
+                vandq_u8(
+                    veorq_u8(source_values, vld1q_u8(self.edge_source_flips[s].as_ptr())),
+                    vdupq_n_u8(1),
+                ),
+            );
+            let flips = vandq_u8(transformed, vdupq_n_u8(1));
+            let eo = u16::from(vaddv_u8(vmul_u8(vget_low_u8(flips), weights)))
+                | (u16::from(vaddv_u8(vmul_u8(vget_high_u8(flips), weights))) << 8);
+            (vshrq_n_u8::<1>(transformed), eo & 2047)
+        } else {
+            (
+                vqtbl1q_u8(
+                    vld1q_u8(self.edge_identities[s].as_ptr()),
+                    vshrq_n_u8::<1>(source_values),
+                ),
+                0,
+            )
+        };
+        let outer_bits = vandq_u8(vshrq_n_u8::<3>(identities), vdupq_n_u8(1));
+        let outer = (vaddv_u8(vmul_u8(vget_low_u8(outer_bits), weights)) as usize
+            | ((vaddv_u8(vmul_u8(vget_high_u8(outer_bits), weights)) as usize) << 8))
+            & 2047;
+        let positions = vcombine_u8(
+            vld1_u8(self.outer_complement[outer].as_ptr()),
+            vdup_n_u8(0x80),
+        );
+        let remaining = vget_low_u8(vqtbl1q_u8(identities, positions));
+        let inner = vaddv_u8(vmul_u8(
+            vand_u8(vshr_n_u8::<2>(remaining), vdup_n_u8(1)),
+            weights,
+        )) as usize
+            & 127;
+        let orbit = (entry >> 6) * EDGE_STRIDE
+            + (self.separation8[inner] as u32) * 512
+            + self.separation12[outer] as u32;
+        (orbit, eo)
+    }
+
+    /// Original symmetry conjugation, including reflected corner frames.
+    /// Kept public for differential checking; search indexing only needs edges.
+    pub fn conjugate(&self, cube: &Cube, symmetry_index: u8) -> Cube {
+        let s = &self.symmetries[symmetry_index as usize];
+        let inv = &self.symmetries[self.symmetry_inverse[symmetry_index as usize] as usize];
+        let mut result = Cube::SOLVED;
+        for i in 0..8 {
+            let source = s[i];
+            let current = cube.corners[(source & 7) as usize];
+            let destination = inv[(current & 7) as usize];
+            let twist = (current >> 3) + (source >> 3);
+            let twist = if destination < 24 { twist } else { 12 - twist };
+            result.corners[i] = destination & 7 | ((twist + (destination >> 3)) % 3) << 3;
+        }
+        for i in 0..12 {
+            let source = s[8 + i];
+            let current = cube.edges[(source >> 1) as usize];
+            result.edges[i] = inv[8 + (current >> 1) as usize] ^ ((current ^ source) & 1);
+        }
+        result
+    }
+}

@@ -44,8 +44,14 @@
   {
     "name": "nissy-core H48 / Sebastiano Tronto and Enrico Tenuti",
     "url": "https://github.com/sebastianotronto/nissy-core",
-    "zh": "H48 h11 原生整解表使用 nissy-core 源码生成；源码按 GPL-3.0-or-later 保留在 solver/vendor/nissy-core，表只在本机生成。",
-    "en": "The native H48 h11 whole-cube table is generated with nissy-core. Its GPL-3.0-or-later source is retained in solver/vendor/nissy-core; the table is generated locally."
+    "zh": "H48 h10 原生整解表使用 nissy-core 源码生成；独立 Rust H0～H11 实验移植其坐标、对称变换和表格式；固定 H10 版本已复用已有表验收，通用版仅经编译和小数据检查，H11 未运行。固定源码及 GPL-3.0-or-later 许可保留在 solver/vendor/nissy-core，组合 Rust H48 程序遵循该许可。",
+    "en": "The native H48 h10 whole-cube table is generated with nissy-core. A separate Rust H0–H11 experiment ports its coordinates, symmetry transforms and table format. The fixed H10 build was validated with the existing table; the generic build has compilation and small-data checks only, and H11 has not been run. The pinned GPL-3.0-or-later source remains in solver/vendor/nissy-core, and the combined Rust H48 program uses that license."
+  },
+  {
+    "name": "cubeopt-wasm / Chen Shuang",
+    "url": "https://github.com/cs0x7f/cubeopt-wasm",
+    "zh": "三阶最优求解使用其 MIT 许可的 cube48opt WASM。独立的 Mac Rust 实验根据固定 opt1–9 编译产物恢复状态、坐标与搜索，原版用于建表和差分验证；实验尚未替换现用引擎。",
+    "en": "Optimal 3×3 solving uses its MIT-licensed cube48opt WASM. A separate Mac Rust experiment reconstructs state, coordinates and search from pinned opt1–9 artifacts, retaining the original for table generation and differential validation; it has not replaced the current engine."
   },
   {
     "name": "The Math Flow: Rubik’s Cube ring animation",

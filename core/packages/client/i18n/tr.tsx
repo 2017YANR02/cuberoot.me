@@ -9,8 +9,8 @@
 // Two locales: en + zh (Simplified). No runtime conversion; SSR and client
 // render identical text.
 
-import { useTranslation } from 'react-i18next';
-import type { ReactNode } from 'react';
+import { I18nContext } from 'react-i18next';
+import { useCallback, useContext, useSyncExternalStore, type ReactNode } from 'react';
 import i18n, { normalizeAppLang, type AppLang } from './i18n-client';
 
 export type Lang = AppLang;
@@ -23,9 +23,9 @@ export interface Msg {
   zh: string;
 }
 
-// Pure resolver. Reads the i18n singleton's current language — set synchronously
-// per render by I18nProvider (the same model the old `i18n.language` ternaries
-// relied on). Use in string contexts (props, aria-label, computed values).
+// Pure resolver. Reads the i18n singleton's current language, owned by
+// I18nProvider. It does not subscribe; a component rendering these values uses
+// useT/useLang or another subscription. Use in props and computed string values.
 //
 // Generic: defaults to string (`tr({ en, zh })`), but also selects a localized
 // value of any type — `tr(obj)` where obj is `{ en, zh }` returns the picked
@@ -37,8 +37,17 @@ export function tr<T = string>(m: { en: T; zh: T }): T {
 // Hook form: subscribes to language changes (re-renders on toggle) and returns
 // the current normalized locale. Use when a component needs the lang value.
 export function useLang(): Lang {
-  const { i18n: inst } = useTranslation();
-  return normalizeLang(inst.language);
+  const context = useContext(I18nContext);
+  const instance = context?.i18n ?? i18n;
+  const subscribe = useCallback((notify: () => void) => {
+    instance.on('languageChanged', notify);
+    return () => { instance.off('languageChanged', notify); };
+  }, [instance]);
+  const snapshot = useCallback(() => normalizeLang(instance.language), [instance]);
+  // A route can render before the provider changes language, then subscribe
+  // after that event. React rechecks this snapshot when subscribing, including
+  // Suspense commits; an event-only passive subscription misses that window.
+  return useSyncExternalStore(subscribe, snapshot, snapshot);
 }
 
 // JSX text node. Self-subscribing (re-renders on language toggle). Accepts plain
