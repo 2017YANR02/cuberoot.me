@@ -1,15 +1,84 @@
 #!/usr/bin/env node
-// Startup interlock, not an OS swap setting. No verified no-swap launcher is
-// registered yet: polling vm_stat, env flags and a small batch are not exemptions.
+// Startup interlock, not an OS swap setting. H10 solving is authorized with
+// runtime resource monitoring; it does not require an OS no-swap launcher.
+// Other protected computations still require the documented safeguards.
 import { dirname, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
-const native = /^(?:table_generator(?:_high_memory)?|solve_h48_h10(?:_\d+)?|(?:pseudo_f2leo|f2leo|pseudo_pair|pair|std)_analyzer)(?:\.exe)?$/;
-const script = /(?:^|\/)(?:solve_h10\.mts|double-zbll\.ts|gen-table\.mjs|backfill_xcross_variant\.[cm]?[jt]s)$/;
+const native = /^(?:table_generator(?:_high_memory)?|(?:pseudo_f2leo|f2leo|pseudo_pair|pair|std)_analyzer)(?:\.exe)?$/;
+const script = /(?:^|\/)(?:double-zbll\.ts|gen-table\.mjs|backfill_xcross_variant\.[cm]?[jt]s)$/;
 const base = (word: string) => word.replaceAll('\\', '/').split('/').pop() ?? '';
+const cubeoptRoot = resolve(repoRoot, 'solver/experiments/cube48opt-rust');
+const cubeoptLabel = 'cube48opt Opt1–9 / Rust H0–H10 研究计算';
+const cubeoptComputations = ['validate.mjs', 'benchmark.mjs', 'verify-h10.mjs', 'validate-h10.mjs', 'h10-benchmark.mjs'];
+
+// Only the actual interpreter entrypoint can authorize its child arguments.
+// Merely mentioning guard.mts after oracle.mjs must not grant an exemption.
+function interpreterScript(words: string[]): { index: number; checkOnly: boolean } | undefined {
+  let interpreter = 0;
+  while (interpreter < words.length) {
+    const word = words[interpreter];
+    if (/^[\w]+=/.test(word) || /^(?:env|nohup|caffeinate|time|command)$/.test(base(word)) || /^-[a-z]+$/.test(word)) {
+      interpreter++;
+      continue;
+    }
+    break;
+  }
+  if (!/^(?:node(?:\.exe)?|tsx(?:\.cmd)?)$/.test(base(words[interpreter] ?? ''))) return undefined;
+  let checkOnly = false;
+  for (let index = interpreter + 1; index < words.length; index++) {
+    const word = words[index];
+    if (['-e', '--eval', '-p', '--print'].includes(word)) return undefined;
+    if (['-c', '--check'].includes(word)) { checkOnly = true; continue; }
+    if (['--import', '--require', '-r', '--loader', '--experimental-loader', '--conditions', '-C', '--input-type'].includes(word)) { index++; continue; }
+    if (word === '--' || word.startsWith('-')) continue;
+    return { index, checkOnly };
+  }
+  return undefined;
+}
+
+function blockedCubeopt(words: string[], cwd: string): boolean {
+  const invocation = interpreterScript(words);
+  if (invocation?.checkOnly) return false;
+  // Even the real guard is not an H11 authorization. Runtime policy and the
+  // native CLI also reject it before file IO; no path/alias bypass is provided.
+  const h48Mode = words.findIndex(word => ['solve-h48', 'query-h48'].includes(word));
+  if (words.some(word => /^CUBEOPT_H=/.test(word) && Number(word.slice('CUBEOPT_H='.length)) >= 11)
+      || h48Mode >= 0 && Number(words[h48Mode + 1]) >= 11
+      || words.some(word => /^(?:solve|query)-h11$/.test(word))) return true;
+  if (invocation) {
+    const entry = resolve(cwd, words[invocation.index].replaceAll('\\', '/'));
+    if (entry === resolve(cubeoptRoot, 'guard.mts')) return false;
+    if (entry === resolve(cubeoptRoot, 'oracle.mjs'))
+      return ['generate', 'query', 'solve'].includes(words[invocation.index + 1]);
+    if (cubeoptComputations.some(name => entry === resolve(cubeoptRoot, name))) return true;
+  }
+  // A lookalike wrapper is not the authorized guard, even when its arguments
+  // visibly name the real computation entrypoint.
+  for (const [index, word] of words.entries()) {
+    const path = resolve(cwd, word.replaceAll('\\', '/'));
+    if (path === resolve(cubeoptRoot, 'oracle.mjs') && ['generate', 'query', 'solve'].includes(words[index + 1])) return true;
+    if (cubeoptComputations.some(name => path === resolve(cubeoptRoot, name))) return true;
+  }
+  const cargo = words.findIndex(word => base(word) === 'cargo');
+  if (cargo >= 0 && words.includes('run')) {
+    const manifestFlag = words.findIndex(word => word === '--manifest-path' || word.startsWith('--manifest-path='));
+    const manifest = manifestFlag < 0 ? '' : words[manifestFlag].includes('=')
+      ? words[manifestFlag].slice('--manifest-path='.length) : words[manifestFlag + 1] ?? '';
+    const researchPackage = cwd === cubeoptRoot || manifest && resolve(cwd, manifest) === resolve(cubeoptRoot, 'Cargo.toml')
+      || words.some(word => word === 'cube48opt-research' || word === '--bin=cube48opt-research');
+    if (researchPackage && !words.some(word => word === '--example' || word.startsWith('--example='))) {
+      const delimiter = words.indexOf('--');
+      return delimiter < 0 || !['inspect', '--help', '-h'].includes(words[delimiter + 1]);
+    }
+    return false;
+  }
+  const executable = words.findIndex(word => /^cube48opt-research(?:[-_.][\w.-]+)?$/.test(base(word)));
+  return executable >= 0 && !['inspect', '--help', '-h'].includes(words[executable + 1]);
+}
 
 // Preserve quoted arguments so `rg 'table_generator' ...` is inspection, while
 // command lists and shell -c wrappers are checked independently. This is not a
@@ -38,16 +107,27 @@ function segments(command: string): string[][] {
   return result;
 }
 
-export function blockedCompute(command: string, depth = 0): string | undefined {
+export function blockedCompute(command: string, depth = 0, cwd = repoRoot): string | undefined {
   if (command.includes('double-zbll-auf-20261011/run.mts') && command.includes('--solve')) return '双底 AUF 小样本';
   if (command.includes('double-zbll-auf-20261011/full.mts') && command.includes('--run')) return '双底 AUF 长期计算';
   if (depth > 8) return undefined;
   for (const words of segments(command)) {
     const first = base(words.find(word => !/^[\w]+=.*/.test(word)) ?? '');
+    if (first === 'cd') {
+      const index = words.findIndex(word => word === 'cd');
+      const destination = words[index + 1] === '--' ? words[index + 2] : words[index + 1];
+      if (destination) cwd = resolve(cwd, destination.replaceAll('\\', '/'));
+      continue;
+    }
     // These commands read or display their arguments; names in source/fixtures
     // are not launches. Command substitution is checked separately below.
     if (/^(?:rg|grep|cat|head|tail|sed|less|echo|printf|git|ls|stat|du|wc|file|shasum)$/.test(first)) continue;
+    // A direct cp copies bytes; a solver-looking source/destination is not an
+    // executable. This exemption is segment-local, and substitutions are still
+    // checked below. Do not extend it to Node or arbitrary file-operation code.
+    if (first === 'cp') continue;
     if (first === 'cargo' && !words.includes('run')) continue;
+    if (blockedCubeopt(words, cwd)) return cubeoptLabel;
     for (const [index, word] of words.entries()) {
       const normalized = word.replaceAll('\\', '/');
       const name = base(word).replace(/^--bin=/, '');
@@ -65,17 +145,19 @@ export function blockedCompute(command: string, depth = 0): string | undefined {
       if (publishedStats && !words.slice(index + 1).includes('--publish-only')) return '打乱统计计算';
       if (/^-(?:[a-z]*c|e|eval)$/.test(word) || word === '--eval' || word === '-Command') {
         const nested = words[index + 1] ?? '';
-        const blocked = blockedCompute(nested, depth + 1);
+        const blocked = blockedCompute(nested, depth + 1, cwd);
         if (blocked) return blocked;
         // Visible child-process calls in inline JS/Python/PowerShell. Do not
         // execute or import arbitrary code in order to classify it.
         if (/spawn|exec|subprocess|Start-Process/.test(nested)
-          && /table_generator|solve_h(?:48_h)?10|double-zbll|stats:scramble|scripts[\\/]stats[\\/]update-/.test(nested)) return '内联脚本中的大内存计算';
+          && /table_generator|double-zbll|stats:scramble|scripts[\\/]stats[\\/]update-/.test(nested)) return '内联脚本中的大内存计算';
+        if (/spawn|exec|subprocess|Start-Process/.test(nested)
+          && /cube48opt-research|cube48opt-rust[\\/](?:oracle|validate|benchmark|verify-h10|validate-h10|h10-benchmark)\.mjs/.test(nested)) return cubeoptLabel;
       }
     }
   }
   for (const match of command.matchAll(/\$\(([^()]*)\)|`([^`]*)`/g)) {
-    const blocked = blockedCompute(match[1] ?? match[2], depth + 1);
+    const blocked = blockedCompute(match[1] ?? match[2], depth + 1, cwd);
     if (blocked) return blocked;
   }
   return undefined;
@@ -125,11 +207,13 @@ async function main() {
   const directory = typeof cwd === 'string' ? resolve(cwd).toLowerCase() : '';
   if (directory !== root && !directory.startsWith(root + sep)
     && !command.replaceAll('\\', '/').toLowerCase().includes(root.replaceAll('\\', '/'))) return;
-  const blocked = blockedCompute(command);
+  const blocked = blockedCompute(command, 0, typeof cwd === 'string' ? resolve(cwd) : repoRoot);
   if (!blocked) return;
   process.stdout.write(JSON.stringify({ hookSpecificOutput: {
     hookEventName: 'PreToolUse', permissionDecision: 'deny',
-    permissionDecisionReason: `禁止启动 ${blocked}：尚无经核验、覆盖进程及其子进程的系统级防交换保护。现有轮询监控、NO_SWAP 环境变量及缩小批次不能保证零换出。保留结果和断点，先配置并核验系统级保护，再登记受保护入口；不要重设基线或绕过 hook。只读查看统计计划可用 pnpm stats:scramble:local --plan。见 AGENTS.md「项目硬性约束：禁止使用交换空间」。`,
+    permissionDecisionReason: blocked === cubeoptLabel
+      ? `禁止直接启动 ${blocked}：本轮授权仅适用于 solver/experiments/cube48opt-rust/guard.mts。请经 node --experimental-strip-types solver/experiments/cube48opt-rust/guard.mts LABEL EXECUTABLE [ARGS] 启动，由入口按 CUBEOPT_VARIANT=1..9、显式 CUBEOPT_BACKEND=h10，或 CUBEOPT_BACKEND=h48 加 CUBEOPT_H=0..10 核对预算。H48 档位必须匹配 CLI、实际表大小和表头；H11 仅实现代码，不允许运行，即使通过 guard 也拒绝。持续监控进程树 RSS、内存压力、同次系统启动的 Swapouts 与至少 2 GiB 余量，H10 基准仅允许顺序单表驻留。保护触发后不得重设基线自动重启。inspect、small、verify-small 和小表坐标校验可直接运行；此授权不是操作系统禁用 swap。`
+      : `禁止启动 ${blocked}：尚无经核验、覆盖进程及其子进程的系统级防交换保护。现有轮询监控、NO_SWAP 环境变量及缩小批次不能保证零换出。保留结果和断点，先配置并核验系统级保护，再登记受保护入口；不要重设基线或绕过 hook。只读查看统计计划可用 pnpm stats:scramble:local --plan。见 AGENTS.md「本地计算内存与交换保护」；H10 独立求解已按新规则放行，此限制仍适用于上述其他计算。`,
   } }));
 }
 

@@ -44,15 +44,10 @@ describe('unprotected memory computation command guard', () => {
     'NO_SWAP=1 pnpm --filter @cuberoot/alg-build double-zbll --limit 1',
     'cd core && pnpm --filter @cuberoot/alg-build double-zbll',
     'node --import tsx core/jobs/alg-build/src/double-zbll.ts',
-    'node solver/333opt/solve_h10.mts --no-counts',
-    'nohup caffeinate -i node solver/333opt/solve_h10.mts > run.log &',
     'cargo run --release --bin table_generator -- --only h48-h10',
     'cargo run --bin=table_generator',
     './solver/target/release/table_generator --help',
     './solver/target/release/f2leo_analyzer input.csv',
-    './solver/333opt/solve_h48_h10',
-    './solver/target/release/solve_h48_h10_16',
-    './solver/target/release/solve_h48_h10_16.exe',
     'node .tmp/double-zbll-1000/run.mts',
     'pnpm stats:scramble:local',
     'pnpm stats:scramble --jobs 333opt',
@@ -66,7 +61,8 @@ describe('unprotected memory computation command guard', () => {
     'pnpm --filter @cuberoot/alg-build double-zbll:symmetry --plan --run',
     'pnpm --filter @cuberoot/alg-build double-zbll:symmetry --watch --run',
     'bash -lc "pnpm --filter @cuberoot/alg-build double-zbll"',
-    'node -e "require(\'node:child_process\').spawnSync(\'node\', [\'solver/333opt/solve_h10.mts\'])"',
+    'node -e "require(\'node:child_process\').spawnSync(\'solver/target/release/table_generator\', [])"',
+    './solver/target/release/solve_h48_h10_16; cargo run --bin table_generator',
     'echo $(pnpm --filter @cuberoot/alg-build double-zbll)',
     'pnpm --filter @cuberoot/alg-build \\\n double-zbll',
   ])('denies without executing the computation: %s', command => {
@@ -78,6 +74,136 @@ describe('unprotected memory computation command guard', () => {
     const output = JSON.parse(result.stdout).hookSpecificOutput;
     expect(output.permissionDecision).toBe('deny');
     expect(output.permissionDecisionReason).toContain('系统级防交换保护');
+  });
+
+  it.each([
+    'node solver/333opt/solve_h10.mts --no-counts',
+    'nohup caffeinate -i node solver/333opt/solve_h10.mts > run.log &',
+    './solver/333opt/solve_h48_h10',
+    './solver/target/release/solve_h48_h10_16',
+    './solver/target/release/solve_h48_h10_16.exe',
+    './solver/target/release/h48_corners_bench',
+    './solver/target/release/h48_corners_bench.exe',
+    './solver/target/release/h48_bpmx_bench',
+    './solver/target/release/h48_bpmx_face_bench',
+    './solver/target/release/h48_bpmx_recursive_bench',
+    './solver/target/release/h48_survivor_sample_bench',
+    'node solver/experiments/h48-corners/run.mts --run --threads=1 --variant=survivor-sample',
+    'bash -lc "node solver/333opt/solve_h10.mts --no-counts"',
+    'node -e "require(\'node:child_process\').spawnSync(\'node\', [\'solver/333opt/solve_h10.mts\'])"',
+    'node -e "require(\'node:child_process\').spawnSync(\'solver/target/release/solve_h48_h10_16\', [])"',
+    'node -e "require(\'node:child_process\').spawnSync(\'solver/target/release/h48_corners_bench\', [])"',
+  ])('allows H10 solving without an OS no-swap launcher: %s', command => {
+    // This checks startup policy only. Resource monitoring belongs to the runner.
+    const result = runAdapter(COMMAND_ADAPTER, MEMORY_COMPUTE_HOOK, {
+      cwd: REPO_ROOT, tool_input: { command },
+    });
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe('');
+    expect(result.stdout).toBe('');
+  });
+
+  it.each([
+    'CUBEOPT_BACKEND=h48 CUBEOPT_H=0 ./solver/experiments/cube48opt-rust/target/release/cube48opt-research solve-h48 0 table.dat 8 20 0',
+    'env CUBEOPT_BACKEND=h48 CUBEOPT_H=10 ./solver/experiments/cube48opt-rust/target/release/cube48opt-research query-h48 10 table.dat',
+    'cargo run --release --manifest-path solver/experiments/cube48opt-rust/Cargo.toml -- solve-h48 7 table.dat',
+    './solver/experiments/cube48opt-rust/target/release/cube48opt-research-snapshot query-h48 9 renamed.dat',
+    'CUBEOPT_BACKEND=h48 CUBEOPT_H=7 node solver/experiments/cube48opt-rust/guard.mts h7 ./solver/experiments/cube48opt-rust/target/release/cube48opt-research query-h48 7 table.dat; ./solver/experiments/cube48opt-rust/target/release/cube48opt-research solve-h48 7 table.dat',
+    'CUBEOPT_BACKEND=h48 CUBEOPT_H=11 node solver/experiments/cube48opt-rust/guard.mts h11 ./solver/experiments/cube48opt-rust/target/release/cube48opt-research solve-h48 11 renamed.dat',
+    'CUBEOPT_BACKEND=h48 CUBEOPT_H=10 node solver/experiments/cube48opt-rust/guard.mts mismatch ./solver/experiments/cube48opt-rust/target/release/cube48opt-research query-h48 11 table.dat',
+    'node solver/experiments/cube48opt-rust/guard.mts alias ./solver/experiments/cube48opt-rust/target/release/cube48opt-research solve-h11 renamed.dat',
+    '/tmp/renamed-native query-h48 11 /tmp/innocent-name.dat',
+    'node -e "require(\'node:child_process\').spawnSync(\'solver/experiments/cube48opt-rust/target/release/cube48opt-research\', [\'solve-h48\', \'11\', \'renamed.dat\'])"',
+    'CUBEOPT_BACKEND=h10 ./solver/experiments/cube48opt-rust/target/release/cube48opt-research solve-h10 table.dat 8 20 0',
+    'env CUBEOPT_BACKEND=h10 ./solver/experiments/cube48opt-rust/target/release/cube48opt-research query-h10 table.dat',
+    'CUBEOPT_BACKEND=h10 node solver/experiments/cube48opt-rust/h10-benchmark.mjs rust c table out --probe',
+    'node solver/experiments/cube48opt-rust/verify-h10.mjs rust c table out',
+    'CUBEOPT_BACKEND=h10 node solver/experiments/cube48opt-rust/validate-h10.mjs rust c table out',
+    'CUBEOPT_BACKEND=h10 node solver/experiments/cube48opt-rust/guard.mts first node solver/experiments/cube48opt-rust/verify-h10.mjs c rust table fixture out; node solver/experiments/cube48opt-rust/validate-h10.mjs rust c table other',
+    'node /tmp/guard.mts h10 node solver/experiments/cube48opt-rust/h10-benchmark.mjs rust c table out',
+    'node solver/experiments/cube48opt-rust/guard.mts h10 node solver/experiments/cube48opt-rust/h10-benchmark.mjs rust c table out; node solver/experiments/cube48opt-rust/verify-h10.mjs rust c table other',
+    'node -e "require(\'node:child_process\').spawnSync(\'node\', [\'solver/experiments/cube48opt-rust/h10-benchmark.mjs\', \'rust\', \'c\', \'table\', \'out\'])"',
+    'CUBEOPT_VARIANT=9 ./solver/experiments/cube48opt-rust/target/release/cube48opt-research solve small.bin table.dat',
+    'env CUBEOPT_VARIANT=2 node solver/experiments/cube48opt-rust/oracle.mjs generate out',
+    'node solver/experiments/cube48opt-rust/oracle.mjs query table.dat fixtures.json out.json',
+    'node solver/experiments/cube48opt-rust/oracle.mjs solve table.dat cases.json out.jsonl',
+    'node solver/experiments/cube48opt-rust/validate.mjs shallow native small table out',
+    'node solver/experiments/cube48opt-rust/benchmark.mjs native small table out --probe',
+    'cargo run --release --manifest-path solver/experiments/cube48opt-rust/Cargo.toml -- solve small.bin table.dat',
+    'cargo run --bin=cube48opt-research -- solve small.bin table.dat',
+    'cd solver/experiments/cube48opt-rust && node oracle.mjs generate out',
+    'cd solver/experiments/cube48opt-rust && cargo run --release -- solve small.bin table.dat',
+    'bash -lc "node solver/experiments/cube48opt-rust/oracle.mjs generate out"',
+    'node solver/experiments/cube48opt-rust/oracle.mjs generate out solver/experiments/cube48opt-rust/guard.mts',
+    'node /tmp/guard.mts label node solver/experiments/cube48opt-rust/oracle.mjs generate out',
+    './solver/experiments/cube48opt-rust/target/release/cube48opt-research solve small.bin table.dat node solver/experiments/cube48opt-rust/guard.mts',
+    'node solver/experiments/cube48opt-rust/guard.mts first node solver/experiments/cube48opt-rust/oracle.mjs generate out; node solver/experiments/cube48opt-rust/oracle.mjs generate unguarded',
+    'node solver/experiments/cube48opt-rust/guard.mts first node solver/experiments/cube48opt-rust/oracle.mjs generate out && ./solver/experiments/cube48opt-rust/target/release/cube48opt-research solve small.bin table.dat',
+    'node solver/experiments/cube48opt-rust/guard.mts first node solver/experiments/cube48opt-rust/oracle.mjs generate out\nnode solver/experiments/cube48opt-rust/benchmark.mjs native small table other',
+    'node solver/experiments/cube48opt-rust/guard.mts first node solver/experiments/cube48opt-rust/oracle.mjs generate "$(node solver/experiments/cube48opt-rust/oracle.mjs generate unguarded)"',
+    'node -e "require(\'node:child_process\').spawnSync(\'node\', [\'solver/experiments/cube48opt-rust/oracle.mjs\', \'generate\', \'out\'])"',
+    'cp solver/experiments/cube48opt-rust/target/release/cube48opt-research /tmp/snapshot; solver/experiments/cube48opt-rust/target/release/cube48opt-research solve small.bin table.dat',
+    'cp solver/experiments/cube48opt-rust/target/release/cube48opt-research /tmp/snapshot && node solver/experiments/cube48opt-rust/benchmark.mjs native small table out',
+    'cp "$(solver/experiments/cube48opt-rust/target/release/cube48opt-research solve small.bin table.dat)" /tmp/snapshot',
+    'cp <(node solver/experiments/cube48opt-rust/oracle.mjs generate out) /tmp/snapshot',
+    'node -e "require(\'node:child_process\').spawnSync(\'solver/experiments/cube48opt-rust/target/release/cube48opt-research\', [\'solve\', \'small.bin\', \'table.dat\'])"',
+  ])('requires the cubeopt research guard for each computation segment: %s', command => {
+    const result = runAdapter(COMMAND_ADAPTER, MEMORY_COMPUTE_HOOK, {
+      cwd: REPO_ROOT, tool_input: { command },
+    });
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe('');
+    const output = JSON.parse(result.stdout).hookSpecificOutput;
+    expect(output.permissionDecision).toBe('deny');
+    expect(output.permissionDecisionReason).toContain('cube48opt-rust/guard.mts');
+  });
+
+  it.each([
+    'CUBEOPT_BACKEND=h48 CUBEOPT_H=0 node --experimental-strip-types solver/experiments/cube48opt-rust/guard.mts h0 ./solver/experiments/cube48opt-rust/target/release/cube48opt-research solve-h48 0 table.dat 8 20 0',
+    'env CUBEOPT_BACKEND=h48 CUBEOPT_H=10 tsx solver/experiments/cube48opt-rust/guard.mts h10 ./solver/experiments/cube48opt-rust/target/release/cube48opt-research query-h48 10 table.dat',
+    'cp /tmp/h48h11.dat /tmp/h48h11-backup.dat',
+    'CUBEOPT_BACKEND=h10 node --experimental-strip-types solver/experiments/cube48opt-rust/guard.mts h10 ./solver/experiments/cube48opt-rust/target/release/cube48opt-research solve-h10 table.dat 8 20 0',
+    'env CUBEOPT_BACKEND=h10 node --experimental-strip-types solver/experiments/cube48opt-rust/guard.mts h10 ./solver/experiments/cube48opt-rust/target/release/cube48opt-research query-h10 table.dat',
+    'CUBEOPT_BACKEND=h10 tsx solver/experiments/cube48opt-rust/guard.mts h10 node solver/experiments/cube48opt-rust/h10-benchmark.mjs rust c table out --probe',
+    'CUBEOPT_BACKEND=h10 node solver/experiments/cube48opt-rust/guard.mts h10 node solver/experiments/cube48opt-rust/verify-h10.mjs rust c table out',
+    'CUBEOPT_BACKEND=h10 node solver/experiments/cube48opt-rust/guard.mts h10 node solver/experiments/cube48opt-rust/validate-h10.mjs rust c table out',
+    'node --check solver/experiments/cube48opt-rust/h10-benchmark.mjs',
+    'node --check solver/experiments/cube48opt-rust/verify-h10.mjs',
+    'CUBEOPT_VARIANT=9 node --experimental-strip-types solver/experiments/cube48opt-rust/guard.mts opt9 node solver/experiments/cube48opt-rust/oracle.mjs generate out',
+    'node --import ./core/node_modules/tsx/dist/loader.mjs solver/experiments/cube48opt-rust/guard.mts opt2 ./solver/experiments/cube48opt-rust/target/release/cube48opt-research solve small.bin table.dat',
+    'tsx solver/experiments/cube48opt-rust/guard.mts opt3 node solver/experiments/cube48opt-rust/validate.mjs suite native small table out',
+    'cd solver/experiments/cube48opt-rust && CUBEOPT_VARIANT=4 node --experimental-strip-types guard.mts opt4 node oracle.mjs generate out',
+    'node solver/experiments/cube48opt-rust/guard.mts one node solver/experiments/cube48opt-rust/oracle.mjs generate out; node solver/experiments/cube48opt-rust/guard.mts two node solver/experiments/cube48opt-rust/benchmark.mjs native small table other',
+    'node solver/experiments/cube48opt-rust/oracle.mjs inspect',
+    'node solver/experiments/cube48opt-rust/oracle.mjs small out',
+    'node solver/experiments/cube48opt-rust/oracle.mjs verify-small out',
+    'node --check solver/experiments/cube48opt-rust/benchmark.mjs',
+    './solver/experiments/cube48opt-rust/target/release/cube48opt-research inspect small.bin',
+    'cargo run --release --manifest-path solver/experiments/cube48opt-rust/Cargo.toml -- inspect small.bin',
+    'cargo run --release --manifest-path solver/experiments/cube48opt-rust/Cargo.toml --example verify_coordinates -- small',
+    'cargo build --release --manifest-path solver/experiments/cube48opt-rust/Cargo.toml',
+    "rg 'cube48opt-research solve|oracle.mjs generate' solver/experiments/cube48opt-rust",
+    'cp solver/experiments/cube48opt-rust/target/release/cube48opt-research /tmp/snapshot',
+    '/bin/cp -p solver/experiments/cube48opt-rust/target/release/cube48opt-research /tmp/cube48opt-research-before-h10',
+    'cp solver/experiments/cube48opt-rust/benchmark.mjs /tmp/benchmark.mjs',
+    'cp /tmp/snapshot solver/experiments/cube48opt-rust/target/release/cube48opt-research-before-h10',
+  ])('allows the exact cubeopt guard or small-table inspection: %s', command => {
+    const result = runAdapter(COMMAND_ADAPTER, MEMORY_COMPUTE_HOOK, {
+      cwd: REPO_ROOT, tool_input: { command },
+    });
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe('');
+    expect(result.stdout).toBe('');
+  });
+
+  it('resolves research-relative commands using the tool working directory', () => {
+    for (const command of ['node oracle.mjs generate out', './target/release/cube48opt-research solve small.bin table.dat']) {
+      const result = runAdapter(COMMAND_ADAPTER, MEMORY_COMPUTE_HOOK, {
+        cwd: REPO_ROOT, tool_input: { command, workdir: join(REPO_ROOT, 'solver/experiments/cube48opt-rust') },
+      });
+      expect(result.status).toBe(0);
+      expect(JSON.parse(result.stdout).hookSpecificOutput.permissionDecision).toBe('deny');
+    }
   });
 
   it.each([
