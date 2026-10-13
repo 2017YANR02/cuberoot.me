@@ -84,6 +84,7 @@ const SHARED_EVENTS: Readonly<Partial<Record<EventId, TimerSharedScrambleProvide
   quadx: 'native-random-move',
   dinoocta: 'native-random-move',
   fto5: 'native-random-move',
+  fto6: 'native-random-move',
   eto: 'native-random-move',
   radiocrystal: 'native-random-move',
   cube3skewb: 'native-random-move',
