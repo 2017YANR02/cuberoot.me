@@ -89,6 +89,29 @@
 .shell-topbar-brand img { height: 24px; width: auto; display: block; }
 
 .shell-topbar .pp-trigger { color: var(--foreground); }
+.shell-topbar .pp-trigger--active .pp-trigger-icon { color: var(--accent); }
+
+/* Keep text and icon controls on one toolbar axis. */
+.shell-topbar-left {
+  --timer-topbar-control-size: 32px;
+}
+.shell-topbar-left .settings-popover-trigger {
+  width: var(--timer-topbar-control-size);
+  height: var(--timer-topbar-control-size);
+}
+.shell-topbar-left .timer-difficulty-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.shell-topbar-left .shell-players-select,
+.shell-topbar-left .timer-difficulty-trigger {
+  font-family: inherit;
+  box-sizing: border-box;
+}
+.shell-topbar-left .pp-trigger-label {
+  line-height: 20px;
+}
 
 /* The solo device chooser sits beside settings instead of in the stage footer. */
 .timer-shell .shell-device-center.shell-topbar-device-center {
@@ -96,10 +119,10 @@
   inset: auto;
   transform: none;
   translate: none;
-  width: 36px;
-  height: 36px;
-  min-height: 36px;
-  flex-basis: 36px;
+  width: var(--timer-topbar-control-size);
+  height: var(--timer-topbar-control-size);
+  min-height: var(--timer-topbar-control-size);
+  flex-basis: var(--timer-topbar-control-size);
   border: 0;
   border-radius: 6px;
   background: none;
@@ -107,9 +130,9 @@
 }
 
 .shell-topbar-device-center .shell-device-center-trigger {
-  width: 36px;
-  height: 36px;
-  min-height: 36px;
+  width: var(--timer-topbar-control-size);
+  height: var(--timer-topbar-control-size);
+  min-height: var(--timer-topbar-control-size);
 }
 
 .shell-topbar-device-center .shell-device-center-menu,
