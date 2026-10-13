@@ -8,6 +8,9 @@ permissions:
 concurrency:
   group: fto6-feature-verification
   cancel-in-progress: false
+defaults:
+  run:
+    shell: bash
 jobs:
   verify:
     if: github.repository == '2017YANR02/cuberoot.me' && github.ref == 'refs/heads/codex/add-six-layer-fto-20261013'
@@ -30,6 +33,15 @@ jobs:
             /.agents/skills/sim-add-puzzle/
             /.github/workflows/
             /tools/cstimer-scramble/
+      - name: Export relevant tracked source for code review
+        run: |
+          mkdir -p core/.tmp/fto6
+          tar -czf core/.tmp/fto6/review-source.tar.gz -- AGENTS.md .agents/skills/sim-add-puzzle 'core/packages/client/app/[lang]/sim' 'core/packages/client/app/[lang]/scramble/gen' core/packages/client/components/TwistySection.tsx core/packages/client/components/NativePuzzleControls.tsx core/packages/client/components/PuzzlePicker core/packages/client/components/PlaybackBar.tsx core/packages/client/components/ScramblePreview2D.tsx core/packages/client/lib/native-scramble.ts core/packages/client/lib/twisty-playback.ts core/packages/client/lib/sim_timing.ts core/packages/shared/src/timer core/packages/timer-ui/src core/packages/puzzle-solvers/src/native-puzzles.ts core/packages/puzzle-solvers/src/native-puzzle-model.ts core/packages/puzzle-render-core/src/native-puzzle-svg.ts
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fto6-review-source
+          path: core/.tmp/fto6/review-source.tar.gz
+          retention-days: 7
       - uses: pnpm/action-setup@v6
         with:
           package_json_file: core/package.json
@@ -38,11 +50,10 @@ jobs:
           node-version-file: .node-version
           cache: pnpm
           cache-dependency-path: core/pnpm-lock.yaml
-      - name: Apply the narrowly scoped registry integration
-        shell: bash
+      - name: Apply narrowly scoped registry integration
         run: |
           node --input-type=module <<'NODE'
-          import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+          import { readFileSync, writeFileSync } from 'node:fs';
           const changed = [];
           function edit(path, transform) {
             const before = readFileSync(path, 'utf8');
@@ -53,13 +64,13 @@ jobs:
             if (text.split(needle).length !== 2) throw new Error(`Expected one exact anchor: ${needle}`);
             return text.replace(needle, replacement);
           }
-          function addSibling(path, marker, map) {
+          function addSibling(path, marker, map, expected = 1) {
             edit(path, text => {
               if (text.includes('fto6')) return text;
               const rows = text.split('\n');
-              const indexes = rows.flatMap((line, i) => line.includes(marker) ? [i] : []);
-              if (indexes.length !== 1) throw new Error(`Ambiguous sibling in ${path}`);
-              const i = indexes[0]; rows.splice(i + 1, 0, map(rows[i])); return rows.join('\n');
+              const matches = rows.filter(line => line.includes(marker));
+              if (matches.length !== expected) throw new Error(`Expected ${expected} siblings in ${path}; found ${matches.length}`);
+              return rows.flatMap(line => line.includes(marker) ? [line, map(line)] : [line]).join('\n');
             });
           }
           const six = text => text.replaceAll('fto5', 'fto6').replaceAll('FTO5', 'FTO6').replaceAll('5-layer', '6-layer').replaceAll('五阶', '六阶');
@@ -77,7 +88,7 @@ jobs:
           });
           addSibling('core/packages/shared/src/timer/event-catalog.ts', "id: 'fto5'", six);
           addSibling('core/packages/shared/src/timer/scramble-runtime.ts', '  fto5:', six);
-          addSibling('core/packages/shared/src/timer/export-cstimer.ts', '  fto5:', six);
+          addSibling('core/packages/shared/src/timer/export-cstimer.ts', '  fto5:', six, 2);
           addSibling('core/packages/shared/src/timer/import-cstimer.ts', "'5layerfto'", text => six(text).replaceAll('5layerfto', '6layerfto').replaceAll('5×5fto', '6×6fto').replaceAll('5x5fto', '6x6fto'));
           addSibling('core/packages/client/components/NativePuzzleControls.tsx', '  fto5:', six);
           edit('core/packages/client/app/[lang]/sim/puzzleOptions.ts', text => text.includes("'fto6'") ? text : replaceOnce(text, "'masterftov2', 'fto5',", "'masterftov2', 'fto5', 'fto6',"));
@@ -85,10 +96,9 @@ jobs:
           addSibling('core/packages/client/tests/timer_event_catalog.test.ts', "['fto5',", six);
           edit('.agents/skills/sim-add-puzzle/references/native-pg-puzzles.md', text => {
             if (text.includes('## Six-layer FTO')) return text;
-            return text + '\n\n## Six-layer FTO\n\n`fto6`（六阶 FTO / 6-layer FTO）沿用 [Jaap 的 FTO 面转与平行切面说明](https://www.jaapsch.net/puzzles/octaface.htm)，将正八面体每条边六等分；这是独立构造的均匀六阶结构，不声称测量复刻某个商品。内切球半径为 1 时，切深为 0、±1/3、±2/3，描述为 `o f 0 f 0.3333333333333333 f 0.6666666666666666`。每面 36 个等面积三角形，共 288 个可见贴片；按表面邻接统计有 6 个四贴片角块、48 个双贴片棱块、168 个单贴片中心块，共 222 块。\n\n每步面转 120°。八个面向均提供 `A`、`2A`、`3A`、`1-2A`、`1-3A`，复用 FTO 的原生 FaceRenamingMapper 范围记号，不拼接无效 `Aw`。六阶的两侧第三层互不相同，不能沿用五阶中层 `3A = 3O\'` 的别名；这是新增偶数阶最容易漏掉的回归。普通和种子入口共用 72 步有界随机转动，仅供练习，不伪造 csTimer 类型或宣称均匀随机状态。\n\n三入口矩阵：`/sim?puzzle=fto6` 复用原生手动操作、拖转、播放、记录和分享；Timer 保留独立 `fto6` 会话及 `cuberootEvent` 导出元数据；生成页比赛、批量、输入以及 PDF 使用同一完整八面展开 SVG。项目菜单归入“FTO 与八面体”，结构图标由现有 `generate-puzzle-icons.mts` 生成。\n\n开工平面对比先核对四阶旧切线、六阶新切线及固定三角包络。`fto6-native-geometry.test.ts` 独立核对贴片面积、表面块数、40 种动作的顺时针刚体对应、宽转组合与两侧第三层的区别；跨入口、种子、导入导出及 SVG/PDF 继续由既有逐原生项目契约覆盖。测试结果、浏览器能力和正式部署是单独的验收证据；二维回退通过不等于三维拖转通过。\n';
+            return text + '\n\n## Six-layer FTO\n\n`fto6`（六阶 FTO / 6-layer FTO）沿用 [Jaap 的 FTO 面转与平行切面说明](https://www.jaapsch.net/puzzles/octaface.htm)，将正八面体每条边六等分。这是独立构造的均匀六阶结构，不声称复刻某个商品。内切球半径为 1 时，切深为 0、±1/3、±2/3，描述为 `o f 0 f 0.3333333333333333 f 0.6666666666666666`。每面 36 个等面积三角形，共 288 个可见贴片；6 个四贴片角块、48 个双贴片棱块、168 个单贴片中心块，共 222 块。\n\n每步面转 120°。八个面向均提供 `A`、`2A`、`3A`、`1-2A`、`1-3A`，沿用原生 FaceRenamingMapper 范围记号，不拼接无效 `Aw`。六阶两侧的第三层互不相同，不能沿用五阶的中央层反向别名。普通和种子入口共用 72 步有界随机转动，仅供练习，不伪造 csTimer 类型或宣称均匀随机状态。\n\n三入口矩阵：模拟器复用原生手动操作、拖转、播放、记录和分享；Timer 保留独立 `fto6` 会话及 `cuberootEvent` 导出元数据；生成页比赛、批量、输入以及 PDF 使用同一完整八面展开 SVG。菜单归入“FTO 与八面体”，结构图标由现有 `generate-puzzle-icons.mts` 生成。\n\n开工平面对比先核对四阶旧切线、六阶新切线及固定三角包络。`fto6-native-geometry.test.ts` 独立核对贴片面积、表面块数、40 种动作的顺时针刚体对应、宽转组合与两侧第三层区别；跨入口、种子、导入导出及 SVG/PDF 继续由既有逐原生项目契约覆盖。测试结果、浏览器能力和正式部署是单独的验收证据；二维回退通过不等于三维拖转通过。\n';
           });
-          edit('.agents/skills/sim-add-puzzle/SKILL.md', text => text.includes('Six-layer FTO') ? text : text + '\n\n## 六阶 FTO 的偶数阶接入要点\n\n新增相邻切割的偶数阶 FTO 时，按 [Six-layer FTO](references/native-pg-puzzles.md#six-layer-fto) 核对中心切面、对侧层的独立性与原生范围记号。`fto6` 复用同一注册表和三入口，不复制引擎；保留 `3A` 与对侧 `3O` 是不同物理层的负例，以及图标、计时导入导出和完整八面 SVG 的契约。\n');
-          mkdirSync('core/.tmp/fto6', { recursive: true });
+          edit('.agents/skills/sim-add-puzzle/SKILL.md', text => text.includes('Six-layer FTO') ? text : text + '\n\n## 六阶 FTO 的偶数阶接入要点\n\n新增相邻切割的偶数阶 FTO 时，按 [Six-layer FTO](references/native-pg-puzzles.md#six-layer-fto) 核对中心切面、对侧层的独立性与原生范围记号。`fto6` 复用同一注册表和三入口，不复制引擎；保留两侧第三层是不同物理层的负例，以及图标、计时导入导出和完整八面 SVG 的契约。\n');
           writeFileSync('core/.tmp/fto6/patched-files.json', JSON.stringify(changed, null, 2));
           console.log(changed.join('\n'));
           NODE
@@ -104,7 +114,6 @@ jobs:
           pnpm --filter @cuberoot/client exec node scripts/generate-puzzle-icons.mts
           pnpm --filter @cuberoot/event-icon generate
       - name: Commit only this task's registry and generated changes
-        shell: bash
         run: |
           git diff --check
           git diff > core/.tmp/fto6/integration.diff
