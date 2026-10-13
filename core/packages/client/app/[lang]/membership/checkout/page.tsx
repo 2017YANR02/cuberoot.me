@@ -16,7 +16,9 @@ export default function AppCheckoutPage() {
       setInvalid(new URLSearchParams(window.location.search).get('returned') !== '1');
       return;
     }
-    // Drop the one-time cashier URL from browser history before leaving.
+    // allow-raw-history: consume the one-time cashier fragment synchronously before
+    // navigation; nuqs only handles query state and must not retain this secret.
+    // eslint-disable-next-line no-restricted-syntax, no-restricted-globals
     window.history.replaceState(null, '', window.location.pathname + '?returned=1');
     if (!isWebMembershipCheckout(checkout)) { setInvalid(true); return; }
     window.location.replace(checkout);

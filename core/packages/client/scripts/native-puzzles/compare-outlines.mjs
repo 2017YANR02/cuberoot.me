@@ -4,12 +4,24 @@
 // --set=2026-10: review the next five before their registry entries are built.
 // --set=2026-10-12: review the mixed-axis and icosahedral additions.
 // --set=cube3heli: review the uniform 3x3 / Helicopter combination.
+// --set=radiojewel: review Radio Jewel's exact face-cut depth.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { getPuzzleGeometryByDesc } from 'cubing/puzzle-geometry';
 import { NATIVE_PUZZLES } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { Vector3 } from 'three';
 
 const reviewSets = {
+  radiojewel: {
+    basename: 'radiojewel-outlines',
+    rows: [
+      {
+        id: 'radiojewel', en: 'Radio Jewel (Radiolarian 7)',
+        description: 'i f 0.5278640450004204', visibleFacelets: 320,
+        prior: 'i f 0.3333333333333333', priorLabel: 'Radio Crystal (shape comparison; cuts are replaced)',
+        notes: ['Exact face-normal depth h = 5 - 2 sqrt(5); fifteen triangles and one hexagon per face.', 'Shape-preserving 120-degree face turns; no jumbling or measured retail dimensions.'],
+      },
+    ],
+  },
   cube3heli: {
     basename: 'cube3heli-outlines',
     rows: [
@@ -106,7 +118,7 @@ const reviewSets = {
 };
 const args = process.argv.slice(2);
 if (args.length > 1 || (args[0] && !args[0].startsWith('--set='))) {
-  throw new Error('Usage: node compare-outlines.mjs [--set=original|2026-10|2026-10-12|cube3heli]');
+  throw new Error('Usage: node compare-outlines.mjs [--set=original|2026-10|2026-10-12|cube3heli|radiojewel]');
 }
 const setName = args[0]?.slice('--set='.length) ?? 'original';
 if (!Object.hasOwn(reviewSets, setName)) throw new Error(`Unknown review set: ${setName}`);

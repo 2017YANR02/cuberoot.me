@@ -15,7 +15,7 @@
 .solver-compare__explain { color: var(--muted-foreground); line-height: 1.85; font-size: 14px; margin: 0 0 20px; max-width: 920px; }
 .solver-compare__controls { display: flex; align-items: flex-end; gap: 14px 22px; flex-wrap: wrap; margin: 20px 0; }
 .solver-compare__controls label { display: flex; flex-direction: column; gap: 7px; font-size: 12px; color: var(--muted-foreground); max-width: 100%; }
-.solver-compare__controls select { align-self: flex-start; width: fit-content; max-width: 100%; padding: 9px 30px 9px 11px; border: 1px solid var(--input); border-radius: 8px; color: var(--foreground); background: var(--background); font: inherit; font-size: 13px; }
+.solver-compare__select { align-self: flex-start; width: fit-content; max-width: 100%; padding: 9px 30px 9px 11px; border: 1px solid var(--input); border-radius: 8px; color: var(--foreground); background: var(--background); font: inherit; font-size: 13px; }
 .solver-compare__hint { font-size: 12px; line-height: 1.6; color: var(--muted-foreground); padding-bottom: 9px; }
 .solver-compare__table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; font-variant-numeric: tabular-nums; }
 .solver-compare__table caption { caption-side: bottom; text-align: left; padding-top: 12px; font-size: 12px; color: var(--muted-foreground); }
@@ -25,8 +25,8 @@
 .solver-compare__table thead th { background: var(--background); color: var(--muted-foreground); font-size: 12px; white-space: nowrap; font-weight: 500; }
 .solver-compare__table tbody th { font-weight: 550; white-space: nowrap; }
 .solver-compare__table tbody th small { display: block; color: var(--muted-foreground); font-weight: 400; font-size: 10px; margin: 4px 0 0 15px; }
-.solver-compare__table button { all: unset; cursor: pointer; display: inline-flex; gap: 5px; align-items: center; }
-.solver-compare__table button:hover { color: var(--foreground); }
+.solver-compare__sort { all: unset; cursor: pointer; display: inline-flex; gap: 5px; align-items: center; }
+.solver-compare__sort:hover { color: var(--foreground); }
 .solver-compare :is(a, button, select, summary):focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; border-radius: 3px; }
 .solver-compare__number { white-space: nowrap; }
 .solver-compare__status { display: inline-block; color: var(--muted-foreground); font-size: 12px; line-height: 1.5; }

@@ -7,7 +7,7 @@ import { computeStageSegments } from '@cuberoot/shared/timer/reconstruct/stage-s
 import { normalizeSolve, initialPoseRotation } from '@cuberoot/shared/timer/reconstruct/gyro-orient';
 import { applyScramble } from '@cuberoot/shared/timer/reconstruct/state';
 import { applyOneToken } from '@cuberoot/shared/timer/reconstruct/apply-token';
-import { reconstructedTrack } from '../../timer-ui/src/reconstruct/playback-track';
+import { reconstructedTrack } from '@cuberoot/timer-ui/reconstruct/playback-track';
 
 it.each(['roux', 'zz'] as const)('%s keeps stages already solved in the scramble at zero time', async method => {
   const moves = [{ m: "U'", ts: 100 }];

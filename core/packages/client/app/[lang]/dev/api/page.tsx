@@ -67,7 +67,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   CI red here = a newly-mounted route is undocumented: add its endpoints below,
 //   then add the file stem to this list.
 //   account_auth account_face admin_disk alg alg_lsll alg_marks alg_preferred_algs alg_srs alg_sets alg_sweep alg_time_attack_order announced_comps app_boot_diagnostics article auth battle_rooms calendar cn_comp_names colpi
-//   chat comp_follows creator_gallery cube cubeopt_solve cubing_live documents drive feedback forum friends geo health historical_ranks pb private_vault
+//   chat comp_follows creator_gallery cube cubeopt_solve cubing_live documents downloads drive feedback forum friends geo health historical_ranks pb private_vault
 //   membership membership_benefits membership_apple membership_google membership_subscriptions music nav_sites pets nemesizer notifications ops remote_access dev_preview page_notices paint pattern_examples platform_catalog platform_commerce platform_content platform_learning platform_qr progress quiz recon recon_ground_truth scramble_555 teacher_directory teaching teaching_saas
 //   scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
 //   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wca_teams wca_training_institutions wechat_jssdk wechat_pc_opensdk wiki
@@ -76,6 +76,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   mcp mcp_oauth onboarding timer_replay_shares site_assistant cube_agents
 // ─ covers-routes-end ─
 const ENDPOINTS: Ep[] = [
+  { d: 'content', m: 'POST', p: '/v1/downloads/events', g: 'public', c: 'no-store', zh: '匿名记录 Android 下载入口点击；仅接受 play/apk 渠道与 en/zh 语言，正文最多 256 字节，按 IP 限流', en: 'Record anonymous Android download-entry clicks; accepts only play/apk channels and en/zh languages, with a 256-byte body limit and per-IP rate limiting' },
   { d: 'enterprise-verification', m: 'POST', p: '/v1/enterprise-verification/admin/applications/:id/receipt', g: 'admin', c: 'no-store', zh: '登记实际银行到账，包含异常或过期来款，不授予认证', en: 'Record actual bank receipts, including mismatches and late transfers, without granting certification' },
   { d: 'enterprise-verification', m: 'GET', p: '/v1/enterprise-verification/organizations/:slug', g: 'login', c: 'no-store', zh: '读取企业认证状态', en: 'Read enterprise verification' },
   { d: 'enterprise-verification', m: 'POST', p: '/v1/enterprise-verification/organizations/:slug', g: 'login', c: 'no-store', zh: '申请对公账户认证', en: 'Apply for corporate account verification' },
