@@ -107,7 +107,7 @@ export default function SolveTimeline({
     const seen: Record<string, number> = {};
     for (const line of lines) {
       const color = stageOfLine(line.kind);
-      const stage = method === 'cfop' ? color : line.key === 'tail' ? METHODS[method].stages.at(-1)!.key : line.key;
+      const stage = line.stageKey ?? (method === 'cfop' ? color : line.key === 'tail' ? METHODS[method].stages.at(-1)!.key : line.key);
       const shade = seen[stage] ?? 0;
       seen[stage] = shade + 1;
       // 一步从「上一手落下」算起,所以起点是 fromIdx-1 那一手的时刻(第一步从 0 起)。
@@ -131,7 +131,7 @@ export default function SolveTimeline({
     const out: StageSpan[] = [];
     for (const line of lines) {
       const color = stageOfLine(line.kind);
-      const key = method === 'cfop' ? color : line.key === 'tail' ? METHODS[method].stages.at(-1)!.key : line.key;
+      const key = line.stageKey ?? (method === 'cfop' ? color : line.key === 'tail' ? METHODS[method].stages.at(-1)!.key : line.key);
       const definition = METHODS[method].stages.find(stage => stage.key === key);
       const fromMs = line.fromIdx > 0 ? (moves[line.fromIdx - 1]?.ts ?? 0) : 0;
       const toMs = moves[line.toIdx]?.ts ?? fromMs;
