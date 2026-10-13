@@ -1,0 +1,5 @@
+<page-meta page-style="{{appearanceStyle}}" />
+<import src="../../templates/native-appearance.wxml" />
+<template is="native-scenery" />
+<import src="../../templates/web-route-view.wxml" />
+<template is="web-route-view" data="{{src: src, viewAttempt: viewAttempt, loadingTitle: loadingTitle, errorTitle: errorTitle, errorMessage: errorMessage, canRetry: canRetry, retryLabel: retryLabel, loginRequired: loginRequired, loginStorageUnavailable: loginStorageUnavailable, loginBusy: loginBusy, loginButtonLabel: loginButtonLabel, loginButtonBusyLabel: loginButtonBusyLabel, loginRetryLabel: loginRetryLabel, loginError: loginError}}" />

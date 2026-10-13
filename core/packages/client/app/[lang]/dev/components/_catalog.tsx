@@ -832,6 +832,20 @@ export const EXTRA_DEMOS: Partial<Record<string, () => ReactNode>> = {
 
 export const CATALOG: ComponentEntry[] = [
   {
+    name: 'TrainingDailyBoard',
+    import: "import TrainingDailyBoard from '@/components/teaching/TrainingDailyBoard';",
+    category: 'more',
+    zh: '教师与学员共用的每日训练完成情况、次数与分项目成绩排名和固定入口。',
+    en: 'Shared teacher and learner daily training board with completion, attempt and per-event result rankings, and a persistent room link.',
+  },
+  {
+    name: 'ScrambleImageDownload',
+    import: "import ScrambleImageDownload from '@/components/ScrambleImageDownload';",
+    category: 'more',
+    zh: '把现有打乱批次导出为每张最多五把的 PNG，多张打包下载，复用统一打乱图渲染。',
+    en: 'Exports existing scramble batches as PNG sheets of up to five attempts, zipped for multiple sheets using the canonical preview renderer.',
+  },
+  {
     name: 'InstalledContentBoundary',
     import: "import InstalledContentBoundary from '@/components/InstalledContentBoundary';",
     category: 'more',

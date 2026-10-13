@@ -100,3 +100,21 @@ describe('NxN real-time catch-up', () => {
     }
   });
 });
+
+it('shortens an active linear turn from the displayed angle and leaves another cube untouched', () => {
+  const live = new Cube(3), other = new Cube(3);
+  try {
+    live.twister.push('R', false, 1, 6, 'linear');
+    other.twister.push('F', false, 1, 60);
+    tweener.update(1.5);
+    const active = tweener.tweens[0];
+    expect(active.value).toBe(1.5);
+    live.twister.accelerateRealtime(1.5);
+    expect(active.begin).toBeCloseTo(Math.PI / 8);
+    expect(active.duration).toBe(1.5);
+    expect(tweener.tweens[1].duration).toBe(60);
+    tweener.update(0.75);
+    expect(active.value).toBe(0.75);
+    expect(live.twister.remainingTicks).toBe(0.75);
+  } finally { live.dispose(); other.dispose(); }
+});

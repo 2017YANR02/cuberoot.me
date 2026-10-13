@@ -235,7 +235,7 @@ export const DEFAULT_SETTINGS: SimSettings = {
   coreOpacity: 100,
   stickerOpacity: 100,
   stickerGap: STICKER_GAP_DEFAULT * 100,
-  faceColors: { ...CUBER_APPEARANCE.faces },
+  faceColors: { ...DEFAULT_FACE_COLORS },
   coreStyle: 'normal',
   mirrorColorMode: 'single',
   mirrorColor: MIRROR_DEFAULT_COLOR,
@@ -306,13 +306,8 @@ export function loadSettings(): SimSettings {
     if (!raw) return { ...DEFAULT_SETTINGS, pictureFaces };
     const parsed = JSON.parse(raw) as Partial<SimSettings> & { checkeredBg?: boolean };
     const merged = { ...DEFAULT_SETTINGS, ...parsed, pictureFaces };
-    // Upgrade the previous untouched defaults once; preserve custom colours and
-    // explicit WCA selections made after the upgrade.
+    // Upgrade the old core appearance once without changing saved face colours.
     if (parsed.cuberAppearanceVersion !== DEFAULT_SETTINGS.cuberAppearanceVersion) {
-      if (Object.entries(DEFAULT_FACE_COLORS).every(([face, color]) =>
-        parsed.faceColors?.[face as keyof typeof DEFAULT_FACE_COLORS]?.toLowerCase() === color.toLowerCase())) {
-        merged.faceColors = { ...CUBER_APPEARANCE.faces };
-      }
       if (parsed.coreColor?.toLowerCase() === '#202020') merged.coreColor = CUBER_APPEARANCE.core;
       merged.cuberAppearanceVersion = DEFAULT_SETTINGS.cuberAppearanceVersion;
     }

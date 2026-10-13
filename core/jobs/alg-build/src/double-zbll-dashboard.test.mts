@@ -27,6 +27,9 @@ test('ETA uses observed work, never imported historical rows; stale data suspend
   assert.match(view, /16 线程/);
   assert.equal(view.split('\n').filter(row => /^\d\d 步/.test(row)).length, 10);
   assert.match(renderDashboard(p, { now: Date.parse(p.updatedAt) + 20000, rate: 20 }), /暂停估算/);
+  const waiting = renderDashboard({ ...p, status: 'waiting-memory', stage: '等待内存 33.7 / 34 GiB · 自动续算' }, { columns: 80, rows: 24 });
+  assert.match(waiting, /等待内存，达标后自动续算/);
+  assert.doesNotMatch(waiting, /计算停止/);
 });
 test('ANSI and CJK columns stay within narrow terminal width', () => {
   assert.equal(fitLine('\x1b[36m内存 12\x1b[0m', 4), '\x1b[36m内存\x1b[0m');

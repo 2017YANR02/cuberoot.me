@@ -486,6 +486,7 @@ const TABLES: Table[] = [
   { name: 'comments', domain: 'community', origin: 'snapshot', purpose: { zh: '评论', en: 'Comments' } },
   { name: 'recon_featured_solves', domain: 'community', origin: '0263', purpose: { zh: '管理员精选复盘，与首页置顶独立管理', en: 'Administrator-featured solves, independent of homepage pins' } },
   { name: 'recon_home_pins', domain: 'community', origin: '0262', purpose: { zh: '管理员设置的首页复盘置顶，支持多条', en: 'Multiple administrator-selected homepage reconstruction pins' } },
+  { name: 'recon_favorites', domain: 'community', origin: '0275', purpose: { zh: '登录账号的复盘收藏，随账号或复盘删除级联清理', en: 'Account-scoped reconstruction favorites with cascading deletion' } },
   { name: 'recon_comment_votes', domain: 'community', origin: '0261', purpose: { zh: '复盘评论赞踩，每账号每条评论一票，删除评论或账号时级联清理', en: 'One vote per account per reconstruction comment, cascading on comment or account deletion' } },
   { name: 'edits', domain: 'community', origin: 'snapshot', purpose: { zh: '编辑记录', en: 'Edit records' } },
   { name: 'edit_history', domain: 'community', origin: 'snapshot', purpose: { zh: '编辑历史', en: 'Edit history' } },
@@ -841,6 +842,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 270, slug: 'assistant_knowledge', desc: { zh: '公开资料分段、中文全文与向量混合检索，索引原子更新。', en: 'Public passages with Chinese lexical and vector retrieval and atomic index publication.' } },
   { n: 271, slug: 'enterprise_verification', desc: { zh: '企业对公打款认证、私密材料、到账复核及退款审计。', en: 'Corporate transfer verification, encrypted documents, receipt review and refund audit.' } },
   { n: 273, slug: 'dev_preview_requests', desc: { zh: '开发网址一键申请、负责人批准与自动接入。', en: 'Preview enrollment, owner approval and automatic device setup.' } },
+  { n: 275, slug: 'recon_favorites', desc: { zh: '所有登录用户可收藏复盘，按账号持久保存。', en: 'Persistent reconstruction favorites for every signed-in account.' } },
   { n: 274, slug: 'dev_preview_health', desc: { zh: '独立记录开发网址的连通验收与检查时间，过期不显示可用。', en: 'Track independent preview connectivity checks; stale evidence does not imply availability.' } },
   { n: 272, slug: 'remote_access', desc: { zh: '员工远程连接申请、负责人审批及主机同步确认。', en: 'Employee remote access requests, host-owner approval and host acknowledgements.' } },
 ];

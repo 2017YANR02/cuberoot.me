@@ -48,7 +48,7 @@ import type { ReferenceResult, StageReference } from '@cuberoot/shared/timer/rec
 import { computeF2lSlots } from '@cuberoot/shared/timer/reconstruct/f2l-slots';
 import { walkMethod, methodFrame } from '@cuberoot/shared/timer/reconstruct/method-walk';
 
-import { decodeGyroTrack } from '@cuberoot/shared/smart-cube/gyro-track';
+import { decodeGyroTrack, type GyroSample } from '@cuberoot/shared/smart-cube/gyro-track';
 import { buildCoreTrack } from '@cuberoot/shared/timer/reconstruct/core-track';
 import { applyReconTextOverride } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import { initialPoseRotation, normalizeSolve } from '@cuberoot/shared/timer/reconstruct/gyro-orient';
@@ -97,6 +97,8 @@ export interface ReconstructReportProps {
   hideActions?: boolean;
   /** In-progress move score, using the same segmentation and notation as the report. */
   live?: boolean;
+  /** In-progress samples retain their coordinate frame and avoid Base64 encoding. */
+  liveGyroSamples?: readonly GyroSample[];
   /** Mirror the current stage from this same analysis stream below the live cube. */
   liveStageTarget?: HTMLElement | null;
 }
@@ -154,7 +156,7 @@ function AccordionSection({
 }
 
 function ReconstructReportBody({
-  solve, isZh, history, onMemoApply, onUseScramble, onReconFeedback, hideDate, hideActions, live = false, liveStageTarget,
+  solve, isZh, history, onMemoApply, onUseScramble, onReconFeedback, hideDate, hideActions, live = false, liveStageTarget, liveGyroSamples,
 }: ReconstructReportProps) {
   const host = useReconstructHost();
   const { localize: tr } = host;
@@ -174,7 +176,8 @@ function ReconstructReportBody({
   // cuber executed it rather than as the D-moves the cube's colour frame
   // reports; and the replay, so the cross is on the bottom the way they were
   // holding it. Same move count, same indices — only the frame differs.
-  const gyroSamples = useMemo(() => decodeGyroTrack(solve.gyro), [solve.gyro]);
+  const gyroSamples = useMemo(() => live && liveGyroSamples
+    ? liveGyroSamples.slice() : decodeGyroTrack(solve.gyro), [live, liveGyroSamples, solve.gyro]);
   const recordedViewRotation = useMemo(
     () => initialPoseRotation(gyroSamples, solve.device?.model),
     [gyroSamples, solve.device?.model],

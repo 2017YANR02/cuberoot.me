@@ -1,7 +1,8 @@
 /** Resume optimal 3x3 solves with the native nissy-core H48 h10 table. */
 import { availableParallelism } from 'node:os';
 import { spawn, spawnSync } from 'node:child_process';
-import { createReadStream, createWriteStream, existsSync, statSync, writeFileSync } from 'node:fs';
+import { appendFileSync, createReadStream, createWriteStream, existsSync, statSync, writeFileSync } from 'node:fs';
+import { rustConfiguration, rustCsv, rustScramble } from './rust-h10-adapter.mts';
 import { createInterface } from 'node:readline';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -16,6 +17,8 @@ const corpus = resolve(process.env.CORPUS || resolve(wcaDir, 'wca_scrambles_no_w
 const output = resolve(process.env.OUT || resolve(here, 'out.0.csv'));
 const expectedBytes = 30_336_314_216;
 const threads = Number(process.env.THREADS || availableParallelism());
+const engine = process.env.H10_ENGINE ?? 'c';
+if (!['c', 'rust'].includes(engine)) throw Error('Invalid H10_ENGINE');
 if (!Number.isSafeInteger(threads) || threads < 1) throw new Error(`Invalid THREADS: ${threads}`);
 const binary = resolve(solverDir, 'target/release', `solve_h48_h10_${threads}${process.platform === 'win32' ? '.exe' : ''}`);
 const source = resolve(solverDir, 'native/solve_h48_h10.c');
@@ -76,9 +79,14 @@ for await (const row of lines(corpus)) {
 if (total === 0) throw new Error(`WCA corpus is empty: ${corpus}`);
 if (!existsSync(table) || statSync(table).size !== expectedBytes) throw new Error(`H48 h10 table missing/incomplete: ${table}`);
 if (solved === total) { console.log(`[H48 h10] corpus complete: ${solved}/${total}`); process.exit(0); }
-ensureWorker();
+const rust = engine === 'rust' ? rustConfiguration(resolve(solverDir, '..'), table, threads) : null;
+if (!rust) ensureWorker();
 console.log(`[H48 h10] table=${table}, corpus=${corpus}, solved=${solved}/${total}, threads=${threads}`);
-const child = spawn(binary, [table, String(threads)], { cwd: solverDir, stdio: ['pipe', 'pipe', 'inherit'] });
+if (rust) writeFileSync(`${output}.rust-run-${Date.now()}.json`, JSON.stringify({ ...rust, threads, table, corpus, startedAt: new Date().toISOString() }, null, 2));
+const child = spawn(rust ? process.execPath : binary, rust ? rust.args : [table, String(threads)],
+  { cwd: solverDir, env: { ...process.env, ...rust?.env }, stdio: ['pipe', 'pipe', 'inherit'] });
+process.on('SIGTERM', () => child.kill('SIGTERM'));
+process.on('SIGINT', () => child.kill('SIGTERM'));
 const append = createWriteStream(output, { flags: 'a', encoding: 'utf8' });
 let produced = 0;
 const started = performance.now();
@@ -86,13 +94,16 @@ const feed = (async () => {
   for await (const row of lines(corpus)) {
     const comma = row.indexOf(',');
     if (comma <= 0 || done.has(row.slice(0, comma))) continue;
-    if (!child.stdin.write(`${row}\n`)) await once(child.stdin, 'drain');
+    const input = rust ? `${row.slice(0, comma)}\t${rustScramble(row.slice(comma + 1))}` : row;
+    if (!child.stdin.write(`${input}\n`)) await once(child.stdin, 'drain');
   }
   child.stdin.end();
 })();
 const collect = (async () => {
   const rl = createInterface({ input: child.stdout, crlfDelay: Infinity });
-  for await (const row of rl) {
+  for await (const raw of rl) {
+    const row = rust ? rustCsv(raw) : raw;
+    if (rust) appendFileSync(`${output}.rust.jsonl`, raw + '\n');
     const parts = row.split(',');
     if (parts.length < 3 || !/^\d+$/.test(parts[1]) || !parts[2].trim()) throw new Error(`Invalid native result: ${row.slice(0, 100)}`);
     if (!append.write(`${row}\n`)) await once(append, 'drain');

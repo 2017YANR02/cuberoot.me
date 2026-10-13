@@ -65,10 +65,10 @@ fn main() {
             SELECTED_TABLE.set(table.trim_end_matches(".bin").to_string()).unwrap();
             "rust"
         },
-        _ => panic!("usage: table_generator [--only rust|sq1|h48-h7|h48-h10] [--table exact_file_stem (rust only)]"),
+        _ => panic!("usage: table_generator [--only rust|sq1|h48-h7|h48-h9|h48-h10] [--table exact_file_stem (rust only)]"),
     };
     assert!(
-        ["all", "rust", "sq1", "h48-h7", "h48-h10"].contains(&only),
+        ["all", "rust", "sq1", "h48-h7", "h48-h9", "h48-h10"].contains(&only),
         "unknown --only target: {only}"
     );
     let rayon_threads = rayon::current_num_threads();
@@ -106,7 +106,7 @@ fn main() {
         rayon_threads
     );
 
-    if only == "sq1" || only == "h48-h7" || only == "h48-h10" {
+    if only == "sq1" || only == "h48-h7" || only == "h48-h9" || only == "h48-h10" {
         assert!(
             profile.high_memory(),
             "large-table generation requires a high-memory profile"
@@ -150,9 +150,9 @@ fn main() {
     }
     if !disable_huge
         && profile.high_memory()
-        && (only == "all" || only == "h48-h7" || only == "h48-h10")
+        && (only == "all" || only == "h48-h7" || only == "h48-h9" || only == "h48-h10")
     {
-        let dataid = if only == "h48-h7" { "h48h7" } else { "h48h10" };
+        let dataid = match only { "h48-h7" => "h48h7", "h48-h9" => "h48h9", _ => "h48h10" };
         eprintln!("\n=== H48 {dataid} native table (57 GiB RSS alarm) ===");
         let started = Instant::now();
         let (generated, peak, bytes) = match h48_native::generate(rayon_threads, dataid) {
@@ -172,7 +172,7 @@ fn main() {
         table_timing::record_peak(dataid, peak);
         eprintln!("[GEN] {dataid} done in {:.1}s", elapsed.as_secs_f64());
     }
-    if only == "sq1" || only == "h48-h7" || only == "h48-h10" {
+    if only == "sq1" || only == "h48-h7" || only == "h48-h9" || only == "h48-h10" {
         return;
     }
 

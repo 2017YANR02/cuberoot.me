@@ -186,6 +186,7 @@ import {
   parseManualScrambleQueue,
   takeManualScramble,
   SmartCubeAttemptProducer,
+  type GyroSample,
 } from '@cuberoot/shared/timer';
 import { AutoRecapDismissGesture, shouldAutoRecap } from '../_lib/reconstruct/recap';
 import { reconstructionAnalyzer } from '@cuberoot/timer-ui/reconstruct-analysis';
@@ -418,10 +419,12 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
 
   const trainingDestinationRef = useRef<ReturnType<typeof parseTrainingAssignmentDestination>>(null);
+  const [trainingOrg] = useQueryState('trainingOrg', parseAsString);
+  const [trainingAssignment] = useQueryState('trainingAssignment', parseAsString);
   useEffect(() => {
-    trainingDestinationRef.current = parseTrainingAssignmentDestination(window.location.search);
+    trainingDestinationRef.current = parseTrainingAssignmentDestination(new URLSearchParams({ trainingOrg: trainingOrg ?? '', trainingAssignment: trainingAssignment ?? '' }).toString());
     return startTrainingEvidenceOutbox(trainingDestinationRef.current);
-  }, []);
+  }, [trainingOrg, trainingAssignment]);
 
   // 解法提示的全屏浮层由 SolverHintPanel 经同一个 URL param 开合(手机点 pill、桌面把头部的
   // 形态开关拨到「全屏」都进这一个);这里只读,用来把它算进 anyModalOpen(浮层盖住整屏时,
@@ -1356,7 +1359,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const caseIdAtStartRef = useRef<string | null>(null);
   const smartCubeAttemptProducerRef = useRef(new SmartCubeAttemptProducer());
   const abortingSmartCubeRef = useRef(false);
-  const [liveSolve, setLiveSolve] = useState<Solve | null>(null);
+  const [liveSolve, setLiveSolve] = useState<(Solve & { liveGyroSamples?: readonly GyroSample[] }) | null>(null);
+  const liveSolvePublishRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (liveSolvePublishRef.current !== null) clearTimeout(liveSolvePublishRef.current); }, []);
   const [liveStageTarget, setLiveStageTarget] = useState<HTMLDivElement | null>(null);
   const autoRecapDismissGestureRef = useRef(new AutoRecapDismissGesture());
   const autoRecapInputBlockedRef = useRef(false);
@@ -1471,6 +1476,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       ? { reference: scrambleGyroRef.current, initial: gyroQuatRef.current,
         orientation: timerSmartCubeTrainingOrientation(event, getSettings().preScrT) }
       : undefined);
+    if (liveSolvePublishRef.current !== null) clearTimeout(liveSolvePublishRef.current);
+    liveSolvePublishRef.current = null;
     setLiveSolve(null);
   });
   cancelArmForScrambleChangeRef.current = competition.enabled ? () => {} : timer.cancelArm;
@@ -1608,15 +1615,22 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     recordMove: ({ move, timestamp }) => {
       if (!smartCubeAttemptProducerRef.current.recordMove(move, timestamp)) return;
       // Use only this attempt's accepted moves, never the 3D anchor's scramble log.
-      const { moves, device, gyro } = smartCubeAttemptProducerRef.current.snapshot();
-      setLiveSolve({
-        id: `live-${attemptStartedAtRef.current}`,
-        event: eventAtStartRef.current,
-        scramble: scrambleAtStartRef.current,
-        timeMs: moves.at(-1)?.ts ?? 0,
-        penalty: 'ok', ts: 0, moves, device,
-        ...(gyro ? { gyro } : {}),
-      });
+      const moves = smartCubeAttemptProducerRef.current.snapshotMoves();
+      // Coalesce only the expensive presentation snapshot, never physical moves
+      // or split/stop detection. The final recording is drained synchronously.
+      if (liveSolvePublishRef.current === null) {
+        const attempt = attemptStartedAtRef.current;
+        liveSolvePublishRef.current = setTimeout(() => {
+          liveSolvePublishRef.current = null;
+          if (phaseSnapshotRef.current !== 'running' || attempt !== attemptStartedAtRef.current) return;
+          const { moves, device, gyroSamples } = smartCubeAttemptProducerRef.current.snapshotLive();
+          setLiveSolve({
+            id: `live-${attempt}`, event: eventAtStartRef.current,
+            scramble: scrambleAtStartRef.current, timeMs: moves.at(-1)?.ts ?? 0,
+            penalty: 'ok', ts: 0, moves, device, liveGyroSamples: gyroSamples,
+          });
+        }, 100);
+      }
       attemptSplitRecorder.observeMoves({
         event: eventAtStartRef.current,
         moves,
@@ -1681,7 +1695,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       }
       : undefined,
     onMove: (move: string, ts: number, facelets: string, metadata?: CubeMoveMetadata) => {
-      liveAnchorRef.current?.move(move);
+      liveAnchorRef.current?.move(move, ts);
       const outcome = smartCubeSoloController.move({ facelets, metadata, move, timestamp: ts });
       if (outcome.guidancePenultimate && getSettings().autoCalibrateGyro && gyroQuatRef.current) {
         resetSmartCubeOrientation();
@@ -1848,7 +1862,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         enableDevSource={fakeCubeEnabled}
         key={bluetoothCube.status.deviceId || bluetoothCube.status.deviceName}
         facelets={bluetoothCube.facelets}
-        moves={[...liveMoves]}
+        moves={liveMoves}
+        liveSource={liveAnchor}
         algAnchored={algAnchored}
         displayOrientation={trainingOrientation}
         // 陀螺仪只决定这颗魔方**朝哪儿**,不决定它是什么状态 —— 没有姿态流
@@ -2836,7 +2851,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         {tr({ zh: '实时解法', en: 'Live solution' })}
       </div>
       <div className="shell-recap-body">
-        <LiveReconstructReport key={liveSolve.id} solve={liveSolve} isZh={isZh} live liveStageTarget={liveStageTarget} />
+        <LiveReconstructReport key={liveSolve.id} solve={liveSolve} liveGyroSamples={liveSolve.liveGyroSamples} isZh={isZh} live liveStageTarget={liveStageTarget} />
       </div>
     </section>
   ) : null;
@@ -3025,6 +3040,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           brand: <HomeLink className="tb-btn shell-topbar-home" data-no-timer aria-label={tr({ zh: '返回首页', en: 'Back to home' })}><ArrowLeft size={18} /></HomeLink>,
           controls: (
           <>
+          {trainingOrg && trainingAssignment && <AppLink className="tb-btn" data-no-timer prefetch={false} href={`/training/${encodeURIComponent(trainingOrg)}?assignment=${encodeURIComponent(trainingAssignment)}`}>{tr({ zh: '训练打卡进度', en: 'Training check-in progress' })}</AppLink>}
           {playersControl}
           <TimerTrainingMenu currentEvent={event} onTimerEventChange={selectEvent}
             disabled={!sourceControlsEnabled} showProject

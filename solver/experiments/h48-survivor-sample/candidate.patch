@@ -1,0 +1,87 @@
+diff --git a/src/solvers/h48/solve.h b/src/solvers/h48/solve.h
+--- a/src/solvers/h48/solve.h
++++ b/src/solvers/h48/solve.h
+@@ -5,6 +5,11 @@
+ #define H48_STARTING_CUBES 43254
+ #define H48_SORT_TASKS_MIN_DEPTH 16
+ #define H48_LOG_PROGRESS_MIN_DEPTH 15
++
++typedef void (*h48_survivor_observer_t)(cube_t, uint8_t, uint8_t, uint8_t, void *);
++/* Set only between solves; every solve snapshots these before its threads. */
++STATIC h48_survivor_observer_t h48_survivor_observer = NULL;
++STATIC void *h48_survivor_observer_data = NULL;
+ 
+ typedef struct {
+ 	cube_t cube;
+@@ -35,6 +40,8 @@
+ 	uint64_t nodes_visited;
+ 	uint64_t table_fallbacks;
+ 	uint64_t table_lookups;
++	h48_survivor_observer_t survivor_observer;
++	void *survivor_observer_data;
+ 	int8_t threads;
+ 	int ntasks;
+ 	solve_h48_task_t *tasks;
+@@ -82,6 +89,7 @@
+     dfsarg_solve_h48_t [NON_NULL], dfsarg_solve_h48_maketasks_t [NON_NULL],
+     solve_h48_task_t [SIZE(H48_STARTING_CUBES)], int [NON_NULL]);
+ STATIC wrapthread_return_t solve_h48_runthread(void *);
++STATIC_INLINE void h48_observe_survivor(dfsarg_solve_h48_t [NON_NULL], uint8_t);
+ STATIC int64_t solve_h48_dfs(dfsarg_solve_h48_t [NON_NULL]);
+ STATIC void solve_h48_log_solutions(solution_list_t [NON_NULL], size_t);
+ STATIC int solve_h48_compare_tasks(const void *, const void *);
+@@ -300,6 +308,20 @@
+ 		arg->movemask_normal &= MM18_NOHALFTURNS;
+ 	if (arg->lb_normal == target)
+ 		arg->movemask_inverse &= MM18_NOHALFTURNS;
++}
++
++STATIC_INLINE void
++h48_observe_survivor(dfsarg_solve_h48_t arg[NON_NULL], uint8_t remaining)
++{
++	/* Above base+3 the pipeline skipped its H48 lookups entirely. */
++	if (arg->survivor_observer == NULL || remaining < 10 || remaining > 12 ||
++	    remaining > arg->base + 3 || arg->lb_normal > remaining ||
++	    arg->lb_inverse > remaining || equal(arg->cube, SOLVED_CUBE) ||
++	    arg->solution_list->nsols >= arg->solution_settings->maxsolutions)
++		return;
++
++	arg->survivor_observer(arg->cube, remaining, arg->lb_normal,
++	    arg->lb_inverse, arg->survivor_observer_data);
+ }
+ 
+ STATIC int64_t
+@@ -356,6 +378,7 @@
+ 			arg->movemask_normal = mm_normal;
+ 			arg->movemask_inverse = mm_inverse;
+ 			h48_prune_restore_normal(&prune[m], arg, target);
++			h48_observe_survivor(arg, target);
+ 			n = solve_h48_dfs(arg);
+ 			if (n < 0)
+ 				return n;
+@@ -371,6 +394,7 @@
+ 			arg->movemask_normal = mm_normal;
+ 			arg->movemask_inverse = mm_inverse;
+ 			h48_prune_restore_inverse(&prune[m], arg, target);
++			h48_observe_survivor(arg, target);
+ 			n = solve_h48_dfs(arg);
+ 			if (n < 0)
+ 				return n;
+@@ -571,6 +595,8 @@
+ {
+ 	int i, ntasks;
+ 	bool td;
++	const h48_survivor_observer_t observer = h48_survivor_observer;
++	void *const observer_data = h48_survivor_observer_data;
+ 	wrapthread_atomic int status, prev_status;
+ 	size_t lastused;
+ 	int8_t d;
+@@ -633,6 +659,8 @@
+ 			.nodes_visited = 0,
+ 			.table_fallbacks = 0,
+ 			.table_lookups = 0,
++			.survivor_observer = info.h48h == 10 ? observer : NULL,
++			.survivor_observer_data = observer_data,
+ 			.threads = threads,
+ 			.thread_id = i,
+ 			.solutions_mutex = &solutions_mutex,

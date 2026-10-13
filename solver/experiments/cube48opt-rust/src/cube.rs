@@ -78,14 +78,18 @@ pub fn moved_pair(cube: &Cube, inverse: &Cube, movement: u8) -> (Cube, Cube) {
     unsafe {
         moved_pair_neon(cube, inverse, movement)
     }
-    #[cfg(not(all(feature = "neon-moves", target_arch = "aarch64")))]
+    #[cfg(all(target_family = "wasm", target_feature = "simd128"))]
+    unsafe {
+        moved_pair_wasm(cube, inverse, movement)
+    }
+    #[cfg(not(any(all(feature = "neon-moves", target_arch = "aarch64"), all(target_family = "wasm", target_feature = "simd128"))))]
     (cube.moved(movement), inverse.premoved(movement))
 }
 
 // Same three 16-byte blocks as original fast-move table at address 30016:
 // normal/inverse corners, normal edges, inverse edges. Four padding bytes per
 // edge block are zero. The six physical generators remain the single source.
-#[cfg(all(feature = "neon-moves", target_arch = "aarch64"))]
+#[cfg(any(all(feature = "neon-moves", target_arch = "aarch64"), all(target_family = "wasm", target_feature = "simd128")))]
 const PAIRED_MOVES: [[u8; 48]; 18] = {
     let mut result = [[0; 48]; 18];
     let mut m = 0;
@@ -108,6 +112,48 @@ const PAIRED_MOVES: [[u8; 48]; 18] = {
     }
     result
 };
+
+/// One paired corner shuffle and two edge shuffles, equivalent to the NEON
+/// implementation and the original WASM fast-move representation. Only the
+/// fixed move table uses padding; all Cube loads and stores remain in-bounds.
+#[cfg(all(target_family = "wasm", target_feature = "simd128"))]
+#[inline]
+unsafe fn moved_pair_wasm(cube: &Cube, inverse: &Cube, movement: u8) -> (Cube, Cube) {
+    #[cfg(target_arch = "wasm32")]
+    use std::arch::wasm32::*;
+    #[cfg(target_arch = "wasm64")]
+    use std::arch::wasm64::*;
+
+    let movement = &PAIRED_MOVES[movement as usize];
+    let corner_source = v128_load64_lane::<1>(
+        v128_load64_zero(cube.corners.as_ptr().cast::<u64>()),
+        movement.as_ptr().add(8).cast::<u64>(),
+    );
+    let corner_rhs = v128_load64_lane::<1>(
+        v128_load64_zero(movement.as_ptr().cast::<u64>()),
+        inverse.corners.as_ptr().cast::<u64>(),
+    );
+    let corner_indices = v128_or(v128_and(corner_rhs, u8x16_splat(7)), u8x16(0, 0, 0, 0, 0, 0, 0, 0, 8, 8, 8, 8, 8, 8, 8, 8));
+    let corners = i8x16_add(i8x16_swizzle(corner_source, corner_indices), v128_and(corner_rhs, u8x16_splat(24)));
+    let corners = u8x16_min(corners, i8x16_add(corners, u8x16_splat(232)));
+    let normal_tail = v128_load((cube as *const Cube).cast::<u8>().add(4).cast::<v128>());
+    let inverse_tail = v128_load((inverse as *const Cube).cast::<u8>().add(4).cast::<v128>());
+    let normal_edges = i8x16_shuffle::<4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19>(normal_tail, u8x16_splat(0));
+    let inverse_edges = i8x16_shuffle::<4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19>(inverse_tail, u8x16_splat(0));
+    let move_edges = v128_load(movement.as_ptr().add(16).cast::<v128>());
+    let inverse_move_edges = v128_load(movement.as_ptr().add(32).cast::<v128>());
+    let normal_edges = v128_xor(i8x16_swizzle(normal_edges, u8x16_shr(move_edges, 1)), v128_and(move_edges, u8x16_splat(1)));
+    let inverse_edges = v128_xor(i8x16_swizzle(inverse_move_edges, u8x16_shr(inverse_edges, 1)), v128_and(inverse_edges, u8x16_splat(1)));
+    let mut normal = Cube::SOLVED;
+    let mut inverse = Cube::SOLVED;
+    v128_store64_lane::<0>(corners, normal.corners.as_mut_ptr().cast::<u64>());
+    v128_store64_lane::<1>(corners, inverse.corners.as_mut_ptr().cast::<u64>());
+    v128_store64_lane::<0>(normal_edges, normal.edges.as_mut_ptr().cast::<u64>());
+    v128_store64_lane::<0>(inverse_edges, inverse.edges.as_mut_ptr().cast::<u64>());
+    v128_store32_lane::<2>(normal_edges, normal.edges.as_mut_ptr().add(8).cast::<u32>());
+    v128_store32_lane::<2>(inverse_edges, inverse.edges.as_mut_ptr().add(8).cast::<u32>());
+    (normal, inverse)
+}
 
 /// Original step4_domove (WASM func43): one paired corner shuffle and two
 /// edge shuffles. Unlike the original packed fastcube, Cube is only 20 bytes.

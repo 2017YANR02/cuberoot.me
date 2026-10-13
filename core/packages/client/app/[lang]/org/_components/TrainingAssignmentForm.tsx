@@ -136,12 +136,13 @@ export default function TrainingAssignmentForm({
         <label>{t('任务标题', 'Assignment title')}<input className="org-form-control" name="title" required maxLength={160} defaultValue={initial?.assignment.title ?? ''} /></label>
         <label className="org-field-wide">{t('任务说明', 'Instructions')}<textarea className="org-form-control org-form-textarea" name="instructions" required maxLength={8_000} defaultValue={initial?.assignment.instructions ?? ''} /></label>
         <label>{t('频率', 'Schedule')}
-          <select className="org-form-control" name="scheduleKind" defaultValue={initial?.assignment.scheduleKind ?? 'once'}>
+          <select className="org-form-control" name="scheduleKind" defaultValue={initial?.assignment.scheduleKind ?? 'daily'}>
             <option value="once">{t('一次性', 'Once')}</option>
             <option value="daily">{t('每天', 'Daily')}</option>
           </select>
         </label>
-        <label>{t('期望次数', 'Expected count')}<input className="org-form-control" name="expectedCount" type="number" min={1} max={1_000} step={1} required defaultValue={initial?.assignment.expectedCount ?? 1} /></label>
+        <label>{t('期望次数', 'Expected count')}<input className="org-form-control" name="expectedCount" type="number" min={1} max={1_000} step={1} required defaultValue={initial?.assignment.expectedCount ?? 5} /></label>
+        <p className="org-help org-field-wide">{t('每日任务可长期保留：结束时间留空，发布后复制固定打卡入口给学生。学生需先由老师关联学员账号；每天从任务进入训练，记录自动回传。', 'Keep a daily assignment open by leaving its end time empty. After publishing, share its persistent check-in link. Teachers must first link learner accounts; training started from the assignment reports records automatically.')}</p>
         <label>{t('开始时间', 'Starts at')}<input className="org-form-control" name="startsAt" type="datetime-local" required defaultValue={localDateTime(initial?.assignment.startsAt)} /></label>
         <label>{t('结束时间（可留空）', 'Ends at (optional)')}<input className="org-form-control" name="endsAt" type="datetime-local" defaultValue={localDateTime(initial?.assignment.endsAt)} /></label>
         <label>{t('班级目标（可多选）', 'Class targets (multiple)')}

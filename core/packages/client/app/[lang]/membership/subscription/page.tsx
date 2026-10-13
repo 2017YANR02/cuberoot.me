@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
+import { useModalBackdrop } from '@/hooks/useModalDismiss';
 import { nextQuery, useOwnerKey } from '@/lib/auth-store';
 import { cancelMySubscription, listMySubscriptions, type MembershipSubscription, type MembershipSubscriptions } from '@/lib/membership-api';
 import { fmtDate, fmtPrice } from '@/lib/membership-format';
@@ -16,15 +17,18 @@ function CancellationConfirmation({ subscription, onClose, onConfirm }: {
 }) {
   const t = useT();
   const dialog = useRef<HTMLDialogElement>(null);
+  const backdrop = useModalBackdrop(onClose);
   useEffect(() => { dialog.current?.showModal(); }, []);
   return (
-    <dialog ref={dialog} className="mem-cancel-dialog" aria-labelledby="mem-cancel-title" aria-describedby="mem-cancel-description" onCancel={onClose}>
+    <dialog ref={dialog} className="mem-cancel-dialog" aria-labelledby="mem-cancel-title" aria-describedby="mem-cancel-description" onCancel={onClose} {...backdrop}>
+      <div className="mem-cancel-body">
       <h2 id="mem-cancel-title">{t('确认取消自动续费？', 'Cancel auto-renewal?')}</h2>
       <p>{fmtPrice(subscription.priceCents, subscription.currency)} / {subscription.periodCount} {subscription.period === 'year' ? t('年', 'year(s)') : t('个月', 'month(s)')}</p>
       <p id="mem-cancel-description">{t('确认后将向微信申请解除此扣款授权。以微信确认结果为准，确认取消后不再发起后续续费扣款。已购买权益保留至已付服务期结束，本操作不会自动退款。', 'We will ask WeChat to revoke this debit authorization. Cancellation takes effect when WeChat confirms it, and no further renewal charges will be initiated. Paid benefits remain until the paid period ends. This does not issue a refund.')}</p>
       <div className="mem-subscription-actions">
         <button type="button" className="mem-contact-save" onClick={onConfirm}>{t('确认取消自动续费', 'Confirm cancellation')}</button>
         <button type="button" className="mem-contact-save" onClick={onClose}>{t('暂不取消', 'Keep auto-renewal')}</button>
+      </div>
       </div>
     </dialog>
   );

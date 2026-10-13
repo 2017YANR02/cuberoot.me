@@ -30,6 +30,18 @@ export interface LiveSmartCubeAnchorSnapshot {
   algAnchored: boolean;
 }
 
+export interface LiveSmartCubeDisplayEvent {
+  snapshot: LiveSmartCubeAnchorSnapshot;
+  /** Present only for a physical append to a verified anchor, including solved. */
+  move?: string;
+  timestamp?: number;
+}
+
+export interface LiveSmartCubeDisplaySource {
+  getSnapshot(): LiveSmartCubeAnchorSnapshot;
+  subscribe(listener: (event: LiveSmartCubeDisplayEvent) => void): () => void;
+}
+
 /**
  * One session-owned anchor for Web and installed clients. React renders do not
  * cancel the pending solve: subsequent turns queue behind its captured opening.
@@ -41,6 +53,7 @@ export class LiveSmartCubeAnchor {
   private facelets: string | null = null;
   private pendingMoves: string[] = [];
   private snapshot: LiveSmartCubeAnchorSnapshot = { moves: [], algAnchored: false };
+  private readonly listeners = new Set<(event: LiveSmartCubeDisplayEvent) => void>();
 
   constructor(private readonly options: {
     solve: Solve333;
@@ -49,8 +62,19 @@ export class LiveSmartCubeAnchor {
 
   getSnapshot(): LiveSmartCubeAnchorSnapshot { return this.snapshot; }
 
-  private publish(moves: readonly string[], algAnchored: boolean): void {
+  subscribe(listener: (event: LiveSmartCubeDisplayEvent) => void): () => void {
+    this.listeners.add(listener);
+    return () => { this.listeners.delete(listener); };
+  }
+
+  private publish(moves: readonly string[], algAnchored: boolean, move?: string, timestamp?: number): void {
     this.snapshot = { moves, algAnchored };
+    for (const listener of this.listeners) {
+      // A failed display must never interrupt accurate recording or stop detection.
+      try { listener({ snapshot: this.snapshot, move, timestamp }); } catch (error) {
+        console.error('[live-cube-display]', error);
+      }
+    }
     this.options.onChange(this.snapshot);
   }
 
@@ -63,7 +87,7 @@ export class LiveSmartCubeAnchor {
     this.publish([], false);
   }
 
-  move(move: string): void {
+  move(move: string, timestamp?: number): void {
     if (!this.connection || !this.facelets) return;
     const next = replay(this.facelets, [move]);
     if (!next) {
@@ -77,9 +101,9 @@ export class LiveSmartCubeAnchor {
     if (next === SOLVED_3X3) {
       this.revision++;
       this.pendingMoves = [];
-      this.publish([], true);
+      this.publish([], true, this.snapshot.algAnchored ? move : undefined, timestamp);
     } else if (this.snapshot.algAnchored) {
-      this.publish([...this.snapshot.moves, move], true);
+      this.publish([...this.snapshot.moves, move], true, move, timestamp);
     } else {
       this.pendingMoves.push(move);
     }

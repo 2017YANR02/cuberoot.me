@@ -1,0 +1,335 @@
+diff --git a/src/solvers/h48/solve.h b/src/solvers/h48/solve.h
+--- a/src/solvers/h48/solve.h
++++ b/src/solvers/h48/solve.h
+@@ -5,6 +5,9 @@
+ #define H48_STARTING_CUBES 43254
+ #define H48_SORT_TASKS_MIN_DEPTH 16
+ #define H48_LOG_PROGRESS_MIN_DEPTH 15
++
++/* Each solve snapshots this experimental setting before starting workers. */
++STATIC _Atomic bool h48_bpmx_enabled = false;
+ 
+ typedef struct {
+ 	cube_t cube;
+@@ -35,6 +38,10 @@
+ 	uint64_t nodes_visited;
+ 	uint64_t table_fallbacks;
+ 	uint64_t table_lookups;
++	bool bpmx_enabled;
++	uint64_t bpmx_cuts;
++	uint64_t bpmx_skipped;
++	uint64_t bpmx_recursive_cuts;
+ 	int8_t threads;
+ 	int ntasks;
+ 	solve_h48_task_t *tasks;
+@@ -68,8 +75,13 @@
+     unsigned, unsigned, unsigned, unsigned, unsigned, unsigned long long,
+     const unsigned char *, unsigned, char *,
+     long long [SIZE(NISSY_SIZE_SOLVE_STATS)], int (*)(void *), void *);
+-STATIC_INLINE void h48_prune_pipeline(dfsarg_solve_h48_t [NON_NULL],
+-    h48_prune_t [SIZE(NMOVES)], uint8_t, bool);
++STATIC_INLINE bool h48_bpmx_cut(dfsarg_solve_h48_t [NON_NULL],
++    h48_prune_t [SIZE(NMOVES)], uint8_t, uint8_t, uint8_t, uint8_t [NON_NULL]);
++STATIC_INLINE bool h48_bpmx_propagate(dfsarg_solve_h48_t [NON_NULL],
++    const h48_prune_t [SIZE(NMOVES)], uint8_t, uint8_t, uint8_t,
++    uint8_t [NON_NULL]);
++STATIC_INLINE bool h48_prune_pipeline(dfsarg_solve_h48_t [NON_NULL],
++    h48_prune_t [SIZE(NMOVES)], uint8_t, bool, uint8_t [NON_NULL]);
+ STATIC_INLINE uint8_t h48_prune_lookup(
+     uint64_t, cube_t, dfsarg_solve_h48_t [NON_NULL]);
+ STATIC_INLINE uint8_t h48_prune_lookup_nocoord(
+@@ -82,7 +94,7 @@
+     dfsarg_solve_h48_t [NON_NULL], dfsarg_solve_h48_maketasks_t [NON_NULL],
+     solve_h48_task_t [SIZE(H48_STARTING_CUBES)], int [NON_NULL]);
+ STATIC wrapthread_return_t solve_h48_runthread(void *);
+-STATIC int64_t solve_h48_dfs(dfsarg_solve_h48_t [NON_NULL]);
++STATIC int64_t solve_h48_dfs(dfsarg_solve_h48_t [NON_NULL], uint8_t [NON_NULL]);
+ STATIC void solve_h48_log_solutions(solution_list_t [NON_NULL], size_t);
+ STATIC int solve_h48_compare_tasks(const void *, const void *);
+ STATIC int64_t solve_h48(oriented_cube_t, uint8_t, uint8_t, uint64_t, uint8_t,
+@@ -154,12 +166,68 @@
+ 	return h48_prune_lookup(coord, cube, arg);
+ }
+ 
+-STATIC_INLINE void
++/* These generic word-metric bounds never enter the H48 half-turn caches. */
++STATIC_INLINE bool
++h48_bpmx_cut(
++	dfsarg_solve_h48_t arg[NON_NULL],
++	h48_prune_t prune[SIZE(NMOVES)],
++	uint8_t bound,
++	uint8_t target,
++	uint8_t witness,
++	uint8_t parent_bound[NON_NULL]
++)
++{
++	uint8_t m;
++
++	if (!arg->bpmx_enabled)
++		return false;
++	if (bound > 0)
++		*parent_bound = MAX(*parent_bound, bound - 1);
++	if (*parent_bound <= (unsigned)target + 1U)
++		return false;
++
++	arg->bpmx_cuts++;
++	prune[witness].stop = 1;
++	for (m = 0; m < NMOVES; m++)
++		if (!prune[m].stop)
++			arg->bpmx_skipped++;
++	return true;
++}
++
++STATIC_INLINE bool
++h48_bpmx_propagate(
++	dfsarg_solve_h48_t arg[NON_NULL],
++	const h48_prune_t prune[SIZE(NMOVES)],
++	uint8_t child_bound,
++	uint8_t remaining,
++	uint8_t first_unvisited,
++	uint8_t parent_bound[NON_NULL]
++)
++{
++	uint8_t m;
++
++	if (!arg->bpmx_enabled)
++		return false;
++	if (child_bound > 0)
++		*parent_bound = MAX(*parent_bound, child_bound - 1);
++	if (*parent_bound <= remaining)
++		return false;
++
++	arg->bpmx_cuts++;
++	arg->bpmx_recursive_cuts++;
++	for (m = first_unvisited; m < NMOVES; m++)
++		if (!prune[m].stop)
++			arg->bpmx_skipped++;
++	return true;
++}
++
++STATIC_INLINE bool
+ h48_prune_pipeline(
+ 	dfsarg_solve_h48_t arg[NON_NULL],
+ 	h48_prune_t prune[SIZE(NMOVES)],
+ 	uint8_t target,
+-	bool normal
++	bool normal,
++	uint8_t parent_bound[NON_NULL]
+ )
+ {
+ 	uint64_t i;
+@@ -198,7 +266,7 @@
+ 
+ 	/* We'll never get a bound higher than base + 3 */
+ 	if (target > arg->base + 3)
+-		return;
++		return false;
+ 
+ 	/* Stage 1: cdata and prefetch inverse */
+ 	for (m = 0; m < NMOVES; m++) {
+@@ -206,6 +274,8 @@
+ 			continue;
+ 
+ 		p = get_h48_cdata(prune[m].inverse, arg->cocsepdata, &cdata);
++		if (h48_bpmx_cut(arg, prune, p, target, m, parent_bound))
++			return true;
+ 		if (p > target) {
+ 			prune[m].stop = 1;
+ 			continue;
+@@ -226,6 +296,8 @@
+ 		if (prune[m].pi == 0) {
+ 			prune[m].pi = h48_prune_lookup(
+ 			    prune[m].coord, prune[m].inverse, arg);
++			if (h48_bpmx_cut(arg, prune, prune[m].pi, target, m, parent_bound))
++				return true;
+ 			if (prune[m].pi > target) {
+ 				prune[m].stop = 1;
+ 				continue;
+@@ -233,6 +305,8 @@
+ 		}
+ 
+ 		p = get_h48_cdata(prune[m].cube, arg->cocsepdata, &cdata);
++		if (h48_bpmx_cut(arg, prune, p, target, m, parent_bound))
++			return true;
+ 		if (p > target) {
+ 			prune[m].stop = 1;
+ 			continue;
+@@ -250,8 +324,11 @@
+ 
+ 		prune[m].pn = h48_prune_lookup(
+ 		    prune[m].coord, prune[m].cube, arg);
++		if (h48_bpmx_cut(arg, prune, prune[m].pn, target, m, parent_bound))
++			return true;
+ 		prune[m].stop = prune[m].pn > target;
+ 	}
++	return false;
+ }
+ 
+ STATIC_INLINE void
+@@ -303,25 +380,30 @@
+ }
+ 
+ STATIC int64_t
+-solve_h48_dfs(dfsarg_solve_h48_t arg[NON_NULL])
++solve_h48_dfs(dfsarg_solve_h48_t arg[NON_NULL], uint8_t generic_bound[NON_NULL])
+ {
+ 	int64_t ret, n;
+-	uint8_t m, nm, nn, ni, target;
++	uint8_t m, nm, nn, ni, target, remaining, child_bound;
++	uint8_t backup_lb_normal, backup_lb_inverse;
+ 	uint64_t mm_normal, mm_inverse;
+ 	cube_t cube, backup_cube, backup_inverse;
+ 	h48_prune_t prune[NMOVES];
+ 
+-	if (equal(arg->cube, SOLVED_CUBE) || /* Solved before target depth */
++	/* Zero means no new evidence. Early success/stop is not a proof of
++	 * failure and must never manufacture a remaining+1 lower bound. */
++	*generic_bound = 0;
++	if (equal(arg->cube, SOLVED_CUBE) ||
+ 	    arg->solution_list->nsols >= arg->solution_settings->maxsolutions)
+ 		return 0;
+ 
+ 	nn = arg->solution_moves->nmoves;
+ 	ni = arg->solution_moves->npremoves;
+ 	nm = nn + ni;
+-	target = arg->target_depth - (nm + 1);
++	remaining = arg->target_depth - nm;
++	target = remaining - 1;
+ 	mm_normal = arg->movemask_normal;
+ 	mm_inverse = arg->movemask_inverse;
+-	if (target == 0) { /* Last move */
++	if (target == 0) { /* Last move: unchanged search, no inferred bound. */
+ 		arg->solution_moves->nmoves++;
+ 		for (m = 0; m < NMOVES; m++) {
+ 			if (!(mm_normal & mm_inverse & MM_SINGLE(m)))
+@@ -345,10 +427,12 @@
+ 
+ 	backup_cube = arg->cube;
+ 	backup_inverse = arg->inverse;
+-
++	backup_lb_normal = arg->lb_normal;
++	backup_lb_inverse = arg->lb_inverse;
+ 	ret = 0;
+ 	if (popcount_u64(mm_normal) <= popcount_u64(mm_inverse)) {
+-		h48_prune_pipeline(arg, prune, target, true);
++		if (h48_prune_pipeline(arg, prune, target, true, generic_bound))
++			goto solve_h48_dfs_restore;
+ 		arg->solution_moves->nmoves++;
+ 		for (m = 0; m < NMOVES; m++) {
+ 			if (prune[m].stop)
+@@ -356,14 +440,20 @@
+ 			arg->movemask_normal = mm_normal;
+ 			arg->movemask_inverse = mm_inverse;
+ 			h48_prune_restore_normal(&prune[m], arg, target);
+-			n = solve_h48_dfs(arg);
+-			if (n < 0)
+-				return n;
++			n = solve_h48_dfs(arg, &child_bound);
++			if (n < 0) {
++				ret = n;
++				*generic_bound = 0;
++				goto solve_h48_dfs_restore;
++			}
+ 			ret += n;
+-		}
+-		arg->solution_moves->nmoves--;
++			if (h48_bpmx_propagate(arg, prune, child_bound, remaining,
++			    m + 1, generic_bound))
++				goto solve_h48_dfs_restore;
++		}
+ 	} else {
+-		h48_prune_pipeline(arg, prune, target, false);
++		if (h48_prune_pipeline(arg, prune, target, false, generic_bound))
++			goto solve_h48_dfs_restore;
+ 		arg->solution_moves->npremoves++;
+ 		for (m = 0; m < NMOVES; m++) {
+ 			if (prune[m].stop)
+@@ -371,19 +461,28 @@
+ 			arg->movemask_normal = mm_normal;
+ 			arg->movemask_inverse = mm_inverse;
+ 			h48_prune_restore_inverse(&prune[m], arg, target);
+-			n = solve_h48_dfs(arg);
+-			if (n < 0)
+-				return n;
++			n = solve_h48_dfs(arg, &child_bound);
++			if (n < 0) {
++				ret = n;
++				*generic_bound = 0;
++				goto solve_h48_dfs_restore;
++			}
+ 			ret += n;
+-		}
+-		arg->solution_moves->npremoves--;
+-	}
+-
++			if (h48_bpmx_propagate(arg, prune, child_bound, remaining,
++			    m + 1, generic_bound))
++				goto solve_h48_dfs_restore;
++		}
++	}
++
++solve_h48_dfs_restore:
++	arg->solution_moves->nmoves = nn;
++	arg->solution_moves->npremoves = ni;
+ 	arg->cube = backup_cube;
+ 	arg->inverse = backup_inverse;
+ 	arg->movemask_normal = mm_normal;
+ 	arg->movemask_inverse = mm_inverse;
+-
++	arg->lb_normal = backup_lb_normal;
++	arg->lb_inverse = backup_lb_inverse;
+ 	return ret;
+ }
+ 
+@@ -391,7 +490,7 @@
+ solve_h48_runthread(void *arg)
+ {
+ 	int i, j;
+-	uint8_t lastmove;
++	uint8_t lastmove, generic_bound;
+ 	int64_t d, f, nprev;
+ 	dfsarg_solve_h48_t *dfsarg;
+ 
+@@ -427,7 +526,7 @@
+ 		dfsarg->movemask_inverse = MM18_ALLMOVES;
+ 		dfsarg->tmask = dfsarg->tasks[i].tmask;
+ 
+-		solve_h48_dfs(dfsarg);
++		solve_h48_dfs(dfsarg, &generic_bound);
+ 
+ 		/*
+ 		We compute the "rank" of each taks, which is used in the next
+@@ -571,6 +670,7 @@
+ {
+ 	int i, ntasks;
+ 	bool td;
++	const bool bpmx_enabled = atomic_load(&h48_bpmx_enabled);
+ 	wrapthread_atomic int status, prev_status;
+ 	size_t lastused;
+ 	int8_t d;
+@@ -590,6 +690,7 @@
+ 	wrapthread_define_var_thread_t(thread[THREADS]);
+ 	wrapthread_define_var_mutex_t(solutions_mutex);
+ 
++	stats[7] = stats[8] = stats[9] = 0;
+ 	if (!solution_list_init(&sollist, solutions_size, solutions))
+ 		goto solve_h48_error_solutions_buffer;
+ 
+@@ -633,6 +734,7 @@
+ 			.nodes_visited = 0,
+ 			.table_fallbacks = 0,
+ 			.table_lookups = 0,
++			.bpmx_enabled = bpmx_enabled,
+ 			.threads = threads,
+ 			.thread_id = i,
+ 			.solutions_mutex = &solutions_mutex,
+@@ -738,6 +840,9 @@
+ 		nodes_visited += arg[i].nodes_visited;
+ 		table_fallbacks += arg[i].table_fallbacks;
+ 		table_lookups += arg[i].table_lookups;
++		stats[7] += arg[i].bpmx_cuts;
++		stats[8] += arg[i].bpmx_skipped;
++		stats[9] += arg[i].bpmx_recursive_cuts;
+ 	}
+ 
+ 	stats[0] = nodes_visited;

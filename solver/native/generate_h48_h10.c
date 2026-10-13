@@ -40,7 +40,7 @@ static void log_nissy(const char *message, void *unused) {
 
 int main(int argc, char **argv) {
     if (argc != 2 && argc != 3) {
-        fprintf(stderr, "usage: generate_h48_h10 OUTPUT_PATH [h48h7|h48h10]\n");
+        fprintf(stderr, "usage: generate_h48_h10 OUTPUT_PATH [h48h7|h48h9|h48h10]\n");
         return 2;
     }
 #ifndef CUBEROOT_H48_BENCH_LIMIT
@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
 #endif
     const char *solver = argc == 3 && strcmp(argv[1], "--bench") != 0
         ? argv[2] : "h48h10";
-    if (strcmp(solver, "h48h7") != 0 && strcmp(solver, "h48h10") != 0) {
+    if (strcmp(solver, "h48h7") != 0 && strcmp(solver, "h48h9") != 0 && strcmp(solver, "h48h10") != 0) {
         fprintf(stderr, "unsupported H48 table: %s\n", solver);
         return 2;
     }

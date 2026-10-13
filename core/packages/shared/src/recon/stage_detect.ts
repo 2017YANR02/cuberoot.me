@@ -116,6 +116,8 @@ export interface StageInfo {
   /**
    * F2L slots that are solved. For cross/xcross/xxcross/xxxcross stages this
    * tells the caller WHICH slots got included beyond the bare cross.
+   * For pscross these are the pairs restored by the SAME bottom alignment;
+   * one such pair is psxcross. canonicalPattern is that aligned reference.
    */
   solvedSlots: F2lSlotId[];
   /**
@@ -383,14 +385,23 @@ export async function detectStage(pattern: KPattern): Promise<StageInfo> {
   }
 
   if (bestF < 0) {
-    // Pseudo-cross: cross forms after a single same-face turn (mis-aligned to centers).
+    // Reuse the existing cross/F2L detector after each legal bottom alignment.
+    // This is the trainer's pseudo-xcross goal: the whole cross+pair tuple
+    // becomes solved under the same face turn, not an unrelated free pair.
+    let pseudo: StageInfo | undefined;
     for (let f = 0; f < 6; f++) {
       const m = FACE_MOVE[f];
-      if ([m, `${m}2`, `${m}'`].some(mv => crossEdgesSolved(home.applyAlg(mv), f))) {
-        const canonical = FACE_TO_D_ROT[f] ? home.applyAlg(FACE_TO_D_ROT[f]) : home;
-        return { stage: 'pscross', crossFaceHome: f, solvedSlots: [], solvedPairs: [], crossColor: colorInfo(f), canonicalPattern: canonical };
+      for (const mv of [m, `${m}2`, `${m}'`]) {
+        const aligned = home.applyAlg(mv);
+        if (!crossEdgesSolved(aligned, f)) continue;
+        const info = await detectStage(aligned);
+        if (info.crossFaceHome !== f) continue;
+        if (!pseudo || info.solvedSlots.length > pseudo.solvedSlots.length) {
+          pseudo = { ...info, stage: 'pscross' };
+        }
       }
     }
+    if (pseudo) return pseudo;
     return { stage: 'none', crossFaceHome: 5, solvedSlots: [], solvedPairs: [], crossColor: colorInfo(5), canonicalPattern: home };
   }
 

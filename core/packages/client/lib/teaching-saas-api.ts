@@ -2603,6 +2603,43 @@ export async function getTeachingTrainingAssignment(
   ));
 }
 
+export interface TeachingDailyBoard extends TeachingTrainingAssignmentDetail {
+  rankEvent: string | null;
+  events: string[];
+  date: string;
+  today: string;
+  timezone: string;
+  selfId: string | null;
+  total: number;
+  completedTotal: number;
+  page: number;
+  pageSize: number;
+  rows: { studentId: string; name: string; rank: number | null; count: number; durationMs: number; successes: number; completed: boolean; results: { event: string; bestMs: number | null; meanMs: number | null }[] }[];
+}
+
+export async function getTeachingDailyBoard(orgSlug: string, assignmentId: string, learner: boolean, date: string | null, pageNumber = 1, rankEvent: string | null = null): Promise<TeachingDailyBoard> {
+  const query = new URLSearchParams({ page: String(pageNumber), pageSize: '50' });
+  if (date) query.set('date', date);
+  if (rankEvent) query.set('rankEvent', rankEvent);
+  const body = record(await request(orgPath(orgSlug, `/${learner ? 'me/' : ''}training/assignments/${encodeURIComponent(assignmentId)}/daily?${query}`)), 'dailyBoard');
+  if (!Array.isArray(body.rows)) throw new TeachingApiError('INVALID_RESPONSE', 502, 'dailyBoard.rows is invalid');
+  if (!Array.isArray(body.events)) throw new TeachingApiError('INVALID_RESPONSE', 502, 'dailyBoard.events is invalid');
+  return {
+    ...trainingAssignmentDetail(body),
+    rankEvent: nullableString(body.rankEvent, 'rankEvent'), events: body.events.map(event => string(event, 'event')),
+    date: string(body.date, 'date'), today: string(body.today, 'today'), timezone: string(body.timezone, 'timezone'), selfId: nullableString(body.selfId, 'selfId'),
+    total: integer(body.total, 'total', 0), completedTotal: integer(body.completedTotal, 'completedTotal', 0), page: integer(body.page, 'page', 1), pageSize: integer(body.pageSize, 'pageSize', 1),
+    rows: body.rows.map(raw => {
+      const row = record(raw, 'row');
+      if (!Array.isArray(row.results)) throw new TeachingApiError('INVALID_RESPONSE', 502, 'dailyBoard.results is invalid');
+      return { studentId: string(row.studentId, 'studentId'), name: string(row.name, 'name'), rank: nullableInteger(row.rank, 'rank'), count: integer(row.count, 'count', 0), durationMs: integer(row.durationMs, 'durationMs', 0), successes: integer(row.successes, 'successes', 0), completed: boolean(row.completed, 'completed'), results: row.results.map(rawResult => {
+        const result = record(rawResult, 'result');
+        return { event: string(result.event, 'event'), bestMs: nullableInteger(result.best_ms, 'best_ms'), meanMs: nullableInteger(result.mean_ms, 'mean_ms') };
+      }) };
+    }),
+  };
+}
+
 export async function createTeachingTrainingAssignment(
   orgSlug: string,
   input: TeachingTrainingAssignmentWriteInput,

@@ -50,7 +50,8 @@
  * Frame budget: this renders on the timing surface while the user is timing, so
  * a cube sitting still on the table must not burn 60 fps of GPU. The frame hook
  * marks the world dirty only when the smoothed quaternion actually moved past
- * ~1e-4 rad; a resting cube settles and the loop goes quiet within a few frames.
+ * ~1e-4 rad; a resting cube stops drawing after settling. Its frame subscription
+ * still polls the passive quatRef so a new BLE sample cannot be missed.
  *
  * Size comes from the host box, which `mountSimWorld` measures with a
  * ResizeObserver — see `.timer-live-cube-3d` in timer.css.
@@ -74,7 +75,13 @@ import {
   appendedSlicePair,
   planLiveSimUpdate,
   planSimUpdate,
+  LiveTurnCadence,
+  liveSimNeedsCatchUp,
+  LIVE_VISUAL_BUDGET_MS,
 } from '@cuberoot/shared/timer/sim-log';
+import type { LiveSmartCubeDisplaySource, LiveSmartCubeDisplayEvent } from '@cuberoot/shared/smart-cube/anchor';
+import { normalizeWcaScramble } from '@cuberoot/shared/normalize-wca-scramble';
+import { invertAlg } from '@cuberoot/shared/alg-transform';
 import {
   applyOrientation,
   calibrate,
@@ -98,8 +105,7 @@ const STILL_EPS_RAD = 1e-4;
 /** Live mirrors receive completed BLE turns, not continuous layer angles. Keep
  *  one turn readable without replaying half-second-old history. These values
  *  alter motion timing only; geometry, materials and render cadence are intact. */
-const LIVE_TURN_TICKS = 7.2; // 120 ms at the engine's nominal 60 Hz.
-const LIVE_QUEUED_TURN_TICKS = 4.8; // 80 ms while catching up.
+const LIVE_TICKS_PER_MS = 60 / 1000;
 
 type CubeView = 'iso' | 'front' | 'smart';
 
@@ -189,7 +195,8 @@ export interface SimCubeViewProps {
   /** Temporarily orbit while held, restoring the viewer angle on release. */
   resetViewOnRelease?: boolean;
   /** Moves since the cube was last known SOLVED — see the note above. */
-  moves: string[];
+  moves: readonly string[];
+  liveSource?: LiveSmartCubeDisplaySource;
   /**
    * A whole-cube rotation appended to the log for VIEWING only — the replay
    * uses it to put the cross face down without renaming (and recolouring) the
@@ -242,9 +249,9 @@ export interface SimCubeViewProps {
    */
   moveDurationTicks?: number;
   /**
-   * Keep an actual smart-cube mirror close to the physical state. Normal turns
-   * remain animated, but a growing BLE batch/queue snaps stale turns and plays
-   * only the newest one. Replay callers leave this off and retain /sim timing.
+   * Use linear turns with an adaptive duration and a millisecond backlog budget.
+   * Emergency catch-up applies every stale turn and animates the newest one.
+   * Replay callers leave this off and retain /sim timing.
    */
   realtime?: boolean;
   /**
@@ -285,6 +292,7 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
     allowViewDrag = false,
     resetViewOnRelease = false,
     moves,
+    liveSource,
     pose = '',
     gyroOrientation = '',
     quat,
@@ -322,6 +330,7 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
   // matching opposite-face BLE pair temporarily accelerates only orientation
   // follow; layer timing and every rendering-quality setting remain unchanged.
   const sliceFollowUntilRef = useRef(0);
+  const cadenceRef = useRef(new LiveTurnCadence());
   /** 挂载时读一次(避免先按等轴画一帧);之后的改动走下面的 effect。 */
   const viewRef = useRef(view);
   const gyroViewActiveRef = useRef(false);
@@ -388,12 +397,16 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
       if (!host) return;
       gyroViewActiveRef.current = hasValidOrientation(externalQuatRef.current?.current ?? rawRef.current);
 
+      let cachedInput: { raw: Quat; reference: Quat | null; basis: SensorBasisName;
+        mirror: boolean; frame: Quat; target: Quat } | null = null;
+
       const nextMount = mountSimWorld({
         host,
         puzzle: 3,
         interactive: allowViewDrag,
         faceHints: false,
         pixelRatioCap: 2,
+        preserveDrawingBuffer: !realtime,
         sceneRot: sceneRotation(viewRef.current, gyroViewActiveRef.current),
         onFrame: (world: World, dtMs: number): boolean => {
           const raw = externalQuatRef.current?.current ?? rawRef.current;
@@ -412,17 +425,24 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
             referenceRef.current = calibrate(raw);
             pendingCalibrationRef.current = false;
           }
-          const measured = applyOrientation(raw, referenceRef.current, {
-            basis: basisRef.current,
-            mirror: mirrorRef.current,
-          });
           // Match DCTimer-BLE: always follow the latest measured pose and use
           // SLERP only to bridge the gaps between BLE samples. Snapping gradual
           // motion to a whole orientation makes the live cube feel stuck.
           // The child model already contains O. Applying Q directly produces
           // Q·O and reverses X/Y under z2. Use O·Q·O⁻¹ so the result is O·Q.
           const frame = gyroFrameRef.current;
-          const target = quatMul(quatMul(frame, measured), quatConjugate(frame));
+          if (!cachedInput || cachedInput.raw.w !== raw.w || cachedInput.raw.x !== raw.x
+            || cachedInput.raw.y !== raw.y || cachedInput.raw.z !== raw.z
+            || cachedInput.reference !== referenceRef.current || cachedInput.basis !== basisRef.current
+            || cachedInput.mirror !== mirrorRef.current || cachedInput.frame !== frame) {
+            const measured = applyOrientation(raw, referenceRef.current, {
+              basis: basisRef.current, mirror: mirrorRef.current,
+            });
+            cachedInput = { raw: { ...raw }, reference: referenceRef.current, basis: basisRef.current,
+              mirror: mirrorRef.current, frame,
+              target: quatMul(quatMul(frame, measured), quatConjugate(frame)) };
+          }
+          const target = cachedInput.target;
           // BLE lands at 20-50 Hz, under the 60 fps loop — ease between samples
           // so the cube glides instead of stepping. A slice turn is the one
           // exception that moves the sensor-bearing core itself; keep SLERP but
@@ -493,7 +513,7 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
       mount?.dispose();
       mountRef.current = null;
     };
-  }, [allowViewDrag, resetViewOnRelease, attempt]);
+  }, [allowViewDrag, resetViewOnRelease, attempt, realtime]);
 
   // Update the viewing angle without remounting the cube or altering its moves.
   useEffect(() => {
@@ -548,44 +568,92 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
   // call — turns and pose are two axes and the plan is pure algebra over them.
   // Read _lib/cube/sim_log.ts; there is nothing to decide here.
   //
-  // Live mode counts the active turn, pending turns, and a newly batched BLE
-  // append together. Once that total crosses the cap, it snaps through stale
-  // history and animates only the newest move. Replay keeps the ordinary plan.
-  const turns = moves.join(' ');
+  // Prop-driven callers retain the canonical log planner, with a millisecond
+  // budget in live mode. Timestamped physical subscriptions take the path below.
+  const turns = useMemo(() => liveSource && realtime ? '' : moves.join(' '), [moves, liveSource, realtime]);
   const shownRef = useRef({ turns: '', pose: '' });
   const hasShownRef = useRef(false);
   useEffect(() => {
     const world = mountRef.current?.world;
     if (!ready || !world) return;
+    if (liveSource && realtime) return;
     const twister = (world.cube as NxnCube).twister;
     const next = { turns, pose };
+    const durationMs = cadenceRef.current.durationMs(undefined, performance.now());
+    const durationTicks = durationMs * LIVE_TICKS_PER_MS;
+    if (realtime) twister.accelerateRealtime(durationTicks);
     if (!realtime || turns === '') {
       sliceFollowUntilRef.current = 0;
     } else if (hasShownRef.current && appendedSlicePair(shownRef.current.turns, turns)) {
       sliceFollowUntilRef.current = performance.now() + SLICE_ORIENTATION_FOLLOW_MS;
     }
     const plan = realtime
-      ? planLiveSimUpdate(shownRef.current, next, animate, twister.backlog, hasShownRef.current)
+      ? planLiveSimUpdate(shownRef.current, next, animate, twister.backlog, hasShownRef.current,
+        { remainingMs: twister.remainingTicks / LIVE_TICKS_PER_MS, durationMs })
       : planSimUpdate(shownRef.current, next, animate);
     shownRef.current = { turns, pose };
     hasShownRef.current = true;
     if (plan.mode === 'push') {
-      const queued = twister.backlog > 0 || plan.exp.trim().split(/\s+/).length > 1;
       twister.push(
         plan.exp,
         false,
         1,
         realtime
-          ? (queued ? LIVE_QUEUED_TURN_TICKS : LIVE_TURN_TICKS)
+          ? durationTicks
           : moveDurationTicks,
+        realtime ? 'linear' : 'ease-out',
       );
     } else if (plan.mode === 'catch-up') {
-      twister.catchUpRealtime(plan.exp, plan.fallbackExp, LIVE_QUEUED_TURN_TICKS);
+      twister.catchUpRealtime(plan.exp, plan.fallbackExp, durationTicks, 'linear');
     } else {
       twister.setup(plan.exp);
     }
     mountRef.current?.invalidate();
-  }, [ready, turns, pose, animate, realtime]);
+  }, [ready, turns, pose, animate, realtime, liveSource]);
+
+  // Physical commands arrive here before the parent React commit. A resync uses
+  // a verified complete anchor; ordinary turns never reparse the whole history.
+  useEffect(() => {
+    const mount = mountRef.current;
+    if (!ready || !mount || !realtime || !liveSource) return;
+    const twister = (mount.world.cube as NxnCube).twister;
+    let verified = false;
+    let previousMove = '';
+    const oriented = (exp: string): string => gyroOrientation
+      ? normalizeWcaScramble(`${invertAlg(gyroOrientation)} ${exp}`) ?? exp : exp;
+    const fullExpression = (event: LiveSmartCubeDisplayEvent): string =>
+      `${gyroOrientation} ${oriented(event.snapshot.moves.join(' '))} ${pose}`.trim();
+    const apply = (event: LiveSmartCubeDisplayEvent): void => {
+      if (!event.snapshot.algAnchored) { verified = false; return; }
+      if (!verified || !event.move || !animate || pose) {
+        twister.setup(fullExpression(event));
+        cadenceRef.current.reset();
+        previousMove = '';
+        sliceFollowUntilRef.current = 0;
+      } else {
+        const now = performance.now();
+        if (appendedSlicePair(previousMove, `${previousMove} ${event.move}`.trim())) {
+          sliceFollowUntilRef.current = now + SLICE_ORIENTATION_FOLLOW_MS;
+        }
+        previousMove = event.move;
+        const durationMs = cadenceRef.current.durationMs(event.timestamp, now);
+        const ticks = durationMs * LIVE_TICKS_PER_MS;
+        twister.accelerateRealtime(ticks);
+        const exp = oriented(event.move);
+        const count = exp.split(/\s+/).filter(Boolean).length;
+        const ageMs = event.timestamp === undefined ? 0 : Math.max(0, now - event.timestamp);
+        if (ageMs > LIVE_VISUAL_BUDGET_MS || liveSimNeedsCatchUp(twister.remainingTicks / LIVE_TICKS_PER_MS, count, durationMs)) {
+          twister.catchUpRealtime(exp, fullExpression(event), ticks, 'linear');
+        } else {
+          twister.push(exp, false, 1, ticks, 'linear');
+        }
+      }
+      verified = true;
+      mount.invalidate();
+    };
+    apply({ snapshot: liveSource.getSnapshot() });
+    return liveSource.subscribe(apply);
+  }, [ready, liveSource, realtime, gyroOrientation, pose, animate]);
 
   return (
     <div

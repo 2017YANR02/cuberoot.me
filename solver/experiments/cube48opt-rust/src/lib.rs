@@ -1,3 +1,6 @@
+#![cfg_attr(target_arch = "wasm64", feature(simd_wasm64))]
+
+pub mod batch;
 pub mod coord;
 pub mod cube;
 pub mod h10_coord;
@@ -7,6 +10,9 @@ pub mod h48_table;
 pub mod h48_variant;
 pub mod search;
 pub mod table;
+pub mod opt10;
+pub mod opt10_table;
+pub mod opt10_generate;
 
 pub use h48_coord::H48State;
 pub use h48_table::H48Table;

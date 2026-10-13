@@ -190,38 +190,65 @@ export interface CrossFaceScan {
  * 每个面都是「把问题整体转到该面朝下,再跑现成的 D 面判据」——判据只写一份,
  * 六个面共用,不会出现某个面的十字定义和别的面不一样。
  */
-export function scanCrossFaces(scramble: string, moves: SolveMove[]): CrossFaceScan[] {
-  return CUBE_FACES.map((face) => {
-    const blank: CrossFaceScan = { face, crossIdx: null, f2lIdx: null };
-    const rotation = ROTATION_TO_D[face];
-    const perm = facePermFor(rotation);
-    // D needs no rewriting at all, so a stream we cannot conjugate is still
-    // scanned against D — that is the old behaviour, kept exactly.
-    const scr = rotation === '' ? scramble : conjugateSequence(scramble, perm);
-    if (scr === null) return blank;
+/** Incremental version of the same six-face first-reach scan. Live timing
+ * tracks OLL too; ordinary cross inference stops each face at its first F2L. */
+export class IncrementalCfopProgress {
+  private index = 0;
+  private readonly faces;
 
-    let state: CubeFaces;
-    try {
-      state = applyScramble(3, scr);
-    } catch {
-      state = solved(3);
-    }
-    let crossIdx: number | null = null;
-    let f2lIdx: number | null = null;
-    for (let i = 0; i < moves.length; i++) {
-      let tok: string | null = moves[i].m;
-      if (rotation !== '') {
-        tok = conjugateToken(tok, perm);
-        // 认不出的记号 → 这个面根本没法评,别拿半条流去和别的面比。
-        if (tok === null) return blank;
+  constructor(scramble: string, private readonly trackOll = false) {
+    this.faces = CUBE_FACES.map(face => {
+      const rotation = ROTATION_TO_D[face];
+      const perm = facePermFor(rotation);
+      const scr = rotation === '' ? scramble : conjugateSequence(scramble, perm);
+      let state: CubeFaces;
+      try { state = scr === null ? solved(3) : applyScramble(3, scr); }
+      catch { state = solved(3); }
+      return { face, perm, state, valid: scr !== null,
+        crossIdx: null as number | null, f2lIdx: null as number | null,
+        crossDoneMs: null as number | null, f2lDoneMs: null as number | null,
+        ollDoneMs: null as number | null };
+    });
+  }
+
+  push(move: SolveMove): void {
+    for (const f of this.faces) {
+      if (!f.valid || (!this.trackOll && f.f2lIdx !== null)) continue;
+      const token = f.face === 'D' ? move.m : conjugateToken(move.m, f.perm);
+      if (token === null) { f.valid = false; continue; }
+      f.state = applyOneToken(f.state, token);
+      const rank = stageRank(detectCfopStage(f.state));
+      if (f.crossIdx === null && rank >= stageRank('cross')) {
+        f.crossIdx = this.index; f.crossDoneMs = move.ts;
       }
-      state = applyOneToken(state, tok);
-      const rank = stageRank(detectCfopStage(state));
-      if (crossIdx === null && rank >= stageRank('cross')) crossIdx = i;
-      if (rank >= stageRank('f2l')) { f2lIdx = i; break; }
+      if (f.f2lIdx === null && rank >= stageRank('f2l')) {
+        f.f2lIdx = this.index; f.f2lDoneMs = move.ts;
+      }
+      if (f.ollDoneMs === null && rank >= stageRank('oll')) f.ollDoneMs = move.ts;
     }
-    return { face, crossIdx, f2lIdx };
-  });
+    this.index++;
+  }
+
+  scans(): CrossFaceScan[] {
+    // The canonical scan stops at F2L: an unknown later token cannot erase that
+    // face's score, but it still prevents normalizeSolve from conjugating it.
+    return this.faces.map(f => ({ face: f.face,
+      crossIdx: f.valid || f.f2lIdx !== null ? f.crossIdx : null,
+      f2lIdx: f.f2lIdx }));
+  }
+
+  stages(): { crossDoneMs: number | null; f2lDoneMs: number | null; ollDoneMs: number | null } {
+    const face = pickCrossFace(this.scans());
+    const selected = this.faces.find(f => f.face === face);
+    const f = selected?.valid ? selected : this.faces.find(f => f.face === 'D')!;
+    return { crossDoneMs: f.crossDoneMs, f2lDoneMs: f.f2lDoneMs, ollDoneMs: f.ollDoneMs };
+  }
+}
+
+export function scanCrossFaces(scramble: string, moves: SolveMove[]): CrossFaceScan[] {
+  const progress = new IncrementalCfopProgress(scramble);
+  for (const move of moves) progress.push(move);
+  return progress.scans();
 }
 
 /** 排序键:F2L 最早的赢,其次十字最早的,再平就是 D 优先(标准视角原样通过)。 */

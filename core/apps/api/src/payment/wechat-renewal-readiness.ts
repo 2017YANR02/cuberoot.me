@@ -71,3 +71,14 @@ export function renewalReadinessReport(checks: readonly ReadinessCheck[]) {
     ] as const,
   };
 }
+
+/** Administrator diagnostics: report presence only, never credentials or customer records. */
+export function renewalServerReadiness(env: Environment) {
+  const checks = checkRenewalEnvironment(env);
+  return {
+    ...renewalReadinessReport(checks),
+    scope: 'server_configuration_only' as const,
+    managementConfigured: checks.every((check) => check.status === 'present'),
+    syncEnabled: env.WECHAT_PAPAY_SYNC_ENABLED === 'true',
+  };
+}

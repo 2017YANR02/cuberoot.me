@@ -188,7 +188,7 @@ export async function resolveCommentPopupState(
   const currPattern = await patternFromAlg(currAlg);
 
   const previousLine = linesBefore.trimEnd().split('\n').at(-1) ?? '';
-  const continuesCancelledCross = /\/\/\s*(?:[WYROBG]\s+)?x*cross\b.*\bcancel into\s*$/.test(previousLine);
+  const continuesCancelledCross = /\/\/\s*(?:[WYROBG]\s+)?(?:ps)?x*cross\b.*\bcancel into\s*$/.test(previousLine);
   return { prevPattern, currPattern, lineMovesText, prevMovesText: prevMoves, moveCount, replaceFrom, continuesCancelledCross };
 }
 

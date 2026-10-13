@@ -1,4 +1,6 @@
-import { stageSegmentsFor } from './stage-segments-producer';
+import { STAGE_SEGMENT_EVENTS } from './stage-segments-producer';
+import { IncrementalCfopProgress } from './reconstruct/orient';
+import type { SolveMove } from './stage-segments';
 import type { Solve } from './types';
 
 export type TimerManualStage = 'cross' | 'f2l' | 'oll';
@@ -45,6 +47,9 @@ export class TimerAttemptSplitRecorder {
   private manualStages = new Set<TimerManualStage>();
   private options: TimerAttemptSplitOptions = { bldMemo: false, multiStage: false };
   private state: TimerAttemptSplitState = { stages: {} };
+  private progress: IncrementalCfopProgress | null = null;
+  private observedMoves: SolveMove[] = [];
+  private scramble = '';
 
   constructor(private readonly onChange?: (state: TimerAttemptSplitState) => void) {}
 
@@ -52,12 +57,16 @@ export class TimerAttemptSplitRecorder {
     this.active = true;
     this.options = options;
     this.manualStages.clear();
+    this.progress = null;
+    this.observedMoves = [];
     this.setState({ stages: {} });
   }
 
   cancel(): void {
     this.active = false;
     this.manualStages.clear();
+    this.progress = null;
+    this.observedMoves = [];
     this.setState({ stages: {} });
   }
 
@@ -74,8 +83,27 @@ export class TimerAttemptSplitRecorder {
   ): void {
     if (!this.active || !this.options.multiStage) return;
     if (validElapsed(solve.timeMs) === null) return;
-    const segments = stageSegmentsFor(solve);
-    if (!segments) return;
+    if (!STAGE_SEGMENT_EVENTS.has(solve.event) || !solve.moves?.length) return;
+    // Only replay on an actual rewrite/rewind. No recognition, HTM grouping or
+    // repeated scramble normalization belongs in the physical move callback.
+    const moves = solve.moves;
+    let segments: ReturnType<IncrementalCfopProgress['stages']>;
+    try {
+      if (!this.progress || this.scramble !== solve.scramble || moves.length < this.observedMoves.length
+        || this.observedMoves.some((move, i) => move.m !== moves[i].m || move.ts !== moves[i].ts)) {
+        this.progress = new IncrementalCfopProgress(solve.scramble, true);
+        this.observedMoves = [];
+        this.scramble = solve.scramble;
+      }
+      for (let i = this.observedMoves.length; i < moves.length; i++) {
+        this.progress.push(moves[i]);
+        this.observedMoves.push({ ...moves[i] });
+      }
+      segments = this.progress.stages();
+    } catch {
+      this.progress = null;
+      return;
+    }
     if (segments.crossDoneMs !== null) this.setAutomaticStage('cross', segments.crossDoneMs);
     if (segments.f2lDoneMs !== null) this.setAutomaticStage('f2l', segments.f2lDoneMs);
     if (segments.ollDoneMs !== null) this.setAutomaticStage('oll', segments.ollDoneMs);

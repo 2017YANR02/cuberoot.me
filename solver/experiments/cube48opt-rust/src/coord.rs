@@ -41,6 +41,46 @@ pub struct CoordTables {
 }
 
 impl CoordTables {
+    pub(crate) fn corner_entry(&self, cube: &Cube) -> u32 {
+        self.corner_class[self.raw_corner(cube)]
+    }
+
+    /// Full EO pattern in an already chosen corner frame. No symmetry folding.
+    pub(crate) fn full_pattern_in_frame(&self, cube: &Cube, class: u32) -> u64 {
+        let mut outer = 0usize;
+        let mut inner = 0usize;
+        let mut inner_position = 0;
+        let mut eo = 0u64;
+        for (position, &edge) in cube.edges.iter().enumerate() {
+            let identity = edge >> 1;
+            if identity >= 8 { outer |= 1 << position; }
+            else {
+                inner |= usize::from((identity >> 2) & 1) << inner_position;
+                inner_position += 1;
+            }
+            if position < 11 { eo |= u64::from(edge & 1) << position; }
+        }
+        (((u64::from(class) * 70 + u64::from(self.separation8[inner & 127])) << 11 | eo) << 9)
+            | u64::from(self.separation12[outer & 2047])
+    }
+
+    /// Research-only EO10 coordinates, using the validated Opt9 small LUTs.
+    /// This does not invent an upstream variant, checksum or PDB decoder.
+    pub(crate) fn eo10_index(&self, cube: &Cube, scalar: bool) -> u64 {
+        assert_eq!(self.variant, 9);
+        let (orbit, eo) = if scalar {
+            self.coordinate_parts_slow::<true>(cube)
+        } else {
+            #[cfg(target_arch = "aarch64")]
+            { unsafe { self.coordinate_parts_neon::<true>(cube) } }
+            #[cfg(not(target_arch = "aarch64"))]
+            { self.coordinate_parts_slow::<true>(cube) }
+        };
+        ((u64::from(orbit) & !511) << 10)
+            | (u64::from(eo >> 1) << 9)
+            | u64::from(orbit & 511)
+    }
+
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, String> {
         Self::from_variant_bytes(bytes, 1)
     }
@@ -182,7 +222,9 @@ impl CoordTables {
         }
         #[cfg(target_arch = "aarch64")]
         let (orbit, eo) = unsafe { self.coordinate_parts_neon::<true>(cube) };
-        #[cfg(not(target_arch = "aarch64"))]
+        #[cfg(all(target_family = "wasm", target_feature = "simd128"))]
+        let (orbit, eo) = unsafe { self.coordinate_parts_wasm::<true>(cube) };
+        #[cfg(not(any(target_arch = "aarch64", all(target_family = "wasm", target_feature = "simd128"))))]
         let (orbit, eo) = self.coordinate_parts_slow::<true>(cube);
         self.pack_index(orbit, eo)
     }
@@ -221,7 +263,11 @@ impl CoordTables {
         unsafe {
             self.coordinate_parts_neon::<false>(cube).0
         }
-        #[cfg(not(target_arch = "aarch64"))]
+        #[cfg(all(target_family = "wasm", target_feature = "simd128"))]
+        unsafe {
+            self.coordinate_parts_wasm::<false>(cube).0
+        }
+        #[cfg(not(any(target_arch = "aarch64", all(target_family = "wasm", target_feature = "simd128"))))]
         self.index_slow(cube)
     }
 
@@ -264,6 +310,55 @@ impl CoordTables {
             + (self.separation8[inner & 127] as u32) * 512
             + self.separation12[outer & 2047] as u32;
         (orbit, eo & 2047)
+    }
+
+    /// The byte-shuffle coordinate in native WebAssembly SIMD. This preserves
+    /// the scalar packing exactly: corner representative, twelve conjugated
+    /// edges, EO bitmask, and the eight-edge complement mask. No per-edge
+    /// indexed scalar loads or branches remain in this path.
+    #[cfg(all(target_family = "wasm", target_feature = "simd128"))]
+    #[inline]
+    unsafe fn coordinate_parts_wasm<const WITH_EO: bool>(&self, cube: &Cube) -> (u32, u16) {
+        #[cfg(target_arch = "wasm32")]
+        use std::arch::wasm32::*;
+        #[cfg(target_arch = "wasm64")]
+        use std::arch::wasm64::*;
+
+        // The eight corners are a complete in-bounds 64-bit load. Multiplying
+        // each twist by its base-three place gives the same 0..2186 scalar CO.
+        let corners = v128_load64_zero(cube.corners.as_ptr().cast::<u64>());
+        let orientation = u16x8_extend_low_u8x16(u8x16_shr(corners, 3));
+        let products = i16x8_mul(orientation, u16x8(1, 3, 9, 27, 81, 243, 729, 0));
+        let pairs = i32x4_extadd_pairwise_u16x8(products);
+        let halves = i32x4_add(pairs, i32x4_shuffle::<2, 3, 0, 1>(pairs, pairs));
+        let total = i32x4_add(halves, i32x4_shuffle::<1, 0, 3, 2>(halves, halves));
+        let co = u32x4_extract_lane::<0>(total) as usize;
+        let corner_mask = usize::from(i8x16_bitmask(i8x16_shl(corners, 5))) & 127;
+        let entry = self.corner_class[co * 70 + self.separation8[corner_mask] as usize];
+        let s = (entry & 63) as usize;
+
+        // Cube is exactly 20 bytes. Load 4..20 and shuffle away the four corner
+        // bytes, so there is no 16-byte read past the 12-byte edge array.
+        let tail = v128_load((cube as *const Cube).cast::<u8>().add(4).cast::<v128>());
+        let edges = i8x16_shuffle::<4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19>(tail, u8x16_splat(0));
+        let source_values = i8x16_swizzle(edges, v128_load(self.edge_sources[s].as_ptr().cast::<v128>()));
+        let (identities, eo) = if WITH_EO {
+            let transformed = v128_xor(
+                i8x16_swizzle(v128_load(self.edge_inverse_cubies[s].as_ptr().cast::<v128>()), u8x16_shr(source_values, 1)),
+                v128_and(v128_xor(source_values, v128_load(self.edge_source_flips[s].as_ptr().cast::<v128>())), u8x16_splat(1)),
+            );
+            (u8x16_shr(transformed, 1), i8x16_bitmask(i8x16_shl(transformed, 7)) & 2047)
+        } else {
+            (i8x16_swizzle(v128_load(self.edge_identities[s].as_ptr().cast::<v128>()), u8x16_shr(source_values, 1)), 0)
+        };
+        let outer = usize::from(i8x16_bitmask(i8x16_shl(identities, 4))) & 2047;
+        let positions = v128_load64_zero(self.outer_complement[outer].as_ptr().cast::<u64>());
+        let remaining = i8x16_swizzle(identities, positions);
+        let inner = usize::from(i8x16_bitmask(i8x16_shl(remaining, 5))) & 127;
+        let orbit = (entry >> 6) * EDGE_STRIDE
+            + (self.separation8[inner] as u32) * 512
+            + self.separation12[outer] as u32;
+        (orbit, eo)
     }
 
     /// Native version of the WASM's two byte-table lookups and complement

@@ -202,6 +202,9 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
         })}><X size={18} /></button>
         <h2 className="mem-pay-title">{isZh ? plan.nameZh : plan.nameEn}</h2>
         <div className="mem-pay-price">{fmtPrice(plan.priceCents, plan.currency)}</div>
+        <p className="mem-pay-tip">
+          {tr({ zh: '单次购买，不会自动续费。此付款将真实扣款，请勿用于测试。', en: 'One-time purchase with no auto-renewal. This is a real payment, not a test transaction.' })}
+        </p>
 
         {!order ? (
           <>

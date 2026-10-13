@@ -20,10 +20,16 @@ const geomean = values => values.every(v => v > 0) ? Math.exp(values.reduce((sum
 async function hashFile(file) { const hash = createHash('sha256'); for await (const chunk of createReadStream(file)) hash.update(chunk); return hash.digest('hex'); }
 
 export function parseArguments(argv = process.argv.slice(2)) {
-  assert(argv.length === 4 || argv.length === 5 && argv[4] === '--probe',
-    'usage: h10-benchmark.mjs RUST_NATIVE C_NATIVE H10 NEW_OUT_DIR [--probe]');
+  assert(argv.length >= 4,
+    'usage: h10-benchmark.mjs RUST_NATIVE C_NATIVE H10 NEW_OUT_DIR [--probe] [--cases FILE]');
   const [rust, c, table, out] = argv.slice(0, 4).map(value => path.resolve(value));
-  return { rust, c, table, out, probe: argv.length === 5 };
+  let probe = false, casesFile = null;
+  for (let i = 4; i < argv.length; i++) {
+    if (argv[i] === '--probe') probe = true;
+    else if (argv[i] === '--cases' && argv[i + 1]) casesFile = path.resolve(argv[++i]);
+    else throw Error('Unknown or incomplete option: ' + argv[i]);
+  }
+  return { rust, c, table, out, probe, casesFile };
 }
 
 function tableIdentity(file) {
@@ -187,9 +193,10 @@ async function main() {
   const config = parseArguments(), { out, probe } = config;
   assert(!existsSync(out), 'output directory must be new');
   const identity = tableIdentity(config.table); config.table = identity.path;
-  const cases = loadCases(null, true); assert.equal(cases.length, 60);
+  const cases = loadCases(config.casesFile, true);
   mkdirSync(out, { recursive: true });
   const provenance = await snapshot(out, config);
+  if (config.casesFile) { copyFileSync(config.casesFile, path.join(out, 'corpus.json'), constants.COPYFILE_EXCL); provenance.corpusFileSha256 = await hashFile(config.casesFile); }
   const { cube3x3x3 } = await import(pathToFileURL(path.join(ROOT, 'core/jobs/alg-build/node_modules/cubing/dist/lib/cubing/puzzles/index.js')).href);
   const puzzle = await cube3x3x3.kpuzzle();
   const method = 'one H10 file; one resident engine; fresh process per batch; alternating whole-batch order';
@@ -250,16 +257,16 @@ async function main() {
       }
       process.stderr.write(`[h10-benchmark] ${phase} round ${round} complete: all ${cases.length} cases per engine\n`);
     }
-    assert.equal(rows.length, probe ? 120 : 960);
+    assert.equal(rows.length, cases.length * (probe ? 2 : 16));
     const report = { schema: 'cuberoot.h10-rust-c.benchmark-report.v1', method, mode: probe ? 'probe' : 'benchmark',
       cases: cases.length, verifiedSolutions: rows.length, startupChecks: batches.length,
-      measuredSolutions: probe ? 120 : 360, tableIdentity: identity, ...provenance, batches,
+      measuredSolutions: cases.length * (probe ? 2 : 6), tableIdentity: identity, ...provenance, batches,
       ...summarize(rows, cases, probe ? 'probe' : 'measure', probe ? 1 : 3), limitations: [
         'Rust and C use the same H10 file and one solving CPU thread. Rust has eight interleaved contexts; those are not eight threads. Search implementations and node-counter definitions differ.',
         'Compare only self-reported search seconds. Rust times solve(); C times nissy_solve(). Loading, IPC, parent replay and startup wall time are separate and excluded.',
-        probe ? 'Probe runs all 60 cases once per engine with no corpus warmup; it is a correctness/resource check, not the final performance estimate.' : 'Every new process verifies a full 60-case warmup before its pass. The first whole round is also excluded. Three measured rounds alternate whole-engine order; this differs from per-case interleaving or persistent-process protocols.',
+        probe ? 'Probe runs all selected cases once per engine with no corpus warmup; it is a correctness/resource check, not the final performance estimate.' : 'Every new process verifies a full selected-corpus warmup before its pass. The first whole round is also excluded. Three measured rounds alternate whole-engine order; this differs from per-case interleaving or persistent-process protocols.',
         'Both native node limits are disabled for this comparison. Counters have different meanings and impose no cross-engine acceptance threshold. The parent enforces 120 seconds per case and 600 seconds for startup; the outer guard enforces its run deadline.',
-        'All historical HTM 15–19 cases stay in original order. Known optimal lengths and cross-engine lengths must match, and every solution is independently replayed with cubing.js. This is finite corpus evidence.',
+        'All selected cases stay in original order. Any known optimal lengths and cross-engine lengths must match, and every solution is independently replayed with cubing.js. This is finite corpus evidence.',
         'Table identity/timestamps are checked, not cryptographically rehashed. These checks detect ordinary replacement/modification, not adversarial same-metadata edits. Binary/source SHA256 snapshots are retained; caller build provenance must establish which source produced each binary.',
         'C output must identify the original mode and report no experiment counters. That is a protocol check, not proof of build provenance. The C binary must be built with H48_ORIGINAL from unmodified vendor sources.',
         'time -l records each batch maximum resident set size; this differs from simultaneous aggregate RSS. C mmap and Rust storage may account for file-backed pages differently; the outer guard monitors process-tree RSS and system headroom.',

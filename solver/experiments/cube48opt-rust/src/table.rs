@@ -81,6 +81,18 @@ impl PruningTable {
         if file.read(&mut [0_u8; 1]).map_err(|e| e.to_string())? != 0 {
             return Err("table changed during read".into());
         }
+        Self::from_words(words, variant)
+    }
+
+    /// Validate an owned table loaded by a host such as a WASM wrapper.
+    /// Ownership moves into the table without allocating a second copy.
+    pub fn from_words(words: Vec<u32>, variant: Variant) -> Result<Self, String> {
+        if words.len() as u64 * 4 != variant.bytes() {
+            return Err(format!(
+                "opt{} requires exactly {} bytes; got {}",
+                variant.number(), variant.bytes(), words.len() as u64 * 4
+            ));
+        }
         // The original check_pruning_dist_chunk masks the two reserved cells
         // in every block and the padded final cells in every 512-entry slice.
         // Keep the recovered reference distribution as a corruption check.
@@ -152,6 +164,12 @@ impl PruningTable {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn owned_table_rejects_wrong_size_before_scanning() {
+        for number in 1..=9 {
+            assert!(PruningTable::from_words(vec![0; 8], Variant::new(number).unwrap()).is_err());
+        }
+    }
     #[test]
     fn packed_codes_and_fallback_cross_word_boundary() {
         let mut table = PruningTable {

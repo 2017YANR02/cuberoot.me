@@ -3,7 +3,7 @@ import Cubelet from "./cubelet";
 import { TwistAction } from "./twister";
 import Cube from "./cube";
 import * as THREE from "three";
-import tweener, { Tween } from "@cuberoot/puzzle-render-core/engine/tweener";
+import tweener, { Tween, type TweenEasing } from "@cuberoot/puzzle-render-core/engine/tweener";
 import { timing, tweenDuration } from "@cuberoot/puzzle-render-core/engine/tweenTiming";
 import { buildPanelFan, colorPanelFan } from "./panelFan";
 
@@ -248,11 +248,16 @@ export default class CubeGroup extends THREE.Group {
     this.cube.callback();
   }
 
+  get remainingTicks(): number { return this.tween?.remainingTicks ?? 0; }
+
+  accelerateRealtime(ticks: number): void { this.tween?.shortenRemaining(ticks); }
+
   twist(
     angle: number,
     fast: boolean,
     formulaStep = false,
     formulaDurationTicks = timing.frames,
+    easing: TweenEasing = 'ease-out',
   ): boolean {
     if (!Number.isFinite(angle)) {
       if (this.tween) tweener.cancel(this.tween);
@@ -292,7 +297,7 @@ export default class CubeGroup extends THREE.Group {
           return true;
         }
         return false;
-      });
+      }, easing);
     }
     return true;
   }

@@ -112,8 +112,8 @@ export class GyroRecorder {
   get droppedCount(): number { return this.dropped; }
 
   /** Read the current recording without consuming or exposing mutable samples. */
-  snapshot(): GyroSample[] {
-    return this.samples.map(({ tMs, q }) => ({ tMs, q: { ...q } }));
+  snapshot(from = 0): GyroSample[] {
+    return this.samples.slice(from).map(({ tMs, q }) => ({ tMs, q: { ...q } }));
   }
 
   /** 拿走并清空。 */

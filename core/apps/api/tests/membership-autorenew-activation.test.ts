@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HTTPException } from 'hono/http-exception';
 
 const { query } = vi.hoisted(() => ({ query: vi.fn() }));
@@ -18,6 +18,7 @@ const update = (slug: string, body: unknown, admin = true) => membershipRoutes.r
 });
 
 describe('auto-renewal activation safety', () => {
+  afterEach(() => vi.unstubAllEnvs());
   beforeEach(() => {
     query.mockReset();
     query.mockResolvedValue([{ slug: 'monthly', name_zh: '月度', name_en: 'Monthly', price_cents: 2999, period: 'month', period_count: 1, perks: [], active: false }]);
@@ -43,5 +44,26 @@ describe('auto-renewal activation safety', () => {
     expect(query).toHaveBeenCalledTimes(1);
     expect((await update('monthly', { active: false }, false)).status).toBe(403);
     expect(query).toHaveBeenCalledTimes(1);
+  });
+  it('restricts readiness to administrators and never returns credential values or enables sales', async () => {
+    const path = '/membership/admin/renewal-readiness';
+    expect((await membershipRoutes.request(path)).status).toBe(403);
+    vi.stubEnv('WECHAT_PAPAY_APPID', 'wx0123456789abcdef');
+    vi.stubEnv('WECHAT_PAPAY_MCHID', '1234567890');
+    vi.stubEnv('WECHAT_PAPAY_API_V2_KEY', '0123456789abcdef0123456789abcdef');
+    vi.stubEnv('WECHAT_PAPAY_SYNC_ENABLED', 'true');
+    const response = await membershipRoutes.request(path, { headers: { Authorization: 'Bearer test-admin' } });
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Cache-Control')).toBe('no-store');
+    const body = await response.json();
+    expect(body.managementConfigured).toBe(true);
+    expect(body.syncEnabled).toBe(true);
+    expect(body.scope).toBe('server_configuration_only');
+    expect(body.readyForProduction).toBe(false);
+    for (const key of ['WECHAT_PAPAY_APPID', 'WECHAT_PAPAY_MCHID', 'WECHAT_PAPAY_API_V2_KEY']) {
+      expect(JSON.stringify(body)).not.toContain(process.env[key]);
+    }
+    expect(query).not.toHaveBeenCalled();
+    expect((await update('monthly_auto_renew', { active: true })).status).toBe(503);
   });
 });

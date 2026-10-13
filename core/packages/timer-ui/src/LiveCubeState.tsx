@@ -54,6 +54,7 @@ import { Spinner } from './Spinner';
 import './live-cube.css';
 import { readDevQuatSource } from './dev-quat-source';
 import { FaceletsCube } from './FaceletsCube';
+import type { LiveSmartCubeDisplaySource } from '@cuberoot/shared/smart-cube/anchor';
 import { orientCubeFacelets } from '@cuberoot/shared/timer';
 import { normalizeWcaScramble } from '@cuberoot/shared/normalize-wca-scramble';
 import { invertAlg } from '@cuberoot/shared/alg-transform';
@@ -112,7 +113,9 @@ export interface LiveCubeStateProps {
    * state is reachable from solved by replaying these — which is why the caller
    * anchors the log there rather than at connect time. Empty is fine (solved).
    */
-  moves: string[];
+  moves: readonly string[];
+  /** Direct physical move stream; React still owns controls and flat previews. */
+  liveSource?: LiveSmartCubeDisplaySource;
   /**
    * False when the state is NOT expressible as `moves` from solved — i.e. the
    * cube was already turned when we started tracking it. The 3D view is
@@ -161,6 +164,7 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
     displayOrientation = '',
     facelets,
     moves,
+    liveSource,
     algAnchored,
     mode = 'net',
     quat = null,
@@ -180,18 +184,19 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
   // A state resync temporarily invalidates the move log. Preserve the last
   // verified 3D instance until the new opening is ready, rather than switching
   // renderers (and disposing a cube while it may still be turning).
-  const lastVerifiedMoves = useRef<string[] | null>(null);
+  const lastVerifiedMoves = useRef<readonly string[] | null>(null);
   useEffect(() => {
     if (algAnchored) lastVerifiedMoves.current = moves;
   }, [algAnchored, moves]);
   const renderedMoves = algAnchored ? moves : lastVerifiedMoves.current;
   const displayMoves = useMemo(() => {
+    if (liveSource && wants3d) return renderedMoves;
     if (!renderedMoves || !displayOrientation) return renderedMoves;
     const local = normalizeWcaScramble(`${invertAlg(displayOrientation)} ${renderedMoves.join(' ')}`);
     return local === null ? renderedMoves : `${displayOrientation} ${local}`.trim().split(/\s+/);
-  }, [renderedMoves, displayOrientation]);
-  const displayFacelets = useMemo(() => facelets
-    ? orientCubeFacelets(facelets, displayOrientation) : null, [facelets, displayOrientation]);
+  }, [renderedMoves, displayOrientation, liveSource, wants3d]);
+  const displayFacelets = useMemo(() => facelets && !wants3d
+    ? orientCubeFacelets(facelets, displayOrientation) : null, [facelets, displayOrientation, wants3d]);
 
   // The single decision, taken once and reported, so the owner draws the
   // calibrate button against what is on screen rather than what was asked for.
@@ -215,6 +220,7 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
         allowViewDrag
         ariaLabel={tr({ zh: '智能魔方实时三维状态', en: 'Live 3D smart-cube state' })}
         moves={displayMoves!}
+        liveSource={liveSource}
         gyroOrientation={displayOrientation}
         quat={liveQuat}
         quatRef={useGyro ? quatRef : undefined}

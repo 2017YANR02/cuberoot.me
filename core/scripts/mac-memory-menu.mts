@@ -10,7 +10,7 @@ const work = resolve(import.meta.dirname, '../../.tmp/double-zbll-symmetry-v2');
 const GiB = 2 ** 30;
 export function computeRss(processes: ReturnType<typeof parseProcesses>, owner: number): number {
   // Include surviving native solvers even if the coordinator already removed owner.pid.
-  const family = new Set(processes.filter(p => p.pid === owner || /^solve_h48(?:_|$)/.test(p.name)).map(p => p.pid));
+  const family = new Set(processes.filter(p => p.pid === owner || /^(?:solve_h48(?:_|$)|cube48opt-research$)/.test(p.name)).map(p => p.pid));
   for (let changed = true; changed;) {
     changed = false;
     for (const p of processes) if (family.has(p.ppid) && !family.has(p.pid)) { family.add(p.pid); changed = true; }

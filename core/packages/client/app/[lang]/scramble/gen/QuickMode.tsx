@@ -26,6 +26,7 @@ import CopyAllScramblesButton, { scrambleClipboardText } from './CopyAllScramble
 import { scrambleEventPickerGroups } from './_event-picker';
 import ScrambleLines from './ScrambleLines';
 import { displaySq1ForEvent } from '@cuberoot/shared/sq1-notation';
+import ScrambleImageDownload from '@/components/ScrambleImageDownload';
 
 const GENERATOR_TAG = 'TNoodle-WCA-1.2.3-port';
 
@@ -438,6 +439,10 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
 
       <div className="gen-tn-controls">
         <div className="gen-control-group gen-control-actions">
+          <ScrambleImageDownload className="gen-btn" disabled={loading} sheets={eventsOrdered.map(event => ({
+            event, title: eventDisplayName(event, isZh),
+            rows: (subMode === 'batch' ? generated[event] ?? [] : parsePastedScrambles(pasteTexts[event] ?? '')).map((scramble, i) => ({ label: String(i + 1), scramble })),
+          }))} />
           {subMode === 'batch' && (
             <ProgressButton
               primary

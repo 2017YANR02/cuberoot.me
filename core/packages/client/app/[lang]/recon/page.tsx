@@ -13,7 +13,7 @@ import Link from '@/components/AppLink';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { useQueryState, parseAsBoolean, parseAsStringEnum } from 'nuqs';
-import { CirclePlus, HelpCircle, TriangleAlert, LayoutGrid, List, TestTube2, Check } from 'lucide-react';
+import { CirclePlus, HelpCircle, TriangleAlert, LayoutGrid, List, TestTube2, Check, Bookmark } from 'lucide-react';
 import type { ReconSolve } from '@cuberoot/shared';
 import { useReconStore, type SortKey, type SortDir } from '@/lib/recon-store';
 import {
@@ -28,7 +28,7 @@ import { localizeCompName } from '@/lib/comp-localize';
 import { reconPathSeg } from '@/lib/recon-seo';
 import { RecordBadge } from '@/components/RecordBadge';
 import { CuratedReconCard } from '@/components/ReconCard/CuratedReconCard';
-import { getPinnedRecons, setReconHomePin, getFeaturedRecons, setReconFeatured } from '@/lib/recon-api';
+import { getPinnedRecons, setReconHomePin, getFeaturedRecons, setReconFeatured, getReconFavorites, setReconFavorite } from '@/lib/recon-api';
 import WcaAuth from '@/components/WcaAuth';
 import BackHome from '@/components/BackHome';
 import { EventSelect } from '@/components/EventSelect';
@@ -41,13 +41,15 @@ import { SearchInput } from '@/components/SearchInput';
 import { isWcaEvent, eventDisplayName } from '@/lib/wca-events';
 import './recon.css';
 import { tr } from '@/i18n/tr';
-import { useIsAdmin } from '@/lib/auth-store';
+import { useIsAdmin, useAuthUser, useAuthStore } from '@/lib/auth-store';
 import { CompactSelect } from '@/components/CompactSelect';
 import { ReconCompletionBadge } from '@/components/recon/ReconCompletionBadge';
+import dynamic from 'next/dynamic';
+const ReconRoundOverview = dynamic(() => import('./ReconRoundOverview'));
 
 // ── 视图模式 ──
-type ViewMode = 'list' | 'grid';
-const VIEW_MODES: ViewMode[] = ['list', 'grid'];
+type ViewMode = 'list' | 'grid' | 'rounds';
+const VIEW_MODES: ViewMode[] = ['list', 'grid', 'rounds'];
 
 // ── 卡片视图排序选项 (key:dir 编码) ──
 const GRID_SORTS: { key: SortKey; dir: SortDir; zh: string; en: string }[] = [
@@ -238,9 +240,50 @@ export default function ReconListPage() {
       setSavingCuration(new Set(pendingCuration.current));
     }
   };
+  const user = useAuthUser();
+  const owner = String(user?.uid ?? '');
+  const ownerRef = useRef(owner);
+  ownerRef.current = owner;
+  const [favoritesOnly, setFavoritesOnly] = useQueryState('favorites', parseAsBoolean.withDefault(false));
+  const [favoriteState, setFavoriteState] = useState<{ owner: string; rows: ReconSolve[] } | null>(null);
+  const [favoriteRevision, setFavoriteRevision] = useState(0);
+  const favorites = favoriteState?.owner === owner ? favoriteState.rows : null;
+  const favoriteIds = useMemo(() => new Set(favorites?.map(solve => solve.id)), [favorites]);
+  useEffect(() => {
+    let active = true;
+    setFavoriteState(null);
+    if (owner) void getReconFavorites().then(rows => {
+      if (active) setFavoriteState({ owner, rows });
+    }).catch(() => {
+      if (active) setCurationError(tr({ zh: '收藏夹加载失败，请重试。', en: 'Could not load favorites. Please retry.' }));
+    });
+    return () => { active = false; };
+  }, [owner, favoriteRevision]);
+  const toggleFavorite = async (solve: ReconSolve) => {
+    if (!user) { useAuthStore.getState().login(); return; }
+    const key = `favorite:${owner}:${solve.id}`;
+    if (!favorites || pendingCuration.current.has(key)) return;
+    const selected = !favoriteIds.has(solve.id);
+    pendingCuration.current.add(key);
+    setSavingCuration(new Set(pendingCuration.current));
+    setCurationError(null);
+    try {
+      await setReconFavorite(solve.id, selected);
+      if (ownerRef.current === owner) setFavoriteState(previous => previous?.owner === owner ? {
+        owner, rows: selected ? [solve, ...previous.rows.filter(row => row.id !== solve.id)] : previous.rows.filter(row => row.id !== solve.id),
+      } : previous);
+    } catch {
+      if (ownerRef.current === owner) setCurationError(tr({ zh: '收藏未保存，请重试。', en: 'Could not save your favorite. Please retry.' }));
+    } finally {
+      pendingCuration.current.delete(key);
+      setSavingCuration(new Set(pendingCuration.current));
+    }
+  };
   const curationActions = (solve: ReconSolve) => {
-    if (!isAdmin || (solve.visibility && solve.visibility !== 'public') || solve.recordType === 'timing') return {};
+    const personal = { favorite: { active: favoriteIds.has(solve.id), disabled: Boolean(user) && favorites === null || savingCuration.has(`favorite:${owner}:${solve.id}`), onToggle: () => void toggleFavorite(solve) } };
+    if (!isAdmin || (solve.visibility && solve.visibility !== 'public') || solve.recordType === 'timing') return personal;
     return {
+      ...personal,
       pin: { active: pinnedIds.has(solve.id), disabled: pinnedRecons === null || savingCuration.has('pin:' + solve.id), onToggle: () => void toggleCuration(solve, 'pin', !pinnedIds.has(solve.id)) },
       featured: { active: featuredIds.has(solve.id), disabled: featuredRecons === null || savingCuration.has('featured:' + solve.id), onToggle: () => void toggleCuration(solve, 'featured', !featuredIds.has(solve.id)) },
     };
@@ -298,12 +341,12 @@ export default function ReconListPage() {
     void loadFlagData().then(v => { if (v !== flagVer) setFlagVer(v); });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const filtered = useMemo(() => getFilteredSolves().filter(s =>
+  const filtered = useMemo(() => getFilteredSolves(favoritesOnly ? (favorites ?? []) : undefined).filter(s =>
     recordKind === 'all' || (recordKind === 'timing' ? s.recordType === 'timing' : s.recordType !== 'timing')
   ), [
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useReconStore.getState().allSolves,
-    filters, sortKey, sortDir, recordKind,
+    filters, sortKey, sortDir, recordKind, favoritesOnly, favorites,
   ]);
 
   // NOTE: 同一轮里 avg / aoxr 在每把都重复——按 (person, comp, event, round) 分组，
@@ -916,7 +959,7 @@ export default function ReconListPage() {
       </div>
 
       {curationError && <p role="alert">{curationError}</p>}
-      {(isAdmin || !!featuredRecons?.length) && (
+      {!favoritesOnly && (isAdmin || !!featuredRecons?.length) && (
         <section className="recon-featured" aria-labelledby="recon-featured-title">
           <h2 id="recon-featured-title">{tr({ zh: '复盘', en: 'Reconstructions' })}</h2>
           <div className="recon-grid">
@@ -960,6 +1003,7 @@ export default function ReconListPage() {
           </div>}
         />
         <div className="recon-view-toggle">
+          <button type="button" className={`toggle-btn${viewMode === 'rounds' ? ' active' : ''}`} onClick={() => setViewMode('rounds')} aria-pressed={viewMode === 'rounds'}>{tr({ zh: '整轮', en: 'Rounds' })}</button>
           <button
             className={`toggle-btn${viewMode === 'list' ? ' active' : ''}`}
             onClick={() => setViewMode('list')}
@@ -993,6 +1037,16 @@ export default function ReconListPage() {
               <TestTube2 size={17} />
             </Link>
           ) : null}
+          <button type="button" className="btn-secondary" aria-pressed={favoritesOnly}
+            title={tr({ zh: '收藏夹', en: 'Favorites' })}
+            aria-label={tr({ zh: '收藏夹', en: 'Favorites' })}
+            onClick={() => {
+              if (!user) { useAuthStore.getState().login(); return; }
+              if (favorites === null) setFavoriteRevision(value => value + 1);
+              void setFavoritesOnly(!favoritesOnly);
+            }}>
+            <Bookmark size={17} fill={favoritesOnly ? 'currentColor' : 'none'} aria-hidden="true" />
+          </button>
           <WcaAuth />
           <SearchInput
             value={filters.search}
@@ -1004,13 +1058,16 @@ export default function ReconListPage() {
         </div>
       </div>
 
+      {favoritesOnly && !user && <button type="button" className="btn-secondary" onClick={() => useAuthStore.getState().login()}>{tr({ zh: '登录后查看收藏夹', en: 'Sign in to view favorites' })}</button>}
+      {user && favorites === null && curationError && <button type="button" className="btn-secondary" onClick={() => { setCurationError(null); setFavoriteRevision(value => value + 1); }}>{tr({ zh: '重试加载收藏夹', en: 'Retry loading favorites' })}</button>}
+      {favoritesOnly && user && favorites === null && !curationError && <p role="status">{t('common.loading')}</p>}
       {loading && <div className="recon-loading">{t('common.loading')}</div>}
       {error && <div className="recon-error"><TriangleAlert size={16} /> {error}</div>}
 
       {!loading && !error && (
         <>
           {/* 卡片视图：表头没了，提供一条紧凑筛选 + 排序栏（与表头共用同一份 store filter） */}
-          {viewMode === 'grid' && (
+          {viewMode !== 'list' && (
             <div className="recon-grid-filters">
               <EventSelect
                 events={events}
@@ -1047,6 +1104,7 @@ export default function ReconListPage() {
             </div>
           )}
 
+          {viewMode === 'rounds' && <ReconRoundOverview filtered={filtered} all={useReconStore.getState().allSolves} />}
           {viewMode === 'list' && (
           <div className="recon-table-wrap sticky-scroll-mobile">
             <table className="recon-table sticky-thead">
@@ -1108,6 +1166,13 @@ export default function ReconListPage() {
                           className={col.className || ''}
                         >
                           {renderCell(col, solve)}
+                          {col.key === 'id' && <button type="button" className="recon-add-btn"
+                            aria-label={tr({ zh: favoriteIds.has(solve.id) ? '取消收藏' : '收藏复盘', en: favoriteIds.has(solve.id) ? 'Remove from favorites' : 'Save reconstruction' })}
+                            aria-pressed={favoriteIds.has(solve.id)} disabled={curationActions(solve).favorite.disabled}
+                            onMouseDown={event => event.stopPropagation()} onMouseUp={event => event.stopPropagation()}
+                            onClick={event => { event.stopPropagation(); void toggleFavorite(solve); }}>
+                            <Bookmark size={16} fill={favoriteIds.has(solve.id) ? 'currentColor' : 'none'} />
+                          </button>}
                         </td>}</Tooltip>
                       );
                     })}
@@ -1140,7 +1205,7 @@ export default function ReconListPage() {
           )}
 
           {/* 无限滚动 sentinel + 分页信息 */}
-          <div className="recon-pagination">
+          {viewMode !== 'rounds' && <div className="recon-pagination">
             {hasMore ? (
               <span className="recon-showing">
                 {t('recon.showing', { shown: displayed.length, total: filtered.length })}
@@ -1150,8 +1215,8 @@ export default function ReconListPage() {
                 {t('recon.total', { count: filtered.length })}
               </span>
             )}
-          </div>
-          {hasMore && <div ref={sentinelRef} style={{ height: 1 }} />}
+          </div>}
+          {viewMode !== 'rounds' && hasMore && <div ref={sentinelRef} style={{ height: 1 }} />}
         </>
       )}
     </div>

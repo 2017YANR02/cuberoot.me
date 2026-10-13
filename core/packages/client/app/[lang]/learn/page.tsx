@@ -50,6 +50,10 @@ export default function LearningCenterPage() {
         <h1>{t('学习中心', 'Learning center')}</h1>
         <p className="teaching-lead">{t('查看与当前账号关联的学员档案。监护人只能看到明确向监护人发布的内容。', 'View learner profiles linked to this account. Guardians only see content explicitly published to guardians.')}</p>
       </header>
+      {contexts.some(context => context.relationships.some(relationship => relationship.kind === 'student')) && <section className="teaching-list">
+        <h2>{t('每日训练打卡', 'Daily training check-in')}</h2>
+        {contexts.filter(context => context.relationships.some(relationship => relationship.kind === 'student')).map(context => <AppLink className="teaching-row teaching-row-link" key={context.organization.slug} href={`/training/${context.organization.slug}`} prefetch={false}>{context.organization.name} · {t('进入班级训练与排名', 'Open class training and ranking')}</AppLink>)}
+      </section>}
       {loading ? <p aria-busy="true">{t('正在加载学习档案…', 'Loading learning profiles…')}</p> : error ? (
         <MutationMessage message={error} error />
       ) : contexts.length === 0 ? (

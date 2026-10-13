@@ -42,26 +42,10 @@ export async function reconF2lLinks(scramble: string, text: string): Promise<Map
   return (await reconF2lAnnotations(scramble, text)).links;
 }
 
-export async function reconF2lAnnotations(scramble: string, text: string): Promise<ReconF2lAnnotations> {
+export async function reconF2lAnnotations(scramble: string, text: string, onDiagrams?: (diagrams: ReconF2lAnnotations['diagrams']) => void): Promise<ReconF2lAnnotations> {
   const links = new Map<number, Map<string, string>>();
   const diagrams: ReconF2lAnnotations['diagrams'] = new Map();
   if (!scramble.trim()) return { links, diagrams };
-  const file = await loadAlg('3x3', 'f2l');
-  const slugs = buildCaseSlugMap(file.cases, 'f2l');
-  const hrefByState = new Map<string, Set<string>>();
-  for (const c of file.cases) {
-    const slug = c.id == null ? undefined : slugs.byId.get(c.id);
-    if (!slug || !c.setup) continue;
-    // Match the library's case setup, not algorithms that can solve multiple cases.
-    const reference = applyScramble(3, c.setup);
-    for (const auf of ['', 'U', 'U2', "U'"]) {
-      const key = f2lSlotFingerprint(rotate(reference, auf), 'FR');
-      if (!key) continue;
-      const hrefs = hrefByState.get(key) ?? new Set<string>();
-      hrefs.add(algCaseDetailHref('3x3', 'f2l', slug));
-      hrefByState.set(key, hrefs);
-    }
-  }
   let state = applyScramble(3, cleanForPlayer(scramble));
   let setup = cleanForPlayer(scramble);
   const explicitCross = crossColorFromReconText(text);
@@ -103,11 +87,48 @@ export async function reconF2lAnnotations(scramble: string, text: string): Promi
       if (crossLine) continue;
       if (!canonical || isSlotSolved(canonical, 'FR')) continue;
       const key = f2lSlotFingerprint(canonical, 'FR');
-      const hrefs = key ? hrefByState.get(key) : undefined;
-      if (hrefs?.size === 1) lineLinks.set(pair, [...hrefs][0]);
+      if (key) lineLinks.set(pair, key);
     }
     if (genericF2l && pairs.length === 1 && lineLinks.size === 1) lineLinks.set('F2L', [...lineLinks.values()][0]);
     if (lineLinks.size) links.set(lineIndex, lineLinks);
+    const rowDiagrams = diagrams.get(lineIndex);
+    if (rowDiagrams && rowDiagrams.length > 1) {
+      // All masks describe the same pre-line state and grip. Union their
+      // visible stickers so a multi-pair stage still has one thumbnail.
+      diagrams.set(lineIndex, [{
+        colors: rowDiagrams.map(item => item.colors).join('+'),
+        facelets: [...rowDiagrams[0].facelets].map((color, index) =>
+          rowDiagrams.find(item => item.facelets[index] !== 'd')?.facelets[index] ?? color,
+        ).join(''),
+      }]);
+    }
+  }
+  // Drawing uses only the recorded state. Publish it before any library I/O;
+  // the library is needed solely to turn fingerprints into case links.
+  onDiagrams?.(diagrams);
+  const file = await loadAlg('3x3', 'f2l');
+  const slugs = buildCaseSlugMap(file.cases, 'f2l');
+  const hrefByState = new Map<string, Set<string>>();
+  for (const c of file.cases) {
+    const slug = c.id == null ? undefined : slugs.byId.get(c.id);
+    if (!slug || !c.setup) continue;
+    // Match the library's case setup, not algorithms that can solve multiple cases.
+    const reference = applyScramble(3, c.setup);
+    for (const auf of ['', 'U', 'U2', "U'"]) {
+      const key = f2lSlotFingerprint(rotate(reference, auf), 'FR');
+      if (!key) continue;
+      const hrefs = hrefByState.get(key) ?? new Set<string>();
+      hrefs.add(algCaseDetailHref('3x3', 'f2l', slug));
+      hrefByState.set(key, hrefs);
+    }
+  }
+  for (const [line, pairs] of links) {
+    for (const [pair, key] of pairs) {
+      const hrefs = hrefByState.get(key);
+      if (hrefs?.size === 1) pairs.set(pair, [...hrefs][0]);
+      else pairs.delete(pair);
+    }
+    if (!pairs.size) links.delete(line);
   }
   return { links, diagrams };
 }

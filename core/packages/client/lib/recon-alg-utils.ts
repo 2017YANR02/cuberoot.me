@@ -3,6 +3,7 @@
  * extract alg from recon-prefixed text. Ported from packages/client-vite/src/utils/recon_alg_utils.ts.
  */
 import { etm } from '@cuberoot/shared/alg-notation';
+import { wastedDisplaySpans } from '@cuberoot/shared/timer/reconstruct/error-detect';
 import { parseSq1Tokens } from '@cuberoot/shared/sq1-notation';
 import { orientedFaceColors } from '@/lib/cube-orientation';
 import { CUBE_COLOR_LETTER_FOR_FACE } from '@/lib/cube-colors';
@@ -30,6 +31,21 @@ export function expandGroupRepeats(alg: string): string {
 
 export function cleanForPlayer(text: string): string {
   return cleanReconAlgForPlayer(text);
+}
+
+/** Row boundaries in the same expanded token coordinates as the NxN player.
+ * Inspection rotations belong to the first solve segment. */
+export function reconPlaybackSegments(text: string): number[] {
+  const ends: number[] = [];
+  let prefix = '';
+  for (const line of text.replace(/\r\n?/g, '\n').split('\n')) {
+    prefix += line + '\n';
+    const moves = cleanForPlayer(line).split(/\s+/).filter(Boolean);
+    if (!moves.some(move => !/^[xyz][2']*$/i.test(move))) continue;
+    const end = cleanForPlayer(prefix).split(/\s+/).filter(Boolean).length;
+    if (end > (ends.at(-1) ?? 0)) ends.push(end);
+  }
+  return ends;
 }
 
 export function cleanForAlgCubingNet(text: string): string {
@@ -118,6 +134,33 @@ export function findTokenPositions(text: string): TokenPosition[] {
     offset += line.length + 1;
   }
   return tokens;
+}
+
+/** Display decorations indexed into the unchanged source; never feed these to playback. */
+export function reconWasteBrackets(text: string, scramble: string): Map<number, string> {
+  const markers = new Map<number, string>();
+  const code = text.replace(/\/\/[^\n]*/g, comment => ' '.repeat(comment.length));
+  // Repeated groups/commutators do not have a one-to-one source-to-move mapping.
+  if (/[\[\]:,]/.test(code) || /\)\s*\d/.test(code)) return markers;
+  const tokens = findTokenPositions(text);
+  if (!tokens.length || /[^\s()]/.test(code.replace(TOKEN_RE, ''))) return markers;
+  const manual: Array<[number, number]> = [];
+  const stack: number[] = [];
+  for (let i = 0; i < code.length; i++) {
+    if (code[i] === '(') stack.push(i);
+    else if (code[i] === ')' && stack.length) manual.push([stack.pop()!, i]);
+  }
+  // Unfinished user annotations should not acquire a second set of brackets.
+  if (stack.length) return markers;
+  const moves = tokens.map((token, ts) => ({ m: token.text, ts }));
+  for (const span of wastedDisplaySpans(cleanForPlayer(scramble), moves)) {
+    const start = tokens[span.fromIdx].start;
+    const end = tokens[span.toIdx].end;
+    if (manual.some(([a, b]) => a < end && b >= start)) continue;
+    markers.set(start, (markers.get(start) ?? '') + '(');
+    markers.set(end, ')' + (markers.get(end) ?? ''));
+  }
+  return markers;
 }
 
 /** Every whitespace-delimited run, with its position in `text` — mirrors the

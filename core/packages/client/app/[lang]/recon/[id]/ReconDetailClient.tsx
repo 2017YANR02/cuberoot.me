@@ -420,6 +420,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
             </div>
             {solutionText && (
               <SolutionView
+                autoWaste
                 text={displayText}
                 event={solve.event}
                 scramble={scramble}
@@ -441,6 +442,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
         )}
 
         <SameScrambleNav key={`same-scramble-${solve.id}`} solve={solve} initial={initialSameScramble} />
+        {solve.comp && solve.round && solve.solveNum && <Link href={`/recon?view=rounds&roundId=${solve.id}`} prefetch={false}>{tr({ zh: '查看整轮打乱与复盘', en: 'View this round’s scrambles and reconstructions' })}</Link>}
 
         <StatsGrid solve={solve} />
 

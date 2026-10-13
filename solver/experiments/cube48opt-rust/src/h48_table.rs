@@ -463,6 +463,11 @@ struct ReadOnlyMapping {
     _file: File,
 }
 
+// SAFETY: PROT_READ mapping, no mutable view is exposed. Scoped workers only
+// borrow it; Drop cannot unmap until all borrows have ended. As for any mmap,
+// callers must keep the underlying immutable table file unchanged while open.
+unsafe impl Sync for ReadOnlyMapping {}
+
 #[cfg(all(
     any(target_os = "macos", target_os = "linux"),
     target_pointer_width = "64"

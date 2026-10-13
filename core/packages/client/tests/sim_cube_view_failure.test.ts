@@ -5,6 +5,8 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import SimCubeView from '@cuberoot/timer-ui/SimCubeView';
 import LiveCubeState from '@cuberoot/timer-ui/LiveCubeState';
+import { LiveSmartCubeAnchor } from '@cuberoot/shared/smart-cube/anchor';
+import { SOLVED_3X3 } from '@cuberoot/puzzle-solvers/timer-333-cube';
 
 const state = vi.hoisted(() => ({
   mount: vi.fn(),
@@ -28,12 +30,13 @@ beforeEach(() => {
     puzzleKind: 3,
     controller: { turnsLocked: false, dragEmpty: 'orbit', onOrbit: null, touch: vi.fn(() => true) },
     scene: { rotation: { x: 0.4, y: -0.6, z: 0, set(x: number, y: number, z: number) { Object.assign(this, { x, y, z }); } }, updateMatrix() {} },
-    cube: { quaternion: { set: state.setQuaternion }, updateMatrix() {}, twister: { push: state.push, setup: state.setup, backlog: 0 }, instancedRenderer: { setStickering() {} } },
+    cube: { quaternion: { set: state.setQuaternion }, updateMatrix() {}, twister: { push: state.push, setup: state.setup, backlog: 0, remainingTicks: 0, accelerateRealtime() {} }, instancedRenderer: { setStickering() {} } },
     } };
   });
   host = document.createElement('div'); document.body.append(host); root = createRoot(host);
 });
 afterEach(async () => {
+  vi.restoreAllMocks();
   await act(async () => root.unmount());
   host.remove(); vi.unstubAllGlobals();
 });
@@ -254,4 +257,29 @@ describe('the single live/replay 3D failure surface', () => {
     expect(state.mount).not.toHaveBeenCalled();
     expect(host.textContent).toBe('');
   });
+});
+
+
+it('consumes each physical command without a parent render, and does not replay it on the later commit', async () => {
+  const anchor = new LiveSmartCubeAnchor({ solve: async () => 'F', onChange() {} });
+  anchor.setConnection('test'); anchor.observeFacelets(SOLVED_3X3);
+  const draw = () => act(async () => root.render(createElement(LiveCubeState, {
+    mode: '3d', facelets: null, moves: anchor.getSnapshot().moves,
+    algAnchored: true, liveSource: anchor, displayOrientation: 'z2',
+  })));
+  await draw();
+  await vi.waitFor(() => expect(state.mount).toHaveBeenCalledOnce());
+  expect(state.mount.mock.calls[0][0].preserveDrawingBuffer).toBe(false);
+  let now = performance.now();
+  vi.spyOn(performance, 'now').mockImplementation(() => now);
+  state.push.mockClear(); state.setup.mockClear();
+  anchor.move('R', now); now += 50; anchor.move("R'", now); now += 50; anchor.move('U', now);
+  expect(state.push.mock.calls.map(call => call[0])).toEqual(['L', "L'", 'D']);
+  expect(state.push.mock.calls.map(call => call[4])).toEqual(['linear', 'linear', 'linear']);
+  expect(state.setup).not.toHaveBeenCalled();
+  await draw();
+  expect(state.push).toHaveBeenCalledTimes(3);
+  anchor.setConnection(null);
+  anchor.setConnection('reconnected'); anchor.observeFacelets(SOLVED_3X3);
+  expect(state.setup).toHaveBeenCalledTimes(1);
 });

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useT } from '@/hooks/useT';
 import { apiUrl } from '@/lib/api-base';
 import { authHeaders, handleApi } from '@/lib/admin-api';
+import { sessionFetch } from '@/lib/session-fetch';
 
 interface BootEvent {
   eventId: string;
@@ -27,7 +28,7 @@ export default function BootDiagnostics() {
     const controller = new AbortController();
     setLoading(true);
     setFailed(false);
-    void fetch(apiUrl('/v1/app/boot-diagnostics?limit=50&v=2'), {
+    void sessionFetch(apiUrl('/v1/app/boot-diagnostics?limit=50&v=2'), {
       headers: authHeaders(false), signal: controller.signal, cache: 'no-store',
     }).then(handleApi<{ events: BootEvent[] }>).then(result => {
       if (!controller.signal.aborted) setEvents(result.events);

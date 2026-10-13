@@ -18,10 +18,28 @@ import {
   MAX_LIVE_ANIMATION_BACKLOG,
   planLiveSimUpdate,
   planSimUpdate,
+  LiveTurnCadence,
+  liveSimNeedsCatchUp,
 } from '@/app/[lang]/timer/_lib/cube/sim_log';
 import { applyScramble, type CubeFaces } from '@/app/[lang]/timer/_lib/cube/state';
 
 const S = (turns: string, pose = '') => ({ turns, pose });
+
+it('adapts to timestamped high-speed turns without treating a BLE batch as zero-duration moves', () => {
+  const cadence = new LiveTurnCadence();
+  expect(cadence.durationMs(1000, 1000)).toBe(110);
+  expect(cadence.durationMs(1050, 1080)).toBe(40);
+  expect(cadence.durationMs(1050, 1080)).toBe(40);
+  expect(cadence.durationMs(1040, 1080)).toBe(40);
+  expect(cadence.durationMs(1060, 1080)).toBe(35);
+  expect(cadence.durationMs(5000, 5000)).toBe(110);
+  cadence.reset();
+  expect(cadence.durationMs(undefined, 5100)).toBe(110);
+  expect(cadence.durationMs(Number.NaN, 5150)).toBe(40);
+  expect(liveSimNeedsCatchUp(80, 1, 40)).toBe(false);
+  expect(liveSimNeedsCatchUp(110, 1, 40)).toBe(true);
+  expect(liveSimNeedsCatchUp(0, 4, 35)).toBe(false);
+});
 
 describe('appendedSlicePair:中层硬件编码对', () => {
   it.each([

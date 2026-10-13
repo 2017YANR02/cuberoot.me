@@ -52,7 +52,7 @@ import {
   type TrainingEvidenceV1,
   TrainingEvidenceValidationError,
 } from '@cuberoot/shared/teaching';
-import { query, sql } from '../db/connection.js';
+import { query, sql, transactionQuery } from '../db/connection.js';
 import {
   authenticateTeachingActor,
   InvalidTeachingPlatformAssertionError,
@@ -267,6 +267,7 @@ interface ConversationMessagePageInput {
 }
 
 export interface TeachingSaasRepository {
+  getTrainingDailyBoard(actor: TeachingActor, slug: string, assignmentId: string, date: string | null, learner: boolean, pagination: PageInput, requestId: string, rankEvent?: string | null): Promise<JsonObject>;
   listOrganizations(actor: TeachingActor): Promise<JsonObject[]>;
   getOrganization(actor: TeachingActor, slug: string, requestId: string): Promise<JsonObject>;
   getOrganizationSummary(actor: TeachingActor, slug: string, requestId: string): Promise<JsonObject>;
@@ -3716,6 +3717,110 @@ async function insertConversationAudit(
 }
 
 export const teachingSaasRepository: TeachingSaasRepository = {
+  async getTrainingDailyBoard(actor, slug, assignmentId, requestedDate, learner, pagination, requestId, rankEvent = null) {
+    return withDeniedAccessAudit(actor, slug, 'training.daily.read', requestId, async () => sql.begin(async tx => {
+      let organizationId: string;
+      let selfId: string | null = null;
+      let scopedIds: string[] | null = null;
+      if (learner) {
+        const student = await boundSelfStudentForUpdate(tx, actor.userId, slug);
+        organizationId = student.organizationId;
+        selfId = student.studentId;
+      } else {
+        const access = await accessForWrite(tx, actor.userId, slug);
+        requirePermission(access, 'training:assignment:read');
+        organizationId = access.id;
+        if (!hasOrganizationTrainingScope(access.role)) {
+          const scoped = await transactionQuery(tx)<{ id: string }>(`${ACTIVE_STUDENT_SCOPE_CTE} SELECT id FROM scoped_student_ids`, [organizationId, actor.userId, organizationId, organizationId]);
+          scopedIds = scoped.map(row => String(row.id));
+        }
+      }
+      const assignments = await tx`SELECT * FROM training_assignments WHERE organization_id = ${organizationId} AND id = ${assignmentId} AND schedule_kind = 'daily' AND status IN ('published', 'closed')`;
+      if (!assignments.length) throw new ConcealedTeachingPermissionDeniedException('Training assignment not found');
+      const assignment = assignments[0];
+      let groupId: string | null = null;
+      if (selfId) {
+        const targets = await tx`SELECT source_group_id FROM training_assignment_targets WHERE organization_id = ${organizationId} AND assignment_id = ${assignmentId} AND student_id = ${selfId} AND target_kind = 'student'`;
+        if (!targets.length) throw new ConcealedTeachingPermissionDeniedException('Training assignment not found');
+        groupId = targets[0].source_group_id ? String(targets[0].source_group_id) : null;
+        // Classmates remain visible only while the learner belongs to that active class.
+        if (groupId) {
+          const memberships = await tx`SELECT 1 FROM student_group_memberships m JOIN teaching_groups g ON g.organization_id = m.organization_id AND g.id = m.group_id AND g.status = 'active' WHERE m.organization_id = ${organizationId} AND m.group_id = ${groupId} AND m.student_id = ${selfId} AND m.effective_from <= clock_timestamp() AND (m.effective_to IS NULL OR m.effective_to > clock_timestamp())`;
+          if (!memberships.length) groupId = null;
+        }
+      }
+      const timezone = String(assignment.timezone_snapshot);
+      const dates = await tx`SELECT (clock_timestamp() AT TIME ZONE ${timezone})::date AS today`;
+      const today = String(dates[0].today).slice(0, 10);
+      const date = requestedDate ?? today;
+      const envelope = await trainingAssignmentEnvelope(tx, organizationId, assignmentId);
+      const rows = await tx`
+        WITH eligible AS (
+          SELECT target.student_id, target.student_display_name_snapshot AS name
+          FROM training_assignment_targets target
+          JOIN student_profiles student ON student.organization_id = target.organization_id AND student.id = target.student_id AND student.status = 'active'
+          WHERE target.organization_id = ${organizationId} AND target.assignment_id = ${assignmentId} AND target.target_kind = 'student'
+            AND (${scopedIds === null} OR target.student_id = ANY(${scopedIds ?? []}::uuid[]))
+            AND (${!learner} OR target.student_id = ${selfId}::uuid OR (
+              ${groupId}::uuid IS NOT NULL AND target.source_group_id = ${groupId}::uuid
+              AND EXISTS (SELECT 1 FROM student_group_memberships m WHERE m.organization_id = target.organization_id AND m.group_id = ${groupId}::uuid AND m.student_id = target.student_id AND m.effective_from <= clock_timestamp() AND (m.effective_to IS NULL OR m.effective_to > clock_timestamp()))
+            ))
+        ), evidence AS (
+          SELECT e.* FROM training_evidence_assignments link
+          JOIN training_evidence e ON e.organization_id = link.organization_id AND e.id = link.evidence_id AND e.student_id = link.student_id
+          JOIN eligible ON eligible.student_id = e.student_id
+          WHERE link.organization_id = ${organizationId} AND link.assignment_id = ${assignmentId}
+            AND e.occurred_at >= (${date}::date::timestamp AT TIME ZONE ${timezone})
+            AND e.occurred_at < ((${date}::date + 1)::timestamp AT TIME ZONE ${timezone})
+        ), totals AS (
+          SELECT eligible.student_id, eligible.name, COUNT(e.id)::int AS count,
+            COALESCE(SUM(e.duration_ms), 0)::bigint AS duration_ms,
+            COUNT(e.id) FILTER (WHERE e.success)::int AS successes,
+            MIN(e.result_ms) FILTER (WHERE e.success AND e.result_ms > 0) AS best_ms,
+            MIN(e.result_ms) FILTER (WHERE e.success AND e.result_ms > 0 AND e.source = 'timer' AND e.payload->>'event' = ${rankEvent}) AS rank_ms
+          FROM eligible LEFT JOIN evidence e ON e.student_id = eligible.student_id
+          GROUP BY eligible.student_id, eligible.name
+        ), evaluated AS (
+          SELECT totals.*, count >= ${Number(assignment.expected_count)} AND NOT EXISTS (
+            SELECT 1 FROM training_assignment_goal_metrics goal
+            WHERE goal.organization_id = ${organizationId} AND goal.assignment_id = ${assignmentId}
+              AND NOT COALESCE(CASE goal.metric_key
+                WHEN 'evidence_count' THEN totals.count >= goal.target_value
+                WHEN 'duration_ms' THEN totals.duration_ms >= goal.target_value
+                WHEN 'success_count' THEN totals.successes >= goal.target_value
+                WHEN 'best_result_ms' THEN totals.best_ms <= goal.target_value
+                ELSE false END, false)
+          ) AS completed FROM totals
+        ), ranked AS (
+          SELECT evaluated.*, RANK() OVER (ORDER BY CASE WHEN ${rankEvent}::text IS NULL THEN count END DESC, rank_ms ASC NULLS LAST)::int AS rank FROM evaluated
+        ), page_rows AS (
+        SELECT ranked.*,
+          COALESCE((SELECT jsonb_agg(summary ORDER BY summary.event) FROM (
+            SELECT COALESCE(NULLIF(e.payload->>'event', ''), 'unknown') AS event,
+              MIN(e.result_ms) FILTER (WHERE e.success AND e.result_ms > 0) AS best_ms,
+              ROUND(AVG(e.result_ms) FILTER (WHERE e.success AND e.result_ms > 0)) AS mean_ms
+            FROM evidence e WHERE e.student_id = ranked.student_id AND e.source = 'timer'
+            GROUP BY e.payload->>'event'
+          ) summary), '[]'::jsonb) AS results
+        FROM ranked ORDER BY rank, name, student_id
+        LIMIT ${pagination.pageSize} OFFSET ${pagination.offset}
+        ) SELECT page_rows.*, stats.total, stats.completed_total, stats.events
+          FROM (SELECT COUNT(*)::int AS total, COUNT(*) FILTER (WHERE completed)::int AS completed_total,
+            COALESCE((SELECT jsonb_agg(DISTINCT e.payload->>'event') FROM evidence e WHERE e.source = 'timer' AND e.success AND e.result_ms > 0 AND NULLIF(e.payload->>'event', '') IS NOT NULL), '[]'::jsonb) AS events FROM ranked) stats
+          LEFT JOIN page_rows ON true ORDER BY page_rows.rank, page_rows.name, page_rows.student_id`;
+      if (!learner && scopedIds !== null && !rows.some(row => row.student_id)) {
+        // Do not disclose another teacher's assignment metadata through an empty board.
+        const visible = await tx`SELECT 1 FROM training_assignment_targets WHERE organization_id = ${organizationId} AND assignment_id = ${assignmentId} AND student_id = ANY(${scopedIds}::uuid[]) LIMIT 1`;
+        if (!visible.length) throw new ConcealedTeachingPermissionDeniedException('Training assignment not found');
+      }
+      return {
+        ...envelope, date, today, timezone, selfId, rankEvent, events: (rows[0]?.events ?? []) as JsonValue,
+        total: Number(rows[0]?.total ?? 0), completedTotal: Number(rows[0]?.completed_total ?? 0),
+        page: pagination.page, pageSize: pagination.pageSize,
+        rows: rows.filter(row => row.student_id).map(row => ({ studentId: String(row.student_id), name: String(row.name), rank: (rankEvent ? row.rank_ms != null : Number(row.count) > 0) ? Number(row.rank) : null, count: Number(row.count), durationMs: Number(row.duration_ms), successes: Number(row.successes), completed: Boolean(row.completed), results: row.results as JsonValue })),
+      } as JsonObject;
+    }));
+  },
   async listOrganizations(actor) {
     const rows = await query<Record<string, unknown>>(
       `SELECT o.id, o.slug, o.name, o.timezone, o.status, o.version, m.role
@@ -10441,6 +10546,26 @@ export function createTeachingSaasRoutes(deps: {
       return errorResponse(c, error, requestId);
     }
   });
+
+  const dailyBoardHandler = (learner: boolean) => async (c: Context) => {
+      const requestId = requestIdOf(c);
+      c.header('Cache-Control', 'no-store');
+      try {
+        const actor = await authenticate(c);
+        const date = c.req.query('date') || null;
+        const rankEvent = c.req.query('rankEvent') || null;
+        if (rankEvent && !/^[a-zA-Z0-9_-]{1,64}$/.test(rankEvent)) throw new TeachingApiException('INVALID_INPUT', 400, 'Invalid ranking event');
+        if (date && (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date.startsWith('0000-') || !Number.isFinite(Date.parse(`${date}T00:00:00Z`)) || new Date(`${date}T00:00:00Z`).toISOString().slice(0, 10) !== date)) {
+          throw new TeachingApiException('INVALID_INPUT', 400, 'Invalid calendar date');
+        }
+        const slug = c.req.param('orgSlug');
+        const assignmentId = c.req.param('assignmentId');
+        if (!slug || !assignmentId) throw new TeachingApiException('INVALID_INPUT', 400, 'Missing training assignment');
+        return c.json(await repository.getTrainingDailyBoard(actor, slug, uuidParam(assignmentId, 'assignmentId'), date, learner, trainingPaginationOf(c, ['date', 'rankEvent']), requestId, rankEvent));
+      } catch (error) { return errorResponse(c, error, requestId); }
+  };
+  routes.get('/teaching/organizations/:orgSlug/training/assignments/:assignmentId/daily', dailyBoardHandler(false));
+  routes.get('/teaching/organizations/:orgSlug/me/training/assignments/:assignmentId/daily', dailyBoardHandler(true));
 
   routes.post('/teaching/organizations/:orgSlug/me/training/evidence', async (c) => {
     const requestId = requestIdOf(c);

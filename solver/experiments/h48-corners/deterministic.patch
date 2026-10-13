@@ -1,0 +1,29 @@
+diff --git a/src/solvers/h48/solve.h b/src/solvers/h48/solve.h
+--- a/src/solvers/h48/solve.h
++++ b/src/solvers/h48/solve.h
+@@ -484,5 +484,7 @@
+ 	if (mtarg->nmoves == H48_STARTING_MOVES) {
+ 		tasks[*ntasks].cube = mtarg->cube;
++		/* A task skipped before DFS must still have a defined rank. */
++		tasks[*ntasks].rank = 0;
+ 		tasks[*ntasks].pval =
+ 		    h48_prune_lookup_nocoord(mtarg->cube, solve_arg);
+ 		memcpy(tasks[*ntasks].moves, mtarg->moves,
+@@ -545,11 +547,14 @@
+ STATIC int
+ solve_h48_compare_tasks(const void *x, const void *y)
+ {
+-	int64_t nodes_x = ((solve_h48_task_t *)x)->rank;
+-	int64_t nodes_y = ((solve_h48_task_t *)y)->rank;
++	const solve_h48_task_t *task_x = x, *task_y = y;
++	int64_t nodes_x = task_x->rank, nodes_y = task_y->rank;
+ 
+ 	/* Same as returning nodes_y - nodes_x, but avoids overflow */
+-	return (nodes_x < nodes_y) - (nodes_x > nodes_y);
++	int rank_order = (nodes_x < nodes_y) - (nodes_x > nodes_y);
++	/* Prefixes are unique; make equal ranks independent of qsort ties. */
++	return rank_order != 0 ? rank_order :
++	    memcmp(task_x->moves, task_y->moves, H48_STARTING_MOVES);
+ }
+ 
+ STATIC int64_t

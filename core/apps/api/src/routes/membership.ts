@@ -40,6 +40,7 @@ import { ADMIN_WCA_IDS, isAdminWcaId } from '@cuberoot/shared/admin';
 import * as alipay from '../payment/alipay.js';
 import * as wechat from '../payment/wechat.js';
 import * as airwallex from '../payment/airwallex.js';
+import { renewalServerReadiness } from '../payment/wechat-renewal-readiness.js';
 
 export const membershipRoutes = new Hono();
 
@@ -236,7 +237,13 @@ membershipRoutes.get('/membership/plans', async (c) => {
     `SELECT slug, name_zh, name_en, period, period_count, price_cents, currency, perks, active, sort
        FROM membership_plans WHERE active = TRUE ORDER BY sort, price_cents`,
   );
-  return c.json({ plans: rows.map(planToJson), payEnabled: paymentConfigured(), channels: channelAvailability() });
+  // Display the two renewal prices without activating either plan for checkout.
+  const renewalRows = await query<PlanRow>(
+    `SELECT slug, name_zh, name_en, period, period_count, price_cents, currency, perks, active, sort
+       FROM membership_plans WHERE slug IN ('monthly_auto_renew', 'yearly_auto_renew') ORDER BY sort, price_cents`,
+  );
+  return c.json({ plans: rows.map(planToJson), renewalPlans: renewalRows.map(planToJson),
+    payEnabled: paymentConfigured(), channels: channelAvailability() });
 });
 
 // ─────────────────────────── 公开:首页会员名单 ───────────────────────────
@@ -761,6 +768,13 @@ async function settlePaidOrder(provider: MembershipProvider, raw: unknown, merch
 }
 
 // ─────────────────────────── admin ───────────────────────────
+membershipRoutes.get('/membership/admin/renewal-readiness', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  await requireAdmin(c);
+  checkRateLimit(getIp(c), { bucket: 'membership-renewal-readiness', max: 20 });
+  return c.json(renewalServerReadiness(process.env));
+});
+
 // 手动开通/续期(给已打赏用户或未配置商户时用)。
 membershipRoutes.post('/membership/admin/grant', async (c) => {
   c.header('Cache-Control', 'no-store');

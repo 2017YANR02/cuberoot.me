@@ -28,7 +28,7 @@
 
 import { type ReactNode, type RefObject } from 'react';
 import { getPuzzleId } from '@/lib/recon-utils';
-import { cleanForPlayer } from '@/lib/recon-alg-utils';
+import { cleanForPlayer, reconPlaybackSegments } from '@/lib/recon-alg-utils';
 import { cleanFtoReconAlgForPlayer, cleanReconAlgText } from '@cuberoot/shared/recon-completion';
 import { parseSkewbMoves } from '@/app/[lang]/sim/engine/skewb/skewbState';
 import { parseGearMoves } from '@/app/[lang]/sim/engine/gear/gearState';
@@ -97,6 +97,7 @@ export default function ReconEnginePlayer({
   if (NXN_RE.test(puzzleId) || puzzleId === 'mirror' || puzzleId === 'mirror2') {
     return (
       <CuberReconPlayer showPlaybackOptions
+        segmentEnds={reconPlaybackSegments(solution)}
         scramble={scramble}
         alg={cleanForPlayer(solution)}
         anchorAtEnd={anchorAtEnd}
