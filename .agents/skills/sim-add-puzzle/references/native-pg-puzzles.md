@@ -195,3 +195,5 @@
 - 生成 40 步练习打乱并交替面转／棱转，不声称 WCA 或均匀随机状态；复用原生 provider、完整六面 SVG、记号与手动历史，使用 `cube2heli` 保存计时记录，csTimer 导出用 `input` 并保留 `cuberootEvent`。
 - 运行 `node core/packages/client/scripts/native-puzzles/compare-outlines.mjs --set=cube2heli` 重现平面对照；生成结构图标后运行共享图标映射生成器，不为重合切缝编造额外线条。
 - 扩展现有独立半空间、交错转动与 PG3D 中间帧用例，并遍历手动选择、拖转层、二维回退、分享锚点、Timer 外层预览与双进口 round-trip；独立模型和 jsdom 中间帧均不等于浏览器 3D 拖拽实测。
+
+- 新增 Timer 项目还会改变完整项目分区、选择器图标／文字徽标数量与三来源矩阵；同步检查 `timer_event_catalog.test.ts`、`timer-puzzle-picker.test.ts`、`timer-drill-contract-shared.test.ts`、app-ui 的 `scramble-source-matrix.audit.test.ts`，并在 `timer-sync-seed.test.ts` 验证普通／种子打乱共用原生生成器。保留完整名单与数量断言，不以删除断言消除目录漂移。
