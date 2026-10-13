@@ -44,18 +44,23 @@ async function check(name: string, browser: Browser, action: (page: Page) => Pro
 const net = (page: Page) => page.locator('svg[aria-label="fto6"]').filter({ visible: true }).first();
 async function colors(page: Page): Promise<string[]> {
   if (await page.locator('.twisty-section--2d').count()) {
-    const facelets = page.locator('.twisty-section--2d svg').locator('polygon, path');
-    await expect.poll(() => facelets.count()).toBeGreaterThanOrEqual(288);
-    return facelets.evaluateAll(nodes => nodes.map(node => getComputedStyle(node).fill));
+    // cubing.js owns a closed shadow root here. Compare the rendered net,
+    // not private renderer state; the shared SVG contract separately locks 288 facelets.
+    const image = await page.locator('.twisty-container').screenshot({ animations: 'disabled' });
+    return [image.toString('base64')];
   }
   await expect(net(page).locator('polygon[data-piece]')).toHaveCount(288);
   return net(page).locator('polygon[data-piece]').evaluateAll(nodes => nodes.map(node => node.getAttribute('fill') ?? ''));
 }
 async function selectGenerator(page: Page): Promise<void> {
   await page.locator('.gen-config-toolbar .pp-trigger:visible').click();
-  const selected = page.getByRole('menuitemcheckbox', { checked: true });
-  while (await selected.count()) await selected.first().click();
-  await page.getByRole('menuitemcheckbox', { name: /六阶 FTO/ }).click();
+  const fto = page.getByRole('menuitemcheckbox', { name: /六阶 FTO/ });
+  await fto.waitFor();
+  if (await fto.getAttribute('aria-checked') !== 'true') await fto.click();
+  // Never briefly leave the auto-generating batch/competition menu empty:
+  // it reinstates the default 333 event and remounts/closes its picker.
+  const others = page.getByRole('menuitemcheckbox', { checked: true }).filter({ hasNotText: '六阶 FTO' });
+  while (await others.count()) await others.first().click();
   await page.keyboard.press('Escape');
 }
 const sequence = "F 2U 3BR 1-2L 1-3D'";
@@ -106,6 +111,7 @@ try {
   await check('fallback-playback-share-scramble', fallback, async page => {
     await go(page, '/zh/sim?puzzle=fto6');
     await page.locator('.twisty-section--2d').waitFor();
+    await page.waitForTimeout(1000);
     const solved = await colors(page);
     const alg = page.getByPlaceholder('解法', { exact: true });
     await page.getByLabel('转动记号', { exact: true }).selectOption('3F');
@@ -184,9 +190,9 @@ try {
       const rows = page.locator('.gen-tn-attempt-scramble:visible');
       await expect(rows).toHaveCount(expectedCount);
       if (mode !== 'paste') for (const row of await rows.all()) expect((await row.innerText()).trim().split(/\s+/)).toHaveLength(72);
-      else expect(await rows.first().innerText()).toBe(sequence);
+      else expect((await rows.first().innerText()).trim().split(/\s+/).join(' ')).toBe(sequence);
       const download = page.waitForEvent('download', { timeout: 120_000 });
-      await page.getByTitle('下载 PDF', { exact: true }).filter({ visible: true }).click();
+      await page.getByTitle(/^下载 PDF/).filter({ visible: true }).click();
       const pdf = await download;
       const target = resolve(out, `fto6-${mode}.pdf`);
       await pdf.saveAs(target);

@@ -45,7 +45,7 @@ function currentMobileOutcome(event: EventId, source: Source): RouteOutcome {
     : 'provider-missing';
 }
 
-describe('adversarial 76 × 3 Mobile scramble-source matrix', () => {
+describe('adversarial 77 × 3 Mobile scramble-source matrix', () => {
   it('enumerates every event/source cell exactly once', () => {
     const matrix = EVENTS.flatMap(({ id }) => (
       (['real', 'random', 'manual'] as const).map((source) => ({
@@ -55,12 +55,12 @@ describe('adversarial 76 × 3 Mobile scramble-source matrix', () => {
       }))
     ));
 
-    expect(EVENTS).toHaveLength(76);
-    expect(matrix).toHaveLength(228);
-    expect(new Set(matrix.map(({ event, source }) => `${event}:${source}`))).toHaveLength(228);
+    expect(EVENTS).toHaveLength(77);
+    expect(matrix).toHaveLength(231);
+    expect(new Set(matrix.map(({ event, source }) => `${event}:${source}`))).toHaveLength(231);
   });
 
-  it('keeps the real route at 19 isolated WCA pools, 56 same-event fallbacks, and custom manual-only', () => {
+  it('keeps the real route at 19 isolated WCA pools, 57 same-event fallbacks, and custom manual-only', () => {
     const mapped = EVENTS.filter(({ id }) => currentMobileOutcome(id, 'real') === 'real-pool')
       .map(({ id }) => id);
     const local = EVENTS.filter(({ id }) => currentMobileOutcome(id, 'real') === 'same-event-local')
@@ -86,7 +86,7 @@ describe('adversarial 76 × 3 Mobile scramble-source matrix', () => {
       ...CURRENT_MISSING_LOCAL_PROVIDERS,
       'custom',
     ].sort());
-    expect(local).toHaveLength(56);
+    expect(local).toHaveLength(57);
     expect(missing).toHaveLength(1);
   });
 
@@ -98,7 +98,7 @@ describe('adversarial 76 × 3 Mobile scramble-source matrix', () => {
 
     expect(local.sort()).toEqual([...CURRENT_LOCAL_PROVIDERS].sort());
     expect(missing.sort()).toEqual([...CURRENT_MISSING_LOCAL_PROVIDERS, 'custom'].sort());
-    expect(local).toHaveLength(75);
+    expect(local).toHaveLength(76);
     expect(missing).toHaveLength(1);
   });
 
@@ -137,9 +137,9 @@ describe('adversarial 76 × 3 Mobile scramble-source matrix', () => {
     }
   });
 
-  it('routes manual through one queue for all 76 events, including custom and empty input', () => {
+  it('routes manual through one queue for all 77 events, including custom and empty input', () => {
     const outcomes = EVENTS.map(({ id }) => currentMobileOutcome(id, 'manual'));
-    expect(outcomes).toHaveLength(76);
+    expect(outcomes).toHaveLength(77);
     expect(new Set(outcomes)).toEqual(new Set<RouteOutcome>(['manual-queue']));
   });
 
