@@ -31,7 +31,7 @@
 .admin-dashboard__toolbar > div { flex: 1 1 360px; }
 .admin-dashboard__toolbar p { margin: 0; }
 .admin-dashboard label { font-size: .85rem; color: var(--muted-foreground); }
-.admin-dashboard select { width: fit-content; max-width: 100%; padding: 7px 10px; border: 1px solid var(--border-default); border-radius: 8px; background: var(--background); color: var(--foreground); font: inherit; }
+.admin-dashboard-select { width: fit-content; max-width: 100%; padding: 7px 10px; border: 1px solid var(--border-default); border-radius: 8px; background: var(--background); color: var(--foreground); font: inherit; }
 .admin-dashboard .admin-boot__refresh { display: inline-flex; align-items: center; gap: 8px; }
 .admin-dashboard__metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 20px; }
 .admin-dashboard__metrics > * { display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 20px; border: 1px solid var(--border-default); border-radius: 14px; color: var(--foreground); text-decoration: none; }

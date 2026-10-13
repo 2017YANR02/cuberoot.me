@@ -32,7 +32,7 @@ describe('live training gyro agrees with the renderer', () => {
         sim.mount.mockImplementation(() => ({ dispose() {}, invalidate() {}, world: {
           controller: { touch() {} }, scene: { rotation: { set() {} }, updateMatrix() {} },
           cube: { quaternion: { set: sim.setQuaternion }, updateMatrix() {},
-            twister: { setup() {}, push() {}, backlog: 0 }, instancedRenderer: { setStickering() {} } },
+            twister: { setup() {}, push() {}, backlog: 0, remainingTicks: 0, accelerateRealtime() {} }, instancedRenderer: { setStickering() {} } },
         } }));
         const mount = SENSOR_BASES.rotX90;
         const quatRef = { current: { w: 1, x: 0, y: 0, z: 0 } };
