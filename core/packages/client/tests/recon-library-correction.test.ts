@@ -3,7 +3,7 @@ import { correctLibraryLine, correctReconFromLibrary } from '@cuberoot/shared/ti
 import { formattedReconMoves, type ReconTextLine, type ReconTextResult } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import { getCube3 } from '@cuberoot/shared/recon/cube3';
 import type { AlgFile } from '@cuberoot/shared/alg';
-import { reconstructedTrack } from '../../timer-ui/src/reconstruct/playback-track';
+import { reconstructedTrack } from '@cuberoot/timer-ui/reconstruct/playback-track';
 import { conjugateSequence, facePermFor } from '@cuberoot/shared/timer/reconstruct/gyro-orient';
 
 const observed = "F R U' R' U' R U l' U' R B R' B' x' R' F R F'";
