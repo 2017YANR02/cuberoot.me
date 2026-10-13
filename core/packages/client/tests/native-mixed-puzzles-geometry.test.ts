@@ -26,6 +26,8 @@ import { nativePuzzleKPuzzle, parseNativePuzzleAlg } from '@cuberoot/puzzle-solv
 // Circo-Radiolarian: https://www.puzzleforge.com/wp/2010/01/11/radiolarian-2-12010/
 // Its radio02 cut, 1 - (1 - 1/phi)*2/3 = sqrt(5)/3:
 // https://github.com/HactarCE/Hyperspeedcube/blob/main/lua/puzzles/ft_icosahedra.lua
+// Radio Jewel's radio07 cut is 5 - 2 sqrt(5); original shape and mechanism:
+// https://www.puzzleforge.com/wp/2012/11/06/radiolarian-7-radio-jewel-112012/
 // Baby Face preset: https://github.com/cubing/cubing.js/issues/127
 // 3x3 + Skewb is the independent superposition of the standard 3x3 and Skewb
 // cut families, not a measured reproduction of an inaccessible original post.
@@ -159,6 +161,13 @@ const CASES: readonly Spec[] = [
     faces: 20, perFace: 1, raw: 60, visible: 20, pieces: 20,
     shapes: { 3: 1 }, unmarkedOrbit: 'CENTERS', orbits: [['CENTERS', 20, 3]],
   },
+  {
+    id: 'radiojewel', faceNormals: icoNormals,
+    axes: [{ pairs: icoFacePairs, normals: icoNormals, cuts: [5 - 2 * Math.sqrt(5)], order: 3 }],
+    faces: 20, perFace: 16, raw: 360, visible: 320, pieces: 242,
+    shapes: { 3: 15, 6: 1 }, unmarkedOrbit: 'CENTERS4',
+    orbits: [['CENTERS', 60, 1], ['C5RNER', 12, 5], ['CENTERS2', 60, 1], ['EDGES', 30, 2], ['CENTERS3', 60, 1], ['CENTERS4', 20, 3]],
+  },
 ];
 
 const center = (points: Vector3[]) => points.reduce((sum, point) => sum.add(point), new Vector3()).divideScalar(points.length);
@@ -243,6 +252,31 @@ function manualChoices(spec: Spec) {
     ];
   }));
 }
+
+it('keeps Radio Jewel at the exact cut where the neighboring designs lose their extra face regions', () => {
+  const spec = CASES.find(({ id }) => id === 'radiojewel')!;
+  const depth = 5 - 2 * Math.sqrt(5);
+  expect(Number(NATIVE_PUZZLES.radiojewel.description.split(' ')[2])).toBeCloseTo(depth, 14);
+  // The intended critical-depth model is not interchangeable with a nearby
+  // decimal approximation. Reconstruct both negative controls without PG.
+  for (const delta of [-0.0001, 0.0001]) {
+    const nearby: Spec = { ...spec, axes: [{ ...spec.axes[0], cuts: [depth + delta] }] };
+    for (const normal of Object.values(icoNormals)) {
+      expect(expectedFace(nearby, normal).length).toBe(22);
+      expect(expectedFace(spec, normal).length).toBe(16);
+    }
+  }
+  const puzzle = nativePuzzleKPuzzle(spec.id);
+  for (const family of Object.keys(icoNormals)) {
+    const move = puzzle.moveToTransformation(family).transformationData;
+    // Three neighboring face centers are inside this cap and travel around
+    // its face axis; the turning face's own monochrome center only spins.
+    const adjacentCenters = Object.entries(icoNormals).filter(([other, normal]) =>
+      other !== family && normal.dot(icoNormals[family]) > depth);
+    expect(adjacentCenters).toHaveLength(3);
+    expect(move.CENTERS4.permutation.filter((piece, slot) => piece !== slot)).toHaveLength(adjacentCenters.length);
+  }
+});
 
 describe.each(CASES)('$id independent physical model', (spec) => {
   it('matches every physical face polygon, visible piece and independent outward axis', () => {
@@ -508,7 +542,7 @@ afterEach(async () => {
   }
 });
 
-it.each(['heliskewb', 'cube3heli'] as const)('animates %s mixed-axis moves in both directions with the real PG3D middle matrix and selected pieces', async (id) => {
+it.each(['heliskewb', 'cube3heli', 'radiojewel'] as const)('animates %s moves in both directions with the real PG3D middle matrix and selected pieces', async (id) => {
   // This is a local renderer fixture, not browser interaction evidence. The
   // real TwistyPlayer creates its real PG3D; only DOM camera attachment and
   // scheduling are suppressed because jsdom has no display or GPU.

@@ -46,6 +46,7 @@ describe('simulator puzzle families', () => {
       ['comboctahedron', 'octahedron'],
       ['circoradiolarian', 'icosahedron'],
       ['icosababyface', 'icosahedron'],
+      ['radiojewel', 'icosahedron'],
       ['cube3heli', 'hybrid-cuts'],
     ]) {
       const containing = groups.filter(group => group.options.some(option => option.value === puzzle));
