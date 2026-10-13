@@ -5,12 +5,12 @@
  */
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { chromium, expect, type BrowserContext, type Page } from '@playwright/test';
+import { chromium, expect as baseExpect, type BrowserContext, type Page } from '@playwright/test';
 
 const base = process.env.BASE_URL ?? 'http://127.0.0.1:3000';
 const out = resolve(import.meta.dirname, '../../../.tmp/radio-web-evidence');
 mkdirSync(out, { recursive: true });
-expect.configure({ timeout: 30_000 });
+const expect = baseExpect.configure({ timeout: 30_000 });
 const checks: { name: string; status: 'passed' | 'failed' | 'skipped'; detail?: unknown }[] = [];
 const errors: { url: string; error: string }[] = [];
 const pause = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
@@ -22,7 +22,7 @@ for (let attempt = 0; ; attempt++) {
 const browser = await chromium.launch({ headless: true, args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 const contexts: BrowserContext[] = [];
 async function context(noWebGL = false) {
-  const ctx = await browser.newContext({ viewport: { width: 1440, height: 1100 }, permissions: ['clipboard-read', 'clipboard-write'], acceptDownloads: true });
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 1100 }, locale: 'en-US', permissions: ['clipboard-read', 'clipboard-write'], acceptDownloads: true });
   contexts.push(ctx);
   if (noWebGL) await ctx.addInitScript(() => {
     const original = HTMLCanvasElement.prototype.getContext;
@@ -85,10 +85,13 @@ await check('sim-3d-drag', sim, async () => {
     checks.push({ name: 'actual-3d-piece-drag', status: 'skipped', detail: 'WebGL unavailable: only the 2D fallback was exercised.' });
     return info;
   }
-  const canvas = sim.locator('twisty-player canvas').first();
+  // cubing.js renders inside closed shadow roots. The public host bounds enclose
+  // the visible canvas; pointer events below hit the actual rendered stickers.
+  const canvas = sim.locator('twisty-player').first();
   await expect(canvas).toBeVisible();
   const box = await canvas.boundingBox();
   if (!box) throw new Error('Missing rendered canvas bounds');
+  await canvas.screenshot({ path: resolve(out, 'sim-3d-solved.png') });
   const recorded: string[] = [];
   for (const depth of ['outer', 'inner', 'wide']) {
     await sim.getByRole('combobox', { name: '拖转层' }).selectOption(depth);
@@ -110,6 +113,7 @@ await check('sim-3d-drag', sim, async () => {
     if (depth === 'wide') expect(token).toMatch(/w/);
     if (depth === 'outer') expect(token).toMatch(/^[A-T](?:2|'|2')?$/);
     await expect.poll(() => pattern(sim)).not.toBe(previousPattern);
+    await canvas.screenshot({ path: resolve(out, `sim-3d-${depth}.png`) });
     recorded.push(token);
   }
   return { ...info, recorded, verified: 'Actual pointer events on the rendered 3D canvas; turn history and native pattern changed for outer, inner and wide layers.' };
@@ -120,7 +124,10 @@ const page = await flat.newPage();
 await check('sim-2d-playback-history-share', page, async () => {
   await open(page, '/zh/sim?puzzle=radioweb&anchor=start');
   await expect(page.locator('.twisty-section--2d')).toBeVisible();
-  await expect(page.locator('twisty-player svg').first()).toBeVisible();
+  // Closed shadow content is verified through actual screenshots and the public
+  // TwistyPlayer pattern API, not by piercing private renderer handles.
+  await expect(page.locator('twisty-player')).toBeVisible();
+  await page.locator('twisty-player').screenshot({ path: resolve(out, 'sim-2d-solved.png') });
   await expect(page.getByRole('combobox', { name: '转动记号' }).locator('option')).toHaveCount(60);
   await page.getByRole('button', { name: '随机打乱', exact: true }).click();
   await expect.poll(() => setup(page).inputValue()).not.toBe('');
@@ -155,7 +162,10 @@ await check('sim-2d-playback-history-share', page, async () => {
   await reload.close();
   return { copied, view: 'forced no-WebGL native SVG', manual: "2R'", randomMoves: 60 };
 });
-await check('sim-english-mobile', page, async () => {
+// A fresh context prevents the prior Chinese locale cookie redirecting /sim.
+const englishPage = await (await context(true)).newPage();
+await check('sim-english-mobile', englishPage, async () => {
+  const page = englishPage;
   await page.setViewportSize({ width: 390, height: 844 });
   await open(page, '/sim?puzzle=radioweb&anchor=start&alg=R');
   await expect(page.getByRole('combobox', { name: 'Move notation' })).toBeVisible();
@@ -167,15 +177,27 @@ await check('sim-english-mobile', page, async () => {
 });
 await page.setViewportSize({ width: 1440, height: 1100 });
 async function chooseWeb(p: Page) {
-  await p.locator('.gen-config-toolbar .pp-trigger').first().click();
-  const menu = p.locator('.pp-popup').filter({ visible: true }).first();
-  const active = menu.locator('.pp-item--active');
-  for (let count = await active.count(); count > 0; count--) await active.first().click();
-  await menu.locator('.pp-item').filter({ has: p.locator('.pp-item-label', { hasText: /^Radio Web$/ }) }).click();
+  // All three mode panels remain mounted. Only interact with the visible one.
+  const trigger = p.locator('.gen-config-toolbar .pp-trigger:visible').first();
+  const menu = p.locator('.pp-popup:visible').first();
+  async function openMenu() {
+    if (!await menu.count()) await trigger.click();
+    await expect(menu).toBeVisible();
+  }
+  await openMenu();
+  const web = menu.locator('.pp-item').filter({ has: p.locator('.pp-item-label', { hasText: /^Radio Web$/ }) });
+  if (await web.getAttribute('aria-checked') !== 'true') await web.click();
+  await openMenu();
+  const otherActive = menu.locator('.pp-item--active').filter({ hasNot: p.locator('.pp-item-label', { hasText: /^Radio Web$/ }) });
+  for (let count = await otherActive.count(); count > 0; count--) {
+    await otherActive.first().click();
+    await openMenu();
+  }
+  await expect(web).toHaveAttribute('aria-checked', 'true');
   await p.keyboard.press('Escape');
 }
 async function preview(p: Page) {
-  const svg = p.locator('.gen-tn-attempt-preview svg[aria-label="radioweb"]').first();
+  const svg = p.locator('.gen-tn-attempt-preview svg[aria-label="radioweb"]:visible').first();
   await expect(svg).toBeVisible();
   await expect(svg.locator('polygon')).toHaveCount(440);
   return svg;
@@ -184,19 +206,20 @@ for (const mode of ['batch', 'paste', 'comp']) {
   await check(`scramble-${mode}`, page, async () => {
     await open(page, `/zh/scramble/gen?mode=${mode}`);
     await chooseWeb(page);
-    if (mode === 'paste') await page.locator('.gen-tn-paste-area').fill("1. R U F\n2. 2R' Lw G");
+    if (mode === 'paste') await page.locator('.gen-tn-paste-area:visible').fill("1. R U F\n2. 2R' Lw G");
     if (mode === 'batch') {
-      await page.getByRole('spinbutton', { name: '每项打乱数' }).fill('2');
-      await page.getByRole('spinbutton', { name: '每项打乱数' }).press('Tab');
+      await page.locator('input[aria-label="每项打乱数"]:visible').fill('2');
+      await page.locator('input[aria-label="每项打乱数"]:visible').press('Tab');
     }
     if (mode === 'comp') await page.locator('button[title="生成打乱"]').click();
     await preview(page);
-    const texts = await page.locator('.gen-tn-attempt-scramble').allTextContents();
+    if (mode !== 'comp') await expect(page.locator('.gen-tn-attempt-scramble:visible')).toHaveCount(2);
+    const texts = await page.locator('.gen-tn-attempt-scramble:visible').allTextContents();
     expect(texts.length).toBeGreaterThanOrEqual(2);
     if (mode === 'paste') expect(texts[0].replace(/\s+/g, ' ').trim()).toBe('R U F');
     if (mode === 'batch') {
       const downloadPromise = page.waitForEvent('download', { timeout: 60_000 });
-      await page.locator('button[title="下载 PDF"]').click();
+      await page.locator('button[title="下载 PDF"]:visible').click();
       const download = await downloadPromise;
       const pdf = resolve(out, 'radio-web-scrambles.pdf');
       await download.saveAs(pdf);
