@@ -26,6 +26,17 @@ async function equivalent(a: string[], b: string[]) {
 }
 
 describe('library-assisted notation correction', () => {
+  it('excludes boundary AUF marked as waste while preserving its moves and grouping', async () => {
+    const original = line(`U U U ${observed} U U U`);
+    original.wasteGroups = original.moves.map((_, i) => i < 3 ? 1 : i >= original.moves.length - 3 ? 2 : null);
+    const result = await correctLibraryLine(original, [{ alg: library }]);
+    expect(result.moves.join(' ')).toBe(`U U U ${body} U U U`);
+    expect(formattedReconMoves(result).join(' ')).toBe(`(U U U) ${library.slice(2)} (U U U)`);
+    expect(result.moveRanges!.slice(0, 3)).toEqual(original.moveRanges!.slice(0, 3));
+    expect(result.moveRanges!.slice(-3)).toEqual(original.moveRanges!.slice(-3));
+    await equivalent(original.moves, result.moves);
+  });
+
   it('extracts the implicit trailing AUF in the reported Gc without changing its transform', async () => {
     const original = line("R2' U' x l U' R U R' U R2 E B U' B' E'");
     const gc = "R2 U' R U' R U R' U R2 D' U R U' R' D";

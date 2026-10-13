@@ -42,9 +42,16 @@ function parseFormula(text: string): Formula {
 }
 
 function bodyBounds(moves: string[], waste?: Array<number | null>): [number, number] {
+  // Boundary AUF remains outside the formula even when redundant turns are
+  // marked as waste. Never split a waste group extending into the body.
+  const isBoundary = (index: number) => {
+    if (!boundary(moves[index])) return false;
+    const group = waste?.[index];
+    return group == null || moves.every((move, i) => waste?.[i] !== group || /^U(?:\d+)?'?$/.test(move));
+  };
   let from = 0, to = moves.length;
-  while (from < to && boundary(moves[from]) && waste?.[from] == null) from++;
-  while (to > from && boundary(moves[to - 1]) && waste?.[to - 1] == null) to--;
+  while (from < to && isBoundary(from)) from++;
+  while (to > from && isBoundary(to - 1)) to--;
   return [from, to];
 }
 
