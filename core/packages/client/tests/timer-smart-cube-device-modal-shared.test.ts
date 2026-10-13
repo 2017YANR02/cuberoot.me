@@ -50,26 +50,55 @@ describe('shared smart-cube device modal', () => {
 
     const dialog = document.body.querySelector<HTMLElement>('[role="dialog"]')!;
     expect(dialog.textContent).toContain('GAN16ui');
-    expect(dialog.textContent).toContain('Connected, unsolved');
+    expect(dialog.textContent).not.toContain('Connected, unsolved');
     expect(dialog.textContent).toContain('72%');
     expect(dialog.textContent).not.toContain('Last move');
     expect(dialog.textContent).not.toContain("R'");
-    expect(dialog.textContent).toContain('gan-v4');
+    expect(dialog.textContent).not.toContain('gan-v4');
 
     const button = (label: string) => [...dialog.querySelectorAll<HTMLButtonElement>('button')]
       .find((candidate) => candidate.textContent?.includes(label))!;
-    await act(async () => button('Reset state').click());
+    await act(async () => button('Reset cube').click());
     expect(onResetState).toHaveBeenCalledOnce();
     expect(dialog.textContent).toContain('State reset');
-    expect(button('Reset state').querySelector('svg')).toBeNull();
-    expect(button('Reset gyroscope').querySelector('svg')).toBeNull();
-
-    await act(async () => button('Reset gyroscope').click());
+    expect(button('Reset cube').querySelector('svg')).toBeNull();
+    expect(dialog.textContent).not.toContain('Reset gyroscope');
     expect(onResetGyro).toHaveBeenCalledOnce();
 
     await act(async () => button('Disconnect').click());
     expect(onDisconnect).toHaveBeenCalledOnce();
     expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it('anchors idle and connected panels to the Bluetooth trigger without a backdrop or focus trap', async () => {
+    const anchor = document.createElement('button');
+    host.before(anchor);
+    const anchorRef = { current: anchor };
+    const onClose = vi.fn();
+    vi.spyOn(anchor, 'getBoundingClientRect').mockReturnValue({
+      left: 24, right: 56, top: 20, bottom: 52, width: 32, height: 32,
+      x: 24, y: 20, toJSON: () => ({}),
+    });
+    try {
+      for (const phase of ['idle', 'connected'] as const) {
+        await act(async () => root.render(createElement(TimerSmartCubeDeviceModal, {
+          anchorRef, language: 'en', onClose, onConnect: vi.fn(),
+          snapshot: { ...connectedSnapshot, phase, deviceName: 'GAN16ui (C2:AF)' },
+        })));
+        const panel = document.querySelector<HTMLElement>('[role="dialog"]')!;
+        expect(panel.classList.contains('timer-smart-cube-device__popover')).toBe(true);
+        expect(panel.style.top).toBe('58px');
+        expect(panel.hasAttribute('aria-modal')).toBe(false);
+        expect(document.querySelector('.timer-smart-cube-device__overlay')).toBeNull();
+        expect(panel.textContent).not.toContain('(C2:AF)');
+        anchor.focus();
+        expect(document.activeElement).toBe(anchor);
+      }
+      await act(async () => document.body.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true })));
+      expect(onClose).toHaveBeenCalledOnce();
+    } finally {
+      anchor.remove();
+    }
   });
 
   it('renders a selectable scan list without exposing device addresses', async () => {
@@ -120,7 +149,7 @@ describe('shared smart-cube device modal', () => {
 
     const dialog = document.body.querySelector<HTMLElement>('[role="dialog"]')!;
     expect(dialog.textContent).toContain('Disconnect');
-    expect(dialog.textContent).not.toContain('Reset state');
+    expect(dialog.textContent).not.toContain('Reset cube');
     expect(dialog.textContent).not.toContain('Reset gyroscope');
   });
 
@@ -143,7 +172,7 @@ describe('shared smart-cube device modal', () => {
     const button = (label: string) => [...dialog.querySelectorAll<HTMLButtonElement>('button')]
       .find((candidate) => candidate.textContent?.includes(label))!;
 
-    await act(async () => button('Reset state').click());
+    await act(async () => button('Reset cube').click());
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     expect(onClose).not.toHaveBeenCalled();
 

@@ -447,6 +447,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   const [timerMode, setTimerMode] = useState<TimerPlayersValue>(1);
   const wideLayout = useTimerWideLayout();
   const wideLayoutRef = useRef(wideLayout);
+  const bluetoothButtonRef = useRef<HTMLButtonElement>(null);
   wideLayoutRef.current = wideLayout;
   const compactSoloLayout = useTimerSoloCompactLayout();
   const dockHistory = wideLayout && view === 'history' && timerMode === 1;
@@ -3738,6 +3739,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   };
   const smartCubeDeviceCenter = (
     <TimerDeviceCenter
+      triggerRef={bluetoothButtonRef}
       ariaLabel={TIMER_DEVICE_CENTER_LABELS.title[language]}
       items={timerDeviceRegistry.list()
         .map((device) => device.kind !== 'smart-cube' ? ({
@@ -4879,6 +4881,7 @@ children: <>
       />}
       {openOverlay === TIMER_OVERLAY_IDS.smartCubeDevice && (
         <TimerSmartCubeDeviceModal
+          anchorRef={bluetoothButtonRef}
           availableDevices={smartCube.availableDevices}
           macPrompt={smartCube.macPrompt ?? undefined}
           capabilities={{

@@ -666,6 +666,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   // 还原即停表、赛前自动预备。手动 MAC 输入沿用 Solo 那套「延迟 promise」:
   // hook 需要 MAC 时挂起,弹窗把用户输入的值 resolve 回去。
   const [bluetoothOpen, setBluetoothOpen] = useState(false);
+  const bluetoothButtonRef = useRef<HTMLButtonElement>(null);
   const [bluetoothConnectAttempt, setBluetoothConnectAttempt] = useState<Promise<void> | null>(null);
   const [macPrompt, setMacPrompt] = useState<{ deviceName: string; isWrongKey?: boolean } | null>(null);
   const macResolverRef = useRef<((m: string | null) => void) | null>(null);
@@ -1422,7 +1423,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   return <TimerNetBattlePage language={isZh ? 'zh' : 'en'} className="timer-shell net-shell" mainClassName="shell-main timer-workspace-main"
     solving={timer.phase === 'running'} topbar={topbar} video={video}
     room={{
-      devices: timerSupportsNetBattleSmartCube(myEvent) ? <TimerDeviceCenter ariaLabel={tr({ en: 'Timer devices', zh: '计时设备' })}
+      devices: timerSupportsNetBattleSmartCube(myEvent) ? <TimerDeviceCenter triggerRef={bluetoothButtonRef} ariaLabel={tr({ en: 'Timer devices', zh: '计时设备' })}
         menuLabel={tr({ en: 'Timer devices', zh: '计时设备' })} triggerLabel={tr({ en: 'Devices', zh: '设备' })}
         items={[{
           id: 'smart-cube', kind: 'smart-cube', active: cubeConnected,
@@ -1521,6 +1522,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
         onClose: () => setQrOpen(false)
       } : false,
     }} overlays={bluetoothOpen && <BluetoothModal
+      anchorRef={bluetoothButtonRef}
       isZh={isZh}
       cube={bluetoothCube}
       connectAttempt={bluetoothConnectAttempt}
