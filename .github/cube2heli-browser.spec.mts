@@ -1,4 +1,4 @@
-import { test, expect, type Page, type TestInfo } from '@playwright/test';
+import { chromium, test, expect, type Page, type TestInfo } from '@playwright/test';
 
 const origin = process.env.CUBE2HELI_BASE_URL ?? 'http://127.0.0.1:3000';
 test.use({ viewport: { width: 1440, height: 1000 }, permissions: ['clipboard-read', 'clipboard-write'] });
@@ -15,8 +15,7 @@ test.afterEach(async ({ page }, info) => {
 });
 
 async function chooseGeneratorPuzzle(page: Page) {
-  // Inactive tab panels remain mounted. Never click a hidden panel's picker,
-  // or assume that a pre-hydration SSR button already has its event handler.
+  // Inactive panels remain mounted; wait for hydration before opening a picker.
   const trigger = page.locator('.gen-config-toolbar:visible .pp-trigger:visible').first();
   await expect(trigger).toBeVisible({ timeout: 90_000 });
   await expect(async () => {
@@ -75,7 +74,7 @@ test('3D simulator: manual moves, playback, history and exact share restoration'
   expect(setup.trim().split(/\s+/)).toHaveLength(60);
   await evidence(page, info, 'random-terminal');
   await page.getByRole('button', { name: '动画展示打乱', exact: true }).click();
-  // This documented action moves the scramble into the playable algorithm track.
+  // This action transfers setup into the playable algorithm track.
   await expect(scramble).toHaveValue('');
   await expect(solution).toHaveValue(setup);
   await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible();
@@ -111,8 +110,7 @@ test('3D surface pointer drag appends a genuine layer move', async ({ page }, in
   const box = await host.boundingBox();
   expect(box).not.toBeNull();
   if (!box) throw new Error('Missing visible native player');
-  // Normal pointer input on the front-face sticker region visible in the
-  // solved screenshot. No private scene, raycaster, React or model access.
+  // Ordinary pointer input on the front-face sticker region, not model access.
   await page.mouse.move(box.x + box.width * 0.65, box.y + box.height * 0.62);
   await page.mouse.down();
   await page.mouse.move(box.x + box.width * 0.80, box.y + box.height * 0.52, { steps: 16 });
@@ -166,9 +164,10 @@ test('Timer retains the event and renders a 48-sticker random scramble net', asy
   expect(new URL(page.url()).searchParams.get('event')).toBe('cube2heli');
 });
 
-test.describe('No WebGL', () => {
-  test.use({ launchOptions: { args: ['--disable-webgl'] }, viewport: { width: 390, height: 844 } });
-  test('mobile English fallback remains usable without claiming 3D', async ({ page }, info) => {
+test('No WebGL: mobile English fallback remains usable without claiming 3D', async ({}, info) => {
+  const browser = await chromium.launch({ headless: true, args: ['--disable-webgl'] });
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  try {
     await page.goto(`${origin}/sim?puzzle=cube2heli`, { waitUntil: 'domcontentloaded' });
     await expect(page.getByText('3D is unavailable. Showing a 2D net.', { exact: true })).toBeVisible({ timeout: 90_000 });
     await expect(page.getByLabel('Drag layer', { exact: true })).toHaveCount(0);
@@ -178,5 +177,8 @@ test.describe('No WebGL', () => {
     await page.getByRole('button', { name: 'Turn DFw', exact: true }).click();
     await expect(page.getByPlaceholder('Solution', { exact: true })).toHaveValue('DFw');
     await evidence(page, info, 'mobile-english-2d');
-  });
+  } finally {
+    await evidence(page, info, 'fallback-final').catch(() => {});
+    await browser.close();
+  }
 });
