@@ -1,0 +1,111 @@
+name: Cube2Heli catalog regression
+on:
+  push:
+    branches: [codex/cube2heli-acceptance-20261013]
+    paths: ['.github/workflows/cube2heli-fixtures.yml']
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: codex/native-puzzle-20261013
+          filter: blob:none
+          sparse-checkout: |
+            core
+            .agents/skills/sim-add-puzzle
+            .github
+            .codex
+            .githooks
+            docs
+            tools/cstimer-scramble
+      - name: Extend exact catalog fixtures without weakening assertions
+        run: |
+          mkdir -p /tmp/cube2heli-catalog
+          python - <<'PY'
+          from pathlib import Path
+          import shutil
+          changed = []
+          def edit(path, replacements):
+              p = Path(path)
+              s = p.read_text()
+              for old, new in replacements:
+                  assert s.count(old) == 1, (path, old, s.count(old))
+                  s = s.replace(old, new)
+              p.write_text(s)
+              changed.append(path)
+          base = 'core/packages/client/tests/'
+          edit(base + 'timer-drill-contract-shared.test.ts', [('expect(EVENTS).toHaveLength(76);', 'expect(EVENTS).toHaveLength(77);')])
+          edit(base + 'timer_event_catalog.test.ts', [
+              ("  'cube3heli', 'radiojewel',", "  'cube2heli', 'cube3heli', 'radiojewel',"),
+              ('duplicate-free 76-event', 'duplicate-free 77-event'),
+              ('expect(pickerIds).toHaveLength(76);', 'expect(pickerIds).toHaveLength(77);'),
+              ("      ['cube3heli', '3×3 + Helicopter'", "      ['cube2heli', '2×2 + Helicopter', '二阶＋直升机', '2Heli'],\n      ['cube3heli', '3×3 + Helicopter'"),
+          ])
+          edit(base + 'timer-puzzle-picker.test.ts', [
+              ('expect(items).toHaveLength(76);', 'expect(items).toHaveLength(77);'),
+              ("expect(items.filter((item) => item.querySelector('.pp-item-tag'))).toHaveLength(49);", "expect(items.filter((item) => item.querySelector('.pp-item-tag'))).toHaveLength(50);"),
+          ])
+          edit(base + 'timer-sync-seed.test.ts', [("    'cube3heli', 'radiojewel',", "    'cube2heli', 'cube3heli', 'radiojewel',")])
+          ref = '.agents/skills/sim-add-puzzle/references/native-pg-puzzles.md'
+          p = Path(ref)
+          p.write_text(p.read_text() + '\n- 新增 Timer 项目还会改变完整项目分区、选择器图标／文字徽标数量与三来源矩阵；同步检查 `timer_event_catalog.test.ts`、`timer-puzzle-picker.test.ts`、`timer-drill-contract-shared.test.ts`、app-ui 的 `scramble-source-matrix.audit.test.ts`，并在 `timer-sync-seed.test.ts` 验证普通／种子打乱共用原生生成器。保留完整名单与数量断言，不以删除断言消除目录漂移。\n')
+          changed.append(ref)
+          Path('/tmp/cube2heli-changed.txt').write_text('\n'.join(changed))
+          for path in changed:
+              out = Path('/tmp/cube2heli-catalog/source') / path
+              out.parent.mkdir(parents=True, exist_ok=True)
+              shutil.copy(path, out)
+          PY
+          git diff --check
+          git diff | tee /tmp/cube2heli-catalog/changes.patch
+          while IFS= read -r path || [[ -n "$path" ]]; do git add -- "$path"; done < /tmp/cube2heli-changed.txt
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'test: complete cube2heli picker, drill and seeded scramble coverage'
+          git push origin HEAD:codex/native-puzzle-20261013
+          git rev-parse HEAD > /tmp/cube2heli-catalog/COMMIT.txt
+      - uses: pnpm/action-setup@v6
+        with:
+          package_json_file: core/package.json
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: core/pnpm-lock.yaml
+      - name: Install and build dependencies
+        working-directory: core
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm --filter @cuberoot/client build:deps
+      - name: Verify complete picker, drill and seed contracts
+        id: client
+        continue-on-error: true
+        working-directory: core
+        run: pnpm --filter @cuberoot/client exec vitest run tests/timer-drill-contract-shared.test.ts tests/timer_event_catalog.test.ts tests/timer-puzzle-picker.test.ts tests/timer-sync-seed.test.ts > /tmp/cube2heli-catalog/client.log 2>&1
+      - name: Verify app-ui source matrix
+        id: appui
+        continue-on-error: true
+        working-directory: core
+        run: pnpm --filter @cuberoot/app-ui test > /tmp/cube2heli-catalog/app-ui.log 2>&1
+      - name: Verify Mini Program
+        id: mini
+        continue-on-error: true
+        working-directory: core
+        run: pnpm --filter @cuberoot/miniprogram test > /tmp/cube2heli-catalog/miniprogram.log 2>&1
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cube2heli-catalog-evidence
+          path: /tmp/cube2heli-catalog
+          retention-days: 7
+      - name: Require all contracts
+        if: always()
+        run: |
+          test '${{ steps.client.outcome }}' = success
+          test '${{ steps.appui.outcome }}' = success
+          test '${{ steps.mini.outcome }}' = success
