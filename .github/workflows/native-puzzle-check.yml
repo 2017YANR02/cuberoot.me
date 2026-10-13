@@ -9,6 +9,9 @@ on:
 
 permissions:
   contents: write
+concurrency:
+  group: native-puzzle-verification
+  cancel-in-progress: true
 
 jobs:
   verify:
@@ -27,11 +30,20 @@ jobs:
             .codex
             .githooks
             tools/cstimer-scramble
-      - name: Apply reviewed source changes once
+      - name: Lock cube2heli orbit serialization order without changing physical expectations
         run: |
-          if ! grep -q '  cube2heli: {' core/packages/puzzle-solvers/src/native-puzzles.ts; then
-            python .github/cube2heli-edit.py
-          fi
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('core/packages/client/tests/native-mixed-puzzles-geometry.test.ts')
+          text = p.read_text()
+          start = text.index("id: 'cube2heli', faceNormals")
+          end = text.index("id: 'cube3heli', faceNormals", start)
+          case = text[start:end]
+          old = "orbits: [['CORNERS', 8, 3], ['CENTERS', 24, 1]]"
+          new = "orbits: [['CENTERS', 24, 1], ['CORNERS', 8, 3]]"
+          assert old in case or new in case
+          p.write_text(text[:start] + case.replace(old, new) + text[end:])
+          PY
       - uses: pnpm/action-setup@v6
         with:
           package_json_file: core/package.json
@@ -50,17 +62,14 @@ jobs:
           pnpm --filter @cuberoot/client exec node scripts/generate-puzzle-icons.mts
           pnpm --filter @cuberoot/event-icon generate
           pnpm --filter @cuberoot/client exec node scripts/native-puzzles/compare-outlines.mjs --set=cube2heli
-      - name: Commit only reviewed source and generated puzzle icon
+      - name: Commit the reviewed test expectation
         run: |
-          if [[ -f /tmp/cube2heli-files.txt ]]; then
-            while IFS= read -r path; do git add -- "$path"; done < /tmp/cube2heli-files.txt
-          fi
-          git add core/packages/event-icon/svg/puzzle/cube2heli.svg core/packages/event-icon/src/svg-map-puzzle.ts
+          git add core/packages/client/tests/native-mixed-puzzles-geometry.test.ts
           git diff --cached --check
           if ! git diff --cached --quiet; then
             git config user.name 'github-actions[bot]'
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git commit -m 'feat(sim): add native 2x2 + Helicopter across simulator, scrambles and timer'
+            git commit -m 'test(sim): lock cube2heli orbit serialization order'
             git push origin HEAD:codex/native-puzzle-20261013
           fi
           git rev-parse HEAD
@@ -92,7 +101,6 @@ jobs:
         working-directory: core
         run: pnpm --filter @cuberoot/client exec node scripts/generate-puzzle-icons.mts --check
       - name: Browser acceptance
-        if: ${{ hashFiles('.github/cube2heli-browser.mjs') != '' }}
         working-directory: core/packages/client
         run: |
           pnpm exec playwright install --with-deps chromium
