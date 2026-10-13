@@ -97,6 +97,7 @@ const CSTIMER_EVENT_MAP: Record<string, EventId> = {
   'quadx': 'quadx',
   'dinoocta': 'dinoocta', 'dinooct': 'dinoocta', '恐龙八面体': 'dinoocta',
   'fto5': 'fto5', '5layerfto': 'fto5', '5×5fto': 'fto5', '5x5fto': 'fto5', '五阶fto': 'fto5',
+  'fto6': 'fto6', '6layerfto': 'fto6', '6×6fto': 'fto6', '6x6fto': 'fto6', '六阶fto': 'fto6',
   'eto': 'eto', 'eitanseto': 'eto', "eitan'seto": 'eto', 'eitan’seto': 'eto', 'eto棱转八面体': 'eto',
   'radiocrystal': 'radiocrystal', 'radiocr': 'radiocrystal',
   'cube3skewb': 'cube3skewb', '3skewb': 'cube3skewb',

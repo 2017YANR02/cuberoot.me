@@ -29,7 +29,7 @@ export type EventId =
   | 'fto' | 'kilominx' | 'gear' | 'ivy' | 'redi' | 'mpyram' | 'pyraminx_duo' | 'superz'
   | 'dogic' | 'octahedron4' | 'dinoskewb' | 'cube3dino'
   | 'lattice' | 'hyperx' | 'latticex' | 'masterbrilic' | 'masterftov2'
-  | 'quadx' | 'dinoocta' | 'fto5' | 'eto' | 'radiocrystal'
+  | 'quadx' | 'dinoocta' | 'fto5' | 'fto6' | 'eto' | 'radiocrystal'
   | 'cube3skewb' | 'heliskewb' | 'comboctahedron' | 'circoradiolarian' | 'icosababyface'
   | 'cube3heli' | 'radiojewel'
   // Relays
@@ -247,6 +247,7 @@ export const EVENTS: EventInfo[] = [
   { id: 'quadx', nameEn: 'Quad-X', nameZh: 'Quad-X', group: 'nonwca' },
   { id: 'dinoocta', nameEn: 'Dino Octa', nameZh: '恐龙八面体', group: 'nonwca' },
   { id: 'fto5', nameEn: '5-layer FTO', nameZh: '五阶 FTO', group: 'nonwca' },
+  { id: 'fto6', nameEn: '6-layer FTO', nameZh: '六阶 FTO', group: 'nonwca' },
   { id: 'eto', nameEn: "Eitan's ETO", nameZh: 'ETO 棱转八面体', group: 'nonwca' },
   { id: 'radiocrystal', nameEn: 'Radio Crystal', nameZh: 'Radio Crystal', group: 'nonwca' },
   { id: 'cube3skewb', nameEn: '3×3 + Skewb', nameZh: '三阶＋斜转', group: 'nonwca' },
