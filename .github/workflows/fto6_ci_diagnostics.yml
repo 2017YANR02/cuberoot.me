@@ -1,0 +1,23 @@
+# Temporary read-only diagnostic for this feature branch; remove before merge.
+name: FTO CI diagnostics
+on:
+  push:
+    branches: [codex/add-six-layer-fto-20261013]
+permissions:
+  actions: read
+jobs:
+  diagnostics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Collect previously failed PR checks
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p evidence
+          gh run view 38438283029 --repo 2017YANR02/cuberoot.me --log-failed > evidence/failed-checks.log
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fto6-ci-failures
+          path: evidence/
+          retention-days: 3
