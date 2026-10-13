@@ -65,7 +65,7 @@ import { humanizeStream } from './humanize';
 import { wastedDisplaySpans } from './error_detect';
 import type { HumanRotation } from './humanize';
 import { walkMethod } from './method_walk';
-import type { MethodId } from './methods';
+import { METHODS, type MethodId } from './methods';
 import type { MethodStageMetric } from './method_walk';
 import { metricForRange } from './step_metrics';
 import type { F2lSlotsResult } from './f2l_slots';
@@ -79,6 +79,7 @@ import type { RangeMoveItem, StepMetricsResult } from './step_metrics';
 export type ReconLineKind = 'inspection' | 'cross' | 'f2l' | 'oll' | 'pll';
 
 export interface ReconTextLine {
+  stageKey?: string;
   kind: ReconLineKind;
   /** 和 `StepAnalysis` 的列 key 同名(`cross` / `slot-FR` / `f2l` / `oll` / `pll`),
    *  这样点表里某一列能高亮文字里对应那一行。 */
@@ -100,6 +101,7 @@ export interface ReconTextLine {
 }
 
 export interface ReconTextResult {
+  currentStage?: { key: string; zh: string; en: string };
   /** Method metrics use the exact gesture boundaries rendered by playback. */
   methodStages?: MethodStageMetric[];
   /**
@@ -632,6 +634,10 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
   const isCfop = !input.method || input.method === 'cfop';
   const physical = input.physical ?? input;
   const methodWalk = isCfop ? null : walkMethod(input.method!, physical.scramble, physical.moves, totalMs, input.viewRotation);
+  const currentIndex = methodWalk ? Math.min(3, methodWalk.reachedIdx + 1)
+    : segs.ollEndIdx != null ? 3 : segs.f2lEndIdx != null ? 2 : segs.crossEndIdx != null ? 1 : 0;
+  const { key: currentKey, zh: currentZh, en: currentEn } = METHODS[input.method ?? 'cfop'].stages[currentIndex];
+  const currentStage = { key: currentKey, zh: currentZh, en: currentEn };
   const kinds = ['cross', 'f2l', 'oll', 'pll'] as const;
   const sourceSpans: Span[] = isCfop ? stepSpans(segs, metrics, slots, moves)
     : (methodWalk?.stages ?? []).flatMap((stage, index) => stage.endIdx === null ? [] : [{
@@ -682,7 +688,7 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
     ...span,
     endIdx: snappedEnd(span),
   }));
-  const spans = snappedSpans.filter((span, i) => i === 0 || span.endIdx > snappedSpans[i - 1].endIdx);
+  const spans = snappedSpans.filter((span, i) => span.endIdx >= 0 && (i === 0 || span.endIdx > snappedSpans[i - 1].endIdx));
   const wasteSpans = wastedDisplaySpans(scramble, moves);
   const preserveMoves = new Set<number>();
   for (const span of wasteSpans) {
@@ -754,6 +760,9 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
   // `stepTimeBounds` —— 两边各写一遍迟早会分叉,而分叉的表现是「同一把,文字里
   // 有那次转体、表里没有」。
   const spanEndMs = stepTimeBounds(spans.map(s => s.endIdx), moves);
+  if (spans.length && spans.at(-1)!.endIdx < moves.length - 1) {
+    spanEndMs[spanEndMs.length - 1] = moves[spans.at(-1)!.endIdx].ts;
+  }
 
   for (const [spanIdx, span] of spans.entries()) {
     const from = prevEnd + 1;
@@ -839,11 +848,12 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
     );
     if (tail.length > 0) {
       lines.push({
-        kind: 'pll', key: 'tail', moves: tail.map(item => item.token),
+        kind: kinds[currentIndex], key: 'tail', stageKey: currentKey, moves: tail.map(item => item.token),
         moveRanges: playbackRanges(tail),
         wasteGroups: wasteGroupsFor(tail),
         fromIdx: prevEnd + 1, toIdx: moves.length - 1,
-        label: null, recognitionMs: null, executionMs: null, stepMs: null,
+        label: isCfop ? null : input.language === 'zh' ? currentZh : currentEn,
+        recognitionMs: null, executionMs: null, stepMs: null,
       });
     }
   }
@@ -854,6 +864,7 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
     // 原始打乱 + 观察转体。共轭过的那条只在这个模块内部用(识别、切分),不出门。
     scramble: phys.scramble,
     methodStages,
+    currentStage,
     inspection: viewRot,
     lines,
     turns,

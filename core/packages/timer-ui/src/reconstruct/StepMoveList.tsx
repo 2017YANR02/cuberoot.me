@@ -75,7 +75,7 @@ interface Group {
 function groupLines(lines: ReconTextLine[], method: MethodId): Group[] {
   const out: Group[] = [];
   for (const line of lines) {
-    const key = method === 'cfop' ? line.kind : line.key === 'tail' ? METHODS[method].stages.at(-1)!.key : line.key;
+    const key = line.stageKey ?? (method === 'cfop' ? line.kind : line.key === 'tail' ? METHODS[method].stages.at(-1)!.key : line.key);
     const last = out[out.length - 1];
     if (last && last.key === key) last.lines.push(line);
     else out.push({ key, lines: [line] });

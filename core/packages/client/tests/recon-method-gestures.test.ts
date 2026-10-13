@@ -8,6 +8,18 @@ import { normalizeSolve, initialPoseRotation } from '@cuberoot/shared/timer/reco
 import { applyScramble } from '@cuberoot/shared/timer/reconstruct/state';
 import { applyOneToken } from '@cuberoot/shared/timer/reconstruct/apply-token';
 
+it.each(['roux', 'zz'] as const)('%s assigns an unfinished tail to the current stage', async method => {
+  const scramble = "R U F L D B";
+  const moves = [{ m: 'U', ts: 100 }];
+  const result = await buildReconText({ method, scramble, moves, totalMs: 200,
+    segs: computeStageSegments(scramble, moves, 200)!, metrics: null, slots: null });
+  const tail = result.lines.find(line => line.key === 'tail')!;
+  expect(tail.stageKey).toBe(method === 'roux' ? 'fb' : 'eoline');
+  expect(result.currentStage?.key).toBe(tail.stageKey);
+  expect(tail.fromIdx).toBe(0);
+  expect(tail.toIdx).toBe(0);
+});
+
 it.each(['roux', 'zz'] as const)('%s preserves slice gestures, pose and complete playback coverage', async method => {
   const { scramble, moves, timeMs: totalMs, model: brand } = recording;
   const samples = decodeGyroTrack(recording.gyro);

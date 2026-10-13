@@ -85,6 +85,14 @@ export function walkMethod(
   }
 
   const endIdx: Array<number | null> = method.stages.map(() => null);
+  if (method.id !== 'cfop') {
+    const facelets = facesToFacelets(state);
+    for (let s = 0; s < method.stages.length; s++) {
+      if (method.stages[s].done(state, facelets)) {
+        for (let k = 0; k <= s; k++) endIdx[k] = -1;
+      }
+    }
+  }
   for (let i = 0; i < moves.length; i++) {
     state = applyOneToken(state, moves[i].m);
     // Facelets are only built when some stage still needs them — that string is
@@ -119,7 +127,7 @@ export function walkMethod(
     reachedIdx = s;
     if (end === prevEndIdx) {
       stages.push({ key: st.key, zh: st.zh, en: st.en, endIdx: end, skipped: true,
-        recognitionMs: null, executionMs: null, stepMs: 0, cumulativeMs: moves[end].ts,
+        recognitionMs: null, executionMs: null, stepMs: 0, cumulativeMs: moves[end]?.ts ?? 0,
         turns: 0, tps: null });
       continue;
     }
@@ -136,7 +144,7 @@ export function walkMethod(
     method,
     stages,
     pickupMs: Math.max(0, moves[0].ts),
-    putDownMs: lastEnd !== null ? Math.max(0, totalMs - moves[lastEnd].ts) : null,
+    putDownMs: lastEnd !== null ? Math.max(0, totalMs - (moves[lastEnd]?.ts ?? 0)) : null,
     totalRecognitionMs: stages.reduce((n, s) => n + (s.recognitionMs ?? 0), 0),
     totalExecutionMs: stages.reduce((n, s) => n + (s.executionMs ?? 0), 0),
     totalTurns: stages.reduce((n, s) => n + (s.turns ?? 0), 0),
