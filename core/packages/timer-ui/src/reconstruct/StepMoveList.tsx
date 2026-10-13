@@ -224,7 +224,7 @@ export default function StepMoveList({
                     ) : (
                       <span className="sml-moves">{displayMoves.join(' ')}</span>
                     )}
-                    {line.label && (() => {
+                    {' '}{line.label && (() => {
                       const colors = leadingCubeColors(line.label);
                       const visibleLabel = colors
                         ? line.label.slice(colors.length).replace(/^\/?/, '').trimStart()

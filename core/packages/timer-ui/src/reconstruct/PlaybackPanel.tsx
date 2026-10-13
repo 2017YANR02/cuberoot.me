@@ -290,6 +290,13 @@ export default function PlaybackPanel({
       <div className="reconstruct-playback-main">
         <div className="reconstruct-playback-top">
           <span className="reconstruct-playback-cap">{tr({ zh: '回放', en: 'replay' })}</span>
+          <div className="reconstruct-playback-controls">
+          {hasGyro && (
+            <div className="reconstruct-playback-gyro">
+              <BoolToggle value={gyroOn} onChange={setGyroOn}
+                label={tr({ zh: '陀螺仪', en: 'Gyro' })} />
+            </div>
+          )}
           <span className="reconstruct-playback-speed">
             <span className="reconstruct-playback-speed-cap">{tr({ zh: '速度', en: 'Speed' })}</span>
             {SPEEDS.map(s => (
@@ -304,19 +311,8 @@ export default function PlaybackPanel({
               </button>
             ))}
           </span>
-        </div>
-
-        {/* 开关只在**这把真的录到姿态**时出现。没录到就没有 —— 一个按下去什么
-            也不会发生的开关比没有这个开关更糟。 */}
-        {hasGyro && (
-          <div className="reconstruct-playback-gyro">
-            <BoolToggle
-              value={gyroOn}
-              onChange={setGyroOn}
-              label={tr({ zh: '陀螺仪', en: 'Gyro' })}
-            />
           </div>
-        )}
+        </div>
 
         {/* 3D 而不是展开图:回放是「看别人拧」,展开图看不出这是一次转动还是
             三次。展开图留给打乱预览那种「一眼扫全六面」的场合。
