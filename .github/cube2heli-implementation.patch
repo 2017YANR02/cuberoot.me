@@ -1,0 +1,122 @@
+diff --git a/.agents/skills/sim-add-puzzle/SKILL.md b/.agents/skills/sim-add-puzzle/SKILL.md
+index 365d4cc..f76cbf9 100644
+--- a/.agents/skills/sim-add-puzzle/SKILL.md
++++ b/.agents/skills/sim-add-puzzle/SKILL.md
+@@ -181,0 +182 @@
++- 对新增切面与既有表面缝线重合的组合模型，分别锁定不变的可见分区和新增的转动自由度，并按逐轴层数限制按钮、拖拽和打乱。
+diff --git a/.agents/skills/sim-add-puzzle/references/native-pg-puzzles.md b/.agents/skills/sim-add-puzzle/references/native-pg-puzzles.md
+index 22e479a..8b20be7 100644
+--- a/.agents/skills/sim-add-puzzle/references/native-pg-puzzles.md
++++ b/.agents/skills/sim-add-puzzle/references/native-pg-puzzles.md
+@@ -57,0 +58 @@
++| `cube2heli` | 二阶＋直升机 / 2×2 + Helicopter | `c f 0 e 0.7071067811865476` | 根据 [Jaap 的平面 Helicopter 切割说明](https://www.jaapsch.net/puzzles/helicopter.htm)组合独立二阶穿心面切；[Rob 的实物收藏目录](https://www.robspuzzlepage.com/rearrangement.htm)列有 Helicopter + 2x2x2。以立方体半边长 1 独立构造面切 0、棱切 ±√2/2，保留 90° 面转及 180° 棱转；不包含 jumbling，不冒充带角转或曲面切割的量产 Corner Helicopter。 |
+@@ -85,0 +87 @@
++| 2×2 + Helicopter | 6 | 8（三角形） | 48 | 8 三贴片角块、24 单贴片中心块 | 面轴 90°、棱轴 180° |
+@@ -122,0 +125 @@
++- 对 2×2 + Helicopter 的面轴使用单独半体、棱轴使用外层／中层／两层宽转；核对 `Fv = F B'`、`2F = B'`、`DFw = DF 2DF`，拒绝不存在的 `Fw` 和 `3DFw`，不要因为每面仍为八个三角形而省略穿心面切。
+@@ -168,0 +172 @@
++- 从 `core/` 运行 `node packages/client/scripts/native-puzzles/compare-outlines.mjs --set=cube2heli`，核对 48 片、32 块和与 Helicopter 重合的表面切线；用 `native-mixed-puzzles-geometry.test.ts` 分别验证保留的面转自由度、不同轴层数、交错操作后的刚体状态及真实 PG3D 中间帧。
+diff --git a/core/packages/client/scripts/native-puzzles/compare-outlines.mjs b/core/packages/client/scripts/native-puzzles/compare-outlines.mjs
+index 8226748..3df1918 100644
+--- a/core/packages/client/scripts/native-puzzles/compare-outlines.mjs
++++ b/core/packages/client/scripts/native-puzzles/compare-outlines.mjs
+@@ -12,0 +13,11 @@
++  cube2heli: {
++    basename: 'cube2heli-outlines',
++    rows: [
++      {
++        id: 'cube2heli', en: '2×2 + Helicopter',
++        description: 'c f 0 e 0.7071067811865476', visibleFacelets: 48,
++        prior: 'c e 0.7071067811865476', priorLabel: 'Helicopter',
++        notes: ['Add central face cuts to edge cuts at h = sqrt(2)/2; eight triangles per face.', 'The surface seams coincide; retain independent 90-degree face and 180-degree edge turns.'],
++      },
++    ],
++  },
+@@ -109 +120 @@
+-  throw new Error('Usage: node compare-outlines.mjs [--set=original|2026-10|2026-10-12|cube3heli]');
++  throw new Error('Usage: node compare-outlines.mjs [--set=original|2026-10|2026-10-12|cube2heli|cube3heli]');
+diff --git a/core/packages/client/tests/native-mixed-puzzles-geometry.test.ts b/core/packages/client/tests/native-mixed-puzzles-geometry.test.ts
+index 500c29c..17594e2 100644
+--- a/core/packages/client/tests/native-mixed-puzzles-geometry.test.ts
++++ b/core/packages/client/tests/native-mixed-puzzles-geometry.test.ts
+@@ -127,0 +128,9 @@
++  {
++    id: 'cube2heli', faceNormals: cubeNormals,
++    axes: [
++      { pairs: cubeFacePairs, normals: cubeNormals, cuts: [0], order: 4 },
++      { pairs: cubeEdgePairs, normals: cubeAxisNormals(cubeEdgePairs), cuts: [Math.SQRT1_2], order: 2 },
++    ],
++    faces: 6, perFace: 8, raw: 48, visible: 48, pieces: 32,
++    shapes: { 3: 8 }, orbits: [['CENTERS', 24, 1], ['CORNERS', 8, 3]],
++  },
+@@ -362,2 +371,3 @@
+-it('keeps 3x3 + Helicopter pieces rigid through interleaved face, edge, slice, wide and whole turns', () => {
+-  const spec = CASES.find(({ id }) => id === 'cube3heli')!;
++it.each(['cube2heli', 'cube3heli'] as const)('keeps %s pieces rigid through interleaved face, edge, slice, wide and whole turns', (id) => {
++  const spec = CASES.find((candidate) => candidate.id === id)!;
++  const faceLayers = boundaries(spec.axes[0]).length + 1;
+@@ -373 +383 @@
+-    { move: 'Fv', family: 'F', axis: 0, first: 1, last: 3, amount: 1 },
++    { move: 'Fv', family: 'F', axis: 0, first: 1, last: faceLayers, amount: 1 },
+@@ -375 +385 @@
+-    { move: "Bw'", family: 'B', axis: 0, first: 1, last: 2, amount: -1 },
++    { move: faceLayers === 2 ? "B'" : "Bw'", family: 'B', axis: 0, first: 1, last: faceLayers - 1, amount: -1 },
+@@ -421,0 +432,16 @@
++it('retains independent 2x2 face turns when their cuts leave the Helicopter outline unchanged', () => {
++  const spec = CASES.find(({ id }) => id === 'cube2heli')!;
++  const edgeOnly: Spec = { ...spec, axes: [spec.axes[1]] };
++  for (const normal of Object.values(cubeNormals)) {
++    expect(expectedFace(spec, normal).map(polygonKey).sort())
++      .toEqual(expectedFace(edgeOnly, normal).map(polygonKey).sort());
++  }
++  const puzzle = nativePuzzleKPuzzle(spec.id);
++  for (const face of Object.keys(cubeNormals)) {
++    const turn = puzzle.moveToTransformation(face);
++    expect(turn.repetitionOrder()).toBe(4);
++    expect(turn.transformationData.CORNERS.permutation.filter((piece, index) => piece !== index)).toHaveLength(4);
++    expect(() => parseNativePuzzleAlg(spec.id, `${face}w`)).toThrow();
++  }
++});
++
+@@ -511 +537 @@
+-it.each(['heliskewb', 'cube3heli'] as const)('animates %s mixed-axis moves in both directions with the real PG3D middle matrix and selected pieces', async (id) => {
++it.each(['heliskewb', 'cube2heli', 'cube3heli'] as const)('animates %s mixed-axis moves in both directions with the real PG3D middle matrix and selected pieces', async (id) => {
+diff --git a/core/packages/client/tests/native-puzzle-drag.test.ts b/core/packages/client/tests/native-puzzle-drag.test.ts
+index fd670c2..1fb4f53 100644
+--- a/core/packages/client/tests/native-puzzle-drag.test.ts
++++ b/core/packages/client/tests/native-puzzle-drag.test.ts
+@@ -31,0 +32 @@
++  { id: 'cube2heli', stickers: 48, moves: 42, outer: 18, inner: 12, wide: 12 },
+diff --git a/core/packages/client/tests/native-puzzle-sim-controls.test.ts b/core/packages/client/tests/native-puzzle-sim-controls.test.ts
+index 1faf750..7999dfd 100644
+--- a/core/packages/client/tests/native-puzzle-sim-controls.test.ts
++++ b/core/packages/client/tests/native-puzzle-sim-controls.test.ts
+@@ -45,0 +46 @@
++  { id: 'cube2heli', setup: 'F', alg: "DF U'", manual: '2DF', typed: "FLw' U", reducedTyped: 'FLw U' },
+diff --git a/core/packages/client/tests/native-puzzles-client-integration.test.ts b/core/packages/client/tests/native-puzzles-client-integration.test.ts
+index 0437cfd..519234d 100644
+--- a/core/packages/client/tests/native-puzzles-client-integration.test.ts
++++ b/core/packages/client/tests/native-puzzles-client-integration.test.ts
+@@ -148,2 +148,2 @@
+-  it('mixes real face and edge turns in 3×3 + Helicopter practice scrambles without full-circle edge moves', () => {
+-    const puzzle = nativePuzzleKPuzzle('cube3heli');
++  it.each(['cube2heli', 'cube3heli'] as const)('mixes real face and edge turns in %s practice scrambles without full-circle edge moves', (id) => {
++    const puzzle = nativePuzzleKPuzzle(id);
+@@ -151 +151 @@
+-      const moves = [...parseNativePuzzleAlg('cube3heli', generateNativePuzzleScramble('cube3heli', random)).childAlgNodes()] as Move[];
++      const moves = [...parseNativePuzzleAlg(id, generateNativePuzzleScramble(id, random)).childAlgNodes()] as Move[];
+diff --git a/core/packages/puzzle-solvers/src/native-puzzles.ts b/core/packages/puzzle-solvers/src/native-puzzles.ts
+index 4795461..94240f7 100644
+--- a/core/packages/puzzle-solvers/src/native-puzzles.ts
++++ b/core/packages/puzzle-solvers/src/native-puzzles.ts
+@@ -150,0 +151,10 @@
++  cube2heli: {
++    // Central face cuts coincide with existing Helicopter surface seams but
++    // add real quarter-turns. Face axes have two halves, edge axes three slabs.
++    description: 'c f 0 e 0.7071067811865476',
++    zh: '二阶＋直升机', en: '2×2 + Helicopter', textLabel: '2Heli',
++    axes: [...CUBE_FACE_CORNER_AXES.slice(0, 3), ...CUBE_EDGE_AXES],
++    order: 0, axisOrders: [4, 4, 4, 2, 2, 2, 2, 2, 2],
++    layers: 2, axisLayers: [1, 1, 1, 2, 2, 2, 2, 2, 2],
++    scrambleLength: 60, aspect: 4 / 3, visibleFacelets: 48,
++  },
