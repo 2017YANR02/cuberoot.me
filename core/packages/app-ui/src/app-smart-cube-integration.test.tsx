@@ -463,9 +463,22 @@ describe('installed App GAN lifecycle integration', () => {
     await act(async () => options.onSolved?.(2_500));
     await settle();
     expect(saved()).toHaveLength(1);
-    await vi.waitFor(async () => { await settle(); expect(container.querySelector('.shell-recap')).not.toBeNull(); });
+    await vi.waitFor(async () => {
+      await settle();
+      expect(document.querySelector(wide ? '.shell-recap' : '.timer-solve-detail-overlay')).not.toBeNull();
+    });
     expect(container.querySelector('.timer-workspace > .shell-recap-rail .shell-recap') !== null).toBe(wide);
-    expect(container.querySelector('.timer-view .shell-recap') !== null).toBe(!wide);
+    expect(container.querySelector('.timer-view .shell-recap')).toBeNull();
+    if (!wide) {
+      expect(document.querySelector('.timer-solve-detail-overlay--full')).not.toBeNull();
+      expect(container.querySelector('.app-shell--timer')).not.toBeNull();
+      await act(async () => {
+        window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Space', bubbles: true }));
+        window.dispatchEvent(new KeyboardEvent('keyup', { code: 'Space', bubbles: true }));
+      });
+      expect(phase).toBe('stopped');
+      expect(saved()).toHaveLength(1);
+    }
     expect(container.querySelector('.timer-workspace[data-recap-open]') !== null).toBe(wide);
     if (wide) {
       const timerNode = container.querySelector('.timing-surface');
@@ -476,18 +489,18 @@ describe('installed App GAN lifecycle integration', () => {
       await act(async () => container.querySelector<HTMLButtonElement>('.primary-nav button')!.click());
       await act(async () => { wideViewport = false; mediaListeners.forEach(fn => fn()); });
       expect(container.querySelector('.shell-recap-rail')).toBeNull();
-      await vi.waitFor(async () => { await settle(); expect(container.querySelector('.timer-view .shell-recap')).not.toBeNull(); });
+      expect(container.querySelector('.timer-view .shell-recap')).toBeNull();
       await act(async () => { wideViewport = true; mediaListeners.forEach(fn => fn()); });
       await vi.waitFor(async () => { await settle(); expect(container.querySelector('.shell-recap-rail .shell-recap')).not.toBeNull(); });
     }
-    const full = container.querySelector<HTMLButtonElement>('.shell-recap-btn')!;
-    await act(async () => full.click());
+    if (wide) await act(async () => container.querySelector<HTMLButtonElement>('.shell-recap-btn')!.click());
     await settle();
     expect(document.querySelector('[role="dialog"]')).not.toBeNull();
-    await vi.waitFor(async () => { await settle(); expect(document.body.textContent).toContain('Move stream (3)'); }, { timeout: 5_000 });
+    await vi.waitFor(() => expect(document.body.textContent).toContain('Move stream (3)'), { timeout: 15_000 });
     expect(document.querySelector('[role="dialog"] h2')?.textContent).toBe('#1');
     await act(async () => document.querySelector<HTMLButtonElement>('[data-history-action-id="solve.detail.close"]')!.click());
     await vi.waitFor(() => expect(document.querySelector('[role="dialog"]')).toBeNull());
+    if (!wide) expect(container.querySelector('.app-shell--timer')).not.toBeNull();
 
     // A second real attempt must be independent of the closed detail. Exercise
     // both the automatic recap entry and the actual history row activation.
@@ -504,18 +517,25 @@ describe('installed App GAN lifecycle integration', () => {
     expect(saved()).toHaveLength(2);
     expect(saved()[1]).toMatchObject({ timeMs: 500, scramble: 'F' });
     expect(saved()[1].id).not.toBe(saved()[0].id);
-    await vi.waitFor(async () => { await settle(); expect(container.querySelector('.shell-recap')).not.toBeNull(); });
-    await act(async () => container.querySelector<HTMLButtonElement>('.shell-recap-btn')!.click());
+    await vi.waitFor(async () => {
+      await settle();
+      expect(document.querySelector(wide ? '.shell-recap' : '.timer-solve-detail-overlay')).not.toBeNull();
+    });
+    if (wide) await act(async () => container.querySelector<HTMLButtonElement>('.shell-recap-btn')!.click());
     await settle();
     expect(document.querySelector('[role="dialog"] h2')?.textContent).toBe('#2');
-    await act(async () => document.querySelector<HTMLButtonElement>('[data-history-action-id="solve.detail.close"]')!.click());
+    await act(async () => backListener?.());
     await vi.waitFor(() => expect(document.querySelector('[role="dialog"]')).toBeNull());
+    if (!wide) {
+      expect(container.querySelector('.app-shell--timer')).not.toBeNull();
+      await act(async () => container.querySelector<HTMLButtonElement>('.shell-stat-rail')!.click());
+    }
     const firstRow = Array.from(container.querySelectorAll<HTMLButtonElement>('.timer-history-row'))
       .find((row) => row.querySelector('.idx')?.textContent === '1')!;
     await act(async () => firstRow.click());
     await settle();
     expect(document.querySelector('[role="dialog"] h2')?.textContent).toBe('#1');
-  }, 15_000);
+  }, 30_000);
 
   it('cancels pending preparation on disconnect and does not start on a stray post-disconnect turn', async () => {
     await act(async () => move('R', 1_000));

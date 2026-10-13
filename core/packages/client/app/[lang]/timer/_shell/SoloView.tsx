@@ -285,7 +285,6 @@ const SolveModal = dynamic(() => import('../_components/SolveModal'), { ssr: fal
 // video SDK, charts or configuration UI. Their existing render gates own loading.
 const CompetitionVideoRoom = dynamic(() => import('@/components/platform/CompetitionVideoRoom').then(m => m.CompetitionVideoRoom), { ssr: false });
 const SettingsPanel = dynamic(() => import('../_components/SettingsPanel'), { ssr: false });
-const InspectionRotationDebug = dynamic(() => import('../_components/InspectionRotationDebug').then(m => m.InspectionRotationDebug), { ssr: false });
 const TimerReplayImportModal = dynamic(() => import('@cuberoot/timer-ui').then(m => m.TimerReplayImportModal), { ssr: false });
 const TimerStatisticsWorkspace = dynamic(() => import('@cuberoot/timer-ui').then(m => m.TimerStatisticsWorkspace), { ssr: false });
 const ReconstructModal = dynamic(() => import('../_components/ReconstructModal'), { ssr: false });
@@ -407,8 +406,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const settings = useSettings();
   const authUser = useAuthStore((st) => st.user);
   const isAdmin = useIsAdmin();
-  const [inspectionDebugOn, setInspectionDebugOn] = useState(false);
-  const inspectionDebugEnabled = isAdmin && inspectionDebugOn;
   const competition = useCompetitionAttempt();
   const fakeCubeEnabled = isAdmin && settings.showAdminFakeCube && !competition.enabled;
   const competitionRef = useRef(competition);
@@ -1673,8 +1670,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const bluetoothCube = useBluetoothCube({
     allowSimulated: fakeCubeEnabled,
     // Passing onGyro is what turns the stream on at all (MoYu32 has an explicit
-    // enable opcode), so ask for it when the live view, replay, or admin debug uses it.
-    onGyro: (settings.gyroEnabled || settings.recordGyro || inspectionDebugEnabled)
+    // enable opcode), so ask for it when the live view or replay uses it.
+    onGyro: (settings.gyroEnabled || settings.recordGyro)
       ? (q) => {
         gyroQuatRef.current = q;
         // The scramble reference and current sample recover the net inspection grip at start.
@@ -3249,15 +3246,6 @@ scrambleSlot: <TimerScrambleStrip
             </TimerScrambleStrip>,
 cornerSlot: centerCubeSlot,
 cubeFooter: <>
-  {isAdmin && cubeConnected && <InspectionRotationDebug
-    enabled={inspectionDebugEnabled}
-    onToggle={() => setInspectionDebugOn(value => !value)}
-    quatRef={gyroQuatRef}
-    brand={bluetoothCube.status.brand}
-    phase={timer.phase}
-    displayOrientation={trainingOrientation}
-    resetKey={`${bluetoothCube.status.deviceId}:${currentScrambleEntry.id}`}
-  />}
   {timer.phase === 'running' && liveSolve && <div ref={setLiveStageTarget} className="timer-live-stage" data-no-timer />}
 </>,
 cornerAspect: cubeConnected || cubeStartedRef.current ? undefined : timerCubePreviewAspect(event, previewScramble),

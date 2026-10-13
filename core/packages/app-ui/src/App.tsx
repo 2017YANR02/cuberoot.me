@@ -446,6 +446,8 @@ export function App({ host }: { host: InstalledAppHost }) {
   const [settingsCategory, setSettingsCategory] = useState<TimerSettingCategoryId>('timer');
   const [timerMode, setTimerMode] = useState<TimerPlayersValue>(1);
   const wideLayout = useTimerWideLayout();
+  const wideLayoutRef = useRef(wideLayout);
+  wideLayoutRef.current = wideLayout;
   const compactSoloLayout = useTimerSoloCompactLayout();
   const dockHistory = wideLayout && view === 'history' && timerMode === 1;
   const timerVisible = view === 'timer' || view === 'settings' || dockHistory;
@@ -504,6 +506,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   const [undoToast, setUndoToast] = useState<{ message: string; undo(): void } | null>(null);
   const [historyDetail, setHistoryDetail] = useState<{
     autoFocusComment: boolean;
+    autoRecap: boolean;
     context: string;
     solveId: string;
   } | null>(null);
@@ -1702,6 +1705,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     const active = document.activeElement;
     if (active instanceof HTMLTextAreaElement
       && active.dataset.historyActionId === 'solve.detail.comment') active.blur();
+    if (historyDetailRef.current?.autoRecap) setRecapSolveId(null);
     historyDetailRef.current = null;
     setHistoryDetail(null);
     setOpenOverlay((current) => {
@@ -1711,8 +1715,8 @@ export function App({ host }: { host: InstalledAppHost }) {
     });
   }, []);
 
-  const openHistorySolveDetail = useCallback((solve: Solve, autoFocusComment = false) => {
-    const detail = { autoFocusComment, context: historyContext, solveId: solve.id };
+  const openHistorySolveDetail = useCallback((solve: Solve, autoFocusComment = false, autoRecap = false) => {
+    const detail = { autoFocusComment, autoRecap, context: historyContext, solveId: solve.id };
     historyDetailRef.current = detail;
     setHistoryDetail(detail);
     openOverlayRef.current = TIMER_OVERLAY_IDS.solveDetail;
@@ -1724,13 +1728,12 @@ export function App({ host }: { host: InstalledAppHost }) {
       !== currentWcaMarkIdentity;
     wcaMarksOverlayIdentityRef.current = currentWcaMarkIdentity;
     if (openOverlay === null) return;
-    const available = openOverlay === TIMER_OVERLAY_IDS.sessionSwitcher
+    const available = openOverlay === TIMER_OVERLAY_IDS.solveDetail
+      ? (view === 'timer' || view === 'history') && historyDetailSolve !== null
+      : openOverlay === TIMER_OVERLAY_IDS.sessionSwitcher
       || openOverlay === TIMER_OVERLAY_IDS.historyQuickMenu
       || openOverlay === TIMER_OVERLAY_IDS.historyCompare
-      || openOverlay === TIMER_OVERLAY_IDS.solveDetail
-      ? view === 'history' && (
-        (openOverlay !== TIMER_OVERLAY_IDS.solveDetail || historyDetailSolve !== null)
-      )
+      ? view === 'history'
       : timerVisible && (
         (openOverlay !== TIMER_OVERLAY_IDS.stageSolver || activeEvent === '333')
         && (openOverlay !== TIMER_OVERLAY_IDS.drillPicker
@@ -2363,10 +2366,16 @@ export function App({ host }: { host: InstalledAppHost }) {
       }
       if (recapRevision === recapAttemptRevisionRef.current
         && storeRef.current?.database.activeSessionId === sessionId
+        && activeEventRef.current === solve.event && viewRef.current === 'timer'
         && shouldAutoRecap(solve, storeRef.current?.settings ?? {})) {
         const saved = [...(data.database.dataBySession[sessionId]?.[solve.event] ?? [])].reverse().find((item) => !priorSolveIds.has(item.id)
           && item.timeMs === solve.timeMs && item.scramble === solve.scramble);
-        if (saved) setRecapSolveId(saved.id);
+        if (saved) {
+          // Match Web: narrow screens open full detail over the timer; wide
+          // screens keep the completed reconstruction in the workspace rail.
+          setRecapSolveId(saved.id);
+          if (!wideLayoutRef.current) openHistorySolveDetail(saved, false, true);
+        }
       }
     }).catch(() => {
       setPendingSolves((current) => current.some((pending) => pending.solve === solve)
@@ -2381,6 +2390,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     attemptSplitRecorder,
     currentScrambleEntry,
     markSavedWcaSolve,
+    openHistorySolveDetail,
     recoverLatestStoreSnapshot,
   ]);
 
@@ -4267,7 +4277,6 @@ children: <>
                 )}
               </>
 }}
-        narrowRecap={solveRecap}
         afterTiming={<>
               <div className="surface-chrome">
                 <TimerGoalProgress solves={allSessionSolves} goal={trainingSettings.dailySolveGoal} localize={value => value[language]} />
@@ -4510,6 +4519,9 @@ children: <>
             />
             </div>
             {statsOpen && <TimerStatsModal key={historyContext} event={activeEvent} solves={solves} isZh={language === 'zh'} onClose={() => setStatsOpen(false)} onCopyText={text => host.writeClipboardText(text)} />}
+            </div>
+          </section>
+        )}
             {openOverlay === TIMER_OVERLAY_IDS.solveDetail
               && historyDetailSolve
               && historyDetailIndex >= 0 && (
@@ -4555,9 +4567,6 @@ children: <>
                 ) : undefined}
               />
             )}
-            </div>
-          </section>
-        )}
 
         {view === 'settings' && (
           <TimerSettingsPanel language={language} activeCategory={settingsCategory}
