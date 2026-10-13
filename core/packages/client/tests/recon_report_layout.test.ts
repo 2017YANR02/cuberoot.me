@@ -256,7 +256,8 @@ describe('阶段名和阶段用时只出现一次(2026-08-04)', () => {
     // 同一屏左边那根带游标的轴(SolveTimeline showLabels)已经把四段的名字和
     // 用时画出来了。两处都写等于同一件事说两次,而且两处口径一旦分叉没人看得出来。
     expect(src).not.toMatch(/sml-group-ms/);
-    expect(src).not.toMatch(/data-stage=/);
+    // Stage identity is also used for playback grouping; it must not add a second heading.
+    expect(src.slice(src.indexOf('{groups.map'))).not.toMatch(/sml-group-head|sml-group-name/);
   });
 
   it('组标题只剩打乱那一个', () => {

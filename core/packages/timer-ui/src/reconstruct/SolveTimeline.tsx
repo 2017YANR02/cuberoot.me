@@ -36,8 +36,10 @@ import { useReconstructHost } from './ReconstructHost';
 
 import type { ReconTextLine } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import type { SolveMove } from '@cuberoot/shared/timer/reconstruct/stage-segments';
+import { METHODS, type MethodId } from '@cuberoot/shared/timer/reconstruct/methods';
 
 export interface SolveTimelineProps {
+  method?: MethodId;
   moves: SolveMove[];
   /** 计时总长。所有横坐标都按它归一化。 */
   totalMs: number;
@@ -64,7 +66,8 @@ export interface SolveTimelineHandle {
 type StageKey = 'cross' | 'f2l' | 'oll' | 'pll';
 
 interface StageSpan {
-  key: StageKey;
+  key: string;
+  color: StageKey;
   label: string;
   fromMs: number;
   toMs: number;
@@ -74,7 +77,8 @@ interface StageSpan {
 /** 轨道上的一段:一步的「在看」或「在拧」。 */
 interface Seg {
   key: string;
-  stage: StageKey;
+  stage: string;
+  color: StageKey;
   /** 同阶段里的第几段,用来给四对 F2L 分深浅。 */
   shade: number;
   pause: boolean;
@@ -89,7 +93,7 @@ const stageOfLine = (kind: ReconTextLine['kind']): StageKey => (
 );
 
 export default function SolveTimeline({
-  moves, totalMs, lines, showLabels, currentIdx, onSeek, ref,
+  method = 'cfop', moves, totalMs, lines, showLabels, currentIdx, onSeek, ref,
 }: SolveTimelineProps) {
   const { localize: tr } = useReconstructHost();
   const span = Math.max(1, totalMs);
@@ -102,7 +106,8 @@ export default function SolveTimeline({
     const out: Seg[] = [];
     const seen: Record<string, number> = {};
     for (const line of lines) {
-      const stage = stageOfLine(line.kind);
+      const color = stageOfLine(line.kind);
+      const stage = method === 'cfop' ? color : line.key === 'tail' ? METHODS[method].stages.at(-1)!.key : line.key;
       const shade = seen[stage] ?? 0;
       seen[stage] = shade + 1;
       // 一步从「上一手落下」算起,所以起点是 fromIdx-1 那一手的时刻(第一步从 0 起)。
@@ -112,12 +117,12 @@ export default function SolveTimeline({
       // 否则执行段会算出负宽度盖到下一步头上。
       const recog = Math.max(0, Math.min(line.recognitionMs ?? 0, toMs - fromMs));
       if (recog > 0) {
-        out.push({ key: `${line.key}-p`, stage, shade, pause: true, fromMs, toMs: fromMs + recog });
+        out.push({ key: `${line.key}-p`, stage, color, shade, pause: true, fromMs, toMs: fromMs + recog });
       }
-      out.push({ key: line.key, stage, shade, pause: false, fromMs: fromMs + recog, toMs });
+      out.push({ key: line.key, stage, color, shade, pause: false, fromMs: fromMs + recog, toMs });
     }
     return out;
-  }, [lines, moves]);
+  }, [lines, moves, method]);
 
   const stages = useMemo<StageSpan[]>(() => {
     const label: Record<StageKey, string> = {
@@ -125,15 +130,17 @@ export default function SolveTimeline({
     };
     const out: StageSpan[] = [];
     for (const line of lines) {
-      const key = stageOfLine(line.kind);
+      const color = stageOfLine(line.kind);
+      const key = method === 'cfop' ? color : line.key === 'tail' ? METHODS[method].stages.at(-1)!.key : line.key;
+      const definition = METHODS[method].stages.find(stage => stage.key === key);
       const fromMs = line.fromIdx > 0 ? (moves[line.fromIdx - 1]?.ts ?? 0) : 0;
       const toMs = moves[line.toIdx]?.ts ?? fromMs;
       const last = out[out.length - 1];
       if (last && last.key === key) { last.toMs = toMs; last.ms += toMs - fromMs; }
-      else out.push({ key, label: label[key], fromMs, toMs, ms: toMs - fromMs });
+      else out.push({ key, color, label: method === 'cfop' ? label[color] : definition ? tr(definition) : line.label ?? key, fromMs, toMs, ms: toMs - fromMs });
     }
     return out;
-  }, [lines, moves, tr]);
+  }, [lines, moves, tr, method]);
 
   if (moves.length === 0) return null;
 
@@ -202,6 +209,7 @@ export default function SolveTimeline({
               key={s.key}
               className="stl-seg"
               data-stage={s.stage}
+              data-color={s.color}
               data-shade={Math.min(3, s.shade)}
               data-pause={s.pause ? '' : undefined}
               style={{ left: pct(s.fromMs / span), width: pct(w) }}
@@ -220,6 +228,7 @@ export default function SolveTimeline({
               key={`${s.key}-${i}`}
               className="stl-cap"
               data-stage={s.key}
+              data-color={s.color}
               style={{ left: pct(s.fromMs / span), width: pct((s.toMs - s.fromMs) / span) }}
             >
               {s.label}

@@ -814,15 +814,15 @@ button.stl-track:focus-visible { outline: 2px solid var(--ring); outline-offset:
   --stl-c: var(--muted-foreground);
   background: var(--stl-c);
 }
-.stl-seg[data-stage='cross'] { --stl-c: var(--rc-stage-cross); }
-.stl-seg[data-stage='f2l']   { --stl-c: var(--rc-stage-f2l); }
-.stl-seg[data-stage='oll']   { --stl-c: var(--rc-stage-oll); }
-.stl-seg[data-stage='pll']   { --stl-c: var(--rc-stage-pll); }
+.stl-seg[data-color='cross'] { --stl-c: var(--rc-stage-cross); }
+.stl-seg[data-color='f2l']   { --stl-c: var(--rc-stage-f2l); }
+.stl-seg[data-color='oll']   { --stl-c: var(--rc-stage-oll); }
+.stl-seg[data-color='pll']   { --stl-c: var(--rc-stage-pll); }
 /* 四对 F2L 同一个蓝但逐对退一档 —— 暗的停顿已经把它们分开了,深浅只是让
    「第几对」不用数也看得出来。退太多会让第 4 对看着像背景,所以只走到 64%。 */
-.stl-seg[data-stage='f2l'][data-shade='1'] { --stl-c: color-mix(in srgb, var(--rc-stage-f2l) 88%, var(--background)); }
-.stl-seg[data-stage='f2l'][data-shade='2'] { --stl-c: color-mix(in srgb, var(--rc-stage-f2l) 76%, var(--background)); }
-.stl-seg[data-stage='f2l'][data-shade='3'] { --stl-c: color-mix(in srgb, var(--rc-stage-f2l) 64%, var(--background)); }
+.stl-seg[data-color='f2l'][data-shade='1'] { --stl-c: color-mix(in srgb, var(--rc-stage-f2l) 88%, var(--background)); }
+.stl-seg[data-color='f2l'][data-shade='2'] { --stl-c: color-mix(in srgb, var(--rc-stage-f2l) 76%, var(--background)); }
+.stl-seg[data-color='f2l'][data-shade='3'] { --stl-c: color-mix(in srgb, var(--rc-stage-f2l) 64%, var(--background)); }
 /* 停顿:同一个色压暗,所以「这段发呆属于哪一步」不用连线也看得出来。 */
 .stl-seg[data-pause] { background: color-mix(in srgb, var(--stl-c) 26%, transparent); }
 .stl-cursor {
@@ -847,10 +847,10 @@ button.stl-track:focus-visible { outline: 2px solid var(--ring); outline-offset:
 }
 .stl-times .stl-cap { color: var(--foreground); font-weight: 600; }
 .stl-names .stl-cap { letter-spacing: 0.06em; }
-.stl-names .stl-cap[data-stage='cross'] { color: var(--rc-stage-cross); }
-.stl-names .stl-cap[data-stage='f2l']   { color: var(--rc-stage-f2l); }
-.stl-names .stl-cap[data-stage='oll']   { color: var(--rc-stage-oll); }
-.stl-names .stl-cap[data-stage='pll']   { color: var(--rc-stage-pll); }
+.stl-names .stl-cap[data-color='cross'] { color: var(--rc-stage-cross); }
+.stl-names .stl-cap[data-color='f2l']   { color: var(--rc-stage-f2l); }
+.stl-names .stl-cap[data-color='oll']   { color: var(--rc-stage-oll); }
+.stl-names .stl-cap[data-color='pll']   { color: var(--rc-stage-pll); }
 
 /* ── 分步动作列表 ─────────────────────────────────────────────────────
    动作 + 标注 + 徽章。没有卡片框,层级全靠留白和字重。 */
@@ -921,7 +921,7 @@ button.sml-moves:focus-visible { outline: 2px solid var(--ring); outline-offset:
 /* Chromium 103 installed hosts: custom properties accept color-mix text even
    when the paint property cannot, so give timeline colors an explicit fallback. */
 @supports not (color: color-mix(in srgb, white, black)) {
-  .stl-seg[data-stage='f2l'][data-shade] { --stl-c: var(--rc-stage-f2l); }
+  .stl-seg[data-color='f2l'][data-shade] { --stl-c: var(--rc-stage-f2l); }
   .stl-seg[data-pause] { background: var(--stl-c); opacity: 0.26; }
 }
 

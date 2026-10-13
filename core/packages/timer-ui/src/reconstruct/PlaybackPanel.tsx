@@ -63,6 +63,7 @@ import { buildCoreTrack, coreTrackPoseAt } from '@cuberoot/shared/timer/reconstr
 import type { HumanRotation } from '@cuberoot/shared/timer/reconstruct/humanize';
 import type { ReconTextLine } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import type { SolveMove } from '@cuberoot/shared/timer/reconstruct/stage-segments';
+import type { MethodId } from '@cuberoot/shared/timer/reconstruct/methods';
 import SolveTimeline from './SolveTimeline';
 import type { SolveTimelineHandle } from './SolveTimeline';
 
@@ -71,6 +72,7 @@ import type { SolveTimelineHandle } from './SolveTimeline';
 const SimCubeView = lazy(() => import('../SimCubeView'));
 
 interface Props {
+  method?: MethodId;
   event: EventId;
   scramble: string;
   moves: SolveMove[];
@@ -104,7 +106,7 @@ function formatSec(ms: number, digits = 2): string {
 }
 
 export default function PlaybackPanel({
-  event, scramble, moves, totalMs, lines, rotations, side, gyro, deviceModel, viewRotation,
+  method, event, scramble, moves, totalMs, lines, rotations, side, gyro, deviceModel, viewRotation,
 }: Props) {
   const { localize: tr, BoolToggle = DefaultBoolToggle } = useReconstructHost();
   // /sim 只画 NxN;这里只有 3x3 会有动作流(智能魔方就这一种),别的项目退回预览图。
@@ -354,6 +356,7 @@ export default function PlaybackPanel({
         {/* showLabels:这是这一页上唯一一根轴了(报告顶部那根删了),所以阶段名和
             阶段用时归它 —— 一根没有标注的彩条只能看出「有几段」。 */}
         <SolveTimeline
+          method={method}
           ref={timelineRef}
           moves={moves}
           totalMs={totalMs}
