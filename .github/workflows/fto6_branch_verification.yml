@@ -1,4 +1,4 @@
-# Temporary task workspace. Remove before merging; never runs on main or PR code.
+# Temporary isolated workspace; remove this file before merging the feature.
 name: Six-layer FTO branch verification
 on:
   push:
@@ -33,15 +33,6 @@ jobs:
             /.agents/skills/sim-add-puzzle/
             /.github/workflows/
             /tools/cstimer-scramble/
-      - name: Export relevant tracked source for code review
-        run: |
-          mkdir -p core/.tmp/fto6
-          tar -czf core/.tmp/fto6/review-source.tar.gz -- AGENTS.md .agents/skills/sim-add-puzzle 'core/packages/client/app/[lang]/sim' 'core/packages/client/app/[lang]/scramble/gen' core/packages/client/components/TwistySection.tsx core/packages/client/components/NativePuzzleControls.tsx core/packages/client/components/PuzzlePicker core/packages/client/components/PlaybackBar.tsx core/packages/client/components/ScramblePreview2D.tsx core/packages/client/lib/native-scramble.ts core/packages/client/lib/twisty-playback.ts core/packages/client/lib/sim_timing.ts core/packages/shared/src/timer core/packages/timer-ui/src core/packages/puzzle-solvers/src/native-puzzles.ts core/packages/puzzle-solvers/src/native-puzzle-model.ts core/packages/puzzle-render-core/src/native-puzzle-svg.ts
-      - uses: actions/upload-artifact@v4
-        with:
-          name: fto6-review-source
-          path: core/.tmp/fto6/review-source.tar.gz
-          retention-days: 7
       - uses: pnpm/action-setup@v6
         with:
           package_json_file: core/package.json
@@ -50,90 +41,113 @@ jobs:
           node-version-file: .node-version
           cache: pnpm
           cache-dependency-path: core/pnpm-lock.yaml
-      - name: Apply narrowly scoped registry integration
+      - name: Apply reviewed regression fixes
         run: |
+          mkdir -p core/.tmp/fto6
           node --input-type=module <<'NODE'
           import { readFileSync, writeFileSync } from 'node:fs';
-          const changed = [];
-          function edit(path, transform) {
-            const before = readFileSync(path, 'utf8');
-            const after = transform(before);
-            if (after !== before) { writeFileSync(path, after); changed.push(path); }
+          function edit(path, before, after) {
+            const text = readFileSync(path, 'utf8');
+            if (text.includes(after)) return;
+            if (text.split(before).length !== 2) throw new Error(`Expected one anchor in ${path}: ${before}`);
+            writeFileSync(path, text.replace(before, after));
           }
-          function replaceOnce(text, needle, replacement) {
-            if (text.split(needle).length !== 2) throw new Error(`Expected one exact anchor: ${needle}`);
-            return text.replace(needle, replacement);
-          }
-          function addSibling(path, marker, map, expected = 1) {
-            edit(path, text => {
-              if (text.includes('fto6')) return text;
-              const rows = text.split('\n');
-              const matches = rows.filter(line => line.includes(marker));
-              if (matches.length !== expected) throw new Error(`Expected ${expected} siblings in ${path}; found ${matches.length}`);
-              return rows.flatMap(line => line.includes(marker) ? [line, map(line)] : [line]).join('\n');
-            });
-          }
-          const six = text => text.replaceAll('fto5', 'fto6').replaceAll('FTO5', 'FTO6').replaceAll('5-layer', '6-layer').replaceAll('五阶', '六阶');
-          edit('core/packages/puzzle-solvers/src/native-puzzles.ts', text => {
-            if (text.includes('  fto6: {')) return text;
-            const anchor = "  fto5: {\n    description: 'o f 0.2 f 0.6', zh: '五阶 FTO', en: '5-layer FTO', textLabel: 'FTO5',\n    axes: OCTAHEDRON_FACE_AXES, order: 3, layers: 3, rangeWide: true,\n    scrambleLength: 60, aspect: 4 / 3, visibleFacelets: 200,\n  },";
-            const entry = "\n  fto6: {\n    description: 'o f 0 f 0.3333333333333333 f 0.6666666666666666', zh: '六阶 FTO', en: '6-layer FTO', textLabel: 'FTO6',\n    axes: OCTAHEDRON_FACE_AXES, order: 3, layers: 3, rangeWide: true,\n    scrambleLength: 72, aspect: 4 / 3, visibleFacelets: 288,\n  },";
-            return replaceOnce(text, anchor, anchor + entry);
-          });
-          edit('core/packages/shared/src/timer/types.ts', text => {
-            if (text.includes("| 'fto6'")) return text;
-            text = replaceOnce(text, "| 'fto5' |", "| 'fto5' | 'fto6' |");
-            const row = "  { id: 'fto5', nameEn: '5-layer FTO', nameZh: '五阶 FTO', group: 'nonwca' },";
-            return replaceOnce(text, row, row + '\n' + six(row));
-          });
-          addSibling('core/packages/shared/src/timer/event-catalog.ts', "id: 'fto5'", six);
-          addSibling('core/packages/shared/src/timer/scramble-runtime.ts', '  fto5:', six);
-          addSibling('core/packages/shared/src/timer/export-cstimer.ts', '  fto5:', six, 2);
-          addSibling('core/packages/shared/src/timer/import-cstimer.ts', "'5layerfto'", text => six(text).replaceAll('5layerfto', '6layerfto').replaceAll('5×5fto', '6×6fto').replaceAll('5x5fto', '6x6fto'));
-          addSibling('core/packages/client/components/NativePuzzleControls.tsx', '  fto5:', six);
-          edit('core/packages/client/app/[lang]/sim/puzzleOptions.ts', text => text.includes("'fto6'") ? text : replaceOnce(text, "'masterftov2', 'fto5',", "'masterftov2', 'fto5', 'fto6',"));
-          addSibling('core/packages/client/tests/timer_cstimer_io.test.ts', "event: 'fto5'", six);
-          addSibling('core/packages/client/tests/timer_event_catalog.test.ts', "['fto5',", six);
-          edit('.agents/skills/sim-add-puzzle/references/native-pg-puzzles.md', text => {
-            if (text.includes('## Six-layer FTO')) return text;
-            return text + '\n\n## Six-layer FTO\n\n`fto6`（六阶 FTO / 6-layer FTO）沿用 [Jaap 的 FTO 面转与平行切面说明](https://www.jaapsch.net/puzzles/octaface.htm)，将正八面体每条边六等分。这是独立构造的均匀六阶结构，不声称复刻某个商品。内切球半径为 1 时，切深为 0、±1/3、±2/3，描述为 `o f 0 f 0.3333333333333333 f 0.6666666666666666`。每面 36 个等面积三角形，共 288 个可见贴片；6 个四贴片角块、48 个双贴片棱块、168 个单贴片中心块，共 222 块。\n\n每步面转 120°。八个面向均提供 `A`、`2A`、`3A`、`1-2A`、`1-3A`，沿用原生 FaceRenamingMapper 范围记号，不拼接无效 `Aw`。六阶两侧的第三层互不相同，不能沿用五阶的中央层反向别名。普通和种子入口共用 72 步有界随机转动，仅供练习，不伪造 csTimer 类型或宣称均匀随机状态。\n\n三入口矩阵：模拟器复用原生手动操作、拖转、播放、记录和分享；Timer 保留独立 `fto6` 会话及 `cuberootEvent` 导出元数据；生成页比赛、批量、输入以及 PDF 使用同一完整八面展开 SVG。菜单归入“FTO 与八面体”，结构图标由现有 `generate-puzzle-icons.mts` 生成。\n\n开工平面对比先核对四阶旧切线、六阶新切线及固定三角包络。`fto6-native-geometry.test.ts` 独立核对贴片面积、表面块数、40 种动作的顺时针刚体对应、宽转组合与两侧第三层区别；跨入口、种子、导入导出及 SVG/PDF 继续由既有逐原生项目契约覆盖。测试结果、浏览器能力和正式部署是单独的验收证据；二维回退通过不等于三维拖转通过。\n';
-          });
-          edit('.agents/skills/sim-add-puzzle/SKILL.md', text => text.includes('Six-layer FTO') ? text : text + '\n\n## 六阶 FTO 的偶数阶接入要点\n\n新增相邻切割的偶数阶 FTO 时，按 [Six-layer FTO](references/native-pg-puzzles.md#six-layer-fto) 核对中心切面、对侧层的独立性与原生范围记号。`fto6` 复用同一注册表和三入口，不复制引擎；保留两侧第三层是不同物理层的负例，以及图标、计时导入导出和完整八面 SVG 的契约。\n');
-          writeFileSync('core/.tmp/fto6/patched-files.json', JSON.stringify(changed, null, 2));
-          console.log(changed.join('\n'));
+          const importer = 'core/packages/shared/src/timer/import-cstimer.ts';
+          const anchor = "  // Preserve the FTO order before the standalone 5/FTO tokens resolve to 555/fto.";
+          edit(importer, anchor, "  // Match the complete six-layer name before generic 6/FTO tokens.\n  if (/(?:^|[^a-z0-9])6(?:[\\s_-]+layer|\\s*[x×]\\s*6)[\\s_-]+fto(?:$|[^a-z0-9])|六阶[\\s_-]*fto/i.test(name)) {\n    return normalizeEventKey('fto6');\n  }\n" + anchor);
+          const geometry = 'core/packages/client/tests/fto6-native-geometry.test.ts';
+          edit(geometry, "import { Vector3 } from 'three';", "import { Vector3 } from 'three';\nimport { Move } from 'cubing/alg';");
+          edit(geometry, 'const grip = geometry.axis.find((axis) => axis.quantumMove.toString() === family)!;', 'const grip = geometry.axis.find((axis) => geometry.notationMapper\n        .notationToExternal(new Move(axis.quantumMove.toString()))?.family === family)!;');
+          const catalog = 'core/packages/client/tests/timer_event_catalog.test.ts';
+          edit(catalog, "'quadx', 'dinoocta', 'fto5', 'eto',", "'quadx', 'dinoocta', 'fto5', 'fto6', 'eto',");
+          edit(catalog, '76-event partition', '77-event partition');
+          edit(catalog, 'expect(pickerIds).toHaveLength(76);', 'expect(pickerIds).toHaveLength(77);');
+          const drag = 'core/packages/client/tests/native-puzzle-drag.test.ts';
+          const row = "  { id: 'fto5', stickers: 200, moves: 40, outer: 8, inner: 8, wide: 8, inner3: 8, wide3: 8 },";
+          edit(drag, row, row + '\n' + row.replace('fto5', 'fto6').replace('200', '288'));
           NODE
-      - name: Install pinned workspace dependencies
-        working-directory: core
-        run: pnpm install --frozen-lockfile
-      - name: Build shared runtime exports
-        working-directory: core
-        run: pnpm --filter @cuberoot/client build:deps
-      - name: Generate the matching structural icon
+      - name: Install and build the actual workspace
         working-directory: core
         run: |
-          pnpm --filter @cuberoot/client exec node scripts/generate-puzzle-icons.mts
-          pnpm --filter @cuberoot/event-icon generate
-      - name: Commit only this task's registry and generated changes
-        run: |
-          git diff --check
-          git diff > core/.tmp/fto6/integration.diff
-          git add core/packages/puzzle-solvers/src/native-puzzles.ts core/packages/shared/src/timer/types.ts core/packages/shared/src/timer/event-catalog.ts core/packages/shared/src/timer/scramble-runtime.ts core/packages/shared/src/timer/import-cstimer.ts core/packages/shared/src/timer/export-cstimer.ts
-          git add 'core/packages/client/app/[lang]/sim/puzzleOptions.ts' core/packages/client/components/NativePuzzleControls.tsx core/packages/client/tests/timer_cstimer_io.test.ts core/packages/client/tests/timer_event_catalog.test.ts
-          git add core/packages/event-icon/svg/puzzle/fto6.svg core/packages/event-icon/src .agents/skills/sim-add-puzzle/SKILL.md .agents/skills/sim-add-puzzle/references/native-pg-puzzles.md
-          if ! git diff --cached --quiet; then
-            git config user.name 'github-actions[bot]'
-            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git commit -m 'feat(sim): integrate six-layer FTO across simulator and scramble tools'
-            git push origin HEAD:refs/heads/codex/add-six-layer-fto-20261013
-          fi
-          git rev-parse HEAD | tee core/.tmp/fto6/tested-sha.txt
-      - name: Typecheck the actual client
-        working-directory: core
-        run: pnpm --filter @cuberoot/client typecheck 2>&1 | tee .tmp/fto6/typecheck.log
+          pnpm install --frozen-lockfile
+          pnpm --filter @cuberoot/client build:deps
+          pnpm --filter @cuberoot/client typecheck 2>&1 | tee .tmp/fto6/typecheck.log
       - name: Run geometry, gestures, previews and timer contracts
         working-directory: core
         run: |
-          pnpm --filter @cuberoot/client exec vitest run tests/fto6-native-geometry.test.ts tests/native-puzzles-client-integration.test.ts tests/native-puzzle-svg.test.ts tests/native-puzzle-drag.test.ts tests/native-puzzle-sim-controls.test.ts tests/puzzle-icon-catalog.test.ts tests/timer_battle_event_sync.test.ts tests/timer_nonwca_scramble.test.ts tests/timer_cstimer_io.test.ts tests/timer_event_catalog.test.ts 2>&1 | tee .tmp/fto6/tests.log
+          pnpm --filter @cuberoot/client exec vitest run tests/fto6-native-geometry.test.ts tests/native-puzzles-client-integration.test.ts tests/native-puzzle-svg.test.ts tests/native-puzzle-drag.test.ts tests/native-puzzle-sim-controls.test.ts tests/puzzle-icon-catalog.test.ts tests/timer_battle_event_sync.test.ts tests/timer_nonwca_scramble.test.ts tests/timer_cstimer_io.test.ts tests/timer_event_catalog.test.ts tests/twisty_2d_fallback.test.ts 2>&1 | tee .tmp/fto6/tests.log
+      - name: Commit the verified scoped corrections and export review source
+        run: |
+          git diff --check
+          git diff > core/.tmp/fto6/corrections.diff
+          git add core/packages/shared/src/timer/import-cstimer.ts core/packages/client/tests/fto6-native-geometry.test.ts core/packages/client/tests/native-puzzle-drag.test.ts core/packages/client/tests/timer_event_catalog.test.ts
+          if ! git diff --cached --quiet; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git commit -m 'fix(sim): preserve six-layer FTO imports and validate mapped drag axes'
+            git push origin HEAD:refs/heads/codex/add-six-layer-fto-20261013
+          fi
+          git rev-parse HEAD | tee core/.tmp/fto6/tested-sha.txt
+          git archive --format=tar.gz -o core/.tmp/fto6/review-source.tar.gz HEAD AGENTS.md .agents/skills/sim-add-puzzle core/packages/client/tests 'core/packages/client/app/[lang]/sim' 'core/packages/client/app/[lang]/timer' 'core/packages/client/app/[lang]/scramble/gen' core/packages/client/components/PuzzlePicker core/packages/client/components/AlgInput.tsx core/packages/client/components/ScramblePreview2D.tsx core/packages/client/components/puzzle-models/gestures core/packages/shared/src/timer core/packages/timer-ui/src core/packages/puzzle-solvers/src/native-puzzles.ts core/packages/puzzle-solvers/src/native-puzzle-model.ts
+      - name: Install real Chromium
+        working-directory: core
+        run: pnpm --filter @cuberoot/client exec playwright install --with-deps chromium
+      - name: Probe real pages in Chromium with and without WebGL
+        working-directory: core
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+        run: |
+          pnpm --filter @cuberoot/client dev > .tmp/fto6/dev.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          for n in {1..120}; do
+            if curl -fsS http://127.0.0.1:3000/zh/sim > /dev/null; then break; fi
+            sleep 2
+          done
+          cat > packages/client/scripts/native-puzzles/.fto6-probe.mjs <<'NODE'
+          import { chromium } from '@playwright/test';
+          import { mkdirSync, writeFileSync } from 'node:fs';
+          import { resolve } from 'node:path';
+          const out = resolve('../../.tmp/fto6');
+          mkdirSync(out, { recursive: true });
+          const report = [];
+          for (const mode of ['webgl', 'fallback']) {
+            const browser = await chromium.launch({ headless: true, args: mode === 'webgl' ? ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] : ['--disable-webgl'] });
+            const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, permissions: ['clipboard-read', 'clipboard-write'] });
+            const page = await context.newPage();
+            const errors = [];
+            page.on('pageerror', error => errors.push(String(error)));
+            const routes = mode === 'webgl' ? ['/zh/sim?puzzle=fto6', '/sim?puzzle=fto6', '/zh/timer?event=fto6', '/zh/scramble/gen?mode=batch', '/zh/scramble/gen?mode=paste', '/zh/scramble/gen'] : ['/zh/sim?puzzle=fto6'];
+            for (let i = 0; i < routes.length; i++) {
+              const route = routes[i];
+              const key = `${mode}-${i}`;
+              let error = null;
+              let status;
+              try {
+                status = (await page.goto(`http://127.0.0.1:3000${route}`, { waitUntil: 'domcontentloaded', timeout: 120000 }))?.status();
+                if (route.includes('/sim')) await page.locator('.twisty-native-controls').waitFor({ timeout: 90000 });
+                else await page.waitForTimeout(5000);
+                await page.waitForTimeout(2500);
+              } catch (e) { error = String(e); }
+              await page.screenshot({ path: `${out}/${key}.png`, fullPage: true });
+              writeFileSync(`${out}/${key}.txt`, await page.locator('body').innerText());
+              writeFileSync(`${out}/${key}.html`, await page.content());
+              report.push({ route, mode, status, error, errors: [...errors], url: page.url(), fallback: await page.locator('.twisty-section--2d').count(), inputs: await page.locator('textarea,input,select,button,[contenteditable]').evaluateAll(els => els.map(el => ({ tag: el.tagName, role: el.getAttribute('role'), label: el.getAttribute('aria-label'), placeholder: el.getAttribute('placeholder'), title: el.getAttribute('title'), text: el.textContent?.slice(0,120), class: el.className }))) });
+              if (mode === 'webgl' && route === '/zh/sim?puzzle=fto6') {
+                await page.getByLabel('转动记号', { exact: true }).selectOption('3F');
+                await page.locator('.twisty-fallback-move').click();
+                await page.waitForTimeout(1500);
+                await page.screenshot({ path: `${out}/webgl-manual-3F.png`, fullPage: true });
+                writeFileSync(`${out}/webgl-manual-3F.txt`, await page.locator('body').innerText());
+              }
+            }
+            await browser.close();
+          }
+          writeFileSync(`${out}/browser-probe.json`, JSON.stringify(report, null, 2));
+          console.log(JSON.stringify(report.map(({ inputs, ...rest }) => rest), null, 2));
+          if (report.some(row => row.error || row.status !== 200)) process.exitCode = 1;
+          NODE
+          pnpm --filter @cuberoot/client exec node scripts/native-puzzles/.fto6-probe.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
