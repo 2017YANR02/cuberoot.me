@@ -18,6 +18,12 @@ it.each(['roux', 'zz'] as const)('%s preserves slice gestures, pose and complete
     core: buildCoreTrack(samples, { brand, moves }), physical: { scramble, moves }, viewRotation: view.rotation,
   });
   const items = result.lines.flatMap(line => line.moveRanges!);
+  expect(result.methodStages!.reduce((sum, stage) => sum + (stage.turns ?? 0), 0)).toBe(result.stm);
+  for (const line of result.lines.filter(line => line.key !== 'tail')) {
+    const stage = result.methodStages!.find(stage => stage.key === line.key)!;
+    expect(stage.endIdx).toBe(line.toIdx);
+    expect(stage.stepMs).toBe(line.stepMs);
+  }
   expect(items.some(item => /^M2/.test(item.token) && item.endIdx > item.startIdx)).toBe(true);
   expect(result.lines.some(line => (method === 'roux' ? ['fb', 'sb', 'cmll', 'lse'] : ['eoline', 'zzleft', 'zzright', 'll']).includes(line.key))).toBe(true);
   const covered = items.flatMap(item => Array.from({ length: Math.max(0, item.endIdx - item.startIdx + 1) }, (_, i) => item.startIdx + i));

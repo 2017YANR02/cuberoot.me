@@ -66,6 +66,8 @@ import { wastedDisplaySpans } from './error_detect';
 import type { HumanRotation } from './humanize';
 import { walkMethod } from './method_walk';
 import type { MethodId } from './methods';
+import type { MethodStageMetric } from './method_walk';
+import { metricForRange } from './step_metrics';
 import type { F2lSlotsResult } from './f2l_slots';
 import { facePermFor } from './gyro_orient';
 import type { SolveMove, StageSegments } from './stage_segments';
@@ -98,6 +100,8 @@ export interface ReconTextLine {
 }
 
 export interface ReconTextResult {
+  /** Method metrics use the exact gesture boundaries rendered by playback. */
+  methodStages?: MethodStageMetric[];
   /**
    * **这把真正的打乱** —— 计时器发的那一条,和成绩里存的、和粘到 cubedb 去的
    * 逐字相同。
@@ -691,6 +695,21 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
       : (moves[spans.filter(span => span.kind === 'cross' || span.kind === 'f2l').at(-1)?.endIdx ?? -1]?.ts ?? f2lEndMs),
   };
   const countedHumanized = humanizeStream(quarterMoves(moves), humanizeOptions);
+  let metricEnd = -1;
+  let metricTs = moves[0]?.ts ?? 0;
+  const methodStages = methodWalk?.stages.map(stage => {
+    const endIdx = snappedSpans.find(span => span.key === stage.key)?.endIdx ?? stage.endIdx;
+    if (endIdx === null) return stage;
+    if (endIdx <= metricEnd) return { ...stage, endIdx, skipped: true, turns: 0, tps: null,
+      recognitionMs: 0, executionMs: 0, stepMs: 0, cumulativeMs: metricTs };
+    const metric = metricForRange(moves, counted, metricEnd, metricTs, endIdx);
+    const turns = countedHumanized.moves.filter(move => move.startIdx > metricEnd && move.startIdx <= endIdx).length;
+    metricEnd = endIdx; metricTs = metric.cumulativeMs;
+    const updated = { ...stage, ...metric, endIdx, turns, tps: metric.executionMs > 0 ? turns / (metric.executionMs / 1000) : null };
+    const span = spans.find(item => item.key === stage.key);
+    if (span) Object.assign(span, { recognitionMs: updated.recognitionMs, executionMs: updated.executionMs, stepMs: updated.stepMs });
+    return updated;
+  });
   const humanized = preserveMoves.size === 0 ? countedHumanized
     : humanizeStream(quarterMoves(moves), { ...humanizeOptions, preserveMoves });
   const wasteGroupsFor = (items: WovenItem[]) => items.map(item => {
@@ -834,6 +853,7 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
   return {
     // 原始打乱 + 观察转体。共轭过的那条只在这个模块内部用(识别、切分),不出门。
     scramble: phys.scramble,
+    methodStages,
     inspection: viewRot,
     lines,
     turns,
