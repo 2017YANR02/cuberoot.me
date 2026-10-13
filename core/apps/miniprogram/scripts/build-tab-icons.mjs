@@ -7,6 +7,7 @@ const require = createRequire(import.meta.url);
 const iconsByPage = new Map([
   ['pages/timer/index', 'timer'],
   ['pages/tools/index', 'layout-grid'],
+  ['pages/training/index', 'dumbbell'],
   ['pages/account/index', 'user-round'],
 ]);
 
