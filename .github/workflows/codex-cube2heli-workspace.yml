@@ -7,59 +7,30 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   workspace:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-          filter: blob:none
-          sparse-checkout-cone-mode: false
-          sparse-checkout: |
-            /.node-version
-            /AGENTS.md
-            /.agents/
-            /.github/
-            /.codex/
-            /.githooks/
-            /core/
-            !/core/packages/platform/
-            /docs/
-            /ops/
-            /scripts/
-            /.sync/
-            /sync_upstream.ts
-            /tools/cstimer-scramble/
-            /solver/333opt/inject.mjs
-            /solver/333opt/data_paths.mjs
-      - uses: pnpm/action-setup@v6
-        with:
-          package_json_file: core/package.json
-      - uses: actions/setup-node@v6
-        with:
-          node-version-file: .node-version
-          cache: pnpm
-          cache-dependency-path: core/pnpm-lock.yaml
-      - name: Install and build the existing client dependency closure
-        working-directory: core
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm --filter @cuberoot/client build:deps
-      - name: Package source and dependency snapshot without credentials
-        shell: bash
-        run: |
-          mkdir -p /tmp/cube2heli-runtime
-          cp "$(command -v node)" /tmp/cube2heli-runtime/node
-          node --version > /tmp/cube2heli-runtime/node-version.txt
-          git rev-parse HEAD > /tmp/cube2heli-runtime/source-commit.txt
-          tar --exclude='.git' --exclude='.env' --exclude='.env.*' --exclude='.password.md' --exclude='.next' --exclude='target' -czf /tmp/cube2heli-workspace.tar.gz AGENTS.md .node-version .agents .github .codex .githooks core docs ops scripts .sync sync_upstream.ts tools/cstimer-scramble solver/333opt/inject.mjs solver/333opt/data_paths.mjs -C /tmp cube2heli-runtime
-          du -h /tmp/cube2heli-workspace.tar.gz
-      - uses: actions/upload-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           name: cube2heli-workspace
-          path: /tmp/cube2heli-workspace.tar.gz
+          run-id: 38373025016
+          github-token: ${{ github.token }}
+          path: /tmp/cube2heli-download
+      - name: Split the existing credential-free source and dependency snapshot
+        run: split -b 350M /tmp/cube2heli-download/cube2heli-workspace.tar.gz /tmp/cube2heli-part-
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cube2heli-part-aa
+          path: /tmp/cube2heli-part-aa
+          retention-days: 1
+          compression-level: 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cube2heli-part-ab
+          path: /tmp/cube2heli-part-ab
           retention-days: 1
           compression-level: 0
