@@ -83,7 +83,7 @@ const SIM_PUZZLE_FAMILIES: readonly SimPuzzleFamily[] = [
   },
   {
     id: 'octahedron', labelZh: 'FTO 与八面体', labelEn: 'FTO & octahedra',
-    values: ['fto', 'masterfto', 'masterftov2', 'fto5', 'skewbdiamond', 'christophersjewel',
+    values: ['fto', 'masterfto', 'masterftov2', 'fto5', 'fto6', 'skewbdiamond', 'christophersjewel',
       'trajbersoctahedron', 'octahedron4', 'dinoocta', 'eto', 'comboctahedron', 'octastar'],
   },
   {

@@ -97,6 +97,7 @@ const CSTIMER_EVENT_MAP: Record<string, EventId> = {
   'quadx': 'quadx',
   'dinoocta': 'dinoocta', 'dinooct': 'dinoocta', '恐龙八面体': 'dinoocta',
   'fto5': 'fto5', '5layerfto': 'fto5', '5×5fto': 'fto5', '5x5fto': 'fto5', '五阶fto': 'fto5',
+  'fto6': 'fto6', '6layerfto': 'fto6', '6×6fto': 'fto6', '6x6fto': 'fto6', '六阶fto': 'fto6',
   'eto': 'eto', 'eitanseto': 'eto', "eitan'seto": 'eto', 'eitan’seto': 'eto', 'eto棱转八面体': 'eto',
   'radiocrystal': 'radiocrystal', 'radiocr': 'radiocrystal',
   'cube3skewb': 'cube3skewb', '3skewb': 'cube3skewb',
@@ -208,6 +209,10 @@ function nameToEvent(name: unknown): { event: EventId; matched: boolean } {
   }
   if (tokens.some((token, index) => token === 'deep' && tokens[index + 1] === 'cut' && tokens[index + 2] === 'icosahedron') || name.includes('深切角转二十面体')) {
     return normalizeEventKey('icosababyface');
+  }
+  // Match the complete six-layer name before generic 6/FTO tokens.
+  if (/(?:^|[^a-z0-9])6(?:[\s_-]+layer|\s*[x×]\s*6)[\s_-]+fto(?:$|[^a-z0-9])|六阶[\s_-]*fto/i.test(name)) {
+    return normalizeEventKey('fto6');
   }
   // Preserve the FTO order before the standalone 5/FTO tokens resolve to 555/fto.
   if (/(?:^|[^a-z0-9])5(?:[\s_-]+layer|\s*[x×]\s*5)[\s_-]+fto(?:$|[^a-z0-9])|五阶[\s_-]*fto/i.test(name)) {

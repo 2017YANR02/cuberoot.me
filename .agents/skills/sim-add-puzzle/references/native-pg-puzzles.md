@@ -197,3 +197,13 @@
 - 扩展现有独立半空间、交错转动与 PG3D 中间帧用例，并遍历手动选择、拖转层、二维回退、分享锚点、Timer 外层预览与双进口 round-trip；独立模型和 jsdom 中间帧均不等于浏览器 3D 拖拽实测。
 
 - 新增 Timer 项目还会改变完整项目分区、选择器图标／文字徽标数量与三来源矩阵；同步检查 `timer_event_catalog.test.ts`、`timer-puzzle-picker.test.ts`、`timer-drill-contract-shared.test.ts`、app-ui 的 `scramble-source-matrix.audit.test.ts`，并在 `timer-sync-seed.test.ts` 验证普通／种子打乱共用原生生成器。保留完整名单与数量断言，不以删除断言消除目录漂移。
+
+## Six-layer FTO
+
+`fto6`（六阶 FTO / 6-layer FTO）沿用 [Jaap 的 FTO 面转与平行切面说明](https://www.jaapsch.net/puzzles/octaface.htm)，将正八面体每条边六等分。这是独立构造的均匀六阶结构，不声称复刻某个商品。内切球半径为 1 时，切深为 0、±1/3、±2/3，描述为 `o f 0 f 0.3333333333333333 f 0.6666666666666666`。每面 36 个等面积三角形，共 288 个可见贴片；6 个四贴片角块、48 个双贴片棱块、168 个单贴片中心块，共 222 块。
+
+每步面转 120°。八个面向均提供 `A`、`2A`、`3A`、`1-2A`、`1-3A`，沿用原生 FaceRenamingMapper 范围记号，不拼接无效 `Aw`。六阶两侧的第三层互不相同，不能沿用五阶的中央层反向别名。普通和种子入口共用 72 步有界随机转动，仅供练习，不伪造 csTimer 类型或宣称均匀随机状态。
+
+三入口矩阵：模拟器复用原生手动操作、拖转、播放、记录和分享；Timer 保留独立 `fto6` 会话及 `cuberootEvent` 导出元数据；生成页比赛、批量、输入以及 PDF 使用同一完整八面展开 SVG。菜单归入“FTO 与八面体”，结构图标由现有 `generate-puzzle-icons.mts` 生成。
+
+开工平面对比先核对四阶旧切线、六阶新切线及固定三角包络。`fto6-native-geometry.test.ts` 独立核对贴片面积、表面块数、40 种动作的顺时针刚体对应、宽转组合与两侧第三层区别；跨入口、种子、导入导出及 SVG/PDF 继续由既有逐原生项目契约覆盖。测试结果、浏览器能力和正式部署是单独的验收证据；二维回退通过不等于三维拖转通过。
