@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { ANDROID_RELEASE_CERTIFICATE, ANDROID_RELEASE_URL, parseAndroidRelease } from '../../packages/shared/src/android-release.ts';
 import { playClient } from './play.ts';
 import { parseOptions } from './options.ts';
+import { affectsAndroidBuild } from './inputs.ts';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 const { values, flags } = parseOptions(process.argv.slice(2));
@@ -63,6 +64,14 @@ try {
   } else {
     run('git', ['fetch', 'origin', 'main']);
     const commit = run('git', ['rev-parse', 'origin/main']);
+    if (previous && !track && !buildOnly) {
+      const changes = run('git', ['diff', '--name-only', previous.commit, commit]).split('\n').filter(Boolean);
+      if (!changes.some(affectsAndroidBuild)) {
+        console.log(`No Android changes since ${previous.versionName} (${previous.versionCode}); existing APK retained.`);
+        rmSync(lock, { recursive: true, force: true });
+        process.exit(0);
+      }
+    }
     const versionCode = Math.max(previous?.versionCode ?? 1004, playState?.maxVersionCode ?? 1004) + 1;
     const requestId = randomUUID();
     directory = join(configDir, 'builds', `${versionCode}-${requestId}`);

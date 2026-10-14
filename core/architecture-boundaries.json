@@ -23,16 +23,16 @@
       "from": "apps/mobile release build CLI",
       "to": "repository-owned Android Gradle wrapper",
       "phase": "subprocess-native",
-      "mechanism": "One spawnSync call selecting only the Windows or POSIX Gradle wrapper; validated direct/play channel, fixed assembleRelease arguments and Android working directory; shell enabled only for the Windows batch wrapper",
+      "mechanism": "One spawnSync call selecting only the Windows or POSIX Gradle wrapper; validated direct/play channel, allowlisted assembleRelease or Play bundleRelease arguments and Android working directory; shell enabled only for Windows. Unsigned staging requires an explicit CI-only flag; production signing remains on the maintainer host.",
       "owner": "mobile release",
       "rationale": "The existing signed Android release command invokes the native Gradle toolchain outside the TypeScript runtime.",
-      "replacement": "Keep build-only with a fixed wrapper, argument allowlist and required release signing; never accept arbitrary commands or invoke from app runtime.",
+      "replacement": "Keep the fixed wrapper and argument allowlist; local releases require signing. Only the manually dispatched GitHub build may create unsigned staging for separately verified local signing; never invoke from app runtime.",
       "subprocessCalls": [
         {"file":"apps/mobile/scripts/build-android.ts","mechanism":"spawnSync","target":"<dynamic>","count":1}
       ],
       "evidence": [
         {"file":"core/apps/mobile/scripts/build-android.ts","contains":"const channel = process.argv[2];\nif (channel !== 'direct' && channel !== 'play') throw new Error('Expected direct or play distribution');"},
-        {"file":"core/apps/mobile/scripts/build-android.ts","contains":"const result = spawnSync(process.platform === 'win32' ? '.\\\\gradlew.bat' : './gradlew', [\n  'assembleRelease', `-PmobileDistribution=${channel}`, '--no-daemon', '--max-workers=2',\n], {\n  cwd: fileURLToPath(new URL('../android', import.meta.url)),\n  stdio: 'inherit',\n  shell: process.platform === 'win32',\n  env: { ...process.env, MOBILE_REQUIRE_RELEASE_SIGNING: 'true' },\n});"},
+        {"file":"core/apps/mobile/scripts/build-android.ts","contains":"const result = spawnSync(process.platform === 'win32' ? '.\\\\gradlew.bat' : './gradlew', [\n  ...(bundle ? ['bundleRelease'] : ['assembleRelease']), `-PmobileDistribution=${channel}`, '--no-daemon', '--max-workers=2',\n], {\n  cwd: fileURLToPath(new URL('../android', import.meta.url)),\n  stdio: 'inherit',\n  shell: process.platform === 'win32',\n  env: { ...process.env, MOBILE_REQUIRE_RELEASE_SIGNING: unsignedCi ? 'false' : 'true' },\n});"},
         {"file":"core/apps/mobile/package.json","contains":"node scripts/build-android.ts direct"},
         {"file":"core/apps/mobile/package.json","contains":"node scripts/build-android.ts play"}
       ]
