@@ -22,7 +22,7 @@
 - 加 `--only-play --play production`：仅提交 Play，不切换官网下载包；仍复用同一构建/签名实现。
 - 加 `--build-only`：只构建、正式签名并保存，暂不发布；验收后用输出的 `--resume <目录>` 发布同一批文件，无需重建。
 
-只有手动 workflow_dispatch 触发 Android Release Build；普通 push 不会发包。入口固定最新 origin/main 提交，不打包当前目录未提交内容；云端依赖/Gradle缓存减少重复工作，Mac 仅签名发布。私钥、密码、Play 服务账号文件始终留在维护者电脑；配置路径见 `core/scripts/android-release/release.ts --help`，配置仅存文件位置，不存密码。云端产物是 unsigned staging，不能直接给用户安装。
+只有手动 workflow_dispatch 触发 Android Release Build；普通 push 不会发包。仅发官网包时，若相对上次版本没有 Android/共享库/构建输入变化则跳过（仅网站/API/文档变化不会重打）；显式 build-only 和 Play 发布不跳过。入口固定最新 origin/main 提交，不打包当前目录未提交内容；云端依赖/Gradle缓存减少重复工作，Mac 仅签名发布。私钥、密码、Play 服务账号文件始终留在维护者电脑；配置路径见 `core/scripts/android-release/release.ts --help`，配置仅存文件位置，不存密码。云端产物是 unsigned staging，不能直接给用户安装。
 
 版本号从官网清单和（选择 Play 时）API 已用版本的最大值递增。官网发布有本机锁、服务端锁、校验和、证书/包名检查、禁止同名覆盖与降级；上传校验完成后原子替换 latest.apk，随后原子替换 latest.json。每次构建的提交、版本、校验值和发布回执保存在本机 builds 目录。失败保留产物；官网成功而 Play 失败时分别报告，不宣称同时上线。
 
