@@ -1,11 +1,13 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { createReadStream } from 'node:fs';
-import { copyFile, lstat, mkdir, open, rename, rm, stat, writeFile } from 'node:fs/promises';
-import { basename, resolve } from 'node:path';
+import { copyFile, link, lstat, mkdir, open, realpath, rename, rm, writeFile } from 'node:fs/promises';
+import { basename, dirname, resolve } from 'node:path';
 import {
   CUBEOPT_ARTIFACT_SCHEMA,
   CUBEOPT_PROTOCOL,
+  CUBEOPT_RUST_OPT8,
   cubeoptBundleVariant,
+  cubeoptEngineContract,
   cubeoptVariantContractFromModuleName,
   syncDirectoryDurably,
   verifyCubeoptBundle,
@@ -32,21 +34,26 @@ async function fileEntry(path, expectedName) {
   if (basename(path) !== expectedName) {
     throw new Error(`${path} must be named ${expectedName}`);
   }
-  const info = await stat(path);
+  const info = await lstat(path);
   if (!info.isFile()) throw new Error(`${path} is not a regular file`);
   return { path: expectedName, bytes: info.size, sha256: await hashFile(path) };
 }
 
-export function cubeoptArtifactContractFromModulePath(modulePath) {
+export function cubeoptArtifactContractFromModulePath(modulePath, engine = 'emscripten') {
   const moduleName = basename(modulePath);
+  if (engine !== 'emscripten') {
+    const contract = cubeoptEngineContract('opt8', engine);
+    if (moduleName !== contract.files.module) throw new Error(`${modulePath} must be named ${contract.files.module}`);
+    return contract;
+  }
   return cubeoptVariantContractFromModuleName(moduleName);
 }
 
-export function detectCubeoptArtifactSources({ modulePath, wasmPath, tablePath }) {
-  const contract = cubeoptArtifactContractFromModulePath(modulePath);
-  const inputs = { module: modulePath, wasm: wasmPath, table: tablePath };
+export function detectCubeoptArtifactSources({ modulePath, wasmPath, workerPath, snapshotPath, tablePath, engine = 'emscripten' }) {
+  const contract = cubeoptArtifactContractFromModulePath(modulePath, engine);
+  const inputs = { module: modulePath, wasm: wasmPath, worker: workerPath, snapshot: snapshotPath, table: tablePath };
   for (const [role, expectedName] of Object.entries(contract.files)) {
-    if (basename(inputs[role]) !== expectedName) {
+    if (typeof inputs[role] !== 'string' || basename(inputs[role]) !== expectedName) {
       throw new Error(`${inputs[role]} must be named ${expectedName} for ${contract.variant}`);
     }
   }
@@ -68,6 +75,9 @@ export async function assertCubeoptArtifactSources(manifest, {
     wasmPath: inputs.wasm,
     tablePath: inputs.table,
   });
+  if ((manifest.engine ?? 'emscripten') !== 'emscripten') {
+    throw new Error('existing immutable bundle engine does not match legacy sources');
+  }
   if (manifest.variant !== contract.variant) {
     throw new Error(`existing immutable bundle variant ${manifest.variant} does not match ${contract.variant} legacy sources`);
   }
@@ -92,7 +102,11 @@ export async function prepareCubeoptArtifact({
   bundle: rawBundle,
   modulePath: rawModulePath,
   wasmPath: rawWasmPath,
+  workerPath: rawWorkerPath,
+  snapshotPath: rawSnapshotPath,
   tablePath: rawTablePath,
+  engine = 'emscripten',
+  linkTable = false,
   sourceUrl,
   sourceRevision,
   sourceBuildCommand,
@@ -110,10 +124,20 @@ export async function prepareCubeoptArtifact({
     wasm: resolve(required(rawWasmPath, 'wasm')),
     table: resolve(required(rawTablePath, 'table')),
   };
+  if (engine === 'rust-wasm') {
+    inputs.worker = resolve(required(rawWorkerPath, 'worker'));
+    inputs.snapshot = resolve(required(rawSnapshotPath, 'snapshot'));
+  } else if (rawWorkerPath || rawSnapshotPath) {
+    throw new Error('--worker and --snapshot require --engine rust-wasm');
+  }
+  if (typeof linkTable !== 'boolean') throw new Error('--link-table must be a boolean');
   const contract = detectCubeoptArtifactSources({
     modulePath: inputs.module,
     wasmPath: inputs.wasm,
     tablePath: inputs.table,
+    workerPath: inputs.worker,
+    snapshotPath: inputs.snapshot,
+    engine,
   });
   if (cubeoptBundleVariant(bundle, '--bundle') !== contract.variant) {
     throw new Error(`--bundle must start with cubeopt-${contract.variant}- and contain only portable characters`);
@@ -135,12 +159,28 @@ export async function prepareCubeoptArtifact({
   for (const role of Object.keys(names)) {
     files[role] = await fileEntry(inputs[role], names[role]);
   }
+  let linkedSource;
+  if (linkTable) {
+    // Reuse only a fully verified, already published immutable bundle. Logical
+    // immutability does not require chmod: changing an old inode's mode would
+    // also mutate the retained rollback bundle. All table access here is read-only.
+    linkedSource = await verifyCubeoptBundle(dirname(inputs.table), { allowFixtureSizes });
+    if (basename(linkedSource.root) !== linkedSource.manifest.bundle
+      || await realpath(inputs.table) !== linkedSource.tablePath
+      || linkedSource.manifest.variant !== contract.variant
+      || linkedSource.manifest.files.table.sha256 !== files.table.sha256
+      || linkedSource.manifest.files.table.bytes !== files.table.bytes) {
+      throw new Error('--link-table requires the matching table from a verified immutable bundle');
+    }
+  }
 
   const manifest = {
     schema: CUBEOPT_ARTIFACT_SCHEMA,
     bundle,
     variant: contract.variant,
     protocol: CUBEOPT_PROTOCOL,
+    ...(engine === 'rust-wasm' ? { engine, abiVersion: CUBEOPT_RUST_OPT8.abiVersion,
+      memory64: true, sharedTable: true, maxThreads: CUBEOPT_RUST_OPT8.maxThreads } : {}),
     source,
     files,
   };
@@ -150,6 +190,16 @@ export async function prepareCubeoptArtifact({
   try {
     for (const role of Object.keys(names)) {
       const destination = resolve(stagingDir, names[role]);
+      if (role === 'table' && linkedSource) {
+        const sourceInfo = await lstat(inputs.table);
+        if (sourceInfo.dev !== (await lstat(stagingDir)).dev) throw new Error('--link-table requires the same filesystem; copying is not a fallback');
+        await link(inputs.table, destination);
+        const linkedInfo = await lstat(destination);
+        if (linkedInfo.dev !== sourceInfo.dev || linkedInfo.ino !== sourceInfo.ino) throw new Error('--link-table inode changed during linking');
+        // The existing table is never opened for writing, chmodded, or copied.
+        // The staging directory fsync below persists its new hard-link entry.
+        continue;
+      }
       await copyFile(inputs[role], destination);
       await syncFile(destination);
     }

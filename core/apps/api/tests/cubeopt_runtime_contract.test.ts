@@ -1,8 +1,10 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { Writable } from 'node:stream';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createBootDeadline } from '../src/cubeopt/boot-deadline.js';
-import { DEFAULT_CUBEOPT_IDLE_MS, resolveCubeoptIdleMs } from '../src/cubeopt/config.js';
+import { cubeoptInputWriter } from '../src/cubeopt/daemon-input.js';
+import { assertCubeoptReadyLine, DEFAULT_CUBEOPT_IDLE_MS, resolveCubeoptIdleMs, resolveCubeoptThreads } from '../src/cubeopt/config.js';
 import { assertCubeoptSmokeResult } from '../src/cubeopt/smoke-contract.js';
 import { assertCubeoptLoadMemory, requiredCubeoptLoadBytes, CUBEOPT_LOAD_FLOOR_BYTES } from '../src/cubeopt/memory-budget.js';
 
@@ -11,6 +13,31 @@ afterEach(() => {
 });
 
 describe('CubeOpt runtime contracts', () => {
+  it('handles asynchronous EPIPE once without writing later queued requests', async () => {
+    const writes: string[] = [], failures: Error[] = [];
+    const pipe = new Writable({ write(chunk, _encoding, callback) {
+      writes.push(chunk.toString());
+      queueMicrotask(() => callback(Object.assign(new Error('closed'), { code: 'EPIPE' })));
+    } });
+    const send = cubeoptInputWriter(pipe, error => failures.push(error));
+    send('first');
+    await new Promise(resolve => setImmediate(resolve));
+    send('second');
+    expect(writes).toEqual(['first']);
+    expect(failures).toHaveLength(1);
+    expect(failures[0]).toMatchObject({ code: 'EPIPE' });
+  });
+  it('checks the actual configured thread count in READY', () => {
+    expect(resolveCubeoptThreads('4')).toBe(4);
+    expect(resolveCubeoptThreads(undefined)).toBe(2);
+    for (const value of ['0', '-1', '1.5', '17', 'NaN']) {
+      expect(() => resolveCubeoptThreads(value)).toThrow(/THREADS/);
+    }
+    expect(() => assertCubeoptReadyLine('READY\t4', 4)).not.toThrow();
+    for (const line of ['READY', 'READY\t1', 'READY\t4extra']) {
+      expect(() => assertCubeoptReadyLine(line, 4)).toThrow(/configured threads/);
+    }
+  });
   it('refuses a full table load without service headroom and enforces a loading floor', () => {
     const tableBytes = 7_782_727_680;
     expect(requiredCubeoptLoadBytes(tableBytes)).toBe(8_856_469_504);

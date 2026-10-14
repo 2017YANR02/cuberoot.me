@@ -2,10 +2,21 @@ import { createHash, randomUUID } from 'node:crypto';
 import { createReadStream } from 'node:fs';
 import { lstat, open, readFile, realpath, rename, unlink } from 'node:fs/promises';
 import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 export const CUBEOPT_ARTIFACT_SCHEMA = 'cuberoot.cubeopt-artifact/v1';
 export const CUBEOPT_POINTER_SCHEMA = 'cuberoot.cubeopt-current/v1';
 export const CUBEOPT_PROTOCOL = 1;
+export const CUBEOPT_RUST_OPT8 = Object.freeze({
+  engine: 'rust-wasm', variant: 'opt8', abiVersion: 2,
+  memory64: true, sharedTable: true, maxThreads: 4,
+  tableBytes: 7_782_727_680, snapshotBytes: 818_008,
+  files: Object.freeze({
+    module: 'cube48opt-rust8.mjs', wasm: 'cube48opt-rust8.wasm',
+    worker: 'cube48opt-rust8-worker.mjs', snapshot: 'cube48opt8.small.bin',
+    table: 'h48prun31h8.dat',
+  }),
+});
 export const CUBEOPT_VARIANTS = Object.freeze({
   opt5: Object.freeze({
     files: Object.freeze({
@@ -57,6 +68,13 @@ export function cubeoptVariantContract(rawVariant) {
   return Object.freeze({ variant, ...contract });
 }
 
+export function cubeoptEngineContract(variant, engine = 'emscripten') {
+  const contract = cubeoptVariantContract(variant);
+  if (engine === 'emscripten') return Object.freeze({ ...contract, engine });
+  if (engine === 'rust-wasm' && variant === 'opt8') return CUBEOPT_RUST_OPT8;
+  throw artifactError(`unsupported engine/variant ${JSON.stringify(engine)}/${JSON.stringify(variant)}`);
+}
+
 export function cubeoptVariantContractFromModuleName(rawModuleName) {
   const moduleName = requireNonEmptyString(rawModuleName, 'module filename');
   const entry = Object.entries(CUBEOPT_VARIANTS)
@@ -85,13 +103,18 @@ function validateManifest(manifest, { allowFixtureSizes }) {
   }
   const bundle = requireNonEmptyString(manifest.bundle, 'bundle');
   const variant = requireNonEmptyString(manifest.variant, 'variant');
-  const contract = cubeoptVariantContract(variant);
+  const contract = cubeoptEngineContract(variant, manifest.engine);
   const variantFromBundle = cubeoptBundleVariant(bundle);
   if (variantFromBundle !== variant) {
     throw artifactError(`bundle variant ${variantFromBundle} does not match manifest variant ${variant}`);
   }
   if (manifest.protocol !== CUBEOPT_PROTOCOL) {
     throw artifactError(`protocol must be ${CUBEOPT_PROTOCOL}, got ${JSON.stringify(manifest.protocol)}`);
+  }
+  if (contract.engine === 'rust-wasm') {
+    for (const field of ['abiVersion', 'memory64', 'sharedTable', 'maxThreads']) {
+      if (manifest[field] !== contract[field]) throw artifactError(`${field} must be ${contract[field]} for Rust Opt8`);
+    }
   }
 
   const source = manifest.source;
@@ -105,6 +128,9 @@ function validateManifest(manifest, { allowFixtureSizes }) {
   const files = manifest.files;
   if (!files || typeof files !== 'object' || Array.isArray(files)) {
     throw artifactError('files must be an object');
+  }
+  if (Object.keys(files).some((role) => !Object.hasOwn(contract.files, role))) {
+    throw artifactError('files contains a role outside the selected engine contract');
   }
   for (const [role, expectedPath] of Object.entries(contract.files)) {
     const entry = files[role];
@@ -124,8 +150,42 @@ function validateManifest(manifest, { allowFixtureSizes }) {
   if (!allowFixtureSizes && files.table.bytes !== contract.tableBytes) {
     throw artifactError(`${variant} table must be ${contract.tableBytes} bytes, got ${files.table.bytes}`);
   }
+  if (contract.engine === 'rust-wasm' && !allowFixtureSizes && files.snapshot.bytes !== contract.snapshotBytes) {
+    throw artifactError(`opt8 snapshot must be ${contract.snapshotBytes} bytes, got ${files.snapshot.bytes}`);
+  }
 
   return contract;
+}
+
+async function verifyRustAbi(paths, contract) {
+  // A genuine empty instance proves the ABI without allocating a PDB, reading
+  // the snapshot or starting workers. No Emscripten filename markers are used.
+  const { default: create } = await import(pathToFileURL(paths.modulePath).href);
+  if (typeof create !== 'function') throw artifactError('Rust module must export a factory');
+  const probe = await create({ variant: 8, threads: 4, instantiateOnly: true,
+    wasmBinary: await readFile(paths.wasmPath),
+    workerURL: pathToFileURL(paths.workerPath), snapshotURL: pathToFileURL(paths.snapshotPath) });
+  if (!(probe?.wasmInstance instanceof WebAssembly.Instance)
+    || !(probe.wasmMemory instanceof WebAssembly.Memory)
+    || !(probe.wasmMemory.buffer instanceof SharedArrayBuffer)
+    || probe.wasmMemory.buffer.byteLength > 16 * 1024 * 1024) {
+    throw artifactError('Rust ABI probe must use one bounded, shared empty WASM instance');
+  }
+  const api = probe.wasmInstance.exports;
+  for (const [name, expected] of Object.entries({ cubeopt_abi_version: contract.abiVersion,
+    cubeopt_pointer_bytes: 8, cubeopt_max_threads: contract.maxThreads })) {
+    if (typeof api[name] !== 'function' || api[name]() !== expected) {
+      throw artifactError(`Rust WASM ${name} must return ${expected}`);
+    }
+  }
+  if (typeof api.cubeopt_supports_variant !== 'function' || api.cubeopt_supports_variant(8) !== 1) {
+    throw artifactError('Rust WASM cubeopt_supports_variant must support Opt8');
+  }
+  if (probe.metadata?.implementation !== 'cuberoot-rust-opt-shared-wasm'
+    || probe.metadata.abiVersion !== contract.abiVersion || probe.metadata.variant !== 8
+    || probe.metadata.threads !== 4 || probe.metadata.sharedTable !== true) {
+    throw artifactError('Rust wrapper metadata does not match its verified WASM ABI');
+  }
 }
 
 function sha256File(path) {
@@ -247,6 +307,12 @@ export async function verifyCubeoptBundle(bundleDir, { allowFixtureSizes = false
       throw artifactError(`${role} sha256 mismatch: manifest=${manifest.files[role].sha256}, actual=${actualHash}`);
     }
     paths[`${role}Path`] = path;
+  }
+
+  if (contract.engine === 'rust-wasm') {
+    await verifyRustAbi(paths, contract);
+    return Object.freeze({ root: canonicalRoot, manifestPath,
+      manifest: Object.freeze(manifest), ...paths });
   }
 
   // The generated Node wrapper hard-codes both adjacent filenames for its wasm

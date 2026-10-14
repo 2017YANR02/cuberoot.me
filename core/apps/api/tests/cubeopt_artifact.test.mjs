@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { mkdir, mkdtemp, readFile, readdir, rename, rm, symlink, writeFile } from 'node:fs/promises';
+import { lstat, mkdir, mkdtemp, readFile, readdir, rename, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -11,6 +11,7 @@ import {
   CUBEOPT_ARTIFACT_SCHEMA,
   CUBEOPT_POINTER_SCHEMA,
   CUBEOPT_PROTOCOL,
+  CUBEOPT_RUST_OPT8,
   CUBEOPT_VARIANTS,
   cubeoptBundleVariant,
   cubeoptVariantContract,
@@ -87,11 +88,131 @@ async function writeManifest(root, manifest) {
   await writeFile(join(root, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
 }
 
+// Real, tiny WASM: four ABI functions and one shared page, no search/table code.
+function rustAbiFixture({ abi = 2, variant = 8, pointerBytes = 8, maxThreads = 4 } = {}) {
+  const uleb = (value) => { const bytes = []; do { let byte = value & 127; value >>>= 7; if (value) byte |= 128; bytes.push(byte); } while (value); return bytes; };
+  const text = (value) => [...uleb(Buffer.byteLength(value)), ...Buffer.from(value)];
+  const section = (id, bytes) => [id, ...uleb(bytes.length), ...bytes];
+  const names = ['cubeopt_abi_version', 'cubeopt_supports_variant', 'cubeopt_pointer_bytes', 'cubeopt_max_threads'];
+  return Buffer.from([
+    0, 97, 115, 109, 1, 0, 0, 0,
+    ...section(1, [2, 0x60, 0, 1, 0x7f, 0x60, 1, 0x7f, 1, 0x7f]),
+    ...section(3, [4, 0, 1, 0, 0]),
+    ...section(5, [1, 7, 1, 1]),
+    ...section(7, [5, ...names.flatMap((name, i) => [...text(name), 0, i]), ...text('memory'), 2, 0]),
+    ...section(10, [4, 4, 0, 0x41, abi, 0x0b, 7, 0, 0x20, 0, 0x41, variant, 0x46, 0x0b,
+      ...[pointerBytes, maxThreads].flatMap((value) => [4, 0, 0x41, value, 0x0b])]),
+  ]);
+}
+
+async function makeRustFixture({ abi, variant, pointerBytes, maxThreads } = {}) {
+  const fixture = await makeFixture({ variant: 'opt8', bundle: 'cubeopt-opt8-rust-fixture' });
+  const { root, manifest } = fixture;
+  const contents = {
+    module: Buffer.from(`export default async ({ instantiateOnly, wasmBinary, variant, threads }) => {
+      if (!instantiateOnly || variant !== 8 || threads !== 4) throw new Error('fixture must remain bounded');
+      const { instance } = await WebAssembly.instantiate(wasmBinary);
+      return { wasmInstance: instance, wasmMemory: instance.exports.memory,
+        metadata: { implementation: 'cuberoot-rust-opt-shared-wasm', abiVersion: 2, variant: 8, threads: 4, sharedTable: true } };
+    };\n`),
+    wasm: rustAbiFixture({ abi, variant, pointerBytes, maxThreads }),
+    worker: Buffer.from('// hashed worker fixture; never executed\n'),
+    snapshot: Buffer.from('hashed snapshot fixture'),
+    table: await readFile(join(root, 'h48prun31h8.dat')),
+  };
+  Object.assign(manifest, { engine: 'rust-wasm', abiVersion: 2, memory64: true, sharedTable: true, maxThreads: 4 });
+  manifest.files = {};
+  for (const [role, name] of Object.entries(CUBEOPT_RUST_OPT8.files)) {
+    await writeFile(join(root, name), contents[role]);
+    manifest.files[role] = { path: name, bytes: contents[role].length, sha256: sha256(contents[role]) };
+  }
+  await writeManifest(root, manifest);
+  return fixture;
+}
+
 afterEach(async () => {
   await Promise.all(scratchDirs.splice(0).map((path) => rm(path, { recursive: true, force: true })));
 });
 
 describe('CubeOpt artifact bundle', () => {
+  it('accepts explicit Rust Opt8 with a real bounded shared WASM ABI probe', async () => {
+    const { store, bundle } = await makeRustFixture();
+    await promoteCubeoptBundle(store, bundle, { allowFixtureSizes: true });
+    const artifact = await loadCubeoptArtifact(store, { allowFixtureSizes: true });
+    expect(artifact.manifest.engine).toBe('rust-wasm');
+    expect(artifact.workerPath).toBe(join(artifact.root, CUBEOPT_RUST_OPT8.files.worker));
+    expect(artifact.snapshotPath).toBe(join(artifact.root, CUBEOPT_RUST_OPT8.files.snapshot));
+  });
+
+  it.each(['worker', 'snapshot'])('rejects missing or tampered Rust %s bytes', async (role) => {
+    const { root } = await makeRustFixture();
+    const path = join(root, CUBEOPT_RUST_OPT8.files[role]);
+    const bytes = await readFile(path);
+    await rm(path);
+    await expect(verifyCubeoptBundle(root, { allowFixtureSizes: true })).rejects.toThrow(new RegExp(`missing ${role} file`));
+    bytes[0] ^= 1;
+    await writeFile(path, bytes);
+    await expect(verifyCubeoptBundle(root, { allowFixtureSizes: true })).rejects.toThrow(new RegExp(`${role} sha256 mismatch`));
+  });
+
+  it.each([
+    [{ abi: 1 }, 'cubeopt_abi_version'], [{ variant: 9 }, 'cubeopt_supports_variant'],
+    [{ pointerBytes: 4 }, 'cubeopt_pointer_bytes'], [{ maxThreads: 1 }, 'cubeopt_max_threads'],
+  ])('rejects rehashed incompatible Rust ABI %j', async (changes, field) => {
+    const { root } = await makeRustFixture(changes);
+    await expect(verifyCubeoptBundle(root, { allowFixtureSizes: true })).rejects.toThrow(new RegExp(field));
+  });
+
+  it('rejects Rust engine/variant/manifest mixing without changing current', async () => {
+    const { root, manifest } = await makeRustFixture();
+    manifest.variant = 'opt6';
+    await writeManifest(root, manifest);
+    await expect(verifyCubeoptBundle(root, { allowFixtureSizes: true })).rejects.toThrow(/unsupported engine\/variant/);
+    manifest.variant = 'opt8'; delete manifest.engine;
+    await writeManifest(root, manifest);
+    await expect(verifyCubeoptBundle(root, { allowFixtureSizes: true })).rejects.toThrow(/role outside/);
+    manifest.engine = 'rust-wasm'; manifest.abiVersion = 1;
+    await writeManifest(root, manifest);
+    await expect(verifyCubeoptBundle(root, { allowFixtureSizes: true })).rejects.toThrow(/abiVersion must be 2/);
+  });
+
+  it('hard-links a verified old table without copying or changing its bytes or mode', async () => {
+    const old = await makeFixture({ variant: 'opt8', bundle: 'cubeopt-opt8-existing-table' });
+    const rust = await makeRustFixture();
+    await promoteCubeoptBundle(old.store, old.bundle, { allowFixtureSizes: true });
+    const oldPath = join(old.root, CUBEOPT_RUST_OPT8.files.table);
+    const before = await lstat(oldPath);
+    const beforePointer = await readFile(join(old.store, 'current.json'), 'utf8');
+    const result = await prepareCubeoptArtifact({
+      storeDir: old.store, bundle: 'cubeopt-opt8-rust-linked', engine: 'rust-wasm', linkTable: true,
+      modulePath: join(rust.root, CUBEOPT_RUST_OPT8.files.module),
+      wasmPath: join(rust.root, CUBEOPT_RUST_OPT8.files.wasm),
+      workerPath: join(rust.root, CUBEOPT_RUST_OPT8.files.worker),
+      snapshotPath: join(rust.root, CUBEOPT_RUST_OPT8.files.snapshot), tablePath: oldPath,
+      sourceUrl: 'fixture://rust', sourceRevision: 'test-only', sourceBuildCommand: 'fixture', allowFixtureSizes: true,
+    });
+    const linked = await lstat(join(result.finalDir, CUBEOPT_RUST_OPT8.files.table));
+    const after = await lstat(oldPath);
+    expect([linked.dev, linked.ino]).toEqual([before.dev, before.ino]);
+    expect(after.mode).toBe(before.mode); expect(after.mtimeMs).toBe(before.mtimeMs);
+    expect(after.nlink).toBe(before.nlink + 1);
+    expect(await readFile(join(old.store, 'current.json'), 'utf8')).toBe(beforePointer);
+    await verifyCubeoptBundle(old.root, { allowFixtureSizes: true });
+    await verifyCubeoptBundle(result.finalDir, { allowFixtureSizes: true });
+  });
+
+  it('refuses hard-linking an unverified or modified source bundle', async () => {
+    const source = await makeFixture({ variant: 'opt8' });
+    const target = join(source.store, 'other-store');
+    await writeFile(join(source.root, 'h48prun31h8.dat'), 'modified bytes');
+    await expect(prepareCubeoptArtifact({ storeDir: target, bundle: 'cubeopt-opt8-bad-link', linkTable: true,
+      modulePath: join(source.root, 'cube48opt8.mjs'), wasmPath: join(source.root, 'cube48opt8.wasm'),
+      tablePath: join(source.root, 'h48prun31h8.dat'), sourceUrl: 'fixture://link', sourceRevision: 'test',
+      sourceBuildCommand: 'fixture', allowFixtureSizes: true,
+    })).rejects.toThrow(/table (size|sha256) mismatch/);
+    expect(await readdir(join(target, 'bundles'))).toEqual([]);
+  });
+
   it('prefers the artifact store and strips all legacy path variables', () => {
     const env = {
       CUBEOPT_SOLVE_ENABLED: '1',
