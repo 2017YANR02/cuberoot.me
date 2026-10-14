@@ -101,7 +101,6 @@
 
 .shell-topbar .pp-trigger { color: var(--foreground); }
 .shell-topbar .pp-trigger--active .pp-trigger-icon { color: var(--accent); }
-.shell-topbar-left .shell-scramble-source-select .timer-scramble-source-trigger,
 .shell-topbar .shell-topbar-left .timer-difficulty-trigger {
   background: transparent;
   border-color: transparent;
