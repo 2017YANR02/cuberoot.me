@@ -19,8 +19,7 @@
 //   out: "READY\t<threads>"            once, when the table is loaded
 //        "<id>\t<htm>\t<solution>"     success (solution = optimal HTM solve seq)
 //        "<id>\tERROR\t<message>"      failure (bad scramble / no solution parsed)
-//   solve_scramble() blocks this thread, so requests are processed strictly
-//   FIFO one-at-a-time — that IS the global serial queue.
+//   Requests are awaited strictly FIFO, including asynchronous Rust workers.
 //
 // Env:
 //   CUBEOPT_ARTIFACT_DIR  required API-owned store containing current.json and
@@ -31,35 +30,31 @@ import { pathToFileURL } from 'node:url';
 import { createInterface } from 'node:readline';
 import { loadCubeoptArtifact } from './artifact.mjs';
 import { checkCubeoptLoadMemory, requiredCubeoptLoadBytes, CUBEOPT_LOAD_FLOOR_BYTES } from './memory-budget.ts';
+import { resolveCubeoptThreads } from './config.ts';
+import { captureCubeoptOutput, initializeCubeoptSolver, serveCubeoptLines } from './solve-protocol.mjs';
 
 const artifact = await loadCubeoptArtifact(process.env.CUBEOPT_ARTIFACT_DIR);
 const MJS = artifact.modulePath;
 const DAT = artifact.tablePath;
-const THREADS = Math.max(1, Number(process.env.CUBEOPT_THREADS) || 2);
-
-// Validate a single scramble token-by-token: only HTM face turns (the wasm can't
-// take wide moves / rotations / slices). Belt-and-suspenders — the route also
-// validates, but the daemon must never feed garbage into solve_scramble.
-const TOKEN = /^[URFDLB][2']?$/;
-function cleanScramble(raw) {
-  const toks = String(raw).trim().split(/\s+/).filter(Boolean);
-  if (toks.length === 0 || toks.length > 50) return null;
-  for (const t of toks) if (!TOKEN.test(t)) return null;
-  return toks.join(' ');
+const THREADS = resolveCubeoptThreads(process.env.CUBEOPT_THREADS);
+if (artifact.manifest.engine === 'rust-wasm' && THREADS > artifact.manifest.maxThreads) {
+  throw new Error(`Rust CubeOpt supports at most ${artifact.manifest.maxThreads} threads`);
 }
 
 async function makeSolver() {
   // Reject before allocating the large WASM heap, including during deploy smoke.
   const sz = statSync(DAT).size;
   checkCubeoptLoadMemory(requiredCubeoptLoadBytes(sz));
-  const state = { last: '', sol: '' };
+  const output = captureCubeoptOutput();
   const createModule = (await import(pathToFileURL(MJS).href)).default;
   const m = await createModule({
-    print: (t) => {
-      const s = t.match(/Solution found!:\s*(.*)/);
-      if (s) state.sol = s[1].trim().replace(/\s+/g, ' '); // wasm double-pads — normalize
-      if (/finished in/.test(t)) state.last = t;
-    },
+    ...(artifact.manifest.engine === 'rust-wasm' ? {
+      variant: Number(artifact.manifest.variant.slice(3)), threads: THREADS,
+      wasmURL: pathToFileURL(artifact.wasmPath),
+      workerURL: pathToFileURL(artifact.workerPath),
+      snapshotURL: pathToFileURL(artifact.snapshotPath),
+    } : {}),
+    print: output.print,
     printErr: () => {},
   });
   const base = Number(m._get_mem_ptr());
@@ -75,40 +70,16 @@ async function makeSolver() {
       off += g;
     }
   } finally { closeSync(fd); }
-  m.init(0, THREADS); // 0 = table already in heap
-  return (scr) => {
-    state.last = '';
-    state.sol = '';
-    m.solve_scramble(scr, THREADS, 1, true); // debug=true → prints the optimal solution
-    const htm = (state.last.match(/finished in (\d+)/) || [])[1];
-    return { htm, sol: state.sol };
-  };
+  return initializeCubeoptSolver(m, THREADS, output);
 }
 
 const solve = await makeSolver();
 process.stdout.write(`READY\t${THREADS}\n`);
 
 const rl = createInterface({ input: process.stdin });
-rl.on('line', (line) => {
-  const tab = line.indexOf('\t');
-  if (tab < 0) return;
-  const id = line.slice(0, tab);
-  const scr = cleanScramble(line.slice(tab + 1));
-  if (!scr) {
-    process.stdout.write(`${id}\tERROR\tinvalid scramble\n`);
-    return;
-  }
-  try {
-    const { htm, sol } = solve(scr);
-    if (!htm || !sol) {
-      process.stdout.write(`${id}\tERROR\tno solution\n`);
-      return;
-    }
-    process.stdout.write(`${id}\t${htm}\t${sol}\n`);
-  } catch (e) {
-    // Surface then die — an exception out of the wasm (e.g. emscripten unwind)
-    // means this process is poisoned; the parent will respawn a fresh child.
-    process.stdout.write(`${id}\tERROR\t${String((e && e.message) || e).replace(/\s+/g, ' ')}\n`);
-    process.exit(1);
-  }
-});
+try {
+  await serveCubeoptLines(rl, solve, line => process.stdout.write(line));
+  process.exit(0); // Includes all worker_threads when the parent closes stdin.
+} catch {
+  process.exit(1); // Parent respawns the entire failed pool.
+}

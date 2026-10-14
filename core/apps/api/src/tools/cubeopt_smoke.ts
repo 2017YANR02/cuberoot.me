@@ -1,10 +1,12 @@
 import { resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { assertCubeoptSmokeResult } from '../cubeopt/smoke-contract.js';
+import { resolveCubeoptThreads } from '../cubeopt/config.js';
 
 const { values } = parseArgs({
   options: {
     store: { type: 'string' },
+    threads: { type: 'string' },
     'boot-timeout-ms': { type: 'string', default: '300000' },
     'solve-timeout-ms': { type: 'string', default: '180000' },
   },
@@ -26,10 +28,11 @@ function positiveInteger(name: 'boot-timeout-ms' | 'solve-timeout-ms'): number {
 
 const bootTimeoutMs = positiveInteger('boot-timeout-ms');
 const solveTimeoutMs = positiveInteger('solve-timeout-ms');
+const threads = resolveCubeoptThreads(values.threads ?? process.env.CUBEOPT_THREADS);
 
 process.env.CUBEOPT_SOLVE_ENABLED = '1';
 process.env.CUBEOPT_ARTIFACT_DIR = resolve(artifactStore);
-process.env.CUBEOPT_THREADS = '1';
+process.env.CUBEOPT_THREADS = String(threads);
 process.env.CUBEOPT_BOOT_TIMEOUT_MS = String(bootTimeoutMs);
 process.env.CUBEOPT_TIMEOUT_MS = String(solveTimeoutMs);
 delete process.env.CUBEOPT_DAEMON_SCRIPT;
@@ -54,5 +57,5 @@ const result = await Promise.race([
 
 assertCubeoptSmokeResult(result);
 
-console.log(JSON.stringify({ ok: true, scramble: 'R', ...result }, null, 2));
+console.log(JSON.stringify({ ok: true, threads, scramble: 'R', ...result }, null, 2));
 process.exit(0);

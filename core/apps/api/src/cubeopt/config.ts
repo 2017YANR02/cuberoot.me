@@ -8,6 +8,20 @@ export const CUBEOPT_LEGACY_ENV = [
 
 export const DEFAULT_CUBEOPT_IDLE_MS = 10 * 60_000;
 
+export function resolveCubeoptThreads(raw: string | undefined): number {
+  const parsed = raw?.trim() ? Number(raw) : 2;
+  if (!Number.isSafeInteger(parsed) || parsed < 1 || parsed > 16) {
+    throw new Error('CUBEOPT_THREADS must be an integer from 1 to 16');
+  }
+  return parsed;
+}
+
+export function assertCubeoptReadyLine(line: string, threads: number): void {
+  if (line !== `READY\t${threads}`) {
+    throw new Error(`solver READY does not match configured threads=${threads}`);
+  }
+}
+
 /** Zero disables idle unload; invalid values retain the safe default. */
 export function resolveCubeoptIdleMs(raw: string | undefined): number {
   const normalized = raw?.trim();

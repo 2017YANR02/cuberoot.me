@@ -5,8 +5,8 @@
  * manifest-verified opt5/h5, opt6/h6, or opt8/h8 artifact bundle in its wasm heap and solves 3x3 scrambles
  * to god's-number optimal over line-based stdio. Same shape as cube555/daemon.ts.
  *
- * Concurrency: the child's solve_scramble() is synchronous, so it processes
- * requests strictly FIFO one-at-a-time — the global serial queue is intrinsic.
+ * Concurrency: the child awaits requests strictly FIFO one-at-a-time, including
+ * asynchronous Rust workers sharing a single pruning table.
  * We additionally cap how many requests may queue (MAX_QUEUE) and time each one
  * out (kill + respawn the child if a single solve hangs past the deadline).
  *
@@ -26,7 +26,8 @@ import { basename, dirname, resolve } from 'node:path';
 import { existsSync, writeFileSync, readFileSync } from 'node:fs';
 import { registerTenant, claimMemory } from '../mem-arbiter.js';
 import { createBootDeadline } from './boot-deadline.js';
-import { cubeoptChildEnv, resolveCubeoptArtifactConfig, resolveCubeoptIdleMs } from './config.js';
+import { cubeoptInputWriter } from './daemon-input.js';
+import { assertCubeoptReadyLine, cubeoptChildEnv, resolveCubeoptArtifactConfig, resolveCubeoptIdleMs, resolveCubeoptThreads } from './config.js';
 import { diagnosticLog } from '../observability/request.js';
 import { createSolverDiagnostics, traceSolverJob } from './diagnostics.js';
 
@@ -67,6 +68,7 @@ const SOLVE_TIMEOUT_MS = positiveIntegerEnv('CUBEOPT_TIMEOUT_MS', 180_000);
 // hash-valid but unusable wrapper must not leave API requests awaiting READY
 // forever; this deadline recycles the child before any solve is queued.
 const BOOT_TIMEOUT_MS = positiveIntegerEnv('CUBEOPT_BOOT_TIMEOUT_MS', 300_000);
+const THREADS = resolveCubeoptThreads(process.env.CUBEOPT_THREADS);
 // How long a request may WAIT in the queue (behind other solves) before we give
 // up on it — rejected cleanly with a "busy" error, WITHOUT killing the daemon.
 const QUEUE_WAIT_MS = Number(process.env.CUBEOPT_QUEUE_WAIT_MS) || 120_000;
@@ -108,6 +110,7 @@ interface Job {
 }
 
 let child: ChildProcess | null = null;
+let writeInput: ((line: string) => void) | null = null;
 let ready = false;
 let bootPromise: Promise<void> | null = null;
 let nextId = 1;
@@ -148,7 +151,7 @@ function rejectAll(reason: string): void {
 
 /** Send the next queued job to the daemon, if idle + ready. */
 function pump(): void {
-  if (active || !ready || !child?.stdin) return;
+  if (active || !ready || !child?.stdin || !writeInput) return;
   const job = queue.shift();
   if (!job) return;
   if (job.queueTimer) { clearTimeout(job.queueTimer); job.queueTimer = null; }
@@ -162,7 +165,7 @@ function pump(): void {
     job.trace.finish('solve_timeout');
     recycleChild('solve_timeout');
   }, SOLVE_TIMEOUT_MS);
-  child.stdin.write(`${job.id}\t${job.scramble}\n`);
+  writeInput(`${job.id}\t${job.scramble}\n`);
 }
 
 function spawnDaemon(): Promise<void> {
@@ -204,6 +207,13 @@ function spawnDaemon(): Promise<void> {
     }
     const spawned = proc;
     child = spawned;
+    writeInput = cubeoptInputWriter(spawned.stdin!, error => {
+      if (child !== spawned) return;
+      ready = false;
+      finishErr(error);
+      rejectAll('solver input pipe closed');
+      recycleChild('input_pipe_closed');
+    });
     diagnosticLog('cubeopt_daemon_spawned', { solverPid: spawned.pid });
 
     // Layer 3: make THIS process the OOM killer's first victim, so a memory
@@ -224,6 +234,13 @@ function spawnDaemon(): Promise<void> {
     rl.on('line', (line) => {
       if (!ready) {
         if (line.startsWith('READY')) {
+          try {
+            assertCubeoptReadyLine(line, THREADS);
+          } catch (error) {
+            finishErr(error as Error);
+            spawned.kill('SIGKILL');
+            return;
+          }
           ready = true;
           console.log(`[cubeopt] daemon ready (${line.replace('\t', ' threads=')})`);
           finishOk();
@@ -246,9 +263,11 @@ function spawnDaemon(): Promise<void> {
       if (field === 'ERROR') {
         job.trace.finish('solver_error');
         job.reject(new Error(`solver: ${tail}`));
+        ready = false;
+        recycleChild('solver_error');
       } else {
         const htm = Number(field);
-        if (!Number.isFinite(htm) || !tail) job.reject(new Error('solver: malformed result'));
+        if (!Number.isInteger(htm) || htm < 0 || htm > 20 || (htm > 0 && !tail)) job.reject(new Error('solver: malformed result'));
         else job.resolve({ htm, solution: tail });
       }
       pump(); // start the next queued solve
@@ -261,6 +280,7 @@ function spawnDaemon(): Promise<void> {
       console.error(`[cubeopt] daemon exited code=${code} signal=${signal}`);
       ready = false;
       child = null;
+      writeInput = null;
       bootPromise = null;
       rejectAll(`solver restarted (code=${code}, signal=${signal})`);
       // If it died before READY, unblock the awaiting ensureDaemon().
@@ -272,6 +292,7 @@ function spawnDaemon(): Promise<void> {
       console.error('[cubeopt] spawn error:', err);
       ready = false;
       child = null;
+      writeInput = null;
       bootPromise = null;
       finishErr(err);
     });
