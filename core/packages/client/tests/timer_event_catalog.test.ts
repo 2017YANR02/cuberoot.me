@@ -39,7 +39,7 @@ const EXPECTED_OTHER: EventId[] = [
   'lattice', 'hyperx', 'latticex', 'masterbrilic', 'masterftov2',
   'quadx', 'dinoocta', 'fto5', 'eto', 'radiocrystal',
   'cube3skewb', 'heliskewb', 'comboctahedron', 'circoradiolarian', 'icosababyface',
-  'cube3heli', 'radiojewel', 'radioweb',
+  'cube2heli', 'cube3heli', 'radiojewel', 'radioweb',
 ];
 
 const EXPECTED_REAL_WCA_EVENTS = {
@@ -174,6 +174,7 @@ describe('shared timer event picker catalog', () => {
       ['comboctahedron', 'Comboctahedron', 'Comboctahedron', 'Combo'],
       ['circoradiolarian', 'Circo-Radiolarian', 'Circo-Radiolarian', 'Circo'],
       ['icosababyface', 'Deep-Cut Icosahedron', '深切角转二十面体', 'Icosa'],
+      ['cube2heli', '2×2 + Helicopter', '二阶＋直升机', '2Heli'],
       ['cube3heli', '3×3 + Helicopter', '三阶＋直升机', '3Heli'],
       ['radiojewel', 'Radio Jewel', 'Radio Jewel', 'Jewel'],
       ['radioweb', 'Radio Web', 'Radio Web', 'Web'],
