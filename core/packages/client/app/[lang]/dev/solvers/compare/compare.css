@@ -2,7 +2,7 @@
 .compare-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
 .compare-header { display: flex; align-items: baseline; flex-wrap: wrap; gap: 12px 24px; margin-bottom: 28px; }
 .compare-header h1 { margin: 0; font-size: 28px; font-weight: 750; letter-spacing: -.04em; }
-.compare-header > span, .compare-note { color: var(--muted-foreground); font-size: 13px; line-height: 1.6; }
+.compare-header > span { color: var(--muted-foreground); font-size: 13px; line-height: 1.6; }
 .compare-controls { display: flex; flex-wrap: wrap; gap: 16px 24px; align-items: center; }
 .compare-controls label { display: flex; align-items: center; gap: 10px; color: var(--muted-foreground); font-size: 13px; }
 .compare-select { width: fit-content; padding: 7px 28px 7px 10px; border: 1px solid var(--border-default); border-radius: 5px; background: var(--background); color: var(--foreground); font: inherit; }
@@ -13,6 +13,8 @@
 .solver-compare .is-opt { background: var(--signal-info); }
 .solver-compare .is-nissy { background: var(--muted-foreground); }
 .solver-compare .is-rust { background: var(--accent); }
+.solver-compare .is-rust-opt { background: var(--signal-warning); }
+.solver-compare .is-rust-wasm { background: var(--signal-success); }
 .compare-chart { margin: 0 0 28px; }
 .compare-chart-scroll { overflow-x: auto; }
 .compare-chart-inner { display: flex; height: 410px; padding-top: 65px; padding-bottom: 45px; }
@@ -27,7 +29,6 @@
 .compare-column { position: relative; width: 100%; max-width: 36px; }
 .compare-column > span { position: absolute; bottom: calc(100% + 7px); left: 50%; transform: rotate(-60deg); transform-origin: left center; white-space: nowrap; font-size: 10px; font-weight: 650; font-variant-numeric: tabular-nums; }
 .compare-x-label { position: absolute; top: calc(100% + 14px); left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 10px; font-weight: 650; }
-.compare-missing { color: var(--faint-foreground); font-size: 12px; }
 .compare-chart figcaption { margin-top: 12px; font-size: 12px; color: var(--muted-foreground); line-height: 1.6; }
 .compare-empty { padding: 80px 0; text-align: center; color: var(--muted-foreground); }
 .compare-details { border-top: 1px solid var(--border-default); }
@@ -35,14 +36,12 @@
 .compare-table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; white-space: nowrap; }
 .compare-table th, .compare-table td { padding: 12px 16px 12px 0; border-bottom: 1px solid var(--border-default); font-variant-numeric: tabular-nums; }
 .compare-table thead { color: var(--muted-foreground); }
-.compare-table small { display: block; color: var(--muted-foreground); font-size: 10px; margin-top: 4px; }
 .compare-dot { margin-right: 8px; }
-.compare-history { padding: 24px 0 8px; }
-.compare-history-pair { margin-bottom: 20px; font-size: 13px; }
-.compare-history-row { display: grid; grid-template-columns: 150px 1fr 90px; align-items: center; gap: 16px; margin-top: 10px; font-size: 12px; }
-.compare-history-track { height: 15px; }
-.compare-history-track > div { height: 100%; }
-.compare-history-row strong { text-align: right; font-variant-numeric: tabular-nums; }
+.compare-performance { display: grid; gap: 24px; margin: 36px 0; }
+.compare-performance-row { display: grid; grid-template-columns: 170px minmax(0, 1fr) 85px; align-items: center; gap: 16px; font-size: 13px; }
+.compare-performance-track { height: 24px; }
+.compare-performance-track > div { height: 100%; }
+.compare-performance-row strong { text-align: right; font-variant-numeric: tabular-nums; }
 @media (max-width: 600px) {
   .solver-compare { padding: 18px 16px 40px; }
   .compare-top { margin-bottom: 22px; }
@@ -52,5 +51,6 @@
   .compare-controls label { gap: 6px; }
   .compare-legend { gap: 12px; font-size: 11px; }
   .compare-chart-inner { height: 360px; }
-  .compare-history-row { grid-template-columns: 100px 1fr 75px; gap: 8px; }
+  .compare-performance-row { grid-template-columns: minmax(0, 1fr) 85px; gap: 8px; }
+  .compare-performance-row > span { grid-column: 1 / -1; }
 }
