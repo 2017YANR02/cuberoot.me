@@ -262,9 +262,9 @@ describe('阶段名和阶段用时只出现一次(2026-08-04)', () => {
     expect(src.slice(src.indexOf('{groups.map'))).not.toMatch(/sml-group-head|sml-group-name/);
   });
 
-  it('组标题只剩打乱那一个', () => {
-    expect(src.match(/sml-group-head/g) ?? []).toHaveLength(1);
-    expect(src).toMatch(/sml-scramble[\s\S]{0,200}sml-group-head/);
+  it('打乱直接展示原文，不再重复组标题', () => {
+    expect(src).not.toMatch(/sml-group-head|sml-group-name/);
+    expect(src).toMatch(/sml-scramble[\s\S]{0,200}\{recon\.scramble\}/);
   });
 
   it('十字 / OLL / PLL 的最优徽章跟着动作那一行走', () => {
