@@ -3,6 +3,7 @@
 // No arguments: reproduce the original five-puzzle review.
 // --set=2026-10: review the next five before their registry entries are built.
 // --set=2026-10-12: review the mixed-axis and icosahedral additions.
+// --set=cube2heli: review the central face cuts added to a planar Helicopter.
 // --set=cube3heli: review the uniform 3x3 / Helicopter combination.
 // --set=radiojewel: review Radio Jewel's exact face-cut depth.
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -21,6 +22,15 @@ const reviewSets = {
         notes: ['Exact face-normal depth h = 5 - 2 sqrt(5); fifteen triangles and one hexagon per face.', 'Shape-preserving 120-degree face turns; no jumbling or measured retail dimensions.'],
       },
     ],
+  },
+  cube2heli: {
+    basename: 'cube2heli-outlines',
+    rows: [{
+      id: 'cube2heli', en: '2×2 + Helicopter',
+      description: 'c f 0 e 0.7071067811865476', visibleFacelets: 48,
+      prior: 'c e 0.7071067811865476', priorLabel: 'Helicopter (same visible seams)',
+      notes: ['Central face cuts add 90-degree half-cube turns; edge cuts stay at sqrt(2)/2.', 'Eight triangles per face; 180-degree edge turns; shape-preserving, no jumbling.'],
+    }],
   },
   cube3heli: {
     basename: 'cube3heli-outlines',

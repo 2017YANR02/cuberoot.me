@@ -184,3 +184,16 @@
 - Quad-X 与 ETO 是此注册表首批基本周期为 2 的项目。旧生成器把所有非 3/4 周期都按 5 周期提供 `2` 后缀，旧控件也固定显示 ±1/±2，导致 360° 单位动作。以实际周期过滤整圈，同时保留相反动画方向；实时消步开启时原生规范化可将半转逆向写法归一为正向，关闭时保留原文。
 - 原生 `orientCenters` 使用重合轮廓表示单色中心朝向。预实现原始 SVG 中 Quad-X 的方中心有四份、三种八面体的三角中心有三份，这不是四块或三块可见贴片；下游 `renderNativePuzzleSvg` 保存完整颜色表后去重，勿通过关闭朝向模型消除这些内部数据。
 - Comboctahedron 的浅顶点切 ±2/√3 与既有面切在表面交线重合，省略后仍得到 72 个三角贴片，却失去独立尖角转动。通过单尖只改一角朝向、两层宽转与单尖不等的独立回归核对完整机制；仅凭外轮廓及片数相同不足以认定模型等价。
+
+
+## 二阶＋直升机
+
+- 将 `cube2heli` 作为平面二阶／直升机组合，使用 `c f 0 e 0.7071067811865476`；不要称为某一曲面零售型号的尺寸复刻，不支持 jumbling。
+- 核对标准直升机切面及实体：<https://www.jaapsch.net/puzzles/helicopter.htm>；实物组合的独立照片与原作者链接见 <https://robspuzzlepage.com/rearrangement.htm> 的 Helicopter+2x2 小节。使用立方体半边长 1：三张中心面切面为 x/y/z = 0，棱切深为 sqrt(2)/2。
+- 保留每面八个三角形、六面 48 个可见贴片、8 个三色角块与 24 个单色面块；中心面切面与部分既有表面切缝重合，但添加了独立面转，不能从描述中删除 `f 0`。
+- 按九对轴登记 `axisOrders = [4,4,4,2,2,2,2,2,2]` 与 `axisLayers = [1,1,1,2,2,2,2,2,2]`；面轴只提供两半外层，第二层与两层宽转只用于棱轴；完整转体采用 `Av`，拒绝面宽转 `Fw`。
+- 生成 40 步练习打乱并交替面转／棱转，不声称 WCA 或均匀随机状态；复用原生 provider、完整六面 SVG、记号与手动历史，使用 `cube2heli` 保存计时记录，csTimer 导出用 `input` 并保留 `cuberootEvent`。
+- 运行 `node core/packages/client/scripts/native-puzzles/compare-outlines.mjs --set=cube2heli` 重现平面对照；生成结构图标后运行共享图标映射生成器，不为重合切缝编造额外线条。
+- 扩展现有独立半空间、交错转动与 PG3D 中间帧用例，并遍历手动选择、拖转层、二维回退、分享锚点、Timer 外层预览与双进口 round-trip；独立模型和 jsdom 中间帧均不等于浏览器 3D 拖拽实测。
+
+- 新增 Timer 项目还会改变完整项目分区、选择器图标／文字徽标数量与三来源矩阵；同步检查 `timer_event_catalog.test.ts`、`timer-puzzle-picker.test.ts`、`timer-drill-contract-shared.test.ts`、app-ui 的 `scramble-source-matrix.audit.test.ts`，并在 `timer-sync-seed.test.ts` 验证普通／种子打乱共用原生生成器。保留完整名单与数量断言，不以删除断言消除目录漂移。

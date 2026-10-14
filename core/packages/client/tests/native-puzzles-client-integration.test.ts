@@ -145,11 +145,11 @@ describe('native puzzle client integration', () => {
     }
   });
 
-  it('mixes real face and edge turns in 3×3 + Helicopter practice scrambles without full-circle edge moves', () => {
-    const puzzle = nativePuzzleKPuzzle('cube3heli');
+  it.each(['cube2heli', 'cube3heli'] as const)('mixes real face and edge turns in %s practice scrambles without full-circle edge moves', (id) => {
+    const puzzle = nativePuzzleKPuzzle(id);
     for (const random of [() => 0, () => 0.999999, randomFromSeed(2026)]) {
-      const moves = [...parseNativePuzzleAlg('cube3heli', generateNativePuzzleScramble('cube3heli', random)).childAlgNodes()] as Move[];
-      expect(moves).toHaveLength(60);
+      const moves = [...parseNativePuzzleAlg(id, generateNativePuzzleScramble(id, random)).childAlgNodes()] as Move[];
+      expect(moves).toHaveLength(NATIVE_PUZZLES[id].scrambleLength);
       for (const [index, move] of moves.entries()) {
         const family = move.family.replace(/w$/, '');
         expect(family.length).toBe(index % 2 === 0 ? 1 : 2);

@@ -27,6 +27,7 @@ const CASES = [
   { id: 'radiojewel', scramble: "R 2L' Gw Uv [F, U] Rw'", facelets: 320 },
   { id: 'radioweb', scramble: "R 2L' Gw Uv [F, U] Rw'", facelets: 440 },
   { id: 'icosababyface', scramble: "FREGU 2HIERC' FLACRw NALPOv", facelets: 20 },
+  { id: 'cube2heli', scramble: "F DF 2DF' FLw U2 2UB' Fv DFv", facelets: 48 },
   { id: 'cube3heli', scramble: "F DF 2U' FLw Rw2 2UB' Fv DFv", facelets: 168 },
 ] as const;
 

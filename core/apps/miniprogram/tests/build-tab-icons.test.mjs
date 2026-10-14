@@ -28,6 +28,10 @@ describe('Douyin native tab assets', () => {
     });
     expect(config.tabBar).toEqual(original);
     expect(tabs).toHaveLength(4);
+    expect(tabs.find((tab) => tab.pagePath === 'pages/training/index')).toMatchObject({
+      iconPath: 'assets/tabbar/graduation-cap.png',
+      selectedIconPath: 'assets/tabbar/graduation-cap-selected.png',
+    });
     const paths = new Set();
     for (const [index, tab] of tabs.entries()) {
       expect(tab).toMatchObject(original.list[index]);
