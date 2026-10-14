@@ -31,7 +31,7 @@ export type EventId =
   | 'lattice' | 'hyperx' | 'latticex' | 'masterbrilic' | 'masterftov2'
   | 'quadx' | 'dinoocta' | 'fto5' | 'eto' | 'radiocrystal'
   | 'cube3skewb' | 'heliskewb' | 'comboctahedron' | 'circoradiolarian' | 'icosababyface'
-  | 'cube3heli' | 'radiojewel'
+  | 'cube3heli' | 'radiojewel' | 'radioweb'
   // Relays
   | 'r3' | 'r4' | 'r5'
   // CFOP step training
@@ -256,6 +256,7 @@ export const EVENTS: EventInfo[] = [
   { id: 'icosababyface', nameEn: 'Deep-Cut Icosahedron', nameZh: '深切角转二十面体', group: 'nonwca' },
   { id: 'cube3heli', nameEn: '3×3 + Helicopter', nameZh: '三阶＋直升机', group: 'nonwca' },
   { id: 'radiojewel', nameEn: 'Radio Jewel', nameZh: 'Radio Jewel', group: 'nonwca' },
+  { id: 'radioweb', nameEn: 'Radio Web', nameZh: 'Radio Web', group: 'nonwca' },
 
   // CFOP step training
   { id: 'cross',  nameEn: 'Cross only',  nameZh: '十字',       group: 'cfop'

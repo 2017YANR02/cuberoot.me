@@ -162,6 +162,13 @@ export const NATIVE_PUZZLES = {
     axes: ICOSAHEDRON_FACE_AXES, order: 3, layers: 2,
     scrambleLength: 60, aspect: 8 / 5, visibleFacelets: 320,
   },
+  // Jason Smith's Radiolarian 6. Hyperspeedcube radio06 uses 5 - 2 sqrt(5) + 0.02;
+  // unlike Radio Jewel, the wings remain visible. See references/radio-web.md.
+  radioweb: {
+    description: 'i f 0.5478640450004204', zh: 'Radio Web', en: 'Radio Web', textLabel: 'Web',
+    axes: ICOSAHEDRON_FACE_AXES, order: 3, layers: 2,
+    scrambleLength: 60, aspect: 8 / 5, visibleFacelets: 440,
+  },
 } as const;
 
 export type NativePuzzleId = keyof typeof NATIVE_PUZZLES;
