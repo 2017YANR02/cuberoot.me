@@ -169,3 +169,7 @@ Windows/macOS 共享桌面宿主    → core/apps/desktop（同一 Tauri 工程�
 | HARMONY-01 | `core/apps/harmony` 通过 ArkWeb 本地 bundle 消费共享 React App，并完成 HAP、设备交互、系统 adapter、签名与分发证据 |
 
 P0/P1 实施顺序与所有阶段证据统一由路线图维护；稳定合同不得用平台暂时缺失来改写。
+
+### Android 更新渠道（2026-10-14）
+
+「我的」canonical 页面上方允许共享 App 壳显示应用版本与更新控件，账号正文仍由网站提供。Android 宿主通过原生版本/渠道能力提供信息；官网 direct 检查公开版本清单，下载及系统安装需用户确认；Play 只进入 Play 商店。其他宿主不注入 Android 更新能力，不展示错误的 APK 更新入口。

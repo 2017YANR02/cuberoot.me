@@ -2,6 +2,8 @@
 
 /** @module Official app downloads and platform availability. */
 import { ArrowLeft, Download } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { fetchAndroidRelease, type AndroidRelease } from '@cuberoot/shared/android-release';
 import HomeLink from '@/components/HomeLink';
 import HeaderToggles from '@/components/HeaderToggles';
 import { tr, useLang } from '@/i18n/tr';
@@ -10,6 +12,14 @@ import './download.css';
 
 export default function DownloadPage() {
   const language = useLang();
+  const [release, setRelease] = useState<AndroidRelease | null>(null);
+  useEffect(() => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10_000);
+    void fetchAndroidRelease(controller.signal).then(setRelease).catch(() => {}).finally(() => clearTimeout(timeout));
+    return () => { controller.abort(); clearTimeout(timeout); };
+  }, []);
+  const apkUrl = release?.url ?? ANDROID_APK_URL;
   return (
     <main className="download-page">
       <div className="download-nav">
@@ -32,8 +42,8 @@ export default function DownloadPage() {
             <img src={tr({ zh: '/badges/google-play-zh-cn.png', en: '/badges/google-play-en.png' })}
               alt={tr({ zh: '在 Google Play 下载', en: 'Get it on Google Play' })} width={646} height={250} />
           </a>
-          {ANDROID_APK_URL ? (
-            <a className="download-button" href={ANDROID_APK_URL}
+          {apkUrl ? (
+            <a className="download-button" href={apkUrl}
               onClick={() => trackDownload('apk', language)}>
               <Download size={16} aria-hidden="true" />{tr({ zh: '下载 APK', en: 'Download APK' })}
             </a>
@@ -43,10 +53,11 @@ export default function DownloadPage() {
             </button>
           )}
         </div>
-        {ANDROID_APK_URL && <p className="download-note">
-          {tr({ zh: '0.1.0 (1004) · Android 8.0 及以上。官网 APK 与 Google Play 签名不同；Play 用户请继续通过 Play 更新，请勿卸载以免丢失本地记录。', en: '0.1.0 (1004) · Android 8.0 or later. This APK uses a different signing certificate from Google Play. Play users should update through Play; uninstalling can erase local records.' })}
+        {apkUrl && <p className="download-note">
+          {release ? `${release.versionName} (${release.versionCode}) · ` : ''}
+          {tr({ zh: 'Android 8.0 及以上。官网 APK 与 Google Play 签名不同；Play 用户请继续通过 Play 更新，请勿卸载以免丢失本地记录。', en: 'Android 8.0 or later. This APK uses a different signing certificate from Google Play. Play users should update through Play; uninstalling can erase local records.' })}
         </p>}
-        {!ANDROID_APK_URL && <p className="download-note" id="download-apk-status">
+        {!apkUrl && <p className="download-note" id="download-apk-status">
           {tr({ zh: 'APK 下载准备中，可先通过 Google Play 安装。', en: 'APK download is being prepared. Install through Google Play for now.' })}
         </p>}
       </section>

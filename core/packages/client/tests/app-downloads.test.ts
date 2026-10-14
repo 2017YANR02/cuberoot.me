@@ -8,7 +8,7 @@ describe('official download links and independent click reporting', () => {
     expect(new URL(GOOGLE_PLAY_URL).searchParams.get('id')).toBe('me.cuberoot.app');
     const apk = new URL(ANDROID_APK_URL!);
     expect(apk.origin).toBe('https://static.cuberoot.me');
-    expect(apk.pathname).toMatch(/^\/downloads\/android\/CubeRoot-\d+\.\d+\.\d+-\d+\.apk$/);
+    expect(apk.pathname).toBe('/downloads/android/latest.apk');
   });
 
   it('sends only the selected channel and language without credentials', () => {

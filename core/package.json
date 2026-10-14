@@ -24,7 +24,9 @@
     "dev:server": "turbo dev --filter=@cuberoot/server",
     "build": "turbo build",
     "typecheck": "turbo typecheck",
-    "lint": "turbo lint"
+    "lint": "turbo lint",
+    "android:release": "node scripts/android-release/release.ts",
+    "android:release:test": "node --test scripts/android-release/*.test.ts"
   },
   "devDependencies": {
     "ajv": "^8.20.0",

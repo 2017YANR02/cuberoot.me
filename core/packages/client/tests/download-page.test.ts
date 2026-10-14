@@ -25,7 +25,7 @@ describe('download availability', () => {
     const apk = host.querySelector<HTMLAnchorElement>('.download-actions a.download-button');
     expect(apk?.href).toBe(ANDROID_APK_URL);
     expect(host.querySelector('.download-actions button')).toBeNull();
-    expect(host.querySelector('.download-note')?.textContent).toContain('1004');
+    expect(host.querySelector('.download-note')?.textContent).not.toContain('1004');
     expect(host.querySelectorAll('.download-upcoming a, .download-upcoming button')).toHaveLength(0);
     expect([...host.querySelectorAll('.download-platform > :first-child')].map((node) => node.textContent))
       .toEqual(['Windows', 'iOS', 'macOS', 'HarmonyOS NEXT']);

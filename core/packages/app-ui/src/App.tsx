@@ -1,4 +1,5 @@
 import { shareOrDownloadBackup } from './file-export';
+import { AndroidUpdateNotice } from './AndroidUpdateNotice';
 import { TimerSoloPage, timerSoloModalState, useTimerSoloCompactLayout } from '@cuberoot/timer-ui/TimerSoloPage';
 import { InstalledBleHost, installedBleRequestPort } from './installed-ble-host';
 import { pickInstalledBleDevice, type InstalledBlePicker } from './installed-ble-picker';
@@ -4421,10 +4422,11 @@ children: <>
           return (
             <section
               aria-label={title}
-              className="web-surface"
+              className={`web-surface${surface === 'account' ? ' web-surface--account' : ''}`}
               hidden={view !== surface}
               key={surface}
             >
+              {surface === 'account' && <AndroidUpdateNotice host={host} language={language} />}
               {showState && (
                 <div className="web-surface-state" role={status === 'error' ? 'alert' : 'status'}>
                   <p>{stateLabel}</p>

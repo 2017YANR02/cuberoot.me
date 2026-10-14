@@ -248,6 +248,12 @@ button {
   background: var(--background);
 }
 
+.web-surface.web-surface--account:not([hidden]) { display: flex; flex-direction: column; }
+.web-surface.web-surface--account iframe { flex: 1; min-height: 0; }
+.android-update-notice { flex: 0 1 auto; max-height: 45%; overflow: auto; padding: 8px 12px; border-bottom: 1px solid var(--shell-divider); }
+.android-update-notice .action-row { flex-wrap: wrap; }
+.android-update-notice p { margin: 6px 0; font-size: 0.85rem; }
+
 .timer-toolbar-control {
   display: inline-flex;
   min-height: 32px;

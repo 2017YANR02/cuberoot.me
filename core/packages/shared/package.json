@@ -213,7 +213,8 @@
       "./country-search": "runtime-neutral",
       "./timer/rank-client": "runtime-neutral",
       "./double-zbll": "runtime-neutral",
-      "./competition-calendar": "runtime-neutral"
+      "./competition-calendar": "runtime-neutral",
+      "./android-release": "runtime-neutral"
     }
   },
   "main": "./src/index.ts",
@@ -799,7 +800,12 @@
       "node": "./dist/timer/rank-client.js",
       "default": "./src/timer/rank-client.ts"
     },
-    "./competition-calendar": "./src/competition_calendar.ts"
+    "./competition-calendar": "./src/competition_calendar.ts",
+    "./android-release": {
+      "types": "./src/android-release.ts",
+      "node": "./dist/android-release.js",
+      "default": "./src/android-release.ts"
+    }
   },
   "scripts": {
     "build": "tsc -b",

@@ -437,12 +437,12 @@ export default function LandingPage() {
   return (
     <div className="landing-page">
       <div className="landing-auth">
-        {isAdmin && <Tooltip content={tr({ zh: '下载', en: 'Download' })}>
+        <Tooltip content={tr({ zh: '下载', en: 'Download' })}>
           {(tip) => <Link {...tip} href="/download" className="landing-auth-icon"
             aria-label={tr({ zh: '下载', en: 'Download' })} prefetch={false}>
             <Download size={16} aria-hidden="true" />
           </Link>}
-        </Tooltip>}
+        </Tooltip>
         <Link href="/membership" className="landing-auth-icon landing-membership-icon"
           title={tr({ zh: '会员', en: 'Membership' })}
           aria-label={tr({ zh: '会员', en: 'Membership' })} prefetch={false}>
