@@ -46,7 +46,7 @@ describe('website frontend is Next-only', () => {
     expect(nativeCheck).toBe(nextBuild + 1);
     expect(pkg.scripts?.typecheck).toBe('tsgo --noEmit');
     const config = readFileSync(join(CLIENT, 'next.config.ts'), 'utf8');
-    expect(config).toContain('typescript: { ignoreBuildErrors: isVercel }');
+    expect(config).toContain('typescript: { ignoreBuildErrors: true }');
   });
 
   it('has no retired website package or Vite configuration', () => {

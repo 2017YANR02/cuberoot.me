@@ -75,6 +75,14 @@ jobs:
         working-directory: core
         run: pnpm install --frozen-lockfile
 
+      - name: Cache Next build
+        uses: actions/cache@v4
+        with:
+          path: core/${{ steps.workspace.outputs.web }}/.next/cache
+          key: ${{ runner.os }}-next-standalone-${{ hashFiles('.node-version', 'core/pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-next-standalone-${{ hashFiles('.node-version', 'core/pnpm-lock.yaml') }}-
+
       # build script prebuilds the Client workspace dependencies that emit dist/
       # (@cuberoot/shared, visualcube, vendor-sr-puzzlegen, puzzle-render-core,
       # puzzle-solvers)
