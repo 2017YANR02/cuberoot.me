@@ -48,6 +48,11 @@
   font-weight: 400;
 }
 
+.shell-topbar-left .shell-scramble-source-select .timer-scramble-source-trigger {
+  background: transparent;
+  border-color: transparent;
+}
+
 .timer-scramble-source-current {
   min-width: 0;
   overflow: hidden;
