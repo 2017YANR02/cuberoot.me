@@ -11,7 +11,7 @@
   "ignoreDependencies": ["tsx"],
   "workspaces": {
     ".": {
-      "entry": ["scripts/build-shanghai-space.mjs", "scripts/vercel-ignore-build.ts", "scripts/traffic-monitor.ts", "scripts/traffic-monitor.test.mjs", "scripts/traffic-guard.ts", "scripts/traffic-guard.test.mjs", "scripts/dev-preview/cli.ts", "scripts/dev-preview/client.ts", "scripts/dev-preview/model.test.ts", "scripts/local-dev.ts", "scripts/dev-preview/enroll.ts", "scripts/dev-preview/enroll.test.ts", "scripts/dev-preview/retry.test.ts", "scripts/dev-preview/provision.ts", "scripts/mac-memory-menu.mts", "scripts/mac-system-recorder.mts", "scripts/mac-system-recorder.test.mts"]
+      "entry": ["scripts/build-shanghai-space.mjs", "scripts/vercel-ignore-build.ts", "scripts/traffic-monitor.ts", "scripts/traffic-monitor.test.mjs", "scripts/traffic-guard.ts", "scripts/traffic-guard.test.mjs", "scripts/dev-preview/cli.ts", "scripts/dev-preview/client.ts", "scripts/dev-preview/model.test.ts", "scripts/local-dev.ts", "scripts/dev-preview/enroll.ts", "scripts/dev-preview/enroll.test.ts", "scripts/dev-preview/retry.test.ts", "scripts/dev-preview/provision.ts", "scripts/mac-memory-menu.mts", "scripts/mac-memory-menu.test.mts", "scripts/zbll-memory-budget.mts", "scripts/mac-system-recorder.mts", "scripts/mac-system-recorder.test.mts"]
     },
     "{packages/client,apps/web}": {
       "entry": [
@@ -69,6 +69,7 @@
       "entry": [
         "scripts/**/*.{ts,mjs}",
         "tests/fixtures/**/*_pg.ts",
+        "tests/fixtures/teaching_daily_board_sql.mts",
         "src/tools/**/*.ts",
         "src/monitors/**/*.ts",
         "src/**/*-daemon.{ts,mjs}"
