@@ -204,9 +204,6 @@ export default function StepMoveList({
           「这不行,必须是原始打乱」。复制按钮导出的是同一份。 */}
       {recon.scramble.trim() !== '' && (
         <section className="sml-group sml-scramble">
-          <h4 className="sml-group-head">
-            <span className="sml-group-name">{tr({ zh: '打乱', en: 'SCRAMBLE' })}</span>
-          </h4>
           <div className="sml-line">
             <div className="sml-body">
               <span className="sml-moves">{recon.scramble}</span>
@@ -230,7 +227,7 @@ export default function StepMoveList({
 
       {groups.map(g => (
           <section key={g.key} className="sml-group" data-stage={g.key}>
-            {g.lines.map((line, i) => {
+            {g.lines.map((line) => {
               // 徽章:F2L 一组一个。十字 / OLL / PLL 的以前挂在组标题上,标题去掉
               // 之后跟着它那一行走 —— 但只在这一组确实只有一行时,PLL 后面那条
               // 收尾行(recon_text 的 `tail`)没有参考,标了也是空的。
@@ -290,11 +287,6 @@ export default function StepMoveList({
                         </span>
                       );
                     })()}
-                    {g.key === 'f2l' && line.key.startsWith('slot-') && (
-                      <span className="sml-sub-name">
-                        {`F${i + 1}`}
-                      </span>
-                    )}
                   </div>
                 </div>
               );

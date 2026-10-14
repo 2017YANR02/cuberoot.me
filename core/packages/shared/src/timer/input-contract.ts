@@ -315,6 +315,11 @@ export function timerKeyDownDecision(context: TimerKeyDownContext): TimerKeyboar
     return decision({ id: 'press-down', warmupSound: true }, true, true);
   }
 
+  // Escape must still abort when focus remains on a button or cube control.
+  if (input.code === 'Escape') {
+    return input.repeat ? decision() : decision({ id: 'reset' });
+  }
+
   if (target.noTimerRegion) {
     const allowed = timerCanSwitchScramble(phase)
       && !input.repeat
@@ -329,7 +334,6 @@ export function timerKeyDownDecision(context: TimerKeyDownContext): TimerKeyboar
   }
 
   if (input.repeat) return decision();
-  if (input.code === 'Escape') return decision({ id: 'reset' });
 
   if (phase === 'running' && context.multiStageActive && hasUnmodifiedStageChord(input)) {
     if (input.code === 'Digit1') return decision({ id: 'mark-stage', stage: 'cross' });

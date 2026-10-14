@@ -164,6 +164,35 @@ impl PruningTable {
         }
     }
 
+    /// Start the immutable PDB read while the other search contexts still
+    /// compute their coordinates. Invalid indices issue no hint and never
+    /// form an out-of-allocation pointer; checked lookup remains authoritative.
+    #[cfg(all(feature = "opt9-native-prefetch", not(target_family = "wasm")))]
+    #[inline(always)]
+    pub(crate) fn prefetch_opt9(&self, index: u64) {
+        #[cfg(target_arch = "aarch64")]
+        if let Some(address) = self.prefetch_word_address(index) {
+            // address comes from an in-bounds reference to the live immutable
+            // Vec. PRFM is a read hint only and does not mutate table contents.
+            unsafe {
+                std::arch::asm!(
+                    "prfm pldl1keep, [{address}]",
+                    address = in(reg) address,
+                    options(readonly, nostack, preserves_flags),
+                );
+            }
+        }
+        #[cfg(not(target_arch = "aarch64"))]
+        let _ = index;
+    }
+
+    #[cfg(all(feature = "opt9-native-prefetch", not(target_family = "wasm"), any(target_arch = "aarch64", test)))]
+    #[inline(always)]
+    fn prefetch_word_address(&self, index: u64) -> Option<*const u32> {
+        let word = usize::try_from(index >> 4).ok()?;
+        self.words.get(word).map(|word| word as *const u32)
+    }
+
     pub fn byte_len(&self) -> usize {
         self.words.len() * 4
     }
@@ -211,5 +240,35 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[cfg(all(feature = "opt9-native-prefetch", not(target_family = "wasm")))]
+    #[test]
+    fn opt9_prefetch_has_bounded_addresses_and_preserves_all_decoded_cells() {
+        let mut table = PruningTable {
+            words: vec![0; 8], variant: Variant(9), distribution: [0; 16],
+        };
+        table.words[0] = 5;
+        table.words[1] = 1 | (2 << 2) | (3 << 30);
+        table.words[4] = 7;
+        table.words[7] = 0x0123_4567;
+        let before = table.words.clone();
+        assert_eq!(table.prefetch_word_address(0), Some(&table.words[0] as *const u32));
+        assert_eq!(table.prefetch_word_address(15), Some(&table.words[0] as *const u32));
+        assert_eq!(table.prefetch_word_address(16), Some(&table.words[1] as *const u32));
+        assert_eq!(table.prefetch_word_address(127), Some(&table.words[7] as *const u32));
+        for index in [128, 129, u64::MAX] {
+            assert!(table.prefetch_word_address(index).is_none());
+            table.prefetch_opt9(index);
+        }
+        for index in 0..128 {
+            let expected = table.get(index);
+            table.prefetch_opt9(index);
+            assert_eq!(table.get_opt9(index), expected);
+        }
+        assert_eq!(table.words, before);
+        table.words.clear();
+        assert!(table.prefetch_word_address(0).is_none());
+        table.prefetch_opt9(0);
     }
 }

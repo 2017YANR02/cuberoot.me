@@ -8,7 +8,8 @@
  *   mode 'net' (default) — the unfolded WCA net. Exact for any state the cube
  *     can be in, and the one you can check face-by-face against your hands.
  *   mode '2d'            — the isometric still: three faces visible, three not.
- *   mode '3d'            — a live 3D cube that turns as you turn (SimCubeView),
+ *   mode '3d' / 'twizzle' — a live 3D cube that turns as you turn (SimCubeView
+ *     or the cubing.js renderer used by Twizzle),
  *     posed by the cube's gyroscope when there is one. 3x3 only, and only
  *     while the state is expressible as an alg (see `moves` below).
  *   mode 'q2look'        — compact U + F + R projection for last-layer looks.
@@ -67,6 +68,7 @@ import {
 
 /** three + the /sim engine only load when a 3D view is actually mounted. */
 const SimCubeView = lazy(() => import('./SimCubeView'));
+const TwizzleCubeView = lazy(() => import('./TwizzleCubeView'));
 
 /** Synthetic-sample cadence, ms. ~30 Hz sits in the middle of the 20-50 Hz a
  *  real BLE gyro delivers, so the dev path exercises the same "samples arrive
@@ -129,7 +131,7 @@ export interface LiveCubeStateProps {
    *       face-by-face against the cube in your hands (csTimer only has this one);
    * '2d'  the isometric still, where three faces are visible and three are not.
    */
-  mode?: '2d' | 'net' | '3d' | 'q2look';
+  mode?: '2d' | 'net' | '3d' | 'twizzle' | 'q2look';
   /** Latest orientation sample from the cube, or null when none has arrived. */
   quat?: Quat | null;
   /**
@@ -178,7 +180,8 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
   } = props;
 
   const tr = (copy: { en: string; zh: string }) => copy[language];
-  const wants3d = mode === '3d';
+  const wants3d = mode === '3d' || mode === 'twizzle';
+  const CubeView = mode === 'twizzle' ? TwizzleCubeView : SimCubeView;
   const devQuat = useSyntheticQuat(wants3d && useGyro && enableDevSource);
   const liveQuat = useGyro ? (quat ?? devQuat) : null;
   // A state resync temporarily invalidates the move log. Preserve the last
@@ -214,7 +217,7 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
     return (
       <div aria-busy={!algAnchored} style={{ height: '100%', position: 'relative', lineHeight: 1.5 }}>
       <Suspense fallback={<Spinner size={16} label={tr({ zh: '加载中', en: 'Loading' })} />}>
-      <SimCubeView
+      <CubeView
         key={`${useGyro ? 'gyro' : 'no-gyro'}:${displayOrientation}`}
         language={language}
         allowViewDrag

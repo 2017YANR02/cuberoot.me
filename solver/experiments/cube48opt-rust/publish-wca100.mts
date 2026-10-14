@@ -1,7 +1,7 @@
 /** Publish only completed, verified WCA100 reports. This never launches solvers. */
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync, writeFileSync, renameSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve, basename } from 'node:path';
 import { setTimeout } from 'node:timers/promises';
 const root = resolve(import.meta.dirname, '../../..');
@@ -12,14 +12,11 @@ assert(/^wca100-(?:h10|opt[1-9])$/.test(run));
 const corpusFile = resolve(root, 'solver/testdata/benchmarks/wca-first100.json');
 const corpus = JSON.parse(readFileSync(corpusFile, 'utf8'));
 const digest = (data: Buffer) => createHash('sha256').update(data).digest('hex');
-const pageFile = resolve(root, 'core/packages/client/app/[lang]/dev/solvers/compare/unified-benchmark.ts');
 type Result = {id:string;seconds:number;peakRssBytes:number|null};
 function update(results:Result[], status:{zh:string;en:string}) {
-  const previous = JSON.parse(readFileSync(pageFile,'utf8').split('export const WCA100 = ')[1].trim().replace(/;$/, ''));
-  assert.equal(previous.corpusSha256, corpus.corpusSha256);
-  const data = {...previous, status, results:[...previous.results.filter((r:Result)=>!results.some(n=>n.id===r.id)),...results]};
-  writeFileSync(pageFile+'.tmp', '/** Verified WCA100 results; raw reports: .tmp/cubeopt-reverse/benchmark-wca100-*/\nexport const WCA100 = '+JSON.stringify(data,null,2)+';\n');
-  renameSync(pageFile+'.tmp',pageFile);
+  // This legacy verifier uses three single-thread rounds. Retain its results
+  // off-page instead of replacing the current multithread comparison.
+  console.log({ archivedOnly: true, published: false, status, results });
 }
 const deadline = Date.now() + 65 * 60_000;
 while (!existsSync(resolve(directory, 'report.json'))) {
@@ -57,4 +54,4 @@ for (const side of h10 ? ['rust','c'] : ['native', 'wasm']) {
 const results:Result[] = h10 ? ['c','rust'].map(side=>({id:side==='c'?'nissy-h10':'rust-h10',seconds:report[`${side}MedianTotalSeconds`],peakRssBytes:Math.max(...report.batches.filter((b:{side:string})=>b.side===side).map((b:{peakRssBytes:number})=>b.peakRssBytes))})) : [{ id: `opt-${report.variant}`, seconds: report.groups.all.wasm.medianRoundTotalSeconds, peakRssBytes: null }];
 if(!h10) assert.equal(run, `wca100-opt${report.variant}`);
 update(results, {zh:'100 条 · 三轮中位数',en:'100 scrambles · median of 3 rounds'});
-console.log(JSON.stringify({published:results}));
+console.log(JSON.stringify({archivedOnly:true,published:false,results}));

@@ -3041,37 +3041,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           controls: (
           <>
           {trainingOrg && trainingAssignment && <AppLink className="tb-btn" data-no-timer prefetch={false} href={`/training/${encodeURIComponent(trainingOrg)}?assignment=${encodeURIComponent(trainingAssignment)}`}>{tr({ zh: '训练打卡进度', en: 'Training check-in progress' })}</AppLink>}
-          {playersControl}
-          <TimerTrainingMenu currentEvent={event} onTimerEventChange={selectEvent}
-            disabled={!sourceControlsEnabled} showProject
-            onAdvancedSettings={() => setSettingsOpen(true)}
-            onSettingsOpenChange={setPracticeSettingsOpen}
-            sourceControl={onSelectCases => <span className="timer-practice-control">
-          <TimerScrambleSourceSelect
-            showArrow={false}
-            disabled={!sourceControlsEnabled}
-            className="shell-scramble-source-select"
-            triggerClassName="shell-players-select"
-            popupClassName="shell-scramble-source-popup"
-            labels={{
-              ariaLabel: tr({ zh: '出题来源', en: 'Question source' }),
-              real: tr({ zh: '真题', en: 'Real' }),
-              realOption: tr({ zh: 'WCA 真题', en: 'WCA real' }),
-              random: randomSourceOptionLabel,
-              randomOption: randomSourceOptionLabel,
-              manual: tr({ zh: '手动', en: 'Manual' }),
-              manualOption: tr({ zh: '手动输入', en: 'Manual input' }),
-            }}
-            value={effectiveScrambleSource}
-            realAvailable={realSourceAvailable}
-            trainingItems={onSelectCases ? [{ value: 'cases', label: tr({ zh: '选定情况', en: 'Selected cases' }) }] : []}
-            onTrainingChange={onSelectCases}
-            onChange={(scrambleSource) => updateSettings({ scrambleSource })}
-            realValue="wca"
-            realMenuContent={<div ref={setWcaSourceSlot} />}
-          />
-            </span>}
-          />
           <TimerDeviceCenter
             triggerRef={bluetoothButtonRef}
             className="shell-topbar-device-center"
@@ -3132,6 +3101,37 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
               />
             )}
           </TimerDeviceCenter>
+          {playersControl}
+          <TimerTrainingMenu currentEvent={event} onTimerEventChange={selectEvent}
+            disabled={!sourceControlsEnabled} showProject
+            onAdvancedSettings={() => setSettingsOpen(true)}
+            onSettingsOpenChange={setPracticeSettingsOpen}
+            sourceControl={onSelectCases => <span className="timer-practice-control">
+          <TimerScrambleSourceSelect
+            showArrow={false}
+            disabled={!sourceControlsEnabled}
+            className="shell-scramble-source-select"
+            triggerClassName="shell-players-select"
+            popupClassName="shell-scramble-source-popup"
+            labels={{
+              ariaLabel: tr({ zh: '出题来源', en: 'Question source' }),
+              real: tr({ zh: '真题', en: 'Real' }),
+              realOption: tr({ zh: 'WCA 真题', en: 'WCA real' }),
+              random: randomSourceOptionLabel,
+              randomOption: randomSourceOptionLabel,
+              manual: tr({ zh: '手动', en: 'Manual' }),
+              manualOption: tr({ zh: '手动输入', en: 'Manual input' }),
+            }}
+            value={effectiveScrambleSource}
+            realAvailable={realSourceAvailable}
+            trainingItems={onSelectCases ? [{ value: 'cases', label: tr({ zh: '选定情况', en: 'Selected cases' }) }] : []}
+            onTrainingChange={onSelectCases}
+            onChange={(scrambleSource) => updateSettings({ scrambleSource })}
+            realValue="wca"
+            realMenuContent={<div ref={setWcaSourceSlot} />}
+          />
+            </span>}
+          />
           {/* 「难度」开关的落点(内容由 ScrambleSourceBar 里的两个配置组件 portal 过来)。
               摆在「解法」左边,和来源下拉同一组:难度讲的就是这条打乱怎么来的。
               data-no-timer 得挂在这儿 —— 开关已经不在打乱来源条里,借不到那块的豁免。 */}

@@ -1,6 +1,6 @@
 import { Worker } from 'node:worker_threads';
 import { readFile } from 'node:fs/promises';
-import { instantiate, INITIAL_BYTES, TLS_BYTES, STACK_BYTES, ARENA_BYTES } from './cube48opt-rust8-worker.mjs';
+import { instantiate, INITIAL_BYTES, WORKER_REGION_BYTES, MAX_THREADS } from './cube48opt-rust8-worker.mjs';
 
 export const RUST_OPT_SHARED_ABI = 2;
 export const RUST_OPT_SUPPORTED_VARIANTS = Object.freeze([1,2,3,4,5,6,7,8,9]);
@@ -9,6 +9,26 @@ const MAX_PAGES = 16 * 1024 ** 3 / PAGE;
 function integer(value, name, min, max) {
   if (!Number.isSafeInteger(value) || value < min || value > max) throw new Error(`${name} must be ${min}..${max}`);
   return value;
+}
+export function errorFromWorker(message) {
+  const context = `worker=${message.worker ?? '?'} operation=${message.operation ?? '?'} depth=${message.depth ?? '-'}`;
+  const error = new Error(`Rust WASM ${context}: ${message.error}`);
+  error.workerDetails = { worker: message.worker, operation: message.operation, depth: message.depth, heap: message.heap };
+  if (message.errorStack) error.stack += `\nWorker stack:\n${message.errorStack}`;
+  if (message.heap) error.stack += `\nWorker arena: ${JSON.stringify(message.heap)}`;
+  return error;
+}
+// All stacks/arenas follow the single table, at disjoint page-aligned offsets.
+// Check the whole reservation before grow or workers are started. Opt9 + 18
+// regions still fits the pinned linker's 16 GiB shared-memory maximum.
+export function sharedMemoryLayout(tablePointer, tableBytes, threads) {
+  integer(tablePointer, 'table pointer', INITIAL_BYTES, MAX_PAGES * PAGE);
+  integer(tableBytes, 'table bytes', 0, MAX_PAGES * PAGE);
+  integer(threads, 'threads', 1, MAX_THREADS);
+  const regionBase = Math.ceil((tablePointer + tableBytes) / PAGE) * PAGE;
+  const requiredBytes = regionBase + threads * WORKER_REGION_BYTES;
+  if (requiredBytes > MAX_PAGES * PAGE) throw new Error('Table and worker regions exceed the 16 GiB shared-memory limit');
+  return Object.freeze({ regionBase, requiredBytes, workerRegionBytes: WORKER_REGION_BYTES });
 }
 async function bytes(source) {
   if (source instanceof Uint8Array) return source;
@@ -23,17 +43,21 @@ async function bytes(source) {
 // its own WASM instance, stack, allocator arena and DepthSearch session.
 export default async function createModule(options = {}) {
   const variant = integer(options.variant ?? 8, 'variant', 1, 9);
-  const threads = integer(options.threads ?? 4, 'threads', 1, 4);
+  const threads = integer(options.threads ?? 4, 'threads', 1, MAX_THREADS);
   const compiled = options.wasmModule ?? await WebAssembly.compile(await bytes(options.wasmBinary
     ?? options.wasmURL ?? new URL('./cube48opt-rust8.wasm', import.meta.url)));
   const memory = new WebAssembly.Memory({ initial: BigInt(INITIAL_BYTES / PAGE), maximum: BigInt(MAX_PAGES), shared: true, address: 'i64' });
   const { instance, api } = await instantiate(compiled, memory);
+  const maxThreads = api.cubeopt_max_threads();
+  if (threads > maxThreads) throw new Error(`This WASM supports at most ${maxThreads} workers`);
   if (api.cubeopt_supports_variant(variant) !== 1) throw new Error('WASM does not support this variant');
   const tableBytes = Number(api.cubeopt_table_bytes(variant));
   const snapshotBytes = Number(api.cubeopt_snapshot_bytes(variant));
   const tablePointer = Number(api.cubeopt_pdb_ptr());
+  const layout = sharedMemoryLayout(tablePointer, options.fixture ? 0 : tableBytes, threads);
   const metadata = Object.freeze({ implementation: 'cuberoot-rust-opt-shared-wasm', abiVersion: 2,
-    variant, threads, memory64: true, sharedTable: true, tableBytes, snapshotBytes });
+    variant, threads, maxThreads, memory64: true, sharedTable: true, tableBytes, snapshotBytes,
+    workerRegionBytes: layout.workerRegionBytes, reservedMemoryBytes: layout.requiredBytes });
   const workers = [];
   let nextId = 0, ready = false, busy = false, broken = false, initializing, closing;
   const control = new Int32Array(memory.buffer, Number(api.cubeopt_control_ptr()), 2);
@@ -71,10 +95,9 @@ export default async function createModule(options = {}) {
       initializing = (async () => {
         if (!options.fixture && api.cubeopt_validate_table(variant) !== 0) throw new Error('Pruning table checksum/distribution validation failed');
         const workerURL = options.workerURL ?? new URL('./cube48opt-rust8-worker.mjs', import.meta.url);
-        const regionBase = Math.ceil((tablePointer + (options.fixture ? 0 : tableBytes)) / PAGE) * PAGE;
         await Promise.all(Array.from({ length: threads }, (_, index) => new Promise((resolve, reject) => {
           const worker = new Worker(workerURL, { workerData: { compiled, memory, variant, threads, index,
-            fixture: !!options.fixture, region: regionBase + index * (TLS_BYTES + STACK_BYTES + ARENA_BYTES) } });
+            fixture: !!options.fixture, region: layout.regionBase + index * WORKER_REGION_BYTES } });
           const w = { worker, pending: new Map(), rejectStartup: reject }; workers.push(w);
           const fail = error => { broken = true; reject(error); for (const p of w.pending.values()) p.reject(error); w.pending.clear(); };
           worker.on('error', fail);
@@ -82,9 +105,9 @@ export default async function createModule(options = {}) {
           worker.on('message', message => {
             if (message.ready) { resolve(); return; }
             const pending = w.pending.get(message.id);
-            if (!pending) { if (message.error) fail(new Error(message.error)); return; }
+            if (!pending) { if (message.error) fail(errorFromWorker(message)); return; }
             w.pending.delete(message.id);
-            if (message.error) { const error = new Error(message.error); pending.reject(error); fail(error); }
+            if (message.error) { const error = errorFromWorker(message); pending.reject(error); fail(error); }
             else pending.resolve(message.value);
           });
         })));
@@ -133,14 +156,21 @@ export default async function createModule(options = {}) {
       if (!options.fixture || !ready || busy) throw new Error('Fixture mode only');
       return Promise.all(workers.map(w => call(w, 'coordinate', { scramble })));
     },
+    async fixtureDeepPrefixes(scramble) {
+      if (!options.fixture || !ready || busy) throw new Error('Fixture mode only');
+      await Promise.all(workers.map(w => call(w, 'begin', { scramble })));
+      const depths = [];
+      for (let depth = 0; depth <= 20; depth++) {
+        depths.push(await Promise.all(workers.map(w => call(w, 'resource-depth', { depth }))));
+      }
+      return depths;
+    },
     async allocationStats() { if (!ready || busy) throw new Error('Pool must be idle'); return Promise.all(workers.map(w => call(w, 'stats'))); },
     close,
   };
   if (options.instantiateOnly) return module;
   if (options.fixture && typeof api.cubeopt_fixture_create !== 'function') throw new Error('Production module cannot use the fixture oracle');
-  const regionBase = Math.ceil((tablePointer + (options.fixture ? 0 : tableBytes)) / PAGE) * PAGE;
-  const required = regionBase + threads * (TLS_BYTES + STACK_BYTES + ARENA_BYTES);
-  memory.grow(BigInt(required / PAGE - INITIAL_BYTES / PAGE));
+  memory.grow(BigInt(layout.requiredBytes / PAGE - INITIAL_BYTES / PAGE));
   const snapshot = await bytes(options.smallTableBytes ?? options.snapshotURL ?? options.smallTableURL
     ?? new URL(`./cube48opt${variant}.small.bin`, import.meta.url));
   if (snapshot.byteLength !== snapshotBytes) throw new Error(`Snapshot must contain ${snapshotBytes} bytes`);

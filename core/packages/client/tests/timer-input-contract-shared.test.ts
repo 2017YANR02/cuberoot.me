@@ -194,6 +194,21 @@ describe('shared timer keydown priority golden matrix', () => {
     }).command).toEqual({ id: 'reset' });
   });
 
+  it('allows Escape to abort after focusing a control without bypassing modal or text entry guards', () => {
+    for (const select of [false, true]) {
+      const target = { ...PLAIN_TARGET, noTimerRegion: true, select };
+      const context = { target, phase: 'running' as const };
+      expect(down(key('Escape'), context).command).toEqual({ id: 'reset' });
+      expect(down(key('Escape', { repeat: true }), context).command).toEqual({ id: 'none' });
+      for (const modal of ['blocking', 'hints-only'] as const) {
+        expect(down(key('Escape'), { ...context, modal }).command).toEqual({ id: 'none' });
+      }
+      expect(down(key('Escape'), {
+        ...context, target: { ...target, textEntry: true },
+      }).command).toEqual({ id: 'none' });
+    }
+  });
+
   it('resolves stage/memo controls before the running any-key stop', () => {
     expect(down(key('Digit2'), { phase: 'running', multiStageActive: true })).toEqual({
       command: { id: 'mark-stage', stage: 'f2l' },

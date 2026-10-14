@@ -14,6 +14,17 @@ import { parsePrintedSolution, parseWasmBenchmarkArguments, readWca100 } from '.
 
 const here = dirname(fileURLToPath(import.meta.url));
 const native = resolve(here, 'target/release/cube48opt-research');
+test('dedicated 18-thread reviews route only existing-table commands with one shared native table', () => {
+  const root=resolve(here,'../../..'), executable=resolve(here,'target/multithread/release/cube48opt-research');
+  const env={CUBEOPT_MULTITHREAD_REVIEW:resolve(root,'.tmp/cubeopt-reverse/mt18-review/launch.json'),
+    CUBEOPT_BACKEND:'h48',CUBEOPT_H:'10',CUBEOPT_SEARCH_THREADS:'18',CUBEOPT_SOLVE_THREADS:'1',CUBEOPT_MEASURE_RSS:'1'};
+  const args=['solve-h48','10',resolve(root,'solver/tables/h48-nissy-core/h48h10.dat'),'8','20','0'];
+  const p=researchPolicy('wca100-mt18-h10',executable,args,env);
+  assert.equal(p.entry,'native');assert.equal(p.searchThreads,18);assert.equal(p.tableBytes,30_336_314_216);
+  assert.equal(p.rssLimit,30_336_314_216+2**30+18*16*2**20);
+  assert.throws(()=>researchPolicy('wca100-mt18-h10',executable,args,{...env,CUBEOPT_MULTITHREAD_REVIEW:undefined}));
+  assert.throws(()=>researchPolicy('wca100-mt18-h10',executable,args,{...env,CUBEOPT_SOLVE_THREADS:'18'}));
+});
 test('one reviewed comparison binds stopped bytes, exact command, current resources and unused history', () => {
   const hash = (bytes:Buffer) => createHash('sha256').update(bytes).digest('hex');
   const encode = (value:unknown) => Buffer.from(JSON.stringify(value));

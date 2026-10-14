@@ -10,6 +10,7 @@ use cube48opt_research::{coord::{Opt8CoordTables, CoordTables, snapshot_bytes}, 
 const CONTROL: usize = 8 * 1024 * 1024;
 const SNAPSHOT: usize = CONTROL + 65536;
 const PDB: usize = 16 * 1024 * 1024;
+const MAX_THREADS: u32 = 18;
 
 #[link(wasm_import_module = "host")]
 extern "C" {
@@ -122,6 +123,13 @@ struct GenericOracle {
     #[cfg(feature = "small-check")]
     fixture: bool,
 }
+#[inline(always)]
+fn lookup_generic(words: &[u32], variant: Variant, index: u64) -> u8 {
+    let word = (index >> 4) as usize;
+    let code = words[word] >> ((index & 15) * 2) & 3;
+    if code == 0 { (words[word & !3] & 15) as u8 }
+    else { code as u8 + variant.max_bound() - 3 }
+}
 impl PruningOracle for GenericOracle {
     type Query = u64;
     #[inline(always)] fn prepare(&self, c: &Cube, _: u8) -> Result<u64, u8> {
@@ -132,9 +140,7 @@ impl PruningOracle for GenericOracle {
     #[inline(always)] fn lookup(&self, index: u64) -> u8 {
         #[cfg(feature = "small-check")]
         if self.fixture { return 0; }
-        let word = (index >> 4) as usize;
-        let code = self.words[word] >> ((index & 15) * 2) & 3;
-        if code == 0 { (self.words[word & !3] & 15) as u8 } else { code as u8 + self.variant.max_bound() - 3 }
+        lookup_generic(self.words, self.variant, index)
     }
     fn conjugate(&self, c: &Cube, symmetry: u8) -> Option<Cube> { Some(self.coords.conjugate(c, symmetry)) }
     fn max_bound(&self) -> u8 { self.variant.max_bound() }
@@ -160,7 +166,7 @@ fn status(p: usize, action: impl FnOnce(&mut State) -> Result<(), String>) -> i3
 #[no_mangle] pub extern "C" fn cubeopt_abi_version() -> u32 { 2 }
 #[no_mangle] pub extern "C" fn cubeopt_supports_variant(n: u32) -> u32 { u32::from((1..=9).contains(&n)) }
 #[no_mangle] pub extern "C" fn cubeopt_pointer_bytes() -> u32 { std::mem::size_of::<usize>() as u32 }
-#[no_mangle] pub extern "C" fn cubeopt_max_threads() -> u32 { 4 }
+#[no_mangle] pub extern "C" fn cubeopt_max_threads() -> u32 { MAX_THREADS }
 #[no_mangle] pub extern "C" fn cubeopt_table_bytes(n: u32) -> u64 { if (1..=9).contains(&n) { Variant::new(n as u8).unwrap().bytes() } else { 0 } }
 #[no_mangle] pub extern "C" fn cubeopt_snapshot_bytes(n: u32) -> u64 { if (1..=9).contains(&n) { snapshot_bytes(n as u8).unwrap() as u64 } else { 0 } }
 #[no_mangle] pub extern "C" fn cubeopt_control_ptr() -> usize { CONTROL }
@@ -195,7 +201,7 @@ fn status(p: usize, action: impl FnOnce(&mut State) -> Result<(), String>) -> i3
     0
 }
 fn create(index: u32, count: u32, n: u32, fixture: bool) -> usize {
-    if count == 0 || count > 4 || index >= count { return 0; }
+    if count == 0 || count > MAX_THREADS || index >= count { return 0; }
     if !(1..=9).contains(&n) { return 0; }
     let variant = Variant::new(n as u8).unwrap();
     if !fixture && control(4).load(Ordering::Acquire) != n { return 0; }
@@ -262,4 +268,57 @@ fn create(index: u32, count: u32, n: u32, fixture: bool) -> usize {
         if a != b { return Err("coordinate mismatch".into()); }
         s.output = a.to_string(); Ok(())
     })
+}
+
+/// Resource-only fixture: reject every query so all prefix queue lengths and
+/// sorting stages can be exercised without a PDB or an exponential solve.
+/// This is deliberately not an admissible oracle and supplies no solve result.
+#[cfg(feature="small-check")]
+#[no_mangle]
+pub extern "C" fn cubeopt_fixture_prepare_depth(p: usize, depth: u32) -> i32 {
+    struct RejectAll(u8);
+    impl PruningOracle for RejectAll {
+        type Query = u64;
+        fn prepare(&self, _: &Cube, remaining: u8) -> Result<u64, u8> { Err(remaining + 1) }
+        fn lookup(&self, _: u64) -> u8 { unreachable!("resource fixture must never query a PDB") }
+        fn max_bound(&self) -> u8 { self.0 }
+    }
+    status(p, |s| {
+        if depth > 20 { return Err("fixture depth must be at most 20".into()); }
+        let max_bound = match &s.oracle { Backend::Opt8(o) => o.max_bound(), Backend::Generic(o) => o.max_bound() };
+        let result = s.search.as_mut().ok_or("begin a scramble first")?
+            .run_depth(&RejectAll(max_bound), depth as u8)?;
+        if result.solution.is_some() || result.cancelled || result.completed_depth != Some(depth as u8) {
+            return Err("resource fixture requires a nontrivial scramble and exhausted depth".into());
+        }
+        s.output = format!("{{\"depth\":{depth},\"nodes\":{},\"jobs\":{},\"worker\":{}}}",
+            result.stats.nodes,result.stats.jobs,s.shard.index);
+        Ok(())
+    })
+}
+
+/// Exercise the production generic decoder with a 128-byte synthetic array.
+#[cfg(feature="small-check")]
+#[no_mangle]
+pub extern "C" fn cubeopt_fixture_verify_generic_probes() -> i32 {
+    let mut checked = 0;
+    for number in 1..=9 {
+        let variant = Variant::new(number).unwrap();
+        for phase in 0..4_u32 {
+            let mut words = [0_u32; 32];
+            for (word, value) in words.iter_mut().enumerate() {
+                for slot in 0..16 { *value |= (phase + word as u32 + slot) % 4 << (slot * 2); }
+                if word & 3 == 0 { *value = (*value & !15) | ((word as u32 / 4 + phase) % u32::from(variant.max_bound()+1)); }
+            }
+            for index in 0..512_u64 {
+                let word = (index / 16) as usize;
+                let code = (words[word] / (1_u32 << (2 * (index % 16)))) % 4;
+                let expected = if code == 0 { (words[word / 4 * 4] % 16) as u8 }
+                    else { code as u8 + variant.max_bound() - 3 };
+                if lookup_generic(&words, variant, index) != expected { return -1; }
+                checked += 1;
+            }
+        }
+    }
+    checked
 }

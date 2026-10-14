@@ -1896,11 +1896,11 @@ export const CATALOG: ComponentEntry[] = [
     usage: "<FaceletsCube fd={caseFacelets(state)} size={88} />",
   },
   {
-    name: 'LiveCubeState / SimCubeView',
+    name: 'LiveCubeState / SimCubeView / TwizzleCubeView',
     import: "import LiveCubeState from '@cuberoot/timer-ui/LiveCubeState';",
     category: 'more',
-    zh: '网站与已安装 App 共用的智能魔方实况图。以设备贴纸与验算后的动作锚点为准；三维动画和姿态回放共用 SimCubeView，宿主只传语言与设备状态。',
-    en: 'Smart-cube mirror shared by Web and installed apps. Uses device facelets and a verified move anchor; live animation and orientation replay share SimCubeView. Hosts supply language and device state only.',
+    zh: '网站与已安装 App 共用的智能魔方实况图。以设备贴纸与验算后的动作锚点为准；mode="3d" 使用现有 SimCubeView，mode="twizzle" 使用 cubing.js 的实时转动与陀螺仪视图。只挂载所选引擎，切换保留设备状态；姿态回放仍用 SimCubeView。',
+    en: 'Smart-cube mirror shared by Web and installed apps. Uses device facelets and a verified move anchor. mode="3d" selects SimCubeView; mode="twizzle" selects cubing.js live turns and gyro. Only the selected engine mounts; switching preserves device state. Replay retains SimCubeView.',
     usage: '<LiveCubeState facelets={facelets} moves={moves} algAnchored={anchored} mode="3d" language="en" />',
   },
   {

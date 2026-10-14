@@ -147,3 +147,38 @@ The original service is restored after diagnostics; no slow candidate is promote
   bytes. Old WASM/wrapper/manifest remain, and the durable cleanup receipt contains
   the exact hardlink restore command required before rollback. This removes a
   redundant path and does not reclaim the shared file's disk blocks.
+
+## Local 18-worker boundary — 2026-10-14
+
+- The Mac Opt9 shared-WASM run `wca100-mt18-wasm-opt9` stopped with
+  `Error: unreachable` before producing any case result. `rust/raw.jsonl`
+  contains a ready record: the 15,565,455,360-byte table passed validation and
+  all 18 workers initialized; loading took 22.647901583 seconds. The failure
+  happened during the first solve, not table loading or worker startup.
+- Guard retained the failure and sticky stop. Sampled peak RSS was
+  15,857,188,864 bytes, minimum conservative headroom 21,452,537,856 bytes,
+  Swapouts remained zero and pressure was normal. The formal queue remains
+  stopped; no failed result is eligible for the comparison page.
+- The old worker discarded the original WASM stack and operation/depth context.
+  This information-loss bug is fixed locally: forwarded errors now preserve
+  worker ID, operation, depth, original stack and arena statistics. **The actual
+  first-solve trap has not been located or fixed.** No automatic retry occurred.
+- Bounded diagnostics used no PDB. Frozen `build-ij8uAi/small-check.wasm`
+  passed 1,800 begin-only calls (100 WCA inputs × 18 workers; no search-depth
+  requests), with maximum arena use 642,436 bytes. New build `build-KGlaGt`
+  passed 9,432 shallow independent solves, 81,450 scalar coordinate comparisons,
+  18,432 synthetic comparisons through the production generic decoder, and
+  18-worker depth 0–20 prefix preparation/sorting. Depths 17–20 each prepared
+  43,254 total prefixes; peak arena use was 3,263,308 bytes. The deep-prefix
+  fixture deliberately rejects queries and proves only resource/control-flow
+  behavior, not admissibility or full-depth solving correctness.
+- These checks did not reproduce the trap. They do not exercise the real Opt9
+  PDB reads or production worker arenas above 15.58 GB. The failed frozen build,
+  accepted four-worker production bundle and all stop records remain intact.
+  New diagnostic build WASM SHA-256:
+  `1ff8093b63c9c178c9010647fbcae4834e115137a5e2440f2e76c2badd328004`.
+  It is not a verified repair or a deployment candidate.
+- The simplified comparison-page commit
+  `c4b32068639892424a146bde293320012cecec27` is deployed: CI, Next and Vercel
+  succeeded. It displays the two verified Mac 18-thread results, Rust H7 and
+  native Rust Opt9. The diagnostic changes above remain local.

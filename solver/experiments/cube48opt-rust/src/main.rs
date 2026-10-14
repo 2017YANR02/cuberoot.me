@@ -95,6 +95,16 @@ fn run() -> Result<(), String> {
         PruningTable::load_variant(Path::new(pdb_path), variant)?,
     )?;
     let (options, parallelism) = search.unwrap();
+    // Preserve the default native binary and every other table variant.
+    // Only an explicitly built candidate opts into the Opt9 specialized
+    // oracle and the selected experimental pruning/scheduling policy.
+    #[cfg(all(
+        any(feature = "opt9-native-bpmx", feature = "opt9-native-dynamic", feature = "opt9-native-prefetch", feature = "opt9-native-quarter", feature = "opt9-native-root-bound"),
+        not(target_family = "wasm"),
+    ))]
+    if let Some(specialized) = oracle.experimental_native_opt9_oracle() {
+        return run_solver(&specialized, options, parallelism);
+    }
     run_solver(&oracle, options, parallelism)
 }
 
@@ -283,7 +293,60 @@ fn run_solver<O: PruningOracle + Sync>(oracle: &O, options: SearchOptions, paral
             .map(|v| v.to_string())
             .unwrap_or("null".into());
         let s = result.stats;
-        Ok(format!("{{\"id\":\"{id}\",\"solution\":{solution_json},\"length\":{length},\"seconds\":{seconds:.9},\"completed_depth\":{completed},\"cancelled\":{},\"contexts\":{contexts},\"threads\":{search_threads},\"batch_threads\":{batch_threads},\"nodes\":{},\"probes\":{},\"inverse_probes\":{},\"cache_reuses\":{},\"splits\":{},\"face_prunes\":{},\"face_siblings_removed\":{}}}",
+        #[cfg(all(feature = "opt10-native-profile", not(target_family = "wasm")))]
+        if oracle.profile_search() && !s.profile.matches_totals(&s) {
+            return Err("diagnostic profile does not conserve search totals".into());
+        }
+        #[cfg(all(feature = "opt9-native-quarter", not(target_family = "wasm")))]
+        let quarter_stats = format!(",\"quarter_siblings_removed\":{}", s.quarter_siblings_removed);
+        #[cfg(not(all(feature = "opt9-native-quarter", not(target_family = "wasm"))))]
+        let quarter_stats = "";
+        #[cfg(all(feature = "opt9-native-quarter-cache", not(target_family = "wasm")))]
+        let quarter_cache_stats = format!(",\"quarter_cache_reuses\":{}", s.quarter_cache_reuses);
+        #[cfg(not(all(feature = "opt9-native-quarter-cache", not(target_family = "wasm"))))]
+        let quarter_cache_stats = "";
+        #[cfg(all(feature = "opt9-native-axis", not(target_family = "wasm")))]
+        let axis_stats = format!(",\"axis_siblings_removed\":{},\"axis_deferred_marks\":{},\"axis_deferred_siblings_removed\":{}",
+            s.axis_siblings_removed, s.axis_deferred_marks, s.axis_deferred_siblings_removed);
+        #[cfg(not(all(feature = "opt9-native-axis", not(target_family = "wasm"))))]
+        let axis_stats = "";
+        #[cfg(all(feature = "opt9-native-ranked", not(target_family = "wasm")))]
+        let ranked_stats = format!(",\"exhausted_depth_nodes\":{},\"solution_depth_nodes\":{}",
+            s.exhausted_depth_nodes, s.solution_depth_nodes);
+        #[cfg(not(all(feature = "opt9-native-ranked", not(target_family = "wasm"))))]
+        let ranked_stats = "";
+        #[cfg(all(feature = "opt10-native-dual", not(target_family = "wasm")))]
+        let dual_stats = format!(",\"dual_attempts\":{},\"dual_raised\":{},\"dual_parent_cuts\":{}",
+            s.dual_attempts, s.dual_raised, s.dual_parent_cuts);
+        #[cfg(not(all(feature = "opt10-native-dual", not(target_family = "wasm"))))]
+        let dual_stats = "";
+        #[cfg(all(feature = "opt10-native-coset", not(target_family = "wasm")))]
+        let coset_stats = format!(",\"coset_parent_proofs\":{},\"coset_half_prunes\":{}", s.coset_parent_proofs, s.coset_half_prunes);
+        #[cfg(not(all(feature = "opt10-native-coset", not(target_family = "wasm"))))]
+        let coset_stats = "";
+        #[cfg(all(feature = "opt10-native-coset-chain", not(target_family = "wasm")))]
+        let coset_chain_stats = format!(",\"coset_chain_proofs\":{},\"coset_chain_attempts\":{},\"coset_chain_edges\":{},\"coset_chain_ancestor_cuts\":{},\"coset_chain_half_prunes\":{}",
+            s.coset_chain_proofs, s.coset_chain_attempts, s.coset_chain_edges, s.coset_chain_ancestor_cuts, s.coset_chain_half_prunes);
+        #[cfg(not(all(feature = "opt10-native-coset-chain", not(target_family = "wasm"))))]
+        let coset_chain_stats = "";
+        #[cfg(all(feature = "opt10-native-profile", not(target_family = "wasm")))]
+        let profile_stats = format!(",\"profile\":{}", s.profile.json());
+        #[cfg(not(all(feature = "opt10-native-profile", not(target_family = "wasm"))))]
+        let profile_stats = "";
+        #[cfg(all(feature = "opt10-native-lookahead", not(target_family = "wasm")))]
+        let lookahead_stats = format!(",\"lookahead_attempts\":{},\"lookahead_probes\":{},\"lookahead_raises\":{},\"lookahead_rejects\":{},\"lookahead_tightened_at_budget\":{},\"lookahead_half_prunes\":{},\"lookahead_by_remaining\":{{\"remaining\":[10,11,12],\"attempts\":{:?},\"raises\":{:?},\"rejects\":{:?}}}",
+            s.lookahead_attempts, s.lookahead_probes, s.lookahead_raises, s.lookahead_rejects,
+            s.lookahead_tightened_at_budget, s.lookahead_half_prunes,
+            s.lookahead_attempts_by_remaining, s.lookahead_raises_by_remaining, s.lookahead_rejects_by_remaining);
+        #[cfg(not(all(feature = "opt10-native-lookahead", not(target_family = "wasm"))))]
+        let lookahead_stats = "";
+        #[cfg(all(feature = "opt10-native-projection", not(target_family = "wasm")))]
+        let projection_stats = format!(",\"projection_attempts\":{},\"projection_probes\":{},\"projection_raises\":{},\"projection_rejects\":{},\"projection_by_remaining\":{{\"remaining\":[11,12],\"attempts\":{:?},\"raises\":{:?},\"rejects\":{:?}}}",
+            s.projection_attempts, s.projection_probes, s.projection_raises, s.projection_rejects,
+            s.projection_attempts_by_remaining, s.projection_raises_by_remaining, s.projection_rejects_by_remaining);
+        #[cfg(not(all(feature = "opt10-native-projection", not(target_family = "wasm"))))]
+        let projection_stats = "";
+        Ok(format!("{{\"id\":\"{id}\",\"solution\":{solution_json},\"length\":{length},\"seconds\":{seconds:.9},\"completed_depth\":{completed},\"cancelled\":{},\"contexts\":{contexts},\"threads\":{search_threads},\"batch_threads\":{batch_threads},\"nodes\":{},\"probes\":{},\"inverse_probes\":{},\"cache_reuses\":{},\"splits\":{},\"face_prunes\":{},\"face_siblings_removed\":{}{quarter_stats}{quarter_cache_stats}{axis_stats}{ranked_stats}{dual_stats}{coset_stats}{coset_chain_stats}{profile_stats}{lookahead_stats}{projection_stats}}}",
             result.cancelled, s.nodes, s.probes, s.inverse_probes, s.cache_reuses, s.splits, s.face_prunes, s.face_siblings_removed))
     })
 }
@@ -321,6 +384,9 @@ mod tests {
         assert_eq!(Parallelism::parse(None, None, 16, options).unwrap(), Parallelism { batch_threads: 1, search_threads: 1 });
         assert_eq!(Parallelism::parse(Some("16"), None, 16, options).unwrap().batch_threads, 16);
         assert_eq!(Parallelism::parse(None, Some("16"), 16, options).unwrap().search_threads, 16);
+        assert_eq!(Parallelism::parse(None, Some("18"), 18, options).unwrap().search_threads, 18);
+        assert!(Parallelism::parse(None, Some("18"), 16, options).is_err());
+        assert!(Parallelism::parse(None, Some("19"), 24, options).is_err());
         assert!(Parallelism::parse(Some("2"), Some("2"), 16, options).is_err());
         for text in ["0", "17", "01", "+1", "1.0"] {
             assert!(Parallelism::parse(None, Some(text), 16, options).is_err());

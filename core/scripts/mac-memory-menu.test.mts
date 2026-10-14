@@ -89,3 +89,13 @@ test('idle memory equals the system estimate and does not invent a calculation',
   const budget = memoryBudget([process(400, 1, 'ordinary-app', 5 * GiB)], 0, 13 * GiB, lock, lock.boot, command());
   assert.deepEqual(budget, { rssBytes: 0, anonymousRssBytes: 0, reservedRssBytes: 0, marginBytes: 13 * GiB, opt10Mode: null });
 });
+
+test('official Opt10 solve has the same anonymous budget; official generation is never exempt',()=>{
+  const official=native.replace('/opt10/','/opt10-official/');
+  for(const mode of ['solve-opt10','generate-opt10']) {
+    const nativeLine=nativeCommand(mode).replace(native,official);
+    const result=memoryBudget(processes,0,13*GiB,{...lock,mode},lock.boot,command(mode).replace(native,official),
+      {guardCwd:root,commands:{101:nativeLine}});
+    assert.equal(result.anonymousRssBytes,mode==='solve-opt10'?64*MiB+Math.round(29.2*GiB):0);
+  }
+});

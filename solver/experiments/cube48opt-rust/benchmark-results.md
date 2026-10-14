@@ -1,5 +1,13 @@
 # Rust 历史 H10 与 Opt1–9 原生内存及基准记录
 
+2026-10-14 正式版：维护者指定Opt10 coset **24.591秒**（WCA1000、16线程、单轮不预热）为正式版本，原生峰值RSS **31.2GB**。正式程序保持与该次实测SHA一致，未重跑测试；其余9份已测/诊断版本原位归档。登记见 [opt10-release.json](opt10-release.json)，恢复清单见 [opt10-archives.json](opt10-archives.json)。本地比较页已同步；仅本地未发布。下方“不采用/默认未替换”等按当时实验阶段理解。
+
+2026-10-14 Opt10第三/四轮完成：coset-chain **25.483秒**、邻居下界lookahead **27.438秒**、替代对称投影projection **25.501秒**，同一1000条/16线程/每版单轮无预热，各1000条独立验解及最优长度核对通过。均未超过保留coset **24.591秒**，不采用，未达到20秒。profile仅用于诊断，带计数耗时不进排名；96.689%节点在剩余10–12步。projection总节点减少1.20%，本轮总耗时反增3.70%，不把局部剪枝当作性能突破。所有候选完整冻结、旧程序未覆盖、旧基准未重跑、原表不变；仅本地未提交、推送或发布。维护者说明20秒为尽力探索目标，本轮收尾；详情见 [Opt10原生实验记录](opt10-native-experiments.md)。
+
+2026-10-14 Opt10第二轮：同一WCA1000/16线程/单轮无预热，batch **29.764秒**、dual **27.827秒**、coset **24.591秒**；三版各1000条全部独立验解和最优长度核对通过。前向pathmax的新剪枝被证明冗余，未跑正式基准。coset是本轮最快单次，比保留25.145秒版少约2.2%，仍未达20秒；总节点没有下降，不能断言稳定提速或重大突破。原33.032秒和25.145秒未重跑、完整源码/程序及报告都保留；同表、RSS约31.2GB，仅本地未发布。完整数学推导、负结果与复现证据见 [Opt10原生实验记录](opt10-native-experiments.md)。
+
+2026-10-14 Opt10新增结果：同机WCA前1000条、16线程、各单轮无预热，原生基准 **33.032秒**，搜索优化版 **25.666秒**，查表优化版 **25.145秒**。各1000条独立验解通过，均复用同一31.1GB Opt10 v2表，峰值RSS约31.2GB；原版及两候选均保留，仅本地未发布。最短实测耗时减少23.9%，未达到减半。协议、源码/程序快照与误差边界见 [Opt10原生实验记录](opt10-native-experiments.md)。下列“暂无Opt10表与性能数据”是先前历史状态。
+
 2026-10-13 后续：维护者取消 H9 建表和测试，进程已停止、跟进已停用，没有完整 H9 表或测试结果。开发转向 Rust Opt10 代码，暂无其大表与性能数据；状态见 [Opt10 开发跟踪](opt10-development.md)。下方 H9 启动记录保留为历史。
 
 本记录汇总已完成的 **Rust H10 与原 C 同表完整 60 例对照**、**Opt1–8 同机、同档位、固定 18 例基准**、**Opt9 与 WASM 的完整 60 例基准**及原生进程内存测量。各表档、比较对象与协议分别解释，不作跨档速度排名。所有数据均为本地实验，未替换统计管道或线上引擎。
@@ -213,3 +221,80 @@ Rust Opt8 不是 Rust H8，不将该结果标在 Rust H8 行。
 30.5 GB，保守余量大于 41 GB，Swapouts 为 0。完成前不填性能成绩。
 `publish-wca100.mts` 从原始逐条结果核对完整语料、轮次、总时间和中位数后
 回填页面，H10 与 Opt 使用同一份冻结输入，保留旧成绩与原始程序。
+
+## 本机 18 线程统一基准（2026-10-13，进行中）
+
+本节取代比较页的历史测试口径。按维护者最新要求，只测试本机 Mac M5 Pro
+（18 核、64 GiB），每个引擎使用 18 个实际搜索线程、一个输入任务，固定 WCA
+前 100 条原顺序只跑一遍，不预热，不重新测试阿里云。页面只接收这一口径的完整
+已验解报告；历史原始结果和程序保留，历史报告入口不再写入页面。
+
+已有表可用于原版 WASM Opt1–9、Rust WASM Opt1–9、Rust 原生 Opt1–10 和
+Rust H7/H10。H0–H6、H8/H9 缺表，不补表；H11 禁止运行；本轮不运行 Nissy。
+Opt10 使用已完成的 v2 表，旧 v1 不完整文件不参与测试。
+
+原生 18 线程程序使用独立 `target/multithread` 构建，未覆盖旧版。共享内存 WASM
+保留默认 4 线程，增加显式 18 线程支持；18 线程构建已完成全部 9 档的浅层状态
+正确性验证。正式大表测试统一经过 guard，沿用原系统启动和 Swapouts 证据，
+串行执行，一次仅驻留一个引擎；任何保护停止均保留记录，不自动重新设置基线。
+
+每份正式报告须核对 100 条顺序、18 个搜索线程、独立复原全部解及 H10 已验证
+最短长度、正常退出和未触发资源保护。耗时为 100 条搜索时间之和，排除加载；
+峰值 RSS 含表加载。界面只显示整数 MB、一位小数 GB 和一位小数秒数，不显示
+精确字节数。尚无正式 18 线程报告时显示待测，不复用旧的单线程成绩。
+
+### 已完成的本机 18 线程结果
+
+| 引擎 | 100 条总搜索秒数 | 峰值 RSS 字节 | 独立验解/最优长度 |
+| --- | ---: | ---: | --- |
+| Rust H7 | 25.372522463 | 3,865,968,640 | 100/100，通过 |
+| Rust 原生 Opt9 | 6.385029210 | 15,642,624,000 | 100/100，通过 |
+
+结果分别在 `.tmp/cubeopt-reverse/wca100-mt18-rust-h7-review/result/` 和
+`wca100-mt18-rust-opt9-review/result/`，保留完整报告、消费凭证及原始输出。
+两项均单轮、不预热、正常退出，Swapouts 为 0，资源保护未触发。
+
+H10 于 2026-10-14T05:02:55Z 在启动前被余量检查拒绝，没有加载表或求解，
+也没有消耗该档运行凭证。Rust WASM Opt9 于 05:04:37Z 在首个结果输出前
+出现 worker `unreachable`，未形成完整实测；资源记录仍为正常压力、Swapouts 0。
+守卫因子进程非零退出留下独立停止记录，后续队列停止，未自动重启或重设基线。
+失败结果不填入性能图，原版 WASM 的对照尚未开始。
+
+### WCA1000 / 16 threads (local request, 2026-10-13)
+
+- Targets: original Opt9 WASM, Rust Opt9 native, Rust Opt9 shared WASM. One pass, no warmup; same first 1000 full source records.
+- Corpus: solver/testdata/benchmarks/wca-first1000.json, SHA256 5b42a18086b27e974115a73696702017b5dde0a19c9819a77c88c8014d67c8ea.
+- Runner: run-wca1000.mts, all computation remains under guard.mts.
+- Status: original WASM startup rejected before any solve or table loading: fresh 3 GiB startup headroom unavailable. Observed reclaimable 12.6 GiB; required WASM 21.4 GiB / native 18.7 GiB. Swapouts 0. Neither other engine started. No valid performance result.
+- Attempt evidence: .tmp/cubeopt-reverse/wca1000-mt16-original-wasm-opt9.stderr.log and -exit.json. This is a preflight rejection, not a consumed benchmark. Preserve resource failure history; do not lower budgets or automatically reset/retry.
+- Previous scores must not be presented as the new 1000/16 results. User does not want historical results displayed.
+
+### WCA1000 / 16 threads — 2026-10-14 outcome
+
+- Explicit resume after startup-memory rejection; archived only the unconsumed preflight attempt in .tmp/cubeopt-reverse/preflight-archive-20261014. No baseline reset.
+- Original Opt9 WASM: 625 completed and independently verified, process exited 1 on case 626 (ID 1683001), stderr only unwind. Incomplete; no 1000-case time.
+- Rust Opt9 native: 1000 completed and independently verified, 70.54567079799996 solve seconds, peak RSS 15645851648 bytes; 625 original reference lengths matched.
+- Rust Opt9 shared WASM: failed on first case, worker 3 cubeopt_begin -> GenericOracle::conjugate -> panic_bounds_check. Zero completed rows.
+- All three were 16 search threads, single pass, no warmup, same frozen corpus. No swapout or resource-protection trigger; program failures preserved and no engine retried. Local only.
+- Page replaced old 100/18 result with valid native 1000/16 result. Opt10 remains unmeasured under this protocol. No speed ratio claimed against incomplete WASM runs.
+
+### 原生 Opt9 实验优化（2026-10-14）
+
+维护者要求实验优化并保留原版。同一 WCA1000、16 个搜索线程、单轮不预热：专门化 + BPMX 为 **59.1430 秒**；再加动态前缀分工为 **55.8018 秒**。两版峰值 RSS 均约 15.64 GB；各 1000 条独立验解通过，全部长度与保留原版一致。无新增 Swapouts，guard 正常退出，无保护触发。
+
+相对之前 70.5457 秒同协议基准，本轮最快实验少耗时 20.90%、少访问 7.52% 节点。原版本轮没有重跑，不宣称已证明稳定提升或达到了 40 秒。原版程序、完整源码备份和原表保留，实验使用非默认 feature 和独立 target，未替换默认版本、网页或服务器，未提交推送。详细数学说明、检查及产物索引见 [opt9-native-experiments.md](opt9-native-experiments.md)。
+
+### 原生 Opt9 第二轮：保留原版与 55.8 秒版（2026-10-14）
+
+仍为相同 WCA1000、16 个搜索线程，每个新候选单轮且无额外预热。C 预取为 56.0287 秒；D 加等价四分之一转剪枝为 46.6339 秒；E 加成功查询缓存和根下界为 47.9108 秒；F 去掉 E 缓存，使用固定上下文流水线及根下界，为 **43.2312 秒**。
+
+F 峰值 RSS **15.64 GB**，进程树峰值 15.75 GB；1000 条全部独立验解通过，长度同时匹配原版和 55.8 秒版。各轮正常退出，Swapouts 为 0，资源保护未触发。F 比保留 55.8018 秒结果少耗时 22.53%，比原版 70.5457 秒少耗时 38.72%；两份旧版没有重跑，属于同协议历史对照。**尚未达到 40 秒。**
+
+原版、55.8 秒版与新最快版均有独立源码/程序/证据封存，原 Opt9 表不变。F 程序位于 `target/opt9-fixed`，完整快照位于 `.tmp/cubeopt-reverse/opt9-native-fixed-preserved-20261014/`；详情与数学依据见 [opt9-native-experiments.md](opt9-native-experiments.md)。只改本地，未更换默认程序、网页或服务器，未提交推送。
+
+
+## 2026-10-14：Opt9 第三轮探索 30 秒
+
+固定 WCA 前1000条、16个实际搜索线程、每个新候选单轮、不预热。同一 Opt9 主表；原版70.55秒、B55.80秒、F43.23秒不重测，源码/程序完整保留。本轮 G NISS排序45.6850秒，H三进制坐标47.1400秒，I相反面两步剪枝45.6115秒，J全局前缀评分46.1451秒；全部1000条独立回放与三个参考的最优长度一致，正常退出、Swapouts=0、无保护触发。**当前最佳仍是F43.2312秒，未达到30秒。** 不将单轮历史对照表述为同期重复测量；没有替换默认版本或发布。
+
+J阶段统计显示52.75%节点位于已穷尽的较短深度，47.25%位于找到解的深度，另17,000根证明节点；节点比例不能当作时间比例。Opt10仅完成小坐标等价性审计，没有运行其大表或基准。各候选完整源码/可执行文件/证据快照、数学边界与后续方向见 [Opt9实验跟踪](opt9-native-experiments.md#第三轮保留三版探索-30-秒四个候选完成)。

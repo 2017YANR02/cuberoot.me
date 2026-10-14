@@ -1,0 +1,88 @@
+{
+  "schema": "cuberoot.opt10-native-archive-index.v1",
+  "official": "opt10-release.json",
+  "archivedAt": "2026-10-14T12:12:39.303Z",
+  "storage": "in-place immutable snapshots; original paths retained for evidence references",
+  "entries": [
+    {
+      "candidate": "baseline",
+      "status": "archived",
+      "kind": "measured",
+      "seconds": 33.03216799100001,
+      "snapshot": ".tmp/cubeopt-reverse/opt10-native-baseline-20261014",
+      "manifestSha256": "862c35417b2c5f561afcd8f8f3cc882f0e144e8230d7e4157bfb040b25070bca",
+      "files": 36
+    },
+    {
+      "candidate": "search",
+      "status": "archived",
+      "kind": "measured",
+      "seconds": 25.665952338999983,
+      "snapshot": ".tmp/cubeopt-reverse/opt10-native-search-preserved-20261014",
+      "manifestSha256": "80a98f4a35d51e931d2f0c6654e774589da73d34d4c472d3dacc7a1e1bb5a161",
+      "files": 35
+    },
+    {
+      "candidate": "hotpath",
+      "status": "archived",
+      "kind": "measured",
+      "seconds": 25.145347332000014,
+      "snapshot": ".tmp/cubeopt-reverse/opt10-native-hotpath-preserved-20261014",
+      "manifestSha256": "4e73ebf9862085ef03f2fddd7b95826415d6e5ace55ded7fdb688366628f6b11",
+      "files": 35
+    },
+    {
+      "candidate": "batch",
+      "status": "archived",
+      "kind": "measured",
+      "seconds": 29.764163911000008,
+      "snapshot": ".tmp/cubeopt-reverse/opt10-native-batch-preserved-20261014",
+      "manifestSha256": "c142357180d4f65e8436f352119c1787fc43b41116ce14dbc62e06424b8b1793",
+      "files": 35
+    },
+    {
+      "candidate": "dual",
+      "status": "archived",
+      "kind": "measured",
+      "seconds": 27.826550047999984,
+      "snapshot": ".tmp/cubeopt-reverse/opt10-native-dual-preserved-20261014",
+      "manifestSha256": "98f8f466619d7e620efe4064ab39c31494d100c1a27555d3a5a33020a1136759",
+      "files": 39
+    },
+    {
+      "candidate": "coset-chain",
+      "status": "archived",
+      "kind": "measured",
+      "seconds": 25.482831271999995,
+      "snapshot": ".tmp/cubeopt-reverse/opt10-native-coset-chain-preserved-20261014",
+      "manifestSha256": "1f410e97a9c227e2dfa9f7bc17d9dfe4a73a67ea01332410c88c11295b7ef3ca",
+      "files": 43
+    },
+    {
+      "candidate": "profile",
+      "status": "archived",
+      "kind": "diagnostic",
+      "snapshot": ".tmp/cubeopt-reverse/opt10-native-profile-preserved-20261014",
+      "manifestSha256": "3235dbe576b6db83bb56a2fc408a7e2031296ab1b4076a05a79c42a140e1b813",
+      "files": 45
+    },
+    {
+      "candidate": "lookahead",
+      "status": "archived",
+      "kind": "measured",
+      "seconds": 27.437856878000005,
+      "snapshot": ".tmp/cubeopt-reverse/opt10-native-lookahead-preserved-20261014",
+      "manifestSha256": "1f03e2acf11b3d0f1422c81200e688314835280de1e638ac91954ae9d9158bb9",
+      "files": 49
+    },
+    {
+      "candidate": "projection",
+      "status": "archived",
+      "kind": "measured",
+      "seconds": 25.501252761999986,
+      "snapshot": ".tmp/cubeopt-reverse/opt10-native-projection-preserved-20261014",
+      "manifestSha256": "56e3830f26eafd433aff476f2b9269b4b6076020ad6086262fc102974ab12841",
+      "files": 46
+    }
+  ]
+}

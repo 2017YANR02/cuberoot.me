@@ -11,6 +11,7 @@ const root = resolve(import.meta.dirname, '../..');
 const research = 'solver/experiments/cube48opt-rust';
 const guardScript = `${research}/guard.mts`;
 const opt10Native = resolve(root, research, 'target/opt10/release/cube48opt-research');
+const opt10OfficialNative = resolve(root, research, 'target/opt10-official/release/cube48opt-research');
 const GiB = 2 ** 30;
 type Processes = ReturnType<typeof parseProcesses>;
 function descendants(processes: Processes, seeds: number[]): Set<number> {
@@ -50,8 +51,10 @@ function guardedNativeCommand(command: string, lock: Opt10Lock, cwd: string | un
   // among another script's arguments is not evidence that this is the guard.
   while (words[at] === '--experimental-strip-types' || words[at] === '--no-warnings') at++;
   if (words[at] !== resolve(root, guardScript) && !(words[at] === guardScript && cwd === root)) return null;
-  if (!/^[a-z0-9-]+$/.test(words[at + 1] ?? '') || words[at + 2] !== opt10Native || words[at + 3] !== lock.mode) return null;
-  const expected = [opt10Native, lock.mode,
+  const binary = words[at + 2];
+  if (!/^[a-z0-9-]+$/.test(words[at + 1] ?? '') || words[at + 3] !== lock.mode
+      || !(binary === opt10Native || binary === opt10OfficialNative && lock.mode === 'solve-opt10')) return null;
+  const expected = [binary, lock.mode,
     resolve(root, '.tmp/cubeopt-reverse/opt9-generated/small-memory.bin'),
     resolve(root, '.tmp/cubeopt-reverse/opt10-generated-v2/cuberoot-opt10.dat'),
     ...(lock.mode === 'generate-opt10' ? ['16'] : ['8', '20', '0'])];

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState, type ReactNode } from 'react';
+import { Settings } from 'lucide-react';
 import { TimerPuzzlePicker } from '@cuberoot/timer-ui';
 import { TIMER_EVENT_PICKER_GROUPS, timerEventIdFromSelector, type EventId } from '@cuberoot/shared/timer';
 import { useSearchParams } from 'next/navigation';
@@ -186,10 +187,6 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
             else startTimer(content, true, source === 'manual' ? 'manual' : 'random');
           }} />}
     </div>}
-    {onAdvancedSettings && <button type="button" className="timer-practice-settings__action timer-practice-settings__more" onClick={() => {
-      changeSettingsOpen(false);
-      onAdvancedSettings();
-    }}>{tr({ zh: '更多', en: 'More' })}</button>}
   </div>;
 
   if (settingsOnly) return practiceSettings;
@@ -214,7 +211,7 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
     </span>}
     <span className="timer-practice-control timer-practice-control--content">
       <TimerPuzzlePicker
-        showArrow
+        showArrow={false}
         disabled={navigationDisabled} puzzleLabel={tr({ zh: '内容', en: 'Content' })}
         triggerLabel={contentLabel} selectedEvent={content?.id ?? ''} showSubmenuHeading={false}
         showItemIcons={false} dataNoTimer
@@ -242,9 +239,17 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
         }}
       />
     </span>}
-    {practiceSettings && !isRun && <SettingsPopover label={tr({ zh: '训练设置', en: 'Training settings' })}
+    {practiceSettings && !isRun && (onAdvancedSettings ? <>
+      {!training && sourceControl?.(content?.selectPath
+        ? () => startTraining(content, method, true, true) : undefined)}
+      <button type="button" className="settings-popover-trigger" data-no-timer
+        aria-label={tr({ zh: '设置', en: 'Settings' })} aria-haspopup="dialog"
+        onClick={onAdvancedSettings}>
+        <Settings size={18} aria-hidden="true" />
+      </button>
+    </> : <SettingsPopover label={tr({ zh: '训练设置', en: 'Training settings' })}
       open={settingsOpen} onOpenChange={changeSettingsOpen} ignoreTimer>
       {practiceSettings}
-    </SettingsPopover>}
+    </SettingsPopover>)}
   </>;
 }

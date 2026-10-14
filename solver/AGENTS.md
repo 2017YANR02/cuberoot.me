@@ -1,5 +1,25 @@
 # AGENTS.md
 
+2026-10-14 正式版本晋升：维护者已指定Opt10最快coset24.591秒版为正式默认，其他实验归档。唯一正式选择在 `experiments/cube48opt-rust/opt10-release.json`；默认入口 `run-opt10.mts` 只选择已验SHA的 `target/opt10-official/release/cube48opt-research`，仅Opt10 solve。`opt10-release.mts install|verify|status` 仅安装/核验冻结构件，不加载表。其余9份快照以 `opt10-archives.json` 原位归档，保留源码、程序和报告，禁止覆盖或重复消费旧标签。不要给Cargo全局default加coset：它依赖Opt9实验features；不要覆盖通用程序、WASM或旧target/opt10的生成/ZBLL验证绑定。实际运行仍须guard和独立review，沿用旧资源基线；本次只完成本地晋升和比较页数据更新，不新跑基准，不授权发布。下方“默认版本未替换”等为晋升前的历史记录。
+
+2026-10-14 Opt10第四轮已收尾：维护者明确20秒是尽力探索目标，不苛求。本轮数学候选lookahead27.438秒、projection25.501秒，均未超过保留coset24.591秒；此前coset-chain25.483秒，gated微调未跑正式基准。固定WCA1000原序、16线程、每版单轮零预热，各1000条独立验解及四份参考最优长度核对通过。profile发现96.689%节点在剩余10–12步，诊断耗时不排名。projection确有新增12层拒绝，但总节点仅降1.20%，未转化为本轮耗时改善。原33.032秒、hotpath25.145秒、coset24.591秒及所有实验/诊断源码、程序与证据已完整冻结；不覆盖默认feature或旧程序，不重建主表，禁止重复消费旧标签。仅本地未提交、推送或发布，不启动其他档位；正式结果以 `experiments/cube48opt-rust/opt10-native-experiments.md` 为准。
+
+2026-10-14 Opt10继续：维护者要求争取20秒以内，保留原33.032秒及25.145秒版。仍为固定WCA1000原序、16搜索线程、每个新候选一轮不预热，仅本地。既有基准不重跑；新candidate使用独立target与证据，强制核对已保留的hotpath快照。复用同一表，运行保护与旧Swapouts/停止记录保持，不授权其他档位、重建表或发布。
+
+第二轮已完成：batch 29.764秒、dual 27.827秒、coset 24.591秒，各1000条独立验解及最优长度通过；均未达到20秒。coset以直接查询的陪集证书清父帧反侧半转，不增加查询阶段；本轮最快单次，但总节点略增，不能宣称约2.2%差异稳定。原版、hotpath及三候选全部冻结，默认feature不变。pathmax经数学和小数据证明新增剪枝冗余，保留草稿后撤回，未跑正式基准。所有已消费的候选标签不可重跑，详见 `experiments/cube48opt-rust/opt10-native-experiments.md`。
+
+2026-10-14 Opt10 新任务：维护者明确要求先测当前 Rust 原生 Opt10 基准，再探索将耗时减半；未达到也如实保留结果。沿用相同 WCA 前1000条、16个搜索线程、每版一轮不预热，仅本地。复用已验收 Opt10 v2 主表和 Opt9 辅助坐标快照，不建表、不运行其他档位；原 Opt10、原版 Opt9 / 55.8秒 / 43.2秒均保留。基准与各候选采用独立target/源码及证据快照，经既有guard监控，旧系统启动、Swapouts基线和停止记录不得覆盖或重设。下文 Opt10“只分析不运行”的旧阶段限制由此次明确授权取代；不授权推送或部署。
+
+本轮 Opt10 已完成：baseline 33.032秒、search 25.666秒、hotpath 25.145秒，三个版本各1000条独立验解通过、无保护触发，未达到耗时减半。非默认 `opt10-native-search` / `opt10-native-hotpath` 使用独立target；三版源码、程序与原始证据已分别冻结，详见 `experiments/cube48opt-rust/opt10-native-experiments.md`。不能重用已消费的三个测试标签或覆盖原快照。Opt9各保留版本不受影响。
+
+2026-10-14 第三轮：维护者要求继续争取 30 秒以内，保留原版 70.55 秒、55.80 秒及 43.23 秒版的完整源码/程序。43.23 秒版另封存于 `.tmp/cubeopt-reverse/opt9-native-fixed-preserved-20261014/`，逐文件 manifest 已核验。仍为同一 WCA1000、16 个搜索线程、每个新候选一轮、不预热，不重新跑保留基准。新候选使用非默认 feature、独立 target、既有 guard 与同一资源基线；只在本地实验。Opt10 本轮只审查数学适用性，不据 Opt9 成绩推算 Opt10 提速。G/H/I/J 已完成各一轮（45.685/47.140/45.611/46.145 秒），均验解通过但未超过 F，当前最佳仍为保留的 43.231 秒；完整实验记录见 `experiments/cube48opt-rust/opt9-native-experiments.md`，不得重复运行这些已消费的候选标签。
+
+2026-10-14 继续实验：维护者要求争取低于 40 秒，原版 70.55 秒及上一轮 55.80 秒版均须保持可用。55.80 秒源码、程序、原始结果和资源证据另封存于 `.tmp/cubeopt-reverse/opt9-native-55s-preserved-20261014/`，有逐文件摘要清单。新候选沿用相同 WCA1000、16 线程、各一轮、不预热，只在新的独立 target 构建运行；不覆盖旧程序、不重新运行旧基准。复用现有表，运行保护和本地不发布范围不变。
+
+2026-10-14 最新范围：维护者授权实验优化 **Rust 原生 Opt9**，原版必须继续可用。固定 WCA 前 1000 条、16 个实际搜索线程、每个候选单轮不预热；目标 60 秒以内，40 秒为探索目标。默认 Cargo 功能与 `target/multithread` 原版保留，候选用独立 `target/opt9-bpmx` / `target/opt9-dynamic`，仅非默认 feature 启用。源码、程序及原基准备份在 `.tmp/cubeopt-reverse/opt9-native-baseline-20261014/`，过程见 `experiments/cube48opt-rust/opt9-native-experiments.md`。复用现有 Opt9 表，不恢复旧档位、不重建大表，不做服务器测试或发布。大表实验仍经现有 guard，旧停止记录和 Swapouts 基线不得清除或重设，失败不自动重试。
+
+2026-10-13 最新范围更新：维护者仅保留本机三阶最优研究 Opt9 与自研 Opt10 v2 两张主表及所需 Opt9 坐标快照。Opt1–8、H7/H10 与旧 Opt10 partial 已移入废纸篓（清单 `.tmp/cubeopt-reverse/table-retirement-20261013.json`），不得因旧文档的保留/默认统计约定自动恢复或补建。旧 H10 统计入口目前缺表，尚未迁移；服务器 Opt8 保持原状。比较页只展示 Rust 原生 Opt9/Opt10。当前只汇报 Opt10 优化方案，不运行新基准；WASM 修复已取消。下列旧授权与库存说明保留为历史，以最新范围为准。
+
 2026-10-13 最新指令：维护者已确认先做 Rust Opt9 编译的 WASM 与原版 WASM 对照，固定 WCA 前 100 条一次、无额外预热；更快且正确兼容才发布。线上实际为 Opt8，发布需验证对应档位而不能直接用 Opt9 占满服务器内存。随后测试并优化自研 Rust Opt10；所有实际计算仍须接入具备对应预算的研究 guard，先完成小档生成器独立对照，再启用 Opt10 大表路径。H9 取消、H11 禁止运行、旧程序/表/原始报告保留。
 
 2026-10-13 后续指令：维护者已取消 H9 建表及测试；16 线程进程已停止，跟进自动化已暂停，未生成完整 H9 表。下述 H9 授权保留为历史，不能据此重启。当前只开发 Rust Opt10 代码与有界小数据校验，不启动 Opt10 大表生成、加载或求解；H7/H10 及 Opt1–9 旧表、旧程序保留。

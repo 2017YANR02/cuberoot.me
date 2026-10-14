@@ -225,9 +225,11 @@
 .wse-table a { color: var(--accent); text-decoration: none; }
 .wse-table a:hover { text-decoration: underline; }
 
-/* 1 号:纪录表格所有表头、单元格内容水平居中展示 */
+/* 纪录表默认居中;选手和比赛名称在所有复用页面上统一左对齐。 */
 .wca-record-rows-table th,
 .wca-record-rows-table td { text-align: center; }
+.wca-record-rows-table th.wse-name-col,
+.wca-record-rows-table td.wse-name-col { text-align: left; }
 /* 成绩列(单次/平均/每把)保持右对齐,保小数点跨行对齐 */
 .wca-record-rows-table th.wse-value-col,
 .wca-record-rows-table td.wse-value-col,

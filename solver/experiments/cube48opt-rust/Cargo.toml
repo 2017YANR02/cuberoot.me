@@ -16,8 +16,55 @@ h10-prefetch = []
 # Only the dedicated target/opt10 build opts in; local execution requires the
 # Opt10 guard budget and a matching complete small-table generator proof.
 opt10-runtime = []
+# Isolated Opt10 search candidate; the default Opt10 runtime stays unchanged.
+# Reuse the proven generic native search paths, with no table-format changes.
+opt10-native-search = [
+    "opt10-runtime",
+    "opt9-native-bpmx",
+    "opt9-native-dynamic",
+    "opt9-native-quarter",
+    "opt9-native-root-bound",
+    "opt9-native-fixed-contexts",
+]
+# Isolated immutable-table read hint and decoder inlining; no coordinate changes.
+opt10-native-hotpath = ["opt10-native-search"]
+# Issue immutable probe loads as a group before decoding their bounds.
+opt10-native-batch = ["opt10-native-hotpath"]
+# Probe the other side only when a weak rejection can still save owned siblings.
+opt10-native-dual = ["opt10-native-hotpath"]
+# Backward normal-side coset proof removes newly forbidden inverse half turns.
+opt10-native-coset = ["opt10-native-hotpath"]
+# Extend direct coset certificates through compatible ancestor edges.
+opt10-native-coset-chain = ["opt10-native-coset"]
+opt10-native-coset-gated = ["opt10-native-coset-chain"]
+# Diagnostics only: local per-worker depth counters, never a timing candidate.
+opt10-native-profile = ["opt10-native-coset"]
+# Strengthen surviving states with one selected right-half-turn coset bound.
+opt10-native-lookahead = ["opt10-native-coset"]
+opt10-native-projection = ["opt10-native-coset"]
 # Bounded no-PDB search-control and independent distance validation.
 bpmx-check = []
+# Isolated native Opt9 candidates. Neither is enabled by default or changes
+# the shared/single-thread WASM adapters; use a separate target directory.
+opt9-native-bpmx = []
+opt9-native-dynamic = []
+# Previous-depth global scores; dynamic ownership remains mandatory.
+opt9-native-ranked = ["opt9-native-dynamic"]
+# Native-only read-ahead hint; does not alter coordinates, bounds or scheduling.
+opt9-native-prefetch = []
+# Opposite quarter-turn children share the inverse subgroup lower bound.
+opt9-native-quarter = []
+opt9-native-quarter-cache = ["opt9-native-quarter"]
+# Prove the starting depth before dispatching workers; preserve IDA optimality.
+opt9-native-root-bound = []
+# Specialize the native search pipeline to its supported 1/8 contexts.
+opt9-native-fixed-contexts = []
+# Experimental equal-branch NISS tie: favor the stronger opposite bound.
+opt9-native-niss = []
+# Equivalent direct ternary ranking of the three four-edge groups.
+opt9-native-ternary = []
+# Opposite faces commute: reuse proven rejections across same-axis branches.
+opt9-native-axis = []
 # Shared-WASM experiment only; native/default and the single-thread adapter
 # retain the original interleaved lookup/decode pipeline.
 wasm-batch-probes = []

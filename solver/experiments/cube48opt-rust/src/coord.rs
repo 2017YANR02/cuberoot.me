@@ -43,6 +43,15 @@ pub struct CoordTables {
     outer_complement: Box<[[u8; 8]; 2048]>,
 }
 
+/// Native Opt9-only rank lookup. The 12 edge identities belong to three
+/// groups of four. Their first eleven base-3 digits uniquely determine the
+/// last one, so 3^11 slots cover every legal partition without changing the
+/// existing padded edge coordinate or the on-disk pruning table.
+#[cfg(all(feature = "opt9-native-ternary", target_arch = "aarch64"))]
+pub(crate) struct Opt9TernaryRanks {
+    ranks: Box<[u16; 177_147]>,
+}
+
 /// Fixed Opt8 layout for the shared-memory server adapter. Construction binds
 /// the EO projection once; callers cannot supply an Opt9 table by accident.
 pub struct Opt8CoordTables(CoordTables);
@@ -68,6 +77,21 @@ impl Opt8CoordTables {
 impl CoordTables {
     pub(crate) fn corner_entry(&self, cube: &Cube) -> u32 {
         self.corner_class[self.raw_corner(cube)]
+    }
+
+    /// EO10 retains canonical positions 1..10. Parity makes its omitted
+    /// freedom a simultaneous flip at positions 0 and 11; return those two
+    /// positions in the input cube, using the same source convention as the
+    /// coordinate decoder. This only supports the native Opt10 experiment.
+    #[cfg(all(any(feature = "opt10-native-lookahead", feature = "opt10-native-projection"), not(target_family = "wasm")))]
+    pub(crate) fn eo10_omitted_sources(&self, cube: &Cube) -> [u8; 2] {
+        self.eo10_omitted_sources_in_frame((self.corner_entry(cube) & 63) as u8)
+    }
+
+    #[cfg(all(any(feature = "opt10-native-lookahead", feature = "opt10-native-projection"), not(target_family = "wasm")))]
+    pub(crate) fn eo10_omitted_sources_in_frame(&self, symmetry: u8) -> [u8; 2] {
+        let sources = &self.edge_sources[usize::from(symmetry)];
+        [sources[0], sources[11]]
     }
 
     /// Full EO pattern in an already chosen corner frame. No symmetry folding.
@@ -104,6 +128,33 @@ impl CoordTables {
         ((u64::from(orbit) & !511) << 10)
             | (u64::from(eo >> 1) << 9)
             | u64::from(orbit & 511)
+    }
+
+    /// One explicitly selected canonical corner frame. The caller must choose
+    /// a symmetry with the same raw representative as the ordinary frame;
+    /// the projection selector validates this while building its small LUT.
+    #[cfg(all(feature = "opt10-native-projection", not(target_family = "wasm")))]
+    pub(crate) fn eo10_index_in_frame(&self, cube: &Cube, raw: usize, symmetry: u8) -> u64 {
+        assert_eq!(self.variant, 9);
+        assert!(symmetry < 48);
+        let entry = (self.corner_class[raw] & !63) | u32::from(symmetry);
+        #[cfg(target_arch = "aarch64")]
+        {
+            // Reuse the existing bounded edge shuffles and combination rank,
+            // without conjugating a full Cube or recomputing its corner rank.
+            let (orbit, eo) = unsafe {
+                let (_, identities, eo) = self.edge_parts_neon_in_frame::<true>(cube, entry);
+                self.rank_edge_parts_neon(entry, identities, eo)
+            };
+            ((u64::from(orbit) & !511) << 10)
+                | (u64::from(eo >> 1) << 9)
+                | u64::from(orbit & 511)
+        }
+        #[cfg(not(target_arch = "aarch64"))]
+        {
+            let full = self.full_pattern_in_frame(&self.conjugate(cube, symmetry), entry >> 6);
+            ((full >> 10) << 9) | (full & 511)
+        }
     }
 
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, String> {
@@ -290,6 +341,78 @@ impl CoordTables {
             | u64::from(orbit & 511)
     }
 
+    #[cfg(all(feature = "opt9-native-ternary", target_arch = "aarch64"))]
+    pub(crate) fn opt9_ternary_ranks(&self) -> Opt9TernaryRanks {
+        assert_eq!(self.variant, 9);
+        // Invalid group counts keep a sentinel. Search only supplies legal
+        // cubes; legal partitions fill exactly C(12,4)*C(8,4)=34,650 entries.
+        let mut ranks = vec![u16::MAX; 177_147];
+        let mut filled = 0usize;
+        for outer in 0u16..4096 {
+            if outer.count_ones() != 4 { continue; }
+            let complement = 4095 ^ outer;
+            let mut middle = complement;
+            loop {
+                if middle.count_ones() == 4 {
+                    let mut inner = 0usize;
+                    let mut inner_position = 0usize;
+                    let mut key = 0usize;
+                    let mut power = 1usize;
+                    for position in 0..12 {
+                        let outer_bit = (outer >> position) & 1;
+                        let middle_bit = (middle >> position) & 1;
+                        if outer_bit == 0 {
+                            inner |= usize::from(middle_bit) << inner_position;
+                            inner_position += 1;
+                        }
+                        if position < 11 {
+                            let group = if outer_bit != 0 { 2 } else { usize::from(middle_bit) };
+                            key += group * power;
+                            power *= 3;
+                        }
+                    }
+                    let rank = u16::from(self.separation8[inner & 127]) * 512
+                        + self.separation12[usize::from(outer) & 2047];
+                    // Validated padded ranks are <= 69*512+511 = 35,839.
+                    assert!(rank <= 35_839);
+                    assert_eq!(ranks[key], u16::MAX);
+                    ranks[key] = rank;
+                    filled += 1;
+                }
+                if middle == 0 { break; }
+                middle = (middle - 1) & complement;
+            }
+        }
+        assert_eq!(filled, 34_650);
+        Opt9TernaryRanks { ranks: ranks.into_boxed_slice().try_into().unwrap() }
+    }
+
+    #[cfg(all(feature = "opt9-native-ternary", target_arch = "aarch64"))]
+    #[inline(always)]
+    pub(crate) fn index9_ternary(&self, cube: &Cube, ranks: &Opt9TernaryRanks) -> u64 {
+        debug_assert_eq!(self.variant, 9);
+        // The canonical-frame transform and EO calculation are shared with
+        // the unchanged coordinate. Only edge partition ranking differs.
+        let (orbit, eo) = unsafe {
+            use std::arch::aarch64::*;
+            let (entry, identities, eo) = self.canonical_edge_parts_neon::<true>(cube);
+            let groups = vshrq_n_u8::<2>(identities);
+            let weights = vld1_u8([1u8, 3, 9, 27, 81, 243, 0, 0].as_ptr());
+            let first = usize::from(vaddvq_u16(vmull_u8(vget_low_u8(groups), weights)));
+            let high = vextq_u8::<6>(groups, vdupq_n_u8(0));
+            let high_weights = vld1_u8([1u8, 3, 9, 27, 81, 0, 0, 0].as_ptr());
+            let second = usize::from(vaddvq_u16(vmull_u8(vget_low_u8(high), high_weights)));
+            // Groups are 0..2. Six digits <=728 and five <=242, so the
+            // u16 partial reductions never truncate and key <=177,146.
+            let key = first + 729 * second;
+            let orbit = (entry >> 6) * EDGE_STRIDE + u32::from(ranks.ranks[key]);
+            (orbit, eo)
+        };
+        ((u64::from(orbit) & !511) << 9)
+            | (u64::from(eo >> 2) << 9)
+            | u64::from(orbit & 511)
+    }
+
     /// Raw corner orientation (little-endian base 3) and tetrad separation.
     #[inline]
     pub fn raw_corner(&self, cube: &Cube) -> usize {
@@ -421,6 +544,38 @@ impl CoordTables {
     #[cfg(target_arch = "aarch64")]
     #[inline]
     unsafe fn coordinate_parts_neon<const WITH_EO: bool>(&self, cube: &Cube) -> (u32, u16) {
+        let (entry, identities, eo) = self.canonical_edge_parts_neon::<WITH_EO>(cube);
+        self.rank_edge_parts_neon(entry, identities, eo)
+    }
+
+    #[cfg(target_arch = "aarch64")]
+    #[inline(always)]
+    unsafe fn rank_edge_parts_neon(&self, entry: u32, identities: std::arch::aarch64::uint8x16_t, eo: u16) -> (u32, u16) {
+        use std::arch::aarch64::*;
+        let weights = vld1_u8([1u8, 2, 4, 8, 16, 32, 64, 128].as_ptr());
+        let outer_bits = vandq_u8(vshrq_n_u8::<3>(identities), vdupq_n_u8(1));
+        let outer = (vaddv_u8(vmul_u8(vget_low_u8(outer_bits), weights)) as usize
+            | ((vaddv_u8(vmul_u8(vget_high_u8(outer_bits), weights)) as usize) << 8))
+            & 2047;
+        let positions = vcombine_u8(
+            vld1_u8(self.outer_complement[outer].as_ptr()),
+            vdup_n_u8(0x80),
+        );
+        let remaining = vget_low_u8(vqtbl1q_u8(identities, positions));
+        let inner = vaddv_u8(vmul_u8(
+            vand_u8(vshr_n_u8::<2>(remaining), vdup_n_u8(1)),
+            weights,
+        )) as usize
+            & 127;
+        let orbit = (entry >> 6) * EDGE_STRIDE
+            + (self.separation8[inner] as u32) * 512
+            + self.separation12[outer] as u32;
+        (orbit, eo)
+    }
+
+    #[cfg(target_arch = "aarch64")]
+    #[inline(always)]
+    unsafe fn canonical_edge_parts_neon<const WITH_EO: bool>(&self, cube: &Cube) -> (u32, std::arch::aarch64::uint8x16_t, u16) {
         use std::arch::aarch64::*;
         let corners = vld1_u8(cube.corners.as_ptr());
         let orientation = vmovl_u8(vshr_n_u8::<3>(corners));
@@ -434,6 +589,14 @@ impl CoordTables {
             weights,
         )) as usize;
         let entry = self.corner_class[co * 70 + self.separation8[corner_mask & 127] as usize];
+        self.edge_parts_neon_in_frame::<WITH_EO>(cube, entry)
+    }
+
+    #[cfg(target_arch = "aarch64")]
+    #[inline(always)]
+    unsafe fn edge_parts_neon_in_frame<const WITH_EO: bool>(&self, cube: &Cube, entry: u32) -> (u32, std::arch::aarch64::uint8x16_t, u16) {
+        use std::arch::aarch64::*;
+        let weights = vld1_u8([1u8, 2, 4, 8, 16, 32, 64, 128].as_ptr());
         let s = (entry & 63) as usize;
         // repr(C) Cube is exactly 20 bytes: this load spans bytes 4..20,
         // then discards the four remaining corner bytes. No over-read.
@@ -464,24 +627,7 @@ impl CoordTables {
                 0,
             )
         };
-        let outer_bits = vandq_u8(vshrq_n_u8::<3>(identities), vdupq_n_u8(1));
-        let outer = (vaddv_u8(vmul_u8(vget_low_u8(outer_bits), weights)) as usize
-            | ((vaddv_u8(vmul_u8(vget_high_u8(outer_bits), weights)) as usize) << 8))
-            & 2047;
-        let positions = vcombine_u8(
-            vld1_u8(self.outer_complement[outer].as_ptr()),
-            vdup_n_u8(0x80),
-        );
-        let remaining = vget_low_u8(vqtbl1q_u8(identities, positions));
-        let inner = vaddv_u8(vmul_u8(
-            vand_u8(vshr_n_u8::<2>(remaining), vdup_n_u8(1)),
-            weights,
-        )) as usize
-            & 127;
-        let orbit = (entry >> 6) * EDGE_STRIDE
-            + (self.separation8[inner] as u32) * 512
-            + self.separation12[outer] as u32;
-        (orbit, eo)
+        (entry, identities, eo)
     }
 
     /// Original symmetry conjugation, including reflected corner frames.
@@ -504,5 +650,86 @@ impl CoordTables {
             result.edges[i] = inv[8 + (current >> 1) as usize] ^ ((current ^ source) & 1);
         }
         result
+    }
+}
+
+#[cfg(all(test, feature = "opt9-native-ternary", target_arch = "aarch64"))]
+mod ternary_tests {
+    use super::*;
+
+    // No PDB or snapshot is loaded. Identity symmetry isolates edge ranking;
+    // the real snapshot receives a separate full-state differential check.
+    fn tables() -> CoordTables {
+        let mut separation8 = [0u8; 128];
+        let mut separation12 = Box::new([0u16; 2048]);
+        let mut outer_complement = vec![[0u8; 8]; 2048];
+        let mut rank8 = 0u8;
+        let mut rank12 = 2u16;
+        for mask in (0u16..4096).rev().filter(|m| m.count_ones() == 4) {
+            if mask < 256 { separation8[usize::from(mask & 127)] = rank8; rank8 += 1; }
+            separation12[usize::from(mask & 2047)] = rank12;
+            outer_complement[usize::from(mask & 2047)] = (0u8..12)
+                .filter(|i| mask & (1 << i) == 0).collect::<Vec<_>>().try_into().unwrap();
+            rank12 += 1;
+            if rank12 & 63 == 0 { rank12 += 2; }
+        }
+        let mut edge_sources = [[0x80u8; 16]; 64];
+        let mut edge_identities = [[0u8; 16]; 64];
+        let mut edge_inverse_cubies = [[0u8; 16]; 64];
+        for i in 0..12 {
+            edge_sources[0][i] = i as u8;
+            edge_identities[0][i] = i as u8;
+            edge_inverse_cubies[0][i] = 2 * i as u8;
+        }
+        CoordTables {
+            variant: 9,
+            corner_class: vec![0u32; CORNER_RAW_COUNT].into_boxed_slice().try_into().unwrap(),
+            symmetries: [Cube::SOLVED.to_bytes(); 48], symmetry_inverse: [0; 48],
+            separation8, separation12, edge_sources, edge_identities,
+            edge_source_flips: [[0; 16]; 64], edge_inverse_cubies,
+            outer_complement: outer_complement.into_boxed_slice().try_into().unwrap(),
+        }
+    }
+
+    #[test]
+    fn every_edge_partition_and_eo_bit_matches_existing_rank() {
+        let tables = tables();
+        let ranks = tables.opt9_ternary_ranks();
+        let mut checked = 0usize;
+        for outer in 0u16..4096 {
+            if outer.count_ones() != 4 { continue; }
+            let complement = 4095 ^ outer;
+            let mut middle = complement;
+            loop {
+                if middle.count_ones() == 4 {
+                    let mut cube = Cube::SOLVED;
+                    let mut counts = [0u8; 3];
+                    for p in 0..12 {
+                        let group = if outer & (1 << p) != 0 { 2 }
+                            else if middle & (1 << p) != 0 { 1 } else { 0 };
+                        cube.edges[p] = 2 * (4 * group as u8 + counts[group]);
+                        counts[group] += 1;
+                    }
+                    assert_eq!(counts, [4, 4, 4]);
+                    assert_eq!(tables.index9_ternary(&cube, &ranks), tables.index9(&cube));
+                    assert_eq!(tables.index9_ternary(&cube, &ranks), tables.index64_slow(&cube));
+                    // Each retained and discarded EO bit, with parity fixed.
+                    for bit in 0..11 {
+                        cube.edges[bit] ^= 1; cube.edges[11] ^= 1;
+                        assert_eq!(tables.index9_ternary(&cube, &ranks), tables.index9(&cube));
+                        cube.edges[bit] ^= 1; cube.edges[11] ^= 1;
+                    }
+                    checked += 1;
+                }
+                if middle == 0 { break; }
+                middle = (middle - 1) & complement;
+            }
+        }
+        assert_eq!(checked, 34_650);
+        assert_eq!(ranks.ranks.iter().filter(|&&x| x != u16::MAX).count(), checked);
+        assert!(ranks.ranks.iter().filter(|&&x| x != u16::MAX).all(|&x| x <= 35_839));
+        assert_eq!(2usize * (1 + 3 + 9 + 27 + 81 + 243), 728);
+        assert_eq!(2usize * (1 + 3 + 9 + 27 + 81), 242);
+        assert_eq!(728 + 729 * 242, ranks.ranks.len() - 1);
     }
 }

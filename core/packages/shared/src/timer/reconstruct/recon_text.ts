@@ -345,12 +345,9 @@ export function formatReconLine(line: ReconTextLine): string {
   return `${moves} // ${line.label}${timeSuffix(line)}`;
 }
 
-/** Keep one token per playback range; parentheses never become extra moves. */
+/** Keep one token per playback range; only wasted runs receive parentheses. */
 export function formattedReconMoves(line: ReconTextLine): string[] {
   return line.moves.map((move, i) => {
-    const opens = line.algorithmGroups?.filter(group => group.from === i).length ?? 0;
-    const closes = line.algorithmGroups?.filter(group => group.to === i + 1).length ?? 0;
-    move = `${'('.repeat(opens)}${move}${')'.repeat(closes)}`;
     const group = line.wasteGroups?.[i];
     if (group == null) return move;
     const open = i === 0 || line.wasteGroups?.[i - 1] !== group;

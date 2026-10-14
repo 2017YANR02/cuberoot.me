@@ -102,3 +102,17 @@ test('synchronous original call is timed once with the same four-thread boundary
   assert.equal(calls, 1); assert.equal(result.seconds, 0.1); assert.equal(result.engineReportedSeconds, 0.099);
   assert.equal(Object.hasOwn(result, 'search'), false);
 });
+
+test('local eighteen-worker requests require matching ABI evidence and guard budget', () => {
+  const build = { ...sharedBuild, maxThreads: 18, verifiedThreadCounts: [1, 2, 4, 18] };
+  for (let variant = 1; variant <= 9; variant++) {
+    const config = parseWasmBenchmarkArguments([...args.map(x => x === '8' ? String(variant) : x), '--threads', '18']);
+    assert.equal(config.variant, variant); assert.equal(config.threads, 18);
+    assert.equal(wasmBuildContract(config, build).shared, true);
+    assert.throws(() => wasmBuildContract(config, sharedBuild), /exceed/);
+    assert.throws(() => assertBenchmarkGuard(config, { pid: 123, entry: 'wasm-benchmark.mjs', wasmThreads: 4 }, 123));
+    assert.doesNotThrow(() => assertBenchmarkGuard(config, { pid: 123, entry: 'wasm-benchmark.mjs', wasmThreads: 18 }, 123));
+  }
+  assert.throws(() => wasmBuildContract({ variant: 8, threads: 18 }, { ...build, verifiedThreadCounts: [4] }), /validation/);
+  assert.throws(() => parseWasmBenchmarkArguments([...args, '--threads', '19']));
+});

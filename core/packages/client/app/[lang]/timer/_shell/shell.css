@@ -101,6 +101,22 @@
 
 .shell-topbar .pp-trigger { color: var(--foreground); }
 .shell-topbar .pp-trigger--active .pp-trigger-icon { color: var(--accent); }
+.shell-topbar-left .shell-scramble-source-select .timer-scramble-source-trigger,
+.shell-topbar .shell-topbar-left .timer-difficulty-trigger {
+  background: transparent;
+  border-color: transparent;
+}
+
+/* Fade only the controls, so their menus retain full opacity and material. */
+.shell-topbar-left :is(.shell-players-select, .pp-trigger, .compact-select-trigger,
+  .settings-popover-trigger, .shell-device-center-trigger, .timer-difficulty-trigger):not(:disabled) {
+  opacity: 0.8;
+  transition: opacity 150ms ease;
+}
+.shell-topbar-left :is(.shell-players-select, .pp-trigger, .compact-select-trigger,
+  .settings-popover-trigger, .shell-device-center-trigger, .timer-difficulty-trigger):not(:disabled):is(:hover, :focus-visible, [aria-expanded='true']) {
+  opacity: 1;
+}
 
 /* Keep text and icon controls on one toolbar axis. */
 .shell-topbar-left {
@@ -124,7 +140,7 @@
   line-height: 20px;
 }
 
-/* The solo device chooser sits beside settings instead of in the stage footer. */
+/* The solo device chooser leads the toolbar, before the players control. */
 .timer-shell .shell-device-center.shell-topbar-device-center {
   position: relative;
   inset: auto;

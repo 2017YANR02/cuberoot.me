@@ -14,6 +14,16 @@
 
 ## 手动一键 Android 发布
 
+### 本机 Mac 点击入口
+
+2026-10-14 已在维护者 Mac 的 Apple「快捷指令」App 创建「发布 Android」，按维护者选择仅放在 App 内，不加入 Dock 或菜单栏。点击播放后自动打开终端进度窗口，运行下面的官网 APK + Play 正式版命令，无需输入命令。仍须先把目标代码推送到 main，运行期间保持 Mac 联网；官网发布和 Google 审核状态分别看结果。
+
+快捷指令只有一个运行 Shell 脚本操作：`open -a Terminal "$HOME/.local/bin/发布 Android.command"`。本机启动文件进入 `${CUBEROOT_REPO:-$HOME/Developer/cuberoot.me}/core`，复用 `pnpm android:release --play production`，保留现有发布锁和错误退出状态；日志在 `~/.local/state/cuberoot/android-release/`。凭据仍由正式发布脚本读取，快捷指令不保存凭据。换 Mac 须重新配置，不能假定该个人启动文件存在。
+
+验证：启动文件 `--check` 仅调用发布入口的 `--help`，通过；快捷指令实际点击后已确认启动目标 `.command` 进程，验证时使用临时发布锁阻止构建发布，随后已清理该锁及本次探针进程。本轮未发布新包。
+
+### 命令行入口
+
 在维护者 Mac 的 `core/` 运行：
 
 - `pnpm android:release`：构建并发布官网 direct APK。

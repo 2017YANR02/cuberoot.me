@@ -29,7 +29,8 @@ const AUTO_READY_COPY = {
   'double-flick': { zh: "双反扭 (U U')²", en: "Double-flick (U U')²" },
 } satisfies Record<TimerSmartCubeSettings['bluetoothAutoReady'], TimerSettingCopy>;
 const LIVE_VIEW_COPY = {
-  '3d': { zh: '三维', en: '3D' },
+  '3d': { zh: 'three.js', en: 'three.js' },
+  twizzle: { zh: 'cubing.js', en: 'cubing.js' },
   q2look: { zh: 'q2Look', en: 'q2Look' },
   net: { zh: '展开图', en: 'Net' },
   '2d': { zh: '立体图', en: 'Isometric' },

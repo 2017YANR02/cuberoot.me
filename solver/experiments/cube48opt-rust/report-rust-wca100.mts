@@ -1,6 +1,6 @@
 /** Read-only replay of completed benchmark output; publish verified measurements. */
 import assert from 'node:assert/strict';
-import { readFileSync, writeFileSync, existsSync, renameSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { verify } from './benchmark.mjs';
@@ -44,10 +44,6 @@ for (const [h, name] of [[10,'wca100-rust-h10-v2'],[7,'wca100-rust-h7-v2']] as c
   console.log({h,totals,...result});
 }
 assert(results.length>0,'No completed Rust H benchmark yet');
-const page=resolve(root,'core/packages/client/app/[lang]/dev/solvers/compare/unified-benchmark.ts');
-const old=JSON.parse(readFileSync(page,'utf8').split('export const WCA100 = ')[1].trim().replace(/;$/,''));
-assert.equal(old.corpusSha256,corpus.corpusSha256);
-// Opt results use a different process protocol and remain in their raw report.
-const data={...old,status:results.length===2?{zh:'Rust H7/H10 已完成 · 三轮中位数',en:'Rust H7/H10 complete · median of 3 rounds'}:{zh:'Rust H10 已完成 · H7 待完成',en:'Rust H10 complete · H7 pending'},results};
-writeFileSync(page+'.tmp','/** Verified Rust-only WCA100 benchmarks. */\nexport const WCA100 = '+JSON.stringify(data,null,2)+';\n');
-renameSync(page+'.tmp',page);
+// Historical single-thread reports remain available, but cannot overwrite the
+// machine-specific multithread snapshot.
+console.log({ archivedOnly: true, results, published: false });
