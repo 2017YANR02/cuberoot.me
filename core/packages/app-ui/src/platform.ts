@@ -114,4 +114,6 @@ export interface InstalledAppHost {
   useSmartCube(options: InstalledAppSmartCubeOptions): InstalledAppSmartCube;
   useTimerEffects(phase: TimerPhase): void;
   version: string;
+  /** Native version/channel; absent on hosts without an Android update channel. */
+  getAndroidUpdateInfo?(): Promise<{ versionName: string; versionCode: number; channel: 'direct' | 'play' }>;
 }

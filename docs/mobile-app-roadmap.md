@@ -1615,3 +1615,7 @@ CubeRoot 应以这些证据证明不是简单套壳：
 - Mobile、Desktop、Harmony 共用 app-ui 计时阶段与 visibility 生命周期；观察/运行时持有，隐藏/停止/卸载时释放。原生调用串行化并按所有者管理，旧阶段迟到释放不关掉新阶段的保活。Harmony 保留已有原生 window adapter，Web 仍使用标准 Wake Lock。
 - 10 项定向生命周期/竞态测试、78 项账号文档检查、app-ui typecheck 与架构边界检查通过；Mobile build/sync、Android debug APK、iOS unsigned Simulator、macOS unsigned app、Harmony Web build/sync 通过。macOS 实际 IOKit 调用验证持有期间存在本进程断言，释放后消失、重复开启/释放成功。独立审查发现的 Windows 系统空闲锁遗漏已修复，最终复核无阻断。
 - Windows 原生构建与实机休眠未验；Harmony HAP 仍受本机 Hvigor 6.0.1 / 工程 modelVersion 6.0.2 不匹配限制。各端实体设备长计时、前后台与电源策略仍需验收。仅本地提交，未 push/部署/发布，五端总体继续 NOT COMPLETE。
+
+## 2026-10-14 Android 手动发布与更新入口
+
+实施中：手动 GitHub workflow 构建固定提交，维护者 Mac 正式签名；官网清单/版本包原子发布，Google Play 使用独立 AAB 提交流程，普通 push 不发包。App「我的」页增加原生版本/渠道检查：direct 提示下载及安装步骤，Play 打开商店。构建、发布、审核、真机覆盖升级证据将在本次发布后分别记录；不把实现当成已上线或手机自动升级。

@@ -1,16 +1,32 @@
 # 下载页与安装包分发
 
-状态：`REFERENCE`。下载页源码入口为 `core/packages/client/app/[lang]/download/`，中文 `/zh/download`，英文 `/download`；首页顶部入口位于设置和会员之间，暂仅管理员可见。此限制只控制入口展示，下载页仍可通过地址直接访问。
+状态：`REFERENCE`。下载页源码入口为 `core/packages/client/app/[lang]/download/`，中文 `/zh/download`，英文 `/download`；首页顶部入口位于设置和会员之间，对所有用户显示，无需登录。
 
 ## 渠道与安装包
 
 - 页面复用 `/icons/icon-512.png` 的现有 App 图标；Google Play 入口使用本地托管的官方中英文徽章，素材来源见 `core/packages/client/public/badges/README.md`。
 - `core/packages/client/lib/app-downloads.ts` 集中维护官网分发链接。Google Play 指向公开的 `me.cuberoot.app` 商品页。
-- `ANDROID_APK_URL` 指向官网正式签名包 `https://static.cuberoot.me/downloads/android/CubeRoot-0.1.0-1004.apk`，页面提供「下载 APK」并保留独立点击统计。
+- 下载页读取 `https://static.cuberoot.me/downloads/android/latest.json` 的版本、不可变 APK 地址；首屏和网络失败回退到同源 `latest.apk`。两者均禁止缓存，分别由服务端原子替换，APK 就绪后才更新版本清单。页面保留独立点击统计。
 - Windows、iOS、macOS、HarmonyOS NEXT 仅显示「即将发布」。
 - 官网 APK 使用维护者长期正式上传密钥，不能覆盖 Google Play 不同签名的安装版。页面明确提示 Play 用户继续通过 Play 更新，避免卸载丢失本地记录；本轮没有连接真机，未完成安装/升级及真实业务验收。不得把 debug、unsigned 或 CI 临时签名包用于官网分发。
-- 将验证后的包上传到受控 HTTPS 静态存储，使用带版本号的不可变地址；确认响应、文件大小、SHA-256、续传和国内访问后再填写 `ANDROID_APK_URL`。安装包不提交源码 Git，不经业务 API 转发。静态文件位于服务器 `/www/wwwroot/toolkit/downloads/android/`，由 `ops/nginx/static.cuberoot.me.conf` 提供附件下载与单段 Range；nginx 配置仍通过 `deploy_nginx.yml` 发布。
+- 将验证后的包上传到受控 HTTPS 静态存储，使用带版本号的不可变地址；确认响应、文件大小、SHA-256、续传和国内访问后再切换最新版本指针。安装包不提交源码 Git，不经业务 API 转发。静态文件位于服务器 `/www/wwwroot/toolkit/downloads/android/`，由 `ops/nginx/static.cuberoot.me.conf` 提供附件下载与单段 Range；nginx 配置仍通过 `deploy_nginx.yml` 发布。
 - 发布新包先完成文件校验，再切换链接；撤回时改回已验证旧版或置 `null`，不覆盖同名版本文件。
+
+## 手动一键 Android 发布
+
+在维护者 Mac 的 `core/` 运行：
+
+- `pnpm android:release`：构建并发布官网 direct APK。
+- `pnpm android:release --play production`：同一提交构建官网 APK 和 Play AAB，分别发布官网、提交 Google Play 正式轨道。
+- `pnpm android:release --play internal`：官网 APK + Play 内部测试轨道。
+- 加 `--only-play --play production`：仅提交 Play，不切换官网下载包；仍复用同一构建/签名实现。
+- 加 `--build-only`：只构建、正式签名并保存，暂不发布；验收后用输出的 `--resume <目录>` 发布同一批文件，无需重建。
+
+只有手动 workflow_dispatch 触发 Android Release Build；普通 push 不会发包。入口固定最新 origin/main 提交，不打包当前目录未提交内容；云端依赖/Gradle缓存减少重复工作，Mac 仅签名发布。私钥、密码、Play 服务账号文件始终留在维护者电脑；配置路径见 `core/scripts/android-release/release.ts --help`，配置仅存文件位置，不存密码。云端产物是 unsigned staging，不能直接给用户安装。
+
+版本号从官网清单和（选择 Play 时）API 已用版本的最大值递增。官网发布有本机锁、服务端锁、校验和、证书/包名检查、禁止同名覆盖与降级；上传校验完成后原子替换 latest.apk，随后原子替换 latest.json。每次构建的提交、版本、校验值和发布回执保存在本机 builds 目录。失败保留产物；官网成功而 Play 失败时分别报告，不宣称同时上线。
+
+App「我的」页由宿主提供原生版本和渠道：direct 检查官网清单、提示新版并打开下载，给出允许浏览器安装/覆盖升级说明；play 只打开 Google Play。iOS/桌面/鸿蒙不提供 Android 更新入口。不会静默安装；1004 没有检查更新功能，必须先手动下载安装新包。Google Play API提交成功仍须另查审核与公开可用状态。
 
 ## 官网 Android 0.1.0 (1004) 发布记录
 

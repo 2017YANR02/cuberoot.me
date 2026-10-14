@@ -50,4 +50,12 @@ export const capacitorHost: InstalledAppHost = {
   useSmartCube,
   useTimerEffects: useNativeTimerEffects,
   version: packageInfo.version,
+  getAndroidUpdateInfo: Capacitor.getPlatform() === 'android' ? async () => {
+    const info = await NativeApp.getInfo();
+    const versionCode = Number(info.build);
+    if (info.id !== 'me.cuberoot.app' || !Number.isSafeInteger(versionCode) || versionCode < 1) {
+      throw new Error('Official Android build information unavailable');
+    }
+    return { versionName: info.version, versionCode, channel: usesDirectPayments() ? 'direct' : 'play' };
+  } : undefined,
 };
