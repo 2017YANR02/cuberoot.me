@@ -46,10 +46,25 @@ impl OptSolver {
         options: search::SearchOptions,
     ) -> Result<search::SearchOutcome, String> {
         if self.pruning.variant().number() == 9 {
-            search::solve(cube, &Opt9Oracle(self), options)
+            search::solve(cube, &Opt9Oracle::new(self), options)
         } else {
             search::solve(cube, self, options)
         }
+    }
+
+    /// Borrow the validated Opt9 layout for the opt-in native experiment.
+    /// The concrete oracle stays private, so callers cannot construct it for
+    /// another variant or outlive the immutable table owner. Returning the
+    /// concrete opaque type also allows parallel search to specialize its hot
+    /// coordinate and decoder paths without dynamic dispatch.
+    #[cfg(all(
+        any(feature = "opt9-native-bpmx", feature = "opt9-native-dynamic", feature = "opt9-native-prefetch", feature = "opt9-native-quarter", feature = "opt9-native-root-bound"),
+        not(target_family = "wasm"),
+    ))]
+    pub fn experimental_native_opt9_oracle(
+        &self,
+    ) -> Option<impl search::PruningOracle<Query = u64> + Sync + '_> {
+        (self.pruning.variant().number() == 9).then(|| Opt9Oracle::new(self))
     }
 
     /// Exposes the same optimized path to the small coordinate differential
@@ -67,14 +82,33 @@ impl OptSolver {
 
 /// This private type cannot be constructed with a different variant by an
 /// external caller. It changes neither admissibility nor lookup ordering.
-struct Opt9Oracle<'a>(&'a OptSolver);
+struct Opt9Oracle<'a>(
+    &'a OptSolver,
+    #[cfg(all(feature = "opt9-native-ternary", target_arch = "aarch64"))]
+    coord::Opt9TernaryRanks,
+);
+
+impl<'a> Opt9Oracle<'a> {
+    fn new(solver: &'a OptSolver) -> Self {
+        Self(solver,
+            #[cfg(all(feature = "opt9-native-ternary", target_arch = "aarch64"))]
+            solver.coordinates.opt9_ternary_ranks(),
+        )
+    }
+}
 
 impl search::PruningOracle for Opt9Oracle<'_> {
     type Query = u64;
 
     #[inline(always)]
     fn prepare(&self, cube: &cube::Cube, _: u8) -> Result<u64, u8> {
-        Ok(self.0.coordinates.index9(cube))
+        #[cfg(all(feature = "opt9-native-ternary", target_arch = "aarch64"))]
+        let index = self.0.coordinates.index9_ternary(cube, &self.1);
+        #[cfg(not(all(feature = "opt9-native-ternary", target_arch = "aarch64")))]
+        let index = self.0.coordinates.index9(cube);
+        #[cfg(all(feature = "opt9-native-prefetch", not(target_family = "wasm")))]
+        self.0.pruning.prefetch_opt9(index);
+        Ok(index)
     }
 
     #[inline(always)]
@@ -91,7 +125,45 @@ impl search::PruningOracle for Opt9Oracle<'_> {
 
     #[inline(always)]
     fn allow_parent_propagation(&self) -> bool {
-        cfg!(all(target_family = "wasm", target_feature = "simd128"))
+        cfg!(any(
+            all(target_family = "wasm", target_feature = "simd128"),
+            all(feature = "opt9-native-bpmx", not(target_family = "wasm")),
+        ))
+    }
+
+    #[inline(always)]
+    fn allow_dynamic_prefixes(&self) -> bool {
+        cfg!(all(feature = "opt9-native-dynamic", not(target_family = "wasm")))
+    }
+
+    #[inline(always)]
+    fn allow_quarter_pruning(&self) -> bool {
+        cfg!(all(feature = "opt9-native-quarter", not(target_family = "wasm")))
+    }
+
+    #[inline(always)]
+    fn allow_quarter_cache(&self) -> bool {
+        cfg!(all(feature = "opt9-native-quarter-cache", not(target_family = "wasm")))
+    }
+
+    #[inline(always)]
+    fn allow_root_bound(&self) -> bool {
+        cfg!(all(feature = "opt9-native-root-bound", not(target_family = "wasm")))
+    }
+
+    #[inline(always)]
+    fn allow_niss_inverse_tie(&self) -> bool {
+        cfg!(all(feature = "opt9-native-niss", not(target_family = "wasm")))
+    }
+
+    #[inline(always)]
+    fn allow_global_prefix_ranking(&self) -> bool {
+        cfg!(all(feature = "opt9-native-ranked", not(target_family = "wasm")))
+    }
+
+    #[inline(always)]
+    fn allow_axis_pruning(&self) -> bool {
+        cfg!(all(feature = "opt9-native-axis", not(target_family = "wasm")))
     }
 }
 

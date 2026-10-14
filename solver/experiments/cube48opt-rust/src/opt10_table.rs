@@ -356,6 +356,59 @@ impl Opt10Table {
             self.header.base + code as u8
         }
     }
+
+    /// Keep the entire read pass separate under LTO, so a cell's decoding and
+    /// fallback cannot delay issuing later independent reads. None slots never
+    /// read memory. Every real coordinate retains the scalar decoder's checks.
+    #[cfg(all(feature = "opt10-native-batch", not(target_family = "wasm")))]
+    #[inline(never)]
+    fn load_probe_words(&self, queries: &[Option<u64>; 8]) -> [u32; 8] {
+        std::array::from_fn(|i| queries[i].map_or(0, |index| {
+            assert!(valid_index(index));
+            self.words[(index >> 4) as usize]
+        }))
+    }
+
+    #[cfg(all(feature = "opt10-native-batch", not(target_family = "wasm")))]
+    #[inline(always)]
+    pub(crate) fn get_batch(&self, queries: &[Option<u64>; 8]) -> [u8; 8] {
+        let loaded = self.load_probe_words(queries);
+        std::array::from_fn(|i| {
+            let Some(index) = queries[i] else { return 0; };
+            let code = (loaded[i] >> ((index & 15) * 2)) & 3;
+            if code == 0 { (self.words[((index >> 4) as usize) & !3] & 15) as u8 }
+            else { self.header.base + code as u8 }
+        })
+    }
+
+    /// Begin the immutable read while other contexts prepare their queries.
+    /// A hint never replaces get's padding and allocation-boundary checks.
+    #[cfg(all(feature = "opt10-native-hotpath", not(target_family = "wasm")))]
+    #[inline(always)]
+    pub(crate) fn prefetch(&self, index: u64) {
+        #[cfg(target_arch = "aarch64")]
+        if let Some(address) = self.prefetch_word_address(index) {
+            // SAFETY: the pointer comes from an in-bounds reference into the
+            // live immutable Vec. PRFM is only a read hint, retaining nothing.
+            unsafe {
+                std::arch::asm!(
+                    "prfm pldl1keep, [{address}]",
+                    address = in(reg) address,
+                    options(readonly, nostack, preserves_flags),
+                );
+            }
+        }
+        #[cfg(not(target_arch = "aarch64"))]
+        let _ = index;
+    }
+
+    #[cfg(all(feature = "opt10-native-hotpath", not(target_family = "wasm"), any(target_arch = "aarch64", test)))]
+    #[inline(always)]
+    fn prefetch_word_address(&self, index: u64) -> Option<*const u32> {
+        let word = usize::try_from(index >> 4).ok()?;
+        self.words.get(word).map(|value| value as *const u32)
+    }
+
     pub fn byte_len(&self) -> u64 {
         TABLE_BYTES
     }
@@ -616,6 +669,82 @@ impl Sha256 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[cfg(all(feature = "opt10-native-hotpath", not(target_family = "wasm")))]
+    #[test]
+    fn hotpath_prefetch_stays_in_allocation_and_preserves_the_decoder() {
+        // 256 bytes of synthetic storage, never a publishable main table.
+        // Each word exercises codes 0/1/2/3; each block has its own minimum.
+        let mut words = vec![0xe4e4_e4e4; 64];
+        for block in 0..16 {
+            words[block * 4] = (words[block * 4] & !15) | (block % 11) as u32;
+        }
+        let mut table = Opt10Table {
+            words,
+            header: Opt10Header {
+                base: 10,
+                max_bound: 13,
+                completed_depth: 12,
+                snapshot_sha256: [0; 32],
+                payload_sha256: [0; 32],
+                distribution: [0; 16],
+            },
+        };
+        let before = table.words.clone();
+        for (index, word) in [(0, 0), (15, 0), (16, 1), (511, 31), (1023, 63)] {
+            assert_eq!(table.prefetch_word_address(index), Some(&table.words[word] as *const u32));
+        }
+        for index in [1024, 1026, COORDINATES, u64::MAX] {
+            assert!(table.prefetch_word_address(index).is_none());
+            table.prefetch(index);
+        }
+        let mut decoded = 0;
+        for index in 0..1024u64 {
+            if !valid_index(index) { continue; }
+            let code = index & 3;
+            let expected = if code == 0 { ((index / 64) % 11) as u8 } else { 10 + code as u8 };
+            assert_eq!(table.get(index), expected);
+            table.prefetch(index);
+            assert_eq!(table.get(index), expected);
+            decoded += 1;
+        }
+        assert_eq!(decoded, 990);
+        #[cfg(feature = "opt10-native-batch")]
+        {
+            let mut checked = 0;
+            for start in (0..1024u64).step_by(8) {
+                for mask in 0..256 {
+                    let queries = std::array::from_fn(|i| {
+                        let index = start + i as u64;
+                        (mask & (1 << i) != 0 && valid_index(index)).then_some(index)
+                    });
+                    let expected = queries.map(|query| query.map_or(0, |index| table.get(index)));
+                    assert_eq!(table.get_batch(&queries), expected);
+                    checked += queries.iter().filter(|query| query.is_some()).count();
+                }
+            }
+            assert_eq!(checked, 990 * 128);
+            for invalid in [0, 1, 64, 511, 1023, 1026, u64::MAX] {
+                for slot in 0..8 {
+                    let mut queries = [None; 8];
+                    queries[slot] = Some(invalid);
+                    assert!(std::panic::catch_unwind(|| table.get_batch(&queries)).is_err());
+                }
+            }
+        }
+        // Padding may receive an in-allocation hint, but get still rejects it.
+        // A real coordinate beyond the fixture must still fail its Vec check.
+        for index in [0, 1, 64, 65, 511, 512, 513, 1023, 1026, u64::MAX] {
+            table.prefetch(index);
+            assert!(std::panic::catch_unwind(|| table.get(index)).is_err());
+        }
+        assert_eq!(table.words, before);
+        table.words.clear();
+        assert!(table.prefetch_word_address(0).is_none());
+        table.prefetch(0);
+        #[cfg(feature = "opt10-native-batch")]
+        assert_eq!(table.get_batch(&[None; 8]), [0; 8]);
+    }
 
     struct IoFixture(PathBuf);
 

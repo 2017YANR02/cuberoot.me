@@ -1,0 +1,31 @@
+{
+  "schema": "cuberoot.opt10-native-release.v1",
+  "id": "opt10-coset-20261014",
+  "candidate": "coset",
+  "status": "official",
+  "platform": "darwin",
+  "arch": "arm64",
+  "executable": {
+    "path": "target/opt10-official/release/cube48opt-research",
+    "sha256": "bd311e05cfd541b43aafb32e67025130bacc130592033b28439a9277cee3c58c"
+  },
+  "snapshot": {
+    "path": ".tmp/cubeopt-reverse/opt10-native-coset-preserved-20261014",
+    "manifestSha256": "c0fb78c5e8565ed34304448ce1346008a6ee46b144b4f5332f9f3d9db448a529"
+  },
+  "benchmark": {
+    "report": "wca1000-mt16-rust-native-opt10-exp-coset-report.json",
+    "sha256": "045b03b1d0fec4d36da9c780ba68fa3d941a4f2e671e5a2661ebac7eed8e70a2",
+    "cases": 1000,
+    "threads": 16,
+    "passes": 1,
+    "warmup": 0,
+    "seconds": 24.591098480000003,
+    "peakRssBytes": 31207653376,
+    "corpusSha256": "5b42a18086b27e974115a73696702017b5dde0a19c9819a77c88c8014d67c8ea"
+  },
+  "threads": 16,
+  "contexts": 8,
+  "command": "solve-opt10",
+  "archives": "opt10-archives.json"
+}

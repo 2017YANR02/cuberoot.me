@@ -11,6 +11,7 @@
  *  - AlgEditor (admin):编辑时显示当前 focused 行的预览,核对公式
  */
 import { useEffect, useRef, useImperativeHandle, forwardRef, type CSSProperties } from 'react';
+import { mountTwistyPlayer, type MountedTwistyPlayer } from '@cuberoot/timer-ui/mount-twisty-player';
 import { normalizeAlgForTwisty } from '@/lib/alg_normalize';
 import { pickStickering } from './stickering';
 import AlgSimPlayer from './AlgSimPlayer';
@@ -162,7 +163,8 @@ const TwistyAlgPlayer = forwardRef<AlgPlayerHandle, Props>(function TwistyAlgPla
     let cancelled = false;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let player: any = null;
-    let ro: ResizeObserver | null = null;
+    const abort = new AbortController();
+    let mount: MountedTwistyPlayer | undefined;
     let replayTimer: ReturnType<typeof setInterval> | null = null;
     const normalized = puzzle === 'clock' || puzzle === 'ivy' ? alg : normalizeAlgForTwisty(puzzle, alg);
     const stickering = puzzle === 'clock' || puzzle === 'ivy' ? undefined : pickStickering(puzzle, set);
@@ -173,10 +175,8 @@ const TwistyAlgPlayer = forwardRef<AlgPlayerHandle, Props>(function TwistyAlgPla
     const replayDelayMs = tempoScale !== undefined && moveDurationMs ? moveDurationMs + 900 : 1800;
     // NOTE: 播的是库里的完整公式(含收尾 AUF),动画才停在还原态。前端只在**显示/复制**时
     // 用 displayAlg() 剥掉那个 AUF —— 别把 displayAlg 的结果传进来。
-    import('cubing/twisty').then((mod) => {
+    void (async () => {
       if (cancelled || !host) return;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const Ctor = (mod as any).TwistyPlayer || (mod as any).default;
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const opts: any = {
@@ -189,27 +189,11 @@ const TwistyAlgPlayer = forwardRef<AlgPlayerHandle, Props>(function TwistyAlgPla
           backView: 'none',
         };
         if (stickering) opts.experimentalStickering = stickering;
-        player = new Ctor(opts);
+        mount = await mountTwistyPlayer(host, opts, { signal: abort.signal, size: fillPane ? undefined : size });
+        if (cancelled) { mount.dispose(); return; }
+        player = mount.player;
         if (tempoScale !== undefined) player.tempoScale = tempoScale;
         player.style.colorScheme = 'light';
-        if (fillPane) {
-          // ResizeObserver 把 host 像素尺寸写到 player,WebGL canvas 才会重绘
-          const syncSize = () => {
-            const w = host.offsetWidth;
-            const h = host.offsetHeight;
-            if (w > 0 && h > 0) {
-              player.style.width = `${w}px`;
-              player.style.height = `${h}px`;
-            }
-          };
-          syncSize();
-          ro = new ResizeObserver(syncSize);
-          ro.observe(host);
-        } else {
-          player.style.width = size + 'px';
-          player.style.height = size + 'px';
-        }
-        host.appendChild(player);
         playerRef.current = player;
         if (startSolved) player.timestamp = 0;
         const canAutoPlay = autoPlay && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -222,15 +206,16 @@ const TwistyAlgPlayer = forwardRef<AlgPlayerHandle, Props>(function TwistyAlgPla
           }
         }
       } catch (err) {
+        if (cancelled) return;
         console.warn(`[AlgPlayer] ${puzzle} alg failed: ${alg}`, err);
         host.innerHTML = `<div style="font-size:12px;color:#888;padding:8px">player unavailable</div>`;
       }
-    }).catch(err => console.warn('Failed to load cubing library:', err));
+    })();
     return () => {
       cancelled = true;
+      abort.abort();
       if (replayTimer) clearInterval(replayTimer);
-      if (ro) ro.disconnect();
-      if (player && host.contains(player)) host.removeChild(player);
+      mount?.dispose();
       if (playerRef.current === player) playerRef.current = null;
     };
   }, [alg, puzzle, set, setup, startSolved, autoPlay, loop, controlMode, moveDurationMs, size, fillPane]);

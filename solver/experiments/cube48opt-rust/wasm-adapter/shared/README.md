@@ -2,7 +2,8 @@
 
 ABI 2 is separate from the retained single-thread ABI 1 and its measured Opt9
 artifacts. This Node adapter supports the existing **Opt1–9** raw pruning table
-formats with 1–4 real workers. The production bundle currently targets Opt8 and
+formats with 1–18 real workers (default: 4). The retained production bundle
+supports 1–4 workers; it is unchanged by a new local build. The production bundle currently targets Opt8 and
 uses `cube48opt-rust8.mjs`, `cube48opt-rust8-worker.mjs`,
 `cube48opt-rust8.wasm`, `cube48opt8.small.bin`, and `h48prun31h8.dat`.
 The filenames are a production bundle convention; the factory's `variant`
@@ -20,7 +21,11 @@ There is one shared memory64 pruning table, validated once with the existing
 checksum/distribution rules before publishing it as read-only to workers. Each
 worker has a separate WASM instance, 64 KiB TLS region, 2 MiB stack and 64 MiB
 allocator arena. This is a bounded virtual-memory reservation; the shared table
-is not copied per worker. The linker initializes static data once using atomics.
+is not copied per worker. Eighteen worker regions reserve 1,246,887,936 bytes;
+even Opt9 plus those regions fits within the 16 GiB linker limit. The wrapper
+rejects an oversized layout before growing memory or starting workers. This
+reservation is not a measured RSS or a permission to run an unguarded large table.
+The linker initializes static data once using atomics.
 The wrapper verifies that the linker's static region stays below the reserved
 8 MiB control page. Each worker explicitly initializes its own TLS and stack.
 The host allocator only handles allocations; coordinate calculations and pruning
@@ -48,9 +53,17 @@ depth barrier and does not multiply table memory by the worker count.
 `node build.mjs` uses the pinned nightly toolchain with SIMD, atomics and bulk
 memory, one Cargo job, and a 16 GiB shared memory64 maximum. It first builds a
 separate small-check artifact with a zero-bound fixture oracle, verifies exact
-shallow BFS distances and scalar coordinates in real 1/2/4-worker WASM, then
+shallow BFS distances and scalar coordinates in real 1/2/4/18-worker WASM, then
 builds the production module **without** that fixture entry. It archives source
-hashes, immutable artifacts, logs and reports under the repository's `.tmp/`.
+hashes, immutable artifacts, logs and reports under the repository's `.tmp/`,
+using an independent target directory for every build. Old build archives and
+the deployed four-worker artifact are not overwritten. ABI 2 reports its actual
+maximum via `cubeopt_max_threads`; the host rejects a requested worker count
+above that maximum, so an older four-worker module cannot silently run eighteen.
+The checker also covers the generic packed decoder with synthetic words and
+deep prefix preparation/sorting with a rejecting resource-only oracle. Those
+checks do not validate full-depth solutions or production PDB addresses. Worker
+errors preserve the WASM stack, worker/operation/depth and allocator statistics.
 No PDB is allocated or read by this build. `instantiateOnly:true` uses 16 MiB,
 starts no workers, and does not read the snapshot or table.
 

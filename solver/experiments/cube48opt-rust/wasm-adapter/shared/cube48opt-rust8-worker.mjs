@@ -4,8 +4,16 @@ export const INITIAL_BYTES = 16 * 1024 * 1024;
 export const STACK_BYTES = 2 * 1024 * 1024;
 export const TLS_BYTES = 65536;
 export const ARENA_BYTES = 64 * 1024 * 1024;
+export const MAX_THREADS = 18;
+export const WORKER_REGION_BYTES = TLS_BYTES + STACK_BYTES + ARENA_BYTES;
 const decoder = new TextDecoder('utf-8', { fatal: true });
 const encoder = new TextEncoder();
+
+// Preserve the engine's actual WASM function/offset stack. A bare "unreachable"
+// cannot distinguish a bounds panic, allocator abort or other worker trap.
+export function workerFailure(error, details = {}) {
+  return { error: String(error?.message ?? error), errorStack: String(error?.stack ?? error), ...details };
+}
 
 // Each instance owns one disjoint arena. No global shared allocator lock, and
 // no host callback in coordinate calculation or PDB reads. Blocks are reused.
@@ -45,12 +53,18 @@ export function allocator(start, bytes) {
 }
 
 export async function instantiate(compiled, memory, region = null) {
+  if (region !== null && (!Number.isSafeInteger(region) || region < INITIAL_BYTES
+      || region % TLS_BYTES !== 0 || region + WORKER_REGION_BYTES > memory.buffer.byteLength)) {
+    throw new Error('Worker region must fit inside the shared memory');
+  }
   const heap = allocator(region ? region + TLS_BYTES + STACK_BYTES : 12 * 1024 * 1024,
     region ? ARENA_BYTES : 4 * 1024 * 1024);
   const instance = await WebAssembly.instantiate(compiled, { env: { memory }, host: heap });
   const api = instance.exports;
+  const maxThreads = api.cubeopt_max_threads?.();
   if (api.cubeopt_abi_version?.() !== 2 || api.cubeopt_pointer_bytes?.() !== 8
-      || api.cubeopt_max_threads?.() !== 4 || !(memory.buffer instanceof SharedArrayBuffer)
+      || !Number.isInteger(maxThreads) || maxThreads < 1 || maxThreads > MAX_THREADS
+      || !(memory.buffer instanceof SharedArrayBuffer)
       || !(api.__stack_pointer instanceof WebAssembly.Global)
       || !(api.__data_end instanceof WebAssembly.Global)
       || Number(api.__data_end.value) >= 8 * 1024 * 1024
@@ -85,11 +99,13 @@ if (!isMainThread) {
         if (operation === 'begin') { checked(api.cubeopt_begin(handle, input(scramble))); value = { worker: index }; }
         else if (operation === 'depth') { checked(api.cubeopt_run_depth(handle, depth)); value = JSON.parse(output()); }
         else if (operation === 'coordinate' && fixture) { checked(api.cubeopt_fixture_coordinate(handle, input(scramble))); value = output(); }
+        else if (operation === 'resource-depth' && fixture) { checked(api.cubeopt_fixture_prepare_depth(handle, depth)); value = JSON.parse(output()); }
         else if (operation === 'stats') value = heap.stats();
         else throw new Error('Unsupported worker operation');
         parentPort.postMessage({ id, value });
-      } catch (error) { parentPort.postMessage({ id, error: String(error?.message ?? error) }); }
+      } catch (error) { parentPort.postMessage({ id, ...workerFailure(error,
+        { worker: index, operation, depth, heap: heap.stats() }) }); }
     });
     parentPort.postMessage({ ready: true, worker: index, memoryBytes: memory.buffer.byteLength });
-  } catch (error) { parentPort.postMessage({ error: String(error?.message ?? error) }); }
+  } catch (error) { parentPort.postMessage(workerFailure(error, { worker: index, operation: 'startup' })); }
 }

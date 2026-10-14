@@ -26,6 +26,9 @@ let solverThreads: number | undefined;
 if (args[0] === '--watch' || (solve && activeOwner(work))) {
   await watchDashboard(work); process.exit(0);
 }
+// Verify the selected release without loading its table, before touching checkpoints.
+const opt10Release = solverEngine === 'opt10' && (solve || args[0] === '--plan')
+  ? (await import(resolve(root,'solver/333opt/rust-h10-adapter.mts'))).opt10Configuration(root,1).release : undefined;
 const seed = readJson(path('migration.json')), integrity = readJson(path('migration-integrity.json')), audit = readJson(path('audit.json'));
 if (seed.status !== 'complete' || seed.unique !== integrity.rows || audit.orbits !== TOTAL) throw Error('迁移或对称审计不完整。');
 const progressPath = path('progress.json'), prior = maybeJson(progressPath), checkpoint = maybeJson(path('checkpoint.json'));
@@ -48,7 +51,7 @@ const baseline = recoveredStartup ? { ...prior, status: 'stopped' } : prior ?? s
 let current = memory();
 const count = prior?.verified ?? seed.unique;
 if (args[0] === '--plan') {
-  console.log(`求解器：${solverEngine === 'opt10' ? 'Rust Opt10 · 31.13 GB 表' : solverEngine === 'rust' ? 'Rust H10' : 'C H10'}`);
+  console.log(`求解器：${solverEngine === 'opt10' ? `Rust Opt10 · ${opt10Release} · 31.13 GB 表 · 最多 ${Math.min(18,availableParallelism())} 搜索线程` : solverEngine === 'rust' ? 'Rust H10' : 'C H10'}`);
   console.log(`双底 ZBLL · 对称去重（包含 PLL）\n已验证 ${count.toLocaleString()} / ${TOTAL.toLocaleString()} · ${(100 * count / TOTAL).toFixed(2)}%\n剩余 ${(TOTAL - count).toLocaleString()} 个\n可回收内存 ${(current.available / GiB).toFixed(1)} GiB / 启动门槛 34 GiB\n压力 ${current.pressure === 1 ? '正常' : '异常'} · 换出 ${current.swapouts} 页（基线 ${baseline.baselineSwapouts}）\n磁盘剩余 ${(current.disk / GiB).toFixed(1)} GiB\n${guard(current, baseline, 0, true) ?? '资源检查通过；实际启动时会再次检查。'}\n断点：${work}\n仅查看计划，没有启动求解器。`);
   process.exit(0);
 }
@@ -70,7 +73,7 @@ if (solve) {
   const cancel = new AbortController();
   prompt.once('SIGINT', () => cancel.abort());
   prompt.once('close', () => cancel.abort());
-  try { solverThreads = await askSolverThreads(availableParallelism(), text => prompt.question(text, { signal: cancel.signal })); }
+  try { solverThreads = await askSolverThreads(Math.min(availableParallelism(), solverEngine === 'opt10' ? 18 : Infinity), text => prompt.question(text, { signal: cancel.signal })); }
   catch (e) { if (!cancel.signal.aborted) throw e; console.log('\n已取消启动，断点保持不变。'); process.exit(0); }
   finally { prompt.close(); }
 }
@@ -253,7 +256,7 @@ try {
     atomicJson(path('selected-pairs.json'), selection.snapshot());
     const wake = spawn('caffeinate', ['-i', '-w', String(process.pid)], { stdio: 'ignore' }); wake.unref();
     sessionNewStart = newCount; computeStarted = Date.now();
-    appendFileSync(log, `\n${new Date().toISOString()} 开始/续算，已验证 ${verified}，引擎 ${solverEngine}，求解线程 ${solverThreads}\n`);
+    appendFileSync(log, `\n${new Date().toISOString()} 开始/续算，已验证 ${verified}，引擎 ${opt10Release ?? solverEngine}，求解线程 ${solverThreads}\n`);
     while (pass < 2) {
       checkResources();
       const batchDir = path('batches/' + String(activeBatch).padStart(6, '0'));

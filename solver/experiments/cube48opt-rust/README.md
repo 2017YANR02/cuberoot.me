@@ -1,4 +1,22 @@
-# Opt1–9 / H48 H0–H11：Mac 原生 Rust 最优求解实验
+# Rust Opt9 / Opt10：Mac 原生最优求解器
+
+## 当前正式 Opt10
+
+维护者于2026-10-14指定 **coset 24.6秒版**为正式原生Opt10，登记在 [opt10-release.json](opt10-release.json)。正式程序是已完成WCA1000独立验解的原始构件，未从后续实验源码重新编译；基准为同一Mac、16搜索线程、单轮、不预热，峰值RSS约31.2GB。此晋升仅本地，未发布到服务器或替换WASM。
+
+默认正式入口为 `run-opt10.mts`，只选择登记的 `target/opt10-official/release/cube48opt-research`，仅允许Opt10求解。无参数仅检查，不启动计算：
+
+```sh
+node --experimental-strip-types solver/experiments/cube48opt-rust/run-opt10.mts
+```
+
+实际运行继续通过原内存guard，须提供新的独立运行review；当前正式入口限定既有WCA1000、16线程、单轮、零预热，不自动重跑旧测试。本次晋升没有启动求解，也没有创建运行review。旧基线、保护记录和已消费标签保留。
+
+`opt10-release.mts install` 从冻结快照安装精确程序，`verify` 核对正式程序和40个冻结文件，均不加载剪枝表。缺少本机快照时明确失败，不自动改为构建最新实验源。需要重新编译时必须从该快照的源码、保留默认features并额外启用 `opt10-native-coset`，用独立target；新构件不能自动继承旧程序的性能证明。
+
+其他9份已测/诊断快照见 [归档索引](opt10-archives.json)，包括原33.0秒、25.1秒及后续未采用的候选。归档保留原路径，避免破坏报告内的证据引用；源码、程序、日志和逐文件摘要均可恢复。Cargo全局default、通用Opt9/WASM构建及旧 `target/opt10` 的建表/历史验证入口不变。历史数学推导见 [实验记录](opt10-native-experiments.md)。
+
+## 以下为历史研究记录
 
 **2026-10-13 Opt10 代码阶段**：维护者已取消 H9 建表与测试。自有 Rust Opt10 的原生生成、独立表格式及搜索接入已实现，完成有界小数据验证；尚未生成/加载约 31.13 GB 大表，不能据此声称性能提升。默认 CLI 与研究 guard 禁止 Opt10 大表运行；执行边界、数学条件和剩余验收见 [Opt10 开发跟踪](opt10-development.md)。原 Opt1–9/H7/H10 程序与表继续保留。
 

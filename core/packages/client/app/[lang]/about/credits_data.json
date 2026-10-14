@@ -835,8 +835,8 @@
   {
     "name": "cubing/cubing.js",
     "url": "https://github.com/cubing/cubing.js",
-    "zh": "/sim Pyraminx / Skewb / Megaminx 渲染走 cubing.js TwistyPlayer(复刻 alpha.twizzle.net/edit);Alg parser + 各项目 random-state scramble 也复用此库",
-    "en": "Pyraminx / Skewb / Megaminx in /sim use cubing.js TwistyPlayer (mirrors alpha.twizzle.net/edit); Alg parser + per-event random-state scramble also share this library",
+    "zh": "Twizzle 同源的 cubing.js TwistyPlayer 用于模拟器与公式播放器，并提供智能魔方实况的可选三维引擎；公式解析与各项目随机状态打乱也复用此库",
+    "en": "cubing.js TwistyPlayer, also used by Twizzle, powers simulator and alg players and the optional live smart-cube 3D engine; alg parsing and per-event random-state scrambles also share this library",
     "long_en": "Lucas Garron's cubing.js — Pyraminx / Skewb / Megaminx canvases in `/sim` embed `TwistyPlayer` to mirror the alpha.twizzle.net/edit demo; the `Alg` parser, `randomScrambleForEvent`, and several `PuzzleID` utilities are reused across alg/recon/training pages"
   },
   {

@@ -31,7 +31,7 @@ describe('library-assisted notation correction', () => {
     original.wasteGroups = original.moves.map((_, i) => i < 3 ? 1 : i >= original.moves.length - 3 ? 2 : null);
     const result = await correctLibraryLine(original, [{ alg: library }]);
     expect(result.moves.join(' ')).toBe(`U U U ${body} U U U`);
-    expect(formattedReconMoves(result).join(' ')).toBe(`(U U U) ${library.slice(2)} (U U U)`);
+    expect(formattedReconMoves(result).join(' ')).toBe(`(U U U) ${body} (U U U)`);
     expect(result.moveRanges!.slice(0, 3)).toEqual(original.moveRanges!.slice(0, 3));
     expect(result.moveRanges!.slice(-3)).toEqual(original.moveRanges!.slice(-3));
     await equivalent(original.moves, result.moves);
@@ -122,7 +122,7 @@ describe('library-assisted notation correction', () => {
     const result = await correctLibraryLine(original, [{ alg: `${library} U2` }]);
     expect(result).not.toBe(original);
     expect(result.moves.join(' ')).toBe(`U2' ${body} U'`);
-    expect(formattedReconMoves(result).join(' ')).toBe(`U2' ${library.slice(2)} U'`);
+    expect(formattedReconMoves(result).join(' ')).toBe(`U2' ${body} U'`);
     expect(original).toEqual(snapshot);
     expect(result.libraryCorrection?.originalMoves).toEqual(original.moves);
     await equivalent(original.moves, result.moves);
@@ -140,7 +140,7 @@ describe('library-assisted notation correction', () => {
     const original = line("U2 R2' U R U R' U' R R R U' R' U R'");
     const result = await correctLibraryLine(original, [{ alg: formula }]);
     expect(result.moves.join(' ')).toBe("U2 R2' U R U R' U' R3 U' R' U R'");
-    expect(formattedReconMoves(result).join(' ')).toBe(`U2 ${formula.slice(3)}`);
+    expect(formattedReconMoves(result).join(' ')).toBe("U2 R2' U R U R' U' R3 U' R' U R'");
     await equivalent(original.moves, result.moves);
   });
 
@@ -193,7 +193,7 @@ describe('library-assisted notation correction', () => {
     const load = vi.fn(async () => ({ cases: [{ name: 'Y', algs: [[{ alg: library }]] }] }) as AlgFile);
     const corrected = await correctReconFromLibrary(recon, load);
     expect(load).toHaveBeenCalledWith('pll');
-    expect(corrected.text).toContain(`U2' ${library.slice(2)} // PLL-Y`);
+    expect(corrected.text).toContain(`U2' ${body} // PLL-Y`);
     expect(corrected.text).toContain('z2 // insp');
     expect(await correctReconFromLibrary(recon, async () => { throw new Error('offline'); })).toBe(recon);
     const other = { ...recon, lines: [{ ...original, label: 'PLL-T' }] };
@@ -221,7 +221,7 @@ it('matches the reported PLL-E to the library and retains its actual final frame
   source.label = 'PLL-E';
   const formula = "x'· (R U' R' D) (R U R' D') (R U R' D) (R U' R' D') x";
   const result = await correctLibraryLine(source, [{ alg: formula }]);
-  expect(formattedReconMoves(result).join(' ')).toBe("x' (R U' R' D) (R U R' D') (R U R' D) (R U' R' D')");
+  expect(formattedReconMoves(result).join(' ')).toBe("x' R U' R' D R U R' D' R U R' D R U' R' D'");
   expect(result.libraryCorrection?.algorithm).toBe(formula);
   await equivalent(source.moves, result.moves);
   const raw = source.moves.map((m, i) => ({ m, ts: (i + 1) * 100 }));
@@ -259,7 +259,7 @@ it('accepts library grouping and glued opposite faces without discarding the gro
   const original = line("L' R2 B R' B R B2 R' B L R'");
   const result = await correctLibraryLine(original, [{ alg: formula }]);
   expect(result.libraryCorrection?.algorithm).toBe(formula);
-  expect(formattedReconMoves(result).join(' ')).toBe("M (R U R' U R U2' R') U M'");
+  expect(formattedReconMoves(result).join(' ')).toBe("M R U R' U R U2' R' U M'");
   await equivalent(original.moves, result.moves);
   expect((await correctLibraryLine(line('R L U'), [{ alg: 'LR U' }])).moves).toEqual(['L', 'R', 'U']);
 });
@@ -282,5 +282,5 @@ it('closes groups correctly when a library final rotation cancels with the recor
   const formula = "(x' R U' R' D R U R' D' R U R' D R U' R' D' x)";
   const result = await correctLibraryLine(source, [{ alg: formula }]);
   expect(result.algorithmGroups).toEqual([{ from: 0, to: 17 }]);
-  expect(formattedReconMoves(result).join(' ')).toBe("(x' R U' R' D R U R' D' R U R' D R U' R' D')");
+  expect(formattedReconMoves(result).join(' ')).toBe("x' R U' R' D R U R' D' R U R' D R U' R' D'");
 });

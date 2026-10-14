@@ -177,7 +177,7 @@ function normalizedBoolean(value: unknown, fallback: boolean): boolean {
 }
 
 export const TIMER_SMART_CUBE_AUTO_READY_MODES = ['scrambled', 'off', 'still', 'double-flick'] as const;
-export const TIMER_SMART_CUBE_LIVE_VIEWS = ['3d', 'q2look', 'net', '2d'] as const;
+export const TIMER_SMART_CUBE_LIVE_VIEWS = ['3d', 'twizzle', 'q2look', 'net', '2d'] as const;
 
 export interface TimerSmartCubeSettings {
   /** Arming never starts the clock; the first turn after ready does. */

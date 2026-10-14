@@ -27,18 +27,21 @@ export function parseWasmBenchmarkArguments(argv) {
   const args = [...argv], values = {};
   while (args.length) {
     const key = args.shift();
-    assert(['--variant', '--engine', '--threads', '--table', '--small', '--wasm', '--out'].includes(key), `Unknown argument: ${key}`);
+    assert(['--variant', '--engine', '--threads', '--table', '--small', '--wasm', '--out', '--cases'].includes(key), `Unknown argument: ${key}`);
     assert(!Object.hasOwn(values, key) && args.length && !args[0].startsWith('--'), `Missing or duplicate ${key}`);
     values[key] = args.shift();
   }
-  assert(/^[89]$/.test(values['--variant'] ?? ''), 'This comparison permits only Opt8 or Opt9');
+  assert(/^[1-9]$/.test(values['--variant'] ?? ''), 'This comparison permits Opt1 through Opt9');
   const engine = values['--engine'] ?? 'both';
   assert(['both', 'rust', 'original'].includes(engine), 'engine must be both, rust or original');
   const threads = values['--threads'] ?? '1';
-  assert(['1', '4'].includes(threads), 'threads must be 1 or 4');
-  assert(threads === '1' || values['--variant'] === '8', 'Four-thread comparison currently permits only Opt8');
+  assert(['1', '4', '16', '18'].includes(threads), 'threads must be 1, 4, 16 or 18');
+  assert(threads !== '4' || values['--variant'] === '8', 'The retained four-thread protocol is Opt8 only');
   for (const key of ['--table', '--small', '--wasm', '--out']) assert(values[key], `${key} is required`);
-  return { variant: Number(values['--variant']), engine, threads: Number(threads),
+  const count = Number(values['--cases'] ?? 100);
+  assert(count === 100 || (count === 1000 && threads === '16' && values['--variant'] === '9'));
+  assert(threads !== '16' || count === 1000);
+  return { variant: Number(values['--variant']), engine, threads: Number(threads), ...(count === 1000 ? { count } : {}),
     table: resolve(values['--table']), small: resolve(values['--small']),
     wasm: resolve(values['--wasm']), out: resolve(values['--out']) };
 }
@@ -48,16 +51,18 @@ export function assertBenchmarkGuard(config, lock, parentPid) {
   assert.equal(lock.entry, 'wasm-benchmark.mjs');
   // The old guard does not budget/attest shared workers. Parsing a new option
   // alone must not silently enlarge that authorization before policy is updated.
-  if (config.threads === 4) assert.equal(lock.wasmThreads, 4, 'Guard must explicitly budget and attest four WASM solve threads');
+  if (config.threads > 1) assert.equal(lock.wasmThreads, config.threads, 'Guard must explicitly budget and attest the requested WASM solve threads');
 }
 
 export function wasmBuildContract(config, build) {
   assert.equal(build.target, 'wasm64-unknown-unknown');
   if (build.schema === 'cuberoot.rust-opt-shared-wasm64.build.v1') {
-    assert.equal(config.variant, 8, 'Shared WASM benchmark currently validates Opt8 only');
-    assert.equal(build.abiVersion, 2); assert.equal(build.maxThreads, 4);
+    assert(config.variant >= 1 && config.variant <= 9, 'Shared WASM supports Opt1–9');
+    assert.equal(build.abiVersion, 2); assert([4, 18].includes(build.maxThreads));
+    assert(config.threads <= build.maxThreads, 'Requested workers exceed the frozen WASM ABI');
+    if (config.threads >= 16) assert(build.verifiedThreadCounts?.includes(18), '18-worker small validation is required');
     assert.equal(build.threads, 4); assert.equal(build.memory64, true); assert.equal(build.sharedTable, true);
-    assert(Array.isArray(build.supportedVariants) && build.supportedVariants.includes(8));
+    assert(Array.isArray(build.supportedVariants) && build.supportedVariants.includes(config.variant));
     assert(/^[0-9a-f]{64}$/.test(build.workerSha256));
     return { shared: true, wrapper: 'cube48opt-rust8.mjs', worker: 'cube48opt-rust8-worker.mjs' };
   }
@@ -88,7 +93,7 @@ export async function initializeBenchmarkModule(module, engine, threads) {
     assert.equal(await module.init(-1, threads), 0, 'Original table validation failed');
   } else {
     assert.equal(module.metadata.threads, threads);
-    if (threads === 4) {
+    if (threads > 1) {
       assert.equal(module.metadata.abiVersion, 2); assert.equal(module.metadata.sharedTable, true);
     }
   }
@@ -126,23 +131,25 @@ export async function measureBenchmarkCase(module, engine, item, threads, lines,
     assert.equal(raw.threads, threads);
     assert.equal(raw.length, printed.length); assert.equal(raw.solution.trim(), printed.solution);
     assert.equal(raw.completed_depth, raw.length === 0 ? null : raw.length - 1, 'Rust search did not finish all shorter bounds');
-    if (threads === 4) validateSharedDepthResults(raw, threads);
+    if (threads > 1) validateSharedDepthResults(raw, threads);
   }
   return { seconds, ...printed, threads, output: [...lines], ...(engine === 'rust' ? { search: raw } : {}) };
 }
 
-export function readWca100(file = CORPUS) {
+export function readWca100(file = CORPUS, count = 100) {
+  assert([100, 1000].includes(count));
+  const expectedHash = count === 100 ? CORPUS_HASH : '5b42a18086b27e974115a73696702017b5dde0a19c9819a77c88c8014d67c8ea';
   const corpus = JSON.parse(readFileSync(file, 'utf8'));
-  assert.equal(corpus.schema, 'cuberoot.solver.wca-first100.v1');
-  assert.equal(corpus.cases.length, 100);
-  assert.equal(corpus.corpusSha256, CORPUS_HASH);
-  assert.equal(new Set(corpus.cases.map(row => row.id)).size, 100);
+  assert.equal(corpus.schema, `cuberoot.solver.wca-first${count}.v1`);
+  assert.equal(corpus.cases.length, count);
+  assert.equal(corpus.corpusSha256, expectedHash);
+  assert.equal(new Set(corpus.cases.map(row => row.id)).size, count);
   for (const [index, row] of corpus.cases.entries()) {
     assert.equal(row.sourceLine, index + 1);
     assert(/^\d+$/.test(row.id) && TOKEN_SEQUENCE.test(row.scramble) && !/[\r\n]/.test(row.scramble));
   }
   const canonical = corpus.cases.map(row => `${row.id},${row.scramble}\n`).join('');
-  assert.equal(createHash('sha256').update(canonical).digest('hex'), CORPUS_HASH, 'Frozen WCA100 was changed');
+  assert.equal(createHash('sha256').update(canonical).digest('hex'), expectedHash, 'Frozen WCA corpus was changed');
   return corpus;
 }
 
@@ -196,7 +203,7 @@ async function worker(inputFile, engine) {
   assert(process.send && ['rust', 'original'].includes(engine), 'Private worker requires parent IPC');
   const input = JSON.parse(readFileSync(inputFile, 'utf8'));
   const threads = input.threads;
-  assert([1, 4].includes(threads));
+  assert([1, 4, 16, 18].includes(threads));
   assert.equal(process.env.CUBEOPT_VARIANT, String(input.variant));
   await checkSources(input);
   const variant = getVariant(input.variant), lines = [], start = performance.now();
@@ -210,7 +217,9 @@ async function worker(inputFile, engine) {
       ...(artifact.files.worker ? { workerURL: pathToFileURL(artifact.files.worker) } : {}),
       smallTableBytes: readFileSync(artifact.files.small), print: log, printErr: log })
     : await create({ print: log, printErr: log,
-      wasmMemory: new WebAssembly.Memory({ initial: 256n, maximum: BigInt(variant.linearMemoryLimitPages), shared: true, address: 'i64' }) });
+      wasmMemory: new WebAssembly.Memory(variant.memory64
+        ? { initial: 256n, maximum: BigInt(variant.linearMemoryLimitPages), shared: true, address: 'i64' }
+        : { initial: 256, maximum: variant.linearMemoryLimitPages, shared: true }) });
   assert.equal(Number(module.get_table_size()), variant.tableBytes);
   assert.equal(module.get_table_name(), variant.tableName);
   const loaded = streamTable(module, input.table, variant.tableBytes, input.tableSha256);
@@ -231,7 +240,7 @@ async function worker(inputFile, engine) {
     try {
       assert(!busy, 'Concurrent worker request'); busy = true;
       if (message.type === 'finish') {
-        assert.equal(index, 100, 'A partial pass cannot finish successfully');
+        assert.equal(index, input.cases.length, 'A partial pass cannot finish successfully');
         if (engine === 'rust' && typeof module.close === 'function') await module.close();
         await send({ type: 'finished', engine, cases: index, threads,
           maxRssKiB: process.resourceUsage().maxRSS, linearMemoryBytes: module.HEAPU8.byteLength });
@@ -262,6 +271,11 @@ export function profilerNodeFlags(profileDirectory, engine, detached, platform =
 
 export function startSession(inputFile, engine, directory, { detached = false, profileDirectory = null } = {}) {
   assert(!detached || process.platform === 'linux', 'Detached remote sessions require Linux');
+  const sessionInput = JSON.parse(readFileSync(inputFile, 'utf8'));
+  // The Mac18 protocol already has a six-hour whole-run guard deadline.
+  // Small tables must not inherit the old Opt8/9 two-minute per-case cutoff.
+  const caseTimeoutMs = sessionInput.threads >= 16 ? 6 * 60 * 60_000 : 120_000;
+  if (sessionInput.threads >= 16) assert.equal(sessionInput.perCaseTimeoutSeconds, caseTimeoutMs / 1000);
   const nodeFlags = profilerNodeFlags(profileDirectory, engine, detached);
   if (profileDirectory !== null) {
     assert.equal(realpathSync(profileDirectory), profileDirectory);
@@ -320,7 +334,7 @@ export function startSession(inputFile, engine, directory, { detached = false, p
     terminate,
     ready,
     request(index) {
-      const result = expect('result', 120_000);
+      const result = expect('result', caseTimeoutMs);
       child.send({ type: 'solve', index }, error => { if (error) reject(error); });
       return result;
     },
@@ -353,13 +367,16 @@ async function main() {
   assert(!existsSync(config.out), `Refusing to overwrite ${config.out}`);
   mkdirSync(dirname(config.out), { recursive: true }); mkdirSync(config.out);
   try {
-    const variant = getVariant(config.variant), corpus = readWca100();
+    const count = config.count ?? 100;
+    const corpusPath = count === 100 ? CORPUS : resolve(ROOT, 'solver/testdata/benchmarks/wca-first1000.json');
+    const variant = getVariant(config.variant), corpus = readWca100(corpusPath, count);
     const { verify } = await import('./benchmark.mjs');
     const { cube3x3x3 } = await import(pathToFileURL(resolve(ROOT, 'core/jobs/alg-build/node_modules/cubing/dist/lib/cubing/puzzles/index.js')).href);
     const puzzle = await cube3x3x3.kpuzzle();
     const reference = readFileSync(REFERENCE, 'utf8').trim().split('\n').map(line => JSON.parse(line));
     assert.equal(reference.length, 400);
     const cases = corpus.cases.map((item, index) => {
+      if (index >= 100) return { ...item };
       const row = reference[index]; assert.equal(row.id, `r0_${item.id}`); assert.equal(row.cancelled, false);
       verify(puzzle, item, row); return { ...item, htm: row.length };
     });
@@ -419,17 +436,17 @@ async function main() {
         copyExclusive(file, resolve(config.out, 'source/build', name));
       }
     }
-    copyExclusive(CORPUS, resolve(config.out, 'cases-source.json'));
+    copyExclusive(corpusPath, resolve(config.out, 'cases-source.json'));
     save(resolve(config.out, 'reference-first-pass.json'), reference.slice(0, 100));
     save(resolve(config.out, 'table-manifest.json'), tableManifest);
     save(resolve(config.out, 'small-manifest.json'), smallManifest);
     const schemaVersion = buildContract.shared ? 'v2' : 'v1';
     const input = { schema: `cuberoot.rust-opt-wasm-benchmark-input.${schemaVersion}`, ...config, cases,
-      corpusSha256: CORPUS_HASH, referenceFile: REFERENCE, referenceSha256: await hashFile(REFERENCE),
+      corpusSha256: corpus.corpusSha256, referenceFile: REFERENCE, referenceSha256: await hashFile(REFERENCE),
       tableSha256, artifacts, sourceHashes, rustBuild, threads: config.threads, contexts: 8, warmupCases: 0, measuredPasses: 1,
-      method: 'Fresh sequential processes; exact WCA100 order; one timed public WASM call per case; no startup solve, warmup or retry',
+      method: 'Fresh sequential processes; exact frozen WCA source order; one timed public WASM call per case; no startup solve, warmup or retry',
       measurement: `Monotonic host elapsed seconds surrounding await solve_scramble(scramble,${config.threads},1,true) in both workers; load and independent replay excluded`,
-      perCaseTimeoutSeconds: 120, startupTimeoutSeconds: 600, node: process.version, execArgv: process.execArgv,
+      perCaseTimeoutSeconds: config.threads >= 16 ? 6 * 60 * 60 : 120, startupTimeoutSeconds: 600, node: process.version, execArgv: process.execArgv,
       machine: { platform: process.platform, arch: process.arch, osRelease: release(), cpuModel: cpus()[0]?.model ?? null } };
     const inputFile = resolve(config.out, 'input.json'); save(inputFile, input);
     const summaries = {};
@@ -447,21 +464,21 @@ async function main() {
           assert.equal(result.threads, config.threads);
           assert(Number.isFinite(result.seconds) && result.seconds >= 0);
           verify(puzzle, item, result);
-          const row = { ...result, verified: true, optimalLengthMatched: true, expectedLength: item.htm };
+          const row = { ...result, verified: true, optimalLengthMatched: item.htm !== undefined, expectedLength: item.htm ?? null };
           rows.push(row); writeSync(results, JSON.stringify(row) + '\n'); fsyncSync(results);
-          process.stderr.write(`[wasm-benchmark] ${engine} ${index + 1}/100 ${item.id} ${result.seconds.toFixed(6)}s\n`);
+          process.stderr.write(`[wasm-benchmark] ${engine} ${index + 1}/${count} ${item.id} ${result.seconds.toFixed(6)}s\n`);
         }
         const resource = await session.finish();
         assert.equal(resource.threads, config.threads);
-        assert.equal(rows.length, 100); await checkSources(input);
-        summaries[engine] = { engine, cases: 100, verifiedSolutions: 100, optimalLengthsMatched: 100,
+        assert.equal(rows.length, count); await checkSources(input);
+        summaries[engine] = { engine, cases: count, verifiedSolutions: count, optimalLengthsMatched: cases.filter(c => c.htm !== undefined).length,
           totalSeconds: rows.reduce((sum, row) => sum + row.seconds, 0),
           peakRssBytes: resource.maxRssKiB * 1024, peakRssMethod: 'Node child resourceUsage().maxRSS, KiB converted to bytes',
           linearMemoryBytes: resource.linearMemoryBytes, loadSeconds: ready.loadSeconds, processExited: true,
           threads: config.threads, warmupCases: 0, measuredPasses: 1, tableSha256, artifacts: artifacts[engine] };
-        if (engine === 'rust' && config.threads === 4) {
-          const workerNodes = Array.from({ length: 4 }, (_, worker) => rows.reduce((sum, row) => sum + row.search.workers[worker], 0));
-          assert(workerNodes.every(count => count > 0), 'All four workers must have contributed actual search nodes');
+        if (engine === 'rust' && config.threads > 1) {
+          const workerNodes = Array.from({ length: config.threads }, (_, worker) => rows.reduce((sum, row) => sum + row.search.workers[worker], 0));
+          assert(workerNodes.every(count => count > 0), 'All requested workers must have contributed actual search nodes');
           summaries[engine].workerNodes = workerNodes;
           summaries[engine].verifiedDepthBarriers = rows.length;
         }
@@ -472,15 +489,15 @@ async function main() {
     assert.equal(after.size, tableBefore.size); assert.equal(after.mtimeMs, tableBefore.mtimeMs);
     const ratio = summaries.rust && summaries.original ? summaries.original.totalSeconds / summaries.rust.totalSeconds : null;
     const report = { schema: `cuberoot.rust-opt-wasm-benchmark-report.${schemaVersion}`, variant: config.variant,
-      corpusSha256: CORPUS_HASH, cases: 100, threads: config.threads, measuredPasses: 1, warmupCases: 0,
+      corpusSha256: corpus.corpusSha256, cases: count, threads: config.threads, measuredPasses: 1, warmupCases: 0,
       sameSolveThreadCount: true, machine: input.machine, node: input.node,
       tableSha256, method: input.method, measurement: input.measurement, engines: summaries,
       originalOverRustTotalRatio: ratio, rustFasterOnThisRun: ratio === null ? null : ratio > 1,
       limitations: ['A single pass has no warmup or repetition; performance noise is not estimated.',
         config.threads === 1 ? 'This comparison uses one solve thread. It is not a four-thread production comparison.'
-          : 'Both engines use four solve threads with one shared table; results describe only the recorded machine/runtime, not an unmeasured server.',
+          : `Both engines use ${config.threads} solve threads with one shared table; results describe only the recorded machine/runtime, not an unmeasured server.`,
         'Table loading, checksum validation and independent solution replay are excluded from solve seconds.',
-        'Every solution is replayed independently and its length matched to the retained verified H10 first pass; this is not an independent proof of optimality.',
+        'Every solution is replayed independently. Only the first 100 have retained H10 reference lengths; additional cases require cross-engine length comparison.',
         'An individual engine report remains valid when a later engine fails; never rerun or overwrite it implicitly.'] };
     save(resolve(config.out, 'report.json'), report); process.stdout.write(JSON.stringify(report, null, 2) + '\n');
   } catch (error) {

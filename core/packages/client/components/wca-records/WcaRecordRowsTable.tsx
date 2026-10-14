@@ -65,9 +65,9 @@ export function WcaRecordRowsTable({
           {showEvent && <th>{tr({ zh: '项目', en: 'Event' })}</th>}
           <th className="wse-value-col">{tr({ zh: '单次', en: 'Single' })}</th>
           <th className="wse-value-col">{tr({ zh: '平均', en: 'Average' })}</th>
-          <th>{tr({ zh: '选手', en: 'Person' })}</th>
+          <th className="wse-name-col">{tr({ zh: '选手', en: 'Person' })}</th>
           <WcaTeacherColumnHeader />
-          <th>{tr({ zh: '比赛', en: 'Competition' })}</th>
+          <th className="wse-name-col">{tr({ zh: '比赛', en: 'Competition' })}</th>
           <th>{tr({ zh: '日期', en: 'Date' })}</th>
           <AttemptHeaderCells count={attemptCols} />
         </tr>
@@ -93,7 +93,7 @@ export function WcaRecordRowsTable({
               <td className="wse-value-col">
                 {row.t === 'a' ? formatWcaResult(row.v, row.e, 'average') : ''}
               </td>
-              <td>
+              <td className="wse-name-col">
                 {personIso2 && (
                   <Flag iso2={personIso2} spanClassName="country-flag" imgClassName="country-flag-ct" />
                 )}{' '}
@@ -107,7 +107,7 @@ export function WcaRecordRowsTable({
                   isZh={isZh}
                 />
               </td>
-              <td>
+              <td className="wse-name-col">
                 <AppLink {...compLinkProps(row.c)}>
                   <CompCell compId={row.c} compName={row.cn} isZh={isZh} date={row.d} />
                 </AppLink>

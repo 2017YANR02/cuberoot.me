@@ -17,8 +17,8 @@ const table = process.env.H10_ENGINE === 'opt10' ? resolve(solverDir, '../.tmp/c
 const corpus = resolve(process.env.CORPUS || resolve(wcaDir, 'wca_scrambles_no_wide_move.txt'));
 const output = resolve(process.env.OUT || resolve(here, 'out.0.csv'));
 const expectedBytes = process.env.H10_ENGINE === 'opt10' ? 31_130_911_744 : 30_336_314_216;
-const threads = Number(process.env.THREADS || availableParallelism());
 const engine = process.env.H10_ENGINE ?? 'c';
+const threads = Number(process.env.THREADS || Math.min(availableParallelism(),engine === 'opt10' ? 16 : Infinity));
 const engineLabel = engine === 'opt10' ? 'Rust Opt10' : engine === 'rust' ? 'Rust H10' : 'H48 h10';
 if (!['c', 'rust', 'opt10'].includes(engine)) throw Error('Invalid H10_ENGINE');
 if (!Number.isSafeInteger(threads) || threads < 1) throw new Error(`Invalid THREADS: ${threads}`);
@@ -86,6 +86,7 @@ const rust = engine === 'opt10' ? opt10Configuration(resolve(solverDir, '..'),th
   : engine === 'rust' ? rustConfiguration(resolve(solverDir, '..'), table, threads) : null;
 if (!rust) ensureWorker();
 console.log(`[${engineLabel}] table=${table}, corpus=${corpus}, solved=${solved}/${total}, threads=${threads}`);
+if (rust && 'release' in rust) console.log(`[${engineLabel}] release=${rust.release}, searchThreads=${threads}, batchWorkers=1`);
 if (rust) writeFileSync(`${output}.rust-run-${Date.now()}.json`, JSON.stringify({ ...rust, engine, threads, table, corpus, startedAt: new Date().toISOString() }, null, 2));
 const child = spawn(rust ? process.execPath : binary, rust ? rust.args : [table, String(threads)],
   { cwd: solverDir, env: { ...process.env, ...rust?.env }, stdio: ['pipe', 'pipe', 'inherit'] });

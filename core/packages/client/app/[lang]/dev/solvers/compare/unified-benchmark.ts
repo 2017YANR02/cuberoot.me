@@ -1,28 +1,30 @@
 import type { Bilingual } from './comparison-data';
 export type MachineId = 'mac';
 export const BENCHMARK_MACHINES: readonly { id: MachineId; label: Bilingual; threads: number; note: Bilingual }[] = [
-  { id: 'mac', threads: 18, label: { zh: 'Mac · M5 Pro · 18 线程', en: 'Mac · M5 Pro · 18 threads' },
-    note: { zh: '100 条 · 单轮 · 不预热', en: '100 scrambles · one pass · no warmup' } },
+  { id: 'mac', threads: 16, label: { zh: 'Mac · M5 Pro · 16 线程', en: 'Mac · M5 Pro · 16 threads' },
+    note: { zh: '1000 条 · 单轮 · 不预热', en: '1000 scrambles · one pass · no warmup' } },
 ];
 export type MultithreadResult = { id: string; machineId: MachineId; threads: number; seconds: number; peakRssBytes: number };
-/** Local 18-thread results only. Historical and server runs remain archived. */
-export const WCA100 = {
-  count: 100, passes: 1, warmup: 0,
-  corpusSha256: '92171d593d13982924ed16723f099bd771a873aaa2c30a0e08f319c86b75dcde',
+/** Local 16-thread results only. Historical and server runs remain archived. */
+export const WCA_BENCHMARK = {
+  count: 1000, passes: 1, warmup: 0,
+  corpusSha256: '5b42a18086b27e974115a73696702017b5dde0a19c9819a77c88c8014d67c8ea',
   results: [
     {
       "id": "rust-opt-9",
       "machineId": "mac",
-      "threads": 18,
-      "seconds": 6.385029209999999,
-      "peakRssBytes": 15642624000
+      "threads": 16,
+      "seconds": 70.54567079799996,
+      "peakRssBytes": 15645851648
     },
+    // Approved Opt10 coset result; solver RSS from /usr/bin/time, not guard-tree RSS.
+    // Evidence: .tmp/cubeopt-reverse/wca1000-mt16-rust-native-opt10-exp-coset-report.json
     {
-      "id": "rust-h7",
+      "id": "rust-opt-10",
       "machineId": "mac",
-      "threads": 18,
-      "seconds": 25.372522463000006,
-      "peakRssBytes": 3865968640
+      "threads": 16,
+      "seconds": 24.591098480000003,
+      "peakRssBytes": 31207653376
     }
   ] as MultithreadResult[],
 };
