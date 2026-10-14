@@ -131,6 +131,7 @@ import { startMonitors } from './monitors/index.js';
 import { startIdentityChoiceCleanup } from './utils/identity_choice.js';
 import { startDouyinOrderSync } from './platform/douyin_order_sync.js';
 import { startMembershipContractSync } from './payment/membership-contract-sync.js';
+import { startMembershipRenewals } from './payment/membership-renewals.js';
 
 const app = new Hono();
 app.use('*', requestDiagnostics);
@@ -416,6 +417,7 @@ startWatchedForeignRegMonitor();
 // 未配置 DOUYIN_* 环境变量时保持关闭。
 startDouyinOrderSync();
 startMembershipContractSync();
+startMembershipRenewals();
 startPlatformRefundReconciliation();
 
 const PORT = Number(process.env.PORT) || 3001;

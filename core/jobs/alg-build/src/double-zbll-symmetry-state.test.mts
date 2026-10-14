@@ -7,6 +7,14 @@ import { guard, GiB, repairTail, atomicJson, readJson, selectBatch, claimOwner, 
 
 const baseline = { boot: 'same-boot', baselineSwapouts: 10 };
 const normal = { boot: 'same-boot', swapouts: 10, pressure: 1, available: 40 * GiB, disk: 100 * GiB };
+test('identified anonymous memory is counted once without relaxing RSS, swap or minimum headroom', () => {
+  const loaded = {...normal,available:9*GiB};
+  assert.match(guard(loaded,baseline,29*GiB)!,/2 GiB/);
+  assert.equal(guard(loaded,baseline,29*GiB,false,0.5*GiB),null);
+  assert.match(guard(loaded,baseline,33*GiB,false,0.5*GiB)!,/32 GiB/);
+  assert.match(guard({...loaded,available:2*GiB},baseline,29*GiB,false,0.5*GiB)!,/2 GiB/);
+  assert.match(guard({...loaded,swapouts:baseline.baselineSwapouts+1},baseline,29*GiB,false,0)!,/换出/);
+});
 test('startup memory waits for three consecutive ready samples without weakening runtime guards', async () => {
   const samples = [33,34,34,33,34,34,34], states: number[] = [];
   let sleeps = 0;

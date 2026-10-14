@@ -24,6 +24,7 @@ const VERSION: u32 = 1;
 const LAYOUT: u32 = 1;
 const HASH_OFFSET: usize = HEADER_BYTES - 32;
 const CHUNK_BYTES: usize = 1024 * 1024;
+const WRITE_SYNC_BYTES: usize = 64 * CHUNK_BYTES;
 
 /// In the padded 4-of-12 rank, there are 495 real cells per 512 indices.
 #[inline(always)]
@@ -240,23 +241,11 @@ impl AtomicOpt10Table {
         if completed_depth < self.base + 2 || completed_depth > 20 {
             return Err("Opt10 generation did not complete the required exhaustive depth".into());
         }
-        if path.exists() {
-            return Err("refusing to replace an existing Opt10 table".into());
-        }
-        let partial = partial_path(path);
-        let mut output = OpenOptions::new()
-            .write(true)
-            .read(true)
-            .create_new(true)
-            .open(&partial)
-            .map_err(|e| format!("{}: {e}", partial.display()))?;
-        // A crash before the finalized header is written always fails closed.
-        output
-            .write_all(&[0u8; HEADER_BYTES])
-            .map_err(|e| e.to_string())?;
+        let mut output = create_partial(path)?;
         let mut hasher = Sha256::new();
         let mut distribution = [0u64; 16];
         let mut scratch = Vec::with_capacity(CHUNK_BYTES);
+        let mut unsynced_bytes = 0;
         let mut fallback = 0u8;
         for (i, atom) in self.words.iter().enumerate() {
             let word = atom.load(Ordering::Relaxed);
@@ -264,13 +253,13 @@ impl AtomicOpt10Table {
             scratch.extend_from_slice(&word.to_le_bytes());
             if scratch.len() == CHUNK_BYTES {
                 hasher.update(&scratch);
-                output.write_all(&scratch).map_err(|e| e.to_string())?;
+                write_stream_chunk(&mut output, &scratch, &mut unsynced_bytes)?;
                 scratch.clear();
             }
         }
         if !scratch.is_empty() {
             hasher.update(&scratch);
-            output.write_all(&scratch).map_err(|e| e.to_string())?;
+            write_stream_chunk(&mut output, &scratch, &mut unsynced_bytes)?;
         }
         if distribution.iter().sum::<u64>() != VALID_ENTRIES {
             return Err("Opt10 completed payload has wrong valid-cell count".into());
@@ -288,17 +277,7 @@ impl AtomicOpt10Table {
         output
             .write_all(&header.encode())
             .map_err(|e| e.to_string())?;
-        output.sync_all().map_err(|e| e.to_string())?;
-        drop(output);
-        // A same-directory hard link provides an atomic no-clobber publish;
-        // rename() would silently replace a concurrently-created destination.
-        fs::hard_link(&partial, path).map_err(|e| e.to_string())?;
-        fs::remove_file(&partial).map_err(|e| e.to_string())?;
-        if let Some(parent) = path.parent().filter(|p| !p.as_os_str().is_empty()) {
-            File::open(parent)
-                .and_then(|f| f.sync_all())
-                .map_err(|e| e.to_string())?;
-        }
+        publish_partial(output, path)?;
         Ok(header)
     }
 }
@@ -316,6 +295,7 @@ impl Opt10Table {
             return Err("an unpublished Opt10 .partial file cannot be loaded".into());
         }
         let mut input = File::open(path).map_err(|e| e.to_string())?;
+        configure_streaming_io(&input)?;
         if input.metadata().map_err(|e| e.to_string())?.len() != FILE_BYTES {
             return Err(format!(
                 "Opt10 native file must be exactly {FILE_BYTES} bytes"
@@ -382,6 +362,88 @@ impl Opt10Table {
     pub fn header(&self) -> &Opt10Header {
         &self.header
     }
+}
+
+/// The in-memory table already occupies 31 GB. On macOS, a bounded userspace
+/// buffer alone does not prevent another table-sized file cache during either
+/// writing or verification/loading. Set this before any data I/O/allocation;
+/// failure must not silently fall back to the original cached path. This is
+/// a file-cache policy, not a system-wide no-swap guarantee; the guard remains.
+#[cfg(target_os = "macos")]
+fn configure_streaming_io(file: &File) -> Result<(), String> {
+    use std::os::fd::AsRawFd;
+    // Darwin <sys/fcntl.h>: a nonzero argument disables data caching.
+    const F_NOCACHE: std::ffi::c_int = 48;
+    unsafe extern "C" {
+        fn fcntl(fd: std::ffi::c_int, command: std::ffi::c_int, ...) -> std::ffi::c_int;
+    }
+    // SAFETY: the borrowed File keeps this descriptor valid; F_NOCACHE takes
+    // one c_int argument and does not retain any pointer or take ownership.
+    if unsafe { fcntl(file.as_raw_fd(), F_NOCACHE, 1 as std::ffi::c_int) } == -1 {
+        return Err(format!(
+            "Opt10 requires macOS F_NOCACHE for streamed table I/O: {}",
+            std::io::Error::last_os_error()
+        ));
+    }
+    Ok(())
+}
+
+#[cfg(not(target_os = "macos"))]
+fn configure_streaming_io(_: &File) -> Result<(), String> {
+    // Other hosts retain their existing I/O policy; no uncached-I/O claim.
+    Ok(())
+}
+
+fn create_partial(path: &Path) -> Result<File, String> {
+    if path.exists() {
+        return Err("refusing to replace an existing Opt10 table".into());
+    }
+    let partial = partial_path(path);
+    let mut output = OpenOptions::new()
+        .write(true)
+        .read(true)
+        .create_new(true)
+        .open(&partial)
+        .map_err(|e| format!("{}: {e}", partial.display()))?;
+    configure_streaming_io(&output)?;
+    // A crash before the finalized header is written always fails closed.
+    output
+        .write_all(&[0u8; HEADER_BYTES])
+        .map_err(|e| e.to_string())?;
+    Ok(output)
+}
+
+fn write_stream_chunk(
+    output: &mut File,
+    bytes: &[u8],
+    unsynced_bytes: &mut usize,
+) -> Result<(), String> {
+    output.write_all(bytes).map_err(|e| e.to_string())?;
+    *unsynced_bytes += bytes.len();
+    if *unsynced_bytes >= WRITE_SYNC_BYTES {
+        // The 1024-byte header leaves payload writes unaligned. Darwin can
+        // therefore use its copy path even with F_NOCACHE; drain pending
+        // writes every 64 MiB rather than only after the complete 31 GB file.
+        output.sync_data().map_err(|e| e.to_string())?;
+        *unsynced_bytes = 0;
+    }
+    Ok(())
+}
+
+fn publish_partial(output: File, path: &Path) -> Result<(), String> {
+    output.sync_all().map_err(|e| e.to_string())?;
+    drop(output);
+    let partial = partial_path(path);
+    // A same-directory hard link provides an atomic no-clobber publish;
+    // rename() would silently replace a concurrently-created destination.
+    fs::hard_link(&partial, path).map_err(|e| e.to_string())?;
+    fs::remove_file(&partial).map_err(|e| e.to_string())?;
+    if let Some(parent) = path.parent().filter(|p| !p.as_os_str().is_empty()) {
+        File::open(parent)
+            .and_then(|f| f.sync_all())
+            .map_err(|e| e.to_string())?;
+    }
+    Ok(())
 }
 
 fn inspect_word(
@@ -554,6 +616,102 @@ impl Sha256 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    struct IoFixture(PathBuf);
+
+    impl IoFixture {
+        fn new() -> Self {
+            let nonce = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos();
+            let directory = Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("target/test-tables")
+                .join(format!("opt10-io-{}-{nonce}", std::process::id()));
+            fs::create_dir_all(directory.parent().unwrap()).unwrap();
+            fs::create_dir(&directory).unwrap();
+            Self(directory)
+        }
+    }
+
+    impl Drop for IoFixture {
+        fn drop(&mut self) {
+            fs::remove_dir_all(&self.0).unwrap();
+        }
+    }
+
+    #[test]
+    fn streamed_io_preserves_unaligned_bytes_and_publishes_exclusively() {
+        use std::io::{Seek, SeekFrom};
+        let directory = IoFixture::new();
+        let path = directory.0.join("small-io-fixture.bin");
+        let partial = partial_path(&path);
+        let mut output = create_partial(&path).unwrap();
+        assert!(!path.exists());
+        assert_eq!(fs::read(&partial).unwrap(), vec![0; HEADER_BYTES]);
+
+        // Exercise the production 1024-byte file offset, full 1 MiB chunk,
+        // short tail and final header rewrite without allocating a real PDB.
+        let payload: Vec<u8> = (0..CHUNK_BYTES + 73).map(|i| (i % 251) as u8).collect();
+        // Start just below the production drain threshold to exercise the
+        // actual sync path without creating a 64 MiB test file.
+        let mut unsynced = WRITE_SYNC_BYTES - CHUNK_BYTES;
+        write_stream_chunk(&mut output, &payload[..CHUNK_BYTES], &mut unsynced).unwrap();
+        assert_eq!(unsynced, 0);
+        write_stream_chunk(&mut output, &payload[CHUNK_BYTES..], &mut unsynced).unwrap();
+        assert_eq!(unsynced, 73);
+        let header = [0xa5; HEADER_BYTES];
+        output.seek(SeekFrom::Start(0)).unwrap();
+        output.write_all(&header).unwrap();
+        publish_partial(output, &path).unwrap();
+        assert!(!partial.exists());
+
+        // The same F_NOCACHE setup is used before the real loader allocates
+        // its word buffer. Reopen and verify every byte, including the tail.
+        let mut input = File::open(&path).unwrap();
+        configure_streaming_io(&input).unwrap();
+        assert_eq!(
+            input.metadata().unwrap().len(),
+            (HEADER_BYTES + payload.len()) as u64
+        );
+        let mut actual_header = [0; HEADER_BYTES];
+        input.read_exact(&mut actual_header).unwrap();
+        assert_eq!(actual_header, header);
+        let mut actual_payload = vec![0; payload.len()];
+        for chunk in actual_payload.chunks_mut(CHUNK_BYTES) {
+            input.read_exact(chunk).unwrap();
+        }
+        assert_eq!(actual_payload, payload);
+        assert_eq!(input.read(&mut [0]).unwrap(), 0);
+        assert!(create_partial(&path).is_err());
+        assert!(!partial.exists());
+        // Small I/O fixtures must never be accepted as full Opt10 tables.
+        assert!(Opt10Table::load(&path, &[]).is_err());
+    }
+
+    #[test]
+    fn interrupted_io_retains_partial_and_never_replaces_a_racing_destination() {
+        let directory = IoFixture::new();
+        let path = directory.0.join("interrupted-io-fixture.bin");
+        let partial = partial_path(&path);
+        let mut output = create_partial(&path).unwrap();
+        output.write_all(b"unfinished payload").unwrap();
+        drop(output);
+        let interrupted_bytes = fs::read(&partial).unwrap();
+        assert!(create_partial(&path).is_err());
+        assert_eq!(fs::read(&partial).unwrap(), interrupted_bytes);
+        assert!(!path.exists());
+
+        let raced = directory.0.join("raced-io-fixture.bin");
+        let mut output = create_partial(&raced).unwrap();
+        output.write_all(b"our payload").unwrap();
+        fs::write(&raced, b"existing table must survive").unwrap();
+        assert!(publish_partial(output, &raced).is_err());
+        assert_eq!(fs::read(&raced).unwrap(), b"existing table must survive");
+        let retained = fs::read(partial_path(&raced)).unwrap();
+        assert_eq!(&retained[..HEADER_BYTES], &[0; HEADER_BYTES]);
+        assert_eq!(&retained[HEADER_BYTES..], b"our payload");
+    }
     fn hex(bytes: [u8; 32]) -> String {
         bytes.iter().map(|b| format!("{b:02x}")).collect()
     }

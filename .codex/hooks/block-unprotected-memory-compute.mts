@@ -192,16 +192,20 @@ async function main() {
     && Date.now() < Date.parse('2026-12-01T00:00:00Z')) {
     // Reviewed local shortcut: fixed coordinator and exact audited dependencies.
     const files = {
-      "solver/experiments/cube48opt-rust/guard.mts": "659929576edeea6421b62e8278fb3dc8180d4527aa827f83dba3ca8f21d58191",
-      "solver/333opt/rust-h10-adapter.mts": "bfb3ae07fc4dd86f88ba5d540b08cdda23b7b699ccf1c7de5583820d4e8e019d",
-      "core/jobs/alg-build/src/double-zbll-symmetry.mts": "74fa8d827a18a3fecd0c7e870db90cf84e3fb1945272253f7e233b0df505ea95",
+      "solver/experiments/cube48opt-rust/guard.mts": "e1b450bdfaee625deb5c1fb00432de1b372caefcb1dc30b3697fafff33d9e864",
+      "solver/333opt/rust-h10-adapter.mts": "40ce7aee279153160798524def8fd65a55e3da472620eeae5f27809dda1ab923",
+      "core/jobs/alg-build/src/double-zbll-symmetry.mts": "634959724ca7dddd605c212b1a4e8ca9a1feb873ee437563231a3aee0c0a36f3",
       "core/jobs/alg-build/src/double-zbll-selection.mts": "0de647807f60be78c8386fe2ea1243af6768c88399f6128e1a067b645d433439",
-      "core/jobs/alg-build/src/double-zbll-dashboard.mts": "fdda9d09c104170d81547cb6d26d8b998747ad1a4358ad18435bc52e0cd97e23",
+      "core/jobs/alg-build/src/double-zbll-dashboard.mts": "95ee22772c0d921824684628b075e0a6062fca3ad176202376f2f44b961077e9",
       "core/jobs/alg-build/src/double-zbll-website-stats.mts": "1909aa32d3794c45c64490cd0e56ec27efa79cd4de805f4d3c362f6dfd098143",
-      "core/jobs/alg-build/src/double-zbll-symmetry-state.mts": "50561cb176c7c9e5776ac7d76ce970e982325ab7f8933a296ac6562137802e5a",
+      "core/jobs/alg-build/src/double-zbll-symmetry-state.mts": "f089ebc0d8a89461df79d5283fdd9a2703ccc5730b9e23bec874435388bbbad0",
       ".tmp/double-zbll-symmetry-v2/model.mts": "ec36d0ba647796b8c979863aa81ab9cb7162a7083398fa898f7b17b76cf4f3a1",
-      ".tmp/double-zbll-auf-20261011/run.mts": "cba0a6c888532ab1c606af9bd0c7d811f4afe786c220a0daa2c3c84e80f3e8b0",
-      "solver/333opt/solve_h10.mts": "ae894eab51504aacd0d0a15881d0ce26a425788ff26ef212db0fb00a51b4e0a8",
+      ".tmp/double-zbll-auf-20261011/run.mts": "20308805d6aef28a4cc94dd4a4140bfb6065ec7fac854c20162067fb55878cbd",
+      "solver/333opt/solve_h10.mts": "a5800f452539a2af395016aefc3205fa5ad8b0df38f9d0ae5fdc95556671b9ba",
+      "solver/experiments/cube48opt-rust/opt10-zbll-policy.mts": "594d60013f8a5301a9d3ed18ded54e82fa9d4cb6a76b73295fca3abbca132ab2",
+      "core/scripts/zbll-memory-budget.mts": "9ff1980d29ab3d1976158daf85c68f99b91eb19098872ceea47fdbe5045bc231",
+      "core/scripts/mac-memory-menu.mts": "ccaef3afe58018cda2e0d619a3312886e8a13eb5937b2df64b182fa282e11dc6",
+      "core/scripts/mac-system-recorder.mts": "6256247971dec4bac1c09ba26e2f0b4296fbe63225cbe75c573b6b989339c3ee"
     };
     try {
       const pkg = JSON.parse(readFileSync(resolve(repoRoot, 'core/jobs/alg-build/package.json'), 'utf8'));

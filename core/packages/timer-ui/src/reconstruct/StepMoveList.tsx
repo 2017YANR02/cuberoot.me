@@ -47,7 +47,7 @@ import CubeColorChip, {
 import { useReconstructHost, type ReconstructLocalize } from './ReconstructHost';
 
 import type { ReconTextResult, ReconTextLine } from '@cuberoot/shared/timer/reconstruct/recon-text';
-import { formattedReconMoves, reconTextForClipboard } from '@cuberoot/shared/timer/reconstruct/recon-text';
+import { formattedReconMoves, reconTextForClipboard, simplifyF2lRotations, originalReconNotation } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import { gradeForDelta } from '@cuberoot/shared/timer/reconstruct/reference';
 import type { ReferenceResult, SlotReference } from '@cuberoot/shared/timer/reconstruct/reference';
 import { METHODS, type MethodId } from '@cuberoot/shared/timer/reconstruct/methods';
@@ -96,12 +96,15 @@ export default function StepMoveList({
 }: StepMoveListProps) {
   const { localize: tr, writeClipboardText, renderCaseLink } = useReconstructHost();
   const [copied, setCopied] = useState(false);
-  const [crossNormalized, setCrossNormalized] = useState(false);
+  const [showSimplified, setShowSimplified] = useState(true);
+  const simplifiedRecon = useMemo(() => method === 'cfop' && recon ? simplifyF2lRotations(recon) : recon, [method, recon]);
+  const originalRecon = useMemo(() => recon ? originalReconNotation(recon) : recon, [recon]);
+  const shownRecon = showSimplified ? simplifiedRecon : originalRecon;
   const [commentCases, setCommentCases] = useState<ReconCommentCases>(new Map());
-  const normalizedText = useMemo(() => method === 'cfop' && recon && hasNormalizableCrossMove(recon.text)
-    ? buildNormalizedSolution(recon.text) : null, [method, recon]);
-  const normalized = crossNormalized && normalizedText !== null;
-  const displayText = normalized ? normalizedText : recon?.text ?? '';
+  const normalizedText = useMemo(() => method === 'cfop' && shownRecon && hasNormalizableCrossMove(shownRecon.text)
+    ? buildNormalizedSolution(shownRecon.text) : null, [method, shownRecon]);
+  const normalized = showSimplified && normalizedText !== null;
+  const displayText = normalized ? normalizedText : shownRecon?.text ?? '';
   const normalizedLines = displayText.split(/\r?\n/);
   const crossLine = normalized ? findCrossLineIndex(displayText) : -1;
   const inspectionOffset = recon?.inspection ? 1 : 0;
@@ -133,9 +136,9 @@ export default function StepMoveList({
     return <>{parts}{text.slice(end)}</>;
   };
 
-  if (!recon || recon.lines.length === 0) return null;
+  if (!recon || !shownRecon || recon.lines.length === 0) return null;
   const displayInspection = normalized && inspectionOffset ? normalizedLines[0].split('//')[0].trim() : recon.inspection;
-  const groups = groupLines(recon.lines, method);
+  const groups = groupLines(shownRecon.lines, method);
   const crossColor = crossColorFromLabels(recon.lines.map(line => line.label));
 
   /** 这一行的徽章。槽走 slotReference,其余走 stages。 */
@@ -152,7 +155,7 @@ export default function StepMoveList({
 
   const handleCopy = async () => {
     try {
-      await writeClipboardText(reconTextForClipboard(normalized ? { ...recon, text: displayText } : recon));
+      await writeClipboardText(reconTextForClipboard({ ...shownRecon, text: displayText }));
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch (err) {
@@ -176,6 +179,10 @@ export default function StepMoveList({
   return (
     <div className="sml">
       <div className="sml-head">
+        {method === 'cfop' && (simplifiedRecon !== recon || originalRecon !== recon || normalizedText) && <ReconCrossToggle
+          normalized={showSimplified} onToggle={() => setShowSimplified(value => !value)}
+          label={showSimplified ? tr({ zh: '显示原始记录', en: 'Show original record' })
+            : tr({ zh: '显示化简记录', en: 'Show simplified record' })} />}
         <button
           type="button"
           className="sml-copy"
@@ -229,7 +236,7 @@ export default function StepMoveList({
               // 收尾行(recon_text 的 `tail`)没有参考,标了也是空的。
               const grade = g.key === 'f2l' || g.lines.length === 1 ? gradeFor(line) : null;
               const st = stateOf(line);
-              const sourceLine = recon.lines.indexOf(line) + inspectionOffset;
+              const sourceLine = shownRecon.lines.indexOf(line) + inspectionOffset;
               const normalizedLine = normalized && sourceLine <= crossLine;
               const displayMoves = normalizedLine
                 ? normalizedLines[sourceLine].split('//')[0].trim().split(/\s+/).filter(Boolean)
@@ -259,8 +266,8 @@ export default function StepMoveList({
                           const index = positions.findIndex(position => position.end >= offset);
                           const range = line.moveRanges[index];
                           if (!range) { onSeek(line.fromIdx); return; }
-                          if (offset <= positions[index].start) onSeek(range.startIdx);
-                          else onSeek(range.endIdx + 1, range.endTs);
+                          if (offset <= positions[index].start) onSeek(range.startIdx, range.ts);
+                          else onSeek((range.seekEndIdx ?? range.endIdx) + 1, range.endTs);
                         }}
                         title={normalizedLine ? tr({ zh: '从本阶段开始播放', en: 'Play from the start of this stage' })
                           : tr({ zh: '从点击的动作开始播放', en: 'Play from the clicked move' })}
@@ -283,10 +290,6 @@ export default function StepMoveList({
                         </span>
                       );
                     })()}
-                    {line.kind === 'cross' && normalizedText && <ReconCrossToggle
-                      normalized={normalized} onToggle={() => setCrossNormalized(value => !value)}
-                      label={normalized ? tr({ zh: '显示原始转动', en: 'Show original' })
-                        : tr({ zh: '十字改为单层转动', en: 'Normalize cross' })} />}
                     {g.key === 'f2l' && line.key.startsWith('slot-') && (
                       <span className="sml-sub-name">
                         {`F${i + 1}`}

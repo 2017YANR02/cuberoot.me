@@ -1,0 +1,19 @@
+[package]
+name = "cube48opt-rust-shared-wasm"
+version = "0.1.0"
+edition = "2021"
+publish = false
+license = "GPL-3.0-or-later"
+
+[workspace]
+[lib]
+crate-type = ["cdylib"]
+[features]
+small-check = []
+[dependencies]
+cube48opt-research = { path = "../..", default-features = false, features = ["wasm-batch-probes"] }
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"

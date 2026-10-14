@@ -13,7 +13,11 @@ export function reconstructedTrack(lines: ReconTextLine[] | undefined, raw: Solv
   const out: PlaybackMove[] = [];
   const covered = new Set<number>();
   let consumed = 0;
-  for (const line of lines) {
+  for (const displayLine of lines) {
+    // Library notation is a display projection, never a synthetic timed execution.
+    const correction = displayLine.libraryCorrection;
+    const line = correction?.originalLine ?? (correction
+      ? { ...displayLine, moveRanges: correction.originalRanges } : displayLine);
     if (!line.moveRanges) return null;
     for (const range of line.moveRanges) {
       const rotation = range.endIdx < range.startIdx;

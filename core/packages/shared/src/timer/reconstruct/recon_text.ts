@@ -69,7 +69,7 @@ import { METHODS, type MethodId } from './methods';
 import type { MethodStageMetric } from './method_walk';
 import { metricForRange } from './step_metrics';
 import type { F2lSlotsResult } from './f2l_slots';
-import { facePermFor } from './gyro_orient';
+import { compactCubeRotations, facePermFor } from './gyro_orient';
 import type { SolveMove, StageSegments } from './stage_segments';
 import { stepTimeBounds } from './rotation_detect';
 import { moveItemsForRange, tokensForRange } from './step_metrics';
@@ -94,6 +94,7 @@ export interface ReconTextLine {
   algorithmGroups?: Array<{ from: number; to: number }>;
   /** Derived correction only; the original notation and timing remain recoverable. */
   libraryCorrection?: { algorithm: string; originalMoves: string[]; originalRanges: RangeMoveItem[];
+    originalLine?: Omit<ReconTextLine, 'libraryCorrection'>;
     implicitAuf?: { before: string; after: string } };
   /** 在原始动作流里的闭区间。 */
   fromIdx: number;
@@ -287,6 +288,57 @@ function timeSuffix(line: ReconTextLine): string {
 }
 
 /** 一行渲染成 `<动作> // <标签> (<时间>)`。标签缺席时只留动作。 */
+/** A reversible display projection. Raw movements, poses and timing stay untouched. */
+export function originalReconNotation(recon: ReconTextResult): ReconTextResult {
+  const lines = recon.lines.map(line => line.libraryCorrection
+    ? line.libraryCorrection.originalLine ?? { ...line, moves: line.libraryCorrection.originalMoves,
+      moveRanges: line.libraryCorrection.originalRanges, algorithmGroups: undefined, libraryCorrection: undefined }
+    : line);
+  if (lines.every((line, i) => line === recon.lines[i])) return recon;
+  return { ...recon, lines, text: [...(recon.inspection ? [`${recon.inspection} // insp`] : []),
+    ...lines.map(formatReconLine)].join('\n') };
+}
+
+export function simplifyF2lRotations(recon: ReconTextResult): ReconTextResult {
+  const lines = recon.lines.map(line => {
+    if (line.kind !== 'f2l') return line;
+    const entries: Array<{ token: string; from: number; to: number; range?: RangeMoveItem }> = [];
+    for (let i = 0; i < line.moves.length;) {
+      const from = i;
+      if (!/^[xyz](?:2'?|')?$/.test(line.moves[i])) {
+        entries.push({ token: line.moves[i], from, to: ++i, range: line.moveRanges?.[from] });
+        continue;
+      }
+      while (i < line.moves.length && /^[xyz](?:2'?|')?$/.test(line.moves[i])) i++;
+      const original = line.moves.slice(from, i);
+      const compact = compactCubeRotations(original.join(' ')).split(/\s+/).filter(Boolean);
+      // Do not gratuitously rename equal-length notation or cross a layer move.
+      if (compact.length >= original.length) {
+        original.forEach((token, n) => entries.push({ token, from: from + n, to: from + n + 1,
+          range: line.moveRanges?.[from + n] }));
+      } else {
+        const first = line.moveRanges?.[from], last = line.moveRanges?.[i - 1];
+        // A synthesized net rotation represents the whole observed interval,
+        // never a fabricated intermediate pose. Both ends seek the raw track.
+        compact.forEach(token => entries.push({ token, from, to: i,
+          range: first && last ? { ...first, token, endIdx: last.endIdx, endTs: last.endTs } : undefined }));
+      }
+    }
+    if (entries.length === line.moves.length) return line;
+    return { ...line, moves: entries.map(entry => entry.token),
+      moveRanges: line.moveRanges ? entries.map(entry => entry.range!) : undefined,
+      wasteGroups: line.wasteGroups ? entries.map(entry => line.wasteGroups![entry.from]) : undefined,
+      algorithmGroups: line.algorithmGroups?.flatMap(group => {
+        const indices = entries.flatMap((entry, index) => entry.from < group.to && entry.to > group.from ? [index] : []);
+        return indices.length ? [{ from: indices[0], to: indices.at(-1)! + 1 }] : [];
+      }),
+    };
+  });
+  if (lines.every((line, i) => line === recon.lines[i])) return recon;
+  return { ...recon, lines,
+    text: [...(recon.inspection ? [`${recon.inspection} // insp`] : []), ...lines.map(formatReconLine)].join('\n') };
+}
+
 export function formatReconLine(line: ReconTextLine): string {
   const moves = formattedReconMoves(line).join(' ');
   if (!line.label) return moves;

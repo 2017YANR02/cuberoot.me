@@ -150,6 +150,20 @@ impl PruningTable {
         }
     }
 
+    /// Exact Opt9 decoder, selected once by the private specialized oracle.
+    /// Retains checked PDB accesses: no unchecked public index entry point.
+    #[inline(always)]
+    pub(crate) fn get_opt9(&self, index: u64) -> u8 {
+        debug_assert_eq!(self.variant.number(), 9);
+        let word = (index >> 4) as usize;
+        let code = (self.words[word] >> ((index & 15) * 2)) & 3;
+        if code == 0 {
+            (self.words[word & !3] & 15) as u8
+        } else {
+            code as u8 + 10
+        }
+    }
+
     pub fn byte_len(&self) -> usize {
         self.words.len() * 4
     }
@@ -191,6 +205,11 @@ mod tests {
             assert_eq!(table.get(17), table.variant.max_bound() - 1);
             assert_eq!(table.get(31), table.variant.max_bound());
             assert_eq!(table.get(32), 5);
+            if number == 9 {
+                for index in 0..(table.words.len() as u64 * 16) {
+                    assert_eq!(table.get_opt9(index), table.get(index));
+                }
+            }
         }
     }
 }

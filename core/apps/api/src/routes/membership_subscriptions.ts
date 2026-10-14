@@ -3,15 +3,46 @@ import { HTTPException } from 'hono/http-exception';
 import { bodyLimit } from 'hono/body-limit';
 import { requireAuth, checkRateLimit } from '../utils/recon_helpers.js';
 import { listMembershipContracts, cancelMembershipContract, synchronizeMembershipNotification } from '../payment/membership-contracts.js';
-import { verifyPapayNotification } from '../payment/wechat-papay.js';
+import { verifyPapayNotification, verifyPapayPaymentNotification, papayConfigured, PapayUnavailable } from '../payment/wechat-papay.js';
+import { enrollMembership } from '../payment/membership-enrollment.js';
+import { reconcileRenewalDebit } from '../payment/membership-renewals.js';
+import { renewalReleased, RENEWAL_TERMS_VERSION } from '../payment/membership-renewal-policy.js';
+import { getIp } from '../utils/analytics_helpers.js';
 
 export const membershipSubscriptionRoutes = new Hono();
+membershipSubscriptionRoutes.get('/membership/subscriptions/availability', (c) => {
+  c.header('Cache-Control', 'no-store');
+  return c.json({ available: renewalReleased() && papayConfigured()
+    && process.env.WECHAT_PAPAY_DEBIT_ENABLED === 'true' && process.env.WECHAT_PAPAY_SYNC_ENABLED === 'true',
+  termsVersion: RENEWAL_TERMS_VERSION });
+});
 for (const path of ['/membership/subscriptions', '/membership/subscriptions/*']) {
   membershipSubscriptionRoutes.use(path, async (c, next) => {
     c.header('Cache-Control', 'no-store');
     await next();
   });
 }
+membershipSubscriptionRoutes.post('/membership/subscriptions/enroll', bodyLimit({ maxSize: 4096 }), async (c) => {
+  const user = await requireAuth(c);
+  checkRateLimit(user.wcaId, { bucket: 'membership-enroll', max: 5 });
+  if (!renewalReleased() || !papayConfigured() || process.env.WECHAT_PAPAY_DEBIT_ENABLED !== 'true'
+    || process.env.WECHAT_PAPAY_SYNC_ENABLED !== 'true') return c.json({ error: 'auto-renewal unavailable' }, 503);
+  const input = await c.req.json().catch(() => null);
+  try { return c.json(await enrollMembership(user.wcaId, input, getIp(c))); }
+  catch (error) {
+    return c.json({ error: 'unable to start subscription; refresh or manage your existing subscription' }, error instanceof PapayUnavailable ? 503 : 409);
+  }
+});
+membershipSubscriptionRoutes.post('/membership/subscriptions/wechat/payment-notify', bodyLimit({ maxSize: 65536 }), async (c) => {
+  const payload = await c.req.text();
+  let success = false;
+  try {
+    const notification = verifyPapayPaymentNotification(payload);
+    success = await reconcileRenewalDebit(notification.out_trade_no);
+  } catch { /* Ask WeChat to retry without exposing payment details. */ }
+  c.header('Content-Type', 'application/xml; charset=utf-8');
+  return c.body(`<xml><return_code><![CDATA[${success ? 'SUCCESS' : 'FAIL'}]]></return_code><return_msg><![CDATA[${success ? 'OK' : 'RETRY'}]]></return_msg></xml>`);
+});
 membershipSubscriptionRoutes.post('/membership/subscriptions/wechat/notify',
   bodyLimit({ maxSize: 65536 }), async (c) => {
     c.header('Cache-Control', 'no-store');

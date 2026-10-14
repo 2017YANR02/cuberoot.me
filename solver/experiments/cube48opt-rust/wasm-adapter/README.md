@@ -10,7 +10,46 @@ The module supports **one solve thread only**. Multiple DFS contexts are search
 interleaving within that one thread, not a thread pool. The wrapper rejects a
 thread count other than one instead of silently ignoring it.
 
-## Measured Opt9 result (2026-10-13)
+## Latest completed Opt9 comparison (2026-10-13, v8)
+
+Fixed WCA first 100 scrambles in order, the same Opt9 table and snapshot, one
+thread, one pass per engine, no extra warmup. Both processes and the guard exited
+with status 0. All 200 solutions passed independent replay and retained optimal
+length checks. This candidate combines explicit SIMD, fixed Opt9 coordinates,
+prefix-stack reuse and local parent-bound propagation (BPMX). The last change is
+enabled only for the private Opt9 WASM oracle; other backends retain their pruning.
+
+| Engine | Total solve time | Worker peak RSS |
+| --- | ---: | ---: |
+| Original Opt9 WASM, current paired run | 74.978778541 s | 15,857,139,712 B |
+| Rust Opt9 WASM, v8 | 73.070801921 s | 15,636,398,080 B |
+
+Rust took **2.54% less time in this paired run** (1.026 times the throughput).
+One pass, fixed Rust-first order and selecting among candidates do not establish
+a stable speed advantage. In particular, v7 Rust time is almost unchanged from
+v4, while its paired original was slower; the entire wall-clock lead cannot be
+attributed to BPMX. V8 simplifies the propagation loop to an equivalent single
+stack truncation, but did not improve absolute Rust time over v7. It is retained
+for that simpler implementation, not as evidence of an extra speedup. No twofold
+gain over the original is demonstrated.
+
+BPMX did reduce actual nodes by **5.7603%**, from 1,195,086,911 to 1,126,245,862,
+and probes by **5.0563%**. Some equal-length solutions and counters changed, as
+expected for new pruning; all 100 retained optimal lengths still match. Guard
+pressure stayed normal, Swapouts stayed 0, and minimum estimated headroom was
+21,233,549,312 B. No production replacement or push occurred. The production
+Opt8/four-thread configuration still requires its own compatibility and performance
+acceptance; this local Node/V8 Opt9/single-thread result cannot substitute for it.
+
+Evidence: `.tmp/cubeopt-reverse/wca100-wasm-opt9-simd-v8/` (`report.json`,
+`guard-exit.json`, `pruning-audit.json`, `v7-v8-exact-search-audit.json`, frozen
+artifacts/sources). Every solution and search counter matches v7 exactly.
+Measured WASM SHA-256: `d9e1703e41dc0f64034c37ef129d63c9c2ae5dfe27fa8e1f3103d319a065e065`.
+Earlier candidates and paired results remain in `../opt10-development.md`; they
+are different builds, not repeated measurement rounds. Query-slot masks, Cube24
+and fixed-context containers failed their paired comparisons and were not adopted.
+
+## Initial scalar Opt9 result (retained history)
 
 Same existing Opt9 table, fixed WCA first 100 scrambles in order, one thread,
 one pass per engine, no extra warmup. Both processes exited successfully; all
@@ -48,8 +87,9 @@ RUSTFLAGS='-C panic=abort -C target-feature=+simd128 -C link-arg=--max-memory=17
   --target-dir solver/experiments/cube48opt-rust/wasm-adapter/target
 ```
 
-The host working directory is the repository root. `simd128` permits LLVM
-vectorization; the AArch64-only NEON source branch is not used. The memory ceiling
+The host working directory is the repository root. The current WASM source uses
+explicit SIMD coordinate and paired-move paths; the initial build only enabled
+LLVM's `simd128` target feature and still selected scalar source paths. The memory ceiling
 is **16 GiB** for linear memory, not a limit or guarantee for process RSS.
 
 The script preserves the previous Cargo output before rebuilding, then freezes
@@ -64,6 +104,18 @@ and an allocation-free ABI smoke report under:
 a convenience pointer; benchmarks must freeze a specific version and copy its
 metadata. Existing benchmark reports are not rewritten. Compilation and the
 smoke check allocate no pruning table and perform no real cube search.
+
+The bounded pruning check is reproducible from the repository root:
+
+```sh
+node solver/experiments/cube48opt-rust/verify-bpmx.mjs
+```
+
+It builds separate native and WASM checkers in a fresh private output directory,
+compares all 33,792 loop/truncation boundary cases, and checks real Cube/NISS
+ancestor cuts against an independent radius-three bidirectional BFS. No PDB is
+loaded and no full solve is run. The checker WASM has an 8 MiB ceiling; this is
+separate from the production module's 16 GiB ceiling.
 
 ## Runtime requirements
 
@@ -160,9 +212,10 @@ Instruction counts do not measure runtime cost; no speedup from a future SIMD
 implementation is promised. Cache misses, remaining bounds checks, scheduling,
 and V8 tiering have not been separately measured.
 
-If this WASM optimization is resumed, first profile each guarded Node worker
-in a separate diagnostic run with the same V8 configuration and map samples
-to the frozen functions. Keep profiled timings separate from the completed
-benchmark. Only after identifying the costly code should explicit WASM SIMD
-coordinate/move paths be implemented and differentially checked before a new
-comparison. Current research proceeds to Opt10 instead of deploying this build.
+Subsequent work implemented explicit SIMD coordinate/move paths. Actual WASM
+Opt1–9 scalar/SIMD coordinate checks covered 490,842 comparisons with zero
+differences. SIMD v1 measured 86.934273584 s against its paired original's
+80.708198045 s, still 7.7% slower. Fixed Opt9 specialization and search changes
+were then measured separately; see the latest result above. These observations
+do not attribute the entire original performance gap to SIMD. The cancelled
+Opt10 write is preserved separately and is not restarted by this Opt9 work.

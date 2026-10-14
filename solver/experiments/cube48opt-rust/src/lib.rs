@@ -36,6 +36,63 @@ impl OptSolver {
             pruning,
         })
     }
+
+    /// One dispatch per request; the generic oracle remains the baseline.
+    /// OptSolver::new and both table constructors already enforce matching,
+    /// validated layouts. Other variants retain their existing search path.
+    pub fn solve_specialized(
+        &self,
+        cube: cube::Cube,
+        options: search::SearchOptions,
+    ) -> Result<search::SearchOutcome, String> {
+        if self.pruning.variant().number() == 9 {
+            search::solve(cube, &Opt9Oracle(self), options)
+        } else {
+            search::solve(cube, self, options)
+        }
+    }
+
+    /// Exposes the same optimized path to the small coordinate differential
+    /// checks; no search or input/solution convention is changed.
+    pub fn query_specialized(&self, cube: &cube::Cube) -> (u64, u8) {
+        if self.pruning.variant().number() == 9 {
+            let index = self.coordinates.index9(cube);
+            (index, self.pruning.get_opt9(index))
+        } else {
+            let index = self.coordinates.index64(cube);
+            (index, self.pruning.get(index))
+        }
+    }
+}
+
+/// This private type cannot be constructed with a different variant by an
+/// external caller. It changes neither admissibility nor lookup ordering.
+struct Opt9Oracle<'a>(&'a OptSolver);
+
+impl search::PruningOracle for Opt9Oracle<'_> {
+    type Query = u64;
+
+    #[inline(always)]
+    fn prepare(&self, cube: &cube::Cube, _: u8) -> Result<u64, u8> {
+        Ok(self.0.coordinates.index9(cube))
+    }
+
+    #[inline(always)]
+    fn lookup(&self, index: u64) -> u8 {
+        self.0.pruning.get_opt9(index)
+    }
+
+    fn conjugate(&self, cube: &cube::Cube, symmetry: u8) -> Option<cube::Cube> {
+        Some(self.0.coordinates.conjugate(cube, symmetry))
+    }
+
+    #[inline(always)]
+    fn max_bound(&self) -> u8 { 13 }
+
+    #[inline(always)]
+    fn allow_parent_propagation(&self) -> bool {
+        cfg!(all(target_family = "wasm", target_feature = "simd128"))
+    }
 }
 
 impl search::PruningOracle for OptSolver {

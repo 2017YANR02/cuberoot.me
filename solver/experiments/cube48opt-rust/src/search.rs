@@ -30,6 +30,20 @@ pub trait PruningOracle {
     fn prepare(&self, cube: &Cube, remaining: u8) -> Result<Self::Query, u8>;
     fn lookup(&self, query: Self::Query) -> u8;
 
+    /// Optional batched reads of the same immutable oracle. None slots must
+    /// not issue a lookup; their result is unused. Returned bounds must equal
+    /// lookup(query), independent of lookup/prepare call interleaving.
+    #[cfg(feature = "wasm-batch-probes")]
+    #[inline(always)]
+    fn lookup_batch(&self, queries: &[Option<Self::Query>; MAX_CONTEXTS]) -> [u8; MAX_CONTEXTS] {
+        std::array::from_fn(|i| queries[i].map_or(0, |query| self.lookup(query)))
+    }
+
+    /// Cooperative cancellation used by parallel depth shards. Ordinary
+    /// backends compile the default false away and keep their old behavior.
+    #[inline(always)]
+    fn cancelled(&self) -> bool { false }
+
     /// Maximum decoded bound: Opt1 = 10, Opt2/3 = 11, Opt4..7 = 12,
     /// Opt8/9 = 13; Nissy h0..3 = 11, h4..7 = 12, h8..11 = 13.
     /// This also sets the NISS threshold, prefix-job starting
@@ -37,6 +51,11 @@ pub trait PruningOracle {
     fn max_bound(&self) -> u8 {
         10
     }
+
+    /// Experimental parent propagation is opt-in per backend.
+    /// This does not strengthen or replace the half-turn-invariant oracle.
+    #[inline(always)]
+    fn allow_parent_propagation(&self) -> bool { false }
 
     /// Optional complete cube conjugation for the original 48 symmetries.
     /// Missing symmetries simply disable that reduction; they never prune.
@@ -187,12 +206,26 @@ impl Context {
 
     /// Return to the nearest ancestor that still owns an untried move.
     fn reject(&mut self, excess: u8, stats: &mut SearchStats) {
+        self.reject_bound(excess, false, stats);
+    }
+
+    fn reject_bound(&mut self, mut excess: u8, propagate_parent: bool, stats: &mut SearchStats) {
         self.stack.pop();
+        // An admissible child bound h and child budget r imply a full-state
+        // parent bound h-1 against budget r+1: its excess is excess-2.
+        // NISS inversion preserves distance to solved. Propagate only this
+        // local rejection proof; it is NOT a half-turn-invariant table bound.
+        if propagate_parent && excess > 2 {
+            let count = self.stack.len().min(usize::from((excess - 1) / 2));
+            self.stack.truncate(self.stack.len() - count);
+            excess -= 2 * count as u8;
+        }
         if excess > 1 {
             if let Some(parent) = self.stack.last_mut() {
                 // If child h > r+1, every sibling on the same face has h > r:
                 // two different powers of one face differ by a single HTM move.
-                // This is step2_plan's face mask, not a whole-parent BPMX cut.
+                // At excess=2 the whole parent is not proved impossible; retain
+                // the original same-face cut using its recorded chosen move.
                 let face_mask = 7 << (parent.chosen_move / 3 * 3);
                 let removed = (parent.normal_mask & face_mask).count_ones();
                 parent.normal_mask &= !face_mask;
@@ -211,17 +244,22 @@ impl Context {
 
     /// Split the earliest pending subtree. The two contexts own disjoint masks.
     /// Ancestors before the split have no pending moves and cannot be re-entered.
-    fn split(&mut self) -> Option<Self> {
+    fn split_into(&mut self, other: &mut Self) -> bool {
+        // The caller has already finished this vacant context. Keep its
+        // MAX_DEPTH+1 frame buffer instead of allocating a replacement on
+        // every split (which crosses the host allocator ABI in shared WASM).
+        debug_assert!(other.stack.is_empty());
+        debug_assert!(other.job.is_none());
         if self.needs_query {
-            return None;
+            return false;
         }
-        let last = self.stack.len().checked_sub(1)?;
-        let split_at = self.stack.iter().enumerate().position(|(i, frame)| {
+        let Some(last) = self.stack.len().checked_sub(1) else { return false; };
+        let Some(split_at) = self.stack.iter().enumerate().position(|(i, frame)| {
             frame.normal_mask != 0 && (i != last || frame.normal_mask.count_ones() > 1)
-        })?;
-        let mut other = Self::empty();
+        }) else { return false; };
         other.stack.extend_from_slice(&self.stack[..=split_at]);
         other.job = self.job;
+        other.weight = 0;
         other.needs_query = false;
         let mask = self.stack[split_at].normal_mask;
         let mut high = mask;
@@ -230,7 +268,13 @@ impl Context {
         }
         self.stack[split_at].normal_mask &= !high;
         other.stack[split_at].normal_mask = high;
-        Some(other)
+        true
+    }
+
+    #[cfg(any(test, feature = "bpmx-check"))]
+    fn split(&mut self) -> Option<Self> {
+        let mut other = Self::empty();
+        self.split_into(&mut other).then_some(other)
     }
 
     fn solution(&self) -> Vec<u8> {
@@ -310,6 +354,7 @@ struct PrefixJob {
 struct PrefixQueue {
     jobs: Vec<PrefixJob>,
     next: usize,
+    shard: Option<SearchShard>,
 }
 
 impl PrefixQueue {
@@ -370,12 +415,28 @@ impl PrefixQueue {
         }
     }
 
-    fn fetch(&mut self, start: Cube, stats: &mut SearchStats) -> Option<Context> {
+    fn fetch_into(&mut self, start: Cube, stats: &mut SearchStats, context: &mut Context) -> bool {
+        if let Some(shard) = self.shard {
+            while let Some(job) = self.jobs.get(self.next) {
+                // Ownership depends only on the prefix, never on locally
+                // accumulated weights or scheduling order in another worker.
+                let key = job.moves[..job.len].iter().fold(0usize, |key, &m| key * 18 + usize::from(m));
+                if key % shard.count == shard.index { break; }
+                self.next += 1;
+            }
+        }
         let index = self.next;
-        let job = self.jobs.get(index)?;
+        let Some(job) = self.jobs.get(index) else {
+            return false;
+        };
+        // Callers finish an exhausted context before refilling it. Preserve its
+        // reserved stack allocation; an absent job leaves the context untouched.
+        debug_assert!(context.stack.is_empty());
+        debug_assert!(context.job.is_none());
         self.next += 1;
-        let mut context = Context::empty();
         context.job = Some(index);
+        context.weight = 0;
+        context.needs_query = true;
         context.stack.push(Frame::root(start));
         for &movement in &job.moves[..job.len] {
             let parent = context.stack.last_mut().unwrap();
@@ -384,7 +445,7 @@ impl PrefixQueue {
             context.stack.push(child);
         }
         stats.jobs += 1;
-        Some(context)
+        true
     }
 
     fn finish(&mut self, context: &mut Context) {
@@ -416,20 +477,24 @@ fn search_depth<O: PruningOracle>(
 ) -> DepthResult {
     let mut contexts: Vec<Context> = (0..options.contexts).map(|_| Context::empty()).collect();
     let max_bound = oracle.max_bound();
+    let parent_propagation = oracle.allow_parent_propagation();
     let rank_scale = 1_u32 << max_bound;
     jobs.prepare(depth, max_bound, symmetries);
     if depth <= max_bound {
         let mut root = Frame::root(start);
         root.normal_mask = symmetries.next_mask(&[], ALL_MOVES);
+        if let Some(shard) = jobs.shard {
+            root.normal_mask &= (0..18).filter(|m| m % shard.count == shard.index)
+                .fold(0, |mask, m| mask | (1 << m));
+        }
         contexts[0].stack.push(root);
     } else {
         for context in &mut contexts {
-            if let Some(job) = jobs.fetch(start, stats) {
-                *context = job;
-            }
+            jobs.fetch_into(start, stats, context);
         }
     }
     loop {
+        if oracle.cancelled() { return DepthResult::Cancelled; }
         let mut live = [false; MAX_CONTEXTS];
         let mut inverse_coordinate = [None; MAX_CONTEXTS];
         let mut normal_coordinate = [None; MAX_CONTEXTS];
@@ -469,6 +534,10 @@ fn search_depth<O: PruningOracle>(
             }
         }
 
+        // The opt-in shared-WASM path issues all inverse reads before any
+        // survivor's normal coordinate work. Processing/statistics stay ordered.
+        #[cfg(feature = "wasm-batch-probes")]
+        let inverse_bounds = oracle.lookup_batch(&inverse_coordinate);
         // stage 1b: inverse PDB reads; survivors prepare the normal-side query.
         for (i, context) in contexts.iter_mut().enumerate() {
             if !live[i] || excess[i] != 0 {
@@ -476,8 +545,11 @@ fn search_depth<O: PruningOracle>(
             }
             let remaining = context.remaining(depth);
             let frame = context.stack.last_mut().unwrap();
-            if let Some(index) = inverse_coordinate[i] {
-                frame.inverse_bound = oracle.lookup(index);
+            if let Some(_index) = inverse_coordinate[i] {
+                #[cfg(not(feature = "wasm-batch-probes"))]
+                { frame.inverse_bound = oracle.lookup(_index); }
+                #[cfg(feature = "wasm-batch-probes")]
+                { frame.inverse_bound = inverse_bounds[i]; }
                 stats.probes += 1;
                 stats.inverse_probes += 1;
             }
@@ -497,14 +569,19 @@ fn search_depth<O: PruningOracle>(
             }
         }
 
+        #[cfg(feature = "wasm-batch-probes")]
+        let normal_bounds = oracle.lookup_batch(&normal_coordinate);
         // stage 1c: normal PDB reads, kept separate from coordinate computation.
         for (i, context) in contexts.iter_mut().enumerate() {
-            let Some(index) = normal_coordinate[i] else {
+            let Some(_index) = normal_coordinate[i] else {
                 continue;
             };
             let remaining = context.remaining(depth);
             let frame = context.stack.last_mut().unwrap();
-            frame.normal_bound = oracle.lookup(index);
+            #[cfg(not(feature = "wasm-batch-probes"))]
+            { frame.normal_bound = oracle.lookup(_index); }
+            #[cfg(feature = "wasm-batch-probes")]
+            { frame.normal_bound = normal_bounds[i]; }
             stats.probes += 1;
             // The original score adds one reciprocal power for each side,
             // including a normal-side lookup that subsequently rejects a node.
@@ -521,7 +598,7 @@ fn search_depth<O: PruningOracle>(
                 continue;
             }
             if excess[i] != 0 {
-                context.reject(excess[i], stats);
+                context.reject_bound(excess[i], parent_propagation, stats);
             } else {
                 let remaining = context.remaining(depth);
                 context.stack.last_mut().unwrap().plan(remaining, max_bound);
@@ -539,8 +616,7 @@ fn search_depth<O: PruningOracle>(
             }
             jobs.finish(&mut contexts[empty]);
             if depth > max_bound {
-                if let Some(job) = jobs.fetch(start, stats) {
-                    contexts[empty] = job;
+                if jobs.fetch_into(start, stats, &mut contexts[empty]) {
                     continue;
                 }
             }
@@ -548,8 +624,14 @@ fn search_depth<O: PruningOracle>(
                 if donor == empty {
                     continue;
                 }
-                if let Some(other) = contexts[donor].split() {
-                    contexts[empty] = other;
+                let split = if donor < empty {
+                    let (before, after) = contexts.split_at_mut(empty);
+                    before[donor].split_into(&mut after[0])
+                } else {
+                    let (before, after) = contexts.split_at_mut(donor);
+                    after[0].split_into(&mut before[empty])
+                };
+                if split {
                     stats.splits += 1;
                     break;
                 }
@@ -573,6 +655,51 @@ fn search_depth<O: PruningOracle>(
         if !active {
             return DepthResult::Exhausted;
         }
+    }
+}
+
+/// One disjoint part of each depth. A coordinator must exhaust all shards at
+/// depth d before starting d+1. A result found at d may cancel its siblings.
+#[derive(Clone, Copy, Debug)]
+pub struct SearchShard { pub index: usize, pub count: usize }
+
+/// Persistent prefix rankings for one worker; no table or cross-worker state
+/// is owned here. The start cube and oracle must stay unchanged across depths.
+pub struct DepthSearch {
+    start: Cube,
+    symmetries: RootSymmetries,
+    jobs: PrefixQueue,
+    next_depth: u8,
+}
+
+impl DepthSearch {
+    pub fn new<O: PruningOracle>(start: Cube, oracle: &O, shard: SearchShard) -> Result<Self, String> {
+        if shard.count == 0 || shard.count > 256 || shard.index >= shard.count {
+            return Err("shards require 1..256 workers and a valid worker index".into());
+        }
+        if !(10..=13).contains(&oracle.max_bound()) { return Err("invalid subgroup bound".into()); }
+        Ok(Self { start, symmetries: RootSymmetries::new(&start, oracle),
+            jobs: PrefixQueue { shard: Some(shard), ..PrefixQueue::default() }, next_depth: 0 })
+    }
+
+    pub fn run_depth<O: PruningOracle>(&mut self, oracle: &O, depth: u8) -> Result<SearchOutcome, String> {
+        self.run_depth_with_options(oracle, depth, SearchOptions::default())
+    }
+
+    pub fn run_depth_with_options<O: PruningOracle>(&mut self, oracle: &O, depth: u8, options: SearchOptions) -> Result<SearchOutcome, String> {
+        if depth > MAX_DEPTH || depth != self.next_depth { return Err("depths must be searched consecutively from zero".into()); }
+        if options.max_depth > MAX_DEPTH || depth > options.max_depth || (options.contexts != 1 && options.contexts != MAX_CONTEXTS) {
+            return Err("invalid shard depth or context count".into());
+        }
+        let mut outcome = SearchOutcome { solution: None, completed_depth: None,
+            cancelled: false, stats: SearchStats::default() };
+        match search_depth(self.start, oracle, options, depth,
+            &mut outcome.stats, &self.symmetries, &mut self.jobs) {
+            DepthResult::Found(solution) => outcome.solution = Some(solution),
+            DepthResult::Exhausted => { outcome.completed_depth = Some(depth); self.next_depth += 1; }
+            DepthResult::Cancelled => outcome.cancelled = true,
+        }
+        Ok(outcome)
     }
 }
 
@@ -629,6 +756,98 @@ pub fn solve<O: PruningOracle>(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // Freeze the complete outcome/statistics and each direction-independent
+    // prepare/lookup trace with the old feature-off path, then require exactly
+    // the same digest with batching enabled. No PDB or large search is used.
+    #[test]
+    fn probe_pipeline_search_semantics() {
+        use std::cell::Cell;
+        fn mix(value: &Cell<u64>, bytes: &[u8]) {
+            for &byte in bytes { value.set((value.get() ^ u64::from(byte)).wrapping_mul(1099511628211)); }
+        }
+        struct TwistBound { early: bool, prepares: Cell<u64>, probes: Cell<u64> }
+        impl PruningOracle for TwistBound {
+            type Query = u8;
+            fn prepare(&self, cube: &Cube, remaining: u8) -> Result<u8, u8> {
+                mix(&self.prepares, &cube.to_bytes()); mix(&self.prepares, &[remaining]);
+                // A move changes at most four corner orientations, and every
+                // half turn preserves the number of twisted corners.
+                let bound = cube.corners.iter().filter(|&&c| c >> 3 != 0).count().div_ceil(4) as u8;
+                if self.early && bound > remaining { Err(bound) } else { Ok(bound) }
+            }
+            fn lookup(&self, query: u8) -> u8 { mix(&self.probes, &[query]); query }
+        }
+        let digest = Cell::new(14695981039346656037_u64);
+        let mut aggregate = SearchStats::default();
+        let mut count = 0;
+        for scramble in ["", "U", "R2", "R F", "R F U", "F R U2", "R U R'", "F R F' U"] {
+            let cube = Cube::from_scramble(scramble).unwrap();
+            for contexts in [1, 8] { for early in [false, true] { for budget in [0, 29, 1024] {
+                let oracle = TwistBound { early, prepares: Cell::new(0), probes: Cell::new(0) };
+                let result = solve(cube, &oracle, SearchOptions { max_depth: 3, max_nodes: budget, contexts }).unwrap();
+                if let Some(solution) = &result.solution { assert!(replay(cube, solution).is_solved()); }
+                mix(&digest, format!("{result:?}|{}|{}", oracle.prepares.get(), oracle.probes.get()).as_bytes());
+                aggregate.probes += result.stats.probes; aggregate.cache_reuses += result.stats.cache_reuses;
+                aggregate.splits += result.stats.splits; count += 1;
+            } } }
+        }
+        assert_eq!(count, 96);
+        // Captured with wasm-batch-probes disabled: complete results, all eight
+        // SearchStats fields and separate prepare/probe traces must not drift.
+        assert_eq!(digest.get(), 0x6d17ca1f6d7bb115);
+        assert_eq!((aggregate.probes, aggregate.cache_reuses, aggregate.splits), (4718, 896, 1250));
+        println!("probe pipeline: cases={count} digest={:016x} probes={} cache={} splits={}",
+            digest.get(), aggregate.probes, aggregate.cache_reuses, aggregate.splits);
+    }
+
+    #[cfg(feature = "wasm-batch-probes")]
+    #[test]
+    fn probe_pipeline_none_slots_issue_no_lookup() {
+        struct Recording(std::cell::RefCell<Vec<u8>>);
+        impl PruningOracle for Recording {
+            type Query = u8;
+            fn prepare(&self, _: &Cube, _: u8) -> Result<u8, u8> { unreachable!() }
+            fn lookup(&self, query: u8) -> u8 { self.0.borrow_mut().push(query); query }
+        }
+        let oracle = Recording(std::cell::RefCell::new(Vec::new()));
+        assert_eq!(oracle.lookup_batch(&[None; 8]), [0; 8]);
+        assert!(oracle.0.borrow().is_empty());
+        assert_eq!(oracle.lookup_batch(&[None, Some(0), Some(13), None, Some(2), None, None, Some(7)]), [0, 0, 13, 0, 2, 0, 0, 7]);
+        assert_eq!(*oracle.0.borrow(), vec![0, 13, 2, 7]);
+    }
+
+    #[test]
+    fn depth_shards_cover_every_prefix_once_despite_independent_rankings() {
+        use std::collections::BTreeSet;
+        let symmetries = RootSymmetries { maps: vec![std::array::from_fn(|m| m as u8)] };
+        for count in [1, 2, 4, 16] {
+            let mut queues: Vec<_> = (0..count).map(|index| PrefixQueue {
+                shard: Some(SearchShard { index, count }), ..PrefixQueue::default()
+            }).collect();
+            let mut reference = PrefixQueue::default();
+            for depth in 11..=14 {
+                reference.prepare(depth, 10, &symmetries);
+                let expected: BTreeSet<Vec<u8>> = reference.jobs.iter().map(|j| j.moves[..j.len].to_vec()).collect();
+                let mut visited = BTreeSet::new();
+                for (worker, queue) in queues.iter_mut().enumerate() {
+                    // Distinct previous-depth weights force independent order,
+                    // but must never change global coverage/ownership.
+                    for (i, job) in queue.jobs.iter_mut().enumerate() { job.weight = ((i + 7) * (worker + 3) % 101) as u64; }
+                    queue.prepare(depth, 10, &symmetries);
+                    let mut context = Context::empty();
+                    let mut stats = SearchStats::default();
+                    while queue.fetch_into(Cube::SOLVED, &mut stats, &mut context) {
+                        let job = &queue.jobs[context.job.unwrap()];
+                        assert!(visited.insert(job.moves[..job.len].to_vec()), "duplicate prefix ownership");
+                        assert_eq!(context.stack.len(), job.len + 1);
+                        context.stack.clear(); queue.finish(&mut context);
+                    }
+                }
+                assert_eq!(visited, expected, "missing depth {depth} prefix with {count} workers");
+            }
+        }
+    }
 
     struct ZeroBound;
     impl PruningOracle for ZeroBound {
@@ -897,6 +1116,76 @@ mod tests {
     }
 
     #[test]
+    fn split_reuses_vacant_stack_and_matches_allocating_reference() {
+        // The frozen shared-WASM baseline's allocating split, retained only
+        // as an independent reference for mask/ownership/state equivalence.
+        fn allocating_reference(context: &mut Context) -> Option<Context> {
+            if context.needs_query { return None; }
+            let last = context.stack.len().checked_sub(1)?;
+            let at = context.stack.iter().enumerate().position(|(i, frame)| {
+                frame.normal_mask != 0 && (i != last || frame.normal_mask.count_ones() > 1)
+            })?;
+            let mut other = Context::empty();
+            other.stack.extend_from_slice(&context.stack[..=at]);
+            other.job = context.job;
+            other.needs_query = false;
+            let mask = context.stack[at].normal_mask;
+            let mut high = mask;
+            for _ in 0..mask.count_ones() / 2 { high &= high - 1; }
+            context.stack[at].normal_mask &= !high;
+            other.stack[at].normal_mask = high;
+            Some(other)
+        }
+        fn frames(context: &Context) -> Vec<([u8; 20], [u8; 20], u32, u32, u8, u8, bool, bool, u8)> {
+            context.stack.iter().map(|f| (f.cube.to_bytes(), f.inverse.to_bytes(), f.normal_mask,
+                f.inverse_mask, f.normal_bound, f.inverse_bound, f.cached_inverse, f.side, f.chosen_move)).collect()
+        }
+        let mut vacant = Context::empty();
+        let pointer = vacant.stack.as_ptr();
+        let capacity = vacant.stack.capacity();
+        for depth in 0..=usize::from(MAX_DEPTH) + 1 {
+            for pending in 0..=depth {
+                for mask in [0, 1, 3, 0b1001001, ALL_MOVES] {
+                    for needs_query in [false, true] {
+                        let mut donor = Context::empty();
+                        donor.job = Some(17);
+                        donor.weight = 42;
+                        donor.needs_query = needs_query;
+                        for i in 0..depth {
+                            let mut frame = Frame::root(MOVES[i % 18]);
+                            frame.normal_mask = if i == pending { mask } else { 0 };
+                            frame.side = i % 2 != 0;
+                            frame.chosen_move = (i % 18) as u8;
+                            donor.stack.push(frame);
+                        }
+                        let mut reference = donor.clone();
+                        let expected = allocating_reference(&mut reference);
+                        let success = donor.split_into(&mut vacant);
+                        assert_eq!(success, expected.is_some());
+                        assert_eq!(frames(&donor), frames(&reference));
+                        assert_eq!((donor.job, donor.weight, donor.needs_query),
+                            (reference.job, reference.weight, reference.needs_query));
+                        if let Some(expected) = expected {
+                            assert_eq!(frames(&vacant), frames(&expected));
+                            assert_eq!((vacant.job, vacant.weight, vacant.needs_query),
+                                (expected.job, expected.weight, expected.needs_query));
+                        } else {
+                            assert!(vacant.stack.is_empty() && vacant.job.is_none());
+                            assert_eq!((vacant.weight, vacant.needs_query), (0, true));
+                        }
+                        assert_eq!(vacant.stack.as_ptr(), pointer);
+                        assert_eq!(vacant.stack.capacity(), capacity);
+                        vacant.stack.clear();
+                        vacant.job = None;
+                        vacant.weight = 0;
+                        vacant.needs_query = true;
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
     fn inherited_halfturn_bound_uses_the_actual_opposite_side() {
         let cube = replay(Cube::SOLVED, &[0, 3, 6]);
         let mut frame = Frame::root(cube);
@@ -938,4 +1227,13 @@ mod tests {
             }
         }
     }
+}
+
+#[cfg(any(test, feature = "bpmx-check"))]
+#[path = "bpmx_check.rs"]
+mod bpmx_check;
+
+#[cfg(feature = "bpmx-check")]
+pub fn verify_bpmx_small() -> Result<String, String> {
+    bpmx_check::run()
 }

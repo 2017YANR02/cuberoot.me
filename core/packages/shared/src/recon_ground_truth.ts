@@ -207,6 +207,15 @@ export interface NormalizeOptions {
   expandSlices?: boolean;
 }
 
+/** Lossless outer-face expansion in the initial frame, with residual rotation. */
+export function outerTurnSequence(tokens: string[]): { moves: string[]; rotation: string[] } {
+  const state = [0, 1, 2, 3, 4, 5];
+  const history: RecordedMove[] = [];
+  for (const token of tokens) processToken(token, state, history, true);
+  return { moves: history.map(move => FACE_NAMES[move.originalFace] + suffix(move.amount)),
+    rotation: solveSimplification(state) };
+}
+
 /**
  * 标准化输入 token 序列。
  * 输出：[...prefix rotations, ...face moves]，全部为单层 + 整体转体。

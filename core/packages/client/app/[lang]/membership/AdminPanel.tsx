@@ -126,7 +126,7 @@ export default function AdminPanel({ plans, isZh, onPlanUpdated, onViewRenewal }
   }
 
   async function updateVisibility(p: MembershipPlan, active: boolean) {
-    if (active && isAutoRenewPlanSlug(p.slug)) return;
+    if (active && isAutoRenewPlanSlug(p.slug) && !(readiness?.releaseEnabled && readiness.debitEnabled && readiness.managementConfigured && readiness.syncEnabled)) return;
     setPlanUpdating(p.slug);
     try {
       const updatedPlan = await adminUpdatePlan(p.slug, { active });
@@ -160,8 +160,12 @@ export default function AdminPanel({ plans, isZh, onPlanUpdated, onViewRenewal }
             </li>)}
             <li>{tr({ zh: '合约后台同步：', en: 'Background contract synchronization: ' })}{readiness.syncEnabled
               ? tr({ zh: '开关已开启', en: 'Switch enabled' }) : tr({ zh: '开关未开启', en: 'Switch disabled' })}</li>
+            {readiness.templates?.map(template => <li key={template.slug}>
+              {tr({ zh: '模板', en: 'Template' })} {template.templateId}：{template.approved
+                ? tr({ zh: '已登记审核通过', en: 'Approval recorded' }) : tr({ zh: '等待审核通过', en: 'Awaiting approval' })}
+            </li>)}
           </ul>
-          <p className="mem-note">{tr({ zh: '这里只核对当前 API 服务的配置格式，不验证微信权限、模板、数据库或实际交易。配置齐全也不代表可以开放销售；新签约与周期扣款流程仍待接入。', en: 'This checks configuration format in the connected API service only, not WeChat permissions, templates, database readiness, or transactions. Complete configuration does not enable sales; enrollment and recurring debit processing still require integration.' })}</p>
+          <p className="mem-note">{tr({ zh: '这里只核对当前 API 服务的配置格式，不验证微信权限、模板、数据库或实际交易。签约与周期扣款代码已接入，仍须完成模板审核、商户配置和交易联调后开放。', en: 'This checks configuration format only, not WeChat permissions, templates, database readiness, or transactions. Enrollment and recurring debit code is integrated; template approval, merchant configuration, and transaction verification are still required before release.' })}</p>
         </div>}
         <details>
         <summary>{tr({ zh: '接入步骤与配置地址', en: 'Integration steps and configuration URLs' })}</summary>
@@ -224,7 +228,7 @@ export default function AdminPanel({ plans, isZh, onPlanUpdated, onViewRenewal }
                 value={p.active !== false}
                 onChange={(active) => void updateVisibility(p, active)}
                 label={tr({ zh: '公开', en: 'Public' })}
-                disabled={planUpdating === p.slug || (isAutoRenewPlanSlug(p.slug) && p.active === false)}
+                disabled={planUpdating === p.slug || (isAutoRenewPlanSlug(p.slug) && p.active === false && !(readiness?.releaseEnabled && readiness.debitEnabled && readiness.managementConfigured && readiness.syncEnabled))}
               />
             </div>
           ))}
@@ -236,7 +240,7 @@ export default function AdminPanel({ plans, isZh, onPlanUpdated, onViewRenewal }
             </button>
           ))}
         </div>
-        <p className="mem-note">{tr({ zh: '自动续费尚未接通，暂不能公开；仍可保存价格、查看签约说明或关闭已公开的套餐。签约说明使用已保存的价格，不代表已开通代扣。', en: 'Auto-renewal cannot be made public yet. You can still save prices, view authorization details, or hide an active plan. Saved prices in these details do not mean recurring billing is available.' })}</p>
+        <p className="mem-note">{tr({ zh: '自动续费等待审核与联调，暂不能公开；仍可查看签约说明或关闭已公开的套餐。月度模板 225492，年度模板 225493；签约说明不代表已开通代扣。', en: 'Auto-renewal awaits approval and verification. You can view authorization details or hide active plans. Monthly template: 225492; annual template: 225493. These details do not mean recurring billing is available.' })}</p>
       </div>
 
     </section>

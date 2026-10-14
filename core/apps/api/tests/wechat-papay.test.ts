@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { XMLBuilder, XMLParser } from 'fast-xml-parser';
-import { cancelPapayContract, papayConfigured, parsePapayResponse, queryPapayContract, signPapay, verifyPapayNotification } from '../src/payment/wechat-papay.js';
+import { applyPapayDebit, createPapayEnrollment, queryPapayDebit, verifyPapayPaymentNotification, cancelPapayContract, papayConfigured, parsePapayResponse, queryPapayContract, signPapay, verifyPapayNotification } from '../src/payment/wechat-papay.js';
 
 const key = '192006250b4c09247ec02edce69f6a2d';
 const contract = { appid: 'wxd930ea5d5a258f4f', mch_id: '10000100', plan_id: '123', contract_code: 'own-order', contract_id: 'wx-contract' };
@@ -17,6 +17,32 @@ describe('WeChat APIv2 entrusted-payment contract transport', () => {
     fetchMock.mockReset().mockImplementation(async () => new Response(xml(responseFields)));
   });
   afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
+  it('accepts only the official HTTPS H5 redirect and signs the request', async () => {
+    fetchMock.mockResolvedValueOnce(new Response('<xml><return_code>SUCCESS</return_code><result_code>SUCCESS</result_code><redirect_url>https://payapp.weixin.qq.com/authorize</redirect_url></xml>'));
+    expect(await createPapayEnrollment(contract, '1', '127.0.0.1')).toBe('https://payapp.weixin.qq.com/authorize');
+    const request = new URL(fetchMock.mock.calls[0][0]);
+    const fields = Object.fromEntries(request.searchParams);
+    expect(fields.sign).toBe(signPapay(fields, key));
+    expect(fields.notify_url).toBe('https://api.cuberoot.me/v1/membership/subscriptions/wechat/notify');
+    for (const redirect of ['http://payapp.weixin.qq.com/a', 'https://evil.example/a', 'https://payapp.weixin.qq.com@evil.example/a']) {
+      fetchMock.mockResolvedValueOnce(new Response(new XMLBuilder().build({ xml: { return_code: 'SUCCESS', result_code: 'SUCCESS', redirect_url: redirect } })));
+      await expect(createPapayEnrollment(contract, '2', '127.0.0.1')).rejects.toThrow();
+    }
+  });
+  it('submits a fixed order and amount without interpreting acceptance as paid', async () => {
+    await expect(applyPapayDebit(contract, 'R123', 2999)).resolves.toBeUndefined();
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe('https://api.mch.weixin.qq.com/pay/pappayapply');
+    const fields = new XMLParser({ parseTagValue: false }).parse(init.body).xml;
+    expect(fields).toMatchObject({ out_trade_no: 'R123', total_fee: '2999', contract_id: contract.contract_id, trade_type: 'PAP', fee_type: 'CNY' });
+    expect(fields.sign).toBe(signPapay(fields, key));
+  });
+  it('rejects query order substitution and unauthenticated debit notifications', async () => {
+    fetchMock.mockResolvedValueOnce(new Response(xml({ ...responseFields, out_trade_no: 'OTHER', trade_state: 'SUCCESS' })));
+    await expect(queryPapayDebit('R123')).rejects.toThrow();
+    expect(() => verifyPapayPaymentNotification('<xml><return_code>SUCCESS</return_code></xml>')).toThrow();
+    expect(() => verifyPapayPaymentNotification(xml({ ...responseFields, out_trade_no: 'R123', trade_type: 'NATIVE' }))).toThrow();
+  });
   it('matches the official MD5 example exactly', () => {
     expect(signPapay({ appid: contract.appid, mch_id: contract.mch_id, device_info: '1000', body: 'test', nonce_str: 'ibuaiVcKdpRxkhJA' }, key))
       .toBe('9A0A8659F005D6984697E2CA0A9CF3B7');

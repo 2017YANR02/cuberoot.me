@@ -4,18 +4,17 @@ import type { KPattern, KPuzzle } from 'cubing/kpuzzle';
 import { loadAlg, type AlgEntry, type AlgFile } from '../../alg';
 import { cubeOnly, toMoveStringStrict } from '../../alg_notation';
 import { getCube3 } from '../../recon/cube3';
-import { ollCommentName, pllCommentName } from '../../recon/alg_case_display';
-import { conjugateToken, facePermFor } from './orient';
+import { ollCommentName, pllCommentName, primaryCaseName, zbllCommentLabel } from '../../recon/alg_case_display';
+import { outerTurnSequence } from '../../recon_ground_truth';
+import { compactCubeRotations } from './gyro_orient';
 import { formatReconLine, type ReconTextLine, type ReconTextResult } from './recon_text';
 import type { RangeMoveItem } from './step_metrics';
 
 export interface NotationGroup { from: number; to: number }
 interface Formula { moves: string[]; groups: NotationGroup[] }
 interface Block { from: number; to: number; targetFrom: number; targetTo: number }
-interface Match extends Formula { blocks: Block[]; score: number; source: string; implicitAuf: { before: string; after: string } }
+interface Match extends Formula { blocks: Block[]; source: string; implicitAuf: { before: string; after: string } }
 const MAX_MOVES = 100;
-const MIN_OVERLAP = 0.6;
-const UNIQUE_MARGIN = 0.08;
 const boundary = (token: string) => /^(?:U|[xyz])(?:\d+)?'?$/.test(token);
 
 /** Expand execution repeats while retaining grouping, without simplifying R3 or R2'. */
@@ -35,7 +34,7 @@ function parseFormula(text: string): Formula {
       if (moves.length > MAX_MOVES) throw new Error('Long formula');
     }
   };
-  visit(new Alg(cubeOnly(text)));
+  visit(new Alg(cubeOnly(text).replace(/\(/g, ' (').replace(/([URFDLBMESxyzurfdlb]w?(?:\d+)?'?)/g, ' $1 ')));
   // The shared strict tokenizer also guards unknown/glued move families.
   if (moves.join(' ') !== toMoveStringStrict(text)) throw new Error('Noncanonical formula');
   return { moves, groups };
@@ -66,14 +65,6 @@ function states(kp: KPuzzle, moves: string[]): string[] {
     state = state.applyMove(move);
     return stateKey(state);
   })];
-}
-
-function overlap(a: string[], b: string[]): number {
-  const rows = Array.from({ length: a.length + 1 }, () => new Uint16Array(b.length + 1));
-  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) {
-    rows[i][j] = a[i - 1] === b[j - 1] ? rows[i - 1][j - 1] + 1 : Math.max(rows[i - 1][j], rows[i][j - 1]);
-  }
-  return 2 * rows[a.length][b.length] / (a.length + b.length);
 }
 
 function coverage(ranges: RangeMoveItem[]): string | null {
@@ -110,61 +101,80 @@ function align(a: string[], b: string[]): Block[] | null {
   }));
 }
 
+/** Exact normal form in the initial frame: only same-axis commutation/cancellation. */
+export function strictOuterForm(moves: string[]): { key: string; rotation: string[] } {
+  const tokens = moves.flatMap(token => {
+    const move = new Move(token);
+    if (!/^(?:[URFDLB]w?|[urfdlbMESxyz])$/.test(move.family)) throw new Error('Unsupported move');
+    const amount = ((move.amount % 4) + 4) % 4;
+    return amount ? [move.modified({ amount: amount === 3 ? -1 : amount }).toString()] : [];
+  });
+  const expanded = outerTurnSequence(tokens);
+  const axes = ['UD', 'LR', 'FB'];
+  const blocks: Array<{ axis: string; counts: number[] }> = [];
+  for (const token of expanded.moves) {
+    const move = new Move(token), axis = axes.find(axis => axis.includes(move.family))!;
+    if (blocks.at(-1)?.axis !== axis) blocks.push({ axis, counts: [0, 0] });
+    const block = blocks.at(-1)!, side = axis.indexOf(move.family);
+    block.counts[side] = (block.counts[side] + move.amount + 4) % 4;
+    if (block.counts.every(count => count === 0)) blocks.pop();
+  }
+  const key = blocks.flatMap(block => block.counts.flatMap((amount, index) => amount
+    ? [block.axis[index] + (amount === 2 ? '2' : amount === 3 ? "'" : '')] : [])).join(' ');
+  return { key, rotation: expanded.rotation };
+}
+const formulaCache = new Map<string, Formula | null>();
+function cachedFormula(text: string): Formula | null {
+  if (!formulaCache.has(text)) {
+    if (formulaCache.size >= 4096) formulaCache.clear();
+    try { formulaCache.set(text, parseFormula(text)); } catch { formulaCache.set(text, null); }
+  }
+  return formulaCache.get(text)!;
+}
+
 function matchBody(kp: KPuzzle, moves: string[], candidates: AlgEntry[]): Match | null {
-  const before = states(kp, moves);
-  const matches = new Map<string, Match>();
+  const before = states(kp, moves), sourceForm = strictOuterForm(moves);
+  let preferred: Match | null = null;
   for (const entry of candidates) {
-    let parsed: Formula;
-    try { parsed = parseFormula(entry.alg); } catch { continue; }
-    const [from, to] = bodyBounds(parsed.moves);
+    const parsed = cachedFormula(entry.alg);
+    if (!parsed) continue;
+    // Keep library rotations: they define how its face names are interpreted.
+    let from = 0, to = parsed.moves.length;
+    while (from < to && /^U(?:\d+)?'?$/.test(parsed.moves[from])) from++;
+    while (to > from && /^U(?:\d+)?'?$/.test(parsed.moves[to - 1])) to--;
     const body = parsed.moves.slice(from, to);
     if (!body.length) continue;
     for (const rotation of ['', 'y', 'y2', "y'"]) {
-      const perm = facePermFor(rotation);
-      const target = body.map(token => {
-        if (!rotation) return token;
-        const move = new Move(token);
-        const family = /^[rludfb]$/.test(move.family) ? `${move.family.toUpperCase()}w` : move.family;
-        const mapped = conjugateToken(family, perm);
-        if (!mapped) return null;
-        const direction = new Move(mapped);
-        return direction.modified({ amount: direction.amount * move.amount }).toString();
-      });
-      if (target.some(move => move === null)) continue;
-      const bodyTokens = target as string[];
-      // AUF may be encoded inside slice/wide notation instead of appearing as
-      // a boundary U token. Infer it from the recorded transform, never copy it
-      // from the library. Both outer wrappers are checked again before output.
+      const wrapper = rotation ? [rotation] : [];
+      const inverse = rotation ? new Alg(rotation).invert().toString() : '';
       for (const pre of ['', 'U', 'U2', "U'"]) for (const post of ['', 'U', 'U2', "U'"]) {
-        const offset = pre ? 1 : 0;
-        const tokens = [...(pre ? [pre] : []), ...bodyTokens, ...(post ? [post] : [])];
-        let blocks: Block[] | null;
-        try { blocks = align(before, states(kp, tokens)); } catch { continue; }
-        if (!blocks) continue;
-        // A verified one-to-few decomposition (slice/wide/half turn) is also
-        // execution evidence. A single whole-algorithm equivalence is not.
-        const local = blocks.filter(block => Math.min(block.to - block.from, block.targetTo - block.targetFrom) === 1
-          && Math.max(block.to - block.from, block.targetTo - block.targetFrom) <= 3
-          && block.targetFrom >= offset && block.targetTo <= offset + bodyTokens.length);
-        const supportedSource = local.reduce((sum, block) => sum + block.to - block.from, 0);
-        const supportedTarget = local.reduce((sum, block) => sum + block.targetTo - block.targetFrom, 0);
-        // Exclude recorded steps proven to be only boundary AUF from body scoring.
-        const sourceBody = blocks.filter(block => block.targetTo > offset && block.targetFrom < offset + bodyTokens.length)
-          .flatMap(block => moves.slice(block.from, block.to));
-        const score = Math.max(overlap(sourceBody, bodyTokens), (supportedSource / sourceBody.length + supportedTarget / bodyTokens.length) / 2);
-        if (score < MIN_OVERLAP) continue;
-        const key = tokens.join(' ');
-        if (matches.has(key)) continue; // Formatting/AUF duplicates are one candidate.
-        matches.set(key, { moves: tokens, source: entry.alg, score, blocks, implicitAuf: { before: pre, after: post },
+        const offset = (pre ? 1 : 0) + wrapper.length;
+        const tokens = [...(pre ? [pre] : []), ...wrapper, ...body,
+          ...(inverse ? [inverse] : []), ...(post ? [post] : [])];
+        let targetForm: ReturnType<typeof strictOuterForm>;
+        try { targetForm = strictOuterForm(tokens); } catch { continue; }
+        if (targetForm.key !== sourceForm.key) continue;
+        // Preserve the recording's final frame, including a missing written regrip.
+        const suffix = compactCubeRotations([
+          new Alg(targetForm.rotation.join(' ')).invert().toString(), ...sourceForm.rotation,
+        ].filter(Boolean).join(' ')).split(/\s+/).filter(Boolean);
+        const trailing: string[] = [];
+        while (tokens.length && /^[xyz]/.test(tokens.at(-1)!)) trailing.unshift(tokens.pop()!);
+        tokens.push(...compactCubeRotations([...trailing, ...suffix].join(' ')).split(/\s+/).filter(Boolean));
+        const blocks = align(before, states(kp, tokens));
+        if (!blocks) continue; // Independent full cubie/centre equivalence check.
+        const match: Match = { moves: tokens, source: entry.alg, blocks,
+          implicitAuf: { before: pre, after: post },
           groups: parsed.groups.filter(group => group.from >= from && group.to <= to)
-            .map(group => ({ from: group.from - from + offset, to: group.to - from + offset })),
-        });
+            .map(group => ({ from: group.from - from + offset, to: Math.min(group.to - from + offset, tokens.length) }))
+            .filter(group => group.to > group.from),
+        };
+        if (!rotation) return match;
+        preferred ??= match;
       }
     }
   }
-  const ranked = [...matches.values()].sort((a, b) => b.score - a.score);
-  if (!ranked.length || ranked[1] && ranked[0].score - ranked[1].score < UNIQUE_MARGIN) return null;
-  return ranked[0];
+  return preferred;
 }
 
 /** No input mutations, no change without complete transforms and replay coverage. */
@@ -222,10 +232,9 @@ export async function correctLibraryLine(line: ReconTextLine, candidates: AlgEnt
         const endTs = Math.max(...ranges.map(range => range.endTs));
         target.forEach((token, index) => {
           items.push(same ? { ...ranges[index], token } : {
-            token, ts: ts + (endTs - ts) * index / target.length,
-            endTs: ts + (endTs - ts) * (index + 1) / target.length,
+            token, ts, endTs,
             // The complete encoder span belongs to the final replacement step.
-            startIdx, endIdx: index === target.length - 1 ? endIdx : startIdx - 1,
+            startIdx, endIdx: index === target.length - 1 ? endIdx : startIdx - 1, seekEndIdx: endIdx,
           });
           groups.push(same ? line.wasteGroups?.[originals[index]] ?? null : null);
         });
@@ -245,18 +254,18 @@ export async function correctLibraryLine(line: ReconTextLine, candidates: AlgEnt
       if (coverage(ranges) !== originalCoverage) continue;
       // Also verifies the unchanged AUF/inspection/waste wrappers as a whole.
       if (states(kp, moves).at(-1) !== states(kp, line.moves).at(-1)) continue;
-      if (moves.join(' ') === line.moves.join(' ')) return line;
+      if (moves.join(' ') === line.moves.join(' ') && !matched.groups.length) return line;
       return { ...line, moves, moveRanges: ranges, wasteGroups,
         algorithmGroups: matched.groups.map(group => ({ from: positions[group.from], to: positions[group.to] })),
         libraryCorrection: { algorithm: matched.source, originalMoves: line.moves, originalRanges: line.moveRanges,
-          implicitAuf: matched.implicitAuf },
+          implicitAuf: matched.implicitAuf, originalLine: line },
       };
     }
   } catch { /* Parsing or incomplete correspondence: retain the recorded notation. */ }
   return line;
 }
 
-/** Exact recognized OLL/PLL cases only. A library failure never hides the report. */
+/** All recognized last-layer families share strict matching; library failures retain source. */
 export async function correctReconFromLibrary(
   recon: ReconTextResult,
   load: (set: string) => Promise<AlgFile> = set => loadAlg('3x3', set),
@@ -264,13 +273,18 @@ export async function correctReconFromLibrary(
   const files = new Map<string, Promise<AlgFile | null>>();
   const lines: ReconTextLine[] = [];
   for (const line of recon.lines) {
-    const label = /^(OLL|PLL|EPLL)-([A-Za-z0-9+-]+)(?:\/PLL Skip)?$/.exec(line.label ?? '');
-    if (!label || (line.kind !== 'oll' && line.kind !== 'pll')) { lines.push(line); continue; }
-    const set = label[1] === 'OLL' ? 'oll' : 'pll';
+    const label = /^(OLL\(CP\)|OLLCP|1LLL|ZBLL|COLL|EPLL|OLL|PLL|ELL|ZBLS|VLS|WV|SV)(?:[- ](.+?))?(?:\/PLL Skip)?$/.exec(line.label ?? '');
+    if (!label) { lines.push(line); continue; }
+    const set = label[1] === 'EPLL' ? 'pll' : label[1] === 'OLL(CP)' ? 'ollcp' : label[1].toLowerCase();
     if (!files.has(set)) files.set(set, boundedLoad(() => load(set)));
     const file = await files.get(set)!;
-    const cases = file?.cases.filter(item => (set === 'oll' ? ollCommentName(item.name) : pllCommentName(item.name)) === label[2]);
-    lines.push(cases?.length === 1 ? await correctLibraryLine(line, cases[0].algs.flat()) : line);
+    const key = (text: string) => text.toLowerCase().replace(/\s+/g, '');
+    const cases = file?.cases.filter(item => !label[2] || [item.name, item.meta?.ollcp,
+      primaryCaseName('3x3', set, item),
+      set === 'oll' ? ollCommentName(item.name) : set === 'pll' ? pllCommentName(item.name) : undefined,
+      set === 'zbll' ? zbllCommentLabel(item.name)?.replace(/^ZBLL-/, '') : undefined,
+    ].some(alias => alias && key(alias) === key(label[2])));
+    lines.push(cases?.length ? await correctLibraryLine(line, cases.flatMap(item => item.algs.flat())) : line);
   }
   if (lines.every((line, i) => line === recon.lines[i])) return recon;
   return { ...recon, lines, text: [

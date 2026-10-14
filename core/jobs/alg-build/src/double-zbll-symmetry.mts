@@ -1,4 +1,4 @@
-/** Local-only coordinator: audited symmetry model + existing guarded H48 runner. */
+/** Local-only coordinator: audited symmetry model + existing guarded batch runner. */
 import { createReadStream, readFileSync, existsSync, mkdirSync, openSync, closeSync, writeFileSync, fsyncSync, unlinkSync, statfsSync, statSync, appendFileSync, readdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { spawn, execFileSync, type ChildProcess } from 'node:child_process';
@@ -13,13 +13,14 @@ import { WebsiteStatistics } from './double-zbll-website-stats.mjs';
 import { PairSelection } from './double-zbll-selection.mjs';
 
 const root = resolve(import.meta.dirname, '../../../..');
+const { observeZbllMemory } = await import(resolve(root,'core/scripts/zbll-memory-budget.mts'));
 const work = resolve(root, '.tmp/double-zbll-symmetry-v2');
 const path = (name: string) => resolve(work, name);
 const args = process.argv.slice(2);
 if (args.length !== 1 || !['--plan', '--run', '--verify-checkpoint', '--watch'].includes(args[0])) throw Error('使用 --plan 查看，--run 开始或续算，--verify-checkpoint 只验证断点，--watch 只看面板。');
 const solve = args[0] === '--run';
-const solverEngine = process.env.DOUBLE_ZBLL_ENGINE ?? (existsSync(path('rust-h10-acceptance.json')) ? 'rust' : 'c');
-if (!['c', 'rust'].includes(solverEngine)) throw Error('DOUBLE_ZBLL_ENGINE 必须为 c 或 rust');
+const solverEngine = process.env.DOUBLE_ZBLL_ENGINE ?? (existsSync(path('rust-opt10-acceptance.json')) ? 'opt10' : existsSync(path('rust-h10-acceptance.json')) ? 'rust' : 'c');
+if (!['c', 'rust', 'opt10'].includes(solverEngine)) throw Error('DOUBLE_ZBLL_ENGINE 必须为 c、rust 或 opt10');
 let solverThreads: number | undefined;
 // A viewer never loads tables, checks startup resources or owns the job.
 if (args[0] === '--watch' || (solve && activeOwner(work))) {
@@ -47,6 +48,7 @@ const baseline = recoveredStartup ? { ...prior, status: 'stopped' } : prior ?? s
 let current = memory();
 const count = prior?.verified ?? seed.unique;
 if (args[0] === '--plan') {
+  console.log(`求解器：${solverEngine === 'opt10' ? 'Rust Opt10 · 31.13 GB 表' : solverEngine === 'rust' ? 'Rust H10' : 'C H10'}`);
   console.log(`双底 ZBLL · 对称去重（包含 PLL）\n已验证 ${count.toLocaleString()} / ${TOTAL.toLocaleString()} · ${(100 * count / TOTAL).toFixed(2)}%\n剩余 ${(TOTAL - count).toLocaleString()} 个\n可回收内存 ${(current.available / GiB).toFixed(1)} GiB / 启动门槛 34 GiB\n压力 ${current.pressure === 1 ? '正常' : '异常'} · 换出 ${current.swapouts} 页（基线 ${baseline.baselineSwapouts}）\n磁盘剩余 ${(current.disk / GiB).toFixed(1)} GiB\n${guard(current, baseline, 0, true) ?? '资源检查通过；实际启动时会再次检查。'}\n断点：${work}\n仅查看计划，没有启动求解器。`);
   process.exit(0);
 }
@@ -82,6 +84,7 @@ let interrupted = false, protectedStop = false, reason = '', child: ChildProcess
 let stage = '核验已有断点', verified = 0, newCount = 0, activeCompleted = 0, activeTotal = 0, activeBatch = checkpoint?.batch ?? 0;
 const histogram = Array.from({ length: 21 }, () => 0);
 let sum = 0, peak = prior?.peakRssGiB ?? 0, min = prior?.minimumHeadroomGiB ?? null;
+let reservedRss = 0;
 let currentRss = 0, model: any, lengths: Uint8Array, fd: number | undefined;
 let websiteStats: WebsiteStatistics | undefined;
 let selection: PairSelection;
@@ -109,7 +112,7 @@ function snapshot(status: string) {
   return { status, updatedAt: new Date().toISOString(), boot: baseline.boot, baselineSwapouts: baseline.baselineSwapouts,
     total: TOTAL, verified, imported: seed.unique, newlyVerified: newCount, activeBatch, activeCompleted, activeTotal,
     stage, activeVerified, solverThreads, solverEngine, ratePerSecond: ratePerSecond(), memoryPressure: current.pressure, diskGiB: current.disk / GiB,
-    computeSeconds: elapsed(), currentSwapouts: current.swapouts, currentRssGiB: currentRss / GiB,
+    computeSeconds: elapsed(), currentSwapouts: current.swapouts, currentRssGiB: currentRss / GiB, reservedRssGiB: reservedRss / GiB,
     peakRssGiB: peak, minimumHeadroomGiB: min, availableGiB: current.available / GiB,
     histogram, meanHtm: verified ? sum / verified : null, reason: reason || undefined,
     website: stage === '核验已有断点' ? undefined : websiteStats?.summary(),
@@ -143,12 +146,10 @@ function show(force = false, status = 'running') {
 function checkResources() {
   if (solve && Date.now() >= Date.parse('2026-12-01T00:00:00Z')) { stop('本任务运行授权已到期，需要重新核对。', true); throw Error(reason); }
   current = memory();
-  const list = execFileSync('ps', ['-axo', 'pid,ppid,rss'], { encoding: 'utf8', timeout: 5000 }).trim().split('\n').slice(1).map(s => s.trim().split(/\s+/).map(Number));
-  const family = new Set([process.pid]);
-  for (let changed = true; changed;) { changed = false; for (const [pid, parent] of list) if (family.has(parent) && !family.has(pid)) { family.add(pid); changed = true; } }
-  currentRss = list.reduce((n, [pid, , rss]) => n + (family.has(pid) ? rss * 1024 : 0), 0);
-  peak = Math.max(peak, currentRss / GiB); min = Math.min(min ?? Infinity, (current.available - currentRss) / GiB);
-  const violation = guard(current, baseline, currentRss);
+  const budget = observeZbllMemory(process.pid,current.available,current.boot);
+  currentRss = budget.rssBytes; reservedRss = budget.reservedRssBytes;
+  peak = Math.max(peak,currentRss/GiB); min = Math.min(min ?? Infinity,budget.marginBytes/GiB);
+  const violation = guard(current,baseline,currentRss,false,reservedRss);
   if (violation) { stop(violation, true); throw Error(violation); }
   if (!computeStarted && currentRss > 768 * 2 ** 20) { stop('断点核验内存超过 768 MiB。', true); throw Error(reason); }
   if (interrupted) throw Error(reason);

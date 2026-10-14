@@ -1,12 +1,14 @@
 //! Memory64 ABI. The host fills one module-owned PDB allocation; finalization
 //! moves that allocation into the ordinary Rust decoder without copying it.
 //! No filesystem, host pruning callback, or thread pool is used during search.
+#[cfg(feature = "bpmx-check")]
+mod bpmx_check;
 use std::cell::RefCell;
 
 use cube48opt_research::{
     coord::{snapshot_bytes, CoordTables},
     cube::{Cube, MOVE_NAMES},
-    search::{self, PruningOracle, SearchOptions},
+    search::SearchOptions,
     table::{PruningTable, Variant},
     OptSolver,
 };
@@ -167,8 +169,7 @@ pub extern "C" fn cubeopt_query(input_len: u64) -> i32 {
     status(|state| {
         let cube = input_cube(state, input_len)?;
         let solver = state.solver.as_ref().ok_or("finalize the table before querying")?;
-        let index = solver.prepare(&cube, u8::MAX).map_err(|_| "unexpected Opt early bound")?;
-        let bound = solver.lookup(index);
+        let (index, bound) = solver.query_specialized(&cube);
         state.output = format!("{{\"index\":{index},\"bound\":{bound}}}");
         Ok(())
     })
@@ -180,7 +181,7 @@ pub extern "C" fn cubeopt_solve(input_len: u64, contexts: u32, max_depth: u32, m
         let cube = input_cube(state, input_len)?;
         let solver = state.solver.as_ref().ok_or("finalize the table before solving")?;
         let max_depth = u8::try_from(max_depth).map_err(|_| "max_depth must be at most 20")?;
-        let result = search::solve(cube, solver, SearchOptions {
+        let result = solver.solve_specialized(cube, SearchOptions {
             contexts: contexts as usize,
             max_depth,
             max_nodes,

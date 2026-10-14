@@ -2,10 +2,11 @@ use cube48opt_research::{
     coord::CoordTables,
     cube::{Cube, MOVE_NAMES},
     h10_table::{H10Table, Validation},
-    search::{solve, PruningOracle, SearchOptions},
+    search::{PruningOracle, SearchOptions},
     table::{PruningTable, Variant},
     H48Solver, H48Table, H48Variant, OptSolver,
 };
+mod native_parallel;
 use std::{
     env, fs,
     io::{self, BufRead},
@@ -33,6 +34,7 @@ fn run() -> Result<(), String> {
     }
     if let Some(request) = h48_request(&args)? {
         // h48_request rejects h11 before any file metadata/open/mmap call.
+        let parallelism = if request.query { None } else { Some(Parallelism::from_env(request.options)?) };
         let oracle = if request.legacy_h10 {
             H48Solver::new(H10Table::open(Path::new(request.path), Validation::Full)?)
         } else {
@@ -54,7 +56,7 @@ fn run() -> Result<(), String> {
             }
             return Ok(());
         }
-        return run_solver(&oracle, request.options);
+        return run_solver(&oracle, request.options, parallelism.unwrap());
     }
     let variant_text = env::var("CUBEOPT_VARIANT").unwrap_or("1".into());
     if variant_text.len() != 1 {
@@ -65,6 +67,11 @@ fn run() -> Result<(), String> {
             .parse()
             .map_err(|_| "CUBEOPT_VARIANT must be an integer from 1 to 9")?,
     )?;
+    let search = if args[1] == "solve" {
+        args.get(3).ok_or("missing variant table path")?;
+        let options = options(&args[4..])?;
+        Some((options, Parallelism::from_env(options)?))
+    } else { None };
     let coordinates = CoordTables::from_variant_bytes(
         &fs::read(&args[2]).map_err(|e| e.to_string())?,
         variant.number(),
@@ -87,7 +94,8 @@ fn run() -> Result<(), String> {
         coordinates,
         PruningTable::load_variant(Path::new(pdb_path), variant)?,
     )?;
-    run_solver(&oracle, options(&args[4..])?)
+    let (options, parallelism) = search.unwrap();
+    run_solver(&oracle, options, parallelism)
 }
 
 fn opt10_command(args: &[String]) -> Result<(), String> {
@@ -109,6 +117,7 @@ fn opt10_command(args: &[String]) -> Result<(), String> {
         threads
     } else { 1 };
     let search_options = if !generation { Some(options(&args[4..])?) } else { None };
+    let parallelism = search_options.map(Parallelism::from_env).transpose()?;
     let path = Path::new(&args[3]);
     if generation && (path.exists() || std::path::PathBuf::from(format!("{}.partial", path.display())).exists()) {
         return Err("Opt10 output or partial already exists; refusing to overwrite".into());
@@ -117,7 +126,7 @@ fn opt10_command(args: &[String]) -> Result<(), String> {
         return Err("Opt10 expects an 818008-byte Opt9 small snapshot".into());
     }
     let snapshot = fs::read(&args[2]).map_err(|e| e.to_string())?;
-    if !generation { return run_solver(&Opt10Solver::open(&snapshot, path)?, search_options.unwrap()); }
+    if !generation { return run_solver(&Opt10Solver::open(&snapshot, path)?, search_options.unwrap(), parallelism.unwrap()); }
     let coordinates = Opt10Coordinates::from_opt9_snapshot(&snapshot)?;
     let table = AtomicOpt10Table::new(DEFAULT_BASE)?;
     let result = generate(&coordinates, &table, GenerationConfig { threads, ..GenerationConfig::default() }, |progress| {
@@ -210,17 +219,43 @@ fn options(args: &[String]) -> Result<SearchOptions, String> {
     })
 }
 
-fn run_solver<O: PruningOracle + Sync>(oracle: &O, options: SearchOptions) -> Result<(), String> {
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct Parallelism { batch_threads: usize, search_threads: usize }
+
+impl Parallelism {
+    fn parse(batch: Option<&str>, search: Option<&str>, available: usize, options: SearchOptions) -> Result<Self, String> {
+        fn count(value: Option<&str>, name: &str, maximum: usize) -> Result<usize, String> {
+            let text = value.unwrap_or("1");
+            let n = text.parse::<usize>().map_err(|_| format!("invalid {name}"))?;
+            if n == 0 || n > maximum || text != n.to_string() {
+                return Err(format!("{name} must be a canonical integer from 1 to {maximum}"));
+            }
+            Ok(n)
+        }
+        let batch_threads = count(batch, "CUBEOPT_SOLVE_THREADS", available.min(256))?;
+        let search_threads = count(search, "CUBEOPT_SEARCH_THREADS", available.min(native_parallel::MAX_SEARCH_THREADS))?;
+        if batch_threads > 1 && search_threads > 1 {
+            return Err("choose batch parallelism or single-cube parallelism; CUBEOPT_SOLVE_THREADS and CUBEOPT_SEARCH_THREADS cannot both exceed 1".into());
+        }
+        native_parallel::validate(options, search_threads)?;
+        Ok(Self { batch_threads, search_threads })
+    }
+
+    fn from_env(options: SearchOptions) -> Result<Self, String> {
+        Self::parse(env::var("CUBEOPT_SOLVE_THREADS").ok().as_deref(),
+            env::var("CUBEOPT_SEARCH_THREADS").ok().as_deref(),
+            std::thread::available_parallelism().map_err(|e| e.to_string())?.get(), options)
+    }
+}
+
+fn run_solver<O: PruningOracle + Sync>(oracle: &O, options: SearchOptions, parallelism: Parallelism) -> Result<(), String> {
     let contexts = options.contexts;
-    let threads = env::var("CUBEOPT_SOLVE_THREADS").unwrap_or_else(|_| "1".into())
-        .parse::<usize>().map_err(|_| "invalid CUBEOPT_SOLVE_THREADS")?;
-    let maximum = std::thread::available_parallelism().map_err(|e| e.to_string())?.get();
-    if threads == 0 || threads > maximum { return Err(format!("threads must be 1..{maximum}")); }
-    cube48opt_research::batch::run(io::BufReader::new(io::stdin()), io::stdout(), threads, |line| {
+    let Parallelism { batch_threads, search_threads } = parallelism;
+    cube48opt_research::batch::run(io::BufReader::new(io::stdin()), io::stdout(), batch_threads, |line| {
         let (id, scramble) = input(&line)?;
         let cube = Cube::from_scramble(scramble)?;
         let started = Instant::now();
-        let result = solve(cube, oracle, options)?;
+        let result = native_parallel::solve(cube, oracle, options, search_threads)?;
         let seconds = started.elapsed().as_secs_f64();
         let solution = result.solution.as_ref().map(|moves| {
             moves
@@ -248,7 +283,7 @@ fn run_solver<O: PruningOracle + Sync>(oracle: &O, options: SearchOptions) -> Re
             .map(|v| v.to_string())
             .unwrap_or("null".into());
         let s = result.stats;
-        Ok(format!("{{\"id\":\"{id}\",\"solution\":{solution_json},\"length\":{length},\"seconds\":{seconds:.9},\"completed_depth\":{completed},\"cancelled\":{},\"contexts\":{contexts},\"nodes\":{},\"probes\":{},\"inverse_probes\":{},\"cache_reuses\":{},\"splits\":{},\"face_prunes\":{},\"face_siblings_removed\":{}}}",
+        Ok(format!("{{\"id\":\"{id}\",\"solution\":{solution_json},\"length\":{length},\"seconds\":{seconds:.9},\"completed_depth\":{completed},\"cancelled\":{},\"contexts\":{contexts},\"threads\":{search_threads},\"batch_threads\":{batch_threads},\"nodes\":{},\"probes\":{},\"inverse_probes\":{},\"cache_reuses\":{},\"splits\":{},\"face_prunes\":{},\"face_siblings_removed\":{}}}",
             result.cancelled, s.nodes, s.probes, s.inverse_probes, s.cache_reuses, s.splits, s.face_prunes, s.face_siblings_removed))
     })
 }
@@ -278,6 +313,21 @@ mod tests {
 
     fn arguments(values: &[&str]) -> Vec<String> {
         values.iter().map(|s| s.to_string()).collect()
+    }
+
+    #[test]
+    fn thread_modes_are_explicit_and_reject_multiplication_and_unsupported_limits() {
+        let options = SearchOptions { max_nodes: 0, ..SearchOptions::default() };
+        assert_eq!(Parallelism::parse(None, None, 16, options).unwrap(), Parallelism { batch_threads: 1, search_threads: 1 });
+        assert_eq!(Parallelism::parse(Some("16"), None, 16, options).unwrap().batch_threads, 16);
+        assert_eq!(Parallelism::parse(None, Some("16"), 16, options).unwrap().search_threads, 16);
+        assert!(Parallelism::parse(Some("2"), Some("2"), 16, options).is_err());
+        for text in ["0", "17", "01", "+1", "1.0"] {
+            assert!(Parallelism::parse(None, Some(text), 16, options).is_err());
+        }
+        assert!(Parallelism::parse(None, Some("4"), 2, options).is_err());
+        assert!(Parallelism::parse(None, Some("4"), 16, SearchOptions { max_nodes: 100, ..options }).is_err());
+        assert!(Parallelism::parse(Some("4"), None, 16, SearchOptions { max_nodes: 100, ..options }).is_ok());
     }
 
     #[test]

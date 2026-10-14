@@ -87,8 +87,8 @@ export async function waitForStartupMemory(baseline: Baseline,
   }
 }
 
-export function guard(m: Memory, baseline: Baseline, rss: number, starting = false): string | null {
-  if (![m.swapouts, m.pressure, m.available, m.disk, rss, baseline.baselineSwapouts].every(Number.isFinite)) return '资源数据读取失败，停止。';
+export function guard(m: Memory, baseline: Baseline, rss: number, starting = false, reservedRss = rss): string | null {
+  if (![m.swapouts, m.pressure, m.available, m.disk, rss, reservedRss, baseline.baselineSwapouts].every(Number.isFinite)) return '资源数据读取失败，停止。';
   if (baseline.status === 'protected-stop') return `上次已触发资源保护，需要检查后才能恢复，不能自动重设基线。${baseline.reason ? '\n上次原因：' + baseline.reason : ''}`;
   if (m.boot !== baseline.boot) return '电脑已重新启动，需要核对上次停止原因和新的换出基线后再恢复。';
   if (m.swapouts !== baseline.baselineSwapouts) return `系统换出计数变化：${baseline.baselineSwapouts} → ${m.swapouts}。禁止自动重启。`;
@@ -96,7 +96,8 @@ export function guard(m: Memory, baseline: Baseline, rss: number, starting = fal
   if (m.disk < 30 * GiB) return '磁盘剩余空间不足 30 GiB。';
   if (starting && m.available < 34 * GiB) return `可回收内存约 ${(m.available / GiB).toFixed(1)} GiB，启动需要至少 34 GiB。`;
   if (rss > 32 * GiB) return '计算进程组内存超过 32 GiB。';
-  if (m.available - rss < 2 * GiB) return '扣除计算驻留内存后的保守余量不足 2 GiB。';
+  if (reservedRss < 0 || reservedRss > rss) return '资源预留数据异常。';
+  if (m.available - reservedRss < 2 * GiB) return '扣除额外预留后的保守余量不足 2 GiB。';
   return null;
 }
 export function atomicJson(path: string, data: unknown) {

@@ -120,6 +120,8 @@ function SubscriptionManager() {
               : subscription.state === 'active' ? t('自动续费已签约', 'Auto-renewal authorized') : t('签约待确认', 'Authorization pending confirmation')}</p>
           {subscription.syncStatus === 'unavailable' && <p>{t('暂未取得微信最新状态。以下为本站保留的记录，请刷新核实。', 'The latest WeChat status is unavailable. This is the record retained by the site; refresh to verify.')}</p>}
           {subscription.verifiedAt && <p>{t('最近核实日期：', 'Last verified: ')}{fmtDate(subscription.verifiedAt)}</p>}
+          {subscription.billingStatus === 'submitted' && <p>{t('扣款处理中，可能包含微信通知后的 24 小时等待期。到账前不会延长会员，请勿重复购买。', 'Debit pending, possibly within WeChat’s 24-hour notice period. Membership extends after confirmed payment. Avoid purchasing again while this is pending.')}</p>}
+          {subscription.billingStatus === 'failed' && <p>{t('本期扣款未成功，未延长会员。请联系客服核对后处理，系统不会重复发起本期扣款。', 'This charge failed and membership was not extended. Contact support to reconcile it; the system will not submit this cycle again automatically.')}</p>}
           {subscription.state !== 'terminated' && <button type="button" className="mem-contact-save" disabled={loading || busyId !== null || !data.managementAvailable} onClick={() => setConfirm(subscription)}>
             {busyId === subscription.id ? t('正在申请取消…', 'Requesting cancellation…') : subscription.cancellationRequested ? t('重试取消自动续费', 'Retry cancellation') : t('取消自动续费', 'Cancel auto-renewal')}
           </button>}

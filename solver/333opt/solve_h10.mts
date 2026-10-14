@@ -2,7 +2,7 @@
 import { availableParallelism } from 'node:os';
 import { spawn, spawnSync } from 'node:child_process';
 import { appendFileSync, createReadStream, createWriteStream, existsSync, statSync, writeFileSync } from 'node:fs';
-import { rustConfiguration, rustCsv, rustScramble } from './rust-h10-adapter.mts';
+import { opt10Configuration, rustConfiguration, rustCsv, rustScramble } from './rust-h10-adapter.mts';
 import { createInterface } from 'node:readline';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -12,13 +12,15 @@ import { wcaDir } from './data_paths.mjs';
 const here = dirname(fileURLToPath(import.meta.url));
 const solverDir = resolve(here, '..');
 const tableDir = resolve(process.env.CUBE_TABLE_DIR || resolve(solverDir, 'tables'));
-const table = resolve(process.env.H48_H10_TABLE || resolve(tableDir, 'h48-nissy-core/h48h10.dat'));
+const table = process.env.H10_ENGINE === 'opt10' ? resolve(solverDir, '../.tmp/cubeopt-reverse/opt10-generated-v2/cuberoot-opt10.dat')
+  : resolve(process.env.H48_H10_TABLE || resolve(tableDir, 'h48-nissy-core/h48h10.dat'));
 const corpus = resolve(process.env.CORPUS || resolve(wcaDir, 'wca_scrambles_no_wide_move.txt'));
 const output = resolve(process.env.OUT || resolve(here, 'out.0.csv'));
-const expectedBytes = 30_336_314_216;
+const expectedBytes = process.env.H10_ENGINE === 'opt10' ? 31_130_911_744 : 30_336_314_216;
 const threads = Number(process.env.THREADS || availableParallelism());
 const engine = process.env.H10_ENGINE ?? 'c';
-if (!['c', 'rust'].includes(engine)) throw Error('Invalid H10_ENGINE');
+const engineLabel = engine === 'opt10' ? 'Rust Opt10' : engine === 'rust' ? 'Rust H10' : 'H48 h10';
+if (!['c', 'rust', 'opt10'].includes(engine)) throw Error('Invalid H10_ENGINE');
 if (!Number.isSafeInteger(threads) || threads < 1) throw new Error(`Invalid THREADS: ${threads}`);
 const binary = resolve(solverDir, 'target/release', `solve_h48_h10_${threads}${process.platform === 'win32' ? '.exe' : ''}`);
 const source = resolve(solverDir, 'native/solve_h48_h10.c');
@@ -37,11 +39,12 @@ function ensureWorker(): void {
   const arch = process.arch === 'arm64' ? 'NEON' : 'PORTABLE';
   const args = ['-std=c11', '-D_POSIX_C_SOURCE=200809L', `-DTHREADS=${threads}`, `-D${arch}`, '-O3', '-pthread',
     '-I', resolve(solverDir, 'vendor/nissy-core/src'), nissy, source, '-o', binary];
-  console.log(`[H48 h10] compiling native solver with ${threads} threads`);
+  console.log(`[${engineLabel}] compiling native solver with ${threads} threads`);
   const result = spawnSync(compiler, args, { stdio: 'inherit' });
   if (result.error || result.status !== 0) throw new Error(`Native H48 compile failed: ${String(result.error || result.status)}`);
 }
 if (process.argv.includes('--smoke')) {
+  if (engine !== 'c') throw Error('--smoke is only supported for the original C backend');
   if (!existsSync(table) || statSync(table).size !== expectedBytes) throw new Error(`H48 h10 table missing/incomplete: ${table}`);
   ensureWorker();
   const result = spawnSync(binary, [table, String(threads)], {
@@ -52,7 +55,7 @@ if (process.argv.includes('--smoke')) {
   if (result.error || result.status !== 0 || !match || Number(match[1]) > 3) {
     throw new Error(`H48 h10 smoke solve failed: ${String(result.error || result.status)}; stdout=${row}; stderr=${result.stderr}`);
   }
-  console.log(`[H48 h10] smoke solve OK: ${row}`);
+  console.log(`[${engineLabel}] smoke solve OK: ${row}`);
   process.exit(0);
 }
 if (!existsSync(corpus)) throw new Error(`WCA corpus missing: ${corpus}`);
@@ -78,11 +81,12 @@ for await (const row of lines(corpus)) {
 }
 if (total === 0) throw new Error(`WCA corpus is empty: ${corpus}`);
 if (!existsSync(table) || statSync(table).size !== expectedBytes) throw new Error(`H48 h10 table missing/incomplete: ${table}`);
-if (solved === total) { console.log(`[H48 h10] corpus complete: ${solved}/${total}`); process.exit(0); }
-const rust = engine === 'rust' ? rustConfiguration(resolve(solverDir, '..'), table, threads) : null;
+if (solved === total) { console.log(`[${engineLabel}] corpus complete: ${solved}/${total}`); process.exit(0); }
+const rust = engine === 'opt10' ? opt10Configuration(resolve(solverDir, '..'),threads)
+  : engine === 'rust' ? rustConfiguration(resolve(solverDir, '..'), table, threads) : null;
 if (!rust) ensureWorker();
-console.log(`[H48 h10] table=${table}, corpus=${corpus}, solved=${solved}/${total}, threads=${threads}`);
-if (rust) writeFileSync(`${output}.rust-run-${Date.now()}.json`, JSON.stringify({ ...rust, threads, table, corpus, startedAt: new Date().toISOString() }, null, 2));
+console.log(`[${engineLabel}] table=${table}, corpus=${corpus}, solved=${solved}/${total}, threads=${threads}`);
+if (rust) writeFileSync(`${output}.rust-run-${Date.now()}.json`, JSON.stringify({ ...rust, engine, threads, table, corpus, startedAt: new Date().toISOString() }, null, 2));
 const child = spawn(rust ? process.execPath : binary, rust ? rust.args : [table, String(threads)],
   { cwd: solverDir, env: { ...process.env, ...rust?.env }, stdio: ['pipe', 'pipe', 'inherit'] });
 process.on('SIGTERM', () => child.kill('SIGTERM'));
@@ -131,4 +135,4 @@ if (solved + produced !== total) throw new Error(`H48 output incomplete: ${solve
 if (writeCounts) {
   writeFileSync(resolve(here, 'counts.json'), `${JSON.stringify({ samples: done.size + produced, counts }, null, 2)}\n`);
 }
-console.log(`[H48 h10] complete: ${solved + produced}/${total} in ${((performance.now() - started) / 1000).toFixed(1)}s`);
+console.log(`[${engineLabel}] complete: ${solved + produced}/${total} in ${((performance.now() - started) / 1000).toFixed(1)}s`);
