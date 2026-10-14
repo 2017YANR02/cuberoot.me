@@ -271,7 +271,7 @@ export default function MembershipPage() {
       </p>}
 
       <p className="mem-sub" role="status">
-        {tr({ zh: '测试中 · 自动续费暂未开放', en: 'In testing · Auto-renewal coming later' })}
+        {autoRenewPlans.length > 0 ? tr({ zh: '可单次购买或选择自动续费', en: 'Choose a one-time purchase or auto-renewal' }) : tr({ zh: '测试中 · 自动续费暂未开放', en: 'In testing · Auto-renewal coming later' })}
       </p>
       <nav className="mem-service-links" aria-label={tr({ zh: '会员服务', en: 'Membership services' })}>
         <AppLink href="/membership/subscription" prefetch={false}>{tr({ zh: '管理自动续费', en: 'Manage auto-renewal' })}</AppLink>
@@ -507,6 +507,8 @@ export default function MembershipPage() {
       {donateOpen && <DonateModal lang={isZh ? 'zh' : 'en'} onClose={() => setDonateOpen(false)} />}
       {selectedAutoRenewPlan && (selectedAutoRenewPlan.period === 'month' || selectedAutoRenewPlan.period === 'year') && (
         <AutoRenewModal
+          planSlug={selectedAutoRenewPlan.slug}
+          priceCents={selectedAutoRenewPlan.priceCents}
           price={fmtPrice(selectedAutoRenewPlan.priceCents, selectedAutoRenewPlan.currency)}
           period={selectedAutoRenewPlan.period}
           onClose={() => setSelectedAutoRenewPlan(null)}

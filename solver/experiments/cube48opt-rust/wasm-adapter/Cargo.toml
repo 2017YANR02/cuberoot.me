@@ -11,6 +11,10 @@ description = "Single-threaded memory64 WebAssembly adapter for the Rust Opt1–
 [lib]
 crate-type = ["cdylib"]
 
+[features]
+# Bounded no-PDB validation build; never enabled for the production ABI.
+bpmx-check = ["cube48opt-research/bpmx-check"]
+
 [dependencies]
 cube48opt-research = { path = "..", default-features = false }
 

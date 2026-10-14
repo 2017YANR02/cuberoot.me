@@ -71,6 +71,11 @@ const ROTATION_BY_PERM = (() => {
 
 const INITIAL_POSE_MAX_ERROR_RAD = Math.PI / 4;
 
+/** Shortest equivalent notation for a sequence containing only cube rotations. */
+export function compactCubeRotations(rotation: string): string {
+  return ROTATION_BY_PERM.get(permKey(facePermFor(rotation))) ?? rotation;
+}
+
 /** WCA rotations use clockwise angles and compose in the current viewer frame. */
 export function notationQuaternion(rotation: string): Quat {
   let pose: Quat = { w: 1, x: 0, y: 0, z: 0 };

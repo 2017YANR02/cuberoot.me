@@ -28,16 +28,41 @@ pub fn snapshot_bytes(variant: u8) -> Result<usize, String> {
 
 pub struct CoordTables {
     variant: u8,
-    corner_class: Box<[u32]>,
+    corner_class: Box<[u32; CORNER_RAW_COUNT]>,
     symmetries: [[u8; 20]; 48],
     symmetry_inverse: [u8; 48],
     separation8: [u8; 128],
-    separation12: Box<[u16]>,
-    edge_sources: [[u8; 16]; 48],
-    edge_identities: [[u8; 16]; 48],
-    edge_source_flips: [[u8; 16]; 48],
-    edge_inverse_cubies: [[u8; 16]; 48],
-    outer_complement: Box<[[u8; 8]]>,
+    separation12: Box<[u16; 2048]>,
+    // The validated corner table only names 0..48. Padding to 64 lets the
+    // compiler prove that the existing entry & 63 SIMD lookup is in bounds.
+    // Unused slots retain inert padding and change no legal-state coordinate.
+    edge_sources: [[u8; 16]; 64],
+    edge_identities: [[u8; 16]; 64],
+    edge_source_flips: [[u8; 16]; 64],
+    edge_inverse_cubies: [[u8; 16]; 64],
+    outer_complement: Box<[[u8; 8]; 2048]>,
+}
+
+/// Fixed Opt8 layout for the shared-memory server adapter. Construction binds
+/// the EO projection once; callers cannot supply an Opt9 table by accident.
+pub struct Opt8CoordTables(CoordTables);
+
+impl Opt8CoordTables {
+    pub fn from_bytes(bytes: &[u8]) -> Result<Self, String> {
+        CoordTables::from_variant_bytes(bytes, 8).map(Self)
+    }
+    #[inline(always)]
+    pub fn index(&self, cube: &Cube) -> u64 {
+        #[cfg(target_arch = "aarch64")]
+        let (orbit, eo) = unsafe { self.0.coordinate_parts_neon::<true>(cube) };
+        #[cfg(all(target_family = "wasm", target_feature = "simd128"))]
+        let (orbit, eo) = unsafe { self.0.coordinate_parts_wasm::<true>(cube) };
+        #[cfg(not(any(target_arch = "aarch64", all(target_family = "wasm", target_feature = "simd128"))))]
+        let (orbit, eo) = self.0.coordinate_parts_slow::<true>(cube);
+        ((u64::from(orbit) & !511) << 8) | (u64::from(eo >> 3) << 9) | u64::from(orbit & 511)
+    }
+    pub fn conjugate(&self, cube: &Cube, symmetry: u8) -> Cube { self.0.conjugate(cube, symmetry) }
+    pub fn index_scalar(&self, cube: &Cube) -> u64 { self.0.index64_slow(cube) }
 }
 
 impl CoordTables {
@@ -93,11 +118,13 @@ impl CoordTables {
                 "opt{variant} small-table snapshot must be {snapshot_bytes} bytes"
             ));
         }
-        let corner_class = bytes[204_496 + delta..snapshot_bytes]
+        let corner_class: Box<[u32; CORNER_RAW_COUNT]> = bytes[204_496 + delta..snapshot_bytes]
             .chunks_exact(4)
             .map(|b| u32::from_le_bytes(b.try_into().unwrap()))
             .collect::<Vec<_>>()
-            .into_boxed_slice();
+            .into_boxed_slice()
+            .try_into()
+            .map_err(|_| "corner class table length differs")?;
         if corner_class
             .iter()
             .any(|&v| v >> 6 >= CORNER_CLASSES || v & 63 >= 48)
@@ -121,20 +148,24 @@ impl CoordTables {
         let separation8 = bytes[6_560 + separation_delta..6_688 + separation_delta]
             .try_into()
             .unwrap();
-        let separation12 = bytes[6_688 + separation_delta..10_784 + separation_delta]
+        let separation12: Box<[u16; 2048]> = bytes[6_688 + separation_delta..10_784 + separation_delta]
             .chunks_exact(2)
             .map(|b| u16::from_le_bytes(b.try_into().unwrap()))
             .collect::<Vec<_>>()
-            .into_boxed_slice();
-        let outer_complement = bytes[13_632 + delta..30_016 + delta]
+            .into_boxed_slice()
+            .try_into()
+            .map_err(|_| "4-of-12 table length differs")?;
+        let outer_complement: Box<[[u8; 8]; 2048]> = bytes[13_632 + delta..30_016 + delta]
             .chunks_exact(8)
             .map(|b| b.try_into().unwrap())
             .collect::<Vec<[u8; 8]>>()
-            .into_boxed_slice();
-        let mut edge_sources = [[0x80u8; 16]; 48];
-        let mut edge_identities = [[0u8; 16]; 48];
-        let mut edge_source_flips = [[0u8; 16]; 48];
-        let mut edge_inverse_cubies = [[0u8; 16]; 48];
+            .into_boxed_slice()
+            .try_into()
+            .map_err(|_| "edge complement table length differs")?;
+        let mut edge_sources = [[0x80u8; 16]; 64];
+        let mut edge_identities = [[0u8; 16]; 64];
+        let mut edge_source_flips = [[0u8; 16]; 64];
+        let mut edge_inverse_cubies = [[0u8; 16]; 64];
         for s in 0..48 {
             for i in 0..12 {
                 edge_sources[s][i] = symmetries[s][8 + i] >> 1;
@@ -235,6 +266,30 @@ impl CoordTables {
         self.pack_index(orbit, eo)
     }
 
+    /// Checked dispatch for coordinate-only callers and differential checks.
+    /// The search oracle dispatches once per solve instead of per query.
+    #[inline(always)]
+    pub fn index64_specialized(&self, cube: &Cube) -> u64 {
+        if self.variant == 9 { self.index9(cube) } else { self.index64(cube) }
+    }
+
+    /// Only the private Opt9 oracle calls this after its entry-point dispatch.
+    /// It shares the SIMD/scalar coordinate implementation and merely fixes
+    /// the existing pack_index formula to nine retained EO bits.
+    #[inline(always)]
+    pub(crate) fn index9(&self, cube: &Cube) -> u64 {
+        debug_assert_eq!(self.variant, 9);
+        #[cfg(target_arch = "aarch64")]
+        let (orbit, eo) = unsafe { self.coordinate_parts_neon::<true>(cube) };
+        #[cfg(all(target_family = "wasm", target_feature = "simd128"))]
+        let (orbit, eo) = unsafe { self.coordinate_parts_wasm::<true>(cube) };
+        #[cfg(not(any(target_arch = "aarch64", all(target_family = "wasm", target_feature = "simd128"))))]
+        let (orbit, eo) = self.coordinate_parts_slow::<true>(cube);
+        ((u64::from(orbit) & !511) << 9)
+            | (u64::from(eo >> 2) << 9)
+            | u64::from(orbit & 511)
+    }
+
     /// Raw corner orientation (little-endian base 3) and tetrad separation.
     #[inline]
     pub fn raw_corner(&self, cube: &Cube) -> usize {
@@ -317,7 +372,7 @@ impl CoordTables {
     /// edges, EO bitmask, and the eight-edge complement mask. No per-edge
     /// indexed scalar loads or branches remain in this path.
     #[cfg(all(target_family = "wasm", target_feature = "simd128"))]
-    #[inline]
+    #[inline(always)]
     unsafe fn coordinate_parts_wasm<const WITH_EO: bool>(&self, cube: &Cube) -> (u32, u16) {
         #[cfg(target_arch = "wasm32")]
         use std::arch::wasm32::*;

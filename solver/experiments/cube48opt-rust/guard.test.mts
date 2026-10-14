@@ -2,15 +2,162 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { Writable } from 'node:stream';
 import test from 'node:test';
-import { h48FileBytes, researchPolicy, validateH48Metadata, validateOpt10GenerationProof, validateOpt10Metadata } from './guard.mts';
+import { consumeResourceReview, deliverOpt10Input, h48FileBytes, opt10ReviewScope, opt10ReviewSources, productionResourceReviewScope, researchPolicy, resourceProtectionReasons, resourceReviewCommandSha256, resourceReviewScope, validateH48Metadata, validateOpt10GenerationProof, validateOpt10Metadata, validateOpt10ResourceReview, validateResourceReview, validateSuccessfulPredecessor } from './guard.mts';
 import { blockedCompute } from '../../../.codex/hooks/block-unprotected-memory-compute.mts';
 import { parsePrintedSolution, parseWasmBenchmarkArguments, readWca100 } from './wasm-benchmark.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const native = resolve(here, 'target/release/cube48opt-research');
+test('one reviewed comparison binds stopped bytes, exact command, current resources and unused history', () => {
+  const hash = (bytes:Buffer) => createHash('sha256').update(bytes).digest('hex');
+  const encode = (value:unknown) => Buffer.from(JSON.stringify(value));
+  const prior={boot:'same-boot',swapouts:0,pressure:1,available:40*2**30,stopped:'old pressure'};
+  const baseline=encode(prior), resources=encode({...prior,sampledAt:'2026-10-13T15:18:34.304Z'});
+  const request={label:'opt9-reviewed',executable:process.execPath,
+    args:[resolve(here,'wasm-benchmark.mjs'),'--variant','9','--engine','both','--table','table','--small','small','--wasm','wasm','--out','new-out'],
+    env:{CUBEOPT_BACKEND:'opt',CUBEOPT_VARIANT:'9'}};
+  const current={boot:prior.boot,swapouts:0,pressure:1,available:40*2**30};
+  const review={schema:'cuberoot.resource-review.v1',scope:resourceReviewScope,reason:'User-authorized lower-memory comparison after resource audit',
+    reviewedAt:'2026-10-13T16:00:00.000Z',baselineSha256:hash(baseline),stoppedLabel:'old-opt10',stoppedResourcesSha256:hash(resources),
+    nextLabel:request.label,commandSha256:resourceReviewCommandSha256(request.executable,request.args),boot:prior.boot,swapouts:0};
+  assert.deepEqual(validateResourceReview(review,baseline,resources,request,current),{baselineSha256:hash(baseline),commandSha256:review.commandSha256});
+  for(const field of ['scope','baselineSha256','stoppedResourcesSha256','nextLabel','commandSha256','boot','schema'])
+    assert.throws(()=>validateResourceReview({...review,[field]:'wrong'},baseline,resources,request,current),field);
+  assert.throws(()=>validateResourceReview(review,Buffer.concat([baseline,Buffer.from('\n')]),resources,request,current));
+  assert.throws(()=>validateResourceReview(review,baseline,Buffer.concat([resources,Buffer.from('\n')]),request,current));
+  for(const changed of [{...request,label:'other'},{...request,args:[...request.args,'--repeat','3']},
+    {...request,args:request.args.map(x=>x==='both'?'rust':x)},
+    {...request,args:request.args.map(x=>x==='9'?'8':x),env:{...request.env,CUBEOPT_VARIANT:'8'}},
+    {...request,executable:native,args:['solve-h48','11','table'],env:{CUBEOPT_BACKEND:'h48',CUBEOPT_H:'11'}},
+    {...request,executable:resolve(here,'target/opt10/release/cube48opt-research'),args:['generate-opt10','small','table','16'],env:{CUBEOPT_BACKEND:'opt10'}}])
+    assert.throws(()=>validateResourceReview(review,baseline,resources,changed,current));
+  for(const changed of [{...current,swapouts:1},{...current,boot:'other'},{...current,pressure:2},{...current,available:2**30}])
+    assert.throws(()=>validateResourceReview(review,baseline,resources,request,changed));
+  assert.throws(()=>validateResourceReview(review,baseline,resources,request,current,true,false));
+  assert.throws(()=>validateResourceReview(review,baseline,resources,request,current,false,true));
+  const noStop=encode({...prior,stopped:''});
+  assert.throws(()=>validateResourceReview({...review,baselineSha256:hash(noStop)},noStop,resources,request,current));
+  assert.equal(baseline.toString(),JSON.stringify(prior));
+});
+
+test('review receipt is consumed exclusively and retains the first record', () => {
+  const directory=mkdtempSync(resolve(tmpdir(),'cubeopt-review-policy-'));
+  try {
+    const path=resolve(directory,'stopped-hash.json');
+    consumeResourceReview(path,{label:'once'});
+    const bytes=readFileSync(path);
+    assert.throws(()=>consumeResourceReview(path,{label:'again'}),/EEXIST/);
+    assert.equal(existsSync(path),true); assert.deepEqual(readFileSync(path),bytes);
+  } finally { rmSync(directory,{recursive:true,force:true}); }
+});
+
+test('production Opt8 four-thread review retains the stopped baseline and cannot authorize another mode', () => {
+  const encode=(x:unknown)=>Buffer.from(JSON.stringify(x));
+  const hash=(x:Buffer)=>createHash('sha256').update(x).digest('hex');
+  const prior={boot:'same-boot',swapouts:0,stopped:'Opt10 resource stop'};
+  const baseline=encode(prior), resources=encode(prior);
+  const request={label:'production-opt8-four',executable:process.execPath,
+    args:[resolve(here,'wasm-benchmark.mjs'),'--variant','8','--threads','4','--engine','both','--table','table','--small','small','--wasm','wasm','--out','new-out'],
+    env:{CUBEOPT_BACKEND:'opt',CUBEOPT_VARIANT:'8'}};
+  const review={schema:'cuberoot.resource-review.v1',scope:productionResourceReviewScope,
+    reason:'Fresh resource review for explicitly requested production replacement; original stop retained',
+    reviewedAt:'2026-10-14T02:00:00Z',baselineSha256:hash(baseline),stoppedLabel:'opt10-old',stoppedResourcesSha256:hash(resources),
+    nextLabel:request.label,commandSha256:resourceReviewCommandSha256(request.executable,request.args),boot:prior.boot,swapouts:0};
+  const current={boot:prior.boot,swapouts:0,pressure:1,available:40*2**30};
+  assert.equal(validateResourceReview(review,baseline,resources,request,current).baselineSha256,hash(baseline));
+  for(const changed of [{...current,swapouts:1},{...current,boot:'new-boot'},{...current,available:2**30}])
+    assert.throws(()=>validateResourceReview(review,baseline,resources,request,changed));
+  assert.throws(()=>validateResourceReview(review,baseline,resources,{...request,args:request.args.map(x=>x==='4'?'1':x)},current));
+  assert.throws(()=>validateResourceReview({...review,scope:resourceReviewScope},baseline,resources,request,current));
+  assert.throws(()=>validateResourceReview(review,baseline,resources,request,current,true));
+});
+
+test('native search parallelism shares a bounded budget and cannot multiply batch workers', () => {
+  const args=['solve-h48','7','table','8','20','0'];
+  const env={CUBEOPT_BACKEND:'h48',CUBEOPT_H:'7'};
+  const single=researchPolicy('h7',native,args,env);
+  const parallel=researchPolicy('h7',native,args,{...env,CUBEOPT_SEARCH_THREADS:'4'});
+  assert.equal(parallel.rssLimit,single.rssLimit+3*16*2**20);
+  assert.throws(()=>researchPolicy('h7',native,args,{...env,CUBEOPT_SEARCH_THREADS:'4',CUBEOPT_SOLVE_THREADS:'2'}));
+  for(const count of ['0','17','1.5','bad'])
+    assert.throws(()=>researchPolicy('h7',native,args,{...env,CUBEOPT_SEARCH_THREADS:count}));
+});
+
+test('a failed fixed-input pipe follows the stop path instead of an unhandled stream error', async () => {
+  const reason=await new Promise<string>(resolve=>{
+    const input=new Writable({write(_chunk,_encoding,callback){callback(new Error('EPIPE fixture'));}});
+    deliverOpt10Input(input,Buffer.from('one fixed input'),resolve);
+  });
+  assert.match(reason,/Opt10 fixed input pipe failed:.*EPIPE fixture/);
+});
+
+test('a successor requires a successful exact predecessor and a never-measured WASM', () => {
+  const encode=(value:unknown)=>Buffer.from(JSON.stringify(value));
+  const hash=(bytes:Buffer)=>createHash('sha256').update(bytes).digest('hex');
+  const args=[resolve(here,'wasm-benchmark.mjs'),'--variant','9','--engine','both','--table','table','--small','small','--wasm','old.wasm','--out','old-out'];
+  const env={CUBEOPT_BACKEND:'opt',CUBEOPT_VARIANT:'9'};
+  const oldPolicy=researchPolicy('old-run',process.execPath,args,env);
+  const receipt={schema:'cuberoot.resource-review-consumption.v1',baselineSha256:'a'.repeat(64),stoppedLabel:'old-opt10',
+    stoppedResourcesSha256:'b'.repeat(64),label:'old-run',executable:process.execPath,args,
+    commandSha256:resourceReviewCommandSha256(process.execPath,args),before:{boot:'same',swapouts:0}};
+  const resources={...oldPolicy,reviewReceipt:receipt,boot:'same',swapouts:0,pressure:1,stopped:'',trigger:null,
+    peakRss:16*2**30,minimumHeadroom:4*2**30,sampledAt:'2026-10-13T17:02:54.639Z'};
+  const engine=(name:string)=>({engine:name,cases:100,verifiedSolutions:100,optimalLengthsMatched:100,processExited:true,
+    threads:1,warmupCases:0,measuredPasses:1,tableSha256:'c'.repeat(64),totalSeconds:80,
+    artifacts:{sha256:{wasm:(name==='rust'?'d':'e').repeat(64)}}});
+  const report={schema:'cuberoot.rust-opt-wasm-benchmark-report.v1',variant:9,
+    corpusSha256:'92171d593d13982924ed16723f099bd771a873aaa2c30a0e08f319c86b75dcde',cases:100,
+    threads:1,measuredPasses:1,warmupCases:0,tableSha256:'c'.repeat(64),engines:{rust:engine('rust'),original:engine('original')}};
+  const exit={exitCode:0,recordedAt:'2026-10-13T17:03:12.652Z'};
+  const evidence={receipt:encode(receipt),resources:encode(resources),report:encode(report),exit:encode(exit),
+    previousWasmSha256:'d'.repeat(64),candidateWasmSha256:'f'.repeat(64)};
+  const review={schema:'cuberoot.resource-review.v2',baselineSha256:receipt.baselineSha256,stoppedLabel:receipt.stoppedLabel,
+    stoppedResourcesSha256:receipt.stoppedResourcesSha256,boot:'same',swapouts:0,previousReceipt:receipt.baselineSha256+'.json',
+    previousReceiptSha256:hash(evidence.receipt),previousResourcesSha256:hash(evidence.resources),previousReportSha256:hash(evidence.report),
+    previousGuardExitSha256:hash(evidence.exit),candidateWasmSha256:evidence.candidateWasmSha256};
+  const request={label:'new-run',executable:process.execPath,args:args.map(x=>x==='old.wasm'?'new.wasm':x==='old-out'?'new-out':x),env};
+  assert.deepEqual(validateSuccessfulPredecessor(review,evidence,request).candidateHistorySha256,['d'.repeat(64),'f'.repeat(64)]);
+  for(const field of ['previousReceipt','previousReceiptSha256','previousResourcesSha256','previousReportSha256','previousGuardExitSha256','candidateWasmSha256'])
+    assert.throws(()=>validateSuccessfulPredecessor({...review,[field]:'wrong'},evidence,request),field);
+  for(const bad of [{...exit,exitCode:1},{...exit,recordedAt:'2026-10-13T17:00:00.000Z'}]) {
+    const bytes=encode(bad);assert.throws(()=>validateSuccessfulPredecessor({...review,previousGuardExitSha256:hash(bytes)},{...evidence,exit:bytes},request));
+  }
+  for(const bad of [{...resources,stopped:'memory'},{...resources,trigger:{reason:'pressure'}},{...resources,swapouts:1},
+    {...resources,pressure:2},{...resources,peakRss:oldPolicy.rssLimit+1},{...resources,minimumHeadroom:1},
+    {...resources,reviewReceipt:{...receipt,label:'other'}}]) {
+    const bytes=encode(bad);assert.throws(()=>validateSuccessfulPredecessor({...review,previousResourcesSha256:hash(bytes)},{...evidence,resources:bytes},request));
+  }
+  for(const bad of [{...report,cases:99},{...report,warmupCases:100},{...report,measuredPasses:3},
+    {...report,engines:{rust:report.engines.rust}},{...report,engines:{...report.engines,original:{...report.engines.original,optimalLengthsMatched:99}}}]) {
+    const bytes=encode(bad);assert.throws(()=>validateSuccessfulPredecessor({...review,previousReportSha256:hash(bytes)},{...evidence,report:bytes},request));
+  }
+  assert.throws(()=>validateSuccessfulPredecessor({...review,candidateWasmSha256:evidence.previousWasmSha256},
+    {...evidence,candidateWasmSha256:evidence.previousWasmSha256},request));
+  assert.throws(()=>validateSuccessfulPredecessor(review,{...evidence,previousWasmSha256:'0'.repeat(64)},request));
+  assert.throws(()=>validateSuccessfulPredecessor(review,evidence,{...request,args}));
+  // A later successor cannot drop its recorded history or go back to V1.
+  const linked={...receipt,previousReceiptSha256:'1'.repeat(64),candidateWasmSha256:'d'.repeat(64),
+    candidateHistorySha256:['2'.repeat(64),'d'.repeat(64)]};
+  const linkedBytes=encode(linked), linkedResources=encode({...resources,reviewReceipt:linked});
+  const linkedReview={...review,previousReceipt:`${receipt.baselineSha256}-${linked.previousReceiptSha256}.json`,
+    previousReceiptSha256:hash(linkedBytes),previousResourcesSha256:hash(linkedResources),candidateWasmSha256:'2'.repeat(64)};
+  assert.throws(()=>validateSuccessfulPredecessor(linkedReview,{...evidence,receipt:linkedBytes,resources:linkedResources,candidateWasmSha256:'2'.repeat(64)},request));
+});
+
+test('resource protection records each exact failing observation', () => {
+  const before={boot:'same',swapouts:0,pressure:1,available:10*2**30};
+  assert.deepEqual(resourceProtectionReasons(before,before,1,2,3*2**30),[]);
+  assert.deepEqual(resourceProtectionReasons(before,{...before,pressure:2},1,2,3*2**30),['memory pressure 2']);
+  assert.deepEqual(resourceProtectionReasons(before,{...before,boot:'other',swapouts:1,pressure:4},3,2,1),
+    ['boot changed','Swapouts changed','memory pressure 4','RSS 3 > 2',`headroom 1 < ${2*2**30}`]);
+});
+
 test('WASM comparison fixes corpus, variant, one thread and sequential full-memory budget', () => {
   const script = resolve(here, 'wasm-benchmark.mjs');
   const base = ['--variant', '9', '--table', 'table', '--small', 'small', '--wasm', 'wasm', '--out', 'out'];
@@ -70,7 +217,7 @@ test('Opt10 commands never receive a smaller existing backend or an unrelated bi
 test('Opt10 generation and solving have fixed canonical paths, options and full budgets', () => {
   const root=resolve(here,'../../..'), binary=resolve(here,'target/opt10/release/cube48opt-research');
   const small=resolve(root,'.tmp/cubeopt-reverse/opt9-generated/small-memory.bin');
-  const table=resolve(root,'.tmp/cubeopt-reverse/opt10-generated/cuberoot-opt10.dat');
+  const table=resolve(root,'.tmp/cubeopt-reverse/opt10-generated-v2/cuberoot-opt10.dat');
   const env={CUBEOPT_BACKEND:'opt10'};
   const generate=['generate-opt10',small,table,'16'], solve=['solve-opt10',small,table,'8','20','0'];
   const generation=researchPolicy('opt10-generate',binary,generate,env);
@@ -111,6 +258,108 @@ test('Opt10 generation proof rejects stale sources, incomplete coverage and stop
   assert.throws(()=>validateOpt10GenerationProof(proof,{...hashes,'src/opt10_generate.rs':'b'.repeat(64)},current));
   assert.throws(()=>validateOpt10GenerationProof(proof,hashes,{...current,swapouts:1}));
   assert.throws(()=>validateOpt10GenerationProof(proof,hashes,{...current,boot:'rebooted'}));
+});
+
+function opt10ChainFixture() {
+  const encode=(v:unknown)=>Buffer.from(JSON.stringify(v)), hash=(v:Buffer)=>createHash('sha256').update(v).digest('hex');
+  const root=resolve(here,'../../..'),small=resolve(root,'.tmp/cubeopt-reverse/opt9-generated/small-memory.bin');
+  const table=resolve(root,'.tmp/cubeopt-reverse/opt10-generated-v2/cuberoot-opt10.dat');
+  const binary=resolve(here,'target/opt10/release/cube48opt-research');
+  const sources=Object.fromEntries(opt10ReviewSources.map(name=>[name,'a'.repeat(64)]));
+  const current={boot:'original-boot',swapouts:0,pressure:1,available:45*2**30};
+  const baseline=encode({...current,stopped:'original pressure'});
+  const failed=encode({...current,stopped:'original pressure',backend:'opt10',mode:'generate-opt10',tableBytes:31_130_911_744});
+  const make=(stage:string,label:string,executable:string,args:string[],env:NodeJS.ProcessEnv,previous?:any,proof?:any,metadata?:any)=>{
+    const request={label,executable,args,env};
+    const evidence:any={baseline,stoppedResources:failed,executableSha256:'b'.repeat(64),sourceSha256:sources,snapshotSha256:'6'.repeat(64),
+      ...(previous?{previous:{receipt:encode(previous.receipt),resources:encode(previous.resources),exit:encode(previous.exit)}}:{}),
+      ...(proof?{proof:encode(proof)}:{}),...(metadata?{metadata:encode(metadata),headerSha256:'c'.repeat(64),payloadSha256:'d'.repeat(64),headerSnapshotSha256:'6'.repeat(64),
+        inputSha256:'e'.repeat(64),corpusSha256:'92171d593d13982924ed16723f099bd771a873aaa2c30a0e08f319c86b75dcde'}:{})};
+    const review:any={schema:'cuberoot.opt10.resource-review.v1',scope:opt10ReviewScope,stage,reason:'User authorized finish and test Opt10',
+      reviewedAt:'2026-10-13T18:00:00.000Z',baselineSha256:hash(baseline),stoppedLabel:'opt10-generate-v1',
+      stoppedResourcesSha256:hash(failed),nextLabel:label,commandSha256:resourceReviewCommandSha256(executable,args),
+      boot:current.boot,swapouts:0,executableSha256:evidence.executableSha256,sourceSha256:sources,snapshotSha256:evidence.snapshotSha256,
+      ...(previous?{previous:{receiptSha256:hash(evidence.previous.receipt),resourcesSha256:hash(evidence.previous.resources),exitSha256:hash(evidence.previous.exit)}}:{}),
+      ...(proof?{proofSha256:hash(evidence.proof)}:{}),...(metadata?{metadataSha256:hash(evidence.metadata),inputSha256:evidence.inputSha256,
+        corpusSha256:evidence.corpusSha256,cases:100,measuredPasses:1,warmupCases:0,threads:1}:{})};
+    const identity=validateOpt10ResourceReview(review,evidence,request,current);
+    const receipt={schema:'cuberoot.opt10.resource-review-consumption.v1',scope:opt10ReviewScope,...identity,
+      label,executable,args,before:current,reviewPath:'/fixture/review.json',reviewSha256:hash(encode(review))};
+    const policy=researchPolicy(label,executable,args,env);
+    const resources={...policy,...current,stopped:'',trigger:null,peakRss:policy.rssLimit-1,minimumHeadroom:4*2**30,
+      opt10ReviewReceipt:receipt,sampledAt:'2026-10-13T18:01:00.000Z'};
+    return {request,evidence,review,receipt,resources,exit:{exitCode:0,signal:null,finishedAt:'2026-10-13T18:01:01.000Z'}};
+  };
+  const verify=make('verify-opt1','verify-opt10-v2',resolve(here,'target/release/examples/verify_opt10_generation'),
+    ['--verify-opt1',small,resolve(root,'.tmp/cubeopt-reverse/opt1-generated/h48prun01.dat'),'16'],{CUBEOPT_BACKEND:'opt10-verify',CUBEOPT_VARIANT:'1'});
+  const proof={schema:'cuberoot.opt10.generation-proof.v1',exitCode:0,sourceSha256:sources,resources:verify.resources,
+    result:{schema:'cuberoot.opt10.opt1-generation-validation.v1',sharedGenerator:true,projectionEoBits:0,base:7,completedDepth:9,threads:16,
+      comparedValidCells:117_567_450,differences:0,allEqual:true,tableWritten:false,distribution:[117_567_450,0,0,0,0,0,0,0,0,0,0]}};
+  const generate=make('generate-opt10','opt10-generate-v2',binary,['generate-opt10',small,table,'16'],{CUBEOPT_BACKEND:'opt10'},verify,proof);
+  const metadata={schema:'cuberoot.opt10.generation-metadata.v1',binary:{path:binary,sha256:'b'.repeat(64)},
+    table:{path:table,bytes:31_130_911_744,headerSha256:'c'.repeat(64),payloadSha256:'d'.repeat(64)},sourceSha256:sources,
+    generation:{exitCode:0,completedDepth:12,resources:generate.resources}};
+  const solve=make('solve-opt10','wca100-opt10-v2',binary,['solve-opt10',small,table,'8','20','0'],
+    {CUBEOPT_BACKEND:'opt10',CUBEOPT_MEASURE_RSS:'1'},generate,proof,metadata);
+  return {verify,generate,solve,current,encode,hash,proof,metadata};
+}
+
+test('Opt10 review binds the original stop, exact binary/sources and each single-use stage', () => {
+  const {verify,generate,solve,current}=opt10ChainFixture();
+  for(const run of [verify,generate,solve]) {
+    const {review,evidence,request}=run;
+    assert.equal(validateOpt10ResourceReview(review,evidence,request,current).stage,review.stage);
+    for(const field of ['schema','scope','stage','stoppedLabel','baselineSha256','stoppedResourcesSha256','nextLabel','commandSha256','executableSha256','snapshotSha256','boot'])
+      assert.throws(()=>validateOpt10ResourceReview({...review,[field]:'bad'},evidence,request,current),field);
+    assert.throws(()=>validateOpt10ResourceReview(review,{...evidence,executableSha256:'f'.repeat(64)},request,current));
+    assert.throws(()=>validateOpt10ResourceReview(review,{...evidence,sourceSha256:{...evidence.sourceSha256,'src/main.rs':'f'.repeat(64)}},request,current));
+    assert.throws(()=>validateOpt10ResourceReview(review,evidence,request,current,true));
+    assert.throws(()=>validateOpt10ResourceReview(review,evidence,request,current,false,true));
+    for(const change of [{swapouts:1},{boot:'other'},{pressure:2},{available:1}])
+      assert.throws(()=>validateOpt10ResourceReview(review,evidence,request,{...current,...change}));
+  }
+  assert.throws(()=>validateOpt10ResourceReview({...verify.review,previous:{}},verify.evidence,verify.request,current));
+  assert.throws(()=>validateOpt10ResourceReview(generate.review,{...generate.evidence,previous:undefined},generate.request,current));
+  assert.throws(()=>validateOpt10ResourceReview(solve.review,{...solve.evidence,previous:generate.evidence.previous},solve.request,current));
+  const oldTable=solve.request.args.map(x=>x.replace('opt10-generated-v2/','opt10-generated/'));
+  assert.throws(()=>researchPolicy(solve.request.label,solve.request.executable,oldTable,solve.request.env));
+  for(const run of [verify,generate,solve]) {
+    assert.throws(()=>researchPolicy(run.request.label,run.request.executable.replace(resolve(here,'../../..')+'/',''),run.request.args,run.request.env));
+    const relative=run.request.args.map((x,i)=>i===1?x.replace(resolve(here,'../../..')+'/',''):x);
+    assert.throws(()=>researchPolicy(run.request.label,run.request.executable,relative,run.request.env));
+  }
+});
+
+test('Opt10 predecessor failures, stale proofs and incomplete generated metadata cannot advance', () => {
+  const {generate,solve,current,encode,hash}=opt10ChainFixture();
+  for(const run of [generate,solve]) {
+    for(const part of ['receipt','resources','exit']) {
+      const value=JSON.parse(run.evidence.previous[part]);
+      for(const change of part==='exit'?[{exitCode:1},{signal:'SIGTERM'},{finishedAt:'2026-10-13T17:00:00Z'}]:
+        part==='resources'?[{stopped:'pressure'},{trigger:{reason:'x'}},{swapouts:1},{peakRss:99*2**30},{minimumHeadroom:1}]:
+        [{stage:run.review.stage},{baselineSha256:'f'.repeat(64)},{sourceSha256:{...value.sourceSha256,'src/coord.rs':'f'.repeat(64)}}]) {
+        const bytes=encode({...value,...change});
+        const review={...run.review,previous:{...run.review.previous,[part+'Sha256']:hash(bytes)}};
+        const evidence={...run.evidence,previous:{...run.evidence.previous,[part]:bytes}};
+        assert.throws(()=>validateOpt10ResourceReview(review,evidence,run.request,current),JSON.stringify({part,change}));
+      }
+    }
+    assert.throws(()=>validateOpt10ResourceReview({...run.review,proofSha256:'f'.repeat(64)},run.evidence,run.request,current));
+  }
+  const proof=JSON.parse(generate.evidence.proof);proof.result.differences=1;const badProof=encode(proof);
+  assert.throws(()=>validateOpt10ResourceReview({...generate.review,proofSha256:hash(badProof)},{...generate.evidence,proof:badProof},generate.request,current));
+  for(const change of [{generation:{exitCode:1}},{table:{path:'old'}},{binary:{path:solve.request.executable,sha256:'f'.repeat(64)}}]) {
+    const bytes=encode({...JSON.parse(solve.evidence.metadata),...change});
+    assert.throws(()=>validateOpt10ResourceReview({...solve.review,metadataSha256:hash(bytes)},{...solve.evidence,metadata:bytes},solve.request,current));
+  }
+  for(const field of ['inputSha256','corpusSha256','metadataSha256'])
+    assert.throws(()=>validateOpt10ResourceReview({...solve.review,[field]:'f'.repeat(64)},solve.evidence,solve.request,current));
+  for(const change of [{cases:99},{measuredPasses:3},{warmupCases:100},{threads:2}])
+    assert.throws(()=>validateOpt10ResourceReview({...solve.review,...change},solve.evidence,solve.request,current));
+  assert.throws(()=>validateOpt10ResourceReview(solve.review,solve.evidence,{...solve.request,env:{CUBEOPT_BACKEND:'opt10'}},current));
+  assert.throws(()=>validateOpt10ResourceReview(solve.review,{...solve.evidence,headerSnapshotSha256:'f'.repeat(64)},solve.request,current));
+  assert.throws(()=>validateOpt10ResourceReview({...generate.review,snapshotSha256:'f'.repeat(64)},
+    {...generate.evidence,snapshotSha256:'f'.repeat(64)},generate.request,current));
 });
 
 test('Opt10 header rejects renamed tables, incomplete data and a different auxiliary snapshot', () => {

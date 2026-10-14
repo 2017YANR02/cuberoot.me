@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { correctLibraryLine, correctReconFromLibrary } from '@cuberoot/shared/timer/reconstruct/library-correction';
-import { formattedReconMoves, type ReconTextLine, type ReconTextResult } from '@cuberoot/shared/timer/reconstruct/recon-text';
+import { correctLibraryLine, correctReconFromLibrary, strictOuterForm } from '@cuberoot/shared/timer/reconstruct/library-correction';
+import { formattedReconMoves, originalReconNotation, type ReconTextLine, type ReconTextResult } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import { getCube3 } from '@cuberoot/shared/recon/cube3';
 import type { AlgFile } from '@cuberoot/shared/alg';
 import { reconstructedTrack } from '@cuberoot/timer-ui/reconstruct/playback-track';
@@ -82,7 +82,7 @@ describe('library-assisted notation correction', () => {
   it('keeps inspection/AUF wrappers and conjugates the library body into the execution frame', async () => {
     const perm = facePermFor('y');
     const source = conjugateSequence(observed.replace("l'", "Lw'"), perm)!;
-    const expected = conjugateSequence(body, perm)!;
+    const expected = `y' ${body} y`;
     const original = line(`z2 U2' ${source} U' y`);
     const result = await correctLibraryLine(original, [{ alg: library }]);
     expect(result.moves.join(' ')).toBe(`z2 U2' ${expected} U' y`);
@@ -129,7 +129,7 @@ describe('library-assisted notation correction', () => {
     const raw = original.moveRanges!.filter(range => range.endIdx >= range.startIdx).map(range => ({ m: range.token, ts: range.ts }));
     const playback = reconstructedTrack([result], raw);
     expect(playback).not.toBeNull();
-    expect(playback!.map(move => move.m)).toEqual(result.moves);
+    expect(playback!.map(move => move.m)).toEqual(original.moves);
     expect(result.moveRanges![0]).toEqual(original.moveRanges![0]);
     expect(result.moveRanges!.at(-1)).toEqual(original.moveRanges!.at(-1));
     expect(result.moveRanges!.every((range, i, all) => range.endTs >= range.ts && (!i || range.ts >= all[i - 1].ts))).toBe(true);
@@ -170,12 +170,12 @@ describe('library-assisted notation correction', () => {
     expect(await correctLibraryLine(wrong, [{ alg: library }])).toBe(wrong);
   });
 
-  it('rejects ambiguous equal candidates but deduplicates AUF/grouping copies', async () => {
+  it('uses library order for strictly identical normalized variants', async () => {
     const original = line(observed);
-    // Half-turn travel direction is deliberately not silently collapsed.
+    // These local identity pairs are equal under the agreed strict normalization.
     const first = `${body.slice(0, 2)}R R' ${body.slice(2)}`;
     const second = `${body.slice(0, 2)}L L' ${body.slice(2)}`;
-    expect(await correctLibraryLine(original, [{ alg: first }, { alg: second }])).toBe(original);
+    expect((await correctLibraryLine(original, [{ alg: first }, { alg: second }])).libraryCorrection?.algorithm).toBe(first);
     const result = await correctLibraryLine(original, [{ alg: library }, { alg: `U2 ${body} U'` }]);
     expect(result.moves.join(' ')).toBe(body);
   });
@@ -213,4 +213,74 @@ describe('library-assisted notation correction', () => {
       expect(await result).toBe(recon);
     } finally { vi.useRealTimers(); }
   });
+});
+
+
+it('matches the reported PLL-E to the library and retains its actual final frame and replay', async () => {
+  const source = line("R B' R' F R B R' F' R B R' F l U' R' D'");
+  source.label = 'PLL-E';
+  const formula = "x'· (R U' R' D) (R U R' D') (R U R' D) (R U' R' D') x";
+  const result = await correctLibraryLine(source, [{ alg: formula }]);
+  expect(formattedReconMoves(result).join(' ')).toBe("x' (R U' R' D) (R U R' D') (R U R' D) (R U' R' D')");
+  expect(result.libraryCorrection?.algorithm).toBe(formula);
+  await equivalent(source.moves, result.moves);
+  const raw = source.moves.map((m, i) => ({ m, ts: (i + 1) * 100 }));
+  expect(reconstructedTrack([result], raw)?.map(move => move.m)).toEqual(source.moves);
+  const restored = originalReconNotation({ lines: [result], inspection: '', text: '' } as ReconTextResult);
+  expect(restored.lines[0]).toBe(source);
+  expect(restored.text).toContain(source.moves.join(' '));
+});
+
+it('rejects a globally equivalent algorithm with a different execution path', async () => {
+  const original = line(body);
+  const alternative = `${body} ${Array(6).fill("R U R' U'").join(' ')}`;
+  await equivalent(original.moves, alternative.split(' '));
+  expect(await correctLibraryLine(original, [{ alg: alternative }])).toBe(original);
+});
+
+it('normalizes opposite-face order, slice/wide expansion, half turns and local cancellation', () => {
+  expect(strictOuterForm(['L', 'R', "R'", 'R', 'U', 'U']).key).toBe(strictOuterForm(['R', 'L', 'U2']).key);
+  expect(strictOuterForm(['M', 'U', 'r', 'F']).key).toBe(strictOuterForm(['R', "L'", "x'", 'U', 'x', 'L', 'F']).key);
+});
+
+it.each(['oll', 'pll', 'zbll', 'coll', 'ollcp', '1lll', 'ell', 'zbls', 'vls', 'wv', 'sv'])(
+  'routes %s through the same strict matcher and retains unmatched text', async set => {
+    const original = { ...line(observed), kind: 'oll' as const, label: set.toUpperCase() };
+    const recon = { lines: [original], inspection: '', text: observed } as ReconTextResult;
+    const load = vi.fn(async () => ({ cases: [{ name: 'test', algs: [[{ alg: library }]] }] }) as AlgFile);
+    const result = await correctReconFromLibrary(recon, load);
+    expect(load).toHaveBeenCalledWith(set);
+    expect(result.lines[0].libraryCorrection?.algorithm).toBe(library);
+    expect(await correctReconFromLibrary(recon, async () => ({ cases: [{ name: 'other', algs: [[{ alg: 'R U' }]] }] }) as AlgFile)).toBe(recon);
+  });
+
+it('accepts library grouping and glued opposite faces without discarding the grouping', async () => {
+  const formula = "M(R U R' U R U2' R') U M'";
+  const original = line("L' R2 B R' B R B2 R' B L R'");
+  const result = await correctLibraryLine(original, [{ alg: formula }]);
+  expect(result.libraryCorrection?.algorithm).toBe(formula);
+  expect(formattedReconMoves(result).join(' ')).toBe("M (R U R' U R U2' R') U M'");
+  await equivalent(original.moves, result.moves);
+  expect((await correctLibraryLine(line('R L U'), [{ alg: 'LR U' }])).moves).toEqual(['L', 'R', 'U']);
+});
+
+it('checks outer expansion and residual orientation against cubing.js for all primitive pairs', async () => {
+  const kp = await getCube3();
+  const tokens = [...'URFDLBMESxyzurfdlb'].flatMap(face => [face, `${face}'`, `${face}2`]);
+  const state = (text: string) => {
+    const { EDGES, CORNERS, CENTERS } = kp.defaultPattern().applyAlg(text).patternData;
+    return JSON.stringify([EDGES, CORNERS, CENTERS.pieces]);
+  };
+  for (const a of tokens) for (const b of tokens) {
+    const form = strictOuterForm([a, b]);
+    expect(state([form.key, ...form.rotation].join(' ')), `${a} ${b}`).toBe(state(`${a} ${b}`));
+  }
+});
+
+it('closes groups correctly when a library final rotation cancels with the recorded frame', async () => {
+  const source = line("R B' R' F R B R' F' R B R' F l U' R' D'");
+  const formula = "(x' R U' R' D R U R' D' R U R' D R U' R' D' x)";
+  const result = await correctLibraryLine(source, [{ alg: formula }]);
+  expect(result.algorithmGroups).toEqual([{ from: 0, to: 17 }]);
+  expect(formattedReconMoves(result).join(' ')).toBe("(x' R U' R' D R U R' D' R U R' D R U' R' D')");
 });

@@ -183,9 +183,10 @@ export default function BluetoothModal({ anchorRef, isZh, cube, onClose, onConne
         </p>
       )}
       <p>
-        {tr({ zh: '受 Web 浏览器限制，首次连接需要手动填写魔方的 MAC 地址。连接成功后会记住，下次无需重复输入。', en: 'Your browser cannot provide the cube’s MAC address to this page. Enter it for the first connection; it will be remembered after a successful connection.' })}
+        {tr({ zh: '未能自动获取魔方的蓝牙 MAC 地址（不是电脑地址）。部分 App 内置浏览器未开放读取蓝牙广播的接口。', en: 'The cube’s Bluetooth MAC address (not your computer’s address) could not be obtained automatically. Some in-app browsers do not expose the Bluetooth advertisement API.' })}
       </p>
-      <p>{tr({ zh: '在浏览器新标签页的地址栏中打开：', en: 'Open this address in a new browser tab:' })}</p>
+      <p>{tr({ zh: '可继续用已能连接的 Chrome，或在这里填写一次；成功读取转动后会记住。记录不跨浏览器或网站地址共享。', en: 'Keep using Chrome where the connection works, or enter the address here once; it will be remembered after a turn is decoded. Saved addresses are separate for each browser and site address.' })}</p>
+      <p>{tr({ zh: '查找地址：在独立 Chrome / Edge 中打开（内置浏览器可能无法打开）：', en: 'Find the address in standalone Chrome / Edge (these URLs may not open in an in-app browser):' })}</p>
       <ul style={{ paddingLeft: 20, overflowWrap: 'anywhere' }}>
         <li>Chrome: <code>chrome://bluetooth-internals/#devices</code></li>
         <li>Edge: <code>edge://bluetooth-internals/#devices</code></li>

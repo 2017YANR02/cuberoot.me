@@ -64,8 +64,25 @@ html[data-contrast='soft'] .site-scenery img {
 }
 
 .appearance-color-options {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, 40px);
+  align-content: start;
+}
+
+.appearance-color-options .appearance-schemes {
+  display: contents;
+}
+
+.appearance-color-options .lang-menu-item {
+  position: relative;
+  justify-content: center;
+  height: 32px;
+  padding: 0;
+}
+
+.appearance-color-options .lang-menu-check {
+  position: absolute;
+  left: 0;
 }
 
 .appearance-background-row {

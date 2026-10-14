@@ -103,7 +103,7 @@ export async function settleMembershipPayment(
     // Serialize transaction-ID reuse even when malicious events name different local orders.
     await run('SELECT pg_advisory_xact_lock(hashtextextended(?, 0))', [`membership:payment:${payment.provider}:${payment.transactionId}`]);
     const [order] = await run<Order>('SELECT * FROM membership_orders WHERE out_trade_no = ? FOR UPDATE', [payment.orderNo]);
-    if (!order || order.provider !== payment.provider || order.amount_cents !== payment.amountMinor
+    if (!order || order.pay_channel === 'wechat_papay' || order.provider !== payment.provider || order.amount_cents !== payment.amountMinor
       || order.currency !== payment.currency || !payment.merchantId
       || merchantForOrder(order.provider, order.pay_channel) !== payment.merchantId
       || (order.provider_txn && order.provider_txn !== payment.transactionId)) return invalid();

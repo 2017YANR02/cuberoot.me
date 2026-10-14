@@ -58,6 +58,6 @@ describe('local WeChat renewal readiness', () => {
   it('never certifies full launch even if environment and schema checks pass', () => {
     const report = renewalReadinessReport([...checkRenewalEnvironment(valid), ...checkRenewalSchema(columns, 'verified')]);
     expect(report.readyForProduction).toBe(false);
-    expect(report.blockers.map((item) => item.status)).toEqual(['not_implemented', 'not_implemented', 'not_verified', 'not_verified']);
+    expect(report.blockers.map((item) => item.status)).toEqual(['not_verified', 'not_verified']);
   });
 });

@@ -506,6 +506,7 @@ CREATE TRIGGER memberships_updated_at BEFORE UPDATE ON memberships
   FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
 
 -- WeChat renewal contracts retain provider identity and verified lifecycle evidence.
+CREATE SEQUENCE membership_enrollment_serial;
 CREATE TABLE membership_contracts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   wca_id TEXT NOT NULL CHECK (btrim(wca_id) <> ''),
@@ -520,6 +521,10 @@ CREATE TABLE membership_contracts (
   period TEXT NOT NULL CHECK (period IN ('month', 'year')),
   period_count INTEGER NOT NULL CHECK (period_count > 0),
   terms_version TEXT NOT NULL CHECK (btrim(terms_version) <> ''),
+  enrollment_serial BIGINT UNIQUE,
+  consented_at TIMESTAMPTZ,
+  next_debit_at TIMESTAMPTZ,
+  debit_cycle INTEGER NOT NULL DEFAULT 0 CHECK (debit_cycle >= 0),
   state TEXT NOT NULL DEFAULT 'pending' CHECK (state IN ('pending', 'active', 'terminated')),
   cancellation_requested_at TIMESTAMPTZ,
   verified_at TIMESTAMPTZ,
@@ -532,6 +537,18 @@ CREATE TABLE membership_contracts (
       OR (plan_slug = 'yearly_auto_renew' AND period = 'year'))
 );
 CREATE INDEX idx_membership_contracts_owner ON membership_contracts(wca_id);
+CREATE TABLE membership_renewal_debits (
+  out_trade_no VARCHAR(32) PRIMARY KEY,
+  contract_id UUID NOT NULL REFERENCES membership_contracts(id),
+  cycle INTEGER NOT NULL CHECK (cycle >= 0),
+  status TEXT NOT NULL DEFAULT 'prepared' CHECK (status IN ('prepared', 'submitted', 'paid', 'failed', 'cancelled')),
+  submitted_at TIMESTAMPTZ,
+  last_query_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(contract_id, cycle)
+);
+CREATE INDEX idx_membership_renewal_debits_pending ON membership_renewal_debits(last_query_at)
+  WHERE status = 'submitted';
 CREATE INDEX idx_membership_contracts_sync ON membership_contracts(last_sync_attempt_at, id)
   WHERE state IN ('pending', 'active');
 CREATE TRIGGER membership_contracts_updated_at BEFORE UPDATE ON membership_contracts

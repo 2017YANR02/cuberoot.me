@@ -144,6 +144,8 @@ export interface RangeMoveItem {
   endTs: number;
   startIdx: number;
   endIdx: number;
+  /** Display replacements can share a verified interval without duplicating coverage. */
+  seekEndIdx?: number;
 }
 
 export function moveItemsForRange(

@@ -1,6 +1,6 @@
 /** Protocol boundary for the independently validated, shared-table Rust batch engine. */
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 /** Dual-bottom setups wrap the bottom layer in x2 ... x2. Rust accepts
@@ -39,4 +39,22 @@ export function rustConfiguration(root: string, table: string, threads: number) 
     throw Error('Rust H10 executable/thread configuration has not passed the ZBLL acceptance benchmark');
   return { binary, sha256, acceptancePath, args: [resolve(research, 'guard.mts'), 'double-zbll-batch', binary, 'solve-h10', table, '8', '20', '0'],
     env: { CUBEOPT_BACKEND: 'h10', CUBEOPT_SOLVE_THREADS: String(threads) } };
+}
+
+export function opt10Configuration(root: string, threads: number) {
+  const research = resolve(root, 'solver/experiments/cube48opt-rust');
+  const binary = resolve(research, 'target/opt10/release/cube48opt-research');
+  const table = resolve(root, '.tmp/cubeopt-reverse/opt10-generated-v2/cuberoot-opt10.dat');
+  const small = resolve(root, '.tmp/cubeopt-reverse/opt9-generated/small-memory.bin');
+  const acceptancePath = resolve(root, '.tmp/double-zbll-symmetry-v2/rust-opt10-acceptance.json');
+  const acceptance = JSON.parse(readFileSync(acceptancePath,'utf8'));
+  const sha256 = createHash('sha256').update(readFileSync(binary)).digest('hex');
+  if (!Number.isInteger(threads) || threads < 1 || threads > 18 || acceptance.passed !== true
+      || acceptance.binarySha256 !== sha256 || acceptance.table !== table || !acceptance.report
+      || statSync(table).size !== 31_130_911_744 || statSync(small).size !== 818_008)
+    throw Error('Rust Opt10 artifacts have not passed the ZBLL acceptance benchmark');
+  return { binary, sha256, table, acceptancePath,
+    args:[resolve(research,'guard.mts'),'double-zbll-opt10-batch',binary,'solve-opt10',small,table,'8','20','0'],
+    env:{CUBEOPT_BACKEND:'opt10',CUBEOPT_SOLVE_THREADS:String(threads),
+      CUBEOPT_ZBLL_REVIEW:resolve(root,'.tmp/double-zbll-symmetry-v2/opt10-resource-review.json')} };
 }

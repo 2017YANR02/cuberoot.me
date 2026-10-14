@@ -13,9 +13,10 @@ import './person_upcoming_comps.css';
 interface Props {
   wcaId: string;
   isZh: boolean;
+  title?: string;
 }
 
-export default function PersonUpcomingComps({ wcaId, isZh }: Props) {
+export default function PersonUpcomingComps({ wcaId, isZh, title }: Props) {
   const t = useT();
   const [competitions, setCompetitions] = useState<Comp[] | null>(null);
   const [eventIdsByCompetition, setEventIdsByCompetition] = useState<Record<string, string[]>>({});
@@ -51,7 +52,7 @@ export default function PersonUpcomingComps({ wcaId, isZh }: Props) {
     <section className="wp-card wp-upcoming-card" aria-labelledby="wp-upcoming-title">
       <div className="wp-upcoming-head">
         <h2 id="wp-upcoming-title" className="wp-upcoming-title">
-          {t('未来比赛', 'Upcoming Competitions')}
+          {title ?? t('未来比赛', 'Upcoming Competitions')}
         </h2>
       </div>
 

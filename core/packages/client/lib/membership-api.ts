@@ -59,6 +59,7 @@ export interface Membership {
 }
 
 export interface MembershipSubscription {
+  billingStatus?: 'prepared' | 'submitted' | 'paid' | 'failed' | 'cancelled' | null;
   id: string;
   planSlug: string;
   priceCents: number;
@@ -75,6 +76,16 @@ export interface MembershipSubscription {
 export interface MembershipSubscriptions {
   subscriptions: MembershipSubscription[];
   managementAvailable: boolean;
+}
+export async function renewalAvailability(): Promise<{ available: boolean; termsVersion: string }> {
+  return handleApi(await sessionFetch(apiUrl('/v1/membership/subscriptions/availability'), { cache: 'no-store' }));
+}
+
+export async function enrollMembershipSubscription(planSlug: string, priceCents: number, termsVersion: string): Promise<{ subscriptionId: string; redirectUrl: string }> {
+  return handleApi(await sessionFetch(apiUrl('/v1/membership/subscriptions/enroll'), {
+    method: 'POST', headers: authHeaders(), cache: 'no-store',
+    body: JSON.stringify({ planSlug, priceCents, termsVersion, agreed: true }),
+  }));
 }
 
 export async function listMySubscriptions(signal?: AbortSignal): Promise<MembershipSubscriptions> {
@@ -271,6 +282,9 @@ export async function adminList(): Promise<{ members: AdminMembership[]; plans?:
 }
 
 export interface RenewalReadiness {
+  releaseEnabled?: boolean;
+  debitEnabled?: boolean;
+  templates?: { slug: string; templateId: string; approved: boolean }[];
   scope: 'server_configuration_only';
   readyForProduction: false;
   managementConfigured: boolean;

@@ -16,6 +16,16 @@ h10-prefetch = []
 # Only the dedicated target/opt10 build opts in; local execution requires the
 # Opt10 guard budget and a matching complete small-table generator proof.
 opt10-runtime = []
+# Bounded no-PDB search-control and independent distance validation.
+bpmx-check = []
+# Shared-WASM experiment only; native/default and the single-thread adapter
+# retain the original interleaved lookup/decode pipeline.
+wasm-batch-probes = []
+
+[[example]]
+name = "bpmx-check"
+path = "examples/bpmx-check.rs"
+required-features = ["bpmx-check"]
 
 [profile.release]
 opt-level = 3

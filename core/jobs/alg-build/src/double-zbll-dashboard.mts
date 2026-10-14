@@ -13,6 +13,7 @@ export interface DashboardProgress {
   activeVerified?: number; memoryPressure?: number; diskGiB?: number;
   solverThreads?: number;
   solverEngine?: string;
+  reservedRssGiB?: number;
   website?: WebsiteSummary;
   pairs?: { finishedPairs: number; meanBefore: number | null; meanAfter: number | null;
     latest?: { top: string; bottom: string; before: number | null; best: number; states: number;
@@ -57,7 +58,7 @@ export function renderDashboard(p: DashboardProgress, options: { now?: number; r
   const paint = (s: string, code: string) => options.color ? `\x1b[${code}m${s}\x1b[0m` : s;
   const accent = (s: string) => paint(s, '1;36');
   const muted = (s: string) => paint(s, '2');
-  const headroom = p.availableGiB - p.currentRssGiB;
+  const headroom = p.availableGiB - (p.reservedRssGiB ?? p.currentRssGiB);
   const swap = p.currentSwapouts - p.baselineSwapouts;
   const good = !stale && p.status === 'running' && swap === 0 && headroom >= 2 && p.memoryPressure === 1;
   const barWidth = Math.max(16, width - 12), filled = Math.floor(barWidth * count / p.total);
@@ -81,7 +82,7 @@ export function renderDashboard(p: DashboardProgress, options: { now?: number; r
     return left + ' '.repeat(Math.max(2, 34 - [...plain].length - 1)) + (right ? histogramRow(right, 6) : '');
   }) : histogram.map(row => histogramRow(row, Math.max(8, width - 27)));
   const rows = [
-    accent('  双底 ZBLL') + muted(`  /  ${p.solverEngine === 'rust' ? 'Rust H10' : '最优 HTM'} · 含 PLL · 旋转去重`),
+    accent('  双底 ZBLL') + muted(`  /  ${p.solverEngine === 'opt10' ? 'Rust Opt10' : p.solverEngine === 'rust' ? 'Rust H10' : '最优 HTM'} · 含 PLL · 旋转去重`),
     paint(`  ${p.status === 'running' ? '●' : '○'} ${p.stage}`, good ? '32' : '33') + (p.solverThreads ? accent(`  ·  ${p.solverThreads} 线程`) : '') + muted(options.viewer ? '  ·  只读面板' : '  ·  断点续算'), ...(compact ? [] : [muted(line)]),
     accent('━'.repeat(filled)) + muted('─'.repeat(barWidth - filled)) + accent(`  ${(100 * count / p.total).toFixed(2)}%`),
     `已计算   ${paint(number(count), '1')} / ${number(p.total)}  ·  剩余 ${number(p.total - count)}`,

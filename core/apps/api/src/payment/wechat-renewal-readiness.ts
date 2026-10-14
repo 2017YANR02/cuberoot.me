@@ -1,4 +1,5 @@
 /** Local diagnostics only: syntax/schema checks cannot certify merchant authorization or launch readiness. */
+import { RENEWAL_TEMPLATES, renewalReleased } from './membership-renewal-policy.js';
 export interface ReadinessCheck {
   name: string;
   status: 'present' | 'missing' | 'invalid' | 'verified' | 'mismatch' | 'skipped' | 'unavailable' | 'not_implemented' | 'not_verified';
@@ -63,9 +64,8 @@ export function renewalReadinessReport(checks: readonly ReadinessCheck[]) {
     scope: 'local_read_only_precheck',
     readyForProduction: false as const,
     checks,
+    implementation: { enrollment: 'implemented', recurringDebit: 'implemented', verifiedFulfillment: 'implemented' },
     blockers: [
-      { name: 'enrollment_and_verified_contract_persistence', status: 'not_implemented' },
-      { name: 'renewal_debit_and_fulfillment_pipeline', status: 'not_implemented' },
       { name: 'merchant_approval_and_template_binding', status: 'not_verified' },
       { name: 'real_merchant_end_to_end_acceptance', status: 'not_verified' },
     ] as const,
@@ -80,5 +80,9 @@ export function renewalServerReadiness(env: Environment) {
     scope: 'server_configuration_only' as const,
     managementConfigured: checks.every((check) => check.status === 'present'),
     syncEnabled: env.WECHAT_PAPAY_SYNC_ENABLED === 'true',
+    releaseEnabled: renewalReleased(env),
+    debitEnabled: env.WECHAT_PAPAY_DEBIT_ENABLED === 'true',
+    templates: Object.entries(RENEWAL_TEMPLATES).map(([slug, template]) => ({ slug, templateId: template.id,
+      approved: env[slug === 'monthly_auto_renew' ? 'WECHAT_PAPAY_MONTHLY_APPROVED' : 'WECHAT_PAPAY_YEARLY_APPROVED'] === template.id })),
   };
 }

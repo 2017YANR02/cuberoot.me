@@ -33,6 +33,7 @@ import { SiteBackgroundControl } from '@/components/SiteBackground';
 import AppLink from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
 import LangToggle from '@/components/LangToggle';
+import { Tooltip } from '@/components/Tooltip';
 import { useDeskPetVisible } from '@/hooks/useDeskPetVisible';
 import { useHomeBackgroundChoice } from '@/hooks/useHomeBackgroundChoice';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
@@ -231,7 +232,7 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
           }}
           >
           {!showBackgrounds && <div className="appearance-color-options">
-            <div className="appearance-schemes" style={{ display: 'flex', flexFlow: 'row nowrap', gap: 0 }}>
+            <div className="appearance-schemes">
               {(['dark', 'light'] as const).map((choice) => {
                 const Icon = choice === 'light' ? Sun : Moon;
                 const active = onScheme && eff === choice;
@@ -244,7 +245,6 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
                     aria-label={L[choice]}
                     title={L[choice]}
                     className={`lang-menu-item appearance-scheme${active ? ' is-active' : ''}`}
-                    style={{ flex: '0 0 32px', width: 32, padding: 0, justifyContent: 'center' }}
                     onPointerEnter={() => showThemePreview(choice)}
                     onPointerLeave={endPreview}
                     onFocus={() => showThemePreview(choice)}
@@ -260,22 +260,26 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
             {PALETTES.map((p) => {
               const on = p.id === palette;
               return (
-                <button
-                  key={p.id}
-                  type="button"
-                  role="menuitemradio"
-                  aria-checked={on}
-                  className={`lang-menu-item${on ? ' is-active' : ''}`}
-                  onPointerEnter={() => showPalettePreview(p.id)}
-                  onPointerLeave={endPreview}
-                  onFocus={() => showPalettePreview(p.id)}
-                  onBlur={endPreview}
-                  onClick={() => pickPalette(p.id)}
-                >
-                  <span className="lang-menu-check">{on && <Check size={13} />}</span>
-                  <Swatch color={p.swatch[1]} />
-                  <span>{tr(p)}</span>
-                </button>
+                <Tooltip key={p.id} content={tr(p)}>
+                  {(tip) => (
+                    <button
+                      {...tip}
+                      type="button"
+                      role="menuitemradio"
+                      aria-checked={on}
+                      aria-label={tr(p)}
+                      className={`lang-menu-item${on ? ' is-active' : ''}`}
+                      onPointerEnter={(event) => { tip.onPointerEnter?.(event); showPalettePreview(p.id); }}
+                      onPointerLeave={(event) => { tip.onPointerLeave?.(event); endPreview(); }}
+                      onFocus={(event) => { tip.onFocus?.(event); showPalettePreview(p.id); }}
+                      onBlur={(event) => { tip.onBlur?.(event); endPreview(); }}
+                      onClick={() => pickPalette(p.id)}
+                    >
+                      <span className="lang-menu-check">{on && <Check size={13} />}</span>
+                      <Swatch color={p.swatch[1]} />
+                    </button>
+                  )}
+                </Tooltip>
               );
             })}
           </div>}

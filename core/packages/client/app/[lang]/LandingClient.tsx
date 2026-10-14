@@ -437,7 +437,6 @@ export default function LandingPage() {
   return (
     <div className="landing-page">
       <div className="landing-auth">
-        <HeaderToggles />
         {isAdmin && <Tooltip content={tr({ zh: '下载', en: 'Download' })}>
           {(tip) => <Link {...tip} href="/download" className="landing-auth-icon"
             aria-label={tr({ zh: '下载', en: 'Download' })} prefetch={false}>
@@ -473,6 +472,7 @@ export default function LandingPage() {
             {authInner}
           </Link>
         )}
+        <HeaderToggles />
       </div>
 
       <div className="brand-line">
@@ -480,7 +480,7 @@ export default function LandingPage() {
         <span className="brand-name">{t('brand')}</span>
       </div>
       <LandingSearch cards={searchCards} lang={lang} />
-      {user?.wcaId && <PersonUpcomingComps wcaId={user.wcaId} isZh={lang === 'zh'} />}
+      {user?.wcaId && <PersonUpcomingComps wcaId={user.wcaId} isZh={lang === 'zh'} title={tr({ zh: '我的比赛', en: 'My competitions' })} />}
       {featuredNotice && featuredNotice.href && (() => {
         const FeaturedIcon = iconFor(featuredNotice);
         const isHistoryFeature = featuredNotice === HISTORY_HOME_FEATURE;

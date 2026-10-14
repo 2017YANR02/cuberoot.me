@@ -79,7 +79,10 @@ export async function listMembershipContracts(owner: string) {
   for (const row of rows) {
     const result = row.state === 'terminated' ? publicContract(row, 'verified')
       : !papayConfigured() ? publicContract(row, 'unavailable') : await synchronizeMembershipContract(row.id, owner, false);
-    if (result) subscriptions.push(result);
+    if (result) {
+      const [billing] = await query<{ status: string }>('SELECT status FROM membership_renewal_debits WHERE contract_id = ? ORDER BY cycle DESC LIMIT 1', [row.id]);
+      subscriptions.push({ ...result, billingStatus: billing?.status ?? null });
+    }
   }
   return { subscriptions, managementAvailable: papayConfigured() };
 }
