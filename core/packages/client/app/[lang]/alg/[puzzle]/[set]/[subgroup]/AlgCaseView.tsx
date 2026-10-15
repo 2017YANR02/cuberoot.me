@@ -1,5 +1,5 @@
 'use client';
-import { alignAlgFile, caseAlgIssue } from '@/lib/alg_case_alignment';
+import { alignAlgFile, caseAlgIssue, loadAlg } from '@/lib/alg_case_alignment';
 
 /**
  * 单张 case 的**独立详情页**正文(短链 `/alg/<puzzle>/<set>/<slug>`,如 `/alg/3x3/zbll/ur3`)。
@@ -24,6 +24,8 @@ import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import AlgCaseMetaContent from '@/components/AlgCaseMetaContent';
 import { AlgCaseRelationCards, type AlgCaseRelationCardItem } from '@/components/AlgCaseRelationCards';
 import CubeOrientationSelect from '@/components/CubeOrientationSelect';
+import F2lSolutionGroups from '@/components/F2lSolutionGroups';
+import { isF2lStandard } from '@/lib/f2l-solution-groups';
 import AlgPlayer from '@/components/AlgPlayer';
 import CommunityAlgs from '@/components/CommunityAlgs';
 import AdminCaseEditor, { type InlineCaseEditorParts } from '@/components/AdminCaseEditor';
@@ -185,11 +187,39 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
    * 代价是关联缩略图(镜像/逆)那份 `data` 会短暂过期,刷新即一致。
    */
   const [caseObj, setCaseObj] = useState(caseProp);
+  const [insertionCases, setInsertionCases] = useState(data.cases);
+  useEffect(() => { setInsertionCases(data.cases); }, [data.cases]);
+  useEffect(() => {
+    if (puzzle !== '3x3' || set !== 'f2l') return;
+    let live = true;
+    let reading = false;
+    const refresh = async () => {
+      if (reading || document.visibilityState === 'hidden') return;
+      reading = true;
+      try {
+        const fresh = await loadAlg('3x3', 'f2l', { fresh: true });
+        if (live) setInsertionCases(fresh.cases);
+      } catch { /* Keep the last verified library while offline. */ }
+      finally { reading = false; }
+    };
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      live = false;
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', refresh);
+    };
+  }, [puzzle, set]);
+  const f2lLibrary = useMemo(() => puzzle === '3x3' && set === 'f2l'
+    ? insertionCases.map(c => c.id === caseObj.id ? caseObj : c) : undefined,
+  [puzzle, set, insertionCases, caseObj]);
+  const [composedByOri, setComposedByOri] = useState<Record<number, AlgEntry>>({});
   const [validationInvalid, setValidationInvalid] = useState<AlgInvalidMark[]>([]);
   const [selectedAlgByOri, setSelectedAlgByOri] = useState<Record<number, number>>({});
   const [playRequestByOri, setPlayRequestByOri] = useState<Record<number, number>>({});
   useEffect(() => {
     setCaseObj(caseProp);
+    setComposedByOri({});
     setValidationInvalid([]);
     setSelectedAlgByOri({});
     setPlayRequestByOri({});
@@ -543,7 +573,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
               const orientedSetup = oriAdjustSetup(caseObj.setup, oi);
               const requestedAlgIdx = selectedAlgByOri[oi] ?? 0;
               const selectedAlgIdx = requestedAlgIdx < oriAlgs.length ? requestedAlgIdx : 0;
-              const candidateEntry = oriAlgs[selectedAlgIdx];
+              const candidateEntry = composedByOri[oi] ?? oriAlgs[selectedAlgIdx];
               const selectedEntry = candidateEntry && !caseAlgIssue(candidateEntry)
                 ? candidateEntry : oriAlgs.find(entry => !caseAlgIssue(entry));
               const selectedAlg = caseViewAlg(selectedEntry?.alg ?? '', effectiveViewAngle);
@@ -561,6 +591,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
                     invalid={invalidReasonByRow.get(`${oi}:${i}`)}
                     selected={i === selectedAlgIdx}
                     onSelect={() => {
+                      setComposedByOri(current => { const next = { ...current }; delete next[oi]; return next; });
                       setSelectedAlgByOri(current => ({ ...current, [oi]: i }));
                       setPlayRequestByOri(current => ({ ...current, [oi]: (current[oi] ?? 0) + 1 }));
                     }}
@@ -594,7 +625,13 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
                           sq1NotationMode={sq1NotationMode}
                         />
                       )}
-                      {rows}
+                      {f2lLibrary && !isF2lStandard(caseObj) && effectiveViewAngle === 'default' ? <F2lSolutionGroups
+                        cases={f2lLibrary} entries={oriAlgs} setup={orientationSetup} orientation={oi}
+                        onSelect={entry => {
+                          setComposedByOri(current => ({ ...current, [oi]: entry }));
+                          setPlayRequestByOri(current => ({ ...current, [oi]: (current[oi] ?? 0) + 1 }));
+                        }}
+                      >{rows}</F2lSolutionGroups> : rows}
                       {oi === 0 && renderCommunityAlgs(!editor)}
                     </div>
                   </div>
@@ -619,6 +656,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
       setSlug={set}
       state={{ mode: 'edit', existing: caseObj }}
       algorithmsAfter={renderCommunityAlgs(false)}
+      f2lLibrary={f2lLibrary}
       renderOrientationSetup={m ? undefined : (setup) => (
         <SetupLine
           puzzle={puzzle}
