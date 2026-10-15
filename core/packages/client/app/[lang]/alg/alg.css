@@ -973,6 +973,21 @@ html[data-theme=dark] .alg-root {
 .alg-case-inline-editor .alg-editor-tools { max-width: 250px; }
 .alg-case-inline-editor .alg-alg-sortable { display: block; padding-left: 18px; margin-bottom: 6px; }
 .alg-case-inline-editor .alg-alg-drag-handle { position: absolute; left: 0; top: 8px; }
+.f2l-solution-groups { min-width: 0; display: grid; gap: 10px; }
+.f2l-solution-group { min-width: 0; }
+.f2l-solution-group > summary { cursor: pointer; padding: 10px 0; line-height: 1.6; overflow-wrap: anywhere; }
+.f2l-solution-prefix { font-size: 0.9rem; }
+.f2l-solution-target { margin-left: 12px; color: var(--muted-foreground); font-size: 0.78rem; white-space: nowrap; }
+.f2l-solution-choices { display: grid; gap: 12px; padding: 0 0 12px 18px; min-width: 0; }
+.f2l-solution-choices label { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; font-size: 0.78rem; color: var(--muted-foreground); }
+.f2l-solution-choices select { max-width: 100%; width: fit-content; font: inherit; color: var(--foreground); }
+.f2l-solution-composed { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.f2l-solution-play { flex: 1; display: flex; align-items: center; gap: 8px; min-width: 0; padding: 8px 0; border: 0; background: none; color: inherit; font: inherit; font-size: 0.85rem; text-align: left; cursor: pointer; overflow-wrap: anywhere; }
+.f2l-solution-play svg { flex-shrink: 0; }
+.f2l-solution-play strong { font-weight: 500; color: var(--accent); }
+.f2l-solution-copy { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; min-width: 32px; min-height: 32px; padding: 4px; border: 0; background: none; color: var(--muted-foreground); cursor: pointer; }
+.f2l-solution-source { width: fit-content; font-size: 0.75rem; color: var(--muted-foreground); }
+.f2l-solution-originals > summary { cursor: pointer; padding: 8px 0; color: var(--muted-foreground); font-size: 0.75rem; }
 .alg-editor-mirror { flex-basis: 100%; min-width: 0; }
 .alg-editor-notation { flex-basis: 100%; overflow-wrap: anywhere; }
 .alg-validation-name:is(button, a) { display: flex; flex: 1; align-items: center; gap: 6px; color: inherit; font: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: start; }
