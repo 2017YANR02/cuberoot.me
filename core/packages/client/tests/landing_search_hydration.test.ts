@@ -63,6 +63,7 @@ describe('LandingSearch placeholder hydration', () => {
     changeAppLanguage('zh');
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     vi.useFakeTimers();
+    vi.spyOn(crypto, 'randomUUID').mockReturnValue('00000000-0000-4000-8000-000000000066');
   });
 
   afterEach(() => {
@@ -72,7 +73,7 @@ describe('LandingSearch placeholder hydration', () => {
   });
 
   it('only asks on submission, ignores IME Enter and renders a real source link', async () => {
-    const fetcher = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ answer: '打开数帧页面。', sources: [{ id: 'frame-count', title: '数帧', href: '/frame-count', read: true }] }) });
+    const fetcher = vi.fn().mockResolvedValue(Response.json({ answer: '打开数帧页面。', sources: [{ id: 'frame-count', title: '数帧', href: '/frame-count', read: true }] }));
     vi.stubGlobal('fetch', fetcher);
     const host = document.createElement('div');
     document.body.appendChild(host);
@@ -85,7 +86,7 @@ describe('LandingSearch placeholder hydration', () => {
     await act(async () => { input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })); });
     expect(fetcher).toHaveBeenCalledTimes(1);
     expect(fetcher.mock.calls[0][1].headers.Authorization).toBe('Bearer session-test');
-    expect(JSON.parse(fetcher.mock.calls[0][1].body)).toEqual({ question: '视频怎么数帧', lang: 'zh', timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone, history: [] });
+    expect(JSON.parse(fetcher.mock.calls[0][1].body)).toEqual({ conversationId: '00000000-0000-4000-8000-000000000066', question: '视频怎么数帧', lang: 'zh', timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone, history: [] });
     // The dialog and its controls render immediately; formatting arrives in its own chunk.
     await act(async () => { await import('react-markdown'); });
     expect(document.querySelector('.site-assistant-prose')?.textContent).toBe('打开数帧页面。数帧');
@@ -147,13 +148,13 @@ describe('LandingSearch placeholder hydration', () => {
       await act(async()=>root.render(createElement(LandingSearch,{cards:[],lang:'zh',query:'第一问',persistentResults:true})));
       await click('button[aria-label="提问"]');
       await click('button[title="重新生成"]');
-      expect(JSON.parse(fetcher.mock.calls[1][1].body)).toEqual({question:'第一问',lang:'zh',timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone,history:[]});
+      expect(JSON.parse(fetcher.mock.calls[1][1].body)).toEqual({conversationId:'00000000-0000-4000-8000-000000000066',question:'第一问',lang:'zh',timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone,history:[]});
       expect(document.querySelectorAll('.site-assistant-turn')).toHaveLength(1);
       await click('button[title="编辑问题"]');
       const textarea=document.querySelector('textarea[aria-label="编辑问题"]') as HTMLTextAreaElement;
       await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value')!.set!.call(textarea,'改过的问题');textarea.dispatchEvent(new Event('input',{bubbles:true}));});
       await act(async()=>{document.querySelector('.site-assistant-edit')!.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));});
-      expect(JSON.parse(fetcher.mock.calls[2][1].body)).toEqual({question:'改过的问题',lang:'zh',timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone,history:[]});
+      expect(JSON.parse(fetcher.mock.calls[2][1].body)).toEqual({conversationId:'00000000-0000-4000-8000-000000000066',question:'改过的问题',lang:'zh',timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone,history:[]});
       expect(document.querySelector('.site-assistant-question h3')?.textContent).toBe('改过的问题');
       expect(document.querySelectorAll('.site-assistant-turn')).toHaveLength(1);
     } finally {await act(async()=>root.unmount());host.remove();}
