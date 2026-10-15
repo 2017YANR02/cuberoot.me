@@ -16,3 +16,5 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=read-only
+StateDirectory=cuberoot-assistant
+StateDirectoryMode=0700
