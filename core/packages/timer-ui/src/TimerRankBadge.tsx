@@ -5,7 +5,7 @@
  * 只显示用户选择且有数据的范围；缺 WCA ID 时不查 PR，缺国家时不查 NR/CR。
  * 输入为时间厘秒，FMC/多盲不能按计时时长排名。
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { TIMER_RANK_SCOPES, type TimerRankScope } from '@cuberoot/shared/timer';
 import { EVENT_DISPLAY_EN, EVENT_DISPLAY_ZH } from '@cuberoot/shared/wca-events';
 import { toWcaEventForRank, type RankResult, type RegionRank } from '@cuberoot/shared/timer/rank-client';
@@ -44,6 +44,32 @@ export function TimerRankBadge({
   scopes = TIMER_RANK_SCOPES,
   wcaId = '',
 }: RankBadgeProps) {
+  const rowRef = useRef<HTMLSpanElement>(null);
+  // Rankings stay on one line. Fit the actual text, including record badges,
+  // after async results arrive and whenever its container or font changes.
+  useLayoutEffect(() => {
+    const row = rowRef.current;
+    const line = row?.querySelector<HTMLElement>('.rank-chip-inner');
+    if (!row || !line) return;
+    const fit = () => {
+      let size = parseFloat(getComputedStyle(row).fontSize) * 0.82;
+      line.style.fontSize = `${size}px`;
+      const available = row.clientWidth;
+      if (available <= 0) return;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const width = line.getBoundingClientRect().width;
+        if (width <= available) break;
+        size *= Math.max(0, available - 1) / width;
+        line.style.fontSize = `${size}px`;
+      }
+    };
+    fit();
+    if (typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(fit);
+    observer.observe(row);
+    observer.observe(line);
+    return () => observer.disconnect();
+  });
   const tr = <T,>(text: { en: T; zh: T }) => text[isZh ? 'zh' : 'en'];
   const { fetchRankFor, fetchOfficial: fetchWcaPersonResults } = host;
   const wcaEvent = toWcaEventForRank(eventId as EventId);
@@ -148,7 +174,7 @@ export function TimerRankBadge({
   });
 
   return (
-    <span className={`rank-badge-row${className ? ` ${className}` : ''}`}>
+    <span ref={rowRef} className={`rank-badge-row${className ? ` ${className}` : ''}`}>
       <span className="rank-pills">
         <span
           className="rank-pill"

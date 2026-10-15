@@ -2,13 +2,15 @@
    Token-only: accent-soft pill, accent text; top-tier names go signal-success. */
 .rank-badge-row {
   display: inline-flex;
+  width: 100%;
   flex-direction: column;
   align-items: center;
   gap: 6px;
+  min-width: 0;
 }
 .rank-pills {
   display: inline-flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: center;
   gap: 6px;
 }
@@ -29,13 +31,26 @@
 }
 /* WR12/AsR9/NR9 segments: center-align text + any inline RecordBadge, even gaps
    around the "/" separators. 字体继承 .rank-pill 的 Inter(已非 mono). */
-.timer-display-corner:has(.rank-badge-row) {
-  right: 0;
-  max-width: min(100%, calc(100vw - 32px));
-  transform: translateY(-100%);
+.timer-display-wrap:has(> .timer-display-corner .rank-badge-row) {
+  display: flex;
+  flex-direction: column;
 }
+/* Keep rankings in the measured readout height so the scramble/source
+   above it reserves enough room, including on narrow embedded WebViews. */
+.timer-display-corner:has(.rank-badge-row) {
+  position: static;
+  inset: auto;
+  transform: none;
+  order: -1;
+  align-self: stretch;
+  display: flex;
+  justify-content: flex-end;
+  max-width: 100%;
+  margin-bottom: 4px;
+}
+.timer-display-corner .rank-badge-row { align-items: flex-end; }
 .rank-badge-row, .rank-pills, .rank-pill { max-width: 100%; }
-.rank-chip-inner { display: inline-flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 3px; }
+.rank-chip-inner { display: inline-flex; flex: none; flex-wrap: nowrap; white-space: nowrap; justify-content: flex-end; align-items: center; gap: 3px; }
 .rank-chip-sep { color: var(--faint-foreground); font-weight: 400; }
 .rank-chip-inner .record-badge { font-size: 1em; padding: 0 4px; }
 .rank-scope-options {
