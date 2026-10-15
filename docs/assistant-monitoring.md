@@ -23,7 +23,7 @@
 
 聊天每一轮以及在线/离线向量调用均记录用量。输入含缓存 token，输出含思考 token，不重复累加。未返回用量或未知模型记为未估价，不能视为免费。
 
-价目快照 `bailian-beijing-2026-10-15`：按[百炼官方价格](https://help.aliyun.com/zh/model-studio/model-pricing)核实北京服务的 `qwen3.8-flash` 输入/输出 0.8/2.7 元每百万 token，`text-embedding-v4` 输入 0.5 元每百万 token。快照保存在每次调用记录中，未知供应商不套用这些费率。展示未扣缓存折扣、免费额度和合同优惠的标价估算，实际支付以服务商账单为准。更换模型/地域/费率需更新估价规则及测试；旧记录不重算。
+价目快照 `bailian-beijing-2026-10-15`：按[百炼官方价格](https://help.aliyun.com/zh/model-studio/model-pricing)核实北京服务的 `qwen3.8-flash` 输入/输出 0.8/2.7 元每百万 token，`text-embedding-v4` 输入 0.5 元每百万 token。另按 [DeepSeek 官方人民币价格](https://api-docs.deepseek.com/zh-cn/quick_start/pricing/)保存 `deepseek-cny-peak-2026-10-15`：Flash 输入/输出 2/8 元每百万 token，V4 Pro 为 9/27 元；使用高峰未缓存标价，故未扣低谷和缓存优惠。快照保存在每次调用记录中，未知供应商不套用这些费率。展示未扣缓存折扣、免费额度和合同优惠的标价估算，实际支付以服务商账单为准。更换模型/地域/费率需更新估价规则及测试；旧记录不重算。
 
 ## 告警
 

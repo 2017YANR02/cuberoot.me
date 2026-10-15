@@ -14,6 +14,10 @@ describe('private assistant monitoring', () => {
     expect(assistantPrice('qwen3.8-flash','https://other.invalid',100,100).grossCny).toBeNull();
     expect(assistantPrice('qwen3.8-flash','https://dashscope.aliyuncs.com',null,100).grossCny).toBeNull();
     expect(assistantPrice('unknown','https://dashscope.aliyuncs.com',100,100).grossCny).toBeNull();
+    expect(assistantPrice('deepseek-flash','https://api.deepseek.com',1000000,1000000).grossCny).toBe(10);
+    expect(assistantPrice('deepseek-v4-pro','https://api.deepseek.com',1000000,1000000).grossCny).toBe(36);
+    expect(assistantPrice('deepseek-flash','https://dashscope.aliyuncs.com',100,100).grossCny).toBeNull();
+    expect(assistantPrice('deepseek-flash','https://api.deepseek.com',100,null).grossCny).toBeNull();
   });
   it('does not spend quota or call a model when durable admission fails',async()=>{
     const reserve=vi.fn(),answer=vi.fn(),entry=vi.fn();
