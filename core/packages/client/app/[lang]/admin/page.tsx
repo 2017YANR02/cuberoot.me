@@ -8,6 +8,7 @@ import { useT } from '@/hooks/useT';
 import { loginHref, useAuthStore, useIsAdmin } from '@/lib/auth-store';
 import BootDiagnostics from './BootDiagnostics';
 import Dashboard from './Dashboard';
+import AssistantMonitoring from './AssistantMonitoring';
 import './admin.css';
 
 interface AdminDestination {
@@ -59,6 +60,7 @@ export default function AdminPage() {
         <p>{t('集中查看用户增长、访问量、收入和待处理事项。', 'User growth, traffic, revenue and pending work in one place.')}</p>
       </header>
       <Dashboard />
+      <AssistantMonitoring />
       <h2 className="admin-dashboard__tools-title">{t('管理工具', 'Management tools')}</h2>
       <nav className="admin-hub__nav" aria-label={t('管理工具', 'Administration tools')}>
         {DESTINATIONS.map(({ href, Icon, title }) => (

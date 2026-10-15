@@ -1,3 +1,4 @@
+import { recordAssistantRetrieval } from './site_assistant_monitor.js';
 import postgres, { type Sql } from 'postgres';
 import { databaseSettings } from '../db/settings.js';
 import { assistantEmbeddingConfig, embedKnowledge } from './site_assistant_embedding.js';
@@ -80,7 +81,7 @@ export async function retrieveKnowledge(db: Sql, input: { corpusHash: string; id
       SELECT id,sum(score) AS score FROM (
         SELECT id,1.0/(60+rank) AS score FROM lexical UNION ALL SELECT id,1.0/(60+rank) FROM semantic
       ) r GROUP BY id
-    ) SELECT c.id,c.document_id AS "documentId",c.lang,c.href,c.title,c.content,c.fingerprint
+    ) SELECT c.id,c.document_id AS "documentId",c.lang,c.href,c.title,c.content,c.fingerprint,r.score
       FROM ranked r JOIN corpus c USING(id) ORDER BY r.score DESC,c.id LIMIT 6`;
   const abort = () => task.cancel();
   signal.addEventListener('abort', abort, { once: true });
@@ -90,14 +91,16 @@ export async function retrieveKnowledge(db: Sql, input: { corpusHash: string; id
 
 export async function hybridKnowledge(index: KnowledgeIndex, query: string, lang: 'zh'|'en', hrefs: string[], signal: AbortSignal) {
   const config = assistantEmbeddingConfig();
-  if (process.env.SITE_ASSISTANT_KNOWLEDGE_ENABLED === '0' || !config) return [];
+  if (process.env.SITE_ASSISTANT_KNOWLEDGE_ENABLED === '0' || !config) { recordAssistantRetrieval({ mode: 'fallback', reason: 'disabled_or_unconfigured', hits: [] }); return []; }
   const db = knowledgeDatabase();
   try {
     const corpusHash=knowledgeGeneration(index);
-    const [state]=await db`SELECT corpus_hash,embedding_identity FROM site_assistant_knowledge_state WHERE singleton`;
-    if(state?.corpus_hash!==corpusHash || state?.embedding_identity!==config.identity) return [];
+    const [state]=await db`SELECT corpus_hash,embedding_identity,generation FROM site_assistant_knowledge_state WHERE singleton`;
+    if(state?.corpus_hash!==corpusHash || state?.embedding_identity!==config.identity) { recordAssistantRetrieval({ mode: 'fallback', reason: 'index_mismatch', generation: state?.generation, hits: [] }); return []; }
     let vector: number[] | undefined;
     try { [vector] = await embedKnowledge([query.slice(0,500)], signal); } catch { signal.throwIfAborted(); }
-    return await retrieveKnowledge(db, { corpusHash, identity: config.identity, query, lang, hrefs, vector }, signal);
+    const hits = await retrieveKnowledge(db, { corpusHash, identity: config.identity, query, lang, hrefs, vector }, signal);
+    recordAssistantRetrieval({ mode: vector ? 'hybrid' : 'database_lexical', ...(vector ? {} : { reason: 'embedding_unavailable' }), generation: state.generation, hits });
+    return hits;
   } finally { await db.end({ timeout: 0 }); }
 }

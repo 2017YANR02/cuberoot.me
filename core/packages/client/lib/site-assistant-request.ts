@@ -1,7 +1,10 @@
+import { apiUrl } from './api-base';
+import { authHeaders, handleApi } from './admin-api';
 import { sessionFetch } from '@/lib/session-fetch';
 import { SITE_ASSISTANT_MAX_IMAGES, type AssistantMessage, type AssistantImage } from '@cuberoot/shared/site-assistant';
 
 interface AssistantRequest {
+  conversationId?: string; parentId?: string; retryOf?: string;
   question:string;
   images?:AssistantImage[];
   lang:'zh'|'en';
@@ -11,13 +14,20 @@ interface AssistantRequest {
 
 /** A schema rejection happens before quota/model work, so this retry is safe. */
 export async function requestSiteAssistant(url:string,request:AssistantRequest,init:RequestInit,fetcher:typeof fetch=sessionFetch):Promise<Response> {
-  const response=await fetcher(url,{...init,method:'POST',body:JSON.stringify(request)});
+  let response=await fetcher(url,{...init,method:'POST',body:JSON.stringify(request)});
   if(response.status!==400)return response;
-  const failure=await response.clone().json().catch(()=>null);
+  let failure=await response.clone().json().catch(()=>null);
   if(failure?.error!=='invalid_question')return response;
+  if (request.conversationId) {
+    const { conversationId: _conversation, parentId: _parent, retryOf: _retry, ...compatible } = request;
+    response = await fetcher(url, { ...init, method: 'POST', body: JSON.stringify(compatible) });
+    if (response.status !== 400) return response;
+    failure = await response.clone().json().catch(() => null);
+    if (failure?.error !== 'invalid_question') return response;
+  }
   // An older server cannot understand images; never silently drop them or retry.
   if(request.images?.length || request.history.some(message=>message.images?.length)) return Response.json({error:'vision_unavailable'},{status:503});
-  const {timeZone:_,...legacyRequest}=request;
+  const {timeZone:_,conversationId:_conversation,parentId:_parent,retryOf:_retry,...legacyRequest}=request;
   return fetcher(url,{...init,method:'POST',body:JSON.stringify(legacyRequest)});
 }
 
@@ -32,4 +42,9 @@ export function assistantImageHistory(history: AssistantMessage[], currentImages
     }
     return { role: message.role, content: message.content + '\n[Earlier attached images omitted; ask the user to reattach if needed.]' };
   }).reverse();
+}
+
+export type AssistantFeedback = 'helpful' | 'incorrect' | 'irrelevant' | 'bad_source' | 'bad_link' | 'other';
+export async function sendAssistantEvent(id: string, event: { type: 'feedback'; value: AssistantFeedback | null } | { type: 'click'; kind: 'action' | 'source'; id: string }) {
+  return handleApi(await sessionFetch(apiUrl(`/v1/site-assistant/requests/${id}/events`), { method: 'POST', headers: authHeaders(), body: JSON.stringify(event), keepalive: true }));
 }

@@ -242,6 +242,7 @@ export default function LandingSearch({
   const [assistantDraft, setAssistantDraft] = useState('');
   const [assistantImages, setAssistantImages] = useState<AssistantImage[]>([]);
   const [assistantTurns, setAssistantTurns] = useState<AssistantTurn[]>([]);
+  const assistantConversation = useRef<string | null>(null);
   const assistantRequest = useRef<AbortController | null>(null);
   const [assistantBusy, setAssistantBusy] = useState(false);
   const [assistantStatus, setAssistantStatus] = useState<AssistantStatus>({ phase: 'planning' });
@@ -253,6 +254,7 @@ export default function LandingSearch({
     assistantRequest.current = null;
     setAssistantBusy(false);
     setAssistantTurns([]);
+    assistantConversation.current = null;
     setAssistantDraft('');
     setAssistantImages([]);
     setAssistantAnswer(null);
@@ -294,10 +296,14 @@ export default function LandingSearch({
     setAssistantAnswer(null);
     const timeout = setTimeout(() => controller.abort(), SITE_ASSISTANT_TIMEOUT_MS);
     try {
+      assistantConversation.current ??= crypto.randomUUID();
       const response = await requestSiteAssistant(apiUrl('/v1/site-assistant'), {
+        conversationId: assistantConversation.current, parentId: previous.at(-1)?.requestId, retryOf: replaceLast ? assistantTurns.at(-1)?.requestId : undefined,
         question, lang, ...(images.length ? {images} : {}), timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone,
         history: assistantImageHistory(previous.filter(turn => !turn.partial).slice(-5).flatMap(turn => [{ role: 'user', content: turn.question, ...(turn.images?.length ? {images:turn.images} : {}) }, { role: 'assistant', content: turn.result!.answer }]), images),
       }, {headers: { ...authHeaders(), Accept: 'text/event-stream' },signal: controller.signal});
+      const requestId = response.headers.get('X-Assistant-Request-Id') ?? undefined;
+      if (assistantRequest.current === controller) setAssistantTurns([...previous, { question, images, requestId }]);
       if (!response.ok) {
         const failure = await response.json().catch(() => null);
         if (assistantRequest.current === controller) setAssistantError(assistantResponseError(response, failure));
@@ -308,7 +314,7 @@ export default function LandingSearch({
         if (assistantRequest.current !== controller) return;
         const result: AssistantAnswer = { answer: data.answer, actions: data.actions?.filter(action => typeof action.href === 'string' && /^\/(?!\/)/.test(action.href)), artifacts: Array.isArray(data.artifacts) ? data.artifacts : [], sources: data.sources.filter(source => typeof source.href === 'string' && /^\/(?!\/)/.test(source.href)) };
         if (!partial) setAssistantAnswer(result);
-        setAssistantTurns([...previous, { question, images, result, partial }]);
+        setAssistantTurns([...previous, { question, images, result, partial, requestId }]);
       };
       if (response.headers?.get('content-type')?.includes('text/event-stream')) {
         if (!response.body) throw new Error('missing stream');
@@ -635,7 +641,7 @@ export default function LandingSearch({
         </p>
       )}
 
-      {assistantDialog && <SiteAssistantDialog key={`${assistantUser?.uid ?? "guest"}:${assistantUser?.wcaId ?? ""}`} images={assistantImages} onImagesChange={setAssistantImages} lang={lang} draft={assistantDraft} onDraftChange={setAssistantDraft} turns={assistantTurns} status={assistantStatus} busy={assistantBusy} error={assistantError} onAsk={(question, replaceLast, images) => void askAssistant(question, replaceLast, images)} onStop={stopAssistant} onClose={closeAssistant} onNew={() => { stopAssistant(); setAssistantDraft(''); setAssistantImages([]); setAssistantTurns([]); setAssistantAnswer(null); setAssistantError(null); }} />}
+      {assistantDialog && <SiteAssistantDialog key={`${assistantUser?.uid ?? "guest"}:${assistantUser?.wcaId ?? ""}`} images={assistantImages} onImagesChange={setAssistantImages} lang={lang} draft={assistantDraft} onDraftChange={setAssistantDraft} turns={assistantTurns} onFeedback={(id,value)=>setAssistantTurns(turns=>turns.map(turn=>turn.requestId===id?{...turn,feedback:value}:turn))} status={assistantStatus} busy={assistantBusy} error={assistantError} onAsk={(question, replaceLast, images) => void askAssistant(question, replaceLast, images)} onStop={stopAssistant} onClose={closeAssistant} onNew={() => { assistantConversation.current = null; stopAssistant(); setAssistantDraft(''); setAssistantImages([]); setAssistantTurns([]); setAssistantAnswer(null); setAssistantError(null); }} />}
 
       {showDropdown && !assistantDialog && (
         <div className="landing-search-panel">

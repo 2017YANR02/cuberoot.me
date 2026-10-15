@@ -50,3 +50,13 @@ describe('assistant rolling deployment compatibility',()=>{
     expect(rejected).toHaveBeenCalledTimes(2);
   });
 });
+
+it('removes only trace metadata for an older API while preserving image, timezone and auth',async()=>{
+  const done=Response.json({answer:'ok',sources:[]});
+  const fetcher=vi.fn<typeof fetch>().mockResolvedValueOnce(Response.json({error:'invalid_question'},{status:400})).mockResolvedValueOnce(done);
+  const body={...request,images:[image],conversationId:'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa'};
+  const response=await requestSiteAssistant('/v1/site-assistant',body,{headers:{Authorization:'fixture'}},fetcher);
+  expect(response).toBe(done);expect(fetcher).toHaveBeenCalledTimes(2);
+  expect(JSON.parse(String(fetcher.mock.calls[1][1]?.body))).toEqual({...request,images:[image]});
+  expect(fetcher.mock.calls[1][1]?.headers).toEqual({Authorization:'fixture'});
+});

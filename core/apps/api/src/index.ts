@@ -17,11 +17,13 @@ import { onboardingRoutes } from './routes/onboarding.js';
 import { accountAuthRoutes } from './routes/account_auth.js';
 import { progressRoutes } from './routes/progress.js';
 import { healthRoutes } from './routes/health.js';
+import { startAssistantMonitorCleanup } from './utils/site_assistant_monitor.js';
 import { siteAssistantRoutes } from './routes/site_assistant.js';
 import { cubeAgentRoutes } from './routes/cube_agents.js';
 import { mcpRoutes } from './routes/mcp.js';
 import { mcpOauthRoutes, mcpDiscoveryRoutes } from './routes/mcp_oauth.js';
 import { adminDiskRoutes } from './routes/admin_disk.js';
+import { adminAssistantRoutes } from './routes/admin_assistant.js';
 import { adminDashboardRoutes } from './routes/admin_dashboard.js';
 import { geoRoutes } from './routes/geo.js';
 import { reconRoutes } from './routes/recon.js';
@@ -185,6 +187,7 @@ app.route('/v1', mcpOauthRoutes);
 app.route('/', mcpDiscoveryRoutes);
 app.route('/v1', adminDiskRoutes);
 app.route('/v1', adminDashboardRoutes);
+app.route('/v1', adminAssistantRoutes);
 app.route('/v1', geoRoutes);
 app.route('/v1', reconRoutes);
 app.route('/v1', reconGroundTruthRoutes);
@@ -396,6 +399,7 @@ startPrewarmCron();
 // MONITORS_ENABLED!=1 时直接返回(休眠);MONITOR_PUSH_ENABLED!=1 时只 DRY 日志不真推.
 startMonitors();
 startIdentityChoiceCleanup();
+startAssistantMonitorCleanup();
 
 // /calendar 日程提醒:每分钟扫一遍「该发提醒了吗」,命中写站内通知(+ 邮件旁路)。
 // 去重靠 calendar_reminder_log 的主键抢占,重启 / 窗口重叠都不会重复发。

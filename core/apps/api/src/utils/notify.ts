@@ -38,6 +38,7 @@ export function verifyUnsubToken(token: string): string | null {
 }
 
 export type NotificationKind =
+  | 'assistant_alert'
   | 'recon_alt' | 'recon_comment' | 'recon_reply'
   | 'forum_thread' | 'forum_reply' | 'forum_report'
   | 'forum_review' | 'forum_approved' | 'forum_rejected'
@@ -80,6 +81,7 @@ export interface NotifyInput {
 }
 
 const KIND_TEXT: Record<NotificationKind, Record<MailLang, string>> = {
+  assistant_alert: { zh: 'AI 服务告警', en: 'AI service alert' },
   recon_alt: { zh: '提交了新另解', en: 'submitted an alternative solution' },
   recon_comment: { zh: '发表了新评论', en: 'left a new comment' },
   recon_reply: { zh: '回复了你的评论', en: 'replied to your comment' },

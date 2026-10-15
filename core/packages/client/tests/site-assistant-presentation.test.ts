@@ -7,6 +7,7 @@ import type { AssistantAnswer } from '@cuberoot/shared/site-assistant';
 vi.mock('next/link',()=>({default:({children,prefetch:_prefetch,...props}:AnchorHTMLAttributes<HTMLAnchorElement> & {children?:ReactNode;prefetch?:boolean})=>createElement('a',props,children)}));
 vi.mock('next/navigation',()=>({useParams:()=>({lang:'zh'})}));
 vi.mock('@/hooks/useSpeechToText',()=>({useSpeechToText:()=>({listening:false,start:vi.fn(),stop:vi.fn()})}));
+vi.mock('@/lib/site-assistant-request',()=>({sendAssistantEvent:vi.fn().mockResolvedValue({ok:true})}));
 vi.mock('@/lib/site-assistant-images',()=>({prepareAssistantImage:vi.fn()}));
 vi.mock('@/lib/country-flags',()=>({
   loadFlagData:vi.fn(async()=>1),compFlagIso2:(id:string)=>id==='WC2025'?'us':'tw',
@@ -15,6 +16,7 @@ vi.mock('@/lib/country-flags',()=>({
 import SiteAssistantDialog from '@/components/SiteAssistantDialog';
 import { loadFlagData } from '@/lib/country-flags';
 import { changeAppLanguage } from '@/i18n/i18n-client';
+import { sendAssistantEvent } from '@/lib/site-assistant-request';
 import { prepareAssistantImage } from '@/lib/site-assistant-images';
 
 const sources=[
@@ -35,7 +37,7 @@ async function render(answer:AssistantAnswer,overrides:Partial<ComponentProps<ty
   const root=createRoot(host);roots.push(root);
   const props:ComponentProps<typeof SiteAssistantDialog>={
     turns:[{question:'历年世锦赛时间',result:answer}],busy:false,error:null,lang:'zh',draft:'',images:[],onImagesChange:vi.fn(),
-    onDraftChange:vi.fn(),onAsk:vi.fn(),onStop:vi.fn(),onClose:vi.fn(),onNew:vi.fn(),
+    onDraftChange:vi.fn(),onFeedback:vi.fn(),onAsk:vi.fn(),onStop:vi.fn(),onClose:vi.fn(),onNew:vi.fn(),
     ...overrides,
   };
   await act(async()=>root.render(createElement(SiteAssistantDialog,props)));
@@ -129,4 +131,17 @@ describe('assistant linked table presentation',()=>{
     expect(document.querySelector('.site-assistant-navigation a')?.getAttribute('href')).toBe('/zh/timer');
     expect(document.querySelector('.site-assistant-citation')).toBeNull();
   });
+});
+
+it('shows persisted feedback and keeps a failed change unsaved',async()=>{
+  const id='aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa';
+  const props=await render(result,{turns:[{question:'PLL?',result,requestId:id,feedback:'helpful'}]});
+  const up=document.querySelector<HTMLButtonElement>('button[aria-label="有帮助"]')!;
+  expect(up.getAttribute('aria-pressed')).toBe('true');
+  vi.mocked(sendAssistantEvent).mockRejectedValueOnce(new Error('offline'));
+  await act(async()=>document.querySelector<HTMLButtonElement>('button[aria-label="没帮助"]')!.click());
+  expect(up.getAttribute('aria-pressed')).toBe('true');expect(props.onFeedback).not.toHaveBeenCalled();
+  expect(document.body.textContent).toContain('反馈未保存');
+  await act(async()=>document.querySelector<HTMLButtonElement>('button[aria-label="没帮助"]')!.click());
+  expect(props.onFeedback).toHaveBeenCalledWith(id,'other');
 });
