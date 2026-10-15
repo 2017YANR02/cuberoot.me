@@ -14,7 +14,7 @@ import '@/components/sticky-table.css';
 type Series = { name: string; data: Array<number | null>; type: 'bar' | 'line' };
 
 // Page-local adapter: domain data and authorization stay outside the chart engine.
-function DashboardChart({ labels, series, label, integer = true }: { labels: string[]; series: Series[]; label: string; integer?: boolean }) {
+export function DashboardChart({ labels, series, label, integer = true }: { labels: string[]; series: Series[]; label: string; integer?: boolean }) {
   const host = useRef<HTMLDivElement>(null);
   const t = useT();
   const [failed, setFailed] = useState(false);

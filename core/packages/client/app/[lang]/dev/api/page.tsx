@@ -66,7 +66,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   equals the set mounted via app.route('/v1', …) in apps/api/src/index.ts.
 //   CI red here = a newly-mounted route is undocumented: add its endpoints below,
 //   then add the file stem to this list.
-//   account_auth account_face admin_dashboard admin_disk alg alg_lsll alg_marks alg_preferred_algs alg_srs alg_sets alg_sweep alg_time_attack_order announced_comps app_boot_diagnostics article auth battle_rooms calendar cn_comp_names colpi
+//   account_auth account_face admin_assistant admin_dashboard admin_disk alg alg_lsll alg_marks alg_preferred_algs alg_srs alg_sets alg_sweep alg_time_attack_order announced_comps app_boot_diagnostics article auth battle_rooms calendar cn_comp_names colpi
 //   chat comp_follows creator_gallery cube cubeopt_solve cubing_live documents downloads drive feedback forum friends geo health historical_ranks pb private_vault
 //   membership membership_benefits membership_apple membership_google membership_subscriptions music nav_sites pets nemesizer notifications ops remote_access dev_preview page_notices paint pattern_examples platform_catalog platform_commerce platform_content platform_learning platform_qr progress quiz recon recon_ground_truth scramble_555 teacher_directory teaching teaching_saas
 //   scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
@@ -115,6 +115,13 @@ const ENDPOINTS: Ep[] = [
   { d: 'auth', m: 'POST', p: '/v1/mcp/oauth/revoke', g: 'public', c: 'no-store', zh: '凭 MCP 令牌撤销对应授权', en: 'Revoke a grant using its MCP token' },
   { d: 'auth', m: 'GET', p: '/v1/mcp/oauth/connections', g: 'admin', c: 'no-store', zh: '本人有效的 MCP 授权', en: 'Own active MCP grants' },
   { d: 'auth', m: 'POST', p: '/v1/mcp/oauth/connections/revoke', g: 'admin', c: 'no-store', zh: '撤销本人指定的 MCP 授权', en: 'Revoke a specific MCP grant owned by the administrator' },
+  { d: 'system', m: 'GET', p: '/v1/admin/assistant/insights', g: 'admin', c: 'no-store', zh: '评价、检索、费用、告警、匿名汇总与访问审计', en: 'Feedback, retrieval, cost, alerts, anonymous totals and access audit' },
+  { d: 'system', m: 'GET', p: '/v1/admin/assistant/health', g: 'admin', c: 'no-store', zh: '监控后台心跳及活动告警', en: 'Monitoring heartbeat and active alerts' },
+  { d: 'system', m: 'POST', p: '/v1/admin/assistant/requests/:id/review', g: 'admin', c: 'no-store', zh: '管理员复核与处理记录', en: 'Admin review and resolution' },
+  { d: 'system', m: 'POST', p: '/v1/site-assistant/requests/:id/events', g: 'login', c: 'no-store', zh: '仅本人问答的评价和页面点击；30天内', en: 'Owner-only feedback and destination clicks within 30 days' },
+  { d: 'system', m: 'GET', p: '/v1/admin/assistant/summary', g: 'admin', c: 'no-store', zh: '聊天每日指标、模型与工具用量、记录健康状态；北京时间，days=7/30/90', en: 'Daily chat metrics, model/tool usage and recording health; Beijing time, days=7/30/90' },
+  { d: 'system', m: 'GET', p: '/v1/admin/assistant/requests', g: 'admin', c: 'no-store', zh: '按状态与问答正文搜索，每页 25 条；仅记录通过身份校验的请求', en: 'Search authenticated requests by status and content, 25 per page' },
+  { d: 'system', m: 'GET', p: '/v1/admin/assistant/requests/:id', g: 'admin', c: 'no-store', zh: '问答详情与指标；正文 30 天，记录 90 天，不记录图片及思考原文', en: 'Chat details and metrics; 30-day content, 90-day records, no images or reasoning text' },
   { d: 'system', m: 'GET', p: '/v1/admin/dashboard', g: 'admin', c: 'no-store', zh: '只读汇总待办、分币种收款与退款、累计赞助和最近小时流量快照；days=7/30/90，UTC', en: 'Read-only pending counts, receipts/refunds by currency, lifetime sponsorship and latest hourly traffic snapshot; days=7/30/90, UTC' },
   { d: 'system', m: 'GET', p: '/v1/admin/disk', g: 'admin', c: 'no-store', zh: '根磁盘容量与目录占用；path 选择目录，refresh=1 请求后台刷新', en: 'Root disk capacity and directory usage; path selects a directory, refresh=1 requests a background scan' },
   { d: 'platform', m: 'POST', p: '/v1/platform/organizer-applications', g: 'login', c: 'no-store', zh: '提交主办方申请，可关联已有组织', en: 'Apply to host competitions using a new or existing organization' },

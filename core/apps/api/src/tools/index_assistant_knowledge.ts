@@ -1,3 +1,4 @@
+import { startAssistantMonitor } from '../utils/site_assistant_monitor.js';
 /** Offline worker. Only the fixed public build artifact is sent to the embedding provider. */
 import { createCompetitionProof, COMPETITION_SERVICE_HEADER } from '@cuberoot/shared/competition-access';
 import { assistantEmbeddingConfig, embedKnowledge } from '../utils/site_assistant_embedding.js';
@@ -29,14 +30,16 @@ async function main() {
   const budget=Number(process.env.SITE_ASSISTANT_EMBEDDING_JOB_LIMIT || 2000);
   if(!Number.isSafeInteger(budget) || budget<1 || budget>30000) throw new Error('Invalid embedding job budget');
   const db=knowledgeDatabase();
+  const monitor = await startAssistantMonitor({ uid: null, question: '', lang: 'en', model: config.model, streaming: false, imageCount: 0, historyCount: 0, scope: 'index' });
   try {
     phase='index';
-    const result=await indexKnowledge(db,index,config.identity,signal,async(texts,requestSignal)=>{
+    const result=await monitor.run(() => indexKnowledge(db,index,config.identity,signal,async(texts,requestSignal)=>{
       embedded+=texts.length;
       if(embedded>budget) throw new Error('Embedding job budget reached; completed batches are reusable on the next run');
       return embedKnowledge(texts,requestSignal,fetch,{timeoutMs:30000,maxRetries:2});
-    });
+    }));
+    await monitor.finish('success');
     console.log(JSON.stringify({event:'assistant_knowledge_index',...result}));
-  } finally { await db.end({timeout:0}); }
+  } catch (error) { await monitor.finish('error', 'index_failed'); throw error; } finally { await db.end({timeout:0}); }
 }
 main().catch(error=>{ console.error(JSON.stringify({event:'assistant_knowledge_index_failed',phase,code:error?.name ?? 'Error'}));process.exitCode=1; });

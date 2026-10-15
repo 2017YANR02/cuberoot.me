@@ -42,6 +42,13 @@ const DOMAINS: { key: DomainKey; dot: string; name: Bi; sub: Bi }[] = [
 ];
 
 const TABLES: Table[] = [
+  { name: 'site_assistant_requests', domain: 'community', origin: '0277', purpose: { zh: '管理员聊天监控：问答保留 30 天、指标保留 90 天，注销级联删除', en: 'Admin chat monitoring: 30-day content, 90-day metrics, cascade on account deletion' } },
+  { name: 'site_assistant_entry_daily', domain: 'community', origin: '0277', purpose: { zh: '未通过准入的匿名日计数', en: 'Anonymous daily admission failures' } },
+  { name: 'site_assistant_daily', domain: 'community', origin: '0277', purpose: { zh: '无身份日汇总，保留两年', en: 'Anonymous daily totals retained for two years' } },
+  { name: 'site_assistant_alerts', domain: 'community', origin: '0277', purpose: { zh: '持久告警、恢复与通知状态', en: 'Durable alerts, recovery and notification state' } },
+  { name: 'site_assistant_audit', domain: 'community', origin: '0277', purpose: { zh: '管理员读取与复核审计，保留90天', en: 'Admin access and review audit retained for 90 days' } },
+  { name: 'site_assistant_recording_faults', domain: 'community', origin: '0277', purpose: { zh: '跨进程持久记录故障计数，无用户内容', en: 'Durable recording fault counters across process restarts, no user content' } },
+  { name: 'site_assistant_monitor_state', domain: 'community', origin: '0277', purpose: { zh: '聊天监控启用与清理时间', en: 'Chat monitoring activation and cleanup times' } },
   { name: 'membership_renewal_debits', domain: 'commerce', origin: '0276', purpose: { zh: '微信续费周期与扣款查证记录；每期唯一订单', en: 'WeChat renewal cycles and reconciliation with one order per cycle' } },
   { name: 'dev_preview_requests', domain: 'community', origin: '0273', purpose: { zh: '开发电脑接入申请及开通状态', en: 'Development computer enrollment and provisioning state' } },
   { name: 'dev_preview_events', domain: 'community', origin: '0273', purpose: { zh: '开发网址审批与执行审计', en: 'Preview approval and provisioning audit' } },
@@ -567,6 +574,7 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
+  { n: 277, slug: 'assistant_monitoring', desc: { zh: '私有聊天问答、响应时间、状态、模型用量及工具统计', en: 'Private chat content, latency, status, model usage and tool metrics' } },
   { n: 276, slug: 'membership_renewal_pipeline', desc: { zh: '微信签约同意快照、签约序列与幂等续费扣款记录', en: 'WeChat enrollment consent, request sequence and idempotent renewal debits' } },
   { n: 0, slug: 'bootstrap_updated_at_function', desc: { zh: '为全新数据库预先创建共用 updated_at trigger 函数，修复历史迁移 0001 早于 0010 引用它的重放缺口。', en: 'Bootstrap the shared updated_at trigger function so fresh replays can run historical migration 0001 before 0010.' } },
   { n: 1, slug: 'nav_sites', desc: { zh: '/site 导航站表初建', en: 'Create nav_sites for the /site directory' } },

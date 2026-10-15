@@ -169,6 +169,7 @@ export const NOT_USER_OWNED: Readonly<Record<string, string>> = {
   friend_chat_stickers: '上传者归属随账号清空；删除无会话和收藏引用的图片，其余仅保留其他用户持有的副本',
   user_blocks: '黑名单关系的双向账号外键都随 app_users 级联删',
   user_wca_friend_contacts: '未注册 WCA 好友条目只属于账号本人,随 app_users 级联删',
+  site_assistant_requests: '私有 AI 问答与监控指标通过 user_id 外键随 app_users 级联删除，不转为匿名正文',
   recon_favorites: '私有复盘收藏通过 user_id 外键随 app_users 级联删',
   user_pets: '私人宠物领养与养成数据通过 user_id 外键随 app_users 级联删',
   drive_members: '网盘访问权限随 app_users 级联删',

@@ -2,6 +2,7 @@ import { APICallError, embedMany } from 'ai';
 import { setTimeout as delay } from 'node:timers/promises';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { KNOWLEDGE_DIMENSIONS } from './site_assistant_knowledge.js';
+import { recordAssistantEmbedding } from './site_assistant_monitor.js';
 
 export function assistantEmbeddingConfig() {
   const key = process.env.SITE_ASSISTANT_EMBEDDING_API_KEY || process.env.SITE_ASSISTANT_API_KEY;
@@ -33,8 +34,10 @@ export async function embedKnowledge(texts: string[], signal: AbortSignal, fetch
   for(let attempt=0; ; attempt++) {
     signal.throwIfAborted();
     try {
+      const recordUsage = recordAssistantEmbedding(config.model, new URL(config.baseUrl).origin);
       const result = await embedMany({ model: provider.embeddingModel(config.model), values: texts, dimensions: KNOWLEDGE_DIMENSIONS,
         maxRetries: 0, maxParallelCalls: 1, abortSignal: AbortSignal.any([signal, AbortSignal.timeout(options.timeoutMs ?? 8000)]) });
+      recordUsage(result.usage.tokens);
       if (result.embeddings.length !== texts.length || result.embeddings.some(vector => vector.length !== KNOWLEDGE_DIMENSIONS || vector.some(value => !Number.isFinite(value)) || !vector.some(value => value !== 0))) throw new Error('Invalid embedding vector');
       return result.embeddings;
     } catch(error) {

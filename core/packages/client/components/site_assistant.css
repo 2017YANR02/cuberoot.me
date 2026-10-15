@@ -47,7 +47,7 @@
 .site-assistant-input-actions .site-assistant-action { width:36px; height:36px; flex-shrink:0; padding:0; border:0; border-radius:50%; }
 .site-assistant-mic { background:transparent; }
 .site-assistant-mic:hover { background:var(--card); }
-.site-assistant-mic[aria-pressed=true] { background:var(--accent-soft); color:var(--accent); }
+.site-assistant-action[aria-pressed=true] { background:var(--accent-soft); color:var(--accent); }
 .site-assistant-send,.site-assistant-send:hover { background:var(--primary); color:var(--primary-foreground); }
 .site-assistant-note,.site-assistant-status { color:var(--muted-foreground); font-size:12px; }
 .site-assistant-note { margin:10px 0 0; text-align:center; }

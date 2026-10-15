@@ -25,6 +25,7 @@ import './notifications.css';
 import RecordPreferences from './_RecordPreferences';
 
 const KIND_ICON: Record<NotificationKind, typeof MessageSquare> = {
+  assistant_alert: BellRing,
   recon_alt: GitBranch,
   recon_comment: MessageSquare,
   recon_reply: Reply,
@@ -68,6 +69,7 @@ export default function NotificationsPage() {
   useEffect(() => { setMounted(true); }, []);
 
   const kindText = (k: NotificationKind): string => ({
+    assistant_alert: t('AI 服务告警', 'AI service alert'),
     recon_alt: t('提交了新另解', 'submitted an alternative'),
     recon_comment: t('发表了新评论', 'left a new comment'),
     recon_reply: t('回复了你的评论', 'replied to your comment'),

@@ -1,3 +1,4 @@
+import { recordAssistantRetrieval } from './site_assistant_monitor.js';
 import { knowledgeIndexSchema, lexicalKnowledge } from './site_assistant_knowledge.js';
 import { hybridKnowledge } from './site_assistant_knowledge_db.js';
 import { createAssistantModel } from './site_assistant_model.js';
@@ -180,7 +181,7 @@ export async function answerSiteQuestion(
   if(!hasImages && worldDateQuestion && requestedAnnouncements.length===0) {
     const years=[...new Set(timeContext.normalizedQuestion.match(/(?:19|20)\d{2}/g) ?? [])];
     await emit?.({type:'status',status:{phase:'querying',tool:'competitions'}});
-    const result=await assistantStage('tool',()=>runDataTool({tool:'competitions',query:['WC',...years].join(' '),country:'',upcoming:false,limit:20},lang,read),0);
+    const result=await assistantStage('tool',()=>runDataTool({tool:'competitions',query:['WC',...years].join(' '),country:'',upcoming:false,limit:20},lang,read),0,'competitions');
     const rows=(result.evidence as {competitions:Array<{id:string;start_date:string;end_date:string}>}).competitions;
     const found=new Set(rows.map(c=>c.id.slice(2)));
     const missing=years.filter(year=>!found.has(year));
@@ -193,13 +194,13 @@ export async function answerSiteQuestion(
   if (!hasImages && asksForPersonalCountries && /^(?:我(?:去过哪些国家比赛|参加过哪些国家的比赛)|Which countries have I competed in)[?？。!！\s]*$/i.test(question.trim())) {
     if (!selfWcaId) return {answer:{zh:'请提供你的 WCA ID 或选手姓名，我才能查询你在哪些国家或地区参加过比赛。',en:'Please provide your WCA ID or competitor name so I can look up the countries or regions where you competed.'}[lang],sources:[],artifacts:[]};
     await emit?.({type:'status',status:{phase:'querying',tool:'person_countries'}});
-    const result=await assistantStage('tool',()=>runDataTool({tool:'person_countries',wcaId:selfWcaId},lang,read),0);
+    const result=await assistantStage('tool',()=>runDataTool({tool:'person_countries',wcaId:selfWcaId},lang,read),0,'person_countries');
     return {answer:result.factualSummary+result.sources.map(s=>` [[${s.id}]]`).join(''),sources:result.sources,artifacts:result.artifacts};
   }
   if (!hasImages && asksForPersonalCompetitionCount) {
     if (!selfWcaId) return {answer:{zh:'请提供你的 WCA ID 或选手姓名，我才能查询你的参赛总数。',en:'Please provide your WCA ID or competitor name so I can look up your competition total.'}[lang],sources:[],artifacts:[]};
     await emit?.({type:'status',status:{phase:'querying',tool:'person'}});
-    const result=await assistantStage('tool',()=>runDataTool({tool:'person',wcaId:selfWcaId,event:'all',progress:false,view:'profile'},lang,read),0);
+    const result=await assistantStage('tool',()=>runDataTool({tool:'person',wcaId:selfWcaId,event:'all',progress:false,view:'profile'},lang,read),0,'person');
     const profile=result.evidence as {name:string;competitionCount?:number};
     const answer=typeof profile.competitionCount==='number' && Number.isSafeInteger(profile.competitionCount) && profile.competitionCount>=0
       ? {zh:`按已导入的 WCA 官方成绩，${profile.name}共参加过 ${profile.competitionCount} 场比赛。`,en:`According to imported official WCA results, ${profile.name} has competed in ${profile.competitionCount} competitions.`}[lang]
@@ -291,8 +292,8 @@ export async function answerSiteQuestion(
       const hrefs=[...new Set([...selected.map(page=>page.href),...call.pageIds.flatMap(id=>sources.get(id)?.href ?? (id.startsWith('page:/')?id.slice(5):[]))])];
       if(call.pageIds.length && !hrefs.length) throw new AssistantFailure('source_unavailable');
       let hits: Awaited<ReturnType<typeof lexicalKnowledge>>=[];
-      try { hits=await hybridKnowledge(corpus,call.query,lang,hrefs,signal); } catch { signal.throwIfAborted(); }
-      if(!hits.length) hits=await lexicalKnowledge(corpus,call.query,lang,hrefs);
+      try { hits=await hybridKnowledge(corpus,call.query,lang,hrefs,signal); } catch { signal.throwIfAborted(); recordAssistantRetrieval({ mode: 'fallback', reason: 'retrieval_unavailable', hits: [] }); }
+      if(!hits.length) { hits=await lexicalKnowledge(corpus,call.query,lang,hrefs); recordAssistantRetrieval({ mode: 'local_lexical', generation: corpus.updated, hits }); }
       // Replace placeholders with the actual passages and cite each retrieved section.
       for(const chunk of hits) {
         const placeholder=selected.findIndex(page=>page.href===chunk.href && !page.content);
@@ -301,6 +302,7 @@ export async function answerSiteQuestion(
       }
     } catch(error) {
       signal.throwIfAborted();
+      recordAssistantRetrieval({ mode: 'fallback', reason: 'corpus_unavailable', hits: [] });
       // Known directory pages can still be read when the index is unavailable.
       if(!selected.length) throw error;
     }
@@ -436,7 +438,7 @@ export async function answerSiteQuestion(
           if(parsed.data.tool==='analysis_schema') { analysisSchemaRead=true; return describeAnalysis(parsed.data.datasets); }
           if(parsed.data.tool==='analysis_query') return analysisSchemaRead ? runAnalysisQuery(parsed.data,lang,signal,resolvedPeople) : {sources:[],artifacts:[],evidence:{error:'Call analysis_schema before constructing a query.',notEvidence:true}};
           return parsed.data.tool==='navigation' ? navigation(parsed.data) : parsed.data.tool==='pages' ? pages(parsed.data) : runDataTool(parsed.data,lang,read,undefined,timeContext.today);
-        },round);
+        },round,parsed.data.tool);
         if(parsed.data.tool==='analysis_query')analysisIncomplete=!!(result.evidence && typeof result.evidence==='object' && 'notEvidence' in result.evidence);
         // Rejected or unresolved calls have not read any evidence. They must
         // remain eligible after the planner repairs arguments or resolves a name.

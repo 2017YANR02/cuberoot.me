@@ -1,0 +1,68 @@
+name: Assistant Monitor
+on:
+  schedule:
+    - cron: '11,26,41,56 * * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: assistant-monitor
+  cancel-in-progress: false
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Setup SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id
+          chmod 600 ~/.ssh/id
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+      - name: Check recording heartbeat and active alerts
+        id: probe
+        continue-on-error: true
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          ssh -o ConnectTimeout=15 -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'REMOTE'
+          set -eu
+          set -a
+          . /root/core-api/.env
+          set +a
+          node --input-type=module <<'NODE'
+          const r = await fetch('http://127.0.0.1:3001/v1/admin/assistant/health', {
+            headers: { 'X-Admin-Key': process.env.ADMIN_API_KEY }, signal: AbortSignal.timeout(15000)
+          });
+          if (!r.ok) throw new Error('Assistant monitor heartbeat unavailable');
+          const data = await r.json();
+          console.log(JSON.stringify(data));
+          if (!data.healthy || data.alerts?.length) process.exitCode = 1;
+          NODE
+          REMOTE
+      - name: Notify only on incident or recovery
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BARK_KEY: ${{ secrets.BARK_KEY }}
+          CURRENT: ${{ steps.probe.outcome }}
+        run: |
+          previous=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/assistant_monitor.yml/runs?status=completed&per_page=1" --jq '.workflow_runs[0].conclusion // "success"')
+          current=success
+          [ "$CURRENT" = success ] || current=failure
+          if [ "$current" != "$previous" ]; then
+            [ -n "$BARK_KEY" ] || { echo '::error::Bark notification is not configured'; exit 1; }
+            title='CubeRoot AI 监控已恢复'
+            [ "$current" = success ] || title='CubeRoot AI 监控异常'
+            curl --fail --silent --show-error --max-time 15 -X POST "https://api.day.app/$BARK_KEY" \
+              --data-urlencode "title=$title" \
+              --data-urlencode 'body=请查看 AI 聊天监控中的告警与记录健康状态。通知不包含问答正文。' \
+              --data-urlencode 'group=cuberoot-assistant' \
+              --data-urlencode "url=https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          fi
+          [ "$current" = success ]

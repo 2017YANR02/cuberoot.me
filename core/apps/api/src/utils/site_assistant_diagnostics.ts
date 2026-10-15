@@ -1,5 +1,6 @@
 import type { AssistantErrorCode } from '@cuberoot/shared/site-assistant';
 import { currentDiagnosticRequestId, diagnosticLog } from '../observability/request.js';
+import { recordAssistantStage } from './site_assistant_monitor.js';
 
 export class AssistantFailure extends Error {
   constructor(public readonly code: AssistantErrorCode, public readonly upstreamStatus?: number) { super(code); }
@@ -21,7 +22,7 @@ export function assistantDeadline<T>(run: () => Promise<T>, signal: AbortSignal)
 }
 
 /** Never log questions, identities, URLs, evidence, provider bodies or credentials. */
-export async function assistantStage<T>(stage: 'auth' | 'quota' | 'model' | 'data' | 'page' | 'tool' | 'total', run: () => Promise<T>, round?: number): Promise<T> {
+export async function assistantStage<T>(stage: 'auth' | 'quota' | 'model' | 'data' | 'page' | 'tool' | 'total', run: () => Promise<T>, round?: number, tool?: string): Promise<T> {
   const started = performance.now();
   const requestId = currentDiagnosticRequestId();
   diagnosticLog('site_assistant_stage', { requestId, stage, phase: 'start', round });
@@ -29,7 +30,11 @@ export async function assistantStage<T>(stage: 'auth' | 'quota' | 'model' | 'dat
   let upstreamStatus: number | undefined;
   try { return await run(); }
   catch (error) { code = assistantFailureCode(error); upstreamStatus=error instanceof AssistantFailure?error.upstreamStatus:undefined; throw error; }
-  finally { diagnosticLog('site_assistant_stage', { requestId, stage, phase: 'end', round, durationMs: Math.round(performance.now() - started), code: code ?? 'ok', upstreamStatus }, !!code); }
+  finally {
+    const durationMs = Math.round(performance.now() - started);
+    recordAssistantStage(stage, durationMs, !!code, tool);
+    diagnosticLog('site_assistant_stage', { requestId, stage, phase: 'end', round, durationMs, code: code ?? 'ok', upstreamStatus }, !!code);
+  }
 }
 
 export function checkAssistantResponse(response: Response, source: 'model' | 'source') {

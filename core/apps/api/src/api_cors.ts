@@ -24,6 +24,6 @@ export const apiCors = cors({
   },
   credentials: true,                      // 兼容浏览器 sendBeacon / 默认 include 的请求;server 用 Bearer 鉴权,不读 cookie
   allowHeaders: ['Content-Type', 'Authorization', 'Idempotency-Key', 'X-Battle-Token', 'Upload-Offset', 'Upload-Checksum'],
-  exposeHeaders: ['Upload-Offset', 'Upload-Length', 'Upload-Expires'],
+  exposeHeaders: ['X-Assistant-Request-Id', 'Upload-Offset', 'Upload-Length', 'Upload-Expires'],
   maxAge: 86400,
 });

@@ -5,6 +5,7 @@ import i18n, { normalizeAppLang } from '@/i18n/i18n-client';
 import type { RecordNotificationPreferences } from '@cuberoot/shared/record-notifications';
 
 export type NotificationKind =
+  | 'assistant_alert'
   | 'recon_alt' | 'recon_comment' | 'recon_reply'
   | 'forum_thread' | 'forum_reply' | 'forum_report'
   | 'forum_review' | 'forum_approved' | 'forum_rejected'

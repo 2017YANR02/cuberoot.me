@@ -6,6 +6,7 @@ import type { AssistantImage, AssistantMessage } from '@cuberoot/shared/site-ass
 import { toolCallSchema } from './site_assistant_tools.js';
 import { AssistantFailure, checkAssistantResponse } from './site_assistant_diagnostics.js';
 import type { AssistantConfig } from './site_assistant.js';
+import { recordAssistantModel } from './site_assistant_monitor.js';
 
 const answerSchema = z.object({ answer: z.string().max(6000), sourceIds: z.array(z.string()).max(100) });
 
@@ -80,6 +81,7 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
           // below. SDK eager JSON parsing cannot handle the provider's fences.
           : { enable_thinking: false, response_format: { type: 'json_object' } } },
       };
+      const recordUsage = recordAssistantModel(config.model, options.thinking, new URL(config.baseUrl).origin);
       const response = options.onText ? streamText(request) : generateText(request);
       let result;
       if ('fullStream' in response) {
@@ -93,8 +95,9 @@ export function createAssistantModel(config: AssistantConfig, fetcher: typeof fe
             await options.onText?.(content);
           }
         }
-        result = { toolCalls: await response.toolCalls, text: await response.text, finishReason: await response.finishReason, response: await response.response };
+        result = { toolCalls: await response.toolCalls, text: await response.text, finishReason: await response.finishReason, response: await response.response, totalUsage: await response.totalUsage };
       } else result = await response;
+      recordUsage(result.totalUsage);
       if (result.finishReason === 'length') throw new Error('Incomplete model output');
       if (result.toolCalls.length) {
         const calls = result.toolCalls.map(call => ({ ...call.input as object, tool: call.toolName }));
