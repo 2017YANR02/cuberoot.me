@@ -32,10 +32,7 @@ jobs:
         run: |
           ssh -o ConnectTimeout=15 -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" 'bash -s' <<'REMOTE'
           set -eu
-          set -a
-          . /root/core-api/.env
-          set +a
-          node --input-type=module <<'NODE'
+          node --env-file=/root/core-api/.env --input-type=module <<'NODE'
           const r = await fetch('http://127.0.0.1:3001/v1/admin/assistant/health', {
             headers: { 'X-Admin-Key': process.env.ADMIN_API_KEY }, signal: AbortSignal.timeout(15000)
           });
