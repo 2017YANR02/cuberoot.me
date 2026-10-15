@@ -3,7 +3,8 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import type { QueryRunner } from '../db/connection.js';
 
-export const assistantOutboxDirectory = () => process.env.SITE_ASSISTANT_OUTBOX_DIR || join(homedir(), '.local/state/cuberoot/assistant-outbox');
+// Linux shares the systemd-managed state directory with the sandboxed indexer.
+export const assistantOutboxDirectory = () => process.env.SITE_ASSISTANT_OUTBOX_DIR || (process.platform === 'linux' ? '/var/lib/cuberoot-assistant/outbox' : join(homedir(), '.local/state/cuberoot/assistant-outbox'));
 export interface AssistantCompletion { id: string; createdAt: string; params: unknown[] }
 const update = `UPDATE site_assistant_requests SET status=?,error_code=?,finished_at=?,duration_ms=?,first_answer_ms=?,answer=?,response=?,metrics=?
   WHERE id=? AND status IN ('running','interrupted')`;
