@@ -440,8 +440,8 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'dev/schema': { title: { zh: '数据库 Schema', en: 'Database schema' } },
   'dev/solvers': { title: { zh: '求解器', en: 'Solvers' } },
   'dev/solvers/compare': {
-    title: { zh: '三阶最优求解器对比', en: 'Optimal 3×3 Solver Comparison' },
-    description: { zh: '对比 cube48opt、Nissy 与 CubeRoot Rust 的 EO 档位、表数据、原生内存和同条件实测性能，明确已实现与已验证的边界。', en: 'Compare cube48opt, Nissy and CubeRoot Rust by EO tier, table data, native memory and matched benchmarks, with implementation and validation status kept distinct.' },
+    title: { zh: '三阶最优求解器 Benchmark', en: 'Optimal 3×3 Solver Benchmark' },
+    description: { zh: '三阶 HTM 最优求解器本机实测：Opt8 使用 8 GB 档、100 条打乱；Opt9 使用 16 GB 档、1000 条打乱，按测试组与运行环境分别比较。', en: 'Local optimal 3×3 HTM solver benchmarks: Opt8 at 8 GB with 100 scrambles and Opt9 at 16 GB with 1000 scrambles, compared within each test group and runtime.' },
   },
   'dev/stack': { title: { zh: '技术栈', en: 'Stack' } },
   'dev/tokens': { title: { zh: '设计令牌', en: 'Design Tokens' } },
