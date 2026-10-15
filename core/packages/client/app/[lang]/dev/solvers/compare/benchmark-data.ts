@@ -20,7 +20,7 @@ export const COHORTS = {
 } as const;
 export type Candidate = {
   id: string; name: string; implementation: string; runtime: Runtime;
-  cohort: CohortId; tableGB: number; source: string; note: Bilingual;
+  cohort: CohortId; tableGB: number; source: string; note: Bilingual; status?: Bilingual;
 };
 
 // Candidate configurations, not results. Table estimates are decimal GB.
@@ -29,6 +29,10 @@ export const CANDIDATES: readonly Candidate[] = [
   { id: 'rust-opt8-wasm', name: 'CubeRoot Opt8', implementation: 'Rust → WASM', runtime: 'wasm', cohort: 'opt8', tableGB: 7.8,
     source: 'https://github.com/2017YANR02/cuberoot.me',
     note: { zh: '正式版 · 本机已测', en: 'Official release · measured locally' } },
+  { id: 'rust-opt8-wasm-coset', name: 'CubeRoot Opt8 · coset', implementation: 'Rust → WASM', runtime: 'wasm', cohort: 'opt8', tableGB: 7.8,
+    source: 'https://github.com/2017YANR02/cuberoot.me',
+    status: { zh: '实验变慢 · 未采用', en: 'Slower experiment · not promoted' },
+    note: { zh: '100 条已验证 · 耗时增加，保留正式版', en: '100 verified · slower; official release retained' } },
   { id: 'cube48opt8-wasm', name: 'cube48opt 8', implementation: 'Original WASM', runtime: 'wasm', cohort: 'opt8', tableGB: 7.8,
     source: 'https://github.com/cs0x7f/cubeopt-wasm',
     note: { zh: '本机尚无同条件结果', en: 'No matched local result yet' } },
@@ -50,6 +54,10 @@ export const CANDIDATES: readonly Candidate[] = [
   { id: 'rust-opt9-wasm-quarter', name: 'CubeRoot Opt9 · quarter-fixed', implementation: 'Rust → WASM', runtime: 'wasm', cohort: 'opt9', tableGB: 15.6,
     source: 'https://github.com/2017YANR02/cuberoot.me',
     note: { zh: '补齐 Opt9 等价剪枝 · 本轮已测', en: 'Opt9 equivalent-branch pruning enabled · measured' } },
+  { id: 'rust-opt9-wasm-coset', name: 'CubeRoot Opt9 · coset', implementation: 'Rust → WASM', runtime: 'wasm', cohort: 'opt9', tableGB: 15.6,
+    source: 'https://github.com/2017YANR02/cuberoot.me',
+    status: { zh: '内存保护停止', en: 'Memory protection stopped run' },
+    note: { zh: '加载时触发内存保护 · 0 / 1000 · 无成绩', en: 'Memory protection during loading · 0 / 1000 · no score' } },
   { id: 'rust-opt9-wasm', name: 'CubeRoot Opt9 · baseline', implementation: 'Rust → WASM', runtime: 'wasm', cohort: 'opt9', tableGB: 15.6,
     source: 'https://github.com/2017YANR02/cuberoot.me',
     note: { zh: '本轮 1000 条已验证', en: '1000 verified this run' } },
@@ -76,7 +84,9 @@ export const BENCHMARK_MANIFEST = {
   ranking: 'Compare only within one cohort and runtime; keep batch throughput and single-state latency separate',
   memory: 'Table budget; report solver and whole-process-tree peak RSS separately',
   currentRunResults: currentResults, candidates: CANDIDATES,
-  incompleteRuns: [],
+  incompleteRuns: [{ id: 'rust-opt9-wasm-coset', cohort: 'opt9', completedCases: 0, plannedCases: 1000,
+    reason: 'Memory protection: Swapouts increased from 16 to 48 during table loading',
+    phase: 'table-loading', stoppedAt: '2026-10-15T06:59:36.852Z', performanceResult: false }],
   continuation: { id: 'cube48opt-wasm', retainedCases: 431, continuedCases: 569, sessions: 2,
     timing: 'Sum of 1000 completed calls; first 431 retained without rerunning; failed attempt and reload excluded',
     limitation: 'Two sessions, unlike the uninterrupted Rust runs. No repeated-run noise estimate.',
