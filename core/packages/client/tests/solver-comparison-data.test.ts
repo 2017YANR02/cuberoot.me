@@ -5,11 +5,14 @@ import { BENCHMARK_MANIFEST, CANDIDATES, COHORTS, CURRENT_RESULTS } from '@/app/
 
 describe('multithread solver comparison evidence', () => {
   it('publishes complete verified runs and discloses the retained original prefix', () => {
-    expect(CURRENT_RESULTS.map(row => [row.id, row.seconds])).toEqual([
-      ['rust-opt8-wasm', 33.36867566599999],
-      ['rust-opt-9', 42.098461187999995], ['cube48opt-wasm', 83.655909546], ['rust-opt9-wasm', 99.88279715799992],
-      ['rust-opt9-wasm-quarter', 93.74520485000006],
-    ]);
+    expect(Object.fromEntries(CURRENT_RESULTS.map(row => [row.id, row.seconds]))).toEqual({
+      'rust-opt8-wasm': 33.36867566599999,
+      'rust-opt8-wasm-coset': 39.667527956000015,
+      'rust-opt-9': 42.098461187999995,
+      'cube48opt-wasm': 83.655909546,
+      'rust-opt9-wasm': 99.88279715799992,
+      'rust-opt9-wasm-quarter': 93.74520485000006,
+    });
     for (const row of BENCHMARK_MANIFEST.currentRunResults) {
       const candidate = CANDIDATES.find(candidate => candidate.id === row.id)!;
       const cohort = COHORTS[candidate.cohort];
@@ -19,7 +22,11 @@ describe('multithread solver comparison evidence', () => {
       expect(row.tableBytes).toBe(candidate.cohort === 'opt8' ? 7782727680 : 15565455360);
       expect(row.swapoutsDelta).toBe(0);
     }
-    expect(BENCHMARK_MANIFEST.incompleteRuns).toEqual([]);
+    expect(BENCHMARK_MANIFEST.incompleteRuns).toEqual([{
+      id: 'rust-opt9-wasm-coset', cohort: 'opt9', completedCases: 0, plannedCases: 1000,
+      reason: 'Memory protection: Swapouts increased from 16 to 48 during table loading',
+      phase: 'table-loading', stoppedAt: '2026-10-15T06:59:36.852Z', performanceResult: false,
+    }]);
     expect(BENCHMARK_MANIFEST.continuation).toMatchObject({retainedCases:431,continuedCases:569,sessions:2});
     expect(CURRENT_RESULTS.find(r => r.id === 'cube48opt-wasm')?.continuation)
       .toMatchObject({completedCases:431,remainingCases:569,sessions:2});
@@ -32,6 +39,15 @@ describe('multithread solver comparison evidence', () => {
     expect(CANDIDATES.find(row => row.id === 'cube48opt8-wasm')?.cohort).toBe('opt8');
     expect(CURRENT_RESULTS.find(row => row.id === 'cube48opt8-wasm')).toBeUndefined();
     expect(CANDIDATES.every(row => row.cohort in COHORTS)).toBe(true);
+  });
+  it('records the slower Opt8 experiment and excludes the unmeasured Opt9 attempt', () => {
+    expect(CURRENT_RESULTS.find(row => row.id === 'rust-opt8-wasm-coset'))
+      .toMatchObject({ cases: 100, threads: 4, seconds: 39.667527956000015, verifiedSolutions: 100 });
+    expect(CANDIDATES.find(row => row.id === 'rust-opt8-wasm-coset')?.status?.en)
+      .toBe('Slower experiment · not promoted');
+    expect(CURRENT_RESULTS.find(row => row.id === 'rust-opt9-wasm-coset')).toBeUndefined();
+    expect(CANDIDATES.find(row => row.id === 'rust-opt9-wasm-coset')?.status?.en)
+      .toBe('Memory protection stopped run');
   });
   it('shows only the retained native Opt9 and Opt10 tiers', () => {
     expect(COMPARISON_ROWS.map(row => [row.id, row.family, row.eoBits]))
