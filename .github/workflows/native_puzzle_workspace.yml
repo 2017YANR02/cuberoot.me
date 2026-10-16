@@ -8,17 +8,30 @@ permissions:
 jobs:
   source:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - name: Archive tracked implementation and contracts
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 12.6.0
+          run_install: false
+      - name: Install locked workspace dependencies
+        working-directory: core
+        run: pnpm install --frozen-lockfile
+      - name: Archive reproducible dependency workspace
         shell: bash
         run: |
           mkdir -p /tmp/native-puzzle-workspace
           git rev-parse HEAD > /tmp/native-puzzle-workspace/revision.txt
-          git ls-files -z -- AGENTS.md .agents .github docs core | tar --exclude='core/packages/client/public/*' --exclude='core/packages/platform/*' --exclude='core/apps/fmc-solver/vendor/*' --exclude='core/jobs/stats-build/output/*' --null -czf /tmp/native-puzzle-workspace/source.tar.gz -T -
+          cp "$(command -v node)" /tmp/native-puzzle-workspace/node
+          find core -type d -name node_modules -prune -print0 | tar --null -czf /tmp/native-puzzle-workspace/deps.tar.gz -T -
+          git ls-files -z -- .node-version .codex .githooks ops scripts .sync sync_upstream.ts architecture-boundaries.json | tar --null -czf /tmp/native-puzzle-workspace/contracts.tar.gz -T -
       - uses: actions/upload-artifact@v4
         with:
-          name: native-puzzle-source
+          name: native-puzzle-dependencies
           path: /tmp/native-puzzle-workspace
+          compression-level: 0
           retention-days: 2
