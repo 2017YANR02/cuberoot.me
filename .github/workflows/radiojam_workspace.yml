@@ -4,23 +4,21 @@ on:
     branches: [feat/native-puzzle-20261016b]
     paths: [.github/workflows/radiojam_workspace.yml]
 permissions:
-  contents: read
+  contents: write
+concurrency:
+  group: radiojam-isolated-verification
+  cancel-in-progress: false
 jobs:
   workspace:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+      NODE_OPTIONS: --max-old-space-size=6144
     steps:
       - uses: actions/checkout@v6
         with:
-          persist-credentials: false
-          sparse-checkout: |
-            core
-            .agents
-            .codex
-            .github
-            docs
-            scripts
-            solver
+          fetch-depth: 1
       - uses: pnpm/action-setup@v6
         with:
           package_json_file: core/package.json
@@ -29,16 +27,96 @@ jobs:
           node-version-file: .node-version
           cache: pnpm
           cache-dependency-path: core/pnpm-lock.yaml
+      - name: Apply scoped reviewed implementation
+        id: apply
+        run: |
+          node .github/radiojam-apply.mjs
+          git diff --check
+          git add -u -- core .agents/skills/sim-add-puzzle
+          mkdir -p core/.tmp/radiojam-evidence
+          git diff --cached --binary > core/.tmp/radiojam-evidence/implementation.patch
       - name: Install locked dependencies
         working-directory: core
         run: pnpm install --frozen-lockfile
-      - name: Inspect actual native geometry
-        working-directory: core/packages/client
+      - name: Build shared dependencies and generate matching artwork
+        id: deps
+        working-directory: core
         run: |
-          node --input-type=module <<'JS'
-          import {getPuzzleGeometryByDesc} from 'cubing/puzzle-geometry';
-          const depth = 5 - 2*Math.sqrt(5) - 0.06;
-          const pg=getPuzzleGeometryByDesc(`i f ${depth}`, {allMoves:true,orientCenters:true,addRotations:true});
-          const data=pg.get3d();
-          console.log('RADIO_JAM_PROBE', JSON.stringify({depth, perFace:pg.stickersPerFace,raw:data.stickers.length, visible:data.stickers.filter(s=>!s.isDup).length,orbits:pg.getKPuzzleDefinition(true).orbits}));
-          JS
+          pnpm --filter @cuberoot/client run build:deps
+          pnpm --filter @cuberoot/client exec node scripts/generate-puzzle-icons.mts
+          pnpm --filter @cuberoot/event-icon generate
+          node packages/client/scripts/native-puzzles/compare-outlines.mjs --set=radiojam
+          git add packages/event-icon/svg/puzzle/radiojam.svg packages/event-icon/src/svg-map-puzzle.ts
+          git diff --cached --check
+      - name: Native and three-entry regression tests
+        id: unit
+        continue-on-error: true
+        working-directory: core
+        run: |
+          set -o pipefail
+          pnpm --filter @cuberoot/client exec vitest run --maxWorkers=2 tests/native-mixed-puzzles-geometry.test.ts tests/native-puzzles-client-integration.test.ts tests/native-puzzle-drag.test.ts tests/native-puzzle-svg.test.ts tests/native-puzzle-manual-anchor.test.ts tests/native-puzzle-sim-controls.test.ts tests/twisty_2d_fallback.test.ts tests/sim-native-companion-lifecycle.test.ts tests/sim-puzzle-menu.test.ts tests/puzzle-icon-catalog.test.ts tests/puzzle-menu-label-guard.test.ts tests/timer-sync-seed.test.ts tests/timer_scramble_runtime.test.ts tests/timer_event_catalog.test.ts tests/timer_persistence.test.ts tests/timer_cstimer_io.test.ts tests/timer_battle_event_sync.test.ts tests/timer-scramble-preview-shared.test.ts tests/timer-scramble-source-bar.test.ts 2>&1 | tee .tmp/radiojam-evidence/unit-tests.log
+      - name: Shared app provider contract
+        id: app
+        continue-on-error: true
+        working-directory: core
+        run: |
+          set -o pipefail
+          pnpm --filter @cuberoot/app-ui exec vitest run src/scramble-source-matrix.audit.test.ts src/scramble-source-contract.test.ts 2>&1 | tee .tmp/radiojam-evidence/app-tests.log
+      - name: Client typecheck
+        id: types
+        continue-on-error: true
+        working-directory: core
+        run: |
+          set -o pipefail
+          pnpm --filter @cuberoot/client typecheck 2>&1 | tee .tmp/radiojam-evidence/typecheck.log
+      - name: Architecture boundary audit
+        id: boundaries
+        continue-on-error: true
+        working-directory: core
+        run: |
+          set -o pipefail
+          pnpm audit:boundaries 2>&1 | tee .tmp/radiojam-evidence/boundaries.log
+      - name: Install actual Chromium browser
+        working-directory: core
+        run: pnpm --filter @cuberoot/client exec playwright install --with-deps chromium
+      - name: Actual browser acceptance, including forced SVG fallback
+        id: browser
+        continue-on-error: true
+        working-directory: core
+        env:
+          NATIVE_PUZZLE_ID: radiojam
+          BASE_URL: http://127.0.0.1:3000
+        run: |
+          set -o pipefail
+          pnpm --filter @cuberoot/client dev > .tmp/radiojam-evidence/dev.log 2>&1 &
+          DEV_PID=$!
+          trap 'kill "$DEV_PID" 2>/dev/null || true' EXIT
+          pnpm --filter @cuberoot/client exec node --import tsx scripts/radio-web-browser-acceptance.mts 2>&1 | tee .tmp/radiojam-evidence/browser.log
+      - name: Preserve reviewed code and artwork evidence
+        if: always() && steps.apply.outcome == 'success'
+        run: |
+          git diff --cached --binary > core/.tmp/radiojam-evidence/verified-changes.patch
+          git rev-parse HEAD > core/.tmp/radiojam-evidence/base-commit.txt
+          cp core/packages/event-icon/svg/puzzle/radiojam.svg core/.tmp/radiojam-evidence/ 2>/dev/null || true
+          cp core/.tmp/png/radiojam-outlines*.svg core/.tmp/radiojam-evidence/ 2>/dev/null || true
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.apply.outcome == 'success'
+        with:
+          name: radiojam-verification-evidence
+          path: core/.tmp/radiojam-evidence
+          include-hidden-files: true
+          retention-days: 7
+      - name: Commit only verified implementation to the task branch
+        if: always() && steps.deps.outcome == 'success'
+        run: |
+          test '${{ steps.unit.outcome }}' = success
+          test '${{ steps.app.outcome }}' = success
+          test '${{ steps.types.outcome }}' = success
+          test '${{ steps.boundaries.outcome }}' = success
+          test '${{ steps.browser.outcome }}' = success
+          git diff --cached --check
+          git diff --cached --stat
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'feat(sim): add native Radio Jam with complete shared integration'
+          git push origin HEAD:refs/heads/feat/native-puzzle-20261016b
