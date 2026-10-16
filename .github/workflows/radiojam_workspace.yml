@@ -33,8 +33,7 @@ jobs:
           node --input-type=module <<'JS'
           import {readFileSync,writeFileSync} from 'node:fs';
           const stage='.github/radiojam-apply.mjs';
-          // Replacement content contains a regex dollar followed by a backtick.
-          // Callback form preserves it literally rather than expanding source prefixes.
+          // Callback replacement preserves literal regex dollars in source.
           writeFileSync(stage,readFileSync(stage,'utf8').replace('s.replace(before, after)','s.replace(before, () => after)'));
           await import('./.github/radiojam-apply.mjs');
           for (const path of ['core/packages/client/tests/timer_event_catalog.test.ts','core/packages/client/tests/timer-drill-contract-shared.test.ts']) {
@@ -43,6 +42,12 @@ jobs:
           const matrix='core/packages/app-ui/src/scramble-source-matrix.audit.test.ts';
           const counts={79:80,237:240,59:60,78:79};
           writeFileSync(matrix, readFileSync(matrix,'utf8').replace(/\b(79|237|59|78)\b/g,n=>String(counts[n])));
+          const path='core/packages/client/scripts/radio-web-browser-acceptance.mts';
+          const before='  await end(page).click();\n  const sharedPattern = await pattern(page);';
+          const after='  // A manual turn already seeks to its newly appended endpoint.\n  await expect(end(page)).toBeDisabled();\n  await expect.poll(() => pattern(page)).not.toBe(finished);\n  const sharedPattern = await pattern(page);';
+          const source=readFileSync(path,'utf8');
+          if (source.split(before).length!==2) throw new Error('Expected one manual endpoint assertion');
+          writeFileSync(path,source.replace(before,()=>after));
           JS
           node --check core/packages/client/scripts/radio-web-browser-acceptance.mts
           git diff --check
@@ -113,6 +118,7 @@ jobs:
           assert.equal(report.puzzle,'radiojam');
           assert.equal(report.checks.filter(c=>c.status==='passed').length,7);
           assert.equal(report.checks.filter(c=>c.status==='failed').length,0);
+          assert.equal(report.errors.length,0);
           console.log('Browser report counts verified',report.checks);
           JS
       - name: Preserve code, actual step outcomes and artwork evidence
