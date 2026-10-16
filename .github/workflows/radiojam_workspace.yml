@@ -1,42 +1,44 @@
 name: Radio Jam verification workspace
-
 on:
   push:
     branches: [feat/native-puzzle-20261016b]
-    paths:
-      - .github/workflows/radiojam_workspace.yml
-
+    paths: [.github/workflows/radiojam_workspace.yml]
 permissions:
   contents: read
-
 jobs:
   workspace:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
-          fetch-depth: 1
           persist-credentials: false
-      - name: Package tracked development sources without credentials or build products
-        shell: bash
-        run: |
-          mkdir -p /tmp/radiojam-workspace
-          git ls-files -z AGENTS.md .agents .codex .github core docs ops scripts solver > /tmp/radiojam-files
-          python3 - <<'PY'
-          import os, tarfile
-          paths = open('/tmp/radiojam-files', 'rb').read().split(b'\0')
-          excluded = ('core/packages/client/public/', 'core/apps/fmc-solver/', 'solver/tables/', 'solver/target/')
-          with tarfile.open('/tmp/radiojam-workspace/sources.tar.gz', 'w:gz') as archive:
-              for raw in paths:
-                  path = os.fsdecode(raw)
-                  if path and not path.startswith(excluded) and os.path.isfile(path) and os.path.getsize(path) < 2000000:
-                      archive.add(path, recursive=False)
-          PY
-          ls -lh /tmp/radiojam-workspace/sources.tar.gz
-          git rev-parse HEAD
-      - uses: actions/upload-artifact@v4
+          sparse-checkout: |
+            core
+            .agents
+            .codex
+            .github
+            docs
+            scripts
+            solver
+      - uses: pnpm/action-setup@v6
         with:
-          name: radiojam-development-sources
-          path: /tmp/radiojam-workspace/sources.tar.gz
-          retention-days: 2
+          package_json_file: core/package.json
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: core/pnpm-lock.yaml
+      - name: Install locked dependencies
+        working-directory: core
+        run: pnpm install --frozen-lockfile
+      - name: Inspect actual native geometry
+        working-directory: core/packages/client
+        run: |
+          node --input-type=module <<'JS'
+          import {getPuzzleGeometryByDesc} from 'cubing/puzzle-geometry';
+          const depth = 5 - 2*Math.sqrt(5) - 0.06;
+          const pg=getPuzzleGeometryByDesc(`i f ${depth}`, {allMoves:true,orientCenters:true,addRotations:true});
+          const data=pg.get3d();
+          console.log('RADIO_JAM_PROBE', JSON.stringify({depth, perFace:pg.stickersPerFace,raw:data.stickers.length, visible:data.stickers.filter(s=>!s.isDup).length,orbits:pg.getKPuzzleDefinition(true).orbits}));
+          JS
