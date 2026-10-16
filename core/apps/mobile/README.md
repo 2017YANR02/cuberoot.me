@@ -111,6 +111,14 @@ On macOS, run `ios:doctor` first, use `ios:build` for a repeatable unsigned Simu
 
 For this Mac's real-iPhone screenshot and UI automation setup, see [iOS device automation](../../../docs/mobile-ios-automation.md). It uses Appium/XCUITest against the installed app without resetting its data; it is separate from production dependencies and native release builds.
 
+## UU Remote
+
+Open **Account → UU Remote** in the bundled App shell. Install UU Remote 4.42.0 or later, sign in there and add a Windows/macOS computer with remote access enabled. Bind a computer in UU's picker, then choose full-screen control or picture in picture (iOS 18+ with PiP support). The official protocol is documented at https://github.com/netease-uuyc/uuremote-integration-guide.
+
+`@cuberoot/app-ui` owns the UI and request lifecycle; `src/uu-remote.ts` supplies Capacitor AppLauncher, launch/event URLs and the existing secure-storage adapter. Android callbacks use the actual application ID, including `.debug`; iOS keeps `me.cuberoot.app`. Binding and pending request IDs are stored together in Keychain/Keystore, never uploaded or passed into website frames. Requests expire after 30 minutes; stop waiting invalidates late callbacks without terminating UU's remote session. Full-screen mode has no success callback. Removing the local binding does not revoke the computer in UU or terminate its session. UU account changes can require rebinding.
+
+After source changes, build the Mobile bundle and sync both native projects. Device acceptance must separately cover bind/cancel, cold return, full-screen, PiP success/unsupported, offline computer, changed UU account and local removal. Native builds alone do not prove a real remote connection; no store release or device authorization is implied.
+
 ## Persistence
 
 `core/packages/app-ui/src/data/timer-repository.ts` is the installed App timer storage boundary. It writes schema-versioned `TimerStoreData` with a nested canonical `TimerDatabase` from `@cuberoot/shared/timer` to IndexedDB and serializes concurrent changes. Website database v1/v2/v3 and App envelope v1/v2 use the same decoder and migration chain. Import is limited to 10 MB, previews record counts, writes an atomic recovery copy, and offers one undo; invalid data never replaces the current valid database.

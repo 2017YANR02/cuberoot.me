@@ -97,6 +97,7 @@ export interface InstalledAppNetBattle {
 }
 
 export interface InstalledAppHost {
+  uuRemote?: import('./uu-remote').UURemoteClient;
   watchTimer?: import('./watch-timer').WatchTimerPort;
   createBleTransport?(): BleTransport;
   createStackmatSource?(): StackmatMicSource;

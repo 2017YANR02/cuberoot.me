@@ -33,6 +33,7 @@
     "@capacitor-community/bluetooth-le": "8.3.0",
     "@capacitor/android": "8.5.3",
     "@capacitor/app": "8.1.1",
+    "@capacitor/app-launcher": "8.0.1",
     "@capacitor/browser": "8.0.4",
     "@capacitor/clipboard": "8.0.1",
     "@capacitor/core": "8.5.3",

@@ -37,7 +37,6 @@ export default function AlgTransformPanel({ text, order, onApply }: {
     setSelected(null);
   };
   const rotations = ['x', 'x2', "x'", 'y', 'y2', "y'", 'z', 'z2', "z'"];
-  const rotationNames = { x: t('前后翻', 'Tilt'), y: t('左右转', 'Turn'), z: t('侧着转', 'Roll') };
   return <>
     <select className="sim-transform-select" aria-label={t('换朝向', 'Orientation')} value="" disabled={!enabled}
       onChange={event => {
@@ -45,14 +44,14 @@ export default function AlgTransformPanel({ text, order, onApply }: {
         apply(rotateAlg(text, rotation.family as 'x' | 'y' | 'z', rotation.amount));
       }}>
       <option value="" disabled>{t('换朝向', 'Orientation')}</option>
-      {rotations.map(value => <option key={value} value={value}>{rotationNames[value[0] as 'x' | 'y' | 'z']} {value.endsWith('2') ? '180°' : value.endsWith("'") ? '−90°' : '90°'} · {value}</option>)}
+      {rotations.map(value => <option key={value} value={value}>{value}</option>)}
     </select>
     <select className="sim-transform-select" aria-label={t('镜像', 'Mirror')} value="" disabled={!enabled}
       onChange={event => { if (parsed) apply(mirrorAlg(parsed.canonical, event.target.value as 'M' | 'S' | 'E')); }}>
       <option value="" disabled>{t('镜像', 'Mirror')}</option>
-      <option value="M">{t('左右对换', 'Left ↔ right')}</option>
-      <option value="S">{t('前后对换', 'Front ↔ back')}</option>
-      <option value="E">{t('上下对换', 'Top ↔ bottom')}</option>
+      <option value="M">{t('LR 镜像', 'LR mirror')}</option>
+      <option value="S">{t('FB 镜像', 'FB mirror')}</option>
+      <option value="E">{t('UD 镜像', 'UD mirror')}</option>
     </select>
     <button type="button" aria-expanded={editing} className={editing ? 'sim-transform-active' : undefined}
       disabled={!enabled && !editing} onClick={() => { setEditing(!editing); setSelected(null); }}>
@@ -82,7 +81,7 @@ export default function AlgTransformPanel({ text, order, onApply }: {
         {/^[xyz]$/.test(move.family) && <button type="button" onClick={() => edit('remove')}>{t('去掉', 'Remove')} {move.toString()}</button>}
         <select className="sim-transform-select" aria-label={t('在选中动作后插入转体', 'Insert rotation after selected move')} value="" onChange={event => edit(event.target.value)}>
           <option value="" disabled>{t('在这步后转体…', 'Rotate after this move…')}</option>
-          {rotations.map(value => <option key={value} value={value}>{rotationNames[value[0] as 'x' | 'y' | 'z']} {value.endsWith('2') ? '180°' : value.endsWith("'") ? '−90°' : '90°'} · {value}</option>)}
+          {rotations.map(value => <option key={value} value={value}>{value}</option>)}
         </select>
         <span className="sim-move-note">{t('后续动作自动调整，末态朝向可能改变', 'Following moves adapt; the final orientation may change')}</span>
       </div>}

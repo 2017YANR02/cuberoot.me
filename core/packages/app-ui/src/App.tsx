@@ -1,5 +1,6 @@
 import { shareOrDownloadBackup } from './file-export';
 import { AndroidUpdateNotice } from './AndroidUpdateNotice';
+import { UURemotePanel } from './UURemotePanel';
 import { TimerSoloPage, timerSoloModalState, useTimerSoloCompactLayout } from '@cuberoot/timer-ui/TimerSoloPage';
 import { InstalledBleHost, installedBleRequestPort } from './installed-ble-host';
 import { pickInstalledBleDevice, type InstalledBlePicker } from './installed-ble-picker';
@@ -1984,6 +1985,20 @@ export function App({ host }: { host: InstalledAppHost }) {
     setToolsEntryRoute(route);
     selectPrimaryView('tools');
   }, [selectPrimaryView]);
+
+  const remoteReturnRef = useRef(0);
+  useEffect(() => {
+    const remote = host.uuRemote;
+    if (!remote) return;
+    const onReturn = () => {
+      const returned = remote.getSnapshot().returned;
+      if (returned <= remoteReturnRef.current) return;
+      remoteReturnRef.current = returned;
+      selectPrimaryView('account');
+    };
+    onReturn();
+    return remote.subscribe(onReturn);
+  }, [host.uuRemote, selectPrimaryView]);
 
   const markSavedWcaSolve = useCallback((
     solve: Omit<Solve, 'id' | 'ts'>,
@@ -4438,6 +4453,7 @@ children: <>
               key={surface}
             >
               {surface === 'account' && <AndroidUpdateNotice host={host} language={language} />}
+              {surface === 'account' && <UURemotePanel host={host} language={language} />}
               {showState && (
                 <div className="web-surface-state" role={status === 'error' ? 'alert' : 'status'}>
                   <p>{stateLabel}</p>

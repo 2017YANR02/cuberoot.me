@@ -1,5 +1,13 @@
 # CubeRoot 五端 App 完整路线图
 
+### 2026-10-16：UU 远程接入（本地构建完成，真机待验）
+
+- 用户授权接入 CubeRoot App。共享「我的 → UU 远程」折叠入口支持绑定、更换电脑、全屏远控、PiP 小窗、停止等待和移除本机绑定；中英文及不支持平台提示共用一份 React UI。Android/iOS 宿主注入官方 `@capacitor/app-launcher@8.0.1`、现有 App 深链及 Keychain/Keystore，不新增账号、屏幕采集或远控 SDK。
+- 设备标识与待处理请求一起保存在本机安全存储；绑定 nonce、小窗 callback request、严格回调地址/重复参数检查、串行处理、30 分钟过期及消费后去重覆盖热/冷启动。全屏只记已唤起，PiP 仅最终成功回调记成功；设备失效清除绑定，未知错误不冒充成功。有效回跳显示「我的」结果，活动计时仍受原导航保护。
+- `pnpm --filter @cuberoot/app-ui typecheck`、Mobile typecheck、`vitest run src/uu-remote.test.ts src/uu-remote-panel.test.tsx`（10 项）、Mobile Vite build、Android/iOS `cap sync`、plist lint 和差异空白检查通过。Android 使用本机 OpenJDK 21 执行 `./gradlew :app:assembleDebug --max-workers=2` 成功；Debug 包仍用 `.debug` ID，回调 scheme 按实际 App ID 创建。
+- iOS 原 `ios:build` helper 的通用模拟器命令因 WatchJS.o 路径失败；保持源工程不变，使用新的 derived-data 目录并让 destination 决定 SDK：`xcrun xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug -destination 'generic/platform=iOS Simulator' -derivedDataPath /tmp/cuberoot-uu-ios-derived-data CODE_SIGNING_ALLOWED=NO build`，包含 Watch 的联合模拟器构建成功。未更改签名或实际安装。
+- 真机授权/绑定、Windows/macOS 真实连接、PiP 显示、离线设备/账号切换和系统版本差异仍待用户验收；本轮未安装手机、提交、推送或商店发布。官方协议仅支持 Android/iOS 调用（UU 4.42.0+），iOS PiP 需 iOS 18+；不据此标记其他三端或五端整体完成。维护说明见 `core/apps/mobile/README.md` 的 UU Remote 小节。
+
 ### 2026-10-15：Watch 复盘完整对照（验收未通过）
 
 - 用户确认最终出现分段，但等待太久，且方法入口与整个报告未与现有平台一致。直接读取手表确认分析完成；不能据此称为完整复盘验收通过。
