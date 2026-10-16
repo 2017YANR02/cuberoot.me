@@ -91,5 +91,6 @@
 .solo-layout-reset { width: 36px; padding: 0; color: var(--muted-foreground); background: transparent; }
 .solo-layout-reset:hover { color: var(--foreground); background: var(--muted); }
 .solo-layout-done { padding-inline: 14px; color: var(--background); background: var(--foreground); font-weight: 600; }
-.solo-layout-toolbar button:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.solo-layout-reset:focus-visible,
+.solo-layout-done:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .solo-layout-handles { transition: none; } }
