@@ -120,7 +120,7 @@ if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url) && process
           const reason = /error in libcrypto|invalid format/.test(result.stderr ?? '') ? 'invalid SSH key format'
             : /Permission denied/.test(result.stderr ?? '') ? 'SSH permission denied'
             : /node: command not found|node: not found/.test(result.stderr ?? '') ? 'remote Node unavailable'
-            : `remote upload exit ${result.status ?? result.error?.code ?? 'unknown'}`;
+            : `remote upload exit ${result.status ?? 'unknown'}`;
           throw Error(reason);
         }
       }
