@@ -30,7 +30,21 @@ jobs:
       - name: Apply scoped reviewed implementation
         id: apply
         run: |
-          node .github/radiojam-apply.mjs
+          node --input-type=module <<'JS'
+          import {readFileSync,writeFileSync} from 'node:fs';
+          const stage='.github/radiojam-apply.mjs';
+          // Replacement content contains a regex dollar followed by a backtick.
+          // Callback form preserves it literally rather than expanding source prefixes.
+          writeFileSync(stage,readFileSync(stage,'utf8').replace('s.replace(before, after)','s.replace(before, () => after)'));
+          await import('./.github/radiojam-apply.mjs');
+          for (const path of ['core/packages/client/tests/timer_event_catalog.test.ts','core/packages/client/tests/timer-drill-contract-shared.test.ts']) {
+            writeFileSync(path, readFileSync(path,'utf8').replaceAll('79-event','80-event').replaceAll('toHaveLength(79)','toHaveLength(80)'));
+          }
+          const matrix='core/packages/app-ui/src/scramble-source-matrix.audit.test.ts';
+          const counts={79:80,237:240,59:60,78:79};
+          writeFileSync(matrix, readFileSync(matrix,'utf8').replace(/\b(79|237|59|78)\b/g,n=>String(counts[n])));
+          JS
+          node --check core/packages/client/scripts/radio-web-browser-acceptance.mts
           git diff --check
           git add -u -- core .agents/skills/sim-add-puzzle
           mkdir -p core/.tmp/radiojam-evidence
@@ -54,7 +68,7 @@ jobs:
         working-directory: core
         run: |
           set -o pipefail
-          pnpm --filter @cuberoot/client exec vitest run --maxWorkers=2 tests/native-mixed-puzzles-geometry.test.ts tests/native-puzzles-client-integration.test.ts tests/native-puzzle-drag.test.ts tests/native-puzzle-svg.test.ts tests/native-puzzle-manual-anchor.test.ts tests/native-puzzle-sim-controls.test.ts tests/twisty_2d_fallback.test.ts tests/sim-native-companion-lifecycle.test.ts tests/sim-puzzle-menu.test.ts tests/puzzle-icon-catalog.test.ts tests/puzzle-menu-label-guard.test.ts tests/timer-sync-seed.test.ts tests/timer_scramble_runtime.test.ts tests/timer_event_catalog.test.ts tests/timer_persistence.test.ts tests/timer_cstimer_io.test.ts tests/timer_battle_event_sync.test.ts tests/timer-scramble-preview-shared.test.ts tests/timer-scramble-source-bar.test.ts 2>&1 | tee .tmp/radiojam-evidence/unit-tests.log
+          pnpm --filter @cuberoot/client exec vitest run --maxWorkers=2 tests/native-mixed-puzzles-geometry.test.ts tests/native-puzzles-client-integration.test.ts tests/native-puzzle-drag.test.ts tests/native-puzzle-svg.test.ts tests/native-puzzle-manual-anchor.test.ts tests/native-puzzle-sim-controls.test.ts tests/twisty_2d_fallback.test.ts tests/sim-native-companion-lifecycle.test.ts tests/sim-puzzle-menu.test.ts tests/puzzle-icon-catalog.test.ts tests/puzzle-menu-label-guard.test.ts tests/timer-sync-seed.test.ts tests/timer_scramble_runtime.test.ts tests/timer_event_catalog.test.ts tests/timer-drill-contract-shared.test.ts tests/timer_persistence.test.ts tests/timer_cstimer_io.test.ts tests/timer_battle_event_sync.test.ts tests/timer-scramble-preview-shared.test.ts tests/timer-scramble-source-bar.test.ts 2>&1 | tee .tmp/radiojam-evidence/unit-tests.log
       - name: Shared app provider contract
         id: app
         continue-on-error: true
@@ -92,11 +106,21 @@ jobs:
           DEV_PID=$!
           trap 'kill "$DEV_PID" 2>/dev/null || true' EXIT
           pnpm --filter @cuberoot/client exec node --import tsx scripts/radio-web-browser-acceptance.mts 2>&1 | tee .tmp/radiojam-evidence/browser.log
-      - name: Preserve reviewed code and artwork evidence
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const report=JSON.parse(readFileSync('.tmp/radiojam-evidence/browser-report.json','utf8'));
+          assert.equal(report.puzzle,'radiojam');
+          assert.equal(report.checks.filter(c=>c.status==='passed').length,7);
+          assert.equal(report.checks.filter(c=>c.status==='failed').length,0);
+          console.log('Browser report counts verified',report.checks);
+          JS
+      - name: Preserve code, actual step outcomes and artwork evidence
         if: always() && steps.apply.outcome == 'success'
         run: |
           git diff --cached --binary > core/.tmp/radiojam-evidence/verified-changes.patch
           git rev-parse HEAD > core/.tmp/radiojam-evidence/base-commit.txt
+          printf '%s\n' 'unit=${{ steps.unit.outcome }} app=${{ steps.app.outcome }} types=${{ steps.types.outcome }} boundaries=${{ steps.boundaries.outcome }} browser=${{ steps.browser.outcome }}' | tee core/.tmp/radiojam-evidence/outcomes.txt
           cp core/packages/event-icon/svg/puzzle/radiojam.svg core/.tmp/radiojam-evidence/ 2>/dev/null || true
           cp core/.tmp/png/radiojam-outlines*.svg core/.tmp/radiojam-evidence/ 2>/dev/null || true
       - uses: actions/upload-artifact@v4
