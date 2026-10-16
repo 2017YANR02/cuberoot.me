@@ -8,10 +8,17 @@ describe('multithread solver comparison evidence', () => {
     expect(Object.fromEntries(CURRENT_RESULTS.map(row => [row.id, row.seconds]))).toEqual({
       'rust-opt8-wasm': 33.36867566599999,
       'rust-opt8-wasm-coset': 39.667527956000015,
+      'cube48opt8-wasm': 44.984614784999984,
       'rust-opt-9': 42.098461187999995,
       'cube48opt-wasm': 83.655909546,
       'rust-opt9-wasm': 99.88279715799992,
       'rust-opt9-wasm-quarter': 93.74520485000006,
+      'rust-opt9-wasm-batch': 81.08118170599995,
+      'rust-opt9-wasm-padded': 83.6733282019999,
+      'rust-opt9-wasm-batch-padded': 84.30364284300008,
+      'rust-opt9-wasm-select': 83.68332329199988,
+      'nxopt-22': 296.600813958,
+      'rust-opt8-native': 26.402382370999998,
     });
     for (const row of BENCHMARK_MANIFEST.currentRunResults) {
       const candidate = CANDIDATES.find(candidate => candidate.id === row.id)!;
@@ -19,7 +26,7 @@ describe('multithread solver comparison evidence', () => {
       expect([row.cases, row.threads, row.passes, row.warmupCases, row.verifiedSolutions, row.optimalLengthsMatched])
         .toEqual([cohort.cases, cohort.threads, 1, 0, cohort.cases, cohort.cases]);
       expect(row.corpusSha256).toBe(cohort.corpusSha256);
-      expect(row.tableBytes).toBe(candidate.cohort === 'opt8' ? 7782727680 : 15565455360);
+      expect(row.tableBytes).toBe(row.id === 'nxopt-22' ? 7809269764 : candidate.cohort === 'opt8' ? 7782727680 : 15565455360);
       expect(row.swapoutsDelta).toBe(0);
     }
     expect(BENCHMARK_MANIFEST.incompleteRuns).toEqual([{
@@ -31,20 +38,98 @@ describe('multithread solver comparison evidence', () => {
     expect(CURRENT_RESULTS.find(r => r.id === 'cube48opt-wasm')?.continuation)
       .toMatchObject({completedCases:431,remainingCases:569,sessions:2});
   });
+  it('shows the fastest verified Opt9 WASM and preserves all other experiments in the download', () => {
+    const visible = CANDIDATES.filter(row => row.cohort === 'opt9' && row.runtime === 'wasm' && !row.archived);
+    expect(visible.map(row => [row.id, row.name])).toEqual([
+      ['rust-opt9-wasm-batch', 'CubeRoot Opt9'], ['cube48opt-wasm', 'cube48opt9'],
+    ]);
+    expect(CANDIDATES.filter(row => row.cohort === 'opt9' && row.runtime === 'wasm' && row.archived).map(row => row.id))
+      .toEqual(['rust-opt9-wasm-padded', 'rust-opt9-wasm-batch-padded', 'rust-opt9-wasm-select',
+        'rust-opt9-wasm-quarter', 'rust-opt9-wasm-coset', 'rust-opt9-wasm']);
+    const results = BENCHMARK_MANIFEST.currentRunResults;
+    const newIds = ['rust-opt9-wasm-batch', 'rust-opt9-wasm-padded', 'rust-opt9-wasm-batch-padded', 'rust-opt9-wasm-select'];
+    const candidates = results.filter(row => newIds.includes(row.id));
+    expect(candidates.map(row => row.id)).toEqual(newIds);
+    for (const row of candidates) {
+      expect(row.nodes).toBeNull();
+      expect(row.searchNodes).toBeTypeOf('number');
+      expect(row.comparison).toMatchObject({baselineId: 'cube48opt-wasm', baselineSeconds: 83.655909546,
+        matchedProtocol: true, sameMachine: true, sameTable: true, baselineRerun: false,
+        baselineContinuation: {completedCases: 431, remainingCases: 569, sessions: 2}});
+      expect(row.retainedRustComparison).toMatchObject({baselineId: 'rust-opt9-wasm-quarter-fixed',
+        baselineSeconds: 93.74520485000006, baselineRerun: false});
+      expect(row.matchedExhaustedShardWork).toMatchObject({cases: 1000, workEquivalent: true,
+        differingShards: 0, exhaustedLayers: 17708, differingLayers: 0});
+      expect(row.reportSha256).toMatch(/^[a-f0-9]{64}$/);
+    }
+    expect(candidates.map(row => [row.candidateBuildEvidence?.opt9BatchEnabled,
+      row.candidateBuildEvidence?.paddedStateLayout, row.candidateBuildEvidence?.opt9SelectEnabled]))
+      .toEqual([[true, 0, false], [false, 4200468, false], [true, 4200468, false], [true, 0, true]]);
+    const rust = candidates[0];
+    expect(rust).toMatchObject({seconds: 81.08118170599995, peakRssBytes: 16191668224,
+      processTreePeakRssBytes: 16442589184, searchNodes: 9983318127,
+      artifactSha256: '17d66df66935894e28a5ee0c7494853f79444c96eac3b9b2b9d4832eedcfb545'});
+    expect(rust.comparison).toMatchObject({rustFasterOnThisRun: true, rustTimeReductionPercent: 3.077759663331714});
+    expect(results.filter(row => CANDIDATES.find(candidate => candidate.id === row.id)?.cohort === 'opt9'
+      && row.engine !== 'rust-native').every(row => row.nodes === null)).toBe(true);
+  });
   it('separates Opt8 and Opt9 without substituting server results', () => {
     expect(Object.values(COHORTS).map(row => [row.id, row.tableBudgetGB, row.cases, row.threads]))
-      .toEqual([['opt8', 8, 100, 4], ['opt9', 16, 1000, 16]]);
+      .toEqual([['opt10', 32, 1000, 16], ['opt8', 8, 100, 4], ['opt9', 16, 1000, 16]]);
     expect(CURRENT_RESULTS.find(row => row.id === 'rust-opt8-wasm'))
       .toMatchObject({ seconds: 33.36867566599999, peakRssBytes: 7965376512, processTreePeakRssBytes: 8175861760 });
     expect(CANDIDATES.find(row => row.id === 'cube48opt8-wasm')?.cohort).toBe('opt8');
-    expect(CURRENT_RESULTS.find(row => row.id === 'cube48opt8-wasm')).toBeUndefined();
+    expect(BENCHMARK_MANIFEST.currentRunResults.find(row => row.id === 'cube48opt8-wasm'))
+      .toMatchObject({
+        cases: 100, threads: 4, passes: 1, warmupCases: 0,
+        seconds: 44.984614784999984, peakRssBytes: 8076361728,
+        processTreePeakRssBytes: 8399142912,
+        corpusSha256: COHORTS.opt8.corpusSha256,
+        originalEvidence: { upstreamWasmUnchanged: true },
+        comparison: {
+          baselineId: 'rust-opt8-wasm', baselineSeconds: 33.36867566599999,
+          matchedProtocol: true, sameMachine: true, sameTable: true, baselineRerun: false,
+        },
+      });
     expect(CANDIDATES.every(row => row.cohort in COHORTS)).toBe(true);
+  });
+  it('retains complete engine-specific node counters without equating their definitions', () => {
+    expect(Object.fromEntries(CURRENT_RESULTS.map(row => [row.id, row.nodeCounter.value]))).toEqual({
+      'rust-opt-9': 9814932764,
+      'cube48opt-wasm': 13926702773,
+      'rust-opt9-wasm': 13448458239,
+      'rust-opt9-wasm-quarter': 9954986953,
+      'rust-opt8-wasm': 1717133808,
+      'rust-opt8-wasm-coset': 1716985601,
+      'cube48opt8-wasm': 2384839394,
+      'rust-opt9-wasm-batch': 9983318127,
+      'rust-opt9-wasm-padded': 9974653073,
+      'rust-opt9-wasm-batch-padded': 9978389143,
+      'rust-opt9-wasm-select': 9994096263,
+      'nxopt-22': 2673464088,
+      'rust-opt8-native': 1837689891,
+    });
+    for (const row of BENCHMARK_MANIFEST.currentRunResults) {
+      expect(row.nodeCounter.cases).toBe(row.cases);
+      expect(row.nodeCounter.rawSha256).toBe(row.rawSha256);
+      expect(row.nodeCounter.definition).toBe(row.engine === 'original-wasm'
+        ? 'cube48opt-active-query-slots-v1' : row.engine === 'nxopt-native' ? 'nxopt-evals-v1' : 'rust-context-visits-v1');
+      if (row.searchNodes !== undefined) expect(row.nodeCounter.value).toBe(row.searchNodes);
+      if (row.nodes !== null) expect(row.nodeCounter.value).toBe(row.nodes);
+    }
+    expect(BENCHMARK_MANIFEST.currentRunResults.find(row => row.id === 'cube48opt-wasm')?.nodeCounter)
+      .toMatchObject({ value: 13926702773, inactiveContextSlots: 5223659, previousDepthActiveVisits: 7402568428 });
+    expect(BENCHMARK_MANIFEST.currentRunResults.find(row => row.id === 'cube48opt8-wasm')?.nodeCounter)
+      .toMatchObject({ value: 2384839394, inactiveContextSlots: 155654, previousDepthActiveVisits: 1157031384 });
+    expect(Object.keys(BENCHMARK_MANIFEST.nodeCounters.definitions))
+      .toEqual(['rust-context-visits-v1', 'cube48opt-active-query-slots-v1', 'nxopt-evals-v1']);
   });
   it('records the slower Opt8 experiment and excludes the unmeasured Opt9 attempt', () => {
     expect(CURRENT_RESULTS.find(row => row.id === 'rust-opt8-wasm-coset'))
       .toMatchObject({ cases: 100, threads: 4, seconds: 39.667527956000015, verifiedSolutions: 100 });
     expect(CANDIDATES.find(row => row.id === 'rust-opt8-wasm-coset')?.status?.en)
       .toBe('Slower experiment · not promoted');
+    expect(CANDIDATES.find(row => row.id === 'rust-opt8-wasm-coset')?.archived).toBe(true);
     expect(CURRENT_RESULTS.find(row => row.id === 'rust-opt9-wasm-coset')).toBeUndefined();
     expect(CANDIDATES.find(row => row.id === 'rust-opt9-wasm-coset')?.status?.en)
       .toBe('Memory protection stopped run');

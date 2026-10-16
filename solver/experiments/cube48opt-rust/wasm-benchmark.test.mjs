@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createHash } from 'node:crypto';
 import { assertBenchmarkGuard, initializeBenchmarkModule, measureBenchmarkCase,
-  parseWasmBenchmarkArguments, readWca100, sharedBuildSources, wasmBuildContract } from './wasm-benchmark.mjs';
+  parseWasmBenchmarkArguments, readWca100, sharedBuildSources, validateSharedDepthResults, wasmBuildContract } from './wasm-benchmark.mjs';
 
 const args = ['--variant', '8', '--table', 'table', '--small', 'small', '--wasm', 'module.wasm', '--out', 'fresh'];
 const sharedBuild = { schema: 'cuberoot.rust-opt-shared-wasm64.build.v1', target: 'wasm64-unknown-unknown',
@@ -29,6 +29,15 @@ test('a four-thread request cannot inherit an old single-thread guard authorizat
   assert.throws(() => assertBenchmarkGuard({ threads: 4 }, lock, 123), /explicitly budget/);
   assert.doesNotThrow(() => assertBenchmarkGuard({ threads: 4 }, { ...lock, wasmThreads: 4 }, 123));
   assert.throws(() => assertBenchmarkGuard({ threads: 4 }, { ...lock, wasmThreads: 4 }, 124));
+});
+
+test('matched Opt8 original and Rust runs use TurboFan without broadening other cohorts', () => {
+  for (const engine of ['rust', 'original']) {
+    const parsed = parseWasmBenchmarkArguments([...args, '--threads', '4', '--engine', engine, '--compiler', 'turbofan']);
+    assert.equal(parsed.compiler, 'turbofan'); assert.equal(parsed.engine, engine);
+  }
+  for (const extra of [ ['--threads', '1', '--engine', 'original'], ['--threads', '4', '--engine', 'both'] ])
+    assert.throws(() => parseWasmBenchmarkArguments([...args, ...extra, '--compiler', 'turbofan']));
 });
 
 test('four-thread Rust requires an actual shared build and a frozen worker artifact', () => {
@@ -101,6 +110,40 @@ test('synchronous original call is timed once with the same four-thread boundary
   const result = await measureBenchmarkCase(module, 'original', { scramble: 'R' }, 4, lines, () => clock);
   assert.equal(calls, 1); assert.equal(result.seconds, 0.1); assert.equal(result.engineReportedSeconds, 0.099);
   assert.equal(Object.hasOwn(result, 'search'), false);
+});
+
+test('root-bound skipping requires unanimous checked bounds and consecutive real depth results', () => {
+  const threads = 4;
+  const depthResults = [1,2].map(depth => Array.from({ length: threads }, (_, worker) => ({
+    depth, worker, nodes: 1, solution: depth === 2 && worker === 0 ? "U' R'" : null,
+    cancelled: false, completed: depth === 1,
+  })));
+  const raw = { solution: "U' R'", length: 2, completed_depth: 1, workers: [2,2,2,2], nodes: 8,
+    initialDepth: 1, skippedDepths: 1, depthResults,
+    rootBoundProof: { schema: 'cuberoot.root-bound-proof.v1', source: 'pdb-forward-inverse',
+      lowerBound: 1, maximum: 13, oracleLookups: 16,
+      workers: Array.from({ length: threads }, (_, worker) => ({ worker, normal: 0, inverse: 1 })) } };
+  assert.doesNotThrow(() => validateSharedDepthResults(raw, threads));
+  const mutations = [
+    r => { delete r.rootBoundProof; },
+    r => { delete r.initialDepth; },
+    r => { r.initialDepth = 2; },
+    r => { r.skippedDepths = 2; },
+    r => { r.rootBoundProof.lowerBound = 2; },
+    r => { r.rootBoundProof.workers[1].normal = 1; },
+    r => { r.rootBoundProof.workers[1].worker = 0; },
+    r => { r.rootBoundProof.workers.pop(); },
+    r => { r.rootBoundProof.workers[0].inverse = 14; },
+    r => { r.rootBoundProof.oracleLookups = 8; },
+    r => { r.rootBoundProof.source = 'fixture-orientation-bound'; },
+    r => { r.depthResults[0][0].depth = 0; },
+    r => { r.depthResults[0][0].completed = false; },
+    r => { r.depthResults.splice(0, 1); },
+  ];
+  for (const change of mutations) {
+    const altered = structuredClone(raw); change(altered);
+    assert.throws(() => validateSharedDepthResults(altered, threads));
+  }
 });
 
 test('local eighteen-worker requests require matching ABI evidence and guard budget', () => {

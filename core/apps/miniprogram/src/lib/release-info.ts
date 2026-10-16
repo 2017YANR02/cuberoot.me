@@ -1,5 +1,5 @@
 import { getMiniProgramLocale, tr, type MiniProgramLocale } from './i18n';
-import { miniProgramApi } from './platform';
+import { isDouyinMiniProgram, miniProgramApi } from './platform';
 
 type MiniProgramEnvironment = 'develop' | 'trial' | 'release' | 'unknown';
 
@@ -29,6 +29,9 @@ const RELEASE_NOTES = [
 function readRuntimeRelease(): { environment: MiniProgramEnvironment; version: string } {
   try {
     const api = miniProgramApi() as typeof wx & {
+      getEnvInfoSync?: () => {
+        microapp?: { envType?: unknown; mpVersion?: unknown };
+      };
       getAccountInfoSync?: () => {
         miniProgram?: {
           envVersion?: unknown;
@@ -36,6 +39,16 @@ function readRuntimeRelease(): { environment: MiniProgramEnvironment; version: s
         };
       };
     };
+    if (isDouyinMiniProgram()) {
+      const microapp = api.getEnvInfoSync?.().microapp;
+      const environment = microapp?.envType;
+      return {
+        environment: environment === 'production' ? 'release'
+          : environment === 'development' ? 'develop'
+          : environment === 'preview' ? 'trial' : 'unknown',
+        version: typeof microapp?.mpVersion === 'string' ? microapp.mpVersion.trim() : '',
+      };
+    }
     if (typeof api.getAccountInfoSync !== 'function') {
       return { environment: 'unknown', version: '' };
     }

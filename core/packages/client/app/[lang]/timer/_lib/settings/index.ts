@@ -159,8 +159,9 @@ export interface TimerSettings extends
 
   /** Action when user clicks the scramble strip. */
   scrambleClickAction: TimerScrambleClickAction;
+  scrambleClickStartMigrated?: boolean;
 
-  /** One-shot marker: the scramble-click default flipped to 'copy' (migrate legacy 'next'). */
+  /** Legacy marker retained for old backups; superseded by scrambleClickStartMigrated. */
   scrambleClickMigrated?: boolean;
 
   /**
@@ -292,6 +293,7 @@ export const DEFAULTS: TimerSettings = {
   ...DEFAULT_TIMER_RANDOM_DIFFICULTY_SETTINGS,
   autoMarkWcaScramble: true,
   scrambleClickAction: DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION,
+  scrambleClickStartMigrated: true,
   scrambleClickMigrated: false,
   recordGyroMigrated: false,
   hideAllUiWhileRunning: false,
@@ -391,11 +393,11 @@ function load(): TimerSettings {
     merged.wcaDifficultyOn = false;
 
     // 迁移都先改 `merged`,末尾只落一次盘 —— 每条自己 `save()` 会在一次加载里写三遍。
-    // One-shot migration: scramble-click now copies by default. Flip the legacy
-    // 'next' default once (leave a deliberate 'none' alone), then persist the marker.
-    if (!merged.scrambleClickMigrated) {
-      if (merged.scrambleClickAction === 'next') merged.scrambleClickAction = 'copy';
-      merged.scrambleClickMigrated = true;
+    // The old hidden preference was ignored. Enable timing once for existing
+    // stores; preserve any explicit choices made after this migration.
+    if (parsed.scrambleClickStartMigrated !== true) {
+      merged.scrambleClickAction = DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION;
+      merged.scrambleClickStartMigrated = true;
       dirty = true;
     }
     // 录姿态默认从关翻成开 —— 存档里那个 false 是旧默认值,不是用户选的。

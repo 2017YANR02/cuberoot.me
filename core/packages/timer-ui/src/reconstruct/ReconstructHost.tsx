@@ -10,7 +10,13 @@ export interface ReconstructHost {
   localize: ReconstructLocalize;
   writeClipboardText: (text: string) => Promise<void>;
   replayUrl: (solve: Solve) => string | Promise<string>;
-  renderCaseLink?: (href: string, label: string, className: string) => ReactNode;
+  renderCaseLink?: (href: string, label: ReactNode, className: string) => ReactNode;
+  LineDiagramProvider?: ComponentType<{
+    scramble: string; text: string; enabled: boolean;
+    children: (diagramAt: (line: number) => ReactNode, caseHrefAt: (line: number, colors: string) => string | undefined) => ReactNode;
+  }>;
+  inspectionColors?: (moves: string) => string | undefined;
+  wasteBrackets?: (text: string, scramble: string) => Map<number, string>;
   recordGyro: boolean;
   onEnableGyro?: () => void;
   BoolToggle?: ComponentType<BoolToggleProps>;

@@ -52,6 +52,9 @@ export const PAIRED_GUARDS: PairedGuard[] = [
   },
   {
     id: 'site-material',
+    // Includes the 11 scenery-content policies for formula/reconstruction
+    // reading sections; CI also requires their transparent adapters to remain.
+    // Real write rejection verified 2026-10-15; see docs/glass-menu-regression.md.
     scope: 'project',
     hook: 'hook-detect-site-material.mjs',
     test: 'site-material-guard.test.ts',
@@ -243,10 +246,10 @@ export const PAIRED_GUARDS: PairedGuard[] = [
     id: 'recon-ground-truth',
     scope: 'project',
     hook: 'recon-ground-truth-gate.mts',
-    test: 'recon-ground-truth-gate.test.ts + recon_ground_truth.test.ts',
+    test: 'recon-ground-truth-gate.test.ts + recon_ground_truth.test.ts + recon-ground-truth-display.test.ts',
     baseline: '当前集合全量',
-    zh: { title: '复盘 Ground Truth 未验证', desc: '管理员管理器是唯一手工入口，测试命令从公开导出生成供 Git 和 AI 审查的 JSON。Codex 命令 hook 与 Git pre-commit 两层拦截：提交复盘算法、陀螺仪、转体处理或 ground-truth 管道前，当前内容指纹必须对应一次全部 confirmed 样本测试通过记录；管理器新增样本并同步后，旧凭证立即失效。' },
-    en: { title: 'Unverified reconstruction ground truth', desc: 'The admin manager is the only manual entry point; the test command generates the Git- and AI-reviewable JSON from its public export. The Codex command hook and Git pre-commit require the exact current content fingerprint to have a successful run over every confirmed case before reconstruction logic, gyro, rotation handling or the ground-truth pipeline can be committed. Syncing a newly confirmed case immediately invalidates the old credential.' },
+    zh: { title: '复盘 Ground Truth 未验证', desc: '管理员管理器维护人工确认样本，真实计时记录仅在用户明确说“收录到回归测试”并确认原始记录及答案后参加统一检查；待确认样例退出正式检查，历史保留，修改记录或答案会使确认失效。统一检查遍历已确认样本，覆盖公式匹配到最终显示的动作、标签、色块、图示和链接。安装依赖时自动启用 Git pre-commit；涉及复盘的提交自动检查全部样本，同一份内容通过后才复用结果。失败或检查期间改动会阻止提交，暂存与工作区不一致也会拦截。Codex 只做准备检查，测试由 Git 执行，CI 再独立验证。每次运行保留成功或失败记录，现有 ground-truth 页可查看历史、逐例实际显示与具体复盘；管理员集中同步失败时本机记录继续保留。' },
+    en: { title: 'Unverified reconstruction ground truth', desc: 'The admin manager maintains manually confirmed cases. The existing unified check runs only explicitly user-approved real timer regressions (pending cases keep their history but are excluded; changes to the recording or answer invalidate approval) through library matching and final displayed moves, labels, color chips, diagrams and links. Dependency installation enables Git pre-commit automatically. Relevant commits run the full suite unless the exact content already passed. Test failures, edits during verification and staged/worktree differences block commits. Codex only preflights readiness; Git owns the test run and CI verifies independently. Each run retains passes or failures for the existing ground-truth page, with per-case output and replay links. Failed administrator cloud synchronization preserves local history.' },
   },
 ];
 
@@ -366,7 +369,7 @@ export const CI_GUARDS_DRIFT: CiGuard[] = [
   {
     id: 'recon-report-layout',
     test: 'recon_report_layout.test.ts',
-    zh: { title: '复盘报告的顺序 + 打乱只出现一次', desc: '报告先给回放和按步谱子(默认展开),质量分 / 分步分析表 / 四个总量整块排在后面 —— 不知道自己拧了什么之前,一张 5×7 的表读不出东西。打乱是谱子的第一行且用视角归一化后那条(和复制导出的逐字相同);智能魔方那把不再另摆一遍打乱和打乱图,手动计时的成绩照旧两样都有。' },
+    zh: { title: '复盘报告的顺序 + 打乱只出现一次', desc: '报告先给回放和按步还原步骤(默认展开),质量分 / 分步分析表 / 四个总量整块排在后面 —— 不知道自己拧了什么之前,一张 5×7 的表读不出东西。打乱是还原步骤的第一行且用视角归一化后那条(和复制导出的逐字相同);智能魔方那把不再另摆一遍打乱和打乱图,手动计时的成绩照旧两样都有。' },
     en: { title: 'Reconstruction report order + the scramble appears once', desc: 'The report leads with the replay and the per-step move text (expanded by default); the quality score, step table and totals come after as one block — a 5×7 grid reads as nothing until you know what you turned. The scramble is the first line of that move text, in the normalized viewing frame (byte-identical to what the copy button exports); the smart-cube solve page no longer repeats the scramble or draws the scramble picture, while manually-timed solves keep both.' },
   },
   {

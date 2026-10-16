@@ -1,3 +1,4 @@
+import { decodeGyroTrack, type GyroSample } from '../../smart_cube/gyro_track';
 /**
  * 文字复盘 —— 把一把智能魔方的动作流写成 /recon 详情页那种带注释的谱子。
  *
@@ -57,20 +58,23 @@ import { patternFromAlg } from '../../recon/cube3';
 import { buildCommentSuggestions, crossFamilyCancelInto } from '../../recon/popup_suggest';
 import { sliceSplitTable } from '../../recon_slice';
 import { detectStage } from '../../recon/stage_detect';
+import { solved } from './state';
+import { applyOneToken } from './apply-token';
+import { isCross, isSolved } from './cfop-detect';
 
-import { conjugateCoreTrack, coreTurnsIn } from './core_track';
+import { buildCoreTrack, conjugateCoreTrack, coreTurnsIn } from './core_track';
 import type { CoreTrack } from './core_track';
 import { htmMoves, quarterMoves } from './htm';
 import { humanizeStream } from './humanize';
 import { wastedDisplaySpans } from './error_detect';
 import type { HumanRotation } from './humanize';
-import { walkMethod } from './method_walk';
+import { methodFrame, walkMethod } from './method_walk';
 import { METHODS, type MethodId } from './methods';
 import type { MethodStageMetric } from './method_walk';
-import { metricForRange } from './step_metrics';
-import type { F2lSlotsResult } from './f2l_slots';
-import { compactCubeRotations, facePermFor } from './gyro_orient';
-import type { SolveMove, StageSegments } from './stage_segments';
+import { computeStepMetrics, metricForRange } from './step_metrics';
+import { computeF2lSlots, type F2lSlotsResult } from './f2l_slots';
+import { initialPoseRotation, normalizeSolve, compactCubeRotations, conjugateToken, facePermFor } from './gyro_orient';
+import { computeStageSegments, type SolveMove, type StageSegments } from './stage_segments';
 import { stepTimeBounds } from './rotation_detect';
 import { moveItemsForRange, tokensForRange } from './step_metrics';
 import type { RangeMoveItem, StepMetricsResult } from './step_metrics';
@@ -124,6 +128,8 @@ export interface ReconTextResult {
    * 三样接起来照着拧,还是这把。
    */
   scramble: string;
+  /** Physical face/color of the detected cross, independent of the recorded grip. */
+  crossColor?: string;
   /**
    * 观察时把魔方转成「十字朝下」的那一手(`z2` / `x'` / …)。`''` = 不用转。
    *
@@ -159,6 +165,27 @@ export interface ReconTextResult {
    * 输出长得一样,用户看不出来。
    */
   blindPairs: number;
+}
+
+/** The report and native replay must analyze the same physical stream and viewing frame. */
+export function prepareReconstruction(record: {
+  scramble: string; moves?: SolveMove[]; timeMs: number; gyro?: string; device?: { model?: string };
+}, method: MethodId, language: 'zh' | 'en', samples?: GyroSample[]) {
+  const moves = record.moves ?? [];
+  const gyroSamples = samples ?? decodeGyroTrack(record.gyro);
+  const rotation = initialPoseRotation(gyroSamples, record.device?.model);
+  const view = method === 'cfop' ? normalizeSolve(record.scramble, moves, {
+    preferredRotation: rotation, measuredGrip: gyroSamples[0]?.frame === 'scramble',
+  }) : methodFrame(method, record.scramble, moves, rotation);
+  const stageSegs = computeStageSegments(record.scramble, moves, record.timeMs);
+  const stepMx = stageSegs ? computeStepMetrics(record.scramble, moves, record.timeMs) : null;
+  const slots = stageSegs ? computeF2lSlots(record.scramble, moves, record.timeMs, stageSegs) : null;
+  const core = gyroSamples.length ? buildCoreTrack(gyroSamples, { brand: record.device?.model, moves }) : null;
+  const text: ReconTextInput | null = stageSegs && moves.length ? {
+    method, language, scramble: view.scramble, moves: view.moves, totalMs: record.timeMs,
+    segs: stageSegs, metrics: stepMx, slots, core, physical: { scramble: record.scramble, moves }, viewRotation: view.rotation,
+  } : null;
+  return { gyroSamples, view, stageSegs, stepMx, slots, core, text };
 }
 
 /** 一行要切在哪、时间是多少。纯数据,不碰魔方。 */
@@ -290,21 +317,334 @@ function timeSuffix(line: ReconTextLine): string {
 /** 一行渲染成 `<动作> // <标签> (<时间>)`。标签缺席时只留动作。 */
 /** A reversible display projection. Raw movements, poses and timing stay untouched. */
 export function originalReconNotation(recon: ReconTextResult): ReconTextResult {
-  const lines = recon.lines.map(line => line.libraryCorrection
-    ? line.libraryCorrection.originalLine ?? { ...line, moves: line.libraryCorrection.originalMoves,
-      moveRanges: line.libraryCorrection.originalRanges, algorithmGroups: undefined, libraryCorrection: undefined }
-    : line);
+  const lines = recon.lines.map(line => {
+    if (!line.libraryCorrection) return line;
+    const original = line.libraryCorrection.originalLine ?? { ...line, moves: line.libraryCorrection.originalMoves,
+      moveRanges: line.libraryCorrection.originalRanges, algorithmGroups: undefined, libraryCorrection: undefined };
+    return original.label === line.label ? original : { ...original, label: line.label };
+  });
   if (lines.every((line, i) => line === recon.lines[i])) return recon;
   return { ...recon, lines, text: [...(recon.inspection ? [`${recon.inspection} // insp`] : []),
     ...lines.map(formatReconLine)].join('\n') };
 }
 
-export function simplifyF2lRotations(recon: ReconTextResult): ReconTextResult {
+/** Carry omitted tilts through later moves instead of leaving the cross sideways. */
+function reconstructionAlg(tokens: string[]): string {
+  return tokens.flatMap(token => token.match(/[RUFLDBrufldbxyzMSE]w?(?:2'?|')?/g) ?? [token]).join(' ');
+}
+
+function conjugateReconToken(token: string, perm: ReturnType<typeof facePermFor>): string | null {
+  const parts = token.match(/[RUFLDBrufldbxyzMSE]w?(?:2'?|')?/g);
+  if (!parts || parts.join('') !== token) return null;
+  const mapped = parts.map(part => conjugateToken(part.replace(/^([rludfb])/, face => `${face.toUpperCase()}w`), perm));
+  return mapped.some(part => part === null) ? null : mapped.join('');
+}
+
+/** Stage-end cross orientation outranks notation preferences, including library algs. */
+function restoreCrossAtBoundaries(recon: ReconTextResult, lines: ReconTextLine[]): ReconTextLine[] {
+  let state = applyOneToken(solved(3), `${recon.scramble} ${recon.inspection}`);
+  const down = recon.crossColor ?? state.D[4];
+  let pending = '';
+  const inverse = (alg: string) => alg.split(' ').filter(Boolean).reverse()
+    .map(token => token.endsWith("'") ? token.slice(0, -1) : `${token}'`).join(' ');
+  const result = lines.map(line => {
+    const entries: Array<{ token: string; source: number }> = [];
+    // Repay a yaw before a matched last-layer algorithm, rather than renaming
+    // its M/R moves to S/F. Yaw preserves the cross-down frame.
+    if (line.libraryCorrection && (line.kind === 'oll' || line.kind === 'pll')
+      && /^y(?:2|')?$/.test(pending)) {
+      entries.push({ token: pending, source: -1 });
+      pending = '';
+    }
+    line.moves.forEach((token, source) => {
+      const canonical = token.replace(/^([rludfb])/, face => `${face.toUpperCase()}w`);
+      const mapped = pending ? conjugateReconToken(canonical, facePermFor(inverse(pending))) : token;
+      if (mapped === null) throw new Error('Unsupported reconstruction move');
+      // Apply the policy in the current display frame, including debt from
+      // earlier stage-end corrections. A later pass must not recreate z turns.
+      if (line.kind === 'f2l' && (/^z/.test(mapped)
+        || (!line.libraryCorrection && /^x/.test(mapped)))) {
+        pending = compactCubeRotations(`${pending} ${token}`.trim());
+        return;
+      }
+      entries.push({ token: /^[rludfb]/.test(token)
+        ? mapped.replace(/^([RLUDFB])w/, (_, face: string) => face.toLowerCase()) : mapped, source });
+    });
+    const moves = entries.map(entry => entry.token);
+    state = applyOneToken(state, reconstructionAlg(moves));
+    let correction = '';
+    if ((line.kind === 'cross' || line.kind === 'f2l') && state.D[4] !== down) {
+      correction = ['x', "x'", 'x2', 'z', "z'"].find(rotation => {
+        const rotated = applyOneToken(state, rotation);
+        return rotated.D[4] === down && isCross(rotated);
+      }) ?? '';
+      if (correction) {
+        moves.push(correction);
+        state = applyOneToken(state, correction);
+        pending = compactCubeRotations(`${inverse(correction)} ${pending}`.trim());
+      }
+    }
+    if (moves.length === line.moves.length && moves.every((token, i) => token === line.moves[i])) return line;
+    const last = line.moveRanges?.at(-1);
+    return { ...line, moves,
+      moveRanges: line.moveRanges ? [
+        ...entries.map(({ token, source }) => source < 0
+          ? { ...line.moveRanges![0], token, endTs: line.moveRanges![0].ts, endIdx: line.moveRanges![0].startIdx - 1 }
+          : token === line.moveRanges![source].token
+          ? line.moveRanges![source] : { ...line.moveRanges![source], token }),
+        ...(correction ? [{ ...last!, token: correction, ts: last!.endTs,
+          startIdx: last!.endIdx + 1, endIdx: last!.endIdx }] : []),
+      ] : undefined,
+      wasteGroups: line.wasteGroups ? [...entries.map(entry => entry.source < 0 ? null : line.wasteGroups![entry.source]),
+        ...(correction ? [null] : [])] : undefined,
+      algorithmGroups: line.algorithmGroups?.flatMap(group => {
+        const indices = entries.flatMap((entry, i) => entry.source >= group.from && entry.source < group.to ? [i] : []);
+        return indices.length ? [{ from: indices[0], to: indices.at(-1)! + 1 }] : [];
+      }),
+    };
+  });
+  if (pending) {
+    const last = lines.at(-1)!;
+    const range = last.moveRanges?.at(-1);
+    const moves = pending.split(' ');
+    result.push({ kind: 'inspection', stageKey: 'orientation', key: 'cross-down-final-orientation',
+      moves, label: null, fromIdx: last.toIdx + 1, toIdx: last.toIdx,
+      recognitionMs: null, executionMs: null, stepMs: null,
+      moveRanges: range ? moves.map(token => ({ ...range, token, ts: range.endTs,
+        startIdx: last.toIdx + 1, endIdx: last.toIdx })) : undefined });
+  }
+  return result;
+}
+
+/** Boundary corrections and conjugated library moves must also obey no-z. */
+function withoutF2lZ(line: ReconTextLine): ReconTextLine {
+  if (line.kind !== 'f2l' || !line.moves.some(token => /^z/.test(token))) return line;
+  const entries = line.moves.flatMap((token, source) => /^z/.test(token)
+    ? ['x', `y${token.slice(1)}`, "x'"].map(token => ({ token, source }))
+    : [{ token, source }]);
+  return { ...line, moves: entries.map(entry => entry.token),
+    moveRanges: line.moveRanges ? entries.map(({ token, source }) => ({ ...line.moveRanges![source], token })) : undefined,
+    wasteGroups: line.wasteGroups ? entries.map(({ source }) => line.wasteGroups![source]) : undefined,
+    algorithmGroups: line.algorithmGroups?.map(group => ({
+      from: entries.findIndex(entry => entry.source === group.from),
+      to: entries.filter(entry => entry.source < group.to).length,
+    })),
+  };
+}
+
+function orientInspectionForCross(recon: ReconTextResult): ReconTextResult {
+  if (!recon.crossColor) return recon;
+  const state = applyOneToken(solved(3), `${recon.scramble} ${recon.inspection}`);
+  if (state.D[4] === recon.crossColor) return recon;
+  const rotation = ['x', "x'", 'x2', 'z', "z'"].find(rotation =>
+    applyOneToken(state, rotation).D[4] === recon.crossColor);
+  if (!rotation) return recon;
+  const perm = facePermFor(rotation);
   const lines = recon.lines.map(line => {
-    if (line.kind !== 'f2l') return line;
+    const moves = line.moves.map(token => {
+      const mapped = conjugateReconToken(token, perm);
+      if (mapped === null) throw new Error('Unsupported reconstruction move');
+      return /^[rludfb]/.test(token) ? mapped.replace(/^([RLUDFB])w/, (_, face: string) => face.toLowerCase()) : mapped;
+    });
+    return { ...line, moves, moveRanges: line.moveRanges?.map((range, i) => ({ ...range, token: moves[i] })) };
+  });
+  return { ...recon, inspection: compactCubeRotations(`${recon.inspection} ${rotation}`), lines };
+}
+
+/** Choose reading frames across whole stages; never rewrite a matched library body. */
+function preferF2lSideTurns(recon: ReconTextResult): ReconTextResult {
+  const yaws = ['', 'y', 'y2', "y'"];
+  const mapped = (line: ReconTextLine, yaw: number) => line.moves.map(token => {
+    if (!yaw) return token;
+    const move = conjugateReconToken(token, facePermFor(yaws[yaw]));
+    if (move === null) throw new Error('Unsupported reconstruction move');
+    return /^[rludfb]/.test(token) ? move.replace(/^([RLUDFB])w/, (_, face: string) => face.toLowerCase()) : move;
+  });
+  const cost = (line: ReconTextLine, moves: string[]) => {
+    if (line.kind !== 'f2l' || line.libraryCorrection) return 0;
+    let score = 0;
+    for (const face of ['F', 'B']) {
+      let side = 0, up = 0;
+      const flush = () => {
+        if (side >= 3 && up >= 2) score += side * 100;
+        side = up = 0;
+      };
+      for (const token of moves) {
+        if (new RegExp(`^${face}(?:2'?|')?$`).test(token)) side++;
+        else if (/^U(?:2'?|')?$/.test(token)) up++;
+        else flush();
+      }
+      flush();
+    }
+    return score;
+  };
+  if (!recon.lines.some(line => cost(line, line.moves))) return recon;
+  // A mixed stage can contain long triggers on perpendicular faces. Split
+  // only those stages at trigger boundaries, so one yaw need not serve both.
+  const parts = recon.lines.flatMap((line, source) => {
+    const runs: Array<{ start: number; axis: string }> = [];
+    if (line.kind === 'f2l' && !line.libraryCorrection) {
+      for (let i = 0; i < line.moves.length;) {
+        const face = /^([FRBL])(?:2'?|')?$/.exec(line.moves[i])?.[1];
+        if (!face) { i++; continue; }
+        const start = i;
+        let side = 0, up = 0;
+        while (i < line.moves.length) {
+          if (new RegExp(`^${face}(?:2'?|')?$`).test(line.moves[i])) side++;
+          else if (/^U(?:2'?|')?$/.test(line.moves[i])) up++;
+          else break;
+          i++;
+        }
+        if (side >= 3 && up >= 2) runs.push({ start, axis: 'FB'.includes(face) ? 'FB' : 'RL' });
+      }
+    }
+    const cuts = new Set([0, line.moves.length]);
+    if (new Set(runs.map(run => run.axis)).size > 1) runs.slice(1).forEach(run => cuts.add(run.start));
+    const bounds = [...cuts].sort((a, b) => a - b);
+    if (bounds.length <= 2) return [{ source, line }];
+    return bounds.slice(0, -1).map((from, i) => {
+      const to = bounds[i + 1];
+      return { source, line: { ...line, moves: line.moves.slice(from, to),
+        moveRanges: line.moveRanges?.slice(from, to), wasteGroups: line.wasteGroups?.slice(from, to),
+        algorithmGroups: line.algorithmGroups?.flatMap(group => group.from < to && group.to > from
+          ? [{ from: Math.max(group.from, from) - from, to: Math.min(group.to, to) - from }] : []),
+      } };
+    });
+  });
+  // Four-state dynamic programming: repeated front/back triggers outrank the
+  // number of inserted rotations. The initial yaw is free (inspection).
+  let paths: Array<{ score: number; yaws: number[] }> = [{ score: 0, yaws: [] }];
+  for (const { line } of parts) {
+    const choices = line.kind === 'cross' || (line.kind === 'f2l' && !line.libraryCorrection) ? [0, 1, 2, 3] : [0];
+    paths = choices.map(yaw => {
+      const best = paths.map(path => ({
+        score: path.score + (path.yaws.length && path.yaws.at(-1) !== yaw ? 1 + (line.kind === 'f2l' ? 0.01 : 0) : 0),
+        yaws: [...path.yaws, yaw],
+      })).sort((a, b) => a.score - b.score)[0];
+      return { ...best, score: best.score + cost(line, mapped(line, yaw)) };
+    });
+  }
+  // Returning to the source frame preserves the complete transformation.
+  const best = paths.sort((a, b) => (a.score + (a.yaws.at(-1) ? 1 : 0)) - (b.score + (b.yaws.at(-1) ? 1 : 0)))[0];
+  const initial = best.yaws[0] ?? 0;
+  let previous = initial;
+  const projected = parts.map(({ line }, i) => {
+    const yaw = best.yaws[i];
+    const delta = (yaw - previous + 4) % 4;
+    previous = yaw;
+    if (!yaw && !delta) return line;
+    const moves = [...(delta ? [yaws[delta]] : []), ...mapped(line, yaw)];
+    const first = line.moveRanges?.[0];
+    return { ...line, moves,
+      moveRanges: line.moveRanges ? [
+        ...(delta && first ? [{ ...first, token: yaws[delta], endTs: first.ts, endIdx: first.startIdx - 1 }] : []),
+        ...line.moveRanges.map((range, j) => ({ ...range, token: moves[j + (delta ? 1 : 0)] })),
+      ] : undefined,
+      wasteGroups: line.wasteGroups ? [...(delta ? [null] : []), ...line.wasteGroups] : undefined,
+      algorithmGroups: line.algorithmGroups?.map(group => ({ from: group.from + (delta ? 1 : 0), to: group.to + (delta ? 1 : 0) })),
+    };
+  });
+  const lines: ReconTextLine[] = [];
+  projected.forEach((line, i) => {
+    if (i === 0 || parts[i].source !== parts[i - 1].source) { lines.push(line); return; }
+    const last = lines.at(-1)!;
+    const offset = last.moves.length;
+    lines[lines.length - 1] = { ...last, moves: [...last.moves, ...line.moves],
+      moveRanges: last.moveRanges && line.moveRanges ? [...last.moveRanges, ...line.moveRanges] : undefined,
+      wasteGroups: last.wasteGroups && line.wasteGroups ? [...last.wasteGroups, ...line.wasteGroups] : undefined,
+      algorithmGroups: last.algorithmGroups && line.algorithmGroups
+        ? [...last.algorithmGroups, ...line.algorithmGroups.map(group => ({ from: group.from + offset, to: group.to + offset }))] : undefined,
+    };
+  });
+  if (previous) {
+    const last = lines.at(-1)!;
+    lines.push({ ...last, key: 'f2l-reading-final-orientation', kind: 'inspection', label: null,
+      moves: [yaws[(4 - previous) % 4]], fromIdx: last.toIdx + 1,
+      moveRanges: undefined, wasteGroups: undefined, algorithmGroups: undefined,
+      recognitionMs: null, executionMs: null, stepMs: null });
+  }
+  const inspection = compactCubeRotations(`${recon.inspection} ${yaws[initial]}`.trim());
+  return { ...recon, inspection, lines,
+    text: [...(inspection ? [`${inspection} // insp`] : []), ...lines.map(formatReconLine)].join('\n') };
+}
+
+/** Final grip is replay information, not another step after the cube is solved. */
+function omitSolvedTailRotations(recon: ReconTextResult): ReconTextResult {
+  let lastLine = recon.lines.length - 1;
+  let end = 0;
+  while (lastLine >= 0) {
+    const moves = recon.lines[lastLine].moves;
+    end = moves.length;
+    while (end && /^[xyz](?:2'?|')?$/.test(moves[end - 1])) end--;
+    if (end) break;
+    lastLine--;
+  }
+  const line = recon.lines[lastLine];
+  if (!line || (line.kind !== 'pll' && line.kind !== 'oll')
+    || (lastLine === recon.lines.length - 1 && end === line.moves.length)) return recon;
+  const moves = recon.lines.slice(0, lastLine).flatMap(line => line.moves).concat(line.moves.slice(0, end));
+  if (!isSolved(applyOneToken(solved(3), `${recon.scramble} ${recon.inspection} ${reconstructionAlg(moves)}`))) return recon;
+  const lines = [...recon.lines.slice(0, lastLine), { ...line, moves: line.moves.slice(0, end),
+    moveRanges: line.moveRanges?.slice(0, end), wasteGroups: line.wasteGroups?.slice(0, end),
+    algorithmGroups: line.algorithmGroups?.filter(group => group.from < end)
+      .map(group => ({ ...group, to: Math.min(group.to, end) })),
+  }];
+  return { ...recon, lines,
+    text: [...(recon.inspection ? [`${recon.inspection} // insp`] : []), ...lines.map(formatReconLine)].join('\n') };
+}
+
+export function simplifyF2lRotations(source: ReconTextResult): ReconTextResult {
+  let recon: ReconTextResult;
+  try { recon = orientInspectionForCross(source); } catch { return source; }
+  const expanded = recon.lines.map(line => {
+    if (line.kind !== 'f2l' || line.libraryCorrection) return line;
     const entries: Array<{ token: string; from: number; to: number; range?: RangeMoveItem }> = [];
     for (let i = 0; i < line.moves.length;) {
       const from = i;
+      const wide = line.moves[i].match(/^([rludfb]|[RLUDFB]w)(2'?|')?$/);
+      if (wide) {
+        const definition = WIDE_TURN_DEFS.find(([family]) => family === wide[1][0].toLowerCase())!;
+        const [, axis, rotationQuarter, face] = definition;
+        const q = wide[2]?.startsWith('2') ? (wide[2].endsWith("'") ? -2 : 2)
+          : wide[2] === "'" ? -1 : 1;
+        const tokens = [quarterToken(face, q), quarterToken(axis, (rotationQuarter === 3 ? -1 : 1) * q)];
+        const range = line.moveRanges?.[i];
+        tokens.forEach(token => entries.push({ token, from, to: i + 1,
+          range: range ? { ...range, token } : undefined }));
+        i++;
+        continue;
+      }
+      // E = U D' y'. Carry its rotation through a BU/FU two-generator run,
+      // retaining any net rotation after the closing E turn.
+      if (/^E(?:2'?|')?$/.test(line.moves[i])) {
+        let end = i + 1;
+        const faces = new Set<string>();
+        while (end < line.moves.length && /^[UBF](?:2'?|')?$/.test(line.moves[end])) {
+          faces.add(line.moves[end][0]);
+          end++;
+        }
+        if (faces.has('U') && faces.size === 2 && /^E(?:2'?|')?$/.test(line.moves[end] ?? '')) {
+          const amount = (token: string) => token.includes('2') ? 2 : token.endsWith("'") ? -1 : 1;
+          const first = amount(line.moves[i]), last = amount(line.moves[end]);
+          const append = (token: string, source: number) => {
+            const range = line.moveRanges?.[source];
+            entries.push({ token, from: source, to: source + 1, range: range ? { ...range, token } : undefined });
+          };
+          append(quarterToken('U', first), i);
+          append(quarterToken('D', -first), i);
+          const sides = 'BRFL';
+          for (let n = i + 1; n < end; n++) {
+            const token = line.moves[n];
+            const face = token[0] === 'U' ? 'U' : sides[(sides.indexOf(token[0]) + first + 4) % 4];
+            append(face + token.slice(1), n);
+          }
+          append(quarterToken('U', last), end);
+          append(quarterToken('D', -last), end);
+          if ((first + last) % 4 !== 0) append(quarterToken('y', -first - last), end);
+          i = end + 1;
+          continue;
+        }
+      }
       if (!/^[xyz](?:2'?|')?$/.test(line.moves[i])) {
         entries.push({ token: line.moves[i], from, to: ++i, range: line.moveRanges?.[from] });
         continue;
@@ -324,7 +664,7 @@ export function simplifyF2lRotations(recon: ReconTextResult): ReconTextResult {
           range: first && last ? { ...first, token, endIdx: last.endIdx, endTs: last.endTs } : undefined }));
       }
     }
-    if (entries.length === line.moves.length) return line;
+    if (entries.length === line.moves.length && entries.every((entry, i) => entry.token === line.moves[i])) return line;
     return { ...line, moves: entries.map(entry => entry.token),
       moveRanges: line.moveRanges ? entries.map(entry => entry.range!) : undefined,
       wasteGroups: line.wasteGroups ? entries.map(entry => line.wasteGroups![entry.from]) : undefined,
@@ -334,9 +674,12 @@ export function simplifyF2lRotations(recon: ReconTextResult): ReconTextResult {
       }),
     };
   });
-  if (lines.every((line, i) => line === recon.lines[i])) return recon;
-  return { ...recon, lines,
-    text: [...(recon.inspection ? [`${recon.inspection} // insp`] : []), ...lines.map(formatReconLine)].join('\n') };
+  let lines: ReconTextLine[];
+  try { lines = restoreCrossAtBoundaries(recon, expanded).map(withoutF2lZ); }
+  catch { return recon; }
+  if (recon === source && lines.length === recon.lines.length && lines.every((line, i) => line === recon.lines[i])) return omitSolvedTailRotations(preferF2lSideTurns(recon));
+  return omitSolvedTailRotations(preferF2lSideTurns({ ...recon, lines,
+    text: [...(recon.inspection ? [`${recon.inspection} // insp`] : []), ...lines.map(formatReconLine)].join('\n') }));
 }
 
 export function formatReconLine(line: ReconTextLine): string {
@@ -416,14 +759,15 @@ function quarterToken(family: string, signedQuarters: number): string {
   return `${family}'`;
 }
 
-const WIDE_PAIRS = (() => {
-  const out = new Map<string, string>();
-  const defs = [
+const WIDE_TURN_DEFS = [
     ['r', 'x', 1, 'L'], ['l', 'x', 3, 'R'],
     ['u', 'y', 1, 'D'], ['d', 'y', 3, 'U'],
     ['f', 'z', 1, 'B'], ['b', 'z', 3, 'F'],
   ] as const;
-  for (const [wide, rotation, rotationQuarter, face] of defs) {
+
+const WIDE_PAIRS = (() => {
+  const out = new Map<string, string>();
+  for (const [wide, rotation, rotationQuarter, face] of WIDE_TURN_DEFS) {
     const rotationSign = rotationQuarter === 3 ? -1 : 1;
     for (const q of [1, 2, -2, -1]) {
       const rot = quarterToken(rotation, rotationSign * q);
@@ -520,12 +864,13 @@ function markWideCoreEvents(
       // Calibrated recordings already use physical WCA directions. Pair one
       // nearby encoder gesture with one core event, regardless of arrival order.
       // Anchor both at the encoder time so a stage cut cannot split the gesture.
+      const gestureMs = event.notationMs ?? event.tMs;
       const nearest = counted.map((move, moveIdx) => ({ move, moveIdx,
-        distance: Math.min(Math.abs(move.ts - event.tMs), Math.abs(move.endTs - event.tMs)),
+        distance: Math.min(Math.abs(move.ts - gestureMs), Math.abs(move.endTs - gestureMs)),
       })).filter(({ move, moveIdx, distance }) => {
         if (claimedOuter.has(moveIdx) || distance > WIDE_TURN_SLACK_MS
           || !WIDE_PAIRS.has(`${move.m} ${event.token}`)) return false;
-        const from = Math.min(move.ts, event.tMs), to = Math.max(move.endTs, event.tMs);
+        const from = Math.min(move.ts, gestureMs), to = Math.max(move.endTs, gestureMs);
         return !counted.some((other, otherIdx) => otherIdx !== moveIdx
           && other.ts > from && other.ts < to);
       }).sort((a, b) => a.distance - b.distance || a.moveIdx - b.moveIdx)[0];
@@ -921,6 +1266,7 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
   return {
     // 原始打乱 + 观察转体。共轭过的那条只在这个模块内部用(识别、切分),不出门。
     scramble: phys.scramble,
+    crossColor: /^([UDFBLR])-cross$/.exec(segs.crossSide ?? '')?.[1],
     methodStages,
     currentStage,
     inspection: viewRot,

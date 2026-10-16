@@ -12,18 +12,17 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
 import { ReconCrossToggle } from '@cuberoot/timer-ui';
-import { VisualCube } from '@/components/VisualCube';
-import Link from '@/components/AppLink';
+import { useReconLineDiagrams } from './ReconLineDiagrams';
+import Link from '@/components/ReconCaseLink';
 import { loadAlg } from '@cuberoot/shared/alg';
 import { reconCommentCaseIndex, reconCommentLinks, type ReconCommentCases } from '@/lib/recon-comment-links';
 import { tr } from '@/i18n/tr';
 import CubeColorChip, {
   crossColorFromReconText,
-  cubeColorGroups,
+  cubeColorGroups, cubeColorGroupPunctuation,
   f2lDisplayColors,
 } from '@/components/CubeColorChip/CubeColorChip';
-import { cleanForPlayer, findTokenPositions, syncReconPlayerCursorFromText, reconInspectionOrientations, reconWasteBrackets } from '@/lib/recon-alg-utils';
-import { visualCubeSchemeForOrientation } from '@/lib/cube-orientation';
+import { findTokenPositions, syncReconPlayerCursorFromText, reconInspectionOrientations, reconWasteBrackets } from '@/lib/recon-alg-utils';
 import { getTextOffsetInElement, snapCaretToLine } from '@cuberoot/timer-ui/recon/text-cursor';
 import './solution_view.css';
 
@@ -72,41 +71,12 @@ export default function SolutionView({ text, event, scramble = '', sourceText = 
   const [hlRange, setHlRange] = useState<[number, number] | null>(null);
   const plainText = useMemo(() => text.replace(/\r\n?/g, '\n'), [text]);
   const inspectionColors = useMemo(() => new Map(reconInspectionOrientations(plainText).map(item => [item.line, item.colors])), [plainText]);
-  const lineSetups = useMemo(() => {
-    let setup = cleanForPlayer(scramble);
-    return sourceText.replace(/\r\n?/g, '\n').split('\n').map(line => {
-      const before = setup;
-      setup = [setup, cleanForPlayer(line)].filter(Boolean).join(' ');
-      return before;
-    });
-  }, [scramble, sourceText]);
   const crossColor = useMemo(() => crossColorFromReconText(plainText), [plainText]);
   const linkComments = event === '3x3' || event === '333' || event === 'oh' || event === '333oh';
+  const { diagramAt, f2lLinks, f2lLoading, libraryLinks } = useReconLineDiagrams(scramble, sourceText, linkComments);
   const wasteBrackets = useMemo(() => autoWaste && linkComments
     ? reconWasteBrackets(plainText, scramble) : new Map<number, string>(), [autoWaste, linkComments, plainText, scramble]);
   const [commentCases, setCommentCases] = useState<ReconCommentCases>(new Map());
-  const [f2lLinks, setF2lLinks] = useState<Map<number, Map<string, string>>>(new Map());
-  const [f2lDiagrams, setF2lDiagrams] = useState<Map<number, { colors: string; facelets: string }[]>>(new Map());
-  const [f2lLoading, setF2lLoading] = useState(false);
-  useEffect(() => {
-    let cancelled = false;
-    setF2lLinks(new Map());
-    setF2lDiagrams(new Map());
-    setF2lLoading(false);
-    if (linkComments && scramble && sourceText.split('\n').some(line => {
-      const comment = line.indexOf('//');
-      if (comment < 0) return false;
-      const label = line.slice(comment + 2).trim();
-      return /\bF2L[1-4]?\b/i.test(label) || cubeColorGroups(label).some(group => group.colors.length === 2);
-    })) {
-      setF2lLoading(true);
-      void import('@/lib/recon-f2l-links').then(({ reconF2lAnnotations }) => reconF2lAnnotations(scramble, sourceText, diagrams => { if (!cancelled) setF2lDiagrams(diagrams); }))
-        .then(({ links, diagrams }) => { if (!cancelled) { setF2lLinks(links); setF2lDiagrams(diagrams); } })
-        .catch(() => { /* Unknown states stay as plain labels, never a guessed case. */ })
-        .finally(() => { if (!cancelled) setF2lLoading(false); });
-    }
-    return () => { cancelled = true; };
-  }, [linkComments, scramble, sourceText]);
   const commentSets = useMemo(() => linkComments
     ? [...new Set(plainText.split('\n').flatMap(line => reconCommentLinks(line).map(link => link.href.split('/').pop()!)))].sort().join(',')
     : '', [plainText, linkComments]);
@@ -248,41 +218,13 @@ export default function SolutionView({ text, event, scramble = '', sourceText = 
             }))
           : [];
         const colorsAt = new Map(labelColorGroups.map(group => [group.start, group.colors]));
-        const hiddenBrackets = new Set<number>();
-        for (const match of line.matchAll(/\(([^()]*)\)/g)) {
-          const start = match.index!;
-          const end = start + match[0].length - 1;
-          const groups = labelColorGroups.filter(group => group.start > start && group.end <= end);
-          if (!groups.length) continue;
-          let remainder = line.slice(start + 1, end);
-          for (const group of [...groups].reverse()) {
-            remainder = remainder.slice(0, group.start - start - 1) + remainder.slice(group.end - start - 1);
-          }
-          if (/^[\s+]*$/.test(remainder)) {
-            hiddenBrackets.add(start); hiddenBrackets.add(end);
-            for (let offset = start + 1; offset < end; offset++) {
-              if (line[offset] === '+') hiddenBrackets.add(offset);
-            }
-          }
-        }
-        const links = linkComments ? reconCommentLinks(line, commentCases).flatMap(link => {
+        const hiddenBrackets = cubeColorGroupPunctuation(line, labelColorGroups);
+        const links = linkComments ? reconCommentLinks(line, commentCases, set => libraryLinks.get(i)?.get(set)).flatMap(link => {
           if (link.href !== '/alg/3x3/f2l') return [link];
           const href = f2lLinks.get(i)?.get('F2L');
           return href ? [{ ...link, href }] : [];
         }) : [];
-        const topLayerLink = scramble.trim() && links.find(link =>
-          /^\/alg\/3x3\/(?:oll|pll|coll|zbll|zbls)(?:\/|$)/.test(link.href));
-        const isF2lLine = linkComments && scramble.trim() && !topLayerLink && (
-          labelColorGroups.some(group => group.colors.length === 2)
-          || (labelStart >= 0 && /^F2L(?:[1-4])?\b/i.test(line.slice(labelStart)))
-        );
-        const diagram = topLayerLink && lineSetups[i] ? (
-          <VisualCube setup={lineSetups[i]} scheme={visualCubeSchemeForOrientation('')} view="plan" size={28} local interactive enlargeable
-            alt={tr({ zh: '执行此行前的顶层状态', en: 'Last-layer state before this line' })} />
-        ) : isF2lLine && f2lDiagrams.has(i) ? <>{f2lDiagrams.get(i)!.map(({ colors, facelets }) => {
-          return <VisualCube key={colors} faceletColors={facelets} view="iso" size={28} local interactive enlargeable
-            alt={tr({ zh: `执行此行前的 ${colors} F2L 状态`, en: `${colors} F2L state before this line` })} />;
-        })}</> : null;
+        const diagram = diagramAt(i);
 
         // 切点:0 / 行尾 / 光标 / 高亮起止 / 色块位置 → 分段渲染。
         const cuts = new Set<number>([0, line.length]);

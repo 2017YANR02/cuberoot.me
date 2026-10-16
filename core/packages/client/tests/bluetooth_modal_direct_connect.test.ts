@@ -183,13 +183,32 @@ describe('BluetoothModal direct connection attempt', () => {
     });
 
     const failure = modal().querySelector('[role="alert"]')?.textContent ?? '';
-    expect(failure).toContain('This device model is not currently supported');
+    expect(failure).toContain('Connection failed');
+    expect(failure).toContain('用户取消选择');
+    expect(failure).not.toContain('This device model is not currently supported');
     expect(failure).toContain('Only smart 3x3 cubes are supported');
     for (const model of ['GAN356 i Carry', 'GAN Mini ui FreePlay', 'GAN12 ui FreePlay', 'V10 AI / V11 AI', 'Super WeiLong V2', 'QYSC', 'Tornado V4', 'GoCube / GoCube Edge', 'Rubik’s Connected', 'GiiKER i3']) {
       expect(failure).toContain(model);
     }
     expect(modal().querySelectorAll('[role="alert"] ul')).toHaveLength(4);
     expect(modal().textContent).toContain('Retry connection');
+  });
+
+  it('preserves the native privacy error when retrying a connection', async () => {
+    const privacyError = '小程序尚未在隐私协议中声明蓝牙用途，请联系开发者';
+    await act(async () => {
+      root.render(createElement(BluetoothModal, {
+        isZh: false,
+        cube: disconnectedCube,
+        onClose: vi.fn(),
+        onConnect: vi.fn(async () => { throw new Error(privacyError); }),
+      }));
+    });
+    const connect = modal().querySelector<HTMLButtonElement>('.bt-connect-btn')!;
+    await act(async () => connect.click());
+    const failure = modal().querySelector('[role="alert"]')?.textContent ?? '';
+    expect(failure).toContain(privacyError);
+    expect(failure).not.toContain('This device model is not currently supported');
   });
 
   it('keeps the essential connected-cube facts and recovery actions', async () => {

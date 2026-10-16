@@ -15,6 +15,9 @@ on:
     branches: [main]
     paths:
       - '.node-version'
+      - '.githooks/pre-commit'
+      - '.codex/hooks/recon-ground-truth-gate.mts'
+      - '.codex/hooks.json'
       - 'core/**'
       - '!core/packages/platform/**'
       - 'solver/333opt/inject.mjs'
@@ -95,6 +98,9 @@ jobs:
               - 'core/packages/client/vercel.json'
               - 'core/scripts/vercel-ignore-build.ts'
             client:
+              - '.githooks/pre-commit'
+              - '.codex/hooks/recon-ground-truth-gate.mts'
+              - '.codex/hooks.json'
               - '.node-version'
               - '.github/workflows/test.yml'
               - 'core/package.json'
@@ -701,6 +707,33 @@ jobs:
       - name: Build client dependencies
         working-directory: core
         run: pnpm --filter @cuberoot/client build:deps
+
+      - name: Record reconstruction regression results
+        if: ${{ matrix.shard == 1 }}
+        working-directory: core
+        env:
+          RECON_TEST_DISABLE_SYNC: '1'
+        run: node scripts/recon-ground-truth-gate.mjs run --offline
+
+      - name: Retain reconstruction history
+        if: ${{ always() && matrix.shard == 1 }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: recon-ground-truth-results
+          path: .tmp/recon-ground-truth-runs/
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 90
+
+      # Never expose deployment access to pull-request code.
+      - name: Synchronize reconstruction history
+        if: ${{ always() && matrix.shard == 1 && github.ref == 'refs/heads/main' && github.event_name != 'pull_request' }}
+        working-directory: core
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: node scripts/recon-ground-truth-results.mts publish-ci ..
 
       - name: Test client shard
         working-directory: core

@@ -11,12 +11,13 @@ const icons = { timer: Timer, 'smart-cube': Bluetooth, scramble: Dices, training
   appearance: Palette, sound: Volume2, data: Database, advanced: Keyboard };
 
 /** One responsive settings dialog. Hosts supply supported categories and their fields. */
-export function TimerSettingsPanel({ language, activeCategory, onCategoryChange, onClose, categories, children }: {
+export function TimerSettingsPanel({ language, activeCategory, onCategoryChange, onClose, categories, playersControl, children }: {
   language: 'en' | 'zh';
   activeCategory: TimerSettingCategoryId;
   onCategoryChange(category: TimerSettingCategoryId): void;
   onClose(): void;
   categories?: readonly TimerSettingCategoryId[];
+  playersControl?: ReactNode;
   children: ReactNode;
 }) {
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -76,6 +77,12 @@ export function TimerSettingsPanel({ language, activeCategory, onCategoryChange,
           </aside>
           <div ref={mainRef} className="settings-main">
             <div className="settings-category-intro"><h3>{items.find(category => category.id === activeCategory)?.label[language]}</h3></div>
+            {activeCategory === 'timer' && playersControl && (
+              <div className="settings-row">
+                <span className="settings-row-label">{label('Players', '人数')}</span>
+                <span className="settings-row-control">{playersControl}</span>
+              </div>
+            )}
             {children}
           </div>
         </div>

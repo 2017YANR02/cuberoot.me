@@ -7,6 +7,7 @@ import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import createModule from './cube48opt-rust8.mjs';
 import { verifySmall } from './verify-small.mjs';
+import { verifyRootBound } from './verify-root-bound.mjs';
 import { MAX_THREADS } from './cube48opt-rust8-worker.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -22,7 +23,7 @@ function rustFiles(dir) { return readdirSync(dir, { withFileTypes: true }).flatM
 function sources() {
   return Object.fromEntries([...rustFiles(resolve(RESEARCH, 'src')), ...rustFiles(resolve(HERE,'src')),
     resolve(RESEARCH,'Cargo.toml'), resolve(RESEARCH,'Cargo.lock'), ...['Cargo.toml','Cargo.lock',
-    'cube48opt-rust8.mjs','cube48opt-rust8-worker.mjs','verify-small.mjs','build.mjs'].map(p => resolve(HERE,p))]
+    'cube48opt-rust8.mjs','cube48opt-rust8-worker.mjs','verify-small.mjs','verify-root-bound.mjs','build.mjs'].map(p => resolve(HERE,p))]
     .sort().map(p => [rel(p),fileHash(p)]));
 }
 function mainCommand(feature, directory, targetDir) {
@@ -37,17 +38,67 @@ function mainCommand(feature, directory, targetDir) {
 }
 
 async function main() {
-  assert.equal(process.argv.length,2);
+  const candidate = process.argv[2] ?? null;
+  const compileOnly = process.argv[3] === '--compile-only';
+  assert(process.argv.length <= 4 && (process.argv[3] === undefined || compileOnly));
+  assert(candidate === null || ["quarter-fixed","quarter-fixed-four","opt9-quarter-fixed","coset-batch","coset-batch-four","root-bound","root-bound-four","lazy-normal","lazy-normal-four","padded-state","opt9-batch","opt9-batch-padded","opt9-select"].includes(candidate));
+  const features = candidate === 'quarter-fixed-four' ? 'quarter-fixed,production-four'
+    : candidate === 'coset-batch-four' ? 'wasm-coset-batch,production-four'
+    : candidate === 'coset-batch' ? 'wasm-coset-batch'
+    : candidate === 'root-bound-four' ? 'wasm-root-bound,production-four'
+    : candidate === 'root-bound' ? 'wasm-root-bound'
+    : candidate === 'lazy-normal-four' ? 'wasm-lazy-normal,production-four'
+    : candidate === 'lazy-normal' ? 'wasm-lazy-normal'
+    : candidate === 'padded-state' ? 'wasm-padded-state'
+    : candidate === 'opt9-batch-padded' ? 'wasm-opt9-batch-padded'
+    : candidate === 'opt9-select' ? 'wasm-opt9-select'
+    : candidate === 'opt9-batch' ? 'wasm-opt9-batch' : candidate;
   const archive = resolve(ROOT,'.tmp/cubeopt-reverse/rust-wasm-shared-builds'); mkdirSync(archive,{recursive:true});
-  const directory = mkdtempSync(resolve(archive,'build-'));
+  const directory = mkdtempSync(resolve(archive,compileOnly ? 'draft-' : 'build-'));
   const targetDir = resolve(directory, 'target');
   const output = resolve(targetDir, TARGET, 'release/cube48opt_rust_shared_wasm.wasm');
   const before = sources();
-  const checkCommand = mainCommand('small-check',directory,targetDir);
+  if (compileOnly) {
+    const buildCommand = mainCommand(features,directory,targetDir);
+    assert.deepEqual(sources(),before,'Sources changed during compilation; do not reuse this draft');
+    const artifact = resolve(directory,'cube48opt-rust8.wasm');
+    copyFileSync(output,artifact,constants.COPYFILE_EXCL);
+    for (const name of ['cube48opt-rust8.mjs','cube48opt-rust8-worker.mjs'])
+      copyFileSync(resolve(HERE,name),resolve(directory,name),constants.COPYFILE_EXCL);
+    for (const path of Object.keys(before)) {
+      const target=resolve(directory,'source',path); mkdirSync(dirname(target),{recursive:true});
+      copyFileSync(resolve(ROOT,path),target,constants.COPYFILE_EXCL);
+    }
+    // Intentionally no build-metadata.json: production guard/harness must not
+    // mistake a compile-only artifact for a validated runnable candidate.
+    const metadata = {schema:'cuberoot.rust-opt-shared-wasm64.draft.v1',createdAt:new Date().toISOString(),
+      status:'compiled-unverified',candidate,toolchain:TOOLCHAIN,target:TARGET,rustflags:RUSTFLAGS,
+      command:buildCommand,artifact,wasmSha256:fileHash(artifact),wasmBytes:readFileSync(artifact).length,
+      wrapperSha256:fileHash(resolve(directory,'cube48opt-rust8.mjs')),
+      workerSha256:fileHash(resolve(directory,'cube48opt-rust8-worker.mjs')),
+      sourceHashes:before,sourceDigest:hash(JSON.stringify(before)),
+      smallCheck:null,verified:false,benchmarkEligible:false,deploymentValidated:false,
+      note:'Compiled only at the maintainer request. No WASM instantiation, fixtures, PDB load or benchmark. Validate and freeze a new build before any protected run.'};
+    writeFileSync(resolve(directory,'draft-metadata.json'),JSON.stringify(metadata,null,2)+'\n',{flag:'wx'});
+    console.log(JSON.stringify({directory,candidate,status:metadata.status,wasmSha256:metadata.wasmSha256,wasmBytes:metadata.wasmBytes}));
+    return;
+  }
+  const checkCommand = mainCommand(['small-check',features].filter(Boolean).join(','),directory,targetDir);
   const checker = resolve(directory,'small-check.wasm'); copyFileSync(output,checker,constants.COPYFILE_EXCL);
-  const small = await verifySmall(checker,ROOT);
+  const isolatedOpt9 = ['opt9-batch','padded-state','opt9-batch-padded','opt9-select'].includes(candidate);
+  const small = await verifySmall(checker,ROOT,{additionalThreadCounts:isolatedOpt9 ? [16] : []});
+  if (isolatedOpt9) {
+    assert.equal(small.opt9BatchEnabled,candidate !== 'padded-state');
+    assert.equal(small.paddedStateLayout,['padded-state','opt9-batch-padded'].includes(candidate) ? 0x401814 : 0);
+    assert.equal(small.opt9SelectEnabled,candidate === 'opt9-select');
+    assert.equal(small.cosetBatchEnabled,false);
+    assert.equal(small.rootBoundEnabled,false);
+    assert.equal(small.lazyNormalEnabled,false);
+  }
+  small.rootBoundDiagnostic = await verifyRootBound(checker,ROOT);
+  const MAX_THREADS = small.maxThreads;
   writeFileSync(resolve(directory,'small-check.json'),JSON.stringify(small,null,2)+'\n',{flag:'wx'});
-  const buildCommand = mainCommand(null,directory,targetDir);
+  const buildCommand = mainCommand(features,directory,targetDir);
   assert.deepEqual(sources(),before,'Sources changed during build; retry only after source edits finish');
   const artifact = resolve(directory,'cube48opt-rust8.wasm'); copyFileSync(output,artifact,constants.COPYFILE_EXCL);
   for (const name of ['cube48opt-rust8.mjs','cube48opt-rust8-worker.mjs']) copyFileSync(resolve(HERE,name),resolve(directory,name),constants.COPYFILE_EXCL);
@@ -62,7 +113,7 @@ async function main() {
   assert.equal(maxThreadProbe.HEAPU8.length,16777216);
   assert.equal(maxThreadProbe.metadata.maxThreads,MAX_THREADS);
   const metadata = { schema:'cuberoot.rust-opt-shared-wasm64.build.v1',createdAt:new Date().toISOString(),
-    toolchain:TOOLCHAIN,target:TARGET,rustflags:RUSTFLAGS,command:buildCommand,checkCommand,
+    toolchain:TOOLCHAIN,target:TARGET,rustflags:RUSTFLAGS,candidate,command:buildCommand,checkCommand,
     artifact,wasmSha256:fileHash(artifact),wasmBytes:readFileSync(artifact).length,
     wrapper:resolve(directory,'cube48opt-rust8.mjs'),wrapperSha256:fileHash(resolve(directory,'cube48opt-rust8.mjs')),
     worker:resolve(directory,'cube48opt-rust8-worker.mjs'),workerSha256:fileHash(resolve(directory,'cube48opt-rust8-worker.mjs')),

@@ -559,7 +559,13 @@ export function raceBleAbortWithLateCleanup<T>(
 }
 
 export function normalizeBleUuid(uuid: string): string {
-  return uuid.toLowerCase();
+  const normalized = uuid.toLowerCase();
+  // iOS hosts can return Bluetooth-assigned UUIDs in 16/32-bit form.
+  // Canonicalize for comparison only; native calls keep the host's original ID.
+  if (/^(?:[0-9a-f]{4}|[0-9a-f]{8})$/.test(normalized)) {
+    return `${normalized.padStart(8, '0')}-0000-1000-8000-00805f9b34fb`;
+  }
+  return normalized;
 }
 
 export function safeBleCallback(callback: (() => void) | undefined): void {

@@ -95,10 +95,11 @@ const WEB_TIMER_DEVICE_REGISTRY = createTimerDeviceRegistry({
   registrations: SMART_CUBE_TIMER_DEVICE_REGISTRATIONS,
 });
 
-function ConnectFailure() {
+function ConnectFailure({ detail }: { detail: string }) {
   return (
     <div className="modal-section bt-warn" role="alert">
-      <h3 className="bt-warn-title">{tr({ zh: '连接的设备型号暂不支持', en: 'This device model is not currently supported' })}</h3>
+      <h3 className="bt-warn-title">{tr({ zh: '连接失败', en: 'Connection failed' })}</h3>
+      <p>{detail}</p>
       <p>{tr({ zh: '暂只支持智能三阶魔方，二阶和异形智能魔方暂不支持', en: 'Only smart 3x3 cubes are supported. Smart 2x2 and shape-mod cubes are not currently supported.' })}</p>
       {SUPPORTED_CUBE_GROUPS.map(group => (
         <div key={group.en}>
@@ -241,7 +242,7 @@ export default function BluetoothModal({ anchorRef, isZh, cube, onClose, onConne
         gyro: Boolean(onResetGyro),
       }}
       className={`timer-modal bluetooth-modal${!macPrompt && !connectError ? ' bt-connected-modal' : ''}`}
-      connectionFailure={connectError ? <ConnectFailure /> : undefined}
+      connectionFailure={connectError ? <ConnectFailure detail={connectError.detail} /> : undefined}
       intro={intro}
       language={isZh ? 'zh' : 'en'}
       onClose={onClose}

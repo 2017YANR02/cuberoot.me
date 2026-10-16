@@ -6,6 +6,14 @@ import { join } from 'node:path';
 import { guard, GiB, repairTail, atomicJson, readJson, selectBatch, claimOwner, selectPairBatch, pairGroup, CsvTail, askSolverThreads, batchFailureReason, batchFailure, recoverableStartupStop, waitForStartupMemory } from './double-zbll-symmetry-state.mjs';
 
 const baseline = { boot: 'same-boot', baselineSwapouts: 10 };
+test('reviewed continuation keeps old counter and stops on any further swap-out',()=>{
+  const reviewed={boot:'same-boot',baselineSwapouts:0,reviewedSwapouts:48};
+  const memory={boot:'same-boot',swapouts:48,pressure:1,available:40*GiB,disk:100*GiB};
+  assert.equal(guard(memory,reviewed,0),null);
+  assert.match(guard({...memory,swapouts:49},reviewed,0)!,/48 → 49/);
+  assert.match(guard(memory,{...reviewed,status:'protected-stop'},0)!,/上次已触发/);
+  assert.equal(reviewed.baselineSwapouts,0);
+});
 const normal = { boot: 'same-boot', swapouts: 10, pressure: 1, available: 40 * GiB, disk: 100 * GiB };
 test('identified anonymous memory is counted once without relaxing RSS, swap or minimum headroom', () => {
   const loaded = {...normal,available:9*GiB};

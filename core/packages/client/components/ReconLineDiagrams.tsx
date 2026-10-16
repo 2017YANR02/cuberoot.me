@@ -1,0 +1,112 @@
+'use client';
+
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { VisualCube } from '@/components/VisualCube';
+import { cubeColorGroups } from '@/components/CubeColorChip/CubeColorChip';
+import { cleanForPlayer } from '@/lib/recon-alg-utils';
+import { visualCubeSchemeForOrientation } from '@/lib/cube-orientation';
+import { tr } from '@/i18n/tr';
+import { loadAlg } from '@cuberoot/shared/alg';
+import { reconCommentCaseIndex, reconCommentLinks } from '@/lib/recon-comment-links';
+import { algCaseDetailHref, buildCaseSlugMap } from '@/lib/alg_case_link';
+
+/** Shared pre-line states, F2L masking and library links for recon and timer. */
+export function useReconLineDiagrams(scramble: string, text: string, enabled = true) {
+  const lineSetups = useMemo(() => {
+    let setup = cleanForPlayer(scramble);
+    return text.replace(/\r\n?/g, '\n').split('\n').map(line => {
+      const before = setup;
+      setup = [setup, cleanForPlayer(line)].filter(Boolean).join(' ');
+      return before;
+    });
+  }, [scramble, text]);
+  const [f2lLinks, setF2lLinks] = useState<Map<number, Map<string, string>>>(new Map());
+  const [f2lDiagrams, setF2lDiagrams] = useState<Map<number, { colors: string; facelets: string }[]>>(new Map());
+  const [f2lLoading, setF2lLoading] = useState(false);
+  const [libraryLinks, setLibraryLinks] = useState<Map<number, Map<string, string>>>(new Map());
+  useEffect(() => {
+    let cancelled = false;
+    setLibraryLinks(new Map());
+    if (!enabled) return;
+    // Bare stage labels in manually authored /recon text need the same exact
+    // recognition as timer labels. Reuse the matcher and the existing dialog.
+    void (async () => {
+      const { identifyLibraryCase } = await import('@cuberoot/shared/timer/reconstruct/library-correction');
+      const files = new Map<string, ReturnType<typeof loadAlg>>();
+      const links = new Map<number, Map<string, string>>();
+      const lines = text.replace(/\r\n?/g, '\n').split('\n');
+      for (const [index, line] of lines.entries()) {
+        if (cancelled) return;
+        for (const comment of reconCommentLinks(line)) {
+          const set = comment.href.split('/')[3];
+          if (set === 'f2l') continue;
+          try {
+            if (!files.has(set)) files.set(set, loadAlg('3x3', set));
+            const file = await files.get(set)!;
+            const named = reconCommentLinks(line, new Map([[set, reconCommentCaseIndex(set, file.cases)]]));
+            if (named.some(link => link.start === comment.start && /^\/alg\/3x3\/[^/]+\//.test(link.href))) continue;
+            const item = await identifyLibraryCase({ moves: cleanForPlayer(line).split(/\s+/).filter(Boolean) }, file.cases, set);
+            const slug = item?.id == null ? undefined : buildCaseSlugMap(file.cases, set).byId.get(item.id);
+            if (slug) {
+              if (!links.has(index)) links.set(index, new Map());
+              links.get(index)!.set(set, algCaseDetailHref('3x3', set, slug));
+            }
+          } catch { /* Do not guess a case when the library is unavailable. */ }
+        }
+      }
+      if (!cancelled) setLibraryLinks(links);
+    })();
+    return () => { cancelled = true; };
+  }, [enabled, text]);
+  useEffect(() => {
+    let cancelled = false;
+    setF2lLinks(new Map());
+    setF2lDiagrams(new Map());
+    setF2lLoading(false);
+    if (enabled && scramble && text.split('\n').some(line => {
+      const comment = line.indexOf('//');
+      if (comment < 0) return false;
+      const label = line.slice(comment + 2).trim();
+      return /\bF2L[1-4]?\b/i.test(label) || cubeColorGroups(label).some(group => group.colors.length === 2);
+    })) {
+      setF2lLoading(true);
+      void import('@/lib/recon-f2l-links').then(({ reconF2lAnnotations }) => reconF2lAnnotations(scramble, text, diagrams => { if (!cancelled) setF2lDiagrams(diagrams); }))
+        .then(({ links, diagrams }) => { if (!cancelled) { setF2lLinks(links); setF2lDiagrams(diagrams); } })
+        .catch(() => { /* Unknown states stay as plain labels, never a guessed case. */ })
+        .finally(() => { if (!cancelled) setF2lLoading(false); });
+    }
+    return () => { cancelled = true; };
+  }, [enabled, scramble, text]);
+
+  const sourceLines = useMemo(() => text.replace(/\r\n?/g, '\n').split('\n'), [text]);
+  const diagramAt = (index: number): ReactNode => {
+    if (!enabled || !scramble.trim()) return null;
+    const line = sourceLines[index] ?? '';
+    const commentAt = line.indexOf('//');
+    const label = commentAt < 0 ? '' : line.slice(commentAt + 2).trim();
+    // Last-slot algorithms still involve the first two layers, even when their
+    // names also mention OLL/PLL skips. Show their full pre-line state in 3D.
+    const lastSlot = /\b(?:ZBLS|VLS|WV|SV)\b/i.test(label);
+    if (lastSlot && lineSetups[index]) return <VisualCube setup={lineSetups[index]}
+      scheme={visualCubeSchemeForOrientation('')} view="iso" size={28} local interactive enlargeable
+      alt={tr({ zh: '执行此行前的魔方状态', en: 'Cube state before this line' })} />;
+    const topLayer = /\b(?:OLL|OLLCP|PLL|EPLL|ELL|COLL|ZBLL|1LLL)\b/i.test(label);
+    if (topLayer && lineSetups[index]) return <VisualCube setup={lineSetups[index]}
+      scheme={visualCubeSchemeForOrientation('')} view="plan" size={28} local interactive enlargeable
+      alt={tr({ zh: '执行此行前的顶层状态', en: 'Last-layer state before this line' })} />;
+    const f2l = cubeColorGroups(label).some(group => group.colors.length === 2) || /^F2L(?:[1-4])?\b/i.test(label);
+    if (f2l && f2lDiagrams.has(index)) return <>{f2lDiagrams.get(index)!.map(({ colors, facelets }) =>
+      <VisualCube key={colors} faceletColors={facelets} view="iso" size={28} local interactive enlargeable
+        alt={tr({ zh: `执行此行前的 ${colors} F2L 状态`, en: `${colors} F2L state before this line` })} />)}</>;
+    return null;
+  };
+  return { diagramAt, f2lLinks, f2lLoading, libraryLinks };
+}
+
+export function ReconLineDiagramProvider({ scramble, text, enabled, children }: {
+  scramble: string; text: string; enabled: boolean;
+  children: (diagramAt: (line: number) => ReactNode, caseHrefAt: (line: number, colors: string) => string | undefined) => ReactNode;
+}) {
+  const { diagramAt, f2lLinks, libraryLinks } = useReconLineDiagrams(scramble, text, enabled);
+  return children(diagramAt, (line, key) => f2lLinks.get(line)?.get(key) ?? libraryLinks.get(line)?.get(key));
+}

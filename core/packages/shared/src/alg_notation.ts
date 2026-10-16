@@ -104,6 +104,14 @@ export function areOppositeParallelFaceMoves(firstBase: string, secondBase: stri
   return OPPOSITE_FACE_PAIRS.has(`${firstBase.toUpperCase()}${secondBase.toUpperCase()}`);
 }
 
+/** Distinct parallel face/slice families can stay joined; rotations cannot. */
+export function areParallelCubeMoves(firstBase: string, secondBase: string): boolean {
+  const first = firstBase.toUpperCase();
+  const second = secondBase.toUpperCase();
+  return first !== second && ['RLM', 'UDE', 'FBS'].some(axis => axis.includes(first) && axis.includes(second))
+    && first.length === 1 && second.length === 1;
+}
+
 export interface IllegalGluedCubeMoves {
   first: string;
   second: string;
@@ -113,8 +121,8 @@ export interface IllegalGluedCubeMoves {
 }
 
 /**
- * Finds adjacent cube moves that are missing whitespace. Opposite parallel faces may stay joined
- * (`RL`, `U'D`, `FB`); every other pair, including rotations and slices, must be separated.
+ * Finds adjacent cube moves that are missing whitespace. Distinct parallel face/slice moves may stay joined
+ * (`RL`, `U'D`, `FS`, `MR`, `ML`); cross-axis moves and rotations must be separated.
  */
 export function findIllegalGluedCubeMoves(alg: string): IllegalGluedCubeMoves | null {
   let i = 0;
@@ -132,7 +140,7 @@ export function findIllegalGluedCubeMoves(alg: string): IllegalGluedCubeMoves | 
     const match = MOVE_RE.exec(alg.slice(i));
     if (match) {
       const [raw, , base] = match;
-      if (previousEnd === i && !areOppositeParallelFaceMoves(previousBase, base)) {
+      if (previousEnd === i && !areParallelCubeMoves(previousBase, base)) {
         return { first: previousRaw, second: raw, joined: previousRaw + raw, index: i };
       }
       i += raw.length;
@@ -147,7 +155,7 @@ export function findIllegalGluedCubeMoves(alg: string): IllegalGluedCubeMoves | 
   return null;
 }
 
-/** Inserts only the required spaces and preserves permitted opposite-face notation verbatim. */
+/** Inserts only the required spaces and preserves permitted parallel face/slice notation verbatim. */
 export function spaceIllegalGluedCubeMoves(alg: string): string {
   let fixed = alg;
   while (true) {

@@ -54,13 +54,16 @@ function applyScramble(
 ): void {
   host.style.visibility = 'hidden';
   try {
-    player.experimentalSetupAlg = puzzle === 'redi_cube' ? rediScrambleForCubing(scramble)
-      : puzzle === 'kilominx' ? toCubingKilominx(scramble)
-      : scramble;
+    player.experimentalSetupAlg = previewAlg(puzzle, scramble);
     host.style.visibility = '';
   } catch (err) {
     console.warn(`[TimerScramblePreview] scramble render failed for ${puzzle}`, err);
   }
+}
+
+function previewAlg(puzzle: string, scramble: string): string {
+  return puzzle === 'redi_cube' ? rediScrambleForCubing(scramble)
+    : puzzle === 'kilominx' ? toCubingKilominx(scramble) : scramble;
 }
 
 interface PuzzleSpec {
@@ -124,6 +127,38 @@ export function timerScramblePreviewAspect(event: string, scramble = ''): number
   return plan.w / plan.h;
 }
 
+function inlinePreviewSvg(plan: PuzzleSpec | null, scramble: string): string | null {
+    if (!plan?.inlineSvg) return null;
+    try {
+      if (plan.inlineSvg === 'sq1')  return renderSq1ScrambleSvg(scramble ?? '', DEFAULT_SQ1_COLORS);
+      if (plan.inlineSvg === 'mega') return renderMegaScrambleSvg(scramble ?? '', DEFAULT_MEGA_COLORS);
+      if (plan.inlineSvg === 'pyraminx_duo') return renderPyraminxDuoSvg(scramble ?? '');
+      if (plan.inlineSvg === 'magic' || plan.inlineSvg === 'mmagic') return renderMagicSvg(plan.inlineSvg, scramble ?? '');
+      if (plan.inlineSvg === 'sphere') return renderSphereScrambleSvg(scramble ?? '');
+      if (isNativePuzzleId(plan.inlineSvg)) return renderNativePuzzleSvg(plan.inlineSvg, scramble ?? '');
+    } catch (err) {
+      console.warn(`[CubingPreview] ${plan.inlineSvg} render failed`, err);
+    }
+    return null;
+
+}
+
+/** Static export of the same puzzle plan/renderers for native companions. No player or WebGL. */
+export async function renderTimerScrambleSvg(event: string, scramble: string): Promise<string | null> {
+  const plan = planFor(event);
+  if (!plan) return null;
+  if (plan.inlineSvg) return inlinePreviewSvg(plan, scramble);
+  if (!plan.cubingPuzzle) return null;
+  const [{ puzzles }, { ExperimentalSVGAnimator }] = await Promise.all([import('cubing/puzzles'), import('cubing/twisty')]);
+  const loader = puzzles[plan.cubingPuzzle];
+  const [kpuzzle, svg] = await Promise.all([loader.kpuzzle(), loader.svg()]);
+  const renderer = new ExperimentalSVGAnimator(kpuzzle, svg);
+  renderer.drawPattern(kpuzzle.defaultPattern().applyAlg(previewAlg(plan.cubingPuzzle, scramble)));
+  // Same hintFacelets:'none' setting as the iOS player; its host CSS is absent in a PNG export.
+  renderer.svgElement.querySelectorAll('.hint-facelet').forEach(element => element.remove());
+  return renderer.svgElement.outerHTML;
+}
+
 export function TimerScramblePreview({
   ariaLabel,
   event,
@@ -140,21 +175,7 @@ export function TimerScramblePreview({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const playerRef = useRef<any>(null);
 
-  // Inline-SVG renderers bypass cubing.js entirely.
-  const portedSvg = useMemo(() => {
-    if (!plan?.inlineSvg) return null;
-    try {
-      if (plan.inlineSvg === 'sq1')  return renderSq1ScrambleSvg(scramble ?? '', DEFAULT_SQ1_COLORS);
-      if (plan.inlineSvg === 'mega') return renderMegaScrambleSvg(scramble ?? '', DEFAULT_MEGA_COLORS);
-      if (plan.inlineSvg === 'pyraminx_duo') return renderPyraminxDuoSvg(scramble ?? '');
-      if (plan.inlineSvg === 'magic' || plan.inlineSvg === 'mmagic') return renderMagicSvg(plan.inlineSvg, scramble ?? '');
-      if (plan.inlineSvg === 'sphere') return renderSphereScrambleSvg(scramble ?? '');
-      if (isNativePuzzleId(plan.inlineSvg)) return renderNativePuzzleSvg(plan.inlineSvg, scramble ?? '');
-    } catch (err) {
-      console.warn(`[CubingPreview] ${plan.inlineSvg} render failed`, err);
-    }
-    return null;
-  }, [plan, scramble]);
+  const portedSvg = useMemo(() => inlinePreviewSvg(plan, scramble), [plan, scramble]);
 
   // Lazy-load cubing/twisty only when we actually need it.
   useEffect(() => {

@@ -54,6 +54,8 @@ import '@/components/wca-source.css';
 interface Props {
   onClose: () => void;
   actions: readonly MoreMenuItem[];
+  presenceControl?: React.ReactNode;
+  playersControl?: React.ReactNode;
   /** Current event — target-time setting applies to this event. */
   event: EventId;
   mergeSlotRef: (element: HTMLDivElement | null) => void;
@@ -101,7 +103,7 @@ function SettingsSection({ category, activeCategory, title, children, headerCont
   );
 }
 
-export default function SettingsPanel({ onClose, event, actions, mergeSlotRef, onDataReplaced }: Props) {
+export default function SettingsPanel({ onClose, event, actions, presenceControl, playersControl, mergeSlotRef, onDataReplaced }: Props) {
   const s = useSettings();
   const optimalUser = useAuthStore((st) => st.user);
   const metro = useMetronome();
@@ -245,7 +247,14 @@ export default function SettingsPanel({ onClose, event, actions, mergeSlotRef, o
 
   return (
     <TimerSettingsPanel language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'}
+      playersControl={playersControl}
       activeCategory={activeCategory} onCategoryChange={setActiveCategory} onClose={onClose}>
+        {activeCategory === 'timer' && presenceControl && (
+          <div className="settings-row">
+            <span className="settings-row-label">{tr({ zh: '当前计时会话', en: 'Live timer sessions' })}</span>
+            <span className="settings-row-control">{presenceControl}</span>
+          </div>
+        )}
         {actions.some(action => action.visible && !action.danger && ACTION_CATEGORY[action.id] === activeCategory) && (
           <div className="timer-settings-actions" aria-label={tr({ en: 'Tools', zh: '工具' })}>
             {actions.filter(action => action.visible && !action.danger && ACTION_CATEGORY[action.id] === activeCategory).map(action => {

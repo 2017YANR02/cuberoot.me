@@ -236,11 +236,11 @@ function emptyRef(step: StepKey, note: ReferenceNote, userTurns: number | null):
  * Returns null when there is nothing to price at all: no moves, no stage walk
  * (non-3x3 or unparseable), or a scramble the engine's alphabet can't express.
  */
-export function computeStageReferences(
+export function* stageReferenceSteps(
   scramble: string,
   moves: SolveMove[],
   metrics: StepMetricsResult,
-): ReferenceResult | null {
+): Generator<void, ReferenceResult | null> {
   if (!moves || moves.length === 0) return null;
   if (!scramble || !scramble.trim()) return null;
 
@@ -300,6 +300,7 @@ export function computeStageReferences(
   const stages: StageReference[] = [];
 
   for (const step of STEP_ORDER) {
+    yield;
     const metric = byStep.get(step);
     const userTurns = userTurnsFor(step);
     if (!metric || metric.turns === null) {
@@ -450,11 +451,11 @@ export interface SlotReference {
  *
  * Returns null when there is nothing to price at all.
  */
-export function computeF2lSlotReferences(
+export function* slotReferenceSteps(
   scramble: string,
   moves: SolveMove[],
   slots: F2lSlotsResult,
-): SlotReference[] | null {
+): Generator<void, SlotReference[] | null> {
   if (!moves || moves.length === 0) return null;
   if (!scramble || !scramble.trim()) return null;
   const crossEndIdx = slots.segments.crossEndIdx;
@@ -485,6 +486,7 @@ export function computeF2lSlotReferences(
   let prevEndIdx = crossEndIdx;
 
   for (const s of slots.slots) {
+    yield;
     if (s.free) {
       out.push({
         slot: s.slot, refTurns: 0, refSolution: null,
@@ -567,4 +569,14 @@ export function gradeForDelta(delta: number | null | undefined): StepGrade | nul
   if (delta < 0) return 'brilliant';
   if (delta === 0) return 'optimal';
   return null;
+}
+
+/** Synchronous callers keep the original API; worker hosts can yield between stages. */
+export function computeStageReferences(...args: Parameters<typeof stageReferenceSteps>): ReferenceResult | null {
+  const steps = stageReferenceSteps(...args);
+  for (;;) { const result = steps.next(); if (result.done) return result.value; }
+}
+export function computeF2lSlotReferences(...args: Parameters<typeof slotReferenceSteps>): SlotReference[] | null {
+  const steps = slotReferenceSteps(...args);
+  for (;;) { const result = steps.next(); if (result.done) return result.value; }
 }

@@ -1,10 +1,9 @@
 'use client';
 
 /**
- * 登录 / 我的 入口 — 全站通用。两态都是真链接、都指 /account,没有弹层:
+ * 登录 / 我的 入口 — 全站通用。两态都是真链接,没有弹层:
  *   未登录 → /account 渲染登录表单(带 ?next= 回跳本页)
- *   已登录 → /account 就是「我的」页
- * 地址里不带 wcaId:那是当前登录者的页面,不随看的是谁而变。
+ *   已登录 → 默认 /account,页面可通过 href 指定个人入口。
  */
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
@@ -15,7 +14,7 @@ import { useAuthStore, nextQuery } from '@/lib/auth-store';
 import './wca_auth.css';
 import { tr } from '@/i18n/tr';
 
-export default function WcaAuth({ onNavigate, showLabel = false }: { onNavigate?: () => void; showLabel?: boolean }) {
+export default function WcaAuth({ onNavigate, showLabel = false, href = '/account' }: { onNavigate?: () => void; showLabel?: boolean; href?: string }) {
   const { t } = useTranslation();
   const pathname = usePathname();
   const user = useAuthStore(s => s.user);
@@ -53,7 +52,7 @@ export default function WcaAuth({ onNavigate, showLabel = false }: { onNavigate?
 
   return (
     <AppLink
-      href="/account"
+      href={href}
       className="wca-auth-trigger"
       title={label}
       aria-label={label}

@@ -314,6 +314,8 @@ const ENDPOINTS: Ep[] = [
   { d: 'recon', m: 'GET', p: '/v1/recon-ground-truth/export', g: 'public', zh: '已确认复盘测试样本的确定性导出', en: 'Deterministic export of confirmed recon test cases' },
   { d: 'recon', m: 'GET', p: '/v1/recon-ground-truth/candidates', g: 'admin', zh: '管理员复盘测试候选池', en: 'Admin recon-test candidate pool' },
   { d: 'recon', m: 'GET', p: '/v1/recon-ground-truth/:reconId', g: 'admin', zh: '候选完整性检查与规范化预览', en: 'Candidate completeness check and normalized preview' },
+  { d: 'recon', m: 'GET', p: '/v1/recon-ground-truth/runs', g: 'admin', zh: '分页读取自动复盘测试历史', en: 'Read paginated reconstruction test history' },
+  { d: 'recon', m: 'POST', p: '/v1/recon-ground-truth/runs', g: 'admin', zh: '保存自动复盘测试报告', en: 'Save automated reconstruction test report' },
   { d: 'recon', m: 'PUT', p: '/v1/recon-ground-truth/:reconId', g: 'admin', zh: '保存采用、讨论或不采用决定', en: 'Save include, discuss or reject decision' },
 
   // ---- comp ----

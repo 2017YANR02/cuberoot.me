@@ -13,7 +13,7 @@
  * 顺序:**先这把是怎么拧的,再这把拧得怎么样**(2026-08-03 用户提的)。
  *
  *   摘要 — 时间 / STM / TPS,加上读完之后想做的那几件事。
- *   回放 + 谱子 — 三维回放和按步写出来的动作(打乱就是谱子的第一行)。固定展示,
+ *   回放 + 还原步骤 — 三维回放和按步写出来的动作(打乱就是还原步骤的第一行)。固定展示,
  *     它是报告的主体。
  *   数据 — 分步分析表。排在后面不是因为不重要,而是
  *     因为它们都在**归因**:不知道自己拧了什么的时候,一张 5×7 的表读不出东西。
@@ -40,25 +40,22 @@ import type { Solve, EventId } from '@cuberoot/shared/timer';
 import { effectiveMs } from '@cuberoot/shared/timer';
 import { formatMs } from '@cuberoot/shared/timer';
 import { sliceReconstruction, detectMemoPause } from '@cuberoot/shared/timer/reconstruct/slice';
-import { computeStageAverages, computeStageSegments } from '@cuberoot/shared/timer/reconstruct/stage-segments';
-import { computeStepMetrics } from '@cuberoot/shared/timer/reconstruct/step-metrics';
+import { computeStageAverages } from '@cuberoot/shared/timer/reconstruct/stage-segments';
 import type { StepMetricsResult } from '@cuberoot/shared/timer/reconstruct/step-metrics';
 import { detectWastedWork } from '@cuberoot/shared/timer/reconstruct/error-detect';
 import type { ReferenceResult, StageReference } from '@cuberoot/shared/timer/reconstruct/reference';
-import { computeF2lSlots } from '@cuberoot/shared/timer/reconstruct/f2l-slots';
-import { walkMethod, methodFrame } from '@cuberoot/shared/timer/reconstruct/method-walk';
+import { walkMethod, detectSolveMethod } from '@cuberoot/shared/timer/reconstruct/method-walk';
 
-import { decodeGyroTrack, type GyroSample } from '@cuberoot/shared/smart-cube/gyro-track';
-import { buildCoreTrack } from '@cuberoot/shared/timer/reconstruct/core-track';
-import { applyReconTextOverride } from '@cuberoot/shared/timer/reconstruct/recon-text';
-import { initialPoseRotation, normalizeSolve } from '@cuberoot/shared/timer/reconstruct/gyro-orient';
+import { type GyroSample } from '@cuberoot/shared/smart-cube/gyro-track';
+import { applyReconTextOverride, prepareReconstruction } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import { createLiveReconstructionStream, reconstructionAnalyzer } from './analysis-client';
 import type { AnalysisInput, AnalysisSnapshot } from './analysis-protocol';
 import StepAnalysis from './StepAnalysis';
-import MethodPicker from './MethodPicker';
-import { useReconstructionMethod } from './method-preference';
+import ReportContent from './ReportContent';
+import { reportComposition, reportNotationExtras, reportSummary, reportRawMoves, reportReferences, reportMeta, reportBld, reportNoGyro, reportFeedback, initialReportUI, reduceReportUI, resolveReportSlots } from './report-content';
 import { rememberMethodStages, useMethodHistory } from './method-history';
 import StepMoveList from './StepMoveList';
+import { projectReferenceRows, reconstructionSummary } from './report-presentation';
 import ReconstructActions from './ReconstructActions';
 
 import { timerEventNxnSize as nxnSizeForEvent } from '@cuberoot/shared/timer';
@@ -161,39 +158,19 @@ function ReconstructReportBody({
   const host = useReconstructHost();
   const { localize: tr } = host;
   const moves = solve.moves ?? [];
-  const [method, setMethod] = useReconstructionMethod();
+  const methodMoves = moves.map(move => move.m).join(' ');
+  // Classification uses move order, never elapsed time. Timer ticks must not
+  // repeat the orientation search or invalidate the report's method.
+  const method = useMemo(() => detectSolveMethod(solve.scramble,
+    methodMoves ? methodMoves.split(' ').map((m,ts)=>({m,ts})) : [], 0), [solve.scramble,methodMoves]);
   const slices = useMemo(
     () => sliceReconstruction(moves, solve.timeMs, solve.bld?.memoMs),
     [moves, solve.timeMs, solve.bld?.memoMs],
   );
-  const stageSegs = useMemo(
-    () => computeStageSegments(solve.scramble, moves, solve.timeMs),
-    [solve.scramble, moves, solve.timeMs],
-  );
-  // The same rotation the analysis layer applies to itself (see orient.ts),
-  // made explicit here because the two things the USER looks at need it too:
-  // the written reconstruction, so the last layer reads as U-moves the way the
-  // cuber executed it rather than as the D-moves the cube's colour frame
-  // reports; and the replay, so the cross is on the bottom the way they were
-  // holding it. Same move count, same indices — only the frame differs.
-  const gyroSamples = useMemo(() => live && liveGyroSamples
-    ? liveGyroSamples.slice() : decodeGyroTrack(solve.gyro), [live, liveGyroSamples, solve.gyro]);
-  const recordedViewRotation = useMemo(
-    () => initialPoseRotation(gyroSamples, solve.device?.model),
-    [gyroSamples, solve.device?.model],
-  );
-  const view = useMemo(
-    () => method !== 'cfop' ? methodFrame(method, solve.scramble, moves, recordedViewRotation) : normalizeSolve(solve.scramble, moves, {
-      preferredRotation: recordedViewRotation, measuredGrip: gyroSamples[0]?.frame === 'scramble',
-    }),
-    [method, solve.scramble, moves, recordedViewRotation, gyroSamples],
-  );
-  // Recognition/execution split (Cubeast definitions — see step_metrics.ts).
-  // 3x3-shaped events only: the stage walker underneath models a 3x3.
-  const stepMx = useMemo(
-    () => (stageSegs ? computeStepMetrics(solve.scramble, moves, solve.timeMs) : null),
-    [stageSegs, solve.scramble, moves, solve.timeMs],
-  );
+  const prepared = useMemo(() => prepareReconstruction(solve, method, isZh ? 'zh' : 'en',
+    live && liveGyroSamples ? liveGyroSamples.slice() : undefined),
+  [solve.scramble, moves, solve.timeMs, solve.gyro, solve.device?.model, method, isZh, live, liveGyroSamples]);
+  const { view, stageSegs, stepMx, slots } = prepared;
   // Wasted-work detection (state revisits — see error_detect.ts). Gated the
   // same way: the walker models a 3x3.
   const waste = useMemo(
@@ -208,39 +185,11 @@ function ReconstructReportBody({
     return set;
   }, [waste]);
 
-  // F2L, one pair at a time — the column set the step table opens F2L into.
-  // Derived, never stored: it is a second reading of the same move stream.
-  // Declared before the analysis effect below, which prices its slots.
-  const slots = useMemo(
-    () => (stageSegs ? computeF2lSlots(solve.scramble, moves, solve.timeMs, stageSegs) : null),
-    [stageSegs, solve.scramble, moves, solve.timeMs],
-  );
-
   const scoreable = !live && stepMx !== null && stepMx.putDownMs !== null && solve.penalty !== 'DNF';
-  /**
-   * 中心核的轨迹。转体和中层都只能从它推 —— 所以只有**录了姿态**的那些把有;
-   * 没录的把 `solve.gyro` 不存在,这里是 null,中层退回时间判据、一个转体也不写。
-   * 纯几何、不联网,几十个样本的活,不必推到下一帧。
-   */
-  const core = useMemo(
-    // 牌子决定记号里的轴向(`BRAND_SENSOR_BASIS`);「换没换格」与它无关。
-    () => (gyroSamples.length > 0
-      ? buildCoreTrack(gyroSamples, { brand: solve.device?.model, moves })
-      : null),
-    [gyroSamples, solve.device?.model, moves],
-  );
   // Reader preference only; changing methods never rewrites the stored solve.
-  const analysisInput = useMemo<AnalysisInput | null>(() => (
-    stageSegs && moves.length > 0 ? {
-      scoreable: scoreable && method === 'cfop',
-      text: {
-        method, language: isZh ? 'zh' : 'en',
-        scramble: view.scramble, moves: view.moves, totalMs: solve.timeMs,
-        segs: stageSegs, metrics: stepMx, slots, core,
-        physical: { scramble: solve.scramble, moves }, viewRotation: view.rotation,
-      },
-    } : null
-  ), [stageSegs, moves, scoreable, view, solve.timeMs, solve.scramble, stepMx, slots, core, method, isZh]);
+  const analysisInput = useMemo<AnalysisInput | null>(() => prepared.text ? {
+    scoreable: scoreable && method === 'cfop', text: prepared.text,
+  } : null, [prepared.text, scoreable, method]);
   const [analysisState, setAnalysisState] = useState<{
     solveId: string; input: AnalysisInput; snapshot: AnalysisSnapshot;
   } | null>(null);
@@ -308,20 +257,17 @@ function ReconstructReportBody({
   const playbackRecon = reconText;
 
   // 回放固定展示；折叠只留给「参考解法」和「原始动作序列」这类附加内容。
-  const [moveListExpanded, setMoveListExpanded] = useState(false);
-  const [referenceExpanded, setReferenceExpanded] = useState(false);
+  const [reportUI, setReportUI] = useState(initialReportUI);
   const playbackAvailable = moves.length > 0 && nxnSizeForEvent(solve.event) !== null;
 
   const eff = effectiveMs(solve);
   const dt = new Date(solve.ts);
   const memoMs = solve.bld?.memoMs;
 
-  // 摘要里的步数按 STM 记:谱子上一个中层是一个记号(`S`,不是 `F' B`),读者对着
-  // 谱子数出来的就该是这个数。文字复盘落地前先拿面转数顶着 —— 两者只差合并掉的
+  // 摘要里的步数按 STM 记:还原步骤上一个中层是一个记号(`S`,不是 `F' B`),读者对着
+  // 还原步骤数出来的就该是这个数。文字复盘落地前先拿面转数顶着 —— 两者只差合并掉的
   // 那几对。效率比对和分步分析表仍然按 HTM 数(那边和参考解法比,口径必须一致,
   // 见 `humanize.ts` 头注),所以那张表的步数会比这里多几个。
-  const stmCount = reconText ? reconText.stm : slices.htmCount;
-  const stmTps = slices.executionMs >= 1 ? stmCount / (slices.executionMs / 1000) : 0;
   const executionMs = useMemo(() => {
     if (method === 'cfop') {
       if (!stepMx) return null;
@@ -330,9 +276,7 @@ function ReconstructReportBody({
     if (!walk) return null;
     return walk.stages.reduce((sum, stage) => sum + (stage.executionMs ?? 0), 0);
   }, [method, stepMx, walk]);
-  const fluency = executionMs !== null && solve.timeMs > 0
-    ? Math.round((executionMs / solve.timeMs) * 100)
-    : null;
+  const { stm: stmCount, tps: stmTps, fluency } = reconstructionSummary(moves, solve.timeMs, reconText, executionMs, memoMs);
 
   // Auto-detect memo pause for BLD-class solves that haven't had a memoMs
   // set manually. The hint surfaces at the top of the report; user can apply
@@ -372,7 +316,6 @@ function ReconstructReportBody({
     // beneath the cube. At a boundary, show the next stage with an empty score.
     const currentMoves = reconText?.lines.find(line => line.key === 'tail')?.moves ?? [];
     return <>
-      <MethodPicker method={method} onChange={setMethod} />
       {liveStageTarget && createPortal(<>
         <div className="timer-live-stage-label">{stageName}</div>
         <div className="sml-moves">{currentMoves.join(' ') || '…'}</div>
@@ -390,10 +333,10 @@ function ReconstructReportBody({
   /**
    * 数据那一半:分步分析表和阶段补充信息。
    *
-   * 摘出来是因为它排在**回放和谱子后面**(2026-08-03 用户提的顺序)。以前它是报告
+   * 摘出来是因为它排在**回放和还原步骤后面**(2026-08-03 用户提的顺序)。以前它是报告
    * 的第一屏,道理是「这把慢在哪」该一眼看到;但那是在假设读者已经知道自己拧了
-   * 什么。真实顺序是反的 —— 先认出这把是怎么拧的(回放 + 谱子),那些数字才有东西
-   * 可归因;先给一张 5×7 的表,读者第一件事仍然是往下翻去找谱子。
+   * 什么。真实顺序是反的 —— 先认出这把是怎么拧的(回放 + 还原步骤),那些数字才有东西
+   * 可归因;先给一张 5×7 的表,读者第一件事仍然是往下翻去找还原步骤。
    */
   const analysisBlock = (
     <>
@@ -405,7 +348,6 @@ function ReconstructReportBody({
       {(stageSegs || walk) && memoMs === undefined && (
         <StepAnalysis
           method={method}
-          onMethodChange={setMethod}
           segs={stageSegs}
           stepMetrics={stepMx}
           slots={slots}
@@ -416,10 +358,10 @@ function ReconstructReportBody({
           methodAverages={methodAverages}
           reconLines={reconText?.lines}
           moves={moves}
-          // 转体和谱子里那些是同一份 —— 表里数的和文字里写的必须是一回事。
+          // 转体和还原步骤里那些是同一份 —— 表里数的和文字里写的必须是一回事。
           rotations={reconText?.rotations ?? []}
           // 有文字复盘时,阶段条由回放那根带游标的轴负责(同一份切分),这里不再
-          // 画第二根;切不出谱子的那些把留着它,否则一根都没有。
+          // 画第二根;切不出还原步骤的那些把留着它,否则一根都没有。
           hideBar={playbackLines.length > 0}
           isZh={isZh}
         />
@@ -433,128 +375,22 @@ function ReconstructReportBody({
     </>
   );
 
-  return (
-    // `.rc-report` carries the CFOP stage palette (--rc-stage-*) that the bar,
-    // the dots and the timeline all read. On the report, not on whatever is
-    // around it — it is rendered inside two different containers.
-    <div className="rc-report">
-      {/* The numbers you want before you want anything else. They were strung
-          along the title and inside the panels below; a solve report should
-          open with them, not make you assemble them. */}
-      <dl className="rc-summary">
-        <div className="rc-summary-cell">
-          <dt>{tr({ zh: '时间', en: 'Time' })}</dt>
-          <dd className="rc-summary-big">
-            {formatMs(eff)}
-            {solve.penalty !== 'ok' && <span className="rc-summary-pen">{solve.penalty}</span>}
-          </dd>
-        </div>
-        <div className="rc-summary-cell">
-          <dt>STM</dt>
-          <dd className="rc-summary-big">{stmCount}</dd>
-        </div>
-        <div className="rc-summary-cell">
-          <dt>TPS</dt>
-          <dd className="rc-summary-big">{stmTps.toFixed(2)}</dd>
-        </div>
-        <div className="rc-summary-cell">
-          <dt>{tr({ zh: '流畅', en: 'Fluency' })}</dt>
-          <dd className="rc-summary-big">{fluency === null ? '–' : `${fluency}%`}</dd>
-        </div>
-        {!hideDate && (
-          <div className="rc-summary-cell">
-            <dt>{tr({ zh: '日期', en: 'Date' })}</dt>
-            <dd title={dt.toLocaleString()}>{dt.toLocaleDateString()}</dd>
-          </div>
-        )}
-      </dl>
-
-      {/* 读完那几个数之后想做的事。内联复盘把它们提到整屏按钮旁边，
-          完整详情仍留在摘要下面。 */}
-      {!hideActions && (
-        <ReconstructActions
-          host={host}
-          solve={solve}
-          onUseScramble={onUseScramble}
-          placement="report"
-        />
-      )}
-
-      {/* 打乱。有文字复盘的时候它是谱子的第一行(见 StepMoveList)—— 打乱和动作
-          写在一起才是一份照着能复现的东西,分成两块就得自己拼。这里兜的是没有
-          文字复盘的那些把(非三阶、切分失败):否则整份报告一个字都不提这把是从
-          哪儿开始的。 */}
-      {(solve.scramble ?? '').trim() !== '' && !(reconText && reconText.lines.length > 0) && (
-        <div className="rc-scramble">
-          <span className="rc-scramble-label">{tr({ zh: '打乱', en: 'Scramble' })}</span>
-          <span className="rc-scramble-text">{solve.scramble}</span>
-        </div>
-      )}
-
-      {autoMemoMs !== null && (
-        <div className="reconstruct-auto-memo-hint">
-          <span>
-            {tr({ zh: '自动检测记忆时长', en: 'auto-detected memo' })}: {(autoMemoMs / 1000).toFixed(2)}s
-          </span>
-          {onMemoApply && (
-            <button type="button" className="rc-action rc-action--ghost" onClick={() => onMemoApply(autoMemoMs)}>
-              {tr({ zh: '应用', en: 'Apply' })}
-            </button>
-          )}
-        </div>
-      )}
-
-      {bldMemo && (
-        <div className="reconstruct-bld-memo">
-          <div className="reconstruct-bld-memo-head">
-            <span className="reconstruct-bld-memo-title">
-              {tr({ zh: '盲拧记忆 (Speffz)', en: 'BLD memo (Speffz)' })}
-            </span>
-            <span className="reconstruct-bld-memo-buffers">
-              {tr({ zh: '缓冲块: 角 UFR / 棱 UF', en: 'buffers: corner UFR / edge UF' })}
-              {bldMemo.parity ? tr({ zh: ' · 奇偶', en: ' · parity' }) : ''}
-            </span>
-          </div>
-          <div className="reconstruct-bld-memo-grid">
-            <span className="reconstruct-bld-memo-key">{tr({ zh: '角块', en: 'Corners' })}:</span>
-            <span className="reconstruct-bld-memo-val">
-              {bldMemo.cornerPairs || tr({ zh: '(无)', en: '(none)' })}
-            </span>
-            <span className="reconstruct-bld-memo-key">{tr({ zh: '棱块', en: 'Edges' })}:</span>
-            <span className="reconstruct-bld-memo-val">
-              {bldMemo.edgePairs || tr({ zh: '(无)', en: '(none)' })}
-            </span>
-            {bldMemo.twistedCorners.length > 0 && (
-              <>
-                <span className="reconstruct-bld-memo-key">{tr({ zh: '角扭', en: 'Twisted' })}:</span>
-                <span className="reconstruct-bld-memo-val">{bldMemo.twistedCorners.join(' ')}</span>
-              </>
-            )}
-            {bldMemo.flippedEdges.length > 0 && (
-              <>
-                <span className="reconstruct-bld-memo-key">{tr({ zh: '棱翻', en: 'Flipped' })}:</span>
-                <span className="reconstruct-bld-memo-val">{bldMemo.flippedEdges.join(' ')}</span>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
-      {memoMs !== undefined && (
-        <div className="reconstruct-bld-bar">
-          <span className="reconstruct-bld-seg memo">
-            {tr({ zh: '记忆', en: 'Memo'
-          })} {formatMs(memoMs)}
-          </span>
-          <span className="reconstruct-bld-seg exec">
-            {tr({ zh: '执行', en: 'Execution'
-          })} {formatMs(slices.executionMs)}
-          </span>
-        </div>
-      )}
-
-      {playbackAvailable && (
-        <PlaybackPanel
+  const extras=reportNotationExtras(solve,playbackRecon,initialReportUI(solve.reconOk),tr,{recordGyro:host.recordGyro,canEnableGyro:Boolean(host.onEnableGyro),canFeedback:Boolean(onReconFeedback)});
+  const composition=reportComposition({solve,recon:reconText,analysis:analysis??null,hasAnalysis:Boolean(analysisInput),scoreable,state:reportUI,tr,
+    hideActions,hasTable:Boolean(stageSegs||walk),hasMeta:false,autoMemoMs,hasBldMemo:Boolean(bldMemo)});
+  const document=resolveReportSlots(composition,{
+    summary:reportSummary(solve,{stm:stmCount,tps:stmTps,fluency},tr,hideDate?undefined:{short:dt.toLocaleDateString(),full:dt.toLocaleString()}),
+    'raw-list':reportRawMoves(solve,wastedIdx,tr),
+    'reference-list':analysis?.reference?reportReferences(analysis.reference,tr):null,
+    ...reportBld(solve,autoMemoMs,bldMemo,slices.executionMs,Boolean(onMemoApply),tr),
+  });
+  return <ReportContent node={document} dispatch={action=>{
+    setReportUI(state=>reduceReportUI(state,action));
+    if(action.type==='memo')onMemoApply?.(Number(action.value));
+  }} slots={{
+    actions:<ReconstructActions host={host} solve={solve} onUseScramble={onUseScramble} placement="report"/>,
+    analysis:analysisBlock,
+    playback:<PlaybackPanel
           method={method}
           event={solve.event}
           scramble={solve.scramble}
@@ -574,85 +410,12 @@ function ReconstructReportBody({
               slotReference={analysis?.slotReference ?? null}
               currentIdx={idx}
               onSeek={playFrom}
-              notice={!solve.gyro && playbackRecon.blindPairs > 0
-                ? <NoGyroNotice />
-                : undefined}
-              feedback={onReconFeedback
-                ? <ReconFeedback value={solve.reconOk} onChange={onReconFeedback} />
-                : undefined}
+              notice={<ReportContent node={extras.notice} dispatch={()=>host.onEnableGyro?.()}/>}
+              feedback={<ReportContent node={extras.feedback} dispatch={action=>onReconFeedback?.(reduceReportUI(initialReportUI(solve.reconOk),action).feedback??undefined)}/>}
             />
           ) : undefined}
-        />
-      )}
-
-      {analysisInput && (!analysis?.text || analysis.provisional) && analysis?.status !== 'complete' && (
-        <p role="status">{analysis?.status === 'error'
-          ? tr({ zh: '部分复盘分析未能加载，请重新打开重试。', en: 'Some analysis could not load. Reopen this report to retry.' })
-          : analysis?.provisional
-          ? tr({ zh: '正在补齐最后的步骤…', en: 'Updating the final steps…' })
-          : tr({ zh: '正在分析复盘…', en: 'Analyzing solve…' })}</p>
-      )}
-
-      {analysisBlock}
-
-      {(scoreable || analysis?.reference) && (
-        <AccordionSection
-          title={tr({ zh: '参考解法', en: 'Reference lines' })}
-          collapsible
-          expanded={referenceExpanded}
-          onToggle={() => setReferenceExpanded(v => !v)}
-        >
-          {analysis?.reference && <ReferenceList reference={analysis.reference} />}
-          {(!analysis?.reference || analysis.status === 'error') && (
-            <p role="status">{analysis?.status === 'error'
-              ? tr({ zh: '参考解法未能加载，请重新打开重试。', en: 'Reference lines could not load. Reopen this report to retry.' })
-              : analysis?.status === 'complete'
-              ? tr({ zh: '暂无参考解法。', en: 'No reference lines available.' })
-              : tr({ zh: '正在计算参考解法…', en: 'Computing reference lines…' })}</p>
-          )}
-        </AccordionSection>
-      )}
-
-      <AccordionSection
-        title={tr({ zh: `动作序列 (${moves.length})`, en: `Move stream (${moves.length})` })}
-        collapsible
-        expanded={moveListExpanded}
-        onToggle={() => setMoveListExpanded(v => !v)}
-      >
-        {moves.length === 0 ? (
-          <div className="reconstruct-empty">
-            {tr({ zh: '此次成绩未记录蓝牙动作。', en: 'No bluetooth moves recorded for this solve.'
-          })}
-          </div>
-        ) : (
-          <ol className="reconstruct-move-list">
-            {moves.map((mv, i) => {
-              const prev = i > 0 ? moves[i - 1].ts : null;
-              const gap = prev !== null ? mv.ts - prev : null;
-              const slow = gap !== null && gap > 500;
-              const wasted = wastedIdx.has(i);
-              return (
-                <li
-                  key={i}
-                  className={`reconstruct-move-row ${slow ? 'slow' : ''}${wasted ? ' wasted' : ''}`}
-                  title={wasted
-                    ? tr({ zh: '废步:这一段转完回到了之前的状态', en: 'wasted: this run returns to a prior state' })
-                    : undefined}
-                >
-                  <span className="reconstruct-move-idx">{i + 1}</span>
-                  <span className="reconstruct-move-token">{mv.m}</span>
-                  <span className="reconstruct-move-ts">t={formatSec(mv.ts)}</span>
-                  <span className="reconstruct-move-gap">
-                    {gap !== null ? `Δ=+${formatSec(gap)}` : '—'}
-                  </span>
-                </li>
-              );
-            })}
-          </ol>
-        )}
-      </AccordionSection>
-    </div>
-  );
+        />,
+  }}/>;
 }
 
 /**
@@ -670,33 +433,8 @@ function ReconstructReportBody({
  * (`blindPairs > 0`)。中层都配上了的把不会看到它。
  */
 function NoGyroNotice() {
-  const { localize: tr } = useReconstructHost();
-  const { recordGyro: on, onEnableGyro } = useReconstructHost();
-  return (
-    <div className="rc-nogyro">
-      <Info size={13} />
-      <span>
-        {on
-          ? tr({
-            zh: '这把没录姿态,还有几处相对面判不准是不是中层 —— 现在已经开着了,下一把就准。',
-            en: 'No orientation was recorded for this solve, so a few opposite-face pairs could not be confirmed as slices. It is on now — the next solve will be exact.',
-          })
-          : tr({
-            zh: '这把没录姿态,还有几处相对面判不准是不是中层 —— 转体也一个都推不出来。',
-            en: 'No orientation was recorded for this solve, so a few opposite-face pairs could not be confirmed as slices — and rotations cannot be recovered at all.',
-          })}
-      </span>
-      {!on && onEnableGyro && (
-        <button
-          type="button"
-          className="rc-nogyro-fix"
-          onClick={onEnableGyro}
-        >
-          {tr({ zh: '开启录姿态', en: 'Record orientation' })}
-        </button>
-      )}
-    </div>
-  );
+  const host=useReconstructHost();
+  return <ReportContent node={reportNoGyro(host.recordGyro,Boolean(host.onEnableGyro),host.localize)} dispatch={()=>host.onEnableGyro?.()}/>;
 }
 
 /**
@@ -709,105 +447,17 @@ function NoGyroNotice() {
  *
  * 再按一次同一个按钮 = 收回答案(回到「没问过」),因为误点比不答更常见。
  */
-function ReconFeedback({
-  value, onChange,
-}: {
-  value: boolean | undefined;
-  onChange: (v: boolean | undefined) => void;
-}) {
-  const { localize: tr } = useReconstructHost();
-  const hint = tr({
-    zh: '阶段边界是从动作流推出来的,不是魔方报的。推错了这里说一声 —— 不影响任何数字,只是留个记号。',
-    en: 'The stage boundaries are inferred from the turn stream, not reported by the cube. Say so if they are wrong — it changes no number, it just leaves a marker.',
-  });
-  return (
-    <div className="rc-feedback">
-      <span className="rc-feedback-q">{tr({ zh: '复盘对不对?', en: 'Reconstruction correct?' })}</span>
-      <button
-        type="button"
-        className={`rc-feedback-btn${value === true ? ' is-on' : ''}`}
-        aria-pressed={value === true}
-        onClick={() => onChange(value === true ? undefined : true)}
-        title={tr({ zh: '切分是对的', en: 'The split is right' })}
-        aria-label={tr({ zh: '切分是对的', en: 'The split is right' })}
-      >
-        <ThumbsUp size={14} />
-      </button>
-      <button
-        type="button"
-        className={`rc-feedback-btn${value === false ? ' is-off' : ''}`}
-        aria-pressed={value === false}
-        onClick={() => onChange(value === false ? undefined : false)}
-        title={tr({ zh: '切分不对', en: 'The split is wrong' })}
-        aria-label={tr({ zh: '切分不对', en: 'The split is wrong' })}
-      >
-        <ThumbsDown size={14} />
-      </button>
-      <span className="rc-feedback-info" title={hint} aria-label={hint}>
-        <Info size={13} />
-      </span>
-    </div>
-  );
+function ReconFeedback({value,onChange}:{value:boolean|undefined;onChange:(v:boolean|undefined)=>void}) {
+  const {localize:tr}=useReconstructHost();
+  const state=initialReportUI(value);
+  return <ReportContent node={reportFeedback(state,tr)} dispatch={action=>onChange(reduceReportUI(state,action).feedback??undefined)}/>;
 }
 
 /** 0-100 with its three components. Pending renders the same row with dashes
  *  so the report doesn't jump when the search lands. */
 /** Where a stage's reference came from — the honesty label. */
-function refKindLabel(tr: ReconstructLocalize, kind: NonNullable<StageReference['kind']>): string {
-  switch (kind) {
-    case 'optimal':      return tr({ zh: '最优', en: 'optimal' });
-    case 'step-optimal': return tr({ zh: '步进最优', en: 'step-optimal' });
-    case 'library-alg':  return tr({ zh: '库内最短', en: 'shortest in library' });
-  }
-}
-
-type StageKey = 'cross' | 'f2l' | 'oll' | 'pll';
-
-function stageLabel(tr: ReconstructLocalize, step: StageKey): string {
-  switch (step) {
-    case 'cross': return tr({ zh: '十字', en: 'Cross' });
-    case 'f2l':   return 'F2L';
-    case 'oll':   return 'OLL';
-    case 'pll':   return 'PLL';
-  }
-}
-
 /** The reference line for each stage, with the move sequence — the depth layer
  *  where "6 turns were available" becomes "and here they are". */
-function ReferenceList({ reference }: { reference: ReferenceResult }) {
-  const { localize: tr } = useReconstructHost();
-  const rows = reference.stages.filter(s => s.refSolution || s.refTurns !== null);
-  if (rows.length === 0) return null;
-  return (
-    <div className="reconstruct-ref-list">
-      {rows.map(s => (
-        <div key={s.step} className="reconstruct-ref-row">
-          <span className="reconstruct-ref-stage">{stageLabel(tr, s.step)}</span>
-          <span className="reconstruct-ref-count">
-            {s.userTurns ?? '—'} / {s.refTurns ?? '—'}
-            {s.kind && (
-              <span className="reconstruct-ref-kind">{refKindLabel(tr, s.kind)}</span>
-            )}
-          </span>
-          <span className="reconstruct-ref-alg">
-            {s.refSolution || (s.note === 'skipped' ? tr({ zh: '跳过', en: 'skipped' }) : '—')}
-          </span>
-        </div>
-      ))}
-      {reference.refTurns !== null && reference.userTurns !== null && (
-        <div className="reconstruct-ref-total">
-          {tr({ zh: '合计', en: 'Total' })} {reference.userTurns} / {reference.refTurns}
-          {' '}{tr({ zh: '步', en: 'turns' })}
-          {reference.delta !== null && reference.delta !== 0 && (
-            <span className={`reconstruct-stage-delta ${reference.delta > 0 ? 'slower' : 'faster'}`}>
-              {reference.delta > 0 ? '+' : ''}{reference.delta}
-            </span>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
 
 /**
  * The solve-level line the step table has no column for: inspection and
@@ -821,18 +471,8 @@ function StageMetaLine({
   stepMetrics: StepMetricsResult | null;
   inspectionMs: number | null;
 }) {
-  const { localize: tr } = useReconstructHost();
-  if (!stepMetrics) return null;
-  const t = (ms: number | null): string => (ms === null ? '—' : `${(ms / 1000).toFixed(2)}s`);
-  const parts: string[] = [];
-  if (inspectionMs !== null && inspectionMs > 0) {
-    parts.push(`${tr({ zh: '观察', en: 'inspect' })} ${t(inspectionMs)}`);
-  }
-  if (stepMetrics.putDownMs !== null && stepMetrics.putDownMs > 0) {
-    parts.push(`${tr({ zh: '放下', en: 'put-down' })} ${t(stepMetrics.putDownMs)}`);
-  }
-  if (parts.length === 0) return null;
-  return <div className="reconstruct-stage-meta">{parts.join(' · ')}</div>;
+  const {localize:tr}=useReconstructHost();
+  return <ReportContent node={stepMetrics?reportMeta(inspectionMs,stepMetrics.putDownMs,tr):null} dispatch={()=>{}}/>;
 }
 
 /** Full shared report; only clipboard, settings and public URL construction are host-owned. */

@@ -206,6 +206,10 @@ Page<SmartCubePageData, WechatMiniprogram.Page.CustomOption>({
 
   retryConnection() {
     const page = this as unknown as SmartCubePageInstance;
+    if (!smartCubeSession.relayOpen || page.latestPhase === 'error') {
+      navigateBackToTimer(page, true);
+      return;
+    }
     page.autoReturnAttempted = false;
     void startConnection(page);
   },

@@ -1,10 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
-import { correctLibraryLine, correctReconFromLibrary, strictOuterForm } from '@cuberoot/shared/timer/reconstruct/library-correction';
+import { correctLibraryLine, correctReconFromLibrary, identifyLibraryCase, strictOuterForm } from '@cuberoot/shared/timer/reconstruct/library-correction';
 import { formattedReconMoves, originalReconNotation, type ReconTextLine, type ReconTextResult } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import { getCube3 } from '@cuberoot/shared/recon/cube3';
 import type { AlgFile } from '@cuberoot/shared/alg';
 import { reconstructedTrack } from '@cuberoot/timer-ui/reconstruct/playback-track';
 import { conjugateSequence, facePermFor } from '@cuberoot/shared/timer/reconstruct/gyro-orient';
+import { CUBE_ORIENTATIONS } from '@cuberoot/shared/timer';
 
 const observed = "F R U' R' U' R U l' U' R B R' B' x' R' F R F'";
 const body = "F R U' R' U' R U R' F' R U R' U' R' F R F'";
@@ -26,6 +27,52 @@ async function equivalent(a: string[], b: string[]) {
 }
 
 describe('library-assisted notation correction', () => {
+  it('matches the same executed formula in all 24 holding frames, including local AUF', async () => {
+    const formula = "(R U R' U') (R' F R2 U R' U' F')";
+    const executions = ["R U R' U' R' F R R U R' U' F'", "U R U R' U' R' F R R U R' U' F' U2"];
+    for (const execution of executions) for (const { value } of CUBE_ORIENTATIONS) {
+      const original = line(conjugateSequence(execution, facePermFor(value))!);
+      const snapshot = JSON.stringify(original);
+      const result = await correctLibraryLine(original, [{ alg: formula }]);
+      expect(result.libraryCorrection?.algorithm, value || 'UF').toBe(formula);
+      await equivalent(original.moves, result.moves);
+      expect(JSON.stringify(original)).toBe(snapshot);
+      expect(originalReconNotation({ lines: [result] } as ReconTextResult).lines[0]).toEqual(original);
+      if (/[xz]/.test(value)) expect(result.moves.some(move => /^[xyz]/.test(move)), value).toBe(false);
+    }
+  });
+  it('prefers an exact case orientation over another case reachable by AUF, but rejects exact ambiguity', async () => {
+    const alg = "F R U R' U' R F' r U R' U' r'";
+    const cases = [
+      { name: 'OLLCP56 1', algs: [[{ alg: `U2 ${alg} U2` }]] },
+      { name: 'OLLCP56 3', algs: [[{ alg }]] },
+    ] as AlgFile['cases'];
+    expect(await identifyLibraryCase({ moves: alg.split(' ') }, cases, 'ollcp')).toBe(cases[1]);
+    expect(await identifyLibraryCase({ moves: `U2 ${alg} U2`.split(' ') }, cases, 'ollcp')).toBe(cases[0]);
+    expect(await identifyLibraryCase({ moves: alg.split(' ') }, [...cases, { ...cases[1], name: 'duplicate' }], 'ollcp')).toBeUndefined();
+  });
+  it('uses PLL library primary names even without an algorithm correction', async () => {
+    for (const [legacy, name, primary] of [['Jb', 'Jb', 'PLL-J'], ['Ja', 'L', 'PLL-L'], ['Ua', 'Ua', 'PLL-U-']]) {
+      const original = { ...line('R U'), label: `PLL-${legacy}` };
+      const recon = { lines: [original], inspection: '', text: '' } as ReconTextResult;
+      const result = await correctReconFromLibrary(recon, async () => ({
+        cases: [{ name, meta: { ollcp: primary }, algs: [] }],
+      }) as unknown as AlgFile);
+      expect(result.lines[0].label).toBe(primary);
+      expect(result.text).toContain(`// ${primary}`);
+      expect(result.lines[0].moves).toBe(original.moves);
+      expect(result.lines[0].libraryCorrection).toBeUndefined();
+    }
+  });
+
+  it('marks an unchanged library formula so F2L keeps its wide-turn notation', async () => {
+    const original = { ...line("l F l' L U L'"), kind: 'f2l' as const, key: 'slot-FR' };
+    const result = await correctLibraryLine(original, [{ alg: "l F l' L U L'" }]);
+    expect(result.moves).toEqual(original.moves);
+    expect(result.libraryCorrection?.algorithm).toBe("l F l' L U L'");
+    expect(result.libraryCorrection?.originalLine).toBe(original);
+  });
+
   it('excludes boundary AUF marked as waste while preserving its moves and grouping', async () => {
     const original = line(`U U U ${observed} U U U`);
     original.wasteGroups = original.moves.map((_, i) => i < 3 ? 1 : i >= original.moves.length - 3 ? 2 : null);
@@ -283,4 +330,28 @@ it('closes groups correctly when a library final rotation cancels with the recor
   const result = await correctLibraryLine(source, [{ alg: formula }]);
   expect(result.algorithmGroups).toEqual([{ from: 0, to: 17 }]);
   expect(formattedReconMoves(result).join(' ')).toBe("x' R U' R' D R U R' D' R U R' D R U' R' D'");
+});
+
+it.each(['oll', 'pll', 'zbll', 'coll', 'ollcp', '1lll', 'ell', 'zbls', 'vls', 'wv', 'sv'])(
+  'uses %s library primary names in displayed, copied and original notation', async set => {
+    const original = { ...line(observed), label: `${set.toUpperCase()}-legacy/PLL Skip` };
+    const recon = { lines: [original], inspection: '', text: '' } as ReconTextResult;
+    const result = await correctReconFromLibrary(recon, async () => ({ cases: [{
+      name: 'legacy', meta: { ollcp: `${set.toUpperCase()}-Canonical` }, algs: [[{ alg: library }]],
+    }] }) as unknown as AlgFile);
+    const expected = `${set.toUpperCase()}-Canonical/PLL Skip`;
+    expect(result.lines[0].label).toBe(expected);
+    expect(result.text).toContain(`// ${expected}`);
+    expect(originalReconNotation(result).lines[0].label).toBe(expected);
+    expect(originalReconNotation(result).lines[0].moves).toEqual(original.moves);
+  },
+);
+
+it('names an unlabelled recognized family only from the uniquely matched library case', async () => {
+  const recon = { lines: [{ ...line(observed), label: 'OLL' }], inspection: '', text: '' } as ReconTextResult;
+  const result = await correctReconFromLibrary(recon, async () => ({ cases: [
+    { name: 'wrong', meta: { ollcp: 'OLL-Wrong' }, algs: [[{ alg: 'R U' }]] },
+    { name: 'right', meta: { ollcp: 'OLL-Right' }, algs: [[{ alg: library }]] },
+  ] }) as unknown as AlgFile);
+  expect(result.lines[0].label).toBe('OLL-Right');
 });

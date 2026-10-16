@@ -365,7 +365,7 @@ function useMediaQuery(query: string): boolean {
 type PanelTab = 'times' | 'stats' | 'chart';
 
 interface SoloViewProps {
-  /** The players (人数) select node, injected by the shell at the topbar left. */
+  /** The players select node, injected by the shell into settings. */
   playersControl?: React.ReactNode;
   presenceControl?: React.ReactNode;
   onPresenceChange?: (report: TimerPresenceReport) => void;
@@ -2935,7 +2935,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
                       : null;
   const scrambleStatus = scrambleStatusReason ? timerScrambleStatus(scrambleStatusReason) : null;
   const scrambleClickEffect = timerScrambleClickEffect(
-    'none', // Scramble presses belong to timing, including legacy click preferences.
+    settings.scrambleClickAction,
     displayScramble.length > 0,
     attemptCanStart,
     scrambleStatus?.retryable === true,
@@ -3101,7 +3101,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
               />
             )}
           </TimerDeviceCenter>
-          {playersControl}
           <TimerTrainingMenu currentEvent={event} onTimerEventChange={selectEvent}
             disabled={!sourceControlsEnabled} showProject
             onAdvancedSettings={() => setSettingsOpen(true)}
@@ -3141,11 +3140,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
 
           </>
         ),
-          actions: (
-          <>
-          {presenceControl}
-          </>
-        )}}
+        }}
         stage={{
           className: "shell-main",
           fullscreen: fullscreen,
@@ -3208,6 +3203,16 @@ scrambleSlot: <TimerScrambleStrip
                     }
                 : undefined}
               title={tr(TIMER_SCRAMBLE_CLICK_TITLE_COPY[scrambleClickEffect])}
+              timingEnabled={scrambleClickEffect === 'start'}
+              onActivate={scrambleClickEffect === 'next' ? sheetNextScramble
+                : scrambleClickEffect === 'copy' ? () => {
+                  if (!canSwitchScramble()) return;
+                  void browserTimerToolTransport.copy(displayScramble).then(() => {
+                    setInfoToast({ msg: tr({ zh: '已复制打乱', en: 'Scramble copied' }) });
+                  }).catch(() => {
+                    setInfoToast({ msg: tr({ zh: '复制失败，请重试', en: 'Copy failed. Please try again.' }) });
+                  });
+                } : undefined}
               verificationLabels={{
                 copiedCorrection: tr({ zh: '已复制原打乱', en: 'Copied the scramble' }),
               }}
@@ -3247,7 +3252,6 @@ scrambleSlot: <TimerScrambleStrip
                   key={curMarkKey ?? 'wca-source-progress'}
                   allMarksHref={`${languagePrefix}/timer/marks`}
                   language={timerLanguage}
-                  markCount={curMarks?.count}
                   marked={myMark}
                   marks={curMarks?.marks.map((mark) => ({
                     country: mark.country,
@@ -3443,7 +3447,7 @@ children: <>
         />
       )}
 
-      {settingsOpen && <SettingsPanel event={event} actions={moreItems} mergeSlotRef={setMergeSlot} onClose={closeSettings} onDataReplaced={() => { trainingRound.reset(); setByEvent(loadAll()); }} />}
+      {settingsOpen && <SettingsPanel event={event} actions={moreItems} playersControl={playersControl} presenceControl={presenceControl} mergeSlotRef={setMergeSlot} onClose={closeSettings} onDataReplaced={() => { trainingRound.reset(); setByEvent(loadAll()); }} />}
 
       {infoToast && (
         <TimerInfoToast

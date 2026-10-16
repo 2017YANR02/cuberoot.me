@@ -38,6 +38,13 @@ const brief = (list: ReturnType<typeof mirrorCascadeOnEdit>) =>
   list.map(e => `${e.caseId}/${e.view}/${e.gen} ${e.alg}`).sort();
 
 describe('mirrorCascadeOnEdit —— 删一条,连带哪几条', () => {
+  it('deleting a legacy FL original previews its partner FR mirror removal', () => {
+    const self = { id: 1, algs: [[], [{ alg: "FS' R U' R' S U' F'" }], [], []] };
+    const partner = caseOf(2, []);
+    expect(brief(mirrorCascadeOnEdit(self, partner, [[], [], [], []])))
+      .toEqual(["2/0/lr F' S L' U L S' U F"]);
+  });
+
   it('不含 F 不含 B 的公式:三份全生成,删源三份全没', () => {
     // `U R U' R'` 的三份都不带 B → lr 落伙伴 FL、fb 落伙伴 BR、y² 落自己 BL
     const [self, partner] = synced(caseOf(1, ["U R U' R'"]), caseOf(2, []));
@@ -64,10 +71,10 @@ describe('mirrorCascadeOnEdit —— 删一条,连带哪几条', () => {
     const partner: MirrorPairCase = { id: 2, algs: [[], [{ alg: "U' L' U L" }], [], []] };
     const [s, p] = synced(self, partner);
     const gone = mirrorCascadeOnEdit(s, p, without(s, 0));
-    expect(brief(gone)).toEqual([
-      "1/2/y2 U L U' L'",
-      "2/3/fb U' R' U R",
-    ]);
+    // The surviving FL original is now also a source for the same generated copies.
+    expect(brief(gone)).toEqual([]);
+    const after = regenerateMirrorAlgs({ ...s, algs: without(s, 0) }, p).algsById;
+    expect(after.get(2)![1]).toContainEqual({ alg: "U' L' U L" });
   });
 
   it('只连带被删那条的,旁边那条的生成份一条不动', () => {

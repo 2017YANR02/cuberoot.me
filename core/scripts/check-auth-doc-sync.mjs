@@ -17,6 +17,7 @@ const ROOTS = [
   'packages/client/app/api/identity-choice',
 ];
 const EXACT = new Set([
+  'packages/client/app/api/admin/recon-tests/route.ts',
   'packages/client/app/[lang]/admin/page.tsx',
   'packages/client/lib/store-membership-bridge.ts',
   'packages/client/i18n/i18n-client.ts',

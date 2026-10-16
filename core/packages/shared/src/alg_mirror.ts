@@ -202,11 +202,9 @@ export interface MirrorRegenResult {
  * §5.5 要的「排序传播」也就自动有了 —— 源那边换了顺序,生成的左右镜份跟着换,因为它们本来
  * 就是按源顺序排的。不需要单独的 reorder 端点。
  *
- * ## 只拿第 0 视角(FR)当源
- *
- * FR 是这套库的规范视角,另外三个视角本来就是「同一个 case 换个槽的说法」。四个视角都当源,
- * 每个视角都会被另外三个灌进来,一个 case 的公式数会翻两番;只认 FR 当源,则每个目标视角
- * 恰好有唯一一个来源,**FR 那栏永远是纯人写的**。方案 §5.0 / §5.7 的所有计数也都是按这个口径。
+ * 四个视角的原创条都作为源，目标由 MIRROR_VIEW[gen][ori] 决定。
+ * 生成条不作为源，所有目标先保留原创条再去重，避免镜像反复繁殖或覆盖人工版本。
+ * src 同时记录源 case、视角和行号，编辑、删除和排序继续通过整体重算传播。
  *
  * @param self    被编辑的那个 case
  * @param partner 镜像伙伴。`null` = 还没建链或链断了 —— 这时只**剥掉**生成条,不生成新的
@@ -236,7 +234,7 @@ export function regenerateMirrorAlgs(
     : [[self, partner], [partner, self]];
 
   for (const [src, srcPartner] of pairs) {
-    (src.algs[0] ?? []).forEach((entry, i) => {
+    src.algs.forEach((view, ori) => view.forEach((entry, i) => {
       // 生成条不当源头 —— 否则镜像的镜像会一轮轮长出来
       if (entry.gen) return;
       for (const gen of mirrorGensFor(entry.alg)) {
@@ -244,17 +242,17 @@ export function regenerateMirrorAlgs(
         try {
           alg = applyMirrorGen(entry.alg, gen);
         } catch (e) {
-          notes.push(`case ${src.id} 第 ${i} 条的 ${gen} 重写失败:${(e as Error).message}`);
+          notes.push(`case ${src.id} ${VIEWS[ori]} 第 ${i} 条的 ${gen} 重写失败:${(e as Error).message}`);
           continue;
         }
         const dst = MIRROR_TARGET[gen] === 'self' ? src : srcPartner;
-        const list = algsById.get(dst.id)?.[MIRROR_VIEW[gen][0]];
+        const list = algsById.get(dst.id)?.[MIRROR_VIEW[gen][ori]];
         if (!list) continue;
         const key = canonicalMirrorDisplayAlg(alg);
         // 展示重合就跳过 —— 库里本来就人工收了不少镜像份(f2l `A-` 的 FL 首条就是 `A+` 的
         // 左右镜,只是末尾多一个页面会隐藏的 y'),自镜像 case 也常镜回同一条。
         if (!key || list.some(e => canonicalMirrorDisplayAlg(e.alg) === key)) continue;
-        const made: AlgEntry = { alg, gen, src: { id: src.id, ori: 0, i } };
+        const made: AlgEntry = { alg, gen, src: { id: src.id, ori, i } };
         // 步数镜像后不变;出处跟着源走(作者还是写源那条的人)。
         // algHtml / ytId / tags 一律不带:指法标注、教学视频、单手标签讲的都是**那只手**的事。
         if (entry.stm != null) made.stm = entry.stm;
@@ -262,7 +260,7 @@ export function regenerateMirrorAlgs(
         if (entry.source) made.source = entry.source;
         list.push(made);
       }
-    });
+    }));
   }
   return { algsById, notes };
 }

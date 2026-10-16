@@ -68,6 +68,7 @@ function unframedKind(selector) {
     value = value.replace(/::?[\w-]+/g, '').trim();
     const parts = value.split(/[\s>+~]+/);
     for (const policy of UNFRAMED_RULES) {
+      if (policy.kind === 'scenery-content' && !value.includes('[data-site-scenery]')) continue;
       if (!policy.parts.at(-1).test(parts.at(-1) ?? '')) continue;
       if (policy.parts.slice(0, -1).every(pattern => parts.slice(0, -1).some(part => pattern.test(part)))) return policy.kind;
     }
@@ -92,7 +93,7 @@ export function scanSiteMaterial(source, filePath) {
       const neutral = /^(?:none|transparent|initial|unset|0(?:px)?)(?:\s*!important)?$/.test(value);
       const visibleBorder = /^border(?:-(?:top|right|bottom|left))?(?:-(?:color|width|style))?$/.test(property)
         && !neutral && !/\btransparent\b/.test(value) && !/^0(?:px)?(?:\s|$)/.test(value);
-      const shellPaint = unframed === 'container' && (/^background(?:-color|-image)?$|^box-shadow$/.test(property)
+      const shellPaint = (unframed === 'container' || unframed === 'scenery-content') && (/^background(?:-color|-image)?$|^box-shadow$/.test(property)
         || (/^(?:-webkit-)?backdrop-filter$/.test(property) && !filtersMenuHost(selector))) && !neutral;
       if (unframed && (visibleBorder || shellPaint)) hits.push({ selector, property, value, reason: 'unframed-surface' });
       if (property === 'content' && /\battr\(\s*(?:data-(?:tooltip|tip)|title)\s*\)/i.test(value)) {

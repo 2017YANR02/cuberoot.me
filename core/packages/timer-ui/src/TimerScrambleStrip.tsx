@@ -62,6 +62,8 @@ export interface TimerScrambleStripProps {
   match?: boolean | null;
   nonOptimal?: TimerScrambleNonOptimalLabel;
   onActivate?: () => void;
+  /** Plain scramble presses use the surrounding timer's existing input path. */
+  timingEnabled?: boolean;
   scramble: string;
   status?: TimerScrambleStatusProps;
   title?: string;
@@ -122,6 +124,7 @@ export function TimerScrambleStrip({
   match = null,
   nonOptimal,
   onActivate,
+  timingEnabled = true,
   scramble,
   status,
   title,
@@ -148,6 +151,7 @@ export function TimerScrambleStrip({
       || !stripActivate
       || (event.key !== 'Enter' && event.key !== ' ')) return;
     event.preventDefault();
+    event.stopPropagation();
     stripActivate();
   };
 
@@ -157,6 +161,7 @@ export function TimerScrambleStrip({
       className={`scramble-strip sf-${font}${compact ? ' compact' : ''}${className ? ` ${className}` : ''}`}
       data-scramble-match={match === null ? undefined : match ? 'ok' : 'off'}
       data-interactive={stripActivate ? 'true' : undefined}
+      data-no-timer={!timingEnabled || stripActivate || status ? true : undefined}
       style={style}
       title={title}
     >
@@ -164,6 +169,9 @@ export function TimerScrambleStrip({
         className="scramble-text"
         onClick={stripActivate}
         onKeyDown={activateFromKeyboard}
+        onKeyUp={(event) => {
+          if (stripActivate && (event.key === 'Enter' || event.key === ' ')) event.stopPropagation();
+        }}
         role={stripActivate ? 'button' : undefined}
         tabIndex={stripActivate ? 0 : undefined}
       >

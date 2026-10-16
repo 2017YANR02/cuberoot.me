@@ -22,6 +22,12 @@
 
 export type DoMoveFn = (state: string, move: string) => string;
 
+/** Optional host budget; browser defaults and search ordering remain unchanged.
+ * A budget exhaustion returns no solution, never a non-optimal reference. */
+let hostBudget: { pruningDepth: number; nodes: number } | null = null;
+export function configureGSolverBudget(budget: typeof hostBudget) { hostBudget = budget; }
+const budgetExceeded = Symbol('solver budget exceeded');
+
 export class GSolver {
   private readonly solvedStates: string[];
   private readonly doMove: DoMoveFn;
@@ -39,6 +45,8 @@ export class GSolver {
   private solArr: string[] | null = null;
   private prevSolStr: string | null = null;
   private maxl = 0;
+  private nodes = 0;
+  budgetExhausted = false;
 
   constructor(solvedStates: string[], doMove: DoMoveFn, moves: Record<string, number>) {
     this.solvedStates = solvedStates.slice();
@@ -54,6 +62,7 @@ export class GSolver {
    * `search`; bounded by MAX_PRUN_SIZE so deep targets degrade gracefully.
    */
   private updatePrun(targetDepth: number): void {
+    if (hostBudget) targetDepth = Math.min(targetDepth, hostBudget.pruningDepth);
     for (let depth = this.prunDepth + 1; depth <= targetDepth; depth++) {
       if (this.prevSize >= this.MAX_PRUN_SIZE) break;
       if (depth < 1) {
@@ -99,6 +108,7 @@ export class GSolver {
    * `undefined` if no solution exists in that range.
    */
   search(state: string, minl: number, MAXL: number): string[] | undefined {
+    this.nodes = 0; this.budgetExhausted = false;
     this.sol = [];
     this.subOpt = false;
     this.visited = new Map();
@@ -109,12 +119,14 @@ export class GSolver {
     const cap = MAXL + 1;
     for (; this.maxl < cap; this.maxl++) {
       this.updatePrun(Math.ceil(this.maxl / 2));
-      if (this.idaSearch(state, this.maxl, null, 0)) break;
+      try { if (this.idaSearch(state, this.maxl, null, 0)) break; }
+      catch (error) { if (error === budgetExceeded) { this.budgetExhausted = true; return undefined; } throw error; }
     }
     return this.solArr ?? undefined;
   }
 
   private idaSearch(state: string, maxl: number, lm: number | null, depth: number): boolean {
+    if (hostBudget && ++this.nodes > hostBudget.nodes) throw budgetExceeded;
     if (this.getPruning(state) > maxl) return false;
     if (maxl === 0) {
       // Target match: in cstimer's convention `state` is a *permuted mask*
@@ -216,6 +228,7 @@ export function solveParallel(
       let state = t.target;
       for (const m of scrambleAndSol) state = doMove(state, m);
       sol = t.solver.search(state, 0, maxl);
+      if (t.solver.budgetExhausted) return { sol: undefined, mask: currentMask };
       if (sol !== undefined) {
         outMask = currentMask | t.mask;
         break outer;
@@ -223,6 +236,7 @@ export function solveParallel(
       for (const f of fmov) {
         const fstate = doMove(state, f);
         sol = t.solver.search(fstate, 0, maxl);
+        if (t.solver.budgetExhausted) return { sol: undefined, mask: currentMask };
         if (sol !== undefined) {
           sol.unshift(f);
           outMask = currentMask | t.mask;

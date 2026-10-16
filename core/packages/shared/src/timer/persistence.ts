@@ -115,6 +115,8 @@ export interface TimerStoreSettings extends TimerSyncSeedSettings,
   /** Auto-upsert a public mark after a successful real-WCA solve. */
   autoMarkWcaScramble: boolean;
   scrambleClickAction: TimerScrambleClickAction;
+  /** Old hidden click preferences were ignored; adopt timing once, then preserve choices. */
+  scrambleClickStartMigrated?: boolean;
   language: 'en' | 'zh';
   theme: 'system' | 'light' | 'dark';
 }
@@ -324,6 +326,10 @@ export function decodeTimerSolve(value: unknown, event: EventId): Solve | null {
     if (!Array.isArray(value.reconstruction) || !value.reconstruction.every((line) => typeof line === 'string')) return null;
     decoded.reconstruction = [...value.reconstruction];
   }
+  if (value.watchReconRevision !== undefined) {
+    if (typeof value.watchReconRevision !== 'number' || !Number.isSafeInteger(value.watchReconRevision) || value.watchReconRevision < 0) return null;
+    decoded.watchReconRevision = value.watchReconRevision;
+  }
   if (value.reconOk !== undefined) {
     if (typeof value.reconOk !== 'boolean') return null;
     decoded.reconOk = value.reconOk;
@@ -527,7 +533,10 @@ function decodeSettings(value: unknown): TimerStoreSettings | null {
     bldMemo: typeof value.bldMemo === 'boolean'
       ? value.bldMemo
       : DEFAULT_TIMER_ATTEMPT_SPLIT_SETTINGS.bldMemo,
-    scrambleClickAction: normalizeTimerScrambleClickAction(value.scrambleClickAction),
+    scrambleClickAction: value.scrambleClickStartMigrated === true
+      ? normalizeTimerScrambleClickAction(value.scrambleClickAction)
+      : DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION,
+    scrambleClickStartMigrated: true,
     ...scramblePreview,
     ...normalizeTimerTypography(value),
     ...normalizeTimerDisplaySettings(value),
@@ -712,6 +721,7 @@ export function createTimerStoreSettings(language: 'en' | 'zh' = 'en'): TimerSto
     autoBackupEvery: DEFAULT_TIMER_AUTO_BACKUP_EVERY,
     autoMarkWcaScramble: DEFAULT_TIMER_AUTO_MARK_WCA_SCRAMBLE,
     scrambleClickAction: DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION,
+    scrambleClickStartMigrated: true,
     ...DEFAULT_TIMER_SCRAMBLE_PREVIEW_SETTINGS,
     ...DEFAULT_TIMER_WCA_SOURCE_SETTINGS,
     language,

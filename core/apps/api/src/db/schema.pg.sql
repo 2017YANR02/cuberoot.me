@@ -9369,3 +9369,11 @@ ALTER TABLE site_assistant_monitor_state ADD COLUMN failed_writes BIGINT NOT NUL
 CREATE TABLE site_assistant_recording_faults (
   id UUID PRIMARY KEY, failures BIGINT NOT NULL, last_at TIMESTAMPTZ NOT NULL
 );
+CREATE TABLE IF NOT EXISTS recon_test_runs (
+  id UUID PRIMARY KEY,
+  started_at TIMESTAMPTZ NOT NULL,
+  payload JSONB NOT NULL,
+  uploaded_by TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS recon_test_runs_started ON recon_test_runs (started_at DESC);

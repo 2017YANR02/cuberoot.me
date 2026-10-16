@@ -11,6 +11,7 @@ import {
   buildReconGroundTruth,
   reconCandidateMetadataBlockers,
   reconAlgMoves,
+  isReconTestRun,
 } from '@cuberoot/shared/recon-ground-truth';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
@@ -478,6 +479,27 @@ reconGroundTruthRoutes.get('/recon-ground-truth/candidates', async (c) => {
 });
 
 // Admin detail: source + derived normalized truth + stored decision snapshot.
+reconGroundTruthRoutes.get('/recon-ground-truth/runs', async (c) => {
+  c.header('Cache-Control', 'private, no-store');
+  await requireAdminOrApiKey(c);
+  const offset = Math.max(0, Math.min(100000, Math.floor(Number(c.req.query('offset')) || 0)));
+  const rows = await query<{ payload: unknown }>('SELECT payload FROM recon_test_runs ORDER BY started_at DESC, id DESC LIMIT 21 OFFSET ?', [offset]);
+  return c.json({ runs: rows.slice(0, 20).map(row => row.payload), hasMore: rows.length > 20, scope: 'cloud' });
+});
+
+reconGroundTruthRoutes.post('/recon-ground-truth/runs', async (c) => {
+  c.header('Cache-Control', 'private, no-store');
+  const actor = await requireAdminOrApiKey(c);
+  const text = await c.req.text();
+  if (text.length > 2_000_000) return c.json({ error: 'report too large' }, 413);
+  let body: unknown;
+  try { body = JSON.parse(text); } catch { return c.json({ error: 'invalid report' }, 400); }
+  if (!isReconTestRun(body)) return c.json({ error: 'invalid report' }, 400);
+  await query(`INSERT INTO recon_test_runs (id, started_at, payload, uploaded_by) VALUES (?, ?, ?::jsonb, ?)
+    ON CONFLICT (id) DO NOTHING`, [body.id, body.startedAt, body, actor.wcaId]);
+  return c.json({ saved: true });
+});
+
 reconGroundTruthRoutes.get('/recon-ground-truth/:reconId', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   await requireAdminOrApiKey(c);

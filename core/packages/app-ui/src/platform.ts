@@ -37,6 +37,8 @@ export interface InstalledAppAuth {
 
 export interface InstalledSmartCubeMoveMetadata {
   futureHistory?: boolean;
+  delayed?: boolean;
+  estimatedTime?: boolean;
 }
 
 export interface InstalledAppSmartCubeOptions {
@@ -95,6 +97,7 @@ export interface InstalledAppNetBattle {
 }
 
 export interface InstalledAppHost {
+  watchTimer?: import('./watch-timer').WatchTimerPort;
   createBleTransport?(): BleTransport;
   createStackmatSource?(): StackmatMicSource;
   appleMembership?(request: AppleMembershipRequest, session: WebSession): Promise<Omit<AppleMembershipResult, 'type' | 'requestId'>>;

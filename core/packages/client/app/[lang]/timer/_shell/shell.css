@@ -139,42 +139,6 @@
   line-height: 20px;
 }
 
-/* The solo device chooser leads the toolbar, before the players control. */
-.timer-shell .shell-device-center.shell-topbar-device-center {
-  position: relative;
-  inset: auto;
-  transform: none;
-  translate: none;
-  width: var(--timer-topbar-control-size);
-  height: var(--timer-topbar-control-size);
-  min-height: var(--timer-topbar-control-size);
-  flex-basis: var(--timer-topbar-control-size);
-  border: 0;
-  border-radius: 6px;
-  background: none;
-  color: var(--foreground);
-}
-
-.shell-topbar-device-center .shell-device-center-trigger {
-  width: var(--timer-topbar-control-size);
-  height: var(--timer-topbar-control-size);
-  min-height: var(--timer-topbar-control-size);
-}
-
-.shell-topbar-device-center .shell-device-center-menu,
-.shell-topbar-device-center .devcube {
-  /* anchored-panel: clamped (both device panels retain usePanelClamp) */
-  top: calc(100% + 6px);
-  bottom: auto;
-  left: 0;
-  right: auto;
-}
-
-.shell-topbar-device-center .shell-device-center-menu {
-  width: max-content;
-  min-width: 0;
-  max-width: calc(100vw - 16px);
-}
 /* ── Main column ────────────────────────────────────────── */
 
 /* Default surfaces outside the shared solo/net/local layouts. */

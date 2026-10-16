@@ -5,9 +5,14 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import SolutionView from '@/components/SolutionView';
+import StepMoveList from '@cuberoot/timer-ui/reconstruct/StepMoveList';
+import { ReconstructHostContext } from '@cuberoot/timer-ui/reconstruct/ReconstructHost';
+import { formatReconLine, type ReconTextResult } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import { reconInspectionOrientations, reconWasteBrackets, reconPlaybackSegments } from '@/lib/recon-alg-utils';
 import { getTextOffsetInElement } from '@cuberoot/timer-ui/recon/text-cursor';
 import { renderFromSimpleQuery } from '@cuberoot/visualcube';
+import { loadAlg, type AlgFile } from '@cuberoot/shared/alg';
+import { ReconLineDiagramProvider } from '@/components/ReconLineDiagrams';
 
 vi.mock('@cuberoot/shared/alg', async importOriginal => ({
   ...await importOriginal<typeof import('@cuberoot/shared/alg')>(),
@@ -39,6 +44,69 @@ describe('SolutionView caret mapping', () => {
     window.getSelection()?.removeAllRanges();
     await act(async () => root.unmount());
     host.remove();
+    vi.mocked(loadAlg).mockResolvedValue({ cases: [] } as unknown as AlgFile);
+  });
+
+  it.each(['timer', 'recon'])('resolves a bare OLL(CP) label to an exact case in %s', async surface => {
+    const moves = "R U R' U R U2 R'";
+    vi.mocked(loadAlg).mockResolvedValue({ cases: [{ id: 1, name: 'OLLCP27 1', algs: [[{ alg: moves }]] }] } as AlgFile);
+    const line = { kind: 'oll' as const, key: 'oll', moves: moves.split(' '), label: 'OLL(CP)', fromIdx: 0, toIdx: 6,
+      recognitionMs: null, executionMs: null, stepMs: null };
+    const text = `${moves} // OLL(CP)`;
+    const recon = { scramble: '', inspection: '', lines: [line], text, turns: 7, stm: 7, seconds: 1, tps: 7, rotations: [], blindPairs: 0 } as ReconTextResult;
+    await act(async () => root.render(surface === 'recon'
+      ? createElement(SolutionView, { text, event: '333', playerRef: { current: null } })
+      : createElement(ReconstructHostContext.Provider, { value: {
+        localize: value => value.en, writeClipboardText: async () => {}, replayUrl: () => '', recordGyro: false,
+        LineDiagramProvider: ReconLineDiagramProvider,
+        renderCaseLink: (href, children) => createElement('a', { href }, children),
+      } }, createElement(StepMoveList, { recon, reference: null, slotReference: null }))));
+    await vi.waitFor(async () => {
+      await act(async () => {});
+      expect(host.querySelector('a[href*="/ollcp/ollcp27-1"]')?.textContent).toBe('OLL(CP)');
+    });
+    expect(text).toBe(`${moves} // OLL(CP)`);
+  });
+
+  it('shares recon color-only grouping punctuation with timer labels', async () => {
+    const labels = ['W xcross (RB)', 'W xxcross (RB+GO)', 'OLL(CP)'];
+    const lines: ReconTextResult['lines'] = labels.map((label, i) => ({
+      kind: 'oll', key: String(i), moves: ['U'], label, fromIdx: i, toIdx: i,
+      recognitionMs: null, executionMs: null, stepMs: null,
+    }));
+    const recon: ReconTextResult = { scramble: '', inspection: '', lines,
+      text: lines.map(formatReconLine).join('\n'), turns: 3, stm: 3, seconds: 1,
+      tps: 3, rotations: [], blindPairs: 0 };
+    await act(async () => root.render(createElement(ReconstructHostContext.Provider, {
+      value: { localize: text => text.en, writeClipboardText: async () => {},
+        replayUrl: () => '', recordGyro: false },
+    }, createElement(StepMoveList, { recon, reference: null, slotReference: null }))));
+    const timer = [...host.querySelectorAll('.sml-label')];
+    expect(timer[0].textContent).toBe('// xcross ');
+    expect(timer[1].textContent).toBe('// xxcross  ');
+    expect(timer[2].textContent).toBe('// OLL(CP)');
+    expect(timer.map(el => el.querySelectorAll('.ccc-chip').length)).toEqual([2, 3, 0]);
+  });
+
+  it('uses recon waste brackets across timer rows instead of stale per-row groups', async () => {
+    const lines: ReconTextResult['lines'] = ["U' U' U' F", "U R'", "R U' B"].map((moves, i) => ({
+      kind: 'f2l', key: `slot-${i}`, moves: moves.split(' '),
+      wasteGroups: i === 2 ? [null, null, 9] : undefined,
+      label: null, fromIdx: i * 4, toIdx: i * 4 + moves.split(' ').length - 1,
+      recognitionMs: null, executionMs: null, stepMs: null,
+    }));
+    const recon: ReconTextResult = { scramble: '', inspection: '', lines,
+      text: lines.map(formatReconLine).join('\n'), turns: 9, stm: 9, seconds: 1,
+      tps: 9, rotations: [], blindPairs: 0 };
+    const original = JSON.stringify(recon);
+    await act(async () => root.render(createElement(ReconstructHostContext.Provider, {
+      value: { localize: text => text.en, writeClipboardText: async () => {},
+        replayUrl: () => '', recordGyro: false, wasteBrackets: reconWasteBrackets },
+    }, createElement(StepMoveList, { recon, reference: null, slotReference: null }))));
+    expect([...host.querySelectorAll('.sml-moves')].map(el => el.textContent)).toEqual([
+      "(U' U' U') F", "(U R'", "R U') B",
+    ]);
+    expect(JSON.stringify(recon)).toBe(original);
   });
 
   it('adds waste brackets across lines without shifting source offsets or duplicating manual marks', async () => {
@@ -62,7 +130,7 @@ describe('SolutionView caret mapping', () => {
     expect([...reconWasteBrackets('R U // R R\nF', '')]).toEqual([]);
   });
 
-  it.each(['OLL', 'PLL', 'COLL', 'ZBLL', 'EPLL', 'ZBLS'])('shows an actual-state plan for %s without requiring a case number', async label => {
+  it.each(['OLL', 'PLL', 'COLL', 'ZBLL', 'EPLL'])('shows an actual-state plan for %s without requiring a case number', async label => {
     await act(async () => {
       root.render(createElement(SolutionView, {
         text: `R U // ${label}`, event: '3x3', scramble: "R U2 R'",
@@ -91,6 +159,15 @@ describe('SolutionView caret mapping', () => {
     await act(async () => diagram?.querySelector('button')?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
     expect(diagram?.querySelector('svg')?.outerHTML).toBe(before);
     expect(rotated.style.transform).toBe('');
+  });
+
+  it.each(['ZBLS', 'VLS', 'WV', 'SV', 'GR ZBLS / PLL Skip'])('shows the full 3D state for %s', async label => {
+    await act(async () => root.render(createElement(SolutionView, {
+      text: `R U // ${label}`, event: '3x3', scramble: "R U2 R'", playerRef: { current: null },
+    })));
+    const expected = document.createElement('div');
+    expected.innerHTML = renderFromSimpleQuery({ setup: "R U2 R'", sch: 'wrgyob', view: 'iso', size: 28, pzl: 3 });
+    expect(host.querySelector('.recon-case-diagram svg')?.outerHTML).toBe(expected.querySelector('svg')?.outerHTML);
   });
 
   it('shows inspection U/F colors without changing source text or caret offsets', async () => {

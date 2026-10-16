@@ -1,0 +1,473 @@
+{
+  "source": "https://cuberoot.me/zh/timer?share=howVgKOze0g",
+  "recording": {
+    "scramble": "B R B' L' F' U2 B' R2 B' L' B2 F D2 L2 R U' B2 D",
+    "moves": [
+      {
+        "m": "L",
+        "ts": 0
+      },
+      {
+        "m": "B'",
+        "ts": 115
+      },
+      {
+        "m": "L'",
+        "ts": 296
+      },
+      {
+        "m": "L'",
+        "ts": 394
+      },
+      {
+        "m": "D'",
+        "ts": 569
+      },
+      {
+        "m": "L'",
+        "ts": 741
+      },
+      {
+        "m": "F",
+        "ts": 814
+      },
+      {
+        "m": "L",
+        "ts": 942
+      },
+      {
+        "m": "U",
+        "ts": 1056
+      },
+      {
+        "m": "U",
+        "ts": 1140
+      },
+      {
+        "m": "L",
+        "ts": 1253
+      },
+      {
+        "m": "L",
+        "ts": 1310
+      },
+      {
+        "m": "U",
+        "ts": 1621
+      },
+      {
+        "m": "U",
+        "ts": 1715
+      },
+      {
+        "m": "D",
+        "ts": 4397
+      },
+      {
+        "m": "F",
+        "ts": 4715
+      },
+      {
+        "m": "L'",
+        "ts": 4779
+      },
+      {
+        "m": "D",
+        "ts": 4926
+      },
+      {
+        "m": "L",
+        "ts": 5086
+      },
+      {
+        "m": "F'",
+        "ts": 5235
+      },
+      {
+        "m": "D'",
+        "ts": 5848
+      },
+      {
+        "m": "B",
+        "ts": 5957
+      },
+      {
+        "m": "D",
+        "ts": 6036
+      },
+      {
+        "m": "B'",
+        "ts": 6144
+      },
+      {
+        "m": "D",
+        "ts": 6189
+      },
+      {
+        "m": "B",
+        "ts": 6262
+      },
+      {
+        "m": "D'",
+        "ts": 6314
+      },
+      {
+        "m": "B'",
+        "ts": 6387
+      },
+      {
+        "m": "B'",
+        "ts": 6464
+      },
+      {
+        "m": "D",
+        "ts": 6546
+      },
+      {
+        "m": "B",
+        "ts": 6698
+      },
+      {
+        "m": "D",
+        "ts": 7165
+      },
+      {
+        "m": "D",
+        "ts": 7598
+      },
+      {
+        "m": "L'",
+        "ts": 7840
+      },
+      {
+        "m": "D'",
+        "ts": 7912
+      },
+      {
+        "m": "D'",
+        "ts": 7956
+      },
+      {
+        "m": "L",
+        "ts": 8037
+      },
+      {
+        "m": "L",
+        "ts": 8094
+      },
+      {
+        "m": "D",
+        "ts": 8247
+      },
+      {
+        "m": "L'",
+        "ts": 8305
+      },
+      {
+        "m": "B",
+        "ts": 9060
+      },
+      {
+        "m": "D'",
+        "ts": 9109
+      },
+      {
+        "m": "D'",
+        "ts": 9162
+      },
+      {
+        "m": "B'",
+        "ts": 9295
+      },
+      {
+        "m": "D",
+        "ts": 9377
+      },
+      {
+        "m": "D",
+        "ts": 9445
+      },
+      {
+        "m": "B",
+        "ts": 9527
+      },
+      {
+        "m": "D'",
+        "ts": 9576
+      },
+      {
+        "m": "B'",
+        "ts": 9658
+      },
+      {
+        "m": "D",
+        "ts": 10597
+      },
+      {
+        "m": "D",
+        "ts": 10658
+      },
+      {
+        "m": "D",
+        "ts": 10927
+      },
+      {
+        "m": "L",
+        "ts": 11208
+      },
+      {
+        "m": "D",
+        "ts": 11305
+      },
+      {
+        "m": "B",
+        "ts": 11400
+      },
+      {
+        "m": "D'",
+        "ts": 11459
+      },
+      {
+        "m": "B'",
+        "ts": 11556
+      },
+      {
+        "m": "D",
+        "ts": 11609
+      },
+      {
+        "m": "B",
+        "ts": 11701
+      },
+      {
+        "m": "D'",
+        "ts": 11750
+      },
+      {
+        "m": "D'",
+        "ts": 11815
+      },
+      {
+        "m": "B'",
+        "ts": 11924
+      },
+      {
+        "m": "D'",
+        "ts": 12065
+      },
+      {
+        "m": "B",
+        "ts": 12137
+      },
+      {
+        "m": "D",
+        "ts": 12246
+      },
+      {
+        "m": "B'",
+        "ts": 12338
+      },
+      {
+        "m": "L'",
+        "ts": 12503
+      },
+      {
+        "m": "F",
+        "ts": 13586
+      },
+      {
+        "m": "B'",
+        "ts": 13599
+      },
+      {
+        "m": "F",
+        "ts": 13665
+      },
+      {
+        "m": "B'",
+        "ts": 13680
+      },
+      {
+        "m": "U",
+        "ts": 13748
+      },
+      {
+        "m": "U",
+        "ts": 13825
+      },
+      {
+        "m": "F'",
+        "ts": 13915
+      },
+      {
+        "m": "B",
+        "ts": 13915
+      },
+      {
+        "m": "L",
+        "ts": 14101
+      },
+      {
+        "m": "F",
+        "ts": 14226
+      },
+      {
+        "m": "B'",
+        "ts": 14226
+      },
+      {
+        "m": "F",
+        "ts": 14288
+      },
+      {
+        "m": "B'",
+        "ts": 14294
+      },
+      {
+        "m": "R",
+        "ts": 14387
+      },
+      {
+        "m": "F",
+        "ts": 14526
+      },
+      {
+        "m": "B'",
+        "ts": 14535
+      },
+      {
+        "m": "F",
+        "ts": 14583
+      },
+      {
+        "m": "B'",
+        "ts": 14595
+      },
+      {
+        "m": "L",
+        "ts": 14646
+      },
+      {
+        "m": "F'",
+        "ts": 14743
+      },
+      {
+        "m": "B",
+        "ts": 14743
+      },
+      {
+        "m": "D",
+        "ts": 15076
+      },
+      {
+        "m": "D",
+        "ts": 15143
+      }
+    ],
+    "timeMs": 15131.5,
+    "model": "gan-v4",
+    "gyro": "RwIAfQAA+v0jhgAN7/E4kAAX8v4zjAB28wA3jwBe+AQXgwBR/xIFggBaAA4UgwDz+hIGgwA5/iD+hQBaARQJgwBaBwwbhQCXCRAhhwBaAw8bhQBcCBAYhQA5AwwXhADTBwgfhQA7Bw8liAB4Aw4uigBaAQpDlAC0+wNElQAB9f49kQBZ9gAsiQB4+QQlhwDS8/wkhwBa8vEghwA8/MMWkwBa/q0bpAB4/agaqQC0/7ITnQCW/9wGhgA8AOkMhACWAfwNggA8AQMMggB4/woMggAeAhgMhAB49UwMmwA8+mEJrwGk9mMIsQEO+GAKrQEOFFbxpgB4BlT4oQBa/VQCoQE2+lYKowAa+1sNqAAY+F4NrAB59V4UrgCz710XrwDT61oWrABZ6FgXqwC01k4hqwAk0kYtrAEn71sTqwAC6FkfrgA8+mYMtQBa+mMKsQBX92QGsgB4+mYMtQC0/GYItQBb+GQIswB38mENsAA8918LrQBa814PrQDS8lkCpgBa+z8GkgCW+h4RhgBa9BMIgwA87h71hgB49B/1hgBa5/wfhwA82fAojwB47/YihwBa9gsSgwB4/zYIjQA87zUQjwB4/0UIlgA890cMmAB49lAKngDx8VYIpAAG6lIDogBT0VD3qgAe3E//owBa4VIDpABb7FQUpQB65lYXqQBX0k4brABa51kRqwDS5VoWrgFo41gUqwFp4VYZqwAd5VgXqwI662ITtAFL6V0QrwAh2k4lqwAb1EwcqABc5FcPqQAbzU8AqwB4xUv6rAA91U79pQDS8l0FqwBC5VYIpwAXxUULqAB41EsLpAAe6lv7qgDZ6FgDpwEl714CrQAB8mEFrwDR9V8HrACW81kEpgDS7loCqQC0Nze7twB5WQGo6AA7WQGr4wB4PB+wuAA9JS64qQCVKDG7qgA8OiOytgB9V8HEIABVV77IIQA8WLjRIQCaC7ksXwBX+Mg7YQA7N7ETUAB4M6wSTgBaI6MOTgBaGaEEUA=="
+  },
+  "issue": "No final synthetic x-prime after solved PLL.",
+  "displayRows": [
+    {
+      "moves": "B R B' L' F' U2 B' R2 B' L' B2 F D2 L2 R U' B2 D",
+      "label": "",
+      "colors": [],
+      "hrefs": [],
+      "diagrams": []
+    },
+    {
+      "moves": "z2",
+      "label": "// inspection ",
+      "colors": [
+        "Yellow Green"
+      ],
+      "hrefs": [],
+      "diagrams": []
+    },
+    {
+      "moves": "R B' R2' U' R' F R D2 R2 D2",
+      "label": "// cross",
+      "colors": [
+        "White"
+      ],
+      "hrefs": [],
+      "diagrams": []
+    },
+    {
+      "moves": "y U L F' U F L'",
+      "label": "// ",
+      "colors": [
+        "Green Red"
+      ],
+      "hrefs": [],
+      "diagrams": [
+        "iso"
+      ]
+    },
+    {
+      "moves": "U' R U R' U R U' R2' U R",
+      "label": "// ",
+      "colors": [
+        "Blue Red"
+      ],
+      "hrefs": [
+        "/alg/3x3/f2l/g-"
+      ],
+      "diagrams": [
+        "iso"
+      ]
+    },
+    {
+      "moves": "U y' U R' U2' R2 U R'",
+      "label": "// ",
+      "colors": [
+        "Green Orange"
+      ],
+      "hrefs": [
+        "/alg/3x3/f2l/x+"
+      ],
+      "diagrams": [
+        "iso"
+      ]
+    },
+    {
+      "moves": "y R U2' R' U2 R U' R'",
+      "label": "// ZBLS-M T",
+      "colors": [
+        "Orange Blue"
+      ],
+      "hrefs": [
+        "/alg/3x3/f2l/m+"
+      ],
+      "diagrams": [
+        "iso"
+      ]
+    },
+    {
+      "moves": "(U U U) F U R U' R' U R U2 R' U' R U R' F'",
+      "label": "// COLL-Pi3",
+      "colors": [],
+      "hrefs": [
+        "/alg/3x3/coll/pi-3"
+      ],
+      "diagrams": [
+        "plan"
+      ]
+    },
+    {
+      "moves": "M2' U2 M U M2' U M2' U M U2",
+      "label": "// PLL-Z",
+      "colors": [],
+      "hrefs": [
+        "/alg/3x3/pll/z"
+      ],
+      "diagrams": [
+        "plan"
+      ]
+    }
+  ]
+,
+  "approval": { "status": "pending" }
+}

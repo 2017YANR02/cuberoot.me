@@ -1082,5 +1082,11 @@
     "url": "https://github.com/dataxiv/data-district",
     "zh": "账号中国地区选项以民政部2025年末公开行政区划存档为基础，结合地方政府后续公告及港澳台官方资料校核；保留来源、存档版本和核对日期。",
     "en": "Chinese account location options use an archived year-end 2025 MCA administrative dataset, checked against later local-government announcements and official Hong Kong, Macao and Taiwan sources, with provenance and review dates recorded."
+  },
+  {
+    "name": "QuickJS / Fabrice Bellard & Charlie Gordon",
+    "url": "https://bellard.org/quickjs/",
+    "zh": "Apple Watch 通过 MIT 许可的 QuickJS 核心直接运行既有智能魔方共享代码，避免另写协议和计时规则。",
+    "en": "Apple Watch uses the MIT-licensed QuickJS core to run existing shared smart-cube code without duplicating protocols or timing rules."
   }
 ]

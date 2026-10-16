@@ -264,6 +264,32 @@ const views = (fr: string[], fl: string[] = [], bl: string[] = [], br: string[] 
 const texts = (algs: AlgEntry[][]) => algs.map(v => v.map(e => e.alg));
 
 describe('regenerateMirrorAlgs', () => {
+  it.each([0, 1, 2, 3])('all originals in orientation %i generate into the mapped slots', ori => {
+    const algs = views([]);
+    algs[ori] = [entry("U R U' R'")];
+    const a = { id: 1, algs };
+    const b = { id: 2, algs: views([]) };
+    const once = regenerateMirrorAlgs(a, b).algsById;
+    for (const gen of ['lr', 'fb', 'y2'] as const) {
+      const target = once.get(gen === 'y2' ? 1 : 2)![MIRROR_VIEW[gen][ori]];
+      expect(target).toContainEqual({ alg: applyMirrorGen(algs[ori][0].alg, gen), gen, src: { id: 1, ori, i: 0 } });
+    }
+    const twice = regenerateMirrorAlgs({ id: 1, algs: once.get(1)! }, { id: 2, algs: once.get(2)! }).algsById;
+    expect(twice).toEqual(once);
+    const removed = regenerateMirrorAlgs({ id: 1, algs: views([]) }, { id: 2, algs: once.get(2)! }).algsById;
+    expect(removed.get(2)!.flat()).toEqual([]);
+  });
+
+  it('G+ FL compact slice formula produces G- FR mirror', () => {
+    const result = regenerateMirrorAlgs(
+      { id: 3845, algs: views([], ["FS' R U' R' S U' F'"]) },
+      { id: 3846, algs: views([]) },
+    );
+    expect(result.algsById.get(3846)![0]).toEqual([{
+      alg: "F' S L' U L S' U F", gen: 'lr', src: { id: 3845, ori: 1, i: 0 },
+    }]);
+  });
+
   it('一对 case:左右镜进伙伴 FL、前后镜进伙伴 BR、y² 落自己 BL', () => {
     const a = { id: 1, algs: views(["U R U' R'"]) };
     const b = { id: 2, algs: views([]) };

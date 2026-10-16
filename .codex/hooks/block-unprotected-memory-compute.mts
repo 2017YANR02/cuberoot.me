@@ -13,7 +13,7 @@ const script = /(?:^|\/)(?:double-zbll\.ts|gen-table\.mjs|backfill_xcross_varian
 const base = (word: string) => word.replaceAll('\\', '/').split('/').pop() ?? '';
 const cubeoptRoot = resolve(repoRoot, 'solver/experiments/cube48opt-rust');
 const cubeoptLabel = 'cube48opt Opt1–9 / Rust Opt10 / Rust H0–H10 研究计算';
-const cubeoptComputations = ['validate.mjs', 'benchmark.mjs', 'wasm-benchmark.mjs', 'verify-h10.mjs', 'validate-h10.mjs', 'h10-benchmark.mjs', 'zbll-benchmark.mjs'];
+const cubeoptComputations = ['validate.mjs', 'benchmark.mjs', 'wasm-benchmark.mjs', 'wasm-browser-benchmark.mjs', 'nxopt-benchmark.mjs', 'verify-h10.mjs', 'validate-h10.mjs', 'h10-benchmark.mjs', 'zbll-benchmark.mjs'];
 
 // Only the actual interpreter entrypoint can authorize its child arguments.
 // Merely mentioning guard.mts after oracle.mjs must not grant an exemption.
@@ -52,6 +52,17 @@ function blockedCubeopt(words: string[], cwd: string): boolean {
   if (invocation) {
     const entry = resolve(cwd, words[invocation.index].replaceAll('\\', '/'));
     if (entry === resolve(cubeoptRoot, 'guard.mts')) return false;
+    if (entry === resolve(cubeoptRoot, 'wasm-browser-benchmark.mjs')) {
+      // Only separately bounded no-PDB probes/three-case Rust fixtures may
+      // bypass the compute guard. A flag anywhere in a larger command is not enough.
+      const args = words.slice(invocation.index + 1);
+      const out = resolve(cwd, args[4] ?? '');
+      const probeDir = resolve(repoRoot, '.tmp/cubeopt-reverse/wasm-browser-probes');
+      const boundedMode = args[0] === '--probe' && ['original8', 'rust8', 'original9', 'rust9'].includes(args[2])
+        || args[0] === '--fixture' && ['rust8', 'rust9'].includes(args[2]);
+      return !(args.length === 5 && boundedMode && args[1] === '--slot' && args[3] === '--out'
+        && dirname(out) === probeDir && /^[a-z0-9][a-z0-9-]{0,63}$/.test(base(out)));
+    }
     if (entry === resolve(cubeoptRoot, 'oracle.mjs'))
       return ['generate', 'query', 'solve'].includes(words[invocation.index + 1]);
     if (cubeoptComputations.some(name => entry === resolve(cubeoptRoot, name))) return true;
@@ -66,6 +77,7 @@ function blockedCubeopt(words: string[], cwd: string): boolean {
     if (cubeoptComputations.some(name => path === resolve(cubeoptRoot, name))) return true;
   }
   const cargo = words.findIndex(word => base(word) === 'cargo');
+  if (words.some(word => /^nxopt\d+(?:\.exe)?$/.test(base(word)))) return true;
   if (cargo >= 0 && words.includes('run')) {
     const manifestFlag = words.findIndex(word => word === '--manifest-path' || word.startsWith('--manifest-path='));
     const manifest = manifestFlag < 0 ? '' : words[manifestFlag].includes('=')
@@ -129,6 +141,9 @@ export function blockedCompute(command: string, depth = 0, cwd = repoRoot): stri
     // checked below. Do not extend it to Node or arbitrary file-operation code.
     if (first === 'cp') continue;
     if (first === 'cargo' && !words.includes('run')) continue;
+    // Static TypeScript checking reads the entry file; it never executes it.
+    // Keep this segment-local so a following compute command is still checked.
+    if (['tsgo', 'tsc'].includes(first) && words.includes('--noEmit')) continue;
     if (blockedCubeopt(words, cwd)) return cubeoptLabel;
     // H9-only generation was explicitly authorized on 2026-10-13. The guard
     // validates the exact target, directory, threads and process-tree budget.
@@ -163,7 +178,7 @@ export function blockedCompute(command: string, depth = 0, cwd = repoRoot): stri
         if (/spawn|exec|subprocess|Start-Process/.test(nested)
           && /table_generator|double-zbll|stats:scramble|scripts[\\/]stats[\\/]update-/.test(nested)) return '内联脚本中的大内存计算';
         if (/spawn|exec|subprocess|Start-Process/.test(nested)
-          && /cube48opt-research|cube48opt-rust[\\/](?:oracle|validate|benchmark|wasm-benchmark|verify-h10|validate-h10|h10-benchmark)\.mjs/.test(nested)) return cubeoptLabel;
+          && /cube48opt-research|cube48opt-rust[\\/](?:oracle|validate|benchmark|wasm-benchmark|wasm-browser-benchmark|verify-h10|validate-h10|h10-benchmark)\.mjs/.test(nested)) return cubeoptLabel;
       }
     }
   }
@@ -192,25 +207,36 @@ async function main() {
     && Date.now() < Date.parse('2026-12-01T00:00:00Z')) {
     // Reviewed local shortcut: fixed coordinator and exact audited dependencies.
     const files = {
-      "solver/experiments/cube48opt-rust/guard.mts": "0294620a16452fd6e982352b34979c9c5445e87ba688755879bb2daf00000837",
+      "solver/experiments/cube48opt-rust/native-release.mts": "d9fefcf461c9831dec7ab5076d48d64c607f19c71e8843b7a5f2ca4e9bc72e3d",
+      "solver/333opt/resident-rust-session.mts": "313215e251bc666811b4fab4794c3667d93c9ddeadb3eaec8eb03e6a32b85fff",
+      "solver/experiments/cube48opt-rust/guard.mts": "4ff68ee8cc22a7aea96b89d748666d4bd8ebb5b5c64bcb8c9cd80aa6fee6414f",
+      "solver/experiments/cube48opt-rust/wasm-browser-policy.mts": "1176e270d28c8666ae300e7854f23d11e571de210d80eba46977ba15115ebf0d",
+      "solver/experiments/cube48opt-rust/wasm-dual-candidate-policy.mts": "abca4884edc63d97dca715dd55510c7c23cfd96e65b06219830dd6c3b1f3a5f8",
+      "solver/experiments/cube48opt-rust/opt9-wasm-candidate-policy.mts": "65b30139f4dec1dc0cc46a7e4a318777926cef4bf0c96f46a2d795d421eabd12",
+      "solver/experiments/cube48opt-rust/original-resume-policy.mts": "1dd8b04e7561d4a3788197f70dc61b1223670eaf411805ed28502bcf5ba913bf",
+      "solver/experiments/cube48opt-rust/original-wasm-compat.mjs": "c07fc2c68bd80970a97bc10bff9cf379079a0ea23bd81f1273e2d5a8b545e0c8",
+      "solver/experiments/cube48opt-rust/open-benchmark-policy.mts": "35da3ed00440d19001f2d38b306d4a3c520733ba02d54b1bf358f717dcd3e841",
+      "solver/experiments/cube48opt-rust/opt9-release.mts": "5351b3caa48e26377f77c4ee5cab58fcf605fea0895d5f065889f9c62123bb65",
+      "solver/experiments/cube48opt-rust/opt9-release.json": "bd1c345eb97088127f3358ed8db3c387c4f48e5334caa179da7d06f8bfb01080",
       "solver/333opt/rust-h10-adapter.mts": "e7b1aca3c8d635d353826e68117ad545aeb8d12c4719c2a2e77601cc0beba392",
-      "core/jobs/alg-build/src/double-zbll-symmetry.mts": "c9ebb26aca4e33515b5ecf6b10c10d8bde254aa6464c86bedbea6bd055017b81",
-      "core/jobs/alg-build/src/double-zbll-selection.mts": "0de647807f60be78c8386fe2ea1243af6768c88399f6128e1a067b645d433439",
-      "core/jobs/alg-build/src/double-zbll-dashboard.mts": "95ee22772c0d921824684628b075e0a6062fca3ad176202376f2f44b961077e9",
+      "core/jobs/alg-build/src/double-zbll-symmetry.mts": "116823c61fa86e5d11e5e273d1d1610ad845ffa2c1f5a85ebae47770e9d6e68d",
+      "core/jobs/alg-build/src/double-zbll-selection.mts": "182a07e4a54060c51844279eb2c9cf052e063271b05f19f3ed5e522c97f6d8af",
+      "core/jobs/alg-build/src/double-zbll-dashboard.mts": "646acdd47eaf51c1c7594211cc70c2c7a81cd899e671d611d88f3bc5ca9b1f36",
       "core/jobs/alg-build/src/double-zbll-website-stats.mts": "1909aa32d3794c45c64490cd0e56ec27efa79cd4de805f4d3c362f6dfd098143",
-      "core/jobs/alg-build/src/double-zbll-symmetry-state.mts": "f089ebc0d8a89461df79d5283fdd9a2703ccc5730b9e23bec874435388bbbad0",
+      "core/jobs/alg-build/src/double-zbll-symmetry-state.mts": "98783dad8592761349dcc6cb852e07a4a3fee5caf265bafcf0ab3ca35eedc04b",
       ".tmp/double-zbll-symmetry-v2/model.mts": "ec36d0ba647796b8c979863aa81ab9cb7162a7083398fa898f7b17b76cf4f3a1",
       ".tmp/double-zbll-auf-20261011/run.mts": "20308805d6aef28a4cc94dd4a4140bfb6065ec7fac854c20162067fb55878cbd",
       "solver/333opt/solve_h10.mts": "e68064ace9e7b780550d52c8d71d8a734f848b2a7cf6e311a9cae0336c08bb91",
-      "solver/experiments/cube48opt-rust/opt10-zbll-policy.mts": "6f214ba32234f76dee405e2e3c8f305cf3dd09beede28ebdeb62c443b415753f",
+      "solver/experiments/cube48opt-rust/opt10-zbll-policy.mts": "82492332b5c81d252a1f37fe5fff46494c02d8cb8f28c172e3be2045f17c755c",
       "core/scripts/zbll-memory-budget.mts": "9ff1980d29ab3d1976158daf85c68f99b91eb19098872ceea47fdbe5045bc231",
       "core/scripts/mac-memory-menu.mts": "085791ed113fd3d309fadcfd9302e6b037664cb6b5d3b98e99f1f3279cd9111d",
       "core/scripts/mac-system-recorder.mts": "6256247971dec4bac1c09ba26e2f0b4296fbe63225cbe75c573b6b989339c3ee",
-      "solver/experiments/cube48opt-rust/opt10-release.mts": "aaa9884ebb181a62364598f33c8118ae0cb1130247c3baa2ff27ed2c173c98ab",
+      "solver/experiments/cube48opt-rust/opt10-release.mts": "d0576ec7ada98db00a3d213546a22e7070e57fa2c80329cfd82c1d4518d9900f",
       "solver/experiments/cube48opt-rust/opt10-release.json": "ef1b8403b0ff3d2fe29a4f381c21f121b0c9f57817107dab0265aad474a2d3e6",
       "solver/experiments/cube48opt-rust/opt10-official-policy.mts": "bb6a23a7483b58a065a42065f17611801a2b38b44aaaec961107de3608a7bc89",
       "solver/experiments/cube48opt-rust/multithread-policy.mts": "8c05063016b55b9179731eaf6225e840b4df8e004bed7dcdd95badaf4dd7f47b",
-      "solver/experiments/cube48opt-rust/wasm-benchmark.mjs": "5b3f896d0e3de4db165d9f7909410f0e21529e9f1427cacd8410eb62016b793e"
+      "solver/experiments/cube48opt-rust/wasm-benchmark.mjs": "9ac4435ab7d9d35b4ae33c78e38b87a0a67d3f0cf0e0e5df233c454d44b8eb2b",
+      "solver/experiments/cube48opt-rust/zbll-resume-review.mts": "defdfe34d4fc51664a86bb1a2e342c870389af5147f48bdb6e0eab3294a0af7a"
     };
     try {
       const pkg = JSON.parse(readFileSync(resolve(repoRoot, 'core/jobs/alg-build/package.json'), 'utf8'));

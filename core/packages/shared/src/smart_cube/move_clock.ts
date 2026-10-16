@@ -10,6 +10,8 @@ export const RESYNC_THRESHOLD_MS = 2000;
 /** A larger jump is treated as a wrap/restart/unit mismatch. */
 const MAX_PLAUSIBLE_DELTA_MS = 60_000;
 
+export interface MoveClockStampOptions { delayed?: boolean }
+
 export class MoveClock {
   private anchorDevice: number | null = null;
   private anchorLocal = 0;
@@ -19,8 +21,14 @@ export class MoveClock {
     return this.anchorDevice !== null;
   }
 
-  stamp(deviceTs: number | undefined, localTs: number): number {
+  stamp(deviceTs: number | undefined, localTs: number, options?: MoveClockStampOptions): number {
     if (deviceTs === undefined || !Number.isFinite(deviceTs)) {
+      // An untimed historical turn is not a device-clock reset. Keep the last
+      // known instant as an estimate until a timed neighbour arrives; stamping
+      // it at reply arrival would shift every following turn into the future.
+      if (options?.delayed && this.anchorDevice !== null && this.prevDevice !== null) {
+        return this.anchorLocal + this.prevDevice - this.anchorDevice;
+      }
       this.reset();
       return localTs;
     }
@@ -42,7 +50,9 @@ export class MoveClock {
     this.prevDevice = deviceTs;
 
     const estimated = this.anchorLocal + (deviceTs - this.anchorDevice);
-    if (Math.abs(estimated - localTs) > RESYNC_THRESHOLD_MS) {
+    // Recovered history describes past turns. Its reply latency is not clock
+    // drift; preserve the existing anchor for the whole unblocked batch.
+    if (!options?.delayed && Math.abs(estimated - localTs) > RESYNC_THRESHOLD_MS) {
       this.anchorDevice = deviceTs;
       this.anchorLocal = localTs;
       return localTs;

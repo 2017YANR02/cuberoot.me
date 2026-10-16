@@ -19,6 +19,7 @@ import {
   discoverSmartCubeDriver,
   type DetectableSmartCubeDriver,
   type DiscoveredSmartCube,
+  type DiscoveredCubeAdapter,
 } from './discover-driver';
 import type { BleAbortSignal, DiscoveredDevice } from './ble-api';
 
@@ -174,9 +175,14 @@ export class SmartCubeSession {
   private connectionGeneration = 0;
   private connection: CubeConnectionLike | null = null;
   private discoveredDevices = new Map<string, DiscoveredSmartCube>();
+  private discoveryAdapter: DiscoveredCubeAdapter | null = null;
   private pendingConnection: BleCancellation | null = null;
   private hardwareCleanup: Promise<void> = Promise.resolve();
   private cancelPendingStart: (() => void) | null = null;
+
+  get relayOpen(): boolean {
+    return this.socketOpen;
+  }
 
   subscribe(listener: (snapshot: SmartCubeSessionSnapshot) => void): () => void {
     this.listeners.add(listener);
@@ -281,7 +287,9 @@ export class SmartCubeSession {
         }
         this.socketOpen = false;
         ++this.connectionGeneration;
-        this.setSnapshot({ phase: 'error', error: tr({ en: 'The timer connection was interrupted. Return and try again.', zh: '计时器连接已中断，请返回重试' }) });
+        if (this.snapshot.phase !== 'error' || !this.snapshot.error) {
+          this.setSnapshot({ phase: 'error', error: tr({ en: 'The timer connection was interrupted. Return and try again.', zh: '计时器连接已中断，请返回重试' }) });
+        }
         void this.disconnectHardware();
       });
       task.onClose(() => {
@@ -294,7 +302,10 @@ export class SmartCubeSession {
           reject(new Error(tr({ en: 'The timer connection was closed', zh: '计时器连接已关闭' })));
         }
         ++this.connectionGeneration;
-        if (this.snapshot.phase !== 'disconnected') {
+        // The timer closes its relay after a BLE failure. Keep that actionable
+        // cause instead of replacing it with the resulting transport closure.
+        if (this.snapshot.phase !== 'disconnected'
+          && !(this.snapshot.phase === 'error' && this.snapshot.error)) {
           this.setSnapshot({ phase: 'error', error: tr({ en: 'The timer connection was closed. Return and try again.', zh: '计时器连接已关闭，请返回重试' }) });
         }
         void this.disconnectHardware();
@@ -350,6 +361,7 @@ export class SmartCubeSession {
       const discovery = discoverSmartCubeDriver({
         signal: cancellation.signal,
         onUpdate: updateDiscoveredDevices,
+        onAdapterRetained: (adapter) => { this.discoveryAdapter = adapter; },
       });
       cancellation.track(discovery);
       found = await discovery;
@@ -407,7 +419,7 @@ export class SmartCubeSession {
     });
 
     const generation = ++this.connectionGeneration;
-    await this.disconnectHardware();
+    await this.disconnectHardware(kind === 'gan-v4' && Boolean(selectedDevice));
     if (generation !== this.connectionGeneration) return;
     const cancellation = createBleCancellation();
     this.pendingConnection = cancellation;
@@ -421,7 +433,10 @@ export class SmartCubeSession {
           requestBattery: async () => 100,
         };
       } else if (kind === 'gan-v4') {
+        const adapter = this.discoveryAdapter ?? undefined;
+        this.discoveryAdapter = null;
         const operation = connectGanV4({
+          adapter,
           device: selectedDevice,
           signal: cancellation.signal,
           onDisconnect: (message) => this.handleHardwareDisconnect(generation, kind, message),
@@ -565,7 +580,7 @@ export class SmartCubeSession {
     };
   }
 
-  private async disconnectHardware(): Promise<void> {
+  private async disconnectHardware(preserveDiscoveryAdapter = false): Promise<void> {
     this.calibrating = false;
     const cancellation = this.pendingConnection;
     this.pendingConnection = null;
@@ -574,6 +589,11 @@ export class SmartCubeSession {
     this.connection = null;
     const cleanup = this.hardwareCleanup.then(async () => {
       await cancellation?.drain();
+      if (!preserveDiscoveryAdapter) {
+        const adapter = this.discoveryAdapter;
+        this.discoveryAdapter = null;
+        await adapter?.close().catch(() => {});
+      }
       if (connection) await connection.disconnect().catch(() => {});
     });
     this.hardwareCleanup = cleanup.catch(() => {});

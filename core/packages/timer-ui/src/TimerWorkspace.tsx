@@ -18,7 +18,7 @@ export function TimerWorkspace({ active = true, panelOpen = false, recap, childr
 }) {
   const wide = useTimerWideLayout();
   const recapOpen = active && wide && !panelOpen && Boolean(recap);
-  return <div {...props} className={`${className}${active ? ' timer-workspace' : ''}`}
+  return <div {...props} className={`${className}${active ? ' timer-workspace timer-no-selection' : ''}`}
     data-panel-open={active && (panelOpen || recapOpen) ? '' : undefined} data-recap-open={recapOpen ? '' : undefined}>
     {children}
     {recapOpen && (

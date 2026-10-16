@@ -1,5 +1,6 @@
 // Ported from packages/client-vite/src/utils/trainerScramble.ts
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
+import { invertAlg as inverseAlg } from '@cuberoot/shared/alg-transform';
 import { flattenAlg, mergeAdjacentMoves } from '@cuberoot/shared/alg-notation';
 import { equivalentPyraScramble } from './pyraminx-solver';
 import { allowedPostAuf, oriCornersOnly, type OrientationSel } from './alg_ll_orientation';
@@ -112,18 +113,6 @@ export function replaceOuterDAdjustment(base: string, adjustment: string): strin
   return tokens.join(' ');
 }
 
-function inverseAlg(alg: string): string {
-  return alg
-    .split(/\s+/)
-    .filter(Boolean)
-    .map(m => {
-      if (m.endsWith('2')) return m;
-      if (m.endsWith("'")) return m.slice(0, -1);
-      return m + "'";
-    })
-    .reverse()
-    .join(' ');
-}
 
 /**
  * 出题用哪一种打乱。除 `inv` 外全部来自站长那张 1LLL 表(`alg_cases.meta`),

@@ -400,3 +400,54 @@
 .shell-topbar:has(.shell-topbar-home) .shell-topbar-right {
   grid-column: 3;
 }
+
+/* The solo device chooser leads the toolbar, before the puzzle control. */
+.shell-topbar .shell-device-center {
+  position: relative;
+  inset: auto;
+  transform: none;
+  translate: none;
+  width: var(--timer-topbar-control-size, 32px);
+  height: var(--timer-topbar-control-size, 32px);
+  min-height: var(--timer-topbar-control-size, 32px);
+  flex-basis: var(--timer-topbar-control-size, 32px);
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--foreground);
+}
+
+.shell-topbar .shell-device-center .shell-device-center-trigger {
+  width: var(--timer-topbar-control-size, 32px);
+  height: var(--timer-topbar-control-size, 32px);
+  min-height: var(--timer-topbar-control-size, 32px);
+}
+
+.shell-topbar .shell-device-center .shell-device-center-menu,
+.shell-topbar .shell-device-center .devcube {
+  /* anchored-panel: clamped (both device panels retain usePanelClamp) */
+  top: calc(100% + 6px);
+  bottom: auto;
+  left: 0;
+  right: auto;
+}
+
+.shell-topbar .shell-device-center .shell-device-center-menu {
+  width: max-content;
+  min-width: 0;
+  max-width: calc(100vw - 16px);
+}
+.timer-no-selection.timer-no-selection,
+.timer-no-selection.timer-no-selection :where(*) {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Timer labels use explicit copy actions. Editors retain native selection. */
+.timer-no-selection.timer-no-selection :is(input, textarea, [contenteditable]:not([contenteditable="false"])),
+.timer-no-selection.timer-no-selection [contenteditable]:not([contenteditable="false"]) * {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}

@@ -327,13 +327,15 @@ describe('installed app multiplayer modes', () => {
     });
     expect(surface.querySelector('.timer-display')?.classList).toContain('holding');
     expect(surface.hasPointerCapture(1)).toBe(true);
+    await act(async () => dispatchPointer(surface, 'pointercancel', 1));
     const scrambleStrip = surface.querySelector<HTMLElement>('.scramble-strip')!;
+    await act(async () => dispatchPointer(scrambleStrip, 'pointerdown', 2));
+    expect(surface.querySelector('.timer-display')?.classList).toContain('holding');
     await act(async () => {
-      dispatchPointer(scrambleStrip, 'pointerdown', 2);
       dispatchPointer(surface, 'pointerup', 2);
       dispatchPointer(surface, 'pointercancel', 2);
     });
-    expect(surface.querySelector('.timer-display')?.classList).toContain('holding');
+    expect(surface.querySelector('.timer-display')?.classList).toContain('idle');
     expect(surface.hasPointerCapture(2)).toBe(false);
     expect(postNetStatus).not.toHaveBeenCalled();
     expect(writeClipboardText).not.toHaveBeenCalled();

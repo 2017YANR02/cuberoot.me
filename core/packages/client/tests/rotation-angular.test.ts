@@ -42,3 +42,14 @@ it('keeps a genuine immediate reversal in notation', () => {
   const core = { frame: 'scramble' as const, events: ['x', "x'"].map((token, tMs) => ({ tMs, token, angleRad: Math.PI / 2 })) };
   expect(humanizeStream([], { core }).rotations.map(e => e.token)).toEqual(['x', "x'"]);
 });
+
+it('separates the notation boundary from the responsive pose snap', () => {
+  const events = detectRotations(samples([0, 60, 76]));
+  expect(events.map(e => [e.tMs, e.notationMs])).toEqual([[1, 2]]);
+  expect(quatAngleTo(rotationPoseAt(events, 1), x(90))).toBeLessThan(1e-6);
+  expect(detectRotations(samples([0, 90, 90]))[0].notationMs).toBeUndefined();
+  expect(detectRotations(samples([0, 60, 0]))[0].notationMs).toBeUndefined();
+  expect(detectRotations([{ tMs: 0, q: x(0), frame: 'scramble' },
+    { tMs: 1, q: x(60), frame: 'scramble' },
+    { tMs: 1000, q: x(90), frame: 'scramble' }])[0].notationMs).toBeUndefined();
+});

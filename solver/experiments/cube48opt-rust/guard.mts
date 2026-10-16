@@ -1,10 +1,19 @@
+import { nxPolicy as opt8NativePolicy, validateNxReview as validateOpt8NativeReview } from './opt8-native-policy.mts';
 /** Backend-budgeted research. Shares the previous experiment's swap stop record. */
+import { localOpt8Scope, validateLocalOpt8Review } from './opt8-local-policy.mts';
+import { openPolicy, validateOpenReview, openStopPath } from './open-benchmark-policy.mts';
+import { resumePolicy, validateResumeReview, resumeStopPath } from './original-resume-policy.mts';
+import { candidatePolicy, validateCandidateReview, candidateStopPath } from './opt9-wasm-candidate-policy.mts';
+import { dualCandidatePolicy, validateDualCandidateReview } from './wasm-dual-candidate-policy.mts';
+import { browserPolicy, validateBrowserReview } from './wasm-browser-policy.mts';
+import { nxPolicy, validateNxReview } from './nxopt-policy.mts';
 import { constants, existsSync, mkdirSync, readFileSync, writeFileSync, renameSync, openSync, closeSync, unlinkSync, fstatSync, readSync, lstatSync, fsyncSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { execFileSync, spawn } from 'node:child_process';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { availableParallelism } from 'node:os';
+import { readResumeReview, resumeStopPath as zbllResumeStopPath } from './zbll-resume-review.mts';
 import { validateOpt10BatchReview, zbllOfficialPolicy, validateZbllOfficialReview } from './opt10-zbll-policy.mts';
 import { officialPolicy, officialPaths, officialScope, collectOfficialEvidence, validateOfficialReview, officialHasStop } from './opt10-official-policy.mts';
 import { collectMultithreadEvidence, multithreadPaths, multithreadPolicy, multithreadScope, validateMultithreadReview } from './multithread-policy.mts';
@@ -271,6 +280,20 @@ export function resourceProtectionReasons(before: MemoryObservation, now: Memory
 
 /** Pure protocol validation. Tests never need to observe memory or open a PDB. */
 export function researchPolicy(label: string, executable: string, args: string[], env: NodeJS.ProcessEnv = process.env) {
+if (env.CUBEOPT_OPT8_NATIVE_REVIEW !== undefined)
+  return opt8NativePolicy({label,executable,args,env});
+if (env.CUBEOPT_NXOPT_REVIEW !== undefined)
+  return nxPolicy({label,executable,args,env});
+if (env.CUBEOPT_BROWSER_REVIEW !== undefined)
+  return browserPolicy({label,executable,args,env});
+if (env.CUBEOPT_WASM_DUAL_CANDIDATE_REVIEW !== undefined)
+  return dualCandidatePolicy({label,executable,args,env});
+if (env.CUBEOPT_WASM_CANDIDATE_REVIEW !== undefined)
+  return candidatePolicy({label,executable,args,env});
+if (env.CUBEOPT_ORIGINAL_RESUME_REVIEW !== undefined)
+  return resumePolicy({label,executable,args,env});
+if (env.CUBEOPT_OPEN_BENCHMARK_REVIEW !== undefined)
+  return openPolicy({label,executable,args,env});
 if (env.CUBEOPT_ZBLL_REVIEW !== undefined && executable === officialPaths.executable)
   return zbllOfficialPolicy({label,executable,args,env}, availableParallelism());
 if (env.CUBEOPT_OPT10_OFFICIAL_REVIEW !== undefined)
@@ -500,8 +523,24 @@ export function validateH48Metadata(h: number, fileBytes: number, header: Buffer
 async function main() {
 const [label, executable, ...args] = process.argv.slice(2);
 const policy = researchPolicy(label, executable, args);
+const openBenchmark = 'openBenchmark' in policy && policy.openBenchmark === true;
+const originalResume = 'originalResume' in policy && policy.originalResume === true;
+const wasmCandidate = 'wasmCandidate' in policy && policy.wasmCandidate === true;
+const dualWasmCandidate = 'dualWasmCandidate' in policy && policy.dualWasmCandidate === true;
+const browserBenchmark = 'browserBenchmark' in policy && policy.browserBenchmark === true;
+const opt8NativeBenchmark = 'opt8NativeBenchmark' in policy && policy.opt8NativeBenchmark === true;
+const nxoptBenchmark = 'nxoptBenchmark' in policy && policy.nxoptBenchmark === true;
+const dualScopeStopPath = 'scopeStopPath' in policy ? policy.scopeStopPath : undefined;
+if ((dualWasmCandidate || browserBenchmark) && typeof dualScopeStopPath !== 'string') throw Error('Missing fixed candidate scope stop path');
+const validateBenchmarkReview = opt8NativeBenchmark ? validateOpt8NativeReview : nxoptBenchmark ? validateNxReview : browserBenchmark ? validateBrowserReview : dualWasmCandidate ? validateDualCandidateReview : wasmCandidate ? validateCandidateReview : originalResume ? validateResumeReview : validateOpenReview;
+let openBenchmarkReceipt: any;
 const { entry, mode, backend, variant, h, tablePath, measureNativeRss, rssLimit, deadlineMs } = policy;
+// Only the fixed, reviewed candidate policy may select a different startup reserve.
+// Runtime headroom protection remains 2 GiB in resourceProtectionReasons.
+const startupReserveBytes = 'startupReserveBytes' in policy ? policy.startupReserveBytes : 3 * GiB;
 const reviewPath = process.env.CUBEOPT_RESOURCE_REVIEW;
+if (reviewPath && lstatSync(reviewPath).size > 256 * 1024) throw Error('Review is not bounded');
+const localOpt8 = Boolean(reviewPath && JSON.parse(readFileSync(reviewPath).toString()).scope === localOpt8Scope);
 const opt10ReviewPath = process.env.CUBEOPT_OPT10_REVIEW;
 const multithreadReviewPath = process.env.CUBEOPT_MULTITHREAD_REVIEW;
 const officialReviewPath = process.env.CUBEOPT_OPT10_OFFICIAL_REVIEW;
@@ -513,7 +552,7 @@ const isOpt10Stage = !zbll && !multithread && !official && (backend === 'opt10' 
 if (isOpt10Stage !== Boolean(opt10ReviewPath) || (opt10ReviewPath && reviewPath))
   throw Error('Opt10 execution requires its separate explicit stage review; other backends cannot use it');
 if (reviewPath !== undefined && (!reviewPath || entry !== 'wasm-benchmark.mjs' || ![8,9].includes(variant!)
-    || parseWasmBenchmarkArguments(args.slice(1)).engine !== 'both'))
+    || (!localOpt8 && parseWasmBenchmarkArguments(args.slice(1)).engine !== 'both')))
   throw Error('Resource review permits only the exact WASM WCA100 comparison with both engines');
 let { tableBytes } = policy;
 let generationProof: any;
@@ -586,6 +625,7 @@ function memory() {
     pressure: Number(command('/usr/sbin/sysctl', ['-n', 'kern.memorystatus_vm_pressure_level']).trim()), available: summary.reclaimableEstimateBytes };
 }
 let before = memory();
+const zbllResume = zbllOfficial && label === 'double-zbll-opt10-session' ? readResumeReview(before) : undefined;
 if (generationProof) {
   const sourceHashes = Object.fromEntries(opt10ProofSources.map(name=>[name,digest(readFileSync(resolve(here,name)))]));
   validateOpt10GenerationProof(generationProof,sourceHashes,before);
@@ -593,10 +633,10 @@ if (generationProof) {
 if (process.env.AUF_EXPECTED_BOOT !== undefined && (process.env.AUF_EXPECTED_BOOT !== before.boot || Number(process.env.AUF_EXPECTED_SWAPOUTS) !== before.swapouts))
   throw Error('Long-job boot/swap baseline changed; cannot reset');
 const otherComputations = command('/bin/ps', ['-axo', 'pid,comm']).split('\n')
-  .filter(line => /solve_h48_h10|cube48opt-research|table_generator/.test(line));
+  .filter(line => /solve_h48_h10|cube48opt-research|table_generator|nxopt\d+/.test(line));
 if (otherComputations.length) throw Error('Another native computation is running: ' + otherComputations.join('; '));
-if (existsSync(reviewedStopPath) || existsSync(opt10ReviewedStopPath) || existsSync(officialPaths.stop)
-    || (existsSync(multithreadPaths.stop) && !multithreadReviewPath && !official && !zbllOfficial)) throw Error('A newer reviewed computation stopped; further execution requires review');
+if (!openBenchmark && !zbllResume && (existsSync(reviewedStopPath) || existsSync(opt10ReviewedStopPath) || existsSync(officialPaths.stop)
+    || (existsSync(multithreadPaths.stop) && !multithreadReviewPath && !official && !zbllOfficial && !localOpt8))) throw Error('A newer reviewed computation stopped; further execution requires review');
 let reviewReceipt: any;
 let opt10ReviewReceipt: any;
 let multithreadReviewReceipt: any;
@@ -618,6 +658,15 @@ if (mode === 'solve-opt10' && !zbll && !multithread && !official) {
 }
 function checkZbllReview(current: MemoryObservation) {
   if (!zbll) return;
+  if (zbllResume) {
+    const resumed=readResumeReview(current)!;
+    const original=JSON.parse(readSmallRecord(process.env.CUBEOPT_ZBLL_REVIEW!).toString());
+    // Validate the original release against its historical observation; the
+    // explicit continuation separately validates today's unchanged counter.
+    const identity=validateZbllOfficialReview(original,collectOfficialEvidence(),
+      {...current,boot:original.boot,swapouts:original.swapouts},false);
+    return {...identity,resumeReviewSha256:resumed.sha256,originalSwapouts:resumed.originalSwapouts,acceptedSwapouts:resumed.acceptedSwapouts};
+  }
   if (zbllOfficial) return validateZbllOfficialReview(
     JSON.parse(readSmallRecord(process.env.CUBEOPT_ZBLL_REVIEW!).toString()),collectOfficialEvidence(),current,officialHasStop());
   const fd = openSync(opt10Table, 'r'), header = Buffer.alloc(1024);
@@ -629,6 +678,11 @@ function checkZbllReview(current: MemoryObservation) {
   }, current);
 }
 function checkBaselines(current: MemoryObservation) {
+  if (zbllResume) { readResumeReview(current); return; }
+  if (openBenchmark) {
+    validateBenchmarkReview({label,executable,args,env:process.env},current);
+    return;
+  }
   for (const file of [record, ownRecord]) if (existsSync(file)) {
     const prior = JSON.parse(readFileSync(file, 'utf8'));
     if (prior.boot !== current.boot || prior.swapouts !== current.swapouts || prior.stopped && !(file === ownRecord && (review || opt10Review || zbll || multithreadReview || officialReview)))
@@ -700,6 +754,11 @@ function checkReview(current: MemoryObservation) {
   if (!/^[a-z0-9-]+$/.test(review.stoppedLabel ?? '')) throw Error('Invalid reviewed stopped label');
   const baselineBytes = readSmallRecord(ownRecord);
   const receipts = resolve(output, 'resource-review-receipts');
+  if (localOpt8) {
+    const receiptPath = resolve(receipts, 'opt8-local-' + label + '.json');
+    const identity = validateLocalOpt8Review(review,{label,executable,args,env:process.env},current,existsSync(receiptPath));
+    return {receipts,receiptPath,identity};
+  }
   const successor = review.schema === 'cuberoot.resource-review.v2';
   if (successor && (!/^[a-f0-9]{64}(?:-[a-f0-9]{64})?\.json$/.test(review.previousReceipt ?? '')
       || !/^[a-f0-9]{64}$/.test(review.previousReceiptSha256 ?? '')))
@@ -733,14 +792,21 @@ checkReview(before);
 checkOpt10Review(before);
 checkMultithreadReview(before);
 checkOfficialReview(before);
-if (before.pressure !== 1 || before.available < rssLimit + 3 * GiB)
-  throw Error(`Insufficient memory headroom: ${backend === 'h48' ? `h${h}` : backend === 'h10' ? 'h10' : `opt${variant}`} ${entry}/${mode} requires ${rssLimit + 3 * GiB} bytes; observed ${before.available}`);
+if (before.pressure !== 1 || before.available < rssLimit + startupReserveBytes)
+  throw Error(`Insufficient memory headroom: ${backend === 'h48' ? `h${h}` : backend === 'h10' ? 'h10' : `opt${variant}`} ${entry}/${mode} requires ${rssLimit + startupReserveBytes} bytes; observed ${before.available}`);
 // An abandoned lock requires explicit inspection; never erase it to auto-restart.
 const lock = openSync(lockPath, 'wx');
 writeFileSync(lock, JSON.stringify({ pid: process.pid, backend, variant, h, entry, mode, boot: before.boot,
   ...('wasmThreads' in policy ? {wasmThreads:policy.wasmThreads} : {}) }));
 closeSync(lock);
 try {
+  if (openBenchmark) {
+    before=memory();
+    const checked=validateBenchmarkReview({label,executable,args,env:process.env},before);
+    openBenchmarkReceipt=checked.receipt;
+    consumeResourceReview(checked.receiptPath,openBenchmarkReceipt);
+    if (entry==='native') opt10SolveInput=checked.input;
+  }
   if (zbll) { before = memory(); checkBaselines(before); checkZbllReview(before); }
   if (review) {
     before = memory();
@@ -798,7 +864,7 @@ function stop(reason: string, protection = false, details?: unknown) {
   if (stopped) return;
   stopped = reason;
   try {
-    if (protection || opt10ReviewReceipt || multithreadReviewReceipt || officialReviewReceipt) {
+    if (protection || openBenchmark || opt10ReviewReceipt || multithreadReviewReceipt || officialReviewReceipt || localOpt8) {
       trigger = { reason, sampledAt:new Date().toISOString(), details };
       // A reviewed run must never mutate the original stopped history.
       if ((multithreadReviewReceipt?.repair || multithreadReviewReceipt?.continuation) && existsSync(multithreadPaths.stop)) {
@@ -806,7 +872,7 @@ function stop(reason: string, protection = false, details?: unknown) {
         const archive = resolve(output, `multithread-stop-${digest(previous)}.json`);
         if (!existsSync(archive)) writeFileSync(archive, previous, {flag:'wx'});
       }
-      atomic(officialReviewReceipt ? officialPaths.stop : multithreadReviewReceipt ? multithreadPaths.stop : opt10ReviewReceipt || zbll ? opt10ReviewedStopPath : reviewReceipt ? reviewedStopPath : ownRecord,
+      atomic(zbllResume ? zbllResumeStopPath : dualWasmCandidate || browserBenchmark || nxoptBenchmark || opt8NativeBenchmark ? dualScopeStopPath as string : wasmCandidate ? candidateStopPath : originalResume ? resumeStopPath : openBenchmark ? openStopPath : officialReviewReceipt ? officialPaths.stop : multithreadReviewReceipt ? multithreadPaths.stop : opt10ReviewReceipt || zbll ? opt10ReviewedStopPath : reviewReceipt ? reviewedStopPath : ownRecord,
         { ...before, stopped: reason, trigger,
           ...(reviewReceipt ? { label, reviewReceipt } : {}), ...(opt10ReviewReceipt ? {label,opt10ReviewReceipt} : {}),
           ...(multithreadReviewReceipt ? {label,multithreadReviewReceipt} : {}),...(officialReviewReceipt ? {label,officialReviewReceipt} : {}) });
@@ -828,7 +894,7 @@ async function cleanProcessGroup() {
   const alive = () => { try { process.kill(pgid, 0); return true; } catch { return false; } };
   if (!alive()) return;
   if (!stopped) {
-    if (multithreadReviewReceipt || officialReviewReceipt) stop('Child processes outlived the command');
+    if (openBenchmark || multithreadReviewReceipt || officialReviewReceipt || localOpt8) stop('Child processes outlived the command');
     else stopped = 'Child processes outlived the command';
   }
   try { process.kill(pgid, 'SIGTERM'); } catch {}
@@ -839,6 +905,8 @@ async function cleanProcessGroup() {
 }
 function sample() {
   try {
+    if (zbllOfficial && label === 'double-zbll-opt10-session' && Date.now() >= Date.parse('2026-12-01T00:00:00Z'))
+      stop('ZBLL task authorization expired', true);
     const now = memory();
     const all = parseProcesses(command('/bin/ps', ['-axo', 'pid,ppid,rss,pcpu,stat,comm']));
     if (!all.some(p => p.pid === process.pid)) throw Error('Incomplete process observation');
@@ -853,20 +921,23 @@ function sample() {
     minimumHeadroom = Math.min(minimumHeadroom, headroom);
     const reasons = resourceProtectionReasons(before, now, rss, rssLimit, headroom);
     if (reasons.length) stop(`Resource protection: ${reasons.join('; ')}`, true, { ...now, rss, rssLimit, headroom, reasons });
-    atomic(resolve(output, `${label}-resources.json`), { ...now, backend, variant, h, entry, mode, measureNativeRss, tableBytes, rssLimit, deadlineMs, peakRss, minimumHeadroom, stopped, trigger, reviewReceipt, opt10ReviewReceipt, zbllReviewReceipt, multithreadReviewReceipt, officialReviewReceipt, sampledAt: new Date().toISOString() });
+    atomic(resolve(output, `${label}-resources.json`), { ...now, backend, variant, h, entry, mode, measureNativeRss, tableBytes, rssLimit, deadlineMs, peakRss, minimumHeadroom, stopped, trigger, reviewReceipt, opt10ReviewReceipt, zbllReviewReceipt, multithreadReviewReceipt, officialReviewReceipt, openBenchmarkReceipt, sampledAt: new Date().toISOString() });
   } catch (e) { stop(String(e), true, { observationError:String(e) }); }
 }
 const interval = setInterval(sample, 500);
-const deadline = setTimeout(() => stop('Research deadline'), deadlineMs);
+const deadline = deadlineMs ? setTimeout(() => stop('Research deadline'), deadlineMs) : undefined;
 process.on('SIGINT', () => stop('Interrupted'));
 process.on('SIGTERM', () => stop('Interrupted'));
 try {
   const status = await closed;
+  if (openBenchmark && status !== 0) stop(`Benchmark child exited with status ${status}`);
+  if (localOpt8 && status !== 0) stop(`Local Opt8 child exited with status ${status}`);
   if (opt10ReviewReceipt && status !== 0) stop(`Opt10 child exited with status ${status}`);
   if (multithreadReviewReceipt && status !== 0) stop(`Multithread child exited with status ${status}`);
   if (officialReviewReceipt && status !== 0) stop(`Official Opt10 child exited with status ${status}`);
   await cleanProcessGroup(); sample(); process.exitCode = stopped ? 1 : status;
 } catch (error) {
+  if (openBenchmark) stop(`Benchmark child failed: ${String(error)}`);
   if (opt10ReviewReceipt) stop(`Opt10 child failed: ${String(error)}`);
   if (multithreadReviewReceipt) stop(`Multithread child failed: ${String(error)}`);
   if (officialReviewReceipt) stop(`Official Opt10 child failed: ${String(error)}`);

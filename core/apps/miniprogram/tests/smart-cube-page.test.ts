@@ -47,6 +47,7 @@ async function loadPage(
     listener?.(connectedSnapshot());
   });
   const session = {
+    relayOpen: true,
     connect: vi.fn(async () => undefined),
     scan: scanMock,
     connectDevice: vi.fn(async () => {
@@ -104,6 +105,23 @@ function connectedSnapshot(battery: number | null = null): Snapshot {
 }
 
 describe('native smart-cube page', () => {
+  it.each([true, false])('returns to the timer after a failed connection (relay open: %s)', async (relayOpen) => {
+    const navigateBack = vi.fn();
+    const scan = vi.fn(async () => undefined);
+    const { emit, page, session } = await loadPage(navigateBack, idleSnapshot, scan);
+    page.onLoad({ token: 'relay-token' });
+    await vi.waitFor(() => expect(scan).toHaveBeenCalledOnce());
+    emit({ ...idleSnapshot, phase: 'error', error: '蓝牙用途未声明' });
+    session.relayOpen = relayOpen;
+
+    page.retryConnection();
+
+    expect(navigateBack).toHaveBeenCalledOnce();
+    expect(session.start).toHaveBeenCalledOnce();
+    expect(scan).toHaveBeenCalledOnce();
+    page.onUnload();
+  });
+
   afterEach(() => {
     vi.useRealTimers();
     vi.resetModules();

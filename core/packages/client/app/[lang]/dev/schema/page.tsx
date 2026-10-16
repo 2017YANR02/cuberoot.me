@@ -42,6 +42,7 @@ const DOMAINS: { key: DomainKey; dot: string; name: Bi; sub: Bi }[] = [
 ];
 
 const TABLES: Table[] = [
+  { name: 'recon_test_runs', domain: 'recon', origin: '0278', purpose: { zh: '智能魔方自动回归检查历史、逐例结果和显示差异', en: 'Smart cube regression history, case results and display differences' } },
   { name: 'site_assistant_requests', domain: 'community', origin: '0277', purpose: { zh: '管理员聊天监控：问答保留 30 天、指标保留 90 天，注销级联删除', en: 'Admin chat monitoring: 30-day content, 90-day metrics, cascade on account deletion' } },
   { name: 'site_assistant_entry_daily', domain: 'community', origin: '0277', purpose: { zh: '未通过准入的匿名日计数', en: 'Anonymous daily admission failures' } },
   { name: 'site_assistant_daily', domain: 'community', origin: '0277', purpose: { zh: '无身份日汇总，保留两年', en: 'Anonymous daily totals retained for two years' } },
@@ -574,6 +575,7 @@ const TABLES: Table[] = [
 ];
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
+  { n: 278, slug: 'recon_test_runs', desc: { zh: '持久保存复盘自动检查结果', en: 'Persist automated reconstruction check results' } },
   { n: 277, slug: 'assistant_monitoring', desc: { zh: '私有聊天问答、响应时间、状态、模型用量及工具统计', en: 'Private chat content, latency, status, model usage and tool metrics' } },
   { n: 276, slug: 'membership_renewal_pipeline', desc: { zh: '微信签约同意快照、签约序列与幂等续费扣款记录', en: 'WeChat enrollment consent, request sequence and idempotent renewal debits' } },
   { n: 0, slug: 'bootstrap_updated_at_function', desc: { zh: '为全新数据库预先创建共用 updated_at trigger 函数，修复历史迁移 0001 早于 0010 引用它的重放缺口。', en: 'Bootstrap the shared updated_at trigger function so fresh replays can run historical migration 0001 before 0010.' } },
