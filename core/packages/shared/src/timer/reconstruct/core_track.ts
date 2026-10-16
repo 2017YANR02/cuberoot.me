@@ -188,7 +188,8 @@ export function coreTurnsIn(
     if (expectedToken !== undefined && !supportsRotation(track.events[i].token,
       track.frame === 'scramble' ? inverseRotation(expectedToken) : expectedToken)) continue;
     const event = track.events[i];
-    const start = event.startMs !== undefined && event.tMs - event.startMs <= 1200
+    const start = event.sliceStartMs !== undefined && expectedToken !== undefined
+      ? event.sliceStartMs : event.startMs !== undefined && event.tMs - event.startMs <= 1200
       ? event.startMs : event.tMs;
     if (event.tMs >= lo && start <= hi) out.push(i);
   }

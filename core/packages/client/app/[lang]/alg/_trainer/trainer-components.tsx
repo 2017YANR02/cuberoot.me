@@ -1,7 +1,7 @@
 'use client';
 
 // Ported from packages/client-vite/src/pages/trainer/components.tsx
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Trash2, ChevronDown, ChevronRight, Check, Star } from 'lucide-react';
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
 import Link from '@/components/AppLink';
@@ -119,13 +119,17 @@ export function CaseThumbAction({
 }
 
 /** Both views come from the exact combined state; x2 brings the bottom to the top. */
-export function DoubleZbllThumb({ top, bottom, scramble, size = 112, compact = false }: { top: AlgCase; bottom: AlgCase; scramble: string; size?: number; compact?: boolean }) {
+export function DoubleZbllThumb({ top, bottom, scramble, size = 112, compact = false, onShowCase }: { top: AlgCase; bottom: AlgCase; scramble: string; size?: number; compact?: boolean; onShowCase?: (c: AlgCase) => void }) {
   return <div className={`trainer-double-thumbs${compact ? ' is-compact' : ''}`}>
     {[{ c: top, setup: scramble, label: tr({ zh: '顶层', en: 'Top' }) },
       { c: bottom, setup: `${scramble} x2`, label: tr({ zh: '底层 · 翻转后', en: 'Bottom · after flipping' }) }].map(({ c, setup, label }) => (
       <figure key={label}>
         {/* Full-state plan view: a single-layer LL mask would hide all bottom pieces after x2. */}
-        <VisualCube view="plan" setup={setup} scheme={visualCubeSchemeForOrientation(DEFAULT_ALG_CUBE_ORIENTATION)} size={size} local alt={label} />
+        {onShowCase && !compact ? (
+          <CaseThumbAction name={`${label} ${c.name}`} onOpen={() => onShowCase(c)}>
+            <VisualCube view="plan" setup={setup} scheme={visualCubeSchemeForOrientation(DEFAULT_ALG_CUBE_ORIENTATION)} size={size} local alt={label} />
+          </CaseThumbAction>
+        ) : <VisualCube loading={compact ? 'lazy' : undefined} view="plan" setup={setup} scheme={visualCubeSchemeForOrientation(DEFAULT_ALG_CUBE_ORIENTATION)} size={size} local alt={label} />}
         {!compact && <CaseMarkBar k={caseKey(c)} />}
       </figure>
     ))}
@@ -152,8 +156,7 @@ export function SolveCard({
   /** 打乱图开关(「打乱图」关时整卡不出 CaseThumb)。默认 true。 */
   showThumb?: boolean;
   /**
-   * 图走本地渲染,不发请求。三张卡片同时换(三条一屏的「上三个」)时必须给:
-   * 三个 `<img>` 各走各的网络往返,会一张一张地陆续落地。见 `VisualCube` 的 `local`。
+   * 默认本地渲染，让同时切换的卡片一起出图，不等待各自的网络请求。
    */
   localThumb?: boolean;
   /** 打乱字体档位,同主屏(用户在侧栏「打乱字体」里选的那个)。 */
@@ -180,7 +183,7 @@ export function SolveCard({
         ) : (
           <>
             {/* 开图时标记图标一左一右夹着图；关图时标记与下方公式共用一行。 */}
-            {showThumb && bottomCase ? <DoubleZbllThumb top={c} bottom={bottomCase} scramble={scramble} /> : showThumb && (
+            {showThumb && bottomCase ? <DoubleZbllThumb top={c} bottom={bottomCase} scramble={scramble} onShowCase={onShowCase} /> : showThumb && (
               <div className="trainer-figure">
                 {markSlot}
                 <CaseThumbAction
@@ -195,9 +198,9 @@ export function SolveCard({
                     // 图从「实际打乱」渲染(含 pre/post-AUF),而非 case 规范 setup —— 否则
                     // 图与卡片上的打乱公式朝向对不上(3x3/2x2 才有 AUF;其余打乱==规范 setup)。
                     setup={scramble ?? c.setup}
-                    // 与左栏大图 / 离屏预取同 size=140:同一 URL 共用浏览器缓存,换题时秒出不再重取。
+                    // 少量当前/上一题直接本地绘制，不依赖图片接口或预取。
                     size={140}
-                    local={localThumb}
+                    local={localThumb ?? true}
                   />
                 </CaseThumbAction>
               </div>
@@ -226,17 +229,42 @@ export function StatsList({
   onPick: (i: number) => void;
   onClear: () => void;
 }) {
+  const [collapsed, setCollapsed] = useState(false);
+  const listId = useId();
+  const cardRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const card = cardRef.current;
+    if (!card) return;
+    const updateTop = () => {
+      const top = `${Math.round(card.getBoundingClientRect().top + window.scrollY)}px`;
+      if (card.style.getPropertyValue('--results-top') !== top) card.style.setProperty('--results-top', top);
+    };
+    updateTop();
+    window.addEventListener('resize', updateTop);
+    const topbar = card.closest('.trainer-root')?.querySelector('.trainer-topbar');
+    const observer = new ResizeObserver(updateTop);
+    if (topbar) observer.observe(topbar);
+    return () => { window.removeEventListener('resize', updateTop); observer.disconnect(); };
+  }, []);
   return (
-    <div className={`trainer-stats-card${solves.length > 0 ? ' has-clear' : ''}`}>
-      {solves.length === 0 && <div className="trainer-stats-empty">{tr({ zh: '暂无成绩', en: 'No solves yet' })}</div>}
-      {solves.length > 0 && (
-        <button type="button" className="trainer-icon-btn trainer-stats-clear" onClick={onClear}
-          title={tr({ zh: '清空', en: 'Clear' })} aria-label={tr({ zh: '清空', en: 'Clear' })}>
-          <Trash2 size={14} />
+    <div ref={cardRef} className="trainer-stats-card trainer-results-card">
+      <div className="trainer-results-header">
+        <button type="button" className="trainer-results-toggle" aria-expanded={!collapsed} aria-controls={listId}
+          aria-label={collapsed ? tr({ zh: '展开成绩', en: 'Expand results' }) : tr({ zh: '收起成绩', en: 'Collapse results' })}
+          onClick={() => setCollapsed(value => !value)}>
+          {collapsed ? <ChevronRight size={16} aria-hidden /> : <ChevronDown size={16} aria-hidden />}
+          <span>{tr({ zh: '成绩', en: 'Results' })}</span>
         </button>
-      )}
-      {solves.length > 0 && (
-        <div className="trainer-stats-list">
+        {solves.length > 0 && (
+          <button type="button" className="trainer-icon-btn trainer-stats-clear" onClick={onClear}
+            title={tr({ zh: '清空', en: 'Clear' })} aria-label={tr({ zh: '清空', en: 'Clear' })}>
+            <Trash2 size={14} />
+          </button>
+        )}
+      </div>
+      <div id={listId} className="trainer-results-scroll" hidden={collapsed}>
+        {solves.length === 0 && <div className="trainer-stats-empty">{tr({ zh: '暂无成绩', en: 'No solves yet' })}</div>}
+        {solves.length > 0 && <div className="trainer-stats-list">
           {/* 最新一条在最前 —— 刚练完那条才是要看的,不该滚到列表末尾去找。
               `s.i` 是这条在会话里的原始序号(高亮 / 点击回看都按它),倒序只换呈现。 */}
           {solves.slice().reverse().map((s, shownIndex) => {
@@ -261,8 +289,8 @@ export function StatsList({
                     alg={c.algs.flat()[0]?.alg ?? c.standard ?? ''}
                     setup={s.scramble || c.setup}
                     size={48}
-                    // 新近 40 把本地同步画,保证刚完成的图瞬间出现；更早的记录懒加载网络图。
-                    local={shownIndex < 40}
+                    // 新近 40 把立即本地绘制；更早的记录接近视口后才生成。
+                    local
                     loading={shownIndex < 40 ? undefined : 'lazy'}
                   />
                 )}
@@ -270,8 +298,8 @@ export function StatsList({
               </button>
             );
           })}
-        </div>
-      )}
+        </div>}
+      </div>
     </div>
   );
 }
@@ -563,16 +591,16 @@ export function CaseTreePicker({
     if (hasSubLevel && puzzle === '3x3') {
       const firstAlg = g.sample.algs.flat()[0]?.alg ?? g.sample.standard ?? '';
       // setup 优先:公式带起手转体 / 收尾 AUF 时,inverse(alg) 会把图整体转一格。
-      return <VisualCube setup={g.sample.setup} algorithm={firstAlg} view="oll" size={44} hideGreySides local={set === 'zbll'} />;
+      return <VisualCube loading="lazy" setup={g.sample.setup} algorithm={firstAlg} view="oll" size={44} hideGreySides local />;
     }
     return (
-      <CaseThumb
+      <CaseThumb loading="lazy"
         puzzle={puzzle}
         set={set}
         sticker={g.sample.sticker}
         alg={g.sample.algs.flat()[0]?.alg ?? g.sample.standard ?? ''}
         setup={g.sample.setup}
-        local={set === 'zbll'}
+        local
         size={44}
       />
     );
@@ -657,8 +685,8 @@ export function CaseTreePicker({
                               onClick={() => toggleBulk(subCases)}
                             >
                               <TriCheckbox checked={subAll} indeterminate={!subAll && !subNone} />
-                              <CaseThumb puzzle={puzzle} set={set} sticker={subCases[0].sticker}
-                                alg={subSampleAlg} setup={subCases[0].setup} size={36} mask={pickerMask} local={set === 'zbll'} />
+                              <CaseThumb loading="lazy" puzzle={puzzle} set={set} sticker={subCases[0].sticker}
+                                alg={subSampleAlg} setup={subCases[0].setup} size={36} mask={pickerMask} local />
                               <span>{set === 'zbll' ? displayZbllToken(subLabel) : subLabel}</span>
                               <span style={{ color: 'var(--muted-foreground)', fontWeight: 400, fontSize: '0.85rem' }}>
                                 ({subSelectedCount}/{subCases.length})
@@ -716,13 +744,13 @@ function CaseCell({
     <button type="button" className={`trainer-case-cell${isOn ? ' is-selected' : ''}`}
       aria-pressed={isOn} onClick={toggle}>
       <span className="trainer-case-cell-thumb">
-        <CaseThumb
+        <CaseThumb loading="lazy"
           puzzle={puzzle}
           set={set}
           sticker={c.sticker}
           alg={c.algs.flat()[0]?.alg ?? c.standard ?? ''}
           setup={c.setup}
-          local={set === 'zbll'}
+          local
           size={64}
         />
         {marks && <CaseMarkBadges marks={marks} k={k} />}

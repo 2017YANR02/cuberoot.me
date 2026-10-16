@@ -15,8 +15,40 @@ import { normalize } from '@cuberoot/shared/recon-ground-truth';
 
 // 可见预转体 y^n(n=0..3):无 / y / y2 / y'
 const Y_PREFIX = ['', 'y', 'y2', "y'"] as const;
-// 内部 y^{-n}:无 / y'(y⁻¹) / y2(y⁻²) / y(y⁻³=y)
-const Y_INV = ['', "y'", 'y2', 'y'] as const;
+
+/** Rank orientations by R+L, then F-B, then R-L (all descending).
+ * U/D and rotations are neutral; each half turn counts once. Ties keep the first candidate.
+ */
+export function bestErgonomicOrientationIndex(candidates: readonly string[]): number {
+  let best = -1, bestScore = [-Infinity, -Infinity, -Infinity];
+  candidates.forEach((alg, index) => {
+    let R = 0, L = 0, F = 0, B = 0;
+    for (const token of alg.trim().split(/\s+/)) {
+      const face = token[0];
+      if (face === 'R') R++; else if (face === 'L') L++;
+      else if (face === 'F') F++; else if (face === 'B') B++;
+    }
+    const score = [R + L, F - B, R - L];
+    const difference = score.findIndex((value, i) => value !== bestScore[i]);
+    if (difference >= 0 && score[difference] > bestScore[difference]) {
+      best = index;
+      bestScore = score;
+    }
+  });
+  return best;
+}
+
+/** Rewrite moves in a rotated frame: inverse(rotation) · alg · rotation.
+ * With a face-turn-only alg the result contains no whole-cube rotations.
+ * Supports x/y/z, including z2 and composed frames, through the shared normalizer.
+ */
+export function rotateMovesToFrame(alg: string, rotation: string): string {
+  const frame = rotation.trim().split(/\s+/).filter(Boolean);
+  if (frame.some(move => !/^[xyz](?:2|')?$/.test(move))) throw new Error('Invalid rotation frame');
+  if (!frame.length) return alg.trim();
+  const inverse = frame.slice().reverse().map(move => move.endsWith('2') ? move : move.endsWith("'") ? move[0] : move + "'");
+  return normalize([...inverse, ...alg.trim().split(/\s+/).filter(Boolean), ...frame]).join(' ');
+}
 
 /** 按钮当前态文本(0 态用 'y' 提示可加)。 */
 export const Y_ROT_LABEL = ['y', 'y', 'y2', "y'"] as const;
@@ -39,7 +71,6 @@ export function rotateSolutionY(alg: string, n: number): string {
   const prefix = all.slice(0, p);
   const moves = all.slice(p);
   if (moves.length === 0) return body; // 全是旋转,无实际转动可重写
-  const tokens = `${Y_INV[k]} ${moves.join(' ')} ${Y_PREFIX[k]}`.trim().split(/\s+/);
-  const relabeled = normalize(tokens);
-  return [...prefix, Y_PREFIX[k], ...relabeled].join(' ').trim();
+  const relabeled = rotateMovesToFrame(moves.join(' '), Y_PREFIX[k]);
+  return [...prefix, Y_PREFIX[k], relabeled].join(' ').trim();
 }

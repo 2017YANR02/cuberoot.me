@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { ArrowDown, Layers, RotateCw } from 'lucide-react';
 import AppLink from '@/components/AppLink';
-import BoolToggle from '@/components/BoolToggle';
+import CorpusStatistics from './CorpusStatistics';
 import HeaderToggles from '@/components/HeaderToggles';
 import { useT } from '@/hooks/useT';
 import './double-zbll-about.css';
@@ -15,7 +15,7 @@ const number = (value: number) => value.toLocaleString('en-US');
 
 export default function DoubleZbllAbout() {
   const t = useT();
-  const [pll, setPll] = useState(true);
+  const [pll, setPll] = useState(false);
   const [rotation, setRotation] = useState(0);
   const cases = pll ? 493 : 472;
   const states = pll ? 7772 : 7488;
@@ -32,12 +32,13 @@ export default function DoubleZbllAbout() {
       <AppLink href="/alg/3x3/zbll/run" prefetch={false} className="dz-about-start">{t('开始双底训练', 'Open double ZBLL training')} →</AppLink>
     </header>
 
-    <section aria-labelledby="dz-counts">
+    <CorpusStatistics pll={pll} onPllChange={setPll} />
+
+    <section className="dz-about-prose" aria-labelledby="dz-counts">
       <div className="dz-about-section-head">
         <h2 id="dz-counts">{t('从组合到代表状态', 'From combinations to representatives')}</h2>
-        <BoolToggle label={t('计数包含 PLL', 'Include PLL in this calculation')} value={pll} onChange={setPll} />
       </div>
-      <p className="dz-about-muted">{t('这里的开关用于比较理论数量，不会修改你的训练设置。', 'This switch compares the counts; it does not change your training settings.')}</p>
+      <p className="dz-about-muted">{t('跟随上方「统计包含 PLL」开关。', 'Follows the “Include PLL in statistics” switch above.')}</p>
       <div className="dz-about-counts">
         <article data-site-surface="panel"><span>01 · {t('原始组合', 'Raw combinations')}</span><strong>{number(raw)}</strong><code>{cases}² × 16²</code></article>
         <article data-site-surface="panel"><span>02 · {t('不同状态', 'Distinct states')}</span><strong>{number(unique)}</strong><code>{number(states)}²</code></article>
@@ -81,10 +82,25 @@ export default function DoubleZbllAbout() {
       <p>{t('我们只使用保持顶底轴的这八种对称。整颗魔方虽有 24 种空间朝向，另外 16 种会改变这条轴，本方案没有把它们计入节省量。', 'This method uses only the eight symmetries preserving the top–bottom axis. A cube has 24 spatial orientations, but the other 16 change that axis and are not included in the savings claimed here.')}</p>
     </section>
 
+    <section className="dz-about-prose">
+      <h2>{t('先选短，再选更好打的方向', 'Choose a short scramble, then a convenient orientation')}</h2>
+      <p>{t('每对 case 在全部已保存的状态解法中，依次选择 HTM 最少、QTM 最少、不同转动面数量最少的一条。HTM 将半转算一步，QTM 将半转算两步；转动面数量只看用了几个面，例如 RU 是两个、RUF 是三个，不偏好具体字母。', 'For each case pair, saved state solutions are ranked by HTM, then QTM, then the number of distinct faces used. A half turn counts as one HTM move and two QTM moves. RU uses two faces and RUF uses three; this tie-breaker does not prefer particular face letters.')}</p>
+      <p className="dz-about-muted">{t('每个状态保留了一个 HTM 最优解，并没有枚举该状态的全部 HTM 最优解。因此 QTM 和转动面数量是在已保存的候选中选优，不宣称全局 QTM 最优。所有原始结果保留。', 'One HTM-optimal solution was retained per state; not every HTM-optimal solution of that state was enumerated. QTM and distinct-face tie-breaking therefore choose among the saved candidates, without claiming global QTM optimality. All original results are retained.')}</p>
+      <p>{t('出题时再比较 y 轴转体、z2 翻转及它们的组合，共八种方向，复用 Timer 求解器的朝向评分：先让 R＋L 最多，同分时让 F−B 最大，再让 R−L 最大。U、D 不参与评分，半转计一次，完全同分保留先出现的方向。只改变面转记号，HTM、QTM 和不同转动面数量都不变，最终公式不需要额外做转体。', 'When a case is drawn, eight orientations are compared using y rotations, a z2 flip and their combinations. The same ranking as the Timer solver maximizes R+L, then F−B, then R−L. U and D are neutral, half turns count once, and exact ties keep the first orientation. Relabeling preserves HTM, QTM and the number of distinct faces; the final scramble requires no extra cube rotations.')}</p>
+      <div className="dz-about-equation" data-site-surface="panel">
+        <code>F U F′</code>
+        <ArrowDown size={18} aria-hidden />
+        <code>R U R′</code>
+        <span>{t('转动记号示例：步数不变，把 F 换成 R', 'Face relabeling example: replace F with R without changing the move count')}</span>
+      </div>
+      <p>{t('z2 会交换顶底，训练图示和 case 标记会同步交换，智能魔方也按变换后的打乱识别目标状态。这不会额外减少需要求解的状态数量：z2 和前面的 x2 只是同一组八种对称的不同写法。', 'A z2 flip exchanges the top and bottom, so case labels and diagrams swap accordingly. Smart-cube training uses the transformed scramble as its target. This does not further reduce the number of states to solve: z2 and the x2 notation above describe the same eight-element symmetry group.')}</p>
+    </section>
+
     <section className="dz-about-prose dz-about-evidence">
-      <h2>{t('已验证什么，接下来算什么', 'What is verified, and what remains to compute')}</h2>
-      <p>{t('已完整枚举 60,403,984 个不同配对，得到 7,555,446 个等价组，并与上述公式一致；另核对了 62,176 次单层旋转和 144 次 HTM 面转映射。这个数量是求解任务规模，不代表这些最短解已经全部算完。', 'Enumerating all 60,403,984 distinct pairs produced 7,555,446 symmetry classes, matching the formula. The audit also checked 62,176 single-layer rotations and 144 HTM generator mappings. This is the size of the solving task, not a claim that all shortest solutions have already been computed.')}</p>
-      <p>{t('已有解法会先转换、验证后复用。后续只求解缺失的代表状态，再把得到的更短打乱更新到训练题库。每对 case 仍可覆盖多种状态；网站只需保存经验证的训练打乱，不必让浏览器重跑求解器。', 'Existing solutions will be transformed, verified and reused first. Only missing representatives need solving, and shorter verified scrambles can then update the training corpus. Each case pair can still represent multiple states; the website can serve verified scrambles without rerunning the solver in your browser.')}</p>
+      <h2>{t('验证与离线使用', 'Verification and offline use')}</h2>
+      <p>{t('完整枚举 60,403,984 个不同配对，得到 7,555,446 个等价组，与上述公式一致；另核对了 62,176 次单层旋转和 144 次 HTM 面转映射。求解完成后，导出的 243,049 条打乱逐条验证了完整魔方状态与记录编码，并用哈希校验题库完整性。', 'Enumeration of all 60,403,984 distinct pairs produced 7,555,446 symmetry classes, matching the formula. The audit also checked 62,176 single-layer rotations and 144 HTM generator mappings. After solving, all 243,049 exported scrambles were checked against their full cube states and encoded records; hashes protect corpus integrity.')}</p>
+      <p>{t('出题方向优化另外验证了八种方向下全部 18 种面转的状态等价性，以及顶底交换和智能魔方目标同步。浏览器只读取题库并转换记号，不重新运行最短解求解器。', 'The orientation optimization separately verifies state equivalence for all 18 face turns in each of the eight frames, along with layer swapping and smart-cube target consistency. The browser reads the corpus and relabels moves; it does not rerun the optimal solver.')}</p>
+      <p>{t('联网进入双底模式后，会在后台自动缓存题库和训练页面，无需点击下载。缓存完成后可离线使用；题库或离线页面版本更新后会自动补齐，断网失败时在恢复联网或下次进入时重试。浏览器需支持离线存储，并保留该网站的数据。', 'Entering double ZBLL mode online automatically caches the corpus and training pages in the background. Offline use is available after caching completes. Corpus or offline-page updates are cached automatically, with failures retried on reconnection or the next visit. The browser must support offline storage and retain this site’s data.')}</p>
     </section>
   </main>;
 }

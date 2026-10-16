@@ -888,14 +888,8 @@ button.stl-track:focus-visible { outline: 2px solid var(--ring); outline-offset:
   letter-spacing: 0.08em; color: var(--muted-foreground);
 }
 
+.sml-line { display: block; }
 .sml-line + .sml-line { margin-top: 6px; }
-.sml-line-with-diagram { display: flex; align-items: center; gap: 4px; }
-.sml-line-with-diagram > .sml-body { min-width: 0; flex: 1; }
-.sml-diagram { display: inline-flex; flex: 0 0 auto; gap: 4px; line-height: 0; }
-.sml-diagram:empty { display: none; }
-.sml:has(.sml-diagram:not(:empty)) .sml-line:not(:has(.sml-diagram:not(:empty))) {
-  padding-inline-start: var(--recon-diagram-indent, 32px);
-}
 .sml-line[data-state='future'] { opacity: 0.42; }
 .sml-line[data-state='now'] .sml-moves { color: var(--accent); }
 /* 「第 n 对」和动作同一行(见 StepMoveList.tsx),所以它自己带小字号和弱化色,
@@ -903,7 +897,6 @@ button.stl-track:focus-visible { outline: 2px solid var(--ring); outline-offset:
 .sml-sub-name { font-size: 11px; color: var(--muted-foreground); }
 /* Inline text keeps the trailing stage comment on the same clipboard line. */
 .sml-body { display: block; }
-.sml-body > * + * { margin-inline-start: 8px; }
 .sml-moves {
   font-family: var(--font-mono); font-size: 13px; line-height: 1.7;
   color: var(--foreground); word-break: break-word;
@@ -921,11 +914,6 @@ button.stl-track:focus-visible { outline: 2px solid var(--ring); outline-offset:
   font-family: var(--font-mono); font-size: 12px;
   color: var(--faint-foreground); white-space: normal;
 }
-.sml-case-link { color: inherit; text-decoration: underline dotted; text-underline-offset: 3px; }
-.sml-case-link:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
-.sml-case-link:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
-/* 色块直接替代颜色字母,和剩余的阶段名称留一点间距。 */
-.sml-label-chip { margin: 0 4px 0 0; width: 17px; height: 11px; }
 
 @media (max-width: 480px) {
   .sml-moves { font-size: 12px; }

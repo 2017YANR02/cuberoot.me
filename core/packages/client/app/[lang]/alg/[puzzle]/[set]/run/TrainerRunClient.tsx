@@ -1,10 +1,11 @@
 'use client';
 import '@cuberoot/timer-ui/compact-select.css';
 
-import { useModalBackdrop } from '@/hooks/useModalDismiss';
+import { useModalBackdrop, useModalDismiss } from '@/hooks/useModalDismiss';
+import { ClearButton } from '@/components/ClearButton';
 
 // Ported from packages/client-vite/src/pages/trainer/TrainerRunPage.tsx
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from '@/components/AppLink';
 import { parseAsString } from 'nuqs';
 import {
@@ -18,7 +19,7 @@ import { ALG_CATALOG, getAlgSetMeta, type AlgCase } from '@cuberoot/shared/alg';
 import { loadTrainingAlg as loadAlg } from '@/lib/alg_case_alignment';
 import {
   useTrainerStore, TimerState, trainerPool, trainerScramblesReady, mixSessionId,
-  completedRecapCount, readSessionSelection, type TrainerMode,
+  completedRecapCount, readSessionSelection, type TrainerMode, type TrainerSolve,
 } from '@/lib/trainer-store';
 import TimerFontPicker from '@/components/TimerFontPicker';
 import { useSpaceHoldTimer } from '@/hooks/useSpaceHoldTimer';
@@ -48,12 +49,12 @@ import { virtualTrainingSessionId } from '@/lib/training-set-metadata';
 import { useTrainerMarks, markStatus, type CaseMarkStatus } from '@/lib/trainer-marks';
 import { ALG_SET_UNIVERSE } from '@/lib/alg_probability';
 import {
-  TimerDisplay, ScrambleHeader, SolveCard, StatsList, HistoryList, CaseMarkBar, DoubleZbllThumb,
+  TimerDisplay, ScrambleHeader, SolveCard, StatsList, HistoryList, CaseMarkBar, DoubleZbllThumb, formatSolveTime,
 } from '@/app/[lang]/alg/_trainer/trainer-components';
 import { RoomQrModal } from '@/components/RoomQrModal';
 import { RoomCodeInput, normalizeRoomCode, ROOM_CODE_LENGTH } from '@/components/RoomCodeInput';
 import DoubleZbllOptions from '@/app/[lang]/alg/_trainer/DoubleZbllOptions';
-import { loadDoubleZbll } from '@/lib/double-zbll';
+import { ensureDoubleZbllOffline, loadDoubleZbll } from '@/lib/double-zbll';
 import MemoryTrainer from '@/app/[lang]/alg/_trainer/MemoryTrainer';
 import MixSetPicker from '@/app/[lang]/alg/_trainer/MixSetPicker';
 import SmartCubeRow from '@/app/[lang]/alg/_trainer/SmartCubeRow';
@@ -79,6 +80,36 @@ import '@/app/[lang]/alg/alg.css';
 import { tr } from '@/i18n/tr';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { SettingsPopover } from '@/components/TrainingSettings';
+
+/** 成绩回看复用训练卡片，生命周期与训练游标完全分离。 */
+function TrainerResultDialog({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
+  const backdropProps = useModalDismiss(onClose);
+  const titleId = useId();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const previousFocus = document.activeElement;
+    dialogRef.current?.querySelector('button')?.focus();
+    return () => { if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus(); };
+  }, []);
+  return (
+    <div className="alg-admin-modal-backdrop" {...backdropProps} data-no-timer>
+      <div ref={dialogRef} className="alg-admin-modal" data-site-surface="popover" role="dialog" aria-modal="true" aria-labelledby={titleId}
+        onKeyDown={event => {
+          if (event.key !== 'Tab') return;
+          const controls = [...event.currentTarget.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], input:not([disabled]), [tabindex="0"]')];
+          const first = controls[0], last = controls.at(-1);
+          if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+          else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+        }}>
+        <div className="alg-admin-modal-head">
+          <h2 id={titleId}>{tr({ zh: '成绩', en: 'Result' })} {title}</h2>
+          <ClearButton variant="standalone" onClick={onClose} ariaLabel={tr({ zh: '关闭', en: 'Close' })} />
+        </div>
+        <div className="alg-admin-modal-body">{children}</div>
+      </div>
+    </div>
+  );
+}
 
 /** 顶层只区分动作训练与间隔记忆;训练内部再选覆盖或随机抽题。 */
 const PRIMARY_MODES: Array<{ id: 'train' | 'memo'; zh: string; en: string }> = [
@@ -317,7 +348,6 @@ export default function TrainerRunClient() {
   const trainingDestinationRef = useRef<ReturnType<typeof parseTrainingAssignmentDestination>>(null);
   const previousTrainingTimerStateRef = useRef(timerState);
   const previousTrainingSolveCountRef = useRef(solves.length);
-  const observingIdx = useTrainerStore(s => s.observingIdx);
   const scrambleKind = useTrainerStore(s => s.scrambleKind);
   const doubleZbll = useTrainerStore(s => s.doubleZbll);
   const [doubleRestoreError, setDoubleRestoreError] = useState(false);
@@ -326,6 +356,14 @@ export default function TrainerRunClient() {
   const storePuzzle = useTrainerStore(s => s.puzzle);
   const storeSet = useTrainerStore(s => s.set);
   const sessionReady = storePuzzle === puzzle && storeSet === sessionId;
+  useEffect(() => {
+    if (!doubleZbll || !sessionReady) return;
+    // Cache even with settings closed. Retry on reconnection, never in a tight loop.
+    const cacheOffline = () => { void ensureDoubleZbllOffline().catch(() => { /* Training remains usable; retry on next entry or reconnection. */ }); };
+    cacheOffline();
+    window.addEventListener('online', cacheOffline);
+    return () => window.removeEventListener('online', cacheOffline);
+  }, [doubleZbll, sessionReady]);
   const sessionReadyRef = useRef(sessionReady);
   sessionReadyRef.current = sessionReady;
   const loadSession = useTrainerStore(s => s.loadSession);
@@ -404,8 +442,6 @@ export default function TrainerRunClient() {
   const setMultiScramble = useTrainerStore(s => s.setMultiScramble);
   const smartCube = useTrainerStore(s => s.smartCube);
   const setSmartCube = useTrainerStore(s => s.setSmartCube);
-  const observingPinned = useTrainerStore(s => s.observingPinned);
-  const pinObserving = useTrainerStore(s => s.pinObserving);
   const nextScramble = useTrainerStore(s => s.nextScramble);
   const prevScramble = useTrainerStore(s => s.prevScramble);
   const jumpToHist = useTrainerStore(s => s.jumpToHist);
@@ -743,12 +779,14 @@ export default function TrainerRunClient() {
   const [qrOpen, setQrOpen] = useState(false);
   /** case 详情弹窗(卡片的图 / 名字 / 历史条目点开)。 */
   const [metaCase, setMetaCase] = useState<AlgCase | null>(null);
+  const [resultSolve, setResultSolve] = useState<TrainerSolve | null>(null);
+  const closeResult = useCallback(() => setResultSolve(null), []);
   const [optsOpen, setOptsOpen] = useState(false);
   /**
    * 有弹层盖着:计时和全局按键一律让位 —— 空格别在背后起表,←/→ 别在背后翻题。
    * 声明在计时 / 键盘之前,它俩要读它。
    */
-  const overlayOpen = qrOpen || metaCase != null || optsOpen;
+  const overlayOpen = qrOpen || metaCase != null || resultSolve != null || optsOpen;
   const overlayOpenRef = useRef(false);
   overlayOpenRef.current = overlayOpen;
 
@@ -1277,7 +1315,6 @@ export default function TrainerRunClient() {
     ? hist.list[hist.idx + 1]
     : peek;
   const nextCase = nextEntry ? findCaseByKey(cases, nextEntry.key) ?? null : null;
-  const nextScrambleStr = nextEntry?.scramble ?? null;
 
   // 再往后一格(三条一屏的第 3 条):在队尾 = 二级预抽 peek2,队尾前一格 = peek,
   // 更靠前 = 历史里 idx+2 那条(已看过、已缓存)。
@@ -1329,22 +1366,17 @@ export default function TrainerRunClient() {
     </div>
   );
 
-  // 「上一个」卡片(回看 + 标记):默认 = 打乱历史里的上一条 —— 换题(计时停表 / 空格 / →)
-  // 时光标一起走,卡片跟着更新(计时停表后的上一条正好是你刚做完那把)。在统计里点选某条
-  // 成绩(pinned)则临时切到那把,标题显示 #N,换题自动解除。
-  const pinnedSolve = observingPinned ? (solves[observingIdx] ?? null) : null;
+  // 「上一个」始终跟随训练历史；成绩回看只在独立弹窗中展示。
   const prevHistEntry = hist.idx > 0 ? hist.list[hist.idx - 1] : null;
-  const prevKey = pinnedSolve?.caseKey ?? prevHistEntry?.key ?? null;
+  const prevKey = prevHistEntry?.key ?? null;
   const prevCase = prevKey ? findCaseByKey(cases, prevKey) ?? null : null;
-  const prevSolveScramble = pinnedSolve?.scramble ?? prevHistEntry?.scramble ?? null;
-  const prevBottomKey = pinnedSolve?.bottomKey ?? prevHistEntry?.bottomKey;
+  const prevSolveScramble = prevHistEntry?.scramble ?? null;
+  const prevBottomKey = prevHistEntry?.bottomKey;
   const currentBottomKey = hist.list[hist.idx]?.bottomKey;
   const currentBottomCase = currentBottomKey ? findCaseByKey(cases, currentBottomKey) : undefined;
-  const prevHeader = pinnedSolve
-    ? `#${pinnedSolve.i + 1}`
-    : tr({ zh: '上一个', en: 'Previous' });
+  const prevHeader = tr({ zh: '上一个', en: 'Previous' });
   // 三条一屏时「上一个」= 上一屏那三条(点一次跨 3 格,所以回看的单位也是一屏三条),
-  // 顺序与主屏一致(上屏第 1/2/3 条)。不计时模式下 pinned 恒为空,直接读历史即可。
+  // 顺序与主屏一致(上屏第 1/2/3 条)，直接读取历史。
   const prevTrio = multi
     ? [hist.idx - 3, hist.idx - 2, hist.idx - 1]
         .filter(i => i >= 0)
@@ -1543,7 +1575,7 @@ export default function TrainerRunClient() {
                         disabled={doubleLoading || timerState !== TimerState.NOT_RUNNING}
                         aria-label={tr({ zh: '打乱类型', en: 'Scramble type' })}
                       >
-                        {doubleAvailable && <option value="double-zbll" disabled={!!room || isMemo || splitActive}>{tr({ zh: '双底最优 HTM', en: 'Double ZBLL optimal HTM' })}</option>}
+                        {doubleAvailable && <option value="double-zbll" disabled={!!room || isMemo || splitActive}>{tr({ zh: '双底 HTM', en: 'Double ZBLL HTM' })}</option>}
                         {kinds.map(k => <option key={k.id} value={k.id}>{k.label()}</option>)}
                       </select>
                       {doubleZbll && <DoubleZbllOptions />}
@@ -2134,7 +2166,7 @@ export default function TrainerRunClient() {
                     <div className="trainer-stage-thumb">
                       {(() => {
                         const thumb = (
-                          <CaseThumb
+                          <CaseThumb local
                             puzzle={puzzle}
                             set={setSlug}
                             sticker={currentCase.sticker}
@@ -2164,22 +2196,6 @@ export default function TrainerRunClient() {
               </div>
             </>
           ))}
-          {/* 离屏预取下一题的图(size=140,与主屏/左卡同一 URL → 共用浏览器缓存):换题后它就是
-              主屏当前图,也是「上一个」卡片的图,届时命中缓存秒出,不等网络往返(打乱公式是本地
-              状态所以本就瞬间出)。「打乱图」关时哪都不出图,无需预取。 */}
-          {showStageThumb && nextCase && nextScrambleStr && (
-            <div className="trainer-thumb-prefetch" aria-hidden>
-              <CaseThumb
-                puzzle={puzzle}
-                set={setSlug}
-                sticker={nextCase.sticker}
-                alg={nextCase.algs.flat()[0]?.alg ?? nextCase.standard ?? ''}
-                setup={nextScrambleStr}
-                size={140}
-              />
-            </div>
-          )}
-
           {suggest && (
             <div className="trainer-mark-suggest" data-no-timer>
               <span>
@@ -2238,7 +2254,7 @@ export default function TrainerRunClient() {
                 scramble={shownScramble(prevSolveScramble)}
                 c={prevCase}
                 bottomCase={prevBottomKey ? findCaseByKey(cases, prevBottomKey) : undefined}
-                localThumb={doubleZbll}
+                localThumb
                 isZh={isZh}
                 showThumb={showStageThumb}
                 onShowCase={setMetaCase}
@@ -2257,8 +2273,8 @@ export default function TrainerRunClient() {
               cases={cases}
               puzzle={puzzle}
               set={setSlug}
-              observingIdx={observingIdx}
-              onPick={pinObserving}
+              observingIdx={resultSolve?.i ?? -1}
+              onPick={i => setResultSolve(solves.find(solve => solve.i === i) ?? null)}
               onClear={() => {
                 if (confirm(tr({ zh: '清空所有成绩?', en: 'Clear all solves?'
               })))
@@ -2287,6 +2303,21 @@ export default function TrainerRunClient() {
 
       <GestureWheel ref={wheelRef} isZh={isZh} labels={wheelLabels} />
 
+      {resultSolve && !metaCase && (
+        <TrainerResultDialog title={`#${resultSolve.i + 1} · ${formatSolveTime(resultSolve)}`} onClose={closeResult}>
+          <SolveCard
+            puzzle={puzzle}
+            set={setSlug}
+            c={findCaseByKey(cases, resultSolve.caseKey) ?? null}
+            bottomCase={resultSolve.bottomKey ? findCaseByKey(cases, resultSolve.bottomKey) : undefined}
+            scramble={resultSolve.scramble}
+            onShowCase={setMetaCase}
+            isZh={isZh}
+            localThumb
+            font={scrambleFont}
+          />
+        </TrainerResultDialog>
+      )}
       {/* 有没有 meta 都弹:没有元数据的集(虚拟集等)弹窗里仍有图、全部公式、打乱,
           外链换成该集自己的详情页地址(算不出库内地址)。 */}
       {metaCase && (

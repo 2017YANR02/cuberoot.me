@@ -262,14 +262,9 @@
 }
 .trainer-brush-select .list-select-label { font-size: inherit; }
 .trainer-brush-select .list-select-item { font-size: 12px; }
-.trainer-offline-progress {
-  display: inline-block;
-  inline-size: 11ch;
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  text-align: center;
-  white-space: nowrap;
-}
+.trainer-double-help { display: inline-flex; align-items: center; justify-content: center; padding: 6px; border: 0; background: transparent; color: var(--muted-foreground); text-decoration: none; }
+.trainer-double-help:hover { color: var(--foreground); }
+.trainer-double-help:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; border-radius: 4px; }
 .trainer-quick-btn {
   appearance: none; -webkit-appearance: none;
   font: inherit; font-size: 0.82rem; color: var(--foreground);
@@ -335,7 +330,7 @@
 @media (min-width: 901px) {
   .trainer-run.has-left.has-right {
     grid-template-columns: 300px minmax(0, 1fr) 300px;
-    grid-template-areas: "prev stage stats" "prev stage stats" "history history history";
+    grid-template-areas: "prev stage stats" "prev stage stats" "history history stats";
   }
   .trainer-run.has-left:not(.has-right) {
     grid-template-columns: 300px minmax(0, 1fr);
@@ -343,7 +338,7 @@
   }
   .trainer-run.has-right:not(.has-left) {
     grid-template-columns: minmax(0, 1fr) 300px;
-    grid-template-areas: "stage stats" "stage stats" "history history";
+    grid-template-areas: "stage stats" "stage stats" "history stats";
   }
   .trainer-run:not(.has-left):not(.has-right) {
     grid-template-areas: "stage" "stage" "history";
@@ -361,6 +356,12 @@
   }
   /* 卡片自己再套一层 subgrid:卡片的内边距只推两端,中间那条行线仍是父网格的 → 图对得齐 */
   .trainer-run .trainer-sidebar > .trainer-solve-card:only-child { grid-row: 1 / -1; }
+  /* 前两行只按主屏内容定高，成绩跨三行，额外高度由第三行承接，不推低魔方。 */
+  .trainer-run.has-right { grid-template-rows: max-content max-content minmax(0, 1fr); }
+  .trainer-run > .trainer-sidebar.is-right {
+    min-height: 0;
+    align-self: start;
+  }
 }
 
 .trainer-stage {
@@ -454,15 +455,6 @@
 .trainer-live-cube-3d { width: 140px; height: 140px; }
 .trainer-live-cube-loading {
   display: flex; align-items: center; justify-content: center;
-}
-
-/* 下一题图的离屏预取:渲染但移出视口(仍会加载 → 进浏览器缓存),换题秒出 */
-.trainer-thumb-prefetch {
-  position: fixed;
-  left: -9999px; top: 0;
-  width: 140px; height: 140px;
-  opacity: 0;
-  pointer-events: none;
 }
 
 .trainer-timer {
@@ -905,6 +897,15 @@
   border-radius: 10px;
   padding: 14px 16px;
 }
+.trainer-stats-card.trainer-results-card { display: flex; flex-direction: column; min-height: 0; max-height: 100%; overflow: hidden; }
+.trainer-results-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-shrink: 0; }
+.trainer-results-toggle { display: inline-flex; align-items: center; gap: 6px; padding: 4px 0; appearance: none; border: 0; background: transparent; color: var(--foreground); font: inherit; font-weight: 600; cursor: pointer; }
+.trainer-results-toggle:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.trainer-results-scroll { min-height: 0; max-height: 60dvh; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; margin-top: 12px; }
+@media (min-width: 901px) {
+  .trainer-stats-card.trainer-results-card { max-height: max(160px, calc(100dvh - var(--results-top, 68px) - 24px)); }
+  .trainer-results-card .trainer-results-scroll { max-height: none; }
+}
 /* 「上一个」卡片不套框:各列共用行高(见 .trainer-run 的 subgrid),框一画就得被拉到
    最高那列的高度,内容再怎么贴边也堵不住框里的空。层次交给间距,不交给边框。 */
 .trainer-solve-card { padding: 0 4px; }
@@ -926,9 +927,6 @@
 }
 .trainer-card-header .trainer-icon-btn:hover { color: var(--destructive); }
 .trainer-stats-clear {
-  position: absolute;
-  top: 10px;
-  right: 10px;
   display: inline-flex;
   padding: 4px;
   border: none;
@@ -937,7 +935,6 @@
   cursor: pointer;
 }
 .trainer-stats-clear:hover { color: var(--destructive); }
-.trainer-stats-card.has-clear .trainer-stats-list { padding-right: 24px; }
 .trainer-card-divider {
   border: none; border-top: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
   margin: 0 0 10px;

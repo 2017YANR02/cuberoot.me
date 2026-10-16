@@ -14,14 +14,10 @@ import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObjec
 import { ReconCrossToggle } from '@cuberoot/timer-ui';
 import { useReconLineDiagrams } from './ReconLineDiagrams';
 import Link from '@/components/ReconCaseLink';
-import { loadAlg } from '@cuberoot/shared/alg';
-import { reconCommentCaseIndex, reconCommentLinks, type ReconCommentCases } from '@/lib/recon-comment-links';
+import { reconCommentLinks } from '@/lib/recon-comment-links';
 import { tr } from '@/i18n/tr';
-import CubeColorChip, {
-  crossColorFromReconText,
-  cubeColorGroups, cubeColorGroupPunctuation,
-  f2lDisplayColors,
-} from '@/components/CubeColorChip/CubeColorChip';
+import { crossColorFromReconText } from '@/components/CubeColorChip/CubeColorChip';
+import NotationLine, { useNotationCases } from '@cuberoot/timer-ui/recon/NotationLine';
 import { findTokenPositions, syncReconPlayerCursorFromText, reconInspectionOrientations, reconWasteBrackets } from '@/lib/recon-alg-utils';
 import { getTextOffsetInElement, snapCaretToLine } from '@cuberoot/timer-ui/recon/text-cursor';
 import './solution_view.css';
@@ -76,20 +72,7 @@ export default function SolutionView({ text, event, scramble = '', sourceText = 
   const { diagramAt, f2lLinks, f2lLoading, libraryLinks } = useReconLineDiagrams(scramble, sourceText, linkComments);
   const wasteBrackets = useMemo(() => autoWaste && linkComments
     ? reconWasteBrackets(plainText, scramble) : new Map<number, string>(), [autoWaste, linkComments, plainText, scramble]);
-  const [commentCases, setCommentCases] = useState<ReconCommentCases>(new Map());
-  const commentSets = useMemo(() => linkComments
-    ? [...new Set(plainText.split('\n').flatMap(line => reconCommentLinks(line).map(link => link.href.split('/').pop()!)))].sort().join(',')
-    : '', [plainText, linkComments]);
-
-  useEffect(() => {
-    let cancelled = false;
-    setCommentCases(new Map());
-    if (commentSets) void Promise.all(commentSets.split(',').map(async set => {
-      try { return [set, reconCommentCaseIndex(set, (await loadAlg('3x3', set)).cases)] as const; }
-      catch { return [set, new Map<string, string>()] as const; }
-    })).then(entries => { if (!cancelled) setCommentCases(new Map(entries)); });
-    return () => { cancelled = true; };
-  }, [commentSets]);
+  const commentCases = useNotationCases(plainText, linkComments);
 
   useEffect(() => {
     cursorOffsetRef.current = null;
@@ -181,7 +164,7 @@ export default function SolutionView({ text, event, scramble = '', sourceText = 
     <pre
       key={crossNormalized ? 'normalized' : 'original'}
       ref={preRef}
-      className="detail-solution-text"
+      className="detail-solution-text recon-notation-list"
       aria-busy={f2lLoading}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
@@ -189,7 +172,6 @@ export default function SolutionView({ text, event, scramble = '', sourceText = 
       style={{ cursor: 'text', outline: 'none' }}
     >
       {lines.map((line, i) => {
-        const trimmed = line.trim();
         const nl = i > 0 ? '\n' : '';
         const lineStart = lineStarts[i];
         const toggle = i === crossLineIdx && onToggleCross ? (
@@ -197,104 +179,17 @@ export default function SolutionView({ text, event, scramble = '', sourceText = 
             label={crossNormalized ? 'Show original' : 'Normalize cross'} tabIndex={-1} />
         ) : null;
 
-        // 行内局部位置:光标(空 span 占位)与当前招式高亮区间。
-        const localCursor = cursorOffset != null && cursorOffset >= lineStart && cursorOffset <= lineStart + line.length
-          ? cursorOffset - lineStart : null;
-        const hlS = hlRange ? hlRange[0] - lineStart : -1;
-        const hlE = hlRange ? hlRange[1] - lineStart : -1;
-        const hasHl = hlRange != null && hlS < line.length && hlE > 0 && hlE > hlS;
-
-        // 注释行整体上色;招式高亮只会落在指令区,注释行不会命中 hlRange。
-        const isComment = trimmed.startsWith('//');
-        const commentStart = line.indexOf('//');
-        const labelStart = commentStart >= 0
-          ? commentStart + 2 + (line.slice(commentStart + 2).match(/^\s*/)?.[0].length ?? 0)
-          : -1;
-        const labelColorGroups = labelStart >= 0
-          ? cubeColorGroups(line.slice(labelStart)).map(group => ({
-              ...group,
-              start: group.start + labelStart,
-              end: group.end + labelStart,
-            }))
-          : [];
-        const colorsAt = new Map(labelColorGroups.map(group => [group.start, group.colors]));
-        const hiddenBrackets = cubeColorGroupPunctuation(line, labelColorGroups);
         const links = linkComments ? reconCommentLinks(line, commentCases, set => libraryLinks.get(i)?.get(set)).flatMap(link => {
           if (link.href !== '/alg/3x3/f2l') return [link];
           const href = f2lLinks.get(i)?.get('F2L');
           return href ? [{ ...link, href }] : [];
         }) : [];
-        const diagram = diagramAt(i);
-
-        // 切点:0 / 行尾 / 光标 / 高亮起止 / 色块位置 → 分段渲染。
-        const cuts = new Set<number>([0, line.length]);
-        for (const offset of wasteBrackets.keys()) {
-          if (offset >= lineStart && offset <= lineStart + line.length) cuts.add(offset - lineStart);
-        }
-        for (const offset of hiddenBrackets) { cuts.add(offset); cuts.add(offset + 1); }
-        if (localCursor != null) cuts.add(localCursor);
-        if (hasHl) { cuts.add(Math.max(0, hlS)); cuts.add(Math.min(line.length, hlE)); }
-        for (const group of labelColorGroups) {
-          cuts.add(group.start);
-          cuts.add(group.end);
-        }
-        for (const link of links) { cuts.add(link.start); cuts.add(link.end); }
-        const sorted = [...cuts].sort((a, b) => a - b);
-        const parts: React.ReactNode[] = [];
-        for (let s = 0; s < sorted.length - 1; s++) {
-          const a = sorted[s], b = sorted[s + 1];
-          if (wasteBrackets.has(lineStart + a)) parts.push(
-            <span key={`waste${a}`} data-recon-text-length={0}>{wasteBrackets.get(lineStart + a)}</span>,
-          );
-          if (hiddenBrackets.has(a)) {
-            parts.push(<span key={`bracket${a}`} data-recon-text-length={1}>{line[a] === '+' ? ' ' : null}</span>);
-            continue;
-          }
-          const colors = colorsAt.get(a);
-          if (colors) {
-            const chip = <CubeColorChip colors={f2lDisplayColors(colors, crossColor)} className="recon-label-chip" />;
-            const f2lHref = linkComments ? f2lLinks.get(i)?.get(colors) : undefined;
-            parts.push(
-              <span key={`color${a}`} data-recon-text-length={colors.length}>
-                {f2lHref
-                  ? <Link href={f2lHref} prefetch={false} className="recon-comment-link" title={tr({ en: 'Learn this F2L case', zh: '学习这个 F2L 情况' })}>{chip}</Link>
-                  : chip}
-              </span>,
-            );
-          }
-          if (localCursor === a) parts.push(<span key={`c${a}`} className="detail-cursor" />);
-          const seg = line.slice(a, b);
-          if (!seg) continue;
-          const isColorCode = labelColorGroups.some(group => a >= group.start && b <= group.end);
-          if (isColorCode) {
-            // 原字母完全不渲染；色块 wrapper 的 data 长度负责维持点击光标的原始偏移。
-            continue;
-          }
-          const inHl = hasHl && a >= Math.max(0, hlS) && b <= Math.min(line.length, hlE);
-          const link = links.find(link => a >= link.start && b <= link.end);
-          if (inHl) parts.push(<span key={`h${a}`} className="recon-move-current">{seg}</span>);
-          else if (link) parts.push(<Link key={`link${a}`} href={link.href} prefetch={false} className="recon-comment-link">{seg}</Link>);
-          else parts.push(seg);
-        }
-        if (wasteBrackets.has(lineStart + line.length)) parts.push(
-          <span key="wasteEnd" data-recon-text-length={0}>{wasteBrackets.get(lineStart + line.length)}</span>,
-        );
-        if (localCursor === line.length) parts.push(<span key="cend" className="detail-cursor" />);
-
-        const content = isComment ? <span className="recon-step-label">{parts}</span> : parts;
-        const lineContent = <>{content}{inspectionColors.has(i) && (
-          <span className="recon-inspection-chip" data-recon-text-length="0">
-            <CubeColorChip colors={inspectionColors.get(i)!} className="cube-orientation-chip" />
-          </span>
-        )}{toggle}</>;
-        return <span key={i}>{nl}{diagram ? (
-          <span className="recon-case-line">
-            <span className="recon-case-diagram" data-recon-text-length="0">
-              {diagram}
-            </span>
-            <span className="recon-case-line-text">{lineContent}</span>
-          </span>
-        ) : <span className="recon-plain-line">{lineContent}</span>}</span>;
+        return <span key={i}>{nl}<NotationLine line={line} lineStart={lineStart}
+          cursorOffset={cursorOffset} hlRange={hlRange} wasteBrackets={wasteBrackets}
+          crossColor={crossColor} links={links} colorHref={colors => linkComments ? f2lLinks.get(i)?.get(colors) : undefined}
+          inspectionColors={inspectionColors.get(i)} diagram={diagramAt(i)} trailing={toggle}
+          localize={tr} renderLink={(href, children) => <Link href={href} prefetch={false} className="recon-comment-link">{children}</Link>}
+        /></span>;
       })}
     </pre>
   );

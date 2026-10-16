@@ -1,0 +1,284 @@
+{
+  "version": "dbb361143e883990",
+  "dataSha256": "1fbae05e0b92ca8dd88e2f4bf5a4afc182db86cc8a35dc6456662b10c4f0f254",
+  "generatedAt": "2026-10-16T04:42:01.059Z",
+  "sourceStates": 7555446,
+  "caseCount": 493,
+  "compute": {
+    "seconds": 121780.287,
+    "finalEngine": "opt10"
+  },
+  "baseline": {
+    "version": "2cf62aac9b538a9d",
+    "count": 222784,
+    "meanHtm": 16.42343705113473,
+    "improvedPairs": 205903,
+    "maxSaved": 3
+  },
+  "groups": {
+    "pure": {
+      "count": 222784,
+      "totalHtm": 3361569,
+      "totalQtm": 4512924,
+      "histogram": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        40,
+        209,
+        1415,
+        7678,
+        35714,
+        103740,
+        71804,
+        2178,
+        4,
+        0,
+        0
+      ],
+      "qtmHistogram": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0,
+        42,
+        88,
+        771,
+        1596,
+        4705,
+        10476,
+        21252,
+        33570,
+        49200,
+        43355,
+        32371,
+        15397,
+        7624,
+        1708,
+        575,
+        46,
+        6,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "generators": [
+        0,
+        0,
+        44,
+        3106,
+        29763,
+        84592,
+        105279
+      ],
+      "shortest": [
+        {
+          "top": "ZBLL U 31",
+          "bottom": "ZBLL U 32",
+          "scramble": "F' L2 F R2 D2 R2 F' L2 F",
+          "htm": 9,
+          "qtm": 14,
+          "generators": 4
+        },
+        {
+          "top": "ZBLL U 32",
+          "bottom": "ZBLL U 31",
+          "scramble": "B' L2 B R2 U2 R2 B' L2 B",
+          "htm": 9,
+          "qtm": 14,
+          "generators": 4
+        }
+      ],
+      "longest": [
+        {
+          "top": "ZBLL Pi 50",
+          "bottom": "ZBLL Pi 72",
+          "scramble": "F' L F2 R' U2 F U' F' R F U' L' F U' F2 D U R",
+          "htm": 18,
+          "qtm": 21,
+          "generators": 5
+        },
+        {
+          "top": "ZBLL Pi 60",
+          "bottom": "ZBLL Pi 72",
+          "scramble": "F R' F2 L U2 F' U F L' F' U R F' U F2 D' U' L'",
+          "htm": 18,
+          "qtm": 21,
+          "generators": 5
+        },
+        {
+          "top": "ZBLL Pi 72",
+          "bottom": "ZBLL Pi 50",
+          "scramble": "B' L B2 R' D2 B D' B' R B D' L' B D' B2 U D R",
+          "htm": 18,
+          "qtm": 21,
+          "generators": 5
+        },
+        {
+          "top": "ZBLL Pi 72",
+          "bottom": "ZBLL Pi 60",
+          "scramble": "B R' B2 L D2 B' D B L' B' D R B' D B2 U' D' L'",
+          "htm": 18,
+          "qtm": 21,
+          "generators": 5
+        }
+      ]
+    },
+    "all": {
+      "count": 243049,
+      "totalHtm": 3650209,
+      "totalQtm": 4901268,
+      "histogram": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        5,
+        10,
+        108,
+        469,
+        2318,
+        10716,
+        42511,
+        111264,
+        73398,
+        2244,
+        4,
+        0,
+        0
+      ],
+      "qtmHistogram": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        2,
+        0,
+        66,
+        152,
+        1106,
+        2006,
+        6059,
+        12300,
+        25006,
+        36994,
+        52990,
+        45899,
+        34150,
+        15941,
+        7950,
+        1768,
+        590,
+        54,
+        16,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "generators": [
+        0,
+        0,
+        44,
+        3510,
+        33499,
+        93186,
+        112810
+      ],
+      "shortest": [
+        {
+          "top": "L",
+          "bottom": "Jb",
+          "scramble": "B2 U' B2 D2 L2 D' L2",
+          "htm": 7,
+          "qtm": 12,
+          "generators": 4
+        },
+        {
+          "top": "Jb",
+          "bottom": "L",
+          "scramble": "F2 D' F2 U2 L2 U' L2",
+          "htm": 7,
+          "qtm": 12,
+          "generators": 4
+        }
+      ],
+      "longest": [
+        {
+          "top": "ZBLL Pi 50",
+          "bottom": "ZBLL Pi 72",
+          "scramble": "F' L F2 R' U2 F U' F' R F U' L' F U' F2 D U R",
+          "htm": 18,
+          "qtm": 21,
+          "generators": 5
+        },
+        {
+          "top": "ZBLL Pi 60",
+          "bottom": "ZBLL Pi 72",
+          "scramble": "F R' F2 L U2 F' U F L' F' U R F' U F2 D' U' L'",
+          "htm": 18,
+          "qtm": 21,
+          "generators": 5
+        },
+        {
+          "top": "ZBLL Pi 72",
+          "bottom": "ZBLL Pi 50",
+          "scramble": "B' L B2 R' D2 B D' B' R B D' L' B D' B2 U D R",
+          "htm": 18,
+          "qtm": 21,
+          "generators": 5
+        },
+        {
+          "top": "ZBLL Pi 72",
+          "bottom": "ZBLL Pi 60",
+          "scramble": "B R' B2 L D2 B' D B L' B' D R B' D B2 U' D' L'",
+          "htm": 18,
+          "qtm": 21,
+          "generators": 5
+        }
+      ]
+    }
+  }
+}

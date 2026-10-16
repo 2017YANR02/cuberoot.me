@@ -13,8 +13,11 @@ import type { ReferenceResult } from '@cuberoot/shared/timer/reconstruct/referen
 import { columnTotals, stageAverageDelta, reportTableVisibility, type Col } from './report-columns';
 import { projectReferenceRows, reportSeconds as sec } from './report-presentation';
 
-export type ReportAction = { type: string; key?: string; value?: number | boolean | string; timeMs?: number };
+export type ReportAction = { type: string; key?: string; value?: number | boolean | string; timeMs?: number; copyText?: string };
 export interface ReportNode {
+  notation?: { line: string; crossColor: import('@cuberoot/shared/timer').TimerColorLetter | null;
+    links: import('@cuberoot/shared/recon/comment-links').ReconCommentLink[];
+    colorHrefs: Record<string, string>; inspectionColors?: string; diagramId?: string };
   id: string; kind: 'group' | 'text' | 'button' | 'toggle' | 'select' | 'disclosure' | 'table' | 'slot' | 'color' | 'moves' | 'bar';
   tag?: 'div'|'span'|'dl'|'dt'|'dd'|'fragment'; text?: string; className?: string; layout?: 'row' | 'flow'; title?: string; icon?: string;
   children?: ReportNode[]; action?: ReportAction; disabled?: boolean; selected?: boolean;

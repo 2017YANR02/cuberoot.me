@@ -19,14 +19,16 @@ import { applyOneToken } from '@cuberoot/shared/timer/reconstruct/apply-token';
 import { isCross, isSolved } from '@cuberoot/shared/timer/reconstruct/cfop-detect';
 import StepMoveList from '@cuberoot/timer-ui/reconstruct/StepMoveList';
 import { ReconstructHostContext } from '@cuberoot/timer-ui/reconstruct/ReconstructHost';
+import { cubeThumbParams } from '@/lib/alg_thumb_plan';
+import { CUBE_ORIENTATIONS, orientedFaceColors } from '@cuberoot/shared/timer';
 import { ReconLineDiagramProvider } from '@/components/ReconLineDiagrams';
 import { reconInspectionOrientations, reconWasteBrackets } from '@/lib/recon-alg-utils';
 
 // Only the drawing surface is replaced: state/mask selection, annotations,
 // formula matching, links, waste and the actual timer DOM remain production code.
 vi.mock('@/components/VisualCube', () => ({
-  VisualCube: (props: { view: string; setup?: string; faceletColors?: string }) =>
-    createElement('span', { 'data-diagram': props.view, 'data-setup': props.setup, 'data-facelets': props.faceletColors }),
+  VisualCube: (props: { view: string; setup?: string; faceletColors?: string; mask?: string; scheme?: string; hideGreySides?: boolean }) =>
+    createElement('span', { 'data-diagram': ['oll', 'pll'].includes(props.view) ? 'plan' : props.view, 'data-view': props.view, 'data-setup': props.setup, 'data-facelets': props.faceletColors, 'data-mask': props.mask, 'data-scheme': props.scheme, 'data-hide-grey': props.hideGreySides }),
 }));
 const jobs = vi.hoisted(() => [] as Promise<unknown>[]);
 vi.mock('@/lib/recon-f2l-links', async original => {
@@ -82,17 +84,28 @@ describe('ground truth: real timer records through the final display', () => {
         await vi.waitFor(() => expect(jobs.length).toBeGreaterThan(0));
         await Promise.all(jobs);
       });
-      const elements = [...host.querySelectorAll('.sml-line')];
-      const rows = elements.map(el => ({
+      const readRows = () => [...host.querySelectorAll('.sml-line')].map(el => ({
         moves: el.querySelector('.sml-moves')?.textContent ?? '',
         label: el.querySelector('.sml-label')?.textContent ?? '',
         colors: [...el.querySelectorAll('[role="img"]')].map(chip => chip.getAttribute('aria-label')),
         hrefs: [...el.querySelectorAll('a')].map(a => a.getAttribute('href')),
         diagrams: [...el.querySelectorAll('[data-diagram]')].map(diagram => diagram.getAttribute('data-diagram')),
       }));
-      if (process.env.RECON_GROUND_TRUTH_CAPTURE_DIR) {
-        writeFileSync(join(process.env.RECON_GROUND_TRUTH_CAPTURE_DIR, file), JSON.stringify(rows));
+      // Exact library-case links may settle after the independent F2L lookup.
+      // Flush React between retries and compare the final DOM, never an
+      // intermediate render with a missing asynchronous case link.
+      try {
+        await vi.waitFor(async () => {
+          await act(async () => { await Promise.all(jobs); });
+          expect(readRows()).toEqual(fixture.displayRows);
+        }, { timeout: 5000 });
+      } finally {
+        if (process.env.RECON_GROUND_TRUTH_CAPTURE_DIR) {
+          writeFileSync(join(process.env.RECON_GROUND_TRUTH_CAPTURE_DIR, file), JSON.stringify(readRows()));
+        }
       }
+      const elements = [...host.querySelectorAll('.sml-line')];
+      const rows = readRows();
       expect(rows).toEqual(fixture.displayRows);
       let state = applyScramble(3, scramble);
       const stageRows = rows.slice(2);
@@ -101,7 +114,11 @@ describe('ground truth: real timer records through the final display', () => {
         // A correct view type is insufficient if the thumbnail shows the state
         // after this line, or ignores an inspection/display-frame rotation.
         for (const diagram of elements[index + 2].querySelectorAll('[data-setup]')) {
-          expect(applyScramble(3, diagram.getAttribute('data-setup')!), file + ' diagram before line ' + index).toEqual(state);
+          const rebased = applyScramble(3, diagram.getAttribute('data-setup')!);
+          const restored = Object.fromEntries((['U', 'R', 'F', 'D', 'L', 'B'] as const).map(face =>
+            [face, rebased[face].map(color => state[color][4])],
+          ));
+          expect(restored, file + ' diagram before line ' + index).toEqual(state);
         }
         state = applyOneToken(state, tokens(row.moves));
         const line = corrected.lines[index];
@@ -134,4 +151,35 @@ describe('ground truth: real timer records through the final display', () => {
     }
   });
   }
+});
+
+// Synthetic mask checks do not enroll any real recording into ground truth.
+it('recon diagrams reuse library masks in every holding orientation', async () => {
+  (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+  const host = document.createElement('div');
+  const root = createRoot(host);
+  try {
+    for (const set of ['oll', 'ollcp', 'coll', 'pll', 'zbll', 'zbls', 'wv', 'vls', 'sv']) {
+      for (const { value: grip } of CUBE_ORIENTATIONS) {
+        const scramble = `R U R' ${grip}`;
+        await act(async () => root.render(createElement(ReconLineDiagramProvider, {
+          scramble, text: `U // ${set.toUpperCase()}`, enabled: true,
+          children: diagramAt => diagramAt(0),
+        })));
+        const diagram = host.querySelector('[data-diagram]')!;
+        const expected = cubeThumbParams('3x3', set, libraries[set]?.cases[0]?.sticker ?? { kind: 'raw', tag: '', attrs: {} });
+        expect(diagram.getAttribute('data-mask'), set).toBe(expected.mask ?? null);
+        expect(diagram.getAttribute('data-view'), set).toBe(['zbls', 'wv', 'vls', 'sv'].includes(set) ? 'iso' : expected.view);
+        expect(diagram.getAttribute('data-hide-grey'), set).toBe(expected.hideGreySides === undefined ? null : String(expected.hideGreySides));
+        const actual = applyScramble(3, scramble);
+        const rebased = applyScramble(3, diagram.getAttribute('data-setup')!);
+        const colors = orientedFaceColors(grip);
+        for (const face of ['U', 'R', 'F', 'D', 'L', 'B'] as const) {
+          expect(rebased[face][4]).toBe(face);
+          expect(rebased[face].map(color => colors[color])).toEqual(actual[face]);
+        }
+        if (set === 'oll') expect(diagram.getAttribute('data-scheme')!.split(',').slice(1)).toEqual(Array(5).fill('404040'));
+      }
+    }
+  } finally { await act(async () => root.unmount()); }
 });

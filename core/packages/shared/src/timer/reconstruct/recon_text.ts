@@ -1,4 +1,5 @@
 import { decodeGyroTrack, type GyroSample } from '../../smart_cube/gyro_track';
+import { toMoveStringStrict } from '../../alg_notation';
 /**
  * 文字复盘 —— 把一把智能魔方的动作流写成 /recon 详情页那种带注释的谱子。
  *
@@ -515,9 +516,14 @@ function preferF2lSideTurns(recon: ReconTextResult): ReconTextResult {
   // number of inserted rotations. The initial yaw is free (inspection).
   let paths: Array<{ score: number; yaws: number[] }> = [{ score: 0, yaws: [] }];
   for (const { line } of parts) {
-    const choices = line.kind === 'cross' || (line.kind === 'f2l' && !line.libraryCorrection) ? [0, 1, 2, 3] : [0];
-    paths = choices.map(yaw => {
-      const best = paths.map(path => ({
+    // An unmatched last layer has no library frame to return to. Keep the
+    // chosen reading frame across its boundary instead of inventing a regrip.
+    const choices = line.kind === 'cross' || !line.libraryCorrection ? [0, 1, 2, 3] : [0];
+    const keepFrame = !line.libraryCorrection && (line.kind === 'oll' || line.kind === 'pll');
+    paths = choices.flatMap(yaw => {
+      const eligible = paths.filter(path => !keepFrame || !path.yaws.length || path.yaws.at(-1) === yaw);
+      if (!eligible.length) return [];
+      const best = eligible.map(path => ({
         score: path.score + (path.yaws.length && path.yaws.at(-1) !== yaw ? 1 + (line.kind === 'f2l' ? 0.01 : 0) : 0),
         yaws: [...path.yaws, yaw],
       })).sort((a, b) => a.score - b.score)[0];
@@ -590,6 +596,51 @@ function omitSolvedTailRotations(recon: ReconTextResult): ReconTextResult {
       .map(group => ({ ...group, to: Math.min(group.to, end) })),
   }];
   return { ...recon, lines,
+    text: [...(recon.inspection ? [`${recon.inspection} // insp`] : []), ...lines.map(formatReconLine)].join('\n') };
+}
+
+/** Cross-down can rename an already matched algorithm. Restore its library yaw
+ * only when the complete library body matches token for token in that frame. */
+function restoreLibraryYaw(recon: ReconTextResult): ReconTextResult {
+  const lines = recon.lines.map(line => {
+    if (!line.libraryCorrection || line.kind === 'f2l' || line.kind === 'cross') return line;
+    let body: string[];
+    try { body = toMoveStringStrict(line.libraryCorrection.algorithm).split(' ').filter(Boolean); }
+    catch { return line; }
+    while (/^U(?:\d+)?'?$/.test(body[0] ?? '')) body.shift();
+    while (/^U(?:\d+)?'?$/.test(body.at(-1) ?? '')) body.pop();
+    if (!body.length) return line;
+    const containsBody = (moves: string[]) => {
+      const ordinary = moves.filter((_, i) => line.wasteGroups?.[i] == null);
+      return ordinary.some((_, i) => body.every((token, j) => ordinary[i + j] === token));
+    };
+    if (containsBody(line.moves)) return line;
+    for (const yaw of ['y', 'y2', "y'"]) {
+      const moves = line.moves.map(token => conjugateReconToken(token, facePermFor(yaw)));
+      if (moves.some(token => token === null) || !containsBody(moves as string[])) continue;
+      const inverse = yaw === 'y' ? "y'" : yaw === "y'" ? 'y' : 'y2';
+      const first = line.moveRanges?.[0], last = line.moveRanges?.at(-1);
+      // A prior reading-frame adjustment can cancel this yaw. Compact only
+      // leading rotations with empty encoder ranges, never physical turns.
+      let from = 0;
+      while (from < moves.length && /^[xyz](?:2'?|')?$/.test(moves[from]!)
+        && line.moveRanges && line.moveRanges[from].endIdx < line.moveRanges[from].startIdx
+        && line.wasteGroups?.[from] == null) from++;
+      const prefix = compactCubeRotations([yaw, ...moves.slice(0, from)].join(' ')).split(' ').filter(Boolean);
+      const offset = prefix.length - from;
+      return { ...line, moves: [...prefix, ...moves.slice(from) as string[], inverse],
+        moveRanges: first && last ? [
+          ...prefix.map(token => ({ ...first, token, endTs: first.ts, endIdx: first.startIdx - 1 })),
+          ...line.moveRanges!.slice(from).map((range, i) => ({ ...range, token: moves[from + i]! })),
+          { ...last, token: inverse, ts: last.endTs, startIdx: last.endIdx + 1 },
+        ] : undefined,
+        wasteGroups: [...prefix.map(() => null), ...(line.wasteGroups ?? line.moves.map(() => null)).slice(from), null],
+        algorithmGroups: line.algorithmGroups?.map(group => ({ from: group.from + offset, to: group.to + offset })),
+      };
+    }
+    return line;
+  });
+  return lines.every((line, i) => line === recon.lines[i]) ? recon : { ...recon, lines,
     text: [...(recon.inspection ? [`${recon.inspection} // insp`] : []), ...lines.map(formatReconLine)].join('\n') };
 }
 
@@ -677,9 +728,9 @@ export function simplifyF2lRotations(source: ReconTextResult): ReconTextResult {
   let lines: ReconTextLine[];
   try { lines = restoreCrossAtBoundaries(recon, expanded).map(withoutF2lZ); }
   catch { return recon; }
-  if (recon === source && lines.length === recon.lines.length && lines.every((line, i) => line === recon.lines[i])) return omitSolvedTailRotations(preferF2lSideTurns(recon));
-  return omitSolvedTailRotations(preferF2lSideTurns({ ...recon, lines,
-    text: [...(recon.inspection ? [`${recon.inspection} // insp`] : []), ...lines.map(formatReconLine)].join('\n') }));
+  if (recon === source && lines.length === recon.lines.length && lines.every((line, i) => line === recon.lines[i])) return omitSolvedTailRotations(restoreLibraryYaw(preferF2lSideTurns(recon)));
+  return omitSolvedTailRotations(restoreLibraryYaw(preferF2lSideTurns({ ...recon, lines,
+    text: [...(recon.inspection ? [`${recon.inspection} // insp`] : []), ...lines.map(formatReconLine)].join('\n') })));
 }
 
 export function formatReconLine(line: ReconTextLine): string {

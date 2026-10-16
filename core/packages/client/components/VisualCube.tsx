@@ -6,6 +6,7 @@ import { ORBIT_K } from '@cuberoot/puzzle-render-core/engine/viewControls';
 import { tr } from '@/i18n/tr';
 import { apiUrl } from '@/lib/api-base';
 import { TimerRoomDialog } from '@cuberoot/timer-ui';
+import LazyVisible from '@/components/LazyVisible';
 import './visual-cube.css';
 
 interface Props {
@@ -40,7 +41,7 @@ interface Props {
   size?: number;
   puzzleSize?: number;
   alt?: string;
-  /** Native <img> loading hint. Defaults to browser eager; pass 'lazy' for below-the-fold. */
+  /** With local rendering, 'lazy' defers SVG generation until near the viewport; otherwise the native image hint. */
   loading?: 'lazy' | 'eager';
   /**
    * Render the SVG in-process instead of fetching `/v1/visualcube.svg`.
@@ -50,8 +51,7 @@ interface Props {
    * *together and instantly* (the trainer's three-at-once screen: a network `<img>` per cube
    * lands one by one, so the images visibly lag the scrambles and each other).
    *
-   * Do NOT switch a grid of dozens of thumbnails to this — that's what `<img>` (parallel fetch +
-   * HTTP cache) is good at; rendering them all synchronously would block paint.
+   * Long lists must combine local with loading="lazy", so offscreen diagrams are not generated.
    */
   local?: boolean;
   /** Drag to orbit the existing state; leaving restores the original projection. */
@@ -60,9 +60,18 @@ interface Props {
   enlargeable?: boolean;
 }
 
-// Ported from packages/client-vite/src/components/VisualCube.tsx — minus the SW interception note
-// (Next.js bundles a fresh SW; for now this hits the api.cuberoot.me endpoint directly in prod).
 export function VisualCube(props: Props) {
+  if (props.loading === 'lazy' && (props.local || props.faceletColors || props.interactive)) {
+    const size = props.size ?? 88;
+    return <LazyVisible inline minHeight={size} rootMargin="160px" unwrapWhenVisible
+      style={{ display: 'inline-flex', width: size, height: size, flexShrink: 0 }}>
+      <VisualCubeContent {...props} />
+    </LazyVisible>;
+  }
+  return <VisualCubeContent {...props} />;
+}
+
+function VisualCubeContent(props: Props) {
   const { algorithm = '', setup, view, mask, faceletColors, faceletAlg, scheme, showLastLayerColor, planSimplify, size = 88, puzzleSize = 3, alt = 'Cube state', loading, local, hideGreySides, interactive = false, enlargeable = false } = props;
   const [expanded, setExpanded] = useState(false);
   const dragged = useRef(false);

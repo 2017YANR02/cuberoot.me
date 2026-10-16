@@ -116,35 +116,6 @@
   color: var(--foreground);
 }
 
-.timer-practice-advanced {
-  width: 100%;
-}
-
-.timer-practice-advanced > summary {
-  width: fit-content;
-  margin-inline-start: auto;
-  color: var(--muted-foreground);
-  font-size: 12px;
-  font-weight: 400;
-  cursor: pointer;
-  list-style: none;
-}
-
-.timer-practice-advanced > summary::-webkit-details-marker {
-  display: none;
-}
-
-.timer-practice-advanced > summary:hover {
-  color: var(--foreground);
-}
-
-.timer-practice-advanced__content {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding-top: 14px;
-}
-
 /* Keep the selection hierarchy without nesting large framed panels. */
 .timer-training-workspace .trainer-set-block,
 .timer-training-workspace .trainer-subgroup {

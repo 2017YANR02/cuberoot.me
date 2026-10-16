@@ -351,6 +351,7 @@ export function computeF2lSlots(
   const frozen = new Set(free);
   let currentLevel: F2lSlotId[] = [];
   let dipped = false;
+  let levelSettled = false;
   const SETTLED_GAP_MS = 900;
   for (let i = crossEndIdx + 1; i <= horizon; i++) {
     const cur = standing(i);
@@ -358,28 +359,34 @@ export function computeF2lSlots(
     // L' B U B' L. Keep that final restoration with the pair. Still observe
     // slot dips below so the existing pass-through recovery remains intact.
     const crossRestored = isCross(states[i + 1]);
+    const nextTs = moves[i + 1]?.ts ?? totalMs;
+    const paused = nextTs - moves[i].ts >= SETTLED_GAP_MS;
     if (cur.length > peak && crossRestored) {
       for (const id of currentLevel) frozen.add(id);
       peak = cur.length;
       currentLevel = cur.filter(id => !frozen.has(id));
       for (const id of currentLevel) closedAt.set(id, i);
       dipped = false;
+      levelSettled = paused;
       continue;
     }
     if (cur.length < peak) {
       dipped = true;
       continue;
     }
-    const nextTs = moves[i + 1]?.ts ?? totalMs;
-    if (dipped
+    if (dipped && !levelSettled
       && crossRestored
-      && nextTs - moves[i].ts >= SETTLED_GAP_MS
+      && paused
       && [...frozen].every(id => cur.includes(id))) {
       for (const id of currentLevel) closedAt.delete(id);
       currentLevel = cur.filter(id => !frozen.has(id));
       for (const id of currentLevel) closedAt.set(id, i);
       dipped = false;
     }
+    // Once this completed pair has its own observation pause, later temporary
+    // disruption belongs to the next pair. A second pause cannot move an
+    // already-established boundary to the end of that later sequence.
+    if (crossRestored && paused && currentLevel.every(id => cur.includes(id))) levelSettled = true;
   }
 
   interface Found { id: F2lSlotId; endIdx: number | null; free: boolean }

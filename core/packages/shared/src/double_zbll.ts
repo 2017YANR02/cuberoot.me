@@ -19,6 +19,15 @@ export interface DoubleZbllManifest {
   generatedAt: string;
 }
 
+export function validDoubleZbllManifest(m: DoubleZbllManifest): boolean {
+  return m?.schema === 1 && [472,493].includes(m.caseCount) && m.pairCount === m.caseCount ** 2
+    && m.recordBytes === DOUBLE_ZBLL_RECORD_BYTES && m.metric === 'HTM'
+    && JSON.stringify(m.moves) === JSON.stringify(DOUBLE_ZBLL_MOVES)
+    && /^pairs-[a-f0-9]{16}\.bin$/.test(m.dataFile) && /^cases-[a-f0-9]{16}\.json$/.test(m.casesFile)
+    && /^[a-f0-9]{64}$/.test(m.dataSha256) && /^[a-f0-9]{64}$/.test(m.casesSha256)
+    && m.dataBytes === m.pairCount * DOUBLE_ZBLL_RECORD_BYTES;
+}
+
 export function decodeDoubleZbll(data: Uint8Array, caseCount: number, top: number, bottom: number): string {
   if (![caseCount, top, bottom].every(Number.isInteger) || caseCount < 1
     || top < 0 || bottom < 0 || top >= caseCount || bottom >= caseCount

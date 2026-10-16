@@ -104,6 +104,8 @@ const RELAXED_HOLD_MS = 500;
 export const HOLD_MS = 120;
 
 export interface RotationEvent {
+  /** Earlier measured entry into this pose's 45-degree cell, for slice ownership only. */
+  sliceStartMs?: number;
   /** Display-only boundary when an early angular snap is followed by a closer pose. */
   notationMs?: number;
   /** 核心开始离开上一格的时刻。记谱位置用它,避免把转体晚插到后面几手。 */
@@ -345,16 +347,30 @@ function detectAngularRotations(samples: readonly GyroSample[], opts: DetectRota
   let ref = quatNormalize(pose(samples[0].q));
   const out: RotationEvent[] = [];
   let pending: { events: RotationEvent[]; target: Quat } | undefined;
+  let previousSnapIndex = 0;
+  const notationSettled = (q: Quat, target: Quat, events: RotationEvent[]): boolean => {
+    const error = quatNormalize(quatMul(quatConjugate(target), q));
+    const angle = quatAngleTo(q, target);
+    if (angle <= 20 * Math.PI / 180) return true;
+    // Settling the rotation axis does not require straightening the grip.
+    // Keep the pose inside the accepted cell, but ignore perpendicular tilt
+    // when deciding which encoder turn follows a single-axis regrip.
+    if (angle > ENTER_RAD || events.length !== 1) return false;
+    const axis = events[0].token[0] as 'x' | 'y' | 'z';
+    const twist = 2 * Math.atan2(Math.abs(error[axis]), Math.abs(error.w));
+    return twist <= 20 * Math.PI / 180;
+  };
   // Always leave a gap between adjacent cells, even with a caller override.
   const enterRad = Math.min(opts.enterRad ?? ENTER_RAD, ENTER_RAD);
-  for (const sample of samples.slice(1)) {
+  for (let sampleIndex = 1; sampleIndex < samples.length; sampleIndex++) {
+    const sample = samples[sampleIndex];
     // The 35-degree snap is intentionally responsive for pose playback. A
     // face turn can still finish in the old grip during that transition.
     // Only notation waits for a closer sample, within one short gesture;
     // sparse recordings and already-settled turns retain the original time.
     if (pending) {
       if (sample.tMs - pending.events[0].tMs > 250) pending = undefined;
-      else if (quatAngleTo(pose(sample.q), pending.target) <= 20 * Math.PI / 180) {
+      else if (notationSettled(pose(sample.q), pending.target, pending.events)) {
         for (const event of pending.events) event.notationMs = sample.tMs;
         pending = undefined;
       }
@@ -372,13 +388,25 @@ function detectAngularRotations(samples: readonly GyroSample[], opts: DetectRota
         if (b) { tokens = [a.token, b.token]; break; }
       }
     }
+    const target = quatNormalize(quatMul(ref, near.quat));
+    // Grip tilt can keep a completed slice just outside the 35-degree snap
+    // region. Associate its encoder pair with the continuous measured approach
+    // to this exact pose, without moving playback or notation timestamps.
+    let sliceStartMs = sample.tMs;
+    for (let i = sampleIndex - 1; i > previousSnapIndex; i--) {
+      if (sample.tMs - samples[i].tMs > 1200
+        || quatAngleTo(pose(samples[i].q), target) >= Math.PI / 4) break;
+      sliceStartMs = samples[i].tMs;
+    }
     const gesture = tokens.map(token => ({
+      ...(sliceStartMs < sample.tMs ? { sliceStartMs } : {}),
       startMs: sample.tMs, tMs: sample.tMs, token,
       angleRad: token.includes('2') ? Math.PI : Math.PI / 2,
     }));
     out.push(...gesture);
-    ref = quatNormalize(quatMul(ref, near.quat));
-    pending = gesture.length && near.angleRad > 20 * Math.PI / 180
+    ref = target;
+    previousSnapIndex = sampleIndex;
+    pending = gesture.length && !notationSettled(pose(sample.q), ref, gesture)
       ? { events: gesture, target: ref } : undefined;
   }
   return out;

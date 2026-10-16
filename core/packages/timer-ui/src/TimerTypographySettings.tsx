@@ -8,8 +8,10 @@ export const TIMER_TYPOGRAPHY_SETTING_FIELD_IDS = [
 ] as const;
 
 /** Font previews and scale controls shared by Web and installed clients. */
-export function TimerTypographySettings({ value, onChange, language }: {
+export function TimerTypographySettings({ value, onChange, language, showScaleControls = true }: {
   value: Value; onChange(patch: Partial<Value>): void; language: 'en' | 'zh';
+  /** Hosts with direct layout editing can keep only the font pickers here. */
+  showScaleControls?: boolean;
 }) {
   return <>{(['timer', 'scramble'] as const).map((kind, index) => {
     const fontKey = `${kind}Font` as const;
@@ -24,12 +26,12 @@ export function TimerTypographySettings({ value, onChange, language }: {
           options={kind === 'scramble' ? ['liberation', 'mono', 'sans'] : undefined}
           onChange={font => onChange({ [fontKey]: font })} />
       </TimerSettingRow>
-      <TimerSettingRow field={scale} label={scale.copy[language]}>
+      {showScaleControls && <TimerSettingRow field={scale} label={scale.copy[language]}>
         <input type="range" className="settings-row-control-input" aria-label={scale.copy[language]}
           min={kind === 'timer' ? 0.5 : 0.6} max={kind === 'timer' ? 2 : 2.5} step={0.05}
           value={value[scaleKey]} onChange={event => onChange({ [scaleKey]: Number(event.target.value) })} />
         <span className="hint">{value[scaleKey].toFixed(2)}×</span>
-      </TimerSettingRow>
+      </TimerSettingRow>}
     </section>;
   })}</>;
 }

@@ -42,6 +42,7 @@ import {
 } from 'lucide-react';
 import { Alg, Move } from 'cubing/alg';
 import World from './engine/world';
+import AlgTransformPanel from './AlgTransformPanel';
 import { TwistAction } from './engine/nxn/twister';
 import { timing } from './engine/tweenTiming';
 import tweener from './engine/tweener';
@@ -2903,8 +2904,31 @@ export default function PlayerControls({
             onChange={setLiveReduce}
           />
         )}
-        {!isSquarePuzzle && !isTwistyMode && corner?.cubeMirrors !== false && <button onClick={tool((s) => mirrorAlg(s, 'M'))} title={t('Mirror M (L↔R)', 'Mirror M (L↔R)')} aria-label="Mirror M"><FlipHorizontal2 size={13} /></button>}
-        {!isSquarePuzzle && !isTwistyMode && corner?.cubeMirrors !== false && <button onClick={tool((s) => mirrorAlg(s, 'S'))} title={t('Mirror S (F↔B)', 'Mirror S (F↔B)')} aria-label="Mirror S"><FlipVertical2 size={13} /></button>}
+        {!(typeof puzzleKind === 'number' || puzzleKind === 'mirror' || puzzleKind === 'mirror2' || puzzleKind === 'sphere') && !isSquarePuzzle && !isTwistyMode && corner?.cubeMirrors !== false && <button onClick={tool((s) => mirrorAlg(s, 'M'))} title={t('Mirror M (L↔R)', 'Mirror M (L↔R)')} aria-label="Mirror M"><FlipHorizontal2 size={13} /></button>}
+        {!(typeof puzzleKind === 'number' || puzzleKind === 'mirror' || puzzleKind === 'mirror2' || puzzleKind === 'sphere') && !isSquarePuzzle && !isTwistyMode && corner?.cubeMirrors !== false && <button onClick={tool((s) => mirrorAlg(s, 'S'))} title={t('Mirror S (F↔B)', 'Mirror S (F↔B)')} aria-label="Mirror S"><FlipVertical2 size={13} /></button>}
+        {(typeof puzzleKind === 'number' || puzzleKind === 'mirror' || puzzleKind === 'mirror2' || puzzleKind === 'sphere') && (
+          <AlgTransformPanel
+            text={stripHandMarks(setupDraft + '\n' + algDraft).trim()}
+            order={order}
+            onApply={(next) => {
+              const previousSetup = setupDraft, previousAlg = algDraft, previousStep = stepRef.current;
+              const update = (newSetup: string, newAlg: string, targetStep: number) => {
+                setPlaying(false);
+                setCaretChar(null);
+                skipAutoResetRef.current = false;
+                stepRef.current = targetStep;
+                setSetupDraft(newSetup);
+                onSetupChange(newSetup);
+                setAlgDraft(newAlg);
+                onAlgChange(newAlg);
+                if (setupElRef.current) setupElRef.current.value = newSetup;
+                if (algElRef.current) algElRef.current.value = newAlg;
+              };
+              update('', next, parseNxnItems(next).length);
+              return () => update(previousSetup, previousAlg, previousStep);
+            }}
+          />
+        )}
         {!isSquarePuzzle && !isIvy && !corner && !isTwistyMode && (
           <button
             onClick={tool(flattenAlg)}
@@ -2923,6 +2947,8 @@ export default function PlayerControls({
           {linkCopied ? t('已复制', 'Copied') : t('复制链接', 'Copy link')}
         </button>
       </div>
+
+
 
       <PuzzleSettings
         world={world}

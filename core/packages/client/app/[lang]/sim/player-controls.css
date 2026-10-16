@@ -228,6 +228,7 @@
   align-items: center;
   gap: 8px;
 }
+
 /* 消步开关在工具行里:无外框,标签 + PillToggle 滑钮直接排在按钮间(开 / 关状态由滑钮表达) */
 .sim-player-tools .sim-toggle {
   height: 34px;
@@ -260,6 +261,48 @@
   color: var(--signal-success);
   background: color-mix(in srgb, var(--signal-success) 12%, transparent);
 }
+
+.sim-transform-select {
+  width: fit-content;
+  max-width: 100%;
+  height: 34px;
+  padding: 0 8px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.sim-transform-select option { background: var(--background); color: var(--foreground); }
+.sim-player-tools > button.sim-transform-active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.sim-transform-select:disabled,
+.sim-player-tools > button:disabled { opacity: 0.45; cursor: default; }
+.sim-move-editor {
+  flex-basis: 100%;
+  min-width: 0;
+  order: 1;
+  padding: 10px 0 2px;
+  border-top: 1px solid var(--border-default);
+}
+.sim-move-editor-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--muted-foreground); font-size: 12px; }
+.sim-move-editor button { appearance: none; font: inherit; color: var(--foreground); background: transparent; border: 0; cursor: pointer; }
+.sim-move-editor-heading button { display: inline-flex; padding: 6px; border-radius: 6px; }
+.sim-move-tokens { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 8px; max-height: 180px; overflow-y: auto; }
+.sim-move-tokens button { min-width: 34px; min-height: 36px; padding: 6px 8px; border-radius: 6px; font-family: var(--font-geist-mono), monospace; font-size: 16px; }
+.sim-move-editor button:hover { background: var(--muted); }
+.sim-move-tokens button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
+.sim-move-editor button:focus-visible,
+.sim-transform-select:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.sim-move-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
+.sim-move-actions button { display: inline-flex; align-items: center; gap: 10px; border: 1px solid var(--border-default); border-radius: 6px; padding: 7px 10px; }
+.sim-move-actions small { color: var(--muted-foreground); }
+.sim-move-note { flex-basis: 100%; color: var(--muted-foreground); font-size: 12px; }
 
 .sim-puzzle {
   /* No card frame (house style, matches .gt-panel): stacked panels are separated

@@ -36,6 +36,8 @@ export function AlgCaseRelationCards({
   const content = (item: AlgCaseRelationCardItem) => item.caseObj ? (
     <>
       <CaseThumb
+        // A detail view has only a few related cases; render together without an image request.
+        local
         onRotate={item.onRotate}
         puzzle={puzzle}
         set={set}

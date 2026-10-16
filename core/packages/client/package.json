@@ -13,6 +13,7 @@
   ],
   "scripts": {
     "double-zbll:install": "node --import tsx scripts/install-double-zbll.mts",
+    "double-zbll:summary": "node --max-old-space-size=128 --import tsx scripts/summarize-double-zbll.mts",
     "dev": "node --import tsx scripts/build-cube-history.ts && node ../../scripts/copy-maplibre-assets.mts && node ../../scripts/build-cubing-worker.mjs packages/client/public/cubing-chunks && node scripts/predev-clean.mjs && next dev -H 127.0.0.1 -p 3000",
     "dev:clean": "node --import tsx scripts/build-cube-history.ts && node ../../scripts/copy-maplibre-assets.mts && node ../../scripts/build-cubing-worker.mjs packages/client/public/cubing-chunks && node scripts/predev-clean.mjs --wipe-next && next dev -H 127.0.0.1 -p 3000",
     "dev:safe": "node --import tsx scripts/build-cube-history.ts && node ../../scripts/copy-maplibre-assets.mts && node scripts/dev-safe.mjs",

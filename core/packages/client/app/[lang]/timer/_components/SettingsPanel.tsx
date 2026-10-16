@@ -451,7 +451,7 @@ export default function SettingsPanel({ onClose, event, actions, presenceControl
           title={tr({ zh: '外观', en: 'Appearance'
         })}
         >
-          <TimerTypographySettings value={s} onChange={updateSettings} language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} />
+          <TimerTypographySettings showScaleControls={false} value={s} onChange={updateSettings} language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} />
           <TimerDisplaySettings value={s} onChange={updateSettings} localize={tr} renderBooleanControl={props => <SharedBoolToggle {...props} />}>
           <TimerScramblePreviewSettings
             localize={tr}
