@@ -1,5 +1,7 @@
 'use client';
 import { TimerSoloPage, timerSoloModalState, useTimerSoloCompactLayout } from '@cuberoot/timer-ui/TimerSoloPage';
+import SoloLayoutEditor from '../_components/SoloLayoutEditor';
+import { Tooltip } from '@/components/Tooltip';
 import { get222Mode } from '@/lib/scramble-222-mode';
 import { browserTimerToolTransport, type TimerTool } from '@cuberoot/timer-ui/TimerTools';
 import { timerSeedTicket } from '@cuberoot/shared/timer/sync-seed';
@@ -39,6 +41,7 @@ import { useTranslation } from 'react-i18next';
 import { useQueryState, parseAsBoolean, parseAsString, parseAsStringEnum } from 'nuqs';
 import {
   AlertTriangle,
+  LayoutTemplate,
   ArrowLeft,
   Box,
   X,
@@ -438,6 +441,12 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const [solverBlocking, setSolverBlocking] = useState(false);
   const [historyOverlayOpen, setHistoryOverlayOpen] = useState(false);
   const [devFakeCubeOpen, setDevFakeCubeOpen] = useState(false);
+  const [layoutEditing, setLayoutEditing] = useState(false);
+  const layoutEditingRef = useRef(false);
+  const finishLayoutEditing = useCallback(() => {
+    layoutEditingRef.current = false;
+    setLayoutEditing(false);
+  }, []);
   const [sessionSwitcherOpen, setSessionSwitcherOpen] = useState(false);
   const closeResultsPanel = useCallback(() => setPanelTab(null), []);
   useEffect(() => {
@@ -1515,7 +1524,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     (supportsSmartCube && bluetoothCubeRef.current?.status.connected) || cubeStartedRef.current
   ), [supportsSmartCube]);
   const onPressDown = useCallback((withWarmup = false): boolean => {
-    if (competitionRef.current.enabled) return false;
+    if (competitionRef.current.enabled || layoutEditingRef.current) return false;
     if (!timerCanHandleAttemptPress(
       phaseSnapshotRef.current,
       attemptCanStartRef.current,
@@ -1526,7 +1535,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     return true;
   }, [smartCubeInputBlocked, timer.onPressDown]);
   const onPressUp = useCallback((): boolean => {
-    if (competitionRef.current.enabled || smartCubeInputBlocked()) return false;
+    if (competitionRef.current.enabled || layoutEditingRef.current || smartCubeInputBlocked()) return false;
     if (!attemptCanStartRef.current && phaseSnapshotRef.current !== 'running') {
       timer.cancelArm();
       return false;
@@ -1601,7 +1610,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     },
     autoReadyOnScramble: () => !competitionRef.current.enabled
       && getSettings().bluetoothAutoReady === 'scrambled',
-    canStartAttempt: () => attemptCanStartRef.current
+    canStartAttempt: () => !layoutEditingRef.current && attemptCanStartRef.current
       && !autoRecapInputBlockedRef.current
       && (!competitionRef.current.enabled || competitionRef.current.canStart()),
     getPhase: () => phaseSnapshotRef.current,
@@ -1695,6 +1704,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       }
       : undefined,
     onMove: (move: string, ts: number, facelets: string, metadata?: CubeMoveMetadata) => {
+      setBluetoothOpen(false);
       liveAnchorRef.current?.move(move, ts);
       const outcome = smartCubeSoloController.move({ facelets, metadata, move, timestamp: ts });
       if (outcome.guidancePenultimate && getSettings().autoCalibrateGyro && gyroQuatRef.current) {
@@ -1986,6 +1996,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   type ExternalRecordContext = ExternalAttempt & { inspectionMs?: number };
   const externalTimeRecordRef = useRef<((ms: number, context?: ExternalRecordContext) => void) | null>(null);
   externalTimeRecordRef.current = (ms: number, context?: ExternalRecordContext) => {
+    if (layoutEditingRef.current) return;
     if (competitionRef.current.enabled) return;
     if (!Number.isFinite(ms) || ms < 0) {
       setInfoToast({
@@ -2013,7 +2024,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const stackmatAttemptRef = useRef<ExternalAttempt | null>(null);
   const stackmat = useStackmat({
     onStart: () => {
-      stackmatAttemptRef.current = attemptCanStartRef.current ? { event, scramble } : null;
+      stackmatAttemptRef.current = !layoutEditingRef.current && attemptCanStartRef.current ? { event, scramble } : null;
     },
     onStop: (ms) => {
       const attempt = stackmatAttemptRef.current;
@@ -2040,7 +2051,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const bluetoothTimer = useBluetoothTimer({
     onNeedMac: requestBluetoothTimerMac,
     onEvent: (timerEvent) => {
-      if (competitionRef.current.enabled) return;
+      if (competitionRef.current.enabled || layoutEditingRef.current) return;
       if (timerEvent.state === 'IDLE' || timerEvent.state === 'GAN_RESET') {
         bluetoothTimerAttemptRef.current = null;
         timer.reset();
@@ -2130,7 +2141,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const { wheelRef: gestureWheelRef } = useGestureWheel({
     surfaceRef,
     canGesture: () => {
-      if (competitionRef.current.enabled) return false;
+      if (competitionRef.current.enabled || layoutEditingRef.current) return false;
       const ph = phaseSnapshotRef.current;
       return timerCanUseGestureWheel(ph);
     },
@@ -2466,7 +2477,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // 成绩 / 图表面板在非桌面宽度下是整屏的(桌面是右侧常驻栏,不挡计时器),所以只有
   // 整屏那一形态要算进「有东西盖住计时器」—— 否则空格会穿到后面预备计时。
   const panelFullscreen = panelTab !== null && !isDesktop;
-  const otherModalOpen = solverBlocking ||
+  const otherModalOpen = layoutEditing || solverBlocking ||
     settingsOpen || bluetoothOpen || bluetoothTimerOpen || stackmatOpen ||
     trainerSubsetOpen !== null || statsModalOpen || historyOverlayOpen ||
     manualEntryOpen || solverOpen || bulkScrambleOpen ||
@@ -3002,11 +3013,20 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   );
 
   return (
-    <TimerWorkspace panelOpen={Boolean(panelTab) && !liveSolutionPanel} recap={liveSolutionPanel ?? solveRecap}
+    <TimerWorkspace resizeLabel={tr({ zh: '拖动调整侧栏宽度', en: 'Drag to resize panel' })} panelOpen={Boolean(panelTab) && !liveSolutionPanel} recap={liveSolutionPanel ?? solveRecap}
       className={`timer-shell${fullscreen ? ' fullscreen' : ''}${distractionFree ? ' is-solving' : ''}${hideAllUi ? ' hide-ui' : ''}${isDesktop && (panelTab || recapSolve || liveSolutionPanel) ? ' panel-open' : ''}${isDesktop && (liveSolutionPanel || (recapSolve && !panelTab)) ? ' recap-open' : ''}`}
+      data-layout-editing={layoutEditing ? '' : undefined}
       data-solving={timer.phase === 'running' ? 'true' : undefined}
       data-mini-program-fullscreen={fullscreen && miniProgramFullscreen ? '' : undefined}
       data-live-reconstruction={liveSolutionPanel ? '' : undefined}
+      style={{
+        '--solo-scramble-gap': `${settings.soloLayout.scrambleGap}px`,
+        '--solo-source-gap': `${settings.soloLayout.sourceGap}px`,
+        '--solo-timer-gap': `${settings.soloLayout.timerGap}px`,
+        '--solo-cube-gap': `${settings.soloLayout.cubeGap}px`,
+        '--solo-source-scale': settings.soloLayout.sourceScale,
+        '--solo-cube-scale': settings.soloLayout.cubeScale,
+      } as React.CSSProperties}
     >
       <TimerPrintController
         currentResult={digitsText}
@@ -3027,7 +3047,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       />
 
       {/* ── Topbar ──────────────────────────────────────────── */}
-      <TimerSoloPage tools={{
+      <TimerSoloPage resizeLabel={tr({ zh: '拖动调整侧栏宽度', en: 'Drag to resize panel' })} tools={{
           tool: tool,
           event: event,
           scramble: scramble,
@@ -3134,6 +3154,16 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           {/* 「难度」开关的落点(内容由 ScrambleSourceBar 里的两个配置组件 portal 过来)。
               摆在「解法」左边,和来源下拉同一组:难度讲的就是这条打乱怎么来的。
               data-no-timer 得挂在这儿 —— 开关已经不在打乱来源条里,借不到那块的豁免。 */}
+          <Tooltip content={tr({ zh: '调整布局', en: 'Edit layout' })}>{tip => (
+            <button {...tip} type="button" className="tb-btn solo-layout-toggle" data-no-timer
+              aria-label={tr({ zh: '调整布局', en: 'Edit layout' })}
+              disabled={!layoutEditing && timer.phase !== 'idle' && timer.phase !== 'stopped'}
+              aria-pressed={layoutEditing}
+              onClick={() => {
+                if (layoutEditing) finishLayoutEditing();
+                else { layoutEditingRef.current = true; setLayoutEditing(true); }
+              }}><LayoutTemplate size={18} strokeWidth={1.6} /></button>
+          )}</Tooltip>
           <span className="shell-topbar-diff" data-no-timer ref={setDiffSlot} />
           {/* 解法提示(手机形态)。桌面同一个组件挂在左侧 .shell-rail 里(见下),
               这里是二选一 —— 两处同时挂就有两个实例抢同一个 ?hints。 */}
@@ -3203,8 +3233,8 @@ scrambleSlot: <TimerScrambleStrip
                     }
                 : undefined}
               title={tr(TIMER_SCRAMBLE_CLICK_TITLE_COPY[scrambleClickEffect])}
-              timingEnabled={scrambleClickEffect === 'start'}
-              onActivate={scrambleClickEffect === 'next' ? sheetNextScramble
+              timingEnabled={!layoutEditing && scrambleClickEffect === 'start'}
+              onActivate={layoutEditing ? undefined : scrambleClickEffect === 'next' ? sheetNextScramble
                 : scrambleClickEffect === 'copy' ? () => {
                   if (!canSwitchScramble()) return;
                   void browserTimerToolTransport.copy(displayScramble).then(() => {
@@ -3447,6 +3477,9 @@ children: <>
         />
       )}
 
+      {layoutEditing && <SoloLayoutEditor surfaceRef={surfaceRef}
+        contentKey={`${displayScramble}:${settings.showCubePreview}:${cubeConnected}`}
+        onDone={finishLayoutEditing} />}
       {settingsOpen && <SettingsPanel event={event} actions={moreItems} playersControl={playersControl} presenceControl={presenceControl} mergeSlotRef={setMergeSlot} onClose={closeSettings} onDataReplaced={() => { trainingRound.reset(); setByEvent(loadAll()); }} />}
 
       {infoToast && (

@@ -317,6 +317,26 @@ describe('等价性 —— 重写只换写法,不换这把', () => {
 });
 
 describe('录了姿态的把:中层不再靠时间猜,转体也写进去', () => {
+  it('keeps a complete measured slice before a later same-axis face turn', () => {
+    const raw = [
+      { m: "F'", ts: 100 }, { m: 'B', ts: 110 }, { m: 'U', ts: 250 },
+      { m: 'F', ts: 400 }, { m: "B'", ts: 425 }, { m: 'F', ts: 1500 },
+    ];
+    const core = { frame: 'scramble' as const, events: [
+      { token: 'z', tMs: 105, angleRad: Math.PI / 2 },
+      { token: "z'", tMs: 410, angleRad: Math.PI / 2 },
+    ] };
+    const original = JSON.stringify({ raw, core });
+    const result = humanizeStream(htmMoves(raw), { core });
+    const closing = result.moves.find(move => move.m === "S'")!;
+    expect([closing.startIdx, closing.endIdx, closing.ts, closing.endTs]).toEqual([3, 4, 400, 425]);
+    expect(result.moves.at(-1)).toMatchObject({ m: 'F', startIdx: 5, endIdx: 5, ts: 1500 });
+    expect(result.rotations).toEqual([]);
+    expect(facesEqual(apply(raw.map(move => move.m)),
+      apply([...result.moves.map(move => move.m), ...T(result.rotation)]))).toBe(true);
+    expect(JSON.stringify({ raw, core })).toBe(original);
+  });
+
   it.each(['z', "z'", 'z2', "z2'"])('F2L rejects %s without changing subsequent face names', (token) => {
     const moves = stamped(T("R U R' U'"), 200);
     const core = { events: [{ tMs: 300, token, angleRad: Math.PI / 2 }] };

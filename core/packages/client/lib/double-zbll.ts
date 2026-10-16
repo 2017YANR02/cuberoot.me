@@ -1,11 +1,12 @@
 /** Downloaded public corpus; no solver or pruning table runs in the browser. */
 import type { AlgCase, AlgFile } from '@cuberoot/shared/alg';
-import { decodeDoubleZbll, DOUBLE_ZBLL_MOVES, DOUBLE_ZBLL_RECORD_BYTES, type DoubleZbllManifest } from '@cuberoot/shared/double-zbll';
+import { decodeDoubleZbll, validDoubleZbllManifest, type DoubleZbllManifest } from '@cuberoot/shared/double-zbll';
 import { caseKey } from './trainer-case-key';
+import { bestErgonomicOrientationIndex, rotateMovesToFrame } from './rotate-solution';
 
 const ROOT = '/data/double-zbll/';
 const CACHE = 'cuberoot-double-zbll-data-v1';
-export const DOUBLE_ZBLL_APP_CACHE = 'cuberoot-double-zbll-app-v1';
+export const DOUBLE_ZBLL_APP_CACHE = 'cuberoot-double-zbll-app-v3';
 interface Corpus { manifest: DoubleZbllManifest; file: AlgFile; data: Uint8Array; indices: Map<string, number> }
 let corpus: Corpus | undefined;
 let pending: Promise<Corpus> | undefined;
@@ -19,12 +20,7 @@ async function readCorpus(read: (path: string) => Promise<Response | undefined>)
   const manifestResponse = await read(`${ROOT}manifest.json`);
   if (!manifestResponse?.ok) throw new Error('Double ZBLL corpus unavailable');
   const manifest = await manifestResponse.json() as DoubleZbllManifest;
-  if (manifest.schema !== 1 || manifest.caseCount !== 472 || manifest.pairCount !== 472 ** 2
-    || manifest.recordBytes !== DOUBLE_ZBLL_RECORD_BYTES || manifest.metric !== 'HTM'
-    || JSON.stringify(manifest.moves) !== JSON.stringify(DOUBLE_ZBLL_MOVES)
-    || !/^pairs-[a-f0-9]{16}\.bin$/.test(manifest.dataFile)
-    || !/^cases-[a-f0-9]{16}\.json$/.test(manifest.casesFile)
-    || manifest.dataBytes !== manifest.pairCount * DOUBLE_ZBLL_RECORD_BYTES) throw new Error('Invalid Double ZBLL manifest');
+  if (!validDoubleZbllManifest(manifest)) throw new Error('Invalid Double ZBLL manifest');
   const [dataResponse, casesResponse] = await Promise.all([read(ROOT + manifest.dataFile), read(ROOT + manifest.casesFile)]);
   if (!dataResponse?.ok || !casesResponse?.ok) throw new Error('Incomplete Double ZBLL corpus');
   const [dataBytes, casesBytes] = await Promise.all([dataResponse.arrayBuffer(), casesResponse.arrayBuffer()]);
@@ -33,16 +29,33 @@ async function readCorpus(read: (path: string) => Promise<Response | undefined>)
   const file = JSON.parse(new TextDecoder().decode(casesBytes)) as AlgFile;
   const indices = new Map(file.cases.map((c, i) => [caseKey(c), i]));
   if (file.cases.length !== manifest.caseCount || indices.size !== manifest.caseCount) throw new Error('Invalid Double ZBLL cases');
+  if (manifest.caseCount === 493 && file.cases.some((c,i) => isDoubleZbllPllCase(c) !== (i >= 472))) throw new Error('Invalid Double ZBLL PLL cases');
   const data = new Uint8Array(dataBytes);
   for (let i = 0; i < manifest.pairCount; i++) decodeDoubleZbll(data, manifest.caseCount, Math.floor(i / manifest.caseCount), i % manifest.caseCount);
   return { manifest, file, data, indices };
 }
 
 export function doubleZbllReady(): boolean { return !!corpus; }
+export const isDoubleZbllPllCase = (c: Pick<AlgCase,'subgroup'>): boolean => c.subgroup.startsWith('PLL/');
+export function doubleZbllPllCases(): AlgCase[] { return corpus?.file.cases.filter(isDoubleZbllPllCase) ?? []; }
 export function doubleZbllSupports(cases: AlgCase[]): boolean { return !!corpus && cases.every(c => corpus!.indices.has(caseKey(c))); }
 export function doubleZbllScramble(top: string, bottom: string): string {
   if (!corpus) throw new Error('Double ZBLL corpus is not loaded');
   return decodeDoubleZbll(corpus.data, corpus.manifest.caseCount, corpus.indices.get(top) ?? -1, corpus.indices.get(bottom) ?? -1);
+}
+
+/** Keep the optimal solution, choosing only its easiest axis-preserving frame. */
+export function orientDoubleZbllScramble(scramble: string): { scramble: string; swapped: boolean; rotation: string } {
+  const candidates = [false, true].flatMap(swapped => ['', 'y', 'y2', "y'"].map(y => {
+    const rotation = [swapped ? 'z2' : '', y].filter(Boolean).join(' ');
+    return { scramble: rotateMovesToFrame(scramble, rotation), swapped, rotation };
+  }));
+  return candidates[bestErgonomicOrientationIndex(candidates.map(candidate => candidate.scramble))];
+}
+
+export function doubleZbllTrainingPair(top: string, bottom: string): { key: string; bottomKey: string; scramble: string } {
+  const oriented = orientDoubleZbllScramble(doubleZbllScramble(top, bottom));
+  return { key: oriented.swapped ? bottom : top, bottomKey: oriented.swapped ? top : bottom, scramble: oriented.scramble };
 }
 
 /** Check for a new version once per page load; retain the verified offline copy on failure. */
@@ -89,9 +102,10 @@ export async function loadDoubleZbll(): Promise<Corpus> {
 }
 
 export async function cachedDoubleZbllCases(): Promise<AlgFile | undefined> {
-  if (corpus) return corpus.file;
+  const zbllOnly = (file: AlgFile): AlgFile => ({ ...file, cases: file.cases.filter(c => !isDoubleZbllPllCase(c)) });
+  if (corpus) return zbllOnly(corpus.file);
   if (typeof caches === 'undefined') return undefined;
-  try { corpus = await readCorpus(path => caches.open(CACHE).then(cache => cache.match(path))); return corpus.file; }
+  try { corpus = await readCorpus(path => caches.open(CACHE).then(cache => cache.match(path))); return zbllOnly(corpus.file); }
   catch { return undefined; }
 }
 
@@ -108,6 +122,20 @@ export function doubleZbllOfflinePages(pathname: string): { scope: string; pages
 
 export function doubleZbllScope(): string {
   return doubleZbllOfflinePages(location.pathname).scope;
+}
+
+const offlineInstalls = new Map<string, Promise<void>>();
+/** One background check/install per scope, including concurrent React mounts. */
+export function ensureDoubleZbllOffline(): Promise<void> {
+  if (typeof navigator === 'undefined' || !('serviceWorker' in navigator) || typeof caches === 'undefined' || navigator.onLine === false) return Promise.resolve();
+  const scope = doubleZbllScope();
+  const pending = offlineInstalls.get(scope);
+  if (pending) return pending;
+  const task = (async () => {
+    if (!await doubleZbllOfflineReady()) await installDoubleZbllOffline(() => {});
+  })().finally(() => { offlineInstalls.delete(scope); });
+  offlineInstalls.set(scope, task);
+  return task;
 }
 
 /** Cache the public trainer shell(s) and their assets; never cache account/API responses. */
@@ -188,7 +216,8 @@ export async function doubleZbllOfflineReady(): Promise<boolean> {
   const [cache, registration] = await Promise.all([caches.open(DOUBLE_ZBLL_APP_CACHE), navigator.serviceWorker.getRegistration(scope)]);
   const marker = await cache.match(markerPath);
   if (!marker) return false;
-  const saved = await marker.json() as { resources?: string[] };
+  const saved = await marker.json() as { resources?: string[]; version?: string };
+  try { if (saved.version !== (await loadDoubleZbll()).manifest.version) return false; } catch { return false; }
   if (!Array.isArray(saved.resources) || !saved.resources.length) return false;
   const resourcesPresent = (await Promise.all(saved.resources.map(path => cache.match(path)))).every(Boolean);
   return resourcesPresent && !!registration?.active && registration.scope === new URL(scope, location.href).href

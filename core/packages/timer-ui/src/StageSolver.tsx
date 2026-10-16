@@ -36,7 +36,7 @@ import { createRustCrossPool, FR_NOT_HTR, HTR_NOT_DR, HTR2_NOT_HTR, type MovesTi
 import { onXCrossProgress, type XCrossProgress } from './stage-solver/rust-cross-tables';
 import { getRustCrossPool, dropRustCrossPool, isRustCrossPoolReady, poolSizeForDevice, type PoolNeed } from './stage-solver/rust-cross-pool';
 import { normalizeWcaScramble as normalizeScramble } from '@cuberoot/shared/normalize-wca-scramble';
-import { rotateSolutionY, Y_ROT_LABEL } from './stage-solver/rotate-solution';
+import { bestErgonomicOrientationIndex, rotateSolutionY, Y_ROT_LABEL } from './stage-solver/rotate-solution';
 import { variantLabel, stageLabel, VARIANT_STAGES } from '@cuberoot/shared/timer/scramble-variants';
 import { countQtm } from '@cuberoot/shared/scramble-length';
 import './StageSolver.css';
@@ -356,35 +356,9 @@ function SlotChipSelect({
 const moveLen = (sol: string) => sol.replace(/^([xyz][2']?\s+)+/, '').split(/\s+/).filter(Boolean).length;
 // QTM(180°=2)走 shared 的 countQtm,单一来源;它本身会跳过 x/y/z 旋转 token。HTM 相同时按它升序排。
 
-// 解法里 F/R/B/L 四个侧面各自的转动数(剥掉前导整体旋转;U/D 中性不计)。
-const sideCounts = (alg: string) => {
-  const body = alg.replace(/^([xyz][2']?\s+)+/, '');
-  let R = 0, L = 0, F = 0, B = 0;
-  for (const tok of body.split(/\s+/)) {
-    const c = tok[0];
-    if (c === 'R') R++; else if (c === 'L') L++; else if (c === 'F') F++; else if (c === 'B') B++;
-  }
-  return { R, L, F, B };
-};
-// 在 0..3 个 y 预转体里挑最顺手的朝向(字典序最大):
-//   ① 主目标 R+L 越多越好(食指/无名指拨,无需换握);
-//   ② 同分时 F≥B(F 比后排的 B 好按)→ 取 F−B 大的;
-//   ③ 再同分(F==B)时 R≥L(右手食指更顺)→ 取 R−L 大的。
-// y 预转体只在 F/R/B/L 间置换、U/D 不变,且 y2 同时交换 R↔L、F↔B → R+L 并列的两个朝向(相差 y2)
-// 恰好是「F 多/B 多」之分(用 ② 决);若它们 F==B,则恰好是「R 多/L 多」之分(用 ③ 决)。全平偏好 0(不额外转体)。
-const bestErgoRot = (alg: string): number => {
-  let best = 0, bRL = -1, bFB = -Infinity, bR_L = -Infinity;
-  for (let n = 0; n < 4; n++) {
-    const { R, L, F, B } = sideCounts(rotateSolutionY(alg, n));
-    const rl = R + L, fb = F - B, r_l = R - L;
-    if (rl > bRL
-      || (rl === bRL && fb > bFB)
-      || (rl === bRL && fb === bFB && r_l > bR_L)) {
-      bRL = rl; bFB = fb; bR_L = r_l; best = n;
-    }
-  }
-  return best;
-};
+// Timer 保留四种 y 朝向；与双底打乱复用同一套顺手程度评分。
+const bestErgoRot = (alg: string): number =>
+  bestErgonomicOrientationIndex([0, 1, 2, 3].map(n => rotateSolutionY(alg, n)));
 
 // 把解法前导的整体旋转(视角前缀 + y 预转体,如 "z2 y")与实际转动分离。
 // 播放器把 lead 折进 setup(打乱之后),只动画 body → 开头的整体转体不参与动画

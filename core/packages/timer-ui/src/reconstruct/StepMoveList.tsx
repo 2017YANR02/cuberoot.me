@@ -31,9 +31,8 @@
 import ReportContent from './ReportContent';
 import { reportNotation, prepareReportNotation } from './report-notation';
 import { initialReportUI, reduceReportUI } from './report-content';
-import { useEffect, useMemo, useState } from 'react';
-import { loadAlg } from '@cuberoot/shared/alg';
-import { reconCommentCaseIndex, reconCommentLinks, type ReconCommentCases } from '@cuberoot/shared/recon/comment-links';
+import { useMemo, useState } from 'react';
+import { useNotationCases } from '../recon/NotationLine';
 
 import { useReconstructHost, type ReconstructHost } from './ReconstructHost';
 
@@ -65,12 +64,7 @@ const NoLineDiagrams: NonNullable<ReconstructHost['LineDiagramProvider']> = ({ c
 export default function StepMoveList({method='cfop',recon,currentIdx,onSeek,notice,feedback}:StepMoveListProps) {
   const host=useReconstructHost(), {LineDiagramProvider=NoLineDiagrams}=host;
   const [ui,setUI]=useState(initialReportUI);
-  const [commentCases,setCommentCases]=useState<ReconCommentCases>(new Map());
-  const caseSets=[...new Set(method==='cfop'?(recon?.lines??[]).flatMap(line=>reconCommentLinks('// '+(line.label??'')).map(link=>link.href.split('/')[3])):[])].sort().join(',');
-  useEffect(()=>{let active=true;if(!caseSets){setCommentCases(new Map());return;}
-    void Promise.all(caseSets.split(',').map(async set=>{try{return [set,reconCommentCaseIndex(set,(await loadAlg('3x3',set)).cases)] as const;}catch{return [set,new Map<string,string>()] as const;}})).then(entries=>{if(active)setCommentCases(new Map(entries));});
-    return ()=>{active=false;};
-  },[caseSets]);
+  const commentCases=useNotationCases((recon?.lines??[]).map(line=>'// '+(line.label??'')).join('\n'),method==='cfop');
   const prepared=useMemo(()=>prepareReportNotation(recon,method,ui.simplified,host.wasteBrackets),[recon,method,ui.simplified,host.wasteBrackets]);
   const projection=prepared.projection;
   if(!recon)return null;
@@ -78,8 +72,9 @@ export default function StepMoveList({method='cfop',recon,currentIdx,onSeek,noti
     const content=reportNotation(recon,method,ui,host.localize,{prepared,currentIdx,canSeek:Boolean(onSeek),cases:commentCases,caseHref:caseHrefAt,inspectionColors:host.inspectionColors,wasteBrackets:host.wasteBrackets,
       notice:notice?{id:'notice',kind:'slot'}:null,feedback:feedback?{id:'feedback',kind:'slot'}:null});
     const slots:Record<string,React.ReactNode>={notice,feedback};
-    projection.lines.forEach((_,i)=>{const line=i+projection.inspectionOffset;slots['diagram:'+line]=<span className="sml-diagram">{diagramAt(line)}</span>;});
+    projection.lines.forEach((_,i)=>{const line=i+projection.inspectionOffset;slots['diagram:'+line]=diagramAt(line);});
     return <ReportContent node={content.node} slots={slots} dispatch={action=>{
+      if(action.copyText)void host.writeClipboardText(action.copyText).catch(err=>console.warn('[step-move-list] copy failed:',err));
       if(action.type==='play-from')onSeek?.(Number(action.value),action.timeMs);
       if(action.type==='copy-notation')void host.writeClipboardText(content.clipboard).then(()=>{
         setUI(state=>reduceReportUI(state,{type:'copied',key:'notation'}));

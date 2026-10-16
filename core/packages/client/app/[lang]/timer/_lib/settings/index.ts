@@ -41,6 +41,7 @@ import {
   type TimerRandomDifficultySettings,
 } from '@cuberoot/shared/timer';
 import { useSyncExternalStore } from 'react';
+import { DEFAULT_SOLO_LAYOUT, normalizeSoloLayout, type SoloLayout } from './layout';
 import { persistItem } from '@/lib/safe-storage';
 import {
   DEFAULT_ROLLING_STAT_COLUMNS,
@@ -60,6 +61,8 @@ export interface TimerSettings extends
   TimerAttemptSplitOptions,
   TimerScramblePreviewSettings,
   TimerRandomDifficultySettings {
+  soloLayout: SoloLayout;
+
   /** Play start/stop/8s/12s sounds via Web Audio. */
   soundsEnabled: boolean;
   /** 0..1 master volume. */
@@ -255,6 +258,7 @@ export interface TimerSettings extends
 }
 
 export const DEFAULTS: TimerSettings = {
+  soloLayout: { ...DEFAULT_SOLO_LAYOUT },
   ...DEFAULT_TIMER_TIMING_SETTINGS,
   ...DEFAULT_TIMER_SMART_CUBE_SETTINGS,
   ...DEFAULT_TIMER_ATTEMPT_SPLIT_SETTINGS,
@@ -347,6 +351,7 @@ function load(): TimerSettings {
       ...normalizedScramblePreview,
       ...normalizedSmartCube,
       ...normalizeTimerTypography(parsed),
+      soloLayout: normalizeSoloLayout(parsed.soloLayout),
       ...normalizeTimerDisplaySettings(parsed),
       ...normalizeTimerPreScrambleSettings(parsed),
       ...normalizeTimerSoundSettings(parsed),
@@ -464,6 +469,7 @@ export function updateSettings(patch: Partial<TimerSettings>): void {
     ...normalizeTimerTimingSettings({ ...candidate, timingEnabled: true }),
     ...normalizeTimerSyncSeed(candidate),
     ...normalizeTimerTypography(candidate),
+    soloLayout: normalizeSoloLayout(candidate.soloLayout),
     ...normalizeTimerDisplaySettings(candidate),
     ...normalizeTimerPreScrambleSettings(candidate),
     ...normalizeTimerSoundSettings(candidate),

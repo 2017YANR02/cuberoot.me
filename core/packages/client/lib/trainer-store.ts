@@ -9,7 +9,7 @@ import {
   trainerSetScrambleFeatures, type F2LFinalAdjustment,
   type F2LSlot, type ScrambleKind,
 } from './trainer-scramble';
-import { doubleZbllScramble, doubleZbllSupports } from './double-zbll';
+import { doubleZbllTrainingPair, doubleZbllSupports, doubleZbllPllCases, isDoubleZbllPllCase } from './double-zbll';
 import { caseKey, findCaseByKey } from './trainer-case-key';
 import {
   isSq1CsTarget,
@@ -363,6 +363,8 @@ interface TrainerState {
   scrambleKind: ScrambleKind;
   doubleZbll: boolean;
   setDoubleZbll: (enabled: boolean) => void;
+  doubleZbllIncludePll: boolean;
+  setDoubleZbllIncludePll: (enabled: boolean) => void;
   timerState: TimerState;
   timerStarted: number;
   observingIdx: number;
@@ -559,6 +561,18 @@ export const trainerPool = (selected: string[], scope: string[] | null): string[
 };
 
 const EMPTY_HIST: ScrambleHist<TrainerHistEntry> = { list: [], idx: -1 };
+
+function doublePllSelection(st: Pick<TrainerState, 'cases' | 'selected' | 'scope'>, enabled: boolean) {
+  const pllCases = doubleZbllPllCases();
+  const pllKeys = new Set([...pllCases, ...st.cases.filter(isDoubleZbllPllCase)].map(caseKey));
+  const added = enabled ? pllCases : [];
+  const select = (keys: string[]) => [...new Set([...keys.filter(key => !pllKeys.has(key)), ...added.map(caseKey)])];
+  return {
+    cases: [...st.cases.filter(c => !isDoubleZbllPllCase(c)), ...added],
+    selected: select(st.selected),
+    scope: st.scope === null ? null : select(st.scope),
+  };
+}
 
 export const useTrainerStore = create<TrainerState>((set, get) => {
   // The store is shared by the legacy and timer-hosted surfaces. A released
@@ -871,9 +885,11 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     const c = findCaseByKey(st.cases, key);
     if (!c) return null;
     const f2lFinalAdjustment = c.sticker.kind === 'f2l' ? nextF2LFinalAdjustment(st) : undefined;
-    const scramble = bottomKey ? doubleZbllScramble(key, bottomKey) : generateTrainerScramble(c, st, f2lFinalAdjustment);
+    const pair = bottomKey ? doubleZbllTrainingPair(key, bottomKey) : undefined;
+    const scramble = pair?.scramble ?? generateTrainerScramble(c, st, f2lFinalAdjustment);
     return {
-      entry: { key, name: c.name, scramble, recap: entryRecap, f2lFinalAdjustment, bottomKey },
+      entry: { key: pair?.key ?? key, name: pair ? findCaseByKey(st.cases, pair.key)!.name : c.name,
+        scramble, recap: entryRecap, f2lFinalAdjustment, bottomKey: pair?.bottomKey },
       recapQueue,
       recapPos,
       recapSig,
@@ -1236,12 +1252,15 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     // 走 aufOpts 而不是直接读 preAuf/postAuf —— 出题(draw)用的就是它,两条路各读各的
     // 会让「重出」这一下和原来那题不是同一套规则(记忆模式尤其明显:那边一律不加 AUF)。
     const regenEntry = (entry: TrainerHistEntry, entryCase: AlgCase): TrainerHistEntry => {
+      // Paired records already contain the selected frame and matching layer keys.
+      // Single-case AUF/font/orientation preferences must not rotate them again.
+      if (entry.bottomKey) return entry;
       const f2lFinalAdjustment = rerollF2LAdjustments && entryCase.sticker.kind === 'f2l'
         ? nextF2LFinalAdjustment(st)
         : entry.f2lFinalAdjustment;
       return {
         ...entry,
-        scramble: entry.bottomKey ? doubleZbllScramble(entry.key, entry.bottomKey) : generateTrainerScramble(entryCase, st, f2lFinalAdjustment),
+        scramble: generateTrainerScramble(entryCase, st, f2lFinalAdjustment),
         f2lFinalAdjustment,
       };
     };
@@ -1284,6 +1303,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     set({
       puzzle,
       doubleZbll: false,
+      doubleZbllIncludePll: false,
       set: sessionId,
       sets,
       cases,
@@ -1375,14 +1395,26 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     // 默认 H*(最优 HTM 打乱);case/set 没有这列时组件的回退 effect 会落回 `inv`
     scrambleKind: 'htm',
     doubleZbll: false,
+    doubleZbllIncludePll: false,
     setDoubleZbll: (enabled) => {
       const st = get();
       if (st.timerState !== TimerState.NOT_RUNNING || st.doubleZbll === enabled) return;
       if (enabled && (st.puzzle !== '3x3' || st.set !== 'zbll' || st.room || st.mode === 'memo' || !doubleZbllSupports(st.cases))) return;
       persistItem('trainer:double-zbll', enabled ? '1' : '0');
       const solves = loadPersisted(st.puzzle!, enabled ? 'zbll:double' : st.set!).solves;
-      set({ doubleZbll: enabled, scrambleKind: enabled ? 'htm' : st.scrambleKind, solves,
+      let includePll = false;
+      try { includePll = enabled && localStorage.getItem('trainer:double-zbll-pll') === '1' && doubleZbllPllCases().length > 0; } catch { /* storage disabled */ }
+      set({ ...doublePllSelection(st, includePll), doubleZbll: enabled, doubleZbllIncludePll: includePll, scrambleKind: enabled ? 'htm' : st.scrambleKind, solves,
         observingIdx: Math.max(0, solves.length - 1), observingPinned: false,
+        hist: EMPTY_HIST, recapQueue: [], recapPos: 0, recapSig: '', peek: null, peek2: null });
+      pickFresh();
+    },
+    setDoubleZbllIncludePll: (enabled) => {
+      const st = get();
+      if (!st.doubleZbll || st.timerState !== TimerState.NOT_RUNNING || st.doubleZbllIncludePll === enabled
+        || (enabled && doubleZbllPllCases().length === 0)) return;
+      persistItem('trainer:double-zbll-pll', enabled ? '1' : '0');
+      set({ ...doublePllSelection(st, enabled), doubleZbllIncludePll: enabled,
         hist: EMPTY_HIST, recapQueue: [], recapPos: 0, recapSig: '', peek: null, peek2: null });
       pickFresh();
     },
@@ -1427,7 +1459,10 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     setSelected: (keys) => {
       const { puzzle, set: setSlug, solves, selected, doubleZbll } = get();
       if (!puzzle || !setSlug) return;
-      if (get().doubleZbll) presetSessionSelection(puzzle, setSlug, keys);
+      if (get().doubleZbll) {
+        const pll = new Set(get().cases.filter(isDoubleZbllPllCase).map(caseKey));
+        presetSessionSelection(puzzle, setSlug, keys.filter(key => !pll.has(key)));
+      }
       persist(puzzle, get().doubleZbll ? `${setSlug}:double` : setSlug, { selected: keys, solves });
       set({ selected: keys });
       if (doubleZbll && (keys.length !== selected.length || keys.some(k => !selected.includes(k)))) {

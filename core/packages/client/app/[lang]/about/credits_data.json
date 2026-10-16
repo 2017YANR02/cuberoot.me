@@ -1088,5 +1088,11 @@
     "url": "https://bellard.org/quickjs/",
     "zh": "Apple Watch 通过 MIT 许可的 QuickJS 核心直接运行既有智能魔方共享代码，避免另写协议和计时规则。",
     "en": "Apple Watch uses the MIT-licensed QuickJS core to run existing shared smart-cube code without duplicating protocols or timing rules."
+  },
+  {
+    "name": "Algorithm Translator / Conrad Rider",
+    "url": "https://cube.rider.biz/algtrans.html",
+    "zh": "模拟器公式变换与逐步改写的功能参考；实现复用本站公式解析和变换逻辑。",
+    "en": "Feature reference for simulator algorithm transformations and step editing, implemented with our existing algorithm parser and transformation utilities."
   }
 ]

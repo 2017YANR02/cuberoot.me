@@ -217,7 +217,7 @@ describe('打乱是还原步骤的第一行', () => {
   });
 
   it('摆的是 recon.scramble', () => {
-    expect(src).toContain("textNode('moves',recon.scramble,'sml-moves')");
+    expect(src).toContain("text:recon.scramble,className:'sml-moves is-seek'");
     expect(src).not.toMatch(/solve\.scramble/);
   });
 
@@ -229,9 +229,9 @@ describe('打乱是还原步骤的第一行', () => {
 
   it('观察那一手印在打乱下面 —— 少了它两边接不上', () => {
     expect(src).toContain('const inspection=projection.inspection');
-    expect(src).toContain(":inspection,'sml-moves'");
+    expect(src).toContain(":inspection,className:'sml-moves is-seek'");
     const scramble = src.indexOf('sml-scramble');
-    const insp = src.indexOf(":inspection,'sml-moves'");
+    const insp = src.indexOf(":inspection,className:'sml-moves is-seek'");
     expect(insp).toBeGreaterThan(scramble);
     expect(insp).toBeLessThan(src.indexOf('...groups,options.notice'));
     // 剪贴板那一份也得带上,否则粘出去的还原步骤照着拧是错的。
@@ -268,7 +268,7 @@ describe('阶段名和阶段用时只出现一次(2026-08-04)', () => {
 
   it('打乱直接展示原文，不再重复组标题', () => {
     expect(src).not.toMatch(/sml-group-head|sml-group-name/);
-    expect(src).toContain("textNode('moves',recon.scramble,'sml-moves')");
+    expect(src).toContain("text:recon.scramble,className:'sml-moves is-seek'");
   });
 
   it('最优评价只保留在分步分析，不重复到动作记录里', () => {

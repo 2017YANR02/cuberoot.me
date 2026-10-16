@@ -6,6 +6,7 @@ import BoolToggle from '../BoolToggle';
 import CubeColorChip from '../CubeColorChip';
 import { useReconstructHost } from './ReconstructHost';
 import { getTextOffsetInElement, snapCaretToLine } from '../recon/text-cursor';
+import NotationLine from '../recon/NotationLine';
 import { notationHit } from './report-notation';
 import type { ReportNode, ReportAction } from './report-content';
 
@@ -17,6 +18,18 @@ export default function ReportContent({node,dispatch,slots={}}:{node:ReportNode|
   if(node.href){
     const content=<ReportContent node={{...node,href:undefined}} dispatch={dispatch} slots={slots}/>;
     return host.renderCaseLink?host.renderCaseLink(node.href,content,'sml-case-link'):<a className="sml-case-link" href={host.localize({en:node.href,zh:'/zh'+node.href})}>{content}</a>;
+  }
+  if(node.notation){
+    const data=node.notation;
+    const body=node.children?.find(child=>child.id==='body');
+    const moves=body?.children?.find(child=>child.id==='moves');
+    return <NotationLine line={data.line} crossColor={data.crossColor} links={data.links}
+      colorHref={colors=>data.colorHrefs[colors]} inspectionColors={data.inspectionColors}
+      diagram={data.diagramId?slots[data.diagramId]:undefined}
+      moves={moves?<ReportContent node={moves} dispatch={dispatch} slots={slots}/>:undefined}
+      className={node.className} state={node.state} bodyClassName="sml-body" diagramClassName="sml-diagram"
+      chipClassName="sml-label-chip" commentClassName="sml-label" localize={host.localize}
+      renderLink={(href,label)=>host.renderCaseLink?host.renderCaseLink(href,label,'sml-case-link'):<a className="sml-case-link" href={host.localize({en:href,zh:'/zh'+href})}>{label}</a>}/>;
   }
   const render=(child:ReportNode)=><ReportContent key={child.id} node={child} dispatch={dispatch} slots={slots}/>;
   const children=node.children?.map(render);

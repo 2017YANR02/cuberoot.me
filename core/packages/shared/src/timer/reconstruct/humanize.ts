@@ -372,7 +372,15 @@ export function humanizeStream(
     const b = counted[i + 1];
     const split = b ? table.get(`${a.m} ${b.m}`) : undefined;
     return !!core && !!b && !!split
-      && coreTurnsIn(core, a.ts, b.endTs, split.rotation).length > 0;
+      && coreTurnsIn(core, a.ts, b.endTs, split.rotation).some(index => {
+        if (core.frame !== 'scramble') return true;
+        const event = core.events[index];
+        // Both encoder notifications must belong to the measured gesture.
+        // An opposite face after a pause must not borrow the earlier slice's
+        // core event merely because its interval starts near that event.
+        const start = event.sliceStartMs ?? event.startMs ?? event.tMs;
+        return a.ts >= start - CORE_EVENT_SLACK_MS && b.endTs <= event.tMs + CORE_EVENT_SLACK_MS;
+      });
   });
   const eligible = counted.map(() => true);
   if (core?.frame === 'scramble') {
@@ -397,9 +405,13 @@ export function humanizeStream(
   // 增量方案；判据是中心块必须回家,不是间隔,也不是「姿态流没看见就算没有」。
   const algebraicPlan = planMerges(counted, table, counted.map(() => false), eligible, boundaries);
   const measuredPlan = planMerges(counted, table, forced, eligible, boundaries);
-  // 姿态阳性只在它能认出更多中层时介入。相同合并数时纯代数方案已经满足中心
-  // 回位,而真机姿态里的短暂倾斜可能恰好落进别的相对面对,不能拿它改写整段。
-  const planned = measuredPlan.size > algebraicPlan.size ? measuredPlan : algebraicPlan;
+  // 优先认出更多中层；数量相同时，已标定姿态可用完整覆盖两条通知的
+  // 实测证据裁决，避免把中层的后半步与下一组动作错配。
+  const supportedPairs = (plan: Set<number>) => [...plan].filter(index => forced[index]).length;
+  const planned = measuredPlan.size > algebraicPlan.size
+    || (core?.frame === 'scramble' && measuredPlan.size === algebraicPlan.size
+      && supportedPairs(measuredPlan) > supportedPairs(algebraicPlan))
+    ? measuredPlan : algebraicPlan;
 
   const out: HtmMove[] = [];
   const rotations: HumanRotation[] = [];

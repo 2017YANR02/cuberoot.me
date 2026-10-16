@@ -6,9 +6,38 @@ import { cubeColorGroups } from '@/components/CubeColorChip/CubeColorChip';
 import { cleanForPlayer } from '@/lib/recon-alg-utils';
 import { visualCubeSchemeForOrientation } from '@/lib/cube-orientation';
 import { tr } from '@/i18n/tr';
-import { loadAlg } from '@cuberoot/shared/alg';
+import { cubeThumbParams } from '@/lib/alg_thumb_plan';
+import { CUBE_ORIENTATIONS, orientedFaceColors } from '@cuberoot/shared/timer';
+import { applyScramble } from '@cuberoot/shared/timer/reconstruct/state';
+import { loadAlg, type AlgSticker } from '@cuberoot/shared/alg';
 import { reconCommentCaseIndex, reconCommentLinks } from '@/lib/recon-comment-links';
 import { algCaseDetailHref, buildCaseSlugMap } from '@/lib/alg_case_link';
+
+// Rebase sticker identities to the current grip before applying the library mask.
+// The displayed state stays unchanged, including non-white crosses.
+function LibraryLineDiagram({ setup, set, sticker, lastSlot }: {
+  setup: string; set: string; sticker?: AlgSticker; lastSlot: boolean;
+}) {
+  const params = cubeThumbParams('3x3', set, sticker ?? { kind: 'raw', tag: '', attrs: {} });
+  const frame = useMemo(() => {
+    const state = applyScramble(3, setup);
+    const faces = ['U', 'R', 'F', 'D', 'L', 'B'] as const;
+    const orientation = CUBE_ORIENTATIONS.find(option => {
+      const shown = orientedFaceColors(option.value);
+      return faces.every(face => shown[face] === state[face][4]);
+    })?.value ?? '';
+    const inverse = CUBE_ORIENTATIONS.find(option => {
+      const shown = orientedFaceColors(option.value);
+      return faces.every(face => shown[state[face][4]] === face);
+    })?.value ?? '';
+    return { orientation, setup: [inverse, setup].filter(Boolean).join(' ') };
+  }, [setup]);
+  return <VisualCube setup={frame.setup} mask={params.mask}
+    scheme={params.scheme ?? visualCubeSchemeForOrientation(frame.orientation, params.view === 'oll' && !params.mask)}
+    view={lastSlot ? 'iso' : params.view} hideGreySides={params.hideGreySides}
+    size={28} local interactive enlargeable
+    alt={tr({ zh: '执行此行前的魔方状态', en: 'Cube state before this line' })} />;
+}
 
 /** Shared pre-line states, F2L masking and library links for recon and timer. */
 export function useReconLineDiagrams(scramble: string, text: string, enabled = true) {
@@ -23,10 +52,12 @@ export function useReconLineDiagrams(scramble: string, text: string, enabled = t
   const [f2lLinks, setF2lLinks] = useState<Map<number, Map<string, string>>>(new Map());
   const [f2lDiagrams, setF2lDiagrams] = useState<Map<number, { colors: string; facelets: string }[]>>(new Map());
   const [f2lLoading, setF2lLoading] = useState(false);
+  const [libraryStickers, setLibraryStickers] = useState<Map<string, AlgSticker>>(new Map());
   const [libraryLinks, setLibraryLinks] = useState<Map<number, Map<string, string>>>(new Map());
   useEffect(() => {
     let cancelled = false;
     setLibraryLinks(new Map());
+    setLibraryStickers(new Map());
     if (!enabled) return;
     // Bare stage labels in manually authored /recon text need the same exact
     // recognition as timer labels. Reuse the matcher and the existing dialog.
@@ -43,10 +74,17 @@ export function useReconLineDiagrams(scramble: string, text: string, enabled = t
           try {
             if (!files.has(set)) files.set(set, loadAlg('3x3', set));
             const file = await files.get(set)!;
+            const slugs = buildCaseSlugMap(file.cases, set);
             const named = reconCommentLinks(line, new Map([[set, reconCommentCaseIndex(set, file.cases)]]));
-            if (named.some(link => link.start === comment.start && /^\/alg\/3x3\/[^/]+\//.test(link.href))) continue;
-            const item = await identifyLibraryCase({ moves: cleanForPlayer(line).split(/\s+/).filter(Boolean) }, file.cases, set);
-            const slug = item?.id == null ? undefined : buildCaseSlugMap(file.cases, set).byId.get(item.id);
+            const namedHref = named.find(link => link.start === comment.start && /^\/alg\/3x3\/[^/]+\//.test(link.href))?.href;
+            const item = namedHref
+              ? file.cases.find(item => item.id != null && algCaseDetailHref('3x3', set, slugs.byId.get(item.id) ?? '') === namedHref)
+              : await identifyLibraryCase({ moves: cleanForPlayer(line).split(/\s+/).filter(Boolean) }, file.cases, set);
+            const sticker = item?.sticker;
+            const key = `${index}:${set}`;
+            if (sticker && !cancelled) setLibraryStickers(current => current.get(key) === sticker ? current : new Map(current).set(key, sticker));
+            if (namedHref) continue;
+            const slug = item?.id == null ? undefined : slugs.byId.get(item.id);
             if (slug) {
               if (!links.has(index)) links.set(index, new Map());
               links.get(index)!.set(set, algCaseDetailHref('3x3', set, slug));
@@ -87,13 +125,10 @@ export function useReconLineDiagrams(scramble: string, text: string, enabled = t
     // Last-slot algorithms still involve the first two layers, even when their
     // names also mention OLL/PLL skips. Show their full pre-line state in 3D.
     const lastSlot = /\b(?:ZBLS|VLS|WV|SV)\b/i.test(label);
-    if (lastSlot && lineSetups[index]) return <VisualCube setup={lineSetups[index]}
-      scheme={visualCubeSchemeForOrientation('')} view="iso" size={28} local interactive enlargeable
-      alt={tr({ zh: '执行此行前的魔方状态', en: 'Cube state before this line' })} />;
-    const topLayer = /\b(?:OLL|OLLCP|PLL|EPLL|ELL|COLL|ZBLL|1LLL)\b/i.test(label);
-    if (topLayer && lineSetups[index]) return <VisualCube setup={lineSetups[index]}
-      scheme={visualCubeSchemeForOrientation('')} view="plan" size={28} local interactive enlargeable
-      alt={tr({ zh: '执行此行前的顶层状态', en: 'Last-layer state before this line' })} />;
+    const set = reconCommentLinks(line).map(link => link.href.split('/')[3])
+      .find(value => value !== 'f2l');
+    if (set && lineSetups[index]) return <LibraryLineDiagram setup={lineSetups[index]}
+      set={set} sticker={libraryStickers.get(`${index}:${set}`)} lastSlot={lastSlot} />;
     const f2l = cubeColorGroups(label).some(group => group.colors.length === 2) || /^F2L(?:[1-4])?\b/i.test(label);
     if (f2l && f2lDiagrams.has(index)) return <>{f2lDiagrams.get(index)!.map(({ colors, facelets }) =>
       <VisualCube key={colors} faceletColors={facelets} view="iso" size={28} local interactive enlargeable

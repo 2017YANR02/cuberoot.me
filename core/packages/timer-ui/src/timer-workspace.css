@@ -19,6 +19,7 @@
 .timer-workspace-panel { min-width: 0; min-height: 0; }
 @media (min-width: 1024px) {
   .timer-workspace.timer-workspace {
+    position: relative;
     display: grid;
     grid-template-columns: minmax(0, 1fr) 0;
     grid-template-rows: auto minmax(0, 1fr);
@@ -26,8 +27,8 @@
     height: var(--timer-workspace-height, calc(100dvh - var(--page-notice-h, 0px)));
     overflow: hidden;
   }
-  .timer-workspace[data-panel-open] { grid-template-columns: minmax(0, 1fr) 360px; }
-  .timer-workspace[data-recap-open] { grid-template-columns: minmax(0, 1fr) clamp(340px, 30vw, 480px); }
+  .timer-workspace[data-panel-open] { grid-template-columns: minmax(0, 1fr) var(--timer-right-dock-width, 360px); }
+  .timer-workspace[data-recap-open] { grid-template-columns: minmax(0, 1fr) var(--timer-right-dock-width, clamp(340px, 30vw, 480px)); }
   .timer-workspace > .shell-topbar { grid-area: topbar; }
   .timer-workspace-main { grid-area: main; }
   .timer-workspace-main--with-toolbar { grid-row: 1 / -1; }
@@ -44,4 +45,31 @@
   .shell-recap-rail > .shell-recap { flex: 1; min-width: 0; height: 100%; border-top: 0; }
   .shell-recap-rail .reconstruct-playback.has-side { grid-template-columns: minmax(0, 1fr); }
   .shell-recap-rail .reconstruct-stage-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.timer-workspace-divider { display: none; }
+@media (min-width: 1024px) {
+  .timer-workspace-divider {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    z-index: 43;
+    width: 24px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: col-resize;
+    touch-action: none;
+  }
+  .timer-workspace-divider--right {
+    display: flex;
+    right: calc(var(--timer-right-dock-width, 360px) - 12px);
+  }
+  .timer-workspace[data-recap-open] > .timer-workspace-divider--right {
+    right: calc(var(--timer-right-dock-width, clamp(340px, 30vw, 480px)) - 12px);
+  }
+  .timer-solver-stage:has(.timer-workspace-divider.is-dragging) { transition: none; }
+  .timer-workspace-divider--left { left: calc(var(--shell-left-inset) - 12px); }
+  .timer-solver-stage:not([data-stage-fullscreen='true']):has(.solver-panel[data-open='true']) > .timer-workspace-divider--left { display: flex; }
+  :is(.hide-ui, [data-timer-hide-ui]) .timer-workspace-divider { visibility: hidden; }
 }

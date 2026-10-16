@@ -33,8 +33,8 @@ export function CaseThumb({
   /** NxN 走本地渲染(瞬时、与同屏其它图同帧出现)。见 `VisualCube` 的 `local`。 */
   local?: boolean;
   /**
-   * `<img>` 路径的原生加载提示。首屏之外的长网格传 'lazy' —— 视口外的图根本不发请求。
-   * 首屏可见的图别传(懒加载会推迟它)。`local` 渲染时无意义(没有请求可省)。
+   * 长网格使用 local + loading="lazy"，接近视口才生成 SVG。少量当前题/弹窗图直接 local。
+   * 网络图片分支仍使用原生 loading 提示。
    */
   loading?: 'lazy' | 'eager';
   /** Override the renderer's generic accessible name when the caller knows the visible case name. */

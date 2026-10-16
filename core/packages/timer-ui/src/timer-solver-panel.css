@@ -186,7 +186,7 @@
   /* :not(.fullscreen) so fullscreen (rail hidden via display:none) doesn't keep a
      phantom left pad — :has() still matches display:none panels otherwise. */
   .timer-solver-stage:not([data-stage-fullscreen='true']):has(.timer-solver-rail .solver-panel[data-open='true']) {
-    --shell-left-inset: var(--solver-rail-w);
+    --shell-left-inset: var(--timer-left-dock-width, var(--solver-rail-w));
   }
   .timer-workspace:has(.timer-solver-rail .solver-panel[data-open='true']) .timer-solver-rail {
     top: 0;
@@ -194,7 +194,7 @@
     bottom: 0;
     align-items: stretch;
     gap: 0;
-    width: var(--solver-rail-w);
+    width: var(--timer-left-dock-width, var(--solver-rail-w));
     border-right: 1px solid var(--shell-divider, var(--border-default));
     background: var(--background);
     overflow-y: auto;

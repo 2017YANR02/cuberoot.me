@@ -67,6 +67,24 @@
   overflow: visible;
 }
 
+/* User spacing stays in normal flow: enlarged content pushes the following
+   regions down instead of covering them. Horizontal placement stays centered. */
+.timer-shell .timing-surface.timing-surface--solo {
+  padding-top: var(--solo-scramble-gap, 16px);
+  row-gap: var(--solo-timer-gap, 20px);
+}
+.timer-shell .timing-surface--solo .scramble-strip .scramble-src-row {
+  /* Cancel the strip's 8px flex gap before applying the requested spacing. */
+  margin-top: calc(var(--solo-source-gap, 16px) - 8px);
+  --timer-scramble-src-fs: calc(12px * var(--solo-source-scale, 1));
+}
+.timer-shell .timing-surface--solo .timing-surface-core {
+  gap: var(--solo-cube-gap, 8px);
+}
+.timer-shell .timing-surface--solo .timing-surface-cube-frame {
+  --cube-h: calc(var(--timer-cube-h) * var(--solo-cube-scale, 1));
+}
+
 /* Sidebars must not contribute their content height to the timer's grid.
    Only the main content may grow the document on short screens. */
 @media (min-width: 1024px) {

@@ -38,8 +38,6 @@ interface OriGroup {
   options: OriOption[];
 }
 
-/** 本地渲染的上限:再多就交给 `<img loading="lazy">`(见 `VisualCube` 的 local 注释)。 */
-const LOCAL_THUMB_BUDGET = 40;
 const THUMB = 40;
 
 function groupsOf(puzzle: AlgPuzzle, setSlug: string, cases: readonly AlgCase[]): OriGroup[] {
@@ -113,8 +111,6 @@ export default function OrientationPicker({
   // 一两组直接摊开(点进来就能挑);多了先收起来,免得把设置面板顶成一屏。
   const open = openRaw ?? groups.length <= 2;
   const pinned = groups.filter(g => (sel[g.key]?.length ?? 0) > 0).length;
-  const thumbs = groups.reduce((n, g) => n + g.options.length, 0);
-  const local = thumbs <= LOCAL_THUMB_BUDGET;
 
   const toggle = (g: OriGroup, off: number) => {
     const cur = sel[g.key] ?? [];
@@ -178,8 +174,8 @@ export default function OrientationPicker({
                             setup={o.setup}
                             size={THUMB}
                             puzzleSize={puzzle === '2x2' ? 2 : 3}
-                            local={local}
-                            loading={local ? undefined : 'lazy'}
+                            local
+                            loading="lazy"
                             alt=""
                           />
                         </button>

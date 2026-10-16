@@ -3,7 +3,7 @@ const approvedCases = new Set(readWorkbookCases(findCheckoutRoot()!).filter(samp
 import { expect, it } from 'vitest';
 import { Alg } from 'cubing/alg';
 import { getCube3 } from '@cuberoot/shared/recon/cube3';
-import { compactCubeRotations } from '@cuberoot/shared/timer/reconstruct/gyro-orient';
+import { compactCubeRotations, conjugateSequence, facePermFor } from '@cuberoot/shared/timer/reconstruct/gyro-orient';
 import { formatReconLine, simplifyF2lRotations, type ReconTextLine, type ReconTextResult } from '@cuberoot/shared/timer/reconstruct/recon-text';
 
 function fixture(moves: string[], kind: ReconTextLine['kind'] = 'f2l'): ReconTextResult {
@@ -54,6 +54,68 @@ it('keeps library bodies intact and maps synthetic y turns to empty encoder rang
   expect(cube.algToTransformation(`${result.inspection} ${result.lines.flatMap(line => line.moves).join(' ')}`)
     .isIdentical(cube.algToTransformation(`${recon.inspection} ${recon.lines.flatMap(line => line.moves).join(' ')}`))).toBe(true);
   expect(JSON.stringify(recon)).toBe(before);
+});
+
+it('restores a matched last-layer library yaw after cross-down changes the face names', async () => {
+  const algorithm = "(R U R' F') (R U R' U') (R' F R2 U' R') U'";
+  const canonical = "R U R' F' R U R' U' R' F R2 U' R'";
+  const cube = await getCube3();
+  for (const yaw of ['', 'y', 'y2', "y'"]) {
+    const moves = conjugateSequence(`U ${canonical} U2`, facePermFor(yaw))!.split(' ');
+    const recon = fixture(moves, 'pll');
+    recon.inspection = '';
+    const line = recon.lines[0];
+    line.moveRanges = moves.map((token, i) => ({ token, ts: i * 100, endTs: i * 100,
+      startIdx: 3 + i, endIdx: 3 + i }));
+    line.libraryCorrection = { algorithm, originalMoves: moves, originalRanges: line.moveRanges! };
+    line.algorithmGroups = [{ from: 1, to: 5 }, { from: 5, to: 9 }, { from: 9, to: 14 }];
+    const before = JSON.stringify(recon);
+    const shown = simplifyF2lRotations(recon);
+    expect(shown.lines[0].moves.join(' '), yaw).toContain(`U ${canonical} U2`);
+    expect(cube.algToTransformation(shown.lines[0].moves.join(' '))
+      .isIdentical(cube.algToTransformation(moves.join(' '))), yaw).toBe(true);
+    expect(shown.lines[0].moveRanges!.filter(range => range.endIdx >= range.startIdx)
+      .map(({ token: _token, ...range }) => range))
+      .toEqual(line.moveRanges!.map(({ token: _token, ...range }) => range));
+    if (yaw) {
+      expect(shown.lines[0].moveRanges![0].endIdx).toBe(shown.lines[0].moveRanges![0].startIdx - 1);
+      expect(shown.lines[0].algorithmGroups).toEqual([{ from: 2, to: 6 }, { from: 6, to: 10 }, { from: 10, to: 15 }]);
+    }
+    expect(JSON.stringify(recon)).toBe(before);
+  }
+});
+
+it('carries the F2L reading frame into an unmatched OLL instead of inventing a regrip', async () => {
+  const recon = fixture("F U F' U F U' F'".split(' '));
+  recon.inspection = '';
+  const oll = { ...fixture("S B U B' U B U2' B' U S'".split(' '), 'oll').lines[0], key: 'oll' };
+  const pll = { ...fixture("R U R' F' R U R' U' R' F R2 U' R'".split(' '), 'pll').lines[0], key: 'pll' };
+  pll.libraryCorrection = { algorithm: pll.moves.join(' '), originalMoves: pll.moves, originalRanges: pll.moveRanges! };
+  recon.lines.push(oll, pll);
+  const before = JSON.stringify(recon);
+  const shown = simplifyF2lRotations(recon);
+  expect(shown.lines.find(line => line.key === 'oll')!.moves.some(token => /^[xyz]/.test(token))).toBe(false);
+  const cube = await getCube3();
+  expect(cube.algToTransformation(`${shown.inspection} ${shown.lines.flatMap(line => line.moves).join(' ')}`)
+    .isIdentical(cube.algToTransformation(recon.lines.flatMap(line => line.moves).join(' ')))).toBe(true);
+  expect(JSON.stringify(recon)).toBe(before);
+});
+
+it('cancels an empty reading-frame prefix when restoring the library yaw', async () => {
+  const canonical = "R U R' F' R U R' U' R' F R2 U' R'";
+  const moves = ["y'", ...conjugateSequence(canonical, facePermFor("y'"))!.split(' ')];
+  const recon = fixture(moves, 'pll');
+  recon.inspection = '';
+  const line = recon.lines[0];
+  line.moveRanges = moves.map((token, i) => ({ token, ts: i * 100, endTs: i * 100, startIdx: i, endIdx: i ? i : -1 }));
+  line.libraryCorrection = { algorithm: canonical, originalMoves: moves, originalRanges: line.moveRanges };
+  const shown = simplifyF2lRotations(recon);
+  expect(shown.lines[0].moves.join(' ')).toBe(`${canonical} y'`);
+  expect(shown.lines[0].moveRanges!.filter(range => range.endIdx >= range.startIdx).map(range => range.startIdx))
+    .toEqual(line.moveRanges.slice(1).map(range => range.startIdx));
+  const cube = await getCube3();
+  expect(cube.algToTransformation(shown.lines[0].moves.join(' '))
+    .isIdentical(cube.algToTransformation(moves.join(' ')))).toBe(true);
 });
 
 it('handles perpendicular long triggers within the same F2L stage', async () => {

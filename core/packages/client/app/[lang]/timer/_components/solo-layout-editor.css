@@ -1,0 +1,95 @@
+.timer-shell[data-layout-editing] .timing-surface--solo :is(.scramble-text, .scramble-src-row, .timer-display-wrap, .timing-surface-cube-frame) {
+  position: relative;
+}
+.solo-layout-handles {
+  position: absolute;
+  inset: -5px;
+  z-index: 5;
+  border: 1px solid color-mix(in srgb, var(--foreground) 16%, transparent);
+  border-radius: 16px;
+  pointer-events: none;
+  transition: border-color 160ms, box-shadow 160ms;
+}
+.solo-layout-handles:has(button:hover, button:focus-visible, button:active) {
+  border-color: color-mix(in srgb, var(--foreground) 44%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--foreground) 4%, transparent);
+}
+.solo-layout-handle {
+  appearance: none;
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted-foreground);
+  touch-action: none;
+  pointer-events: auto;
+  user-select: none;
+  cursor: ns-resize;
+}
+.solo-layout-handle:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; border-radius: 12px; }
+.solo-layout-handle--move { inset: 0; align-items: flex-start; }
+.solo-layout-grip {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 18px;
+  margin-top: -9px;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  background: var(--background);
+}
+.solo-layout-handle--size { right: -13px; bottom: -13px; width: 44px; height: 44px; }
+.solo-layout-size-knob {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--foreground);
+  color: var(--background);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--foreground) 12%, transparent);
+}
+.timer-shell[data-layout-editing] .timing-surface--solo { touch-action: pan-y; }
+.timer-shell .tb-btn.solo-layout-toggle[aria-pressed='true'] { color: var(--foreground); background: var(--shell-hover); }
+.solo-layout-toolbar {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: max-content;
+  max-width: calc(100% - 24px);
+  padding: 6px;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  background: var(--popover);
+  box-shadow: 0 8px 32px color-mix(in srgb, var(--foreground) 8%, transparent);
+  font: 12px/1.4 var(--font-sans);
+  cursor: default;
+}
+.solo-layout-toolbar-label { padding-inline: 12px 4px; color: var(--muted-foreground); white-space: nowrap; }
+.solo-layout-reset, .solo-layout-done {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  flex: 0 0 auto;
+  height: 36px;
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  cursor: pointer;
+}
+.solo-layout-reset { width: 36px; padding: 0; color: var(--muted-foreground); background: transparent; }
+.solo-layout-reset:hover { color: var(--foreground); background: var(--muted); }
+.solo-layout-done { padding-inline: 14px; color: var(--background); background: var(--foreground); font-weight: 600; }
+.solo-layout-toolbar button:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .solo-layout-handles { transition: none; } }

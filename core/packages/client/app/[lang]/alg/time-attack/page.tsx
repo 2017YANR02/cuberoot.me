@@ -84,7 +84,7 @@ function SortableCase({
   return (
     <div ref={setNodeRef} style={style} className={`alg-time-attack-case${isDragging ? ' is-dragging' : ''}`}>
       <div className="alg-time-attack-thumb">
-        <CaseThumb
+        <CaseThumb local
           puzzle={puzzle}
           set={setSlug}
           sticker={c.sticker}

@@ -177,6 +177,7 @@ H11 在本机仅允许源码实现、静态检查和不接触 H11 表文件的�
 
 - 弹窗必须支持点击/触摸外部遮罩关闭,内部操作和从内部拖到外部不得误关;新改弹窗遮罩复用 `useModalDismiss` 返回的 props(已有生命周期用 `useModalBackdrop`),关闭等同取消且不得隐式保存/提交,仅提交中的临时禁用可阻止关闭;hook + CI 检查漏接关闭事件。
 - 新增或复刻任何功能前先全仓搜索现有组件、数据源、工具、交互契约与资源，存在同职责实现时直接复用或先提取单一事实源，禁止复制后改名、各端维护副本或擅自增加源实现没有的内容，跨运行时只保留必要的平台适配层。
+- 复用内嵌逻辑时，能抽取就优先抽取：若逻辑仍属于某个页面、组件或业务入口，先将可共用部分移到职责合适的公共模块，再让原调用方和新调用方共同引用，避免新调用方直接依赖原业务入口或复制实现。抽取保持原调用方行为不变；已经独立的公共实现直接复用，不为抽取而新增无必要的层级或 package。
 - 优先编辑已有文件；typecheck 范围遵循全局验证规则。
 - 改动先定位根因,禁止在症状点打补丁;根因定位后落地用最小实现,不臆造抽象层/翻译层。
 - 展示格式化、隐藏步骤和本地化后的值只用于渲染或复制;播放器、计算、校验、保存、API 和派生状态必须使用无损原值,登录/管理员态只能增加操作能力,不得改变公开内容语义。
@@ -201,6 +202,7 @@ H11 在本机仅允许源码实现、静态检查和不接触 H11 表文件的�
 - 浏览器基线跟随当前 Next 官方支持范围，禁为旧 WebView/开发者工具下调 `browserslist`；旧内核走全站启动失败提示，顶层 `ssr:false` 加载态用 `ClientLoadStatus`。CI:`browser-support-policy.test.ts` + `timer-bootstrap.test.ts`。
 - 项目菜单统一用 `components/PuzzlePicker`;WCA 筛选用默认菜单式 `WcaEventSelector`/`WcaEventMultiSelector`，师生编辑和双人计时浮层显式 `presentation="inline"`；比赛列表保留项目表头；禁页面自写项目菜单。hook + CI 守卫:`component-reuse-guard`。
 - `/alg` case 详情统一走 `AlgCaseView`:静态主图用 `CaseThumb`,动画用 `AlgPlayer`;多朝向不得省略主图或另造结构,桌面一行一朝向且动画左公式右。
+- **魔方静态图的本地绘制（2026-10-16）**：`/alg`、`/recon`、`/timer` 的应用内状态图优先复用现有 `CaseThumb` / `VisualCube` / 计时器共享绘图器，不依赖 `/v1/visualcube.svg` 的网络往返。当前题、上一个、弹窗等少量图使用 `local`；长列表、选择网格和旧成绩必须使用 `local` + `loading="lazy"`，由 `VisualCube` 复用 `LazyVisible`，在接近视口后才生成 SVG，并预留准确宽高。禁止为了本地化一次同步生成全库，也禁止把旧记录悄悄切回网络图；新增同类页面沿用此契约。动画继续用既有播放器，视频封面、静态资源与对外可分享的 SVG URL 不属本地绘图替换范围。回归见 `tests/visualcube-lazy-local.test.ts`；相关技能见 `.agents/skills/visualcube/SKILL.md`。
 - 全局固定按钮对齐内容右沿:`right: max(16px, calc((100vw - <content-max-width>) / 2))`。
 - chip/tab/下拉项不显示数量计数。
 - WCA 时间锚点:时间序列默认视图从 2003-08-22 起步(第 0 帧 = 1982 快照),统计聚合必含 1982 场。

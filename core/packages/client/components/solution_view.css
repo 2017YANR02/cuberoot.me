@@ -1,37 +1,5 @@
 /* SolutionView 共享样式 — 详情页和编辑页(标准化只读视图)都用 */
 
-.detail-solution-text:has(.recon-case-diagram) .recon-plain-line {
-  display: inline-block;
-  box-sizing: border-box;
-  max-width: 100%;
-  padding-inline-start: var(--recon-diagram-indent, 32px);
-}
-
-.recon-case-line {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  max-width: 100%;
-  vertical-align: middle;
-}
-
-.recon-case-line-text {
-  flex: 0 1 auto;
-  min-width: 0;
-}
-
-.recon-case-diagram {
-  display: inline-flex;
-  flex: 0 0 auto;
-  gap: 4px;
-  line-height: 0;
-}
-
-.recon-inspection-chip {
-  display: inline-block;
-  margin-inline-start: 6px;
-}
-
 .recon-solution-input {
   position: relative;
 }
@@ -66,24 +34,6 @@
 .recon-step-label {
   color: var(--accent);
   font-weight: 500;
-}
-
-/* 和计时器复盘一致:色块贴着它解释的颜色字母。 */
-.recon-label-chip {
-  width: 17px;
-  height: 11px;
-}
-
-.detail-solution-text .recon-comment-link {
-  color: inherit;
-  text-decoration: underline dotted;
-  text-underline-offset: 3px;
-  cursor: pointer;
-}
-.detail-solution-text .recon-comment-link:hover,
-.detail-solution-text .recon-comment-link:focus-visible {
-  color: var(--accent);
-  text-decoration-style: solid;
 }
 
 /* 解法文本中的可视闪烁光标 */
