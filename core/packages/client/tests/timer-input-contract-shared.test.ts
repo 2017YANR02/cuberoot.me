@@ -494,13 +494,13 @@ describe('Web migration consumes the shared contract', () => {
     expect(soloSource).toContain('timerCanHandleAttemptPress(');
     expect(soloSource.match(/timer\.onPressDown\(\)/g)).toHaveLength(2);
     expect(soloSource).toMatch(
-      /if \(competitionRef\.current\.enabled\) return false;\s*if \(!timerCanHandleAttemptPress\([\s\S]*?timer\.onPressDown\(\)/,
+      /if \(competitionRef\.current\.enabled \|\| layoutEditingRef\.current\) return false;\s*if \(!timerCanHandleAttemptPress\([\s\S]*?timer\.onPressDown\(\)/,
     );
     expect(soloSource).toMatch(
       /if \(!await competition\.begin\(scrambleTarget, bluetoothCube\.status\)\) return;[\s\S]*?if \(!latest\?\.status\.connected \|\| latest\.hijacked \|\| !latestFaces \|\| toFaceletString\(latestFaces\) !== scrambleTarget\) \{[\s\S]*?return;\s*\}\s*timer\.onPressDown\(\)/,
     );
     expect(soloSource).toMatch(
-      /new SmartCubeSoloTimerController[\s\S]*?canStartAttempt: \(\) => attemptCanStartRef\.current[\s\S]*?competitionRef\.current\.canStart\(\)[\s\S]*?startFromCube: \(timestamp\) => \{[\s\S]*?timerHandleRef\.current\.startFromCube\(timestamp\)/,
+      /new SmartCubeSoloTimerController[\s\S]*?canStartAttempt: \(\) => !layoutEditingRef\.current && attemptCanStartRef\.current[\s\S]*?competitionRef\.current\.canStart\(\)[\s\S]*?startFromCube: \(timestamp\) => \{[\s\S]*?timerHandleRef\.current\.startFromCube\(timestamp\)/,
     );
     expect(soloSource).toMatch(
       /if \(timerEvent\.state === 'RUNNING'\)[\s\S]*?if \(!attemptCanStartRef\.current\)[\s\S]*?timer\.startNow/,
