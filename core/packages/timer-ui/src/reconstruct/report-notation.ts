@@ -34,7 +34,7 @@ export function reportNotation(recon:ReconTextResult|null,method:MethodId,state:
       comments.length?groupNode('comment',comments,'sml-label','flow'):null,
     ],'sml-body','flow');
     const row={...groupNode(line.key,[line.kind!=='cross'&&line.kind!=='inspection'?{id:`diagram:${sourceLine}`,kind:'slot' as const}:null,body],'sml-line sml-line-with-diagram','flow'),state:reconNotationState(line,options.currentIdx)??undefined};
-    if(groupKey!==item.groupKey){groupKey=item.groupKey;groups.push(groupNode('group:'+groupKey,[],'sml-group'));}
+    if(groupKey!==item.groupKey){groupKey=item.groupKey;groups.push({...groupNode('group:'+groupKey,[],'sml-group'),stage:line.kind});}
     groups.at(-1)!.children!.push(row);
   }
   const inspection=projection.inspection;

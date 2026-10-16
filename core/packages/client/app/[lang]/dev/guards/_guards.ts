@@ -52,11 +52,11 @@ export const PAIRED_GUARDS: PairedGuard[] = [
   },
   {
     id: 'site-material',
+    scope: 'project',
+    hook: 'hook-detect-site-material.mjs',
     // Includes the 11 scenery-content policies for formula/reconstruction
     // reading sections; CI also requires their transparent adapters to remain.
     // Real write rejection verified 2026-10-15; see docs/glass-menu-regression.md.
-    scope: 'project',
-    hook: 'hook-detect-site-material.mjs',
     test: 'site-material-guard.test.ts',
     baseline: '0',
     zh: { title: '背景材质统一复用', desc: '玻璃材质在 glass-material.css 定义，公共适配放 site-surfaces.css。底框规则仅针对 site-surface-policy.mts 中已确认的布局容器，标题只约束分隔边线；复用现有 Hook 和 CI 扫描，不增加独立检查任务。audit:surfaces 和菜单巡检按需运行，不作为日常提交门槛。新候选先人工确认，正常卡片、控件和焦点边界不禁用。承载菜单的外层不能直接加模糊，短提示复用 Tooltip。静态检查不覆盖任意动态样式，例外沿用同一行 allow-site-material 及具体理由。' },

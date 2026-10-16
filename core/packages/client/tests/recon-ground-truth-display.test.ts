@@ -1,3 +1,4 @@
+// guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 // @vitest-environment jsdom
 import { act, createElement } from 'react';
 import { createRoot } from 'react-dom/client';

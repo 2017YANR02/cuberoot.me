@@ -50,7 +50,7 @@ it('reuses cross normalization for display and copy without rewriting playback d
     await act(async () => host.querySelector<HTMLButtonElement>('.sml-copy')!.click());
     expect(copy).toHaveBeenLastCalledWith(expect.stringContaining(normalized));
     await act(async () => host.querySelector<HTMLButtonElement>('[data-stage="cross"] .sml-moves')!.click());
-    expect(seek).toHaveBeenLastCalledWith(0);
+    expect(seek).toHaveBeenLastCalledWith(0, undefined);
     expect(JSON.stringify(recon)).toBe(original);
     expect(host.querySelector('a[href="/zh/alg/3x3/oll/s+"]')?.textContent).toBe('OLL-S+');
     expect(host.querySelector('a[href="/zh/alg/3x3/pll/a+"]')?.textContent).toBe('PLL-A+');

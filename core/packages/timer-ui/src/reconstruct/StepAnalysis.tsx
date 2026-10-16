@@ -28,25 +28,21 @@
  * table nobody can read.
  */
 
-import { reportSeconds as sec } from './report-presentation';
 import ReportContent from './ReportContent';
 import { reportStepTable, initialReportUI, reduceReportUI } from './report-content';
 import { useMemo, useState } from 'react';
-import { buildCfopColumns, buildWalkColumns, reportStepSequences, reportTableVisibility, columnTotals, stageAverageDelta, type Col } from './report-columns';
+import { buildCfopColumns, buildWalkColumns, reportStepSequences, type Col } from './report-columns';
 
-import { useReconstructHost, type ReconstructLocalize } from './ReconstructHost';
+import { useReconstructHost } from './ReconstructHost';
 import type { StageAverages } from '@cuberoot/shared/timer/reconstruct/stage-segments';
 import type { StageSegments } from '@cuberoot/shared/timer/reconstruct/stage-segments';
 import type { StepMetricsResult } from '@cuberoot/shared/timer/reconstruct/step-metrics';
-import { tokensForRange } from '@cuberoot/shared/timer/reconstruct/step-metrics';
-import { htmMoves } from '@cuberoot/shared/timer/reconstruct/htm';
 import type { SolveMove } from '@cuberoot/shared/timer/reconstruct/stage-segments';
 import type { ReferenceResult, SlotReference } from '@cuberoot/shared/timer/reconstruct/reference';
-import { gradeForDelta } from '@cuberoot/shared/timer/reconstruct/reference';
 import type { F2lSlotsResult } from '@cuberoot/shared/timer/reconstruct/f2l-slots';
 import type { MethodWalkResult } from '@cuberoot/shared/timer/reconstruct/method-walk';
 import MethodPicker from './MethodPicker';
-import { formattedReconMoves, type ReconTextLine } from '@cuberoot/shared/timer/reconstruct/recon-text';
+import { type ReconTextLine } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import type { MethodId } from '@cuberoot/shared/timer/reconstruct/methods';
 import { rotationsByStep, stepTimeBounds } from '@cuberoot/shared/timer/reconstruct/rotation-detect';
 
@@ -88,20 +84,8 @@ export interface StepAnalysisProps {
 }
 
 
-const num = (n: number | null | undefined): string =>
-  n === null || n === undefined ? '–' : String(n);
 
-/** Only the exact reference match gets a badge; negative deltas stay numeric. */
-function gradeLabel(tr: ReconstructLocalize): string {
-  return tr({ zh: '最优', en: 'Optimal' });
-}
 
-function gradeTitle(tr: ReconstructLocalize): string {
-  return tr({
-    zh: '和参考解法一样短',
-    en: 'As short as the reference line',
-  });
-}
 
 export default function StepAnalysis(props: StepAnalysisProps) {
   const { localize: tr } = useReconstructHost();
@@ -132,7 +116,6 @@ export default function StepAnalysis(props: StepAnalysisProps) {
     return rotationsByStep(rotations, bounds).map(r => r.length);
   }, [rotations, cols, moves]);
 
-  const totals = useMemo(() => columnTotals(cols), [cols]);
 
   // Per-step sequences, cut at the same boundaries the numbers use: a step owns
   // `(previous step's last move, its own last move]`. A column with no boundary

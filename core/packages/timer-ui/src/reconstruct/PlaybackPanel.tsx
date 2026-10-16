@@ -40,11 +40,7 @@ import { reportPlayback, reportPlayerAction, playbackMoveDurationTicks, type Rep
 import type { ReportAction } from './report-content';
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import {
-  ChevronLeft, ChevronRight, Play, Pause, SkipBack, SkipForward,
-} from 'lucide-react';
 
-import DefaultBoolToggle from '../BoolToggle';
 import { useReconstructHost } from './ReconstructHost';
 
 import type { EventId } from '@cuberoot/shared/timer';
@@ -60,7 +56,7 @@ import type { SolveMove } from '@cuberoot/shared/timer/reconstruct/stage-segment
 import type { MethodId } from '@cuberoot/shared/timer/reconstruct/methods';
 import SolveTimeline from './SolveTimeline';
 import type { SolveTimelineHandle } from './SolveTimeline';
-import { reconstructedTrack, playbackIndexAt, playbackEndMs, playbackSeek, rawPlaybackTarget, playbackFrame, type PlaybackMove } from './playback-track';
+import { reconstructedTrack, playbackIndexAt, playbackEndMs, rawPlaybackTarget, playbackFrame, type PlaybackMove } from './playback-track';
 
 // WebGL + the /sim engine. The panel stays visible; the cube itself mounts only
 // when it nears the viewport (see cubeNear below).
@@ -90,18 +86,13 @@ interface Props {
   viewRotation?: string;
 }
 
-const SPEEDS: Array<{ key: string; label: string; mult: number }> = [
-  { key: '0.5x', label: '0.5x', mult: 0.5 },
-  { key: '1x',   label: '1x',   mult: 1 },
-  { key: '2x',   label: '2x',   mult: 2 },
-];
 
 const formatSec = reportSeconds;
 
 export default function PlaybackPanel({
   method, event, scramble, moves: rawMoves, totalMs, lines, rotations, side, gyro, deviceModel, viewRotation,
 }: Props) {
-  const { localize: tr, BoolToggle = DefaultBoolToggle } = useReconstructHost();
+  const { localize: tr } = useReconstructHost();
   // /sim 只画 NxN;这里只有 3x3 会有动作流(智能魔方就这一种),别的项目退回预览图。
   const isNxn3 = nxnSizeForEvent(event) === 3;
   const [playing, setPlaying] = useState(false);
@@ -187,7 +178,6 @@ export default function PlaybackPanel({
     ? `${scramble} ${moves.slice(0, idx).map(m => m.m).join(' ')}`
     : scramble;
 
-  const tsOf = (i: number) => (i <= 0 ? 0 : (moves[Math.min(i, total) - 1]?.ts ?? 0));
   const elapsedMs = playFromRef.current;
   const lastTs = playbackEndMs(moves, rawMoves);
 
@@ -255,9 +245,6 @@ export default function PlaybackPanel({
   );
   const simPose = !useRebuilt && !posed && viewRotation ? viewRotation : '';
 
-  const playLabel = playing
-    ? tr({ zh: '暂停', en: 'Pause' })
-    : (idx >= total ? tr({ zh: '重播', en: 'Replay' }) : tr({ zh: '播放', en: 'Play' }));
 
   return <ReportContent node={reportPlayback(playerRef.current,total,totalMs,hasGyro,Boolean(side),tr)} dispatch={dispatchPlayer} slots={{
     cube:<div ref={cubeBoxRef} className={`reconstruct-playback-cube${gyroOn ? ' is-gyro' : ''}`}>

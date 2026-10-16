@@ -20,7 +20,7 @@ export interface ReportNode {
   children?: ReportNode[]; action?: ReportAction; disabled?: boolean; selected?: boolean;
   value?: number | boolean | string; options?: { value: number; label: string }[];
   columns?: ReportNode[]; rows?: { id: string; label: string; className?: string; cells: ReportNode[] }[];
-  tone?: number; href?: string; state?: string; colors?: string; fills?: string[];
+  tone?: number; href?: string; state?: string; stage?: string; colors?: string; fills?: string[];
   segments?: {id:string;fraction:number;tone:number;label:string}[];
   tokens?: {token:string;before:ReportAction;after:ReportAction}[];
 }

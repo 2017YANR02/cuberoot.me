@@ -33,17 +33,12 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronDown, ChevronRight, ThumbsUp, ThumbsDown, Info } from 'lucide-react';
 import type { Solve, EventId } from '@cuberoot/shared/timer';
-import { effectiveMs } from '@cuberoot/shared/timer';
-import { formatMs } from '@cuberoot/shared/timer';
 import { sliceReconstruction, detectMemoPause } from '@cuberoot/shared/timer/reconstruct/slice';
 import { computeStageAverages } from '@cuberoot/shared/timer/reconstruct/stage-segments';
 import type { StepMetricsResult } from '@cuberoot/shared/timer/reconstruct/step-metrics';
 import { detectWastedWork } from '@cuberoot/shared/timer/reconstruct/error-detect';
-import type { ReferenceResult, StageReference } from '@cuberoot/shared/timer/reconstruct/reference';
 import { walkMethod, detectSolveMethod } from '@cuberoot/shared/timer/reconstruct/method-walk';
 
 import { type GyroSample } from '@cuberoot/shared/smart-cube/gyro-track';
@@ -52,17 +47,16 @@ import { createLiveReconstructionStream, reconstructionAnalyzer } from './analys
 import type { AnalysisInput, AnalysisSnapshot } from './analysis-protocol';
 import StepAnalysis from './StepAnalysis';
 import ReportContent from './ReportContent';
-import { reportComposition, reportNotationExtras, reportSummary, reportRawMoves, reportReferences, reportMeta, reportBld, reportNoGyro, reportFeedback, initialReportUI, reduceReportUI, resolveReportSlots } from './report-content';
+import { reportComposition, reportNotationExtras, reportSummary, reportRawMoves, reportReferences, reportMeta, reportBld, initialReportUI, reduceReportUI, resolveReportSlots } from './report-content';
 import { rememberMethodStages, useMethodHistory } from './method-history';
 import StepMoveList from './StepMoveList';
-import { projectReferenceRows, reconstructionSummary } from './report-presentation';
+import { reconstructionSummary } from './report-presentation';
 import ReconstructActions from './ReconstructActions';
 
-import { timerEventNxnSize as nxnSizeForEvent } from '@cuberoot/shared/timer';
 import { memoize3bld } from '@cuberoot/shared/timer/reconstruct/bld-helper';
 import PlaybackPanel from './PlaybackPanel';
 import './reconstruct.css';
-import { ReconstructHostContext, useReconstructHost, type ReconstructHost, type ReconstructLocalize } from './ReconstructHost';
+import { ReconstructHostContext, useReconstructHost, type ReconstructHost } from './ReconstructHost';
 export type { ReconstructHost } from './ReconstructHost';
 
 export interface ReconstructReportProps {
@@ -105,52 +99,8 @@ const BLD_AUTO_DETECT_EVENTS = new Set<EventId>(['333bld', '444bld', '555bld', '
 // 4BLD/5BLD have wings/x-centers/+centers that the 3x3 helper can't handle.
 const BLD_MEMO_EVENTS = new Set<EventId>(['333bld', '333ni']);
 
-function formatSec(ms: number, digits = 2): string {
-  return (ms / 1000).toFixed(digits) + 's';
-}
 
-interface AccordionSectionProps {
-  title: ReactNode;
-  /** When true, this section is collapsible with a chevron header.
-   *  When false, the title still renders but content is always shown. */
-  collapsible: boolean;
-  expanded: boolean;
-  onToggle: () => void;
-  className?: string;
-  children: ReactNode;
-}
 
-function AccordionSection({
-  title, collapsible, expanded, onToggle, className, children,
-}: AccordionSectionProps) {
-  const cls = `reconstruct-section${className ? ' ' + className : ''}${collapsible ? ' reconstruct-section-collapsible' : ''}`;
-  if (!collapsible) {
-    return (
-      <div className={cls}>
-        <div className="reconstruct-section-title">{title}</div>
-        {children}
-      </div>
-    );
-  }
-  return (
-    <div className={cls}>
-      <button
-        type="button"
-        className="reconstruct-section-header"
-        onClick={onToggle}
-        aria-expanded={expanded}
-      >
-        {expanded
-          ? <ChevronDown size={14} />
-          : <ChevronRight size={14} />}
-        <span className="reconstruct-section-title reconstruct-section-title-inline">
-          {title}
-        </span>
-      </button>
-      {expanded && children}
-    </div>
-  );
-}
 
 function ReconstructReportBody({
   solve, isZh, history, onMemoApply, onUseScramble, onReconFeedback, hideDate, hideActions, live = false, liveStageTarget, liveGyroSamples,
@@ -258,9 +208,7 @@ function ReconstructReportBody({
 
   // 回放固定展示；折叠只留给「参考解法」和「原始动作序列」这类附加内容。
   const [reportUI, setReportUI] = useState(initialReportUI);
-  const playbackAvailable = moves.length > 0 && nxnSizeForEvent(solve.event) !== null;
 
-  const eff = effectiveMs(solve);
   const dt = new Date(solve.ts);
   const memoMs = solve.bld?.memoMs;
 
@@ -418,40 +366,7 @@ function ReconstructReportBody({
   }}/>;
 }
 
-/**
- * 「这把没录姿态」—— 只在**确实还有拿不准的地方**时说一句。
- *
- * 中层是靠「中心块必须回家」这条约束配对的,录没录姿态都一样(见 `humanize.ts`
- * 头注);姿态流做的是加法 —— 实测到核心换格的那几对直接钉死,不必等配对。所以
- * 没录姿态时,配不上的那几对就只能按两手真转写,而它们本来也可能是一个中层。
- *
- * 转体则完全是另一回事:陀螺仪装在中心核里,姿态流是「这儿有没有转体」的**唯一**
- * 证据(见 `_lib/reconstruct/core_track.ts`),没录就一个都推不出来。
- *
- * 这一行的存在理由是**别默默降级**:少认一个中层和正常输出长得一样,用户没有别的
- * 办法知道。所以条件卡得很紧 —— 这把没有姿态流,**并且**确实有配不上的相对面
- * (`blindPairs > 0`)。中层都配上了的把不会看到它。
- */
-function NoGyroNotice() {
-  const host=useReconstructHost();
-  return <ReportContent node={reportNoGyro(host.recordGyro,Boolean(host.onEnableGyro),host.localize)} dispatch={()=>host.onEnableGyro?.()}/>;
-}
 
-/**
- * 「这份复盘对不对?」 —— 两个按钮,不改任何一个数字。
- *
- * 阶段切分是**推**出来的:魔方只报转了什么,不报你心里把哪一手当成 F2L 的开始。
- * 边界推错的那把,表里每个数都跟着错,而唯一知道错了的人是刚拧完的那个。这一行
- * 就是给他一个说「不对」的地方 —— 答案落在 `Solve.reconOk` 上,和那把成绩存在
- * 一起,以后要查切分 bug 时有样本可捞。
- *
- * 再按一次同一个按钮 = 收回答案(回到「没问过」),因为误点比不答更常见。
- */
-function ReconFeedback({value,onChange}:{value:boolean|undefined;onChange:(v:boolean|undefined)=>void}) {
-  const {localize:tr}=useReconstructHost();
-  const state=initialReportUI(value);
-  return <ReportContent node={reportFeedback(state,tr)} dispatch={action=>onChange(reduceReportUI(state,action).feedback??undefined)}/>;
-}
 
 /** 0-100 with its three components. Pending renders the same row with dashes
  *  so the report doesn't jump when the search lands. */

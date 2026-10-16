@@ -266,13 +266,14 @@ describe('installed App GAN lifecycle integration', () => {
     const disconnect = vi.fn(async () => undefined);
     const resetState = vi.fn();
     await act(async () => setRadio({ ...radio, disconnect, resetState }));
-    const selector = container.querySelector<HTMLSelectElement>('.shell-players-select')!;
+    await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Settings"]')!.click());
+    const selector = document.querySelector<HTMLSelectElement>('.settings-modal .shell-players-select')!;
     await act(async () => {
       selector.value = mode;
       selector.dispatchEvent(new Event('change', { bubbles: true }));
     });
     await settle();
-    await act(async () => container.querySelector<HTMLButtonElement>('.timer-stage-footer .shell-device-center-trigger')!.click());
+    await act(async () => container.querySelector<HTMLButtonElement>('.shell-device-center-trigger')!.click());
     // Both the chooser and the connected shortcut lead to the same operation dialog.
     await act(async () => container.querySelector<HTMLButtonElement>('[role="menuitem"]')?.click());
     const dialog = document.querySelector<HTMLElement>('.timer-smart-cube-device__modal')!;

@@ -286,7 +286,7 @@ describe('mobile displayed-scramble history', () => {
 
   it('uses the shared stage footer without changing timer gestures', () => {
     expect(app).toContain('<TimerSoloPage');
-    expect(app).toContain('devices: smartCubeDeviceCenter');
+    expect(app).toContain('deviceControls={smartCubeDeviceCenter}');
     const page = readFileSync(new URL(import.meta.resolve('@cuberoot/timer-ui/TimerSoloPage')), 'utf8');
     expect(page).toContain('<TimerStageLayout');
     expect(page).toContain('<TimingSurface {...timing} layout="solo" />');

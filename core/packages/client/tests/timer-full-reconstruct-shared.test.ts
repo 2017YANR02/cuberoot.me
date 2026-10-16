@@ -11,7 +11,6 @@ import { decodeReplayParam } from '@/app/[lang]/timer/_lib/share/decode';
 import ReconstructReport, { type ReconstructHost } from '@cuberoot/timer-ui/reconstruct-report';
 import SolveRecap from '@cuberoot/timer-ui/solve-recap';
 import { reconstructionAnalyzer } from '@cuberoot/timer-ui/reconstruct-analysis';
-import { METHODS } from '@cuberoot/shared/timer/reconstruct/methods';
 
 vi.mock('@cuberoot/timer-ui/SimCubeView', () => ({
   default: ({ moves }: { moves: string[] }) => createElement('div', { 'data-replay-moves': moves.join(' ') }),

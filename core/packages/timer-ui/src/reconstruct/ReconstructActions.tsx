@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import ReportContent from './ReportContent';
 import { reportActions, initialReportUI, reduceReportUI } from './report-content';
-import { Check, Forward } from 'lucide-react';
 import type { Solve } from '@cuberoot/shared/timer';
 import type { ReconstructHost } from './ReconstructHost';
 
