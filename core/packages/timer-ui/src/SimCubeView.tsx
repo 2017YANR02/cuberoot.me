@@ -70,7 +70,7 @@ import type World from '@cuberoot/puzzle-render-core/engine/world';
 import type NxnCube from '@cuberoot/puzzle-render-core/engine/nxn/cube';
 import type Controller from '@cuberoot/puzzle-render-core/engine/nxn/controller';
 import type { SimMount } from '@cuberoot/puzzle-render-core/sim/mountSimWorld';
-import { FRONT_SCENE_ROT, homeSceneRot, ORBIT_K, orbitScene } from '@cuberoot/puzzle-render-core/engine/viewControls';
+import { liveCubeSceneRotation as sceneRotation, ORBIT_K, orbitScene } from '@cuberoot/puzzle-render-core/engine/viewControls';
 import {
   appendedSlicePair,
   planLiveSimUpdate,
@@ -111,14 +111,6 @@ type CubeView = 'iso' | 'front' | 'smart';
 
 /** DCTimer-BLE cameras look at the origin from (0,4.1,7.2) with gyro,
  *  or (4.8,4.1,7.2) without. Our fixed camera uses the inverse scene orbit. */
-function sceneRotation(view: CubeView, hasGyro: boolean) {
-  if (view === 'front') return FRONT_SCENE_ROT;
-  if (view === 'iso') return homeSceneRot(3);
-  return hasGyro
-    ? { x: Math.atan2(4.1, 7.2), y: 0, z: 0 }
-    : { x: Math.atan2(4.1, Math.hypot(4.8, 7.2)), y: -Math.atan2(4.8, 7.2), z: 0 };
-}
-
 function hasValidOrientation(q: Quat | null | undefined): q is Quat {
   return !!q && [q.w, q.x, q.y, q.z].every(Number.isFinite)
     && Math.hypot(q.w, q.x, q.y, q.z) > 1e-6;

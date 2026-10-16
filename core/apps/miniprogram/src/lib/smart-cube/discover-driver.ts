@@ -21,10 +21,12 @@ import {
   raceBleAbortWithLateCleanup,
   waitForBleCleanupDrain,
   waitForBleNativeOperations,
+  BleApiError,
   BleOperationAbortedError,
   type BleAbortSignal,
   type DiscoveredDevice,
   type MiniProgramBleApi,
+  type BleResourceLease,
 } from './ble-api';
 
 export type DetectableSmartCubeDriver = 'gan-v4' | 'giiker' | 'gocube' | 'moyu' | 'moyu32' | 'qiyi';
@@ -32,6 +34,12 @@ export type DetectableSmartCubeDriver = 'gan-v4' | 'giiker' | 'gocube' | 'moyu' 
 export interface DiscoveredSmartCube {
   device: DiscoveredDevice;
   driver: DetectableSmartCubeDriver;
+}
+
+export interface DiscoveredCubeAdapter {
+  api: MiniProgramBleApi;
+  lease: BleResourceLease;
+  close(): Promise<void>;
 }
 
 const DEFAULT_SCAN_TIMEOUT_MS = 6_000;
@@ -61,6 +69,8 @@ export function classifySmartCubeDriver(
 export async function discoverSmartCubeDriver(options: {
   api?: MiniProgramBleApi;
   onUpdate?: (devices: DiscoveredSmartCube[]) => void;
+  /** Caller owns closing or handing this adapter to a driver after scanning. */
+  onAdapterRetained?: (adapter: DiscoveredCubeAdapter) => void;
   scanTimeoutMs?: number;
   signal?: BleAbortSignal;
 } = {}): Promise<DiscoveredSmartCube[]> {
@@ -75,6 +85,7 @@ export async function discoverSmartCubeDriver(options: {
   diagnostic.info('start', { runtime: bleRuntimeInfo(), scanTimeoutMs });
   let adapterOpen = false;
   let discoveryStarted = false;
+  let foundCompatible = false;
   let listener: ((result: { devices: DiscoveredDevice[] }) => void) | null = null;
   const stopDiscovery = (): Promise<unknown> => invokeBleCleanupForLease(
     lease,
@@ -99,6 +110,14 @@ export async function discoverSmartCubeDriver(options: {
       adapterOpen = true;
     } catch (error) {
       if (error instanceof BleOperationAbortedError) throw error;
+      diagnostic.error('adapter-open-failed', {
+        message: error instanceof Error ? error.message : String(error),
+        ...(error instanceof BleApiError ? {
+          errCode: error.errCode,
+          errNo: error.errNo,
+          errorCode: error.errorCode,
+        } : {}),
+      });
       throw new Error(bluetoothAdapterErrorMessage(error), { cause: error });
     }
 
@@ -162,6 +181,7 @@ export async function discoverSmartCubeDriver(options: {
             diagnostic.info('device-found', description);
           }
           if (!driver || !device.deviceId) continue;
+          foundCompatible = true;
           const previous = devices.get(device.deviceId)?.device;
           const merged: DiscoveredDevice = {
             ...previous,
@@ -224,7 +244,25 @@ export async function discoverSmartCubeDriver(options: {
     try {
       if (discoveryStarted || adapterOpen) await ignoreBleFailure(stopDiscovery);
       await waitForBleCleanupDrain(waitForBleNativeOperations(lease));
-      if (adapterOpen) await ignoreBleFailure(closeAdapter);
+      if (adapterOpen && foundCompatible && options.onAdapterRetained) {
+        let closed = false;
+        options.onAdapterRetained({
+          api,
+          lease,
+          async close() {
+            if (closed) return;
+            closed = true;
+            const release = beginBleResourceCleanup(lease);
+            try {
+              await ignoreBleFailure(closeAdapter);
+              await waitForBleCleanupDrain(waitForBleNativeOperations(lease));
+            } finally {
+              release();
+            }
+          },
+        });
+        diagnostic.info('adapter-retained');
+      } else if (adapterOpen) await ignoreBleFailure(closeAdapter);
       await waitForBleCleanupDrain(waitForBleNativeOperations(lease));
     } finally {
       releaseCleanupBarrier();

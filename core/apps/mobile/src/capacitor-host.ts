@@ -1,3 +1,4 @@
+import { watchTimerPort } from './watch-timer';
 import { exportNativeFile } from './native-export';
 import { createStackmatMicSource } from '@cuberoot/timer-ui/external';
 import { NativeBleTransport } from './bluetooth/native-ble-transport';
@@ -23,6 +24,7 @@ import {
 } from './net-battle/mobile-net-battle';
 
 export const capacitorHost: InstalledAppHost = {
+  watchTimer: Capacitor.getPlatform() === 'ios' ? watchTimerPort : undefined,
   createBleTransport: () => new NativeBleTransport(),
   createStackmatSource: createStackmatMicSource,
   appleMembership: Capacitor.getPlatform() === 'ios' ? handleAppleMembership : undefined,

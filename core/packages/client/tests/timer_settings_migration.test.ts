@@ -36,6 +36,17 @@ async function freshSettings() {
   return import('@/app/[lang]/timer/_lib/settings');
 }
 
+it.each(['none', 'copy', 'next'])('migrates hidden %s to timing once and preserves subsequent choices', async (legacy) => {
+  installStorage({ [KEY]: JSON.stringify({ scrambleClickAction: legacy, scrambleClickMigrated: true }) });
+  try {
+    const settings = await freshSettings();
+    expect(settings.getSettings().scrambleClickAction).toBe('start');
+    expect(settings.getSettings().scrambleClickStartMigrated).toBe(true);
+    settings.updateSettings({ scrambleClickAction: 'copy' });
+    expect((await freshSettings()).getSettings().scrambleClickAction).toBe('copy');
+  } finally { vi.unstubAllGlobals(); }
+});
+
 it('keeps Web training timed after loading or updating an old untimed preference', async () => {
   const mem = installStorage({ [KEY]: JSON.stringify({ timingEnabled: false }) });
   try {
@@ -121,7 +132,7 @@ describe('录姿态:老存档里的 false 要翻过来', () => {
     const { getSettings } = await freshSettings();
     // 两条迁移(scrambleClick + recordGyro)同时命中,但只落一次盘。
     expect(writes.filter(k => k === KEY)).toHaveLength(1);
-    expect(getSettings().scrambleClickAction).toBe('copy');
+    expect(getSettings().scrambleClickAction).toBe('start');
     expect(getSettings().recordGyro).toBe(true);
   });
 
@@ -141,8 +152,8 @@ describe('录姿态:老存档里的 false 要翻过来', () => {
       }),
     });
     const { getSettings } = await freshSettings();
-    expect(getSettings().scrambleClickAction).toBe('copy');
-    expect(JSON.parse(mem.get(KEY) as string).scrambleClickAction).toBe('copy');
+    expect(getSettings().scrambleClickAction).toBe('start');
+    expect(JSON.parse(mem.get(KEY) as string).scrambleClickAction).toBe('start');
   });
 
   it('分段开关复用共享默认值并修复显式坏值', async () => {

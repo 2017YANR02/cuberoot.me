@@ -25,7 +25,6 @@ body[data-site-scenery] .wp-page {
 body[data-site-scenery] :is(
   [data-site-surface='panel'],
   .alg-card,
-  .alg-case-detail-ori-algs,
   .chx-panel,
   .chx-chain,
   .chx-tabs,
@@ -38,11 +37,9 @@ body[data-site-scenery] :is(
   .deskpet-gallery-tile,
   .pet-home,
   .comp-recent-item,
-  .wca-stats-table-wrapper,
   .vc-arrow-builder,
   .vc-api-doc,
   .ns-dist-card,
-  .ns-stat-cell,
   .t10h-stage,
   .t10h-metric-toggle,
   .t10h-speed,
@@ -159,11 +156,12 @@ body[data-site-scenery] .calendar-page .cl-list-count {
   background: var(--glass-surface-bg);
 }
 
-/* DistributionChart sets its neutral SVG mat inline; keep plotted colors intact. */
+/* Charts belong to the surrounding content, without a second tinted mat.
+   DistributionChart sets its neutral SVG background inline. */
 body[data-site-scenery] .dist-chart-container > svg {
-  background: var(--glass-surface-bg) !important;
-  -webkit-backdrop-filter: var(--glass-filter);
-  backdrop-filter: var(--glass-filter);
+  background: transparent !important;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 /* Blur keeps scrolling results from showing through the sticky column labels. */
@@ -301,6 +299,15 @@ body[data-site-scenery] :is(
   background-color: var(--glass-surface-bg) !important;
   -webkit-backdrop-filter: var(--glass-filter);
   backdrop-filter: var(--glass-filter);
+}
+
+/* Inline algorithm editors share the formula's reading surface in both full
+   pages and dialogs. Keep their hover/focus borders and ordinary form fields. */
+body[data-site-scenery] .alg-case-inline-editor .alg-admin-setup-textarea,
+body[data-site-scenery] .alg-case-inline-editor .alg-editor-input {
+  background-color: transparent !important;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 /* Native option popups are browser/OS surfaces and cannot sample the page. */
@@ -456,17 +463,36 @@ body[data-site-scenery] .timer-room-dialog.timer-difficulty-dialog {
   backdrop-filter: var(--glass-filter);
 }
 
-/* Nested sections use the existing shell's blur, without another opaque mat. */
+/* Session controls retain their own hit-area surface. */
 body[data-site-scenery] :is(
   .tsession-trigger,
-  .reconstruct-playback-main,
-  .reconstruct-playback-side,
-  .reconstruct-stage-cell,
-  .timer-reconstruct-metric,
   .stsv-mr-cell:not(.is-on)
 ) {
   background: var(--glass-surface-bg);
 }
 body[data-site-scenery] .tsession-trigger:hover:not(:disabled) {
   background: var(--shell-hover);
+}
+
+/* Reading sections already have a page or dialog behind them. Spacing, table
+   rules and headings provide structure; no nested tint, blur or outer frame.
+   Do not include selectable cards, sticky headers, controls or status fills. */
+body[data-site-scenery] :is(
+  .alg-case-detail-ori-algs,
+  .detail-stats-grid,
+  .detail-note,
+  .wca-stats-table-wrapper,
+  .ns-stat-cell,
+  .reconstruct-playback-main,
+  .reconstruct-playback-side,
+  .reconstruct-stage-cell,
+  .reconstruct-move-list,
+  .reconstruct-empty,
+  .timer-reconstruct-metric
+) {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }

@@ -36,7 +36,6 @@ export default function CompetitionCalendars(p: Props) {
         {p.loading && <p className="cal-hint" role="status">{tr({ zh: '正在同步比赛…', en: 'Loading competitions…' })}</p>}
         {!p.loading && <p className="cal-hint">{tr({ zh: `${personal.filter((c) => c.source === 'attended').length} 场已参赛，${personal.filter((c) => c.source === 'registered').length} 场已报名`, en: `${personal.filter((c) => c.source === 'attended').length} attended, ${personal.filter((c) => c.source === 'registered').length} registered` })}</p>}
         {p.incomplete && <p className="cal-hint" role="status">{tr({ zh: '部分来源暂不可用，当前列表可能不完整。', en: 'Some sources are unavailable. This list may be incomplete.' })}</p>}
-        <p className="cal-hint">{tr({ zh: '公开报名名单可能延迟更新，不含尚未公开的待审核报名。关注不代表报名。', en: 'Public registration lists may update with a delay and exclude unpublished pending registrations. Following is not registration.' })}</p>
         <button type="button" className="cal-link-btn" disabled={p.loading} onClick={p.onRefresh}>{tr({ zh: '刷新比赛', en: 'Refresh competitions' })}</button>
       </>}
       <AppLink className="cal-link-btn" href="/wca/comp" prefetch={false}>{tr({ zh: '查找与关注未来比赛', en: 'Find & follow competitions' })}</AppLink>

@@ -156,11 +156,11 @@ export function normalizeTimerRankScopes(value: unknown): TimerRankScope[] {
     : [...TIMER_RANK_SCOPES];
 }
 
-export const TIMER_SCRAMBLE_CLICK_ACTIONS = ['none', 'next', 'copy'] as const;
+export const TIMER_SCRAMBLE_CLICK_ACTIONS = ['start', 'none', 'next', 'copy'] as const;
 
 export type TimerScrambleClickAction = (typeof TIMER_SCRAMBLE_CLICK_ACTIONS)[number];
 
-export const DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION: TimerScrambleClickAction = 'copy';
+export const DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION: TimerScrambleClickAction = 'start';
 
 export interface TimerScramblePreviewSettings {
   showCubePreview: boolean;
@@ -236,9 +236,10 @@ export function timerScramblePreview3DDisabled(value: Pick<TimerScramblePreviewS
   return !value.showCubePreview;
 }
 
-export type TimerScrambleClickEffect = 'none' | 'next' | 'copy' | 'retry';
+export type TimerScrambleClickEffect = TimerScrambleClickAction | 'retry';
 
 export const TIMER_SCRAMBLE_CLICK_TITLE_COPY: Record<TimerScrambleClickEffect, TimerSettingCopy> = {
+  start: { en: 'Hold to start timing', zh: '按住打乱开始计时' },
   none: { en: 'Click disabled', zh: '点击无操作' },
   next: { en: 'Click to refresh', zh: '点击换一个打乱' },
   copy: { en: 'Click to copy', zh: '点击复制打乱' },
@@ -258,6 +259,7 @@ export function timerScrambleClickEffect(
 ): TimerScrambleClickEffect {
   if (retryable) return 'retry';
   if (!ready) return 'none';
+  if (action === 'start') return 'start';
   if (action === 'next') return 'next';
   return action === 'copy' && hasScramble ? 'copy' : 'none';
 }

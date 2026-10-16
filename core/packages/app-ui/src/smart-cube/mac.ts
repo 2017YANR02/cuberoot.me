@@ -12,7 +12,13 @@ export async function resolveCubeMac(
   if (nativeMac && nativeMac !== '00:00:00:00:00:00') return macStringToBytes(nativeMac);
   if (family === 'gan') {
     for (const companyId of GAN_V4_MANUFACTURER_DATA_CICS) {
-      const mac = extractGanV4MacFromAdvertisement(device.manufacturerData?.get(companyId));
+      const payload = device.manufacturerData?.get(companyId);
+      if (!payload) continue;
+      // Apple/Web adapters separate the company ID from its payload. Restore the
+      // canonical segment consumed by the Mini Programs' shared parser, including
+      // longer firmware payloads whose MAC is NOT in the trailing six bytes.
+      const segment = Uint8Array.from([companyId & 0xff, companyId >> 8, ...payload]);
+      const mac = extractGanV4MacFromAdvertisement(segment);
       if (mac) return mac;
     }
     const fullMac = /([0-9a-f]{12})$/i.exec(device.name)?.[1];

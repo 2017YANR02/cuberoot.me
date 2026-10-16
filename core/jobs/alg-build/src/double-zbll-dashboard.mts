@@ -8,7 +8,7 @@ export interface DashboardProgress {
   total: number; verified: number; activeCompleted: number; activeTotal: number; activeBatch: number;
   stage: string; status: string; updatedAt: string; computeSeconds: number;
   currentRssGiB: number; peakRssGiB: number; availableGiB: number;
-  currentSwapouts: number; baselineSwapouts: number; histogram: number[]; meanHtm: number | null;
+  currentSwapouts: number; baselineSwapouts: number; reviewedSwapouts?: number; histogram: number[]; meanHtm: number | null;
   ratePerSecond?: number; reason?: string;
   activeVerified?: number; memoryPressure?: number; diskGiB?: number;
   solverThreads?: number;
@@ -59,7 +59,7 @@ export function renderDashboard(p: DashboardProgress, options: { now?: number; r
   const accent = (s: string) => paint(s, '1;36');
   const muted = (s: string) => paint(s, '2');
   const headroom = p.availableGiB - (p.reservedRssGiB ?? p.currentRssGiB);
-  const swap = p.currentSwapouts - p.baselineSwapouts;
+  const swap = p.currentSwapouts - (p.reviewedSwapouts ?? p.baselineSwapouts);
   const good = !stale && p.status === 'running' && swap === 0 && headroom >= 2 && p.memoryPressure === 1;
   const barWidth = Math.max(16, width - 12), filled = Math.floor(barWidth * count / p.total);
   const website = p.website;
@@ -171,7 +171,11 @@ export async function watchDashboard(work: string) {
   try {
     while (!closing) {
       try {
-        const p = JSON.parse(readFileSync(resolve(work, 'progress.json'), 'utf8')) as DashboardProgress;
+        let p = JSON.parse(readFileSync(resolve(work, 'progress.json'), 'utf8')) as DashboardProgress;
+        try {
+          const live = JSON.parse(readFileSync(resolve(work, 'live-progress.json'), 'utf8'));
+          if (live.ownerPid === Number(readFileSync(resolve(work, 'owner.pid'), 'utf8')) && activeOwner(work)) p = live;
+        } catch { /* Older coordinators only write the durable snapshot. */ }
         const output = renderDashboard(p, { rate: speed.update(p), viewer: true, columns: process.stdout.columns, rows: process.stdout.rows, color: process.stdout.isTTY && !process.env.NO_COLOR });
         screen.render(output);
         if (!activeOwner(work)) { screen.close(); console.log('计算进程已结束。此面板不会自动重启计算。'); return; }

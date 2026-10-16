@@ -214,7 +214,11 @@
       "./timer/rank-client": "runtime-neutral",
       "./double-zbll": "runtime-neutral",
       "./competition-calendar": "runtime-neutral",
-      "./android-release": "runtime-neutral"
+      "./android-release": "runtime-neutral",
+      "./timer/machine": "runtime-neutral",
+      "./timer/types": "runtime-neutral",
+      "./timer/stats": "runtime-neutral",
+      "./timer/event-catalog": "runtime-neutral"
     }
   },
   "main": "./src/index.ts",
@@ -805,7 +809,11 @@
       "types": "./src/android-release.ts",
       "node": "./dist/android-release.js",
       "default": "./src/android-release.ts"
-    }
+    },
+    "./timer/machine": "./src/timer/machine.ts",
+    "./timer/types": "./src/timer/types.ts",
+    "./timer/stats": "./src/timer/stats.ts",
+    "./timer/event-catalog": "./src/timer/event-catalog.ts"
   },
   "scripts": {
     "build": "tsc -b",

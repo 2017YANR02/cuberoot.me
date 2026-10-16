@@ -46,6 +46,9 @@
 }
 
 .recon-person-id h1 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin: 0;
   font-size: 1.5rem;
   line-height: 1.1;
@@ -116,7 +119,19 @@
 }
 
 .recon-person-roles {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
   margin-bottom: 1rem;
+}
+.btn-secondary.recon-person-favorites {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+  text-decoration: none;
 }
 .recon-person-role-select {
   width: fit-content;

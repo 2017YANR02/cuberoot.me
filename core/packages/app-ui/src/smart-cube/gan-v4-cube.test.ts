@@ -40,6 +40,60 @@ function fakeTransport() {
 
 describe('GanV4CubeConnection', () => {
   afterEach(() => vi.useRealTimers());
+  it('cancels the old history deadline after an explicit hardware reset succeeds', async () => {
+    vi.useFakeTimers();
+    const fake = fakeTransport(), onProtocolError = vi.fn();
+    const connection = new GanV4CubeConnection(fake.transport, {
+      onDisconnect: vi.fn(), onMove: vi.fn(), onProtocolError,
+    });
+    await connection.connect({ id: 'AB:CD:EF:01:23:45', name: 'GAN16ui' });
+    const cipher = createGanV4Cipher(Uint8Array.of(0xab, 0xcd, 0xef, 1, 0x23, 0x45));
+    const feed = (plain: readonly number[]) => {
+      const encrypted = cipher.encrypt(Uint8Array.from(plain));
+      fake.notification()!(new DataView(encrypted.buffer as ArrayBuffer));
+    };
+    feed(GAN_V4_FIXTURE.seed);
+    feed(GAN_V4_FIXTURE.moves[2]); // missing 41..42 starts recovery
+    const reset = connection.resetDeviceState();
+    for (let i = 0; i < 20; i++) await Promise.resolve();
+    feed(GAN_V4_FIXTURE.solved);
+    await reset;
+    await vi.advanceTimersByTimeAsync(16000);
+    expect(onProtocolError).not.toHaveBeenCalled();
+    await connection.disconnect();
+  });
+
+  it('fails once when a missing history window cannot be recovered', async () => {
+    vi.useFakeTimers();
+    const fake = fakeTransport();
+    const onProtocolError = vi.fn(), onMove = vi.fn(), onState = vi.fn();
+    const connection = new GanV4CubeConnection(fake.transport, {
+      onDisconnect: vi.fn(), onMove, onState, onProtocolError,
+    });
+    await connection.connect({ id: 'AB:CD:EF:01:23:45', name: 'GAN16ui' });
+    const cipher = createGanV4Cipher(Uint8Array.of(0xab, 0xcd, 0xef, 1, 0x23, 0x45));
+    const feed = (plain: readonly number[]) => {
+      const encrypted = cipher.encrypt(Uint8Array.from(plain));
+      fake.notification()!(new DataView(encrypted.buffer as ArrayBuffer));
+    };
+    feed(GAN_V4_FIXTURE.seed);
+    feed(GAN_V4_FIXTURE.moves[0]);
+    for (let counter = 43; counter <= 60; counter++) {
+      const move = [...GAN_V4_FIXTURE.moves[0]] as number[]; move[6] = counter; feed(move);
+    }
+    await vi.advanceTimersByTimeAsync(14999);
+    expect(onProtocolError).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(1);
+    expect(onProtocolError).toHaveBeenCalledOnce();
+    feed(GAN_V4_FIXTURE.solved);
+    feed(GAN_V4_FIXTURE.history);
+    expect(onState).toHaveBeenCalledTimes(1);
+    expect(onMove).toHaveBeenCalledTimes(1);
+    await connection.disconnect();
+    await vi.advanceTimersByTimeAsync(30000);
+    expect(onProtocolError).toHaveBeenCalledOnce();
+  });
+
   it('requests quiet-stream state and recovers a dropped final turn without needing another move', async () => {
     vi.useFakeTimers();
     const fake = fakeTransport();
@@ -64,7 +118,7 @@ describe('GanV4CubeConnection', () => {
     feed(GAN_V4_FIXTURE.history);
     // No later live timestamp exists: the tail is estimated at the state/history
     // request time (1500 + 650), rather than stamped when its reply arrives.
-    expect(onMove.mock.calls).toEqual([['R', 1000], ['R', 1250], ['R', 1500], ['R', 2150]]);
+    expect(onMove.mock.calls).toEqual([['R', 1000], ['R', 1250], ['R', 1500], ['R', 2150, { delayed: true, estimatedTime: true }]]);
     // A late live frame or repeated history must never apply the physical last turn twice.
     feed(GAN_V4_FIXTURE.moves[3]);
     feed(GAN_V4_FIXTURE.history);
@@ -131,14 +185,16 @@ describe('GanV4CubeConnection', () => {
     expect(fake.transport.connect).not.toHaveBeenCalled();
   });
 
-  it('derives the cipher from iOS advertisement manufacturer data', async () => {
+  it.each([9, 20])('derives the cipher from a %i-byte iOS manufacturer payload', async length => {
     const fake = fakeTransport();
     const connection = new GanV4CubeConnection(fake.transport, {
       onDisconnect: vi.fn(),
       onMove: vi.fn(),
       onProtocolError: vi.fn(),
     });
-    const payload = Uint8Array.of(0xa3, 0xb4, 0xc5, 0x45, 0x23, 0x01, 0xef, 0xcd, 0xab);
+    const payload = new Uint8Array(length);
+    payload.set([0xa3, 0xb4, 0xc5, 0x45, 0x23, 0x01, 0xef, 0xcd, 0xab]);
+    payload.fill(0x71, 9);
 
     await connection.connect({
       id: '93F18F53-A6E8-4A6A-91B4-836AB85BC247',

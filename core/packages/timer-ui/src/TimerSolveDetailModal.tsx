@@ -439,7 +439,7 @@ export function TimerSolveDetailModal({
   if (typeof document === 'undefined') return null;
   return createPortal(
     <div
-      className={`timer-solve-detail-overlay${full ? ' timer-solve-detail-overlay--full' : ''}${closing ? ' timer-solve-detail-overlay--closing' : ''}`}
+      className={`timer-solve-detail-overlay timer-no-selection${full ? ' timer-solve-detail-overlay--full' : ''}${closing ? ' timer-solve-detail-overlay--closing' : ''}`}
       data-no-timer
       onAnimationEnd={onOverlayAnimationEnd}
       onClick={full ? undefined : requestClose}

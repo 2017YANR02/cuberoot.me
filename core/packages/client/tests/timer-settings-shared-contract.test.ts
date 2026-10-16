@@ -224,12 +224,12 @@ describe('canonical timer settings surface manifest', () => {
   });
 
   it('locks the scramble click action options, default, and invalid fallback', () => {
-    expect(TIMER_SCRAMBLE_CLICK_ACTIONS).toEqual(['none', 'next', 'copy']);
-    expect(DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION).toBe('copy');
+    expect(TIMER_SCRAMBLE_CLICK_ACTIONS).toEqual(['start', 'none', 'next', 'copy']);
+    expect(DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION).toBe('start');
     expect(TIMER_SCRAMBLE_CLICK_ACTIONS.map(normalizeTimerScrambleClickAction))
       .toEqual(TIMER_SCRAMBLE_CLICK_ACTIONS);
-    expect(normalizeTimerScrambleClickAction('invalid')).toBe('copy');
-    expect(normalizeTimerScrambleClickAction(undefined)).toBe('copy');
+    expect(normalizeTimerScrambleClickAction('invalid')).toBe('start');
+    expect(normalizeTimerScrambleClickAction(undefined)).toBe('start');
     expect(timerScrambleClickEffect('none', true, true, false)).toBe('none');
     expect(timerScrambleClickEffect('copy', false, true, false)).toBe('none');
     expect(timerScrambleClickEffect('copy', true, true, false)).toBe('copy');
@@ -342,14 +342,13 @@ describe('Web SettingsPanel is a checked shared-contract consumer', () => {
     const panelIds = [...directPanelIds];
     expect(panel).toContain('<TimerSmartCubeSettingsFields');
     expect(panel).toContain('<TimerTypographySettings');
-    // Web scramble presses now use the timing surface; the legacy persisted
-    // click preference remains decodable but is intentionally not configurable.
+    // The click selector is rendered once inside shared TimerDisplaySettings.
     expect(panel).not.toContain('<TimerScrambleClickActionSetting');
     if (panel.includes('<TimerScramblePreviewSettings')) {
       panelIds.push(...TIMER_SCRAMBLE_PREVIEW_SETTING_FIELD_IDS);
     }
     expect([...new Set([...panelIds, ...sharedFieldIds])].sort())
-      .toEqual(TIMER_SETTING_FIELD_IDS.filter((id) => id !== 'settings.appearance.scramble-click-action').sort());
+      .toEqual([...TIMER_SETTING_FIELD_IDS].sort());
   });
 
   it('keeps direct layout-only rows on a fixed whitelist instead of hiding new fields outside the manifest', () => {

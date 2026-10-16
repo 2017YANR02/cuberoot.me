@@ -11,7 +11,7 @@
 .compare-github, .compare-download { display: inline-flex; align-items: center; gap: 9px; padding: 10px 14px; border: 1px solid var(--border-default); border-radius: 6px; font-size: 13px; color: var(--foreground); text-decoration: none; background: transparent; cursor: pointer; }
 .compare-github:hover, .compare-download:hover { border-color: var(--accent); }
 .compare-subtitle { color: var(--muted-foreground); font-size: 14px; margin: 20px 0 28px; }
-.compare-protocol-strip { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 26px; padding: 17px 0; border-top: 1px solid var(--border-default); border-bottom: 1px solid var(--border-default); font-size: 13px; font-variant-numeric: tabular-nums; }
+.compare-protocol-strip { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 26px; padding: 20px 0 0; font-size: 13px; font-variant-numeric: tabular-nums; }
 .compare-protocol-strip small { margin-left: 4px; font-size: 12px; color: var(--muted-foreground); }
 .compare-section-head { margin: 0 0 26px; }
 .compare-section-head h2 { font-size: 21px; letter-spacing: -.025em; margin: 7px 0 0; }
@@ -21,7 +21,10 @@
 .compare-chart-caption { font-size: 11px; color: var(--muted-foreground); margin-bottom: 8px; }
 .compare-chart-caption > span:last-child { display: inline-flex; align-items: center; gap: 5px; }
 .compare-chart { margin: 0; }
-.compare-chart-row { display: grid; grid-template-columns: 190px minmax(0, 1fr) 145px; gap: 22px; align-items: center; min-height: 70px; border-bottom: 1px solid var(--border-default); }
+.compare-chart-row, .compare-column-head { display: grid; grid-template-columns: 220px minmax(0, 1fr) minmax(0, 1fr); gap: 22px; align-items: center; min-height: 70px; }
+.compare-column-head { min-height: 36px; font-size: 12px; }
+.compare-metric-cell { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px; align-items: center; min-width: 0; }
+.compare-metric-cell .compare-row-value { white-space: nowrap; }
 .compare-row-name strong { font-size: 14px; font-weight: 600; }
 .compare-row-name span, .compare-row-value > span { display: block; margin-top: 5px; font-size: 11px; color: var(--muted-foreground); }
 .compare-row-value { text-align: right; font-variant-numeric: tabular-nums; }
@@ -31,8 +34,6 @@
 .compare-bar-area { position: relative; height: 25px; }
 .compare-bar { height: 100%; background: var(--accent); border-radius: 1px; }
 .compare-pending-line { position: absolute; inset: 50% 0 auto; border-top: 1px dashed var(--border-default); }
-.compare-axis { margin: 12px 167px 0 212px; display: flex; justify-content: space-between; color: var(--faint-foreground); font: 10px/1.4 var(--font-mono, monospace); }
-.compare-chart figcaption { margin: 20px 0 0; color: var(--muted-foreground); font-size: 12px; }
 .compare-baseline { display: flex; align-items: center; justify-content: space-between; gap: 28px; margin: 36px 0 46px; padding: 24px 26px; border: 1px solid var(--border-default); border-left: 3px solid var(--accent); border-radius: 4px; }
 .compare-baseline-title h2 { font-size: 18px; margin: 7px 0; }
 .compare-baseline-title h2 span { font-size: 12px; color: var(--muted-foreground); font-weight: 400; margin-left: 5px; }
@@ -52,38 +53,30 @@
 .compare-table-wrap a, .compare-footer a { display: inline-flex; align-items: center; gap: 4px; color: var(--muted-foreground); text-decoration: none; white-space: nowrap; }
 .compare-table-wrap a:hover, .compare-footer a:hover { color: var(--accent); }
 .compare-number { white-space: nowrap; font-variant-numeric: tabular-nums; }
-.compare-method { margin-top: 30px; border-block: 1px solid var(--border-default); padding: 21px 0; }
-.compare-method summary { cursor: pointer; font-size: 13px; font-weight: 500; }
-.compare-method-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 40px; padding-top: 22px; }
-.compare-method h3 { margin: 0; font-size: 13px; font-weight: 600; }
-.compare-method p { font-size: 12px; line-height: 1.8; color: var(--muted-foreground); margin: 8px 0 14px; }
-.compare-evidence { margin-top: 16px; display: flex; align-items: flex-start; flex-direction: column; gap: 10px; font-size: 11px; color: var(--muted-foreground); }
-.compare-evidence code { overflow-wrap: anywhere; max-width: 100%; }
-.compare-download { margin-top: 6px; }
+.compare-method { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 30px; border-block: 1px solid var(--border-default); padding: 16px 0; }
 .compare-footer { padding-top: 22px; font-size: 11px; color: var(--faint-foreground); }
 .solver-compare :is(a, button, select, summary):focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 @media (max-width: 760px) {
   .solver-compare { padding: 20px 20px 32px; }
   .compare-topbar { margin-bottom: 40px; }
   .compare-section-head { align-items: flex-start; flex-wrap: wrap; gap: 18px; }
-  .compare-chart-row { grid-template-columns: 135px minmax(0, 1fr) 100px; gap: 12px; }
+  .compare-chart-row, .compare-column-head { grid-template-columns: 170px minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+  .compare-metric-cell { grid-template-columns: minmax(0, 1fr); gap: 6px; }
   .compare-row-name strong { font-size: 12px; }
   .compare-row-value > span { font-size: 10px; }
-  .compare-axis { margin-left: 147px; margin-right: 112px; }
   .compare-baseline { flex-direction: column; align-items: stretch; padding: 20px; }
   .compare-baseline dl { justify-content: space-between; gap: 12px; }
   .compare-baseline dd { font-size: 25px; }
-  .compare-method-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 480px) {
   .compare-heading { align-items: flex-start; gap: 18px; flex-direction: column; }
   .compare-github { padding: 8px 10px; }
   .compare-protocol-strip { gap: 12px 18px; }
-  .compare-chart-row { grid-template-columns: minmax(0, 1fr) 110px; gap: 7px 10px; padding: 15px 0; }
-  .compare-row-name { grid-row: 1; }
-  .compare-row-value { grid-row: 1; }
-  .compare-bar-area { grid-column: 1 / -1; height: 16px; }
-  .compare-axis { margin-inline: 0; }
+  .compare-chart-row, .compare-column-head { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 20px; }
+  .compare-chart-row { padding: 15px 0; }
+  .compare-column-head > span:first-child { display: none; }
+  .compare-row-name { grid-column: 1 / -1; }
+  .compare-bar-area { height: 16px; }
   .compare-table-wrap td:nth-child(3), .compare-table-wrap th:nth-child(3) { min-width: 175px; }
   .compare-baseline dl { flex-wrap: wrap; gap: 20px; }
   .compare-footer { align-items: flex-start; flex-direction: column; gap: 12px; }

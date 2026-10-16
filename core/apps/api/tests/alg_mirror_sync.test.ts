@@ -183,3 +183,11 @@ describe('链不完整', () => {
     expect(notes).toEqual([]);
   });
 });
+
+ it('backfills pre-existing FL originals and stays idempotent without a source edit', async () => {
+   db.rows = [row(3845, views([], ["FS' R U' R' S U' F'"]), 3846), row(3846, views([]), 3845)];
+   const result = await syncMirrorForCase('3x3', 'f2l', 3845);
+   expect(result.notes).toEqual([]);
+   expect(texts(3846)[0]).toEqual(["F' S L' U L S' U F"]);
+   expect((await syncMirrorForCase('3x3', 'f2l', 3846)).updated).toEqual([]);
+ });

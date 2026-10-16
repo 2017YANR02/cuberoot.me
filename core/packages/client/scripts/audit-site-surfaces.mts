@@ -98,7 +98,9 @@ try {
           const id = String(findings.size);
           element.setAttribute('data-surface-audit', id);
           // Heading fills remain review candidates, not automatic violations.
-          const known = !!policy && (policy.kind === 'container' || painted.some(reason => reason.includes('边框')));
+          const known = !!policy && (policy.kind === 'scenery-content'
+            ? document.body.hasAttribute('data-site-scenery')
+            : policy.kind === 'container' || painted.some(reason => reason.includes('边框')));
           findings.set(identity, { selector, target: `[data-surface-audit="${id}"]`, text: (element.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 100), reason: painted.join('; '), count: 1, known });
         }
         return [...findings.values()];

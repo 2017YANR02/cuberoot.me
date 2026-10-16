@@ -3,6 +3,14 @@ use std::{fs, io::Read, path::Path};
 
 pub const OPT1_BYTES: usize = 30_401_280;
 
+// Preserve the existing WASM load/decode boundary even under LTO. None lanes
+// never read the table; every Some retains the ordinary slice bounds check.
+#[cfg(all(feature = "opt8-native-batch", not(target_family = "wasm")))]
+#[inline(never)]
+fn load_opt8_probe_words(words: &[u32], queries: &[Option<u64>; 8]) -> [u32; 8] {
+    std::array::from_fn(|i| queries[i].map_or(0, |index| words[(index >> 4) as usize]))
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Variant(u8);
 
@@ -150,6 +158,39 @@ impl PruningTable {
         }
     }
 
+    /// Exact Opt8 decoder. Checked reads and code-zero block fallback remain
+    /// identical to get(); only the validated layout's base becomes constant.
+    #[cfg(all(feature = "opt8-native-specialized", not(target_family = "wasm")))]
+    #[inline(always)]
+    pub(crate) fn get_opt8(&self, index: u64) -> u8 {
+        debug_assert_eq!(self.variant.number(), 8);
+        let word = (index >> 4) as usize;
+        let code = (self.words[word] >> ((index & 15) * 2)) & 3;
+        if code == 0 {
+            (self.words[word & !3] & 15) as u8
+        } else {
+            code as u8 + 10
+        }
+    }
+
+    /// Read the same immutable Opt8 cells together, then decode in lane order.
+    /// Zero codes still read their original aligned block header.
+    #[cfg(all(feature = "opt8-native-batch", not(target_family = "wasm")))]
+    #[inline(always)]
+    pub(crate) fn get_opt8_batch(&self, queries: &[Option<u64>; 8]) -> [u8; 8] {
+        debug_assert_eq!(self.variant.number(), 8);
+        let loaded = load_opt8_probe_words(&self.words, queries);
+        std::array::from_fn(|i| {
+            let Some(index) = queries[i] else { return 0; };
+            let code = (loaded[i] >> ((index & 15) * 2)) & 3;
+            if code == 0 {
+                (self.words[((index >> 4) as usize) & !3] & 15) as u8
+            } else {
+                code as u8 + 10
+            }
+        })
+    }
+
     /// Exact Opt9 decoder, selected once by the private specialized oracle.
     /// Retains checked PDB accesses: no unchecked public index entry point.
     #[inline(always)]
@@ -207,6 +248,94 @@ impl PruningTable {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(all(feature = "opt8-native-batch", not(target_family = "wasm")))]
+    #[test]
+    fn opt8_batch_decoder_matches_scalar_sparse_lanes_and_block_headers() {
+        let empty = PruningTable {
+            words: vec![], variant: Variant(8), distribution: [0; 16],
+        };
+        assert_eq!(empty.get_opt8_batch(&[None; 8]), [0; 8]);
+        let mut table = PruningTable {
+            words: vec![0; 64], variant: Variant(8), distribution: [0; 16],
+        };
+        let mut seen_codes = 0u32;
+        let mut seen_headers = 0u32;
+        for phase in 0..16u32 {
+            for (word, value) in table.words.iter_mut().enumerate() {
+                *value = 0;
+                for slot in 0..16 {
+                    *value |= ((phase + word as u32 + slot) & 3) << (slot * 2);
+                }
+                if word & 3 == 0 {
+                    *value = (*value & !15) | ((phase + word as u32 / 4) % 14);
+                }
+            }
+            for base in (0..1024u64).step_by(8) {
+                for mask in [0xffu8, 0x55, 0xaa] {
+                    // The stride mixes words and aligned blocks across lanes,
+                    // including index zero and the final valid cell.
+                    let queries = std::array::from_fn(|i| {
+                        (mask & (1 << i) != 0).then_some((base + i as u64 * 73) % 1024)
+                    });
+                    let actual = table.get_opt8_batch(&queries);
+                    for (i, query) in queries.into_iter().enumerate() {
+                        let Some(index) = query else { assert_eq!(actual[i], 0); continue; };
+                        let word = (index >> 4) as usize;
+                        let code = (table.words[word] >> ((index & 15) * 2)) & 3;
+                        seen_codes |= 1 << code;
+                        if code == 0 { seen_headers |= 1 << (table.words[word & !3] & 15); }
+                        assert_eq!(actual[i], table.get(index));
+                        assert_eq!(actual[i], table.get_opt8(index));
+                    }
+                }
+            }
+        }
+        assert_eq!(seen_codes, 15);
+        assert_eq!(seen_headers, (1 << 14) - 1);
+        let mut invalid = [None; 8];
+        invalid[7] = Some(1024);
+        assert!(std::panic::catch_unwind(|| table.get_opt8_batch(&invalid)).is_err());
+    }
+
+    #[cfg(all(feature = "opt8-native-specialized", not(target_family = "wasm")))]
+    #[test]
+    fn opt8_fixed_decoder_matches_generic_all_cells_codes_and_headers() {
+        let mut table = PruningTable {
+            words: vec![0; 64], variant: Variant(8), distribution: [0; 16],
+        };
+        let mut seen_codes = 0u32;
+        let mut seen_headers = 0u32;
+        let mut checked = 0;
+        for phase in 0..16u32 {
+            for (word, value) in table.words.iter_mut().enumerate() {
+                *value = 0;
+                for slot in 0..16 {
+                    *value |= ((phase + word as u32 + slot) & 3) << (slot * 2);
+                }
+                if word & 3 == 0 {
+                    *value = (*value & !15) | ((phase + word as u32 / 4) % 14);
+                }
+            }
+            for index in 0..1024u64 {
+                let word = (index >> 4) as usize;
+                let code = (table.words[word] >> ((index & 15) * 2)) & 3;
+                seen_codes |= 1 << code;
+                let expected = if code == 0 {
+                    let header = (table.words[word & !3] & 15) as u8;
+                    seen_headers |= 1 << header;
+                    header
+                } else { code as u8 + 10 };
+                assert_eq!(table.get(index), expected);
+                assert_eq!(table.get_opt8(index), expected);
+                checked += 1;
+            }
+        }
+        assert_eq!(checked, 16384);
+        assert_eq!(seen_codes, 15);
+        assert_eq!(seen_headers, (1 << 14) - 1);
+        assert!(std::panic::catch_unwind(|| table.get_opt8(1024)).is_err());
+    }
+
     #[test]
     fn owned_table_rejects_wrong_size_before_scanning() {
         for number in 1..=9 {

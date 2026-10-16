@@ -1,4 +1,9 @@
 import { sessionFetch } from '@/lib/session-fetch';
+import { readTimerReplay } from '@cuberoot/shared/timer/replay-client';
+import { extractReplayParam } from '@cuberoot/shared/timer/replay-input';
+import { decodeReplayParam } from '@cuberoot/shared/timer/replay-decode';
+import { encodeReplayPayload } from '@cuberoot/shared/timer/replay-encode';
+import { apiUrl } from './api-base';
 import { API_ORIGIN } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
 
@@ -111,4 +116,17 @@ export async function saveGroundTruthDecision(
     headers: authHeaders(),
     body: JSON.stringify(body),
   }));
+}
+
+/** Preserve existing replay tokens; resolve share IDs only through our API. */
+export async function resolveGroundTruthReplay(input: string): Promise<string> {
+  if (!input.trim()) throw new Error('replay_required');
+  const token = extractReplayParam(input);
+  if (token) {
+    if (!decodeReplayParam(token)) throw new Error('replay_malformed');
+    return token;
+  }
+  const solve = await readTimerReplay(input, [], { apiUrl, fetcher: sessionFetch });
+  if (!solve) throw new Error('replay_malformed');
+  return encodeReplayPayload(solve);
 }

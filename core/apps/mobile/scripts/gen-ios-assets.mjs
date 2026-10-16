@@ -3,7 +3,7 @@
 //
 //   pnpm --filter @cuberoot/mobile assets:ios
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, copyFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
@@ -74,3 +74,6 @@ for (const suffix of ['-2', '-1', '']) {
 }
 
 console.log('Generated CubeRoot iOS App Icon and light/dark launch assets.');
+
+// watchOS uses the identical generated brand icon.
+copyFileSync(APP_ICON, join(HERE, '..', 'ios', 'App', 'CubeRootWatch', 'Assets.xcassets', 'AppIcon.appiconset', 'AppIcon.png'));

@@ -7,6 +7,31 @@ export interface PlaybackMove extends SolveMove {
   rawAfter: number;
 }
 
+export function playbackTrack(raw: SolveMove[], lines: ReconTextLine[] | undefined, posed: boolean) {
+  const rebuilt = posed ? null : reconstructedTrack(lines, raw);
+  return { rebuilt: rebuilt !== null, moves: rebuilt ?? raw.map((move, i) => ({ ...move, endTs: move.ts, rawAfter: i + 1 })) };
+}
+
+export function playbackEndMs(moves: PlaybackMove[], raw: SolveMove[]) {
+  return moves.length ? Math.max(moves.at(-1)!.endTs, raw.at(-1)?.ts ?? 0) : 0;
+}
+
+export function playbackSeek(moves: PlaybackMove[], lastTs: number, index: number, atMs?: number) {
+  const next = Math.max(0, Math.min(moves.length, index));
+  return { index: next, timeMs: atMs === undefined ? (next ? moves[next - 1].ts : 0) : Math.max(0, Math.min(lastTs, atMs)) };
+}
+
+export function rawPlaybackTarget(moves: PlaybackMove[], raw: SolveMove[], index: number, atMs?: number, play = false) {
+  const at = atMs ?? (index > 0 ? raw[index - 1]?.ts ?? 0 : 0);
+  const next = atMs === undefined || play ? playbackIndexForRaw(moves, index, at) : playbackIndexAt(moves, at);
+  return playbackSeek(moves, playbackEndMs(moves, raw), next, play ? at : atMs);
+}
+
+export function playbackFrame(moves: PlaybackMove[], lastTs: number, timeMs: number) {
+  const at = Math.min(timeMs, lastTs);
+  return { timeMs: at, index: playbackIndexAt(moves, at), playing: timeMs < lastTs };
+}
+
 /** The notation ranges are authoritative; display-only manual overrides have no timing map. */
 export function reconstructedTrack(lines: ReconTextLine[] | undefined, raw: SolveMove[]): PlaybackMove[] | null {
   if (!lines?.length) return null;

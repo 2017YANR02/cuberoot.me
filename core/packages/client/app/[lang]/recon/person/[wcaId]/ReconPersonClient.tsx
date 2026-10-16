@@ -11,7 +11,7 @@ import Link from '@/components/AppLink';
 import PersonLink from '@/components/PersonLink';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { LogOut, TriangleAlert } from 'lucide-react';
+import { Bookmark, LogOut, TriangleAlert } from 'lucide-react';
 import type { ReconSolve } from '@cuberoot/shared';
 import { listPersonRecons } from '@/lib/recon-api';
 import {
@@ -201,12 +201,10 @@ export default function ReconPersonClient() {
         <div className="recon-person-id">
           <h1>
             <PersonLink wcaId={wcaId} className="recon-person-name-link">{displayName}</PersonLink>
-          </h1>
-          {avatarUrl && identity.country && (
-            <div className="recon-person-meta">
+            {avatarUrl && identity.country && (
               <Flag iso2={identity.country} className="recon-inline-flag" />
-            </div>
-          )}
+            )}
+          </h1>
           <div className="recon-person-stats">
             <span><b>{counts.solver}</b> {tr({ zh: '选手', en: 'solver'
             })}</span>
@@ -225,6 +223,11 @@ export default function ReconPersonClient() {
       </div>
 
       <div className="recon-person-roles">
+        {isSelf && (
+          <Link href="/recon?favorites=true" className="btn-secondary recon-person-favorites" prefetch={false}>
+            <Bookmark size={17} aria-hidden="true" /> {tr({ zh: '收藏夹', en: 'Favorites' })}
+          </Link>
+        )}
         <ListSelect
           items={roleItems}
           value={role}

@@ -13,7 +13,7 @@
  */
 import { describe, it, expect } from 'vitest';
 
-import { walkMethod, methodFrame } from '@/app/[lang]/timer/_lib/reconstruct/method_walk';
+import { walkMethod, methodFrame, detectSolveMethod } from '@/app/[lang]/timer/_lib/reconstruct/method_walk';
 import { conjugateSequence, conjugateToken, facePermFor } from '@cuberoot/shared/timer/reconstruct/gyro-orient';
 import { computeStepMetrics } from '@/app/[lang]/timer/_lib/reconstruct/step_metrics';
 import { allEdgesOriented, METHOD_ORDER, methodById } from '@/app/[lang]/timer/_lib/reconstruct/methods';
@@ -115,5 +115,32 @@ describe('allEdgesOriented', () => {
     expect(allEdgesOriented(toFaceletString(applyScramble(3, "R U L D B2 U' R2")))).toBe(true);
     // 单个 B 也是坏的(定向是相对 F/B 轴定义的)。
     expect(allEdgesOriented(toFaceletString(applyScramble(3, "B")))).toBe(false);
+  });
+});
+
+const methodFixtures = [
+  { method:'cfop', scramble:SCRAMBLE, moves },
+  ...[
+    ['roux', "L U L' R U R' R U R' U R U2 R' M' U2 M U2"],
+    ['roux', "F R U R' F' M U M U2 M' U M'"], // CMLL skip
+    ['zz', "F U F' L U L R U R R U R' U R U2 R'"],
+  ].map(([method, solution]) => {
+    const tokens = solution.split(' ');
+    return {method, scramble:tokens.slice().reverse().map(m => m.endsWith('2') ? m : m.endsWith("'") ? m.slice(0,-1) : m+"'").join(' '),
+      moves:tokens.map((m,i)=>({m,ts:(i+1)*200}))};
+  }),
+];
+describe('automatic reconstruction method', () => {
+  it.each(methodFixtures)('recognizes $method from its observed milestones in every cube orientation', fixture => {
+    for (const rotation of ['', 'x', 'y', 'z', 'x2', 'y2', 'z2', 'x y']) {
+      const perm = facePermFor(rotation);
+      const scr = conjugateSequence(fixture.scramble,perm)!;
+      const stream = fixture.moves.map(move => ({...move,m:conjugateToken(move.m,perm)!}));
+      expect(detectSolveMethod(scr,stream,20000), rotation).toBe(fixture.method);
+    }
+  });
+  it('does not classify an unfinished stream or a one-turn case as a complete method', () => {
+    expect(detectSolveMethod('R U', [{m:"U'",ts:100}],200)).toBe('cfop');
+    expect(detectSolveMethod('U', [{m:"U'",ts:100}],200)).toBe('cfop');
   });
 });

@@ -17,7 +17,10 @@ export function zbllOfficialPolicy({label,executable,args,env}:OfficialRequest,c
     assert.equal(env[key],undefined,`Conflicting ${key}`);
   return {entry:'native',mode:'solve-opt10',backend:'opt10',variant:null,h:null,tablePath:officialPaths.table,
     tableBytes:31_130_911_744,measureNativeRss:false,rssLimit:31_130_911_744+2**30+threads*16*2**20,
-    deadlineMs:2*60*60_000,zbll:true,zbllOfficial:true,searchThreads:threads};
+    // One authorized task owns this process across all checkpoint batches.
+    // Resource stops and the task's absolute authorization expiry still apply.
+    deadlineMs:label === 'double-zbll-opt10-session' ? 0 : 2*60*60_000,
+    zbll:true,zbllOfficial:true,searchThreads:threads};
 }
 
 export function validateZbllOfficialReview(review:any,e:any,current:{boot:string;swapouts:number;pressure:number;available:number},newerStop=false) {

@@ -36,3 +36,5 @@ export {
   type TimerWakeLockPage,
   type TimerWakeLockSentinel,
 } from './timer-effects';
+
+export type { WatchTimerPort, WatchTimerBatch } from './watch-timer';

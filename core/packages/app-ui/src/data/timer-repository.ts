@@ -1,3 +1,4 @@
+import { decodeWatchTimerRecord, watchTimerSolve, type WatchTimerRecord } from '../watch-timer';
 import { consumeTimerSeed, type TimerSeedTicket } from '@cuberoot/shared/timer/sync-seed';
 import { TIMER_BACKUP_KEEP, type TimerLocalBackupEntry } from '@cuberoot/shared/timer/backup-client';
 import { appendTimerImportSessions, type TimerImportPlan } from '@cuberoot/shared/timer/import-timer';
@@ -37,7 +38,8 @@ export interface TimerStoreDriver {
   readBackup?(key: string): Promise<string | undefined>;
   read(): Promise<unknown | undefined>;
   readRecovery(): Promise<unknown | undefined>;
-  write(data: TimerStoreData, canCommit?: () => boolean): Promise<void>;
+  hasReceipt?(id: string): Promise<boolean>;
+  write(data: TimerStoreData, canCommit?: () => boolean, receipt?: string): Promise<void>;
   writeWithRecovery(data: TimerStoreData, recovery: unknown, canCommit?: () => boolean): Promise<void>;
 }
 
@@ -169,6 +171,48 @@ export class TimerRepository {
       const decoded = decodeTimerStoreData(data);
       if (!decoded) throw new CorruptTimerStoreError();
       await this.driver.write(decoded);
+      return decoded;
+    });
+  }
+
+  /** Durable receipt and solve share a transaction, including after clear/delete/import. */
+  importWatchSolve(input: WatchTimerRecord): Promise<TimerStoreData> {
+    return this.run(async () => {
+      const record = decodeWatchTimerRecord(input);
+      if (!record || !this.driver.hasReceipt) throw new Error('Invalid or unsupported watch record');
+      const data = await this.loadUnlocked();
+      const solve = watchTimerSolve(record);
+      const received = await this.driver.hasReceipt(solve.id);
+      const row = Object.values(data.database.dataBySession).flatMap(events => Object.values(events).flat())
+        .find(item => item?.id === solve.id);
+      // A restored backup may contain the solve without its transport receipt.
+      // Update feedback in either case; receipts only prevent resurrection.
+      if (row && (record.reconRevision ?? 0) > (row.watchReconRevision ?? 0)) {
+        row.reconOk = record.reconOk; row.watchReconRevision = record.reconRevision;
+        const decoded = decodeTimerStoreData(data);
+        if (!decoded) throw new CorruptTimerStoreError();
+        await this.driver.write(decoded, undefined, solve.id);
+        return decoded;
+      }
+      if (received) return data;
+      const exists = Boolean(row);
+      if (!exists) {
+        let sessionId = record.slot.sessionId;
+        if (!data.database.dataBySession[sessionId]) {
+          sessionId = `watch-recovered-${sessionId}`;
+          if (!data.database.dataBySession[sessionId]) {
+            const prefix = { en: 'Recovered · ', zh: '已恢复 · ' }[data.settings.language];
+            data.database.sessions.push({ id: sessionId, name: prefix + record.slot.sessionName,
+              event: solve.event, createdTs: record.ts });
+            data.database.dataBySession[sessionId] = {};
+          }
+        }
+        const events = data.database.dataBySession[sessionId];
+        events[solve.event] = [...(events[solve.event] ?? []), solve].sort((a, b) => a.ts - b.ts);
+      }
+      const decoded = decodeTimerStoreData(data);
+      if (!decoded) throw new CorruptTimerStoreError();
+      await this.driver.write(decoded, undefined, solve.id);
       return decoded;
     });
   }
@@ -622,10 +666,25 @@ export class IndexedDbTimerStoreDriver implements TimerStoreDriver {
     }
   }
 
-  async write(data: TimerStoreData, canCommit?: () => boolean): Promise<void> {
+  async hasReceipt(id: string): Promise<boolean> {
+    const database = await openDatabase();
+    try {
+      const transaction = database.transaction(STORE_NAME, 'readonly');
+      const done = transactionDone(transaction);
+      const value = await requestResult(transaction.objectStore(STORE_NAME).get(`receipt:${id}`));
+      await done;
+      return value === true;
+    } finally { database.close(); }
+  }
+
+  async write(data: TimerStoreData, canCommit?: () => boolean, receipt?: string): Promise<void> {
     const database = await openDatabase(); let shouldBackup = false;
+    let writing: IDBTransaction | undefined;
     try {
       const transaction = database.transaction(STORE_NAME, 'readwrite'); const done = transactionDone(transaction);
+      writing = transaction;
+      // A synchronous quota/serialization failure can precede the transaction's abort event.
+      void done.catch(() => undefined);
       const store = transaction.objectStore(STORE_NAME);
       const previous = await requestResult(store.get(TIMER_KEY)) as TimerStoreData | undefined;
       const previousCount = previous ? summarizeTimerDatabase(previous.database).solveCount : 0;
@@ -635,7 +694,12 @@ export class IndexedDbTimerStoreDriver implements TimerStoreDriver {
       const next = count + added;
       if (added) store.put(next, 'timer-backup-counter');
       shouldBackup = added > 0 && data.settings.autoBackupEvery > 0 && Math.floor(next / data.settings.autoBackupEvery) > Math.floor(count / data.settings.autoBackupEvery);
-      store.put(data, TIMER_KEY); await done;
+      store.put(data, TIMER_KEY);
+      if (receipt) store.put(true, `receipt:${receipt}`);
+      await done;
+    } catch (error) {
+      try { writing?.abort(); } catch { /* Already committed or aborted. */ }
+      throw error;
     } finally { database.close(); }
     if (shouldBackup) await this.createBackup(data).catch(() => undefined);
   }

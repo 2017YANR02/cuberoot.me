@@ -12,6 +12,7 @@ import {
   invokeBle,
   invokeBleCleanupForLease,
   invokeBleForLease,
+  normalizeBleUuid,
   invokeBleWithLateCleanup,
   invokeBleWithLateCleanupForLease,
   raceBleAbort,
@@ -21,6 +22,16 @@ import {
 } from '../src/lib/smart-cube/ble-api';
 
 describe('BLE platform compatibility', () => {
+  it('matches short Bluetooth UUIDs with full UUIDs without rewriting vendor UUIDs', () => {
+    expect(normalizeBleUuid('FFF5')).toBe('0000fff5-0000-1000-8000-00805f9b34fb');
+    expect(normalizeBleUuid('0000FFF6')).toBe('0000fff6-0000-1000-8000-00805f9b34fb');
+    expect(normalizeBleUuid('0000FFF6-0000-1000-8000-00805F9B34FB'))
+      .toBe('0000fff6-0000-1000-8000-00805f9b34fb');
+    expect(normalizeBleUuid('6E400001-B5A3-F393-E0A9-E50E24DCCA9E'))
+      .toBe('6e400001-b5a3-f393-e0a9-e50e24dcca9e');
+    expect(normalizeBleUuid('not-a-uuid')).toBe('not-a-uuid');
+  });
+
   it('selects the native subscription type from characteristic properties', () => {
     expect(getBleSubscriptionType({ uuid: 'both', properties: { indicate: true, notify: true } }))
       .toBe('notification');

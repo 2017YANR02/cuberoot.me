@@ -124,3 +124,12 @@
 @media (prefers-reduced-motion: reduce) {
   .gt-page * { scroll-behavior: auto !important; }
 }
+
+.gt-page.gt-mode { margin-bottom: 0; }
+.gt-run-note, .gt-run-summary { color: var(--muted-foreground); line-height: 1.6; }
+.gt-run-summary { display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; }
+.gt-run-errors { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 360px; overflow: auto; font-size: 0.8rem; color: var(--destructive); }
+.gt-page [data-result="passed"] { color: var(--signal-success); }
+.gt-page [data-result="failed"] { color: var(--destructive); }
+.gt-page [data-result="running"], .gt-page [data-result="interrupted"] { color: var(--signal-warning); }
+@media (max-width: 640px) { .gt-filters { flex-wrap: wrap; } .gt-filter-select { max-width: 100%; } }

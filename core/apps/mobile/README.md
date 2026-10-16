@@ -134,6 +134,28 @@ Keep these boundaries:
 - Login does not imply cloud sync. Timer records, comments, and settings still remain local until the roadmap's merge, conflict, deletion, and multi-device sync design is implemented and tested.
 - Release and debug callbacks are `me.cuberoot.app://auth/callback` and `me.cuberoot.app.debug://auth/callback`. Keep the shared allowlist, Android manifest, iOS URL types, and Capacitor application IDs aligned.
 
+## iOS release with asc
+
+Install the App Store Connect CLI with `brew install asc` (integration checked against 5.14.0).
+Authenticate with `asc auth login --name CubeRoot --key-id "$ASC_KEY_ID" --issuer-id "$ASC_ISSUER_ID" --private-key "$ASC_PRIVATE_KEY_PATH" --network`.
+Use an App Store Connect API key, not the Sign in with Apple or APNs key. Store it outside the repository with mode `600`; asc uses the system Keychain by default. For an individual API key, use `--key-type individual` and omit `--issuer-id`.
+
+From `core/`:
+
+```sh
+pnpm --filter @cuberoot/mobile ios:release plan
+pnpm --filter @cuberoot/mobile ios:release status --profile CubeRoot
+pnpm --filter @cuberoot/mobile ios:release archive --build-number 2
+# After reviewing the candidate, upload the exact directory printed by archive:
+pnpm --filter @cuberoot/mobile ios:release upload --dir "$RELEASE_DIR" --profile CubeRoot
+```
+
+`2` is an example: check Apple for an unused build number first. The marketing version comes from this package and must match the iOS/watch project. Existing Apple version `1.0` is historical; the current package version must be reconciled with the intended App Store version before a real release.
+
+`plan` is offline and is the default. `status` is read-only. `archive` reuses `cap:sync:ios` and the existing toolchain doctor, then runs asc archive/export against the same `App` scheme, including its Watch target. It passes the build number to all targets, disables export-time renumbering, and saves the archive, IPA, source commit/dirty-file list and IPA SHA-256 under `~/Library/Developer/CubeRootReleases/`. Existing directories are never replaced. The dirty-file list is provenance context, not a complete reproducible source snapshot.
+
+`upload` verifies the recorded IPA hash, uploads it and waits for Apple processing; the successful response is saved as `upload.json`. If interrupted after upload starts, inspect Apple status before retrying: the upload may already have succeeded. This command does not assign test groups, answer export-compliance questions or submit App Review. API authentication, Xcode signing, successful upload, TestFlight device acceptance and public release remain separate checks; see the [roadmap](../../../docs/mobile-app-roadmap.md).
+
 ## Android release build
 
 `package.json` is the single `versionName` source. Gradle derives `versionCode` as `major * 1,000,000 + minor * 1,000 + patch`; set `MOBILE_VERSION_CODE` only when Play requires a higher monotonic code without changing the public version.
@@ -163,3 +185,9 @@ The debug suffix lets development builds coexist with the signed release app. Do
 ## Windows Android prerequisites
 
 Install Android Studio 2025.2.1 or newer, JDK 21 and an Android SDK platform. Capacitor 8 compiles Android sources at Java 21; if the command-line default is not JDK 21, point `JAVA_HOME` at JDK 21 for Gradle rather than changing the project source level. The Capacitor 8 project uses Android API 26 as its minimum runtime and currently targets API 36. External website/privacy links use the official Capacitor Browser plugin. Camera and microphone access is requested when the user invokes media features such as Stackmat audio input or tool-page recording. The Tools iframe delegates these capabilities to the canonical website; the Account iframe does not. Smart-cube connection requests Android 12+ Nearby devices (`BLUETOOTH_SCAN` / `BLUETOOTH_CONNECT`) only after the user taps Connect; scanning is declared `neverForLocation`. Android 11 and older retain the platform-required Bluetooth/location compatibility permissions capped at API 30.
+
+## Apple Watch companion timer
+
+The existing Xcode project includes a native SwiftUI `CubeRootWatch` target. It reuses this iOS host and the shared App generator/repository through a durable WatchConnectivity adapter; the React product is not copied or reimplemented for watchOS. From `core/`, use `pnpm --filter @cuberoot/mobile watch:build` for its unsigned simulator build. `ios:build` embeds the watch product in the iOS app. Both targets require the same local signing team for device installation.
+
+Scope, offline operation, import receipts, interrupted attempts, and acceptance boundaries are documented in [apple-watch-timer.md](../../../docs/apple-watch-timer.md). Current proof levels are recorded only in [mobile-app-roadmap.md](../../../docs/mobile-app-roadmap.md).

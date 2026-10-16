@@ -54,7 +54,7 @@ export interface TimerMachineTransition {
   accepted?: boolean;
 }
 
-const DEFAULT_MAX_CUBE_BACKDATE_MS = 2000;
+export const DEFAULT_MAX_CUBE_BACKDATE_MS = 2000;
 
 export function initialTimerMachineState(): TimerMachineState {
   return {

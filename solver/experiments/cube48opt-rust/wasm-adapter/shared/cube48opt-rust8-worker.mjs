@@ -77,10 +77,10 @@ export async function instantiate(compiled, memory, region = null) {
 }
 
 if (!isMainThread) {
-  const { compiled, memory, region, index, threads, variant, fixture } = workerData;
+  const { compiled, memory, region, index, threads, variant, fixture, fixtureRootBound } = workerData;
   try {
     const { api, heap } = await instantiate(compiled, memory, region);
-    const create = fixture ? api.cubeopt_fixture_create : api.cubeopt_create;
+    const create = fixtureRootBound ? api.cubeopt_fixture_root_bound_create : fixture ? api.cubeopt_fixture_create : api.cubeopt_create;
     if (typeof create !== 'function') throw new Error('This production module has no fixture oracle');
     const handle = create(index, threads, variant);
     if (handle === 0n) throw new Error('Rust worker initialization failed (snapshot or table validation)');
@@ -96,7 +96,10 @@ if (!isMainThread) {
     parentPort.on('message', ({ id, operation, scramble, depth }) => {
       try {
         let value;
-        if (operation === 'begin') { checked(api.cubeopt_begin(handle, input(scramble))); value = { worker: index }; }
+        if (operation === 'begin') {
+          checked(api.cubeopt_begin(handle, input(scramble)));
+          value = api.cubeopt_root_bound_enabled?.() === 1 ? JSON.parse(output()) : { worker: index };
+        }
         else if (operation === 'depth') { checked(api.cubeopt_run_depth(handle, depth)); value = JSON.parse(output()); }
         else if (operation === 'coordinate' && fixture) { checked(api.cubeopt_fixture_coordinate(handle, input(scramble))); value = output(); }
         else if (operation === 'resource-depth' && fixture) { checked(api.cubeopt_fixture_prepare_depth(handle, depth)); value = JSON.parse(output()); }

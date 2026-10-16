@@ -519,6 +519,7 @@ export function humanizeStream(
   // 区间横跨了已由动作流还原出的中层,说明检测器把「独立转体 + 中层核心运动」并成了
   // 一段。这时开始时刻才是独立转体的位置,不能按结尾把它塞给最后一个中层。
   const eventTime = (event: (typeof events)[number]): number => {
+    if (!event.wide && event.notationMs !== undefined) return event.notationMs;
     const start = event.startMs ?? event.tMs;
     if (event.tMs - start <= 1200) return start;
     const spansPlannedSlice = [...planned].some(i => {
@@ -527,13 +528,18 @@ export function humanizeStream(
     });
     return spansPlannedSlice ? start : event.tMs;
   };
+  // Pose settle times and wide-turn encoder anchors can cross. Consume events
+  // in the same notation-time order used to weave the displayed sequence;
+  // retain source indices for slice ownership and the untouched gyro track.
+  const notationOrder = events.map((_, index) => index)
+    .sort((a, b) => eventTime(events[a]) - eventTime(events[b]) || a - b);
   let evPtr = 0;
   /** `out` 里从这个下标起才允许和前一条并 —— 转体会把它推到末尾。 */
   let noJoinBefore = 0;
   /** 这一手开始之前还没被认领的换格 = 人在这儿做了转体。 */
   const writeRotationsBefore = (tMs: number): void => {
-    while (evPtr < events.length && eventTime(events[evPtr]) <= tMs) {
-      const idx = evPtr++;
+    while (evPtr < notationOrder.length && eventTime(events[notationOrder[evPtr]]) <= tMs) {
+      const idx = notationOrder[evPtr++];
       if (claimed.has(idx) || suppressed.has(idx)) continue;
       const event = events[idx];
       const token = event.wide ? (event.wideToken ?? inverseToken(event.token)) : event.token;

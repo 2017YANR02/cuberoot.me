@@ -85,7 +85,7 @@ function HookHarness({
         createElement('span', { className: 'timer-display-value' }, '0.00')),
       createElement('div', { className: 'scramble-strip' },
         createElement('span', { className: 'scramble-moves' }, 'R U')),
-      createElement('div', { className: 'scramble-strip', 'data-interactive': 'true' },
+      createElement('div', { className: 'scramble-strip', 'data-interactive': 'true', 'data-no-timer': true },
         createElement('span', { className: 'fixture-retry' }, 'Retry')),
       createElement('button', { type: 'button' }, 'host action')),
     createElement(GestureWheel, { isZh: false, ref: wheelRef }),
@@ -294,6 +294,7 @@ describe('shared useGestureWheel pointer lifecycle', () => {
 
   it.each([
     ['mouse', '.timer-display-value'], ['touch', '.timer-display-value'],
+    ['mouse', '.scramble-moves'], ['touch', '.scramble-moves'],
   ] as const)('keeps %s presses on %s timing-only even after dragging', (pointerType, selector) => {
     render({ ignoreButtons: true });
     const digits = host.querySelector(selector)!;
@@ -311,6 +312,7 @@ describe('shared useGestureWheel pointer lifecycle', () => {
   it.each(['mouse', 'touch'] as const)('keeps %s scramble scrolling outside the timing path', (pointerType) => {
     render({ ignoreButtons: true });
     const scramble = host.querySelector('.scramble-moves')!;
+    scramble.parentElement!.setAttribute('data-no-timer', 'true');
     dispatch(scramble, 'pointerdown', { pointerType, time: 0, x: 100, y: 100 });
     dispatch(scramble, 'pointermove', { pointerType, time: 700, x: 100, y: 30 });
     dispatch(scramble, 'pointerup', { pointerType, time: 800, x: 100, y: 30 });

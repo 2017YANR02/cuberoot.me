@@ -429,7 +429,7 @@ mod tests {
         assert!(combined.profile.matches_totals(&combined));
     }
 
-    #[cfg(all(feature = "opt10-native-batch", not(target_family = "wasm")))]
+    #[cfg(all(any(feature = "opt8-native-batch", feature = "opt10-native-batch"), not(target_family = "wasm")))]
     #[test]
     fn cancellation_wrapper_forwards_the_batch_override() {
         struct BatchOnly;
@@ -461,6 +461,38 @@ mod tests {
     }
     fn options(depth: u8, contexts: usize) -> SearchOptions {
         SearchOptions { max_depth: depth, max_nodes: 0, contexts }
+    }
+
+    #[cfg(all(feature = "opt8-native-batch", not(target_family = "wasm")))]
+    #[test]
+    fn opt8_batch_parallel_search_reaches_grouped_override() {
+        use std::sync::atomic::AtomicUsize;
+        struct Counting { batch_queries: AtomicUsize }
+        impl PruningOracle for Counting {
+            type Query = u8;
+            fn prepare(&self, cube: &Cube, _: u8) -> Result<u8, u8> {
+                Ok(cube.corners.iter().filter(|&&corner| corner >> 3 != 0).count().div_ceil(4) as u8)
+            }
+            fn lookup(&self, query: u8) -> u8 { query }
+            fn lookup_batch(&self, queries: &[Option<u8>; 8]) -> [u8; 8] {
+                self.batch_queries.fetch_add(queries.iter().flatten().count(), Ordering::Relaxed);
+                queries.map(|query| query.unwrap_or(0))
+            }
+            fn max_bound(&self) -> u8 { 13 }
+            fn allow_parent_propagation(&self) -> bool { true }
+            fn allow_dynamic_prefixes(&self) -> bool { true }
+            fn allow_quarter_pruning(&self) -> bool { true }
+            fn allow_root_bound(&self) -> bool { true }
+        }
+        let start = Cube::from_scramble("R U F").unwrap();
+        let oracle = Counting { batch_queries: AtomicUsize::new(0) };
+        let result = solve(start, &oracle, options(3, 8), 4).unwrap();
+        let solution = result.solution.unwrap();
+        assert_eq!(solution.len(), 3);
+        assert!(solution.iter().fold(start, |cube, &movement| cube.moved(movement)).is_solved());
+        assert_eq!(result.completed_depth, Some(2));
+        assert!(!result.cancelled);
+        assert!(oracle.batch_queries.load(Ordering::Relaxed) > 0);
     }
 
     #[test]

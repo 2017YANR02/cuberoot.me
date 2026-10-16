@@ -4,8 +4,8 @@ export {
   computeStageSegments,
   stageSegmentsFor,
   STAGE_SEGMENT_EVENTS,
-  type SolveMove,
   type StageAverages,
   type StageSegments,
-} from '../index';
+} from '../stage-segments-producer';
+export type { SolveMove } from '../types';
 export { applyOneToken } from './apply-token';

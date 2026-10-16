@@ -8,6 +8,8 @@ import { dirname, isAbsolute, resolve } from 'node:path';
 import { cpus, release } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { getVariant } from './variants.mjs';
+import { patchOriginalWrapper } from './original-wasm-compat.mjs';
+import { validateRootBoundProof } from './wasm-adapter/shared/cube48opt-rust8.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '../../..');
@@ -27,12 +29,17 @@ export function parseWasmBenchmarkArguments(argv) {
   const args = [...argv], values = {};
   while (args.length) {
     const key = args.shift();
-    assert(['--variant', '--engine', '--threads', '--table', '--small', '--wasm', '--out', '--cases'].includes(key), `Unknown argument: ${key}`);
+    assert(['--variant', '--engine', '--threads', '--table', '--small', '--wasm', '--out', '--cases', '--compiler', '--resume-from'].includes(key), `Unknown argument: ${key}`);
     assert(!Object.hasOwn(values, key) && args.length && !args[0].startsWith('--'), `Missing or duplicate ${key}`);
     values[key] = args.shift();
   }
   assert(/^[1-9]$/.test(values['--variant'] ?? ''), 'This comparison permits Opt1 through Opt9');
   const engine = values['--engine'] ?? 'both';
+  const compiler = values['--compiler'];
+  if (compiler !== undefined) assert(compiler === 'turbofan' && (
+    values['--variant'] === '8' && values['--threads'] === '4' && ['rust','original'].includes(engine)
+    || values['--variant'] === '9' && values['--threads'] === '16' && values['--cases'] === '1000' && ['rust','original'].includes(engine)),
+    'Compiler override requires the reviewed Opt8 or Opt9 comparison');
   assert(['both', 'rust', 'original'].includes(engine), 'engine must be both, rust or original');
   const threads = values['--threads'] ?? '1';
   assert(['1', '4', '16', '18'].includes(threads), 'threads must be 1, 4, 16 or 18');
@@ -41,7 +48,8 @@ export function parseWasmBenchmarkArguments(argv) {
   const count = Number(values['--cases'] ?? 100);
   assert(count === 100 || (count === 1000 && threads === '16' && values['--variant'] === '9'));
   assert(threads !== '16' || count === 1000);
-  return { variant: Number(values['--variant']), engine, threads: Number(threads), ...(count === 1000 ? { count } : {}),
+  if (values['--resume-from']) assert(engine === 'original' && values['--variant'] === '9' && threads === '16' && count === 1000 && compiler === 'turbofan');
+  return { ...(values['--resume-from'] ? {resumeFrom:resolve(values['--resume-from'])} : {}), ...(compiler ? {compiler} : {}), variant: Number(values['--variant']), engine, threads: Number(threads), ...(count === 1000 ? { count } : {}),
     table: resolve(values['--table']), small: resolve(values['--small']),
     wasm: resolve(values['--wasm']), out: resolve(values['--out']) };
 }
@@ -78,6 +86,9 @@ export function sharedBuildSources(build) {
     'Shared build source digest does not match its frozen file map');
   for (const name of ['wasm-adapter/shared/cube48opt-rust8.mjs', 'wasm-adapter/shared/cube48opt-rust8-worker.mjs',
     'wasm-adapter/shared/src/lib.rs', 'src/search.rs']) assert(Object.hasOwn(build.sourceHashes, prefix + name), `Missing build source: ${name}`);
+  if (build.smallCheck?.rootBoundEnabled || build.smallCheck?.rootBoundDiagnostic?.enabled) {
+    assert(Object.hasOwn(build.sourceHashes, prefix + 'wasm-adapter/shared/verify-root-bound.mjs'), 'Missing root-bound proof verification source');
+  }
   for (const [name, sha] of Object.entries(build.sourceHashes)) {
     assert(name.startsWith(prefix) && !name.split('/').some(part => ['..', '.'].includes(part))
       && /(?:\.(?:rs|mjs|mts)|Cargo\.(?:toml|lock))$/.test(name), `Invalid shared build source: ${name}`);
@@ -100,9 +111,17 @@ export async function initializeBenchmarkModule(module, engine, threads) {
 }
 
 export function validateSharedDepthResults(raw, threads) {
-  assert.equal(raw.workers?.length, threads); assert.equal(raw.depthResults?.length, raw.length + 1);
+  let initialDepth = 0;
+  if (['initialDepth', 'skippedDepths', 'rootBoundProof'].some(field => Object.hasOwn(raw, field))) {
+    initialDepth = validateRootBoundProof(raw.rootBoundProof, threads);
+    assert.equal(raw.initialDepth, initialDepth, 'Initial depth must match both-root proof');
+    assert.equal(raw.skippedDepths, initialDepth, 'Skipped depths must match the root proof');
+  }
+  assert(Number.isSafeInteger(raw.length) && raw.length >= initialDepth && raw.length <= 20);
+  assert.equal(raw.workers?.length, threads); assert.equal(raw.depthResults?.length, raw.length - initialDepth + 1);
   const workerNodes = Array(threads).fill(0);
-  for (const [depth, shards] of raw.depthResults.entries()) {
+  for (const [offset, shards] of raw.depthResults.entries()) {
+    const depth = initialDepth + offset;
     assert.equal(shards.length, threads);
     assert.deepEqual(shards.map(row => row.worker).sort((a, b) => a - b), Array.from({ length: threads }, (_, i) => i));
     for (const shard of shards) {
@@ -227,7 +246,8 @@ async function worker(inputFile, engine) {
   if (engine === 'rust') assert.equal(module.metadata.variant, input.variant);
   for (const line of lines) process.stderr.write(line + '\n');
   const ready = { type: 'ready', engine, loaded, loadSeconds: (performance.now() - start) / 1000,
-    linearMemoryBytes: module.HEAPU8.byteLength, threads, warmupCases: 0 };
+    linearMemoryBytes: module.HEAPU8.byteLength, threads, warmupCases: 0, execArgv: [...process.execArgv] };
+  if (input.compiler === 'turbofan') assert.deepEqual(process.execArgv, ['--no-liftoff']);
   if (input.diagnostic === true) {
     assert.equal(input.schema, 'cuberoot.opt8.production-profile-input.v1');
     assert.equal(input.performanceEligible, false);
@@ -235,7 +255,7 @@ async function worker(inputFile, engine) {
     ready.profiler = { kind: 'v8-prof', execArgv: [...process.execArgv], node: process.version,
       v8: process.versions.v8, pid: process.pid, diagnostic: true, performanceEligible: false };
   }
-  let index = 0, busy = false;
+  let index = input.resume?.completedCases ?? 0, busy = false;
   process.on('message', async message => {
     try {
       assert(!busy, 'Concurrent worker request'); busy = true;
@@ -277,6 +297,12 @@ export function startSession(inputFile, engine, directory, { detached = false, p
   const caseTimeoutMs = sessionInput.threads >= 16 ? 6 * 60 * 60_000 : 120_000;
   if (sessionInput.threads >= 16) assert.equal(sessionInput.perCaseTimeoutSeconds, caseTimeoutMs / 1000);
   const nodeFlags = profilerNodeFlags(profileDirectory, engine, detached);
+  if (sessionInput.compiler === 'turbofan') {
+    assert(process.platform === 'darwin' && profileDirectory === null && (
+      sessionInput.variant === 8 && sessionInput.threads === 4 && ['rust','original'].includes(engine)
+      || sessionInput.variant === 9 && sessionInput.threads === 16 && sessionInput.cases.length === 1000 && ['rust','original'].includes(engine)));
+    nodeFlags.push('--no-liftoff');
+  }
   if (profileDirectory !== null) {
     assert.equal(realpathSync(profileDirectory), profileDirectory);
     assert.equal(readdirSync(profileDirectory).length, 0, 'Profiler output must be a fresh directory');
@@ -380,8 +406,28 @@ async function main() {
       const row = reference[index]; assert.equal(row.id, `r0_${item.id}`); assert.equal(row.cancelled, false);
       verify(puzzle, item, row); return { ...item, htm: row.length };
     });
+    let resume, prefixBytes, prefixRows = [];
+    if (config.resumeFrom) {
+      const previous = JSON.parse(readFileSync(resolve(config.resumeFrom, 'input.json'), 'utf8'));
+      assert.equal(previous.corpusSha256, corpus.corpusSha256);
+      assert.equal(previous.threads, 16); assert.equal(previous.compiler, 'turbofan');
+      assert.equal(previous.artifacts.original.sha256.wasm, variant.wasmSha256);
+      assert.equal(previous.artifacts.original.sha256.wrapper, variant.wrapperSha256);
+      prefixBytes = readFileSync(resolve(config.resumeFrom, 'original/results.jsonl'));
+      assert(prefixBytes.toString().endsWith('\n'));
+      prefixRows = prefixBytes.toString().trim().split('\n').map(line => JSON.parse(line));
+      assert.equal(prefixRows.length, 431);
+      prefixRows.forEach((row, index) => {
+        assert.equal(row.index,index); assert.equal(row.id,cases[index].id); assert.equal(row.threads,16);
+        assert.equal(row.verified,true); assert(Number.isFinite(row.seconds) && row.seconds >= 0);
+        verify(puzzle,cases[index],row);
+      });
+      resume = { completedCases:431, remainingCases:569, previousDirectory:config.resumeFrom,
+        prefixSha256:createHash('sha256').update(prefixBytes).digest('hex'), sessions:2,
+        note:'First 431 completed calls retained byte-for-byte; only remaining 569 solved after runtime compatibility fix. Table reload and failed attempt excluded.' };
+    }
     const tableBefore = statSync(config.table); assert.equal(tableBefore.size, variant.tableBytes);
-    const tableManifest = JSON.parse(readFileSync(resolve(dirname(config.table), 'table.json'), 'utf8'));
+    const tableManifest = JSON.parse(readFileSync(resolve(dirname(config.small), 'table.json'), 'utf8'));
     assert.equal(tableManifest.schema, `cuberoot.cube48opt${config.variant}.table.v1`);
     assert.equal(tableManifest.wasmSha256, variant.wasmSha256);
     const tableSha256 = await hashFile(config.table); assert.equal(tableSha256, tableManifest.tableSha256);
@@ -419,18 +465,26 @@ async function main() {
     }
     assert.equal(artifacts.original.sha256.wasm, variant.wasmSha256);
     assert.equal(artifacts.original.sha256.wrapper, variant.wrapperSha256);
+    if (resume || config.engine === 'original' && config.variant === 8 && config.threads === 4 && config.compiler === 'turbofan') {
+      artifacts.original.upstreamWrapperSha256 = variant.wrapperSha256;
+      const wrapper = artifacts.original.files.wrapper;
+      writeFileSync(wrapper, patchOriginalWrapper(readFileSync(wrapper, 'utf8')));
+      artifacts.original.sha256.wrapper = await hashFile(wrapper);
+    }
     assert.equal(artifacts.rust.sha256.wasm, rustBuild.wasmSha256);
     assert.equal(artifacts.rust.sha256.wrapper, rustBuild.wrapperSha256);
     if (buildContract.shared) assert.equal(artifacts.rust.sha256.worker, rustBuild.workerSha256);
     const sourceHashes = {};
     const adapterSources = buildContract.shared ? [] : ['wasm-adapter/wrapper.mjs'];
-    for (const name of ['wasm-benchmark.mjs', 'variants.mjs', 'benchmark.mjs', 'oracle.mjs', ...adapterSources]) {
+    for (const name of ['wasm-benchmark.mjs', 'original-wasm-compat.mjs', 'variants.mjs', 'benchmark.mjs', 'oracle.mjs', ...adapterSources]) {
       const file = resolve(HERE, name); sourceHashes[file] = await hashFile(file);
       copyExclusive(file, resolve(config.out, 'source', name));
     }
     if (buildContract.shared) {
       for (const [name, expected] of Object.entries(sharedBuildSources(rustBuild))) {
-        const file = resolve(ROOT, name);
+        // Retained builds must attest their frozen sources, not today's checkout.
+        const frozen = resolve(dirname(config.wasm), 'source', name);
+        const file = existsSync(frozen) ? frozen : resolve(ROOT, name);
         assert.equal(await hashFile(file), expected, `Shared build source changed since compilation: ${name}`);
         sourceHashes[file] = expected;
         copyExclusive(file, resolve(config.out, 'source/build', name));
@@ -441,7 +495,7 @@ async function main() {
     save(resolve(config.out, 'table-manifest.json'), tableManifest);
     save(resolve(config.out, 'small-manifest.json'), smallManifest);
     const schemaVersion = buildContract.shared ? 'v2' : 'v1';
-    const input = { schema: `cuberoot.rust-opt-wasm-benchmark-input.${schemaVersion}`, ...config, cases,
+    const input = { schema: `cuberoot.rust-opt-wasm-benchmark-input.${schemaVersion}`, ...config, cases, ...(resume ? {resume} : {}),
       corpusSha256: corpus.corpusSha256, referenceFile: REFERENCE, referenceSha256: await hashFile(REFERENCE),
       tableSha256, artifacts, sourceHashes, rustBuild, threads: config.threads, contexts: 8, warmupCases: 0, measuredPasses: 1,
       method: 'Fresh sequential processes; exact frozen WCA source order; one timed public WASM call per case; no startup solve, warmup or retry',
@@ -452,13 +506,15 @@ async function main() {
     const summaries = {};
     for (const engine of config.engine === 'both' ? ['rust', 'original'] : [config.engine]) {
       await checkSources(input);
-      const directory = resolve(config.out, engine), session = startSession(inputFile, engine, directory), rows = [];
+      const directory = resolve(config.out, engine), session = startSession(inputFile, engine, directory), rows = [...prefixRows];
       const results = openSync(resolve(directory, 'results.jsonl'), 'wx');
+      if (prefixBytes) { writeSync(results,prefixBytes); fsyncSync(results); }
       try {
         const ready = await session.ready;
         assert.equal(ready.threads, config.threads); assert.equal(ready.warmupCases, 0);
         save(resolve(directory, 'startup.json'), ready);
         for (const [index, item] of cases.entries()) {
+          if (index < (resume?.completedCases ?? 0)) continue;
           const result = await session.request(index);
           assert.equal(result.index, index); assert.equal(result.id, item.id);
           assert.equal(result.threads, config.threads);
@@ -475,7 +531,8 @@ async function main() {
           totalSeconds: rows.reduce((sum, row) => sum + row.seconds, 0),
           peakRssBytes: resource.maxRssKiB * 1024, peakRssMethod: 'Node child resourceUsage().maxRSS, KiB converted to bytes',
           linearMemoryBytes: resource.linearMemoryBytes, loadSeconds: ready.loadSeconds, processExited: true,
-          threads: config.threads, warmupCases: 0, measuredPasses: 1, tableSha256, artifacts: artifacts[engine] };
+          threads: config.threads, warmupCases: 0, measuredPasses: 1, tableSha256, artifacts: artifacts[engine], ...(resume ? {resume} : {}) };
+        if (resume) assert.equal(await hashFile(resolve(config.resumeFrom,'original/results.jsonl')),resume.prefixSha256);
         if (engine === 'rust' && config.threads > 1) {
           const workerNodes = Array.from({ length: config.threads }, (_, worker) => rows.reduce((sum, row) => sum + row.search.workers[worker], 0));
           assert(workerNodes.every(count => count > 0), 'All requested workers must have contributed actual search nodes');
@@ -490,7 +547,7 @@ async function main() {
     const ratio = summaries.rust && summaries.original ? summaries.original.totalSeconds / summaries.rust.totalSeconds : null;
     const report = { schema: `cuberoot.rust-opt-wasm-benchmark-report.${schemaVersion}`, variant: config.variant,
       corpusSha256: corpus.corpusSha256, cases: count, threads: config.threads, measuredPasses: 1, warmupCases: 0,
-      sameSolveThreadCount: true, machine: input.machine, node: input.node,
+      sameSolveThreadCount: true, compiler: input.compiler ?? "default", machine: input.machine, node: input.node,
       tableSha256, method: input.method, measurement: input.measurement, engines: summaries,
       originalOverRustTotalRatio: ratio, rustFasterOnThisRun: ratio === null ? null : ratio > 1,
       limitations: ['A single pass has no warmup or repetition; performance noise is not estimated.',

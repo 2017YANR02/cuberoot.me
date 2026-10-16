@@ -33,6 +33,7 @@ import { TimerSoundSettings, TimerMetronomeSettings } from '@cuberoot/timer-ui';
 import { createMetronome } from '@cuberoot/timer-ui/metronome';
 import { applyOrientationPrefix, preScrambleFor, timerSmartCubeTrainingOrientation, timerSmartCubeAttemptScramble } from '@cuberoot/shared/timer';
 import { timerHidesRunningUi } from '@cuberoot/shared/timer';
+import { startWatchTimerSync } from './watch-timer-sync';
 import type { TimerSettingsUpdate } from './data/timer-repository';
 import { TimerKeymapSettings, useTimerRound, TimerGoalSettings, TimerRoundSettings, TimerGoalProgress, TimerRoundPanel, TimerTargetTime, useTimerTargetFeedback } from '@cuberoot/timer-ui';
 import { normalizeTimerTrainingSettings } from '@cuberoot/shared/timer';
@@ -261,7 +262,7 @@ import {
   UserRound,
   X,
 } from 'lucide-react';
-import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ChangeEvent, type MouseEvent as ReactMouseEvent } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode, type MouseEvent as ReactMouseEvent } from 'react';
 
 import {
   COPY,
@@ -2250,6 +2251,20 @@ export function App({ host }: { host: InstalledAppHost }) {
   }, []);
 
   useEffect(() => {
+    if (!host.watchTimer) return;
+    return startWatchTimerSync(host.watchTimer, repository, async (operation) => {
+      const revision = storeSnapshotGateRef.current.beginMutation();
+      try {
+        const data = await operation();
+        storeSnapshotGateRef.current.commitIfLatest(revision, data, applyStoreSnapshot);
+      } catch (error) {
+        await storeSnapshotGateRef.current.reloadIfLatest(revision, () => repository.load(), applyStoreSnapshot);
+        throw error;
+      }
+    });
+  }, [host, applyStoreSnapshot]);
+
+  useEffect(() => {
     let active = true;
     void repository.load().then((data) => {
       if (!active) return;
@@ -3170,7 +3185,7 @@ export function App({ host }: { host: InstalledAppHost }) {
 
   const reconstructionHost = {
     localize: <T,>(text: { en: T; zh: T }) => text[language],
-    renderCaseLink: (path: string, label: string, className: string) => {
+    renderCaseLink: (path: string, label: ReactNode, className: string) => {
       const href = SITE_ORIGIN + (language === 'zh' ? '/zh' : '') + path;
       return <a href={href} className={className} onClick={event => {
         event.preventDefault();
@@ -3717,7 +3732,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   }
 
   const scrambleClickEffect = timerScrambleClickEffect(
-    'none', // Scramble presses belong to timing, including legacy click preferences.
+    store?.settings.scrambleClickAction ?? 'start',
     scramble.length > 0,
     scrambleReady,
     scrambleStatus?.retryable === true && currentScrambleEntry !== undefined,
@@ -3888,19 +3903,9 @@ export function App({ host }: { host: InstalledAppHost }) {
               ),
           controls: (
                 <>
-                  <TimerPlayersSelect
-                    ariaLabel={copy.onePlayer}
-                    disabled={timer.machine.phase !== 'idle'
-                      && timer.machine.phase !== 'stopped'}
-                    onlineLabel={copy.online}
-                    onChange={(mode) => {
-                      timerModeRef.current = mode;
-                      setTimerMode(mode);
-                    }}
-                    playerLabel={copy.players}
-                    value={1}
-                  />
+                  {smartCubeDeviceCenter}
                   <TimerPuzzlePicker
+                    showArrow={false}
                     combineScrambleTypes={timerPuzzleSelection(activeEvent).puzzle === '333'}
                     dataNoTimer
                     disabled={timer.machine.phase === 'running' || timerContextMutationBusy}
@@ -3913,6 +3918,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                     selectedEvent={activeEvent}
                   />
                   <TimerScrambleSourceSelect
+                    showArrow={false}
                     language={language}
                     trainingItems={timerPuzzleSelection(activeEvent).puzzle === '333'
                       ? eventPickerGroups.flatMap(group => group.items)
@@ -4112,8 +4118,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                   language={language}
                   summary={stats}
                   onClick={() => setView('history')}
-                />,
-          devices: smartCubeDeviceCenter}}
+                />}}
         solver={solverHintPanel}
         timing={{
 digitsCorner: solves.length > 0 && <TimerRankBadge eventId={activeEvent} centis={rankCentis} type="single" country={rankCountry} isZh={language === 'zh'} scopes={store!.settings.rankScopes} wcaId={rankWcaId} host={timerRankHost} />,
@@ -4166,6 +4171,13 @@ scrambleSlot: (
                       title: TIMER_WCA_SCRAMBLE_SOURCE_COPY.nonOptimalTitle[language],
                     } : undefined}
                     title={TIMER_SCRAMBLE_CLICK_TITLE_COPY[scrambleClickEffect][language]}
+                    timingEnabled={scrambleClickEffect === 'start'}
+                    onActivate={scrambleClickEffect === 'next' ? nextDisplayedScramble
+                      : scrambleClickEffect === 'copy' ? () => {
+                        if (!canSwitchScramble()) return;
+                        void host.writeClipboardText(scrambleText).then(() => announce(copy.copied))
+                          .catch(() => announce(copy.actionFailed));
+                      } : undefined}
                     scramble={scrambleReady && scramble.length > 0 ? scrambleText : ''}
                     status={scrambleStatus
                       ? scrambleStatus.retryable && currentScrambleEntry
@@ -4239,7 +4251,6 @@ scrambleSlot: (
                           allMarksHref={siteRouteUrl(language, '/timer/marks')}
                           labels={wcaProgressLabels}
                           language={language}
-                          markCount={currentWcaMarks?.count}
                           marked={currentWcaMarked}
                           marks={currentWcaMarks?.marks.map((mark) => ({
                             country: mark.country || undefined,
@@ -4582,6 +4593,21 @@ children: <>
         {view === 'settings' && (
           <TimerSettingsPanel language={language} activeCategory={settingsCategory}
             onCategoryChange={setSettingsCategory} onClose={() => setView('timer')}
+            playersControl={
+              <TimerPlayersSelect
+                ariaLabel={copy.onePlayer}
+                disabled={timer.machine.phase !== 'idle'
+                  && timer.machine.phase !== 'stopped'}
+                onlineLabel={copy.online}
+                onChange={(mode) => {
+                  timerModeRef.current = mode;
+                  setTimerMode(mode);
+                  setView('timer');
+                }}
+                playerLabel={copy.players}
+                value={1}
+              />
+            }
             categories={[
               'timer', 'smart-cube', 'scramble', 'training', 'appearance', 'sound', 'data', 'advanced',
             ]}>

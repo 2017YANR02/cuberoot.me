@@ -98,7 +98,12 @@ export class GanMoveSync {
    */
   private lastEmittedTs: number | null = null;
   private lastEmittedLocalTime: number | null = null;
-  private readonly recoveryEnds: Array<number | undefined> = [];
+  // GAN can split one request into several pages and repeat pages. Associate
+  // the first request-time estimate with each serial, never with reply order.
+  private readonly recoveryTimes = new Map<number, number>();
+  private lastRequest: { counter: number; start: number; count: number; at: number } | null = null;
+  private wedgedCounter = -1;
+  private wedgedSize = 0;
   private readonly buffer: BufferedMove[] = [];
   private readonly hooks: GanMoveSyncHooks;
 
@@ -131,7 +136,8 @@ export class GanMoveSync {
     this.lastSeenCnt = serial(moveCnt);
     this.lastEmittedTs = null;
     this.lastEmittedLocalTime = null;
-    this.recoveryEnds.length = 0;
+    this.recoveryTimes.clear();
+    this.lastRequest = null; this.wedgedCounter = -1; this.wedgedSize = 0;
     this.buffer.length = 0;
   }
 
@@ -146,7 +152,8 @@ export class GanMoveSync {
     this.lastSeenCnt = -1;
     this.lastEmittedTs = null;
     this.lastEmittedLocalTime = null;
-    this.recoveryEnds.length = 0;
+    this.recoveryTimes.clear();
+    this.lastRequest = null; this.wedgedCounter = -1; this.wedgedSize = 0;
     this.buffer.length = 0;
   }
 
@@ -194,7 +201,7 @@ export class GanMoveSync {
   injectHistory(moves: BufferedMove[]): TimedMove[] {
     if (this.prevMoveCnt === -1) return [];
     for (const m of moves) this.injectLost({ ...m, cnt: serial(m.cnt) });
-    return this.evict(false, this.recoveryEnds.shift());
+    return this.evict(false);
   }
 
   /**
@@ -211,7 +218,9 @@ export class GanMoveSync {
     // so it fires on every wrap, not just the first one.
     if (serial(cubeMoveCnt) === 0) return;
     const start = this.buffer.length > 0 ? this.buffer[0].cnt : (cubeMoveCnt + 1) & 0xff;
-    this.requestHistory(start, diff + 1);
+    // Ask only for the head hole. The rest is already buffered; asking for the
+    // entire snapshot distance from this older start requests unrelated history.
+    this.requestHistory(start, this.buffer.length > 0 ? (start - this.prevMoveCnt) & 0xff : diff + 1);
   }
 
   /* ---------------------------------------------------------------- */
@@ -221,8 +230,9 @@ export class GanMoveSync {
    * `reqLostMoves` gates the history request so a history REPLY can't trigger
    * another request from inside itself.
    */
-  private evict(reqLostMoves: boolean, recoveryEnd?: number): TimedMove[] {
+  private evict(reqLostMoves: boolean): TimedMove[] {
     const out: TimedMove[] = [];
+    let recoveryEnd: number | undefined;
     while (this.buffer.length > 0) {
       const diff = (this.buffer[0].cnt - this.prevMoveCnt) & 0xff;
       if (diff > 1) {
@@ -241,8 +251,13 @@ export class GanMoveSync {
       const move = this.buffer.shift()!;
       out.push({ mv: move.mv, ts: move.ts });
       this.prevMoveCnt = move.cnt;
+      recoveryEnd = this.recoveryTimes.get(move.cnt);
+      this.recoveryTimes.delete(move.cnt);
     }
-    if (this.buffer.length > MAX_PENDING) {
+    if (reqLostMoves && this.buffer.length > MAX_PENDING
+      && (this.wedgedCounter !== this.prevMoveCnt || (this.buffer.length >= 128 && this.wedgedSize < 128))) {
+      this.wedgedCounter = this.prevMoveCnt; this.wedgedSize = this.buffer.length;
+      // A history reply must not create a state -> history -> state loop.
       this.hooks.onWedged?.();
     }
     this.fillRecoveredTimes(out, recoveryEnd);
@@ -345,13 +360,26 @@ export class GanMoveSync {
     if (num % 2 === 1) num++;
     num = Math.min(num, start + 1);
     const now = this.hooks.now?.() ?? Date.now();
+    const previous = this.lastRequest;
+    if (previous && previous.counter === this.prevMoveCnt && previous.start === start
+      && previous.count === num && now >= previous.at && now - previous.at < 500) return;
+    this.lastRequest = { counter: this.prevMoveCnt, start, count: num, at: now };
     const elapsed = this.lastEmittedLocalTime === null ? 0 : now - this.lastEmittedLocalTime;
     const end = this.lastEmittedTs !== null && elapsed > 0
       ? this.lastEmittedTs + Math.min(0xffff, elapsed) : undefined;
-    // Bounded FIFO mirrors request/reply ordering without retaining a lost
-    // response indefinitely. Missing anchors fall back to unknown timestamps.
-    if (this.recoveryEnds.length === MAX_PENDING) this.recoveryEnds.shift();
-    this.recoveryEnds.push(end);
+    const distance = (this.lastSeenCnt - this.prevMoveCnt) & 0xff;
+    if (end !== undefined && this.lastEmittedTs !== null && distance > 0) {
+      // Interpolate within the observed window. A partial reply ending before
+      // its newest serial must not receive the entire window's elapsed time.
+      for (let offset = 1; offset <= distance; offset++) {
+        const cnt = serial(this.prevMoveCnt + offset);
+        const requested = ((start - cnt) & 0xff) < num;
+        if (requested && !this.recoveryTimes.has(cnt)) {
+          this.recoveryTimes.set(cnt, Math.round(this.lastEmittedTs
+            + (end - this.lastEmittedTs) * offset / distance));
+        }
+      }
+    }
     this.hooks.requestHistory(start, num);
   }
 }

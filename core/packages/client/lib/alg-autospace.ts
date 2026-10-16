@@ -3,7 +3,7 @@
  * Ported from packages/client-vite/src/utils/alg_autospace.ts
  */
 
-import { areOppositeParallelFaceMoves } from '@cuberoot/shared/alg-notation';
+import { areParallelCubeMoves } from '@cuberoot/shared/alg-notation';
 
 export const MOVE_START_RE = /[RLUDFBMESxyzrludfbmes]/;
 export const MOVE_END_RE = /[RLUDFBMESwxyzrludfbmes'2]/;
@@ -119,10 +119,10 @@ function moveBaseFaceBack(value: string, endIdx: number): string {
 }
 
 /**
- * 同轴对面「连写」对:R/L、U/D、F/B 三条轴的两个方向都不加空格。
+ * 同轴不同层「连写」:R/L/M、U/D/E、F/B/S 之间都不加空格。
  * 大小写宽层按对应外层面处理；其余相邻转动必须由空格分开。
  */
-const isGluedOppositePair = areOppositeParallelFaceMoves;
+const isGluedParallelPair = areParallelCubeMoves;
 
 const OPEN_TO_CLOSE: Record<string, string> = { '(': ')', '[': ']', '{': '}' };
 
@@ -213,7 +213,7 @@ export function autoSpaceMoves(
     const prevChar = value[cursor - 2];
     // 新输入的是一步转动,而前一个字符是「转动结尾」或「右括号」(如 (U U') 后接 R)→ 补空格。
     const afterMove = MOVE_END_RE.test(prevChar)
-      && !isGluedOppositePair(moveBaseFaceBack(value, cursor - 2), newChar);
+      && !isGluedParallelPair(moveBaseFaceBack(value, cursor - 2), newChar);
     const afterCloseParen = prevChar === ')';
     if (MOVE_START_RE.test(newChar) && (afterMove || afterCloseParen) && !inComment(value, cursor - 1)) {
       value = value.slice(0, cursor - 1) + ' ' + value.slice(cursor - 1);
@@ -225,7 +225,7 @@ export function autoSpaceMoves(
     const newChar = value[cursor - 1];
     const nextChar = value[cursor];
     if (MOVE_END_RE.test(newChar) && MOVE_START_RE.test(nextChar) && !inComment(value, cursor - 1)
-      && !isGluedOppositePair(moveBaseFaceBack(value, cursor - 1), nextChar)) {
+      && !isGluedParallelPair(moveBaseFaceBack(value, cursor - 1), nextChar)) {
       value = value.slice(0, cursor) + ' ' + value.slice(cursor);
     }
   }
@@ -267,7 +267,7 @@ export function autoSpaceMovesCE(el: HTMLElement, inputType: string): void {
   const nextChar = after.slice(0, 1);
 
   const afterMove = MOVE_END_RE.test(prevChar)
-    && !isGluedOppositePair(moveBaseFaceBack(before, before.length - 2), newChar);
+    && !isGluedParallelPair(moveBaseFaceBack(before, before.length - 2), newChar);
   const afterCloseParen = prevChar === ')';
   if (
     newChar &&
@@ -287,7 +287,7 @@ export function autoSpaceMovesCE(el: HTMLElement, inputType: string): void {
     nextChar &&
     MOVE_START_RE.test(nextChar) &&
     !inComment(before, before.length - 1) &&
-    !isGluedOppositePair(moveBaseFaceBack(before, before.length - 1), nextChar)
+    !isGluedParallelPair(moveBaseFaceBack(before, before.length - 1), nextChar)
   ) {
     document.execCommand('insertText', false, ' ');
     sel.modify('move', 'backward', 'character');

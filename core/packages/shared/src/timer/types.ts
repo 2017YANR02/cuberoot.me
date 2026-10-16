@@ -142,6 +142,8 @@ export interface Solve {
    *  number — it exists so a segmentation bug has somewhere to be recorded
    *  next to the solve that shows it. */
   reconOk?: boolean;
+  /** Monotone Watch feedback receipt; never changes the recorded solve. */
+  watchReconRevision?: number;
   /** Optional auto-tags. Reserved for future persistence; HistoryPanel
    *  currently recomputes tags on the fly from solve + history. */
   tags?: string[];

@@ -47,7 +47,9 @@ import {
   beginBleResourceCleanup,
   bluetoothAdapterErrorMessage,
   claimBleResourceLease,
+  createBleDiagnostic,
   createBleNativeOperationQueue,
+  describeBleDevice,
   getBleSubscriptionType,
   ignoreBleFailure,
   invokeBleCleanupForLease,
@@ -58,6 +60,7 @@ import {
   raceBleAbortWithLateCleanup,
   safeBleCallback,
   waitForBleCleanupDrain,
+  BleApiError,
   BleOperationAbortedError,
   type BleAbortSignal,
   type CharacteristicValueChange,
@@ -82,6 +85,7 @@ export interface GanV4BleConnection {
 
 export interface ConnectGanV4Options {
   api?: MiniProgramBleApi;
+  adapter?: import('./discover-driver').DiscoveredCubeAdapter;
   device?: DiscoveredDevice;
   signal?: BleAbortSignal;
   onBattery?(level: number): void;
@@ -173,7 +177,10 @@ async function findGan(
   timeoutMs: number,
   signal: BleAbortSignal | undefined,
   selectedDevice?: DiscoveredDevice,
+  selectedInCurrentAdapter = false,
 ): Promise<GanDiscovery> {
+  const diagnostic = createBleDiagnostic('gan-scan');
+  diagnostic.info('start', { selected: selectedDevice ? describeBleDevice(selectedDevice) : null });
   if (selectedDevice) {
     const mac = ganMac(selectedDevice);
     if (!selectedDevice.deviceId || !mac) {
@@ -185,7 +192,10 @@ async function findGan(
         }),
       );
     }
-    return { device: selectedDevice, mac };
+    if (selectedInCurrentAdapter) return { device: selectedDevice, mac };
+    // A standalone picker may close its adapter. Reopening can discard the platform's
+    // peripheral cache (Douyin iOS reports "no device" for the old ID), so the
+    // selected cube must be observed again in this adapter session.
   }
 
   return new Promise<GanDiscovery>((resolve, reject) => {
@@ -193,10 +203,14 @@ async function findGan(
     let sawGan = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let offAbort = (): void => {};
+    const loggedDevices = new Set<string>();
 
     const finish = (result: GanDiscovery | Error): void => {
       if (settled) return;
       settled = true;
+      diagnostic.info('finish', result instanceof Error
+        ? { error: result.message, seenDeviceCount: loggedDevices.size }
+        : { device: describeBleDevice(result.device) });
       if (timer !== undefined) clearTimeout(timer);
       offAbort();
       api.offBluetoothDeviceFound(onFound);
@@ -211,10 +225,18 @@ async function findGan(
 
     const onFound = (result: { devices: DiscoveredDevice[] }): void => {
       for (const device of result.devices) {
+        const description = describeBleDevice(device);
+        delete description['RSSI'];
+        const signature = JSON.stringify(description);
+        if (!loggedDevices.has(signature)) {
+          loggedDevices.add(signature);
+          diagnostic.info('device-found', description);
+        }
+        if (selectedDevice && device.deviceId !== selectedDevice.deviceId) continue;
         if (!device.deviceId
           || !(matchesGanName(device.name) || matchesGanName(device.localName))) continue;
         sawGan = true;
-        const mac = ganMac(device);
+        const mac = ganMac(device) ?? (selectedDevice ? ganMac(selectedDevice) : null);
         if (mac) {
           finish({ device, mac });
           return;
@@ -254,7 +276,7 @@ async function findGan(
       startDiscovery,
       signal,
       stopDiscovery,
-    ).catch((error: unknown) => {
+    ).then(() => diagnostic.info('discovery-started')).catch((error: unknown) => {
       if (error instanceof BleOperationAbortedError) {
         finish(error);
         return;
@@ -274,14 +296,15 @@ async function findGan(
 export async function connectGanV4(
   options: ConnectGanV4Options = {},
 ): Promise<GanV4BleConnection> {
-  const api = options.api ?? (miniProgramApi() as unknown as MiniProgramBleApi);
+  const api = options.adapter?.api ?? options.api ?? (miniProgramApi() as unknown as MiniProgramBleApi);
   const scanTimeoutMs = options.scanTimeoutMs ?? 12_000;
   if (!Number.isFinite(scanTimeoutMs) || scanTimeoutMs < 1_000 || scanTimeoutMs > 30_000) {
     throw new RangeError('scanTimeoutMs must be between 1000 and 30000.');
   }
-  const lease = claimBleResourceLease(api);
+  const lease = options.adapter?.lease ?? claimBleResourceLease(api);
+  const diagnostic = createBleDiagnostic('gan');
 
-  let adapterOpen = false;
+  let adapterOpen = Boolean(options.adapter);
   let active = false;
   let connectedDeviceId: string | null = null;
   let deviceName = tr({ en: 'GAN smart cube', zh: 'GAN 智能魔方' });
@@ -373,7 +396,7 @@ export async function connectGanV4(
         lease,
         (callbacks) => api.closeBluetoothAdapter(callbacks),
       );
-      await raceBleAbortWithLateCleanup(
+      if (!adapterOpen) await raceBleAbortWithLateCleanup(
         invokeBleWithLateCleanupForLease(
           lease,
           (callbacks) => api.openBluetoothAdapter(callbacks),
@@ -390,7 +413,7 @@ export async function connectGanV4(
       });
     }
 
-    const discovery = await findGan(api, lease, scanTimeoutMs, options.signal, options.device);
+    const discovery = await findGan(api, lease, scanTimeoutMs, options.signal, options.device, Boolean(options.adapter));
     connectedDeviceId = discovery.device.deviceId;
     deviceName = discovery.device.name ?? discovery.device.localName ?? deviceName;
     try {
@@ -416,12 +439,22 @@ export async function connectGanV4(
       );
     } catch (error) {
       if (error instanceof BleOperationAbortedError) throw error;
+      createBleDiagnostic('gan').error('connection-failed', {
+        message: error instanceof Error ? error.message : String(error),
+        ...(error instanceof Error ? { name: error.name } : {}),
+        ...(error instanceof BleApiError ? {
+          errCode: error.errCode,
+          errNo: error.errNo,
+          errorCode: error.errorCode,
+        } : {}),
+      });
       throw new GanV4BleError('connection-failed', tr({
         en: 'Failed to connect to the GAN smart cube',
         zh: 'GAN 智能魔方连接失败',
       }), { cause: error });
     }
     active = true;
+    diagnostic.info('connected');
     connectionStateListener = (result): void => {
       if (result.deviceId === connectedDeviceId && !result.connected) {
         reportUnexpectedDisconnect(tr({
@@ -436,6 +469,7 @@ export async function connectGanV4(
       ...callbacks,
       deviceId: discovery.device.deviceId,
     })), options.signal);
+    diagnostic.info('gatt-services', { result: JSON.stringify(services.services) });
     const protocol = GAN_PROTOCOLS.find((candidate) => services.services.some((serviceCandidate) =>
       normalizeBleUuid(serviceCandidate.uuid) === candidate.serviceUuid));
     const service = protocol
@@ -451,6 +485,12 @@ export async function connectGanV4(
       deviceId: discovery.device.deviceId,
       serviceId: service.uuid,
     })), options.signal);
+    diagnostic.info('gatt-characteristics', {
+      family: protocol.family,
+      writeUuid: protocol.writeCharacteristicUuid,
+      notifyUuid: protocol.notifyCharacteristicUuid,
+      result: JSON.stringify(characteristics.characteristics),
+    });
     const writeCharacteristic = characteristics.characteristics.find((candidate) =>
       normalizeBleUuid(candidate.uuid) === protocol.writeCharacteristicUuid
       && Boolean(candidate.properties?.write || candidate.properties?.writeNoResponse));
@@ -644,7 +684,9 @@ export async function connectGanV4(
       type: subscriptionType,
     })), options.signal);
     notificationsEnabled = true;
+    diagnostic.info('notifications-enabled', { type: subscriptionType });
     for (const command of initialCommands) await sendCommand(command);
+    diagnostic.info('initial-commands-sent', { count: initialCommands.length });
 
     return {
       deviceId: discovery.device.deviceId,
@@ -674,6 +716,12 @@ export async function connectGanV4(
       },
     };
   } catch (error) {
+    diagnostic.error('setup-failed', {
+      message: error instanceof Error ? error.message : String(error),
+      ...(error instanceof BleApiError ? {
+        errCode: error.errCode, errNo: error.errNo, errorCode: error.errorCode,
+      } : {}),
+    });
     await disconnect();
     throw error;
   }

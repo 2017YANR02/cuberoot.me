@@ -180,7 +180,7 @@ function PlayableAlgRow({ entry, puzzle, set, mirror, ori = 0, viewAngle, sq1Not
   );
 }
 
-export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { puzzle: AlgPuzzle; set: string; caseObj: AlgCase; data: AlgFile; }) {
+export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embedded = false }: { puzzle: AlgPuzzle; set: string; caseObj: AlgCase; data: AlgFile; embedded?: boolean; }) {
   /**
    * 显示的这张 case 自己拿一份 —— admin 改完 / 拖完就地更新,不回写上层的 `data`:
    * 上层是按 **slug** 解析出这张 case 的,改了名字再回写会当场解析失败(整页变「没找到」)。
@@ -255,7 +255,8 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
   // 副名:meta case 的原始站名(`ZBLL U 1`)、非 meta 的原始名 —— 和主名不同才显示,免重复。
   const sub = displayAlgCaseName(puzzle, set, caseObj.name);
   const showSub = sub && sub !== primary;
-  useDocumentTitle(primary, primary);
+  // Embedded case dialogs share the host document; only the page owns its title.
+  useDocumentTitle(primary, primary, !embedded);
   const thumbParams = cubeThumbParams(puzzle, set, caseObj.sticker);
   const canChooseViewAngle = supportsCaseViewAngle(thumbParams);
   const canChooseOrientation = supportsCubeOrientation(puzzle, thumbParams);

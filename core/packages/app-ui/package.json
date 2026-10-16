@@ -14,14 +14,20 @@
       ".": "react-dom",
       "./app.css": "asset",
       "./chat": "react-dom",
-      "./chat.css": "asset"
+      "./chat.css": "asset",
+      "./watch-cube": "runtime-neutral",
+      "./watch-cube-scene": "mixed",
+      "./watch-replay": "mixed"
     }
   },
   "exports": {
     ".": "./src/index.ts",
     "./app.css": "./src/app.css",
     "./chat": "./src/chat/index.ts",
-    "./chat.css": "./src/chat/chat.css"
+    "./chat.css": "./src/chat/chat.css",
+    "./watch-cube": "./src/watch-cube.ts",
+    "./watch-cube-scene": "./src/watch-cube-scene.ts",
+    "./watch-replay": "./src/watch-replay.ts"
   },
   "sideEffects": true,
   "scripts": {

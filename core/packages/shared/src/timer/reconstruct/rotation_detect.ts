@@ -104,6 +104,8 @@ const RELAXED_HOLD_MS = 500;
 export const HOLD_MS = 120;
 
 export interface RotationEvent {
+  /** Display-only boundary when an early angular snap is followed by a closer pose. */
+  notationMs?: number;
   /** 核心开始离开上一格的时刻。记谱位置用它,避免把转体晚插到后面几手。 */
   startMs?: number;
   /** 转体**完成**的时刻(相对起表),即新朝向第一次被采到的那个样本的时刻。 */
@@ -342,9 +344,21 @@ function detectAngularRotations(samples: readonly GyroSample[], opts: DetectRota
   const pose = (q: Quat) => applyOrientation(q, null, { basis, mirror });
   let ref = quatNormalize(pose(samples[0].q));
   const out: RotationEvent[] = [];
+  let pending: { events: RotationEvent[]; target: Quat } | undefined;
   // Always leave a gap between adjacent cells, even with a caller override.
   const enterRad = Math.min(opts.enterRad ?? ENTER_RAD, ENTER_RAD);
   for (const sample of samples.slice(1)) {
+    // The 35-degree snap is intentionally responsive for pose playback. A
+    // face turn can still finish in the old grip during that transition.
+    // Only notation waits for a closer sample, within one short gesture;
+    // sparse recordings and already-settled turns retain the original time.
+    if (pending) {
+      if (sample.tMs - pending.events[0].tMs > 250) pending = undefined;
+      else if (quatAngleTo(pose(sample.q), pending.target) <= 20 * Math.PI / 180) {
+        for (const event of pending.events) event.notationMs = sample.tMs;
+        pending = undefined;
+      }
+    }
     const rel = quatNormalize(quatMul(quatConjugate(ref), pose(sample.q)));
     const near = nearestCubeOrientation(rel);
     if (near.angleRad > enterRad || quatAngleTo(QUAT_IDENTITY, near.quat) < 1e-3) continue;
@@ -358,11 +372,14 @@ function detectAngularRotations(samples: readonly GyroSample[], opts: DetectRota
         if (b) { tokens = [a.token, b.token]; break; }
       }
     }
-    for (const token of tokens) out.push({
+    const gesture = tokens.map(token => ({
       startMs: sample.tMs, tMs: sample.tMs, token,
       angleRad: token.includes('2') ? Math.PI : Math.PI / 2,
-    });
+    }));
+    out.push(...gesture);
     ref = quatNormalize(quatMul(ref, near.quat));
+    pending = gesture.length && near.angleRad > 20 * Math.PI / 180
+      ? { events: gesture, target: ref } : undefined;
   }
   return out;
 }

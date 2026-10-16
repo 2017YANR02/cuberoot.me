@@ -327,7 +327,7 @@ export function useInstalledSmartCube(
           metadata?: InstalledSmartCubeMoveMetadata,
         ) => {
           if (connectionRef.current !== connection || !session.isCurrent()) return;
-          session.move(move, deviceTimestamp, metadata);
+          session.move(move, deviceTimestamp, metadata, { delayed: metadata?.delayed });
         },
         onProtocolError: () => {
           if (connectionRef.current !== connection || !session.isCurrent()) return;

@@ -18,7 +18,7 @@
  * `bestOrientationAlg` and prefixes the returned alg with the same canonRot.
  */
 
-import type { KPattern, KTransformation } from 'cubing/kpuzzle';
+import { KTransformation, type KPattern, type KTransformationData } from 'cubing/kpuzzle';
 import { getCube3, simplifyAlg, invertAlg } from './cube3';
 import {
   CORNER_STICKERS, EDGE_STICKERS,
@@ -190,3 +190,15 @@ export function warmupOllTable(): Promise<void> {
 }
 
 export { ollFingerprint };
+
+/** Build-time serialization of this exact index for offline interpreters. */
+export async function exportOllLookup() {
+  const index = await buildIndex();
+  return { table: [...index.table], algs: index.algs.map(({ alg, caseName, transformation }) =>
+    ({ alg, caseName, transformation: transformation.transformationData })) };
+}
+export async function installOllLookup(data: { table: Array<[string, OllAlgEntry[]]>; algs: Array<OllAlgEntry & { transformation: KTransformationData }> }) {
+  const kp = await getCube3();
+  const algs = data.algs.map(item => ({ ...item, transformation: new KTransformation(kp, item.transformation) }));
+  _indexPromise = Promise.resolve({ table: new Map(data.table), algs, algByText: new Map(algs.map(item => [item.alg, item])) });
+}

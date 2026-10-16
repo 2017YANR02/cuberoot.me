@@ -179,7 +179,7 @@ export default function PrivacyPage() {
       <h2>{t('复盘分享', 'Replay sharing')}</h2>
       <p>
         {t(
-          '主动分享复盘时,生成的链接会包含该条成绩的打乱、时间、动作、设备名称、可用的姿态轨迹以及已确认的复盘谱子。链接接收方可以查看并再次转发这些数据;删除本机成绩不会撤回已分享链接或导出副本。App 不会自动分享复盘。',
+          '主动分享复盘时,生成的链接会包含该条成绩的打乱、时间、动作、设备名称、可用的姿态轨迹以及已确认的复盘还原步骤。链接接收方可以查看并再次转发这些数据;删除本机成绩不会撤回已分享链接或导出副本。App 不会自动分享复盘。',
           'When you choose to share a replay, its link contains that solve’s scramble, time, turns, device name, available orientation track, and confirmed reconstruction lines. Recipients can view and forward these data; deleting the local solve does not revoke shared links or exported copies. The app does not share replays automatically.',
         )}
       </p>

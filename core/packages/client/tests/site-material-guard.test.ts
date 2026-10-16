@@ -4,11 +4,31 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { scanSiteMaterial, violationsFromHookPayload } from '../scripts/hook-detect-site-material.mjs';
+import { unframedSurfaces } from '../scripts/site-surface-policy.mts';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const PAGE = 'app/[lang]/example/example.css';
 
 describe('site materials have one definition and shared scenery tokens', () => {
+  it.each(unframedSurfaces.filter(policy => policy.kind === 'scenery-content'))('protects the reviewed transparent section $selector', ({ selector }) => {
+    for (const declaration of ['background: var(--glass-surface-bg)', 'border: 1px solid var(--border-default)', 'backdrop-filter: var(--glass-filter)']) {
+      expect(scanSiteMaterial(`body[data-site-scenery] :is(${selector}, .other)::before { ${declaration}; }`, PAGE)).toContainEqual(expect.objectContaining({ reason: 'unframed-surface' }));
+    }
+    // Preserve the ordinary-theme fallback and meaningful child highlights.
+    expect(scanSiteMaterial(`${selector} { background: var(--card); } body[data-site-scenery] ${selector} .selected { background: var(--accent-soft); }`, PAGE)).toEqual([]);
+  });
+
+  it('keeps every reviewed reading section in the transparent adapter', () => {
+    const css = readFileSync(join(ROOT, 'components/site-surfaces.css'), 'utf8');
+    const rules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)];
+    for (const { selector } of unframedSurfaces.filter(policy => policy.kind === 'scenery-content')) {
+      expect(rules.some(([, selectors, declarations]) => selectors.includes('body[data-site-scenery]')
+        && selectors.split(/[\s,()]+/).includes(selector)
+        && /background:\s*transparent\s*;/.test(declarations)
+        && /backdrop-filter:\s*none\s*;/.test(declarations)), selector).toBe(true);
+    }
+  });
+
   it.each([
     '.calendar-page .toolbar',
     'body[data-site-scenery] .calendar-page .toolbar::before',

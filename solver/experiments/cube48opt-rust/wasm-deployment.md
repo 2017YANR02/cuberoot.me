@@ -182,3 +182,18 @@ The original service is restored after diagnostics; no slow candidate is promote
   `c4b32068639892424a146bde293320012cecec27` is deployed: CI, Next and Vercel
   succeeded. It displays the two verified Mac 18-thread results, Rust H7 and
   native Rust Opt9. The diagnostic changes above remain local.
+
+## Deployment completed — local-qualified quarter candidate
+
+Transaction `rust-opt8-local-quarter-20261014` reached `complete`. Fresh remote
+readback confirmed `enabled/configured/ready=true` and bundle
+`cubeopt-opt8-rustb600c699ab91-20261014`, SHA-256
+`b600c699ab91c29f0bef5a14b7c2871bf1fb03d840b8813d5656266132433bb6`.
+The four-thread smoke passed; PM2 state was saved. V4 remains available for
+rollback, and both bundle table paths reference the same inode. No server
+performance benchmark, table regeneration, Git commit or push was performed.
+Local exact release: 33.368675666 s versus V4 37.794426789 s, WCA100/4 workers/
+one pass/no warmup, both with --no-liftoff; 100/100 independently verified.
+Server speed improvement has not been measured or inferred from local seconds.
+The release selection is recorded in `opt8-wasm-release.json`; all reports and
+transaction/verification evidence are under `.tmp/cubeopt-reverse/opt8-local-release-20261014/`.

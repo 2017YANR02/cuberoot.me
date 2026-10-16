@@ -37,7 +37,7 @@ describe('shared display preferences', () => {
   });
 
   it.each(['en', 'zh'] as const)('updates the shared scramble and hides only during a running solve (%s)', async language => {
-    let value = normalizeTimerDisplaySettings();
+    let value = { ...normalizeTimerDisplaySettings(), scrambleClickAction: 'start' as import('@cuberoot/shared/timer').TimerScrambleClickAction };
     function Harness() {
       const [settings, setSettings] = useState(value);
       return <>

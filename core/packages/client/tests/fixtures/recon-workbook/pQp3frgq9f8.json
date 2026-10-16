@@ -1,0 +1,374 @@
+{
+  "source": "https://cuberoot.me/zh/timer?share=pQp3frgq9f8",
+  "recording": {
+    "scramble": "D U' B' F2 U2 B2 D2 L R D U2 L' U2 B' R2 F D2 B2 U2",
+    "moves": [
+      {
+        "m": "R'",
+        "ts": 0
+      },
+      {
+        "m": "U",
+        "ts": 336
+      },
+      {
+        "m": "F'",
+        "ts": 458
+      },
+      {
+        "m": "R",
+        "ts": 565
+      },
+      {
+        "m": "B",
+        "ts": 735
+      },
+      {
+        "m": "L",
+        "ts": 996
+      },
+      {
+        "m": "L",
+        "ts": 1075
+      },
+      {
+        "m": "U",
+        "ts": 1866
+      },
+      {
+        "m": "U",
+        "ts": 2731
+      },
+      {
+        "m": "U",
+        "ts": 2798
+      },
+      {
+        "m": "B'",
+        "ts": 3408
+      },
+      {
+        "m": "D'",
+        "ts": 3487
+      },
+      {
+        "m": "B",
+        "ts": 3558
+      },
+      {
+        "m": "F",
+        "ts": 4758
+      },
+      {
+        "m": "D",
+        "ts": 4840
+      },
+      {
+        "m": "F'",
+        "ts": 4959
+      },
+      {
+        "m": "B",
+        "ts": 5100
+      },
+      {
+        "m": "D",
+        "ts": 5210
+      },
+      {
+        "m": "B'",
+        "ts": 5369
+      },
+      {
+        "m": "D",
+        "ts": 6082
+      },
+      {
+        "m": "D",
+        "ts": 6191
+      },
+      {
+        "m": "F'",
+        "ts": 6445
+      },
+      {
+        "m": "D'",
+        "ts": 6497
+      },
+      {
+        "m": "D'",
+        "ts": 6546
+      },
+      {
+        "m": "F",
+        "ts": 6693
+      },
+      {
+        "m": "D'",
+        "ts": 6840
+      },
+      {
+        "m": "F'",
+        "ts": 6978
+      },
+      {
+        "m": "D",
+        "ts": 7088
+      },
+      {
+        "m": "F",
+        "ts": 7271
+      },
+      {
+        "m": "D",
+        "ts": 7751
+      },
+      {
+        "m": "D",
+        "ts": 7833
+      },
+      {
+        "m": "D",
+        "ts": 8544
+      },
+      {
+        "m": "R'",
+        "ts": 8832
+      },
+      {
+        "m": "D",
+        "ts": 8990
+      },
+      {
+        "m": "R",
+        "ts": 9219
+      },
+      {
+        "m": "D",
+        "ts": 9716
+      },
+      {
+        "m": "F",
+        "ts": 9813
+      },
+      {
+        "m": "D",
+        "ts": 9887
+      },
+      {
+        "m": "F'",
+        "ts": 9978
+      },
+      {
+        "m": "F",
+        "ts": 10601
+      },
+      {
+        "m": "D'",
+        "ts": 10645
+      },
+      {
+        "m": "D'",
+        "ts": 10685
+      },
+      {
+        "m": "F'",
+        "ts": 10817
+      },
+      {
+        "m": "D'",
+        "ts": 10900
+      },
+      {
+        "m": "F",
+        "ts": 10983
+      },
+      {
+        "m": "D'",
+        "ts": 11074
+      },
+      {
+        "m": "F'",
+        "ts": 11155
+      },
+      {
+        "m": "D",
+        "ts": 11764
+      },
+      {
+        "m": "D",
+        "ts": 11837
+      },
+      {
+        "m": "F",
+        "ts": 11999
+      },
+      {
+        "m": "D",
+        "ts": 12096
+      },
+      {
+        "m": "F'",
+        "ts": 12159
+      },
+      {
+        "m": "D'",
+        "ts": 12220
+      },
+      {
+        "m": "F'",
+        "ts": 12309
+      },
+      {
+        "m": "R",
+        "ts": 12350
+      },
+      {
+        "m": "F",
+        "ts": 12415
+      },
+      {
+        "m": "F",
+        "ts": 12454
+      },
+      {
+        "m": "D'",
+        "ts": 12490
+      },
+      {
+        "m": "F'",
+        "ts": 12587
+      },
+      {
+        "m": "D'",
+        "ts": 12642
+      },
+      {
+        "m": "F",
+        "ts": 12702
+      },
+      {
+        "m": "D",
+        "ts": 12792
+      },
+      {
+        "m": "F'",
+        "ts": 12882
+      },
+      {
+        "m": "R'",
+        "ts": 12950
+      },
+      {
+        "m": "D'",
+        "ts": 13020
+      }
+    ],
+    "timeMs": 12998.5,
+    "model": "gan-v4",
+    "gyro": "RwIAaAAA4aH5sgAG5aD6sQBT6aL4rgA89av9owB4A60JoABdCrEGngBb4rLsogB12b/fnwBZ1b/joAA9zrreqABZ2LjipAB44LbjogBa6bPunwCX8LT+mwAd7LL5ngB487H/ngB4+K8FnwBa/64FnwBaBLAFngBaDrANnwA8HrQbogB7JbcaogBXHLUOngB4FbEKnwBbBa8BngC0C64GoAEND64EoABaFrEDnwFLEbEBngAADqoBowBZCqcDpgBaBqUHpwA8BKgLpQB4LLoPoAB4JMMKlwA8CbIHnQB4DK4LoQC0CKoLowBaBqcMpwC0BKoNpAB4BK0MoAB9A7EHnQBVAbQCmgC0/68BngBaDacXqQA8FqIhtAB7A6QJqQCx86X7qQB8/qcDpgA5A6sDogBZBbICnADxBbAHngA7A6wMogDTBKwRogCzBqwNogC0Ba8EngB4/q8NnwB88rn6mACz/acNpwBXA6QRqgA8/6YPqAB4+qsHogBb9a4DoAB4+asDogCz/LT9mwEs+LD9nQBb/awCoQI5/qoJowAe+aoKpAGk/akIpAB4/KYMpwA8AqcKpgDTA6gOpQBcBKwHoQEpA6kKpAC3BagPpgBbFqgkrwBWIaoisAB7DasKowELEqwRpAEvBqQgrgD07LI5sAAY86QptAB4/6cXqABa9aYdrAAC/KQlsAA6+qUfrQB3/KccqgB4/60XowA8A7MQnAB6BbQJmgB2BLEHnQBbCK0IoQB3B6kFowDTF6w3tgADA6QdrQCW/aoSpABX/K8JnwC3EakrsABW+6sRowBbBakcqABcD6gfqwBX9rD6ngBa67j8mg=="
+  },
+  "issue": "F2L stage-end cross down; last-slot iso diagram and cross-line waste.",
+  "displayRows": [
+    {
+      "moves": "D U' B' F2 U2 B2 D2 L R D U2 L' U2 B' R2 F D2 B2 U2",
+      "label": "",
+      "colors": [],
+      "hrefs": [],
+      "diagrams": []
+    },
+    {
+      "moves": "x2 y",
+      "label": "// inspection ",
+      "colors": [
+        "Yellow Red"
+      ],
+      "hrefs": [],
+      "diagrams": []
+    },
+    {
+      "moves": "F' D R' F L B2 (D D D)",
+      "label": "// cross",
+      "colors": [
+        "White"
+      ],
+      "hrefs": [],
+      "diagrams": []
+    },
+    {
+      "moves": "L' U' L",
+      "label": "// ",
+      "colors": [
+        "Blue Red"
+      ],
+      "hrefs": [
+        "/alg/3x3/f2l/b-"
+      ],
+      "diagrams": [
+        "iso"
+      ]
+    },
+    {
+      "moves": "R U R' L U L'",
+      "label": "// ",
+      "colors": [
+        "Orange Blue"
+      ],
+      "hrefs": [],
+      "diagrams": [
+        "iso"
+      ]
+    },
+    {
+      "moves": "U2 R' U2' R U' R' U R",
+      "label": "// ",
+      "colors": [
+        "Green Orange"
+      ],
+      "hrefs": [
+        "/alg/3x3/f2l/q-"
+      ],
+      "diagrams": [
+        "iso"
+      ]
+    },
+    {
+      "moves": "(U U U) F' U F U R U (R' x' x",
+      "label": "// ZBLS-V Tb'",
+      "colors": [
+        "Green Red"
+      ],
+      "hrefs": [
+        "/alg/3x3/f2l/v-",
+        "/alg/3x3/zbls/v"
+      ],
+      "diagrams": [
+        "iso"
+      ]
+    },
+    {
+      "moves": "R) U2' R' U' R U' R'",
+      "label": "// OLL-S-",
+      "colors": [],
+      "hrefs": [
+        "/alg/3x3/oll/s-"
+      ],
+      "diagrams": [
+        "plan"
+      ]
+    },
+    {
+      "moves": "U2 R U R' U' R' F R2 U' R' U' R U l' U' B'",
+      "label": "// PLL-T",
+      "colors": [],
+      "hrefs": [
+        "/alg/3x3/pll/t"
+      ],
+      "diagrams": [
+        "plan"
+      ]
+    }
+  ]
+,
+  "approval": { "status": "pending" }
+}

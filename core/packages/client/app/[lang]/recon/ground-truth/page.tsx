@@ -15,6 +15,7 @@ import {
   getGroundTruthDetail,
   listGroundTruthCandidates,
   saveGroundTruthDecision,
+  resolveGroundTruthReplay,
   type CandidatePage,
   type GroundTruthCandidate,
   type GroundTruthDetail,
@@ -23,6 +24,7 @@ import {
 } from '@/lib/recon-ground-truth-api';
 import { tr } from '@/i18n/tr';
 import './ground-truth.css';
+import RegressionResults from './RegressionResults';
 
 const FILTERS = ['all', 'pending', 'discussion', 'confirmed', 'rejected'] as const;
 type Filter = (typeof FILTERS)[number];
@@ -43,6 +45,8 @@ const ISSUE_TEXT: Record<string, { zh: string; en: string }> = {
   short_scramble: { zh: '打乱异常短', en: 'Unusually short scramble' },
   missing_result: { zh: '成绩为空', en: 'Missing result' },
   missing_comp_or_date: { zh: '比赛或日期为空', en: 'Missing competition or date' },
+  replay_required: { zh: '请填写这条复盘对应的计时器回放链接，再确认纳入。只有文字解法无法验证原始动作的重建。', en: 'Add the timer replay for this reconstruction before including it. Text alone cannot verify reconstruction from recorded moves.' },
+  'valid replay URL or token required': { zh: '请填写有效的计时器回放链接。', en: 'Enter a valid timer replay URL.' },
   replay_malformed: { zh: 'Replay 内容无法解析', en: 'Replay cannot be decoded' },
   replay_event_not_333: { zh: 'Replay 不是标准三阶', en: 'Replay is not standard 3×3' },
   replay_scramble_missing: { zh: 'Replay 缺少打乱', en: 'Replay has no scramble' },
@@ -89,6 +93,16 @@ function CandidateRow({ item, selected, onSelect }: {
 }
 
 export default function ReconGroundTruthPage() {
+  const [view, setView] = useQueryState('view', parseAsStringEnum(['smart', 'manual']).withDefault('smart'));
+  return <><div className="gt-page gt-mode"><label className="gt-filter-label">
+    <span>{tr({ zh: '查看内容', en: 'View' })}</span>
+    <select className="gt-filter-select" value={view} onChange={event => { void setView(event.target.value as 'smart' | 'manual'); }}>
+      <option value="smart">{tr({ zh: '智能魔方回归测试', en: 'Smart cube regression tests' })}</option>
+      <option value="manual">{tr({ zh: '人工复盘样例', en: 'Manual reconstruction cases' })}</option>
+    </select></label></div>{view === 'manual' ? <ManualGroundTruthPage /> : <RegressionResults />}</>;
+}
+
+function ManualGroundTruthPage() {
   const user = useAuthUser();
   const isAdmin = useIsAdmin();
   const [q, setQ] = useQueryState('q', parseAsString.withDefault('').withOptions({ history: 'replace' }));
@@ -175,7 +189,7 @@ export default function ReconGroundTruthPage() {
     try {
       const saved = await saveGroundTruthDecision(detail.source.id, {
         status: decisionStatus,
-        replay,
+        replay: decisionStatus === 'confirmed' ? await resolveGroundTruthReplay(replay) : replay,
         note,
         currentWrong,
         acknowledgeWarnings,
@@ -350,12 +364,17 @@ export default function ReconGroundTruthPage() {
                   <textarea
                     className="gt-editor-textarea"
                     value={replay}
-                    onChange={(e) => setReplay(e.target.value)}
+                    onChange={(e) => { setReplay(e.target.value); setSaveError(null); }}
+                    aria-describedby="gt-replay-help"
                     rows={3}
                     spellCheck={false}
-                    placeholder="https://cuberoot.me/zh/timer?replay=…"
+                    placeholder="https://cuberoot.me/zh/timer?share=…"
                   />
                 </label>
+                <p id="gt-replay-help">{tr({
+                  zh: '确认纳入需要同一把的原始动作记录。支持计时器的 share 或 replay 链接；没有记录时请先选“待讨论”，不会生成或猜测动作。',
+                  en: 'Inclusion requires the original moves from this solve. Paste a timer share or replay URL; without a recording, choose Discuss. Moves are never synthesized.',
+                })}</p>
                 <label>
                   <span>{decisionStatus === 'confirmed'
                     ? tr({ zh: '备注（可选）', en: 'Note (optional)' })
@@ -378,7 +397,7 @@ export default function ReconGroundTruthPage() {
                   type="button"
                   className="gt-save"
                   onClick={() => void save()}
-                  disabled={saving || (decisionStatus !== 'confirmed' && !note.trim())}
+                  disabled={saving || (decisionStatus === 'confirmed' ? !replay.trim() : !note.trim())}
                 >
                   <Save size={16} /> {saving ? tr({ zh: '保存中…', en: 'Saving…' }) : tr({ zh: '保存决定', en: 'Save decision' })}
                 </button>

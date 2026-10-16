@@ -972,7 +972,17 @@ html[data-theme=dark] .alg-root {
 .alg-case-inline-editor .alg-editor-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; align-items: start; }
 .alg-case-inline-editor .alg-editor-tools { max-width: 250px; }
 .alg-case-inline-editor .alg-alg-sortable { display: block; padding-left: 18px; margin-bottom: 6px; }
-.alg-case-inline-editor .alg-alg-drag-handle { position: absolute; left: 0; top: 8px; }
+/* Align with the input's first text line (1px border + 6px padding), even when it wraps. */
+.alg-case-inline-editor .alg-alg-drag-handle {
+  position: absolute;
+  left: 0;
+  top: 7px;
+  transform: none;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  height: 1.5em;
+  padding: 0 2px;
+}
 .f2l-solution-groups { min-width: 0; display: grid; gap: 10px; }
 .f2l-solution-group { min-width: 0; }
 .f2l-solution-group > summary { cursor: pointer; padding: 10px 0; line-height: 1.6; overflow-wrap: anywhere; }
@@ -2532,6 +2542,7 @@ a.alg-community-author:hover {
   }
   .alg-case-inline-editor .alg-editor-tools-group::before {
     content: '…';
+    pointer-events: none;
     position: absolute;
     inset: 0;
     display: grid;
@@ -2546,13 +2557,13 @@ a.alg-community-author:hover {
     transform: translateX(8px);
     transition: opacity 140ms ease, transform 300ms cubic-bezier(.22, 1, .36, 1);
   }
-  .alg-case-inline-editor .alg-editor-tools:is(:hover, :has(:focus-visible), :has([aria-expanded='true'])) .alg-editor-tools-group {
+  .alg-case-inline-editor .alg-editor-tools:is(:hover, :focus-within, :has([aria-expanded='true'])) .alg-editor-tools-group {
     max-width: min(320px, calc(100vw - 32px));
   }
-  .alg-case-inline-editor .alg-editor-tools:is(:hover, :has(:focus-visible), :has([aria-expanded='true'])) .alg-editor-tools-group::before {
+  .alg-case-inline-editor .alg-editor-tools:is(:hover, :focus-within, :has([aria-expanded='true'])) .alg-editor-tools-group::before {
     opacity: 0;
   }
-  .alg-case-inline-editor .alg-editor-tools:is(:hover, :has(:focus-visible), :has([aria-expanded='true'])) .alg-editor-tools-group > * {
+  .alg-case-inline-editor .alg-editor-tools:is(:hover, :focus-within, :has([aria-expanded='true'])) .alg-editor-tools-group > * {
     opacity: 1;
     pointer-events: auto;
     transform: none;

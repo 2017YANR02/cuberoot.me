@@ -8,9 +8,9 @@
  *
  *       U R' F R' B2 L                    // Y cross
  *
- *       最优  U F2 R' F2 U2 R             // BR  F1
+ *       U F2 R' F2 U2 R             // BR  F1
  *       ...
- *       最优  U2 F U R U' R' F'           // OLL-P+
+ *       U2 F U R U' R' F'           // OLL-P+
  *
  *       U' F2 U' F2 D R2 B2 U B2 D' R2 U  // PLL-T
  *
@@ -19,10 +19,7 @@
  * 本身留着 —— 组与组之间的空白就是它,而每一行右边的标注(`// Y cross`、`F1`、
  * `// OLL-P+`)本来就说得出自己是谁。
  *
- * 三样东西在这一块里第一次凑齐:**动作**(以前要点开表头才看得到一列)、
- * **标注**(以前只有 /recon 有)、**徽章**(以前只在表里那一行)。它们本来就是
- * 在回答同一个问题 —— 「这一步我拧了什么、拧得好不好」—— 拆在三个地方看的人得
- * 自己拼。
+ * 这里只展示动作和标注；参考步数评价保留在分步分析中。
  *
  * 标注和动作都不是这里算的:动作来自 `recon_text.ts` 的行(切点和分步分析表同一把
  * 刀),标注来自 /recon 的识别器。这个文件只负责摆。
@@ -32,9 +29,12 @@
  */
 
 import { Copy, Check } from 'lucide-react';
+import ReportContent from './ReportContent';
+import { reportNotation, prepareReportNotation } from './report-notation';
+import { initialReportUI, reduceReportUI } from './report-content';
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { loadAlg } from '@cuberoot/shared/alg';
-import { buildNormalizedSolution, findCrossLineIndex, hasNormalizableCrossMove } from '@cuberoot/shared/recon-ground-truth';
+import { projectReconNotation, projectReconComment, reconNotationGroup, reconNotationState } from './report-presentation';
 import { reconCommentCaseIndex, reconCommentLinks, type ReconCommentCases } from '@cuberoot/shared/recon/comment-links';
 import { ReconCrossToggle } from '../recon/ReconCrossToggle';
 import { getTextOffsetInElement, snapCaretToLine } from '../recon/text-cursor';
@@ -42,28 +42,26 @@ import { getTextOffsetInElement, snapCaretToLine } from '../recon/text-cursor';
 import CubeColorChip, {
   crossColorFromLabels,
   f2lDisplayColors,
-  leadingCubeColors,
 } from '../CubeColorChip';
-import { useReconstructHost, type ReconstructLocalize } from './ReconstructHost';
+import { useReconstructHost, type ReconstructHost } from './ReconstructHost';
 
 import type { ReconTextResult, ReconTextLine } from '@cuberoot/shared/timer/reconstruct/recon-text';
-import { formattedReconMoves, reconTextForClipboard, simplifyF2lRotations, originalReconNotation } from '@cuberoot/shared/timer/reconstruct/recon-text';
-import { gradeForDelta } from '@cuberoot/shared/timer/reconstruct/reference';
+import { formattedReconMoves, reconTextForClipboard } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import type { ReferenceResult, SlotReference } from '@cuberoot/shared/timer/reconstruct/reference';
-import { METHODS, type MethodId } from '@cuberoot/shared/timer/reconstruct/methods';
+import { type MethodId } from '@cuberoot/shared/timer/reconstruct/methods';
 
 export interface StepMoveListProps {
   method?: MethodId;
   recon: ReconTextResult | null;
-  /** 每阶段参考步数(十字 / OLL / PLL 的徽章从这里来)。 */
+  /** 保留调用契约；公式列表不显示参考步数评价。 */
   reference: ReferenceResult | null;
-  /** 每组参考步数(四个槽的徽章从这里来)。 */
+  /** 保留调用契约；公式列表不显示槽位评价。 */
   slotReference: SlotReference[] | null;
   /** 回放游标 = 已经播了几手。省略则不做高亮。 */
   currentIdx?: number | null;
   /** 点某一步跳到它开头。省略则标题不是按钮。 */
   onSeek?: (idx: number, atMs?: number) => void;
-  /** 谱子底下的一句提醒(如「这把没录姿态」)。省略则不显示。 */
+  /** 还原步骤底下的一句提醒(如「这把没录姿态」)。省略则不显示。 */
   notice?: React.ReactNode;
   /** 「复盘对不对」那一行。省略则不显示。 */
   feedback?: React.ReactNode;
@@ -79,7 +77,7 @@ interface Group {
 function groupLines(lines: ReconTextLine[], method: MethodId): Group[] {
   const out: Group[] = [];
   for (const line of lines) {
-    const key = line.stageKey ?? (method === 'cfop' ? line.kind : line.key === 'tail' ? METHODS[method].stages.at(-1)!.key : line.key);
+    const key = reconNotationGroup(line, method);
     const last = out[out.length - 1];
     if (last && last.key === key) last.lines.push(line);
     else out.push({ key, lines: [line] });
@@ -87,215 +85,32 @@ function groupLines(lines: ReconTextLine[], method: MethodId): Group[] {
   return out;
 }
 
-function gradeLabel(tr: ReconstructLocalize): string {
-  return tr({ zh: '最优', en: 'Optimal' });
-}
+const NoLineDiagrams: NonNullable<ReconstructHost['LineDiagramProvider']> = ({ children }) => children(() => null, () => undefined);
 
-export default function StepMoveList({
-  method = 'cfop', recon, reference, slotReference, currentIdx, onSeek, notice, feedback,
-}: StepMoveListProps) {
-  const { localize: tr, writeClipboardText, renderCaseLink } = useReconstructHost();
-  const [copied, setCopied] = useState(false);
-  const [showSimplified, setShowSimplified] = useState(true);
-  const simplifiedRecon = useMemo(() => method === 'cfop' && recon ? simplifyF2lRotations(recon) : recon, [method, recon]);
-  const originalRecon = useMemo(() => recon ? originalReconNotation(recon) : recon, [recon]);
-  const shownRecon = showSimplified ? simplifiedRecon : originalRecon;
-  const [commentCases, setCommentCases] = useState<ReconCommentCases>(new Map());
-  const normalizedText = useMemo(() => method === 'cfop' && shownRecon && hasNormalizableCrossMove(shownRecon.text)
-    ? buildNormalizedSolution(shownRecon.text) : null, [method, shownRecon]);
-  const normalized = showSimplified && normalizedText !== null;
-  const displayText = normalized ? normalizedText : shownRecon?.text ?? '';
-  const normalizedLines = displayText.split(/\r?\n/);
-  const crossLine = normalized ? findCrossLineIndex(displayText) : -1;
-  const inspectionOffset = recon?.inspection ? 1 : 0;
-  const caseSets = [...new Set(method === 'cfop' ? (recon?.lines ?? []).flatMap(line =>
-    reconCommentLinks(`// ${line.label ?? ''}`).map(link => link.href.split('/')[3])) : [])].sort().join(',');
-  useEffect(() => {
-    let active = true;
-    if (!caseSets) { setCommentCases(new Map()); return; }
-    void Promise.all(caseSets.split(',').map(async set => {
-      try { return [set, reconCommentCaseIndex(set, (await loadAlg('3x3', set)).cases)] as const; }
-      catch { return [set, new Map<string, string>()] as const; }
-    })).then(entries => { if (active) setCommentCases(new Map(entries)); });
-    return () => { active = false; };
-  }, [caseSets]);
-
-  const caseLabel = (label: string) => {
-    const text = `// ${label}`;
-    const links = method === 'cfop' ? reconCommentLinks(text, commentCases)
-      .filter(link => /^\/alg\/3x3\/[^/]+\//.test(link.href)) : [];
-    let end = 3;
-    const parts = links.map(link => {
-      const prefix = text.slice(end, link.start);
-      const name = text.slice(link.start, link.end);
-      end = link.end;
-      return <Fragment key={link.start}>{prefix}{renderCaseLink
-        ? renderCaseLink(link.href, name, 'sml-case-link')
-        : <a className="sml-case-link" href={tr({ en: link.href, zh: `/zh${link.href}` })}>{name}</a>}</Fragment>;
-    });
-    return <>{parts}{text.slice(end)}</>;
-  };
-
-  if (!recon || !shownRecon || recon.lines.length === 0) return null;
-  const displayInspection = normalized && inspectionOffset ? normalizedLines[0].split('//')[0].trim() : recon.inspection;
-  const groups = groupLines(shownRecon.lines, method);
-  const crossColor = crossColorFromLabels(recon.lines.map(line => line.label));
-
-  /** 这一行的徽章。槽走 slotReference,其余走 stages。 */
-  const gradeFor = (line: ReconTextLine): 'optimal' | null => {
-    if (method !== 'cfop') return null;
-    if (line.key.startsWith('slot-')) {
-      const slot = line.key.slice(5);
-      const sr = slotReference?.find(s => s.slot === slot) ?? null;
-      return sr && gradeForDelta(sr.delta) === 'optimal' ? 'optimal' : null;
-    }
-    const st = reference?.stages.find(s => s.step === line.key) ?? null;
-    return st && !st.note && gradeForDelta(st.delta) === 'optimal' ? 'optimal' : null;
-  };
-
-  const handleCopy = async () => {
-    try {
-      await writeClipboardText(reconTextForClipboard({ ...shownRecon, text: displayText }));
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch (err) {
-      console.warn('[step-move-list] copy failed:', err);
-    }
-  };
-
-  // 已播完 / 正在播 / 还没播到。currentIdx 是「已经播了几手」,所以正在播的那一步
-  // 是 fromIdx < idx <= toIdx+1 的那个。
-  //
-  // idx = 0 是**还没开始播**,不是「停在第 0 手」—— 那时候把整张单子压暗等于告诉
-  // 用户「这些都还没发生」,而他打开报告就是来读这些已经发生过的事的。所以
-  // 未开播时一律不标,一按播放才开始分明暗。
-  const stateOf = (line: ReconTextLine): 'done' | 'now' | 'future' | null => {
-    if (!currentIdx) return null;
-    if (currentIdx > line.toIdx + 1) return 'done';
-    if (currentIdx > line.fromIdx) return 'now';
-    return 'future';
-  };
-
-  return (
-    <div className="sml">
-      <div className="sml-head">
-        {method === 'cfop' && (simplifiedRecon !== recon || originalRecon !== recon || normalizedText) && <ReconCrossToggle
-          normalized={showSimplified} onToggle={() => setShowSimplified(value => !value)}
-          label={showSimplified ? tr({ zh: '显示原始记录', en: 'Show original record' })
-            : tr({ zh: '显示化简记录', en: 'Show simplified record' })} />}
-        <button
-          type="button"
-          className="sml-copy"
-          onClick={handleCopy}
-          title={tr({ zh: '复制成 /recon 的格式', en: 'Copy in /recon format' })}
-          aria-label={tr({ zh: '复制成 /recon 的格式', en: 'Copy in /recon format' })}
-        >
-          {copied ? <Check size={14} /> : <Copy size={14} />}
-        </button>
-      </div>
-
-      {/* 打乱先摆在最上面 —— 这一块要成为一份**照着能复现**的东西:从这个局面
-          开始,往下每一步是怎么拧的。以前它孤零零挂在整页最底下(还配一张打乱图),
-          读谱子的人得先滚到底再滚回来。
-          `recon.scramble` 就是**这把真正的打乱**,和成绩里那条逐字相同。谱子确实
-          写在「十字朝下」那个视角里(见 orient.ts),但接法不是改写打乱 —— 是把
-          观察那一手(`recon.inspection`,`z2` 之类)当成谱子的第一行印出来,和人
-          写复盘一模一样。2026-08-04 用户报的就是这个:印出来的打乱不是他做的那条,
-          「这不行,必须是原始打乱」。复制按钮导出的是同一份。 */}
-      {recon.scramble.trim() !== '' && (
-        <section className="sml-group sml-scramble">
-          <div className="sml-line">
-            <div className="sml-body">
-              <span className="sml-moves">{recon.scramble}</span>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* 观察那一手。它不是注释,是谱子的第一行:少了它,上面那条原始打乱配下面
-          这些动作对不上。 */}
-      {displayInspection.trim() !== '' && (
-        <section className="sml-group">
-          <div className="sml-line">
-            <div className="sml-body">
-              <span className="sml-moves">{displayInspection}</span>
-              <span className="sml-label">{'// '}{tr({ zh: '观察', en: 'inspection' })}</span>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {groups.map(g => (
-          <section key={g.key} className="sml-group" data-stage={g.key}>
-            {g.lines.map((line) => {
-              // 徽章:F2L 一组一个。十字 / OLL / PLL 的以前挂在组标题上,标题去掉
-              // 之后跟着它那一行走 —— 但只在这一组确实只有一行时,PLL 后面那条
-              // 收尾行(recon_text 的 `tail`)没有参考,标了也是空的。
-              const grade = g.key === 'f2l' || g.lines.length === 1 ? gradeFor(line) : null;
-              const st = stateOf(line);
-              const sourceLine = shownRecon.lines.indexOf(line) + inspectionOffset;
-              const normalizedLine = normalized && sourceLine <= crossLine;
-              const displayMoves = normalizedLine
-                ? normalizedLines[sourceLine].split('//')[0].trim().split(/\s+/).filter(Boolean)
-                : formattedReconMoves(line);
-              return (
-                <div key={line.key} className="sml-line" data-state={st ?? undefined}>
-                  {/* 「第 n 对」和它的徽章跟动作同一行 —— 一对 F2L 是一件事,
-                      拆两行读起来是两件,四对就白占四行。窄屏由 flex-wrap 兜。 */}
-                  <div className="sml-body">
-                    {grade && <span className={`sa-grade ${grade}`}>{gradeLabel(tr)}</span>}
-                    {onSeek ? (
-                      <button
-                        type="button"
-                        className="sml-moves is-seek"
-                        onClick={(event) => {
-                          if (normalizedLine || !line.moveRanges || event.detail === 0) { onSeek(line.fromIdx); return; }
-                          const text = displayMoves.join(' ');
-                          let start = 0;
-                          const positions = displayMoves.map(token => {
-                            const position = { start, end: start + token.length, text: token };
-                            start = position.end + 1;
-                            return position;
-                          });
-                          const raw = getTextOffsetInElement(event.currentTarget, { x: event.clientX, y: event.clientY });
-                          if (raw < 0) { onSeek(line.fromIdx); return; }
-                          const offset = snapCaretToLine(raw, text, positions);
-                          const index = positions.findIndex(position => position.end >= offset);
-                          const range = line.moveRanges[index];
-                          if (!range) { onSeek(line.fromIdx); return; }
-                          if (offset <= positions[index].start) onSeek(range.startIdx, range.ts);
-                          else onSeek((range.seekEndIdx ?? range.endIdx) + 1, range.endTs);
-                        }}
-                        title={normalizedLine ? tr({ zh: '从本阶段开始播放', en: 'Play from the start of this stage' })
-                          : tr({ zh: '从点击的动作开始播放', en: 'Play from the clicked move' })}
-                      >
-                        {displayMoves.join(' ')}
-                      </button>
-                    ) : (
-                      <span className="sml-moves">{displayMoves.join(' ')}</span>
-                    )}
-                    {' '}{line.label && (() => {
-                      const colors = leadingCubeColors(line.label);
-                      const visibleLabel = colors
-                        ? line.label.slice(colors.length).replace(/^\/?/, '').trimStart()
-                        : line.label;
-                      return (
-                        <span className="sml-label">
-                          {'// '}
-                          {colors && <CubeColorChip localize={tr} colors={f2lDisplayColors(colors, crossColor)} className="sml-label-chip" />}
-                          {caseLabel(visibleLabel)}
-                        </span>
-                      );
-                    })()}
-                  </div>
-                </div>
-              );
-            })}
-          </section>
-      ))}
-
-      {notice}
-      {feedback}
-    </div>
-  );
+export default function StepMoveList({method='cfop',recon,currentIdx,onSeek,notice,feedback}:StepMoveListProps) {
+  const host=useReconstructHost(), {LineDiagramProvider=NoLineDiagrams}=host;
+  const [ui,setUI]=useState(initialReportUI);
+  const [commentCases,setCommentCases]=useState<ReconCommentCases>(new Map());
+  const caseSets=[...new Set(method==='cfop'?(recon?.lines??[]).flatMap(line=>reconCommentLinks('// '+(line.label??'')).map(link=>link.href.split('/')[3])):[])].sort().join(',');
+  useEffect(()=>{let active=true;if(!caseSets){setCommentCases(new Map());return;}
+    void Promise.all(caseSets.split(',').map(async set=>{try{return [set,reconCommentCaseIndex(set,(await loadAlg('3x3',set)).cases)] as const;}catch{return [set,new Map<string,string>()] as const;}})).then(entries=>{if(active)setCommentCases(new Map(entries));});
+    return ()=>{active=false;};
+  },[caseSets]);
+  const prepared=useMemo(()=>prepareReportNotation(recon,method,ui.simplified,host.wasteBrackets),[recon,method,ui.simplified,host.wasteBrackets]);
+  const projection=prepared.projection;
+  if(!recon)return null;
+  return <LineDiagramProvider scramble={recon.scramble} text={projection.displayText} enabled={method==='cfop'}>{(diagramAt,caseHrefAt)=>{
+    const content=reportNotation(recon,method,ui,host.localize,{prepared,currentIdx,canSeek:Boolean(onSeek),cases:commentCases,caseHref:caseHrefAt,inspectionColors:host.inspectionColors,wasteBrackets:host.wasteBrackets,
+      notice:notice?{id:'notice',kind:'slot'}:null,feedback:feedback?{id:'feedback',kind:'slot'}:null});
+    const slots:Record<string,React.ReactNode>={notice,feedback};
+    projection.lines.forEach((_,i)=>{const line=i+projection.inspectionOffset;slots['diagram:'+line]=<span className="sml-diagram">{diagramAt(line)}</span>;});
+    return <ReportContent node={content.node} slots={slots} dispatch={action=>{
+      if(action.type==='play-from')onSeek?.(Number(action.value),action.timeMs);
+      if(action.type==='copy-notation')void host.writeClipboardText(content.clipboard).then(()=>{
+        setUI(state=>reduceReportUI(state,{type:'copied',key:'notation'}));
+        setTimeout(()=>setUI(state=>reduceReportUI(state,{type:'copied'})),1500);
+      }).catch(err=>console.warn('[step-move-list] copy failed:',err));
+      setUI(state=>reduceReportUI(state,action));
+    }}/>;
+  }}</LineDiagramProvider>;
 }

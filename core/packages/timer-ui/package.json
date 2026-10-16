@@ -136,7 +136,19 @@
       "./timer-tools.css": "react-dom",
       "./timer-bld-helper.css": "react-dom",
       "./TimerSoloPage": "react-dom",
-      "./timer-solo-page.css": "react-dom"
+      "./timer-solo-page.css": "react-dom",
+      "./scramble-preview": "react-dom",
+      "./native-cube-scene": "mixed",
+      "./reconstruct/analysis-core": "runtime-neutral",
+      "./reconstruct/analysis-runner": "mixed",
+      "./reconstruct/analysis-protocol": "runtime-neutral",
+      "./reconstruct/report-presentation": "mixed",
+      "./reconstruct/report-columns": "mixed",
+      "./reconstruct/timeline-model": "runtime-neutral",
+      "./reconstruct/history-model": "runtime-neutral",
+      "./reconstruct/report-content": "mixed",
+      "./reconstruct/report-notation": "mixed",
+      "./reconstruct/report-player": "mixed"
     }
   },
   "exports": {
@@ -260,7 +272,19 @@
     "./timer-tools.css": "./src/timer-tools.css",
     "./timer-bld-helper.css": "./src/timer-bld-helper.css",
     "./TimerSoloPage": "./src/TimerSoloPage.tsx",
-    "./timer-solo-page.css": "./src/timer-solo-page.css"
+    "./timer-solo-page.css": "./src/timer-solo-page.css",
+    "./scramble-preview": "./src/TimerScramblePreview.tsx",
+    "./native-cube-scene": "./src/NativeCubeScene.ts",
+    "./reconstruct/analysis-core": "./src/reconstruct/analysis-core.ts",
+    "./reconstruct/analysis-runner": "./src/reconstruct/analysis-runner.ts",
+    "./reconstruct/analysis-protocol": "./src/reconstruct/analysis-protocol.ts",
+    "./reconstruct/report-presentation": "./src/reconstruct/report-presentation.ts",
+    "./reconstruct/report-columns": "./src/reconstruct/report-columns.ts",
+    "./reconstruct/timeline-model": "./src/reconstruct/timeline-model.ts",
+    "./reconstruct/history-model": "./src/reconstruct/history-model.ts",
+    "./reconstruct/report-content": "./src/reconstruct/report-content.ts",
+    "./reconstruct/report-notation": "./src/reconstruct/report-notation.ts",
+    "./reconstruct/report-player": "./src/reconstruct/report-player.ts"
   },
   "sideEffects": [
     "./src/index.ts",
