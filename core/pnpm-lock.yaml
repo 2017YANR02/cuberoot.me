@@ -320,6 +320,9 @@ importers:
       '@capacitor/app':
         specifier: 8.1.1
         version: 8.1.1(@capacitor/core@8.5.3)
+      '@capacitor/app-launcher':
+        specifier: 8.0.1
+        version: 8.0.1(@capacitor/core@8.5.3)
       '@capacitor/browser':
         specifier: 8.0.4
         version: 8.0.4(@capacitor/core@8.5.3)
@@ -1258,6 +1261,11 @@ packages:
     resolution: {integrity: sha512-ilH4gSSz3DrketMkzDVAvY9JsWJ//rCQnECLTdcFRO7xXDogwAbUvQAnIAbiqefwV/D1xfjEL4Gw1MJXEcaA9g==}
     peerDependencies:
       '@capacitor/core': ^8.5.0
+
+  '@capacitor/app-launcher@8.0.1':
+    resolution: {integrity: sha512-23D8zi74sn7kxvISix8qYwgqdxGJN+4NImcNGvHen98LB1zb4eZfkJvFvp7pwntxGw4OjIE7yuf4wbzZxQHpog==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
 
   '@capacitor/app@8.1.1':
     resolution: {integrity: sha512-xM2ZTX5jK60tFtmjsmJv+Cdj1Qsb6NcavkqmdEnCPQBeya9oKhamZJxYOnQNj1ZvcJM7sWfG6BEtSLx42pisbA==}
@@ -6642,6 +6650,10 @@ snapshots:
       '@types/web-bluetooth': 0.0.20
 
   '@capacitor/android@8.5.3(@capacitor/core@8.5.3)':
+    dependencies:
+      '@capacitor/core': 8.5.3
+
+  '@capacitor/app-launcher@8.0.1(@capacitor/core@8.5.3)':
     dependencies:
       '@capacitor/core': 8.5.3
 

@@ -867,6 +867,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Shared friend chat panel and useChat lifecycle hook: conversations, text and native emoji, uploaded sticker favorites, retry and visible-message read receipts. Hosts inject transport, language, identity rendering and built-in expression catalogs (WeChat and unlocked pets); Compact composer, recent expressions, search and host action slots support Web meeting invites, music sharing and dictation; import @cuberoot/app-ui/chat.css for styles.',
   },
   {
+    name: 'UURemotePanel',
+    import: "import { UURemotePanel, UURemoteClient } from '@cuberoot/app-ui';",
+    category: 'more',
+    zh: '安装端 UU 远程入口：绑定电脑、全屏远控与画中画；宿主注入安全存储与 URL 唤起，共享请求校验和回调状态。',
+    en: 'Installed-app UU Remote panel: computer binding, full-screen control and PiP; host-injected secure storage and URL launching with shared request validation and callback state.',
+  },
+  {
     name: 'RecordSectionsView',
     import: "import { RecordSectionsView } from '@/components/wca-stats/WcaStatView.views';",
     category: 'more',

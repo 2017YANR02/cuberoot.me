@@ -1,4 +1,6 @@
 export { App } from './App';
+export { UURemoteClient, type UURemoteRuntime } from './uu-remote';
+export { UURemotePanel } from './UURemotePanel';
 export {
   InstalledAuthClient,
   jwtExpiresAt,

@@ -3,6 +3,10 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="uuremote" />
+        </intent>
         <intent><action android:name="com.getui.sdk.action" /></intent>
     </queries>
     <application
@@ -38,6 +42,13 @@
                     android:scheme="${applicationId}" />
             </intent-filter>
 
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="${applicationId}" android:host="uu-remote" android:path="/bind" />
+                <data android:scheme="${applicationId}" android:host="uu-remote" android:path="/control" />
+            </intent-filter>
         </activity>
 
         <service android:name=".RecordPushService" android:exported="false" android:process=":pushservice" />
