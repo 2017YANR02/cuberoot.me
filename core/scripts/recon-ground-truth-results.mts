@@ -100,7 +100,7 @@ if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url) && process
   } else {
     const dir = mkdtempSync(join(tmpdir(), 'recon-test-upload-'));
     try {
-      writeFileSync(join(dir, 'key'), key, { mode: 0o600 });
+      writeFileSync(join(dir, 'key'), key.replaceAll('\r\n', '\n').trimEnd() + '\n', { mode: 0o600 });
       const scan = spawnSync('ssh-keyscan', ['-H', host], { encoding: 'utf8', timeout: 15000 });
       if (scan.status !== 0) throw Error('Host unavailable');
       writeFileSync(join(dir, 'known_hosts'), scan.stdout);
@@ -116,10 +116,16 @@ if (resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url) && process
           '-o', `UserKnownHostsFile=${join(dir, 'known_hosts')}`, `${user}@${host}`,
           'node --env-file=/root/core-api/.env --input-type=module -e ' + quote(remoteCode)],
           { input: JSON.stringify(run), encoding: 'utf8', timeout: 20000 });
-        if (result.status !== 0) throw Error('Upload failed');
+        if (result.status !== 0) {
+          const reason = /error in libcrypto|invalid format/.test(result.stderr ?? '') ? 'invalid SSH key format'
+            : /Permission denied/.test(result.stderr ?? '') ? 'SSH permission denied'
+            : /node: command not found|node: not found/.test(result.stderr ?? '') ? 'remote Node unavailable'
+            : `remote upload exit ${result.status ?? result.error?.code ?? 'unknown'}`;
+          throw Error(reason);
+        }
       }
       console.log('CI test history synchronized.');
-    } catch { console.error('Cloud sync failed; reports retained as CI artifacts.'); process.exitCode = 1; }
+    } catch (error) { console.error(`Cloud sync failed (${error instanceof Error ? error.message : 'unknown'}); reports retained as CI artifacts.`); process.exitCode = 1; }
     finally { rmSync(dir, { recursive: true, force: true }); }
   }
 }
