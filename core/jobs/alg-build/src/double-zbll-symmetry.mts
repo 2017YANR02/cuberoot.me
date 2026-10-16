@@ -8,7 +8,7 @@ import { availableParallelism } from 'node:os';
 import { resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { atomicJson, maybeJson, readJson, repairTail, guard, TOTAL, GiB, selectPairBatch, pairGroup, CsvTail, claimOwner, askSolverThreads, batchFailure, recoverableStartupStop, waitForStartupMemory, type Memory, type PairGroup } from './double-zbll-symmetry-state.mjs';
-import { activeOwner, watchDashboard, renderDashboard, TerminalDashboard, REFRESH_MS } from './double-zbll-dashboard.mjs';
+import { activeOwner, watchDashboard, renderDashboard, renderCompletion, TerminalDashboard, REFRESH_MS } from './double-zbll-dashboard.mjs';
 import { WebsiteStatistics } from './double-zbll-website-stats.mjs';
 import { PairSelection } from './double-zbll-selection.mjs';
 
@@ -46,6 +46,20 @@ const opt10Release = solverEngine === 'opt10' && (solve || args[0] === '--plan')
 const seed = readJson(path('migration.json')), integrity = readJson(path('migration-integrity.json')), audit = readJson(path('audit.json'));
 if (seed.status !== 'complete' || seed.unique !== integrity.rows || audit.orbits !== TOTAL) throw Error('迁移或对称审计不完整。');
 const progressPath = path('progress.json'), prior = maybeJson(progressPath), checkpoint = maybeJson(path('checkpoint.json'));
+// A completed task only verifies saved-file hashes and prints its result. No
+// thread prompt, replay or solver/table startup is needed on subsequent opens.
+if ((solve || args[0] === '--plan') && prior?.verified === TOTAL
+  && (prior.status === 'complete' || prior.stage === '全部完成并验证') && existsSync(path('solutions-integrity.json'))) {
+  const report = readJson(path('solutions-integrity.json'));
+  if (report.total !== TOTAL || report.importedSha256 !== integrity.sha256
+    || JSON.stringify(report.histogram) !== JSON.stringify(prior.histogram)
+    || await hashFile(path('representatives.csv')) !== report.importedSha256
+    || await hashFile(path('solutions.csv')) !== report.solutionsSha256) throw Error('最终结果文件完整性检查未通过，文件保留。');
+  const completed = { ...prior, status: 'complete' };
+  if (solve && prior.status !== 'complete') atomicJson(progressPath, completed);
+  console.log(renderCompletion(completed, work));
+  process.exit(0);
+}
 const memory = (): Memory => {
   const raw = execFileSync('vm_stat', { encoding: 'utf8', timeout: 5000 });
   const n = (key: string) => { const m = raw.match(new RegExp(key + ':\\s+(\\d+)')); if (!m) throw Error('无法读取 ' + key); return Number(m[1]); };
@@ -416,9 +430,11 @@ try {
       appendFileSync(log, `${new Date().toISOString()} 已保存 ${verified}/${TOTAL}\n`);
     }
     if (verified !== TOTAL) throw Error(`枚举不完整：${verified}/${TOTAL}`);
+    if (interval) { clearInterval(interval); interval = undefined; }
     if (resident) await resident.finish();
-    stage = '全部完成并验证'; atomicJson(progressPath, snapshot('complete')); show(true, 'complete');
     atomicJson(path('solutions-integrity.json'), { total: verified, importedSha256: integrity.sha256, solutionsSha256: await hashFile(journal), histogram });
+    stage = '全部完成并验证'; atomicJson(progressPath, snapshot('complete')); show(true, 'complete');
+    screen.close(); console.log(renderCompletion(snapshot('complete'), work));
   }
 } catch (e) {
   if (interval) clearInterval(interval);

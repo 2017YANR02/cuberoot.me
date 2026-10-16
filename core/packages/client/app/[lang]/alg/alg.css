@@ -990,7 +990,7 @@ html[data-theme=dark] .alg-root {
 .f2l-solution-target { margin-left: 12px; color: var(--muted-foreground); font-size: 0.78rem; white-space: nowrap; }
 .f2l-solution-choices { display: grid; gap: 12px; padding: 0 0 12px 18px; min-width: 0; }
 .f2l-solution-choices label { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; font-size: 0.78rem; color: var(--muted-foreground); }
-.f2l-solution-choices select { max-width: 100%; width: fit-content; font: inherit; color: var(--foreground); }
+.f2l-solution-select { max-width: 100%; width: fit-content; font: inherit; color: var(--foreground); }
 .f2l-solution-composed { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .f2l-solution-play { flex: 1; display: flex; align-items: center; gap: 8px; min-width: 0; padding: 8px 0; border: 0; background: none; color: inherit; font: inherit; font-size: 0.85rem; text-align: left; cursor: pointer; overflow-wrap: anywhere; }
 .f2l-solution-play svg { flex-shrink: 0; }

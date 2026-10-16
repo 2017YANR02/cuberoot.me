@@ -22,6 +22,19 @@ export interface DashboardProgress {
 export const REFRESH_MS = 5000;
 const number = (n: number) => n.toLocaleString('en-US');
 const gib = (n: number) => Number.isFinite(n) ? n.toFixed(1) : '—';
+export function renderCompletion(p: DashboardProgress, work: string): string {
+  if (p.status !== 'complete' || p.verified !== p.total) throw Error('任务尚未完整完成');
+  const w = p.website;
+  return [
+    '双底 ZBLL · 全部完成并验证',
+    `已验证 ${number(p.verified)} / ${number(p.total)}（100%）`,
+    ...(w ? ['', '网站候选打乱 · 不含 PLL',
+      `平均 ${w.baselineMean.toFixed(3)} → ${w.bestMean.toFixed(3)} 步 · 减少 ${w.meanSaved.toFixed(3)} 步`,
+      `${number(w.improvedPairs)} 对变短 · 最多减少 ${w.maxSaved} 步`,
+      `含 PLL 配对：${number(w.pllKnownPairs)} / ${number(w.pllTotalPairs)} 对完成`] : []),
+    '', `结果与断点：${work}`, '计算已结束，无需再次启动。',
+  ].join('\n');
+}
 export function humanTime(seconds: number | null): string {
   if (seconds === null || !Number.isFinite(seconds)) return '采集速度中（约 10 秒）';
   const minutes = Math.ceil(Math.max(0, seconds) / 60);
