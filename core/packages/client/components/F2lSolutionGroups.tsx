@@ -57,7 +57,7 @@ export default function F2lSolutionGroups({ cases, entries, setup, orientation, 
         </summary>
         <div className="f2l-solution-choices">
           <label><span>{tr({ zh: '入槽方法', en: 'Insertion' })}</span>
-            <select value={option.fullAlg} onChange={event => {
+            <select className="f2l-solution-select" value={option.fullAlg} onChange={event => {
               setSelection(previous => ({ ...previous, [group.key]: event.target.value }));
               setActive(group.key);
             }}>
