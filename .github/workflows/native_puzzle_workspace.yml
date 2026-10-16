@@ -1,0 +1,24 @@
+name: Native puzzle workspace
+on:
+  push:
+    branches: [feat/native-puzzle-20261016]
+    paths: [.github/workflows/native_puzzle_workspace.yml]
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Archive tracked implementation and contracts
+        shell: bash
+        run: |
+          mkdir -p /tmp/native-puzzle-workspace
+          git rev-parse HEAD > /tmp/native-puzzle-workspace/revision.txt
+          git ls-files -z -- AGENTS.md .agents .github docs core | tar --null -T - --exclude='core/packages/client/public/*' --exclude='core/packages/platform/*' --exclude='core/apps/fmc-solver/vendor/*' --exclude='core/jobs/stats-build/output/*' -czf /tmp/native-puzzle-workspace/source.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-puzzle-source
+          path: /tmp/native-puzzle-workspace
+          retention-days: 2
