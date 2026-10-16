@@ -16,7 +16,7 @@ jobs:
         run: |
           mkdir -p /tmp/native-puzzle-workspace
           git rev-parse HEAD > /tmp/native-puzzle-workspace/revision.txt
-          git ls-files -z -- AGENTS.md .agents .github docs core | tar --null -T - --exclude='core/packages/client/public/*' --exclude='core/packages/platform/*' --exclude='core/apps/fmc-solver/vendor/*' --exclude='core/jobs/stats-build/output/*' -czf /tmp/native-puzzle-workspace/source.tar.gz
+          git ls-files -z -- AGENTS.md .agents .github docs core | tar --exclude='core/packages/client/public/*' --exclude='core/packages/platform/*' --exclude='core/apps/fmc-solver/vendor/*' --exclude='core/jobs/stats-build/output/*' --null -czf /tmp/native-puzzle-workspace/source.tar.gz -T -
       - uses: actions/upload-artifact@v4
         with:
           name: native-puzzle-source
