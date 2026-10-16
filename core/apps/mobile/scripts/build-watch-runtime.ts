@@ -60,7 +60,7 @@ export { createReconstructionAnalyzer } from '@cuberoot/timer-ui/reconstruct/ana
 export { prepareReconstruction } from '@cuberoot/shared/timer/reconstruct/recon-text';
 export { detectSolveMethod } from '@cuberoot/shared/timer/reconstruct/method-walk';
 export * from '@cuberoot/timer-ui/reconstruct/history-model';
-`,resolveDir:resolve(root,'../../packages/timer-ui'),sourcefile:'watch-analysis-fingerprint.ts'},write:false,bundle:true,format:'esm',platform:'neutral',target:'es2022',minify:true,conditions:['import'],mainFields:['module','main']});
+`,resolveDir:root,sourcefile:'watch-analysis-fingerprint.ts'},write:false,bundle:true,format:'esm',platform:'neutral',target:'es2022',minify:true,conditions:['import'],mainFields:['module','main']});
 const analysisVersion=createHash('sha256').update(analysisBundle.outputFiles[0].text)
   .update(await readFile(resolve(root,'src/watch-replay-runtime.ts'))).update(version).digest('hex');
 const installedData=JSON.parse(await readFile(algorithmFile,'utf8'));

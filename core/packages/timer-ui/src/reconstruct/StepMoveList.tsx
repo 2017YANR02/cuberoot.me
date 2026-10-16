@@ -28,25 +28,16 @@
  * 点某一步的标题跳到那一步开头。
  */
 
-import { Copy, Check } from 'lucide-react';
 import ReportContent from './ReportContent';
 import { reportNotation, prepareReportNotation } from './report-notation';
 import { initialReportUI, reduceReportUI } from './report-content';
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { loadAlg } from '@cuberoot/shared/alg';
-import { projectReconNotation, projectReconComment, reconNotationGroup, reconNotationState } from './report-presentation';
 import { reconCommentCaseIndex, reconCommentLinks, type ReconCommentCases } from '@cuberoot/shared/recon/comment-links';
-import { ReconCrossToggle } from '../recon/ReconCrossToggle';
-import { getTextOffsetInElement, snapCaretToLine } from '../recon/text-cursor';
 
-import CubeColorChip, {
-  crossColorFromLabels,
-  f2lDisplayColors,
-} from '../CubeColorChip';
 import { useReconstructHost, type ReconstructHost } from './ReconstructHost';
 
-import type { ReconTextResult, ReconTextLine } from '@cuberoot/shared/timer/reconstruct/recon-text';
-import { formattedReconMoves, reconTextForClipboard } from '@cuberoot/shared/timer/reconstruct/recon-text';
+import type { ReconTextResult } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import type { ReferenceResult, SlotReference } from '@cuberoot/shared/timer/reconstruct/reference';
 import { type MethodId } from '@cuberoot/shared/timer/reconstruct/methods';
 
@@ -67,23 +58,7 @@ export interface StepMoveListProps {
   feedback?: React.ReactNode;
 }
 
-/** 分组:十字 / F2L(可能好几行)/ OLL / PLL。空组不出现。组不再有标题,它只剩
- *  两个作用:组间的那道空白,以及「F2L 才编第 n 组」这条判断。 */
-interface Group {
-  key: string;
-  lines: ReconTextLine[];
-}
 
-function groupLines(lines: ReconTextLine[], method: MethodId): Group[] {
-  const out: Group[] = [];
-  for (const line of lines) {
-    const key = reconNotationGroup(line, method);
-    const last = out[out.length - 1];
-    if (last && last.key === key) last.lines.push(line);
-    else out.push({ key, lines: [line] });
-  }
-  return out;
-}
 
 const NoLineDiagrams: NonNullable<ReconstructHost['LineDiagramProvider']> = ({ children }) => children(() => null, () => undefined);
 

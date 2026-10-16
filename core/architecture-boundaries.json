@@ -19,6 +19,111 @@
   },
   "manualContracts": [
     {
+      "id": "watch-reconstruction-test-inputs",
+      "from": "client integration tests",
+      "to": "app-ui timer persistence and native Watch DTO; shared reconstruction fixtures",
+      "phase": "test-contract",
+      "mechanism": "Exact test-only source reads and imports recorded in legacyFindings.",
+      "owner": "timer and reconstruction maintainers",
+      "rationale": "Tests inspect canonical implementations and fixture guard coverage without copying production logic.",
+      "replacement": "Keep these exact bounded calls and test-only references; do not introduce production cross-package source imports.",
+      "evidence": [
+        {
+          "file": "core/packages/client/tests/recon-ground-truth-gate.test.ts"
+        },
+        {
+          "file": "core/packages/client/tests/timer-scramble-click-action-shared.test.ts"
+        },
+        {
+          "file": "core/packages/client/tests/watch_timer_import.test.ts"
+        },
+        {
+          "file": "core/packages/client/tests/watch_timer_native.test.ts"
+        },
+        {
+          "file": "core/packages/client/tests/watch_timer_sync.test.ts"
+        }
+      ]
+    },
+    {
+      "id": "recon-local-fingerprint-subprocess",
+      "from": "packages/client/app/api/admin/recon-tests/route.ts",
+      "to": "local toolchain",
+      "phase": "subprocess-native",
+      "mechanism": "Authenticated admin development endpoint invokes the fixed fingerprint command; production returns cloud scope before spawning.",
+      "owner": "timer and reconstruction maintainers",
+      "rationale": "Authenticated admin development endpoint invokes the fixed fingerprint command; production returns cloud scope before spawning.",
+      "replacement": "Keep these exact bounded calls and test-only references; do not introduce production cross-package source imports.",
+      "subprocessCalls": [
+        {
+          "file": "packages/client/app/api/admin/recon-tests/route.ts",
+          "mechanism": "spawnSync",
+          "target": "<dynamic>",
+          "count": 1
+        }
+      ],
+      "evidence": [
+        {
+          "file": "core/packages/client/app/api/admin/recon-tests/route.ts",
+          "contains": "timeout: 5000"
+        }
+      ]
+    },
+    {
+      "id": "recon-gate-test-subprocess",
+      "from": "packages/client/tests/recon-ground-truth-gate.test.ts",
+      "to": "local toolchain",
+      "phase": "subprocess-native",
+      "mechanism": "Isolated temporary-repository tests exercise the real gate and fixed fixture executables.",
+      "owner": "timer and reconstruction maintainers",
+      "rationale": "Isolated temporary-repository tests exercise the real gate and fixed fixture executables.",
+      "replacement": "Keep these exact bounded calls and test-only references; do not introduce production cross-package source imports.",
+      "subprocessCalls": [
+        {
+          "file": "packages/client/tests/recon-ground-truth-gate.test.ts",
+          "mechanism": "spawnSync",
+          "target": "<dynamic>",
+          "count": 2
+        }
+      ],
+      "evidence": [
+        {
+          "file": "core/packages/client/tests/recon-ground-truth-gate.test.ts",
+          "contains": "spawnSync"
+        }
+      ]
+    },
+    {
+      "id": "watch-native-test-subprocess",
+      "from": "packages/client/tests/watch_timer_native.test.ts",
+      "to": "local toolchain",
+      "phase": "subprocess-native",
+      "mechanism": "Darwin-only contract test compiles the canonical Foundation DTO and runs the temporary test binary.",
+      "owner": "timer and reconstruction maintainers",
+      "rationale": "Darwin-only contract test compiles the canonical Foundation DTO and runs the temporary test binary.",
+      "replacement": "Keep these exact bounded calls and test-only references; do not introduce production cross-package source imports.",
+      "subprocessCalls": [
+        {
+          "file": "packages/client/tests/watch_timer_native.test.ts",
+          "mechanism": "spawnSync",
+          "target": "xcrun",
+          "count": 1
+        },
+        {
+          "file": "packages/client/tests/watch_timer_native.test.ts",
+          "mechanism": "spawnSync",
+          "target": "<dynamic>",
+          "count": 1
+        }
+      ],
+      "evidence": [
+        {
+          "file": "core/packages/client/tests/watch_timer_native.test.ts",
+          "contains": "describe.skipIf(process.platform"
+        }
+      ]
+    },
+    {
       "id": "mobile-android-release-build",
       "from": "apps/mobile release build CLI",
       "to": "repository-owned Android Gradle wrapper",
@@ -191,7 +296,7 @@
       "rationale": "Reviewed for the user-requested 7555446-state local shortcut: retains boot/swap baseline, verifies checkpoints, monitors the process tree, never publishes or commits.",
       "replacement": "Keep native execution in this offline job. UI consumes only verified artifacts.",
       "subprocessCalls": [
-        { "file": "jobs/alg-build/src/double-zbll-symmetry.mts", "mechanism": "spawn", "target": "<dynamic>", "count": 1 },
+        { "file": "jobs/alg-build/src/double-zbll-symmetry.mts", "mechanism": "spawn", "target": "<dynamic>", "count": 2 },
         { "file": "jobs/alg-build/src/double-zbll-symmetry.mts", "mechanism": "spawn", "target": "caffeinate", "count": 1 },
         { "file": "jobs/alg-build/src/double-zbll-symmetry.mts", "mechanism": "execFileSync", "target": "vm_stat", "count": 1 },
         { "file": "jobs/alg-build/src/double-zbll-symmetry.mts", "mechanism": "execFileSync", "target": "sysctl", "count": 2 },
@@ -529,6 +634,101 @@
     }
   ],
   "legacyFindings": [
+    {
+      "file": "packages/client/tests/recon-ground-truth-gate.test.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "core/packages/shared/node_modules/typescript/bin/tsc",
+      "target": "shared"
+    },
+    {
+      "file": "packages/client/tests/recon-ground-truth-gate.test.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "core/packages/timer-ui/src/reconstruct/reconstruct.css",
+      "target": "timer-ui"
+    },
+    {
+      "file": "packages/client/tests/recon-ground-truth-gate.test.ts",
+      "mechanism": "path-literal",
+      "occurrences": 2,
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "core/packages/timer-ui/src/reconstruct/StepMoveList.tsx",
+      "target": "timer-ui"
+    },
+    {
+      "file": "packages/client/tests/timer-scramble-click-action-shared.test.ts",
+      "mechanism": "readFileSync",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "../timer-ui/src/TimerDisplaySettings.tsx",
+      "target": "timer-ui"
+    },
+    {
+      "file": "packages/client/tests/watch_timer_import.test.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "rule": "cross-package-relative-module",
+      "sourceKind": "test",
+      "specifier": "../../app-ui/src/data/timer-repository",
+      "target": "app-ui"
+    },
+    {
+      "file": "packages/client/tests/watch_timer_import.test.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "rule": "cross-package-relative-module",
+      "sourceKind": "test",
+      "specifier": "../../app-ui/src/watch-timer",
+      "target": "app-ui"
+    },
+    {
+      "file": "packages/client/tests/watch_timer_native.test.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "rule": "cross-package-relative-module",
+      "sourceKind": "test",
+      "specifier": "../../app-ui/src/watch-timer",
+      "target": "app-ui"
+    },
+    {
+      "file": "packages/client/tests/watch_timer_native.test.ts",
+      "mechanism": "path-resolve",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "../../apps/mobile/ios/App/WatchShared/WatchTimerWire.swift",
+      "target": "mobile"
+    },
+    {
+      "file": "packages/client/tests/watch_timer_sync.test.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "rule": "cross-package-relative-module",
+      "sourceKind": "test",
+      "specifier": "../../app-ui/src/watch-timer-sync",
+      "target": "app-ui"
+    },
+    {
+      "file": "packages/client/tests/watch_timer_sync.test.ts",
+      "importKind": "runtime",
+      "mechanism": "static-import",
+      "rule": "cross-package-relative-module",
+      "sourceKind": "test",
+      "specifier": "../../app-ui/src/watch-timer",
+      "target": "app-ui"
+    },
+    {
+      "file": "packages/client/tests/watch_timer_sync.test.ts",
+      "importKind": "type-only",
+      "mechanism": "static-import",
+      "rule": "cross-package-relative-module",
+      "sourceKind": "test",
+      "specifier": "../../app-ui/src/data/timer-repository",
+      "target": "app-ui"
+    },
     {
       "file": "packages/client/tests/auth-doc-sync.test.ts",
       "mechanism": "path-literal",
@@ -2098,13 +2298,6 @@
       "sourceKind": "test",
       "specifier": "core/packages/shared/src/recon_ground_truth.ts",
       "target": "shared"
-    },
-    {
-      "file": "packages/client/tests/recon-ground-truth-gate.test.ts",
-      "mechanism": "spawnSync",
-      "rule": "subprocess-call",
-      "sourceKind": "subprocess",
-      "target": "<dynamic>"
     },
     {
       "file": "packages/client/tests/sq1_pbl_alg_library.test.ts",

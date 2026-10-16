@@ -14,7 +14,7 @@ const RASTER = /\.(png|jpe?g|webp|gif|bmp|avif)$/i;
 const ANDROID_GENERATED_RESOURCE =
   /^core\/apps\/mobile\/android\/app\/src\/main\/res\/(?:drawable(?:-land|-port)?-(?:mdpi|hdpi|xhdpi|xxhdpi|xxxhdpi)\/splash|drawable\/splash|drawable(?:-night)?\/splash_icon|drawable-(?:ldpi|mdpi|hdpi|xhdpi|xxhdpi|xxxhdpi)\/push(?:_small)?|mipmap-(?:mdpi|hdpi|xhdpi|xxhdpi|xxxhdpi)\/ic_launcher(?:_foreground|_round)?)\.png$/;
 const IOS_ASSET_CATALOG_RESOURCE =
-  /^core\/apps\/mobile\/ios\/App\/App\/Assets\.xcassets\/[^/]+\.(?:appiconset|imageset)\/[^/]+\.(?:png|jpe?g|webp|gif|bmp|avif)$/i;
+  /^core\/apps\/mobile\/ios\/App\/(?:App|CubeRootWatch)\/Assets\.xcassets\/[^/]+\.(?:appiconset|imageset)\/[^/]+\.(?:png|jpe?g|webp|gif|bmp|avif)$/i;
 const MINIPROGRAM_RUNTIME_ASSET =
   /^core\/apps\/miniprogram\/(?:src\/)?assets\/.+\.(?:png|jpe?g|webp|gif|bmp|avif)$/i;
 const DESKTOP_NATIVE_ICON = /^core\/apps\/desktop\/src-tauri\/icons\/.+\.png$/i;

@@ -34,12 +34,10 @@ import { join, dirname } from 'node:path';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..'); // packages/client
 const TIMER = join(ROOT, 'app', '[lang]', 'timer');
 const REPORT = join(ROOT, '..', 'timer-ui', 'src', 'reconstruct', 'ReconstructReport.tsx');
-const STEP_LIST = join(ROOT, '..', 'timer-ui', 'src', 'reconstruct', 'StepMoveList.tsx');
 const SOLVE_MODAL = join(TIMER, '_components', 'SolveModal.tsx');
 const TIMER_UI = join(ROOT, '..', 'timer-ui', 'src');
 const SHELL_CSS = join(TIMER, '_shell', 'shell.css');
 const DETAIL_MODAL = join(TIMER_UI, 'TimerSolveDetailModal.tsx');
-const STEP_ANALYSIS = join(TIMER_UI, 'reconstruct', 'StepAnalysis.tsx');
 const CONTENT = join(TIMER_UI, 'reconstruct', 'report-content.ts');
 const NOTATION = join(TIMER_UI, 'reconstruct', 'report-notation.ts');
 

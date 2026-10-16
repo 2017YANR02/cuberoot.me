@@ -2,11 +2,7 @@ import { useEffect, useState } from 'react';
 import { methodHistoryWindow, methodStageAverages, historyAnalysisInput, methodHistorySource as source } from './history-model';
 export { methodHistoryWindow, methodStageAverages } from './history-model';
 import type { Solve } from '@cuberoot/shared/timer';
-import { decodeGyroTrack } from '@cuberoot/shared/smart-cube/gyro-track';
-import { initialPoseRotation } from '@cuberoot/shared/timer/reconstruct/gyro-orient';
-import { buildCoreTrack } from '@cuberoot/shared/timer/reconstruct/core-track';
-import { computeStageSegments } from '@cuberoot/shared/timer/reconstruct/stage-segments';
-import { methodFrame, type MethodStageMetric } from '@cuberoot/shared/timer/reconstruct/method-walk';
+import { type MethodStageMetric } from '@cuberoot/shared/timer/reconstruct/method-walk';
 import { METHODS, type MethodId } from '@cuberoot/shared/timer/reconstruct/methods';
 import { reconstructionAnalyzer } from './analysis-client';
 
