@@ -22,6 +22,7 @@ const ADDED_CASES = [
   { id: 'circoradiolarian', setup: 'R', alg: "G U'", moves: ['2R', "Gw'"], invalid: '4R' },
   { id: 'radiojewel', setup: 'R', alg: "G U'", moves: ['2R', "Gw'"], invalid: '4R' },
   { id: 'radioweb', setup: 'R', alg: "G U'", moves: ['2R', "Gw'"], invalid: '4R' },
+  { id: 'radiojam', setup: 'R', alg: "G U'", moves: ['2R', "Gw'"], invalid: '4R' },
   { id: 'icosababyface', setup: 'FREGU', alg: "HIERC2 FLACR'", moves: ['2NALPO', "FLACRw'"], invalid: '4FREGU' },
   { id: 'cube2heli', setup: 'F', alg: "DF U'", moves: ['2DF', "FLw'"], invalid: 'Rw' },
   { id: 'cube3heli', setup: 'F', alg: "DF U'", moves: ['2DF', "Rw'"], invalid: 'UFR' },

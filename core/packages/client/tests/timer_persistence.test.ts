@@ -73,7 +73,7 @@ describe('shared timer persistence schema', () => {
     'lattice', 'hyperx', 'latticex', 'masterbrilic', 'masterftov2',
     'quadx', 'dinoocta', 'fto5', 'eto', 'radiocrystal',
     'cube3skewb', 'heliskewb', 'comboctahedron', 'circoradiolarian', 'icosababyface',
-    'cube2heli', 'cube3heli', 'radiojewel', 'radioweb',
+    'cube2heli', 'cube3heli', 'radiojewel', 'radioweb', 'radiojam',
   ] as const)('retains %s as the selected event, session association and solve bucket', (event) => {
     const data = createTimerStoreData(100, 'duo', 'zh');
     data.settings.event = event;

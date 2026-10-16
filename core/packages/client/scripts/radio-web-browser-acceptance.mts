@@ -1,6 +1,7 @@
 /**
  * Actual browser acceptance, not a mocked renderer. Start client dev separately,
  * then run from core: pnpm --filter @cuberoot/client exec node --import tsx scripts/radio-web-browser-acceptance.mts
+ * NATIVE_PUZZLE_ID=radiojam also verifies Radio Jam with the same actual controls.
  * BASE_URL may target a deployed preview. Uses isolated anonymous contexts only.
  */
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -8,7 +9,11 @@ import { resolve } from 'node:path';
 import { chromium, expect as baseExpect, type BrowserContext, type Page } from '@playwright/test';
 
 const base = process.env.BASE_URL ?? 'http://127.0.0.1:3000';
-const out = resolve(import.meta.dirname, '../../../.tmp/radio-web-evidence');
+const id = process.env.NATIVE_PUZZLE_ID ?? 'radioweb';
+if (id !== 'radioweb' && id !== 'radiojam') throw new Error('Unsupported acceptance target');
+const puzzleName = { radioweb: 'Radio Web', radiojam: 'Radio Jam' }[id];
+const puzzleLabel = new RegExp(`^${puzzleName}$`);
+const out = resolve(import.meta.dirname, `../../../.tmp/${id}-evidence`);
 mkdirSync(out, { recursive: true });
 const expect = baseExpect.configure({ timeout: 30_000 });
 const checks: { name: string; status: 'passed' | 'failed' | 'skipped'; detail?: unknown }[] = [];
@@ -50,7 +55,7 @@ async function check(name: string, page: Page, run: () => Promise<unknown>) {
     writeFileSync(resolve(out, `${name}.txt`), await page.locator('body').innerText().catch(() => 'unavailable'));
   } finally {
     await page.screenshot({ path: resolve(out, `${name}.png`), fullPage: true, timeout: 15_000 }).catch(() => undefined);
-    writeFileSync(resolve(out, 'browser-report.json'), JSON.stringify({ base, checks, errors }, null, 2));
+    writeFileSync(resolve(out, 'browser-report.json'), JSON.stringify({ base, puzzle: id, checks, errors }, null, 2));
   }
 }
 async function open(page: Page, path: string) {
@@ -74,7 +79,7 @@ async function move(page: Page, token: string, amount = '1') {
 const gl = await context();
 const sim = await gl.newPage();
 await check('sim-3d-drag', sim, async () => {
-  await open(sim, '/zh/sim?puzzle=radioweb&anchor=start');
+  await open(sim, `/zh/sim?puzzle=${id}&anchor=start`);
   await expect(sim.locator('.twisty-native-controls')).toBeVisible();
   const info = await sim.evaluate(() => {
     const c = document.createElement('canvas');
@@ -122,7 +127,7 @@ await check('sim-3d-drag', sim, async () => {
 const flat = await context(true);
 const page = await flat.newPage();
 await check('sim-2d-playback-history-share', page, async () => {
-  await open(page, '/zh/sim?puzzle=radioweb&anchor=start');
+  await open(page, `/zh/sim?puzzle=${id}&anchor=start`);
   await expect(page.locator('.twisty-section--2d')).toBeVisible();
   // Closed shadow content is verified through actual screenshots and the public
   // TwistyPlayer pattern API, not by piercing private renderer handles.
@@ -148,12 +153,14 @@ await check('sim-2d-playback-history-share', page, async () => {
   await move(page, '2R', '-1');
   await expect.poll(() => solution(page).inputValue()).not.toBe(before);
   expect(await solution(page).inputValue()).toContain("2R'");
-  await end(page).click();
+  // A manual turn already seeks to its newly appended endpoint.
+  await expect(end(page)).toBeDisabled();
+  await expect.poll(() => pattern(page)).not.toBe(finished);
   const sharedPattern = await pattern(page);
   await page.locator('button[title="复制本页链接(含打乱 / 解法)"]').click();
   const copied = await page.evaluate(() => navigator.clipboard.readText());
   const link = new URL(copied);
-  expect(link.searchParams.get('puzzle')).toBe('radioweb');
+  expect(link.searchParams.get('puzzle')).toBe(id);
   expect(link.searchParams.get('setup')).toBe(await setup(page).inputValue());
   expect(link.searchParams.get('alg')).toBe(await solution(page).inputValue());
   const reload = await flat.newPage();
@@ -169,7 +176,7 @@ const englishPage = await (await context(true)).newPage();
 await check('sim-english-mobile', englishPage, async () => {
   const page = englishPage;
   await page.setViewportSize({ width: 390, height: 844 });
-  await open(page, '/sim?puzzle=radioweb&anchor=start&alg=R');
+  await open(page, `/sim?puzzle=${id}&anchor=start&alg=R`);
   await expect(page.getByRole('combobox', { name: 'Move notation' })).toBeVisible();
   await move(page, 'Rw');
   await expect.poll(() => solution(page).inputValue()).toContain('Rw');
@@ -178,7 +185,7 @@ await check('sim-english-mobile', englishPage, async () => {
   return { viewport: '390x844', overflow };
 });
 await page.setViewportSize({ width: 1440, height: 1100 });
-async function chooseWeb(p: Page) {
+async function choosePuzzle(p: Page) {
   // All three mode panels remain mounted. Only interact with the visible one.
   const trigger = p.locator('.gen-config-toolbar .pp-trigger:visible').first();
   const menu = p.locator('.pp-popup:visible').first();
@@ -192,19 +199,19 @@ async function chooseWeb(p: Page) {
     }, { timeout: 30_000, intervals: [500, 1000] }).toBe(true);
   }
   await openMenu();
-  const web = menu.locator('.pp-item').filter({ has: p.locator('.pp-item-label', { hasText: /^Radio Web$/ }) });
-  if (await web.getAttribute('aria-checked') !== 'true') await web.click();
+  const target = menu.locator('.pp-item').filter({ has: p.locator('.pp-item-label', { hasText: puzzleLabel }) });
+  if (await target.getAttribute('aria-checked') !== 'true') await target.click();
   await openMenu();
-  const otherActive = menu.locator('.pp-item--active').filter({ hasNot: p.locator('.pp-item-label', { hasText: /^Radio Web$/ }) });
+  const otherActive = menu.locator('.pp-item--active').filter({ hasNot: p.locator('.pp-item-label', { hasText: puzzleLabel }) });
   for (let count = await otherActive.count(); count > 0; count--) {
     await otherActive.first().click();
     await openMenu();
   }
-  await expect(web).toHaveAttribute('aria-checked', 'true');
+  await expect(target).toHaveAttribute('aria-checked', 'true');
   await p.keyboard.press('Escape');
 }
 async function preview(p: Page) {
-  const svg = p.locator('.gen-tn-attempt-preview svg[aria-label="radioweb"]:visible').first();
+  const svg = p.locator(`.gen-tn-attempt-preview svg[aria-label="${id}"]:visible`).first();
   await expect(svg).toBeVisible();
   await expect(svg.locator('polygon')).toHaveCount(440);
   return svg;
@@ -212,7 +219,7 @@ async function preview(p: Page) {
 for (const mode of ['batch', 'paste', 'comp']) {
   await check(`scramble-${mode}`, page, async () => {
     await open(page, `/zh/scramble/gen?mode=${mode}`);
-    await chooseWeb(page);
+    await choosePuzzle(page);
     if (mode === 'paste') await page.locator('.gen-tn-paste-area:visible').fill("1. R U F\n2. 2R' Lw G");
     if (mode === 'batch') {
       await page.locator('input[aria-label="每项打乱数"]:visible').fill('2');
@@ -228,7 +235,7 @@ for (const mode of ['batch', 'paste', 'comp']) {
       const downloadPromise = page.waitForEvent('download', { timeout: 60_000 });
       await page.locator('button[title="下载 PDF"]:visible').click();
       const download = await downloadPromise;
-      const pdf = resolve(out, 'radio-web-scrambles.pdf');
+      const pdf = resolve(out, `${id}-scrambles.pdf`);
       await download.saveAs(pdf);
       expect(readFileSync(pdf).subarray(0, 5).toString()).toBe('%PDF-');
     }
@@ -236,17 +243,17 @@ for (const mode of ['batch', 'paste', 'comp']) {
   });
 }
 await check('timer-project-and-preview', page, async () => {
-  await open(page, '/zh/timer?event=radioweb');
-  const svg = page.locator('svg[aria-label="radioweb"]').first();
+  await open(page, `/zh/timer?event=${id}`);
+  const svg = page.locator(`svg[aria-label="${id}"]`).first();
   await expect(svg).toBeVisible({ timeout: 60_000 });
   await expect(svg.locator('polygon')).toHaveCount(440);
-  expect(new URL(page.url()).searchParams.get('event')).toBe('radioweb');
+  expect(new URL(page.url()).searchParams.get('event')).toBe(id);
   await page.reload();
   await expect(svg).toBeVisible();
   await expect(svg.locator('polygon')).toHaveCount(440);
-  return { event: 'radioweb', previewFacelets: 440, reloadPreservesEvent: true };
+  return { event: id, previewFacelets: 440, reloadPreservesEvent: true };
 });
 for (const ctx of contexts) await ctx.close();
 await browser.close();
-writeFileSync(resolve(out, 'browser-report.json'), JSON.stringify({ base, checks, errors }, null, 2));
+writeFileSync(resolve(out, 'browser-report.json'), JSON.stringify({ base, puzzle: id, checks, errors }, null, 2));
 if (checks.some(({ status }) => status === 'failed')) process.exitCode = 1;

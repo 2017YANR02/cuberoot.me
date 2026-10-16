@@ -184,6 +184,13 @@ export const NATIVE_PUZZLES = {
     axes: ICOSAHEDRON_FACE_AXES, order: 3, layers: 2,
     scrambleLength: 60, aspect: 8 / 5, visibleFacelets: 440,
   },
+  // Radio Jam (Radiolarian 8): Hyperspeedcube radio08 uses radio7 - 0.06.
+  // The unused radio8 constant in that source is NOT this model's cut depth.
+  radiojam: {
+    description: 'i f 0.4678640450004204', zh: 'Radio Jam', en: 'Radio Jam', textLabel: 'Jam',
+    axes: ICOSAHEDRON_FACE_AXES, order: 3, layers: 2,
+    scrambleLength: 60, aspect: 8 / 5, visibleFacelets: 440,
+  },
 } as const;
 
 export type NativePuzzleId = keyof typeof NATIVE_PUZZLES;

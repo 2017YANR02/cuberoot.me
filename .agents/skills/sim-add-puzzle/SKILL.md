@@ -23,6 +23,7 @@ description: "用户说造魔方模拟器、给 /sim 加魔方、新魔方类型
 - 原生 PG 独立项目复用 `core/packages/puzzle-solvers/src/native-puzzles.ts` 的注册表、同目录 `native-puzzle-model.ts` 的模型与有界解析、`core/packages/puzzle-render-core/src/native-puzzle-svg.ts` 的完整展开图；按 [原生 PG 结构与接线](references/native-pg-puzzles.md) 核对来源、深度、方向和可见贴片，不在页面复制描述或生成器。
 - 按注册表的逐轴层数派生混合转角与深度能力，保留第二／第三单层及宽转；让按钮、拖转和点击共用规范族名与层深元数据，按原生映射选择 `Aw` 或 `1-2A`，不要拼接不存在的面宽转。
 - 按逐轴 `axisOrders` 处理混合机制，保留 FaceRenamingMapper 的完整外部族名，并独立核对不增加表面分区的角尖切面与旧种子打乱兼容性。
+- 制作 Radio Jam（Radiolarian 8）时按 [Radio Jam 几何与验收](references/radio-jam.md) 核对实际 `radio08` 构造式，不误用未被引用的 `radio8` 常量；用逐面形状与切深区分同为 440 片的 Radio Web。
 - 制作 Radio Web（Radiolarian 6）时按 [Radio Web 几何与验收](references/radio-web.md) 保留临界切深上方的细小翼块；不能复用 Radio Jewel 的 320 片图示冒充本项目的 440 片。
 - 对二阶＋直升机等可见切缝重合的组合保留全部机制切面；分别核对 90° 面轴与 180° 棱轴、逐轴层数及交错转动，不以相同展开图或图标判定机制相同，见 [原生 PG 结构与接线](references/native-pg-puzzles.md#二阶直升机)。
 - 对 Radio Jewel 等恰有小块消失的临界切深保留解析精度，独立核对面分区、可见块数及切深两侧的负例，并在双语说明中写明保形转动与 jumbling 的支持边界。

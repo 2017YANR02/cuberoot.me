@@ -12,7 +12,7 @@ describe('shared displayed seed sequence', () => {
     'lattice', 'hyperx', 'latticex', 'masterbrilic', 'masterftov2',
     'quadx', 'dinoocta', 'fto5', 'eto', 'radiocrystal',
     'cube3skewb', 'heliskewb', 'comboctahedron', 'circoradiolarian', 'icosababyface',
-    'cube2heli', 'cube3heli', 'radiojewel', 'radioweb',
+    'cube2heli', 'cube3heli', 'radiojewel', 'radioweb', 'radiojam',
   ] as const)('%s shares one generator between ordinary and seeded requests', async (event) => {
     const ticket = { seed: 'Native 中文 seed', index: 7, revision: 0 };
     const scramble = generateNativePuzzleScramble(event, rngFor(ticket.seed, ticket.index));

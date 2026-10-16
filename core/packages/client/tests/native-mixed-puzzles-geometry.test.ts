@@ -185,6 +185,14 @@ const CASES: readonly Spec[] = [
     shapes: { 3: 12, 4: 6, 5: 3, 6: 1 }, unmarkedOrbit: 'CENTERS4',
     orbits: [['CENTERS', 60, 1], ['C5RNER', 12, 5], ['CENTERS2', 60, 1], ['EDGES', 60, 2], ['EDGES2', 30, 2], ['CENTERS3', 60, 1], ['CENTERS4', 20, 3]],
   },
+  {
+    // Read radio08's axes:add expression, not the unused radio8 constant.
+    id: 'radiojam', faceNormals: icoNormals,
+    axes: [{ pairs: icoFacePairs, normals: icoNormals, cuts: [5 - 2 * Math.sqrt(5) - 0.06], order: 3 }],
+    faces: 20, perFace: 22, raw: 480, visible: 440, pieces: 302,
+    shapes: { 3: 15, 5: 6, 6: 1 }, unmarkedOrbit: 'CENTERS4',
+    orbits: [['EDGES', 60, 2], ['C5RNER', 12, 5], ['CENTERS', 60, 1], ['CENTERS2', 60, 1], ['EDGES2', 30, 2], ['CENTERS3', 60, 1], ['CENTERS4', 20, 3]],
+  },
 ];
 
 const center = (points: Vector3[]) => points.reduce((sum, point) => sum.add(point), new Vector3()).divideScalar(points.length);
@@ -312,6 +320,34 @@ it('retains Radio Web wings, closes every face without gaps and distinguishes bo
     expect(Math.min(...areas)).toBeCloseTo(0.003561495853740537, 10);
   }
   const { stickers } = fixture(web);
+  const counts = new Map<string, number>();
+  for (const sticker of stickers) {
+    const key = sticker.orbit + ':' + sticker.ord;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  expect([...counts.values()].filter((n) => n === 1)).toHaveLength(200);
+  expect([...counts.values()].filter((n) => n === 2)).toHaveLength(90);
+  expect([...counts.values()].filter((n) => n === 5)).toHaveLength(12);
+});
+
+it('distinguishes Radio Jam from same-count Radio Web and preserves all of its small triangles', () => {
+  const jam = CASES.find(({ id }) => id === 'radiojam')!;
+  const web = CASES.find(({ id }) => id === 'radioweb')!;
+  // Hyperspeedcube declares radio8 = 1/phi^2 but does NOT use it for radio08.
+  // That alternative has the same number of pieces and a different silhouette.
+  const unusedConstant = { ...jam, axes: [{ ...jam.axes[0], cuts: [1 / PHI ** 2] }] };
+  const area = (polygon: Vector3[]) => polygon.reduce((sum, point, i) =>
+    sum.add(point.clone().cross(polygon[(i + 1) % polygon.length])), new Vector3()).length() / 2;
+  expect(Number(NATIVE_PUZZLES.radiojam.description.split(' ')[2])).toBeCloseTo(5 - 2 * Math.sqrt(5) - 0.06, 14);
+  for (const normal of Object.values(icoNormals)) {
+    const regions = expectedFace(jam, normal);
+    expect(shapeCounts(regions)).toEqual({ 3: 15, 5: 6, 6: 1 });
+    expect(shapeCounts(expectedFace(web, normal))).toEqual({ 3: 12, 4: 6, 5: 3, 6: 1 });
+    expect(shapeCounts(expectedFace(unusedConstant, normal))).toEqual({ 3: 15, 4: 3, 5: 3, 6: 1 });
+    expect(regions.map(area).reduce((sum, a) => sum + a, 0))
+      .toBeCloseTo(area(uncutFace(normal, Object.values(icoNormals))), 10);
+  }
+  const { stickers } = fixture(jam);
   const counts = new Map<string, number>();
   for (const sticker of stickers) {
     const key = sticker.orbit + ':' + sticker.ord;
@@ -601,7 +637,7 @@ afterEach(async () => {
   }
 });
 
-it.each(['heliskewb', 'cube2heli', 'cube3heli', 'radiojewel', 'radioweb'] as const)('animates %s moves in both directions with the real PG3D middle matrix and selected pieces', async (id) => {
+it.each(['heliskewb', 'cube2heli', 'cube3heli', 'radiojewel', 'radioweb', 'radiojam'] as const)('animates %s moves in both directions with the real PG3D middle matrix and selected pieces', async (id) => {
   // This is a local renderer fixture, not browser interaction evidence. The
   // real TwistyPlayer creates its real PG3D; only DOM camera attachment and
   // scheduling are suppressed because jsdom has no display or GPU.

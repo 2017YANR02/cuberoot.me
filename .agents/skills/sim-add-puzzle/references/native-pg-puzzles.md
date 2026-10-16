@@ -57,6 +57,7 @@
 | `icosababyface` | 深切角转二十面体 / Deep-Cut Icosahedron | `i v 0.562777422255239` | 使用 [cubing.js 维护者列出的单层深角切描述](https://github.com/cubing/cubing.js/issues/127)，以外接球半径 r 推导切深 r/√5，使每个切面经过五个邻接顶点；只采用 Dogic 的深切族，不添加小角片。上游昵称带问号，显示名使用明确结构名称。 |
 | `cube3heli` | 三阶＋直升机 / 3×3 + Helicopter | `c f 0.333333333333333 e 0.7071067811865476` | 根据 [cubing.js 官方 pgPuzzles.ts](https://github.com/cubing/cubing.js/blob/main/src/cubing/puzzle-geometry/pgPuzzles.ts) 的独立 `3x3x3`、`helicopter` 预设及 [Jaap 的平面棱转说明](https://www.jaapsch.net/puzzles/helicopter.htm)，组合均匀三阶面切与 Helicopter 棱切；以立方体半边长 1 推导面切 ±1/3、棱切 ±√2/2。支持保形 90° 面转及 180° 棱转，不包含 jumbling，不宣称精确复刻 Grégoire Pfennig 的 Helicopter 3×3 实物切深。 |
 | `radiojewel` | Radio Jewel / Radio Jewel | `i f 0.5278640450004204` | 按 [Jason Smith 的 Radiolarian 7 原作](https://www.puzzleforge.com/wp/2012/11/06/radiolarian-7-radio-jewel-112012/)和 [Hyperspeedcube 的 radio07 实现](https://github.com/HactarCE/Hyperspeedcube/blob/main/lua/puzzles/ft_icosahedra.lua)，取内切球半径 1、面切深 5−2√5；核对原作照片的中央六边形与十五个三角形，以及[实体规格的 242 个外露块](https://cubein.cn/products/radio-jewel-radiolarian-7)。保留二十色和保形 120° 面转，不包含实物的两种 jumbling，不宣称测量复刻商品尺寸。 |
+| `radiojam` | Radio Jam / Radio Jam | `i f 0.4678640450004204` | 按 [Radio Jam 几何与验收](radio-jam.md)取实际 `radio08` 构造式 `5 − 2√5 − 0.06`，不误用未引用的 `radio8 = 1/φ²` 常量；每面十五个三角形、六个五边形和一个六边形，仅保形 120° 面转，不含 jumbling。 |
 
 把拼图描述视为几何数据；Dino Skewb、3×3 + Dino 与 3×3 + Helicopter 的组合描述由已核证的两类切面推导，不标注成上游预设中逐字复制的条目。
 

@@ -48,6 +48,7 @@ describe('simulator puzzle families', () => {
       ['icosababyface', 'icosahedron'],
       ['radiojewel', 'icosahedron'],
       ['radioweb', 'icosahedron'],
+      ['radiojam', 'icosahedron'],
       ['cube2heli', 'hybrid-cuts'],
       ['cube3heli', 'hybrid-cuts'],
     ]) {

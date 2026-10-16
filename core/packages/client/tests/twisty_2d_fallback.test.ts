@@ -311,6 +311,11 @@ describe('TwistySection without WebGL', () => {
       invalid: '4R', absent: ['3R', '3Rw'],
     },
     {
+      id: 'radiojam', setup: 'R', alg: '2R', move: 'Rw', order: 3,
+      controls: [{ move: 'R', order: 3 }, { move: '2R', order: 3 }, { move: 'Rw', order: 3 }],
+      invalid: '4R', absent: ['3R', '3Rw'],
+    },
+    {
       id: 'icosababyface', setup: 'FREGU', alg: 'HIERCw', move: '2FLACR', order: 5,
       controls: [{ move: 'FREGU', order: 5 }, { move: '2HIERC', order: 5 }, { move: 'FLACRw', order: 5 }],
       invalid: '4FREGU', absent: ['F', '3FREGU', '3FREGUw'],

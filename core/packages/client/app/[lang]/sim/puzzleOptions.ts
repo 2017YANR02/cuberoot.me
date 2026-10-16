@@ -88,7 +88,7 @@ const SIM_PUZZLE_FAMILIES: readonly SimPuzzleFamily[] = [
   },
   {
     id: 'icosahedron', labelZh: '二十面体', labelEn: 'Icosahedra',
-    values: ['radiochop', 'radiocrystal', 'radiojewel', 'radioweb', 'circoradiolarian', 'eitansstar', 'icosamate', 'astrominx', 'astrominxbigchop',
+    values: ['radiochop', 'radiocrystal', 'radiojewel', 'radioweb', 'radiojam', 'circoradiolarian', 'eitansstar', 'icosamate', 'astrominx', 'astrominxbigchop',
       'icosaminx', 'redicosahedron', 'redicosahedroncenters', 'dogic', 'icosababyface'],
   },
   {

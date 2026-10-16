@@ -31,6 +31,7 @@ const CASES = [
   { id: 'circoradiolarian', stickers: 300, moves: 60, outer: 20, inner: 20, wide: 20 },
   { id: 'radiojewel', stickers: 320, moves: 60, outer: 20, inner: 20, wide: 20 },
   { id: 'radioweb', stickers: 440, moves: 60, outer: 20, inner: 20, wide: 20 },
+  { id: 'radiojam', stickers: 440, moves: 60, outer: 20, inner: 20, wide: 20 },
   { id: 'icosababyface', stickers: 20, moves: 36, outer: 12, inner: 12, wide: 12 },
   { id: 'cube2heli', stickers: 48, moves: 42, outer: 18, inner: 12, wide: 12 },
   { id: 'cube3heli', stickers: 168, moves: 54, outer: 18, inner: 18, wide: 18 },
