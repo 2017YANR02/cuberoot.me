@@ -129,6 +129,7 @@ import { useMembership } from '@/hooks/useMembership';
 import {
   loadKeymap, saveKeymap, resetKeymap as resetKeymapStorage, type KeyMove,
 } from './keymap';
+import { normalizeDrawPuzzle } from './puzzleOptions';
 import './sim.css';
 
 const FtoImageGenerator = dynamic(() => import('./FtoImageGenerator'), { ssr: false });
@@ -280,12 +281,14 @@ export default function SimPage() {
   // identity is never silently dropped (which used to read back as a 3x3 fallback).
   const [query, setQuery] = useQueryStates(
     {
-      tool: parseAsStringEnum(['sim', 'draw', 'image'] as const)
+      tool: parseAsStringEnum(['sim', 'capture', 'draw', 'image'] as const)
         .withDefault('sim')
         .withOptions({ history: 'push' }),
       puzzle: parseAsString.withDefault('3').withOptions({ clearOnDefault: false }),
       // Custom-cut PuzzleGeometry description for the Puzzle Cuts editor (e.g. "c f 0.255").
       cuts: parseAsString,
+      drawPuzzle: parseAsString,
+      imageAlg: parseAsString,
       alg: parseAsString,
       setup: parseAsString,
       // The timer uses csTimer's face names. Share the convention with the text:
@@ -323,9 +326,22 @@ export default function SimPage() {
   const setupParam = query.setup || '';
   const drawMode = query.tool === 'draw';
   const imageMode = query.tool === 'image';
+  const captureMode = query.tool === 'capture';
+  const animationMode = query.tool === 'sim';
+  const [lastCreationTool, setLastCreationTool] = useState<'capture' | 'draw' | 'image'>(
+    query.tool === 'sim' ? 'capture' : query.tool,
+  );
+  useEffect(() => {
+    if (query.tool !== 'sim') setLastCreationTool(query.tool);
+  }, [query.tool]);
+  // Drawing owns its puzzle; entering a template must never replace the animation.
+  const [initialDrawPuzzle] = useState(() => normalizeDrawPuzzle(query.puzzle));
+  const drawPuzzle = normalizeDrawPuzzle(query.drawPuzzle ?? initialDrawPuzzle);
+  const [initialImageAlg] = useState(() => imageMode || query.puzzle === 'fto' ? query.alg ?? '' : '');
+  const [imageVisited, setImageVisited] = useState(imageMode);
+  useEffect(() => { if (imageMode) setImageVisited(true); }, [imageMode]);
 
   const puzzleParam: SimPuzzle = useMemo(() => {
-    if (imageMode) return 'fto';
     const raw = query.puzzle;
     if (!raw) return NXN_ORDER_DEFAULT;
     if (raw === 'sq1' || raw === 'sq2' || raw === 'sq4') return raw;
@@ -346,7 +362,7 @@ export default function SimPage() {
     const n = parseInt(raw, 10);
     if (!Number.isFinite(n) || n < NXN_ORDER_MIN || n > NXN_ORDER_MAX) return NXN_ORDER_DEFAULT;
     return n;
-  }, [imageMode, query.puzzle]);
+  }, [query.puzzle]);
 
   // Force the puzzle id into the URL on mount (clearOnDefault:false keeps it there):
   // a bare /sim becomes /sim?puzzle=3 so the project is always explicit and never
@@ -722,7 +738,7 @@ export default function SimPage() {
   // Dependencies let cleanup tear down a live cuber instance when the user
   // switches NxN ↔ twisty or enters the image-only tool.
   useEffect(() => {
-    if (imageMode || twisty) return;
+    if (twisty) return;
     if (worldRef.current) return;
     const container = containerRef.current;
     if (!container) return;
@@ -1401,7 +1417,7 @@ export default function SimPage() {
       cleanup?.();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [imageMode, twisty]);
+  }, [twisty]);
 
   const applyPuzzle = useCallback((kind: SimPuzzle) => {
     if (typeof kind === 'number') setOrder(kind);
@@ -1677,11 +1693,12 @@ export default function SimPage() {
   }, []);
 
   useEffect(() => {
+    if (!animationMode) return;
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
       // 菜单内编辑与键盘拖拽只操作菜单，不能同时转动魔方。
-      if (target?.closest('[role="dialog"], [role="listbox"]')) return;
-      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
+      if (target?.closest('[role="dialog"], [role="listbox"], [role="menu"]')) return;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable)) return;
       if ((e.ctrlKey || e.metaKey) && (e.code === 'KeyZ')) {
         e.preventDefault();
         if (e.shiftKey) handleRedo(); else handleUndo();
@@ -1726,7 +1743,7 @@ export default function SimPage() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [handleUndo, handleRedo]);
+  }, [animationMode, handleUndo, handleRedo]);
 
   const onAlgChange = useCallback((alg: string) => {
     setQuery({ alg: alg || null });
@@ -2202,7 +2219,7 @@ export default function SimPage() {
   }, [imgSwapActive]);
 
   return (
-    <div className={`sim-page${fullscreen && !drawMode && !imageMode ? ' sim-page--fullscreen' : ''}`} data-board-bg={settings.boardBg}>
+    <div className={`sim-page${fullscreen && !drawMode && !imageMode ? ' sim-page--fullscreen' : ''}`} data-board-bg={settings.boardBg} data-workspace={captureMode ? 'capture' : query.tool}>
       <header className="sim-header">
         <HomeLink className="sim-back" title={t('返回', 'Back')}>
           <ChevronLeft size={18} />
@@ -2210,19 +2227,25 @@ export default function SimPage() {
         <h1 className="sim-title">{t('模拟', 'Sim')}</h1>
         <select
           className="sim-tool-select"
-          value={query.tool}
-          onChange={(event) => {
-            const tool = event.target.value as 'sim' | 'draw' | 'image';
-            setQuery({ tool: tool === 'sim' ? null : tool, ...(tool === 'image' ? { puzzle: 'fto' } : {}) });
-          }}
-          aria-label={t('工具', 'Tool')}
+          value={animationMode ? 'animation' : 'creation'}
+          onChange={(event) => setQuery({ tool: event.target.value === 'animation' ? null : lastCreationTool })}
+          aria-label={t('工作模式', 'Workspace mode')}
         >
-          <option value="sim">{t('模拟', 'Simulate')}</option>
-          <option value="draw">{t('绘图', 'Draw')}</option>
-          {puzzleParam === 'fto' && (
-            <option value="image">{t('FTO 图片', 'FTO image')}</option>
-          )}
+          <option value="animation">{t('动画', 'Animation')}</option>
+          <option value="creation">{t('作图', 'Create images')}</option>
         </select>
+        {!animationMode && (
+          <select
+            className="sim-tool-select"
+            value={query.tool}
+            onChange={(event) => setQuery({ tool: event.target.value as 'capture' | 'draw' | 'image' })}
+            aria-label={t('作图方式', 'Image source')}
+          >
+            <option value="capture">{t('当前状态', 'Current state')}</option>
+            <option value="draw">{t('自由绘图', 'Free drawing')}</option>
+            <option value="image">{t('FTO 公式出图', 'FTO algorithm')}</option>
+          </select>
+        )}
         <div className="sim-spacer" />
         {!drawMode && !imageMode && reconHref && (
           <AppLink
@@ -2406,6 +2429,7 @@ export default function SimPage() {
             </div>
           )}
           <PlayerControls
+            active={!drawMode && !imageMode}
             world={worldRef.current}
             activeCube={activeCube}
             clearFrozen={clearPartialFreeze}
@@ -2519,23 +2543,25 @@ export default function SimPage() {
         </aside>
       </div>
 
-      {imageMode && (
+      {imageVisited && (
+        <div className="sim-image-workspace" hidden={!imageMode}>
         <FtoImageGenerator
-          algorithm={algParam}
-          onAlgorithmChange={(algorithm) => setQuery({ alg: algorithm || null })}
+          algorithm={query.imageAlg ?? initialImageAlg}
+          onAlgorithmChange={(algorithm) => setQuery({ imageAlg: algorithm })}
           inverse={query.imageInverse === '1'}
           onInverseChange={(inverse) => setQuery({ imageInverse: inverse ? '1' : null })}
         />
+        </div>
       )}
 
       {drawVisited && (
         <div style={{ display: drawMode ? 'contents' : 'none' }}>
           <PuzzleDrawWorkspace
             active={drawMode}
-            puzzle={puzzleParam}
-            order={order}
-            onPuzzleChange={handlePuzzle}
-            onOrderChange={handleOrder}
+            puzzle={drawPuzzle}
+            order={typeof drawPuzzle === 'number' ? drawPuzzle : 3}
+            onPuzzleChange={(puzzle) => setQuery({ drawPuzzle: String(puzzle) })}
+            onOrderChange={(order) => setQuery({ drawPuzzle: String(order) })}
             onDocumentChange={setDrawDocument}
             exportPanel={drawDocument ? (
               <PuzzleImageStudio

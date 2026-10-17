@@ -891,3 +891,13 @@
     flex-basis: 100%;
   }
 }
+
+/* Keep FTO edits mounted when the user returns to animation or another image source. */
+.sim-image-workspace {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+.sim-image-workspace[hidden] { display: none; }
+.sim-image-workspace > .fto-image-generator { width: 100%; }

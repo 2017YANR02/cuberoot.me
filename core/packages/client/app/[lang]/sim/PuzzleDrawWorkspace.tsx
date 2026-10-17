@@ -20,7 +20,7 @@ import type { SimPuzzle } from './PlayerControls';
 import { PuzzleTypeSelect } from './PuzzleTypeSelect';
 import './puzzle-draw-workspace.css';
 
-const DRAW_PUZZLES = ['nxn', 'sq1', 'megaminx', 'skewb', 'pyraminx', 'fto'] as const;
+import { DRAW_PUZZLES } from './puzzleOptions';
 type DrawPuzzle = 'cube' | Exclude<(typeof DRAW_PUZZLES)[number], 'nxn'>;
 
 function drawPuzzleOf(puzzle: SimPuzzle): DrawPuzzle | null {

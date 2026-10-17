@@ -32,7 +32,6 @@ import {
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useT } from '@/hooks/useT';
-import { tr } from '@/i18n/tr';
 import {
   Play,
   FlipHorizontal2, FlipVertical2, Eraser,
@@ -914,6 +913,8 @@ function collapseSameAxis(alg: string, N: number): string {
 }
 
 interface Props {
+  /** Only animation owns playback and physical keyboard input. */
+  active?: boolean;
   world: World | null;
   /** Cube identity published after the parent completes its puzzle switch. */
   activeCube?: World['cube'] | null;
@@ -996,6 +997,7 @@ interface Props {
 }
 
 export default function PlayerControls({
+  active = true,
   world, activeCube = world?.cube ?? null,
   clearFrozen, alg, setup, onAlgChange: onAlgChangeProp, onSetupChange: onSetupChangeProp,
   order, onOrderChange, puzzleKind, onPuzzleChange,
@@ -1124,6 +1126,11 @@ export default function PlayerControls({
   const [setupDraft, setSetupDraft] = useState(() => formatIncomingSquareText(setup ?? ''));
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(false);
+  useEffect(() => {
+    if (active) return;
+    setPlaying(false);
+    twistyPlaybackPlayer?.pause();
+  }, [active, twistyPlaybackPlayer]);
   const [twistyPlayback, setTwistyPlayback] = useState<TwistyPlaybackState>(EMPTY_TWISTY_PLAYBACK_STATE);
   const twistyPlaybackRef = useRef<ReturnType<typeof createTwistyPlayback> | null>(null);
   // Caret char offset in the solution box while the user is navigating text (click
@@ -1846,7 +1853,7 @@ export default function PlayerControls({
   }, [activeCube, engineReady, world, playing, step, totalSteps, jumpToStep, clearFrozen, isTwistyMode]);
 
   useEffect(() => {
-    if (!playing || !engineReady) {
+    if (!active || !playing || !engineReady) {
       if (playTimerRef.current) { window.clearInterval(playTimerRef.current); playTimerRef.current = null; }
       return;
     }
@@ -1934,7 +1941,7 @@ export default function PlayerControls({
       if (playTimerRef.current) { window.clearInterval(playTimerRef.current); playTimerRef.current = null; }
       timing.frames = mapFrames(settings.speed);
     };
-  }, [activeCube, engineReady, puzzleKind, playing, nxnItems, squareActions, ivyActions, cornerActions, corner, world, clearFrozen, playbackFrames, isSquarePuzzle, isIvy, settings.animatePlayback, settings.speed]);
+  }, [active, activeCube, engineReady, puzzleKind, playing, nxnItems, squareActions, ivyActions, cornerActions, corner, world, clearFrozen, playbackFrames, isSquarePuzzle, isIvy, settings.animatePlayback, settings.speed]);
 
   const tool = (transform: (s: string) => string) => () => {
     // 镜像/转体变换先剥手部记号(cubing.js Alg 解析不了会 catch 返 '',静默清空解法框)。
@@ -2172,11 +2179,11 @@ export default function PlayerControls({
   // 打乱框聚焦时放行(让字符正常落进打乱框)。capture + stopPropagation 同时挡掉
   // SimPage 的全局 keydown,不会双触发。
   useEffect(() => {
-    if (kbVariant !== 'qwerty' || isTwistyMode) return;
+    if (!active || kbVariant !== 'qwerty' || isTwistyMode) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       const target = e.target as HTMLElement | null;
-      if (target?.closest('[role="dialog"], [role="listbox"]')) return;
+      if (target?.closest('[role="dialog"], [role="listbox"], [role="menu"]')) return;
       // 设置区的原生表单控件必须自行接收按键。否则 Digit2 等会命中魔方
       // keymap，applyMove 随后聚焦解法框，在 iOS 上表现为数字键盘输一位即关闭。
       if (target && (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.isContentEditable)) return;
@@ -2189,7 +2196,7 @@ export default function PlayerControls({
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [kbVariant, keymap, applyMove, isTwistyMode]);
+  }, [active, kbVariant, keymap, applyMove, isTwistyMode]);
 
   const handleScramble = useCallback(async () => {
     // A new setup may replace an invalid setup draft, but keep the last valid
