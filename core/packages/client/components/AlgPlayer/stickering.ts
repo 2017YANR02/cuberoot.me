@@ -15,6 +15,8 @@ export function pickStickering(
 ): string | undefined {
   if (puzzle !== '3x3') return undefined;
   switch (set) {
+    case 'f2l-tutorial':                          return engine === 'sim' ? 'F2LPair' : 'F2L';
+    case 'f2l-overview':                          return engine === 'sim' ? 'F2LOverview' : 'F2L';
     case 'Cross':                                 return engine === 'sim' ? 'Cross' : undefined;
     case 'adv-f2l':                               return engine === 'sim' ? 'AF2L' : 'F2L';
     case 'f2l': case 'psf2l':                     return 'F2L';

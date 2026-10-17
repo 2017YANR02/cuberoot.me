@@ -126,6 +126,9 @@ function rulesFor(order: number, name: string): Rule[] | null {
     // 规则定义在 solved initial 上,所以 setup / 播放过程中两块会一起跟随而不会露色。
     case "AF2L": return [[LL, "Ignored"], [slotFR, "Ignored"]];
     case "F2L": return [[LL, "Ignored"]];
+    // 教学只保留中心、底十字和 FR 对；按本位身份标记，动画中颜色随块走。
+    case "F2LPair": return [[all, "Ignored"], [CENTERS, "Regular"], [and(D, EDGES), "Regular"], [slotFR, "Regular"]];
+    case "F2LOverview": return [[LL, "Ignored"], [CENTERS, "Regular"]];
     case "Daisy": return [[all, "Ignored"], [and(U, CENTERS), "Regular"], [and(D, EDGES), "IgnoreNonPrimary"]];
     case "Cross": return [[all, "Ignored"], [and(CENTERS, not(orUD)), "Dim"], [and(D, CENTERS), "Regular"], [and(D, EDGES), "Regular"]];
     // —— ZZ ——
