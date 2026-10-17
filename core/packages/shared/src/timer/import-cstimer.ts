@@ -116,6 +116,8 @@ const CSTIMER_EVENT_MAP: Record<string, EventId> = {
   '三阶＋直升机': 'cube3heli', '三阶+直升机': 'cube3heli',
   'radiojewel': 'radiojewel', 'jewel': 'radiojewel',
   'radioweb': 'radioweb', 'radiolarian6': 'radioweb',
+  'catscradle': 'catscradle', 'cat’scradle': 'catscradle', "cat'scradle": 'catscradle',
+  'radiolarian5': 'catscradle',
 };
 
 /* ------------------------------------------------------------------ */
@@ -202,6 +204,12 @@ function nameToEvent(name: unknown): { event: EventId; matched: boolean } {
     (token === 'radio' && tokens[index + 1] === 'web')
     || (token === 'radiolarian' && tokens[index + 1] === '6'))) {
     return normalizeEventKey('radioweb');
+  }
+  if (tokens.some((token, index) =>
+    (token === 'cat' && tokens[index + 1] === 's' && tokens[index + 2] === 'cradle')
+    || (token === 'cats' && tokens[index + 1] === 'cradle')
+    || (token === 'radiolarian' && tokens[index + 1] === '5'))) {
+    return normalizeEventKey('catscradle');
   }
   // Hybrid names must be recognized before the standalone Skewb/3x3 tokens.
   if (tokens.some((token, index) => token === 'helicopter' && tokens[index + 1] === 'skewb') || name.includes('直升机斜转')) {

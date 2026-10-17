@@ -141,6 +141,7 @@ export const TIMER_SCRAMBLE_CAPABILITIES = Object.freeze({
   cube3heli: { kind: 'shared', provider: 'native-random-move' },
   radiojewel: { kind: 'shared', provider: 'native-random-move' },
   radioweb: { kind: 'shared', provider: 'native-random-move' },
+  catscradle: { kind: 'shared', provider: 'native-random-move' },
   r3: { kind: 'compound', provider: 'timer-compound' },
   r4: { kind: 'compound', provider: 'timer-compound' },
   r5: { kind: 'compound', provider: 'timer-compound' },
