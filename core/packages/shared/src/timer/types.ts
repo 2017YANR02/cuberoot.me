@@ -7,6 +7,7 @@
 
 // Type-only import — fully erased at runtime, does not pull cube/recognizer deps.
 import type { StageSegments } from './stage-segments';
+import type { TrainingStartMode } from './training-settings';
 
 export interface SolveMove {
   /** Move token (e.g. "R", "U'", "F2"). */
@@ -102,9 +103,12 @@ export interface Solve {
    * For OLL/PLL it's the case key from oll.json/pll.json (e.g. "OLL 1", "Aa").
    * For other trainers it's the alg string used to build the scramble. */
   caseId?: string;
+  /** Smart-cube training clock origin. Moves and timeMs share this origin,
+   * including pre-turn observation for scrambled/manual starts. */
+  trainingStartMode?: TrainingStartMode;
   /** Bluetooth-recorded move stream for solve reconstruction.
    * Each entry is { m: face notation move, ts: ms since solve start
-   * (i.e. since timer phase became 'running'). Inspection-time moves are
+   * (training may include the pre-turn observation interval). WCA inspection-time moves are
    * NOT recorded — with a smart cube the first turn of an armed attempt
    * IS the start signal, so there is no window in which an inspection
    * turn could exist without starting the clock. */

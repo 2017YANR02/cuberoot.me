@@ -70,6 +70,7 @@ const EXPECTED_FIELDS_BY_CATEGORY = {
     'settings.scramble.color-neutral',
   ],
   training: [
+    'settings.training.start-mode',
     'settings.training.stage-splits',
     'settings.training.bld-memo-split',
     'settings.training.target-time',
@@ -156,7 +157,7 @@ describe('canonical timer settings surface manifest', () => {
     ]);
     expect(TIMER_SETTING_CATEGORY_CONTRACTS.map((category) => category.id))
       .toEqual(TIMER_SETTING_CATEGORY_IDS);
-    expect(new Set(TIMER_SETTING_FIELD_IDS).size).toBe(67);
+    expect(new Set(TIMER_SETTING_FIELD_IDS).size).toBe(68);
     expect(TIMER_SETTING_FIELD_IDS).toEqual(Object.values(EXPECTED_FIELDS_BY_CATEGORY).flat());
     for (const category of TIMER_SETTING_CATEGORY_IDS) {
       expect(TIMER_SETTING_FIELD_CONTRACTS

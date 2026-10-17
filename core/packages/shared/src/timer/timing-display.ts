@@ -13,6 +13,7 @@ export interface TimerTimingDisplayInput extends Pick<
   displayMs: number;
   inspectionDisplayMs: number;
   inspectionLimitSec: number;
+  trainingObservation?: boolean;
   lastPenalty: Penalty | null;
   phase: TimerPhase;
 }
@@ -25,6 +26,7 @@ export interface TimerTimingDisplayInput extends Pick<
 export function formatTimerTimingDisplay(input: TimerTimingDisplayInput): string {
   if (!input.timingEnabled) return '';
   if (input.phase === 'inspecting') {
+    if (input.trainingObservation) return input.hideTime ? '' : formatMs(input.inspectionDisplayMs, input.runningPrecision);
     return formatInspectionDisplay(input.inspectionDisplayMs, input.inspectionLimitSec);
   }
   if (input.phase === 'ready') return formatMs(0, input.precision);

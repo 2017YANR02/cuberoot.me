@@ -16,7 +16,7 @@ import { apiUrl as replayApiUrl } from '@/lib/api-base';
 import { timerStatsPanelLabels } from '@cuberoot/timer-ui';
 import { loadAllSessionData, deleteSessionSolves } from '../_lib/storage/db';
 import { TIMER_DEVICE_CENTER_LABELS } from '@cuberoot/timer-ui';
-import { timerHidesRunningUi, upsertNetRecordedSolve } from '@cuberoot/shared/timer';
+import { timerHidesRunningUi, upsertNetRecordedSolve, timerSupportsTrainingTiming, type SolveResult } from '@cuberoot/shared/timer';
 import { useTimerRound, TimerTargetTime, useTimerTargetFeedback } from '@cuberoot/timer-ui';
 
 import { TimerWorkspace, useTimerWideLayout } from '@cuberoot/timer-ui';
@@ -1388,7 +1388,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const attemptStartedAtRef = useRef(0);
   const timerDisplayMsRef = useRef(0);
 
-  const recordSolve = useCallback((res: { timeMs: number; inspectionMs: number; autoPenalty: 'ok' | '+2' | 'DNF' }) => {
+  const recordSolve = useCallback((res: SolveResult) => {
     if (competitionRef.current.enabled) {
       const faces = bluetoothCubeRef.current?.getFaces();
       const currentRun = competitionRef.current.run();
@@ -1413,6 +1413,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     if (stages) solve.stages = stages;
     if (bld) solve.bld = bld;
     if (caseIdAtStartRef.current) solve.caseId = caseIdAtStartRef.current;
+    if (res.trainingStartMode) solve.trainingStartMode = res.trainingStartMode;
     Object.assign(solve, smartCubeAttemptProducerRef.current.finishSolveFields(solve));
     reconstructionAnalyzer.handoff(`live-${attemptStartedAtRef.current}`, solve.id);
     // Inspection actually used (0 when inspection was off / never entered).
@@ -1462,6 +1463,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     nextScramble();
   }, [attemptSplitRecorder, isDesktop, nextScramble, settings.autoOpenSolution, settings.precision, settings.autoRecap]);
 
+  const trainingTimingMode = () => !competitionRef.current.enabled && timerSupportsTrainingTiming(event)
+    && bluetoothCubeRef.current?.status.connected ? getSettings().trainingStartMode : undefined;
+  const trainingTimingModeRef = useRef(trainingTimingMode);
+  trainingTimingModeRef.current = trainingTimingMode;
   const timer = useTimer(recordSolve, (startedAtMs) => {
     const history = scrambleHistRef.current;
     const entry = competitionRef.current.enabled ? competitionScrambleEntry : history.list[history.idx];
@@ -1481,7 +1486,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       multiStage: settings.multiStage && timerSupportsStageSplits(eventAtStartRef.current),
     });
     const bt = bluetoothCubeRef.current?.status;
-    gyroStartRef.current = performance.now();
+    gyroStartRef.current = trainingTimingModeRef.current() ? startedAtMs : performance.now();
     // begin resets both streams; later start handlers must preserve this recording.
     smartCubeAttemptProducerRef.current.begin(startedAtMs, bt?.connected
       ? { model: bt.brand, name: bt.deviceName }
@@ -1492,7 +1497,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     if (liveSolvePublishRef.current !== null) clearTimeout(liveSolvePublishRef.current);
     liveSolvePublishRef.current = null;
     setLiveSolve(null);
-  });
+  }, () => ({ trainingStartMode: trainingTimingModeRef.current() }));
   cancelArmForScrambleChangeRef.current = competition.enabled ? () => {} : timer.cancelArm;
   useLayoutEffect(() => { timer.reset(); smartCubeAttemptProducerRef.current.reset(); }, [competition.enabled, competition.attemptKey, timer.reset]);
   timerDisplayMsRef.current = timer.displayMs;
@@ -1529,6 +1534,14 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   ), [supportsSmartCube]);
   const onPressDown = useCallback((withWarmup = false): boolean => {
     if (competitionRef.current.enabled || layoutEditingRef.current) return false;
+    if (trainingTimingModeRef.current() === 'manual') {
+      if (!getSettings().timingEnabled || !attemptCanStartRef.current
+        || smartCubeSoloController.getGuidanceSnapshot().match !== true) return false;
+      if (withWarmup) warmupSound();
+      const armed = timer.armFromCube();
+      if (armed) phaseSnapshotRef.current = 'inspecting';
+      return armed;
+    }
     if (!timerCanHandleAttemptPress(
       phaseSnapshotRef.current,
       attemptCanStartRef.current,
@@ -1537,7 +1550,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     if (withWarmup) warmupSound();
     timer.onPressDown();
     return true;
-  }, [smartCubeInputBlocked, timer.onPressDown]);
+  }, [smartCubeInputBlocked, timer.onPressDown, timer.armFromCube]);
   const onPressUp = useCallback((): boolean => {
     if (competitionRef.current.enabled || layoutEditingRef.current || smartCubeInputBlocked()) return false;
     if (!attemptCanStartRef.current && phaseSnapshotRef.current !== 'running') {
@@ -1603,17 +1616,20 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     match: null,
   });
   const smartCubeSoloController = useMemo(() => new SmartCubeSoloTimerController<CubeMoveMetadata>({
-    armFromCube: () => {
+    armFromCube: (timestamp) => {
       warmupSound();
-      const armed = timerHandleRef.current.armFromCube();
+      const armed = timerHandleRef.current.armFromCube(timestamp);
       if (armed) {
-        phaseSnapshotRef.current = getSettings().inspectionSec > 0 ? 'inspecting' : 'ready';
+        const mode = trainingTimingModeRef.current();
+        phaseSnapshotRef.current = mode ? mode === 'first-turn' ? 'ready' : 'inspecting'
+          : getSettings().inspectionSec > 0 ? 'inspecting' : 'ready';
         if (!scrambleGyroRef.current && gyroQuatRef.current) scrambleGyroRef.current = { ...gyroQuatRef.current };
       }
       return armed;
     },
     autoReadyOnScramble: () => !competitionRef.current.enabled
-      && getSettings().bluetoothAutoReady === 'scrambled',
+      && (trainingTimingModeRef.current() ? trainingTimingModeRef.current() !== 'manual'
+        : getSettings().bluetoothAutoReady === 'scrambled'),
     canStartAttempt: () => !layoutEditingRef.current && attemptCanStartRef.current
       && !autoRecapInputBlockedRef.current
       && (!competitionRef.current.enabled || competitionRef.current.canStart()),
@@ -1802,6 +1818,12 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   liveAnchorRef.current = liveAnchor;
   useEffect(() => () => liveAnchor.setConnection(null), [liveAnchor]);
   const cubeConnected = supportsSmartCube && bluetoothCube.status.connected;
+  const trainingTimingActive = cubeConnected && !competition.enabled && timerSupportsTrainingTiming(event);
+  useEffect(() => {
+    // A new start preference or lost transport cancels an unstarted observation;
+    // an already running attempt keeps its frozen mode and timestamps.
+    timer.cancelArm();
+  }, [settings.trainingStartMode, trainingTimingActive, timer.cancelArm]);
   useEffect(() => {
     if (!cubeConnected) {
       gyroQuatRef.current = null;
@@ -2503,7 +2525,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     // A subscription belongs to one armable attempt. Leaving that phase or
     // covering the timer cancels gestures; returning starts a fresh lifetime.
     // 'scrambled' is state matching, not a move-stream gesture.
-    enabled: !competition.enabled && settings.timingEnabled && attemptCanStart && !anyModalOpen
+    enabled: !trainingTimingActive && !competition.enabled && settings.timingEnabled && attemptCanStart && !anyModalOpen
       && (timer.phase === 'idle' || timer.phase === 'inspecting' || timer.phase === 'stopped')
       && (settings.bluetoothAutoReady === 'still' || settings.bluetoothAutoReady === 'double-flick')
       && cubeConnected,
@@ -2731,6 +2753,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     if (timer.phase === 'ready') return 'ready';
     if (timer.phase === 'running') return 'running';
     if (timer.phase === 'inspecting') {
+      if (trainingTimingActive) return 'inspection';
       const penalty = inspectionPenalty(timer.inspectionDisplayMs, inspectionLimit);
       if (penalty === 'DNF') return 'inspection-dnf';
       if (penalty === '+2') return 'inspection-plus2';
@@ -2741,7 +2764,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     }
     if (timer.phase === 'stopped' && (lastPenalty === 'DNF' || lastPenalty === 'DNS')) return 'dnf';
     return '';
-  }, [timer.phase, timer.inspectionDisplayMs, inspectionLimit, lastPenalty]);
+  }, [timer.phase, timer.inspectionDisplayMs, inspectionLimit, lastPenalty, trainingTimingActive]);
 
   const digitsText = useMemo(() => {
     return formatTimerTimingDisplay({
@@ -2749,13 +2772,14 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       hideTime: settings.hideTime,
       inspectionDisplayMs: timer.inspectionDisplayMs,
       inspectionLimitSec: inspectionLimit,
+      trainingObservation: trainingTimingActive,
       lastPenalty,
       phase: timer.phase,
       precision: settings.precision,
       runningPrecision: settings.runningPrecision,
       timingEnabled: settings.timingEnabled,
     });
-  }, [timer.phase, timer.inspectionDisplayMs, timer.displayMs, inspectionLimit, lastPenalty, settings.hideTime, settings.precision, settings.runningPrecision, settings.timingEnabled]);
+  }, [timer.phase, timer.inspectionDisplayMs, timer.displayMs, inspectionLimit, lastPenalty, settings.hideTime, settings.precision, settings.runningPrecision, settings.timingEnabled, trainingTimingActive]);
 
   const fontSize = `calc(clamp(48px, 10vw, 132px) * ${settings.timerFontScale})`;
 
@@ -3310,8 +3334,14 @@ digitsCorner: settings.rankScopes.length > 0 && rankBadgePhase && solves.length 
           ) : undefined,
 children: <>
           {/* sub-content under the digits */}
+          {trainingTimingActive && timer.phase === 'inspecting' && <div className="timer-live-tps">
+            {tr({ zh: '观察中 · 起手后自动记录分段', en: 'Observing · turn to record the attempt' })}
+          </div>}
+          {trainingTimingActive && settings.trainingStartMode === 'manual'
+            && (timer.phase === 'idle' || timer.phase === 'stopped') && scrambleGuidance.match === true
+            && <div className="timer-live-tps">{tr({ zh: '按空格或点击计时区开始观察', en: 'Press Space or tap the timer to start observation' })}</div>}
           {timer.phase === 'running' && <TimerTargetTime targetMs={targetMs} displayMs={timer.displayMs} localize={tr} />}
-          {timer.phase === 'inspecting' && inspectionIllegalCount > 0 && (
+          {!trainingTimingActive && timer.phase === 'inspecting' && inspectionIllegalCount > 0 && (
             <div className="inspection-illegal-warn" title={tr({ zh: 'WCA 4d: 观察期间只允许整体旋转 (x/y/z)，转面会判 DNF', en: 'WCA 4d: only rotations (x/y/z) are legal during inspection — face turns are DNF'
             })}>
               <AlertTriangle size={14} />

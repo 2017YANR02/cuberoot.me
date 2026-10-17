@@ -45,7 +45,7 @@ export interface TimerHandle {
   /** Start an armed attempt from a smart-cube move timestamp. */
   startFromCube: (atMs?: number) => boolean;
   /** A matched smart-cube scramble skips the manual holding phase. */
-  armFromCube: () => boolean;
+  armFromCube: (atMs?: number) => boolean;
   /** Stop a running attempt at the smart cube's calibrated move timestamp. */
   stopFromCube: (atMs?: number) => boolean;
   /** Cancel an in-progress arm while preserving the last displayed solve. */
@@ -64,6 +64,7 @@ function machineConfig(): TimerMachineConfig {
 export function useTimer(
   onSolve?: (result: SolveResult) => void,
   onStart?: (startedAtMs: number) => void,
+  configOverride?: () => Partial<TimerMachineConfig>,
 ): TimerHandle {
   const onSoundTransition = useTimerSoundFeedback(timerSound);
   const initial = useRef<TimerMachineState>(initialTimerMachineState());
@@ -80,6 +81,9 @@ export function useTimer(
   const onStartRef = useRef(onStart);
   onSolveRef.current = onSolve;
   onStartRef.current = onStart;
+  const configOverrideRef = useRef(configOverride);
+  configOverrideRef.current = configOverride;
+  const currentConfig = useCallback(() => ({ ...machineConfig(), ...configOverrideRef.current?.() }), []);
 
   const commitState = useCallback((state: TimerMachineState) => {
     machineRef.current = state;
@@ -114,7 +118,7 @@ export function useTimer(
     inspTickRef.current = window.setInterval(() => {
       const elapsed = Math.max(0, performance.now() - startedAtMs);
       setInspectionDisplayMs((previous) => (
-        Math.floor(previous / 1000) === Math.floor(elapsed / 1000) ? previous : elapsed
+        !machineRef.current.trainingStartMode && Math.floor(previous / 1000) === Math.floor(elapsed / 1000) ? previous : elapsed
       ));
     }, 100);
   }, [stopInspectionTick]);
@@ -145,7 +149,7 @@ export function useTimer(
           const transition = transitionTimer(
             machineRef.current,
             { type: 'hold-ready' },
-            machineConfig(),
+            currentConfig(),
           );
           commitState(transition.state);
         }, getSettings().holdMs);
@@ -174,15 +178,15 @@ export function useTimer(
         setInspectionDisplayMs(0);
       }
     }
-  }, [beginInspectionEffects, beginRunEffects, commitState, stopHoldTimer, stopInspectionTick, stopTick]);
+  }, [beginInspectionEffects, beginRunEffects, commitState, currentConfig, stopHoldTimer, stopInspectionTick, stopTick]);
 
   const dispatch = useCallback((action: TimerMachineAction) => {
-    const transition = transitionTimer(machineRef.current, action, machineConfig());
+    const transition = transitionTimer(machineRef.current, action, currentConfig());
     commitState(transition.state);
     onSoundTransition(transition);
     runEffects(transition.effects, transition.state, transition.solve);
     return transition;
-  }, [commitState, runEffects, onSoundTransition]);
+  }, [commitState, currentConfig, runEffects, onSoundTransition]);
 
   const onPressDown = useCallback(() => {
     dispatch({ type: 'press-down', nowMs: performance.now() });
@@ -213,8 +217,8 @@ export function useTimer(
     return transition.accepted === true;
   }, [dispatch]);
 
-  const armFromCube = useCallback((): boolean => {
-    return dispatch({ type: 'arm-from-cube', nowMs: performance.now() }).accepted === true;
+  const armFromCube = useCallback((atMs?: number): boolean => {
+    return dispatch({ type: 'arm-from-cube', nowMs: performance.now(), atMs }).accepted === true;
   }, [dispatch]);
 
   const stopFromCube = useCallback((atMs?: number): boolean => {

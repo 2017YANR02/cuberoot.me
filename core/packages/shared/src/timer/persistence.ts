@@ -7,7 +7,7 @@ import { normalizeTimerMetronomeSettings, type TimerMetronomeSettings } from './
 import { normalizeTimerColorNeutralMode, type CnMode } from './color-neutral';
 import { normalizeTimerDisplaySettings, type TimerDisplaySettings } from './display-settings';
 import { normalizeTimerKeymap, type TimerKeymapOverrides } from './input-contract';
-import { normalizeTimerTrainingSettings, type TimerTrainingSettings } from './training-settings';
+import { normalizeTimerTrainingSettings, TRAINING_START_MODES, type TrainingStartMode, type TimerTrainingSettings } from './training-settings';
 import { DEFAULT_TIMER_TYPOGRAPHY, normalizeTimerTypography, type TimerTypographySettings } from './typography';
 import { EVENTS, type EventId, type Penalty, type Solve } from './types';
 import {
@@ -282,6 +282,10 @@ export function decodeTimerSolve(value: unknown, event: EventId): Solve | null {
   if (value.caseId !== undefined) {
     if (typeof value.caseId !== 'string') return null;
     decoded.caseId = value.caseId;
+  }
+  if (value.trainingStartMode !== undefined) {
+    if (!TRAINING_START_MODES.includes(value.trainingStartMode as TrainingStartMode)) return null;
+    decoded.trainingStartMode = value.trainingStartMode as TrainingStartMode;
   }
   if (value.scrambleSource !== undefined) {
     if (!isRecord(value.scrambleSource)

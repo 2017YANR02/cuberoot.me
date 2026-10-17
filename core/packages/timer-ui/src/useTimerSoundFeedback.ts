@@ -16,6 +16,7 @@ export function createTimerSoundFeedback(sound: {
           clear();
           sound.cancelVoice();
           sound.play('inspection-start');
+          if (state.trainingStartMode) continue;
           const start = state.inspectionStartedAtMs ?? performance.now();
           const fired = new Set<number>();
           const firedBeeps = new Set<number>();
