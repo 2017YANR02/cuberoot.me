@@ -388,8 +388,7 @@
 }
 
 .sim-side {
-  width: clamp(340px, 32vw, 420px);
-  max-width: 48%;
+  width: 50%;
   min-width: 0;
   flex-shrink: 0;
   border-left: 1px solid var(--border-default);
@@ -579,17 +578,6 @@
   width: auto;
   height: auto;
   inset: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-/* Keep the primary image comfortably framed instead of enlarging it to fill
-   the stage. This affects only the on-screen preview, not exported dimensions. */
-.sim-canvas-wrap--imgswap .sim-image-overlay .vc-preview-wrap {
-  width: 72%;
-  height: 72%;
-  max-width: 480px;
-  max-height: 480px;
 }
 .sim-canvas-wrap--imgswap > canvas {
   position: absolute;

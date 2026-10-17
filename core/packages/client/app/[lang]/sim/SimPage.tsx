@@ -2384,7 +2384,7 @@ export default function SimPage() {
               portal 内容),所以关闭钮挂在外层、host 是里面那层。 */}
           {/* 常挂:studio 常驻侧栏,预览总要有个 portal 落点。关掉只是 display:none
               (若卸载,previewHost 变 null → studio 会把预览渲回侧栏里)。 */}
-          <div className="sim-image-overlay" style={{ display: imageOpen ? undefined : 'none' }}>
+          <div className="sim-image-overlay" style={{ display: imageOpen ? 'block' : 'none' }}>
             <div className="sim-image-overlay-host" ref={setImageHost} />
             <button
               type="button"
