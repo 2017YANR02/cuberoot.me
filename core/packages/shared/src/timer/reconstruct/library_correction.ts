@@ -392,6 +392,15 @@ export async function correctReconFromLibrary(
     const identified = !label[2] && cases?.length ? await identifyLibraryCase(line, cases, set).catch(() => undefined) : undefined;
     const candidates = identified ? [identified] : cases;
     let corrected = candidates?.length ? await correctLibraryLine(line, candidates.flatMap(item => item.algs.flat())) : line;
+    // A last-slot formula is still F2L: recognizing its library name must not
+    // move a recorded regrip across layer turns (for example y' R' -> F' y').
+    // Retain the match proof, but use the original path and encoder timing.
+    if (line.kind === 'f2l' && corrected.libraryCorrection
+      && line.moves.some((token, i) => /^[xyz]/.test(token)
+        && line.moves.slice(0, i).some(move => !/^[xyz]/.test(move))
+        && line.moves.slice(i + 1).some(move => !/^[xyz]/.test(move)))) {
+      corrected = { ...line, libraryCorrection: corrected.libraryCorrection };
+    }
     // Names are independent of whether the recorded fingertrick matches a
     // library algorithm. Use the same primary name as the /alg case list.
     let namedCases = label[2] ? cases : cases?.filter(item => corrected.libraryCorrection
