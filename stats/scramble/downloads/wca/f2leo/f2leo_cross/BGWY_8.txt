@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_cross / BGWY / bin 8
-# Population in this bin: 147
-# Samples listed: 147 (all entries in this bin)
+# Population in this bin: 148
+# Samples listed: 148 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 48955001,L' D2 L' D2 B2 R' D2 U2 L2 F R D' L D2 L B' F2 D F',B,Cross-strait Cubing Exchange 2014 (2014-08-09~10),333 R2 A #3
@@ -152,3 +152,4 @@
 5748458001,D' U2 R2 D2 B L2 B2 F R2 B2 L F' D R B' U L' U' R' U',B,Stevenage July 2026 (2026-07-11~12),333 R2 C #4
 5816225001,B' D R U' R' B' R' F L U2 B2 U2 L' B2 R' B' L' D,B,Dębica Cubing Summer 2026 (2026-09-05~06),333 R1 C E2
 5817423001,F2 R2 D' R2 D' B2 F2 D2 F2 U' B' D2 F2 R2 U F' L' B2 R' D',B,Cube Factory Aleksandrów 2026 (2026-09-05~06),333 R1 B #2
+5858403001,F' U' D2 L2 B' F L2 D2 F2 U2 L' D' F2 U B2 F L F R,B,Trondheim Høst 2026 (2026-10-02~04),333 R1 B E1

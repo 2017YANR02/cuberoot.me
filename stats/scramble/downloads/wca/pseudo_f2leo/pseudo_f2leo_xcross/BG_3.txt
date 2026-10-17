@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / BG / bin 3
-# Population in this bin: 715
+# Population in this bin: 717
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 242001,L' U2 F2 L D2 U2 R D2 U' B' R2 D R' B D F' D' B2 D',B,Montréal Open 2014 (2014-03-15),333 R1 A #3
@@ -88,7 +88,7 @@
 419567001,U' R2 F2 D2 U' L2 D F2 U' B2 R' F2 U F' L' B D' B' L' D2,G,Cubelelo Winter Open 2016 (2016-12-22~23),333 R2 H #3
 3591883001,R2 B L' F' R D2 R L2 B U2 B2 U2 R2 D' R2 B2 R2 D,B,San Diego Newcomers 2024 (2024-03-16),333 R1 C #4
 430842001,R2 F2 R' D2 B2 R2 B2 F2 L' B2 U R' B' D2 U' L' B2 F L' B' D',B,Malabar Open 2017 (2017-01-14),333bf Final B #2
-433258001,B2 U' L2 R2 D B2 D2 R2 F R F2 L2 B' L' D' F' L B' D,G,Santa Fe Open 2016 (2016-12-10),333 R1 D E1
+5870392001,U2 B2 U2 B R2 U2 B R' B F2 R' D L2 D2 R F2 U,G,Waremme Open 2026 (2026-10-11),333 R1 C #5
 433587001,U2 B2 D' B L' D' F' R D' L' B2 L2 B2 U2 D F2 U2 R2 F2,G,6 Sides of Silesia 2017 (2017-01-14),333oh R2 A #5
 3904729001,L' D R' F B' D2 L' B' F2 U F2 U' B2 U2 B2 D L',G,Cebu Cube Preview 2024 (2024-06-29),333oh R1 C #1
 3172485001,R U L' D L' D L2 B' R2 U L2 F D2 F2 D2 F' D2 L2,G,Salonica Autumn Open 2023 (2023-10-14~15),333 R2 D #4

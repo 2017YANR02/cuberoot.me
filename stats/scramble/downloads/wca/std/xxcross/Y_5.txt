@@ -1,8 +1,8 @@
 # Scramble samples — std / xxcross / Y / bin 5
-# Population in this bin: 125
-# Samples listed: 125 (all entries in this bin)
+# Population in this bin: 126
+# Samples listed: 126 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 26001,U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2,Y,Galeries Dorian Open 2014 (2014-03-15),333bf Final A E2
@@ -94,7 +94,7 @@
 4036164012,R' U2 R L2 D' B' D' B L2 U2 L2 F D2 R2 L B' U2 R2 B' L2,Y,Israel Championship 2024 (2024-08-18~21),333mbf Final A #1
 4054367001,U' R' B' U' B U R U D B' U' F B L2 U2 B2,Y,Cubi Koronel 2024 (2024-08-24~25),333oh Final A E1
 4093356001,U' R U2 F2 L2 F2 U2 F R B2 D F2 L B2 D' U B,Y,Aliso Niguel Summer 2024 (2024-09-08),333 R2 B #5
-4151018001,R2 D' R' D L2 F2 U' L2 R2 D U2 F D U' R F2 D B' L,Y, Esprit Cube Open Bayonne 2024 (2024-09-28~29),333oh Final A E1
+4151018001,R2 D' R' D L2 F2 U' L2 R2 D U2 F D U' R F2 D B' L,Y,Esprit Cube Open Bayonne 2024 (2024-09-28~29),333oh Final A E1
 4216075001,U' B2 R2 U B' D' R2 U' F2 U2 D2 L2 B2 L' D2 R' F2,Y,Berkeley October Weekday Tricubealon 2024 (2024-10-21),333 Final A E2
 4279660001,U' F R2 B' D2 F D2 F2 L F' R2 F2 R2 U' F U R' B',Y,Slow N Steady UMD Fall 2024 (2024-11-09~10),333 R1 D #1
 4326421058,L' F U2 B2 R L U L F D2 B' D2 F D2 L2 B2 D2 L2 U' L' F',Y,Ashfield Winter Challenge 2024 (2024-12-01),333mbf Final A #1
@@ -130,3 +130,4 @@
 5690390001,R2 B2 F2 L' F2 U2 B2 U' B' U' B R F' L' F D U F L' F,Y,Headache in Kode 2026 (2026-06-05~07),333bf Final A #4
 5821566001,L2 B2 D2 R' B2 D2 B2 F2 U2 L' F R D2 L' U' B2 L,Y,RUS Mall 2026 (2026-09-06),333 Final A #4
 5852577054,B' L2 D U2 F2 D' B2 U' L B2 U2 B U' L D2 F' R' F' L2 U',Y,Multimatum: New York Multimate PBQ VI 2026 (2026-09-25~27),333mbf R1 B #1
+5864735001,U' L2 B' R' F' B' U' B F2 U R2 D R2 D R2 B2 U,Y,Guangzhou Grand Open 2026 (2026-10-05~06),333 R1 B #3

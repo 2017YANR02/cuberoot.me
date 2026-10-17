@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / BGWY / bin 7
-# Population in this bin: 36
-# Samples listed: 36 (all entries in this bin)
+# Population in this bin: 37
+# Samples listed: 37 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 115238001,D R' U L' U2 B U2 L2 B' L' U' B2 U2 R2 U L2 D L2 B2,W,Summit City Open 2015 (2015-03-07),333 R2 A E1
@@ -41,3 +41,4 @@
 5447077001,D2 F U' L2 F' L' B D B2 L2 B' U2 R2 F' R2 U2 B' U' F2,W,Stevenage March 2026 (2026-03-14~15),333 R2 A #4
 5539194001,L2 U2 B2 F2 L2 U' B2 D' R2 L U2 F U' B2 D' F' U2 B' D2,Y,Adelaide Autumn 2026 (2026-04-12),333 R1 A #2
 5831025001,U2 F2 L U2 F' L F B' R2 L D2 F2 L2 D2 R B' D2,W,Road to Nats Maracay II 2026 (2026-09-13),333 R1 B E2
+5858879001,D U2 L2 B2 L D2 R' B2 L' D2 R' U' L F R2 F' D' R U',G,Honey Cube Barcin 2026 (2026-10-03~04),333 R1 B #3

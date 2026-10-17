@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / G / bin 5
-# Population in this bin: 956
+# Population in this bin: 958
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 2622391001,U2 B U2 F R B2 R2 B U' F2 D' F2 U2 L2 F2 L U2 R U2,G,Abierto de Pascuas 2023 (2023-04-07~08),333 R1 A #4
@@ -123,7 +123,7 @@
 530676001,F' D' R2 D2 R B' R' U' D' B' L2 U2 F2 D L2 F2 U' F2 U2,G,SCC Summer 2017 (2017-06-10),333 R1 B #1
 4608131001,D' R2 B2 U2 B2 R2 U' R' U R B L2 D2 L2 D' F L2 D2,G,Cubing in the 'Cuse 2025 (2025-03-29),333 R2 B #5
 783782001,R2 B2 D2 R2 U R2 D B R2 B D' L' B2 D' R F2 R2 D2 U2,G,North Plainfield Open 2018 (2018-05-19),333oh R1 E E1
-537493001,F' B R L D R2 F U' F2 L' B2 U2 R' F2 U2 L' B2 U2 L2,G,Ramenskoe Open 2017 (2017-06-24~25),333 R2 B #3
+5862008001,B2 U2 F2 D2 L2 U' F D2 U' B2 D2 B' D2 F2 L2 R' D2 U2,G,GA Cuber Jackets Fall 2026 (2026-10-04),333 R3 A #5
 4677790001,U' L F2 U2 L2 B2 D2 F2 R' F D R2 D2 B R2 U2 R F' L',G,VERK V 2025 (2025-04-27),333oh Final A #1
 803711039,L2 F U2 F L2 R2 B2 D2 R2 B' D L2 R D2 B' L2 R' B' L U L B,G,Indian Nationals 2018 (2018-05-25~27),333mbf Final A #3
 549497001,B2 D F2 D' B2 D L2 F' D L2 F U2 R' F D R F R F',G,CubingUSA Nationals 2017 (2017-07-07~09),333 R2 K E2

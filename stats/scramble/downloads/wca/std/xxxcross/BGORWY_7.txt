@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxcross / BGORWY / bin 7
-# Population in this bin: 449
+# Population in this bin: 452
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 5357348001,B L' B2 L R2 D2 U2 B' U2 F' R F' R' B F2 D' U,W,Ekerö Open 2026 (2026-01-31),333 Final A #5
@@ -44,7 +44,7 @@
 4983878009,U F' R2 B2 U2 R' U2 R' F2 U2 B L2 U R' B' R2 F' L D' L' F,O,Romanian National Championship 2025 (2025-08-21~24),333mbf Final A #2
 5320925001,U2 L2 U' L2 D' B2 U B2 L2 D2 F R' B U2 F D2 F2 L R2 U',G,SVNIT Cube Open 2026 (2026-01-10~11),333 R2 A E2
 313231001,L2 R2 B2 U2 B' D2 B' U2 B2 L2 R' U R2 U' F R2 D R2 D',Y,Cajun Cube Clash 2016 (2016-06-18),333oh R1 A #4
-315519001,B R2 B L2 U2 R2 F2 U2 F L2 F2 L' U2 L U F' D2 U' L B,G,SCMU 2016 (2016-06-17~19),333 R1 R #5
+5867833001,R F' L' B' R D' F R U' F2 B' U2 R2 B2 R2 F' D F',Y,Cube4fun Lublin Autumn 2026 (2026-10-10),333oh Final A E2
 317590001,L2 F2 D' B2 D R U' B' U' R D F2 U2 L U2 D2 R L,Y,Slow N Steady Spring 2016 (2016-06-18~19),333 R2 C #3
 3897619001,U' B' D2 L2 B' R' L2 B R U' D R2 F R2 U2 F' B2,G,Cecil Singapore Playoffs 2024 (2024-06-30),333oh R2 A E1
 4300183001,R' L2 U B2 L2 F2 U2 R' D' B L D F2 R' D F2 R',W,The Amerinst Cubing CBBA 2024 (2024-11-16~17),333oh Final A #2

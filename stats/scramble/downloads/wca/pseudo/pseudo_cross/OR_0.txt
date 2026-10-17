@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_cross / OR / bin 0
-# Population in this bin: 55
-# Samples listed: 55 (all entries in this bin)
+# Population in this bin: 56
+# Samples listed: 56 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 146624001,R' U2 R' D2 R2 B U2 L' U R' B2 L2 D' L2 D B2 U' F2,R,Indian Nationals 2015 (2015-05-29~31),333 R3 D E1
@@ -60,3 +60,4 @@
 5730147001,D2 F' D2 L2 U D' R U' R2 B2 L F2 D2 L2 U2 R' U2 R' B U',R,Hampshire Summer 2026 (2026-06-27~28),333 R2 B E1
 5806968001,U' L' B' D L2 U2 D' L U F2 U R2 U D' L2 B2 L2 D' L D',O,Slovenian Nationals 2026 (2026-08-28~30),333bf R1 A #3
 5809459001,R F' L B2 D2 L U2 F2 U' F R2 U2 R2 F B U2 B2 L F',O,DFW Cubing Summer 2026 (2026-08-29~30),333 R3 B #2
+5857517001,D' R2 U R' L2 B F2 D2 U2 L2 F D2 R B2 D' B R' U2,R,Indian Elite Championship 2026 (2026-10-02~04),333 R1 B E1

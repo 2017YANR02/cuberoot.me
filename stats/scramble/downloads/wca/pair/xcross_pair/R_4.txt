@@ -1,8 +1,8 @@
 # Scramble samples — pair / xcross_pair / R / bin 4
-# Population in this bin: 314
+# Population in this bin: 316
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 3938051001,U D R' B2 U' F R F2 L' U' R2 B2 U2 D' R2 U D L,R,Varna Open 2024 (2024-07-13),333 Final A #2
@@ -142,7 +142,7 @@
 1641878001,L U' B' D R2 F2 L2 U' R2 D' B2 R2 F' R' D2 B2 L2 D B2,R,Shenzhen Nanshan Morning 2021 (2021-03-28),333 R1 A #1
 1643647033,L2 U B D2 R2 F2 D2 B2 D R2 U R D' B D B D L F' D',R,Please Be Quiet Brisbane 2021 (2021-04-10),333mbf Final A #1
 1683691001,U2 L B2 D L2 F' R2 B2 D2 F2 U R2 B2 R F' L R,R,Wyoming Summer 2021 (2021-07-31),333oh Final B #2
-1696663001,L' R U2 L' D2 R D2 B2 F L U2 F' D2 U F2 R' D2 F2,R,Polish Championship 2021 (2021-10-01~03),333 R2 A #1
+5865841001,B R' B' U F U R B U' L' F2 L F2 R B2 R D2 F',R,GercenCube Petržalka 2026 (2026-10-03),333 R2 B #1
 1716690028,D' R' F D2 L2 F D2 F R2 F L D U2 B R2 B2 F' R2 D' L2 U',R,Italian Championship 2021 (2021-10-30~11-01),333mbf Final A #1
 5251836001,D2 L2 B F2 L2 D2 B' R2 U' F R F U' L B L' F L' U2,R,Nacionales Argentinas 2025 (2025-12-05~07),333oh R1 C #5
 1798526001,R B R' B D L2 F2 R' U' F2 U R2 F2 L' F2 U2,R,Ankara Winter 2022 (2022-01-29~30),333 R1 E #3

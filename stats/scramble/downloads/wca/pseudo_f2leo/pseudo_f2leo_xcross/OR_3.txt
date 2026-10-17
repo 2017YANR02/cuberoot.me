@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / OR / bin 3
-# Population in this bin: 753
+# Population in this bin: 756
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 5787001,R L2 F' L' F2 L U F L2 U' D2 B2 L2 B D2 B' U2 F' D2,R,GuateRubik 2014 (2014-03-30),333oh R1 A #3
@@ -130,7 +130,7 @@
 660851016,D2 R2 D2 F L2 R2 D2 B F' D2 F' L' U2 B U' R B L2 R2 U' L2 U',O,Two days in Vitebsk 2015 (2015-10-31~11-01),333mbf Final A #1
 660918004,F2 L' R' F2 D2 R' B2 F2 D2 L D U F' R' U' F2 D' U' B2 L,O,Zaragoza Open 2016 (2016-02-06~07),333mbf Final A #1
 1056251001,D R L' U D' F' U L' D B' L D2 F2 R D2 L2 F2 L' B2,O,Wolfpack Winter 2019 (2019-03-16),333oh R1 B #3
-661044037,L2 U B2 F2 D' L2 D L D' F' U' L R' F U' L' B2 F R' D',O,European Rubik's Cube Championship 2016 (2016-07-15~17),333mbf Final A #1
+5867506001,D' R' F2 L' U' B D2 F L' D2 F2 D' R2 F2 U' B2 D B2 L,R,Cube-bers in Iloilo 2026 (2026-10-04),333 R2 B #3
 661130007,R2 D2 L' B2 R' F2 D2 R B2 L2 B U' B' F' L2 F R F2 D2 L,O,Belgorod Open 2016 (2016-10-08~09),333mbf Final A #1
 661173002,B2 F' D2 L2 U2 L2 B U2 R2 U2 L2 R D' R U B2 L2 D2 B2 D,O,Basauri Open 2016 (2016-11-12~13),333mbf Final A #1
 1731662030,R U2 B2 D2 F' R' D2 B' U' F2 L2 D2 F2 L2 B2 R' B2 D2 R U2 B' L,O,Nacionales Fénix Colombia 2021 (2021-11-13~15),333mbf Final A #1

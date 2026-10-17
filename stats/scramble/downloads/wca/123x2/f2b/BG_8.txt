@@ -1,8 +1,8 @@
 # Scramble samples — 123x2 / f2b / BG / bin 8
-# Population in this bin: 894
+# Population in this bin: 900
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 1626433016,R2 F2 U' F2 U B2 L2 D' F2 R' D R B L F' R2 D' U F' L B,G,Turn Around Tassie 2020 (2020-12-12~13),333mbf Final A #1
@@ -31,7 +31,7 @@
 97451001,F' D R L' F' U R' D F D R2 D2 F D2 L2 B R2 B2,G,Shaastra Cube Open 2015 (2015-01-03~04),333 R1 K #3
 2569906001,R' U2 B2 R U' F' U2 R2 U' R2 D2 R2 B D2 F2 B R2 L2,G,InTents Cubing Anza-Borrego 2023 (2023-03-18~19),333 Final A E2
 2652035001,F2 D2 B' L U R L' U R2 U' D R2 D L2 U' B',B,UCOM Paraguay 2023 (2023-04-15~16),333 R1 A #4
-894615001,D' B' D F B' U F2 U2 B R2 U2 R2 F D2 R2 L2,B,Hiroshima 2018 (2018-10-07),333 Final A #1
+5866589001,U2 F2 L2 R2 D U2 L2 D2 R' D2 F U F' R' D' L R' D2 L2,G,Croatian Championship 2026 (2026-10-03~04),333 R1 D #5
 5389590001,F' R F D2 F R' L' F U2 L' D2 R' L2 F2 R D' L,B,El Solar Valentine's Day SC 2026 (2026-02-14),333 R1 C E1
 1993606001,U' B D' R F2 L' B2 F2 R2 D2 L' F D2 R' B L' D R' U,B,1st Salem Open 2022 (2022-06-26),333 R1 G E2
 5224725001,U D B D2 B' D' F D2 R L F2 R2 B2 D L2 U2 D' B,G,Kamppi Cube Weekend 2025 (2025-11-29~30),333 R1 B #2

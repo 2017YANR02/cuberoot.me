@@ -1,8 +1,8 @@
 # Scramble samples — daisy / daisy / BGWY / bin 0
-# Population in this bin: 667
+# Population in this bin: 670
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 3004850001,U R' U' B2 R B2 R2 D2 L' B2 R F2 U L' B' U L D' R',W,Flex in Lex 2023 (2023-08-19),333 R2 A #3
@@ -16,7 +16,7 @@
 5790151001,F' D' F B' R2 L F' B' L U' B2 U2 F2 U2 L' D2 L' B2 L B' L2,G,Kalibata Agustusan 2026 (2026-08-15~16),333bf Final B #3
 3900354001,R U' L D2 U2 R' D2 R U2 R' F2 L2 D2 F R F D' B R B,Y,Oklahoma Championship 2024 (2024-06-29~30),333oh R1 A #4
 94420001,D R F' B' U2 B2 R U L2 B U R2 B2 U R2 U B2 U2 R2 D,B,Mumbai Open 2014 (2014-12-28~29),333oh R2 C #3
-4652753001,F U' F2 D' F2 R' U F' R' F2 R2 D2 R D2 B2 R2,Y,BQHS Spring Open 2025 (2025-04-13),333oh Final A #2
+5873877001,R2 D2 B2 L' D2 B2 R B L' R2 D' L2 U2 B2 R2 L2 U' F2,W,Road to Nats Caracas II 2026 (2026-10-10),333 R1 A #3
 97530001,R2 U2 B2 L R D2 L' D2 F' R' U2 B R' B R B F2,B,Shaastra Cube Open 2015 (2015-01-03~04),333 R2 B #5
 97632001,U' L F U L U' D' B' R' L D2 F2 R2 F2 L' B2 D2 R' U2,Y,Shaastra Cube Open 2015 (2015-01-03~04),333 Final A #2
 3328677001,R' B U2 B' L2 R2 U2 F' D2 F' R2 B R' D' F' R2 D L2 B' L2,W,Spanish Championship 2023 (2023-12-08~10),333oh R2 A #3
@@ -24,7 +24,7 @@
 3039828001,R2 F' L F U L B' U2 R' D R' L2 U2 F' U2 B R2 F2,W,South Australian Open 2023 (2023-09-02~03),333oh R1 A #5
 2278001001,L2 B2 R' B2 D2 L U2 B2 U2 F2 L D2 B' D L R2 D' F U' B2,W,Floripa ao Cubo 2022 (2022-10-29~30),333 R1 D #5
 131786001,B2 R2 U' B2 U2 L2 F2 R' B R B R2 D' F' L' D' U2 L,W,SPCS Stanford Spring 2015 (2015-04-19),333oh Final A E1
-3910804002,R' D F2 U' R2 B2 R2 B' L2 D R2 B L2 B R U2 B2 F' L' F,W,PBQ at MSU 2024 (2024-06-28),333mbf Final A #2
+5864487001,R' B' F2 D2 L2 F2 L2 U' B2 D2 R2 U' R' U F' R F' L B' U2,G,Reto Finales Aves María 2026 (2026-10-04),333 R1 B E2
 4961618001,F2 L' F B2 R2 U' F B2 R' D' F' U2 D2 F' B' L2 U2 B U2,Y,Breda Open 2025 (2025-08-23~24),333 R2 C #5
 148550001,U R2 D U2 F2 D' B2 R2 D' F2 R' F L U L F L R U2,W,Guangzhou SYSU Open 2015 (2015-06-06),333oh Final A #4
 2536708033,F2 L2 B2 D' U2 R2 D L2 R' D F2 L2 F' D' F U R' F2 D2 L',Y,I Hope It's Solved Calgary 2023 (2023-03-04~05),333mbf Final A #1
@@ -190,7 +190,7 @@
 971816001,R' F D2 B' D2 F D' B D' L2 D2 L' B2 D2 L U2 L' B2 R2,G,UBC Open 2019 (2019-01-05),333 R1 F E2
 2919811001,F U' F R2 D2 F2 L R2 U2 L' F' L' D' L' U2 B2 D2 B',W,Stevenage July 2023 (2023-07-22~23),333 R1 B #3
 3012292035,U F2 R' D2 B' D2 B' F D2 L2 R2 B' R D2 R' U R F L' F' D,W,Slovenian Nationals 2023 (2023-08-25~27),333mbf Final A #1
-3822422001,L' R2 D2 B' F' R2 F' D2 B L U B2 F' D2 B2 D B' L2,W,Cubes on the Bayside Summer 2024 (2024-06-01),333 R1 E E1
+5861592001,U' D R' B' U' R2 F D L F' U2 L U2 L' F2 R L D2 R',W,Oregon State Fall 2026 (2026-10-03),333 R2 A E2
 2642867001,R U' R2 F D R L2 B L U' R' B2 D2 L F2 L2 U2 B2 L2,Y,Cubing in HD 2023 (2023-04-15~16),333oh R1 C E1
 5235703001,L2 U2 B U2 F2 U2 F' R2 F L2 U2 R' U' F L2 B2 F' L' B L2,Y,Bireh Cubing 2025 (2025-11-27~28),333oh R1 B #2
 1024051001,F2 L2 D B2 U B2 R2 D' B2 L B' D R U2 R B' L F' L' D B' L',Y,I Hope It's Solved Edmonton 2019 (2019-02-16~17),333bf R1 A #3

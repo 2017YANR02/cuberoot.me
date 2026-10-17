@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxcross / ORWY / bin 6
-# Population in this bin: 411
+# Population in this bin: 414
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 2910188001,U L U L2 D R2 B2 D2 B2 L' D L' D2 L D' F,R,Israel Championship 2023 (2023-07-17~20),333 R3 A #4
@@ -95,7 +95,7 @@
 722141001,R' B2 R U2 L' B2 R2 B2 D' F2 D' F2 L R U L D,R,Eretum Open 2018 (2018-03-10~11),333oh Final A #3
 4789632001,U' L B' D2 F R2 D2 R2 F2 U2 D' B' D B' L' B2 D' U,Y,Kansas Championship 2025 (2025-06-06~08),333oh Final A #1
 4933863001,L2 F2 R B2 U2 R B2 L U' L' D2 F' D' F R2 D F2 L2,R,Visayas Championship 2025 (2025-08-09~10),333 R2 A E1
-753670001,U2 B2 L2 D' L2 B2 U R2 U R F U2 F R' U' R' F,O,Chanquete Open 2018 (2018-04-14),333 R2 B #1
+5860203001,B2 F' L2 F' D2 B' L2 R2 U2 F U' B F2 L' U2 L B F,Y,ODU Big Blue Fall 2026 (2026-10-03),333oh Final C #5
 760592001,U2 R F2 R U2 L U2 L' B L2 B' L' D R2 D' L D2 B,O,Canberra Autumn 2018 (2018-04-21~22),333oh R2 A #3
 2878030001,L2 U' L2 U2 F2 R2 F' L B F2 U2 B' L' B2 U2 L2,R,Bolivia Nationals 2023 (2023-07-07~09),333oh R1 B #1
 785586006,L2 B F2 R2 B D2 U2 F2 L' D' F R2 B D U2 F2 R D L' B' L',O,Arnold Classic Africa 2018 (2018-05-18~20),333mbf Final A #1
@@ -148,7 +148,7 @@
 4059127001,F' U2 B2 L2 R2 B' R2 F L2 F' D L D' B' L' B' U2 B D',Y,Viña Cubing Fest IV SC 2024 (2024-08-24~25),333 R2 C E2
 4320719001,F2 L' B2 D L' D' F U B2 L' U2 F2 R' B2 R F2 L U2 F2 U',O,Cubestuff Challenge Q4 Menlyn Park 2024 (2024-11-23~24),333 R2 A #1
 5026127001,L' U2 L F2 B D R2 L D F D R2 F2 U B2 L2 D' R2,Y,Las Palmas Open 2025 (2025-09-13~14),333oh R1 B E2
-2954245001,R2 U R2 B2 U B2 L2 D' B2 U' B D U2 R' D B2 D F' L2,O,Richmond Summer Open 2023 (2023-08-05),333 R2 B E2
+5872880004,U' R U L2 D L2 F2 D U2 R' F2 D2 B' L2 B F L U L' F2,R,Perth Favourites Evening II 2026 (2026-10-13),333mbf Final A #1
 1297258001,D2 R2 F2 L B2 R D2 R2 B2 F D B2 U L U' F U2 L' B2,W,Manaus Cubo Plaza Open II 2019 (2019-09-14~15),333 Final A #4
 1311129001,R2 U L2 F2 D2 U R2 F2 R2 B' U2 L F2 U' B' D B' D R2,Y,Mongolia Open 2019 (2019-09-21~22),333 R1 B #3
 3043338001,L B L B' R2 B2 L D R2 L2 B2 L2 U' B2 R' U2 F' R2,Y,Bucharest Funky Cubes 2023 (2023-09-02~03),333 R1 E #5

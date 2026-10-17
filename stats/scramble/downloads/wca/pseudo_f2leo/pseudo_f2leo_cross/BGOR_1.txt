@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / BGOR / bin 1
-# Population in this bin: 179
-# Samples listed: 179 (all entries in this bin)
+# Population in this bin: 180
+# Samples listed: 180 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 29329001,B2 R2 F2 U R2 U B2 U2 B U L2 D' F D2 U' L2 U,O,No Parity Open 2014 (2014-06-21),333 R2 A E2
@@ -129,7 +129,7 @@
 3760964001,R2 F' R2 B U2 B2 F' U2 D R U2 R2 D2 F D R F' D' F,B,Bursa Mother's Day 2024 (2024-05-11~12),333oh R1 A #5
 3785649001,L2 F' D B2 R B' R' D' R' U2 R2 L2 F2 B L2 F B L2 D2,B,Kanazawa 2024 (2024-05-25),333 R2 A #1
 3795287017,F2 U2 B2 L2 U2 R2 D' B U2 L F D' F' L' U' L2 D F U' B R2,G,Cornhusker Quiet Classic 2024 (2024-05-25),333mbf Final A #1
-3886385001,U' B U' F' B' R F2 R' D2 L2 U2 B D2 B U2 F2 U2 L2 B',O, Vasconcubos 2024 (2024-06-22~23),333 R2 B #1
+3886385001,U' B U' F' B' R F2 R' D2 L2 U2 B D2 B U2 F2 U2 L2 B',O,Vasconcubos 2024 (2024-06-22~23),333 R2 B #1
 3977667001,L2 F D R2 B2 F L2 B2 F R2 U2 D' F2 R2 D2 F U2 L R,R,Malaysia 15th Anniversary Championship 2024 (2024-07-27~28),333oh R1 D E1
 4003397001,U2 L2 R D' U' L2 D L2 F2 D R2 U2 R' D2 F' R' F2 R2 F',O,V per Varese 2024 (2024-08-10~11),333oh R1 A #4
 4024490001,F' R2 D F2 B' R2 B' U R U R2 U L2 U2 F2 L2 F',G,Ruta Valenciana I: Calp-Ifach 2024 (2024-08-17~18),333 R1 C #1
@@ -184,3 +184,4 @@
 5750550009,R2 B' D2 R2 U2 F2 R' F2 R2 F2 U2 R' B' R2 B D' L' D' B2 L B2,G,GAN New Zealand Nationals 2026 (2026-07-10~12),333mbf Final A E1
 5750594009,R2 B' D2 R2 U2 F2 R' F2 R2 F2 U2 R' B' R2 B D' L' D' B2 L B2,G,GAN New Zealand Nationals 2026 (2026-07-10~12),333mbf Final A #2
 5817527001,F2 D2 R2 F' R2 B2 D2 F' L U' F L2 U R U' L' R',B,Cube Factory Aleksandrów 2026 (2026-09-05~06),333 R1 B #4
+5864363001,R2 F' D F2 U2 F2 U L2 U' L2 R2 U' L2 F' D U2 R F2 U2 R,G,Head to UBC Morning 2026 (2026-10-03),333 R1 C E2

@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / WY / bin 8
-# Population in this bin: 251
+# Population in this bin: 256
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 2608001,D' B' L' D L' F2 U F U' L' U2 F D2 R2 F' B2 R2 U2 B2,Y,CMI Fiesta Open 2014 (2014-03-21~23),333 R1 R #4
@@ -67,10 +67,10 @@
 5548184001,D2 B' D2 F2 D2 R2 F' U' R' D L B' R2 B U L2 D' F,Y,Solving in Sale 2026 (2026-04-17~19),333 R1 B #2
 963754040,B2 D2 L' B2 L D2 U2 R' U' R B2 R D' L' D F L' F L',Y,New Zealand Nationals 2018 (2018-12-14~16),333mbf Final A #1
 1007749001,L2 D L2 D L2 B D' R D' R' D2 B' U2 L2 U2 F U2 F,W,Valenzuela Cube Classic 2019 (2019-02-02),333 Final A #4
-1015089001,B2 R' F2 R2 B2 D2 L B2 F' L' D2 B' U' B2 D2 F L2 B' L' B',W,Medan Lunar New Year 2019 (2019-02-09~10),333bf Final B E1
+5860167001,R F B R2 B' U2 R F2 R2 D' B2 D2 B2 L2 F2 R2 U2 L F',Y,ODU Big Blue Fall 2026 (2026-10-03),333oh Final A #4
 5835166005,L2 U L' B2 D2 R B2 R' U2 L2 D' L2 D U' R' D B D B' L B,W,LA Quiet Championship 2026 (2026-09-19),333mbf Final A #1
 1040919001,L' U2 F2 D2 R F2 L2 U2 R F' L2 D' F' R U' B R2 U R2,W,Hobart Open 2019 (2019-03-09),333oh R1 C E1
-1048989001,L2 B' U2 F U2 B' R2 F D2 F2 R2 D' R B' L2 B U2 R B2 D',Y,Chelles Open 2019 (2019-03-09~10),333 R2 A #5
+5857713001,L2 F' L F2 U2 R2 D2 R B2 L' B' R U' B2 L U F' L F',Y,Indian Elite Championship 2026 (2026-10-02~04),333oh R1 E E2
 1080139001,B2 D2 B' F R2 F' D L2 B2 R' B2 F L B' U2 L F',W,Anyang Open 2019 (2019-04-06),333 R1 F #1
 5677615033,D' R2 U2 B L2 F L2 F2 D2 F D2 U F U2 F' L' F U2 L,W,New York Multimate PBQ V 2026 (2026-05-29~31),333mbf Final A #3
 1098075001,F' L' D' R D2 F2 L B2 R L2 U2 F B R2 U2 B' D2 F',W,Cork Open 2019 (2019-04-13~14),333 R1 B E2
@@ -100,7 +100,7 @@
 1552979028,B2 D2 B2 D' R2 D2 F2 R' U R' D' L' D U' B2 U L' U2 L,Y,Kiev Super Blind 2020 (2020-02-15~16),333mbf Final B #3
 1620931001,U' D' R' B' R B D2 F2 L F2 U' B2 U2 B2 D' B2 L2 F2 D2,Y,Ha Noi Summer 2020 (2020-09-20),333 R2 C E1
 5320191001,U L2 D2 U2 F' D2 L2 U2 R2 L' D' F' U2 B2 L2 R2 B D,Y,Winter in Bishkek 2026 (2026-01-09~10),333oh R1 A #3
-5061924001,R2 D2 B2 U2 B2 U2 F' U2 R B R2 D' L2 D L' R' B R',Y,PHS Johor Cube Open 2025 (2025-09-28),333 R2 B #1
+5874957001,U B2 U2 R2 F' U' B L' F2 D2 R2 B2 D2 F' L2 F' D' F2 U',W,Berkeley Fall 2026 (2026-10-11),333oh R1 A #3
 1797022001,B' U L2 B2 D' L2 F2 R2 B2 F2 D L' F' R F L B2 D2 L2,W,GA Cubers Greetings 2022 (2022-01-29),333 R1 G #2
 1810530001,L2 U2 B2 L' B2 U2 L' U B2 L' D' F2 L' F U2 R2 F',W,Cape Fear 2022 (2022-02-12),333 R1 C #5
 4693415001,R' D2 B2 R2 D' F2 U F2 U R D2 U2 L' U F' D' B' L',Y,NSW State Championship 2025 (2025-04-26~27),333 R2 A E1
@@ -131,7 +131,7 @@
 2986852001,D F R2 F L2 B2 R2 F L2 U2 F2 D' R' F2 D F' U2 L,Y,Mystic Cubikon 2023 (2023-08-20),333 R2 B #1
 3005259001,R B2 L' D2 L B2 L' F2 R F' U L B' F2 R B2 R B' U,Y,Taman Anggrek Speedcubing 2023 (2023-08-19~20),333 R2 C E1
 3007333001,D B R' B F2 R2 B L2 F' D2 L' U2 F D2 U' R' D' L2,Y,Chapacos Cuberos 2023 (2023-08-26),333 R2 C #2
-3065118001,L B U2 R' D2 R' F' L U' R' L2 U2 R' B2 L2 B',Y,Simple Sydney Sunday 2023 (2023-09-10),333 R1 E #4
+5867833001,R F' L' B' R D' F R U' F2 B' U2 R2 B2 R2 F' D F',Y,Cube4fun Lublin Autumn 2026 (2026-10-10),333oh Final A E2
 5273541001,R2 U2 B2 R2 B' F L2 U2 F L2 D' R D' R2 F L D L U,Y,Legazpi City Speedcubing Open 2025 (2025-12-14),333oh R1 A #5
 3172830001,L D F L2 B L' D' R2 U B R2 L2 F2 L2 U B2 U B2 R2,W,Campeonato Brasileiro 2023 (2023-10-13~15),333 R1 E #5
 3212747001,B2 U2 L2 B2 U' L2 R B2 L B' U' L' F L' U2 R' F',Y,Davis Fall 2023 (2023-10-29),333 R2 A #4
@@ -173,7 +173,7 @@
 4017929001,B' U2 B2 F D2 B' L2 D2 R U' L B2 R' D' R' F' U2 L' U,W,Córdoba Cubea 2024 (2024-08-17~18),333 R1 B E2
 4020053017,D2 F' R2 B' L F2 B' R B' L' U2 B2 D L2 F2 B2 U L2 D',W,Morro Reuter Cubing 2024 (2024-08-17~18),333mbf Final A #1
 4020383005,D2 U2 B2 D' U2 R' D2 U L' D2 R' D' U L F U,Y,Shhicago II 2024 (2024-08-17~18),333mbf Final B #3
-4037292001,F2 R U B' R2 L' D2 L F2 U' D2 L2 F2 D2 R2 F2 D2 B U2,Y,Hotel Forum Open 2024 (2024-08-24),333oh Final B #2
+5873950002,U' R B2 R U' R' B' D' R2 D' F2 U2 L2 F2 L2 U R U' R' D2,Y,Portugal Championship 2026 (2026-10-09~11),333mbf Final A #1
 4789632001,U' L B' D2 F R2 D2 R2 F2 U2 D' B' D B' L' B2 D' U,Y,Kansas Championship 2025 (2025-06-06~08),333oh Final A #1
 4195156001,R' B D F D' R D F' L' D2 F' R2 B D2 F D' R2,W,Cyprus Nationals 2024 (2024-10-12~13),333oh R1 B #2
 4204162001,U2 F2 U2 B' D2 R2 D2 F2 R F2 R' B D F2 U' R2 U,W,Kalvskinnet Kubing 2024 (2024-10-19~20),333 Final A E2
@@ -201,7 +201,7 @@
 4474225001,F L' R' B2 D2 L' D2 R2 U2 R' D B D F D2 U2 F2 U',W,Tramsheds IV: Summer Sunday 2025 (2025-02-09),333 R1 B #2
 4668462001,F2 U2 F2 R2 D2 L U2 B U F' U2 R2 U2 L2 U2 F2 B R2,Y,Cubing Comes to Madurai 2025 (2025-04-20),333 R1 A #3
 4733374001,F L2 D' U F2 D' U2 B2 U2 L F' L' R B' L F L2 D' L,W,Mololoa Open 2025 (2025-05-17~18),333oh R1 A E1
-4540561001,R' B U2 L2 B2 U2 B R2 F2 R' D L' U' F2 D' U' F' L' B,W, Ruta Cubera Queretaro NxN 2025 (2025-03-01~02),333 R1 B E2
+4540561001,R' B U2 L2 B2 U2 B R2 F2 R' D L' U' F2 D' U' F' L' B,W,Ruta Cubera Queretaro NxN 2025 (2025-03-01~02),333 R1 B E2
 5300738001,U' B' U' R' L2 U' R' B' D2 F' R2 D2 F' R2 F' U2 B2 D' L',W,Kirkkonummen Jouluvääntelyt 2025 (2025-12-26~29),333oh R2 A #1
 4571276001,D2 B F' U2 F D2 L2 D2 B' U2 L D' B' L B U2 F2 R' D',W,Muggiò Spring 2025 (2025-03-15~16),333 R2 C #5
 4626881032,U2 R' F B2 L2 D2 B2 D' L2 D2 B U' B2 U R2 F' D2 F' L2 U,Y,New York Multimate PBQ 2025 (2025-04-04~06),333mbf R1 B #1

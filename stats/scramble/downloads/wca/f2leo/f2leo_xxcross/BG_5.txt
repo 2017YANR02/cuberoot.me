@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxcross / BG / bin 5
-# Population in this bin: 119
-# Samples listed: 119 (all entries in this bin)
+# Population in this bin: 120
+# Samples listed: 120 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 1779001,F U2 B' U L' F' R F' B D F R2 U R2 F2 B2 D' F2,G,Kansai Open 2014 (2014-03-21~22),333ft Final A #1
@@ -124,3 +124,4 @@
 5844209001,B' D L' B D2 B2 L' R2 D' F2 U R2 U' B2 U2 R2 U L' B',G,Ribeirão ao Cubo 2026 (2026-09-19~20),333oh Final C #4
 5846172001,D2 B2 R2 B2 R' F2 U2 L2 R' F2 L2 B' D2 R' F D2 F R2 B R,G,Tafalla Open 2026 (2026-09-26~27),333bf Final A #1
 5854329001,F L' B2 L2 F D L' B2 D2 L F' U' D2 F2 D' R2 B2 R2,B,Balam Cubes Bekasi Comeback 2026 (2026-09-26~27),333 Final A E2
+5866912001,D2 L' D F' R' L2 F2 B D B' R2 B2 R2 F2 R2 U' B2 L2,B,St. John's Fall 2026 (2026-10-04),333 R1 A #2

@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxcross / BGWY / bin 6
-# Population in this bin: 437
+# Population in this bin: 440
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 5829061001,U' R' U2 R' L2 U D2 B' D' F' D2 F L2 F L2 B' U2 D2 R',Y,Cocha NxN CBBA 2026 (2026-09-12~13),333oh R1 B #4
@@ -77,7 +77,7 @@
 5449788001,B' L B2 L2 B L D R2 U' B L2 U R2 F2 L2,G,The Heart of Texas Spring 2026 (2026-03-14),333 R2 A #5
 4674819014,F' L B2 D B2 R2 D2 L2 R D L F2 D2 R' D U B L2,B,Please Be Solved Vancouver 2025 (2025-04-26),333mbf Final A #1
 4146082001,B' D2 B R2 F' R2 F' D F D B L D2 F D2 B F2 R,B,Airdrie NxNs 2024 (2024-09-29),333 R1 G #1
-3641569019,B F R2 B2 F U2 B F L F2 U' B R2 U' L' U B2 L' F',W,Pocos Cupos Bogotá VIII 2024 (2024-04-06),333mbf Final A #2
+5860203001,B2 F' L2 F' D2 B' L2 R2 U2 F U' B F2 L' U2 L B F,Y,ODU Big Blue Fall 2026 (2026-10-03),333oh Final C #5
 5065358001,F U2 B2 L' F2 U2 R D2 R F D L' F L U' F' D' U,B,Clock & 'Minx Ohio 2025 (2025-10-04),333 R1 B #4
 4284414001,L2 U2 R' B2 L F2 L' D2 L' B L2 R2 F' L' R D' R U,B,Speedy Southport 2024 (2024-11-16~17),333 R1 A #2
 660931019,F2 U2 R' F2 U2 L B2 L2 U F2 U L2 F2 L U' B2 F' R2 U2 L' F',G,Cubéate Weekend 2016 (2016-02-27~28),333mbf Final A #1
@@ -128,7 +128,7 @@
 3005406001,B' F2 L U2 R B2 F2 U2 L U' L2 U2 R D2 U L2 B D',B,Taman Anggrek Speedcubing 2023 (2023-08-19~20),333oh Final A #4
 5395763001,L' D2 B2 R U2 B2 D2 U L U2 L2 D' F R U' L F2 R2,Y,Cuenca Open 2026 (2026-02-21),333 R1 A #2
 1028250001,D2 F' D2 B' D2 F L2 D2 B2 D B' U B2 D2 L' R U B2,G,Idéale Nabeul Open 2019 (2019-02-16~17),333 Final A #4
-4298118001,F L2 B' R2 D U2 B2 R2 B2 R2 F D R B2 F2 R2 F' R,Y,Los Fuertes V2 Puebla 2024 (2024-11-16~18),333 R2 B #3
+5858277001,D2 L B R' F2 R2 U R2 U' B2 U F' D2 L D2 B2 L2 F2 R,W,Trondheim Høst 2026 (2026-10-02~04),333oh R1 A #3
 3043338001,L B L B' R2 B2 L D R2 L2 B2 L2 U' B2 R' U2 F' R2,Y,Bucharest Funky Cubes 2023 (2023-09-02~03),333 R1 E #5
 1032528001,R' U' R2 L F2 U L D2 R U2 B2 U2 L U2 R2 D2 R',W,Long Island Winter 2019 (2019-02-23),333 R2 A #3
 1037511001,L2 D' F2 R D B' L' U2 L F' U L2 U2 R2 D2 B2 R2 L2,B,Voronezh Open 2019 (2019-03-02~03),333oh R1 A #1
@@ -167,7 +167,7 @@
 1370900001,L2 U2 R2 D2 R2 F U2 L2 R B2 U2 L' B' U' R' B' D2 U2,B,Cubeland Arequipa Speedsolving 2019 (2019-10-26),333 R2 D #4
 4316275001,L U2 B' R2 D2 R2 U2 B2 R2 L B2 F R2 U2 F2 L U2,B,Lincolnshire Autumn 2024 (2024-11-23~24),333 R2 A #4
 1404726001,B U' B2 U L D L' U2 L F2 D F2 U' D2 L2 U' D',G,Chengdu Winter 2019 (2019-11-09~10),333 R1 B E1
-5392036001,U' R2 D2 L2 B R B D R2 L2 U F2 U2 B2 R' F2 D B',B,UMBC Winter 2026 (2026-02-14),333oh Final C E2
+5862708001,F2 U F2 D L2 D2 B2 U' R2 F U B' D' L' D' L R2 U',B,Sydney Cubing Decathlon 2026 (2026-10-02~04),333 R1 F #1
 1427750001,F R2 B R2 F' U2 F' D' R2 U L2 U2 L2 F2 D2 B' F' D',W,Malta Open 2019 (2019-11-30),333bf Final A E1
 2573324001,D2 F' L2 D B2 U' B2 F2 D' U2 L2 R' D2 B' D U2 F D' L2,G,Kendeda Kubing B 2023 (2023-03-19),333oh R1 A #2
 5759406001,R U2 B2 D2 U2 R D2 F R D2 U2 B2 U' L2 F2 L' F2 L',W,SPAMTown IV MN 2026 (2026-07-25),333oh R1 A E2

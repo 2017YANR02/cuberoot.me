@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / WY / bin 10
-# Population in this bin: 641
+# Population in this bin: 645
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 1258630001,D' L2 R2 F2 D' R2 B2 F' R D' B L D B2 D U2 F L' U,W,Baoji Open 2019 (2019-08-11),333 R2 D #4
@@ -139,7 +139,7 @@
 3101568017,U2 F' L R2 B' F' L2 B' U2 B2 F' U R2 D R B L B D2 B' L2,W,Mayo Cubing 2023 (2023-09-23~24),333mbf Final A #1
 4986374001,L D2 B U' R F D' F R2 F U2 B2 R2 U2 B2 L' D2 F' L',W,Sidste Sommerdag i Lille Friheden 2025 (2025-08-31),333 R2 B #5
 685324001,B F U2 B2 F' D2 F2 R2 D2 U2 R' F U F' L' B' D2 L2 R2 B' R',W,Poções 2018 (2018-01-13~14),333oh Final A #1
-3533740001,U2 D2 L' F' B U R2 L' F D2 B2 R U2 D2 B2 R' U L2,W,Acrópolis Bucaramanga 2024 (2024-02-24),333 R1 A #4
+5876168003,L2 F' L2 D2 R' B2 L D2 U2 L2 B2 R' F L R D R B' R' U L B,W,Regionales Santander 2026 (2026-10-10~11),333mbf Final A #1
 2159285001,U2 R2 U2 B R2 B F L2 D2 F D' R2 B' F D' R2 F R B' L',W,AOpen in Rome 2022 (2022-09-10~11),333 R1 A #1
 1643782001,R' F L U D B2 L2 B L' D2 R2 F2 R2 B2 U' D2 L2 D2 R2 F' L' F',W,Solving in Sale 2021 (2021-04-10~11),333bf Final A E2
 696510001,B' F D2 L2 B2 F L2 R2 D2 L' U2 B' D' R U2 L U' B' D2 B',W,Utah Winter Open 2018 (2018-01-27),333 R1 B #3

@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / BG / bin 3
-# Population in this bin: 272
+# Population in this bin: 274
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 17106001,U F2 U' D' F D' L' D L2 F2 D' R2 F2 L2 B2 D2 F2 U2,B,SLS Chorzow 2014 (2014-05-03~04),333oh R1 C #5
@@ -175,7 +175,7 @@
 3273333001,U2 F2 D2 L2 F U2 B L2 U' L2 B2 F2 L D2 F2 R F R',G,Ekerö Open 2023 (2023-11-19),333oh R1 B #4
 5416932006,B2 L2 D R2 U L2 D' U2 B' R2 F2 R' U B' L' U' L2 D L' F,B,Hämeenlinna 2026 (2026-02-28~03-01),333mbf Final A #1
 4508505001,R' U' L2 F2 U2 D R B' D' B' U' R2 B2 U2 L2 D' F2 R',G,Manchester February 2025 (2025-02-22),333oh Final A #5
-3315260001,R2 U' R' U2 L U2 R B2 R' U F R F' D' F2 R B',B,ZGZ Open 2023 (2023-12-02~03),333 R1 D E2
+5875808001,U' L U2 R2 D2 F' L2 U2 B' U R' B U2 L2 F D F2,G,Thailand Championship 2026 (2026-10-09~11),333oh R1 B #3
 4595542010,U' B U' F2 D2 U' R2 D2 R2 L F U L' B' F L2 F L,G,Buckeye Big Brain Ohio State 2025 (2025-03-08~09),333mbf Final A #1
 4754930001,F2 U' L2 B2 R2 U F2 U' F2 B' D F' U2 B' L' F' U2,B,Saint-Augustin A 2025 (2025-05-24),333 Final A #1
 3462299001,D L' U' F2 D B2 U F2 U2 F2 R' U' B' D B2 F L' B,G,DJ Sanghvi Cube Open 2024 (2024-01-28),333oh Final A E1

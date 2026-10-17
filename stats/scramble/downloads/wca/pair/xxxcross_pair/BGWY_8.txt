@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / BGWY / bin 8
-# Population in this bin: 484
+# Population in this bin: 491
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 5835166005,L2 U L' B2 D2 R B2 R' U2 L2 D' L2 D U' R' D B D B' L B,W,LA Quiet Championship 2026 (2026-09-19),333mbf Final A #1
@@ -32,7 +32,7 @@
 3282489001,L' B' D2 L' F L2 U' L' D2 B2 R2 B2 L' F2 R' D' L D',Y,Azerbaijan Nationals 2023 (2023-11-18~19),333oh Final B E1
 233401001,L2 U2 L B2 R' D2 B' D F2 R' U R U' F L U L,W,Liberty Science 2015 (2015-12-19),333oh Final A #1
 5273541001,R2 U2 B2 R2 B' F L2 U2 F L2 D' R D' R2 F L D L U,Y,Legazpi City Speedcubing Open 2025 (2025-12-14),333oh R1 A #5
-244725001,B D2 L F D2 L2 B' R' F U B2 L2 F2 R' U2 F2 L U2 L2 D2 B2,G,Torneo Aventura Cubica 2016 (2016-01-23~24),333 R2 C #1
+5874957001,U B2 U2 R2 F' U' B L' F2 D2 R2 B2 D2 F' L2 F' D' F2 U',W,Berkeley Fall 2026 (2026-10-11),333oh R1 A #3
 3590421001,F U R D2 L D2 L B D B2 U2 D2 R2 B2 L' D2 L' F,Y,Nýliðamót Kubbafélagsins 2024 (2024-03-16),333 R2 C E2
 273426001,D' B' L2 B L2 D L D L' U2 L' D2 F2 D2 L U2 L2 U2 L2,B,Indian Nationals 2016 (2016-03-25~27),333oh R1 C E2
 281128001,F2 L' U2 B2 U2 B2 R2 D2 U L B' L' F2 U L2 D' U' F',B,Newport Spring 2016 (2016-03-26),333 R2 B #1
@@ -107,7 +107,7 @@
 3265016001,F' B2 D' L2 F2 L2 F R' D' L2 R' B2 L2 U F D',W,Scarborough Fall A 2023 (2023-11-18),333 R1 A #4
 2454088001,R B D2 F R2 B' U2 B L2 U2 F2 R U' F D2 U2 F U2 R',Y,Glasgow Winter 2023 (2023-01-27~29),333 R1 A #3
 775302001,L2 R2 F' D2 B' R2 B F D2 F2 D L2 D' R D' R' F2,Y,SESC Gravataí 2018 (2018-05-05~06),333 Final A E2
-4238932001,F' U B' R D L U L B' R2 U D2 B2 D2 L2 B2 D L2 U' L2,B,Dolphin Cup ISP 2024 (2024-10-26),333oh Final A #4
+5871876001,D R B U' R B U' L2 F' U' R F R2 D2 F' R2 B R2 D2 B,G,Minnesota Quiet Championship 2026 (2026-10-11),333bf R1 A #1
 791576001,F2 U2 L2 U' F2 R2 D L2 F' U B L D2 B' R' U' B2 D2,G,Cubing Sa Nia Ra Jud Open 2018 (2018-05-26),333 R1 A E1
 792326001,R2 U L2 D U2 B2 D' L2 R' D B F' U' F' L' U' L U' L,G,Colorado Qualifier 2018 (2018-05-26~27),333 R2 B E1
 795751001,D R U2 D' L B' L' D F' R' D L' B2 D2 L U2 R' F2,B,Hastings Open 2018 (2018-06-02~03),333 Final A E1
@@ -123,7 +123,7 @@
 4626881032,U2 R' F B2 L2 D2 B2 D' L2 D2 B U' B2 U R2 F' D2 F' L2 U,Y,New York Multimate PBQ 2025 (2025-04-04~06),333mbf R1 B #1
 3630978001,B U' B2 U R' B' D B R' F' B D2 L2 F L2 B2 R2 D',W,New to Sherwood Park 2024 (2024-03-30),333 R2 D #4
 3568502001,L' D' L2 U2 B L2 B R2 B2 D2 F' U' L D2 U L' D2 U,G,Northampton Newcomers A 2024 (2024-03-09),333 R2 B #1
-3212747001,B2 U2 L2 B2 U' L2 R B2 L B' U' L' F L' U2 R' F',Y,Davis Fall 2023 (2023-10-29),333 R2 A #4
+5857713001,L2 F' L F2 U2 R2 D2 R B2 L' B' R U' B2 L U F' L F',Y,Indian Elite Championship 2026 (2026-10-02~04),333oh R1 E E2
 906730001,F' L D R F' U L' F D L U2 F' L2 F2 R2 L2 U2 F' R2,G,Gravitas Cube Open 2018 (2018-10-13~14),333ft Final B E1
 2712927001,U2 L2 F' L U B2 D R2 D R' F2 D2 R U2 F2 R2 U R2,G,Cube4fun in Jarosław 2023 (2023-05-06~07),333 R2 A #4
 2567610001,U2 F' R2 F2 U' F L F R D2 L D2 R' U2 F2 L F2 U2 R,B,Huancayo Summer 2023 (2023-03-18~19),333 Final A #1

@@ -1,8 +1,8 @@
 # Scramble samples — pair / xcross_pair / O / bin 4
-# Population in this bin: 312
+# Population in this bin: 313
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 4987001,F D2 U2 F' D2 R2 B' F' D2 U2 R F' D' L D' R2 U L2 B2 R' B L,O,Tula Open 2014 (2014-03-28~30),333bf R1 B E2
@@ -76,7 +76,7 @@
 4172028001,R2 D2 F2 L2 U2 B2 U' R2 L' B' D U2 F' L' U2 R F L2 U',O,La Paz Masters 2024 (2024-10-05~06),333 R1 D E2
 750437001,B U F R2 U R' B2 D B2 R2 B' D2 L2 F D2 B' U2 B' L2,O,100º Mérito 2018 (2018-04-14),333 R2 B #2
 753670001,U2 B2 L2 D' L2 B2 U R2 U R F U2 F R' U' R' F,O,Chanquete Open 2018 (2018-04-14),333 R2 B #1
-758398001,L2 R' F2 U2 F2 U2 L R2 D2 F D F' U2 B2 L' D' R2 F2 U',O,SNZ Southern 2018 (2018-04-21),333 R2 A #5
+5867591001,R2 D B2 R2 D' R2 U F2 U' L2 B L2 F2 D' U2 R' D L F2,O,Cube-bers in Iloilo 2026 (2026-10-04),333 R2 C E1
 781796001,D2 L D2 B2 D2 B2 L2 U2 L' B' U R B2 U' L F2 L R' F',O,Shanghai Love in ECNU 2018 (2018-05-19~20),333 R1 D #1
 5459462001,B' R U2 B' U2 B D' F' U2 B U2 B' R2 F U2 B U2 D' R,O,Katano Spring 2026 (2026-03-21~22),333 R1 D E1
 802346001,B2 U F L D F' B2 D R L2 D2 B' R2 U2 F U2 F L2 F2,O,Roma3 Al Cubo 2018 (2018-06-09),333 R1 A #2

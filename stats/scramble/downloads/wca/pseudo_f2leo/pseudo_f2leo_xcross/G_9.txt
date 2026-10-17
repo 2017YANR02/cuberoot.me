@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / G / bin 9
-# Population in this bin: 369
+# Population in this bin: 370
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 3775418001,U' B R2 L' B R' F' U L2 B' U2 F L2 B L2 D' L B2,G,Mriy Diy Cubing Lviv 2024 (2024-05-18~19),333 R1 B #3
@@ -53,7 +53,7 @@
 661159018,R2 U L2 U B2 U2 R2 B2 L D R D' L F' L F' L2 U2 L2 B R',G,Torneo de Speedcubers 2016 (2016-10-29~30),333mbf Final A #2
 3267813001,L2 U2 L' F2 R2 U2 B2 D2 U F' D U B F' R' U2 L' F' D2 B' L',G,DFW Fall Warmup 2023 (2023-11-18),333bf Final A E2
 661302013,D' R2 D2 U' R2 D' R2 F2 D R2 B R' F2 D B2 F R B' L' F' D' L2 U2,G,Kongens Lyngby Open 2017 (2017-04-08),333mbf Final A #1
-4412143001,R L' B' U B' L2 F L D' L2 D' L2 B2 D B2 D' F2 L2 D,G,Locos Por Los Cubos Bogotá 2025 (2025-01-11),333 Final A #5
+5866592001,D R U' F B R' F' R2 B' R U2 D2 F2 R L2 D2 L F L,G,Croatian Championship 2026 (2026-10-03~04),333oh R1 A E1
 3005198001,R' B' D2 R D2 U2 L' B2 R B2 R2 B2 U' B' D2 R2 B D L B2,G,Taman Anggrek Speedcubing 2023 (2023-08-19~20),333 R1 C #1
 661441008,L U2 B' D' F' U' L' B' L' F2 D' L' F2 L U2 R L' U2 R2,G,China Championship 2017 (2017-07-28~30),333mbf Final A #3
 661486038,R' U2 L F2 R2 U2 R U2 R' D2 F2 U' B' U L D U F R' U B R2,G,SCMU 2017 (2017-09-01~03),333mbf Final A #1

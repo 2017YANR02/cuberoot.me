@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_face / B / bin 4
-# Population in this bin: 678
+# Population in this bin: 685
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 3752976001,B2 R2 B D2 B L2 B' L2 F L2 D2 U R B' D R2 F R U F,B,Minnesota Cube Melt 2024 (2024-05-11),333 R1 E #2
@@ -92,7 +92,7 @@
 4924955001,F2 R2 U' R2 U L2 D B D' F' U L' B L B2 D2 L' R' D,B,Little LeideNxN 2025 (2025-08-10),333 R2 B #1
 5160112001,D2 L B' R U2 D' L U F2 R2 L F2 L' U2 F2 L U L',B,Malaysia Cube Championship 2025 (2025-11-01~02),333oh R1 C #5
 550199001,B2 D2 L2 D2 B D2 U2 B U F' U R B2 D B F R2 D F2,B,Eden Village Winter 2017 (2017-07-15),333 Final A #2
-2992665001,U' F2 U2 L' F2 U2 L' D2 R B2 L F U R B L2 F' U F U2,B,Santa Ana Summer A 2023 (2023-08-19),333 R2 B #3
+5868146001,U' L B' L' D L F' R' F2 B' D R2 U2 F' U2 R2 L2 F B2 L B2,B,Newmarket Side Events 2026 (2026-10-10),333bf R1 A #3
 554174001,B2 F2 D2 R' B2 L2 D2 B2 U2 R' B D R D2 B2 U2 F D' B D2,B,Montevideo Winter Open 2017 (2017-07-16),333bf Final A E1
 5740677001,B R' U L F' L B' D R' B2 L' F2 U2 L' B2 D2 L2 U2 R U L2 U',B,Selangor PBQ 2026 (2026-07-05),333bf R1 B #2
 3888174025,L' F U R U' F R' F' B2 D' B2 U F2 D' F D L' F2,B,Hari-Hari Horas 2 2024 (2024-06-27),333mbf Final A #2
@@ -138,7 +138,7 @@
 1433742001,D2 L2 U' L2 R2 D' B2 L2 D B' L' F' L B D B' U2 L' F U',B,Bremium Winter 2019 (2019-11-30~12-01),333oh R1 B #1
 4725808001,U2 B2 L' B2 R2 B2 U2 F U R B2 F D2 U R' U2 F2 L,B,USM Penang Cube 2025 (2025-05-17~18),333 Final A E1
 3706269001,B2 D' B R' F U2 D R U' B2 U R2 U2 B2 U' B' U2 F2,B,Pedro Moncayo Open 2024 (2024-04-27),333 R2 A #2
-1154913001,B2 U2 F2 L2 F2 D' B2 D2 U B' D' F' D L B' D2 L' R' U' B2 D' L' F,B,Koalafication Palmy 2019 (2019-05-25~26),333mbf Final A #2
+5862351001,U2 F' U2 B2 U' B2 R2 F2 D2 L2 U' R' F R D' L D' F D,B,Cubeando en el Río Guadalajara 2026 (2026-10-03~04),333 R1 C #3
 665132001,F' B' R B U L' F2 L2 B' R B2 R2 F2 D2 L2 B' R2 B',B,Zhenjiang Open 2017 (2017-12-10),333 R1 C E2
 1384102001,D2 R2 F2 D2 U2 L2 F2 U2 F L U' L2 B U' R2 F U B' L2,B,Namangan Open 2019 (2019-11-03),333oh Final B #1
 2576457001,U' L2 F R' D2 R2 F U' R' L U B2 U F2 U2 R2 U' D2 L2 B' L2,B,Martorell Open 2023 (2023-03-18~19),333bf R1 A #2
@@ -146,7 +146,7 @@
 4839133001,L2 U' D F D R' F R F2 R F2 U2 F' R' B L',B,Gem City Pre-Flight Warm Up OH 2025 (2025-06-28~29),333 R1 B #3
 4934079001,R' B2 R2 D L2 D B2 L2 D L2 D2 L B U B F D R2 B' U2,B,Visayas Championship 2025 (2025-08-09~10),333oh Final D #5
 5795176041,B' R F2 D L2 U2 F' D2 B F L2 B' U' R' U' B2 R' B D B',B,Morro Reuter Cubing 2026 (2026-08-22~23),333mbf Final A #1
-1624062001,D B' R2 F2 B L2 D B' R' U2 D' F2 U2 R2 B2 R2 U F2,B, Shenzhen Good Afternoon 2020 (2020-11-15),333 Final A E1
+1624062001,D B' R2 F2 B L2 D B' R' U2 D' F2 U2 R2 B2 R2 U F2,B,Shenzhen Good Afternoon 2020 (2020-11-15),333 Final A E1
 708060001,F2 L2 U R2 U F2 R2 B2 D' F U2 F D' F' R U' F R2,B,Halifax Open 2018 (2018-02-17),333 R1 C #1
 722954036,U2 L2 D' F2 U B2 R2 B F2 L D2 R2 D B2 L2 B2 U2 B' U' L',B,CubingUSA Heartland Championship 2018 (2018-03-09~11),333mbf Final A #1
 5065938001,B' U B2 L2 D2 R2 U2 B L2 D2 F D2 B2 L U' L' F2 D' B2 R',B,Berkeley Fall 2025 (2025-10-04),333oh Final A #3

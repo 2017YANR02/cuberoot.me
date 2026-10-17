@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / W / bin 7
-# Population in this bin: 859
+# Population in this bin: 866
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 3483929001,D B' D F' U2 B U L F2 R F' L2 U2 B2 U' L2 D' F2 L2,W,Empire State Winter 2024 (2024-02-03~04),333 R1 C #2
@@ -17,7 +17,7 @@
 2564196004,U' D F' B2 U2 R F D B2 L' B2 R' U2 L' F2 L2 F' L F' L2 U',W,Take a Break Ohio State 2023 (2023-03-17~18),333mbf Final A #1
 2593034001,R2 B R' U R' F2 U' B U' L2 D' B2 D L' B U,W,Bayonne Atoutcubes Open 2023 (2023-03-25~26),333 R1 C #4
 2771981004,U' L U L' F' U B' U L2 F U2 F D2 F2 R2 U2 R2 D' B' L',W,Swiss Nationals 2023 (2023-05-27~29),333mbf Final A #1
-3776894001,U' L D' B F2 D B2 D' U F2 D B D B' U2 L2 R2 U L',W,Campeonato do Cerrado ABRACM 2024 (2024-05-17~19),333bf R1 A #1
+5857581001,U R' F R2 D F2 D F L2 D2 R' B2 L2 B2 D2 L' U2 L',W,Indian Elite Championship 2026 (2026-10-02~04),333 R2 E E1
 3517484001,D L2 U L2 U2 L2 R2 B' F U' L2 R2 B' D B U' L U' R,W,Ulaanbaatar Cubing Challenge Feb 2024 (2024-02-17),333 Final E #4
 74086001,U' L2 U' F2 D' B2 D' R2 F U F2 R' D2 F' R F D B L2,W,Los Andes 2014 (2014-11-08),333 R1 B E2
 4913442001,B2 D' F2 D' U' L2 U' F' R' B L R D2 B' D2 L2 D2 F2,W,Davis Summer 2025 (2025-08-02),333 R2 E E1
@@ -187,7 +187,7 @@
 4611480001,U2 L U' F' U' R F' L2 D R2 D B2 U2 F2 L2 U' L2 F' R2,W,Sofia Open 2025 (2025-03-29~30),333 R1 A E2
 2883103001,R2 F' R' U' R2 U R2 B2 U' R2 U' F D' R2 B2 D2 R' B,W,Guwahati Summer Cube Open 2023 (2023-07-16),333 R1 D #5
 4624482020,R2 F U D2 R' F D L' B R F2 D2 R2 B2 D2 F2 D' R2 B R2,W,Nittedal Mental Breakdown Spring 2025 (2025-04-05~06),333mbf Final B #2
-726756012,R2 F D2 F D2 R2 F' U2 F L2 U' F' D' L F' U L U' R B' D2 L B,W,Brilliant Big & Blind Blast 2018 (2018-03-17~18),333mbf Final A #2
+5867326001,F2 R2 U2 B' F2 U2 B' R2 F D' F2 L B2 D' U2 L2 F D' F',W,Vilajuga Vilafranca 2026 (2026-10-03~04),333 R1 D #3
 4634479033,R2 B R F2 L B2 R' B2 D2 L B2 R' B U2 F2 L2 F U B2 L' F2,W,Nacionales Chilenas 2025 (2025-02-07~09),333mbf Final B #1
 3828326013,F R2 D' R D2 L' U2 F2 U2 B2 F' R2 F U B F2 L' F' L2,W,Rio Cubolympics 2024 (2024-05-30~06-02),333mbf Final B #1
 1303808001,D2 U2 B2 U2 B' R2 F2 U2 R2 B R' B U' L' F2 U2 L F' L',W,Yongjun Jakarta Speedcubing 2019 (2019-09-14~15),333 R1 E E1

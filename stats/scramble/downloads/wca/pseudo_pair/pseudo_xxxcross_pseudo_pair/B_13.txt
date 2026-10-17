@@ -2,7 +2,7 @@
 # Population in this bin: 227
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 5755551001,L' U F U2 R2 B2 U2 L F2 D2 R' D L2 B' F' L2 D B2 D,B,Rubik's WCA European Championship 2026 (2026-07-16~19),333 R2 D #4
@@ -160,7 +160,7 @@
 3384883001,F' L' B2 U D2 R' B L2 D R2 F2 R' F2 B2 R' F2 D2 B2 R2 F2,B,Georgia New Year 2023 (2023-12-24),333oh Final A #1
 3386212001,L' F2 D F U' F L U2 B2 R2 U2 F R2 U2 L2 F' U2 L' U2 F' L B2,B,BrizZon Sylwester Open 2023 (2023-12-30~31),333bf Final B E2
 5545078001,L' F R B' L' F' R2 D' L U' R F B' R2 L2 F' B,B,OberliNxN 2026 (2026-04-12),333 R1 C E2
-3458834001,U2 L2 B' D2 L2 B D2 F L2 F' U F2 R' U2 R' U B' F L' B2 L2,B, NxN Di Tella 2024 (2024-01-27~28),333bf R1 A #1
+3458834001,U2 L2 B' D2 L2 B D2 F L2 F' U F2 R' U2 R' U B' F L' B2 L2,B,NxN Di Tella 2024 (2024-01-27~28),333bf R1 A #1
 3476714001,B D L2 D' F2 D2 R' U2 R B2 F2 R' D F U' R D B2 F2,B,NxN in Hanoi 2024 (2024-01-27~28),333 R1 E #4
 3530543001,F2 D2 B U L2 U L2 R2 B2 D U2 B2 D B' L' D R2 U B2 U2 B' L2 U2,B,Fullerton Winter 2024 (2024-02-24),333bf R1 B #3
 3541743001,R2 D U' L2 U2 R2 F2 L' F' D' B' R' B' F' L2 R' D' F2,B,Bora Bora Barra Summer 2024 (2024-02-24~25),333 R2 A #4

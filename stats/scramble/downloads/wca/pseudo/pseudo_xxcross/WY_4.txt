@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxcross / WY / bin 4
-# Population in this bin: 352
+# Population in this bin: 356
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 3998525002,F2 R' D2 R' U2 B2 R F2 D2 U R2 U L D2 B' L' R F2 L' B R',W,Blind Till Nine in Vietnam 2024 (2024-08-10),333mbf Final A #2
@@ -93,7 +93,7 @@
 739447001,L' U' R B2 D F' R F2 D F L U R2 D F2 U D F2 L2,W,Happy Autumn MDQ 2018 (2018-03-30~31),333oh R1 E #5
 5755399001,R' U' F L F L' R' D2 U2 F2 R' D2 R' D R' F' D' L2 B2 F R' B' R' U' F,Y,Rubik's WCA European Championship 2026 (2026-07-16~19),333fm Final A #3
 4582952001,L2 R2 F' L2 U2 B R2 F' R2 F2 L U R F2 R' B D2 L' B2 L2 U,W,Big Side & Blind Olsztyn 2025 (2025-03-22~23),333bf R2 B #2
-2987761001,B2 L' U2 F2 D2 R U2 R2 B2 U R D' F2 R' U B L B',Y,Araruama Open 2023 (2023-08-19~20),333oh R1 B #4
+5857581001,U R' F R2 D F2 D F L2 D2 R' B2 L2 B2 D2 L' U2 L',W,Indian Elite Championship 2026 (2026-10-02~04),333 R2 E E1
 779453001,D2 B2 L2 B F' U2 L2 F' R' D F U' B' F' L2 F R2 D U',W,Play Cube 2018 (2018-05-13),333 R1 H #1
 784008001,F B' D2 L' B2 D' L' F' R F B2 L2 B' R2 F' L2 U2 F' U2 F2,W,CCPA Open 2018 (2018-05-19),333 R1 B #3
 5845317001,R F' R' B2 U2 L' D2 U2 R B2 U2 F2 U' F D F' L2 U L',W,Hancock County NxNs 2026 (2026-09-26),333 R2 B #4
@@ -151,7 +151,7 @@
 4536867001,F D' B2 U R2 F2 D2 F2 U' R U2 R' F D B F' D2 U2,Y,Bayonne Atoutcubes Open 2025 (2025-03-01~02),333oh Final B #1
 5162093001,D2 B2 L2 B2 D' F2 U2 L2 U2 B' U' L D2 U R2 U2 L F' R',W,Penn Cube Day Fall 2025 (2025-11-02),333 R1 A #3
 1415637001,D2 R D2 L2 B2 D2 L R D2 F2 R' B U L U L2 D2 B U' L' U2,W,Ramli Mall Open 2019 (2019-11-23),333 R1 C #3
-3043883001,B' U' L2 D2 R D2 R' D2 F2 L2 R D' L' B2 D U F U L' B' L2,Y,Budapest Back to School 2023 (2023-09-02~03),333bf Final A E2
+5874012001,L2 F2 U2 F2 U2 L2 B2 F' D2 R' D' R D' L' B2 F' D2 B,W,Portugal Championship 2026 (2026-10-09~11),333bf R1 A #2
 4658404001,F U2 L2 B L2 U2 F' U2 B D' L2 D' L' B' R D' R' U L,W,Tokyo Spring PM 2025 (2025-04-20),333 R1 C #5
 4180617001,U2 L' R2 B' R2 B2 U2 L2 F2 U' R2 F2 D L R B' L' R2,W,UC al Cubo - Santiago 2024 (2024-10-05),333 R1 C #1
 1500835001,B2 L2 R2 U' L2 R2 B2 U' R2 F2 L U' R' B' L2 U B L2 U B',W,Bay Area Speedcubin' 23 2020 (2020-01-12),333 R1 C #3
@@ -170,7 +170,7 @@
 1834498001,F2 R2 B2 D2 B2 F2 D' F2 U2 F' D B2 L' D' B D2 R' F',Y,Perth Autumn 2022 (2022-03-19),333oh R1 B E1
 1903191001,U' D R' F2 D2 F' D2 L R2 F' D2 B2 U2 B' L2 F' D2 B',W,Arnold Sports Festival South America 2022 (2022-05-01),333oh Final B E2
 3448266001,D F R U D2 L2 D2 R' U' R2 L2 F D2 B' L2 B R2 F2 D2,Y,Bolivia Cubing Tour - LPZ 2024 (2024-01-20~21),333 R1 F E2
-4674846027,U L2 D' R2 U L2 D' R' D U' R' U B2 D' B D2 B' D' L2,Y,Toronto Blindfolded 2025 (2025-04-26),333mbf Final A #1
+5866509001,F R2 D2 B2 L2 D2 R' B2 U' F U B' U' B L2 B2 L2 U2,Y,Croatian Championship 2026 (2026-10-03~04),333 R1 A #4
 1940044027,L F' D L2 D B R D2 R B' R U2 R2 U2 L2 U2 B2 L2 B R2,W,Please Be Quiet Colorado 2022 (2022-05-28),333mbf Final A #2
 1971249001,F R B2 U' F L2 U2 B' U2 B' L2 F2 L' R' D' R2 B' U B,W,Cubing Returns Pune 2022 (2022-06-12),333oh R1 C #4
 3451494001,L D2 B' L' B' D2 R F L B R2 U F2 R2 D' F2 R2 U,Y,Folkets Kub Alvesta 2024 (2024-01-27~28),333oh Final B E1

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / R / bin 3
-# Population in this bin: 694
+# Population in this bin: 699
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 2568701027,U2 F2 R' D L U F2 U F2 U L2 B2 L' D B2 F' U B L' B' L',R,Di Tella Open 2023 (2023-03-18~19),333mbf Final B #1
@@ -47,7 +47,7 @@
 1397072001,L2 U2 F L2 R2 F L2 B2 F2 D L2 D' B U' R' F2 U B',R,Lafayette Fall 2019 (2019-11-09),333oh R1 B E1
 285701001,U2 R2 F L2 D2 R2 B2 L' F2 U L2 R2 F D2 U B2 F D,R,KCubing Spring 2016 (2016-04-16),333 R1 D E1
 2069649001,F U F D' L2 D2 B' F' U2 B D2 U2 R' B L B2 R D R,R,Milwaukee First 2022 (2022-08-06),333oh Final B E1
-299793001,R2 F R' U' R F' B2 R L D B2 D2 B2 R2 U2 L2 B' U2,R,Michigan Cubing Club Beta 2016 (2016-05-14~15),333 R2 A E2
+5858718050,L2 F L U' B U2 R L U' F D2 F2 U2 L' U2 B2 R' B2 L2 B R',R,Please Be Quiet Singapore Oct 2026 (2026-10-03~04),333mbf Final A #1
 4873386001,U F2 B R U2 R2 U2 R D2 F' R B2 U2 D F2 L2 U' D L2,R,Avenida Chile XXIV 2025 (2025-07-20),333 Final A E2
 315587001,R2 F2 U' R2 F2 D' R2 U2 B' D' B' R' F' R2 U2 B U F' D,R,SCMU 2016 (2016-06-17~19),333 R2 H #3
 317561001,F' L2 R2 D2 F U2 R2 B D2 L D' B' U2 F2 D' F2 L2 D R,R,Slow N Steady Spring 2016 (2016-06-18~19),333 R1 T #2
@@ -112,7 +112,7 @@
 1628094001,R' U' F U F L F' L2 U L2 U2 L' D' B2 L2 D R2 D' F2 D' R D2 R' U' F,R,New Zealand Nationals 2020 (2020-12-11~13),333fm Final A #3
 5122609001,L B' U' D' R2 B' U F B' D2 L2 B L2 B2 U2 D2 L,R,Glasgow Favourites Evening IV 2025 (2025-10-24),333 Final A #1
 4311410005,R' B' R2 D' U2 L2 D2 L2 B' U B2 L2 B' F U' F' U' L2 U,R,Indiana Championship 2024 (2024-11-22~24),333mbf Final B #1
-3904817001,D B2 R L U' B2 L2 D2 B' R D F2 D R2 D' R2 F2 B2,R, Wembley Quimbaya 2024 (2024-06-30),333 Final A #5
+3904817001,D B2 R L U' B2 L2 D2 B' R D F2 D R2 D' R2 F2 B2,R,Wembley Quimbaya 2024 (2024-06-30),333 Final A #5
 600418001,D2 B' D2 R2 F U2 R2 F2 U2 F2 D' L' R2 F R2 D' F L' D2 B,R,AZCubing Hamilton Fall 2017 (2017-09-23),333 Final C #3
 607740015,U F2 L2 U B2 R2 B' R2 D' F' U R2 B' U2 B U2 R' U' L B',R,Feevale NH Open 2017 (2017-09-29~30),333mbf Final B #3
 1001355001,F' L2 B' L2 F' L2 D2 R2 U' F' D' B U B D U2 R' F' D' L B',R,Just Cube Open 2019 (2019-02-02~03),333bf Final A #3

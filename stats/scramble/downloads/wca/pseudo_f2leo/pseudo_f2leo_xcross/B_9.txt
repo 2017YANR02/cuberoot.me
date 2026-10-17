@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / B / bin 9
-# Population in this bin: 392
+# Population in this bin: 393
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 4190940001,U L D' R2 F' U2 F' L' F U F2 D2 F2 U R2 D F2 L2 U' R',B,CubingUSA Mid-Atlantic Championship 2024 (2024-10-12~14),333 R1 C E2
@@ -77,7 +77,7 @@
 661418037,F2 L2 D2 F2 D2 U' L2 F2 R2 B U L2 D' F L D R U2 B U L' F',B,CubingUSA Nationals 2017 (2017-07-07~09),333mbf Final A #2
 5355244003,B2 D2 B L2 B2 F' U2 R2 F2 R2 D B2 R' U' R' F' D2 R D F' L2,B,BrizZon Side Open 2026 (2026-01-31~02-01),333mbf Final A #2
 667684001,F2 L2 B2 D2 R2 D U2 L2 B2 U F' L2 U L U' R B' L F D2,B,Capivara 2017 (2017-12-09~10),333 Final A #1
-4895962001,L' F' U D2 B' D' R F U2 R2 U2 L2 U2 B2 L D2 L' U2 L U',B, Hverdagscubing XVII - Hvidovre 2025 (2025-07-29),333oh Final B E1
+4895962001,L' F' U D2 B' D' R F U2 R2 U2 L2 U2 B2 L D2 L' U2 L U',B,Hverdagscubing XVII - Hvidovre 2025 (2025-07-29),333oh Final B E1
 5031667001,D' L' B' L2 F' R' B2 U L F' D2 L2 B2 D2 L U2 R U2 F2 R',B,PS Levels UD Bogotá 2025 (2025-09-20),333 R2 C E2
 689019001,D2 R2 F R2 B R2 F L2 R2 D2 L' D B U' R2 D2 B' D2 R B2,B,Speed Days Kraśnik 2018 (2018-01-13~14),333 Final A #4
 690245001,B2 U2 F R2 B F L2 U2 F' L' R F U L2 F' L2 D F' R2 B',B,Caribe Challenge 2018 (2018-01-20~21),333oh Final A #3
@@ -111,7 +111,7 @@
 941666001,U2 R' B U2 F' D' R' F U' D2 L2 F2 R2 B L2 B' U2 F' L2 B,B,Plata Open Taxco 2018 (2018-11-24~25),333oh R2 B E1
 944586056,U2 L' D2 L2 D2 R' D2 B2 R2 B' U L F2 U' L' F L2 F2 D2 R D,B,Please Be Quiet Berkeley 2018 (2018-12-01~02),333mbf Final A #2
 947946001,R2 D' F2 L2 U2 R2 D' R2 B2 L2 F U' L2 U R' D' B' D2 L' U' L' F2,B,Brasília Spring 2018 (2018-11-30~12-02),333bf Final A E1
-5374259001,B U' L' F B L2 U' B' D' B' R D2 F2 B' D2 L2 F',B,Oredigger Open CO 2026 (2026-02-08),333 Final A #2
+5863547001,F L' D' F2 U B' D2 F2 R D2 L' U2 R B2 L' F2 B R2 U2 L B2,B,WetterWürfeln Wölfersheim 2026 (2026-10-03~04),333bf Final A #2
 3968385001,B2 L2 U' R' F' D L F' L2 U2 F2 U2 F' D2 R2 D2 B2 U R U',B,Motavita Boyacá 2024 (2024-07-28),333 R1 A E2
 3430970001,D' L2 D' U F2 R2 U B' L R B' R F L' F2 R' U2 F2 D,B,Tacoma Winter Twisters 2024 (2024-01-20),333 Final A #1
 5411029001,R2 D' B2 D' B2 L2 D2 R2 F2 R' B' F' L' F2 U' B R2 D' U' F',B,Brown Cubing Day 2026 (2026-02-21),333oh R1 C E1

@@ -1,8 +1,8 @@
 # Scramble samples — pair / xcross_pair / G / bin 4
-# Population in this bin: 335
+# Population in this bin: 338
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 3888175073,D2 R2 F' D2 L2 R D2 F2 L D2 U L' D L' D U' L F' L,G,Hari-Hari Horas 2 2024 (2024-06-27),333mbf Final B #1
@@ -95,7 +95,7 @@
 5572079001,R2 B' R' B L D L R2 F2 U B2 D2 L2 U R2 U' L D,G,National Trail Open OH 2026 (2026-04-25),333 R2 C #5
 940298001,B2 R2 F2 U' R2 U R2 U2 L B2 F R D F2 U B R2 D' L',G,Cocha Cubing II 2018 (2018-11-24),333 R1 A #2
 945382001,B D2 F D2 B U2 B D2 F2 D' L2 R' F R D' F' D' B' D',G,AZCubing Open 2018 (2018-12-01),333 Final A E1
-4461726002,R' U2 R F L2 U2 F' D' R2 D' U2 B' L2 B2 D2 B U2 B D',G,Melbourne Summer 2025 (2025-01-24~26),333mbf Final A #1
+5872248001,U R2 F2 L2 U2 F' D2 L2 D2 F R2 L' U' L D' L D' R D2,G,Dosquebradas II 2026 (2026-10-10),333 R2 B E2
 4864270019,U' R2 U' R' F' R' U F2 L D2 B2 L2 D2 B2 L' U2 R D2 F2 D,G,Long Beach Fantastic Memory Challenge 2025 (2025-07-13),333mbf Final A #1
 5311833001,B' R D2 B' D2 L2 R2 F' U2 R2 B2 D2 L' D2 B2 D' R D2 L,G,Zigzag Zambia Cubing 2026 (2026-01-03),333bf Final B #4
 4821497001,D U2 L2 D R2 F2 D' F' D F2 R' F' R D' U' F' D2,G,Plymouth Puzzle-Off 2025 (2025-06-22),333 R2 C #2
@@ -166,7 +166,7 @@
 5446662001,F L D' L U' F2 U' B' R' B2 L' D2 R L2 F L' B2,G,Southern Oregon Game Expo 2026 (2026-03-14),333 R2 B #3
 3889447001,D2 L2 D' U' B2 R2 L D R2 U L' B2 F' U' F2 U L',G,Bucharest Cubing June 2024 (2024-06-22),333oh R1 A #3
 2372625001,D' R' D2 F2 U B L2 D' R2 D2 R' D2 L' F2 R D2 L' D R2 B',G,Naperville Winter A 2022 (2022-12-17),333bf Final B E2
-3904872001,F' R' F2 L D2 U2 R2 U2 R' U2 F2 U L R' U' R2 B2 F L,G, Wembley Quimbaya 2024 (2024-06-30),333oh Final B #4
+3904872001,F' R' F2 L D2 U2 R2 U2 R' U2 F2 U L R' U' R2 B2 F L,G,Wembley Quimbaya 2024 (2024-06-30),333oh Final B #4
 2425654001,D' R2 D F' U2 R2 F2 U' L' F' U F2 D2 R2 U R2 U B',G,Buckeye Big Brain 2023 (2023-01-14~15),333bf R1 A E1
 2432430001,L2 U B2 R B D' B' U2 R' L' D' R2 F2 U' L2 B2 D F2 D,G,Stockholmsligan 1: The Gunners - 2023 (2023-01-19),333 Final B #1
 5492759070,R F L2 U R' D' F' R2 F2 D2 L2 D' R2 U F2 R' L2 U R' D2,G,New York Multimate PBQ IV 2026 (2026-03-27~29),333mbf R1 A #1

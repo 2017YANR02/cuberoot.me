@@ -1,8 +1,8 @@
 # Scramble samples — 123x2 / f2b / WY / bin 8
-# Population in this bin: 821
+# Population in this bin: 823
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 969271001,R F2 L' D2 L' U2 B2 D2 U2 R2 B R2 F2 U' R' F U B' R B',W,Welcome to 2019 (2018-12-31~2019-01-01),333bf Final A #1
@@ -73,7 +73,7 @@
 323267001,L' D2 L2 F2 R B2 R' U2 R F' L R D B2 D' B F' D2,W,Cannes Summer Open 2016 (2016-07-02~03),333 Final A #2
 324824001,U2 B F2 R2 B U2 F D B U L2 D' F' R B' D2 L U2,Y,Bolivia Nationals 2016 (2016-07-01~03),333 R1 E E2
 852275001,B2 F2 D' R2 D' B2 F2 U L B2 L F' L B2 D' B2 R B,Y,Ibarra Open 2018 (2018-08-11),333 R2 D #1
-3886553020,U2 R' B R2 U' R' L2 D L F' D2 B L2 F2 U2 L2 D2 F2 U2 F' L2 U',Y, Vasconcubos 2024 (2024-06-22~23),333mbf Final A #1
+3886553020,U2 R' B R2 U' R' L2 D L F' D2 B L2 F2 U2 L2 D2 F2 U2 F' L2 U',Y,Vasconcubos 2024 (2024-06-22~23),333mbf Final A #1
 5431701001,U' B2 D' F2 L' F R D' R' F2 D' L2 D2 R2 D' L2 B2 L,Y,VERK XIII 2026 (2026-03-07~08),333oh Final B #2
 4790657001,B2 U R B' D2 F R2 B' R2 F2 D2 U2 L' U2 L B2 F L' B2,Y,One Shamelin Cube Open 2025 (2025-06-07~08),333 R1 C #5
 358722001,L' F2 R F2 L2 U2 L' F' L' D F' R U' B' R2 F2 R F',W,Mérida Summer 2016 (2016-09-03~04),333 R2 A E2

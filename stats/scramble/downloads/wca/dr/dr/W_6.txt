@@ -1,8 +1,8 @@
 # Scramble samples — dr / dr / W / bin 6
-# Population in this bin: 641
+# Population in this bin: 643
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 5415001,B2 D U L2 F2 U' B2 F2 R U2 F2 R' U L F2 L2 U2 R F L' F',W,Fénix 2014 (2014-03-29~30),333bf R2 A E1
@@ -46,7 +46,7 @@
 5852594004,D L2 U' L2 U F2 U B L' F' D2 U2 L R B' L2 B L2 B',W,Multimatum: New York Multimate PBQ VI 2026 (2026-09-25~27),333mbf Final C #2
 4178004001,B2 L2 D2 F D2 R2 F' U' B' D' B' R' F' L F2 U2 L2 R,W,50 Years of Cubing in the Philippines 2024 (2024-10-06),333 R2 A #1
 5793326001,B2 L D' R D2 F' R' F2 L' D B2 U2 B2 L2 D L2 R D,W,Deerfield MA Summer 2026 (2026-08-22),333 R1 C E1
-250137001,R2 F2 D U B2 D L2 U B2 U' R D L' F' U2 F2 L2 D2 R2,W,Mantua Tiny Open 2016 (2016-02-06),333 Final A #3
+5867241001,B U B L2 D B2 D' B2 U2 L2 B2 L2 B' R D L D L D2,W,Vilajuga Vilafranca 2026 (2026-10-03~04),333 R1 A #1
 5016292001,L2 F2 U B2 R2 D' B' R2 B2 D F2 L D' L U2,W,Willimiehen Kuutiopäivät 2025 (2025-09-13~14),333 R1 B E2
 2720493001,R L2 F2 U R2 D U2 B2 U2 B R B R' U2 F D2 L2 R',W,Connecticut Spring 2023 (2023-05-13),333 Final A #1
 4378726001,R2 U' B2 F2 L2 B2 U' R2 D' R2 L' U B R2 B' U',W,The Last Game EC 2024 (2024-12-21),333oh Final A #4

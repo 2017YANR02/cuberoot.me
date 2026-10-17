@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / OR / bin 8
-# Population in this bin: 251
+# Population in this bin: 252
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 5225508001,B' D2 U2 F R2 B2 R2 F' U' R' U' R F' L' F2 R U B,R,Hvidovre Open 2025 (2025-11-29~30),333 R2 A #1
@@ -120,7 +120,7 @@
 2372946041,R2 F' L' F' D' L2 U' F2 R' B2 U F2 D' B2 R2 F2 D' F2 B L B',R,Ota Blind Winter 2022 (2022-12-18),333mbf Final B #1
 5516180001,L' U2 L2 U2 F R2 B' U2 B R U2 R' B F2 L' F D,R,Marble City Cubing NY 2026 (2026-04-11),333 Final B #1
 2399275001,R D F' L2 B2 L2 U2 B2 D2 R2 D2 L' B L U2 B' D2 R',O,Vardagscubing II - Hive A 2022 (2022-12-26),333oh Final B E2
-5285865011,L2 R2 F' L2 F2 R2 D2 R2 U2 D R' F' U' B2 D2 F L U' F' D,R,Please Be Quiet Hefei 2025 (2025-12-21),333mbf Final A #1
+5865636001,F' R D F2 R2 D F2 R2 U F2 U' F D B' L B2 R' F2 D,O,Ivano Frankivsk Open 2026 (2026-10-03~04),333 R1 A E1
 5457080001,U B2 U2 B' R' B2 D2 F2 D2 R U2 B' D L' F R U' L,R,Sausalito NxN Open 2026 (2026-03-14),333 R1 A E1
 2476174001,U' B2 F2 R2 B2 R2 U R2 U' L2 B L2 U F' D2 F D' L',R,Lima Summer 2023 (2023-02-04~05),333oh R1 B E1
 2520176001,L F U2 F2 R F2 L2 U2 R2 B U2 R' U R' D' U2 L R2 B' L,O,Brussels Blind Open 2023 (2023-02-25~26),333bf Final B #2

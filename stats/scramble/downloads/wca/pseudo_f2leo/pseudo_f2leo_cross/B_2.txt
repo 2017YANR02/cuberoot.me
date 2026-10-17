@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / B / bin 2
-# Population in this bin: 423
+# Population in this bin: 426
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 3752773001,R2 D2 B' U2 R2 B' R2 B L B U' L2 U' L' F U2 B' L2 R,B,North Jersey Speedsolving B 2024 (2024-05-12),333 R1 A #2
@@ -68,7 +68,7 @@
 457348001,D B2 D F2 D U' B2 U2 F' L' D2 L F' R2 F2 D' L2 R B2,B,For The Love Of Cubing 2017 (2017-02-11),333 R1 E #1
 4178837001,U' R2 U B L D2 L' U F R2 F' D2 F' B2 L2 F2 D2 R2 U,B,Glasgow 3x3 Evening 2024 (2024-10-09),333 R2 A #4
 459069001,B' F' U2 R2 B2 U2 L2 F R' B U' B2 D F' L F D U L,B,Inquivesta Cube Open 2017 (2017-03-04~05),333oh Final A E1
-459781001,F2 L2 D U2 L2 B2 L2 B' R2 D' B L' D U' B D' B2 U',B,Šiauliai-Tilžė Open 2017 (2017-03-04~05),333oh Final A #1
+5858730018,F U B' L2 F U2 B2 D2 U' R B2 R2 F' R B2 D' R D,B,Please Be Quiet Singapore Oct 2026 (2026-10-03~04),333mbf Final A #2
 471375001,F2 L2 R2 D U2 R2 U B2 D' U' R' B' L' R' U L' B U' L F' U L B2,B,SCMU ICT Open 2017 (2017-03-18~19),333bf Final E #3
 3610239001,L2 B D2 R' F' D' F' D B' R2 F' R2 D2 B U2 B' D2 B',B,Los Aviadores Aragua 2024 (2024-03-23),333 R2 B E2
 502555001,F2 D2 R2 F' U2 F' D2 L2 D F L D U2 L B2 U2 L R,B,Tlaxcala Open Clásico 2017 (2017-05-06~07),333oh Final A #5

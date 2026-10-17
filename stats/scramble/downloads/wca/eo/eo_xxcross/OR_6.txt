@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxcross / OR / bin 6
-# Population in this bin: 215
+# Population in this bin: 216
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 11317001,D2 F2 U2 R2 F U B U' R' U2 D2 F R2 B' R2 B2 L2 B,R,Nanjing Spring 2014 (2014-04-07),333 R2 A #2
@@ -201,7 +201,7 @@
 5466732001,B' U2 R' B D2 U2 B D F' D L' D R' D' R,R,Arkansas Championship 2026 (2026-03-20~22),333 R1 B #4
 5492769077,B L2 B' D L2 U B' U D B' R U2 B2 D2 R2 U' L B2,O,New York Multimate PBQ IV 2026 (2026-03-27~29),333mbf Final B #1
 5626374001,R' B2 U F2 D U L2 D' U2 L2 B2 R B F L2 R B2 L2,O,No Clocks in Greenpoint 2026 (2026-05-09~10),333 R2 A E1
-5556536001,U2 B2 L2 R D2 B2 L2 R2 U2 F D' L2 D2 F U' L D R' D',R,CBA Open Tarija 2026 (2026-04-18),333 R1 A #1
+5872880004,U' R U L2 D L2 F2 D U2 R' F2 D2 B' L2 B F L U L' F2,R,Perth Favourites Evening II 2026 (2026-10-13),333mbf Final A #1
 5809683001,B' L' U2 D F D2 B L B' R L' B2 R' U2 D2 L B2,R,DFW Cubing Summer 2026 (2026-08-29~30),333 R3 B E1
 5579565001,D R2 F2 U' F2 R2 D2 L D2 F U F U' B F' U' L2,R,GLS Gdańsk III 2026 (2026-04-25~26),333 R2 B #1
 5596414001,F D' R2 B R2 D2 F2 L2 F L2 D' R B' R' U R B L F2,R,Oregon State Spring 2026 (2026-05-02),333 R2 A E2

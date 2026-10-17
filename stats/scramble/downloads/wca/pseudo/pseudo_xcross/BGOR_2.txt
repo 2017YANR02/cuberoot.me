@@ -1,14 +1,14 @@
 # Scramble samples — pseudo / pseudo_xcross / BGOR / bin 2
-# Population in this bin: 552
+# Population in this bin: 555
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 3733001,U2 R F' L' B2 L F2 R D' F' L2 D2 F2 D2 L' U2 R2 U2,G,Kharkiv Special 2014 (2014-03-22),333ft R1 A #2
 5847787001,U2 L2 F2 R2 D' R2 B' R B2 U2 R F' L D2 L B D',R,Maltese Championship 2026 (2026-09-26),333 R1 A #5
 4380412001,U2 B2 F2 L D2 F2 R2 F D L2 F' R' D' B2 L B' L,G,Clash of Cubers: Celebes Speedcubing Masters 2024 (2024-12-14~15),333 Final B E1
-31993001,B2 D' L2 B2 R2 F2 U' L2 U B' U' B F' R B' L B' F2 L',B,ULA Rubiks 2014 (2014-06-27~28),333 R2 B #2
+5864735001,U' L2 B' R' F' B' U' B F2 U R2 D R2 D R2 B2 U,R,Guangzhou Grand Open 2026 (2026-10-05~06),333 R1 B #3
 4524713001,L' B2 F2 L2 U' R2 D2 R2 B2 R' U L F2 R2 B D2 B D2,O,Spark Melbourne February 2025 (2025-02-22~23),333 R1 D #2
 63903001,L' F2 R' F2 B2 D' B' U D' R2 U2 F2 L' U2 R' D2 R2 B2 R,G,CCC Autumn Open 2014 (2014-10-04~05),333oh R1 C #1
 5179558001,D2 F2 D B2 L2 U' F2 B L2 D L B' F2 U' B R2 F' D2,B,Berkeley November Weekday 2025 (2025-11-14),333 R1 A E2

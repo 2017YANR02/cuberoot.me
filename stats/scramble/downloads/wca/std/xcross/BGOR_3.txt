@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / BGOR / bin 3
-# Population in this bin: 550
+# Population in this bin: 555
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 3164001,F' B2 R2 L F U2 F R B' R2 B L2 U B2 U' L2 D F2,O,CMI Fiesta Open 2014 (2014-03-21~23),333oh R1 D #4
@@ -119,7 +119,7 @@
 786434010,U2 B2 R D2 R' D2 U2 R' U2 R' U L' U' L' B2 U' B2 L2,R,YJ Fest 2018 (2018-05-18~20),333mbf Final A #1
 2835202001,U' L2 B' F L2 B' R2 D2 F D R2 F' R' U' B L F' U L B',O,Jönköpingsligan Final: Tattoo 2023 (2023-06-27),333bf Final B #1
 788375001,U L2 B D2 B2 U B' D B R' U2 F' L2 F' L2 U2 B D2,B,Tea Time Spring 2018 (2018-05-26~27),333 R2 B #3
-5815668001,U2 L2 F L2 U2 L2 F2 R2 L' B2 D U' B2 D' R' U' L F,O,Seremban Cube Challenge 2026 (2026-09-05),333 R1 B #1
+5875808001,U' L U2 R2 D2 F' L2 U2 B' U R' B U2 L2 F D F2,G,Thailand Championship 2026 (2026-10-09~11),333oh R1 B #3
 4126175001,L' D2 L' B L' D2 B F2 R D2 L' U2 D2 L2 F2 D L2 B2,R,McMinnville Cubing Fall 2024 (2024-09-21),333oh R1 A #5
 5716213022,D' F' B U2 B' U' R F' R2 F2 U D2 L2 D2 B2 D' R' U' L B,O,Flinders Park Side Events 2026 (2026-06-20~21),333mbf Final A #1
 5240283001,B' L D2 F2 L' F2 L2 R F2 D2 L2 B2 F R' U R' U' F' R2,B,Clash of Cubers III Davao 2025 (2025-11-30),333 Final A #2
@@ -131,7 +131,7 @@
 839680001,F' B R2 L2 D' R' U2 F2 U R U B2 D R2 U' R2 D2 R2,B,Beijing Summer 2018 (2018-07-29),333 Final D E1
 5508012001,D2 L2 D' L2 B2 U' L D U R' B R' F' R F' L' F R2,G,MYHM UoSM Final Cube Open 2026 (2026-04-04~05),333oh R1 E E1
 843886001,R2 D' L2 U2 F2 U R2 U B2 D' R' D2 F' U R2 F' U' L' B R B' L,B,Mariano Melgar Speedcubing 2018 (2018-08-04),333bf Final A #2
-3904817001,D B2 R L U' B2 L2 D2 B' R D F2 D R2 D' R2 F2 B2,R, Wembley Quimbaya 2024 (2024-06-30),333 Final A #5
+3904817001,D B2 R L U' B2 L2 D2 B' R D F2 D R2 D' R2 F2 B2,R,Wembley Quimbaya 2024 (2024-06-30),333 Final A #5
 5549255001,D2 F U D2 L F2 R' B2 U2 L' B2 L B' D' R2 F' D' U B,G,Wide Bay Cubing 2026 (2026-04-18~19),333oh R1 A #2
 5735877001,R2 U F2 U F2 U' L2 D L' U' L' D R2 U B F L B',G,Indian Cube Challenge BLR 2026 (2026-06-27~28),333 R2 A #5
 5377776001,U' R2 B U' R2 D2 R' D F' L D2 R L2 F2 D2 U F,O,Berkeley February Weekday 2026 (2026-02-06),333 R1 B E1
@@ -165,7 +165,7 @@
 1009574001,F2 L R B2 L D2 R2 B2 D2 F2 D2 B D2 L' B D L2 R2 F2 D2,O,Salem Cube Trials 2019 (2019-02-02),333 R2 A #5
 1015089001,B2 R' F2 R2 B2 D2 L B2 F' L' D2 B' U' B2 D2 F L2 B' L' B',B,Medan Lunar New Year 2019 (2019-02-09~10),333bf Final B E1
 2792292001,U2 R F2 L D2 B' D' U2 B' R2 D2 R2 F R2 U2 F' U2 B' U2 B' L,G,FSUbers 4.5 2023 (2023-06-10~11),333bf R1 A #3
-2176890001,L' D' F U' D F2 U B L F2 U2 F2 R2 B2 R' D2 L U2 B',B,U24 Open September 2022 (2022-09-18),333oh Final C #3
+5874897001,U' F' U' L2 D' F2 U' L2 D U2 F R2 F2 D2 L R B L B',R,Kuwait Nationals 2026 (2026-10-09~10),333 R2 B E2
 4709694001,R' L U R' B R B2 U' L2 U2 F2 R2 B' U2 F2 B R2 L',R,West Negros Cube Fest 2025 (2025-05-04),333 Final B #5
 3298247079,U R2 D' B2 D F2 D L2 F2 U' F L' U' L R' U2 F U2 R2 B',R,Mountain View Multi Madness 2023 (2023-11-24~27),333mbf R1 B #1
 1480268001,U2 R2 U2 B' F U2 B L2 F L2 R' B2 L2 D' B D2 B D R' U,R,AZCubing Winter 2019 (2019-12-21),333 Final A E2

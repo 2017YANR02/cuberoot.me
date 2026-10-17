@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_cross / BGWY / bin 2
-# Population in this bin: 605
+# Population in this bin: 608
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 5392183001,R F' L U F2 U' R2 B2 U B2 U F' L' B2 D' F D2,G,Melbourne Summer 2026 (2026-01-24~26),333 R1 E E1
@@ -59,7 +59,7 @@
 417944001,F2 U' R L2 U' B' U' B U B U F2 R2 L2 U L2 U B2,W,Cubing Complexity 2016 (2016-12-17~18),333 R2 H #1
 420336001,L2 B2 R2 D' U2 B2 D2 L2 R F2 U' R' D U2 F' D2 F D U,B,Santa Claus Cube Race 2016 (2016-12-17~18),333oh Final A E1
 427203001,R2 D' B' D R' U' R' L U B' L B2 R2 L2 U L2 F2 D F2,Y,Dayton Winter 2017 (2017-01-07),333 R1 C #3
-4696871001,F' L' F' B2 L2 F D R F D2 B2 L2 U F2 R2 F2 D2 F2 L,W,Estella-Lizarra Open 2025 (2025-05-03~04),333 R1 C E1
+5862765001,U2 B2 D B2 F2 L2 U' F' D2 L2 R' U2 B L' U L B2 D2,Y,Sydney Cubing Decathlon 2026 (2026-10-02~04),333 R1 B #3
 435421001,F L' U2 L' D' B' L2 F' R2 F' B L F2 U2 L' U2 R,G,Trondheim Winter 2017 (2017-01-21~22),333 R2 B #2
 4680143001,B R2 D2 F' D2 R2 F' R2 D' R B2 U' L' B2 R' D B' L,B,Viña Keep Going 2025 (2025-04-26),333 R1 B E1
 451245001,L' U F' R' D' R D R U' R' L' U2 L' B2 R' B2 D2 F2 L',B,P3 Grand Open - Feb 2017 (2017-02-26),333 R1 I #4
@@ -138,7 +138,7 @@
 826425001,U2 F2 R2 F2 L D2 U2 B' D B2 D2 B2 F2 R' D U2 B D2,Y,Adelaide Winter 2018 (2018-07-14),333 R2 A #5
 2898490001,R' U' F D R' B2 L' B' U L' D F2 D2 L' B2 U2 R F2 L2 U2 F2 B2 D2 R' U' F,B,Nod Don Denver 2023 (2023-07-16),333fm Final A #3
 827416001,L' F' R L2 D R2 U' R D' B L2 F2 R2 F2 U' R2 D2 F2 D,W,First State 2018 (2018-07-14),333 R1 D #5
-5137939001,F' D2 R' D2 R2 U' R' U L2 B2 D R2 F2 B2 L' F2 U',Y,Hampshire Autumn 2025 (2025-10-25~26),333 R2 A E1
+5864363001,R2 F' D F2 U2 F2 U L2 U' L2 R2 U' L2 F' D U2 R F2 U2 R,G,Head to UBC Morning 2026 (2026-10-03),333 R1 C E2
 1485783001,F2 R F2 R U2 L D2 F2 R' U' R' B L U' R U L U2,B,Sariki in Moscow 2020 (2020-01-02),333oh Final A #4
 5113413001,L2 B' D2 B R D R B2 L2 D2 L F2 L B2 U2 F' U,W,UMBC Fall 2025 (2025-10-18),333 R2 C #5
 848704001,D R2 U2 B2 U2 F2 L2 U F' D F2 D' B2 U' R' F2 R U,B,Project Radom 2018 (2018-08-04~05),333 R1 A #5

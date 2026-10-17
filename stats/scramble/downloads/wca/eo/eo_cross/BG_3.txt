@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / BG / bin 3
-# Population in this bin: 426
+# Population in this bin: 428
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 17503001,R U2 R' F U2 F' R2 F2 D2 R' L2 U' L2 U D2 F2 U L2 U2,B,Mumbai Summer Open 2014 (2014-05-03~04),333 R1 C E2
@@ -39,7 +39,7 @@
 360740001,L2 U2 L2 F R2 F R2 U2 B' D2 R U' F D' R F2 U R F',B,Mason Cubing Challenge 2016 (2016-09-10),333 R1 C E2
 370711001,B2 U2 R2 U' L2 F2 R2 U L2 U2 L2 B D L2 R B' L2 F R' F' L',B,Guildford Open 2016 (2016-10-01~02),333 R1 C #2
 380886001,R2 U2 L2 D2 L B' D R2 D L B2 R2 U B2 D B2 R2 B2 U2,B,Rubik's Cube Pune Open 2016 (2016-10-15~16),333 R1 N #4
-391470001,F2 R2 D2 U' L2 D' B2 D2 R2 F D2 F2 D B U F D2 U',B,Cubetcha 2016 (2016-11-05),333 R2 A #3
+5871861001,L2 D2 B F2 R2 B2 D R' F2 U' B L B' D L D L',B,Hazlet Fall 2026 (2026-10-11),333 R2 A E2
 396679001,R2 U2 L2 R2 U2 F2 R' F2 R' B U B L B' R2 B' U F2 U L2,G,Ljubljana Open 2016 (2016-11-12~13),333bf Final A E2
 417595001,B D2 R2 B' R' L F B R' B' L2 F2 D' F2 D2 R2 D2 R2 D',B,Cubing Complexity 2016 (2016-12-17~18),333ft R1 A E1
 464368001,U' L2 F L F2 U F' B' R2 U' R F2 R2 L U2 R2 B2 L' F2,G,AZCubing Spring 2017 (2017-03-11),333 R2 B #4

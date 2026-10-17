@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_layer / WY / bin 6
-# Population in this bin: 488
+# Population in this bin: 489
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 27659001,B2 L B2 L D2 R F2 D2 R2 D' F2 R' F2 D' F2 D' B' L2 U,Y,Nottingham Summer 2014 (2014-06-14~15),333oh R1 B #3
@@ -88,7 +88,7 @@
 1980133001,U L2 U' D' R F' R' D2 F' L2 U B2 U B2 R2 U D L2 D',W,Jāņi Kārķos 2022 (2022-06-18),333 R1 C E2
 660952022,B F L2 D2 F' L2 R2 U2 R B2 L2 B L D2 U F R D2 U' L',W,Classic San Lorenzo Open 2016 (2016-03-24~26),333mbf Final A #1
 661033009,D' R2 D2 L2 R2 D U' R2 B2 U F D' B2 R D2 L B2 D L2 F' D',W,Archena Open 2016 (2016-07-02~03),333mbf Final C #1
-3027873001,D L2 U' B2 D R2 D R2 B2 F' D L R' U' L' F' D2 U2,Y,Corona Summer 2023 (2023-09-02),333 R2 A #5
+5856776001,F' R' U2 B R D' B U2 B2 L2 B2 R2 U B2 L2 D' F2 U' L',W,Viña Spring 2026 (2026-10-03),333oh R1 B E1
 5668544001,B L' U' B2 L' U2 D F L2 F2 L' U2 R' B2 R' B2 L' F',Y,Hiroshima Spring 2026 (2026-05-30),333 R1 D #3
 4120712001,R' F D' B2 F2 R2 D L2 U' R2 D2 B D2 L2 D' L U2 L2 U,W,Unicentro Armenia III 2024 (2024-09-21),333 R1 A #4
 661418119,U2 F U2 F2 U2 F L2 U2 L2 F R U' L' B L U2 F D' F U2 L' F,Y,CubingUSA Nationals 2017 (2017-07-07~09),333mbf Final A #2

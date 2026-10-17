@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxcross / WY / bin 6
-# Population in this bin: 220
+# Population in this bin: 222
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 33688001,D' L D2 R2 L' D R' B' D L' F D2 R2 B2 U2 B2 D2 B D2,Y,P3 Grand Open 2014 (2014-06-28~29),333 R1 S E2
@@ -75,7 +75,7 @@
 1128452001,D' F2 L2 U' L2 D U2 F2 R' U2 F2 U2 F D2 U' B2 U' B2,Y,Chillán Open 2019 (2019-05-04),333oh Final A #1
 1156961001,D R' F' D F R D2 F R U2 F R2 U2 F' R2 U2 L2 B,Y,Myyrmäki Summer Challenge 2019 (2019-05-24~26),333 Final A #3
 1176032001,R2 U' B2 D R2 U L2 U' L D' L' R B2 L R2 U',Y,High Wycombe Open 2019 (2019-06-08~09),333 R2 B #2
-1177388001,F2 L2 B2 L2 U2 R2 F R2 B2 D' R' B' F2 R2 F' L D2 R' U,W,Swiss Nationals 2019 (2019-06-08~10),333 R2 A #1
+5860203001,B2 F' L2 F' D2 B' L2 R2 U2 F U' B F2 L' U2 L B F,Y,ODU Big Blue Fall 2026 (2026-10-03),333oh Final C #5
 1178110013,F2 L2 F2 L2 U2 F2 U L2 D' L' R2 D' B R F' R2 U F' U2 B' L',W,Ukrainian Open 2019 (2019-06-08~09),333mbf Final A #1
 1191798003,D' L2 U' F2 D2 U B' L2 B2 F2 D2 U' R U R2 D2 L' U2 L' F,W,Medan Farewell 2019 (2019-06-22~24),333mbf Final A #1
 1196885038,B2 R2 U' R2 D B2 L2 R2 U' R' U' L2 F2 R B R F' L2 F' R' B R,Y,YJ Kazan 2019 (2019-06-22~23),333mbf Final A #1

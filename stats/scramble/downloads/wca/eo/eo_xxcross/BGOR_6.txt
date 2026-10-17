@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxcross / BGOR / bin 6
-# Population in this bin: 436
+# Population in this bin: 437
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 3270001,D2 R D2 R' F2 D2 F2 R2 F2 R B U' R' U B' U' R2 D F',B,CMI Fiesta Open 2014 (2014-03-21~23),333oh R1 S #5
@@ -91,7 +91,7 @@
 687064001,D2 B L2 F R2 U2 R2 B U' L2 B2 U2 B' L F U L D',O,South Enough 2018 (2018-01-13),333 R1 F E1
 5422542014,B2 D2 B D2 B D2 L2 F L' D R F2 L B' L R' B L2 F L' F2,R,BL&D BLD Binningen 2026 (2026-02-28),333mbf Final B #2
 722141001,R' B2 R U2 L' B2 R2 B2 D' F2 D' F2 L R U L D,R,Eretum Open 2018 (2018-03-10~11),333oh Final A #3
-733249020,F2 U' B2 U2 L2 B2 F2 D F2 U2 F' D' F U' R2 F2 U' L F L B2,R,Nacionales Uruguayas UCHI 2018 (2018-03-24~25),333mbf Final B #2
+5872880004,U' R U L2 D L2 F2 D U2 R' F2 D2 B' L2 B F L U L' F2,R,Perth Favourites Evening II 2026 (2026-10-13),333mbf Final A #1
 747041001,L2 B2 U2 L2 U' R2 D' F2 D2 R2 F' U2 R' F D2 B' L2 B2 F R,B,Putra Speedcubing Challenge 2018 (2018-04-07~08),333 R1 C #1
 3762748001,L' D' F2 R B2 R F2 L' D' L D B' F' D2 R2 D' R2,G,Kensington May Saturday 2024 (2024-05-11),333 R1 E #1
 5149959022,U' L2 F2 L D' L2 F' R' F2 U2 L2 U2 R2 L' F' U' R D2 L B,G,Furesø 3x3 Frenzy 2025 (2025-11-01~02),333mbf Final B #1

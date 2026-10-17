@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / ORWY / bin 7
-# Population in this bin: 493
+# Population in this bin: 498
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 2198244038,B U' D' B2 L B' U B2 D2 F2 L2 U2 L2 B2 U' F2 U' R B,W,Trondheim Mental Breakdown 2022 (2022-09-24~25),333mbf Final A #3
@@ -66,7 +66,7 @@
 561263001,L' D R' D' L2 U R' U2 R B' L2 U F2 L2 F2 D' B2 D' F2,O,FLIP Open 2017 (2017-07-22~23),333 R2 B #3
 2126780001,D' R B' R B' U' R F D2 F2 U2 L2 B U2 F' R' D' R2,Y,FING Open 2022 (2022-08-27~28),333 R2 B #1
 4949726001,U B' L' B2 L D2 R2 U F' B2 R' F2 R2 U2 L2 U2 F2 R' B' L',R,Korea Open 2025 (2025-08-15~17),333bf R1 C E2
-590697001,F D B' R L U L2 B U2 R' D R2 U2 L2 U L2 F2 U' F2 B2,R, Raipur Cube Challenge 2017 (2017-09-10),333oh Final A #1
+590697001,F D B' R L U L2 B U2 R' D R2 U2 L2 U L2 F2 U' F2 B2,R,Raipur Cube Challenge 2017 (2017-09-10),333oh Final A #1
 596596001,L2 D2 R2 B2 U2 L' R' U F R F R U2 R2 F L' D2 L',R,Zurich Open 2017 (2017-09-16~17),333 R2 A E2
 3157216001,D2 B' D B U2 L2 F D2 L2 F2 R2 D R' U2 L2 D F2 L,R,The Art of the Cube Colorado 2023 (2023-10-14),333 R2 B #2
 2420220001,L' U2 B2 U L2 U' L2 D' R2 L' U' R' U R' B U' F L B,W,GLS I 2023 (2023-01-07~08),333 R1 B #3
@@ -93,7 +93,7 @@
 3436847001,U2 L' B2 U' F D2 B D2 F2 U2 R2 D2 L' U' F2 L2 B' F' D',O,Big N Blind Bangalore Jan 2024 (2024-01-20~21),333 R1 B #4
 4943228001,D2 U L2 U2 B2 D B2 U F R F D' L B2 U L2 R' U B,W,Cube en Baie Open 2025 (2025-08-15~17),333 R1 B #1
 4262585001,R F R F L' U2 B L2 U2 F2 R F2 L2 U2 F2 R F' D',Y,Rubik's WCA Asian Championship 2024 (2024-11-01~04),333 Final A #2
-3976122001,B' U' F R B U2 L' F' L2 D B2 D' L2 U' L2 F2 R2 L F2,W,Perth Winter 2024 (2024-07-27~28),333 R1 D #1
+5875297001,U2 B2 L2 U2 F2 R2 B' L U' F2 D2 F' U' F' L2 B' D2 U',Y,Nexta Andorra Championship 2026 (2026-10-10~12),333 Final A #4
 5772088001,D' R2 F U' L U2 F2 U2 R U2 L R D' R2 F' L D F' U',R,Saint-Martin Saturday 2026 (2026-08-01),333oh Final B #3
 3267639001,L D R2 D2 B L B U' B D2 L2 U2 D' F2 R2 L2 D' R2,R,Vermont Cubikon 2023 (2023-11-18),333 Final A #3
 2376390001,L' B' R F U' F' U D' B L2 D2 B2 D2 L B2 L' F2 R' F2 B2,Y,Rubik's WCA Oceanic Championship 2022 (2022-12-15~18),333 R1 D #3
@@ -106,7 +106,7 @@
 5642895001,D2 B L2 U' F2 R2 F' B R' D R F2 L2 B2 L2 U F2 B2,Y,Hamoye Jinju 2026 (2026-05-16~17),333 R1 D E3
 3877566001,U F R F2 L' F2 R F' U2 D B' R2 D B2 L2 U2 R2,Y,Juhannus 2024 (2024-06-20~23),333oh Final A E2
 5790758001,F' U2 F2 L2 F' R2 U2 R2 B' L2 D R' B U B' L2 D' B2,Y,Cubing School SCZ 2026 (2026-08-15~16),333 R3 B #5
-842557001,B' F' L2 B' F2 D L' B2 F2 R D2 U' B U2 L B',O,VCP Invierno 2018 (2018-07-28),333 R1 C #5
+5873950002,U' R B2 R U' R' B' D' R2 D' F2 U2 L2 F2 L2 U R U' R' D2,Y,Portugal Championship 2026 (2026-10-09~11),333mbf Final A #1
 2060472001,B' L U2 R F2 R D2 R F' U' B U2 L B2 D2 U2 R' F2,Y,Valmiera Open 2022 (2022-07-30),333 R1 B #4
 887276001,L2 F' B2 U R L F2 R U2 B D2 L U2 L B2 R' B2 U2,R,Kew Forest Open 2018 (2018-09-22),333 R2 B E1
 4685725001,D2 F2 L2 U2 R' B2 R2 U2 F2 D2 B' U' B D R' U2 B D' R,R,Easter in Prague-East 2025 (2025-04-26~27),333oh Final A #4

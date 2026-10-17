@@ -1,15 +1,15 @@
 # Scramble samples — std / xxxxcross / OR / bin 10
-# Population in this bin: 638
+# Population in this bin: 642
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 1204775001,F2 L D2 B2 L' D2 F2 L2 U2 R F' L2 D' L F2 D2 L2 B' D,R,Destino Maya Honduras 2019 (2019-06-30),333 Final A E1
 5578721001,F2 L' F2 R D L2 R2 D' R2 B2 U2 R B F2 L' F R2 B',O,Prepa CBBA 2026 (2026-04-25),333 R2 B #2
 9200001,B' U2 L' B L2 B2 U' R U2 D' R2 U2 F2 R2 B' R2 F' U2 B' L2,O,SLS Tarnowskie Gory 2014 (2014-04-05),333 R1 A #4
 2979467001,L2 B' D2 F U R2 F R' B' U' B2 R2 D2 R2 L2 D' F2 U' L2,O,Nacionales El Salvador 2023 (2023-08-11~13),333oh Final B #3
-5533311001,D R B' R L F2 U D2 F2 L2 D2 F D2 F L2 B' L2 B U B2,O,Desafio Aves María Sabaneta 2026 (2026-04-12),333 R2 B E1
+5875998001,D B2 F2 D' U F2 U R' U L2 F D B D' R B L R F,R,Thailand Championship 2026 (2026-10-09~11),333 R1 F #5
 4208816001,B' D' B F2 D2 F' L2 B R2 U L' B2 F2 R' B' R' U,R,M Moves in Middlebury 2024 (2024-10-19),333 R1 D #3
 1299708001,B' L2 B2 D2 F' D B F' R' U R2 D2 L' U2 F',R,Polish Open 2019 (2019-09-13~15),333 R1 A #4
 1892341001,B L U L' F' D F L2 U2 F2 R' D2 F2 U R2 B2,R,FSUbers 2022 (2022-04-24),333 R2 B #1
@@ -153,7 +153,7 @@
 3478366001,L D2 F U2 D2 R' D B2 D2 R' F2 L2 U2 B L' U' F2,R,MYHM Singapore Championship 2024 (2024-02-02~04),333 Final A E2
 2101177001,L D2 L F R2 U' L2 U' B' D2 R2 L' U2 F2 L2 U2,O,Rubik's WCA Asian Championship 2022 (2022-08-11~14),333 Final A #3
 1345994001,F D2 L D2 R2 B2 U F2 D2 R' D2 F2 D2 R2 B L2 B' R2 F' D2 R2,R,Curicó al Cubo 2019 (2019-10-12),333 R1 A #1
-3341820001,R B2 R2 D B' D2 F L2 F' D2 B2 L2 U2 L' B' R U' L2 B F2,O,Waterloo Favourites Autumn 2023 (2023-12-16),333oh Final B #3
+5873524001,D F2 L2 B2 D L2 U' B2 U R2 L B2 F2 U' R2 F R D F2,R,IIT Gandhinagar Cube Open 2026 (2026-10-10~11),333 R1 A #5
 4721708001,F2 R B2 F D2 L2 F' U2 R D F2 L D F' L F' R,O,Govi-Altai Cube Day 2025 (2025-05-10),333 Final A E1
 1256148001,U2 R' D2 F2 L F2 L B2 U2 B2 R2 D' B' U L U2 F' D2 B2 D' U,R,Independence Cube Open 2019 (2019-08-11),333 R1 A E2
 3738213001,F D R L2 F2 R2 B2 U' D2 F R2 L2 D2 B' D2 L2 F,O,New Beginnings in Ankara 2024 (2024-05-04~05),333oh Final A #4

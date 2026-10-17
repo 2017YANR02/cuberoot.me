@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_cross / BGOR / bin 2
-# Population in this bin: 617
+# Population in this bin: 620
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 3323001,D B2 D' U2 R2 D' L2 U' R2 U' B R' B2 L B L R2 B F2 R2,R,CMI Fiesta Open 2014 (2014-03-21~23),333oh R2 G #2
@@ -156,7 +156,7 @@
 5634398032,L U R2 F2 R2 F2 D F2 D2 L2 F2 B' U' L' B2 D2 L D' R D2 B R,G,Please Don't DNF Beijing 2026 (2026-05-16~17),333mbf Final A #2
 4222435001,R' D2 L D2 B2 R' D2 R' D R B2 L2 D' F' U R2 B' L U',R,Turn 'N Solve Bataan 2024 (2024-10-19~20),333 R1 A #5
 839058001,U2 L' B2 U2 L D2 U2 R' F2 D R U2 B' R F L' B F D2,B,Mariupol Open 2018 (2018-07-27~29),333ft Final A E1
-3425916001,F2 D' F2 U' L2 D2 B2 F2 L2 F D F' R U2 F2 R' B L' U B R',B,Ota Blind New Year 2024 (2024-01-20),333bf Final C E1
+5873358001,F' L2 U2 R' L2 B' R' U2 R2 F U D L2 U D2 F2 L2,O,Mini Guildford in Olomouc 2026 (2026-10-10~11),333 R2 A E2
 848346001,R' B2 U2 L R F2 L B2 L' B2 D B U' B' L2 U' B' D',R,Back to İzmir 2018 (2018-08-03~05),333 R1 C #1
 848704001,D R2 U2 B2 U2 F2 L2 U F' D F2 D' B2 U' R' F2 R U,B,Project Radom 2018 (2018-08-04~05),333 R1 A #5
 2811526001,R2 D' R2 D2 L2 R2 D' L' B' D2 F' D U2 B' R U' B2 F,B,Mofunland Cruise Open 2023 (2023-06-19~20),333 Final A #1

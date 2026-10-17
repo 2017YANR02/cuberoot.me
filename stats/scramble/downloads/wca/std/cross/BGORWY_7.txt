@@ -1,8 +1,8 @@
 # Scramble samples — std / cross / BGORWY / bin 7
-# Population in this bin: 335
+# Population in this bin: 337
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 2643001,D2 B2 L2 D2 U2 B2 R' D2 L D2 L2 D B' L2 U2 F' D2 R' B U' L,B,CMI Fiesta Open 2014 (2014-03-21~23),333 R2 C #4
@@ -75,13 +75,13 @@
 729279001,D2 B' L2 F' U2 R2 U2 R2 F2 R' D' L F R' U F D2 F D' B2,B,I Hope I Qualify 2018 (2018-03-17),333oh Final B #4
 732269001,B2 U R2 D U B2 R2 U L2 F2 R2 B' F L' F2 U R2 B' L F2 U',B,Tunisia Winter Open 2018 (2018-03-20),333 Final A #1
 4425505001,U2 L2 D2 B D2 F D2 R2 L D' U F2 L B' D' L' F L,B,A New Year in Auckland 2025 (2025-01-17~18),333 R1 B #4
-3904826001,L' B2 D2 U2 L' B2 F2 U2 F U' R' D' L R U B' L2 D' U',B, Wembley Quimbaya 2024 (2024-06-30),333 Final B E2
+3904826001,L' B2 D2 U2 L' B2 F2 U2 F U' R' D' L R U B' L2 D' U',B,Wembley Quimbaya 2024 (2024-06-30),333 Final B E2
 739746014,U' B2 D2 F2 U' B2 U F2 R2 B2 F' L R2 D' U2 L U' F' L R' B D2,B,Belgian Easter 2018 (2018-03-31~04-01),333mbf Final A #2
 771302001,L2 D2 B2 U' R2 F2 U2 L2 D L B' U' R F D' R U' L' B2 L B2 D2,B,Nanjing Spring 2018 (2018-04-30~05-01),333bf R1 B E2
 771366024,R2 F2 R2 U L2 F2 D' F2 D2 B2 L B2 L B F D L2 R' F R2 B' L',B,FMEntal Breakdown 2018 (2018-04-28),333mbf Final A #1
 4890594001,R F U B' R' L F2 B2 U F2 R2 F' U2 B U2 B' D2 L2 B',B,Championnat Canadien 2025 (2025-07-24~27),333oh R1 B E2
 852861001,L2 B2 D L2 U L2 D F2 D' L F' L2 R U' B2 F2 R' U' F' D,B,Indonesian Championship 2018 (2018-08-11~12),333oh R1 C #2
-5636990001,R L2 F' U2 L2 B2 L2 F R2 D2 B2 U R' D' F' L2 B' D' L F,B,Weston-super-Mare Spring 2026 (2026-05-16~17),333oh R1 C #3
+5874574001,U2 F D2 B2 D2 U2 L2 B2 R' U2 F' U' B' D L U2 R U R,B,Forgotten O'Clocks II SBC 2026 (2026-10-10~11),333oh Final B #3
 874536001,L F2 R' U2 L' R' F2 R' U L' R2 D2 B2 F U B' R F,B,German Nationals 2018 (2018-09-07~09),333 Final A #3
 5328783001,R' U2 L2 U B2 D2 L2 B2 F U' B L' R U' L D F L' U',B,Porten til Ishavet 2026 (2026-01-17~18),333oh R1 B #3
 4241159001,D' R' B' U' R2 U2 L D B F2 R' D2 R2 L F2 R' B2 U2 L B2,B,Skowhegan Spookfest 2024 (2024-11-02),333 R1 B #3

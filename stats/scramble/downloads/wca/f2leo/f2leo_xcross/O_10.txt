@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xcross / O / bin 10
-# Population in this bin: 27
-# Samples listed: 27 (all entries in this bin)
+# Population in this bin: 28
+# Samples listed: 28 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 57759001,B' D2 L2 R2 F' R2 B' L2 B D' R U2 R2 B D' L' U2 F' U,O,Desio Rubik's Ace 2014 (2014-09-14),333oh R1 A #2
@@ -32,3 +32,4 @@
 5419064001,U F U2 B' L' U D B' L D R2 F2 D2 F' D2 R2 U2 L2,O,Summer of the Cube Huancayo 2026 (2026-02-28~03-01),333 R2 A E1
 5444727001,F D2 U' F2 U R2 U' F2 R2 B2 F' R' U' F2 R' F U2 R B L,O,Loba March Ankara 2026 (2026-03-07~08),333 R1 E E2
 5508798001,R2 B2 U B2 F2 U L2 D' U F2 L' B' L' F' D R B' U R2 F2 D2,O,No Peeking Calgary 2026 (2026-04-04~05),333bf R1 B E2
+5861426001,F L' U' R U2 B2 U B2 D' F2 R2 D B2 L' F' L B' U' R' D',O,Oregon State Fall 2026 (2026-10-03),333oh R1 B #1

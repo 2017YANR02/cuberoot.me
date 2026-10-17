@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / W / bin 5
-# Population in this bin: 666
+# Population in this bin: 668
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 2349420001,F' U2 L F' D' B D' B2 L D2 F L2 D2 L2 D2 F' U L,W,TCG Power Up 2022 (2022-12-03~04),333 R2 A #3
@@ -65,7 +65,7 @@
 1990095043,D2 R2 U R' F L D' R' L2 B R2 F R2 L2 F U2 F R2 U' L B2,W,Blind Is Back LA 2022 (2022-06-26),333mbf Final A #1
 4524717001,R2 U2 F2 D' L' B D B D2 F2 L2 F D2 F R2 B R2 F2,W,Spark Melbourne February 2025 (2025-02-22~23),333 R1 D E1
 3173203021,R F R2 D U' L2 D F2 D2 L D' R B2 D2 R' D' B' U' L B,W,Campeonato Brasileiro 2023 (2023-10-13~15),333mbf Final B #1
-388669001,B2 L2 R2 F' R2 B2 L2 B' L R2 U2 L2 R F' D B' U2 L' B' L' F,W,Dutch Open 2016 (2016-10-29~30),333bf Final A #3
+5857581001,U R' F R2 D F2 D F L2 D2 R' B2 L2 B2 D2 L' U2 L',W,Indian Elite Championship 2026 (2026-10-02~04),333 R2 E E1
 393260001,B' R' B2 R B' D R2 F2 U' L' D F2 D' L2 U L2 D' L2 F2,W,Munich Open 2016 (2016-11-05~06),333 R2 A #3
 1408956019,U2 L2 U2 F D2 B U2 B F L B L' B U' B' F U2 F' D L' F,W,Thailand Championship 2019 (2019-11-15~17),333mbf Final A #1
 2278599001,L' F' U2 R' B2 L' R2 U2 F2 R' U' R' B D2 U B' R U' F2 L2,W,Cubing SimCheong Open 2022 (2022-10-29~30),333bf R2 A #1
@@ -202,6 +202,6 @@
 2372744001,L2 D2 F' R2 B D2 F2 R2 B' R2 D2 U2 R' B L D F2 R B L,W,Mental Breakdown Bogotá 2022 (2022-12-17),333bf R1 A #1
 1168983001,D' L2 U F2 D' U2 L2 F2 U2 B2 R F R2 U2 L2 U2 F D',W,Wyoming Summer 2019 (2019-06-01),333 Final D #3
 1169883001,L2 U' B2 L2 B2 L2 D' B2 U' F' R' B2 U2 B' U2 R2 U B2 D B' L,W,Copa Black Horse 2019 (2019-06-01~02),333bf Final A E1
-5523082001,D' B' L2 D2 L2 U2 R2 B' L' B2 L2 R2 U2 B F2,W,Itajai ao Cubo 2026 (2026-04-11~12),333 R1 A E2
+5865134001,B2 R' L2 U2 F U F2 U' R U2 L2 U D2 R2 L2 B2 U2 B2,W,Río Grande TDF 2026 (2026-09-26~27),333 Final B #2
 4293621001,F B' U' D' L' F2 D B2 D R' U L2 U F2 L2 D2 F2 L2 U,W,Rosario Siempre Estuvo Cerca 2024 (2024-11-17~18),333bf R1 A E2
 1177682001,R2 D' U R2 F2 R2 F2 R2 D2 U' L' D U' R' D2 R' D' F' L' F' L2 U,W,Ukrainian Open 2019 (2019-06-08~09),333bf Final B #2

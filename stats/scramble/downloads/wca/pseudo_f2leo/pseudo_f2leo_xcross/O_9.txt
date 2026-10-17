@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / O / bin 9
-# Population in this bin: 334
+# Population in this bin: 336
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 5035001,F2 D2 F2 U2 L U2 B2 R' U2 L' F U' B' L' D' L2 F' R2 U' R',O,Tula Open 2014 (2014-03-28~30),333 Final A #1
@@ -171,7 +171,7 @@
 2763044074,F2 L2 U' F2 D2 L2 B2 L2 F D L2 R D U2 F2 L2 F U L' R' B' L,O,Please Be Quiet in Tashkent 2023 (2023-05-27~28),333mbf Final A #1
 5750065001,B2 D' B U2 B L U F2 B R' U2 R2 F2 L2 U2 R2 F' R2 B',O,Golden Square Shopping 2026 (2026-07-11~12),333 Final A #3
 2800128027,U' L B2 D2 B2 F U2 L2 F2 U2 L2 D' R2 F2 R F U2 B R B' L2,O,Please Be Solved Vancouver 2023 (2023-06-17),333mbf Final B #1
-3904825001,F2 D' B' R L2 U2 R2 F2 U' R2 B2 U2 B' D R B L R F2,O, Wembley Quimbaya 2024 (2024-06-30),333 Final B E1
+3904825001,F2 D' B' R L2 U2 R2 F2 U' R2 B2 U2 B' D R B L R F2,O,Wembley Quimbaya 2024 (2024-06-30),333 Final B E1
 3767086001,D' B L' F2 U2 R F2 U2 B2 U' L' D' L' R' U' B' D2 F',O,Quito Free 2024 (2024-05-18),333 R1 B #5
 2936532006,B' R2 L2 B2 D2 B D F2 D2 R' D2 B2 L' B2 U2 B' U' L' D2 B,O,Vietnam Championship 2023 (2023-07-14~16),333mbf Final A #1
 5753072001,R' U' L' D' R B D' R2 F B2 U F' L2 B D2 F D2 L2 B',O,UNSA Speedcubing Otoño 2026 (2026-07-18~19),333oh R1 A #1
@@ -200,7 +200,7 @@
 3580687002,L2 U2 B2 U' L2 U' L2 D2 R2 B2 L' D F' R D U B F' D F L2 U,O,Reno Blind & Side Spring 2024 (2024-03-10),333mbf Final A #2
 5590756001,D' R' D' R' D2 R' D2 U2 L2 F2 L' U' B F' D2 U' L2 R D',O,Haileybury Astana Open 2026 (2026-04-26),333 R1 D E2
 3590983022,U2 R2 B2 D R2 B2 U2 R2 D' B L B2 R F R2 D' B2 U R' U2 L2 U,O,No Peeking Calgary 2024 (2024-03-16),333mbf Final A #2
-3590986012,L F B2 R B2 L' D2 L F2 D2 L U F2 L B R' D' U F' U' L2 U,O,No Peeking Calgary 2024 (2024-03-16),333mbf Final C #1
+5864327001,B2 R' U2 L U2 R2 F2 D2 R D F' L F R' F2 D' U2 F L2 U,O,Head to UBC Morning 2026 (2026-10-03),333 Final A #3
 3598299001,U F2 L2 R D2 L U2 F2 R' B' R2 D U' F' L' B' L' D2 U2,O,Ulaanbaatar Spring 2024 (2024-03-16),333 R2 C #4
 3604570001,F L B F U2 L2 U2 B L2 R2 D B2 U' B R' D' R2 F' U',O,Sofia Spring 2024 (2024-03-16~17),333 R2 A E1
 5144630001,F' R D L F2 D' U F2 D' B2 U R2 F' D R' D2 U2 L F,O,Bucharest Cubing October 2025 (2025-10-25),333 R1 B #4

@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_layer / O / bin 6
-# Population in this bin: 230
+# Population in this bin: 231
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 12338001,D' B2 L2 F2 R2 F2 U L2 F' L R B' D B D' R' D2 B R2 D,O,Pantheon Cube Open 2014 (2014-04-12),333bf Final E E2
@@ -79,7 +79,7 @@
 1216396001,L U2 R' F2 R' F2 U R B' U R2 U R' F2 L U,O,Luzon Championship 2019 (2019-06-22~23),333 R1 C #5
 1234678001,B2 L' D2 F2 D2 R2 U2 L R D F' D' B' D2 F U R D2 U2,O,BeCubed Summer 2019 (2019-07-27),333 R1 B E2
 1243665008,U2 F D2 B2 U2 B' U2 L2 F' L B' F R B2 L R' D' L R B2 D,O,Massachusetts Championship 2019 (2019-07-26~28),333mbf Final A #1
-1297806001,D' B2 D' F2 L2 U F2 D2 L D2 F U2 B2 F2 L' R D' L2,O,CC El Muelle Open 2019 (2019-09-14~15),333 R1 A E2
+5859408001,B2 R2 L2 D B L' U' L2 B L2 F U2 L2 F' D2 B2 D' B R2,O,Beijing Autumn Rivalry 2026 (2026-10-01~03),333 R1 H #4
 1298071001,R2 U2 L' F2 L R2 B2 D2 R2 B2 U F L F D F2 D2 R F D,O,Slow N Steady Summer 2019 (2019-09-14),333oh R1 B #2
 1306675001,F R' F' U2 F' U R L' U' F2 R2 U L2 B2 D L2 B2 U2,O,Dutch Nationals 2019 (2019-09-21~22),333oh R1 I E1
 1387870001,D2 F2 U' B' D L D F R' U2 R2 D2 F B2 L2 U2 B U2 B L2,O,Every Event Éire 2019 (2019-11-02~03),333 R1 A #5
