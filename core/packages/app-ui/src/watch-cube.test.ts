@@ -215,3 +215,52 @@ it('calibrates through the iOS GAN reset and blocks timing until device confirma
   await feed({ kind: 'disconnected' });
   expect(events.filter(event => event.kind === 'reset').at(-1)?.phase).toBe('idle');
 });
+
+it('renders the offline scramble using the canonical 2D unfolded layout and colors', async () => {
+  const { renderUnfoldedSvg } = await import('@cuberoot/shared/cube-unfolded-svg');
+  const { smartCubeTargetFacelets } = await import('@cuberoot/shared/smart-cube/cubie');
+  const scramble = "R U F2 L' D B2";
+  const svg = renderUnfoldedSvg(3, scramble);
+  const bridge = createWatchCubeBridge();
+  const preview = JSON.parse(bridge.scramblePreview(smartCubeTargetFacelets(scramble)!));
+  const expected = [...svg.matchAll(/<rect x="([^"]+)" y="([^"]+)" width="1" height="1" fill="(#[0-9A-Fa-f]+)"/g)]
+    .map(match => {
+      const rgb = parseInt(match[3].slice(1), 16);
+      return { x: Number(match[1]), y: Number(match[2]), color: [((rgb >> 16) & 255) / 255, ((rgb >> 8) & 255) / 255, (rgb & 255) / 255] };
+    });
+  const sort = (a: { x: number; y: number }, b: { x: number; y: number }) => a.y - b.y || a.x - b.x;
+  expect(preview.cells).toHaveLength(54);
+  expect(preview.cells.sort(sort)).toEqual(expected.sort(sort));
+  expect([preview.width, preview.height, preview.stroke]).toEqual([13, 9.8, 0.1]);
+});
+
+it('publishes scramble steps for Watch coloring and clears them on disconnect', async () => {
+  vi.useFakeTimers();
+  const bridge = createWatchCubeBridge(), events: Record<string, any>[] = [];
+  async function feed(message: Record<string, unknown>) {
+    bridge.dispatch(message);
+    for (let i = 0; i < 40; i++) {
+      await Promise.resolve();
+      for (const event of JSON.parse(bridge.drain())) {
+        if (event.kind === 'native') bridge.dispatch({ kind: 'reply', id: event.id });
+        else events.push(event);
+      }
+    }
+  }
+  const cipher = createGanV4Cipher(Uint8Array.of(0xab, 0xcd, 0xef, 1, 0x23, 0x45));
+  const frame = (bytes: readonly number[], now: number) => feed({ kind: 'notification', now, bytes: [...cipher.encrypt(Uint8Array.from(bytes))] });
+  const guidance = () => events.filter(e => e.kind === 'guidance').at(-1);
+  await feed({ kind: 'context', id: 'colored', event: '333', scramble: 'R U', enabled: true, now: 100000 });
+  await feed({ kind: 'connect', device: { id: 'AB:CD:EF:01:23:45', name: 'GAN16ui' } });
+  await frame(GAN_V4_FIXTURE.seed, 100000);
+  expect(guidance()).toMatchObject({ contextId: 'colored', hint: { done: [], current: 'R', pending: ['U'] } });
+  await frame(GAN_V4_FIXTURE.moves[0], 100000);
+  expect(guidance()).toMatchObject({ hint: { done: ['R'], current: 'U', pending: [] } });
+  const move = Uint8Array.from(GAN_V4_FIXTURE.moves[0]);
+  move[6] = 42; move[8] = 2;
+  new DataView(move.buffer).setUint32(2, 1250, true);
+  await frame([...move], 100250);
+  expect(guidance()).toMatchObject({ contextId: 'colored', matched: true, hint: null });
+  await feed({ kind: 'disconnect' });
+  expect(guidance()).toMatchObject({ matched: null, hint: null });
+});

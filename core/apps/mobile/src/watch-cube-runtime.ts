@@ -17,6 +17,7 @@ const bridge = createWatchCubeBridge();
     for (const [id, timer] of timers) if (timer.at <= now) { timers.delete(id); timer.callback(...timer.args); }
   },
   drain: bridge.drain,
+  scramblePreview: bridge.scramblePreview,
   supportsDevice: bridge.supportsDevice,
   normalizeMac: bridge.normalizeMac,
 };

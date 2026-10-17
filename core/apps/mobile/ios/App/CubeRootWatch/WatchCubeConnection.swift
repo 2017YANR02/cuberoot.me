@@ -6,6 +6,13 @@ import WatchJS
 /** watchOS transport only; the bundled iOS/shared JS owns GAN and timing rules. */
 final class WatchCubeConnection: NSObject, ObservableObject, CBCentralManagerDelegate, CBPeripheralDelegate {
     struct Device: Identifiable { let id: UUID; let name: String }
+    struct ScrambleGuidance: Decodable {
+        struct Hint: Decodable { let done: [String]; let current: String?; let pending: [String] }
+        let contextId: String
+        let matched: Bool?
+        let hint: Hint?
+    }
+    @Published var guidance: ScrambleGuidance?
     @Published var phase = "idle"
     @Published var devices: [Device] = []
     @Published var name = ""
@@ -128,7 +135,7 @@ final class WatchCubeConnection: NSObject, ObservableObject, CBCentralManagerDel
         connectDeadline = Date().addingTimeInterval(20)
         send(["kind": "connect", "device": device])
     }
-    func disconnect() { pendingMac = nil; macPrompt = false; display.clear(); stopScan(); send(["kind": "disconnect"]); phase = "idle"; connectDeadline = nil }
+    func disconnect() { guidance = nil; pendingMac = nil; macPrompt = false; display.clear(); stopScan(); send(["kind": "disconnect"]); phase = "idle"; connectDeadline = nil }
     func submitMac() {
         guard let id = pendingMac else { return }
         do {
@@ -140,6 +147,28 @@ final class WatchCubeConnection: NSObject, ObservableObject, CBCentralManagerDel
         } catch { macInvalid = true }
     }
     func cancelMac() { reply(pendingMac); pendingMac = nil; macPrompt = false; disconnect() }
+    struct ScramblePreview: Decodable {
+        struct Cell: Decodable { let x: Double; let y: Double; let color: [Double] }
+        let width: Double; let height: Double; let stroke: Double; let cells: [Cell]
+    }
+    func scramblePreview(_ facelets: String) -> ScramblePreview? {
+        do {
+            let encoded = try JSONSerialization.data(withJSONObject: [facelets])
+            let json = try evaluate("WatchCube.scramblePreview(\(String(decoding: encoded, as: UTF8.self))[0])")
+            let preview = try JSONDecoder().decode(ScramblePreview.self, from: Data(json.utf8))
+            if let url = try? WatchTimerDisk.url("watch-scramble-preview-status.json"),
+               let data = try? JSONSerialization.data(withJSONObject: ["cells": preview.cells.count,
+                   "width": preview.width, "height": preview.height, "at": Date().timeIntervalSince1970]) {
+                try? data.write(to: url, options: .atomic)
+            }
+            return preview
+        } catch {
+            if let url = try? WatchTimerDisk.url("watch-scramble-preview-status.json"),
+               let data = try? JSONSerialization.data(withJSONObject: ["error": error.localizedDescription,
+                   "at": Date().timeIntervalSince1970]) { try? data.write(to: url, options: .atomic) }
+            return nil
+        }
+    }
     func tap() { send(["kind": "tap"]) }
     func resetCube() {
         guard canReset, phase == "connected", resetPhase != "pending" else { return }
@@ -154,7 +183,7 @@ final class WatchCubeConnection: NSObject, ObservableObject, CBCentralManagerDel
     }
     func setContext(_ slot: WatchTimerSlot?, enabled: Bool) {
         let key = "\(slot?.id ?? ""):\(enabled)"
-        guard contextKey != key else { return }; contextKey = key
+        guard contextKey != key else { return }; contextKey = key; guidance = nil
         send(["kind": "context", "id": slot?.id ?? "", "event": slot?.event ?? "333",
               "scramble": slot?.scramble ?? "", "inspectionSec": slot?.inspectionSec ?? 0, "enabled": enabled])
     }
@@ -228,11 +257,15 @@ final class WatchCubeConnection: NSObject, ObservableObject, CBCentralManagerDel
                         connectDeadline = nil
                         if let suppliedMac { UserDefaults.standard.set(suppliedMac, forKey: "cubeMac." + selectedDeviceID) }
                     }
-                    if phase == "idle" || phase == "error" { display.clear(); macPrompt = false; pendingMac = nil }
+                    if phase == "idle" || phase == "error" { guidance = nil; display.clear(); macPrompt = false; pendingMac = nil }
                     if phase == "error" {
                         error = "connection"; connectDeadline = nil
                         UserDefaults.standard.removeObject(forKey: "cubeMac." + selectedDeviceID)
                         if let message = event["message"] as? String { failureDetail = message }
+                    }
+                case "guidance":
+                    if let data = try? JSONSerialization.data(withJSONObject: event) {
+                        guidance = try? JSONDecoder().decode(ScrambleGuidance.self, from: data)
                     }
                 case "move":
                     if let move = event["move"] as? String { lastMove = move; moves += 1 }

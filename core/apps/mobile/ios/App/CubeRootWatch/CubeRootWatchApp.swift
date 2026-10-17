@@ -61,7 +61,8 @@ struct WatchTimerView: View {
                             Text([slot.eventName, model.text("random"), slot.sessionName]
                                 .filter { !$0.isEmpty }.joined(separator: " · "))
                                 .font(.caption2).lineLimit(1).minimumScaleFactor(0.85)
-                            Text(slot.scramble).font(.system(.footnote, design: .monospaced))
+                            WatchScrambleText(scramble: slot.scramble, slotID: slot.id, cube: model.cube)
+                                .font(.system(.footnote, design: .monospaced))
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         Text(model.display)
@@ -348,6 +349,34 @@ private struct WatchReplayView: View {
     }
 }
 
+private struct WatchScrambleText: View {
+    let scramble: String
+    let slotID: String
+    @ObservedObject var cube: WatchCubeConnection
+    private var content: AttributedString {
+        guard cube.phase == "connected", let guidance = cube.guidance, guidance.contextId == slotID else {
+            return AttributedString(scramble)
+        }
+        if guidance.matched == true {
+            var text = AttributedString(scramble)
+            text.foregroundColor = Color(uiColor: .lightGray)
+            return text
+        }
+        guard let hint = guidance.hint else { return AttributedString(scramble) }
+        var parts: [(String, Color)] = hint.done.map { ($0, Color(uiColor: .lightGray)) }
+        if let current = hint.current { parts.append((current, .green)) }
+        parts += hint.pending.map { ($0, .primary) }
+        var text = AttributedString()
+        for (index, part) in parts.enumerated() {
+            var token = AttributedString((index == 0 ? "" : " ") + part.0)
+            token.foregroundColor = part.1
+            text.append(token)
+        }
+        return text
+    }
+    var body: some View { Text(content) }
+}
+
 private struct WatchCubePreview: View {
     @ObservedObject var model: WatchTimerModel
     @ObservedObject var cube: WatchCubeConnection
@@ -357,7 +386,7 @@ private struct WatchCubePreview: View {
             if cube.timingLate { Text(model.text("timingLate")).font(.footnote) }
             if model.phase != "running" { if cube.canReset { WatchCubeResetControl(model: model, cube: cube) } }
         } else if model.phase != "running", let facelets = model.state.current?.localFacelets {
-            WatchLocalScramblePreview(facelets: facelets, language: model.state.language)
+            WatchLocalScramblePreview(facelets: facelets, label: model.text("preview"), cube: cube)
         } else if model.phase != "running", let png = model.state.current?.previewPng,
                   let data = Data(base64Encoded: png), let preview = UIImage(data: data) {
             Image(uiImage: preview).resizable().scaledToFit()
@@ -369,17 +398,25 @@ private struct WatchCubePreview: View {
 
 private struct WatchLocalScramblePreview: View {
     let facelets: String
-    let language: String
-    @StateObject private var display = WatchCubeScene()
-    @Environment(\.scenePhase) private var scenePhase
+    let label: String
+    let cube: WatchCubeConnection
+    @State private var preview: WatchCubeConnection.ScramblePreview?
     var body: some View {
-        WatchLiveCubeView(display: display, language: language, height: 100, isStatic: true)
-            .frame(maxWidth: 120)
-            .onAppear { update(); display.setAwake(scenePhase == .active) }
-            .onChange(of: facelets) { _, _ in update() }
-            .onChange(of: scenePhase) { _, value in display.setAwake(value == .active) }
+        Canvas { context, size in
+            guard let preview else { return }
+            let scale = size.width / preview.width
+            for cell in preview.cells {
+                let path = Path(CGRect(x: cell.x * scale, y: cell.y * scale, width: scale, height: scale))
+                context.fill(path, with: .color(Color(red: cell.color[0], green: cell.color[1], blue: cell.color[2])))
+                context.stroke(path, with: .color(.black), lineWidth: preview.stroke * scale)
+            }
+        }
+        // Keep a real, sized view mounted while loading. An initially empty
+        // Group has no child whose onAppear can initialize the preview.
+        .frame(width: 120, height: preview.map { 120 * $0.height / $0.width } ?? 91)
+        .accessibilityLabel(label)
+        .task(id: facelets) { preview = cube.scramblePreview(facelets) }
     }
-    private func update() { display.receive(["kind": "snapshot", "facelets": facelets], now: 0) }
 }
 
 private struct WatchCubeResetControl: View {
