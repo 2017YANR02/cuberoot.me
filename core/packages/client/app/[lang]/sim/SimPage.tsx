@@ -2255,8 +2255,14 @@ export default function SimPage() {
   const changeTool = (tool: 'sim' | 'capture' | 'draw' | 'image') => {
     void setQuery({
       tool: tool === 'sim' ? null : tool,
-      ...(tool === 'draw' ? { drawPuzzle: query.drawPuzzle ?? String(normalizeDrawPuzzle(query.puzzle)) } : {}),
-      ...(tool === 'image' ? { imageAlg: query.imageAlg ?? (puzzleParam === 'fto' ? algParam : initialImageAlg) } : {}),
+      // Legacy creation links share puzzle/alg with animation until the first mode
+      // change. Snapshot the departing document before animation can edit those keys.
+      ...(drawMode || tool === 'draw' ? {
+        drawPuzzle: query.drawPuzzle ?? String(drawMode ? drawPuzzle : normalizeDrawPuzzle(query.puzzle)),
+      } : {}),
+      ...(imageMode || tool === 'image' ? {
+        imageAlg: query.imageAlg ?? (imageMode ? initialImageAlg : puzzleParam === 'fto' ? algParam : initialImageAlg),
+      } : {}),
     });
   };
 
