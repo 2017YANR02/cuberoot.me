@@ -17,6 +17,7 @@ export function PuzzleTypeSelect({ value, onChange, isZh, allowedValues, showNam
   const current = options.find((option) => option.value === value) ?? options[0];
   const toItem = (option: SimPuzzleTypeOption): PuzzlePickerItem => ({
       id: option.value,
+      searchText: `${option.labelEn} ${option.labelZh} ${option.value}`,
       label: [option.labelEn, option.labelZh][Number(isZh)],
       iconClass: option.iconClass,
       textLabel: option.textLabel,
@@ -40,6 +41,17 @@ export function PuzzleTypeSelect({ value, onChange, isZh, allowedValues, showNam
 
   return (
     <PuzzlePicker
+      discovery={{
+        storageKey: 'sim.puzzle-shortcuts',
+        searchLabel: tr({ zh: '搜索项目名称 / 阶数', en: 'Search name / order' }),
+        clearLabel: tr({ zh: '清除搜索', en: 'Clear search' }),
+        emptyLabel: tr({ zh: '没有匹配项目', en: 'No matching puzzles' }),
+        resultsLabel: tr({ zh: '搜索结果', en: 'Results' }),
+        recentLabel: tr({ zh: '最近使用', en: 'Recent' }),
+        favoritesLabel: tr({ zh: '收藏', en: 'Favorites' }),
+        favoriteLabel: tr({ zh: '收藏当前项目', en: 'Favorite current puzzle' }),
+        unfavoriteLabel: tr({ zh: '取消收藏当前项目', en: 'Unfavorite current puzzle' }),
+      }}
       isZh={isZh}
       selectedEvent={current?.value}
       groups={groups}

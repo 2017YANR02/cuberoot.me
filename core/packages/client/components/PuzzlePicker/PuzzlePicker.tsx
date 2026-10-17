@@ -23,7 +23,7 @@
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useParams } from 'next/navigation';
 import { ChevronDown } from 'lucide-react';
-import { TimerPuzzlePicker } from '@cuberoot/timer-ui/puzzle-picker';
+import { TimerPuzzlePicker, type TimerPuzzlePickerProps } from '@cuberoot/timer-ui/puzzle-picker';
 import AppLink from '../AppLink';
 import { CubingIcon } from '../EventIcon/EventIcon';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
@@ -44,6 +44,7 @@ export interface PuzzlePickerItem {
   iconClass?: string;
   textLabel?: string;
   detail?: ReactNode;
+  searchText?: string;
   /** Single-select callback menus may reuse the shared two-level picker. */
   children?: readonly Omit<PuzzlePickerItem, 'children'>[];
 }
@@ -55,6 +56,7 @@ export interface PuzzlePickerGroup {
 }
 
 interface Props {
+  discovery?: TimerPuzzlePickerProps['discovery'];
   isZh?: boolean;
   selectedEvent?: string;
   /** 多选模式的当前项目;与 onToggle 配套使用。 */
@@ -92,7 +94,7 @@ const menuLabel = (label: string): string => label.replaceAll('魔方', '').repl
 
 export default function PuzzlePicker({
   isZh = false, selectedEvent, selectedEvents, wcaEvents, availableEvents, onSelect, onToggle, linkFor,
-  groups: suppliedGroups, placeholderLabel, showTriggerIcon = true, showItemIcons = true, popupFooter, itemAction, dataNoTimer,
+  discovery, groups: suppliedGroups, placeholderLabel, showTriggerIcon = true, showItemIcons = true, popupFooter, itemAction, dataNoTimer,
 }: Props) {
   const params = useParams();
   const prefix = params?.lang === 'zh' ? '/zh' : '';
@@ -175,15 +177,17 @@ export default function PuzzlePicker({
   // Keep one implementation of submenu navigation, focus restoration, touch
   // layout and viewport clamping. Flat/link/multiselect catalogs retain their
   // existing renderer; the simulator supplies the same lossless leaf IDs here.
-  if (groups.some(group => group.items.some(item => item.children?.length))
+  if ((discovery || groups.some(group => group.items.some(item => item.children?.length)))
     && onSelect && !isMulti && !linkFor && !itemAction && !popupFooter) {
     const normalize = (item: Omit<PuzzlePickerItem, 'children'>) => ({
       id: item.id,
+      searchText: item.searchText,
       label: menuLabel(item.label),
       iconClass: item.iconClass,
       textLabel: item.textLabel && menuLabel(item.textLabel),
     });
     return <TimerPuzzlePicker
+      discovery={discovery}
       groups={groups.map(group => ({
         id: group.id,
         label: menuLabel(group.label),
