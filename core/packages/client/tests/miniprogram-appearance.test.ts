@@ -61,6 +61,11 @@ it.each(['2', '3'])('immediately syncs supported settings with protocol %s and r
   expect(navigateTo).not.toHaveBeenCalled();
   document.documentElement.removeAttribute('data-appearance-preview');
   await syncMiniProgramAppearance();
+  expect(navigateTo).not.toHaveBeenCalled();
+  expect(postMessage.mock.lastCall?.[0].data.type).toBe('cuberoot:appearance');
+  postMessage.mockClear();
+  localStorage.setItem('home-background.v1.dark', '07');
+  await syncMiniProgramAppearance();
   const payload = JSON.parse(decodeURIComponent(navigateTo.mock.lastCall![0].url.split('?value=')[1]));
   expect(payload.preferences.theme).toBe('dark');
   expect(payload.appearance.scheme).toBe('dark');
@@ -96,20 +101,33 @@ it.each(['light', 'dark'])('keeps transparent %s backgrounds out of the old nati
   expect(localStorage.getItem(`home-background.v1.${scheme}`)).toBe('transparent');
 });
 
-it('sends default transparent choices unchanged when the native shell advertises protocol 3', async () => {
-  window.history.replaceState(null, '', '/zh');
-  sessionStorage.setItem('cuberoot.native-preferences', '3');
+it.each(['2', '3'])('opens timer without native navigation and keeps color changes silent (protocol %s)', async (version) => {
+  window.history.replaceState(null, '', '/timer');
+  sessionStorage.setItem('cuberoot.native-preferences', version);
   localStorage.setItem('theme', 'dark');
+  localStorage.setItem('home-background.v1.light', 'none');
+  localStorage.setItem('home-background.v1.dark', 'none');
   document.documentElement.dataset.theme = 'dark';
   document.documentElement.removeAttribute('data-palette');
+  let color = 23;
   vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
-    clearRect() {}, fillRect() {}, getImageData: () => ({ data: [23, 23, 23, 255] }),
+    clearRect() {}, fillRect() {}, getImageData: () => ({ data: [color, color, color, 255] }),
   } as never);
   const { syncMiniProgramAppearance } = await import('@/lib/miniprogram-appearance');
   await syncMiniProgramAppearance();
+  await syncMiniProgramAppearance();
+  color = 24;
+  await syncMiniProgramAppearance();
+  expect(navigateTo).not.toHaveBeenCalled();
+  expect(postMessage.mock.calls.filter(([message]) => message.data.type === 'cuberoot:appearance')).toHaveLength(2);
+  // A real edit still reaches the native shell immediately, including a return
+  // to the initial choice; silent startup must not disable subsequent syncing.
+  localStorage.setItem('home-background.v1.dark', version === '3' ? 'transparent' : '08');
+  await syncMiniProgramAppearance();
   expect(navigateTo).toHaveBeenCalledTimes(1);
   const payload = JSON.parse(decodeURIComponent(navigateTo.mock.lastCall![0].url.split('?value=')[1]));
-  expect(payload.preferences.lightBackground).toBe('transparent');
-  expect(payload.preferences.darkBackground).toBe('transparent');
-  expect(postMessage).not.toHaveBeenCalled();
+  expect(payload.preferences.darkBackground).toBe(version === '3' ? 'transparent' : '08');
+  localStorage.setItem('home-background.v1.dark', 'none');
+  await syncMiniProgramAppearance();
+  expect(navigateTo).toHaveBeenCalledTimes(2);
 });
