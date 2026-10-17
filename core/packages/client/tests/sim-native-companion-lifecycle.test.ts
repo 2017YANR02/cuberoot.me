@@ -26,10 +26,16 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/sim',
 }));
 vi.mock('@/hooks/useMembership', () => ({ useMembership: () => ({ isMember: false }) }));
-vi.mock('@/app/[lang]/sim/useSimMasks', () => ({ useSimMasks: () => ({ rows: fixture.masks }) }));
+vi.mock('@/app/[lang]/sim/useSimMasks', () => ({ useSimMasks: () => ({ rows: fixture.masks, layouts: [] }) }));
 vi.mock('@/hooks/useT', () => ({ useT: () => (_zh: string, en: string) => en }));
 vi.mock('@/i18n/tr', () => ({ useLang: () => 'en', tr: ({ en }: { en: string }) => en }));
 vi.mock('@/app/[lang]/sim/GroupTheoryPanel', () => ({ default: () => null }));
+vi.mock('@/app/[lang]/sim/PuzzleDrawWorkspace', () => ({
+  default: ({ puzzle }: { puzzle: string | number }) => createElement('div', { 'data-drawing-puzzle': puzzle }),
+}));
+vi.mock('@/app/[lang]/sim/FtoImageGenerator', () => ({
+  default: ({ algorithm }: { algorithm: string }) => createElement('div', { 'data-image-alg': algorithm }),
+}));
 vi.mock('@/components/HomeLink', () => ({ default: () => null }));
 vi.mock('@/components/AppLink', () => ({ default: () => null }));
 vi.mock('@/lib/puzzle-image/image-export', async (importOriginal) => {
@@ -70,6 +76,7 @@ vi.mock('@/components/TwistySection', async () => {
 function RouteControls() {
   const [, setQuery] = useQueryStates({ puzzle: parseAsString, setup: parseAsString, alg: parseAsString });
   return createElement('div', null,
+    createElement('button', { 'data-route-alg': true, onClick: () => { void setQuery({ alg: 'L' }); } }, 'Change animation algorithm'),
     ...['masterskewb', 'superz'].map((puzzle) => createElement('button', {
       key: puzzle,
       'data-route-puzzle': puzzle,
@@ -138,6 +145,43 @@ function exportButton(label: string): HTMLButtonElement {
 function preview() {
   return host.querySelector<SVGElement>('.sim-image-overlay-host .vc-preview svg');
 }
+
+async function setWorkspace(value: 'animation' | 'creation') {
+  await act(async () => {
+    const select = host.querySelector<HTMLSelectElement>('select[aria-label="Workspace mode"]')!;
+    select.value = value;
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    await vi.dynamicImportSettled();
+  });
+}
+
+it('snapshots a legacy drawing puzzle before animation changes its project', async () => {
+  await act(async () => {
+    root.render(createElement(NuqsTestingAdapter, {
+      searchParams: '?tool=draw&puzzle=skewb&renderer=cubing', hasMemory: true,
+      children: [createElement(RouteControls, { key: 'routes' }), createElement(SimPage, { key: 'sim' })],
+    }));
+    await vi.dynamicImportSettled();
+  });
+  await setWorkspace('animation');
+  await navigate('masterskewb');
+  await setWorkspace('creation');
+  expect(host.querySelector('[data-drawing-puzzle]')?.getAttribute('data-drawing-puzzle')).toBe('skewb');
+});
+
+it('snapshots a legacy FTO image algorithm before animation changes its formula', async () => {
+  await act(async () => {
+    root.render(createElement(NuqsTestingAdapter, {
+      searchParams: '?tool=image&puzzle=fto&alg=R&renderer=cubing', hasMemory: true,
+      children: [createElement(RouteControls, { key: 'routes' }), createElement(SimPage, { key: 'sim' })],
+    }));
+    await vi.dynamicImportSettled();
+  });
+  await setWorkspace('animation');
+  await act(async () => host.querySelector<HTMLButtonElement>('[data-route-alg]')!.click());
+  await setWorkspace('creation');
+  expect(host.querySelector('[data-image-alg]')?.getAttribute('data-image-alg')).toBe('R');
+});
 
 async function navigate(puzzle: string) {
   await act(async () => host.querySelector<HTMLButtonElement>(`[data-route-puzzle="${puzzle}"]`)!.click());
