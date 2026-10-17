@@ -1,0 +1,699 @@
+{
+  "capturedAt": "2026-10-16T14:02:55.588Z",
+  "source": "https://api.cuberoot.me/v1/alg/sets/3x3/f2l",
+  "scrapedAt": "2026-05-03T13:38:09.638Z",
+  "puzzle": "3x3",
+  "set": "f2l",
+  "cases": [
+    {
+      "name": "A+",
+      "subgroup": "Free Pairs",
+      "setup": "R U R'",
+      "algs": [
+        [
+          {
+            "alg": "R U' R'"
+          }
+        ]
+      ],
+      "selection": {
+        "kind": "teacher-three-move"
+      }
+    },
+    {
+      "name": "A-",
+      "subgroup": "Free Pairs",
+      "setup": "F' U' F",
+      "algs": [
+        [
+          {
+            "alg": "F' U F"
+          }
+        ]
+      ],
+      "selection": {
+        "kind": "teacher-three-move"
+      }
+    },
+    {
+      "name": "B-",
+      "subgroup": "Free Pairs",
+      "setup": "F' U F",
+      "algs": [
+        [
+          {
+            "alg": "F' U' F"
+          }
+        ]
+      ],
+      "selection": {
+        "kind": "teacher-three-move"
+      }
+    },
+    {
+      "name": "B+",
+      "subgroup": "Free Pairs",
+      "setup": "R U' R'",
+      "algs": [
+        [
+          {
+            "alg": "R U R'"
+          }
+        ]
+      ],
+      "selection": {
+        "kind": "teacher-three-move"
+      }
+    },
+    {
+      "name": "W+",
+      "subgroup": "Disconnected Pairs",
+      "setup": "R U R' U2' R U' R' U",
+      "algs": [
+        [
+          {
+            "alg": "U' R U R' U2 R U' R'"
+          }
+        ]
+      ],
+      "selection": {
+        "slot": "FR",
+        "ordinal": 1,
+        "prefix": ""
+      }
+    },
+    {
+      "name": "W-",
+      "subgroup": "Disconnected Pairs",
+      "setup": "r U' R' U' R U r' U",
+      "algs": [
+        [
+          {
+            "alg": "U F' U' F U2 F' U F"
+          }
+        ]
+      ],
+      "selection": {
+        "slot": "FR",
+        "ordinal": 2,
+        "prefix": ""
+      }
+    },
+    {
+      "name": "M+",
+      "subgroup": "Disconnected Pairs",
+      "setup": "R U2 R' U R U2 R' U",
+      "algs": [
+        [
+          {
+            "alg": "U' R U2' R' U' R U2' R'"
+          }
+        ]
+      ],
+      "selection": {
+        "slot": "FR",
+        "ordinal": 1,
+        "prefix": ""
+      }
+    },
+    {
+      "name": "M-",
+      "subgroup": "Disconnected Pairs",
+      "setup": "r' U' R2' U' R2' U2' r",
+      "algs": [
+        [
+          {
+            "alg": "y' U R' U2 R U R' U2 R"
+          }
+        ]
+      ],
+      "selection": {
+        "slot": "BR",
+        "ordinal": 1,
+        "prefix": "y'"
+      }
+    },
+    {
+      "name": "R-",
+      "subgroup": "Disconnected Pairs",
+      "setup": "F' U F U' R U R' U",
+      "algs": [
+        [
+          {
+            "alg": "U' R U' R' U F' U' F"
+          }
+        ]
+      ],
+      "selection": {
+        "slot": "FR",
+        "ordinal": 1,
+        "prefix": ""
+      }
+    },
+    {
+      "name": "R+",
+      "subgroup": "Disconnected Pairs",
+      "setup": "R U' R' U' R U' R' U",
+      "algs": [
+        [
+          {
+            "alg": "U' R U R' U R U R'"
+          }
+        ]
+      ],
+      "selection": {
+        "slot": "FR",
+        "ordinal": 1,
+        "prefix": ""
+      }
+    },
+    {
+      "name": "X-",
+      "subgroup": "Connected Pairs",
+      "setup": "F' U F U' R U2' R' U",
+      "algs": [
+        [
+          {
+            "alg": "U' R U2 R' U F' U' F"
+          }
+        ]
+      ],
+      "selection": {
+        "slot": "FR",
+        "ordinal": 1,
+        "prefix": ""
+      }
+    },
+    {
+      "name": "X+",
+      "subgroup": "Connected Pairs",
+      "setup": "R U R' U2' R U R' U' R U R'",
+      "algs": [
+        [
+          {
+            "alg": "R U' R' U R U' R' U2 R U' R'"
+          }
+        ]
+      ],
+      "selection": {
+        "slot": "FR",
+        "ordinal": 1,
+        "prefix": ""
+      }
+    },
+    {
+      "name": "K-",
+      "subgroup": "Connected Pairs",
+      "setup": "r U R' U2' R U' R' U M",
+      "algs": [
+        [
+          {
+            "alg": "R U' R' U R' F R F' R U' R'"
+          }
+        ]
+      ],
+      "selection": {
+        "slot": "FR",
+        "ordinal": 2,
+        "prefix": ""
+      }
+    },
+    {
+      "name": "K+",
+      "subgroup": "Connected Pairs",
+      "setup": "R U' R' U' R U R' U",
+      "algs": [
+        [
+          {
+            "alg": "U' R U' R' U R U R'"
+          }
+        ]
+      ],
+      "selection": {
+        "slot": "FR",
+        "ordinal": 1,
+        "prefix": ""
+      }
+    },
+    {
+      "name": "I+",
+      "subgroup": "Connected Pairs",
+      "setup": "R U R' U' R' D' R U R' D R",
+      "algs": [
+        [
+          {
+            "alg": "R' D' R U' R' D R U R U' R'"
+          }
+        ]
+      ],
+      "selection": {
+        "slot": "FR",
+        "ordinal": 1,
+        "prefix": ""
+      }
+    },
+    {
+      "name": "I-",
+      "subgroup": "Connected Pairs",
+      "setup": "F' U F U2' R U R'",
+      "algs": [
+        [
+          {
+            "alg": "R U' R' U2 F' U' F"
+          }
+        ]
+      ],
+      "selection": {
+        "slot": "FR",
+        "ordinal": 1,
+        "prefix": ""
+      }
+    },
+    {
+      "name": "H+",
+      "subgroup": "Connected Pairs",
+      "setup": "R U' R' U R U2' R'",
+      "algs": [
+        [
+          {
+            "alg": "R U2 R' U' R U R'"
+          }
+        ]
+      ],
+      "selection": {
+        "slot": "FR",
+        "ordinal": 1,
+        "prefix": ""
+      }
+    },
+    {
+      "name": "H-",
+      "subgroup": "Connected Pairs",
+      "setup": "F' U F U' F' U2' F",
+      "algs": [
+        [
+          {
+            "alg": "F' U2 F U F' U' F"
+          }
+        ]
+      ],
+      "selection": {
+        "slot": "FR",
+        "ordinal": 1,
+        "prefix": ""
+      }
+    },
+    {
+      "name": "Q+",
+      "subgroup": "Disconnected Pairs",
+      "setup": "R U R' U' R U2' R' U'",
+      "algs": [
+        [
+          {
+            "alg": "U R U2 R' U R U' R'"
+          }
+        ]
+      ],
+      "selection": {
+        "slot": "FR",
+        "ordinal": 1,
+        "prefix": ""
+      }
+    },
+    {
+      "name": "Q-",
+      "subgroup": "Disconnected Pairs",
+      "setup": "R U R' F R' F' R2' U R' U",
+      "algs": [
+        [
+          {
+            "alg": "U' R U' R2 F R F' R U' R'"
+          }
+        ]
+      ],
+      "selection": {
+        "slot": "FR",
+        "ordinal": 1,
+        "prefix": ""
+      }
+    },
+    {
+      "name": "P+",
+      "subgroup": "Disconnected Pairs",
+      "setup": "R U R' U' R U' R' U2'",
+      "algs": [
+        [
+          {
+            "alg": "U2 R U R' U R U' R'"
+          }
+        ]
+      ],
+      "selection": {
+        "slot": "FR",
+        "ordinal": 1,
+        "prefix": ""
+      }
+    },
+    {
+      "name": "P-",
+      "subgroup": "Disconnected Pairs",
+      "setup": "r U' r' U2' r U r'",
+      "algs": [
+        [
+          {
+            "alg": "y' R' U R U2 R' U' R"
+          }
+        ]
+      ],
+      "selection": {
+        "slot": "BR",
+        "ordinal": 1,
+        "prefix": "y'"
+      }
+    },
+    {
+      "name": "G+",
+      "subgroup": "Connected Pairs",
+      "setup": "R U R' U' R U R' U R U R' U'",
+      "algs": [
+        [
+          {
+            "alg": "U R U' R' U' R U' R' U R U' R'"
+          }
+        ]
+      ],
+      "selection": {
+        "slot": "FR",
+        "ordinal": 1,
+        "prefix": ""
+      }
+    },
+    {
+      "name": "G-",
+      "subgroup": "Connected Pairs",
+      "setup": "R U R' F R U R' U' F'",
+      "algs": [
+        [
+          {
+            "alg": "F U R U' R' F' R U' R'"
+          }
+        ]
+      ],
+      "selection": {
+        "slot": "FR",
+        "ordinal": 1,
+        "prefix": ""
+      }
+    },
+    {
+      "name": "E+",
+      "subgroup": "Corner In Slot",
+      "setup": "R U' R' F R' F' R U",
+      "algs": [
+        [
+          {
+            "alg": "U' R' F R F' R U R'"
+          }
+        ]
+      ],
+      "selection": {
+        "slot": "FR",
+        "ordinal": 1,
+        "prefix": ""
+      }
+    },
+    {
+      "name": "E-",
+      "subgroup": "Corner In Slot",
+      "setup": "R' F R F' R U R' U'",
+      "algs": [
+        [
+          {
+            "alg": "U R U' R' U' F' U F"
+          }
+        ]
+      ],
+      "selection": {
+        "slot": "FR",
+        "ordinal": 4,
+        "prefix": ""
+      }
+    },
+    {
+      "name": "J+",
+      "subgroup": "Corner In Slot",
+      "setup": "R U R' U' R U R'",
+      "algs": [
+        [
+          {
+            "alg": "R U' R' U R U' R'"
+          }
+        ]
+      ],
+      "selection": {
+        "slot": "FR",
+        "ordinal": 1,
+        "prefix": ""
+      }
+    },
+    {
+      "name": "J-",
+      "subgroup": "Corner In Slot",
+      "setup": "R' F R F' U R U' R'",
+      "algs": [
+        [
+          {
+            "alg": "F' U F U' F' U F"
+          }
+        ]
+      ],
+      "selection": {
+        "slot": "FR",
+        "ordinal": 2,
+        "prefix": ""
+      }
+    },
+    {
+      "name": "L-",
+      "subgroup": "Corner In Slot",
+      "setup": "R U R' U' F R' F' R",
+      "algs": [
+        [
+          {
+            "alg": "R' F R F' U R U' R'"
+          }
+        ]
+      ],
+      "selection": {
+        "slot": "FR",
+        "ordinal": 1,
+        "prefix": ""
+      }
+    },
+    {
+      "name": "L+",
+      "subgroup": "Corner In Slot",
+      "setup": "R U' R' U R U' R'",
+      "algs": [
+        [
+          {
+            "alg": "R U R' U' R U R'"
+          }
+        ]
+      ],
+      "selection": {
+        "slot": "FR",
+        "ordinal": 1,
+        "prefix": ""
+      }
+    },
+    {
+      "name": "T",
+      "subgroup": "Edge In Slot",
+      "setup": "R U R' F R' F' R U",
+      "algs": [
+        [
+          {
+            "alg": "U' R' F R F' R U' R'"
+          }
+        ]
+      ],
+      "selection": {
+        "slot": "FR",
+        "ordinal": 1,
+        "prefix": ""
+      }
+    },
+    {
+      "name": "S",
+      "subgroup": "Edge In Slot",
+      "setup": "R U R' U' R U R' U' R U R' U'",
+      "algs": [
+        [
+          {
+            "alg": "U R U' R' U R U' R' U R U' R'"
+          }
+        ]
+      ],
+      "selection": {
+        "slot": "FR",
+        "ordinal": 1,
+        "prefix": ""
+      }
+    },
+    {
+      "name": "U+",
+      "subgroup": "Edge In Slot",
+      "setup": "R U R' U2' R U R' U",
+      "algs": [
+        [
+          {
+            "alg": "U' R U' R' U2 R U' R'"
+          }
+        ]
+      ],
+      "selection": {
+        "slot": "FR",
+        "ordinal": 1,
+        "prefix": ""
+      }
+    },
+    {
+      "name": "U-",
+      "subgroup": "Edge In Slot",
+      "setup": "R U' R' U2' R U' R' U'",
+      "algs": [
+        [
+          {
+            "alg": "U R U R' U2 R U R'"
+          }
+        ]
+      ],
+      "selection": {
+        "slot": "FR",
+        "ordinal": 1,
+        "prefix": ""
+      }
+    },
+    {
+      "name": "V+",
+      "subgroup": "Edge In Slot",
+      "setup": "F' U F U' R U' R' U",
+      "algs": [
+        [
+          {
+            "alg": "U' R U R' U F' U' F"
+          }
+        ]
+      ],
+      "selection": {
+        "slot": "FR",
+        "ordinal": 1,
+        "prefix": ""
+      }
+    },
+    {
+      "name": "V-",
+      "subgroup": "Edge In Slot",
+      "setup": "R U' R' U F' U F U'",
+      "algs": [
+        [
+          {
+            "alg": "U F' U' F U' R U R'"
+          }
+        ]
+      ],
+      "selection": {
+        "slot": "FR",
+        "ordinal": 1,
+        "prefix": ""
+      }
+    },
+    {
+      "name": "F",
+      "subgroup": "Pieces In Slot",
+      "setup": "R U' R U2' F R2' F' U2' R2'",
+      "algs": [
+        [
+          {
+            "alg": "R U2 R' U R U2 R' U F' U' F"
+          }
+        ]
+      ],
+      "selection": {
+        "slot": "FR",
+        "ordinal": 3,
+        "prefix": ""
+      }
+    },
+    {
+      "name": "D+",
+      "subgroup": "Pieces In Slot",
+      "setup": "R U R' U2' R U' R' U R U R'",
+      "algs": [
+        [
+          {
+            "alg": "R U' R' U' R U R' U2 R U' R'"
+          }
+        ]
+      ],
+      "selection": {
+        "slot": "FR",
+        "ordinal": 1,
+        "prefix": ""
+      }
+    },
+    {
+      "name": "D-",
+      "subgroup": "Pieces In Slot",
+      "setup": "R U R' U' R U2' R' U' R U R'",
+      "algs": [
+        [
+          {
+            "alg": "R U' R' U R U2 R' U R U' R'"
+          }
+        ]
+      ],
+      "selection": {
+        "slot": "FR",
+        "ordinal": 1,
+        "prefix": ""
+      }
+    },
+    {
+      "name": "C+",
+      "subgroup": "Pieces In Slot",
+      "setup": "R U' R' r U' r' U2' r U r'",
+      "algs": [
+        [
+          {
+            "alg": "r U' r' U2 r U r' R U R'"
+          }
+        ]
+      ],
+      "selection": {
+        "slot": "FR",
+        "ordinal": 1,
+        "prefix": ""
+      }
+    },
+    {
+      "name": "C-",
+      "subgroup": "Pieces In Slot",
+      "setup": "r U' r' U2' r U r' R U R'",
+      "algs": [
+        [
+          {
+            "alg": "R U R' U' R U' R' U2 F' U' F"
+          }
+        ]
+      ],
+      "selection": {
+        "slot": "FR",
+        "ordinal": 4,
+        "prefix": "",
+        "adaptation": "Replace the final y' R' U' R with the B- insertion F' U' F, without rotating the cube."
+      }
+    }
+  ]
+}

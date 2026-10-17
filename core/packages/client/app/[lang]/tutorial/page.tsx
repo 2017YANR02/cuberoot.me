@@ -263,6 +263,10 @@ export default function TutorialPage() {
           thumb={<SimCubeView moves={LBL_COVER_MOVES} pose="z2" className="tutorial-lbl-thumb" ariaLabel={tr({ zh: '复原的三阶魔方', en: 'Solved 3×3 cube' })} />}
           title={<T zh="层先法" en="LBL" />}
           sub={<T zh="从小花到六面复原" en="From daisy to solved cube" />} />
+        <AlgCard href="/tutorial/f2l" prefetch={false}
+          thumb={<SimCubeView moves={LBL_COVER_MOVES} stickering="F2LPair" className="tutorial-lbl-thumb" ariaLabel={tr({ zh: '底十字和右前角棱对', en: 'Bottom cross and front-right pair' })} />}
+          title={<T zh="F2L" en="F2L" />}
+          sub={<T zh="从四种三步标态开始" en="Start with four three-move cases" />} />
       </div>}
     </main>
   );

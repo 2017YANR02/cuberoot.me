@@ -77,6 +77,15 @@ interface Props {
   interactionMode?: AlgPlayerInteractionMode;
   /** `interactionMode='turn'` 时返回 `/sim` 产生的标准转动记号。 */
   onUserMove?: (move: string) => void;
+  /** Sim 教学预览：在这些完整步数之后暂停；继续播放会越过当前边界。 */
+  pauseAfterSteps?: readonly number[];
+  /** Sim only: automatically continue after this many ms at section boundaries.
+   * Omitted or non-positive keeps the existing manual-resume behavior. */
+  sectionPauseMs?: number;
+  /** Sim 教学预览的动作位置，用于同步逐步说明。 */
+  onStepChange?: (step: number) => void;
+  /** Sim renderer only: update piece visibility without resetting playback. */
+  stickeringAtStep?: (step: number) => import('@cuberoot/puzzle-render-core/engine/nxn/stickering').StickeringMaskFn;
   /** 每个 STM 的动画时长(ms)，默认 1000。 */
   moveDurationMs?: number;
   /** 自定义尺寸,默认 260px;`fillPane=true` 时忽略 */
@@ -146,6 +155,10 @@ const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, r
         interactionMode={props.interactionMode}
         onUserMove={props.onUserMove}
         moveDurationMs={moveDurationMs} size={props.size ?? 260} fillPane={props.fillPane}
+        pauseAfterSteps={props.pauseAfterSteps}
+        sectionPauseMs={props.sectionPauseMs}
+        onStepChange={props.onStepChange}
+        stickeringAtStep={props.stickeringAtStep}
       />
     );
   }
