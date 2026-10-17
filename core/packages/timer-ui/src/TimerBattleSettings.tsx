@@ -24,8 +24,8 @@ export interface TimerBattleSettingsProps {
   children?: ReactNode;
 }
 const COPY = {
-  en: { sync: 'Start together', settings: 'Settings', reset: 'Reset All', confirm: 'Confirm', keys: 'Key bindings', player: 'Player', press: 'Press a key…', space: 'Space', precision: 'Precision', inspection: 'Inspection', off: 'Off', hold: 'Hold to start', preview: 'Show scramble preview', hide: 'Hide running time' },
-  zh: { sync: '同时开始', settings: '设置', reset: '全部重置', confirm: '确认', keys: '按键', player: '玩家', press: '按任意键…', space: '空格', precision: '精度', inspection: '观察', off: '关闭', hold: '按住起表', preview: '显示打乱图', hide: '隐藏计时读数' },
+  en: { sync: 'Start together', settings: 'Settings', reset: 'Clear battle results', confirm: 'Clear all results in the current battle session? This cannot be undone. Your settings will be kept.', resetHint: 'Clears this battle session’s results, not its settings.', keys: 'Key bindings', player: 'Player', press: 'Press a key…', space: 'Space', precision: 'Precision', inspection: 'Inspection', off: 'Off', hold: 'Hold to start', preview: 'Show scramble preview', hide: 'Hide running time' },
+  zh: { sync: '同时开始', settings: '设置', reset: '清空对战成绩', confirm: '清空当前对战会话的全部成绩？此操作无法撤销，设置会保留。', resetHint: '清空当前对战会话的成绩，保留设置。', keys: '按键', player: '玩家', press: '按任意键…', space: '空格', precision: '精度', inspection: '观察', off: '关闭', hold: '按住起表', preview: '显示打乱图', hide: '隐藏计时读数' },
 };
 export function TimerBattleKeyBindings({ language, keys, onChange }: { language: 'en' | 'zh'; keys: readonly string[]; onChange(playerId: number, key: string): void }) {
   const copy = COPY[language];
@@ -33,6 +33,7 @@ export function TimerBattleKeyBindings({ language, keys, onChange }: { language:
   useEffect(() => {
     if (recording === null) return;
     const onKeyDown = (event: KeyboardEvent) => {
+      if (event.ctrlKey || event.metaKey || event.altKey) return;
       event.preventDefault(); event.stopImmediatePropagation();
       if (event.key === 'Escape') { setRecording(null); return; }
       if (!isLocalBattleAssignableKey(event.key) || event.repeat) return;
@@ -49,12 +50,10 @@ export function TimerBattleKeyBindings({ language, keys, onChange }: { language:
 }
 export function TimerBattleSettings({ language, layout, onClose, keys, onKeyChange, precision, inspection, hold, preview, hideTime, syncStart, source, devices, children, onReset }: TimerBattleSettingsProps) {
   const copy = COPY[language];
-  const [confirmReset, setConfirmReset] = useState(false);
   const [resetting, setResetting] = useState(false);
   return <TimerRoomDialog className="timer-battle-settings-dialog" title={copy.settings} language={language} onClose={onClose}>
     <div className="timer-battle-settings">
       {layout && <TimerBattleLayoutControls {...layout} language={language} autoOrientation={false} />}
-      {source}
       {precision && <label>{copy.precision}<select value={precision.value} onChange={(event) => precision.onChange(Number(event.target.value))}>{(precision.options ?? [0, 1, 2, 3]).map((value) => <option value={value} key={value}>{(10 ** -value).toFixed(value)}s</option>)}</select></label>}
       {inspection && <label>{copy.inspection}<select value={inspection.value} onChange={(event) => inspection.onChange(Number(event.target.value))}>{(inspection.options ?? [0, 15]).map((value) => <option value={value} key={value}>{value === 0 ? copy.off : value === 9999 ? '∞' : `${value}s`}</option>)}</select></label>}
       {hold && <label>{copy.hold}<span>{(hold.value / 1000).toFixed(2)}s</span><input type="range" min={0} max={1000} step={50} value={hold.value} onChange={(event) => hold.onChange(Number(event.target.value))} /></label>}
@@ -63,13 +62,14 @@ export function TimerBattleSettings({ language, layout, onClose, keys, onKeyChan
       {hideTime && <BoolToggle label={copy.hide} {...hideTime} />}
       <TimerBattleKeyBindings language={language} keys={keys} onChange={onKeyChange} />
       {devices}
+      {source}
       {children}
-      {onReset && <button type="button" disabled={resetting} onBlur={() => setConfirmReset(false)} onClick={async () => {
-        if (!confirmReset) { setConfirmReset(true); return; }
+      {onReset && <div className="timer-battle-settings-reset"><p>{copy.resetHint}</p><button type="button" disabled={resetting} onClick={async () => {
+        if (!window.confirm(copy.confirm)) return;
         setResetting(true);
         try { await onReset(); onClose(); } catch { /* Host reports persistence failure. */ }
         finally { setResetting(false); }
-      }}>{confirmReset ? copy.confirm : copy.reset}</button>}
+      }}>{copy.reset}</button></div>}
     </div>
   </TimerRoomDialog>;
 }

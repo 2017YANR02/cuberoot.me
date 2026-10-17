@@ -68,6 +68,7 @@ export function TimerGoalSettings({ value: s, onChange: updateSettings, localize
             <input
               className="settings-row-control-input"
               type="text"
+              aria-label={tr(timerSettingFieldContract('settings.training.target-time').copy)}
               value={targetInput}
               placeholder={tr({ zh: '例：0:10.50（留空关闭）', en: 'e.g. 0:10.50 (blank = off)'
             })}
@@ -89,6 +90,7 @@ export function TimerGoalSettings({ value: s, onChange: updateSettings, localize
               type="number"
               min={0}
               step={1}
+              aria-label={tr(timerSettingFieldContract('settings.training.daily-goal').copy)}
               value={goalInput}
               placeholder={tr({ zh: '例：50（留空 / 0 关闭）', en: 'e.g. 50 (blank / 0 = off)'
             })}
@@ -144,6 +146,7 @@ export function TimerRoundSettings({ value: s, onChange, localize: tr }: Omit<Pr
           <TimerSettingRow field={timerSettingFieldContract('settings.training.round-format')} label={tr(timerSettingFieldContract('settings.training.round-format').copy)}>
             <select
               className="settings-row-control-select"
+              aria-label={tr(timerSettingFieldContract('settings.training.round-format').copy)}
               value={s.round.format}
               onChange={(e) => onChange({ format: e.target.value as RoundFormat })}
             >
@@ -157,6 +160,7 @@ export function TimerRoundSettings({ value: s, onChange, localize: tr }: Omit<Pr
             <input
               className="settings-row-control-input"
               type="text"
+              aria-label={tr(timerSettingFieldContract('settings.training.round-cutoff').copy)}
               value={roundCutoffInput}
               placeholder={tr({ zh: '留空 = 无', en: 'blank = none' })}
               onChange={(e) => setRoundCutoffInput(e.target.value)}
@@ -169,6 +173,7 @@ export function TimerRoundSettings({ value: s, onChange, localize: tr }: Omit<Pr
             <input
               className="settings-row-control-input"
               type="text"
+              aria-label={tr(timerSettingFieldContract('settings.training.round-time-limit').copy)}
               value={roundLimitInput}
               placeholder={tr({ zh: '留空 = 无', en: 'blank = none' })}
               onChange={(e) => setRoundLimitInput(e.target.value)}

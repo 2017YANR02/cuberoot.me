@@ -1,6 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import 'fake-indexeddb/auto';
 
+// This Node harness models storage and reloads, not an embedded browser DOM.
+vi.mock('@/lib/douyin-content', () => ({ isDouyinToolSurface: () => false }));
+
 // 自动备份的触发计数器必须活过刷新。
 //
 // 回归的是一次真实的数据丢失:计数器原本是模块级 `let`,刷新即归零,于是「每

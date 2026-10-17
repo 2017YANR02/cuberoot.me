@@ -6,7 +6,7 @@
   align-items: center;
   justify-content: center;
   padding: 16px;
-  background: color-mix(in srgb, var(--foreground) 70%, transparent);
+  background: var(--modal-overlay, color-mix(in srgb, var(--background) 70%, transparent));
 }
 .timer-modal.settings-modal {
   background: var(--popover);
@@ -161,7 +161,7 @@
   line-height: 1.35;
 }
 .settings-modal .settings-section { margin: 0; color: var(--foreground); font-size: 13px; }
-.settings-section + .settings-modal .settings-section {
+.settings-modal .settings-section + .settings-section {
   margin-top: 18px;
   padding-top: 16px;
   border-top: 1px solid var(--border-default);
@@ -169,6 +169,7 @@
 .settings-section-head {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
   margin-bottom: 6px;
 }
@@ -195,9 +196,17 @@
   align-items: start;
   gap: 6px 22px;
   margin: 0;
-  padding: 2px 0;
+  padding: 8px 0;
 }
 .settings-modal .settings-row-boolean { align-items: center; }
+.settings-modal .settings-row-boolean .settings-row-control { justify-content: flex-end; }
+.settings-modal .settings-row-hint { grid-column: 1 / -1; margin: 0; line-height: 1.5; }
+.settings-modal .settings-section > h3 { margin: 0 0 10px; font-size: 14px; }
+.settings-modal .settings-disclosure { margin-top: 18px; }
+.settings-modal .settings-disclosure > summary { cursor: pointer; padding: 12px 0; font-weight: 600; }
+.settings-modal .settings-disclosure > summary:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.settings-modal .settings-disclosure > p { line-height: 1.6; color: var(--muted-foreground); }
+.settings-modal .settings-row-control > :disabled { opacity: .5; cursor: not-allowed; }
 .settings-modal .settings-row-label {
   padding-top: 5px;
   color: var(--muted-foreground);
@@ -293,8 +302,9 @@
   .settings-modal .settings-row {
     grid-template-columns: minmax(0, 1fr);
     gap: 4px;
-    padding: 0;
+    padding: 8px 0;
   }
+  .settings-modal .settings-row-boolean { grid-template-columns: minmax(0, 1fr) auto; gap: 6px 16px; min-height: 44px; }
   .settings-modal .settings-row-label { padding-top: 0; }
   .settings-modal .settings-row-label:empty { display: none; }
   .settings-modal .settings-row:has(.settings-row-label:empty) { gap: 0; }

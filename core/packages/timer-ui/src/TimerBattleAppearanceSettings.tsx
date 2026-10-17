@@ -13,7 +13,9 @@ export function TimerBattleAppearanceSettings({ language, playerCount, value, on
   const current = useRef(value); current.current = value;
   const versions = useRef([0, 0, 0, 0]);
   useEffect(() => () => { versions.current = versions.current.map(n => n + 1); }, []);
-  return <fieldset className="timer-battle-appearance"><legend>{copy.background}</legend>
+  return <details className="timer-battle-appearance-disclosure">
+    <summary>{copy.background} · {copy.scale}</summary>
+    <fieldset className="timer-battle-appearance" aria-label={copy.background}>
     <label>{copy.scale}<input type="range" min={.5} max={2} step={.1} value={value.scrambleScale} onChange={e => onChange({ scrambleScale: Number(e.target.value) })} /></label>
     {Array.from({ length: playerCount }, (_, id) => <div key={id} className="timer-battle-background-row">
       <span>P{id + 1}</span>
@@ -35,5 +37,6 @@ export function TimerBattleAppearanceSettings({ language, playerCount, value, on
     </div>)}
     <label>{copy.opacity}<span>{value.bgOpacity.toFixed(2)}</span><input type="range" min={.1} max={1} step={.05} value={value.bgOpacity} onChange={e => onChange({ bgOpacity: Number(e.target.value) })} /></label>
     {error && <p role="alert">{error}</p>}
-  </fieldset>;
+    </fieldset>
+  </details>;
 }
