@@ -2366,7 +2366,6 @@ export default function PlayerControls({
   // WASM 路径一次性重建,不逐步 replay,高阶宽转也不卡(逐步 finish 会几百万次 getColor 卡死)。
   const flushPendingScramble = useCallback(() => {
     restoreScramblePreview();
-    setKbVariant(null);
     if (!world || isTwistyMode) return;
     const tw = (world.cube as unknown as CornerCube).twister;
     const scr = setupDraft.trim();
@@ -2496,6 +2495,8 @@ export default function PlayerControls({
         alg={{
           text: algDraft, elementRef: algElRef, spans: algHlSpans, error: algError,
           showOverlay: showAlgOverlay, autoSpace: algAutoSpace, onFocus: flushPendingScramble,
+          // Virtual-key presses refocus this textarea; only a direct click closes the keyboard.
+          onClick: () => setKbVariant(null),
           onChange: (text) => { setAlgDraft(text); onAlgChange(text); },
           onCaretChange: handleCaretSync,
         }}
