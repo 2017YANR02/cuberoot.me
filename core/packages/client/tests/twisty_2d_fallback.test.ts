@@ -511,10 +511,13 @@ describe('TwistySection without WebGL', () => {
     await mountNative(spec, { externalControls: true, hideControls });
     const player = host.querySelector('.twisty-container')!.firstElementChild as HTMLElement & {
       controlPanel: string;
+      timestamp: number;
     };
     expect(probe.construct).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
       controlPanel: 'none', background: 'none',
     }));
+    expect(probe.construct.mock.calls[0][0]).not.toHaveProperty('timestamp');
+    expect(player.timestamp).toBe(0);
     expect(player.controlPanel).toBe('none');
     expect(player.style.colorScheme).toBe('');
     expect(host.querySelector('.recon-play-overlay')).toBeNull();
