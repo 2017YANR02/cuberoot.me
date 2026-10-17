@@ -1,6 +1,8 @@
 /** Canonical report content for DOM and native renderers. Keep labels, ordering,
  * visibility and action payloads here; adapters only draw nodes and execute effects. */
 import type { Solve } from '@cuberoot/shared/timer';
+import { TRAINING_START_MODE_COPY } from '@cuberoot/shared/timer';
+import type { trainingRepetitionMetrics, trainingCaseStatistics } from './report-presentation';
 import { effectiveMs } from '@cuberoot/shared/timer/types';
 import { formatMs } from '@cuberoot/shared/timer/stats';
 import { timerEventNxnSize } from '@cuberoot/shared/timer/event-catalog';
@@ -64,6 +66,43 @@ export function reportSummary(solve:Solve,summary:{stm:number;tps:number;fluency
     cell('fluency',tr({zh:'流畅',en:'Fluency'}),summary.fluency==null?'–':`${summary.fluency}%`),
     date&&{...cell('date',tr({zh:'日期',en:'Date'}),date.short),title:date.full},
   ],'rc-summary','flow'),tag:'dl' as const};
+}
+
+export function reportTrainingSummary(solve: Solve,
+  metrics: NonNullable<ReturnType<typeof trainingRepetitionMetrics>>,
+  statistics: ReturnType<typeof trainingCaseStatistics>, tr: ReconstructLocalize): ReportNode {
+  const metric = (id: string, label: string, ms: number) => groupNode(id, [
+    { ...textNode(id + '-label', label, 'rc-summary-label'), tag: 'dt' },
+    { ...textNode(id + '-value', `${sec(ms)} s`, 'rc-summary-big'), tag: 'dd' },
+  ], 'rc-summary-cell');
+  const delta = statistics && solve.penalty === 'ok' ? metrics.executionMs - statistics.executionMs : null;
+  return groupNode('training-summary', [
+    groupNode('training-identity', [
+      Boolean(solve.caseId) && textNode('case', solve.caseId!, 'rc-training-case'),
+      textNode('mode', tr(TRAINING_START_MODE_COPY[solve.trainingStartMode ?? 'first-turn']), 'rc-summary-label'),
+      solve.penalty !== 'ok' && textNode('penalty', solve.penalty, 'rc-summary-pen'),
+    ], 'rc-training-identity', 'row'),
+    { ...groupNode('training-times', [
+      metric('observation', tr({ zh: '观察', en: 'Observation' }), metrics.observationMs),
+      metric('execution', tr({ zh: '执行', en: 'Execution' }), metrics.executionMs),
+      metric('total', tr({ zh: '总时间', en: 'Total' }), metrics.totalMs),
+    ], 'rc-summary rc-training-times'), tag: 'dl' },
+    textNode('definition', tr({ zh: '观察包含起手 U 调整，执行从公式主体开始。', en: 'Observation includes leading U adjustments; execution begins with the algorithm.' }), 'rc-training-note'),
+    statistics ? groupNode('case-statistics', [
+      textNode('sample', tr({ zh: `同情况 · 同计时方式 · 此前最近 ${statistics.count} 次`, en: `Same case and timing mode · ${statistics.count} previous attempts` }), 'rc-training-note'),
+      { ...groupNode('case-means', [
+        metric('observation-mean', tr({ zh: '观察均值', en: 'Mean observation' }), statistics.observationMs),
+        metric('execution-mean', tr({ zh: '执行均值', en: 'Mean execution' }), statistics.executionMs),
+        metric('execution-best', tr({ zh: '执行最佳', en: 'Best execution' }), statistics.bestExecutionMs),
+      ], 'rc-summary rc-training-history'), tag: 'dl' },
+      delta !== null && textNode('comparison', delta === 0
+        ? tr({ zh: '本次执行与近期均值相同', en: 'Execution matches your recent mean' })
+        : delta < 0 ? tr({ zh: `本次执行快 ${sec(-delta)} s`, en: `Execution is ${sec(-delta)} s faster` })
+          : tr({ zh: `本次执行慢 ${sec(delta)} s`, en: `Execution is ${sec(delta)} s slower` }), 'rc-training-note'),
+    ], 'rc-training-statistics') : textNode('no-history', solve.caseId
+      ? tr({ zh: '暂无同情况、同计时方式的历史记录', en: 'No previous attempts for this case and timing mode' })
+      : tr({ zh: '此记录没有情况标识，暂不进行同情况对比', en: 'This attempt has no case identity for comparison' }), 'rc-training-note'),
+  ], 'rc-training-summary');
 }
 export function reportStepTable(cols:Col[],sequences:Map<string,string[]>,rotations:number[]|null,reference:ReferenceResult|null,method:MethodId,state:ReportUIState,tr:ReconstructLocalize,hideBar=false) {
   if(!cols.length)return null;
@@ -135,13 +174,14 @@ export interface ReportCompositionInput {
   solve:Solve; recon:ReconTextResult|null; analysis:AnalysisSnapshot|null; hasAnalysis:boolean; scoreable:boolean;
   state:ReportUIState; tr:ReconstructLocalize; hideActions?:boolean; hasTable:boolean; hasMeta:boolean;
   autoMemoMs:number|null; hasBldMemo:boolean;
+  trainingSummary?: boolean;
 }
 /** Composition is shared too. Slots refer to shared content builders or platform drawing. */
 export function reportComposition(input:ReportCompositionInput):ReportNode {
   const {solve,recon,analysis,hasAnalysis,scoreable,state,tr}=input;
   const slot=(id:string):ReportNode=>({id,kind:'slot'});
   const disclosure=(id:string,title:string,children:(ReportNode|null|false)[]):ReportNode=>({...groupNode(id,children,'reconstruct-section reconstruct-section-collapsible'),kind:'disclosure',text:title,selected:!!state.expanded[id],action:{type:'disclosure',key:id}});
-  return groupNode('report',[
+  const report = groupNode('report',[
     slot('summary'),!input.hideActions&&slot('actions'),
     Boolean(solve.scramble?.trim())&&!recon?.lines.length&&groupNode('scramble',[textNode('label',tr({zh:'打乱',en:'Scramble'}),'rc-scramble-label'),textNode('text',solve.scramble,'rc-scramble-text')],'rc-scramble'),
     input.autoMemoMs!=null&&slot('auto-memo'),input.hasBldMemo&&slot('bld-memo'),solve.bld?.memoMs!=null&&slot('memo-bar'),
@@ -154,6 +194,12 @@ export function reportComposition(input:ReportCompositionInput):ReportNode {
     ]),
     disclosure('raw',tr({zh:`动作序列 (${solve.moves?.length??0})`,en:`Move stream (${solve.moves?.length??0})`}),[slot('raw-list')]),
   ],'rc-report');
+  if (input.trainingSummary) report.children = [
+    slot('training-summary'), ...(!input.hideActions ? [slot('actions')] : []),
+    disclosure('training-details', tr({ zh: '解法回放与分段分析', en: 'Replay and stage analysis' }),
+      report.children!.filter(node => node.id !== 'actions')),
+  ];
+  return report;
 }
 export function resolveReportSlots(node:ReportNode,slots:Record<string,ReportNode|null>):ReportNode|null {
   if(node.kind==='slot'&&Object.hasOwn(slots,node.id))return slots[node.id];

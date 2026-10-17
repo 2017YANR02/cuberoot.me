@@ -47,10 +47,10 @@ import { createLiveReconstructionStream, reconstructionAnalyzer } from './analys
 import type { AnalysisInput, AnalysisSnapshot } from './analysis-protocol';
 import StepAnalysis from './StepAnalysis';
 import ReportContent from './ReportContent';
-import { reportComposition, reportNotationExtras, reportSummary, reportRawMoves, reportReferences, reportMeta, reportBld, initialReportUI, reduceReportUI, resolveReportSlots } from './report-content';
+import { reportComposition, reportNotationExtras, reportSummary, reportTrainingSummary, reportRawMoves, reportReferences, reportMeta, reportBld, initialReportUI, reduceReportUI, resolveReportSlots } from './report-content';
 import { rememberMethodStages, useMethodHistory } from './method-history';
 import StepMoveList from './StepMoveList';
-import { reconstructionSummary } from './report-presentation';
+import { reconstructionSummary, trainingRepetitionMetrics, trainingCaseHistory, trainingCaseStatistics } from './report-presentation';
 import ReconstructActions from './ReconstructActions';
 
 import { memoize3bld } from '@cuberoot/shared/timer/reconstruct/bld-helper';
@@ -121,6 +121,18 @@ function ReconstructReportBody({
     live && liveGyroSamples ? liveGyroSamples.slice() : undefined),
   [solve.scramble, moves, solve.timeMs, solve.gyro, solve.device?.model, method, isZh, live, liveGyroSamples]);
   const { view, stageSegs, stepMx, slots } = prepared;
+  const trainingMetrics = useMemo(() => !live ? trainingRepetitionMetrics(solve, view.moves) : null,
+    [live, solve, view.moves]);
+  const trainingStatistics = useMemo(() => {
+    if (!trainingMetrics) return null;
+    const samples = trainingCaseHistory(history ?? [], solve).flatMap(item => {
+      const itemMethod = detectSolveMethod(item.scramble, item.moves ?? [], item.timeMs);
+      const itemView = prepareReconstruction(item, itemMethod, 'en').view;
+      const metrics = trainingRepetitionMetrics(item, itemView.moves);
+      return metrics ? [metrics] : [];
+    });
+    return trainingCaseStatistics(samples);
+  }, [history, solve, trainingMetrics]);
   // Wasted-work detection (state revisits — see error_detect.ts). Gated the
   // same way: the walker models a 3x3.
   const waste = useMemo(
@@ -325,8 +337,9 @@ function ReconstructReportBody({
 
   const extras=reportNotationExtras(solve,playbackRecon,initialReportUI(solve.reconOk),tr,{recordGyro:host.recordGyro,canEnableGyro:Boolean(host.onEnableGyro),canFeedback:Boolean(onReconFeedback)});
   const composition=reportComposition({solve,recon:reconText,analysis:analysis??null,hasAnalysis:Boolean(analysisInput),scoreable,state:reportUI,tr,
-    hideActions,hasTable:Boolean(stageSegs||walk),hasMeta:false,autoMemoMs,hasBldMemo:Boolean(bldMemo)});
+    hideActions,hasTable:Boolean(stageSegs||walk),hasMeta:false,autoMemoMs,hasBldMemo:Boolean(bldMemo),trainingSummary:Boolean(trainingMetrics)});
   const document=resolveReportSlots(composition,{
+    'training-summary':trainingMetrics ? reportTrainingSummary(solve,trainingMetrics,trainingStatistics,tr) : null,
     summary:reportSummary(solve,{stm:stmCount,tps:stmTps,fluency},tr,hideDate?undefined:{short:dt.toLocaleDateString(),full:dt.toLocaleString()}),
     'raw-list':reportRawMoves(solve,wastedIdx,tr),
     'reference-list':analysis?.reference?reportReferences(analysis.reference,tr):null,
