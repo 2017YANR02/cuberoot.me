@@ -21,10 +21,12 @@ export function caseImageBatch(options: FromCasesOptions): CaseImageBatch {
   return {
     filename: options.filename,
     groups: options.cases.map((c, index) => {
+      const requestedOri = options.oriOf?.(c) ?? 0;
+      const currentOri = requestedOri >= 0 && requestedOri < c.algs.length ? requestedOri : 0;
       const rows = (allOris: boolean) => algSheetFromCases({
-        ...options, cases: [c], allOris, thumbs: true, maxAlgs: 0,
+        ...options, cases: [c], oriOf: () => currentOri, allOris: allOris && c.algs.length > 0, thumbs: true, maxAlgs: 0,
       }).cases.map((row, oi) => ({
-        name: `${options.puzzle}-${options.set}-${c.name}${allOris ? `-ori-${oi + 1}` : ''}`,
+        name: `${options.puzzle}-${options.set}-${c.name}${c.algs.length > 1 ? `-ori-${allOris ? oi + 1 : currentOri + 1}` : ''}`,
         input: row.thumb!,
       }));
       return { id: String(index), label: options.caseLabel?.(c) ?? c.name, current: rows(false), all: rows(true) };
