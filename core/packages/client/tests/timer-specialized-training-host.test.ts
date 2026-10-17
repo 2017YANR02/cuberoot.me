@@ -63,10 +63,13 @@ it('keeps hosted blindfold modes separate instead of recording everything as tim
   }
 });
 
-it('selects the active SQ1 tool from the hosted path', async () => {
+it('leaves SQ1 navigation to the timer while retaining it on standalone reference pages', async () => {
   navigation.pathname = '/zh/timer';
   await act(async () => root.render(hosted('/alg/sq1/inspect', createElement(Sq1ToolNav))));
-  expect(container.querySelector('[aria-current="page"]')!.getAttribute('href')).toBe('/zh/alg/sq1/inspect');
+  expect(container.querySelector('nav')).toBeNull();
   await act(async () => root.render(hosted('/sq1/cs/name/train', createElement(Sq1ToolNav))));
-  expect(container.querySelector('[aria-current="page"]')!.getAttribute('href')).toBe('/zh/sq1/cs/name');
+  expect(container.querySelector('nav')).toBeNull();
+  navigation.pathname = '/zh/alg/sq1/inspect';
+  await act(async () => root.render(createElement(Sq1ToolNav)));
+  expect(container.querySelector('[aria-current="page"]')!.getAttribute('href')).toBe('/zh/alg/sq1/inspect');
 });

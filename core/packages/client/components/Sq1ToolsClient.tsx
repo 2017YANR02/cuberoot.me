@@ -7,6 +7,7 @@ import { Sq1Importer, Sq1Inspector, Sq1Visualizer } from '@/components/Sq1InputT
 import { Sq1CountPositions, Sq1ParityGame, Sq1ShapeTrainer } from '@/components/Sq1PracticeTools';
 import Sq1ToolNav from '@/components/Sq1ToolNav';
 import { tr } from '@/i18n/tr';
+import { useTrainingHost } from '@/lib/training-host';
 import styles from './Sq1Tools.module.css';
 
 const Sq1PblFinder = dynamic(() => import('@/components/Sq1PblFinder'));
@@ -49,15 +50,16 @@ const TOOL_TEXT = {
 } as const;
 
 export default function Sq1ToolsClient({ tool }: { tool: Sq1Tool }) {
+  const host = useTrainingHost();
   const text = TOOL_TEXT[tool];
   return (
     <main className={styles.page}>
       <header className={styles.header}>
-        <div className="page-back-row"><BackHome /></div>
+        {!host && <div className="page-back-row"><BackHome /></div>}
         <h1 className={styles.title}>{tr(text.title)}</h1>
         <p className={styles.intro}>{tr(text.intro)}</p>
       </header>
-      <div className={styles.navRow}><Sq1ToolNav contained /></div>
+      {!host && <div className={styles.navRow}><Sq1ToolNav contained /></div>}
       <div className={styles.content}>
         {tool === 'inspect' && <Sq1Inspector />}
         {tool === 'visualize' && <Sq1Visualizer />}

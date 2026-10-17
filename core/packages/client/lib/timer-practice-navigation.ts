@@ -124,7 +124,7 @@ export function timerPracticeContents(event: string): readonly TimerPracticeCont
   const solveEvent = timerEvent === 'eg1' || timerEvent === 'eg2' ? '222'
     : TIMER_333_SCRAMBLE_TYPES.some(type => type.event === timerEvent) ? '333' : timerEvent;
   return [{
-    id: 'solve', title: { zh: '完整', en: 'Full solve' },
+    id: 'solve', title: { zh: '完整还原', en: 'Full solve' },
     timer: { event: solveEvent, ...(solveEvent === '222' ? { type222: 'full' as const } : {}) },
   }, ...formulas, ...randomOnly, ...tools];
 }

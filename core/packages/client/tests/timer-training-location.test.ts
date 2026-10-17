@@ -111,7 +111,7 @@ describe('practice menu availability and transitions', () => {
   }
   async function choosePractice(value: 'memo' | 'action') {
     await act(async () => trigger('练习方式', 'Practice method').click());
-    await act(async () => option(value === 'memo' ? '记忆' : '训练', value === 'memo' ? 'Recall' : 'Training').click());
+    await act(async () => option(value === 'memo' ? '记忆' : '实操', value === 'memo' ? 'Recall' : 'Execution').click());
     await vi.waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
     return onUrlUpdate.mock.lastCall![0].searchParams;
   }
@@ -127,7 +127,7 @@ describe('practice menu availability and transitions', () => {
     await renderMenu(null);
     await act(async () => trigger('练习方式', 'Practice method').click());
     expect([...document.querySelectorAll('[role="option"]')].map(item => item.textContent)).toEqual([
-      label('训练', 'Training'), label('识别', 'Recognition'), label('记忆', 'Recall'),
+      label('实操', 'Execution'), label('识别', 'Recognition'), label('记忆', 'Recall'),
     ]);
     await renderMenu('/alg/2x2/eg1/select', { event: 'eg1' });
     await act(async () => trigger('练习方式', 'Practice method').click());
@@ -458,15 +458,15 @@ describe('training host hooks and links', () => {
     expect(container.querySelector('.pp-popup .cubing-icon')).toBeNull();
     expect(container.querySelector('.pp-popup')?.textContent).not.toContain('Ortega');
     const timer = [...container.querySelectorAll<HTMLButtonElement>('.pp-item')]
-      .find(item => item.textContent === tr({ zh: '完整', en: 'Full solve' }))!;
+      .find(item => item.textContent === tr({ zh: '完整还原', en: 'Full solve' }))!;
     await act(async () => timer.click());
     await vi.waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
     const update = onUrlUpdate.mock.lastCall![0];
     expect(update.searchParams.toString()).toBe('event=333&players=2&room=timer-room&share=timer-share&trainingOrg=school&trainingAssignment=homework');
     expect(update.options.history).toBe('push');
-    expect(trigger.textContent).toBe(tr({ zh: '完整', en: 'Full solve' }));
+    expect(trigger.textContent).toBe(tr({ zh: '完整还原', en: 'Full solve' }));
     await act(async () => trigger.click());
-    expect(container.querySelector('.pp-item[aria-current="page"]')?.textContent).toBe(tr({ zh: '完整', en: 'Full solve' }));
+    expect(container.querySelector('.pp-item[aria-current="page"]')?.textContent).toBe(tr({ zh: '完整还原', en: 'Full solve' }));
     expect(container.querySelector('.pp-item[aria-current="page"] .pp-item-check')).not.toBeNull();
   });
 
