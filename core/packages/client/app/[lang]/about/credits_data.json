@@ -794,6 +794,12 @@
     "long_en": "professional speedcubing timer & WCA random-state scramble engine; also vendored at tools/cstimer-scramble/ to power non-WCA puzzle generation (gear/ivy/dino/sq2/giga/pyracrystal/heli/curvycopter/cuboids/15-puzzle/bicube/siamese cubes/...) via classic Web Worker bridge; for a few puzzles whose state space is too large for a full BFS/table, cstimer's own solver is wrapped directly as the SOLVING engine in /scramble/solver (Dino = redi IDA*, Master Pyraminx = two-phase, Square-1 = sq12phase two-phase); cstimer's megascramble model + poly3dlib geometry (makePuzzle) are also used as the bit-exact piece-model oracle when building from-scratch reductions (e.g. the Helicopter Cube and the Siamese 2×2×2 solvers)"
   },
   {
+    "name": "poliva/smartcube-web-bluetooth",
+    "url": "https://github.com/poliva/smartcube-web-bluetooth",
+    "zh": "全端共享的 MoYu32 地址发现参考其 MY32/MY33 有限候选探测设计；候选经加密状态校验后使用",
+    "en": "Reference for shared MoYu32 MY32/MY33 finite MAC candidate probing across clients; candidates are verified with encrypted state replies"
+  },
+  {
     "name": "mintydev789/RecordRanks",
     "url": "https://github.com/mintydev789/RecordRanks",
     "zh": "比赛管理、现场成绩、排名与纪录系统;独立实例嵌入 /contests",

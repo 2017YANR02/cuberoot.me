@@ -108,7 +108,7 @@ final class WatchCubeConnection: NSObject, ObservableObject, CBCentralManagerDel
         guard scanWanted, central.state == .poweredOn else { return }
         phase = "scanning"
         scanDeadline = Date().addingTimeInterval(20)
-        central.scanForPeripherals(withServices: nil, options: [CBCentralManagerScanOptionAllowDuplicatesKey: false])
+        central.scanForPeripherals(withServices: nil, options: [CBCentralManagerScanOptionAllowDuplicatesKey: true])
     }
     func select(_ id: UUID) {
         guard let selected = peripherals[id], peripheral == nil, phase != "connecting" else { return }
@@ -215,6 +215,11 @@ final class WatchCubeConnection: NSObject, ObservableObject, CBCentralManagerDel
             for event in events {
                 switch event["kind"] as? String {
                 case "native": native(event)
+                case "verified-mac":
+                    if let mac = event["mac"] as? String {
+                        suppliedMac = mac
+                        UserDefaults.standard.set(mac, forKey: "cubeMac." + selectedDeviceID)
+                    }
                 case "connection":
                     phase = event["phase"] as? String ?? "error"
                     if let name = event["name"] as? String { self.name = name }
@@ -367,7 +372,9 @@ final class WatchCubeConnection: NSObject, ObservableObject, CBCentralManagerDel
         guard let json = try? JSONSerialization.data(withJSONObject: [name]),
               (try? evaluate("WatchCube.supportsDevice(\(String(decoding: json, as: UTF8.self))[0])")) == "true" else { return }
         peripherals[peripheral.identifier] = peripheral
-        advertisements[peripheral.identifier] = advertisementData[CBAdvertisementDataManufacturerDataKey] as? Data
+        if let data = advertisementData[CBAdvertisementDataManufacturerDataKey] as? Data, data.count >= 8 {
+            advertisements[peripheral.identifier] = data
+        }
         if !devices.contains(where: { $0.id == peripheral.identifier }) { devices.append(Device(id: peripheral.identifier, name: name)) }
     }
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {

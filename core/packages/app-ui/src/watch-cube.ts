@@ -150,7 +150,8 @@ export function createWatchCubeBridge() {
     if (!supportsDevice(deviceName)) { emit({ kind: 'connection', phase: 'error', message: 'Unsupported smart cube' }); return; }
     deviceModel = model!;
     emit({ kind: 'connection', phase: 'connecting', name: device.name });
-    const callbacks: Omit<GanV4CubeCallbacks, 'onMove' | 'onStatus'> & { onMove(move: string, timestamp?: number, metadata?: { delayed?: boolean; estimatedTime?: boolean; futureHistory?: boolean }): void; onStatus(status: GanCubeStatus | Moyu32CubeStatus | QiyiCubeStatus): void } = {
+    const callbacks: Omit<GanV4CubeCallbacks, 'onMove' | 'onStatus'> & { onVerifiedMac?(mac: string): void; onMove(move: string, timestamp?: number, metadata?: { delayed?: boolean; estimatedTime?: boolean; futureHistory?: boolean }): void; onStatus(status: GanCubeStatus | Moyu32CubeStatus | QiyiCubeStatus): void } = {
+      onVerifiedMac: mac => { if (current()) emit({ kind: 'verified-mac', mac }); },
       onNeedMac: async name => {
         const value = await request('needMac', { name, device: device.id });
         return typeof value === 'string' ? normalizeMac(value) : null;

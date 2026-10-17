@@ -146,7 +146,7 @@ export class NativeBleTransport implements BleTransport {
       }, (result) => {
         if (result.device.deviceId !== selected.id) return;
         const captured = copyManufacturerData(result.manufacturerData);
-        if (captured) finish(captured);
+        if (captured && [...captured.values()].some(payload => payload.length >= 6)) finish(captured);
       }).then(() => {
         if (!settled) timer = setTimeout(() => finish(undefined), ADVERTISEMENT_CAPTURE_TIMEOUT_MS);
       }).catch(() => finish(undefined));

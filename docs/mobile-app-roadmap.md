@@ -1766,3 +1766,14 @@ Series 8 的 11.524 秒/66 动作记录真机分析完成，无错误，七段�
 重启恢复七段缓存，回调 CPU 约 0.483 ms（不是 App 启动耗时）。手机配套版已安装。
 详细清单与尚未验收的分享/反馈往返、复杂参考预算等边界见 `apple-watch-replay-parity-audit.md`；
 不把该结果当作所有平台、所有方法或所有 UI 交互已完全一致。
+
+### 2026-10-17：全端共享 MoYu32 地址发现（本地实现，实体魔方待验）
+
+- 唯一策略在 `shared/smart_cube/moyu32.ts`：原生真实地址、广播 manufacturer payload 尾部六字节逆序、已验证缓存，随后 MY32 的 `00/01/02` 或 MY33 的 `02/01/00` 前缀候选，最后手动输入。候选源参考 [csTimer](https://github.com/cs0x7f/cstimer/blob/master/src/js/hardware/moyu32cube.js) 和 [poliva](https://github.com/poliva/smartcube-web-bluetooth/blob/main/src/smartcube/attachment/mac-candidates.ts)，致谢登记在 canonical credits。
+- 地址只作为待验证提示：复用现有 AES 发状态请求，收到可解密且通过完整 cubie 合法性检查的状态才接受。每个候选最多等待两秒，并重发一次状态请求；探测不输出计时动作，不执行校准/重置。超时、断线和取消清理临时订阅；错误缓存不会阻止后续候选和手输。
+- Web 恢复 MoYu 广播观察，允许 CIC 0（明确识别为 Chromium <130 时保留兼容排除），支持标准 manufacturer map 和 Bluefy 原始段。Apple 平台仍以 UUID 连接，广播中携带的协议地址不等于系统 API 暴露硬件 MAC。
+- Android/iOS、Windows/macOS、HarmonyOS NEXT 共用 app-ui 的同一协商入口，Apple Watch 同样复用；微信/抖音通过现有 encrypted-ble adapter 接入同一 shared 协商。缓存分别由 Web/App localStorage、Watch UserDefaults、小程序 storage 按设备身份持久化，每次重连仍验证。
+- Watch 扫描允许后续广播补齐 manufacturer data；iOS 扫描不再用不足六字节的首包结束地址捕获。没有额外的 iPhone 依赖。
+- 本轮只提交本地代码。自动化/构建证据与 MoYu 实物连接、连续转动和自动计时验收分开记录；尚未覆盖安装、推送或发布，也不宣称各端 MoYu32 真机已通过。
+
+验证：shared 构建、Client/app-ui/Mobile 类型检查、MoYu 地址探测与 Watch/安装端协议回归、Web 蓝牙回归、Mobile 广播 adapter 回归、小程序检查及微信/抖音构建通过；Watch watchOS 未签名构建通过。Watch 模拟 MY33 握手无需 iPhone 或手输即可发布已验证缓存与 connected，尚未替代实体魔方验收。

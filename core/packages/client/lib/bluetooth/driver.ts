@@ -69,6 +69,7 @@ declare global {
   }
 
   interface BluetoothManufacturerData {
+    values?(): IterableIterator<DataView>;
     has(companyIdentifier: number): boolean;
     get(companyIdentifier: number): DataView | undefined;
   }

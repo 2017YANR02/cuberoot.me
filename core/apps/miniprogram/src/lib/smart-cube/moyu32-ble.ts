@@ -1,3 +1,5 @@
+import { tr } from '../i18n';
+import { resolveMoyu32Address, moyu32AdvertisementMac } from '@cuberoot/shared/smart-cube/moyu32';
 import { createDeviceStateReset } from '@cuberoot/shared/smart-cube/device-reset';
 import { miniProgramApi } from '../platform';
 import {
@@ -15,21 +17,18 @@ import {
   MOYU32_NOTIFY_CHARACTERISTIC_UUID,
   MOYU32_SERVICE_UUID,
   MOYU32_WRITE_CHARACTERISTIC_UUID,
-  moyu32DefaultMac,
 } from '@cuberoot/shared/smart-cube/moyu32';
 import type { BleAbortSignal, DiscoveredDevice, MiniProgramBleApi } from './ble-api';
 import {
   connectEncryptedBle,
-  extractBleMacFromAdvertisement,
-  normalizeBleMac,
   type EncryptedBleConnection,
 } from './encrypted-ble';
 
-const MOYU32_COMPANY_IDS = Array.from({ length: 255 }, (_value, index) => (index + 1) << 8);
 
 export type Moyu32BleConnection = EncryptedBleConnection & { resetDeviceState(): Promise<void> };
 export interface ConnectMoyu32Options {
   api?: MiniProgramBleApi;
+  requestMac?(): Promise<string | null>;
   device?: DiscoveredDevice;
   signal?: BleAbortSignal;
   onBattery?(level: number): void;
@@ -62,16 +61,28 @@ export async function connectMoyu32(options: ConnectMoyu32Options = {}): Promise
     notifyCharacteristicUuid: MOYU32_NOTIFY_CHARACTERISTIC_UUID,
     characteristicUuid: MOYU32_WRITE_CHARACTERISTIC_UUID,
     matches: (device) => matchesMoyu32Name(device.name) || matchesMoyu32Name(device.localName),
-    resolveMac: (device) => {
-      const deviceMac = normalizeBleMac(device.deviceId);
-      if (deviceMac) return { source: 'device-id', value: deviceMac };
-      const advertised = extractBleMacFromAdvertisement(device.advertisData, {
-        companyIds: MOYU32_COMPANY_IDS,
-        layout: 'last6-reversed',
+    negotiateMac: (device, io) => {
+      const key = 'cuberoot.moyu32.mac.' + device.deviceId;
+      let cached: string | null = null;
+      try { cached = miniProgramApi().getStorageSync(key) || null; } catch { /* unavailable in test hosts */ }
+      const raw = device.advertisData && new Uint8Array(device.advertisData);
+      return resolveMoyu32Address({
+        id: device.deviceId, name: device.name || device.localName || '',
+        hints: [device.deviceId, raw && raw.length >= 8 ? moyu32AdvertisementMac(raw.subarray(2)) : null, cached],
+        io,
+        onVerified: mac => { try { miniProgramApi().setStorageSync(key, mac); } catch { /* optional persistence */ } },
+        requestMac: options.requestMac ?? (() => new Promise(resolve => {
+          try {
+            miniProgramApi().removeStorageSync(key);
+            miniProgramApi().showModal({
+              title: tr({ en: 'Cube Bluetooth MAC', zh: '魔方蓝牙 MAC 地址' }),
+              editable: true, placeholderText: 'CF:30:16:00:12:34',
+              success: result => resolve(result.confirm ? result.content ?? null : null),
+              fail: () => resolve(null),
+            });
+          } catch { resolve(null); }
+        })),
       });
-      if (advertised) return { source: 'manufacturer-data', value: advertised };
-      const named = moyu32DefaultMac(device.name) ?? moyu32DefaultMac(device.localName);
-      return named ? { source: 'device-name-default', value: named } : null;
     },
     createCipher: (mac) => {
       return createMoyu32Cipher(mac);
