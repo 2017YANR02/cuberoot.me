@@ -227,6 +227,9 @@ describe('sim playback across active cube changes', () => {
     }));
     await act(async () => setPuzzle('sphere'));
     expect(sphere.complete).toBe(true);
+    expect(button('Play').disabled).toBe(true);
+    expect(button('Step forward').disabled).toBe(true);
+    expect(host.querySelector<HTMLInputElement>('.playback-scrubber')!.disabled).toBe(true);
     vi.useFakeTimers();
     await act(async () => button('Play').click());
     await act(async () => button('Step forward').click());
@@ -234,6 +237,7 @@ describe('sim playback across active cube changes', () => {
     expect(sphere.complete).toBe(true);
     expect(button('Play')).not.toBeNull();
     await act(async () => release());
+    expect(button('Step forward').disabled).toBe(false);
     expectState('R');
     await act(async () => button('Step forward').click());
     expectState('R U');
