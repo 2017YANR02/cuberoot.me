@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { AlgCase } from '@cuberoot/shared';
+import type { AlgCase } from '@cuberoot/shared/alg';
 import { caseImageBatch, imageFilename } from '@/lib/alg-case-images';
 import { algCaseSvg } from '@/lib/alg_pdf/case_svg';
 import { caseViewSetup, oriAdjustSetup } from '@/lib/alg_display';
