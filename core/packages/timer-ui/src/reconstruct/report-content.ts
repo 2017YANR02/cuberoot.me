@@ -1,7 +1,6 @@
 /** Canonical report content for DOM and native renderers. Keep labels, ordering,
  * visibility and action payloads here; adapters only draw nodes and execute effects. */
 import type { Solve } from '@cuberoot/shared/timer';
-import { TRAINING_START_MODE_COPY } from '@cuberoot/shared/timer/training-settings';
 import type { trainingRepetitionMetrics, trainingCaseStatistics } from './report-presentation';
 import { effectiveMs } from '@cuberoot/shared/timer/types';
 import { formatMs } from '@cuberoot/shared/timer/stats';
@@ -77,9 +76,8 @@ export function reportTrainingSummary(solve: Solve,
   ], 'rc-summary-cell');
   const delta = statistics && solve.penalty === 'ok' ? metrics.executionMs - statistics.executionMs : null;
   return groupNode('training-summary', [
-    groupNode('training-identity', [
+    (Boolean(solve.caseId) || solve.penalty !== 'ok') && groupNode('training-identity', [
       Boolean(solve.caseId) && textNode('case', solve.caseId!, 'rc-training-case'),
-      textNode('mode', tr(TRAINING_START_MODE_COPY[solve.trainingStartMode ?? 'first-turn']), 'rc-summary-label'),
       solve.penalty !== 'ok' && textNode('penalty', solve.penalty, 'rc-summary-pen'),
     ], 'rc-training-identity', 'row'),
     { ...groupNode('training-times', [
@@ -87,7 +85,6 @@ export function reportTrainingSummary(solve: Solve,
       metric('execution', tr({ zh: '执行', en: 'Execution' }), metrics.executionMs),
       metric('total', tr({ zh: '总时间', en: 'Total' }), metrics.totalMs),
     ], 'rc-summary rc-training-times'), tag: 'dl' },
-    textNode('definition', tr({ zh: '观察包含起手 U 调整，执行从公式主体开始。', en: 'Observation includes leading U adjustments; execution begins with the algorithm.' }), 'rc-training-note'),
     statistics ? groupNode('case-statistics', [
       textNode('sample', tr({ zh: `同情况 · 同计时方式 · 此前最近 ${statistics.count} 次`, en: `Same case and timing mode · ${statistics.count} previous attempts` }), 'rc-training-note'),
       { ...groupNode('case-means', [
@@ -99,9 +96,7 @@ export function reportTrainingSummary(solve: Solve,
         ? tr({ zh: '本次执行与近期均值相同', en: 'Execution matches your recent mean' })
         : delta < 0 ? tr({ zh: `本次执行快 ${sec(-delta)} s`, en: `Execution is ${sec(-delta)} s faster` })
           : tr({ zh: `本次执行慢 ${sec(delta)} s`, en: `Execution is ${sec(delta)} s slower` }), 'rc-training-note'),
-    ], 'rc-training-statistics') : textNode('no-history', solve.caseId
-      ? tr({ zh: '暂无同情况、同计时方式的历史记录', en: 'No previous attempts for this case and timing mode' })
-      : tr({ zh: '此记录没有情况标识，暂不进行同情况对比', en: 'This attempt has no case identity for comparison' }), 'rc-training-note'),
+    ], 'rc-training-statistics') : null,
   ], 'rc-training-summary');
 }
 export function reportStepTable(cols:Col[],sequences:Map<string,string[]>,rotations:number[]|null,reference:ReferenceResult|null,method:MethodId,state:ReportUIState,tr:ReconstructLocalize,hideBar=false) {

@@ -961,7 +961,8 @@ button.stl-track:focus-visible { outline: 2px solid var(--ring); outline-offset:
 .rc-training-identity { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; }
 .rc-training-case { font-weight: 600; overflow-wrap: anywhere; }
 .rc-training-times.rc-summary, .rc-training-history.rc-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; }
-.rc-training-times .rc-summary-big { font-size: clamp(1.25rem, 3vw, 2rem); }
+.rc-training-summary .rc-summary-big { font-family: var(--font-sans); font-weight: 500; }
+.rc-training-times .rc-summary-big { font-size: 1.5rem; }
 .rc-training-history .rc-summary-big { font-size: 1rem; }
 .rc-training-note { color: var(--muted-foreground); font-size: .8rem; line-height: 1.5; }
 .rc-training-statistics { display: flex; flex-direction: column; gap: 8px; }
