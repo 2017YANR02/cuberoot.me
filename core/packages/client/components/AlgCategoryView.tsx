@@ -51,7 +51,9 @@ import SortableCard from '@/components/SortableCard';
 import { useAlgViewMode } from '@/components/AlgViewModeToggle';
 import AlgListSettings, { useAlgCaseNumberVisibility } from '@/components/AlgListSettings';
 import AlgPdfButton from '@/components/AlgPdfButton';
-import { algSheetFromCases } from '@/lib/alg_pdf/from_cases';
+import AlgImageDownloadButton from '@/components/AlgImageDownloadButton';
+import { caseImageBatch } from '@/lib/alg-case-images';
+import { algSheetFromCases, type FromCasesOptions } from '@/lib/alg_pdf/from_cases';
 import { useCopy } from '@/hooks/useCopy';
 import { listSubmissions } from '@/lib/alg_api';
 import { reorderCases, reorderCaseAlgs, rotateCaseClockwise } from '@/lib/alg_sets_api';
@@ -1062,7 +1064,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
    * 当前子组都跟着走。只有还没挑过组的那张落地页(`/alg/3x3/zbll`)才印整套 ——
    * 挑过组之后即使停在二级选择页(`/zbll/u`),要的也是这一组,不是整个 ZBLL。
    */
-  const buildPdfSheet = () => {
+  const buildExportOptions = (): FromCasesOptions => {
     const listing = !showSubgroupPicker && !showSubSubgroupPicker;
     const pdfCases = listing || subgroupSlug ? visibleCases : orderedCases;
     const orderedPdfCases = isSq1Ep
@@ -1074,7 +1076,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     const title = collection
       ? `${puzzleParam} ${tr(collection.heading)}`
       : `${puzzleParam} ${tr(meta)}${subgroupDisplay ? ` ${subgroupDisplay}` : ''}`;
-    return algSheetFromCases({
+    return {
       puzzle: puzzleParam as AlgPuzzle,
       set,
       cases: orderedPdfCases,
@@ -1107,8 +1109,9 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       simplifyRecognition: recognitionSimplified,
       viewAngle: effectiveViewAngle,
       orientation: effectiveOrientation,
-    });
+    };
   };
+  const buildPdfSheet = () => algSheetFromCases(buildExportOptions());
 
   return (
     <div className="alg-root">
@@ -1337,7 +1340,10 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
         {/* 打印表:子组选择页(没列 case)也给 —— 那一层下载的是**整套**,
             正是「把这套公式印出来」最自然的落点 */}
         {data && data.cases.length > 0 && (
-          <AlgPdfButton build={buildPdfSheet} />
+          <>
+            <AlgPdfButton build={buildPdfSheet} />
+            <AlgImageDownloadButton batch build={() => caseImageBatch(buildExportOptions())} />
+          </>
         )}
         {/* set 级(含 umbrella 落地页)从全集选;subgroup 页带 ?scope= 只从该组选 */}
         {data && !collection && (
