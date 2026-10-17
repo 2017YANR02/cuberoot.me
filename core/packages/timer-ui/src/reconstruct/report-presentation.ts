@@ -97,7 +97,12 @@ export function projectReconNotation(recon: ReconTextResult | null, method: Reco
   const simplifiedRecon = method === 'cfop' && recon ? simplifyF2lRotations(recon) : recon;
   const originalRecon = recon ? originalReconNotation(recon) : recon;
   const shownRecon = simplified ? simplifiedRecon : originalRecon;
-  const normalizedText = method === 'cfop' && shownRecon && hasNormalizableCrossMove(shownRecon.text)
+  // Measured wide turns are real gestures. The legacy cross normalizer expands
+  // them into outer turns and moves their rotation into inspection, erasing
+  // what the user did. Keep the entire cross frame when it contains one.
+  const hasWideCross = shownRecon?.lines.some(line => line.kind === 'cross'
+    && line.moves.some(move => /^(?:[rludfb]|[RLUDFB]w)(?:2'?|')?$/.test(move)));
+  const normalizedText = method === 'cfop' && shownRecon && !hasWideCross && hasNormalizableCrossMove(shownRecon.text)
     ? buildNormalizedSolution(shownRecon.inspection ? shownRecon.text : `// insp\n${shownRecon.text}`) : null;
   const normalized = simplified && normalizedText !== null;
   const displayText = normalized ? normalizedText : shownRecon?.text ?? '';

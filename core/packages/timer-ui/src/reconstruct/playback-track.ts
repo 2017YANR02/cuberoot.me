@@ -38,13 +38,28 @@ export function reconstructedTrack(lines: ReconTextLine[] | undefined, raw: Solv
   const out: PlaybackMove[] = [];
   const covered = new Set<number>();
   let consumed = 0;
-  for (const displayLine of lines) {
-    // Library notation is a display projection, never a synthetic timed execution.
-    const correction = displayLine.libraryCorrection;
-    const line = correction?.originalLine ?? (correction
-      ? { ...displayLine, moveRanges: correction.originalRanges } : displayLine);
+  for (const line of lines) {
+    // Reconstructed steps carry verified encoder spans. Replay those steps;
+    // the original recording remains the fallback and gyro-mode track.
     if (!line.moveRanges) return null;
-    for (const range of line.moveRanges) {
+    const timedRanges = line.moveRanges.map(range => ({ ...range }));
+    // A library replacement shares one verified source interval. Allocate it
+    // across the replacement steps instead of enqueueing every step at once.
+    for (let from = 0; from < timedRanges.length;) {
+      const first = timedRanges[from];
+      let to = from + 1;
+      while (to < timedRanges.length && timedRanges[to].startIdx === first.startIdx
+        && timedRanges[to].ts === first.ts && timedRanges[to].endTs === first.endTs) to++;
+      if (to - from > 1 && first.endTs > first.ts) {
+        const start = first.ts, duration = first.endTs - start;
+        for (let i = from; i < to; i++) {
+          timedRanges[i].ts = start + duration * (i - from) / (to - from);
+          timedRanges[i].endTs = start + duration * (i - from + 1) / (to - from);
+        }
+      }
+      from = to;
+    }
+    for (const range of timedRanges) {
       const rotation = range.endIdx < range.startIdx;
       if (!rotation) {
         if (range.startIdx < 0 || range.endIdx >= raw.length) return null;

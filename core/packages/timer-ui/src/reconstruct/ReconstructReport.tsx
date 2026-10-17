@@ -51,6 +51,7 @@ import ReportContent from './ReportContent';
 import { reportComposition, reportNotationExtras, reportSummary, reportTrainingSummary, reportRawMoves, reportReferences, reportMeta, reportBld, initialReportUI, reduceReportUI, resolveReportSlots } from './report-content';
 import { rememberMethodStages, useMethodHistory } from './method-history';
 import StepMoveList from './StepMoveList';
+import { simplifyF2lRotations } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import { reconstructionSummary, trainingCaseHistory, trainingCaseStatistics } from './report-presentation';
 import ReconstructActions from './ReconstructActions';
 
@@ -204,8 +205,9 @@ function ReconstructReportBody({
     totalRecognitionMs: reconText.methodStages.reduce((sum, stage) => sum + (stage.recognitionMs ?? 0), 0),
     totalExecutionMs: reconText.methodStages.reduce((sum, stage) => sum + (stage.executionMs ?? 0), 0),
   } : rawWalk, [rawWalk, reconText?.methodStages]);
-  const playbackLines = reconText?.lines ?? [];
-  const playbackRecon = reconText;
+  const playbackRecon = useMemo(() => reconText && method === 'cfop'
+    ? simplifyF2lRotations(reconText) : reconText, [reconText, method]);
+  const playbackLines = playbackRecon?.lines ?? [];
 
   // 回放固定展示；折叠只留给「参考解法」和「原始动作序列」这类附加内容。
   const [reportUI, setReportUI] = useState(initialReportUI);
@@ -345,6 +347,7 @@ function ReconstructReportBody({
           scramble={solve.scramble}
           moves={moves}
           viewRotation={view.rotation}
+          inspection={playbackRecon?.inspection}
           totalMs={solve.timeMs}
           isZh={isZh}
           lines={playbackLines}
@@ -354,7 +357,7 @@ function ReconstructReportBody({
           side={playbackRecon ? ({ idx, playFrom }) => (
             <StepMoveList
               method={method}
-              recon={playbackRecon}
+              recon={reconText}
               reference={analysis?.reference ?? null}
               slotReference={analysis?.slotReference ?? null}
               currentIdx={idx}

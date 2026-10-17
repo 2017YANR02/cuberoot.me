@@ -1,0 +1,440 @@
+{
+  "source": "https://cuberoot.me/zh/timer?share=NOcVl53hdkc",
+  "recording": {
+    "scramble": "B D F' D B2 R' L U2 F' U F U' L B' F L2 R'",
+    "moves": [
+      {
+        "m": "U",
+        "ts": 57.5
+      },
+      {
+        "m": "U",
+        "ts": 114.5
+      },
+      {
+        "m": "R",
+        "ts": 205.5
+      },
+      {
+        "m": "R",
+        "ts": 270.5
+      },
+      {
+        "m": "U",
+        "ts": 385.5
+      },
+      {
+        "m": "U",
+        "ts": 437.5
+      },
+      {
+        "m": "R'",
+        "ts": 543.5
+      },
+      {
+        "m": "R'",
+        "ts": 640.5
+      },
+      {
+        "m": "U",
+        "ts": 1082.5
+      },
+      {
+        "m": "U",
+        "ts": 1148.5
+      },
+      {
+        "m": "F'",
+        "ts": 2328.5
+      },
+      {
+        "m": "D",
+        "ts": 2410.5
+      },
+      {
+        "m": "F",
+        "ts": 2765.5
+      },
+      {
+        "m": "R'",
+        "ts": 3648.5
+      },
+      {
+        "m": "D",
+        "ts": 3709.5
+      },
+      {
+        "m": "R",
+        "ts": 3807.5
+      },
+      {
+        "m": "D'",
+        "ts": 3881.5
+      },
+      {
+        "m": "R'",
+        "ts": 3978.5
+      },
+      {
+        "m": "D'",
+        "ts": 4051.5
+      },
+      {
+        "m": "R",
+        "ts": 4129.5
+      },
+      {
+        "m": "L",
+        "ts": 4412.5
+      },
+      {
+        "m": "D",
+        "ts": 4507.5
+      },
+      {
+        "m": "L'",
+        "ts": 4638.5
+      },
+      {
+        "m": "B'",
+        "ts": 4982.5
+      },
+      {
+        "m": "D",
+        "ts": 5056.5
+      },
+      {
+        "m": "B",
+        "ts": 5397.5
+      },
+      {
+        "m": "D'",
+        "ts": 5470.5
+      },
+      {
+        "m": "B'",
+        "ts": 5551.5
+      },
+      {
+        "m": "D'",
+        "ts": 5644.5
+      },
+      {
+        "m": "B",
+        "ts": 5718.5
+      },
+      {
+        "m": "B",
+        "ts": 5776.5
+      },
+      {
+        "m": "D'",
+        "ts": 5890.5
+      },
+      {
+        "m": "B'",
+        "ts": 6046.5
+      },
+      {
+        "m": "D",
+        "ts": 6086.5
+      },
+      {
+        "m": "B",
+        "ts": 6169.5
+      },
+      {
+        "m": "D'",
+        "ts": 6213.5
+      },
+      {
+        "m": "D'",
+        "ts": 6256.5
+      },
+      {
+        "m": "B'",
+        "ts": 6456.5
+      },
+      {
+        "m": "D",
+        "ts": 6550.5
+      },
+      {
+        "m": "B",
+        "ts": 6635.5
+      },
+      {
+        "m": "D'",
+        "ts": 6686.5
+      },
+      {
+        "m": "B'",
+        "ts": 6768.5
+      },
+      {
+        "m": "D'",
+        "ts": 7210.5
+      },
+      {
+        "m": "B",
+        "ts": 7300.5
+      },
+      {
+        "m": "D",
+        "ts": 7426.5
+      },
+      {
+        "m": "B'",
+        "ts": 7531.5
+      },
+      {
+        "m": "D'",
+        "ts": 7646.5
+      },
+      {
+        "m": "B'",
+        "ts": 7698.5
+      },
+      {
+        "m": "L",
+        "ts": 7747.5
+      },
+      {
+        "m": "B",
+        "ts": 7810.5
+      },
+      {
+        "m": "B",
+        "ts": 7862.5
+      },
+      {
+        "m": "D",
+        "ts": 8174.5
+      },
+      {
+        "m": "B'",
+        "ts": 8262.5
+      },
+      {
+        "m": "D'",
+        "ts": 8356.5
+      },
+      {
+        "m": "L'",
+        "ts": 8472.5
+      },
+      {
+        "m": "D'",
+        "ts": 8879.5
+      },
+      {
+        "m": "D'",
+        "ts": 9368.5
+      },
+      {
+        "m": "L",
+        "ts": 9830.5
+      },
+      {
+        "m": "B",
+        "ts": 9904.5
+      },
+      {
+        "m": "B'",
+        "ts": 10035.5
+      },
+      {
+        "m": "D'",
+        "ts": 10106.5
+      },
+      {
+        "m": "D",
+        "ts": 10360.5
+      },
+      {
+        "m": "B",
+        "ts": 10488.5
+      },
+      {
+        "m": "D'",
+        "ts": 10556.5
+      },
+      {
+        "m": "B'",
+        "ts": 10607.5
+      },
+      {
+        "m": "D'",
+        "ts": 10702.5
+      },
+      {
+        "m": "B",
+        "ts": 10766.5
+      },
+      {
+        "m": "D",
+        "ts": 10831.5
+      },
+      {
+        "m": "B'",
+        "ts": 10893.5
+      },
+      {
+        "m": "L'",
+        "ts": 10959.5
+      },
+      {
+        "m": "B",
+        "ts": 11008.5
+      },
+      {
+        "m": "D",
+        "ts": 11087.5
+      },
+      {
+        "m": "B'",
+        "ts": 11145.5
+      },
+      {
+        "m": "D'",
+        "ts": 11417.5
+      },
+      {
+        "m": "B'",
+        "ts": 11507.5
+      },
+      {
+        "m": "L",
+        "ts": 11556.5
+      },
+      {
+        "m": "B",
+        "ts": 11616.5
+      },
+      {
+        "m": "L'",
+        "ts": 11674.5
+      },
+      {
+        "m": "D",
+        "ts": 11799.5
+      },
+      {
+        "m": "D",
+        "ts": 11856.5
+      }
+    ],
+    "timeMs": 11766,
+    "model": "gan-v4",
+    "gyro": "RwIAaAAA9H0H8AA78H0K+QCd+X4H+QAf8X3+8ACy6HwI+wBz7n0H/AAF/H8A+gBU7X388wGH730D9wB37n39+AA86nvz6wBa73v16gBa9nz16wEs+X3y7QCWBHvx5QAeEHD2yACW8VjzpwBb903znAEO9U/8ngAG8FIJoQA18FIEoAB48FILoQC0+FEDnwBa8lAEngEO9FP+oACWAzL5jAA8AAoAgQBa/vz7gQB4/fn/gQCc/f4SggBy+vL6ggBaAPwGgQB4HAgbiABaAwAPggCX/vkNggB39fUSgwDx/N4diQAAAfINggA74jv9lABa9lkDpgB491wAqQA8/V8DrAB+CVIGnwBUDlYGpABaAl0BqQB4A178qgC6/loDpwA3DF37qwB49lgDpQBZ508HoABa71EDnwB+9FT+ogCv4lL2pABZ5VD6oQB57E/+nwA771X/owB57lAAnwCW5UwGngAd81L+oABa7VEAoAB48lIBoAEs81T6ogA861jzqABg61ADoABy8FT8ogB481n+pgA8A2bztQB+61bwpgA25Er6nADT51D9oAAA7UcAmABb/kkBmABZDFv6qQCWCGH8rwAd/1sCqABaAVcEpADxAlMHoACV/VAFngCW+E0GnAA970sCmwC7+VP9oACsCV31qgAeAlzzqgBaB1rypwB5CV3xqwA7DlztrAB4+1UBogA8C1f8pABbCV32qwCWDWD7rgA7B1rwqABaDlX3owBb+VYKowCcCVr8pwDM/FgApQAdE2TttgBaCF/1rABaAFUHogCXAVYCogCW9lQEoQB4/Vj+pQA7DmPvswCW/lr6pwBb91QEoQ=="
+  },
+  "issue": "连续 R 跨 F2L 分段时不能合成 R2：前一组末尾 R，下一组开头 R；保持十字和蓝红、橙蓝配对。",
+  "displayRows": [
+    {
+      "colors": [],
+      "diagrams": [],
+      "hrefs": [],
+      "label": "",
+      "moves": "B D F' D B2 R' L U2 F' U F U' L B' F L2 R'"
+    },
+    {
+      "colors": [
+        "Yellow Blue"
+      ],
+      "diagrams": [],
+      "hrefs": [],
+      "label": "// inspection",
+      "moves": "x2"
+    },
+    {
+      "colors": [
+        "White"
+      ],
+      "diagrams": [],
+      "hrefs": [],
+      "label": "//  cross",
+      "moves": "D2 R2 D2 R2' D2"
+    },
+    {
+      "colors": [
+        "Green Red"
+      ],
+      "diagrams": [
+        "iso"
+      ],
+      "hrefs": [
+        "/alg/3x3/f2l/q-"
+      ],
+      "label": "// ",
+      "moves": "y' L' U L y' L' U L U' L' U' L"
+    },
+    {
+      "colors": [
+        "Green Orange"
+      ],
+      "diagrams": [
+        "iso"
+      ],
+      "hrefs": [
+        "/alg/3x3/f2l/b+"
+      ],
+      "label": "// ",
+      "moves": "R U R'"
+    },
+    {
+      "colors": [
+        "Blue Red"
+      ],
+      "diagrams": [
+        "iso"
+      ],
+      "hrefs": [
+        "/alg/3x3/f2l/k-"
+      ],
+      "label": "// ",
+      "moves": "y R' U R U' R' U' R"
+    },
+    {
+      "colors": [
+        "Orange Blue"
+      ],
+      "diagrams": [
+        "iso"
+      ],
+      "hrefs": [
+        "/alg/3x3/f2l/d-"
+      ],
+      "label": "// ",
+      "moves": "R U' R' U R U2' R' U R U' R'"
+    },
+    {
+      "colors": [],
+      "diagrams": [
+        "plan"
+      ],
+      "hrefs": [
+        "/alg/3x3/oll/y-"
+      ],
+      "label": "// OLL-Y-",
+      "moves": "U' R U R' U' R' F R2 U R' U' F'"
+    },
+    {
+      "colors": [],
+      "diagrams": [
+        "plan"
+      ],
+      "hrefs": [
+        "/alg/3x3/pll/y"
+      ],
+      "label": "// PLL-Y",
+      "moves": "U2' F (R R' U' U R) U' R' U' R U R' F' R U R' U' R' F R F' U2"
+    }
+  ],
+  "approval": {
+    "status": "approved",
+    "confirmedBy": "user",
+    "instruction": "收录到回归测试",
+    "confirmedAt": "2026-10-17T09:28:40.261Z",
+    "contentHash": "3e32f811dad37ad4e733a93fe6a571ff739f8474d4bef8d962f1c391eaa4104a"
+  }
+}
