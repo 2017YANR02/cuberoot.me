@@ -244,3 +244,15 @@ solver 系列(6 analyzer + table_generator)全部移植并 golden bit-exact,剩�
 2026-10-15 Opt8 native quarter candidate completed: WCA100 / 4 search threads / one pass / no warmup, 26.402382370999998 seconds, 100 independently verified optimal solutions, Swapouts48 unchanged. Page selects this result. Scope opt8-native-quarter-wca100-4-20261015 is consumed; do not rerun. Preserved baseline33.593746037, binary and table remain intact. Non-default opt8-native-quarter feature only applies to variant8. Isolated measured source and executable: `.tmp/cubeopt-reverse/opt8-native-quarter-source-20261015/`. 32G still not authorized to run.
 
 2026-10-15 Opt8 native 6 solves/s follow-up completed: five new single-pass WCA100/4-thread candidates (specialized 29.881s, search 29.848s, batch 34.523s, search/native-cpu 27.434s, quarter/native-cpu 40.114s) all verified 100 optimal solutions, guard exit0, Swapouts48 unchanged. None beat retained quarter26.402s; page remains3.8/s, target6/s not achieved. Every new receipt is consumed; do not rerun or replace the selected result with an experimental one. Frozen source/binaries/raw output and negative findings are retained; read `../docs/optimal-solver-benchmark.md` section “Opt8 native follow-up toward 6 solves/s” and `.tmp/cubeopt-reverse/opt8-native-6ps-20261015-summary.json` before further optimization. Background CPU workload was observed; single-pass differences do not isolate compiler/algorithm effects. A/B/C features remain non-default. No publish and still no32G testing.
+
+## 2026-10-17 日常统计切换正式 Opt10
+
+维护者明确要求将日常 333 整解统计切到正式 CubeRoot Opt10（32G 档）。此条取代上文日常必须使用 Nissy H10 的约定；不授权重建大表。`solve_h10.mts` 保留兼容文件名，默认 `H10_ENGINE=opt10`，使用 `opt10-release.mts verify` 核验的正式制品及 `.tmp/cubeopt-reverse/opt10-generated-v2/cuberoot-opt10.dat`（31,130,911,744 字节），不能与旧 H10 表互换。`H10_ENGINE=c|rust` 保留显式旧后端，须自行具备旧表。
+
+统计专用 `scramble-stats-opt10-session` 经过原 guard，共享正式制品历史资源审查、独占锁、换出/压力/RSS/2 GiB 余量保护；不使用 ZBLL 的基线重审或到期例外，不重设已有基线。单进程、单批次 worker、默认最多16个搜索线程，全语料期间只加载一次表，已有 `out.0.csv` 按 ID 续算，逐行落盘。这里只修改入口，不启动整轮统计、不发布。下一次运行快捷指令仍按其原有完整计算后发布语义执行。
+
+2026-10-17：维护者另行明确授权“允许，复核后准备好，我自己启动”。统计独立审查保存在 `.tmp/scramble-stats-opt10/review-20261017.json`，绑定当前启动标识、Swapouts 48、旧保护记录和入口源码指纹；不改旧基线、不使用 ZBLL 续跑授权。统计保护停止写入该目录的 `protected-stop.json`，存在则不能自动续跑。入口预检提前检查该审查、余量与独占状态，避免先跑完其他阶段才发现无法启动 Opt10。准备过程不加载大表、不启动统计。
+
+### 2026-10-17 日常 Opt10 统计启动规则更新（维护者明确授权）
+
+维护者同意取消历史换出计数锁定、保留运行保护，并要求开始续跑。仅 `scramble-stats-opt10-session`：每次用户主动启动时核验正式制品、当前压力、可用内存和独占锁，以当前 boot/Swapouts 建立本轮固定基线；历史非零计数或旧停止记录不再永久阻止新任务。运行中不得更新基线，新增换出、异常压力、RSS 超限或余量不足仍立即停止，不自动重启。每轮基线、资源采样及停止证据单独保存在 `.tmp/scramble-stats-opt10/runs/<timestamp>-<pid>/`，保留全部旧记录及求解结果。此条取代此前日常统计对48/80的逐次批准要求，不扩大到其他研究或建表任务。

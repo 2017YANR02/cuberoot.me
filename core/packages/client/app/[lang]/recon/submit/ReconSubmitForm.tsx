@@ -1,6 +1,6 @@
 'use client';
 
-import { normalizeReconVideoUrls } from '@/lib/recon-video-url';
+import { appendReconVideo, splitReconVideoGroups, normalizeReconVideoUrls } from '@/lib/recon-video-url';
 /**
  * /recon/submit — submit/edit a reconstruction.
  *
@@ -348,11 +348,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     setVideoUploading(true);
     try {
       const uploaded = await uploadReconVideo(file);
-      setForm(prev => {
-        const urls = (prev.videoUrl || '').split('\n').map(line => line.trim()).filter(Boolean);
-        if (!urls.includes(uploaded.url)) urls.push(uploaded.url);
-        return { ...prev, videoUrl: urls.join('\n') };
-      });
+      setForm(prev => ({ ...prev, videoUrl: appendReconVideo(prev.videoUrl || '', uploaded.url) }));
       pruneReused('videoUrl');
     } catch (error) {
       setVideoUploadError((error as Error).message);
@@ -2415,7 +2411,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
             <div className="submit-row">
                 <div className={`submit-field submit-field-wide${reusedCls('videoUrl')}`}>
                   <label className="submit-label" htmlFor="recon-video-urls">
-                    {tr({ zh: '视频链接(每一个链接占一行)', en: 'Video URL (one link per line)' })}
+                    {tr({ zh: '视频', en: 'Videos' })}
                   </label>
                   {isMember && (
                     <div className="submit-video-upload">
@@ -2444,38 +2440,60 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                       </span>
                     </div>
                   )}
-                  <textarea
-                    id="recon-video-urls"
-                    className="submit-field-textarea"
-                    value={form.videoUrl || ''}
-                    onChange={e => setField('videoUrl', e.target.value)}
-                    onBlur={async () => {
-                      const cur = normalizeReconVideoUrls(form.videoUrl || '');
-                      if (cur !== (form.videoUrl || '')) setField('videoUrl', cur);
-                      if (!/b23\.tv/i.test(cur)) return;
-                      const lines = cur.split('\n');
-                      let changed = false;
-                      const resolved = await Promise.all(lines.map(async line => {
-                        const trimmed = line.trim();
-                        const m = trimmed.match(/https?:\/\/b23\.tv\/\S+/i);
-                        if (!m) return line;
-                        try {
-                          const res = await resolveShortUrl(m[0]);
-                          if (res.url) {
-                            changed = true;
-                            return normalizeReconVideoUrls(line.replace(m[0], res.url));
+                  <span className="submit-hint">
+                    {tr({ zh: '同一视频的不同平台链接放在一起，每行一个；不同视频请点击“添加视频”。', en: 'Keep links to the same video together, one per line. Use “Add video” for a different video.' })}
+                  </span>
+                  {splitReconVideoGroups(form.videoUrl || '').map((group, index, groups) => (
+                    <div key={index} className="submit-video-group">
+                    <label className="submit-label" htmlFor={index === 0 ? 'recon-video-urls' : 'recon-video-urls-' + index}>
+                      {tr({ zh: '视频', en: 'Video' })} {index + 1}
+                    </label>
+                      <textarea
+                        id={index === 0 ? 'recon-video-urls' : 'recon-video-urls-' + index}
+                        className="submit-field-textarea"
+                        value={group}
+                        onChange={e => setField('videoUrl', groups.map((value, i) => i === index ? e.target.value : value).join('\n\n'))}
+                        onBlur={async () => {
+                          const cur = normalizeReconVideoUrls(form.videoUrl || '');
+                          if (cur !== (form.videoUrl || '')) setField('videoUrl', cur);
+                          if (!/b23\.tv/i.test(cur)) return;
+                          const lines = cur.split('\n');
+                          let changed = false;
+                          const resolved = await Promise.all(lines.map(async line => {
+                            const trimmed = line.trim();
+                            const m = trimmed.match(/https?:\/\/b23\.tv\/\S+/i);
+                            if (!m) return line;
+                            try {
+                              const res = await resolveShortUrl(m[0]);
+                              if (res.url) {
+                                changed = true;
+                                return normalizeReconVideoUrls(line.replace(m[0], res.url));
+                              }
+                            } catch { /* keep short link on failure */ }
+                            return line;
+                          }));
+                          if (changed) {
+                            // Do not overwrite edits made while a short link is resolving.
+                            setForm(prev => prev.videoUrl === cur ? { ...prev, videoUrl: resolved.join('\n') } : prev);
+                            pruneReused('videoUrl');
                           }
-                        } catch { /* keep short link on failure */ }
-                        return line;
-                      }));
-                      if (changed) {
-                        // Do not overwrite edits made while a short link is resolving.
-                        setForm(prev => prev.videoUrl === cur ? { ...prev, videoUrl: resolved.join('\n') } : prev);
-                        pruneReused('videoUrl');
-                      }
-                    }}
-                    rows={2}
-                  />
+                        }}
+                        rows={2}
+                      />
+                    <div className="submit-video-upload">
+                      {group && <ClearButton variant="standalone" onClick={() => setField('videoUrl', groups.map((value, i) => i === index ? '' : value).join('\n\n'))} />}
+                      {groups.length > 1 && <button type="button" className="submit-reuse-btn"
+                        onClick={() => setField('videoUrl', groups.filter((_, i) => i !== index).join('\n\n'))}>
+                        {tr({ zh: '移除视频', en: 'Remove video' })} {index + 1}
+                      </button>}
+                    </div>
+                    </div>
+                  ))}
+                  <button type="button" className="submit-reuse-btn"
+                    disabled={!splitReconVideoGroups(form.videoUrl || '').every(group => group.trim())}
+                    onClick={() => setField('videoUrl', (form.videoUrl || '').trimEnd() + '\n\n')}>
+                    {tr({ zh: '添加视频', en: 'Add video' })}
+                  </button>
                   {videoUploadError && <span className="submit-hint submit-hint-warn">{videoUploadError}</span>}
                 </div>
               </div>
