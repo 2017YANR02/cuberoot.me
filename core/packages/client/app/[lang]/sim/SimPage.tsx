@@ -17,7 +17,7 @@ import {
 import dynamic from 'next/dynamic';
 import { useQueryStates, parseAsString, parseAsStringEnum } from 'nuqs';
 import HomeLink from '@/components/HomeLink';
-import NumberCommitInput from '@/components/NumberCommitInput';
+import NxNOrderInput from '@/components/NxNOrderInput';
 import { useTranslation } from 'react-i18next';
 import { PuzzleTypeSelect } from './PuzzleTypeSelect';
 import { persistItem } from '@/lib/safe-storage';
@@ -2276,7 +2276,7 @@ export default function SimPage() {
           {typeof selectedPuzzle === 'number' && (
             <label className="sim-order-label">
               <span>{t('阶数', 'Order')}</span>
-              <NumberCommitInput
+              <NxNOrderInput
                 className="sim-order-input"
                 value={selectedPuzzle}
                 min={drawMode ? 2 : NXN_ORDER_MIN}
