@@ -1,4 +1,5 @@
 'use client';
+import { useDouyinToolSurface } from '@/lib/douyin-content';
 import { TimerSyncSeedSettings, TimerRankSettings, TimerBackupSettings, TimerImportSettings, TimerReanalyzeSettings, TimerDisplaySettings, TimerSoundSettings, TimerMetronomeSettings } from '@cuberoot/timer-ui';
 
 /**
@@ -105,6 +106,7 @@ function SettingsSection({ category, activeCategory, title, children, headerCont
 
 export default function SettingsPanel({ onClose, event, actions, presenceControl, playersControl, mergeSlotRef, onDataReplaced }: Props) {
   const s = useSettings();
+  const douyin = useDouyinToolSurface();
   const optimalUser = useAuthStore((st) => st.user);
   const metro = useMetronome();
   const [activeCategory, setActiveCategory] = useState<TimerSettingCategoryId>('timer');
@@ -246,7 +248,7 @@ export default function SettingsPanel({ onClose, event, actions, presenceControl
   }
 
   return (
-    <TimerSettingsPanel language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'}
+    <TimerSettingsPanel categories={douyin ? ['timer', 'smart-cube', 'appearance', 'sound', 'data', 'advanced'] : undefined} language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'}
       playersControl={playersControl}
       activeCategory={activeCategory} onCategoryChange={setActiveCategory} onClose={onClose}>
         {activeCategory === 'timer' && presenceControl && (

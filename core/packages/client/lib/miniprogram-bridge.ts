@@ -45,7 +45,7 @@ function supportsMiniProgramNavigation(
   return typeof sdk?.miniProgram?.navigateTo === 'function';
 }
 
-function isDouyinWebViewCandidate(): boolean {
+export function isDouyinWebViewCandidate(): boolean {
   if (typeof window === 'undefined') return false;
   return /toutiaomicroapp/i.test(window.navigator?.userAgent ?? '')
     || supportsMiniProgramNavigation(window.tt);

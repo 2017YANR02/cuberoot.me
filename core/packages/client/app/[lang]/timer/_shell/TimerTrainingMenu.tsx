@@ -1,4 +1,6 @@
 'use client';
+import { useDouyinToolSurface } from '@/lib/douyin-content';
+import { DOUYIN_BASIC_TIMER_EVENTS } from '@cuberoot/shared/douyin-content';
 
 import { useMemo, useState, type ReactNode } from 'react';
 import { Settings } from 'lucide-react';
@@ -32,6 +34,7 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
   onAdvancedSettings?: () => void;
   onSettingsOpenChange?: (open: boolean) => void;
 }) {
+  const douyin = useDouyinToolSurface();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const changeSettingsOpen = (open: boolean) => {
     setSettingsOpen(open);
@@ -105,6 +108,21 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
     }
     void setNavigation(next);
   };
+
+  if (douyin) return settingsOnly ? null : <>
+    <TimerPuzzlePicker showArrow={false} disabled={disabled} dataNoTimer
+      puzzleLabel={tr({ zh: '项目', en: 'Puzzle' })} selectedEvent={event}
+      groups={TIMER_EVENT_PICKER_GROUPS.map(group => ({
+        id: group.id, label: tr({ zh: group.nameZh, en: group.nameEn }),
+        items: group.items.filter(item => DOUYIN_BASIC_TIMER_EVENTS.includes(item.id)).map(item => ({
+          id: item.id, label: tr({ zh: item.nameZh, en: item.nameEn }), iconClass: item.iconClass,
+        })),
+      })).filter(group => group.items.length > 0)}
+      onSelect={id => { const next = timerEventIdFromSelector(id); if (next && DOUYIN_BASIC_TIMER_EVENTS.includes(next)) onTimerEventChange?.(next); }}
+    />
+    {onAdvancedSettings && <button type="button" className="settings-popover-trigger" data-no-timer
+      aria-label={tr({ zh: '设置', en: 'Settings' })} onClick={onAdvancedSettings}><Settings size={18} /></button>}
+  </>;
 
   const startTimer = (entry: TimerPracticeContent, sameContent = true, source?: 'random' | 'manual') => {
     if (!entry.timer) return;

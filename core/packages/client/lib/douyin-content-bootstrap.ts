@@ -1,0 +1,1 @@
+export const DOUYIN_CONTENT_BOOTSTRAP = `try{if(/toutiaomicroapp/i.test(navigator.userAgent)||/(^#|&)douyin_redirect(?:&|$|=)/.test(location.hash)||sessionStorage.getItem('cuberoot.douyin-surface')==='true'){sessionStorage.setItem('cuberoot.douyin-surface','true');document.documentElement.dataset.douyinSurface='true'}}catch{}`;

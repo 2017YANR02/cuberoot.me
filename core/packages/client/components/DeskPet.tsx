@@ -1,4 +1,5 @@
 'use client';
+import { useDouyinToolSurface } from '@/lib/douyin-content';
 import { installedPetAvailable } from '@/lib/installed-content';
 
 // Clawd web desk pet — ported interaction engine from clawd-on-desk renderer.js.
@@ -231,6 +232,7 @@ const CSS = `
 `;
 
 export default function DeskPet() {
+  const douyin = useDouyinToolSurface();
   const [mounted, setMounted] = useState(false);
   const [size, setSize] = useState<Size>('m');
   const [character, setCharacter] = useState<ThemeId>('rootbeast');
@@ -1166,7 +1168,7 @@ export default function DeskPet() {
     };
   }, [mounted, hidden, character, randomMode, user, petAvailable, visibleKey]);
 
-  if (!mounted || hidden || !petAvailable) return null;
+  if (douyin || !mounted || hidden || !petAvailable) return null;
 
   const zh = lang === 'zh';
   const t = (z: string, e: string) => (zh ? z : e);

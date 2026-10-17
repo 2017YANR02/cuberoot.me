@@ -196,6 +196,9 @@ async function normalizeDouyinAppConfig() {
   // Douyin privacy-related capabilities (including Bluetooth) must enter the
   // platform privacy authorization flow before the native API is invoked.
   normalized.usePrivacyCheck = true;
+  normalized.pages = normalized.pages.filter(page => page !== 'pages/training/index');
+  normalized.tabBar.list = normalized.tabBar.list.filter(tab => tab.pagePath !== 'pages/training/index');
+  await rm(join(stagingRoot, 'pages/training'), { recursive: true, force: true });
   normalized.tabBar.list = await buildDouyinTabIcons(stagingRoot, normalized.tabBar);
   await writeFile(appConfigPath, `${JSON.stringify(normalized, null, 2)}\n`, 'utf8');
   await Promise.all([
