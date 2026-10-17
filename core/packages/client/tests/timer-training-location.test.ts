@@ -92,8 +92,7 @@ describe('practice menu availability and transitions', () => {
     const menu = createElement(TimerTrainingMenu);
     const children = target?.kind === 'alg-run'
       ? createElement(TrainingHostProvider, {
-        value: { path: training!, params: target.params, mapHref, settingsPortal,
-          practiceSettings: createElement(TimerTrainingMenu, { settingsOnly: true }) },
+        value: { path: training!, params: target.params, mapHref, settingsPortal },
         children: createElement(Fragment, null, menu, createElement(SettingsPopover, {
           hosted: true, label: label('训练设置', 'Training settings'),
           triggerPrefix: createElement('span', null, '8/472'),
@@ -107,16 +106,15 @@ describe('practice menu availability and transitions', () => {
   }
   async function openSettings() {
     const gear = trigger('训练设置', 'Training settings');
-    if (gear.getAttribute('aria-expanded') !== 'true') await act(async () => gear.click());
+    if (gear && gear.getAttribute('aria-expanded') !== 'true') await act(async () => gear.click());
   }
   async function choosePractice(value: 'memo' | 'action') {
     await act(async () => trigger('练习方式', 'Practice method').click());
-    await act(async () => option(value === 'memo' ? '记忆' : '实操', value === 'memo' ? 'Recall' : 'Execution').click());
+    await act(async () => option(value === 'memo' ? '记忆' : '训练', value === 'memo' ? 'Recall' : 'Training').click());
     await vi.waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
     return onUrlUpdate.mock.lastCall![0].searchParams;
   }
   async function chooseSource(zh: string, en: string) {
-    await openSettings();
     await act(async () => trigger('出题来源', 'Question source').click());
     await act(async () => option(zh, en).click());
     await vi.waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
@@ -127,7 +125,7 @@ describe('practice menu availability and transitions', () => {
     await renderMenu(null);
     await act(async () => trigger('练习方式', 'Practice method').click());
     expect([...document.querySelectorAll('[role="option"]')].map(item => item.textContent)).toEqual([
-      label('实操', 'Execution'), label('识别', 'Recognition'), label('记忆', 'Recall'),
+      label('训练', 'Training'), label('识别', 'Recognition'), label('记忆', 'Recall'),
     ]);
     await renderMenu('/alg/2x2/eg1/select', { event: 'eg1' });
     await act(async () => trigger('练习方式', 'Practice method').click());
@@ -208,7 +206,7 @@ describe('practice menu availability and transitions', () => {
     expect(trigger('计时', 'Timing')).toBeNull();
   });
 
-  it.each([true, false])('enters recall without selected cases and discards legacy timing preferences (%s)', async timing => {
+  it.each([true, false])('enters recall without selected cases and preserves explicit trainer timing preferences (%s)', async timing => {
     useTrainerStore.setState({ selected: [], timing });
     updateSettings({ timingEnabled: timing });
     await renderMenu(null);
@@ -225,7 +223,7 @@ describe('practice menu availability and transitions', () => {
     const returned = await choosePractice('action');
     expect(returned.get('training')).toBe('/alg/3x3/oll/run');
     expect(returned.get('train.mode')).toBe('recap');
-    expect(returned.has('train.timing')).toBe(false);
+    expect(returned.get('train.timing')).toBe(timing ? '1' : '0');
     expect(getSettings().timingEnabled).toBe(true);
   });
 
@@ -266,14 +264,16 @@ describe('practice menu availability and transitions', () => {
     expect(settingsPortal.contains(gear)).toBe(true);
     expect(container.textContent).toContain('8/472');
     expect(settingsPortal.textContent).not.toContain('8/472');
+    expect(settingsPortal.contains(trigger('出题来源', 'Question source'))).toBe(false);
     expect(document.querySelectorAll(`button[aria-label="${label('训练设置', 'Training settings')}"]`)).toHaveLength(1);
     await openSettings();
     expect(settingsPortal.querySelector('[data-existing-setting]')).not.toBeNull();
+    expect(settingsPortal.querySelector('details')).toBeNull();
     expect(practiceType()).toBeNull();
     await act(async () => trigger('出题来源', 'Question source').click());
     const cases = option('选定情况', 'Selected cases');
     await act(async () => cases.dispatchEvent(new Event('pointerdown', { bubbles: true })));
-    expect(gear.getAttribute('aria-expanded')).toBe('true');
+    expect(gear.getAttribute('aria-expanded')).toBe('false');
     await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
     expect(settingsPortal.querySelector('[role="dialog"]')).toBeNull();
     await openSettings();
