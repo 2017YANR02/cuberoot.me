@@ -131,8 +131,8 @@ export function puzzleCaps(kind: SimPuzzle): SimPuzzleCaps {
 }
 
 /** Which settings actually DO something for the current (kind, renderer). A `false`
- *  control still renders (the panel shape stays identical per puzzle) but is grayed out
- *  and non-interactive — "feature not built for this puzzle yet". Grounded in the two
+ *  capability is hidden by the settings UI. Temporary prerequisites (for example
+ *  enabling hands) remain visible with an explanation. Grounded in the two
  *  apply paths, NOT guessed:
  *   - in-house engine (SettingDrawer.applySettings, runs only when a `world` exists):
  *     drives sensitivity / perspective / face-label常显 / lockView / 立体贴片 / 镂空 /
