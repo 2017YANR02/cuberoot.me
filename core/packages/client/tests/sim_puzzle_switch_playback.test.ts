@@ -205,8 +205,10 @@ describe('sim playback across active cube changes', () => {
     expect(button('Play').disabled).toBe(true);
     expect(button('Step forward').disabled).toBe(true);
     expect(button('Skip to end').disabled).toBe(true);
+    expect(button('Random scramble').disabled).toBe(true);
     await act(async () => publishWorld());
     expect(button('Step forward').disabled).toBe(false);
+    expect(button('Random scramble').disabled).toBe(false);
     expect(world.puzzleKind).toBe('sphere');
     expectState('R');
     await act(async () => button('Step forward').click());

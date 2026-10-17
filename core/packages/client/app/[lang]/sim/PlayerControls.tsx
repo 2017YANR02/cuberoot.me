@@ -2505,7 +2505,8 @@ export default function PlayerControls({
         algStm={algStm}
         scramble={{
           previewing: !!scramblePreview, onRestore: restoreScramblePreview,
-          onRandom: handleScramble, randomDisabled: !nativeAlgValid,
+          onRandom: handleScramble,
+          randomDisabled: !nativeAlgValid || (isTwistyMode ? !twistyPlaybackPlayer : !engineReady),
           onPreview: handlePlayScramble,
           previewDisabled: corner?.endAnchor === false || !setupDraft.trim() || !squareFamilySetupValid || !cornerSetupValid || !nativeSetupValid || !nativeAlgValid,
           onDerive: is3x3 ? handleDeriveScramble : undefined,
