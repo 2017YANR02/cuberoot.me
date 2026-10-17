@@ -12,7 +12,7 @@
  */
 
 import {
-  useCallback, useEffect, useMemo, useRef, useState,
+  useCallback, useEffect, useId, useMemo, useRef, useState,
 } from 'react';
 import dynamic from 'next/dynamic';
 import { useQueryStates, parseAsString, parseAsStringEnum } from 'nuqs';
@@ -2659,6 +2659,7 @@ function CollapsibleSection({
   label: string;
   children: React.ReactNode;
 }) {
+  const bodyId = useId();
   return (
     <section className="sim-puzzle">
       <button
@@ -2666,13 +2667,14 @@ function CollapsibleSection({
         className="sim-puzzle-head"
         onClick={onToggle}
         aria-expanded={open}
+        aria-controls={bodyId}
         title={label}
       >
         <ChevronRight size={14} className={'sim-puzzle-caret' + (open ? ' open' : '')} />
         <Icon size={14} />
         <span className="sim-puzzle-title">{label}</span>
       </button>
-      {open && <div className="sim-section-body">{children}</div>}
+      <div id={bodyId} className="sim-section-body" hidden={!open}>{open && children}</div>
     </section>
   );
 }

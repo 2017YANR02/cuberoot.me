@@ -2618,6 +2618,7 @@ export default function PlayerControls({
           aria-label={t('随机打乱', 'Random scramble')}
         >
           <Shuffle size={14} />
+          {t('随机打乱', 'Random scramble')}
         </button>
         {is3x3 && (
           <button
