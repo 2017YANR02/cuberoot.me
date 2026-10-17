@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { invertAlg } from '@cuberoot/shared/alg-transform';
+import { normalizeWcaScramble } from '@cuberoot/shared/normalize-wca-scramble';
 import {
   EVENTS,
   OLL_CASES,
@@ -21,7 +22,7 @@ describe('shared Timer drill contract', () => {
     expect(TIMER_DRILL_AUFS).toEqual(['', 'U', 'U2', "U'"]);
     for (const [type, cases] of [['oll', OLL_CASES], ['pll', PLL_CASES]] as const) {
       for (const item of cases) {
-        const inverse = invertAlg(item.solutionAlg);
+        const inverse = invertAlg(normalizeWcaScramble(item.solutionAlg)!);
         expect(inverse).not.toBe('');
         for (const [random, prefix] of [[0, ''], [0.25, 'U'], [0.5, 'U2'], [0.75, "U'"]] as const) {
           expect(generateTimerDrillScramble({ type, id: item.id }, () => random)).toEqual({
@@ -35,7 +36,7 @@ describe('shared Timer drill contract', () => {
 
   it('keeps shared random boundary semantics and fails closed on stale targets', () => {
     const target: TimerDrillTarget = { type: 'oll', id: OLL_CASES[0].id };
-    const inverse = invertAlg(OLL_CASES[0].solutionAlg);
+    const inverse = invertAlg(normalizeWcaScramble(OLL_CASES[0].solutionAlg)!);
     expect(generateTimerDrillScramble(target, () => Number.NaN)?.scramble).toBe(inverse);
     expect(generateTimerDrillScramble(target, () => -1)?.scramble).toBe(inverse);
     expect(generateTimerDrillScramble(target, () => 1)?.scramble).toBe(`U' ${inverse}`);
