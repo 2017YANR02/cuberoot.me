@@ -1,4 +1,5 @@
 'use client';
+import SimAppearancePresets from './SimAppearancePresets';
 
 /**
  * PlayerControls — alg playground for /sim (Next.js port).
@@ -3027,6 +3028,7 @@ export default function PlayerControls({
 
       <details className="sim-settings-section">
         <summary>{t('外观与操作', 'Appearance & interaction')}</summary>
+      <SimAppearancePresets settings={settings} onChange={onSettingsChange} />
       <PuzzleSettings
         world={world}
         order={order}
