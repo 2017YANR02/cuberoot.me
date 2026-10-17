@@ -1415,3 +1415,17 @@
   cursor: pointer;
 }
 .sim-research-enable { padding: 0 12px 12px; font-size: 13px; }
+
+@media (max-width: 767px) {
+  .sim-view-tools { flex-wrap: nowrap; overflow-x: auto; }
+  .sim-view-tools > * { flex-shrink: 0; }
+  .sim-stage-controls .playback-bar-btn,
+  .sim-player button,
+  .sim-panel-toggle,
+  .sim-float-close,
+  .sim-backview-swap,
+  .sim-image-swap { min-width: 44px; min-height: 44px; }
+  .sim-player input:not([type="range"]),
+  .sim-player select { min-height: 44px; font-size: 16px; }
+  .sim-side { overscroll-behavior: contain; scroll-padding-block: 12px; }
+}

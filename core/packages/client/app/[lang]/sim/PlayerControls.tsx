@@ -14,7 +14,7 @@
  *    either way). See `algAutoSpaceSafe` below.
  *  - Virtual keyboards (issue #32): 'alg' = CubeVirtualKeyboard writing into the
  *    solution box; 'qwerty' = SimQwertyKeypad mirroring the keymap (click =
- *    twist, same applyMove path as hard keys). Mobile auto-opens qwerty.
+ *    twist, same applyMove path as hard keys). Keyboards open only on request.
  *  - Scramble path uses tnoodleRandomScramble (lib/cubing-scramble.ts), which
  *    routes to cubing.js + the in-app pool. NxN N≥8 falls back to inline
  *    random-move (cheap, no solver needed).
@@ -1159,12 +1159,9 @@ export default function PlayerControls({
   useEffect(() => { stepRef.current = step; }, [step]);
 
   // 虚拟键盘:'alg' = 记号输入键盘(写进解法框),'qwerty' = 按键映射键盘(点击 =
-  // 转魔方)。桌面默认收起;移动端(实体键盘点不到)mount 后自动展开 qwerty —
-  // 不能用 useIsMobile 做 useState 初值:SSR 首帧按非移动渲染,水合会不一致。
+  // 转魔方)。按需打开，避免与手机系统键盘争抢空间。
   const [kbVariant, setKbVariant] = useState<'alg' | 'qwerty' | null>(null);
-  useEffect(() => {
-    if (window.matchMedia('(max-width: 768px)').matches) setKbVariant('qwerty');
-  }, []);
+
   // 快捷键弹窗(查看 / 自定义按键映射)。按钮与虚拟键盘开关同排 —— 都是「键盘」主题,
   // 放一起比藏在下方设置区里好找(设置区原按钮已移除)。
   const [keymapOpen, setKeymapOpen] = useState(false);
@@ -2428,6 +2425,7 @@ export default function PlayerControls({
   // WASM 路径一次性重建,不逐步 replay,高阶宽转也不卡(逐步 finish 会几百万次 getColor 卡死)。
   const flushPendingScramble = useCallback(() => {
     restoreScramblePreview();
+    setKbVariant(null);
     if (!world || isTwistyMode) return;
     const tw = (world.cube as unknown as CornerCube).twister;
     const scr = setupDraft.trim();
