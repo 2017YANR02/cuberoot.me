@@ -40,6 +40,7 @@ import {
   Keyboard, Grid3x3, ImagePlus, Upload, Trash2, Crop,
 } from 'lucide-react';
 import { Alg, Move } from 'cubing/alg';
+import type { TwistyPlayer } from 'cubing/twisty';
 import World from './engine/world';
 import AlgTransformPanel from './AlgTransformPanel';
 import { TwistAction } from './engine/nxn/twister';
@@ -1626,18 +1627,19 @@ export default function PlayerControls({
   const scrambleReqIdRef = useRef(0);
   const twistyReplayReqIdRef = useRef(0);
   const [scramblePreview, setScramblePreview] = useState(false);
-  const restorePreviewRef = useRef<(() => void) | null>(null);
-  const restoreScramblePreview = useCallback(() => {
-    ++twistyReplayReqIdRef.current;
-    restorePreviewRef.current?.();
+  const restorePreviewRef = useRef<((revision: number) => Promise<void>) | null>(null);
+  const restoreScramblePreview = useCallback(async () => {
+    const revision = ++twistyReplayReqIdRef.current;
+    const restore = restorePreviewRef.current;
     restorePreviewRef.current = null;
     setScramblePreview(false);
+    await restore?.(revision);
   }, []);
   useEffect(() => {
     restoreScramblePreview();
     return () => {
-      ++twistyReplayReqIdRef.current;
-      restorePreviewRef.current?.();
+      const revision = ++twistyReplayReqIdRef.current;
+      void restorePreviewRef.current?.(revision);
       restorePreviewRef.current = null;
     };
   }, [active, puzzleKind, renderer, setupDraft, algDraft, settings.playbackMode, restoreScramblePreview]);
@@ -2352,22 +2354,30 @@ export default function PlayerControls({
     const scramble = setupDraft.trim();
     if (!scramble || !squareFamilySetupValid || !cornerSetupValid || !nativeSetupValid || !nativeAlgValid) return;
     if (isTwistyMode) {
-      restoreScramblePreview();
-      const player = twistyPlayerRef?.current;
+      await restoreScramblePreview();
+      const player = twistyPlayerRef?.current as TwistyPlayer | null;
       if (!player) return;
       const reqId = ++twistyReplayReqIdRef.current;
-      const timeline = await player.experimentalModel?.detailedTimelineInfo.get();
+      const model = player.experimentalModel;
+      const [timeline, originalSetup, originalAlg, originalAnchor] = await Promise.all([
+        model.detailedTimelineInfo.get(), model.setupAlg.get(), model.alg.get(), model.setupAnchor.get(),
+      ]).catch(() => [null, null, null, null] as const);
+      if (!timeline || !originalSetup || !originalAlg || !originalAnchor) return;
       if (reqId !== twistyReplayReqIdRef.current) return;
-      const original = { setup: player.experimentalSetupAlg, alg: player.alg, anchor: player.experimentalSetupAnchor };
+      const original = { setup: originalSetup.alg, alg: originalAlg.alg, anchor: originalAnchor };
       const previewText = toPlaybackText?.(scramble) ?? scramble;
-      restorePreviewRef.current = () => {
+      restorePreviewRef.current = async (revision) => {
         player.pause();
+        const [currentAlg, currentSetup, currentAnchor] = await Promise.all([
+          model.alg.get(), model.setupAlg.get(), model.setupAnchor.get(),
+        ]).catch(() => [null, null, null] as const);
+        if (revision !== twistyReplayReqIdRef.current || !currentAlg || !currentSetup) return;
         // A new URL/project has already replaced the borrowed model: do not
         // restore an obsolete snapshot over its new owner.
-        if (String(player.alg) !== previewText || String(player.experimentalSetupAlg) !== '') return;
+        if (currentAlg.alg.toString() !== previewText || currentSetup.alg.toString() !== '') return;
         player.experimentalSetupAlg = original.setup;
         player.alg = original.alg;
-        if (player.experimentalSetupAnchor === 'start') player.experimentalSetupAnchor = original.anchor;
+        if (currentAnchor === 'start') player.experimentalSetupAnchor = original.anchor;
         player.timestamp = timeline?.timestamp ?? 0;
       };
       player.pause();
@@ -2376,11 +2386,12 @@ export default function PlayerControls({
       player.experimentalSetupAnchor = 'start';
       setScramblePreview(true);
       // Wait for this model's parsed timeline, never a fixed number of frames.
-      await player.experimentalModel?.indexer.get();
+      const ready = await model.indexer.get().then(() => true, () => false);
+      if (!ready) { await restoreScramblePreview(); return; }
       if (reqId !== twistyReplayReqIdRef.current || twistyPlayerRef?.current !== player) return;
       player.jumpToStart({ flash: false });
       player.play();
-      void player.experimentalModel?.coarseTimelineInfo.get().then(() => {
+      void model.coarseTimelineInfo.get().then(() => {
         if (reqId !== twistyReplayReqIdRef.current) player.pause();
       }).catch(() => { player.pause(); });
       return;
@@ -2799,6 +2810,22 @@ export default function PlayerControls({
       const playbackBar = (
       // 播放控制排:twizzle alpha.twizzle.net/edit 同款两排布局(进度条在上、传输按钮在下),
       // 与 /recon 播放条共用同一份 <PlaybackBar>。stickering / 锚点两个下拉挂在按钮排两端。
+      <div className="sim-stage-controls">
+      <div className="sim-view-tools" role="toolbar" aria-label={t('画布工具', 'Canvas tools')}>
+        {imageButton}{backViewButton}{fullscreenButton}
+        {typeof puzzleKind === 'number' && <select aria-label={t('画布视图', 'Canvas view')}
+          value={settings.viewMode} onChange={e => onSettingsChange({ ...settings, viewMode: e.target.value as 'cube' | 'net' })}>
+          <option value="cube">{t('立体图', '3D cube')}</option>
+          <option value="net" disabled={normalizeRoomTheme(settings.roomTheme) !== 'off'}>{t('平面图', 'Flat net')}</option>
+        </select>}
+        {!resolveCaps(puzzleKind, renderer).flat && <button type="button" className="playback-bar-btn"
+          onClick={() => {
+            const next = { ...settings, scale: DEFAULT_SETTINGS.scale, viewAngle: DEFAULT_SETTINGS.viewAngle, viewGradient: DEFAULT_SETTINGS.viewGradient };
+            onSettingsChange(next);
+            if (world) resetWorldView(world, next);
+          }}>{t('重置视角', 'Reset view')}</button>}
+        {stickeringSelect}
+      </div>
       <PlaybackBar layout="wide"
         step={isTwistyMode ? (totalSteps > 0 ? twistyPlayback.step : 0) : step}
         total={totalSteps}
@@ -2809,8 +2836,7 @@ export default function PlayerControls({
         onTogglePlay={handleTogglePlay}
         onStepForward={stepForward}
         onSkipEnd={() => { setCaretChar(null); jumpToStep(totalSteps); }}
-        leading={<>{imageButton}{fullscreenButton}{stickeringSelect}</>}
-        trailing={<>{anchorSelect}{backViewButton}</>}
+
         labels={{
           skipStart: t('回到起点', 'Skip to start'),
           stepBack: t('上一步', 'Step back'),
@@ -2821,6 +2847,15 @@ export default function PlayerControls({
           scrub: t('拖动播放进度', 'Scrub playback'),
         }}
       />
+      <div className="sim-playback-options">
+        <Slider label="TPS" value={settings.speed} onChange={speed => onSettingsChange({ ...settings, speed })} unit={UNIT_TPS} title={t('每秒转动步数', 'Turns per second')} />
+        <details>
+          <summary>{t('播放设置', 'Playback settings')}</summary>
+          {anchorSelect}
+          <Toggle label={t('动画', 'Animation')} value={settings.animatePlayback !== false} onChange={animatePlayback => onSettingsChange({ ...settings, animatePlayback })} />
+        </details>
+      </div>
+      </div>
       );
       return playbackSlot ? createPortal(playbackBar, playbackSlot) : playbackBar;
       })()}
@@ -2886,6 +2921,8 @@ export default function PlayerControls({
         )}
       </div>
 
+      <details className="sim-formula-tools">
+      <summary>{t('公式操作', 'Algorithm tools')}</summary>
       <div className="sim-player-tools">
         <button disabled={corner?.endAnchor === false} onClick={tool(invertForPuzzle)} title={t('取逆', 'Invert')}>{t('逆', 'Invert')}</button>
         {/* 消步:实时消步开关(默认开)。开 = 手势 / 键盘转动追加时自动合并 / 抵消重复转动,
@@ -2930,7 +2967,10 @@ export default function PlayerControls({
             {t('去括号', 'Expand')}
           </button>
         )}
-        <button onClick={tool(() => '')} title={t('清空', 'Clear')}><Eraser size={13} />{t('清空', 'Clear')}</button>
+        <button onClick={tool(() => '')} title={t('清空公式', 'Clear algorithm')}><Eraser size={13} />{t('清空公式', 'Clear algorithm')}</button>
+      </div>
+      </details>
+      <div className="sim-player-tools">
         <button
           onClick={handleCopyLink}
           className={linkCopied ? 'sim-link-copied' : undefined}
@@ -2940,10 +2980,8 @@ export default function PlayerControls({
           {linkCopied ? t('已复制', 'Copied') : t('复制链接', 'Copy link')}
         </button>
       </div>
-
-
-
       </div>
+
       <details className="sim-settings-section">
         <summary>{t('外观与操作', 'Appearance & interaction')}</summary>
       <PuzzleSettings
@@ -3988,7 +4026,6 @@ function PuzzleSettings({
     thickness: false, hollow: false, hint: false, logo: false, structureColor: false,
     coreColor: false, coreOpacity: false, coreFinish: false, faceColors: false,
   });
-  const isNxNLocal = typeof puzzleKind === 'number';
   const isMirror = puzzleKind === 'mirror' || puzzleKind === 'mirror2';
   const faceColorsKey = puzzleKind === 'ghost' ? 'ghostFaceColors' : 'faceColors';
   const faceColors = settings[faceColorsKey] ?? GHOST_DEFAULT_FACE_COLORS;
@@ -4176,18 +4213,7 @@ function PuzzleSettings({
                 </select>
               </div>
             )}
-            {isNxNLocal && (
-              <div className="sim-puzzle-section">
-                <select
-                  className="sim-puzzle-select"
-                  value={roomsActive ? 'cube' : settings.viewMode}
-                  onChange={(e) => set('viewMode', e.target.value as 'cube' | 'net')}
-                >
-                  <option value="cube">{t('立体图', '3D cube')}</option>
-                  <option value="net" disabled={roomsActive}>{t('平面图', 'Flat net')}</option>
-                </select>
-              </div>
-            )}
+
           </div>
 
           <div className="sim-puzzle-sliders">
@@ -4198,7 +4224,6 @@ function PuzzleSettings({
                 : t('跟手倍率(相对默认):同时作用于拖层转动、拖空白转视角、SQ1 / SQ2 / SQ4 拖拽', 'Responsiveness relative to the default — scales layer drags, view drags and SQ1 / SQ2 / SQ4 drags alike'))} />)}
             {caps.supports.scale && (<Slider label={t('缩放', 'Scale')} value={settings.scale} onChange={(v) => set('scale', v)} disabled={!caps.supports.scale} unit={UNIT_SCALE} title={hint(caps.supports.scale) ?? t('缩放倍率', 'Zoom factor')} />)}
             {caps.supports.perspective && (<Slider label={t('透视', 'Perspective')} value={settings.perspective} onChange={(v) => set('perspective', v)} disabled={!caps.supports.perspective} unit={UNIT_FOCAL} title={hint(caps.supports.perspective) ?? t('35mm 等效焦距(小 = 广角畸变强,大 = 接近正交)', '35mm-equivalent focal length (low = wide-angle distortion, high = near-orthographic)')} />)}
-            <Slider label={t('TPS', 'TPS')} value={settings.speed} onChange={(v) => set('speed', v)} unit={UNIT_TPS} title={t('每秒转动步数', 'Turns per second')} />
           </div>
           {/* 视角盘:「左右 / 上下」两条滑条合成一个平面直角坐标系 —— 可拖圆点 + 两个精确度数框
               (打 30 正好 30)。右 = 正(看右面)、上 = 正(俯视),纯显示层符号,不改底层 3D 旋转。
@@ -4238,7 +4263,6 @@ function PuzzleSettings({
               </select>
             </label>)}
             {/* 播放动画开关:关 → 「播放」时瞬切每一步(不逐格转动);单步前进/后退本就瞬切。 */}
-            <Toggle label={t('动画', 'Animation')} value={settings.animatePlayback !== false} onChange={(v) => set('animatePlayback', v)} />
             {/* 方位字母常显:U/D/L/R/F/B(角/棱/面转拼图显对应标签),等同拖视角时浮现的标签但常驻。 */}
             {caps.supports.faceLabels && (<Toggle
               label={t('字母', 'Letters')}

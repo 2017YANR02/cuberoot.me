@@ -64,6 +64,9 @@ describe('native PG simulator controls', () => {
   const userMoveRef: NonNullable<ComponentProps<typeof PlayerControls>['userMoveRef']> = { current: null };
   const player = {
     experimentalModel: {
+      setupAlg: { get: vi.fn(async () => ({ alg: player.experimentalSetupAlg })) },
+      alg: { get: vi.fn(async () => ({ alg: player.alg })) },
+      setupAnchor: { get: vi.fn(async () => player.experimentalSetupAnchor) },
       detailedTimelineInfo: { get: vi.fn(async () => ({ timestamp: 0 })) },
       indexer: { get: vi.fn<() => Promise<null>>(async () => null) },
       coarseTimelineInfo: { get: vi.fn(async () => null) },

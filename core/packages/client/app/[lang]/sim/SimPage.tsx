@@ -2517,29 +2517,16 @@ export default function SimPage() {
                 {fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
               </button>
             }
-            /* 两个浮层的「找回来」按钮,位置对应它们在画布上的角:图像在左上 → 按钮在
-               最左;背面小窗在右上 → 按钮在最右。只在对应浮层关着时出现 —— 开着时关它
-               的入口是浮层自己右上角那个 ×,这里再放一个同义按钮纯属占位。 */
-            imageButton={!imageOpen ? (
-              <button
-                type="button"
-                className="playback-bar-btn"
-                onClick={() => setImageOpen(true)}
-                title={t('显示图像', 'Show image')}
-                aria-label={t('显示图像', 'Show image')}
-              >
+            imageButton={(
+              <button type="button" className="playback-bar-btn" aria-pressed={imageOpen}
+                onClick={() => setImageOpen(!imageOpen)}
+                title={t('伴图', 'Companion image')} aria-label={t('伴图', 'Companion image')}>
                 <ImagePlus size={14} />
               </button>
-            ) : null}
-            /* 小窗按钮在两条渲染路径下语义不同,因为「关」的入口不一样:
-               - 引擎(NxN / SQ1):小窗是我们自己画的浮层,右上角有 ×,所以这里
-                 只做「开」,关着时才出现,和图像那个一致;
-               - cubing.js:小窗是 player 原生画的,我们钉不上 ×(那块区域归它管),
-                 所以这里必须常驻并且是真开关,否则 settings.backView 在这条路径上
-                 一个入口都没有 —— 侧栏那个「小窗」toggle 已经删掉了。 */
-            backViewButton={!flatMode && (twisty || !settings.backView) ? (
-              <PlaybackBackViewButton visible={twisty ? settings.backView : false} toggle={twisty}
-                onClick={() => setSettings(prev => ({ ...prev, backView: twisty ? !prev.backView : true }))}
+            )}
+            backViewButton={!flatMode ? (
+              <PlaybackBackViewButton visible={settings.backView} toggle
+                onClick={() => setSettings(prev => ({ ...prev, backView: !prev.backView }))}
                 showLabel={t('显示小窗', 'Show back view')} hideLabel={t('关闭小窗', 'Hide back view')} />
             ) : null}
             stickering={query.stickering}
