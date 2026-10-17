@@ -612,6 +612,12 @@
   overflow: hidden;
 }
 
+/* The miniature keeps the live puzzle visible for both preview and capture.
+   Manual controls can exceed its full height; use them in the main animation view. */
+.sim-canvas-wrap--imgswap > .twisty-section > .twisty-fallback {
+  display: none;
+}
+
 /* FTO EIF image tool lives in /sim so its URL, export helpers and puzzle
  * renderer stay on the same source of truth as the interactive simulator. */
 .sim-tool-select {
