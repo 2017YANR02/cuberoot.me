@@ -8,6 +8,34 @@ import { cubeColorGroups, cubeColorGroupPunctuation, leadingCubeColors, crossCol
 import { CUBE_FILL, CUBE_FACE_FOR_COLOR_LETTER, type CubeColorLetter } from '@cuberoot/puzzle-render-core/support/cube-colors';
 import { sliceReconstruction } from '@cuberoot/shared/timer/reconstruct/slice';
 import type { SolveMove } from '@cuberoot/shared/timer/reconstruct/stage-segments';
+import { timerSupportsTrainingTiming, type Solve } from '@cuberoot/shared/timer';
+import { metricForRange } from '@cuberoot/shared/timer/reconstruct/step-metrics';
+import { htmMoves } from '@cuberoot/shared/timer/reconstruct/htm';
+
+/** One training repetition is one range. Use precisely the same AUF/rotation
+ * boundary as the step table, with the training clock's origin as its start.
+ * The caller supplies the report's oriented moves, never a display-only alg. */
+export function trainingRepetitionMetrics(solve: Solve, moves: SolveMove[]) {
+  if (!timerSupportsTrainingTiming(solve.event) || !moves.length) return null;
+  const range = metricForRange(moves, htmMoves(moves), -1, 0, moves.length - 1);
+  const observationMs = Math.min(solve.timeMs, range.recognitionMs);
+  return { observationMs, executionMs: Math.max(0, solve.timeMs - observationMs), totalMs: solve.timeMs };
+}
+
+export function trainingCaseHistory(history: Solve[], current: Solve): Solve[] {
+  if (!current.caseId) return [];
+  return history.filter(item => item.id !== current.id && item.event === current.event
+    && item.caseId === current.caseId && item.ts <= current.ts && item.penalty === 'ok'
+    && item.moves?.length && (item.trainingStartMode ?? 'first-turn') === (current.trainingStartMode ?? 'first-turn'))
+    .sort((a, b) => b.ts - a.ts).slice(0, 12);
+}
+
+export function trainingCaseStatistics(samples: NonNullable<ReturnType<typeof trainingRepetitionMetrics>>[]) {
+  if (!samples.length) return null;
+  const mean = (key: 'observationMs' | 'executionMs' | 'totalMs') => samples.reduce((sum, sample) => sum + sample[key], 0) / samples.length;
+  return { count: samples.length, observationMs: mean('observationMs'), executionMs: mean('executionMs'), totalMs: mean('totalMs'),
+    bestExecutionMs: Math.min(...samples.map(sample => sample.executionMs)) };
+}
 
 /** The stage spacing and inline comments of StepMoveList, shared with native rendering. */
 export function reconNotationGroup(line: ReconTextResult['lines'][number], method: MethodId) {
