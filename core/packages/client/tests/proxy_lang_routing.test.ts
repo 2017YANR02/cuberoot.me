@@ -20,6 +20,56 @@ afterEach(() => { vi.unstubAllGlobals(); });
 
 const FORWARDED_HTTPS = { 'x-forwarded-proto': 'https' };
 
+describe('retired algorithm trainers', () => {
+  it('redirects before rendering and scopes invitations, repeated cases and assignment attribution', async () => {
+    const res = await request('http://localhost:3000/zh/alg/333/oll/run?room=invite&case=A&case=B&scope=ocll&mode=memo&trainingOrg=school');
+    expect(res.status).toBe(308);
+    const url = new URL(res.headers.get('location')!);
+    expect(url.pathname).toBe('/zh/timer');
+    expect([...url.searchParams]).toEqual([
+      ['training', '/alg/333/oll/run'], ['train.room', 'invite'],
+      ['train.case', 'A'], ['train.case', 'B'], ['train.scope', 'ocll'],
+      ['train.mode', 'memo'], ['trainingOrg', 'school'],
+    ]);
+    const landed = await request(url.href);
+    expect(landed.headers.get('location')).toBeNull();
+  });
+
+  it.each([
+    '/alg/3x3/pll/select', '/alg/2x2/mix/run?sets=eg1,eg2', '/alg/3x3/cross',
+    '/alg/roux', '/alg/skewb-trainer', '/alg/3bld/edge', '/alg/3bld/corner',
+    '/alg/3bld/edge-float', '/alg/3bld/corner-float', '/alg/3bld/2c2c', '/alg/3bld/2e2e',
+    '/alg/3bld/parity', '/alg/3bld/flip', '/alg/3bld/twist', '/alg/3bld/ltct',
+    '/alg/3bld/memo', '/alg/3bld/timer', '/alg/3bld/helper',
+    '/alg/sq1/algorithm-trainer', '/alg/sq1/train', '/alg/sq1/parity-game',
+    '/alg/lsll', '/alg/lsll/ap', '/alg/lsll/case?k=123', '/alg/lsll/route', '/alg/time-attack',
+  ])('keeps the old %s entrance usable in the timer', async path => {
+    const res = await request(`http://localhost:3000${path}`, { cookie: 'lang=en' });
+    const url = new URL(res.headers.get('location')!);
+    expect(url.pathname).toBe('/timer');
+    expect(url.searchParams.get('training')).toBe(path.split('?')[0]);
+  });
+
+  it('uses explicit and preferred language without permanently caching a user preference', async () => {
+    const preferred = await request('http://localhost:3000/alg/roux', { cookie: 'lang=zh' });
+    expect(preferred.status).toBe(307);
+    expect(new URL(preferred.headers.get('location')!).pathname).toBe('/zh/timer');
+    const explicit = await request('http://localhost:3000/zh/alg/roux?lang=en&mode=fb');
+    const url = new URL(explicit.headers.get('location')!);
+    expect(url.pathname).toBe('/timer');
+    expect(url.searchParams.get('train.mode')).toBe('fb');
+    expect(url.searchParams.has('train.lang')).toBe(false);
+  });
+
+  it.each(['/alg', '/alg/3x3', '/alg/3x3/oll', '/alg/3x3/oll/ocll', '/alg/3bld',
+    '/alg/3bld/lookup', '/alg/3bld/comm', '/alg/sq1/inspect', '/alg/progress', '/alg/commutator',
+    '/alg/double-zbll-about', '/alg-trainers', '/tools/alg_trainers/',
+  ])('retains the library, reference or upstream page %s', async path => {
+    const res = await request(`http://localhost:3000/zh${path}`);
+    expect(res.headers.get('location')).toBeNull();
+  });
+});
+
 describe('proxy: 裸路径 → 英文', () => {
   it('直连(没有反代)时透明 rewrite 到 /en,URL 保持裸', async () => {
     const res = await request('http://127.0.0.1:3000/');
