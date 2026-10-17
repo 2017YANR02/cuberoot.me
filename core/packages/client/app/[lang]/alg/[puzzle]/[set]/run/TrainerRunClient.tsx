@@ -1448,6 +1448,10 @@ export default function TrainerRunClient() {
   const recapCur = hist.idx >= 0 ? hist.list[hist.idx]?.recap : undefined;
   const recapShown = mode === 'recap' && !!recapCur;
   const recapCompleted = completedRecapCount(recapCur, recapRoundDone || recapRoundAcked);
+  // 双底每题覆盖两个 case；奇数范围的最后一个 case 仍算一题。
+  const recapCasesPerQuestion = doubleZbll ? 2 : 1;
+  const recapQuestionsCompleted = Math.ceil(recapCompleted / recapCasesPerQuestion);
+  const recapQuestionsTotal = Math.ceil((recapCur?.total ?? 0) / recapCasesPerQuestion);
 
   return (
     <div className="trainer-root">
@@ -1516,7 +1520,7 @@ export default function TrainerRunClient() {
               ) : roundLabel ? (
                 <span className="trainer-recap-round">{tr(roundLabel)}</span>
               ) : null}
-              {recapCompleted}/{recapCur.total}
+              {recapQuestionsCompleted}/{recapQuestionsTotal}
             </span>
           ) : undefined}
         >
