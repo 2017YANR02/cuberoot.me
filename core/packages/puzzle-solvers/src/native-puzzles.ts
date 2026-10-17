@@ -184,6 +184,13 @@ export const NATIVE_PUZZLES = {
     axes: ICOSAHEDRON_FACE_AXES, order: 3, layers: 2,
     scrambleLength: 60, aspect: 8 / 5, visibleFacelets: 440,
   },
+  // Jason Smith's Radiolarian 5; Hyperspeedcube radio05 uses phi^2/(2+phi^2).
+  // Preserve this critical depth: nearby cuts have a different face partition.
+  catscradle: {
+    description: 'i f 0.566915270681799', zh: 'Cat’s Cradle', en: 'Cat’s Cradle', textLabel: 'Cradle',
+    axes: ICOSAHEDRON_FACE_AXES, order: 3, layers: 2,
+    scrambleLength: 60, aspect: 8 / 5, visibleFacelets: 380,
+  },
 } as const;
 
 export type NativePuzzleId = keyof typeof NATIVE_PUZZLES;
