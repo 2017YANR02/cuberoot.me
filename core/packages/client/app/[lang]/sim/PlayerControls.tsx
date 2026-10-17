@@ -1401,6 +1401,7 @@ export default function PlayerControls({
 
   const totalSteps = isTwistyMode
     ? (nativeSetupValid && nativeAlgValid && twistyPlayback.ready ? twistyPlayback.total : 0)
+    : !engineReady ? 0
     : isSquarePuzzle
     ? (squareFamilyCanPlay ? squareActions.length : 0)
     : isIvy
