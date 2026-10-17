@@ -921,6 +921,8 @@ interface Props {
   setup?: string;
   onAlgChange: (alg: string) => void;
   onSetupChange: (setup: string) => void;
+  /** Translate editor notation only at the playback boundary. */
+  toPlaybackText?: (text: string) => string;
   order: number;
   puzzleKind: SimPuzzle;
   settings: SimSettings;
@@ -999,7 +1001,7 @@ export default function PlayerControls({
   order, puzzleKind,
   settings, onSettingsChange, canUseCustomLogo, transCore = null,
   keymap, onKeymapChange, onResetKeymap,
-  userMoveRef, twistyPlayerRef, twistyPlaybackPlayer = null,
+  userMoveRef, twistyPlayerRef, twistyPlaybackPlayer = null, toPlaybackText,
   skewbNotation, onSkewbNotationChange,
   kilominxNotation = 'cstimer', onKilominxNotationChange,
   onCopyLink,
@@ -1623,6 +1625,22 @@ export default function PlayerControls({
   const animatingScrambleRef = useRef(false);
   const scrambleReqIdRef = useRef(0);
   const twistyReplayReqIdRef = useRef(0);
+  const [scramblePreview, setScramblePreview] = useState(false);
+  const restorePreviewRef = useRef<(() => void) | null>(null);
+  const restoreScramblePreview = useCallback(() => {
+    ++twistyReplayReqIdRef.current;
+    restorePreviewRef.current?.();
+    restorePreviewRef.current = null;
+    setScramblePreview(false);
+  }, []);
+  useEffect(() => {
+    restoreScramblePreview();
+    return () => {
+      ++twistyReplayReqIdRef.current;
+      restorePreviewRef.current?.();
+      restorePreviewRef.current = null;
+    };
+  }, [active, puzzleKind, renderer, setupDraft, algDraft, settings.playbackMode, restoreScramblePreview]);
   useEffect(() => {
     ++twistyReplayReqIdRef.current;
     return () => { ++twistyReplayReqIdRef.current; };
@@ -2045,6 +2063,10 @@ export default function PlayerControls({
   }, [flushAlgCommit, onCopyLink, setupDraft, algDraft]);
 
   const appendUserMove = useCallback((action: TwistAction | string, anchoredSetup?: { setup: string }) => {
+    if (restorePreviewRef.current) {
+      restoreScramblePreview();
+      return algDraftRef.current;
+    }
     let moveText = typeof action === 'string' ? action : action.value;
     if (typeof action !== 'string' && !isSquarePuzzle && !isTwistyMode && world && world.cube.order === 1) {
       const norm = normalizeTo1x1(action);
@@ -2120,7 +2142,7 @@ export default function PlayerControls({
     // The native player uses the exact editor spelling to recognize its later
     // URL echo, including a batch of turns or a live-reduction setting change.
     return next;
-  }, [commitAlgDebounced, onSetupChange, onAlgChange, isSquarePuzzle, isSq1, squareFamilySpec, isIvy, isTwistyMode, world, settings.liveReduce, simplifyForPuzzle, squareFormat, puzzleKind, cornerActions]);
+  }, [commitAlgDebounced, onSetupChange, onAlgChange, isSquarePuzzle, isSq1, squareFamilySpec, isIvy, isTwistyMode, world, settings.liveReduce, simplifyForPuzzle, squareFormat, puzzleKind, cornerActions, restoreScramblePreview]);
 
   useEffect(() => {
     if (!userMoveRef) return;
@@ -2330,37 +2352,37 @@ export default function PlayerControls({
     const scramble = setupDraft.trim();
     if (!scramble || !squareFamilySetupValid || !cornerSetupValid || !nativeSetupValid || !nativeAlgValid) return;
     if (isTwistyMode) {
+      restoreScramblePreview();
+      const player = twistyPlayerRef?.current;
+      if (!player) return;
       const reqId = ++twistyReplayReqIdRef.current;
-      const requestedPlayer = twistyPlayerRef?.current;
-      // This action explicitly plays solved → scramble, regardless of the editor anchor.
-      if (settings.playbackMode !== 'moves') onSettingsChange({ ...settings, playbackMode: 'moves' });
-      if (setupElRef.current) { setupElRef.current.value = ''; autosize(setupElRef.current); }
-      setSetupDraft('');
-      onSetupChange('');
-      if (algElRef.current) { algElRef.current.value = scramble; autosize(algElRef.current); }
-      skipAutoResetRef.current = true;
-      setAlgDraft(scramble);
-      onAlgChange(scramble);
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          // A new puzzle, scramble or editor change cancels this queued replay.
-          // Recheck the live inputs before touching the native animation model.
-          if (reqId !== twistyReplayReqIdRef.current || twistyPlayerRef?.current !== requestedPlayer) return;
-          if ((setupElRef.current?.value ?? setupDraftRef.current).trim()
-            || (algElRef.current?.value ?? algDraftRef.current) !== scramble) return;
-          if (isNativePuzzleId(puzzleKind)) {
-            try { parseNativePuzzleAlg(puzzleKind, scramble); } catch { return; }
-          }
-          const p = twistyPlayerRef?.current as unknown as {
-            experimentalSetupAnchor?: string;
-            jumpToStart?: (opts?: unknown) => void;
-            play?: () => void;
-          } | null;
-          try { if (p) p.experimentalSetupAnchor = 'start'; } catch { /* */ }
-          try { p?.jumpToStart?.({ flash: false }); } catch { /* */ }
-          try { p?.play?.(); } catch { /* */ }
-        });
-      });
+      const timeline = await player.experimentalModel?.detailedTimelineInfo.get();
+      if (reqId !== twistyReplayReqIdRef.current) return;
+      const original = { setup: player.experimentalSetupAlg, alg: player.alg, anchor: player.experimentalSetupAnchor };
+      const previewText = toPlaybackText?.(scramble) ?? scramble;
+      restorePreviewRef.current = () => {
+        player.pause();
+        // A new URL/project has already replaced the borrowed model: do not
+        // restore an obsolete snapshot over its new owner.
+        if (String(player.alg) !== previewText || String(player.experimentalSetupAlg) !== '') return;
+        player.experimentalSetupAlg = original.setup;
+        player.alg = original.alg;
+        if (player.experimentalSetupAnchor === 'start') player.experimentalSetupAnchor = original.anchor;
+        player.timestamp = timeline?.timestamp ?? 0;
+      };
+      player.pause();
+      player.experimentalSetupAlg = '';
+      player.alg = previewText;
+      player.experimentalSetupAnchor = 'start';
+      setScramblePreview(true);
+      // Wait for this model's parsed timeline, never a fixed number of frames.
+      await player.experimentalModel?.indexer.get();
+      if (reqId !== twistyReplayReqIdRef.current || twistyPlayerRef?.current !== player) return;
+      player.jumpToStart({ flash: false });
+      player.play();
+      void player.experimentalModel?.coarseTimelineInfo.get().then(() => {
+        if (reqId !== twistyReplayReqIdRef.current) player.pause();
+      }).catch(() => { player.pause(); });
       return;
     }
     if (!world) return;
@@ -2388,12 +2410,13 @@ export default function PlayerControls({
     clearFrozen();
     tw.setup('');
     tw.push(engScramble);
-  }, [setupDraft, squareFamilySetupValid, cornerSetupValid, nativeSetupValid, nativeAlgValid, isTwistyMode, puzzleKind, world, clearFrozen, corner, onSetupChange, onAlgChange, twistyPlayerRef, toEngineText, settings, onSettingsChange]);
+  }, [setupDraft, squareFamilySetupValid, cornerSetupValid, nativeSetupValid, nativeAlgValid, isTwistyMode, puzzleKind, world, clearFrozen, corner, onSetupChange, onAlgChange, twistyPlayerRef, toEngineText, toPlaybackText, restoreScramblePreview]);
 
   // 点解法框时,若打乱动画仍在逐步播放(高阶打乱可达 400+ 步 ≈ 分钟级),立即落到完整打乱态,
   // 让用户马上能在打乱好的魔方上输解法。走快速整体应用 setup(打乱文本):它清空待播队列后用
   // WASM 路径一次性重建,不逐步 replay,高阶宽转也不卡(逐步 finish 会几百万次 getColor 卡死)。
   const flushPendingScramble = useCallback(() => {
+    restoreScramblePreview();
     if (!world || isTwistyMode) return;
     const tw = (world.cube as unknown as CornerCube).twister;
     const scr = setupDraft.trim();
@@ -2405,7 +2428,7 @@ export default function PlayerControls({
       return;
     }
     tw.setup(engScramble);
-  }, [world, isTwistyMode, corner, setupDraft, squareFamilySetupValid, cornerSetupValid, toEngineText]);
+  }, [world, isTwistyMode, corner, setupDraft, squareFamilySetupValid, cornerSetupValid, toEngineText, restoreScramblePreview]);
 
   // Derive the state solved by the reconstruction, then minimize its scramble.
   const handleDeriveScramble = useCallback(async () => {
@@ -2509,6 +2532,10 @@ export default function PlayerControls({
     <div className="sim-player">
       {!active && stickeringSelect}
       <div className="sim-animation-controls" hidden={!active}>
+      {scramblePreview && <div className="sim-preview-notice" role="status">
+        <span>{t('正在预览打乱', 'Previewing scramble')}</span>
+        <button type="button" onClick={restoreScramblePreview} title={t('返回公式', 'Return to algorithm')}>{t('返回公式', 'Return to algorithm')}</button>
+      </div>}
       <label className="sim-field-label" htmlFor="sim-setup">{t('初始状态', 'Initial state')}</label>
       <div className="sim-player-row sim-player-row--top">
         <div className="sim-player-hlwrap">
@@ -2522,6 +2549,7 @@ export default function PlayerControls({
           <textarea
             ref={setupElRef}
             id="sim-setup"
+            onFocus={restoreScramblePreview}
             defaultValue={setupDraft}
             rows={1}
             spellCheck={false}

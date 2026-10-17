@@ -2484,6 +2484,7 @@ export default function SimPage() {
             setup={setupParam}
             onAlgChange={onAlgChange}
             onSetupChange={onSetupChange}
+            toPlaybackText={toPlayerText}
             order={order}
             puzzleKind={puzzleKind}
             settings={settings}
