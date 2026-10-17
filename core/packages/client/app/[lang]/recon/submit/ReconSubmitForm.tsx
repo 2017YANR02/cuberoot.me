@@ -834,10 +834,17 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   }, [form.compWcaId, form.event, form.round]);
 
   const groupMatchScramble = getReconScramble(form);
+  // Automatic scrambles follow the selected group, not the other way around:
+  // a competitor can use different groups for different attempts in one round.
+  // Match the provenance of getReconScramble's preferred field so a manually
+  // entered/loaded optimal scramble still protects its reconstruction state.
+  const groupMatchScrambleAutoFilled = form.optimalScramble
+    ? optimalAutoFilledRef.current
+    : form.wcaScramble ? scrambleAutoFilledRef.current : false;
   const groupMatchKey = JSON.stringify([form.compWcaId, form.event, form.round, form.solveNum, groupMatchScramble]);
   const [groupMatch, setGroupMatch] = useState<{ key: string; group: string | null } | null>(null);
   const needsGroupMatch = !!(form.compWcaId && form.event && form.round && form.solveNum
-    && groupMatchScramble.trim() && groupOptions && groupOptions.length > 1);
+    && !groupMatchScrambleAutoFilled && groupMatchScramble.trim() && groupOptions && groupOptions.length > 1);
   const groupMatchPending = needsGroupMatch && groupMatch?.key !== groupMatchKey;
   const matchedGroup = needsGroupMatch && groupMatch?.key === groupMatchKey ? groupMatch.group : null;
   const selectableGroups = groupMatchPending ? [] : matchedGroup ? [matchedGroup] : undefined;
