@@ -19,8 +19,8 @@ describe('shared NxN order contract', () => {
   });
 
   it('keeps the simulator and notation explorer on the same input component', () => {
-    const simControls = readFileSync(
-      join(process.cwd(), 'app', '[lang]', 'sim', 'PlayerControls.tsx'),
+    const simPage = readFileSync(
+      join(process.cwd(), 'app', '[lang]', 'sim', 'SimPage.tsx'),
       'utf8',
     );
     const notationPage = readFileSync(
@@ -28,10 +28,11 @@ describe('shared NxN order contract', () => {
       'utf8',
     );
 
-    expect(simControls).toContain("from '@/components/NxNOrderInput'");
+    expect(simPage).toContain("from '@/components/NxNOrderInput'");
+    expect(simPage).toContain('<NxNOrderInput');
     expect(notationPage).toContain("from '@/components/NxNOrderInput'");
-    expect(simControls).not.toContain('commitOrderInput');
-    expect(simControls).not.toContain('sim-puzzle-order-input');
+    expect(simPage).not.toContain('commitOrderInput');
+    expect(simPage).not.toContain('sim-puzzle-order-input');
   });
 
   it('uses the selected order when mounting the shared NxN animation engine', () => {

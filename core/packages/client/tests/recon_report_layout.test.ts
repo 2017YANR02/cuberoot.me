@@ -30,6 +30,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
+import { playbackMoveDurationTicks } from '@cuberoot/timer-ui/reconstruct/report-player';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..'); // packages/client
 const TIMER = join(ROOT, 'app', '[lang]', 'timer');
@@ -153,9 +154,14 @@ describe('回放进度条匀速走', () => {
     // 引擎默认一手 500ms,比真实动作间隔长时会把动作排队,所以回放必须
     // 把当前动作到下一手(或结束)的时间间隔换成 60Hz ticks,并跟随播放倍率。
     expect(pb).toContain('playbackMoveDurationTicks(moves,idx,totalMs,speedMult)');
-    const player=read(join(TIMER_UI,'reconstruct','report-player.ts'));
-    expect(player).toContain('(moves[index]?.ts??totalMs)-moves[index-1].ts');
-    expect(player).toContain('*60/(1000*speed)');
+    const moves = [
+      { m: 'R', ts: 100, endTs: 100, rawAfter: 1 },
+      { m: 'U', ts: 300, endTs: 400, rawAfter: 2 },
+    ];
+    expect(playbackMoveDurationTicks(moves, 1, 600, 1)).toBe(12);
+    expect(playbackMoveDurationTicks(moves, 1, 600, 2)).toBe(6);
+    // Replaced moves must also finish inside their own allocated interval.
+    expect(playbackMoveDurationTicks(moves, 2, 600, 1)).toBe(6);
     expect(pb).toMatch(/moveDurationTicks=\{moveDurationTicks\}/);
   });
 });

@@ -175,7 +175,7 @@ describe('component reuse rule registry', () => {
     const surfaces = [
       join(ROOT, 'components', 'RecentScrambles.tsx'),
       join(ROOT, 'app', '[lang]', 'predict', 'page.tsx'),
-      join(ROOT, 'app', '[lang]', 'sim', 'PlayerControls.tsx'),
+      join(ROOT, 'app', '[lang]', 'sim', 'PuzzleTypeSelect.tsx'),
       join(ROOT, 'app', '[lang]', 'scramble', '_components', 'SolveTabs.tsx'),
       join(ROOT, 'components', 'AlgPuzzlePicker.tsx'),
       join(ROOT, 'app', '[lang]', 'alg', 'time-attack', 'page.tsx'),
@@ -186,6 +186,10 @@ describe('component reuse rule registry', () => {
       expect(source, relative(ROOT, file)).toContain("from '@/components/PuzzlePicker/PuzzlePicker'");
       expect(source, relative(ROOT, file)).toContain('<PuzzlePicker');
     }
+
+    const simPage = readFileSync(join(ROOT, 'app', '[lang]', 'sim', 'SimPage.tsx'), 'utf8');
+    expect(simPage).toContain("from './PuzzleTypeSelect'");
+    expect(simPage).toContain('<PuzzleTypeSelect');
 
     const timer = join(ROOT, 'app', '[lang]', 'timer', '_shell', 'SoloView.tsx');
     const timerSource = readFileSync(timer, 'utf8');

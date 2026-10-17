@@ -13,6 +13,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { timerSeedTicket } from '@cuberoot/shared/timer/sync-seed';
 
+// These storage migrations run in the ordinary Web surface. Keep the native
+// bridge (and its browser session listeners) outside this Node-only harness.
+vi.mock('@/lib/douyin-content', () => ({ isDouyinToolSurface: () => false }));
+
 const KEY = 'cuberoot-timer.settings.v1';
 
 /** node 环境没有 localStorage / window,给一个够用的内存版。 */
