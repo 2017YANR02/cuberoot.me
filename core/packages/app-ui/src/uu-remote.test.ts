@@ -24,6 +24,18 @@ function fixture() {
 }
 
 describe('UU remote request lifecycle', () => {
+  it('launches without a visibility preflight and handles an actually unavailable app', async () => {
+    const f = fixture();
+    delete f.runtime.canOpen;
+    await f.client.start('bind');
+    expect(f.opened).toHaveLength(1);
+    expect(f.opened[0].pathname).toBe('/device/authorize');
+    expect(f.client.getSnapshot()).toMatchObject({ pending: 'bind', message: 'waiting' });
+    await f.client.cancel();
+    f.runtime.open = async () => false;
+    await f.client.start('bind');
+    expect(f.client.getSnapshot()).toMatchObject({ pending: null, message: 'open_failed' });
+  });
   it('binds with nonce, preserves opaque ID and launches fullscreen without waiting for callback', async () => {
     const f = fixture(); await f.bind();
     expect(f.client.getSnapshot().bound).toBe(true);

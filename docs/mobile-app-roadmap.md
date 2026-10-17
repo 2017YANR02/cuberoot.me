@@ -1,6 +1,10 @@
 # CubeRoot 五端 App 完整路线图
 
-### 2026-10-16：UU 远程接入（本地构建完成，真机待验）
+### 2026-10-16：UU 远程接入（Android 用户验收通过，iOS 真机待验）
+
+- Android 真机用户反馈 UU 版本达标但点击绑定提示“未检测到”；该文案来自发起 Intent 前的 `canOpenUrl` 拦截，并不是启动失败结果。核对已发 APK 的 queries 与官方 Android 安装包的 `uuremote://external` 声明均存在。按 Android 官方 package-visibility use-cases 指引，Android 改为直接尝试 `ACTION_VIEW`、以 AppLauncher 的实际启动结果处理失败；iOS 保留 canOpenURL。此修复消除查询假阴性阻止启动的路径，未连接用户手机，不能声称已确认该机系统返回 false 的具体原因或真实跳转已通过。11 项定向检查、Mobile typecheck 与 Web build/sync 通过；新 APK 的真机重试单独验收。
+
+- 修正版 Android Debug APK 构建及签名校验通过；用户安装测试后明确确认“验收完成”。据此记录本次 Android UU 远程接入验收通过，不推断未逐项反馈的异常场景或 iOS 真机已通过。
 
 - 用户授权接入 CubeRoot App。共享「我的 → UU 远程」折叠入口支持绑定、更换电脑、全屏远控、PiP 小窗、停止等待和移除本机绑定；中英文及不支持平台提示共用一份 React UI。Android/iOS 宿主注入官方 `@capacitor/app-launcher@8.0.1`、现有 App 深链及 Keychain/Keystore，不新增账号、屏幕采集或远控 SDK。
 - 设备标识与待处理请求一起保存在本机安全存储；绑定 nonce、小窗 callback request、严格回调地址/重复参数检查、串行处理、30 分钟过期及消费后去重覆盖热/冷启动。全屏只记已唤起，PiP 仅最终成功回调记成功；设备失效清除绑定，未知错误不冒充成功。有效回跳显示「我的」结果，活动计时仍受原导航保护。
