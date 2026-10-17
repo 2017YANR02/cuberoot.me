@@ -9,6 +9,7 @@
  */
 import { renderFromSimpleQuery } from '@cuberoot/visualcube';
 import type { AlgPuzzle, AlgSticker } from '@cuberoot/shared';
+import type { CaseViewAngle } from '@/lib/alg_display';
 import { caseThumbPlan } from '@/lib/alg_thumb_plan';
 import { renderEngineSvg, engineForwardAlg } from '@/components/EnginePuzzleSVG';
 
@@ -30,6 +31,8 @@ export interface CaseSvgInput {
   simplifyRecognition?: boolean;
   /** Keep PDF cube colors consistent with the selected on-screen holding. */
   orientation?: string;
+  viewAngle?: CaseViewAngle;
+  sq1SideBySide?: boolean;
 }
 
 /** sr-puzzlegen 是 DOM 渲染器(往宿主元素里塞 <svg>),借个离屏容器取字符串。 */
@@ -66,8 +69,7 @@ const cache = new Map<string, string | null>();
 const CACHE_CAP = 4000;
 
 export async function algCaseSvg(input: CaseSvgInput): Promise<string | null> {
-  const { puzzle, set, sticker, alg, setup, mask, size = 160, sq1BlackTop = true, simplifyRecognition = false, orientation } = input;
-  const key = `${puzzle}|${set}|${JSON.stringify(sticker)}|${mask ?? ''}|${size}|${sq1BlackTop}|${simplifyRecognition}|${orientation ?? ''}|${setup ?? ''}|${alg}`;
+  const key = JSON.stringify(input);
   const hit = cache.get(key);
   if (hit !== undefined) return hit;
   const svg = await renderCaseSvg(input);
@@ -77,9 +79,9 @@ export async function algCaseSvg(input: CaseSvgInput): Promise<string | null> {
 }
 
 async function renderCaseSvg({
-  puzzle, set, sticker, alg, setup, mask, size = 160, sq1BlackTop, simplifyRecognition, orientation,
+  puzzle, set, sticker, alg, setup, mask, size = 160, sq1BlackTop, simplifyRecognition, orientation, viewAngle, sq1SideBySide,
 }: CaseSvgInput): Promise<string | null> {
-  const plan = caseThumbPlan({ puzzle, set, sticker, alg, setup, mask, sq1BlackTop, simplifyRecognition, orientation });
+  const plan = caseThumbPlan({ puzzle, set, sticker, alg, setup, mask, sq1BlackTop, simplifyRecognition, orientation, viewAngle, sq1SideBySide });
   if (plan.renderer === 'inline-svg') return plan.svg || null;
   if (plan.renderer === 'asset') {
     try {
