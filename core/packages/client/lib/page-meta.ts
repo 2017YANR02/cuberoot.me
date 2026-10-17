@@ -49,10 +49,10 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     },
   },
   'alg/double-zbll-about': {
-    title: { zh: '双底 ZBLL：对称与最短解', en: 'Double ZBLL: Symmetry and Shortest Solutions' },
+    title: { zh: 'ZBLL 打乱方式与统计', en: 'ZBLL Scramble Modes and Statistics' },
     description: {
-      zh: '从 62,220,544 个组合到 7,555,446 个代表状态：双底 ZBLL 如何利用 AUF 去重、顶底互换和旋转对称，保留全局最优 HTM 解。',
-      en: 'From 62,220,544 combinations to 7,555,446 representatives: AUF deduplication and rotational symmetry preserve globally optimal HTM solutions for double ZBLL.',
+      zh: '比较双底 HTM、逆 case、最优 HTM / STM / SQTM / QTM、COEP 与 csTimer 的打乱分布、极端情况及计步规则。',
+      en: 'Compare double ZBLL HTM, inverse case, optimal HTM / STM / SQTM / QTM, COEP and csTimer: distributions, extremes and counting rules.',
     },
   },
   'cube-history': {

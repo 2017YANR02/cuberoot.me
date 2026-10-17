@@ -48,3 +48,32 @@ it('shows the available platform immediately when there is no alternative', asyn
   expect(host.querySelector('.detail-video-switch')).toBeNull();
   expect(loadIpCountry).not.toHaveBeenCalled();
 });
+
+
+it('shows four independent videos as four covers, including repeated platforms', async () => {
+  await act(async () => root.render(createElement(VideoSection, { videoUrl: [youtube, youtube, bilibili, bilibili].join('\n\n') })));
+  expect(host.querySelectorAll('.detail-video-facade')).toHaveLength(4);
+  expect(host.querySelector('.detail-video-switch')).toBeNull();
+});
+
+it('switches sources only within the selected video in mixed groups', async () => {
+  vi.mocked(loadIpCountry).mockResolvedValue('cn');
+  await act(async () => root.render(createElement(VideoSection, { videoUrl: [youtube + '\n' + bilibili, youtube, bilibili].join('\n\n') })));
+  expect(host.querySelectorAll('.detail-video-facade')).toHaveLength(3);
+  expect(host.querySelectorAll('.detail-video-switch')).toHaveLength(1);
+  await act(async () => (host.querySelector('.detail-video-switch') as HTMLButtonElement).click());
+  expect([...host.querySelectorAll('.detail-video-facade')].map(el => el.getAttribute('href'))).toEqual([youtube, youtube, bilibili]);
+});
+
+it('preserves selected Bilibili part and time when opening its cover', async () => {
+  const url = bilibili + '?p=2&t=12';
+  await act(async () => root.render(createElement(VideoSection, { videoUrl: url })));
+  expect(host.querySelector('.detail-video-facade')?.getAttribute('href')).toBe(url);
+});
+
+it('shows uploaded files and unknown providers as separate video entries', async () => {
+  await act(async () => root.render(createElement(VideoSection, { videoUrl: 'https://api.cuberoot.me/v1/recon/video/42\n\nhttps://example.com/watch' })));
+  expect(host.querySelectorAll('.detail-video-player')).toHaveLength(2);
+  expect(host.querySelector('video')?.getAttribute('src')).toBe('https://api.cuberoot.me/v1/recon/video/42');
+  expect(host.querySelector('.detail-video-facade')?.getAttribute('href')).toBe('https://example.com/watch');
+});

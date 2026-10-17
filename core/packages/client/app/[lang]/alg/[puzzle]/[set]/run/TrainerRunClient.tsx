@@ -1592,7 +1592,7 @@ export default function TrainerRunClient() {
                         {doubleAvailable && <option value="double-zbll" disabled={!!room || isMemo || splitActive}>{tr({ zh: '双底 HTM', en: 'Double ZBLL HTM' })}</option>}
                         {kinds.map(k => <option key={k.id} value={k.id}>{k.label()}</option>)}
                       </select>
-                      {doubleZbll && <DoubleZbllOptions />}
+                      {doubleAvailable && <DoubleZbllOptions showPll={doubleZbll} />}
                     </div>
                   )}
                 </div>

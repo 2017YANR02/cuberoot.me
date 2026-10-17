@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import AppLink from '@/components/AppLink';
-import BoolToggle from '@/components/BoolToggle';
 import { useT } from '@/hooks/useT';
 import { orientDoubleZbllScramble } from '@/lib/double-zbll';
 import statistics from './statistics.json';
@@ -26,20 +25,19 @@ function ExtremeScramble({ example }: { example: Example }) {
   </article>;
 }
 
-export default function CorpusStatistics({ pll, onPllChange }: { pll: boolean; onPllChange: (value: boolean) => void }) {
+export default function CorpusStatistics({ pll }: { pll: boolean }) {
   const t = useT();
   const [distribution, setDistribution] = useState('htm');
   const group = statistics.groups[pll ? 'all' : 'pure'];
   const pure = statistics.groups.pure;
   const mean = group.totalHtm / group.count;
   const saved = statistics.baseline.meanHtm - pure.totalHtm / pure.count;
-  const hist = distribution === 'htm' ? group.histogram : distribution === 'qtm' ? group.qtmHistogram : group.generators;
+  const hist = distribution === 'htm' || distribution === 'stm' ? group.histogram : distribution === 'qtm' || distribution === 'sqtm' ? group.qtmHistogram : group.generators;
   const max = Math.max(...hist);
   const minutes = Math.round(statistics.compute.seconds / 60);
   return <section className="dz-statistics" aria-labelledby="dz-results">
     <div className="dz-about-section-head">
       <h2 id="dz-results">{t('完整题库 · 计算结果', 'Complete corpus · Results')}</h2>
-      <BoolToggle label={t('统计包含 PLL', 'Include PLL in statistics')} value={pll} onChange={onPllChange} />
     </div>
     <p className="dz-about-muted">{t('开关同步切换分布、极端情况和下方理论数量，不改变训练设置。每个顶底有序配对等权，不按实际抽题概率加权。', 'This switch updates distributions, extremes and theoretical counts below without changing training settings. Each ordered pair has equal weight, independently of training probabilities.')}</p>
     <div className="dz-about-counts">
@@ -51,9 +49,9 @@ export default function CorpusStatistics({ pll, onPllChange }: { pll: boolean; o
     <p className="dz-about-muted">{number(statistics.baseline.improvedPairs)} / {number(pure.count)} {t('对变短', 'pairs improved')} ({percent(statistics.baseline.improvedPairs, pure.count).toFixed(2)}%) · {t('最多减少', 'Largest reduction')} {statistics.baseline.maxSaved} HTM。{t('含 PLL 的配对没有旧题库基线，不混入改善幅度。', 'Pairs involving PLL have no previous-corpus baseline and are excluded from the improvement comparison.')}</p>
 
     <div className="dz-about-section-head dz-stats-subhead">
-      <h3>{t('打乱分布', 'Scramble distribution')}</h3>
-      <select className="dz-about-symmetry-select" aria-label={t('分布指标', 'Distribution metric')} value={distribution} onChange={event => setDistribution(event.target.value)}>
-        <option value="htm">HTM</option><option value="qtm">QTM</option><option value="generators">{t('转动面数量', 'Distinct faces')}</option>
+      <h3>{t('双底打乱分布', 'Double ZBLL scramble distribution')}</h3>
+      <select className="dz-about-symmetry-select" aria-label={t('双底统计指标', 'Double ZBLL counting metric')} value={distribution} onChange={event => setDistribution(event.target.value)}>
+        <option value="htm">HTM</option><option value="stm">STM</option><option value="sqtm">SQTM</option><option value="qtm">QTM</option><option value="generators">{t('转动面数量', 'Distinct faces')}</option>
       </select>
     </div>
     <table className="dz-stats-distribution">

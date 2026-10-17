@@ -1,12 +1,19 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
+import BoolToggle from '@/components/BoolToggle';
+import { SCRAMBLE_KINDS } from '@/lib/trainer-scramble';
 import { ArrowDown, Layers, RotateCw } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import CorpusStatistics from './CorpusStatistics';
+import StatisticsOverview from './StatisticsOverview';
+import { useStatisticsData, type Mode } from './useStatisticsData';
 import HeaderToggles from '@/components/HeaderToggles';
 import { useT } from '@/hooks/useT';
 import './double-zbll-about.css';
+
+const SingleStatistics = dynamic(() => import('./SingleStatistics'));
 
 // Verified against the 18 face-turn generators and all 7,772 single-layer states.
 const rotations = ['', 'y', 'y2', "y'", 'x2', 'y x2', 'y2 x2', "y' x2"];
@@ -15,7 +22,13 @@ const number = (value: number) => value.toLocaleString('en-US');
 
 export default function DoubleZbllAbout() {
   const t = useT();
+  const [mode, setMode] = useState<Mode>('double-zbll');
   const [pll, setPll] = useState(false);
+  const data = useStatisticsData(pll);
+  const selectMode = (mode: Mode) => {
+    setMode(mode);
+    document.getElementById('dz-mode-details')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
   const [rotation, setRotation] = useState(0);
   const cases = pll ? 493 : 472;
   const states = pll ? 7772 : 7488;
@@ -26,13 +39,27 @@ export default function DoubleZbllAbout() {
   const orbits = (unique + 2 * quarterFixed ** 2 + halfFixed ** 2 + 4 * states) / 8;
   return <main className="dz-about">
     <header className="dz-about-hero">
-      <div className="dz-about-topline"><span className="dz-about-eyebrow"><Layers size={18} /> ZBLL × 2</span><HeaderToggles /></div>
-      <h1>{t('换个方向，同样最短', 'A different orientation. The same shortest solution.')}</h1>
-      <p>{t('把顶层和底层的两个 case 放在同一颗魔方上。利用对称，只计算每组等价状态中的一个，再把解法转换回来。', 'Combine two cases on opposite layers. Solve one representative from each symmetry class, then transform its solution back to the requested state.')}</p>
-      <AppLink href="/alg/3x3/zbll/run" prefetch={false} className="dz-about-start">{t('开始双底训练', 'Open double ZBLL training')} →</AppLink>
+      <div className="dz-about-topline"><span className="dz-about-eyebrow"><Layers size={18} /> ZBLL</span><HeaderToggles /></div>
+      <h1>{t('ZBLL 打乱方式与统计', 'ZBLL scramble modes and statistics')}</h1>
+      <p>{t('从双底 HTM 到逆 case、四种最优度量、COEP 和 csTimer：了解每种打乱如何产生，比较分布与极端情况。', 'Explore double ZBLL HTM, inverse case, four optimal metrics, COEP and csTimer: how each scramble is made, its distribution and its extremes.')}</p>
+      <AppLink href="/alg/3x3/zbll/run" prefetch={false} className="dz-about-start">{t('开始 ZBLL 训练', 'Open ZBLL training')} →</AppLink>
     </header>
 
-    <CorpusStatistics pll={pll} onPllChange={setPll} />
+    <div className="dz-about-section-head dz-scope-control"><p>{t('统计范围：完整 ZBLL 题库', 'Scope: complete ZBLL corpus')}</p><BoolToggle label={t('统计包含 PLL', 'Include PLL in statistics')} value={pll} onChange={setPll} /></div>
+    <StatisticsOverview pll={pll} data={data} selected={mode} onSelect={selectMode} />
+    <section className="dz-about-guide" id="dz-mode-details">
+      <h2>{t('模式明细与计步说明', 'Mode details and counting rules')}</h2>
+      <p>{t('HTM：外层半转算一步，夹层转动折算为两个外层转动。STM：外层、宽转、夹层各算一步。QTM / SQTM 分别在 HTM / STM 基础上将半转算两步。整颗转体不计步；例如 M2 为 2 HTM、1 STM、4 QTM、2 SQTM。最短不等于最好拧，步数也不能直接预测还原时间。', 'HTM counts a face half turn as one and a slice turn as two face turns. STM counts face, wide and slice turns as one each. QTM / SQTM count half turns twice under HTM / STM respectively. Cube rotations cost zero: M2 is 2 HTM, 1 STM, 4 QTM and 2 SQTM. Shortest does not mean easiest to execute, and move count does not predict solve time.')}</p>
+      <div className="dz-about-section-head">
+        <label>{t('打乱方式', 'Scramble mode')} <select aria-label={t('打乱方式', 'Scramble mode')} className="dz-about-symmetry-select" value={mode} onChange={e => setMode(e.target.value as typeof mode)}>
+          <option value="double-zbll">{t('双底 HTM', 'Double ZBLL HTM')}</option>
+          {SCRAMBLE_KINDS.filter(k => k.id !== 'rand').map(k => <option key={k.id} value={k.id}>{k.label()}</option>)}
+        </select></label>
+      </div>
+    </section>
+    {mode !== 'double-zbll' ? <SingleStatistics kind={mode} data={data} /> : <>
+    <p>{t('双底把两个 case 放在同一颗魔方的顶层和底层，一条打乱练两例。以下统计为每个有序配对选出的打乱；单层模式每题只有一个 case。', 'Double ZBLL places one case on each of two opposite layers, training two cases with one scramble. These statistics count selected scrambles per ordered pair; single-layer modes train one case per scramble.')}</p>
+    <CorpusStatistics pll={pll} />
 
     <section className="dz-about-prose" aria-labelledby="dz-counts">
       <div className="dz-about-section-head">
@@ -102,5 +129,6 @@ export default function DoubleZbllAbout() {
       <p>{t('出题方向优化另外验证了八种方向下全部 18 种面转的状态等价性，以及顶底交换和智能魔方目标同步。浏览器只读取题库并转换记号，不重新运行最短解求解器。', 'The orientation optimization separately verifies state equivalence for all 18 face turns in each of the eight frames, along with layer swapping and smart-cube target consistency. The browser reads the corpus and relabels moves; it does not rerun the optimal solver.')}</p>
       <p>{t('联网进入双底模式后，会在后台自动缓存题库和训练页面，无需点击下载。缓存完成后可离线使用；题库或离线页面版本更新后会自动补齐，断网失败时在恢复联网或下次进入时重试。浏览器需支持离线存储，并保留该网站的数据。', 'Entering double ZBLL mode online automatically caches the corpus and training pages in the background. Offline use is available after caching completes. Corpus or offline-page updates are cached automatically, with failures retried on reconnection or the next visit. The browser must support offline storage and retain this site’s data.')}</p>
     </section>
+    </>}
   </main>;
 }

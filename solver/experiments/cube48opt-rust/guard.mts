@@ -1,3 +1,4 @@
+import {beginStatsRun, validateStatsRun} from './stats-resume-review.mts';
 import { nxPolicy as opt8NativePolicy, validateNxReview as validateOpt8NativeReview } from './opt8-native-policy.mts';
 /** Backend-budgeted research. Shares the previous experiment's swap stop record. */
 import { localOpt8Scope, validateLocalOpt8Review } from './opt8-local-policy.mts';
@@ -294,6 +295,12 @@ if (env.CUBEOPT_ORIGINAL_RESUME_REVIEW !== undefined)
   return resumePolicy({label,executable,args,env});
 if (env.CUBEOPT_OPEN_BENCHMARK_REVIEW !== undefined)
   return openPolicy({label,executable,args,env});
+// Daily statistics explicitly authorized on 2026-10-17. Reuse the exact release
+// and historical resource review, never the ZBLL continuation/reset exception.
+if (label === 'scramble-stats-opt10-session') {
+  const policy = zbllOfficialPolicy({label:'double-zbll-opt10-batch',executable,args,env}, availableParallelism());
+  return {...policy, deadlineMs:0};
+}
 if (env.CUBEOPT_ZBLL_REVIEW !== undefined && executable === officialPaths.executable)
   return zbllOfficialPolicy({label,executable,args,env}, availableParallelism());
 if (env.CUBEOPT_OPT10_OFFICIAL_REVIEW !== undefined)
@@ -625,6 +632,7 @@ function memory() {
     pressure: Number(command('/usr/sbin/sysctl', ['-n', 'kern.memorystatus_vm_pressure_level']).trim()), available: summary.reclaimableEstimateBytes };
 }
 let before = memory();
+const statsResume = label === 'scramble-stats-opt10-session' ? beginStatsRun(before) : undefined;
 const zbllResume = zbllOfficial && label === 'double-zbll-opt10-session' ? readResumeReview(before) : undefined;
 if (generationProof) {
   const sourceHashes = Object.fromEntries(opt10ProofSources.map(name=>[name,digest(readFileSync(resolve(here,name)))]));
@@ -635,7 +643,7 @@ if (process.env.AUF_EXPECTED_BOOT !== undefined && (process.env.AUF_EXPECTED_BOO
 const otherComputations = command('/bin/ps', ['-axo', 'pid,comm']).split('\n')
   .filter(line => /solve_h48_h10|cube48opt-research|table_generator|nxopt\d+/.test(line));
 if (otherComputations.length) throw Error('Another native computation is running: ' + otherComputations.join('; '));
-if (!openBenchmark && !zbllResume && (existsSync(reviewedStopPath) || existsSync(opt10ReviewedStopPath) || existsSync(officialPaths.stop)
+if (!openBenchmark && !zbllResume && !statsResume && (existsSync(reviewedStopPath) || existsSync(opt10ReviewedStopPath) || existsSync(officialPaths.stop)
     || (existsSync(multithreadPaths.stop) && !multithreadReviewPath && !official && !zbllOfficial && !localOpt8))) throw Error('A newer reviewed computation stopped; further execution requires review');
 let reviewReceipt: any;
 let opt10ReviewReceipt: any;
@@ -658,6 +666,12 @@ if (mode === 'solve-opt10' && !zbll && !multithread && !official) {
 }
 function checkZbllReview(current: MemoryObservation) {
   if (!zbll) return;
+  if (statsResume) {
+    validateStatsRun(statsResume,current);
+    const original=JSON.parse(readSmallRecord(process.env.CUBEOPT_ZBLL_REVIEW!).toString());
+    const identity=validateZbllOfficialReview(original,collectOfficialEvidence(),{...current,boot:original.boot,swapouts:original.swapouts},false);
+    return {...identity,statsRunDirectory:statsResume.directory,acceptedSwapouts:statsResume.swapouts};
+  }
   if (zbllResume) {
     const resumed=readResumeReview(current)!;
     const original=JSON.parse(readSmallRecord(process.env.CUBEOPT_ZBLL_REVIEW!).toString());
@@ -678,6 +692,7 @@ function checkZbllReview(current: MemoryObservation) {
   }, current);
 }
 function checkBaselines(current: MemoryObservation) {
+  if (statsResume) { validateStatsRun(statsResume,current); return; }
   if (zbllResume) { readResumeReview(current); return; }
   if (openBenchmark) {
     validateBenchmarkReview({label,executable,args,env:process.env},current);
@@ -872,7 +887,7 @@ function stop(reason: string, protection = false, details?: unknown) {
         const archive = resolve(output, `multithread-stop-${digest(previous)}.json`);
         if (!existsSync(archive)) writeFileSync(archive, previous, {flag:'wx'});
       }
-      atomic(zbllResume ? zbllResumeStopPath : dualWasmCandidate || browserBenchmark || nxoptBenchmark || opt8NativeBenchmark ? dualScopeStopPath as string : wasmCandidate ? candidateStopPath : originalResume ? resumeStopPath : openBenchmark ? openStopPath : officialReviewReceipt ? officialPaths.stop : multithreadReviewReceipt ? multithreadPaths.stop : opt10ReviewReceipt || zbll ? opt10ReviewedStopPath : reviewReceipt ? reviewedStopPath : ownRecord,
+      atomic(statsResume ? statsResume.stopPath : zbllResume ? zbllResumeStopPath : dualWasmCandidate || browserBenchmark || nxoptBenchmark || opt8NativeBenchmark ? dualScopeStopPath as string : wasmCandidate ? candidateStopPath : originalResume ? resumeStopPath : openBenchmark ? openStopPath : officialReviewReceipt ? officialPaths.stop : multithreadReviewReceipt ? multithreadPaths.stop : opt10ReviewReceipt || zbll ? opt10ReviewedStopPath : reviewReceipt ? reviewedStopPath : ownRecord,
         { ...before, stopped: reason, trigger,
           ...(reviewReceipt ? { label, reviewReceipt } : {}), ...(opt10ReviewReceipt ? {label,opt10ReviewReceipt} : {}),
           ...(multithreadReviewReceipt ? {label,multithreadReviewReceipt} : {}),...(officialReviewReceipt ? {label,officialReviewReceipt} : {}) });
@@ -921,7 +936,7 @@ function sample() {
     minimumHeadroom = Math.min(minimumHeadroom, headroom);
     const reasons = resourceProtectionReasons(before, now, rss, rssLimit, headroom);
     if (reasons.length) stop(`Resource protection: ${reasons.join('; ')}`, true, { ...now, rss, rssLimit, headroom, reasons });
-    atomic(resolve(output, `${label}-resources.json`), { ...now, backend, variant, h, entry, mode, measureNativeRss, tableBytes, rssLimit, deadlineMs, peakRss, minimumHeadroom, stopped, trigger, reviewReceipt, opt10ReviewReceipt, zbllReviewReceipt, multithreadReviewReceipt, officialReviewReceipt, openBenchmarkReceipt, sampledAt: new Date().toISOString() });
+    atomic(statsResume ? resolve(statsResume.directory, "resources.json") : resolve(output, `${label}-resources.json`), { ...now, backend, variant, h, entry, mode, measureNativeRss, tableBytes, rssLimit, deadlineMs, peakRss, minimumHeadroom, stopped, trigger, reviewReceipt, opt10ReviewReceipt, zbllReviewReceipt, multithreadReviewReceipt, officialReviewReceipt, openBenchmarkReceipt, sampledAt: new Date().toISOString() });
   } catch (e) { stop(String(e), true, { observationError:String(e) }); }
 }
 const interval = setInterval(sample, 500);

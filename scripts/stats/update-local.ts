@@ -8,6 +8,7 @@ import {
   tableDir, taskProgress, wcaDir,
 } from './common.js';
 import { runPuzzles } from './puzzles.js';
+import { preflightStatsEngine, statsEngine } from '../../solver/333opt/stats-engine.mts';
 
 type Job = 'stages' | '333opt' | 'puzzles';
 type Options = {
@@ -212,7 +213,7 @@ async function run333(options: Options, inject: boolean): Promise<boolean> {
   const units = Number(solve) + (inject ? 3 : 0);
   let completedUnits = 0;
   if (options.jobs.includes('333opt') && !options.skipSolve333) {
-    console.log('\n=== 333opt: H48 h10 续解 ===');
+    console.log('\n=== 333opt: ' + statsEngine(repoRoot).engine + ' 续解 ===');
     await runTs(join(solverDir, '333opt', 'solve_h10.mts'), [], coreDir, { ...process.env, CUBE_TABLE_DIR: tableDir, RAYON_NUM_THREADS: String(availableParallelism()) });
     taskProgress('333opt', ++completedUnits, units);
   }
@@ -231,7 +232,7 @@ type Summary = { startedAt: string; finishedAt?: string; status: string; active?
 async function main(): Promise<void> {
   const options = parse(process.argv.slice(2));
   if (options.plan) {
-    console.log(JSON.stringify({ ...options, analyzers: requiredAnalyzers(options), repoRoot, coreDir, jobDir, wcaDir, puzzleDir, tableDir, publish: false }, null, 2));
+    console.log(JSON.stringify({ ...options, analyzers: requiredAnalyzers(options), repoRoot, coreDir, jobDir, wcaDir, puzzleDir, tableDir, optimalEngine: statsEngine(repoRoot), publish: false }, null, 2));
     return;
   }
   if (options.dryRun) {
@@ -241,8 +242,7 @@ async function main(): Promise<void> {
   }
   const runStart = Date.now();
   if (options.jobs.includes('333opt') && !options.skipSolve333) {
-    const h10 = resolve(process.env.H48_H10_TABLE || join(tableDir, 'h48-nissy-core', 'h48h10.dat'));
-    if (await fileSize(h10) !== 30_336_314_216) throw new Error(`H48 h10 table missing/incomplete: ${h10}`);
+    preflightStatsEngine(repoRoot);
   }
   if (options.jobs.includes('puzzles') && options.puzzles.includes('sq1')) {
     const sq1 = join(tableDir, 'sq1_wca_jsqfull.bin');

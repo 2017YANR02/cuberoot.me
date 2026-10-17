@@ -21,6 +21,9 @@ test('H48 resume checks current corpus IDs and counts existing plus appended row
   }
   copyFileSync(resolve(here, 'solve_h10.mts'), resolve(fixture, '333opt/solve_h10.mts'));
   copyFileSync(resolve(here, 'data_paths.mjs'), resolve(fixture, '333opt/data_paths.mjs'));
+  writeFileSync(resolve(fixture, '333opt/stats-engine.mts'), readFileSync(resolve(here, 'stats-engine.mts'),'utf8').replace(/^import \{observeStatsResources,statsStartupReady\}.*\n/m, ''));
+  writeFileSync(resolve(fixture, '333opt/rust-h10-adapter.mts'),
+    'export const opt10Configuration = () => { throw Error("unexpected Opt10 in C fixture"); }; export const rustConfiguration = opt10Configuration; export const rustCsv = x => x; export const rustScramble = x => x;');
   for (const path of ['native/solve_h48_h10.c', 'vendor/nissy-core/src/nissy.c', 'vendor/nissy-core/src/utils/wrapthread.h']) {
     writeFileSync(resolve(fixture, path), 'fixture');
   }
@@ -51,7 +54,7 @@ syncBuiltinESMExports();
   const oldRows = "old-a,1,R'\nold-b,1,R'\n";
   writeFileSync(output, oldRows);
   const run = () => spawnSync(process.execPath, ['--import', preload, '--import', resolve(repo, 'core/node_modules/tsx/dist/loader.mjs'), resolve(fixture, '333opt/solve_h10.mts')], {
-    env: { ...process.env, THREADS: '1', CORPUS: corpus, OUT: output, H48_H10_TABLE: table },
+    env: { ...process.env, H10_ENGINE: 'c', THREADS: '1', CORPUS: corpus, OUT: output, H48_H10_TABLE: table },
     encoding: 'utf8', timeout: 15_000,
   });
   const first = run();
@@ -65,5 +68,15 @@ syncBuiltinESMExports();
   const second = run();
   assert.equal(second.status, 0, second.stderr);
   assert.match(second.stdout, /corpus complete: 1\/1/);
+  assert.equal(readFileSync(output, 'utf8'), `${oldRows}current,1,R'\n`);
+  // A guard can reject before reading any input. Exercise enough input to
+  // hit backpressure, and verify the coordinator exits without losing output.
+  writeFileSync(resolve(fixture, 'target/release/solve_h48_h10_1'), '#!/usr/bin/env node\nprocess.exit(7);\n', {mode:0o755});
+  writeFileSync(corpus, Array.from({length:10000},(_,i)=>`pending-${i},R`).join('\n')+'\n');
+  const refused = run();
+  assert.equal(refused.error, undefined);
+  assert.notEqual(refused.status, 0);
+  assert.notEqual(refused.status, 13, refused.stderr);
+  assert.doesNotMatch(refused.stderr, /unsettled top-level await/);
   assert.equal(readFileSync(output, 'utf8'), `${oldRows}current,1,R'\n`);
 });

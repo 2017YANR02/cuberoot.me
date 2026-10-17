@@ -207,9 +207,11 @@ async function main() {
     && Date.now() < Date.parse('2026-12-01T00:00:00Z')) {
     // Reviewed local shortcut: fixed coordinator and exact audited dependencies.
     const files = {
+      "solver/experiments/cube48opt-rust/stats-resume-review.mts": "6f609b721bee3a645280a238a94f3c5093cc9d085244dc4f13824c51c0bb6f97",
+      "solver/333opt/stats-engine.mts": "ac25211efc875ca6d48446a5ed65d992d6a5f59122f0c10c8d18716c02ce4e16",
       "solver/experiments/cube48opt-rust/native-release.mts": "d9fefcf461c9831dec7ab5076d48d64c607f19c71e8843b7a5f2ca4e9bc72e3d",
       "solver/333opt/resident-rust-session.mts": "313215e251bc666811b4fab4794c3667d93c9ddeadb3eaec8eb03e6a32b85fff",
-      "solver/experiments/cube48opt-rust/guard.mts": "4ff68ee8cc22a7aea96b89d748666d4bd8ebb5b5c64bcb8c9cd80aa6fee6414f",
+      "solver/experiments/cube48opt-rust/guard.mts": "b028fa2bbd51c94a72d141cc5c63f78635c12ee973d63f9c90285aff32ff324b",
       "solver/experiments/cube48opt-rust/wasm-browser-policy.mts": "1176e270d28c8666ae300e7854f23d11e571de210d80eba46977ba15115ebf0d",
       "solver/experiments/cube48opt-rust/wasm-dual-candidate-policy.mts": "abca4884edc63d97dca715dd55510c7c23cfd96e65b06219830dd6c3b1f3a5f8",
       "solver/experiments/cube48opt-rust/opt9-wasm-candidate-policy.mts": "65b30139f4dec1dc0cc46a7e4a318777926cef4bf0c96f46a2d795d421eabd12",
@@ -226,7 +228,7 @@ async function main() {
       "core/jobs/alg-build/src/double-zbll-symmetry-state.mts": "98783dad8592761349dcc6cb852e07a4a3fee5caf265bafcf0ab3ca35eedc04b",
       ".tmp/double-zbll-symmetry-v2/model.mts": "ec36d0ba647796b8c979863aa81ab9cb7162a7083398fa898f7b17b76cf4f3a1",
       ".tmp/double-zbll-auf-20261011/run.mts": "20308805d6aef28a4cc94dd4a4140bfb6065ec7fac854c20162067fb55878cbd",
-      "solver/333opt/solve_h10.mts": "e68064ace9e7b780550d52c8d71d8a734f848b2a7cf6e311a9cae0336c08bb91",
+      "solver/333opt/solve_h10.mts": "bc65a841175e08fc71c7aa493132501399e863870e4613a90a2bc9bbca36ecf2",
       "solver/experiments/cube48opt-rust/opt10-zbll-policy.mts": "82492332b5c81d252a1f37fe5fff46494c02d8cb8f28c172e3be2045f17c755c",
       "core/scripts/zbll-memory-budget.mts": "9ff1980d29ab3d1976158daf85c68f99b91eb19098872ceea47fdbe5045bc231",
       "core/scripts/mac-memory-menu.mts": "085791ed113fd3d309fadcfd9302e6b037664cb6b5d3b98e99f1f3279cd9111d",
