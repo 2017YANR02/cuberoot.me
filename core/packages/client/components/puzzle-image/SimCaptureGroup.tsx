@@ -18,6 +18,7 @@ import type * as THREE from 'three';
 import type World from '@/app/[lang]/sim/engine/world';
 import type { ExportProgress } from '@/app/[lang]/sim/sim_export';
 import { useT } from '@/hooks/useT';
+import { saveBlob, snapshotSvgElement, svgBlob, svgToRasterBlob } from '@/lib/puzzle-image/image-export';
 import './puzzle-image.css';
 
 /**
@@ -26,6 +27,8 @@ import './puzzle-image.css';
  * export animates the alg).
  */
 export interface SimBridge {
+  /** Present for DOM-based views; never capture their hidden WebGL canvas. */
+  getSvg?: () => SVGSVGElement | null;
   getCanvas: () => HTMLCanvasElement | null;
   getWorld: () => World | null;
   getRenderer: () => THREE.WebGLRenderer | null;
@@ -103,6 +106,14 @@ export default function SimCaptureGroup({ simBridge }: { simBridge: SimBridge })
   }, []);
 
   const snapshot = useCallback(async () => {
+    if (simBridge.getSvg) {
+      const node = simBridge.getSvg();
+      if (node) {
+        const frame = snapshotSvgElement(node);
+        saveBlob(await svgToRasterBlob(frame.svg, frame), `sim-${Date.now()}.png`);
+      }
+      return;
+    }
     const cv = simBridge.getCanvas();
     if (cv) {
       cv.toBlob((blob) => {
@@ -130,6 +141,11 @@ export default function SimCaptureGroup({ simBridge }: { simBridge: SimBridge })
   // scene+camera 喂截图导出器(全 Basic 材质无灯,无深度图 → 纯 painter 分支)。
   const svgSnapshot = useCallback(async () => {
     try {
+      if (simBridge.getSvg) {
+        const node = simBridge.getSvg();
+        if (node) saveBlob(svgBlob(snapshotSvgElement(node).svg), `sim-${Date.now()}.svg`);
+        return;
+      }
       const world = simBridge.getWorld();
       let svg: string | undefined;
       if (world) {
@@ -177,6 +193,7 @@ export default function SimCaptureGroup({ simBridge }: { simBridge: SimBridge })
   }, [simBridge, downloadUrl, t]);
 
   const startExport = useCallback(async () => {
+    if (simBridge.getSvg) return;
     const world = simBridge.getWorld();
     const renderer = simBridge.getRenderer();
     if (!world || !renderer || exporting) return;
@@ -207,9 +224,9 @@ export default function SimCaptureGroup({ simBridge }: { simBridge: SimBridge })
   }, [simBridge, exporting, isZh, t]);
 
   const cancelExport = useCallback(() => { abortRef.current.aborted = true; }, []);
-  // Offline video needs our live World and renderer. TwistyPlayer still supports
-  // the screenshot paths above, but cannot drive this video exporter.
-  const hasVideoSource = Boolean(simBridge.getWorld() && simBridge.getRenderer());
+  // Offline video needs a visible World + renderer. DOM and TwistyPlayer views
+  // use their own screenshot paths and cannot drive this video exporter.
+  const hasVideoSource = !simBridge.getSvg && Boolean(simBridge.getWorld() && simBridge.getRenderer());
   const canRecord = hasVideoSource && simBridge.alg.trim().length > 0;
 
   return (

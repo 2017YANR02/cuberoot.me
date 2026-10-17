@@ -1826,13 +1826,21 @@ export default function SimPage() {
     worldRef.current as unknown as SimWorldView | null, []);
   const getRenderer = useCallback((): THREE.WebGLRenderer | null => rendererRef.current, []);
 
+  const netMode = !roomsActive && settings.viewMode === 'net' && typeof puzzleParam === 'number';
+  const clockMode = puzzleParam === 'clock';
+  const flatMode = netMode || clockMode;
+  const getFlatSvg = useCallback(() => containerRef.current?.querySelector<SVGSVGElement>(
+    '.sim-clock .iclock-svg, .sim-net > .sim-net-svg',
+  ) ?? null, []);
+
   const simBridge = useMemo<SimBridge>(() => ({
     getCanvas, getWorld, getRenderer,
+    getSvg: flatMode ? getFlatSvg : undefined,
     // cubing.js TwistyPlayer(自定义切割 / PG 目录拼图 / renderer='cubing'):
     // 引擎 world 不在场时,截图组从它的 vantage 取 scene+camera 做 SVG 投影 / PNG。
     getTwistyPlayer: () => twistyPlayerRef.current,
     setup: setupParam, alg: algParam,
-  }), [getCanvas, getWorld, getRenderer, setupParam, algParam]);
+  }), [getCanvas, getWorld, getRenderer, flatMode, getFlatSvg, setupParam, algParam]);
 
   // Keep the (seeded) image spec in step with the sim as its puzzle / alg / colours
   // change after mount — the codec injection only runs on the cold-load seed, so every
@@ -2230,14 +2238,6 @@ export default function SimPage() {
       imgSpec.planSideRule, imgSpec.planUpRule, imgSpec.planShowYellow,
       imgSpec.planForceShow, imgSpec.planForceHide,
       settings.faceColors, settings.ghostFaceColors, settings.pictureBaseColors, settings.pictureFaces, stickeringMaskFor]);
-
-  // 2D flat-net view mode — NxN only (number puzzle), driven by the same live cube.
-  const netMode = !roomsActive && settings.viewMode === 'net' && typeof puzzleParam === 'number';
-  // 魔表:唯一没有立体形态的拼图 —— 画面恒走 DOM 层的 SVG 板,3D 画布是空的。判据与
-  // netMode 同族(都是"画布上盖一层平面图"),所以下面凡是 `!netMode` 的角落控件
-  // (背面小窗 / 交换主图 …)也一并要避开它,统一用 flatMode。
-  const clockMode = puzzleParam === 'clock';
-  const flatMode = netMode || clockMode;
 
   // 主图 ↔ 伴图交换态生效条件(与画布 wrap 的 --imgswap class 同一判据):把它写进
   // resize 闭包读的 ref,再触发一次重排,渲染器在全幅 ↔ 左上小框之间切换。
