@@ -1,6 +1,8 @@
 // Lightweight catalog shared by the simulator menu and icon gallery.
 import { eventDisplayName } from '@/lib/wca-events';
-import { PG_PUZZLES } from './pgCatalog';
+import { PG_PUZZLES, type PgPuzzleId } from './pgCatalog';
+
+export type SimPuzzle = number | 'sq1' | 'sq2' | 'sq4' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'ghost' | 'pyraminx' | 'pyraminx_duo' | 'skewb' | 'megaminx' | 'kilominx' | 'fto' | 'mirror' | 'mirror2' | 'sphere' | 'clock' | 'magic' | 'mmagic' | 'custom' | PgPuzzleId;
 
 // WCA-standard event names reuse the site-wide single source (lib/wca-events
 // eventDisplayName — same labels the /wca/records page renders: 三阶/3×3, SQ1,
