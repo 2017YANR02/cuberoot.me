@@ -133,3 +133,15 @@ export function groupSimPuzzleOptions(allowedValues?: readonly string[]): SimPuz
   return groups.filter(group => group.options.length > 0);
 }
 
+
+/** Free drawing supports templates independently of the animation puzzle. */
+export const DRAW_PUZZLES = ['nxn', 'sq1', 'megaminx', 'skewb', 'pyraminx', 'fto'] as const;
+export type DrawPuzzleSelection = number | Exclude<(typeof DRAW_PUZZLES)[number], 'nxn'>;
+
+export function normalizeDrawPuzzle(value: string | number): DrawPuzzleSelection {
+  if (typeof value === 'string' && DRAW_PUZZLES.some(id => id !== 'nxn' && id === value)) {
+    return value as Exclude<DrawPuzzleSelection, number>;
+  }
+  const order = Number(value);
+  return Number.isInteger(order) && order >= 2 && order <= 20 ? order : 3;
+}
