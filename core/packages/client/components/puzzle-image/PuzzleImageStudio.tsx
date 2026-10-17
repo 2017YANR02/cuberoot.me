@@ -499,9 +499,6 @@ export default function PuzzleImageStudio({
         {/* 链接类按钮指向服务端 spec 渲染(/v1/visualcube.svg),engine-only 拼图服务端
             画不了 → 只留 SVG/PNG(下载预览那份引擎矢量)。没有单独的「分享链接」按钮:
             面板状态本来就写在地址栏的 img_* 里,复制地址栏即分享。 */}
-        {!engineOnly && staticFallbackExact && !externalImage && (
-          <CopyButton label={t('API 链接', 'API URL')} getValue={() => apiSvgUrl} />
-        )}
         <ImageExportMenu
           kind="copy"
           disabled={!exportReady}
@@ -521,15 +518,6 @@ export default function PuzzleImageStudio({
             ...(externalImage ? [{ label: 'JPG', run: downloadJpeg }] : []),
           ]}
         />
-        {!engineOnly && staticFallbackExact && !externalImage && (
-          <CopyButton
-            label={t('<img> 标签', '<img> tag')}
-            getValue={() => `<img src="${apiSvgUrl}" alt="cube" width="${s.imageSize}" height="${s.imageSize}" />`}
-          />
-        )}
-        {!engineOnly && staticFallbackExact && !externalImage && (
-          <CopyButton label="Markdown" getValue={() => `![cube](${apiSvgUrl})`} />
-        )}
       </section>
 
       {!externalImage && <section className="vc-controls">
@@ -673,8 +661,8 @@ export default function PuzzleImageStudio({
 
         {!engineOnly && (<>
         {isCube && projected && (
-          <div className="vc-row vc-row-block">
-            <label className="vc-label">{t('箭头', 'Arrow Definition')}</label>
+          <details className="vc-control-section">
+            <summary>{t('箭头标注', 'Arrow annotations')}</summary>
             <div className="vc-row-controls vc-col">
               <div className="vc-arrow-builder">
                 <span>{t('面', 'Face')}</span>
@@ -775,12 +763,12 @@ export default function PuzzleImageStudio({
                 allowEmpty
               />
             </div>
-          </div>
+          </details>
         )}
 
         {maskable && (
-          <div className="vc-row vc-row-block">
-            <label className="vc-label">{t('贴纸遮罩', 'Sticker Mask')}</label>
+          <details className="vc-control-section">
+            <summary>{t('贴纸遮罩', 'Sticker mask')}</summary>
             <div className="vc-row-controls vc-col">
               <div className="vc-row-controls">
                 <input
@@ -841,7 +829,7 @@ export default function PuzzleImageStudio({
                 />
               )}
             </div>
-          </div>
+          </details>
         )}
 
         {/* 背景色是**导出件**的底色(默认透明),不是画布背景 —— sim 那个 BG 选择器管的是
@@ -861,6 +849,14 @@ export default function PuzzleImageStudio({
       {!engineOnly && staticFallbackExact && !externalImage && (
       <details className="vc-api-doc">
         <summary>{t('API 用法（外部嵌入）', 'API usage (embed elsewhere)')}</summary>
+        <div className="vc-exports">
+          <CopyButton label={t('API 链接', 'API URL')} getValue={() => apiSvgUrl} />
+          <CopyButton
+            label={t('<img> 标签', '<img> tag')}
+            getValue={() => `<img src="${apiSvgUrl}" alt="cube" width="${s.imageSize}" height="${s.imageSize}" />`}
+          />
+          <CopyButton label="Markdown" getValue={() => `![cube](${apiSvgUrl})`} />
+        </div>
         <p>
           {t(
             '直接通过 GET /v1/visualcube.svg 拿到 SVG 字节流，可放进 <img>、curl、博客 Markdown 等。这是简化端点（7 个参数），端点覆盖不到的设置请在这里调好后复制地址栏。',
