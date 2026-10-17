@@ -14,7 +14,11 @@ export interface CaseImageExportOptions {
 
 /** Give standalone SVGs intrinsic dimensions and preserve their native aspect ratio. */
 export function prepareCaseSvg(source: string, size: number, background: 'transparent' | 'white') {
-  const doc = new DOMParser().parseFromString(source, 'image/svg+xml');
+  // Standalone files cannot inherit website CSS variables (notably SQ1 shape diagrams).
+  const style = getComputedStyle(document.documentElement);
+  const resolved = source.replace(/var\((--[\w-]+)(?:,\s*([^)]*))?\)/g,
+    (_, token: string, fallback: string | undefined) => style.getPropertyValue(token).trim() || fallback || 'currentColor');
+  const doc = new DOMParser().parseFromString(resolved, 'image/svg+xml');
   const svg = doc.documentElement;
   if (svg.localName !== 'svg' || doc.querySelector('parsererror')) throw new Error('Invalid SVG');
   const vb = svg.getAttribute('viewBox')?.trim().split(/[\s,]+/).map(Number);
@@ -24,6 +28,7 @@ export function prepareCaseSvg(source: string, size: number, background: 'transp
   const width = Math.max(1, Math.round(size * w / Math.max(w, h)));
   const height = Math.max(1, Math.round(size * h / Math.max(w, h)));
   if (!vb) svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  svg.setAttribute('color', style.color);
   svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
   svg.setAttribute('width', String(width));
   svg.setAttribute('height', String(height));

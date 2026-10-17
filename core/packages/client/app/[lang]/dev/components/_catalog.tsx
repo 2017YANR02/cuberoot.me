@@ -1501,6 +1501,13 @@ export const CATALOG: ComponentEntry[] = [
     Demo: BackHomeDemo,
   },
   {
+    name: 'AlgImageDownloadButton',
+    import: "import AlgImageDownloadButton from '@/components/AlgImageDownloadButton';",
+    category: 'more',
+    zh: '公式库单张图片与批量 ZIP 下载。点击时快照当前筛选与显示设置，支持 PNG/SVG、背景、朝向、自选 case 和取消；共享现有 case 绘图与栅格化工具。',
+    en: 'Single case images and batch ZIP downloads with PNG/SVG, backgrounds, orientations, case selection and cancellation. Snapshots display settings on click and reuses the canonical case renderer.',
+  },
+  {
     name: 'AlgPdfButton',
     import: "import AlgPdfButton from '@/components/AlgPdfButton';\nimport { algSheetFromCases } from '@/lib/alg_pdf/from_cases';",
     category: 'more',
