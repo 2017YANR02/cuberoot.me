@@ -9,6 +9,7 @@
 import type { EventId, Solve } from './types';
 import { EVENTS } from './types';
 import { findVerifiedReconstruction } from './replay-verified';
+import { TRAINING_START_MODES, type TrainingStartMode } from './training-settings';
 
 export interface DecodedReplay {
   event: EventId;
@@ -18,6 +19,8 @@ export interface DecodedReplay {
   gyro?: string;
   device?: { model: string; name: string };
   reconstruction?: string[];
+  trainingStartMode?: TrainingStartMode;
+  caseId?: string;
 }
 
 function base64UrlDecode(input: string): string {
@@ -55,6 +58,8 @@ export function decodeReplayParam(param: string): DecodedReplay | null {
   const g = obj.g;
   const d = obj.d;
   const r = obj.r;
+  if (obj.a !== undefined && !TRAINING_START_MODES.includes(obj.a as TrainingStartMode)) return null;
+  if (obj.c !== undefined && typeof obj.c !== 'string') return null;
   if (typeof e !== 'string' || !VALID_EVENTS.has(e)) return null;
   if (typeof s !== 'string') return null;
   if (typeof t !== 'number' || !Number.isFinite(t) || t < 0) return null;
@@ -85,6 +90,8 @@ export function decodeReplayParam(param: string): DecodedReplay | null {
   if (g !== undefined) decoded.gyro = g;
   if (d !== undefined) decoded.device = { model: d[0], name: d[1] };
   if (r !== undefined) decoded.reconstruction = r as string[];
+  if (obj.a !== undefined) decoded.trainingStartMode = obj.a as TrainingStartMode;
+  if (obj.c !== undefined) decoded.caseId = obj.c as string;
   return decoded;
 }
 
@@ -104,7 +111,7 @@ export function solveFromReplay(
   const sameMoves = (solve: Solve): boolean => {
     const source = solve.moves ?? [];
     if (source.length !== decoded.moves.length) return false;
-    const base = source.length > 0 ? source[0].ts : 0;
+    const base = !decoded.trainingStartMode && source.length > 0 ? source[0].ts : 0;
     return source.every((mv, i) => (
       mv.m === decoded.moves[i].m
       && Math.round(mv.ts - base) === decoded.moves[i].ts
@@ -132,5 +139,7 @@ export function solveFromReplay(
     ...(gyro ? { gyro } : {}),
     ...(device ? { device } : {}),
     ...(reconstruction ? { reconstruction } : {}),
+    ...(decoded.trainingStartMode ? { trainingStartMode: decoded.trainingStartMode } : {}),
+    ...(decoded.caseId ? { caseId: decoded.caseId } : {}),
   };
 }

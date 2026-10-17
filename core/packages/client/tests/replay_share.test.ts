@@ -22,6 +22,15 @@ const SOLVE: Solve = {
 };
 
 describe('replay share keeps the data needed for an exact reconstruction', () => {
+  it.each(['first-turn', 'scrambled', 'manual'] as const)('retains the %s training origin and case identity', trainingStartMode => {
+    const source = { ...SOLVE, event: 'pll' as const, caseId: 'T', trainingStartMode };
+    const decoded = decodeReplayParam(encodeReplayPayload(source))!;
+    const replay = solveFromReplay(decoded);
+    expect(replay.trainingStartMode).toBe(trainingStartMode);
+    expect(replay.caseId).toBe('T');
+    expect(replay.moves).toEqual(source.moves!.map(move => ({ ...move, ts: Math.round(move.ts) })));
+    expect(replay.timeMs).toBe(Math.round(source.timeMs));
+  });
   it('new links round-trip gyro and device together with the rebased moves', () => {
     const decoded = decodeReplayParam(encodeReplayPayload(SOLVE));
     expect(decoded).toEqual({
