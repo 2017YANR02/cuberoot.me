@@ -242,6 +242,7 @@ describe.each([
   { event: 'cube3heli', nameEn: '3×3 + Helicopter', nameZh: '三阶＋直升机' },
   { event: 'radiojewel', nameEn: 'Radio Jewel', nameZh: 'Radio Jewel' },
   { event: 'radioweb', nameEn: 'Radio Web', nameZh: 'Radio Web' },
+  { event: 'catscradle', nameEn: 'Cat’s Cradle', nameZh: 'Cat’s Cradle' },
 ] as const)('$event csTimer compatibility', ({ event, nameEn, nameZh }) => {
   it('preserves renamed sessions and mixed native notation through both import APIs', () => {
     const solve = {
@@ -328,6 +329,10 @@ describe('compound native csTimer session names', () => {
     ['Radio_Web_Practice', 'radioweb'],
     ['Session_Radio-Web', 'radioweb'],
     ['Radiolarian 6 practice', 'radioweb'],
+    ['Cat’s_Cradle_Practice', 'catscradle'],
+    ["Session_Cat's_Cradle", 'catscradle'],
+    ['Cats Cradle practice', 'catscradle'],
+    ['Session_Radiolarian_5', 'catscradle'],
     ['Session_3x3_+_Skewb', 'cube3skewb'],
     ['3×3 + Skewb_Practice', 'cube3skewb'],
     ['练习：三阶＋斜转', 'cube3skewb'],
