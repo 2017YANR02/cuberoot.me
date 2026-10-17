@@ -218,7 +218,8 @@
       "./timer/machine": "runtime-neutral",
       "./timer/types": "runtime-neutral",
       "./timer/stats": "runtime-neutral",
-      "./timer/event-catalog": "runtime-neutral"
+      "./timer/event-catalog": "runtime-neutral",
+      "./douyin-content": "runtime-neutral"
     }
   },
   "main": "./src/index.ts",
@@ -813,7 +814,8 @@
     "./timer/machine": "./src/timer/machine.ts",
     "./timer/types": "./src/timer/types.ts",
     "./timer/stats": "./src/timer/stats.ts",
-    "./timer/event-catalog": "./src/timer/event-catalog.ts"
+    "./timer/event-catalog": "./src/timer/event-catalog.ts",
+    "./douyin-content": "./src/douyin-content.ts"
   },
   "scripts": {
     "build": "tsc -b",

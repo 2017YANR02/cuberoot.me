@@ -1,3 +1,4 @@
+import { DOUYIN_CONTENT_BOOTSTRAP } from '@/lib/douyin-content-bootstrap';
 import InstalledContentBoundary from "@/components/InstalledContentBoundary";
 import { MOBILE_EMBED_FRAME_NAMES } from '@cuberoot/shared/mobile-embed';
 import type { Metadata } from "next";
@@ -70,9 +71,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: DOUYIN_CONTENT_BOOTSTRAP }} />
         {/* Hide prerendered route content in installed surfaces until their content boundary has checked it. */}
         <script dangerouslySetInnerHTML={{ __html: `if(window.parent!==window&&${JSON.stringify(Object.values(MOBILE_EMBED_FRAME_NAMES))}.includes(window.name))document.documentElement.dataset.installedSurface='true';` }} />
-        <style>{`[data-installed-route]{display:contents}html[data-installed-surface="true"] [data-installed-route]:not([data-installed-reviewed="true"]){display:none}`}</style>
+        <style>{`[data-installed-route]{display:contents}html[data-douyin-surface="true"] [data-installed-route]:not([data-douyin-checked="true"]){display:none}html[data-installed-surface="true"] [data-installed-route]:not([data-installed-reviewed="true"]){display:none}`}</style>
         <link rel="icon" href="/icons/CubeRoot.png" />
         <link rel="icon" href="/icons/CubeRoot-dark.png" media="(prefers-color-scheme: dark)" />
         {/* iOS「添加到主屏幕」的图标。Safari 只认 apple-touch-icon —— 缺这条它就

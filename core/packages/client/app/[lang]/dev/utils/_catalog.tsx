@@ -73,6 +73,13 @@ export const UCATS: { id: UtilCat; zh: string; en: string }[] = [
 
 export const CATALOG: UtilEntry[] = [
   {
+    name: 'useDouyinToolSurface', sig: 'useDouyinToolSurface(): boolean',
+    imp: "import { useDouyinToolSurface } from '@/lib/douyin-content';",
+    category: 'hook',
+    zh: '识别抖音工具版，配合共享 douyinContentAvailable 限制所有用户的页面入口；不改变微信和独立网站功能。',
+    en: 'Identify the Douyin tool surface and apply the shared douyinContentAvailable route policy for all users, preserving WeChat and standalone web features.',
+  },
+  {
     name: 'useWcaInstitutions',
     sig: 'useWcaInstitutions(studentKeys: string[])',
     imp: "import { useWcaInstitutions } from '@/hooks/useWcaInstitutions';",

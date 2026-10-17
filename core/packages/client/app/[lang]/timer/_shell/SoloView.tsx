@@ -1,4 +1,6 @@
 'use client';
+import { useDouyinToolSurface } from '@/lib/douyin-content';
+import { DOUYIN_BASIC_TIMER_EVENTS } from '@cuberoot/shared/douyin-content';
 import { TimerSoloPage, timerSoloModalState, useTimerSoloCompactLayout } from '@cuberoot/timer-ui/TimerSoloPage';
 import SoloLayoutEditor from '../_components/SoloLayoutEditor';
 import { Tooltip } from '@/components/Tooltip';
@@ -408,6 +410,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const languagePrefix = ['', '/zh'][Number(isZh)];
   const printControllerRef = useRef<TimerPrintControllerHandle>(null);
   const settings = useSettings();
+  const douyin = useDouyinToolSurface();
   const authUser = useAuthStore((st) => st.user);
   const isAdmin = useIsAdmin();
   const competition = useCompetitionAttempt();
@@ -425,9 +428,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const [trainingOrg] = useQueryState('trainingOrg', parseAsString);
   const [trainingAssignment] = useQueryState('trainingAssignment', parseAsString);
   useEffect(() => {
+    if (douyin) return;
     trainingDestinationRef.current = parseTrainingAssignmentDestination(new URLSearchParams({ trainingOrg: trainingOrg ?? '', trainingAssignment: trainingAssignment ?? '' }).toString());
     return startTrainingEvidenceOutbox(trainingDestinationRef.current);
-  }, [trainingOrg, trainingAssignment]);
+  }, [douyin, trainingOrg, trainingAssignment]);
 
   // 解法提示的全屏浮层由 SolverHintPanel 经同一个 URL param 开合(手机点 pill、桌面把头部的
   // 形态开关拨到「全屏」都进这一个);这里只读,用来把它算进 anyModalOpen(浮层盖住整屏时,
@@ -496,7 +500,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     if (typeof window === 'undefined') return;
     if (new URLSearchParams(window.location.search).has('event')) return;
     const stored = localStorage.getItem('cuberoot-timer.event');
-    const valid = EVENTS.some(e => e.id === stored);
+    const valid = EVENTS.some(e => e.id === stored) && (!douyin || DOUYIN_BASIC_TIMER_EVENTS.includes(stored ?? ''));
     // 始终显式写一次(哪怕就是当前默认值 '333'),否则 clearOnDefault:false 只在真调用
     // setEvent 时生效 —— 光靠 withDefault 不会自动把默认值补进 URL。
     void setEvent(valid ? (stored as EventId) : event, { history: 'replace' });
@@ -534,7 +538,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // ── Drill mode ──────────────────────────────────────────────────
   const [drillTarget, setDrillTarget] = useState<TimerDrillTarget | null>(null);
   const [drillModalOpen, setDrillModalOpen] = useState(false);
-  const drillAllowed = timerEventSupportsDrill(event);
+  const drillAllowed = !douyin && timerEventSupportsDrill(event);
   useEffect(() => {
     if (!drillAllowed && drillTarget) setDrillTarget(null);
   }, [drillAllowed, drillTarget]);
@@ -2837,7 +2841,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
 
   // 解法提示(仅 333)。同一个组件在两处挂点里二选一:桌面进左侧 .shell-rail(展开成竖栏),
   // 手机进顶栏那一组控件的末尾(点开 = 全屏浮层)。写成一个变量,免得两处各写一遍 props。
-  const solverHintPanel = event === '333'
+  const solverHintPanel = !douyin && event === '333'
     ? (
         <SolverHintPanel
           scramble={scramble}
@@ -3174,7 +3178,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         stage={{
           className: "shell-main",
           fullscreen: fullscreen,
-          source: <ScrambleSourceBar disabled={!sourceControlsEnabled} event={event} isZh={isZh} diffSlot={diffSlot} mergeSlot={mergeSlot} wcaSourceSlot={wcaSourceSlot} />,
+          source: !douyin && <ScrambleSourceBar disabled={!sourceControlsEnabled} event={event} isZh={isZh} diffSlot={diffSlot} mergeSlot={mergeSlot} wcaSourceSlot={wcaSourceSlot} />,
           statistics: <TimerStatRail
             ariaExpanded={panelTab != null}
             language={timerLanguage}
@@ -3364,7 +3368,7 @@ children: <>
             );
           })()}
         </div>
-        {(event === '222' || event === 'pyra' || event === 'skewb' || event === 'sq1' || event === 'mega') && (
+        {!douyin && (event === '222' || event === 'pyra' || event === 'skewb' || event === 'sq1' || event === 'mega') && (
           <div className="shell-undersurface surface-chrome"><SolverHints scramble={scramble} isZh={isZh} event={event} /></div>
         )}
 
@@ -3480,7 +3484,7 @@ children: <>
       {layoutEditing && <SoloLayoutEditor surfaceRef={surfaceRef}
         contentKey={`${displayScramble}:${settings.showCubePreview}:${cubeConnected}`}
         onDone={finishLayoutEditing} />}
-      {settingsOpen && <SettingsPanel event={event} actions={moreItems} playersControl={playersControl} presenceControl={presenceControl} mergeSlotRef={setMergeSlot} onClose={closeSettings} onDataReplaced={() => { trainingRound.reset(); setByEvent(loadAll()); }} />}
+      {settingsOpen && <SettingsPanel event={event} actions={douyin ? moreItems.filter(item => !['more.drill', 'more.bld-helper', 'more.solver', 'more.bulk'].includes(item.id)) : moreItems} playersControl={playersControl} presenceControl={presenceControl} mergeSlotRef={setMergeSlot} onClose={closeSettings} onDataReplaced={() => { trainingRound.reset(); setByEvent(loadAll()); }} />}
 
       {infoToast && (
         <TimerInfoToast

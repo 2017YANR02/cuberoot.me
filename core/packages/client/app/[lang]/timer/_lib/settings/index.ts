@@ -1,3 +1,4 @@
+import { isDouyinToolSurface } from '@/lib/douyin-content';
 import { normalizeTimerSyncSeed, consumeTimerSeed, type TimerSeedTicket } from '@cuberoot/shared/timer/sync-seed';
 /**
  * User-facing settings — persisted to localStorage as a single JSON blob.
@@ -455,8 +456,21 @@ function save(s: TimerSettings): void {
   persistItem(KEY, JSON.stringify(s));
 }
 
+let douyinSource: TimerSettings | undefined;
+let douyinSettings: TimerSettings | undefined;
 export function getSettings(): TimerSettings {
-  return _cache;
+  if (!isDouyinToolSurface()) return _cache;
+  // Effective product capabilities never overwrite the user's full-site preferences.
+  if (douyinSource !== _cache) {
+    douyinSource = _cache;
+    douyinSettings = { ..._cache, ...DEFAULT_TIMER_ATTEMPT_SPLIT_SETTINGS,
+      scrambleSource: 'random', genByStepsOn: false,
+      genDiffOn: false, wcaDifficultyOn: false, wcaUseOptimal: false,
+      dailySolveGoal: null, targetMsByEvent: {}, round: { ...DEFAULT_ROUND_CONFIG, on: false },
+      showAdminFakeCube: false,
+    };
+  }
+  return douyinSettings!;
 }
 
 export function updateSettings(patch: Partial<TimerSettings>): void {
