@@ -62,13 +62,18 @@ describe('shared timer sound', () => {
     }
     try {
       await act(async () => root.render(<Harness />));
-      expect(container.querySelector('input')!.disabled).toBe(true);
+      // Volume can be prepared while muted; playback remains disabled.
+      const volume = container.querySelector<HTMLInputElement>('[data-setting-id="settings.sound.volume"] input[type="range"]')!;
+      const previewButton = container.querySelector<HTMLButtonElement>('[aria-label="Test"]')!;
+      expect(volume.disabled).toBe(false);
+      expect(previewButton.disabled).toBe(true);
       const enabled = container.querySelector<HTMLButtonElement>('[data-setting-id="settings.sound.enabled"] [role="switch"]')!;
       expect(enabled.getAttribute('aria-checked')).toBe('false');
       await act(async () => enabled.click());
       expect(enabled.getAttribute('aria-checked')).toBe('true');
       expect(warm).toHaveBeenCalledOnce();
-      expect(container.querySelector('input')!.disabled).toBe(false);
+      expect(volume.disabled).toBe(false);
+      expect(previewButton.disabled).toBe(false);
       expect(container.querySelector<HTMLSelectElement>('[data-setting-id="settings.sound.voice-inspection"] select')!.disabled).toBe(true);
       await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Test"]')!.click());
       expect(preview).toHaveBeenCalledOnce();

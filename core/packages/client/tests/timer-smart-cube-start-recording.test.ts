@@ -34,6 +34,7 @@ describe('Web solo attempt recording lifecycle', () => {
     const context: Record<string, unknown> = {
       performance: { now: () => 1_000 },
       competitionRef: ref({ enabled: false }),
+      trainingTimingModeRef: ref(() => undefined),
       scrambleHistRef: ref({ list: [entry], idx: 0 }),
       scrambleAtStartRef: ref(''),
       wcaAtStartRef: ref(null),

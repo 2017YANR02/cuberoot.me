@@ -70,26 +70,26 @@ function ImageDownloadDialog({ snapshot, batch, onClose }: { snapshot: CaseImage
   return <TimerRoomDialog title={tr({ zh: '下载图片', en: 'Download images' })}
     className="alg-image-download-dialog" language={tr({ zh: 'zh', en: 'en' }) as 'zh' | 'en'} onClose={close}>
     <fieldset className="alg-image-download-options" disabled={busy}>
-      <label>{tr({ zh: '格式', en: 'Format' })}<select aria-label={tr({ zh: '格式', en: 'Format' })} value={format} onChange={e => setFormat(e.target.value as 'png' | 'svg')}><option value="png">PNG</option><option value="svg">SVG</option></select></label>
-      <label>{tr({ zh: '背景', en: 'Background' })}<select aria-label={tr({ zh: '背景', en: 'Background' })} value={background} onChange={e => setBackground(e.target.value as 'transparent' | 'white')}>
+      <label>{tr({ zh: '格式', en: 'Format' })}<select className="alg-image-download-select" aria-label={tr({ zh: '格式', en: 'Format' })} value={format} onChange={e => setFormat(e.target.value as 'png' | 'svg')}><option value="png">PNG</option><option value="svg">SVG</option></select></label>
+      <label>{tr({ zh: '背景', en: 'Background' })}<select className="alg-image-download-select" aria-label={tr({ zh: '背景', en: 'Background' })} value={background} onChange={e => setBackground(e.target.value as 'transparent' | 'white')}>
         <option value="transparent">{tr({ zh: '透明', en: 'Transparent' })}</option><option value="white">{tr({ zh: '白底', en: 'White' })}</option>
       </select></label>
-      {format === 'png' && <label>{tr({ zh: '长边尺寸', en: 'Longest edge' })}<select aria-label={tr({ zh: '长边尺寸', en: 'Longest edge' })} value={size} onChange={e => setSize(Number(e.target.value))}>
+      {format === 'png' && <label>{tr({ zh: '长边尺寸', en: 'Longest edge' })}<select className="alg-image-download-select" aria-label={tr({ zh: '长边尺寸', en: 'Longest edge' })} value={size} onChange={e => setSize(Number(e.target.value))}>
         {[512, 1024, 2048].map(value => <option key={value} value={value}>{value} px</option>)}
       </select></label>}
       {snapshot.groups.some(group => group.all.length > 1) && <label>{tr({ zh: '朝向', en: 'Orientations' })}
-        <select aria-label={tr({ zh: '朝向', en: 'Orientations' })} value={allOris ? 'all' : 'current'} onChange={e => setAllOris(e.target.value === 'all')}>
+        <select className="alg-image-download-select" aria-label={tr({ zh: '朝向', en: 'Orientations' })} value={allOris ? 'all' : 'current'} onChange={e => setAllOris(e.target.value === 'all')}>
           <option value="current">{tr({ zh: '当前朝向', en: 'Current orientation' })}</option>
           <option value="all">{tr({ zh: '全部朝向', en: 'All orientations' })}</option>
         </select></label>}
-      {batch && <label>{tr({ zh: '范围', en: 'Scope' })}<select aria-label={tr({ zh: '范围', en: 'Scope' })} value={custom ? 'custom' : 'all'} onChange={e => setCustom(e.target.value === 'custom')}>
+      {batch && <label>{tr({ zh: '范围', en: 'Scope' })}<select className="alg-image-download-select" aria-label={tr({ zh: '范围', en: 'Scope' })} value={custom ? 'custom' : 'all'} onChange={e => setCustom(e.target.value === 'custom')}>
         <option value="all">{tr({ zh: '当前筛选结果', en: 'Current filtered results' })}</option>
         <option value="custom">{tr({ zh: '选择 case', en: 'Select cases' })}</option>
       </select></label>}
       {custom && <>
         <div className="alg-image-download-actions">
-          <button type="button" onClick={() => setSelected(new Set(snapshot.groups.map(g => g.id)))}>{tr({ zh: '全选', en: 'Select all' })}</button>
-          <button type="button" onClick={() => setSelected(new Set())}>{tr({ zh: '清空', en: 'Clear' })}</button>
+          <button className="alg-image-download-action" type="button" onClick={() => setSelected(new Set(snapshot.groups.map(g => g.id)))}>{tr({ zh: '全选', en: 'Select all' })}</button>
+          <button className="alg-image-download-action" type="button" onClick={() => setSelected(new Set())}>{tr({ zh: '清空', en: 'Clear' })}</button>
         </div>
         <div className="alg-image-download-cases">
           {snapshot.groups.map(group => <BoolToggle key={group.id} label={group.label} disabled={busy} value={selected.has(group.id)}
@@ -99,8 +99,8 @@ function ImageDownloadDialog({ snapshot, batch, onClose }: { snapshot: CaseImage
     </fieldset>
     <p>{tr({ zh: `${images.length} 张图片`, en: `${images.length} images` })}{zipped ? ' · ZIP' : ''}</p>
     <div className="alg-image-download-actions">
-      <button type="button" disabled={busy || !images.length} onClick={() => void run()}>{tr({ zh: '下载', en: 'Download' })}</button>
-      {busy && <button type="button" onClick={() => controller.current?.abort()}>{tr({ zh: '取消', en: 'Cancel' })}</button>}
+      <button className="alg-image-download-action" type="button" disabled={busy || !images.length} onClick={() => void run()}>{tr({ zh: '下载', en: 'Download' })}</button>
+      {busy && <button className="alg-image-download-action" type="button" onClick={() => controller.current?.abort()}>{tr({ zh: '取消', en: 'Cancel' })}</button>}
     </div>
     <div role="status" aria-live="polite">
       {busy ? tr({ zh: `已生成 ${progress} / ${images.length}，正在准备下载…`, en: `Generated ${progress} / ${images.length}, preparing download…` }) : message}

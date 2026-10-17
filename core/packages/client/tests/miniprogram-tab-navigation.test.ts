@@ -5,7 +5,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import WeChatShareSync from '@/components/WeChatShareSync';
 import { openMiniProgramTab } from '@/lib/miniprogram-bridge';
 vi.mock('next/navigation', () => ({ usePathname: () => '/zh/timer' }));
-vi.mock('@/lib/miniprogram-bridge', () => ({ miniProgramTab: () => 'timer', mayUseMiniProgramBridge: () => true, openMiniProgramTab: vi.fn(async () => true) }));
+vi.mock('@/lib/miniprogram-bridge', () => ({ miniProgramTab: () => 'timer', mayUseMiniProgramBridge: () => true, isDouyinWebViewCandidate: () => false, openMiniProgramTab: vi.fn(async () => true) }));
 vi.mock('@/lib/wechat-share', () => ({ isInWeChat: () => false, configureWeChatShare: vi.fn() }));
 vi.mock('@/lib/page-share', () => ({ syncMiniProgramPageShare: vi.fn() }));
 let root: Root;

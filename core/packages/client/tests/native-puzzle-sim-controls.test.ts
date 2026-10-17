@@ -15,6 +15,8 @@ vi.mock('next/navigation', () => ({ useParams: () => ({ lang: 'en' }), usePathna
 vi.mock('@/lib/cubing-scramble', () => ({ tnoodleRandomScramble: vi.fn() }));
 vi.mock('@/lib/pg-scramble', () => ({ pgRandomScramble: vi.fn() }));
 
+import type { TwistyPlaybackPlayer } from '@/lib/twisty-playback';
+
 import PlayerControls from '@/app/[lang]/sim/PlayerControls';
 import { DEFAULT_SETTINGS } from '@/app/[lang]/sim/SettingDrawer';
 import { DEFAULT_KEYMAP } from '@/app/[lang]/sim/keymap';
@@ -67,8 +69,9 @@ describe('native PG simulator controls', () => {
       setupAlg: { get: vi.fn(async () => ({ alg: player.experimentalSetupAlg })) },
       alg: { get: vi.fn(async () => ({ alg: player.alg })) },
       setupAnchor: { get: vi.fn(async () => player.experimentalSetupAnchor) },
-      detailedTimelineInfo: { get: vi.fn(async () => ({ timestamp: 0 })) },
-      indexer: { get: vi.fn<() => Promise<null>>(async () => null) },
+      detailedTimelineInfo: { get: vi.fn(async () => ({ timestamp: 0 })), addFreshListener: vi.fn(), removeFreshListener: vi.fn() },
+      playingInfo: { get: vi.fn(async () => ({ playing: false })), addFreshListener: vi.fn(), removeFreshListener: vi.fn() },
+      indexer: { get: vi.fn<() => Promise<null>>(async () => null), addFreshListener: vi.fn(), removeFreshListener: vi.fn() },
       coarseTimelineInfo: { get: vi.fn(async () => null) },
     },
     experimentalSetupAlg: '',
@@ -139,6 +142,7 @@ describe('native PG simulator controls', () => {
         onCopyLink: copyLinks,
         order: 3, puzzleKind: spec.id,
         renderer: 'group', twistyPlayerRef: playerRef, userMoveRef,
+        twistyPlaybackPlayer: player as unknown as TwistyPlaybackPlayer,
         settings, onSettingsChange: (next) => { settingsChanges(next); setSettings(next); }, canUseCustomLogo: false,
         keymap: DEFAULT_KEYMAP, onKeymapChange: () => {}, onResetKeymap: () => {},
       });

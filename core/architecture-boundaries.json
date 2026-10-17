@@ -972,15 +972,6 @@
       "target": "shared"
     },
     {
-      "file": "packages/client/app/[lang]/alg/_trainer/events.ts",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
       "file": "packages/client/app/[lang]/alg/_trainer/MemoryTrainer.tsx",
       "importKind": "type-only",
       "mechanism": "static-import",

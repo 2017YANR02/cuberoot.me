@@ -44,13 +44,13 @@ function rules(file: string, content: string): string[] {
 
 describe('architecture boundary guard', () => {
   it('pins the complete current dependency baseline by exact finding identity', () => {
-    expect(MANIFEST.legacyFindings).toHaveLength(203);
+    expect(MANIFEST.legacyFindings).toHaveLength(202);
     expect(compareFindings(uncontractedFindings(CURRENT, MANIFEST.manualContracts), MANIFEST.legacyFindings)).toEqual({ additions: [], stale: [] });
     // Reviewed native adapters, the Android release build, isolated fixtures, diagnostics, geometry/solver proofs,
     // deployment-only pgvector provisioning and remote-access host commands, plus
     // five exact offline symmetry-coordinator identities (Node, caffeinate, vm_stat, sysctl and ps).
     expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length + 28);
-    expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'shared-root-import')).toHaveLength(145);
+    expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'shared-root-import')).toHaveLength(144);
     expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'cross-package-alias-import')).toHaveLength(0);
   });
 
