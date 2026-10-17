@@ -224,6 +224,10 @@ describe('TwistySection without WebGL', () => {
     for (const [filename] of download.mock.calls) expect(filename).toMatch(/^sim-\d+$/);
     expect(screenshot).not.toHaveBeenCalled();
     expect(vantages).not.toHaveBeenCalled();
+    const record = [...host.querySelectorAll<HTMLButtonElement>('button')]
+      .find((candidate) => candidate.textContent?.trim() === 'Record MP4')!;
+    expect(record.disabled).toBe(true);
+    expect(record.title).toBe('Video export is not available for the current renderer');
   });
 
   const addedNativeCases = [

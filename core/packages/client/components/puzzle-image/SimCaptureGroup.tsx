@@ -207,7 +207,10 @@ export default function SimCaptureGroup({ simBridge }: { simBridge: SimBridge })
   }, [simBridge, exporting, isZh, t]);
 
   const cancelExport = useCallback(() => { abortRef.current.aborted = true; }, []);
-  const canRecord = simBridge.alg.trim().length > 0;
+  // Offline video needs our live World and renderer. TwistyPlayer still supports
+  // the screenshot paths above, but cannot drive this video exporter.
+  const hasVideoSource = Boolean(simBridge.getWorld() && simBridge.getRenderer());
+  const canRecord = hasVideoSource && simBridge.alg.trim().length > 0;
 
   return (
     <>
@@ -228,7 +231,9 @@ export default function SimCaptureGroup({ simBridge }: { simBridge: SimBridge })
           className="vc-btn"
           onClick={startExport}
           disabled={!canRecord || exporting}
-          title={!canRecord
+          title={!hasVideoSource
+            ? t('当前渲染方式暂不支持视频导出', 'Video export is not available for the current renderer')
+            : !canRecord
             ? t('解法为空, 无可导出动画', 'Alg is empty — nothing to record')
             : t('导出 mp4 1080p:离线渲染当前解法动画', 'Export mp4 1080p: offline render of the solution animation')}
         >
