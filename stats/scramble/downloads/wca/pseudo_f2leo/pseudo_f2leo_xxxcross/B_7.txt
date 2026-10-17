@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / B / bin 7
-# Population in this bin: 858
+# Population in this bin: 861
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 1528404001,U F2 L2 D F2 D' L2 U' B2 U2 R2 B U' L2 U L B2 D U' R',B,İzmir Open 2020 (2020-01-25~26),333 R2 A #1
@@ -94,7 +94,7 @@
 1128452001,D' F2 L2 U' L2 D U2 F2 R' U2 F2 U2 F D2 U' B2 U' B2,B,Chillán Open 2019 (2019-05-04),333oh Final A #1
 5697838001,R D R D2 F2 R2 D2 B2 L' B D F' L' D' U' R' B2,B,Valdepeñas Open 2026 (2026-06-13~14),333 R2 A #5
 1758766001,B' L' F R' B2 L' D2 L2 F2 D2 R2 B L2 R' D' B2 D2 U2,B,Florida Fall 2021 (2021-12-11~12),333 Final A #4
-1410611001,U' L2 F U' D' R' L U' L F B' R' B2 D2 B2 R B2 R D2,B,Palacio del Cubo 2019 (2019-11-16~17),333 R2 D #2
+5859063015,B' R' U' F2 B R B' U D2 F2 L' B2 D2 L F2 D2 B' D2 L B' L,B,Beijing Autumn Rivalry 2026 (2026-10-01~03),333mbf Final A #1
 5530096001,U2 F' D R2 B D2 L2 F' U2 L2 R D' B' F' L R D L',B,Shopping Parque da Cidade 2026 (2026-04-11),333 R2 A #4
 2649338001,L B2 D U2 L2 F2 L2 F2 R F U2 L2 R2 D B2 R' U' L' F2,B,IZcube 2023 (2023-04-14~16),333bf Final A #2
 4295461001,D2 R' D2 F' L2 F' B2 D L U2 F' U2 F' R2 B' U2 R2 F2 L,B,Kjeller Open 2024 (2024-11-16~17),333oh R2 A #1

@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / R / bin 8
-# Population in this bin: 887
+# Population in this bin: 893
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 5760304001,B2 D B2 U F2 U B2 L' F2 U L2 F2 D L2 B L F2 D',R,Mental Breakdown Bangkok 2026 (2026-07-25),333bf Final B #5
@@ -138,7 +138,7 @@
 1091608001,D F2 D' L2 D' B' D R' F' L B' L2 F2 R2 U2 F2 U D2 F2 D,R,Putra Speedcubing Challenge 2019 (2019-04-13~14),333oh R1 A #4
 5413279040,F U2 D' L F2 U' L' U L2 U2 F' B' R2 F L2 U2 L D L' F,R,CF Goes Sideways Brzeziny 2026 (2026-02-21~22),333mbf Final B #1
 4451932001,D F R2 F' L2 U2 R2 D2 B2 R' B' R' F' D' R2 B' U F' R2,R,Avenida Chile XIX 2025 (2025-01-25~26),333oh Final A #2
-2765368001,R F2 D2 B2 D' R2 B2 U' L2 R' U2 L D B2 F' R' D2 R B,R,Trondheim Hverdagskubing Mai 2023 (2023-05-31),333oh Final A E1
+5870169001,U2 L2 F2 R2 F2 U2 R B2 R' F R2 F D B' D' L' U B2 L,R,Bergen Open 2026 (2026-10-10~11),333 R1 B #5
 1474339001,F2 D' U' R2 D U2 F' D' B2 F' R F' D' L R F D U' B R',R,Florida Winter Break 2019 (2019-12-21~22),333mbf Final A #2
 600147001,F2 D L2 B2 U F2 D2 F2 U L R' F' U F D2 B L D B',R,Verona Open 2017 (2017-09-24),333oh Final A #1
 4236119001,L2 D2 R F' R' B' U B U2 B R L F2 R D2 R2 L D2 B2,R,Uppsalaligan 3: Triangle - 2024 (2024-10-28),333oh Final A #2

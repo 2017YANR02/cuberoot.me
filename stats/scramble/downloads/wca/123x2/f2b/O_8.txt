@@ -1,8 +1,8 @@
 # Scramble samples — 123x2 / f2b / O / bin 8
-# Population in this bin: 468
+# Population in this bin: 469
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 39342001,L U F' R2 F' D2 B' R D' F' U2 B2 D2 R2 F2 B D2 B L2,O,Gernika Open 2014 (2014-07-12~13),333oh R1 B #5
@@ -37,7 +37,7 @@
 4796766001,U D B2 D B' L' U2 D' B R2 D' F D2 L2 F B L2 D2,O,Beskidy Cubing Day 2025 (2025-06-14),333 R2 B E2
 283096001,L2 D2 R B2 R2 U2 R' D' F2 D2 F U2 L F2 L' U' F2 L',O,Puget Sound Spring 2016 (2016-04-16),333 R1 F #1
 289659001,B L2 B2 L2 U2 B R2 D2 B L2 U' R F' U2 R B' R' D2 L D' B' L,O,Alpharetta Open 2016 (2016-04-23),333bf Final C #1
-4134448001,L D2 B2 D2 B2 R2 B2 R2 U2 F2 L' D B L2 D2 U' L R2 B2 L,O,6th Guwahati Open 2024 (2024-09-21~22),333 R1 B #2
+5857430001,F' D2 L2 U2 R2 F2 L2 F R F' D' F2 D' R U' B' F' R' U',O,Indian Elite Championship 2026 (2026-10-02~04),333 R1 E #5
 4145507001,R2 U' F' U' F U R U2 R' F L2 B2 U2 D B2 L',O,Planetário Rio Open 2024 (2024-09-28~29),333oh R1 B #1
 299672001,F' R2 F' D2 B L2 F D2 F2 U2 L' U B F2 L D U2 L B2,O,Michigan Cubing Club Beta 2016 (2016-05-14~15),333oh R2 B #1
 306021001,U2 B' D2 U2 F R2 B' R2 B' U2 L2 R' D2 U B2 L R U2 R U,O,Serbian Open 2016 (2016-05-28~29),333 R1 C #3
@@ -176,7 +176,7 @@
 5281372001,U D R B U2 R U D2 F2 U2 L' D2 F2 R' F2 R' F' R U,O,NR Hanukkah A Israel 2025 (2025-12-16),333 Final A #2
 4963844001,F' R' L2 F2 L D B2 R L' F R B2 R2 B2 U2 B2 L' F2 D2,O,Yumbo al Cubo 2025 (2025-08-23),333 Final A #3
 1275412001,L2 F2 L2 U' B2 R2 D U B2 U2 B' L U' F' L' D' R2 B2 L F,O,Eka Cube Days 2019 (2019-08-24~25),333 R1 A #4
-3886385001,U' B U' F' B' R F2 R' D2 L2 U2 B D2 B U2 F2 U2 L2 B',O, Vasconcubos 2024 (2024-06-22~23),333 R2 B #1
+3886385001,U' B U' F' B' R F2 R' D2 L2 U2 B D2 B U2 F2 U2 L2 B',O,Vasconcubos 2024 (2024-06-22~23),333 R2 B #1
 1295270016,L2 F D2 B2 U2 F U2 F2 L2 D R' F' D B U' R2 F' U2 F2 L B,O,City Centre Sharjah Open 2019 (2019-09-13~14),333mbf Final A #1
 1309999001,L2 F' D2 B2 F U2 B' L2 U2 R D B' D F' L R2 B U',O,Monnem City Cubing 2019 (2019-09-21~22),333 Final B #1
 4531451014,R2 U D2 R2 L D F2 L U B' U2 F U2 L2 D2 F U2 R2 U' B R2,O,Only 3x3s in Hyderabad 2025 (2025-03-01~02),333mbf Final B #1

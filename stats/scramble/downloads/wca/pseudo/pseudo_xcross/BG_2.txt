@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xcross / BG / bin 2
-# Population in this bin: 265
+# Population in this bin: 266
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 3733001,U2 R F' L' B2 L F2 R D' F' L2 D2 F2 D2 L' U2 R2 U2,G,Kharkiv Special 2014 (2014-03-22),333ft R1 A #2
@@ -77,7 +77,7 @@
 906005001,U L2 D' B2 U F2 R2 D U' F' L' U B' L2 D2 U' B' D' F,G,CCC Kalmykia 2018 (2018-10-13~14),333oh Final A #3
 909725028,L2 F2 D2 L2 D R2 B2 D F' L2 F2 D' U2 L' F L B U B D2,G,Supreme South Open 2018 (2018-10-13~14),333mbf Final A #1
 944546001,U2 L U2 F2 L U2 B D' B F' D2 F R B2 L2 U2 F,B,Zibo Open 2018 (2018-12-01),333oh Final A #3
-5034811002,B2 U L2 U2 B2 D' R2 B2 L B2 D' U R' D F' D2 R' F' D B' L,B,Cube Factory League Brzeziny 2025 (2025-09-20~21),333mbf Final D #1
+5866432001,F B2 R2 B2 U2 F2 U' F2 D F2 L2 R D R' B U L B' L2 D2,G,Croatian Championship 2026 (2026-10-03~04),333oh Final A #2
 946729001,L' D2 L' U2 R F2 R' B2 L' B F2 D' L2 F L D' L2 B' R2,G,Vancouver Select Winter 2018 (2018-12-02),333oh Final F #1
 4443337001,B R' F L2 B2 U2 R F B2 D2 F' R2 L2 F2 D2 F U' F' U,B,Cube4fun in Tylmanowa 2025 (2025-01-25~26),333oh Final A #4
 956086001,U' F2 D R2 U F2 R2 D' B2 L' R B' U R B' D2 L U L,G,Cambridge Open 2018 (2018-12-15~16),333 R2 A #3

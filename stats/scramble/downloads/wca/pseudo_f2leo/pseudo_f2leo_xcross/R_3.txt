@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / R / bin 3
-# Population in this bin: 380
+# Population in this bin: 382
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 5787001,R L2 F' L' F2 L U F L2 U' D2 B2 L2 B D2 B' U2 F' D2,R,GuateRubik 2014 (2014-03-30),333oh R1 A #3
@@ -13,7 +13,7 @@
 2658293001,L2 B' D' L2 D' F2 R2 B2 U B L' R' U2 B' F2 L2 U' L2,R,Cube Ta Liwat Iloilo 2023 (2023-04-23),333 R2 B E2
 65780001,D F2 L2 R2 U2 B2 D U2 R2 U L U' F L2 F U2 R2 U2 L2 D',R,Back to 360 2014 (2014-10-11~12),333 R1 B E1
 5642350001,D' F2 R2 D' U' R2 F2 U' B R2 B2 L B2 L' U2 B2 F D L2,R,Bayanzurkh Cup 2026 (2026-05-16),333 R1 A #2
-84567001,U2 B F2 D2 F R2 B' D2 R2 F' U' L' D2 U' L B U' F D2 L' F,R,Cube Elite Union Cafe 2014 (2014-12-06),333bf Final A #1
+5867506001,D' R' F2 L' U' B D2 F L' D2 F2 D' R2 F2 U' B2 D B2 L,R,Cube-bers in Iloilo 2026 (2026-10-04),333 R2 B #3
 122016001,D R2 D' B2 U' R2 B2 D F2 U2 F U' R B2 F R' U' R U,R,Ceará Open 2015 (2015-03-28~29),333 Final A E1
 131609001,F D' L2 U' D L2 F R D2 F2 B2 R2 U R2 F2 D' R2 U2 R2,R,Slovenian Open 2015 (2015-04-18~19),333oh R1 A E1
 5770881001,B2 R B2 R B2 D2 F R2 U F2 L2 F2 D' L' B' D,R,Rose City OR 2026 (2026-08-01),333 R2 C #2

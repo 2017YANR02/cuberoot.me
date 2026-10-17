@@ -2,7 +2,7 @@
 # Population in this bin: 108
 # Samples listed: 108 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 26001,U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2,R,Galeries Dorian Open 2014 (2014-03-15),333bf Final A E2
@@ -25,7 +25,7 @@
 463000001,L2 U2 R2 U R2 D' L2 D B2 U B2 F D' B L' U' L' R2 F R2,R,Anaadyanta Cube Open 2017 (2017-03-11),333 R1 F #1
 495726001,F' L2 R2 F D2 F U2 L U2 L U' R2 U' L U2 R' F' L',R,Arnold Classic South America 2017 (2017-04-21),333 R1 G #3
 573409001,R2 B2 F D2 B2 D2 U' F' R' U2 R D U2 F D' F R2,R,Shantou Open 2017 (2017-08-20),333 R1 B E1
-590697001,F D B' R L U L2 B U2 R' D R2 U2 L2 U L2 F2 U' F2 B2,R, Raipur Cube Challenge 2017 (2017-09-10),333oh Final A #1
+590697001,F D B' R L U L2 B U2 R' D R2 U2 L2 U L2 F2 U' F2 B2,R,Raipur Cube Challenge 2017 (2017-09-10),333oh Final A #1
 603423001,D2 B2 F2 L2 U B2 R B' U2 L' D2 R2 B2 L R' F R,R,Puget Sound Fall 2017 (2017-09-23),333 R1 F E2
 613267001,D2 F' R2 U2 B2 D2 F R2 B2 U' F' L U' F' R D' F' D' R2,R,NIT Trichy Open 2017 (2017-10-07~08),333 Final B E2
 661436024,L2 D2 B L2 B' D2 F' D2 F L2 R D F' D' B R' B R F R' B',R,Swiss Open 2017 (2017-07-21~23),333mbf Final A #2

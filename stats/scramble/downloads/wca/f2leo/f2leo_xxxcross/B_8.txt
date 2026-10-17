@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / B / bin 8
-# Population in this bin: 942
+# Population in this bin: 946
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 2652480001,D2 F2 U F2 U' F2 D' F2 U' R' D' R' U R2 U B U' L' R,B,Palmerston North 2023 (2023-04-16),333 R1 B #2
@@ -48,7 +48,7 @@
 5697838001,R D R D2 F2 R2 D2 B2 L' B D F' L' D' U' R' B2,B,Valdepeñas Open 2026 (2026-06-13~14),333 R2 A #5
 1295945001,L' R2 U2 L R2 U2 B2 F2 U R' D' B' U' R' D2 R D' F R' B',B,Norrkubing 2019 (2019-09-13~15),333bf R2 A #2
 4561864001,F2 R F2 D2 F2 L U2 L2 F2 L' U2 B L' R U' R' D' B' L2,B,Ateneo Pi Day Plus 1 2025 (2025-03-15),333 R1 E #4
-4019810001,L' U' F D2 F2 D2 B2 L' D2 L R' D U F' L2 B2 L B' R2,B,Morro Reuter Cubing 2024 (2024-08-17~18),333 R1 D E1
+5873950011,R' B D' R L' U2 L U' F2 R F2 R' D2 R2 B2 D' R2 U B' L',B,Portugal Championship 2026 (2026-10-09~11),333mbf Final A #1
 5117341001,D B2 D' L2 D2 R2 U F' U2 B' F2 R' F' D2 L' U2 R F2,B,Regina Twist 'N Treat 2025 (2025-10-18),333 R1 A #2
 1568782040,R D2 U2 L' U2 F2 L R2 D' U R F D' L' D' U2 F' L' U' L2 U2,B,Silent Winter Tashkent 2020 (2020-02-22~23),333mbf Final A #1
 1849054001,F2 L R B2 F2 R2 B2 L' B2 R' B' L D B2 D2 L B' F L2 B' L2,B,Port Huron Speedcubing 2022 (2022-03-26),333bf R1 A E2

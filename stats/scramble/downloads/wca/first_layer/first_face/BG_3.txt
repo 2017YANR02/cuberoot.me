@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_face / BG / bin 3
-# Population in this bin: 109
-# Samples listed: 109 (all entries in this bin)
+# Population in this bin: 112
+# Samples listed: 112 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 48062001,F2 L2 D' F2 U L2 F2 R2 U2 F2 L B' L2 B2 L2 R U2 R' U,G,Rubik's Cube European Championships 2014 (2014-08-08~10),333oh R1 B E1
@@ -114,3 +114,6 @@
 5800056001,F L2 U' D2 L' B L B' R D R U2 D' R2 B2 U2 D F2 U',G,Fuzhou Summer 2026 (2026-08-23),333 R2 A #5
 5832556001,R U2 R2 B D2 R2 B' R2 F' R2 L' U F2 U R' B2 D R2 F2,G,Visé Saturday Open 2026 (2026-09-12),333 Final A E1
 5847860014,L2 D2 B U2 L2 B' U2 B2 U' F L2 B2 D F2 L B U' R' D2 B R',B,BLD Fall Fürth 2026 (2026-09-26~27),333mbf Final B #1
+5865028001,R2 B' U' L2 R D2 R2 D2 B2 D2 R F' R' B D2 U R' B' F,B,Guangzhou Grand Open 2026 (2026-10-05~06),333 Final A E2
+5870608001,U L2 B' U2 F' D2 B F R2 D' U F L' B D B2 L' U',G,Plaza ao Cubo Sides Manaus 2026 (2026-10-11),333oh Final B #4
+5872880010,R D' R U2 F' R U2 D' L' B U' R2 F2 D R2 U' R2 F2 D2 B' L,G,Perth Favourites Evening II 2026 (2026-10-13),333mbf Final A #1

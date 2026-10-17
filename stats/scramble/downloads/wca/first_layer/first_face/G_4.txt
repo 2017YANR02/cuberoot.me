@@ -1,13 +1,13 @@
 # Scramble samples — first_layer / first_face / G / bin 4
-# Population in this bin: 672
+# Population in this bin: 677
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 3299986021,B2 D' L2 U D L' D F2 D2 L2 B L2 U2 F' U2 L B,G,No Clock in Lužice 2023 (2023-11-25~26),333mbf Final A #1
 3477584001,L' B' U' F' D' F L B R' U L F2 R2 B2 U2 L' U',G,Back to Bishkek 2024 (2024-02-03~04),333 R1 A E1
-4308164001,R B2 R' D' R' F L2 D2 F2 R U2 D2 F L2 F D2 F B L B2,G,DNFeandon't Guadalajara 2024 (2024-11-23~24),333bf Final A E1
+5862752001,U2 F' L D L2 F2 U' B' F2 R2 U' R2 U B2 U' L2 D2 B',G,Sydney Cubing Decathlon 2026 (2026-10-02~04),333 R1 A #3
 24196001,F' L2 D2 U2 F' L2 D2 L2 U2 L' D F R' B' F' R' F D L2 F2 L B2,G,C3 Cube Open 2014 (2014-05-26~27),333bf Final C E1
 1458678001,F2 U F R' D2 B U F' U L2 B2 R' U2 R U2 R2 U2 B2 R U2,G,Santa Claus Cube Race Poland 2019 (2019-12-06~08),333oh R1 A #2
 5579856001,R2 U' F2 U' L F' B R' B2 R F2 L2 D2 R F2 U2 B R2 U,G,Hancock County Spring 2026 (2026-04-26),333 R1 D #5
@@ -20,7 +20,7 @@
 71526001,L2 F2 U2 R' B2 F2 R2 U2 R D2 R2 U' B2 U2 B' L2 D' L' F' U F2 L2 U',G,Villa de Catral 2014 (2014-11-01),333bf Final A E2
 2440715021,U' B' L2 B2 U F L2 D2 F' B2 L B2 L' D2 L' B2 R B2 D2 B R2,G,El Carmen de Viboral 2023 (2023-01-21~22),333mbf Final A #1
 5816901001,B L2 B F2 U2 F R2 U' R' F' D2 U' L2 D' B D' B2 R,G,Mayo Cubing 2026 (2026-09-05~06),333 R1 A E1
-100202001,B2 U2 L2 D' R2 F2 D2 R2 U' R2 B' D2 F L' F2 D' L B' D2 L',G,PB Smashathon 2015 (2015-01-17~18),333 R2 C E2
+5873998001,B' F U2 L2 R2 B2 F' L B2 D' U2 L' F R' U' F' D2 L',G,Portugal Championship 2026 (2026-10-09~11),333oh R2 B #1
 3604583001,F2 D2 R2 D' R2 F2 R2 U2 R2 D' R2 F' U' F2 D B2 L B,G,Sofia Spring 2024 (2024-03-16~17),333 R2 C #5
 2537866001,U2 B' D2 F' L2 D2 R2 U2 B R U' L B' F R D' R' B2 R',G,Penn Cube Day Spring 2023 (2023-03-04),333 R2 A E1
 4127048032,L B R' D2 F2 D2 L2 U' B2 U F R B U R2 F' U B R',G,Oklahoma Quiet Championship 2024 (2024-09-22),333mbf Final A #1
@@ -84,7 +84,7 @@
 4725114010,F2 R F2 D2 R2 U R2 D F2 U L' D' B D' B D U R2 D B R,G,DFW Quiet Qualifier 2025 (2025-05-17),333mbf Final B #1
 4782519001,L2 B2 D R B' U2 B' L' F2 R2 U2 D' L2 U B2 U D F' R,G,Kota Cube Festival 2025 (2025-06-08),333 R1 C #4
 473477001,B U2 B2 D2 B' D2 U2 L2 B2 D' B D2 L D' R2 D' R F' L',G,Classic City Shenanigans 2017 (2017-03-25),333 R1 A E2
-2876040001,F' U2 L' U2 B2 L2 F B2 L B2 D B2 D B2 D2 L2 B2 F',G,High Gate Irbid 2023 (2023-07-08),333 R1 D #5
+5865600001,F' L' F' B2 U2 D' B' R' F U2 D2 L' F2 U2 L F2 B2 L F,G,Ivano Frankivsk Open 2026 (2026-10-03~04),333 R1 C #4
 1133145001,R2 B2 U B2 D B2 R2 U' L2 D2 B R' F D2 F R2 F D' B2,G,Bay Area Speedcubin' 16 2019 (2019-05-11),333 R1 C #4
 5739119001,U' R2 L' U2 F' R' B2 L F2 D R' U F2 B2 D2 B2 U L2 B2,G,Taipei Cube Open 2026 (2026-06-27~28),333 R1 B #3
 519891001,F2 D2 F2 D B2 R2 U' F2 D F L' R2 B R' B' R F2 D B D2,G,Aix-en-Provence Open 2017 (2017-05-27~28),333 R1 A E1
@@ -98,7 +98,7 @@
 5745209001,B2 R2 B' L2 B' L2 B' U2 B2 R2 L U' B R2 U2 B F L',G,Cardinal Country KY Cubing 2026 (2026-07-11),333 R1 D #2
 3876705001,B' D U' F2 R2 D R2 B2 F' U2 L2 B L D2 B' F' R D,G,Hvidovre Sommer 2024 (2024-06-22~23),333 R2 B #5
 1892670001,B L' U2 F2 R L2 B' R2 F L F D L2 D L2 U2 B2 U' R2,G,Sarzana Seaside Cubing 2022 (2022-04-23~24),333oh R1 A #2
-575260001,B' D2 F' L2 B2 U2 B' U2 F U2 F' R' F' D L' D R' D2 B2,G,Cuberussia in Kalmykia 2017 (2017-08-05~06),333 R1 B #2
+5865095001,F D' B' F2 R2 F2 D2 L' F2 R' U' B2 L U' B L' F R2,G,Río Grande TDF 2026 (2026-09-26~27),333 R1 B #1
 579451001,R2 D F2 D2 F2 U' R2 U R' D2 U2 F D2 R F2 U R2 B U2 B R,G,Slovakian Open 2017 (2017-08-26~27),333bf Final B #1
 1816869001,R2 U2 R2 U L2 F2 U R' U' L B L' D2 R2 D U2 F2 U2,G,Palmerston North 2022 (2022-02-19),333 R1 A #1
 4212073001,L D F2 B D' R F L F2 U' F2 D L2 U B2 U' R,G,Hampshire Autumn 2024 (2024-10-19~20),333oh R1 B #2
@@ -144,7 +144,7 @@
 5453936039,D B2 D R2 U' B2 U' B2 F' U' L' U2 L' B L U2 R' B' D' B R,G,SCU III: FMC Triple-Scoop 2026 (2026-03-14~15),333mbf Final B #1
 5284172001,R2 U F2 D2 R' B2 U2 L' R2 D' B' U' R2 U B' L,G,Franconia Christmas 2025 (2025-12-19~21),333 R1 C E2
 3368237001,R2 F U2 F2 B2 U F' U2 R' F2 U2 L2 B2 R2 B2 R' D2 B,G,III Recife Open 2023 (2023-12-16~17),333 R1 A E2
-3458897001,U2 R' U B U' B R' F B2 U2 R2 F2 L2 U2 R' L2 F2 U2 R',G, NxN Di Tella 2024 (2024-01-27~28),333oh Final A E2
+3458897001,U2 R' U B U' B R' F B2 U2 R2 F2 L2 U2 R' L2 F2 U2 R',G,NxN Di Tella 2024 (2024-01-27~28),333oh Final A E2
 5246750001,L' D F2 B D' R2 B' D2 R D' B F2 R B2 R L' B2 U2 R',G,MR Ulaanbaatar 2025 (2025-12-06),333 R2 B E2
 4117768001,L U' R2 U2 B2 D L2 R2 U' R2 L U2 B' F L D2 B' D' R2 U2 L B,G,Salamanca Guanajuato 2024 (2024-09-14~15),333bf R1 B E1
 780939001,F2 D' F2 U L2 D L2 B2 U R F' L2 B2 R' U' B2 L U2,G,SPB Island 2018 (2018-05-12~13),333ft R1 A #1

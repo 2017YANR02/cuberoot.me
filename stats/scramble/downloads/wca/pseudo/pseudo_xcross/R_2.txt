@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xcross / R / bin 2
-# Population in this bin: 151
-# Samples listed: 151 (all entries in this bin)
+# Population in this bin: 152
+# Samples listed: 152 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 17474001,D2 B2 L2 B D2 L2 R2 F2 D' L D R U' L2 F U2 F' U',R,Apollo Open 2014 (2014-05-04),333 R2 B E1
@@ -109,7 +109,7 @@
 3642947008,D2 B2 D2 F' R2 D2 U2 F2 R D2 B U' F' U' B' L2 B' U' F',R,Please Be Quiet Auckland 2024 (2024-04-07),333mbf Final A #2
 3736955001,F U L' U F L' U R U L F2 L2 U' R2 B2 R2 B2 U,R,Mexicali Rose 2024 (2024-05-04~05),333oh Final A #3
 3838261001,F2 B' U L' D B U' R' L F2 U' R2 D2 R2 D F2 D2 B' L,R,Stevenage June 2024 (2024-06-08~09),333 R1 A #4
-3904817001,D B2 R L U' B2 L2 D2 B' R D F2 D R2 D' R2 F2 B2,R, Wembley Quimbaya 2024 (2024-06-30),333 Final A #5
+3904817001,D B2 R L U' B2 L2 D2 B' R D F2 D R2 D' R2 F2 B2,R,Wembley Quimbaya 2024 (2024-06-30),333 Final A #5
 3909393030,U R2 D2 L R F2 R D2 B D U' B U L D B2 U2 B',R,Hari-Hari Horas 10 2024 (2024-07-05),333mbf Final D #1
 3960722001,U L2 U2 L2 F2 D L2 F2 D F' U F R F' L' B' F2 R2 F2,R,Rubik's WCA South American Championship 2024 (2024-07-22~25),333oh R1 G #2
 4118123001,B R2 B2 F' L2 U2 F L U L' F2 D2 L B2 U F2 D R,R,New York Championship 2024 (2024-09-14~15),333oh R1 B E2
@@ -156,3 +156,4 @@
 5707606001,R2 F' U2 B2 L U2 B2 D2 F2 L R2 U' B L B' U' F U',R,No Veas Ocaña 2026 (2026-06-20),333 R1 C #5
 5756413001,B D F D2 L2 B' F2 R2 B U2 B' U' L' U2 L B U B' D2,R,Guelaguetza Oaxaca 2026 (2026-07-18~19),333oh R2 B #4
 5847787001,U2 L2 F2 R2 D' R2 B' R B2 U2 R F' L D2 L B D',R,Maltese Championship 2026 (2026-09-26),333 R1 A #5
+5864735001,U' L2 B' R' F' B' U' B F2 U R2 D R2 D R2 B2 U,R,Guangzhou Grand Open 2026 (2026-10-05~06),333 R1 B #3

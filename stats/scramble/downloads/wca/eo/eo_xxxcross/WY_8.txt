@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / WY / bin 8
-# Population in this bin: 236
+# Population in this bin: 238
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 13215001,B2 L2 D' B2 D F2 D R2 F2 R U L2 U R U,Y,Velbert Easter Open 2014 (2014-04-18~20),333 R2 B #5
@@ -71,7 +71,7 @@
 968218011,B' D2 F' D2 U2 B' R2 D2 B' R2 U B2 R' U2 F2 L2 F U L' B D',W,Please Be Quiet Philippines 2018 (2018-12-29~30),333mbf Final A #1
 5378127001,F' L' B2 U2 B' R2 B' L2 B' U' B' R2 D2 L F U2 R2 U,W,Don't Inverloch Up 2026 (2026-02-07~08),333 R2 C E2
 975136001,D R' U R F L D B' R' B' L U' R2 U' R2 L2 U' R2 U,W,Another Bruin Cube Day 2019 (2019-01-12),333oh R1 C #4
-979237001,R' D2 B2 R2 F2 R B2 L' F2 D2 L D' F' U' F D' R' B F2 L',Y, Tlaxcallan 2019 (2019-01-12~13),333 R1 A #4
+979237001,R' D2 B2 R2 F2 R B2 L' F2 D2 L D' F' U' F D' R' B F2 L',Y,Tlaxcallan 2019 (2019-01-12~13),333 R1 A #4
 984819001,U2 R2 U' L' U2 R U2 R U2 B U2 L2 F L2 U2 L2 F D2,Y,Poções 2019 (2019-01-19~20),333oh Final A E1
 5709375001,R' B2 D2 F2 D2 L2 R' U2 B U R2 D L U L2 F R2 F2,Y,B-Game - Bastardo Open 2026 (2026-06-13~14),333 R2 C #2
 1019643001,L2 B2 L2 R2 D2 R2 F' R2 F2 U' F' R2 F2 L' F2 L' D' B' U2,Y,Brilliant Ballarat 2019 (2019-02-16~17),333 R1 C E1
@@ -106,7 +106,7 @@
 1786496001,U' F' L' U B' D2 R2 D R' B U' B2 R2 D2 L2 D' L2,Y,Empire State Winter B 2022 (2022-01-16),333 Final A #1
 5686142001,B D2 B2 R F2 D2 R2 D2 U2 R B R F2 U2 B2 D R' D,W,Only Cubes in ABQ 2026 (2026-06-06),333 R1 C E2
 1910958001,D L' D2 L R2 B2 U2 R B2 U' R D' F D L2 R' B2 F2,Y,A Bruin Cube Day 2022 (2022-05-08),333 R1 B E2
-1943842001,U' D2 R D2 L D2 B2 R2 F2 R' U2 F' L B L' B2 U' F' R2 D2,W,Banja Luka Open 2022 (2022-05-28~29),333 R1 A #4
+5860167001,R F B R2 B' U2 R F2 R2 D' B2 D2 B2 L2 F2 R2 U2 L F',Y,ODU Big Blue Fall 2026 (2026-10-03),333oh Final A #4
 1959792001,R U' B2 U2 L2 F2 L2 U2 B' R' B U' B' D B2 D L B',W,ROC the Cube 2022 (2022-06-04),333 R1 C #3
 2036737001,U' B2 L2 U2 R2 D' R2 L U L B' F' U2 L2 B' U' B L2,Y,La Tablaza Open 2022 (2022-07-16~17),333oh R1 B #1
 2037766001,R2 B' R2 U2 B R2 U F' D2 R B2 U2 L2 D2 L' D2 F2 U2 F,W,Cubing For Yuval 2022 (2022-07-19~20),333oh R1 C E2
@@ -150,7 +150,7 @@
 3435766001,U2 L D' B2 L2 U2 F' L2 F L2 B2 F' L' R B' D R F2 R',W,SacCubing XVI 2024 (2024-01-20~21),333 R2 C #1
 5416353001,D2 U2 L2 R2 F2 L R' B' D2 L' U2 R2 F L F R F,Y,Good Solves in Gibson Park 2026 (2026-03-01),333 R1 C #5
 3482497001,F2 L2 B F D2 U2 R2 D2 R' D2 R U' B' L R2 U' B R U,W,Altavista Open 2024 (2024-02-03~04),333oh Final C #5
-3526235001,D2 R2 F' L D B D' B' D R U2 F2 D' R2 U2 L2 U B2 L2 D,W,Corduff Cubing Sunday 2024 (2024-02-18),333 R2 A #1
+5859563001,F' U R' D' F2 D2 F2 R2 F2 D' F2 L' F' U' F' U2 L F,W,Beijing Autumn Rivalry 2026 (2026-10-01~03),333oh R1 D E1
 3545220042,U2 R2 F2 R2 B' L2 F' L2 U B2 U' B L2 F R D' L' B2 F2 L B',Y,BASC 57 - Big and Blind 2024 (2024-02-25),333mbf Final B #1
 3546300004,U' F2 R2 F2 L U' F U2 B2 D2 L' U2 B2 U2 B L2 F' R B R2,Y,Lejre Side Events 2024 (2024-03-02),333mbf Final A #1
 3546336001,U R' L' U' F' L' F R F' B2 U2 R' F2 R' U2 D2 L U2,Y,Tramsheds I: Newcomer Saturday 2024 (2024-03-02),333 R1 E E2

@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / BG / bin 8
-# Population in this bin: 435
+# Population in this bin: 437
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 5836296001,R' U' F D' U L2 U' L2 F2 R F2 U F2 R2 D2 F L' F L2 R2 F2 R' U' F,B,VERK XVIII 2026 (2026-09-19~20),333fm R1 A #2
@@ -52,7 +52,7 @@
 2550948003,F2 L F2 D' L2 R2 D2 R2 B2 D U2 F2 L' B2 D' R' F L2 U B R,B,Please Be Quiet Joburg 2023 (2023-03-11),333mbf Final A #1
 5779719001,R' F L' F' D F2 L2 U L2 B2 D2 B2 U2 B' F2 L' U' L2 D' F,B,Toowoomba Carnival of Cubing 2026 (2026-08-08~09),333 R1 D #2
 3631334001,L U D B U' R L' D R2 F2 R2 U L2 U2 D' F' D' L' U2,B,Zeer Rangsit Cubing 2024 (2024-03-29~31),333oh R1 C #1
-3924885001,F D R' F2 B' U B' D F2 B2 R F2 U2 L' F2 L2 D2 L D2 F,B,Gem City Airplane Mode VIII OH 2024 (2024-07-11),333bf Final B E2
+5871224001,F2 D2 R' F2 L' B2 D2 L D2 B U R2 D' B2 D' R D L B',B,Imaginaire Québec 2026 (2026-10-10~11),333 R2 B #5
 417938001,R B2 L B L2 U F' D' F2 B2 L U D F2 U2 B2 D L2 U R2,B,Cubing Complexity 2016 (2016-12-17~18),333 R2 G #2
 3003517001,R' B2 D2 F' B D B2 R L' F2 U' B2 D2 L2 U B2 D2 B,B,Rubik's WCA World Championship 2023 (2023-08-12~15),333oh R1 E #1
 2944281001,D2 B L2 F D' R U B D' B2 R U2 R2 B2 R' B2 R U2 R,B,Cuenca Cubea 2023 (2023-07-29),333oh Final B #5
@@ -110,7 +110,7 @@
 836834001,U2 F' L2 U2 B L2 B' R2 D2 F2 L2 D L F D U R' F2 D2 R2 B' D,B,Colombia Nationals 2018 (2018-07-20~22),333bf R1 A #2
 848727001,R2 U2 R U2 L B2 L' U2 B2 U2 L D R' U' L F2 D B D' R2,B,Project Radom 2018 (2018-08-04~05),333 Final A E2
 853273001,L2 F2 U2 B L2 B2 U2 L2 F2 R' B' U B D U R2 U' F L,B,Cochin Monsoon Open 2018 (2018-08-11),333 R1 B #5
-2703905001,R' F' D L D2 R2 U' L U2 R' U2 D2 F' B2 D2 F U2 L2 D2,B,Larissa Spring Open 2023 (2023-05-06~07),333 R1 D E2
+5876820001,R2 B' L D2 B2 R2 D2 L2 U2 R' D' U B L' R' F' R F,B,PramuCup 2026 (2026-10-10~11),333 R1 C #3
 3350506026,U2 B2 F2 D' U' B2 D' L2 B' D2 B' R U' L' D' L D2 B F U' B R2,B,Korean Championship 2023 (2023-12-15~17),333mbf Final A #1
 4813467001,U' R' D' L2 R2 U B2 D U' B2 R D' B L D F R D' L',B,ROC the Cube NY 2025 (2025-06-21),333 Final A E2
 871234001,B L B U2 L B R' D R U L U2 F' D2 B U2 R2 F2,B,Bilbao Open 2018 (2018-09-01~02),333 R2 A #3

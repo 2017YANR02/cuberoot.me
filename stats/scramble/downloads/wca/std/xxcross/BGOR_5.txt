@@ -1,8 +1,8 @@
 # Scramble samples — std / xxcross / BGOR / bin 5
-# Population in this bin: 481
+# Population in this bin: 485
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 26001,U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2,R,Galeries Dorian Open 2014 (2014-03-15),333bf Final A E2
@@ -88,7 +88,7 @@
 661337004,L2 B2 R2 D B2 U F2 R2 F' U' F2 L2 B2 R2 F2 L B D' U2 L B,R,Wirewood Pro 2017 (2017-04-30),333mbf Final A #1
 661369015,R2 B2 U2 B2 R2 B2 D' L B2 D' B2 L2 B D L2 B' D' L D2,B,Wuhan NxN Open 2017 (2017-05-20~21),333mbf Final A #2
 661466043,R F2 R2 D2 F2 L' B2 L2 B D2 L B2 U' L U R B F L D',O,Michigan 2017 (2017-08-19~20),333mbf Final A #1
-664500001,U R2 F2 R2 D B2 L2 D R2 F2 R' D R' U B R' U2 B,B,GuateMaya Open 2017 (2017-12-02~03),333oh R1 B E1
+5860203001,B2 F' L2 F' D2 B' L2 R2 U2 F U' B F2 L' U2 L B F,O,ODU Big Blue Fall 2026 (2026-10-03),333oh Final C #5
 4202540001,D2 F L2 B' L2 F D2 B2 L' F2 U2 R' U2 B U B2 U2 F',G,Dolné Orešany Cube Day 2024 (2024-10-19~20),333 R1 C #5
 684399001,U2 R U' B U' B' U' L F2 D2 L2 B R2 L2 B' D2 B R2 B',B,PDX Cubing for Causes 2018 (2018-01-13),333oh R1 B #1
 693769001,U' R2 F L2 F' R' F D B' L' D2 L2 F2 B' R2 B' U2 B2 U2,O,Generalforsamlingen 2018 (2018-01-27),333 R1 B #1
@@ -139,7 +139,7 @@
 966188001,R2 D2 L' F2 B D2 B D' F2 B' R2 L' F2 B2 R' D2 R2 U2,R,Mudanjiang Open 2018 (2018-12-22),333oh R1 B #2
 985184001,B R' B' R B' D' R' D2 R B U2 F2 U' R2 D' R2 D L2 D2,O,D-City Cubing 2019 (2019-01-19~20),333 R1 B #4
 5461287001,L2 U F2 U B2 D R2 D L2 R U2 F' R' D' B2 R' B2 F' U2,O,Fuentes de Andalucía Open 2026 (2026-03-21~22),333 R2 A #1
-1015333005,B2 R B2 D2 U2 L' F2 R2 U R' D B' F' R D F' U B' D L' F,O,Medan Lunar New Year 2019 (2019-02-09~10),333mbf Final A #3
+5862708001,F2 U F2 D L2 D2 B2 U' R2 F U B' D' L' D' L R2 U',R,Sydney Cubing Decathlon 2026 (2026-10-02~04),333 R1 F #1
 5422542014,B2 D2 B D2 B D2 L2 F L' D R F2 L B' L R' B L2 F L' F2,R,BL&D BLD Binningen 2026 (2026-02-28),333mbf Final B #2
 3518977001,U R2 D' F R' L2 F' L2 D2 B2 U F2 R2 F2 B2 D R U' R',O,Greater Toronto 2024 (2024-02-18),333 R1 H #1
 1035983001,R D' R2 D' L2 B' U2 R' B' R U B2 L U2 F2 R F2 L',O,Cult A Way Cube Open 2019 (2019-03-03),333 Final A #1

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / G / bin 3
-# Population in this bin: 358
+# Population in this bin: 359
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 11096001,F2 R2 U2 R' B2 U' R U2 B U' B2 R' B2 D B' U,G,Slovenian Open 2014 (2014-04-12~13),333 R2 B #4
@@ -113,9 +113,9 @@
 1039808001,U F2 R2 F2 D L2 D' U R' U B' F' R' D2 U' L' B' D2 R' U2 L2 U2,G,Carte Blanche Kube Open 2019 (2019-03-02~03),333bf R1 A #3
 1079007001,U2 R2 D2 R2 B' U2 F' R2 F2 L' B' F R' U F2 U F L' B',G,Cubalaya 2019 (2019-04-06),333oh Final B E1
 1106989001,R2 U' R' F L2 D L' B U2 B' L' D2 B L2 F L2 U2 B',G,Chanquete Open 2019 (2019-04-13~14),333 R2 A E1
-4152799001,U L2 D' B2 L2 B' D2 F D2 U' B2 U2 B' F D' U2 B,G,Side Events in Nyack 2024 (2024-09-28~29),333oh R1 D #4
+5870392001,U2 B2 U2 B R2 U2 B R' B F2 R' D L2 D2 R F2 U,G,Waremme Open 2026 (2026-10-11),333 R1 C #5
 1112435001,F' D L' U D2 R D' L' B' R F2 B2 D B2 U2 R2 D' L2 D',G,Speedcuber Perú Otoño 2019 (2019-04-20~21),333 R2 B #1
-4150800001,R2 F' L' B U2 L2 R2 U2 F D2 U F' L B2 D' F2 D R2,G, Esprit Cube Open Bayonne 2024 (2024-09-28~29),333 R1 A E1
+4150800001,R2 F' L' B U2 L2 R2 U2 F D2 U F' L B2 D' F2 D R2,G,Esprit Cube Open Bayonne 2024 (2024-09-28~29),333 R1 A E1
 1180456006,F' D2 U2 F R2 D2 U2 F' D2 R' D B2 U' L2 D2 L2 U2 R' U2 R B' L',G,GLS Cup II 2019 (2019-06-08~09),333mbf Final A #1
 4228534001,L2 F2 D2 B2 F2 L2 R U2 B2 R' D B2 L B' D' B2 L R' U',G,Oct-ober-ahedron i Hvidovre 2024 (2024-10-26~27),333 Final A #1
 3490702001,R2 U L' F U L' D F' B2 D' R F2 D2 R2 B2 R2 F' U2 L',G,Berkeley Winter 2024 (2024-02-04),333bf R1 E E1

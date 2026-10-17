@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_cross / Y / bin 8
-# Population in this bin: 104
-# Samples listed: 104 (all entries in this bin)
+# Population in this bin: 106
+# Samples listed: 106 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 130067001,D B2 U' L2 D' U2 B2 L2 R2 U' B' R U F L D2 R2 U2 B2 F R,Y,German Open 2015 (2015-04-18~19),333 R1 C E2
@@ -109,3 +109,5 @@
 5829818001,L' U F L B' D B' F2 D2 L B2 D2 R2 L D2 L' B R B' R2,Y,Kukulcán Open Quetzaltenango 2026 (2026-09-11~13),333 Final A E1
 5838216024,D B' R' F2 U' L2 R2 F2 U2 L2 R D' F' D' B U' F' D U L2,Y,Gouverneur Quiet 2026 (2026-09-19~20),333mbf Final A #3
 5840790001,R' B2 R' U2 R' D2 F2 R' B' D' L' B2 L2 D' L2 F2 R2 B L2 U',Y,Wellesley Fall 2026 (2026-09-19),333bf R2 A #3
+5860555001,B R U' R F2 U' L B' R' F R2 F' U2 F' L2 B' R2 U',Y,Bowling Green Fall 2026 (2026-10-03),333 R2 C E2
+5873033001,R' D F L' R2 F2 D' F2 D' B2 D2 B D2 F U2 F2 L' U B',Y,Perth Favourites Evening II 2026 (2026-10-13),333 Final A E2

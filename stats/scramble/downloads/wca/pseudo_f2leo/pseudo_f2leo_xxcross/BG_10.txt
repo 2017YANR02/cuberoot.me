@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / BG / bin 10
-# Population in this bin: 633
+# Population in this bin: 634
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 5807863001,U2 L D2 L' R D2 B2 D2 U2 B F' U' R B2 F D' B R F' U2,B,Tartan Twist PA 2026 (2026-08-29),333 R2 B #3
@@ -24,7 +24,7 @@
 4053605001,B' R2 B R2 B2 R2 F2 D' L B' R' U2 F D L2 D2 L U' L2,B,Deqing Big Cubes Summer 2024 (2024-08-24),333oh R1 C #5
 5209309001,U2 R' U R' B' U R2 B2 L2 D' B2 U' B2 L' R B' L2 B' D' B,B,mcubes Alleppey Open 2025 (2025-11-22~23),333 R2 A #2
 142794001,L2 D2 R2 U F2 U' R2 D F2 D' U' L' R' D' F' U B U2 R',B,Brasov Rubik's Open 2015 (2015-05-24),333oh Final B E1
-148689001,F2 L B R' F' R2 L U' D L' F' R2 U2 D2 F' L2 B' U2 F' L2,B,Ukrainian Open 2015 (2015-05-29~31),333oh R1 A #3
+5861454001,L' F2 U' B' L' U' L' F' U D2 R' B2 L2 F2 R2 U R2 B2,B,Oregon State Fall 2026 (2026-10-03),333 R1 B #2
 148709001,B2 D' L2 U R2 B2 D F2 L2 F2 U2 L D' B2 R' F L B' L' R',B,Ukrainian Open 2015 (2015-05-29~31),333oh R2 A #2
 2308329001,L2 U2 B' F2 D2 L2 B' F2 L' D B2 R' U L F D2 B2 F2 U,B,Frösö Cubing 2022 (2022-11-19~20),333 R1 A E2
 196098001,R' B' D' L U D' F2 R U2 B R2 D2 R2 D2 F2 D2 L D2 L2 D2,B,China Championship 2015 (2015-10-02~04),333 R1 A #4

@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / Y / bin 3
-# Population in this bin: 234
+# Population in this bin: 235
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 5277716001,R2 D2 L2 D' R2 F2 B U F2 U' L2 U L2 B2 U R2 D L,Y,Relámpago Medellín Explora 2025 (2025-12-13~14),333oh R1 B E2
@@ -15,7 +15,7 @@
 164205001,D L2 D' U' F2 D' B2 F2 U' R2 B' D2 U F2 R2 F' D R2 D',Y,Campeonato de Portugal 2015 (2015-07-11~12),333fm Final A #1
 189745001,D' U' B2 L2 D' L2 B2 R2 B2 F' L2 B' D F' L2 U2 F,Y,SCMU Cognition Open 2015 (2015-09-16),333 R2 A E2
 192558001,R2 F' R2 F' L2 U2 F2 L2 B' R U B2 U' B' D' B' L2 D R2,Y,SCMU KJSCE Open 2015 (2015-09-26),333 R1 J #4
-206971001,D' U' F2 D' F2 R2 U' L2 U L2 U2 F D2 L2 R' U L B U' B' L2 U2,Y,Finnish Championship 2015 (2015-10-23~25),333bf Final A #3
+5860530001,B' D2 L2 U' F2 L2 U' F2 L' U2 F' R F2 D2 R U R' U2,Y,Bowling Green Fall 2026 (2026-10-03),333 R2 A E2
 5627739001,U2 L2 F2 D2 U2 B' L2 B D2 R2 D' F R B' L R' D F R',Y,Temple Qualifier 2026 (2026-05-09~10),333oh Final A #5
 227928001,F D2 F R2 B D2 R2 F2 D2 R2 F U' F' U' F' R B F' R' F,Y,MIT Fall 2015 (2015-12-12),333 Final A E2
 228118001,F2 U' F2 U B2 U' F2 L2 U' R' U2 L U' R D2 U2 F' R' D' F2 L' F',Y,Santa Lucía Open 2015 (2015-12-12),333bf Final A #1

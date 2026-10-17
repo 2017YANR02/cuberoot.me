@@ -1,8 +1,8 @@
 # Scramble samples — pair / xcross_pair / B / bin 10
-# Population in this bin: 124
-# Samples listed: 124 (all entries in this bin)
+# Population in this bin: 125
+# Samples listed: 125 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 15956001,D' B2 R2 D' F2 U' B2 D2 B2 R2 F R2 F2 R U B' L' U F R' F2,B,Hefei Spring 2014 (2014-05-01~02),333 R1 B #2
@@ -129,3 +129,4 @@
 5636178001,D2 R U' B D' L D2 F' R2 F2 U2 L2 D2 B' R2 F' D F' D' B',B,GLS Gdańsk IV 2026 (2026-05-16~17),333bf R1 A E1
 5789632001,R2 U2 B' U2 R2 B2 D2 F' R2 F2 D R2 U2 L' R D' F U R B',B,Birzeit Cubing 2026 (2026-08-17~18),333oh Final B #2
 5815285001,L' R2 B2 D2 L2 D' F2 R2 U2 L D' L' R2 B D L D' L F,B,Ciudad Blanca Ibarra 2026 (2026-09-05),333oh Final A E2
+5863209001,R F' L' D L B' L F U2 D' F D2 R2 L2 B2 R B2 D2 B2 L2,B,Primma Cube Open 2026 (2026-10-03~04),333oh Final B #4

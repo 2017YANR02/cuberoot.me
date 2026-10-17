@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / G / bin 8
-# Population in this bin: 122
-# Samples listed: 122 (all entries in this bin)
+# Population in this bin: 123
+# Samples listed: 123 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 2210001,U' R2 F2 D2 L2 D F2 U L2 D' F L2 U L' R2 U F2 D U' L B',G,IIT Roorkee Open 2014 (2014-03-21),333bf Final A E1
@@ -127,3 +127,4 @@
 5820336039,L' U' B D F2 L2 F2 R2 U' L2 R2 F U F' D B F U B R,G,New York Big and Quiet Championship 2026 (2026-09-05~07),333mbf Final B #1
 5833006001,D2 F2 R' F2 R' U' R D2 L' D' B' R' D' F' R D2,G,Ansan Autumn 2026 (2026-09-19),333oh R1 F #1
 5846172001,D2 B2 R2 B2 R' F2 U2 L2 R' F2 L2 B' D2 R' F D2 F R2 B R,G,Tafalla Open 2026 (2026-09-26~27),333bf Final A #1
+5871876001,D R B U' R B U' L2 F' U' R F R2 D2 F' R2 B R2 D2 B,G,Minnesota Quiet Championship 2026 (2026-10-11),333bf R1 A #1

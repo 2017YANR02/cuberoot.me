@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / O / bin 8
-# Population in this bin: 125
-# Samples listed: 125 (all entries in this bin)
+# Population in this bin: 126
+# Samples listed: 126 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 33876001,L D2 R U2 L F2 L2 U2 B2 D2 F' D U' R2 F L2 F U' R2 D',O,P3 Grand Open 2014 (2014-06-28~29),333bf Final A E1
@@ -130,3 +130,4 @@
 5768671001,R' B U' B2 D2 F U2 B' U2 R2 B' L D U B2 R,O,Cubalaya LA 2026 (2026-07-25),333 R1 A #4
 5796003001,B' L' R2 B' L2 B' R2 B R U2 L2 R2 U' L' F2 D2 B' L2,O,Capelle Chaos B 2026 (2026-08-23),333bf Final B #5
 5823754001,L' D L2 U2 F2 L2 F' R2 F2 U2 B2 U' R B' R' F' R2,O,Wuhan Crimson Autumn 2026 (2026-09-13),333 R2 D #3
+5872790001,F' B U B' R' F2 B R U R2 U' F2 B2 R2 B2 D F2 L F',O,Penn Cube Day Fall 2026 (2026-10-10),333 R1 B E2

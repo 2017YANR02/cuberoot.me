@@ -1,8 +1,8 @@
 # Scramble samples — 123 / fbsquare / Y / bin 6
-# Population in this bin: 60
-# Samples listed: 60 (all entries in this bin)
+# Population in this bin: 61
+# Samples listed: 61 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 39638001,F R2 B U2 D' B' L F' B U R' U2 R2 F U2 F R2 L2 F2 L2,Y,Les Santes Open 2014 (2014-07-18~19),333oh R1 D #5
@@ -65,3 +65,4 @@
 5503636001,L2 B2 L R2 U' R2 D' L2 U L2 R2 B2 U2 R F' D' U2 R' F2 U,Y,Seoul Spring 2026 (2026-03-22),333 Final G #3
 5604325001,R' L B R2 U' D' B L' F' L' U2 R2 D L2 D' F2 D R2 D,Y,Start of Summer Beijing 2026 (2026-05-01~02),333 R2 D #2
 5799057035,U B2 L2 U F2 D' B2 D2 U' F2 U2 R' U2 B L' B' F2 D' R F' L B',Y,Northwest Championship 2026 (2026-08-21~23),333mbf Final A #2
+5856935001,L2 U2 R2 F2 L U2 L R' U2 B' L B2 F D' B' U2 F' L U',Y,Indian Elite Championship 2026 (2026-10-02~04),333 R1 K #1

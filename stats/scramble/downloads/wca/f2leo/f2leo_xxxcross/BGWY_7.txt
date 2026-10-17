@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / BGWY / bin 7
-# Population in this bin: 282
+# Population in this bin: 285
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 6373001,U D2 F U' L' F2 D R2 L D' L2 D' F2 R2 F2 U F2 R2 D,B,Rumia Open 2014 (2014-03-29~30),333 R1 A E2
@@ -34,7 +34,7 @@
 5447077001,D2 F U' L2 F' L' B D B2 L2 B' U2 R2 F' R2 U2 B' U' F2,W,Stevenage March 2026 (2026-03-14~15),333 R2 A #4
 411140001,F U2 R2 D2 F R2 U2 R2 F' R' U F2 L' U2 R' U' L' B2,B,Charrua 2016 (2016-12-03),333 R1 A #2
 450031001,B U2 F U D F L' U2 L F2 B2 D' R2 U2 L2 U L2 F2,G,Piedra del Sol Santander 2017 (2017-02-18),333oh Final B #3
-484145001,D2 B' D2 B F2 D2 R2 U' R U R2 U R' D' R' F U',W,Shaker Spring 2017 (2017-04-08),333 R3 A #1
+5870493001,R L2 F' R2 U2 B F2 D2 F R2 U2 R2 L F L R D F R2 B2,G,Maine Fall 2026 (2026-10-10),333 R1 B #4
 5412599001,R' U F' L U2 R2 D2 B2 F2 L B' L' B U2 L D2 B' F',B,Burnaby Winter 2026 (2026-02-21),333 R2 A #4
 538439001,R2 B2 D2 R2 D2 R2 D' B R' D' B D B' F' R2 F D2 R,W,National Cubing Region Open 2017 (2017-06-23~25),333 R1 I #2
 4324135001,D' L2 F2 U R' D' L' B F2 R F2 R B2 L U2 F D2,W,Barcelona Open 2024 (2024-11-30~12-01),333 R1 E #5
@@ -92,7 +92,7 @@
 1231985001,D2 B' D2 F2 R2 B2 F2 U2 F' R' D F D' U2 L' D2 B2 U',Y,Gdańsk Cubing Summer Camp 2019 (2019-07-15~19),333 Final A #3
 5418830001,U2 B2 R2 F2 R2 U' B2 L' U' L B L' B' L2 R D L' B2,G,New Martinsville Newcomers 2026 (2026-02-28),333 R2 A #3
 1263974001,F2 R B2 L D2 B2 F2 U2 L F2 U' B2 L' F U R2 B' L2 F' U2,G,Bay Area Speedcubin' 19 2019 (2019-08-18),333oh R1 B #2
-5695560015,F2 L R' B2 F2 R U2 B2 D B' U2 B2 D' B' L F D F' D2,B,Jog Your Memory Joondalup 2026 (2026-06-13),333mbf Final A #1
+5867833001,R F' L' B' R D' F R U' F2 B' U2 R2 B2 R2 F' D F',Y,Cube4fun Lublin Autumn 2026 (2026-10-10),333oh Final A E2
 1274048001,U2 B2 R' D2 R B2 U2 R' B' D2 L2 D2 U2 R2 B' U' B U L2 U,Y,Bucharest Blind and Stuff 2019 (2019-08-24~25),333bf Final A #3
 1295391001,U' B2 U2 F2 D F2 L2 R' D2 U2 F U2 L2 R2 D' B' R2 D,W,City Centre Sharjah Open 2019 (2019-09-13~14),333 R2 D #2
 1306280001,D2 F D2 F2 L2 F' L2 F' L' B' L2 B D2 L F' D R2 F2,W,Dutch Nationals 2019 (2019-09-21~22),333 R2 I E1

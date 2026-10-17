@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / B / bin 5
-# Population in this bin: 964
+# Population in this bin: 971
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 2679777001,L2 D R2 U' F2 U B2 D2 U' F' L2 D' F2 R' U' R' B' U2 R',B,Welcome to Olympia 2023 (2023-04-29),333 R1 B E2
@@ -152,7 +152,7 @@
 635117001,D' U' R2 U' F2 U2 L' U2 F U B R' F' U2 L R' F' U,B,Kjeller Open 2017 (2017-11-04~05),333oh Final A #3
 637626001,U' L2 F2 D' B2 D F2 R' F' U' R2 F R2 F L2 F2 R2 F L2,B,Porto Alegre Open 2017 (2017-11-04~05),333 R2 C #4
 641782001,D2 L2 B2 D B2 R2 U L' F U2 F R' B2 F2 D' B D2 L' R2,B,RubIquitos 2017 (2017-11-12),333 R2 A E2
-642921001,D2 F2 D B' U2 F2 L' B2 R U' R2 D' R2 D B2 U' L2 U B2,B,Chak-chak cubing in Kazan 2017 (2017-11-11~12),333 R2 B E2
+5858394001,B' F2 U B2 F2 L2 U2 F2 U' B2 D L F U F D' R2 D2 R2,B,Trondheim Høst 2026 (2026-10-02~04),333 R2 A E1
 5850528001,R B2 U' B2 D F2 R2 F2 U F' L B D2 B' F R2 F2 U',B,Colorado Cubing Weekend 2026 (2026-09-26~27),333oh R1 A #1
 1286266001,U2 L2 B2 F2 U2 F2 D L2 B2 L' B' L' B' D' U' F L2 D L2,B,Cubing in Cill Chainnigh 2019 (2019-08-31~09-01),333 R2 D #3
 649039001,B2 D2 U' L2 D L2 U' L2 U2 L2 F D' B' L B2 D' L U' F L',B,Berkeley Fall 2017 (2017-11-18~19),333oh R1 A E1

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / ORWY / bin 4
-# Population in this bin: 324
+# Population in this bin: 328
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 3194001,L' U2 L' R2 F2 R D2 F D L' R D' B2 D' F R2 B2 L,W,CMI Fiesta Open 2014 (2014-03-21~23),333oh R1 H E1
@@ -78,7 +78,7 @@
 3662366001,U' F2 U L2 D2 F2 D' B2 L B' L D2 F2 L2 D' B' U2 B F',Y,Luanda Open 2024 (2024-04-13),333 Final B #4
 826306001,L2 D2 B2 R2 B2 F2 U' B2 F D U B' R2 B' U2 B2 U L' R2 D2,O,Wuxi Try to Get a Mean 2018 (2018-07-14~15),333bf R1 A #3
 833220001,D2 F D2 F' R2 D2 R2 U2 R2 B' R D2 F' D R F L F R2 B,R,Ekat Summer 2018 (2018-07-21~22),333 Final A E1
-5053823001,F D2 F2 B' R' U' R2 F D' B L2 F2 B D2 F2 U2 L2 U2 L2,R,Amor y Amistad Aves María 2025 (2025-09-27~28),333 R2 B #4
+5858718050,L2 F L U' B U2 R L U' F D2 F2 U2 L' U2 B2 R' B2 L2 B R',R,Please Be Quiet Singapore Oct 2026 (2026-10-03~04),333mbf Final A #1
 4582952001,L2 R2 F' L2 U2 B R2 F' R2 F2 L U R F2 R' B D2 L' B2 L2 U,W,Big Side & Blind Olsztyn 2025 (2025-03-22~23),333bf R2 B #2
 849464001,D' R2 F2 U' R' U R U' F' R2 F2 D2 B2 R B2 R' L' D2,Y,Swisscubing Better Be Quick 2018 (2018-08-04),333 R2 A E2
 4864627017,F2 R2 B' F L2 U2 B' L2 D L' F2 D F2 L R2 D B' R2 D B',O,MBLD Madness in Dobřejovice 2025 (2025-07-12),333mbf Final A #2
@@ -150,7 +150,7 @@
 4170083001,B U' D R' B U F' U' R' U2 L' D2 F2 R' B2 R2 B2 F R,R,Estonian Championship 2024 (2024-10-04~06),333oh Final A #1
 2154412001,D2 F D R2 F' U' B2 L B' U2 D' R2 D R2 L2 D F2 L,O,Pretzel Mania 2022 (2022-09-03~04),333 R2 B #1
 2156013001,F L' D R' B' R2 L2 U' L' B2 U2 F2 B2 D' B2 R2 U D B2,Y,Fénix México 2022 (2022-09-03~04),333 Final A #2
-2156434001,F D2 B' L B' R B2 D' F' D L' D2 F L2 F' B R2 F',R,Apollo Bay Cubing 2022 (2022-09-10~11),333 R1 C #4
+5874012001,L2 F2 U2 F2 U2 L2 B2 F' D2 R' D' R D' L' B2 F' D2 B,W,Portugal Championship 2026 (2026-10-09~11),333bf R1 A #2
 5073976001,D B R2 D' B' D2 R2 B' L2 D2 F2 U' B' R D2 R' U F',W,Swiss Science Open 2025 (2025-10-04~05),333 Final B #4
 2180201001,B D R2 F2 D' L2 F2 D2 L2 B' L B' R2 F R2 U' L R2,O,Hanoi Open 2022 (2022-09-18),333oh Final E E2
 4658404001,F U2 L2 B L2 U2 F' U2 B D' L2 D' L' B' R D' R' U L,W,Tokyo Spring PM 2025 (2025-04-20),333 R1 C #5

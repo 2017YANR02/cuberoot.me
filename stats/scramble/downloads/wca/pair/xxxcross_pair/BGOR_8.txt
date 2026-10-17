@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / BGOR / bin 8
-# Population in this bin: 466
+# Population in this bin: 469
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 26001,U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2,R,Galeries Dorian Open 2014 (2014-03-15),333bf Final A E2
@@ -81,7 +81,7 @@
 3128748001,F U2 B D' R' U2 F2 D2 F R F2 U2 B2 D2 L2 B2 L' D2,R,Cubing for Yuval 2023 (2023-10-01~02),333 R2 C E2
 3581509001,D' F2 R' F U2 L D' R2 D2 R B2 L' D2 F2 D' F2 U' R,O,Northampton Newcomers D 2024 (2024-03-10),333 R2 B #3
 603423001,D2 B2 F2 L2 U B2 R B' U2 L' D2 R2 B2 L R' F R,R,Puget Sound Fall 2017 (2017-09-23),333 R1 F E2
-613267001,D2 F' R2 U2 B2 D2 F R2 B2 U' F' L U' F' R D' F' D' R2,R,NIT Trichy Open 2017 (2017-10-07~08),333 Final B E2
+5871876001,D R B U' R B U' L2 F' U' R F R2 D2 F' R2 B R2 D2 B,G,Minnesota Quiet Championship 2026 (2026-10-11),333bf R1 A #1
 5709191001,F D L2 U2 F2 L2 D F2 U' F' U R' U' L2 B R2 F U,R,B-Game - Bastardo Open 2026 (2026-06-13~14),333 Final A E2
 5784353001,B R' U' B' U2 L' D' R2 B2 L2 F2 U2 F2 R' B2 L U' R F D',B,Pacha Cubing: Jujuy 2026 (2026-08-15~16),333bf Final A #5
 660838040,U B2 D F2 U B2 L2 U' B' F R F' L2 B' U' R2 B2 D R' U' B' L',O,Spanish Championship 2015 (2015-10-09~11),333mbf Final A #1

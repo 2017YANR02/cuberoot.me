@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / W / bin 8
-# Population in this bin: 132
-# Samples listed: 132 (all entries in this bin)
+# Population in this bin: 133
+# Samples listed: 133 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 13193001,B F2 R2 U2 F2 D R2 B' D2 U' B' R F U2 F2 R',W,Velbert Easter Open 2014 (2014-04-18~20),333 R1 A #4
@@ -110,7 +110,7 @@
 4474225001,F L' R' B2 D2 L' D2 R2 U2 R' D B D F D2 U2 F2 U',W,Tramsheds IV: Summer Sunday 2025 (2025-02-09),333 R1 B #2
 4509788001,U' B' L2 D' U' L2 U F' L B L' B' F D2 U R',W,LA PRE Pucallpa Speedcubing 2025 (2025-02-22),333 R2 D #2
 4527533001,L D R2 F' L2 B2 F D2 B R2 D' L U' F R B' L2 B' R2,W,Metropolis Lara League I 2025 (2025-02-22),333oh Final A #3
-4540561001,R' B U2 L2 B2 U2 B R2 F2 R' D L' U' F2 D' U' F' L' B,W, Ruta Cubera Queretaro NxN 2025 (2025-03-01~02),333 R1 B E2
+4540561001,R' B U2 L2 B2 U2 B R2 F2 R' D L' U' F2 D' U' F' L' B,W,Ruta Cubera Queretaro NxN 2025 (2025-03-01~02),333 R1 B E2
 4543067001,F' D F' D' L B2 D' B F2 U D2 L2 U D2 F2 B2 R D',W,Rapid Academy Surabaya Showdown 2025 (2025-03-01~02),333oh Final A #1
 4571276001,D2 B F' U2 F D2 L2 D2 B' U2 L D' B' L B U2 F2 R' D',W,Muggiò Spring 2025 (2025-03-15~16),333 R2 C #5
 4724880001,B' U2 F D2 B' L2 B L2 U F2 D' B L U2 B L' B2 R2,W,Sant'Anna Open Araruama 2025 (2025-05-17),333 R2 A #3
@@ -137,3 +137,4 @@
 5835166005,L2 U L' B2 D2 R B2 R' U2 L2 D' L2 D U' R' D B D B' L B,W,LA Quiet Championship 2026 (2026-09-19),333mbf Final A #1
 5844142001,D F R2 B' U2 B2 F D2 L F U2 L2 D2 U' B' U' R2 D',W,Ribeirão ao Cubo 2026 (2026-09-19~20),333 R2 A #3
 5853400001,D L B R' B' D' R2 D' R' D L' F2 R U2 R' B2 L',W,Toronto Weeknights I 2026 (2026-09-30),333bf Final A E1
+5874957001,U B2 U2 R2 F' U' B L' F2 D2 R2 B2 D2 F' L2 F' D' F2 U',W,Berkeley Fall 2026 (2026-10-11),333oh R1 A #3

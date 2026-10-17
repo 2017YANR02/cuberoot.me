@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxcross_pair / OR / bin 6
-# Population in this bin: 538
+# Population in this bin: 542
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 4716333030,F' U' B L B' R L2 F U2 B D F U2 L2 U2 F2 B U2 L',O,UCSD Blind and Big 2025 (2025-05-10),333mbf Final A #1
@@ -47,7 +47,7 @@
 5670671013,B U2 L R2 D F2 U' L2 B2 D2 U' B2 D2 R B2 F L D F' R2 B' L2,O,Quanzhou Blindfolded 2026 (2026-05-31),333mbf Final A #1
 292125001,B2 U2 B2 L D2 R2 F2 U' R2 U2 F2 R' U' F L B' D' R2,O,CCC Spring Open 2016 (2016-04-29~05-01),333oh R1 D #2
 3942769001,U F L2 R2 U2 B2 F' D B' L B D' L2 R2 F' L' F,R,Puebla de Zaragoza Open 2024 (2024-07-13~14),333 R1 B E2
-316160001,U2 L2 B F' R2 F' L2 U2 F2 D F' L2 R' B' U R2 B R' F',O,SCMU 2016 (2016-06-17~19),333ft Final A #3
+5876633001,B2 R' L2 F2 B L2 B2 D' R2 U2 F U2 F2 R2 B' U2 F L' B',O,Solve Well in Wellington 2026 (2026-10-10),333 R1 C #4
 4798212001,L2 D2 R2 D B2 R2 D' B2 R2 D' R2 B' U R' D2 U' L2 U B2,O,Penang Mini Cube 2025 (2025-06-14),333 R1 D #5
 4241958001,D R B2 L2 U2 R B2 U F' D' R D F D' R D L,R,Kublördag Västerås V - 2024 (2024-11-02),333oh Final A E2
 1461469001,B2 F2 U2 B2 R U2 R F2 L R2 D2 U L B' F' L2 D2 L' B,R,TCG Spring 2019 (2019-12-14~15),333oh R1 A #2
@@ -55,7 +55,7 @@
 337020001,U R2 F2 U2 R2 D' R' F U' L2 D L2 U' R2 D' R' D,O,Wirewood Open 2016 (2016-07-24),333oh Final A #4
 5298491001,F2 B D' L' B L' B2 D L D2 L2 B D2 F' U2 R2 F' U',R,Race the Clock MN 2025 (2025-12-27),333 R1 A #4
 342679001,F2 U' F2 R2 D F2 D F2 L' U' B2 R2 B D2 B' F' D' F' L2,R,SSN Cube Open 2016 (2016-08-05~06),333ft Final D #1
-2632971001,L2 R2 F2 U2 F D2 F' R B2 R' U F D2 L2 U' L' U2 L,R,Newmarket Favourites 2023 (2023-04-15),333oh Final A #3
+5873784001,F L2 B2 R' D2 B2 D2 F2 R B2 D L' D2 L F2 U2 R,R,Cuberos del Chaco 2026 (2026-10-10),333 R1 A #2
 5338845004,R B R2 B2 D R2 D R2 D2 U' B' L2 B U' R2 F2 L U' R',R,BlindCon Venteira 2026 (2026-01-24),333mbf Final A #1
 379079001,B' D' B U2 D F' L F D B' R2 F2 R2 F2 R' U2 R F2,R,CAVA Open 2016 (2016-10-15),333ft Final A #1
 379927001,L' F2 L2 B2 R D2 R' B2 R' F' R2 B' D L B' L U2 L2 R2,R,Cubing ATMOSphere 2016 (2016-10-15~16),333 R1 L #2

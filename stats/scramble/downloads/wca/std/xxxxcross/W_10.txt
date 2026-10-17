@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxxcross / W / bin 10
-# Population in this bin: 362
+# Population in this bin: 363
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 37618001,U' B2 D' L F' D' R' U R U' F2 U F2 D L2 F2 U B2 L2 D,W,Welcome To Cambridge 2014 (2014-07-12~13),333oh R1 B #3
@@ -53,7 +53,7 @@
 5528192001,D2 F2 U2 L F L' D R L2 F L2 B U2 L2 B L2 B2 L' F',W,Caminos de Guanajuato - León 2026 (2026-04-12),333 R1 A E1
 3735450046,D B R' F2 L' F2 U2 R' U2 F2 L2 B2 R' F' D' F D' U L D,W,BrizZon Side Open II 2024 (2024-05-01~05),333mbf Final A #3
 407796001,U' L2 D' F2 D' U2 L B2 U R2 D F' D2 R' D2 B2 D2,W,GLS Cup Final 2016 (2016-12-03),333 R1 C #1
-417876001,D2 R U2 L' D2 R2 F2 D2 R' D R' D F2 D F' L D' R' D',W,Cubing Complexity 2016 (2016-12-17~18),333 R1 J #3
+5870442001,D2 B2 R2 U B2 R2 B2 D' L2 U' R2 L U L F2 R F' L' R2 F L' F',W,Maine Fall 2026 (2026-10-10),333bf Final B #1
 438104001,R' D2 R2 U2 B2 L R2 B2 F U2 F R2 B' F2 L' U2 R,W,Wirewood 3 2017 (2017-01-29),333oh R1 B #2
 4301350001,D' F B D' R2 D2 L2 D' L F U2 D2 B R2 F2 B2 R2 F2,W,Broome Open 2024 (2024-11-23),333 R1 A #4
 458893001,U' R2 D' F2 U B2 U' L2 U2 B' R' B2 L2 D' B F R B' L2 U,W,ODU Big Blue Spring 2017 (2017-03-04),333 R2 A #5
@@ -135,7 +135,7 @@
 3293014001,R2 B D2 B L2 B2 R2 D L2 F2 D L D B' F R' D L,W,Dutch Nationals 2023 (2023-11-25~26),333 R1 A #3
 3299127001,F R2 B2 D F2 D R' F' R D R2 U D2 B2 D B2 U F2 L,W,Bucharest Autumn Cubing B 2023 (2023-11-25~26),333 R1 C E1
 1453474015,B2 D R2 D U' R2 U' B2 U2 R' B L B2 L' F D' L2 U2 R U2 B' L2,W,Hobart Hoedown 2019 (2019-12-14~15),333mbf Final A #1
-3904792001,D L D B' L2 R2 U2 B2 L' F2 L' B' R U B2 U2 B R2,W, Wembley Quimbaya 2024 (2024-06-30),333 R1 C #1
+3904792001,D L D B' L2 R2 U2 B2 L' F2 L' B' R U B2 U2 B R2,W,Wembley Quimbaya 2024 (2024-06-30),333 R1 C #1
 5513898003,D2 B2 D2 B' L2 D2 L2 D2 L U F2 R F' L R2 U2 F D F' L2 U',W,Please Don't DNF Kaohsiung 2026 (2026-04-05~06),333mbf Final A #1
 5523427001,R' D F2 R B' D L2 U2 F2 L U L2 U' F2 U B2 U2 F2 L B',W,Cube Against Cancer Minnesota 2026 (2026-04-11),333bf R1 A #2
 1495818001,F D2 L2 B' L2 F' R2 F L B2 L' U2 L2 R' F' L2 B U2,W,Potomac Speedcubing 2020 (2020-01-11),333 R1 F #3

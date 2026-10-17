@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xcross / G / bin 5
-# Population in this bin: 724
+# Population in this bin: 728
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 5139459001,D2 F2 L' B2 R2 F2 L2 D' L2 B' D B2 F' D' R2 F' U' F,G,Spookin' on the Plains at Auburn 2025 (2025-10-25),333oh R1 C E2
@@ -168,7 +168,7 @@
 5167564001,D2 B2 L' U' L2 B' D2 B L F2 L2 U' L2 D' R2 U2 B' L,G,Guangzhou Small Cubes 2025 (2025-11-09),333 R2 C #4
 4545960001,R2 B' D F' R' L U R2 U2 R D R2 U' L2 B2 U2 L2 F2 U,G,Oredigger Open CO 2025 (2025-03-08),333 R1 C #2
 1534497001,D2 L2 U' R2 B2 U' L2 B2 U L2 U R B2 F R F' R' B R2 D2 L B2,G,CCC Qualification SPB 2020 (2020-02-01~02),333bf Final B E1
-1080765001,R2 F' B2 U F2 U L2 D2 L2 B' U2 D2 L2 F' L2 U2 B',G,Koalafication Brisbane 2019 (2019-04-06~07),333 Final A #5
+5864167001,D2 R2 F2 L2 R2 B D2 B U L F2 R B R' B R D L2 R',G,Late in Larchmont II 2026 (2026-10-05),333 Final B #3
 4008677001,B2 R' U' R2 U2 F2 R2 D' U2 L2 F D L' F2 D B' L2 B2,G,GiocAosta Cube Open 2024 (2024-08-11),333 Final A E2
 782695001,F' D2 B F2 D2 B2 D2 L2 U' F' L' F U' R B D' F R B R,G,Swedish Championship 2018 (2018-05-11~13),333bf R2 A #1
 2795397023,B R L2 U R2 D' B2 R2 D B2 L' B' U2 B R2 U' R B L2 D',G,Please Be Solved Pickering Evening 2023 (2023-06-17),333mbf Final A #1

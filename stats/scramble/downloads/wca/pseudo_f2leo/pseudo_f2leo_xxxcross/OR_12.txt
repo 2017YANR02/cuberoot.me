@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / OR / bin 12
-# Population in this bin: 226
+# Population in this bin: 228
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 5741620001,B' U2 F D2 B2 L2 F' R2 F D F2 R2 U' B' D B2 L2 R B' L',O,Wiltshire Summer 2026 (2026-07-04~05),333 R1 A #1
@@ -37,7 +37,7 @@
 481966001,B' D L2 U R L' U' B D2 R B D2 F U2 F' U2 F R2 D2,O,ŚLS Jastrzębie Zdrój 2017 (2017-04-01),333 R1 B #2
 487743001,R2 B' L2 F D2 U2 F L2 B' U' B' F' L D' R U B U' B2 U2,O,Florida Cubing Spring Qualifier 2017 (2017-04-15),333 R1 B #3
 493401001,L2 B2 D2 R2 U' B2 L2 U B U' L D2 B D' B L B2 D F2 L B,O,IIA Summer Open April 2017 (2017-04-22~23),333bf R1 B E1
-501957001,D' U2 R2 B2 U2 F2 D2 F2 L' D' B U L B2 U L2 B' F2 D' U' B' L2,O,Faria Brito Open 2017 (2017-04-29~30),333bf R1 A E1
+5871963001,L' F2 R2 U' F2 U R2 U B' L' F D' R' F D2 F2 L2 F' R',O,Cubetcha MN 2026 (2026-10-10),333 R2 C #2
 522749001,F2 U L2 F D F L F B R' L' D L2 F2 R2 B2,O,Ho Chi Minh Warm Up 2017 (2017-05-28),333 R1 J E2
 555434001,B L2 B2 F' U2 L2 F' D2 L2 B R' D U' R' D' L' D F R' U2 B',O,150th Cube Meeting in Brest 2017 (2017-07-22~23),333oh R1 A #4
 570092001,D2 B2 R' U2 R D2 U2 R2 U2 F L U R' F' L B' U2 L U F,O,Deccan Cube Open - August 2017 (2017-08-13),333 R1 A #3
@@ -201,7 +201,7 @@
 5124373001,L' F' R B2 R2 B2 U B2 U B2 L2 D B2 F' L2 R' F D2 L' U2,O,Manchester October 2025 (2025-10-25),333 Final B #3
 5142279001,R' B R2 B' D2 U2 B F R2 L' F U' B2 U2 R D2 R2 B' L',O,Hefei Open 2025 (2025-10-25),333 R1 A #2
 5181703001,F' L' R2 F2 U B2 U2 B2 R2 U R2 U B R D2 L D U L2,O,Cubing on the Green MN 2025 (2025-11-15),333 Final A #4
-5842290001,D2 L2 B2 L B2 D2 R' U L' R2 B' R' B' L' F L' U' L,O,Rio Exxcube Open 2026 (2026-09-19~20),333 R1 B #2
+5866041001,F U R U2 L2 B' R2 F U2 F2 D2 F U2 D B U' L B' R D',O,UMBC Fall 2026 (2026-10-03),333 R1 D #3
 5265804001,B' U F2 D R2 B2 F2 D2 U' R2 B' R' B L B R2 B' U R' B,O,Noida Winter Cube Open 2025 (2025-12-14),333 R1 A E1
 5708487001,R' U' B' L2 F2 R2 B D2 L' U B U' L2 U2 R' U' F2,O,Cubing in the Park Reno 2026 (2026-06-20),333oh R1 B #4
 5297405051,F2 U F2 D U B2 R2 D' B R F L' U F' L F' L' B' D2 B D,O,Taiwan Championship 2025 (2025-12-19~21),333mbf Final A #1

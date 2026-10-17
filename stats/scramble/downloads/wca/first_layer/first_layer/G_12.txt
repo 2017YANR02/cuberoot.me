@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_layer / G / bin 12
-# Population in this bin: 969
+# Population in this bin: 977
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 874682001,B2 L' B2 L B2 U2 L' B2 F2 L F D' B' U R B2 U R2 U' L' D2 L2,G,Happy Cubing Honduras 2018 (2018-09-08),333bf Final A #2
@@ -61,7 +61,7 @@
 4449385001,F D2 F2 R2 D L2 D' F2 U2 B' D R D B D' L' F D2 R2,G,Ruta Cubera Izcalli Clásico 2025 (2025-01-25~26),333oh R2 B E2
 5492552001,F D2 L2 F2 L F D' L2 U' R2 B2 L2 U2 F D2 B2 U2 B L2 D',G,Forgotten O'Clocks SBC 2026 (2026-03-28~29),333oh Final A #5
 234668001,D2 R' F2 U2 L2 B2 F2 R' B2 R D2 U B R F' U2 L' D R U' B,G,Cubing Mérida 2015 (2015-12-27~28),333bf Final A #1
-931504004,B2 U' L2 B2 U R2 D R2 U2 B' F D L R2 B R F L B' R2 D2,G,Smart Cube Fest 2018 (2018-11-09~11),333mbf Final A #1
+5858767001,U2 F' B D L2 F2 U B D' B2 R2 F2 L U2 R L2 D2 U' B2 L2 U2,G,Please Be Quiet Singapore Oct 2026 (2026-10-03~04),333bf Final A E1
 4852159001,D2 L' D2 R' B2 F2 L' F2 U2 R2 B2 F' U2 R2 U' R' D' B U,G,Paseo Central Winter 2025 (2025-07-05),333 R1 C E2
 1569795001,R' B2 L' D' R F2 D R B R2 D B D2 B2 L2 U2 B2 L2 U2 B,G,PSKG Premiere Cubing 2020 (2020-02-15~16),333 R1 D #4
 249865001,L2 D2 L2 U2 B' U2 B2 F R2 F2 R2 U R B2 D R2 D2 L' R',G,Edmonton Open Winter 2016 (2016-01-30~31),333 R2 A E2

@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / BGOR / bin 7
-# Population in this bin: 261
+# Population in this bin: 263
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 6373001,U D2 F U' L' F2 D R2 L D' L2 D' F2 R2 F2 U F2 R2 D,B,Rumia Open 2014 (2014-03-29~30),333 R1 A E2
@@ -149,7 +149,7 @@
 3030991001,U B2 U2 R2 B2 L U2 L' R' B' D' R2 B L B2 L' U2 L2 R2 D2,G,Pace Blind 'n Crazy Stockholm 2023 (2023-09-03),333bf R1 B #3
 5564013001,F' B2 U2 B2 D2 L' U2 L B R F2 D' L U L F' R2 D2,O,Duper Super Davis Spring 2026 (2026-04-19),333 R2 A E1
 5583781009,R2 U' L' U2 F2 L' F2 R' U2 L2 F2 R F D' U L B' L F' D2,R,WCC Western PBQ Championship - Los Angeles 2026 (2026-04-25),333mbf Final B #1
-3090630001,F2 D' B' U L U2 L F L U2 L' U' R2 D2 L2 F2 U' R2 F2 L B2,R,Criciúma Open 2023 (2023-09-16~17),333bf Final A E1
+5858879001,D U2 L2 B2 L D2 R' B2 L' D2 R' U' L F R2 F' D' R U',G,Honey Cube Barcin 2026 (2026-10-03~04),333 R1 B #3
 3115469035,U2 L U R U' L' B U2 D2 R' D2 F2 U2 D2 B' D2 B' D2 B' L2,B,BMME 3x3 Day 2023 (2023-09-23),333mbf Final A #1
 3126076001,D2 F' D' R2 U2 R' F' D' R' U D' L2 U2 L D2 R F2 R,B,South Deerfield Side Events 2023 (2023-09-30),333 R1 C #5
 3145366001,D2 U2 R' U2 L2 F2 R D2 U2 R' D' F U2 L D L2 D' B' R' F,B,Somerset September 2023 (2023-09-30),333 R1 A #2
@@ -184,7 +184,7 @@
 3830575001,F2 R' D2 F2 L2 D L2 F' U F R2 D2 F' L2 F' R2 F D2 L',B,Singapore 50 and Counting 2024 (2024-06-08),333oh R1 B E1
 3844688001,D2 F L2 B' F' L2 F' D F2 U' L U L R' F' D' R' B,B,Trains on Main La Grange 2024 (2024-06-08),333 R1 C E1
 3961814001,L' F' U F2 L2 D F2 R2 F2 U B F' R' U F2 D2 B' R U',G,Vintage Cubing La Paz 2024 (2024-07-20),333 R1 D E1
-3992623001,D2 F B2 U' F2 L2 F' R F' B L2 U2 L2 U2 F' D',R,A Twisty Day in Araneta 2024 (2024-08-04),333oh R1 A E2
+5870493001,R L2 F' R2 U2 B F2 D2 F R2 U2 R2 L F L R D F R2 B2,G,Maine Fall 2026 (2026-10-10),333 R1 B #4
 4753269001,F2 R' D2 R' U2 F2 D2 R2 U R2 B' R F' D2 B' D R' U' F,R,North Carolina Championship 2025 (2025-05-24~25),333oh Final A #2
 3998524025,B' U' F2 R2 D2 B' F2 D2 B2 U2 R2 F' L' F U F D' F U B' L',O,Blind Till Nine in Vietnam 2024 (2024-08-10),333mbf Final A #1
 4014678001,U2 R B D' F2 D F' L D' U2 F' B2 U2 F2 R2 U2 R2 B' U' L2 U,G,Rhein-Neckar Mental Squaredown 2024 (2024-08-17~18),333bf R2 A E1

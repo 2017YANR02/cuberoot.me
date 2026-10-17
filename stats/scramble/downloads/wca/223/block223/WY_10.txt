@@ -1,8 +1,8 @@
 # Scramble samples — 223 / block223 / WY / bin 10
-# Population in this bin: 927
+# Population in this bin: 934
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 3307504001,R2 F U R' B U R F R2 D' L2 U' B2 U2 R2 F2 R F' L',W,Texas Championship 2023 (2023-12-02~03),333 R2 C E1
@@ -54,7 +54,7 @@
 3603480001,U2 D2 F' R2 L2 U R' B' L F' D' L2 U2 B U2 D2 F B' D2,W,Open PUCP 2024 (2024-03-16),333 R2 F #4
 3180922001,L' F' D' U2 B2 R2 U' B2 L2 U' B L D U2 B U' F' D2 L,W,Rubik's UK Championship 2023 (2023-10-20~22),333 R2 C #4
 1568633001,B2 U' L2 D2 U2 F2 U R D' F2 L' R F L R' F' L2 B2 U' B R,W,BhanuBhakta Cube Open 2020 (2020-02-21~22),333bf Final A #2
-5021813001,U2 B2 R2 F2 L2 D B2 U B2 L' B' D' F U B2 L' F' R2 D U2,W,Liberty Science Center Fall A 2025 (2025-09-13),333 R2 B #5
+5872076001,L' F' B2 R' F U B D' R2 F2 B2 D2 B2 U2 L' U2 L2 B' D' L2,W,Cubetcha MN 2026 (2026-10-10),333 R1 C E1
 255622001,F' U2 R2 D2 R2 B' D2 B R' D' L F' U' R' D L B F2 L,W,Iran Open 2016 (2016-02-18~19),333 R2 A E1
 258194001,U' D B R' F' U' D' L' D2 L' B2 U2 B U2 F L2 D2 F' U2 B' D2,W,Cube On Bengaluru 2016 (2016-02-27),333 Final E #5
 3694308001,U2 D F U R B' U' D' B' D2 L2 F B' D2 B L D2 R',W,Bangkok Cube Day Summer 2024 (2024-04-20~21),333 Final A #4

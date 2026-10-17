@@ -2,7 +2,7 @@
 # Population in this bin: 55
 # Samples listed: 55 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 33688001,D' L D2 R2 L' D R' B' D L' F D2 R2 B2 U2 B2 D2 B D2,Y,P3 Grand Open 2014 (2014-06-28~29),333 R1 S E2
@@ -38,7 +38,7 @@
 3594687001,D' U F2 R2 D B U B2 L' F D L2 B' L2 F L',Y,Delta County Cubing 2024 (2024-03-16),333 R2 A #5
 3662366001,U' F2 U L2 D2 F2 D' B2 L B' L D2 F2 L2 D' B' U2 B F',Y,Luanda Open 2024 (2024-04-13),333 Final B #4
 3825874001,L2 R2 F2 D R2 U2 F2 D' B2 L R' U F' L D B2 F2 R2 F',Y,Bacolod Big Cubes 2024 (2024-06-01~02),333 Final A #3
-3904784001,L2 B2 L2 D B2 L2 D' F2 L2 F R' U R2 D2 B D U' B U2,Y, Wembley Quimbaya 2024 (2024-06-30),333 R1 A E2
+3904784001,L2 B2 L2 D B2 L2 D' F2 L2 F R' U R2 D2 B D U' B U2,Y,Wembley Quimbaya 2024 (2024-06-30),333 R1 A E2
 3962152001,D F R L2 D2 B' R F2 D2 B R2 B U2 L2 B2 U' F2 U',Y,Bucharest Cubing July 2024 (2024-07-27),333 R1 C #5
 4085301001,U' B' F2 R2 F2 L2 D U2 B' L' D L2 U2 L2 B D2 F L B,Y,Summer Vibe Puck 2024 (2024-08-31~09-01),333bf Final A E1
 4141941001,R' B R2 F2 L2 B L2 F' R2 F D2 L D2 F2 U2 B' U' F,Y,Leicestershire Autumn 2024 (2024-09-28~29),333oh R1 C E1

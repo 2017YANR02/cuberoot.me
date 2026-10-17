@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / W / bin 4
-# Population in this bin: 75
-# Samples listed: 75 (all entries in this bin)
+# Population in this bin: 77
+# Samples listed: 77 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 3194001,L' U2 L' R2 F2 R D2 F D L' R D' B2 D' F R2 B2 L,W,CMI Fiesta Open 2014 (2014-03-21~23),333oh R1 H E1
@@ -80,3 +80,5 @@
 5752054001,F' B U2 R D F' R' D2 R' B' R2 D2 B' R2 D2 F R2 U2 B2,W,Nanchang Summer 2026 (2026-07-18),333 Final A #2
 5785108003,D' L' F L R U2 L F2 U2 F2 R2 F2 R U2 B' U L B L' R U2 L2 U',W,Kansas Championship 2026 (2026-08-14~16),333mbf Final A #1
 5845317001,R F' R' B2 U2 L' D2 U2 R B2 U2 F2 U' F D F' L2 U L',W,Hancock County NxNs 2026 (2026-09-26),333 R2 B #4
+5874012001,L2 F2 U2 F2 U2 L2 B2 F' D2 R' D' R D' L' B2 F' D2 B,W,Portugal Championship 2026 (2026-10-09~11),333bf R1 A #2
+5875631001,U' R2 B2 D' F2 L2 F2 R2 F2 L' U' L B2 L2 R F R B2,W,Thailand Championship 2026 (2026-10-09~11),333oh Final A #1

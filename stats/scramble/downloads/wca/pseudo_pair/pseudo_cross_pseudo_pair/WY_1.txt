@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_cross_pseudo_pair / WY / bin 1
-# Population in this bin: 356
+# Population in this bin: 358
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 5640748001,U2 R' U L F B2 R L2 U' F2 R2 L2 D2 R2 L2 F2 B L D,Y,Perth Puzzle Party 2026 (2026-05-16),333 Final A #1
@@ -78,7 +78,7 @@
 660747035,D2 B U2 B' R2 F U2 F' U2 B2 D F' U' F' L' B2 D2 R D2,Y,Radomsko Cube Theory 2015 (2015-06-27~28),333mbf Final A #3
 661085004,U L2 U B2 R2 D' R2 D2 U B D R2 F2 L2 U B' R' F R2 U2 L2 U',W,Singapore 333 Cube Competition 2016 (2016-08-27),333mbf Final A #2
 666370001,B' R D F' U L' D' B' U2 L2 D R2 D2 B L2 F2 D2 R2 U2 F2,Y,Fuenlabrada Open 2017 (2017-12-08~10),333 R1 D E2
-3741296001,R' U2 F2 R' D2 L F2 L2 D' B R' D' R D' F2 R B' U F',W,Korum Cube Challenge 2024 (2024-05-03~05),333oh R1 A #5
+5868004001,D2 L R2 B' D2 R2 B L2 B' D2 U2 R2 D U R' B2 D B' U' L,Y,Colégio Salesiano Itajaí 2026 (2026-10-10),333 R1 C E2
 678466001,R' L B' L' U' L B' R2 D F' L' B2 L2 U2 R2 U2 D' L2 D,Y,Kyushu Open 2017 (2017-12-30),333 R1 C #3
 5410135001,F' R2 D2 F2 L B2 L2 F2 U2 L' D2 R2 U R2 F D2 U L' D' F,Y,Belli in Zona 2026 (2026-02-21~22),333 R1 C #1
 5263299001,B' U2 F R2 B L2 F2 R' U' L D B F' R2 F' D L' B,Y,Feral Ricaurte Cundinamarca 2025 (2025-12-12),333 Final A #5
@@ -159,7 +159,7 @@
 4665237001,L B F L2 F' D2 U2 F R2 D' L' B U2 B' L F D' R',W,NxN Tlaxcala 2025 (2025-04-19~20),333 R1 C E1
 1655432001,U' D F' B' L2 F' U D R U' L2 F2 B2 D B2 L',Y,Welcome Back Kaohsiung 2021 (2021-05-09),333 R2 A #1
 1740888001,B' R D2 B U2 F U B D R2 U F2 U' B2 L2 U R2 D2 B,Y,Guayaquil Resist 2021 (2021-11-27),333 R2 D #1
-1760380001,F' L' U2 L2 B2 F2 D B2 D R2 B2 F2 U B' L' R' B' R U R2,W,Back To Cubing Arequipa 2021 (2021-12-11),333 R1 J #3
+5863120001,D R2 U R2 F2 U' B' U L D L2 R2 F' L D U2 L',W,Primma Cube Open 2026 (2026-10-03~04),333oh Final A #2
 1764244001,L U R2 L2 B2 D2 R' U2 B L' U2 B D2 L2 B2 R2 F' D2,Y,Welcome Back Taipei 2021 (2021-12-19),333 R2 C #2
 5049063001,U R2 U2 R' B2 R' B2 R2 D L2 U2 L' B' L' D' B L2 R,W,Hvidovre Liga II 2025 (2025-09-28),333oh R1 C #4
 1828201066,U' D2 B D' B R' L' U F2 U D2 F2 L2 U2 D' L2 F2 R F L2,Y,Kidderminster - British Blind Off 2022 (2022-03-12~13),333mbf Final B #1

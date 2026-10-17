@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xcross / BGORWY / bin 3
-# Population in this bin: 224
+# Population in this bin: 226
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 17106001,U F2 U' D' F D' L' D L2 F2 D' R2 F2 L2 B2 D2 F2 U2,B,SLS Chorzow 2014 (2014-05-03~04),333oh R1 C #5
@@ -38,7 +38,7 @@
 559645001,F2 R F2 L R2 D2 R U' F D F' D L2 D U L' B,B,Acho Open 2017 (2017-07-29~30),333ft Final A #2
 576386001,B2 R' B D' F2 L B L2 B2 D2 F' B2 R2 D2 R2 U2 L U2,W,IGA Rubik 2017 (2017-08-19),333oh R1 A #1
 584713001,B D F2 R' F' L2 U F' R' B2 R2 L2 B R2 B D2,O,Rain City Cube Competition 2017 (2017-09-02~03),333 R1 F #1
-660935002,L2 F2 R2 D2 F' L2 F2 L2 R' F' U' F L2 F R2 F2 D' B2 D' L' F2,W,Guangzhou Rubik's Cube Days 2016 (2016-03-05~06),333mbf Final A #1
+5864735001,U' L2 B' R' F' B' U' B F2 U R2 D R2 D R2 B2 U,R,Guangzhou Grand Open 2026 (2026-10-05~06),333 R1 B #3
 5539376001,R D L2 F D' R2 F U2 F2 U D2 F2 R2 U L2 F2 L2,O,NZ South Island Championship 2026 (2026-04-10~12),333 R2 C #2
 661146001,L2 R2 B' D2 B' R2 B2 L2 U F2 L2 F' R F R' D2 B L B2,Y,Porto Alegre Open 2016 (2016-10-15~16),333mbf Final A #2
 661341008,R2 D2 F2 D2 F' D2 U2 B2 D2 L U' R F' U F2 L' B2 F2 L2 U,W,Meguro 2017 (2017-05-05),333mbf Final A #2
@@ -110,7 +110,7 @@
 2235082001,R' B2 L2 U2 R2 D' U' L2 B2 F' U' F' D B2 R' D2 L2 F',W,Fecap Open 2022 (2022-10-08),333 R1 A E2
 2345586001,B' D2 L F2 L' B2 L F2 U2 L2 U2 R2 U' F U' R2 B2 D2 B2 L,G,Navidad Aves María 2022 (2022-12-03~04),333bf R1 A #3
 5450363019,F L' F' L B2 U' D' R L' D2 L' U2 B2 R B2 U2 D L D2,W,PBQ NCSU 2026 (2026-03-15),333mbf Final A #1
-2467387001,R' D2 U2 R2 D2 L F2 D L U2 B' L2 F' D' U R' U,O,A New Year in Hamilton 2023 (2023-01-28~29),333 R2 B E1
+5873913001,L2 F' U L2 U2 R2 B2 D' B' D B2 D F' D2 F L R',R,Road to Nats Caracas II 2026 (2026-10-10),333oh Final B #5
 2468007002,L2 F' U' R' U D L F' D' B2 L2 U' B2 R2 D' R2 U2 B' D' B R',B,MultiShevat Israel 2023 (2023-02-03),333mbf Final A #1
 2527413001,D' F2 R2 D2 U' R2 B2 U' B2 F U B' R2 D2 U L' D2 L2 U',B,ViraCup 2023 (2023-03-02~03),333 R2 A #1
 5693421001,D F' U2 B' D2 F' U2 R' U2 B2 F2 U2 R' B D' L2 R' B' L2,Y,Burnaby Cubes Big & Small 2026 (2026-06-07),333bf Final A E2
