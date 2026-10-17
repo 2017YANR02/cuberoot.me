@@ -366,18 +366,20 @@ final class WatchCubeScene: ObservableObject {
 struct WatchLiveCubeView: View {
     @ObservedObject var display: WatchCubeScene
     let language: String
+    var height: CGFloat = 150
+    var isStatic = false
     var body: some View {
         Group {
             if display.failed {
                 Text(language == "zh" ? "三维视图加载失败。计时仍可使用。" : "3D view unavailable. Timing is still available.")
                     .font(.caption)
             } else {
-                SceneView(scene: display.scene, pointOfView: display.camera, preferredFramesPerSecond: 30)
+                SceneView(scene: display.scene, pointOfView: display.camera, preferredFramesPerSecond: isStatic ? 1 : 30)
                     .opacity(display.ready ? 1 : 0)
-                    .accessibilityLabel(language == "zh" ? "智能魔方实时三维状态" : "Live 3D smart-cube state")
+                    .accessibilityLabel(isStatic ? WatchCopy.text("preview", language: language) : language == "zh" ? "智能魔方实时三维状态" : "Live 3D smart-cube state")
             }
         }
-        .frame(height: 150).allowsHitTesting(false)
+        .frame(height: height).allowsHitTesting(false)
         .onAppear { display.setVisible(true) }
         .onDisappear { display.setVisible(false) }
     }

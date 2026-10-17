@@ -1,5 +1,10 @@
-import { GanV4CubeConnection } from './smart-cube/gan-v4-cube';
-import type { BleDeviceRef, BleTransport } from './smart-cube/transport';
+import { GanV4CubeConnection, type GanV4CubeCallbacks } from './smart-cube/gan-v4-cube';
+import { GanCubeConnection, type GanCubeStatus } from './smart-cube/gan-cube';
+import { Moyu32CubeConnection, type Moyu32CubeStatus } from './smart-cube/moyu32-cube';
+import { QiyiCubeConnection, type QiyiCubeStatus } from './smart-cube/qiyi-cube';
+import { modelForDeviceName } from './smart-cube/models';
+import { normalizeMac } from '@cuberoot/shared/timer/external/mac';
+import type { BleDeviceRef, BleServiceRef, BleTransport } from './smart-cube/transport';
 import { SmartCubeSessionController } from '@cuberoot/shared/smart-cube/session';
 import { SmartCubeSoloTimerController } from '@cuberoot/shared/smart-cube/solo-timer';
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
@@ -12,9 +17,12 @@ import type { Quat } from '@cuberoot/shared/smart-cube/orientation';
 export function createWatchCubeBridge() {
   let now = 0, nextId = 0, generation = 0;
   let output: Record<string, unknown>[] = [];
-  let connection: GanV4CubeConnection | null = null;
+  let connection: GanV4CubeConnection | GanCubeConnection | Moyu32CubeConnection | QiyiCubeConnection | null = null;
   let disconnected: (() => void) | undefined;
-  let notification: ((value: DataView) => void) | undefined;
+  const notifications = new Map<string, (value: DataView) => void>();
+  const notificationKey = (service: string, characteristic: string) => service.toLowerCase() + '/' + characteristic.toLowerCase();
+  let deviceModel = 'gan-v4';
+  const supportsDevice = (name: string) => ['gan-v1', 'gan-v2', 'gan-v3', 'gan-v4', 'moyu32', 'qiyi'].includes(modelForDeviceName(name) ?? '');
   let inspectionSec = 0, enabled = false, connected = false, contextId = '';
   let machine = initialTimerMachineState();
   let resetting = false;
@@ -30,15 +38,17 @@ export function createWatchCubeBridge() {
   };
   const transport: BleTransport = {
     initialize: async () => {}, getMtu: async () => null,
+    getServices: async device => await request('getServices', { device }) as BleServiceRef[],
     requestDevice: async () => { throw new Error('Use the native device picker'); },
     connect: async (device, onDisconnect) => { disconnected = onDisconnect; await request('connect', { device }); },
     disconnect: async device => { await request('disconnect', { device }); },
     read: async (device, service, characteristic) => new DataView(Uint8Array.from(await request('read', { device, service, characteristic }) as number[]).buffer),
     write: async (device, service, characteristic, value) => { await request('write', { device, service, characteristic, bytes: Array.from(value) }); },
     subscribe: async (device, service, characteristic, callback) => {
-      notification = callback;
+      const key = notificationKey(service, characteristic);
+      notifications.set(key, callback);
       await request('subscribe', { device, service, characteristic });
-      return async () => { notification = undefined; await request('unsubscribe', { device, service, characteristic }); };
+      return async () => { if (notifications.get(key) === callback) notifications.delete(key); await request('unsubscribe', { device, service, characteristic }); };
     },
   };
   const action = (value: TimerMachineAction): boolean => {
@@ -48,7 +58,7 @@ export function createWatchCubeBridge() {
     if (result.effects.includes('inspection-started') || machine.phase === 'ready') reference = quaternion ? { ...quaternion } : null;
     if (result.effects.includes('run-started')) {
       startedAt = machine.startedAtMs ?? now;
-      recording.begin(startedAt, connected ? { model: 'gan-v4', name: deviceName } : undefined,
+      recording.begin(startedAt, connected ? { model: deviceModel, name: deviceName } : undefined,
         reference && quaternion ? { reference, initial: quaternion } : undefined);
     }
     const recorded = result.solve ? recording.finish() : undefined;
@@ -87,7 +97,7 @@ export function createWatchCubeBridge() {
     onSolved: timestamp => { if (!resetting) solo.solved(timestamp); },
   });
   async function resetCube() {
-    if (!connected || !connection || resetting || machine.phase === 'running') return;
+    if (deviceModel === 'gan-v1' || !connected || !connection || resetting || machine.phase === 'running') return;
     const revision = generation, driver = connection;
     resetting = true;
     action({ type: 'cancel-arm' });
@@ -125,7 +135,7 @@ export function createWatchCubeBridge() {
     connected = false; solo.setConnected(false); solo.setRunning(false); session.close();
     recording.reset(); reference = null;
     for (const task of pending.values()) task.reject(new Error('Connection closed'));
-    pending.clear();
+    pending.clear(); notifications.clear();
     const old = connection; connection = null;
     await old?.disconnect().catch(() => undefined);
   }
@@ -135,9 +145,16 @@ export function createWatchCubeBridge() {
     const lease = session.open({ publishInitialState: false });
     const current = () => revision === generation && lease.isCurrent();
     const device: BleDeviceRef = { ...input, manufacturerData: new Map(input.manufacturerData?.map(([id, data]) => [id, Uint8Array.from(data)])) };
-    deviceName = device.name ?? 'GAN';
+    deviceName = device.name;
+    const model = modelForDeviceName(deviceName);
+    if (!supportsDevice(deviceName)) { emit({ kind: 'connection', phase: 'error', message: 'Unsupported smart cube' }); return; }
+    deviceModel = model!;
     emit({ kind: 'connection', phase: 'connecting', name: device.name });
-    const driver = new GanV4CubeConnection(transport, {
+    const callbacks: Omit<GanV4CubeCallbacks, 'onMove' | 'onStatus'> & { onMove(move: string, timestamp?: number, metadata?: { delayed?: boolean; estimatedTime?: boolean; futureHistory?: boolean }): void; onStatus(status: GanCubeStatus | Moyu32CubeStatus | QiyiCubeStatus): void } = {
+      onNeedMac: async name => {
+        const value = await request('needMac', { name, device: device.id });
+        return typeof value === 'string' ? normalizeMac(value) : null;
+      },
       onDisconnect: () => { if (current()) { void disconnect(); emit({ kind: 'connection', phase: 'idle' }); } },
       onProtocolError: () => { if (current()) { void disconnect(); emit({ kind: 'connection', phase: 'error' }); } },
       onMove: (move, timestamp, metadata) => {
@@ -155,17 +172,21 @@ export function createWatchCubeBridge() {
         if (current() && lease.adoptFacelets(facelets, now)) {
           connected = true; solo.setConnected(true); if (!resetting) solo.syncFacelets(facelets);
           emit({ kind: 'snapshot', facelets });
-          emit({ kind: 'connection', phase: 'connected', name: device.name });
+          emit({ kind: 'connection', phase: 'connected', name: device.name, canReset: deviceModel !== 'gan-v1' });
         }
       },
-      onStatus: status => { if (current()) emit({ kind: 'status', ...status }); },
+      onStatus: status => { if (current()) { deviceModel = status.protocol; emit({ kind: 'status', ...status, canReset: deviceModel !== 'gan-v1' }); } },
       onDiagnostic: event => { if (current()) emit({ kind: 'diagnostic', ...event, now }); },
-    });
+    };
+    const driver = model === 'moyu32' ? new Moyu32CubeConnection(transport, callbacks)
+      : model === 'qiyi' ? new QiyiCubeConnection(transport, callbacks)
+      : new GanCubeConnection(transport, callbacks);
     connection = driver;
     try { await driver.connect(device); }
     catch (error) { if (current()) { void disconnect(); emit({ kind: 'connection', phase: 'error', message: String(error) }); } }
   }
   return {
+    supportsDevice, normalizeMac,
     dispatch(input: Record<string, unknown>) {
       if (typeof input.now === 'number') now = input.now;
       if (input.kind === 'connect') void connect(input.device as Parameters<typeof connect>[0]);
@@ -175,7 +196,11 @@ export function createWatchCubeBridge() {
       else if (input.kind === 'reply') {
         const id = input.id as number, task = pending.get(id); pending.delete(id);
         if (input.error) task?.reject(new Error(String(input.error))); else task?.resolve(input.value);
-      } else if (input.kind === 'notification') notification?.(new DataView(Uint8Array.from(input.bytes as number[]).buffer));
+      } else if (input.kind === 'notification') {
+        const callback = notifications.get(notificationKey(String(input.service ?? ''), String(input.characteristic ?? '')))
+          ?? (input.service === undefined && notifications.size === 1 ? notifications.values().next().value : undefined);
+        callback?.(new DataView(Uint8Array.from(input.bytes as number[]).buffer));
+      }
       else if (input.kind === 'context') {
         inspectionSec = Number(input.inspectionSec) || 0;
         enabled = input.enabled === true;

@@ -146,7 +146,9 @@ export class Moyu32CubeConnection {
     let confirmed: { facelets: string; counter: number } | null = null;
     let pending: Uint8Array[] = [];
     const apply = (plain: Uint8Array) => {
+        if (protocolError.value || !current()) return;
         const notification = decodeMoyu32Notification(plain, decodeState);
+        if (decodeState.historyLost) { reportProtocolError(); return; }
         if (notification.state) {
           stateReady = true;
           this.callbacks.onState?.(notification.state);

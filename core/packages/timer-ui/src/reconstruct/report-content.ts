@@ -1,7 +1,7 @@
 /** Canonical report content for DOM and native renderers. Keep labels, ordering,
  * visibility and action payloads here; adapters only draw nodes and execute effects. */
 import type { Solve } from '@cuberoot/shared/timer';
-import { TRAINING_START_MODE_COPY } from '@cuberoot/shared/timer';
+import { TRAINING_START_MODE_COPY } from '@cuberoot/shared/timer/training-settings';
 import type { trainingRepetitionMetrics, trainingCaseStatistics } from './report-presentation';
 import { effectiveMs } from '@cuberoot/shared/timer/types';
 import { formatMs } from '@cuberoot/shared/timer/stats';

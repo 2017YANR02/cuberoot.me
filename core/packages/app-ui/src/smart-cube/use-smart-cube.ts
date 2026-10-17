@@ -1,12 +1,12 @@
-import { matchesGiikerName, GIIKER_DATA_SERVICE_UUID, GIIKER_RW_SERVICE_UUID } from '@cuberoot/shared/smart-cube/giiker';
-import { matchesGoCubeName, GOCUBE_SERVICE_UUID } from '@cuberoot/shared/smart-cube/gocube';
-import { matchesMoyuName, MOYU_SERVICE_UUID } from '@cuberoot/shared/smart-cube/moyu';
+import { GIIKER_DATA_SERVICE_UUID, GIIKER_RW_SERVICE_UUID } from '@cuberoot/shared/smart-cube/giiker';
+import { GOCUBE_SERVICE_UUID } from '@cuberoot/shared/smart-cube/gocube';
+import { MOYU_SERVICE_UUID } from '@cuberoot/shared/smart-cube/moyu';
 import { LegacyCubeConnection, type LegacyCubeStatus } from './legacy-cube';
-import { GAN_V2_SERVICE_UUID, matchesGanV2Name } from '@cuberoot/shared/smart-cube/gan-v2';
-import { GAN_V3_SERVICE_UUID, matchesGanV3Name } from '@cuberoot/shared/smart-cube/gan-v3';
-import { GAN_V4_SERVICE_UUID, matchesGanV4Name } from '@cuberoot/shared/smart-cube/gan-v4';
-import { matchesMoyu32Name, MOYU32_SERVICE_UUID } from '@cuberoot/shared/smart-cube/moyu32';
-import { matchesQiyiName, QIYI_SERVICE_UUID } from '@cuberoot/shared/smart-cube/qiyi';
+import { GAN_V2_SERVICE_UUID } from '@cuberoot/shared/smart-cube/gan-v2';
+import { GAN_V3_SERVICE_UUID } from '@cuberoot/shared/smart-cube/gan-v3';
+import { GAN_V4_SERVICE_UUID } from '@cuberoot/shared/smart-cube/gan-v4';
+import { MOYU32_SERVICE_UUID } from '@cuberoot/shared/smart-cube/moyu32';
+import { QIYI_SERVICE_UUID } from '@cuberoot/shared/smart-cube/qiyi';
 import { normalizeMac } from '@cuberoot/shared/timer/external/mac';
 import { SmartCubeSessionController } from '@cuberoot/shared/smart-cube/session';
 import type { TimerDeviceConnectionEvent } from '@cuberoot/shared/timer/device-contract';
@@ -24,7 +24,7 @@ import { Moyu32CubeConnection, type Moyu32CubeStatus } from './moyu32-cube';
 import { QiyiCubeConnection, type QiyiCubeStatus } from './qiyi-cube';
 import type { BleDeviceRef, BleRequestOptions, BleTransport } from './transport';
 
-type InstalledCubeModel = 'gan-v2' | 'gan-v3' | 'gan-v4' | 'moyu32' | 'qiyi' | 'giiker' | 'gocube' | 'moyu';
+import { modelForDeviceName, type InstalledCubeModel } from './models';
 
 const DISCOVERABLE_CUBE_SERVICES = [
   GAN_V2_SERVICE_UUID,
@@ -70,17 +70,6 @@ function requestOptions(
   };
 }
 
-function modelForDeviceName(name: string): InstalledCubeModel | null {
-  if (matchesMoyu32Name(name)) return 'moyu32';
-  if (matchesQiyiName(name)) return 'qiyi';
-  if (matchesGanV4Name(name)) return 'gan-v4';
-  if (matchesGanV3Name(name)) return 'gan-v3';
-  if (matchesGanV2Name(name)) return 'gan-v2';
-  if (matchesGiikerName(name)) return 'giiker';
-  if (matchesGoCubeName(name)) return 'gocube';
-  if (matchesMoyuName(name)) return 'moyu';
-  return null;
-}
 
 export function useInstalledSmartCube(
   createTransport: () => BleTransport,

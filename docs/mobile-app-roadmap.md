@@ -1,5 +1,20 @@
 # CubeRoot 五端 App 完整路线图
 
+### 2026-10-16：Watch 多型号智能魔方接入（本地，新增型号实物待验）
+
+- Watch 已接 GAN v1/v2/v3/v4、MoYu32、QiYi；服务识别、MAC 输入缓存、按服务/特征路由通知及真实协议成绩标签已落地，直接连接魔方，无需 iPhone 中转。
+- v1 共享 csTimer 协议适配，其他协议复用现有安装端驱动；v4 保留原恢复驱动。超历史窗口或状态无法对齐时中断计时，避免保存不完整录像。
+- 定向回归、app-ui/mobile 类型检查、watchOS 签名构建与原生 QuickJS smoke 通过。新增型号真机 BLE、自动计时、断线与功耗未验；已有 GAN 16 UI 记录不外推到其他款。详细边界见 [手表文档](./apple-watch-timer.md#多协议直连2026-10-16)。
+
+
+### 2026-10-16：Watch 本地三阶标准打乱（本地，已覆盖安装）
+
+- 复用锁定版本 cubing.js 的原随机状态三阶生成器与 min2phase，构建时仅适配 Worker 传输；手表系统随机源、独立串行 QuickJS（32 MiB、30 秒单次 CPU 上限）常驻复用表，不改变 BLE/计时预算。空闲时自动补三条待用题，沿用最近手机分组/观察设置，首次无手机配置默认三阶手表分组。
+- 本地题使用已有 shared tracker 和 WatchCubeScene 显示紧凑状态预览；队列与模板原子保存，新手机配置拒收在途旧生成结果，当前题不替换。其他项目仍需手机补充；1,000 笔未同步上限保持，失败可显式重试。
+- Mobile 类型检查通过；新生成器回归连续生成 12 条通过；既有 Swift 契约/成绩导入 8 项通过。实际 C QuickJS 宿主连续生成三条通过，Mac 进程峰值约 12 MiB（不代表手表耗时或内存）。独立审阅修正构建输出依赖声明后，Watch 签名构建及深层签名校验通过。
+- 已备份原始手表状态并覆盖安装到 Series 8；远程启动被系统 `Locked` 拒绝，已请求解锁以继续真机生成、续题和重启恢复核对。未提交、推送或商店发布。
+- 用户解锁并打开后直接读回真机状态：从空题/空队列变为本地当前题＋三条本地缓存，期间新增四笔本地打乱的手动计时记录；原十笔成绩逐字段保持不变。诊断 `generating=false`、`failed=false`、`localCurrent=true`、`queued=3`，证明手机缺席时生成与消耗后续题成功。Watch 模拟器构建亦通过；本轮未完成真实 GAN 自动起停、长时功耗或真机重启恢复验收，不以手动短记录代替这些证据。
+
 ### 2026-10-16：UU 远程接入（Android 用户验收通过，iOS 真机待验）
 
 - Android 真机用户反馈 UU 版本达标但点击绑定提示“未检测到”；该文案来自发起 Intent 前的 `canOpenUrl` 拦截，并不是启动失败结果。核对已发 APK 的 queries 与官方 Android 安装包的 `uuremote://external` 声明均存在。按 Android 官方 package-visibility use-cases 指引，Android 改为直接尝试 `ACTION_VIEW`、以 AppLauncher 的实际启动结果处理失败；iOS 保留 canOpenURL。此修复消除查询假阴性阻止启动的路径，未连接用户手机，不能声称已确认该机系统返回 false 的具体原因或真实跳转已通过。11 项定向检查、Mobile typecheck 与 Web build/sync 通过；新 APK 的真机重试单独验收。

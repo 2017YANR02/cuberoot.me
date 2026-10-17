@@ -3,9 +3,11 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { build } from 'esbuild';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { resolve, dirname } from 'node:path';
+import { buildWatchScramble } from './build-watch-scramble.ts';
 const root = fileURLToPath(new URL('..', import.meta.url));
 const outfile = process.argv[2];
 if (!outfile) throw new Error('A derived output path is required');
+await buildWatchScramble(resolve(dirname(outfile), 'WatchScramble.js'));
 await build({ entryPoints: [resolve(root, 'src/watch-cube-runtime.ts')], outfile,
   bundle: true, format: 'iife', platform: 'neutral', target: 'es2020', minify: true,
   conditions: ['import'], mainFields: ['module', 'main'], legalComments: 'inline' });

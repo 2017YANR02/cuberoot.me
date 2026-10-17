@@ -2,6 +2,50 @@ import Foundation
 import Combine
 import WatchKit
 import WatchConnectivity
+import WatchJS
+
+/** Retains the original cubing.js tables on one serial queue across requests. */
+private final class WatchScrambleWorker {
+    private var engine: OpaquePointer?
+    deinit { cw_destroy(engine) }
+    private func evaluate(_ source: String) throws -> String {
+        var failed: Int32 = 0
+        guard let engine, let value = cw_eval(engine, source, &failed) else {
+            throw NSError(domain: "WatchScramble", code: 1)
+        }
+        defer { cw_free(value) }
+        let result = String(cString: value)
+        guard failed == 0 else { throw NSError(domain: "WatchScramble", code: 2, userInfo: [NSLocalizedDescriptionKey: result]) }
+        return result
+    }
+    func generate() throws -> (String, String) {
+        do {
+            if engine == nil {
+                engine = cw_create_scramble()
+                guard let url = Bundle.main.url(forResource: "WatchScramble", withExtension: "js") else {
+                    throw NSError(domain: "WatchScramble", code: 3)
+                }
+                _ = try evaluate(String(contentsOf: url, encoding: .utf8))
+            }
+            _ = try evaluate("WatchScramble.start()")
+            // Pending Promise jobs are bounded; native search itself has a CPU limit.
+            for _ in 0..<100 {
+                let result = try evaluate("WatchScramble.result()")
+                if result == "null" { continue }
+                let value = try JSONSerialization.jsonObject(with: Data(result.utf8)) as? [String: String]
+                guard let scramble = value?["scramble"], !scramble.isEmpty,
+                      let facelets = value?["facelets"], facelets.count == 54 else {
+                    throw NSError(domain: "WatchScramble", code: 4, userInfo: [NSLocalizedDescriptionKey: value?["error"] ?? result])
+                }
+                return (scramble, facelets)
+            }
+            throw NSError(domain: "WatchScramble", code: 5)
+        } catch {
+            cw_destroy(engine); engine = nil
+            throw error
+        }
+    }
+}
 
 struct WatchLocalState: Codable {
     var language = Locale.current.language.languageCode?.identifier == "zh" ? "zh" : "en"
@@ -19,6 +63,7 @@ struct WatchLocalState: Codable {
     var history: [WatchTimerRecord]? = nil
     var lastSolve: WatchTimerRecord?
     var recordingVersion: Int? = nil
+    var localTemplate: WatchTimerSlot? = nil
 }
 
 final class WatchTimerModel: NSObject, ObservableObject, WCSessionDelegate {
@@ -27,6 +72,10 @@ final class WatchTimerModel: NSObject, ObservableObject, WCSessionDelegate {
     @Published private(set) var displayMs: Double = 0
     @Published private(set) var errorKey: String?
     @Published var reviewing = false { didSet { syncCubeContext() } }
+    @Published private(set) var generating = false
+    @Published private(set) var generationFailed = false
+    private let scrambleQueue = DispatchQueue(label: "me.cuberoot.watch.scramble", qos: .utility)
+    private let scrambleWorker = WatchScrambleWorker()
     let cube = WatchCubeConnection()
     lazy var replayDisplay = WatchCubeScene()
     var recovered: Bool { state.recovered }
@@ -59,6 +108,7 @@ final class WatchTimerModel: NSObject, ObservableObject, WCSessionDelegate {
         WCSession.default.delegate = self
         WCSession.default.activate()
         ticker = Timer.publish(every: 0.05, on: .main, in: .common).autoconnect().sink { [weak self] _ in self?.tick() }
+        replenishLocalScrambles()
     }
     private func restoreFromDisk() throws {
         var next = try WatchTimerDisk.load(file, default: WatchLocalState())
@@ -74,6 +124,53 @@ final class WatchTimerModel: NSObject, ObservableObject, WCSessionDelegate {
         state = next; phase = next.draft == nil ? "idle" : "stopped"
         diskFailed = false; errorKey = nil
         if next.draft != nil { saveAndNext() }
+    }
+    private var localTemplate: WatchTimerSlot? {
+        guard !state.unsupported else { return nil }
+        // Existing installations recover the most recent phone selection, including exhausted queues.
+        if let slot = state.localTemplate ?? state.queue.last ?? state.current ?? state.lastSolve?.slot {
+            return slot.event == "333" ? slot : nil
+        }
+        guard state.batchId.isEmpty else { return nil }
+        return WatchTimerSlot(id: UUID().uuidString, sessionId: "watch-local-333", sessionName: text("localSession"),
+                              event: "333", eventName: "3×3×3", scramble: "", inspectionSec: 0, holdMs: 300)
+    }
+    func retryGeneration() { generationFailed = false; replenishLocalScrambles() }
+    private func replenishLocalScrambles() {
+        guard active, phase == "idle", !diskFailed, !generating, !generationFailed,
+              state.draft == nil, state.outbox.count < 1000, state.queue.count < 3,
+              let template = localTemplate else { return }
+        generating = true
+        let cursor = state.batchCursor
+        scrambleQueue.async { [weak self] in
+            guard let self else { return }
+            let result = Result { try self.scrambleWorker.generate() }
+            DispatchQueue.main.async {
+                self.generating = false
+                // A newly received phone selection wins over an in-flight generation.
+                guard self.state.batchCursor.sourceId == cursor.sourceId,
+                      self.state.batchCursor.sequence == cursor.sequence,
+                      self.localTemplate?.sessionId == template.sessionId,
+                      self.localTemplate?.event == "333" else { self.replenishLocalScrambles(); return }
+                switch result {
+                case .success(let (scramble, facelets)):
+                    var slot = template
+                    slot.id = UUID().uuidString; slot.scramble = scramble
+                    slot.previewPng = nil; slot.localFacelets = facelets
+                    var next = self.state
+                    next.localTemplate = slot
+                    if next.current == nil { next.current = slot } else { next.queue.append(slot) }
+                    if self.commit(next) { self.replenishLocalScrambles() }
+                case .failure:
+                    self.generationFailed = true
+                }
+                // Small diagnostic contains status only, never replaces durable timer storage.
+                if let data = try? JSONSerialization.data(withJSONObject: ["generating": self.generating,
+                    "failed": self.generationFailed, "queued": self.state.queue.count,
+                    "localCurrent": self.state.current?.localFacelets != nil]),
+                   let url = try? WatchTimerDisk.url("watch-scramble-status.json") { try? data.write(to: url, options: .atomic) }
+            }
+        }
     }
     func text(_ key: String) -> String { WatchCopy.text(key, language: state.language) }
     private func elapsed(_ start: ContinuousClock.Instant) -> Double {
@@ -108,6 +205,7 @@ final class WatchTimerModel: NSObject, ObservableObject, WCSessionDelegate {
         }
         if commit(state), state.draft != nil { saveAndNext() }
         receiveBatch(WCSession.default.receivedApplicationContext)
+        replenishLocalScrambles()
     }
     private func tick() {
         guard active else { return }
@@ -120,7 +218,7 @@ final class WatchTimerModel: NSObject, ObservableObject, WCSessionDelegate {
             }
         }
         ticks += 1
-        if ticks % 200 == 0 { flush() }
+        if ticks % 200 == 0 { flush(); replenishLocalScrambles() }
     }
     func tapTimer() {
         guard cube.phase != "connected" else { return }
@@ -225,6 +323,7 @@ final class WatchTimerModel: NSObject, ObservableObject, WCSessionDelegate {
     }
     func requestBatch() {
         guard !diskFailed else { return }
+        replenishLocalScrambles()
         if state.requestId.isEmpty {
             var next = state; next.requestId = UUID().uuidString
             guard commit(next) else { return }
@@ -271,9 +370,10 @@ final class WatchTimerModel: NSObject, ObservableObject, WCSessionDelegate {
         next.batchId = batch.id; next.language = batch.language
         next.recordingVersion = batch.recordingVersion
         next.queue = batch.slots; next.requestId = ""; next.unsupported = batch.unsupported
+        next.localTemplate = batch.slots.last
         // Never replace the scramble the user is reading, inspecting or solving.
         if next.current == nil, !next.queue.isEmpty { next.current = next.queue.removeFirst() }
-        _ = commit(next)
+        if commit(next) { generationFailed = false; replenishLocalScrambles() }
     }
     private func receive(_ info: [String: Any]) {
         if info["batch"] != nil { receiveBatch(info); return }

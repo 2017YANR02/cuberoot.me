@@ -219,7 +219,9 @@
       "./timer/types": "runtime-neutral",
       "./timer/stats": "runtime-neutral",
       "./timer/event-catalog": "runtime-neutral",
-      "./douyin-content": "runtime-neutral"
+      "./douyin-content": "runtime-neutral",
+      "./smart-cube/gan-v1": "runtime-neutral",
+      "./timer/training-settings": "runtime-neutral"
     }
   },
   "main": "./src/index.ts",
@@ -815,7 +817,9 @@
     "./timer/types": "./src/timer/types.ts",
     "./timer/stats": "./src/timer/stats.ts",
     "./timer/event-catalog": "./src/timer/event-catalog.ts",
-    "./douyin-content": "./src/douyin-content.ts"
+    "./douyin-content": "./src/douyin-content.ts",
+    "./smart-cube/gan-v1": "./src/smart_cube/gan_v1.ts",
+    "./timer/training-settings": "./src/timer/training-settings.ts"
   },
   "scripts": {
     "build": "tsc -b",

@@ -14,6 +14,13 @@ final class WatchCubeConnection: NSObject, ObservableObject, CBCentralManagerDel
     @Published var error = ""
     @Published var resetPhase = "idle"
     @Published var timingLate = false
+    @Published var canReset = true
+    @Published var macPrompt = false
+    @Published var macInput = ""
+    @Published var macInvalid = false
+    private var pendingMac: Int?
+    private var selectedDeviceID = ""
+    private var suppliedMac: String?
     let display = WatchCubeScene()
     var onTimer: (([String: Any]) -> Void)?
     var onFailure: (() -> Void)?
@@ -26,9 +33,9 @@ final class WatchCubeConnection: NSObject, ObservableObject, CBCentralManagerDel
     private var pendingServices = Set<CBUUID>()
     private var pendingConnect: Int?
     private var pendingDisconnect: Int?
-    private var pendingWrites: [CBUUID: Int] = [:]
-    private var pendingNotify: [CBUUID: Int] = [:]
-    private var pendingReads: [CBUUID: Int] = [:]
+    private var pendingWrites: [String: Int] = [:]
+    private var pendingNotify: [String: Int] = [:]
+    private var pendingReads: [String: Int] = [:]
     private var context: OpaquePointer?
     private var ticker: AnyCancellable?
     private var contextKey = ""
@@ -115,13 +122,27 @@ final class WatchCubeConnection: NSObject, ObservableObject, CBCentralManagerDel
         manufacturerBytes = data.count; manufacturerHeader = data.prefix(4).map(Int.init); stage = "resolve-device"
         var manufacturer: [[Any]] = []
         if data.count >= 2 { manufacturer = [[Int(data[0]) | Int(data[1]) << 8, Array(data.dropFirst(2)).map(Int.init)]] }
+        selectedDeviceID = id.uuidString; suppliedMac = nil; canReset = true
+        var device: [String: Any] = ["id": id.uuidString, "name": name, "manufacturerData": manufacturer]
+        if let cached = UserDefaults.standard.string(forKey: "cubeMac." + selectedDeviceID) { device["macAddress"] = cached }
         connectDeadline = Date().addingTimeInterval(20)
-        send(["kind": "connect", "device": ["id": id.uuidString, "name": name, "manufacturerData": manufacturer]])
+        send(["kind": "connect", "device": device])
     }
-    func disconnect() { display.clear(); stopScan(); send(["kind": "disconnect"]); phase = "idle"; connectDeadline = nil }
+    func disconnect() { pendingMac = nil; macPrompt = false; display.clear(); stopScan(); send(["kind": "disconnect"]); phase = "idle"; connectDeadline = nil }
+    func submitMac() {
+        guard let id = pendingMac else { return }
+        do {
+            let json = String(decoding: try JSONSerialization.data(withJSONObject: [macInput]), as: UTF8.self)
+            let normalized = try evaluate("JSON.stringify(WatchCube.normalizeMac(\(json)[0]))")
+            guard let value = try JSONSerialization.jsonObject(with: Data(normalized.utf8), options: .fragmentsAllowed) as? String else { macInvalid = true; return }
+            suppliedMac = value; pendingMac = nil; macPrompt = false; macInvalid = false
+            connectDeadline = Date().addingTimeInterval(20); reply(id, value: value)
+        } catch { macInvalid = true }
+    }
+    func cancelMac() { reply(pendingMac); pendingMac = nil; macPrompt = false; disconnect() }
     func tap() { send(["kind": "tap"]) }
     func resetCube() {
-        guard phase == "connected", resetPhase != "pending" else { return }
+        guard canReset, phase == "connected", resetPhase != "pending" else { return }
         timingLate = false; send(["kind": "reset"])
     }
     func cancel() { send(["kind": "cancel"]) }
@@ -197,10 +218,15 @@ final class WatchCubeConnection: NSObject, ObservableObject, CBCentralManagerDel
                 case "connection":
                     phase = event["phase"] as? String ?? "error"
                     if let name = event["name"] as? String { self.name = name }
-                    if phase == "connected" { connectDeadline = nil }
-                    if phase == "idle" || phase == "error" { display.clear() }
+                    if let value = event["canReset"] as? Bool { canReset = value }
+                    if phase == "connected" {
+                        connectDeadline = nil
+                        if let suppliedMac { UserDefaults.standard.set(suppliedMac, forKey: "cubeMac." + selectedDeviceID) }
+                    }
+                    if phase == "idle" || phase == "error" { display.clear(); macPrompt = false; pendingMac = nil }
                     if phase == "error" {
                         error = "connection"; connectDeadline = nil
+                        UserDefaults.standard.removeObject(forKey: "cubeMac." + selectedDeviceID)
                         if let message = event["message"] as? String { failureDetail = message }
                     }
                 case "move":
@@ -214,6 +240,7 @@ final class WatchCubeConnection: NSObject, ObservableObject, CBCentralManagerDel
                     let nextBattery = event["battery"] as? Int
                     if battery != nextBattery { battery = nextBattery }
                     protocolStatus = event
+                    if let value = event["canReset"] as? Bool { canReset = value }
                 case "timing-late": timingLate = true
                 case "diagnostic":
                     trace.append(event)
@@ -260,10 +287,32 @@ final class WatchCubeConnection: NSObject, ObservableObject, CBCentralManagerDel
                     if (try? data.write(to: url, options: .atomic)) != nil { lastDiagnostic = data }
                 }
     }
+    private func fullUUID(_ uuid: CBUUID) -> String {
+        let value = uuid.uuidString.lowercased()
+        if value.count == 4 { return "0000" + value + "-0000-1000-8000-00805f9b34fb" }
+        if value.count == 8 { return value + "-0000-1000-8000-00805f9b34fb" }
+        return value
+    }
+    private func characteristicKey(_ characteristic: CBCharacteristic) -> String {
+        fullUUID(characteristic.service?.uuid ?? CBUUID(string: "0000")) + "/" + fullUUID(characteristic.uuid)
+    }
     private func native(_ command: [String: Any]) {
         let id = command["id"] as? Int
         stage = command["op"] as? String ?? "unknown"
         switch command["op"] as? String {
+        case "needMac":
+            pendingMac = id; macPrompt = true; macInput = ""; macInvalid = false; connectDeadline = nil
+        case "getServices":
+            let services: [[String: Any]] = characteristics.map { service, values in
+                ["uuid": fullUUID(service), "characteristics": values.values.map { characteristic -> [String: Any] in
+                    let properties = characteristic.properties
+                    return ["uuid": fullUUID(characteristic.uuid), "properties": [
+                        "notify": properties.contains(.notify), "indicate": properties.contains(.indicate),
+                        "read": properties.contains(.read), "write": properties.contains(.write),
+                        "writeWithoutResponse": properties.contains(.writeWithoutResponse)]]
+                }]
+            }
+            reply(id, value: services)
         case "connect":
             guard let raw = command["device"] as? String, let uuid = UUID(uuidString: raw), let found = peripherals[uuid] else {
                 reply(id, error: "Device unavailable"); return
@@ -280,17 +329,18 @@ final class WatchCubeConnection: NSObject, ObservableObject, CBCentralManagerDel
             guard let characteristic = characteristics[service]?[key], let peripheral, peripheral.state == .connected else {
                 reply(id, error: "Characteristic unavailable"); return
             }
+            let address = characteristicKey(characteristic)
             switch command["op"] as? String {
             case "subscribe", "unsubscribe":
-                pendingNotify[key] = id; peripheral.setNotifyValue(command["op"] as? String == "subscribe", for: characteristic)
+                pendingNotify[address] = id; peripheral.setNotifyValue(command["op"] as? String == "subscribe", for: characteristic)
             case "write":
                 let data = Data((command["bytes"] as? [Int] ?? []).map { UInt8(truncatingIfNeeded: $0) })
                 if characteristic.properties.contains(.write) {
-                    pendingWrites[key] = id; peripheral.writeValue(data, for: characteristic, type: .withResponse)
+                    pendingWrites[address] = id; peripheral.writeValue(data, for: characteristic, type: .withResponse)
                 } else if characteristic.properties.contains(.writeWithoutResponse), peripheral.canSendWriteWithoutResponse {
                     peripheral.writeValue(data, for: characteristic, type: .withoutResponse); reply(id)
                 } else { reply(id, error: "Write unavailable") }
-            case "read": pendingReads[key] = id; peripheral.readValue(for: characteristic)
+            case "read": pendingReads[address] = id; peripheral.readValue(for: characteristic)
             default: reply(id, error: "Unsupported operation")
             }
         }
@@ -314,7 +364,8 @@ final class WatchCubeConnection: NSObject, ObservableObject, CBCentralManagerDel
     func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String: Any], rssi RSSI: NSNumber) {
         if forwardToMain({ self.centralManager(central, didDiscover: peripheral, advertisementData: advertisementData, rssi: RSSI) }) { return }
         let name = peripheral.name ?? advertisementData[CBAdvertisementDataLocalNameKey] as? String ?? ""
-        guard name.uppercased().hasPrefix("GAN") else { return }
+        guard let json = try? JSONSerialization.data(withJSONObject: [name]),
+              (try? evaluate("WatchCube.supportsDevice(\(String(decoding: json, as: UTF8.self))[0])")) == "true" else { return }
         peripherals[peripheral.identifier] = peripheral
         advertisements[peripheral.identifier] = advertisementData[CBAdvertisementDataManufacturerDataKey] as? Data
         if !devices.contains(where: { $0.id == peripheral.identifier }) { devices.append(Device(id: peripheral.identifier, name: name)) }
@@ -358,20 +409,20 @@ final class WatchCubeConnection: NSObject, ObservableObject, CBCentralManagerDel
     func peripheral(_ peripheral: CBPeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) {
         if forwardToMain({ self.peripheral(peripheral, didUpdateNotificationStateFor: characteristic, error: error) }) { return }
         guard self.peripheral === peripheral else { return }
-        reply(pendingNotify.removeValue(forKey: characteristic.uuid), error: error?.localizedDescription)
+        reply(pendingNotify.removeValue(forKey: characteristicKey(characteristic)), error: error?.localizedDescription)
     }
     func peripheral(_ peripheral: CBPeripheral, didWriteValueFor characteristic: CBCharacteristic, error: Error?) {
         if forwardToMain({ self.peripheral(peripheral, didWriteValueFor: characteristic, error: error) }) { return }
         guard self.peripheral === peripheral else { return }
-        reply(pendingWrites.removeValue(forKey: characteristic.uuid), error: error?.localizedDescription)
+        reply(pendingWrites.removeValue(forKey: characteristicKey(characteristic)), error: error?.localizedDescription)
     }
     func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
-        let data = characteristic.value.map { Data($0) }, key = characteristic.uuid, receivedAt = now
+        let data = characteristic.value.map { Data($0) }, key = characteristicKey(characteristic), receivedAt = now
         DispatchQueue.main.async {
             self.receiveValue(peripheral, key: key, data: data, receivedAt: receivedAt, error: error)
         }
     }
-    private func receiveValue(_ peripheral: CBPeripheral, key: CBUUID, data: Data?, receivedAt: Double, error: Error?) {
+    private func receiveValue(_ peripheral: CBPeripheral, key: String, data: Data?, receivedAt: Double, error: Error?) {
         guard self.peripheral === peripheral else { return }
         callbackQueueDelayMaxMs = max(callbackQueueDelayMaxMs, now - receivedAt)
         if let id = pendingReads.removeValue(forKey: key) { reply(id, value: Array(data ?? Data()).map(Int.init), error: error?.localizedDescription); return }
@@ -384,6 +435,8 @@ final class WatchCubeConnection: NSObject, ObservableObject, CBCentralManagerDel
         }
         guard let data else { return }
         receivedFrames += 1
-        send(["kind": "notification", "bytes": Array(data).map(Int.init)])
+        let address = key.split(separator: "/").map(String.init)
+        guard address.count == 2 else { return }
+        send(["kind": "notification", "service": address[0], "characteristic": address[1], "bytes": Array(data).map(Int.init)])
     }
 }
