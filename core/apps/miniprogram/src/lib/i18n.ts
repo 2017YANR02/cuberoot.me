@@ -60,7 +60,6 @@ export function applyLocalizedTabBar(): void {
   const labels = [
     tr({ en: 'Timer', zh: '计时' }),
     tr({ en: 'Tools', zh: '工具' }),
-    tr({ en: 'Training', zh: '训练' }),
     tr({ en: 'Me', zh: '我的' }),
   ];
 
