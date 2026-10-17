@@ -32,8 +32,7 @@
    桌面收起态的 pill 形态里当它不存在,原有布局一字不改;只有右栏展开态(见 ≥1024 段)
    才把它变成真的 flex 行,好把按钮摆到标题那条分隔线上。 */
 .solver-panel-headrow { display: contents; }
-/* 手机形态:顶栏那排控件里的一员,但不画框 —— 纯文字入口,高度对齐旁边的下拉。
-   (桌面那颗仍是 pill:它在右栏里是唯一的可点物,没有边框就读不出可点。) */
+/* 手机形态:顶栏那排控件里的一员,但不画框 —— 纯文字入口,高度对齐旁边的下拉。 */
 .shell-topbar-left .solver-panel-head {
   height: 32px;
   padding: 0 4px;
@@ -232,13 +231,12 @@
   .timer-workspace:has(.timer-solver-rail .solver-panel[data-open='true']) .timer-solver-rail .solver-panel-headrow:has(.solver-settings-slot) .solver-panel-head {
     flex: 0 0 auto;
   }
-  /* Header, rail collapsed (all closed): free-floating pill under the topbar
-     icons (not flush to the viewport edge, so it's rounded all the way round). */
+  /* Collapsed desktop entry: text and chevron, matching the toolbar controls. */
   .timer-solver-rail .solver-panel[data-open='false'] .solver-panel-head {
-    border: 1px solid var(--shell-divider, var(--border-default));
-    border-radius: 999px;
+    border: 0;
+    border-radius: 6px;
     padding: 9px 13px;
-    background: var(--shell-chip, var(--card));
+    background: transparent;
   }
   .timer-solver-rail .solver-panel[data-open='false'] .solver-panel-head:hover { background: var(--shell-hover, var(--muted)); }
 
