@@ -47,5 +47,7 @@ export function reportPlayback(state:ReportPlayerState,total:number,totalMs:numb
 
 export function playbackMoveDurationTicks(moves:PlaybackMove[],index:number,totalMs:number,speed:number) {
   if(index<=0)return undefined;
-  return Math.max(1,Math.min(500,(moves[index]?.ts??totalMs)-moves[index-1].ts)*60/(1000*speed));
+  const move=moves[index-1];
+  const interval=move.endTs>move.ts?move.endTs-move.ts:Infinity;
+  return Math.max(1,Math.min(500,interval,(moves[index]?.ts??totalMs)-move.ts)*60/(1000*speed));
 }

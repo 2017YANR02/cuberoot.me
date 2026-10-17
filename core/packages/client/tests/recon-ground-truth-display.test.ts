@@ -18,6 +18,8 @@ import { applyScramble } from '@cuberoot/shared/timer/reconstruct/state';
 import { applyOneToken } from '@cuberoot/shared/timer/reconstruct/apply-token';
 import { isCross, isSolved } from '@cuberoot/shared/timer/reconstruct/cfop-detect';
 import StepMoveList from '@cuberoot/timer-ui/reconstruct/StepMoveList';
+import { projectReconNotation } from '@cuberoot/timer-ui/reconstruct/report-presentation';
+import { reconstructedTrack } from '@cuberoot/timer-ui/reconstruct/playback-track';
 import { ReconstructHostContext } from '@cuberoot/timer-ui/reconstruct/ReconstructHost';
 import { cubeThumbParams } from '@/lib/alg_thumb_plan';
 import { CUBE_ORIENTATIONS, orientedFaceColors } from '@cuberoot/shared/timer';
@@ -129,6 +131,12 @@ describe('ground truth: real timer records through the final display', () => {
         }
       }
       expect(isSolved(state), file + ' final DOM must solve').toBe(true);
+      const shown = projectReconNotation(corrected, 'cfop').shownRecon!;
+      const playback = reconstructedTrack(shown.lines, moves);
+      expect(playback, file + ' simplified playback must retain complete encoder coverage').not.toBeNull();
+      expect(playback!.map(move => move.m)).toEqual(shown.lines.flatMap(line => line.moves));
+      expect(isSolved(applyOneToken(applyScramble(3, scramble),
+        [shown.inspection, ...playback!.map(move => move.m)].join(' '))), file + ' simplified playback must solve').toBe(true);
       const last = tokens(stageRows.at(-1)!.moves).split(' ').at(-1)!;
       expect(/^[xyz]/.test(last), 'no synthetic rotation after solved').toBe(false);
       expect(rows.slice(0, 3).flatMap(row => row.diagrams)).toEqual([]);
@@ -182,4 +190,19 @@ it('recon diagrams reuse library masks in every holding orientation', async () =
       }
     }
   } finally { await act(async () => root.unmount()); }
+});
+
+it.each(["u'", "Uw'"])('preserves a measured wide cross gesture (%s) instead of moving it into inspection', wide => {
+  const moves = ["R'", "B'", 'F', 'L', 'R2', wide];
+  const recon = {
+    scramble: "R U' F U2 F2 L' B' U' B2 U2 R' B2 R U' L' D' L2 F2",
+    inspection: 'x2',
+    lines: [{ kind: 'cross', key: 'cross', moves, label: 'W cross', fromIdx: 0, toIdx: 5,
+      recognitionMs: null, executionMs: null, stepMs: null }],
+    text: `x2 // insp\n${moves.join(' ')} // W cross`,
+  } as Parameters<typeof projectReconNotation>[0];
+  const result = projectReconNotation(recon, 'cfop');
+  expect(result.inspection).toBe('x2');
+  expect(result.lines[0].moves).toEqual(moves);
+  expect(result.normalized).toBe(false);
 });

@@ -133,8 +133,13 @@ function cachedFormula(text: string): Formula | null {
   return formulaCache.get(text)!;
 }
 
-async function matchBody(kp: KPuzzle, moves: string[], candidates: AlgEntry[]): Promise<Match | null> {
+async function matchBody(kp: KPuzzle, moves: string[], candidates: AlgEntry[], preserveMoves = false): Promise<Match | null> {
   const before = states(kp, moves), sourceForm = strictOuterForm(moves);
+  const spelling = (token: string) => {
+    const move = new Move(token.replace(/^([urfdlb])/, face => `${face.toUpperCase()}w`));
+    return `${move.family}:${(move.amount % 4 + 4) % 4}`;
+  };
+  const spellings = preserveMoves ? moves.map(spelling) : [];
   let preferred: Match | null = null;
   let candidateIndex = 0;
   for (const entry of candidates) {
@@ -166,6 +171,13 @@ async function matchBody(kp: KPuzzle, moves: string[], candidates: AlgEntry[]): 
         if (mapped.some(token => token === null)) continue;
         const tokens: string[] = tilted ? mapped as string[]
           : [...wrapper, ...framed, ...inverse.split(/\s+/).filter(Boolean)];
+        if (preserveMoves) {
+          // The suffix below may remove library-only final rotations, but cannot
+          // change the body. Reject different fingertricks before cubie replay.
+          let end = tokens.length;
+          while (end && /^[xyz]/.test(tokens[end - 1])) end--;
+          if (end !== moves.length || tokens.slice(0, end).some((token, i) => spelling(token) !== spellings[i])) continue;
+        }
         let targetForm: ReturnType<typeof strictOuterForm>;
         try { targetForm = strictOuterForm(tokens); } catch { continue; }
         if (targetForm.key !== sourceForm.key) continue;
@@ -176,6 +188,14 @@ async function matchBody(kp: KPuzzle, moves: string[], candidates: AlgEntry[]): 
         const trailing: string[] = [];
         while (tokens.length && /^[xyz]/.test(tokens.at(-1)!)) trailing.unshift(tokens.pop()!);
         tokens.push(...compactCubeRotations([...trailing, ...suffix].join(' ')).split(/\s+/).filter(Boolean));
+        // F2L already retains the measured wide turns. A matching case/formula
+        // must not introduce a different fingertrick (e.g. y' U' -> d' ... y2).
+        // Accept spelling differences such as Rw/r or R2'/R2, retaining the
+        // recording's tokens and intermediate states rather than replacing them.
+        if (preserveMoves) {
+          if (tokens.length !== moves.length || tokens.some((token, i) => spelling(token) !== spellings[i])) continue;
+          tokens.splice(0, tokens.length, ...moves);
+        }
         const blocks = align(before, states(kp, tokens));
         if (!blocks) continue; // Independent full cubie/centre equivalence check.
         const match: Match = { moves: tokens, source: entry.alg, blocks,
@@ -193,7 +213,7 @@ async function matchBody(kp: KPuzzle, moves: string[], candidates: AlgEntry[]): 
 }
 
 /** No input mutations, no change without complete transforms and replay coverage. */
-export async function correctLibraryLine(line: ReconTextLine, candidates: AlgEntry[]): Promise<ReconTextLine> {
+export async function correctLibraryLine(line: ReconTextLine, candidates: AlgEntry[], preserveMoves = false): Promise<ReconTextLine> {
   if (line.libraryCorrection || !line.moveRanges || line.moves.length !== line.moveRanges.length
     || !line.moves.length || line.moves.length > MAX_MOVES) return line;
   const originalCoverage = coverage(line.moveRanges);
@@ -219,8 +239,15 @@ export async function correctLibraryLine(line: ReconTextLine, candidates: AlgEnt
         if (group == null) { i++; continue; }
         const indices: number[] = [];
         while (i < to && line.wasteGroups?.[i] === group) indices.push(i++);
-        if (states(kp, indices.map(index => line.moves[index])).at(-1) !== stateKey(kp.defaultPattern())) return line;
-        waste.push(indices);
+        // Waste brackets can include a useful net turn, e.g. (R R' R).
+        // Extract only closed subpaths, retaining the final R in the formula.
+        const path = states(kp, indices.map(index => line.moves[index]));
+        for (let start = 0; start < indices.length;) {
+          let end = indices.length;
+          while (end > start && path[end] !== path[start]) end--;
+          if (end > start) { waste.push(indices.slice(start, end)); start = end; }
+          else start++;
+        }
       }
       if (waste.length) {
         const removed = new Set(waste.flat());
@@ -228,7 +255,7 @@ export async function correctLibraryLine(line: ReconTextLine, candidates: AlgEnt
       }
       for (const variant of variants) {
         if (!variant.kept.length) continue;
-        const matched = await matchBody(kp, variant.kept.map(index => line.moves[index]), candidates);
+        const matched = await matchBody(kp, variant.kept.map(index => line.moves[index]), candidates, preserveMoves);
         if (!matched) continue;
         const items: RangeMoveItem[] = [], groups: Array<number | null> = [];
         const inserts = new Map<number, number[]>();
@@ -338,6 +365,15 @@ export async function correctReconFromLibrary(
   const lines: ReconTextLine[] = [];
   for (const line of recon.lines) {
     const label = /^(?:([WYGBOR]{2})\/?\s*)?(OLL\(CP\)|OLLCP|1LLL|ZBLL|COLL|EPLL|OLL|PLL|ELL|ZBLS|VLS|WV|SV)(?:[- ](.+?))?(\/PLL Skip)?$/.exec(line.label ?? '');
+    // F2L case links identify a starting state; preserving the executed formula
+    // requires the same strict move-path match used for last-layer algorithms.
+    // Keep pair labels unchanged and never substitute another solution to a case.
+    if (line.kind === 'f2l' && !label) {
+      if (!files.has('f2l')) files.set('f2l', boundedLoad(() => load('f2l')));
+      const file = await files.get('f2l')!;
+      lines.push(file ? await correctLibraryLine(line, file.cases.flatMap(item => item.algs.flat()), true) : line);
+      continue;
+    }
     if (!label) { lines.push(line); continue; }
     const colors = label.splice(1, 1)[0];
     const set = label[1] === 'EPLL' ? 'pll' : label[1] === 'OLL(CP)' ? 'ollcp' : label[1].toLowerCase();
@@ -383,6 +419,8 @@ async function boundedLoad(load: () => Promise<AlgFile>): Promise<AlgFile | null
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     return await Promise.race([Promise.resolve().then(load).catch(() => null),
-      new Promise<null>(resolve => { timer = setTimeout(() => resolve(null), 2500); })]);
+      // Large sets such as ZBLL can take several seconds through the API proxy.
+      // The original reconstruction is already visible while this runs.
+      new Promise<null>(resolve => { timer = setTimeout(() => resolve(null), 15000); })]);
   } finally { clearTimeout(timer); }
 }

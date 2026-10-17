@@ -7,6 +7,7 @@ import type { ReconTextLine } from '@cuberoot/shared/timer/reconstruct/recon-tex
 import { encodeGyroTrack } from '@cuberoot/shared/smart-cube/gyro-track';
 import { notationQuaternion } from '@cuberoot/shared/timer/reconstruct/gyro-orient';
 import { reconstructedTrack, playbackIndexForRaw } from '@cuberoot/timer-ui/reconstruct/playback-track';
+import { playbackMoveDurationTicks } from '@cuberoot/timer-ui/reconstruct/report-player';
 import Cube from '@cuberoot/puzzle-render-core/engine/nxn/cube';
 import tweener from '@cuberoot/puzzle-render-core/engine/tweener';
 import { planSimUpdate } from '@cuberoot/shared/timer/sim-log';
@@ -183,6 +184,27 @@ it('steps complete reconstructed gestures and rotations, and switches to raw mov
   expect(shown()?.getAttribute('data-moves')).toBe('B z2');
 });
 
+it('replays simplified library steps in their inspection frame, retaining raw gyro playback', async () => {
+  const original = { ...lines[0], moves: raw.map(move => move.m),
+    moveRanges: raw.map((move, i) => ({ token: move.m, ts: move.ts, endTs: move.ts, startIdx: i, endIdx: i })) };
+  const corrected = { ...lines[0], libraryCorrection: { algorithm: lines[0].moves.join(' '),
+    originalMoves: original.moves, originalRanges: original.moveRanges, originalLine: original } };
+  await act(async () => root.render(createElement(PlaybackPanel, {
+    event: '333', scramble: 'B', moves: raw, totalMs: 500, isZh: false,
+    lines: [corrected], viewRotation: 'z2', inspection: 'y', gyro,
+  })));
+  await vi.waitFor(() => expect(shown()).not.toBeNull());
+  expect(shown()?.getAttribute('data-moves')).toBe('B y');
+  await click('Step forward');
+  expect(shown()?.getAttribute('data-moves')).toBe("B y M'");
+  await click('Gyro');
+  // Switching modes retains the 100 ms playhead; the second encoder event
+  // belonging to M' arrives at 120 ms in the original gyro recording.
+  expect(shown()?.getAttribute('data-moves')).toBe('B R');
+  await click('Gyro');
+  expect(shown()?.getAttribute('data-moves')).toBe("B y M'");
+});
+
 it('snaps raw seeks before an incomplete merged gesture and keeps rotation click time', async () => {
   await mount();
   await click('To end');
@@ -245,4 +267,23 @@ it('maps pure rotations without consuming encoder events and keeps waste tokens'
     { token: "R'", ts: 120, endTs: 120, startIdx: 1, endIdx: 1 },
   ] }];
   expect(reconstructedTrack(waste, raw.slice(0, 2))!.map(move => move.m)).toEqual(['R', "R'"]);
+});
+
+it.each([2, 4])('fits %i replacement moves into the original interval including the final animation', count => {
+  const raw = ['R', 'U', "R'", "U'"].map((m, i) => ({ m, ts: 100 + i * 100 }));
+  const moves = Array.from({ length: count }, (_, i) => i % 2 ? 'U2' : 'R');
+  const mapped = [{ ...lines[0], moves, moveRanges: moves.map((token, i) => ({
+    token, ts: 100, endTs: 400, startIdx: 0, endIdx: i === count - 1 ? 3 : -1,
+  })) }];
+  const before = structuredClone(mapped);
+  const track = reconstructedTrack(mapped, raw)!;
+  expect(track.map(move => move.ts)).toEqual(moves.map((_, i) => 100 + 300 * i / count));
+  expect(track.at(-1)!.endTs).toBe(400);
+  expect(track.at(-1)!.rawAfter).toBe(raw.length);
+  for (const speed of [0.5, 1, 2]) for (let i = 0; i < count; i++) {
+    const durationMs = playbackMoveDurationTicks(track, i + 1, 5000, speed)! * 1000 / 60;
+    expect(durationMs).toBeCloseTo(300 / count / speed);
+    expect(track[i].ts + durationMs * speed).toBeCloseTo(track[i].endTs);
+  }
+  expect(mapped).toEqual(before);
 });

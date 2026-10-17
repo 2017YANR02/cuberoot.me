@@ -84,13 +84,15 @@ interface Props {
    * 只影响看到的朝向,不影响状态。开陀螺仪时忽略。
    */
   viewRotation?: string;
+  /** Initial frame of the simplified steps; raw gyro playback keeps its own frame. */
+  inspection?: string;
 }
 
 
 const formatSec = reportSeconds;
 
 export default function PlaybackPanel({
-  method, event, scramble, moves: rawMoves, totalMs, lines, rotations, side, gyro, deviceModel, viewRotation,
+  method, event, scramble, moves: rawMoves, totalMs, lines, rotations, side, gyro, deviceModel, viewRotation, inspection,
 }: Props) {
   const { localize: tr } = useReconstructHost();
   // /sim 只画 NxN;这里只有 3x3 会有动作流(智能魔方就这一种),别的项目退回预览图。
@@ -237,13 +239,14 @@ export default function PlaybackPanel({
 
   // The inspection rotation is a fixed prefix before reconstructed notation.
   // New gestures append after it; recorded playback instead gets external pose.
+  const rebuiltInspection = inspection ?? viewRotation ?? '';
   const simMoves = useMemo(
     () => [
       ...scramble.trim().split(/\s+/).filter(Boolean),
-      ...(useRebuilt ? (viewRotation ?? '').trim().split(/\s+/).filter(Boolean) : []),
+      ...(useRebuilt ? rebuiltInspection.trim().split(/\s+/).filter(Boolean) : []),
       ...moves.slice(0, idx).map(m => m.m),
     ],
-    [scramble, moves, idx, useRebuilt, viewRotation],
+    [scramble, moves, idx, useRebuilt, rebuiltInspection],
   );
   const simPose = !useRebuilt && !posed && viewRotation ? viewRotation : '';
 
@@ -257,7 +260,7 @@ export default function PlaybackPanel({
               resetViewOnRelease
               moves={simMoves}
               pose={simPose}
-              key={useRebuilt ? `rebuilt:${viewRotation ?? ''}` : 'recorded'}
+              key={useRebuilt ? `rebuilt:${rebuiltInspection}` : 'recorded'}
               quatRef={useRebuilt ? undefined : playbackQuatRef}
               sensorBasis={posed && !calibrated ? sensorBasisForBrand(deviceModel) : 'identity'}
               mirror={posed && !calibrated ? mirrorForBrand(deviceModel) : false}

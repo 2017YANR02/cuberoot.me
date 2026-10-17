@@ -22,6 +22,7 @@ const STAMP_VERSION = 3;
 export const GROUND_TRUTH_TESTS = [
   'tests/recon_ground_truth.test.ts',
   'tests/recon-ground-truth-display.test.ts',
+  'tests/recon-playback-track.test.ts',
   'tests/recon-ground-truth-input.test.ts',
   'tests/recon-ground-truth-gate.test.ts',
   'tests/recon-ground-truth-results.test.ts',
