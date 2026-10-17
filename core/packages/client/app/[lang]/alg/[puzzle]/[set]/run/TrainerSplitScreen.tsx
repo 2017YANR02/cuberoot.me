@@ -22,12 +22,14 @@ import {
   type SplitLaneId,
   type SplitOrder,
 } from '@/lib/trainer-split';
-import { CaseMarkBar, ScrambleHeader } from '@/app/[lang]/alg/_trainer/trainer-components';
+import { doubleZbllTrainingPair } from '@/lib/double-zbll';
+import { CaseMarkBar, DoubleZbllThumb, ScrambleHeader } from '@/app/[lang]/alg/_trainer/trainer-components';
 import { tr } from '@/i18n/tr';
 
 interface SplitLaneProps {
   lane: SplitLaneId;
   cases: AlgCase[];
+  doubleZbll?: boolean;
   puzzle: AlgPuzzle;
   set: string;
   scrambleKind: ScrambleKind;
@@ -43,12 +45,18 @@ interface SplitLaneProps {
 }
 
 function TrainerSplitLane({
-  lane, cases, puzzle, set, scrambleKind, scrambleOpts, showThumb, pureScramble,
+  lane, cases, doubleZbll, puzzle, set, scrambleKind, scrambleOpts, showThumb, pureScramble,
   scrambleFont, grouped, completed, roundDone, resolveCase, onComplete,
 }: SplitLaneProps) {
   const [scrambles, setScrambles] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(false);
+  const pairs = useMemo(() => doubleZbll ? cases.filter((_, i) => i % 2 === 0).map((top, i) => {
+    const bottom = cases[i * 2 + 1] ?? top;
+    return doubleZbllTrainingPair(caseKey(top), caseKey(bottom));
+  }) : [], [cases, doubleZbll]);
+  const shownCases = useMemo(() => doubleZbll
+    ? pairs.map(pair => findCaseByKey(cases, pair.key)!) : cases, [cases, doubleZbll, pairs]);
   const [attempt, setAttempt] = useState(0);
   const laneName = lane === 'a'
     ? { zh: '左侧分屏', en: 'Left split pane' }
@@ -65,6 +73,10 @@ function TrainerSplitLane({
 
     setLoading(true);
     void (async () => {
+      if (doubleZbll) {
+        if (!cancelled) setScrambles(pairs.map(pair => pair.scramble));
+        return;
+      }
       const prepared = await Promise.all(cases.map(async c => {
         let base = generateScramble(c, puzzle, scrambleKind, scrambleOpts);
         if (!base) {
@@ -82,10 +94,10 @@ function TrainerSplitLane({
       .finally(() => { if (!cancelled) setLoading(false); });
 
     return () => { cancelled = true; };
-  }, [cases, puzzle, scrambleKind, scrambleOpts, resolveCase, attempt]);
+  }, [cases, puzzle, scrambleKind, scrambleOpts, resolveCase, attempt, doubleZbll, pairs]);
 
   const ready = cases.length > 0
-    && scrambles.length === cases.length
+    && scrambles.length === shownCases.length
     && scrambles.every(Boolean)
     && !loading
     && !failed;
@@ -131,7 +143,7 @@ function TrainerSplitLane({
                 </button>
               </div>
             ) : (
-              cases.map((c, index) => {
+              shownCases.map((c, index) => {
                 const scramble = scrambles[index] ?? '';
                 const shownScramble = pureScramble ? purifyScramble(puzzle, scramble) : scramble;
                 return (
@@ -139,7 +151,9 @@ function TrainerSplitLane({
                     {showThumb && (
                       <div className="trainer-figure">
                         <CaseMarkBar k={caseKey(c)} />
-                        {scramble && (
+                        {scramble && doubleZbll ? (
+                          <DoubleZbllThumb top={c} bottom={findCaseByKey(cases, pairs[index].bottomKey)!} scramble={scramble} size={grouped ? 104 : 160} />
+                        ) : scramble && (
                           <CaseThumb
                             puzzle={puzzle}
                             set={c.srcSet ?? set}
@@ -168,11 +182,12 @@ function TrainerSplitLane({
 
 export default function TrainerSplitScreen({
   puzzle, set, cases, pool, order, scrambleKind, scrambleOpts, showThumb,
-  pureScramble, scrambleFont, multi, resolveCase, markPassedAsMastered, onExit,
+  pureScramble, scrambleFont, multi, doubleZbll = false, resolveCase, markPassedAsMastered, onExit,
 }: {
   puzzle: AlgPuzzle;
   set: string;
   cases: AlgCase[];
+  doubleZbll?: boolean;
   pool: string[];
   order: SplitOrder;
   scrambleKind: ScrambleKind;
@@ -185,8 +200,8 @@ export default function TrainerSplitScreen({
   markPassedAsMastered: (keys: Array<string | null | undefined>) => void;
   onExit: () => void;
 }) {
-  const batchSize: SplitBatchSize = multi ? 3 : 1;
-  const signature = `${order}:${pool.join('\u0000')}`;
+  const batchSize: SplitBatchSize = doubleZbll ? (multi ? 6 : 2) : (multi ? 3 : 1);
+  const signature = `${doubleZbll}:${order}:${pool.join('\u0000')}`;
   const signatureRef = useRef(signature);
   const [round, setRound] = useState(() => startSplitRound(pool, order, Math.random, 1, batchSize));
   const done = splitRoundDone(round);
@@ -247,6 +262,7 @@ export default function TrainerSplitScreen({
         <TrainerSplitLane
           lane="a"
           cases={laneCasesA}
+          doubleZbll={doubleZbll}
           puzzle={puzzle}
           set={set}
           scrambleKind={scrambleKind}
@@ -263,6 +279,7 @@ export default function TrainerSplitScreen({
         <TrainerSplitLane
           lane="b"
           cases={laneCasesB}
+          doubleZbll={doubleZbll}
           puzzle={puzzle}
           set={set}
           scrambleKind={scrambleKind}

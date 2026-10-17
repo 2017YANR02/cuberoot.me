@@ -297,3 +297,13 @@ it.each([false, true])('retries a warm-session invitation after the StrictMode e
   expect(useTrainerStore.getState().multiScramble).toBe(!hosted);
   expect(container.textContent).not.toMatch(/Joining room|正在加入房间/);
 });
+
+it('keeps the shared room and split settings visible in double practice', async () => {
+  vi.stubGlobal('matchMedia', () => ({ matches: true, addEventListener() {}, removeEventListener() {} }));
+  await renderTrainer(true);
+  await act(async () => { useTrainerStore.setState({ doubleZbll: true }); });
+  expect(container.querySelector('.trainer-room-row')).not.toBeNull();
+  expect(container.querySelector('input.trainer-coop-code')).not.toBeNull();
+  expect(container.querySelector('.trainer-split-setting')).not.toBeNull();
+  await act(async () => { useTrainerStore.setState({ doubleZbll: false }); });
+});
