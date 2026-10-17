@@ -170,7 +170,6 @@ export const EXPECTED_APP_PAGES = [
 export const EXPECTED_TAB_BAR = [
   { pagePath: 'pages/timer/index', text: '计时' },
   { pagePath: 'pages/tools/index', text: '工具' },
-  { pagePath: 'pages/training/index', text: '训练' },
   { pagePath: 'pages/account/index', text: '我的' },
 ];
 
