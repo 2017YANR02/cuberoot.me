@@ -63,6 +63,11 @@ describe('native PG simulator controls', () => {
   const playStates = vi.fn();
   const userMoveRef: NonNullable<ComponentProps<typeof PlayerControls>['userMoveRef']> = { current: null };
   const player = {
+    experimentalModel: {
+      detailedTimelineInfo: { get: vi.fn(async () => ({ timestamp: 0 })) },
+      indexer: { get: vi.fn<() => Promise<null>>(async () => null) },
+      coarseTimelineInfo: { get: vi.fn(async () => null) },
+    },
     experimentalSetupAlg: '',
     experimentalSetupAnchor: 'start' as 'start' | 'end',
     alg: '',
@@ -189,15 +194,20 @@ describe('native PG simulator controls', () => {
     expect(player.play).not.toHaveBeenCalled();
 
     await act(async () => button('Animate scramble').click());
-    expect(input('Scramble').value).toBe('');
-    expect(input('Solution').value).toBe(scramble);
-    expect(settingsChanges).toHaveBeenLastCalledWith(expect.objectContaining({ playbackMode: 'moves' }));
-    expect(player.play).not.toHaveBeenCalled();
+    expect(input('Scramble').value).toBe(scramble);
+    expect(input('Solution').value).toBe(spec.alg);
+    expect(settingsChanges).not.toHaveBeenCalled();
     await nextAnimationFrame();
     await nextAnimationFrame();
     expect(player.jumpToStart).toHaveBeenCalledExactlyOnceWith({ flash: false });
     expect(player.play).toHaveBeenCalledOnce();
     expect(playStates).toHaveBeenCalledExactlyOnceWith({ setup: '', alg: scramble, anchor: 'start' });
+    await act(async () => button('Return to algorithm').click());
+    expect(player.experimentalSetupAlg).toBe(scramble);
+    expect(player.alg).toBe(spec.alg);
+    expect(player.experimentalSetupAnchor).toBe('end');
+    expect(input('Scramble').value).toBe(scramble);
+    expect(input('Solution').value).toBe(spec.alg);
   });
 
   it.each(CASES)('$id preserves typed multi-letter tokens and copies a manual move after a comment before URL debounce', async (spec) => {
@@ -366,14 +376,15 @@ describe('native PG simulator controls', () => {
     expect(inverse.isIdentical(setupState.invert())).toBe(false);
   });
 
-  it('cancels a queued native animation when input becomes invalid before its animation frame', async () => {
+  it('cancels a queued native animation when input becomes invalid before its model is ready', async () => {
     await mount(CASES[0]);
+    let ready!: (value: null) => void;
+    player.experimentalModel.indexer.get.mockImplementationOnce(() => new Promise(resolve => { ready = resolve; }));
     await act(async () => button('Animate scramble').click());
     expect(player.play).not.toHaveBeenCalled();
     await enter('Solution', '(UFR)1000000000');
     expect(input('Solution').closest('.sim-player-hlwrap')?.querySelector('.bad')).not.toBeNull();
-    await nextAnimationFrame();
-    await nextAnimationFrame();
+    await act(async () => ready(null));
     expect(player.play).not.toHaveBeenCalled();
   });
 
