@@ -518,6 +518,10 @@ html[data-theme='dark'] .stsv {
   display: grid;
   grid-template-columns: minmax(max-content, 1fr) 3ch;
 }
+/* 带槽位色块时有三项内容，不能把公式挤进步数列并让步数换行。 */
+.stsv-solution-menu .stsv-sol-option:has(> .stsv-sol-len:nth-child(3)) {
+  grid-template-columns: max-content minmax(max-content, 1fr) 3ch;
+}
 .stsv-solution-menu .stsv-sol-option code {
   white-space: nowrap;
   overflow: visible;
