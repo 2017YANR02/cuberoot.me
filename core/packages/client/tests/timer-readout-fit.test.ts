@@ -34,6 +34,16 @@ describe('shared timer complete-readout fitting', () => {
   const fit = () => Number(host.querySelector<HTMLElement>('.timer-display-value')!.style.getPropertyValue('--timer-readout-fit')) || 1;
   const resize = async () => act(async () => { notify([], {} as ResizeObserver); const pending = frames.splice(0); pending.forEach((callback) => callback(0)); });
 
+  it.each(['DNF', 'DNS'])('keeps %s as text while drawing its LCD capital D, then returns to numeric timing', async (penalty) => {
+    await render(penalty);
+    const readout = host.querySelector('.timer-display-value')!;
+    expect(readout.textContent).toBe(penalty);
+    expect(readout.querySelector('.timer-capital-d-segments')?.getAttribute('aria-hidden')).toBe('true');
+    await render('12.34');
+    expect(readout.textContent).toBe('12.34');
+    expect(readout.querySelector('svg')).toBeNull();
+  });
+
   it.each(['solo', 'net', 'local'] as const)('owns %s scramble order, shared font scale and a timing-enabled stable preview frame', async (layout) => {
     const surfaceRef = createRef<HTMLDivElement>();
     const draw = (live: boolean) => act(async () => root.render(createElement(TimingSurface, {
