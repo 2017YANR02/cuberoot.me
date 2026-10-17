@@ -4169,9 +4169,9 @@ function PuzzleSettings({
                   className="sim-puzzle-select"
                   value={renderer === 'cubing' ? 'cubing' : 'group'}
                   onChange={(e) => onRendererChange(e.target.value as 'cubing' | 'engine' | 'group')}
-                  title={t('cubing.js 官方渲染 / 群论内核(本站引擎:圆润外观 + 拖拽转动 + 群结构面板)', 'cubing.js renderer / group-theory kernel (in-house engine: rounded look + drag + group panel)')}
+                  aria-label={t('渲染引擎', 'Rendering engine')}
                 >
-                  <option value="group">{t('群论内核', 'Group theory')}</option>
+                  <option value="group">{t('本站引擎', 'CubeRoot engine')}</option>
                   <option value="cubing">cubing.js</option>
                 </select>
               </div>
@@ -4191,19 +4191,19 @@ function PuzzleSettings({
           </div>
 
           <div className="sim-puzzle-sliders">
-            <Slider label={t('灵敏度', 'Sensitivity')} value={settings.sensitivity} onChange={(v) => set('sensitivity', v)} disabled={!caps.supports.sensitivity} unit={UNIT_SENS}
+            {caps.supports.sensitivity && (<Slider label={t('灵敏度', 'Sensitivity')} value={settings.sensitivity} onChange={(v) => set('sensitivity', v)} disabled={!caps.supports.sensitivity} unit={UNIT_SENS}
               title={hint(caps.supports.sensitivity) ?? (settings.pointerTurns === false
                 // 手拧关 → 拖层/SQ1 两条路径不再产生 move,只剩转视角,单位含义随之收窄(仍然可调)。
                 ? t('跟手倍率(相对默认):手拧已关,当前只作用于拖动转视角', 'Responsiveness relative to the default — with drag-turn off it only scales view rotation')
-                : t('跟手倍率(相对默认):同时作用于拖层转动、拖空白转视角、SQ1 / SQ2 / SQ4 拖拽', 'Responsiveness relative to the default — scales layer drags, view drags and SQ1 / SQ2 / SQ4 drags alike'))} />
-            <Slider label={t('缩放', 'Scale')} value={settings.scale} onChange={(v) => set('scale', v)} disabled={!caps.supports.scale} unit={UNIT_SCALE} title={hint(caps.supports.scale) ?? t('缩放倍率', 'Zoom factor')} />
-            <Slider label={t('透视', 'Perspective')} value={settings.perspective} onChange={(v) => set('perspective', v)} disabled={!caps.supports.perspective} unit={UNIT_FOCAL} title={hint(caps.supports.perspective) ?? t('35mm 等效焦距(小 = 广角畸变强,大 = 接近正交)', '35mm-equivalent focal length (low = wide-angle distortion, high = near-orthographic)')} />
+                : t('跟手倍率(相对默认):同时作用于拖层转动、拖空白转视角、SQ1 / SQ2 / SQ4 拖拽', 'Responsiveness relative to the default — scales layer drags, view drags and SQ1 / SQ2 / SQ4 drags alike'))} />)}
+            {caps.supports.scale && (<Slider label={t('缩放', 'Scale')} value={settings.scale} onChange={(v) => set('scale', v)} disabled={!caps.supports.scale} unit={UNIT_SCALE} title={hint(caps.supports.scale) ?? t('缩放倍率', 'Zoom factor')} />)}
+            {caps.supports.perspective && (<Slider label={t('透视', 'Perspective')} value={settings.perspective} onChange={(v) => set('perspective', v)} disabled={!caps.supports.perspective} unit={UNIT_FOCAL} title={hint(caps.supports.perspective) ?? t('35mm 等效焦距(小 = 广角畸变强,大 = 接近正交)', '35mm-equivalent focal length (low = wide-angle distortion, high = near-orthographic)')} />)}
             <Slider label={t('TPS', 'TPS')} value={settings.speed} onChange={(v) => set('speed', v)} unit={UNIT_TPS} title={t('每秒转动步数', 'Turns per second')} />
           </div>
           {/* 视角盘:「左右 / 上下」两条滑条合成一个平面直角坐标系 —— 可拖圆点 + 两个精确度数框
               (打 30 正好 30)。右 = 正(看右面)、上 = 正(俯视),纯显示层符号,不改底层 3D 旋转。
               twisty 渲染下左右量程 ±180°(cameraLongitude 全程),引擎 ±90°。 */}
-          <OrbitPad
+          {!caps.flat && (<OrbitPad
             xValue={settings.viewAngle}
             yValue={settings.viewGradient}
             onChange={(x, y) => onSettingsChange({ ...settings, viewAngle: x, viewGradient: y })}
@@ -4213,7 +4213,7 @@ function PuzzleSettings({
             yUnit={UNIT_PITCH}
             xTitle={t('左右旋转角度(右 = 正,看右面)', 'Horizontal view angle (right = positive, toward the right face)')}
             yTitle={t('上下旋转角度(上 = 正,俯视)', "Vertical view angle (up = positive, bird's-eye)")}
-          />
+          />)}
           <div className="sim-puzzle-toggles">
             {/* 手拧:关 = 鼠标 / 手势不能拧动拼图(点贴纸、拖贴纸都只转视角,不记步);
                 视角旋转 / 缩放 / 平移 / 键盘 / 播放不受影响。三条路径都接:NxN controller、
@@ -4225,7 +4225,7 @@ function PuzzleSettings({
               title={t('关闭后鼠标 / 手势只能转视角,不能拧动拼图(键盘和播放不受影响)', 'Off: mouse / touch only rotates the view — it cannot turn the puzzle (keyboard and playback still work)')}
             />
             {/* 「消步」开关已移到播放器工具行(逆 旁),此处不再重复。 */}
-            <label className={`sim-toggle${caps.supports.dragEmpty ? '' : ' sim-toggle--disabled'}`} title={hint(caps.supports.dragEmpty)}>
+            {caps.supports.dragEmpty && (<label className={`sim-toggle${caps.supports.dragEmpty ? '' : ' sim-toggle--disabled'}`} title={hint(caps.supports.dragEmpty)}>
               <span>{t('拖空白', 'Drag empty')}</span>
               <select
                 value={settings.dragEmpty}
@@ -4236,11 +4236,11 @@ function PuzzleSettings({
                 <option value="view">{t('视角', 'View')}</option>
                 <option value="orbit">{t('自动转体', 'Auto rotate')}</option>
               </select>
-            </label>
+            </label>)}
             {/* 播放动画开关:关 → 「播放」时瞬切每一步(不逐格转动);单步前进/后退本就瞬切。 */}
             <Toggle label={t('动画', 'Animation')} value={settings.animatePlayback !== false} onChange={(v) => set('animatePlayback', v)} />
             {/* 方位字母常显:U/D/L/R/F/B(角/棱/面转拼图显对应标签),等同拖视角时浮现的标签但常驻。 */}
-            <Toggle
+            {caps.supports.faceLabels && (<Toggle
               label={t('字母', 'Letters')}
               value={settings.faceLabels === true}
               onChange={(v) => set('faceLabels', v)}
@@ -4249,12 +4249,12 @@ function PuzzleSettings({
                 ? t('使用图案时暂时隐藏字母', 'Letters are hidden while artwork is active')
                 : hint(caps.supports.faceLabels) ?? (puzzleKind === 'sphere'
                   ? t('三阶逻辑面的辅助方位提示', 'Auxiliary labels for the logical 3×3 faces') : undefined)}
-            />
+            />)}
             {/* 背景(BG)选择器已移到画布左下角浮层(见本组件顶部 bgSelector + SimPage
                 的 .sim-bg-overlay),不再占开关行。 */}
             {/* 顶面 U 中心 logo:无 / 网站 / 自定义上传。仅 NxN 奇数阶有正中心块时实际显示
                 (偶数阶 / 非 NxN 引擎里 setLogo 自动隐藏)。选「自定义」开文件选择器。 */}
-            <div className="sim-logo-setting">
+            {caps.supports.logo && (<div className="sim-logo-setting">
               <label className={'sim-toggle' + (caps.supports.logo ? '' : ' sim-toggle--disabled')} title={hint(caps.supports.logo)}>
                 <span>logo</span>
                 <select
@@ -4296,22 +4296,22 @@ function PuzzleSettings({
                   <AppLink href="/membership" prefetch={false}>{t('开通会员', 'Join')}</AppLink>
                 </span>
               )}
-            </div>
+            </div>)}
             {/* 锁定大小位置 锁的是引擎滚轮/捏合缩放,cubing.js 拼图自管缩放 → 引擎未驱动时灰掉。 */}
-            <Toggle label={t('锁定大小位置', 'Lock size & position')} value={settings.lockView} onChange={(v) => set('lockView', v)} disabled={!caps.supports.lockView} title={hint(caps.supports.lockView)} />
+            {caps.supports.lockView && (<Toggle label={t('锁定大小位置', 'Lock size & position')} value={settings.lockView} onChange={(v) => set('lockView', v)} disabled={!caps.supports.lockView} title={hint(caps.supports.lockView)} />)}
             {/* 小窗(背面视图)的开关不在这里:小窗自己右上角有 ×,关掉后播放条最右出现
                 找回按钮 —— 同一个 settings.backView 已经有两个入口,再放一个是第三份。 */}
             {/* 立体贴片 / 镂空 是本站引擎特性,cubing.js 渲染的拼图上无此能力 → 引擎未驱动时灰掉
                 (面板形状仍保持每拼图一致:控件常显,只是不可点)。 */}
-            <Toggle label={t('立体贴片', 'Sticker thickness')} value={settings.thickness} onChange={(v) => set('thickness', v)} disabled={!caps.supports.thickness} title={hint(caps.supports.thickness)} />
-            <Toggle label={t('镂空', 'Hollow')} value={settings.hollow} onChange={(v) => set('hollow', v)} disabled={!caps.supports.hollow} title={hint(caps.supports.hollow)} />
+            {caps.supports.thickness && (<Toggle label={t('立体贴片', 'Sticker thickness')} value={settings.thickness} onChange={(v) => set('thickness', v)} disabled={!caps.supports.thickness} title={hint(caps.supports.thickness)} />)}
+            {caps.supports.hollow && (<Toggle label={t('镂空', 'Hollow')} value={settings.hollow} onChange={(v) => set('hollow', v)} disabled={!caps.supports.hollow} title={hint(caps.supports.hollow)} />)}
             {/* 提示贴片(hint)两条路径都支持(引擎 hint / cubing.js hintFacelets)→ 不灰。 */}
-            <Toggle label={t('提示贴片', 'Hint facelets')} value={settings.hint} onChange={(v) => set('hint', v)} disabled={!caps.supports.hint} title={hint(caps.supports.hint)} />
+            {caps.supports.hint && (<Toggle label={t('提示贴片', 'Hint facelets')} value={settings.hint} onChange={(v) => set('hint', v)} disabled={!caps.supports.hint} title={hint(caps.supports.hint)} />)}
             {/* 手指(指法演示):双手握持,转层时腕转/弹指跟动画。仅 3x3(simCaps.hands)。 */}
-            <Toggle label={t('手指', 'Hands')} value={settings.hands === true} onChange={(v) => set('hands', v)} disabled={!caps.supports.hands} title={hint(caps.supports.hands)} />
+            {caps.supports.hands && (<Toggle label={t('手指', 'Hands')} value={settings.hands === true} onChange={(v) => set('hands', v)} disabled={!caps.supports.hands} title={settings.hands ? undefined : t('请先开启手指', 'Enable hands first')} />)}
             {/* 全身人物:SMPL-X 完整人随手出场(躯干静态 + 双臂 IK 追手;拉远 Scale 看全身)。
                 依赖手指开启;资产逐机转换,缺失时静默降级。 */}
-            <Toggle label={t('全身人物', 'Full body')} value={settings.fullBody === true} onChange={(v) => set('fullBody', v)} disabled={!caps.supports.hands || settings.hands !== true} title={hint(caps.supports.hands)} />
+            {caps.supports.hands && (<Toggle label={t('全身人物', 'Full body')} value={settings.fullBody === true} onChange={(v) => set('fullBody', v)} disabled={!caps.supports.hands || settings.hands !== true} title={hint(caps.supports.hands)} />)}
             {/* 箭头贴片仅 NxN 引擎生效(cube.arrow),非 NxN 拼图无此属性 → 仅 NxN 显示。
                 用户指定的唯一例外。 */}
             {caps.supports.arrow && (
@@ -4350,22 +4350,22 @@ function PuzzleSettings({
               各控件去掉重复的「调试:」前缀。半转停 / 结构着色 为本站引擎特性,在 cubing.js 渲染的拼图上
               为 no-op(仅存设置);骨架线条为手部 MediaPipe 风格叠加线,仅 3x3 手指开启时有效;
               挖块为统一三选一占位(见 applySettings)。 */}
-          <div className="sim-puzzle-debug">
-            <div className="sim-puzzle-section-title">{t('调试', 'Debug')}</div>
+          <details className="sim-puzzle-debug">
+            <summary>{t('结构与调试', 'Structure & diagnostics')}</summary>
             <div className="sim-puzzle-debug-toggles">
-              <Toggle label={t('半转停', 'Hold partial turn')} value={settings.holdPartialTurn} onChange={(v) => set('holdPartialTurn', v)} disabled={!caps.supports.holdPartialTurn} title={hint(caps.supports.holdPartialTurn)} />
-              <Toggle label={t('结构着色', 'Structure colors')} value={settings.debugStructureColor} onChange={(v) => set('debugStructureColor', v)} disabled={!caps.supports.structureColor} title={hint(caps.supports.structureColor)} />
+              {caps.supports.holdPartialTurn && (<Toggle label={t('半转停', 'Hold partial turn')} value={settings.holdPartialTurn} onChange={(v) => set('holdPartialTurn', v)} disabled={!caps.supports.holdPartialTurn} title={hint(caps.supports.holdPartialTurn)} />)}
+              {caps.supports.structureColor && (<Toggle label={t('结构着色', 'Structure colors')} value={settings.debugStructureColor} onChange={(v) => set('debugStructureColor', v)} disabled={!caps.supports.structureColor} title={hint(caps.supports.structureColor)} />)}
               {/* 骨架线条:MediaPipe 风格关键点叠加,仅手指(hands)开启的拼图上可用(同 caps.supports.hands)。 */}
-              <Toggle label={t('骨架线条', 'Skeleton overlay')} value={settings.handsSkeleton} onChange={(v) => set('handsSkeleton', v)} disabled={!caps.supports.handsSkeleton} title={hint(caps.supports.handsSkeleton)} />
+              {caps.supports.handsSkeleton && (<Toggle label={t('骨架线条', 'Skeleton overlay')} value={settings.handsSkeleton} onChange={(v) => set('handsSkeleton', v)} disabled={!caps.supports.handsSkeleton} title={hint(caps.supports.handsSkeleton)} />)}
               {/* 指甲:立体甲片显隐(mesh.visible,不拆几何),门控同骨架线条(手指相关调试)。 */}
-              <Toggle label={t('指甲', 'Nails')} value={settings.showNails} onChange={(v) => set('showNails', v)} disabled={!caps.supports.handsSkeleton} title={hint(caps.supports.handsSkeleton)} />
+              {caps.supports.handsSkeleton && (<Toggle label={t('指甲', 'Nails')} value={settings.showNails} onChange={(v) => set('showNails', v)} disabled={!caps.supports.handsSkeleton} title={hint(caps.supports.handsSkeleton)} />)}
               {/* SMPL-X 全身:藏拼图与手,只看原版 SMPL-X neutral T-pose 人体(手/臂比例上游真值)。
                   资产逐机转换(convert-mano.py),缺失时开了也无效果 —— 不灰,调试自担。
                   平面拼图是唯一的例外:它根本没有 3D 场景可以站人,那不是"资产可能缺",是没地方放。 */}
-              <Toggle label={t('SMPL-X 全身', 'SMPL-X body')} value={settings.showSmplxBody === true} onChange={(v) => set('showSmplxBody', v)} disabled={caps.flat} title={hint(!caps.flat)} />
+              {!caps.flat && (<Toggle label={t('SMPL-X 全身', 'SMPL-X body')} value={settings.showSmplxBody === true} onChange={(v) => set('showSmplxBody', v)} disabled={caps.flat} title={hint(!caps.flat)} />)}
               {/* 挖块:仅当该拼图有「原生转动元素」(角/面/棱)可掀起时可选;NxN/SQ1 无单一会动块组,
                   cubing.js 拼图引擎未驱动 → 灰掉。 */}
-              <label className={'sim-toggle' + (caps.supports.carve ? '' : ' sim-toggle--disabled')} title={hint(caps.supports.carve)}>
+              {caps.supports.carve && (<label className={'sim-toggle' + (caps.supports.carve ? '' : ' sim-toggle--disabled')} title={hint(caps.supports.carve)}>
                 <span>{t('挖块', 'Carve')}</span>
                 <select
                   value={settings.debugCarve}
@@ -4377,11 +4377,11 @@ function PuzzleSettings({
                   <option value="face">{t('挖面', 'Face')}</option>
                   <option value="edge">{t('挖棱', 'Edge')}</option>
                 </select>
-              </label>
+              </label>)}
               {/* 隔离:只保留某类块、挖掉其余(挖块的反操作)。选项由 simCaps 各魔方声明的
                   isolate 列表驱动(目前仅齿轮:角/棱/中心 —— 中心块含核心骨架),未声明置灰。
                   选了某类后旁边出「编号」下拉:全部 / 第 1…count 个(用户要单独看一个块)。 */}
-              <label className={'sim-toggle' + (caps.supports.isolate ? '' : ' sim-toggle--disabled')} title={hint(caps.supports.isolate)}>
+              {caps.supports.isolate && (<label className={'sim-toggle' + (caps.supports.isolate ? '' : ' sim-toggle--disabled')} title={hint(caps.supports.isolate)}>
                 <span>{t('隔离', 'Isolate')}</span>
                 <select
                   value={settings.debugIsolate}
@@ -4398,7 +4398,7 @@ function PuzzleSettings({
                   {caps.isolate.some((x) => x.kind === 'center') && <option value="center">{t('中心块', 'Center')}</option>}
                   {caps.isolate.some((x) => x.kind === 'core') && <option value="core">{t('骨架', 'Frame')}</option>}
                 </select>
-              </label>
+              </label>)}
               {(() => {
                 const spec = caps.isolate.find((x) => x.kind === settings.debugIsolate);
                 if (!caps.supports.isolate || !spec) return null;
@@ -4418,7 +4418,7 @@ function PuzzleSettings({
                 );
               })()}
             </div>
-          </div>
+          </details>
           {isMirror && (
             <ColorRow label={t('镜面配色', 'Mirror colour')}>
               <ModeColorSelect
@@ -4434,7 +4434,7 @@ function PuzzleSettings({
               />
             </ColorRow>
           )}
-          <ColorRow
+          {caps.supports.coreColor && (<ColorRow
             label={t('内核色', 'Core color')}
             disabled={!caps.supports.coreColor || !!transCore}
             title={transHint ?? hint(caps.supports.coreColor)}
@@ -4450,34 +4450,34 @@ function PuzzleSettings({
               title={t('内核色', 'Core color')}
               t={t}
             />
-          </ColorRow>
+          </ColorRow>)}
           {/* 内核色的三个同族旋钮 —— 都作用在「贴纸之外那层」上,3D 与示意伴图共用同一份值
               (伴图导出器的 bodyOpacity / stickerOpacity / inset)。原来只挂在图像面板里、
               只改图不改动画,现在并到内核色下面一起管。 */}
-          <PercentRow
+          {caps.supports.coreOpacity && (<PercentRow
             label={puzzleKind === 'sphere' ? t('球体不透明度', 'Sphere opacity') : t('内核不透明度', 'Core opacity')}
             value={transCore ? transCore.coreOpacity : settings.coreOpacity}
             onChange={(v) => set('coreOpacity', v)}
             disabled={!caps.supports.coreOpacity || !!transCore}
             title={transHint ?? hint(caps.supports.coreOpacity) ?? (puzzleKind === 'sphere'
               ? t('调整整体彩色球块的不透明度', 'Opacity of the whole coloured sphere') : undefined)}
-          />
-          <PercentRow
+          />)}
+          {caps.supports.coreFinish && (<PercentRow
             label={t('贴纸不透明度', 'Sticker opacity')}
             value={settings.stickerOpacity}
             onChange={(v) => set('stickerOpacity', v)}
             disabled={!caps.supports.coreFinish}
             title={hint(caps.supports.coreFinish)}
-          />
-          <PercentRow
+          />)}
+          {caps.supports.coreFinish && (<PercentRow
             label={t('贴纸自发光', 'Sticker emission')}
             value={settings.stickerEmission}
             onChange={(v) => set('stickerEmission', v)}
             disabled={!caps.supports.coreFinish || !cuberLightingActive(puzzleKind, settings.coreStyle)}
             title={hint(caps.supports.coreFinish && cuberLightingActive(puzzleKind, settings.coreStyle))
               ?? t('按贴纸原色增加自发光，上游默认强度为 50%', 'Add emission in each sticker’s own color; upstream defaults to 50%')}
-          />
-          <PercentRow
+          />)}
+          {caps.supports.coreFinish && (<PercentRow
             label={t('黑边', 'Gap')}
             value={settings.stickerGap}
             min={0}
@@ -4487,8 +4487,8 @@ function PuzzleSettings({
             disabled={!caps.supports.coreFinish}
             title={hint(caps.supports.coreFinish)
               ?? t('贴纸之间那条缝有多宽(占小面的百分比)', 'Width of the gap between stickers, as a % of one facelet')}
-          />
-          <label className="sim-toggle">
+          />)}
+          {caps.supports.faceColors && (<label className="sim-toggle">
             <span>{t('配色预设', 'Color preset')}</span>
             <select
               aria-label={t('配色预设', 'Color preset')}
@@ -4503,8 +4503,8 @@ function PuzzleSettings({
               <option value="cuber">{t('柔和', 'Soft')}</option>
               <option value="custom" disabled>{t('自定义', 'Custom')}</option>
             </select>
-          </label>
-          <ColorRow
+          </label>)}
+          {caps.supports.faceColors && (<ColorRow
             label={t('面色', 'Face colors')}
             disabled={!caps.supports.faceColors}
             title={hint(caps.supports.faceColors)}
@@ -4526,8 +4526,8 @@ function PuzzleSettings({
                 />
               </span>
             ))}
-          </ColorRow>
-          <div
+          </ColorRow>)}
+          {caps.supports.pictureCube && (<div
             className={'sim-picture-setting' + (caps.supports.pictureCube ? '' : ' sim-picture-setting--disabled')}
             title={hint(caps.supports.pictureCube)}
           >
@@ -4574,7 +4574,7 @@ function PuzzleSettings({
                   : t('使用图案时暂时隐藏 logo、字母和箭头', 'Logo, letters and arrows are hidden while pictures are in use')}
               </span>
             )}
-          </div>
+          </div>)}
           <PictureCubeEditor
             open={pictureEditorOpen}
             initialFaces={settings.pictureFaces}
@@ -4588,7 +4588,7 @@ function PuzzleSettings({
           {/* 指甲配色(甲油):自然甲 special + 甲油底色;选了底色后追加「渐变」第二色
               (甲根→游离缘)与「深浅」滑杆(50 = 原色,低淡高深)。重涂手部立体甲片
               顶点色(engine/hands paintNailPolish);门控同全身人物(需手指开启)。 */}
-          <ColorRow
+          {caps.supports.hands && (<ColorRow
             label={t('指甲配色', 'Nail colour')}
             disabled={!caps.supports.hands || settings.hands !== true}
             title={hint(caps.supports.hands)}
@@ -4632,7 +4632,7 @@ function PuzzleSettings({
                 </label>
               </>
             )}
-          </ColorRow>
+          </ColorRow>)}
         </div>
     </section>
   );

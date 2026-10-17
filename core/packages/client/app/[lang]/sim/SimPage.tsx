@@ -2578,18 +2578,23 @@ export default function SimPage() {
           />
           </section>
           {/* Mount panel-only analysis on demand, independently of the render engine. */}
-          {animationMode && (((PG_BOUND_KINDS.has(String(puzzleParam)) || (typeof puzzleParam === 'number' && nxnHasPgKernel(puzzleParam)))
-            && (query.renderer !== 'cubing' || !ENGINE_TWISTY.has(String(puzzleParam))))
-            // cubing.js "explore" puzzles: facts-only kernel, shown unless the user picks the
-            // plain cubing.js renderer (default renderer is 'group', so on by default).
-            || (EXPLORE_BOUND.has(String(puzzleParam)) && query.renderer !== 'cubing')) && (
+          {animationMode && (PG_BOUND_KINDS.has(String(puzzleParam))
+            || (typeof puzzleParam === 'number' && nxnHasPgKernel(puzzleParam))
+            || EXPLORE_BOUND.has(String(puzzleParam))) && (
             <CollapsibleSection
               open={researchOpen && animationMode}
               onToggle={() => setResearchOpen(open => !open)}
               icon={FlaskConical}
               label={t('结构研究', 'Structure research')}
             >
-              <GroupTheoryPanel puzzle={String(puzzleParam)} getWorld={getWorldView} />
+              {query.renderer === 'cubing' && (ENGINE_TWISTY.has(String(puzzleParam)) || EXPLORE_BOUND.has(String(puzzleParam))) ? (
+                <div className="sim-research-enable">
+                  <p>{t('结构分析需要启用对应的分析内核。切换会保留初始状态和公式。', 'Structural analysis needs its analysis engine. Switching preserves the initial state and algorithm.')}</p>
+                  <button type="button" onClick={() => handleRendererChange('group')}>
+                    {t('启用结构分析', 'Enable structural analysis')}
+                  </button>
+                </div>
+              ) : <GroupTheoryPanel puzzle={String(puzzleParam)} getWorld={getWorldView} />}
             </CollapsibleSection>
           )}
         </aside>
