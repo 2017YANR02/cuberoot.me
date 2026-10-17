@@ -72,7 +72,8 @@ import type { HumanRotation } from './humanize';
 import { methodFrame, walkMethod } from './method_walk';
 import { METHODS, type MethodId } from './methods';
 import type { MethodStageMetric } from './method_walk';
-import { computeStepMetrics, metricForRange } from './step_metrics';
+import { computeStepMetrics, endsRecognition, metricForRange } from './step_metrics';
+import { EVENTS, type EventId } from '../types';
 import { computeF2lSlots, type F2lSlotsResult } from './f2l_slots';
 import { initialPoseRotation, normalizeSolve, compactCubeRotations, conjugateToken, facePermFor } from './gyro_orient';
 import { computeStageSegments, type SolveMove, type StageSegments } from './stage_segments';
@@ -81,9 +82,13 @@ import { moveItemsForRange, tokensForRange } from './step_metrics';
 import type { RangeMoveItem, StepMetricsResult } from './step_metrics';
 
 /** 一行属于哪一类。UI 用它决定缩进和配色,和表里的 `tone` 对得上。 */
-export type ReconLineKind = 'inspection' | 'cross' | 'f2l' | 'oll' | 'pll';
+export type ReconstructionType = MethodId | 'training';
+export type ReconLineKind = 'inspection' | 'cross' | 'f2l' | 'oll' | 'pll' | 'training';
 
 export interface ReconTextLine {
+  /** Explicit phase bounds, including waiting before the first encoder move. */
+  fromMs?: number;
+  toMs?: number;
   stageKey?: string;
   kind: ReconLineKind;
   /** 和 `StepAnalysis` 的列 key 同名(`cross` / `slot-FR` / `f2l` / `oll` / `pll`),
@@ -187,6 +192,71 @@ export function prepareReconstruction(record: {
     segs: stageSegs, metrics: stepMx, slots, core, physical: { scramble: record.scramble, moves }, viewRotation: view.rotation,
   } : null;
   return { gyroSamples, view, stageSegs, stepMx, slots, core, text };
+}
+
+/** A drill is one algorithm, not a candidate for full-solve method detection. */
+export function prepareTrainingReconstruction(record: {
+  event: EventId; scramble: string; moves?: SolveMove[]; timeMs: number; gyro?: string; device?: { model?: string };
+}, language: 'zh' | 'en', samples?: GyroSample[], live = false) {
+  const raw = record.moves ?? [];
+  const gyroSamples = samples ?? decodeGyroTrack(record.gyro);
+  // Recover only the viewing grip. Legacy records without a measured grip use
+  // the existing cross-face orientation rule; no method or stage walk runs.
+  const view = normalizeSolve(record.scramble, raw, {
+    preferredRotation: initialPoseRotation(gyroSamples, record.device?.model),
+    measuredGrip: gyroSamples[0]?.frame === 'scramble',
+  });
+  const moves = view.moves;
+  const counted = htmMoves(moves);
+  const firstExecution = moves.findIndex(move => endsRecognition(move.m));
+  const split = firstExecution < 0 ? (live ? moves.length : 0) : firstExecution;
+  const range = moves.length ? metricForRange(moves, counted, -1, 0, moves.length - 1) : null;
+  const observationMs = Math.max(0, Math.min(record.timeMs,
+    live && firstExecution < 0 ? record.timeMs : range?.recognitionMs ?? record.timeMs));
+  const metrics = { observationMs, executionMs: Math.max(0, record.timeMs - observationMs), totalMs: record.timeMs };
+  const rawCore = gyroSamples.length ? buildCoreTrack(gyroSamples, { brand: record.device?.model, moves: raw }) : null;
+  const measuredCore = rawCore ? conjugateCoreTrack(rawCore, facePermFor(view.rotation)) : null;
+  const core = markWideCoreEvents(measuredCore, measuredCore?.frame === 'scramble' ? wideGestureMoves(moves) : counted);
+  const boundaries = new Set([split - 1]);
+  const wasteSpans = wastedDisplaySpans(view.scramble, moves, boundaries);
+  const preserveMoves = new Set<number>();
+  for (const span of wasteSpans) {
+    for (let i = span.fromIdx; i <= span.toIdx; i++) preserveMoves.add(i);
+  }
+  const countedHumanized = humanizeStream(quarterMoves(moves), { core, boundaries });
+  const humanized = preserveMoves.size ? humanizeStream(quarterMoves(moves), { core, boundaries, preserveMoves }) : countedHumanized;
+  const absorbedRotations = new Set<number>();
+  const event = EVENTS.find(event => event.id === record.event);
+  const stage = { key: 'training', zh: event?.nameZh ?? record.event.toUpperCase(), en: event?.nameEn ?? record.event.toUpperCase() };
+  const observation = { key: 'observation', zh: '观察', en: 'Observation' };
+  const lines: ReconTextLine[] = [observation, stage].map((definition, index) => {
+    const fromIdx = index === 0 ? 0 : split;
+    const toIdx = index === 0 ? split - 1 : moves.length - 1;
+    const items = weaveRotations(moveItemsForRange(moves, humanized.moves, fromIdx, toIdx),
+      humanized.rotations.filter(rotation => index === 0 ? rotation.tMs < observationMs : rotation.tMs >= observationMs),
+      absorbedRotations);
+    return {
+      kind: index === 0 ? 'inspection' : 'training', key: definition.key, stageKey: definition.key,
+      label: definition[language], moves: items.map(item => item.token), moveRanges: playbackRanges(items, moves),
+      wasteGroups: items.map(item => {
+        const group = wasteSpans.findIndex(span => item.startIdx >= span.fromIdx && item.endIdx <= span.toIdx);
+        return group < 0 ? null : group;
+      }),
+      fromIdx, toIdx, fromMs: index === 0 ? 0 : observationMs, toMs: index === 0 ? observationMs : record.timeMs,
+      recognitionMs: 0, executionMs: index === 0 ? 0 : metrics.executionMs,
+      stepMs: index === 0 ? observationMs : metrics.executionMs,
+    };
+  });
+  const seconds = record.timeMs / 1000;
+  const recon: ReconTextResult = {
+    scramble: record.scramble, inspection: view.rotation, lines,
+    currentStage: firstExecution < 0 && live ? observation : stage,
+    turns: counted.length, stm: countedHumanized.moves.length, seconds,
+    tps: metrics.executionMs > 0 ? countedHumanized.moves.length / (metrics.executionMs / 1000) : null,
+    text: [...(view.rotation ? [`${view.rotation} // insp`] : []), ...lines.map(formatReconLine)].join('\n'),
+    rotations: humanized.rotations.filter(rotation => !absorbedRotations.has(rotation.tMs)), blindPairs: humanized.blindPairs,
+  };
+  return { type: 'training' as const, view, recon, metrics };
 }
 
 /** 一行要切在哪、时间是多少。纯数据,不碰魔方。 */
@@ -803,6 +873,17 @@ interface WovenItem extends RangeMoveItem {
   wideRotation?: true;
 }
 
+function playbackRanges(items: WovenItem[], moves: SolveMove[]): RangeMoveItem[] {
+  return items.map(item => {
+    if (item.startIdx >= 0) return item;
+    // Rotations do not consume encoder moves. Preserve their own time while
+    // locating the raw cube state at that instant.
+    const next = moves.findIndex(move => move.ts > item.ts);
+    const count = next < 0 ? moves.length : next;
+    return { ...item, startIdx: count, endIdx: count - 1 };
+  });
+}
+
 function quarterToken(family: string, signedQuarters: number): string {
   const quarters = ((signedQuarters % 4) + 4) % 4;
   if (quarters === 1) return family;
@@ -1181,14 +1262,7 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
   const shownFor = (from: number, to: number): RangeMoveItem[] => (
     moveItemsForRange(moves, humanized.moves, from, to)
   );
-  const playbackRanges = (items: WovenItem[]): RangeMoveItem[] => items.map(item => {
-    if (item.startIdx >= 0) return item;
-    // Rotations do not consume encoder moves. Preserve their own time while
-    // locating the raw cube state at that instant.
-    const next = moves.findIndex(move => move.ts > item.ts);
-    const count = next < 0 ? moves.length : next;
-    return { ...item, startIdx: count, endIdx: count - 1 };
-  });
+
 
   // 识别走真颜色那一份(见 `physical`);显示走换过名的 `moves`。两者一一对应,
   // 下标通用 —— 换名不增不减记号。
@@ -1278,7 +1352,7 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
       kind: span.kind,
       key: span.key,
       moves: lineMoves.map(item => item.token),
-      moveRanges: playbackRanges(lineMoves),
+      moveRanges: playbackRanges(lineMoves, moves),
       wasteGroups: wasteGroupsFor(lineMoves),
       fromIdx: from,
       toIdx: span.endIdx,
@@ -1303,7 +1377,7 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
     if (tail.length > 0) {
       lines.push({
         kind: kinds[currentIndex], key: 'tail', stageKey: currentKey, moves: tail.map(item => item.token),
-        moveRanges: playbackRanges(tail),
+        moveRanges: playbackRanges(tail, moves),
         wasteGroups: wasteGroupsFor(tail),
         fromIdx: prevEnd + 1, toIdx: moves.length - 1,
         label: isCfop ? null : input.language === 'zh' ? currentZh : currentEn,

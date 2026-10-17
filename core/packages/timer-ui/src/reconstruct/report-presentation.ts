@@ -2,11 +2,12 @@ import type { ReferenceResult, StageReference } from '@cuberoot/shared/timer/rec
 import type { ReconstructLocalize } from './ReconstructHost';
 import { buildNormalizedSolution, findCrossLineIndex, hasNormalizableCrossMove } from '@cuberoot/shared/recon-ground-truth';
 import { formattedReconMoves, originalReconNotation, simplifyF2lRotations, type ReconTextResult } from '@cuberoot/shared/timer/reconstruct/recon-text';
-import { METHODS, type MethodId } from '@cuberoot/shared/timer/reconstruct/methods';
+import { METHODS } from '@cuberoot/shared/timer/reconstruct/methods';
 import { reconCommentLinks, type ReconCommentCases } from '@cuberoot/shared/recon/comment-links';
 import { cubeColorGroups, cubeColorGroupPunctuation, leadingCubeColors, crossColorFromLabels, f2lDisplayColors } from '../cube-color-model';
 import { CUBE_FILL, CUBE_FACE_FOR_COLOR_LETTER, type CubeColorLetter } from '@cuberoot/puzzle-render-core/support/cube-colors';
 import { sliceReconstruction } from '@cuberoot/shared/timer/reconstruct/slice';
+import type { ReconstructionType } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import type { SolveMove } from '@cuberoot/shared/timer/reconstruct/stage-segments';
 import type { Solve } from '@cuberoot/shared/timer';
 import { timerSupportsTrainingTiming } from '@cuberoot/shared/timer/training-settings';
@@ -39,8 +40,8 @@ export function trainingCaseStatistics(samples: NonNullable<ReturnType<typeof tr
 }
 
 /** The stage spacing and inline comments of StepMoveList, shared with native rendering. */
-export function reconNotationGroup(line: ReconTextResult['lines'][number], method: MethodId) {
-  return line.stageKey ?? (method === 'cfop' ? line.kind : line.key === 'tail' ? METHODS[method].stages.at(-1)!.key : line.key);
+export function reconNotationGroup(line: ReconTextResult['lines'][number], method: ReconstructionType) {
+  return line.stageKey ?? (method === 'cfop' ? line.kind : line.key === 'tail' && method !== 'training' ? METHODS[method].stages.at(-1)!.key : line.key);
 }
 
 export function reconNotationState(line: { fromIdx: number; toIdx: number }, currentIdx?: number | null) {
@@ -53,8 +54,9 @@ export interface ReconCommentPart { text: string; colors?: string; href?: string
 export function reconCommentFills(colors: string, labels: readonly (string | null | undefined)[]) {
   return [...f2lDisplayColors(colors, crossColorFromLabels(labels))].map(letter => CUBE_FILL[CUBE_FACE_FOR_COLOR_LETTER[letter as CubeColorLetter]]);
 }
-export function projectReconComment(label: string, method: MethodId, cases: ReconCommentCases, caseHref?: (colors: string) => string | undefined): ReconCommentPart[] {
+export function projectReconComment(label: string, method: ReconstructionType, cases: ReconCommentCases, caseHref?: (colors: string) => string | undefined): ReconCommentPart[] {
   if (!label) return [];
+  if (method === 'training') return [{ text: '// ' + label }];
   const parts: ReconCommentPart[] = [{ text: '// ' }];
   const leading = leadingCubeColors(label);
   if (leading) {
@@ -91,7 +93,7 @@ export function projectReconComment(label: string, method: MethodId, cases: Reco
 
 /** The final notation projection used by both React and native reports.
  * It never changes the physical track or its original timing ranges. */
-export function projectReconNotation(recon: ReconTextResult | null, method: MethodId, simplified = true) {
+export function projectReconNotation(recon: ReconTextResult | null, method: ReconstructionType, simplified = true) {
   const simplifiedRecon = method === 'cfop' && recon ? simplifyF2lRotations(recon) : recon;
   const originalRecon = recon ? originalReconNotation(recon) : recon;
   const shownRecon = simplified ? simplifiedRecon : originalRecon;

@@ -42,7 +42,8 @@ import { detectWastedWork } from '@cuberoot/shared/timer/reconstruct/error-detec
 import { walkMethod, detectSolveMethod } from '@cuberoot/shared/timer/reconstruct/method-walk';
 
 import { type GyroSample } from '@cuberoot/shared/smart-cube/gyro-track';
-import { applyReconTextOverride, prepareReconstruction } from '@cuberoot/shared/timer/reconstruct/recon-text';
+import { applyReconTextOverride, prepareReconstruction, prepareTrainingReconstruction } from '@cuberoot/shared/timer/reconstruct/recon-text';
+import { timerSupportsTrainingTiming } from '@cuberoot/shared/timer/training-settings';
 import { createLiveReconstructionStream, reconstructionAnalyzer } from './analysis-client';
 import type { AnalysisInput, AnalysisSnapshot } from './analysis-protocol';
 import StepAnalysis from './StepAnalysis';
@@ -50,7 +51,7 @@ import ReportContent from './ReportContent';
 import { reportComposition, reportNotationExtras, reportSummary, reportTrainingSummary, reportRawMoves, reportReferences, reportMeta, reportBld, initialReportUI, reduceReportUI, resolveReportSlots } from './report-content';
 import { rememberMethodStages, useMethodHistory } from './method-history';
 import StepMoveList from './StepMoveList';
-import { reconstructionSummary, trainingRepetitionMetrics, trainingCaseHistory, trainingCaseStatistics } from './report-presentation';
+import { reconstructionSummary, trainingCaseHistory, trainingCaseStatistics } from './report-presentation';
 import ReconstructActions from './ReconstructActions';
 
 import { memoize3bld } from '@cuberoot/shared/timer/reconstruct/bld-helper';
@@ -121,18 +122,6 @@ function ReconstructReportBody({
     live && liveGyroSamples ? liveGyroSamples.slice() : undefined),
   [solve.scramble, moves, solve.timeMs, solve.gyro, solve.device?.model, method, isZh, live, liveGyroSamples]);
   const { view, stageSegs, stepMx, slots } = prepared;
-  const trainingMetrics = useMemo(() => !live ? trainingRepetitionMetrics(solve, view.moves) : null,
-    [live, solve, view.moves]);
-  const trainingStatistics = useMemo(() => {
-    if (!trainingMetrics) return null;
-    const samples = trainingCaseHistory(history ?? [], solve).flatMap(item => {
-      const itemMethod = detectSolveMethod(item.scramble, item.moves ?? [], item.timeMs);
-      const itemView = prepareReconstruction(item, itemMethod, 'en').view;
-      const metrics = trainingRepetitionMetrics(item, itemView.moves);
-      return metrics ? [metrics] : [];
-    });
-    return trainingCaseStatistics(samples);
-  }, [history, solve, trainingMetrics]);
   // Wasted-work detection (state revisits — see error_detect.ts). Gated the
   // same way: the walker models a 3x3.
   const waste = useMemo(
@@ -337,9 +326,8 @@ function ReconstructReportBody({
 
   const extras=reportNotationExtras(solve,playbackRecon,initialReportUI(solve.reconOk),tr,{recordGyro:host.recordGyro,canEnableGyro:Boolean(host.onEnableGyro),canFeedback:Boolean(onReconFeedback)});
   const composition=reportComposition({solve,recon:reconText,analysis:analysis??null,hasAnalysis:Boolean(analysisInput),scoreable,state:reportUI,tr,
-    hideActions,hasTable:Boolean(stageSegs||walk),hasMeta:false,autoMemoMs,hasBldMemo:Boolean(bldMemo),trainingSummary:Boolean(trainingMetrics)});
+    hideActions,hasTable:Boolean(stageSegs||walk),hasMeta:false,autoMemoMs,hasBldMemo:Boolean(bldMemo)});
   const document=resolveReportSlots(composition,{
-    'training-summary':trainingMetrics ? reportTrainingSummary(solve,trainingMetrics,trainingStatistics,tr) : null,
     summary:reportSummary(solve,{stm:stmCount,tps:stmTps,fluency},tr,hideDate?undefined:{short:dt.toLocaleDateString(),full:dt.toLocaleString()}),
     'raw-list':reportRawMoves(solve,wastedIdx,tr),
     'reference-list':analysis?.reference?reportReferences(analysis.reference,tr):null,
@@ -403,7 +391,48 @@ function StageMetaLine({
   return <ReportContent node={stepMetrics?reportMeta(inspectionMs,stepMetrics.putDownMs,tr):null} dispatch={()=>{}}/>;
 }
 
+/** Dedicated training report. It never mounts the full-solve analyzer or method history. */
+function TrainingReportBody({ solve, isZh, history, onUseScramble, onReconFeedback, hideActions,
+  live = false, liveStageTarget, liveGyroSamples }: ReconstructReportProps) {
+  const host = useReconstructHost();
+  const { localize: tr } = host;
+  const prepared = useMemo(() => prepareTrainingReconstruction(solve, isZh ? 'zh' : 'en',
+    liveGyroSamples?.slice(), live), [solve, isZh, liveGyroSamples, live]);
+  const { recon, view, metrics } = prepared;
+  const statistics = useMemo(() => live ? null : trainingCaseStatistics(trainingCaseHistory(history ?? [], solve)
+    .map(item => prepareTrainingReconstruction(item, 'en').metrics)), [history, solve, live]);
+  const [ui, setUI] = useState(initialReportUI);
+  if (live) return <>
+    {liveStageTarget && createPortal(<>
+      <div className="timer-live-stage-label">{recon.currentStage && tr(recon.currentStage)}</div>
+      <div className="sml-moves">{recon.lines.find(line => line.key === recon.currentStage?.key)?.moves.join(' ') || '…'}</div>
+    </>, liveStageTarget)}
+    <StepMoveList method="training" recon={recon} reference={null} slotReference={null} />
+  </>;
+  const extras = reportNotationExtras(solve, recon, initialReportUI(solve.reconOk), tr, {
+    recordGyro: host.recordGyro, canEnableGyro: Boolean(host.onEnableGyro), canFeedback: Boolean(onReconFeedback),
+  });
+  const composition = reportComposition({ solve, recon, analysis: null, hasAnalysis: false, scoreable: false,
+    state: ui, tr, hideActions, hasTable: false, hasMeta: false, autoMemoMs: null, hasBldMemo: false, trainingSummary: true });
+  const document = resolveReportSlots(composition, {
+    'training-summary': reportTrainingSummary(solve, metrics, statistics, tr),
+    'raw-list': reportRawMoves(solve, new Set(), tr),
+  });
+  return <ReportContent node={document} dispatch={action => setUI(state => reduceReportUI(state, action))} slots={{
+    actions: <ReconstructActions host={host} solve={solve} onUseScramble={onUseScramble} placement="report" />,
+    playback: <PlaybackPanel method="training" event={solve.event} scramble={solve.scramble} moves={solve.moves ?? []}
+      viewRotation={view.rotation} totalMs={solve.timeMs} isZh={isZh} lines={recon.lines} rotations={recon.rotations}
+      gyro={solve.gyro ?? null} deviceModel={solve.device?.model ?? null}
+      side={({ idx, playFrom }) => <StepMoveList method="training" recon={recon} reference={null} slotReference={null}
+        currentIdx={idx} onSeek={playFrom}
+        notice={<ReportContent node={extras.notice} dispatch={() => host.onEnableGyro?.()} />}
+        feedback={<ReportContent node={extras.feedback} dispatch={action => onReconFeedback?.(
+          reduceReportUI(initialReportUI(solve.reconOk), action).feedback ?? undefined)} />} />} />,
+  }} />;
+}
+
 /** Full shared report; only clipboard, settings and public URL construction are host-owned. */
 export default function ReconstructReport({ host, ...props }: ReconstructReportProps & { host: ReconstructHost }) {
-  return <ReconstructHostContext.Provider value={host}><ReconstructReportBody {...props} /></ReconstructHostContext.Provider>;
+  return <ReconstructHostContext.Provider value={host}>{timerSupportsTrainingTiming(props.solve.event)
+    ? <TrainingReportBody {...props} /> : <ReconstructReportBody {...props} />}</ReconstructHostContext.Provider>;
 }

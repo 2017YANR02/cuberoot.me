@@ -38,10 +38,10 @@ import { useReconstructHost, type ReconstructHost } from './ReconstructHost';
 
 import type { ReconTextResult } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import type { ReferenceResult, SlotReference } from '@cuberoot/shared/timer/reconstruct/reference';
-import { type MethodId } from '@cuberoot/shared/timer/reconstruct/methods';
+import type { ReconstructionType } from '@cuberoot/shared/timer/reconstruct/recon-text';
 
 export interface StepMoveListProps {
-  method?: MethodId;
+  method?: ReconstructionType;
   recon: ReconTextResult | null;
   /** 保留调用契约；公式列表不显示参考步数评价。 */
   reference: ReferenceResult | null;
