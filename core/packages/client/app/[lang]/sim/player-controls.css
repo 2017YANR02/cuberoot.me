@@ -1366,7 +1366,9 @@
 .sim-animation-controls { display: flex; flex-direction: column; gap: 10px; }
 .sim-animation-controls[hidden] { display: none; }
 .sim-field-label { color: var(--muted-foreground); font-size: 13px; }
-.sim-settings-section > summary {
+.sim-settings-section > summary,
+.sim-formula-tools > summary,
+.sim-puzzle-debug > summary {
   padding: 10px 0;
   font-size: 14px;
   font-weight: 600;
@@ -1374,3 +1376,42 @@
 }
 .sim-settings-section > .sim-puzzle { border: 0; }
 .sim-settings-section .sim-puzzle-body { padding: 8px 0; }
+
+.sim-stage-controls { width: 100%; min-width: 0; }
+.sim-view-tools,
+.sim-playback-options,
+.sim-preview-notice {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.sim-view-tools { margin-bottom: 8px; }
+.sim-view-tools > select {
+  font: inherit;
+  color: var(--foreground);
+  background: var(--background);
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  padding: 4px;
+}
+.sim-view-tools .playback-bar-btn[aria-pressed="true"] {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.sim-playback-options { margin-top: 6px; justify-content: space-between; }
+.sim-playback-options > .sim-slider { width: 180px; min-width: 0; }
+.sim-playback-options > details { max-width: 100%; font-size: 13px; }
+.sim-playback-options summary { cursor: pointer; padding: 4px 0; }
+.sim-preview-notice { color: var(--muted-foreground); font-size: 13px; }
+.sim-preview-notice button,
+.sim-research-enable button {
+  font: inherit;
+  color: var(--foreground);
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+.sim-research-enable { padding: 0 12px 12px; font-size: 13px; }
