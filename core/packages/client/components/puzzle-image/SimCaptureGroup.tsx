@@ -33,8 +33,7 @@ export interface SimBridge {
   getWorld: () => World | null;
   getRenderer: () => THREE.WebGLRenderer | null;
   /** cubing.js TwistyPlayer(自定义切割 / PG 目录拼图 / renderer='cubing')。
-   *  引擎 world 不在场时,截图走它:PNG 用 experimentalScreenshot,SVG 从
-   *  experimentalCurrentVantages 取 scene+camera 喂同一个投影导出器。 */
+   *  引擎 world 不在场时,PNG / SVG 共用当前 scene+camera 的投影导出器。 */
   getTwistyPlayer?: () => unknown | null;
   setup: string;
   alg: string;
@@ -61,6 +60,21 @@ async function downloadTwisty2DScreenshot(player: TwistyPlayerLike | null): Prom
   if (mode !== '2D' && mode !== 'experimental-2D-LL' && mode !== 'experimental-2D-LL-face') return false;
   await player.experimentalDownloadScreenshot(`sim-${Date.now()}`);
   return true;
+}
+
+/** Export the displayed scene; upstream offscreen screenshot can stall on PG puzzles. */
+async function currentTwistySvg(player: TwistyPlayerLike | null): Promise<string | null> {
+  if (!player?.experimentalCurrentVantages) return null;
+  const vantage = [...await player.experimentalCurrentVantages()][0];
+  if (!vantage) return null;
+  const camera = await vantage.camera();
+  const scene = await vantage.scene.scene();
+  const rect = (vantage.contentWrapper ?? player).getBoundingClientRect();
+  const { exportSimSvg } = await import('@/app/[lang]/sim/sim_svg_export');
+  return exportSimSvg({
+    world: { scene, camera, width: Math.max(1, Math.round(rect.width)), height: Math.max(1, Math.round(rect.height)) },
+    srgbColors: true,
+  });
 }
 
 export default function SimCaptureGroup({ simBridge }: { simBridge: SimBridge }) {
@@ -124,14 +138,18 @@ export default function SimCaptureGroup({ simBridge }: { simBridge: SimBridge })
       }, 'image/png');
       return;
     }
-    // cubing.js TwistyPlayer 拼图:官方离屏截图(dataURL)
+    // Reuse the live SVG projection instead of constructing an offscreen player.
     const tp = simBridge.getTwistyPlayer?.() as TwistyPlayerLike | null;
     try {
       if (await downloadTwisty2DScreenshot(tp)) return;
-      if (!tp?.experimentalScreenshot) return;
-      downloadUrl(await tp.experimentalScreenshot(), `sim-${Date.now()}.png`);
-    } catch { /* 截图失败静默(与旧行为一致:无引擎时无操作) */ }
-  }, [simBridge, downloadUrl]);
+      const svg = await currentTwistySvg(tp);
+      if (svg) saveBlob(await svgToRasterBlob(svg, { width: 2048, height: 2048 }), `sim-${Date.now()}.png`);
+    } catch (error) {
+      console.error('[sim] snapshot failed:', error);
+      // eslint-disable-next-line no-alert
+      alert(t('截图失败: ', 'Snapshot failed: ') + (error instanceof Error ? error.message : String(error)));
+    }
+  }, [simBridge, downloadUrl, t]);
 
   // 实时 SVG 截图 — 把当前 3D 场景静止帧投影成矢量 SVG(所有 /sim 拼图 + 任意
   // 设置开关组合;与 PNG 截图一样导出主视图,背景透明)。引擎拼图默认走 BSP
@@ -163,26 +181,10 @@ export default function SimCaptureGroup({ simBridge }: { simBridge: SimBridge })
       } else {
         const tp = simBridge.getTwistyPlayer?.() as TwistyPlayerLike | null;
         if (await downloadTwisty2DScreenshot(tp)) return;
-        const { exportSimSvg } = await import('@/app/[lang]/sim/sim_svg_export');
-        if (!tp?.experimentalCurrentVantages) return;
-        const vantage = [...await tp.experimentalCurrentVantages()][0];
-        if (!vantage) return;
-        const camera = await vantage.camera();
-        const scene = await vantage.scene.scene();
-        const rect = (vantage.contentWrapper ?? tp).getBoundingClientRect();
-        svg = exportSimSvg({
-          world: {
-            scene, camera,
-            width: Math.max(1, Math.round(rect.width)),
-            height: Math.max(1, Math.round(rect.height)),
-          },
-          srgbColors: true, // cubing.js 旧版 three 无色彩管理,颜色 sRGB 直存
-        });
+        svg = await currentTwistySvg(tp) ?? undefined;
+        if (!svg) return;
       }
-      const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      downloadUrl(url, `sim-${Date.now()}.svg`);
-      URL.revokeObjectURL(url);
+      saveBlob(svgBlob(svg), `sim-${Date.now()}.svg`);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       // eslint-disable-next-line no-alert
@@ -190,7 +192,7 @@ export default function SimCaptureGroup({ simBridge }: { simBridge: SimBridge })
         ? t('场景面片太多(超高阶),SVG 导出不适用,请用 PNG 截图', 'Too many faces for SVG export (very high order) — use the PNG snapshot')
         : t('SVG 导出失败: ', 'SVG export failed: ') + msg);
     }
-  }, [simBridge, downloadUrl, t]);
+  }, [simBridge, t]);
 
   const startExport = useCallback(async () => {
     if (simBridge.getSvg) return;
