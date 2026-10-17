@@ -1,4 +1,5 @@
 import { invertAlg } from '../alg_transform';
+import { normalizeWcaScramble } from '../normalize_wca_scramble';
 import {
   TIMER_OLL_CASE_DATA,
   TIMER_PLL_CASE_DATA,
@@ -193,6 +194,14 @@ function pickCase(
   return available[randomIndex(available.length, random)];
 }
 
+/** Keep the case in the solution's starting grip, even if it ends rotated. */
+function inverseTrainingSolution(solution: string): string {
+  // Normalizing AFTER inversion preserves the ending grip instead: an x/z
+  // rotation can move the last layer to a side before preScrT is applied.
+  const fixedFrame = normalizeWcaScramble(solution);
+  return fixedFrame === null ? '' : invertAlg(fixedFrame);
+}
+
 /** Generate the selected OLL/PLL drill exactly; stale targets fail closed. */
 export function generateTimerDrillScramble(
   target: TimerDrillTarget,
@@ -203,7 +212,7 @@ export function generateTimerDrillScramble(
   const cases = target.type === 'oll' ? OLL_CASES : PLL_CASES;
   const item = cases.find((candidate) => candidate.id === target.id);
   if (!item) return null;
-  const inverse = invertAlg(item.solutionAlg);
+  const inverse = inverseTrainingSolution(item.solutionAlg);
   if (!inverse) return null;
   const auf = TIMER_DRILL_AUFS[randomIndex(TIMER_DRILL_AUFS.length, random)];
   return {
@@ -232,7 +241,12 @@ export function generateTimerTrainerScramble(
     const pllIds = options.caseIds?.filter((id) => PLL_CASE_IDS.has(id));
     const oll = pickCase(OLL_CASES, ollIds, random);
     const pll = pickCase(PLL_CASES, pllIds, random);
-    const solutionAlg = `${oll.solutionAlg} ${pll.solutionAlg}`;
+    // Each case starts in its own U-layer frame. Do not carry OLL's final
+    // rotation into PLL, whose formula also assumes the original grip.
+    const ollSolution = normalizeWcaScramble(oll.solutionAlg);
+    const pllSolution = normalizeWcaScramble(pll.solutionAlg);
+    if (!ollSolution || !pllSolution) throw new Error('Invalid LL trainer algorithm');
+    const solutionAlg = `${ollSolution} ${pllSolution}`;
     const scramble = invertAlg(solutionAlg);
     if (!scramble) throw new Error('Failed to invert LL trainer algorithm');
     return {
@@ -244,7 +258,8 @@ export function generateTimerTrainerScramble(
   }
 
   const item = pickCase(TRAINER_CASES[event], options.caseIds, random);
-  const scramble = invertAlg(item.solutionAlg);
+  const scramble = event === 'eg1' || event === 'eg2'
+    ? invertAlg(item.solutionAlg) : inverseTrainingSolution(item.solutionAlg);
   if (!scramble) throw new Error(`Failed to invert ${event} trainer algorithm`);
   return {
     event,
