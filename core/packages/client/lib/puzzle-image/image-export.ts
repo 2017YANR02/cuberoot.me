@@ -9,6 +9,28 @@ export function svgBlob(svg: string): Blob {
   return new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
 }
 
+/** Capture a live SVG, including CSS-painted pins/stickers, without its controls. */
+export function snapshotSvgElement(source: SVGSVGElement) {
+  const clone = source.cloneNode(true) as SVGSVGElement;
+  const originals = [source, ...source.querySelectorAll<SVGElement>('*')];
+  const copies = [clone, ...clone.querySelectorAll<SVGElement>('*')];
+  const paint = ['fill', 'fill-opacity', 'stroke', 'stroke-width', 'stroke-opacity',
+    'stroke-linecap', 'stroke-linejoin', 'opacity', 'color', 'font-family', 'font-size'];
+  originals.forEach((element, index) => {
+    const style = getComputedStyle(element);
+    for (const property of paint) {
+      const value = style.getPropertyValue(property);
+      if (value) copies[index].style.setProperty(property, value);
+    }
+  });
+  const rect = source.getBoundingClientRect();
+  const width = Math.max(1, Math.round(rect.width || source.viewBox.baseVal.width));
+  const height = Math.max(1, Math.round(rect.height || source.viewBox.baseVal.height));
+  clone.setAttribute('width', String(width));
+  clone.setAttribute('height', String(height));
+  return { svg: new XMLSerializer().serializeToString(clone), width, height };
+}
+
 export type RasterImageFormat = 'png' | 'jpeg';
 
 export interface SvgRasterOptions {
