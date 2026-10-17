@@ -196,8 +196,8 @@ export function reportComposition(input:ReportCompositionInput):ReportNode {
   ],'rc-report');
   if (input.trainingSummary) report.children = [
     slot('training-summary'), ...(!input.hideActions ? [slot('actions')] : []),
-    disclosure('training-details', tr({ zh: '解法回放与分段分析', en: 'Replay and stage analysis' }),
-      report.children!.filter(node => node.id !== 'actions')),
+    slot('playback'),
+    disclosure('raw', tr({ zh: `动作序列 (${solve.moves?.length ?? 0})`, en: `Move stream (${solve.moves?.length ?? 0})` }), [slot('raw-list')]),
   ];
   return report;
 }

@@ -53,7 +53,7 @@ import { notationQuaternion } from '@cuberoot/shared/timer/reconstruct/gyro-orie
 import type { HumanRotation } from '@cuberoot/shared/timer/reconstruct/humanize';
 import type { ReconTextLine } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import type { SolveMove } from '@cuberoot/shared/timer/reconstruct/stage-segments';
-import type { MethodId } from '@cuberoot/shared/timer/reconstruct/methods';
+import type { ReconstructionType } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import SolveTimeline from './SolveTimeline';
 import type { SolveTimelineHandle } from './SolveTimeline';
 import { reconstructedTrack, playbackIndexAt, playbackEndMs, rawPlaybackTarget, playbackFrame, type PlaybackMove } from './playback-track';
@@ -63,7 +63,7 @@ import { reconstructedTrack, playbackIndexAt, playbackEndMs, rawPlaybackTarget, 
 const SimCubeView = lazy(() => import('../SimCubeView'));
 
 interface Props {
-  method?: MethodId;
+  method?: ReconstructionType;
   event: EventId;
   scramble: string;
   moves: SolveMove[];
@@ -179,7 +179,7 @@ export default function PlaybackPanel({
     : scramble;
 
   const elapsedMs = playFromRef.current;
-  const lastTs = playbackEndMs(moves, rawMoves);
+  const lastTs = Math.max(playbackEndMs(moves, rawMoves), method === 'training' ? totalMs : 0);
 
   // Keep the engine's normal 500 ms duration across observation/put-down pauses.
   // Shorter gaps still shorten the animation to prevent a backlog; the clock
@@ -219,6 +219,7 @@ export default function PlaybackPanel({
   }, [playing, playbackRun, speedMult, total, moves, lastTs, poseAt]);
 
   const dispatchPlayer=(action:ReportAction)=>{
+    if (method === 'training' && action.type === 'end') action = { type: 'time', value: lastTs };
     const result=reportPlayerAction({...playerRef.current,timeMs:playFromRef.current},action,moves,rawMoves,lastTs,hasGyro);
     const next=result.state;playerRef.current=next;
     playFromRef.current=next.timeMs;playbackQuatRef.current=poseAt(next.timeMs);
@@ -228,6 +229,7 @@ export default function PlaybackPanel({
     if(counterRef.current)counterRef.current.textContent=formatSec(next.timeMs);
   };
   const seekRaw=(i:number,atMs?:number)=>{
+    if (method === 'training' && atMs !== undefined) { dispatchPlayer({ type: 'time', value: atMs }); return; }
     const target=rawPlaybackTarget(moves,rawMoves,i,atMs);
     dispatchPlayer({type:'time',value:target.timeMs});
   };

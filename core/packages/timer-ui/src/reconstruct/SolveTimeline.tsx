@@ -37,10 +37,10 @@ import { reconstructionTimeline } from './timeline-model';
 
 import type { ReconTextLine } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import type { SolveMove } from '@cuberoot/shared/timer/reconstruct/stage-segments';
-import { type MethodId } from '@cuberoot/shared/timer/reconstruct/methods';
+import type { ReconstructionType } from '@cuberoot/shared/timer/reconstruct/recon-text';
 
 export interface SolveTimelineProps {
-  method?: MethodId;
+  method?: ReconstructionType;
   moves: SolveMove[];
   /** 计时总长。所有横坐标都按它归一化。 */
   totalMs: number;
