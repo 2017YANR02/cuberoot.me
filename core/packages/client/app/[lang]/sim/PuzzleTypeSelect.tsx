@@ -4,12 +4,13 @@ import { tr } from '@/i18n/tr';
 import PuzzlePicker, { type PuzzlePickerGroup, type PuzzlePickerItem } from '@/components/PuzzlePicker/PuzzlePicker';
 import { groupSimPuzzleOptions, type SimPuzzleTypeOption } from './puzzleOptions';
 
-export function PuzzleTypeSelect({ value, onChange, isZh, allowedValues }: {
+export function PuzzleTypeSelect({ value, onChange, isZh, allowedValues, showName = false }: {
   value: string;
   onChange: (v: string) => void;
   isZh: boolean;
   /** Optional subset for another /sim tool that shares this selector. */
   allowedValues?: readonly string[];
+  showName?: boolean;
 }) {
   const catalog = groupSimPuzzleOptions(allowedValues);
   const options = catalog.flatMap(group => group.options);
@@ -43,6 +44,7 @@ export function PuzzleTypeSelect({ value, onChange, isZh, allowedValues }: {
       selectedEvent={current?.value}
       groups={groups}
       onSelect={onChange}
+      showTriggerIcon={!showName}
     />
   );
 }

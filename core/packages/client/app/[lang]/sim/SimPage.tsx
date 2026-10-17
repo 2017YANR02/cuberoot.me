@@ -17,6 +17,9 @@ import {
 import dynamic from 'next/dynamic';
 import { useQueryStates, parseAsString, parseAsStringEnum } from 'nuqs';
 import HomeLink from '@/components/HomeLink';
+import NumberCommitInput from '@/components/NumberCommitInput';
+import { useTranslation } from 'react-i18next';
+import { PuzzleTypeSelect } from './PuzzleTypeSelect';
 import { persistItem } from '@/lib/safe-storage';
 import { orientedCubeFaceColors } from '@/lib/cube-orientation';
 import { NXN_ORDER_DEFAULT, NXN_ORDER_MAX, NXN_ORDER_MIN } from '@/lib/nxn-order';
@@ -26,7 +29,7 @@ import { NXN_ORDER_DEFAULT, NXN_ORDER_MAX, NXN_ORDER_MIN } from '@/lib/nxn-order
 import type * as THREE from 'three';
 import {
   ChevronLeft, ChevronRight,
-  BookOpen,
+  BookOpen, FlaskConical,
   Maximize2, Minimize2,
   ArrowLeftRight,
   ImagePlus,
@@ -129,7 +132,7 @@ import { useMembership } from '@/hooks/useMembership';
 import {
   loadKeymap, saveKeymap, resetKeymap as resetKeymapStorage, type KeyMove,
 } from './keymap';
-import { normalizeDrawPuzzle } from './puzzleOptions';
+import { DRAW_PUZZLES, normalizeDrawPuzzle } from './puzzleOptions';
 import './sim.css';
 
 const FtoImageGenerator = dynamic(() => import('./FtoImageGenerator'), { ssr: false });
@@ -271,6 +274,7 @@ const DAISY_SETUP = 'F2 R2 B2 L2';
 
 export default function SimPage() {
   const t = useT();
+  const { i18n } = useTranslation();
   const { isMember } = useMembership();
   // 管理员自建遮罩(DB)。首屏为空 → 按代码清单渲染;拉到后 stickering effect 重跑。
   const { rows: simMaskRows } = useSimMasks();
@@ -326,8 +330,10 @@ export default function SimPage() {
   const setupParam = query.setup || '';
   const drawMode = query.tool === 'draw';
   const imageMode = query.tool === 'image';
-  const captureMode = query.tool === 'capture';
   const animationMode = query.tool === 'sim';
+  const captureMode = query.tool === 'capture';
+  const [panelExpanded, setPanelExpanded] = useState(false);
+  const [researchOpen, setResearchOpen] = useState(false);
   const [lastCreationTool, setLastCreationTool] = useState<'capture' | 'draw' | 'image'>(
     query.tool === 'sim' ? 'capture' : query.tool,
   );
@@ -337,6 +343,8 @@ export default function SimPage() {
   // Drawing owns its puzzle; entering a template must never replace the animation.
   const [initialDrawPuzzle] = useState(() => normalizeDrawPuzzle(query.puzzle));
   const drawPuzzle = normalizeDrawPuzzle(query.drawPuzzle ?? initialDrawPuzzle);
+  const [drawOrder, setDrawOrder] = useState(typeof drawPuzzle === 'number' ? drawPuzzle : 3);
+  useEffect(() => { if (typeof drawPuzzle === 'number') setDrawOrder(drawPuzzle); }, [drawPuzzle]);
   const [initialImageAlg] = useState(() => imageMode || query.puzzle === 'fto' ? query.alg ?? '' : '');
   const [imageVisited, setImageVisited] = useState(imageMode);
   useEffect(() => { if (imageMode) setImageVisited(true); }, [imageMode]);
@@ -557,7 +565,7 @@ export default function SimPage() {
   // 画布左上角图像浮层的显隐(侧栏的 studio 控件常驻,不再受它控制)。分享链接带任何
   // img_ 键 = 对方特意调过图 → 自动显示浮层,否则读持久化偏好。panel 模式的 codec 省略
   // img_pzl 且只写非默认值,所以「一动没动的 studio」不会产生任何 img_ 键。
-  const [imageOpen, setImageOpen] = useState<boolean>(() => {
+  const [imagePreferred, setImageOpen] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     try {
       const sp = new URLSearchParams(window.location.search);
@@ -569,8 +577,9 @@ export default function SimPage() {
   });
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    persistItem('sim.panel.image', imageOpen ? '1' : '0');
-  }, [imageOpen]);
+    persistItem('sim.panel.image', imagePreferred ? '1' : '0');
+  }, [imagePreferred]);
+  const imageOpen = captureMode || imagePreferred;
 
   // 交换主图 ↔ 伴图(伴图铺满画布、实时 3D 缩进左上小框)。观察偏好,走 localStorage。
   // 交换态下渲染器/world 真调到小框尺寸(resize 闭包读 imgSwapRef;CSS 只钉显示位),
@@ -736,7 +745,7 @@ export default function SimPage() {
   // World init. Twisty puzzles (pyraminx/skewb/megaminx) don't use the cuber
   // engine — they render via cubing.js TwistyPlayer in <TwistySection> below.
   // Dependencies let cleanup tear down a live cuber instance when the user
-  // switches NxN ↔ twisty or enters the image-only tool.
+  // switches NxN ↔ twisty. Mode changes retain the existing scene and timeline.
   useEffect(() => {
     if (twisty) return;
     if (worldRef.current) return;
@@ -1451,9 +1460,6 @@ export default function SimPage() {
     setQuery({ renderer: r === 'group' ? null : r });
   }, [setQuery]);
 
-  const handleOrder = useCallback((n: number) => {
-    handlePuzzle(n);
-  }, [handlePuzzle]);
 
   // Controls read the URL puzzle directly. Always sync engine puzzles, even when
   // a newly created World already has the requested default cube: applyPuzzle
@@ -2212,14 +2218,27 @@ export default function SimPage() {
 
   // 主图 ↔ 伴图交换态生效条件(与画布 wrap 的 --imgswap class 同一判据):把它写进
   // resize 闭包读的 ref,再触发一次重排,渲染器在全幅 ↔ 左上小框之间切换。
-  const imgSwapActive = imageOpen && imgSwap && !flatMode;
+  const imgSwapActive = captureMode || (imageOpen && imgSwap && !flatMode);
   useEffect(() => {
     imgSwapRef.current = imgSwapActive;
     resizeMainViewRef.current?.();
   }, [imgSwapActive]);
 
+  const selectedPuzzle = drawMode ? drawPuzzle : imageMode ? 'fto' : puzzleParam;
+  const selectPuzzle = (puzzle: SimPuzzle) => {
+    if (drawMode) void setQuery({ drawPuzzle: String(puzzle) });
+    else if (!imageMode) handlePuzzle(puzzle);
+  };
+  const changeTool = (tool: 'sim' | 'capture' | 'draw' | 'image') => {
+    void setQuery({
+      tool: tool === 'sim' ? null : tool,
+      ...(tool === 'draw' ? { drawPuzzle: query.drawPuzzle ?? String(normalizeDrawPuzzle(query.puzzle)) } : {}),
+      ...(tool === 'image' ? { imageAlg: query.imageAlg ?? (puzzleParam === 'fto' ? algParam : initialImageAlg) } : {}),
+    });
+  };
+
   return (
-    <div className={`sim-page${fullscreen && !drawMode && !imageMode ? ' sim-page--fullscreen' : ''}`} data-board-bg={settings.boardBg} data-workspace={captureMode ? 'capture' : query.tool}>
+    <div className={`sim-page${fullscreen && animationMode ? ' sim-page--fullscreen' : ''}${panelExpanded ? ' sim-page--panel-expanded' : ''}`} data-board-bg={settings.boardBg} data-workspace={query.tool}>
       <header className="sim-header">
         <HomeLink className="sim-back" title={t('返回', 'Back')}>
           <ChevronLeft size={18} />
@@ -2228,7 +2247,7 @@ export default function SimPage() {
         <select
           className="sim-tool-select"
           value={animationMode ? 'animation' : 'creation'}
-          onChange={(event) => setQuery({ tool: event.target.value === 'animation' ? null : lastCreationTool })}
+          onChange={(event) => changeTool(event.target.value === 'animation' ? 'sim' : lastCreationTool)}
           aria-label={t('工作模式', 'Workspace mode')}
         >
           <option value="animation">{t('动画', 'Animation')}</option>
@@ -2238,7 +2257,7 @@ export default function SimPage() {
           <select
             className="sim-tool-select"
             value={query.tool}
-            onChange={(event) => setQuery({ tool: event.target.value as 'capture' | 'draw' | 'image' })}
+            onChange={(event) => changeTool(event.target.value as 'capture' | 'draw' | 'image')}
             aria-label={t('作图方式', 'Image source')}
           >
             <option value="capture">{t('当前状态', 'Current state')}</option>
@@ -2246,8 +2265,36 @@ export default function SimPage() {
             <option value="image">{t('FTO 公式出图', 'FTO algorithm')}</option>
           </select>
         )}
+        <div className="sim-project-controls">
+          <PuzzleTypeSelect
+            value={typeof selectedPuzzle === 'number' ? 'nxn' : selectedPuzzle}
+            isZh={i18n.language.startsWith('zh')}
+            showName
+            allowedValues={drawMode ? DRAW_PUZZLES : imageMode ? ['fto'] : undefined}
+            onChange={(value) => selectPuzzle(value === 'nxn' ? (drawMode ? drawOrder : order) : value as SimPuzzle)}
+          />
+          {typeof selectedPuzzle === 'number' && (
+            <label className="sim-order-label">
+              <span>{t('阶数', 'Order')}</span>
+              <NumberCommitInput
+                className="sim-order-input"
+                value={selectedPuzzle}
+                min={drawMode ? 2 : NXN_ORDER_MIN}
+                max={drawMode ? 20 : NXN_ORDER_MAX}
+                onCommit={selectPuzzle}
+                aria-label={t('阶数', 'Order')}
+              />
+            </label>
+          )}
+        </div>
+        {!drawMode && !imageMode && (
+          <button type="button" className="sim-panel-toggle" aria-pressed={panelExpanded}
+            onClick={() => setPanelExpanded(expanded => !expanded)}>
+            {panelExpanded ? t('收起面板', 'Collapse panel') : t('展开面板', 'Expand panel')}
+          </button>
+        )}
         <div className="sim-spacer" />
-        {!drawMode && !imageMode && reconHref && (
+        {animationMode && reconHref && (
           <AppLink
             href={reconHref}
             prefetch={false}
@@ -2411,8 +2458,8 @@ export default function SimPage() {
         <div className="sim-playback-under" ref={setPlaybackSlot} />
         </div>
 
-        <aside className="sim-side">
-          <CollapsibleSection
+        <aside className="sim-side" data-site-surface="panel">
+          {animationMode && <CollapsibleSection
             open={algsOpen}
             onToggle={() => setAlgsOpen((o) => !o)}
             icon={BookOpen}
@@ -2422,14 +2469,14 @@ export default function SimPage() {
               onSelect={(setup, alg) => { onAlgPick(setup, alg); }}
               activePuzzle={puzzleParam}
             />
-          </CollapsibleSection>
+          </CollapsibleSection>}
           {puzzleParam === 'custom' && (
             <div className="sim-cut-editor-wrap">
               <CutEditor value={customCuts} onChange={(d) => setQuery({ cuts: d })} />
             </div>
           )}
           <PlayerControls
-            active={!drawMode && !imageMode}
+            active={animationMode}
             world={worldRef.current}
             activeCube={activeCube}
             clearFrozen={clearPartialFreeze}
@@ -2438,9 +2485,7 @@ export default function SimPage() {
             onAlgChange={onAlgChange}
             onSetupChange={onSetupChange}
             order={order}
-            onOrderChange={handleOrder}
             puzzleKind={puzzleKind}
-            onPuzzleChange={handlePuzzle}
             settings={settings}
             onSettingsChange={handleSettingsChange}
             canUseCustomLogo={isMember}
@@ -2516,9 +2561,9 @@ export default function SimPage() {
             customRest={query.stickeringRest}
             onCustomRestChange={(v) => recordCustomMask({ ...maskHistory.current.history.current, rest: v })}
           />
-          {/* 图像:不再套折叠区。图本身已经浮在画布左上角,侧栏这一段只剩控件 + 导出,
-              一个「图像」标题栏既没东西可折叠也没图可指。显隐归浮层自己的 × 和播放条
-              按钮(imageOpen),侧栏常驻。 */}
+          {/* One studio owns the preview in both modes; only creation exposes its controls. */}
+          <section className="sim-capture-controls" hidden={!captureMode}>
+          <h2 className="sim-panel-title">{t('图片与导出', 'Image & export')}</h2>
           <PuzzleImageStudio
             spec={imgSpec}
             onSpecChange={setImgSpec}
@@ -2530,15 +2575,21 @@ export default function SimPage() {
             engineOnly={pictureImageStudioEngineOnly}
             compare={imgEngineMode === 'both' && !pictureCubeActive && !roomsActive}
           />
-          {/* Group-theory panel = the visible half of the non-cubing.js view. Shows for any
-              PG-bound puzzle that isn't on cubing.js. Pure-engine PG puzzles (dino/heli/NxN)
-              have no cubing.js option at all → the panel is always on for them. */}
-          {(((PG_BOUND_KINDS.has(String(puzzleParam)) || (typeof puzzleParam === 'number' && nxnHasPgKernel(puzzleParam)))
+          </section>
+          {/* Mount panel-only analysis on demand, independently of the render engine. */}
+          {animationMode && (((PG_BOUND_KINDS.has(String(puzzleParam)) || (typeof puzzleParam === 'number' && nxnHasPgKernel(puzzleParam)))
             && (query.renderer !== 'cubing' || !ENGINE_TWISTY.has(String(puzzleParam))))
             // cubing.js "explore" puzzles: facts-only kernel, shown unless the user picks the
             // plain cubing.js renderer (default renderer is 'group', so on by default).
             || (EXPLORE_BOUND.has(String(puzzleParam)) && query.renderer !== 'cubing')) && (
-            <GroupTheoryPanel puzzle={String(puzzleParam)} getWorld={getWorldView} />
+            <CollapsibleSection
+              open={researchOpen && animationMode}
+              onToggle={() => setResearchOpen(open => !open)}
+              icon={FlaskConical}
+              label={t('结构研究', 'Structure research')}
+            >
+              <GroupTheoryPanel puzzle={String(puzzleParam)} getWorld={getWorldView} />
+            </CollapsibleSection>
           )}
         </aside>
       </div>
@@ -2559,9 +2610,7 @@ export default function SimPage() {
           <PuzzleDrawWorkspace
             active={drawMode}
             puzzle={drawPuzzle}
-            order={typeof drawPuzzle === 'number' ? drawPuzzle : 3}
-            onPuzzleChange={(puzzle) => setQuery({ drawPuzzle: String(puzzle) })}
-            onOrderChange={(order) => setQuery({ drawPuzzle: String(order) })}
+            order={typeof drawPuzzle === 'number' ? drawPuzzle : drawOrder}
             onDocumentChange={setDrawDocument}
             exportPanel={drawDocument ? (
               <PuzzleImageStudio

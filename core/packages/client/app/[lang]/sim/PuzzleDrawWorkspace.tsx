@@ -6,8 +6,6 @@ import {
   useRef,
   type ReactNode,
 } from 'react';
-import { useTranslation } from 'react-i18next';
-import NumberCommitInput from '@/components/NumberCommitInput';
 import CubeDrawPanel from '@/components/puzzle-draw/CubeDrawPanel';
 import FtoDrawPanel from '@/components/puzzle-draw/FtoDrawPanel';
 import MegaminxDrawPanel from '@/components/puzzle-draw/MegaminxDrawPanel';
@@ -15,27 +13,15 @@ import PyraminxDrawPanel from '@/components/puzzle-draw/PyraminxDrawPanel';
 import SkewbDrawPanel from '@/components/puzzle-draw/SkewbDrawPanel';
 import Sq1DrawPanel from '@/components/puzzle-draw/Sq1DrawPanel';
 import type { DrawExport } from '@/components/puzzle-draw/types';
-import { useT } from '@/hooks/useT';
-import type { SimPuzzle } from './PlayerControls';
-import { PuzzleTypeSelect } from './PuzzleTypeSelect';
 import './puzzle-draw-workspace.css';
 
-import { DRAW_PUZZLES } from './puzzleOptions';
-type DrawPuzzle = 'cube' | Exclude<(typeof DRAW_PUZZLES)[number], 'nxn'>;
-
-function drawPuzzleOf(puzzle: SimPuzzle): DrawPuzzle | null {
-  if (typeof puzzle === 'number') return 'cube';
-  if (puzzle === 'sq1' || puzzle === 'megaminx' || puzzle === 'skewb'
-    || puzzle === 'pyraminx' || puzzle === 'fto') return puzzle;
-  return null;
-}
+import type { DrawPuzzleSelection } from './puzzleOptions';
+type DrawPuzzle = 'cube' | Exclude<DrawPuzzleSelection, number>;
 
 export interface PuzzleDrawWorkspaceProps {
   active: boolean;
-  puzzle: SimPuzzle;
+  puzzle: DrawPuzzleSelection;
   order: number;
-  onPuzzleChange: (puzzle: SimPuzzle) => void;
-  onOrderChange: (order: number) => void;
   onDocumentChange: (document: DrawExport | null) => void;
   exportPanel?: ReactNode;
 }
@@ -45,28 +31,13 @@ export default function PuzzleDrawWorkspace({
   active,
   puzzle,
   order,
-  onPuzzleChange,
-  onOrderChange,
   onDocumentChange,
   exportPanel,
 }: PuzzleDrawWorkspaceProps) {
-  const t = useT();
-  const { i18n } = useTranslation();
-  const selected = drawPuzzleOf(puzzle);
-  const current: DrawPuzzle = selected ?? 'cube';
+  const current: DrawPuzzle = typeof puzzle === 'number' ? 'cube' : puzzle;
   const currentRef = useRef<DrawPuzzle>(current);
   currentRef.current = current;
   const documentsRef = useRef<Partial<Record<DrawPuzzle, DrawExport>>>({});
-
-  // An unsupported simulator puzzle cannot produce a meaningful drawing. Only
-  // normalize while this large view is actually open; the hidden mounted editor
-  // must never change the user's simulator selection in the background.
-  useEffect(() => {
-    if (!active) return;
-    if (!selected || (typeof puzzle === 'number' && (puzzle < 2 || puzzle > 20))) {
-      onPuzzleChange(3);
-    }
-  }, [active, onPuzzleChange, puzzle, selected]);
 
   useEffect(() => {
     if (!active) return;
@@ -84,36 +55,8 @@ export default function PuzzleDrawWorkspace({
   const receivePyraminx = useCallback((doc: DrawExport) => receiveDocument('pyraminx', doc), [receiveDocument]);
   const receiveFto = useCallback((doc: DrawExport) => receiveDocument('fto', doc), [receiveDocument]);
 
-  const handlePuzzleSelect = (value: string) => {
-    if (value === 'nxn') onPuzzleChange(order >= 2 && order <= 20 ? order : 3);
-    else if (value === 'sq1' || value === 'megaminx' || value === 'skewb'
-      || value === 'pyraminx' || value === 'fto') onPuzzleChange(value);
-  };
-
   return (
     <div className="sim-draw-workspace">
-      <div className="sim-draw-toolbar">
-        <PuzzleTypeSelect
-          value={current === 'cube' ? 'nxn' : current}
-          onChange={handlePuzzleSelect}
-          isZh={i18n.language === 'zh'}
-          allowedValues={DRAW_PUZZLES}
-        />
-        {current === 'cube' && (
-          <label className="sim-draw-order">
-            <span>{t('阶数', 'Order')}</span>
-            <NumberCommitInput
-              className="sim-draw-order-input"
-              value={Math.max(2, Math.min(20, order))}
-              min={2}
-              max={20}
-              onCommit={onOrderChange}
-              aria-label={t('魔方阶数', 'Cube order')}
-            />
-          </label>
-        )}
-      </div>
-
       <div className="sim-draw-panel" hidden={current !== 'cube'}>
         <CubeDrawPanel order={Math.max(2, Math.min(20, order))} onDocumentChange={receiveCube} />
       </div>
