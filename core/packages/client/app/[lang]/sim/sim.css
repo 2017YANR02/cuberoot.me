@@ -407,6 +407,11 @@
 
 /* 窄屏:cube 在上,面板在下;面板限高,可滚动 */
 @media (max-width: 767px) {
+  .sim-page {
+    top: calc(var(--page-notice-h, 0px) + var(--sim-visible-top, 0px));
+    bottom: auto;
+    height: calc(var(--sim-visible-height, 100dvh) - var(--page-notice-h, 0px));
+  }
   .sim-body {
     flex-direction: column;
   }
@@ -945,6 +950,12 @@
   .sim-header .sim-tool-select { max-width: 100%; }
   .sim-project-controls { flex: 1 0 100%; order: 1; }
   .sim-panel-toggle { display: inline-flex; }
-  .sim-page--panel-expanded .sim-stage { flex: 0 0 25%; }
+  .sim-page--panel-expanded .sim-stage { flex: 0 0 23%; }
+  .sim-page--panel-expanded .sim-playback-under { display: none; }
+  .sim-page--panel-expanded .sim-image-overlay,
+  .sim-page--panel-expanded .sim-backview,
+  .sim-page--panel-expanded .sim-backview-swap,
+  .sim-page--panel-expanded .sim-float-close--backview,
+  .sim-page--panel-expanded .sim-bg-overlay { visibility: hidden; }
   .sim-page--panel-expanded .sim-side { flex: 1; max-height: none; }
 }

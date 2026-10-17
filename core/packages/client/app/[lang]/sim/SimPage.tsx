@@ -333,6 +333,29 @@ export default function SimPage() {
   const animationMode = query.tool === 'sim';
   const captureMode = query.tool === 'capture';
   const [panelExpanded, setPanelExpanded] = useState(false);
+  const pageRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const page = pageRef.current;
+    const viewport = window.visualViewport;
+    if (!page || !viewport) return;
+    const syncViewport = () => {
+      for (const [name, value] of [
+        ['--sim-visible-height', `${viewport.height}px`],
+        ['--sim-visible-top', `${viewport.offsetTop}px`],
+      ]) {
+        if (page.style.getPropertyValue(name) !== value) page.style.setProperty(name, value);
+      }
+    };
+    syncViewport();
+    viewport.addEventListener('resize', syncViewport);
+    viewport.addEventListener('scroll', syncViewport);
+    return () => {
+      viewport.removeEventListener('resize', syncViewport);
+      viewport.removeEventListener('scroll', syncViewport);
+      page.style.removeProperty('--sim-visible-height');
+      page.style.removeProperty('--sim-visible-top');
+    };
+  }, []);
   const [researchOpen, setResearchOpen] = useState(false);
   const [lastCreationTool, setLastCreationTool] = useState<'capture' | 'draw' | 'image'>(
     query.tool === 'sim' ? 'capture' : query.tool,
@@ -2238,7 +2261,7 @@ export default function SimPage() {
   };
 
   return (
-    <div className={`sim-page${fullscreen && animationMode ? ' sim-page--fullscreen' : ''}${panelExpanded ? ' sim-page--panel-expanded' : ''}`} data-board-bg={settings.boardBg} data-workspace={query.tool}>
+    <div ref={pageRef} className={`sim-page${fullscreen && animationMode ? ' sim-page--fullscreen' : ''}${panelExpanded ? ' sim-page--panel-expanded' : ''}`} data-board-bg={settings.boardBg} data-workspace={query.tool}>
       <header className="sim-header">
         <HomeLink className="sim-back" title={t('返回', 'Back')}>
           <ChevronLeft size={18} />
@@ -2288,8 +2311,12 @@ export default function SimPage() {
           )}
         </div>
         {!drawMode && !imageMode && (
-          <button type="button" className="sim-panel-toggle" aria-pressed={panelExpanded}
-            onClick={() => setPanelExpanded(expanded => !expanded)}>
+          <button type="button" className="sim-panel-toggle" aria-expanded={panelExpanded} aria-controls="sim-task-panel"
+            onClick={() => {
+              if (panelExpanded && document.activeElement instanceof HTMLElement
+                && document.activeElement.closest('#sim-task-panel')) document.activeElement.blur();
+              setPanelExpanded(expanded => !expanded);
+            }}>
             {panelExpanded ? t('收起面板', 'Collapse panel') : t('展开面板', 'Expand panel')}
           </button>
         )}
@@ -2458,7 +2485,10 @@ export default function SimPage() {
         <div className="sim-playback-under" ref={setPlaybackSlot} />
         </div>
 
-        <aside className="sim-side" data-site-surface="panel">
+        <aside className="sim-side" data-site-surface="panel" id="sim-task-panel" onFocusCapture={event => {
+          if (window.matchMedia('(max-width: 767px)').matches
+            && event.target.matches('textarea, input:not([type="range"]), [contenteditable="true"]')) setPanelExpanded(true);
+        }}>
           {animationMode && <CollapsibleSection
             open={algsOpen}
             onToggle={() => setAlgsOpen((o) => !o)}
