@@ -319,7 +319,7 @@ export default function SettingsPanel({ onClose, event, actions, presenceControl
             stageVisible={settingState('settings.training.stage-splits').visible}
             value={s}
           />
-          <TimerGoalSettings value={s} event={event} onChange={updateSettings} localize={tr} />
+          <TimerGoalSettings value={s} event={event} onChange={updateSettings} localize={tr} trainingTiming />
         </SettingsSection>
 
         <SettingsSection

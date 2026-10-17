@@ -15,6 +15,9 @@ const BASE = {
 } as const;
 
 describe('shared Solo timer timing display', () => {
+  it('counts training observation upwards without WCA warnings', () => {
+    expect(formatTimerTimingDisplay({ ...BASE, phase: 'inspecting', trainingObservation: true, inspectionDisplayMs: 18_230 })).toBe('18.230');
+  });
   it('locks practice, ready, inspection and live-time display semantics', () => {
     expect(formatTimerTimingDisplay({ ...BASE, timingEnabled: false })).toBe('');
     expect(formatTimerTimingDisplay({ ...BASE, phase: 'ready' })).toBe('0.00');

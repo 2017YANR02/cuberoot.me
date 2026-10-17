@@ -295,6 +295,7 @@ export const TIMER_SETTING_FIELD_CONTRACTS = [
   { id: 'settings.scramble.color-neutral', category: 'scramble', copy: { en: 'Color neutral', zh: '颜色中立' }, storagePath: 'cnMode', value: { kind: 'enum', values: ['none', 'single', 'dual', 'six'] }, visibility: 'color-neutral-event', disabledWhen: 'never', effect: 'persist-color-neutral-mode' },
 
   // Training
+  { id: 'settings.training.start-mode', category: 'training', copy: { en: 'Smart-cube training timing', zh: '智能魔方专项计时方式' }, storagePath: 'trainingStartMode', value: { kind: 'enum', values: ['first-turn', 'scrambled', 'manual'] }, visibility: 'always', disabledWhen: 'never', effect: 'persist-training-start-mode' },
   { id: 'settings.training.stage-splits', category: 'training', copy: { en: 'CFOP stage splits', zh: 'CFOP 分阶段计时' }, storagePath: 'multiStage', value: bool, visibility: 'stage-split-event', disabledWhen: 'never', effect: 'persist-stage-splits' },
   { id: 'settings.training.bld-memo-split', category: 'training', copy: { en: 'BLD memo split', zh: '盲拧记忆 / 执行分段' }, storagePath: 'bldMemo', value: bool, visibility: 'bld-event', disabledWhen: 'never', effect: 'persist-bld-memo-split' },
   { id: 'settings.training.target-time', category: 'training', copy: { en: 'Target time', zh: '目标时间' }, storagePath: 'targetMsByEvent', value: { kind: 'per-event-duration' }, visibility: 'always', disabledWhen: 'never', effect: 'persist-current-event-target' },

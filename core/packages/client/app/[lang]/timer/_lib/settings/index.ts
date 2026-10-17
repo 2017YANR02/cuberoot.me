@@ -23,6 +23,7 @@ import {
   normalizeTimerMetronomeSettings,
   normalizeTimerColorNeutralMode,
   normalizeTimerTrainingSettings,
+  type TrainingStartMode,
   normalizeTimerKeymap,
   type TimerTypeface,
   DEFAULT_TIMER_SMART_CUBE_SETTINGS,
@@ -62,6 +63,7 @@ export interface TimerSettings extends
   TimerAttemptSplitOptions,
   TimerScramblePreviewSettings,
   TimerRandomDifficultySettings {
+  trainingStartMode: TrainingStartMode;
   soloLayout: SoloLayout;
 
   /** Play start/stop/8s/12s sounds via Web Audio. */
@@ -312,6 +314,7 @@ export const DEFAULTS: TimerSettings = {
   keymap: {},
   round: DEFAULT_ROUND_CONFIG,
   targetMsByEvent: {},
+  trainingStartMode: 'first-turn',
   dailySolveGoal: null,
   rankScopes: normalizeTimerRankScopes(undefined),
   rankCountry: '',
