@@ -14,6 +14,7 @@ import World from './engine/world';
 import { timing } from './engine/tweenTiming';
 import tweener from './engine/tweener';
 import { cleanForPlayer } from '@/lib/recon-alg-utils';
+import { cleanReconAlgText } from '@cuberoot/shared/recon-completion';
 import { createCanvasVideoEncoder, type ExportProgress } from '@/lib/canvas-video-export';
 import { saveBlob } from '@/lib/document-export';
 
@@ -38,8 +39,11 @@ export interface SimExportOptions {
   previewCanvas?: HTMLCanvasElement | null;
 }
 
-/** 把 alg 用 cubing.js Alg 展平为单一 leaf moves 序列, 跟 PlayerControls 走同一 parser。 */
-function expandAlg(alg: string): string {
+/** Native engines own their grammar: preserve tuples, corner/edge names and angles. */
+export function prepareSimVideoAlg(alg: string, puzzle: World['puzzleKind']): string {
+  if (typeof puzzle !== 'number' && puzzle !== 'mirror' && puzzle !== 'mirror2' && puzzle !== 'sphere') {
+    return cleanReconAlgText(alg);
+  }
   const cleaned = cleanForPlayer(alg);
   if (!cleaned.trim()) return '';
   try {
@@ -52,7 +56,7 @@ function expandAlg(alg: string): string {
 
 /** 估算总帧数 — 仅用于进度条 (实际帧数取决于 group lock 并发, 最终以循环结束为准)。 */
 function estimateTotalFrames(alg: string): number {
-  const leafs = expandAlg(alg).split(/\s+/).filter(Boolean);
+  const leafs = alg.split(/\s+/).filter(Boolean);
   // 单 move = CubeGroup.frames 帧; 同轴串行假设占满。给个保守估算: 移动数 × frames × 0.9
   const perMove = timing.frames;
   return HOLD_START_FRAMES + Math.max(perMove, Math.round(leafs.length * perMove * 0.9)) + HOLD_END_FRAMES;
@@ -66,7 +70,7 @@ export async function exportSimVideo(opts: SimExportOptions): Promise<void> {
               : 'Browser does not support WebCodecs'));
   }
 
-  const expanded = expandAlg(alg);
+  const expanded = prepareSimVideoAlg(alg, world.puzzleKind);
   if (!expanded) {
     throw new Error((isZh ? '解法为空, 没有可导出的动画' : 'Alg is empty — nothing to record'));
   }
@@ -92,7 +96,7 @@ export async function exportSimVideo(opts: SimExportOptions): Promise<void> {
 
   onProgress?.({
     phase: (isZh ? '准备...' : 'Preparing...'),
-    pct: 0, framesDone: 0, framesTotal: estimateTotalFrames(alg),
+    pct: 0, framesDone: 0, framesTotal: estimateTotalFrames(expanded),
   });
 
   // 2. 能力预检和编码器创建在改变场景前完成。
@@ -121,7 +125,7 @@ export async function exportSimVideo(opts: SimExportOptions): Promise<void> {
   let frameIndex = 0;
   const encodeStartTs = performance.now();
   let lastProgressTs = encodeStartTs;
-  const totalEstimate = estimateTotalFrames(alg);
+  const totalEstimate = estimateTotalFrames(expanded);
   let blob: Blob;
 
   const tickProgress = async (phaseZh: string, phaseEn: string): Promise<void> => {
