@@ -32,7 +32,6 @@ export function reportNotation(recon:ReconTextResult|null,method:ReconstructionT
     });
     const comments=projectReconComment(line.label??'',method,options.cases??new Map(),colors=>options.caseHref?.(sourceLine,colors)).map((part,j)=>({...part.colors?color(String(j),part.colors):textNode(String(j),part.text),href:part.href}));
     const body=groupNode('body',[
-      method==='training'&&line.kind==='inspection'&&recon.inspection?textNode('grip',recon.inspection+' ','sml-moves'):null,
       {id:'moves',kind:'moves',text:tokens.join(' '),tokens:ranges,action:rowAction,className:`sml-moves${options.canSeek?' is-seek':''}`,title:options.canSeek?tr({zh:'复制本行并定位回放',en:'Copy this line and seek playback'}):tr({zh:'复制本行',en:'Copy this line'})},
       comments.length?groupNode('comment',comments,'sml-label','flow'):null,
     ],'sml-body','flow');

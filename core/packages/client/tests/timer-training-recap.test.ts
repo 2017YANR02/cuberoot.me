@@ -4,6 +4,7 @@ import { act, createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { Solve } from '@cuberoot/shared/timer';
 import { prepareTrainingReconstruction } from '@cuberoot/shared/timer/reconstruct/recon-text';
+import { notationQuaternion } from '@cuberoot/shared/timer/reconstruct/gyro-orient';
 import { invertAlg } from '@cuberoot/shared/alg-transform';
 import { normalizeWcaScramble } from '@cuberoot/shared/normalize-wca-scramble';
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
@@ -13,6 +14,7 @@ import ReconstructReport from '@cuberoot/timer-ui/reconstruct-report';
 import { detectSolveMethod } from '@cuberoot/shared/timer/reconstruct/method-walk';
 import { trainingRepetitionMetrics, trainingCaseHistory, trainingCaseStatistics } from '@cuberoot/timer-ui/reconstruct/report-presentation';
 import { initialReportUI, reportComposition, reportTrainingSummary, resolveReportSlots } from '@cuberoot/timer-ui/reconstruct/report-content';
+import { reportNotation } from '@cuberoot/timer-ui/reconstruct/report-notation';
 
 const solve: Solve = { id: 'current', event: 'pll', caseId: 'T', scramble: '', ts: 100, timeMs: 2_100,
   penalty: 'ok', trainingStartMode: 'scrambled', moves: [{ m: 'U', ts: 500 }, { m: 'R', ts: 800 }, { m: 'U', ts: 1_000 }, { m: "R'", ts: 2_100 }] };
@@ -103,6 +105,27 @@ describe('training observation and execution', () => {
     expect(prepared.recon.lines[0].moves).toEqual(['U']);
     const track = reconstructedTrack(prepared.recon.lines, physical.moves!)!;
     expect(smartCubeTargetFacelets(`${physical.scramble} ${prepared.recon.inspection} ${track.map(move => move.m).join(' ')}`))
+      .toBe(smartCubeTargetFacelets(''));
+  });
+
+  it.each([true, false])('keeps initial yellow-up grip out of observed actions (leading AUF: %s)', leadingAuf => {
+    const moves = leadingAuf ? repetition.moves! : repetition.moves!.slice(1);
+    const physical = { ...repetition,
+      scramble: normalizeWcaScramble(`z2 ${invertAlg(moves.map(move => move.m).join(' '))}`)!,
+      moves: moves.map(move => ({ ...move, m: normalizeWcaScramble(`z2 ${move.m}`)! })),
+    };
+    const { recon } = prepareTrainingReconstruction(physical, 'en', [
+      { tMs: 0, q: notationQuaternion('z2'), frame: 'scramble' },
+    ]);
+    expect(recon.inspection).toBe('z2');
+    const report = reportNotation(recon, 'training', initialReportUI(), tr);
+    const observation = report.node!.children!.find(node => node.stage === 'inspection')!;
+    expect(JSON.stringify(observation)).not.toContain('z2');
+    expect(recon.lines[0].moves).toEqual(leadingAuf ? ['U'] : []);
+    // The setup is still required for a lossless exported reconstruction and replay.
+    expect(report.clipboard).toContain('z2 // insp');
+    const track = reconstructedTrack(recon.lines, physical.moves)!;
+    expect(smartCubeTargetFacelets(`${physical.scramble} ${recon.inspection} ${track.map(move => move.m).join(' ')}`))
       .toBe(smartCubeTargetFacelets(''));
   });
 
