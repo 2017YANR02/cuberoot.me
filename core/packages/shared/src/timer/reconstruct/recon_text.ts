@@ -772,11 +772,27 @@ export function simplifyF2lRotations(source: ReconTextResult): ReconTextResult {
   try { recon = orientInspectionForCross(source); } catch { return source; }
   const expanded = recon.lines.map(line => {
     if (line.kind !== 'f2l') return line;
+    // A closed wide-turn trigger is an intentional fingertrick, even when
+    // the library does not contain the complete F2L algorithm.
+    const wideTriggers = new Set<number>();
+    for (let start = 0; start < line.moves.length - 2; start++) {
+      const opening = line.moves[start].match(/^([rludfb]|[RLUDFB]w)(2'?|')?$/);
+      if (!opening) continue;
+      const amount = (suffix: string) => suffix.startsWith('2') ? 2 : suffix === "'" ? -1 : 1;
+      let end = start + 1;
+      while (/^[RLUDFB](?:2'?|')?$/.test(line.moves[end] ?? '')) end++;
+      const closing = line.moves[end]?.match(/^([rludfb]|[RLUDFB]w)(2'?|')?$/);
+      if (end > start + 1 && closing && opening[1][0].toLowerCase() === closing[1][0].toLowerCase()
+        && (amount(opening[2] ?? '') + amount(closing[2] ?? '')) % 4 === 0) {
+        wideTriggers.add(start);
+        wideTriggers.add(end);
+      }
+    }
     const entries: Array<{ token: string; from: number; to: number; range?: RangeMoveItem }> = [];
     for (let i = 0; i < line.moves.length;) {
       const from = i;
       const wide = line.moves[i].match(/^([rludfb]|[RLUDFB]w)(2'?|')?$/);
-      if (wide && !line.libraryCorrection) {
+      if (wide && !line.libraryCorrection && !wideTriggers.has(i)) {
         const definition = WIDE_TURN_DEFS.find(([family]) => family === wide[1][0].toLowerCase())!;
         const [, axis, rotationQuarter, face] = definition;
         const q = wide[2]?.startsWith('2') ? (wide[2].endsWith("'") ? -2 : 2)

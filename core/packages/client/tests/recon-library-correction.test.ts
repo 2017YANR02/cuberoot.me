@@ -407,3 +407,16 @@ it('names an unlabelled recognized family only from the uniquely matched library
   ] }) as unknown as AlgFile);
   expect(result.lines[0].label).toBe('OLL-Right');
 });
+
+it('recognizes last-slot ZBLS without moving the recorded mid-formula regrip', async () => {
+  const original = { ...line("U R U R' U y' R' U' R"), kind: 'f2l' as const, label: 'RB/ZBLS' };
+  const recon = { lines: [original], inspection: '', text: '' } as ReconTextResult;
+  const result = await correctReconFromLibrary(recon, async () => ({
+    cases: [{ name: 'V T', algs: [[{ alg: "U' (R U R' U) F' U' F" }]] }],
+  }) as AlgFile);
+  expect(result.lines[0].label).toBe('RB/ZBLS-V T');
+  expect(result.lines[0].libraryCorrection).toBeDefined();
+  expect(result.lines[0].moves).toEqual(original.moves);
+  expect(result.lines[0].moveRanges).toEqual(original.moveRanges);
+  await equivalent(result.lines[0].moves, original.moves);
+});

@@ -189,7 +189,7 @@ it('rewrites E-wrapped BU/FU runs with equivalent outer turns and net rotation',
   }
 });
 
-it('expands every ordinary F2L wide turn while preserving library formulas and source ranges', async () => {
+it('expands isolated F2L wide turns while preserving closed triggers, library formulas and source ranges', async () => {
   const cube = await getCube3();
   for (const face of ['r', 'l', 'u', 'd', 'f', 'b', 'Rw', 'Lw', 'Uw', 'Dw', 'Fw', 'Bw']) {
     for (const suffix of ['', "'", '2', "2'"]) {
@@ -212,7 +212,7 @@ it('expands every ordinary F2L wide turn while preserving library formulas and s
     }
   }
   expect(simplifyF2lRotations(fixture(['l', 'F', "l'", 'L', 'U', "L'"])).lines[0].moves)
-    .toEqual(['R', 'U', "R'", 'L', 'U', "L'"]);
+    .toEqual(['l', 'F', "l'", 'L', 'U', "L'"]);
 });
 
 it('keeps the reported 12.99 solve cross down after every F2L row and carries its frame into OLL/PLL', async () => {
@@ -241,7 +241,9 @@ it('keeps the reported 12.99 solve cross down after every F2L row and carries it
   for (const row of shown.lines) {
     for (const token of row.moves) state = applyOneToken(state, token);
     if (row.kind === 'f2l') {
-      expect(row.moves.some(token => /^[xzrludfb]/.test(token))).toBe(false);
+      expect(row.moves.some(token => /^[xz]/.test(token))).toBe(false);
+      if (row.key === 'row-2') expect(row.moves).toEqual(rows[2][1].split(' '));
+      else expect(row.moves.some(token => /^[rludfb]/.test(token))).toBe(false);
       expect(state.D[4], row.key).toBe(down);
       expect(isCross(state), row.key).toBe(true);
     }
@@ -368,4 +370,17 @@ it('never leaves z in F2L, including library formulas and stage-end corrections'
   expect(state.D[4]).toBe('D');
   expect(isCross(state)).toBe(true);
   expect(cube.algToTransformation(output.lines.flatMap(row => row.moves).join(' ')).isIdentical(cube.algToTransformation('S'))).toBe(true);
+});
+
+it('preserves the reported closed wide F2L trigger without a library match', async () => {
+  const moves = "R U' R' U2' f R f'".split(' ');
+  const recon = fixture(moves);
+  const original = JSON.stringify(recon);
+  const shown = simplifyF2lRotations(recon);
+  expect(shown.lines[0].moves).toEqual(moves);
+  expect(shown.lines[0].moveRanges).toEqual(recon.lines[0].moveRanges);
+  expect(JSON.stringify(recon)).toBe(original);
+  const cube = await getCube3();
+  expect(cube.algToTransformation(shown.lines[0].moves.join(' '))
+    .isIdentical(cube.algToTransformation(moves.join(' ')))).toBe(true);
 });
