@@ -1,6 +1,6 @@
 import { CubingIcon } from '@cuberoot/event-icon';
 import { TIMER_333_SCRAMBLE_TYPES, timerEventIdFromSelector, timerPuzzleSelection } from '@cuberoot/shared/timer';
-import { Boxes, Check, ChevronDown, ChevronRight } from 'lucide-react';
+import { Boxes, Check, ChevronDown, ChevronRight, Star } from 'lucide-react';
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 
 import {
@@ -10,14 +10,17 @@ import {
   useTimerOverlayControl,
 } from './timer-overlay-control';
 import { CompactSelect } from './CompactSelect';
+import { SearchInput } from './SearchInput';
 
 export interface TimerPuzzlePickerItem {
   id: string;
   label: string;
   iconClass?: string;
   textLabel?: string;
+  searchText?: string;
+  detail?: string;
   /** Optional second level, such as formula sets belonging to this puzzle. */
-  children?: readonly Pick<TimerPuzzlePickerItem, 'id' | 'label' | 'iconClass' | 'textLabel'>[];
+  children?: readonly Pick<TimerPuzzlePickerItem, 'id' | 'label' | 'iconClass' | 'textLabel' | 'searchText' | 'detail'>[];
 }
 
 export interface TimerPuzzlePickerGroup {
@@ -27,6 +30,18 @@ export interface TimerPuzzlePickerGroup {
 }
 
 export interface TimerPuzzlePickerProps extends TimerOverlayControlProps {
+  /** Optional catalog discovery; shared behavior, labels and storage scope supplied by host. */
+  discovery?: {
+    storageKey: string;
+    searchLabel: string;
+    clearLabel: string;
+    emptyLabel: string;
+    resultsLabel: string;
+    recentLabel: string;
+    favoritesLabel: string;
+    favoriteLabel: string;
+    unfavoriteLabel: string;
+  };
   disabled?: boolean;
   groups: readonly TimerPuzzlePickerGroup[];
   onSelect: (id: string) => void;
@@ -55,6 +70,7 @@ const VIEWPORT_MARGIN_PX = 8;
  */
 export function TimerPuzzlePicker({
   dataNoTimer,
+  discovery,
   disabled = false,
   groups: suppliedGroups,
   onSelect,
@@ -71,6 +87,26 @@ export function TimerPuzzlePicker({
   showSubmenuHeading = showMenuHeadings,
   submenuLabel,
 }: TimerPuzzlePickerProps) {
+  const [query, setQuery] = useState('');
+  const [preferences, setPreferences] = useState<{ recent: string[]; favorites: string[] }>({ recent: [], favorites: [] });
+  useEffect(() => {
+    if (!discovery) return;
+    try {
+      const saved = JSON.parse(localStorage.getItem(discovery.storageKey) ?? '{}');
+      const ids = (value: unknown): string[] => Array.isArray(value) ? [...new Set(value.filter((id): id is string => typeof id === 'string'))].slice(0, 100) : [];
+      setPreferences({ recent: ids(saved.recent).slice(0, 8), favorites: ids(saved.favorites) });
+    } catch { setPreferences({ recent: [], favorites: [] }); }
+  }, [discovery?.storageKey]);
+  const savePreferences = (next: typeof preferences) => {
+    setPreferences(next);
+    if (discovery) {
+      try { localStorage.setItem(discovery.storageKey, JSON.stringify(next)); } catch { /* Session preferences still work. */ }
+    }
+  };
+  const select = (id: string) => {
+    if (discovery) savePreferences({ ...preferences, recent: [id, ...preferences.recent.filter(value => value !== id)].slice(0, 8) });
+    onSelect(id);
+  };
   const availableItems = suppliedGroups.flatMap((group) => group.items);
   const separateTypes = Boolean(scrambleTypeLabel && availableItems.some((item) => item.id === '333'));
   const storedEvent = timerEventIdFromSelector(selectedEvent);
@@ -101,7 +137,21 @@ export function TimerPuzzlePicker({
   const [submenuId, setSubmenuId] = useState<string | null>(null);
   const submenuRef = useRef<HTMLDivElement>(null);
   const parentRefs = useRef(new Map<string, HTMLButtonElement>());
-  const hasSubmenus = availableItems.some(item => item.children?.length);
+  const hasSubmenus = !query.trim() && availableItems.some(item => item.children?.length);
+  const leaves = groups.flatMap(group => group.items.flatMap(item => item.children?.length
+    ? item.children.map(child => ({ ...child, detail: `${group.label} / ${item.label}` }))
+    : [{ ...item, detail: group.label }]));
+  const uniqueLeaves = [...new Map(leaves.map(item => [item.id, item])).values()];
+  const shortcutItems = (ids: string[]) => ids.flatMap(id => { const item = uniqueLeaves.find(item => item.id === id); return item ? [item] : []; });
+  const shortcuts: TimerPuzzlePickerGroup[] = discovery ? [
+    { id: 'picker-favorites', label: discovery.favoritesLabel, items: shortcutItems(preferences.favorites) },
+    { id: 'picker-recent', label: discovery.recentLabel, items: shortcutItems(preferences.recent) },
+  ].filter(group => group.items.length) : [];
+  const normalizeSearch = (value: string) => value.normalize('NFKC').toLocaleLowerCase().replace(/[\s×_-]+/g, '');
+  const needle = normalizeSearch(query);
+  const menuGroups: TimerPuzzlePickerGroup[] = needle && discovery
+    ? [{ id: 'picker-search', label: discovery.resultsLabel, items: uniqueLeaves.filter(item => normalizeSearch(`${item.id} ${item.label} ${item.searchText ?? ''} ${item.detail}`).includes(needle)) }]
+    : [...groups.slice(0, groups[0]?.id === 'wca' ? 1 : 0), ...shortcuts, ...groups.slice(groups[0]?.id === 'wca' ? 1 : 0)];
   const submenu = availableItems.find(item => item.id === submenuId && item.children?.length);
   const selectedItem = groups
     .flatMap((group) => group.items)
@@ -113,6 +163,7 @@ export function TimerPuzzlePicker({
 
   const close = useCallback((reason: TimerOverlayOpenReason, restoreFocus = false) => {
     setSubmenuId(null);
+    setQuery('');
     changeOpen(false, reason);
     if (restoreFocus) requestAnimationFrame(() => triggerRef.current?.focus());
   }, [changeOpen]);
@@ -192,7 +243,7 @@ export function TimerPuzzlePicker({
     clamp();
     window.addEventListener('resize', clamp);
     return () => window.removeEventListener('resize', clamp);
-  }, [open, submenuId]);
+  }, [open, submenuId, query]);
 
   if (groups.length === 0) return null;
 
@@ -212,6 +263,11 @@ export function TimerPuzzlePicker({
         aria-label={triggerLabel ?? selectedChoice?.label ?? puzzleLabel}
         className={`pp-trigger${selectedItem ? ' pp-trigger--active' : ''}`}
         disabled={disabled}
+        onKeyDown={event => {
+          if (event.key !== 'ArrowDown') return;
+          event.preventDefault(); setActiveMenu('puzzle'); changeOpen(true, 'trigger');
+          requestAnimationFrame(() => panelRef.current?.querySelector<HTMLElement>('input, [role="menuitem"]')?.focus());
+        }}
         onClick={() => { setActiveMenu('puzzle'); setSubmenuId(null); changeOpen(!open, 'trigger'); }}
         ref={triggerRef}
         type="button"
@@ -223,19 +279,44 @@ export function TimerPuzzlePicker({
         {showArrow && <ChevronDown className="pp-trigger-chevron" size={14} />}
       </button>
       {open && (
-        <div className={`pp-popup${hasSubmenus ? ' pp-popup--nested' : ''}`} id={popupId} ref={panelRef} role="menu"
-          data-site-surface={hasSubmenus ? 'popover' : undefined}>
+        <div className={`pp-popup${hasSubmenus ? ' pp-popup--nested' : ''}${discovery ? ' pp-popup--discovery' : ''}`} id={popupId} ref={panelRef} role="menu"
+          data-site-surface={hasSubmenus ? 'popover' : undefined}
+          onKeyDown={event => {
+            if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
+            if (event.target instanceof HTMLInputElement && event.key !== 'ArrowDown') return;
+            const menu = (event.target as Element).closest('[role="menu"]');
+            const items = [...(menu?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]') ?? [])]
+              .filter(item => item.closest('[role="menu"]') === menu);
+            if (!items.length) return;
+            event.preventDefault();
+            const current = items.indexOf(document.activeElement as HTMLButtonElement);
+            const next = event.key === 'Home' ? 0 : event.key === 'End' ? items.length - 1
+              : (current + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
+            items[next].focus();
+          }}>
+
           <div className={hasSubmenus ? 'pp-cascade-column' : undefined}>
-          {groups.map((group) => (
+          {discovery && <div className="pp-discovery">
+            <SearchInput value={query} onChange={value => { setQuery(value); setSubmenuId(null); }}
+              placeholder={discovery.searchLabel} clearLabel={discovery.clearLabel} />
+            {selectedChoice && <button type="button" className="pp-favorite" aria-pressed={preferences.favorites.includes(selectedPuzzle)}
+              aria-label={preferences.favorites.includes(selectedPuzzle) ? discovery.unfavoriteLabel : discovery.favoriteLabel}
+              onClick={() => savePreferences({ ...preferences, favorites: preferences.favorites.includes(selectedPuzzle)
+                ? preferences.favorites.filter(id => id !== selectedPuzzle) : [...preferences.favorites, selectedPuzzle] })}>
+              <Star size={16} aria-hidden="true" />
+            </button>}
+          </div>}
+          {needle && !menuGroups[0]?.items.length && <p className="pp-empty" role="status">{discovery?.emptyLabel}</p>}
+          {menuGroups.map((group) => (
             <div className="pp-group" key={group.id}>
               {showMenuHeadings && group.label && <div className="pp-group-title">{group.label}</div>}
               <div className="pp-group-items">
                 {group.items.map((item) => {
-                  const active = submenuId === item.id || selectedItem?.id === item.id;
+                  const active = submenuId === item.id || selectedItem?.id === item.id || selectedPuzzle === item.id;
                   const hasChildren = Boolean(item.children?.length);
                   return (
                     <button
-                      aria-current={selectedItem?.id === item.id ? 'page' : undefined}
+                      aria-current={selectedItem?.id === item.id || selectedPuzzle === item.id ? 'page' : undefined}
                       aria-haspopup={hasChildren ? 'menu' : undefined}
                       aria-expanded={hasChildren ? submenuId === item.id : undefined}
                       aria-controls={hasChildren && submenuId === item.id ? `${popupId}-submenu` : undefined}
@@ -250,14 +331,14 @@ export function TimerPuzzlePicker({
                       }}
                       onClick={() => {
                         if (hasChildren) { setSubmenuId(item.id); return; }
-                        onSelect(item.id);
+                        select(item.id);
                         close('select', true);
                       }}
                       role="menuitem"
                       type="button"
                     >
                       {showItemIcons && (!hasSubmenus || item.iconClass || item.textLabel) && renderIcon(item)}
-                      <span className="pp-item-label">{item.label}</span>
+                      <span className="pp-item-label">{item.label}{needle && item.detail && <small className="pp-item-path">{item.detail}</small>}</span>
                       {hasChildren && <ChevronRight className="pp-submenu-arrow" size={14} aria-hidden="true" />}
                       {hasSubmenus && !hasChildren && item.id === selectedPuzzle && <Check className="pp-item-check" size={14} aria-hidden="true" />}
                     </button>
