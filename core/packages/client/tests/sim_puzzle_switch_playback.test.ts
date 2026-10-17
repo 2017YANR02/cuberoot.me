@@ -202,7 +202,11 @@ describe('sim playback across active cube changes', () => {
 
   it('waits for a cold sphere URL to receive its World before applying setup', async () => {
     await mount('sphere', true);
+    expect(button('Play').disabled).toBe(true);
+    expect(button('Step forward').disabled).toBe(true);
+    expect(button('Skip to end').disabled).toBe(true);
     await act(async () => publishWorld());
+    expect(button('Step forward').disabled).toBe(false);
     expect(world.puzzleKind).toBe('sphere');
     expectState('R');
     await act(async () => button('Step forward').click());
