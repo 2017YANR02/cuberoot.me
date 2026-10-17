@@ -19,7 +19,8 @@ export interface TrainingHost {
   mapHref(href: string): string;
   /** Optional toolbar destination for an explicitly hosted settings popover. */
   settingsPortal?: HTMLElement | null;
-  practiceSettings?: ReactNode;
+  /** Device trigger owned by the active trainer, with one BLE/input lifecycle. */
+  devicePortal?: HTMLElement | null;
 }
 
 const TrainingHostContext = createContext<TrainingHost | null>(null);

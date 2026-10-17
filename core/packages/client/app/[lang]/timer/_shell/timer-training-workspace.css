@@ -15,6 +15,49 @@
   border-bottom: 1px solid var(--border-default);
 }
 
+/* The training toolbar hosts the same TimerDeviceCenter as /timer's topbar.
+   Keep its chrome contract here because the trainer surface is outside the
+   timer shell's `.shell-topbar` scope. */
+.timer-training-workspace__toolbar {
+  --timer-topbar-control-size: 32px;
+}
+.timer-training-workspace__toolbar .shell-device-center {
+  position: relative;
+  inset: auto;
+  transform: none;
+  translate: none;
+  width: var(--timer-topbar-control-size);
+  height: var(--timer-topbar-control-size);
+  min-height: var(--timer-topbar-control-size);
+  flex: 0 0 var(--timer-topbar-control-size);
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--foreground);
+}
+.timer-training-workspace__toolbar .shell-device-center-trigger {
+  width: var(--timer-topbar-control-size);
+  height: var(--timer-topbar-control-size);
+  min-height: var(--timer-topbar-control-size);
+  opacity: 0.8;
+  transition: opacity 150ms ease;
+}
+.timer-training-workspace__toolbar .shell-device-center-trigger:hover,
+.timer-training-workspace__toolbar .shell-device-center-trigger:focus-visible,
+.timer-training-workspace__toolbar .shell-device-center-trigger[aria-expanded='true'] {
+  opacity: 1;
+}
+.timer-training-workspace__toolbar .shell-device-center-menu {
+  /* anchored-panel: clamped (TimerDeviceCenter uses usePanelClamp). */
+  top: calc(100% + 6px);
+  bottom: auto;
+  left: 0;
+  right: auto;
+  width: max-content;
+  min-width: 0;
+  max-width: calc(100vw - 16px);
+}
+
 .timer-training-workspace__intro {
   max-width: 48rem;
   margin: 40px auto;

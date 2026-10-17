@@ -37,6 +37,7 @@ type MarkFilter = (typeof MARK_FILTERS)[number];
 export default function TrainerSetClient() {
   const trainingHost = useTrainingHost();
   const [modeParam] = useQueryState('mode');
+  const [timingParam] = useQueryState('timing');
   const [drawParam] = useQueryState('draw');
   const params = useParams<{ lang: string; puzzle: string; set: string }>();
   const puzzleParam = (Array.isArray(params?.puzzle) ? params.puzzle[0] : params?.puzzle) ?? '';
@@ -224,6 +225,7 @@ export default function TrainerSetClient() {
   const runUrl = new URL(originalRunBase, 'https://training.invalid');
   if (trainingHost) {
     if (modeParam) runUrl.searchParams.set('mode', modeParam);
+    if (timingParam !== null) runUrl.searchParams.set('timing', timingParam);
     if (modeParam === 'memo' && drawParam) runUrl.searchParams.set('draw', drawParam);
   }
   const runBase = `${runUrl.pathname}${runUrl.search}`;

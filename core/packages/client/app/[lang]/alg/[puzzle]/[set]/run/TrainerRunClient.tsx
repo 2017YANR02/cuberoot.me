@@ -14,7 +14,8 @@ import {
   useTrainingSearchParams, trainingQueryKey,
 } from '@/lib/training-host';
 import { useTranslation } from 'react-i18next';
-import { Copy, Check, QrCode, RotateCcw, X } from 'lucide-react';
+import { Copy, Check, HelpCircle, QrCode, RotateCcw, X } from 'lucide-react';
+import { Tooltip } from '@/components/Tooltip';
 import { ALG_CATALOG, getAlgSetMeta, type AlgCase } from '@cuberoot/shared/alg';
 import { loadTrainingAlg as loadAlg } from '@/lib/alg_case_alignment';
 import {
@@ -565,12 +566,16 @@ export default function TrainerRunClient() {
         if (puzzle === '3x3' && setSlug === 'psf2l') {
           await preparePsf2lSlotScrambles(d.cases, replaceOuterDAdjustment);
         }
-        if (active) loadSession(puzzle, setSlug, d.cases);
+        // A timer-hosted direct run is the former one-click entry from the
+        // homepage: it starts with the whole set. The dedicated selector keeps
+        // its explicit selection flow, while a standalone run still respects
+        // the saved case selection.
+        if (active) loadSession(puzzle, setSlug, d.cases, { defaultAll: !!trainingHost });
       })
       .catch(failed);
     return () => { active = false; };
   }, [puzzle, setSlug, sessionId, meta, isMix, mixKey, virtual, virtualScope, isVirtualDrill,
-      storePuzzle, storeSet, cases.length, loadSession, loadMixSession, loadRetry]);
+      trainingHost, storePuzzle, storeSet, cases.length, loadSession, loadMixSession, loadRetry]);
 
   useEffect(() => {
     if (storePuzzle !== '3x3' || storeSet !== 'zbll' || puzzle !== '3x3' || setSlug !== 'zbll' || !cases.length || doubleZbll || roomParam || (trainingHost && modeParam === 'memo')) return;
@@ -617,11 +622,11 @@ export default function TrainerRunClient() {
   // 而非已建立的 room —— 必须在自动 join 的 roomAdvance 领题之前就把视图就绪,否则会先按单条领题、
   // 切成三条一屏后 peek/peek2 为空只剩一条。每个房间仅应用一次，之后用户自己改不再被覆盖。
   useEffect(() => {
-    if (trainingHost || !sessionReady || viewApplied.current === roomParam || multiParam !== '1' || !roomParam) return;
+    if (!sessionReady || viewApplied.current === roomParam || multiParam !== '1' || !roomParam) return;
     viewApplied.current = roomParam;
     setTiming(false);
     setMultiScramble(true);
-  }, [trainingHost, sessionReady, multiParam, roomParam, setTiming, setMultiScramble]);
+  }, [sessionReady, multiParam, roomParam, setTiming, setMultiScramble]);
 
   useEffect(() => {
     if (!sessionReady || trainingHost || modeApplied.current) return;
@@ -641,19 +646,10 @@ export default function TrainerRunClient() {
     if ((modeParam === 'memo' || modeParam === 'train' || modeParam === 'recap') && state.mode !== modeParam) {
       state.setMode(modeParam);
     }
-  }, [hosted, sessionReady, modeParam, roomParam, splitEligible]);
-
-  // Timer-hosted execution always records time, including direct links, restored
-  // preferences and room invitations. Split view owns its separate completion
-  // controls; it must not start the single-player clock behind those controls.
-  useEffect(() => {
-    if (!hosted) return;
-    if (timingParam !== null) void setTimingParam(null);
-    if (!sessionReady || splitEligible || timerState !== TimerState.NOT_RUNNING) return;
-    if (!timing) setTiming(true);
-    if (multiScramble) setMultiScramble(false);
-  }, [hosted, sessionReady, splitEligible, timerState, timing, multiScramble,
-      timingParam, setTimingParam, setTiming, setMultiScramble]);
+    if ((timingParam === '1' || timingParam === '0') && state.timing !== (timingParam === '1')) {
+      state.setTiming(timingParam === '1');
+    }
+  }, [hosted, sessionReady, modeParam, timingParam, roomParam, splitEligible]);
 
   // scope slug → 该组全部 case key(与 AlgCategoryView 的 top/sub 两级匹配同一套约定)
   const scopedKeys = useMemo(() => {
@@ -782,6 +778,7 @@ export default function TrainerRunClient() {
   const [resultSolve, setResultSolve] = useState<TrainerSolve | null>(null);
   const closeResult = useCallback(() => setResultSolve(null), []);
   const [optsOpen, setOptsOpen] = useState(false);
+  const [cubeSettingsPortal, setCubeSettingsPortal] = useState<HTMLDivElement | null>(null);
   /**
    * 有弹层盖着:计时和全局按键一律让位 —— 空格别在背后起表,←/→ 别在背后翻题。
    * 声明在计时 / 键盘之前,它俩要读它。
@@ -1224,6 +1221,7 @@ export default function TrainerRunClient() {
   const selectUrl = new URL(originalSelectHref, 'https://training.invalid');
   if (trainingHost) {
     selectUrl.searchParams.set('mode', mode);
+    selectUrl.searchParams.set('timing', timing ? '1' : '0');
     if (mode === 'memo' && drawParam) selectUrl.searchParams.set('draw', drawParam);
   }
   const selectHref = `${selectUrl.pathname}${selectUrl.search}`;
@@ -1455,6 +1453,22 @@ export default function TrainerRunClient() {
 
   return (
     <div className="trainer-root">
+      {!isMemo && <SmartCubeRow
+        enabled={smartCube} onEnabledChange={setSmartCube} state={trainerCube}
+        supported={!splitActive && puzzleHasSmartCube(puzzle)}
+        devicePortal={trainingHost?.devicePortal}
+        settingsPortal={cubeSettingsPortal}
+        timingControl={<BoolToggle
+          value={timing}
+          onChange={value => {
+            setTiming(value);
+            if (trainingHost) void setTimingParam(value ? '1' : '0');
+          }}
+          label={tr({ zh: '计时', en: 'Timing' })}
+          disabled={splitActive || timerState !== TimerState.NOT_RUNNING}
+        />}
+        onSettingsRequested={() => setOptsOpen(true)}
+      />}
       <div className="trainer-topbar">
         {!trainingHost && <Link href={selectHref} className="trainer-back" prefetch={false}>
           {tr({ zh: '选择情况', en: 'Choose cases' })}
@@ -1633,12 +1647,6 @@ export default function TrainerRunClient() {
                         </select>
                       </div>
                     )}
-                    {!trainingHost && <BoolToggle
-                      value={timing}
-                      onChange={setTiming}
-                      label={tr({ zh: '计时', en: 'Timing' })}
-                      disabled={splitActive}
-                    />}
                     {mode === 'recap' && (
                       <>
                         <select
@@ -1670,58 +1678,17 @@ export default function TrainerRunClient() {
                         >
                           <RotateCcw size={13} /> {tr({ zh: '重置', en: 'Reset' })}
                         </button>
+                        <Tooltip openOnClick content={tr({ zh: '覆盖:每轮每个选中 case 各出一次,全部完成后开始下一轮', en: 'Coverage: show every selected case once per round, then start the next round' })}>
+                          {tip => <button {...tip} type="button" className="trainer-opts-help-icon" data-no-timer
+                            aria-label={tr({ zh: '出题方式说明', en: 'About draw modes' })}><HelpCircle size={15} /></button>}
+                        </Tooltip>
                       </>
                     )}
                   </>
                 )}
               </div>
-              {!isMemo && (
-                <div className="trainer-opts-hint">
-                  {mode === 'recap'
-                    ? tr({ zh: '覆盖:每轮每个选中 case 各出一次,全部完成后开始下一轮', en: 'Coverage: show every selected case once per round, then start the next round' })
-                    : tr({ zh: '随机:每题独立抽取,同一 case 可能连续出现', en: 'Random: draw each case independently, so the same case may repeat' })}
-                </div>
-              )}
-              {!isMemo && splitScreenAvailable && (
-                <>
-                  <div className="trainer-opts-row trainer-split-setting">
-                    <BoolToggle
-                      value={splitActive}
-                      onChange={enabled => {
-                        if (!enabled) {
-                          void setSplitParam(null);
-                          return;
-                        }
-                        if (room || pool.length < (doubleZbll ? 4 : 2)) return;
-                        lastTrainingMode.current = 'recap';
-                        setMode('recap');
-                        setTiming(false);
-                        setSmartCube(false);
-                        void setSplitParam('1');
-                        setOptsOpen(false);
-                      }}
-                      disabled={!!room || pool.length < (doubleZbll ? 4 : 2)}
-                      label={tr({ zh: '分屏', en: 'Split view' })}
-                    />
-                  </div>
-                  {(pool.length < (doubleZbll ? 4 : 2) || room) && (
-                    <div className="trainer-opts-hint trainer-split-setting">
-                      {pool.length < (doubleZbll ? 4 : 2)
-                        ? tr({ zh: `至少选择 ${doubleZbll ? 4 : 2} 个 case 才能分屏`, en: `Select at least ${doubleZbll ? 4 : 2} cases to use split view` })
-                        : tr({ zh: '先离开多设备房间，再开启单屏分工', en: 'Leave the multi-device room before starting a shared-screen drill' })}
-                    </div>
-                  )}
-                </>
-              )}
               {/* 智能魔方:接上就不用照打乱拧了,魔方本身变成当前 case */}
-              {!isMemo && (
-                <SmartCubeRow
-                  enabled={smartCube}
-                  onEnabledChange={setSmartCube}
-                  state={trainerCube}
-                  supported={!splitActive && puzzleHasSmartCube(puzzle)}
-                />
-              )}
+              {!isMemo && <div ref={setCubeSettingsPortal} />}
               {isMemo && (
                 <div className="trainer-opts-hint">
                   {tr({
@@ -1947,7 +1914,7 @@ export default function TrainerRunClient() {
                   label={tr({ zh: '纯打乱', en: 'Plain scramble' })}
                 />
                 {/* 三条一屏只在不计时下有意义(计时是一把一把的),分屏时每边独立显示一组。 */}
-                {!timing && (
+                {!isMemo && !timing && (
                   <BoolToggle
                     value={multiScramble}
                     onChange={setMultiScramble}
@@ -1978,14 +1945,42 @@ export default function TrainerRunClient() {
                     label={multi ? tr({ zh: '上三个', en: 'Previous 3' }) : tr({ zh: '上一个', en: 'Previous' })}
                   />
                 )}
+                {splitScreenAvailable && !isMemo && (
+                  <BoolToggle
+                    value={splitActive}
+                    onChange={enabled => {
+                      if (!enabled) {
+                        void setSplitParam(null);
+                        return;
+                      }
+                      if (room || pool.length < (doubleZbll ? 4 : 2)) return;
+                      lastTrainingMode.current = 'recap';
+                      setMode('recap');
+                      setTiming(false);
+                      setSmartCube(false);
+                      void setSplitParam('1');
+                      setOptsOpen(false);
+                    }}
+                    disabled={!!room || pool.length < (doubleZbll ? 4 : 2)}
+                    label={tr({ zh: '分屏', en: 'Split view' })}
+                  />
+                )}
               </div>
+              {splitScreenAvailable && !isMemo && (pool.length < (doubleZbll ? 4 : 2) || room) && (
+                <div className="trainer-opts-hint trainer-split-setting">
+                  {pool.length < (doubleZbll ? 4 : 2)
+                    ? tr({ zh: `至少选择 ${doubleZbll ? 4 : 2} 个 case 才能分屏`, en: `Select at least ${doubleZbll ? 4 : 2} cases to use split view` })
+                    : tr({ zh: '先离开多设备房间，再开启单屏分工', en: 'Leave the multi-device room before starting a shared-screen drill' })}
+                </div>
+              )}
               {timing && (
-                <div className="trainer-opts-hint">
-                  {tr({
+                <Tooltip openOnClick content={tr({
                     zh: 'DNF 记「忘了」,明显慢于本场中位数记「犹豫」,正常记「记得」,明显快记「秒答」。同一个 case 每到期一次只计一把,连做十把不会把间隔吹上天',
                     en: 'A DNF counts as “forgot”, clearly slower than your session median as “hard”, normal as “good”, clearly faster as “easy”. Each case counts once per time it comes due, so ten reps in a row can’t inflate the interval',
-                  })}
-                </div>
+                  })}>
+                  {tip => <button {...tip} type="button" className="trainer-opts-btn is-ghost" data-no-timer
+                    aria-label={tr({ zh: '成绩计入记忆说明', en: 'About solves feeding memory' })}><HelpCircle size={15} /></button>}
+                </Tooltip>
               )}
               {timing && (
                 <div className="trainer-opts-row">

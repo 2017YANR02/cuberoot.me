@@ -2369,7 +2369,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const handlePasteReplay = useCallback(() => setReplayImportOpen(true), []);
 
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [practiceSettingsOpen, setPracticeSettingsOpen] = useState(false);
   const closeSettings = useCallback(() => setSettingsOpen(false), []);
   const [bluetoothOpen, setBluetoothOpen] = useState(false);
   const bluetoothButtonRef = useRef<HTMLButtonElement>(null);
@@ -2518,7 +2517,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     return () => window.removeEventListener('keydown', onKey);
   }, [panelFullscreen, sessionSwitcherOpen]);
 
-  const anyModalOpen = otherModalOpen || hintsSheetOpen || practiceSettingsOpen;
+  const anyModalOpen = otherModalOpen || hintsSheetOpen;
   const anyModalOpenRef = useRef(anyModalOpen);
   useEffect(() => { anyModalOpenRef.current = anyModalOpen; }, [anyModalOpen]);
   useAutoReady({
@@ -3152,7 +3151,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           <TimerTrainingMenu currentEvent={event} onTimerEventChange={selectEvent}
             disabled={!sourceControlsEnabled} showProject
             onAdvancedSettings={() => setSettingsOpen(true)}
-            onSettingsOpenChange={setPracticeSettingsOpen}
             sourceControl={onSelectCases => <span className="timer-practice-control">
           <TimerScrambleSourceSelect
             showArrow={false}

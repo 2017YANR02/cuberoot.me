@@ -133,11 +133,7 @@ export function SettingsPopover({
             className={`settings-popover-panel${panelClassName ? ` ${panelClassName}` : ''}`}
             data-site-surface="popover"
           >
-            {settingsHost?.practiceSettings}
-            {settingsHost?.practiceSettings ? <details className="training-settings-more">
-              <summary>{tr({ zh: '更多设置', en: 'More settings' })}</summary>
-              <div className="training-settings-more__content">{children}</div>
-            </details> : children}
+            {children}
           </div>
         </div>
       )}
