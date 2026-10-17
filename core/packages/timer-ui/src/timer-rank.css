@@ -55,20 +55,28 @@
 .rank-chip-inner .record-badge { font-size: 1em; padding: 0 4px; }
 .rank-scope-options {
   display: inline-flex;
-  border: 1px solid var(--border-default);
-  border-radius: 4px;
-  overflow: hidden;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 .settings-row-control .rank-scope-option {
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
-  border: 0;
-  border-radius: 0;
-  outline-offset: -2px;
-}
-.settings-row-control .rank-scope-option + .rank-scope-option {
-  border-left: 1px solid var(--border-default);
+  min-width: 52px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  cursor: pointer;
 }
 .settings-row-control .rank-scope-option[aria-pressed="true"] {
   background: var(--accent);
   color: var(--accent-foreground);
+}
+.settings-row-control .rank-scope-option:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
 }
