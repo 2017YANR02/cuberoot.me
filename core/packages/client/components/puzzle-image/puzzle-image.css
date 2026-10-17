@@ -209,3 +209,11 @@
   .vc-arrow-builder { gap: 6px; padding: 8px; }
   .vc-num, .vc-select { max-width: 100%; }
 }
+
+.vc-control-section > summary {
+  cursor: pointer;
+  padding: 8px 0;
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+.vc-control-section > .vc-row-controls { margin-top: 8px; }
