@@ -121,18 +121,8 @@ export function cubeStickerIdFromPosit(N: number, positIndex: number): StickerId
   return cubeStickerId(N, f, row, col);
 }
 
-/**
- * Shared SVG assembler. Both entry points — renderUnfoldedSvg (scramble-driven
- * reference) and renderUnfoldedStateSvg (/sim engine companion, state-driven) —
- * emit through here, so layout, stroke, attribute order and every byte of the
- * markup match by construction instead of by parallel porting.
- * `cell(f, i, j)` = fill (+ optional data-sid) for face f, drawn col i, drawn row j.
- */
-function emitUnfolded(
-  N: number,
-  cell: (f: number, i: number, j: number) => { color: string; sid?: string },
-  stickerShape: UnfoldedStickerShape = 'square',
-): string {
+/** Shared geometry for SVG and native drawing adapters; units are sticker widths. */
+export function unfoldedGrid(N: number): { width: number; height: number; faces: [number, number][] } {
   // Tnoodle CubePuzzle layout — same width/height as before:
   //   total width  = (cubie+gap)*4 + gap = 4*N + 5*GAP
   //   total height = (cubie+gap)*3 + gap = 3*N + 4*GAP
@@ -146,6 +136,23 @@ function emitUnfolded(
   FACE_OFFSETS[FACE_U] = [2 * GAP + N,       GAP];
   FACE_OFFSETS[FACE_R] = [3 * GAP + 2 * N,   2 * GAP + N];
   FACE_OFFSETS[FACE_F] = [2 * GAP + N,       2 * GAP + N];
+
+  return { width: w, height: h, faces: FACE_OFFSETS };
+}
+
+/**
+ * Shared SVG assembler. Both entry points — renderUnfoldedSvg (scramble-driven
+ * reference) and renderUnfoldedStateSvg (/sim engine companion, state-driven) —
+ * emit through here, so layout, stroke, attribute order and every byte of the
+ * markup match by construction instead of by parallel porting.
+ * `cell(f, i, j)` = fill (+ optional data-sid) for face f, drawn col i, drawn row j.
+ */
+function emitUnfolded(
+  N: number,
+  cell: (f: number, i: number, j: number) => { color: string; sid?: string },
+  stickerShape: UnfoldedStickerShape = 'square',
+): string {
+  const { width: w, height: h, faces: FACE_OFFSETS } = unfoldedGrid(N);
 
   const parts: string[] = [];
   parts.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%">`);

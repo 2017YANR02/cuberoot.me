@@ -1,3 +1,4 @@
+import { unfoldedGrid, WCA_COLORS, CUBE_FACE_LETTERS, STROKE_W } from '@cuberoot/shared/cube-unfolded-svg';
 import { GanV4CubeConnection, type GanV4CubeCallbacks } from './smart-cube/gan-v4-cube';
 import { GanCubeConnection, type GanCubeStatus } from './smart-cube/gan-cube';
 import { Moyu32CubeConnection, type Moyu32CubeStatus } from './smart-cube/moyu32-cube';
@@ -75,7 +76,7 @@ export function createWatchCubeBridge() {
     recordMove: ({ move, timestamp }) => { recording.recordMove(move, timestamp); },
     startFromCube: atMs => action({ type: 'start-from-cube', nowMs: now, atMs }),
     stopFromCube: atMs => action({ type: 'stop-from-cube', nowMs: now, atMs }),
-    onGuidanceChange: state => emit({ kind: 'guidance', matched: state.match }),
+    onGuidanceChange: state => emit({ kind: 'guidance', contextId, matched: state.match, hint: state.hint }),
   });
   const session = new SmartCubeSessionController<{ delayed?: boolean; estimatedTime?: boolean; futureHistory?: boolean }>({
     now: () => now,
@@ -223,6 +224,17 @@ export function createWatchCubeBridge() {
         }
         solo.setRunning(machine.phase === 'running');
       }
+    },
+    scramblePreview(facelets: string) {
+      if (!/^[URFDLB]{54}$/.test(facelets)) return 'null';
+      const grid = unfoldedGrid(3);
+      const cells = CUBE_FACE_LETTERS.flatMap((face, f) => Array.from({ length: 9 }, (_, i) => {
+        const color = WCA_COLORS[CUBE_FACE_LETTERS.indexOf(facelets['URFDLB'.indexOf(face) * 9 + i] as typeof face)];
+        const rgb = parseInt(color.slice(1), 16);
+        return { x: grid.faces[f][0] + i % 3, y: grid.faces[f][1] + Math.floor(i / 3),
+          color: [(rgb >> 16 & 255) / 255, (rgb >> 8 & 255) / 255, (rgb & 255) / 255] };
+      }));
+      return JSON.stringify({ width: grid.width, height: grid.height, stroke: STROKE_W, cells });
     },
     drain() { const result = output; output = []; return JSON.stringify(result); },
   };
