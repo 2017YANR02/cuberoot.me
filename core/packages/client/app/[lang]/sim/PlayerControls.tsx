@@ -1062,6 +1062,7 @@ export default function PlayerControls({
   const stepRef = useRef(0);
   const replayRequestRef = useRef(0);
   const replayPendingRef = useRef(false);
+  const [replayPending, setReplayPending] = useState(false);
   const setupElRef = useRef<HTMLTextAreaElement | null>(null);
   const algElRef = useRef<HTMLTextAreaElement | null>(null);
   useEffect(() => { stepRef.current = step; }, [step]);
@@ -1418,6 +1419,7 @@ export default function PlayerControls({
     if (!world || !engineReady || world.cube !== activeCube) return;
     const replayRequest = ++replayRequestRef.current;
     replayPendingRef.current = false; // non-NxN replay paths below are synchronous
+    setReplayPending(false);
     // Release any held-partial (debug) turn first: an NxN frozen layer holds the
     // cube lock, which would make the replay's group.twist below spin forever.
     clearFrozen();
@@ -1495,11 +1497,13 @@ export default function PlayerControls({
       ? (setupDraft + ' ' + invertAlg(stripHandMarks(algDraft))).trim()
       : setupDraft;
     replayPendingRef.current = true;
+    setReplayPending(true);
     try {
       await cube.twister.setupAsync(effectiveSetup);
     } finally {
       if (replayRequest === replayRequestRef.current && world.cube === cube) {
         replayPendingRef.current = false;
+        setReplayPending(false);
       }
     }
     // A later seek or puzzle switch owns the UI now. Do not continue replaying on
@@ -1587,6 +1591,7 @@ export default function PlayerControls({
       setPlaying(false);
       replayRequestRef.current++;
       replayPendingRef.current = true;
+      setReplayPending(true);
       scrambleReqIdRef.current++;
       skipAutoResetRef.current = false;
       animatingScrambleRef.current = false;
@@ -2680,6 +2685,7 @@ export default function PlayerControls({
         {stickeringSelect}
       </div>
       <PlaybackBar layout="wide"
+        disabled={!isTwistyMode && (!engineReady || replayPending)}
         step={isTwistyMode ? (totalSteps > 0 ? twistyPlayback.step : 0) : step}
         total={totalSteps}
         playing={isTwistyMode ? totalSteps > 0 && twistyPlayback.playing : playing}

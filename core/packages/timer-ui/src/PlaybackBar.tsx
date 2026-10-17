@@ -57,7 +57,7 @@ export function PlaybackBackViewButton({ visible, toggle = true, onClick, showLa
 }
 
 export default function PlaybackBar({
-  step, total, playing,
+  step, total, playing, disabled = false,
   onScrub, onSkipStart, onStepBack, onTogglePlay, onStepForward, onSkipEnd,
   leading, trailing, labels, layout = 'compact', segmentEnds,
 }: {
@@ -65,6 +65,7 @@ export default function PlaybackBar({
   total: number;
   segmentEnds?: readonly number[];
   playing: boolean;
+  disabled?: boolean;
   onScrub: (n: number) => void;
   onSkipStart: () => void;
   onStepBack: () => void;
@@ -77,9 +78,9 @@ export default function PlaybackBar({
   labels?: Partial<PlaybackBarLabels>;
 }) {
   const L = { ...DEFAULT_LABELS, ...labels };
-  const atStart = step <= 0;
-  const atEnd = step >= total;
-  const empty = total === 0;
+  const atStart = disabled || step <= 0;
+  const atEnd = disabled || step >= total;
+  const empty = disabled || total === 0;
   // Fraction of the way along the track the thumb sits, so the value bubble can
   // float directly above it (native <input type=range> gives no thumb hook — the
   // calc offsets by the thumb width so the label tracks the thumb centre exactly).
