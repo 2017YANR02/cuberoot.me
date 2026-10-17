@@ -4,7 +4,8 @@ export interface UURemoteRuntime {
     getItem(key: string): Promise<string | null>;
     setItem(key: string, value: string): Promise<void>;
   };
-  canOpen(): Promise<boolean>;
+  /** Optional preflight. Android must use the launch result, not package visibility. */
+  canOpen?(): Promise<boolean>;
   open(url: string): Promise<boolean>;
   appId(): Promise<string>;
   nonce(): string;
@@ -80,7 +81,7 @@ export class UURemoteClient {
   }
   start = (mode: 'bind' | 'fullscreen' | 'pip'): Promise<void> => this.run(async () => {
     if (this.saved.pending && this.saved.pending.expires > this.runtime.now()) return;
-    if (!(await this.runtime.canOpen())) { this.publish({ message: 'not_installed' }); return; }
+    if (this.runtime.canOpen && !(await this.runtime.canOpen())) { this.publish({ message: 'not_installed' }); return; }
     if (mode !== 'bind' && !this.saved.device) { this.publish({ message: 'no_binding' }); return; }
     const kind = mode === 'bind' ? 'bind' : 'control';
     const pending: Pending | null = mode === 'fullscreen' ? null : { kind, nonce: this.runtime.nonce(), expires: this.runtime.now() + MAX_WAIT };
