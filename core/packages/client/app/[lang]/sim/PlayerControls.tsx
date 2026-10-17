@@ -2394,7 +2394,9 @@ export default function PlayerControls({
       if (!timeline || !originalSetup || !originalAlg || !originalAnchor) return;
       if (reqId !== twistyReplayReqIdRef.current) return;
       const original = { setup: originalSetup.alg, alg: originalAlg.alg, anchor: originalAnchor };
-      const previewText = toPlaybackText?.(scramble) ?? scramble;
+      let previewText: string;
+      try { previewText = new Alg(toPlaybackText?.(scramble) ?? scramble).toString(); }
+      catch { return; }
       restorePreviewRef.current = async (revision) => {
         player.pause();
         const [currentAlg, currentSetup, currentAnchor] = await Promise.all([
