@@ -1562,6 +1562,14 @@ export const CATALOG: ComponentEntry[] = [
     en: 'General website puzzle dropdown shared by Recent Scrambles, Predict, Sim, Solver, and Scramble Stats. Pass wcaEvents for the data-driven WCA + csTimer family catalog, or groups for a page-specific available set. Single-select callback items may supply children to reuse TimerPuzzlePicker for family → puzzle submenus while keeping WCA entries directly accessible. linkFor preserves middle-click navigation; onSelect updates in-page state. Timer surfaces must use the cross-platform TimerPuzzlePicker. Do not hand-roll page-local puzzle menus.',
   },
   {
+    name: 'PuzzleTypeSelect',
+    import: "import { PuzzleTypeSelect } from '@/app/[lang]/sim/PuzzleTypeSelect';",
+    category: 'input',
+    zh: '动画与作图共用的项目选择器，复用 PuzzlePicker 与模拟器项目目录，保留 WCA 顺序和系列子菜单。',
+    en: 'Puzzle selector shared by animation and drawing, using PuzzlePicker and the simulator catalog with stable WCA ordering and family submenus.',
+    usage: '<PuzzleTypeSelect value="nxn" onChange={setPuzzle} isZh={false} />',
+  },
+  {
     name: 'AlgPuzzlePicker',
     import: "import AlgPuzzlePicker from '@/components/AlgPuzzlePicker';",
     category: 'more',
