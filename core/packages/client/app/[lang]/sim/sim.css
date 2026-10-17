@@ -960,3 +960,19 @@
   .sim-page--panel-expanded .sim-bg-overlay { visibility: hidden; }
   .sim-page--panel-expanded .sim-side { flex: 1; max-height: none; }
 }
+
+/* Short, narrow viewports (including desktop zoom) cannot fit the canvas and
+   playback bar into a percentage-height stage. Let the whole body scroll so
+   the controls stay in flow instead of overlapping the editor below. */
+@media (max-width: 767px) and (max-height: 600px) {
+  .sim-body { overflow-y: auto; }
+  .sim-stage,
+  .sim-page--panel-expanded .sim-stage { flex: 0 0 auto; }
+  .sim-canvas-wrap { flex: 0 0 180px; }
+  .sim-side,
+  .sim-page--panel-expanded .sim-side {
+    flex: 0 0 auto;
+    max-height: none;
+    overflow-y: visible;
+  }
+}
