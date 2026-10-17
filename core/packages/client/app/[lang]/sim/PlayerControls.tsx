@@ -24,7 +24,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useT } from '@/hooks/useT';
-import { Play, FlipHorizontal2, FlipVertical2, Eraser, Shuffle, Link2, Check, Search, Loader2, Keyboard, Grid3x3 } from 'lucide-react';
+import { FlipHorizontal2, FlipVertical2, Eraser, Link2, Check, Keyboard, Grid3x3 } from 'lucide-react';
 import { Alg, Move } from 'cubing/alg';
 import type { TwistyPlayer } from 'cubing/twisty';
 import World from './engine/world';
@@ -103,10 +103,9 @@ import { simulateGrips, type GripName, type GripSimStep, type HandSide, type Pin
 import { flattenAlg, stm, stripGripMarks } from '@cuberoot/shared/alg-notation';
 import { canonicalFtoEifAlgorithm, invertFtoEifAlgorithm, reduceFtoEifAlgorithm } from '@cuberoot/shared/fto-notation';
 import { stripFtnBlocks, FTN_TOKEN, parseFtnPin } from './engine/hands/ftn';
-import { ClearButton } from '@/components/ClearButton';
 export { SIM_FIXED_PUZZLE_OPTIONS } from './puzzleOptions';
 import { simSpeedToTps, simTpsToSpeed } from '@/lib/sim_timing';
-import AlgInput from '@/components/AlgInput';
+import SimAlgEditor, { type SimAlgHighlightSpan } from './SimAlgEditor';
 import ReconAutofill from '@/components/ReconAutofill';
 import PlaybackBar, { PlaybackAnchorSelect } from '@/components/PlaybackBar';
 import { createTwistyPlayback, EMPTY_TWISTY_PLAYBACK_STATE, type TwistyPlaybackPlayer, type TwistyPlaybackState } from '@/lib/twisty-playback';
@@ -623,18 +622,16 @@ function autosize(el: HTMLTextAreaElement | null): void {
   el.style.height = el.scrollHeight + 'px';
 }
 
-type AlgHlSpan = { text: string; bad?: boolean; current?: boolean };
-
 /** Splice a `[start, end)` "currently playing" range across a span list, tagging
  *  the overlapping slice(s) `current` (and slicing a span in two/three when the
  *  range only partly covers it) — same mirror-overlay trick the Ivy `bad`
  *  highlighting already uses (`.sim-player-hl`), just orange instead of red and
  *  driven by playback position instead of live validation. */
-function applyAlgHighlight(spans: AlgHlSpan[], range: [number, number] | null): AlgHlSpan[] {
+function applyAlgHighlight(spans: SimAlgHighlightSpan[], range: [number, number] | null): SimAlgHighlightSpan[] {
   if (!range) return spans;
   const [hs, he] = range;
   if (he <= hs) return spans;
-  const out: AlgHlSpan[] = [];
+  const out: SimAlgHighlightSpan[] = [];
   let pos = 0;
   for (const s of spans) {
     const start = pos;
@@ -1392,7 +1389,7 @@ export default function PlayerControls({
     return p ? [p.start, p.end] : null;
   }, [playing, caretChar, itemPositions, step, algDraft]);
 
-  const algHlBaseSpans = useMemo<AlgHlSpan[]>(
+  const algHlBaseSpans = useMemo<SimAlgHighlightSpan[]>(
     () => algValidationSpans ?? [{ text: algDraft }],
     [algValidationSpans, algDraft],
   );
@@ -2485,173 +2482,85 @@ export default function PlayerControls({
     <div className="sim-player">
       {!active && stickeringSelect}
       <div className="sim-animation-controls" hidden={!active}>
-      {scramblePreview && <div className="sim-preview-notice" role="status">
-        <span>{t('正在预览打乱', 'Previewing scramble')}</span>
-        <button type="button" onClick={restoreScramblePreview} title={t('返回公式', 'Return to algorithm')}>{t('返回公式', 'Return to algorithm')}</button>
-      </div>}
-      <label className="sim-field-label" htmlFor="sim-setup">{t('初始状态', 'Initial state')}</label>
-      <div className="sim-player-row sim-player-row--top">
-        <div className="sim-player-hlwrap">
-          {setupValidationSpans && (
-            <div className="sim-player-hl" aria-hidden="true">
-              {setupValidationSpans.map((s, i) => (
-                <span key={i} className={s.bad ? 'bad' : undefined}>{s.text}</span>
-              ))}
-            </div>
-          )}
-          <textarea
-            ref={setupElRef}
-            id="sim-setup"
-            aria-describedby={setupError ? 'sim-setup-error' : undefined}
-            onFocus={restoreScramblePreview}
-            defaultValue={setupDraft}
-            rows={1}
-            spellCheck={false}
-            className={setupValidationSpans ? 'sim-player-input sim-player-input--hl' : 'sim-player-input'}
-            aria-invalid={!nativeSetupValid || (squareFamilySpec ? !squareFamilySetupValid : corner ? !cornerSetupValid : undefined)}
-            placeholder={t('打乱', 'Scramble')}
-            onInput={(e) => {
-              const el = e.currentTarget;
-              autosize(el);
-              setSetupDraft(el.value);
-              onSetupChange(el.value);
-            }}
-          />
-        </div>
-        <button
-          type="button"
-          className="sim-player-scramble"
-          onClick={handleScramble}
-          disabled={!nativeAlgValid}
-          title={t('随机打乱', 'Random scramble')}
-          aria-label={t('随机打乱', 'Random scramble')}
-        >
-          <Shuffle size={14} />
-          {t('随机打乱', 'Random scramble')}
-        </button>
-        {is3x3 && (
-          <button
-            type="button"
-            className="sim-player-scramble"
-            onClick={handleDeriveScramble}
-            disabled={optimalScrambleBusy || !algDraft.trim()}
-            title={t('从下方解法反推最优打乱(云端，需登录)', 'Derive an optimal scramble from the solution below (cloud, sign-in required)')}
-            aria-label={t('反推最优打乱', 'Derive optimal scramble')}
-          >
-            {optimalScrambleBusy ? <Loader2 size={14} className="sim-spin" /> : <Search size={14} />}
-          </button>
-        )}
-        <button
-          type="button"
-          className="sim-player-scramble"
-          onClick={handlePlayScramble}
-          disabled={corner?.endAnchor === false || !setupDraft.trim() || !squareFamilySetupValid || !cornerSetupValid || !nativeSetupValid || !nativeAlgValid}
-          title={t('动画展示打乱', 'Animate scramble')}
-          aria-label={t('动画展示打乱', 'Animate scramble')}
-        >
-          <Play size={14} />
-        </button>
-      </div>
-      {isMagicPuzzle(puzzleKind) && (
-        <MagicRouteControls
-          cube={engineReady && world?.cube instanceof MagicCube ? world.cube : null}
-          puzzle={puzzleKind}
-          valid={cornerCanPlay}
-          onRoute={direction => {
-            clearFrozen();
-            setPlaying(false);
-            const setup = `${puzzleKind === 'mmagic' ? 'M ' : ''}${direction}`;
-            const solution = magicSolution(puzzleKind);
-            setSetupDraft(setup);
-            onSetupChange(setup);
-            setAlgDraft(solution);
-            onAlgChange(solution);
-            if (setupElRef.current) setupElRef.current.value = setup;
-            if (algElRef.current) algElRef.current.value = solution;
-            stepRef.current = 0;
-            setStep(0);
-            if (world?.cube instanceof MagicCube) world.cube.twister.setup(setup);
-          }}
-          onFold={dir => {
-            if (!engineReady || !(world?.cube instanceof MagicCube)) return;
-            clearFrozen();
-            if (world.cube.twister.twist({ kind: 'fold', dir }, settings.animatePlayback === false, false)) {
-              appendUserMove(dir === 1 ? 'F' : "F'");
-            }
-          }}
-        />
-      )}
-      {puzzleKind === 'pyraminx_duo' && (
-        <div className="sim-player-status">
-          {tr('使用 U、L、R、B 及其逆转（加撇号），每次转动 120°。', 'Use U, L, R, B and their inverses (with a prime); each turn is 120°.')}
-        </div>
-      )}
-      {puzzleKind === 'ghost' && (
-        <div className="sim-player-status">
-          <button type="button" className="sim-player-scramble" onClick={() => {
-            if (!(world?.cube instanceof GhostCube)) return;
-            clearFrozen();
-            world.cube.twister.finish();
-            const text = ghostMovesToString(ghostAlignmentMoves(world.cube.pose));
-            if (text) { world.cube.twister.push(text); appendUserMove(text); }
-          }}>{tr('对齐切层', 'Align layers')}</button>
-          <span>{cornerCanPlay
-            ? tr('先对齐再转侧层；字母表示内部转轴。', 'Align before side turns; letters refer to internal axes.')
-            : tr('记号无效或切层未对齐。还原态先输入 U29° D35°。', 'Invalid notation or misaligned layers. From solved, start with U29° D35°.')}</span>
-        </div>
-      )}
-      {optimalScrambleStatus && (
-        <div className="sim-player-status">
-          {optimalScrambleBusy && <Loader2 size={14} className="sim-spin" />}
-          <span>{optimalScrambleStatus}</span>
-          {optimalScrambleBusy && (
-            <ClearButton
-              variant="standalone"
-              onClick={cancelOptimalScramble}
-              ariaLabel={t('取消', 'Cancel')}
-              title={t('取消', 'Cancel')}
+      <SimAlgEditor
+        setup={{
+          text: setupDraft, elementRef: setupElRef, spans: setupValidationSpans, error: setupError,
+          invalid: !nativeSetupValid || (squareFamilySpec ? !squareFamilySetupValid : corner ? !cornerSetupValid : undefined),
+          onFocus: restoreScramblePreview,
+          onInput: (el) => {
+            autosize(el);
+            setSetupDraft(el.value);
+            onSetupChange(el.value);
+          },
+        }}
+        alg={{
+          text: algDraft, elementRef: algElRef, spans: algHlSpans, error: algError,
+          showOverlay: showAlgOverlay, autoSpace: algAutoSpace, onFocus: flushPendingScramble,
+          onChange: (text) => { setAlgDraft(text); onAlgChange(text); },
+          onCaretChange: handleCaretSync,
+        }}
+        is3x3={is3x3}
+        algStm={algStm}
+        scramble={{
+          previewing: !!scramblePreview, onRestore: restoreScramblePreview,
+          onRandom: handleScramble, randomDisabled: !nativeAlgValid,
+          onPreview: handlePlayScramble,
+          previewDisabled: corner?.endAnchor === false || !setupDraft.trim() || !squareFamilySetupValid || !cornerSetupValid || !nativeSetupValid || !nativeAlgValid,
+          onDerive: is3x3 ? handleDeriveScramble : undefined,
+          busy: optimalScrambleBusy, status: optimalScrambleStatus,
+          onCancel: cancelOptimalScramble,
+        }}
+        setupExtras={<>
+          {isMagicPuzzle(puzzleKind) && (
+            <MagicRouteControls
+              cube={engineReady && world?.cube instanceof MagicCube ? world.cube : null}
+              puzzle={puzzleKind}
+              valid={cornerCanPlay}
+              onRoute={direction => {
+                clearFrozen();
+                setPlaying(false);
+                const setup = `${puzzleKind === 'mmagic' ? 'M ' : ''}${direction}`;
+                const solution = magicSolution(puzzleKind);
+                setSetupDraft(setup);
+                onSetupChange(setup);
+                setAlgDraft(solution);
+                onAlgChange(solution);
+                if (setupElRef.current) setupElRef.current.value = setup;
+                if (algElRef.current) algElRef.current.value = solution;
+                stepRef.current = 0;
+                setStep(0);
+                if (world?.cube instanceof MagicCube) world.cube.twister.setup(setup);
+              }}
+              onFold={dir => {
+                if (!engineReady || !(world?.cube instanceof MagicCube)) return;
+                clearFrozen();
+                if (world.cube.twister.twist({ kind: 'fold', dir }, settings.animatePlayback === false, false)) {
+                  appendUserMove(dir === 1 ? 'F' : "F'");
+                }
+              }}
             />
           )}
-        </div>
-      )}
-
-      {setupError && <p id="sim-setup-error" className="sim-input-error" role="status">{setupError}</p>}
-      <label className="sim-field-label" htmlFor="sim-alg">{t('公式', 'Algorithm')}</label>
-      <div className="sim-player-row">
-        <div className="sim-player-hlwrap">
-          {showAlgOverlay && (
-            <div className="sim-player-hl" aria-hidden="true">
-              {algHlSpans.map((s, i) => (
-                <span
-                  key={i}
-                  className={[s.bad && 'bad', s.current && 'current'].filter(Boolean).join(' ') || undefined}
-                >
-                  {s.text}
-                </span>
-              ))}
+          {puzzleKind === 'pyraminx_duo' && (
+            <div className="sim-player-status">
+              {tr('使用 U、L、R、B 及其逆转（加撇号），每次转动 120°。', 'Use U, L, R, B and their inverses (with a prime); each turn is 120°.')}
             </div>
           )}
-          <AlgInput
-            id="sim-alg"
-            inputMode="text"
-            ariaInvalid={Boolean(algError)}
-            ariaDescribedBy={algError ? 'sim-alg-error' : undefined}
-            elementRef={algElRef as RefObject<HTMLTextAreaElement | HTMLDivElement | null>}
-            initialText={algDraft}
-            rows={1}
-            spellCheck={false}
-            autoSpace={algAutoSpace}
-            autoResize
-            className={showAlgOverlay ? 'sim-player-input sim-player-input--hl' : 'sim-player-input'}
-            placeholder={t('解法', 'Solution')}
-            title={is3x3 ? t('支持换握记号:↑ 上手(拇指起手 U 面)、↓ 下手(D 面)、· 回 home 握', 'Grip marks supported: ↑ thumb-up grip, ↓ thumb-down grip, · back to home grip') : undefined}
-            onFocus={flushPendingScramble}
-            onChange={(text) => {
-              setAlgDraft(text);
-              onAlgChange(text);
-            }}
-            onCaretChange={handleCaretSync}
-          />
+          {puzzleKind === 'ghost' && (
+            <div className="sim-player-status">
+              <button type="button" className="sim-player-scramble" onClick={() => {
+                if (!(world?.cube instanceof GhostCube)) return;
+                clearFrozen();
+                world.cube.twister.finish();
+                const text = ghostMovesToString(ghostAlignmentMoves(world.cube.pose));
+                if (text) { world.cube.twister.push(text); appendUserMove(text); }
+              }}>{tr('对齐切层', 'Align layers')}</button>
+              <span>{cornerCanPlay
+                ? tr('先对齐再转侧层；字母表示内部转轴。', 'Align before side turns; letters refer to internal axes.')
+                : tr('记号无效或切层未对齐。还原态先输入 U29° D35°。', 'Invalid notation or misaligned layers. From solved, start with U29° D35°.')}</span>
+            </div>
+          )}
+        </>}
+        autofill={<>
           {is3x3 && <ReconAutofill
             textareaRef={algElRef}
             value={algDraft}
@@ -2666,94 +2575,86 @@ export default function PlayerControls({
               onAlgChange(text);
             }}
           />}
-        </div>
-        {is3x3 && algStm > 0 && (
-          <output
-            className="sim-player-count"
-            aria-label={t(`解法步数:${algStm} STM`, `Solution length: ${algStm} STM`)}
-          >
-            {algStm} STM
-          </output>
+        </>}
+        notationControls={<>
+          {puzzleKind === 'skewb' && skewbNotation && onSkewbNotationChange && (
+            <select
+              className="sim-player-mode"
+              value={skewbNotation}
+              onChange={(e) => onSkewbNotationChange(e.target.value as SkewbNotation)}
+              title={t('斜转记号:WCA (R/U/L/B) 或 Sarah (R/L/B/F 含 S H 宏)', 'Skewb notation: WCA (R/U/L/B) or Sarah (R/L/B/F with S/H macros)')}
+            >
+              <option value="wca">WCA</option>
+              <option value="sarah">Sarah</option>
+            </select>
+          )}
+          {puzzleKind === 'kilominx' && onKilominxNotationChange && (
+            <select
+              className="sim-player-mode"
+              aria-label={t('二阶五魔方记号', 'Kilominx notation')}
+              value={kilominxNotation}
+              onChange={(e) => {
+                const next = e.target.value as KilominxNotation;
+                const newSetup = convertKilominxAlg(setupDraft, kilominxNotation, next);
+                const newAlg = convertKilominxAlg(algDraft, kilominxNotation, next);
+                // Supersede pending moves / scrambles before changing their convention.
+                ++scrambleReqIdRef.current;
+                pendingAlgCommitRef.current = null;
+                if (algCommitTimerRef.current != null) {
+                  window.clearTimeout(algCommitTimerRef.current);
+                  algCommitTimerRef.current = null;
+                }
+                replacedSetupRef.current = setupDraftRef.current;
+                pushedSetupRef.current = newSetup;
+                replacedAlgRef.current = lastCommittedAlgRef.current;
+                pushedAlgRef.current = newAlg;
+                lastCommittedAlgRef.current = newAlg;
+                setSetupDraft(newSetup);
+                setAlgDraft(newAlg);
+                onKilominxNotationChange(next, newSetup, newAlg);
+              }}
+              title={t('计时器使用 csTimer 记号；切换时自动转换打乱与解法', 'The timer uses csTimer notation; switching converts both scramble and solution')}
+            >
+              <option value="cstimer">csTimer</option>
+              <option value="cubing">Twizzle</option>
+            </select>
+          )}
+          {isSquarePuzzle && (
+            <select
+              className="sim-player-mode"
+              value={squareFormat}
+              onChange={(e) => {
+                const next = e.target.value as SquareFamilyNotationFormat;
+                const convert = isSq1
+                  ? next === 'wca' ? canonicalSq1Alg : compactSq1Alg
+                  : squareFamilySpec
+                    ? (text: string) => formatSquareFamilyAlg(text, squareFamilySpec, next)
+                    : (text: string) => text;
+                const newSetup = setupDraft.trim() ? convertSquareText(setupDraft, convert) : '';
+                const newAlg = algDraft.trim() ? convertSquareText(algDraft, convert) : '';
+                if (squarePuzzleKind) {
+                  setSquareFormats((formats) => ({ ...formats, [squarePuzzleKind]: next }));
+                }
+                setSetupDraft(newSetup);
+                onSetupChange(newSetup);
+                setAlgDraft(newAlg);
+                onAlgChange(newAlg);
+              }}
+              title={t('记号格式', 'Notation format')}
+            >
+              <option value="compact">{t('简化', 'Compact')}</option>
+              <option value="wca">{isSq1 ? 'WCA' : t('标准', 'Standard')}</option>
+            </select>
+          )}
+        </>}
+        algHelp={puzzleKind === 'skewb' && skewbNotation && !isTwistyMode && (
+          <SkewbNotationGuide
+            notation={skewbNotation}
+            onDemo={demoNotationMove}
+            onRestore={restoreFromDemo}
+          />
         )}
-        {puzzleKind === 'skewb' && skewbNotation && onSkewbNotationChange && (
-          <select
-            className="sim-player-mode"
-            value={skewbNotation}
-            onChange={(e) => onSkewbNotationChange(e.target.value as SkewbNotation)}
-            title={t('斜转记号:WCA (R/U/L/B) 或 Sarah (R/L/B/F 含 S H 宏)', 'Skewb notation: WCA (R/U/L/B) or Sarah (R/L/B/F with S/H macros)')}
-          >
-            <option value="wca">WCA</option>
-            <option value="sarah">Sarah</option>
-          </select>
-        )}
-        {puzzleKind === 'kilominx' && onKilominxNotationChange && (
-          <select
-            className="sim-player-mode"
-            aria-label={t('二阶五魔方记号', 'Kilominx notation')}
-            value={kilominxNotation}
-            onChange={(e) => {
-              const next = e.target.value as KilominxNotation;
-              const newSetup = convertKilominxAlg(setupDraft, kilominxNotation, next);
-              const newAlg = convertKilominxAlg(algDraft, kilominxNotation, next);
-              // Supersede pending moves / scrambles before changing their convention.
-              ++scrambleReqIdRef.current;
-              pendingAlgCommitRef.current = null;
-              if (algCommitTimerRef.current != null) {
-                window.clearTimeout(algCommitTimerRef.current);
-                algCommitTimerRef.current = null;
-              }
-              replacedSetupRef.current = setupDraftRef.current;
-              pushedSetupRef.current = newSetup;
-              replacedAlgRef.current = lastCommittedAlgRef.current;
-              pushedAlgRef.current = newAlg;
-              lastCommittedAlgRef.current = newAlg;
-              setSetupDraft(newSetup);
-              setAlgDraft(newAlg);
-              onKilominxNotationChange(next, newSetup, newAlg);
-            }}
-            title={t('计时器使用 csTimer 记号；切换时自动转换打乱与解法', 'The timer uses csTimer notation; switching converts both scramble and solution')}
-          >
-            <option value="cstimer">csTimer</option>
-            <option value="cubing">Twizzle</option>
-          </select>
-        )}
-        {isSquarePuzzle && (
-          <select
-            className="sim-player-mode"
-            value={squareFormat}
-            onChange={(e) => {
-              const next = e.target.value as SquareFamilyNotationFormat;
-              const convert = isSq1
-                ? next === 'wca' ? canonicalSq1Alg : compactSq1Alg
-                : squareFamilySpec
-                  ? (text: string) => formatSquareFamilyAlg(text, squareFamilySpec, next)
-                  : (text: string) => text;
-              const newSetup = setupDraft.trim() ? convertSquareText(setupDraft, convert) : '';
-              const newAlg = algDraft.trim() ? convertSquareText(algDraft, convert) : '';
-              if (squarePuzzleKind) {
-                setSquareFormats((formats) => ({ ...formats, [squarePuzzleKind]: next }));
-              }
-              setSetupDraft(newSetup);
-              onSetupChange(newSetup);
-              setAlgDraft(newAlg);
-              onAlgChange(newAlg);
-            }}
-            title={t('记号格式', 'Notation format')}
-          >
-            <option value="compact">{t('简化', 'Compact')}</option>
-            <option value="wca">{isSq1 ? 'WCA' : t('标准', 'Standard')}</option>
-          </select>
-        )}
-      </div>
-
-      {algError && <p id="sim-alg-error" className="sim-input-error" role="status">{algError}</p>}
-      {puzzleKind === 'skewb' && skewbNotation && !isTwistyMode && (
-        <SkewbNotationGuide
-          notation={skewbNotation}
-          onDemo={demoNotationMove}
-          onRestore={restoreFromDemo}
-        />
-      )}
+      />
 
       {active && (() => {
       const playbackBar = (
