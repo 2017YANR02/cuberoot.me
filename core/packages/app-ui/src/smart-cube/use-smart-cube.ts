@@ -280,11 +280,26 @@ export function useInstalledSmartCube(
       const cancelReady = () => rejectReady(new Error('smart cube connection closed'));
       cancelReadyRef.current = cancelReady;
       let suppliedMac: string | null = null;
+      const macKey = 'cuberoot.moyu32.mac.' + device.id;
+      if (namedModel === 'moyu32' && !device.macAddress) {
+        let cached = knownMacsRef.current.get(device.id);
+        try { cached ??= localStorage.getItem(macKey) ?? undefined; } catch { /* optional storage */ }
+        device = { ...device, macAddress: cached };
+      }
       const connectionCallbacks = {
+        onVerifiedMac: (mac: string) => {
+          if (!current()) return;
+          knownMacsRef.current.set(device.id, mac);
+          try { localStorage.setItem(macKey, mac); } catch { /* optional storage */ }
+        },
         onNeedMac: async (deviceName: string): Promise<string | null> => {
           if (!current()) throw new Error('smart cube connection closed');
+          if (namedModel === 'moyu32') {
+            knownMacsRef.current.delete(device.id);
+            try { localStorage.removeItem(macKey); } catch { /* optional storage */ }
+          }
           const cached = knownMacsRef.current.get(device.id);
-          if (cached) { suppliedMac = cached; return cached; }
+          if (cached && namedModel !== 'moyu32') { suppliedMac = cached; return cached; }
           const mac = await new Promise<string | null>((resolve) => {
             const finish = (value: string | null) => {
               if (cancelMacRef.current !== cancel) return;

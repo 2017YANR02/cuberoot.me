@@ -5,7 +5,7 @@ import type { BleDeviceRef } from './transport';
 /** Device IDs are MACs on Windows/Android, but UUIDs on Apple platforms. */
 export async function resolveCubeMac(
   device: BleDeviceRef,
-  family: 'gan' | 'moyu32',
+  family: 'gan',
   requestMac?: (deviceName: string) => Promise<string | null>,
 ): Promise<Uint8Array> {
   const nativeMac = normalizeMac(device.macAddress) ?? normalizeMac(device.id);
@@ -24,8 +24,7 @@ export async function resolveCubeMac(
     const fullMac = /([0-9a-f]{12})$/i.exec(device.name)?.[1];
     if (fullMac) return macStringToBytes(fullMac.match(/.{2}/g)!.join(':'));
   }
-  // MY32 name suffixes are not a complete address. Like Web, require the
-  // actual MAC instead of assuming the CF:30:16:00 prefix on Apple platforms.
+  // MoYu32 uses resolveMoyu32Address with a verified encrypted handshake.
   const supplied = normalizeMac(await requestMac?.(device.name));
   if (!supplied || supplied === '00:00:00:00:00:00') throw new Error('Cube MAC address required');
   return macStringToBytes(supplied);

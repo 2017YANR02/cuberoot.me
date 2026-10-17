@@ -459,15 +459,16 @@ describe('encrypted smart-cube mini program transport', () => {
     });
     const connection = connectMoyu32({
       api: rig.api,
+      requestMac: async () => null,
       device: {
         advertisData: Uint8Array.from([0x00, 0x01, 0x34, 0x12, 0x00, 0x16, 0x30, 0xcf]).buffer,
         deviceId: 'ios-device-uuid',
         name: 'WCU_MY32_A1B2',
       },
     });
-    const rejection = expect(connection).rejects.toThrow('智能魔方协议未响应');
+    const rejection = expect(connection).rejects.toThrow('MAC unavailable or invalid');
 
-    await vi.advanceTimersByTimeAsync(4_000);
+    await vi.advanceTimersByTimeAsync(10_000);
 
     await rejection;
   });

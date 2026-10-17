@@ -24,7 +24,7 @@ const protocols = [
   ['qiyi', 'QY-QYSC-1-A1B2', qiyi.QIYI_SERVICE_UUID, qiyi.QIYI_CHARACTERISTIC_UUID, qiyi.QIYI_WRITE_CHARACTERISTIC_UUID],
 ] as const;
 
-function harness(service: string, notify: string, write: string, prompt = false) {
+function harness(service: string, notify: string, write: string, prompt = false, mac = 'AB:CD:EF:01:23:45') {
   const bridge = createWatchCubeBridge(), events: Record<string, any>[] = [], native: Record<string, any>[] = [];
   async function feed(message: Record<string, unknown>) {
     bridge.dispatch(message);
@@ -38,6 +38,15 @@ function harness(service: string, notify: string, write: string, prompt = false)
           { uuid: notify, properties: { notify: true } }, { uuid: write, properties: { write: true } },
         ] }] : event.op === 'needMac' ? 'AB:CD:EF:01:23:45' : undefined;
         bridge.dispatch({ kind: 'reply', id: event.id, value });
+        if (service === moyu.MOYU32_SERVICE_UUID && event.op === 'write') {
+          const cipher = moyu.createMoyu32Cipher(Uint8Array.from(mac.split(':').map(byte => parseInt(byte, 16))));
+          const plain = cipher.decrypt(Uint8Array.from(event.bytes));
+          if (plain[0] === 0xa3) {
+            const bits = '10100011' + Array.from({ length: 6 }, (_, i) => i.toString(2).padStart(3, '0').repeat(8)).join('') + '00000000';
+            const packet = Uint8Array.from(bits.match(/.{8}/g)!.map(byte => parseInt(byte, 2)));
+            bridge.dispatch({ kind: 'notification', service, characteristic: notify, bytes: [...cipher.encrypt(packet)] });
+          }
+        }
       }
     }
   }
@@ -67,10 +76,23 @@ it('Watch routes notifications by service and characteristic and cancels a pendi
   await h.feed({ kind: 'disconnect' });
 
   const m = harness(moyu.MOYU32_SERVICE_UUID, moyu.MOYU32_NOTIFY_CHARACTERISTIC_UUID, moyu.MOYU32_WRITE_CHARACTERISTIC_UUID, true);
-  await m.feed({ kind: 'connect', device: { id: 'apple-uuid', name: 'WCU_MY32_A1B2' } });
+  await m.feed({ kind: 'connect', device: { id: 'uncached-apple-uuid', name: 'WCU_MY3_unknown' } });
   const request = m.native.find(event => event.op === 'needMac');
   expect(request).toBeDefined();
   await m.feed({ kind: 'disconnect' });
   await m.feed({ kind: 'reply', id: request!.id, value: 'AB:CD:EF:01:23:45' });
-  expect(m.native.some(event => event.op === 'subscribe')).toBe(false);
+  expect(m.native.filter(event => event.op === 'subscribe')).toHaveLength(1);
+  expect(m.native.filter(event => event.op === 'unsubscribe')).toHaveLength(1);
+});
+
+it('Watch resolves MY33 without an iPhone or a manual MAC and emits the verified cache value', async () => {
+  const mac = 'CF:30:16:02:AF:9E';
+  const h = harness(moyu.MOYU32_SERVICE_UUID, moyu.MOYU32_NOTIFY_CHARACTERISTIC_UUID,
+    moyu.MOYU32_WRITE_CHARACTERISTIC_UUID, false, mac);
+  await h.feed({ kind: 'connect', device: { id: 'standalone-watch-uuid', name: 'WCU_MY33_AF9E' } });
+  expect(h.native.some(event => event.op === 'needMac')).toBe(false);
+  expect(h.events.find(event => event.kind === 'verified-mac')?.mac).toBe(mac);
+  expect(h.events.some(event => event.phase === 'connected')).toBe(true);
+  expect(h.events.some(event => event.kind === 'move')).toBe(false);
+  await h.feed({ kind: 'disconnect' });
 });
