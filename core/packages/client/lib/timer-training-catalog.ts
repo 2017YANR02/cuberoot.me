@@ -3,6 +3,7 @@ import { EVENT_DISPLAY_EN, EVENT_DISPLAY_ZH } from '@cuberoot/shared/wca-events'
 import { timerEventIdFromSelector, timerPuzzleSelection } from '@cuberoot/shared/timer';
 import { PUZZLE_EVENT, resolveAlgPuzzle } from '@/app/[lang]/alg/_trainer/events';
 import { RECOGNITION_TRAINING_SETS, VIRTUAL_ALG_SET_METADATA } from './training-set-metadata';
+import { timerTrainingHref } from './timer-training-location';
 
 export interface TrainingTitle { zh: string; en: string }
 
@@ -259,4 +260,36 @@ export function resolveTrainingTarget(input: string): TrainingTarget | null {
     ? target(path, 'alg-simple', title, params)
     : null;
   return target(path, 'alg-case', title, { ...params, subgroup: leaf, slug: leaf });
+}
+
+/** Retired standalone trainers. Reference libraries and tools keep their /alg pages. */
+export function isRetiredAlgTrainer(path: string): boolean {
+  const target = resolveTrainingTarget(path);
+  if (!target?.path.startsWith('/alg/')) return false;
+  switch (target.kind) {
+    case 'alg-run':
+    case 'alg-select':
+    case 'cross':
+    case 'roux':
+    case 'skewb':
+    case 'lsll':
+    case 'lsll-group':
+    case 'lsll-case':
+    case 'lsll-route':
+    case 'time-attack': return true;
+    case 'bld': return ['edge', 'corner', 'edge-float', 'corner-float', '2e2e', '2c2c',
+      'parity', 'flip', 'twist', 'ltct', 'memo', 'timer', 'helper'].includes(target.params.tool);
+    case 'sq1-tool': return ['algorithm-trainer', 'train', 'parity-game'].includes(target.params.tool);
+    default: return false;
+  }
+}
+
+/** Shared by old bookmarks, site links and the sitemap; preserve every trainer query value. */
+export function retiredAlgTrainerHref(href: string): string {
+  if (!isRetiredAlgTrainer(href)) return href;
+  return timerTrainingHref(href, {
+    timerPathname: /^\/zh(?:\/|$)/.test(href) ? '/zh/timer' : '/timer',
+    currentSearch: '',
+    acceptsPath: isRetiredAlgTrainer,
+  });
 }

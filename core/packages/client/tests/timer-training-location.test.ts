@@ -425,6 +425,19 @@ describe('training host hooks and links', () => {
   });
   afterEach(async () => { await act(async () => root.unmount()); container.remove(); vi.unstubAllGlobals(); });
 
+  it('links directly from the formula library to the timer with scoped state and the same fragment', async () => {
+    await act(async () => root.render(createElement(AppLink, {
+      href: '/alg/3x3/pll/select?scope=g&case=A&case=B#cases',
+    }, 'Train')));
+    const href = container.querySelector('a')!.getAttribute('href')!;
+    const url = new URL(href, 'https://example.test');
+    expect(url.pathname).toBe('/zh/timer');
+    expect(url.searchParams.get('training')).toBe('/alg/3x3/pll/select');
+    expect(url.searchParams.get('train.scope')).toBe('g');
+    expect(url.searchParams.getAll('train.case')).toEqual(['A', 'B']);
+    expect(url.hash).toBe('#cases');
+  });
+
   it('keeps formula content unique and returns to full solve without losing timer state', async () => {
     const onUrlUpdate = vi.fn();
     await act(async () => root.render(createElement(NuqsTestingAdapter, {
@@ -481,7 +494,7 @@ describe('training host hooks and links', () => {
     expect(navigation.router.back).toHaveBeenCalledOnce();
 
     await act(async () => root.render(createElement(Probe)));
-    expect(container.querySelector('a')!.getAttribute('href')).toBe('/zh/alg/3x3/pll/run?case=A');
+    expect(container.querySelector('a')!.getAttribute('href')).toBe('/zh/timer?training=%2Falg%2F3x3%2Fpll%2Frun&train.case=A');
     expect(route).toBe(navigation.router);
     expect(pathname).toBe('/zh/timer');
     expect(params).toEqual({ lang: 'zh' });
