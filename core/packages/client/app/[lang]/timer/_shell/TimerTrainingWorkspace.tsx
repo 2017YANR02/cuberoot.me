@@ -12,7 +12,7 @@ import TimerTrainingContent from './TimerTrainingContent';
 import TimerTrainingMenu from './TimerTrainingMenu';
 // Own the common trainer styles at the workspace boundary so switching lazy
 // select/run surfaces cannot render the trainer before its layout is available.
-// Standalone trainers continue importing these same styles themselves.
+// Legacy /alg URLs redirect here before their standalone surfaces can render.
 import '@/app/[lang]/alg/_trainer/trainer.css';
 import '@/app/[lang]/alg/_trainer/memory.css';
 import '@/app/[lang]/alg/alg.css';

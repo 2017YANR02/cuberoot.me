@@ -246,10 +246,10 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
         variant="plain" showArrow={false} disabled={methodLocked || restrictMethod} dataNoTimer
         ariaLabel={tr({ zh: '练习方式', en: 'Practice method' })}
         label={method === 'recognize' ? tr({ zh: '识别', en: 'Recognition' })
-          : method === 'memo' ? tr({ zh: '记忆', en: 'Recall' }) : tr({ zh: '训练', en: 'Training' })}
+          : method === 'memo' ? tr({ zh: '记忆', en: 'Recall' }) : tr({ zh: '实操', en: 'Execution' })}
         value={method === 'recognize' || method === 'memo' ? method : 'train'}
         items={[
-          { value: 'train', label: tr({ zh: '训练', en: 'Training' }) },
+          { value: 'train', label: tr({ zh: '实操', en: 'Execution' }) },
           ...(content?.recognizePath ? [{ value: 'recognize' as const, label: tr({ zh: '识别', en: 'Recognition' }) }] : []),
           ...(content?.runPath ? [{ value: 'memo' as const, label: tr({ zh: '记忆', en: 'Recall' }) }] : []),
         ]} onChange={task => {

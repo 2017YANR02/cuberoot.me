@@ -14,7 +14,7 @@ import {
   useTrainingSearchParams, trainingQueryKey,
 } from '@/lib/training-host';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Copy, Check, QrCode, RotateCcw, X } from 'lucide-react';
+import { Copy, Check, QrCode, RotateCcw, X } from 'lucide-react';
 import { ALG_CATALOG, getAlgSetMeta, type AlgCase } from '@cuberoot/shared/alg';
 import { loadTrainingAlg as loadAlg } from '@/lib/alg_case_alignment';
 import {
@@ -1452,13 +1452,9 @@ export default function TrainerRunClient() {
   return (
     <div className="trainer-root">
       <div className="trainer-topbar">
-        <Link
-          href={selectHref}
-          className="trainer-back"
-          aria-label={tr({ zh: '选择 case', en: 'Select cases' })}
-        >
-          <ArrowLeft size={14} />
-        </Link>
+        {!trainingHost && <Link href={selectHref} className="trainer-back" prefetch={false}>
+          {tr({ zh: '选择情况', en: 'Choose cases' })}
+        </Link>}
         {(!trainingHost || scopeSuffix) && <span style={{ fontSize: '1rem', color: 'var(--muted-foreground)' }}>
           {trainingHost ? scopeSuffix : `${puzzle} · ${tr(meta)}${scopeSuffix ? ` · ${scopeSuffix}` : ''}`}
         </span>}
