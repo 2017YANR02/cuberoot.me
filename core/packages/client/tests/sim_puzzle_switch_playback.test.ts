@@ -128,6 +128,24 @@ describe('sim playback across active cube changes', () => {
     expectState('R U');
   });
 
+  it('keeps the virtual keyboard open when it refocuses the editor, until a direct editor click', async () => {
+    await mount();
+    const toggle = button('Alg virtual keyboard');
+    await act(async () => { toggle.focus(); toggle.click(); });
+    expect(host.querySelector('.vkb')).not.toBeNull();
+    const editor = host.querySelector<HTMLTextAreaElement>('#sim-alg')!;
+    // CubeVirtualKeyboard restores focus before inserting at the saved caret.
+    await act(async () => editor.focus());
+    expect(document.activeElement).toBe(editor);
+    expect(host.querySelector('.vkb')).not.toBeNull();
+    expect(toggle.getAttribute('aria-pressed')).toBe('true');
+    expectTextPreserved();
+    // Directly choosing the editor still returns to ordinary text input.
+    await act(async () => editor.click());
+    expect(host.querySelector('.vkb')).toBeNull();
+    expect(toggle.getAttribute('aria-pressed')).toBe('false');
+  });
+
   it.each([3, 2])('replays setup from order %i to sphere and preserves the step when returning to a cached cube', async (order) => {
     await mount(order);
     expectState('R');

@@ -26,6 +26,7 @@ type Props = {
     error: string;
     autoSpace: AlgInputProps['autoSpace'];
     onFocus: () => void;
+    onClick: () => void;
     onChange: (text: string) => void;
     onCaretChange: (text: string, caretIndex: number) => void;
   };
@@ -165,6 +166,7 @@ export default function SimAlgEditor({
             placeholder={t('解法', 'Solution')}
             title={is3x3 ? t('支持换握记号:↑ 上手(拇指起手 U 面)、↓ 下手(D 面)、· 回 home 握', 'Grip marks supported: ↑ thumb-up grip, ↓ thumb-down grip, · back to home grip') : undefined}
             onFocus={alg.onFocus}
+            onClick={alg.onClick}
             onChange={alg.onChange}
             onCaretChange={alg.onCaretChange}
           />
