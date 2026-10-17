@@ -1415,6 +1415,7 @@
   cursor: pointer;
 }
 .sim-research-enable { padding: 0 12px 12px; font-size: 13px; }
+.sim-input-error { margin: 0; font-size: 13px; color: var(--destructive); overflow-wrap: anywhere; }
 
 @media (max-width: 767px) {
   .sim-view-tools { flex-wrap: nowrap; overflow-x: auto; }

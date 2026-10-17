@@ -1139,6 +1139,7 @@ export default function PlayerControls({
   // a non-caret action (play / step / reset) moves the timeline.
   const [caretChar, setCaretChar] = useState<number | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [lastEdit, setLastEdit] = useState<{ setup: string; alg: string; nextSetup: string; nextAlg: string; puzzle: SimPuzzle; step: number } | null>(null);
   const [optimalScrambleBusy, setOptimalScrambleBusy] = useState(false);
   const [optimalScrambleStatus, setOptimalScrambleStatus] = useState<string | null>(null);
   const optimalScrambleAbortRef = useRef<AbortController | null>(null);
@@ -1313,14 +1314,16 @@ export default function PlayerControls({
     }
   }, [algDraft, isSquarePuzzle, isIvy, corner, isTwistyMode]);
 
-  const nativeSetupValid = useMemo(() => {
-    if (!isNativePuzzleId(puzzleKind)) return true;
-    try { parseNativePuzzleAlg(puzzleKind, setupDraft); return true; } catch { return false; }
+  const nativeSetupError = useMemo(() => {
+    if (!isNativePuzzleId(puzzleKind)) return '';
+    try { parseNativePuzzleAlg(puzzleKind, setupDraft); return ''; } catch (error) { return String((error as Error).message); }
   }, [puzzleKind, setupDraft]);
-  const nativeAlgValid = useMemo(() => {
-    if (!isNativePuzzleId(puzzleKind)) return true;
-    try { parseNativePuzzleAlg(puzzleKind, algDraft); return true; } catch { return false; }
+  const nativeAlgError = useMemo(() => {
+    if (!isNativePuzzleId(puzzleKind)) return '';
+    try { parseNativePuzzleAlg(puzzleKind, algDraft); return ''; } catch (error) { return String((error as Error).message); }
   }, [puzzleKind, algDraft]);
+  const nativeSetupValid = !nativeSetupError;
+  const nativeAlgValid = !nativeAlgError;
 
   useEffect(() => {
     setTwistyPlayback(EMPTY_TWISTY_PLAYBACK_STATE);
@@ -1401,6 +1404,21 @@ export default function PlayerControls({
     cornerSetupValid && !cornerCanPlay && !cornerAlgSpans?.some(span => span.bad)
       ? [{ text: algDraft, bad: true }] : cornerAlgSpans
   );
+  const describeInvalid = (spans: readonly { text: string; bad?: boolean }[] | null | undefined) => {
+    let prefix = '';
+    for (const span of spans ?? []) {
+      if (span.bad) {
+        const line = prefix.split('\n').length;
+        const column = prefix.length - prefix.lastIndexOf('\n');
+        const token = span.text.trim().slice(0, 32);
+        return t(`第 ${line} 行、第 ${column} 列附近的记号或转动序列无效：${token}`, `Invalid notation or move sequence near line ${line}, column ${column}: ${token}`);
+      }
+      prefix += span.text;
+    }
+    return '';
+  };
+  const setupError = nativeSetupError || describeInvalid(setupValidationSpans);
+  const algError = nativeAlgError || describeInvalid(algValidationSpans);
   useEffect(() => { if (!cornerCanPlay) setPlaying(false); }, [cornerCanPlay]);
 
   // One move list for whichever corner-turn engine puzzle is active (empty otherwise).
@@ -1956,18 +1974,32 @@ export default function PlayerControls({
     };
   }, [active, activeCube, engineReady, puzzleKind, playing, nxnItems, squareActions, ivyActions, cornerActions, corner, world, clearFrozen, playbackFrames, isSquarePuzzle, isIvy, settings.animatePlayback, settings.speed]);
 
+  const replaceDrafts = async (nextSetup: string, nextAlg: string, restoreStep = 0) => {
+    await restoreScramblePreview();
+    setPlaying(false);
+    twistyPlaybackPlayer?.pause();
+    setCaretChar(null);
+    skipAutoResetRef.current = false;
+    stepRef.current = restoreStep;
+    setStep(restoreStep);
+    setSetupDraft(nextSetup);
+    onSetupChange(nextSetup);
+    setAlgDraft(nextAlg);
+    onAlgChange(nextAlg);
+    if (setupElRef.current) { setupElRef.current.value = nextSetup; autosize(setupElRef.current); }
+    if (algElRef.current) { algElRef.current.value = nextAlg; autosize(algElRef.current); }
+  };
+  const editDrafts = (nextSetup: string, nextAlg: string) => {
+    setLastEdit({ setup: setupDraft, alg: algDraft, nextSetup, nextAlg, puzzle: puzzleKind, step: stepRef.current });
+    void replaceDrafts(nextSetup, nextAlg);
+  };
+  const canUndoEdit = lastEdit && lastEdit.puzzle === puzzleKind && setupDraft === lastEdit.nextSetup && algDraft === lastEdit.nextAlg;
   const tool = (transform: (s: string) => string) => () => {
-    // 镜像/转体变换先剥手部记号(cubing.js Alg 解析不了会 catch 返 '',静默清空解法框)。
-    // Keep a trailing setup comment from swallowing the first solution move.
+    // A transformation applies to the complete sequence; preserve its two-field
+    // source for undo, including comments and grip notation.
     const separator = /\/\/[^\n\r]*$/.test(setupDraft) ? '\n' : ' ';
     const combined = stripHandMarks(setupDraft + separator + algDraft).trim();
-    const next = transform(combined);
-    setSetupDraft('');
-    onSetupChange('');
-    setAlgDraft(next);
-    onAlgChange(next);
-    if (setupElRef.current) setupElRef.current.value = '';
-    if (algElRef.current) algElRef.current.value = next;
+    editDrafts('', transform(combined));
   };
 
   // Per-puzzle "消步" (cancel redundant moves) + invert. SQ1 has its own token
@@ -2558,6 +2590,7 @@ export default function PlayerControls({
           <textarea
             ref={setupElRef}
             id="sim-setup"
+            aria-describedby={setupError ? 'sim-setup-error' : undefined}
             onFocus={restoreScramblePreview}
             defaultValue={setupDraft}
             rows={1}
@@ -2669,6 +2702,7 @@ export default function PlayerControls({
         </div>
       )}
 
+      {setupError && <p id="sim-setup-error" className="sim-input-error" role="status">{setupError}</p>}
       <label className="sim-field-label" htmlFor="sim-alg">{t('公式', 'Algorithm')}</label>
       <div className="sim-player-row">
         <div className="sim-player-hlwrap">
@@ -2686,6 +2720,9 @@ export default function PlayerControls({
           )}
           <AlgInput
             id="sim-alg"
+            inputMode="text"
+            ariaInvalid={Boolean(algError)}
+            ariaDescribedBy={algError ? 'sim-alg-error' : undefined}
             elementRef={algElRef as RefObject<HTMLTextAreaElement | HTMLDivElement | null>}
             initialText={algDraft}
             rows={1}
@@ -2796,6 +2833,7 @@ export default function PlayerControls({
         )}
       </div>
 
+      {algError && <p id="sim-alg-error" className="sim-input-error" role="status">{algError}</p>}
       {puzzleKind === 'skewb' && skewbNotation && !isTwistyMode && (
         <SkewbNotationGuide
           notation={skewbNotation}
@@ -2965,7 +3003,12 @@ export default function PlayerControls({
             {t('去括号', 'Expand')}
           </button>
         )}
-        <button onClick={tool(() => '')} title={t('清空公式', 'Clear algorithm')}><Eraser size={13} />{t('清空公式', 'Clear algorithm')}</button>
+        <button onClick={() => editDrafts(setupDraft, '')} title={t('清空公式', 'Clear algorithm')}><Eraser size={13} />{t('清空公式', 'Clear algorithm')}</button>
+        <button type="button" onClick={() => editDrafts('', '')} title={t('重置为还原态', 'Reset to solved')}>{t('重置为还原态', 'Reset to solved')}</button>
+        {canUndoEdit && <button type="button" title={t('撤销公式操作', 'Undo algorithm edit')} onClick={() => {
+          void replaceDrafts(lastEdit.setup, lastEdit.alg, lastEdit.step);
+          setLastEdit(null);
+        }}>{t('撤销公式操作', 'Undo algorithm edit')}</button>}
       </div>
       </details>
       <div className="sim-player-tools">

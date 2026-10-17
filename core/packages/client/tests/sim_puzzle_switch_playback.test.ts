@@ -110,6 +110,24 @@ describe('sim playback across active cube changes', () => {
     expect(host.querySelector<HTMLTextAreaElement>('textarea[placeholder="Solution"]')?.value).toBe('U F');
   }
 
+  it('clears only the algorithm and can undo both clear and solved reset', async () => {
+    await mount();
+    await act(async () => button('Step forward').click());
+    expectState('R U');
+    await act(async () => button('Clear algorithm').click());
+    expect(host.querySelector<HTMLTextAreaElement>('#sim-setup')?.value).toBe('R');
+    expect(host.querySelector<HTMLTextAreaElement>('#sim-alg')?.value).toBe('');
+    expectState('R');
+    await act(async () => button('Undo algorithm edit').click());
+    expectTextPreserved();
+    expectState('R U');
+    await act(async () => button('Reset to solved').click());
+    expectState('');
+    await act(async () => button('Undo algorithm edit').click());
+    expectTextPreserved();
+    expectState('R U');
+  });
+
   it.each([3, 2])('replays setup from order %i to sphere and preserves the step when returning to a cached cube', async (order) => {
     await mount(order);
     expectState('R');
