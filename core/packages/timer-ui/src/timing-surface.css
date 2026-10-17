@@ -153,6 +153,13 @@
   font-weight: 700;
 }
 
+/* Segment7 renders uppercase D as a lowercase-shaped seven-segment glyph.
+   Keep numeric readouts in LCD, but use legible capitals for penalty labels. */
+.timing-surface .timer-display:is(.dnf, .inspection-dnf):not(.tf-mono):not(.tf-liberation):not(.tf-sans) {
+  font-family: var(--font-mono, monospace);
+  font-weight: 600;
+}
+
 .timing-surface-sub {
   display: flex;
   width: max-content;

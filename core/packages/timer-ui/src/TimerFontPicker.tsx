@@ -28,6 +28,12 @@ const OPTIONS: ReadonlyArray<{
   { id: 'sans', label: { en: 'Inter', zh: 'Inter' }, fontFamily: 'var(--font-sans)', fontWeight: 700 },
 ];
 
+/** Use the same face and weight for picker samples and external previews. */
+export function timerFontPreviewStyle(value: TimerFontOptionId, weight?: number) {
+  const option = OPTIONS.find(option => option.id === value) ?? OPTIONS[0];
+  return { fontFamily: option.fontFamily, fontWeight: weight ?? option.fontWeight };
+}
+
 export default function TimerFontPicker({
   value,
   onChange,
@@ -76,7 +82,7 @@ export default function TimerFontPicker({
         onClick={() => setOpen(o => !o)}
         onKeyDown={event => { if (event.key === 'Escape') setOpen(false); }}
       >
-        <span className="tfp-digits" style={{ fontFamily: current.fontFamily, fontWeight: previewWeight ?? current.fontWeight }}>
+        <span className="tfp-digits" style={timerFontPreviewStyle(current.id, previewWeight)}>
           {preview}
         </span>
         <span className="tfp-name">{current.label[language]}</span>
@@ -100,7 +106,7 @@ export default function TimerFontPicker({
               className={`tfp-item${value === o.id ? ' is-active' : ''}`}
               onClick={() => { onChange(o.id); setOpen(false); }}
             >
-              <span className="tfp-digits" style={{ fontFamily: o.fontFamily, fontWeight: previewWeight ?? o.fontWeight }}>
+              <span className="tfp-digits" style={timerFontPreviewStyle(o.id, previewWeight)}>
                 {preview}
               </span>
               <span className="tfp-name">{o.label[language]}</span>

@@ -1,4 +1,5 @@
 'use client';
+import { timerFontPreviewStyle } from '@cuberoot/timer-ui/font-picker';
 import { useDouyinToolSurface } from '@/lib/douyin-content';
 import { TimerSyncSeedSettings, TimerRankSettings, TimerBackupSettings, TimerImportSettings, TimerReanalyzeSettings, TimerDisplaySettings, TimerSoundSettings, TimerMetronomeSettings } from '@cuberoot/timer-ui';
 
@@ -267,8 +268,8 @@ export default function SettingsPanel({ onClose, event, actions, presenceControl
                 aria-label={tr({ zh: '外观预览', en: 'Appearance preview' })}
               >
                 <span className="settings-preview-label">{tr({ zh: '预览', en: 'Preview' })}</span>
-                <strong className={`tf-${s.timerFont}`}>12.34</strong>
-                <span className={`sf-${s.scrambleFont}`}>R U R&apos; U&apos; F2</span>
+                <strong style={timerFontPreviewStyle(s.timerFont)}>12.34</strong>
+                <span style={timerFontPreviewStyle(s.scrambleFont, 400)}>R U R&apos; U&apos; F2</span>
               </div>
             )}
 
