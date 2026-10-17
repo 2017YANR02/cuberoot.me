@@ -277,6 +277,9 @@ export default function TwistySection({
     else playerInit.puzzle = puzzle;
     if (twistOnClick && !use2D) playerInit.experimentalMovePressInput = 'basic';
     const player = new Ctor(playerInit);
+    // timestamp is a player setter, not a constructor config option. /sim starts
+    // at setup instead of resolving cubing.js's default timestamp to the end.
+    if (externalControls) player.timestamp = 0;
     playerInstRef.current = player;
     setPlayerNonce((n) => n + 1);
     // Legacy native controls keep their existing appearance. /sim inherits the
