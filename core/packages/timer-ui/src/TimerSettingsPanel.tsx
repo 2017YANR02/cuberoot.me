@@ -40,11 +40,11 @@ export function TimerSettingsPanel({ language, activeCategory, onCategoryChange,
   if (typeof document === 'undefined') return null;
   return createPortal(
     <div className="timer-settings-overlay" data-no-timer {...backdrop}>
-      <div ref={dialogRef} className="timer-modal settings-modal" role="dialog" aria-modal="true"
+      <div ref={dialogRef} className="timer-modal settings-modal" data-site-surface="panel" role="dialog" aria-modal="true"
         aria-labelledby={titleId} tabIndex={-1} onKeyDown={event => {
           if (event.key !== 'Tab' || !dialogRef.current) return;
           const focusable = [...dialogRef.current.querySelectorAll<HTMLElement>(
-            'button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])',
+            'button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), summary, [tabindex]:not([tabindex="-1"])',
           )].filter(element => !element.closest('[hidden]') && element.getClientRects().length > 0);
           const first = focusable[0]; const last = focusable[focusable.length - 1];
           if (!first) { event.preventDefault(); dialogRef.current.focus(); }
@@ -53,7 +53,9 @@ export function TimerSettingsPanel({ language, activeCategory, onCategoryChange,
           } else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
         }}>
         <header className="settings-modal-head">
-          <h2 id={titleId}>{label('Settings', '设置')}</h2>
+          <div><h2 id={titleId}>{label('Settings', '设置')}</h2>
+            <p>{label('Preferences are saved automatically on this device.', '偏好设置自动保存在当前设备。')}</p>
+          </div>
           <button type="button" className="settings-modal-close" onClick={close} aria-label={label('Close settings', '关闭设置')}><X size={18} /></button>
         </header>
         <div className="settings-layout">
@@ -76,7 +78,10 @@ export function TimerSettingsPanel({ language, activeCategory, onCategoryChange,
             </label>
           </aside>
           <div ref={mainRef} className="settings-main">
-            <div className="settings-category-intro"><h3>{items.find(category => category.id === activeCategory)?.label[language]}</h3></div>
+            <div className="settings-category-intro">
+              <h3>{items.find(category => category.id === activeCategory)?.label[language]}</h3>
+              <p>{items.find(category => category.id === activeCategory)?.description[language]}</p>
+            </div>
             {activeCategory === 'timer' && playersControl && (
               <div className="settings-row">
                 <span className="settings-row-label">{label('Players', '人数')}</span>

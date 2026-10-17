@@ -9,7 +9,7 @@ import {
   type TimerSettingFieldId,
   type TimerTimingSettings,
 } from '@cuberoot/shared/timer';
-import { useId, type ReactNode } from 'react';
+import { useEffect, useId, useState, type ReactNode } from 'react';
 
 export interface TimerBooleanControlProps {
   disabled?: boolean;
@@ -170,8 +170,8 @@ export function TimerBooleanSettingRow({
           settingId: field.id as TimerSettingFieldId,
           value,
         })}
-        {hint && <span className="hint">{hint}</span>}
       </span>
+      {hint && <span className="hint settings-row-hint">{hint}</span>}
     </div>
   );
 }
@@ -191,8 +191,15 @@ export function TimerTimingSettingsSections({
   renderBooleanControl,
   value,
 }: TimerTimingSettingsSectionsProps) {
-  if (!active) return null;
   const settings = normalizeTimerTimingSettings(value);
+  const [holdInput, setHoldInput] = useState(String(settings.holdMs));
+  useEffect(() => setHoldInput(String(settings.holdMs)), [settings.holdMs, active]);
+  const commitHold = () => {
+    const holdMs = holdInput.trim() ? normalizeTimerHoldMs(Number(holdInput)) : settings.holdMs;
+    setHoldInput(String(holdMs));
+    if (holdMs !== settings.holdMs) onChange({ holdMs });
+  };
+  if (!active) return null;
   const label = (field: TimerSettingFieldContract) => localize(field.copy);
 
   return (
@@ -217,14 +224,58 @@ export function TimerTimingSettingsSections({
             className="settings-row-control-input"
             max={HOLD_RULE.max}
             min={HOLD_RULE.min}
-            onChange={(event) => onChange({ holdMs: normalizeTimerHoldMs(Number(event.target.value)) })}
+            aria-label={label(TIMING_FIELDS.holdMs)}
+            onChange={(event) => setHoldInput(event.target.value)}
+            onBlur={commitHold}
+            onKeyDown={event => { if (event.key === 'Enter') commitHold(); }}
             step={HOLD_RULE.step}
             type="number"
-            value={settings.holdMs}
+            value={holdInput}
           />
         </TimerSettingRow>
       </TimerSettingsSection>
 
+      <TimerSettingsSection title={localize(TIMER_TIMING_SECTION_COPY.timingDisplay)}>
+        <TimerBooleanSettingRow
+          field={TIMING_FIELDS.hideTime}
+          label={label(TIMING_FIELDS.hideTime)}
+          onChange={(hideTime) => onChange({ hideTime })}
+          renderBooleanControl={renderBooleanControl}
+          value={settings.hideTime}
+        />
+
+        <TimerSettingRow
+          field={TIMING_FIELDS.runningPrecision}
+          label={label(TIMING_FIELDS.runningPrecision)}
+        >
+          <select
+            className="settings-row-control-select"
+            aria-label={label(TIMING_FIELDS.runningPrecision)}
+            onChange={(event) => onChange({
+              runningPrecision: normalizeTimerRunningPrecision(Number(event.target.value)),
+            })}
+            value={settings.runningPrecision}
+          >
+            {RUNNING_PRECISION_VALUES.map((precision) => (
+              <option key={precision} value={precision}>{precisionLabel(precision)}</option>
+            ))}
+          </select>
+        </TimerSettingRow>
+        <TimerSettingRow field={TIMING_FIELDS.precision} label={label(TIMING_FIELDS.precision)}>
+          <select
+            className="settings-row-control-select"
+            aria-label={label(TIMING_FIELDS.precision)}
+            onChange={(event) => onChange({
+              precision: normalizeTimerResultPrecision(Number(event.target.value)),
+            })}
+            value={settings.precision}
+          >
+            {RESULT_PRECISION_VALUES.map((precision) => (
+              <option key={precision} value={precision}>{precisionLabel(precision)}</option>
+            ))}
+          </select>
+        </TimerSettingRow>
+      </TimerSettingsSection>
       <TimerSettingsSection title={localize(TIMER_TIMING_SECTION_COPY.eventsAndSessions)}>
         <TimerBooleanSettingRow
           field={TIMING_FIELDS.autoSessionForEvent}
@@ -242,47 +293,6 @@ export function TimerTimingSettingsSections({
         />
       </TimerSettingsSection>
 
-      <TimerSettingsSection title={localize(TIMER_TIMING_SECTION_COPY.timingDisplay)}>
-        <TimerBooleanSettingRow
-          field={TIMING_FIELDS.hideTime}
-          label={label(TIMING_FIELDS.hideTime)}
-          onChange={(hideTime) => onChange({ hideTime })}
-          renderBooleanControl={renderBooleanControl}
-          value={settings.hideTime}
-        />
-      </TimerSettingsSection>
-
-      <TimerSettingsSection title={label(TIMING_FIELDS.precision)}>
-        <TimerSettingRow
-          field={TIMING_FIELDS.runningPrecision}
-          label={label(TIMING_FIELDS.runningPrecision)}
-        >
-          <select
-            className="settings-row-control-select"
-            onChange={(event) => onChange({
-              runningPrecision: normalizeTimerRunningPrecision(Number(event.target.value)),
-            })}
-            value={settings.runningPrecision}
-          >
-            {RUNNING_PRECISION_VALUES.map((precision) => (
-              <option key={precision} value={precision}>{precisionLabel(precision)}</option>
-            ))}
-          </select>
-        </TimerSettingRow>
-        <TimerSettingRow field={TIMING_FIELDS.precision} label={label(TIMING_FIELDS.precision)}>
-          <select
-            className="settings-row-control-select"
-            onChange={(event) => onChange({
-              precision: normalizeTimerResultPrecision(Number(event.target.value)),
-            })}
-            value={settings.precision}
-          >
-            {RESULT_PRECISION_VALUES.map((precision) => (
-              <option key={precision} value={precision}>{precisionLabel(precision)}</option>
-            ))}
-          </select>
-        </TimerSettingRow>
-      </TimerSettingsSection>
     </>
   );
 }

@@ -10,15 +10,16 @@ export function TimerSyncSeedSettings({ value, language, disabled = false, onRes
   const tr = <T,>(text: { en: T; zh: T }) => text[language];
   const [draft, setDraft] = useState(value.syncSeed ?? '');
   useEffect(() => setDraft(value.syncSeed ?? ''), [value.syncSeed]);
-  const apply = () => { if (!disabled && draft) onReset(draft); };
+  const canApply = !disabled && !!draft && draft !== value.syncSeed;
+  const apply = () => { if (canApply) onReset(draft); };
   return <>
     <div className="settings-row" data-setting-id="settings.advanced.sync-seed">
       <span className="settings-row-label">{tr(timerSettingFieldContract('settings.advanced.sync-seed').copy)}</span>
       <span className="settings-row-control">
         <input className="settings-row-control-input" aria-label={tr({ en: 'Seed', zh: '种子' })} disabled={disabled} value={draft} placeholder={tr({ en: 'any string', zh: '任意字符串' })} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); apply(); } }} />
         {draft && !disabled && <ClearButton variant="standalone" ariaLabel={tr({ en: 'Clear input', zh: '清除输入' })} onClick={() => setDraft('')} />}
-        <button type="button" className="hint-btn" disabled={disabled || !draft} onClick={apply}>{tr({ en: 'Apply', zh: '应用' })}</button>
-        <button type="button" className="hint-btn" disabled={disabled || !value.syncSeed} onClick={() => onReset(null)}>{tr({ en: 'Clear', zh: '清除' })}</button>
+        <button type="button" className="hint-btn" disabled={!canApply} onClick={apply}>{tr({ en: 'Apply', zh: '应用' })}</button>
+        <button type="button" className="hint-btn" disabled={disabled || !value.syncSeed} onClick={() => onReset(null)}>{tr({ en: 'Turn off seed', zh: '停用种子' })}</button>
       </span>
     </div>
     <div className="settings-row" data-setting-id="settings.advanced.sync-seed-counter">
