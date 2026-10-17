@@ -3,6 +3,10 @@ import Foundation
 enum WatchCopy {
     private static let strings: [String: [String: String]] = [
         "preview": ["en": "Scrambled puzzle", "zh": "打乱状态图"],
+        "localSession": ["en": "Watch", "zh": "手表"],
+        "generating": ["en": "Generating scramble…", "zh": "正在生成打乱…"],
+        "generationFailed": ["en": "Could not generate scramble", "zh": "打乱生成失败"],
+        "retryGeneration": ["en": "Retry generation", "zh": "重试生成"],
         "cancel": ["en": "Cancel inspection", "zh": "取消观察"],
         "random": ["en": "Random", "zh": "随机"],
         "pending": ["en": "Saved on watch · waiting for iPhone", "zh": "已存手表 · 待传到 iPhone"],
@@ -11,6 +15,10 @@ enum WatchCopy {
         "storageError": ["en": "Could not save. Timing is paused until storage recovers.", "zh": "保存失败，存储恢复前无法开始新计时。"],
         "retry": ["en": "Retry saving", "zh": "重试保存"],
         "full": ["en": "Open CubeRoot on iPhone to sync before continuing.", "zh": "请打开 iPhone 上的 CubeRoot 同步后继续。"],
+        "macHint": ["en": "Enter the cube’s Bluetooth MAC address. It is saved after a successful connection.", "zh": "请输入魔方的蓝牙 MAC 地址，连接成功后会记住。"],
+        "macInvalid": ["en": "Enter six hexadecimal pairs, such as AA:BB:CC:DD:EE:FF.", "zh": "请输入六组十六进制数，例如 AA:BB:CC:DD:EE:FF。"],
+        "macConfirm": ["en": "Connect", "zh": "连接"],
+        "macCancel": ["en": "Cancel", "zh": "取消"],
         "cube": ["en": "Smart cube", "zh": "智能魔方"],
         "replay": ["en": "Reconstruction", "zh": "复盘"],
         "play": ["en": "Play", "zh": "播放"],

@@ -35,6 +35,7 @@ const FACE_ORDER = 'URFDLB';
 export interface GanV2DecodeState {
   prevMoveCnt: number;
   prevMoves: string[];
+  historyLost: boolean;
   battery: number | null;
   badFrames: number;
   decodeFacelets?: (frame: Uint8Array) => string | null;
@@ -48,6 +49,7 @@ export function createGanV2DecodeState(options: {
   return {
     prevMoveCnt: -1,
     prevMoves: [],
+    historyLost: false,
     battery: null,
     badFrames: 0,
     decodeFacelets: options.decodeFacelets ?? decodeGanV2Facelets,
@@ -88,7 +90,8 @@ export function decodeGanV2Frame(
     state.badFrames = 0;
     state.prevMoves = parsed;
 
-    const moveDiff = Math.min((moveCnt - state.prevMoveCnt) & 0xff, 7);
+    const moveDiff = (moveCnt - state.prevMoveCnt) & 0xff;
+    if (moveDiff > 7) { state.historyLost = true; return []; }
     const moves: string[] = [];
     for (let index = moveDiff - 1; index >= 0; index--) moves.push(parsed[index]);
     state.prevMoveCnt = moveCnt;

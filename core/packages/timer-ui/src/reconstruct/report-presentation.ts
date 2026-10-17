@@ -8,7 +8,8 @@ import { cubeColorGroups, cubeColorGroupPunctuation, leadingCubeColors, crossCol
 import { CUBE_FILL, CUBE_FACE_FOR_COLOR_LETTER, type CubeColorLetter } from '@cuberoot/puzzle-render-core/support/cube-colors';
 import { sliceReconstruction } from '@cuberoot/shared/timer/reconstruct/slice';
 import type { SolveMove } from '@cuberoot/shared/timer/reconstruct/stage-segments';
-import { timerSupportsTrainingTiming, type Solve } from '@cuberoot/shared/timer';
+import type { Solve } from '@cuberoot/shared/timer';
+import { timerSupportsTrainingTiming } from '@cuberoot/shared/timer/training-settings';
 import { metricForRange } from '@cuberoot/shared/timer/reconstruct/step-metrics';
 import { htmMoves } from '@cuberoot/shared/timer/reconstruct/htm';
 

@@ -31,6 +31,7 @@ export const MOYU32_MESSAGE_GYRO_SWITCH = 0xac;
 export interface Moyu32Move { mv: string; ts: number }
 export interface Moyu32DecodeState {
   prevMoveCount: number;
+  historyLost: boolean;
   battery: number | null;
   deviceTime: number;
   badFrames: number;
@@ -54,7 +55,7 @@ export function moyu32DefaultMac(name?: string | null): string | null {
 }
 
 export function createMoyu32DecodeState(): Moyu32DecodeState {
-  return { prevMoveCount: -1, battery: null, deviceTime: 0, badFrames: 0 };
+  return { historyLost: false, prevMoveCount: -1, battery: null, deviceTime: 0, badFrames: 0 };
 }
 
 function validFacelets(value: string): string | null {
@@ -154,7 +155,8 @@ export function decodeMoyu32Notification(
     gaps[index] = readBits(frame, 8 + index * 16, 16);
   }
   state.badFrames = 0;
-  const count = Math.min(5, (moveCount - state.prevMoveCount) & 0xff);
+  const count = (moveCount - state.prevMoveCount) & 0xff;
+  if (count > 5) { state.historyLost = true; return result; }
   state.prevMoveCount = moveCount;
   for (let index = count - 1; index >= 0; index--) {
     state.deviceTime += gaps[index];

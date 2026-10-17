@@ -43,6 +43,7 @@
     "@cuberoot/app-ui": "workspace:*",
     "@cuberoot/shared": "workspace:*",
     "@cuberoot/timer-ui": "workspace:*",
+    "cubing": "0.63.3",
     "lucide-react": "1.8.0",
     "react": "19.2.4",
     "react-dom": "19.2.4"

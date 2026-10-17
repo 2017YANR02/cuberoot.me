@@ -91,14 +91,14 @@ it.each(['handshake failure', 'manual disconnect', 'pending subscription'] as co
   }
 });
 
-it.each(['WCU_MY32_5C3A', 'GAN16ui_C2AF'])('cancels Apple MAC entry without opening GATT for %s', async (name) => {
+it.each(['WCU_MY32_5C3A', 'GAN16ui_C2AF'])('cancels Apple MAC entry and closes any discovered GATT for %s', async (name) => {
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
-  const connect = vi.fn();
+  const connect = vi.fn(), disconnect = vi.fn(async () => {});
   const transport = {
     initialize: async () => undefined,
     requestDevice: async () => ({ id: 'Apple-UUID', name }),
     getServices: async () => [],
-    connect,
+    connect, disconnect,
   } as unknown as BleTransport;
   let cube!: InstalledAppSmartCube;
   function Harness() {
@@ -116,7 +116,8 @@ it.each(['WCU_MY32_5C3A', 'GAN16ui_C2AF'])('cancels Apple MAC entry without open
     await act(async () => { cube.macPrompt!.onCancel(); await pending; });
     expect(cube.phase).toBe('idle');
     expect(cube.macPrompt).toBe(null);
-    expect(connect).not.toHaveBeenCalled();
+    expect(connect).toHaveBeenCalledTimes(name.startsWith('GAN') ? 1 : 0);
+    expect(disconnect).toHaveBeenCalledTimes(name.startsWith('GAN') ? 1 : 0);
   } finally {
     await act(async () => root.unmount());
     container.remove();

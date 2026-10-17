@@ -11,6 +11,7 @@ struct WatchTimerSlot: Codable, Equatable {
     var inspectionSec: Double
     var holdMs: Double
     var previewPng: String? = nil
+    var localFacelets: String? = nil
 }
 struct WatchTimerBatch: Codable {
     var version: Int

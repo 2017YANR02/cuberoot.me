@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-struct CWEngine { JSRuntime *runtime; JSContext *context; double deadline; double cpu_seconds; double evaluation_started; int incremental_jobs; };
+struct CWEngine { JSRuntime *runtime; JSContext *context; double deadline; double cpu_seconds; double evaluation_started; double budget; int incremental_jobs; };
 // Limit actual script CPU work. watchOS may suspend this thread between two
 // interrupt checks; time spent suspended must not exhaust the execution budget.
 // Solve timestamps still come from the host's ContinuousClock, independently.
@@ -24,6 +24,9 @@ static JSValue cpu_time(JSContext *ctx, JSValueConst this_val, int argc, JSValue
     double current = now();
     return JS_NewFloat64(ctx, 1000 * (e->cpu_seconds + (current > e->evaluation_started ? current - e->evaluation_started : 0)));
 }
+static JSValue random_uint32(JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv) {
+    return JS_NewFloat64(ctx, (double)arc4random());
+}
 static CWEngine *create(size_t memory_limit) {
     double started = now(); if (started < 0) return NULL;
     CWEngine *e = calloc(1, sizeof(*e)); if (!e) return NULL;
@@ -31,7 +34,7 @@ static CWEngine *create(size_t memory_limit) {
     JS_SetMemoryLimit(e->runtime, memory_limit);
     JS_SetMaxStackSize(e->runtime, 512 * 1024);
     JS_SetInterruptHandler(e->runtime, interrupted, e);
-    e->deadline = started + 2;
+    e->budget = 2; e->deadline = started + e->budget;
     e->context = JS_NewContext(e->runtime);
     if (!e->context) { JS_FreeRuntime(e->runtime); free(e); return NULL; }
     e->evaluation_started = started;
@@ -45,11 +48,22 @@ CWEngine *cw_create(void) { return create(16 * 1024 * 1024); }
 // Independent renderer/reconstruction runtime includes cubing.js and offline
 // case tables. BLE/timing retains its smaller, separate 16 MiB limit.
 CWEngine *cw_create_scene(void) { CWEngine *e = create(32 * 1024 * 1024); if (e) e->incremental_jobs = 1; return e; }
+// Independent bounded random-state search; BLE/scene budgets remain unchanged.
+CWEngine *cw_create_scramble(void) {
+    CWEngine *e = create(32 * 1024 * 1024);
+    if (e) {
+        e->budget = 30; e->incremental_jobs = 1;
+        JSValue global = JS_GetGlobalObject(e->context);
+        JS_SetPropertyStr(e->context, global, "__watchRandomUInt32", JS_NewCFunction(e->context, random_uint32, "__watchRandomUInt32", 0));
+        JS_FreeValue(e->context, global);
+    }
+    return e;
+}
 void cw_destroy(CWEngine *e) { if (e) { JS_FreeContext(e->context); JS_FreeRuntime(e->runtime); free(e); } }
 char *cw_eval(CWEngine *e, const char *source, int *failed) {
     double started = now();
     if (started < 0) { *failed = 1; return strdup("Could not read script CPU clock"); }
-    *failed = 0; e->deadline = started + 2; e->evaluation_started = started;
+    *failed = 0; e->deadline = started + e->budget; e->evaluation_started = started;
     // Serial render queues may resume on another OS thread between evaluations.
     JS_UpdateStackTop(e->runtime);
     JSValue result = JS_Eval(e->context, source, strlen(source), "WatchCube", JS_EVAL_TYPE_GLOBAL);

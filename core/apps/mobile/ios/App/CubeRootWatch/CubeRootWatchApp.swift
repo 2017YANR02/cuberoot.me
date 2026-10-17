@@ -58,8 +58,9 @@ struct WatchTimerView: View {
                     // Controls are siblings so opening the device picker cannot start a solve.
                     VStack(spacing: 8) {
                         if model.phase != "running", let slot = model.state.current {
-                            Text(slot.eventName + " · " + model.text("random")).font(.caption)
-                            Text(slot.sessionName).font(.caption2).lineLimit(2)
+                            Text([slot.eventName, model.text("random"), slot.sessionName]
+                                .filter { !$0.isEmpty }.joined(separator: " · "))
+                                .font(.caption2).lineLimit(1).minimumScaleFactor(0.85)
                             Text(slot.scramble).font(.system(.footnote, design: .monospaced))
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
@@ -69,14 +70,17 @@ struct WatchTimerView: View {
                             .padding(.vertical, 8)
                         WatchCubePreview(model: model, cube: model.cube)
                         if model.state.current == nil {
-                            Text(model.text(model.state.unsupported ? "unsupported" : "empty")).font(.footnote)
+                            Text(model.text(model.generating ? "generating" : model.generationFailed ? "generationFailed" : model.state.unsupported ? "unsupported" : "empty")).font(.footnote)
                         }
                     }
                     .padding(.horizontal, 4)
-                    .frame(maxWidth: .infinity, minHeight: geometry.size.height)
+                    .frame(maxWidth: .infinity, minHeight: model.phase == "running" ? geometry.size.height : 0)
                     .contentShape(Rectangle())
                     .onTapGesture { model.tapTimer() }
                     .accessibilityAction { model.tapTimer() }
+                    if model.generationFailed {
+                        Button(model.text("retryGeneration")) { model.retryGeneration() }
+                    }
                     if let error = model.errorKey {
                         Text(model.text(error)).font(.footnote)
                         if error == "storageError" { Button(model.text("retry")) { model.retryStorage() } }
@@ -87,10 +91,17 @@ struct WatchTimerView: View {
                     if model.state.outbox.count >= 1000 { Text(model.text("full")).font(.footnote) }
                     if !model.state.outbox.isEmpty { Text(model.text("pending")).font(.caption2) }
                     if model.phase != "running" {
-                        if model.state.lastSolve?.moves?.isEmpty == false {
-                            Button(model.text("replay")) { model.reviewing = true }
+                        HStack(spacing: 8) {
+                            if model.state.lastSolve?.moves?.isEmpty == false {
+                                Button { model.reviewing = true } label: {
+                                    Text(model.text("replay")).frame(maxWidth: .infinity)
+                                }
+                            }
+                            Button { showsCube = true } label: {
+                                Text(model.text("cube")).frame(maxWidth: .infinity)
+                            }
                         }
-                        Button(model.text("cube")) { showsCube = true }
+                        .font(.caption2)
                     }
                 }
             }
@@ -344,14 +355,31 @@ private struct WatchCubePreview: View {
         if cube.phase == "connected" {
             WatchLiveCubeView(display: cube.display, language: model.state.language)
             if cube.timingLate { Text(model.text("timingLate")).font(.footnote) }
-            if model.phase != "running" { WatchCubeResetControl(model: model, cube: cube) }
+            if model.phase != "running" { if cube.canReset { WatchCubeResetControl(model: model, cube: cube) } }
+        } else if model.phase != "running", let facelets = model.state.current?.localFacelets {
+            WatchLocalScramblePreview(facelets: facelets, language: model.state.language)
         } else if model.phase != "running", let png = model.state.current?.previewPng,
                   let data = Data(base64Encoded: png), let preview = UIImage(data: data) {
             Image(uiImage: preview).resizable().scaledToFit()
-                .frame(maxWidth: .infinity, maxHeight: 150)
+                .frame(maxWidth: 120, maxHeight: 100)
                 .accessibilityLabel(model.text("preview"))
         }
     }
+}
+
+private struct WatchLocalScramblePreview: View {
+    let facelets: String
+    let language: String
+    @StateObject private var display = WatchCubeScene()
+    @Environment(\.scenePhase) private var scenePhase
+    var body: some View {
+        WatchLiveCubeView(display: display, language: language, height: 100, isStatic: true)
+            .frame(maxWidth: 120)
+            .onAppear { update(); display.setAwake(scenePhase == .active) }
+            .onChange(of: facelets) { _, _ in update() }
+            .onChange(of: scenePhase) { _, value in display.setAwake(value == .active) }
+    }
+    private func update() { display.receive(["kind": "snapshot", "facelets": facelets], now: 0) }
 }
 
 private struct WatchCubeResetControl: View {
@@ -378,10 +406,16 @@ struct WatchCubePicker: View {
                 if cube.phase == "connected" {
                     Text(cube.name).font(.headline)
                     Text(model.text("connected"))
-                    WatchCubeResetControl(model: model, cube: cube)
+                    if cube.canReset { WatchCubeResetControl(model: model, cube: cube) }
                     if let battery = cube.battery { Text("\(battery)%") }
                     if !cube.lastMove.isEmpty { Text(cube.lastMove).font(.title2.monospaced()) }
                     Button(model.text("disconnect")) { cube.disconnect() }
+                } else if cube.macPrompt {
+                    Text(model.text("macHint")).font(.footnote)
+                    TextField("AA:BB:CC:DD:EE:FF", text: $cube.macInput)
+                    if cube.macInvalid { Text(model.text("macInvalid")).font(.footnote) }
+                    Button(model.text("macConfirm")) { cube.submitMac() }
+                    Button(model.text("macCancel")) { cube.cancelMac() }
                 } else if cube.phase == "connecting" {
                     ProgressView(model.text("connecting"))
                 } else {

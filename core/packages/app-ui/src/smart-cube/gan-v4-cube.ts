@@ -66,6 +66,7 @@ export class GanV4CubeConnection {
   constructor(
     private readonly transport: BleTransport,
     private readonly callbacks: GanV4CubeCallbacks,
+    private readonly serviceVerified = false,
   ) {}
 
   connect(device: BleDeviceRef): Promise<void> {
@@ -77,7 +78,7 @@ export class GanV4CubeConnection {
   }
 
   private async connectDevice(device: BleDeviceRef): Promise<void> {
-    if (!matchesGanV4Name(device.name)) throw new Error('unsupported GAN protocol');
+    if (!this.serviceVerified && !matchesGanV4Name(device.name)) throw new Error('unsupported GAN protocol');
     const generation = ++this.generation;
     const mac = await resolveCubeMac(device, 'gan', this.callbacks.onNeedMac);
     if (generation !== this.generation) throw new Error('smart cube connection closed');

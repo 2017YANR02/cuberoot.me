@@ -47,7 +47,7 @@ export function decodeWatchTimerRecord(raw: unknown): WatchTimerRecord | null {
     || r.moves.some((move, i) => !move || typeof move.m !== 'string' || !/^[URFDLB](?:2|'|2')?$/.test(move.m)
       || !bounded(move.ts, 86_400_000) || move.ts < (r.moves![i - 1]?.ts ?? 0)))) return null;
   if (r.gyro !== undefined && (typeof r.gyro !== 'string' || r.gyro.length > 32_100)) return null;
-  if (r.device !== undefined && (!r.device || r.device.model !== 'gan-v4'
+  if (r.device !== undefined && (!r.device || !['gan-v1', 'gan-v2', 'gan-v3', 'gan-v4', 'moyu32', 'qiyi'].includes(r.device.model)
     || typeof r.device.name !== 'string' || r.device.name.length > 200)) return null;
   return r;
 }

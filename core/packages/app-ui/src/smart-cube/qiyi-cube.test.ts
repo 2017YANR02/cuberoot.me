@@ -1,3 +1,4 @@
+import { SmartCubeStateTracker } from '@cuberoot/shared/smart-cube/cubie';
 import {
   buildQiyiPacket,
   createQiyiAckCommand,
@@ -21,6 +22,19 @@ const ANDROID_DEVICE: BleDeviceRef = {
 };
 const ANDROID_MAC = Uint8Array.of(0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc);
 const NAME_MAC = Uint8Array.of(0xcc, 0xa3, 0x00, 0x00, 0xa1, 0xb2);
+
+it('rejects inconsistent QiYi history before publishing a turn or repaired solved state', async () => {
+  const fake = fakeBle(ANDROID_DEVICE), onMove = vi.fn(), onState = vi.fn(), onProtocolError = vi.fn();
+  const cube = new QiyiCubeConnection(fake.transport, { onMove, onState, onProtocolError, onDisconnect() {} });
+  await cube.connect(ANDROID_DEVICE);
+  fake.emit(notificationFrame(QIYI_OP_HELLO, 1000));
+  onState.mockClear();
+  fake.emit(notificationFrame(QIYI_OP_STATE, 1100, 1)); // L' cannot leave a solved cube solved.
+  expect(onProtocolError).toHaveBeenCalledTimes(1);
+  expect(onMove).not.toHaveBeenCalled();
+  expect(onState).not.toHaveBeenCalled();
+  await cube.disconnect();
+});
 const NAME_DERIVED_DEVICE: BleDeviceRef = {
   id: 'native-device-id',
   name: 'XMD-TornadoV4-i-1-A1B2',
@@ -59,12 +73,13 @@ function notificationFrame(
   move = 0,
   battery = 80,
   history: ReadonlyArray<{ timestamp: number; move: number }> = [],
+  facelets = QIYI_SOLVED_STATE,
 ): Uint8Array {
   const content = new Uint8Array(opcode === QIYI_OP_STATE ? 89 : 34);
   const view = new DataView(content.buffer);
   content[0] = opcode;
   view.setUint32(1, timestamp, false);
-  encodeFacelets(content, QIYI_SOLVED_STATE);
+  encodeFacelets(content, facelets);
   content[32] = move;
   content[33] = battery;
   if (opcode === QIYI_OP_STATE) {
@@ -338,7 +353,8 @@ it('waits for a QiYi sync reply during the write and preserves newer buffered tu
   fake.emit(notificationFrame(QIYI_OP_STATE, 1100, 1));
   expect(onMove).not.toHaveBeenCalled();
   fake.emit(notificationFrame(0x04, 1200));
-  fake.emit(notificationFrame(QIYI_OP_STATE, 1300, 1));
+  const state = new SmartCubeStateTracker(); state.applyMove("L'");
+  fake.emit(notificationFrame(QIYI_OP_STATE, 1300, 1, 80, [], state.getFacelets()));
   await reset;
   expect(onState).toHaveBeenCalledWith(QIYI_SOLVED_STATE);
   expect(onMove.mock.calls).toHaveLength(1);

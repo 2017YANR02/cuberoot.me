@@ -28,6 +28,16 @@ const APPLE_DEVICE: BleDeviceRef = {
 };
 const SUPPLIED_MAC = ANDROID_MAC;
 
+it('rejects a MoYu32 gap larger than five turns before publishing moves', async () => {
+  const fake = fakeBle(ANDROID_DEVICE, ANDROID_MAC), onMove = vi.fn(), onProtocolError = vi.fn();
+  const cube = new Moyu32CubeConnection(fake.transport, { onMove, onProtocolError, onDisconnect() {} });
+  await cube.connect(ANDROID_DEVICE);
+  fake.emit(stateFrame(MOYU32_SOLVED_STATE, 10)); fake.emit(moveFrame(16, [2], [50]));
+  expect(onProtocolError).toHaveBeenCalledTimes(1);
+  expect(onMove).not.toHaveBeenCalled();
+  await cube.disconnect();
+});
+
 interface WriteRecord {
   characteristic: string;
   service: string;
