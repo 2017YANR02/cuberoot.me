@@ -30,6 +30,7 @@ describe('sim playback across active cube changes', () => {
   let ordinaryCubes: Set<Cube>;
   let setPuzzle: (kind: SimPuzzle) => void;
   let publishWorld: () => void;
+  let setActive: (active: boolean) => void;
 
   beforeEach(() => {
     vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
@@ -62,6 +63,8 @@ describe('sim playback across active cube changes', () => {
 
   async function mount(initial: SimPuzzle = 3, cold = false) {
     function Harness() {
+      const [active, changeActive] = useState(true);
+      setActive = changeActive;
       const [kind, changeKind] = useState(initial);
       const [readyWorld, setReadyWorld] = useState<World | null>(cold ? null : world);
       const [activeCube, setActiveCube] = useState<World['cube'] | null>(null);
@@ -77,10 +80,10 @@ describe('sim playback across active cube changes', () => {
         setActiveCube(readyWorld.cube);
       }, [kind, readyWorld]);
       return createElement(PlayerControls, {
-        world: readyWorld, activeCube, clearFrozen: () => world.controller.clearFrozen(),
+        active, world: readyWorld, activeCube, clearFrozen: () => world.controller.clearFrozen(),
         setup: 'R', alg: 'U F', onSetupChange: () => {}, onAlgChange: () => {},
-        order: typeof kind === 'number' ? kind : 3, onOrderChange: changeKind,
-        puzzleKind: kind, onPuzzleChange: changeKind,
+        order: typeof kind === 'number' ? kind : 3,
+        puzzleKind: kind,
         settings, onSettingsChange: setSettings, canUseCustomLogo: false,
         keymap: {}, onKeymapChange: () => {}, onResetKeymap: () => {},
       });
@@ -138,6 +141,26 @@ describe('sim playback across active cube changes', () => {
     expectTextPreserved();
     await act(async () => button('Play').click());
     await act(async () => { await vi.advanceTimersByTimeAsync(tickMs); });
+    expectState('R U F');
+  });
+
+  it('pauses when leaving animation and preserves the cube, drafts and step on return', async () => {
+    await mount();
+    vi.useFakeTimers();
+    const tickMs = Math.max(80, Math.round(mapFrames(DEFAULT_SETTINGS.speed) / 60 * 1000));
+    await act(async () => button('Play').click());
+    await act(async () => { await vi.advanceTimersByTimeAsync(tickMs); });
+    expectState('R U');
+    const cube = world.cube;
+    await act(async () => setActive(false));
+    await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+    expectState('R U');
+    expect(host.querySelector('button[title="Play"]')).toBeNull();
+    expectTextPreserved();
+    await act(async () => setActive(true));
+    expect(world.cube).toBe(cube);
+    expectState('R U');
+    await act(async () => button('Step forward').click());
     expectState('R U F');
   });
 

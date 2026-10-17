@@ -128,8 +128,8 @@ describe('Kilominx simulator controls', () => {
           setSetup(nextSetup);
           setAlg(nextAlg);
         },
-        order: 3, onOrderChange: setKind,
-        puzzleKind: kind, onPuzzleChange: setKind,
+        order: 3,
+        puzzleKind: kind,
         // Bare simulator URLs default to group, but Kilominx has no local engine.
         renderer: 'group', twistyPlayerRef: playerRef, userMoveRef,
         settings, onSettingsChange: (next) => { settingsChanges(next); setSettings(next); }, canUseCustomLogo: false,

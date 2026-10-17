@@ -388,7 +388,9 @@
 }
 
 .sim-side {
-  width: 50%;
+  width: clamp(340px, 32vw, 420px);
+  max-width: 48%;
+  min-width: 0;
   flex-shrink: 0;
   border-left: 1px solid var(--border-default);
   background: var(--card);
@@ -411,7 +413,8 @@
   }
   .sim-side {
     width: 100%;
-    max-height: 45vh;
+    max-width: none;
+    max-height: 46%;
     border-left: none;
     border-top: 1px solid var(--border-default);
   }
@@ -901,3 +904,48 @@
 }
 .sim-image-workspace[hidden] { display: none; }
 .sim-image-workspace > .fto-image-generator { width: 100%; }
+
+/* Both workspaces share their project context and panel styling. */
+.sim-project-controls,
+.sim-order-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sim-project-controls { min-width: 0; flex-wrap: wrap; }
+.sim-order-label { flex-shrink: 0; white-space: nowrap; font-size: 13px; color: var(--muted-foreground); }
+.sim-order-input {
+  width: 58px;
+  padding: 6px;
+  border: 1px solid var(--input);
+  border-radius: 6px;
+  color: var(--foreground);
+  background: var(--background);
+  font: inherit;
+}
+.sim-panel-toggle {
+  display: none;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  padding: 6px 8px;
+  color: var(--foreground);
+  background: transparent;
+  font: inherit;
+}
+.sim-panel-title { font-size: 14px; margin: 12px; }
+.sim-capture-controls { order: -1; }
+.sim-capture-controls[hidden] { display: none; }
+.sim-capture-controls > .vc-studio { padding: 0 12px 12px; }
+.sim-page[data-workspace="capture"] .sim-image-overlay > button,
+.sim-page[data-workspace="capture"] .sim-backview,
+.sim-page[data-workspace="capture"] .sim-backview-swap,
+.sim-page[data-workspace="capture"] .sim-float-close--backview { display: none; }
+
+@media (max-width: 767px) {
+  .sim-header { gap: 6px; padding: 8px; }
+  .sim-header .sim-tool-select { max-width: 100%; }
+  .sim-project-controls { flex: 1 0 100%; order: 1; }
+  .sim-panel-toggle { display: inline-flex; }
+  .sim-page--panel-expanded .sim-stage { flex: 0 0 25%; }
+  .sim-page--panel-expanded .sim-side { flex: 1; max-height: none; }
+}

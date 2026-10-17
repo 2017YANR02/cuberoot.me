@@ -190,7 +190,6 @@ import {
 } from '@cuberoot/shared/fto-notation';
 import { stripFtnBlocks, FTN_TOKEN, parseFtnPin } from './engine/hands/ftn';
 import { ClearButton } from '@/components/ClearButton';
-import { PuzzleTypeSelect } from './PuzzleTypeSelect';
 export { SIM_FIXED_PUZZLE_OPTIONS } from './puzzleOptions';
 import { simSpeedToTps, simTpsToSpeed } from '@/lib/sim_timing';
 import AlgInput from '@/components/AlgInput';
@@ -201,7 +200,6 @@ import {
   type TwistyPlaybackPlayer, type TwistyPlaybackState,
 } from '@/lib/twisty-playback';
 import BoolToggle from '@/components/BoolToggle';
-import NxNOrderInput from '@/components/NxNOrderInput';
 import './player-controls.css';
 import { ROOM_THEMES, normalizeRoomTheme, roomCubeActive } from './room-themes';
 
@@ -924,9 +922,7 @@ interface Props {
   onAlgChange: (alg: string) => void;
   onSetupChange: (setup: string) => void;
   order: number;
-  onOrderChange: (n: number) => void;
   puzzleKind: SimPuzzle;
-  onPuzzleChange: (kind: SimPuzzle) => void;
   settings: SimSettings;
   onSettingsChange: (s: SimSettings) => void;
   /** 自定义 logo 是会员权益；无权限时仍可使用无 logo 或本站 logo。 */
@@ -1000,7 +996,7 @@ export default function PlayerControls({
   active = true,
   world, activeCube = world?.cube ?? null,
   clearFrozen, alg, setup, onAlgChange: onAlgChangeProp, onSetupChange: onSetupChangeProp,
-  order, onOrderChange, puzzleKind, onPuzzleChange,
+  order, puzzleKind,
   settings, onSettingsChange, canUseCustomLogo, transCore = null,
   keymap, onKeymapChange, onResetKeymap,
   userMoveRef, twistyPlayerRef, twistyPlaybackPlayer = null,
@@ -2511,6 +2507,9 @@ export default function PlayerControls({
 
   return (
     <div className="sim-player">
+      {!active && stickeringSelect}
+      <div className="sim-animation-controls" hidden={!active}>
+      <label className="sim-field-label" htmlFor="sim-setup">{t('初始状态', 'Initial state')}</label>
       <div className="sim-player-row sim-player-row--top">
         <div className="sim-player-hlwrap">
           {setupValidationSpans && (
@@ -2522,6 +2521,7 @@ export default function PlayerControls({
           )}
           <textarea
             ref={setupElRef}
+            id="sim-setup"
             defaultValue={setupDraft}
             rows={1}
             spellCheck={false}
@@ -2632,6 +2632,7 @@ export default function PlayerControls({
         </div>
       )}
 
+      <label className="sim-field-label" htmlFor="sim-alg">{t('公式', 'Algorithm')}</label>
       <div className="sim-player-row">
         <div className="sim-player-hlwrap">
           {showAlgOverlay && (
@@ -2647,6 +2648,7 @@ export default function PlayerControls({
             </div>
           )}
           <AlgInput
+            id="sim-alg"
             elementRef={algElRef as RefObject<HTMLTextAreaElement | HTMLDivElement | null>}
             initialText={algDraft}
             rows={1}
@@ -2765,7 +2767,7 @@ export default function PlayerControls({
         />
       )}
 
-      {(() => {
+      {active && (() => {
       const playbackBar = (
       // 播放控制排:twizzle alpha.twizzle.net/edit 同款两排布局(进度条在上、传输按钮在下),
       // 与 /recon 播放条共用同一份 <PlaybackBar>。stickering / 锚点两个下拉挂在按钮排两端。
@@ -2913,12 +2915,13 @@ export default function PlayerControls({
 
 
 
+      </div>
+      <details className="sim-settings-section">
+        <summary>{t('外观与操作', 'Appearance & interaction')}</summary>
       <PuzzleSettings
         world={world}
         order={order}
-        onOrderChange={onOrderChange}
         puzzleKind={puzzleKind}
-        onPuzzleChange={onPuzzleChange}
         renderer={renderer}
         onRendererChange={onRendererChange}
         settings={settings}
@@ -2928,6 +2931,7 @@ export default function PlayerControls({
         bgSlot={bgSlot}
         t={t}
       />
+      </details>
       <KeymapModal
         open={keymapOpen}
         onClose={() => setKeymapOpen(false)}
@@ -3923,16 +3927,14 @@ function PictureCubeEditor({
 
 function PuzzleSettings({
   world,
-  order, onOrderChange, puzzleKind, onPuzzleChange,
+  order, puzzleKind,
   renderer, onRendererChange,
   settings, onSettingsChange, transCore, bgSlot, t,
   canUseCustomLogo,
 }: {
   world: World | null;
   order: number;
-  onOrderChange: (n: number) => void;
   puzzleKind: SimPuzzle;
-  onPuzzleChange: (kind: SimPuzzle) => void;
   renderer: 'cubing' | 'engine' | 'group';
   onRendererChange?: (r: 'cubing' | 'engine' | 'group') => void;
   settings: SimSettings;
@@ -3945,8 +3947,6 @@ function PuzzleSettings({
   bgSlot?: HTMLElement | null;
   t: (zh: string, en: string) => string;
 }) {
-  const { i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
   // Per-puzzle UI capabilities come from the single registry in simCaps — no per-kind
   // boolean chains here. The settings panel itself is intentionally identical for every
   // puzzle (engine-only toggles always render, no-op where the engine isn't driving); the
@@ -4130,27 +4130,6 @@ function PuzzleSettings({
       {bgSlot && createPortal(<div className="sim-bg-overlay-inner">{bgSelector}</div>, bgSlot)}
         <div className="sim-puzzle-body">
           <div className="sim-puzzle-row">
-            <div className="sim-puzzle-section">
-              <PuzzleTypeSelect
-                value={typeof puzzleKind === 'number' ? 'nxn' : String(puzzleKind)}
-                isZh={isZh}
-                onChange={(v) => {
-                  if (isTwistyPuzzle(v) || v === 'sq1' || v === 'sq2' || v === 'sq4' || v === 'ivy' || v === 'dino' || v === 'redi' || v === 'rex' || v === 'heli' || v === 'gear' || v === 'ghost' || v === 'pyraminx_duo' || v === 'mirror' || v === 'mirror2' || v === 'sphere' || v === 'clock' || v === 'magic' || v === 'mmagic' || v === 'custom') onPuzzleChange(v);
-                  else if (isPgPuzzleId(v)) onPuzzleChange(v as PgPuzzleId);
-                  else onPuzzleChange(order || 3);
-                }}
-              />
-            </div>
-            {isNxNLocal && (
-              <div className="sim-puzzle-section">
-                <NxNOrderInput
-                  value={order}
-                  onCommit={onOrderChange}
-                  aria-label={t('阶数', 'Order')}
-                  onMouseDown={(e) => e.stopPropagation()}
-                />
-              </div>
-            )}
             {/* Renderer choice: cubing.js ↔ 群论内核 (= the in-house engine + a live group
                 panel). The standalone 自有引擎 (engine without panel) option was retired —
                 群论内核 is its strict superset. Only puzzles with a cubing.js renderer get a

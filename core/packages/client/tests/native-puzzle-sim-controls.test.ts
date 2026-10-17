@@ -129,7 +129,7 @@ describe('native PG simulator controls', () => {
         onSetupChange: (text) => { setupChanges(text); if (!options.deferUrlUpdates) setSetup(text); },
         onAlgChange: (text) => { algChanges(text); if (!options.deferUrlUpdates) setAlg(text); },
         onCopyLink: copyLinks,
-        order: 3, onOrderChange: () => {}, puzzleKind: spec.id, onPuzzleChange: () => {},
+        order: 3, puzzleKind: spec.id,
         renderer: 'group', twistyPlayerRef: playerRef, userMoveRef,
         settings, onSettingsChange: (next) => { settingsChanges(next); setSettings(next); }, canUseCustomLogo: false,
         keymap: DEFAULT_KEYMAP, onKeymapChange: () => {}, onResetKeymap: () => {},

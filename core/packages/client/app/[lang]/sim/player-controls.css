@@ -1362,3 +1362,15 @@
 .sim-person-avatar > button:disabled { opacity: 0.5; cursor: wait; }
 .sim-person-avatar-adjust { display: flex; flex-wrap: wrap; gap: 12px; flex-basis: 100%; }
 .sim-person-avatar-adjust > .sim-slider { flex: 1 1 120px; min-width: 0; }
+
+.sim-animation-controls { display: flex; flex-direction: column; gap: 10px; }
+.sim-animation-controls[hidden] { display: none; }
+.sim-field-label { color: var(--muted-foreground); font-size: 13px; }
+.sim-settings-section > summary {
+  padding: 10px 0;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.sim-settings-section > .sim-puzzle { border: 0; }
+.sim-settings-section .sim-puzzle-body { padding: 8px 0; }
