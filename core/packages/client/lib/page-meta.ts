@@ -829,6 +829,10 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     title: { zh: '三阶魔方层先法', en: '3×3 LBL' },
     description: { zh: '从小花到六面复原，跟随可交互魔方逐步学习三阶层先法。', en: 'Learn to solve the 3×3 layer by layer with interactive demonstrations, from the daisy to the last edges.' },
   },
+  'tutorial/f2l': {
+    title: { zh: '三阶魔方 F2L 教程', en: '3×3 F2L Tutorial' },
+    description: { zh: '从层先法走向 F2L：认识四种三步标态，理解顶面调整，逐步学习右前槽角棱对的还原。', en: 'Move from LBL to F2L: recognize four three-move cases, understand top-layer alignment and learn front-right pair insertions step by step.' },
+  },
   'tutorial': {
     title: { zh: '魔方教程', en: 'Cubing Tutorials' },
   },
