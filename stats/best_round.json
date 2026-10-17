@@ -900,17 +900,6 @@
           "22.00"
         ],
         [
-          "[Nordic Swedish Championship 2026](https://www.worldcubeassociation.org/competitions/NordicSwedishChampionship2026/results/all#e333fm_f)",
-          "Final",
-          "1:02.00",
-          "[Adam Marcellus Kelly](https://www.worldcubeassociation.org/persons/2016KELL10)",
-          "19.67",
-          "[Theodor Nordstrand](https://www.worldcubeassociation.org/persons/2016NORD02)",
-          "21.00",
-          "[Niklas Aasen Eliasson](https://www.worldcubeassociation.org/persons/2021ELIA01)",
-          "21.33"
-        ],
-        [
           "[FMC Europe 2024](https://www.worldcubeassociation.org/competitions/FMCEurope2024/results/all#e333fm_f)",
           "Final",
           "1:02.00",
@@ -920,6 +909,17 @@
           "21.00",
           "[Wojciech Rogoziński](https://www.worldcubeassociation.org/persons/2019ROGO04)",
           "21.00"
+        ],
+        [
+          "[Nordic Swedish Championship 2026](https://www.worldcubeassociation.org/competitions/NordicSwedishChampionship2026/results/all#e333fm_f)",
+          "Final",
+          "1:02.00",
+          "[Adam Marcellus Kelly](https://www.worldcubeassociation.org/persons/2016KELL10)",
+          "19.67",
+          "[Theodor Nordstrand](https://www.worldcubeassociation.org/persons/2016NORD02)",
+          "21.00",
+          "[Niklas Aasen Eliasson](https://www.worldcubeassociation.org/persons/2021ELIA01)",
+          "21.33"
         ],
         [
           "[Fun with FM in Kraków 2025](https://www.worldcubeassociation.org/competitions/FunwithFMinKrakow2025/results/all#e333fm_1)",
@@ -1353,17 +1353,6 @@
           "2.89"
         ],
         [
-          "[NAC 2026](https://www.worldcubeassociation.org/competitions/NAC2026/results/all#eclock_1)",
-          "First round",
-          "8.47",
-          "[Alessandro Diomampo](https://www.worldcubeassociation.org/persons/2023DIOM01)",
-          "2.69",
-          "[Jonathan Wang (王嘉洺)](https://www.worldcubeassociation.org/persons/2022WANG23)",
-          "2.73",
-          "[Brendyn Dunagan](https://www.worldcubeassociation.org/persons/2021DUNA01)",
-          "3.05"
-        ],
-        [
           "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025/results/all#eclock_1)",
           "First round",
           "8.47",
@@ -1373,6 +1362,17 @@
           "2.87",
           "[Carter Thomas](https://www.worldcubeassociation.org/persons/2018THOM29)",
           "2.92"
+        ],
+        [
+          "[NAC 2026](https://www.worldcubeassociation.org/competitions/NAC2026/results/all#eclock_1)",
+          "First round",
+          "8.47",
+          "[Alessandro Diomampo](https://www.worldcubeassociation.org/persons/2023DIOM01)",
+          "2.69",
+          "[Jonathan Wang (王嘉洺)](https://www.worldcubeassociation.org/persons/2022WANG23)",
+          "2.73",
+          "[Brendyn Dunagan](https://www.worldcubeassociation.org/persons/2021DUNA01)",
+          "3.05"
         ],
         [
           "[WCA European Championship 2026](https://www.worldcubeassociation.org/competitions/Euro2026/results/all#eclock_1)",
@@ -1509,7 +1509,7 @@
           "1.83",
           "[Ariel Benchetrit](https://www.worldcubeassociation.org/persons/2019BENC04)",
           "1.83",
-          "[Tomasz Pietruszka](https://www.worldcubeassociation.org/persons/2021PIET01)",
+          "[Frank Lindblom](https://www.worldcubeassociation.org/persons/2023LIND07)",
           "1.86"
         ],
         [
@@ -1527,9 +1527,9 @@
           "[Szansa Cubing Open Warsaw 2024](https://www.worldcubeassociation.org/competitions/SzansaCubingOpenWarsaw2024/results/all#eskewb_f)",
           "Final",
           "5.59",
-          "[Ignacy Samselski](https://www.worldcubeassociation.org/persons/2022SAMS03)",
-          "1.79",
           "[Vojtěch Grohmann](https://www.worldcubeassociation.org/persons/2021GROH01)",
+          "1.79",
+          "[Ignacy Samselski](https://www.worldcubeassociation.org/persons/2022SAMS03)",
           "1.79",
           "[Michał Denkiewicz](https://www.worldcubeassociation.org/persons/2021DENK01)",
           "2.01"
