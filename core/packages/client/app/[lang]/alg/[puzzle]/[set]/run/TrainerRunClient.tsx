@@ -1572,7 +1572,7 @@ export default function TrainerRunClient() {
                         className="trainer-scramble-kind"
                         value={doubleZbll ? 'double-zbll' : scrambleKind}
                         onChange={e => void changeScrambleType(e.target.value)}
-                        disabled={doubleLoading || timerState !== TimerState.NOT_RUNNING}
+                        disabled={doubleLoading || roomBusy || (!!room && doubleZbll) || timerState !== TimerState.NOT_RUNNING}
                         aria-label={tr({ zh: '打乱类型', en: 'Scramble type' })}
                       >
                         {doubleAvailable && <option value="double-zbll" disabled={!!room || isMemo || splitActive}>{tr({ zh: '双底 HTM', en: 'Double ZBLL HTM' })}</option>}
@@ -1682,7 +1682,7 @@ export default function TrainerRunClient() {
                     : tr({ zh: '随机:每题独立抽取,同一 case 可能连续出现', en: 'Random: draw each case independently, so the same case may repeat' })}
                 </div>
               )}
-              {!isMemo && !doubleZbll && splitScreenAvailable && (
+              {!isMemo && splitScreenAvailable && (
                 <>
                   <div className="trainer-opts-row trainer-split-setting">
                     <BoolToggle
@@ -1692,7 +1692,7 @@ export default function TrainerRunClient() {
                           void setSplitParam(null);
                           return;
                         }
-                        if (room || pool.length < 2) return;
+                        if (room || pool.length < (doubleZbll ? 4 : 2)) return;
                         lastTrainingMode.current = 'recap';
                         setMode('recap');
                         setTiming(false);
@@ -1700,14 +1700,14 @@ export default function TrainerRunClient() {
                         void setSplitParam('1');
                         setOptsOpen(false);
                       }}
-                      disabled={!!room || pool.length < 2}
+                      disabled={!!room || pool.length < (doubleZbll ? 4 : 2)}
                       label={tr({ zh: '分屏', en: 'Split view' })}
                     />
                   </div>
-                  {(pool.length < 2 || room) && (
+                  {(pool.length < (doubleZbll ? 4 : 2) || room) && (
                     <div className="trainer-opts-hint trainer-split-setting">
-                      {pool.length < 2
-                        ? tr({ zh: '至少选择 2 个 case 才能分屏', en: 'Select at least 2 cases to use split view' })
+                      {pool.length < (doubleZbll ? 4 : 2)
+                        ? tr({ zh: `至少选择 ${doubleZbll ? 4 : 2} 个 case 才能分屏`, en: `Select at least ${doubleZbll ? 4 : 2} cases to use split view` })
                         : tr({ zh: '先离开多设备房间，再开启单屏分工', en: 'Leave the multi-device room before starting a shared-screen drill' })}
                     </div>
                   )}
@@ -1775,7 +1775,7 @@ export default function TrainerRunClient() {
                 </>
               )}
               {/* 在线房间:后端共享队列,多设备原子领取 —— 不重不漏、动态均衡、真·合并进度 */}
-              {mode === 'recap' && !splitActive && !doubleZbll && (
+              {mode === 'recap' && !splitActive && (
                 <>
                   <div className="trainer-opts-row trainer-room-row">
                     {room ? (
@@ -2067,6 +2067,7 @@ export default function TrainerRunClient() {
           pureScramble={pureScramble}
           scrambleFont={scrambleFont}
           multi={multi}
+          doubleZbll={doubleZbll}
           resolveCase={resolveCase}
           markPassedAsMastered={markPassedAsMastered}
           onExit={() => { void setSplitParam(null); }}

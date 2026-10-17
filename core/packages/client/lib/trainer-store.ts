@@ -9,7 +9,7 @@ import {
   trainerSetScrambleFeatures, type F2LFinalAdjustment,
   type F2LSlot, type ScrambleKind,
 } from './trainer-scramble';
-import { doubleZbllTrainingPair, doubleZbllSupports, doubleZbllPllCases, isDoubleZbllPllCase } from './double-zbll';
+import { loadDoubleZbll, doubleZbllTrainingPair, doubleZbllSupports, doubleZbllPllCases, isDoubleZbllPllCase } from './double-zbll';
 import { caseKey, findCaseByKey } from './trainer-case-key';
 import {
   isSq1CsTarget,
@@ -969,11 +969,13 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     const done: string[] = [];
     // 只有「已经翻过去的」算刷完;当前这题还没做完,留作退房后的第一题
     for (let i = 0; i < st.hist.idx; i++) {
-      const k = st.hist.list[i]?.key;
-      if (k && inPool.has(k) && !taken.has(k)) { taken.add(k); done.push(k); }
+      for (const k of [st.hist.list[i]?.key, st.hist.list[i]?.bottomKey]) {
+        if (k && inPool.has(k) && !taken.has(k)) { taken.add(k); done.push(k); }
+      }
     }
     const curKey = st.hist.idx >= 0 ? st.hist.list[st.hist.idx]?.key : undefined;
-    const head = curKey && inPool.has(curKey) && !taken.has(curKey) ? [curKey] : [];
+    const head = [...new Set([curKey, st.hist.list[st.hist.idx]?.bottomKey])]
+      .filter((k): k is string => !!k && inPool.has(k) && !taken.has(k));
     for (const k of head) taken.add(k);
     if (done.length === 0 && head.length === 0) return null; // 一题没领到过 ⟹ 没什么可接的
     const restSet = new Set(pool.filter(k => !taken.has(k)));
@@ -1025,7 +1027,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     // 429(限流)/ 网络抖动是暂态失败,退避重试一次再认输 —— 认输也只报错,绝不能当「本轮领完」
     let res;
     for (let attempt = 0; ; attempt++) {
-      try { res = await claimRoomBatch(st.room.code, st.room.round, count); break; }
+      try { res = await claimRoomBatch(st.room.code, st.room.round, st.doubleZbll ? Math.min(count * 2, 12) : count); break; }
       catch (e) {
         if (!isCurrent()) return { cases: [], terminal: 'stale' };
         const msg = (e as Error).message;
@@ -1051,19 +1053,24 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     }
     const cases: TrainerHistEntry[] = [];
     let maxClaimed = st2.roomClaimed;
-    for (const { caseKey: k, index } of res.cases) {
-      const c = findCaseByKey(st2.cases, k);
+    for (let i = 0; i < res.cases.length; i += st2.doubleZbll ? 2 : 1) {
+      const { caseKey: k, index } = res.cases[i];
+      const bottom = st2.doubleZbll ? (res.cases[i + 1] ?? res.cases[i]) : undefined;
+      if (!findCaseByKey(st2.cases, k) || (bottom && !findCaseByKey(st2.cases, bottom.caseKey))) continue;
+      const pair = bottom ? doubleZbllTrainingPair(k, bottom.caseKey) : undefined;
+      const c = findCaseByKey(st2.cases, pair?.key ?? k);
       if (!c) continue;
       const f2lFinalAdjustment = c.sticker.kind === 'f2l' ? nextF2LFinalAdjustment(st2) : undefined;
-      const scramble = generateTrainerScramble(c, st2, f2lFinalAdjustment);
+      const scramble = pair?.scramble ?? generateTrainerScramble(c, st2, f2lFinalAdjustment);
       cases.push({
-        key: k,
+        key: pair?.key ?? k,
+        bottomKey: pair?.bottomKey,
         name: c.name,
         scramble,
-        recap: { pos: index + 1, total: res.total },
+        recap: { pos: (bottom?.index ?? index) + 1, total: res.total, ...(bottom ? { count: i + 1 < res.cases.length ? 2 : 1 } : {}) },
         f2lFinalAdjustment,
       });
-      maxClaimed = Math.max(maxClaimed, index + 1);
+      maxClaimed = Math.max(maxClaimed, (bottom?.index ?? index) + 1);
     }
     set({ roomClaimed: maxClaimed, room: { ...st2.room, round: res.round, total: res.total } });
     // 领到了格但本集里一个都找不到(房间与本机的 case key 对不上)是数据错,不是「刷完了」
@@ -1398,7 +1405,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     doubleZbllIncludePll: false,
     setDoubleZbll: (enabled) => {
       const st = get();
-      if (st.timerState !== TimerState.NOT_RUNNING || st.doubleZbll === enabled) return;
+      if (st.room || st.roomBusy || st.timerState !== TimerState.NOT_RUNNING || st.doubleZbll === enabled) return;
       if (enabled && (st.puzzle !== '3x3' || st.set !== 'zbll' || st.room || st.mode === 'memo' || !doubleZbllSupports(st.cases))) return;
       persistItem('trainer:double-zbll', enabled ? '1' : '0');
       const solves = loadPersisted(st.puzzle!, enabled ? 'zbll:double' : st.set!).solves;
@@ -1411,7 +1418,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     },
     setDoubleZbllIncludePll: (enabled) => {
       const st = get();
-      if (!st.doubleZbll || st.timerState !== TimerState.NOT_RUNNING || st.doubleZbllIncludePll === enabled
+      if (st.room || st.roomBusy || !st.doubleZbll || st.timerState !== TimerState.NOT_RUNNING || st.doubleZbllIncludePll === enabled
         || (enabled && doubleZbllPllCases().length === 0)) return;
       persistItem('trainer:double-zbll-pll', enabled ? '1' : '0');
       set({ ...doublePllSelection(st, enabled), doubleZbllIncludePll: enabled,
@@ -1737,7 +1744,6 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     createRoom: async () => {
       if (!sessionActive) return { ok: false, error: 'cancelled' };
       const st = get();
-      if (st.doubleZbll) return { ok: false, error: 'Double ZBLL uses a local pair queue' };
       if (!st.puzzle || !st.set) return { ok: false, error: 'no set loaded' };
       const pool = new Set(trainerPool(st.selected, st.scope));
       const poolKeys = st.cases.map(caseKey).filter(k => pool.has(k)); // 规范序全集
@@ -1751,7 +1757,8 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       // 因预抽 peek/peek2 领先当前题最多两格。拿它当已刷前缀,刚开页面(current=1/N,recapPos=3)
       // 建的房会 start=2:全队从 3/N 起步,头两个 case 永不派发。(线上 16 个房全中,见 0077 表
       // next_index 建房后 <200ms 即到 3;且 order 被这条分支一律钉成 seq,用户选的乱序也没生效。)
-      const curPos = st.hist.idx >= 0 ? (st.hist.list[st.hist.idx]?.recap?.pos ?? 0) : 0;
+      const currentRecap = st.hist.list[st.hist.idx]?.recap;
+      const curPos = currentRecap ? currentRecap.pos - (currentRecap.count ?? 1) + 1 : 0;
       const rq = st.recapQueue;
       const rqMatchesPool = rq.length === poolKeys.length && rq.every(k => pool.has(k));
       const useQueue = st.mode === 'recap' && rqMatchesPool && curPos > 1;
@@ -1765,7 +1772,7 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
       set({ roomBusy: true, roomError: null });
       try {
         // 房间只收 [A-Za-z0-9_-] 的 set id;合练 id 走 roomSetId 净化(建/加入同一函数)
-        const info = await apiCreateRoom(st.puzzle, roomSetId(st.set), order, keys, start);
+        const info = await apiCreateRoom(st.puzzle, st.doubleZbll ? (st.doubleZbllIncludePll ? 'zbll-double-pll' : 'zbll-double') : roomSetId(st.set), order, keys, start);
         if (!ownsRoomWork(epoch, roomGeneration)) return { ok: false, error: 'cancelled' };
         set({
           mode: 'recap',
@@ -1786,11 +1793,6 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
     joinRoom: async (rawCode) => {
       if (!sessionActive) return { ok: false, error: 'cancelled' };
       const st = get();
-      if (st.doubleZbll) {
-        const error = 'Double ZBLL uses a local pair queue';
-        set({ roomError: error });
-        return { ok: false, error };
-      }
       const code = rawCode.trim();
       if (!/^\d{4}$/.test(code)) {
         set({ roomError: 'invalid code' });
@@ -1806,12 +1808,22 @@ export const useTrainerStore = create<TrainerState>((set, get) => {
         if (!ownsRoomWork(epoch, roomGeneration)) return { ok: false, error: 'cancelled' };
         // 房间绑定 (puzzle,set):不同集不能混(领来的 case_key 不在本集里)。
         // 合练房间的 set 是净化后的合练 id ⟹ 成员集合不同的两场自然对不上,不会串。
-        if (info.puzzle !== st.puzzle || info.set !== roomSetId(st.set)) {
+        const doubleRoom = info.set === 'zbll-double' || info.set === 'zbll-double-pll';
+        if (info.puzzle !== st.puzzle || (doubleRoom ? st.set !== 'zbll' : info.set !== roomSetId(st.set))) {
           const error = `room is for ${info.puzzle}/${info.set}`;
           set({ roomBusy: false, roomError: error });
           return { ok: false, error };
         }
+        if (doubleRoom) {
+          await loadDoubleZbll();
+          if (!ownsRoomWork(epoch, roomGeneration)) return { ok: false, error: 'cancelled' };
+        }
+        const includePll = info.set === 'zbll-double-pll';
         set({
+          ...(st.set === 'zbll' ? doublePllSelection(get(), includePll) : {}),
+          doubleZbll: doubleRoom, doubleZbllIncludePll: includePll,
+          ...(doubleRoom ? { scrambleKind: 'htm' as const } : {}),
+          ...(doubleRoom !== st.doubleZbll ? { solves: loadPersisted(st.puzzle, doubleRoom ? 'zbll:double' : st.set).solves } : {}),
           mode: 'recap',
           room: { code: info.code, order: info.order, round: info.round, total: info.total },
           roomClaimed: info.claimed, recapRoundDone: false, roomBusy: false,

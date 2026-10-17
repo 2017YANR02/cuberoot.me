@@ -56,11 +56,10 @@ describe('Double ZBLL trainer', () => {
     store.getState().nextScramble(); expect(store.getState().recapRoundDone).toBe(true);
     expect(completedRecapCount(current().recap, true)).toBe(5);
   });
-  it('supports one selected case and rejects incompatible modes', async () => {
+  it('supports one selected case and rejects incompatible modes', () => {
     boot(1); expect(current().scramble).toBe('T|A/T|A');
     store.getState().setMode('memo'); expect(store.getState().mode).toBe('recap');
     store.getState().setScrambleKind('inv'); expect(store.getState().scrambleKind).toBe('htm');
-    expect((await store.getState().createRoom()).ok).toBe(false);
   });
   it('replaces both layers and previews when selection or scope changes', () => {
     boot(5);

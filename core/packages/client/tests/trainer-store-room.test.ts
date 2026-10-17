@@ -10,6 +10,12 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 // 领取数(roomClaimed / sim.idx)一律比「屏上摆着的」多一屏:单条多 1 条、三条一屏多 3 条 ——
 // 那就是预取,别当成漏领或重复领。
 
+vi.mock('@/lib/double-zbll', async importOriginal => ({
+  ...await importOriginal<typeof import('@/lib/double-zbll')>(),
+  loadDoubleZbll: vi.fn(async () => ({})),
+  doubleZbllTrainingPair: vi.fn((key: string, bottomKey: string) => ({ key, bottomKey, scramble: "R U R'" })),
+}));
+
 function makeLocalStorage() {
   const map = new Map<string, string>();
   return {
@@ -58,7 +64,7 @@ vi.mock('@/lib/trainer-room-api', () => ({
 
 const { useTrainerStore } = await import('@/lib/trainer-store');
 const { caseKey } = await import('@/lib/trainer-case-key');
-const { getRoom, claimRoomBatch } = await import('@/lib/trainer-room-api');
+const { createRoom, getRoom, claimRoomBatch } = await import('@/lib/trainer-room-api');
 type AlgCase = import('@cuberoot/shared').AlgCase;
 
 const mkCase = (name: string): AlgCase => ({
@@ -115,7 +121,7 @@ describe('trainer-store online room', () => {
 
   it.each([
     { code: '12345', doubleZbll: false, error: 'invalid code' },
-    { code: '0427', doubleZbll: true, error: 'Double ZBLL uses a local pair queue' },
+    { code: '12345', doubleZbll: true, error: 'invalid code' },
   ])('入房前拒绝也写入错误态: $error', async ({ code, doubleZbll, error }) => {
     useTrainerStore.getState().leaveRoom();
     boot(['A']);
@@ -126,6 +132,39 @@ describe('trainer-store online room', () => {
     expect(useTrainerStore.getState().roomError).toBe(error);
     expect(useTrainerStore.getState().roomBusy).toBe(false);
     expect(getRoom).not.toHaveBeenCalled();
+    useTrainerStore.setState({ doubleZbll: false });
+  });
+
+  it('creates double rooms, counts both cases, keeps the odd tail and restores mode on join', async () => {
+    useTrainerStore.getState().leaveRoom();
+    const cases = boot(['A', 'B', 'C', 'D', 'E']);
+    useTrainerStore.setState({ set: 'zbll', doubleZbll: true, doubleZbllIncludePll: false,
+      mode: 'recap', recapOrder: 'seq', timing: true, recapQueue: [], recapSig: '',
+      hist: { list: [], idx: -1 } });
+    expect((await useTrainerStore.getState().createRoom()).ok).toBe(true);
+    await flush();
+    expect(createRoom).toHaveBeenLastCalledWith('3x3', 'zbll-double', 'seq', cases.map(caseKey), 0);
+    let st = useTrainerStore.getState();
+    expect(st.hist.list[st.hist.idx].bottomKey).toBe(caseKey(cases[1]));
+    expect(curRecap()).toEqual({ pos: 2, total: 5, count: 2 });
+    st.setDoubleZbll(false);
+    expect(useTrainerStore.getState().doubleZbll).toBe(true);
+    st.nextScramble(); await flush();
+    expect(curRecap()).toEqual({ pos: 4, total: 5, count: 2 });
+    useTrainerStore.getState().nextScramble(); await flush();
+    expect(curRecap()).toEqual({ pos: 5, total: 5, count: 1 });
+    st = useTrainerStore.getState();
+    expect(st.hist.list[st.hist.idx].bottomKey).toBe(caseKey(cases[4]));
+    st.leaveRoom();
+    useTrainerStore.setState({ doubleZbll: false });
+    sim.idx = 0;
+    vi.mocked(getRoom).mockResolvedValueOnce({ code: sim.code, puzzle: '3x3', set: 'zbll-double',
+      order: 'seq', round: 1, total: 5, claimed: 0, done: false });
+    expect((await useTrainerStore.getState().joinRoom(sim.code)).ok).toBe(true);
+    await flush();
+    expect(useTrainerStore.getState().doubleZbll).toBe(true);
+    expect(curRecap()).toEqual({ pos: 2, total: 5, count: 2 });
+    useTrainerStore.getState().leaveRoom();
     useTrainerStore.setState({ doubleZbll: false });
   });
 
