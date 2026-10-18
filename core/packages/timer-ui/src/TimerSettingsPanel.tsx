@@ -11,13 +11,14 @@ const icons = { timer: Timer, 'smart-cube': Bluetooth, scramble: Dices, training
   appearance: Palette, sound: Volume2, data: Database, advanced: Keyboard };
 
 /** One responsive settings dialog. Hosts supply supported categories and their fields. */
-export function TimerSettingsPanel({ language, activeCategory, onCategoryChange, onClose, categories, playersControl, children }: {
+export function TimerSettingsPanel({ language, activeCategory, onCategoryChange, onClose, categories, playersControl, resetControl, children }: {
   language: 'en' | 'zh';
   activeCategory: TimerSettingCategoryId;
   onCategoryChange(category: TimerSettingCategoryId): void;
   onClose(): void;
   categories?: readonly TimerSettingCategoryId[];
   playersControl?: ReactNode;
+  resetControl?: ReactNode;
   children: ReactNode;
 }) {
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -60,6 +61,7 @@ export function TimerSettingsPanel({ language, activeCategory, onCategoryChange,
                 {items.map(category => <option key={category.id} value={category.id}>{category.label[language]}</option>)}
               </select>
             </label>
+          {resetControl && <div className="settings-global-reset">{resetControl}</div>}
           <button type="button" className="settings-modal-close" onClick={close} aria-label={label('Close settings', '关闭设置')}><X size={18} /></button>
         </header>
         <div className="settings-layout">
