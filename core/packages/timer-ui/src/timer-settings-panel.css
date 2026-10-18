@@ -310,3 +310,16 @@
 /* Each preference is one aligned row; separators remain within its category. */
 .settings-modal .settings-row + .settings-row { border-top: 1px solid var(--border-default); }
 .settings-modal .settings-row-control > .hint:last-child:not(:first-child) { text-align: right; }
+
+.settings-modal .settings-section + .settings-section:not(:has(> .settings-section-head)):not(:has(> h3)) { padding-top: 0; }
+.settings-modal .settings-section-head:has(.timer-random-difficulty-help) { justify-content: flex-start; gap: 6px; }
+.settings-metronome-tempo { display: flex; align-items: center; width: 100%; min-width: 0; gap: 8px; }
+.settings-metronome-tempo > input[type="range"] { flex: 1; min-width: 0; width: 0; }
+.settings-metronome-tempo > button { flex: none; }
+.settings-cloud-backup-row { display: flex; align-items: flex-start; gap: 12px; }
+.settings-cloud-backup-row > .modal-actions { flex: none; margin: 0; }
+.settings-cloud-backup-info { flex: 1; min-width: 0; }
+.settings-modal .settings-cloud-backup-info > p.hint:first-child { margin-top: 0; }
+
+.settings-metronome-readout { flex: none; white-space: nowrap; font-size: 12px; }
+.settings-modal .settings-row[data-setting-id="settings.sound.metronome-tempo"] { grid-template-columns: minmax(48px, .3fr) minmax(0, 1fr); }
