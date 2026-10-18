@@ -14,7 +14,7 @@
  * clock will stop. "Stops when OLL is done" has to be on screen.
  */
 
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Check, X } from 'lucide-react';
 
@@ -22,7 +22,7 @@ import { tr } from '@/i18n/tr';
 import { TimerDeviceCenter } from '@cuberoot/timer-ui';
 import { detectBluetoothEnv, envAdvice } from '@/lib/bluetooth';
 import type { CubeStep } from '@cuberoot/shared/timer/reconstruct/steps';
-import type { TrainerCubePracticeMode, TrainerCubeState } from './useTrainerCube';
+import type { TrainerCubeState } from './useTrainerCube';
 import TrainerCubeViewPicker from './TrainerCubeViewPicker';
 
 /** What each finish line is called, in the words the alg library already uses. */
@@ -52,11 +52,10 @@ interface Props {
   devicePortal?: HTMLElement | null;
   settingsPortal?: HTMLElement | null;
   onSettingsRequested?: () => void;
-  timingControl?: ReactNode;
 }
 
-export default function SmartCubeRow({ enabled, onEnabledChange, state, supported, devicePortal, settingsPortal, onSettingsRequested, timingControl }: Props) {
-  const { cube, stopStep, reason, view, setView, connect, macPrompt, submitMac, cancelMac, practiceMode, setPracticeMode } = state;
+export default function SmartCubeRow({ enabled, onEnabledChange, state, supported, devicePortal, settingsPortal, onSettingsRequested }: Props) {
+  const { cube, stopStep, reason, view, setView, connect, macPrompt, submitMac, cancelMac, practiceMode } = state;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mac, setMac] = useState('');
@@ -121,13 +120,6 @@ export default function SmartCubeRow({ enabled, onEnabledChange, state, supporte
           </>
         )}
         {devicePortal === undefined && device}
-        {timingControl}
-        <select className="native-select" aria-label={tr({ zh: '智能魔方打乱方式', en: 'Smart cube scramble mode' })}
-          value={practiceMode} disabled={reason === 'running'}
-          onChange={event => setPracticeMode(event.target.value as TrainerCubePracticeMode)}>
-          <option value="virtual">{tr({ zh: '免打乱', en: 'Virtual scramble' })}</option>
-          <option value="manual">{tr({ zh: '手动打乱', en: 'Manual scramble' })}</option>
-        </select>
       </div>
 
       {cube.status.connected && (

@@ -233,7 +233,6 @@ export default function TrainerRunClient() {
   // 深链模式:进度总览页的「复习 N」直接带 ?mode=memo 进来。只应用一次,之后用户自己切不再被覆盖。
   const [modeParam, setModeParam] = useQueryState('mode');
   const [drawParam] = useQueryState('draw');
-  const [timingParam, setTimingParam] = useQueryState('timing');
   // 进度清单的「专练」:case key 已预置在独立会话里,虚拟集按 key 反建这批 case。
   const [drillParam] = useQueryState('drill');
   const modeApplied = useRef(false);
@@ -646,10 +645,7 @@ export default function TrainerRunClient() {
     if ((modeParam === 'memo' || modeParam === 'train' || modeParam === 'recap') && state.mode !== modeParam) {
       state.setMode(modeParam);
     }
-    if ((timingParam === '1' || timingParam === '0') && state.timing !== (timingParam === '1')) {
-      state.setTiming(timingParam === '1');
-    }
-  }, [hosted, sessionReady, modeParam, timingParam, roomParam, splitEligible]);
+  }, [hosted, sessionReady, modeParam, roomParam, splitEligible]);
 
   // scope slug → 该组全部 case key(与 AlgCategoryView 的 top/sub 两级匹配同一套约定)
   const scopedKeys = useMemo(() => {
@@ -1184,6 +1180,15 @@ export default function TrainerRunClient() {
     currentKey,
     currentAttempt: hist.list[hist.idx],
   });
+  // Timing follows the actual connection, never a persisted preference or URL.
+  useEffect(() => {
+    const enabled = trainerCube.cube.status.connected && !isMemo && !splitActive;
+    if (timing !== enabled) {
+      if (!enabled) useTrainerStore.getState().setTimerState(TimerState.NOT_RUNNING);
+      setTiming(enabled);
+    }
+  }, [trainerCube.cube.status.connected, isMemo, splitActive, timing, setTiming]);
+
   const showLiveTrainerCube = trainerCube.armed
     || (smartCube && trainerCube.practiceMode === 'manual' && trainerCube.cube.status.connected);
   const concealManualScramble = smartCube && trainerCube.practiceMode === 'manual'
@@ -1458,15 +1463,6 @@ export default function TrainerRunClient() {
         supported={!splitActive && puzzleHasSmartCube(puzzle)}
         devicePortal={trainingHost?.devicePortal}
         settingsPortal={cubeSettingsPortal}
-        timingControl={<BoolToggle
-          value={timing}
-          onChange={value => {
-            setTiming(value);
-            if (trainingHost) void setTimingParam(value ? '1' : '0');
-          }}
-          label={tr({ zh: '计时', en: 'Timing' })}
-          disabled={splitActive || timerState !== TimerState.NOT_RUNNING}
-        />}
         onSettingsRequested={() => setOptsOpen(true)}
       />}
       <div className="trainer-topbar">
@@ -1685,6 +1681,14 @@ export default function TrainerRunClient() {
                       </>
                     )}
                   </>
+                )}
+                {!isMemo && !splitActive && puzzleHasSmartCube(puzzle) && (
+                  <select className="native-select" aria-label={tr({ zh: '智能魔方打乱方式', en: 'Smart cube scramble mode' })}
+                    value={trainerCube.practiceMode} disabled={trainerCube.reason === 'running'}
+                    onChange={event => trainerCube.setPracticeMode(event.target.value as 'manual' | 'virtual')}>
+                    <option value="virtual">{tr({ zh: '免打乱', en: 'Virtual scramble' })}</option>
+                    <option value="manual">{tr({ zh: '手动打乱', en: 'Manual scramble' })}</option>
+                  </select>
                 )}
               </div>
               {/* 智能魔方:接上就不用照打乱拧了,魔方本身变成当前 case */}
