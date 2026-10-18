@@ -290,7 +290,7 @@ export default function SettingsPanel({ onClose, event, actions, presenceControl
           <TimerPreScrambleSettings only="training" value={s} onChange={updateSettings} localize={tr} />
           {settingState('settings.smart-cube.fake-cube').visible && (
             <details className="settings-disclosure">
-              <summary>{tr({ zh: '开发调试', en: 'Developer tools' })}</summary>
+              <summary><ChevronRight size={14} aria-hidden="true" />{tr({ zh: '开发调试', en: 'Developer tools' })}</summary>
             <BooleanSettingRow
               id="settings.smart-cube.fake-cube"
               value={s.showAdminFakeCube}
@@ -307,7 +307,7 @@ export default function SettingsPanel({ onClose, event, actions, presenceControl
           title={tr({ zh: '目标与分段', en: 'Goals and splits' })}
         >
           <details className="settings-disclosure">
-            <summary>{tr(TIMER_TRAINING_HELP.title)}</summary>
+            <summary><ChevronRight size={14} aria-hidden="true" />{tr(TIMER_TRAINING_HELP.title)}</summary>
             {TIMER_TRAINING_HELP.paragraphs.map((paragraph) => <p key={paragraph.en}>{tr(paragraph)}</p>)}
           </details>
           <TimerAttemptSplitSettings
@@ -413,7 +413,7 @@ export default function SettingsPanel({ onClose, event, actions, presenceControl
             <Row label=""><span className="hint" role="status" aria-live="polite">{ioMsg}</span></Row>
           )}
           <details className="settings-disclosure">
-            <summary>{tr({ zh: '修复历史复盘数据', en: 'Reprocess saved reconstructions' })}</summary>
+            <summary><ChevronRight size={14} aria-hidden="true" />{tr({ zh: '修复历史复盘数据', en: 'Reprocess saved reconstructions' })}</summary>
             <p>{tr({ zh: '仅在复盘算法更新或历史分段异常时使用。', en: 'Use after a reconstruction algorithm update or when saved stage data looks incorrect.' })}</p>
           <TimerReanalyzeSettings language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} run={async () => {
             const result = await reanalyzeAll();
@@ -466,7 +466,7 @@ export default function SettingsPanel({ onClose, event, actions, presenceControl
           activeCategory={activeCategory}
         >
           <details className="settings-disclosure">
-            <summary>{tr({ zh: '同步种子（生成相同打乱）', en: 'Sync seed (matching scrambles)' })}</summary>
+            <summary><ChevronRight size={14} aria-hidden="true" />{tr({ zh: '同步种子（生成相同打乱）', en: 'Sync seed (matching scrambles)' })}</summary>
           <TimerSyncSeedSettings value={s} language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} onReset={seed => updateSettings(resetTimerSyncSeed(getSettings(), seed))} />
           </details>
         </SettingsSection>

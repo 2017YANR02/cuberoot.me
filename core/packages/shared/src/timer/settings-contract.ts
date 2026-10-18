@@ -348,7 +348,7 @@ export const TIMER_SETTING_FIELD_CONTRACTS = [
   { id: 'settings.advanced.sync-seed', category: 'advanced', copy: { en: 'Seed', zh: '种子' }, storagePath: 'syncSeed', value: { kind: 'text' }, visibility: 'always', disabledWhen: 'sync-seed-draft-empty-or-unchanged', effect: 'apply-or-clear-sync-seed-and-reset-counter' },
   { id: 'settings.advanced.sync-seed-counter', category: 'advanced', copy: { en: 'Current', zh: '当前' }, storagePath: 'syncSeedCounter', value: action, visibility: 'always', disabledWhen: 'sync-seed-off', effect: 'reset-sync-seed-counter' },
   { id: 'settings.advanced.keymap', category: 'advanced', copy: { en: 'Shortcut bindings', zh: '快捷键绑定' }, storagePath: 'keymap', value: { kind: 'keymap' }, visibility: 'always', disabledWhen: 'never', effect: 'capture-rebind-or-unbind-timer-action' },
-  { id: 'settings.advanced.reset-keymap', category: 'advanced', copy: { en: 'Reset shortcuts to defaults', zh: '恢复默认快捷键' }, storagePath: 'keymap', value: action, visibility: 'always', disabledWhen: 'never', effect: 'clear-keymap-overrides' },
+  { id: 'settings.advanced.reset-keymap', category: 'advanced', copy: { en: 'Reset defaults', zh: '恢复默认' }, storagePath: 'keymap', value: action, visibility: 'always', disabledWhen: 'never', effect: 'clear-keymap-overrides' },
   { id: 'settings.advanced.reset-defaults', category: 'advanced', copy: { en: 'Reset defaults', zh: '恢复默认' }, storagePath: null, value: action, visibility: 'always', disabledWhen: 'never', effect: 'confirm-and-reset-all-timer-settings' },
 ] as const satisfies readonly TimerSettingFieldContract[];
 
