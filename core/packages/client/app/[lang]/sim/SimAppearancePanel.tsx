@@ -215,12 +215,15 @@ const UNIT_YAW_TWISTY: SliderUnit = { to: (v) => (50 - v) * 3.6, from: (d) => 50
 const UNIT_PITCH: SliderUnit = { to: (v) => (50 - v) * 1.8, from: (d) => 50 - d / 1.8, min: -90, max: 90, step: 1, decimals: 0, suffix: '°' };
 
 export default function SimAppearancePanel({
+  open = true, onToggle,
   world,
   order, puzzleKind,
   renderer, onRendererChange,
   settings, onSettingsChange, transCore, bgSlot, t,
   canUseCustomLogo,
 }: {
+  open?: boolean;
+  onToggle?: () => void;
   world: World | null;
   order: number;
   puzzleKind: SimPuzzle;
@@ -406,8 +409,8 @@ export default function SimAppearancePanel({
   );
 
   return (
-    <details className="sim-settings-section">
-      <summary><ChevronRight size={14} className="sim-puzzle-caret" /><SlidersHorizontal size={14} />{t('外观与操作', 'Appearance & interaction')}</summary>
+    <details className="sim-settings-section" open={open}>
+      <summary onClick={onToggle ? (event) => { event.preventDefault(); onToggle(); } : undefined}><ChevronRight size={14} className="sim-puzzle-caret" /><SlidersHorizontal size={14} />{t('外观与操作', 'Appearance & interaction')}</summary>
       <section className="sim-puzzle">
       {/* 背景选择器浮层 —— portal 到画布左下角(SimPage 的 .sim-bg-overlay)。slot 未
           挂载(SimPage 恒提供)前不渲染。 */}
