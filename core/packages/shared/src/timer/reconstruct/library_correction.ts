@@ -111,27 +111,71 @@ export function strictOuterForm(moves: string[]): { key: string; rotation: strin
     return amount ? [move.modified({ amount: amount === 3 ? -1 : amount }).toString()] : [];
   });
   const expanded = outerTurnSequence(tokens);
+  return { key: reduceOuterTurns(expanded.moves), rotation: expanded.rotation };
+}
+
+/** Reduce outer turns only; callers have already resolved slices and rotations. */
+function reduceOuterTurns(moves: string[]): string {
   const axes = ['UD', 'LR', 'FB'];
   const blocks: Array<{ axis: string; counts: number[] }> = [];
-  for (const token of expanded.moves) {
-    const move = new Move(token), axis = axes.find(axis => axis.includes(move.family))!;
+  for (const token of moves) {
+    const family = token[0], amount = token.endsWith('2') ? 2 : token.endsWith("'") ? 3 : 1;
+    const axis = axes.find(axis => axis.includes(family))!;
     if (blocks.at(-1)?.axis !== axis) blocks.push({ axis, counts: [0, 0] });
-    const block = blocks.at(-1)!, side = axis.indexOf(move.family);
-    block.counts[side] = (block.counts[side] + move.amount + 4) % 4;
+    const block = blocks.at(-1)!, side = axis.indexOf(family);
+    block.counts[side] = (block.counts[side] + amount) % 4;
     if (block.counts.every(count => count === 0)) blocks.pop();
   }
   const key = blocks.flatMap(block => block.counts.flatMap((amount, index) => amount
     ? [block.axis[index] + (amount === 2 ? '2' : amount === 3 ? "'" : '')] : [])).join(' ');
-  return { key, rotation: expanded.rotation };
+  return key;
 }
 const formulaCache = new Map<string, Formula | null>();
 function cachedFormula(text: string): Formula | null {
   if (!formulaCache.has(text)) {
-    if (formulaCache.size >= 4096) formulaCache.clear();
+    if (formulaCache.size >= 16384) formulaCache.delete(formulaCache.keys().next().value!);
     try { formulaCache.set(text, parseFormula(text)); } catch { formulaCache.set(text, null); }
   }
   return formulaCache.get(text)!;
 }
+
+// Adding AUF at either boundary can only add one outer face turn after
+// rotation normalization. This superset admits every frame (including tilted
+// U and slice-induced final rotations), but never authorizes a correction.
+function possibleBodyKeys(sourceKey: string): Set<string> {
+  const turns = ['', ...'URFDLB'.split('').flatMap(face => [face, `${face}2`, `${face}'`])];
+  const source = sourceKey.split(' ').filter(Boolean);
+  return new Set(turns.flatMap(pre => turns.map(post => reduceOuterTurns([
+    ...(pre ? [pre] : []), ...source, ...(post ? [post] : []),
+  ]))));
+}
+const bodyKeyCache = new Map<string, string>();
+function cachedBodyKey(tokens: string[]): string {
+  const text = tokens.join(' ');
+  let key = bodyKeyCache.get(text);
+  if (key === undefined) {
+    key = strictOuterForm(tokens).key;
+    if (bodyKeyCache.size >= 4096) bodyKeyCache.delete(bodyKeyCache.keys().next().value!);
+    bodyKeyCache.set(text, key);
+  }
+  return key;
+}
+// Yield by elapsed work, not candidate count: nested browser timers otherwise
+// add seconds even when the candidates are rejected almost immediately.
+function timeSlice() {
+  let since = performance.now();
+  return async () => {
+    if (performance.now() - since < 12) return;
+    await new Promise<void>(resolve => setTimeout(resolve, 0));
+    since = performance.now();
+  };
+}
+
+const matchingFrames = CUBE_ORIENTATIONS.map(({ value: rotation }) => {
+  const inverse = rotation ? new Alg(rotation).invert().toString() : '';
+  return { rotation, wrapper: rotation.split(/\s+/).filter(Boolean), inverse,
+    tilted: /[xz]/.test(rotation), perm: facePermFor(inverse) };
+});
 
 async function matchBody(kp: KPuzzle, moves: string[], candidates: AlgEntry[], preserveMoves = false): Promise<Match | null> {
   const before = states(kp, moves), sourceForm = strictOuterForm(moves);
@@ -141,9 +185,10 @@ async function matchBody(kp: KPuzzle, moves: string[], candidates: AlgEntry[], p
   };
   const spellings = preserveMoves ? moves.map(spelling) : [];
   let preferred: Match | null = null;
-  let candidateIndex = 0;
+  const possibleKeys = possibleBodyKeys(sourceForm.key);
+  const yieldIfNeeded = timeSlice();
   for (const entry of candidates) {
-    if (++candidateIndex % 4 === 0) await new Promise<void>(resolve => setTimeout(resolve, 0));
+    await yieldIfNeeded();
     const parsed = cachedFormula(entry.alg);
     if (!parsed) continue;
     // Keep library rotations: they define how its face names are interpreted.
@@ -154,11 +199,25 @@ async function matchBody(kp: KPuzzle, moves: string[], candidates: AlgEntry[], p
     if (!body.length) continue;
     // The recorded stage can still have its last layer on B/F/L/R/D;
     // cross-down presentation is applied later. Match in that actual frame.
-    for (const rotation of CUBE_ORIENTATIONS.map(option => option.value)) {
-      const wrapper = rotation.split(/\s+/).filter(Boolean);
-      const inverse = rotation ? new Alg(rotation).invert().toString() : '';
-      const tilted = /[xz]/.test(rotation);
-      const perm = facePermFor(inverse);
+    for (const { rotation, wrapper, inverse, tilted, perm } of matchingFrames) {
+      const mappedBody = tilted ? body.map(token => conjugateToken(
+        token.replace(/^([urfdlb])/, face => `${face.toUpperCase()}w`), perm,
+      )) : body;
+      if (mappedBody.some(token => token === null)) continue;
+      if (preserveMoves) {
+        // AUF/wrapper rotations never interrupt the library body. Even when
+        // its trailing regrip is omitted, every remaining token must occur
+        // contiguously in the measured path; spelling is the same as below.
+        let end = mappedBody.length;
+        while (end && /^[xyz]/.test(mappedBody[end - 1]!)) end--;
+        const required = (mappedBody.slice(0, end) as string[]).map(spelling);
+        if (required.length > spellings.length || !spellings.some((_, start) =>
+          start + required.length <= spellings.length
+          && required.every((token, i) => token === spellings[start + i]))) continue;
+      }
+      const orientedBody = tilted ? mappedBody : [...wrapper, ...body, ...inverse.split(/\s+/).filter(Boolean)];
+      if (orientedBody.some(token => token === null)
+        || !possibleKeys.has(cachedBodyKey(orientedBody as string[]))) continue;
       for (const pre of ['', 'U', 'U2', "U'"]) for (const post of ['', 'U', 'U2', "U'"]) {
         const offset = (pre ? 1 : 0) + (tilted ? 0 : wrapper.length);
         // AUF belongs to the library's U face, inside the frame conjugation.
@@ -316,6 +375,8 @@ export async function correctLibraryLine(line: ReconTextLine, candidates: AlgEnt
   return line;
 }
 
+const fingerprintCache = new Map<string, string>();
+
 /** All recognized last-layer families share strict matching; library failures retain source. */
 export async function identifyLibraryCase(line: Pick<ReconTextLine, 'moves'>, cases: AlgCase[], set: string): Promise<AlgCase | undefined> {
   const kp = await getCube3();
@@ -337,14 +398,20 @@ export async function identifyLibraryCase(line: Pick<ReconTextLine, 'moves'>, ca
   }
   const exact = new Set<AlgCase>();
   const equivalent = new Set<AlgCase>();
-  let caseIndex = 0;
+  const yieldIfNeeded = timeSlice();
   for (const item of cases) {
-    if (++caseIndex % 16 === 0) await new Promise<void>(resolve => setTimeout(resolve, 0));
+    await yieldIfNeeded();
     for (const entry of item.algs.flat()) {
       const formula = cachedFormula(entry.alg);
       if (!formula) continue;
       try {
-        const fingerprint = key(formula.moves);
+        const cacheKey = `${set}:${entry.alg}`;
+        let fingerprint = fingerprintCache.get(cacheKey);
+        if (fingerprint === undefined) {
+          fingerprint = key(formula.moves);
+          if (fingerprintCache.size >= 16384) fingerprintCache.delete(fingerprintCache.keys().next().value!);
+          fingerprintCache.set(cacheKey, fingerprint);
+        }
         if (fingerprint === exactKey) exact.add(item);
         if (keys.has(fingerprint)) equivalent.add(item);
       } catch { /* Unsupported library entries cannot identify a case. */ }
@@ -362,9 +429,17 @@ export async function correctReconFromLibrary(
   load: (set: string) => Promise<AlgFile> = set => loadAlg('3x3', set),
 ): Promise<ReconTextResult> {
   const files = new Map<string, Promise<AlgFile | null>>();
+  const lineLabel = (line: ReconTextLine) => /^(?:([WYGBOR]{2})\/?\s*)?(OLL\(CP\)|OLLCP|1LLL|ZBLL|COLL|EPLL|OLL|PLL|ELL|ZBLS|VLS|WV|SV)(?:[- ](.+?))?(\/PLL Skip)?$/.exec(line.label ?? '');
+  const librarySet = (label: string) => label === 'EPLL' ? 'pll' : label === 'OLL(CP)' ? 'ollcp' : label.toLowerCase();
+  // Start independent set requests together; four F2L lines share one request.
+  for (const line of recon.lines) {
+    const label = lineLabel(line);
+    const set = label ? librarySet(label[2]) : line.kind === 'f2l' ? 'f2l' : null;
+    if (set && !files.has(set)) files.set(set, boundedLoad(() => load(set)));
+  }
   const lines: ReconTextLine[] = [];
   for (const line of recon.lines) {
-    const label = /^(?:([WYGBOR]{2})\/?\s*)?(OLL\(CP\)|OLLCP|1LLL|ZBLL|COLL|EPLL|OLL|PLL|ELL|ZBLS|VLS|WV|SV)(?:[- ](.+?))?(\/PLL Skip)?$/.exec(line.label ?? '');
+    const label = lineLabel(line);
     // F2L case links identify a starting state; preserving the executed formula
     // requires the same strict move-path match used for last-layer algorithms.
     // Keep pair labels unchanged and never substitute another solution to a case.
@@ -376,7 +451,7 @@ export async function correctReconFromLibrary(
     }
     if (!label) { lines.push(line); continue; }
     const colors = label.splice(1, 1)[0];
-    const set = label[1] === 'EPLL' ? 'pll' : label[1] === 'OLL(CP)' ? 'ollcp' : label[1].toLowerCase();
+    const set = librarySet(label[1]);
     if (!files.has(set)) files.set(set, boundedLoad(() => load(set)));
     const file = await files.get(set)!;
     const key = (text: string) => text.toLowerCase().replace(/\s+/g, '');

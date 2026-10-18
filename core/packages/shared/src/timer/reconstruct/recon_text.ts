@@ -195,9 +195,9 @@ export function prepareReconstruction(record: {
 }
 
 /** A drill is one algorithm, not a candidate for full-solve method detection. */
-export function prepareTrainingReconstruction(record: {
+function prepareTrainingMetrics(record: {
   event: EventId; scramble: string; moves?: SolveMove[]; timeMs: number; gyro?: string; device?: { model?: string };
-}, language: 'zh' | 'en', samples?: GyroSample[], live = false) {
+}, samples?: GyroSample[], live = false) {
   const raw = record.moves ?? [];
   const gyroSamples = samples ?? decodeGyroTrack(record.gyro);
   // Recover only the viewing grip. Legacy records without a measured grip use
@@ -209,11 +209,31 @@ export function prepareTrainingReconstruction(record: {
   const moves = view.moves;
   const counted = htmMoves(moves);
   const firstExecution = moves.findIndex(move => endsRecognition(move.m));
-  const split = firstExecution < 0 ? (live ? moves.length : 0) : firstExecution;
   const range = moves.length ? metricForRange(moves, counted, -1, 0, moves.length - 1) : null;
   const observationMs = Math.max(0, Math.min(record.timeMs,
     live && firstExecution < 0 ? record.timeMs : range?.recognitionMs ?? record.timeMs));
   const metrics = { observationMs, executionMs: Math.max(0, record.timeMs - observationMs), totalMs: record.timeMs };
+  return { gyroSamples, view, moves, counted, firstExecution, observationMs, metrics };
+}
+
+/** Immutable completed records keep accumulated statistics linear in new solves. */
+const trainingMetricsCache = new WeakMap<object, ReturnType<typeof prepareTrainingMetrics>['metrics']>();
+
+/** Lightweight timing summary with exactly the report's orientation and AUF boundary. */
+export function trainingSolveMetrics(record: Parameters<typeof prepareTrainingMetrics>[0]) {
+  const cached = trainingMetricsCache.get(record);
+  if (cached) return cached;
+  const metrics = prepareTrainingMetrics(record).metrics;
+  trainingMetricsCache.set(record, metrics);
+  return metrics;
+}
+
+export function prepareTrainingReconstruction(record: {
+  event: EventId; scramble: string; moves?: SolveMove[]; timeMs: number; gyro?: string; device?: { model?: string };
+}, language: 'zh' | 'en', samples?: GyroSample[], live = false) {
+  const raw = record.moves ?? [];
+  const { gyroSamples, view, moves, counted, firstExecution, observationMs, metrics } = prepareTrainingMetrics(record, samples, live);
+  const split = firstExecution < 0 ? (live ? moves.length : 0) : firstExecution;
   const rawCore = gyroSamples.length ? buildCoreTrack(gyroSamples, { brand: record.device?.model, moves: raw }) : null;
   const measuredCore = rawCore ? conjugateCoreTrack(rawCore, facePermFor(view.rotation)) : null;
   const core = markWideCoreEvents(measuredCore, measuredCore?.frame === 'scramble' ? wideGestureMoves(moves) : counted);
