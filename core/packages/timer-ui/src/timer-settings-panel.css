@@ -318,8 +318,10 @@
 .settings-metronome-tempo > button { flex: none; }
 .settings-cloud-backup-row { display: flex; align-items: flex-start; gap: 12px; }
 .settings-cloud-backup-row > .modal-actions { flex: none; margin: 0; }
-.settings-cloud-backup-info { flex: 1; min-width: 0; }
+.settings-cloud-backup-info { flex: 1; min-width: 0; text-align: right; }
 .settings-modal .settings-cloud-backup-info > p.hint:first-child { margin-top: 0; }
 
 .settings-metronome-readout { flex: none; white-space: nowrap; font-size: 12px; }
 .settings-modal .settings-row[data-setting-id="settings.sound.metronome-tempo"] { grid-template-columns: minmax(48px, .3fr) minmax(0, 1fr); }
+
+.settings-modal .timer-keymap-settings { padding-bottom: 12px; }
