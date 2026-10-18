@@ -49,7 +49,6 @@ export default function SimAppearancePresets({ settings, onChange }: {
 
   return <details className="sim-appearance-presets">
     <summary>{t('外观预设', 'Appearance presets')}</summary>
-    <p>{t('保存在当前浏览器，仅包含视角与色块外观。', 'Saved in this browser, including only view and sticker appearance.')}</p>
     <div className="sim-preset-row sim-player-tools">
       <select aria-label={t('已保存预设', 'Saved presets')} id={`${id}-saved`} className="sim-puzzle-select sim-preset-select" value={current?.name ?? ''}
         onChange={event => { setSelected(event.target.value); setMessage(''); }}>

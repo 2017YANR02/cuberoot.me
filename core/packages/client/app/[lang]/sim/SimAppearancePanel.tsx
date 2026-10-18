@@ -662,41 +662,10 @@ export default function SimAppearancePanel({
               })()}
             </div>
           </details>
-          {isMirror && (
-            <ColorRow label={t('镜面配色', 'Mirror colour')}>
-              <ModeColorSelect
-                special={(settings.mirrorColorMode ?? 'single') === 'six'}
-                color={settings.mirrorColor ?? MIRROR_DEFAULT_COLOR}
-                presets={MIRROR_COLOR_PRESETS}
-                specialTitle={t('六色', 'Six colours')}
-                specialSwatchClass="sim-swatch-six-box"
-                onPickColor={(c) => onSettingsChange({ ...settings, mirrorColorMode: 'single', mirrorColor: c })}
-                onPickSpecial={() => set('mirrorColorMode', 'six')}
-                title={t('镜面配色', 'Mirror colour')}
-                t={t}
-              />
-            </ColorRow>
-          )}
-          {caps.supports.coreColor && (<ColorRow
-            label={t('内核色', 'Core color')}
-            disabled={!caps.supports.coreColor || !!transCore}
-            title={transHint ?? hint(caps.supports.coreColor)}
-          >
-            <ModeColorSelect
-              special={!transCore && settings.coreStyle === 'raw'}
-              color={transCore ? transCore.coreColor : settings.coreColor}
-              presets={CORE_COLOR_PRESETS}
-              specialTitle={t('原核', 'Raw body')}
-              specialSwatchClass="sim-swatch-raw-box"
-              onPickColor={(c) => onSettingsChange({ ...settings, coreStyle: 'normal', coreColor: c })}
-              onPickSpecial={() => set('coreStyle', 'raw')}
-              title={t('内核色', 'Core color')}
-              t={t}
-            />
-          </ColorRow>)}
           {/* 内核色的三个同族旋钮 —— 都作用在「贴纸之外那层」上,3D 与示意伴图共用同一份值
               (伴图导出器的 bodyOpacity / stickerOpacity / inset)。原来只挂在图像面板里、
               只改图不改动画,现在并到内核色下面一起管。 */}
+          <div className="sim-material-sliders">
           {caps.supports.coreOpacity && (<PercentRow
             label={puzzleKind === 'sphere' ? t('球体不透明度', 'Sphere opacity') : t('内核不透明度', 'Core opacity')}
             value={transCore ? transCore.coreOpacity : settings.coreOpacity}
@@ -731,6 +700,40 @@ export default function SimAppearancePanel({
             title={hint(caps.supports.coreFinish)
               ?? t('贴纸之间那条缝有多宽(占小面的百分比)', 'Width of the gap between stickers, as a % of one facelet')}
           />)}
+          </div>
+          <div className="sim-color-settings">
+          {isMirror && (
+            <ColorRow label={t('镜面配色', 'Mirror colour')}>
+              <ModeColorSelect
+                special={(settings.mirrorColorMode ?? 'single') === 'six'}
+                color={settings.mirrorColor ?? MIRROR_DEFAULT_COLOR}
+                presets={MIRROR_COLOR_PRESETS}
+                specialTitle={t('六色', 'Six colours')}
+                specialSwatchClass="sim-swatch-six-box"
+                onPickColor={(c) => onSettingsChange({ ...settings, mirrorColorMode: 'single', mirrorColor: c })}
+                onPickSpecial={() => set('mirrorColorMode', 'six')}
+                title={t('镜面配色', 'Mirror colour')}
+                t={t}
+              />
+            </ColorRow>
+          )}
+          {caps.supports.coreColor && (<ColorRow
+            label={t('内核色', 'Core color')}
+            disabled={!caps.supports.coreColor || !!transCore}
+            title={transHint ?? hint(caps.supports.coreColor)}
+          >
+            <ModeColorSelect
+              special={!transCore && settings.coreStyle === 'raw'}
+              color={transCore ? transCore.coreColor : settings.coreColor}
+              presets={CORE_COLOR_PRESETS}
+              specialTitle={t('原核', 'Raw body')}
+              specialSwatchClass="sim-swatch-raw-box"
+              onPickColor={(c) => onSettingsChange({ ...settings, coreStyle: 'normal', coreColor: c })}
+              onPickSpecial={() => set('coreStyle', 'raw')}
+              title={t('内核色', 'Core color')}
+              t={t}
+            />
+          </ColorRow>)}
           {caps.supports.faceColors && (<label className="sim-toggle">
             <span>{t('配色预设', 'Color preset')}</span>
             <select
@@ -876,6 +879,7 @@ export default function SimAppearancePanel({
               </>
             )}
           </ColorRow>)}
+          </div>
         </div>
       </section>
       <SimAppearancePresets settings={settings} onChange={onSettingsChange} />
