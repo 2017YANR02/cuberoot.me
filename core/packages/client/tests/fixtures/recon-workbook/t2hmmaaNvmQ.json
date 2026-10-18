@@ -1,0 +1,410 @@
+{
+  "source": "https://cuberoot.me/zh/timer?share=t2hmmaaNvmQ",
+  "recording": {
+    "scramble": "U' B' U' D' R' D L' U' B' U2 L2 U2 F2 L2 B' R U2",
+    "moves": [
+      {
+        "m": "L'",
+        "ts": 51.09999999962747
+      },
+      {
+        "m": "D",
+        "ts": 105.09999999962747
+      },
+      {
+        "m": "L'",
+        "ts": 210.09999999962747
+      },
+      {
+        "m": "F",
+        "ts": 285.09999999962747
+      },
+      {
+        "m": "U",
+        "ts": 449.09999999962747
+      },
+      {
+        "m": "R",
+        "ts": 651.0999999996275
+      },
+      {
+        "m": "U",
+        "ts": 958.0999999996275
+      },
+      {
+        "m": "U",
+        "ts": 998.0999999996275
+      },
+      {
+        "m": "D",
+        "ts": 1694.0999999996275
+      },
+      {
+        "m": "L",
+        "ts": 2091.0999999996275
+      },
+      {
+        "m": "D",
+        "ts": 2205.0999999996275
+      },
+      {
+        "m": "L'",
+        "ts": 2824.0999999996275
+      },
+      {
+        "m": "B",
+        "ts": 2940.0999999996275
+      },
+      {
+        "m": "D'",
+        "ts": 2989.0999999996275
+      },
+      {
+        "m": "B'",
+        "ts": 3087.0999999996275
+      },
+      {
+        "m": "D",
+        "ts": 3880.0999999996275
+      },
+      {
+        "m": "R",
+        "ts": 3971.0999999996275
+      },
+      {
+        "m": "D",
+        "ts": 4055.0999999996275
+      },
+      {
+        "m": "R'",
+        "ts": 4169.0999999996275
+      },
+      {
+        "m": "F",
+        "ts": 4800.0999999996275
+      },
+      {
+        "m": "D",
+        "ts": 4880.0999999996275
+      },
+      {
+        "m": "F'",
+        "ts": 4954.0999999996275
+      },
+      {
+        "m": "F'",
+        "ts": 5022.0999999996275
+      },
+      {
+        "m": "D'",
+        "ts": 5075.0999999996275
+      },
+      {
+        "m": "F",
+        "ts": 5151.0999999996275
+      },
+      {
+        "m": "D'",
+        "ts": 5251.0999999996275
+      },
+      {
+        "m": "F",
+        "ts": 5334.0999999996275
+      },
+      {
+        "m": "D'",
+        "ts": 5391.0999999996275
+      },
+      {
+        "m": "F'",
+        "ts": 5456.0999999996275
+      },
+      {
+        "m": "D'",
+        "ts": 5539.0999999996275
+      },
+      {
+        "m": "F",
+        "ts": 5588.0999999996275
+      },
+      {
+        "m": "D",
+        "ts": 5672.0999999996275
+      },
+      {
+        "m": "F'",
+        "ts": 5746.0999999996275
+      },
+      {
+        "m": "D",
+        "ts": 6266.0999999996275
+      },
+      {
+        "m": "F",
+        "ts": 6352.0999999996275
+      },
+      {
+        "m": "D",
+        "ts": 6411.0999999996275
+      },
+      {
+        "m": "F'",
+        "ts": 6512.0999999996275
+      },
+      {
+        "m": "D",
+        "ts": 6562.0999999996275
+      },
+      {
+        "m": "F'",
+        "ts": 6667.0999999996275
+      },
+      {
+        "m": "R",
+        "ts": 6722.0999999996275
+      },
+      {
+        "m": "F",
+        "ts": 6905.0999999996275
+      },
+      {
+        "m": "R'",
+        "ts": 7183.0999999996275
+      },
+      {
+        "m": "F",
+        "ts": 7259.0999999996275
+      },
+      {
+        "m": "D'",
+        "ts": 7319.0999999996275
+      },
+      {
+        "m": "D'",
+        "ts": 7351.0999999996275
+      },
+      {
+        "m": "F'",
+        "ts": 7453.0999999996275
+      },
+      {
+        "m": "F",
+        "ts": 8047.0999999996275
+      },
+      {
+        "m": "D'",
+        "ts": 8129.0999999996275
+      },
+      {
+        "m": "F",
+        "ts": 8284.099999999627
+      },
+      {
+        "m": "D",
+        "ts": 8342.099999999627
+      },
+      {
+        "m": "F'",
+        "ts": 8414.099999999627
+      },
+      {
+        "m": "U",
+        "ts": 8467.099999999627
+      },
+      {
+        "m": "F",
+        "ts": 8585.099999999627
+      },
+      {
+        "m": "U'",
+        "ts": 8623.099999999627
+      },
+      {
+        "m": "F",
+        "ts": 8669.099999999627
+      },
+      {
+        "m": "D'",
+        "ts": 8735.099999999627
+      },
+      {
+        "m": "U",
+        "ts": 8742.099999999627
+      },
+      {
+        "m": "F'",
+        "ts": 8848.099999999627
+      },
+      {
+        "m": "F'",
+        "ts": 8899.099999999627
+      },
+      {
+        "m": "D",
+        "ts": 8951.099999999627
+      },
+      {
+        "m": "F",
+        "ts": 9078.099999999627
+      },
+      {
+        "m": "F",
+        "ts": 9124.099999999627
+      },
+      {
+        "m": "U'",
+        "ts": 9225.099999999627
+      },
+      {
+        "m": "F'",
+        "ts": 9362.099999999627
+      },
+      {
+        "m": "F'",
+        "ts": 9571.099999999627
+      },
+      {
+        "m": "F'",
+        "ts": 9612.099999999627
+      },
+      {
+        "m": "D'",
+        "ts": 9749.099999999627
+      },
+      {
+        "m": "D'",
+        "ts": 9815.099999999627
+      },
+      {
+        "m": "D",
+        "ts": 10584.099999999627
+      },
+      {
+        "m": "D",
+        "ts": 10765.099999999627
+      },
+      {
+        "m": "F",
+        "ts": 10971.099999999627
+      },
+      {
+        "m": "D'",
+        "ts": 11063.099999999627
+      },
+      {
+        "m": "D'",
+        "ts": 11102.099999999627
+      }
+    ],
+    "timeMs": 11102.099999999627,
+    "model": "gan-v4",
+    "gyro": "RwIAXAAABBLeeQBaAwjtfQB4AQbofAAeA/XwfgBaA/rhewDw/gDbegA8/gvlfABaABDiegB4ABzjeAB4/B7VcwAe/BbWdgB4/BfieQCWAxfnegAeARDhegB4AAzlewBa/wfmfAC1/APiewENAgbiewB/CQndeQA1EQXiegB48wHXdwB47uLoeAB4CML2bgAeEanvWQB4D6P0VQBaD5/2UABhGKX6VQBaJLXqXQBZILTsXwBUHZkFRQBaJYb9AAErH4X+/wFwIIUBAQDLJIcICQBhLYv4EgAXDooX2gB4EKocqAA8Gq4XpQB4D6sXpgFnDJ8htgB/F58OsgBVBrMAmwBZDrINngA8HacfsADUHqIgtgCUFqYTqwAfDKgnrgBZFqYjsQBaEKkbqQH+FKUZrQB/E6EitgA2JZ0UvQBZFaQOrAB+B64MoAA2+LgAmAB4BLMOnABaCbIOnQB4BrIJnAC0CqcRpwBa/aYxtAB4BqMdrwA8CqkUpgDSCqkZqAA8DacVqQEsEqYRqgB4C60IoQBiCasUpQCsHKsVqQArC64IoABOFqkWqQA7GKUrtwDSC6MJqwBhA6cBpgBTAKcLpgBgGqgmsQBUE6UjsQB4GaQ3wQBaC6AYsQB4C6IisgA8CKYTqQB4DqcSqABoAqkapwCmDp8svADwCZ0muwAeC54atAB4AqQTqwB4BqUYqwBDDKQargBxBqIUrQA8BqQQqgBaCqMRrAEsDKcUqA=="
+  },
+  "issue": "用户要求检查并收录的完整智能魔方复盘",
+  "displayRows": [
+    {
+      "colors": [],
+      "diagrams": [],
+      "hrefs": [],
+      "label": "",
+      "moves": "U' B' U' D' R' D L' U' B' U2 L2 U2 F2 L2 B' R U2"
+    },
+    {
+      "colors": [
+        "Yellow Green"
+      ],
+      "diagrams": [],
+      "hrefs": [],
+      "label": "// inspection",
+      "moves": "z2"
+    },
+    {
+      "colors": [
+        "White"
+      ],
+      "diagrams": [],
+      "hrefs": [],
+      "label": "//  cross",
+      "moves": "R' U R' F D L D2"
+    },
+    {
+      "colors": [
+        "Orange Blue"
+      ],
+      "diagrams": [
+        "iso"
+      ],
+      "hrefs": [
+        "/alg/3x3/f2l/p+"
+      ],
+      "label": "// ",
+      "moves": "U R U y F' R U' R'"
+    },
+    {
+      "colors": [
+        "Blue Red"
+      ],
+      "diagrams": [
+        "iso"
+      ],
+      "hrefs": [
+        "/alg/3x3/f2l/b+"
+      ],
+      "label": "// ",
+      "moves": "y U R U R'"
+    },
+    {
+      "colors": [
+        "Green Orange"
+      ],
+      "diagrams": [
+        "iso"
+      ],
+      "hrefs": [],
+      "label": "// ",
+      "moves": "y R U R2' U' R"
+    },
+    {
+      "colors": [
+        "Green Red"
+      ],
+      "diagrams": [
+        "iso"
+      ],
+      "hrefs": [
+        "/alg/3x3/f2l/r+"
+      ],
+      "label": "// ",
+      "moves": "U' R U' R' U' R U R'"
+    },
+    {
+      "colors": [],
+      "diagrams": [
+        "plan"
+      ],
+      "hrefs": [
+        "/alg/3x3/oll/y+"
+      ],
+      "label": "// OLL-Y+",
+      "moves": "U R U R' U R' F R F' R U2' (R'"
+    },
+    {
+      "colors": [],
+      "diagrams": [
+        "plan"
+      ],
+      "hrefs": [
+        "/alg/3x3/pll/v"
+      ],
+      "label": "// PLL-V",
+      "moves": "R) U' R U R' D R D' R D U' R2' U R2 D' (R' R' R' U' U' U U R) U2'"
+    }
+  ],
+  "approval": {
+    "status": "approved",
+    "confirmedBy": "user",
+    "instruction": "收录到回归测试",
+    "confirmedAt": "2026-10-18T10:35:12.097Z",
+    "contentHash": "1e69098b7a3c88cf2bbf4ad6f0758cd84b8933c2360fc8450c191ebfd07fee4d"
+  }
+}
