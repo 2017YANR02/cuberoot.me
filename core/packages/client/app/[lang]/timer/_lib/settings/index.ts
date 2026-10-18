@@ -416,12 +416,9 @@ function load(): TimerSettings {
       merged.recordGyroMigrated = true;
       dirty = true;
     }
-    // Existing profiles persisted the old `off` default. New profiles already use
-    // `scrambled`, so only stored settings without the marker need this migration.
+    // Shared normalization migrates retired `off` values to `scrambled`.
+    // Keep the historical marker for storage compatibility.
     if (parsed.bluetoothAutoReadyMigrated !== true) {
-      if (parsed.bluetoothAutoReady === 'off') {
-        merged.bluetoothAutoReady = 'scrambled';
-      }
       merged.bluetoothAutoReadyMigrated = true;
       dirty = true;
     }

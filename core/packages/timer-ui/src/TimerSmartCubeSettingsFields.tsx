@@ -23,10 +23,9 @@ export const TIMER_SMART_CUBE_SETTING_FIELD_IDS = FIELDS.map(field => field.id);
 const field = (path: keyof TimerSmartCubeSettings) => FIELDS.find((candidate) => candidate.storagePath === path)!;
 
 const AUTO_READY_COPY = {
-  scrambled: { zh: '打乱正确即预备', en: 'When scrambled' },
-  off: { zh: '关闭', en: 'Off' },
-  still: { zh: '静止 2 秒', en: 'Still 2s' },
-  'double-flick': { zh: "双反扭 (U U')²", en: "Double-flick (U U')²" },
+  scrambled: { zh: '打乱正确', en: 'When scrambled' },
+  still: { zh: '无操作 2 秒', en: 'Idle for 2 seconds' },
+  'double-flick': { zh: "来回转动（U U'）", en: "Turn and return (U U')" },
 } satisfies Record<TimerSmartCubeSettings['bluetoothAutoReady'], TimerSettingCopy>;
 const LIVE_VIEW_COPY = {
   '3d': { zh: 'three.js', en: 'three.js' },
@@ -68,7 +67,7 @@ export function TimerSmartCubeSettingsFields({ value, localize, onChange, render
         </select>
       </TimerSettingRow>
       </TimerSettingsSection>
-      <TimerSettingsSection title={localize({ zh: '完成还原后', en: 'After each solve' })}>
+      <TimerSettingsSection title={localize({ zh: '结束后', en: 'After solving' })}>
       <TimerBooleanSettingRow field={recap} label={localize(recap.copy)} value={settings.autoRecap}
         onChange={(autoRecap) => onChange({ autoRecap })} renderBooleanControl={renderBooleanControl} />
       <TimerBooleanSettingRow field={solution} label={localize(solution.copy)} value={settings.autoOpenSolution}
