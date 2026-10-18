@@ -23,7 +23,7 @@ describe('shared pre-scramble orientation', () => {
       return JSON.stringify(shown);
     });
     expect(new Set(states).size).toBe(24);
-    expect(normalizeTimerPreScrambleSettings({ preScr: 'R U', preScrT: [] })).toEqual({ preScr: '', preScrT: 'z2' });
+    expect(normalizeTimerPreScrambleSettings({ preScr: 'R U', preScrT: [] })).toEqual({ preScr: '', preScrT: '' });
     expect(normalizeTimerPreScrambleSettings({ preScr: " x y' " }).preScr).toBe("x y'");
     expect(preScrambleFor('333', 'x', 'z2')).toBe('x');
     expect(preScrambleFor('pll', 'x', 'z2')).toBe('z2');
@@ -49,7 +49,7 @@ describe('shared pre-scramble orientation', () => {
       await act(async () => option.click());
     };
     await choose('settings.scramble.pre-orientation', '(FD) x');
-    expect(value).toEqual({ preScr: 'x', preScrT: 'z2' });
+    expect(value).toEqual({ preScr: 'x', preScrT: '' });
     await choose('settings.scramble.training-pre-orientation', '(UF)');
     expect(value).toEqual({ preScr: 'x', preScrT: '' });
   });
@@ -66,7 +66,7 @@ describe('shared pre-scramble orientation', () => {
     };
     const env = { now: () => 100, createId: () => 'session', language: () => 'en' as const };
     const repo = new TimerRepository(driver, env);
-    expect((await repo.load()).settings).toMatchObject({ preScr: '', preScrT: 'z2' });
+    expect((await repo.load()).settings).toMatchObject({ preScr: '', preScrT: '' });
     await repo.updateSettings({ preScr: 'y', preScrT: 'x' });
     const reloaded = await new TimerRepository(driver, env).load();
     expect(reloaded.settings).toMatchObject({ preScr: 'y', preScrT: 'x' });
