@@ -146,7 +146,5 @@
   .settings-row { flex-wrap: wrap; }
 }
 
-.wca-src-filters .country-input-popup { border: 0; }
-
 /* Empty portal targets must not reserve a trailing flex gap beside search. */
 .wca-src-shared-controls:empty { display: none; }
