@@ -27,8 +27,8 @@ describe('one smart-cube settings persistence contract', () => {
                 const choice = { bluetoothAutoReady, liveCubeView, gyroEnabled, recordGyro, autoRecap, autoOpenSolution };
                 const data = createTimerStoreData(0, 'session');
                 Object.assign(data.settings, choice);
-                expect(parseTimerStoreJson(serializeTimerStoreData(data))?.settings).toMatchObject(choice);
-                expect(normalizeTimerSmartCubeSettings(choice)).toEqual({ ...choice, autoCalibrateGyro: true });
+                expect(parseTimerStoreJson(serializeTimerStoreData(data))?.settings).toMatchObject({ ...choice, recordGyro: true });
+                expect(normalizeTimerSmartCubeSettings(choice)).toEqual({ ...choice, recordGyro: true, autoCalibrateGyro: true });
               });
             }
           }
@@ -78,13 +78,13 @@ describe('shared smart-cube controls and auto-ready subscription', () => {
       await act(async () => { view.value = value; view.dispatchEvent(new Event('change', { bubbles: true })); });
       expect(onChange).toHaveBeenLastCalledWith({ liveCubeView: value });
     }
-    const [viewGyro, calibration, recordGyro, recap, solution] = [...host.querySelectorAll('button')];
+    const [viewGyro, calibration, recap, solution] = [...host.querySelectorAll('button')];
     expect(host.textContent).toContain(lang === 'zh'
       ? '仅桌面窗口自动展开，移动端请手动打开解法。'
       : 'Auto-opens on desktop only; open solutions manually on mobile.');
     await act(async () => viewGyro.click()); expect(onChange).toHaveBeenLastCalledWith({ gyroEnabled: false });
     await act(async () => calibration.click()); expect(onChange).toHaveBeenLastCalledWith({ autoCalibrateGyro: false });
-    await act(async () => recordGyro.click()); expect(onChange).toHaveBeenLastCalledWith({ recordGyro: false });
+    expect(host.textContent).not.toContain('记录姿态用于回放');
     await act(async () => recap.click()); expect(onChange).toHaveBeenLastCalledWith({ autoRecap: false });
     await act(async () => solution.click()); expect(onChange).toHaveBeenLastCalledWith({ autoOpenSolution: false });
   });

@@ -43,7 +43,6 @@ export function TimerSmartCubeSettingsFields({ value, localize, onChange, render
   const calibration = field('autoCalibrateGyro');
   const autoReady = field('bluetoothAutoReady');
   const liveView = field('liveCubeView');
-  const orientation = field('recordGyro');
   const recap = field('autoRecap');
   const solution = field('autoOpenSolution');
   return (
@@ -61,15 +60,13 @@ export function TimerSmartCubeSettingsFields({ value, localize, onChange, render
         onChange={(gyroEnabled) => onChange({ gyroEnabled })} renderBooleanControl={renderBooleanControl} />
       <TimerBooleanSettingRow field={calibration} label={localize(calibration.copy)} value={settings.autoCalibrateGyro}
         onChange={(autoCalibrateGyro) => onChange({ autoCalibrateGyro })} renderBooleanControl={renderBooleanControl}
-        hint={localize({ zh: '完成倒数第二步后，按当前训练朝向握好魔方；同时校准实况和本次复盘基准。', en: 'Hold the cube in the training orientation as you finish the penultimate move. Calibrates both the live view and the next replay reference.' })} />
+        hint={localize({ zh: '在打乱完成倒数第二步时进行朝向重置', en: 'Reset the orientation after the penultimate scramble move.' })} />
       <TimerSettingRow field={liveView} label={localize(liveView.copy)}>
         <select className="settings-row-control-select" aria-label={localize({ zh: '实况魔方渲染方式', en: 'Live cube rendering' })} value={settings.liveCubeView}
           onChange={(event) => onChange({ liveCubeView: normalizeTimerSmartCubeSettings({ liveCubeView: event.target.value }).liveCubeView })}>
           {TIMER_SMART_CUBE_LIVE_VIEWS.map((view) => <option key={view} value={view}>{localize(LIVE_VIEW_COPY[view])}</option>)}
         </select>
       </TimerSettingRow>
-      <TimerBooleanSettingRow field={orientation} label={localize(orientation.copy)} value={settings.recordGyro}
-        onChange={(recordGyro) => onChange({ recordGyro })} renderBooleanControl={renderBooleanControl} />
       </TimerSettingsSection>
       <TimerSettingsSection title={localize({ zh: '完成还原后', en: 'After each solve' })}>
       <TimerBooleanSettingRow field={recap} label={localize(recap.copy)} value={settings.autoRecap}

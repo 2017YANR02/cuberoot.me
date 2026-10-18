@@ -115,10 +115,13 @@ describe('录姿态:老存档里的 false 要翻过来', () => {
     expect(saved.recordGyroMigrated).toBe(true);
   });
 
-  it('翻过之后用户再关掉,不会被翻回来 —— 那时的 false 才是他的意思', async () => {
-    installStorage({ [KEY]: JSON.stringify({ recordGyro: false, recordGyroMigrated: true }) });
-    const { getSettings } = await freshSettings();
-    expect(getSettings().recordGyro).toBe(false);
+  it('旧版关闭姿态记录的偏好迁移为始终记录', async () => {
+    const mem = installStorage({ [KEY]: JSON.stringify({ recordGyro: false, recordGyroMigrated: true }) });
+    const { getSettings, updateSettings } = await freshSettings();
+    expect(getSettings().recordGyro).toBe(true);
+    expect(JSON.parse(mem.get(KEY) as string).recordGyro).toBe(true);
+    updateSettings({ recordGyro: false });
+    expect(getSettings().recordGyro).toBe(true);
   });
 
   it('从没存过设置的浏览器:走默认值,不写盘', async () => {
