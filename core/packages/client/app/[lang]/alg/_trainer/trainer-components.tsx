@@ -6,7 +6,7 @@ import { Trash2, ChevronDown, ChevronRight, Check, Star } from 'lucide-react';
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
 import Link from '@/components/AppLink';
 import { CaseThumb } from '@/components/CaseThumb';
-import { LEVEL2_PICKER_MASK, DEFAULT_ALG_CUBE_ORIENTATION } from '@/lib/alg_thumb_plan';
+import { LEVEL2_PICKER_MASK } from '@/lib/alg_thumb_plan';
 import { visualCubeSchemeForOrientation } from '@/lib/cube-orientation';
 import { VisualCube } from '@/components/VisualCube';
 import { SegmentTime, TimerScrambleHintText, type TimerScrambleHint } from '@cuberoot/timer-ui';
@@ -127,9 +127,9 @@ export function DoubleZbllThumb({ top, bottom, scramble, size = 112, compact = f
         {/* Full-state plan view: a single-layer LL mask would hide all bottom pieces after x2. */}
         {onShowCase && !compact ? (
           <CaseThumbAction name={`${label} ${c.name}`} onOpen={() => onShowCase(c)}>
-            <VisualCube view="plan" setup={setup} scheme={visualCubeSchemeForOrientation(DEFAULT_ALG_CUBE_ORIENTATION)} size={size} local alt={label} />
+            <VisualCube view="plan" setup={setup} scheme={visualCubeSchemeForOrientation('')} size={size} local alt={label} />
           </CaseThumbAction>
-        ) : <VisualCube loading={compact ? 'lazy' : undefined} view="plan" setup={setup} scheme={visualCubeSchemeForOrientation(DEFAULT_ALG_CUBE_ORIENTATION)} size={size} local alt={label} />}
+        ) : <VisualCube loading={compact ? 'lazy' : undefined} view="plan" setup={setup} scheme={visualCubeSchemeForOrientation('')} size={size} local alt={label} />}
         {!compact && <CaseMarkBar k={caseKey(c)} />}
       </figure>
     ))}
@@ -190,7 +190,7 @@ export function SolveCard({
                   name={name ?? ''}
                   onOpen={onShowCase && c ? () => onShowCase(c) : undefined}
                 >
-                  <CaseThumb
+                  <CaseThumb orientation=""
                     puzzle={puzzle}
                     set={set}
                     sticker={c.sticker}
@@ -282,7 +282,7 @@ export function StatsList({
                 aria-label={`${name} ${time}`}
               >
                 {c && bottom ? <DoubleZbllThumb top={c} bottom={bottom} scramble={s.scramble} size={40} compact /> : c && (
-                  <CaseThumb
+                  <CaseThumb orientation=""
                     puzzle={puzzle}
                     set={set}
                     sticker={c.sticker}
@@ -399,7 +399,7 @@ export function HistoryList({
               aria-label={name}
             >
               {c && bottom ? <DoubleZbllThumb top={c} bottom={bottom} scramble={e.scramble} size={40} compact /> : c ? (
-                <CaseThumb
+                <CaseThumb orientation=""
                   puzzle={puzzle}
                   set={set}
                   sticker={c.sticker}
@@ -594,7 +594,7 @@ export function CaseTreePicker({
       return <VisualCube loading="lazy" setup={g.sample.setup} algorithm={firstAlg} view="oll" size={44} hideGreySides local />;
     }
     return (
-      <CaseThumb loading="lazy"
+      <CaseThumb orientation="" loading="lazy"
         puzzle={puzzle}
         set={set}
         sticker={g.sample.sticker}
@@ -685,7 +685,7 @@ export function CaseTreePicker({
                               onClick={() => toggleBulk(subCases)}
                             >
                               <TriCheckbox checked={subAll} indeterminate={!subAll && !subNone} />
-                              <CaseThumb loading="lazy" puzzle={puzzle} set={set} sticker={subCases[0].sticker}
+                              <CaseThumb orientation="" loading="lazy" puzzle={puzzle} set={set} sticker={subCases[0].sticker}
                                 alg={subSampleAlg} setup={subCases[0].setup} size={36} mask={pickerMask} local />
                               <span>{set === 'zbll' ? displayZbllToken(subLabel) : subLabel}</span>
                               <span style={{ color: 'var(--muted-foreground)', fontWeight: 400, fontSize: '0.85rem' }}>
@@ -744,7 +744,7 @@ function CaseCell({
     <button type="button" className={`trainer-case-cell${isOn ? ' is-selected' : ''}`}
       aria-pressed={isOn} onClick={toggle}>
       <span className="trainer-case-cell-thumb">
-        <CaseThumb loading="lazy"
+        <CaseThumb orientation="" loading="lazy"
           puzzle={puzzle}
           set={set}
           sticker={c.sticker}

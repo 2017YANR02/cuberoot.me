@@ -182,7 +182,7 @@ it('leaves completion to split view without forcing timing on when leaving it', 
   expect(useTrainerStore.getState().timing).toBe(false);
 });
 
-it('pauses keyboard timing, next-case shortcuts and formula recall while settings are open', async () => {
+it('keeps keyboard timing disabled and pauses next-case shortcuts and recall while settings are open', async () => {
   cubeConnection.connected = true;
   useTrainerStore.getState().setMode('train');
   useTrainerStore.getState().setTiming(true);
@@ -213,7 +213,7 @@ it('pauses keyboard timing, next-case shortcuts and formula recall while setting
 
   await act(async () => gear.click());
   await act(async () => { press('Space'); press('ArrowRight'); });
-  expect(ready).toHaveBeenCalledOnce();
+  expect(ready).not.toHaveBeenCalled();
   expect(next).toHaveBeenCalledOnce();
 
   await act(async () => { await changePractice('memo', '1'); });
@@ -222,6 +222,30 @@ it('pauses keyboard timing, next-case shortcuts and formula recall while setting
   expect(memoryRendered.mock.lastCall?.[0].paused).toBe(true);
   await act(async () => gear.click());
   expect(memoryRendered.mock.lastCall?.[0].paused).toBe(false);
+});
+
+it('ignores keyboard and pointer timer input during connected-cube practice', async () => {
+  cubeConnection.connected = true;
+  await renderTrainer(true);
+  const ready = vi.spyOn(useTrainerStore.getState(), 'getTimerReady');
+  const start = vi.spyOn(useTrainerStore.getState(), 'startTimer');
+  const stop = vi.spyOn(useTrainerStore.getState(), 'stopTimer');
+  const press = () => {
+    window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Space', key: ' ', bubbles: true }));
+    window.dispatchEvent(new KeyboardEvent('keyup', { code: 'Space', key: ' ', bubbles: true }));
+    for (const target of [document.body, container.querySelector('.trainer-stage')!]) {
+      target.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, button: 0 }));
+      target.dispatchEvent(new MouseEvent('pointerup', { bubbles: true, button: 0 }));
+    }
+  };
+  await act(async () => press());
+  expect(useTrainerStore.getState().timerState).toBe(TimerState.NOT_RUNNING);
+  await act(async () => useTrainerStore.getState().setTimerState(TimerState.RUNNING));
+  await act(async () => press());
+  expect(useTrainerStore.getState().timerState).toBe(TimerState.RUNNING);
+  expect(ready).not.toHaveBeenCalled();
+  expect(start).not.toHaveBeenCalled();
+  expect(stop).not.toHaveBeenCalled();
 });
 
 it('keeps a three-at-once room untimed without allowing a memory request to replace the room mode', async () => {

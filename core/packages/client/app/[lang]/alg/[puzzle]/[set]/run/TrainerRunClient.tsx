@@ -23,7 +23,6 @@ import {
   completedRecapCount, readSessionSelection, type TrainerMode, type TrainerSolve,
 } from '@/lib/trainer-store';
 import TimerFontPicker from '@/components/TimerFontPicker';
-import { useSpaceHoldTimer } from '@/hooks/useSpaceHoldTimer';
 import { useTrainerSplitScreen } from '@/hooks/useTrainerSplitScreen';
 import { GestureWheel, useGestureWheel } from '@cuberoot/timer-ui';
 import { useCopy } from '@/hooks/useCopy';
@@ -118,7 +117,6 @@ const PRIMARY_MODES: Array<{ id: 'train' | 'memo'; zh: string; en: string }> = [
   { id: 'memo', zh: '记忆', en: 'Memory' },
 ];
 
-const TIMER_DELAY_MS = 0;
 
 const F2L_SLOT_GRID: readonly F2LSlot[] = ['BL', 'BR', 'FL', 'FR'];
 
@@ -450,10 +448,6 @@ export default function TrainerRunClient() {
   const continueRecapRound = useTrainerStore(s => s.continueRecapRound);
   const dismissRecapRound = useTrainerStore(s => s.dismissRecapRound);
   const roundBackdropProps = useModalBackdrop(dismissRecapRound);
-  const getTimerReady = useTrainerStore(s => s.getTimerReady);
-  const startTimer = useTrainerStore(s => s.startTimer);
-  const stopTimer = useTrainerStore(s => s.stopTimer);
-  const setTimerState = useTrainerStore(s => s.setTimerState);
   const setSolvePenalty = useTrainerStore(s => s.setSolvePenalty);
   const deleteSolve = useTrainerStore(s => s.deleteSolve);
   const clearSolves = useTrainerStore(s => s.clearSolves);
@@ -783,9 +777,7 @@ export default function TrainerRunClient() {
   const overlayOpenRef = useRef(false);
   overlayOpenRef.current = overlayOpen;
 
-  // Space-bar timing (keyboard). Touch/mouse press-to-time is handled by the
-  // gesture-wheel hook below so a press can also drive the radial dial.
-  // 记忆模式自己接管全部键盘/指针(空格 = 揭示公式,1-4 = 评分),这里的计时与手势一律让位。
+  // Connected-cube timing is driven exclusively by device turns.
   const isMemo = mode === 'memo';
   const isMemoRef = useRef(false);
   isMemoRef.current = isMemo;
@@ -804,17 +796,6 @@ export default function TrainerRunClient() {
     if (smartCube) setSmartCube(false);
   }, [splitEligible, mode, timing, smartCube,
       setMode, setTiming, setSmartCube]);
-
-  useSpaceHoldTimer({
-    state: timerState,
-    delayMs: TIMER_DELAY_MS,
-    // 「本轮结束」/ 二维码 / case 详情弹窗开着时别让空格误起表
-    enabled: sessionReady && timing && !recapRoundDone && !isMemo && !splitActive && !overlayOpen,
-    getTimerReady,
-    startTimer,
-    stopTimer,
-    setNotRunning: () => setTimerState(TimerState.NOT_RUNNING),
-  });
 
   // ←/→ 打乱历史(同 /timer);不计时模式下空格也直接切下一个打乱。
   useEffect(() => {
@@ -976,33 +957,17 @@ export default function TrainerRunClient() {
         }
       }
     },
-    onPressDown: () => {
-      if (!useTrainerStore.getState().timing) return;
-      const st = useTrainerStore.getState().timerState;
-      if (st === TimerState.RUNNING) stopTimer();
-      else if (st === TimerState.NOT_RUNNING) getTimerReady(TIMER_DELAY_MS);
-    },
-    onPressCancel: () => {
-      const st = useTrainerStore.getState().timerState;
-      if (st === TimerState.READY
-        || st === TimerState.AWAITING_READY
-        || st === TimerState.STOPPING) setTimerState(TimerState.NOT_RUNNING);
-    },
+    onPressDown: () => {},
+    onPressCancel: () => {},
+    onArmCancel: () => {},
     onPressUp: () => {
-      // 不计时模式:单击(未拖动)= 下一个打乱(三条一屏时 = 下一屏三条)
-      if (!useTrainerStore.getState().timing) { advanceScramble(); return; }
-      const st = useTrainerStore.getState().timerState;
-      if (st === TimerState.READY) startTimer();
-      else if (st === TimerState.AWAITING_READY || st === TimerState.STOPPING) setTimerState(TimerState.NOT_RUNNING);
-    },
-    onArmCancel: () => {
-      const st = useTrainerStore.getState().timerState;
-      if (st === TimerState.READY || st === TimerState.AWAITING_READY) setTimerState(TimerState.NOT_RUNNING);
+      // Untimed practice may advance by tapping; a connected cube owns its clock.
+      if (!useTrainerStore.getState().timing) advanceScramble();
     },
   });
 
   // stage 之外的页面空白(顶栏边缘、栏间留白、内容下方的 body)也当按压面:
-  // 计时开 = 同空格按住/松开;计时关 = 单击直接下一个。sidebar(看成绩要点来点去)、
+  // 未连接魔方时单击直接下一个；连接后起停只由魔方触发。sidebar(看成绩要点来点去)、
   // 弹窗、轮盘与一切交互控件除外;不 preventDefault,移动端滚动不受影响(轮盘手势仍只在 stage 内)。
   useEffect(() => {
     const isBlank = (t: EventTarget | null): boolean => {
@@ -1019,19 +984,12 @@ export default function TrainerRunClient() {
       // 设置面板开着时,面板外的按压只该关面板 —— 不该顺带切打乱/触发计时。
       if (optsOpenRef.current) return;
       if (!isBlank(e.target)) return;
-      pressed = true;
-      if (!useTrainerStore.getState().timing) return;
-      const st = useTrainerStore.getState().timerState;
-      if (st === TimerState.RUNNING) stopTimer();
-      else if (st === TimerState.NOT_RUNNING) getTimerReady(TIMER_DELAY_MS);
+      pressed = !useTrainerStore.getState().timing;
     };
     const up = () => {
       if (!pressed) return;
       pressed = false;
-      if (!useTrainerStore.getState().timing) { advanceScramble(); return; }
-      const st = useTrainerStore.getState().timerState;
-      if (st === TimerState.READY) startTimer();
-      else if (st === TimerState.AWAITING_READY || st === TimerState.STOPPING) setTimerState(TimerState.NOT_RUNNING);
+      if (!useTrainerStore.getState().timing) advanceScramble();
     };
     document.addEventListener('pointerdown', down);
     document.addEventListener('pointerup', up);
@@ -1039,7 +997,7 @@ export default function TrainerRunClient() {
       document.removeEventListener('pointerdown', down);
       document.removeEventListener('pointerup', up);
     };
-  }, [advanceScramble, stopTimer, getTimerReady, startTimer, setTimerState]);
+  }, [advanceScramble]);
 
   /**
    * 计时成绩也算一次「复习」—— 手上做出来了就是记得住,这一把该喂回记忆调度里,
@@ -2006,18 +1964,18 @@ export default function TrainerRunClient() {
               {/* 不计时那句「单击 / 空格 / → 切下一个」不出:那是点哪都能试出来的事。 */}
               {timing && (
                 <div className="trainer-opts-help">
-                  {tr({ zh: '空格开始/停止，按住拖动呼出轮盘', en: 'Space to start/stop, hold & drag for the wheel' })}
+                  {tr({ zh: '转动开始，完成自动停表', en: 'Turn to start; completion stops the clock' })}
                 </div>
               )}
               <div className="trainer-opts-help">
                 {multi
                   ? tr({
-                      zh: '数字键 1 不熟、2 已掌握,标在「上三个」最后一条;其余两条点卡片上的标记按钮',
-                      en: 'Keys 1 shaky and 2 mastered mark the last of “Previous 3”; use each card’s mark button for the other two',
+                      zh: '1 不熟 · 2 掌握（上一组末题）',
+                      en: '1 Shaky · 2 Mastered (last of previous 3)',
                     })
                   : tr({
-                      zh: '数字键 1 不熟、2 已掌握,标在「上一个」case',
-                      en: 'Keys 1 shaky and 2 mastered mark the “Previous” case',
+                      zh: '1 不熟 · 2 掌握（上一题）',
+                      en: '1 Shaky · 2 Mastered (previous case)',
                     })}
               </div>
         </SettingsPopover>
@@ -2100,7 +2058,7 @@ export default function TrainerRunClient() {
                       </div>
                     )}
                     {showStageThumb && row.c && row.bottom && row.s ? <DoubleZbllThumb top={row.c} bottom={row.bottom} scramble={row.s} /> : showStageThumb && row.c && (
-                      <CaseThumb
+                      <CaseThumb orientation=""
                         puzzle={puzzle}
                         set={setSlug}
                         sticker={row.c.sticker}
@@ -2166,7 +2124,7 @@ export default function TrainerRunClient() {
                     <div className="trainer-stage-thumb">
                       {(() => {
                         const thumb = (
-                          <CaseThumb local
+                          <CaseThumb local orientation=""
                             puzzle={puzzle}
                             set={setSlug}
                             sticker={currentCase.sticker}

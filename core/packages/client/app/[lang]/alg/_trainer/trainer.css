@@ -816,7 +816,7 @@
   font-size: 0.78rem;
   line-height: 1.5;
   color: var(--faint-foreground);
-  max-width: 240px;
+  white-space: nowrap;
 }
 
 /* ─── 顶层朝向偏好(post-AUF 的细化版,见 _trainer/OrientationPicker.tsx) ─── */

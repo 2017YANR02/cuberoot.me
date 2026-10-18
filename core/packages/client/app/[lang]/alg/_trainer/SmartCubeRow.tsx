@@ -189,7 +189,7 @@ export default function SmartCubeRow({ enabled, onEnabledChange, state, supporte
               en: 'Connect a bluetooth cube and each case is handed to you on the cube itself — no scramble to apply, and the clock starts and stops on its own. The cube in your hands drifts further from solved every rep, which never matters',
             })
           : reason === 'unreadable-case'
-              ? tr({ zh: '这题的打乱含看不懂的记号,本题由你自己停表', en: 'This case’s scramble has notation we can’t read, so stop the clock yourself' })
+              ? tr({ zh: '这题的打乱记号无法识别，请切换打乱方式', en: 'This scramble has unsupported notation; choose another scramble mode' })
               : reason === 'no-case'
                 ? tr({ zh: '等出题', en: 'Waiting for a case' })
                 : reason === 'settling'
@@ -204,8 +204,8 @@ export default function SmartCubeRow({ enabled, onEnabledChange, state, supporte
                       en: `Your first turn starts the clock; it stops at ${stepLabel(stopStep)}`,
                     })
                   : tr({
-                      zh: '这一套的收尾状态判定不了,第一下转动开始计时,整体还原或按空格停表',
-                      en: 'We can’t state where this set finishes: your first turn starts the clock, and a full solve or the space bar stops it',
+                      zh: '这一套没有阶段判定，第一下转动开始计时，整体还原后停表',
+                      en: 'This set has no stage detector: your first turn starts the clock, and a full solve stops it',
                     })}
         </div>
       )}
