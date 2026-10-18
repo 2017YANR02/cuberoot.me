@@ -1,5 +1,5 @@
 .sim-player {
-  padding: 14px 18px;
+  padding: 12px;
   background: var(--card);
   border-top: 1px solid var(--border-default);
   display: flex;
@@ -380,7 +380,7 @@
   border-color: var(--ring);
 }
 
-.sim-appearance-presets { margin: 10px 12px; }
+.sim-appearance-presets { margin: 0; }
 .sim-appearance-presets > :not(summary) { margin-top: 8px; }
 .sim-appearance-presets p { color: var(--muted-foreground); font-size: 14px; }
 .sim-appearance-presets p:empty { display: none; }
@@ -445,7 +445,7 @@
 
 .sim-puzzle-sliders {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 8px 12px;
 }
 @media (max-width: 640px) {
@@ -459,7 +459,7 @@
 
 .sim-puzzle-toggles {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 6px 12px;
 }
 @media (max-width: 640px) {
@@ -471,10 +471,7 @@
   min-width: 0;
   display: flex;
   align-items: center;
-  /* 标签紧贴自己的控件成一组(flex-start),不再 space-between 把控件甩到格右沿 ——
-     多列网格里右沿控件会紧挨「下一格」的标签,造成「这个开关属于哪个标签」歧义
-     (灰掉的「挖块」旁边正好是隔壁「结构着色」可点的开关;空尾格旁边是孤零零没标签的开关)。 */
-  justify-content: flex-start;
+  justify-content: space-between;
   gap: 8px;
 }
 .sim-puzzle-toggles .sim-toggle > span {
@@ -540,7 +537,7 @@
 }
 .sim-puzzle-debug-toggles {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 6px 12px;
 }
 @media (max-width: 640px) {
@@ -1389,7 +1386,6 @@
 .sim-animation-controls[hidden] { display: none; }
 .sim-field-label { color: var(--muted-foreground); font-size: 13px; }
 .sim-settings-section > summary,
-.sim-formula-tools > summary,
 .sim-puzzle-debug > summary {
   padding: 10px 0;
   font-size: 14px;
@@ -1443,7 +1439,7 @@
   .sim-view-tools { flex-wrap: nowrap; overflow-x: auto; }
   .sim-view-tools > * { flex-shrink: 0; }
   .sim-stage-controls .playback-bar-btn,
-  .sim-player button,
+  .sim-player button:not(.pill-toggle):not(.bool-toggle-label),
   .sim-panel-toggle,
   .sim-float-close,
   .sim-backview-swap,
@@ -1452,3 +1448,47 @@
   .sim-player select { min-height: 44px; font-size: 16px; }
   .sim-side { overscroll-behavior: contain; scroll-padding-block: 12px; }
 }
+
+/* Fixed editing tools precede optional panels. One chevron style for every
+   disclosure; native summary markers must not create a second visual hierarchy. */
+.sim-settings-section > summary,
+.sim-appearance-presets > summary,
+.sim-puzzle-debug > summary,
+.sim-playback-options summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  list-style: none;
+}
+.sim-settings-section > summary::-webkit-details-marker,
+.sim-appearance-presets > summary::-webkit-details-marker,
+.sim-puzzle-debug > summary::-webkit-details-marker,
+.sim-playback-options summary::-webkit-details-marker { display: none; }
+.sim-settings-section > summary::before,
+.sim-appearance-presets > summary::before,
+.sim-puzzle-debug > summary::before,
+.sim-playback-options summary::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(-45deg);
+  margin: 0 4px;
+}
+.sim-settings-section[open] > summary::before,
+.sim-appearance-presets[open] > summary::before,
+.sim-puzzle-debug[open] > summary::before,
+.sim-playback-options details[open] > summary::before { transform: rotate(45deg); }
+.sim-settings-section { border-top: 1px solid var(--border-default); }
+.sim-alg-tools { padding-block: 4px; }
+.sim-puzzle-section-title,
+.sim-appearance-presets > summary,
+.sim-puzzle-debug > summary { font-size: 13px; font-weight: 500; }
+.sim-puzzle-toggles > .sim-toggle { min-height: 36px; }
+@media (max-width: 480px) {
+  .sim-puzzle-toggles { grid-template-columns: minmax(0, 1fr); }
+}
+
+.sim-puzzle-toggles .sim-toggle > .bool-toggle { width: 100%; justify-content: space-between; }
