@@ -57,7 +57,7 @@ it('applies and undoes appearance without changing media or playback; delete can
   localStorage.setItem(APPEARANCE_PRESETS_KEY, JSON.stringify(saved));
   await act(async () => root.render(createElement(Harness)));
   await selectPreset();
-  await click('Apply preset');
+  await click('Apply');
   expect(current.scale).toBe(30);
   expect(current.ghostFaceColors).toEqual(palette);
   expect(current.pictureFaces).toEqual({ U: 'image' });
@@ -65,7 +65,7 @@ it('applies and undoes appearance without changing media or playback; delete can
   await click('Undo apply');
   expect(current.scale).toBe(50);
   expect(current.ghostFaceColors).toBeUndefined();
-  await click('Delete preset');
+  await click('Delete');
   expect(readAppearancePresets(localStorage.getItem(APPEARANCE_PRESETS_KEY))).toEqual([]);
   await click('Undo delete');
   expect(readAppearancePresets(localStorage.getItem(APPEARANCE_PRESETS_KEY))).toEqual(saved);
@@ -76,7 +76,7 @@ it('keeps the existing preset when browser storage rejects a change', async () =
   await act(async () => root.render(createElement(Harness)));
   await selectPreset();
   vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new DOMException('Full', 'QuotaExceededError'); });
-  await click('Delete preset');
+  await click('Delete');
   expect(host.querySelector('[role="status"]')?.textContent).toContain('Could not save');
   expect(host.querySelectorAll('option').length).toBe(2);
   expect(readAppearancePresets(localStorage.getItem(APPEARANCE_PRESETS_KEY))).toEqual(saved);
