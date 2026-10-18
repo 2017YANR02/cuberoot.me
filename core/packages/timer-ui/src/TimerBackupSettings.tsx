@@ -50,7 +50,7 @@ export function TimerBackupSettings({ language, every, onEveryChange, local, own
   };
   const blocked = busy || disabled;
   return <>
-    <section className="settings-section"><h3>{tr({ en: 'Local auto-backup', zh: '本机自动备份' })}</h3>
+    <section className="settings-section"><h3>{tr({ en: 'Local backup', zh: '本机备份' })}</h3>
       <label className="settings-row" data-setting-id="settings.data.auto-backup-frequency"><span className="settings-row-label">{tr({ en: 'Back up every N solves', zh: '每完成 N 次自动备份' })}</span><span className="settings-row-control"><input className="settings-row-control-input" type="number" min={0} max={30} step={1} value={everyInput} disabled={blocked} onChange={event => setEveryInput(event.target.value)} onBlur={commitEvery} onKeyDown={event => { if (event.key === 'Enter') commitEvery(); }} /><span className="hint">{tr({ en: '0 disables; keeps last 10', zh: '0 为禁用；保留最近 10 份' })}</span></span></label>
       <div className="modal-actions"><button type="button" className="hint-btn" data-setting-id="settings.data.local-backup-create" disabled={blocked} onClick={() => void run(async () => { await local.create(); if (entries) setEntries(await local.list()); return tr({ en: 'Local backup created', zh: '已写入本机备份' }); })}>{tr({ en: 'Back up now', zh: '立即备份' })}</button>
       <button type="button" className="hint-btn" data-setting-id="settings.data.local-backup-list" disabled={blocked} onClick={() => void run(async () => { setEntries(entries ? null : await local.list()); return ''; })}>{entries ? tr({ en: 'Hide backups', zh: '收起备份' }) : tr({ en: 'View backups', zh: '查看备份' })}</button></div>
@@ -60,14 +60,14 @@ export function TimerBackupSettings({ language, every, onEveryChange, local, own
       }}>{tr({ en: 'Restore', zh: '恢复' })}</button></div>)}</div>}
     </section>
     <section className="settings-section"><h3>{tr({ en: 'Cloud backup', zh: '云备份' })}</h3>
-      {!owner ? <button type="button" className="hint-btn" data-setting-id="settings.data.cloud-sign-in" onClick={login}>{tr({ en: 'Sign in to back up', zh: '登录后备份到云端' })}</button> : <>
-        <div className="modal-actions"><button type="button" className="hint-btn" data-setting-id="settings.data.cloud-upload" disabled={blocked} onClick={() => void run(async () => { const current = generation.current; await cloud.upload(); const next = await cloud.meta(); if (current === generation.current) setMeta(next); return tr({ en: 'Uploaded to cloud', zh: '已上传到云端' }); })}>{tr({ en: 'Upload to cloud', zh: '上传到云端' })}</button>
+      {!owner ? <button type="button" className="hint-btn" data-setting-id="settings.data.cloud-sign-in" onClick={login}>{tr({ en: 'Sign in', zh: '登录' })}</button> : <>
+        <div className="modal-actions"><button type="button" className="hint-btn" data-setting-id="settings.data.cloud-upload" disabled={blocked} onClick={() => void run(async () => { const current = generation.current; await cloud.upload(); const next = await cloud.meta(); if (current === generation.current) setMeta(next); return tr({ en: 'Uploaded to cloud', zh: '已上传到云端' }); })}>{tr({ en: 'Upload', zh: '上传' })}</button>
         <button type="button" className="hint-btn" data-setting-id="settings.data.cloud-restore" disabled={blocked} onClick={() => {
           if (!window.confirm(tr({ en: 'Replace all local solves with the cloud backup?', zh: '确认用云备份覆盖当前全部成绩？' }))) return;
           void run(async canCommit => await cloud.restore(canCommit) ? tr({ en: 'Restored from cloud', zh: '已从云端恢复' }) : tr({ en: 'No cloud backup yet', zh: '云端暂无备份' }));
-        }}>{tr({ en: 'Restore from cloud', zh: '从云端恢复' })}</button></div>
+        }}>{tr({ en: 'Restore', zh: '恢复' })}</button></div>
         <p className="hint">{meta?.exists ? tr({ en: `Cloud: ${meta.solveCount ?? 0} solves`, zh: `云端 ${meta.solveCount ?? 0} 条成绩` }) : tr({ en: 'No cloud backup loaded', zh: '尚未读取到云备份' })}</p>
-        <p className="hint">{meta?.updatedAt ? new Date(meta.updatedAt * 1000).toLocaleString() : null}</p>
+        {!!meta?.updatedAt && <p className="hint">{new Date(meta.updatedAt * 1000).toLocaleString()}</p>}
         <p className="hint">{tr({ en: 'Restore replaces all local sessions. Timer settings are not included.', zh: '恢复会覆盖本地所有分组，计时器设置不在云备份内。' })}</p>
       </>}
     </section>

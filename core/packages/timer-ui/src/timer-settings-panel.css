@@ -145,8 +145,8 @@
 }
 .settings-modal .settings-section { margin: 0; color: var(--foreground); font-size: 13px; }
 .settings-modal .settings-section + .settings-section {
-  margin-top: 18px;
-  padding-top: 16px;
+  margin-top: 0;
+  padding-top: 10px;
   border-top: 1px solid var(--border-default);
 }
 .settings-section-head {
@@ -168,9 +168,9 @@
   font-size: 12px;
   line-height: 1.5;
 }
-.settings-reset-row {
-  margin-top: 32px;
-  padding-top: 20px;
+.settings-modal .settings-reset-row {
+  margin-top: 10px;
+  padding-top: 10px;
   border-top: 1px solid var(--border-default);
 }
 .settings-modal .settings-row {
@@ -183,9 +183,9 @@
 }
 .settings-modal .settings-row-boolean { align-items: center; }
 .settings-modal .settings-row-boolean .settings-row-control { justify-content: flex-end; }
-.settings-modal .settings-row-hint { grid-column: 1 / -1; margin: 0; line-height: 1.5; }
+.settings-modal .settings-row-hint { grid-column: 1 / -1; margin: 0; color: var(--muted-foreground); font-size: 12px; line-height: 1.5; }
 .settings-modal .settings-section > h3 { margin: 0 0 10px; font-size: 14px; }
-.settings-modal .settings-disclosure { margin-top: 18px; }
+.settings-modal .settings-disclosure { margin: 0; }
 .settings-modal .settings-disclosure > summary { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 12px 0; font-weight: 600; list-style: none; }
 .settings-modal .settings-disclosure > summary::-webkit-details-marker { display: none; }
 .settings-modal .settings-disclosure > summary > svg { flex: none; transition: transform 140ms; }
@@ -223,13 +223,24 @@
 .settings-modal .settings-row-control input[type="text"]:not(.country-input-field) {
   max-width: 100%;
 }
-.settings-modal .settings-row-control .hint-btn {
+.settings-modal .hint-btn {
   display: inline-flex;
   align-items: center;
   min-height: 34px;
   padding: 5px 10px;
   white-space: nowrap;
+  gap: 6px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  cursor: pointer;
 }
+.settings-modal .hint-btn:hover:not(:disabled) { background: var(--muted); }
+.settings-modal .hint-btn:disabled { opacity: .5; cursor: not-allowed; }
+.settings-modal .modal-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+.settings-modal p.hint { margin: 6px 0; color: var(--muted-foreground); font-size: 12px; line-height: 1.5; }
 .settings-modal .settings-row-control .hint-btn svg { vertical-align: -2px; }
 @media (max-width: 720px) {
   .timer-settings-overlay { padding: 0; }
