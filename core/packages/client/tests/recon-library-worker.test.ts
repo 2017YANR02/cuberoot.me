@@ -4,7 +4,7 @@ const services = vi.hoisted(() => ({ build: vi.fn(), correct: vi.fn(), warm: vi.
 vi.mock('@cuberoot/shared/timer/reconstruct/recon-text', () => ({ buildReconText: services.build }));
 vi.mock('@cuberoot/shared/timer/reconstruct/library-correction', () => ({ correctReconFromLibrary: services.correct }));
 vi.mock('@cuberoot/shared/timer/reconstruct/reference', () => ({}));
-vi.mock('../../timer-ui/src/reconstruct/library-cache', () => ({ reconstructionLibraries: { warm: services.warm, load: services.load } }));
+vi.mock('@cuberoot/timer-ui/reconstruct/library-cache', () => ({ reconstructionLibraries: { warm: services.warm, load: services.load } }));
 
 afterEach(() => { vi.unstubAllGlobals(); vi.resetAllMocks(); vi.resetModules(); });
 async function worker() {
