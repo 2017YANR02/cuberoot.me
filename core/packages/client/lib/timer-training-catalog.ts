@@ -65,7 +65,7 @@ const SQ1_TOOLS = [
 
 const legacyStage = (variant: string, stage: string | null, isZh: boolean) => [
   ...(variant === 'std' ? [] : [variantLabel(variant, isZh)]),
-  ...(stage ? [stageLabel(stage, isZh)] : []),
+  ...(stage ? [stage === 'cross' ? 'Cross' : stageLabel(stage, isZh)] : []),
 ].join(' ');
 
 const LEGACY_TOOLS = [
