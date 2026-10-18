@@ -982,3 +982,9 @@
     overflow-y: visible;
   }
 }
+
+/* Capture exports one image. Keep the renderer mounted for the studio export
+   bridge, but do not show the animation canvas as a second miniature. */
+.sim-page[data-workspace="capture"] .sim-canvas-wrap > canvas,
+.sim-page[data-workspace="capture"] .sim-canvas-wrap > .twisty-section,
+.sim-page[data-workspace="capture"] .sim-net { visibility: hidden; pointer-events: none; }
