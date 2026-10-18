@@ -1,6 +1,6 @@
 'use client';
 
-import { SlidersHorizontal } from 'lucide-react';
+import { ChevronRight, SlidersHorizontal } from 'lucide-react';
 import SimAppearancePresets from './SimAppearancePresets';
 import PictureCubeEditor, { PictureFaceMiniNet } from './PictureCubeEditor';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
@@ -407,7 +407,7 @@ export default function SimAppearancePanel({
 
   return (
     <details className="sim-settings-section">
-      <summary><SlidersHorizontal size={14} />{t('外观与操作', 'Appearance & interaction')}</summary>
+      <summary><ChevronRight size={14} className="sim-puzzle-caret" /><SlidersHorizontal size={14} />{t('外观与操作', 'Appearance & interaction')}</summary>
       <section className="sim-puzzle">
       {/* 背景选择器浮层 —— portal 到画布左下角(SimPage 的 .sim-bg-overlay)。slot 未
           挂载(SimPage 恒提供)前不渲染。 */}
@@ -417,7 +417,7 @@ export default function SimAppearancePanel({
             {/* The legacy 'group' value selects our engine. Research panels are
                 controlled independently from this renderer selector. */}
             {caps.hasRendererChoice && onRendererChange && (
-              <div className="sim-puzzle-section">
+              <div className="sim-renderer-row">
                 <div className="sim-puzzle-section-title">{t('渲染', 'Renderer')}</div>
                 <select
                   className="sim-puzzle-select"
@@ -433,6 +433,7 @@ export default function SimAppearancePanel({
 
           </div>
 
+          <div className="sim-view-settings">
           <div className="sim-puzzle-sliders">
             {caps.supports.sensitivity && (<Slider label={t('灵敏度', 'Sensitivity')} value={settings.sensitivity} onChange={(v) => set('sensitivity', v)} disabled={!caps.supports.sensitivity} unit={UNIT_SENS}
               title={hint(caps.supports.sensitivity) ?? (settings.pointerTurns === false
@@ -456,6 +457,7 @@ export default function SimAppearancePanel({
             xTitle={t('左右旋转角度(右 = 正,看右面)', 'Horizontal view angle (right = positive, toward the right face)')}
             yTitle={t('上下旋转角度(上 = 正,俯视)', "Vertical view angle (up = positive, bird's-eye)")}
           />)}
+          </div>
           <div className="sim-puzzle-toggles">
             {/* 手拧:关 = 鼠标 / 手势不能拧动拼图(点贴纸、拖贴纸都只转视角,不记步);
                 视角旋转 / 缩放 / 平移 / 键盘 / 播放不受影响。三条路径都接:NxN controller、

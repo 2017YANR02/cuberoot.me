@@ -50,21 +50,18 @@ export default function SimAppearancePresets({ settings, onChange }: {
   return <details className="sim-appearance-presets">
     <summary>{t('外观预设', 'Appearance presets')}</summary>
     <p>{t('保存在当前浏览器，仅包含视角与色块外观。', 'Saved in this browser, including only view and sticker appearance.')}</p>
-    <div className="sim-puzzle-section">
-      <label htmlFor={`${id}-saved`}>{t('已保存预设', 'Saved presets')}</label>
-      <select id={`${id}-saved`} className="sim-puzzle-select sim-preset-select" value={current?.name ?? ''}
+    <div className="sim-preset-row sim-player-tools">
+      <select aria-label={t('已保存预设', 'Saved presets')} id={`${id}-saved`} className="sim-puzzle-select sim-preset-select" value={current?.name ?? ''}
         onChange={event => { setSelected(event.target.value); setMessage(''); }}>
         <option value="">{t('选择预设', 'Choose a preset')}</option>
         {presets.map(p => <option key={p.name} value={p.name}>{p.name}</option>)}
       </select>
-    </div>
-    <div className="sim-player-tools">
       <button type="button" disabled={!current} onClick={() => {
         if (!current) return;
         setBeforeApply({ ghostFaceColors: undefined, mirrorColor: undefined, mirrorColorMode: undefined, ...pickAppearance(settings) });
         onChange({ ...settings, ...current.appearance });
         setMessage(t('已应用外观预设', 'Appearance preset applied'));
-      }}>{t('应用预设', 'Apply preset')}</button>
+      }}>{t('应用', 'Apply')}</button>
       {beforeApply && <button type="button" onClick={() => {
         onChange({ ...settings, ...beforeApply });
         setBeforeApply(null);
@@ -75,19 +72,18 @@ export default function SimAppearancePresets({ settings, onChange }: {
           setDeleted(current); setSelected('');
           setMessage(t('已删除预设', 'Preset deleted'));
         }
-      }}>{t('删除预设', 'Delete preset')}</button>
+      }}>{t('删除', 'Delete')}</button>
       {deleted && <button type="button" disabled={presets.length >= MAX_APPEARANCE_PRESETS || presets.some(p => p.name === deleted.name)} onClick={() => {
         if (save([...presets, deleted])) {
           setSelected(deleted.name); setDeleted(null); setMessage(t('已恢复预设', 'Preset restored'));
         }
       }}>{t('撤销删除', 'Undo delete')}</button>}
     </div>
-    <label htmlFor={`${id}-name`}>{t('新预设名称', 'New preset name')}</label>
+    <div className="sim-preset-row sim-player-tools">
     <div className="sim-preset-name">
-      <input id={`${id}-name`} maxLength={40} value={name} onChange={event => setName(event.target.value)} />
+      <input aria-label={t('新预设名称', 'New preset name')} id={`${id}-name`} placeholder={t('新预设名称', 'New preset name')} maxLength={40} value={name} onChange={event => setName(event.target.value)} />
       {name && <ClearButton onClick={() => setName('')} ariaLabel={t('清除预设名称', 'Clear preset name')} preserveFocus />}
     </div>
-    <div className="sim-player-tools">
       <button type="button" disabled={!trimmed || presets.length >= MAX_APPEARANCE_PRESETS} onClick={() => {
         if (presets.some(p => p.name === trimmed)) {
           setMessage(t('已有同名预设，请使用另一个名称。', 'A preset with this name already exists. Choose another name.'));
@@ -96,7 +92,7 @@ export default function SimAppearancePresets({ settings, onChange }: {
         if (save([...presets, { name: trimmed, appearance: pickAppearance(settings) }])) {
           setSelected(trimmed); setName(''); setMessage(t('已保存当前外观', 'Current appearance saved'));
         }
-      }}>{t('保存当前外观', 'Save current appearance')}</button>
+      }}>{t('保存', 'Save')}</button>
     </div>
     {presets.length >= MAX_APPEARANCE_PRESETS && <p>{t('最多保存 20 个预设。', 'You can save up to 20 presets.')}</p>}
     <p role="status">{message}</p>
