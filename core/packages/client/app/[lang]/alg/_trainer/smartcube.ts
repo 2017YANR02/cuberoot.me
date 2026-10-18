@@ -26,11 +26,25 @@
  */
 
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
-import { stepSolved, type CubeStep } from '@cuberoot/shared/timer/reconstruct/steps';
+import { stepSolved, stepSolvedInFrame, type CubeStep } from '@cuberoot/shared/timer/reconstruct/steps';
 import { applyMoves, solved, toFaceletString } from '@cuberoot/shared/timer/reconstruct/state';
 import { parseScrambleStrict } from '@cuberoot/puzzle-solvers/cube-moves';
 import { ALG_SET_TRAINING_STEPS } from '@cuberoot/shared/timer/smart-cube-training';
+import { DEFAULT_ALG_CUBE_ORIENTATION } from '@/lib/alg_thumb_plan';
+import { orientCubeFacelets } from '@cuberoot/shared/timer';
+import { normalizeWcaScramble } from '@cuberoot/shared/normalize-wca-scramble';
 import { purifyScramble } from '@/lib/trainer-scramble';
+
+/** Diagram colours define the training grip; BLE moves always stay in device coordinates. */
+export const TRAINER_CUBE_ORIENTATION = DEFAULT_ALG_CUBE_ORIENTATION;
+
+export function trainerPhysicalScramble(scramble: string): string | null {
+  return normalizeWcaScramble(`${TRAINER_CUBE_ORIENTATION} ${purifyScramble('3x3', scramble)}`);
+}
+
+export function trainerStepComplete(step: CubeStep, physicalFacelets: string): boolean {
+  return stepSolvedInFrame(step, orientCubeFacelets(physicalFacelets, TRAINER_CUBE_ORIENTATION));
+}
 
 /** Does this puzzle have smart cubes at all? */
 export function puzzleHasSmartCube(puzzle: AlgPuzzle | null | undefined): boolean {

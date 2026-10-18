@@ -29,6 +29,8 @@ import { FaceletsCube } from '@/components/FaceletsCube';
 import { tr } from '@/i18n/tr';
 import { mirrorForBrand, sensorBasisForBrand } from '@cuberoot/shared/smart-cube/orientation';
 import type { TrainerCubeState } from './useTrainerCube';
+import { orientCubeFacelets } from '@cuberoot/shared/timer';
+import { TRAINER_CUBE_ORIENTATION } from './smartcube';
 import { pickTrainerLiveVisual } from './trainer-live-view';
 
 /** three + /sim 引擎只在真的挂了这颗魔方时才加载。 */
@@ -42,16 +44,15 @@ const SimCubeView = dynamic(() => import('@/components/sim-embed/SimCubeView'), 
 });
 
 export default function TrainerLiveCube({
-  state, scramble, idle,
+  state, idle,
 }: {
   state: TrainerCubeState;
-  /** 这一题的打乱 —— 日志的锚点,见文件头。 */
-  scramble: string;
   /** 还没动手时摆在这儿的图(识别图)。见文件头第一段。 */
   idle: ReactNode;
 }) {
   const [calibrateNonce, setCalibrateNonce] = useState(0);
-  const { cube, moves, quatRef, view, practiceMode, physicalMoves } = state;
+  const { cube, moves, quatRef, view, practiceMode, physicalMoves, physicalScramble } = state;
+  const displayFacelets = cube.facelets ? orientCubeFacelets(cube.facelets, TRAINER_CUBE_ORIENTATION) : null;
   const visual = pickTrainerLiveVisual(view, !!cube.facelets);
   const flatView = visual === 'qcube' || visual === 'qlast' || visual === 'q2look'
     ? visual
@@ -66,21 +67,21 @@ export default function TrainerLiveCube({
   // 打乱作为日志第一段。拆不拆词无所谓 —— SimCubeView 里最终是 join(' ') 成一条式子的,
   // 但拆开来第二段之后的每一手才算「纯追加」,那是能播动画的前提(见 sim_log.ts)。
   const log = useMemo(
-    () => practiceMode === 'manual' ? [...(physicalMoves ?? [])] : [...scramble.trim().split(/\s+/).filter(Boolean), ...moves],
-    [scramble, moves, practiceMode, physicalMoves],
+    () => practiceMode === 'manual' ? [...(physicalMoves ?? [])] : [...physicalScramble.trim().split(/\s+/).filter(Boolean), ...moves],
+    [physicalScramble, moves, practiceMode, physicalMoves],
   );
 
   return (
     <div className="trainer-live-cube">
       {flatView && cube.facelets ? (
         <FaceletsCube
-          fd={cube.facelets.toLowerCase()}
+          fd={displayFacelets!.toLowerCase()}
           view={flatView}
           size={140}
           alt={tr({ zh: '智能魔方实时状态', en: 'Live smart-cube state' })}
         />
       ) : visual === 'idle' ? idle : practiceMode === 'manual' && physicalMoves === null ? (
-        cube.facelets ? <FaceletsCube fd={cube.facelets.toLowerCase()} size={140}
+        cube.facelets ? <FaceletsCube fd={displayFacelets!.toLowerCase()} size={140}
           alt={tr({ zh: '智能魔方实时状态', en: 'Live smart-cube state' })} /> : null
       ) : (
         <SimCubeView
