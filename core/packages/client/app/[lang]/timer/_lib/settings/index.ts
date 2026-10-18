@@ -273,7 +273,7 @@ export const DEFAULTS: TimerSettings = {
   ...DEFAULT_TIMER_TYPOGRAPHY,
   compactScramble: false,
   preScr: '',    // (UF)
-  preScrT: 'z2', // (DF) — LL cases are read yellow-up (csTimer's default)
+  preScrT: '', // (UF) — white up, green front
   cnMode: 'none',
   voiceInspection: 'none',
   statsRollingColumns: [...DEFAULT_ROLLING_STAT_COLUMNS],
