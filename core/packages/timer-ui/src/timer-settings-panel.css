@@ -23,9 +23,9 @@
 }
 /* --- SettingsPanel --- */
 .timer-modal.settings-modal {
-  width: min(960px, calc(100vw - 32px));
-  max-width: 960px;
-  height: min(760px, calc(100dvh - 32px));
+  width: min(800px, calc(100vw - 32px));
+  max-width: 800px;
+  height: min(640px, calc(100dvh - 32px));
   max-height: none;
   padding: 0;
   overflow: hidden;
@@ -39,7 +39,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  padding: 20px 24px 16px;
+  padding: 16px 20px 12px;
   border-bottom: 1px solid var(--border-default);
 }
 .timer-modal .settings-modal-head h2 { margin: 0; font-size: 20px; }
@@ -64,7 +64,7 @@
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: 190px minmax(0, 1fr);
+  grid-template-columns: 160px minmax(0, 1fr);
 }
 .settings-category-rail {
   min-width: 0;
@@ -119,10 +119,10 @@
   color: var(--foreground);
   font-size: 13px;
   overflow-y: auto;
-  padding: 26px 32px 36px;
+  padding: 20px 24px 24px;
   scrollbar-gutter: stable;
 }
-.settings-category-intro { margin-bottom: 22px; }
+.settings-category-intro { margin-bottom: 16px; }
 .settings-category-intro h3 {
   margin: 0;
   color: var(--foreground);
@@ -192,11 +192,11 @@
 }
 .settings-modal .settings-row {
   display: grid;
-  grid-template-columns: minmax(150px, 190px) minmax(0, 1fr);
-  align-items: start;
-  gap: 6px 22px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 6px 16px;
   margin: 0;
-  padding: 8px 0;
+  padding: 10px 0;
 }
 .settings-modal .settings-row-boolean { align-items: center; }
 .settings-modal .settings-row-boolean .settings-row-control { justify-content: flex-end; }
@@ -208,14 +208,15 @@
 .settings-modal .settings-disclosure > p { line-height: 1.6; color: var(--muted-foreground); }
 .settings-modal .settings-row-control > :disabled { opacity: .5; cursor: not-allowed; }
 .settings-modal .settings-row-label {
-  padding-top: 5px;
-  color: var(--muted-foreground);
+  padding-top: 0;
+  color: var(--foreground);
   line-height: 1.35;
   white-space: normal;
 }
 .settings-modal .settings-row-boolean .settings-row-label { padding-top: 0; }
 .settings-modal .settings-row-control {
   min-width: 0;
+  justify-content: flex-end;
   line-height: 1.35;
 }
 .settings-modal .settings-row-control > .hint:last-child:not(:first-child) {
@@ -315,4 +316,12 @@
     min-height: 44px;
   }
   .settings-modal .pill-toggle:not(.pill-toggle--switch) { min-height: 44px; }
+}
+
+/* Each preference is one aligned row; separators remain within its category. */
+.settings-modal .settings-row + .settings-row { border-top: 1px solid var(--border-default); }
+.settings-modal .settings-row-control > .hint:last-child:not(:first-child) { text-align: right; }
+@media (max-width: 540px) {
+  .settings-modal .settings-row:not(.settings-row-boolean) .settings-row-control { justify-content: flex-start; }
+  .settings-modal .settings-row-control > .hint:last-child:not(:first-child) { text-align: left; }
 }
