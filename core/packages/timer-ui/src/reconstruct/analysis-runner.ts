@@ -2,7 +2,7 @@ import { reconstructionLibraries } from './library-cache';
 import { buildReconText } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import { correctReconFromLibrary } from '@cuberoot/shared/timer/reconstruct/library-correction';
 import { stageReferenceSteps, slotReferenceSteps } from '@cuberoot/shared/timer/reconstruct/reference';
-import type { AnalysisRequest, AnalysisResponse } from './analysis-protocol';
+import type { AnalysisWorkerRequest, AnalysisResponse } from './analysis-protocol';
 
 // One request at a time, enforced by analysis-client. Cancellation terminates
 // this worker, including an IDA* search that cannot receive a cancel message.
@@ -14,7 +14,9 @@ async function runSteps<T>(steps: Generator<void, T>, cancelled: () => boolean):
     if (result.done) return result.value;
   }
 }
-export async function runReconstructionAnalysis(data: AnalysisRequest, publish: (response: AnalysisResponse) => void, isCancelled: () => boolean = () => false) {
+export async function runReconstructionAnalysis(data: AnalysisWorkerRequest, publish: (response: AnalysisResponse) => void, isCancelled: () => boolean = () => false) {
+  if ('type' in data && data.type === 'warmup') return reconstructionLibraries.warm();
+  if (!('input' in data)) return;
   const { id, input: { text, scoreable } } = data;
   const send = (result: Omit<AnalysisResponse, 'id'>) => publish({ id, ...result });
   const failed = (error: unknown) => send({ error: String(error) });

@@ -1,6 +1,6 @@
 import { afterEach, expect, it, vi } from 'vitest';
 import type { AlgFile } from '@cuberoot/shared/alg';
-import { createReconstructionLibraryCache } from '../../timer-ui/src/reconstruct/library-cache';
+import { createReconstructionLibraryCache } from '@cuberoot/timer-ui/reconstruct/library-cache';
 
 const file = { puzzle: '3x3', set: 'pll', cases: [] } as unknown as AlgFile;
 afterEach(() => vi.useRealTimers());
