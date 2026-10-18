@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { act, createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { Solve } from '@cuberoot/shared/timer';
-import { prepareTrainingReconstruction } from '@cuberoot/shared/timer/reconstruct/recon-text';
+import { prepareTrainingReconstruction, trainingSolveMetrics } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import { notationQuaternion } from '@cuberoot/shared/timer/reconstruct/gyro-orient';
 import { invertAlg } from '@cuberoot/shared/alg-transform';
 import { normalizeWcaScramble } from '@cuberoot/shared/normalize-wca-scramble';
@@ -65,6 +65,7 @@ describe('training observation and execution', () => {
   it('shares exact observation/execution boundaries with notation and playback', () => {
     const { type, recon, metrics } = prepareTrainingReconstruction(repetition, 'en');
     expect(type).toBe('training');
+    expect(trainingSolveMetrics(repetition)).toEqual(metrics);
     expect(metrics).toEqual({ observationMs: 600, executionMs: 1_500, totalMs: 2_100 });
     expect(recon.lines.map(line => [line.key, line.fromIdx, line.toIdx, line.fromMs, line.toMs])).toEqual([
       ['observation', 0, 0, 0, 600], ['training', 1, 14, 600, 2_100],
@@ -102,6 +103,7 @@ describe('training observation and execution', () => {
       moves: repetition.moves!.map(move => ({ ...move, m: normalizeWcaScramble(`z2 ${move.m}`)! })) };
     const prepared = prepareTrainingReconstruction(physical, 'en');
     expect(prepared.metrics.observationMs).toBe(600);
+    expect(trainingSolveMetrics(physical)).toEqual(prepared.metrics);
     expect(prepared.recon.lines[0].moves).toEqual(['U']);
     const track = reconstructedTrack(prepared.recon.lines, physical.moves!)!;
     expect(smartCubeTargetFacelets(`${physical.scramble} ${prepared.recon.inspection} ${track.map(move => move.m).join(' ')}`))

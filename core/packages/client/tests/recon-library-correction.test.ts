@@ -420,3 +420,30 @@ it('recognizes last-slot ZBLS without moving the recorded mid-formula regrip', a
   expect(result.lines[0].moveRanges).toEqual(original.moveRanges);
   await equivalent(result.lines[0].moves, original.moves);
 });
+
+it('loads independent reconstruction libraries concurrently and shares F2L requests', async () => {
+  const pending = new Map<string, (file: AlgFile) => void>();
+  const load = vi.fn((set: string) => new Promise<AlgFile>(resolve => pending.set(set, resolve)));
+  const recon = { inspection: '', text: '', lines: [
+    { ...line('R U'), kind: 'f2l' as const, label: 'FR' },
+    { ...line('L U'), kind: 'f2l' as const, label: 'FL' },
+    { ...line('R U'), label: 'OLL' },
+    { ...line('R U'), label: 'PLL' },
+  ] } as ReconTextResult;
+  const result = correctReconFromLibrary(recon, load);
+  await Promise.resolve();
+  expect([...pending.keys()]).toEqual(['f2l', 'oll', 'pll']);
+  for (const resolve of pending.values()) resolve({ cases: [] } as unknown as AlgFile);
+  expect(await result).toBe(recon);
+  expect(load).toHaveBeenCalledTimes(3);
+});
+
+it('fingerprint reuse respects changed library contents and current case identity', async () => {
+  const alg = "R U R' U' R' F R2 U' R' U' R U R' F'";
+  const cases = [{ name: 'first', algs: [[{ alg }]] }] as AlgFile['cases'];
+  expect(await identifyLibraryCase({ moves: alg.split(' ') }, cases, 'pll')).toBe(cases[0]);
+  const refreshed = [{ name: 'renamed', algs: [[{ alg }]] }] as AlgFile['cases'];
+  expect(await identifyLibraryCase({ moves: alg.split(' ') }, refreshed, 'pll')).toBe(refreshed[0]);
+  refreshed[0].algs[0][0].alg = 'R U';
+  expect(await identifyLibraryCase({ moves: alg.split(' ') }, refreshed, 'pll')).toBeUndefined();
+});
