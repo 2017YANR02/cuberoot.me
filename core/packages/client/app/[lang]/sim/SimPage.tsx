@@ -720,8 +720,8 @@ export default function SimPage() {
   // 外观区那两行同步锁死(PlayerControls 的 transCore),不给出「滑块 100% 而图是 50%」的假读数。
   const transCore = typeof puzzleParam === 'number' && imgSpec.cubeView === 'trans';
   const renderSettings = useMemo(
-    () => withTransCore(withCustomLogoAccess(settings, isMember), transCore),
-    [settings, isMember, transCore],
+    () => withTransCore(withCustomLogoAccess({ ...settings, backView: animationMode && settings.backView }, isMember), transCore),
+    [settings, isMember, transCore, animationMode],
   );
   const renderSettingsRef = useRef(renderSettings);
   useEffect(() => { renderSettingsRef.current = renderSettings; }, [renderSettings]);
@@ -1336,7 +1336,7 @@ export default function SimPage() {
     // lockstep with the main view (only inside the dirty block) so they never
     // drift.
     const renderBackView = (w: World, activeHints: World['faceHints']) => {
-      if (!settingsRef.current.backView) return;
+      if (!renderSettingsRef.current.backView) return;
       const host = backFrameRef.current;
       if (!host) return;
       if (!backViewRef.current) {
@@ -2452,14 +2452,14 @@ export default function SimPage() {
             <div
               ref={backFrameRef}
               className="sim-backview"
-              style={{ display: settings.backView && !flatMode ? 'block' : 'none' }}
+              style={{ display: animationMode && settings.backView && !flatMode ? 'block' : 'none' }}
               aria-hidden
             />
           )}
           {/* Swap main view ↔ back-view mini window. Only while the cuber engine
               back-view is on (NxN / SQ1); twisty puzzles use cubing.js native
               back-view and aren't covered here. */}
-          {!twisty && !flatMode && settings.backView && (
+          {animationMode && !twisty && !flatMode && settings.backView && (
             <button
               ref={swapButtonRef}
               type="button"
@@ -2473,7 +2473,7 @@ export default function SimPage() {
           )}
           {/* 背面小窗的关闭钮 —— 与图像浮层那个同款,钉在小窗右上内角。小窗自身
               pointer-events:none,按钮在 .sim-float-close 里自带 auto。 */}
-          {!twisty && !flatMode && settings.backView && (
+          {animationMode && !twisty && !flatMode && settings.backView && (
             <button
               type="button"
               className="sim-float-close sim-float-close--backview"
@@ -2495,17 +2495,6 @@ export default function SimPage() {
           if (window.matchMedia('(max-width: 767px)').matches
             && event.target.matches('textarea, input:not([type="range"]), [contenteditable="true"]')) setPanelExpanded(true);
         }}>
-          {animationMode && <CollapsibleSection
-            open={algsOpen}
-            onToggle={() => setAlgsOpen((o) => !o)}
-            icon={BookOpen}
-            label={t('公式', 'Algs')}
-          >
-            <AlgsPanel
-              onSelect={(setup, alg) => { onAlgPick(setup, alg); }}
-              activePuzzle={puzzleParam}
-            />
-          </CollapsibleSection>}
           {puzzleParam === 'custom' && (
             <div className="sim-cut-editor-wrap">
               <CutEditor value={customCuts} onChange={(d) => setQuery({ cuts: d })} />
@@ -2600,6 +2589,17 @@ export default function SimPage() {
             compare={imgEngineMode === 'both' && !pictureCubeActive && !roomsActive}
           />
           </section>
+          {animationMode && <CollapsibleSection
+            open={algsOpen}
+            onToggle={() => setAlgsOpen((o) => !o)}
+            icon={BookOpen}
+            label={t('公式', 'Algs')}
+          >
+            <AlgsPanel
+              onSelect={(setup, alg) => { onAlgPick(setup, alg); }}
+              activePuzzle={puzzleParam}
+            />
+          </CollapsibleSection>}
           {/* Mount panel-only analysis on demand, independently of the render engine. */}
           {animationMode && (PG_BOUND_KINDS.has(String(puzzleParam))
             || (typeof puzzleParam === 'number' && nxnHasPgKernel(puzzleParam))
