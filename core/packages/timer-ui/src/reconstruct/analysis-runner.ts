@@ -1,3 +1,4 @@
+import { reconstructionLibraries } from './library-cache';
 import { buildReconText } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import { correctReconFromLibrary } from '@cuberoot/shared/timer/reconstruct/library-correction';
 import { stageReferenceSteps, slotReferenceSteps } from '@cuberoot/shared/timer/reconstruct/reference';
@@ -23,7 +24,7 @@ export async function runReconstructionAnalysis(data: AnalysisRequest, publish: 
       const original = await buildReconText(text);
       if (isCancelled()) return;
       send({ patch: { text: original } });
-      const corrected = await correctReconFromLibrary(original).catch(() => original);
+      const corrected = await correctReconFromLibrary(original, reconstructionLibraries.load).catch(() => original);
       if (isCancelled()) return;
       if (corrected !== original) send({ patch: { text: corrected } });
     }
