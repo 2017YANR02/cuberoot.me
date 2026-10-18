@@ -12,10 +12,11 @@
  */
 
 import {
-  useCallback, useEffect, useId, useMemo, useRef, useState,
+  useCallback, useEffect, useMemo, useRef, useState,
 } from 'react';
 import dynamic from 'next/dynamic';
 import { useQueryStates, parseAsString, parseAsStringEnum } from 'nuqs';
+import CollapsibleSection from './CollapsibleSection';
 import HomeLink from '@/components/HomeLink';
 import NxNOrderInput from '@/components/NxNOrderInput';
 import { useTranslation } from 'react-i18next';
@@ -28,7 +29,7 @@ import { NXN_ORDER_DEFAULT, NXN_ORDER_MAX, NXN_ORDER_MIN } from '@/lib/nxn-order
 // pyraminx/skewb/megaminx (which use cubing.js TwistyPlayer, not THREE).
 import type * as THREE from 'three';
 import {
-  ChevronLeft, ChevronRight,
+  ChevronLeft,
   BookOpen, FlaskConical,
   Maximize2, Minimize2,
   ArrowLeftRight,
@@ -2506,10 +2507,12 @@ export default function SimPage() {
           )}
           {/* 背景(BG)选择器浮层落点 —— 画布左下角(与右上角背面小窗、左上角图像浮层
               同族的角落控件)。PlayerControls 把选择器 portal 进这里。空时 CSS 收起。 */}
-          <div className="sim-bg-overlay" ref={setBgSlot} />
+          <div className="sim-canvas-tools">
+            <div className="sim-bg-overlay" ref={setBgSlot} />
+            <div className="sim-capture-stage-slot" ref={setCaptureStickeringSlot} />
+          </div>
         </div>
         <div className="sim-playback-under" ref={setPlaybackSlot} />
-        <div className="sim-capture-stage-slot" ref={setCaptureStickeringSlot} hidden={!captureMode} />
         </div>
 
         <aside className="sim-side" data-site-surface="panel" id="sim-task-panel" onFocusCapture={event => {
@@ -2681,34 +2684,5 @@ export default function SimPage() {
         </div>
       )}
     </div>
-  );
-}
-
-function CollapsibleSection({
-  open, onToggle, icon: Icon, label, children,
-}: {
-  open: boolean;
-  onToggle: () => void;
-  icon: typeof BookOpen;
-  label: string;
-  children: React.ReactNode;
-}) {
-  const bodyId = useId();
-  return (
-    <section className="sim-puzzle">
-      <button
-        type="button"
-        className="sim-puzzle-head"
-        onClick={onToggle}
-        aria-expanded={open}
-        aria-controls={bodyId}
-        title={label}
-      >
-        <ChevronRight size={14} className={'sim-puzzle-caret' + (open ? ' open' : '')} />
-        <Icon size={14} />
-        <span className="sim-puzzle-title">{label}</span>
-      </button>
-      <div id={bodyId} className="sim-section-body" hidden={!open}>{open && children}</div>
-    </section>
   );
 }

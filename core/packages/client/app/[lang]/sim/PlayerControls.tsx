@@ -2489,7 +2489,7 @@ export default function PlayerControls({
 
   return (
     <div className="sim-player">
-      {!active && stickeringSelect && captureStickeringSlot && createPortal(
+      {stickeringSelect && captureStickeringSlot && createPortal(
         <div className="sim-capture-stickering">
           <div className="sim-capture-stickering-controls">{stickeringSelect}</div>
         </div>,
@@ -2686,7 +2686,6 @@ export default function PlayerControls({
             onSettingsChange(next);
             if (world) resetWorldView(world, next);
           }}>{t('重置视角', 'Reset view')}</button>}
-        {stickeringSelect}
       </div>
       <PlaybackBar layout="wide"
         disabled={!isTwistyMode && (!engineReady || replayPending)}
