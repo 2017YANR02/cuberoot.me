@@ -269,17 +269,21 @@
   .shell-topbar-left .solver-panel-head { height: 30px; padding: 0 3px; font-size: 12px; gap: 4px; }
 }
 
-/* Expanded view uses two coherent columns: stage search with its player,
-   and the independent step-by-step solution. Narrow screens retain reading order. */
+/* Reserve a second column only while step-by-step content is expanded.
+   Its existing disclosure state also controls layout; no extra UI state is needed. */
 @media (min-width: 900px) {
   .solver-sheet .solver-sheet-body { padding: 20px 28px; }
   .solver-sheet-body > [data-no-timer] {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     align-items: start;
     gap: 16px 32px;
-    max-width: 1040px;
+    max-width: 640px;
     margin-inline: auto;
+  }
+  .solver-sheet-body > [data-no-timer]:has(.stepsolve-head[aria-expanded='true']) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    max-width: 1040px;
   }
   .solver-sheet .solver-panel-scramble { grid-column: 1 / -1; margin: 0; }
   .solver-sheet .stepsolve { margin-top: 0; }
