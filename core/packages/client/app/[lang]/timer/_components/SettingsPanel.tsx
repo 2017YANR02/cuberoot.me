@@ -1,7 +1,7 @@
 'use client';
 import { timerFontPreviewStyle } from '@cuberoot/timer-ui/font-picker';
 import { useDouyinToolSurface } from '@/lib/douyin-content';
-import { TimerSyncSeedSettings, TimerRankSettings, TimerBackupSettings, TimerImportSettings, TimerReanalyzeSettings, TimerDisplaySettings, TimerSoundSettings, TimerMetronomeSettings } from '@cuberoot/timer-ui';
+import { TimerSyncSeedSettings, TimerRankSettings, TimerBackupSettings, TimerImportSettings, TimerDisplaySettings, TimerSoundSettings, TimerMetronomeSettings } from '@cuberoot/timer-ui';
 
 /**
  * Settings panel — modal launched from the topbar gear button.
@@ -26,7 +26,6 @@ import { exportSolvesCsv } from '../_lib/storage/export_csv';
 import { uploadBackup, restoreFromCloud, fetchBackupMeta } from '../_lib/storage/cloud';
 import { getSessionToken, useAuthStore, useIsAdmin } from '@/lib/auth-store';
 import { useRankCountry } from '../_shared/use-rank-country';
-import { reanalyzeAll } from '../_lib/storage/reanalyze';
 import { type EventId } from '../_lib/types';
 
 import {
@@ -46,7 +45,6 @@ import { CountryInput } from '@/components/CountryInput';
 import SharedBoolToggle from '@/components/BoolToggle';
 import { TimerResetSettings, TimerExportSettings } from '@cuberoot/timer-ui';
 import { tr } from '@/i18n/tr';
-import { TIMER_TRAINING_HELP } from '@/lib/timer-training-help';
 
 
 // .settings-row* 原语来自 wca-source.css(现已提取到共享 components/)—— 以前靠
@@ -254,7 +252,7 @@ export default function SettingsPanel({ onClose, event, actions, presenceControl
       activeCategory={activeCategory} onCategoryChange={setActiveCategory} onClose={onClose}>
         {activeCategory === 'timer' && presenceControl && (
           <div className="settings-row">
-            <span className="settings-row-label">{tr({ zh: '当前计时会话', en: 'Live timer sessions' })}</span>
+            <span className="settings-row-label">{tr({ zh: '当前在线', en: 'Currently online' })}</span>
             <span className="settings-row-control">{presenceControl}</span>
           </div>
         )}
@@ -306,10 +304,6 @@ export default function SettingsPanel({ onClose, event, actions, presenceControl
           activeCategory={activeCategory}
           title={tr({ zh: '目标与分段', en: 'Goals and splits' })}
         >
-          <details className="settings-disclosure">
-            <summary><ChevronRight size={14} aria-hidden="true" />{tr(TIMER_TRAINING_HELP.title)}</summary>
-            {TIMER_TRAINING_HELP.paragraphs.map((paragraph) => <p key={paragraph.en}>{tr(paragraph)}</p>)}
-          </details>
           <TimerAttemptSplitSettings
             bldVisible={settingState('settings.training.bld-memo-split').visible}
             localize={tr}
@@ -412,15 +406,6 @@ export default function SettingsPanel({ onClose, event, actions, presenceControl
           {ioMsg !== null && (
             <Row label=""><span className="hint" role="status" aria-live="polite">{ioMsg}</span></Row>
           )}
-          <details className="settings-disclosure">
-            <summary><ChevronRight size={14} aria-hidden="true" />{tr({ zh: '修复历史复盘数据', en: 'Reprocess saved reconstructions' })}</summary>
-            <p>{tr({ zh: '仅在复盘算法更新或历史分段异常时使用。', en: 'Use after a reconstruction algorithm update or when saved stage data looks incorrect.' })}</p>
-          <TimerReanalyzeSettings language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} run={async () => {
-            const result = await reanalyzeAll();
-            onDataReplaced?.();
-            return result;
-          }} />
-          </details>
         </SettingsSection>
 
         <SettingsSection
