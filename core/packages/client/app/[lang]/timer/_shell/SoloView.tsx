@@ -1,4 +1,6 @@
 'use client';
+
+import { trainingSolveMetrics } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import { useDouyinToolSurface } from '@/lib/douyin-content';
 import { DOUYIN_BASIC_TIMER_EVENTS } from '@cuberoot/shared/douyin-content';
 import { TimerSoloPage, timerSoloModalState, useTimerSoloCompactLayout } from '@cuberoot/timer-ui/TimerSoloPage';
@@ -2746,6 +2748,17 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
 
   // ── Derived display (digits text + color class) ─────────────────
   const stats = useMemo(() => summarize(solves, event), [solves, event]);
+  const trainingStatistics = useMemo(() => {
+    if (!timerSupportsTrainingTiming(event)) return undefined;
+    const repetitions = solves.filter(solve => solve.moves?.length
+      && (solve.trainingStartMode ?? 'first-turn') === settings.trainingStartMode);
+    const samples = repetitions.map(solve => ({ solve, metrics: trainingSolveMetrics(solve) }));
+    return (['observationMs', 'executionMs', 'totalMs'] as const).map(key => summarize(
+      samples.map(({ solve, metrics }) => ({ ...solve, timeMs: metrics[key],
+        // Penalties belong to the total; do not add +2 to each component.
+        penalty: key === 'totalMs' ? solve.penalty : solve.penalty === '+2' ? 'ok' as const : solve.penalty,
+      })), event));
+  }, [solves, event, settings.trainingStartMode]);
   const inspectionLimit = settings.inspectionSec;
   const colorClass = useMemo(() => {
     if (timer.phase === 'holding') return 'holding';
@@ -3205,6 +3218,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
             ariaExpanded={panelTab != null}
             language={timerLanguage}
             summary={stats}
+            trainingSummaries={trainingStatistics}
             onClick={() => setPanelTab(t => (t ? null : 'times'))}
           />,
         }}
