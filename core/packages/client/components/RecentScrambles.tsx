@@ -30,7 +30,7 @@ import { loadFlagData, flagDataVersion, compFlagIso2 } from '@/lib/country-flags
 import { compSourceLine } from '@/lib/comp-schedule';
 import { statsUrl } from '@/lib/stats-base';
 import { VARIANT_ORDER, stageLabel, variantLabel, BLOCK_DATA_VARIANTS, BLOCK_STAGE_VARIANT, EO_DATA_VARIANTS, EO_STAGE_VARIANT, LBL_STAGE_VARIANT, VARIANT_STAGES, LENGTH_VARIANT, RECENT_METRIC_ORDER, uiVariantOf, uiVariantOptions, dataVariantOfStage, uiStagesOf, variantDataRef } from '@/lib/scramble-variants';
-import { VariantSelect } from '@/components/VariantSelect';
+import { TimerPuzzlePicker } from '@cuberoot/timer-ui/puzzle-picker';
 import { fetchRecentScramblesEvents, type RecentScramblesEventsJson, type RecentScrMeta } from '@/lib/recent-scrambles-events';
 import { formatDateRangeIso } from '@/lib/wca-date';
 import { eventDisplayName, wcaToReconEvent } from '@/lib/wca-events';
@@ -594,23 +594,24 @@ function Recent333Body({ data, dist, eventsJson, isZh, lp }: {
   const curVariant = variantOptions.includes(variant) ? variant : (variants[0] ?? 'std');
   const isLength = curVariant === LENGTH_VARIANT;
   // 聚合方法(lbl / block / eo)的指标散在多个数据变体里 -> 按映射逐个指标回查。
-  const stageVariantMap = curVariant === 'block' ? BLOCK_STAGE_VARIANT : curVariant === 'eo' ? EO_STAGE_VARIANT : null;
-  const metrics = useMemo(() => {
-    if (curVariant === 'lbl') {
-      return uiStagesOf(curVariant).filter((m) => {
-        const ref = variantDataRef(curVariant, m);
+  const metricsForVariant = useCallback((selectedVariant: string) => {
+    if (selectedVariant === 'lbl') {
+      return uiStagesOf(selectedVariant).filter((m) => {
+        const ref = variantDataRef(selectedVariant, m);
         return ref.recentMetric in (data?.rank?.[ref.variant] ?? {});
       });
     }
+    const stageVariantMap = selectedVariant === 'block' ? BLOCK_STAGE_VARIANT : selectedVariant === 'eo' ? EO_STAGE_VARIANT : null;
     if (stageVariantMap) {
       return RECENT_METRIC_ORDER.filter((m) => {
         const dv = stageVariantMap[m];
         return dv !== undefined && m in (data?.rank?.[dv] ?? {});
       });
     }
-    const r = data?.rank?.[curVariant];
-    return r ? RECENT_METRIC_ORDER.filter((m) => m in r) : [];
-  }, [data, curVariant, stageVariantMap]);
+    const rank = data?.rank?.[selectedVariant];
+    return rank ? RECENT_METRIC_ORDER.filter((m) => m in rank) : [];
+  }, [data]);
+  const metrics = useMemo(() => metricsForVariant(curVariant), [curVariant, metricsForVariant]);
   const curMetric = metrics.includes(metric) ? metric : (metrics[0] ?? 'cross');
   const aliasRef = variantDataRef(curVariant, curMetric);
   const dataVariant = aliasRef.variant;
@@ -675,14 +676,26 @@ function Recent333Body({ data, dist, eventsJson, isZh, lp }: {
     </select>
   );
   const variantSelect = (
-    <VariantSelect
-      className="rs-select"
-      value={curVariant}
-      options={variantOptions}
-      onChange={(v) => { markTouched(); setVariant(v); }}
-      isZh={isZh}
-      label={variantLabel}
-      ariaLabel={tr({ zh: '变体', en: 'Variant' })}
+    <TimerPuzzlePicker
+      showItemIcons={false}
+      showMenuHeadings={false}
+      showSubmenuHeading
+      puzzleLabel={tr({ zh: '方法与阶段', en: 'Method and stage' })}
+      triggerLabel={isLength ? variantLabel(curVariant, isZh) : `${variantLabel(curVariant, isZh)} · ${stageLabel(curMetric, isZh)}`}
+      selectedEvent={isLength ? LENGTH_VARIANT : `${curVariant}:${curMetric}`}
+      groups={[{ id: 'methods', label: tr({ zh: '方法', en: 'Method' }), items: variantOptions.map(v => ({
+        id: v,
+        label: variantLabel(v, isZh),
+        children: v === LENGTH_VARIANT ? undefined : metricsForVariant(v).map(m => ({
+          id: `${v}:${m}`, label: stageLabel(m, isZh),
+        })),
+      })) }]}
+      onSelect={id => {
+        markTouched();
+        const [v, m] = id.split(':');
+        setVariant(v);
+        if (m) setMetric(m);
+      }}
     />
   );
 
@@ -719,9 +732,6 @@ function Recent333Body({ data, dist, eventsJson, isZh, lp }: {
         </>) : (<>
         {!isWhole && <SubsetColorPicker sel={pickerSel} isZh={isZh} />}
         {variantSelect}
-        {metrics.length > 1 && (
-          <VariantSelect className="rs-select" value={curMetric} options={metrics} onChange={(v) => { markTouched(); setMetric(v); }} isZh={isZh} label={stageLabel} ariaLabel={tr({ zh: '类型', en: 'Type' })} />
-        )}
         {steps.length > 0 && (
           <select className="rs-select" value={curStep ?? ''} onChange={(e) => { markTouched(); setStep(Number(e.target.value)); }} aria-label={tr({ zh: '步数', en: 'Moves' })}>
             {steps.map((s) => (<option key={s} value={s}>{stepOptionLabel(s)}</option>))}
