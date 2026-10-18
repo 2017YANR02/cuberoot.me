@@ -31,6 +31,8 @@ describe('timer practice content navigation', () => {
       }
     }
     expect(entries[0].group).toBeUndefined();
+    const groups = [...new Set(entries.map(entry => entry.group?.id).filter(Boolean))];
+    expect(groups.slice(0, 4)).toEqual(['cfop', 'zb', 'roux', 'other-formulas']);
     expect(entries.filter(entry => entry.set && !entry.timer).every(entry => entry.group?.id === 'other-formulas')).toBe(true);
     for (const path of ['/alg/333/oll/select', '/alg/3x3/oll/run', '/alg/333/oll/one', '/recognize/oll', '/recognize/oll/guide']) {
       expect(selectedTimerPracticeContent(entries, '333', 'full', resolveTrainingTarget(path)), path).toBe(oll);
