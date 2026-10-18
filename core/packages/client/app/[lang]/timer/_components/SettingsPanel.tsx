@@ -249,6 +249,7 @@ export default function SettingsPanel({ onClose, event, actions, presenceControl
   return (
     <TimerSettingsPanel categories={douyin ? ['timer', 'smart-cube', 'appearance', 'sound', 'data', 'advanced'] : undefined} language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'}
       playersControl={playersControl}
+      resetControl={<TimerResetSettings onReset={resetSettings} confirmReset={message => confirm(message)} localize={tr} />}
       activeCategory={activeCategory} onCategoryChange={setActiveCategory} onClose={onClose}>
         {activeCategory === 'timer' && presenceControl && (
           <div className="settings-row">
@@ -456,7 +457,6 @@ export default function SettingsPanel({ onClose, event, actions, presenceControl
           </details>
         </SettingsSection>
 
-        {activeCategory === 'advanced' && <TimerResetSettings onReset={resetSettings} confirmReset={message => confirm(message)} localize={tr} />}
         {actions.some(action => action.visible && !action.danger && ACTION_CATEGORY[action.id] === activeCategory) && (
           <div className="timer-settings-actions" aria-label={tr({ en: 'Tools', zh: '工具' })}>
             {actions.filter(action => action.visible && !action.danger && ACTION_CATEGORY[action.id] === activeCategory).map(action => {
@@ -479,11 +479,11 @@ export default function SettingsPanel({ onClose, event, actions, presenceControl
           </div>
         )}
         {actions.filter(action => action.visible && action.danger && ACTION_CATEGORY[action.id] === activeCategory).map(action => (
-          <div className="settings-reset-row" key={action.id}>
-            <button type="button" className="timer-settings-action timer-settings-action-danger"
+          <div className="settings-reset-row settings-danger-actions" key={action.id}>
+            <button type="button" className="hint-btn timer-settings-action-danger"
               disabled={action.disabled || !action.onSelect}
               onClick={() => { flushSync(onClose); action.onSelect?.(); }}>
-              <span>{action.label}</span><ChevronRight size={16} aria-hidden="true" />
+              <span>{action.label}</span>
             </button>
           </div>
         ))}

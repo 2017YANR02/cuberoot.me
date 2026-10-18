@@ -61,14 +61,14 @@ export function TimerImportSettings({ language, disabled = false, importBackup, 
     if (await importBackup(text, () => alive.current)) setMessage(tr({ en: 'Import complete', zh: '导入完成' }));
   };
   return <>
-    <div className="settings-row"><span className="settings-row-label">{tr({ en: 'Import', zh: '导入' })}</span><span className="settings-row-control">
+    <div className="settings-row settings-import-row"><span className="settings-row-label">{tr({ en: 'Import', zh: '导入' })}</span><span className="settings-row-control">
       <input ref={input} hidden type="file" accept=".json,.txt,.db,.sqlite,application/json,application/vnd.sqlite3,application/x-sqlite3" onChange={event => {
         const file = event.target.files?.[0]; event.target.value = ''; if (file) void run(() => read(file));
       }} />
       <button type="button" className="hint-btn" data-setting-id="settings.data.import-file" disabled={disabled || busy} aria-busy={busy} onClick={() => input.current?.click()}>
         {busy ? tr({ en: 'Importing…', zh: '正在导入…' }) : tr({ en: 'One-click import', zh: '一键导入' })}
-      </button><span className="hint">{tr({ en: 'csTimer and dcTimer groups are added as new sessions. CubeRoot backups ask before replacing data.', zh: 'csTimer 和 dcTimer 按原分组新增会话；CubeRoot 备份覆盖前会确认。' })}</span>
-    </span></div>
+      </button>
+    </span><span className="hint settings-import-note">{tr({ en: 'csTimer and dcTimer groups are added as new sessions.', zh: 'csTimer 和 dcTimer 按原分组新增会话。' })}</span></div>
     {sessions && <>
       <div className="cstimer-import-list">{sessions.map(session => <div className="cstimer-import-row" key={session.sessionId}>
         <span>{session.name}</span>

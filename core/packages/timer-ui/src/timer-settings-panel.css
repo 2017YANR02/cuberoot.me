@@ -325,3 +325,22 @@
 .settings-modal .settings-row[data-setting-id="settings.sound.metronome-tempo"] { grid-template-columns: minmax(48px, .3fr) minmax(0, 1fr); }
 
 .settings-modal .timer-keymap-settings { padding-bottom: 12px; }
+
+.settings-modal .settings-import-row { grid-template-columns: minmax(0, 1fr) auto; }
+.settings-import-note { grid-column: 1 / -1; color: var(--muted-foreground); font-size: 12px; line-height: 1.5; }
+.settings-modal .settings-export-row { grid-template-columns: minmax(0, 1fr); }
+.settings-modal .settings-export-buttons { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); width: 100%; gap: 6px; }
+.settings-modal .settings-export-buttons > .hint-btn { display: flex; align-items: center; justify-content: center; gap: 4px; min-width: 0; padding: 6px 4px; white-space: nowrap; }
+.settings-export-buttons svg { flex: none; }
+.settings-modal .settings-danger-actions, .settings-modal .keymap-actions { display: flex; justify-content: flex-end; }
+.timer-modal.settings-modal { position: relative; }
+.settings-global-reset { position: absolute; left: 12px; bottom: 16px; }
+.settings-modal .settings-global-reset .settings-reset-row { margin: 0; padding: 0; border: 0; }
+.settings-category-rail { padding-bottom: 76px; }
+@media (max-width: 720px) {
+  .settings-modal-head { flex-wrap: wrap; gap: 6px 12px; }
+  .settings-modal .settings-global-reset { position: static; inset: auto; transform: none; order: 1; flex-basis: 100%; display: flex; justify-content: flex-end; }
+  .settings-modal .settings-global-reset .reset-defaults-btn { min-height: 36px; padding: 6px 10px; }
+  .settings-modal .settings-export-buttons { gap: 4px; font-size: 11px; }
+}
+.settings-modal .hint-btn.timer-settings-action-danger { width: auto; }
