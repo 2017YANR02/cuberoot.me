@@ -265,6 +265,8 @@ const loadPrefs = (): TrainerPrefs => {
       return {
         ...DEFAULT_PREFS,
         ...current,
+        // Connection state owns timing; old saved switches must not enable it.
+        timing: false,
         f2lSlots: normalizeF2LSlots(parsed.f2lSlots, legacySlots),
         psf2lSlots: normalizePsf2lSlots(parsed.psf2lSlots ?? legacyPsf2lSlots),
       };
@@ -285,7 +287,7 @@ const prefsOf = (st: TrainerPrefs): TrainerPrefs => ({
   psf2lExtraScramble: st.psf2lExtraScramble,
   psf2lSlots: st.psf2lSlots,
   randomFinalAuf: st.randomFinalAuf, f2lSlots: st.f2lSlots,
-  oriSel: st.oriSel, timing: st.timing, mode: st.mode,
+  oriSel: st.oriSel, timing: false, mode: st.mode,
   probMode: st.probMode, recapOrder: st.recapOrder, showRecapRoundEnd: st.showRecapRoundEnd,
   timerFont: st.timerFont, scrambleFont: st.scrambleFont,
   showPrevCard: st.showPrevCard, showStats: st.showStats,
