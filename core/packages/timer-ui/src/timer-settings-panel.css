@@ -186,7 +186,10 @@
 .settings-modal .settings-row-hint { grid-column: 1 / -1; margin: 0; line-height: 1.5; }
 .settings-modal .settings-section > h3 { margin: 0 0 10px; font-size: 14px; }
 .settings-modal .settings-disclosure { margin-top: 18px; }
-.settings-modal .settings-disclosure > summary { cursor: pointer; padding: 12px 0; font-weight: 600; }
+.settings-modal .settings-disclosure > summary { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 12px 0; font-weight: 600; list-style: none; }
+.settings-modal .settings-disclosure > summary::-webkit-details-marker { display: none; }
+.settings-modal .settings-disclosure > summary > svg { flex: none; transition: transform 140ms; }
+.settings-modal .settings-disclosure[open] > summary > svg { transform: rotate(90deg); }
 .settings-modal .settings-disclosure > summary:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 .settings-modal .settings-disclosure > p { line-height: 1.6; color: var(--muted-foreground); }
 .settings-modal .settings-row-control > :disabled { opacity: .5; cursor: not-allowed; }

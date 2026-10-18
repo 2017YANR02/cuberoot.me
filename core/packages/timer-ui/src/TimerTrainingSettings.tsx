@@ -2,8 +2,7 @@ import BoolToggle from './BoolToggle';
 import './compact-select.css';
 
 import { useEffect, useState } from 'react';
-import { Target } from 'lucide-react';
-import { eventInfo, formatTargetTime, parseTargetTime, parseDailySolveGoal, timerSettingFieldContract,
+import { formatTargetTime, parseTargetTime, parseDailySolveGoal, timerSettingFieldContract,
   TRAINING_START_MODES, TRAINING_START_MODE_COPY, timerSupportsTrainingTiming,
   type EventId, type RoundConfig, type RoundFormat, type TimerSettingCopy, type TimerSettingFieldId, type TimerTrainingSettings } from '@cuberoot/shared/timer';
 import { TimerSettingRow, TimerSettingsSection } from './TimerTimingSettingsSections';
@@ -82,19 +81,14 @@ export function TimerGoalSettings({ value: s, onChange: updateSettings, localize
               type="text"
               aria-label={tr(timerSettingFieldContract('settings.training.target-time').copy)}
               value={targetInput}
-              placeholder={tr({ zh: '例：0:10.50（留空关闭）', en: 'e.g. 0:10.50 (blank = off)'
+              placeholder={tr({ zh: '留空关闭', en: 'Blank = off'
             })}
               onChange={(e) => setTargetInput(e.target.value)}
               onBlur={(e) => commitTargetInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') commitTargetInput((e.target as HTMLInputElement).value); }}
               style={{ fontFamily: 'ui-monospace, monospace' }}
             />
-            <span className="hint">
-              <Target size={12} style={{ verticalAlign: '-1px', marginRight: 4 }} />
-              {currentTargetMs === null
-                ? tr({ zh: `当前 ${eventInfo(event).nameZh}：关闭`, en: `${eventInfo(event).nameEn}: off` })
-                : tr({ zh: `当前 ${eventInfo(event).nameZh}：${formatTargetTime(currentTargetMs)}`, en: `${eventInfo(event).nameEn}: ${formatTargetTime(currentTargetMs)}` })}
-            </span>
+
           </TimerSettingRow>
           <TimerSettingRow field={timerSettingFieldContract('settings.training.daily-goal')} label={tr(timerSettingFieldContract('settings.training.daily-goal').copy)}>
             <input
@@ -104,16 +98,14 @@ export function TimerGoalSettings({ value: s, onChange: updateSettings, localize
               step={1}
               aria-label={tr(timerSettingFieldContract('settings.training.daily-goal').copy)}
               value={goalInput}
-              placeholder={tr({ zh: '例：50（留空 / 0 关闭）', en: 'e.g. 50 (blank / 0 = off)'
+              style={{ width: '100%' }}
+              placeholder={tr({ zh: '留空 / 0 关闭', en: 'Blank / 0 = off'
             })}
               onChange={(e) => setGoalInput(e.target.value)}
               onBlur={(e) => commitGoalInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') commitGoalInput((e.target as HTMLInputElement).value); }}
             />
-            <span className="hint">{currentDailyGoal === null
-              ? tr({ zh: '关闭', en: 'off'
-                                      })
-              : tr({ zh: `每天 ${currentDailyGoal} 次（全部项目合计）`, en: `${currentDailyGoal} solves/day (all events)` })}</span>
+
           </TimerSettingRow>
 
   </>;

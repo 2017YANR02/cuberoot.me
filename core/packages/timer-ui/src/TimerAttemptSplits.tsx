@@ -14,8 +14,8 @@ const COPY = {
   memo: { en: 'Memo', zh: '记忆' },
   memoAction: { en: 'Memo… press Enter or tap', zh: '记忆中… 按 Enter 或点这里' },
   stageHint: {
-    en: 'Press 1=Cross, 2=F2L, 3=OLL; auto-detected with a smart cube',
-    zh: '按 1=Cross 完成，2=F2L，3=OLL；智能魔方连接时自动检测',
+    en: 'Press 1=Cross, 2=F2L, 3=OLL',
+    zh: '按 1=Cross 完成，2=F2L，3=OLL',
   },
   bldHint: {
     en: 'Press Enter while running to mark memo complete',
@@ -141,8 +141,8 @@ function SettingRow({
       <span className="settings-row-label">{label}</span>
       <span className="settings-row-control">
         {control}
-        <span className="hint timer-attempt-split-hint">{hint}</span>
       </span>
+      <span className="settings-row-hint hint timer-attempt-split-hint">{hint}</span>
     </div>
   );
 }
