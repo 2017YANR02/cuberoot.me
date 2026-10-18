@@ -451,3 +451,16 @@
   user-select: text;
   -webkit-touch-callout: default;
 }
+
+/* Training measures share rows so observation, execution and total align. */
+.shell-stat-training {
+  display: grid;
+  grid-template-columns: auto repeat(6, minmax(0, 1fr));
+  column-gap: 8px;
+  align-items: baseline;
+  font-family: var(--font-sans);
+  line-height: 1.55;
+}
+.shell-stat-training-row { display: contents; }
+.shell-stat-training .shell-stat-lbl::after { content: none; }
+.shell-stat-training .shell-stat-val { text-align: right; font-size: 12px; line-height: 1.3; }
