@@ -77,8 +77,8 @@ describe('shared scramble click action setting', () => {
     const display = readFileSync('../timer-ui/src/TimerDisplaySettings.tsx', 'utf8');
     expect(solo).toContain('settings.scrambleClickAction,');
     // Editing the layout must suppress both starting the timer and other strip actions.
-    expect(solo).toContain("timingEnabled={!layoutEditing && scrambleClickEffect === 'start'}");
-    expect(solo).toContain("onActivate={layoutEditing ? undefined : scrambleClickEffect === 'next'");
+    expect(solo).toContain("timingEnabled={!layoutEditing && settings.scrambleSource !== 'manual' && scrambleClickEffect === 'start'}");
+    expect(solo).toContain("onActivate={layoutEditing ? undefined : settings.scrambleSource === 'manual' ? () => { if (canSwitchScramble()) setManualEditing(true); } : scrambleClickEffect === 'next'");
     expect(display).toContain('<TimerScrambleClickActionSetting');
   });
 

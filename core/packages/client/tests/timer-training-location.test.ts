@@ -458,15 +458,15 @@ describe('training host hooks and links', () => {
     expect(container.querySelector('.pp-popup .cubing-icon')).toBeNull();
     expect(container.querySelector('.pp-popup')?.textContent).not.toContain('Ortega');
     const timer = [...container.querySelectorAll<HTMLButtonElement>('.pp-item')]
-      .find(item => item.textContent === tr({ zh: '完整还原', en: 'Full solve' }))!;
+      .find(item => item.textContent === tr({ zh: '完整', en: 'Full' }))!;
     await act(async () => timer.click());
     await vi.waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
     const update = onUrlUpdate.mock.lastCall![0];
     expect(update.searchParams.toString()).toBe('event=333&players=2&room=timer-room&share=timer-share&trainingOrg=school&trainingAssignment=homework');
     expect(update.options.history).toBe('push');
-    expect(trigger.textContent).toBe(tr({ zh: '完整还原', en: 'Full solve' }));
+    expect(trigger.textContent).toBe(tr({ zh: '完整', en: 'Full' }));
     await act(async () => trigger.click());
-    expect(container.querySelector('.pp-item[aria-current="page"]')?.textContent).toBe(tr({ zh: '完整还原', en: 'Full solve' }));
+    expect(container.querySelector('.pp-item[aria-current="page"]')?.textContent).toBe(tr({ zh: '完整', en: 'Full' }));
     expect(container.querySelector('.pp-item[aria-current="page"] .pp-item-check')).not.toBeNull();
   });
 
