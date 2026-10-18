@@ -111,7 +111,6 @@ import PlaybackBar, { PlaybackAnchorSelect } from '@/components/PlaybackBar';
 import { createTwistyPlayback, EMPTY_TWISTY_PLAYBACK_STATE, type TwistyPlaybackPlayer, type TwistyPlaybackState } from '@/lib/twisty-playback';
 
 import './player-controls.css';
-import { normalizeRoomTheme } from './room-themes';
 
 /**
  * 换握记号(仅 NxN 解法框):↑ 上手(拇指起手在 U 面)、↓ 下手(D 面)、· 回 home 握。
@@ -867,8 +866,10 @@ interface Props {
   /** DOM node below the cube canvas to portal the playback control row into
    *  (twizzle-style bar under the puzzle). Falls back to inline when absent. */
   playbackSlot?: HTMLElement | null;
-  /** Current-state stage control belongs to the image settings above. */
+  /** Current-state stage control shares the canvas footer with animation tools. */
   captureStickeringSlot?: HTMLElement | null;
+  appearanceOpen?: boolean;
+  onAppearanceToggle?: () => void;
   /** DOM node at the canvas' bottom-left corner to portal the 背景(BG)selector into
    *  (overlays the big cube view, like the top-right back-view window). When absent the
    *  selector simply doesn't render — SimPage always provides the slot. */
@@ -916,6 +917,7 @@ export default function PlayerControls({
   kilominxNotation = 'cstimer', onKilominxNotationChange,
   onCopyLink,
   renderer = 'cubing', onRendererChange,
+  appearanceOpen, onAppearanceToggle,
   playbackSlot, captureStickeringSlot, bgSlot, fullscreenButton, imageButton, backViewButton,
   stickering = 'full', onStickeringChange,
   stickeringRot = '', onStickeringRotChange,
@@ -2489,7 +2491,6 @@ export default function PlayerControls({
     <div className="sim-player">
       {!active && stickeringSelect && captureStickeringSlot && createPortal(
         <div className="sim-capture-stickering">
-          <span className="sim-capture-setting-label">{t('阶段', 'Stickering')}</span>
           <div className="sim-capture-stickering-controls">{stickeringSelect}</div>
         </div>,
         captureStickeringSlot,
@@ -2679,11 +2680,6 @@ export default function PlayerControls({
       <div className="sim-stage-controls">
       <div className="sim-view-tools" role="toolbar" aria-label={t('画布工具', 'Canvas tools')}>
         {imageButton}{backViewButton}{fullscreenButton}
-        {typeof puzzleKind === 'number' && <select aria-label={t('画布视图', 'Canvas view')}
-          value={settings.viewMode} onChange={e => onSettingsChange({ ...settings, viewMode: e.target.value as 'cube' | 'net' })}>
-          <option value="cube">{t('立体图', '3D cube')}</option>
-          <option value="net" disabled={normalizeRoomTheme(settings.roomTheme) !== 'off'}>{t('平面图', 'Flat net')}</option>
-        </select>}
         {!resolveCaps(puzzleKind, renderer).flat && <button type="button" className="playback-bar-btn"
           onClick={() => {
             const next = { ...settings, scale: DEFAULT_SETTINGS.scale, viewAngle: DEFAULT_SETTINGS.viewAngle, viewGradient: DEFAULT_SETTINGS.viewGradient };
@@ -2834,7 +2830,7 @@ export default function PlayerControls({
           </button>
         )}
         <button onClick={() => editDrafts(setupDraft, '')} title={t('清空公式', 'Clear algorithm')}><Eraser size={13} />{t('清空公式', 'Clear algorithm')}</button>
-        <button type="button" onClick={() => editDrafts('', '')} title={t('重置为还原态', 'Reset to solved')}>{t('重置为还原态', 'Reset to solved')}</button>
+        <button type="button" onClick={() => editDrafts('', '')} title={t('重置为还原态', 'Reset to solved')}>{t('重置', 'Reset')}</button>
         {canUndoEdit && <button type="button" title={t('撤销公式操作', 'Undo algorithm edit')} onClick={() => {
           void replaceDrafts(lastEdit.setup, lastEdit.alg, lastEdit.step);
           setLastEdit(null);
@@ -2852,6 +2848,8 @@ export default function PlayerControls({
       </div>
 
       <SimAppearancePanel
+        open={appearanceOpen}
+        onToggle={onAppearanceToggle}
         world={world}
         order={order}
         puzzleKind={puzzleKind}

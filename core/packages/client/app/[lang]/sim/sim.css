@@ -728,6 +728,8 @@
 .sim-project-controls { min-width: 0; flex-wrap: wrap; }
 .sim-order-label { flex-shrink: 0; white-space: nowrap; font-size: 13px; color: var(--muted-foreground); }
 .sim-order-input {
+  height: 32px;
+  box-sizing: border-box;
   width: 58px;
   padding: 6px;
   border: 1px solid var(--input);
@@ -738,6 +740,9 @@
 }
 .sim-panel-toggle {
   display: none;
+  height: 32px;
+  box-sizing: border-box;
+  align-items: center;
   border: 1px solid var(--border-default);
   border-radius: 6px;
   padding: 6px 8px;
@@ -757,7 +762,7 @@
 @media (max-width: 767px) {
   .sim-header { gap: 6px; padding: 8px; }
   .sim-header .sim-tool-select { max-width: 100%; }
-  .sim-project-controls { flex: 1 0 100%; order: 1; }
+  .sim-project-controls { flex: 0 1 auto; }
   .sim-panel-toggle { display: inline-flex; }
   .sim-page--panel-expanded .sim-stage { flex: 0 0 23%; }
   .sim-page--panel-expanded .sim-playback-under { display: none; }
@@ -839,7 +844,8 @@
 .sim-capture-controls .vc-row > .vc-label { flex: 0 0 100px; }
 .sim-capture-controls .vc-studio .vc-row.vc-row-block { align-items: flex-start; }
 .sim-capture-controls .vc-row-controls { max-width: 100%; }
-.sim-capture-stage-slot { padding: 0 12px; }
+.sim-capture-stage-slot { padding: 4px 12px 8px; flex-shrink: 0; }
+.sim-capture-stage-slot[hidden] { display: none; }
 .sim-capture-stage-slot:empty { display: none; }
 .sim-capture-stickering {
   display: flex;

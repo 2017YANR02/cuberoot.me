@@ -1439,7 +1439,6 @@
   .sim-view-tools > * { flex-shrink: 0; }
   .sim-stage-controls .playback-bar-btn,
   .sim-player button:not(.pill-toggle):not(.bool-toggle-label),
-  .sim-panel-toggle,
   .sim-float-close,
   .sim-backview-swap,
   .sim-image-swap { min-width: 44px; min-height: 44px; }
@@ -1569,4 +1568,11 @@
 .sim-color-settings .sim-swatch-list { align-items: flex-end; }
 @media (max-width: 767px) {
   .sim-color-settings { --sim-color-control-height: 44px; }
+}
+
+.sim-view-tools .playback-bar-btn,
+.sim-view-tools .compact-select-trigger.sim-player-mode { font-size: 14px; }
+.sim-puzzle-toggles > * { border-inline-end: 1px solid color-mix(in srgb, var(--border-default) 65%, transparent); padding-inline-end: 12px; }
+@media (max-width: 480px) {
+  .sim-puzzle-toggles > * { border-inline-end: 0; padding-inline-end: 0; }
 }

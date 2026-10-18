@@ -356,7 +356,7 @@ export default function SimPage() {
       page.style.removeProperty('--sim-visible-top');
     };
   }, []);
-  const [researchOpen, setResearchOpen] = useState(false);
+  const [openPanel, setOpenPanel] = useState<'appearance' | 'algs' | 'research' | null>('appearance');
   const [lastCreationTool, setLastCreationTool] = useState<'capture' | 'draw' | 'image'>(
     query.tool === 'sim' ? 'capture' : query.tool,
   );
@@ -554,7 +554,7 @@ export default function SimPage() {
   // that parent effect; children must not replay the new puzzle on the old cube.
   const [activeCube, setActiveCube] = useState<World['cube'] | null>(null);
   const [settings, setSettings] = useState<SimSettings>(() => {
-    const saved = loadSettings();
+    const saved = { ...loadSettings(), viewMode: 'cube' as const };
     if (!query.anchor) return saved;
     return { ...saved, playbackMode: query.anchor === 'end' ? 'algorithm' : 'moves' };
   });
@@ -577,15 +577,6 @@ export default function SimPage() {
   const [keymap, setKeymap] = useState<Record<string, KeyMove>>(() => loadKeymap());
   const keymapRef = useRef(keymap);
   useEffect(() => { keymapRef.current = keymap; saveKeymap(keymap); }, [keymap]);
-
-  const [algsOpen, setAlgsOpen] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    try { return localStorage.getItem('sim.panel.algs') === '1'; } catch { return false; }
-  });
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    persistItem('sim.panel.algs', algsOpen ? '1' : '0');
-  }, [algsOpen]);
 
   // 画布左上角图像浮层的显隐(侧栏的 studio 控件常驻,不再受它控制)。分享链接带任何
   // img_ 键 = 对方特意调过图 → 自动显示浮层,否则读持久化偏好。panel 模式的 codec 省略
@@ -2302,27 +2293,6 @@ export default function SimPage() {
           <ChevronLeft size={18} />
         </HomeLink>
         <h1 className="sim-title">{t('模拟', 'Sim')}</h1>
-        <select
-          className="sim-tool-select"
-          value={animationMode ? 'animation' : 'creation'}
-          onChange={(event) => changeTool(event.target.value === 'animation' ? 'sim' : lastCreationTool)}
-          aria-label={t('工作模式', 'Workspace mode')}
-        >
-          <option value="animation">{t('动画', 'Animation')}</option>
-          <option value="creation">{t('作图', 'Create images')}</option>
-        </select>
-        {!animationMode && (
-          <select
-            className="sim-tool-select"
-            value={query.tool}
-            onChange={(event) => changeTool(event.target.value as 'capture' | 'draw' | 'image')}
-            aria-label={t('作图方式', 'Image source')}
-          >
-            <option value="capture">{t('当前状态', 'Current state')}</option>
-            <option value="draw">{t('自由绘图', 'Free drawing')}</option>
-            <option value="image">{t('FTO 公式出图', 'FTO algorithm')}</option>
-          </select>
-        )}
         <div className="sim-project-controls">
           <PuzzleTypeSelect
             value={typeof selectedPuzzle === 'number' ? 'nxn' : selectedPuzzle}
@@ -2345,6 +2315,27 @@ export default function SimPage() {
             </label>
           )}
         </div>
+        <select
+          className="sim-tool-select"
+          value={animationMode ? 'animation' : 'creation'}
+          onChange={(event) => changeTool(event.target.value === 'animation' ? 'sim' : lastCreationTool)}
+          aria-label={t('工作模式', 'Workspace mode')}
+        >
+          <option value="animation">{t('动画', 'Animation')}</option>
+          <option value="creation">{t('作图', 'Create images')}</option>
+        </select>
+        {!animationMode && (
+          <select
+            className="sim-tool-select"
+            value={query.tool}
+            onChange={(event) => changeTool(event.target.value as 'capture' | 'draw' | 'image')}
+            aria-label={t('作图方式', 'Image source')}
+          >
+            <option value="capture">{t('当前状态', 'Current state')}</option>
+            <option value="draw">{t('自由绘图', 'Free drawing')}</option>
+            <option value="image">{t('FTO 公式出图', 'FTO algorithm')}</option>
+          </select>
+        )}
         {!drawMode && !imageMode && (
           <button type="button" className="sim-panel-toggle" aria-expanded={panelExpanded} aria-controls="sim-task-panel"
             onClick={() => {
@@ -2518,6 +2509,7 @@ export default function SimPage() {
           <div className="sim-bg-overlay" ref={setBgSlot} />
         </div>
         <div className="sim-playback-under" ref={setPlaybackSlot} />
+        <div className="sim-capture-stage-slot" ref={setCaptureStickeringSlot} hidden={!captureMode} />
         </div>
 
         <aside className="sim-side" data-site-surface="panel" id="sim-task-panel" onFocusCapture={event => {
@@ -2560,6 +2552,8 @@ export default function SimPage() {
             onRendererChange={handleRendererChange}
             playbackSlot={playbackSlot}
             captureStickeringSlot={captureStickeringSlot}
+            appearanceOpen={openPanel === 'appearance'}
+            onAppearanceToggle={() => setOpenPanel(panel => panel === 'appearance' ? null : 'appearance')}
             bgSlot={bgSlot}
             fullscreenButton={
               <button
@@ -2608,7 +2602,6 @@ export default function SimPage() {
           {/* One studio owns the preview in both modes; only creation exposes its controls. */}
           <section className="sim-capture-controls" hidden={!captureMode}>
           <h2 className="sim-panel-title">{t('图片与导出', 'Image & export')}</h2>
-          <div className="sim-capture-stage-slot" ref={setCaptureStickeringSlot} />
           <PuzzleImageStudio
             spec={imgSpec}
             onSpecChange={setImgSpec}
@@ -2625,8 +2618,8 @@ export default function SimPage() {
           />
           </section>
           {animationMode && <CollapsibleSection
-            open={algsOpen}
-            onToggle={() => setAlgsOpen((o) => !o)}
+            open={openPanel === 'algs'}
+            onToggle={() => setOpenPanel(panel => panel === 'algs' ? null : 'algs')}
             icon={BookOpen}
             label={t('公式', 'Algs')}
           >
@@ -2640,8 +2633,8 @@ export default function SimPage() {
             || (typeof puzzleParam === 'number' && nxnHasPgKernel(puzzleParam))
             || EXPLORE_BOUND.has(String(puzzleParam))) && (
             <CollapsibleSection
-              open={researchOpen && animationMode}
-              onToggle={() => setResearchOpen(open => !open)}
+              open={openPanel === 'research' && animationMode}
+              onToggle={() => setOpenPanel(panel => panel === 'research' ? null : 'research')}
               icon={FlaskConical}
               label={t('结构研究', 'Structure research')}
             >
