@@ -78,14 +78,19 @@ describe('smart cube training notation', () => {
     expect(normalizeWcaScramble("2Rw U 2Rw'")).toBe("L F L'");
   });
 
-  it('uses yellow-top green-front by default, keeps WCA unchanged and records physical scrambles', () => {
-    expect(timerSmartCubeTrainingOrientation('zbll')).toBe('z2');
+  it('uses white-top green-front by default, keeps WCA unchanged and records selected physical grips', () => {
+    expect(timerSmartCubeTrainingOrientation('zbll')).toBe('');
     expect(timerSmartCubeTrainingOrientation('333')).toBe('');
     expect(timerSmartCubeTrainingOrientation('zbll', '')).toBe('');
     expect(timerSmartCubeAttemptScramble('zbll', 'r U', '')).toBe('L F');
     const recorded = timerSmartCubeAttemptScramble('zbll', 'R U');
-    expect(recorded).toBe('L D');
-    expect(after(`${recorded} D' L'`)).toBe(after(''));
+    expect(recorded).toBe('R U');
+    expect(after(`${recorded} U' R'`)).toBe(after(''));
+    expect(orientCubeFacelets(after(''), timerSmartCubeTrainingOrientation('zbll'))[4]).toBe('U');
+    expect(orientCubeFacelets(after(''), timerSmartCubeTrainingOrientation('zbll'))[22]).toBe('F');
+    const selected = timerSmartCubeAttemptScramble('zbll', 'R U', 'z2');
+    expect(selected).toBe('L D');
+    expect(after(`${selected} D' L'`)).toBe(after(''));
     expect(after("R U D' L'")).not.toBe(after(''));
     const display = orientCubeFacelets(after(''), 'z2');
     expect(display[4]).toBe('D');
