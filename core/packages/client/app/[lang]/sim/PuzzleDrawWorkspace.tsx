@@ -4,8 +4,10 @@ import {
   useCallback,
   useEffect,
   useRef,
+  useState,
   type ReactNode,
 } from 'react';
+import { DrawPreviewHostContext } from '@/components/puzzle-draw/DrawCanvas';
 import CubeDrawPanel from '@/components/puzzle-draw/CubeDrawPanel';
 import FtoDrawPanel from '@/components/puzzle-draw/FtoDrawPanel';
 import MegaminxDrawPanel from '@/components/puzzle-draw/MegaminxDrawPanel';
@@ -34,6 +36,7 @@ export default function PuzzleDrawWorkspace({
   onDocumentChange,
   exportPanel,
 }: PuzzleDrawWorkspaceProps) {
+  const [previewHost, setPreviewHost] = useState<HTMLDivElement | null>(null);
   const current: DrawPuzzle = typeof puzzle === 'number' ? 'cube' : puzzle;
   const currentRef = useRef<DrawPuzzle>(current);
   currentRef.current = current;
@@ -55,28 +58,26 @@ export default function PuzzleDrawWorkspace({
   const receivePyraminx = useCallback((doc: DrawExport) => receiveDocument('pyraminx', doc), [receiveDocument]);
   const receiveFto = useCallback((doc: DrawExport) => receiveDocument('fto', doc), [receiveDocument]);
 
-  return (
-    <div className="sim-draw-workspace">
-      <div className="sim-draw-panel" hidden={current !== 'cube'}>
-        <CubeDrawPanel order={Math.max(2, Math.min(20, order))} onDocumentChange={receiveCube} />
-      </div>
-      <div className="sim-draw-panel" hidden={current !== 'sq1'}>
-        <Sq1DrawPanel onDocumentChange={receiveSq1} />
-      </div>
-      <div className="sim-draw-panel" hidden={current !== 'megaminx'}>
-        <MegaminxDrawPanel onDocumentChange={receiveMegaminx} />
-      </div>
-      <div className="sim-draw-panel" hidden={current !== 'skewb'}>
-        <SkewbDrawPanel onDocumentChange={receiveSkewb} />
-      </div>
-      <div className="sim-draw-panel" hidden={current !== 'pyraminx'}>
-        <PyraminxDrawPanel onDocumentChange={receivePyraminx} />
-      </div>
-      <div className="sim-draw-panel" hidden={current !== 'fto'}>
-        <FtoDrawPanel onDocumentChange={receiveFto} />
-      </div>
+  const panels: { key: DrawPuzzle; content: ReactNode }[] = [
+    { key: 'cube', content: <CubeDrawPanel order={Math.max(2, Math.min(20, order))} onDocumentChange={receiveCube} /> },
+    { key: 'sq1', content: <Sq1DrawPanel onDocumentChange={receiveSq1} /> },
+    { key: 'megaminx', content: <MegaminxDrawPanel onDocumentChange={receiveMegaminx} /> },
+    { key: 'skewb', content: <SkewbDrawPanel onDocumentChange={receiveSkewb} /> },
+    { key: 'pyraminx', content: <PyraminxDrawPanel onDocumentChange={receivePyraminx} /> },
+    { key: 'fto', content: <FtoDrawPanel onDocumentChange={receiveFto} /> },
+  ];
 
-      {exportPanel && <div className="sim-draw-exports">{exportPanel}</div>}
+  return (
+    <div className="sim-body sim-draw-workspace">
+      <div className="sim-stage sim-draw-stage" ref={setPreviewHost} />
+      <aside className="sim-side sim-draw-side" data-site-surface="panel">
+        {panels.map(({ key, content }) => (
+          <DrawPreviewHostContext.Provider key={key} value={current === key ? previewHost : null}>
+            <div className="sim-draw-panel" hidden={current !== key}>{content}</div>
+          </DrawPreviewHostContext.Provider>
+        ))}
+        {exportPanel && <div className="sim-draw-exports">{exportPanel}</div>}
+      </aside>
     </div>
   );
 }

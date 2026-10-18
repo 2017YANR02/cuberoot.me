@@ -867,6 +867,8 @@ interface Props {
   /** DOM node below the cube canvas to portal the playback control row into
    *  (twizzle-style bar under the puzzle). Falls back to inline when absent. */
   playbackSlot?: HTMLElement | null;
+  /** Current-state stage control belongs to the image settings above. */
+  captureStickeringSlot?: HTMLElement | null;
   /** DOM node at the canvas' bottom-left corner to portal the 背景(BG)selector into
    *  (overlays the big cube view, like the top-right back-view window). When absent the
    *  selector simply doesn't render — SimPage always provides the slot. */
@@ -914,7 +916,7 @@ export default function PlayerControls({
   kilominxNotation = 'cstimer', onKilominxNotationChange,
   onCopyLink,
   renderer = 'cubing', onRendererChange,
-  playbackSlot, bgSlot, fullscreenButton, imageButton, backViewButton,
+  playbackSlot, captureStickeringSlot, bgSlot, fullscreenButton, imageButton, backViewButton,
   stickering = 'full', onStickeringChange,
   stickeringRot = '', onStickeringRotChange,
   stickeringMask = '', onStickeringMaskClear,
@@ -2485,7 +2487,13 @@ export default function PlayerControls({
 
   return (
     <div className="sim-player">
-      {!active && stickeringSelect}
+      {!active && stickeringSelect && captureStickeringSlot && createPortal(
+        <div className="sim-capture-stickering">
+          <span className="sim-capture-setting-label">{t('阶段', 'Stickering')}</span>
+          <div className="sim-capture-stickering-controls">{stickeringSelect}</div>
+        </div>,
+        captureStickeringSlot,
+      )}
       <div className="sim-animation-controls" hidden={!active}>
       <SimAlgEditor
         setup={{

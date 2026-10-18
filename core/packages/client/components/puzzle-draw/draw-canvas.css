@@ -83,22 +83,14 @@
   width: 100%;
 }
 
-.draw-canvas-tool-label {
-  color: var(--muted-foreground);
-  font-size: 13px;
-  font-weight: 600;
+.vc-label.draw-canvas-tool-label {
+  min-width: 0;
 }
 
-.draw-canvas-text-input {
+.vc-num.draw-canvas-text-input {
   box-sizing: border-box;
   width: min(220px, 100%);
   max-width: 100%;
-  padding: 7px 9px;
-  border: 1px solid var(--input);
-  border-radius: 5px;
-  background: var(--background);
-  color: var(--foreground);
-  font: inherit;
 }
 
 .draw-canvas-text-input:focus-visible {
@@ -177,25 +169,11 @@
   cursor: pointer;
 }
 
-.draw-canvas-button {
+.vc-btn.draw-canvas-button {
   appearance: none;
-  display: inline-flex;
-  align-items: center;
   justify-content: center;
   width: fit-content;
   max-width: 100%;
-  padding: 6px 10px;
-  border: 1px solid var(--border-default);
-  border-radius: 5px;
-  background: var(--muted);
-  color: var(--foreground);
-  font: inherit;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.draw-canvas-button:hover {
-  border-color: var(--accent);
 }
 
 .draw-canvas-button:focus-visible,

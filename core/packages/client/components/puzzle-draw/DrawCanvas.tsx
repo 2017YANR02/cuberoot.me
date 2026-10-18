@@ -1,6 +1,8 @@
 'use client';
 
 import {
+  createContext,
+  useContext,
   useCallback,
   useEffect,
   useId,
@@ -10,6 +12,7 @@ import {
   type KeyboardEvent,
   type PointerEvent,
 } from 'react';
+import { createPortal } from 'react-dom';
 import { persistItem } from '@/lib/safe-storage';
 import { useT } from '@/hooks/useT';
 import {
@@ -25,6 +28,7 @@ import type {
   DrawElement,
   RenderDrawSvgOptions,
 } from './types';
+import '@/components/puzzle-image/puzzle-image.css';
 import './draw-canvas.css';
 
 export type {
@@ -35,6 +39,9 @@ export type {
   DrawLine,
   RenderDrawSvgOptions,
 } from './types';
+
+// The simulator supplies a stage; standalone consumers keep the preview inline.
+export const DrawPreviewHostContext = createContext<HTMLElement | null>(null);
 
 const DEFAULT_SIZE = 400;
 const MAX_HISTORY = 14;
@@ -245,8 +252,10 @@ export function DrawCanvas({
   controls,
   strokeWidthScale = 1,
   className,
+  previewActive = true,
 }: DrawCanvasProps) {
   const t = useT();
+  const previewHost = useContext(DrawPreviewHostContext);
   const controlId = useId();
   const width = safeDimension(widthProp);
   const height = safeDimension(heightProp);
@@ -372,29 +381,34 @@ export function DrawCanvas({
     );
   };
 
+  const preview = (
+    <div className="vc-studio draw-canvas-main" style={canvasStyle}>
+      <div
+        className="draw-canvas-preview"
+        onPointerDown={handlePaint}
+        // allow-static-onclick: delegated SVG buttons carry role, tabindex and keyboard handling.
+        onClick={(event) => toggleElement(event.target)}
+        onKeyDown={handleToggleKey}
+        onContextMenu={(event) => event.preventDefault()}
+        dangerouslySetInnerHTML={{ __html: previewSvg }}
+      />
+      {!previewHost && controls && <div className="draw-canvas-controls">{controls}</div>}
+    </div>
+  );
+
   return (
-    <div className={`draw-canvas${className ? ` ${className}` : ''}`} style={canvasStyle}>
-      <div className="draw-canvas-main">
-        <div
-          className="draw-canvas-preview"
-          onPointerDown={handlePaint}
-          // allow-static-onclick: delegated SVG buttons carry role, tabindex and keyboard handling.
-          onClick={(event) => toggleElement(event.target)}
-          onKeyDown={handleToggleKey}
-          onContextMenu={(event) => event.preventDefault()}
-          dangerouslySetInnerHTML={{ __html: previewSvg }}
-        />
-        {controls && <div className="draw-canvas-controls">{controls}</div>}
-      </div>
+    <div className={`vc-studio draw-canvas${className ? ` ${className}` : ''}`} style={canvasStyle}>
+      {previewHost && previewActive ? createPortal(preview, previewHost) : preview}
 
       <div className="draw-canvas-tools">
+        {previewHost && controls && <div className="draw-canvas-controls">{controls}</div>}
         <div className="draw-canvas-tool-section">
-          <label className="draw-canvas-tool-label" htmlFor={`${controlId}-filename`}>
+          <label className="vc-label draw-canvas-tool-label" htmlFor={`${controlId}-filename`}>
             {t('文件名', 'Filename')}
           </label>
           <input
             id={`${controlId}-filename`}
-            className="draw-canvas-text-input"
+            className="vc-num draw-canvas-text-input"
             type="text"
             value={customFilename}
             placeholder={filenameBase}
@@ -403,7 +417,7 @@ export function DrawCanvas({
         </div>
 
         <div className="draw-canvas-tool-section">
-          <label className="draw-canvas-tool-label" htmlFor={`${controlId}-stroke`}>
+          <label className="vc-label draw-canvas-tool-label" htmlFor={`${controlId}-stroke`}>
             {t('线宽', 'Line width')}
           </label>
           <div className="draw-canvas-range-row">
@@ -421,7 +435,7 @@ export function DrawCanvas({
         </div>
 
         <div className="draw-canvas-tool-section">
-          <div className="draw-canvas-tool-label">{t('颜色', 'Colors')}</div>
+          <div className="vc-label draw-canvas-tool-label">{t('颜色', 'Colors')}</div>
           <div className="draw-canvas-swatches">
             {normalizedPresets.map((color) => renderSwatch(color, 'preset'))}
           </div>
@@ -429,7 +443,7 @@ export function DrawCanvas({
 
         {historyColors.length > 0 && (
           <div className="draw-canvas-tool-section">
-            <div className="draw-canvas-tool-label">{t('历史颜色', 'Recent colors')}</div>
+            <div className="vc-label draw-canvas-tool-label">{t('历史颜色', 'Recent colors')}</div>
             <div className="draw-canvas-swatches">
               {historyColors.map((color) => renderSwatch(color, 'history'))}
             </div>
@@ -437,7 +451,7 @@ export function DrawCanvas({
         )}
 
         <div className="draw-canvas-tool-section">
-          <label className="draw-canvas-tool-label" htmlFor={`${controlId}-custom-color`}>
+          <label className="vc-label draw-canvas-tool-label" htmlFor={`${controlId}-custom-color`}>
             {t('自定义颜色', 'Custom color')}
           </label>
           <div className="draw-canvas-custom-row">
@@ -448,13 +462,13 @@ export function DrawCanvas({
               onChange={(event) => setCustomColor(event.target.value)}
               aria-label={t('选择自定义颜色', 'Choose custom color')}
             />
-            <button type="button" className="draw-canvas-button" onClick={rememberCustomColor}>
+            <button type="button" className="vc-btn draw-canvas-button" onClick={rememberCustomColor}>
               {t('使用', 'Use')}
             </button>
           </div>
         </div>
 
-        <button type="button" className="draw-canvas-button" onClick={reset}>
+        <button type="button" className="vc-btn draw-canvas-button" onClick={reset}>
           {t('重置颜色', 'Reset colors')}
         </button>
       </div>

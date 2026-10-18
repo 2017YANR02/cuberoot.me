@@ -83,4 +83,6 @@ export interface DrawCanvasProps {
   controls?: ReactNode;
   strokeWidthScale?: number;
   className?: string;
+  /** Only the selected view may render into the shared simulator stage. */
+  previewActive?: boolean;
 }

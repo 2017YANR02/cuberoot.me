@@ -241,8 +241,9 @@ body[data-site-scenery] .vkb-popup::after {
   border-top-color: var(--glass-popover-bg);
 }
 
-/* Dense site filters need stronger separation from the card text beneath them. */
-body[data-site-scenery] .sites-filter-row .pp-popup {
+/* Filters and image export menus need stronger separation from text below. */
+body[data-site-scenery] .sites-filter-row .pp-popup,
+body[data-site-scenery] .vc-export-formats {
   background: var(--glass-menu-bg);
   -webkit-backdrop-filter: var(--glass-menu-filter);
   backdrop-filter: var(--glass-menu-filter);

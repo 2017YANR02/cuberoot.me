@@ -1,8 +1,10 @@
 'use client';
 
 import { useMemo, useRef, useState } from 'react';
-import { ChevronRight, Download, RotateCcw } from 'lucide-react';
+import { BookOpen, ChevronRight, RotateCcw } from 'lucide-react';
 import { HexColorPicker } from 'react-colorful';
+import { ImageExportMenu } from '@/components/puzzle-image/PuzzleImageStudio';
+import '@/components/puzzle-image/puzzle-image.css';
 import BoolToggle from '@/components/BoolToggle';
 import { ClearButton } from '@/components/ClearButton';
 import { useT } from '@/hooks/useT';
@@ -15,7 +17,7 @@ import {
   renderFtoEifSvg,
   type FtoEifPalette,
 } from '@/lib/fto-eif-image';
-import { saveBlob, svgToRasterBlob } from '@/lib/puzzle-image/image-export';
+import { copyPngToClipboard, saveBlob, svgToRasterBlob } from '@/lib/puzzle-image/image-export';
 
 const COLOR_KEYS = [...FTO_EIF_FACE_KEYS, 'stroke'] as const;
 type ColorKey = (typeof COLOR_KEYS)[number];
@@ -78,6 +80,12 @@ export default function FtoImageGenerator({
     setHexText(DEFAULT_FTO_EIF_PALETTE[selected]);
   };
 
+  const pngBlob = () => {
+    const width = Math.max(240, Math.round(previewRef.current?.clientWidth || 400)) * 2;
+    const height = Math.round(width * 301.94 / 279.92);
+    return svgToRasterBlob(svg, { width, height, format: 'png', background: null });
+  };
+
   const download = async () => {
     if (parsed.invalid.length > 0) {
       setStatus(t('请先修正不支持的记号', 'Fix the unsupported notation first.'));
@@ -85,9 +93,7 @@ export default function FtoImageGenerator({
     }
     setStatus(t('正在生成…', 'Generating…'));
     try {
-      const width = Math.max(240, Math.round(previewRef.current?.clientWidth || 400)) * 2;
-      const height = Math.round(width * 301.94 / 279.92);
-      const blob = await svgToRasterBlob(svg, { width, height, format: 'png', background: null });
+      const blob = await pngBlob();
       saveBlob(blob, pngFilename(algorithm));
       setStatus(t('已下载 PNG', 'PNG downloaded'));
     } catch {
@@ -96,33 +102,15 @@ export default function FtoImageGenerator({
   };
 
   return (
-    <main className="fto-image-generator">
-      <div className="fto-image-heading">
-        <h2>{t('FTO 图片生成器', 'FTO Image Generator')}</h2>
-        <p>{t('输入任意 EIF 记号的 FTO 公式，预览并下载透明背景 PNG。', 'Preview and download a transparent PNG for any FTO algorithm in EIF notation.')}</p>
-      </div>
-
-      <div className="fto-image-layout">
-        <section className="fto-image-main" aria-label={t('图片预览与公式', 'Image preview and algorithm')}>
-          <div
-            ref={previewRef}
-            className="fto-image-preview puzzle-art"
-            dangerouslySetInnerHTML={{ __html: svg }}
-          />
-
+    <main className="sim-body fto-image-generator">
+      <section className="sim-stage fto-image-stage" aria-label={t('图片预览', 'Image preview')}>
+        <div ref={previewRef} className="fto-image-preview puzzle-art" dangerouslySetInnerHTML={{ __html: svg }} />
+      </section>
+      <aside className="sim-side fto-image-side" data-site-surface="panel">
+        <section className="fto-image-settings vc-studio">
+          <h2 className="fto-image-title">{t('图片与导出', 'Image & export')}</h2>
           <label className="fto-image-alg-label" htmlFor="fto-image-alg">
             <span>{t('公式', 'Algorithm')}</span>
-            <details className="fto-image-notation">
-              <summary><ChevronRight size={14} aria-hidden />{t('记号', 'Notation')}</summary>
-              <div className="fto-image-notation-content">
-                <p><strong>{t('基础转动', 'Simple')}</strong> F R L U D Bl Br B</p>
-                <p><strong>{t('双层转动', 'Wide')}</strong> Fw Rw Lw Uw Dw Blw Brw Bw</p>
-                <p><strong>{t('中层转动', 'Middle')}</strong> Fs Rs Ls Us</p>
-                <p><strong>{t('转体', 'Rotation')}</strong> Fo Ro Lo Uo Rt Lt Ft</p>
-                <p><strong>{t('组合公式', 'Macros')}</strong> S H</p>
-                <p>{t("在转动后加 ' 表示逆时针。", "Add ' after a move for counter-clockwise turns.")}</p>
-              </div>
-            </details>
           </label>
           <div className="fto-image-alg-input-wrap">
             <input
@@ -130,10 +118,7 @@ export default function FtoImageGenerator({
               value={algorithm}
               onChange={(event) => onAlgorithmChange(event.target.value)}
               onKeyDown={(event) => {
-                if (event.key === 'Enter') {
-                  event.preventDefault();
-                  void download();
-                }
+                if (event.key === 'Enter') { event.preventDefault(); void download(); }
               }}
               placeholder={t('在这里输入公式…', 'Type your algorithm here…')}
               spellCheck={false}
@@ -153,23 +138,13 @@ export default function FtoImageGenerator({
               onChange={onInverseChange}
               label={t('逆公式', 'Inverse')}
             />
-            <button
-              type="button"
-              className="fto-image-download"
-              onClick={() => void download()}
-              disabled={parsed.invalid.length > 0}
-            >
-              <Download size={16} />
-              {t('下载图片', 'Download image')}
-            </button>
-            <span className="fto-image-status" role="status">{status}</span>
           </div>
         </section>
 
-        <aside className="fto-image-colors" aria-label={t('配色', 'Colors')}>
+        <section className="fto-image-colors vc-studio" aria-label={t('配色', 'Colors')}>
           <div className="fto-image-colors-heading">
             <h3>{t('配色', 'Colors')}</h3>
-            <button type="button" onClick={resetColors}>
+            <button type="button" className="vc-btn" onClick={resetColors}>
               <RotateCcw size={14} />
               {t('重置', 'Reset')}
             </button>
@@ -211,8 +186,29 @@ export default function FtoImageGenerator({
               aria-label={t('十六进制颜色', 'Hex color')}
             />
           </label>
-        </aside>
-      </div>
+        </section>
+        <section className="fto-image-exports vc-studio">
+          <ImageExportMenu kind="copy" disabled={parsed.invalid.length > 0}
+            formats={[
+              { label: 'PNG', run: () => copyPngToClipboard(pngBlob()) },
+              { label: 'SVG', run: () => navigator.clipboard.writeText(svg) },
+            ]} />
+          <ImageExportMenu kind="download" disabled={parsed.invalid.length > 0}
+            formats={[{ label: 'PNG', run: download }]} />
+          <span className="fto-image-status" role="status">{status}</span>
+        </section>
+        <details className="fto-image-notation sim-settings-section">
+          <summary><ChevronRight className="sim-puzzle-caret" size={14} aria-hidden /><BookOpen size={16} aria-hidden />{t('记号', 'Notation')}</summary>
+          <div className="fto-image-notation-content">
+            <p><strong>{t('基础转动', 'Simple')}</strong> F R L U D Bl Br B</p>
+            <p><strong>{t('双层转动', 'Wide')}</strong> Fw Rw Lw Uw Dw Blw Brw Bw</p>
+            <p><strong>{t('中层转动', 'Middle')}</strong> Fs Rs Ls Us</p>
+            <p><strong>{t('转体', 'Rotation')}</strong> Fo Ro Lo Uo Rt Lt Ft</p>
+            <p><strong>{t('组合公式', 'Macros')}</strong> S H</p>
+            <p>{t("在转动后加 ' 表示逆时针。", "Add ' after a move for counter-clockwise turns.")}</p>
+          </div>
+        </details>
+      </aside>
     </main>
   );
 }

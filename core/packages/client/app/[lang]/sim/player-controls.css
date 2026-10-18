@@ -1491,7 +1491,8 @@
 /* Outer sections share a full-width heading; inner disclosures are inset and
    quieter, so the hierarchy remains legible without a second heavy title. */
 .sim-puzzle-head,
-.sim-settings-section > summary {
+.sim-settings-section > summary,
+.vc-api-doc.sim-api-section > summary {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1505,8 +1506,10 @@
   list-style: none;
   box-sizing: border-box;
 }
-.sim-settings-section > summary::-webkit-details-marker { display: none; }
-.sim-settings-section > summary:hover { background: color-mix(in srgb, var(--foreground) 5%, transparent); }
+.sim-settings-section > summary::-webkit-details-marker,
+.vc-api-doc.sim-api-section > summary::-webkit-details-marker { display: none; }
+.sim-settings-section > summary:hover,
+.vc-api-doc.sim-api-section > summary:hover { background: color-mix(in srgb, var(--foreground) 5%, transparent); }
 .sim-settings-section[open] > summary > .sim-puzzle-caret { transform: rotate(90deg); }
 .sim-settings-section { margin: 0 -12px -12px; border-top: 1px solid var(--border-default); }
 .sim-settings-section .sim-puzzle-body { padding: 8px 12px 12px; }
