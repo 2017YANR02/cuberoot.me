@@ -268,3 +268,20 @@
 @media (max-width: 560px) {
   .shell-topbar-left .solver-panel-head { height: 30px; padding: 0 3px; font-size: 12px; gap: 4px; }
 }
+
+/* Expanded view uses two coherent columns: stage search with its player,
+   and the independent step-by-step solution. Narrow screens retain reading order. */
+@media (min-width: 900px) {
+  .solver-sheet .solver-sheet-body { padding: 20px 28px; }
+  .solver-sheet-body > [data-no-timer] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 16px 32px;
+    max-width: 1040px;
+    margin-inline: auto;
+  }
+  .solver-sheet .solver-panel-scramble { grid-column: 1 / -1; margin: 0; }
+  .solver-sheet .stepsolve { margin-top: 0; }
+  .solver-sheet .stsv-player { width: min(100%, 340px); }
+}
