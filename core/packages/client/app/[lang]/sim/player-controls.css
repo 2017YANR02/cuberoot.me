@@ -1,6 +1,6 @@
 .sim-player {
   padding: 12px;
-  background: var(--card);
+  background: transparent;
   border-top: 1px solid var(--border-default);
   display: flex;
   flex-direction: column;
@@ -1515,9 +1515,10 @@
 .sim-puzzle-debug > summary { padding: 8px 0; font-size: 13px; font-weight: 500; color: var(--muted-foreground); }
 .sim-renderer-row { display: flex; align-items: center; gap: 12px; }
 .sim-renderer-row .sim-puzzle-section-title { font-size: 13px; }
-.sim-view-settings { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 16px; }
+.sim-view-settings { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); align-items: center; gap: 16px; }
 .sim-view-settings > .sim-puzzle-sliders { grid-template-columns: minmax(0, 1fr); gap: 8px; }
-.sim-view-settings > .sim-orbit { align-items: center; }
+.sim-view-settings > .sim-orbit { align-items: center; justify-content: center; }
+.sim-view-settings .sim-orbit-pad { width: clamp(112px, 12vw, 160px); height: clamp(112px, 12vw, 160px); }
 .sim-preset-row.sim-player-tools { gap: 6px; }
 .sim-preset-row > .sim-preset-name { flex: 1 1 140px; }
 .sim-preset-row .sim-preset-select { align-self: center; }
@@ -1537,6 +1538,17 @@
 @media (max-width: 480px) {
   .sim-view-settings { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
   .sim-view-settings > .sim-orbit { flex-direction: column; gap: 6px; }
+  .sim-view-settings .sim-orbit-pad { width: 112px; height: 112px; }
   .sim-view-settings .sim-orbit-fields { width: 100%; gap: 4px; }
   .sim-preset-row input { min-height: 44px; font-size: 16px; }
 }
+
+.sim-material-sliders { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 20px; }
+.sim-material-sliders > .sim-percent-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; margin: 0; }
+.sim-material-sliders .sim-color-row-label { grid-column: 1 / -1; }
+.sim-material-sliders input[type="range"] { width: 100%; min-width: 0; }
+.sim-material-sliders .sim-slider-valwrap { font-size: 13px; }
+.sim-color-settings { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; }
+.sim-color-settings > .sim-color-row,
+.sim-color-settings > .sim-picture-setting { margin: 0; }
+.sim-color-settings > .sim-toggle { min-height: 30px; }

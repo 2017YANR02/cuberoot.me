@@ -686,6 +686,10 @@
   font-size: 0.88rem;
 }
 .fto-image-notation summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  list-style: none;
   cursor: pointer;
   color: var(--primary);
 }
@@ -988,3 +992,6 @@
 .sim-page[data-workspace="capture"] .sim-canvas-wrap > canvas,
 .sim-page[data-workspace="capture"] .sim-canvas-wrap > .twisty-section,
 .sim-page[data-workspace="capture"] .sim-net { visibility: hidden; pointer-events: none; }
+
+.fto-image-notation summary::-webkit-details-marker { display: none; }
+.fto-image-notation[open] > summary > svg { transform: rotate(90deg); }

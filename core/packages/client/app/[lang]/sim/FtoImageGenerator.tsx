@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useRef, useState } from 'react';
-import { Download, RotateCcw } from 'lucide-react';
+import { ChevronRight, Download, RotateCcw } from 'lucide-react';
 import { HexColorPicker } from 'react-colorful';
 import BoolToggle from '@/components/BoolToggle';
 import { ClearButton } from '@/components/ClearButton';
@@ -113,7 +113,7 @@ export default function FtoImageGenerator({
           <label className="fto-image-alg-label" htmlFor="fto-image-alg">
             <span>{t('公式', 'Algorithm')}</span>
             <details className="fto-image-notation">
-              <summary>{t('记号', 'Notation')}</summary>
+              <summary><ChevronRight size={14} aria-hidden />{t('记号', 'Notation')}</summary>
               <div className="fto-image-notation-content">
                 <p><strong>{t('基础转动', 'Simple')}</strong> F R L U D Bl Br B</p>
                 <p><strong>{t('双层转动', 'Wide')}</strong> Fw Rw Lw Uw Dw Blw Brw Bw</p>
