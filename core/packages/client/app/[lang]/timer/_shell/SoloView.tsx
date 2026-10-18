@@ -256,6 +256,7 @@ import {
   TimerAttemptSplitStatus,
   TimerPrintController,
   TimerScrambleStrip,
+  ManualScrambleQueueEditor,
   TimerWcaScrambleProgress,
   TimerWcaScrambleSource,
   TimerScrambleSourceSelect,
@@ -715,6 +716,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
 
   // 手动输入队列:每行一条打乱(去空行);source==='manual' 时按游标顺序取用(走完循环回队首),
   // ←/→ 仍走 scrambleHist 历史。队列内容变了即重置打乱历史(经 genScramble 身份变化)+ 游标。
+  const [manualEditing, setManualEditing] = useState(false);
+  useEffect(() => setManualEditing(settings.scrambleSource === 'manual'), [settings.scrambleSource]);
   const manualQueue = useMemo(
     () => parseManualScrambleQueue(settings.manualScrambles),
     [settings.manualScrambles],
@@ -3237,6 +3240,13 @@ className: targetFeedbackClass,
 onMouseDown: onCenterMouseDown,
 onMouseUp: onCenterMouseUp,
 scrambleSlot: <TimerScrambleStrip
+              editor={settings.scrambleSource === 'manual' && manualEditing ? <ManualScrambleQueueEditor
+                inline disabled={timer.phase !== 'idle' && timer.phase !== 'stopped'}
+                ariaLabel={tr({ zh: '手动输入打乱', en: 'Manual scramble input' })}
+                placeholder={tr({ zh: '输入打乱，回车提交', en: 'Enter scramble, press Enter to apply' })}
+                value={settings.manualScrambles}
+                onChange={manualScrambles => { updateSettings({ manualScrambles }); setManualEditing(parseManualScrambleQueue(manualScrambles).length === 0); }}
+              /> : undefined}
               compact={settings.compactScramble}
               copiedLabel={tr({ zh: '已复制', en: 'Copied' })}
               correctionActive={scrambleGuidance.correctionActive}
@@ -3275,9 +3285,9 @@ scrambleSlot: <TimerScrambleStrip
                       } : undefined,
                     }
                 : undefined}
-              title={tr(TIMER_SCRAMBLE_CLICK_TITLE_COPY[scrambleClickEffect])}
-              timingEnabled={!layoutEditing && scrambleClickEffect === 'start'}
-              onActivate={layoutEditing ? undefined : scrambleClickEffect === 'next' ? sheetNextScramble
+              title={settings.scrambleSource === 'manual' ? tr({ zh: '编辑打乱，回车提交', en: 'Edit scramble, press Enter to apply' }) : tr(TIMER_SCRAMBLE_CLICK_TITLE_COPY[scrambleClickEffect])}
+              timingEnabled={!layoutEditing && settings.scrambleSource !== 'manual' && scrambleClickEffect === 'start'}
+              onActivate={layoutEditing ? undefined : settings.scrambleSource === 'manual' ? () => { if (canSwitchScramble()) setManualEditing(true); } : scrambleClickEffect === 'next' ? sheetNextScramble
                 : scrambleClickEffect === 'copy' ? () => {
                   if (!canSwitchScramble()) return;
                   void browserTimerToolTransport.copy(displayScramble).then(() => {
