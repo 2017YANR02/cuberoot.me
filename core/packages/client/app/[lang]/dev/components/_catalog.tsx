@@ -1504,8 +1504,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'AlgImageDownloadButton',
     import: "import AlgImageDownloadButton from '@/components/AlgImageDownloadButton';",
     category: 'more',
-    zh: '公式库单张图片与批量 ZIP 下载。点击时快照当前筛选与显示设置，支持 PNG/SVG、背景、朝向、自选 case 和取消；共享现有 case 绘图与栅格化工具。',
-    en: 'Single case images and batch ZIP downloads with PNG/SVG, backgrounds, orientations, case selection and cancellation. Snapshots display settings on click and reuses the canonical case renderer.',
+    zh: '公式库单张图片与批量 ZIP 下载。传入 children 时通过右键、触摸长按或菜单键打开单张下载；批量保留按钮。打开时快照当前筛选与显示设置，支持 PNG/SVG、背景、朝向、自选 case 和取消；共享现有 case 绘图与栅格化工具。',
+    en: 'Single case images via right-click, touch hold or the context-menu key on children; batch ZIP downloads retain a button. Supports PNG/SVG, backgrounds, orientations, case selection and cancellation. Snapshots display settings on click and reuses the canonical case renderer.',
   },
   {
     name: 'AlgPdfButton',

@@ -1560,6 +1560,9 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                     : defaultCardName;
                   return (
                     <SortableCard key={c.id ?? c.name} id={c.id ?? 0} draggable={isAdmin && c.id != null}>
+                    <AlgImageDownloadButton build={() => caseImageBatch({
+                      ...buildExportOptions(), cases: [c], filename: `${puzzleParam}-${set}-${c.name}`,
+                    })}>
                     <article
                       className={`alg-case${flashId === c.id ? ' is-flash' : ''}${selectedId === c.id ? ' is-selected' : ''}${isAdmin && c.id != null && invalidIds.has(c.id) ? ' is-invalid' : ''}`}
                       id={c.id != null ? `case-${c.id}` : undefined}
@@ -1759,6 +1762,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                       />
                       </>)}
                     </article>
+                    </AlgImageDownloadButton>
                     </SortableCard>
                   );
                 })}

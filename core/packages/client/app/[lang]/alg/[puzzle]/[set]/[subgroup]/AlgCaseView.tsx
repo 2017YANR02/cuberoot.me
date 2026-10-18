@@ -508,10 +508,6 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
             />
           </label>
         )}
-        <AlgImageDownloadButton build={() => caseImageBatch({
-          puzzle, set, cases: [caseObj], title: primary, filename: `${puzzle}-${set}-${caseObj.name}`,
-          sq1BlackTop, viewAngle: effectiveViewAngle, orientation: effectiveOrientation,
-        })} />
         {/* 单张也能印:每个视角各一份(这页本来就把视角都列出来了) */}
         <AlgPdfButton
           build={() => algSheetFromCases({
@@ -610,15 +606,16 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, embe
               return (
                 <div key={oi} className="alg-case-detail-ori">
                   {multiOri && <div className="alg-case-detail-ori-label">
-                    <CaseThumb local puzzle={puzzle} set={set} sticker={caseObj.sticker}
-                      alg={oriAlgs[0]?.alg ?? caseObj.standard ?? ''} setup={orientedSetup}
-                      viewAngle={effectiveViewAngle} orientation={effectiveOrientation} sq1BlackTop={sq1BlackTop} />
-                    {shortOriName(oriNames![oi])}
-                    <AlgImageDownloadButton icon build={() => caseImageBatch({
+                    <AlgImageDownloadButton build={() => caseImageBatch({
                       puzzle, set, cases: [caseObj], title: primary,
                       filename: `${puzzle}-${set}-${caseObj.name}-ori-${oi + 1}`,
                       oriOf: () => oi, sq1BlackTop, viewAngle: effectiveViewAngle, orientation: effectiveOrientation,
-                    })} />
+                    })}>
+                    <CaseThumb local puzzle={puzzle} set={set} sticker={caseObj.sticker}
+                      alg={oriAlgs[0]?.alg ?? caseObj.standard ?? ''} setup={orientedSetup}
+                      viewAngle={effectiveViewAngle} orientation={effectiveOrientation} sq1BlackTop={sq1BlackTop} />
+                    </AlgImageDownloadButton>
+                    {shortOriName(oriNames![oi])}
                   </div>}
                   <div className="alg-case-detail-ori-main alg-player-list-layout">
                     {selectedEntry && (
