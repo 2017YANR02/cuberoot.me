@@ -469,6 +469,8 @@ export default function SimPage() {
   // Slot below the cube canvas that PlayerControls portals its playback bar into
   // (twizzle-style controls directly under the puzzle). state (not ref) so the
   // portal re-renders once the node mounts.
+  const [apiDocHost, setApiDocHost] = useState<HTMLDivElement | null>(null);
+  const [captureStickeringSlot, setCaptureStickeringSlot] = useState<HTMLDivElement | null>(null);
   const [playbackSlot, setPlaybackSlot] = useState<HTMLDivElement | null>(null);
   // Slot at the canvas' bottom-left corner that PlayerControls portals the 背景(BG)
   // selector into (overlays the big cube, like the top-right back-view window). state
@@ -2557,6 +2559,7 @@ export default function SimPage() {
             renderer={query.renderer}
             onRendererChange={handleRendererChange}
             playbackSlot={playbackSlot}
+            captureStickeringSlot={captureStickeringSlot}
             bgSlot={bgSlot}
             fullscreenButton={
               <button
@@ -2569,13 +2572,13 @@ export default function SimPage() {
                 {fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
               </button>
             }
-            imageButton={(
+            imageButton={!clockMode ? (
               <button type="button" className="playback-bar-btn" aria-pressed={imageOpen}
                 onClick={() => setImageOpen(!imageOpen)}
                 title={t('伴图', 'Companion image')} aria-label={t('伴图', 'Companion image')}>
                 <ImagePlus size={14} />
               </button>
-            )}
+            ) : null}
             backViewButton={!flatMode ? (
               <PlaybackBackViewButton visible={settings.backView} toggle
                 onClick={() => setSettings(prev => ({ ...prev, backView: !prev.backView }))}
@@ -2601,14 +2604,17 @@ export default function SimPage() {
             customRest={query.stickeringRest}
             onCustomRestChange={(v) => recordCustomMask({ ...maskHistory.current.history.current, rest: v })}
           />
+          <div className="sim-api-slot" ref={setApiDocHost} hidden={!captureMode} />
           {/* One studio owns the preview in both modes; only creation exposes its controls. */}
           <section className="sim-capture-controls" hidden={!captureMode}>
           <h2 className="sim-panel-title">{t('图片与导出', 'Image & export')}</h2>
+          <div className="sim-capture-stage-slot" ref={setCaptureStickeringSlot} />
           <PuzzleImageStudio
             spec={imgSpec}
             onSpecChange={setImgSpec}
             simBridge={simBridge}
             previewHost={imageHost}
+            apiDocHost={apiDocHost}
             engineSvg={engineSvg}
             engineSvgUnavailable={engineSvgUnavailable}
             // Do not flash the spec renderer while the first engine frame is

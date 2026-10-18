@@ -1,18 +1,78 @@
+/* Reuse the animation workspace's stage/sidebar and responsive split. */
 .sim-draw-workspace {
-  flex: 1;
-  min-height: 0;
-  overflow: auto;
-  padding: 12px;
-  background: var(--background);
   color: var(--foreground);
+  font-size: 13px;
 }
 
 .sim-draw-panel[hidden] { display: none; }
+.sim-draw-side > .sim-draw-panel { border-top: 0; }
 
-.sim-draw-exports {
-  margin-top: 12px;
+.sim-draw-panel > div > .native-select { margin: 8px 12px 0; }
+
+.sim-draw-side .draw-canvas {
+  display: block;
+  padding: 8px 12px 12px;
 }
 
-@media (max-width: 479px) {
-  .sim-draw-workspace { padding: 8px; }
+.sim-draw-side .draw-canvas-tools {
+  align-items: stretch;
+  gap: 0;
+}
+
+.sim-draw-side .draw-canvas-tool-section {
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 0;
+}
+
+.sim-draw-side .draw-canvas-tool-label {
+  flex: 0 0 100px;
+}
+
+.sim-draw-side .draw-canvas-swatches,
+.sim-draw-side .draw-canvas-range-row,
+.sim-draw-side .draw-canvas-custom-row {
+  flex: 1;
+  min-width: 0;
+}
+
+.sim-draw-side .draw-canvas-button { align-self: flex-start; }
+.sim-draw-side .draw-canvas-custom-row .draw-canvas-button { align-self: center; }
+.sim-draw-exports { padding: 0 12px 12px; }
+
+.sim-draw-stage {
+  justify-content: center;
+  padding: 16px;
+  overflow: hidden;
+}
+
+.sim-draw-stage .draw-canvas-main {
+  min-height: 0;
+  width: 100%;
+  gap: 8px;
+}
+
+.sim-draw-stage .draw-canvas-preview {
+  min-height: 0;
+  background: none;
+  border-radius: 0;
+}
+
+.sim-draw-stage .puzzle-draw-svg {
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.sim-draw-side .draw-canvas-controls {
+  justify-content: flex-start;
+  padding: 10px 0;
+}
+
+@media (max-width: 767px) {
+  .sim-draw-stage { padding: 12px; }
+}
+
+@media (max-width: 767px) and (max-height: 600px) {
+  .sim-draw-stage .draw-canvas-preview { max-height: 240px; }
 }

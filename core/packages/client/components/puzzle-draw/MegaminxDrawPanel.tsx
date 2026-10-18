@@ -59,6 +59,7 @@ export function MegaminxDrawPanel({ onDocumentChange }: MegaminxDrawPanelProps) 
       {/* Keep both canvases mounted so changing layouts never discards either paint document. */}
       <div hidden={view !== 'top'}>
         <DrawCanvas
+          previewActive={view === 'top'}
           elements={MEGAMINX_TOP_ELEMENTS}
           viewBox="0 0 10000 10000"
           width={400}
@@ -73,6 +74,7 @@ export function MegaminxDrawPanel({ onDocumentChange }: MegaminxDrawPanelProps) 
 
       <div hidden={view !== 'expanded'}>
         <DrawCanvas
+          previewActive={view === 'expanded'}
           elements={MEGAMINX_EXPANDED_ELEMENTS}
           viewBox="0 0 565.4 566.6"
           width={400}
