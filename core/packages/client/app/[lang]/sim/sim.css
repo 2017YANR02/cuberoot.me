@@ -109,16 +109,22 @@
 /* SimPage 用 CollapsibleSection 把 AlgsPanel / PuzzleImageStudio 折进侧栏。
    子面板自身已有 border-top,wrapper 不再重复加。 */
 .sim-section-body {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: 0fr;
+  visibility: hidden;
+  transition: grid-template-rows 220ms ease, visibility 0s linear 220ms;
 }
-.sim-section-body[hidden] { display: none; }
-.sim-section-body > .sim-algs {
+.sim-section-body[data-open="true"] { grid-template-rows: 1fr; visibility: visible; transition-delay: 0s; }
+.sim-section-content { min-height: 0; overflow: hidden; }
+@media (prefers-reduced-motion: reduce) {
+  .sim-section-body, .sim-puzzle-caret { transition: none; }
+}
+.sim-section-content > .sim-algs {
   max-height: none;  /* 折叠面板里不再用 40vh 顶死,让父级 .sim-side 滚动 */
 }
 /* 图像面板:studio 自带内边距,只需给一点四周留白与其它面板一致。已脱离折叠区
    (标题栏去掉后直接挂 .sim-side),两种挂法都覆盖。 */
-.sim-section-body > .vc-studio,
+.sim-section-content > .vc-studio,
 .sim-side > .vc-studio {
   padding: 8px 12px 12px;
 }
@@ -229,7 +235,10 @@
   right: 12px;
 }
 /* 背景选择器 portal 到画布左下角,仅保留当前背景色块的一层边框。 */
-.sim-bg-overlay {
+.sim-canvas-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   position: absolute;
   bottom: 8px;
   left: 8px;
@@ -844,7 +853,7 @@
 .sim-capture-controls .vc-row > .vc-label { flex: 0 0 100px; }
 .sim-capture-controls .vc-studio .vc-row.vc-row-block { align-items: flex-start; }
 .sim-capture-controls .vc-row-controls { max-width: 100%; }
-.sim-capture-stage-slot { padding: 4px 12px 8px; flex-shrink: 0; }
+.sim-capture-stage-slot { flex-shrink: 0; }
 .sim-capture-stage-slot[hidden] { display: none; }
 .sim-capture-stage-slot:empty { display: none; }
 .sim-capture-stickering {
@@ -904,3 +913,23 @@
 }
 .sim-api-slot .vc-api-table { width: calc(100% - 24px); }
 .sim-capture-controls .vc-capture-group { margin-bottom: 0; padding-bottom: 0; border-bottom: 0; }
+
+/* Fill the export panel in compact rows without changing other studio hosts. */
+.sim-capture-controls { container-type: inline-size; }
+.sim-capture-controls > .vc-studio { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
+.sim-capture-controls > .vc-studio > .vc-row { margin: 0; }
+.sim-capture-controls > .vc-studio > .vc-exports { margin: 0; }
+.sim-capture-controls > .vc-studio > .vc-controls { flex: 1 0 100%; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px 18px; }
+.sim-capture-controls .vc-controls > .vc-row { margin: 0; }
+.sim-capture-controls .vc-controls > details { margin: 0; }
+@container (min-width: 600px) {
+  .sim-capture-controls > .vc-studio > .vc-controls { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .sim-capture-controls .vc-controls > details[open],
+  .sim-capture-controls .vc-controls > .vc-row-block { grid-column: 1 / -1; }
+  .sim-capture-controls .vc-row > .vc-label { flex-basis: auto; }
+}
+
+.sim-section-body[data-open="true"][data-settled="true"] > .sim-section-content { overflow: visible; }
+@media (prefers-reduced-motion: reduce) {
+  .sim-section-body[data-open="true"] > .sim-section-content { overflow: visible; }
+}

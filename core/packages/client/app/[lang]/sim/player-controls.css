@@ -1482,7 +1482,7 @@
 .sim-puzzle-debug > summary { font-size: 13px; font-weight: 500; }
 .sim-puzzle-toggles > .sim-toggle { min-height: 36px; }
 @media (max-width: 480px) {
-  .sim-puzzle-toggles { grid-template-columns: minmax(0, 1fr); }
+  .sim-puzzle-toggles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 .sim-puzzle-toggles .sim-toggle > .bool-toggle { width: 100%; justify-content: space-between; }
@@ -1512,7 +1512,7 @@
 .sim-settings-section[open] > summary > .sim-puzzle-caret { transform: rotate(90deg); }
 .sim-settings-section { margin: 0 -12px -12px; border-top: 1px solid var(--border-default); }
 .sim-settings-section .sim-puzzle-body { padding: 8px 12px 12px; }
-.sim-settings-section > .sim-appearance-presets { margin: 0 12px 12px; }
+.sim-settings-section .sim-section-content > .sim-appearance-presets { margin: 0 12px 12px; }
 .sim-appearance-presets > summary,
 .sim-puzzle-debug > summary { padding: 8px 0; font-size: 13px; font-weight: 500; color: var(--muted-foreground); }
 .sim-renderer-row { display: flex; align-items: center; gap: 12px; }
