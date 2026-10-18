@@ -46,6 +46,22 @@ describe('shared manual scramble editor', () => {
     vi.restoreAllMocks();
   });
 
+  it('keeps inline edits pending until Enter and ignores Shift+Enter and IME confirmation', () => {
+    const onChange = vi.fn();
+    act(() => root.render(createElement(ManualScrambleQueueEditor, { inline: true, ariaLabel: 'Manual', value: 'R', onChange })));
+    const textarea = host.querySelector('textarea')!;
+    act(() => {
+      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(textarea, 'R U');
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    expect(onChange).not.toHaveBeenCalled();
+    act(() => textarea.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'Enter', shiftKey: true })));
+    act(() => textarea.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'Enter', isComposing: true })));
+    expect(onChange).not.toHaveBeenCalled();
+    act(() => textarea.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'Enter' })));
+    expect(onChange).toHaveBeenCalledExactlyOnceWith('R U');
+  });
+
   it('uses the website textarea contract and persists every edit immediately', () => {
     const onChange = vi.fn<(value: string) => void>();
     act(() => {

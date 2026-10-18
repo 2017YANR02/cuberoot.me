@@ -49,6 +49,7 @@ export type TimerScrambleStatusProps = TimerScrambleStatusBaseProps & (
 
 export interface TimerScrambleStripProps {
   children?: ReactNode;
+  editor?: ReactNode;
   className?: string;
   compact?: boolean;
   copied?: boolean;
@@ -111,6 +112,7 @@ export function TimerScrambleHintText({ hint, tailExtra }: TimerScrambleHintText
  */
 export function TimerScrambleStrip({
   children,
+  editor,
   className,
   compact = false,
   copied = false,
@@ -145,7 +147,7 @@ export function TimerScrambleStrip({
     '--scramble-length-scale': lengthScale,
   } as CSSProperties;
 
-  const stripActivate = status?.onRetry || status?.delayedAction ? undefined : onActivate;
+  const stripActivate = editor || status?.onRetry || status?.delayedAction ? undefined : onActivate;
   const activateFromKeyboard = (event: KeyboardEvent<HTMLSpanElement>) => {
     if (event.target !== event.currentTarget
       || !stripActivate
@@ -161,7 +163,7 @@ export function TimerScrambleStrip({
       className={`scramble-strip sf-${font}${compact ? ' compact' : ''}${className ? ` ${className}` : ''}`}
       data-scramble-match={match === null ? undefined : match ? 'ok' : 'off'}
       data-interactive={stripActivate ? 'true' : undefined}
-      data-no-timer={!timingEnabled || stripActivate || status ? true : undefined}
+      data-no-timer={!!editor || !timingEnabled || stripActivate || status ? true : undefined}
       style={style}
       title={title}
     >
@@ -175,7 +177,7 @@ export function TimerScrambleStrip({
         role={stripActivate ? 'button' : undefined}
         tabIndex={stripActivate ? 0 : undefined}
       >
-        {scramble
+        {editor ?? (scramble
           ? <>
               <span className="scramble-moves">
                 {liveHint
@@ -192,7 +194,7 @@ export function TimerScrambleStrip({
             ? <TimerScrambleStatus {...status} />
           : fallbackKind === 'empty'
             ? <span className="scramble-empty">{fallback}</span>
-            : fallback}
+            : fallback)}
       </span>
 
       {liveHint && correctionActive && copied && (
