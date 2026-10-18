@@ -560,36 +560,31 @@ export default function PuzzleImageStudio({
       )}
 
       {!externalImage && <section className="vc-controls">
+        <div className="vc-view-size-row">
         {!engineOnly && (
         <div className="vc-row">
           <label className="vc-label">{t('视图', 'View')}</label>
           <div className="vc-row-controls">
-            {isCube ? (
-              (['normal', 'plan', 'trans', 'wca'] as SpecialView[]).map((v) => (
-                <button
-                  key={v}
-                  type="button"
-                  className={`vc-btn vc-btn-sm${activeCubeView === v ? ' vc-btn-active' : ''}`}
-                  onClick={() => set('cubeView', v)}
-                >
-                  {v}
-                </button>
-              ))
-            ) : (
-              variantsFor(s.puzzleType).map((pv) => (
-                <button
-                  key={pv}
-                  type="button"
-                  className={`vc-btn vc-btn-sm${s.puzzleVariant === pv ? ' vc-btn-active' : ''}`}
-                  onClick={() => onSpecChange(snapRotationOnVariantBoundary(s, { puzzleVariant: pv }))}
-                >
-                  {pv === 'iso' ? tr({ zh: '立体', en: 'iso' })
-                    : pv === 'top' ? tr({ zh: '顶视', en: 'top' })
-                    : pv === 'wca' ? 'wca'
+            <select
+              className="vc-select"
+              aria-label={t('视图', 'View')}
+              value={isCube ? activeCubeView : s.puzzleVariant}
+              onChange={(event) => {
+                if (isCube) set('cubeView', event.target.value as SpecialView);
+                else onSpecChange(snapRotationOnVariantBoundary(s, { puzzleVariant: event.target.value as PuzzleVariant }));
+              }}
+            >
+              {isCube ? (['normal', 'plan', 'trans', 'wca'] as SpecialView[]).map((view) => (
+                <option key={view} value={view}>{view}</option>
+              )) : variantsFor(s.puzzleType).map((variant) => (
+                <option key={variant} value={variant}>
+                  {variant === 'iso' ? tr({ zh: '立体', en: 'iso' })
+                    : variant === 'top' ? tr({ zh: '顶视', en: 'top' })
+                    : variant === 'wca' ? 'wca'
                     : tr({ zh: '展开', en: 'net' })}
-                </button>
-              ))
-            )}
+                </option>
+              ))}
+            </select>
             {/* 俯视图独有:侧面一圈灰格是「不关心」的占位,删掉只留彩条 = OLL 识别图。
                 顶面 9 格不受影响(侧环由渲染器的独立 pass 画)。 */}
             {isCube && activeCubeView === 'plan' && (
@@ -616,6 +611,23 @@ export default function PuzzleImageStudio({
           </div>
         </div>
         )}
+        <div className="vc-row">
+          <label className="vc-label">
+            {t('图片尺寸 (px)', 'Image Size (px)')}
+          </label>
+          {/* 只留自由输入。以前预设下拉 + 数字框并排,两个控件绑同一个 imageSize,
+              永远显示同一个数,改一个另一个跟着变 —— 看着像坏了。预设本来就是为了
+              「下拉里选不到当前值」补的,值既然能直接读能直接改,预设就多余了。 */}
+          <input
+            type="number" className="vc-num" value={s.imageSize} min={1} max={1000}
+            aria-label={t('图片尺寸 (px)', 'Image Size (px)')}
+            onChange={(e) => {
+              const n = parseInt(e.target.value, 10);
+              if (!isNaN(n)) set('imageSize', Math.max(1, Math.min(1000, n)));
+            }}
+          />
+        </div>
+        </div>
 
         {/* 识别简化:只留「认图真正要看的」那几格。规则是阈值 —— 选中档位以下的图案全留,
             以上的抹掉;真要全抹光时会自动放宽一档,不会给出一张空图。侧面/顶面两条规则的
@@ -681,22 +693,7 @@ export default function PuzzleImageStudio({
           </div>
         )}
 
-        <div className="vc-row">
-          <label className="vc-label">
-            {t('图片尺寸 (px)', 'Image Size (px)')}
-          </label>
-          {/* 只留自由输入。以前预设下拉 + 数字框并排,两个控件绑同一个 imageSize,
-              永远显示同一个数,改一个另一个跟着变 —— 看着像坏了。预设本来就是为了
-              「下拉里选不到当前值」补的,值既然能直接读能直接改,预设就多余了。 */}
-          <input
-            type="number" className="vc-num" value={s.imageSize} min={1} max={1000}
-            aria-label={t('图片尺寸 (px)', 'Image Size (px)')}
-            onChange={(e) => {
-              const n = parseInt(e.target.value, 10);
-              if (!isNaN(n)) set('imageSize', Math.max(1, Math.min(1000, n)));
-            }}
-          />
-        </div>
+
 
         {!engineOnly && (<>
         {isCube && projected && (
