@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { ChevronRight } from 'lucide-react';
 import { tr } from '@/i18n/tr';
 import { useTrainingStats } from '@/hooks/useTrainingStats';
 import './training-stats.css';
@@ -25,7 +26,7 @@ export default function TrainingStatsPanel({ group, description }: { group: stri
         <div><dt>{tr({ zh: '最快用时', en: 'Best time' })}</dt><dd>{stats.bestMs === null ? '—' : seconds(stats.bestMs)}</dd></div>
       </dl>
       {stats.recent.length > 0 && <details>
-        <summary>{tr({ zh: '最近记录', en: 'Recent attempts' })}</summary>
+        <summary><ChevronRight className="training-stats-caret" size={14} aria-hidden />{tr({ zh: '最近记录', en: 'Recent attempts' })}</summary>
         <ol className="training-stats-history">{[...stats.recent].reverse().map(attempt => (
           <li key={attempt.id}>
             <time dateTime={new Date(attempt.at).toISOString()}>{new Date(attempt.at).toLocaleString()}</time>
