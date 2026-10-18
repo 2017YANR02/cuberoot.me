@@ -65,20 +65,19 @@ export function AlgCaseRelationCards({
     <div className="alg-meta-related-grid alg-meta-top-grid">
       {items.map(item => {
         const className = `alg-meta-related-card${item.current ? ' is-self is-current' : ''}${item.caseObj ? '' : ' is-plain'}`;
-        const download = item.caseObj && <AlgImageDownloadButton icon build={() => {
+        const card = item.current || (!item.href && !item.onSelect)
+          ? <div className={className}>{content(item)}</div>
+          : item.href
+            ? <Link href={item.href} className={className} prefetch={false} title={item.title}>{content(item)}</Link>
+            : <button type="button" className={className} onClick={item.onSelect} title={item.title}>{content(item)}</button>;
+        return <div key={item.key} className="alg-related-download-card">{item.caseObj ? <AlgImageDownloadButton build={() => {
           const image = { name: `${puzzle}-${set}-${item.caseObj!.name}`, input: {
             puzzle, set, sticker: item.caseObj!.sticker,
             alg: item.alg || item.caseObj!.algs[0]?.[0]?.alg || item.caseObj!.setup || '',
             setup: item.caseObj!.setup, sq1BlackTop, viewAngle, orientation,
           } };
           return { filename: image.name, groups: [{ id: item.key, label: item.name, current: [image], all: [image] }] };
-        }} />;
-        const card = item.current || (!item.href && !item.onSelect)
-          ? <div className={className}>{content(item)}</div>
-          : item.href
-            ? <Link href={item.href} className={className} prefetch={false} title={item.title}>{content(item)}</Link>
-            : <button type="button" className={className} onClick={item.onSelect} title={item.title}>{content(item)}</button>;
-        return <div key={item.key} className="alg-related-download-card">{card}{download}</div>;
+        }}>{card}</AlgImageDownloadButton> : card}</div>;
       })}
     </div>
   );

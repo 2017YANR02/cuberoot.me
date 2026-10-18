@@ -10,3 +10,6 @@
 .alg-image-download-cases { display: flex; flex-direction: column; gap: 8px; max-height: 240px; overflow: auto; }
 .alg-image-download-cases > .bool-toggle { width: 100%; justify-content: space-between; }
 .alg-related-download-card { display: flex; flex-direction: column; align-items: center; }
+
+.alg-image-download-target { min-width: 0; -webkit-touch-callout: none; }
+.alg-image-download-target:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }

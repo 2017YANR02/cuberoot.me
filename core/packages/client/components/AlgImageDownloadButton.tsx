@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Download } from 'lucide-react';
 import { TimerRoomDialog } from '@cuberoot/timer-ui';
 import BoolToggle from '@/components/BoolToggle';
@@ -10,19 +10,42 @@ import type { CaseImageBatch } from '@/lib/alg-case-images';
 import './alg-image-download.css';
 
 /** Snapshot the current display settings at click time; render images only on download. */
-export default function AlgImageDownloadButton({ build, icon = false, batch = false }: {
+export default function AlgImageDownloadButton({ build, icon = false, batch = false, children }: {
   build: () => CaseImageBatch;
   icon?: boolean;
   batch?: boolean;
+  /** Right-click / touch hold on a case opens the same export options. */
+  children?: ReactNode;
 }) {
   const [snapshot, setSnapshot] = useState<CaseImageBatch | null>(null);
+  const hold = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const origin = useRef({ x: 0, y: 0 });
+  const suppressClick = useRef(false);
+  const cancelHold = () => { if (hold.current !== null) clearTimeout(hold.current); hold.current = null; };
+  useEffect(() => cancelHold, []);
   const label = tr({ zh: '下载图片', en: 'Download images' });
   return <>
-    <Tooltip content={label}>{tip => <button {...tip} type="button"
+    {children ? <div className="alg-image-download-target" role="group" tabIndex={0} aria-label={label}
+      onContextMenu={event => { event.preventDefault(); event.stopPropagation(); cancelHold(); setSnapshot(build()); }}
+      onKeyDown={event => {
+        if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
+          event.preventDefault(); event.stopPropagation(); setSnapshot(build());
+        }
+      }}
+      onPointerDown={event => {
+        cancelHold(); suppressClick.current = false;
+        if (event.pointerType === 'mouse' || !event.isPrimary) return;
+        origin.current = { x: event.clientX, y: event.clientY };
+        hold.current = setTimeout(() => { suppressClick.current = true; setSnapshot(build()); }, 550);
+      }}
+      onPointerMove={event => { if (Math.hypot(event.clientX - origin.current.x, event.clientY - origin.current.y) > 10) cancelHold(); }}
+      onPointerUp={cancelHold} onPointerCancel={cancelHold} onPointerLeave={cancelHold}
+      onClickCapture={event => { if (suppressClick.current) { event.preventDefault(); event.stopPropagation(); suppressClick.current = false; } }}
+    >{children}</div> : <Tooltip content={label}>{tip => <button {...tip} type="button"
       className={icon ? 'alg-image-download-icon' : 'alg-pdf-btn'} aria-label={label}
       onClick={event => { event.preventDefault(); event.stopPropagation(); setSnapshot(build()); }}>
       {icon ? <Download size={15} aria-hidden="true" /> : label}
-    </button>}</Tooltip>
+    </button>}</Tooltip>}
     {snapshot && <ImageDownloadDialog snapshot={snapshot} batch={batch} onClose={() => setSnapshot(null)} />}
   </>;
 }
