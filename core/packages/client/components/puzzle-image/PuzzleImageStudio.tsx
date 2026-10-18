@@ -16,7 +16,7 @@ import '@cuberoot/timer-ui/compact-select.css';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Copy, Check, Download, ChevronDown, MousePointerClick, RotateCcw, Plus, Trash2 } from 'lucide-react';
+import { Copy, Check, Download, ChevronDown, ChevronRight, MousePointerClick, RotateCcw, Plus, Trash2 } from 'lucide-react';
 import SimCaptureGroup, { type SimBridge } from '@/components/puzzle-image/SimCaptureGroup';
 import BoolToggle from '@/components/BoolToggle';
 import PuzzleImage from '@/components/puzzle-image/PuzzleImage';
@@ -662,7 +662,7 @@ export default function PuzzleImageStudio({
         {!engineOnly && (<>
         {isCube && projected && (
           <details className="vc-control-section">
-            <summary>{t('箭头标注', 'Arrow annotations')}</summary>
+            <summary><ChevronRight className="vc-disclosure-caret" size={14} aria-hidden />{t('箭头标注', 'Arrow annotations')}</summary>
             <div className="vc-row-controls vc-col">
               <div className="vc-arrow-builder">
                 <span>{t('面', 'Face')}</span>
@@ -768,7 +768,7 @@ export default function PuzzleImageStudio({
 
         {maskable && (
           <details className="vc-control-section">
-            <summary>{t('贴纸遮罩', 'Sticker mask')}</summary>
+            <summary><ChevronRight className="vc-disclosure-caret" size={14} aria-hidden />{t('贴纸遮罩', 'Sticker mask')}</summary>
             <div className="vc-row-controls vc-col">
               <div className="vc-row-controls">
                 <input
@@ -848,7 +848,7 @@ export default function PuzzleImageStudio({
 
       {!engineOnly && staticFallbackExact && !externalImage && (
       <details className="vc-api-doc">
-        <summary>{t('API 用法（外部嵌入）', 'API usage (embed elsewhere)')}</summary>
+        <summary><ChevronRight className="vc-disclosure-caret" size={14} aria-hidden />{t('API 用法（外部嵌入）', 'API usage (embed elsewhere)')}</summary>
         <div className="vc-exports">
           <CopyButton label={t('API 链接', 'API URL')} getValue={() => apiSvgUrl} />
           <CopyButton
