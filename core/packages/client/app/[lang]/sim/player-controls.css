@@ -1548,7 +1548,22 @@
 .sim-material-sliders .sim-color-row-label { grid-column: 1 / -1; }
 .sim-material-sliders input[type="range"] { width: 100%; min-width: 0; }
 .sim-material-sliders .sim-slider-valwrap { font-size: 13px; }
-.sim-color-settings { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; }
+.sim-color-settings { --sim-color-control-height: 30px; display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 24px; }
 .sim-color-settings > .sim-color-row,
 .sim-color-settings > .sim-picture-setting { margin: 0; }
 .sim-color-settings > .sim-toggle { min-height: 30px; }
+
+/* Align the control row, not the combined height of face letters + controls.
+   Letters may extend above it; every actual control has the same centre line. */
+.sim-color-settings .sim-color-row-label { line-height: var(--sim-color-control-height); }
+.sim-color-settings .sim-color-select-trigger,
+.sim-color-settings .sim-face-color-reset,
+.sim-color-settings > .sim-toggle,
+.sim-color-settings select { min-height: var(--sim-color-control-height); }
+.sim-color-settings .sim-color-select-trigger,
+.sim-color-settings .sim-face-color-reset { height: var(--sim-color-control-height); }
+.sim-color-settings .sim-color-select-trigger { vertical-align: bottom; }
+.sim-color-settings .sim-swatch-list { align-items: flex-end; }
+@media (max-width: 767px) {
+  .sim-color-settings { --sim-color-control-height: 44px; }
+}
