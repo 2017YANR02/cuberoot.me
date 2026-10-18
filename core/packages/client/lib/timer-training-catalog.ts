@@ -1,6 +1,6 @@
 import { ALG_CATALOG, ALG_PUZZLES } from '@cuberoot/shared/alg';
 import { EVENT_DISPLAY_EN, EVENT_DISPLAY_ZH } from '@cuberoot/shared/wca-events';
-import { timerEventIdFromSelector, timerPuzzleSelection } from '@cuberoot/shared/timer';
+import { stageLabel, variantLabel, timerEventIdFromSelector, timerPuzzleSelection } from '@cuberoot/shared/timer';
 import { PUZZLE_EVENT, resolveAlgPuzzle } from '@/app/[lang]/alg/_trainer/events';
 import { RECOGNITION_TRAINING_SETS, VIRTUAL_ALG_SET_METADATA } from './training-set-metadata';
 import { timerTrainingHref } from './timer-training-location';
@@ -63,17 +63,22 @@ const SQ1_TOOLS = [
   ['karnaukh-notation', 'Karnaukh 记号', 'Karnaukh notation'],
 ] as const;
 
+const legacyStage = (variant: string, stage: string | null, isZh: boolean) => [
+  ...(variant === 'std' ? [] : [variantLabel(variant, isZh)]),
+  ...(stage ? [stageLabel(stage, isZh)] : []),
+].join(' ');
+
 const LEGACY_TOOLS = [
   ['alg-trainers', 'alg_trainers', '公式训练器', 'Alg Trainers'],
   ['algTrainer', 'algTrainer', '公式训练', 'Alg Trainer'],
-  ['cross_trainer', 'cross_trainer', '十字训练', 'Cross Trainer'],
-  ['xcross_trainer', 'xcross_trainer', '拓展十字训练', 'XCross Trainer'],
-  ['xxcross_trainer', 'xxcross_trainer', '双拓展十字训练', 'XXCross Trainer'],
-  ['pairing_trainer', 'pairing_trainer', '自由配对训练', 'Free Pair Trainer'],
-  ['xcross_pairing_trainer', 'xcross_pairing_trainer', '拓展十字自由配对', 'XCross Free Pair Trainer'],
-  ['pseudo_xcross_trainer', 'pseudo_xcross_trainer', '伪拓展十字训练', 'Pseudo XCross Trainer'],
-  ['pseudo_pairing_trainer', 'pseudo_pairing_trainer', '伪自由配对训练', 'Pseudo Free Pair Trainer'],
-  ['eocross_trainer', 'eocross_trainer', 'EO 十字训练', 'EOCross Trainer'],
+  ['cross_trainer', 'cross_trainer', legacyStage('std', 'cross', true), legacyStage('std', 'cross', false)],
+  ['xcross_trainer', 'xcross_trainer', legacyStage('std', 'xcross', true), legacyStage('std', 'xcross', false)],
+  ['xxcross_trainer', 'xxcross_trainer', legacyStage('std', 'xxcross', true), legacyStage('std', 'xxcross', false)],
+  ['pairing_trainer', 'pairing_trainer', legacyStage('pair', null, true), legacyStage('pair', null, false)],
+  ['xcross_pairing_trainer', 'xcross_pairing_trainer', legacyStage('pair', 'xcross', true), legacyStage('pair', 'xcross', false)],
+  ['pseudo_xcross_trainer', 'pseudo_xcross_trainer', legacyStage('pseudo', 'xcross', true), legacyStage('pseudo', 'xcross', false)],
+  ['pseudo_pairing_trainer', 'pseudo_pairing_trainer', legacyStage('pseudo_pair', null, true), legacyStage('pseudo_pair', null, false)],
+  ['eocross_trainer', 'eocross_trainer', legacyStage('eo', 'cross', true), legacyStage('eo', 'cross', false)],
 ] as const;
 
 const STATIC_ROUTES: readonly StaticTrainingRoute[] = [
