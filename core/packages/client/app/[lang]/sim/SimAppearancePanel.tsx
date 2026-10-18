@@ -1,5 +1,6 @@
 'use client';
 
+import { SlidersHorizontal } from 'lucide-react';
 import SimAppearancePresets from './SimAppearancePresets';
 import PictureCubeEditor, { PictureFaceMiniNet } from './PictureCubeEditor';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
@@ -406,8 +407,7 @@ export default function SimAppearancePanel({
 
   return (
     <details className="sim-settings-section">
-      <summary>{t('外观与操作', 'Appearance & interaction')}</summary>
-      <SimAppearancePresets settings={settings} onChange={onSettingsChange} />
+      <summary><SlidersHorizontal size={14} />{t('外观与操作', 'Appearance & interaction')}</summary>
       <section className="sim-puzzle">
       {/* 背景选择器浮层 —— portal 到画布左下角(SimPage 的 .sim-bg-overlay)。slot 未
           挂载(SimPage 恒提供)前不渲染。 */}
@@ -876,6 +876,7 @@ export default function SimAppearancePanel({
           </ColorRow>)}
         </div>
       </section>
+      <SimAppearancePresets settings={settings} onChange={onSettingsChange} />
     </details>
   );
 }

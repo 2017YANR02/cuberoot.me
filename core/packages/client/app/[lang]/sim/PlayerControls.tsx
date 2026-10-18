@@ -2780,8 +2780,7 @@ export default function PlayerControls({
         )}
       </div>
 
-      <details className="sim-formula-tools">
-      <summary>{t('公式操作', 'Algorithm tools')}</summary>
+      <section className="sim-alg-tools" aria-label={t('公式操作', 'Algorithm tools')}>
       <div className="sim-player-tools">
         <button disabled={corner?.endAnchor === false} onClick={tool(invertForPuzzle)} title={t('取逆', 'Invert')}>{t('逆', 'Invert')}</button>
         {/* 消步:实时消步开关(默认开)。开 = 手势 / 键盘转动追加时自动合并 / 抵消重复转动,
@@ -2832,9 +2831,6 @@ export default function PlayerControls({
           void replaceDrafts(lastEdit.setup, lastEdit.alg, lastEdit.step);
           setLastEdit(null);
         }}>{t('撤销公式操作', 'Undo algorithm edit')}</button>}
-      </div>
-      </details>
-      <div className="sim-player-tools">
         <button
           onClick={handleCopyLink}
           className={linkCopied ? 'sim-link-copied' : undefined}
@@ -2844,6 +2840,7 @@ export default function PlayerControls({
           {linkCopied ? t('已复制', 'Copied') : t('复制链接', 'Copy link')}
         </button>
       </div>
+      </section>
       </div>
 
       <SimAppearancePanel
