@@ -151,6 +151,6 @@ describe('mobile visible viewport layout', () => {
     expect(app).toContain('<TimerSettingsPanel');
     expect(css).not.toContain('.settings-view');
     expect(settingsCss).toContain('overflow-wrap: anywhere;');
-    expect(settingsCss).toMatch(/@media \(max-width: 720px\)[\s\S]*\.settings-category-nav \{ display: none; \}/);
+    expect(settingsCss).toMatch(/@media \(max-width: 720px\)[\s\S]*\.settings-category-rail \{ display: none; \}/);
   });
 });

@@ -70,10 +70,10 @@ describe('Mobile timer settings parity ledger', () => {
   });
 
   it('locks the canonical category gap counts so a new Web field fails here', () => {
-    expect(TIMER_SETTING_FIELD_IDS).toHaveLength(68);
+    expect(TIMER_SETTING_FIELD_IDS).toHaveLength(67);
     expect(TIMER_SETTING_CATEGORY_IDS.map((category) => (
       TIMER_SETTING_FIELD_CONTRACTS.filter((field) => field.category === category).length
-    ))).toEqual([8, 9, 4, 10, 11, 6, 15, 5]);
+    ))).toEqual([8, 8, 4, 10, 11, 6, 15, 5]);
 
     const parity = new Set<string>(MOBILE_TIMER_SETTING_PARITY_FIELD_IDS);
     expect(TIMER_SETTING_CATEGORY_IDS.map((category) => (
@@ -82,7 +82,7 @@ describe('Mobile timer settings parity ledger', () => {
         && field.visibility !== 'admin-only'
         && !parity.has(field.id)
       )).length
-    ))).toEqual([8, 8, 4, 10, 11, 6, 15, 5]);
+    ))).toEqual([8, 7, 4, 10, 11, 6, 15, 5]);
   });
 
   it('renders the shared settings UI and keeps its runtime effects wired', () => {
