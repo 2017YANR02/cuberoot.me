@@ -1820,6 +1820,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   liveAnchorRef.current = liveAnchor;
   useEffect(() => () => liveAnchor.setConnection(null), [liveAnchor]);
   const cubeConnected = supportsSmartCube && bluetoothCube.status.connected;
+  useEffect(() => {
+    if (cubeConnected) reconstructionAnalyzer.warmup();
+  }, [cubeConnected]);
   const trainingTimingActive = cubeConnected && !competition.enabled && timerSupportsTrainingTiming(event);
   useEffect(() => {
     // A new start preference or lost transport cancels an unstarted observation;

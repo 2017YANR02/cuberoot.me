@@ -1,9 +1,10 @@
 import { afterEach, expect, it, vi } from 'vitest';
 
-const services = vi.hoisted(() => ({ build: vi.fn(), correct: vi.fn() }));
+const services = vi.hoisted(() => ({ build: vi.fn(), correct: vi.fn(), warm: vi.fn(), load: vi.fn() }));
 vi.mock('@cuberoot/shared/timer/reconstruct/recon-text', () => ({ buildReconText: services.build }));
 vi.mock('@cuberoot/shared/timer/reconstruct/library-correction', () => ({ correctReconFromLibrary: services.correct }));
 vi.mock('@cuberoot/shared/timer/reconstruct/reference', () => ({}));
+vi.mock('../../timer-ui/src/reconstruct/library-cache', () => ({ reconstructionLibraries: { warm: services.warm, load: services.load } }));
 
 afterEach(() => { vi.unstubAllGlobals(); vi.resetAllMocks(); vi.resetModules(); });
 async function worker() {
@@ -46,4 +47,14 @@ it('does not rerun correction when reusing the completed text cache', async () =
   expect(services.build).not.toHaveBeenCalled();
   expect(services.correct).not.toHaveBeenCalled();
   expect(host.postMessage).toHaveBeenCalledWith({ id: 1, done: true });
+});
+
+
+it('warms library data without starting reconstruction or publishing an analysis result', async () => {
+  services.warm.mockResolvedValue(undefined);
+  const host = await worker();
+  await host.onmessage!({ data: { type: 'warmup' } });
+  expect(services.warm).toHaveBeenCalledTimes(1);
+  expect(services.build).not.toHaveBeenCalled();
+  expect(host.postMessage).not.toHaveBeenCalled();
 });

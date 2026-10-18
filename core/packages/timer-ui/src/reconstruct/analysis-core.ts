@@ -1,5 +1,5 @@
 import { emptyAnalysis } from './analysis-protocol';
-import type { AnalysisInput, AnalysisRequest, AnalysisResponse, AnalysisSnapshot } from './analysis-protocol';
+import type { AnalysisInput, AnalysisWorkerRequest, AnalysisResponse, AnalysisSnapshot } from './analysis-protocol';
 export type { AnalysisInput, AnalysisRequest, AnalysisResponse, AnalysisSnapshot } from './analysis-protocol';
 
 type Listener = (snapshot: AnalysisSnapshot) => void;
@@ -7,7 +7,7 @@ export interface AnalysisWorker {
   onmessage: ((event: MessageEvent<AnalysisResponse>) => void) | null;
   onerror: ((event: ErrorEvent) => void) | null;
   onmessageerror: ((event: MessageEvent) => void) | null;
-  postMessage(message: AnalysisRequest): void;
+  postMessage(message: AnalysisWorkerRequest): void;
   terminate(): void;
 }
 interface Job {
@@ -126,6 +126,20 @@ export function createReconstructionAnalyzer(createWorker: () => AnalysisWorker)
   }
 
   return {
+    warmup() {
+      try {
+        worker ??= createWorker();
+        if (!active) {
+          worker.onerror = () => { if (!active) terminate(); };
+          worker.onmessageerror = () => { if (!active) terminate(); };
+        }
+        worker.postMessage({ type: 'warmup' });
+        if (!active) {
+          clearTimeout(idleTimer);
+          idleTimer = setTimeout(terminate, 60_000);
+        }
+      } catch { /* Optional preloading cannot prevent timing or reconstruction. */ }
+    },
     exportCache: () => [...cache],
     importCache(entries: Array<[string, AnalysisSnapshot]>) {
       for (const [key, value] of entries.slice(-8)) {
