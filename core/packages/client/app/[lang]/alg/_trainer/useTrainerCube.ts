@@ -38,7 +38,7 @@ import type { CubeStep } from '@cuberoot/shared/timer/reconstruct/steps';
 import type { Quat } from '@cuberoot/shared/smart-cube/orientation';
 import { persistItem } from '@/lib/safe-storage';
 import { TimerState, useTrainerStore } from '@/lib/trainer-store';
-import { autoStopStep, caseTargetFacelets, puzzleHasSmartCube } from './smartcube';
+import { autoStopStep, caseTargetFacelets, puzzleHasSmartCube, trainerPhysicalScramble, trainerStepComplete, TRAINER_CUBE_ORIENTATION } from './smartcube';
 import { toFaceletString } from '@cuberoot/shared/timer/reconstruct/state';
 import { LiveSmartCubeAnchor, type LiveSmartCubeAnchorSnapshot } from '@cuberoot/shared/smart-cube/anchor';
 import { hintSmartCubeScramble, type SmartCubeScrambleHint } from '@cuberoot/shared/smart-cube/scramble-hint';
@@ -59,6 +59,8 @@ export interface TrainerCubeState {
   setPracticeMode(mode: TrainerCubePracticeMode): void;
   /** Verified move log for the physical cube; null until an anchor is ready. */
   physicalMoves: readonly string[] | null;
+  /** The virtual playback anchor uses the same device frame as raw BLE moves. */
+  physicalScramble: string;
   cube: BluetoothCubeHandle;
   /** True while the cube is presenting the current case and driving the clock. */
   armed: boolean;
@@ -179,8 +181,9 @@ export function useTrainerCube(opts: UseTrainerCubeOpts): TrainerCubeState {
     setPracticeLoaded(true);
   }, []);
 
-  const target = puzzleHasSmartCube(puzzle) ? caseTargetFacelets(currentScramble) : null;
-  const stopStep = autoStopStep(puzzle, sessionSet, currentCase, target);
+  const physicalScramble = currentScramble ? trainerPhysicalScramble(currentScramble) ?? '' : '';
+  const target = puzzleHasSmartCube(puzzle) ? caseTargetFacelets(physicalScramble) : null;
+  const stopStep = autoStopStep(puzzle, sessionSet, currentCase, caseTargetFacelets(currentScramble));
   /**
    * What completion is judged by. `stopStep` is null either because the set has
    * no statable finish or because this case starts where it would end; in both
@@ -256,6 +259,25 @@ export function useTrainerCube(opts: UseTrainerCubeOpts): TrainerCubeState {
   const submitMac = useCallback((mac: string) => answerMac(mac), [answerMac]);
   const cancelMac = useCallback(() => answerMac(null), [answerMac]);
 
+  const finishAttempt = () => {
+    if (!enabledRef.current || !armedRef.current) return;
+    if (practiceRef.current === 'manual') {
+      if (!manualRunningRef.current) return;
+      manualRunningRef.current = false;
+      setManualRunning(false);
+    }
+    // No following BLE turn may start another repetition before the next target is armed.
+    setAimed(false);
+    if (!timingRef.current) {
+      nextScramble();
+      return;
+    }
+    if (useTrainerStore.getState().timerState !== TimerState.RUNNING) return;
+    stopTimer(lastMoveEpochRef.current ?? undefined);
+    // The shared trainer store queues the next case after stopping.
+    setTimerState(TimerState.NOT_RUNNING);
+  };
+
   const cube = useBluetoothCube({
     solvedStep: judgeStep,
     onNeedMac,
@@ -288,37 +310,14 @@ export function useTrainerCube(opts: UseTrainerCubeOpts): TrainerCubeState {
         return;
       }
       setMoves((prev) => [...prev, move]);
-      if (!timingRef.current) return;
       const st = useTrainerStore.getState();
       // Any turn while the case is up starts the rep. STOPPING is where the
-      // store parks after a keyboard stop, so treat it as idle too — reaching
-      // for the cube is the same intent as pressing space.
-      if (st.timerState === TimerState.NOT_RUNNING || st.timerState === TimerState.STOPPING) {
+      // store parks after stopping; the newly armed cube can start the next rep.
+      if (timingRef.current && (st.timerState === TimerState.NOT_RUNNING || st.timerState === TimerState.STOPPING)) {
         startTimer(lastMoveEpochRef.current);
       }
-    },
-    onSolved: (ts) => {
-      if (!enabledRef.current || !armedRef.current) return;
-      if (practiceRef.current === 'manual') {
-        if (!manualRunningRef.current || ts === undefined) return;
-        manualRunningRef.current = false;
-        setManualRunning(false);
-        setAimed(false);
-      }
-      if (!timingRef.current) {
-        // Not timing: finishing a case just moves the drill on. Nothing is
-        // recorded, which is the whole point of having the clock off.
-        nextScramble();
-        return;
-      }
-      if (useTrainerStore.getState().timerState !== TimerState.RUNNING) return;
-      // The solved edge is decided from the state AFTER a move, so that move's
-      // own timestamp IS the moment the cube reached it.
-      stopTimer(lastMoveEpochRef.current ?? undefined);
-      // The store parks in STOPPING waiting for a key release that will never
-      // come, and both `getTimerReady` and a fresh draw refuse to run from there.
-      // `stopTimer` has already queued the next case.
-      setTimerState(TimerState.NOT_RUNNING);
+      // Judge only the diagram grip, never another cross face accepted by generic BLE detection.
+      if (trainerStepComplete(judgeStep, facelets)) finishAttempt();
     },
   });
 
@@ -392,8 +391,8 @@ export function useTrainerCube(opts: UseTrainerCubeOpts): TrainerCubeState {
    * so the whole loop — connect, case presented, first turn, finish, next case —
    * can be walked without hardware. No-op in production builds.
    */
-  const scrambleForFakeRef = useRef(currentScramble);
-  scrambleForFakeRef.current = currentScramble;
+  const scrambleForFakeRef = useRef(physicalScramble);
+  scrambleForFakeRef.current = physicalScramble;
   useEffect(() => { installFakeCube(() => scrambleForFakeRef.current ?? ''); }, []);
 
   // Give the cube back when the drill is left, so the next page — or a WCA solve
@@ -420,13 +419,13 @@ export function useTrainerCube(opts: UseTrainerCubeOpts): TrainerCubeState {
   const scrambleHint = useMemo(() => {
     if (!enabled || !connected || practiceMode !== 'manual' || cube.hijacked
       || !currentScramble || !cube.facelets || reason === 'running') return null;
-    return hintSmartCubeScramble(purifyScramble('3x3', currentScramble), cube.facelets);
+    return hintSmartCubeScramble(purifyScramble('3x3', currentScramble), cube.facelets, undefined, TRAINER_CUBE_ORIENTATION);
   }, [enabled, connected, practiceMode, cube.hijacked, currentScramble, cube.facelets, reason]);
 
   return {
     scrambleHint,
     practiceMode, setPracticeMode, physicalMoves: physical.algAnchored ? physical.moves : null,
-    cube, armed, moves, quatRef, view, setView,
+    cube, armed, moves, quatRef, view, setView, physicalScramble,
     stopStep, reason, connect, macPrompt, submitMac, cancelMac,
   };
 }

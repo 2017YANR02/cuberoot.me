@@ -2058,7 +2058,7 @@ export default function TrainerRunClient() {
                       </div>
                     )}
                     {showStageThumb && row.c && row.bottom && row.s ? <DoubleZbllThumb top={row.c} bottom={row.bottom} scramble={row.s} /> : showStageThumb && row.c && (
-                      <CaseThumb orientation=""
+                      <CaseThumb
                         puzzle={puzzle}
                         set={setSlug}
                         sticker={row.c.sticker}
@@ -2111,7 +2111,7 @@ export default function TrainerRunClient() {
             <>
               {showStageThumb && currentCase && currentBottomCase && currentScramble ? (
                 showLiveTrainerCube
-                  ? <TrainerLiveCube state={trainerCube} scramble={currentScramble}
+                  ? <TrainerLiveCube state={trainerCube}
                       idle={<DoubleZbllThumb top={currentCase} bottom={currentBottomCase} scramble={currentScramble} />} />
                   : <DoubleZbllThumb top={currentCase} bottom={currentBottomCase} scramble={currentScramble} />
               ) : showStageThumb && currentCase && (
@@ -2124,7 +2124,7 @@ export default function TrainerRunClient() {
                     <div className="trainer-stage-thumb">
                       {(() => {
                         const thumb = (
-                          <CaseThumb local orientation=""
+                          <CaseThumb local
                             puzzle={puzzle}
                             set={setSlug}
                             sticker={currentCase.sticker}
@@ -2134,7 +2134,7 @@ export default function TrainerRunClient() {
                           />
                         );
                         return showLiveTrainerCube
-                          ? <TrainerLiveCube state={trainerCube} scramble={currentScramble} idle={thumb} />
+                          ? <TrainerLiveCube state={trainerCube} idle={thumb} />
                           : thumb;
                       })()}
                     </div>
