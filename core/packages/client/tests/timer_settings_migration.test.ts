@@ -198,13 +198,10 @@ describe('智能魔方自动预备:老存档里的 off 要翻过来', () => {
     expect(saved.bluetoothAutoReadyMigrated).toBe(true);
   });
 
-  it('迁移后用户手动关闭,刷新后仍然保持关闭', async () => {
-    installStorage();
-    let settings = await freshSettings();
-    settings.updateSettings({ bluetoothAutoReady: 'off' });
-
-    settings = await freshSettings();
-    expect(settings.getSettings().bluetoothAutoReady).toBe('off');
+  it('已迁移存档中的关闭模式也升级为打乱正确', async () => {
+    installStorage({ [KEY]: JSON.stringify({ bluetoothAutoReady: 'off', bluetoothAutoReadyMigrated: true }) });
+    const settings = await freshSettings();
+    expect(settings.getSettings().bluetoothAutoReady).toBe('scrambled');
   });
 
   it('保留老用户选过的其他预备方式', async () => {

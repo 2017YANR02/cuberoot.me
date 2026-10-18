@@ -176,7 +176,7 @@ function normalizedBoolean(value: unknown, fallback: boolean): boolean {
   return typeof value === 'boolean' ? value : fallback;
 }
 
-export const TIMER_SMART_CUBE_AUTO_READY_MODES = ['scrambled', 'off', 'still', 'double-flick'] as const;
+export const TIMER_SMART_CUBE_AUTO_READY_MODES = ['scrambled', 'still', 'double-flick'] as const;
 export const TIMER_SMART_CUBE_LIVE_VIEWS = ['3d', 'twizzle', 'q2look', 'net', '2d'] as const;
 
 export interface TimerSmartCubeSettings {
@@ -278,13 +278,13 @@ export const TIMER_SETTING_FIELD_CONTRACTS = [
   { id: 'settings.timer.auto-event-for-session', category: 'timer', copy: { en: 'Match event when changing session', zh: '切换分组时匹配项目' }, storagePath: 'autoEventForSession', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-auto-event-for-session' },
 
   // Smart cube
-  { id: 'settings.smart-cube.fake-cube', category: 'smart-cube', copy: { en: 'Fake cube', zh: '假魔方' }, storagePath: 'showAdminFakeCube', value: bool, visibility: 'admin-only', disabledWhen: 'never', effect: 'persist-admin-fake-cube-controls' },
-  { id: 'settings.smart-cube.auto-ready', category: 'smart-cube', copy: { en: 'Smart-cube auto-ready', zh: '智能魔方自动预备' }, storagePath: 'bluetoothAutoReady', value: { kind: 'enum', values: TIMER_SMART_CUBE_AUTO_READY_MODES }, visibility: 'always', disabledWhen: 'never', effect: 'persist-smart-cube-auto-ready' },
+  { id: 'settings.smart-cube.fake-cube', category: 'smart-cube', copy: { en: 'Virtual cube', zh: '虚拟魔方' }, storagePath: 'showAdminFakeCube', value: bool, visibility: 'admin-only', disabledWhen: 'never', effect: 'persist-admin-fake-cube-controls' },
+  { id: 'settings.smart-cube.auto-ready', category: 'smart-cube', copy: { en: 'Enter ready state', zh: '准备状态进入' }, storagePath: 'bluetoothAutoReady', value: { kind: 'enum', values: TIMER_SMART_CUBE_AUTO_READY_MODES }, visibility: 'always', disabledWhen: 'never', effect: 'persist-smart-cube-auto-ready' },
   { id: 'settings.smart-cube.gyro', category: 'smart-cube', copy: { en: 'Gyroscope', zh: '陀螺仪' }, storagePath: 'gyroEnabled', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-live-cube-gyro' },
   { id: 'settings.smart-cube.auto-calibrate', category: 'smart-cube', copy: { en: 'Auto-reset orientation', zh: '朝向自动重置' }, storagePath: 'autoCalibrateGyro', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-auto-calibrate-gyro' },
   { id: 'settings.smart-cube.live-view', category: 'smart-cube', copy: { en: 'Live cube', zh: '实况魔方' }, storagePath: 'liveCubeView', value: { kind: 'enum', values: TIMER_SMART_CUBE_LIVE_VIEWS }, visibility: 'always', disabledWhen: 'never', effect: 'persist-live-cube-view' },
-  { id: 'settings.smart-cube.auto-recap', category: 'smart-cube', copy: { en: 'Open reconstruction after each solve', zh: '结束后自动打开复盘' }, storagePath: 'autoRecap', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-auto-recap' },
-  { id: 'settings.smart-cube.auto-solution', category: 'smart-cube', copy: { en: 'Open solution after each solve', zh: '结束后自动打开解法' }, storagePath: 'autoOpenSolution', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-auto-solution' },
+  { id: 'settings.smart-cube.auto-recap', category: 'smart-cube', copy: { en: 'Open reconstruction', zh: '自动打开复盘' }, storagePath: 'autoRecap', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-auto-recap' },
+  { id: 'settings.smart-cube.auto-solution', category: 'smart-cube', copy: { en: 'Open solution', zh: '自动打开解法' }, storagePath: 'autoOpenSolution', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-auto-solution' },
 
   { id: 'settings.scramble.training-pre-orientation', category: 'smart-cube', copy: { en: 'Training orientation', zh: '训练朝向' }, storagePath: 'preScrT', value: { kind: 'orientation' }, visibility: 'always', disabledWhen: 'never', effect: 'persist-training-pre-scramble-orientation' },
 

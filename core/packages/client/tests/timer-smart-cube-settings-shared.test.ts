@@ -17,6 +17,13 @@ describe('one smart-cube settings persistence contract', () => {
     for (const key of Object.keys(DEFAULT_TIMER_SMART_CUBE_SETTINGS)) delete (old.settings as unknown as Record<string, unknown>)[key];
     expect(decodeTimerStoreData(old)?.settings).toMatchObject(DEFAULT_TIMER_SMART_CUBE_SETTINGS);
   });
+  it('offers three modes and migrates retired off values in historical backups', () => {
+    expect(TIMER_SMART_CUBE_AUTO_READY_MODES).toEqual(['scrambled', 'still', 'double-flick']);
+    const data = createTimerStoreData(0, 'session');
+    Object.assign(data.settings, { bluetoothAutoReady: 'off' });
+    expect(parseTimerStoreJson(JSON.stringify(data))?.settings.bluetoothAutoReady).toBe('scrambled');
+    expect(normalizeTimerSmartCubeSettings({ bluetoothAutoReady: 'off' }).bluetoothAutoReady).toBe('scrambled');
+  });
   for (const bluetoothAutoReady of TIMER_SMART_CUBE_AUTO_READY_MODES) {
     for (const liveCubeView of TIMER_SMART_CUBE_LIVE_VIEWS) {
       for (const gyroEnabled of [false, true]) {
@@ -113,20 +120,34 @@ describe('shared smart-cube controls and auto-ready subscription', () => {
     await render(true); await act(async () => vi.advanceTimersByTime(3_000)); expect(onReady).not.toHaveBeenCalled();
     moves.emit('U'); await act(async () => vi.advanceTimersByTime(2_000)); expect(onReady).toHaveBeenCalledTimes(1);
   });
-  it('double flick accepts only the exact U inverse sequence, not other faces or half turns', async () => {
+  it.each(['U', 'R', 'F', 'D', 'L', 'B', 'M', 'E', 'S', 'Rw', 'u'].flatMap(face => [face, `${face}'`]))('accepts one inverse layer pair in either direction (%s)', async first => {
     const moves = stream(), onReady = vi.fn();
     await act(async () => root.render(createElement(Harness, { enabled: true, mode: 'double-flick', onReady, onMoveSubscriber: moves.subscribe })));
-    for (const move of ['R', "R'", 'R', "R'", 'U2', 'U2', 'U', "U'"]) moves.emit(move);
+    const inverse = first.endsWith("'") ? first.slice(0, -1) : `${first}'`;
+    moves.emit(first); expect(onReady).not.toHaveBeenCalled();
+    moves.emit(inverse); expect(onReady).toHaveBeenCalledTimes(1);
+    moves.emit(first); moves.emit(inverse); expect(onReady).toHaveBeenCalledTimes(1);
+  });
+  it('rejects different faces, repeated turns, half turns and rotations, then accepts a new pair', async () => {
+    const moves = stream(), onReady = vi.fn();
+    await act(async () => root.render(createElement(Harness, { enabled: true, mode: 'double-flick', onReady, onMoveSubscriber: moves.subscribe })));
+    for (const move of ['R', "U'", "U'", 'U2', 'U2', 'R', 'x', "R'", 'U R', "R' U'", 'invalid', 'F']) moves.emit(move);
     expect(onReady).not.toHaveBeenCalled();
-    moves.emit('U'); moves.emit("U'"); expect(onReady).toHaveBeenCalledTimes(1);
-    for (const move of ['U', "U'", 'U', "U'"]) moves.emit(move);
-    expect(onReady).toHaveBeenCalledTimes(1);
+    moves.emit("F'"); expect(onReady).toHaveBeenCalledTimes(1);
+  });
+  it('does not carry half a gesture across disabled or covered attempts', async () => {
+    const moves = stream(), onReady = vi.fn();
+    const render = (enabled: boolean) => act(async () => root.render(createElement(Harness, { enabled, mode: 'double-flick', onReady, onMoveSubscriber: moves.subscribe })));
+    await render(true); moves.emit('U');
+    await render(false); await render(true); moves.emit("U'");
+    expect(onReady).not.toHaveBeenCalled();
+    moves.emit('U'); expect(onReady).toHaveBeenCalledTimes(1);
   });
   it.each(['still', 'double-flick'] as const)('rearms for a second complete solve and ignores gestures while covered/running (%s)', async (mode) => {
     const moves = stream(), onReady = vi.fn();
     const render = (enabled: boolean) => act(async () => root.render(createElement(Harness, { enabled, mode, onReady, onMoveSubscriber: moves.subscribe })));
     const gesture = async () => {
-      for (const move of ['U', "U'", 'U', "U'"]) moves.emit(move);
+      for (const move of ['U', "U'"]) moves.emit(move);
       await act(async () => vi.advanceTimersByTime(2_000));
     };
     await render(false); // History/settings are covering the timer.

@@ -460,7 +460,8 @@ function decodeSettings(value: unknown): TimerStoreSettings | null {
       )))) return null;
   if (value.language !== 'en' && value.language !== 'zh') return null;
   if (value.theme !== 'system' && value.theme !== 'light' && value.theme !== 'dark') return null;
-  if (value.bluetoothAutoReady !== undefined
+  // Accept the retired mode in historical backups; normalization migrates it.
+  if (value.bluetoothAutoReady !== undefined && value.bluetoothAutoReady !== 'off'
     && !TIMER_SMART_CUBE_AUTO_READY_MODES.includes(value.bluetoothAutoReady as TimerSmartCubeSettings['bluetoothAutoReady'])) return null;
   if (value.liveCubeView !== undefined
     && !TIMER_SMART_CUBE_LIVE_VIEWS.includes(value.liveCubeView as TimerSmartCubeSettings['liveCubeView'])) return null;
