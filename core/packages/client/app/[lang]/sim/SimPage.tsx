@@ -964,10 +964,17 @@ export default function SimPage() {
       const swapped = imgSwapRef.current;
       const w = swapped ? backSizeRef.current : container.clientWidth;
       const h = swapped ? backSizeRef.current : container.clientHeight;
+      if (w <= 0 || h <= 0) return;
+      const size = renderer.getSize(new THREE.Vector2());
+      if (size.x === w && size.y === h && world.width === w && world.height === h) return;
       world.width = w;
       world.height = h;
       world.resize();
       renderer.setSize(w, h, true);
+      // setSize clears the drawing buffer. ResizeObserver can run after this
+      // frame's animation callback, so repaint before the browser presents it.
+      renderer.clear();
+      renderer.render(world.scene, world.camera);
       world.dirty = true;
     };
     resizeMainViewRef.current = resize;
@@ -1939,19 +1946,37 @@ export default function SimPage() {
   const srCompanionForced = imgEngineMode === 'sr';
   const [engineSvg, setEngineSvg] = useState<string | null>(null);
   const [engineSvgUnavailable, setEngineSvgUnavailable] = useState(false);
+  const engineSvgSourceRef = useRef('');
+  const [engineSvgSettled, setEngineSvgSettled] = useState(false);
   useEffect(() => {
     const active = imageOpen && (!srCompanionForced || pictureCubeActive || roomsActive || !staticFallbackExact);
     setEngineSvgUnavailable(false);
-    // A restarted mirror must wait for its current source, including when
-    // leaving a native 2D puzzle for a player with no ready frame yet.
-    setEngineSvg(null);
-    if (!active) { setEngineSvg(null); return; }
+    // Keep the last frame while the same renderer settles after a resize or
+    // settings change. Clearing it used to flash a different spec-rendered cube
+    // for several sampling frames. A different puzzle/view must never reuse it.
+    const source = `${puzzleParam}|${query.renderer}|${imgSpec.cubeView}|${imgSpec.puzzleVariant}`;
+    if (engineSvgSourceRef.current !== source) {
+      engineSvgSourceRef.current = source;
+      setEngineSvg(null);
+      setEngineSvgSettled(false);
+    }
+    if (!active) {
+      // The cube can change while this mirror is hidden. Never reveal a cached
+      // image from the previous visit when the user returns to capture.
+      setEngineSvg(null);
+      setEngineSvgSettled(false);
+      return;
+    }
+    const publishEngineSvg = (svg: string | null) => {
+      setEngineSvg(svg);
+      setEngineSvgSettled(true);
+    };
     // 贴纸遮罩(mask 直映):有派生表的拼图把灰化烙进镜像;没有的整程置 null,
     // PuzzleImage 落回 spec 渲染器(sr/visualcube 认 mask)—— 哪条路都不丢遮罩。
     // engine-only 拼图没有遮罩编辑入口,忽略 URL 残值(免把伴图饿死在等待帧)。
     const maskIds = pictureImageStudioEngineOnly ? null : parseMask(imgSpec.stickerMask || '');
     const maskKeys = maskIds?.size ? toEngineMask(imgPuzzle.puzzleType, maskIds) : null;
-    if (maskIds?.size && maskKeys === undefined) { setEngineSvg(null); return; }
+    if (maskIds?.size && maskKeys === undefined) { publishEngineSvg(null); return; }
     // 伴图复杂度上限:普通阶几何 ≈ 88 三角/块 + 204 三角/贴纸,6x6 ≈ 5.7 万已是
     // 主线程单帧 ~1s 量级;更高阶(至 N≥50 换简化几何前)会到百万级,必须掐断。
     // 超限在收集阶段即抛(几十 ms),伴图回退 visualcube,不卡页面。
@@ -1988,7 +2013,9 @@ export default function SimPage() {
     const tick = (): void => {
       if (disposed) return;
       raf = requestAnimationFrame(tick);
-      if (++frame % 8 !== 0) return; // ~7.5Hz 采样
+      // Prime the mirror in its first three frames; after that sample at ~7.5Hz.
+      // Initial settling should not expose the fallback renderer for ~400ms.
+      if (++frame > 3 && frame % 8 !== 0) return;
       const world = worldRef.current;
       if (world) {
         if (roomsActive) {
@@ -2002,7 +2029,7 @@ export default function SimPage() {
           const canvas = rendererRef.current?.domElement;
           if (!canvas) return;
           exportedSig = sig;
-          setEngineSvg(`<svg xmlns="http://www.w3.org/2000/svg" width="${canvas.width}" height="${canvas.height}" viewBox="0 0 ${canvas.width} ${canvas.height}"><image width="100%" height="100%" href="${canvas.toDataURL('image/png')}"/></svg>`);
+          publishEngineSvg(`<svg xmlns="http://www.w3.org/2000/svg" width="${canvas.width}" height="${canvas.height}" viewBox="0 0 ${canvas.width} ${canvas.height}"><image width="100%" height="100%" href="${canvas.toDataURL('image/png')}"/></svg>`);
           return;
         }
         if (pictureCubeActive && typeof world.puzzleKind === 'number') {
@@ -2019,7 +2046,7 @@ export default function SimPage() {
           const maskFn = stickeringMaskFor(nxn);
           const stickering = maskFn ? nxn.serializeStickering(maskFn) : null;
           exportedSig = sig;
-          setEngineSvg(renderPictureCubeNetSvg({
+          publishEngineSvg(renderPictureCubeNetSvg({
             order: nxn.order,
             facelets,
             faces: settings.pictureFaces,
@@ -2068,7 +2095,7 @@ export default function SimPage() {
             exportedSig = sig;
             try {
               const fc = settings.faceColors;
-              setEngineSvg(cv === 'plan'
+              publishEngineSvg(cv === 'plan'
                 // plan 透视投影随 spec 的 dist/opacity/旋转变 → 传 imgSpec,渲染旋钮
                 // 复用 specToCubeOptions,与 VC 路逐字节同(net 是 2D emitter,无关 spec)。
                 // 壳体色/两个不透明度改由外观区的内核色那组管(spec 里那三行只留给 /visualcube
@@ -2093,7 +2120,7 @@ export default function SimPage() {
                 }));
             } catch (err) {
               console.warn('[sim] flat companion export failed', err);
-              setEngineSvg(null);
+              publishEngineSvg(null);
             }
             return;
           }
@@ -2109,7 +2136,7 @@ export default function SimPage() {
           // reconstructs those colours on its real curved triangles. A flat NxN
           // schematic or spec fallback would change the shape.
           if (world.puzzleKind === 'sphere') {
-            setEngineSvg(exportSimSvg({ world, renderer: rendererRef.current, maxTriangles: MAX_TRIS }));
+            publishEngineSvg(exportSimSvg({ world, renderer: rendererRef.current, maxTriangles: MAX_TRIS }));
             return;
           }
           // 拼图带示意小面(userData.schematicPoly)→ SR 范式示意导出器:每个小面
@@ -2120,7 +2147,7 @@ export default function SimPage() {
             // 左边 3D 什么样右边就什么样(退役对照表 §2b:inset 模型衬底=壳体,贴纸=sticker)。
             // trans(X 光)视图的银壳 50% 已经由 renderSettings 顶在设置里(withTransCore),
             // 3D 与这里同吃 —— 所以此处不再有第二处 trans 判断。
-            setEngineSvg(exportSimSvgSchematic({
+            publishEngineSvg(exportSimSvgSchematic({
               world,
               // 黑边 = 网格缝宽占小面的百分比(inset 模型):比例量纲天然与视口尺寸、
               // 阶数无关 —— 交换态小框视口、40 阶小贴纸下观感都恒定,也正因如此才能
@@ -2145,20 +2172,20 @@ export default function SimPage() {
             }));
             return;
           }
-          if (bspSceneAudit(world.scene).miscolors) { setEngineSvg(null); return; } // 原核分色:回退旧渲染器
-          setEngineSvg(exportSimSvgBsp({ world, maxTriangles: MAX_TRIS }));
+          if (bspSceneAudit(world.scene).miscolors) { publishEngineSvg(null); return; } // 原核分色:回退旧渲染器
+          publishEngineSvg(exportSimSvgBsp({ world, maxTriangles: MAX_TRIS }));
         } catch (err) {
           if (!(err instanceof Error && err.message.startsWith('SVG_TOO_COMPLEX'))) {
             console.warn('[sim] BSP companion export failed', err);
           }
-          setEngineSvg(null); // 本帧回退旧渲染器
+          publishEngineSvg(null); // 本帧回退旧渲染器
         }
         return;
       }
       // twisty 路径。通常由 spec 精确渲染;engine-only 或 spec 表达不了当前阶段
       // (例如 megaminx LS)时才走 vantage 镜像。
       if (!pictureImageStudioEngineOnly && staticFallbackExact) {
-        if (exportedSig) { exportedSig = ''; setEngineSvg(null); }
+        if (exportedSig) { exportedSig = ''; publishEngineSvg(null); }
         return;
       }
       const tp = twistyPlayerRef.current as TwistyPlayerLike | null;
@@ -2168,10 +2195,10 @@ export default function SimPage() {
           stopNativeCompanion = undefined;
           nativeCompanionPlayer = null;
           native2DActive = false;
-          setEngineSvg(null);
+          publishEngineSvg(null);
           setEngineSvgUnavailable(false);
         }
-        if (exportedSig) { exportedSig = ''; setEngineSvg(null); }
+        if (exportedSig) { exportedSig = ''; publishEngineSvg(null); }
         return;
       }
       if (isNativePuzzleId(puzzleParam)) {
@@ -2188,7 +2215,7 @@ export default function SimPage() {
               // setup + alg or request a nonexistent 3D vantage in this mode.
               twistyView = null;
               exportedSig = '';
-              setEngineSvg(frame.svg);
+              publishEngineSvg(frame.svg);
               setEngineSvgUnavailable(frame.status === 'unavailable');
             },
           });
@@ -2212,15 +2239,15 @@ export default function SimPage() {
       if (sig === exportedSig) return;
       exportedSig = sig;
       try {
-        setEngineSvg(exportSimSvg({ world: view, srgbColors: true }));
+        publishEngineSvg(exportSimSvg({ world: view, srgbColors: true }));
       } catch (err) {
         console.warn('[sim] twisty companion export failed', err);
-        setEngineSvg(null);
+        publishEngineSvg(null);
       }
     };
     raf = requestAnimationFrame(tick);
     return () => { disposed = true; cancelAnimationFrame(raf); stopNativeCompanion?.(); };
-  }, [imageOpen, srCompanionForced, pictureCubeActive, roomsActive, settings.roomTheme, pictureImageStudioEngineOnly,
+  }, [imageOpen, srCompanionForced, pictureCubeActive, roomsActive, settings.roomTheme, pictureImageStudioEngineOnly, query.renderer,
       staticFallbackExact,
       imgSpec.stickerMask, imgSpec.maskColor, imgPuzzle.puzzleType,
       // 伴图外观跟 3D 走同一份设置(见上面 exportSimSvgSchematic 的注释);trans 预设
@@ -2584,7 +2611,9 @@ export default function SimPage() {
             previewHost={imageHost}
             engineSvg={engineSvg}
             engineSvgUnavailable={engineSvgUnavailable}
-            staticFallbackExact={staticFallbackExact}
+            // Do not flash the spec renderer while the first engine frame is
+            // still settling. A completed failed export may use its exact fallback.
+            staticFallbackExact={staticFallbackExact && (twisty || srCompanionForced || engineSvgSettled)}
             engineOnly={pictureImageStudioEngineOnly}
             compare={imgEngineMode === 'both' && !pictureCubeActive && !roomsActive}
           />
