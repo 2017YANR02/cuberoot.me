@@ -43,7 +43,7 @@ Page({
     if (state) openRequiredSessionLogin({ tab: false, url: `/pages/membership/index?ticket=${encodeURIComponent(state.ticket)}&pilotPlan=${encodeURIComponent(state.pilotPlan)}` });
   },
   consent(event: WechatMiniprogram.CheckboxGroupChange) { this.setData({ agreed: event.detail.value.includes('agree') }); },
-  terms() { miniProgramApi().navigateTo({ url: '/pages/web/index?path=%2Fmembership%2Frenewal-terms' }); },
+  terms() { miniProgramApi().navigateTo({ url: '/pages/web/index?key=renewal-terms' }); },
   async refresh() {
     const state = states.get(this);
     if (!state?.visible || isDouyinMiniProgram()) return;
