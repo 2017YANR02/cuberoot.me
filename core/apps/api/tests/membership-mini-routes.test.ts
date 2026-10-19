@@ -52,7 +52,11 @@ it('keeps private signing invisible to anonymous and other accounts', async () =
   const availability = () => membershipSubscriptionRoutes.request('/membership/subscriptions/availability');
   expect(await (await availability()).json()).toMatchObject({ available: true, pilot: true, pilotPayment: false });
   expect((await post('mini-enroll', input())).status).toBe(200);
+  const preview = await post('mini-context', { pilotPlan: 'monthly_auto_renew' });
+  expect(preview.status).toBe(200);
+  expect(await preview.json()).toMatchObject({ pilot: true, ticket: expect.any(String), priceCents: 2999 });
   mocks.owner = 'u13';
+  expect((await post('mini-context', { pilotPlan: 'monthly_auto_renew' })).status).toBe(403);
   expect(await (await availability()).json()).toMatchObject({ available: false, pilot: false });
   expect((await post('mini-enroll', input())).status).toBe(503);
   mocks.owner = '';
