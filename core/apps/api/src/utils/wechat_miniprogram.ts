@@ -173,6 +173,7 @@ export async function generateWechatMiniProgramUrlLink(
   query: string,
   expireTime: number,
   path: 'pages/account/index' | 'pages/membership/index' = 'pages/account/index',
+  environment: 'release' | 'develop' = 'release',
 ): Promise<string> {
   try {
     const token = await fetchWechatMiniProgramAccessToken();
@@ -184,7 +185,7 @@ export async function generateWechatMiniProgramUrlLink(
         body: JSON.stringify({
           path,
           query,
-          env_version: 'release',
+          env_version: path === 'pages/membership/index' ? environment : 'release',
           expire_type: 0,
           expire_time: expireTime,
         }),

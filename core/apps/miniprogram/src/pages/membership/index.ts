@@ -4,7 +4,7 @@ import { openRequiredSessionLogin } from '../../lib/required-session';
 import { isDouyinMiniProgram, miniProgramApi } from '../../lib/platform';
 import { tr } from '../../lib/i18n';
 
-interface Context { account: string; name: string; planSlug: string; priceCents: number; period: string; termsVersion: string; available: boolean }
+interface Context { pilot?: boolean; pilotPayment?: boolean; account: string; name: string; planSlug: string; priceCents: number; period: string; termsVersion: string; available: boolean }
 interface Contract { id: string; planSlug: string; state: string; syncStatus: string; cancellationRequested: boolean; billingStatus: string | null }
 const states = new WeakMap<object, { ticket: string; visible: boolean; revision: number }>();
 const labels = () => ({
@@ -64,7 +64,9 @@ Page({
             : tr({ zh: '请核对开通账号、价格及续费规则。', en: 'Check the membership account, price and renewal terms.' });
       this.setData({ context, account: `${context.name} (${context.account})`,
         amount: `¥${(context.priceCents / 100).toFixed(2)} / ${context.period === 'year' ? tr({ zh: '年', en: 'year' }) : tr({ zh: '月', en: 'month' })}`,
-        message, canSign: context.available && (!contract || contract.state === 'pending' && !contract.cancellationRequested && contract.planSlug === context.planSlug),
+        message: context.pilot ? (context.pilotPayment
+          ? tr({ zh: '指定账号验收：签约后申请真实首期扣款，验收期间不申请第二期扣款。', en: 'Private acceptance: signing requests a real first charge. No second-period charge during acceptance.' })
+          : tr({ zh: '指定账号验收：目前扣款关闭，仅验证签约和取消，不发放会员。', en: 'Private acceptance: debits disabled. Test authorization and cancellation only; no membership is granted.' })) + '\n' + message : message, canSign: context.available && (!contract || contract.state === 'pending' && !contract.cancellationRequested && contract.planSlug === context.planSlug),
         canCancel: Boolean(contract && contract.state !== 'terminated'), contractId: contract?.id ?? '' });
     } catch {
       if (state.visible && state.revision === revision) this.setData({ context: null, error: tr({ zh: '链接已过期、账号不一致或服务暂不可用。请确认小程序与网站登录同一账号，再从网站重新打开。', en: 'The link expired, the account differs, or the service is unavailable. Sign in to the same account as the website and open a new link.' }) });

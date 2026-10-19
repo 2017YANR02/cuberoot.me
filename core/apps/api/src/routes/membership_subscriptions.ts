@@ -1,12 +1,12 @@
 import { Hono, type Context } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { bodyLimit } from 'hono/body-limit';
-import { requireAuth, checkRateLimit } from '../utils/recon_helpers.js';
+import { requireAuth, optionalAuth, checkRateLimit } from '../utils/recon_helpers.js';
 import { listMembershipContracts, cancelMembershipContract, synchronizeMembershipNotification } from '../payment/membership-contracts.js';
 import { verifyPapayNotification, verifyPapayPaymentNotification, papayConfigured, PapayUnavailable } from '../payment/wechat-papay.js';
 import { enrollMembership } from '../payment/membership-enrollment.js';
 import { reconcileRenewalDebit } from '../payment/membership-renewals.js';
-import { renewalReleased, RENEWAL_TERMS_VERSION } from '../payment/membership-renewal-policy.js';
+import { renewalReleased, renewalPilotAllowed, RENEWAL_TERMS_VERSION } from '../payment/membership-renewal-policy.js';
 import { getIp } from '../utils/analytics_helpers.js';
 import QRCode from 'qrcode';
 import { renewalChannel } from '../payment/membership-renewal-policy.js';
@@ -15,10 +15,13 @@ import { exchangeWechatMiniProgramCode, generateWechatMiniProgramUrlLink } from 
 import { findUserByIdentity } from '../utils/account.js';
 
 export const membershipSubscriptionRoutes = new Hono();
-membershipSubscriptionRoutes.get('/membership/subscriptions/availability', (c) => {
+membershipSubscriptionRoutes.get('/membership/subscriptions/availability', async (c) => {
   c.header('Cache-Control', 'no-store');
-  return c.json({ available: renewalReleased() && papayConfigured()
-    && process.env.WECHAT_PAPAY_DEBIT_ENABLED === 'true' && process.env.WECHAT_PAPAY_SYNC_ENABLED === 'true',
+  const user = await optionalAuth(c);
+  const pilot = !renewalReleased() && renewalPilotAllowed(user?.wcaId);
+  return c.json({ available: miniEnrollmentAvailable(user?.wcaId) || (renewalChannel() === 'h5' && renewalReleased() && papayConfigured()
+    && process.env.WECHAT_PAPAY_DEBIT_ENABLED === 'true' && process.env.WECHAT_PAPAY_SYNC_ENABLED === 'true'),
+  pilot, pilotPayment: pilot && process.env.WECHAT_PAPAY_PILOT_DEBIT_ENABLED === 'true',
   termsVersion: RENEWAL_TERMS_VERSION, channel: renewalChannel() });
 });
 for (const path of ['/membership/subscriptions', '/membership/subscriptions/*']) {
@@ -40,19 +43,19 @@ membershipSubscriptionRoutes.post('/membership/subscriptions/enroll', bodyLimit(
   }
 });
 
-function miniEnrollmentAvailable() {
-  return renewalChannel() === 'miniprogram' && renewalReleased() && papayConfigured()
-    && process.env.WECHAT_PAPAY_DEBIT_ENABLED === 'true' && process.env.WECHAT_PAPAY_SYNC_ENABLED === 'true';
+function miniEnrollmentAvailable(owner?: string) {
+  return renewalChannel() === 'miniprogram' && papayConfigured() && process.env.WECHAT_PAPAY_SYNC_ENABLED === 'true'
+    && ((renewalReleased() && process.env.WECHAT_PAPAY_DEBIT_ENABLED === 'true') || renewalPilotAllowed(owner));
 }
 membershipSubscriptionRoutes.post('/membership/subscriptions/mini-link', bodyLimit({ maxSize: 4096 }), async (c) => {
   const user = await requireAuth(c);
   checkRateLimit(user.wcaId, { bucket: 'membership-mini-link', max: 5 });
-  if (!miniEnrollmentAvailable()) return c.json({ error: 'auto-renewal unavailable' }, 503);
+  if (!miniEnrollmentAvailable(user.wcaId)) return c.json({ error: 'auto-renewal unavailable' }, 503);
   const body = await c.req.json().catch(() => null);
   try {
     const ticket = issueMembershipHandoff(user.wcaId, body?.planSlug);
     const urlLink = await generateWechatMiniProgramUrlLink(new URLSearchParams({ ticket }).toString(),
-      Math.floor(Date.now() / 1000) + 600, 'pages/membership/index');
+      Math.floor(Date.now() / 1000) + 600, 'pages/membership/index', renewalReleased() ? 'release' : 'develop');
     return c.json({ urlLink, qrCodeDataUrl: await QRCode.toDataURL(urlLink, { width: 256, margin: 2 }), expiresIn: 600 });
   } catch { return c.json({ error: 'unable to open WeChat authorization' }, 503); }
 });
@@ -62,13 +65,14 @@ membershipSubscriptionRoutes.post('/membership/subscriptions/mini-context', body
   const body = await c.req.json().catch(() => null);
   try {
     return c.json({ ...readMembershipHandoff(body?.ticket, user.wcaId), account: user.wcaId, name: user.name,
-      available: miniEnrollmentAvailable() });
+      available: miniEnrollmentAvailable(user.wcaId), pilot: !renewalReleased() && renewalPilotAllowed(user.wcaId),
+      pilotPayment: process.env.WECHAT_PAPAY_PILOT_DEBIT_ENABLED === 'true' });
   } catch { return c.json({ error: 'link expired or account mismatch' }, 403); }
 });
 membershipSubscriptionRoutes.post('/membership/subscriptions/mini-enroll', bodyLimit({ maxSize: 4096 }), async (c) => {
   const user = await requireAuth(c);
   checkRateLimit(user.wcaId, { bucket: 'membership-enroll', max: 5 });
-  if (!miniEnrollmentAvailable()) return c.json({ error: 'auto-renewal unavailable' }, 503);
+  if (!miniEnrollmentAvailable(user.wcaId)) return c.json({ error: 'auto-renewal unavailable' }, 503);
   const body = await c.req.json().catch(() => null);
   try {
     const consent = readMembershipHandoff(body?.ticket, user.wcaId);

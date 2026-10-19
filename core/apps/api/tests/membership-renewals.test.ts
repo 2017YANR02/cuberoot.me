@@ -56,6 +56,7 @@ describe.skipIf(!databaseUrl)('renewal lifecycle in isolated PostgreSQL, synthet
       ('monthly_auto_renew','月','Month','month',2999,false), ('yearly_auto_renew','年','Year','year',29900,false)`);
   });
   beforeEach(async () => {
+    vi.unstubAllEnvs();
     await db.unsafe('TRUNCATE membership_renewal_debits, membership_contracts, membership_orders, memberships');
     vi.stubEnv('WECHAT_PAPAY_APPID', 'wx0123456789abcdef'); vi.stubEnv('WECHAT_PAPAY_MCHID', '1234567890');
     vi.stubEnv('WECHAT_PAPAY_API_V2_KEY', '0123456789abcdef0123456789abcdef');
@@ -78,6 +79,28 @@ describe.skipIf(!databaseUrl)('renewal lifecycle in isolated PostgreSQL, synthet
     state.query.mockImplementation(async no => ({ trade_state: 'SUCCESS', out_trade_no: no, trade_type: 'PAP',
       total_fee: '2999', fee_type: 'CNY', transaction_id: `tx${no}` }));
   }
+  it('private signing never charges until separately enabled and never submits a second cycle', async () => {
+    await activated();
+    vi.stubEnv('WECHAT_PAPAY_RELEASE_ENABLED', 'false');
+    vi.stubEnv('WECHAT_PAPAY_SIGNING_CHANNEL', 'miniprogram');
+    vi.stubEnv('WECHAT_PAPAY_APPID', 'wx1f92ba91b7e42015');
+    vi.stubEnv('WECHAT_MINI_APP_ID', 'wx1f92ba91b7e42015');
+    vi.stubEnv('WECHAT_MINI_APP_SECRET', 'fixture');
+    vi.stubEnv('WECHAT_PAPAY_PILOT_ENABLED', 'true');
+    vi.stubEnv('WECHAT_PAPAY_PILOT_OWNER', '2017TEST01');
+    vi.stubEnv('WECHAT_PAPAY_PILOT_UNTIL', new Date(Date.now() + 3600000).toISOString());
+    vi.stubEnv('WECHAT_PAPAY_PILOT_DEBIT_ENABLED', 'false');
+    await runMembershipRenewalsOnce();
+    expect(state.apply).not.toHaveBeenCalled();
+    await db.unsafe("UPDATE membership_contracts SET appid='wx1f92ba91b7e42015'");
+    vi.stubEnv('WECHAT_PAPAY_PILOT_DEBIT_ENABLED', 'true');
+    await runMembershipRenewalsOnce();
+    expect(state.apply).toHaveBeenCalledTimes(1);
+    await db.unsafe("UPDATE membership_contracts SET debit_cycle=1,next_debit_at=now()-interval '1 day'");
+    await runMembershipRenewalsOnce();
+    expect(state.apply).toHaveBeenCalledTimes(1);
+    vi.unstubAllEnvs();
+  });
   it('closed gate creates no contract and never contacts WeChat', async () => {
     vi.stubEnv('WECHAT_PAPAY_YEARLY_APPROVED', '');
     await expect(enrollMembership('2017TEST01', consent, '127.0.0.1')).rejects.toThrow();

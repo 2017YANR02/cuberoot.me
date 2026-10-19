@@ -1,6 +1,6 @@
 import { beforeEach, afterEach, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({ enroll: vi.fn(), identity: vi.fn(), account: vi.fn(), owner: 'u12', uid: 12 }));
-vi.mock('../src/utils/recon_helpers.js', () => ({ requireAuth: async () => ({ wcaId: mocks.owner, uid: mocks.uid, name: 'User' }), checkRateLimit: () => {} }));
+vi.mock('../src/utils/recon_helpers.js', () => ({ optionalAuth: async () => mocks.owner ? ({ wcaId: mocks.owner, uid: mocks.uid }) : null, requireAuth: async () => ({ wcaId: mocks.owner, uid: mocks.uid, name: 'User' }), checkRateLimit: () => {} }));
 vi.mock('../src/utils/session.js', () => ({ JWT_SECRET: 'route-test-only' }));
 vi.mock('../src/payment/membership-contracts.js', () => ({ listMembershipContracts: vi.fn(), cancelMembershipContract: vi.fn(), synchronizeMembershipNotification: vi.fn() }));
 vi.mock('../src/payment/membership-renewals.js', () => ({ reconcileRenewalDebit: vi.fn() }));
@@ -41,4 +41,20 @@ it('requires fresh explicit consent and price, and only then reserves a contract
 });
 it('does not permit old H5 endpoints to reserve mini contracts', async () => {
   expect((await post('enroll', input())).status).toBe(409); expect(mocks.enroll).not.toHaveBeenCalled();
+});
+
+it('keeps private signing invisible to anonymous and other accounts', async () => {
+  vi.stubEnv('WECHAT_PAPAY_RELEASE_ENABLED', 'false');
+  vi.stubEnv('WECHAT_PAPAY_PILOT_ENABLED', 'true');
+  vi.stubEnv('WECHAT_PAPAY_PILOT_OWNER', 'u12');
+  vi.stubEnv('WECHAT_PAPAY_PILOT_UNTIL', new Date(Date.now() + 3600000).toISOString());
+  vi.stubEnv('WECHAT_PAPAY_PILOT_DEBIT_ENABLED', 'false');
+  const availability = () => membershipSubscriptionRoutes.request('/membership/subscriptions/availability');
+  expect(await (await availability()).json()).toMatchObject({ available: true, pilot: true, pilotPayment: false });
+  expect((await post('mini-enroll', input())).status).toBe(200);
+  mocks.owner = 'u13';
+  expect(await (await availability()).json()).toMatchObject({ available: false, pilot: false });
+  expect((await post('mini-enroll', input())).status).toBe(503);
+  mocks.owner = '';
+  expect(await (await availability()).json()).toMatchObject({ available: false, pilot: false });
 });
