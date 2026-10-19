@@ -64,9 +64,11 @@ membershipSubscriptionRoutes.post('/membership/subscriptions/mini-context', body
   checkRateLimit(user.wcaId, { bucket: 'membership-mini-context', max: 20 });
   const body = await c.req.json().catch(() => null);
   try {
-    return c.json({ ...readMembershipHandoff(body?.ticket, user.wcaId), account: user.wcaId, name: user.name,
+    const pilot = !renewalReleased() && renewalPilotAllowed(user.wcaId);
+    const ticket = !body?.ticket && pilot ? issueMembershipHandoff(user.wcaId, body?.pilotPlan) : body?.ticket;
+    return c.json({ ...readMembershipHandoff(ticket, user.wcaId), ...(pilot ? { ticket } : {}), account: user.wcaId, name: user.name,
       available: miniEnrollmentAvailable(user.wcaId), pilot: !renewalReleased() && renewalPilotAllowed(user.wcaId),
-      pilotPayment: process.env.WECHAT_PAPAY_PILOT_DEBIT_ENABLED === 'true' });
+      pilotPayment: pilot && process.env.WECHAT_PAPAY_PILOT_DEBIT_ENABLED === 'true' });
   } catch { return c.json({ error: 'link expired or account mismatch' }, 403); }
 });
 membershipSubscriptionRoutes.post('/membership/subscriptions/mini-enroll', bodyLimit({ maxSize: 4096 }), async (c) => {

@@ -4,9 +4,9 @@ import { openRequiredSessionLogin } from '../../lib/required-session';
 import { isDouyinMiniProgram, miniProgramApi } from '../../lib/platform';
 import { tr } from '../../lib/i18n';
 
-interface Context { pilot?: boolean; pilotPayment?: boolean; account: string; name: string; planSlug: string; priceCents: number; period: string; termsVersion: string; available: boolean }
+interface Context { ticket?: string; pilot?: boolean; pilotPayment?: boolean; account: string; name: string; planSlug: string; priceCents: number; period: string; termsVersion: string; available: boolean }
 interface Contract { id: string; planSlug: string; state: string; syncStatus: string; cancellationRequested: boolean; billingStatus: string | null }
-const states = new WeakMap<object, { ticket: string; visible: boolean; revision: number }>();
+const states = new WeakMap<object, { ticket: string; pilotPlan: string; visible: boolean; revision: number }>();
 const labels = () => ({
   title: tr({ zh: '自动续费', en: 'Auto-renewal' }),
   login: tr({ zh: '登录 CubeRoot', en: 'Sign in to CubeRoot' }),
@@ -25,8 +25,9 @@ Page({
   onLoad(options: Record<string, string | undefined>) {
     if (isDouyinMiniProgram()) return;
     const ticket = options.ticket ?? '';
-    if (!ticket || ticket.length > 2048) { this.setData({ error: tr({ zh: '请从网站会员页重新打开签约链接。', en: 'Open a new authorization link from the website membership page.' }) }); return; }
-    states.set(this, { ticket, visible: false, revision: 0 });
+    const pilotPlan = options.pilotPlan === 'yearly_auto_renew' ? 'yearly_auto_renew' : options.pilotPlan === 'monthly_auto_renew' ? 'monthly_auto_renew' : '';
+    if ((!ticket && !pilotPlan) || ticket.length > 2048) { this.setData({ error: tr({ zh: '请从网站会员页重新打开签约链接。', en: 'Open a new authorization link from the website membership page.' }) }); return; }
+    states.set(this, { ticket, pilotPlan, visible: false, revision: 0 });
   },
   onShow() {
     applyNativeAppearance();
@@ -39,7 +40,7 @@ Page({
   onUnload() { this.onHide(); states.delete(this); },
   login() {
     const state = states.get(this);
-    if (state) openRequiredSessionLogin({ tab: false, url: `/pages/membership/index?ticket=${encodeURIComponent(state.ticket)}` });
+    if (state) openRequiredSessionLogin({ tab: false, url: `/pages/membership/index?ticket=${encodeURIComponent(state.ticket)}&pilotPlan=${encodeURIComponent(state.pilotPlan)}` });
   },
   consent(event: WechatMiniprogram.CheckboxGroupChange) { this.setData({ agreed: event.detail.value.includes('agree') }); },
   terms() { miniProgramApi().navigateTo({ url: '/pages/web/index?path=%2Fmembership%2Frenewal-terms' }); },
@@ -51,9 +52,10 @@ Page({
     this.setData({ needsLogin: !session, canSign: false, canCancel: false, error: '' });
     if (!session) return;
     try {
-      const context = await requestJson<Context>('/membership/subscriptions/mini-context', { method: 'POST', token: session.token, body: { ticket: state.ticket } });
+      const context = await requestJson<Context>('/membership/subscriptions/mini-context', { method: 'POST', token: session.token, body: { ticket: state.ticket, pilotPlan: state.pilotPlan } });
       const result = await requestJson<{ subscriptions: Contract[] }>('/membership/subscriptions', { token: session.token });
       if (!state.visible || state.revision !== revision || states.get(this) !== state || getStoredSession()?.token !== session.token) return;
+      if (context.pilot && context.ticket) state.ticket = context.ticket;
       const contract = result.subscriptions.find(row => row.state !== 'terminated');
       const message = contract?.syncStatus === 'unavailable'
         ? tr({ zh: '暂时无法向微信确认签约状态，请稍后刷新。', en: 'Unable to verify authorization with WeChat. Refresh later.' })
