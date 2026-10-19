@@ -1,6 +1,7 @@
+import { variantLabel, stageLabel } from '@cuberoot/shared/timer/scramble-variants';
 import { CubingIcon } from '@cuberoot/event-icon';
 import { TIMER_333_SCRAMBLE_TYPES, timerEventIdFromSelector, timerPuzzleSelection } from '@cuberoot/shared/timer';
-import { Boxes, Check, ChevronDown, ChevronRight, Star } from 'lucide-react';
+import { Boxes, ChevronDown, ChevronRight, Star } from 'lucide-react';
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 
 import {
@@ -19,8 +20,9 @@ export interface TimerPuzzlePickerItem {
   textLabel?: string;
   searchText?: string;
   detail?: string;
+  disabled?: boolean;
   /** Optional second level, such as formula sets belonging to this puzzle. */
-  children?: readonly Pick<TimerPuzzlePickerItem, 'id' | 'label' | 'iconClass' | 'textLabel' | 'searchText' | 'detail'>[];
+  children?: readonly Pick<TimerPuzzlePickerItem, 'id' | 'label' | 'iconClass' | 'textLabel' | 'searchText' | 'detail' | 'disabled'>[];
 }
 
 export interface TimerPuzzlePickerGroup {
@@ -312,7 +314,7 @@ export function TimerPuzzlePicker({
               {showMenuHeadings && group.label && <div className="pp-group-title">{group.label}</div>}
               <div className="pp-group-items">
                 {group.items.map((item) => {
-                  const active = submenuId === item.id || selectedItem?.id === item.id || selectedPuzzle === item.id;
+                  const active = submenu ? submenu.id === item.id : selectedItem?.id === item.id || selectedPuzzle === item.id;
                   const hasChildren = Boolean(item.children?.length);
                   return (
                     <button
@@ -340,7 +342,6 @@ export function TimerPuzzlePicker({
                       {showItemIcons && (!hasSubmenus || item.iconClass || item.textLabel) && renderIcon(item)}
                       <span className="pp-item-label">{item.label}{needle && item.detail && <small className="pp-item-path">{item.detail}</small>}</span>
                       {hasChildren && <ChevronRight className="pp-submenu-arrow" size={14} aria-hidden="true" />}
-                      {hasSubmenus && !hasChildren && item.id === selectedPuzzle && <Check className="pp-item-check" size={14} aria-hidden="true" />}
                     </button>
                   );
                 })}
@@ -355,13 +356,12 @@ export function TimerPuzzlePicker({
             }}>
             {showSubmenuHeading && <div className="pp-group-title">{submenuLabel ?? submenu.label}</div>}
             {submenu.children!.map(item => (
-              <button key={item.id} type="button" role="menuitem"
+              <button key={item.id} type="button" role="menuitem" disabled={item.disabled}
                 aria-current={item.id === selectedPuzzle ? 'page' : undefined}
                 className={`pp-item${item.id === selectedPuzzle ? ' pp-item--active' : ''}`}
                 onClick={() => { onSelect(item.id); close('select', true); }}>
                 {showItemIcons && (item.iconClass || item.textLabel) && renderIcon(item)}
                 <span className="pp-item-label">{item.label}</span>
-                {item.id === selectedPuzzle && <Check className="pp-item-check" size={14} aria-hidden="true" />}
               </button>
             ))}
           </div>}
@@ -391,4 +391,34 @@ export function TimerPuzzlePicker({
     )}
     </>
   );
+}
+
+/** Shared method/stage presentation; callers retain supported options and data identities. */
+export function MethodStagePicker({ method, stage, methods, stagesOf, isZh, onSelect, disabled = false, stagesDisabled = false }: {
+  method: string;
+  stage: string;
+  methods: readonly string[];
+  stagesOf(method: string): readonly string[];
+  stagesDisabled?: boolean;
+  isZh: boolean;
+  onSelect(method: string, stage: string): void;
+  disabled?: boolean;
+}) {
+  const labels = { zh: '方法与阶段', en: 'Method and stage' };
+  const stages = stagesOf(method);
+  const methodName = variantLabel(method, isZh);
+  const stageName = stages.length ? stageLabel(stage, isZh) : '';
+  const label = !stageName ? methodName : method === 'std' || methodName === stageName
+    ? stageName : [methodName, stageName].join(' ');
+  return <TimerPuzzlePicker
+    disabled={disabled} showArrow={false} showItemIcons={false}
+    showMenuHeadings={false} showSubmenuHeading={false}
+    puzzleLabel={labels[isZh ? 'zh' : 'en']} triggerLabel={label}
+    selectedEvent={stages.length ? JSON.stringify([method, stage]) : JSON.stringify([method, ''])}
+    groups={[{ id: 'methods', label: '', items: methods.map(key => ({
+      id: JSON.stringify([key, '']), label: variantLabel(key, isZh),
+      children: stagesOf(key).map(value => ({ id: JSON.stringify([key, value]), label: stageLabel(value, isZh), disabled: stagesDisabled })),
+    })) }]}
+    onSelect={id => { const [nextMethod, nextStage] = JSON.parse(id) as [string, string]; onSelect(nextMethod, nextStage); }}
+  />;
 }

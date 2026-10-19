@@ -5,6 +5,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TIMER_EVENT_PICKER_GROUPS } from '@cuberoot/shared/timer';
 import { TIMER_OVERLAY_IDS, TimerPuzzlePicker } from '@cuberoot/timer-ui';
+import { MethodStagePicker } from '@cuberoot/timer-ui/puzzle-picker';
 
 const GROUPS = [{
   id: 'wca',
@@ -63,6 +64,47 @@ describe('shared timer puzzle picker', () => {
     expect(onSelect).toHaveBeenCalledWith('222');
     expect(host.querySelector('.pp-popup')).toBeNull();
     expect(document.activeElement).toBe(trigger);
+  });
+
+  it('keeps method and stage identities together without extra trigger decoration', () => {
+    const onSelect = vi.fn();
+    act(() => root.render(createElement(MethodStagePicker, {
+      method: 'std', stage: 'xcross', methods: ['std', 'pseudo', 'length'], isZh: true,
+      stagesOf: (method: string) => method === 'length' ? [] : ['cross', 'xcross'], onSelect,
+    })));
+    const trigger = host.querySelector<HTMLButtonElement>('.pp-trigger')!;
+    expect(trigger.textContent).toBe('XCross');
+    expect(trigger.querySelector('.pp-trigger-chevron')).toBeNull();
+    act(() => trigger.click());
+    const parents = host.querySelectorAll<HTMLButtonElement>('.pp-group-items > button');
+    act(() => parents[1].click());
+    act(() => host.querySelectorAll<HTMLButtonElement>('.pp-cascade-options > button')[1].click());
+    expect(onSelect).toHaveBeenLastCalledWith('pseudo', 'xcross');
+    act(() => trigger.click());
+    act(() => host.querySelectorAll<HTMLButtonElement>('.pp-group-items > button')[2].click());
+    expect(onSelect).toHaveBeenLastCalledWith('length', '');
+  });
+
+  it('highlights only the expanded family when browsing away from the selected family', () => {
+    const onSelect = vi.fn();
+    act(() => root.render(createElement(TimerPuzzlePicker, {
+      groups: [{ id: 'methods', label: 'Methods', items: [
+        { id: 'std', label: 'Standard', children: [{ id: 'std:xcross', label: 'XCross' }] },
+        { id: 'pseudo', label: 'Pseudo', children: [{ id: 'pseudo:xcross', label: 'XCross' }] },
+      ] }],
+      selectedEvent: 'pseudo:xcross', onSelect, puzzleLabel: 'Method',
+      showMenuHeadings: false, showSubmenuHeading: false,
+    })));
+    act(() => host.querySelector<HTMLButtonElement>('.pp-trigger')!.click());
+    const parents = host.querySelectorAll<HTMLButtonElement>('.pp-group-items > .pp-item');
+    act(() => parents[0].click());
+    expect([...parents].filter(item => item.classList.contains('pp-item--active'))).toEqual([parents[0]]);
+    expect(host.querySelector('.pp-cascade-options .pp-group-title')).toBeNull();
+    expect(host.querySelector('.pp-cascade-options .pp-item--active')).toBeNull();
+    expect(onSelect).not.toHaveBeenCalled();
+    act(() => parents[1].click());
+    expect([...parents].filter(item => item.classList.contains('pp-item--active'))).toEqual([parents[1]]);
+    expect(host.querySelectorAll('.pp-cascade-options .pp-item--active')).toHaveLength(1);
   });
 
   it('closes on Escape and restores trigger focus', () => {

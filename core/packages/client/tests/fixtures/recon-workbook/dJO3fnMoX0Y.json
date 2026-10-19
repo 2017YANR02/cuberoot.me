@@ -371,14 +371,14 @@
         "/alg/3x3/pll/gc"
       ],
       "label": "// PLL-Gc",
-      "moves": "R2') Uw' R U' R U R' Uw R2 Fw R' Fw' U'"
+      "moves": "R2') u' R U' R U R' u R2 f R' f' U'"
     }
   ],
   "approval": {
     "status": "approved",
     "confirmedBy": "user",
     "instruction": "收录到回归测试",
-    "confirmedAt": "2026-10-16T10:34:26.544Z",
-    "contentHash": "5d3947f6dc6832ebee838846853287f7df5dbc4f9d7a77322f3e77fe47d1c1fe"
+    "confirmedAt": "2026-10-19T03:26:02.983Z",
+    "contentHash": "fa47ccecb40ad4a4ca25a6d5509bc65d17a0befd28b63ad61f9e7cc4ee645613"
   }
 }

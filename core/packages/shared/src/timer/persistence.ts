@@ -1,6 +1,6 @@
 import { normalizeTimerSyncSeed, type TimerSyncSeedSettings } from './sync-seed';
 import { normalizeTimerRankScopes, type TimerRankScope } from './settings-contract';
-import { normalizeTimerAutoBackupEvery, DEFAULT_TIMER_AUTO_BACKUP_EVERY } from './backup-client';
+import { normalizeTimerAutoBackupEvery, DEFAULT_TIMER_AUTO_BACKUP_EVERY } from './backup-settings';
 import { normalizeTimerPreScrambleSettings, type TimerPreScrambleSettings } from './pre-scramble';
 import { normalizeTimerSoundSettings, type TimerSoundSettings } from './sound-settings';
 import { normalizeTimerMetronomeSettings, type TimerMetronomeSettings } from './metronome-settings';

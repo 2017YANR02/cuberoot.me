@@ -72,10 +72,11 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
 //   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wca_teams wca_training_institutions wechat_jssdk wechat_pc_opensdk wiki
 //   platform_competitions platform_competition_attempts platform_competition_evidence platform_competition_settlements platform_competition_device_reports platform_organizer_applications platform_refunds
-//   enterprise_verification
+//   enterprise_verification contests
 //   mcp mcp_oauth onboarding timer_replay_shares site_assistant cube_agents
 // ─ covers-routes-end ─
 const ENDPOINTS: Ep[] = [
+  { d: 'comp', m: 'GET', p: '/v1/contests', g: 'public', c: 'short', zh: 'Contests 公开项目、比赛、纪录、排名及选手；view 选择资源，支持 event/region/group/category/type/history/id/q/offset，成绩格式由 RecordRanks 提供', en: 'Public Contests catalog, competitions, records, rankings and persons; select view, filter by event/region/group/category/type/history/id/q/offset; RecordRanks formats results' },
   { d: 'content', m: 'POST', p: '/v1/downloads/events', g: 'public', c: 'no-store', zh: '匿名记录 Android 下载入口点击；仅接受 play/apk 渠道与 en/zh 语言，正文最多 256 字节，按 IP 限流', en: 'Record anonymous Android download-entry clicks; accepts only play/apk channels and en/zh languages, with a 256-byte body limit and per-IP rate limiting' },
   { d: 'enterprise-verification', m: 'POST', p: '/v1/enterprise-verification/admin/applications/:id/receipt', g: 'admin', c: 'no-store', zh: '登记实际银行到账，包含异常或过期来款，不授予认证', en: 'Record actual bank receipts, including mismatches and late transfers, without granting certification' },
   { d: 'enterprise-verification', m: 'GET', p: '/v1/enterprise-verification/organizations/:slug', g: 'login', c: 'no-store', zh: '读取企业认证状态', en: 'Read enterprise verification' },

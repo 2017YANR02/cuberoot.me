@@ -179,9 +179,37 @@ export class SmartCubeSession {
   private pendingConnection: BleCancellation | null = null;
   private hardwareCleanup: Promise<void> = Promise.resolve();
   private cancelPendingStart: (() => void) | null = null;
+  private localReceiver: ((event: SmartCubeRelayEvent) => void) | null = null;
+
+  /** Native pages consume the existing BLE drivers without a WebView relay. */
+  async startLocal(receiver: (event: SmartCubeRelayEvent) => void): Promise<void> {
+    if (this.localReceiver === receiver) return;
+    const generation = ++this.socketGeneration;
+    ++this.connectionGeneration;
+    this.cancelPendingStart?.();
+    this.cancelPendingStart = null;
+    this.localReceiver = null;
+    const socket = this.socket;
+    this.socket = null;
+    this.socketOpen = false;
+    socket?.close({ code: 1000, reason: 'native timer' });
+    await this.disconnectHardware();
+    if (generation !== this.socketGeneration) return;
+    this.localReceiver = receiver;
+    this.discoveredDevices.clear();
+    this.setSnapshot({ ...INITIAL_SNAPSHOT });
+  }
+
+  async stopLocal(): Promise<void> {
+    ++this.socketGeneration;
+    if (!this.localReceiver) return;
+    const receiver = this.localReceiver;
+    await this.disconnect();
+    if (this.localReceiver === receiver) this.localReceiver = null;
+  }
 
   get relayOpen(): boolean {
-    return this.socketOpen;
+    return this.localReceiver !== null || this.socketOpen;
   }
 
   subscribe(listener: (snapshot: SmartCubeSessionSnapshot) => void): () => void {
@@ -198,6 +226,7 @@ export class SmartCubeSession {
       }));
     }
     if (this.socket && this.socketOpen && this.token === token) return;
+    this.localReceiver = null;
 
     const socketGeneration = ++this.socketGeneration;
     ++this.connectionGeneration;
@@ -314,13 +343,13 @@ export class SmartCubeSession {
   }
 
   async connect(kind: SmartCubeDriverKind): Promise<void> {
-    if (!this.socketOpen) throw new Error(tr({ en: 'Open the connection page from the timer first', zh: '请先从计时器打开连接页' }));
+    if (!this.relayOpen) throw new Error(tr({ en: 'Open the connection page from the timer first', zh: '请先从计时器打开连接页' }));
     if (this.snapshot.phase === 'scanning' || this.snapshot.phase === 'connecting') return;
     await this.connectSelected(kind);
   }
 
-  async scan(): Promise<void> {
-    if (!this.socketOpen) throw new Error(tr({ en: 'Open the connection page from the timer first', zh: '请先从计时器打开连接页' }));
+  async scan(options: { scanTimeoutMs?: number } = {}): Promise<void> {
+    if (!this.relayOpen) throw new Error(tr({ en: 'Open the connection page from the timer first', zh: '请先从计时器打开连接页' }));
     if (this.snapshot.phase === 'connected') {
       await this.disconnectHardware();
       this.discoveredDevices.clear();
@@ -359,6 +388,7 @@ export class SmartCubeSession {
     let found: DiscoveredSmartCube[];
     try {
       const discovery = discoverSmartCubeDriver({
+        scanTimeoutMs: options.scanTimeoutMs,
         signal: cancellation.signal,
         onUpdate: updateDiscoveredDevices,
         onAdapterRetained: (adapter) => { this.discoveryAdapter = adapter; },
@@ -381,7 +411,7 @@ export class SmartCubeSession {
   }
 
   async connectDevice(deviceId: string): Promise<void> {
-    if (!this.socketOpen) throw new Error(tr({ en: 'Open the connection page from the timer first', zh: '请先从计时器打开连接页' }));
+    if (!this.relayOpen) throw new Error(tr({ en: 'Open the connection page from the timer first', zh: '请先从计时器打开连接页' }));
     if (this.snapshot.phase === 'connected' || this.snapshot.phase === 'connecting') return;
     const selected = this.discoveredDevices.get(deviceId);
     if (!selected) {
@@ -645,6 +675,10 @@ export class SmartCubeSession {
 
   private calibrating = false;
   private resetRequests = new Set<string>();
+  /** Native UI uses the same guarded calibration command as the Web relay. */
+  async resetLocalDevice(): Promise<void> {
+    if (this.localReceiver) await this.resetDevice(`native-${Date.now()}`);
+  }
   private async resetDevice(requestId: string): Promise<void> {
     // Never replay a destructive command, including while its first write is pending.
     if (this.resetRequests.has(requestId)) return;
@@ -699,6 +733,10 @@ export class SmartCubeSession {
   }
 
   private send(payload: SmartCubeRelayEvent): boolean {
+    if (this.localReceiver) {
+      this.localReceiver(payload);
+      return true;
+    }
     if (!this.socketOpen || !this.socket) return false;
     const socket = this.socket;
     let accepted = true;
@@ -718,6 +756,10 @@ export class SmartCubeSession {
   }
 
   private sendConfirmed(payload: SmartCubeRelayEvent): Promise<void> {
+    if (this.localReceiver) {
+      this.localReceiver(payload);
+      return Promise.resolve();
+    }
     if (!this.socketOpen || !this.socket) {
       return Promise.reject(new SmartCubeRelaySendError(tr({ en: 'The timer connection has expired. Return and try again.', zh: '计时器连接已失效，请返回重试' })));
     }
@@ -778,4 +820,12 @@ export class SmartCubeSession {
   }
 }
 
-export const smartCubeSession = new SmartCubeSession();
+let fallbackSession: SmartCubeSession | undefined;
+/** Each page is bundled separately; the App instance owns the one hardware session. */
+export function getSmartCubeSession(): SmartCubeSession {
+  if (typeof getApp === 'function') {
+    const app = getApp<{ cubeSession?: SmartCubeSession }>();
+    if (app) return app.cubeSession ??= new SmartCubeSession();
+  }
+  return fallbackSession ??= new SmartCubeSession();
+}

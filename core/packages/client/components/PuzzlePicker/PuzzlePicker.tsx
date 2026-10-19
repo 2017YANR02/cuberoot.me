@@ -77,6 +77,7 @@ interface Props {
   placeholderLabel?: string;
   /** 是否显示收起态图标;纯文本触发器可关闭。 */
   showTriggerIcon?: boolean;
+  showArrow?: boolean;
   /** 是否显示每项的图标/文字徽标;纯文本 catalog 可关闭。 */
   showItemIcons?: boolean;
   /** 菜单分组后的附加控件。 */
@@ -94,7 +95,7 @@ const menuLabel = (label: string): string => label.replaceAll('魔方', '').repl
 
 export default function PuzzlePicker({
   isZh = false, selectedEvent, selectedEvents, wcaEvents, availableEvents, onSelect, onToggle, linkFor,
-  discovery, groups: suppliedGroups, placeholderLabel, showTriggerIcon = true, showItemIcons = true, popupFooter, itemAction, dataNoTimer,
+  discovery, groups: suppliedGroups, placeholderLabel, showArrow = true, showTriggerIcon = true, showItemIcons = true, popupFooter, itemAction, dataNoTimer,
 }: Props) {
   const params = useParams();
   const prefix = params?.lang === 'zh' ? '/zh' : '';
@@ -196,6 +197,7 @@ export default function PuzzlePicker({
           children: item.children?.map(normalize),
         })),
       }))}
+      showArrow={showArrow}
       selectedEvent={selectedEvent ?? ''}
       onSelect={onSelect}
       puzzleLabel={menuLabel(placeholderLabel ?? tr({ zh: '项目', en: 'Puzzle' }))}
@@ -267,7 +269,7 @@ export default function PuzzlePicker({
             ))}
           </span>
         ) : <span className="pp-trigger-label">{triggerLabel}</span>}
-        <ChevronDown size={14} className="pp-trigger-chevron" />
+        {showArrow && <ChevronDown size={14} className="pp-trigger-chevron" />}
       </button>
       {open && (
         <div ref={panelRef} className="pp-popup" id={popupId} role="menu" data-site-surface="popover">

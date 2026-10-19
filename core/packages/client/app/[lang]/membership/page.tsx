@@ -176,7 +176,6 @@ export default function MembershipPage() {
   const oneTimePlans = sortedPlans.filter((plan) => !isAutoRenewPlanSlug(plan.slug));
   const enterprisePlans = oneTimePlans.filter((plan) => plan.slug.startsWith('enterprise_'));
   const personalPlans = oneTimePlans.filter((plan) => !plan.slug.startsWith('enterprise_'));
-  const showAutoRenew = autoRenewPlans.length > 0;
   const universalPerks = benefits.items.filter(item => item.group === 'common').map(item => item.id);
   const universalPerkSet = new Set(benefits.items.filter(item => item.group === 'common').map(item => item.id));
   const enterpriseSharedPerks = benefits.items.filter(item => item.group === 'enterprise').map(item => item.id);
@@ -262,7 +261,7 @@ export default function MembershipPage() {
 
       <p className="mem-sub" role="status">
         {directApp
-          ? tr({ zh: '支付宝和微信支付为单次购买，不会自动续费。当前使用真实支付，请勿用于测试扣款。', en: 'Alipay and WeChat Pay are one-time purchases without automatic renewal. These are real payments, not test transactions.' })
+          ? tr({ zh: '支付成功后开通会员，订阅周期与续费规则以确认页面为准。', en: 'Membership starts after successful payment. See the confirmation page for the subscription period and renewal terms.' })
           : tr({ zh: '解锁专属权益，支持魔方根。', en: 'Unlock member benefits. Support CubeRoot.' })}
       </p>
       {directApp && <p className="mem-note">
@@ -270,9 +269,6 @@ export default function MembershipPage() {
         {' '}<a href="https://play.google.com/store/account/subscriptions?package=me.cuberoot.app" target="_blank" rel="noopener noreferrer">{tr({ zh: '管理 Google Play 订阅', en: 'Manage Google Play subscriptions' })}</a>
       </p>}
 
-      <p className="mem-sub" role="status">
-        {autoRenewPlans.length > 0 ? tr({ zh: '可单次购买或选择自动续费', en: 'Choose a one-time purchase or auto-renewal' }) : tr({ zh: '测试中 · 自动续费暂未开放', en: 'In testing · Auto-renewal coming later' })}
-      </p>
       <nav className="mem-service-links" aria-label={tr({ zh: '会员服务', en: 'Membership services' })}>
         <AppLink href="/membership/subscription" prefetch={false}>{tr({ zh: '管理自动续费', en: 'Manage auto-renewal' })}</AppLink>
         <AppLink href="/membership/renewal-terms" prefetch={false}>{tr({ zh: '自动续费服务协议', en: 'Auto-renewal Agreement' })}</AppLink>
@@ -392,7 +388,7 @@ export default function MembershipPage() {
         <h2 id="renewal-disclosure-title" className="mem-plan-section-title">
           {tr({ zh: '自动续费服务声明', en: 'Auto-renewal disclosure' })}
         </h2>
-        <p>{tr({ zh: '当前自动续费尚未开放。单次购买的月度、年度会员不会自动扣款，无需退订。以下为自动续费开放后的服务规则。', en: 'Auto-renewal is not available yet. One-time monthly and annual memberships do not auto-charge and require no cancellation. The following rules apply once auto-renewal becomes available.' })}</p>
+        <p>{tr({ zh: '月度、年度订阅在你确认签约后按所选周期自动续费，可随时取消。', en: 'Monthly and annual subscriptions renew automatically for the selected period after you authorize them. You can cancel anytime.' })}</p>
         {renewalPrices.length > 0 && <div className="mem-service-links" aria-label={tr({ zh: '自动续费价目表', en: 'Auto-renewal prices' })}>
           {renewalPrices.map((plan) => <span key={plan.slug}>
             {tr({ zh: plan.nameZh, en: plan.nameEn })} {fmtPrice(plan.priceCents, plan.currency)} / {planUnit(plan, isZh)}
@@ -463,15 +459,7 @@ export default function MembershipPage() {
       )}
 
       <p className="mem-foot-note">
-        {showAutoRenew
-          ? tr({
-              zh: '单次套餐不会自动扣款；自动续费套餐将在扣费前通知，并支持随时关闭。',
-              en: 'One-time plans never auto-charge. Auto-renewal plans include notice before charging and can be cancelled anytime.'
-            })
-          : tr({
-              zh: '会员为按周期一次性付款,不会自动扣款。到期前我们会提醒你,一键即可续费。',
-              en: "Membership is a one-time payment per period — no auto-charge. We'll remind you before it expires, and renewing takes one click."
-            })}
+        {tr({ zh: '订阅将在扣费前通知，可随时在“管理自动续费”中取消。取消后，已付会员权益保留至到期。', en: 'You will be notified before renewal charges. Cancel anytime in Manage auto-renewal; paid benefits remain until expiry.' })}
         {' '}
         <span className="mem-foot-links">
           <AppLink href="/support">{tr({ zh: '查看致谢名单 →', en: 'See supporters →'

@@ -30,7 +30,7 @@ import { loadFlagData, flagDataVersion, compFlagIso2 } from '@/lib/country-flags
 import { compSourceLine } from '@/lib/comp-schedule';
 import { statsUrl } from '@/lib/stats-base';
 import { VARIANT_ORDER, stageLabel, variantLabel, BLOCK_DATA_VARIANTS, BLOCK_STAGE_VARIANT, EO_DATA_VARIANTS, EO_STAGE_VARIANT, LBL_STAGE_VARIANT, VARIANT_STAGES, LENGTH_VARIANT, RECENT_METRIC_ORDER, uiVariantOf, uiVariantOptions, dataVariantOfStage, uiStagesOf, variantDataRef } from '@/lib/scramble-variants';
-import { TimerPuzzlePicker } from '@cuberoot/timer-ui/puzzle-picker';
+import { MethodStagePicker } from '@cuberoot/timer-ui/puzzle-picker';
 import { fetchRecentScramblesEvents, type RecentScramblesEventsJson, type RecentScrMeta } from '@/lib/recent-scrambles-events';
 import { formatDateRangeIso } from '@/lib/wca-date';
 import { eventDisplayName, wcaToReconEvent } from '@/lib/wca-events';
@@ -514,7 +514,7 @@ export default function RecentScrambles({ lang }: Props) {
         <span className="rs-title">{tr({ zh: '近期打乱', en: 'Recent Scrambles' })}</span>
         {dateRange && <span className="rs-date-range">{dateRange}</span>}
       </div>
-      <PuzzlePicker isZh={isZh} selectedEvent={curEvent} groups={pickerGroups} onSelect={setEvent} />
+      <PuzzlePicker showArrow={false} isZh={isZh} selectedEvent={curEvent} groups={pickerGroups} onSelect={setEvent} />
       {curEvent === '333'
         ? <Recent333Body data={data} dist={dist} eventsJson={eventsJson} isZh={isZh} lp={lp} />
         : <RecentEventBody event={curEvent} json={eventsJson} isZh={isZh} lp={lp} />}
@@ -669,33 +669,17 @@ function Recent333Body({ data, dist, eventsJson, isZh, lp }: {
       value={String(mode === 'rare')}
       onChange={event => { const v = event.currentTarget.value === 'true'; setMode(v ? 'rare' : 'type'); }}
       aria-label={tr({ zh: '视图', en: 'View' })}
-      className="native-select"
+      className="rs-select"
     >
       <option value="true">{tr({ zh: '概率', en: 'Rare' })}</option>
       <option value="false">{tr({ zh: '类型', en: 'By type' })}</option>
     </select>
   );
   const variantSelect = (
-    <TimerPuzzlePicker
-      showItemIcons={false}
-      showMenuHeadings={false}
-      showSubmenuHeading
-      puzzleLabel={tr({ zh: '方法与阶段', en: 'Method and stage' })}
-      triggerLabel={isLength ? variantLabel(curVariant, isZh) : `${variantLabel(curVariant, isZh)} · ${stageLabel(curMetric, isZh)}`}
-      selectedEvent={isLength ? LENGTH_VARIANT : `${curVariant}:${curMetric}`}
-      groups={[{ id: 'methods', label: tr({ zh: '方法', en: 'Method' }), items: variantOptions.map(v => ({
-        id: v,
-        label: variantLabel(v, isZh),
-        children: v === LENGTH_VARIANT ? undefined : metricsForVariant(v).map(m => ({
-          id: `${v}:${m}`, label: stageLabel(m, isZh),
-        })),
-      })) }]}
-      onSelect={id => {
-        markTouched();
-        const [v, m] = id.split(':');
-        setVariant(v);
-        if (m) setMetric(m);
-      }}
+    <MethodStagePicker
+      isZh={isZh} method={curVariant} stage={curMetric} methods={variantOptions}
+      stagesOf={v => v === LENGTH_VARIANT ? [] : metricsForVariant(v)}
+      onSelect={(v, m) => { markTouched(); setVariant(v); if (m) setMetric(m); }}
     />
   );
 

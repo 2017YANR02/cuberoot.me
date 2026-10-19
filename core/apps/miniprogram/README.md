@@ -1,6 +1,29 @@
 # CubeRoot 微信 / 抖音小程序
 
-微信与抖音共用这一份原生外壳源码。成熟业务页面通过 `web-view` 复用网站运行界面，不导入 Web 源码；登录、BLE 和网页桥接只在平台适配层分流。`package.json`、`src/`、两个项目配置模板与 [`../../docs/MINIPROGRAM.md`](../../docs/MINIPROGRAM.md) 是局部事实源。
+微信与抖音共用平台适配、登录和 BLE 驱动。微信计时与工具页仍通过 `web-view` 复用网站运行界面；抖音因主功能页面原生要求，使用原生计时和查询页面，直接消费共享纯逻辑，不导入 Web/React 源码。`package.json`、`src/`、两个项目配置模板与 [`../../docs/MINIPROGRAM.md`](../../docs/MINIPROGRAM.md) 是局部事实源。
+
+## 抖音原生主页面
+
+- `native-timer.ts` 复用共享计时状态机、打乱、罚时、统计与智能魔方控制器；`timer-store.ts` 从早期微信原生计时器（`7cb3e75349`，当时位于 `core/packages/miniprogram`）恢复，沿用 `cuberoot:timer` 存储格式与 `TimerStoreSettings`。网站 WebView 的 localStorage 成绩不会自动迁入原生存储。
+- `native-timer-page.ts` / `templates/native-timer.wxml` 适配小程序触摸、设置、成绩及生命周期。支持15个计时项目的本地打乱图、智能魔方实况图、观察计时、分组/成绩编辑、共享滚动统计、手动打乱、真题搜索与日期选择、单行排名、CSV/csTimer/Speedstacks导出及备份恢复；不包含FMC、多盲成绩录入或旧网页全部高级设置。接入与实际验收状态见[原生计时器跟踪](../../../docs/douyin-native-timer-tracker.md)。
+- `native-tools-page.ts` 通过现有公共 API 原生展示近期公示比赛、近期纪录与 WCA ID 个人成绩/排名。教程、课程与专项训练继续下线。
+- 蓝牙由 `getSmartCubeSession()` 保存在 App 实例，避免每个独立页面 bundle 创建不同连接；原生模式不需要网页中继 WebSocket。旧微信网页中继路径保留。
+- 抖音构建直接选择原生 TTML 主页面；旧网页主功能深链重定向到原生 tab，隐私说明和账号辅助流程仍可使用网页。
+- 构建/模拟器检查不替代 iOS、Android 的 GAN 16 UI 真机连接与自动计时回归，也不表示已经上传、提审或上线。
+
+### 跨平台复用复盘（2026-10-19）
+
+| 职责 | 已有实现与本次处理 |
+| --- | --- |
+| 原生页面 | 微信早期 MVP 有 WXML 计时器；当前微信已改为 WebView。抖音使用同一小程序工程的原生模板，不能直接引用 React DOM。模板和 `setData` 生命周期是必要宿主适配，不作为新业务引擎。 |
+| 计时、罚时和显示 | 继续直接调用 `timer/machine`、`timer/timing-display`、`timer/stats`，不重写算法。保存共享状态机返回的 `inspectionMs`。 |
+| 设置 | 删除原生独立默认值和持久化写入，直接使用 `TimerStoreSettings`、`settings-contract` 及其字段范围/文案；原生预览包旧设置只做一次迁入，成功保存后移除旧键。按住时间回到共享默认 550 ms，打乱触摸不再跳过按住阈值，保留 start/none/next/copy。 |
+| 打乱 | 将现有 `seeded/generate.ts` 的基础 WCA 分派提取至 `seeded/wca.ts`，原 seeded worker 与小程序共同调用。项目算法及 seeded 随机数顺序保持原实现；不把整套专项训练依赖带入小程序。 |
+| 成绩与分组 | 恢复微信历史 `timer-store`，使用共享数据校验、`activeTimerSolves`、`selectTimerEventSession` 和 CSV 导出，不引入另一套成绩 schema。 |
+| 智能魔方 | 删除原生手写首转/还原判定，直接使用 Web/安装客户端/Watch 已有的 `SmartCubeSessionController`、`SmartCubeSoloTimerController`、`SmartCubeAttemptProducer`；设备时钟、转动记录及阶段字段由共享实现产生。BLE/GATT 继续使用小程序现有驱动。 |
+| 查询 | 复用 `/comp/announced`、`/wca/recent-records`、`/wca/person-page` 和共享姓名、日期、成绩格式化；原生页面只转换展示行、处理请求与生命周期，没有另造查询后端。 |
+
+这些改动不代表与Web完全等价：交互3D、自动双向同步、校正求解、陀螺仪姿态接入等仍未移植；已有的账户备份采用显式上传/恢复，不等同于自动同步。不能因已复用底层就标记功能全部验收。每项后续移植先找现有公共入口，不能在原生页面另建业务规则。
 
 ## 开发
 
@@ -33,7 +56,7 @@ pnpm --filter @cuberoot/miniprogram check:all
 - 平台 API、登录端点和网页标记：`src/lib/platform.ts`
 - 必须原生化的跨端纯逻辑：先提取到 `@cuberoot/shared`，确认有调用方后再添加依赖
 
-不要按平台复制页面。只有平台 API、离线能力或明确的性能需求无法通过 `web-view` 满足时，才新增原生页面。
+不要按平台复制业务算法。平台审核要求、平台 API、离线能力或明确性能需求需要原生页面时，UI 与生命周期留在小程序，纯逻辑复用共享实现。
 
 ## 语言与外观同步
 

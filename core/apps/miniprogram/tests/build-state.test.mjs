@@ -48,6 +48,31 @@ function externalRelayInput(graphInputFiles) {
 }
 
 describe('mini program build graph state', () => {
+  it('loads official scrambles with native bindings and no browser globals', async () => {
+    const { outputFiles } = await build({ absWorkingDir: packageRoot, bundle: true,
+      entryPoints: ['src/lib/native-timer-wca.ts'], inject: ['src/lib/native-timer-runtime.ts'],
+      format: 'iife', globalName: 'NativeWca', write: false, minify: true,
+      platform: 'browser', target: 'chrome91', define: { __MINI_PROGRAM_TARGET__: '"douyin"' }, logLevel: 'silent' });
+    const requests = [];
+    const context = { globalThis: undefined, setTimeout, clearTimeout,
+      tt: { getStorageSync: () => '', setStorageSync() {}, request(options) {
+        requests.push(options.url);
+        options.success({ statusCode: 200, data: { scrambles: [{ scramble: 'R U', ci: 'Fixture2026', cn: 'Fixture', e: '333', r: '1', g: 'A', n: 1, x: 0 }] } });
+        return { abort() {} };
+      } } };
+    runInNewContext(outputFiles[0].text, context);
+    const pool = context.NativeWca.createNativeWcaPool();
+    try {
+      const row = await pool.nextWcaRow({ event: '333', mode: 'date', comp: '', compName: '', round: '', group: '', from: '', to: '', optimal: false });
+      expect(requests).toEqual(['https://api.cuberoot.me/v1/wca/scrambles/random?event=333&count=50']);
+      expect(row).toMatchObject({ scramble: 'R U', meta: { ci: 'Fixture2026', n: 1 } });
+    } finally { pool.dispose(); }
+  });
+  it('tracks published dependency dist files without accepting workspace generated output', () => {
+    expect(buildGraphInputFiles(packageRoot, { inputs: { '../../node_modules/cubing/dist/alg.js': {} } }))
+      .toEqual([resolve(packageRoot, '../../node_modules/cubing/dist/alg.js')]);
+    expect(() => buildGraphInputFiles(packageRoot, { inputs: { '.tmp/node_modules/pkg/dist/index.js': {} } })).toThrow('generated output');
+  });
   it.each([
     { target: 'wechat', watch: false }, { target: 'douyin', watch: false },
     { target: 'wechat', watch: true }, { target: 'douyin', watch: true },

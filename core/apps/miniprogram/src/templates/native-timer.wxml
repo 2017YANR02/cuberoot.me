@@ -1,0 +1,97 @@
+<view class="native-timer" style="{{appearanceStyle}}">
+  <view class="nt-toolbar">
+    <button class="nt-control" bindtap="connectCube" disabled="{{busy}}" aria-label="{{copy.bluetooth}}" hover-class="press-feedback"><image class="nt-icon" src="/assets/tabbar/bluetooth.png" aria-hidden="true" /></button>
+    <picker mode="selector" range="{{events}}" range-key="name" bindchange="selectEvent" disabled="{{busy || generating}}">
+      <view class="nt-control nt-event">{{eventName}}</view>
+    </picker>
+    <button class="nt-control" bindtap="openSheet" data-sheet="settings" disabled="{{busy}}" hover-class="press-feedback">{{copy.settings}}</button>
+  </view>
+  <view wx:if="{{deviceName}}" class="nt-device">{{deviceName}} <text wx:if="{{battery !== null}}"> · {{battery}}%</text></view>
+  <view wx:if="{{externalName}}" class="nt-device">{{externalName}}</view>
+  <text wx:if="{{error}}" class="nt-error" aria-role="alert">{{error}}</text>
+  <button hover-class="press-feedback" class="nt-scramble" bindtap="scrambleTap" bindtouchstart="scrambleDown" bindtouchend="scrambleUp" bindtouchcancel="timerCancel" disabled="{{generating || phase === 'running'}}" aria-label="{{scramble}}">{{generating ? copy.loading : scramble}}</button>
+  <text wx:if="{{sourceLine}}" class="nt-hint nt-source">{{sourceLine}}</text>
+  <button class="nt-clock nt-clock--{{phase}}" bindtouchstart="timerDown" bindtouchend="timerUp" bindtouchcancel="timerCancel" aria-label="{{hint}}" hover-class="press-feedback">
+    <text class="nt-time">{{display}}</text>
+    <text class="nt-hint">{{hint}}</text>
+  </button>
+  <view wx:if="{{preview || livePreview}}" class="nt-previews">
+    <view wx:if="{{preview}}" class="nt-preview"><image mode="aspectFit" src="{{preview}}" binderror="imageError" aria-label="{{copy.preview}}" /><text wx:if="{{cubeConnected}}" class="nt-hint">{{copy.preview}}</text></view>
+    <view wx:if="{{livePreview}}" class="nt-preview"><image mode="aspectFit" src="{{livePreview}}" binderror="imageError" aria-label="{{copy.live}}" /><text class="nt-hint">{{copy.live}}</text></view>
+  </view>
+  <text wx:if="{{previewError}}" class="nt-error">{{previewError}}</text>
+  <text wx:if="{{cubeConnected}}" class="nt-hint nt-cube-hint">{{guidance}} · {{copy.cube}}</text>
+  <button hover-class="press-feedback" wx:if="{{phase === 'ready' || phase === 'inspecting'}}" class="nt-control" bindtap="cancelAttempt">{{copy.cancel}}</button>
+  <view class="nt-footer">
+    <button class="nt-control" bindtap="previousScramble" disabled="{{busy || generating || !canPrevious}}" hover-class="press-feedback">{{copy.previous}}</button>
+    <button class="nt-control" bindtap="nextScramble" disabled="{{busy || generating}}" hover-class="press-feedback">{{copy.next}}</button>
+    <button class="nt-control" bindtap="openSheet" data-sheet="history" disabled="{{busy}}" hover-class="press-feedback">{{copy.results}} · {{summary.count}}</button>
+  </view>
+  <button hover-class="press-feedback" class="nt-stats" bindtap="openSheet" data-sheet="statistics"><text>{{copy.best}} {{summary.best}}</text><text>ao5 {{summary.ao5}}</text><text>ao12 {{summary.ao12}}</text></button>
+  <text wx:if="{{rankLine}}" class="nt-rank" aria-label="{{copy.rankHint}}">{{rankLine}}</text>
+  <view wx:if="{{sheet}}" id="nt-backdrop" class="nt-backdrop" bindtap="closeSheet">
+    <view class="nt-sheet">
+      <view class="nt-sheet-header"><text>{{sheet === 'wca' ? copy.wca : sheet === 'settings' ? copy.settings : sheet === 'manual' ? copy.manualEntry : sheet === 'scrambles' ? copy.manualScrambles : sheet === 'create' ? copy.newSession : sheet === 'rename' ? copy.rename : sheet === 'comment' ? copy.comment : sheet === 'restore' ? copy.restore : sheet === 'import' ? copy.import : sheet === 'statistics' ? copy.statistics : copy.results}}</text><button hover-class="press-feedback" class="nt-control" bindtap="closeSheet">{{copy.close}}</button></view>
+      <scroll-view scroll-y="{{true}}" class="nt-sheet-content">
+      <block wx:if="{{sheet === 'settings'}}">
+        <view class="nt-setting"><text>{{copy.inspectionSetting}}</text><picker range="{{inspectionOptions}}" value="{{inspectionIndex}}" data-setting="inspection" bindchange="changeSetting"><view class="nt-control">{{inspectionOptions[inspectionIndex]}}</view></picker></view>
+        <view class="nt-setting"><text>{{copy.holdSetting}}</text><picker range="{{holdOptions}}" value="{{holdIndex}}" data-setting="hold" bindchange="changeSetting"><view class="nt-control">{{holdOptions[holdIndex]}}</view></picker></view>
+        <view class="nt-setting"><text>{{copy.tapSetting}}</text><picker range="{{copy.tapOptions}}" value="{{tapIndex}}" data-setting="tap" bindchange="changeSetting"><view class="nt-control">{{copy.tapOptions[tapIndex]}}</view></picker></view>
+        <view wx:for="{{settingRows}}" wx:key="key" class="nt-setting"><text>{{item.label}}</text><picker range="{{item.labels}}" value="{{item.index}}" data-setting="{{item.key}}" bindchange="changeSetting"><view class="nt-control">{{item.value}}</view></picker></view>
+        <view class="nt-setting"><text>{{copy.rankScopes}}</text><view class="nt-actions"><button hover-class="press-feedback" wx:for="{{rankScopes}}" wx:key="scope" class="nt-control" data-scope="{{item.scope}}" bindtap="toggleRankScope">{{item.scope}}{{item.selected ? ' ✓' : ''}}</button></view></view>
+        <view class="nt-setting"><text>{{copy.rankCountry}}</text><picker range="{{rankCountries}}" value="{{rankCountryIndex}}" bindchange="changeRankCountry"><view class="nt-control">{{rankCountries[rankCountryIndex]}}</view></picker></view>
+        <view class="nt-setting"><text>{{copy.session}}</text><picker range="{{sessions}}" range-key="name" value="{{sessionIndex}}" bindchange="selectSession"><view class="nt-control">{{sessions[sessionIndex].name}}</view></picker></view>
+        <view class="nt-actions"><button hover-class="press-feedback" class="nt-control" bindtap="sessionAction" data-action="create">{{copy.newSession}}</button><button hover-class="press-feedback" class="nt-control" bindtap="sessionAction" data-action="rename">{{copy.rename}}</button><button hover-class="press-feedback" class="nt-control" bindtap="sessionAction" data-action="clear">{{copy.clearSession}}</button><button hover-class="press-feedback" class="nt-control" bindtap="sessionAction" data-action="delete" disabled="{{sessions.length < 2}}">{{copy.deleteSession}}</button></view>
+        <view class="nt-setting"><button hover-class="press-feedback" class="nt-control" bindtap="randomScrambles">{{copy.random}}{{source === 'random' ? ' ✓' : ''}}</button><button hover-class="press-feedback" class="nt-control" bindtap="openSheet" data-sheet="scrambles">{{copy.manualScrambles}}{{source === 'manual' ? ' ✓' : ''}}</button></view>
+        <button hover-class="press-feedback" class="nt-control" bindtap="openSheet" data-sheet="wca">{{copy.wca}}{{source === 'wca' ? ' ✓' : ''}}</button>
+        <button hover-class="press-feedback" class="nt-control" bindtap="openSheet" data-sheet="manual">{{copy.manualEntry}}</button>
+        <button hover-class="press-feedback" wx:if="{{canResetCube}}" disabled="{{calibrating}}" class="nt-control" bindtap="calibrateCube">{{copy.calibrate}}</button>
+        <button hover-class="press-feedback" class="nt-control" bindtap="connectExternalTimer">{{externalConnected ? copy.disconnect : copy.externalTimer}}</button>
+        <view class="nt-actions"><button hover-class="press-feedback" class="nt-control" bindtap="exportBackup">{{copy.backup}}</button><button hover-class="press-feedback" class="nt-control" bindtap="openSheet" data-sheet="restore">{{copy.restore}}</button><button hover-class="press-feedback" class="nt-control" bindtap="openSheet" data-sheet="import">{{copy.import}}</button></view>
+        <view class="nt-actions"><button hover-class="press-feedback" class="nt-control" bindtap="cloudBackup" data-action="upload" disabled="{{cloudBusy}}">{{copy.cloudUpload}}</button><button hover-class="press-feedback" class="nt-control" bindtap="cloudBackup" data-action="download" disabled="{{cloudBusy}}">{{copy.cloudDownload}}</button></view>
+      </block>
+      <block wx:elif="{{sheet === 'wca'}}">
+        <picker range="{{copy.wcaModes}}" value="{{settings.wcaScrambleMode === 'comp' ? 0 : 1}}" data-setting="mode" bindchange="changeWca"><view class="nt-control">{{settings.wcaScrambleMode === 'comp' ? copy.wcaModes[0] : copy.wcaModes[1]}}</view></picker>
+        <block wx:if="{{settings.wcaScrambleMode === 'comp'}}">
+          <view class="nt-setting"><text>{{settings.wcaCompName || copy.all}}</text><button hover-class="press-feedback" wx:if="{{settings.wcaComp}}" class="nt-control" bindtap="clearWca" data-setting="comp">{{copy.clear}}</button></view>
+          <view class="nt-setting nt-search"><input value="{{competitionQuery}}" placeholder="{{copy.competitionSearch}}" bindinput="wcaSearch" /><button hover-class="press-feedback" class="nt-control {{competitionQuery ? '' : 'nt-clear-empty'}}" disabled="{{!competitionQuery}}" bindtap="clearCompetitionSearch">{{copy.clear}}</button></view>
+          <button hover-class="press-feedback" wx:for="{{competitionMatches}}" wx:key="id" class="nt-result" data-id="{{item.id}}" bindtap="pickCompetition"><text>{{item.displayName}}</text><text class="nt-hint">{{item.startDate}}</text></button>
+          <view class="nt-setting"><text>{{copy.round}}</text><picker range="{{roundLabels}}" value="{{roundIndex}}" data-setting="round" bindchange="changeWca"><view class="nt-control">{{roundLabels[roundIndex]}}</view></picker></view>
+          <view class="nt-setting"><text>{{copy.group}}</text><picker range="{{groupLabels}}" value="{{groupIndex}}" data-setting="group" bindchange="changeWca"><view class="nt-control">{{groupLabels[groupIndex]}}</view></picker></view>
+        </block>
+        <block wx:else>
+          <view class="nt-setting"><text>{{copy.from}}</text><picker mode="date" value="{{settings.wcaDateFrom}}" data-setting="from" bindchange="changeWca"><view class="nt-control">{{settings.wcaDateFrom || copy.all}}</view></picker></view>
+          <view class="nt-setting"><text>{{copy.to}}</text><picker mode="date" value="{{settings.wcaDateTo}}" data-setting="to" bindchange="changeWca"><view class="nt-control">{{settings.wcaDateTo || copy.all}}</view></picker></view>
+          <button hover-class="press-feedback" class="nt-control" bindtap="clearWca" data-setting="dates">{{copy.clear}}</button>
+        </block>
+        <text wx:if="{{formError}}" class="nt-error">{{formError}}</text>
+        <button hover-class="press-feedback" class="nt-control" bindtap="wcaScrambles">{{copy.wca}}</button>
+      </block>
+      <block wx:elif="{{sheet === 'history'}}">
+        <text class="nt-hint">{{copy.local}}</text>
+        <view class="nt-setting nt-search"><input value="{{historyQuery}}" placeholder="{{copy.search}}" bindinput="searchHistory" /><button hover-class="press-feedback" class="nt-control {{historyQuery ? '' : 'nt-clear-empty'}}" disabled="{{!historyQuery}}" bindtap="clearHistorySearch">{{copy.clear}}</button></view>
+        <view class="nt-actions"><button hover-class="press-feedback" class="nt-control" bindtap="exportResults" disabled="{{!summary.count}}">{{copy.export}}</button><button hover-class="press-feedback" class="nt-control" bindtap="exportResults" data-format="cstimer" disabled="{{!summary.count}}">csTimer JSON</button><button hover-class="press-feedback" class="nt-control" bindtap="exportResults" data-format="speedstacks" disabled="{{!summary.count}}">Speedstacks</button><button hover-class="press-feedback" class="nt-control" bindtap="openSheet" data-sheet="manual">{{copy.manualEntry}}</button></view>
+          <text wx:if="{{!summary.count}}" class="nt-hint">{{copy.empty}}</text>
+          <button hover-class="press-feedback" wx:for="{{summary.rows}}" wx:key="id" class="nt-result" data-id="{{item.id}}" bindtap="editResult"><view class="nt-result-title"><text>{{summary.filteredCount - index}}</text><text>{{item.result}}{{item.penalty === '+2' ? ' (+2)' : ''}}</text></view><text class="nt-result-scramble">{{item.scramble}}</text><text wx:if="{{item.comment}}" class="nt-hint">{{item.comment}}</text></button>
+        <button hover-class="press-feedback" wx:if="{{summary.rows.length < summary.filteredCount}}" class="nt-control" bindtap="loadMoreHistory">{{copy.more}}</button>
+      </block>
+      <block wx:elif="{{sheet === 'statistics'}}">
+        <view class="nt-setting"><text></text><text>{{copy.current}}</text><text>{{copy.best}}</text></view>
+        <view wx:for="{{statistics}}" wx:key="key" class="nt-setting"><text>{{item.key}}</text><text>{{item.current}}</text><text>{{item.best}}</text></view>
+      </block>
+      <block wx:elif="{{sheet === 'detail'}}">
+        <text class="nt-time">{{detail.result}}</text><text class="nt-hint">{{detail.date}}</text>
+        <text class="nt-result-scramble">{{detail.scramble}}</text><text class="nt-hint">{{detail.comment}}</text>
+        <view class="nt-previews"><view class="nt-preview"><image mode="aspectFit" src="{{detailPreview}}" binderror="imageError" aria-label="{{copy.preview}}" /></view></view>
+        <view class="nt-actions"><button hover-class="press-feedback" wx:for="{{resultActions}}" wx:key="id" class="nt-control" bindtap="resultAction" data-action="{{item.id}}">{{item.title}}</button></view>
+        <picker wx:if="{{moveTargets.length}}" range="{{moveTargets}}" range-key="name" bindchange="moveResult"><view class="nt-control">{{copy.moveSession}}</view></picker>
+      </block>
+      <block wx:else>
+        <textarea class="nt-draft" value="{{draft}}" bindinput="draftInput" maxlength="-1" placeholder="{{sheet === 'scrambles' ? copy.queuePlaceholder : sheet === 'manual' ? copy.manualPlaceholder : copy.session}}" />
+        <text wx:if="{{formError}}" class="nt-error">{{formError}}</text>
+        <view class="nt-actions"><button hover-class="press-feedback" class="nt-control" bindtap="clearDraft">{{copy.clear}}</button><button hover-class="press-feedback" class="nt-control" bindtap="saveDraft">{{copy.save}}</button></view>
+      </block>
+      </scroll-view>
+    </view>
+  </view>
+</view>

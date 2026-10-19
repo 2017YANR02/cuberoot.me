@@ -156,9 +156,9 @@ function localizePlaceZh(city: string, iso2?: string | null): string {
         }
         return CN_PLACE_ZH[k] ?? translateSeg(seg, idx, I);
       })
-      .join(', ');
+      .join('，');
   }
-  return segs.map((seg, idx) => translateSeg(seg, idx, I)).join(', ');
+  return segs.map((seg, idx) => translateSeg(seg, idx, I)).join('，');
 }
 
 /** 比赛城市名本地化。isZh=false 返回英文(已知城市规整去后缀);isZh=true 全段译中文。

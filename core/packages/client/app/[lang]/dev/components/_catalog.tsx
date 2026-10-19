@@ -31,6 +31,7 @@ import { ClearButton } from '@/components/ClearButton';
 import { SearchInput } from '@/components/SearchInput';
 import { ListSelect } from '@/components/ListSelect';
 import { CompactSelect } from '@/components/CompactSelect';
+import { MethodStagePicker } from '@cuberoot/timer-ui/puzzle-picker';
 import { VariantSelect } from '@/components/VariantSelect';
 import { RangeSlider } from '@/components/RangeSlider/RangeSlider';
 import { ParamSliders, type ParamSliderSpec } from '@/components/ParamSliders';
@@ -1226,14 +1227,22 @@ export const CATALOG: ComponentEntry[] = [
     Demo: CompactSelectDemo,
   },
   {
+    name: 'MethodStagePicker',
+    import: "import { MethodStagePicker } from '@cuberoot/timer-ui/puzzle-picker';",
+    category: 'input',
+    zh: '魔方方法与阶段共用级联菜单。无框、无下拉箭头，标准方法省略前缀；调用方提供支持的阶段和选择回调。',
+    en: 'Shared method/stage cascade with a plain trigger, no arrow, and no Standard prefix. Callers supply supported stages and selection callbacks.',
+    usage: '<MethodStagePicker method={method} stage={stage} methods={methods} stagesOf={stagesOf} isZh={isZh} onSelect={onSelect} />',
+    Demo: () => { const [value, setValue] = useState(['std', 'cross']); return <MethodStagePicker method={value[0]} stage={value[1]} methods={['std', 'pseudo']} stagesOf={() => ['cross', 'xcross']} isZh={useIsZh()} onSelect={(m, s) => setValue([m, s])} />; },
+  },
+  {
     name: 'VariantSelect',
     import: "import { VariantSelect } from '@/components/VariantSelect';",
     category: 'input',
-    zh: '打乱方法 / 阶段下拉:首页近期打乱与 /scramble/stats 共用。默认 label=variantLabel(方法),传 label={stageLabel} 即阶段下拉。纯展示,onChange 各页自理。',
-    en: 'Scramble method / stage dropdown shared by the landing Recent Scrambles and /scramble/stats. Default label=variantLabel (method); pass label={stageLabel} for the stage dropdown. Presentational; each page owns onChange.',
+    zh: '通用原生单选控件，保留给统计维度与数据集等平铺选项。魔方方法与阶段使用 MethodStagePicker。',
+    en: 'Native select for flat choices such as statistical dimensions and datasets. Use MethodStagePicker for cube methods and stages.',
     usage: '<VariantSelect value={v} options={opts} onChange={setV} isZh={isZh} label={stageLabel} />',
     Demo: VariantSelectDemo,
-    note: { zh: '两页的方法 / 阶段下拉都走它,别再各写一份 <select>。', en: 'Both pages’ method / stage dropdowns route through it — don’t hand-roll another <select>.' },
   },
   {
     name: 'CubeOrientationSelect',

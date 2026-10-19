@@ -148,6 +148,26 @@ describe('SmartCubeSession', () => {
     await startPromise;
   }
 
+  it('delivers native connection and moves without opening a WebSocket', async () => {
+    const session = new SmartCubeSession();
+    const receive = vi.fn();
+    await session.startLocal(receive);
+    await session.connect('simulator');
+    session.simulateMove('R');
+    expect(wx.connectSocket).not.toHaveBeenCalled();
+    expect(receive).toHaveBeenCalledWith(expect.objectContaining({ type: 'status', phase: 'connected' }));
+    expect(receive).toHaveBeenCalledWith(expect.objectContaining({ type: 'move', move: 'R' }));
+    await session.stopLocal();
+    expect(session.relayOpen).toBe(false);
+  });
+
+  it('does not revive a local receiver after unload cancels startup', async () => {
+    const session = new SmartCubeSession();
+    const start = session.startLocal(vi.fn());
+    await session.stopLocal(); await start;
+    expect(session.relayOpen).toBe(false);
+  });
+
   it('waits for the server acknowledgement before accepting BLE work', async () => {
     const session = new SmartCubeSession();
     let started = false;
@@ -526,9 +546,10 @@ describe('SmartCubeSession', () => {
     }
   });
 
-  it('hands a retained scan adapter to GAN and releases it if selection is cancelled', async () => {
+  it.each(['relay', 'local'])('hands a retained scan adapter to GAN and releases it if selection is cancelled (%s)', async (transport) => {
     const session = new SmartCubeSession();
-    await startSession(session);
+    if (transport === 'local') await session.startLocal(vi.fn());
+    else await startSession(session);
     const close = vi.fn(async () => {});
     const adapter = { api: {}, lease: {}, close };
     const device = { deviceId: 'gan-1', name: 'GAN16ui' };

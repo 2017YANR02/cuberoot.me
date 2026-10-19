@@ -5,8 +5,9 @@
 .staff-start p { margin: 12px 0; }
 .staff-start-modules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; align-items: start; }
 .staff-start-module { min-width: 0; padding: 32px; border: 1px solid var(--border-default); border-radius: 28px; background: var(--card); overflow-wrap: anywhere; }
-.staff-start-module-icon { margin-bottom: 14px; color: var(--muted-foreground); }
-.staff-start .staff-start-module-title { margin: 0 0 28px; font-size: 1.6rem; font-weight: 600; letter-spacing: -.035em; line-height: 1.25; }
+.staff-start-module-heading { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
+.staff-start-module-icon { flex-shrink: 0; color: var(--muted-foreground); }
+.staff-start .staff-start-module-title { margin: 0; font-size: 1.6rem; font-weight: 600; letter-spacing: -.035em; line-height: 1.25; }
 .staff-start-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .staff-start-task { padding: 20px 0; border-top: 1px solid var(--border-default); }
 .staff-start-task:first-of-type { border-top: 0; padding-top: 0; }

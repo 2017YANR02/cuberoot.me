@@ -318,7 +318,21 @@ const nextConfig: NextConfig = {
   // /average → /calc?tab=average merges with any incoming ?lang=zh.
   // permanent: true = 308 (cached forever); these URL renames are stable.
   async redirects() {
+    // Both products enter the same employee app. Only loopback previews use
+    // this Mac's Mira dev server; tunnel visitors keep the shared online URL.
+    const workspacePaths = ["/workspace", "/zh/workspace", "/en/workspace"];
     return [
+      ...(!isProd ? workspacePaths.map(source => ({
+        source,
+        has: [{ type: "host" as const, value: "(?:localhost|127\\.0\\.0\\.1)" }],
+        destination: "http://localhost:4000/workspace",
+        permanent: false,
+      })) : []),
+      ...workspacePaths.map(source => ({
+        source,
+        destination: "https://mira.fans/workspace",
+        permanent: false,
+      })),
       // Back-compat for the earlier Next route shape /tutorial/p/<slug>.
       { source: "/tutorial/p/:slug", destination: "/tutorial-legacy/:slug", permanent: true },
       { source: "/analyze", destination: "/scramble/analyzer", permanent: true },

@@ -201,8 +201,10 @@ describe('mini program app structure', () => {
     expect(timerTemplate).toContain('viewAttempt: viewAttempt');
     expect(toolsTemplate).toContain('viewAttempt: viewAttempt');
     expect(genericWebTemplate).toContain('viewAttempt: viewAttempt');
-    expect(timerTemplate).toBe(genericWebTemplate);
-    expect(toolsTemplate).toBe(genericWebTemplate);
+    expect(timerTemplate).toContain('templates/native-timer.wxml');
+    expect(toolsTemplate).toContain('templates/native-tools.wxml');
+    expect(timerPage).toContain("__MINI_PROGRAM_TARGET__ === 'douyin'");
+    expect(toolsPage).toContain("__MINI_PROGRAM_TARGET__ === 'douyin'");
     expect(accountTemplate).toContain('bindtap="loginWithMiniProgram"');
     expect(accountTemplate).toContain('bindtap="toggleAgreement"');
     expect(accountTemplate).toContain('bindtap="openPolicy"');
@@ -218,8 +220,8 @@ describe('mini program app structure', () => {
     expect(accountTemplate).toContain('aria-role="status"');
     expect(accountTemplate).toContain('{{release.version}}');
     expect(accountTemplate).toContain('{{release.notesTitle}}');
-    expect(timerStyles.trim()).toBe('');
-    expect(toolsStyles.trim()).toBe('');
+    expect(timerStyles).toContain('.native-timer');
+    expect(toolsStyles).toContain('.tools-heading');
     expect(accountStyles).toContain('var(--cr-muted)');
     expect(genericWebStyles.trim()).toBe('');
   });
@@ -247,8 +249,8 @@ describe('mini program app structure', () => {
     expect(page).toContain('void startConnection(page);');
     expect(page).toContain('getStoredSessionSnapshot');
     expect(page).toContain('openRequiredSessionLogin');
-    expect(page).toContain('else await smartCubeSession.scan();');
-    expect(page).toContain('smartCubeSession.connectDevice(deviceId)');
+    expect(page).toContain('else await getSmartCubeSession().scan(page.nativeTimer ? { scanTimeoutMs: 30_000 } : undefined);');
+    expect(page).toContain('getSmartCubeSession().connectDevice(deviceId)');
     expect(template).toContain('bindtap="selectDevice"');
     expect(template).toContain('data-device-id="{{item.deviceId}}"');
     expect(template).toContain('devices.length > 0');
@@ -256,11 +258,14 @@ describe('mini program app structure', () => {
     expect(template).toContain('bindtap="retryConnection"');
   });
 
-  it('does not carry an abandoned native timer implementation', () => {
-    expect(sourceFiles['../src/lib/timer-store.ts']).toBeUndefined();
-    for (const [path, source] of Object.entries(sourceFiles)) {
-      expect(source, path).not.toMatch(/@cuberoot\/shared\/timer(?!\/external\/)/);
-    }
+  it('reuses the shared engine and restored native storage for Douyin', () => {
+    expect(sourceFiles['../src/lib/timer-store.ts']).toContain('@cuberoot/shared/timer/persistence');
+    const timer = sourceFiles['../src/lib/native-timer.ts'];
+    expect(timer).toContain('@cuberoot/shared/timer/machine');
+    expect(timer).toContain('@cuberoot/shared/timer/stats');
+    expect(timer).toContain('@cuberoot/shared/smart-cube/cubie');
+    expect(timer).not.toMatch(/react|react-dom|next\//);
+    for (const page of ['timer', 'tools']) expect(sourceFiles[`../src/templates/native-${page}.wxml`]).not.toContain('web-view');
   });
 
   it('keeps website addresses out of page adapters and templates', () => {

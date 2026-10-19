@@ -43,6 +43,11 @@ jobs:
           ref: ${{ steps.recordranks.outputs.sha }}
           path: recordranks
 
+      - name: Verify CubeRoot public adapter in pinned fork
+        run: |
+          test -f recordranks/client/app/api/default/cuberoot/route.ts
+          test -f recordranks/client/helpers/current-records.ts
+
       - uses: pnpm/action-setup@v4
         with:
           version: 10.32.1

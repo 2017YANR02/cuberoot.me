@@ -11,9 +11,21 @@ import {
   completeMiniProgramIdentity,
   previewIdentityLinkCode,
   validateStoredSession,
+  requestJson,
 } from '../src/lib/auth';
 
 describe('mini program authentication', () => {
+  it('settles a cancelled native request even if abort throws and a late success arrives', async () => {
+    let success!: (value: unknown) => void;
+    const abort = vi.fn(() => { throw new Error('native abort failure'); });
+    vi.stubGlobal('wx', { request(options: { success(value: unknown): void }) { success = options.success; return { abort }; } });
+    const controller = new AbortController();
+    const result = requestJson('/wca/scrambles/random', { signal: controller.signal });
+    controller.abort();
+    await expect(result).rejects.toMatchObject({ status: 0, message: 'request cancelled' });
+    success({ statusCode: 200, data: { late: true } });
+    expect(abort).toHaveBeenCalledOnce();
+  });
   afterEach(() => {
     vi.useRealTimers();
     vi.unstubAllGlobals();

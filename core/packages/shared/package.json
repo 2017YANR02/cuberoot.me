@@ -215,13 +215,34 @@
       "./double-zbll": "runtime-neutral",
       "./competition-calendar": "runtime-neutral",
       "./android-release": "runtime-neutral",
+      "./timer/timing-display": "runtime-neutral",
+      "./timer/persistence": "runtime-neutral",
+      "./timer/export-csv": "runtime-neutral",
       "./timer/machine": "runtime-neutral",
       "./timer/types": "runtime-neutral",
       "./timer/stats": "runtime-neutral",
       "./timer/event-catalog": "runtime-neutral",
       "./douyin-content": "runtime-neutral",
       "./smart-cube/gan-v1": "runtime-neutral",
-      "./timer/training-settings": "runtime-neutral"
+      "./timer/training-settings": "runtime-neutral",
+      "./timer/seeded/wca": "runtime-neutral",
+      "./timer/settings-contract": "runtime-neutral",
+      "./timer/input-contract": "runtime-neutral",
+      "./timer/session": "runtime-neutral",
+      "./timer/manual-entry": "runtime-neutral",
+      "./timer/manual-scramble-queue": "runtime-neutral",
+      "./timer/export-cstimer": "runtime-neutral",
+      "./timer/export-speedstacks": "runtime-neutral",
+      "./timer/source-revision": "runtime-neutral",
+      "./timer/history": "runtime-neutral",
+      "./timer/rolling-stats": "runtime-neutral",
+      "./timer/wca-scramble-pool": "runtime-neutral",
+      "./timer/wca-difficulty-data": "runtime-neutral",
+      "./timer/wca-source-config": "runtime-neutral",
+      "./timer/scramble-history": "runtime-neutral",
+      "./timer/http": "runtime-neutral",
+      "./timer/rank-presentation": "runtime-neutral",
+      "./timer/wca-competition-catalog": "runtime-neutral"
     }
   },
   "main": "./src/index.ts",
@@ -813,13 +834,50 @@
       "node": "./dist/android-release.js",
       "default": "./src/android-release.ts"
     },
+    "./timer/timing-display": "./src/timer/timing-display.ts",
+    "./timer/persistence": "./src/timer/persistence.ts",
+    "./timer/export-csv": "./src/timer/export-csv.ts",
     "./timer/machine": "./src/timer/machine.ts",
     "./timer/types": "./src/timer/types.ts",
     "./timer/stats": "./src/timer/stats.ts",
     "./timer/event-catalog": "./src/timer/event-catalog.ts",
     "./douyin-content": "./src/douyin-content.ts",
     "./smart-cube/gan-v1": "./src/smart_cube/gan_v1.ts",
-    "./timer/training-settings": "./src/timer/training-settings.ts"
+    "./timer/training-settings": "./src/timer/training-settings.ts",
+    "./timer/seeded/wca": {
+      "types": "./src/timer/seeded/wca.ts",
+      "node": "./dist/timer/seeded/wca.js",
+      "default": "./src/timer/seeded/wca.ts"
+    },
+    "./timer/settings-contract": {
+      "types": "./src/timer/settings-contract.ts",
+      "node": "./dist/timer/settings-contract.js",
+      "default": "./src/timer/settings-contract.ts"
+    },
+    "./timer/input-contract": {
+      "types": "./src/timer/input-contract.ts",
+      "node": "./dist/timer/input-contract.js",
+      "default": "./src/timer/input-contract.ts"
+    },
+    "./timer/session": {
+      "types": "./src/timer/session.ts",
+      "node": "./dist/timer/session.js",
+      "default": "./src/timer/session.ts"
+    },
+    "./timer/manual-entry": "./src/timer/manual-entry.ts",
+    "./timer/manual-scramble-queue": "./src/timer/manual-scramble-queue.ts",
+    "./timer/export-cstimer": "./src/timer/export-cstimer.ts",
+    "./timer/export-speedstacks": "./src/timer/export-speedstacks.ts",
+    "./timer/source-revision": "./src/timer/source-revision.ts",
+    "./timer/history": "./src/timer/history.ts",
+    "./timer/rolling-stats": "./src/timer/rolling-stats.ts",
+    "./timer/wca-scramble-pool": "./src/timer/wca-scramble-pool.ts",
+    "./timer/wca-difficulty-data": "./src/timer/wca-difficulty-data.ts",
+    "./timer/wca-source-config": "./src/timer/wca-source-config.ts",
+    "./timer/scramble-history": "./src/timer/scramble-history.ts",
+    "./timer/http": "./src/timer/http.ts",
+    "./timer/rank-presentation": "./src/timer/rank-presentation.ts",
+    "./timer/wca-competition-catalog": "./src/timer/wca-competition-catalog.ts"
   },
   "scripts": {
     "build": "tsc -b",

@@ -27,6 +27,15 @@ async function equivalent(a: string[], b: string[]) {
 }
 
 describe('library-assisted notation correction', () => {
+  it('displays transformed wide turns like the library without changing playback ranges', async () => {
+    const original = line("x' F Rw F R' F' Rw' D R D' x");
+    const snapshot = JSON.stringify(original);
+    const displayed = formattedReconMoves(original);
+    expect(displayed.join(' ')).toBe("x' F r F R' F' r' D R D' x");
+    expect(displayed).toHaveLength(original.moveRanges!.length);
+    await equivalent(original.moves, displayed);
+    expect(JSON.stringify(original)).toBe(snapshot);
+  });
   it('matches the same executed formula in all 24 holding frames, including local AUF', async () => {
     const formula = "(R U R' U') (R' F R2 U R' U' F')";
     const executions = ["R U R' U' R' F R R U R' U' F'", "U R U R' U' R' F R R U R' U' F' U2"];

@@ -1,0 +1,9 @@
+.tools-heading, .tools-search { display: flex; align-items: center; justify-content: space-between; gap: 16rpx; }
+.tools-button { min-width: 88rpx; min-height: 88rpx; display: flex; align-items: center; justify-content: center; color: var(--cr-accent); padding: 0 16rpx; }
+.tools-select { margin-top: 32rpx; min-height: 96rpx; display: flex; align-items: center; border-bottom: 1rpx solid var(--cr-line); font-weight: 650; }
+.tools-search input { flex: 1; min-width: 0; min-height: 88rpx; }
+.tools-note { display: block; color: var(--cr-muted); line-height: 1.6; margin: 8rpx 0; font-size: 26rpx; }
+.tools-row { padding: 28rpx 0; border-bottom: 1rpx solid var(--cr-line); }
+.tools-row-title { line-height: 1.6; font-weight: 600; }
+.tools-rank { display: block; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--cr-accent); }
+.tools-error { display: block; color: var(--cr-danger); }

@@ -1,4 +1,5 @@
 'use client';
+import { MethodStagePicker } from './TimerPuzzlePicker';
 
 /**
  * GenDiffConfig — 随机状态来源的「难度」子面板(3×3 族项目)。
@@ -16,12 +17,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   dataVariantOfStage,
-  stageLabel,
   TIMER_RANDOM_DIFFICULTY_BEST_SLOT,
   uiStagesOf,
   uiVariantOf,
   uiVariantOptions,
-  variantLabel,
   type TimerRandomDifficultySettings,
 } from '@cuberoot/shared/timer';
 import {
@@ -222,40 +221,11 @@ export function TimerRandomDifficultyConfig({
               <div className="timer-random-difficulty-body">
                 <div className="timer-random-difficulty-options">
                   <SubsetColorPicker disabled={disabled} sel={sel} language={language} />
-                  {methods.length > 1 && (
-                    <select
-                      aria-label={text(COPY.method)}
-                      className="timer-random-difficulty-select"
-                      disabled={disabled}
-                      value={method}
-                      onChange={(event) => {
-                        const m = event.target.value;
-                        const first = stagesOfMethod(m)[0];
-                        onChange({
-                          genDiffVariant: dataVariantOfStage(m, first), genDiffStage: first, ...RESET,
-                        });
-                      }}
-                    >
-                      {methods.map((option) => (
-                        <option key={option} value={option}>{variantLabel(option, language === 'zh')}</option>
-                      ))}
-                    </select>
-                  )}
-                  <select
-                    aria-label={text(COPY.stage)}
-                    className="timer-random-difficulty-select"
-                    disabled={disabled}
-                    value={stage}
-                    onChange={(event) => onChange({
-                      genDiffVariant: dataVariantOfStage(method, event.target.value),
-                      genDiffStage: event.target.value,
-                      ...RESET,
-                    })}
-                  >
-                    {stages.map((option) => (
-                      <option key={option} value={option}>{stageLabel(option, language === 'zh')}</option>
-                    ))}
-                  </select>
+                  <MethodStagePicker
+                    disabled={disabled} isZh={language === 'zh'} method={method} stage={stage}
+                    methods={methods} stagesOf={stagesOfMethod}
+                    onSelect={(m, s) => onChange({ genDiffVariant: dataVariantOfStage(m, s), genDiffStage: s, ...RESET })}
+                  />
                   {showSlots && (
                     <select
                       className="timer-random-difficulty-select"

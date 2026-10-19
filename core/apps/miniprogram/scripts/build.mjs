@@ -74,6 +74,11 @@ async function prepareOutput(sourceFiles) {
     .map(async (file) => {
       const output = join(compileRoot, relative(sourceRoot, file));
       await mkdir(dirname(output), { recursive: true });
+      const page = relative(sourceRoot, file).replaceAll('\\', '/').match(/^pages\/(timer|tools)\/index\.wxml$/)?.[1];
+      if (douyin && page) {
+        await writeFile(output, `<include src="../../templates/native-${page}.wxml" />\n`);
+        return;
+      }
       await copyFile(file, output);
     }));
   await Promise.all(BUILD_ASSETS.map(async (asset) => {
@@ -125,6 +130,7 @@ async function buildProject() {
   const buildResult = await (douyin ? build : buildWechatBundle)({
     absWorkingDir: packageRoot,
     bundle: true,
+    inject: [join(sourceRoot, 'lib/native-timer-runtime.ts')],
     entryPoints: entryPoints(sourceFiles),
     format: 'iife',
     logLevel: 'info',

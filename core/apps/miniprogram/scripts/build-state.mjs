@@ -60,7 +60,11 @@ function assertAllowedBuildGraphInput(packageRoot, file) {
     throw new Error(`Build graph input is outside the core workspace: ${file}`);
   }
   const workspacePath = normalizedRelativePath(workspaceRoot, file);
-  if (workspacePath.split('/').some((segment) => segment === 'dist' || segment === '.tmp')) {
+  const segments = workspacePath.split('/');
+  const dependencyIndex = segments.indexOf('node_modules');
+  // Published dependency entry points (e.g. cubing/dist) are inputs, not our build outputs.
+  const ownedSegments = dependencyIndex < 0 ? segments : segments.slice(0, dependencyIndex);
+  if (ownedSegments.some((segment) => segment === 'dist' || segment === '.tmp')) {
     throw new Error(`Build graph input points at generated output: ${file}`);
   }
 }

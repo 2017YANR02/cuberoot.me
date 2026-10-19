@@ -2,7 +2,9 @@
 <import src="../../templates/native-appearance.wxml" />
 <template is="native-scenery" wx:if="{{!isTimelineEntry}}" />
 <import src="../../templates/web-route-view.wxml" />
+<block wx:if="{{nativeTimerPage}}"><include src="../../templates/native-timer.wxml" /></block>
 <template
+  wx:else
   is="web-route-view"
   data="{{src: src, viewAttempt: viewAttempt, loadingTitle: loadingTitle, errorTitle: errorTitle, errorMessage: errorMessage, canRetry: canRetry, retryLabel: retryLabel, loginRequired: loginRequired, loginStorageUnavailable: loginStorageUnavailable, loginBusy: loginBusy, loginButtonLabel: loginButtonLabel, loginButtonBusyLabel: loginButtonBusyLabel, loginRetryLabel: loginRetryLabel, loginError: loginError}}"
 />

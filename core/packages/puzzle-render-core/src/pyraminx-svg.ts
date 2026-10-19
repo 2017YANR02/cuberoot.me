@@ -1,0 +1,278 @@
+/**
+ * Pyraminx state model + scramble preview SVG, ported from
+ * D:\cube\tnoodle-lib\scrambles\src\main\java\org\worldcubeassociation\tnoodle\puzzle\PyraminxPuzzle.java
+ *
+ * Pure string SVG output (no DOM, no async); identical layout to TNoodle's
+ * `drawScramble` so the PDF preview matches an official tnoodle sheet.
+ *
+ * Sticker layout (per face, 9 stickers):
+ *
+ *           0
+ *         /\
+ *        /1 \
+ *       /----\
+ *      / 2 |8 \
+ *     /----+----\
+ *    /3|4| 5|6|7 \
+ *   /----+----+----\
+ *
+ * Move semantics (uppercase = full face turn + tip; lowercase = tip-only):
+ *   U / L / R / B  → axes 0..3, each a 120° rotation of the matching tip side.
+ *
+ * State values are STICKER IDS (`face * 9 + slot`), not color indices — the
+ * color index is `id / 9` (the sticker's origin face), so colors are unchanged
+ * while the id also carries piece identity through the scramble (that is what
+ * makes `mask` follow the piece rather than the position).
+ */
+import type { MaskRenderOptions, StickerId } from '@cuberoot/shared/cube-unfolded-svg';
+
+export const PYRA_DEFAULT_COLORS: Record<string, string> = {
+  // Tnoodle PyraminxPuzzle.java defaultColorScheme
+  F: '#00FF00',  // green
+  D: '#FFFF00',  // yellow
+  L: '#FF0000',  // red
+  R: '#0000FF',  // blue
+};
+
+export const PYRA_FACE_LABELS = ['F', 'D', 'L', 'R'] as const;
+const FACE_LABELS = PYRA_FACE_LABELS;
+export const PYRA_STICKERS_PER_FACE = 9;
+
+/** Sticker id (`F0`..`R8`) for a state value / canonical `face * 9 + slot`. */
+export function pyraStickerId(v: number): StickerId {
+  return `${FACE_LABELS[Math.floor(v / 9)]}${v % 9}`;
+}
+
+const PIECE_SIZE = 30;          // tnoodle pieceSize
+const GAP = 5;                  // tnoodle gap
+const SQRT3 = Math.sqrt(3);
+const STROKE_W = 1;             // svglite default
+
+export class PyraminxState {
+  // image[face][slot] = sticker id currently sitting there (`origin face * 9 + origin slot`)
+  image: number[][];
+
+  constructor() {
+    this.image = Array.from({ length: 4 }, (_, f) => Array.from({ length: 9 }, (_, s) => f * 9 + s));
+  }
+
+  private static swap3(arr: number[][], f1: number, s1: number, f2: number, s2: number, f3: number, s3: number) {
+    const t = arr[f1][s1];
+    arr[f1][s1] = arr[f2][s2];
+    arr[f2][s2] = arr[f3][s3];
+    arr[f3][s3] = t;
+  }
+
+  /** Tnoodle PyraminxState.turn(s, image) — 120° body turn around tip `s`. */
+  turnBody(s: number) {
+    const im = this.image;
+    switch (s) {
+      case 0: // U
+        PyraminxState.swap3(im, 0, 8, 3, 8, 2, 2);
+        PyraminxState.swap3(im, 0, 1, 3, 1, 2, 4);
+        PyraminxState.swap3(im, 0, 2, 3, 2, 2, 5);
+        break;
+      case 1: // L
+        PyraminxState.swap3(im, 2, 8, 1, 2, 0, 8);
+        PyraminxState.swap3(im, 2, 7, 1, 1, 0, 7);
+        PyraminxState.swap3(im, 2, 5, 1, 8, 0, 5);
+        break;
+      case 2: // R
+        PyraminxState.swap3(im, 3, 8, 0, 5, 1, 5);
+        PyraminxState.swap3(im, 3, 7, 0, 4, 1, 4);
+        PyraminxState.swap3(im, 3, 5, 0, 2, 1, 2);
+        break;
+      case 3: // B
+        PyraminxState.swap3(im, 1, 8, 2, 2, 3, 5);
+        PyraminxState.swap3(im, 1, 7, 2, 1, 3, 4);
+        PyraminxState.swap3(im, 1, 5, 2, 8, 3, 2);
+        break;
+    }
+    this.turnTipOnly(s);
+  }
+
+  turnTipOnly(s: number) {
+    const im = this.image;
+    switch (s) {
+      case 0: PyraminxState.swap3(im, 0, 0, 3, 0, 2, 3); break;
+      case 1: PyraminxState.swap3(im, 0, 6, 2, 6, 1, 0); break;
+      case 2: PyraminxState.swap3(im, 0, 3, 1, 3, 3, 6); break;
+      case 3: PyraminxState.swap3(im, 1, 6, 2, 0, 3, 3); break;
+    }
+  }
+
+  applyMove(token: string) {
+    if (!token) return;
+    const m = /^([ulrbULRB])(['2]?)$/.exec(token.trim());
+    if (!m) return;
+    const ch = m[1];
+    const dir = m[2] === "'" ? 2 : 1;   // ' = inverse = 2 turns; double = also 2; default = 1
+    const isTip = ch === ch.toLowerCase();
+    const axis = 'ulrb'.indexOf(ch.toLowerCase());
+    if (axis < 0) return;
+    for (let i = 0; i < dir; i++) {
+      if (isTip) this.turnTipOnly(axis);
+      else this.turnBody(axis);
+    }
+  }
+
+  applyAlgorithm(scramble: string) {
+    for (const tok of scramble.split(/\s+/).filter(Boolean)) this.applyMove(tok);
+  }
+}
+
+// ─── Geometry helpers (mirror tnoodle's `triangle()` + `drawTriangle()`) ──
+
+interface Triangle {
+  vx: [number, number, number];
+  vy: [number, number, number];
+}
+
+/** Equilateral triangle with circumradius √3·pieceSize, centered at origin. */
+function makeTriangle(pointUp: boolean, pieceSize: number): Triangle {
+  const rad = SQRT3 * pieceSize;
+  const baseAngs = [7 / 6, 11 / 6, 1 / 2];
+  const vx: [number, number, number] = [0, 0, 0];
+  const vy: [number, number, number] = [0, 0, 0];
+  for (let i = 0; i < 3; i++) {
+    const a = (baseAngs[i] + (pointUp ? 1 / 3 : 0)) * Math.PI;
+    vx[i] = rad * Math.cos(a);
+    vy[i] = rad * Math.sin(a);
+  }
+  return { vx, vy };
+}
+
+interface Pt { x: number; y: number; }
+
+function intersect(p1: Pt, p2: Pt, p3: Pt, p4: Pt): Pt {
+  const det = (a: number, b: number, c: number, d: number) => a * d - b * c;
+  const d1 = det(p1.x, p1.y, p2.x, p2.y);
+  const d2 = det(p3.x, p3.y, p4.x, p4.y);
+  const denom = det(p1.x - p2.x, p1.y - p2.y, p3.x - p4.x, p3.y - p4.y);
+  return {
+    x: det(d1, p1.x - p2.x, d2, p3.x - p4.x) / denom,
+    y: det(d1, p1.y - p2.y, d2, p3.y - p4.y) / denom,
+  };
+}
+
+/** 一个面的 9 块子三角(展开图坐标),顺序 = tnoodle 的 slot 0..8。 */
+function facePolys(cx: number, cy: number, pointUp: boolean, pieceSize: number): Array<Array<[number, number]>> {
+  const tri = makeTriangle(pointUp, pieceSize);
+  const xpoints = [tri.vx[0] + cx, tri.vx[1] + cx, tri.vx[2] + cx];
+  const ypoints = [tri.vy[0] + cy, tri.vy[1] + cy, tri.vy[2] + cy];
+
+  // 1/3, 2/3 split points along each edge (i → (i+1)%3)
+  const xs = new Array<number>(6);
+  const ys = new Array<number>(6);
+  for (let i = 0; i < 3; i++) {
+    const j = (i + 1) % 3;
+    xs[i]     = (1 / 3) * xpoints[j] + (2 / 3) * xpoints[i];
+    ys[i]     = (1 / 3) * ypoints[j] + (2 / 3) * ypoints[i];
+    xs[i + 3] = (2 / 3) * xpoints[j] + (1 / 3) * xpoints[i];
+    ys[i + 3] = (2 / 3) * ypoints[j] + (1 / 3) * ypoints[i];
+  }
+
+  const center = intersect(
+    { x: xs[0], y: ys[0] }, { x: xs[4], y: ys[4] },
+    { x: xs[2], y: ys[2] }, { x: xs[3], y: ys[3] },
+  );
+
+  // 9 sub-triangles (mirrors tnoodle's drawTriangle ps[0..8] construction).
+  const polys: Array<[number, number][]> = [];
+  for (let i = 0; i < 3; i++) {
+    // ps[3i]:  corner triangle at vertex i
+    polys.push([
+      [xpoints[i], ypoints[i]],
+      [xs[i], ys[i]],
+      [xs[3 + ((i + 2) % 3)], ys[3 + ((i + 2) % 3)]],
+    ]);
+    // ps[3i+1]: inner triangle xs[i] → xs[3+(i+2)%3] → center
+    polys.push([
+      [xs[i], ys[i]],
+      [xs[3 + ((i + 2) % 3)], ys[3 + ((i + 2) % 3)]],
+      [center.x, center.y],
+    ]);
+    // ps[3i+2]: inner triangle xs[i] → xs[i+3] → center
+    polys.push([
+      [xs[i], ys[i]],
+      [xs[i + 3], ys[i + 3]],
+      [center.x, center.y],
+    ]);
+  }
+  return polys;
+}
+
+function fmt(n: number): string {
+  // 3 decimal places; trim trailing zeros.
+  return Number(n.toFixed(3)).toString();
+}
+
+export interface PyraNetCell {
+  face: number;
+  slot: number;
+  /** `face * 9 + slot` —— 与 lib/pyraminx-solver 的 facelet 下标同一套。 */
+  index: number;
+  points: Array<[number, number]>;
+}
+
+export interface PyraNetGeometry {
+  width: number;
+  height: number;
+  cells: PyraNetCell[];
+}
+
+/**
+ * 展开图的 36 块子三角(净几何,不含颜色)。预览图与交互画板(`_InteractivePyraNet`)共用这一份 ——
+ * 画板要给每块挂点击事件,不能只有拼好的 SVG 字符串。
+ *
+ * 四个面的位置 = tnoodle drawMinx 的 face 原点(各展开三角形的重心):F 顶部朝上,D 底部朝下,
+ * L 左上朝下,R 右上朝下。
+ */
+export function pyraNetGeometry(): PyraNetGeometry {
+  const origins: Array<[number, number, boolean]> = [
+    [2 * GAP + 3 * PIECE_SIZE, GAP + SQRT3 * PIECE_SIZE, true],                    // F
+    [2 * GAP + 3 * PIECE_SIZE, 2 * GAP + 2 * SQRT3 * PIECE_SIZE, false],           // D
+    [GAP + 1.5 * PIECE_SIZE, GAP + 0.5 * SQRT3 * PIECE_SIZE, false],               // L
+    [3 * GAP + 4.5 * PIECE_SIZE, GAP + 0.5 * SQRT3 * PIECE_SIZE, false],           // R
+  ];
+  const cells: PyraNetCell[] = [];
+  origins.forEach(([cx, cy, pointUp], face) => {
+    facePolys(cx, cy, pointUp, PIECE_SIZE).forEach((points, slot) => {
+      cells.push({ face, slot, index: face * PYRA_STICKERS_PER_FACE + slot, points });
+    });
+  });
+  return {
+    // Tnoodle preferredSize: width = 6*pieceSize + 4*gap; height = 3*sqrt(3)*pieceSize + 3*gap
+    width: 6 * PIECE_SIZE + 4 * GAP,
+    height: 3 * SQRT3 * PIECE_SIZE + 3 * GAP,
+    cells,
+  };
+}
+
+/** Render a pyraminx scramble preview SVG (transparent background). */
+export function renderPyraScrambleSvg(
+  scramble: string,
+  colors: Record<string, string> = PYRA_DEFAULT_COLORS,
+  opts?: MaskRenderOptions,
+): string {
+  const state = new PyraminxState();
+  try { state.applyAlgorithm(scramble); } catch (e) {
+    console.warn('[pyraminx_svg] applyAlgorithm failed', scramble, e);
+  }
+
+  const scheme: string[] = FACE_LABELS.map((f) => colors[f] ?? PYRA_DEFAULT_COLORS[f]);
+  const { width: w, height: h, cells } = pyraNetGeometry();
+
+  const out: string[] = [];
+  out.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${fmt(w)} ${fmt(h)}" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%">`);
+  for (const cell of cells) {
+    const id = state.image[cell.face][cell.slot] ?? 0;
+    const masked = opts?.mask?.ids.has(pyraStickerId(id)) ?? false;
+    const fill = masked ? opts!.mask!.color : (scheme[Math.floor(id / PYRA_STICKERS_PER_FACE)] ?? '#888');
+    const sid = opts?.stickerIds ? ` data-sid="${FACE_LABELS[cell.face]}${cell.slot}"` : '';
+    const d = `M${cell.points.map((p) => `${fmt(p[0])},${fmt(p[1])}`).join(' L')} Z`;
+    out.push(`<path d="${d}" fill="${fill}"${sid} stroke="#000" stroke-width="${STROKE_W}" stroke-linejoin="round"/>`);
+  }
+  out.push('</svg>');
+  return out.join('');
+}
