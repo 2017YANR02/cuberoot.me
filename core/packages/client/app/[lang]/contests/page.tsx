@@ -198,7 +198,7 @@ export default function ContestsPage() {
       </div>
     </section>}
     {view !== 'home' && <div className="contests-filters">
-      {view === 'records' && <label>{t('项目分类', 'Event category')}<select value={params.group} onChange={e => update({ group: e.target.value, event: '' })}>
+      {view === 'records' && <label>{t('项目分类', 'Event category')}<select className="contests-filter-select" value={params.group} onChange={e => update({ group: e.target.value, event: '' })}>
         {groups.map(group => <option key={group} value={group}>{CONTEST_GROUPS[group] ? tr(CONTEST_GROUPS[group]) : group}</option>)}</select></label>}
       {view !== 'persons' && <div><span className="contests-label">{t('项目', 'Event')}</span><PuzzlePicker groups={pickerGroups} selectedEvent={eventId || detail?.events[0]?.eventId}
         onSelect={event => update({ event })} isZh={isZh} showTriggerIcon={false} showItemIcons={false} /></div>}
@@ -206,13 +206,13 @@ export default function ContestsPage() {
         <RegionPicker isZh={isZh} value={regionValue} onChange={region => update({ region: REGION_CODES[region] ?? (region === 'world' ? '' : region.toUpperCase()) })}
           restrictTo={catalog.data?.regions.filter(r => r.type !== 'super-region').map(r => r.code)} allLabel={t('全球', 'Worldwide')} />
       </div>}
-      {['rankings', 'records'].includes(view) && <label>{t('成绩来源', 'Result category')}<select value={recordCategory} disabled={recordCategory === 'online' && (selectedEvent?.category.videoBased || params.group === 'extreme-bld')} onChange={e => update({ category: e.target.value as typeof params.category })}>
+      {['rankings', 'records'].includes(view) && <label>{t('成绩来源', 'Result category')}<select className="contests-filter-select" value={recordCategory} disabled={recordCategory === 'online' && (selectedEvent?.category.videoBased || params.group === 'extreme-bld')} onChange={e => update({ category: e.target.value as typeof params.category })}>
         <option value="competitions">{t('比赛', 'Competitions')}</option><option value="meetups">{t('聚会', 'Meetups')}</option><option value="online">{t('线上', 'Online')}</option>
       </select></label>}
-      {view === 'rankings' && <label>{t('成绩类型', 'Result type')}<select value={params.type} onChange={e => update({ type: e.target.value as typeof params.type })}>
+      {view === 'rankings' && <label>{t('成绩类型', 'Result type')}<select className="contests-filter-select" value={params.type} onChange={e => update({ type: e.target.value as typeof params.type })}>
         <option value="single">{t('单次', 'Single')}</option><option value="average">{t('平均（标准赛制）', 'Average (standard format)')}</option><option value="all-avg-formats">{t('平均（全部赛制）', 'Average (all formats)')}</option>
       </select></label>}
-      {view === 'records' && <label>{t('纪录范围', 'Record view')}<select value={params.history} onChange={e => update({ history: e.target.value as typeof params.history })}>
+      {view === 'records' && <label>{t('纪录范围', 'Record view')}<select className="contests-filter-select" value={params.history} onChange={e => update({ history: e.target.value as typeof params.history })}>
         <option value="current">{t('当前纪录', 'Current records')}</option><option value="all">{t('纪录历史', 'Record history')}</option></select></label>}
       {['persons', 'competitions'].includes(view) && <SearchInput value={params.q} onChange={q => update({ q })} debounceMs={300} maxLength={100}
         ariaLabel={t('搜索', 'Search')} placeholder={view === 'persons' ? t('姓名或 WCA ID', 'Name or WCA ID') : t('比赛名称或城市', 'Contest name or city')} />}
@@ -224,7 +224,7 @@ export default function ContestsPage() {
     {error ? <div role="alert" className="contests-empty"><p>{error === 404 && view === 'person'
       ? t('未找到该选手的 Contests 公开档案。有 WCA ID 不代表已参加 Cubing Contests 收录的比赛。', 'No public Contests profile was found. Having a WCA ID does not imply participation in a contest listed here.')
       : error === 404 ? t('未找到这项公开内容。', 'This public entry was not found.') : t('数据暂时无法加载，请重试。', 'Data could not be loaded. Please retry.')}</p>
-      <button type="button" onClick={() => { catalog.retry(); response.retry(); }}>{t('重试', 'Retry')}</button></div>
+      <button className="contests-action-button" type="button" onClick={() => { catalog.retry(); response.retry(); }}>{t('重试', 'Retry')}</button></div>
       : loading ? <p role="status" className="contests-empty">{t('正在加载…', 'Loading…')}</p> : null}
     {!loading && !error && response.data && <>
       {(view === 'home' || view === 'competitions') && <><h2>{t('比赛', 'Contests')} <small>{competitionRows.length}</small></h2>
@@ -267,6 +267,6 @@ export default function ContestsPage() {
 function Pagination({ offset, size, more, change }: { offset: number; size: number; more: boolean; change: (offset: number) => void }) {
   const t = useT();
   if (!offset && !more) return null;
-  return <div className="contests-pagination"><button type="button" disabled={offset <= 0} onClick={() => change(Math.max(0, offset - size))}>{t('上一页', 'Previous')}</button>
-    <span>{Math.floor(Math.max(0, offset) / size) + 1}</span><button type="button" disabled={!more} onClick={() => change(offset + size)}>{t('下一页', 'Next')}</button></div>;
+  return <div className="contests-pagination"><button className="contests-action-button" type="button" disabled={offset <= 0} onClick={() => change(Math.max(0, offset - size))}>{t('上一页', 'Previous')}</button>
+    <span>{Math.floor(Math.max(0, offset) / size) + 1}</span><button className="contests-action-button" type="button" disabled={!more} onClick={() => change(offset + size)}>{t('下一页', 'Next')}</button></div>;
 }
