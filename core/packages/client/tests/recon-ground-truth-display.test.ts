@@ -203,6 +203,7 @@ it.each(["u'", "Uw'"])('preserves a measured wide cross gesture (%s) instead of 
   } as Parameters<typeof projectReconNotation>[0];
   const result = projectReconNotation(recon, 'cfop');
   expect(result.inspection).toBe('x2');
-  expect(result.lines[0].moves).toEqual(moves);
+  expect(result.lines[0].moves).toEqual(["R'", "B'", 'F', 'L', 'R2', "u'"]);
+  expect(recon.lines[0].moves).toEqual(["R'", "B'", 'F', 'L', 'R2', wide]);
   expect(result.normalized).toBe(false);
 });

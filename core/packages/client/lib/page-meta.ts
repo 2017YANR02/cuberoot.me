@@ -122,7 +122,11 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'pets': { title: { zh: '领养宠物', en: 'Adopt a companion' }, description: { zh: '领养根号兽、螃蟹、三花猫或云宝。喂食、互动，点亮星星、月亮与太阳，一起长大。', en: 'Adopt a Root Beast, Clawd, Calico, or Cloud. Feed, play, and grow a friendship from little stars to suns.' } },
   'pets/gallery': { title: { zh: '宠物图鉴', en: 'Companion gallery' }, description: { zh: '探索 CubeRoot 小伙伴的动作与表情，播放喜欢的片段，分享给朋友。', en: 'Explore CubeRoot companion animations and expressions. Play your favorite moments and share them with friends.' } },
   'account': { title: { zh: '账号', en: 'Account' } },
-  'account/get-started': { title: { zh: '新员工入门', en: 'Getting Started for Staff' }, description: { zh: '注册或登录 CubeRoot，复制账号 ID 并联系负责人开通管理员权限。', en: 'Register or sign in to CubeRoot, copy your account ID and contact your team lead for administrator access.' } },
+  'team': { title: { zh: '团队手册', en: 'Team Handbook' }, description: { zh: '入职、离职与 AI 协作 SOP。', en: 'Onboarding, offboarding and AI collaboration SOP.' } },
+  'dev/team': { title: { zh: '团队手册', en: 'Team Handbook' }, description: { zh: '入职、离职与 AI 协作 SOP。', en: 'Onboarding, offboarding and AI collaboration SOP.' } },
+  'account/sop': { title: { zh: 'AI 协作 SOP', en: 'AI Collaboration SOP' }, description: { zh: '团队 AI 协作的工作流程、质量标准与交接规范。', en: 'Workflow, quality standards and handoff guidelines for team AI collaboration.' } },
+  'account/offboarding': { title: { zh: '离职', en: 'Offboarding' }, description: { zh: '工作交接、设备归还与组织权限撤销。', en: 'Work handoff, equipment return and organizational access revocation.' } },
+  'account/get-started': { title: { zh: '入职', en: 'Onboarding' }, description: { zh: '注册或登录 CubeRoot，复制账号 ID 并联系负责人开通管理员权限。', en: 'Register or sign in to CubeRoot, copy your account ID and contact your team lead for administrator access.' } },
   'account/verify': { title: { zh: '实名认证', en: 'Identity Verification' } },
   'account/mcp': { title: { zh: 'ChatGPT 只读连接', en: 'ChatGPT Read-only Connection' } },
   'admin': {
@@ -453,10 +457,10 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'cross_trainer': { title: { zh: '十字训练', en: 'Cross Trainer' } },
   'cstimer': { title: { zh: 'csTimer', en: 'csTimer' } },
   'contests': {
-    title: { zh: '比赛系统', en: 'Contests' },
+    title: { zh: '非官方比赛与纪录', en: 'Unofficial contests & records' },
     description: {
-      zh: '创建比赛、管理项目与选手、录入现场成绩,并自动生成排名和纪录。',
-      en: 'Create competitions, manage events and competitors, enter live results, and generate rankings and records.',
+      zh: '查询 Cubing Contests 非官方比赛、项目排名、世界与地区纪录，以及选手成绩和 WCA 档案。',
+      en: 'Explore Cubing Contests unofficial competitions, event rankings, world and regional records, competitor results and linked WCA profiles.',
     },
   },
   'documentation': { title: { zh: '文档', en: 'Documentation' } },

@@ -136,7 +136,7 @@ const CSTIMER_EVENT_MAP: Record<string, EventId> = {
 /** Matches "DNS", "DNS " and "DNS <rest>" — the shapes `encodeDnsComment` emits. */
 export const CSTIMER_DNS_RE = /^DNS(?:\s+|$)/;
 
-export { encodeDnsComment } from '@cuberoot/shared/timer';
+export { encodeDnsComment } from './export-cstimer';
 
 /** Strip the DNS marker. Returns null when the comment isn't DNS-marked. */
 export function decodeDnsComment(comment: string): string | null {
@@ -268,7 +268,7 @@ export type CstimerSessionParsed = TimerImportSession;
  * Parse a cstimer "Local backup → Export" JSON string into per-session entries.
  * Returns [] if the input does not look like cstimer JSON.
  */
-export function parseCstimerExport(jsonText: string): CstimerSessionParsed[] {
+export function parseCstimerExport(jsonText: string, createId: () => string = newId): CstimerSessionParsed[] {
   let outer: Record<string, unknown>;
   try {
     outer = JSON.parse(jsonText) as Record<string, unknown>;
@@ -372,7 +372,7 @@ export function parseCstimerExport(jsonText: string): CstimerSessionParsed[] {
 
       const ts = Number(dateSec);
       solves.push({
-        id: newId(),
+        id: createId(),
         timeMs,
         penalty,
         scramble: typeof scramble === 'string' ? scramble : '',

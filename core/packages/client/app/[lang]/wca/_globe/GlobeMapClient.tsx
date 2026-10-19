@@ -3212,7 +3212,7 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
                       <span className={`globe-search-item-tag globe-search-item-tag-${c.tag}`}>{c.tag === 'upcoming' ? tr({ zh: '近期', en: 'upcoming' }) : tr({ zh: '历史', en: 'past'
                                                 })}</span>
                     </span>
-                    <span className="globe-search-item-sub">{localizeCity(c.city, isZh, c.country)}, {countryName(c.country, isZh)} · {c.date}</span>
+                    <span className="globe-search-item-sub">{localizeCity(c.city, isZh, c.country)}{tr({ zh: '，', en: ', ' })}{countryName(c.country, isZh)} · {c.date}</span>
                   </button>
                 ))}
                 {personResults.length > 0 && (
@@ -3596,7 +3596,7 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
             {currentComp.country_iso2 && <Flag iso2={currentComp.country_iso2} className="cuber-step-flag" />}
             <span>{localizeCompName(currentComp.id, currentComp.name)}</span>
           </div>
-          <div className="cuber-step-meta is-selectable">{(nameZhMap?.get(currentComp.id)?.city_zh && isZh) ? nameZhMap.get(currentComp.id)!.city_zh : localizeCity(currentComp.city, isZh, currentComp.country_iso2)}, {countryName(currentComp.country_iso2, isZh)} · {currentComp.start_date}</div>
+          <div className="cuber-step-meta is-selectable">{(nameZhMap?.get(currentComp.id)?.city_zh && isZh) ? nameZhMap.get(currentComp.id)!.city_zh : localizeCity(currentComp.city, isZh, currentComp.country_iso2)}{tr({ zh: '，', en: ', ' })}{countryName(currentComp.country_iso2, isZh)} · {currentComp.start_date}</div>
           {prevComp && (
             <div className="cuber-step-leg is-selectable">
               {fmtDistance(legKm, isZh)} · {(isZh ? `距上场 ${legDays} 天` : `${legDays}d since prev`)}

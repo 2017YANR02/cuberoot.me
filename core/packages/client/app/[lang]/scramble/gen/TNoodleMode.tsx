@@ -8,6 +8,7 @@ import '@cuberoot/timer-ui/compact-select.css';
  *   - 输入比赛或链接 → 自动加载 WCA 已公布打乱 (/v1/wca/scrambles)
  * 两条路径共用 SheetView + PDF 管道。
  */
+import { MethodStagePicker } from '@cuberoot/timer-ui/puzzle-picker';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useQueryStates, parseAsString } from 'nuqs';
@@ -34,7 +35,7 @@ import { type WcaScrambleRow } from '@/lib/wca-results-api';
 import { fetchCompName } from '@/lib/comp-wcif';
 import { apiUrl } from '@/lib/api-base';
 import { eventDisplayName } from '@/lib/wca-events';
-import { VARIANT_LABEL, VARIANT_ORDER, stageLabel, dataVariantOfStage, variantDataRef, type ScrambleVariant } from '@/lib/scramble-variants';
+import { VARIANT_LABEL, VARIANT_ORDER, dataVariantOfStage, variantDataRef, type ScrambleVariant } from '@/lib/scramble-variants';
 import { TNOODLE_WCA_EVENTS, TWIZZLE_NONWCA_EVENTS, TWIZZLE_NONWCA_APPEND, tnoodleRandomScramble } from '@/lib/cubing-scramble';
 import { CSTIMER_NONWCA_APPEND, CSTIMER_EVENT_IDS, CSTIMER_EVENTS, cstimerScramble, isCstimerEvent } from '@/lib/cstimer-scramble';
 import { SHAPE_MOD_APPEND, SHAPE_MOD_EVENT_IDS, SHAPE_MOD_EVENTS, isShapeModEvent, shapeModSourceEvent } from '@/lib/shape-mod-scramble';
@@ -1566,28 +1567,11 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
                 />
               )}
               {showCross && (
-                <select
-                  className="gen-cx-modesel"
-                  value={variant}
-                  onChange={(e) => setVariant(e.target.value as VariantKey)}
-                  aria-label={t('变体', 'Variant')}
-                >
-                  {VARIANTS.map((v) => (
-                    <option key={v.key} value={v.key}>{t(v.zh, v.en)}</option>
-                  ))}
-                </select>
-              )}
-              {showCross && (
-                <select
-                  className="gen-cx-modesel"
-                  value={safeMetric}
-                  onChange={(e) => setMetric(e.target.value as Metric)}
-                  aria-label={t('阶段', 'Stage')}
-                >
-                  {vspec.stages.map((mk) => (
-                    <option key={mk} value={mk}>{stageLabel(mk, isZh)}</option>
-                  ))}
-                </select>
+                <MethodStagePicker
+                  isZh={isZh} method={variant} stage={safeMetric} methods={VARIANTS.map(v => v.key)}
+                  stagesOf={v => VARIANT_SPEC[v as VariantKey].stages}
+                  onSelect={(v, s) => { setVariant(v as VariantKey); setMetric(s as Metric); }}
+                />
               )}
               {showCross && (
                 <div className="gen-cx-colorsel">

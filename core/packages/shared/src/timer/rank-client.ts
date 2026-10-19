@@ -10,6 +10,7 @@
  * 生产 api 才能在本地 dev 看到真实名次(NR/CR 字段同理,部署后才有).
  */
 import type { EventId } from './types';
+import type { TimerHttpFetch } from './http';
 import { toWcaEventForRank } from './rank-event';
 export { toWcaEventForRank } from './rank-event';
 
@@ -61,7 +62,7 @@ function parseRankResult(v: unknown): RankResult | null {
 // 用 prefetchRanksForWca 批量预热;成绩弹窗打开时同步读缓存即瞬时显示,未命中才回退单查.
 // 值含义:RankResult=有名次 / null=查过但无(项目不支持/解析失败) / 不存在 key=没查过.
 interface RankQuery { event: string; type: 'single' | 'average'; value: number; country?: string }
-export function createTimerRankClient({ apiUrl, fetcher }: { apiUrl(path: string): string; fetcher: typeof fetch }) {
+export function createTimerRankClient({ apiUrl, fetcher }: { apiUrl(path: string): string; fetcher: TimerHttpFetch }) {
 const rankCache = new Map<string, { result: RankResult | null; expiresAt: number }>();
 const rankInflight = new Set<string>();
 

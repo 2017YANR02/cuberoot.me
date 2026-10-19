@@ -108,6 +108,15 @@ describe('shared WCA difficulty UI', () => {
   const open = async () => {
     await act(async () => host.querySelector<HTMLButtonElement>('.timer-difficulty-trigger')!.click());
   };
+  const choose = async (method: string, stage?: string) => {
+    await act(async () => document.querySelector<HTMLButtonElement>('.pp-trigger')!.click());
+    const parent = [...document.querySelectorAll<HTMLButtonElement>('.pp-group-items > button')].find(item => item.textContent === method)!;
+    await act(async () => parent.click());
+    if (stage) {
+      const child = [...document.querySelectorAll<HTMLButtonElement>('.pp-cascade-options > button')].find(item => item.textContent === stage)!;
+      await act(async () => child.click());
+    }
+  };
   const apply = async () => {
     await act(async () => document.querySelector<HTMLButtonElement>('.timer-difficulty-actions [data-primary]')!.click());
   };
@@ -120,18 +129,12 @@ describe('shared WCA difficulty UI', () => {
     const colors = document.querySelector<HTMLButtonElement>('.subset-picker-mode')!;
     await act(async () => colors.click());
     await act(async () => document.querySelector<HTMLButtonElement>('.subset-picker-panel button[aria-label="White+Yellow"]')!.click());
-    const stage = document.querySelector<HTMLSelectElement>('select[aria-label="Stage"]')!;
-    await act(async () => {
-      stage.value = 'xcross'; stage.dispatchEvent(new Event('change', { bubbles: true }));
-    });
+    await choose('Standard', 'XCross');
     expect(JSON.parse(host.querySelector('output')!.textContent!).wcaDiffStage).toBe('cross');
     await apply();
     expect(JSON.parse(host.querySelector('output')!.textContent!)).toMatchObject({ wcaDiffColors: 'WY', wcaDiffStage: 'xcross' });
     await open();
-    const method = document.querySelector<HTMLSelectElement>('select[aria-label="Method"]')!;
-    await act(async () => {
-      method.value = 'length'; method.dispatchEvent(new Event('change', { bubbles: true }));
-    });
+    await choose('Length');
     expect(document.querySelector('select[aria-label="Stage"]')).toBeNull();
     const min = document.querySelector<HTMLInputElement>('input[aria-label="Scramble length range — min"]')!;
     await act(async () => setRangeValue(min, '19'));
@@ -151,13 +154,13 @@ describe('shared WCA difficulty UI', () => {
     expect(document.querySelector('[role="status"]')?.textContent).toBe('This competition is not indexed.');
     expect(document.querySelector<HTMLButtonElement>('[data-primary]')!.disabled).toBe(true);
     expect(onChange).not.toHaveBeenCalled();
-    const method = document.querySelector<HTMLSelectElement>('select[aria-label="Method"]')!;
+    const method = document.querySelector<HTMLButtonElement>('.pp-trigger')!;
     expect(method.disabled).toBe(false);
-    expect(document.querySelector<HTMLSelectElement>('select[aria-label="Stage"]')!.disabled).toBe(true);
+    await choose('Standard');
+    expect(document.querySelector<HTMLButtonElement>('.pp-cascade-options button')!.disabled).toBe(true);
+    await act(async () => method.click());
     expect(document.querySelector('input[aria-label="Difficulty range — min"]')).toBeNull();
-    await act(async () => {
-      method.value = 'length'; method.dispatchEvent(new Event('change', { bubbles: true }));
-    });
+    await choose('Length');
     expect(document.querySelector('[role="status"]')).toBeNull();
     expect(document.querySelector('input[aria-label="Scramble length range — min"]')).not.toBeNull();
     expect(document.querySelector<HTMLButtonElement>('[data-primary]')!.disabled).toBe(false);

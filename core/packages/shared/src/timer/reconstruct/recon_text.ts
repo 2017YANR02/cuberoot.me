@@ -1,5 +1,5 @@
 import { decodeGyroTrack, type GyroSample } from '../../smart_cube/gyro_track';
-import { toMoveStringStrict } from '../../alg_notation';
+import { canonicalize3x3WideMoves, toMoveStringStrict } from '../../alg_notation';
 /**
  * 文字复盘 —— 把一把智能魔方的动作流写成 /recon 详情页那种带注释的谱子。
  *
@@ -899,9 +899,10 @@ export function formatReconLine(line: ReconTextLine): string {
   return `${moves} // ${line.label}${timeSuffix(line)}`;
 }
 
-/** Keep one token per playback range; only wasted runs receive parentheses. */
+/** Keep one token per playback range; format 3x3 wides like the library without changing execution tokens. */
 export function formattedReconMoves(line: ReconTextLine): string[] {
-  return line.moves.map((move, i) => {
+  return line.moves.map((token, i) => {
+    const move = canonicalize3x3WideMoves(token);
     const group = line.wasteGroups?.[i];
     if (group == null) return move;
     const open = i === 0 || line.wasteGroups?.[i - 1] !== group;

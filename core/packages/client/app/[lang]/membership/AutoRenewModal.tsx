@@ -84,7 +84,7 @@ export default function AutoRenewModal({ price, period, planSlug, priceCents, on
         <p id="mem-autorenew-availability" className="mem-autorenew-caption" role="status">
           {available && !availability?.pilot
             ? tr({ zh: '将在微信中确认授权。签约后申请首期扣款，支付成功后开通会员；后续在到期前 24 小时申请续费，由微信通知并延迟扣款。', en: 'Confirm authorization in WeChat. The first charge is requested after signing and membership starts after payment. Renewal requests are sent 24 hours before expiry, followed by WeChat’s notice and delayed debit.' })
-            : availability?.pilot ? null : tr({ zh: '自动续费尚未开放，当前不能签约或扣款。以下说明用于了解服务，勾选协议不会开通自动续费。', en: 'Auto-renewal is not available yet. No authorization or charge can be made. Checking the agreement below does not activate a subscription.' })}
+            : availability?.pilot ? null : tr({ zh: '自动续费暂不可用，请稍后重试。勾选协议不会建立扣款授权。', en: 'Auto-renewal is temporarily unavailable. Please try again later. Checking the agreement does not authorize any charges.' })}
         </p>
 
         {availability?.pilot && <p role="status" className="mem-autorenew-caption">{availability.pilotPayment
@@ -114,7 +114,7 @@ export default function AutoRenewModal({ price, period, planSlug, priceCents, on
         </div>}
         <button className="mem-autorenew-sign" disabled={!available || !agreed || busy} onClick={sign} aria-describedby="mem-autorenew-availability">
           <SiWechat size={18} aria-hidden="true" />
-          {available ? tr({ zh: '前往微信签约', en: 'Authorize in WeChat' }) : tr({ zh: '微信签约暂未开放', en: 'WeChat authorization unavailable' })}
+          {available ? tr({ zh: '前往微信签约', en: 'Authorize in WeChat' }) : tr({ zh: '微信签约暂不可用', en: 'WeChat authorization unavailable' })}
         </button>
         <p className="mem-autorenew-caption">
           {tr({ zh: '退订：会员 → 管理自动续费 → 对应签约记录 → 取消自动续费 → 确认取消，以微信确认结果为准。已付权益保留到期，取消不会自动退款。', en: 'To cancel: Membership → Manage auto-renewal → Select the authorization → Cancel auto-renewal → Confirm cancellation. WeChat must confirm the result. Paid benefits remain until expiry; cancellation does not automatically issue a refund.' })}

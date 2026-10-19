@@ -22,6 +22,7 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState, type CSSPrope
 import { createPortal } from 'react-dom';
 import { Info, X, Settings, ArrowLeft, ArrowRight, ChevronRight, ChevronDown } from 'lucide-react';
 import { CompactSelect } from './CompactSelect';
+import { MethodStagePicker } from './TimerPuzzlePicker';
 import { Spinner } from './Spinner';
 import CuberReconPlayer from './CuberReconPlayer';
 import type { ReconPlayerHandle } from './recon/ReconPlayerBase';
@@ -37,7 +38,7 @@ import { onXCrossProgress, type XCrossProgress } from './stage-solver/rust-cross
 import { getRustCrossPool, dropRustCrossPool, isRustCrossPoolReady, poolSizeForDevice, type PoolNeed } from './stage-solver/rust-cross-pool';
 import { normalizeWcaScramble as normalizeScramble } from '@cuberoot/shared/normalize-wca-scramble';
 import { bestErgonomicOrientationIndex, rotateSolutionY, Y_ROT_LABEL } from './stage-solver/rotate-solution';
-import { variantLabel, stageLabel, VARIANT_STAGES } from '@cuberoot/shared/timer/scramble-variants';
+import { VARIANT_STAGES } from '@cuberoot/shared/timer/scramble-variants';
 import { countQtm } from '@cuberoot/shared/scramble-length';
 import './StageSolver.css';
 
@@ -400,12 +401,13 @@ interface Props {
   onBaseChange?: (base: string) => void;
   /** gen 行内:更紧凑的间距 + 略小播放器。 */
   compact?: boolean;
+  expandedSolutions?: boolean;
   settingsSlot?: HTMLElement | null;
   onPrevScramble?: () => void;
   onNextScramble?: () => void;
 }
 
-export default function StageSolver({ scramble, lang, initialMethod = 'std', initialStage = 0, initialFace, onSelectionChange, initialSlot = '', onSlotChange, initialBase = '', onBaseChange, compact = false, settingsSlot, onPrevScramble, onNextScramble, onDismissChange, onBlockingChange }: Props) {
+export default function StageSolver({ scramble, lang, initialMethod = 'std', initialStage = 0, initialFace, onSelectionChange, initialSlot = '', onSlotChange, initialBase = '', onBaseChange, compact = false, expandedSolutions = false, settingsSlot, onPrevScramble, onNextScramble, onDismissChange, onBlockingChange }: Props) {
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
 
   // 视角格 / 解法头的目标描述(块类方法按 method+stage 给语义,其余 = 该面十字)。
@@ -1128,7 +1130,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
         {sol.c && slotCombos.length >= 2 && renderSolSlots(sol.c)}
         <code>
           {splitLeadRot(sol.m).lead && `${splitLeadRot(sol.m).lead} `}
-          <span className="stsv-sol-yrot">{Y_ROT_LABEL[rowRot[i] ?? 0] || null}</span>
+          {!expandedSolutions && <span className="stsv-sol-yrot">{Y_ROT_LABEL[rowRot[i] ?? 0] || null}</span>}
           {` ${splitLeadRot(alg).body}`}
         </code>
         <span className="stsv-sol-len">{moveLen(alg)}</span>
@@ -1173,19 +1175,21 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
       {/* 控件常驻:求解器加载期间也能切方法/阶段/条数(切方法即换池),UI 不被 loading 替换。 */}
       <div className="stsv-controls">
         {/* 底色子集(色中性 cross 选择):只显示选中底色对应的视角格;复用 /scramble/stats 的同款 picker。 */}
+        <div className="stsv-method-controls">
         <div className="stsv-control stsv-control-subset">
           <SubsetColorPicker sel={subsetSel} language={lang} />
         </div>
-        <label className="stsv-control">
-          <select className="stsv-control-select" aria-label={t('方法', 'Method')} value={method} onChange={(e) => setMethod(e.target.value as Method)}>
-            {METHOD_KEYS.map((k) => <option key={k} value={k}>{variantLabel(k, lang === 'zh')}</option>)}
-          </select>
-        </label>
-        <label className="stsv-control">
-          <select className="stsv-control-select" aria-label={t('阶段', 'Stage')} value={stage} onChange={(e) => setStage(Number(e.target.value))}>
-            {stages.map((k, i) => <option key={k} value={i}>{stageLabel(k, lang === 'zh')}</option>)}
-          </select>
-        </label>
+        <div className="stsv-control" data-no-swipe>
+          <MethodStagePicker
+            isZh={lang === 'zh'} method={method} stage={stages[stage] ?? stages[0]}
+            methods={METHOD_KEYS} stagesOf={key => VARIANT_STAGES[key as Method]}
+            onSelect={(nextMethod, nextStage) => {
+              setMethod(nextMethod as Method);
+              setStage(VARIANT_STAGES[nextMethod as Method].indexOf(nextStage));
+            }}
+          />
+        </div>
+        </div>
         {/* 槽位选择器仅在「有得选」时显示:k=4(满 F2L,唯一组合 BL BR FR FL,等于自动)
             和 k=0(纯十字无槽)都只有 ≤1 个组合,不显示。选项用侧贴纸色标(SlotChips)替代方位字母,
             视角(selFace)定色 —— 原生 <select> 无法在 <option> 里画色块,故走自绘下拉。 */}
@@ -1511,7 +1515,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
           )}
 
           {selFace !== null && (
-            <div className="stsv-result">
+            <div className={`stsv-result${expandedSolutions ? ' stsv-result-expanded' : ''}`}>
               <div className="stsv-sols">
                 {movesLoading && (!moves || moves.sols.length === 0) && (
                   <div className="stsv-status"><Spinner size={14} />{t('搜索最优解…', 'Searching…')}</div>
@@ -1538,7 +1542,22 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                         <Spinner size={12} className="stsv-sols-spin" label={t('搜索中…', 'Searching…')} />
                       </div>
                     )}
-                    <div ref={solutionControlsRef} className="stsv-solution-controls">
+                    {expandedSolutions ? (
+                      <div className="stsv-solution-list" aria-label={t('解法', 'Solutions')}>
+                        {solutionItems.map((item, i) => (
+                          <div className={`stsv-solution-row${i === selectedSolIndex ? ' is-selected' : ''}`} key={item.value}>
+                            <button type="button" className="stsv-sol-yrot"
+                              aria-label={t('切换 y 预转体', 'Toggle y pre-rotation')}
+                              onClick={() => cycleRot(i)}>{Y_ROT_LABEL[rowRot[i] ?? 0] || '·'}</button>
+                            <button type="button" className="stsv-solution-choice" aria-pressed={i === selectedSolIndex}
+                              onClick={() => {
+                                selectSol(i, true);
+                                copySol(rotateSolutionY(moves.sols[i].m, rowRot[i] ?? 0));
+                              }}>{item.label}</button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : <div ref={solutionControlsRef} className="stsv-solution-controls">
                       {splitLeadRot(moves.sols[selectedSolIndex].m).lead && (
                         <code className="stsv-sol-prefix">{splitLeadRot(moves.sols[selectedSolIndex].m).lead}</code>
                       )}
@@ -1567,7 +1586,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                           copySol(rotateSolutionY(moves.sols[i].m, rowRot[i] ?? 0));
                         }}
                       />
-                    </div>
+                    </div>}
                   </>
                 )}
               </div>

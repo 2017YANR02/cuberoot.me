@@ -59,10 +59,11 @@ import { countryName } from '@/lib/country-name';
 import { fetchByDifficultyCountries, type ByDifficultyCountry } from '@/lib/scramble-by-difficulty';
 import { statsUrl } from '@/lib/stats-base';
 import {
-  stageLabel, uiVariantOf, uiVariantOptions, uiStagesOf, dataVariantOfStage,
+  uiVariantOf, uiVariantOptions, uiStagesOf, dataVariantOfStage,
   normalizeVariantDataRef, variantDataRef,
   type ScrambleVariant,
 } from '@/lib/scramble-variants';
+import { MethodStagePicker } from '@cuberoot/timer-ui/puzzle-picker';
 import { VariantSelect } from '@/components/VariantSelect';
 import SolveTabs, { type SolvePuzzle } from '../_components/SolveTabs';
 import {
@@ -1504,37 +1505,14 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
             <SubsetColorPicker sel={sel} isZh={isZh} />
           </div>
         )}
-        <label>
-          <VariantSelect
-            className="scramble-stats-select"
-            value={uiVariant}
-            options={methodOptions}
-            onChange={(val) => {
-              const v = val as VariantKey;
-              const s = stagesOfUi(v)[0];
-              if (s) { setVariant(dataVariantOfStage(v, s) as VariantKey); setStage(s); }
-              else setVariant(v);
-            }}
-            isZh={i18n.language.startsWith('zh')}
-            ariaLabel={tr({ zh: '变体', en: 'Variant'
-        })}
-          />
-        </label>
-        <label>
-          <VariantSelect
-            className="scramble-stats-select"
-            value={sourceStage}
-            options={stageOptions}
-            onChange={(s) => {
-              if (isAggregate) setVariant(dataVariantOfStage(uiVariant, s) as VariantKey);
-              setStage(s);
-            }}
-            isZh={isZh}
-            label={stageLabel}
-            ariaLabel={tr({ zh: '阶段', en: 'Stage'
-        })}
-          />
-        </label>
+        <MethodStagePicker
+          isZh={isZh} method={uiVariant} stage={sourceStage} methods={methodOptions}
+          stagesOf={v => v === uiVariant ? stageOptions : stagesOfUi(v)}
+          onSelect={(v, s) => {
+            setVariant((s ? dataVariantOfStage(v, s) : v) as VariantKey);
+            if (s) setStage(s);
+          }}
+        />
         {/* 固定方式:精确穷举集专属。按阶段动态列出有意义的档 —— 十字单色底只有一种解法(取
             最优就是它本身)、XCross 只解 1 槽(谈不上相邻/对角)、XXCross 要 2 槽(谈不上固定
             单个),不适用的入口直接不给,不留会算出垃圾值的选项。只剩一档时不渲染下拉。

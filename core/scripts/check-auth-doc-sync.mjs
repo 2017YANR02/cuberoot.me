@@ -14,7 +14,7 @@ const ROOTS = [
   'packages/client/components', 'packages/client/hooks', 'packages/client/app/auth',
   'packages/client/app/[lang]/account', 'packages/client/app/api/google-verify',
   'packages/client/app/api/page-access', 'packages/client/app/api/web-session',
-  'packages/client/app/api/identity-choice',
+  'packages/client/app/api/identity-choice', 'packages/client/app/[lang]/dev/team',
 ];
 const EXACT = new Set([
   "apps/api/src/payment/membership-handoff.ts",
@@ -84,6 +84,7 @@ export function isAuthDocSource(path) {
   if (EXACT.has(normalized)) return true;
   if (normalized.startsWith('packages/client/app/auth/')
     || normalized.startsWith('packages/client/app/[lang]/account/')
+    || normalized.startsWith('packages/client/app/[lang]/dev/team/')
     || normalized.startsWith('packages/client/app/api/google-verify/')
     || normalized.startsWith('packages/client/app/api/page-access/')
     || normalized.startsWith('packages/client/app/api/web-session/')

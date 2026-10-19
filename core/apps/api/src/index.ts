@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { contestsRoutes } from './routes/contests.js';
 import { RateLimitError } from './utils/rate_limit.js';
 import { bodyLimit } from 'hono/body-limit';
 import { checkCompetitionAccess, requireCompetitionAccess } from './utils/competition_access.js';
@@ -180,6 +181,7 @@ app.route('/v1', driveRoutes);
 app.route('/v1', musicRoutes);
 app.route('/v1', progressRoutes);
 app.route('/v1', healthRoutes);
+app.route('/v1', contestsRoutes);
 app.route('/v1', siteAssistantRoutes);
 app.route('/v1', cubeAgentRoutes);
 app.route('/v1', mcpRoutes);

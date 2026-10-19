@@ -357,6 +357,19 @@ BEGIN
 END
 \$\$;
 
+-- Instance-owned branding is separate from imported public competition data.
+-- Do not invent a contact email or expose the default development organization.
+UPDATE record_ranks.organizations
+SET name = 'CubeRoot Contests',
+    metadata = (COALESCE(NULLIF(metadata, ''), '{}')::jsonb || '{"showDonationLinks":false}'::jsonb)::text
+WHERE id = 'default';
+
+INSERT INTO record_ranks.settings (organization_id, key, "group", value)
+VALUES
+  ('default', 'home-page-description', 'page-contents', E'CubeRoot 非官方比赛与纪录。公开数据来自 [Cubing Contests](https://cubingcontests.com/)，每天同步；与 WCA 官方成绩分开展示。\n\nUnofficial contests and records, using public data from Cubing Contests, synced daily. These results are separate from official WCA results.\n\n[中文查询](https://cuberoot.me/zh/contests) · [English](https://cuberoot.me/contests?lang=en)'),
+  ('default', 'website-link', 'socials', 'https://cuberoot.me/zh/contests')
+ON CONFLICT (organization_id, key) DO UPDATE SET value = EXCLUDED.value, updated_at = now();
+
 COMMIT;
 SQL
 

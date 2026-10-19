@@ -203,7 +203,7 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
         <h2 className="mem-pay-title">{isZh ? plan.nameZh : plan.nameEn}</h2>
         <div className="mem-pay-price">{fmtPrice(plan.priceCents, plan.currency)}</div>
         <p className="mem-pay-tip">
-          {tr({ zh: '单次购买，不会自动续费。此付款将真实扣款，请勿用于测试。', en: 'One-time purchase with no auto-renewal. This is a real payment, not a test transaction.' })}
+          {tr({ zh: '支付成功后开通会员，金额与服务期以订单为准。', en: 'Membership starts after successful payment. The order specifies the amount and service period.' })}
         </p>
 
         {!order ? (

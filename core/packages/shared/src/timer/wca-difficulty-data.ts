@@ -9,16 +9,9 @@ import {
   type TimerWcaEventLengths,
 } from './wca-difficulty';
 
-export interface TimerWcaHttpResponse {
-  readonly ok: boolean;
-  readonly status: number;
-  json(): Promise<unknown>;
-}
-
-export type TimerWcaHttpFetch = (
-  url: string,
-  init?: { signal?: AbortSignal },
-) => Promise<TimerWcaHttpResponse>;
+import type { TimerHttpFetch } from './http';
+export type { TimerHttpResponse as TimerWcaHttpResponse } from './http';
+export type TimerWcaHttpFetch = TimerHttpFetch;
 
 export interface TimerWcaDifficultyDataAdapter {
   /** Invalid/unpublished resources resolve to null; callers use static variant definitions. */

@@ -802,8 +802,8 @@
   {
     "name": "mintydev789/RecordRanks",
     "url": "https://github.com/mintydev789/RecordRanks",
-    "zh": "比赛管理、现场成绩、排名与纪录系统;独立实例嵌入 /contests",
-    "en": "Competition management, live results, rankings and records; self-hosted instance embedded at /contests"
+    "zh": "比赛管理、排名与纪录数据服务；/contests 以本站双语界面展示 Cubing Contests 公开数据，成绩格式与排名计算复用 RecordRanks",
+    "en": "Competition, ranking and record data service; /contests presents Cubing Contests public data in CubeRoot's bilingual UI, reusing RecordRanks result formatting and rankings"
   },
   {
     "name": "afedotov/gan-web-bluetooth",

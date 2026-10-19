@@ -1,8 +1,7 @@
 'use client';
 
-// 打乱「方法 / 阶段」下拉:首页 RecentScrambles 与 /scramble/stats 共用同一个组件,
-// 保证选项标签 + 渲染完全一致。纯展示:选项数组 + onChange 由各页自己算(块折叠 /
-// 阶段联动等逻辑各页保留);label 默认 variantLabel(方法),阶段下拉传 stageLabel。
+// 原生平铺选项控件,保留给统计维度、数据集等选择。
+// 魔方方法与阶段统一复用 @cuberoot/timer-ui/puzzle-picker 的 MethodStagePicker。
 import { variantLabel } from '@/lib/scramble-variants';
 
 export function VariantSelect({ value, options, groups, onChange, isZh, className, ariaLabel, label = variantLabel }: {

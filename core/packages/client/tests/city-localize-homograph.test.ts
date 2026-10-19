@@ -8,30 +8,30 @@ import { localizeCityName } from '@/lib/cn-city-name';
 import { buildRegionStats } from '@/components/persons/logic/person-misc-region';
 import type { WcaCompetition } from '@/lib/wca-person-api';
 
-// [城市串, 期望中文城市名, 期望「去过的省份」label]
+// [城市串，期望中文城市名，期望「去过的省份」label]
 const CASES: Array<[string, string, string]> = [
-  ['Taizhou, Zhejiang', '台州, 浙江', '中国浙江'],
-  ['Taizhou, Jiangsu', '泰州, 江苏', '中国江苏'],
-  ['Suzhou, Jiangsu', '苏州, 江苏', '中国江苏'],
-  ['Suzhou, Anhui', '宿州, 安徽', '中国安徽'],
-  ['Fuzhou, Fujian', '福州, 福建', '中国福建'],
-  ['Fuzhou, Jiangxi', '抚州, 江西', '中国江西'],
-  ['Yulin, Guangxi', '玉林, 广西', '中国广西'],
-  ['Yulin, Shaanxi', '榆林, 陕西', '中国陕西'],
-  ['Yichun, Heilongjiang', '伊春, 黑龙江', '中国黑龙江'],
-  ['Yichun, Jiangxi', '宜春, 江西', '中国江西'],
-  ['Baoshan, Shanghai', '宝山, 上海', '中国上海'],
-  ['Baoshan, Yunnan', '保山, 云南', '中国云南'],
-  ['Qianjiang, Hubei', '潜江, 湖北', '中国湖北'],
-  ['Qianjiang, Chongqing', '黔江, 重庆', '中国重庆'],
-  ['Wuxi, Jiangsu', '无锡, 江苏', '中国江苏'],
-  ['Wuxi, Chongqing', '巫溪, 重庆', '中国重庆'],
+  ['Taizhou, Zhejiang', '台州，浙江', '中国浙江'],
+  ['Taizhou, Jiangsu', '泰州，江苏', '中国江苏'],
+  ['Suzhou, Jiangsu', '苏州，江苏', '中国江苏'],
+  ['Suzhou, Anhui', '宿州，安徽', '中国安徽'],
+  ['Fuzhou, Fujian', '福州，福建', '中国福建'],
+  ['Fuzhou, Jiangxi', '抚州，江西', '中国江西'],
+  ['Yulin, Guangxi', '玉林，广西', '中国广西'],
+  ['Yulin, Shaanxi', '榆林，陕西', '中国陕西'],
+  ['Yichun, Heilongjiang', '伊春，黑龙江', '中国黑龙江'],
+  ['Yichun, Jiangxi', '宜春，江西', '中国江西'],
+  ['Baoshan, Shanghai', '宝山，上海', '中国上海'],
+  ['Baoshan, Yunnan', '保山，云南', '中国云南'],
+  ['Qianjiang, Hubei', '潜江，湖北', '中国湖北'],
+  ['Qianjiang, Chongqing', '黔江，重庆', '中国重庆'],
+  ['Wuxi, Jiangsu', '无锡，江苏', '中国江苏'],
+  ['Wuxi, Chongqing', '巫溪，重庆', '中国重庆'],
 ];
 
 // 非碰撞普通城市:确保消歧逻辑没伤到常规译名。
 const REGRESSION: Array<[string, string, string]> = [
-  ['Hangzhou, Zhejiang', '杭州, 浙江', '中国浙江'],
-  ['Shenzhen, Guangdong', '深圳, 广东', '中国广东'],
+  ['Hangzhou, Zhejiang', '杭州，浙江', '中国浙江'],
+  ['Shenzhen, Guangdong', '深圳，广东', '中国广东'],
   ['Beijing', '北京', '中国北京'],
 ];
 

@@ -152,6 +152,7 @@ html[data-theme='dark'] .stsv {
   flex-wrap: wrap;
   margin: 4px 0 12px;
 }
+.stsv-method-controls { display: flex; align-items: center; gap: 2px; }
 .stsv-control { display: flex; flex-direction: column; gap: 4px; }
 .stsv-control > span { font-size: 12px; color: var(--sv-text-sub); }
 /* 直接子 select 才套工具栏外观;嵌套的「底色」picker(孙级 .subset-picker-mode)保留自带样式。 */
@@ -633,3 +634,27 @@ html[data-theme='dark'] .stsv {
 .stsv-settings-limits { display: flex; flex-wrap: wrap; gap: 16px; }
 .stsv-settings .stsv-moverestrict { margin: 0; }
 .stsv-settings .stsv-mr-grid { flex-wrap: wrap; }
+
+/* Expanded timer: one shared player on the left, persistent solutions on the right. */
+.stsv-result.stsv-result-expanded {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 24px;
+}
+.stsv-result-expanded > .stsv-player { grid-column: 1; grid-row: 1; width: 100%; }
+.stsv-result-expanded > .stsv-sols { grid-column: 2; grid-row: 1; }
+.stsv-solution-list { display: flex; flex-direction: column; gap: 4px; }
+.stsv-solution-row { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px; }
+.stsv-solution-row.is-selected { background: var(--accent-soft); }
+.stsv-solution-choice {
+  appearance: none; border: 0; background: transparent; color: inherit; font: inherit;
+  padding: 6px 0; flex: 1; min-width: 0; text-align: left; cursor: pointer;
+}
+.stsv-solution-choice:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.stsv-solution-choice .stsv-sol-option code { white-space: normal; overflow-wrap: anywhere; }
+.stsv-solution-choice .stsv-sol-len { margin-left: auto; }
+@media (max-width: 720px) {
+  .stsv-result.stsv-result-expanded { grid-template-columns: minmax(0, 1fr); }
+  .stsv-result-expanded > .stsv-sols { grid-column: 1; grid-row: 2; }
+}
