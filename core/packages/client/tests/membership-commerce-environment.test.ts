@@ -38,6 +38,7 @@ describe('membership in the WeChat browser', () => {
     mocks.getEnv.mockReset().mockImplementation((callback) => { reply = callback; });
     mocks.listPlans.mockReset().mockResolvedValue({
       plans: [{ slug: 'monthly', nameZh: '月度会员', nameEn: 'Monthly', period: 'month', periodCount: 1, priceCents: 100, currency: 'CNY', perks: [] }],
+      renewalPlans: [{ slug: 'monthly_auto_renew', nameZh: '连续包月', nameEn: 'Monthly auto-renewal', period: 'month', periodCount: 1, priceCents: 2999, currency: 'CNY', perks: [], active: false }],
       payEnabled: true, channels: { wechat: true, wechatNative: true, wechatH5: true },
     });
     host = document.createElement('div');
@@ -67,6 +68,9 @@ describe('membership in the WeChat browser', () => {
       expect(mocks.listPlans).toHaveBeenCalledTimes(1);
       expect(host.textContent).not.toContain('小程序内暂不提供');
       expect(host.querySelector('.mem-plan-cta')?.textContent).toBe('登录后开通');
+      expect(host.querySelectorAll('.mem-plan-cta')).toHaveLength(1);
+      expect(host.textContent).toContain('连续包月');
+      expect(host.textContent).not.toContain('月度会员');
     }
   });
 });
