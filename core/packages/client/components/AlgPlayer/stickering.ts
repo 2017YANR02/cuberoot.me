@@ -15,6 +15,13 @@ export function pickStickering(
 ): string | undefined {
   if (puzzle !== '3x3') return undefined;
   switch (set) {
+    // Explicit /sim sticker masks keep the whole yellow top visible in LBL lessons.
+    case 'sim:oll': case 'sim:coll':
+      return engine === 'sim' ? set.slice(4) : set.slice(4).toUpperCase();
+    // LBL teaching stages reuse the simulator's existing piece-following masks.
+    case 'Daisy': case 'fl': case 'oell': case 'ocll': case 'cll': case 'll':
+    case 'centers-only': case 'edges-only': case 'corners-only':
+      return engine === 'sim' ? set : undefined;
     case 'Cross':                                 return engine === 'sim' ? 'Cross' : undefined;
     case 'adv-f2l':                               return engine === 'sim' ? 'AF2L' : 'F2L';
     case 'f2l': case 'psf2l':                     return 'F2L';

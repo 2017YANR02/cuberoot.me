@@ -26,6 +26,14 @@ import {
 import './alg-sim-player.css';
 
 export interface AlgPlayerHandle {
+  /** Sim: restore the preceding state, animate this zero-based move, then pause. */
+  playMove?: (index: number) => void;
+  /** Move only the embedded simulator view, without turning any puzzle layers. */
+  orbitView?: (dx: number, dy: number) => void;
+  resetView?: () => void;
+  /** Manual NxN practice input, available with turn interaction and no playback controls. */
+  applyUserMove?: (move: string) => boolean;
+  isUserMovePending?: () => boolean;
   /** 拿到底层播放器或兼容 seek adapter,给光标 sync 等高级用法用。 */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getPlayer(): any | null;
@@ -60,9 +68,17 @@ interface Props {
   /** Override the rendered NxN order while retaining the selected notation grammar. */
   puzzleOrder?: number;
   set: string;
+  /** Sim NxN: also reveal the pieces covered by this existing stage mask. */
+  additionalStickering?: string;
+  /** Sim NxN: hide these solved sticker IDs (e.g. U6); the mask follows their pieces. */
+  hiddenStickers?: readonly string[];
+  /** Home sticker IDs whose original colors remain visible inside an outline. */
+  outlinedStickers?: readonly string[];
   setup?: string;
   /** NxN 预览的整体拿方；只重贴颜色，不改公式状态。 */
   orientation?: string;
+  /** Initial scene angles in radians for the sim engine; also used by reset view. */
+  sceneRot?: { x: number; y: number; z: number };
   /** 从还原态演示输入的转动。记号教学用;公式预览默认仍从公式的逆状态开始。 */
   startSolved?: boolean;
   /** 装好后自动播放;尊重 prefers-reduced-motion。 */
@@ -73,10 +89,17 @@ interface Props {
   loop?: boolean;
   /** 完整播放条或仅重播按钮。记号教学使用极简重播模式。 */
   controlMode?: AlgPlayerControlMode;
+  /** Sim engine: move counts at teaching stage boundaries on the scrubber. */
+  stepMarkers?: readonly number[];
+  hideResetView?: boolean;
   /** 拖拽只调整视角，或直接使用 `/sim` 的手拧交互。 */
   interactionMode?: AlgPlayerInteractionMode;
   /** `interactionMode='turn'` 时返回 `/sim` 产生的标准转动记号。 */
   onUserMove?: (move: string) => void;
+  /** Sim engine: current target step (0 at the start), for accompanying move cues. */
+  onStepChange?: (step: number) => void;
+  /** Sim 3x3: frame each daisy petal whose side matches the center below it. */
+  highlightDaisyAlignment?: boolean;
   /** 每个 STM 的动画时长(ms)，默认 1000。 */
   moveDurationMs?: number;
   /** 自定义尺寸,默认 260px;`fillPane=true` 时忽略 */
@@ -128,24 +151,35 @@ const AlgPlayer = forwardRef<AlgPlayerHandle, Props>(function AlgPlayer(props, r
       props.puzzle,
       props.puzzleOrder ?? null,
       props.set,
+      props.additionalStickering,
+      props.hiddenStickers,
       moveDurationMs,
       props.size ?? 260,
       props.fillPane ?? false,
       props.interactionMode ?? 'view',
+      props.sceneRot?.x, props.sceneRot?.y, props.sceneRot?.z,
     ]);
     return (
       <AlgSimPlayer
+        hideResetView={props.hideResetView}
         key={simInstanceKey}
         ref={ref}
         alg={props.alg} puzzle={props.puzzle} set={props.set} setup={props.setup}
         puzzleOrder={props.puzzleOrder}
         orientation={props.orientation}
+        sceneRot={props.sceneRot}
+        additionalStickering={props.additionalStickering}
+        hiddenStickers={props.hiddenStickers}
+        outlinedStickers={props.outlinedStickers}
+        onStepChange={props.onStepChange}
+        highlightDaisyAlignment={props.highlightDaisyAlignment}
         startSolved={props.startSolved} autoPlay={props.autoPlay} loop={props.loop}
         playRequest={props.playRequest}
         controlMode={props.controlMode}
         interactionMode={props.interactionMode}
         onUserMove={props.onUserMove}
         moveDurationMs={moveDurationMs} size={props.size ?? 260} fillPane={props.fillPane}
+        stepMarkers={props.stepMarkers}
       />
     );
   }
@@ -261,3 +295,4 @@ const TwistyAlgPlayer = forwardRef<AlgPlayerHandle, Props>(function TwistyAlgPla
 });
 
 export default AlgPlayer;
+

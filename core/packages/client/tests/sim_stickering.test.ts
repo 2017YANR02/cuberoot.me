@@ -36,6 +36,15 @@ describe('mergeStickeringMaskFns', () => {
 });
 
 describe('stickeringMaskFn 3x3', () => {
+  it('basic piece masks distinguish centers, edges and corners', () => {
+    for (const [name, visible] of [['centers-only', 0], ['edges-only', 1], ['corners-only', 2]] as const) {
+      const mask = stickeringMaskFn(3, name)!;
+      expect(pickStickering('3x3', name, 'sim')).toBe(name);
+      [P3.Uc, P3.UF, P3.UFR].forEach((piece, i) => {
+        expect(mask(piece, FACE.U), name).toBe(i === visible ? FM_REGULAR : FM_IGNORED);
+      });
+    }
+  });
   it('full / 未知阶段 → null(全原色)', () => {
     expect(stickeringMaskFn(3, 'full')).toBeNull();
     expect(stickeringMaskFn(3, 'nope')).toBeNull();

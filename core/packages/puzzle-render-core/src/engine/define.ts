@@ -22,6 +22,8 @@ export const STICKER_INNER = SIZE - 2 * STICKER_BORDER_WIDTH - STICKER_EDGE_WIDT
 /** 贴片圆角半径 = (半宽)/4 = STICKER_INNER/8(= makeStickerShape 的 `radius=size/4`)。
  *  唯一源:`Cubelet` 贴片几何与原核黑缝 SDF 都用它,保证原核贴片圆角 == 六色贴片圆角。 */
 export const STICKER_CORNER_RADIUS = STICKER_INNER / 8;
+/** Highlight band shared by animated stickers and static recognition diagrams. */
+export const STICKER_OUTLINE_WIDTH = 4.5;
 
 /** 「黑边」的量纲 —— 相邻两枚贴纸之间那条深色带宽 ÷ 小面边长。上面的几何常量换算过来
  *  = (SIZE − STICKER_INNER)/SIZE = 0.125,即引擎自出厂起的缝宽。
@@ -49,3 +51,4 @@ export const COLORS: { [key: string]: string } = {
   Gray: "#808080",
   High: "#FF0080",
 };
+
