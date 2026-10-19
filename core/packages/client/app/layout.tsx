@@ -1,3 +1,4 @@
+import { SiteCorners } from "@2017yanr02/continuous-corners/react";
 import { DOUYIN_CONTENT_BOOTSTRAP } from '@/lib/douyin-content-bootstrap';
 import InstalledContentBoundary from "@/components/InstalledContentBoundary";
 import { MOBILE_EMBED_FRAME_NAMES } from '@cuberoot/shared/mobile-embed';
@@ -115,6 +116,7 @@ export default function RootLayout({
         <AppNuqsAdapter>
           <SiteBackground />
           <SiteGlass />
+          <SiteCorners exclude=".site-glass-engine, .maplibregl-map" containers=".cg-card, .rc-card, .recon-card, .sortable-card, .timer-workspace-panel" />
           <InstalledContentBoundary>{children}</InstalledContentBoundary>
           <MembershipReminder />
           <DeskPet />

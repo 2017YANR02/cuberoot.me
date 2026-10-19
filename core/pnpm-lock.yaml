@@ -517,6 +517,9 @@ importers:
 
   packages/app-ui:
     dependencies:
+      '@2017yanr02/continuous-corners':
+        specifier: file:../../vendor/continuous-corners-0.3.0.tgz
+        version: file:vendor/continuous-corners-0.3.0.tgz(react@19.2.4)
       '@cuberoot/puzzle-solvers':
         specifier: workspace:*
         version: link:../puzzle-solvers
@@ -563,6 +566,9 @@ importers:
 
   packages/client:
     dependencies:
+      '@2017yanr02/continuous-corners':
+        specifier: file:../../vendor/continuous-corners-0.3.0.tgz
+        version: file:vendor/continuous-corners-0.3.0.tgz(react@19.2.4)
       '@airwallex/components-sdk':
         specifier: ^1.35.1
         version: 1.35.1
@@ -1120,6 +1126,16 @@ importers:
         version: 5.7.3
 
 packages:
+
+  '@2017yanr02/continuous-corners@file:vendor/continuous-corners-0.3.0.tgz':
+    resolution: {integrity: sha512-MgTEWmm2tfRB3qoe0Cz24OUPg/sVUs5F9Midpsjt/byphzYjmXe6iEs1ktmW7K/BDqClrjoLRPfoCq//2chncA==, tarball: file:vendor/continuous-corners-0.3.0.tgz}
+    version: 0.3.0
+    engines: {node: '>=18'}
+    peerDependencies:
+      react: '>=18'
+    peerDependenciesMeta:
+      react:
+        optional: true
 
   '@ai-sdk/deepseek@3.0.63':
     resolution: {integrity: sha512-oSIwe9tIpRXkANMsdNcW7JnJRLp+dakWiudl8ZImffhw3PD91i5zpN8x3V6jkXhknvEhRxyd6IIiCSCevVZHyw==}
@@ -6505,6 +6521,10 @@ packages:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
 
 snapshots:
+
+  '@2017yanr02/continuous-corners@file:vendor/continuous-corners-0.3.0.tgz(react@19.2.4)':
+    optionalDependencies:
+      react: 19.2.4
 
   '@ai-sdk/deepseek@3.0.63(zod@4.4.3)':
     dependencies:
