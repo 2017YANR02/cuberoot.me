@@ -3,8 +3,8 @@
 /**
  * /membership — 会员订阅。
  * 站内工具保持免费,会员是「支持本站 + 专属权益」(徽章 / 抢先体验 / 致谢署名)。
- * 月 / 年 / 永久三档,WCA 登录后下单,聚合支付(支付宝 / 微信)扫码付款,手动续费。
- * 在线支付未开通时引导走打赏 + 联系站长手动开通。admin 登录后见管理面板。
+ * 个人月度、年度统一通过微信签约自动续费，不回退普通支付。
+ * admin 登录后见管理面板。
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Check, RefreshCw, AlertTriangle, CalendarClock } from 'lucide-react';
@@ -18,14 +18,12 @@ import { useMembershipBenefits } from '@/hooks/useMembershipBenefits';
 import BenefitsEditor from './BenefitsEditor';
 import AppLink from '@/components/AppLink';
 import CubeRootLogo from '@/components/CubeRootLogo';
-import DonateModal from '@/components/DonateModal';
 import { Spinner } from '@/components/Spinner/Spinner';
 import {
   listPlans, getMyMembership, getOrderStatus, membershipExpiry,
   reconcileVisiblePlan, isAutoRenewPlanSlug,
-  type MembershipPlan, type Membership, type PayChannels,
+  type MembershipPlan, type Membership,
 } from '@/lib/membership-api';
-import PayModal from './PayModal';
 import AdminPanel from './AdminPanel';
 import MemberContact from './MemberContact';
 import MemberProfileEditor from '@/components/MemberProfileEditor';
@@ -83,12 +81,8 @@ export default function MembershipPage() {
 
   const [plans, setPlans] = useState<MembershipPlan[] | null>(null);
   const [renewalPrices, setRenewalPrices] = useState<MembershipPlan[]>([]);
-  const [payEnabled, setPayEnabled] = useState(false);
-  const [channels, setChannels] = useState<PayChannels | undefined>(undefined);
   const [loadErr, setLoadErr] = useState<string | null>(null);
   const [membership, setMembership] = useState<Membership | null>(null);
-  const [buyPlan, setBuyPlan] = useState<MembershipPlan | null>(null);
-  const [donateOpen, setDonateOpen] = useState(false);
   const [justPaid, setJustPaid] = useState(false);
   const [paid, setPaid] = useQueryState('paid');
   const [renew, setRenew] = useQueryState('renew');
@@ -107,7 +101,7 @@ export default function MembershipPage() {
     if (commerceRestricted !== false) return;
     let cancel = false;
     listPlans()
-      .then((r) => { if (!cancel) { setPlans(r.plans); setRenewalPrices(r.renewalPlans ?? []); setPayEnabled(r.payEnabled); setChannels(r.channels); } })
+      .then((r) => { if (!cancel) { setPlans(r.plans); setRenewalPrices(r.renewalPlans ?? []); } })
       .catch((e) => { if (!cancel) setLoadErr(e instanceof Error ? e.message : String(e)); });
     return () => { cancel = true; };
   }, [commerceRestricted]);
@@ -145,23 +139,16 @@ export default function MembershipPage() {
   const activeMember = membership?.active;
   const expiry = useMemo(() => membershipExpiry(membership), [membership]);
 
-  function handleChoose(plan: MembershipPlan) {
-    if (!loggedIn) { login(); return; }
-    if (payEnabled) setBuyPlan(plan);
-    else setDonateOpen(true);
-  }
-
-  // 便捷续费:默认续上当前 / 上次的套餐(过期会员的 planSlug 即上次套餐),回落月度 → 第一档。
+  // 到期提醒统一进入签约，不再创建普通付款订单。
   const renewMembership = useCallback(() => {
     if (!loggedIn) { login(); return; }
-    if (!payEnabled) { setDonateOpen(true); return; }
-    const list = (plans ?? []).filter((plan) => !isAutoRenewPlanSlug(plan.slug));
-    const target =
-      list.find((p) => p.slug === membership?.planSlug) ??
-      list.find((p) => p.period === 'month') ??
-      list[0];
-    if (target) setBuyPlan(target);
-  }, [loggedIn, login, payEnabled, plans, membership?.planSlug]);
+    if (membership?.planSlug?.startsWith('enterprise_')) return;
+    const list = renewalPrices.filter((plan) => isAutoRenewPlanSlug(plan.slug));
+    const target = list.find((plan) => plan.slug === membership?.planSlug)
+      ?? list.find((plan) => plan.period === (membership?.planSlug?.includes('year') ? 'year' : 'month'))
+      ?? list[0];
+    if (target) setSelectedAutoRenewPlan(target);
+  }, [loggedIn, login, renewalPrices, membership?.planSlug]);
 
   // 全局到期提醒 banner 深链 ?renew=1 → 自动打开续费弹窗(永久会员忽略)。
   useEffect(() => {
@@ -169,10 +156,10 @@ export default function MembershipPage() {
     renewMembership();
     setRenew(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [commerceRestricted, renew, mounted, plans, membership]);
+  }, [commerceRestricted, renew, mounted, plans, membership, renewalPrices]);
 
   const sortedPlans = useMemo(() => plans ?? [], [plans]);
-  const autoRenewPlans = sortedPlans.filter((plan) => isAutoRenewPlanSlug(plan.slug));
+  const autoRenewPlans = renewalPrices.filter((plan) => isAutoRenewPlanSlug(plan.slug));
   const oneTimePlans = sortedPlans.filter((plan) => !isAutoRenewPlanSlug(plan.slug));
   const enterprisePlans = oneTimePlans.filter((plan) => plan.slug.startsWith('enterprise_'));
   const personalPlans = oneTimePlans.filter((plan) => !plan.slug.startsWith('enterprise_'));
@@ -223,8 +210,7 @@ export default function MembershipPage() {
     return admin && (group || perks.some(perk => benefitMap.has(perk))) ? <BenefitsEditor onSaved={setBenefits} group={group} benefitIds={perks} language={isZh ? 'zh' : 'en'} heading={heading}>{list}</BenefitsEditor> : <>{heading && <h2 id={heading.id} className="mem-plan-section-title">{heading.text}</h2>}{list}</>;
   }
 
-  function renderOneTimePlan(plan: MembershipPlan, sectionPerks: Set<string> = new Set()) {
-    const current = activeMember && membership?.planSlug === plan.slug && !membership.lifetime;
+  function renderEnterprisePlan(plan: MembershipPlan, sectionPerks: Set<string> = new Set()) {
     const planOnlyPerks = plan.perks.filter((perk) =>
       !universalPerkSet.has(perk) && !sectionPerks.has(perk));
     return (
@@ -238,12 +224,8 @@ export default function MembershipPage() {
           <span className="mem-plan-unit">/ {planUnit(plan, isZh)}</span>
         </div>
         {renderPerks(planOnlyPerks)}
-        <button className="mem-plan-cta" onClick={() => handleChoose(plan)}>
-          {!loggedIn
-            ? tr({ zh: '登录后开通', en: 'Sign in to join' })
-            : current
-              ? tr({ zh: '续费', en: 'Renew' })
-              : tr({ zh: '开通', en: 'Subscribe' })}
+        <button className="mem-plan-cta" disabled>
+          {tr({ zh: '企业订阅暂未开放', en: 'Enterprise subscriptions are not yet available' })}
         </button>
       </div>
     );
@@ -293,7 +275,7 @@ export default function MembershipPage() {
               : tr({ zh: '会员有效期至 {d}', en: 'Member until {d}'
             }).replace('{d}', fmtDate(membership.expiresAt))}
           </span>
-          {!membership.lifetime && (expiry?.expiringSoon || expiry?.expired) && (
+          {!membership.lifetime && !membership.planSlug?.startsWith('enterprise_') && (expiry?.expiringSoon || expiry?.expired) && (
             <button className="mem-status-renew" onClick={renewMembership}>
               {tr({ zh: '立即续费', en: 'Renew now'
             })}
@@ -365,20 +347,20 @@ export default function MembershipPage() {
                         <li key={p}><Check size={13} /> {tr(benefitMap.has(p) ? benefitCopy(benefitMap.get(p)!) : { zh: p, en: p })}</li>
                       ))}
                     </ul>
-                    <button className="mem-plan-cta" onClick={() => setSelectedAutoRenewPlan(plan)}>
-                      {tr(copy.cta)}
+                    <button className="mem-plan-cta" onClick={() => { if (!loggedIn) { login(); return; } setSelectedAutoRenewPlan(plan); }}>
+                      {loggedIn ? tr(copy.cta) : tr({ zh: '登录后开通', en: 'Sign in to join' })}
                     </button>
                   </div>
                 );
               })}
-              {personalPlans.map((plan) => renderOneTimePlan(plan))}
+              {autoRenewPlans.length === 0 && <p role="status">{tr({ zh: '自动续费暂不可用，请稍后重试。', en: 'Auto-renewal is temporarily unavailable. Please try again later.' })}</p>}
             </div>
           </section>
 
           <section className="mem-plan-section" aria-labelledby="enterprise-plans-title">
             {renderPerks(enterpriseSharedPerks, 'enterprise', { id: 'enterprise-plans-title', text: tr({ zh: '企业用户', en: 'Enterprise' }) })}
             <div className="mem-plans">
-              {enterprisePlans.map((plan) => renderOneTimePlan(plan, enterpriseSharedPerkSet))}
+              {enterprisePlans.map((plan) => renderEnterprisePlan(plan, enterpriseSharedPerkSet))}
             </div>
           </section>
         </div>
@@ -442,22 +424,6 @@ export default function MembershipPage() {
         </section>
       </section>
 
-      {/* 在线支付未开通提示 */}
-      {plans && !payEnabled && !isLifetime && (
-        <p className="mem-note">
-          {tr({
-            zh: '在线支付正在接入中。你可以先通过',
-            en: 'Online payment is being set up. For now you can '
-        })}
-          <button className="mem-link-btn" onClick={() => setDonateOpen(true)}>{tr({ zh: '打赏', en: 'donate'
-        })}</button>
-          {tr({
-            zh: '支持本站,并备注 WCA ID,站长会为你手动开通会员。',
-            en: ' to support the site (note your WCA ID) and membership will be granted manually.'
-        })}
-        </p>
-      )}
-
       <p className="mem-foot-note">
         {tr({ zh: '订阅将在扣费前通知，可随时在“管理自动续费”中取消。取消后，已付会员权益保留至到期。', en: 'You will be notified before renewal charges. Cancel anytime in Manage auto-renewal; paid benefits remain until expiry.' })}
         {' '}
@@ -483,16 +449,6 @@ export default function MembershipPage() {
       {/* admin 面板 */}
       {admin && <AdminPanel key={user?.wcaId} plans={plans ?? []} isZh={isZh} onPlanUpdated={handlePlanUpdated} onViewRenewal={setSelectedAutoRenewPlan} />}
 
-      {buyPlan && (
-        <PayModal
-          plan={buyPlan}
-          channels={channels}
-          isZh={isZh}
-          onClose={() => setBuyPlan(null)}
-          onPaid={() => { setBuyPlan(null); setJustPaid(true); refreshMembership(); }}
-        />
-      )}
-      {donateOpen && <DonateModal lang={isZh ? 'zh' : 'en'} onClose={() => setDonateOpen(false)} />}
       {selectedAutoRenewPlan && (selectedAutoRenewPlan.period === 'month' || selectedAutoRenewPlan.period === 'year') && (
         <AutoRenewModal
           planSlug={selectedAutoRenewPlan.slug}
