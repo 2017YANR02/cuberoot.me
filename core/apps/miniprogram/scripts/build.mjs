@@ -45,6 +45,7 @@ const douyinUnsupportedAppConfigKeys = [
   'sitemapLocation',
   'style',
   'themeLocation',
+  'navigateToMiniProgramAppIdList',
 ];
 const watch = process.argv.includes('--watch');
 
@@ -104,7 +105,7 @@ async function buildProject() {
       templateLabel: 'project.douyin.config.template.json',
     } : {}),
   });
-  const sourceFiles = await walkFiles(sourceRoot);
+  const sourceFiles = (await walkFiles(sourceRoot)).filter(file => !douyin || !normalizedRelativePath(sourceRoot, file).startsWith('pages/membership/'));
   const appConfigPath = join(sourceRoot, 'app.json');
   const sourceJsonFiles = [
     appConfigPath,
@@ -196,7 +197,7 @@ async function normalizeDouyinAppConfig() {
   // Douyin privacy-related capabilities (including Bluetooth) must enter the
   // platform privacy authorization flow before the native API is invoked.
   normalized.usePrivacyCheck = true;
-  normalized.pages = normalized.pages.filter(page => page !== 'pages/training/index');
+  normalized.pages = normalized.pages.filter(page => page !== 'pages/training/index' && page !== 'pages/membership/index');
   normalized.tabBar.list = normalized.tabBar.list.filter(tab => tab.pagePath !== 'pages/training/index');
   await rm(join(stagingRoot, 'pages/training'), { recursive: true, force: true });
   normalized.tabBar.list = await buildDouyinTabIcons(stagingRoot, normalized.tabBar);
