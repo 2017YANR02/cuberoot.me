@@ -576,6 +576,7 @@ const TABLES: Table[] = [
 
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 278, slug: 'recon_test_runs', desc: { zh: '持久保存复盘自动检查结果', en: 'Persist automated reconstruction check results' } },
+  { n: 279, slug: 'enterprise_membership_prices', desc: { zh: '本期购买定价：个人 39.99/月、399/年；企业 399/月、3999/年', en: 'Update one-time personal and enterprise membership prices' } },
   { n: 277, slug: 'assistant_monitoring', desc: { zh: '私有聊天问答、响应时间、状态、模型用量及工具统计', en: 'Private chat content, latency, status, model usage and tool metrics' } },
   { n: 276, slug: 'membership_renewal_pipeline', desc: { zh: '微信签约同意快照、签约序列与幂等续费扣款记录', en: 'WeChat enrollment consent, request sequence and idempotent renewal debits' } },
   { n: 0, slug: 'bootstrap_updated_at_function', desc: { zh: '为全新数据库预先创建共用 updated_at trigger 函数，修复历史迁移 0001 早于 0010 引用它的重放缺口。', en: 'Bootstrap the shared updated_at trigger function so fresh replays can run historical migration 0001 before 0010.' } },

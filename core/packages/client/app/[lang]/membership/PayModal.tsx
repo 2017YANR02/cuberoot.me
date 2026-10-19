@@ -203,7 +203,7 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
         <h2 className="mem-pay-title">{isZh ? plan.nameZh : plan.nameEn}</h2>
         <div className="mem-pay-price">{fmtPrice(plan.priceCents, plan.currency)}</div>
         <p className="mem-pay-tip">
-          {tr({ zh: '支付成功后开通会员，金额与服务期以订单为准。', en: 'Membership starts after successful payment. The order specifies the amount and service period.' })}
+          {tr({ zh: '本次仅支付所选服务期，不会开通自动续费，也不会在到期后自动扣款。', en: 'This payment covers only the selected period. It does not authorize auto-renewal or any future charges.' })}
         </p>
 
         {!order ? (
