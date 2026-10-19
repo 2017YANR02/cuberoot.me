@@ -165,6 +165,8 @@ function rulesFor(order: number, name: string): Rule[] | null {
     case "opposite-centers": return [[not(and(CENTERS, orUD)), "Ignored"]];
     // —— 其它 ——
     case "centers-only": return [[not(CENTERS), "Ignored"]];
+    case "edges-only": return [[not(EDGES), "Ignored"]];
+    case "corners-only": return [[not(CORNERS), "Ignored"]];
     default: return null;
   }
 }
