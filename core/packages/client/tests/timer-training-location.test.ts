@@ -467,7 +467,7 @@ describe('training host hooks and links', () => {
     expect(trigger.textContent).toBe(tr({ zh: '完整', en: 'Full' }));
     await act(async () => trigger.click());
     expect(container.querySelector('.pp-item[aria-current="page"]')?.textContent).toBe(tr({ zh: '完整', en: 'Full' }));
-    expect(container.querySelector('.pp-item[aria-current="page"] .pp-item-check')).not.toBeNull();
+    expect(container.querySelector('.pp-item.pp-item--active[aria-current="page"]')).not.toBeNull();
   });
 
   it('maps actual link hrefs, virtual route context and router navigation while retaining lang', async () => {
