@@ -3,6 +3,8 @@ import { act, createElement, type AnchorHTMLAttributes } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+const api = vi.hoisted(() => ({ renewalAvailability: vi.fn(), createMembershipMiniLink: vi.fn(), enrollMembershipSubscription: vi.fn() }));
+vi.mock('@/lib/membership-api', () => api);
 vi.mock('@/i18n/tr', () => ({ tr: (copy: { zh: string }) => copy.zh }));
 vi.mock('@/components/AppLink', () => ({
   default: ({ prefetch: _prefetch, ...props }: AnchorHTMLAttributes<HTMLAnchorElement> & { prefetch?: boolean }) => createElement('a', props),
@@ -41,6 +43,19 @@ describe('auto-renewal before merchant approval', () => {
     expect(host.querySelector('a[href="/membership/subscription"]')?.textContent).toBe('管理自动续费 / 退订');
     expect(host.textContent).toContain('取消自动续费 → 确认取消，以微信确认结果为准');
     expect(host.textContent).toContain('已付权益保留到期，取消不会自动退款');
+  });
+  it('opens the mini handoff only after consent without creating an H5 contract', async () => {
+    api.renewalAvailability.mockResolvedValue({ available: true, channel: 'miniprogram', termsVersion: '2026-10-14' });
+    api.createMembershipMiniLink.mockResolvedValue({ urlLink: 'https://wxaurl.cn/example', qrCodeDataUrl: 'data:image/png;base64,abc', expiresIn: 600 });
+    await act(async () => root.render(createElement(AutoRenewModal, { period: 'month', price: '¥29.99', planSlug: 'monthly_auto_renew', priceCents: 2999, onClose: vi.fn() })));
+    const sign = host.querySelector<HTMLButtonElement>('.mem-autorenew-sign')!;
+    expect(sign.disabled).toBe(true);
+    await act(async () => host.querySelector<HTMLInputElement>('input')!.click());
+    await act(async () => sign.click());
+    expect(api.createMembershipMiniLink).toHaveBeenCalledWith('monthly_auto_renew');
+    expect(api.enrollMembershipSubscription).not.toHaveBeenCalled();
+    expect(host.querySelector('a[href="https://wxaurl.cn/example"]')).not.toBeNull();
+    expect(host.querySelector('img')).not.toBeNull();
   });
   it('allows closing without consent', async () => {
     const onClose = vi.fn();

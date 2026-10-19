@@ -77,8 +77,13 @@ export interface MembershipSubscriptions {
   subscriptions: MembershipSubscription[];
   managementAvailable: boolean;
 }
-export async function renewalAvailability(): Promise<{ available: boolean; termsVersion: string }> {
+export async function renewalAvailability(): Promise<{ available: boolean; termsVersion: string; channel?: 'h5' | 'miniprogram' }> {
   return handleApi(await sessionFetch(apiUrl('/v1/membership/subscriptions/availability'), { cache: 'no-store' }));
+}
+export async function createMembershipMiniLink(planSlug: string): Promise<{ urlLink: string; qrCodeDataUrl: string; expiresIn: number }> {
+  return handleApi(await sessionFetch(apiUrl('/v1/membership/subscriptions/mini-link'), {
+    method: 'POST', headers: authHeaders(), cache: 'no-store', body: JSON.stringify({ planSlug }),
+  }));
 }
 
 export async function enrollMembershipSubscription(planSlug: string, priceCents: number, termsVersion: string): Promise<{ subscriptionId: string; redirectUrl: string }> {

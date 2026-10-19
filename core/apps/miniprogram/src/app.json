@@ -8,9 +8,11 @@
     "pages/account/index",
     "pages/web/index",
     "pages/payment/index",
+    "pages/membership/index",
     "pages/preferences/index"
   ],
   "lazyCodeLoading": "requiredComponents",
+  "navigateToMiniProgramAppIdList": ["wxbd687630cd02ce1d"],
   "darkmode": true,
   "themeLocation": "theme.json",
   "window": {

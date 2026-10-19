@@ -164,6 +164,7 @@ export const EXPECTED_APP_PAGES = [
   'pages/account/index',
   'pages/web/index',
   'pages/payment/index',
+  'pages/membership/index',
   'pages/preferences/index',
 ];
 

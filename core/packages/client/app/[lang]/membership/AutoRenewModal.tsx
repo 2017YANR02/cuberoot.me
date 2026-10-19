@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { renewalAvailability, enrollMembershipSubscription } from '@/lib/membership-api';
+import { renewalAvailability, enrollMembershipSubscription, createMembershipMiniLink } from '@/lib/membership-api';
 import { Bell, CalendarClock, ShieldCheck } from 'lucide-react';
 import { SiWechat } from 'react-icons/si';
 import { ClearButton } from '@/components/ClearButton';
@@ -19,7 +19,8 @@ interface Props {
 
 export default function AutoRenewModal({ price, period, planSlug, priceCents, onClose }: Props) {
   const [agreed, setAgreed] = useState(false);
-  const [availability, setAvailability] = useState<{ available: boolean; termsVersion: string } | null>(null);
+  const [availability, setAvailability] = useState<Awaited<ReturnType<typeof renewalAvailability>> | null>(null);
+  const [miniLink, setMiniLink] = useState<Awaited<ReturnType<typeof createMembershipMiniLink>> | null>(null);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
   const mounted = useRef(true);
@@ -35,6 +36,11 @@ export default function AutoRenewModal({ price, period, planSlug, priceCents, on
     setBusy(true);
     setFailed(false);
     try {
+      if (availability.channel === 'miniprogram') {
+        const link = await createMembershipMiniLink(planSlug);
+        if (mounted.current) { setMiniLink(link); setBusy(false); }
+        return;
+      }
       const result = await enrollMembershipSubscription(planSlug, priceCents, availability.termsVersion);
       if (!mounted.current) return;
       const url = new URL(result.redirectUrl);
@@ -97,6 +103,12 @@ export default function AutoRenewModal({ price, period, planSlug, priceCents, on
         </div>
 
         {failed && <p role="alert">{tr({ zh: '暂时无法发起签约，请确认已登录，或到“管理自动续费”检查已有签约后重试。', en: 'Unable to start authorization. Sign in, or check existing authorizations in Manage auto-renewal before retrying.' })}</p>}
+        {miniLink && <div>
+          {/* eslint-disable-next-line @next/next/no-img-element -- API-generated QR data URL */}
+          <img src={miniLink.qrCodeDataUrl} width={256} height={256} alt={tr({ zh: '微信扫码签约', en: 'Scan with WeChat to authorize' })} />
+          <p>{tr({ zh: '请用微信扫码，或在手机点击下方链接。小程序须登录与网站相同的 CubeRoot 账号；链接 10 分钟内有效。', en: 'Scan with WeChat or open the link on your phone. Sign in to the same CubeRoot account in the Mini Program. This link expires in 10 minutes.' })}</p>
+          <a href={miniLink.urlLink} target="_blank" rel="noopener noreferrer">{tr({ zh: '打开微信签约', en: 'Open authorization in WeChat' })}</a>
+        </div>}
         <button className="mem-autorenew-sign" disabled={!available || !agreed || busy} onClick={sign} aria-describedby="mem-autorenew-availability">
           <SiWechat size={18} aria-hidden="true" />
           {available ? tr({ zh: '前往微信签约', en: 'Authorize in WeChat' }) : tr({ zh: '微信签约暂未开放', en: 'WeChat authorization unavailable' })}

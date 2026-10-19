@@ -172,6 +172,7 @@ export async function exchangeWechatMiniProgramPhoneCode(code: string, openid: s
 export async function generateWechatMiniProgramUrlLink(
   query: string,
   expireTime: number,
+  path: 'pages/account/index' | 'pages/membership/index' = 'pages/account/index',
 ): Promise<string> {
   try {
     const token = await fetchWechatMiniProgramAccessToken();
@@ -181,7 +182,7 @@ export async function generateWechatMiniProgramUrlLink(
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          path: 'pages/account/index',
+          path,
           query,
           env_version: 'release',
           expire_type: 0,

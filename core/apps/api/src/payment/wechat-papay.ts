@@ -83,6 +83,20 @@ async function readResponse(response: Response): Promise<string> {
 export const PAPAY_CONTRACT_NOTIFY = 'https://api.cuberoot.me/v1/membership/subscriptions/wechat/notify';
 export const PAPAY_PAYMENT_NOTIFY = 'https://api.cuberoot.me/v1/membership/subscriptions/wechat/payment-notify';
 
+/** Client receives a signed, immutable authorization request, never the merchant secret. */
+export function createPapayMiniEnrollment(contract: PapayContract, serial: string, displayAccount: string) {
+  const { appid, mchId, key } = config();
+  const requestSerial = Number(serial);
+  if (contract.appid !== appid || contract.mch_id !== mchId
+    || !Number.isSafeInteger(requestSerial) || requestSerial <= 0) throw new PapayUnavailable();
+  const fields: Fields = { appid, mch_id: mchId, plan_id: contract.plan_id,
+    contract_code: contract.contract_code, request_serial: serial,
+    contract_display_account: displayAccount, notify_url: PAPAY_CONTRACT_NOTIFY,
+    timestamp: String(Math.floor(Date.now() / 1000)) };
+  return { appId: 'wxbd687630cd02ce1d', path: 'pages/index/index',
+    extraData: { ...fields, sign: signPapay(fields, key), request_serial: requestSerial, timestamp: Number(fields.timestamp) } };
+}
+
 /** The H5 response is unsigned; only its HTTPS WeChat redirect is consumed, never entitlement. */
 export async function createPapayEnrollment(contract: PapayContract, serial: string, clientip: string): Promise<string> {
   const { appid, mchId, key } = config();

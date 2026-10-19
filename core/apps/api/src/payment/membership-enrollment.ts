@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { withTransaction } from '../db/connection.js';
-import { createPapayEnrollment, papayConfig, PapayUnavailable } from './wechat-papay.js';
-import { RENEWAL_TEMPLATES, RENEWAL_TERMS_VERSION, renewalReleased, type RenewalSlug } from './membership-renewal-policy.js';
+import { createPapayEnrollment, createPapayMiniEnrollment, papayConfig, PapayUnavailable } from './wechat-papay.js';
+import { RENEWAL_TEMPLATES, RENEWAL_TERMS_VERSION, renewalChannel, renewalReleased, type RenewalSlug } from './membership-renewal-policy.js';
 import type { MembershipContractRow } from './membership-contracts.js';
 
 /** Reserve ownership and immutable consent before handing off to WeChat. Retry reuses the reservation. */
@@ -40,6 +40,8 @@ export async function enrollMembership(owner: string, input: unknown, ip: string
       [owner, slug, appid, mchId, template.id, randomBytes(24).toString('hex'), template.cents, template.period, RENEWAL_TERMS_VERSION]);
     return saved;
   });
+  if (renewalChannel() === 'miniprogram') return { subscriptionId: contract.id,
+    miniProgram: createPapayMiniEnrollment(contract, String(contract.enrollment_serial), `CubeRoot ${owner}`) };
   return { subscriptionId: contract.id,
     redirectUrl: await createPapayEnrollment(contract, String(contract.enrollment_serial), ip) };
 }
