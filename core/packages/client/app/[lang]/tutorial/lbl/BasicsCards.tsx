@@ -46,7 +46,7 @@ export default function BasicsCards({ onStart, heading }: { onStart: () => void;
       <nav className="lbl-basics-sidebar" aria-label={tr({ zh: '选择基础知识', en: 'Choose a topic' })}>
         {topicGroups.map(group => <div className="lbl-basics-nav-group" key={group.title.en}>
           <p>{tr(group.title)}</p>
-          {group.items.map(item => <button type="button" key={item.id} className="lbl-topic" aria-pressed={topic === item.id} aria-controls="lbl-basics-panel" onClick={() => selectTopic(item.id)}>
+          {group.items.map(item => <button type="button" key={item.id} className="lbl-button lbl-topic" aria-pressed={topic === item.id} aria-controls="lbl-basics-panel" onClick={() => selectTopic(item.id)}>
             {'colors' in item && <VisualCube view="iso" setup={item.setup} stickerColors={item.colors} stickerMaskColor={FM_FIXED_COLOR[FM_IGNORED]} size={38} alt={tr(item.title)} />}
             <span>{tr(item.title)}</span>
           </button>)}
@@ -59,8 +59,8 @@ export default function BasicsCards({ onStart, heading }: { onStart: () => void;
           {guide && <BasicsGuide section={guide.id} />}
         </div>
         <div className="lbl-basic-footer lbl-basics-footer">
-          <button type="button" className="lbl-basic-prev" disabled={index === 0} onClick={() => selectTopic(topics[index - 1].id)}><ArrowLeft size={16} /><T zh="上一项" en="Previous" /></button>
-          <button type="button" className="lbl-basic-next" onClick={() => { if (index === topics.length - 1) onStart(); else selectTopic(topics[index + 1].id); }}>
+          <button type="button" className="lbl-button lbl-basic-prev" disabled={index === 0} onClick={() => selectTopic(topics[index - 1].id)}><ArrowLeft size={16} /><T zh="上一项" en="Previous" /></button>
+          <button type="button" className="lbl-button lbl-basic-next" onClick={() => { if (index === topics.length - 1) onStart(); else selectTopic(topics[index + 1].id); }}>
             {index === topics.length - 1 ? <T zh="开始做小花" en="Make the daisy" /> : tr(topics[index + 1].title)}<ArrowRight size={16} />
           </button>
         </div>

@@ -80,14 +80,14 @@ export default function BasicsGuide({ section }: { section: typeof BASIC_GUIDE_T
         </div>
         <div className="lbl-guide-move-copy">
           <div className="lbl-guide-face-grid" role="group" aria-label={tr({ zh: '选择要观察的面', en: 'Choose a face to watch' })}>
-            {faces.map(item => <button type="button" key={item.base} aria-label={tr(item.title)} aria-pressed={face.base === item.base} onClick={() => selectMove(face.base === item.base ? move : item.move)}>
+            {faces.map(item => <button className="lbl-button" type="button" key={item.base} aria-label={tr(item.title)} aria-pressed={face.base === item.base} onClick={() => selectMove(face.base === item.base ? move : item.move)}>
               <VisualCube local view="iso" stickerColors={item.colors} viewportRotations={item.base === 'L' ? leftView : undefined} size={76} alt={tr(item.title)} />
               <span>{tr(item.title)}</span>
             </button>)}
           </div>
           <p className="lbl-guide-direction"><T zh="顺时针 / 逆时针：正对正在转的面判断。" en="Judge clockwise or counterclockwise by looking straight at the face you are turning." /></p>
           <div className="lbl-guide-variants" role="group" aria-label={tr({ zh: '选择转动方式', en: 'Choose a turn' })}>
-            {variants.map(variant => <button type="button" key={variant.suffix} aria-pressed={move === face.base + variant.suffix} onClick={() => selectMove(face.base + variant.suffix)}>
+            {variants.map(variant => <button className="lbl-button" type="button" key={variant.suffix} aria-pressed={move === face.base + variant.suffix} onClick={() => selectMove(face.base + variant.suffix)}>
               <span><code>{face.base}{variant.suffix.replace("'", '′')}</code></span>
               <strong>{tr(variant.title)}</strong><small>{tr(variant.detail)}</small>
             </button>)}
