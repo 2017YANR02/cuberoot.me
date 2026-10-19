@@ -46,6 +46,14 @@ function parseFlatXml(xml: string): Fields {
   const parsed = new XMLParser({ ignoreAttributes: false, parseTagValue: false, trimValues: false,
     ignoreDeclaration: true }).parse(xml) as Record<string, unknown>;
   const fields = parsed.xml;
+  // WeChat pretty-prints responses. Ignore only inter-element XML whitespace;
+  // keep signed field values untouched and reject non-whitespace mixed content.
+  if (fields && typeof fields === 'object' && !Array.isArray(fields)) {
+    const text = (fields as Record<string, unknown>)['#text'];
+    if (typeof text === 'string' && /^[\t\r\n ]*$/.test(text)) {
+      delete (fields as Record<string, unknown>)['#text'];
+    }
+  }
   if (Object.keys(parsed).length !== 1 || !fields || typeof fields !== 'object' || Array.isArray(fields)
     || Object.entries(fields).some(([k, v]) => !/^[a-zA-Z][a-zA-Z0-9_]*$/.test(k) || typeof v !== 'string')) {
     throw new Error('invalid subscription response');
