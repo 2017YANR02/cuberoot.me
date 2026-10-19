@@ -200,7 +200,7 @@ it.each(["u'", "Uw'"])('preserves a measured wide cross gesture (%s) instead of 
     lines: [{ kind: 'cross', key: 'cross', moves, label: 'W cross', fromIdx: 0, toIdx: 5,
       recognitionMs: null, executionMs: null, stepMs: null }],
     text: `x2 // insp\n${moves.join(' ')} // W cross`,
-  } as Parameters<typeof projectReconNotation>[0];
+  } as NonNullable<Parameters<typeof projectReconNotation>[0]>;
   const result = projectReconNotation(recon, 'cfop');
   expect(result.inspection).toBe('x2');
   expect(result.lines[0].moves).toEqual(["R'", "B'", 'F', 'L', 'R2', "u'"]);

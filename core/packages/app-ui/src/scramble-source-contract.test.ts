@@ -280,7 +280,7 @@ describe('mobile scramble-source parity contract', () => {
 
   it('reuses shared occurrence progress and marks only after a persisted solve succeeds', () => {
     expect(app).toContain('mobileWcaPool.wcaPoolProgress(realSpecToWcaSource(activeRealSourceSpec))');
-    const pool = readFileSync(new URL(import.meta.resolve('@cuberoot/timer-ui/wca-scramble-pool')), 'utf8');
+    const pool = readFileSync(new URL(import.meta.resolve('@cuberoot/shared/timer/wca-scramble-pool')), 'utf8');
     expect(pool).toContain('finitePoolProgress.registerClosedSet(key, closed.map((row) => row.slot))');
     expect(pool).toContain('finitePoolProgress.noteServed(key, slot)');
     expect(app).toContain('<TimerWcaScrambleProgress');

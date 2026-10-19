@@ -30,7 +30,7 @@ describe('auto-renewal before merchant approval', () => {
   ] as const)('uses saved %s pricing and never enables a pretend signing action', async (period, price, cadence) => {
     await act(async () => root.render(createElement(AutoRenewModal, { period, price, onClose: vi.fn() })));
     expect(host.textContent).toContain(`首期及以后${cadence}均为 ${price}`);
-    expect(host.querySelector('[role="status"]')?.textContent).toContain('当前不能签约或扣款');
+    expect(host.querySelector('[role="status"]')?.textContent).toContain('勾选协议不会建立扣款授权');
     const consent = host.querySelector<HTMLInputElement>('input[type="checkbox"]')!;
     const sign = host.querySelector<HTMLButtonElement>('.mem-autorenew-sign')!;
     expect(consent.checked).toBe(false);

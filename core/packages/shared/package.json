@@ -556,7 +556,11 @@
     "./comp-localize": "./src/comp_localize.ts",
     "./city-localize": "./src/city_localize.ts",
     "./competition-index": "./src/competition_index.ts",
-    "./alg": "./src/alg.ts",
+    "./alg": {
+      "types": "./src/alg.ts",
+      "node": "./dist/alg.js",
+      "default": "./src/alg.ts"
+    },
     "./alg-notation": {
       "node": "./dist/alg_notation.js",
       "default": "./src/alg_notation.ts"

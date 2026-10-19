@@ -142,7 +142,7 @@ describe('第一层已还原条件下的第二层分布', () => {
     // 深链 / 旧设置可能残留 UI 聚合键 lbl。页面必须先用真实数据键渲染 options,
     // 再把 URL 规范化,不能让原生 select 出现 value 存在但 option 为空的白框。
     expect(page).toContain('normalizeVariantDataRef(currentSet.variants, variant, stage)');
-    expect(page).toContain('value={sourceStage}');
+    expect(page).toContain('stage={sourceStage}');
 
     const variants = readScrambleJob('src/variants.ts');
     const recent = readScrambleJob('src/build_recent_scrambles.ts');
