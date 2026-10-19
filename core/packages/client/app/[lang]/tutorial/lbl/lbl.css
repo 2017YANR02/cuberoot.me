@@ -163,18 +163,18 @@ button.lbl-case:active, .lbl-practice:active { transform: scale(.96); }
 .lbl-basics-page .lbl-basic-copy p { font-size: clamp(.9rem, calc(.75rem + .25vw), 1.0625rem); }
 .lbl-basic-copy .lbl-basic-hint { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border-default); color: var(--foreground); }
 .lbl-basic-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.lbl-basic-footer button { display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 12px; padding: 11px 16px; font: inherit; font-size: .85rem; cursor: pointer; }
+.lbl-basic-footer .lbl-button { display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 12px; padding: 11px 16px; font: inherit; font-size: .85rem; cursor: pointer; }
 .lbl-basic-prev { color: var(--muted-foreground); background: transparent; }
 .lbl-basic-prev:disabled { visibility: hidden; }
 .lbl-basic-next { background: var(--primary); color: var(--primary-foreground); }
 .lbl-basic-progress { color: var(--muted-foreground); font-size: .8rem; white-space: nowrap; }
-.lbl-basics button:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+.lbl-basics .lbl-button:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
 .lbl-basics-guide { min-width: 0; }
 .lbl-basics-guide h2, .lbl-basics-guide h3, .lbl-basics-guide p, .lbl-basics-guide figure { margin: 0; }
 .lbl-basics-guide h2 { font-size: 1.45rem; font-weight: 550; letter-spacing: -.025em; }
 .lbl-basics-guide h3 { font-size: 1.15rem; font-weight: 550; line-height: 1.6; }
-.lbl-basics-guide button { font: inherit; color: inherit; cursor: pointer; }
-.lbl-basics-guide button:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+.lbl-basics-guide .lbl-button { font: inherit; color: inherit; cursor: pointer; }
+.lbl-basics-guide .lbl-button:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
 .lbl-basics-guide .puzzle-art { flex-shrink: 0; }
 .lbl-basics-guide .puzzle-art svg { width: 100%; height: 100%; }
 .lbl-guide-color { display: inline-block; flex-shrink: 0; width: 13px; height: 13px; border: 1px solid var(--border-strong); border-radius: 4px; }
@@ -193,14 +193,14 @@ button.lbl-case:active, .lbl-practice:active { transform: scale(.96); }
 .lbl-guide-current-move code { font-size: 1.65rem; }
 .lbl-guide-move-copy { min-width: 0; }
 .lbl-guide-face-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
-.lbl-guide-face-grid button { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; padding: 8px 2px; border: 1px solid transparent; border-radius: 10px; background: transparent; }
-.lbl-guide-face-grid button[aria-pressed='true'] { border-color: var(--accent); background: var(--accent-soft); }
-.lbl-guide-face-grid button > span { font-size: .75rem; }
+.lbl-guide-face-grid .lbl-button { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; padding: 8px 2px; border: 1px solid transparent; border-radius: 10px; background: transparent; }
+.lbl-guide-face-grid .lbl-button[aria-pressed='true'] { border-color: var(--accent); background: var(--accent-soft); }
+.lbl-guide-face-grid .lbl-button > span { font-size: .75rem; }
 .lbl-basics-guide .lbl-guide-direction { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border-default); color: var(--muted-foreground); font-size: .75rem; line-height: 1.8; }
 .lbl-guide-variants { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
-.lbl-guide-variants button { display: flex; flex-direction: column; gap: 7px; min-width: 0; padding: 12px 10px; border: 1px solid transparent; border-radius: 10px; background: var(--muted); text-align: start; overflow-wrap: anywhere; }
-.lbl-guide-variants button[aria-pressed='true'] { border-color: var(--accent); }
-.lbl-guide-variants button > span { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+.lbl-guide-variants .lbl-button { display: flex; flex-direction: column; gap: 7px; min-width: 0; padding: 12px 10px; border: 1px solid transparent; border-radius: 10px; background: var(--muted); text-align: start; overflow-wrap: anywhere; }
+.lbl-guide-variants .lbl-button[aria-pressed='true'] { border-color: var(--accent); }
+.lbl-guide-variants .lbl-button > span { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
 .lbl-guide-variants code { font-size: 1.35rem; }
 .lbl-guide-variants strong { font-size: .75rem; font-weight: 500; }
 .lbl-guide-variants small { font-size: .7rem; line-height: 1.7; color: var(--muted-foreground); }
@@ -236,8 +236,8 @@ button.lbl-case:active, .lbl-practice:active { transform: scale(.96); }
 .lbl-exercise .lbl-basic-demo .lbl-cube { max-width: 380px; }
 .lbl-exercise .lbl-help { text-align: center; }
 .lbl-move-buttons { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; width: 100%; max-width: 350px; }
-.lbl-move-buttons button, .lbl-exercise-tools button { border: 1px solid var(--border-default); border-radius: 10px; background: var(--card); color: var(--foreground); padding: 10px 6px; font: inherit; cursor: pointer; }
-.lbl-move-buttons button:hover { background: var(--accent-soft); }
+.lbl-move-buttons .lbl-button, .lbl-exercise-tools .lbl-button { border: 1px solid var(--border-default); border-radius: 10px; background: var(--card); color: var(--foreground); padding: 10px 6px; font: inherit; cursor: pointer; }
+.lbl-move-buttons .lbl-button:hover { background: var(--accent-soft); }
 .lbl-exercise-tools { display: flex; gap: 10px; }
 .lbl-completion { position: fixed; inset: 0; margin: 0; border: 0; padding: 16px; width: 100%; height: 100%; max-width: none; max-height: none; background: transparent; color: var(--foreground); overflow-y: auto; }
 .lbl-completion[open] { display: grid; grid-template-columns: minmax(0, 1fr); place-items: center; box-sizing: border-box; }
@@ -252,19 +252,19 @@ button.lbl-case:active, .lbl-practice:active { transform: scale(.96); }
 .lbl-page a.lbl-completion-review { display: inline-block; margin-top: 20px; font-size: 14px; color: var(--muted-foreground); }
 .lbl-completion-footnote { margin: 28px 0 0; font-size: 12px; color: var(--muted-foreground); }
 .lbl-move-display { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 8px 0; font-size: .75rem; color: var(--muted-foreground); }
-.lbl-move-display select { width: fit-content; padding: 4px 8px; border: 1px solid var(--border-default); border-radius: 8px; background: var(--card); color: var(--foreground); font: inherit; cursor: pointer; }
+.lbl-move-display .lbl-move-select { width: fit-content; padding: 4px 8px; border: 1px solid var(--border-default); border-radius: 8px; background: var(--card); color: var(--foreground); font: inherit; cursor: pointer; }
 .lbl-beginner-controls { width: 100%; max-width: 430px; }
 .lbl-beginner-controls > p { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px; font-size: .85rem; }
 .lbl-beginner-controls small, .lbl-beginner-controls details { color: var(--muted-foreground); font-size: .75rem; }
 .lbl-beginner-controls details { margin-top: 14px; }
 .lbl-action-row { display: grid; grid-template-columns: minmax(62px, .8fr) repeat(2, minmax(0, 1fr)); align-items: center; gap: 8px; margin-bottom: 9px; }
 .lbl-action-row > span { font-size: .75rem; color: var(--muted-foreground); }
-.lbl-action-row button { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 10px 6px; border: 1px solid var(--border-default); border-radius: 12px; background: var(--card); color: var(--foreground); font: inherit; font-size: .8rem; cursor: pointer; }
-.lbl-action-row button:hover { background: var(--accent-soft); }
-.lbl-action-row button:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.lbl-action-row .lbl-button { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 10px 6px; border: 1px solid var(--border-default); border-radius: 12px; background: var(--card); color: var(--foreground); font: inherit; font-size: .8rem; cursor: pointer; }
+.lbl-action-row .lbl-button:hover { background: var(--accent-soft); }
+.lbl-action-row .lbl-button:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 .lbl-action-row b { font-size: 1.35rem; color: var(--accent); font-weight: 400; }
-.lbl-exercise-tools button:disabled { opacity: .45; cursor: default; }
-.lbl-exercise-tools button { padding: 8px 14px; font-size: .85rem; }
+.lbl-exercise-tools .lbl-button:disabled { opacity: .45; cursor: default; }
+.lbl-exercise-tools .lbl-button { padding: 8px 14px; font-size: .85rem; }
 .lbl-exercise-target { display: flex; gap: 16px; align-items: center; border-top: 1px solid var(--border-default); padding-top: 20px; margin-top: 24px; }
 .lbl-exercise-target .puzzle-art { flex-shrink: 0; }
 .lbl-exercise-hint { background: var(--accent-soft); border-radius: 12px; padding: 12px 16px; margin-top: 18px; }
@@ -272,7 +272,7 @@ button.lbl-case:active, .lbl-practice:active { transform: scale(.96); }
 .lbl-exercise .lbl-basic-copy .lbl-exercise-result { margin-top: 22px; color: var(--foreground); }
 .lbl-exercise .lbl-basic-footer { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; border-top: 1px solid var(--border-default); padding-top: 20px; }
 .lbl-exercise .lbl-basic-footer > a:first-child { justify-self: start; }
-.lbl-exercise .lbl-basic-footer > button { grid-column: 2; justify-self: center; }
+.lbl-exercise .lbl-basic-footer > .lbl-button { grid-column: 2; justify-self: center; }
 .lbl-exercise .lbl-basic-footer a { font-size: .85rem; color: var(--muted-foreground); }
 .lbl-exercise .lbl-basic-footer .lbl-exercise-next-lesson { grid-column: 3; justify-self: end; border: 1px solid var(--border-default); color: var(--foreground); background: var(--card); border-radius: 12px; padding: 10px 16px; text-align: center; overflow-wrap: anywhere; }
 @media (max-width: 700px) {
@@ -289,7 +289,7 @@ button.lbl-case:active, .lbl-practice:active { transform: scale(.96); }
   .lbl-guide-player { height: 280px; max-width: 260px; }
   .lbl-guide-face-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .lbl-guide-variants { gap: 7px; }
-  .lbl-guide-variants button { padding: 10px 7px; }
+  .lbl-guide-variants .lbl-button { padding: 10px 7px; }
   .lbl-guide-variants code { font-size: 1.1rem; }
   .lbl-guide-extra { flex-direction: column; }
   .lbl-alg-group { gap: 10px; padding-inline: 10px; }
@@ -298,7 +298,7 @@ button.lbl-case:active, .lbl-practice:active { transform: scale(.96); }
   .lbl-basic-content { grid-template-columns: minmax(0, 1fr); gap: 20px; padding: 20px 0; }
   .lbl-basic-demo .lbl-cube { max-width: 280px; }
   .lbl-basics-page { --lbl-basic-cube-size: 280px; }
-  .lbl-basic-footer button { padding: 10px 8px; font-size: .8rem; }
+  .lbl-basic-footer .lbl-button { padding: 10px 8px; font-size: .8rem; }
   .lbl-exercise .lbl-basic-footer { gap: 8px; }
   .lbl-exercise .lbl-basic-footer .lbl-exercise-next-lesson { padding: 10px 8px; font-size: .8rem; }
   .lbl-page { padding: 16px 16px 40px; }

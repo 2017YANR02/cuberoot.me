@@ -105,7 +105,7 @@ function Exercise({ step, index, onNext, textMoves, onTextMovesChange }: { step:
   const last = index === step.examples.length - 1;
   const nextStep = LBL_STEPS[LBL_STEPS.findIndex(item => item.id === step.id) + 1];
   const actionRows = (rows: typeof practiceMoves) => rows.map(row => <div className="lbl-action-row" key={row.en}>
-    <span>{tr(row)}</span>{row.moves.map((move, i) => <button type="button" key={move} onClick={() => turn(move)}><b aria-hidden="true">{row.arrows[i]}</b>{moveLabel(move)}</button>)}
+    <span>{tr(row)}</span>{row.moves.map((move, i) => <button className="lbl-button" type="button" key={move} onClick={() => turn(move)}><b aria-hidden="true">{row.arrows[i]}</b>{moveLabel(move)}</button>)}
   </div>);
   return <section className="lbl-basics lbl-exercise" data-site-surface="panel">
     {completed && <CompletionDialog onClose={() => setCompleted(false)} />}
@@ -116,14 +116,14 @@ function Exercise({ step, index, onNext, textMoves, onTextMovesChange }: { step:
           <TrainingFeedbackOverlay kind={feedback} correctLabel={tr({ zh: '已达到本题目标', en: 'Target reached' })} wrongLabel={tr({ zh: '尚未达到本题目标', en: 'Not at the target yet' })} />
         </div>
         <p className="lbl-help"><T zh="拖动色块转层，拖动空白调整视角" en="Drag stickers to turn; drag the background to change your view." /></p>
-        <div className="lbl-move-display"><select aria-label={tr({ zh: '操作显示方式', en: 'Move label format' })} value={textMoves ? 'text' : 'notation'} onChange={event => onTextMovesChange(event.target.value === 'text')}><option value="notation">{tr({ zh: '字母操作', en: 'Letter controls' })}</option><option value="text">{tr({ zh: '文字操作', en: 'Word controls' })}</option></select></div>
+        <div className="lbl-move-display"><select className="lbl-move-select" aria-label={tr({ zh: '操作显示方式', en: 'Move label format' })} value={textMoves ? 'text' : 'notation'} onChange={event => onTextMovesChange(event.target.value === 'text')}><option value="notation">{tr({ zh: '字母操作', en: 'Letter controls' })}</option><option value="text">{tr({ zh: '文字操作', en: 'Word controls' })}</option></select></div>
         {textMoves ? <div className="lbl-beginner-controls" role="group" aria-label={tr({ zh: '转动魔方', en: 'Turn the cube' })}>
           <p><T zh="想动哪一层？" en="Which layer?" /><small><T zh="每点一次转四分之一圈" en="Each tap turns a quarter turn" /></small></p>
           {actionRows(practiceMoves.slice(0, 3))}
           {step.id === 'cross' && actionRows(practiceMoves.slice(7))}
           <details><summary><T zh="更多动作" en="More moves" /></summary><p><T zh="顺、逆时针都要正对所转的面判断；转后面时，想象从背后看它。" en="Judge clockwise while looking directly at the face being turned; for the back face, imagine looking from behind." /></p>{actionRows(practiceMoves.slice(3, step.id === 'cross' ? 7 : 8))}</details>
-        </div> : <div className="lbl-move-buttons" role="group" aria-label={tr({ zh: '转动魔方', en: 'Turn the cube' })}>{['R', "R'", 'L', "L'", 'U', "U'", 'F', "F'", 'D', "D'", 'B', "B'", 'f', "f'", 'y', "y'", ...(step.id === 'cross' ? ['d', "d'"] : [])].map(move => <button type="button" key={move} onClick={() => turn(move)}>{move}</button>)}</div>}
-        <div className="lbl-exercise-tools">{beginner && <button type="button" onClick={undo} disabled={!history}><T zh="撤销一步" en="Undo" /></button>}<button type="button" onClick={reset}>{beginner ? <T zh="重新开始" en="Restart" /> : <T zh="重来" en="Restart" />}</button><button type="button" aria-expanded={hint} onClick={() => setHint(!hint)}>{hint ? tr({ zh: '收起提示', en: 'Hide hint' }) : tr({ zh: '给我提示', en: 'Show hint' })}</button></div>
+        </div> : <div className="lbl-move-buttons" role="group" aria-label={tr({ zh: '转动魔方', en: 'Turn the cube' })}>{['R', "R'", 'L', "L'", 'U', "U'", 'F', "F'", 'D', "D'", 'B', "B'", 'f', "f'", 'y', "y'", ...(step.id === 'cross' ? ['d', "d'"] : [])].map(move => <button className="lbl-button" type="button" key={move} onClick={() => turn(move)}>{move}</button>)}</div>}
+        <div className="lbl-exercise-tools">{beginner && <button className="lbl-button" type="button" onClick={undo} disabled={!history}><T zh="撤销一步" en="Undo" /></button>}<button className="lbl-button" type="button" onClick={reset}>{beginner ? <T zh="重新开始" en="Restart" /> : <T zh="重来" en="Restart" />}</button><button className="lbl-button" type="button" aria-expanded={hint} onClick={() => setHint(!hint)}>{hint ? tr({ zh: '收起提示', en: 'Hide hint' }) : tr({ zh: '给我提示', en: 'Show hint' })}</button></div>
       </div>
       <div className="lbl-basic-copy"><h3>{step.id === 'cross' ? tr({ zh: '完成四条白棱，侧面颜色对齐中心。', en: 'Complete all four white edges, matching their side colors to the centers.' }) : tr({ zh: '转动魔方，让重点色块与目标图一致。', en: 'Turn the cube to match the highlighted stickers in the target image.' })}</h3>
         <div className="lbl-exercise-target"><VisualCube view="iso" size={112} setup={target} stickerColors={colors} stickerMaskColor={FM_FIXED_COLOR[FM_IGNORED]} alt={tr({ zh: '本题目标状态', en: 'Target state' })} /><p><T zh="黄心朝上，绿心朝前。" en="Yellow center up, green center in front." /></p></div>
@@ -132,7 +132,7 @@ function Exercise({ step, index, onNext, textMoves, onTextMovesChange }: { step:
       </div>
     </div>
     <div className="lbl-basic-footer"><Link href={`/tutorial/lbl?step=${step.id}`} prefetch={false}><T zh="回看本节教程" en="Review this lesson" /></Link>
-      {feedback === 'correct' && last ? <button className="lbl-basic-next" type="button" onClick={reset}><T zh="再练一次" en="Try again" /></button> : <button type="button" className="lbl-basic-next" disabled={checking} onClick={feedback === 'correct' ? onNext : () => setChecking(true)}>{checking ? tr({ zh: '等待转动完成…', en: 'Waiting for moves…' }) : feedback === 'correct' ? tr({ zh: '下一题 →', en: 'Next →' }) : tr({ zh: '检查结果', en: 'Check result' })}</button>}
+      {feedback === 'correct' && last ? <button className="lbl-button lbl-basic-next" type="button" onClick={reset}><T zh="再练一次" en="Try again" /></button> : <button type="button" className="lbl-button lbl-basic-next" disabled={checking} onClick={feedback === 'correct' ? onNext : () => setChecking(true)}>{checking ? tr({ zh: '等待转动完成…', en: 'Waiting for moves…' }) : feedback === 'correct' ? tr({ zh: '下一题 →', en: 'Next →' }) : tr({ zh: '检查结果', en: 'Check result' })}</button>}
       {nextStep && <Link className="lbl-exercise-next-lesson" href={`/tutorial/lbl?step=${nextStep.id}`} prefetch={false}><T zh="下一节：" en="Next: " />{nextStep.id === 'cross' ? tr({ zh: '白色十字', en: 'White cross' }) : tr(nextStep.title)} →</Link>}
     </div>
   </section>;
@@ -148,7 +148,7 @@ function CompletionDialog({ onClose }: { onClose: () => void }) {
   }, []);
   return <dialog ref={dialog} className="lbl-completion" {...backdropProps} onCancel={event => { event.preventDefault(); onClose(); }} aria-labelledby="lbl-completion-title">
     <section className="lbl-completion-card" data-site-surface="panel">
-      <button type="button" className="lbl-completion-close" onClick={onClose} aria-label={tr({ zh: '关闭', en: 'Close' })}><X size={22} /></button>
+      <button type="button" className="lbl-button lbl-completion-close" onClick={onClose} aria-label={tr({ zh: '关闭', en: 'Close' })}><X size={22} /></button>
       <div className="lbl-completion-art" aria-hidden="true"><span>✦</span><Trophy size={42} /><span>✧</span></div>
       <p className="lbl-completion-tag"><T zh="层先法 · 学习完成" en="Layer by layer · Complete" /></p>
       <h2 id="lbl-completion-title"><T zh="恭喜你！" en="Congratulations!" /><br /><T zh="完成三阶层先法学习" en="You’ve completed the 3×3 LBL course" /></h2>
