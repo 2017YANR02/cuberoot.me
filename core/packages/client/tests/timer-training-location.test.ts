@@ -454,7 +454,7 @@ describe('training host hooks and links', () => {
     await act(async () => selectedGroup.click());
     const selected = container.querySelector('.pp-cascade-options .pp-item[aria-current="page"]')!;
     expect(selected.textContent).toBe('OLL');
-    expect(selected.querySelector('.pp-item-check')).not.toBeNull();
+    expect(selected.classList.contains('pp-item--active')).toBe(true);
     expect(container.querySelector('.pp-popup .cubing-icon')).toBeNull();
     expect(container.querySelector('.pp-popup')?.textContent).not.toContain('Ortega');
     const timer = [...container.querySelectorAll<HTMLButtonElement>('.pp-item')]

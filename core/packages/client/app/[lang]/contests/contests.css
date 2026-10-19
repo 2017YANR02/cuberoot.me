@@ -15,10 +15,10 @@
 .contests-filters { display: flex; flex-wrap: wrap; align-items: end; gap: 16px; margin: 20px 0; }
 .contests-filters label, .contests-label { display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
 .contests-label { margin-bottom: 6px; }
-.contests-filters select { width: fit-content; align-self: flex-start; max-width: 100%; padding: 7px 10px; border: 1px solid var(--input); border-radius: 7px; color: var(--foreground); background: var(--background); }
-.contests-page button { cursor: pointer; font: inherit; }
-.contests-pagination button, .contests-empty button { appearance: none; padding: 8px 14px; border: 1px solid var(--border-default); border-radius: 7px; background: var(--card); color: var(--foreground); }
-.contests-page button:disabled { opacity: .5; cursor: default; }
+.contests-filter-select { width: fit-content; align-self: flex-start; max-width: 100%; padding: 7px 10px; border: 1px solid var(--input); border-radius: 7px; color: var(--foreground); background: var(--background); }
+.contests-action-button { cursor: pointer; font: inherit; }
+.contests-action-button { appearance: none; padding: 8px 14px; border: 1px solid var(--border-default); border-radius: 7px; background: var(--card); color: var(--foreground); }
+.contests-action-button:disabled { opacity: .5; cursor: default; }
 .contests-table-scroll { max-height: 72dvh; margin: 18px 0; }
 .contests-table { border-collapse: separate; border-spacing: 0; width: 100%; text-align: left; font-size: 14px; }
 .contests-table th, .contests-table td { padding: 12px 10px; border-bottom: 1px solid var(--border-default); vertical-align: top; }
