@@ -13,7 +13,7 @@ import { MINI_PROGRAM_WEB_MARKER, isDouyinMiniProgram } from './platform';
 import { publicPageSharePath, type PageShareMessage } from '@cuberoot/shared/page-share';
 
 type DiscoveryRouteKey = Exclude<SiteDirectoryEntryId, 'algdb' | 'alg' | 'github'> | 'alg';
-export type WebRouteKey = DiscoveryRouteKey | 'home' | 'training' | 'account' | 'account-link' | 'privacy' | 'logout';
+export type WebRouteKey = DiscoveryRouteKey | 'home' | 'training' | 'account' | 'account-link' | 'privacy' | 'renewal-terms' | 'logout';
 
 interface WebRouteDefinition {
   title: string;
@@ -141,6 +141,13 @@ function createWebRoutes(): Record<WebRouteKey, WebRouteDefinition> {
         zh: '先登录已有账号，再在登录方式中绑定微信',
       }),
       path: `${localizedWebsitePath('/account')}${isDouyinMiniProgram() ? '?view=signin&mini_program=login' : ''}`,
+      publicEntry: false,
+      sessionHandoff: false,
+    },
+    'renewal-terms': {
+      title: tr({ en: 'Auto-renewal Agreement', zh: '自动续费服务协议' }),
+      description: tr({ en: 'Review renewal prices and cancellation rules', zh: '查看续费价格与取消规则' }),
+      path: localizedWebsitePath('/membership/renewal-terms'),
       publicEntry: false,
       sessionHandoff: false,
     },
