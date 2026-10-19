@@ -164,6 +164,7 @@ export async function collectBuildInputFiles(packageRoot, graphInputFiles) {
     join(packageRoot, 'project.config.template.json'),
     join(packageRoot, 'tsconfig.json'),
     join(packageRoot, 'scripts', 'build.mjs'),
+    join(packageRoot, 'scripts', 'build-wechat-bundle.mjs'),
     join(packageRoot, 'scripts', 'build-assets.mjs'),
     join(packageRoot, 'scripts', 'build-config.mjs'),
     join(packageRoot, 'scripts', 'build-state.mjs'),

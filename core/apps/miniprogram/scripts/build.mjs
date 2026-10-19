@@ -7,6 +7,7 @@ import process from 'node:process';
 import { build } from 'esbuild';
 
 import { BUILD_ASSETS } from './build-assets.mjs';
+import { buildWechatBundle } from './build-wechat-bundle.mjs';
 import { buildDouyinTabIcons } from './build-tab-icons.mjs';
 import { resolveProjectConfig } from './build-config.mjs';
 import {
@@ -121,7 +122,7 @@ async function buildProject() {
     { labelForPath: (file) => normalizedRelativePath(packageRoot, file) },
   );
   await prepareOutput(sourceFiles);
-  const buildResult = await build({
+  const buildResult = await (douyin ? build : buildWechatBundle)({
     absWorkingDir: packageRoot,
     bundle: true,
     entryPoints: entryPoints(sourceFiles),
@@ -159,6 +160,10 @@ async function buildProject() {
   });
   if (!douyin) {
     await writeBuildState(packageRoot, {
+      bundleInputs: Object.fromEntries(Object.entries(buildResult.metafile.outputs).map(([path, output]) => [
+        normalizedRelativePath(compileRoot, resolve(packageRoot, path)),
+        Object.keys(output.inputs).map(input => normalizedRelativePath(packageRoot, resolve(packageRoot, input))),
+      ])),
       buildGraphInputs: serializeBuildGraphInputs(packageRoot, graphInputFiles),
       sourceFingerprint: await buildInputFingerprint(packageRoot, graphInputFiles),
       outputFingerprint: await outputFingerprint(packageRoot, outputRoot),
