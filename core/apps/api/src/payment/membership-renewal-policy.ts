@@ -19,3 +19,23 @@ export function renewalReleased(env: Readonly<Record<string, string | undefined>
       : env.WECHAT_PAPAY_H5_APPROVED === 'true')
     && env.WECHAT_PAPAY_RELEASE_ENABLED === 'true';
 }
+
+/** A private, time-limited acceptance lane. Never makes the public gate true. */
+export function renewalPilotAllowed(owner: string | undefined, env: Readonly<Record<string, string | undefined>> = process.env, now = Date.now()): boolean {
+  const until = Date.parse(env.WECHAT_PAPAY_PILOT_UNTIL ?? '');
+  return Boolean(owner && owner === env.WECHAT_PAPAY_PILOT_OWNER
+    && env.WECHAT_PAPAY_PILOT_ENABLED === 'true'
+    && Number.isFinite(until) && until > now && until - now <= 7 * 86400000
+    && renewalChannel(env) === 'miniprogram'
+    && env.WECHAT_PAPAY_MONTHLY_APPROVED === '225492' && env.WECHAT_PAPAY_YEARLY_APPROVED === '225493'
+    && env.WECHAT_PAPAY_APPID === 'wx1f92ba91b7e42015'
+    && env.WECHAT_MINI_APP_ID === env.WECHAT_PAPAY_APPID && env.WECHAT_MINI_APP_SECRET);
+}
+export function renewalEnrollmentAllowed(owner: string, env: Readonly<Record<string, string | undefined>> = process.env): boolean {
+  return renewalReleased(env) || renewalPilotAllowed(owner, env);
+}
+export function renewalDebitAllowed(owner: string, cycle: number, env: Readonly<Record<string, string | undefined>> = process.env): boolean {
+  if (renewalReleased(env)) return env.WECHAT_PAPAY_DEBIT_ENABLED === 'true';
+  // Pilot payments are real and opt-in; never schedule another period in this lane.
+  return cycle === 0 && renewalPilotAllowed(owner, env) && env.WECHAT_PAPAY_PILOT_DEBIT_ENABLED === 'true';
+}

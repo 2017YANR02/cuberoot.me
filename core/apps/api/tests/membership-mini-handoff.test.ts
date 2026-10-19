@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import jwt from 'jsonwebtoken';
 vi.mock('../src/utils/session.js', () => ({ JWT_SECRET: 'handoff-test-only' }));
 import { issueMembershipHandoff, readMembershipHandoff } from '../src/payment/membership-handoff.js';
-import { renewalReleased } from '../src/payment/membership-renewal-policy.js';
+import { renewalReleased, renewalPilotAllowed, renewalDebitAllowed } from '../src/payment/membership-renewal-policy.js';
 import { createPapayMiniEnrollment, signPapay } from '../src/payment/wechat-papay.js';
 
 afterEach(() => { vi.useRealTimers(); vi.unstubAllEnvs(); });
@@ -42,4 +42,23 @@ describe('mini enrollment boundaries', () => {
     expect(() => createPapayMiniEnrollment(contract, '9007199254740992', 'CubeRoot u12')).toThrow();
     expect(() => createPapayMiniEnrollment({ ...contract, mch_id: '2' }, '123', 'CubeRoot u12')).toThrow();
   });
+});
+
+it('limits private acceptance to its owner, expiry and explicitly enabled first payment', () => {
+  const env = { WECHAT_PAPAY_MONTHLY_APPROVED: '225492', WECHAT_PAPAY_YEARLY_APPROVED: '225493',
+    WECHAT_PAPAY_SIGNING_CHANNEL: 'miniprogram', WECHAT_PAPAY_APPID: 'wx1f92ba91b7e42015',
+    WECHAT_MINI_APP_ID: 'wx1f92ba91b7e42015', WECHAT_MINI_APP_SECRET: 'fixture',
+    WECHAT_PAPAY_PILOT_ENABLED: 'true', WECHAT_PAPAY_PILOT_OWNER: 'u12',
+    WECHAT_PAPAY_PILOT_UNTIL: new Date(Date.now() + 3600000).toISOString() };
+  expect(renewalReleased(env)).toBe(false);
+  expect(renewalPilotAllowed('u12', env)).toBe(true);
+  expect(renewalPilotAllowed('u13', env)).toBe(false);
+  expect(renewalPilotAllowed(undefined, env)).toBe(false);
+  expect(renewalPilotAllowed('u12', { ...env, WECHAT_PAPAY_PILOT_UNTIL: new Date(0).toISOString() })).toBe(false);
+  expect(renewalPilotAllowed('u12', { ...env, WECHAT_PAPAY_PILOT_UNTIL: new Date(Date.now() + 8 * 86400000).toISOString() })).toBe(false);
+  expect(renewalDebitAllowed('u12', 0, env)).toBe(false);
+  const paid = { ...env, WECHAT_PAPAY_PILOT_DEBIT_ENABLED: 'true' };
+  expect(renewalDebitAllowed('u12', 0, paid)).toBe(true);
+  expect(renewalDebitAllowed('u12', 1, paid)).toBe(false);
+  expect(renewalDebitAllowed('u13', 0, paid)).toBe(false);
 });

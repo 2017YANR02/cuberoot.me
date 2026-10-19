@@ -82,11 +82,14 @@ export default function AutoRenewModal({ price, period, planSlug, priceCents, on
           <li><ShieldCheck size={16} /><span>{tr({ zh: '可随时取消，取消后不再产生续费扣款', en: 'Cancel anytime to stop future renewal charges' })}</span></li>
         </ul>
         <p id="mem-autorenew-availability" className="mem-autorenew-caption" role="status">
-          {available
+          {available && !availability?.pilot
             ? tr({ zh: '将在微信中确认授权。签约后申请首期扣款，支付成功后开通会员；后续在到期前 24 小时申请续费，由微信通知并延迟扣款。', en: 'Confirm authorization in WeChat. The first charge is requested after signing and membership starts after payment. Renewal requests are sent 24 hours before expiry, followed by WeChat’s notice and delayed debit.' })
-            : tr({ zh: '自动续费尚未开放，当前不能签约或扣款。以下说明用于了解服务，勾选协议不会开通自动续费。', en: 'Auto-renewal is not available yet. No authorization or charge can be made. Checking the agreement below does not activate a subscription.' })}
+            : availability?.pilot ? null : tr({ zh: '自动续费尚未开放，当前不能签约或扣款。以下说明用于了解服务，勾选协议不会开通自动续费。', en: 'Auto-renewal is not available yet. No authorization or charge can be made. Checking the agreement below does not activate a subscription.' })}
         </p>
 
+        {availability?.pilot && <p role="status" className="mem-autorenew-caption">{availability.pilotPayment
+          ? tr({ zh: '仅限指定账号验收：签约将申请真实首期扣款，不是模拟支付。验收期间不会申请第二期扣款。', en: 'Private account acceptance: authorization requests a real first payment, not a simulation. No second-period debit is requested during acceptance.' })
+          : tr({ zh: '仅限指定账号验收：当前只验证签约与取消，扣款关闭，不会因签约发放会员。', en: 'Private account acceptance: authorization and cancellation only. Debits are disabled; signing does not grant membership.' })}</p>}
         <div className="mem-autorenew-consent">
           {/* allow-checkbox: explicit legal consent must be actively selected by the user */}
           <input
@@ -105,8 +108,8 @@ export default function AutoRenewModal({ price, period, planSlug, priceCents, on
         {failed && <p role="alert">{tr({ zh: '暂时无法发起签约，请确认已登录，或到“管理自动续费”检查已有签约后重试。', en: 'Unable to start authorization. Sign in, or check existing authorizations in Manage auto-renewal before retrying.' })}</p>}
         {miniLink && <div>
           {/* eslint-disable-next-line @next/next/no-img-element -- API-generated QR data URL */}
-          <img src={miniLink.qrCodeDataUrl} width={256} height={256} alt={tr({ zh: '微信扫码签约', en: 'Scan with WeChat to authorize' })} />
-          <p>{tr({ zh: '请用微信扫码，或在手机点击下方链接。小程序须登录与网站相同的 CubeRoot 账号；链接 10 分钟内有效。', en: 'Scan with WeChat or open the link on your phone. Sign in to the same CubeRoot account in the Mini Program. This link expires in 10 minutes.' })}</p>
+          {!availability?.pilot && <img src={miniLink.qrCodeDataUrl} width={256} height={256} alt={tr({ zh: '微信扫码签约', en: 'Scan with WeChat to authorize' })} />}
+          <p>{availability?.pilot ? tr({ zh: '请在手机系统浏览器打开下方链接，进入已上传的开发版；需要开发者权限。小程序须登录与网站相同的账号，链接 10 分钟内有效。', en: 'Open the link in your phone’s system browser to access the uploaded development version. Developer access is required. Use the same account; the link expires in 10 minutes.' }) : tr({ zh: '请用微信扫码，或在手机点击下方链接。小程序须登录与网站相同的 CubeRoot 账号；链接 10 分钟内有效。', en: 'Scan with WeChat or open the link on your phone. Sign in to the same CubeRoot account in the Mini Program. This link expires in 10 minutes.' })}</p>
           <a href={miniLink.urlLink} target="_blank" rel="noopener noreferrer">{tr({ zh: '打开微信签约', en: 'Open authorization in WeChat' })}</a>
         </div>}
         <button className="mem-autorenew-sign" disabled={!available || !agreed || busy} onClick={sign} aria-describedby="mem-autorenew-availability">

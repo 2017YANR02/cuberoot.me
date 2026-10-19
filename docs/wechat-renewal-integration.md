@@ -58,3 +58,9 @@
 - 对外开放前最后启用顺序：确认小程序正式版本 → 登记 MINI_RELEASED → SYNC_ENABLED=true → DEBIT_ENABLED=true → RELEASE_ENABLED=true；重载 API 后核对 availability 和真实签约/取消/到账。此前保持公开开关关闭，避免网站链接指向尚不存在的正式签约页。
 
 小程序签约依据：[微信支付小程序纯签约](https://pay.wechatpay.cn/doc/v2/merchant/4011987274)。
+
+## 2026-10-19 私测隔离
+
+公开开关保持关闭时，可设置 WECHAT_PAPAY_PILOT_ENABLED=true、PILOT_OWNER（同前缀，准确账号）、PILOT_UNTIL（ISO 时间，最多未来七天），开启 SYNC。两模板及 AppID 仍须准确匹配。默认 PILOT_DEBIT_ENABLED=false，只签约及取消；单独开启后仅首期可申请真实扣款，第二期禁止。匿名和其他账号仍不可签约，公开套餐不受私测开关影响。
+
+开发版须先上传；私测 URL Link 指向 develop，使用手机系统浏览器打开。正式版仍用 release。验收完成应取消私测合约并核对终止，再关闭私测；不把测试签约留到公开扣款开启。已提交支付继续对账，关闭开关不抹去未决订单。
