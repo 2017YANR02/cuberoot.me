@@ -1,0 +1,10 @@
+.staff-workspace {
+  --workspace-text: var(--foreground);
+  --workspace-background: var(--background);
+  --workspace-surface: var(--card);
+  --workspace-hover: var(--muted);
+  --workspace-border: var(--border-default);
+  --workspace-muted: var(--muted-foreground);
+  --workspace-accent: var(--accent);
+  --workspace-error: var(--destructive);
+}

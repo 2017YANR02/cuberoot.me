@@ -24,7 +24,7 @@ export default function AutoRenewModal({ price, period, planSlug, priceCents, on
   const [failed, setFailed] = useState(false);
   const mounted = useRef(true);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
-  const available = Boolean(availability?.available && planSlug && priceCents);
+  const available = Boolean(availability?.available && planSlug && priceCents && (planSlug.startsWith('enterprise_') ? availability.plans?.[planSlug] === true : availability.plans?.[planSlug] !== false));
   useEffect(() => {
     let cancelled = false;
     if (planSlug) void renewalAvailability().then(value => { if (!cancelled) setAvailability(value); }).catch(() => {});

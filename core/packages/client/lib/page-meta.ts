@@ -123,6 +123,7 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'pets/gallery': { title: { zh: '宠物图鉴', en: 'Companion gallery' }, description: { zh: '探索 CubeRoot 小伙伴的动作与表情，播放喜欢的片段，分享给朋友。', en: 'Explore CubeRoot companion animations and expressions. Play your favorite moments and share them with friends.' } },
   'account': { title: { zh: '账号', en: 'Account' } },
   'team': { title: { zh: '团队手册', en: 'Team Handbook' }, description: { zh: '入职、离职与 AI 协作 SOP。', en: 'Onboarding, offboarding and AI collaboration SOP.' } },
+  'workspace': { title: { zh: '工作台', en: 'Workspace' }, description: { zh: 'CubeRoot 员工工作台。', en: 'CubeRoot employee workspace.' } },
   'dev/team': { title: { zh: '团队手册', en: 'Team Handbook' }, description: { zh: '入职、离职与 AI 协作 SOP。', en: 'Onboarding, offboarding and AI collaboration SOP.' } },
   'account/sop': { title: { zh: 'AI 协作 SOP', en: 'AI Collaboration SOP' }, description: { zh: '团队 AI 协作的工作流程、质量标准与交接规范。', en: 'Workflow, quality standards and handoff guidelines for team AI collaboration.' } },
   'account/offboarding': { title: { zh: '离职', en: 'Offboarding' }, description: { zh: '工作交接、设备归还与组织权限撤销。', en: 'Work handoff, equipment return and organizational access revocation.' } },
