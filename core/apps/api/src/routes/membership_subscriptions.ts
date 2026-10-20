@@ -6,7 +6,7 @@ import { listMembershipContracts, cancelMembershipContract, synchronizeMembershi
 import { verifyPapayNotification, verifyPapayPaymentNotification, papayConfigured, PapayUnavailable } from '../payment/wechat-papay.js';
 import { enrollMembership } from '../payment/membership-enrollment.js';
 import { reconcileRenewalDebit } from '../payment/membership-renewals.js';
-import { renewalReleased, renewalPilotAllowed, RENEWAL_TERMS_VERSION } from '../payment/membership-renewal-policy.js';
+import { renewalReleased, renewalPilotAllowed, renewalPlanConfigured, RENEWAL_TEMPLATES, RENEWAL_TERMS_VERSION } from '../payment/membership-renewal-policy.js';
 import { getIp } from '../utils/analytics_helpers.js';
 import QRCode from 'qrcode';
 import { renewalChannel } from '../payment/membership-renewal-policy.js';
@@ -22,6 +22,7 @@ membershipSubscriptionRoutes.get('/membership/subscriptions/availability', async
   return c.json({ available: miniEnrollmentAvailable(user?.wcaId) || (renewalChannel() === 'h5' && renewalReleased() && papayConfigured()
     && process.env.WECHAT_PAPAY_DEBIT_ENABLED === 'true' && process.env.WECHAT_PAPAY_SYNC_ENABLED === 'true'),
   pilot, pilotPayment: pilot && process.env.WECHAT_PAPAY_PILOT_DEBIT_ENABLED === 'true',
+  plans: Object.fromEntries(Object.keys(RENEWAL_TEMPLATES).map(slug => [slug, renewalPlanConfigured(slug)])),
   termsVersion: RENEWAL_TERMS_VERSION, channel: renewalChannel() });
 });
 for (const path of ['/membership/subscriptions', '/membership/subscriptions/*']) {
@@ -53,6 +54,7 @@ membershipSubscriptionRoutes.post('/membership/subscriptions/mini-link', bodyLim
   if (!miniEnrollmentAvailable(user.wcaId)) return c.json({ error: 'auto-renewal unavailable' }, 503);
   const body = await c.req.json().catch(() => null);
   try {
+    if (!renewalPlanConfigured(body?.planSlug)) return c.json({ error: 'renewal template unavailable' }, 503);
     const ticket = issueMembershipHandoff(user.wcaId, body?.planSlug);
     const urlLink = await generateWechatMiniProgramUrlLink(new URLSearchParams({ ticket }).toString(),
       Math.floor(Date.now() / 1000) + 600, 'pages/membership/index', renewalReleased() ? 'release' : 'develop');
@@ -66,8 +68,9 @@ membershipSubscriptionRoutes.post('/membership/subscriptions/mini-context', body
   try {
     const pilot = !renewalReleased() && renewalPilotAllowed(user.wcaId);
     const ticket = !body?.ticket && pilot ? issueMembershipHandoff(user.wcaId, body?.pilotPlan) : body?.ticket;
-    return c.json({ ...readMembershipHandoff(ticket, user.wcaId), ...(pilot ? { ticket } : {}), account: user.wcaId, name: user.name,
-      available: miniEnrollmentAvailable(user.wcaId), pilot: !renewalReleased() && renewalPilotAllowed(user.wcaId),
+    const context = readMembershipHandoff(ticket, user.wcaId);
+    return c.json({ ...context, ...(pilot ? { ticket } : {}), account: user.wcaId, name: user.name,
+      available: miniEnrollmentAvailable(user.wcaId) && renewalPlanConfigured(context.planSlug), pilot: !renewalReleased() && renewalPilotAllowed(user.wcaId),
       pilotPayment: pilot && process.env.WECHAT_PAPAY_PILOT_DEBIT_ENABLED === 'true' });
   } catch { return c.json({ error: 'link expired or account mismatch' }, 403); }
 });

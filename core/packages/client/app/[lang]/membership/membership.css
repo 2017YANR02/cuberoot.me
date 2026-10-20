@@ -113,7 +113,7 @@
 }
 .mem-plans {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
 }
 .mem-plan {
@@ -199,10 +199,9 @@
   color: var(--muted-foreground);
   cursor: not-allowed;
 }
-.mem-purchase-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; }
+.mem-purchase-heading { display: flex; align-items: center; justify-content: flex-start; gap: 12px; margin-bottom: 18px; }
 .mem-purchase-heading .mem-plan-section-title { margin: 0; }
 .mem-payment-choice { display: flex; align-items: center; gap: 10px; font-size: 13px; }
-.mem-payment-choice label { font-weight: 600; }
 .mem-payment-select {
   align-self: flex-start;
   max-width: 100%;

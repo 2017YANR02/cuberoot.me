@@ -3,7 +3,7 @@ import { query, withTransaction } from '../db/connection.js';
 import { applyPapayDebit, papayConfig, papayConfigured, queryPapayDebit } from './wechat-papay.js';
 import { synchronizeMembershipContract, type MembershipContractRow } from './membership-contracts.js';
 import { grantMembershipInTransaction } from './membership-settlement.js';
-import { renewalReleased, renewalPilotAllowed, renewalDebitAllowed } from './membership-renewal-policy.js';
+import { renewalReleased, renewalPilotAllowed, renewalDebitAllowed, renewalPlanConfigured, RENEWAL_TEMPLATES, type RenewalSlug } from './membership-renewal-policy.js';
 
 type Contract = MembershipContractRow & { consented_at: Date | null; debit_cycle: number; next_debit_at: Date | null };
 type Debit = { out_trade_no: string; contract_id: string; cycle: number; status: string };
@@ -72,7 +72,9 @@ async function prepareDebit(id: string, owner: string): Promise<string | null> {
     const [contract] = await tx<Contract>(`SELECT * FROM membership_contracts WHERE id = ? AND wca_id = ?
       AND state = 'active' AND cancellation_requested_at IS NULL AND consented_at IS NOT NULL
       AND (debit_cycle = 0 OR next_debit_at <= now()) FOR UPDATE`, [id, owner]);
-    if (!contract || !renewalDebitAllowed(owner, contract.debit_cycle)) return null;
+    if (!contract || !renewalPlanConfigured(contract.plan_slug)
+      || RENEWAL_TEMPLATES[contract.plan_slug as RenewalSlug]?.id !== contract.plan_id
+      || !renewalDebitAllowed(owner, contract.debit_cycle)) return null;
     const [existing] = await tx<Debit>('SELECT * FROM membership_renewal_debits WHERE contract_id = ? AND cycle = ?', [id, contract.debit_cycle]);
     if (existing) return existing.status === 'prepared' ? existing.out_trade_no : null;
     const [membership] = await tx<{ expires_at: Date | null }>('SELECT expires_at FROM memberships WHERE wca_id = ?', [owner]);
@@ -99,7 +101,9 @@ async function submitDebit(no: string): Promise<void> {
     if (!binding) return;
     await tx("SELECT id FROM app_users WHERE wca_id = ? OR 'u' || id::text = ? FOR UPDATE", [binding.wca_id, binding.wca_id]);
     const [contract] = await tx<Contract>('SELECT * FROM membership_contracts WHERE id = ? FOR UPDATE', [attempt.contract_id]);
-    if (!contract || contract.state !== 'active' || contract.cancellation_requested_at
+    if (!contract || !renewalPlanConfigured(contract.plan_slug)
+      || RENEWAL_TEMPLATES[contract.plan_slug as RenewalSlug]?.id !== contract.plan_id
+      || contract.state !== 'active' || contract.cancellation_requested_at
       || !renewalDebitAllowed(contract.wca_id, attempt.cycle)) {
       await tx("UPDATE membership_renewal_debits SET status = 'cancelled' WHERE out_trade_no = ?", [no]);
       return;

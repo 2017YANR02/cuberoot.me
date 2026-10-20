@@ -1,5 +1,5 @@
 /** Local diagnostics only: syntax/schema checks cannot certify merchant authorization or launch readiness. */
-import { RENEWAL_TEMPLATES, renewalReleased } from './membership-renewal-policy.js';
+import { RENEWAL_TEMPLATES, renewalReleased, renewalPlanConfigured } from './membership-renewal-policy.js';
 export interface ReadinessCheck {
   name: string;
   status: 'present' | 'missing' | 'invalid' | 'verified' | 'mismatch' | 'skipped' | 'unavailable' | 'not_implemented' | 'not_verified';
@@ -83,6 +83,6 @@ export function renewalServerReadiness(env: Environment) {
     releaseEnabled: renewalReleased(env),
     debitEnabled: env.WECHAT_PAPAY_DEBIT_ENABLED === 'true',
     templates: Object.entries(RENEWAL_TEMPLATES).map(([slug, template]) => ({ slug, templateId: template.id,
-      approved: env[slug === 'monthly_auto_renew' ? 'WECHAT_PAPAY_MONTHLY_APPROVED' : 'WECHAT_PAPAY_YEARLY_APPROVED'] === template.id })),
+      approved: slug.startsWith('enterprise_') ? renewalPlanConfigured(slug, env) : env[slug === 'monthly_auto_renew' ? 'WECHAT_PAPAY_MONTHLY_APPROVED' : 'WECHAT_PAPAY_YEARLY_APPROVED'] === template.id })),
   };
 }
