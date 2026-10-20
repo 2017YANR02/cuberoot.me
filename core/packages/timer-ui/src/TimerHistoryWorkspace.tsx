@@ -436,7 +436,7 @@ export function TimerHistoryWorkspace({
   };
 
   return (
-    <div className="history-panel timer-history-workspace" data-no-timer>
+    <div className={`history-panel timer-history-workspace${minimal ? ' timer-history-workspace--minimal' : ''}`} data-rolling-count={visibleStatColumns.length} data-no-timer>
       {deleteError && <p role="alert">{tr({en:"Unable to delete solves. Try again.",zh:"删除成绩失败，请重试。"})}</p>}
       {!minimal && <><div className="history-header">
         <span>{tr({ zh: '历史', en: 'History'
@@ -875,10 +875,10 @@ export function TimerHistoryWorkspace({
         )}
         {historyDayGroups.map((group, groupIndex) => (
           <Fragment key={`${group.day}-${groupIndex}`}>
-            <TimerHistoryDayDivider
+            {!minimal && <TimerHistoryDayDivider
               countLabel={tr({ zh: `${group.solves.length} 次`, en: `${group.solves.length}` })}
               day={group.day}
-            />
+            />}
             {group.solves.map((s) => {
           const realIdx = idToRealIdx.get(s.id) ?? -1;
           const isSelected = visibleCompareMode && visibleSelectedIds.includes(s.id);

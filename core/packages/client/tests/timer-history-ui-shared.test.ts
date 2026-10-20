@@ -510,6 +510,7 @@ describe('shared history tag surfaces', () => {
     })));
     expect(host.querySelector('.history-header')).toBeNull();
     expect(host.querySelector('.history-search')).toBeNull();
+    expect(host.querySelector('.timer-history-day-divider')).toBeNull();
     expect(host.querySelector('.timer-history-columns-head button')).toBeNull();
     expect(host.querySelectorAll('.timer-history-row')).toHaveLength(1);
     expect(host.querySelector('.timer-history-row.is-pb .time')?.textContent).toContain('9.00');

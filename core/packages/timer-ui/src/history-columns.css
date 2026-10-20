@@ -82,6 +82,24 @@
 
 .timer-history-day-divider time { font-family: var(--font-mono); }
 
+/* The compact results table shares equal tracks across headings and values. */
+.timer-history-workspace--minimal { --history-columns: 32px repeat(3, minmax(0, 1fr)); }
+.timer-history-workspace--minimal[data-rolling-count='1'] { --history-columns: 32px repeat(2, minmax(0, 1fr)); }
+.timer-history-workspace--minimal[data-rolling-count='0'] { --history-columns: 32px minmax(0, 1fr); }
+.timer-history-workspace--minimal .timer-history-columns-head,
+.timer-history-workspace--minimal .timer-history-columns-head.has-rolling,
+.timer-history-workspace--minimal .timer-history-row:not(.timer-history-row--compare):not(.timer-history-row--select) {
+  grid-template-columns: var(--history-columns);
+  gap: 8px;
+}
+.timer-history-workspace--minimal .timer-history-columns-picker,
+.timer-history-workspace--minimal .rolling-stats-column-pickers,
+.timer-history-workspace--minimal .timer-history-row:not(.timer-history-row--compare):not(.timer-history-row--select) > .timer-history-rolling-cells { display: contents; }
+.timer-history-workspace--minimal .timer-history-columns-head span,
+.timer-history-workspace--minimal .timer-history-row .time { text-align: right; }
+.timer-history-workspace--minimal { font-family: var(--font-sans); font-variant-numeric: tabular-nums; }
+.timer-history-workspace--minimal .timer-history-row :is(.idx, .hao) { font-size: inherit; }
+
 @media (max-width: 480px) {
   .timer-history-columns-head.has-rolling {
     grid-template-columns: 32px minmax(0, 1fr);
