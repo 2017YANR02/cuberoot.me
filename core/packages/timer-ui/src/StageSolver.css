@@ -634,7 +634,9 @@ html[data-theme='dark'] .stsv {
   border-radius: 8px;
   background: var(--card);
 }
-.stsv-settings-limits { display: flex; flex-wrap: wrap; gap: 16px; }
+.stsv-settings-limits { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
+.stsv-settings-limits .stsv-control { flex-direction: row; align-items: center; gap: 8px; }
+.stsv-settings-limits .stsv-control > span { white-space: nowrap; }
 .stsv-settings .stsv-moverestrict { margin: 0; }
 .stsv-settings .stsv-mr-grid { flex-wrap: wrap; }
 

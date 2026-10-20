@@ -289,17 +289,23 @@
   .shell-topbar-left .solver-panel-head { height: 30px; padding: 0 3px; font-size: 12px; gap: 4px; }
 }
 
-/* Both solution views start on the same left edge as the toolbar. */
+/* Center both solution views; the toolbar occupies the same middle column. */
 @media (min-width: 900px) {
-  .solver-sheet { --solver-sheet-padding: 28px; }
-  .solver-sheet .solver-sheet-body { padding: 20px 28px; }
+  .solver-sheet { --solver-sheet-padding: 28px; --solver-sheet-content-width: 640px; }
+  .solver-sheet-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, var(--solver-sheet-content-width)) minmax(0, 1fr);
+    column-gap: 0;
+  }
+  .solver-sheet-head .solver-view-select { justify-self: start; min-width: 0; }
+  .solver-sheet .solver-sheet-body { padding: 20px 28px; scrollbar-gutter: stable both-edges; }
   .solver-sheet-body > [data-no-timer] {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     align-items: start;
     gap: 16px 32px;
-    max-width: 640px;
-    margin: 0;
+    max-width: var(--solver-sheet-content-width);
+    margin: 0 auto;
   }
   .solver-sheet .solver-panel-scramble { grid-column: 1 / -1; margin: 0; }
   .solver-sheet .stepsolve { margin-top: 0; }
