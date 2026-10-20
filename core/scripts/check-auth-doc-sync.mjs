@@ -32,7 +32,7 @@ const EXACT = new Set([
   'apps/api/src/routes/mcp.ts',
   'apps/api/src/routes/dev_preview.ts', 'apps/api/migrations/0273_dev_preview_requests.sql',
   'scripts/dev-preview/enroll.ts', 'scripts/dev-preview/provision.ts',
-  'apps/api/src/routes/workspace.ts', 'apps/api/src/workspace/service.ts', 'apps/api/migrations/0281_workspace.sql',
+  'apps/api/src/routes/workspace.ts', 'apps/api/src/workspace/service.ts', 'apps/api/migrations/0281_workspace.sql', 'apps/api/migrations/0284_workspace_admin_access.sql',
   'packages/client/app/[lang]/workspace/page.tsx',
   'apps/api/src/routes/remote_access.ts', 'apps/api/migrations/0272_remote_access.sql',
   'apps/api/scripts/remote-access-host.ts', 'packages/shared/src/remote-access.ts',

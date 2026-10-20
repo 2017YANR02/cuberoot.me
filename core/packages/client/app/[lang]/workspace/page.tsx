@@ -41,22 +41,22 @@ function WorkspaceContent() {
 function SignedInWorkspace() {
   const t=useT();const [section]=useQueryState('section',parseAsStringEnum([...sections]).withDefault('mine'));
   const [id]=useQueryState('id',parseAsString.withDefault(''));
-  const session=useResource<{actor:StaffActor;directory:MemberDirectory}>('session');const actor=session.data?.actor;
+  const session=useResource<{actor:StaffActor;employee:StaffActor;directory:MemberDirectory}>('session');const actor=session.data?.actor;const employee=session.data?.employee;
   const items=[{key:'mine',label:t('我的工作','My work')},{key:'updates',label:t('团队动态','Team updates')},{key:'projects',label:t('项目','Projects')},...(actor?.kind==='admin'?[{key:'members',label:t('成员与权限','Members and access')}]:[])];
   return <WorkspaceShell brand="CubeRoot" title={items.find(i=>i.key===section)?.label??t('工作记录','Work report')} actions={<AppLink href="/account" prefetch={false}>{actor?.name??t('我的账号','My account')}</AppLink>} navigation={<>{items.map(item=><AppLink key={item.key} href={`/workspace?section=${item.key}`} aria-current={section===item.key?'page':undefined} prefetch={false}>{item.label}</AppLink>)}<AppLink href="/dev/team" prefetch={false}>{t('团队手册','Team handbook')}</AppLink></>}>
     <ErrorNotice error={session.error} retry={session.reload} />
     {session.error?.status===401&&<Button onClick={()=>useAuthStore.getState().login()}>{t('重新登录','Sign in again')}</Button>}
     {session.loading&&<p role="status">{t('正在加载…','Loading…')}</p>}
     {actor&&<>
-      {section==='mine'&&(actor.kind==='staff'?<><ReportEditor /><Reports actor={actor} directory={session.data!.directory} mine /></>:<AppLink href="/workspace?section=members" prefetch={false}>{t('开通员工权限','Enable employee access')}</AppLink>)}
+      {section==='mine'&&employee&&<><ReportEditor /><Reports actor={employee} directory={session.data!.directory} mine /></>}
       {section==='updates'&&<Reports actor={actor} directory={session.data!.directory} />}
       {section==='projects'&&<Projects actor={actor} directory={session.data!.directory} />}
-      {section==='detail'&&id&&<ReportDetailPanel actor={actor} id={id} />}
+      {section==='detail'&&id&&employee&&<ReportDetailPanel actor={employee} id={id} />}
       {section==='members'&&actor.kind==='admin'&&<Members onSaved={session.reload} />}
     </>}
   </WorkspaceShell>;
 }
-type Member={id:number;userId:number;name:string;role:'member'|'manager';active:boolean};
+type Member={id:number;userId:number;name:string;role:'member'|'manager';active:boolean;adminAccess:boolean};
 function Members({onSaved}:{onSaved:()=>void}) {
   const t=useT();const resource=useResource<{members:Member[]}>('members');
   const reload=()=>{resource.reload();onSaved();};
@@ -67,6 +67,6 @@ function Members({onSaved}:{onSaved:()=>void}) {
     <Field label={t('状态','Status')}><select name="active" defaultValue={String(member?.active??true)}><option value="true">{t('启用','Enabled')}</option><option value="false">{t('停用','Disabled')}</option></select></Field>
     <Button type="submit">{member?t('保存','Save'):t('开通','Enable')}</Button>
   </Form>;
-  return <><ErrorNotice error={resource.error} retry={resource.reload} /><section className="staff-panel"><h2>{t('开通员工权限','Enable employee access')}</h2>{form()}</section>{resource.data?.members.map(m=><section key={m.id} className="staff-panel"><h2>{m.name}</h2>{form(m)}</section>)}</>;
+  return <><ErrorNotice error={resource.error} retry={resource.reload} /><section className="staff-panel"><h2>{t('开通员工权限','Enable employee access')}</h2>{form()}</section>{resource.data?.members.map(m=><section key={m.id} className="staff-panel"><h2>{m.name}</h2>{m.adminAccess?<p>{t('管理员 · 已自动开通','Administrator · Enabled automatically')}</p>:form(m)}</section>)}</>;
 }
 export default function WorkspacePage(){return <Suspense><Workspace /></Suspense>;}

@@ -9454,3 +9454,6 @@ END;
 $$;
 CREATE TRIGGER workspace_prepare_account_delete BEFORE DELETE ON app_users
   FOR EACH ROW EXECUTE FUNCTION workspace_prepare_account_delete();
+
+-- Automatic administrator employee access, independent of explicit employee grants.
+ALTER TABLE workspace_members ADD COLUMN admin_access BOOLEAN NOT NULL DEFAULT FALSE;

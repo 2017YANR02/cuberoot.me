@@ -2,7 +2,7 @@
 
 入口 `/workspace`，中文 `/zh/workspace`。直接由 CubeRoot 承载，原跳转到 Mira 的规则已移除。
 
-- 登录：既有 CubeRoot 账号与会话。管理员在成员页按 CubeRoot ID 开通、调整或停用员工权限。
+- 登录：既有 CubeRoot 账号与会话。管理员自动获得员工身份，直接记录本人工作并保留管理能力；其他员工由管理员按 CubeRoot ID 开通。管理员只可查看本人草稿及历史修订。
 - 数据：CubeRoot PostgreSQL 的 `workspace_*` 表，迁移 `0281_workspace.sql`。Mira 使用自己的身份、会话和 SQLite；没有跨应用成员同步、令牌传递或数据库连接。
 - 界面：两个应用共同消费 `@app-foundation/workspace-ui` 的布局、登录外壳、项目、报告、讨论与历史；各自注入传输、路由、品牌、主题和控件。
 - 规则：使用已发布的 `workspace-policy@0.1.0`（Foundation v0.6.0）。UI 0.1.0 已发布于 Foundation v0.7.0，两站固定 release URL 与锁文件完整性。
@@ -32,3 +32,5 @@ pnpm --filter @cuberoot/server exec vitest run tests/workspace-http.test.ts
 - CubeRoot 最终功能提交 `533753580b2c85df9c17657154598daa296bdd7e`；[自有前端部署](https://github.com/2017YANR02/cuberoot.me/actions/runs/39355684592) 与 Vercel 均成功。线上 API 活动目录已匹配该版本，0282 触发器及账号可空外键已回读确认。
 - [最新主线检查](https://github.com/2017YANR02/cuberoot.me/actions/runs/39355899880) 的类型检查、后端检查及前端第1分片通过；第2分片唯一失败为比赛城市 Domažlice 缺中文译名（`city-localize-cn-coverage.test.ts`），没有跳过或放宽断言。工作台注销覆盖率失败已修复；不能把全仓 CI 标记为全绿。
 - [最终 API 部署 39355684610](https://github.com/2017YANR02/cuberoot.me/actions/runs/39355684610) 已成功完成，生产求解服务 ready=true，最终版本保持启用，无回滚。
+
+管理员自动权限：`0284_workspace_admin_access.sql` 记录独立的 `admin_access`，服务端用既有数据库管理员与共享 WCA 管理员清单自动同步全部管理员，复用现有成员 ID。显式员工授权的 `active/role` 独立保留；移除管理员资格即撤销派生权限，原本有显式授权的成员仍可作为员工使用。成员页将管理员标注为自动开通；管理员个人记录使用员工 ID，管理审计继续使用管理员身份。
