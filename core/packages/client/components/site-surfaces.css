@@ -467,6 +467,14 @@ body[data-site-scenery] :is(
   background: var(--glass-dialog-bg);
 }
 
+/* Replay text behind collection controls must not compete with review content. */
+body[data-site-scenery] :is(
+  .ri-dialog[data-site-surface='panel'],
+  .ri-popover[data-site-surface='popover']
+) {
+  background: var(--glass-dialog-bg);
+}
+
 /* The compact difficulty editor uses the same frosted surface as menus.
    Keep its dismiss layer clear: the legacy foreground tint turns white in dark mode. */
 body .timer-room-overlay:has(> .timer-difficulty-dialog) {

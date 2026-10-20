@@ -73,7 +73,7 @@ export default function ReconIntakeAction({ solve, snapshot, host }: {
       {target && <p>{(target.solve.timeMs / 1000).toFixed(3)}s · {target.solve.scramble}</p>}
       <p>{tr({ zh: '确认后保存默认化简步骤为预期，自动测试尚未运行。', en: 'Confirmation saves the default simplified steps as expected output. Automated tests have not run yet.' })}</p>
       {!snapshot && !target && <p>{tr({ zh: '等待复盘完成；第一版支持标准三阶 CFOP。', en: 'Waiting for reconstruction. Version 1 supports standard 3×3 CFOP.' })}</p>}
-      <button className="ri-button" type="button" disabled={busy || unresolvedLink || (!snapshot && !target)} onClick={() => void choose('correct')}>
+      <button className="ri-button ri-primary" type="button" disabled={busy || unresolvedLink || (!snapshot && !target)} onClick={() => void choose('correct')}>
         {tr({ zh: '确认正确并收录 · 待测试', en: 'Confirm correct · Queue tests' })}</button>
       <button className="ri-button" type="button" disabled={busy || unresolvedLink} onClick={() => void choose('needs-fix')}>
         {tr({ zh: '批注问题并收录', en: 'Annotate and collect' })}</button>
@@ -156,7 +156,7 @@ export function ReconIntakeEditor({ solve, host, mode, source, existing, onClose
           <button className="ri-button" type="button" onClick={() => setAnnotations(items => items.filter(item => item.id !== note.id))}>{tr({ zh: '移除批注', en: 'Remove annotation' })}</button></div>)}
       </div>}
       {error && <p role="alert">{error}</p>}
-      <button className="ri-button" type="button" disabled={saving || !snapshot || (mode === 'needs-fix' && !annotations.length && !problem.trim())} onClick={() => void save()}>
+      <button className="ri-button ri-primary" type="button" disabled={saving || !snapshot || (mode === 'needs-fix' && !annotations.length && !problem.trim())} onClick={() => void save()}>
         {mode === 'correct' ? tr({ zh: '确认当前复盘正确并收录', en: 'Confirm this reconstruction and collect' })
           : tr({ zh: '提交批注 · 待修正', en: 'Submit annotations · Needs correction' })}</button>
     </section>
