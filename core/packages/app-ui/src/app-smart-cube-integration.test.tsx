@@ -108,6 +108,10 @@ beforeEach(async () => {
   backListener = null;
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
   vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
+  // JSDOM has no constructable stylesheet adoption; preserve the real App/corner
+  // lifecycle while supplying the browser API surface this device test needs.
+  Object.defineProperty(document, 'adoptedStyleSheets', { configurable: true, writable: true, value: [] });
+  vi.stubGlobal('CSSStyleSheet', class { replaceSync(_css: string) {} });
   wideViewport = false;
   mediaListeners.clear();
   vi.stubGlobal('matchMedia', (query: string) => ({
@@ -140,6 +144,7 @@ beforeEach(async () => {
 afterEach(async () => {
   vi.useRealTimers();
   await act(async () => root.unmount()); container.remove();
+  Reflect.deleteProperty(document, 'adoptedStyleSheets');
   vi.restoreAllMocks(); vi.unstubAllGlobals();
 });
 
