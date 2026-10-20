@@ -30,6 +30,8 @@ import { nativePuzzleKPuzzle, parseNativePuzzleAlg } from '@cuberoot/puzzle-solv
 // https://www.puzzleforge.com/wp/2012/11/06/radiolarian-7-radio-jewel-112012/
 // Cat's Cradle's radio05 cut is phi^2/(2+phi^2) = (4+sqrt(5))/11:
 // https://www.puzzleforge.com/wp/2012/10/06/radiolarian-5-cats-cradle-102012/
+// Radio Canon's radio01_5 uses planar cuts at 0.77 and retains fixed centers:
+// https://www.puzzleforge.com/wp/2014/05/08/radiolarian-1-5-the-radio-cannon-52014/
 // Baby Face preset: https://github.com/cubing/cubing.js/issues/127
 // 3x3 + Skewb is the independent superposition of the standard 3x3 and Skewb
 // cut families, not a measured reproduction of an inaccessible original post.
@@ -193,6 +195,13 @@ const CASES: readonly Spec[] = [
     faces: 20, perFace: 19, raw: 420, visible: 380, pieces: 242,
     shapes: { 3: 15, 4: 3, 6: 1 }, unmarkedOrbit: 'CENTERS3',
     orbits: [['C5RNER', 12, 5], ['CENTERS', 60, 1], ['EDGES', 60, 2], ['EDGES2', 30, 2], ['CENTERS2', 60, 1], ['CENTERS3', 20, 3]],
+  },
+  {
+    id: 'radiocanon', faceNormals: icoNormals,
+    axes: [{ pairs: icoFacePairs, normals: icoNormals, cuts: [0.77], order: 3 }],
+    faces: 20, perFace: 16, raw: 360, visible: 320, pieces: 182,
+    shapes: { 3: 7, 4: 9 }, unmarkedOrbit: 'CENTERS2',
+    orbits: [['C5RNER', 12, 5], ['EDGES', 60, 2], ['CENTERS', 60, 1], ['EDGES2', 30, 2], ['CENTERS2', 20, 3]],
   },
 ];
 
@@ -363,6 +372,55 @@ it('retains Radio Web wings, closes every face without gaps and distinguishes bo
   expect([...counts.values()].filter((n) => n === 1)).toHaveLength(200);
   expect([...counts.values()].filter((n) => n === 2)).toHaveLength(90);
   expect([...counts.values()].filter((n) => n === 5)).toHaveLength(12);
+});
+
+it('keeps all twenty Radio Canon face centers fixed under every outer face turn', () => {
+  const spec = CASES.find(({ id }) => id === 'radiocanon')!;
+  const { byPolygon, puzzle, stickers } = fixture(spec);
+  const depth = 0.77;
+  expect(Number(NATIVE_PUZZLES.radiocanon.description.split(' ')[2])).toBe(depth);
+  const planes = cutPlanes(spec);
+  const counts = new Map<string, number>();
+  const centers = Object.entries(icoNormals).map(([family, normal]) => {
+    // Locate the central triangle from the independent halfspace construction,
+    // not an orbit name or a PG label. A face center is outside every other cap.
+    const neighborDot = Math.max(...Object.entries(icoNormals)
+      .filter(([other]) => other !== family).map(([, other]) => normal.dot(other)));
+    expect(neighborDot, family).toBeCloseTo(Math.sqrt(5) / 3, 12);
+    expect(neighborDot, family).toBeLessThan(depth);
+    const regions = expectedFace(spec, normal);
+    const central = regions.filter((polygon) => center(polygon).distanceTo(normal) < EPS);
+    expect(central, family).toHaveLength(1);
+    expect(central[0], family).toHaveLength(3);
+    for (const polygon of regions) {
+      const point = center(polygon);
+      const key = planes.map(({ normal: cutNormal, offset }) => cutNormal.dot(point) > offset ? '+' : '-').join('');
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    const sticker = byPolygon.get(polygonKey(central[0]));
+    expect(sticker, family).toBeDefined();
+    return { family, sticker: sticker! };
+  });
+  expect(centers).toHaveLength(20);
+  expect(new Set(centers.map(({ sticker }) => sticker.orbit))).toEqual(new Set([spec.unmarkedOrbit]));
+  expect([...counts.values()].filter((n) => n === 1)).toHaveLength(80);
+  expect([...counts.values()].filter((n) => n === 2)).toHaveLength(90);
+  expect([...counts.values()].filter((n) => n === 5)).toHaveLength(12);
+  expect(counts.size).toBe(182);
+  expect(stickers.filter((sticker) => sticker.orbit === spec.unmarkedOrbit)).toHaveLength(20);
+  for (const family of Object.keys(icoNormals)) for (const amount of [1, -1]) {
+    const move = `${family}${amount === -1 ? "'" : ''}`;
+    const transformation = puzzle.moveToTransformation(move);
+    expect(transformation.repetitionOrder(), move).toBe(3);
+    for (const { family: centerFamily, sticker } of centers) {
+      const orbit = transformation.transformationData[sticker.orbit];
+      expect(orbit.permutation[sticker.ord], `${move} fixed ${centerFamily} center`).toBe(sticker.ord);
+      // Its own monochrome triangle may spin, but this invisible orientation
+      // must not be confused with a displaced center or extra visible pieces.
+      expect(orbit.orientationDelta[sticker.ord] !== 0, `${move} center rotation ${centerFamily}`)
+        .toBe(centerFamily === family);
+    }
+  }
 });
 
 describe.each(CASES)('$id independent physical model', (spec) => {
@@ -644,7 +702,7 @@ afterEach(async () => {
   }
 });
 
-it.each(['heliskewb', 'cube2heli', 'cube3heli', 'radiojewel', 'radioweb', 'catscradle'] as const)('animates %s moves in both directions with the real PG3D middle matrix and selected pieces', async (id) => {
+it.each(['heliskewb', 'cube2heli', 'cube3heli', 'radiojewel', 'radioweb', 'catscradle', 'radiocanon'] as const)('animates %s moves in both directions with the real PG3D matrices and selected pieces', async (id) => {
   // This is a local renderer fixture, not browser interaction evidence. The
   // real TwistyPlayer creates its real PG3D; only DOM camera attachment and
   // scheduling are suppressed because jsdom has no display or GPU.
@@ -680,30 +738,36 @@ it.each(['heliskewb', 'cube2heli', 'cube3heli', 'radiojewel', 'radioweb', 'catsc
   expect(object.movingObj).toBeDefined();
   const { pieces } = fixture(spec);
   const puzzle = await (await player.experimentalModel.puzzleLoader.get()).kpuzzle();
+  // Fixed samples of the renderer's quintic easing, independently applied to
+  // physical vertices. Keep existing cases at their established middle frame;
+  // the new fixed-center model checks start, end and three intermediate frames.
+  const samples = id === 'radiocanon'
+    ? [[0, 0], [0.2, 0.05792], [0.5, 0.5], [0.8, 0.94208], [1, 1]]
+    : [[0.5, 0.5]];
   for (const choice of manualChoices(spec)) {
     const axis = choice.axis.normals[choice.family];
     const bounds = [Infinity, ...boundaries(choice.axis), -Infinity];
     const low = bounds[choice.last], high = bounds[choice.first - 1];
     let signWitness = 0;
-    for (const amount of [1, -1]) for (const direction of [1, -1] as const) {
+    for (const amount of [1, -1]) for (const direction of [1, -1] as const) for (const [fraction, eased] of samples) {
       const move = new Move(choice.move).modified({ amount });
-      object.onPositionChange({ pattern: puzzle.defaultPattern(), movesInProgress: [{ move, direction, fraction: 0.5 }] });
+      object.onPositionChange({ pattern: puzzle.defaultPattern(), movesInProgress: [{ move, direction, fraction }] });
       for (const [key, points] of pieces) {
         const [orbit, ord] = key.split(':'), q = center(points).dot(axis);
         const moving = q > low + EPS && q < high - EPS;
         expect(object.stickers[orbit][0][Number(ord)].twistVal, `${move} renderer selection ${key}`).toBe(Number(moving));
         if (!moving) continue;
         for (const point of points) {
-          const expected = point.clone().applyAxisAngle(axis, -direction * amount * Math.PI / choice.order);
+          const expected = point.clone().applyAxisAngle(axis, -direction * amount * 2 * Math.PI * eased / choice.order);
           const actual = point.clone().applyQuaternion(object.movingObj.quaternion);
-          const wrong = point.clone().applyAxisAngle(axis, direction * amount * Math.PI / choice.order);
-          expect(actual.distanceTo(expected), `${move} middle frame direction ${direction}`).toBeLessThan(EPS);
-          expect(actual.dot(axis), `${move} middle frame slab`).toBeCloseTo(point.dot(axis), 10);
+          const wrong = point.clone().applyAxisAngle(axis, direction * amount * 2 * Math.PI * eased / choice.order);
+          expect(actual.distanceTo(expected), `${move} frame ${fraction} direction ${direction}`).toBeLessThan(EPS);
+          expect(actual.dot(axis), `${move} frame ${fraction} slab`).toBeCloseTo(point.dot(axis), 10);
           signWitness = Math.max(signWitness, wrong.distanceTo(actual));
         }
       }
     }
-    expect(signWitness, `${choice.move} opposite signs have different middle frames`).toBeGreaterThan(0.1);
+    expect(signWitness, `${choice.move} opposite signs have different intermediate frames`).toBeGreaterThan(0.1);
     expect(puzzle.moveToTransformation(choice.move).isIdentical(puzzle.moveToTransformation(`${choice.move}'`))).toBe(choice.order === 2);
   }
 });

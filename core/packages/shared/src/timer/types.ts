@@ -32,7 +32,7 @@ export type EventId =
   | 'lattice' | 'hyperx' | 'latticex' | 'masterbrilic' | 'masterftov2'
   | 'quadx' | 'dinoocta' | 'fto5' | 'fto6' | 'eto' | 'radiocrystal'
   | 'cube3skewb' | 'heliskewb' | 'comboctahedron' | 'circoradiolarian' | 'icosababyface'
-  | 'cube2heli' | 'cube3heli' | 'radiojewel' | 'radioweb' | 'catscradle'
+  | 'cube2heli' | 'cube3heli' | 'radiojewel' | 'radioweb' | 'catscradle' | 'radiocanon'
   // Relays
   | 'r3' | 'r4' | 'r5'
   // CFOP step training
@@ -266,6 +266,7 @@ export const EVENTS: EventInfo[] = [
   { id: 'radiojewel', nameEn: 'Radio Jewel', nameZh: 'Radio Jewel', group: 'nonwca' },
   { id: 'radioweb', nameEn: 'Radio Web', nameZh: 'Radio Web', group: 'nonwca' },
   { id: 'catscradle', nameEn: 'Cat’s Cradle', nameZh: 'Cat’s Cradle', group: 'nonwca' },
+  { id: 'radiocanon', nameEn: 'Radio Canon', nameZh: 'Radio Canon', group: 'nonwca' },
 
   // CFOP step training
   { id: 'cross',  nameEn: 'Cross only',  nameZh: '十字',       group: 'cfop'
