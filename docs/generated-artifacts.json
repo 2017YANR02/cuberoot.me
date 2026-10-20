@@ -1025,6 +1025,7 @@
           "core/apps/miniprogram/src/**",
           "core/apps/miniprogram/project.douyin.config.json",
           "core/apps/miniprogram/scripts/build*.mjs",
+          "core/apps/miniprogram/scripts/native-page-check.mjs",
           "core/apps/miniprogram/package.json"
         ]
       },

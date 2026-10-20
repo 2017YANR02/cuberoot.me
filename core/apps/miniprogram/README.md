@@ -4,6 +4,9 @@
 
 ## 抖音原生主页面
 
+- 协议与隐私入口使用 `pages/privacy` 原生离线页；全文由 `@cuberoot/shared/privacy` 与网站共同消费，修改政策时只维护共享数据。第三方政策及支持邮箱提供复制入口。
+- 抖音构建递归检查计时、工具、账号、设备和协议页面引用的模板，拒绝核心页面引入 `web-view`。这只证明这些页面的渲染边界，不证明账号网站流程、全部深链和平台审核已完成；完整清单见[原生化审核核查](../../../docs/douyin-native-review-audit.md)。
+
 - `native-timer.ts` 复用共享计时状态机、打乱、罚时、统计与智能魔方控制器；`timer-store.ts` 从早期微信原生计时器（`7cb3e75349`，当时位于 `core/packages/miniprogram`）恢复，沿用 `cuberoot:timer` 存储格式与 `TimerStoreSettings`。网站 WebView 的 localStorage 成绩不会自动迁入原生存储。
 - `native-timer-page.ts` / `templates/native-timer.wxml` 适配小程序触摸、设置、成绩及生命周期。支持15个计时项目的本地打乱图、智能魔方实况图、观察计时、分组/成绩编辑、共享滚动统计、手动打乱、真题搜索与日期选择、单行排名、CSV/csTimer/Speedstacks导出及备份恢复；不包含FMC、多盲成绩录入或旧网页全部高级设置。接入与实际验收状态见[原生计时器跟踪](../../../docs/douyin-native-timer-tracker.md)。
 - 顶部直接选择项目与打乱来源；设置按共享契约分为计时、智能魔方、打乱、外观和数据，已接紧凑打乱、字号及运行中隐藏界面。统计支持日期范围、汇总、滚动均值和共享分箱的原生成绩分布；详情显示原始时间、罚时、来源、设备及已有分段，修改罚时/备注后保留详情上下文。未提供的声音、3D/姿态、跨组图表等仍按跟踪表记为缺口。

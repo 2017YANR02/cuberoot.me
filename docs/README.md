@@ -45,5 +45,6 @@
 | App `/timer` 一致性 | [mobile-timer-parity-tracker.md](./mobile-timer-parity-tracker.md) | `ACTIVE` | 网站与已安装客户端的计时器完整 UI/UX、复用边界与逐项验收 |
 | App `/timer` 零遗漏审计 | [mobile-timer-zero-omission-audit.md](./mobile-timer-zero-omission-audit.md) | `ACTIVE` | Tracker 的强制 inventory 附录：43 项、可达 surface、状态矩阵和 parity guard 设计 |
 | 小程序 | [../core/docs/MINIPROGRAM.md](../core/docs/MINIPROGRAM.md) | `REFERENCE` | 小程序实现、构建和发布契约 |
+| 抖音原生化审核核查 | [douyin-native-review-audit.md](douyin-native-review-audit.md) | `REFERENCE` | 页面、网页入口、原生构建守卫及尚未完成的验收 |
 
 未列出的专题文档仍可作为局部证据；涉及继续实施前，先核对其日期、状态和对应现役代码。
