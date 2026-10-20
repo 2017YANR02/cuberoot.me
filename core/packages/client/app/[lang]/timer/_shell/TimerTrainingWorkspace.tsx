@@ -25,6 +25,7 @@ export default function TimerTrainingWorkspace() {
   const search = searchParams.toString();
   const target = useMemo(() => training && training !== 'home' ? resolveTrainingTarget(training) : null, [training]);
   const [settingsPortal, setSettingsPortal] = useState<HTMLDivElement | null>(null);
+  const [contextPortal, setContextPortal] = useState<HTMLDivElement | null>(null);
   const [devicePortal, setDevicePortal] = useState<HTMLDivElement | null>(null);
   const mapHref = useCallback((href: string) => timerTrainingHref(href, {
     timerPathname: pathname,
@@ -38,17 +39,21 @@ export default function TimerTrainingWorkspace() {
     params: target.params,
     mapHref,
     settingsPortal,
+    contextPortal,
     devicePortal,
-  } : null, [target, mapHref, settingsPortal, devicePortal]);
+  } : null, [target, mapHref, settingsPortal, contextPortal, devicePortal]);
 
   return (
     <main className="timer-training-workspace" data-timer-training>
       {/* This non-sticky toolbar must not create a backdrop root: its menu needs
           to blur and cover the training cards outside the toolbar. */}
       <div className="timer-training-workspace__toolbar" data-no-timer>
+        <div className="timer-training-workspace__navigation">
         {target?.kind === 'alg-run' && <div className="timer-training-workspace__settings" ref={setDevicePortal} />}
         <TimerTrainingMenu />
         {target?.kind === 'alg-run' && <div className="timer-training-workspace__settings" ref={setSettingsPortal} />}
+        </div>
+        {target?.kind === 'alg-run' && <div className="timer-training-workspace__context" ref={setContextPortal} />}
       </div>
       {host && target ? (
         <TrainingHostProvider value={host}>

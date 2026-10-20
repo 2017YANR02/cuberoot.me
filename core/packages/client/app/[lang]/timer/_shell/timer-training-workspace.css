@@ -6,13 +6,37 @@
 }
 
 .timer-training-workspace__toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.timer-training-workspace__navigation {
+  grid-column: 2;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
   gap: 12px;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border-default);
+  min-width: 0;
+}
+.timer-training-workspace__context {
+  grid-column: 3;
+  justify-self: end;
+  min-width: 0;
+  max-width: 100%;
+}
+.timer-training-workspace__context .settings-popover-context {
+  max-width: 100%;
+  justify-content: flex-end;
+}
+@media (max-width: 767px) {
+  .timer-training-workspace__toolbar { grid-template-columns: minmax(0, 1fr); }
+  .timer-training-workspace__navigation,
+  .timer-training-workspace__context { grid-column: 1; }
 }
 
 /* The training toolbar hosts the same TimerDeviceCenter as /timer's topbar.
@@ -191,7 +215,7 @@
   transform: none;
 }
 
-/* Stage context stays in flow when its settings trigger moves to the timer toolbar. */
+/* Context actions stay in flow inside their toolbar portal. */
 .timer-training-workspace .settings-popover-context {
   display: inline-flex;
   align-items: center;

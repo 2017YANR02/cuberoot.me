@@ -48,6 +48,7 @@ const trainingHost: TrainingHost = {
 describe('practice menu availability and transitions', () => {
   let container: HTMLDivElement;
   let settingsPortal: HTMLDivElement;
+  let contextPortal: HTMLDivElement;
   let root: Root;
   let initialStore: ReturnType<typeof useTrainerStore.getState>;
   let initialSettings: ReturnType<typeof getSettings>;
@@ -73,13 +74,15 @@ describe('practice menu availability and transitions', () => {
     onUrlUpdate.mockClear();
     container = document.createElement('div');
     settingsPortal = document.createElement('div');
-    document.body.append(container, settingsPortal);
+    contextPortal = document.createElement('div');
+    document.body.append(container, settingsPortal, contextPortal);
     root = createRoot(container);
   });
   afterEach(async () => {
     await act(async () => root.unmount());
     container.remove();
     settingsPortal.remove();
+    contextPortal.remove();
     useTrainerStore.setState(initialStore, true);
     updateSettings(initialSettings);
     vi.unstubAllGlobals();
@@ -92,7 +95,7 @@ describe('practice menu availability and transitions', () => {
     const menu = createElement(TimerTrainingMenu);
     const children = target?.kind === 'alg-run'
       ? createElement(TrainingHostProvider, {
-        value: { path: training!, params: target.params, mapHref, settingsPortal },
+        value: { path: training!, params: target.params, mapHref, settingsPortal, contextPortal },
         children: createElement(Fragment, null, menu, createElement(SettingsPopover, {
           hosted: true, label: label('训练设置', 'Training settings'),
           triggerPrefix: createElement('span', null, '8/472'),
@@ -262,7 +265,8 @@ describe('practice menu availability and transitions', () => {
     await renderMenu('/alg/3x3/oll/run');
     const gear = trigger('训练设置', 'Training settings');
     expect(settingsPortal.contains(gear)).toBe(true);
-    expect(container.textContent).toContain('8/472');
+    expect(contextPortal.textContent).toContain('8/472');
+    expect(container.textContent).not.toContain('8/472');
     expect(settingsPortal.textContent).not.toContain('8/472');
     expect(settingsPortal.contains(trigger('出题来源', 'Question source'))).toBe(false);
     expect(document.querySelectorAll(`button[aria-label="${label('训练设置', 'Training settings')}"]`)).toHaveLength(1);

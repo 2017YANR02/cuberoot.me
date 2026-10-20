@@ -141,11 +141,12 @@ export function SettingsPopover({
   );
 
   if (!settingsHost) return popover;
+  const context = (triggerPrefix || triggerSuffix) && <div className="settings-popover-context" data-no-timer={ignoreTimer || undefined}>
+    {triggerPrefix}
+    {triggerSuffix}
+  </div>;
   return <>
-    {(triggerPrefix || triggerSuffix) && <div className="settings-popover-context" data-no-timer={ignoreTimer || undefined}>
-      {triggerPrefix}
-      {triggerSuffix}
-    </div>}
+    {settingsHost.contextPortal ? createPortal(context, settingsHost.contextPortal) : context}
     {settingsHost.settingsPortal ? createPortal(popover, settingsHost.settingsPortal) : null}
   </>;
 }
