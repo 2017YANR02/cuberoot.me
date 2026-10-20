@@ -10,7 +10,8 @@ describe('public Douyin route restriction in native runtimes', () => {
       define: { __MINI_PROGRAM_TARGET__: JSON.stringify('douyin') },
     });
     const redirectTo = vi.fn(), switchTab = vi.fn(), request = vi.fn();
-    const sandbox = { tt: { getStorageSync: () => '', getAppBaseInfo: () => ({ language: 'zh_CN' }), redirectTo, switchTab, request },
+    const app: { nativeTimerLink?: unknown } = {};
+    const sandbox = { getApp: () => app, tt: { getStorageSync: () => '', getAppBaseInfo: () => ({ language: 'zh_CN' }), redirectTo, switchTab, request },
       page: undefined, setTimeout, clearTimeout };
     runInNewContext(result.outputFiles[0]!.text, sandbox);
     const module = sandbox.page as unknown as typeof import('../src/lib/web-view-page');
@@ -30,6 +31,12 @@ describe('public Douyin route restriction in native runtimes', () => {
     expect(switchTab).toHaveBeenLastCalledWith(expect.objectContaining({ url: '/pages/timer/index' }));
     switchTab.mockClear();
     open({ nativeTab: 'timer', path: encodeURIComponent('/zh/timer?event=222&scramble=R') });
+    expect(switchTab).toHaveBeenLastCalledWith(expect.objectContaining({ url: '/pages/timer/index' }));
+    expect(app.nativeTimerLink).toEqual({ event: '222', scramble: 'R' });
+    switchTab.mock.calls[0][0].fail();
+    expect(app.nativeTimerLink).toBeUndefined();
+    switchTab.mockClear();
+    open({ nativeTab: 'timer', path: encodeURIComponent('/zh/timer?event=222&unknown=1') });
     expect(switchTab).not.toHaveBeenCalled();
     expect(context.data.errorMessage).toContain('参数');
     expect(context.data.src).toBe('');

@@ -36,6 +36,7 @@ import { applyLocalizedTabBar, localizedWebsitePath, receiveNativeLocale, tr } f
 import { publicPageSharePath, decodePageShareMessage, type PageShareMessage } from '@cuberoot/shared/page-share';
 import { applyNativeAppearance, receiveNativeAppearance } from './appearance';
 import { nativeWebDestination } from './native-web-destination';
+import { queueNativeTimerLink } from './native-timer-link';
 
 export interface WebViewPageData {
   appearanceStyle: string;
@@ -312,12 +313,17 @@ export async function openWebRoute(context: WebViewPageContext, key: unknown): P
     if (destination) {
       const attempt = beginRouteAttempt(context);
       context.setData({ src: '', routeKey: String(key), canRetry: false, errorTitle: '', errorMessage: '', viewAttempt: attempt });
+      let cancelLink: (() => void) | undefined;
       const fail = () => {
+        cancelLink?.();
         if (!isCurrentAttempt(context, attempt)) return;
         context.setData({ canRetry: true, errorTitle: tr({ zh: '无法打开', en: 'Unable to open' }),
           errorMessage: tr({ zh: '页面跳转失败，请重试。', en: 'Navigation failed. Please retry.' }) });
       };
-      try { miniProgramApi()[destination.method]({ url: destination.url, fail }); } catch { fail(); }
+      try {
+        if (destination.timerLink) cancelLink = queueNativeTimerLink(destination.timerLink);
+        miniProgramApi()[destination.method]({ url: destination.url, fail });
+      } catch { fail(); }
       return false;
     }
     if (!['account', 'account-link', 'logout'].includes(String(key))) {

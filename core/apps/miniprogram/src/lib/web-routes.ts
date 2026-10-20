@@ -231,7 +231,7 @@ export function resolveWebRouteShare(key: unknown, currentUrl?: string, metadata
       imageUrl: WEB_ROUTE_SHARE_IMAGE,
       title: metadata?.path === path ? metadata.title : tr({ en: 'CubeRoot', zh: '魔方根CubeRoot' }),
       // A current destination is independent of the tab/entry used to reach it.
-      path: (isDouyinMiniProgram() ? nativeWebDestination(path)?.url : undefined)
+      path: (isDouyinMiniProgram() && !nativeWebDestination(path)?.timerLink ? nativeWebDestination(path)?.url : undefined)
         ?? `/pages/web/index?key=home&path=${encodeURIComponent(path)}`,
     };
   }

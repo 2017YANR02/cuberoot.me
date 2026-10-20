@@ -1,4 +1,5 @@
 import { exportTimerSolvesCsv } from '@cuberoot/shared/timer/export-csv';
+import { confirmNativeTimerLink } from './native-timer-link';
 import { exportTimerCstimerJson } from '@cuberoot/shared/timer/export-cstimer';
 import { exportSpeedstacks } from '@cuberoot/shared/timer/export-speedstacks';
 import { TIMER_SESSION_UI_COPY, timerSessionDeleteConfirmation, timerSessionClearConfirmation } from '@cuberoot/shared/timer/session';
@@ -283,6 +284,8 @@ export function createNativeTimerPageOptions(): WechatMiniprogram.Page.Options<R
       applyNativeAppearance(); miniProgramApi().setNavigationBarTitle({ title: copy().title });
       if (!p.nativeTimer.scramble) generate(p);
       refresh(p, true);
+      const linkGeneration = p.generation;
+      confirmNativeTimerLink(p.nativeTimer, () => !!p.active && p.generation === linkGeneration, () => refresh(p, true));
       if (p.ticker) clearInterval(p.ticker);
       p.ticker = setInterval(() => { if (p.nativeTimer?.busy) refresh(p); }, 50);
       p.unsubscribe?.();
