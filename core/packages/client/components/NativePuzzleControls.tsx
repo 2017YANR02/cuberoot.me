@@ -34,6 +34,7 @@ const NOTES: Record<NativePuzzleId, readonly [string, string]> = {
   radiojewel: ['Radio Jewel（Radiolarian 7）：二十面体，每面十五个三角形和一个六边形，每步面转 120°，支持外层、第二层与宽转；当前仅支持保形转动，不含 jumbling。', 'Radio Jewel (Radiolarian 7): an icosahedron with fifteen triangles and one hexagon per face. Turns are 120°, with outer, second and wide layers. Supports shape-preserving turns only, without jumbling.'],
   radioweb: ['Radio Web（Radiolarian 6）：二十面体，每步面转 120°，支持外层、第二层与宽转。每面保留 22 个色块，包括细小翼块；当前仅支持保形转动，不含 jumbling。', 'Radio Web (Radiolarian 6): an icosahedron with 120° face turns and outer, second and wide layers. Each face retains 22 stickers, including the small wings. Supports shape-preserving turns only, without jumbling.'],
   catscradle: ['Cat’s Cradle（Radiolarian 5）：二十面体，每面十五个三角形、三个四边形和一个六边形，每步面转 120°，支持外层、第二层与宽转；当前仅支持保形转动，不含 jumbling。', 'Cat’s Cradle (Radiolarian 5): an icosahedron with fifteen triangles, three quadrilaterals and one hexagon per face. Turns are 120°, with outer, second and wide layers. Supports shape-preserving turns only, without jumbling.'],
+  radiocanon: ['Radio Canon（Radiolarian 1.5）：中心固定的二十面体，每面七个三角形和九个四边形，每步面转 120°，支持外层、第二层与宽转；当前仅支持保形转动，不含 jumbling。', 'Radio Canon (Radiolarian 1.5): an icosahedron with fixed centers, seven triangles and nine quadrilaterals per face. Turns are 120°, with outer, second and wide layers. Supports shape-preserving turns only, without jumbling.'],
 };
 
 /** The same native tokens drive 3D gestures, accessible manual input and 2D. */
@@ -62,7 +63,9 @@ export default function NativePuzzleControls({ id, disabled, showDragDepth, dept
   return (
     <div className="twisty-native-controls">
       <p className="twisty-fallback-notice">{t(...NOTES[id])}</p>
-      <div className="twisty-fallback-controls" role="group" aria-label={t('手动转动', 'Manual turns')}>
+      {/* Keep these native form controls on their shared CSS radii. The global
+          corner surface decorator must not repaint the measured control strip. */}
+      <div className="twisty-fallback-controls" data-corner-shape="native" role="group" aria-label={t('手动转动', 'Manual turns')}>
         <label className="twisty-fallback-angle-label">
           <span>{t('转轴', 'Move')}</span>
           <select className="btn-secondary twisty-fallback-angle" aria-label={t('转动记号', 'Move notation')} value={current.move} onChange={(e) => setSelected(e.target.value)}>

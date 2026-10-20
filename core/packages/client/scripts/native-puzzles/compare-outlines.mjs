@@ -7,12 +7,22 @@
 // --set=cube3heli: review the uniform 3x3 / Helicopter combination.
 // --set=radiojewel: review Radio Jewel's exact face-cut depth.
 // --set=catscradle: review Cat's Cradle's critical face-cut depth.
+// --set=radiocanon: review Radio Canon's fixed-center face cuts.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { getPuzzleGeometryByDesc } from 'cubing/puzzle-geometry';
 import { NATIVE_PUZZLES } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { Vector3 } from 'three';
 
 const reviewSets = {
+  radiocanon: {
+    basename: 'radiocanon-outlines',
+    rows: [{
+      id: 'radiocanon', en: 'Radio Canon (Radiolarian 1.5)',
+      description: 'i f 0.77', visibleFacelets: 320,
+      prior: 'i f 0.7453559924999299', priorLabel: 'Circo-Radiolarian (comparison; cuts are replaced)',
+      notes: ['Face-normal depth h = 0.77; seven triangles and nine quadrilaterals per face.', 'Twenty fixed centers; shape-preserving 120-degree turns, without jumbling.'],
+    }],
+  },
   catscradle: {
     basename: 'catscradle-outlines',
     rows: [{

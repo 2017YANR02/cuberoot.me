@@ -39,7 +39,7 @@ const EXPECTED_OTHER: EventId[] = [
   'lattice', 'hyperx', 'latticex', 'masterbrilic', 'masterftov2',
   'quadx', 'dinoocta', 'fto5', 'fto6', 'eto', 'radiocrystal',
   'cube3skewb', 'heliskewb', 'comboctahedron', 'circoradiolarian', 'icosababyface',
-  'cube2heli', 'cube3heli', 'radiojewel', 'radioweb', 'catscradle',
+  'cube2heli', 'cube3heli', 'radiojewel', 'radioweb', 'catscradle', 'radiocanon',
 ];
 
 const EXPECTED_REAL_WCA_EVENTS = {
@@ -77,14 +77,14 @@ describe('shared timer event picker catalog', () => {
       expect(timerPuzzleSelection(id)).toEqual({ puzzle: id, scrambleType: null });
     }
   });
-  it('is a complete, duplicate-free 80-event partition in the website order', () => {
+  it('is a complete, duplicate-free 81-event partition in the website order', () => {
     expect(TIMER_EVENT_PICKER_GROUPS.map((group) => group.id)).toEqual(['wca', 'other']);
     expect(TIMER_EVENT_PICKER_GROUPS[0].items.map((item) => item.id)).toEqual(EXPECTED_WCA);
     expect(TIMER_EVENT_PICKER_GROUPS[1].items.map((item) => item.id)).toEqual(EXPECTED_OTHER);
 
     const pickerIds = TIMER_EVENT_PICKER_ITEMS.map((item) => item.id);
     const eventIds = EVENTS.map((event) => event.id);
-    expect(pickerIds).toHaveLength(80);
+    expect(pickerIds).toHaveLength(81);
     expect(new Set(pickerIds).size).toBe(pickerIds.length);
     expect(new Set(pickerIds)).toEqual(new Set(eventIds));
   });
@@ -180,6 +180,7 @@ describe('shared timer event picker catalog', () => {
       ['radiojewel', 'Radio Jewel', 'Radio Jewel', 'Jewel'],
       ['radioweb', 'Radio Web', 'Radio Web', 'Web'],
       ['catscradle', 'Cat’s Cradle', 'Cat’s Cradle', 'Cradle'],
+      ['radiocanon', 'Radio Canon', 'Radio Canon', 'Canon'],
     ] as const) {
       expect(timerEventPickerItem(event)).toMatchObject({ nameEn, nameZh, textLabel });
       expect(timerEventPickerItem(event).iconClass).toBeUndefined();
