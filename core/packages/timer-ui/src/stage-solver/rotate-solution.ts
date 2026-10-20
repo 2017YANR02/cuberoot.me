@@ -50,8 +50,8 @@ export function rotateMovesToFrame(alg: string, rotation: string): string {
   return normalize([...inverse, ...alg.trim().split(/\s+/).filter(Boolean), ...frame]).join(' ');
 }
 
-/** 按钮当前态文本(0 态用 'y' 提示可加)。 */
-export const Y_ROT_LABEL = ['y', 'y', 'y2', "y'"] as const;
+/** Current rotation only; the UI supplies a separate zero-state control label. */
+export const Y_ROT_LABEL = ['', 'y', 'y2', "y'"] as const;
 
 /**
  * @param alg  原始解法(空格分隔,通常纯单层面转,也容忍含前导旋转)

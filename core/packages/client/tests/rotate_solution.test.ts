@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { Alg } from 'cubing/alg';
 import { cube3x3x3 } from 'cubing/puzzles';
-import { rotateSolutionY } from '@/lib/rotate-solution';
+import { rotateSolutionY, Y_ROT_LABEL } from '@/lib/rotate-solution';
 
 /**
  * 末态串。判据用 **cubing.js** —— 站上的播放器就是它,它才是权威。
@@ -37,6 +37,13 @@ function randAlg(len: number, seed: () => number, pool: string[] = FACES): strin
 function lcg(s: number) { let x = s >>> 0; return () => { x = (x * 1664525 + 1013904223) >>> 0; return x / 0x100000000; }; }
 
 describe('rotateSolutionY', () => {
+  it('does not label the unrotated z2 solution as y', () => {
+    const solution = "z2 D L' B D F R2";
+    expect(Y_ROT_LABEL[0]).toBe('');
+    expect(rotateSolutionY(solution, 0)).toBe(solution);
+    expect(Y_ROT_LABEL[1]).toBe('y');
+    expect(rotateSolutionY(solution, 1)).toMatch(/^z2 y /);
+  });
   it('n=0 原样返回', () => {
     expect(rotateSolutionY("R U R' U'", 0)).toBe("R U R' U'");
     expect(rotateSolutionY('', 1)).toBe('');
