@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildGraphInputFiles,
+  buildStatePath,
   buildInputFingerprint,
   collectBuildInputFiles,
   collectExternalGraphWatchFiles,
@@ -48,6 +49,11 @@ function externalRelayInput(graphInputFiles) {
 }
 
 describe('mini program build graph state', () => {
+  it('keeps Douyin and WeChat build evidence separate', () => {
+    expect(buildStatePath(packageRoot, 'douyin')).not.toBe(buildStatePath(packageRoot));
+    expect(buildStatePath(packageRoot, 'wechat')).toBe(buildStatePath(packageRoot));
+    expect(() => buildStatePath(packageRoot, 'unknown')).toThrow('Unknown build target');
+  });
   it('loads official scrambles with native bindings and no browser globals', async () => {
     const { outputFiles } = await build({ absWorkingDir: packageRoot, bundle: true,
       entryPoints: ['src/lib/native-timer-wca.ts'], inject: ['src/lib/native-timer-runtime.ts'],

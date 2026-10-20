@@ -165,7 +165,7 @@ async function buildProject() {
     backupPath: backupRoot,
     preserveRoot: douyin || process.platform === 'win32',
   });
-  if (!douyin) {
+  {
     await writeBuildState(packageRoot, {
       bundleInputs: Object.fromEntries(Object.entries(buildResult.metafile.outputs).map(([path, output]) => [
         normalizedRelativePath(compileRoot, resolve(packageRoot, path)),
@@ -174,7 +174,7 @@ async function buildProject() {
       buildGraphInputs: serializeBuildGraphInputs(packageRoot, graphInputFiles),
       sourceFingerprint: await buildInputFingerprint(packageRoot, graphInputFiles),
       outputFingerprint: await outputFingerprint(packageRoot, outputRoot),
-    });
+    }, target);
   }
   return collectExternalGraphWatchFiles(packageRoot, graphInputFiles);
 }

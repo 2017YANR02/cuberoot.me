@@ -15,6 +15,7 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "build:douyin": "node scripts/build.mjs --target=douyin",
+    "audit:douyin": "node scripts/audit-douyin.mjs",
     "check": "pnpm verify && node scripts/build.mjs",
     "check:all": "pnpm verify && node scripts/build.mjs && node scripts/build.mjs --target=douyin",
     "check:douyin": "pnpm verify && node scripts/build.mjs --target=douyin",

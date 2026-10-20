@@ -1033,8 +1033,8 @@
       "owner": "core/apps/miniprogram",
       "workingDirectory": "core",
       "command": "pnpm --filter @cuberoot/miniprogram build:douyin",
-      "transientOutputs": ["core/apps/miniprogram/dist-douyin/**"],
-      "verification": ["miniprogram typecheck and tests; build:douyin; developer-tool and device acceptance tracked separately"],
+      "transientOutputs": ["core/apps/miniprogram/dist-douyin/**", "core/apps/miniprogram/.tmp/douyin-build-state.json"],
+      "verification": ["miniprogram typecheck and tests; build:douyin; audit:douyin verifies local configuration and fingerprints; developer-tool and device acceptance tracked separately"],
       "driftPolicy": "TTML, TTSS, JavaScript and Lucide tab/toolbar PNGs are generated together. Never hand-edit dist-douyin; successful conversion does not imply device acceptance or publication."
     },
     {

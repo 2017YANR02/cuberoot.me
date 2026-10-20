@@ -12,8 +12,9 @@ import { BUILD_ASSETS } from './build-assets.mjs';
 
 export const BUILD_STATE_VERSION = 3;
 
-export function buildStatePath(packageRoot) {
-  return join(packageRoot, '.tmp', 'miniprogram-build-state.json');
+export function buildStatePath(packageRoot, target = 'wechat') {
+  if (!['wechat', 'douyin'].includes(target)) throw new Error('Unknown build target');
+  return join(packageRoot, '.tmp', target === 'douyin' ? 'douyin-build-state.json' : 'miniprogram-build-state.json');
 }
 
 export async function walkFiles(directory, { missingOk = false } = {}) {
@@ -172,6 +173,8 @@ export async function collectBuildInputFiles(packageRoot, graphInputFiles) {
     join(packageRoot, 'scripts', 'build-assets.mjs'),
     join(packageRoot, 'scripts', 'build-config.mjs'),
     join(packageRoot, 'scripts', 'build-state.mjs'),
+    join(packageRoot, 'scripts', 'native-page-check.mjs'),
+    join(packageRoot, 'project.douyin.config.template.json'),
     join(packageRoot, 'scripts', 'json-object-file.mjs'),
     join(packageRoot, 'scripts', 'staged-output.mjs'),
   ]);
@@ -195,16 +198,16 @@ export async function outputFingerprint(packageRoot, outputRoot) {
   return fingerprintFiles(packageRoot, await walkFiles(outputRoot, { missingOk: true }));
 }
 
-export async function readBuildState(packageRoot) {
+export async function readBuildState(packageRoot, target = 'wechat') {
   try {
-    return JSON.parse(await readFile(buildStatePath(packageRoot), 'utf8'));
+    return JSON.parse(await readFile(buildStatePath(packageRoot, target), 'utf8'));
   } catch {
     return null;
   }
 }
 
-export async function writeBuildState(packageRoot, state) {
-  const path = buildStatePath(packageRoot);
+export async function writeBuildState(packageRoot, state, target = 'wechat') {
+  const path = buildStatePath(packageRoot, target);
   await mkdir(dirname(path), { recursive: true });
   await writeFile(path, `${JSON.stringify({
     version: BUILD_STATE_VERSION,
