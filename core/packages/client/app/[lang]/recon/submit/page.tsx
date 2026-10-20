@@ -11,10 +11,11 @@
  */
 import { Suspense } from 'react';
 import ReconSubmitForm from './ReconSubmitForm';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 export default function ReconSubmitPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<LoadingIndicator />}>
       <ReconSubmitForm />
     </Suspense>
   );

@@ -11,6 +11,7 @@ import { cancelMeetingPlan, fetchMeetingPlans } from '@/lib/meeting-api';
 import { isMeetCode, normalizeMeetCode } from '@/lib/video-room-api';
 import MeetScheduleEditor from './MeetScheduleEditor';
 import { describeRule } from '../calendar/_components/RepeatEditor';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 export default function MeetLobby({ maxParticipants, busy, error, onCreate, onJoin }: {
   maxParticipants: number; busy: boolean; error: string | null;
@@ -89,7 +90,7 @@ export default function MeetLobby({ maxParticipants, busy, error, onCreate, onJo
         </div>
       </header>
       {now > 0 && <p className="meet-sub">{toLocalIsoDate(new Date(windowStart))} ~ {toLocalIsoDate(new Date(windowEnd))} · {Intl.DateTimeFormat().resolvedOptions().timeZone}</p>}
-      {loading && <p className="meet-sub" role="status">{tr({ zh: '加载预约中…', en: 'Loading meetings…' })}</p>}
+      {loading && <p className="meet-sub" role="status"><LoadingIndicator>{tr({ zh: '加载预约中…', en: 'Loading meetings…' })}</LoadingIndicator></p>}
       {loadError && <p className="vc-err" role="alert">{tr({ zh: '无法加载预约，请刷新重试。', en: 'Could not load meetings. Please refresh.' })}</p>}
       {!loading && !loadError && entries.length === 0 && <div className="meet-empty"><CalendarDays size={32} /><p>{tr({ zh: '这段时间没有预约会议', en: 'No meetings scheduled in this period' })}</p></div>}
       {!loadError && [...groups].map(([date, items]) => <section key={date} className="meet-agenda-day">

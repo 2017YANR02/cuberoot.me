@@ -23,6 +23,7 @@ import {
 import { refreshNotificationsUnread } from '@/lib/notifications-unread';
 import './notifications.css';
 import RecordPreferences from './_RecordPreferences';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const KIND_ICON: Record<NotificationKind, typeof MessageSquare> = {
   assistant_alert: BellRing,
@@ -162,7 +163,7 @@ export default function NotificationsPage() {
 
           <RecordPreferences key={user.uid ?? user.wcaId} />
           {err && <div className="ntf-error">{err}</div>}
-          {!items && !err && <div className="ntf-empty">{t('加载中…', 'Loading…')}</div>}
+          {!items && !err && <div className="ntf-empty"><LoadingIndicator>{t('加载中…', 'Loading…')}</LoadingIndicator></div>}
           {items && items.length === 0 && (
             <div className="ntf-empty">
               <Check size={16} />

@@ -70,6 +70,7 @@ import { tr, useLang } from '@/i18n/tr';
 import PetAccountCard from '@/components/PetAccountCard';
 import AccountCardGrid from './AccountCardGrid';
 import './account.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 function AccountName({ name, wcaId }: { name: string; wcaId?: string | null }) {
   const t = useT();
@@ -232,7 +233,7 @@ function AvatarChooser({ onClose }: { onClose: () => void }) {
         {preparing && <Loader2 size={14} className="auth-spin" aria-label={t('正在读取图片', 'Reading image')} />}
       </div>}
       {source === 'pet' && <>
-        {catalogLoading ? <p className="auth-hint">{t('正在加载…', 'Loading…')}</p> : catalogError
+        {catalogLoading ? <p className="auth-hint"><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p> : catalogError
           ? <button type="button" className="auth-link" onClick={() => setCatalogRetry(n => n + 1)}>{t('加载失败，点击重试', 'Could not load. Retry')}</button>
           : avatarPets.length === 0 ? <p className="auth-hint">{t('暂无可用形象', 'No avatars available')}</p>
           : <select className="auth-input account-avatar-pet-select" aria-label={t('头像形象', 'Avatar character')}
@@ -628,7 +629,7 @@ function BasicProfileEditor() {
             ariaLabel={t('地区', 'Location')}
             label={draft.regionCode
               ? [selectedRegion ? regionLabel(selectedRegion) : draft.regionCode, draft.cityName ? cityLabel(draft.cityName) : null].filter(Boolean).join(' / ')
-              : locationsLoading ? t('正在加载…', 'Loading…')
+              : locationsLoading ? <LoadingIndicator />
                 : locationsError ? t('地区加载失败', 'Could not load locations')
                   : regions.length === 0 ? t('暂无地区', 'No locations')
                     : t('请选择地区', 'Select a location')}

@@ -42,6 +42,7 @@ import {
 } from '@/lib/friends-api';
 import type { WcaPersonLite } from '@/lib/wca-api';
 import './friends.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type View = 'friends' | 'requests' | 'blocked' | 'chats';
 type WcaCandidate = {
@@ -241,7 +242,7 @@ function FriendChat({ user, peerId, onSelectPeer }: { user: WcaUser; peerId: num
     setBinding({ user, client: createWebChatClient() });
   }, [user]);
   if (!user.uid) return <p>{t('请重新登录以确认聊天账号。', 'Sign in again to confirm your chat account.')} <button type="button" className="friends-action" onClick={login}>{t('登录', 'Sign in')}</button></p>;
-  if (binding?.user !== user) return <p className="friends-muted">{t('加载中…', 'Loading…')}</p>;
+  if (binding?.user !== user) return <p className="friends-muted"><LoadingIndicator>{t('加载中…', 'Loading…')}</LoadingIndicator></p>;
   return <ChatPanel expressionPacks={expressionPacks} onReloadExpressions={reloadPetCatalog} client={binding.client} userId={user.uid} peerId={peerId} onSelectPeer={onSelectPeer}
     renderMore={(insert) => <ChatMoreTools insert={insert} />} renderVoice={(insert, disabled) => <ChatVoiceInput key={peerId} insert={insert} disabled={disabled} lang={lang} />}
     renderMessage={(body, renderText) => body.split('\n').some(line => parseChatShare(line)) ? <ChatShareBody body={body} renderText={renderText} /> : undefined}

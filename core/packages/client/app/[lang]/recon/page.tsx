@@ -45,6 +45,7 @@ import { useIsAdmin, useAuthUser, useAuthStore } from '@/lib/auth-store';
 import { CompactSelect } from '@/components/CompactSelect';
 import { ReconCompletionBadge } from '@/components/recon/ReconCompletionBadge';
 import dynamic from 'next/dynamic';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 const ReconRoundOverview = dynamic(() => import('./ReconRoundOverview'));
 
 // ── 视图模式 ──
@@ -1050,8 +1051,8 @@ export default function ReconListPage() {
 
       {favoritesOnly && !user && <button type="button" className="btn-secondary" onClick={() => useAuthStore.getState().login()}>{tr({ zh: '登录后查看收藏夹', en: 'Sign in to view favorites' })}</button>}
       {user && favorites === null && curationError && <button type="button" className="btn-secondary" onClick={() => { setCurationError(null); setFavoriteRevision(value => value + 1); }}>{tr({ zh: '重试加载收藏夹', en: 'Retry loading favorites' })}</button>}
-      {favoritesOnly && user && favorites === null && !curationError && <p role="status">{t('common.loading')}</p>}
-      {loading && <div className="recon-loading">{t('common.loading')}</div>}
+      {favoritesOnly && user && favorites === null && !curationError && <p role="status"><LoadingIndicator>{t('common.loading')}</LoadingIndicator></p>}
+      {loading && <div className="recon-loading"><LoadingIndicator>{t('common.loading')}</LoadingIndicator></div>}
       {error && <div className="recon-error"><TriangleAlert size={16} /> {error}</div>}
 
       {!loading && !error && (

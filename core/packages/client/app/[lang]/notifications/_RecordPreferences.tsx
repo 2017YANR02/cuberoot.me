@@ -9,6 +9,7 @@ import { RegionPicker } from '@/components/RegionPicker';
 import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
 import { fetchRecordNotifySettings, saveRecordNotifySettings, type RecordNotifySettings } from '@/lib/notifications-api';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const EVENTS = new Set(RECORD_NOTIFICATION_EVENTS);
 
@@ -49,7 +50,7 @@ export default function RecordPreferences() {
     <summary>{t('纪录订阅', 'Record subscriptions')}</summary>
     {error && <p role="alert" className="ntf-error">{error}</p>}
     {!draft || !settings ? <button type="button" onClick={load} disabled={!error}>
-      {error ? t('重试', 'Retry') : t('加载中…', 'Loading…')}
+      {error ? t('重试', 'Retry') : <LoadingIndicator>{t('加载中…', 'Loading…')}</LoadingIndicator>}
     </button> : <>
       <p>{settings.ownWcaId
         ? t(`本人纪录自动通知（${settings.ownWcaId}），包括个人纪录，不受下方筛选影响。`,

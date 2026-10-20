@@ -15,6 +15,7 @@ import { eventDisplayName, toWcaEventId } from '@/lib/wca-events';
 import { fetchAttempts, fetchCubingAttempts, fetchScrambles } from '@/lib/wca-results-api';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { reconPathSeg } from '@/lib/recon-seo';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type ReconSolve = Awaited<ReturnType<typeof getRecon>>;
 const roundKey = (s: ReconSolve) => JSON.stringify([s.personId || s.person, s.compWcaId || s.comp, s.event, s.round]);
@@ -89,7 +90,7 @@ function RoundSheet({ seed, title, all }: { seed: ReconSolve; title: string; all
     <div className="recon-round-rows">{rows.map(row => <article key={row.label} className="recon-round-row" data-site-surface="panel">
       <strong>#{row.label} {row.caption}</strong>
       <div className="recon-round-diagram">{row.scramble && <ScramblePreview2D event={event} scramble={row.scramble} size={70} />}</div>
-      <p className="recon-round-scramble">{busy ? t('加载中…', 'Loading…') : row.scramble || t('暂无该把打乱；未推断选手的打乱组。', 'Scramble unavailable; the competitor’s scramble group has not been inferred.')}</p>
+      <p className="recon-round-scramble">{busy ? <LoadingIndicator>{t('加载中…', 'Loading…')}</LoadingIndicator> : row.scramble || t('暂无该把打乱；未推断选手的打乱组。', 'Scramble unavailable; the competitor’s scramble group has not been inferred.')}</p>
       <div>{row.solves.filter(s => s.recordType !== 'timing').map(s => <AppLink key={s.id} href={`/recon/${reconPathSeg(s)}`} prefetch={false}>{t('查看复盘', 'View reconstruction')}</AppLink>)}{!busy && !row.solves.some(s => s.recordType !== 'timing') && <span>{t('尚未收录复盘', 'No reconstruction yet')}</span>}</div>
     </article>)}</div>
   </div>;

@@ -10,6 +10,7 @@ import { fetchForumFeed, type ForumFeedData, type ForumFeedSort } from '@/lib/fo
 import { ForumHeader } from '../_components/ForumHeader';
 import { ForumFeedComposer } from './ForumFeedComposer';
 import '../forum.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const SORTS: ForumFeedSort[] = ['active', 'latest'];
 const PAGE_SIZES = [10, 20, 40];
@@ -73,7 +74,7 @@ export default function ForumFeedPage() {
       </div>
 
       {error && <div className="forum-error">{error}</div>}
-      {!data && !error && <div className="forum-loading"><T zh="加载动态中…" en="Loading feed…" /></div>}
+      {!data && !error && <div className="forum-loading"><LoadingIndicator><T zh="加载动态中…" en="Loading feed…" /></LoadingIndicator></div>}
       {data && data.threads.length === 0 && <div className="forum-empty"><T zh="还没有社区动态。" en="No community activity yet." /></div>}
       {data && data.threads.length > 0 && <ForumFeedList threads={data.threads} />}
 

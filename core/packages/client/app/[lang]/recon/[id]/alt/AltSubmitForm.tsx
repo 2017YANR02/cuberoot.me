@@ -24,6 +24,7 @@ import '../../recon.css';
 import '../../submit/recon_submit.css';
 import '../recon_detail.css';
 import { tr } from '@/i18n/tr';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 interface Props {
   parentId: string;
@@ -93,7 +94,7 @@ export default function AltSubmitForm({ parentId, editIdx }: Props) {
   };
 
   if (loading) {
-    return <div className="recon-page"><div className="recon-loading">{t('common.loading')}</div></div>;
+    return <div className="recon-page"><div className="recon-loading"><LoadingIndicator>{t('common.loading')}</LoadingIndicator></div></div>;
   }
   if (error || !parent) {
     return (

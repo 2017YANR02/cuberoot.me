@@ -25,6 +25,7 @@ import { formatCount } from '@/lib/forum-format';
 import '../../forum.css';
 import './forum_thread.css';
 import '@/components/hash-highlight.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const SIZE_DEFAULT = 20;
 
@@ -289,7 +290,7 @@ export default function ThreadClient() {
       ] : []} />
 
       {error && <div className="forum-error">{error}</div>}
-      {!data && !error && <div className="forum-loading"><T zh="加载中…" en="Loading…" /></div>}
+      {!data && !error && <div className="forum-loading"><LoadingIndicator><T zh="加载中…" en="Loading…" /></LoadingIndicator></div>}
 
       {data && (
         <>

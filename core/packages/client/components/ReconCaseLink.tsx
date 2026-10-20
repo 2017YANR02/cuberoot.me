@@ -10,6 +10,7 @@ import { useModalDismiss } from '@/hooks/useModalDismiss';
 import { tr } from '@/i18n/tr';
 import '../app/[lang]/alg/alg.css';
 import './recon-case-link.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const AlgCaseView = lazy(() => import('../app/[lang]/alg/[puzzle]/[set]/[subgroup]/AlgCaseView'));
 
@@ -36,7 +37,7 @@ function CaseDialog({ href, onClose }: { href: string; onClose: () => void }) {
     return () => { active = false; };
   }, [puzzle, set]);
   const caseObj = data && resolveCaseSlug(data.cases, decodeURIComponent(slug), puzzle, set);
-  const loading = <p>{tr({ zh: '加载中…', en: 'Loading…' })}</p>;
+  const loading = <p><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…' })}</LoadingIndicator></p>;
   return createPortal(
     <div className="alg-admin-modal-backdrop recon-case-backdrop" {...backdrop} role="dialog" aria-modal="true" aria-label={tr({ zh: '公式详情', en: 'Algorithm details' })}>
       <div className="alg-admin-modal recon-case-dialog">

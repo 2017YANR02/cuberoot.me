@@ -25,6 +25,7 @@ import {
 import { tr } from '@/i18n/tr';
 import './ground-truth.css';
 import RegressionResults from './RegressionResults';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const FILTERS = ['all', 'pending', 'discussion', 'confirmed', 'rejected'] as const;
 type Filter = (typeof FILTERS)[number];
@@ -268,7 +269,7 @@ function ManualGroundTruthPage() {
         <section className="gt-candidates" aria-label={tr({ zh: '候选列表', en: 'Candidate list' })}>
           <div className="gt-section-head">
             <span>{tr({ zh: '候选', en: 'Candidates' })}</span>
-            {loading ? <span>{tr({ zh: '加载中…', en: 'Loading…' })}</span> : null}
+            {loading ? <span><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…' })}</LoadingIndicator></span> : null}
           </div>
           <div className="gt-candidate-list">
             {data?.items.map((item) => (

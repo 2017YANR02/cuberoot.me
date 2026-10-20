@@ -85,6 +85,7 @@ import { Spinner } from '@/components/Spinner/Spinner';
 import '../recon.css';
 import './recon_submit.css';
 import { tr } from '@/i18n/tr';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 // ── Constants ──
 
@@ -1647,7 +1648,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   // Pre-mount: render a neutral loading shell on both SSR and the first client
   // render so they match (auth state isn't known until localStorage is read).
   if (!mounted) {
-    return <div className="recon-page"><div className="recon-loading">{t('common.loading')}</div></div>;
+    return <div className="recon-page"><div className="recon-loading"><LoadingIndicator>{t('common.loading')}</LoadingIndicator></div></div>;
   }
 
   // ── Login gate ──
@@ -1688,7 +1689,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     );
   }
 
-  if (loadingEdit) return <div className="recon-page"><div className="recon-loading">{t('common.loading')}</div></div>;
+  if (loadingEdit) return <div className="recon-page"><div className="recon-loading"><LoadingIndicator>{t('common.loading')}</LoadingIndicator></div></div>;
 
   // ── Person/reconer pill helpers ──
   const solverLite: WcaPersonLite | null = form.personId

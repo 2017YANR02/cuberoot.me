@@ -19,6 +19,7 @@ import { ForumBreadcrumbs } from '../../_components/ForumBreadcrumbs';
 import { ThreadRowList } from '../../_components/ThreadRowList';
 import '../../forum.css';
 import './forum_list.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type Sort = 'activity' | 'created';
 const SORTS: Sort[] = ['activity', 'created'];
@@ -161,7 +162,7 @@ export default function ForumListClient() {
         </>
       )}
 
-      {loading && !data && !error && <div className="forum-loading"><T zh="加载中…" en="Loading…" /></div>}
+      {loading && !data && !error && <div className="forum-loading"><LoadingIndicator><T zh="加载中…" en="Loading…" /></LoadingIndicator></div>}
     </div>
   );
 }
