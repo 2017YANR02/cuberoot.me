@@ -6,7 +6,7 @@
 .tc-chart {
   display: block;
   background: transparent;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: inherit;
   overflow: visible;
   /* Responsive default — caller may override via inline style or container CSS. */
   max-width: 100%;
@@ -16,10 +16,10 @@
   /* 分类色板:这几条是「哪条曲线/哪种成绩」的区分色,不是状态语义,所以不套
      --signal-* (ao12 并不是「成功」)。中饱和度,明暗两档底色上都够对比,故不随主题翻。
      改色只改这里。 */
-  --tc-series: #5b9dd9;         /* 主序列:柱 / 散点 / ao5 / 小时柱 */
-  --tc-series-hover: #8bbde8;
-  --tc-ao12: #6abf6a;           /* ao12 曲线 + 中位数 */
-  --tc-ao100: #b07acc;          /* ao100 曲线 + PB 参考线 */
+  --tc-series: #789cab;         /* 主序列:柱 / 散点 / ao5 / 小时柱 */
+  --tc-series-hover: #628a9c;
+  --tc-ao12: #7d9f83;           /* ao12 曲线 + 中位数 */
+  --tc-ao100: #a08bab;          /* ao100 曲线 + PB 参考线 */
   --tc-plus2: #d9a05b;          /* +2 成绩 */
   --tc-plus2-hover: #e8bd8b;
   --tc-dnf: #d04848;            /* DNF 成绩 */
@@ -60,6 +60,7 @@
 /* Histogram */
 .tc-hist .bar {
   fill: var(--tc-series);
+  fill-opacity: 0.78;
   transition: fill 0.12s;
 }
 .tc-hist .bar:hover { fill: var(--tc-series-hover); }
@@ -72,11 +73,11 @@
 }
 
 /* Trend */
-.tc-trend .curve { fill: none; }
-.tc-trend .curve-single { stroke: var(--muted-foreground); stroke-width: 1; }
+.tc-trend .curve { fill: none; stroke-linejoin: round; stroke-linecap: round; }
+.tc-trend .curve-single { stroke: var(--muted-foreground); stroke-width: 1; stroke-opacity: 0.45; }
 .tc-trend .curve-ao5    { stroke: var(--tc-series); stroke-width: 1.5; }
-.tc-trend .curve-ao12   { stroke: var(--tc-ao12); stroke-width: 2; }
-.tc-trend .curve-ao100  { stroke: var(--tc-ao100); stroke-width: 2.5; }
+.tc-trend .curve-ao12   { stroke: var(--tc-ao12); stroke-width: 1.5; }
+.tc-trend .curve-ao100  { stroke: var(--tc-ao100); stroke-width: 1.75; }
 
 .tc-trend .legend-text {
   fill: var(--muted-foreground);
@@ -86,6 +87,7 @@
 /* Scatter */
 .tc-scatter .scatter-dot {
   fill: var(--tc-series);
+  fill-opacity: 0.65;
   stroke: none;
   transition: fill 0.12s, r 0.12s;
 }
@@ -131,6 +133,7 @@
 }
 .tc-hour-bar {
   fill: var(--tc-series);
+  fill-opacity: 0.78;
 }
 .tc-hour-bar-empty {
   fill: var(--tc-empty);

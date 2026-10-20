@@ -8,8 +8,8 @@
  * year (so for years where Jan 1 isn't a Monday, the first column has
  * leading "out-of-year" cells which are rendered transparent).
  *
- * Color buckets (single-hue ramp on the timer dark theme):
- *   0      → empty (subtle background)
+ * Color buckets (single-hue contribution ramp across themes):
+ *   0      → transparent with a subtle outline
  *   1..5   → light
  *   6..15  → mid
  *   16..50 → dark
@@ -66,13 +66,13 @@ function isoDow(d: Date): number {
   return (js + 6) % 7;
 }
 
-/** Color for a count, in the timer.css blue/teal accent family. */
+/** Transparent inactive days, followed by four contribution levels. */
 function bucketColor(count: number): string {
-  if (count <= 0) return '#1a1a1d';
-  if (count <= 5) return '#1f3a55';
-  if (count <= 15) return '#2f5d87';
-  if (count <= 50) return '#5b9dd9';
-  return '#8bbde8';
+  if (count <= 0) return 'transparent';
+  if (count <= 5) return 'var(--heatmap-level-1)';
+  if (count <= 15) return 'var(--heatmap-level-2)';
+  if (count <= 50) return 'var(--heatmap-level-3)';
+  return 'var(--heatmap-level-4)';
 }
 
 /** Effective time after penalty; null if DNF. */
@@ -401,7 +401,7 @@ export default function PracticeHeatmap({
       {!showCalendar ? null : total === 0 ? (
         <div className="tc-heatmap-empty">{emptyLabel}</div>
       ) : (
-        <svg
+        <div className="tc-heatmap-grid"><svg
           className="tc-heatmap-svg"
           width={svgW}
           height={svgH}
@@ -496,8 +496,14 @@ export default function PracticeHeatmap({
               </rect>
             );
           })}
-        </svg>
+        </svg></div>
       )}
+      {showCalendar && total > 0 && <div className="tc-heatmap-legend" aria-label={tr({zh:'每日还原次数',en:'Daily solve count'})}>
+        <span>{tr({zh:'少',en:'Less'})}</span>
+        {[0, 1, 6, 16, 51].map((count, index) => <span key={count} className="tc-heatmap-swatch"
+          style={{background: bucketColor(count)}} title={['0', '1–5', '6–15', '16–50', '51+'][index]} />)}
+        <span>{tr({zh:'多',en:'More'})}</span>
+      </div>}
     </div>
   );
 }

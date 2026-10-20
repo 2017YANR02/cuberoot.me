@@ -176,7 +176,7 @@ function Panel({ buckets, title, width, height }: PanelProps) {
         return (
           <g key={`bar-${i}`}>
             {b.count > 0 ? (
-              <rect className="tc-hour-bar" x={x} y={yTop} width={barW} height={h}>
+              <rect className="tc-hour-bar" x={x} y={yTop} width={barW} height={h} rx={2}>
                 <title>{tooltip}</title>
               </rect>
             ) : (

@@ -1,16 +1,22 @@
 /* =============================================================
    PracticeHeatmap — GitHub-style yearly contributions heatmap.
-   Matches the dark theme defined in ../timer.css.
+   Transparent empty days and a single-hue contribution ramp across themes.
    ============================================================= */
 
 .tc-heatmap {
+  --heatmap-color: #579c70;
+  --heatmap-level-1: color-mix(in srgb, var(--heatmap-color) 28%, transparent);
+  --heatmap-level-2: color-mix(in srgb, var(--heatmap-color) 48%, transparent);
+  --heatmap-level-3: color-mix(in srgb, var(--heatmap-color) 72%, transparent);
+  --heatmap-level-4: var(--heatmap-color);
   background: transparent;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: inherit;
   color: var(--muted-foreground);
 }
 
 .tc-heatmap-header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
@@ -99,7 +105,11 @@
 .tc-heatmap-svg {
   display: block;
   overflow: visible;
+  min-width: 560px;
 }
+.tc-heatmap-grid { overflow-x: auto; padding: 4px 0; }
+.tc-heatmap-legend { display: flex; justify-content: flex-end; align-items: center; gap: 4px; padding-top: 6px; font-size: 11px; }
+.tc-heatmap-swatch { width: 10px; height: 10px; border: 1px solid var(--border-default); border-radius: 2px; }
 
 .tc-heatmap-month {
   fill: var(--muted-foreground);
@@ -126,8 +136,7 @@
 }
 
 .tc-heatmap-cell {
-  shape-rendering: crispEdges;
-  stroke: transparent;
+  stroke: color-mix(in srgb, var(--foreground) 12%, transparent);
   stroke-width: 1;
   transition: stroke 0.12s;
 }
@@ -138,6 +147,7 @@
 
 .tc-heatmap-cell-out {
   fill: transparent;
+  stroke: none;
   pointer-events: none;
 }
 

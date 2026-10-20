@@ -139,11 +139,11 @@ export default function HistogramChart({
           <rect
             key={i}
             className={cls}
-            x={x + 0.5}
+            x={x + Math.min(2, barW * 0.12)}
             y={y}
-            width={Math.max(1, barW - 1)}
+            width={Math.max(1, barW - Math.min(4, barW * 0.24))}
             height={h}
-            rx={1}
+            rx={2}
           >
             <title>
               {`${formatMs(b.lo)} – ${formatMs(b.hi)}: ${b.count}`}
