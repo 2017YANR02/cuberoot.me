@@ -591,7 +591,6 @@ export default function LandingPage() {
               <div className="section-header">
                 <div className="section-eyebrow">{tr(sec.eyebrow)}</div>
                 <h2 className="section-title-serif">{tr(sec.title)}</h2>
-                <div className="section-sub">{tr(sec.sub)}</div>
               </div>
               {grid}
             </section>
