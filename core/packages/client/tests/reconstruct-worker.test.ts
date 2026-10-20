@@ -224,3 +224,36 @@ it('reuses a prewarmed worker for the next report and recovers a failed preload 
   expect(workers[1].requests).toHaveLength(1);
   unsubscribe();
 });
+
+it('publishes corrected live stages once and carries their confirmation through final handoff', () => {
+  const { analyzer, workers } = setup();
+  const listener = vi.fn((request: AnalysisInput, snapshot: AnalysisSnapshot) => analyzer.rememberLive('live', request, snapshot));
+  const stream = createLiveReconstructionStream(listener, analyzer);
+  disposers.push(() => stream.dispose());
+  const first = input();
+  first.text.moves = [{ m: "R'", ts: 1000 }, { m: 'U', ts: 1400 }];
+  first.text.totalMs = 1400;
+  const line = { kind: 'cross' as const, key: 'cross', moves: ["R'"], fromIdx: 0, toIdx: 0,
+    label: 'draft', recognitionMs: 0, executionMs: 1000, stepMs: 1000 };
+  const draft = { ...recognizedText, lines: [line] };
+  const corrected = { ...draft, lines: [{ ...line, label: 'confirmed' }] };
+  stream.update(first);
+  vi.advanceTimersByTime(1);
+  workers[0].reply({ patch: { text: draft } });
+  expect(listener.mock.calls.filter(([, value]) => value.text)).toHaveLength(0);
+  workers[0].reply({ patch: { text: corrected }, done: true });
+  expect(listener.mock.calls.filter(([, value]) => value.text)).toHaveLength(1);
+  const next = { ...first, text: { ...first.text, moves: [...first.text.moves, { m: "U'", ts: 1700 }], totalMs: 1700 } };
+  stream.update(next);
+  vi.advanceTimersByTime(5);
+  expect(workers[0].requests.at(-1)!.input.text.confirmed!.lines).toEqual(corrected.lines);
+  analyzer.handoff('live', 'saved');
+  stream.dispose();
+  const finalListener = vi.fn();
+  analyzer.subscribe(next, finalListener, 'saved');
+  expect(finalListener).toHaveBeenLastCalledWith(expect.objectContaining({ text: corrected, provisional: true }));
+  vi.advanceTimersByTime(5);
+  expect(workers.at(-1)!.requests.at(-1)!.input.text.confirmed!.lines).toEqual(corrected.lines);
+  workers.at(-1)!.reply({ patch: { text: corrected }, done: true });
+  expect(analyzer.peek(next, 'saved').text).toBe(corrected);
+});

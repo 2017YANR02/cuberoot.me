@@ -15,6 +15,7 @@ import {
   useOperationKey,
   useTeachingPage,
 } from '../../_components/OrgUi';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const PAGE_SIZE = 25;
 
@@ -69,7 +70,7 @@ function CampusesContent({ orgSlug, page, organization }: {
           <h2>{t('校区', 'Campuses')}</h2>
           <p className="org-lead">{t('校区时区留空时继承机构时区。', 'A campus inherits the organization time zone when left blank.')}</p>
 
-          {campuses.loading ? <p aria-busy="true">{t('正在加载…', 'Loading…')}</p> : campuses.error ? (
+          {campuses.loading ? <p aria-busy="true"><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p> : campuses.error ? (
             <MutationMessage message={campuses.error} error />
           ) : !campuses.result?.items.length ? (
             <p className="org-empty">{t('还没有可见的校区。', 'No campuses are visible yet.')}</p>

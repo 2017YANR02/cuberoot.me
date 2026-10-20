@@ -11,6 +11,11 @@ const page = (sources = entries, reason = 'Reviewed sign-in, linking, merging an
   `/* auth-doc-review ${JSON.stringify({ fingerprint: fingerprintAuthSources(sources), reason })} */`;
 
 describe('/dev/auth source-review drift', () => {
+  it('tracks private smart-cube addresses and their account lifecycle', () => {
+    for (const path of [...['src/routes/smart_cube_macs.ts', 'migrations/0285_smart_cube_macs.sql']
+      .map(file => relative(CORE_ROOT, workspaceFixturePath('@cuberoot/server', file))),
+      'packages/client/lib/bluetooth/mac-account.ts']) expect(isAuthDocSource(path)).toBe(true);
+  });
   it('tracks account tour state and its homepage trigger', () => {
     for (const path of ['apps/api/src/routes/onboarding.ts', 'apps/api/migrations/0265_home_onboarding.sql',
       'packages/client/lib/onboarding.ts', 'packages/client/components/OnboardingGuideModal.tsx',

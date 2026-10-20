@@ -20,6 +20,8 @@ const REPO_ROOT = resolve(CORE_ROOT, '..');
 const STAMP_PATH = resolve(REPO_ROOT, '.tmp', 'recon-ground-truth-pass.json');
 const STAMP_VERSION = 3;
 export const GROUND_TRUTH_TESTS = [
+  'tests/recon-intake.test.ts',
+  'tests/recon-intake-ui.test.ts',
   'tests/recon_ground_truth.test.ts',
   'tests/recon-ground-truth-display.test.ts',
   'tests/recon-playback-track.test.ts',
@@ -37,6 +39,13 @@ export const GROUND_TRUTH_TESTS = [
 ];
 
 const EXACT_GUARDED_PATHS = new Set([
+  'core/packages/client/lib/recon-intake-check.mts',
+  'core/packages/client/lib/recon-intake-api.ts',
+  'core/packages/client/lib/use-web-reconstruct-host.ts',
+  'core/apps/api/src/routes/recon_intake.ts',
+  'core/apps/api/migrations/0286_recon_intake.sql',
+  'core/packages/shared/src/recon_intake.ts',
+  'core/scripts/recon-intake.mts',
   '.node-version',
   'core/package.json',
   'core/pnpm-lock.yaml',
@@ -103,6 +112,7 @@ const GUARDED_PREFIXES = [
   'core/packages/timer-ui/src/reconstruct/',
   'core/packages/timer-ui/src/recon/',
   'core/packages/client/components/CubeColorChip/',
+  'core/packages/client/components/recon/',
   'core/packages/client/app/[lang]/recon/ground-truth/',
   'core/packages/shared/src/recon/',
   'core/packages/shared/src/timer/reconstruct/',
@@ -293,7 +303,11 @@ function runGroundTruth({ sync = true, trigger = process.env.CI ? 'ci' : 'manual
 
   const fingerprint = computeFingerprint();
   context.run.fingerprint = fingerprint;
+  // Optional local resource bound; it changes scheduling, never test coverage.
+  const workers = process.env.RECON_TEST_MAX_WORKERS;
+  if (workers && !/^[1-9]\d?$/.test(workers)) return finish(2, 'RECON_TEST_MAX_WORKERS must be an integer from 1 to 99.');
   const result = spawnSync(process.execPath, [vitestBin, 'run', ...GROUND_TRUTH_TESTS,
+    ...(workers ? ['--maxWorkers', workers] : []),
     '--reporter=default', '--reporter=json', `--outputFile.json=${context.reportFile}`], {
     cwd: CLIENT_ROOT,
     env: { ...process.env, RECON_GROUND_TRUTH_CAPTURE_DIR: context.captureDirectory },

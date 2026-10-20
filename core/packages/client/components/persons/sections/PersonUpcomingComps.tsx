@@ -14,9 +14,10 @@ interface Props {
   wcaId: string;
   isZh: boolean;
   title?: string;
+  emptyMessage?: string;
 }
 
-export default function PersonUpcomingComps({ wcaId, isZh, title }: Props) {
+export default function PersonUpcomingComps({ wcaId, isZh, title, emptyMessage }: Props) {
   const t = useT();
   const [competitions, setCompetitions] = useState<Comp[] | null>(null);
   const [eventIdsByCompetition, setEventIdsByCompetition] = useState<Record<string, string[]>>({});
@@ -46,7 +47,8 @@ export default function PersonUpcomingComps({ wcaId, isZh, title }: Props) {
     };
   }, [wcaId]);
 
-  if (!competitions || competitions.length === 0) return null;
+  if (!competitions) return null;
+  if (competitions.length === 0) return emptyMessage ? <p className="landing-slot-message">{emptyMessage}</p> : null;
 
   return (
     <section className="wp-card wp-upcoming-card" aria-labelledby="wp-upcoming-title">

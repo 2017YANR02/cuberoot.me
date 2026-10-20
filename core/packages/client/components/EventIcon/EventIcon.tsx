@@ -4,20 +4,28 @@
  * the website and native App consume the same project artwork.
  */
 import { CubingIcon } from '@cuberoot/event-icon';
+import { TIMER_EVENT_PICKER_ITEMS } from '@cuberoot/shared/timer/event-catalog';
 import { isWcaEvent, toWcaEventId } from '@/lib/wca-events';
 import { TWIZZLE_NONWCA_APPEND } from '@/lib/non-wca-events';
+import { CSTIMER_NONWCA_APPEND } from '@/lib/cstimer-scramble';
+import { SHAPE_MOD_APPEND } from '@/lib/shape-mod-scramble';
+import { NATIVE_SCRAMBLE_APPEND } from '@/lib/native-scramble';
 
 export { CubingIcon } from '@cuberoot/event-icon';
 
-const UNOFFICIAL_ICON_CLASS: Record<string, string> = Object.fromEntries(
+// Reuse picker metadata so result headers cannot drift back to text-only or
+// unrelated glyphs. These catalogs do not start workers or build geometry.
+const PROJECT_ICON_CLASS: Record<string, string> = Object.fromEntries(
   [
     ...TWIZZLE_NONWCA_APPEND,
-    { id: 'gear', iconClass: 'puzzle-gear' },
-    { id: 'pyraminx_duo', iconClass: 'unofficial-pyraminx_duo' },
+    ...CSTIMER_NONWCA_APPEND,
+    ...SHAPE_MOD_APPEND,
+    ...NATIVE_SCRAMBLE_APPEND,
+    ...TIMER_EVENT_PICKER_ITEMS,
     { id: 'mirror', iconClass: 'unofficial-333_mirror_blocks' },
     { id: 'mirror2', iconClass: 'unofficial-222_mirror_blocks' },
-    { id: 'mirror_333', iconClass: 'unofficial-333_mirror_blocks' },
-  ].map(({ id, iconClass }) => [id, iconClass]),
+    { id: 'ghost', iconClass: 'unofficial-ghost' },
+  ].flatMap(({ id, iconClass }) => iconClass ? [[id, iconClass]] : []),
 );
 
 interface EventIconProps {
@@ -29,8 +37,8 @@ interface EventIconProps {
 /** Resolve a WCA or supported non-WCA event id to a real cubing icon key. */
 export function eventIconClass(event: string): string | undefined {
   const id = toWcaEventId(event);
-  const unofficialKey = UNOFFICIAL_ICON_CLASS[id];
-  if (unofficialKey) return unofficialKey;
+  const catalogKey = PROJECT_ICON_CLASS[id];
+  if (catalogKey) return catalogKey;
   if (isWcaEvent(id) || /^nxn\d+$/.test(id)) {
     return /^nxn\d+$/.test(id) ? 'event-777' : `event-${id}`;
   }

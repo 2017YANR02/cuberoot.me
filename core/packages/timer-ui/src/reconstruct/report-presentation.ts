@@ -94,7 +94,7 @@ export function projectReconComment(label: string, method: ReconstructionType, c
 /** The final notation projection used by both React and native reports.
  * It never changes the physical track or its original timing ranges. */
 export function projectReconNotation(recon: ReconTextResult | null, method: ReconstructionType, simplified = true) {
-  const simplifiedRecon = method === 'cfop' && recon ? simplifyF2lRotations(recon) : recon;
+  const simplifiedRecon = recon?.presentation ?? (method === 'cfop' && recon ? simplifyF2lRotations(recon) : recon);
   const originalRecon = recon ? originalReconNotation(recon) : recon;
   const shownRecon = simplified ? simplifiedRecon : originalRecon;
   // Measured wide turns are real gestures. The legacy cross normalizer expands

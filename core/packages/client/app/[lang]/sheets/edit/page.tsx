@@ -25,6 +25,7 @@ import {
 } from '@/lib/spreadsheet-model';
 import { repairSpreadsheetSheets } from '@/lib/spreadsheet-yjs';
 import './spreadsheet.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type ConnectionStatus = 'connecting' | 'connected' | 'disconnected';
 type SheetMap = Y.Map<unknown>;
@@ -871,7 +872,7 @@ export default function SpreadsheetEditorPage() {
     <header className="sheet-topbar"><AppLink href="/sheets" prefetch={false} className="sheet-back" aria-label={tr({ zh: '返回表格列表', en: 'Back to spreadsheets' })}><ChevronLeft size={20} /></AppLink><input className="sheet-title-input" value={title} readOnly={!details?.canManage} onChange={(event) => setTitle(event.target.value)} onBlur={() => void saveTitle()} onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.blur(); }} aria-label={tr({ zh: '表格标题', en: 'Spreadsheet title' })} /><div className={`sheet-sync is-${status}`}><span />{status === 'connected' ? <T zh="已同步" en="Synced" /> : status === 'connecting' ? <T zh="连接中" en="Connecting" /> : <T zh="离线，等待重连" en="Offline, retrying" />}</div>{peopleOnline.length > 0 && <span className="sheet-presence" title={peopleOnline.join(', ')}>{peopleOnline.length}<T zh=" 人在线" en=" online" /></span>}<div className="sheet-export-wrap"><button type="button" className="sheet-action" onClick={() => setExportOpen((open) => !open)} disabled={exporting}><Download size={16} /><T zh="导出" en="Export" /></button>{exportOpen && <div className="sheet-export-menu"><button type="button" className="sheet-export-option" onClick={() => void exportFile('xlsx')}><Download size={15} />Excel (.xlsx)</button><button type="button" className="sheet-export-option" onClick={() => void exportFile('csv')}><Download size={15} />CSV</button><button type="button" className="sheet-export-option" onClick={() => void exportFile('pdf')}><FileDown size={15} />PDF</button></div>}</div>{details?.canManage && <button type="button" className="sheet-action" onClick={() => setShareOpen(true)}><Share2 size={16} /><T zh="共享" en="Share" /></button>}<WcaAuth /></header>
     {(error || formulaError) && <p className="sheet-page-error" role="alert">{error || formulaError}</p>}
     {!user && !details && <div className="sheet-auth-needed"><T zh="请先登录，再打开共享给你的表格。" en="Sign in to open a spreadsheet shared with you." /></div>}
-    {user && !details && !error && <p className="sheet-loading"><T zh="正在加载表格…" en="Loading spreadsheet…" /></p>}
+    {user && !details && !error && <p className="sheet-loading"><LoadingIndicator><T zh="正在加载表格…" en="Loading spreadsheet…" /></LoadingIndicator></p>}
     {details && session && <SpreadsheetGrid session={session} readOnly={details.document.role === 'viewer'} activeSheetId={activeSheetId} onActiveSheet={setActiveSheetId} onError={setError} onFormulaError={setFormulaError} onExport={(format) => { void exportFile(format); }} onPrint={() => { void printFile(); }} />}
     {shareOpen && details && <CollaborativeSharePanel id={id} kind="spreadsheet" details={details} reload={load} close={() => setShareOpen(false)} />}
   </main>;

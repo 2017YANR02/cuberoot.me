@@ -13,6 +13,7 @@ import { EVENT_ZH, EVENT_EN } from '@/lib/event-constants';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import type { WcaPersonProfile, WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
 import { tr } from '@/i18n/tr';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 interface Props {
   profile: WcaPersonProfile;
@@ -64,7 +65,7 @@ export default function MilestonesTab({ profile, results, comps, isZh }: Props) 
     });
   }, [profile, results, comps, threshold, isZh, compById]);
 
-  if (!milestones) return <div className="wp-loading-inline">{t('加载中…', 'Loading…')}</div>;
+  if (!milestones) return <div className="wp-loading-inline"><LoadingIndicator>{t('加载中…', 'Loading…')}</LoadingIndicator></div>;
 
   const presentTypes = new Set(milestones.map((m) => m.type));
   const filtered = milestones

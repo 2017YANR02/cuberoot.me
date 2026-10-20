@@ -82,6 +82,7 @@ import {
   type DriveMember,
 } from '@/lib/drive-api';
 import './drive.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type DriveView = 'files' | 'members' | 'all' | 'trash';
 type UploadState = 'queued' | 'uploading' | 'paused' | 'done' | 'error';
@@ -1099,5 +1100,5 @@ function DrivePageContent() {
 }
 
 export default function DrivePage() {
-  return <Suspense fallback={null}><DrivePageContent /></Suspense>;
+  return <Suspense fallback={<LoadingIndicator />}><DrivePageContent /></Suspense>;
 }

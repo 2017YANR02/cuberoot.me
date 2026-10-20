@@ -3,7 +3,8 @@
 import { TimerSolveDetailModal } from '@cuberoot/timer-ui';
 import ReconstructActions from '@cuberoot/timer-ui/reconstruct-actions';
 import dynamic from 'next/dynamic';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import type { ReconSnapshot } from '@cuberoot/shared/recon-ground-truth';
 
 import { tr } from '@/i18n/tr';
 import { onIdle } from '@/lib/on-idle';
@@ -51,6 +52,8 @@ export default function SolveModal({
 }: Props) {
   const hasMoves = (solve.moves?.length ?? 0) > 0;
   const reconstructHost = useWebReconstructHost();
+  const [review, setReview] = useState<{ id: string; snapshot: ReconSnapshot | null } | null>(null);
+  const receiveReview = useCallback((snapshot: ReconSnapshot | null) => setReview({ id: solve.id, snapshot }), [solve.id]);
   const [localCloseRequested, setLocalCloseRequested] = useState(false);
   const handleUseScramble = onUseScramble && ((scramble: string) => {
     onUseScramble(scramble);
@@ -76,6 +79,7 @@ export default function SolveModal({
           onUseScramble={handleUseScramble}
           placement="detail"
           solve={solve}
+          snapshot={review?.id === solve.id ? review.snapshot : null}
         />
       ) : undefined}
       index={index}
@@ -95,6 +99,7 @@ export default function SolveModal({
           hideDate
           isZh={isZh}
           onReconFeedback={onReconFeedback}
+          onReviewSnapshot={receiveReview}
           onUseScramble={handleUseScramble}
           solve={solve}
         />

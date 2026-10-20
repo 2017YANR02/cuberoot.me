@@ -9,6 +9,7 @@ import SearchInput from '@/components/SearchInput';
 import { useAuthUser } from '@/lib/auth-store';
 import { tr } from '@/i18n/tr';
 import { fetchTeacherLiveScripts, type TeacherLiveScript } from '@/lib/teacher-live-scripts-api';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const local = (zh: string, en: string) => tr({ zh, en });
 
@@ -33,7 +34,7 @@ function ScriptLibrary() {
     <p><AppLink href="/teachers/live-guide" prefetch={false} className="script-text-action">{tr({ zh: '直播卖课指南：准备、留存、转化与复盘', en: 'Livestream guide: preparation, retention, conversion & review' })}</AppLink></p>
     <div className="scripts-toolbar"><SearchInput value={query} onChange={(value) => { void setQuery(value || null); }} className="directory-search" inputClassName="directory-search-input" placeholder={tr({ zh: '搜索标题、内容简介或作者', en: 'Search titles, summaries, or authors' })} /></div>
     <section className="scripts-list" aria-label={tr({ zh: '公开直播话术', en: 'Public livestream scripts' })}>
-      {loading && <p className="scripts-empty">{tr({ zh: '正在加载话术…', en: 'Loading scripts…' })}</p>}
+      {loading && <p className="scripts-empty"><LoadingIndicator>{tr({ zh: '正在加载话术…', en: 'Loading scripts…' })}</LoadingIndicator></p>}
       {!loading && error && <p className="scripts-empty">{error}</p>}
       {!loading && !error && filtered.length === 0 && <p className="scripts-empty">{tr({ zh: '暂时没有符合条件的公开话术。', en: 'There are no matching public scripts yet.' })}</p>}
       {filtered.map((script) => <AppLink key={script.id} href={`/teachers/scripts/${script.id}`} prefetch={false} className="script-list-row"><div><h2>{local(script.titleZh, script.titleEn)}</h2>{local(script.summaryZh, script.summaryEn) && <p className="script-list-summary">{local(script.summaryZh, script.summaryEn)}</p>}<p className="script-list-meta"><span>{local(script.teacher.nameZh, script.teacher.nameEn)}</span><span><Clock3 size={14} />{tr({ zh: `${script.durationMinutes} 分钟`, en: `${script.durationMinutes} min` })}</span><span>{tr({ zh: `${script.content.sections.length} 个章节`, en: `${script.content.sections.length} sections` })}</span></p></div><ArrowRight className="script-list-arrow" size={20} /></AppLink>)}

@@ -72,6 +72,7 @@ import {
 } from '@/components/SubsetColorPicker/SubsetColorPicker';
 import './scramble_stats.css';
 import { tr } from '@/i18n/tr';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 interface HistEntry {
   min: number;
@@ -1108,7 +1109,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
           {timeline333Qtm
             ? tr({ zh: 'QTM 首次出现即将加入', en: 'QTM first-appearance coming soon' })
             : timelineLoading
-              ? tr({ zh: '加载中…', en: 'Loading…' })
+              ? <LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…' })}</LoadingIndicator>
               : tr({ zh: '该组合的首次出现数据生成中,稍后再来', en: 'First-appearance data for this selection is being generated, check back soon' })}
         </div>
       )}
@@ -1454,8 +1455,8 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
     return (
       <div className="scramble-stats-page">
         {header}
-        <div className="scramble-stats-loading">{tr({ zh: '加载中…', en: 'Loading…'
-        })}</div>
+        <div className="scramble-stats-loading"><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…'
+        })}</LoadingIndicator></div>
       </div>
     );
   }
@@ -2106,8 +2107,8 @@ function ExamplesPanel({
         />
       )}
       {!showAll && selectedBin !== null && loading && (
-        <div className="scramble-stats-examples-hint">{tr({ zh: '加载中…', en: 'Loading…'
-        })}</div>
+        <div className="scramble-stats-examples-hint"><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…'
+        })}</LoadingIndicator></div>
       )}
       {!showAll && selectedBin !== null && errorText && (
         <div className="scramble-stats-examples-hint">{tr({ zh: '加载失败', en: 'Load failed'

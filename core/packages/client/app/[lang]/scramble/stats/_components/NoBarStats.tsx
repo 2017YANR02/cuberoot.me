@@ -5,6 +5,7 @@ import { statsUrl } from '@/lib/stats-base';
 import { tr } from '@/i18n/tr';
 import { eventDisplayName } from '@/lib/wca-events';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 interface Example {
   id: string; scramble: string; competition: string; event: string;
@@ -43,7 +44,7 @@ export default function NoBarStats({ event, isZh }: { event: string; isZh: boole
         zh: '六个面内所有共边相邻色块均不同色，三阶包含中心块；对角相邻不计。',
         en: 'Every pair of edge-adjacent stickers on each of the six faces differs in colour, including centres on 3×3. Diagonals do not count.',
       })}</p>
-      {!data && <p>{failed ? tr({ zh: '数据加载失败，请刷新重试。', en: 'Could not load data. Please refresh to retry.' }) : tr({ zh: '加载中…', en: 'Loading…' })}</p>}
+      {!data && <p>{failed ? tr({ zh: '数据加载失败，请刷新重试。', en: 'Could not load data. Please refresh to retry.' }) : <LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…' })}</LoadingIndicator>}</p>}
       {data && counts && <>
         <p>{tr({
           zh: `WCA 导出 ${data.meta.exportDate}。${family ? '合计三阶、单手、三盲、多盲、最少步及脚拧，多盲每颗魔方单独计数。' : ''}包含备打，相同打乱在不同记录中重复计数。`,

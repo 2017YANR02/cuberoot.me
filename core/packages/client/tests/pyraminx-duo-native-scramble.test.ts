@@ -32,19 +32,19 @@ describe('native Pyraminx Duo scramble integration', () => {
     expect(groups.find(({ id }) => id === 'other')?.items.find(({ id }) => id === 'pyraminx_duo')).toEqual({
       id: 'pyraminx_duo',
       label: '二重奏',
-      iconClass: undefined,
-      textLabel: 'Duo',
+      iconClass: 'unofficial-pyraminx_duo',
+      textLabel: undefined,
     });
   });
 
-  it('renders a real Duo glyph in result headers while keeping the picker text badge', () => {
+  it('renders the same real Duo glyph in result headers and picker entries', () => {
     expect(eventIconClass('pyraminx_duo')).toBe('unofficial-pyraminx_duo');
     const markup = renderToStaticMarkup(createElement(EventIcon, { event: 'pyraminx_duo' }));
     expect(markup).toContain('<svg');
     expect(markup).toContain('fill="currentColor"');
     expect(markup.match(/<path\b/g)).toHaveLength(4);
     expect(NATIVE_SCRAMBLE_APPEND.find(({ id }) => id === 'pyraminx_duo')).toEqual({
-      id: 'pyraminx_duo', iconClass: '', textLabel: 'Duo',
+      id: 'pyraminx_duo', iconClass: 'unofficial-pyraminx_duo',
     });
   });
 });

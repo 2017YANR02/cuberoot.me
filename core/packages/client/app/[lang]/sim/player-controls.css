@@ -229,6 +229,8 @@
   gap: 8px;
 }
 
+.sim-player-tools > .sim-player-tools-row { flex-basis: 100%; }
+
 /* 消步开关在工具行里:无外框,标签 + PillToggle 滑钮直接排在按钮间(开 / 关状态由滑钮表达) */
 .sim-player-tools .sim-toggle {
   height: 34px;
@@ -283,26 +285,68 @@
 }
 .sim-transform-select:disabled,
 .sim-player-tools > button:disabled { opacity: 0.45; cursor: default; }
-.sim-move-editor {
-  flex-basis: 100%;
+/* Edit mode occupies the existing solution field; no second algorithm panel. */
+.sim-player-hlwrap.sim-player-hlwrap--editing > .sim-player-input { display: none; }
+.sim-player-hlwrap .sim-move-editor-slot {
+  flex: 1;
   min-width: 0;
-  order: 1;
-  padding: 10px 0 2px;
-  border-top: 1px solid var(--border-default);
+  padding: 8px 12px;
+  border: 1px solid var(--input);
+  border-radius: 6px;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-mono);
+  font-size: 16px;
+  line-height: 1.55;
 }
-.sim-move-editor-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--muted-foreground); font-size: 12px; }
-.sim-move-editor button { appearance: none; font: inherit; color: var(--foreground); background: transparent; border: 0; cursor: pointer; }
-.sim-move-editor-heading button { display: inline-flex; padding: 6px; border-radius: 6px; }
-.sim-move-tokens { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 8px; max-height: 180px; overflow-y: auto; }
-.sim-move-tokens button { min-width: 34px; min-height: 36px; padding: 6px 8px; border-radius: 6px; font-family: var(--font-geist-mono), monospace; font-size: 16px; }
-.sim-move-editor button:hover { background: var(--muted); }
-.sim-move-tokens button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
-.sim-move-editor button:focus-visible,
+.sim-move-editor-slot[hidden] { display: none; }
+.sim-inline-moves { white-space: pre-wrap; overflow-wrap: anywhere; }
+.sim-move-anchor { position: relative; display: inline-block; }
+.sim-inline-moves button,
+.sim-move-menu button {
+  appearance: none;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+.sim-inline-moves .sim-move-token { padding: 0 2px; border-radius: 3px; }
+.sim-inline-moves .sim-move-start { padding: 0 4px; font-size: 12px; color: var(--muted-foreground); }
+.sim-inline-moves button:hover,
+.sim-move-menu button:hover { background: var(--muted); }
+.sim-inline-moves button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
+.sim-inline-moves button:focus-visible,
+.sim-move-menu button:focus-visible,
 .sim-transform-select:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
-.sim-move-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
-.sim-move-actions button { display: inline-flex; align-items: center; gap: 10px; border: 1px solid var(--border-default); border-radius: 6px; padding: 7px 10px; }
-.sim-move-actions small { color: var(--muted-foreground); }
+.sim-move-menu {
+  /* Fixed body portal; AlgTransformPanel clamps both axes to the visual viewport. */
+  position: fixed;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: max-content;
+  max-width: min(280px, calc(100vw - 32px));
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 10px;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: var(--popover);
+  color: var(--foreground);
+  white-space: normal;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.sim-move-menu-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.sim-move-menu-heading button { display: inline-flex; padding: 4px; }
+.sim-move-rotations { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.sim-move-rotations button,
+.sim-move-menu > button { padding: 7px; border: 1px solid var(--border-default); border-radius: 5px; }
 .sim-move-note { flex-basis: 100%; color: var(--muted-foreground); font-size: 12px; }
+.sim-player-tools > .sim-move-note { order: 1; }
 
 .sim-puzzle {
   /* No card frame (house style, matches .gt-panel): stacked panels are separated

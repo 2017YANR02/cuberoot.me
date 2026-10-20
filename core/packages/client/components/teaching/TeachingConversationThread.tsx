@@ -21,6 +21,7 @@ import {
   teachingErrorMessage,
   useOperationKey,
 } from './TeachingUi';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const MESSAGE_PAGE_SIZE = 100;
 
@@ -179,7 +180,7 @@ export default function TeachingConversationThread({
     }
   }
 
-  if (loading) return <p aria-busy="true">{t('正在加载消息…', 'Loading messages…')}</p>;
+  if (loading) return <p aria-busy="true"><LoadingIndicator>{t('正在加载消息…', 'Loading messages…')}</LoadingIndicator></p>;
   if (error && !conversation) return <MutationMessage message={error} error />;
   if (!conversation) return null;
 
@@ -225,7 +226,7 @@ export default function TeachingConversationThread({
       {!messages.length && <p className="teaching-empty">{t('还没有消息。', 'No messages yet.')}</p>}
       {hasMore && (
         <button className="teaching-secondary-button" type="button" disabled={loadingMore} onClick={() => { void loadMore(); }}>
-          {loadingMore ? t('正在加载…', 'Loading…') : t('加载后续消息', 'Load later messages')}
+          {loadingMore ? <LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator> : t('加载后续消息', 'Load later messages')}
         </button>
       )}
 

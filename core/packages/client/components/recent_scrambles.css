@@ -18,7 +18,7 @@
   min-height: 320px;
 }
 
-.rs-topbar, .rs-head { display: contents; }
+.rs-topbar, .rs-head, .rs-body { display: contents; }
 
 .rs-title {
   font-size: 0.95rem;

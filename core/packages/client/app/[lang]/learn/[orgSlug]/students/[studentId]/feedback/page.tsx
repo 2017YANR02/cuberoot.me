@@ -8,6 +8,7 @@ import LessonFeedbackList from '@/components/teaching/LessonFeedbackList';
 import { MutationMessage, TeachingPagination, useTeachingPage } from '@/components/teaching/TeachingUi';
 import { useT } from '@/hooks/useT';
 import { listLearnerTeachingLessonFeedback } from '@/lib/teaching-saas-api';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const PAGE_SIZE = 25;
 
@@ -34,7 +35,7 @@ function FeedbackContent({ orgSlug, studentId, page }: { orgSlug: string; studen
     <>
       <h2>{t('课后反馈', 'Lesson feedback')}</h2>
       <p className="teaching-lead">{t('这里只显示老师已发布并授权当前账号查看的反馈，不包含教职员工内部备注。', 'Only feedback published to this account appears here. Staff-only notes are never included.')}</p>
-      {feedback.loading ? <p aria-busy="true">{t('正在加载反馈…', 'Loading feedback…')}</p> : feedback.error ? (
+      {feedback.loading ? <p aria-busy="true"><LoadingIndicator>{t('正在加载反馈…', 'Loading feedback…')}</LoadingIndicator></p> : feedback.error ? (
         <MutationMessage message={feedback.error} error />
       ) : <LessonFeedbackList feedback={feedback.result?.items ?? []} />}
       {feedback.result && <TeachingPagination page={feedback.result.page} pageSize={feedback.result.pageSize} total={feedback.result.total} baseHref={baseHref} />}

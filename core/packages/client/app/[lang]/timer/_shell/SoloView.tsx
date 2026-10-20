@@ -2,7 +2,6 @@
 
 import { trainingSolveMetrics } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import { useDouyinToolSurface } from '@/lib/douyin-content';
-import { DOUYIN_BASIC_TIMER_EVENTS } from '@cuberoot/shared/douyin-content';
 import { TimerSoloPage, timerSoloModalState, useTimerSoloCompactLayout } from '@cuberoot/timer-ui/TimerSoloPage';
 import SoloLayoutEditor from '../_components/SoloLayoutEditor';
 import { Tooltip } from '@/components/Tooltip';
@@ -87,6 +86,7 @@ import { use222Mode, use222Type } from '@/lib/scramble-222-mode';
 import TimerTrainingMenu from './TimerTrainingMenu';
 import {
   isCube222StateType,
+  isScramble222Type,
   resolveTimerWcaSourceCore,
   stepPuzzleOf,
   timerWcaDifficultyFilter,
@@ -497,18 +497,14 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   );
   const event: EventId = competition.enabled ? '333' : queryEvent;
   const supportsSmartCube = timerSupportsSmartCubeAutoTiming(event);
-  // 裸 /timer(无 ?event=)→ 用 localStorage 记的上次项目补齐并强制写回 URL;
-  // 有 ?event= 时(分享链接 / 收藏)以 URL 为准。
+  const [sourceParam, setSourceParam] = useQueryState('source');
+  // URL owns the public source choice. Other sources retain their existing
+  // detailed settings; no stored preference may override a shared cases/random link.
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (new URLSearchParams(window.location.search).has('event')) return;
-    const stored = localStorage.getItem('cuberoot-timer.event');
-    const valid = EVENTS.some(e => e.id === stored) && (!douyin || DOUYIN_BASIC_TIMER_EVENTS.includes(stored ?? ''));
-    // 始终显式写一次(哪怕就是当前默认值 '333'),否则 clearOnDefault:false 只在真调用
-    // setEvent 时生效 —— 光靠 withDefault 不会自动把默认值补进 URL。
-    void setEvent(valid ? (stored as EventId) : event, { history: 'replace' });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (competition.enabled) return;
+    const source = sourceParam === 'manual' ? 'manual' : sourceParam === 'wca' ? 'wca' : 'random';
+    if (getSettings().scrambleSource !== source) updateSettings({ scrambleSource: source });
+  }, [sourceParam, competition.enabled]);
   useEffect(() => { persistItem('cuberoot-timer.event', event); }, [event]);
 
   const selectEvent = useCallback((nextEvent: EventId) => {
@@ -583,7 +579,12 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // 2x2 口径(WCA 11 步 ↔ 最优/Q|H):与 /scramble/gen 同一个全站设置(Scramble222ModePicker)。
   // 真题:optimal → 服务端 God's-number 最优等态(复用 optimal_scramble);随机状态 → 见 scramble222。
   const [mode222] = use222Mode();
-  const [type222] = use222Type();
+  const [savedType222, setType222] = use222Type();
+  const [type222Param] = useQueryState('scramble222');
+  const type222 = isScramble222Type(type222Param) ? type222Param : savedType222;
+  useEffect(() => {
+    if (event === '222' && isScramble222Type(type222Param)) setType222(type222Param);
+  }, [event, type222Param, setType222]);
   const wca222Type = event === '222' && settings.scrambleSource === 'wca'
     && isCube222StateType(type222) ? type222 : undefined;
   const wca222TypeSig = wca222Type ?? '';
@@ -3196,7 +3197,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
             realAvailable={realSourceAvailable}
             trainingItems={onSelectCases ? [{ value: 'cases', label: tr({ zh: '选定情况', en: 'Selected cases' }) }] : []}
             onTrainingChange={onSelectCases}
-            onChange={(scrambleSource) => updateSettings({ scrambleSource })}
+            onChange={(scrambleSource) => {
+              updateSettings({ scrambleSource });
+              void setSourceParam(scrambleSource === 'random' ? null : scrambleSource);
+            }}
             realValue="wca"
             realMenuContent={<div ref={setWcaSourceSlot} />}
           />

@@ -24,6 +24,7 @@ import { RecordPlaceRankings } from './RecordPlaceRankings';
 import '../../_wca_stats_extra.css';
 import './calendar_stats.css';
 import { tr } from '@/i18n/tr';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const EVENT_LIST = ['3x3', '2x2', '4x4', '5x5', '6x6', '7x7', '3bld', '4bld', '5bld', 'oh', 'sq1', 'pyra', 'mega', 'clock', 'skewb', 'fmc', 'mbld'];
 
@@ -183,7 +184,7 @@ export default function CalendarStatsPage() {
   const eventByCount = byEvent.length > 0 ? byEvent[0][1] : 1;
 
   if (!comps) {
-    return <div className="cs-page"><div className="cs-loading">{t('common.loading')}</div></div>;
+    return <div className="cs-page"><div className="cs-loading"><LoadingIndicator>{t('common.loading')}</LoadingIndicator></div></div>;
   }
 
   return (

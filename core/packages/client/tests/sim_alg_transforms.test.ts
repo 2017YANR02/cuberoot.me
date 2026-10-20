@@ -2,9 +2,42 @@ import { describe, expect, it } from 'vitest';
 import { Alg, Move } from 'cubing/alg';
 import { cube3x3x3 } from 'cubing/puzzles';
 import { rotateAlg } from '@/lib/cube3';
-import { manipulateAlg } from '@/app/[lang]/sim/alg-manipulation';
+import { manipulateAlg, transformCubeText, cubeTextMoves, moveAtFirstExecution } from '@/app/[lang]/sim/alg-manipulation';
 
 describe('sim algorithm translator', () => {
+  it('rewrites moves without rewriting source layout, comments or group syntax', () => {
+    const input = "  [R, U]  (3Rw . F)2 // R U p stays a comment\r\n2-3Uw\tFS  ";
+    expect(transformCubeText(input, move => rotateAlg(move, 'y')))
+      .toBe("  [F, U]  (3Fw . L)2 // R U p stays a comment\r\n2-3Uw\tLM  ");
+    expect(transformCubeText("R2' S2'", move => rotateAlg(move, 'y'))).toBe("F2' M2'");
+    for (const text of ["U'p R", '↑ R U', 'R[R2:@C] U', 'R @ U']) {
+      expect(() => transformCubeText(text, move => rotateAlg(move, 'y'))).toThrow();
+    }
+  });
+
+  it('preserves layout and unselected groups during a move edit', () => {
+    expect(manipulateAlg("  R U // cross\n(R U)2  [F, D] ", 1, 'y'))
+      .toBe("  R U y // cross\n(F U)2  [L, D] ");
+    expect(manipulateAlg("R U", -1, 'y')).toBe('y F U');
+  });
+
+  it('rewrites the first execution inside repeated, inverted and nested groups', async () => {
+    const cube = await cube3x3x3.kpuzzle();
+    for (const group of ['(R U)2', "(R U)2'", '[R, U]', '[R: U]', '([R, U] F)2', '(R (U F)2)3']) {
+      const input = `B  ${group}  (D L)2 // unchanged layout`;
+      for (const [index, token] of cubeTextMoves(input).entries()) {
+        if (token.start < 3 || token.start >= input.indexOf('  (D L)')) continue;
+        const output = manipulateAlg(input, index, 'y');
+        expect(output.startsWith('B  ')).toBe(true);
+        expect(output.endsWith('  (D B)2 // unchanged layout')).toBe(true);
+        expect(cube.algToTransformation(output).isIdentical(cube.algToTransformation(`${input}\ny`)), `${group}: ${index}`).toBe(true);
+      }
+    }
+    expect(() => manipulateAlg('(R U)1000000', 0, 'y')).toThrow('Too many expanded moves');
+    expect(() => manipulateAlg('(R U)0', 0, 'y')).toThrow('Selected move is not executed');
+    expect(moveAtFirstExecution("(R U)2'", 0)?.toString()).toBe("R'");
+  });
+
   it('rotates every family using physical cube conjugation', async () => {
     const cube = await cube3x3x3.kpuzzle();
     for (const axis of ['x', 'y', 'z'] as const) {

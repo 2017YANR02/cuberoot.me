@@ -14,6 +14,7 @@ import {
   type CollaborativeDocument,
 } from '@/lib/document-api';
 import './docs.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 function localDate(value: string, lang: 'en' | 'zh'): string {
   return new Intl.DateTimeFormat(lang === 'zh' ? 'zh-CN' : 'en', {
@@ -113,7 +114,7 @@ export default function DocumentsPage() {
           </AppLink>
         </div>
       )}
-      {user && loading && <p className="docs-muted"><T zh="正在加载…" en="Loading…" /></p>}
+      {user && loading && <p className="docs-muted"><LoadingIndicator><T zh="正在加载…" en="Loading…" /></LoadingIndicator></p>}
       {user && !loading && documents.length === 0 && !error && (
         <div className="docs-empty">
           <FileText size={28} aria-hidden="true" />

@@ -46,6 +46,7 @@ import {
 import { MIX_SLUG, MIX_MIN_SETS, parseMixSets, mixTitle, mixHref, loadMixCases, setLabel } from '@/lib/alg-mix';
 import { virtualAlgSet } from '@/lib/alg-virtual-sets';
 import { virtualTrainingSessionId } from '@/lib/training-set-metadata';
+import { decodeTimerPracticeSearch, encodeTimerPracticeSearch } from '@/lib/timer-practice-url';
 import { useTrainerMarks, markStatus, type CaseMarkStatus } from '@/lib/trainer-marks';
 import { ALG_SET_UNIVERSE } from '@/lib/alg_probability';
 import {
@@ -79,6 +80,7 @@ import '@/app/[lang]/alg/_trainer/memory.css';
 import '@/app/[lang]/alg/alg.css';
 import { tr } from '@/i18n/tr';
 import { Spinner } from '@/components/Spinner/Spinner';
+import { ClientLoadStatus } from '@/components/StartupStatus';
 import { SettingsPopover } from '@/components/TrainingSettings';
 
 /** 成绩回看复用训练卡片，生命周期与训练游标完全分离。 */
@@ -855,9 +857,11 @@ export default function TrainerRunClient() {
   const roomInviteUrl = useCallback((): string | null => {
     if (typeof window === 'undefined' || !room) return null;
     const u = new URL(window.location.href);
+    if (trainingHost) u.search = decodeTimerPracticeSearch(u.searchParams).toString();
     u.searchParams.set(trainingQueryKey('room', !!trainingHost), room.code);
     if (multiScramble && !timing) u.searchParams.set(trainingQueryKey('multi', !!trainingHost), '1');
     else u.searchParams.delete(trainingQueryKey('multi', !!trainingHost));
+    if (trainingHost) u.search = encodeTimerPracticeSearch(u.searchParams).toString();
     return u.toString();
   }, [room, multiScramble, timing, trainingHost]);
   const copyRoomLink = useCallback(() => {
@@ -1160,7 +1164,7 @@ export default function TrainerRunClient() {
         <div className="trainer-root">
           {mounted
             ? <MixSetPicker puzzle={puzzle} puzzleParam={puzzleParam} leaf="run" initial={mixSets} />
-            : <div className="trainer-landing-empty">{tr({ zh: '加载中…', en: 'Loading…' })}</div>}
+            : <div className="trainer-landing-empty"><Spinner size={18} /> {tr({ zh: '加载中…', en: 'Loading…' })}</div>}
         </div>
       );
     }
@@ -1174,7 +1178,7 @@ export default function TrainerRunClient() {
   }
 
   if (sessionLoadError) return <div className="trainer-root"><p role="alert">{tr({ zh: '训练加载失败，请重试。', en: 'Training could not load. Please retry.' })}</p><button type="button" onClick={() => setLoadRetry(value => value + 1)}>{tr({ zh: '重试', en: 'Retry' })}</button></div>;
-  if (storePuzzle !== puzzle || storeSet !== sessionId) return <div className="trainer-root" role="status">{tr({ zh: '加载中…', en: 'Loading…' })}</div>;
+  if (storePuzzle !== puzzle || storeSet !== sessionId) return <ClientLoadStatus />;
 
   const originalSelectHref = isMix
     ? mixHref(puzzleParam, mixSets, 'select')
@@ -1184,7 +1188,6 @@ export default function TrainerRunClient() {
   const selectUrl = new URL(originalSelectHref, 'https://training.invalid');
   if (trainingHost) {
     selectUrl.searchParams.set('mode', mode);
-    selectUrl.searchParams.set('timing', timing ? '1' : '0');
     if (mode === 'memo' && drawParam) selectUrl.searchParams.set('draw', drawParam);
   }
   const selectHref = `${selectUrl.pathname}${selectUrl.search}`;

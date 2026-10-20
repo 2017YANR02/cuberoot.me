@@ -27,9 +27,8 @@ describe('retired algorithm trainers', () => {
     const url = new URL(res.headers.get('location')!);
     expect(url.pathname).toBe('/zh/timer');
     expect([...url.searchParams]).toEqual([
-      ['training', '/alg/333/oll/run'], ['train.room', 'invite'],
-      ['train.case', 'A'], ['train.case', 'B'], ['train.scope', 'ocll'],
-      ['train.mode', 'memo'], ['trainingOrg', 'school'],
+      ['content', 'oll'], ['source', 'cases'], ['method', 'recall'], ['group', 'ocll'],
+      ['trainingRoom', 'invite'], ['case', 'A'], ['case', 'B'], ['trainingOrg', 'school'],
     ]);
     const landed = await request(url.href);
     expect(landed.headers.get('location')).toBeNull();
@@ -47,7 +46,14 @@ describe('retired algorithm trainers', () => {
     const res = await request(`http://localhost:3000${path}`, { cookie: 'lang=en' });
     const url = new URL(res.headers.get('location')!);
     expect(url.pathname).toBe('/timer');
-    expect(url.searchParams.get('training')).toBe(path.split('?')[0]);
+    const canonicalCases: Record<string, string> = {
+      '/alg/3x3/pll/select': 'content=pll&source=cases&view=select',
+      '/alg/2x2/mix/run?sets=eg1,eg2': 'event=222&content=mix&source=cases&sets=eg1%2Ceg2',
+      '/alg/lsll': 'content=lsll&source=cases&view=select',
+      '/alg/lsll/ap': 'content=lsll&source=cases&view=select&group=ap',
+    };
+    if (canonicalCases[path]) expect(url.searchParams.toString()).toBe(canonicalCases[path]);
+    else expect(url.searchParams.get('training')).toBe(path.split('?')[0]);
   });
 
   it('uses explicit and preferred language without permanently caching a user preference', async () => {

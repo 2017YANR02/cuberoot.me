@@ -12,6 +12,7 @@ import { apiUrl } from '@/lib/api-base';
 import { getSessionToken, useAuthUser } from '@/lib/auth-store';
 import { extractChineseName } from '@/lib/cuber-name-display';
 import './verify.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type Status = { attemptId: string | null; expiresAt: string | null; canCheck: boolean; sessionChanged: boolean; enabled: boolean; consentVersion: string; status: string; verifiedAt: string | null; idLast4: string | null };
 type DeviceWindow = Window & { getMetaInfo?: () => unknown };
@@ -161,7 +162,7 @@ export default function FaceVerificationPage() {
         {/* allow-checkbox: independent explicit consent for processing identity and facial data */}
         <label className="face-verify-consent"><input className="face-verify-check" type="checkbox" checked={consent} disabled={busy} onChange={e => setConsent(e.target.checked)} />{t('我已阅读并单独同意上述说明', 'I have read and separately consent to the above.')}</label>
         <button className="face-verify-action" type="submit" disabled={!consent || busy}>{busy ? t('正在发起…', 'Starting…') : t('开始认证', 'Start verification')}</button>
-      </form> : <p>{status ? t('刷脸认证暂未开放。', 'Face verification is not available yet.') : t('正在读取认证状态…', 'Loading verification status…')}</p>}
+      </form> : <p>{status ? t('刷脸认证暂未开放。', 'Face verification is not available yet.') : <LoadingIndicator>{t('正在读取认证状态…', 'Loading verification status…')}</LoadingIndicator>}</p>}
       {error && <p role="alert" className="face-verify-error">{error}</p>}
     </section>}
   </main>;

@@ -19,6 +19,7 @@ import { ROUND_ORDER, roundLabel, roundClass } from '@/lib/wca-round-meta';
 import { useT } from '@/hooks/useT';
 import { wcaResultRowKey, type WcaPersonProfile, type WcaResultRow, type WcaCompetition } from '@/lib/wca-person-api';
 import { computePrRank, type RankFlag } from '../logic/progress';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 interface Props {
   profile: WcaPersonProfile;
@@ -59,7 +60,7 @@ export default function RecordsTab({ results, comps, isZh }: Props) {
     { key: 'pr', title: t('历史个人纪录', 'History of Personal Records'), types: null },
   ];
 
-  if (!results || !comps) return <div className="wp-loading-inline">{t('加载中…', 'Loading…')}</div>;
+  if (!results || !comps) return <div className="wp-loading-inline"><LoadingIndicator>{t('加载中…', 'Loading…')}</LoadingIndicator></div>;
 
   const sections = tiers
     .map((tier) => ({

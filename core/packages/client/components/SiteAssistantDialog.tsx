@@ -23,6 +23,7 @@ import { loadFlagData } from '@/lib/country-flags';
 import { countryName } from '@/lib/country-name';
 import { tr } from '@/i18n/tr';
 import './site_assistant.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 export interface AssistantTurn { requestId?: string; feedback?: AssistantFeedback|null; question:string; images?:AssistantImage[]; imagesExpired?:boolean; result?:AssistantAnswer; partial?:boolean }
 interface Props {
@@ -148,7 +149,7 @@ function Progress({chart}:{chart:AssistantChart}) {
   // Raw WCA values drive geometry; formatted labels are only for display.
   const points=chart.points.map(p=>({date:p.date,y:chart.event==='333fm' && chart.metric==='single' ? p.value : chart.event==='333mbf' || chart.event==='333mbo' ? p.value : p.value/100,person:p.person,label:p.label}));
   return <section className="site-assistant-chart"><h4>{chart.title}</h4>
-    {chart.event!=='333mbf' && chart.event!=='333mbo' && <Suspense fallback={null}><WrHistoryChart rawPoints={points} /></Suspense>}
+    {chart.event!=='333mbf' && chart.event!=='333mbo' && <Suspense fallback={<LoadingIndicator />}><WrHistoryChart rawPoints={points} /></Suspense>}
     <details><summary>{tr({zh:'查看成绩数据',en:'View result data'})}</summary><div className="site-assistant-table"><table><thead><tr><th>{tr({zh:'日期',en:'Date'})}</th><th>{tr({zh:'成绩',en:'Result'})}</th></tr></thead><tbody>{chart.points.map((p,i)=><tr key={i}><td>{p.date}</td><td>{formatWcaResult(p.value,chart.event,chart.metric)}</td></tr>)}</tbody></table></div></details>
   </section>;
 }

@@ -5,6 +5,7 @@ import { ForumFeedList } from '@/components/forum/ForumFeedList';
 import type { ForumFeedThread } from '@/lib/forum-api';
 
 vi.mock('next/link', () => ({
+  useLinkStatus: () => ({ pending: false }),
   default: ({ children, prefetch: _prefetch, ...props }: AnchorHTMLAttributes<HTMLAnchorElement> & { children?: ReactNode; prefetch?: boolean }) => (
     createElement('a', props, children)
   ),

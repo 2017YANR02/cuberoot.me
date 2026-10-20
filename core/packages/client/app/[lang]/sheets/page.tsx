@@ -9,6 +9,7 @@ import { T, tr, useLang } from '@/i18n/tr';
 import { useAuthUser, useIsAdmin } from '@/lib/auth-store';
 import { createDocument, fetchDocuments, type CollaborativeDocument } from '@/lib/document-api';
 import '../docs/docs.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const loadSpreadsheetImport = () => import('@/lib/spreadsheet-export');
 const warmSpreadsheetImport = () => { void loadSpreadsheetImport().catch(() => {}); };
@@ -71,7 +72,7 @@ export default function SpreadsheetsPage() {
     </header>
     {error && <p className="docs-error" role="alert">{error}</p>}
     {!user && !loading && <div className="docs-empty"><p><T zh="登录后才能查看别人与你共享的表格。" en="Sign in to see spreadsheets shared with you." /></p><AppLink href="/account?next=/sheets" prefetch={false} className="docs-text-link"><T zh="去登录" en="Sign in" /></AppLink></div>}
-    {user && loading && <p className="docs-muted"><T zh="正在加载…" en="Loading…" /></p>}
+    {user && loading && <p className="docs-muted"><LoadingIndicator><T zh="正在加载…" en="Loading…" /></LoadingIndicator></p>}
     {user && !loading && documents.length === 0 && !error && <div className="docs-empty"><Sheet size={28} /><p>{isAdmin ? <T zh="新建空白表格，或导入 Excel / CSV 文件。" en="Create a blank sheet or import an Excel / CSV file." /> : <T zh="还没有与你共享的表格。" en="No spreadsheets have been shared with you yet." />}</p></div>}
     {documents.length > 0 && <div className="docs-list">{documents.map((document) => <AppLink key={document.id} href={`/sheets/edit?id=${encodeURIComponent(document.id)}`} prefetch={false} className="docs-row"><Sheet size={20} /><span className="docs-row-main"><strong>{document.title}</strong><span>{localDate(document.updatedAt, lang)}</span></span><span className="docs-role">{document.role === 'owner' ? <T zh="所有者" en="Owner" /> : document.role === 'editor' ? <T zh="可编辑" en="Editor" /> : <T zh="只读" en="Viewer" />}</span></AppLink>)}</div>}
   </main>;

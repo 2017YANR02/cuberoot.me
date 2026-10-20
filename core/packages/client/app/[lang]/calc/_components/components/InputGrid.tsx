@@ -20,6 +20,7 @@ import { displayCuberName } from '@/lib/cuber-name-display';
 import PersonLink from '@/components/PersonLink';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
 import { usePopoverDismiss } from '@/hooks/usePopoverDismiss';
+import { Spinner } from '@/components/Spinner/Spinner';
 
 // NOTE: 头像按钮状态 — 由 CalcPage 管理，通过 props 传入
 export interface AvatarState {
@@ -88,11 +89,10 @@ function PlayerIdentity({
         aria-label={menuLabel}
         aria-haspopup={hasIdentityActions ? 'menu' : undefined}
         aria-expanded={hasIdentityActions ? open : undefined}
-        data-loading={loading ? avatar?.loading : undefined}
         disabled={!canOpen || loading}
         onClick={handleTrigger}
       >
-        {/* NOTE: loading 时 img 隐藏，由 CSS ::after 显示 data-loading 文字 */}
+        {loading && <Spinner size={16} label={tr({ zh: '加载中…', en: 'Loading…' })} />}
         <img
           className="me-avatar"
           src={avatar?.avatarUrl || DEFAULT_AVATAR}

@@ -5,6 +5,7 @@ import { ClearButton } from '@/components/ClearButton';
 import { SearchInput } from '@/components/SearchInput';
 import { fetchChatMonitoring, reviewAssistantRequest, type ChatSummary, type ChatRecords, type ChatDetail, type ChatInsights } from '@/lib/admin-assistant-api';
 import { DashboardChart } from './Dashboard';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const statuses = ['success', 'error', 'cancelled', 'rejected', 'running', 'interrupted'] as const;
 const seconds = (value: number | null | undefined) => value == null ? '—' : `${(value / 1000).toFixed(2)} s`;
@@ -135,7 +136,7 @@ export default function AssistantMonitoring() {
     {records && <><div className="admin-dashboard__table"><div className="sticky-scroll admin-dashboard__table-scroll"><table className="sticky-thead"><thead><tr>{[t('时间 (UTC+8)', 'Time (UTC+8)'),t('用户', 'User'),t('问题', 'Question'),t('状态', 'Status'),t('耗时', 'Latency')].map(v => <th key={v}>{v}</th>)}</tr></thead><tbody>{records.rows.map(row => <tr key={row.id}><th>{timestamp(row.started_at)}</th><td>{row.user_id ?? '—'}</td><td><button type="button" className="admin-boot__refresh" onClick={() => setSelected(row.id)}>{row.question || t('图片提问 / 正文已过期', 'Image question / expired text')}</button></td><td>{labels[row.status]}</td><td>{seconds(row.duration_ms)}</td></tr>)}</tbody></table></div></div>
       <div className="admin-dashboard__toolbar"><p>{t(`共 ${records.total} 条，第 ${page} 页`, `${records.total} records, page ${page}`)}</p><button type="button" className="admin-boot__refresh" disabled={page === 1 || loading} onClick={() => { setPage(n => n - 1); setSelected(null); }}>{t('上一页', 'Previous')}</button><button type="button" className="admin-boot__refresh" disabled={page * records.pageSize >= records.total || loading} onClick={() => { setPage(n => n + 1); setSelected(null); }}>{t('下一页', 'Next')}</button></div></>}
     {selected && <section className="admin-dashboard__panel" data-site-surface="panel"><div className="admin-dashboard__toolbar"><h3>{t('问答详情', 'Chat details')}</h3><button type="button" className="admin-boot__refresh" onClick={() => setSelected(null)}>{t('关闭详情', 'Close details')}</button></div>
-      {detailError ? <p role="alert">{t('详情加载失败，请刷新重试。', 'Could not load details. Refresh to retry.')}</p> : !detail ? <p>{t('正在加载…', 'Loading…')}</p> : <>
+      {detailError ? <p role="alert">{t('详情加载失败，请刷新重试。', 'Could not load details. Refresh to retry.')}</p> : !detail ? <p><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p> : <>
         <p style={wrap}>{detail.id} · {detail.model} · {labels[detail.status]} · {seconds(detail.duration_ms)} · {detail.error_code}</p>
         {detail.conversation_id&&detail.user_id&&<button type="button" className="admin-boot__refresh" onClick={()=>{setConversation({id:detail.conversation_id!,user:detail.user_id!});setQ('');setStatus('all');setFeedback('all');setPage(1);}}>{t('查看此会话的所有提问与重试','View all questions and retries in this conversation')}</button>}
         <p style={wrap}>{t('上一轮','Parent')}: {detail.parent_id??'—'} · {t('重试来源','Retry of')}: {detail.retry_of??'—'}</p>

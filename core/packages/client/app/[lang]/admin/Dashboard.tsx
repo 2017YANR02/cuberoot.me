@@ -10,6 +10,7 @@ import { fetchAdminUsers, type AdminUsersResponse } from '@/lib/account-api';
 import { fetchAdminUnreadSubmissions } from '@/lib/alg_api';
 import { fetchAdminDashboard, type AdminDashboardData } from '@/lib/admin-dashboard-api';
 import '@/components/sticky-table.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type Series = { name: string; data: Array<number | null>; type: 'bar' | 'line' };
 
@@ -92,7 +93,7 @@ export default function Dashboard() {
     return () => { active = false; controller.abort(); };
   }, [range, refresh]);
 
-  const unavailable = loading ? t('加载中…', 'Loading…') : t('暂不可用', 'Unavailable');
+  const unavailable = loading ? <LoadingIndicator /> : t('暂不可用', 'Unavailable');
   const count = (value: number | undefined | null) => value == null ? '—' : value.toLocaleString();
   const cash = (value: number, code: string) => `${code} ${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const currencies = [...new Set(data?.revenue?.map(row => row.currency) ?? [])];

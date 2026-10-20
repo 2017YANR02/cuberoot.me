@@ -13,6 +13,7 @@ import {
   type WhatIfResponse,
 } from '../_data/nemesizerApi';
 import { tr } from '@/i18n/tr';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 interface Props { isZh: boolean; }
 
@@ -101,8 +102,8 @@ export default function WhatIfMode({ isZh }: Props) {
   }
 
   if (!personData) {
-    return <div className="nemesizer-loading">{tr({ zh: '加载中…', en: 'Loading…'
-    })}</div>;
+    return <div className="nemesizer-loading"><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…'
+    })}</LoadingIndicator></div>;
   }
 
   const rankByEk = new Map<number, number>();

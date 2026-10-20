@@ -21,6 +21,7 @@ import { tr } from '@/i18n/tr';
 import FirstStepGallery, { type GalleryRow } from './FirstStepGallery';
 import firstFacePyram from '../_data/firstface_pyram.json';
 import './_essential-shared.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const GREEN = '#2ec27e'; // H(整解,与 pyram 图同色)
 const BLUE = '#3d7bf0';  // V(V-first 首步)
@@ -84,7 +85,7 @@ export default function PyraminxEssentialView({ isZh, pop }: { isZh: boolean; po
   }, [data]);
 
   if (error) return <div className="scramble-stats-error">{tr({ zh: '加载失败', en: 'Load failed' })}: {error}</div>;
-  if (!data) return <div className="scramble-stats-loading">{tr({ zh: '加载中…', en: 'Loading…' })}</div>;
+  if (!data) return <div className="scramble-stats-loading"><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…' })}</LoadingIndicator></div>;
 
   const { meta } = data;
   const colTotals = data.joint.h.map((_, hi) => data.joint.grid.reduce((s, row) => s + (row[hi] ?? 0), 0));
@@ -203,7 +204,7 @@ export default function PyraminxEssentialView({ isZh, pop }: { isZh: boolean; po
           <div className="ess-load">
             <button type="button" className="ess-load-btn" onClick={loadCases} disabled={casesLoading}>
               {casesLoading
-                ? tr({ zh: '加载中…', en: 'Loading…' })
+                ? <LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…' })}</LoadingIndicator>
                 : tr({ zh: '浏览全部 {n} 个状态', en: 'Browse all {n} states' }).replace('{n}', meta.essential_count.toLocaleString())}
             </button>
             {casesError && <span className="scramble-stats-error">{tr({ zh: '加载失败', en: 'Load failed' })}: {casesError}</span>}

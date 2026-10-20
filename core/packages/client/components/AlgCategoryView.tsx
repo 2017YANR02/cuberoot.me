@@ -124,6 +124,7 @@ import {
   sortPreferredAlgs,
   usePreferredAlgs,
 } from '@/lib/alg-preferred-algs';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const RIGHT_OH_MENU_VALUE = 'oh-right' as const;
 type AlgTagMenuValue = AlgTag | 'all' | typeof RIGHT_OH_MENU_VALUE;
@@ -1402,8 +1403,8 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       })()}
 
       {error && <div className="alg-empty">{error}</div>}
-      {!data && !error && <div className="alg-empty">{tr({ zh: '加载中…', en: 'Loading…'
-    })}</div>}
+      {!data && !error && <div className="alg-empty"><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…'
+    })}</LoadingIndicator></div>}
 
       {data && showSubgroupPicker && (
         <SubgroupIndex key={`${puzzleParam}/${set}`} puzzle={puzzleParam as AlgPuzzle} set={set} cases={orderedCases} ollByGroup={ollByGroup} isZh={isZh} querySuffix={sq1QuerySuffix} orientation={effectiveOrientation} />

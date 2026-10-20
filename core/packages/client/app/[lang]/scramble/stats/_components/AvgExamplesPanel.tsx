@@ -10,6 +10,7 @@ import { localizeCompName } from '@/lib/comp-localize';
 import { roundTypeShort } from '@/lib/comp-schedule';
 import { COLOR_HEX, type ColorLetter } from '@/components/SubsetColorPicker/SubsetColorPicker';
 import { tr } from '@/i18n/tr';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 // 一条「示例组」:某 (comp,event,round,group) 的成员打乱 + 该阶段/子集下的组平均。
 // mean/cnt 由页面按当前 (variant,stage,subset,备打) 从成员步数重算得来(与直方图同口径)。
@@ -65,7 +66,7 @@ export default function AvgExamplesPanel({
         <div className="scramble-stats-examples-hint">{tr({ zh: '点柱子看该平均值的比赛组', en: 'Click a bar to see competition groups at that average' })}</div>
       )}
       {selectedBin !== null && loading && (
-        <div className="scramble-stats-examples-hint">{tr({ zh: '加载中…', en: 'Loading…' })}</div>
+        <div className="scramble-stats-examples-hint"><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…' })}</LoadingIndicator></div>
       )}
       {selectedBin !== null && errorText && (
         <div className="scramble-stats-examples-hint">{tr({ zh: '加载失败', en: 'Load failed' })}: {errorText}</div>

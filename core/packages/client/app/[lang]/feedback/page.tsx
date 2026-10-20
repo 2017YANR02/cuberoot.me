@@ -28,6 +28,7 @@ import {
   type PublicFeedbackPage,
 } from '@/lib/feedback-api';
 import './feedback.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const KIND_ICON: Record<FeedbackKind, typeof Bug> = { need: Lightbulb, bug: Bug, other: MessageSquare };
 const STATUS_FILTERS: Array<'all' | FeedbackStatus> = ['all', 'new', 'triaged', 'done'];
@@ -161,7 +162,7 @@ export default function FeedbackPage() {
       )}
 
       {err && <div className="fbm-error">{err}</div>}
-      {loading && !err && <div className="fbm-empty">{t('加载中…', 'Loading…')}</div>}
+      {loading && !err && <div className="fbm-empty"><LoadingIndicator>{t('加载中…', 'Loading…')}</LoadingIndicator></div>}
       {safeSelectedId == null && data && data.items.length === 0 && (
         <div className="fbm-empty">
           <p>{t('没有符合条件的反馈。', 'No feedback matches this filter.')}</p>

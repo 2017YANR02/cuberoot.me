@@ -18,6 +18,7 @@ import { useCountries } from '@/components/wca-stats/useCountries';
 import { tr, useLang } from '@/i18n/tr';
 import '../_wca_stats_extra.css';
 import './kinch.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const PAGE_SIZE_OPTIONS = [50, 100, 200];
 
@@ -155,7 +156,7 @@ function KinchPageInner() {
         />
       </div>
 
-      {loading && <div className="wse-state">{tr({ zh: '加载中...', en: 'Loading...' })}</div>}
+      {loading && <div className="wse-state"><LoadingIndicator>{tr({ zh: '加载中...', en: 'Loading...' })}</LoadingIndicator></div>}
       {error && <div className="wse-state wse-state-error">{error}</div>}
 
       {personData && !loading && (
@@ -287,7 +288,7 @@ function KinchPageInner() {
 
 export default function KinchPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<LoadingIndicator />}>
       <KinchPageInner />
     </Suspense>
   );

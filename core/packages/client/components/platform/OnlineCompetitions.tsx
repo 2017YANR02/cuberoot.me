@@ -25,6 +25,7 @@ import {
 } from '@/lib/online-competition-api';
 import { CompetitionVideoRoom } from './CompetitionVideoRoom';
 import './online-competitions.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const ROOT = '/platform/events/online';
 const PROJECTS = new Set(['222', '333', '444', '555']);
@@ -79,7 +80,7 @@ function CompetitionList() {
     </nav>
     {view === 'manage' && !user ? <p><AppLink href="/platform/login">{t('登录后管理赛事', 'Sign in to manage competitions')}</AppLink></p> : null}
     {error ? <div role="alert" className="competition-error"><p>{error}</p><button className="competition-secondary" type="button" onClick={() => setRevision(value => value + 1)}><RefreshCw size={15} />{t('重试', 'Retry')}</button></div> : null}
-    {loading ? <p role="status" className="competition-muted">{t('正在加载比赛…', 'Loading competitions…')}</p> : !error && !items.length && (view === 'browse' || user) ? <p className="competition-empty">{view === 'manage' ? t('还没有你管理的比赛。创建草稿后，可继续添加项目和监督场次。', 'You have no managed competitions yet. Create a draft, then add events and supervised sessions.') : t('暂时没有已发布的线上比赛。', 'No online competitions have been published yet.')}</p> : null}
+    {loading ? <p role="status" className="competition-muted"><LoadingIndicator>{t('正在加载比赛…', 'Loading competitions…')}</LoadingIndicator></p> : !error && !items.length && (view === 'browse' || user) ? <p className="competition-empty">{view === 'manage' ? t('还没有你管理的比赛。创建草稿后，可继续添加项目和监督场次。', 'You have no managed competitions yet. Create a draft, then add events and supervised sessions.') : t('暂时没有已发布的线上比赛。', 'No online competitions have been published yet.')}</p> : null}
     <div className="competition-list">{items.map(item => <AppLink prefetch={false} className="competition-list-row" key={item.id} href={`${href(item.id)}${view === 'manage' ? '?view=manage' : ''}`}>
       <div><span className="competition-state">{item.status === 'published' && now ? (now < Date.parse(item.registrationOpensAt) ? t('报名未开始', 'Registration opens soon') : now < Date.parse(item.registrationClosesAt) ? t('报名中', 'Registration open') : t('报名截止', 'Registration closed')) : statusLabel(item.status, t)}</span><h2>{t(item.titleZh, item.titleEn || item.titleZh)}</h2><p>{dateText(item.startsAt)} <span>{t('北京时间', 'UTC+8')}</span></p><p>{item.projects.map(project => eventDisplayName(project.project, t('zh', 'en') === 'zh')).filter((name, index, names) => names.indexOf(name) === index).join(' / ')}{item.projects.length ? <> — {item.projects.every(project => project.amountMinor === 0) ? t('免费参赛', 'Free entry') : <>{money(Math.min(...item.projects.map(project => project.amountMinor)))} {t('起', 'and up')}</>}</> : null}</p><p>{item.organizationName}</p></div><ChevronRight size={20} />
     </AppLink>)}</div>
@@ -142,7 +143,7 @@ function CompetitionDetail({ id }: { id: string }) {
     catch (error) { setRegistrationError(message(error, t('检录未完成，请重试。', 'Check-in did not complete. Try again.'))); }
     finally { setBusy(false); }
   }
-  if (loading && !competition) return <div className="competitions"><p role="status">{t('正在加载比赛…', 'Loading competition…')}</p></div>;
+  if (loading && !competition) return <div className="competitions"><p role="status"><LoadingIndicator>{t('正在加载比赛…', 'Loading competition…')}</LoadingIndicator></p></div>;
   if (!competition) return <div className="competitions"><p role="alert">{error || t('没有找到这场比赛。', 'Competition not found.')}</p><button className="competition-secondary" type="button" onClick={refresh}>{t('重试', 'Retry')}</button></div>;
   const project = competition.projects.find(item => item.id === ticketId) ?? (competition.projects.length === 1 ? competition.projects[0] : undefined);
   const session = competition.sessions.find(item => item.id === sessionId);
@@ -300,7 +301,7 @@ function OrganizerOnboarding({ organizations, onLoaded }: { organizations: Teach
     finally { setBusy(false); }
   }
   return <div className="competition-onboarding">
-    {loading ? <p role="status" className="competition-muted">{t('正在加载主办资格…', 'Loading organizer access…')}</p> : null}
+    {loading ? <p role="status" className="competition-muted"><LoadingIndicator>{t('正在加载主办资格…', 'Loading organizer access…')}</LoadingIndicator></p> : null}
     {applications.map(item => <div key={item.id} className="competition-registration"><div><strong>{item.name}</strong><p>{item.status === 'pending' ? t('主办申请待审核', 'Organizer application pending') : item.status === 'approved' ? t('主办申请已通过', 'Organizer approved') : t('主办申请未通过', 'Application declined')}</p>{item.reviewNote ? <p>{item.reviewNote}</p> : null}{item.status === 'approved' && item.organizationSlug ? <AppLink prefetch={false} href={`/platform/org/${encodeURIComponent(item.organizationSlug)}`}>{t('管理主办组织', 'Manage organization')}</AppLink> : null}</div></div>)}
     {!pending ? <details className="competition-rules" open={!organizations.length && !applications.length}><summary>{t('申请主办方', 'Apply to host competitions')}</summary><p className="competition-muted">{t('提交主办信息，CubeRoot 审核后可创建比赛。已有组织可直接关联申请。', 'Submit organizer details for CubeRoot approval. You can apply using an existing organization.')}</p><div className="competition-form-grid">
       {available.length ? <div className="competition-field"><span>{t('使用组织', 'Organization')}</span><CompactSelect value={selectedOrganization} label={available.find(item => item.id === selectedOrganization)?.name ?? t('新建主办组织', 'New organizer')} items={[{ value: '', label: t('新建主办组织', 'New organizer') }, ...available.map(item => ({ value: item.id, label: item.name }))]} onChange={setSelectedOrganization} ariaLabel={t('申请组织', 'Applicant organization')} /></div> : null}
@@ -524,7 +525,7 @@ function CompetitionEvidenceFiles({ registrationId, canUpload }: { registrationI
     finally { setBusy(false); }
   }
   return <details className="competition-rules"><summary>{t('复核录像', 'Review recordings')}</summary><p>{t('仅参赛选手、指定监督员与 CubeRoot 审核人员可查看。通常保留 30 天，未结异议期间继续保留。', 'Visible only to the competitor, assigned supervisor and CubeRoot reviewers. Retained for 30 days, or longer while a dispute remains unresolved.')}</p>
-    {loading ? <p role="status">{t('正在加载…', 'Loading…')}</p> : files.length ? files.map(file => <div className="competition-toolbar" key={file.id}><span>{dateText(file.createdAt)} {Math.ceil(Number(file.sizeBytes) / 1024 / 1024)} MiB</span><button type="button" className="competition-secondary" disabled={busy} onClick={() => { void download(file); }}>{t('下载录像', 'Download recording')}</button></div>) : <p>{t('尚未上传复核录像。', 'No review recordings uploaded.')}</p>}
+    {loading ? <p role="status"><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p> : files.length ? files.map(file => <div className="competition-toolbar" key={file.id}><span>{dateText(file.createdAt)} {Math.ceil(Number(file.sizeBytes) / 1024 / 1024)} MiB</span><button type="button" className="competition-secondary" disabled={busy} onClick={() => { void download(file); }}>{t('下载录像', 'Download recording')}</button></div>) : <p>{t('尚未上传复核录像。', 'No review recordings uploaded.')}</p>}
     {canUpload ? <label className="competition-field">{t('上传争议复核片段', 'Upload a dispute review clip')}<input type="file" accept="video/mp4,video/webm,video/quicktime" disabled={busy || loading || files.length >= 2} onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; if (file) void upload(file); }} /><small>{t('最多 2 个文件，每个不超过 64 MiB。', 'Up to 2 files, 64 MiB each.')}</small></label> : null}
     {busy ? <p role="status">{t('正在处理录像…', 'Processing recording…')}</p> : null}{error ? <p role="alert" className="competition-error">{error}</p> : null}
   </details>;

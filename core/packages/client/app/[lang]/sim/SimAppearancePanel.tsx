@@ -18,6 +18,7 @@ import { resolveCaps } from './simCaps';
 import SwatchCell, { SwatchPopup } from './SwatchCell';
 import { ROOM_THEMES, normalizeRoomTheme, roomCubeActive } from './room-themes';
 import type { SimPuzzle } from './puzzleOptions';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 // 五魔方 12 面色 —— 复用 vendored puzzle-geometry 的十二面体配色(单一源,不另造)。
 const MEGAMINX_COLORS = Object.values(defaultPlatonicColorSchemes()[12]) as string[];
@@ -569,7 +570,7 @@ export default function SimAppearancePanel({
               <span>{t('人物头像', 'Character face')}</span>
               {settings.bodyAvatar && <img src={settings.bodyAvatar} alt={t('当前人物头像', 'Current character face')} width={40} height={40} />}
               <button type="button" disabled={avatarBusy} onClick={() => avatarFileRef.current?.click()}>
-                {avatarBusy ? t('读取中…', 'Loading…') : t('上传头像', 'Upload face')}
+                {avatarBusy ? <LoadingIndicator>{t('读取中…', 'Loading…')}</LoadingIndicator> : t('上传头像', 'Upload face')}
               </button>
               {settings.bodyAvatar && <button type="button" onClick={() => {
                 avatarVersion.current++; setAvatarBusy(false); setAvatarError('');

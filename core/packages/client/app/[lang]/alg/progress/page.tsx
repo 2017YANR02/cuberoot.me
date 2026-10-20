@@ -38,6 +38,7 @@ import { caseKey } from '@/lib/trainer-case-key';
 import { tr } from '@/i18n/tr';
 import '../alg.css';
 import './progress.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 /** 每套 set 的总 case 数(进度条分母)。 */
 async function fetchSetCounts(): Promise<Record<string, number>> {
@@ -611,7 +612,7 @@ export default function AlgProgressPage() {
 
       <div className="alg-prog-body">
         {marks == null ? (
-          <div className="alg-empty">{tr({ zh: '加载中…', en: 'Loading…' })}</div>
+          <div className="alg-empty"><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…' })}</LoadingIndicator></div>
         ) : !hasAny ? (
           <div className="alg-prog-empty">
             <p>{tr({ zh: '还没有任何学习记录。', en: 'Nothing tracked yet.' })}</p>

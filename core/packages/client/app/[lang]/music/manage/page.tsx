@@ -16,6 +16,7 @@ import {
 } from '@/lib/music-api';
 import { loadMusicLibrary, loadStaticMusicManifest } from '@/lib/music-player';
 import '../music.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type ManagedTrack = Pick<MusicApiTrack, 'id' | 'title' | 'artist' | 'album' | 'genre' | 'lyricsLrc' | 'status' | 'reviewNote'> & {
   source: 'static' | 'upload';
@@ -186,7 +187,7 @@ export default function MusicManagePage() {
 
     {membershipLoading ? <p className="music-state">{tr({ zh: '正在确认会员状态…', en: 'Checking membership…' })}</p>
       : !isMember ? <p className="music-state">{tr({ zh: '会员可以上传和管理音乐。', en: 'Members can upload and manage music.' })}{' '}<AppLink href="/membership">{tr({ zh: '查看会员', en: 'View membership' })}</AppLink></p>
-        : loading ? <p className="music-state">{tr({ zh: '正在载入曲库…', en: 'Loading library…' })}</p>
+        : loading ? <p className="music-state"><LoadingIndicator>{tr({ zh: '正在载入曲库…', en: 'Loading library…' })}</LoadingIndicator></p>
           : <div className="music-manager-layout">
             <div className="music-manager-list" aria-label={tr({ zh: '曲库内容', en: 'Library content' })}>
               {!tracks.length && <p className="music-state">{tr({ zh: '曲库为空', en: 'The library is empty' })}</p>}

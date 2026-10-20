@@ -8,6 +8,7 @@ import { formatWcaResultK } from '@/lib/wca-format-result';
 import { eventDisplayName } from '@/lib/wca-events';
 import { fetchH2H, type H2HResponse } from '../_data/nemesizerApi';
 import { tr } from '@/i18n/tr';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 interface Props { isZh: boolean; }
 
@@ -109,8 +110,8 @@ export default function H2HMode({ isZh }: Props) {
         placeholder={tr({ zh: '对手：WCA ID 或姓名', en: 'With: WCA ID or name'
         })}
       />
-      {loading && !data && <div className="nemesizer-loading">{tr({ zh: '加载中…', en: 'Loading…'
-    })}</div>}
+      {loading && !data && <div className="nemesizer-loading"><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…'
+    })}</LoadingIndicator></div>}
       {data && p2 && <Comparison data={data} isZh={isZh} show={show} />}
     </div>
   );

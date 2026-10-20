@@ -42,6 +42,7 @@ import { OnlineCompetitionPreview } from './OnlineCompetitionPreview';
 import { OnlineCompetitions } from './OnlineCompetitions';
 import { PlatformLearningWorkspace, isPlatformLearningWorkspace } from './PlatformLearningWorkspace';
 import { PlatformQrAdmin } from './PlatformQrAdmin';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const EMPTY_PLATFORM_ENTITIES: PlatformEntity[] = [];
 
@@ -238,7 +239,7 @@ function PlatformLanding() {
             <h2 id="platform-home-learning-title">{t(`${user?.name ?? ''}，继续上次的学习。`, `Continue where you left off, ${user?.name ?? ''}.`)}</h2>
           </div>
           {loading ? (
-            <p className="platform-home-status" role="status" aria-busy="true" aria-live="polite">{t('正在读取学习进度与工作区…', 'Loading your learning and workspaces…')}</p>
+            <p className="platform-home-status" role="status" aria-busy="true" aria-live="polite"><LoadingIndicator>{t('正在读取学习进度与工作区…', 'Loading your learning and workspaces…')}</LoadingIndicator></p>
           ) : currentCourse ? (
             <AppLink className="platform-home-resume" href={continueHref} prefetch={false}>
               <span>

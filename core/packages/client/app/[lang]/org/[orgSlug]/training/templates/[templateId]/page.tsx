@@ -22,6 +22,7 @@ import {
 import { trainingSourceLabel } from '@/lib/teaching-training';
 import OrgWorkspace from '../../../../_components/OrgWorkspace';
 import { entityStatusLabel, MutationMessage, teachingErrorMessage, useOperationKey, useTeachingPage } from '../../../../_components/OrgUi';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const PAGE_SIZE = 100;
 
@@ -55,7 +56,7 @@ function TemplateContent({ orgSlug, templateId, role, language }: { orgSlug: str
   useEffect(() => { void loadTemplate(); }, [loadTemplate]);
 
   if (loadError) return <MutationMessage message={loadError} error />;
-  if (!template) return <p aria-busy="true">{t('正在加载模板…', 'Loading template…')}</p>;
+  if (!template) return <p aria-busy="true"><LoadingIndicator>{t('正在加载模板…', 'Loading template…')}</LoadingIndicator></p>;
 
   return (
     <>
@@ -65,7 +66,7 @@ function TemplateContent({ orgSlug, templateId, role, language }: { orgSlug: str
 
       <section className="org-section">
         <h2>{t('模板版本', 'Template versions')}</h2>
-        {versions.loading ? <p aria-busy="true">{t('正在加载…', 'Loading…')}</p> : versions.error ? <MutationMessage message={versions.error} error /> : !versions.result?.items.length ? (
+        {versions.loading ? <p aria-busy="true"><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p> : versions.error ? <MutationMessage message={versions.error} error /> : !versions.result?.items.length ? (
           <p className="org-empty">{t('还没有可用于布置任务的版本。', 'No version is available for assignments yet.')}</p>
         ) : (
           <div className="org-list">

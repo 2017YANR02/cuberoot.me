@@ -17,6 +17,7 @@ vi.mock('next/navigation', async original => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), prefetch: vi.fn() }),
 }));
 vi.mock('next/link', () => ({
+  useLinkStatus: () => ({ pending: false }),
   default: ({ children, ...props }: { children: ReactNode; href: string }) => createElement('a', props, children),
 }));
 vi.mock('@/lib/trainer-room-api', () => ({ createRoom: vi.fn(), getRoom: vi.fn(), claimRoomBatch: vi.fn(), nextRoundRoom: vi.fn() }));
@@ -282,7 +283,7 @@ it.each([false, true])('joins a four-digit code from the actual input, copies an
   if (hosted) expect(onUrlUpdate.mock.lastCall![0].searchParams.get('room')).toBe('9876');
   await act(async () => container.querySelector<HTMLButtonElement>('.trainer-room-badge')!.click());
   const copiedUrl = new URL(copied.mock.lastCall![0]);
-  expect(copiedUrl.searchParams.get(trainingQueryKey('room', hosted))).toBe('0123');
+  expect(copiedUrl.searchParams.get(hosted ? 'trainingRoom' : 'room')).toBe('0123');
   if (hosted) expect(copiedUrl.searchParams.get('room')).toBe('9876');
   const leave = container.querySelector<HTMLButtonElement>('.trainer-room-row .is-ghost')!;
   await act(async () => leave.click());

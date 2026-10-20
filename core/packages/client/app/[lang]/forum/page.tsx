@@ -17,6 +17,7 @@ import { formatRelativeTime, formatCount } from '@/lib/forum-format';
 import { ForumHeader } from './_components/ForumHeader';
 import { ThreadRowList } from './_components/ThreadRowList';
 import './forum.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 export default function ForumIndexPage() {
   const lang = useLang();
@@ -41,7 +42,7 @@ export default function ForumIndexPage() {
       <ForumHeader activeView="boards" />
 
       {error && <div className="forum-error">{error}</div>}
-      {!data && !error && <div className="forum-loading"><T zh="加载中…" en="Loading…" /></div>}
+      {!data && !error && <div className="forum-loading"><LoadingIndicator><T zh="加载中…" en="Loading…" /></LoadingIndicator></div>}
 
       {data && (
         <div className="forum-index-layout">

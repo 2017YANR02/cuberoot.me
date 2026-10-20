@@ -37,6 +37,7 @@ import { PendingProposals } from './PendingProposals';
 import { ResultChangeEditor, type ResultChangeTarget } from './ResultChangeEditor';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
 import { useAuthStore } from '@/lib/auth-store';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 interface Props {
   wcaId: string;
@@ -406,7 +407,7 @@ export default function ByCompList({ wcaId, personName, personCountry, results, 
     showAttemptRanks, reconLookup, femaleRecordLookup, handleRowClick, buildAnchorHref,
     setHash, admin, refreshChanges, personCountry, aoxrMap, isOwner, loggedIn, personName]);
 
-  if (!grouped) return <div className="wp-loading-inline">{t('加载中…', 'Loading…')}</div>;
+  if (!grouped) return <div className="wp-loading-inline"><LoadingIndicator>{t('加载中…', 'Loading…')}</LoadingIndicator></div>;
   if (grouped.length === 0) return <div className="wp-empty">{t('暂无成绩', 'No results yet')}</div>;
 
   return (

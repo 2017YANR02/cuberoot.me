@@ -20,6 +20,7 @@ import {
 } from '@/lib/teaching-saas-api';
 import OrgWorkspace from '../../../../../../_components/OrgWorkspace';
 import { entityStatusLabel, MutationMessage, TeachingPagination, teachingErrorMessage, useOperationKey, useTeachingPage } from '../../../../../../_components/OrgUi';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const PAGE_SIZE = 25;
 
@@ -82,7 +83,7 @@ function ReviewContent({ orgSlug, assignmentId, studentId, page, role }: {
 
       <section className="org-section">
         <h2>{t('训练证据', 'Training evidence')}</h2>
-        {evidence.loading ? <p aria-busy="true">{t('正在加载…', 'Loading…')}</p> : evidence.error ? <MutationMessage message={evidence.error} error /> : !evidence.result?.items.length ? (
+        {evidence.loading ? <p aria-busy="true"><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p> : evidence.error ? <MutationMessage message={evidence.error} error /> : !evidence.result?.items.length ? (
           <p className="org-empty">{t('该学员尚未提交与此任务关联的训练证据。', 'This student has not submitted evidence linked to this assignment.')}</p>
         ) : (
           <div className="org-list">
@@ -106,7 +107,7 @@ function ReviewContent({ orgSlug, assignmentId, studentId, page, role }: {
 
       <section className="org-section">
         <h2>{t('批改记录', 'Reviews')}</h2>
-        {reviews.loading ? <p aria-busy="true">{t('正在加载…', 'Loading…')}</p> : reviews.error ? <MutationMessage message={reviews.error} error /> : !reviews.result?.items.length ? (
+        {reviews.loading ? <p aria-busy="true"><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p> : reviews.error ? <MutationMessage message={reviews.error} error /> : !reviews.result?.items.length ? (
           <p className="org-empty">{t('还没有批改记录。', 'No reviews yet.')}</p>
         ) : (
           <div className="org-list">

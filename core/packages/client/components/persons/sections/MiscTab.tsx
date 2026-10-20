@@ -12,6 +12,7 @@ import type { WcaPersonMisc, WcaPersonProfile, WcaCompetition } from '@/lib/wca-
 import { buildRegionStats } from '../logic/person-misc-region';
 import Link from '@/components/AppLink';
 import { tr } from '@/i18n/tr';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 interface Props {
   profile: WcaPersonProfile;
@@ -37,7 +38,7 @@ export default function MiscTab({ profile, comps, isZh }: Props) {
 
   const regions = useMemo(() => (comps ? buildRegionStats(comps, isZh) : null), [comps, isZh]);
 
-  const loading = <div className="wp-loading-inline">{t('加载中…', 'Loading…')}</div>;
+  const loading = <div className="wp-loading-inline"><LoadingIndicator>{t('加载中…', 'Loading…')}</LoadingIndicator></div>;
 
   return (
     <div className="wp-misc">

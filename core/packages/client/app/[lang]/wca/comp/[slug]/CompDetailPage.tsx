@@ -76,6 +76,7 @@ import '../comp.css';
 import { tr } from '@/i18n/tr';
 import i18n from '@/i18n/i18n-client';
 import { competitionRecordNews, withNewcomerRecords, type NewcomerRecord } from './record-news';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 // 「打乱」tab:把 /scramble/gen 的比赛模式整套内嵌进来。重(WASM 求解器 + 打乱引擎),
 // 懒加载 —— 只有用户点开「打乱」才拉这部分 JS,不拖累比赛页首屏。
@@ -2153,7 +2154,7 @@ export default function CompDetailPage() {
         ) : !fullLoaded ? (
           // 分片首屏只带当前项目的选手 — 预排名要全场报名者,等后台的全量请求(已在飞)落地。
           <div className="comp-loading">
-            <div className="comp-loading-label">{tr({ zh: '加载中…', en: 'Loading…' })}</div>
+            <div className="comp-loading-label"><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…' })}</LoadingIndicator></div>
           </div>
         ) : (
           <PsychSheet
@@ -3673,7 +3674,7 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, personal = false, lo
         </header>
         <div className="comp-modal-body">
           {loading ? (
-            <div className="comp-empty" role="status">{tr({ zh: '加载中…', en: 'Loading…' })}</div>
+            <div className="comp-empty" role="status"><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…' })}</LoadingIndicator></div>
           ) : groups.length === 0 ? (
             <div className="comp-empty">{personal
               ? tr({ zh: '本场比赛暂无你的成绩', en: 'No results for you at this competition yet' })

@@ -112,6 +112,14 @@ export const CATALOG: UtilEntry[] = [
     en: 'Map trainer links and query keys while preserving the timer event, room and solve share when leaving training.',
   },
   {
+    name: 'Timer practice URLs',
+    sig: 'canonicalTimerPracticeSearch(search: string | URLSearchParams): URLSearchParams',
+    imp: "import { canonicalTimerPracticeSearch, decodeTimerPracticeSearch, encodeTimerPracticeSearch } from '@/lib/timer-practice-url';\nimport { TimerPracticeUrlProvider, useTimerSearchParams } from '@/lib/timer-practice-url-adapter';",
+    category: 'util',
+    zh: '计时器统一练习地址：项目、内容、来源、练习方式、选题界面、出题方式和范围分别表达；兼容旧链接，保留引擎会话与成绩标识。',
+    en: 'Canonical timer practice URLs separate event, content, source, method, selection view, draw and scope while accepting old links and preserving engine sessions and result IDs.',
+  },
+  {
     name: 'Timer practice content',
     sig: 'timerPracticeContents(event: string): readonly TimerPracticeContent[]',
     imp: "import { timerPracticeContents, selectedTimerPracticeContent } from '@/lib/timer-practice-navigation';\nimport { virtualTrainingSessionId } from '@/lib/training-set-metadata';",
@@ -126,6 +134,14 @@ export const CATALOG: UtilEntry[] = [
     category: 'cube',
     zh: '双底离线题库的固定记录格式与最优 HTM 打乱解码，生成任务与浏览器共用。',
     en: 'Fixed-record corpus format and optimal HTM scramble decoding shared by the offline builder and browser.',
+  },
+  {
+    name: 'useRetainedState',
+    sig: 'useRetainedState<T>(key: string, initial: T)',
+    imp: "import { useRetainedState } from '@/hooks/useRetainedState';",
+    category: 'hook',
+    zh: '在当前浏览会话中保留已加载的数据，页面返回时立即恢复；SSR 使用固定初始快照，身份变化时清空，调用方继续后台刷新。',
+    en: 'Retain loaded data across route mounts with a fixed SSR snapshot and identity-change reset; callers keep their background refresh effects.',
   },
   {
     name: 'useContentRefreshKey',

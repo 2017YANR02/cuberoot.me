@@ -15,6 +15,7 @@ import {
   useOperationKey,
   useTeachingPage,
 } from '../../_components/OrgUi';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const PAGE_SIZE = 25;
 
@@ -97,7 +98,7 @@ function PackagesContent({ orgSlug, page, role }: { orgSlug: string; page: numbe
       <h2>{t('课包', 'Packages')}</h2>
       <p className="org-lead">{t('在这里定义可发放给学员的课时产品。实际余额以学员课包和服务端流水为准。', 'Define credit products here. Student balances and the server ledger remain authoritative.')}</p>
 
-      {products.loading ? <p aria-busy="true">{t('正在加载…', 'Loading…')}</p> : products.error ? (
+      {products.loading ? <p aria-busy="true"><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p> : products.error ? (
         <MutationMessage message={products.error} error />
       ) : !products.result?.items.length ? (
         <p className="org-empty">{t('还没有课包产品。', 'No package products yet.')}</p>

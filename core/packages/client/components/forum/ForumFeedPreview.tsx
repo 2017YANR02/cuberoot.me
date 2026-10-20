@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useRetainedState } from '@/hooks/useRetainedState';
+import { useEffect } from 'react';
 import Link from '@/components/AppLink';
 import { T, tr } from '@/i18n/tr';
 import { fetchForumFeed, type ForumFeedThread } from '@/lib/forum-api';
@@ -8,8 +9,8 @@ import { ForumFeedList } from './ForumFeedList';
 import './forum-feed.css';
 
 export default function ForumFeedPreview() {
-  const [threads, setThreads] = useState<ForumFeedThread[]>([]);
-  const [ready, setReady] = useState(false);
+  const [threads, setThreads] = useRetainedState<ForumFeedThread[]>('home:forumThreads', []);
+  const [ready, setReady] = useRetainedState('home:forumReady', false);
 
   useEffect(() => {
     let cancelled = false;
@@ -18,12 +19,12 @@ export default function ForumFeedPreview() {
       .catch(() => { /* Homepage preview is optional. */ })
       .finally(() => { if (!cancelled) setReady(true); });
     return () => { cancelled = true; };
-  }, []);
+  }, [setThreads, setReady]);
 
   if (!ready) {
     return <section className="forum-feed-preview" data-tour="forum" aria-busy="true" aria-label={tr({ zh: '社区动态', en: 'Community feed' })} />;
   }
-  if (threads.length === 0) return null;
+  if (threads.length === 0) return <p className="landing-slot-message">{tr({ zh: '暂无社区动态', en: 'No community updates available' })}</p>;
 
   return (
     <section className="forum-feed-preview" data-tour="forum">

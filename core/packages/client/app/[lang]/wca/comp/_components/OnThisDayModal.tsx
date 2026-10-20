@@ -15,6 +15,7 @@ import { compLinkProps } from '@/lib/comp-link';
 import { RecordBadge } from '@/components/RecordBadge';
 import { useDayMatches, type DayMatch } from './use_calendar_data';
 import './on_this_day.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type TierKey = 'WR' | 'CR' | 'NR';
 const TIER_KEYS: TierKey[] = ['WR', 'CR', 'NR'];
@@ -150,7 +151,7 @@ export default function OnThisDayModal({ date: initialDate, isZh, onClose }: Pro
           )}
 
           {!matches && !error && (
-            <div className="otd-loading">{t('加载中…', 'Loading…')}</div>
+            <div className="otd-loading"><LoadingIndicator>{t('加载中…', 'Loading…')}</LoadingIndicator></div>
           )}
 
           {matches && matches.length === 0 && (

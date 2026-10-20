@@ -46,8 +46,8 @@ function getWorker(): Worker {
  * cstimer internal scramble id (passed verbatim to scrMgr.scramblers[key]).
  * `length` is the cstimer 2nd argument — only meaningful for random-move
  * scramblers; random-state ones ignore it but we still pass a default for
- * sanity. `iconClass` reuses cubing-icons where available; otherwise we
- * render a short text label via `textLabel`.
+ * sanity. Each physical puzzle has an exact shared SVG in the icon gallery;
+ * `iconClass` is required so new projects cannot silently ship a text badge.
  */
 /**
  * Family buckets for the grouped puzzle picker (PuzzlePicker). Every
@@ -69,8 +69,8 @@ export interface CstimerEvent {
   key: string;
   /** Default scramble length passed to cstimer (random-move puzzles only). */
   length?: number;
-  /** cubing-icons class if available, else use textLabel. */
-  iconClass?: string;
+  /** Exact shared SVG key, registered in /icon before adding the puzzle. */
+  iconClass: string;
   /** Fallback short text rendered when no iconClass. */
   textLabel?: string;
   zh: string;
@@ -93,52 +93,52 @@ export const CSTIMER_EVENTS: ReadonlyArray<CstimerEvent> = [
   { id: 'redi_cube', key: CSTIMER_REDI_KEY, length: 8, zh: '热帝', en: 'Redi Cube', iconClass: 'unofficial-redi', family: 'twist', solvable: true },
   { id: 'gear',    key: 'gearso',  zh: '齿轮',         en: 'Gear Cube',         iconClass: 'puzzle-gear', family: 'twist',  solvable: true
 },
-  { id: 'ivy',     key: 'ivyso',   zh: '枫叶',         en: 'Ivy Cube',          textLabel: 'Ivy',    family: 'twist',  solvable: true
+  { id: 'ivy',     key: 'ivyso',   zh: '枫叶',         en: 'Ivy Cube',          iconClass: 'unofficial-ivy', family: 'twist',  solvable: true
 },
-  { id: 'dino',    key: 'dinoso',  zh: '恐龙',         en: 'Dino Cube',         textLabel: 'Dino',   family: 'twist',  solvable: true
+  { id: 'dino',    key: 'dinoso',  zh: '恐龙',         en: 'Dino Cube',         iconClass: 'unofficial-dino', family: 'twist',  solvable: true
 },
   { id: 'mpyrso',  key: 'mpyrso',  zh: '大金字塔(随态)',   en: 'Master Pyra (RS)',  iconClass: 'puzzle-masterpyraminx', family: 'twist',  solvable: true
 },
-  { id: '223',     key: '223',     zh: '223',            en: '223',             textLabel: '223',  family: 'cuboid', solvable: true },
-  { id: '133',     key: '133',     zh: '133 花型',       en: '133 Floppy',      textLabel: '133',  family: 'cuboid', solvable: true },
-  { id: '15p',     key: '15prp',   zh: '数字华容道',       en: '15-Puzzle',         textLabel: '15',     family: 'slide',  solvable: true },
-  { id: '8p',      key: '8prp',    zh: '八数码',           en: '8-Puzzle',          textLabel: '8',      family: 'slide',  solvable: true },
+  { id: '223',     key: '223',     zh: '223',            en: '223',             iconClass: 'puzzle-223', family: 'cuboid', solvable: true },
+  { id: '133',     key: '133',     zh: '133 花型',       en: '133 Floppy',      iconClass: 'puzzle-133', family: 'cuboid', solvable: true },
+  { id: '15p',     key: '15prp',   zh: '数字华容道',       en: '15-Puzzle',         iconClass: 'puzzle-15p', family: 'slide',  solvable: true },
+  { id: '8p',      key: '8prp',    zh: '八数码',           en: '8-Puzzle',          iconClass: 'puzzle-8p', family: 'slide',  solvable: true },
 
   // Random-move with sensible defaults
   { id: 'heli',    key: 'heli',    length: 20, zh: '直升机',           en: 'Helicopter',        iconClass: 'unofficial-helicopter', family: 'twist', solvable: true
 },
   { id: 'helicv',  key: 'helicv',  length: 20, zh: '弧面直升机',       en: 'Curvy Copter',      iconClass: 'unofficial-curvycopter', family: 'twist', solvable: true
 },
-  { id: 'sq2',     key: 'sq2',     length: 10, zh: '方块二',           en: 'Square-2',          textLabel: 'Sq2',  family: 'sq', solvable: true
+  { id: 'sq2',     key: 'sq2',     length: 10, zh: '方块二',           en: 'Square-2',          iconClass: 'unofficial-sq2', family: 'sq', solvable: true
 },
-  { id: 'ssq1',    key: 'ssq1t',   length: 10, zh: '超 Sq-1',          en: 'Super Sq-1',        textLabel: 'SSq1', family: 'sq', solvable: true },
-  { id: 'bsq',     key: 'bsq',     length: 10, zh: '受限 Sq-1',        en: 'Bandaged Sq-1',     textLabel: 'BSq1', family: 'sq', solvable: true },
-  { id: 'giga',    key: 'giga',    length: 30, zh: '五阶五魔',         en: 'Gigaminx',          textLabel: 'Giga', family: 'twist'
+  { id: 'ssq1',    key: 'ssq1t',   length: 10, zh: '超 Sq-1',          en: 'Super Sq-1',        iconClass: 'unofficial-super_sq1', family: 'sq', solvable: true },
+  { id: 'bsq',     key: 'bsq',     length: 10, zh: '受限 Sq-1',        en: 'Bandaged Sq-1',     iconClass: 'puzzle-bsq', family: 'sq', solvable: true },
+  { id: 'giga',    key: 'giga',    length: 30, zh: '五阶五魔',         en: 'Gigaminx',          iconClass: 'puzzle-gigaminx', family: 'twist'
 },
-  { id: 'prcp',    key: 'prcp',    length: 70, zh: '菊花五魔',       en: 'Pyra Crystal',      textLabel: 'PrC',  family: 'twist' },
-  { id: '233',     key: '233',     length: 25, zh: '多米诺 233',     en: '233 Domino',      textLabel: '233', family: 'cuboid', solvable: true
+  { id: 'prcp',    key: 'prcp',    length: 70, zh: '菊花五魔',       en: 'Pyra Crystal',      iconClass: 'puzzle-pyraminxcrystal', family: 'twist' },
+  { id: '233',     key: '233',     length: 25, zh: '多米诺 233',     en: '233 Domino',      iconClass: 'puzzle-233', family: 'cuboid', solvable: true
 },
-  { id: '334',     key: '334',     length: 40, zh: '334',            en: '334',             textLabel: '334', family: 'cuboid', solvable: true },
-  { id: '335',     key: '335',     length: 50, zh: '335',            en: '335',             textLabel: '335', family: 'cuboid', solvable: true },
-  { id: '336',     key: '336',     length: 50, zh: '336',            en: '336',             textLabel: '336', family: 'cuboid', solvable: true },
-  { id: '337',     key: '337',     length: 60, zh: '337',            en: '337',             textLabel: '337', family: 'cuboid', solvable: true },
-  { id: 'sfl',     key: 'sfl',     length: 25, zh: '超薄花型',         en: 'Super Floppy',      textLabel: 'SFl',  family: 'cuboid', solvable: true },
-  { id: 'ufo',     key: 'ufo',     length: 25, zh: 'UFO',              en: 'UFO',               textLabel: 'UFO',  family: 'twist',  solvable: true },
-  { id: 'ctico',   key: 'ctico',   length: 25, zh: '二十面体',         en: 'Icosamate',         textLabel: 'Ico',  family: 'twist', solvable: true
+  { id: '334',     key: '334',     length: 40, zh: '334',            en: '334',             iconClass: 'puzzle-334', family: 'cuboid', solvable: true },
+  { id: '335',     key: '335',     length: 50, zh: '335',            en: '335',             iconClass: 'puzzle-335', family: 'cuboid', solvable: true },
+  { id: '336',     key: '336',     length: 50, zh: '336',            en: '336',             iconClass: 'puzzle-336', family: 'cuboid', solvable: true },
+  { id: '337',     key: '337',     length: 60, zh: '337',            en: '337',             iconClass: 'puzzle-337', family: 'cuboid', solvable: true },
+  { id: 'sfl',     key: 'sfl',     length: 25, zh: '超薄花型',         en: 'Super Floppy',      iconClass: 'puzzle-sfl', family: 'cuboid', solvable: true },
+  { id: 'ufo',     key: 'ufo',     length: 25, zh: 'UFO',              en: 'UFO',               iconClass: 'unofficial-ufo', family: 'twist',  solvable: true },
+  { id: 'ctico',   key: 'ctico',   length: 25, zh: '二十面体',         en: 'Icosamate',         iconClass: 'puzzle-icosamate', family: 'twist', solvable: true
 },
-  { id: 'crz3a',   key: 'crz3a',   length: 25, zh: '疯狂 3×3',         en: 'Crazy 3×3',         textLabel: 'Crz',  family: 'other',  solvable: true
+  { id: 'crz3a',   key: 'crz3a',   length: 25, zh: '疯狂 3×3',         en: 'Crazy 3×3',         iconClass: 'unofficial-crazy_333', family: 'other',  solvable: true
 },
-  { id: 'cm3',     key: 'cm3',     length: 16, zh: 'Cmetrick',         en: 'Cmetrick',          textLabel: 'Cm3',  family: 'twist',  solvable: true },
-  { id: 'cm2',     key: 'cm2',     length: 16, zh: 'Cmetrick Mini',    en: 'Cmetrick Mini',     textLabel: 'Cm2',  family: 'twist',  solvable: true },
-  { id: 'bic',     key: 'bic',     length: 25, zh: '联体',         en: 'Bicube',            textLabel: 'Bic',  family: 'siamese', solvable: true
+  { id: 'cm3',     key: 'cm3',     length: 16, zh: 'Cmetrick',         en: 'Cmetrick',          iconClass: 'puzzle-cm3', family: 'twist',  solvable: true },
+  { id: 'cm2',     key: 'cm2',     length: 16, zh: 'Cmetrick Mini',    en: 'Cmetrick Mini',     iconClass: 'unofficial-cmetrick_mini', family: 'twist',  solvable: true },
+  { id: 'bic',     key: 'bic',     length: 25, zh: '联体',         en: 'Bicube',            iconClass: 'puzzle-bic', family: 'siamese', solvable: true
 },
-  { id: 'sia113',  key: 'sia113',  length: 25, zh: '联体 113',       en: 'Siamese 113',     textLabel: 'Sia113', family: 'siamese'
+  { id: 'sia113',  key: 'sia113',  length: 25, zh: '联体 113',       en: 'Siamese 113',     iconClass: 'puzzle-sia113', family: 'siamese'
 },
-  { id: 'sia123',  key: 'sia123',  length: 25, zh: '联体 123',       en: 'Siamese 123',     textLabel: 'Sia123', family: 'siamese'
+  { id: 'sia123',  key: 'sia123',  length: 25, zh: '联体 123',       en: 'Siamese 123',     iconClass: 'puzzle-sia123', family: 'siamese'
 },
-  { id: 'sia222',  key: 'sia222',  length: 12, zh: '联体 222',       en: 'Siamese 222',     iconClass: 'unofficial-333_siamese', family: 'siamese', solvable: true
+  { id: 'sia222',  key: 'sia222',  length: 12, zh: '联体 222',       en: 'Siamese 222',     iconClass: 'puzzle-sia222', family: 'siamese', solvable: true
 },
-  { id: 'dmd',     key: 'dmdso',   zh: '钻石',             en: 'Diamond',           textLabel: 'Dmd',  family: 'twist',  solvable: true
+  { id: 'dmd',     key: 'dmdso',   zh: '钻石',             en: 'Diamond',           iconClass: 'puzzle-skewbdiamond', family: 'twist',  solvable: true
 },
 ];
 

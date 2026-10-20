@@ -178,7 +178,7 @@ describe('calculator UI integrations', () => {
 
   it('uses the Kinch API and the canonical competition cell for PR streaks', () => {
     expect(kinchPage).toContain("apiUrl(`/v1/wca/kinch?");
-    expect(kinchPage).toContain('<Suspense fallback={null}>');
+    expect(kinchPage).toContain('<Suspense fallback={<LoadingIndicator />}>');
     expect(miscTab).toContain('<CompCell compId={comp.compId}');
     expect(miscTab).toContain('misc.recordStreak.current');
     expect(miscTab).toContain('misc.recordStreak.longest');

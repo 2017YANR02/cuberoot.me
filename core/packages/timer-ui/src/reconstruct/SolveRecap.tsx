@@ -21,7 +21,8 @@
  * 一下它已经在注册表里了。
  */
 
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useCallback, useState } from 'react';
+import type { ReconSnapshot } from '@cuberoot/shared/recon-ground-truth';
 import type { ReconstructHost } from './ReconstructHost';
 import { SolveRecapBodyPlaceholder } from './SolveRecapPlaceholder';
 import ReconstructActions from './ReconstructActions';
@@ -50,6 +51,10 @@ export default function SolveRecap({
   solve, isZh, history, onFull, onDismiss, onUseScramble, onReconFeedback, host,
 }: SolveRecapProps) {
   const tr = host.localize;
+  const [review, setReview] = useState<{ id: string; snapshot: ReconSnapshot | null } | null>(null);
+  const receiveReview = useCallback((snapshot: ReconSnapshot | null) => {
+    setReview({ id: solve.id, snapshot });
+  }, [solve.id]);
   return (
     <section className="shell-recap" aria-label={tr({ zh: '计时复盘', en: 'Solve reconstruction' })}>
       <div className="shell-recap-head">
@@ -67,6 +72,7 @@ export default function SolveRecap({
           solve={solve}
           onUseScramble={onUseScramble}
           placement="recap"
+          snapshot={review?.id === solve.id ? review.snapshot : null}
         />
         {/* 工具栏形态:整屏、分享、重用打乱，右侧关闭。 */}
         <button
@@ -89,6 +95,7 @@ export default function SolveRecap({
           hideDate
           hideActions
           onReconFeedback={onReconFeedback}
+          onReviewSnapshot={receiveReview}
         /></Suspense>
       </div>
     </section>

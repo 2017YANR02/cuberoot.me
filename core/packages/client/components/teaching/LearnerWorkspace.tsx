@@ -7,6 +7,7 @@ import { useT } from '@/hooks/useT';
 import { getSessionToken, nextQuery, useAuthUser } from '@/lib/auth-store';
 import { listTeachingOrganizationLearningContexts } from '@/lib/teaching-saas-api';
 import { teachingErrorMessage } from './TeachingUi';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 interface Props {
   orgSlug: string;
@@ -51,7 +52,7 @@ export default function LearnerWorkspace({ orgSlug, studentId, children }: Props
   if (error) {
     return <main className="teaching-page teaching-centered"><p role="alert">{error}</p><AppLink href="/learn" prefetch={false}>{t('返回学习中心', 'Back to learning center')}</AppLink></main>;
   }
-  if (!context) return <main className="teaching-page" aria-busy="true"><p>{t('正在加载学习档案…', 'Loading learning profile…')}</p></main>;
+  if (!context) return <main className="teaching-page" aria-busy="true"><p><LoadingIndicator>{t('正在加载学习档案…', 'Loading learning profile…')}</LoadingIndicator></p></main>;
 
   const isSelf = context.relationships.some((relationship) => relationship.kind === 'student');
   const guardianRelationships = context.relationships

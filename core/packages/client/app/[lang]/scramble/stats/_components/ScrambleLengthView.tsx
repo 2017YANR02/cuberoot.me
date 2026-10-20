@@ -18,6 +18,7 @@ import { EVENT_ZH, EVENT_EN } from '@/lib/event-constants';
 import { statsUrl } from '@/lib/stats-base';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { tr } from '@/i18n/tr';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 interface GluedScramble { ci: string; cn: string; r: string; g: string; n: number; tok: string }
 interface ScrambleAnomaly { ci: string; cn: string; lens: number[]; n: number }
@@ -273,8 +274,8 @@ export default function ScrambleLengthView({ isZh, data, event, merged, metric, 
   }, [selectedBin, examples, activeGroup, event, useQtm]);
 
   if (!data) {
-    return <div className="scramble-stats-loading">{tr({ zh: '加载中…', en: 'Loading…'
-    })}</div>;
+    return <div className="scramble-stats-loading"><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…'
+    })}</LoadingIndicator></div>;
   }
 
   // 组平均模式:整段用「组平均」直方图替换(无示例交互 / 无脚注),度量沿用父级 metric。
@@ -414,8 +415,8 @@ export default function ScrambleLengthView({ isZh, data, event, merged, metric, 
               </div>
             )}
             {selectedBin !== null && examplesLoading && (
-              <div className="scramble-stats-examples-hint">{tr({ zh: '加载中…', en: 'Loading…'
-            })}</div>
+              <div className="scramble-stats-examples-hint"><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…'
+            })}</LoadingIndicator></div>
             )}
             {selectedBin !== null && !examplesLoading && curExamples && curExamples.length > 0 && (
               <ul className="scramble-stats-examples-list">

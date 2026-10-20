@@ -51,6 +51,7 @@ import {
   VIEW_KEYS, VIEW_LABELS, isViewKey, type ViewKey,
 } from './_lib/format';
 import './calendar.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const DAY = 86_400_000;
 
@@ -707,7 +708,7 @@ export default function CalendarClient() {
               {importing && importing.total > 0
                 ? tr({ zh: `导入中 ${importing.done}/${importing.total}`, en: `Importing ${importing.done}/${importing.total}` })
                 : importing
-                  ? tr({ zh: '读取中…', en: 'Reading…' })
+                  ? <LoadingIndicator>{tr({ zh: '读取中…', en: 'Reading…' })}</LoadingIndicator>
                   : tr({ zh: '导入 .ics / .zip', en: 'Import .ics / .zip' })}
             </button>
             <button type="button" className="cal-btn" onClick={() => void onExport()}>

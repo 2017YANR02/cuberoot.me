@@ -26,6 +26,7 @@ import {
   useOperationKey,
   useTeachingPage,
 } from '../../_components/OrgUi';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const PAGE_SIZE = 25;
 const OPTION_LIMIT = 100;
@@ -201,7 +202,7 @@ function SessionsContent({ orgSlug, page, role, timezone }: { orgSlug: string; p
       <h2>{t('课次', 'Sessions')}</h2>
       <p className="org-lead">{t('老师和助教只会看到自己被安排的课次。完课后由服务端一次性扣减课时。', 'Teachers and assistants only see assigned sessions. Credits are consumed atomically by the server on completion.')}</p>
 
-      {sessions.loading ? <p aria-busy="true">{t('正在加载…', 'Loading…')}</p> : sessions.error ? (
+      {sessions.loading ? <p aria-busy="true"><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p> : sessions.error ? (
         <MutationMessage message={sessions.error} error />
       ) : !sessions.result?.items.length ? (
         <p className="org-empty">{t('还没有可见课次。', 'No sessions are visible yet.')}</p>
@@ -247,7 +248,7 @@ function SessionsContent({ orgSlug, page, role, timezone }: { orgSlug: string; p
               {memberTotal > members.length && <p className="org-help org-field-wide">{t('这里只显示前 100 名成员。', 'Only the first 100 members are shown.')}</p>}
 
               <div className="org-field-wide org-stack">
-                <strong>{t('本次学员与扣课', 'Attendees and credits')}</strong>
+                <strong>{t('本次学员与扣课', 'Attendees and credits')}{packagesLoading && <LoadingIndicator />}</strong>
                 <div className="org-compact-row">
                   <select className="org-form-control" aria-label={t('选择学员', 'Select student')} value={selectedStudentId} onChange={(event) => { setSelectedStudentId(event.target.value); operationKey.reset(); }}>
                     <option value="">{t('选择学员', 'Select student')}</option>

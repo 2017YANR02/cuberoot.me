@@ -366,22 +366,22 @@ describe('native PG simulator controls', () => {
     expect(player.play).not.toHaveBeenCalled();
   });
 
-  it.each(CASES)('$id inverts both fields when the setup ends with a line comment', async (spec) => {
+  it.each(CASES)('$id inverts only the solution when the setup ends with a line comment', async (spec) => {
     await mount(spec, { deferUrlUpdates: true });
-    await enter('Scramble', `${spec.setup} // keep the separate solution field`);
+    const setup = `${spec.setup} // keep the separate solution field`;
+    await enter('Scramble', setup);
     const puzzle = nativePuzzleKPuzzle(spec.id);
-    // Compose each field independently so the expected state cannot reproduce
-    // the UI bug that joined the solution into the setup's line comment.
-    const setupState = puzzle.algToTransformation(spec.setup);
-    const original = setupState.applyTransformation(puzzle.algToTransformation(spec.alg));
-    expect(original.isIdentical(setupState)).toBe(false);
+    const solution = puzzle.algToTransformation(spec.alg);
+    const combined = puzzle.algToTransformation(spec.setup).applyTransformation(solution);
+    setupChanges.mockClear();
     await act(async () => button('Invert').click());
-    expect(input('Scramble').value).toBe('');
+    expect(input('Scramble').value).toBe(setup);
+    expect(setupChanges).toHaveBeenCalledExactlyOnceWith(setup);
     const inverse = puzzle.algToTransformation(parseNativePuzzleAlg(spec.id, input('Solution').value));
-    expect(inverse.isIdentical(original.invert())).toBe(true);
-    expect(original.applyTransformation(inverse).isIdentityTransformation()).toBe(true);
-    // Negative control: losing the second field produces a different inverse.
-    expect(inverse.isIdentical(setupState.invert())).toBe(false);
+    expect(inverse.isIdentical(solution.invert())).toBe(true);
+    expect(solution.applyTransformation(inverse).isIdentityTransformation()).toBe(true);
+    // The independent solution transform must not absorb the scramble or its comment.
+    expect(inverse.isIdentical(combined.invert())).toBe(false);
   });
 
   it('cancels a queued native animation when input becomes invalid before its model is ready', async () => {

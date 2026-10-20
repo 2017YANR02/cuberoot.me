@@ -318,11 +318,11 @@ describe('smart-cube reconnect ownership', () => {
     let connection!: Promise<void>;
     await act(async () => {
       connection = cube.connectDevice(rig.device);
-      // 10s advertisement fallback plus three 2s encrypted candidate probes.
-      await vi.advanceTimersByTimeAsync(17000);
+      // MY32 now prompts directly; it does not probe guessed addresses.
+      await vi.advanceTimersByTimeAsync(0);
       expect(onNeedMac).toHaveBeenCalledWith(name);
     });
-    expect(rig.device.watchAdvertisements).toHaveBeenCalledTimes(name.endsWith('A1B2') ? 1 : 0);
+    expect(rig.device.watchAdvertisements).not.toHaveBeenCalled();
     expect(start).not.toHaveBeenCalled();
     expect(savedMac(rig.device.id)).toBeNull();
     await act(async () => { input.resolve('11:22:33:44:55:66'); await connection; });
@@ -332,7 +332,7 @@ describe('smart-cube reconnect ownership', () => {
     await act(async () => { await cube.connectDevice(rig.device); });
     expect(onNeedMac).toHaveBeenCalledOnce();
     expect(start.mock.calls[1][2]?.mac).toBe('11:22:33:44:55:66');
-    expect(rig.device.watchAdvertisements).toHaveBeenCalledTimes(name.endsWith('A1B2') ? 1 : 0);
+    expect(rig.device.watchAdvertisements).not.toHaveBeenCalled();
     clearMac(rig.device.id);
   });
 
@@ -348,13 +348,14 @@ describe('smart-cube reconnect ownership', () => {
     let failure: unknown;
     await act(async () => {
       const connection = cube.connectDevice(rig.device).catch(error => { failure = error; });
-      await vi.advanceTimersByTimeAsync(17000);
+      await vi.advanceTimersByTimeAsync(0);
       await connection;
     });
-    expect(failure).toBeInstanceOf(Error);
+    // Dismissing the prompt is a clean cancellation, not a connection error.
+    expect(failure).toBeUndefined();
     expect(onNeedMac).toHaveBeenCalledOnce();
     expect(start).not.toHaveBeenCalled();
-    expect(rig.device.watchAdvertisements).toHaveBeenCalledOnce();
+    expect(rig.device.watchAdvertisements).not.toHaveBeenCalled();
     expect(cube.status.connected).toBe(false);
     expect(savedMac(rig.device.id)).toBeNull();
     expect(rig.disconnect).toHaveBeenCalled();

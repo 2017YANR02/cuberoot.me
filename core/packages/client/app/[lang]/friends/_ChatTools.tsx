@@ -9,6 +9,7 @@ import { ClearButton } from '@/components/ClearButton';
 import { createMeetCode, getVideoConfig } from '@/lib/video-room-api';
 import { loadMusicLibrary, playMusic, pauseMusic, useMusicPlayer } from '@/lib/music-player';
 import { parseChatShare } from '@/lib/chat-shares';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 export function ChatVoiceInput({ insert, disabled, lang }: { insert(value: string): void; disabled: boolean; lang: string }) {
   const t = useT();
@@ -43,7 +44,7 @@ export function ChatMoreTools({ insert }: { insert(value: string): void }) {
     </div> : <div className="friend-chat-music-picker">
       <div className="friend-chat-tools"><button type="button" className="friend-chat-action" onClick={() => setMode('grid')}><ArrowLeft size={16} />{t('更多功能', 'More actions')}</button><AppLink href="/music" prefetch={false}>{t('打开曲库', 'Open music library')}</AppLink></div>
       <div className="friend-chat-search"><Search size={16} /><input aria-label={t('搜索音乐', 'Search music')} value={query} onChange={e => setQuery(e.target.value)} />{query && <ClearButton onClick={() => setQuery('')} />}</div>
-      {player.status === 'loading' && <p role="status">{t('加载中…', 'Loading…')}</p>}
+      {player.status === 'loading' && <p role="status"><LoadingIndicator>{t('加载中…', 'Loading…')}</LoadingIndicator></p>}
       {(player.status === 'error' || player.error) && <p role="alert">{t('音乐加载或播放失败', 'Could not load or play music')}<button type="button" className="friend-chat-action" onClick={() => void loadMusicLibrary(true)}>{t('重试', 'Retry')}</button></p>}
       {player.status === 'ready' && !player.tracks.filter(track => `${track.title} ${track.artist}`.toLocaleLowerCase().includes(query.toLocaleLowerCase())).length && <p>{t('没有匹配的音乐', 'No matching music')}</p>}
       <div className="friend-chat-music-list">{player.tracks.filter(track => `${track.title} ${track.artist}`.toLocaleLowerCase().includes(query.toLocaleLowerCase())).map(track => <div className="friend-chat-music-track" key={track.id}>

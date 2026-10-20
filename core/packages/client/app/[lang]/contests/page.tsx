@@ -21,6 +21,7 @@ import { contestsHref, getContestsData, ContestsError, type ContestCatalog, type
 import { CONTEST_GROUPS, CONTEST_TYPES, contestEventName } from './catalog';
 import '@/components/sticky-table.css';
 import './contests.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const VIEWS = ['home', 'competitions', 'contest', 'rankings', 'records', 'persons', 'person'] as const;
 const REGION_CODES: Record<string, string> = { asia: 'XA', africa: 'XF', europe: 'XE', northAmerica: 'XN', southAmerica: 'XS', oceania: 'XO' };
@@ -225,7 +226,7 @@ export default function ContestsPage() {
       ? t('未找到该选手的 Contests 公开档案。有 WCA ID 不代表已参加 Cubing Contests 收录的比赛。', 'No public Contests profile was found. Having a WCA ID does not imply participation in a contest listed here.')
       : error === 404 ? t('未找到这项公开内容。', 'This public entry was not found.') : t('数据暂时无法加载，请重试。', 'Data could not be loaded. Please retry.')}</p>
       <button className="contests-action-button" type="button" onClick={() => { catalog.retry(); response.retry(); }}>{t('重试', 'Retry')}</button></div>
-      : loading ? <p role="status" className="contests-empty">{t('正在加载…', 'Loading…')}</p> : null}
+      : loading ? <p role="status" className="contests-empty"><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p> : null}
     {!loading && !error && response.data && <>
       {(view === 'home' || view === 'competitions') && <><h2>{t('比赛', 'Contests')} <small>{competitionRows.length}</small></h2>
         <CompetitionList rows={competitionRows.slice(view === 'home' ? 0 : Math.max(0, params.offset), view === 'home' ? 8 : Math.max(0, params.offset) + 50)} isZh={isZh} />

@@ -178,7 +178,7 @@ export interface EventInfo {
   /**
    * cubing-icons key for pickers that render an icon grid (components/EventIcon
    * `CubingIcon`). Only set for events the WCA icon set doesn't cover by id —
-   * i.e. the non-WCA puzzles, whose glyphs live under `unofficial-*`. WCA events
+   * i.e. non-WCA puzzles using `puzzle-*` or `unofficial-*`. WCA events
    * are looked up as `event-<wca id>` and need nothing here.
    */
   icon?: string;
@@ -208,13 +208,13 @@ export const EVENTS: EventInfo[] = [
   { id: '333ni',  nameEn: '3x3 NI',      nameZh: '三盲 NI',    group: 'bld' },
   { id: '444bld', nameEn: '4BLD',        nameZh: '四盲',       group: 'bld' },
   { id: '555bld', nameEn: '5BLD',        nameZh: '五盲',       group: 'bld' },
-  { id: '666bld', nameEn: '6BLD',        nameZh: '六盲',       group: 'bld' },
-  { id: '777bld', nameEn: '7BLD',        nameZh: '七盲',       group: 'bld' },
+  { id: '666bld', nameEn: '6BLD',        nameZh: '六盲',       group: 'bld', icon: 'unofficial-666bf' },
+  { id: '777bld', nameEn: '7BLD',        nameZh: '七盲',       group: 'bld', icon: 'unofficial-777bf' },
 
   // Relays
   { id: 'r3',     nameEn: '2-3 Relay',   nameZh: '2-3 接力',   group: 'relay' },
-  { id: 'r4',     nameEn: '2-4 Relay',   nameZh: '2-4 接力',   group: 'relay' },
-  { id: 'r5',     nameEn: '2-5 Relay',   nameZh: '2-5 接力',   group: 'relay' },
+  { id: 'r4',     nameEn: '2-4 Relay',   nameZh: '2-4 接力',   group: 'relay', icon: 'unofficial-234relay' },
+  { id: 'r5',     nameEn: '2-5 Relay',   nameZh: '2-5 接力',   group: 'relay', icon: 'unofficial-2345relay' },
 
   // Other puzzles
   { id: 'pyra',   nameEn: 'Pyra',        nameZh: '金字塔',     group: 'puzzle' },
@@ -226,47 +226,47 @@ export const EVENTS: EventInfo[] = [
 },
   { id: '333mr',  nameEn: 'Mirror Blocks', nameZh: '镜面',     group: 'puzzle'
 },
-  { id: 'sphere', nameEn: 'Sphere Cube', nameZh: '球形', group: 'puzzle' },
+  { id: 'sphere', nameEn: 'Sphere Cube', nameZh: '球形', group: 'puzzle', icon: 'puzzle-sphere' },
   { id: 'magic',  nameEn: 'Magic',       nameZh: '八板',       group: 'puzzle' },
   { id: 'mmagic', nameEn: 'M.Magic',     nameZh: '十二板',     group: 'puzzle'
 },
 
   // Non-WCA puzzles. Names follow wiki/glossary.json (the site's term base),
   // trimmed of the generic 「魔方」 suffix the way the WCA entries above are.
-  { id: 'fto',      nameEn: 'FTO',             nameZh: '转面八面体', group: 'nonwca', icon: 'unofficial-fto' },
+  { id: 'fto',      nameEn: 'FTO',             nameZh: '转面八面体', group: 'nonwca', icon: 'puzzle-fto' },
   { id: 'kilominx', nameEn: 'Kilominx',        nameZh: '二阶五魔',   group: 'nonwca', icon: 'unofficial-kilominx' },
-  { id: 'gear',     nameEn: 'Gear Cube',       nameZh: '齿轮',       group: 'nonwca', icon: 'unofficial-gear' },
+  { id: 'gear',     nameEn: 'Gear Cube',       nameZh: '齿轮',       group: 'nonwca', icon: 'puzzle-gear' },
   { id: 'ivy',      nameEn: 'Ivy Cube',        nameZh: '枫叶',       group: 'nonwca', icon: 'unofficial-ivy' },
   { id: 'redi',     nameEn: 'Redi Cube',       nameZh: '热帝',       group: 'nonwca', icon: 'unofficial-redi' },
-  { id: 'mpyram',   nameEn: 'Master Pyraminx', nameZh: '四阶金字塔', group: 'nonwca', icon: 'unofficial-mpyram' },
-  { id: 'pyraminx_duo', nameEn: 'Pyraminx Duo', nameZh: '二重奏', group: 'nonwca' },
-  { id: 'superz', nameEn: 'SuperZ (2×2 + Skewb)', nameZh: '二阶＋斜转', group: 'nonwca' },
-  { id: 'dogic', nameEn: 'Dogic', nameZh: 'Dogic 二十面体', group: 'nonwca' },
-  { id: 'octahedron4', nameEn: '4×4 Octahedron', nameZh: '四阶八面体', group: 'nonwca' },
-  { id: 'dinoskewb', nameEn: 'Dino Skewb', nameZh: '恐龙斜转', group: 'nonwca' },
-  { id: 'cube3dino', nameEn: '3×3 + Dino', nameZh: '三阶＋恐龙', group: 'nonwca' },
-  { id: 'lattice', nameEn: 'Lattice Cube', nameZh: 'Lattice', group: 'nonwca' },
-  { id: 'hyperx', nameEn: 'Hyper X', nameZh: 'Hyper X', group: 'nonwca' },
-  { id: 'latticex', nameEn: 'Lattice X', nameZh: 'Lattice X', group: 'nonwca' },
-  { id: 'masterbrilic', nameEn: 'Master Brilic', nameZh: 'Master Brilic', group: 'nonwca' },
-  { id: 'masterftov2', nameEn: 'Master FTO v2', nameZh: '四阶 FTO v2', group: 'nonwca' },
-  { id: 'quadx', nameEn: 'Quad-X', nameZh: 'Quad-X', group: 'nonwca' },
-  { id: 'dinoocta', nameEn: 'Dino Octa', nameZh: '恐龙八面体', group: 'nonwca' },
-  { id: 'fto5', nameEn: '5-layer FTO', nameZh: '五阶 FTO', group: 'nonwca' },
-  { id: 'fto6', nameEn: '6-layer FTO', nameZh: '六阶 FTO', group: 'nonwca' },
-  { id: 'eto', nameEn: "Eitan's ETO", nameZh: 'ETO 棱转八面体', group: 'nonwca' },
-  { id: 'radiocrystal', nameEn: 'Radio Crystal', nameZh: 'Radio Crystal', group: 'nonwca' },
-  { id: 'cube3skewb', nameEn: '3×3 + Skewb', nameZh: '三阶＋斜转', group: 'nonwca' },
-  { id: 'heliskewb', nameEn: 'Helicopter Skewb', nameZh: '直升机斜转', group: 'nonwca' },
-  { id: 'comboctahedron', nameEn: 'Comboctahedron', nameZh: 'Comboctahedron', group: 'nonwca' },
-  { id: 'circoradiolarian', nameEn: 'Circo-Radiolarian', nameZh: 'Circo-Radiolarian', group: 'nonwca' },
-  { id: 'icosababyface', nameEn: 'Deep-Cut Icosahedron', nameZh: '深切角转二十面体', group: 'nonwca' },
-  { id: 'cube2heli', nameEn: '2×2 + Helicopter', nameZh: '二阶＋直升机', group: 'nonwca' },
-  { id: 'cube3heli', nameEn: '3×3 + Helicopter', nameZh: '三阶＋直升机', group: 'nonwca' },
-  { id: 'radiojewel', nameEn: 'Radio Jewel', nameZh: 'Radio Jewel', group: 'nonwca' },
-  { id: 'radioweb', nameEn: 'Radio Web', nameZh: 'Radio Web', group: 'nonwca' },
-  { id: 'catscradle', nameEn: 'Cat’s Cradle', nameZh: 'Cat’s Cradle', group: 'nonwca' },
-  { id: 'radiocanon', nameEn: 'Radio Canon', nameZh: 'Radio Canon', group: 'nonwca' },
+  { id: 'mpyram',   nameEn: 'Master Pyraminx', nameZh: '四阶金字塔', group: 'nonwca', icon: 'puzzle-masterpyraminx' },
+  { id: 'pyraminx_duo', nameEn: 'Pyraminx Duo', nameZh: '二重奏', group: 'nonwca', icon: 'unofficial-pyraminx_duo' },
+  { id: 'superz', nameEn: 'SuperZ (2×2 + Skewb)', nameZh: '二阶＋斜转', group: 'nonwca', icon: 'puzzle-superz' },
+  { id: 'dogic', nameEn: 'Dogic', nameZh: 'Dogic 二十面体', group: 'nonwca', icon: 'puzzle-dogic' },
+  { id: 'octahedron4', nameEn: '4×4 Octahedron', nameZh: '四阶八面体', group: 'nonwca', icon: 'puzzle-octahedron4' },
+  { id: 'dinoskewb', nameEn: 'Dino Skewb', nameZh: '恐龙斜转', group: 'nonwca', icon: 'puzzle-dinoskewb' },
+  { id: 'cube3dino', nameEn: '3×3 + Dino', nameZh: '三阶＋恐龙', group: 'nonwca', icon: 'puzzle-cube3dino' },
+  { id: 'lattice', nameEn: 'Lattice Cube', nameZh: 'Lattice', group: 'nonwca', icon: 'puzzle-lattice' },
+  { id: 'hyperx', nameEn: 'Hyper X', nameZh: 'Hyper X', group: 'nonwca', icon: 'puzzle-hyperx' },
+  { id: 'latticex', nameEn: 'Lattice X', nameZh: 'Lattice X', group: 'nonwca', icon: 'puzzle-latticex' },
+  { id: 'masterbrilic', nameEn: 'Master Brilic', nameZh: 'Master Brilic', group: 'nonwca', icon: 'puzzle-masterbrilic' },
+  { id: 'masterftov2', nameEn: 'Master FTO v2', nameZh: '四阶 FTO v2', group: 'nonwca', icon: 'puzzle-masterftov2' },
+  { id: 'quadx', nameEn: 'Quad-X', nameZh: 'Quad-X', group: 'nonwca', icon: 'puzzle-quadx' },
+  { id: 'dinoocta', nameEn: 'Dino Octa', nameZh: '恐龙八面体', group: 'nonwca', icon: 'puzzle-dinoocta' },
+  { id: 'fto5', nameEn: '5-layer FTO', nameZh: '五阶 FTO', group: 'nonwca', icon: 'puzzle-fto5' },
+  { id: 'fto6', nameEn: '6-layer FTO', nameZh: '六阶 FTO', group: 'nonwca', icon: 'puzzle-fto6' },
+  { id: 'eto', nameEn: "Eitan's ETO", nameZh: 'ETO 棱转八面体', group: 'nonwca', icon: 'puzzle-eto' },
+  { id: 'radiocrystal', nameEn: 'Radio Crystal', nameZh: 'Radio Crystal', group: 'nonwca', icon: 'puzzle-radiocrystal' },
+  { id: 'cube3skewb', nameEn: '3×3 + Skewb', nameZh: '三阶＋斜转', group: 'nonwca', icon: 'puzzle-cube3skewb' },
+  { id: 'heliskewb', nameEn: 'Helicopter Skewb', nameZh: '直升机斜转', group: 'nonwca', icon: 'puzzle-heliskewb' },
+  { id: 'comboctahedron', nameEn: 'Comboctahedron', nameZh: 'Comboctahedron', group: 'nonwca', icon: 'puzzle-comboctahedron' },
+  { id: 'circoradiolarian', nameEn: 'Circo-Radiolarian', nameZh: 'Circo-Radiolarian', group: 'nonwca', icon: 'puzzle-circoradiolarian' },
+  { id: 'icosababyface', nameEn: 'Deep-Cut Icosahedron', nameZh: '深切角转二十面体', group: 'nonwca', icon: 'puzzle-icosababyface' },
+  { id: 'cube2heli', nameEn: '2×2 + Helicopter', nameZh: '二阶＋直升机', group: 'nonwca', icon: 'puzzle-cube2heli' },
+  { id: 'cube3heli', nameEn: '3×3 + Helicopter', nameZh: '三阶＋直升机', group: 'nonwca', icon: 'puzzle-cube3heli' },
+  { id: 'radiojewel', nameEn: 'Radio Jewel', nameZh: 'Radio Jewel', group: 'nonwca', icon: 'puzzle-radiojewel' },
+  { id: 'radioweb', nameEn: 'Radio Web', nameZh: 'Radio Web', group: 'nonwca', icon: 'puzzle-radioweb' },
+  { id: 'catscradle', nameEn: 'Cat’s Cradle', nameZh: 'Cat’s Cradle', group: 'nonwca', icon: 'puzzle-catscradle' },
+  { id: 'radiocanon', nameEn: 'Radio Canon', nameZh: 'Radio Canon', group: 'nonwca', icon: 'puzzle-radiocanon' },
 
   // CFOP step training
   { id: 'cross',  nameEn: 'Cross only',  nameZh: '十字',       group: 'cfop'

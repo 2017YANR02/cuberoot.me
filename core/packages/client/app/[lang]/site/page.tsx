@@ -36,6 +36,7 @@ import { listSites, listTopics, saveTopic, deleteSite, reorderGroup } from './na
 import { useT } from '@/hooks/useT';
 import SiteEditor from './SiteEditor';
 import './sites.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 function YouTubeBadge() {
   return (
@@ -1220,7 +1221,7 @@ function SitesPageInner() {
         {loadErr ? (
           <div className="sites-empty">{TEXTS.err[lang]}: {loadErr}</div>
         ) : !sites ? (
-          <div className="sites-empty">{TEXTS.loading[lang]}</div>
+          <div className="sites-empty"><LoadingIndicator>{TEXTS.loading[lang]}</LoadingIndicator></div>
         ) : filtered.length === 0 ? (
           <div className="sites-empty">{TEXTS.noResults[lang]}</div>
         ) : (
@@ -1266,7 +1267,7 @@ function SitesPageInner() {
 
 export default function SitesPage() {
   return (
-    <Suspense fallback={<div className="sites-page"><div className="sites-empty">Loading…</div></div>}>
+    <Suspense fallback={<div className="sites-page"><div className="sites-empty"><LoadingIndicator /></div></div>}>
       <SitesPageInner />
     </Suspense>
   );

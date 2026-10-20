@@ -7,10 +7,8 @@ import AppLink from '@/components/AppLink';
 /**
  * TimerShell — the mode host for /timer.
  *
- * One URL param owns the whole experience: ?players=1..4 | net (nuqs, default
- * 1, force-written even when default via clearOnDefault:false — a bare /timer
- * gets ?players=1 on first paint so the URL is always shareable/bookmarkable
- * with the exact mode). players=1 renders SoloView; players>=2
+ * ?players=2..4 | net chooses multiplayer; absence means one player.
+ * The URL adapter omits the default. players=1 renders SoloView; players>=2
  * renders BattleView (2 = the original versus/side duo, 3/4 = 田字格 grid);
  * players=net renders NetBattleView (多设备联机对战:创建/加入房间,各自设备
  * 计时,同一条打乱)。?room=CODE 的邀请链接即使没带 players 也强制进联机模式。
@@ -95,13 +93,6 @@ export default function TimerShell() {
   useEffect(() => {
     if (isNet) void setEventParam(null, { history: 'replace' });
   }, [isNet, setEventParam]);
-  // 裸 /timer 强制写显式 ?players=1(默认人数也进 URL,不再省略)。
-  useEffect(() => {
-    if (typeof window !== 'undefined' && !new URLSearchParams(window.location.search).has('players')) {
-      void setPlayersParam(roomParam ? 'net' : playerCount, { history: 'replace' });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const playersControl = (
     <TimerPlayersSelect

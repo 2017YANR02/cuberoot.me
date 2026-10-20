@@ -9,6 +9,7 @@ import { useT } from '@/hooks/useT';
 import { getSessionToken, nextQuery, useAuthUser } from '@/lib/auth-store';
 import { getTeachingOrganization, type TeachingOrganizationAccess } from '@/lib/teaching-saas-api';
 import { teachingErrorMessage, teachingRoleLabel } from './OrgUi';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 interface Props {
   orgSlug: string;
@@ -47,7 +48,7 @@ export default function OrgWorkspace({ orgSlug, children }: Props) {
     );
   }
   if (error) return <main className="org-page org-centered"><p role="alert">{error}</p><AppLink href="/org" prefetch={false}>{t('返回机构列表', 'Back to organizations')}</AppLink></main>;
-  if (!organization) return <main className="org-page" aria-busy="true"><p>{t('正在加载机构…', 'Loading organization…')}</p></main>;
+  if (!organization) return <main className="org-page" aria-busy="true"><p><LoadingIndicator>{t('正在加载机构…', 'Loading organization…')}</LoadingIndicator></p></main>;
 
   const links: Array<{ href: string; label: string; permission?: TeachingPermission }> = [
     { href: `/org/${organization.slug}`, label: t('概览', 'Overview') },

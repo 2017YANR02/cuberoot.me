@@ -20,6 +20,7 @@ import {
   type AdminFeedbackItem, type FeedbackMedia, type FeedbackStatus, type FeedbackKind,
 } from '@/lib/feedback-api';
 import './feedback-admin.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const KIND_ICON: Record<FeedbackKind, typeof Bug> = { need: Lightbulb, bug: Bug, other: MessageSquare };
 const STATUSES: FeedbackStatus[] = ['new', 'triaged', 'done'];
@@ -131,7 +132,7 @@ export default function FeedbackAdminPage() {
       </div>
 
       {err && <div className="fba-error">{err}</div>}
-      {!items && !err && <div className="fba-empty">{t('加载中…', 'Loading…')}</div>}
+      {!items && !err && <div className="fba-empty"><LoadingIndicator>{t('加载中…', 'Loading…')}</LoadingIndicator></div>}
       {items && items.length === 0 && <div className="fba-empty">{t('暂无反馈', 'No feedback yet')}</div>}
 
       <div className="fba-list">

@@ -48,14 +48,15 @@ describe('architecture boundary guard', () => {
     expect(compareFindings(uncontractedFindings(CURRENT, MANIFEST.manualContracts), MANIFEST.legacyFindings)).toEqual({ additions: [], stale: [] });
     // Reviewed native adapters, the Android release build, isolated fixtures, diagnostics, geometry/solver proofs,
     // deployment-only pgvector provisioning and remote-access host commands, plus
-    // five exact offline symmetry-coordinator identities (Node, caffeinate, vm_stat, sysctl and ps).
-    expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length + 28);
+    // five exact offline symmetry-coordinator identities (Node, caffeinate, vm_stat, sysctl and ps),
+    // and the bounded recon intake CLI ESM loader check.
+    expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length + 29);
     expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'shared-root-import')).toHaveLength(144);
     expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'cross-package-alias-import')).toHaveLength(0);
   });
 
   it('keeps every semantic edge contract tied to live repository evidence', () => {
-    expect(MANIFEST.manualContracts).toHaveLength(32);
+    expect(MANIFEST.manualContracts).toHaveLength(33);
     expect(validateManifestSchema(MANIFEST)).toEqual([]);
     expect(validateManualContracts(MANIFEST.manualContracts)).toEqual([]);
     expect(new Set(MANIFEST.manualContracts.map((item: { phase: string }) => item.phase))).toEqual(new Set([

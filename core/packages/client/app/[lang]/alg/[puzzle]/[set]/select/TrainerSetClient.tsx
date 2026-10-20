@@ -29,6 +29,7 @@ import { useAlgSrs } from '@/lib/alg-srs-store';
 import '@/app/[lang]/alg/_trainer/trainer.css';
 import '@/app/[lang]/alg/_trainer/memory.css';
 import { tr } from '@/i18n/tr';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 /** 显示过滤:按标记只看一类(大 set 里找 case 用)。 */
 const MARK_FILTERS = ['all', 'none', 'learning', 'mastered'] as const;
@@ -37,7 +38,6 @@ type MarkFilter = (typeof MARK_FILTERS)[number];
 export default function TrainerSetClient() {
   const trainingHost = useTrainingHost();
   const [modeParam] = useQueryState('mode');
-  const [timingParam] = useQueryState('timing');
   const [drawParam] = useQueryState('draw');
   const params = useParams<{ lang: string; puzzle: string; set: string }>();
   const puzzleParam = (Array.isArray(params?.puzzle) ? params.puzzle[0] : params?.puzzle) ?? '';
@@ -178,7 +178,7 @@ export default function TrainerSetClient() {
         <div className="trainer-root">
           {mounted
             ? <MixSetPicker puzzle={puzzle} puzzleParam={puzzleParam} leaf="select" initial={mixSets} />
-            : <div className="trainer-landing-empty">{tr({ zh: '加载中…', en: 'Loading…' })}</div>}
+            : <div className="trainer-landing-empty"><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…' })}</LoadingIndicator></div>}
         </div>
       );
     }
@@ -192,7 +192,7 @@ export default function TrainerSetClient() {
   }
 
   if (sessionLoadError) return <div className="trainer-root"><p role="alert">{tr({ zh: '训练加载失败，请重试。', en: 'Training could not load. Please retry.' })}</p><button type="button" onClick={() => setLoadRetry(value => value + 1)}>{tr({ zh: '重试', en: 'Retry' })}</button></div>;
-  if (storePuzzle !== puzzle || storeSet !== sessionId) return <div className="trainer-root" role="status">{tr({ zh: '加载中…', en: 'Loading…' })}</div>;
+  if (storePuzzle !== puzzle || storeSet !== sessionId) return <div className="trainer-root" role="status"><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…' })}</LoadingIndicator></div>;
 
   const selectedSet = new Set(selected);
   const scopedSelectedCount = scopedCases.filter(c => selectedSet.has(caseKey(c))).length;
@@ -225,7 +225,6 @@ export default function TrainerSetClient() {
   const runUrl = new URL(originalRunBase, 'https://training.invalid');
   if (trainingHost) {
     if (modeParam) runUrl.searchParams.set('mode', modeParam);
-    if (timingParam !== null) runUrl.searchParams.set('timing', timingParam);
     if (modeParam === 'memo' && drawParam) runUrl.searchParams.set('draw', drawParam);
   }
   const runBase = `${runUrl.pathname}${runUrl.search}`;
@@ -291,8 +290,8 @@ export default function TrainerSetClient() {
       </div>
 
       {cases.length === 0 ? (
-        <div className="trainer-landing-empty">{tr({ zh: '加载中…', en: 'Loading…'
-        })}</div>
+        <div className="trainer-landing-empty"><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…'
+        })}</LoadingIndicator></div>
       ) : (
         <>
           <div className="trainer-marks-toolbar">

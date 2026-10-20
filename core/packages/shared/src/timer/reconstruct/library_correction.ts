@@ -427,18 +427,21 @@ export async function identifyLibraryCase(line: Pick<ReconTextLine, 'moves'>, ca
 export async function correctReconFromLibrary(
   recon: ReconTextResult,
   load: (set: string) => Promise<AlgFile> = set => loadAlg('3x3', set),
+  confirmedEnd = -1,
 ): Promise<ReconTextResult> {
   const files = new Map<string, Promise<AlgFile | null>>();
   const lineLabel = (line: ReconTextLine) => /^(?:([WYGBOR]{2})\/?\s*)?(OLL\(CP\)|OLLCP|1LLL|ZBLL|COLL|EPLL|OLL|PLL|ELL|ZBLS|VLS|WV|SV)(?:[- ](.+?))?(\/PLL Skip)?$/.exec(line.label ?? '');
   const librarySet = (label: string) => label === 'EPLL' ? 'pll' : label === 'OLL(CP)' ? 'ollcp' : label.toLowerCase();
   // Start independent set requests together; four F2L lines share one request.
   for (const line of recon.lines) {
+    if (line.toIdx <= confirmedEnd) continue;
     const label = lineLabel(line);
     const set = label ? librarySet(label[2]) : line.kind === 'f2l' ? 'f2l' : null;
     if (set && !files.has(set)) files.set(set, boundedLoad(() => load(set)));
   }
   const lines: ReconTextLine[] = [];
   for (const line of recon.lines) {
+    if (line.toIdx <= confirmedEnd) { lines.push(line); continue; }
     const label = lineLabel(line);
     // F2L case links identify a starting state; preserving the executed formula
     // requires the same strict move-path match used for last-layer algorithms.

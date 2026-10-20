@@ -14,6 +14,7 @@ import RegionCountrySelect from '@/components/wca-stats/RegionCountrySelect';
 import { useCountries } from '@/components/wca-stats/useCountries';
 import '../_wca_stats_extra.css';
 import { tr } from '@/i18n/tr';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const EVENTS = [
   '333bf','444bf','555bf','333mbf','333fm','333',
@@ -103,8 +104,8 @@ function SuccessRatePageInner() {
       </div>
 
       <div className="wse-table-wrapper sticky-scroll">
-        {loading && <div className="wse-state">{tr({ zh: '加载中...', en: 'Loading...'
-        })}</div>}
+        {loading && <div className="wse-state"><LoadingIndicator>{tr({ zh: '加载中...', en: 'Loading...'
+        })}</LoadingIndicator></div>}
         {error && <div className="wse-state wse-state-error">Error: {error}</div>}
         {data && !loading && (
           <>
@@ -162,7 +163,7 @@ function SuccessRatePageInner() {
 
 export default function SuccessRatePage() {
   return (
-    <Suspense fallback={<div style={{ padding: 16, color: 'var(--muted)' }}>Loading…</div>}>
+    <Suspense fallback={<div style={{ padding: 16, color: 'var(--muted)' }}><LoadingIndicator /></div>}>
       <SuccessRatePageInner />
     </Suspense>
   );

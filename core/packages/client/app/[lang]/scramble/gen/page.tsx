@@ -35,6 +35,7 @@ const GEN_CX_VARS = {
 } as CSSProperties;
 import TNoodleMode from './TNoodleMode';
 import './gen.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const SHOW_PREVIEW_KEY = 'gen:showPreview';
 function readShowPreview(): boolean {
@@ -187,7 +188,7 @@ function GenPageInner() {
 
 export default function GenPage() {
   return (
-    <Suspense fallback={<div className="gen-page" />}>
+    <Suspense fallback={<div className="gen-page"><LoadingIndicator /></div>}>
       <GenPageInner />
     </Suspense>
   );

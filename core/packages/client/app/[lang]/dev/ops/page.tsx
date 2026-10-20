@@ -12,6 +12,7 @@ import { useIsAdmin } from '@/lib/auth-store';
 import { createCommand, updateCommand, deleteCommand, listCommands, type OpsCommandInput } from '@/lib/ops-api';
 import './ops.css';
 import { tr } from '@/i18n/tr';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type Lang = 'zh' | 'en';
 type CategoryId = 'db' | 'build' | 'deploy' | 'backup' | 'prompt';
@@ -290,8 +291,8 @@ export default function OpsPage() {
             </div>
           )}
           {!err && commands === null && (
-            <div className="ops-empty">{tr({ zh: '加载中...', en: 'Loading...'
-            })}</div>
+            <div className="ops-empty"><LoadingIndicator>{tr({ zh: '加载中...', en: 'Loading...'
+            })}</LoadingIndicator></div>
           )}
           {visible.map((op) => (
             <OpCard

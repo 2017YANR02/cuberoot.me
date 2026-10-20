@@ -11,6 +11,7 @@ import { tr } from '@/i18n/tr';
 import { sq1TopLayerQuestions } from '@/lib/recognize-sq1-shapes';
 import { SQ1_SHAPE_GUIDE } from './content';
 import '@/components/recognition-guide.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type ShapeQuestion = ReturnType<typeof sq1TopLayerQuestions>[number];
 
@@ -76,7 +77,7 @@ export default function Sq1ShapeGuideClient() {
         <p className="recognition-guide-simplified-note">{tr(SQ1_SHAPE_GUIDE.libraryNote)}</p>
 
         {loading && (
-          <p className="recognition-guide-status">{tr({ zh: '正在加载形状…', en: 'Loading shapes…' })}</p>
+          <p className="recognition-guide-status"><LoadingIndicator>{tr({ zh: '正在加载形状…', en: 'Loading shapes…' })}</LoadingIndicator></p>
         )}
         {error && (
           <div className="recognition-guide-status">

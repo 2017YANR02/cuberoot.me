@@ -8,6 +8,7 @@ import { useT } from '@/hooks/useT';
 import { ClearButton } from '@/components/ClearButton';
 import HeaderToggles from '@/components/HeaderToggles';
 import './verification.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 interface Challenge { id: string; image: string }
 export default function CompetitionVerifyPage() {
@@ -97,7 +98,7 @@ export default function CompetitionVerifyPage() {
       <h1>{t('输入验证码', 'Enter the image code')}</h1>
       <p>{t('未完成验证时，同一 IP 每分钟请求网站页面或受保护接口超过 10 次，将被封禁 1 小时。', 'Without verification, more than 10 protected page or API requests per minute from one IP will trigger a 1-hour ban.')}</p>
       <form onSubmit={submit}>
-        <div className="competition-verification-image">{challenge ? <img src={challenge.image} width="240" height="76" alt={t('六位字符验证码', 'Six-character verification image')} /> : <span>{busy ? t('正在加载…', 'Loading…') : t('图片未加载', 'Image unavailable')}</span>}</div>
+        <div className="competition-verification-image">{challenge ? <img src={challenge.image} width="240" height="76" alt={t('六位字符验证码', 'Six-character verification image')} /> : <span>{busy ? <LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator> : t('图片未加载', 'Image unavailable')}</span>}</div>
         <button className="competition-verification-action" type="button" onClick={() => void refresh()} disabled={busy}>{t('换一张', 'New image')}</button>
         <label htmlFor="competition-code">{t('图片中的字符', 'Characters in the image')}</label>
         <div className="competition-verification-input"><input className="competition-verification-code" id="competition-code" value={answer} onChange={e => setAnswer(e.target.value)} maxLength={6} autoComplete="off" autoCapitalize="characters" spellCheck={false} required aria-describedby="competition-code-status" />{answer && <ClearButton onClick={() => setAnswer('')} />}</div>

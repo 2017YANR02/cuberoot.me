@@ -7,6 +7,7 @@ import { useT } from '@/hooks/useT';
 import { getSessionToken, nextQuery, useAuthUser } from '@/lib/auth-store';
 import { listTeachingLearningContexts } from '@/lib/teaching-saas-api';
 import { MutationMessage, teachingErrorMessage } from '@/components/teaching/TeachingUi';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 export default function LearningCenterPage() {
   const t = useT();
@@ -54,7 +55,7 @@ export default function LearningCenterPage() {
         <h2>{t('每日训练打卡', 'Daily training check-in')}</h2>
         {contexts.filter(context => context.relationships.some(relationship => relationship.kind === 'student')).map(context => <AppLink className="teaching-row teaching-row-link" key={context.organization.slug} href={`/training/${context.organization.slug}`} prefetch={false}>{context.organization.name} · {t('进入班级训练与排名', 'Open class training and ranking')}</AppLink>)}
       </section>}
-      {loading ? <p aria-busy="true">{t('正在加载学习档案…', 'Loading learning profiles…')}</p> : error ? (
+      {loading ? <p aria-busy="true"><LoadingIndicator>{t('正在加载学习档案…', 'Loading learning profiles…')}</LoadingIndicator></p> : error ? (
         <MutationMessage message={error} error />
       ) : contexts.length === 0 ? (
         <p className="teaching-empty">{t('当前账号还没有关联的学员档案。', 'No learner profiles are linked to this account yet.')}</p>

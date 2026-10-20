@@ -27,7 +27,7 @@
 | 手动追加与锚点 | `packages/client/components/puzzle-models/gestures/nativePgMoveAppend.ts`：`attachNativePgMoveAppend`，校验并同步记录、终点状态及原生补间动画 |
 
 - 从注册表派生选择器和生成器分支，保留已有项目 ID；沿用 `packages/client/scripts/generate-puzzle-icons.mts` 为 `/sim` 的 PG 目录项目生成同切割结构的 SVG 与共享图标映射，并运行 `puzzle-icon-catalog.test.ts` 验证菜单和下载目录。
-- 仅在消费端未传入 `iconClass` 时依赖 `textLabel` 文字徽标；不要用非空但不存在的图标键盖住文本回退，也不要借用无关图标。
+- 原生 PG 的实际拼图先在共享 `svg/puzzle/` 生成同 ID 的结构图并收入 `/zh/icon`，再给模拟器、生成页和 Timer 接 `puzzle-${id}`；不要用 `textLabel` 占位、不存在的键或无关图标代替，文字徽标仅留给训练/自定义等语义模式。
 - 经 package 的公开 subpath 导入模型和 SVG；让模型、SVG 和手势统一使用 `allMoves: true`、`orientCenters: true`、`addRotations: true` 及原生 `ExperimentalPGNotation`，保持与描述播放器一致。
 - 让普通与种子打乱共用注入随机源的纯生成器，只读取注册表，不在生成路径构建几何、DOM 或图示；说明有界随机转动策略，不宣称均匀随机状态或伪造 csTimer 项目键。
 - Timer 来源显示按 `timerScrambleCapability(event)` 的实际 provider 派生：`native-random-move` 即使沿用全局 WCA 偏好，也显示练习用随机转动并同步打印文案，保留手动来源，不改全局偏好；来源菜单隐藏不可用 WCA 选项，比赛配置按 `timerSupportsRealWcaScrambles(event)` 门控。核对重新进入页面、切回 WCA 项目与训练子项目，不能只验证公式和 SVG 正确。

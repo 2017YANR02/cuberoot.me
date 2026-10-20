@@ -5,10 +5,11 @@
 
 import { Suspense } from 'react';
 import CalendarClient from './CalendarClient';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 export default function CalendarPage() {
   return (
-    <Suspense fallback={<div className="cal-page" />}>
+    <Suspense fallback={<div className="cal-page"><LoadingIndicator /></div>}>
       <CalendarClient />
     </Suspense>
   );

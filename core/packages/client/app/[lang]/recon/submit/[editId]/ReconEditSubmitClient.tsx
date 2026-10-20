@@ -8,6 +8,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import ReconSubmitForm from '../ReconSubmitForm';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 export default function ReconEditSubmitClient() {
   const pathname = usePathname();
@@ -19,7 +20,7 @@ export default function ReconEditSubmitClient() {
   }, [pathname]);
   if (editId === null) return null;
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<LoadingIndicator />}>
       <ReconSubmitForm editId={editId} />
     </Suspense>
   );

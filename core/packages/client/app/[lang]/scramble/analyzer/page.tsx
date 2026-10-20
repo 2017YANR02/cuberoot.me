@@ -51,6 +51,7 @@ import { loadFlagData, compFlagIso2 } from '@/lib/country-flags';
 import { variantDataRef } from '@/lib/scramble-variants';
 import SolveTabs from '../_components/SolveTabs';
 import './analyze.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const DEFAULT_SCRAMBLE = "B2 L F' U R' D R' F2 D L R2 D R B' D' L2 D2 R' U'";
 
@@ -813,7 +814,7 @@ function AnalyzePageInner() {
 
 export default function AnalyzePage() {
   return (
-    <Suspense fallback={<div style={{ padding: 16 }}>Loading…</div>}>
+    <Suspense fallback={<div style={{ padding: 16 }}><LoadingIndicator /></div>}>
       <AnalyzePageInner />
     </Suspense>
   );

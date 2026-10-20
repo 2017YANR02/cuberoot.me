@@ -31,6 +31,7 @@ import {
 } from '@/lib/pb-api';
 import { eventDisplayName } from '@/lib/wca-events';
 import { formatWcaResult } from '@/lib/wca-format-result';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 interface Props {
   wcaId: string;
@@ -311,7 +312,7 @@ export default function PersonPbTable({ wcaId, isZh, onVisibilityControlChange }
     <section className="wp-card wp-pr-card wp-pb-card" aria-label={title}>
       {message && <p className="wp-pb-message" role="status">{message}</p>}
       {error && <p className="wp-pb-error" role="alert">{error}</p>}
-      {loading && <p className="wp-pb-muted">{t('加载中…', 'Loading…')}</p>}
+      {loading && <p className="wp-pb-muted"><LoadingIndicator>{t('加载中…', 'Loading…')}</LoadingIndicator></p>}
       {!loading && !collection && !canManage && (
         <p className="wp-pb-muted">{t('暂时没有公开 PB。', 'No public PBs yet.')}</p>
       )}

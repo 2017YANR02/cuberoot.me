@@ -13,6 +13,7 @@ import { displayAlg } from '@/lib/alg_display';
 import { useT } from "@/hooks/useT";
 import { tr } from '@/i18n/tr';
 import { Search } from 'lucide-react';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 interface Props {
   onSelect: (setup: string, alg: string, caseName: string) => void;
@@ -123,7 +124,7 @@ export default function AlgsPanel({ onSelect, activePuzzle }: Props) {
         </label>
       </div>
       <div className="sim-algs-list">
-        {loading ? <div className="sim-algs-msg">{t('加载中…', 'Loading…')}</div> : null}
+        {loading ? <div className="sim-algs-msg"><LoadingIndicator>{t('加载中…', 'Loading…')}</LoadingIndicator></div> : null}
         {error ? <div className="sim-algs-msg error">{error}</div> : null}
         {!loading && !error && matchingCases.length === 0 ? (
           <div className="sim-algs-msg">{query.trim() ? t('没有匹配的公式', 'No matching algorithms') : t('暂无数据', 'No data')}</div>

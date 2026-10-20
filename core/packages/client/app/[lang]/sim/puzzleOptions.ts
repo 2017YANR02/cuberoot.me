@@ -31,7 +31,7 @@ export const SIM_FIXED_PUZZLE_OPTIONS = [
   { value: 'ghost',    iconClass: 'unofficial-ghost', labelZh: '鬼魔', labelEn: 'Ghost Cube' },
   { value: 'mirror',   iconClass: 'unofficial-333_mirror_blocks', labelZh: '镜面', labelEn: 'Mirror' },
   { value: 'mirror2',  iconClass: 'unofficial-222_mirror_blocks', labelZh: '二阶镜面', labelEn: 'Mirror 2x2' },
-  { value: 'sphere', textLabel: 'Sphere', labelZh: '球形', labelEn: 'Sphere Cube' },
+  { value: 'sphere', iconClass: 'puzzle-sphere', labelZh: '球形', labelEn: 'Sphere Cube' },
 ] as const;
 
 // Engine puzzles above + cubing.js PuzzleGeometry puzzles (explore set, rendered

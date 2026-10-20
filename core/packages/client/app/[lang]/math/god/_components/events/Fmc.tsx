@@ -30,6 +30,7 @@ import {
   EvHighlights, EvSection, EvCallout, EvRefs, EvStatStrip,
   TeX, TeXBlock, MathText, type HighlightCard, type RefItem, type StatItem,
 } from './_shared';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const DistanceDistribution = lazy(() => import('../DistanceDistribution'));
 
@@ -170,7 +171,7 @@ export default function Fmc({ isZh }: { isZh: boolean; eventId?: string }) {
             `The minimum-solution distribution below plots how many states have each optimal length d. The point is not the worst case of 20 — it is that almost every scramble sits right against the ceiling: about ${SHARE_17_19} of random states are optimal at 17, 18 or 19 moves (${SHARE_16_19} once you include 16), averaging about ${MEAN}. In other words, nearly every FMC scramble you are dealt has a theoretical optimum somewhere in 16-19.`,
           )}
         </p>
-        <Suspense fallback={<div className="god-loading">{t('加载分布图…', 'Loading distribution…')}</div>}>
+        <Suspense fallback={<div className="god-loading"><LoadingIndicator>{t('加载分布图…', 'Loading distribution…')}</LoadingIndicator></div>}>
           <DistanceDistribution isZh={isZh} />
         </Suspense>
         <EvStatStrip items={statRow(t)} />

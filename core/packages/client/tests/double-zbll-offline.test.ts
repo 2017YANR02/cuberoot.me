@@ -160,6 +160,10 @@ describe('Double ZBLL offline worker', () => {
       const url = prefix + '/timer?training=' + encodeURIComponent(`/alg/${puzzle}/zbll/${view}`) + '&train.scope=U&event=333';
       expect(await (await w.request(url, 'navigate'))!.text()).toBe('timer training shell');
     }
+    for (const suffix of ['', '&view=select']) {
+      const url = prefix + '/timer?content=zbll&source=cases&group=u' + suffix;
+      expect(await (await w.request(url, 'navigate'))!.text()).toBe('timer training shell');
+    }
     // A successful legacy download cannot certify a timer download, or vice versa.
     expect(doubleZbllOfflinePages(prefix + '/alg/3x3/zbll/run').pages).toEqual([
       prefix + '/alg/3x3/zbll/run', prefix + '/alg/3x3/zbll/select',
@@ -173,6 +177,8 @@ describe('Double ZBLL offline worker', () => {
       '/zh/timer?training=/alg/3x3/oll/run', '/zh/timer?training=/alg/3x3/zbll/run/extra',
       '/zh/timer-other?training=/alg/3x3/zbll/run', '/timer?training=/alg/3x3/zbll/run',
       '/zh/alg/3x3/zbll/run', '/v1/me', '/account',
+      '/zh/timer?content=zbll', '/zh/timer?content=oll&source=cases',
+      '/zh/timer?content=zbll&source=cases&method=recognition',
     ]) expect(w.request(path, 'navigate'), path).toBeUndefined();
     expect(w.request('/zh/timer?training=/alg/3x3/zbll/run&_rsc=123')).toBeUndefined();
     expect(w.request('/v1/trainer/room', 'cors', 'POST')).toBeUndefined();

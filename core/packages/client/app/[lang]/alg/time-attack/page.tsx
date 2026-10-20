@@ -57,6 +57,7 @@ import { caseKey } from '@/lib/trainer-case-key';
 import { tr } from '@/i18n/tr';
 import '../alg.css';
 import './time-attack.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type SyncState = 'local' | 'loading' | 'saving' | 'saved' | 'error';
 
@@ -340,7 +341,7 @@ export default function AlgTimeAttackPage() {
       {loadError ? (
         <div className="alg-empty">{tr({ zh: '公式集加载失败', en: 'Failed to load the algorithm set.' })}</div>
       ) : !data ? (
-        <div className="alg-empty">{tr({ zh: '加载中…', en: 'Loading…' })}</div>
+        <div className="alg-empty"><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…' })}</LoadingIndicator></div>
       ) : orderedCases.length === 0 ? (
         <div className="alg-empty">{tr({ zh: '这个范围没有可练习的图', en: 'There are no diagrams in this scope.' })}</div>
       ) : (

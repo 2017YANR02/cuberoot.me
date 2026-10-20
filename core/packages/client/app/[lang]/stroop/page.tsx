@@ -33,6 +33,7 @@ import {
   type StroopRun,
 } from './_lib/history';
 import './stroop.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 /**
  * 墨色 = 魔方六面色,值从站内单一源 lib/cube-colors 取,不在本页重抄一份。
@@ -305,7 +306,7 @@ function StroopPage() {
 export default function Page() {
   // useQueryState 要读 searchParams,SSG 下必须包 Suspense。
   return (
-    <Suspense fallback={<div className="stroop-page" />}>
+    <Suspense fallback={<div className="stroop-page"><LoadingIndicator /></div>}>
       <StroopPage />
     </Suspense>
   );

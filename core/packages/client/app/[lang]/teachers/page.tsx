@@ -15,6 +15,7 @@ import { fetchMyTeacherDirectory, fetchTeacherDirectory, mergeTeacherDirectoryEn
 import { fetchTeacherLiveScripts, type TeacherLiveScript } from '@/lib/teacher-live-scripts-api';
 import { creatorProfileHrefForWcaId } from '@/lib/creator-profile';
 import { CONTACT_FIELDS, DIRECTORY_KINDS, URL_CONTACT_KEYS, directoryContactHref, directoryKindLabel, directoryModeLabel, directoryWebsiteLabel, localDirectoryTags, localDirectoryText } from './directory-data';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 function DirectoryEntry({ entry, canEdit, scripts }: { entry: TeacherDirectoryEntry; canEdit: boolean; scripts: TeacherLiveScript[] }) {
   const name = localDirectoryText(entry.nameZh, entry.nameEn);
@@ -119,7 +120,7 @@ function TeachersDirectoryClient() {
       {teacher && <button type="button" className="directory-edit-button" onClick={() => { void setTeacher(null); }}>{tr({ zh: '查看全部老师与机构', en: 'Show all teachers and schools' })}</button>}
       <div className="directory-toolbar"><SearchInput value={query} onChange={(value) => { void setQuery(value || null); }} className="directory-search" inputClassName="directory-search-input" placeholder={tr({ zh: '搜索姓名、地点或擅长方向', en: 'Search names, places, or specialties' })} /><label className="directory-kind-filter"><span>{tr({ zh: '类型', en: 'Type' })}</span><select className="directory-kind-control" value={kind} onChange={(event) => { void setKind(event.target.value as typeof kind); }}><option value="all">{tr({ zh: '全部', en: 'All' })}</option><option value="teacher">{tr({ zh: '魔方老师', en: 'Teachers' })}</option><option value="organization">{tr({ zh: '培训机构', en: 'Schools' })}</option></select></label></div>
       <section className="directory-list" aria-label={tr({ zh: '老师与机构名录', en: 'Teacher and school directory' })}>
-        {directoryLoading && <p className="directory-state">{tr({ zh: '正在加载名录…', en: 'Loading the directory…' })}</p>}
+        {directoryLoading && <p className="directory-state"><LoadingIndicator>{tr({ zh: '正在加载名录…', en: 'Loading the directory…' })}</LoadingIndicator></p>}
         {!directoryLoading && loadError && <p className="directory-state directory-load-error">{loadError}</p>}
         {!directoryLoading && !loadError && myLoadError && <p className="directory-state directory-load-error">{myLoadError}</p>}
         {!directoryLoading && !loadError && filtered.length === 0 && <p className="directory-state">{tr({ zh: '没有找到符合条件的资料。', en: 'No matching entries.' })}</p>}

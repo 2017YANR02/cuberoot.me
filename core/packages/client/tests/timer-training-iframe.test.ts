@@ -36,7 +36,7 @@ it('keeps legacy trainer links hosted without changing upstream files, and relea
   doc.close();
   await act(async () => { frame.dispatchEvent(new Event('load')); });
   const anchor = doc.querySelector<HTMLAnchorElement>('#training')!;
-  expect(anchor.getAttribute('href')).toBe('/zh/timer?event=333&training=%2Fxcross_trainer%2F');
+  expect(anchor.getAttribute('href')).toBe('/zh/timer?training=%2Fxcross_trainer%2F');
   expect(anchor.target).toBe('_top');
   expect(doc.querySelector<HTMLAnchorElement>('#solver')!.getAttribute('href')).toBe('/solver/');
   expect(doc.querySelector<HTMLAnchorElement>('#local')!.target).toBe('');

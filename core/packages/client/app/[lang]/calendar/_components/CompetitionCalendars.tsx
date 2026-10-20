@@ -7,6 +7,7 @@ import { CompPicker } from '@/components/CompPicker';
 import type { CalendarPrefs } from '@/lib/calendar-store';
 import { tr, useLang } from '@/i18n/tr';
 import type { CalendarCompetition } from '../_lib/competitions';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 interface Props {
   wcaId: string;
@@ -33,7 +34,7 @@ export default function CompetitionCalendars(p: Props) {
         <BoolToggle value={p.prefs.showFollowed} onChange={(showFollowed) => p.onPrefs({ showFollowed })} label={tr({ zh: '关注的未来比赛', en: 'Following' })} />
         <BoolToggle value={p.prefs.showUpcoming} onChange={(showUpcoming) => p.onPrefs({ showUpcoming })} label={tr({ zh: '全部未来比赛', en: 'All upcoming' })} />
         <CompPicker value={search} onChange={setSearch} isZh={isZh} restrictComps={personal} placeholder={tr({ zh: '查找我的比赛', en: 'Find my competition' })} onPick={(c) => { const found = personal.find((x) => x.id === c.id); if (found) p.onPick(found); setSearch(''); }} />
-        {p.loading && <p className="cal-hint" role="status">{tr({ zh: '正在同步比赛…', en: 'Loading competitions…' })}</p>}
+        {p.loading && <p className="cal-hint" role="status"><LoadingIndicator>{tr({ zh: '正在同步比赛…', en: 'Loading competitions…' })}</LoadingIndicator></p>}
         {!p.loading && <p className="cal-hint">{tr({ zh: `${personal.filter((c) => c.source === 'attended').length} 场已参赛，${personal.filter((c) => c.source === 'registered').length} 场已报名`, en: `${personal.filter((c) => c.source === 'attended').length} attended, ${personal.filter((c) => c.source === 'registered').length} registered` })}</p>}
         {p.incomplete && <p className="cal-hint" role="status">{tr({ zh: '部分来源暂不可用，当前列表可能不完整。', en: 'Some sources are unavailable. This list may be incomplete.' })}</p>}
         <button type="button" className="cal-link-btn" disabled={p.loading} onClick={p.onRefresh}>{tr({ zh: '刷新比赛', en: 'Refresh competitions' })}</button>

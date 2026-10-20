@@ -25,6 +25,7 @@ import '../_wca_stats_extra.css';
 import '../_records.css';
 import { tr } from '@/i18n/tr';
 import { useWcaTeachers } from '@/components/WcaTeacherCell';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 interface Row extends WcaRecordRowsTableRow { cc: string }
 
@@ -241,8 +242,8 @@ function RecordsPageInner() {
       </div>
 
       <div className="wse-table-wrapper sticky-scroll">
-        {loading && <div className="wse-state">{tr({ zh: '加载中...', en: 'Loading...'
-        })}</div>}
+        {loading && <div className="wse-state"><LoadingIndicator>{tr({ zh: '加载中...', en: 'Loading...'
+        })}</LoadingIndicator></div>}
         {error && <div className="wse-state wse-state-error">Error: {error}</div>}
         {bundle && !loading && (
           <>
@@ -279,7 +280,7 @@ function RecordsPageInner() {
 
 export default function RecordsPage() {
   return (
-    <Suspense fallback={<div style={{ padding: 16, color: 'var(--muted)' }}>Loading…</div>}>
+    <Suspense fallback={<div style={{ padding: 16, color: 'var(--muted)' }}><LoadingIndicator /></div>}>
       <RecordsPageInner />
     </Suspense>
   );

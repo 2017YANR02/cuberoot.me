@@ -1,5 +1,5 @@
 /* Automatically cached, narrowly scoped offline support for the public ZBLL trainer. */
-const APP_CACHE = 'cuberoot-double-zbll-app-v3';
+const APP_CACHE = 'cuberoot-double-zbll-app-v4';
 const DATA_CACHE = 'cuberoot-double-zbll-data-v1';
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', event => event.waitUntil(self.clients.claim()));
@@ -13,8 +13,12 @@ self.addEventListener('fetch', event => {
   }
   const scopePath = new URL(self.registration.scope).pathname;
   const timerScope = /^\/(?:zh\/)?timer$/.test(scopePath);
+  const zbllPractice = url.searchParams.get('content') === 'zbll'
+    && url.searchParams.get('source') === 'cases'
+    && !url.searchParams.has('method')
+    && (!url.searchParams.has('view') || url.searchParams.get('view') === 'select');
   const page = request.mode === 'navigate' && (timerScope
-    ? url.pathname === scopePath && /^\/alg\/(?:3x3|333)\/zbll\/(?:run|select)\/?$/.test(url.searchParams.get('training') || '')
+    ? url.pathname === scopePath && (zbllPractice || /^\/alg\/(?:3x3|333)\/zbll\/(?:run|select)\/?$/.test(url.searchParams.get('training') || ''))
     : url.href.startsWith(self.registration.scope) && /\/(run|select)\/?$/.test(url.pathname));
   const asset = /^\/(?:_next\/static\/|fonts\/|cubing-chunks\/)/.test(url.pathname);
   if (!page && !asset) return;

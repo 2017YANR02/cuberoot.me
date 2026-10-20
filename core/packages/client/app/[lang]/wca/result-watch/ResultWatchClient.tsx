@@ -26,6 +26,7 @@ import {
   BellRing, RefreshCw, MinusCircle, PencilLine, Clock, ChevronDown, ShieldAlert, Hourglass, Check, X,
 } from 'lucide-react';
 import './result-watch.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const FIELD_ORDER = ['best', 'average', 'attempts', 'pos', 'regional_single_record', 'regional_average_record'];
 
@@ -173,7 +174,7 @@ export default function ResultWatchClient() {
         </div>
       )}
 
-      {changes === null && <div className="rw-loading">{t('加载中…', 'Loading…')}</div>}
+      {changes === null && <div className="rw-loading"><LoadingIndicator>{t('加载中…', 'Loading…')}</LoadingIndicator></div>}
 
       {changes !== null && changes.length === 0 && !err && (
         <div className="rw-empty">

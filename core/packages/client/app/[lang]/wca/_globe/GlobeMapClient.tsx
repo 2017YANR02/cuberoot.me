@@ -57,6 +57,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { exportTrailVideo, isVideoExportSupported } from './_lib/trail_video';
 import './globe.css';
 import { tr } from '@/i18n/tr';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type Mode = 'upcoming' | 'cuber' | 'wr';
 type Speed = 0.5 | 1 | 2;
@@ -3753,8 +3754,8 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
                 <>
                   <span className="globe-statusbar-stats-sep">·</span>
                   {pastLoading && !pastComps
-                    ? <span>{tr({ zh: '加载往期…', en: 'loading past…'
-                    })}</span>
+                    ? <span><LoadingIndicator>{tr({ zh: '加载往期…', en: 'loading past…'
+                    })}</LoadingIndicator></span>
                     : <span>{pastStats.comps} {tr({ zh: '往期', en: 'past' })}</span>}
                 </>
               )}

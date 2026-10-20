@@ -10,6 +10,7 @@ import { hasAdminAccess, useAuthUser } from '@/lib/auth-store';
 import { authHeaders, handleApi } from '@/lib/admin-api';
 import { apiUrl } from '@/lib/api-base';
 import './mcp.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 interface Connection { id: string; created_at: string; expires_at: string }
 export default function McpAccountPage() {
@@ -61,7 +62,7 @@ export default function McpAccountPage() {
     <h1>{t('ChatGPT 只读连接', 'ChatGPT read-only connection')}</h1>
     <p>{t('允许 ChatGPT 读取账号增长、会员数量、数据库状态和数值诊断记录，用于分析 CubeRoot。仅管理员可以授权。', 'Allow ChatGPT to read registration trends, membership counts, database activity and numeric diagnostics to analyze CubeRoot. Only administrators may authorize access.')}</p>
     <p>{t('不开放个人资料、密码、支付明细或写入操作。每次调用检查管理员权限；连接最多保留 30 天，可随时撤销。', 'No personal profiles, passwords, payment records or write operations are exposed. Administrator access is checked on every call. Connections last up to 30 days and can be revoked at any time.')}</p>
-    {!ready ? <p>{t('加载中…', 'Loading…')}</p> : !user ?
+    {!ready ? <p><LoadingIndicator>{t('加载中…', 'Loading…')}</LoadingIndicator></p> : !user ?
       <AppLink href={`/account?next=${encodeURIComponent(loginNext)}`} prefetch={false}>{t('登录 CubeRoot', 'Sign in to CubeRoot')}</AppLink> : !admin ?
         <p>{t('仅限管理员使用。', 'Administrators only.')}</p> : <>
           {clientId ? <div className="mcp-actions">

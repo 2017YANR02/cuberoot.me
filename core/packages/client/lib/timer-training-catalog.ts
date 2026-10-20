@@ -3,7 +3,7 @@ import { EVENT_DISPLAY_EN, EVENT_DISPLAY_ZH } from '@cuberoot/shared/wca-events'
 import { stageLabel, variantLabel, timerEventIdFromSelector, timerPuzzleSelection } from '@cuberoot/shared/timer';
 import { PUZZLE_EVENT, resolveAlgPuzzle } from '@/app/[lang]/alg/_trainer/events';
 import { RECOGNITION_TRAINING_SETS, VIRTUAL_ALG_SET_METADATA } from './training-set-metadata';
-import { timerTrainingHref } from './timer-training-location';
+import { canonicalTimerHref, timerTrainingHref } from './timer-training-location';
 
 export interface TrainingTitle { zh: string; en: string }
 
@@ -291,7 +291,7 @@ export function isRetiredAlgTrainer(path: string): boolean {
 
 /** Shared by old bookmarks, site links and the sitemap; preserve every trainer query value. */
 export function retiredAlgTrainerHref(href: string): string {
-  if (!isRetiredAlgTrainer(href)) return href;
+  if (!isRetiredAlgTrainer(href)) return canonicalTimerHref(href);
   return timerTrainingHref(href, {
     timerPathname: /^\/zh(?:\/|$)/.test(href) ? '/zh/timer' : '/timer',
     currentSearch: '',

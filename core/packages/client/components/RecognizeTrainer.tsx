@@ -16,6 +16,7 @@ import { VisualCube } from '@/components/VisualCube';
 import { CaseThumb } from '@/components/CaseThumb';
 import { tr } from '@/i18n/tr';
 import styles from './RecognizeTrainer.module.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type BilingualText = { zh: string; en: string };
 
@@ -223,7 +224,7 @@ export default function RecognizeTrainer({
     return (
       <TrainerShell title={pageTitle} intro={pageIntro} showSq1Tools={showSq1Tools}>
         <div className={`${styles.trainer} ${styles.status}`} role="status">
-          {tr({ zh: '正在加载训练题库…', en: 'Loading training cases…' })}
+          <LoadingIndicator>{tr({ zh: '正在加载训练题库…', en: 'Loading training cases…' })}</LoadingIndicator>
         </div>
       </TrainerShell>
     );

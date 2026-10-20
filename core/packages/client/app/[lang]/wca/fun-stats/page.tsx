@@ -25,6 +25,7 @@ import { apiUrl } from '@/lib/api-base';
 import './fun_stats.css';
 import { tr } from '@/i18n/tr';
 import { useT } from "@/hooks/useT";
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const ACTIVE_EVENTS = [
   '333', '222', '444', '555', '666', '777',
@@ -303,8 +304,8 @@ function FunStatsInner() {
 
           {err && <div className="fun-stats-error">{tr({ zh: '加载失败:', en: 'Error: '
         })}{err}</div>}
-          {loading && !resp && <div className="fun-stats-loading">{tr({ zh: '加载中…', en: 'Loading…'
-        })}</div>}
+          {loading && !resp && <div className="fun-stats-loading"><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…'
+        })}</LoadingIndicator></div>}
 
           {resp && (
             <FunStatTable
@@ -553,7 +554,7 @@ function FunStatTable({ stat, rows, resp, isZh, kind, event, personHref }: {
 
 export default function FunStatsPage() {
   return (
-    <Suspense fallback={<div className="fun-stats"><div className="fun-stats-loading">Loading…</div></div>}>
+    <Suspense fallback={<div className="fun-stats"><div className="fun-stats-loading"><LoadingIndicator /></div></div>}>
       <FunStatsInner />
     </Suspense>
   );

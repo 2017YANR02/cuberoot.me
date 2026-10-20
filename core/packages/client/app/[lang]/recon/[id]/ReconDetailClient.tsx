@@ -90,6 +90,7 @@ import { CompactSelect } from '@/components/CompactSelect';
 import { saveBlob } from '@/lib/puzzle-image/image-export';
 import { exportReconImages, type ReconImageFont, type ReconImageStyle } from './export-recon-image';
 import { buildSimQuery, simPuzzleForReconEvent } from '@/lib/sim-recon-link';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const YOUTUBE_LOGO = '/assets/youtube_logo.svg';
 const BILIBILI_LOGO = '/assets/bilibili_logo.svg';
@@ -175,7 +176,7 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (loading) return <div className="recon-page"><div className="recon-loading">{t('common.loading')}</div></div>;
+  if (loading) return <div className="recon-page"><div className="recon-loading"><LoadingIndicator>{t('common.loading')}</LoadingIndicator></div></div>;
   // 私享复盘对非添加者本人:服务端 403 → getRecon 抛「private」→ 这里给一个体面的私享门,
   // 而不是裸报错。未登录则提示登录(登录后可能是本人 → 重新拉即可见)。
   if (error) {

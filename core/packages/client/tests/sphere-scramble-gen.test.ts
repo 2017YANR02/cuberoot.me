@@ -17,7 +17,7 @@ describe('Sphere Cube scramble generator registration', () => {
     expect(eventDisplayName('sphere', false)).toBe('Sphere Cube');
     const groups = scrambleEventPickerGroups([...SHAPE_MOD_EVENT_IDS], SHAPE_MOD_APPEND, true);
     expect(groups.find(({ id }) => id === 'other')?.items.find(({ id }) => id === 'sphere')).toEqual({
-      id: 'sphere', label: '球形', iconClass: undefined, textLabel: 'Sphere',
+      id: 'sphere', label: '球形', iconClass: 'puzzle-sphere', textLabel: undefined,
     });
   });
 });

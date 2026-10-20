@@ -9,6 +9,7 @@
 // No '@cuberoot/shared' barrel import here (barrel re-exports client hooks).
 import { Suspense } from 'react';
 import AlgSubOrCaseClient from './AlgSubOrCaseClient';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 export const dynamicParams = false;
 
@@ -18,7 +19,7 @@ export function generateStaticParams(): { puzzle: string; set: string; subgroup:
 
 export default function Page() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<LoadingIndicator />}>
       <AlgSubOrCaseClient />
     </Suspense>
   );

@@ -14,29 +14,28 @@ export interface ShapeModEvent {
   id: string;
   /** WCA event id whose scramble pool we borrow from. Almost always '333'. */
   scrambleSourceId: string;
-  iconClass?: string;
-  textLabel?: string;
+  iconClass: string;
   zh: string;
   en: string;
 }
 
 export const SHAPE_MOD_EVENTS: ReadonlyArray<ShapeModEvent> = [
-  { id: 'sphere',          scrambleSourceId: '333', zh: '球形',     en: 'Sphere Cube',     textLabel: 'Sphere' },
+  { id: 'sphere',          scrambleSourceId: '333', zh: '球形',     en: 'Sphere Cube',     iconClass: 'puzzle-sphere' },
   { id: 'mirror_333',       scrambleSourceId: '333', zh: '镜面',     en: 'Mirror Blocks',   iconClass: 'unofficial-333_mirror_blocks'
 },
   { id: 'pyramorphix',      scrambleSourceId: '222', zh: '二阶金字塔',   en: 'Pyramorphix',     iconClass: 'unofficial-pyramorphix'
 },
-  { id: 'mastermorphix',    scrambleSourceId: '333', zh: '三阶金字塔',   en: 'Mastermorphix',   textLabel: 'MMx'
+  { id: 'mastermorphix',    scrambleSourceId: '333', zh: '三阶金字塔',   en: 'Mastermorphix',   iconClass: 'puzzle-mastermorphix-shape'
 },
   { id: 'fisher_333',       scrambleSourceId: '333', zh: '费舍尔',   en: 'Fisher Cube',     iconClass: 'unofficial-fisher'
 },
-  { id: 'axis_333',         scrambleSourceId: '333', zh: '轴方',         en: 'Axis Cube',       textLabel: 'Axis'
+  { id: 'axis_333',         scrambleSourceId: '333', zh: '轴方',         en: 'Axis Cube',       iconClass: 'puzzle-axis'
 },
-  { id: 'windmill_333',     scrambleSourceId: '333', zh: '风火轮',       en: 'Windmill',        textLabel: 'Wind'
+  { id: 'windmill_333',     scrambleSourceId: '333', zh: '风火轮',       en: 'Windmill',        iconClass: 'puzzle-windmill'
 },
-  { id: 'ghost_333',        scrambleSourceId: '333', zh: '幽灵',     en: 'Ghost Cube',      textLabel: 'Ghost'
+  { id: 'ghost_333',        scrambleSourceId: '333', zh: '幽灵',     en: 'Ghost Cube',      iconClass: 'unofficial-ghost'
 },
-  { id: 'void_333',         scrambleSourceId: '333', zh: '空心',     en: 'Void Cube',       textLabel: 'Void' },
+  { id: 'void_333',         scrambleSourceId: '333', zh: '空心',     en: 'Void Cube',       iconClass: 'puzzle-void' },
 ];
 
 const BY_ID = new Map(SHAPE_MOD_EVENTS.map((e) => [e.id, e] as const));
@@ -46,8 +45,7 @@ export const SHAPE_MOD_EVENT_IDS: ReadonlySet<string> = new Set(SHAPE_MOD_EVENTS
 export const SHAPE_MOD_APPEND: ReadonlyArray<{ id: string; iconClass: string; label?: string; textLabel?: string }> =
   SHAPE_MOD_EVENTS.map((e) => ({
     id: e.id,
-    iconClass: e.iconClass ?? '',
-    textLabel: e.iconClass ? undefined : e.textLabel,
+    iconClass: e.iconClass,
   }));
 
 export function isShapeModEvent(id: string): boolean {

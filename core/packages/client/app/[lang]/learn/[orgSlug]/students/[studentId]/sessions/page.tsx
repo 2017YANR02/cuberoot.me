@@ -15,6 +15,7 @@ import {
   type TeachingLeaveRequest,
   type TeachingLearnerSessionSummary,
 } from '@/lib/teaching-saas-api';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const PAGE_SIZE = 25;
 
@@ -152,7 +153,7 @@ function SessionsContent({ orgSlug, studentId, page }: { orgSlug: string; studen
     <>
       <h2>{t('课次与请假', 'Sessions and leave')}</h2>
       <p className="teaching-lead">{t('请假需等待教职员批准；已批准的请假不扣课，补课由教职员另行安排。', 'Leave requires staff approval. Approved leave is not charged, and staff arrange any makeup session separately.')}</p>
-      {sessions.loading ? <p aria-busy="true">{t('正在加载课次…', 'Loading sessions…')}</p> : sessions.error ? (
+      {sessions.loading ? <p aria-busy="true"><LoadingIndicator>{t('正在加载课次…', 'Loading sessions…')}</LoadingIndicator></p> : sessions.error ? (
         <MutationMessage message={sessions.error} error />
       ) : !sessions.result?.items.length ? (
         <p className="teaching-empty">{t('还没有可查看的课次。', 'No sessions are available yet.')}</p>
@@ -197,7 +198,7 @@ function SessionsContent({ orgSlug, studentId, page }: { orgSlug: string; studen
               ? t('该课次已有待审批或已批准的请假申请。', 'This session already has a pending or approved leave request.')
               : t('只能为尚未确认出勤的已排期课次申请请假。', 'Leave can only be requested for a scheduled session whose attendance is still expected.')}</p>
           )}
-          {historyLoading ? <p aria-busy="true">{t('正在加载请假记录…', 'Loading leave history…')}</p> : historyError ? (
+          {historyLoading ? <p aria-busy="true"><LoadingIndicator>{t('正在加载请假记录…', 'Loading leave history…')}</LoadingIndicator></p> : historyError ? (
             <MutationMessage message={historyError} error />
           ) : !history.length ? <p className="teaching-empty">{t('还没有请假记录。', 'No leave history yet.')}</p> : (
             <div className="teaching-list">

@@ -11,6 +11,7 @@ import {
 } from '@/lib/teaching-saas-api';
 import EffectiveRangeFields, { readEffectiveRange } from './EffectiveRangeFields';
 import { MutationMessage, teachingErrorMessage, teachingRoleLabel, useOperationKey, useTeachingPage } from './OrgUi';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type AssignmentTarget = { groupId: string } | { studentId: string };
 
@@ -75,7 +76,7 @@ export default function TeacherAssignmentManager({ orgSlug, target, members, mem
   return (
     <section className="org-section">
       <h2>{t('负责人', 'Assigned teachers')}</h2>
-      {assignments.loading ? <p aria-busy="true">{t('正在加载…', 'Loading…')}</p> : assignments.error ? <MutationMessage message={assignments.error} error /> : !assignments.result?.items.length ? (
+      {assignments.loading ? <p aria-busy="true"><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p> : assignments.error ? <MutationMessage message={assignments.error} error /> : !assignments.result?.items.length ? (
         <p className="org-empty">{t('还没有负责人记录。', 'No teacher assignments yet.')}</p>
       ) : (
         <div className="org-list">

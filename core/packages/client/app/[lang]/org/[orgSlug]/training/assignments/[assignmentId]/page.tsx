@@ -26,6 +26,7 @@ import { formatTrainingGoal, trainingSourceLabel } from '@/lib/teaching-training
 import TrainingAssignmentForm from '../../../../_components/TrainingAssignmentForm';
 import OrgWorkspace from '../../../../_components/OrgWorkspace';
 import { entityStatusLabel, MutationMessage, TeachingPagination, teachingErrorMessage, useOperationKey, useTeachingPage } from '../../../../_components/OrgUi';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const PAGE_SIZE = 25;
 const OPTION_LIMIT = 100;
@@ -126,7 +127,7 @@ function AssignmentContent({ orgSlug, assignmentId, page, role, language }: {
   }
 
   if (loadError) return <MutationMessage message={loadError} error />;
-  if (!detail) return <p aria-busy="true">{t('正在加载训练任务…', 'Loading training assignment…')}</p>;
+  if (!detail) return <p aria-busy="true"><LoadingIndicator>{t('正在加载训练任务…', 'Loading training assignment…')}</LoadingIndicator></p>;
 
   const assignment = detail.assignment;
   const initialGroupIds = draftTargets.flatMap((target) => target.targetKind === 'group' ? [target.groupId] : []);
@@ -184,7 +185,7 @@ function AssignmentContent({ orgSlug, assignmentId, page, role, language }: {
 
       <section className="org-section">
         <h2>{t('任务目标', 'Assignment targets')}</h2>
-        {targets.loading ? <p aria-busy="true">{t('正在加载…', 'Loading…')}</p> : targets.error ? <MutationMessage message={targets.error} error /> : !targets.result?.items.length ? (
+        {targets.loading ? <p aria-busy="true"><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p> : targets.error ? <MutationMessage message={targets.error} error /> : !targets.result?.items.length ? (
           <p className="org-empty">{t('草稿还没有目标；发布后会展开班级中的有效学员。', 'The draft has no targets. Publishing expands active students in selected classes.')}</p>
         ) : (
           <div className="org-list">

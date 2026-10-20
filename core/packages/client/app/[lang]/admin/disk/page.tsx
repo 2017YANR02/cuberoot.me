@@ -10,6 +10,7 @@ import { useIsAdmin } from '@/lib/auth-store';
 import { fetchDiskReport, type DiskReport } from '@/lib/disk-api';
 import '../admin.css';
 import './disk.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const gib = (bytes: number) => `${(bytes / 1024 ** 3).toFixed(2)} GiB`;
 const percent = (bytes: number, total: number) => total > 0 ? `${(100 * bytes / total).toFixed(1)}%` : '0%';
@@ -116,7 +117,7 @@ export default function AdminDiskPage() {
     </div>
 
     <div className="disk-status" role="status" aria-live="polite">
-      {loading && <p>{t('正在读取上次结果…', 'Loading saved results…')}</p>}
+      {loading && <p><LoadingIndicator>{t('正在读取上次结果…', 'Loading saved results…')}</LoadingIndicator></p>}
       {!error && report?.busy && <p>{t('另一个目录正在扫描，请稍候…', 'Another directory is being scanned. Please wait…')}</p>}
       {!error && report?.scanning && <>
         <p>{t('正在扫描目录', 'Scanning directory')}{progress && ` / ${Math.max(0, Math.floor((clock - Date.parse(progress.startedAt)) / 1000))} ${t('秒', 's')}`}</p>

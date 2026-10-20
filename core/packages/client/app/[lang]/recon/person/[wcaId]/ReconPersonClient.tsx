@@ -32,6 +32,7 @@ import { useAuthStore } from '@/lib/auth-store';
 import '../../recon.css';
 import './recon-person.css';
 import { tr } from '@/i18n/tr';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type Role = 'all' | 'solver' | 'reconer' | 'adder';
 
@@ -238,8 +239,8 @@ export default function ReconPersonClient() {
         />
       </div>
 
-      {loading && <div className="recon-loading">{tr({ zh: '加载中…', en: 'Loading…'
-    })}</div>}
+      {loading && <div className="recon-loading"><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…'
+    })}</LoadingIndicator></div>}
       {error && <div className="recon-error"><TriangleAlert size={16} /> {error}</div>}
 
       {!loading && !error && (

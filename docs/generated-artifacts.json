@@ -517,16 +517,16 @@
       "id": "event-icon.puzzle-glyphs",
       "kind": "checked-in-generated",
       "source": {
-        "locator": "Simulator PG cut definitions and CubeRoot projection/gap design",
-        "paths": ["core/packages/client/app/[lang]/sim/pgCatalog.ts", "core/packages/client/scripts/generate-puzzle-icons.mts"]
+        "locator": "Exact puzzle cuts, shape-mod geometry, canonical bandage/overlap models and CubeRoot projection/gap design",
+        "paths": ["core/packages/client/app/[lang]/sim/pgCatalog.ts", "core/packages/client/scripts/generate-puzzle-icons.mts", "core/packages/client/scripts/generate-extra-puzzle-icons.mts", "core/packages/client/scripts/generate-shape-mod-icons.mts"]
       },
       "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE; existing cubing.js PG definitions and original projection design" },
-      "owner": "core/packages/client/scripts/generate-puzzle-icons.mts",
+      "owner": "core/packages/event-icon",
       "workingDirectory": "core",
-      "command": "pnpm --filter @cuberoot/client exec node scripts/generate-puzzle-icons.mts",
+      "command": "pnpm --filter @cuberoot/client exec node scripts/generate-puzzle-icons.mts && pnpm --filter @cuberoot/client exec node scripts/generate-extra-puzzle-icons.mts && pnpm --filter @cuberoot/client exec node scripts/generate-shape-mod-icons.mts",
       "outputs": ["core/packages/event-icon/svg/puzzle/*.svg"],
-      "verification": ["Run the command with --check", "Review every glyph in /zh/icon and at menu size in /zh/sim"],
-      "driftPolicy": "Regenerate from the exact /sim definitions, then run event-icon generate. Never use a generic family icon to stand in for different cuts. Curvy Copter retains curved upstream artwork; gear.svg is authored artwork."
+      "verification": ["Run each generator with --check", "Run tests/puzzle-icon-catalog.test.ts", "Review glyphs in /zh/icon and at menu size in the simulator, timer and scramble generator"],
+      "driftPolicy": "Regenerate the affected family from its exact model, then run event-icon generate. Keep every physical puzzle registered in /icon before connecting consumers; never substitute a generic family icon or text badge for different cuts. Curvy Copter retains curved upstream artwork; gear.svg is authored artwork."
     },
     {
       "id": "event-icon.maps",
@@ -1240,6 +1240,31 @@
         "pnpm --filter @cuberoot/client exec vitest run tests/account-avatar.test.ts"
       ],
       "driftPolicy": "Regenerate from the pet gallery; stable asset-path hashes preserve saved IDs. Full gallery coverage and asset existence are checked. Script-driven Cloudling scenes are frozen at 1.5 seconds with deterministic randomness into inert SVGs and content-hashed URLs. Public visibility is read from the existing runtime catalog, not frozen into this generated list."
+    },
+    {
+      "id": "recon.intake-regressions",
+      "kind": "build-generated",
+      "source": {
+        "locator": "Administrator-approved active recon_intake cases",
+        "paths": [
+          "core/apps/api/src/routes/recon_intake.ts"
+        ]
+      },
+      "license": {
+        "spdx": "LicenseRef-CubeRoot",
+        "evidence": "Administrator-submitted reconstruction samples"
+      },
+      "owner": "core/scripts/recon-intake.mts",
+      "workingDirectory": "core",
+      "command": "pnpm recon:intake export",
+      "outputs": [
+        "core/packages/client/tests/fixtures/recon-intake.json"
+      ],
+      "verification": [
+        "tests/recon-intake.test.ts",
+        "node scripts/recon-ground-truth-gate.mjs run --offline"
+      ],
+      "driftPolicy": "Explicit authenticated export only. Preserve approved expectations; ordinary offline CI does not fetch new samples. An empty export is not proof of reconstruction correctness."
     }
   ]
 }

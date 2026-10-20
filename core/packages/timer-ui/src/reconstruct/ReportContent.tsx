@@ -26,6 +26,7 @@ export default function ReportContent({node,dispatch,slots={}}:{node:ReportNode|
     return <NotationLine line={data.line} crossColor={data.crossColor} links={data.links}
       colorHref={colors=>data.colorHrefs[colors]} inspectionColors={data.inspectionColors}
       diagram={data.diagramId?slots[data.diagramId]:undefined}
+      trailing={slots['annotation:'+node.id]}
       moves={moves?<ReportContent node={moves} dispatch={dispatch} slots={slots}/>:undefined}
       className={node.className} state={node.state} bodyClassName="sml-body" diagramClassName="sml-diagram"
       chipClassName="sml-label-chip" commentClassName="sml-label" localize={host.localize}

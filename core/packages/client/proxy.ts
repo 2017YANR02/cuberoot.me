@@ -29,6 +29,7 @@ import type { NextRequest } from 'next/server';
 import { fillPlatformParams, matchPlatformRoute } from './lib/platform-routes';
 import { competitionGate } from './lib/competition-gate';
 import { isRetiredAlgTrainer, retiredAlgTrainerHref } from './lib/timer-training-catalog';
+import { canonicalTimerPracticeSearch } from './lib/timer-practice-url';
 
 const SUPPORTED_LOCALES = ['en', 'zh'] as const;
 type Locale = typeof SUPPORTED_LOCALES[number];
@@ -167,6 +168,15 @@ function routeLanguage(req: NextRequest) {
   if (NON_LANG.test(pathname) || /\.[a-z0-9]+$/i.test(pathname)) return NextResponse.next();
 
   const { locale, rest } = stripLocalePrefix(pathname);
+
+  if (rest === '/timer') {
+    const canonical = canonicalTimerPracticeSearch(searchParams).toString();
+    if (canonical !== searchParams.toString()) {
+      const target = url.clone();
+      target.search = canonical;
+      return NextResponse.redirect(target, 308);
+    }
+  }
 
   // 1. ?lang=zh|en on any path → set cookie + redirect to that language's
   //    canonical shape (en = bare, zh = /zh/…), dropping the query. Keeps old

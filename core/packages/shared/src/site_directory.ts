@@ -161,11 +161,8 @@ export const SITE_DIRECTORY_GROUPS = [
     id: 'train',
     placement: 'section',
     eyebrow: { en: 'TRAIN', zh: '训练' },
-    title: { en: 'Recall, look ahead, drill.', zh: '记忆、预判、背公式。' },
-    sub: {
-      en: 'Memory drills, lookahead practice and colour relationship and interference tests, plus the blindfolded algorithm database and two classic algorithm trainers. Head-to-head battles live inside the timer.',
-      zh: '盲拧记忆、预判练习、颜色关系与色词干扰测试，外加盲拧公式库与两套经典公式训练器；双人对战在计时器里。',
-    },
+    title: { en: 'Recall, look ahead, algorithms', zh: '记忆、预判、公式' },
+    sub: { en: '', zh: '' },
     entries: [
       { id: 'memo', href: '/memo', internal: true, tier: 'standard', nameKey: 'memo' },
       { id: 'predict', href: '/predict', internal: true, tier: 'standard', nameKey: 'predict' },
@@ -179,11 +176,8 @@ export const SITE_DIRECTORY_GROUPS = [
     id: 'tool',
     placement: 'section',
     eyebrow: { en: 'TOOL', zh: '工具' },
-    title: { en: 'Solve, count, make.', zh: '求解、数帧、创作。' },
-    sub: {
-      en: 'A solver for any scramble and frame-accurate timing, plus competition management, cube mosaics, vector drawings, event icons, time zone conversion and a shareable calendar.',
-      zh: '把任意打乱交给求解器、逐帧核对成绩，也能管理比赛、拼马赛克、画矢量图、生成项目图标、换算时区和分享日历。',
-    },
+    title: { en: 'Count frames, solve, create', zh: '数帧、求解、创作' },
+    sub: { en: '', zh: '' },
     entries: [
       { id: 'contests', href: '/contests', internal: true, tier: 'medium', nameKey: 'contests' },
       { id: 'online-competitions', href: '/platform/events/online', internal: true, tier: 'medium', nameKey: 'onlineCompetitions' },
@@ -203,11 +197,8 @@ export const SITE_DIRECTORY_GROUPS = [
     id: 'learn',
     placement: 'section',
     eyebrow: { en: 'LEARN', zh: '学习' },
-    title: { en: 'Tutorials, terms, rules.', zh: '教程、术语、规则。' },
-    sub: {
-      en: 'Find teachers and schools, browse their livestream scripts, course plans and illustrated tutorials, learn the terms, regulations and group theory, then use a quiz to check what stuck.',
-      zh: '寻找魔方老师和培训机构，浏览直播话术、录播课方案与图文教程，学习术语、规则和群论，再用问答检验掌握程度。',
-    },
+    title: { en: 'Tutorials, terms, rules', zh: '教程、术语、规则' },
+    sub: { en: '', zh: '' },
     entries: [
       { id: 'platform', href: '/platform', internal: true, tier: 'medium', nameKey: 'platform', lockedForNonAdmin: true },
       { id: 'teaching-management', href: '/org', internal: true, tier: 'medium', nameKey: 'teachingManagement', lockedForNonAdmin: true },
@@ -240,11 +231,8 @@ export const SITE_DIRECTORY_GROUPS = [
     id: 'other',
     placement: 'section',
     eyebrow: { en: 'OTHER', zh: '其他' },
-    title: { en: 'Read, build, explore.', zh: '阅读、开发、探索。' },
-    sub: {
-      en: 'Member photos, forum, contact details, public feedback, code notes, blog, link directory, unofficial world records and the person behind CubeRoot.',
-      zh: '会员图库、论坛、联系方式、公开反馈、代码笔记、博客、站点导航、非官方纪录与 CubeRoot 的创作者。',
-    },
+    title: { en: 'Read, build, explore', zh: '阅读、开发、探索' },
+    sub: { en: '', zh: '' },
     entries: [
       { id: 'gallery', href: '/gallery', internal: true, tier: 'medium', nameKey: 'gallery' },
       { id: 'music', href: '/music', internal: true, tier: 'medium', nameKey: 'music' },

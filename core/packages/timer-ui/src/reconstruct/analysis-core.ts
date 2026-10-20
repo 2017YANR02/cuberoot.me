@@ -1,4 +1,4 @@
-import { emptyAnalysis } from './analysis-protocol';
+import { confirmedReconPrefix, emptyAnalysis, isAnalysisContinuation } from './analysis-protocol';
 import type { AnalysisInput, AnalysisWorkerRequest, AnalysisResponse, AnalysisSnapshot } from './analysis-protocol';
 export type { AnalysisInput, AnalysisRequest, AnalysisResponse, AnalysisSnapshot } from './analysis-protocol';
 
@@ -35,25 +35,20 @@ export function createReconstructionAnalyzer(createWorker: () => AnalysisWorker)
   let idleTimer: ReturnType<typeof setTimeout> | undefined;
 
   function initialSnapshot(input: AnalysisInput, attemptId?: string): AnalysisSnapshot {
-    const exact = textCache.get(JSON.stringify(input.text));
-    if (exact) return { ...emptyAnalysis(), text: exact };
     const live = attemptId ? liveResults.get(attemptId) : undefined;
-    if (!live) return emptyAnalysis();
+    if (!live) {
+      const exact = textCache.get(JSON.stringify(input.text));
+      return exact ? { ...emptyAnalysis(), text: exact } : emptyAnalysis();
+    }
     const key = JSON.stringify(input);
     if (live.targetKey && live.targetKey !== key) return emptyAnalysis();
-    const before = live.input.text.physical ?? live.input.text;
-    const after = input.text.physical ?? input.text;
-    // Only an explicit same-attempt handoff can reuse a prefix. Edits, another
-    // scramble, changed timestamps or a different viewing frame cannot use it.
-    if (before.scramble !== after.scramble || !before.moves.length
-      || before.moves.length > after.moves.length
-      || live.input.text.viewRotation !== input.text.viewRotation
-      || live.input.text.method !== input.text.method
-      || live.input.text.language !== input.text.language
-      || !before.moves.every((move, i) => move.m === after.moves[i].m && move.ts === after.moves[i].ts)) return emptyAnalysis();
+    if (!isAnalysisContinuation(live.input, input)) return emptyAnalysis();
     live.targetKey = key;
     return { ...emptyAnalysis(), text: live.text, provisional: true };
   }
+
+  const cacheKey = (input: AnalysisInput, attemptId?: string) =>
+    JSON.stringify(attemptId && liveResults.has(attemptId) ? [input, attemptId] : input);
 
   function terminate() {
     clearTimeout(deadline);
@@ -75,6 +70,12 @@ export function createReconstructionAnalyzer(createWorker: () => AnalysisWorker)
     jobs.delete(job.key);
     active = null;
     if (!job.failed) {
+      if (job.snapshot.text) {
+        const textKey = JSON.stringify(job.input.text);
+        textCache.delete(textKey);
+        textCache.set(textKey, job.snapshot.text);
+        if (textCache.size > 8) textCache.delete(textCache.keys().next().value!);
+      }
       cache.set(job.key, job.snapshot);
       if (cache.size > 8) cache.delete(cache.keys().next().value!);
     }
@@ -107,13 +108,7 @@ export function createReconstructionAnalyzer(createWorker: () => AnalysisWorker)
         }
         if (data.patch) {
           job.snapshot = { ...job.snapshot, ...data.patch };
-          if (data.patch.text) {
-            job.snapshot.provisional = false;
-            const textKey = JSON.stringify(job.input.text);
-            textCache.delete(textKey);
-            textCache.set(textKey, data.patch.text);
-            if (textCache.size > 8) textCache.delete(textCache.keys().next().value!);
-          }
+          if (data.patch.text) job.snapshot.provisional = false;
         }
         if (data.done) finish(job);
         else notify(job);
@@ -147,7 +142,7 @@ export function createReconstructionAnalyzer(createWorker: () => AnalysisWorker)
       }
     },
     rememberLive(attemptId: string, input: AnalysisInput, snapshot: AnalysisSnapshot) {
-      if (!snapshot.text || snapshot.provisional) return;
+      if (!snapshot.text || snapshot.provisional || snapshot.status !== 'complete') return;
       liveResults.delete(attemptId);
       liveResults.set(attemptId, { input, text: snapshot.text });
       if (liveResults.size > 8) liveResults.delete(liveResults.keys().next().value!);
@@ -159,12 +154,12 @@ export function createReconstructionAnalyzer(createWorker: () => AnalysisWorker)
       if (live) liveResults.set(toSolveId, live);
     },
     peek(input: AnalysisInput, attemptId?: string): AnalysisSnapshot {
-      return cache.get(JSON.stringify(input)) ?? initialSnapshot(input, attemptId);
+      return cache.get(cacheKey(input, attemptId)) ?? initialSnapshot(input, attemptId);
     },
     subscribe(input: AnalysisInput, listener: Listener, attemptId?: string): () => void {
       // Include all physical moves, timestamps, orientation and metric inputs;
       // a corrected solve must never reuse the old solve's analysis.
-      const key = JSON.stringify(input);
+      const key = cacheKey(input, attemptId);
       const cached = cache.get(key);
       if (cached) {
         cache.delete(key);
@@ -175,7 +170,10 @@ export function createReconstructionAnalyzer(createWorker: () => AnalysisWorker)
       let job = jobs.get(key);
       if (!job) {
         const snapshot = initialSnapshot(input, attemptId);
-        job = { id: ++nextId, key, input, listeners: new Set(), snapshot, failed: false,
+        const live = attemptId ? liveResults.get(attemptId) : undefined;
+        const confirmed = snapshot.provisional && live ? confirmedReconPrefix(live.input.text, live.text) : undefined;
+        const request = confirmed?.lines.length ? { ...input, text: { ...input.text, confirmed } } : input;
+        job = { id: ++nextId, key, input: request, listeners: new Set(), snapshot, failed: false,
           skipText: Boolean(snapshot.text && !snapshot.provisional) };
         jobs.set(key, job);
       }

@@ -15,6 +15,7 @@ import { getSessionToken, getWcaToken, useAuthUser } from '@/lib/auth-store';
 import { fetchDocument, markDocumentSeen, updateDocumentSubscription, updateDocumentTitle, type DocumentDetails } from '@/lib/document-api';
 import { CollaborativeDocumentEditor, type DocumentEditorSession } from './CollaborativeDocumentEditor';
 import './editor.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type ConnectionStatus = 'connecting' | 'connected' | 'disconnected';
 type EditorSession = DocumentEditorSession;
@@ -103,7 +104,7 @@ export default function DocumentEditorPage() {
       </header>
       {error && <p className="doc-page-error" role="alert">{error}</p>}
       {!user && !details && <div className="doc-auth-needed"><T zh="请先登录，再打开共享给你的文档。" en="Sign in to open a document shared with you." /></div>}
-      {user && !details && !error && <p className="doc-editor-loading"><T zh="正在加载文档…" en="Loading document…" /></p>}
+      {user && !details && !error && <p className="doc-editor-loading"><LoadingIndicator><T zh="正在加载文档…" en="Loading document…" /></LoadingIndicator></p>}
       {details && session && <CollaborativeDocumentEditor session={session} details={details} title={title} onError={setError}
         onShare={() => setShareOpen(true)} onSubscriptionChange={changeSubscription} />}
       {shareOpen && details && <CollaborativeSharePanel id={id} kind="document" details={details} reload={load} close={() => setShareOpen(false)} />}

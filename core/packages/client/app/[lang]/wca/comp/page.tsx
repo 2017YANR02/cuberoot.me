@@ -74,13 +74,14 @@ import { loadRecent, recentKeyFor, type RecentEntry } from '@/lib/comp-recent';
 import './calendar_page.css';
 import './comp.css';
 import { tr } from '@/i18n/tr';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 // view=globe 视图:地球是本页的一个视图,不是自己的路由 —— 实现放在 wca/_globe/,
 // 下划线前缀让 Next 不当它是路由段(同 alg/_roux、alg/_trainer)。
 // dynamic + ssr:false 懒加载,~550KB maplibre 仅在切到地球视图时下载,不进日历首屏 bundle。
 const GlobeMapClient = dynamic(() => import('../_globe/GlobeMapClient'), {
   ssr: false,
-  loading: () => <div className="comp-globe-loading">Loading globe…</div>,
+  loading: () => <div className="comp-globe-loading"><LoadingIndicator /></div>,
 });
 
 // 最近浏览(localStorage,登录用户专属)的读写在 lib/comp-recent.ts —— 详情页也要
@@ -2940,7 +2941,7 @@ function CalendarPageInner() {
 
 export default function CalendarPage() {
   return (
-    <Suspense fallback={<div className="calendar-page"><div className="calendar-loading">Loading…</div></div>}>
+    <Suspense fallback={<div className="calendar-page"><div className="calendar-loading"><LoadingIndicator /></div></div>}>
       <CalendarPageInner />
     </Suspense>
   );

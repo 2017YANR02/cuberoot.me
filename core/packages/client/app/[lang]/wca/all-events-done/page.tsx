@@ -15,6 +15,7 @@ import RegionCountrySelect from '@/components/wca-stats/RegionCountrySelect';
 import { useCountries } from '@/components/wca-stats/useCountries';
 import '../_wca_stats_extra.css';
 import { tr } from '@/i18n/tr';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const PAGE_SIZE_OPTIONS = [50, 100, 200];
 
@@ -93,8 +94,8 @@ function AllEventsDonePageInner() {
       </div>
 
       <div className="wse-table-wrapper sticky-scroll">
-        {loading && <div className="wse-state">{tr({ zh: '加载中...', en: 'Loading...'
-        })}</div>}
+        {loading && <div className="wse-state"><LoadingIndicator>{tr({ zh: '加载中...', en: 'Loading...'
+        })}</LoadingIndicator></div>}
         {error && <div className="wse-state wse-state-error">Error: {error}</div>}
         {data && !loading && (
           <>
@@ -157,7 +158,7 @@ function AllEventsDonePageInner() {
 
 export default function AllEventsDonePage() {
   return (
-    <Suspense fallback={<div style={{ padding: 16, color: 'var(--muted)' }}>Loading…</div>}>
+    <Suspense fallback={<div style={{ padding: 16, color: 'var(--muted)' }}><LoadingIndicator /></div>}>
       <AllEventsDonePageInner />
     </Suspense>
   );

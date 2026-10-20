@@ -58,6 +58,7 @@ import {
   WCA_SINGLE_METRIC_KEYS,
   type WcaResultMetricMode,
 } from '@/lib/wca-result-metrics';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 interface Props {
   profile: WcaPersonProfile;
@@ -111,7 +112,7 @@ export default function ByEventView({ profile, results, comps, reconLookup, even
       return da.localeCompare(db) || wcaResultRowKey(a).localeCompare(wcaResultRowKey(b));
     }), [results, eventId, compById]);
 
-  if (!results || !comps) return <div className="wp-loading-inline">{t('加载中…', 'Loading…')}</div>;
+  if (!results || !comps) return <div className="wp-loading-inline"><LoadingIndicator>{t('加载中…', 'Loading…')}</LoadingIndicator></div>;
 
   return (
     <div className="wp-byevent">
@@ -156,7 +157,7 @@ export default function ByEventView({ profile, results, comps, reconLookup, even
           </div>
           <div className="wp-trend-block">
             <div className="wp-trend-h">{t('排名趋势', 'Rank Trend')}</div>
-            {histLoading && <div className="wp-loading-inline">{t('加载中…', 'Loading…')}</div>}
+            {histLoading && <div className="wp-loading-inline"><LoadingIndicator>{t('加载中…', 'Loading…')}</LoadingIndicator></div>}
             {!histLoading && hist && hist.rows.length > 0 && (
               <RankChart hist={hist} isZh={isZh} />
             )}
@@ -672,7 +673,7 @@ const EventRoundsList = memo(function EventRoundsList({
   if (displayRows.length === 0) return <div className="wp-empty">{reconFilter === 'all'
     ? tr({ zh: '暂无成绩', en: 'No results yet' })
     : reconLookup == null
-      ? tr({ zh: '正在加载复盘数据…', en: 'Loading reconstruction data…' })
+      ? <LoadingIndicator>{tr({ zh: '正在加载复盘数据…', en: 'Loading reconstruction data…' })}</LoadingIndicator>
       : tr({ zh: '没有符合条件的轮次', en: 'No matching rounds' })}</div>;
 
   const timingStats = computeReconTimingMean(reconLookup, eventId);

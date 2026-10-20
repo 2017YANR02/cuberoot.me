@@ -35,6 +35,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Solve, EventId } from '@cuberoot/shared/timer';
+import type { ReconSnapshot } from '@cuberoot/shared/recon-ground-truth';
 import { sliceReconstruction, detectMemoPause } from '@cuberoot/shared/timer/reconstruct/slice';
 import { computeStageAverages } from '@cuberoot/shared/timer/reconstruct/stage-segments';
 import type { StepMetricsResult } from '@cuberoot/shared/timer/reconstruct/step-metrics';
@@ -53,6 +54,7 @@ import { rememberMethodStages, useMethodHistory } from './method-history';
 import StepMoveList from './StepMoveList';
 import { simplifyF2lRotations } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import { reconstructionSummary, trainingCaseHistory, trainingCaseStatistics } from './report-presentation';
+import { snapshotReconNotation } from './review-snapshot';
 import ReconstructActions from './ReconstructActions';
 
 import { memoize3bld } from '@cuberoot/shared/timer/reconstruct/bld-helper';
@@ -62,6 +64,8 @@ import { ReconstructHostContext, useReconstructHost, type ReconstructHost } from
 export type { ReconstructHost } from './ReconstructHost';
 
 export interface ReconstructReportProps {
+  /** Review observes completed default CFOP notation; never writes back to the solve. */
+  onReviewSnapshot?: (snapshot: ReconSnapshot | null) => void;
   solve: Solve;
   isZh: boolean;
   /** Recent solves of the same event for personal-average comparison.
@@ -105,7 +109,7 @@ const BLD_MEMO_EVENTS = new Set<EventId>(['333bld', '333ni']);
 
 
 function ReconstructReportBody({
-  solve, isZh, history, onMemoApply, onUseScramble, onReconFeedback, hideDate, hideActions, live = false, liveStageTarget, liveGyroSamples,
+  solve, isZh, history, onMemoApply, onUseScramble, onReconFeedback, hideDate, hideActions, live = false, liveStageTarget, liveGyroSamples, onReviewSnapshot,
 }: ReconstructReportProps) {
   const host = useReconstructHost();
   const { localize: tr } = host;
@@ -208,6 +212,10 @@ function ReconstructReportBody({
   const playbackRecon = useMemo(() => reconText && method === 'cfop'
     ? simplifyF2lRotations(reconText) : reconText, [reconText, method]);
   const playbackLines = playbackRecon?.lines ?? [];
+  const reviewSnapshot = useMemo(() => !live && solve.event === '333' && method === 'cfop'
+    && analysis?.status === 'complete' && !analysis.provisional && reconText
+    ? snapshotReconNotation(reconText) : null, [live, solve.event, method, analysis?.status, analysis?.provisional, reconText]);
+  useEffect(() => { onReviewSnapshot?.(reviewSnapshot); }, [onReviewSnapshot, reviewSnapshot]);
 
   // 回放固定展示；折叠只留给「参考解法」和「原始动作序列」这类附加内容。
   const [reportUI, setReportUI] = useState(initialReportUI);
@@ -339,7 +347,7 @@ function ReconstructReportBody({
     setReportUI(state=>reduceReportUI(state,action));
     if(action.type==='memo')onMemoApply?.(Number(action.value));
   }} slots={{
-    actions:<ReconstructActions host={host} solve={solve} onUseScramble={onUseScramble} placement="report"/>,
+    actions:<ReconstructActions host={host} solve={solve} onUseScramble={onUseScramble} placement="report" snapshot={reviewSnapshot}/>,
     analysis:analysisBlock,
     playback:<PlaybackPanel
           method={method}

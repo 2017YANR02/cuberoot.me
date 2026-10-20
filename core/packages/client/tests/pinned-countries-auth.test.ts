@@ -24,6 +24,7 @@ vi.mock('@/lib/country-flags', () => ({
 vi.mock('@/lib/ip-country', () => ({ loadIpCountry: vi.fn(async () => '') }));
 vi.mock('next/navigation', () => ({ useParams: () => ({ lang: 'zh' }) }));
 vi.mock('next/link', () => ({
+  useLinkStatus: () => ({ pending: false }),
   default: ({ children, prefetch: _prefetch, ...props }: AnchorHTMLAttributes<HTMLAnchorElement> & { children?: ReactNode; prefetch?: boolean }) => createElement('a', props, children),
 }));
 

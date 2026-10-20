@@ -9,6 +9,7 @@ import {
   type PlatformCourseManagementScope,
   type PlatformManagedLessonMedia,
 } from '@/lib/platform-gateway';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 interface Props {
   scope: PlatformCourseManagementScope;
@@ -110,7 +111,7 @@ export function PlatformLessonCoverEditor({
       <summary>{currentVideo ? t('编辑封面', 'Edit cover') : t('视频封面', 'Video cover')}</summary>
       {opened && (
         <div className="platform-video-cover-editor-content">
-          {loading ? <p className="platform-domain-note">{t('正在加载…', 'Loading…')}</p> : (
+          {loading ? <p className="platform-domain-note"><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p> : (
             <>
               {!currentVideo && (media?.posterUrl
                 ? <img className="platform-video-cover-editor-preview" src={media.posterUrl} alt={t('当前视频封面', 'Current video cover')} />
