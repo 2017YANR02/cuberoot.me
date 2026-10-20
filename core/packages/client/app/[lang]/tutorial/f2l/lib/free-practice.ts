@@ -3,7 +3,7 @@ import Cube from '@cuberoot/puzzle-render-core/engine/nxn/cube';
 import { FM_IGNORED, FM_REGULAR } from '@cuberoot/puzzle-render-core/engine/nxn/stickering';
 import { buildFaceletMap } from '@/components/sim-embed/faceletMap';
 import { CUBE_ORIENTATIONS } from '@/lib/cube-orientation';
-import { F2L_CASES } from './content';
+import { F2L_CASES } from '../data/basic-cases';
 import { f2lCatalogCases, f2lTeachingPaths } from './curriculum';
 
 export const FREE_CORNER_POSITIONS = [26, 24, 6, 8, 20] as const;
