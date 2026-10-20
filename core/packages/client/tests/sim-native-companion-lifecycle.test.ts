@@ -181,6 +181,14 @@ it('keeps canvas and playback tools together and opens settings in a dismissible
   await act(async () => trigger.click());
   expect(controls.querySelector('[role="dialog"]')).not.toBeNull();
   expect(trigger.getAttribute('aria-expanded')).toBe('true');
+  const anchor = controls.querySelector<HTMLButtonElement>('[role="switch"][aria-label="Anchor at end"]')!;
+  expect(anchor).not.toBeNull();
+  const wasEnd = anchor.getAttribute('aria-checked') === 'true';
+  await act(async () => anchor.click());
+  expect(anchor.getAttribute('aria-checked')).toBe(String(!wasEnd));
+  expect(controls.querySelector('.sim-anchor-value')?.textContent).toBe(wasEnd ? 'Start' : 'End');
+  await act(async () => anchor.click());
+  expect(anchor.getAttribute('aria-checked')).toBe(String(wasEnd));
   await act(async () => trigger.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
   expect(controls.querySelector('[role="dialog"]')).toBeNull();
 });
