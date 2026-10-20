@@ -47,6 +47,7 @@ function createAccountCopy() {
     unlink: tr({ en: 'Unlink', zh: '解绑' }),
     signOut: tr({ en: 'Sign out of this Mini Program', zh: '退出小程序登录' }),
     deleteAccount: tr({ en: 'Delete account', zh: '注销账号' }),
+    securitySettings: tr({ en: 'Email, phone and password', zh: '邮箱、手机与密码' }),
     wcaLinkHint: tr({ en: 'Complete WCA authorization in your system browser. This page refreshes when you return.', zh: '请在系统浏览器完成 WCA 授权，返回后页面会刷新' }),
     agreementLabel: tr({
       en: 'I have read and agree to the terms above',
@@ -943,11 +944,13 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
     }
   },
 
-  openDeleteAccount() {
+  openSecuritySettings() { this.openNativeAccountPage('account-settings'); },
+  openDeleteAccount() { this.openNativeAccountPage('account-delete'); },
+  openNativeAccountPage(page: 'account-settings' | 'account-delete') {
     if (this.data.loginRequired || this.data.isTimelineEntry || this.data.identityMutationBusy || this.data.nameBusy) return;
     this.setData({ identityMutationBusy: true, accountError: '' });
     const fail = () => this.setData({ accountError: ACCOUNT_COPY.accountFailure });
-    try { miniProgramApi().navigateTo({ url: '/pages/account-delete/index', fail,
+    try { miniProgramApi().navigateTo({ url: `/pages/${page}/index`, fail,
       complete: () => this.setData({ identityMutationBusy: false }) }); }
     catch { this.setData({ identityMutationBusy: false }); fail(); }
   },

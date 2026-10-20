@@ -1,0 +1,28 @@
+<page-meta page-style="{{appearanceStyle}}" />
+<view class="page delete-page">
+  <button class="text-button" loading="{{busy}}" disabled="{{busy}}" bindtap="loadAccount">{{copy.reload}}</button>
+  <block wx:if="{{ready}}">
+    <view class="security-section">
+      <picker range="{{providerOptions}}" value="{{providerIndex}}" disabled="{{busy}}" bindchange="selectProvider"><view class="security-heading">{{providerOptions[providerIndex]}} ▾</view></picker>
+      <view class="delete-input-row">
+        <input value="{{destination}}" maxlength="320" disabled="{{busy}}" placeholder="{{copy.destination}}" aria-label="{{copy.destination}}" data-field="destination" bindinput="input" />
+        <button wx:if="{{destination}}" class="text-button" disabled="{{busy}}" aria-label="{{copy.clear}}" bindtap="clearDestination">×</button>
+      </view>
+      <view class="security-consent"><text>{{copy.consent}}</text><switch checked="{{consent}}" disabled="{{busy}}" bindchange="toggleConsent" /></view>
+      <button class="text-button" bindtap="openPolicy">{{copy.policy}}</button>
+      <button class="text-button" disabled="{{busy || !consent || !destination}}" bindtap="sendCode">{{copy.send}}</button>
+      <view class="delete-input-row"><input value="{{code}}" maxlength="6" type="number" disabled="{{busy}}" placeholder="{{copy.code}}" aria-label="{{copy.code}}" data-field="code" bindinput="input" /></view>
+      <button class="primary-button" disabled="{{busy || !consent || !code}}" bindtap="bindCredential">{{bound ? copy.replace : copy.bind}}</button>
+    </view>
+    <view class="security-section">
+      <text class="security-heading">{{copy.password}}</text>
+      <view wx:if="{{hasPassword}}" class="delete-input-row"><input value="{{currentPassword}}" password="{{!showPassword}}" maxlength="128" disabled="{{busy}}" placeholder="{{copy.currentPassword}}" aria-label="{{copy.currentPassword}}" data-field="currentPassword" bindinput="input" /></view>
+      <view class="delete-input-row"><input value="{{newPassword}}" password="{{!showPassword}}" maxlength="128" disabled="{{busy}}" placeholder="{{copy.newPassword}}" aria-label="{{copy.newPassword}}" data-field="newPassword" bindinput="input" /></view>
+      <view class="delete-input-row"><input value="{{repeatPassword}}" password="{{!showPassword}}" maxlength="128" disabled="{{busy}}" placeholder="{{copy.repeatPassword}}" aria-label="{{copy.repeatPassword}}" data-field="repeatPassword" bindinput="input" /></view>
+      <button class="text-button" bindtap="togglePassword">{{showPassword ? copy.hide : copy.show}}</button>
+      <button class="primary-button" disabled="{{busy || !newPassword || !repeatPassword}}" bindtap="savePassword">{{copy.savePassword}}</button>
+    </view>
+  </block>
+  <text wx:if="{{message}}" class="security-message" aria-role="status">{{message}}</text>
+  <text wx:if="{{error}}" class="delete-error" aria-role="status">{{error}}</text>
+</view>

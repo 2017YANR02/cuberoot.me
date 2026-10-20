@@ -40,7 +40,7 @@ await check('页面完整性与核心原生模板', async () => {
     for (const extension of ['js', 'json', 'ttml', 'ttss']) await stat(join(output, `${page}.${extension}`));
   }
   const core = [...new Set([app.pages[0], ...(app.tabBar?.list ?? []).map(tab => tab.pagePath),
-    'pages/privacy/index', 'pages/contact/index', 'pages/account-link/index', 'pages/account-delete/index'])];
+    'pages/privacy/index', 'pages/contact/index', 'pages/account-link/index', 'pages/account-delete/index', 'pages/account-settings/index'])];
   if (core.some(page => !app.pages.includes(page))) throw new Error('核心页面未登记');
   await validateNativePages(output, core);
 });

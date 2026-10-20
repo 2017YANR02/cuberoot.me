@@ -10,6 +10,7 @@
     "pages/contact/index",
     "pages/account-link/index",
     "pages/account-delete/index",
+    "pages/account-settings/index",
     "pages/web/index",
     "pages/payment/index",
     "pages/membership/index",

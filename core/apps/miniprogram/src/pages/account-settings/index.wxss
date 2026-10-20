@@ -1,0 +1,5 @@
+@import "../account-delete/index.wxss";
+.security-section { margin-bottom: 48rpx; }
+.security-heading { display: block; font-size: 36rpx; font-weight: 600; margin-bottom: 24rpx; }
+.security-consent { display: flex; align-items: center; justify-content: space-between; gap: 24rpx; margin: 24rpx 0; }
+.security-message { display: block; margin: 24rpx 0; }

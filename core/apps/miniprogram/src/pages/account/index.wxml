@@ -145,6 +145,7 @@
     {{copy.accountButtonLabel}}
   </button>
   <button class="text-button account-name-edit" disabled="{{identityMutationBusy || nameBusy}}" bindtap="signOut">{{copy.signOut}}</button>
+  <button class="text-button account-name-edit" disabled="{{identityMutationBusy || nameBusy}}" bindtap="openSecuritySettings">{{copy.securitySettings}}</button>
   <button class="text-button account-name-edit" disabled="{{identityMutationBusy || nameBusy}}" bindtap="openDeleteAccount">{{copy.deleteAccount}}</button>
   <text
     wx:if="{{accountError}}"
