@@ -71,7 +71,7 @@ export default function AdminPanel({ plans, isZh, onPlanUpdated, onViewRenewal }
 
   function loadList() {
     adminList().then((r) => {
-      const listedPlans = r.plans ?? plans;
+      const listedPlans = (r.plans ?? plans).filter(p => !['enterprise_yearly', 'enterprise_yearly_auto_renew'].includes(p.slug));
       setAdminPlans(listedPlans);
       setPriceDraft(Object.fromEntries(listedPlans.map((p) => [p.slug, String(p.priceCents / 100)])));
     }).catch(() => {});

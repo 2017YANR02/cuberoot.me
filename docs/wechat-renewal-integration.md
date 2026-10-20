@@ -64,3 +64,19 @@
 公开开关保持关闭时，可设置 WECHAT_PAPAY_PILOT_ENABLED=true、PILOT_OWNER（同前缀，准确账号）、PILOT_UNTIL（ISO 时间，最多未来七天），开启 SYNC。两模板及 AppID 仍须准确匹配。默认 PILOT_DEBIT_ENABLED=false，只签约及取消；单独开启后仅首期可申请真实扣款，第二期禁止。匿名和其他账号仍不可签约，公开套餐不受私测开关影响。
 
 开发版须先上传；私测 URL Link 指向 develop，使用手机系统浏览器打开。正式版仍用 release。验收完成应取消私测合约并核对终止，再关闭私测；不把测试签约留到公开扣款开启。已提交支付继续对账，关闭开关不抹去未决订单。
+
+## 企业模板准备（2026-10-19，尚未上线）
+
+企业仅提供月度会员：自动续费 299 元/月、主动付款 399 元/月。个人月度与年度保持不变，共三张套餐卡片。企业年度停止销售，历史订单与权益保留。
+
+仅需新增一份企业月度模板：类型「自动续费」，周期「月」，名称输入「魔方根企业会员」（后台自动追加每月自动续费），标准价格 299 元。
+
+解约通知 URL：`https://api.cuberoot.me/v1/membership/subscriptions/wechat/notify`。扣款模式沿用当前接口实现的通知后24小时扣费。
+
+审核通过后将 `WECHAT_PAPAY_ENTERPRISE_MONTHLY_PLAN_ID` 和 `WECHAT_PAPAY_ENTERPRISE_MONTHLY_APPROVED` 设置为同一已审核月度 ID。不得使用个人模板 225492/225493。
+
+0283 迁移新增隐藏的企业月度自动续费套餐并停用企业年度销售，扩展合约约束；前端按套餐准入显示签约入口，普通支付接口拒绝自动续费 slug。复用原有显式同意、同账号 UnionID 校验、扣款到账核验、取消与幂等发放；一个账号只能有一个未终止协议。本地准备不改变公开发布或实际扣款开关。
+
+完成条件：模板审核与配置 → 发布迁移/API/Web → 既有小程序正式版本确实包含签约页 → 企业签约、金额、到账权益和取消验收。模板创建成功不等于企业自动续费已上线。
+
+官方依据：[接入流程](https://pay.wechatpay.cn/doc/v2/merchant/4011986709)、[签约解约通知](https://pay.wechatpay.cn/doc/v2/merchant/4011987586)、[周期扣费](https://pay.wechatpay.cn/doc/v2/merchant/4011986682)。
