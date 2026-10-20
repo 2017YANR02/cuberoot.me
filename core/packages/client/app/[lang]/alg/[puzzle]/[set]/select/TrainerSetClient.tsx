@@ -229,9 +229,6 @@ export default function TrainerSetClient() {
     if (modeParam === 'memo' && drawParam) runUrl.searchParams.set('draw', drawParam);
   }
   const runBase = `${runUrl.pathname}${runUrl.search}`;
-  const backHref = isMix
-    ? `/alg/${puzzleParam}`
-    : (scopeSlug ? `/alg/${puzzleParam}/${setSlug}/${scopeSlug}` : `/alg/${puzzleParam}/${setSlug}`);
   const brushItems = [
     {
       value: 'off',
@@ -267,15 +264,8 @@ export default function TrainerSetClient() {
   ];
 
   return (
-    <div className="trainer-root">
+    <div className="trainer-root trainer-select">
       <div className="trainer-topbar">
-        <Link
-          href={backHref}
-          className="trainer-back"
-          prefetch={false}
-        >
-          {tr({ zh: '查看公式', en: 'View algorithms' })}
-        </Link>
         {(!trainingHost || scopeSlug) && <span style={{ fontSize: '1.1rem', fontWeight: 600 }}>
           {!trainingHost && `${puzzle} · ${tr(meta)}`}
           {scopeSlug && `${trainingHost ? '' : ' · '}${setSlug === 'zbll' ? displayZbllToken(scopeSlug) : scopeSlug.toUpperCase()}`}
@@ -305,24 +295,22 @@ export default function TrainerSetClient() {
         })}</div>
       ) : (
         <>
-          {/* 本 set 学习进度 + 待复习 / 连续天数。与 run 页共用同一条(components 单一源) */}
-          <SetProgressStrip keys={scopedKeys} selectHref={selectBase} />
-
           <div className="trainer-marks-toolbar">
-            <label className="trainer-marks-tool">
-              <span className="trainer-opts-label">{tr({ zh: '只看', en: 'Show' })}</span>
-              <select
-                className="trainer-scramble-kind trainer-filter-select"
+            <div className="trainer-marks-tool">
+              <ListSelect
+                className="trainer-filter-select"
                 value={markFilter}
-                onChange={e => setMarkFilter(e.target.value === 'all' ? null : e.target.value as MarkFilter)}
-                aria-label={tr({ zh: '按标记过滤', en: 'Filter by mark' })}
-              >
-                <option value="all">{tr({ zh: '全部', en: 'All' })}</option>
-                <option value="none">{tr({ zh: '未学', en: 'Unlearned' })}</option>
-                <option value="learning">{MARK_STATUS_LABEL.learning()}</option>
-                <option value="mastered">{MARK_STATUS_LABEL.mastered()}</option>
-              </select>
-            </label>
+                onChange={next => setMarkFilter(next === 'all' ? null : next as MarkFilter)}
+                items={[
+                  { value: 'all', label: tr({ zh: '全部情况', en: 'All cases' }) },
+                  { value: 'none', label: tr({ zh: '未学', en: 'Unlearned' }) },
+                  { value: 'learning', label: MARK_STATUS_LABEL.learning() },
+                  { value: 'mastered', label: MARK_STATUS_LABEL.mastered() },
+                ]}
+                allLabel={tr({ zh: '全部情况', en: 'All cases' })}
+                clearable={false}
+              />
+            </div>
             <div className="trainer-marks-tool">
               <ListSelect
                 className="trainer-brush-select"
@@ -344,6 +332,12 @@ export default function TrainerSetClient() {
               />
             </div>
           </div>
+          <SetProgressStrip keys={scopedKeys} selectHref={selectBase} />
+          {visibleCases.length === 0 && (
+            <p className="trainer-selection-empty" role="status">
+              {tr({ zh: '没有符合筛选的情况，可切换为全部情况。', en: 'No matching cases. Switch to all cases to see the full set.' })}
+            </p>
+          )}
           {/* 合练按成员集分块 —— 两套里都有叫「T」的组,混在一棵树里会并成一组、认不出谁是谁 */}
           {isMix ? mixSets.map(slug => {
             const own = visibleCases.filter(c => c.srcSet === slug);

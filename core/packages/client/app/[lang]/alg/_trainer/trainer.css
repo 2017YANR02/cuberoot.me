@@ -67,6 +67,47 @@
 }
 
 /* ─── selection page (subgroup tree) ─── */
+.trainer-root.trainer-select {
+  --tr-sel: var(--accent);
+  max-width: 1200px;
+  font-family: var(--font-sans);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 20px;
+}
+.trainer-select > * { grid-column: 1 / -1; min-width: 0; }
+.trainer-select > .trainer-topbar {
+  grid-column: 2;
+  grid-row: 1;
+  justify-content: flex-end;
+  margin: 0 0 20px;
+}
+.trainer-select > .trainer-marks-toolbar {
+  grid-column: 1;
+  grid-row: 1;
+  margin: 0 0 20px;
+  gap: 10px;
+}
+.trainer-select .trainer-filter-select,
+.trainer-select .trainer-brush-select { width: auto; min-width: 128px; height: auto; font-size: 14px; }
+.trainer-select .list-select-trigger { min-height: 40px; font-size: 14px; padding: 8px 12px; }
+.trainer-select .list-select-label,
+.trainer-select .list-select-item { font-size: 14px; }
+.trainer-select > .trainer-strip { width: 100%; max-width: none; margin: 0 0 20px; padding: 0; }
+.trainer-select .trainer-strip-num,
+.trainer-select .trainer-strip-more { font-size: 0.875rem; }
+.trainer-select .trainer-set-block { padding: 0; border: 0; background: none; }
+.trainer-select .trainer-set-header { font-size: 0.95rem; min-height: 40px; }
+.trainer-select .trainer-start-btn { font-family: inherit; font-size: 0.875rem; min-height: 40px; }
+.trainer-select .trainer-checkbox::after { border-color: var(--accent-foreground); }
+.trainer-select .trainer-checkbox.is-indeterminate::after { background: var(--accent-foreground); }
+.trainer-selection-empty { padding: 24px 0; color: var(--muted-foreground); font-size: 0.875rem; }
+.trainer-select button:active { transform: translateY(1px); }
+@media (max-width: 560px) {
+  .trainer-root.trainer-select { padding: 16px; column-gap: 8px; }
+  .trainer-select > .trainer-topbar { grid-column: 1 / -1; grid-row: 2; justify-content: flex-start; margin-bottom: 16px; }
+  .trainer-select > .trainer-marks-toolbar { grid-column: 1 / -1; margin-bottom: 12px; }
+}
 .trainer-set-block {
   margin-bottom: 18px;
   background: color-mix(in srgb, var(--foreground) 3%, transparent);
@@ -117,6 +158,90 @@
   margin-bottom: 12px;
   cursor: pointer;
   user-select: none;
+}
+.trainer-top-groups {
+  display: grid;
+  align-items: start;
+  gap: 12px 20px;
+}
+.trainer-picker-column { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.trainer-picker-column > .trainer-subgroup {
+  min-width: 0;
+  margin: 0;
+  padding: 8px 0;
+  background: none;
+  border: 0;
+}
+.trainer-top-groups .trainer-subgroup-header { margin-bottom: 0; min-height: 56px; cursor: pointer; gap: 0; }
+.trainer-top-groups .trainer-bulk-toggle {
+  flex: 0 0 36px;
+  justify-content: center;
+  align-self: stretch;
+  min-height: 44px;
+}
+.trainer-group-expand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  min-height: 56px;
+  padding: 4px 8px 4px 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.trainer-group-expand > span { flex-shrink: 0; }
+.trainer-group-chevron { margin-left: auto; flex: none; color: var(--muted-foreground); transition: transform 180ms ease; }
+.trainer-group-expand[aria-expanded="true"] > .trainer-group-chevron { transform: rotate(90deg); }
+.trainer-group-expand:hover { color: var(--accent); }
+.trainer-top-groups .trainer-sub-subgroup-row {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  margin: 8px 0 0;
+  gap: 4px;
+}
+.trainer-top-groups .trainer-sub-subgroup,
+.trainer-top-groups .trainer-sub-subgroup.is-expanded {
+  min-width: 0;
+  flex: auto;
+  padding: 6px 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+.trainer-top-groups .trainer-sub-subgroup-header { margin: 0; gap: 0; }
+.trainer-sub-subgroup-header .trainer-group-expand { min-height: 48px; }
+.trainer-top-groups .trainer-case-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+  gap: 8px;
+  padding: 8px 2px;
+}
+.trainer-top-groups .trainer-case-cell { min-width: 0; padding: 6px 2px; }
+.trainer-picker-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 180ms ease, opacity 180ms ease;
+}
+.trainer-picker-panel.is-open { grid-template-rows: 1fr; opacity: 1; }
+.trainer-picker-panel-inner { min-height: 0; overflow: hidden; }
+.trainer-top-groups button:focus-visible,
+.trainer-set-header:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+@media (max-width: 560px) {
+  .trainer-picker-column { gap: 4px; }
+}
+.trainer-set-block:has(:focus-visible) :is(.trainer-picker-panel, .trainer-group-chevron) { transition: none; }
+@media (prefers-reduced-motion: reduce) {
+  .trainer-picker-panel, .trainer-group-chevron { transition: none; }
 }
 .trainer-set-header .trainer-checkbox { width: 16px; height: 16px; }
 .trainer-subgroup {
@@ -190,7 +315,7 @@
   border: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.12s;
+  transition: background-color 120ms ease, border-color 120ms ease;
   min-width: 92px;
 }
 /* Hover only on real pointers — iOS Safari "sticky hover" after a tap would

@@ -496,6 +496,27 @@ export function CaseMarkBadges({ marks, k }: { marks: CaseMarks; k: string }) {
   return st ? <TrainerMarkBadge status={st} /> : null;
 }
 
+/** Keep visited panels mounted for closing transitions; unopened cases stay lazy. */
+function CasePickerPanel({ open, id, children }: { open: boolean; id: string; children: ReactNode }) {
+  const [visited, setVisited] = useState(open);
+  if (open && !visited) setVisited(true);
+  return (
+    <div id={id} className={`trainer-picker-panel${open ? ' is-open' : ''}`} inert={!open} aria-hidden={!open}>
+      <div className="trainer-picker-panel-inner">{visited ? children : null}</div>
+    </div>
+  );
+}
+
+function TopThumb({ g, puzzle, set, hasSubLevel }: {
+  g: AlgTopGroup; puzzle: AlgPuzzle; set: string; hasSubLevel: boolean;
+}) {
+  const alg = g.sample.algs.flat()[0]?.alg ?? g.sample.standard ?? '';
+  if (hasSubLevel && puzzle === '3x3') {
+    return <VisualCube loading="lazy" setup={g.sample.setup} algorithm={alg} view="oll" size={44} hideGreySides local />;
+  }
+  return <CaseThumb loading="lazy" puzzle={puzzle} set={set} sticker={g.sample.sticker}
+    alg={alg} setup={g.sample.setup} local size={44} />;
+}
 
 export function CaseTreePicker({
   puzzle, set, cases, selected, onChange, marks, brush, onPaint, showSetName = true,
@@ -518,24 +539,27 @@ export function CaseTreePicker({
     return groupAlgCases(cases);
   }, [cases]);
 
-  const [expanded, setExpanded] = useState<Set<string>>(() => {
-    if (hasSubLevel) return new Set();
-    return new Set(tops.map(t => t.label));
-  });
-  const toggleTop = (label: string) => setExpanded(prev => {
-    const next = new Set(prev);
-    if (next.has(label)) next.delete(label);
-    else next.add(label);
-    return next;
-  });
-
-  const [expandedSubs, setExpandedSubs] = useState<Set<string>>(new Set());
-  const toggleSub = (key: string) => setExpandedSubs(prev => {
-    const next = new Set(prev);
-    if (next.has(key)) next.delete(key);
-    else next.add(key);
-    return next;
-  });
+  const pickerId = useId();
+  const groupsRef = useRef<HTMLDivElement>(null);
+  const [columnCount, setColumnCount] = useState(1);
+  useEffect(() => {
+    const element = groupsRef.current;
+    if (!element) return;
+    const observer = new ResizeObserver(([entry]) => {
+      const width = entry.contentRect.width;
+      setColumnCount(width >= 1100 ? 4 : width >= 800 ? 3 : width >= 520 ? 2 : 1);
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+  const columns = tops.some(top => !top.label) ? 1 : columnCount;
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [expandedSub, setExpandedSub] = useState<string | null>(null);
+  const toggleTop = (label: string) => {
+    setExpanded(prev => prev === label ? null : label);
+    setExpandedSub(null);
+  };
+  const toggleSub = (key: string) => setExpandedSub(prev => prev === key ? null : key);
 
   const painting = !!brush && !!onPaint;
 
@@ -565,28 +589,9 @@ export function CaseTreePicker({
     onChange(next);
   };
 
-  function TopThumb({ g }: { g: AlgTopGroup }) {
-    if (hasSubLevel && puzzle === '3x3') {
-      const firstAlg = g.sample.algs.flat()[0]?.alg ?? g.sample.standard ?? '';
-      // setup 优先:公式带起手转体 / 收尾 AUF 时,inverse(alg) 会把图整体转一格。
-      return <VisualCube loading="lazy" setup={g.sample.setup} algorithm={firstAlg} view="oll" size={44} hideGreySides local />;
-    }
-    return (
-      <CaseThumb loading="lazy"
-        puzzle={puzzle}
-        set={set}
-        sticker={g.sample.sticker}
-        alg={g.sample.algs.flat()[0]?.alg ?? g.sample.standard ?? ''}
-        setup={g.sample.setup}
-        local
-        size={44}
-      />
-    );
-  }
-
   return (
     <div className={`trainer-set-block${painting ? ' is-painting' : ''}`}>
-      <button type="button" className="trainer-set-header" onClick={toggleAll}>
+      <button type="button" className="trainer-set-header" onClick={toggleAll} aria-pressed={allSelected ? true : noneSelected ? false : 'mixed'}>
         <TriCheckbox checked={allSelected} indeterminate={!allSelected && !noneSelected} />
         <span>{tr({ zh: '全选', en: 'Select all'
         })}</span>
@@ -595,46 +600,54 @@ export function CaseTreePicker({
         </span>
       </button>
 
-      {tops.map(top => {
-        const isExpanded = expanded.has(top.label);
+      <div ref={groupsRef} className="trainer-top-groups" style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}>
+      {Array.from({ length: columns }, (_, column) => (
+      <div className="trainer-picker-column" key={column}>
+      {tops.filter((_, index) => index % columns === column).map(top => {
+        const topIndex = tops.indexOf(top);
+        const isExpanded = !top.label || expanded === top.label;
+        const panelId = `${pickerId}-top-${topIndex}`;
         const topSelectedCount = top.allCases.filter(c => selected.has(caseKey(c))).length;
         const topAll = topSelectedCount === top.allCases.length && top.allCases.length > 0;
         const topNone = topSelectedCount === 0;
         return (
-          <div className="trainer-subgroup" key={top.label || '_root'}>
+          <div className={`trainer-subgroup${!top.label ? ' is-ungrouped' : ''}${isExpanded ? ' is-expanded' : ''}`} key={top.label || '_root'}>
             {top.label && (
-              <div className="trainer-subgroup-header">
-                <button
-                  type="button"
-                  className="trainer-chevron-btn"
-                  onClick={(e) => { e.stopPropagation(); toggleTop(top.label); }}
-                  title={isExpanded ? tr({ zh: '折叠', en: 'Collapse'
-                                  }) : tr({ zh: '展开', en: 'Expand'
-                                      })}
-                >
-                  {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                </button>
+              <div className="trainer-subgroup-header" onClick={() => toggleTop(top.label)}>
                 <button
                   type="button"
                   className="trainer-bulk-toggle"
-                  onClick={() => toggleBulk(top.allCases)}
+                  aria-label={`${tr({ zh: '选择', en: 'Select' })} ${top.label}`}
+                  aria-pressed={topAll ? true : topNone ? false : 'mixed'}
+                  onClick={e => { e.stopPropagation(); toggleBulk(top.allCases); }}
                 >
                   <TriCheckbox checked={topAll} indeterminate={!topAll && !topNone} />
-                  <TopThumb g={top} />
+                </button>
+                <button
+                  type="button"
+                  className="trainer-group-expand"
+                  aria-expanded={isExpanded}
+                  aria-controls={panelId}
+                  aria-label={`${tr({ zh: '展开或收起', en: 'Toggle' })} ${top.label}`}
+                  onClick={(e) => { e.stopPropagation(); toggleTop(top.label); }}
+                >
+                  <TopThumb g={top} puzzle={puzzle} set={set} hasSubLevel={hasSubLevel} />
                   <span>{showSetName && `${set.toUpperCase()} `}{set === 'zbll' ? displayZbllToken(top.label) : top.label}</span>
                   <span style={{ color: 'var(--muted-foreground)', fontWeight: 400, fontSize: '0.85rem' }}>
                     ({topSelectedCount}/{top.allCases.length})
                   </span>
+                  <ChevronRight className="trainer-group-chevron" size={16} aria-hidden />
                 </button>
               </div>
             )}
 
-            {isExpanded && (
-              hasSubLevel ? (
+            <CasePickerPanel open={isExpanded} id={panelId}>
+              {hasSubLevel ? (
                 <div className="trainer-sub-subgroup-row">
-                  {Array.from(top.subs.entries()).map(([subLabel, subCases]) => {
+                  {Array.from(top.subs.entries()).map(([subLabel, subCases], subIndex) => {
                     const subKey = `${top.label}/${subLabel}`;
-                    const subExpanded = expandedSubs.has(subKey);
+                    const subExpanded = !subLabel || expandedSub === subKey;
+                    const subPanelId = `${panelId}-sub-${subIndex}`;
                     const subSelectedCount = subCases.filter(c => selected.has(caseKey(c))).length;
                     const subAll = subSelectedCount === subCases.length;
                     const subNone = subSelectedCount === 0;
@@ -646,39 +659,41 @@ export function CaseTreePicker({
                         key={subLabel || '_sub_root'}
                       >
                         {subLabel && (
-                          <div className="trainer-sub-subgroup-header">
-                            <button
-                              type="button"
-                              className="trainer-chevron-btn"
-                              onClick={(e) => { e.stopPropagation(); toggleSub(subKey); }}
-                              title={subExpanded ? tr({ zh: '折叠', en: 'Collapse'
-                                                          }) : tr({ zh: '展开', en: 'Expand'
-                                                              })}
-                            >
-                              {subExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                            </button>
+                          <div className="trainer-sub-subgroup-header" onClick={() => toggleSub(subKey)}>
                             <button
                               type="button"
                               className="trainer-bulk-toggle"
-                              onClick={() => toggleBulk(subCases)}
+                              aria-label={`${tr({ zh: '选择', en: 'Select' })} ${subLabel}`}
+                              aria-pressed={subAll ? true : subNone ? false : 'mixed'}
+                              onClick={e => { e.stopPropagation(); toggleBulk(subCases); }}
                             >
                               <TriCheckbox checked={subAll} indeterminate={!subAll && !subNone} />
+                            </button>
+                            <button
+                              type="button"
+                              className="trainer-group-expand"
+                              aria-expanded={subExpanded}
+                              aria-controls={subPanelId}
+                              aria-label={`${tr({ zh: '展开或收起', en: 'Toggle' })} ${subLabel}`}
+                              onClick={(e) => { e.stopPropagation(); toggleSub(subKey); }}
+                            >
                               <CaseThumb loading="lazy" puzzle={puzzle} set={set} sticker={subCases[0].sticker}
                                 alg={subSampleAlg} setup={subCases[0].setup} size={36} mask={pickerMask} local />
                               <span>{set === 'zbll' ? displayZbllToken(subLabel) : subLabel}</span>
                               <span style={{ color: 'var(--muted-foreground)', fontWeight: 400, fontSize: '0.85rem' }}>
                                 ({subSelectedCount}/{subCases.length})
                               </span>
+                              <ChevronRight className="trainer-group-chevron" size={16} aria-hidden />
                             </button>
                           </div>
                         )}
-                        {subExpanded && (
+                        <CasePickerPanel open={subExpanded} id={subPanelId}>
                           <div className="trainer-case-grid">
                             {subCases.map(c => <CaseCell key={caseKey(c)}
                               c={c} puzzle={puzzle} set={set} selected={selected} onChange={onChange}
                               marks={marks} painting={painting} onPaint={onPaint} />)}
                           </div>
-                        )}
+                        </CasePickerPanel>
                       </div>
                     );
                   })}
@@ -689,11 +704,14 @@ export function CaseTreePicker({
                     c={c} puzzle={puzzle} set={set} selected={selected} onChange={onChange}
                     marks={marks} painting={painting} onPaint={onPaint} />)}
                 </div>
-              )
-            )}
+              )}
+            </CasePickerPanel>
           </div>
         );
       })}
+      </div>
+      ))}
+      </div>
     </div>
   );
 }
