@@ -16,6 +16,7 @@ import {
 import { tr } from '@/i18n/tr';
 import BoolToggle from '@/components/BoolToggle';
 import H2hMarker from './H2hMarker';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const WCA_REGS = 'https://www.worldcubeassociation.org/regulations';
 
@@ -85,8 +86,8 @@ export default function ScheduleView({ slug, isZh, compName, view, detailsExpand
     return (
       <div className="sched-loading">
         <Spinner size={22} />
-        <span>{tr({ zh: '加载赛程…', en: 'Loading schedule…'
-        })}</span>
+        <span><LoadingIndicator>{tr({ zh: '加载赛程…', en: 'Loading schedule…'
+        })}</LoadingIndicator></span>
       </div>
     );
   }

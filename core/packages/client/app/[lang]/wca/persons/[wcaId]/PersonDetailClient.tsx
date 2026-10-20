@@ -37,6 +37,7 @@ import '@/components/persons/persons-misc.css';
 import '@/components/wca-results/attempts-grid.css';
 import { useT } from "@/hooks/useT";
 import { fetchFemalePersonRecords, femaleResultRecordLookup, type FemalePersonRecord } from '@/lib/person-achievements';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const NO_FEMALE_RECORDS: FemalePersonRecord[] = [];
 
@@ -175,7 +176,7 @@ export default function PersonDetailClient() {
     return (
       <div className="wp-page">
         <main className="wp-main">
-          <div className="wp-loading">{t('加载中…', 'Loading…')}</div>
+          <div className="wp-loading"><LoadingIndicator>{t('加载中…', 'Loading…')}</LoadingIndicator></div>
         </main>
       </div>
     );
@@ -207,7 +208,7 @@ export default function PersonDetailClient() {
             {reconError ? (
               <p>{t('加载失败', 'Failed to load')} <button type="button" className="wp-error-retry" onClick={() => setReloadKey(k => k + 1)}>{t('重试', 'Retry')}</button></p>
             ) : nonWcaTimings === null ? (
-              <p>{t('加载中…', 'Loading…')}</p>
+              <p><LoadingIndicator>{t('加载中…', 'Loading…')}</LoadingIndicator></p>
             ) : nonWcaTimings.length === 0 ? (
               <p>{t('暂无起拍表记录', 'No pickup or putdown records yet')}</p>
             ) : (

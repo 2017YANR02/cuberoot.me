@@ -10,6 +10,7 @@ import { ALL_EVENT_IDS, CANCELLED_EVENT_IDS } from '@/lib/event-constants';
 import { apiUrl } from '@/lib/api-base';
 import { tr } from '@/i18n/tr';
 import './best-combos.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 export interface ComboBest {
   rank: number; combos?: string[][]; events?: string[]; comboCount?: number;
@@ -160,7 +161,7 @@ export function BestComboBody({
           <div className="sor-pb-expand-row">
             {loaded < comboCount ? (
               <button type="button" className="sor-pb-expand" disabled={loadingMore} onClick={loadMore}>
-                {loadingMore ? tr({ zh: '加载中…', en: 'Loading…' }) : (isZh ? `加载更多 (${loaded.toLocaleString()}/${comboCount.toLocaleString()})` : `Load more (${loaded.toLocaleString()}/${comboCount.toLocaleString()})`)}
+                {loadingMore ? <LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…' })}</LoadingIndicator> : (isZh ? `加载更多 (${loaded.toLocaleString()}/${comboCount.toLocaleString()})` : `Load more (${loaded.toLocaleString()}/${comboCount.toLocaleString()})`)}
               </button>
             ) : (
               <span className="sor-pb-note">{tr({ zh: '已全部展开', en: 'All shown' })}</span>

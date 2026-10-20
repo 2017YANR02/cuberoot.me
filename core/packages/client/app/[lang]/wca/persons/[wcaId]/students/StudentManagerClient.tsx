@@ -9,6 +9,7 @@ import { useT } from '@/hooks/useT';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { fetchWcaPerson, type WcaPersonProfile } from '@/lib/wca-person-api';
 import '@/components/persons/persons.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 export default function StudentManagerClient() {
   const pathname = usePathname();
@@ -53,7 +54,7 @@ export default function StudentManagerClient() {
     return (
       <div className="wp-page">
         <main className="wp-main">
-          <div className="wp-loading">{t('加载中…', 'Loading…')}</div>
+          <div className="wp-loading"><LoadingIndicator>{t('加载中…', 'Loading…')}</LoadingIndicator></div>
         </main>
       </div>
     );

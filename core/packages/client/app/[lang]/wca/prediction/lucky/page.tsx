@@ -49,6 +49,7 @@ import { LineChart, type Series } from '../_components/charts';
 import '../_components/prediction.css';
 import '../_components/lucky.css';
 import { tr, T } from '@/i18n/tr';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 interface Row {
   ev: typeof EVENTS[number];
@@ -541,7 +542,7 @@ function LuckyLimitPageInner() {
 // nuqs useQueryState 走 next/navigation useSearchParams,需 Suspense 边界。
 export default function LuckyLimitPage() {
   return (
-    <Suspense fallback={<div className="pred-page" />}>
+    <Suspense fallback={<div className="pred-page"><LoadingIndicator /></div>}>
       <LuckyLimitPageInner />
     </Suspense>
   );

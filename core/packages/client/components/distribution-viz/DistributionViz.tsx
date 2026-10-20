@@ -25,6 +25,7 @@ import RidgelineCanvas from './_components/RidgelineCanvas';
 import { loadFlagData, flagDataVersion } from '@/lib/country-flags';
 import { tr } from '@/i18n/tr';
 import './viz.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 interface Props {
   /** 主选手(选手页当前 person) */
@@ -163,7 +164,7 @@ export default function DistributionViz({ wcaId, eventId }: Props) {
       {loading && (
         <div className="loading-overlay">
           <Spinner size={40} className="loading-spinner" />
-          <div className="loading-text">Loading...</div>
+          <div className="loading-text"><LoadingIndicator /></div>
         </div>
       )}
     </div>

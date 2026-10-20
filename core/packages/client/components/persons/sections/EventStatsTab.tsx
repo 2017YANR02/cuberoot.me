@@ -6,6 +6,7 @@ import { ALL_EVENT_IDS } from '@/lib/event-constants';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { SortArrow } from '@/components/SortArrow';
 import type { WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 interface Props {
   results: WcaResultRow[] | null;
@@ -73,7 +74,7 @@ export default function EventStatsTab({ results, comps, isZh }: Props) {
     return out;
   }, [results, comps]);
 
-  if (!rows) return <div className="wp-loading-inline">{t('加载中…', 'Loading…')}</div>;
+  if (!rows) return <div className="wp-loading-inline"><LoadingIndicator>{t('加载中…', 'Loading…')}</LoadingIndicator></div>;
   if (rows.length === 0) return <div className="wp-empty">{t('暂无成绩', 'No results yet')}</div>;
 
   const sorted = rows.slice().sort((a, b) => {

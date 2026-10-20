@@ -27,6 +27,7 @@ import BarRaceChart from '@/components/wca-stats/BarRaceChart';
 import { exportTop10Video, type ExportProgress } from '@/lib/top10-export';
 import './top10_history.css';
 import { tr } from '@/i18n/tr';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 interface PbEvent { d: string; p: string; v: number; c: string }
 interface PersonInfo { name: string; country: string; iso2: string | null }
@@ -489,8 +490,8 @@ export default function Top10HistoryPage({
     })}: {error}</div>;
   }
   if (!index) {
-    return <div className="t10h-status">{tr({ zh: '加载中...', en: 'Loading...'
-    })}</div>;
+    return <div className="t10h-status"><LoadingIndicator>{tr({ zh: '加载中...', en: 'Loading...'
+    })}</LoadingIndicator></div>;
   }
 
   const top1Name = top1Person ? displayCuberName(top1Person.name, isZh) : '';
@@ -569,8 +570,7 @@ export default function Top10HistoryPage({
               <Flag iso2={top1Person.iso2} className="t10h-holder-flag" />
             )}
             <div className="t10h-holder-text">
-              <div className="t10h-holder-name">{top1Name || ((eventLoading || countryLoading) ? tr({ zh: '加载中…', en: 'Loading…'
-                                      }) : '')}</div>
+              <div className="t10h-holder-name">{top1Name || ((eventLoading || countryLoading) ? <LoadingIndicator /> : '')}</div>
               <div className="t10h-holder-sub">
                 {top1Person && (country
                   ? tr({ zh: `保持全国纪录 ${top1DurationDays} 天`, en: `National record holder for ${top1DurationDays} days` })

@@ -5,7 +5,7 @@
 //
 // Server wrapper for /wca/comp/[slug]. CompDetailPage is 'use client' and loads ALL
 // data client-side (fetch + WebSocket), so the server render produces only the empty
-// <Suspense fallback={null}> shell — identical for every slug.
+// <Suspense fallback={<LoadingIndicator />}> shell — identical for every slug.
 //
 // The slug space is unbounded (~17k comps) and Vercel resets the ISR cache on every
 // deploy, so the old dynamicParams=true model re-rendered a Function per first-seen
@@ -17,6 +17,7 @@
 // wca/persons/[wcaId], memo/colpi/[pair], recon/submit/[editId], forum/*.
 import { Suspense } from 'react';
 import CompDetailPage from './CompDetailPage';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 export const dynamicParams = false;
 export function generateStaticParams(): { slug: string }[] {
@@ -25,7 +26,7 @@ export function generateStaticParams(): { slug: string }[] {
 
 export default function Page() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<LoadingIndicator />}>
       <CompDetailPage />
     </Suspense>
   );

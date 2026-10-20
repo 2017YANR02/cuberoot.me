@@ -31,6 +31,7 @@ import { getReconScramble } from '@cuberoot/shared/recon-completion';
 import { VideoCoverThumb } from '@/components/VideoCoverThumb';
 import { SolveValue } from './SolveValue';
 import { AttemptBelow } from './AttemptBelow';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 // 懒挂载弹窗不会阻止静态依赖下载；3D 与解法代码只在展示复盘时加载。
 const ReconPlayerCanvas = lazy(() => import('@/components/recon/ReconPlayerCanvas'));
@@ -402,7 +403,7 @@ function AttemptPopoverBody({
             {reconSolve?.recordType === 'timing' ? (
               <div>{tr({ zh: '起表 / 拍表', en: 'Pickup / putdown' })}: {reconSolve.pickupTime?.toFixed(3)}s / {reconSolve.putdownTime?.toFixed(3)}s</div>
             ) : reconScramble ? (
-              <Suspense fallback={<div style={playerLoadingStyle}>{tr({ zh: '载入复盘…', en: 'Loading…' })}</div>}>
+              <Suspense fallback={<div style={playerLoadingStyle}><LoadingIndicator>{tr({ zh: '载入复盘…', en: 'Loading…' })}</LoadingIndicator></div>}>
                 <div style={playerWrapStyle}>
                   <ReconPlayerCanvas
                     event={reconEvent}
@@ -422,7 +423,7 @@ function AttemptPopoverBody({
                 )}
               </Suspense>
             ) : (
-              <div style={playerLoadingStyle}>{tr({ zh: '载入复盘…', en: 'Loading…' })}</div>
+              <div style={playerLoadingStyle}><LoadingIndicator>{tr({ zh: '载入复盘…', en: 'Loading…' })}</LoadingIndicator></div>
             )}
           </div>
         ) : (

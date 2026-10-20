@@ -10,6 +10,7 @@ import type { ReconAttemptInfo } from '@/lib/recon-attempt-lookup';
 
 // 默认成绩视图随页面加载，避免等 profile 返回后才开始请求代码。
 import ResultsTab from './results/ResultsTab';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const RecordsTab = lazy(() => import('./RecordsTab'));
 const ChampionshipPodiumsTab = lazy(() => import('./ChampionshipPodiumsTab'));
@@ -108,7 +109,7 @@ export default function PersonTabs({ profile, results, comps, liveResults, liveC
         ))}
       </div>
       <div className="wp-tab-body">
-        <Suspense fallback={<div className="wp-loading-inline">{t('加载中…', 'Loading…')}</div>}>
+        <Suspense fallback={<div className="wp-loading-inline"><LoadingIndicator>{t('加载中…', 'Loading…')}</LoadingIndicator></div>}>
           {effectiveActive === 'results' && <ResultsTab profile={profile} results={results} comps={comps} liveResults={liveResults} liveComps={liveComps} reconLookup={reconLookup} isZh={isZh} femaleRecordLookup={femaleRecordLookup} />}
           {effectiveActive === 'records' && <RecordsTab profile={profile} results={results} comps={comps} isZh={isZh} />}
           {effectiveActive === 'podiums' && hasPodiums && <ChampionshipPodiumsTab rows={podiumRows!} isZh={isZh} />}

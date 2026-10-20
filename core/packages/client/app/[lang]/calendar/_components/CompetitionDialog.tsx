@@ -14,6 +14,7 @@ import { formatDateRangeIso } from '@/lib/wca-date';
 import { tr, useLang } from '@/i18n/tr';
 import { addDaysToKey } from '../_lib/format';
 import { COMPETITION_SOURCE_LABELS, type CalendarCompetition } from '../_lib/competitions';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 export default function CompetitionDialog({ competition: c, onClose }: { competition: CalendarCompetition; onClose: () => void }) {
   const isZh = useLang() === 'zh';
@@ -53,7 +54,7 @@ export default function CompetitionDialog({ competition: c, onClose }: { competi
           <strong>{formatDateRangeIso(c.start_date, c.end_date)}</strong>
           <p className="cal-hint">{tr({ zh: '日期按比赛当地日期显示；具体轮次时间以比赛赛程为准。', en: 'Dates follow the competition’s local calendar. See its schedule for round times.' })}</p>
           <div className="cal-competition-location"><MapPin size={18} aria-hidden /><span>{city}{address && <><br />{address}</>}</span></div>
-          {loading && <p className="cal-hint" role="status">{tr({ zh: '正在加载场馆地址…', en: 'Loading venue address…' })}</p>}
+          {loading && <p className="cal-hint" role="status"><LoadingIndicator>{tr({ zh: '正在加载场馆地址…', en: 'Loading venue address…' })}</LoadingIndicator></p>}
           {!loading && !address && <p className="cal-hint">{tr({ zh: '暂未取得详细地址，请在比赛官网核对场馆。', en: 'The detailed address is unavailable. Check the venue on the official competition page.' })}</p>}
           <div className="cal-pop-actions">
             <AppLink className="cal-btn" href={`/wca/comp/${c.id}`} prefetch={false}>{tr({ zh: '比赛详情与赛程', en: 'Details & schedule' })}</AppLink>

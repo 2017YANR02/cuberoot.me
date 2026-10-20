@@ -12,6 +12,7 @@
  * within 800px of it, then mounts the parsed content. Stays mounted forever.
  */
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 interface LongformProps {
   text: string;
@@ -132,7 +133,6 @@ export function Longform({ text, eager = false }: LongformProps) {
       className="pred-longform-placeholder"
       style={{ minHeight: estHeight, color: 'var(--muted-foreground)', fontSize: 12, padding: 24 }}
     >
-      Loading chapter…
-    </div>
+      <LoadingIndicator /></div>
   );
 }

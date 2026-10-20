@@ -31,7 +31,7 @@ interface Props {
   rowH: number;
   showN: number;
   barFrac?: number;
-  emptyText?: string;
+  emptyText?: ReactNode;
 }
 
 export default function BarRaceChart({

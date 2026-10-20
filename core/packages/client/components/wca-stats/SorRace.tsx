@@ -26,6 +26,7 @@ import BarRaceChart from '@/components/wca-stats/BarRaceChart';
 import { tr } from '@/i18n/tr';
 import './top10_history.css';
 import './sor-race.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 interface FrameRow { p: string; v: number; r: number; c?: string }
 interface DayFrame { d: string; rows: FrameRow[] }   // d = 'YYYY-MM-DD'(逐比赛日帧)
@@ -196,7 +197,7 @@ export default function SorRace() {
     return <div className="t10h-status">{tr({ zh: '加载失败', en: 'Failed to load' })}: {error}</div>;
   }
   if (!index) {
-    return <div className="t10h-status">{tr({ zh: '加载中...', en: 'Loading...' })}</div>;
+    return <div className="t10h-status"><LoadingIndicator>{tr({ zh: '加载中...', en: 'Loading...' })}</LoadingIndicator></div>;
   }
 
   const curDate = curFrame?.d ?? '';
@@ -240,7 +241,7 @@ export default function SorRace() {
             {leaderInfo?.iso2 && <Flag iso2={leaderInfo.iso2} className="t10h-holder-flag" />}
             <div className="t10h-holder-text">
               <div className="t10h-holder-name">
-                {leaderInfo ? displayCuberName(leaderInfo.name, isZh) : (loading ? tr({ zh: '加载中…', en: 'Loading…' }) : '')}
+                {leaderInfo ? displayCuberName(leaderInfo.name, isZh) : (loading ? <LoadingIndicator /> : '')}
               </div>
               <div className="t10h-holder-sub">
                 {leader && tr({
@@ -287,7 +288,7 @@ export default function SorRace() {
           rowH={rowH}
           showN={SHOW_N}
           emptyText={loading
-            ? tr({ zh: '加载中...', en: 'Loading...' })
+            ? <LoadingIndicator />
             : tr({ zh: '该范围暂无数据', en: 'No data for this scope' })}
         />
       </div>

@@ -12,6 +12,7 @@ import { CompCell } from '@/components/CompCell/CompCell';
 import { compLinkProps } from '@/lib/comp-link';
 import { SortArrow } from '@/components/SortArrow';
 import type { WcaPersonProfile, WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 interface Props {
   profile: WcaPersonProfile;
@@ -60,7 +61,7 @@ export default function CompsTab({ profile, results, comps, isZh }: Props) {
     return m;
   }, [comps]);
 
-  if (!comps) return <div className="wp-loading-inline">{t('加载比赛历史…', 'Loading competitions…')}</div>;
+  if (!comps) return <div className="wp-loading-inline"><LoadingIndicator>{t('加载比赛历史…', 'Loading competitions…')}</LoadingIndicator></div>;
   if (comps.length === 0) return <div className="wp-empty">{t('暂无比赛记录', 'No competitions')}</div>;
 
   const total = comps.length;

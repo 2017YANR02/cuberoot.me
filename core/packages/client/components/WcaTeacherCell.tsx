@@ -34,6 +34,7 @@ import { ALL_EVENT_IDS } from '@/lib/event-constants';
 import { fetchWcaPersonResults } from '@/lib/wca-person-api';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import './wca-teacher-cell.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const LOOKUP_CHUNK_SIZE = 100;
 const MAX_BATCH_STUDENTS = 1000;
@@ -819,7 +820,7 @@ export function WcaStudentAdder({
               </p>
             )}
             {selectedStudent && loadingEvents && (
-              <p className="wca-teacher-dialog-status">{tr({ zh: '正在读取项目…', en: 'Loading events…' })}</p>
+              <p className="wca-teacher-dialog-status"><LoadingIndicator>{tr({ zh: '正在读取项目…', en: 'Loading events…' })}</LoadingIndicator></p>
             )}
             {(selectedStudent || namedStudentName.trim()) && !loadingEvents && (
               <>
@@ -1239,7 +1240,7 @@ export function WcaNamedStudentCell({ student, teacherWcaId, directory, isZh, on
             )}
             {selectedStudent && competitionEventState === 'loading' && (
               <p className="wca-teacher-dialog-status" role="status">
-                {tr({ zh: '正在读取参赛项目…', en: 'Loading competition events…' })}
+                <LoadingIndicator>{tr({ zh: '正在读取参赛项目…', en: 'Loading competition events…' })}</LoadingIndicator>
               </p>
             )}
             {selectedStudent && competitionEventState === 'error' && (

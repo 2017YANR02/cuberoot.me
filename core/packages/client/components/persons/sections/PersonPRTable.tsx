@@ -14,6 +14,7 @@ import { countPodiumByEvent } from '../logic/podium';
 import { isMbldEvent, computeMbfMo3 } from '@/lib/mbf-average';
 import { UnofficialMark } from '@/components/UnofficialMark';
 import { WcaTeacherCell, WcaTeacherColumnHeader, useWcaTeachers } from '@/components/WcaTeacherCell';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 // WCA 大洲 id(continentId,带前缀 _)→ 本地化短名,供 SoCR 的 scope 标签用.
 const CONTINENT_NAME: Record<string, { zh: string; en: string; }> = {
@@ -130,7 +131,7 @@ export default function PersonPRTable({ profile, results, isZh, inclCancelled, m
   return (
     <section className="wp-card wp-pr-card">
       {mode === 'historical' && histLoading && (
-        <div className="wp-loading-inline">{t('加载历史排名…', 'Loading historical ranks…')}</div>
+        <div className="wp-loading-inline"><LoadingIndicator>{t('加载历史排名…', 'Loading historical ranks…')}</LoadingIndicator></div>
       )}
       {mode === 'historical' && histError && (
         <div className="wp-error-inline">{t('历史排名加载失败', 'Failed to load historical ranks')}: {histError}</div>

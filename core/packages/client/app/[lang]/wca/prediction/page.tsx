@@ -31,6 +31,7 @@ import { useHashHighlight } from '@/hooks/useHashHighlight';
 import '@/components/hash-highlight.css';
 import './_components/prediction.css';
 import { tr } from '@/i18n/tr';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 /** 取最后一行 (物理下界单次) 的 T 值 — 优先用显式 t_phys_single, 其次 decomp 末行计算 */
 function physicalFloorSingle(eventId: string): number | null {
@@ -130,8 +131,7 @@ export default function PredictionPage() {
   });
 
   if (err) return <div className="pred-loading">Failed to load: {err}</div>;
-  if (!data) return <div className="pred-loading">Loading {tr({ zh: '加载中…', en: '…'
-})}</div>;
+  if (!data) return <div className="pred-loading"><LoadingIndicator /></div>;
 
   const toggleLang = () => {
     const n = isZh ? 'en' : 'zh';
