@@ -66,7 +66,7 @@ describe('complete shared solver hints', () => {
     expect(host.querySelector('[data-player-setup]')?.getAttribute('data-player-setup')).toBe('R');
     expect(host.querySelector('[data-player-alg]')?.getAttribute('data-player-alg')).toBe('R U');
     await act(async () => host.querySelector<HTMLButtonElement>('.sml-copy')!.click());
-    expect(navigator.clipboard.writeText).toHaveBeenLastCalledWith('R\n\nR // Cross\nU // F2L-1');
+    expect(navigator.clipboard.writeText).toHaveBeenLastCalledWith('R\n\nR // Cross\nU // F1');
     await act(async () => root.render(createElement(TimerStepSolve, { scramble: 'F', isZh: false })));
     expect(host.querySelector('[data-player-alg]')).toBeNull();
     await act(async () => vi.runOnlyPendingTimers());

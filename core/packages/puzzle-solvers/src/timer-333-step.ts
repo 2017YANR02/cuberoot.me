@@ -387,10 +387,10 @@ export type Timer333SolverLanguage = 'en' | 'zh' | 'zh-Hans';
 const STAGE_LABELS: Readonly<Record<MethodId, Readonly<Record<string, { en: string; zh: string }>>>> = {
   cfop: {
     Cross: { en: 'Cross', zh: '十字' },
-    'F2L-1': { en: 'F2L-1', zh: 'F2L-1' },
-    'F2L-2': { en: 'F2L-2', zh: 'F2L-2' },
-    'F2L-3': { en: 'F2L-3', zh: 'F2L-3' },
-    'F2L-4': { en: 'F2L-4', zh: 'F2L-4' },
+    'F2L-1': { en: 'F1', zh: 'F1' },
+    'F2L-2': { en: 'F2', zh: 'F2' },
+    'F2L-3': { en: 'F3', zh: 'F3' },
+    'F2L-4': { en: 'F4', zh: 'F4' },
   },
   roux: {
     'Step 1': { en: 'FB', zh: 'FB' },

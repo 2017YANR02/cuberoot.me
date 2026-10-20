@@ -476,7 +476,15 @@ html[data-theme='dark'] .stsv {
 .stsv-sols { width: 100%; min-width: 0; }
 .stsv-sols-count { color: var(--sv-text-mute); font-size: 12px; margin-bottom: 6px; }
 .stsv-empty { color: var(--sv-text-mute); font-size: 13px; padding: 6px 0; }
-.stsv-solution-controls { display: flex; align-items: center; gap: 8px; }
+.stsv-solution-controls { position: relative; display: flex; align-items: center; gap: 8px; }
+.stsv-sol-rotation, .stsv-sol-prefix { color: var(--accent); }
+.stsv-solution-controls > .stsv-sol-orientation {
+  position: absolute;
+  right: 22px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.stsv-solution-select .compact-select-current { padding-right: 36px; }
 .stsv-sol-prefix,
 .stsv-solution-controls > .stsv-sol-yrot {
   flex-shrink: 0;
@@ -521,11 +529,11 @@ html[data-theme='dark'] .stsv {
 }
 .stsv-solution-menu .stsv-sol-option {
   display: grid;
-  grid-template-columns: minmax(max-content, 1fr) 3ch;
+  grid-template-columns: minmax(max-content, 1fr) 3ch max-content;
 }
 /* 带槽位色块时有三项内容，不能把公式挤进步数列并让步数换行。 */
 .stsv-solution-menu .stsv-sol-option:has(> .stsv-sol-len:nth-child(3)) {
-  grid-template-columns: max-content minmax(max-content, 1fr) 3ch;
+  grid-template-columns: max-content minmax(max-content, 1fr) 3ch max-content;
 }
 .stsv-solution-menu .stsv-sol-option code {
   white-space: nowrap;
@@ -663,3 +671,17 @@ html[data-theme='dark'] .stsv {
   .stsv-result.stsv-result-expanded { grid-template-columns: minmax(0, 1fr); }
   .stsv-result-expanded > .stsv-sols { grid-column: 1; grid-row: 2; }
 }
+.stsv-sol-orientation {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-height: 32px;
+  padding: 4px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+}
+.stsv-sol-orientation:hover { background: var(--accent-soft); }
+.stsv-sol-orientation:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

@@ -27,7 +27,8 @@ import { Spinner } from './Spinner';
 import CuberReconPlayer from './CuberReconPlayer';
 import type { ReconPlayerHandle } from './recon/ReconPlayerBase';
 import { SubsetColorPicker, useSubsetSelection, COLOR_NAME, type ColorLetter } from './TimerColorSubsetPicker';
-import { CUBE_FILL, CUBE_ON_FILL, type CubeFace } from '@cuberoot/puzzle-render-core/support/cube-colors';
+import { CUBE_FILL, CUBE_ON_FILL, CUBE_COLOR_LETTER_FOR_FACE, type CubeFace } from '@cuberoot/puzzle-render-core/support/cube-colors';
+import { orientedFaceColors } from '@cuberoot/shared/timer';
 import CubeColorChip from './CubeColorChip';
 import { useModalBackdrop } from './useModalDismiss';
 import { usePopoverDismiss } from './usePopoverDismiss';
@@ -37,7 +38,7 @@ import { createRustCrossPool, FR_NOT_HTR, HTR_NOT_DR, HTR2_NOT_HTR, type MovesTi
 import { onXCrossProgress, type XCrossProgress } from './stage-solver/rust-cross-tables';
 import { getRustCrossPool, dropRustCrossPool, isRustCrossPoolReady, poolSizeForDevice, type PoolNeed } from './stage-solver/rust-cross-pool';
 import { normalizeWcaScramble as normalizeScramble } from '@cuberoot/shared/normalize-wca-scramble';
-import { bestErgonomicOrientationIndex, rotateSolutionY, Y_ROT_LABEL } from './stage-solver/rotate-solution';
+import { bestErgonomicOrientationIndex, rotateSolutionY } from './stage-solver/rotate-solution';
 import { VARIANT_STAGES } from '@cuberoot/shared/timer/scramble-variants';
 import { countQtm } from '@cuberoot/shared/scramble-length';
 import './StageSolver.css';
@@ -1122,6 +1123,16 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   const selSolAlg = moves && moves.sols.length > 0
     ? rotateSolutionY(moves.sols[selectedSolIndex].m, rowRot[selectedSolIndex] ?? 0)
     : null;
+  const renderOrientation = (alg: string) => {
+    const shown = orientedFaceColors(splitLeadRot(alg).lead);
+    return <CubeColorChip localize={(copy) => t(copy.zh, copy.en)} className="cube-orientation-chip"
+      colors={`${CUBE_COLOR_LETTER_FOR_FACE[shown.U]}${CUBE_COLOR_LETTER_FOR_FACE[shown.F]}`} />;
+  };
+  const orientationButton = (i: number, alg: string) => (
+    <button type="button" className="stsv-sol-orientation"
+      aria-label={t('切换 y 预转体', 'Toggle y pre-rotation')}
+      onClick={() => cycleRot(i)}>{renderOrientation(alg)}</button>
+  );
   const solutionItems = moves?.sols.map((sol, i) => {
     const alg = rotateSolutionY(sol.m, rowRot[i] ?? 0);
     return {
@@ -1129,11 +1140,11 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
       label: <span className="stsv-sol-option">
         {sol.c && slotCombos.length >= 2 && renderSolSlots(sol.c)}
         <code>
-          {splitLeadRot(sol.m).lead && `${splitLeadRot(sol.m).lead} `}
-          {!expandedSolutions && <span className="stsv-sol-yrot">{Y_ROT_LABEL[rowRot[i] ?? 0] || null}</span>}
-          {` ${splitLeadRot(alg).body}`}
+          {splitLeadRot(alg).lead && <span className="stsv-sol-rotation">{splitLeadRot(alg).lead} </span>}
+          {splitLeadRot(alg).body}
         </code>
         <span className="stsv-sol-len">{moveLen(alg)}</span>
+        {!expandedSolutions && renderOrientation(alg)}
       </span>,
     };
   }) ?? [];
@@ -1546,30 +1557,19 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                       <div className="stsv-solution-list" aria-label={t('解法', 'Solutions')}>
                         {solutionItems.map((item, i) => (
                           <div className={`stsv-solution-row${i === selectedSolIndex ? ' is-selected' : ''}`} key={item.value}>
-                            <button type="button" className="stsv-sol-yrot"
-                              aria-label={t('切换 y 预转体', 'Toggle y pre-rotation')}
-                              onClick={() => cycleRot(i)}>{Y_ROT_LABEL[rowRot[i] ?? 0] || 'y0'}</button>
                             <button type="button" className="stsv-solution-choice" aria-pressed={i === selectedSolIndex}
                               onClick={() => {
                                 selectSol(i, true);
                                 copySol(rotateSolutionY(moves.sols[i].m, rowRot[i] ?? 0));
                               }}>{item.label}</button>
+                            {orientationButton(i, rotateSolutionY(moves.sols[i].m, rowRot[i] ?? 0))}
                           </div>
                         ))}
                       </div>
                     ) : <div ref={solutionControlsRef} className="stsv-solution-controls">
-                      {splitLeadRot(moves.sols[selectedSolIndex].m).lead && (
-                        <code className="stsv-sol-prefix">{splitLeadRot(moves.sols[selectedSolIndex].m).lead}</code>
+                      {selSolParts?.lead && (
+                        <code className="stsv-sol-prefix">{selSolParts.lead}</code>
                       )}
-                      <button
-                        type="button"
-                        className="stsv-sol-yrot"
-                        onClick={() => cycleRot(selectedSolIndex)}
-                        title={t('切换预转体:y → y2 → y′ → 无(换个朝向做同一套公式)', 'Toggle pre-rotation: y → y2 → y′ → none (same solve, different grip)')}
-                        aria-label={t('切换 y 预转体', 'Toggle y pre-rotation')}
-                      >
-                        {Y_ROT_LABEL[rowRot[selectedSolIndex] ?? 0] || 'y0'}
-                      </button>
                       <CompactSelect
                         className="stsv-solution-select"
                         showArrow
@@ -1587,6 +1587,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                           copySol(rotateSolutionY(moves.sols[i].m, rowRot[i] ?? 0));
                         }}
                       />
+                      {orientationButton(selectedSolIndex, selSolAlg ?? '')}
                     </div>}
                   </>
                 )}
