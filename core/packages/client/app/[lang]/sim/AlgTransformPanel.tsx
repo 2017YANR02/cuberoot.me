@@ -160,8 +160,6 @@ export default function AlgTransformPanel({ text, setup, order, onApply, editing
         disabled={!enabled && !editing} onClick={() => { onEditingChange(!editing); setSelected(null); setMenuOpen(false); }}>
         <PencilLine size={14} />{editing ? t('完成改写', 'Done editing') : t('改一步', 'Edit move')}
       </button>
-    </div>
-    <div className="sim-player-tools sim-player-tools-row">
       <select className="sim-transform-select" aria-label={t('换朝向', 'Orientation')} value="" disabled={!transformEnabled}
         onChange={event => {
           const rotation = new Move(event.target.value);
