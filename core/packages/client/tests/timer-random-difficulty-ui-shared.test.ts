@@ -66,6 +66,9 @@ describe('shared random-difficulty timer UI', () => {
     await act(async () => root.render(createElement(ConfigHarness)));
     expect(host.querySelector('select')).toBeNull();
     await open();
+    expect(document.querySelector('.timer-room-overlay')).toBeNull();
+    expect(document.body.style.overflow).not.toBe('hidden');
+    expect(document.querySelector<HTMLElement>('[role="dialog"]')!.style.visibility).toBe('visible');
     expect(document.querySelector('select[aria-label="Generate by difficulty"]')).toBeNull();
     expect(document.querySelector('.pp-trigger')).not.toBeNull();
     expect(document.querySelectorAll('input[type="range"]')).toHaveLength(2);

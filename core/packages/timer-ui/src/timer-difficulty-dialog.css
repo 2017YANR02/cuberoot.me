@@ -20,7 +20,17 @@
 }
 .timer-difficulty-trigger:disabled,
 .timer-difficulty-actions button:disabled { opacity: .5; cursor: default; }
-.timer-room-dialog.timer-difficulty-dialog { width: min(100%, 460px); }
+.timer-room-dialog.timer-difficulty-dialog {
+  /* anchored-panel: clamped (trigger geometry and viewport bounds in TimerDifficultyDialog). */
+  position: fixed;
+  z-index: 80;
+  visibility: hidden;
+  width: min(380px, calc(100vw - 16px));
+  max-height: calc(100dvh - 16px);
+  box-sizing: border-box;
+  background: var(--popover);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--foreground) 14%, transparent);
+}
 .timer-difficulty-dialog .timer-random-difficulty-body,
 .timer-difficulty-dialog .timer-wca-difficulty-body {
   display: flex;

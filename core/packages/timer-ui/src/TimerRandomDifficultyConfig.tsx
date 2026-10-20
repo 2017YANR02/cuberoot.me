@@ -107,6 +107,7 @@ export function TimerRandomDifficultyConfig({
   toggleSlot,
 }: TimerRandomDifficultyConfigProps) {
   const [draft, setDraft] = useState<Partial<TimerRandomDifficultySettings> | null>(null);
+  const difficultyTriggerRef = useRef<HTMLButtonElement>(null);
   const settings = { ...savedSettings, ...draft };
   const onChange = (patch: Partial<TimerRandomDifficultySettings>) => {
     if (draft !== null) setDraft(current => current === null ? null : { ...current, ...patch });
@@ -194,9 +195,9 @@ export function TimerRandomDifficultyConfig({
   }, [settings.genDiffOn, variant, stage, mMin, mMax, allowed.length]);
 
   const diffToggle = (
-    <button type="button" className="timer-difficulty-trigger" aria-haspopup="dialog"
+    <button ref={difficultyTriggerRef} type="button" className="timer-difficulty-trigger" aria-haspopup="dialog"
       aria-expanded={draft !== null} data-active={savedSettings.genDiffOn || undefined}
-      onClick={() => setDraft({ genDiffOn: true })} disabled={disabled}>
+      onClick={() => setDraft(draft ? null : { genDiffOn: true })} disabled={disabled}>
       {text(COPY.difficulty)}
     </button>
   );
@@ -213,7 +214,7 @@ export function TimerRandomDifficultyConfig({
       {toggleSlot && createPortal(diffToggle, toggleSlot)}
       {!toggleSlot && diffToggle}
       {draft !== null && (
-        <TimerDifficultyDialog language={language} disabled={disabled} onClose={() => setDraft(null)}
+        <TimerDifficultyDialog anchorRef={difficultyTriggerRef} language={language} disabled={disabled} onClose={() => setDraft(null)}
           onApply={() => { persist(draft); setDraft(null); }}
           onClear={() => { persist({ genDiffOn: false }); setDraft(null); }}>
           <div className="timer-random-difficulty-config">

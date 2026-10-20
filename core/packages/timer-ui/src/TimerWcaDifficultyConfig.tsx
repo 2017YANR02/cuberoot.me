@@ -16,6 +16,7 @@ import {
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -86,6 +87,7 @@ export function TimerWcaDifficultyConfig({
   const [catalog, setCatalog] = useState<TimerWcaDifficultyCatalog>(EMPTY_CATALOG);
   const [coverage, setCoverage] = useState<TimerWcaDifficultyCoverage>('idle');
   const [draft, setDraft] = useState<Partial<TimerWcaDifficultySettings> | null>(null);
+  const difficultyTriggerRef = useRef<HTMLButtonElement>(null);
   const settings = { ...savedSettings, ...draft };
   const onChange = (patch: Partial<TimerWcaDifficultySettings>) => {
     if (draft !== null) setDraft(current => current === null ? null : { ...current, ...patch });
@@ -166,9 +168,9 @@ export function TimerWcaDifficultyConfig({
   const colorOption = timerColorSubsetOption(normalized.wcaDiffColors);
 
   const difficultyToggle = (
-    <button type="button" className="timer-difficulty-trigger" aria-haspopup="dialog"
+    <button ref={difficultyTriggerRef} type="button" className="timer-difficulty-trigger" aria-haspopup="dialog"
       aria-expanded={draft !== null} data-active={(!model.locked && savedSettings.wcaDifficultyOn) || undefined}
-      onClick={() => setDraft({ wcaDifficultyOn: true })} disabled={disabled}>
+      onClick={() => setDraft(current => current ? null : { wcaDifficultyOn: true })} disabled={disabled}>
       {labels.difficulty}
     </button>
   );
@@ -196,7 +198,7 @@ export function TimerWcaDifficultyConfig({
       {toggleSlot && createPortal(difficultyToggle, toggleSlot)}
       {mergeSlot && createPortal(mergeControl, mergeSlot)}
       {draft !== null && (
-        <TimerDifficultyDialog language={language} disabled={disabled} canApply={!model.locked}
+        <TimerDifficultyDialog anchorRef={difficultyTriggerRef} language={language} disabled={disabled} canApply={!model.locked}
           onClose={() => setDraft(null)}
           onApply={() => { persist(draft); setDraft(null); }}
           onClear={() => { persist({ wcaDifficultyOn: false }); setDraft(null); }}>
