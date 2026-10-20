@@ -9,6 +9,7 @@ import { MutationMessage, teachingErrorMessage, teachingRoleLabel } from '@/comp
 import WeeklyReportSections, { teachingVisibilityLabel } from '@/components/teaching/WeeklyReportSections';
 import { useT } from '@/hooks/useT';
 import { getLearnerTeachingWeeklyReport } from '@/lib/teaching-saas-api';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 export default function LearnerReportDetailPage() {
   const params = useParams<{ orgSlug: string; studentId: string; reportId: string }>();
@@ -34,7 +35,7 @@ function ReportContent({ orgSlug, studentId, reportId }: { orgSlug: string; stud
   useEffect(() => { void load(); }, [load]);
 
   if (error) return <MutationMessage message={error} error />;
-  if (!report?.aggregate) return <p aria-busy="true">{t('正在加载每周报告…', 'Loading weekly report…')}</p>;
+  if (!report?.aggregate) return <p aria-busy="true"><LoadingIndicator>{t('正在加载每周报告…', 'Loading weekly report…')}</LoadingIndicator></p>;
 
   return (
     <>

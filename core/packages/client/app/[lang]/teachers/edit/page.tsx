@@ -9,6 +9,7 @@ import { tr } from '@/i18n/tr';
 import { nextQuery, useAuthUser, useIsAdmin, useOwnerKey } from '@/lib/auth-store';
 import { fetchMyTeacherDirectory, fetchTeacherDirectory, type TeacherDirectoryEntry } from '@/lib/teacher-directory-api';
 import TeacherDirectoryEditor from '../TeacherDirectoryEditor';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 function PageBackRow() {
   return <div className="teacher-editor-back-row"><BackHome /></div>;
@@ -51,7 +52,7 @@ function TeacherDirectoryEditClient() {
   if (!user) {
     return <main className="teacher-editor-page"><PageBackRow /><div className="directory-editor-state"><p className="directory-kicker">{tr({ zh: '创建教学资料', en: 'Create a teaching profile' })}</p><h1>{tr({ zh: '先登录，再完善你的资料', en: 'Sign in to build your profile' })}</h1><p>{tr({ zh: '资料将保存在你的账号下，可以随时修改照片、履历和联系方式。', en: 'Your photos, teaching history, and contact details stay editable from your account.' })}</p><AppLink href={`/account${nextQuery(pathname)}`} prefetch={false} className="directory-primary-button">{tr({ zh: '登录', en: 'Sign in' })}</AppLink></div></main>;
   }
-  if (loading) return <main className="teacher-editor-page"><PageBackRow /><p className="directory-state">{tr({ zh: '正在加载资料…', en: 'Loading the profile…' })}</p></main>;
+  if (loading) return <main className="teacher-editor-page"><PageBackRow /><p className="directory-state"><LoadingIndicator>{tr({ zh: '正在加载资料…', en: 'Loading the profile…' })}</LoadingIndicator></p></main>;
   if (notFound) return <main className="teacher-editor-page"><PageBackRow /><div className="directory-editor-state"><h1>{tr({ zh: '找不到可编辑的资料', en: 'This profile is not available to edit' })}</h1><AppLink href="/teachers" className="directory-primary-button">{tr({ zh: '查看名录', en: 'View directory' })}</AppLink></div></main>;
   if (deleted) return <main className="teacher-editor-page"><PageBackRow /><div className="directory-editor-state"><h1>{tr({ zh: '资料已删除', en: 'Profile deleted' })}</h1><AppLink href="/teachers" className="directory-primary-button">{tr({ zh: '查看名录', en: 'View directory' })}</AppLink></div></main>;
 

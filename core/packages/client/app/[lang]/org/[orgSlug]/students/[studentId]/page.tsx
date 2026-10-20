@@ -10,6 +10,7 @@ import OrgWorkspace from '../../../_components/OrgWorkspace';
 import TeacherAssignmentManager from '../../../_components/TeacherAssignmentManager';
 import StudentAccountBindingManager from '../../../_components/StudentAccountBindingManager';
 import { entityStatusLabel, MutationMessage, teachingErrorMessage } from '../../../_components/OrgUi';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const MEMBER_OPTION_LIMIT = 100;
 
@@ -51,7 +52,7 @@ function StudentDetail({ orgSlug, studentId, role }: { orgSlug: string; studentI
   }, [canManageAssignments, orgSlug, t]);
 
   if (error) return <MutationMessage message={error} error />;
-  if (!student) return <p aria-busy="true">{t('正在加载学员…', 'Loading student…')}</p>;
+  if (!student) return <p aria-busy="true"><LoadingIndicator>{t('正在加载学员…', 'Loading student…')}</LoadingIndicator></p>;
 
   return (
     <>

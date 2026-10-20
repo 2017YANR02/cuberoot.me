@@ -42,6 +42,7 @@ import { PlatformReferenceField } from './PlatformReferenceField';
 import { PlatformStructuredField } from './PlatformStructuredField';
 import { renderArticleMarkdown } from '@/lib/article-markdown';
 import { platformLocalDateTime, platformMajorToMinor, platformMinorToMajor } from '@/lib/platform-commerce-fields';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type FieldKind = 'text' | 'textarea' | 'number' | 'rating' | 'date' | 'datetime-local' | 'tel' | 'url' | 'select' | 'boolean' | 'lines' | 'json' | 'structured' | 'markdown' | 'money';
 
@@ -1510,7 +1511,7 @@ function PlatformOrderRefunds({ entity, orderId, admin = false, manualFallback, 
   }
   const labels: Record<string, string> = { requested: t('等待平台审核', 'Awaiting platform review'), pending: t('支付渠道处理中', 'Payment provider processing'), succeeded: t('退款成功', 'Refund completed'), failed: t('退款异常，需平台处理', 'Refund issue: platform review required'), cancelled: t('退款申请已拒绝', 'Refund request declined'), chargeback: t('支付争议处理中', 'Payment dispute in progress') };
   return <section className="platform-domain-actions"><h2>{t('退款', 'Refunds')}</h2>
-    {loading ? <p role="status" className="platform-domain-note">{t('正在查询退款状态…', 'Loading refund status…')}</p> : null}
+    {loading ? <p role="status" className="platform-domain-note"><LoadingIndicator>{t('正在查询退款状态…', 'Loading refund status…')}</LoadingIndicator></p> : null}
     {items.map(item => <div key={item.id} className="platform-domain-stack"><p><strong>{labels[item.status] ?? t('等待确认', 'Awaiting confirmation')}</strong> {new Intl.NumberFormat(undefined, { style: 'currency', currency: item.currency }).format(Number(item.amountMinor) / 100)}</p><p className="platform-domain-note">{item.reasonCode}</p>{item.rejectionReason ? <p>{t('拒绝原因：', 'Declined because: ')}{item.rejectionReason}</p> : null}
       {item.approvedAt && item.status !== 'succeeded' ? <p className="platform-domain-note">{t('已批准的退款正在核对支付渠道结果。收到成功结果前，不视为退款完成。', 'The approved refund is being reconciled with the payment provider. It is complete only after success is confirmed.')}</p> : null}
       {item.failureCode ? <p className="platform-domain-note">{t('渠道暂未确认完成，平台将继续查询。', 'Provider completion is not confirmed; the platform will continue checking.')}</p> : null}

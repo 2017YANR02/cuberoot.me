@@ -18,6 +18,7 @@ import {
 import TrainingAssignmentForm from '../../_components/TrainingAssignmentForm';
 import OrgWorkspace from '../../_components/OrgWorkspace';
 import { entityStatusLabel, MutationMessage, TeachingPagination, teachingErrorMessage, useOperationKey, useTeachingPage } from '../../_components/OrgUi';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const PAGE_SIZE = 25;
 const OPTION_LIMIT = 100;
@@ -66,7 +67,7 @@ function TrainingContent({ orgSlug, page, role }: { orgSlug: string; page: numbe
     <>
       <h2>{t('训练任务', 'Training assignments')}</h2>
       <p className="org-lead">{t('训练工具继续使用主站已有的计时器、预判训练和公式训练；这里仅安排任务、查看证据和批改。', 'Existing main-site timer, prediction, and algorithm tools remain canonical. This workspace only assigns work, reviews evidence, and gives feedback.')}</p>
-      {assignments.loading ? <p aria-busy="true">{t('正在加载…', 'Loading…')}</p> : assignments.error ? <MutationMessage message={assignments.error} error /> : !assignments.result?.items.length ? (
+      {assignments.loading ? <p aria-busy="true"><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p> : assignments.error ? <MutationMessage message={assignments.error} error /> : !assignments.result?.items.length ? (
         <p className="org-empty">{t('还没有可见训练任务。', 'No training assignments are visible yet.')}</p>
       ) : (
         <div className="org-list">
@@ -85,7 +86,7 @@ function TrainingContent({ orgSlug, page, role }: { orgSlug: string; page: numbe
 
       <section className="org-section">
         <h2>{t('训练模板', 'Training templates')}</h2>
-        {templates.loading ? <p aria-busy="true">{t('正在加载…', 'Loading…')}</p> : templates.error ? <MutationMessage message={templates.error} error /> : !templates.result?.items.length ? (
+        {templates.loading ? <p aria-busy="true"><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p> : templates.error ? <MutationMessage message={templates.error} error /> : !templates.result?.items.length ? (
           <p className="org-empty">{t('还没有训练模板。', 'No training templates yet.')}</p>
         ) : (
           <div className="org-list">

@@ -16,6 +16,7 @@ import {
   useOperationKey,
   useTeachingPage,
 } from '../../_components/OrgUi';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const PAGE_SIZE = 25;
 const CAMPUS_OPTION_LIMIT = 100;
@@ -85,7 +86,7 @@ function ClassesContent({ orgSlug, page, role }: { orgSlug: string; page: number
           <h2>{t('班级', 'Classes')}</h2>
           <p className="org-lead">{t('老师只会看到自己当前负责的班级。', 'Teachers only see classes currently assigned to them.')}</p>
 
-          {groups.loading ? <p aria-busy="true">{t('正在加载…', 'Loading…')}</p> : groups.error ? (
+          {groups.loading ? <p aria-busy="true"><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p> : groups.error ? (
             <MutationMessage message={groups.error} error />
           ) : !groups.result?.items.length ? (
             <p className="org-empty">{t('还没有可见的班级。', 'No classes are visible yet.')}</p>

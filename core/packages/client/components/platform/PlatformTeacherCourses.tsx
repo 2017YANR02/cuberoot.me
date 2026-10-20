@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import AppLink from '@/components/AppLink';
 import { apiUrl } from '@/lib/api-base';
 import { useT } from '@/hooks/useT';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type TeacherCourse = { id: string; slug?: string; titleZh: string; titleEn: string; summaryZh?: string; summaryEn?: string };
 
@@ -28,7 +29,7 @@ export function PlatformTeacherCourses({ teacherId }: { teacherId: number }) {
   return <details open={open} onToggle={event => setOpen(event.currentTarget.open)} className="directory-scripts">
     <summary>{t('开设的在线课程', 'Online courses')}</summary>
     {open && <div>
-      {failed ? <p role="alert">{t('课程暂时无法加载。', 'Courses could not be loaded.')} <button type="button" onClick={() => setRetry(value => value + 1)}>{t('重试', 'Retry')}</button></p> : courses === null ? <p role="status">{t('正在加载课程…', 'Loading courses…')}</p> : courses.length === 0 ? <p>{t('尚未发布在线课程。', 'No online courses published yet.')}</p> : courses.map(course => <AppLink key={course.id} href={`/platform/courses/${encodeURIComponent(course.slug || course.id)}`} prefetch={false}>{t(course.titleZh || course.titleEn, course.titleEn || course.titleZh)}</AppLink>)}
+      {failed ? <p role="alert">{t('课程暂时无法加载。', 'Courses could not be loaded.')} <button type="button" onClick={() => setRetry(value => value + 1)}>{t('重试', 'Retry')}</button></p> : courses === null ? <p role="status"><LoadingIndicator>{t('正在加载课程…', 'Loading courses…')}</LoadingIndicator></p> : courses.length === 0 ? <p>{t('尚未发布在线课程。', 'No online courses published yet.')}</p> : courses.map(course => <AppLink key={course.id} href={`/platform/courses/${encodeURIComponent(course.slug || course.id)}`} prefetch={false}>{t(course.titleZh || course.titleEn, course.titleEn || course.titleZh)}</AppLink>)}
     </div>}
   </details>;
 }

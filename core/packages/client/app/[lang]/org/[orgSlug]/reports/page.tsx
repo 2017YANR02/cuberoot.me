@@ -26,6 +26,7 @@ import {
   useOperationKey,
   useTeachingPage,
 } from '../../_components/OrgUi';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const PAGE_SIZE = 25;
 const STUDENT_OPTION_LIMIT = 100;
@@ -118,7 +119,7 @@ function ReportsContent({ orgSlug, page, role }: { orgSlug: string; page: number
       <h2>{t('每周教学报告', 'Weekly teaching reports')}</h2>
       <p className="org-lead">{t('按学员和自然周汇总主站内的课次、出勤、反馈与训练证据。当前只供机构教职员工查看。', 'Summarize main-site sessions, attendance, feedback, and training evidence by student and week. Reports are currently visible only to organization staff.')}</p>
 
-      {reports.loading ? <p aria-busy="true">{t('正在加载…', 'Loading…')}</p> : reports.error ? (
+      {reports.loading ? <p aria-busy="true"><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p> : reports.error ? (
         <MutationMessage message={reports.error} error />
       ) : !reports.result?.items.length ? (
         <p className="org-empty">{t('还没有每周报告。', 'No weekly reports yet.')}</p>
@@ -158,7 +159,7 @@ function ReportsContent({ orgSlug, page, role }: { orgSlug: string; page: number
           {studentsError && <MutationMessage message={studentsError} error />}
           <form className="org-form" onSubmit={submit} onChange={() => { operationKey.reset(); setGenerated(null); setMessage(''); }}>
             <fieldset disabled={submitting || studentsLoading || students.length === 0}>
-              <label>{t('学员', 'Student')}
+              <label>{t('学员', 'Student')}{studentsLoading && <LoadingIndicator />}
                 <select className="org-form-control" name="studentId" defaultValue="" required key={studentPage}>
                   <option value="" disabled>{studentsLoading ? t('正在加载学员…', 'Loading students…') : t('请选择学员', 'Select a student')}</option>
                   {students.map((student) => <option value={student.id} key={student.id}>{student.displayName}</option>)}

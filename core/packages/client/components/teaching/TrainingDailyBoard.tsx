@@ -10,6 +10,7 @@ import { trainingToolHref, formatTrainingGoal } from '@/lib/teaching-training';
 import { flushTrainingEvidenceOutbox, getTrainingEvidenceOutbox } from '@/lib/training-evidence';
 import { eventDisplayName, isWcaEvent } from '@/lib/wca-events';
 import { teachingErrorMessage } from './TeachingUi';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 export default function TrainingDailyBoard({ orgSlug, assignmentId, learner = false }: { orgSlug: string; assignmentId: string; learner?: boolean }) {
   const t = useT();
@@ -56,7 +57,7 @@ export default function TrainingDailyBoard({ orgSlug, assignmentId, learner = fa
       <button type="button" className="org-secondary-button" onClick={() => void copyRoom()}>{copied ? t('已复制固定入口', 'Room link copied') : t('复制固定打卡入口', 'Copy room link')}</button>
     </div>
     {copyFailed && <p role="alert">{t('复制失败，请重试。', 'Copy failed. Please retry.')}</p>}
-    {loading ? <p aria-busy="true">{t('正在加载…', 'Loading…')}</p> : error ? <p role="alert">{error}</p> : board && <>
+    {loading ? <p aria-busy="true"><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p> : error ? <p role="alert">{error}</p> : board && <>
       <h3>{board.assignment.title}</h3><p>{board.assignment.instructions}</p>
       {!!pending && <p role="status">{t(`有 ${pending} 条训练记录尚未同步，联网后点击刷新重试；若持续失败，请联系老师核对账号和任务。`, `${pending} training records have not synced. Refresh when online; if this persists, ask your teacher to check your account and assignment.`)}</p>}
       {!!board.goals.length && <p>{board.goals.map(goal => formatTrainingGoal(goal, isZh ? 'zh' : 'en')).join(' · ')}</p>}

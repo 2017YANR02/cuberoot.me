@@ -21,6 +21,7 @@ import {
   teachingRoleLabel,
   useOperationKey,
 } from '../../../_components/OrgUi';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 export default function WeeklyReportPage() {
   const params = useParams<{ orgSlug: string; reportId: string }>();
@@ -95,7 +96,7 @@ function ReportContent({ orgSlug, reportId, role }: {
   }
 
   if (loadError) return <MutationMessage message={loadError} error />;
-  if (!report) return <p aria-busy="true">{t('正在加载每周报告…', 'Loading weekly report…')}</p>;
+  if (!report) return <p aria-busy="true"><LoadingIndicator>{t('正在加载每周报告…', 'Loading weekly report…')}</LoadingIndicator></p>;
 
   return (
     <>

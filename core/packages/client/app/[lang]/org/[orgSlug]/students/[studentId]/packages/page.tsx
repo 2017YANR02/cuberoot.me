@@ -28,6 +28,7 @@ import {
   useOperationKey,
   useTeachingPage,
 } from '../../../../_components/OrgUi';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const PAGE_SIZE = 25;
 const PRODUCT_OPTION_LIMIT = 100;
@@ -128,7 +129,7 @@ function StudentPackagesContent({ orgSlug, studentId, page, role }: { orgSlug: s
   }
 
   if (loadError) return <MutationMessage message={loadError} error />;
-  if (!student) return <p aria-busy="true">{t('正在加载学员…', 'Loading student…')}</p>;
+  if (!student) return <p aria-busy="true"><LoadingIndicator>{t('正在加载学员…', 'Loading student…')}</LoadingIndicator></p>;
 
   return (
     <>
@@ -136,7 +137,7 @@ function StudentPackagesContent({ orgSlug, studentId, page, role }: { orgSlug: s
       <p className="org-lead">{t('余额直接来自服务端课时账本；历史页不会自行推算累计余额。', 'Balances come directly from the server ledger; history pages do not invent running balances.')}</p>
       <AppLink href={`/org/${orgSlug}/students/${studentId}`} prefetch={false}>{t('查看学员资料', 'View student profile')}</AppLink>
 
-      {packages.loading ? <p aria-busy="true">{t('正在加载…', 'Loading…')}</p> : packages.error ? (
+      {packages.loading ? <p aria-busy="true"><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p> : packages.error ? (
         <MutationMessage message={packages.error} error />
       ) : !packages.result?.items.length ? (
         <p className="org-empty">{t('该学员还没有课包。', 'This student has no packages yet.')}</p>
@@ -332,7 +333,7 @@ function StudentPackageRow({
         )}
         {open && (
           <div className="org-stack">
-            {ledger.loading ? <p aria-busy="true">{t('正在加载流水…', 'Loading ledger…')}</p> : ledger.error ? (
+            {ledger.loading ? <p aria-busy="true"><LoadingIndicator>{t('正在加载流水…', 'Loading ledger…')}</LoadingIndicator></p> : ledger.error ? (
               <MutationMessage message={ledger.error} error />
             ) : !ledger.result?.items.length ? (
               <p className="org-empty">{t('暂无流水。', 'No ledger entries.')}</p>

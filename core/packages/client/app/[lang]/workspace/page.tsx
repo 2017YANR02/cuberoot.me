@@ -12,6 +12,7 @@ import { authHeaders } from '@/lib/admin-api';
 import { sessionFetch } from '@/lib/session-fetch';
 import '@app-foundation/workspace-ui/workspace.css';
 import './workspace.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 // Product adapter: only CubeRoot auth headers and CubeRoot API are used here.
 async function api<T>(action: string, body?: unknown): Promise<T> {
@@ -46,7 +47,7 @@ function SignedInWorkspace() {
   return <WorkspaceShell brand="CubeRoot" title={items.find(i=>i.key===section)?.label??t('工作记录','Work report')} actions={<AppLink href="/account" prefetch={false}>{actor?.name??t('我的账号','My account')}</AppLink>} navigation={<>{items.map(item=><AppLink key={item.key} href={`/workspace?section=${item.key}`} aria-current={section===item.key?'page':undefined} prefetch={false}>{item.label}</AppLink>)}<AppLink href="/dev/team" prefetch={false}>{t('团队手册','Team handbook')}</AppLink></>}>
     <ErrorNotice error={session.error} retry={session.reload} />
     {session.error?.status===401&&<Button onClick={()=>useAuthStore.getState().login()}>{t('重新登录','Sign in again')}</Button>}
-    {session.loading&&<p role="status">{t('正在加载…','Loading…')}</p>}
+    {session.loading&&<p role="status"><LoadingIndicator>{t('正在加载…','Loading…')}</LoadingIndicator></p>}
     {actor&&<>
       {section==='mine'&&employee&&<><ReportEditor /><Reports actor={employee} directory={session.data!.directory} mine /></>}
       {section==='updates'&&<Reports actor={actor} directory={session.data!.directory} />}

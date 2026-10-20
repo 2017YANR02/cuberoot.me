@@ -9,6 +9,7 @@ import { useT } from '@/hooks/useT';
 import { hasAdminAccess, useAuthUser } from '@/lib/auth-store';
 import { applyEnterpriseVerification, EnterpriseVerificationError, getEnterpriseVerification, submitEnterpriseTransfer } from '@/lib/enterprise-verification-api';
 import { MutationMessage, useOperationKey } from './OrgUi';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 export function verificationStatus(status: EnterpriseVerificationStatus, t: ReturnType<typeof useT>) {
   const labels: Record<EnterpriseVerificationStatus, string> = {
@@ -99,7 +100,7 @@ export default function EnterpriseVerification({ orgSlug, name }: { orgSlug: str
       {steps.map((label, index) => <li key={index} data-complete={step > index + 1 || undefined} aria-current={step === index + 1 ? 'step' : undefined}><span aria-hidden="true">{step > index + 1 ? <Check size={16} /> : index + 1}</span><strong>{label}</strong>{step === index + 1 && <small>{t('当前步骤', 'Current step')}</small>}</li>)}
     </ol>
     <MutationMessage message={error} error />
-    {!state && !error && <p aria-busy="true">{t('正在加载…', 'Loading…')}</p>}
+    {!state && !error && <p aria-busy="true"><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p>}
     {waitingForOpening && <div className="org-verification-next" data-site-surface="panel">
       <h3>{t('尚未开始：等待平台开放认证', 'Not started: waiting for the platform to open verification')}</h3>
       <p>{t('现在不用打款。开放后，提交企业资料即可获取本次申请的打款金额、收款账户和附言。', 'No transfer is needed now. Once verification opens, submit your details to get the amount, recipient account and reference for your application.')}</p>

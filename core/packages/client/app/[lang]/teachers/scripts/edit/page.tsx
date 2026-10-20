@@ -22,6 +22,7 @@ import {
   type LocalizedScriptText,
   type TeacherLiveScriptDraft,
 } from '@/lib/teacher-live-scripts-api';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const blankText = (): LocalizedScriptText => ({ zh: '', en: '' });
 const blankSection = (index: number): LiveScriptSection => ({
@@ -101,7 +102,7 @@ function ScriptEditor() {
   };
 
   if (!user) return <main className="script-editor-page"><div className="scripts-back-row"><BackHome /></div><section className="scripts-empty"><p>{tr({ zh: '登录后才能编辑直播话术。', en: 'Sign in to edit livestream scripts.' })}</p><AppLink href={`/account${nextQuery(pathname)}`} className="script-text-action">{tr({ zh: '登录', en: 'Sign in' })}</AppLink></section></main>;
-  if (loading) return <main className="script-state-page"><p>{tr({ zh: '正在加载编辑器…', en: 'Loading the editor…' })}</p></main>;
+  if (loading) return <main className="script-state-page"><p><LoadingIndicator>{tr({ zh: '正在加载编辑器…', en: 'Loading the editor…' })}</LoadingIndicator></p></main>;
   if (entries.length === 0) return <main className="script-editor-page"><div className="scripts-back-row"><BackHome /></div><section className="scripts-empty"><p>{tr({ zh: '请先建立老师或机构主页。', en: 'Create a teacher or school profile first.' })}</p><AppLink href="/teachers/edit" className="script-text-action">{tr({ zh: '建立教学主页', en: 'Build a profile' })}</AppLink></section></main>;
 
   return <main className="script-editor-page"><div className="scripts-back-row"><BackHome /></div><header className="script-editor-hero"><p className="scripts-kicker">{tr({ zh: editId ? '修改话术' : '新建话术', en: editId ? 'Edit script' : 'New script' })}</p><h1>{tr({ zh: '把直播排成一条线', en: 'Build a Clear Run of Show' })}</h1><p>{tr({ zh: '先定标题和时长，再按直播顺序写章节。正文是主播直接说的话；动作、互动和转场只作为现场提示。', en: 'Set the title and timing, then write sections in broadcast order. Spoken copy is read aloud; action, audience, and transition lines are presenter cues.' })}</p></header>

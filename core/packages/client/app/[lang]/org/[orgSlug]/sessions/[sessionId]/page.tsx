@@ -41,6 +41,7 @@ import {
   teachingErrorMessage,
   useOperationKey,
 } from '../../../_components/OrgUi';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type FinalAttendanceStatus = Exclude<TeachingAttendanceStatus, 'expected' | 'excused'>;
 
@@ -509,7 +510,7 @@ function SessionDetailContent({
     return t(labels[visibility][0], labels[visibility][1]);
   }
 
-  if (loading) return <p aria-busy="true">{t('正在加载课次…', 'Loading session…')}</p>;
+  if (loading) return <p aria-busy="true"><LoadingIndicator>{t('正在加载课次…', 'Loading session…')}</LoadingIndicator></p>;
   if (loadError || !session) return <MutationMessage message={loadError || t('没有找到课次。', 'Session not found.')} error />;
 
   return (
@@ -662,7 +663,7 @@ function SessionDetailContent({
                 </select>
               </label>
               <label>
-                <span>{t('目标课次', 'Target session')}</span>
+                <span>{t('目标课次', 'Target session')}{loadingMakeups && <LoadingIndicator />}</span>
                 <select className="org-form-control" required value={makeupTargetSessionId} onChange={(event) => { setMakeupTargetSessionId(event.target.value); makeupOperation.reset(); setMessage(''); setMutationError(''); }}>
                   {!makeupCandidates.length && <option value="">{loadingMakeups ? t('正在加载候选课次…', 'Loading eligible target sessions…') : t('没有可用候选课次', 'No eligible target sessions')}</option>}
                   {makeupCandidates.map((candidate) => <option key={candidate.sessionId} value={candidate.sessionId}>{candidate.title} / {new Date(candidate.startsAt).toLocaleString()}</option>)}
@@ -675,7 +676,7 @@ function SessionDetailContent({
               <div className="org-form-actions"><button className="org-form-button org-primary-button" type="submit" disabled={!makeupTargetSessionId}>{t('安排补课', 'Arrange makeup')}</button></div>
             </fieldset>
           </form>
-          {loadingMakeups ? <p aria-busy="true">{t('正在加载补课安排…', 'Loading makeup arrangements…')}</p> : !makeupAttempts.length ? <p className="org-empty">{t('还没有补课安排。', 'No makeup arrangements yet.')}</p> : (
+          {loadingMakeups ? <p aria-busy="true"><LoadingIndicator>{t('正在加载补课安排…', 'Loading makeup arrangements…')}</LoadingIndicator></p> : !makeupAttempts.length ? <p className="org-empty">{t('还没有补课安排。', 'No makeup arrangements yet.')}</p> : (
             <div className="org-list">
               {makeupAttempts.map((attempt) => (
                 <article className="org-row" key={attempt.id}>

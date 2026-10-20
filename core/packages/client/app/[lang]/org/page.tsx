@@ -12,6 +12,7 @@ import {
   type TeachingOrganizationAccess,
 } from '@/lib/teaching-saas-api';
 import { MutationMessage, teachingErrorMessage, teachingRoleLabel, useOperationKey } from './_components/OrgUi';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 export default function OrganizationsPage() {
   const t = useT();
@@ -84,7 +85,7 @@ export default function OrganizationsPage() {
       <section className="org-section">
         <h2>{t('选择企业', 'Select an enterprise')}</h2>
         <MutationMessage message={message} />
-        {loading ? <p aria-busy="true">{t('正在加载…', 'Loading…')}</p> : loadError ? <><MutationMessage message={loadError} error /><button type="button" className="org-secondary-button" onClick={() => void load()}>{t('重新加载企业列表', 'Reload enterprises')}</button></> : organizations.length === 0 ? (
+        {loading ? <p aria-busy="true"><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p> : loadError ? <><MutationMessage message={loadError} error /><button type="button" className="org-secondary-button" onClick={() => void load()}>{t('重新加载企业列表', 'Reload enterprises')}</button></> : organizations.length === 0 ? (
           <p className="org-empty">{t('你还没有企业信息，可以在下面创建。', 'You do not have an enterprise profile yet. Create one below.')}</p>
         ) : (
           <div className="org-list">

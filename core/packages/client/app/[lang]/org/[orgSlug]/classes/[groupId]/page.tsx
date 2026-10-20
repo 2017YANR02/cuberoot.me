@@ -25,6 +25,7 @@ import {
   useOperationKey,
   useTeachingPage,
 } from '../../../_components/OrgUi';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const OPTION_LIMIT = 100;
 
@@ -76,7 +77,7 @@ function ClassDetail({ orgSlug, groupId, role }: { orgSlug: string; groupId: str
   }, [canManageAssignments, canManageGroup, orgSlug, t]);
 
   if (groupError) return <MutationMessage message={groupError} error />;
-  if (!group) return <p aria-busy="true">{t('正在加载班级…', 'Loading class…')}</p>;
+  if (!group) return <p aria-busy="true"><LoadingIndicator>{t('正在加载班级…', 'Loading class…')}</LoadingIndicator></p>;
   const active = group.status === 'active';
 
   return (
@@ -134,7 +135,7 @@ function GroupMemberships({ orgSlug, groupId, canManage, students, studentTotal 
   return (
     <section className="org-section">
       <h2>{t('班级学员', 'Class students')}</h2>
-      {memberships.loading ? <p aria-busy="true">{t('正在加载…', 'Loading…')}</p> : memberships.error ? (
+      {memberships.loading ? <p aria-busy="true"><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p> : memberships.error ? (
         <MutationMessage message={memberships.error} error />
       ) : !memberships.result?.items.length ? (
         <p className="org-empty">{t('还没有分班记录。', 'No class memberships yet.')}</p>

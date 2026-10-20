@@ -21,6 +21,7 @@ import { listTeachingAuditEvents } from '@/lib/teaching-saas-api';
 import { cellAddress, type SpreadsheetSheet } from '@/lib/spreadsheet-model';
 import { escapeSpreadsheetTextCell, exportSpreadsheetCsv } from '@/lib/spreadsheet-export';
 import OrgWorkspace from '../../_components/OrgWorkspace';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const PAGE_SIZE = 30;
 
@@ -178,7 +179,7 @@ function AuditContent({
         </div>
       </div>
 
-      {auditEvents.loading ? <p aria-busy="true">{t('正在加载…', 'Loading…')}</p> : auditEvents.error ? (
+      {auditEvents.loading ? <p aria-busy="true"><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p> : auditEvents.error ? (
         <p role="alert">{auditEvents.error}</p>
       ) : !auditEvents.result?.items.length ? (
         <p className="org-empty">{t('没有符合条件的审计记录。', 'No matching audit events were found.')}</p>

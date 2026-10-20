@@ -18,6 +18,7 @@ import {
   teachingErrorMessage,
   useTeachingPage,
 } from '../../_components/OrgUi';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const PAGE_SIZE = 25;
 
@@ -81,7 +82,7 @@ function OperationsContent({
     return () => { cancelled = true; };
   }, [orgSlug, t]);
 
-  if (loading) return <p aria-busy="true">{t('正在加载…', 'Loading…')}</p>;
+  if (loading) return <p aria-busy="true"><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p>;
   if (error) return <p role="alert">{error}</p>;
   if (!overview) return <p role="alert">{t('经营概览暂不可用。', 'The operations overview is unavailable.')}</p>;
 
@@ -173,7 +174,7 @@ function OperationsContent({
         <section className="org-section">
           <h2>{t('异常课时流水', 'Credit adjustment ledger')}</h2>
           <p className="org-lead">{t('这里只显示调整、退款、到期和冲正流水；余额以学员课包页的服务端结果为准。', 'This feed shows adjustments, refunds, expirations, and reversals. Use the server balance on the student package page as authoritative.')}</p>
-          {adjustments.loading ? <p aria-busy="true">{t('正在加载流水…', 'Loading ledger…')}</p> : adjustments.error ? (
+          {adjustments.loading ? <p aria-busy="true"><LoadingIndicator>{t('正在加载流水…', 'Loading ledger…')}</LoadingIndicator></p> : adjustments.error ? (
             <p role="alert">{adjustments.error}</p>
           ) : !adjustments.result?.items.length ? (
             <p className="org-empty">{t('暂无异常流水。', 'No credit adjustments were found.')}</p>

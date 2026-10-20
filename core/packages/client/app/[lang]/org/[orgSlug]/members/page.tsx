@@ -16,6 +16,7 @@ import {
   useOperationKey,
   useTeachingPage,
 } from '../../_components/OrgUi';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const PAGE_SIZE = 25;
 const BASE_ASSIGNABLE_ROLES = ['teacher', 'assistant', 'finance', 'viewer'] as const;
@@ -70,7 +71,7 @@ function MembersContent({ orgSlug, page, role }: { orgSlug: string; page: number
     <>
       <h2>{t('机构成员', 'Organization members')}</h2>
       <p className="org-lead">{t('成员身份属于当前机构；老师和助教的学员范围还需要在班级或学员详情中分配。', 'Membership belongs to this organization. Teacher and assistant scopes are assigned from class or student details.')}</p>
-      {members.loading ? <p aria-busy="true">{t('正在加载…', 'Loading…')}</p> : members.error ? (
+      {members.loading ? <p aria-busy="true"><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p> : members.error ? (
         <MutationMessage message={members.error} error />
       ) : !members.result?.items.length ? (
         <p className="org-empty">{t('还没有可见成员。', 'No members are visible yet.')}</p>

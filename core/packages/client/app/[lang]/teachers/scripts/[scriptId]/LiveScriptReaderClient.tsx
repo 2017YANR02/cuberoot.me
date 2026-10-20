@@ -5,6 +5,7 @@ import AppLink from '@/components/AppLink';
 import { tr } from '@/i18n/tr';
 import { fetchTeacherLiveScript, type TeacherLiveScript } from '@/lib/teacher-live-scripts-api';
 import LiveScriptDocument from '../LiveScriptDocument';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 function idFromLocation(): number {
   if (typeof window === 'undefined') return 0;
@@ -23,5 +24,5 @@ export default function LiveScriptReaderClient() {
     return () => { active = false; };
   }, []);
   if (script) return <LiveScriptDocument script={script} />;
-  return <main className="script-state-page"><p>{error || tr({ zh: '正在加载话术…', en: 'Loading the script…' })}</p>{error && <AppLink href="/teachers/scripts">{tr({ zh: '返回话术库', en: 'Back to the library' })}</AppLink>}</main>;
+  return <main className="script-state-page"><p>{error || <LoadingIndicator>{tr({ zh: '正在加载话术…', en: 'Loading the script…' })}</LoadingIndicator>}</p>{error && <AppLink href="/teachers/scripts">{tr({ zh: '返回话术库', en: 'Back to the library' })}</AppLink>}</main>;
 }

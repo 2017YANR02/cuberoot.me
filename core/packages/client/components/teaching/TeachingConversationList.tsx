@@ -17,6 +17,7 @@ import {
   useOperationKey,
   useTeachingPage,
 } from './TeachingUi';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const PAGE_SIZE = 25;
 
@@ -108,7 +109,7 @@ export default function TeachingConversationList({
           : t('在这里与老师查看并继续教学沟通。', 'Review and continue teaching conversations with staff here.')}
       </p>
 
-      {conversations.loading ? <p aria-busy="true">{t('正在加载消息…', 'Loading messages…')}</p> : conversations.error ? (
+      {conversations.loading ? <p aria-busy="true"><LoadingIndicator>{t('正在加载消息…', 'Loading messages…')}</LoadingIndicator></p> : conversations.error ? (
         <MutationMessage message={conversations.error} error />
       ) : !conversations.result?.items.length ? (
         <p className="teaching-empty">{t('还没有消息主题。', 'No conversations yet.')}</p>

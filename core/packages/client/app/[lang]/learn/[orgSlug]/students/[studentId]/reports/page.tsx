@@ -8,6 +8,7 @@ import LearnerWorkspace from '@/components/teaching/LearnerWorkspace';
 import { MutationMessage, TeachingPagination, useTeachingPage } from '@/components/teaching/TeachingUi';
 import { useT } from '@/hooks/useT';
 import { listLearnerTeachingWeeklyReports } from '@/lib/teaching-saas-api';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const PAGE_SIZE = 25;
 
@@ -35,7 +36,7 @@ function ReportsContent({ orgSlug, studentId, page }: { orgSlug: string; student
     <>
       <h2>{t('每周教学报告', 'Weekly teaching reports')}</h2>
       <p className="teaching-lead">{t('这里只显示已发布并授权当前账号查看的报告。', 'Only published reports authorized for this account appear here.')}</p>
-      {reports.loading ? <p aria-busy="true">{t('正在加载周报…', 'Loading weekly reports…')}</p> : reports.error ? (
+      {reports.loading ? <p aria-busy="true"><LoadingIndicator>{t('正在加载周报…', 'Loading weekly reports…')}</LoadingIndicator></p> : reports.error ? (
         <MutationMessage message={reports.error} error />
       ) : !reports.result?.items.length ? (
         <p className="teaching-empty">{t('还没有可查看的每周报告。', 'No weekly reports are available yet.')}</p>

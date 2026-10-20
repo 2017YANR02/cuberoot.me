@@ -10,6 +10,7 @@ import {
 } from '@/lib/teaching-saas-api';
 import type { TeachingStudentAccountBindingInvite } from '@cuberoot/shared/teaching';
 import { MutationMessage, teachingErrorMessage, useOperationKey } from './OrgUi';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 export default function StudentAccountBindingManager({ orgSlug, studentId, linked }: { orgSlug: string; studentId: string; linked: boolean }) {
   const t = useT();
@@ -71,7 +72,7 @@ export default function StudentAccountBindingManager({ orgSlug, studentId, linke
       <h2>{t('主站学习账号', 'Main-site learner account')}</h2>
       {linked ? (
         <><p className="org-lead">{t('该学员已绑定主站账号，可直接接收任务和回传训练证据。', 'This student is linked and can receive assignments and report training evidence.')}</p><AppLink href={`/training/${orgSlug}`} prefetch={false}>{t('打开学员训练入口', 'Open learner training')}</AppLink></>
-      ) : loading ? <p aria-busy="true">{t('正在读取绑定状态…', 'Loading binding status…')}</p> : (
+      ) : loading ? <p aria-busy="true"><LoadingIndicator>{t('正在读取绑定状态…', 'Loading binding status…')}</LoadingIndicator></p> : (
         <>
           {invite?.status === 'pending' && <p className="org-lead">{t(`已有待使用邀请，有效至 ${new Date(invite.expiresAt).toLocaleString()}。`, `A pending invitation expires at ${new Date(invite.expiresAt).toLocaleString()}.`)}</p>}
           <form className="org-form" onSubmit={create}>

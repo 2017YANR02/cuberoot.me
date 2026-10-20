@@ -10,6 +10,7 @@ import { getSessionToken, nextQuery, useAuthUser } from '@/lib/auth-store';
 import { listSelfTeachingTrainingAssignments } from '@/lib/teaching-saas-api';
 import { formatTrainingGoal, trainingSourceLabel, trainingToolHref } from '@/lib/teaching-training';
 import { entityStatusLabel, MutationMessage, TeachingPagination, useTeachingPage } from '@/components/teaching/TeachingUi';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const PAGE_SIZE = 25;
 
@@ -35,7 +36,7 @@ export default function LearnerTrainingPage() {
     <main className="org-page">
       <header className="org-header"><AppLink className="org-eyebrow" href="/account" prefetch={false}>{t('我的账号', 'My account')}</AppLink><h1>{t('我的训练任务', 'My training assignments')}</h1></header>
       {assignmentId && <TrainingDailyBoard key={assignmentId} orgSlug={params.orgSlug} assignmentId={assignmentId} learner />}
-      {assignments.loading ? <p aria-busy="true">{t('正在加载任务…', 'Loading assignments…')}</p> : assignments.error ? <MutationMessage message={assignments.error} error /> : !assignments.result?.items.length ? <p className="org-empty">{t('当前没有已发布的训练任务。', 'There are no published training assignments.')}</p> : (
+      {assignments.loading ? <p aria-busy="true"><LoadingIndicator>{t('正在加载任务…', 'Loading assignments…')}</LoadingIndicator></p> : assignments.error ? <MutationMessage message={assignments.error} error /> : !assignments.result?.items.length ? <p className="org-empty">{t('当前没有已发布的训练任务。', 'There are no published training assignments.')}</p> : (
         <div className="org-list">
           {assignments.result.items.map((item) => (
             <section className="org-row" key={item.assignment.id}>

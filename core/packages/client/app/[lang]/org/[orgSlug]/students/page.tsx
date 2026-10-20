@@ -16,6 +16,7 @@ import {
   useOperationKey,
   useTeachingPage,
 } from '../../_components/OrgUi';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const PAGE_SIZE = 25;
 
@@ -65,7 +66,7 @@ function StudentsContent({ orgSlug, page, role }: { orgSlug: string; page: numbe
           <h2>{t('学员', 'Students')}</h2>
           <p className="org-lead">{t('学员资料按机构隔离，老师只会看到自己负责范围内的学员。', 'Student profiles are isolated by organization. Teachers only see students in their assigned scope.')}</p>
 
-          {students.loading ? <p aria-busy="true">{t('正在加载…', 'Loading…')}</p> : students.error ? (
+          {students.loading ? <p aria-busy="true"><LoadingIndicator>{t('正在加载…', 'Loading…')}</LoadingIndicator></p> : students.error ? (
             <MutationMessage message={students.error} error />
           ) : !students.result?.items.length ? (
             <p className="org-empty">{t('还没有可见的学员。', 'No students are visible yet.')}</p>

@@ -9,6 +9,7 @@ import { apiUrl } from '@/lib/api-base';
 import { authHeaders, handleApi } from '@/lib/admin-api';
 import { executePlatformAction, PlatformPermissionError } from '@/lib/platform-gateway';
 import type { PlatformRouteDefinition } from '@/lib/platform-types';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type Props = { definition: PlatformRouteDefinition; targetType: 'course' | 'product' | 'event' | 'news'; entityId?: string };
 
@@ -71,7 +72,7 @@ function AuthenticatedFavorite({ definition, targetType, entityId }: Props & { e
 
   return <div className="platform-domain-stack">
     {signIn ? <AppLink className="platform-button" href="/platform/login">{t('请重新登录后收藏', 'Sign in again to save')}</AppLink> : <button type="button" className="platform-button" aria-pressed={active === true} disabled={loading || saving || active === null} onClick={() => { void toggle(); }}>
-      {loading ? t('正在读取收藏…', 'Loading saved status…') : saving ? t('正在保存…', 'Saving…') : active ? wishlist ? t('移出心愿单', 'Remove from wishlist') : t('取消收藏', 'Remove from saved') : wishlist ? t('加入心愿单', 'Add to wishlist') : t('收藏', 'Save')}
+      {loading ? <LoadingIndicator>{t('正在读取收藏…', 'Loading saved status…')}</LoadingIndicator> : saving ? t('正在保存…', 'Saving…') : active ? wishlist ? t('移出心愿单', 'Remove from wishlist') : t('取消收藏', 'Remove from saved') : wishlist ? t('加入心愿单', 'Add to wishlist') : t('收藏', 'Save')}
     </button>}
     {error ? <p role="alert">{error}</p> : null}
     {error && active === null && !signIn ? <button type="button" className="platform-button" disabled={loading} onClick={() => setRevision(value => value + 1)}>{t('重新读取收藏', 'Retry loading saved status')}</button> : null}
