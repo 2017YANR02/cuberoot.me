@@ -1,0 +1,1 @@
+ALTER TABLE workspace_members ADD COLUMN admin_access BOOLEAN NOT NULL DEFAULT FALSE;
