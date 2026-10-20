@@ -737,6 +737,9 @@ jobs:
 
       - name: Test client shard
         working-directory: core
+        env:
+          # Live competition data drifts independently of code; audit it weekly.
+          CHECK_CITY_TRANSLATION_COVERAGE: ${{ github.event_name == 'schedule' && '1' || '0' }}
         run: |
           pnpm --filter @cuberoot/client exec vitest run --exclude tests/cross_trainer_reach.test.ts --shard=${{ matrix.shard }}/2
 
