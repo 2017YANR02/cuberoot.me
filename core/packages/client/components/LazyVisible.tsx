@@ -21,6 +21,8 @@ export default function LazyVisible({
   unmountWhenHidden = false,
   inline = false,
   style,
+  initiallyVisible = false,
+  onVisible,
 }: {
   children: ReactNode;
   /** 提前量:容器距视口多远就预挂(默认提前 300px,滚到时已就绪) */
@@ -35,15 +37,19 @@ export default function LazyVisible({
   /** Inline diagrams reserve their exact dimensions without inserting a block wrapper. */
   inline?: boolean;
   style?: CSSProperties;
+  /** Restore an already visited section on a client-side route return. */
+  initiallyVisible?: boolean;
+  onVisible?: () => void;
 }) {
   const ref = useRef<HTMLDivElement & HTMLSpanElement>(null);
-  const [show, setShow] = useState(false);
+  const [show, setShow] = useState(initiallyVisible);
 
   useEffect(() => {
+    if (show && !unmountWhenHidden) return;
     const el = ref.current;
     if (!el) return;
     // 老浏览器无 IntersectionObserver:直接挂载(失去懒加载但功能不丢)。
-    if (typeof IntersectionObserver === 'undefined') { setShow(true); return; }
+    if (typeof IntersectionObserver === 'undefined') { setShow(true); onVisible?.(); return; }
     const io = new IntersectionObserver(
       (entries) => {
         const visible = entries.some((e) => e.isIntersecting);
@@ -51,6 +57,7 @@ export default function LazyVisible({
           setShow(visible);
         } else if (visible) {
           setShow(true);
+          onVisible?.();
           io.disconnect();
         }
       },
@@ -58,7 +65,7 @@ export default function LazyVisible({
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [rootMargin, unmountWhenHidden]);
+  }, [rootMargin, unmountWhenHidden, show, onVisible]);
 
   if (show && unwrapWhenVisible && !unmountWhenHidden) return children;
 

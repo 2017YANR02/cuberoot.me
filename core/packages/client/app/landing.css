@@ -229,10 +229,36 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     width: 100%;
     max-width: 1100px;
     margin-bottom: 2rem;
+    grid-template-rows: 14rem;
+}
+.landing-page .landing-pinned-recons {
+    grid-column: span 2;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: 14rem;
+    gap: 1rem;
+    min-height: 0;
+    overflow-y: auto;
+}
+.landing-pinned-recons .recon-card,
+.landing-pinned-recons .recon-curated-card {
+    height: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+.landing-pinned-recons .recon-card-media { flex-shrink: 0; }
+.landing-pinned-recons .recon-card-body { overflow-y: auto; }
+.landing-slot-message { color: var(--muted-foreground); }
+.landing-pinned-recons > .landing-slot-message { grid-column: 1 / -1; align-self: center; }
+.landing-widget-skeleton {
+    height: 100%;
+    border-radius: 12px;
+    background: var(--muted);
 }
 @media (max-width: 900px) {
     .landing-page .landing-training-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-rows: 8rem 14rem;
     }
 }
 .landing-page .hero-grids {
@@ -875,4 +901,69 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     border: none;
     padding: 0;
     background: transparent;
+}
+
+/* The shell owns geometry through lazy mount, chunk/data/cover loading,
+   empty results and failures. Only the existing content panels scroll. */
+.landing-page .landing-widget {
+    --home-widget-height: 22rem;
+    width: 100%;
+    max-width: 1100px;
+    height: var(--home-widget-height);
+    flex-shrink: 0;
+    margin: 0 auto 2.5rem;
+}
+.landing-page .landing-widget--recons { --home-widget-height: 26rem; }
+.landing-page .landing-widget--comps { --home-widget-height: 20rem; }
+.landing-page .landing-widget--forum { --home-widget-height: 19rem; }
+.landing-page .landing-personal-comps {
+    width: 100%;
+    max-width: 1100px;
+    height: 12rem;
+    margin: 0 auto 2.5rem;
+    overflow-y: auto;
+}
+.landing-widget:empty,
+.landing-widget :is(.recent-scrambles--loading, .today-recon--loading, .ongoing-comps--loading),
+.landing-widget .forum-feed-preview[aria-busy="true"] {
+    border-radius: 12px;
+    background: var(--muted);
+}
+.landing-widget > :is(.recent-scrambles, .today-recon, .ongoing-comps, .forum-feed-preview) {
+    height: 100%;
+    min-height: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+}
+.landing-widget .rs-topbar,
+.landing-widget .rs-head {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.6rem;
+    flex-shrink: 0;
+}
+.landing-widget .rs-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    flex: 1;
+    min-height: 0;
+}
+.landing-widget :is(.rs-cards, .tr-cards, .ongoing-comps-groups, .community-feed-list) {
+    flex: 1 1 0;
+    min-height: 0;
+    max-height: none;
+    overflow-y: auto;
+    align-content: start;
+}
+.landing-widget .community-feed-list { scrollbar-gutter: stable; }
+.landing-widget .tr-head,
+.landing-widget .ongoing-comps-tabbar,
+.landing-widget .forum-feed-preview-header { flex-shrink: 0; }
+@media (max-width: 640px) {
+    .landing-page .landing-widget--scrambles { --home-widget-height: 28rem; }
 }

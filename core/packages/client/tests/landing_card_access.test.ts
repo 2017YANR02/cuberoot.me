@@ -2,10 +2,17 @@
 import { act, createElement, type AnchorHTMLAttributes, type ReactNode } from 'react';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { createRoot } from 'react-dom/client';
-import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import { ADMIN_WCA_IDS } from '@cuberoot/shared/admin';
 import type { PublicMember } from '@/lib/membership-api';
+
+Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
+
+// Access tests isolate state; retention, hydration and identity changes have their own suite.
+vi.mock('@/hooks/useRetainedState', async () => {
+  const { useState } = await import('react');
+  return { useRetainedState: (_key: string, initial: unknown) => useState(initial) };
+});
 
 const auth = vi.hoisted(() => ({ user: null as { wcaId: string } | null }));
 const lockApi = vi.hoisted(() => ({
@@ -43,27 +50,31 @@ import { PRIMARY_CARDS, WCA_CARDS, SECTIONS } from '@/lib/landing-sections';
 const renderLanding = () => createElement(NuqsTestingAdapter, { children: createElement(LandingPage) });
 
 describe('homepage development cards', () => {
-  it('shows the shared upcoming competition cards only for a logged-in WCA account', () => {
+  it('shows the shared upcoming competition cards only for a logged-in WCA account', async () => {
     changeAppLanguage('zh');
-    const render = () => {
+    const render = async () => {
       const host = document.createElement('div');
-      host.innerHTML = renderToStaticMarkup(renderLanding());
-      return host.querySelector('[data-testid="home-upcoming-comps"]');
+      const root = createRoot(host);
+      await act(async () => root.render(renderLanding()));
+      const result = host.querySelector('[data-testid="home-upcoming-comps"]')?.cloneNode(true) as Element | undefined;
+      await act(async () => root.unmount());
+      return result ?? null;
     };
 
     auth.user = null;
-    expect(render()).toBeNull();
+    expect(await render()).toBeNull();
     auth.user = { wcaId: '2017YANR02' };
-    const upcoming = render();
+    const upcoming = await render();
     expect(upcoming?.getAttribute('data-wca-id')).toBe('2017YANR02');
     expect(upcoming?.getAttribute('data-is-zh')).toBe('true');
   });
 
-  it.each([null, { wcaId: 'ordinary-user' }, { wcaId: ADMIN_WCA_IDS[0] }])('renders access for %j', (user) => {
+  it.each([null, { wcaId: 'ordinary-user' }, { wcaId: ADMIN_WCA_IDS[0] }])('renders access for %j', async (user) => {
     auth.user = user;
     changeAppLanguage('zh');
     const host = document.createElement('div');
-    host.innerHTML = renderToStaticMarkup(renderLanding());
+    const root = createRoot(host);
+    await act(async () => root.render(renderLanding()));
     const admin = user?.wcaId === ADMIN_WCA_IDS[0];
     for (const [id, href] of [['platform', '/zh/platform'], ['teaching-management', '/zh/org'], ['learning-center', '/zh/learn']]) {
       const card = host.querySelector(`#card-${id}`)!;
@@ -75,13 +86,13 @@ describe('homepage development cards', () => {
       expect(card.querySelector('.coming-soon-badge')).toBeNull();
       expect(card.querySelector('.lucide-lock')).toBeNull();
     }
-    expect(host.querySelector('#card-teaching')?.getAttribute('href')).toBe(admin ? '/zh/courses' : undefined);
+    expect(host.querySelector('#card-teaching')?.getAttribute('href')).toBe('/zh/courses');
     const partnership = host.querySelector('#card-partnership');
     if (admin) {
       expect(partnership?.getAttribute('href')).toBe('/zh/bp');
       expect(partnership?.classList.contains('is-disabled')).toBe(true);
       const lock = partnership?.parentElement?.querySelector<HTMLButtonElement>('.landing-card-lock');
-      expect(lock?.disabled).toBe(true);
+      expect(lock?.disabled).toBe(false);
       expect(lock?.getAttribute('aria-pressed')).toBe('true');
       expect(lock?.getAttribute('aria-label')).toBe('解锁卡片');
     } else {
@@ -97,7 +108,6 @@ describe('homepage development cards', () => {
     expect(host.querySelectorAll('.landing-card-lock').length > 0).toBe(admin);
     const adminArea = host.querySelector('#landing-admin-content');
     if (admin) {
-      expect(host.querySelector('.landing-page')?.lastElementChild).toBe(host.querySelector('.footer'));
       expect(adminArea?.nextElementSibling).toBe(host.querySelector('.footer'));
       for (const config of [...PRIMARY_CARDS, ...WCA_CARDS, ...SECTIONS.flatMap((section) => section.cards)]) {
         const cards = host.querySelectorAll(`#card-${config.id}`);
@@ -109,6 +119,7 @@ describe('homepage development cards', () => {
     } else {
       expect(adminArea).toBeNull();
     }
+    await act(async () => root.unmount());
   });
   it.each(['partnership', 'interview'])('treats %s as a default-locked card that can be unlocked for visitors', async (id) => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });

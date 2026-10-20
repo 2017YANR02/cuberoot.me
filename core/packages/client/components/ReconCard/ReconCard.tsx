@@ -61,7 +61,13 @@ function ReconCardMedia({ solve, isZh, showScrambleFallback }: { solve: ReconSol
     );
   }
 
-  if (!showScrambleFallback) return null;
+  // A known video owns its media slot before the cover request completes.
+  // Keep it on failure too, so sibling cards and everything below never move.
+  if (!showScrambleFallback) return cover ? (
+    <div className="recon-card-media" aria-hidden="true">
+      <Video size={24} className="recon-card-media-empty" />
+    </div>
+  ) : null;
 
   const scramble = getReconScramble(solve);
   const displayScramble = formatScrambleForEvent(solve.event, scramble);

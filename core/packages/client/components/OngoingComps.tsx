@@ -5,6 +5,7 @@
 // Upcoming / past: grouped by date, country flag prefix on each chip.
 // Data: recent_past_comps.json + all_upcoming_comps.json; full history remains
 // lazy behind homepage search input.
+import { useRetainedState } from '@/hooks/useRetainedState';
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { loadLandingComps, type Comp } from '@/lib/comp-search';
@@ -143,7 +144,7 @@ function CompChip({ comp, lang, isZh, showFlag }: {
 
 export default function OngoingComps({ lang }: Props) {
   const isZh = lang === 'zh';
-  const [comps, setComps] = useState<Comp[] | null>(null);
+  const [comps, setComps] = useRetainedState<Comp[] | null>('home:comps', null);
   const [tab, setTab] = useState<TabKey | null>(null);
   const { filled: records } = useRecentRecords(isZh);
   const announced = useAnnouncedComps();
@@ -156,12 +157,12 @@ export default function OngoingComps({ lang }: Props) {
     loadLandingComps().then(all => {
       if (!mounted) return;
       setComps(all);
-    }).catch(() => { if (mounted) setComps([]); });
+    }).catch(() => { if (mounted) setComps(previous => previous ?? []); });
 
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [setComps]);
 
   const buckets = useMemo<{ upcoming: Comp[]; inProgress: Comp[]; past: Comp[] }>(() => {
     if (!comps) return { upcoming: [], inProgress: [], past: [] };
@@ -222,7 +223,7 @@ export default function OngoingComps({ lang }: Props) {
   if (comps === null && announced === null && records.length === 0) {
     return <div className="ongoing-comps ongoing-comps--loading" aria-hidden="true" />;
   }
-  if (total === 0 && records.length === 0 && announcedList.length === 0 && regCount === 0) return null;
+  if (total === 0 && records.length === 0 && announcedList.length === 0 && regCount === 0) return <p className="landing-slot-message">{tr({ zh: '暂无比赛动态', en: 'No competition updates available' })}</p>;
 
   // 只显示有数据的 tab(某分类为空 → 直接隐藏该 tab,不留灰态)
   const allTabs: { key: TabKey; zh: string; en: string; count: number

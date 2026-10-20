@@ -16,6 +16,7 @@ import '@cuberoot/timer-ui/compact-select.css';
 //    4x4–7x7 / megaminx / clock are fixed-length with no difficulty data → not listed at all.
 // 显示的打乱一律是**最优等态打乱**(同 /timer 真题的「最优打乱」,无 toggle):与该场原打乱同一魔方态、
 // 步数最短。同态 ⇒ 各阶段步数 / 难度值不变。仅「打乱长度」视图例外(那按的就是原打乱长度)。
+import { useRetainedState } from '@/hooks/useRetainedState';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import AppLink from '@/components/AppLink';
@@ -406,9 +407,9 @@ function ScrambleCard({ event, scramble, m, lp, isZh, ssTarget, color, dotColors
 export default function RecentScrambles({ lang }: Props) {
   const isZh = lang === 'zh';
   const lp = langPrefix(lang);
-  const [data, setData] = useState<RecentScramblesJson | null>();
-  const [dist, setDist] = useState<DistributionJson | null>(null);
-  const [eventsJson, setEventsJson] = useState<RecentScramblesEventsJson | null>(null);
+  const [data, setData] = useRetainedState<RecentScramblesJson | null | undefined>('home:scrambles', undefined);
+  const [dist, setDist] = useRetainedState<DistributionJson | null>('home:scrambleDistribution', null);
+  const [eventsJson, setEventsJson] = useRetainedState<RecentScramblesEventsJson | null>('home:scrambleEvents', null);
   const [event, setEvent] = useState('333');
   const aliveRef = useRef(true);
   const extrasStartedRef = useRef(false);
@@ -427,9 +428,9 @@ export default function RecentScrambles({ lang }: Props) {
   useEffect(() => {
     fetch(statsUrl('/stats/scramble/recent_scrambles.json'), { cache: 'no-cache' })
       .then((r) => (r.ok ? r.json() : null))
-      .then((j: RecentScramblesJson | null) => { if (aliveRef.current) setData(j); })
-      .catch(() => { if (aliveRef.current) setData(null); });
-  }, []);
+      .then((j: RecentScramblesJson | null) => { if (aliveRef.current) setData(previous => j ?? previous ?? null); })
+      .catch(() => { if (aliveRef.current) setData(previous => previous ?? null); });
+  }, [setData]);
 
   // 先拿默认 333 卡片；项目全集和完整概率分布等首批内容画完后再补。
   // 用户开始触碰控件时立即预热，保证功能完整，同时避免三个大 JSON 同时下载、解析。
@@ -443,7 +444,7 @@ export default function RecentScrambles({ lang }: Props) {
       .then((r) => (r.ok ? r.json() : null))
       .then((j: DistributionJson | null) => { if (aliveRef.current) setDist(j); })
       .catch(() => { if (aliveRef.current) setDist(null); });
-  }, []);
+  }, [setEventsJson, setDist]);
 
   useEffect(() => {
     if (!data) return;
@@ -489,7 +490,7 @@ export default function RecentScrambles({ lang }: Props) {
 
   // 主数据到达前保留与成品区块一致的几何尺寸，避免动态 chunk 已到、JSON 未到时先塌陷。
   if (data === undefined) return <div className="recent-scrambles recent-scrambles--loading" data-tour="recent-scrambles" aria-hidden="true" />;
-  if (availableEvents.size === 0) return null;
+  if (availableEvents.size === 0) return <p className="landing-slot-message">{tr({ zh: '暂无近期打乱', en: 'No recent scrambles available' })}</p>;
 
   const curEvent = availableEvents.has(event) ? event : (availableEvents.has('333') ? '333' : [...availableEvents][0]);
   const pickerGroups: readonly PuzzlePickerGroup[] = [{
@@ -513,8 +514,8 @@ export default function RecentScrambles({ lang }: Props) {
       <div className="rs-topbar">
         <span className="rs-title">{tr({ zh: '近期打乱', en: 'Recent Scrambles' })}</span>
         {dateRange && <span className="rs-date-range">{dateRange}</span>}
+        <PuzzlePicker showArrow={false} isZh={isZh} selectedEvent={curEvent} groups={pickerGroups} onSelect={setEvent} />
       </div>
-      <PuzzlePicker showArrow={false} isZh={isZh} selectedEvent={curEvent} groups={pickerGroups} onSelect={setEvent} />
       {curEvent === '333'
         ? <Recent333Body data={data} dist={dist} eventsJson={eventsJson} isZh={isZh} lp={lp} />
         : <RecentEventBody event={curEvent} json={eventsJson} isZh={isZh} lp={lp} />}
@@ -697,7 +698,7 @@ function Recent333Body({ data, dist, eventsJson, isZh, lp }: {
   if (!data || variants.length === 0) return null;
 
   return (
-    <>
+    <div className="rs-body">
       <div className="rs-head">
         {modePill}
         {mode === 'rare' ? (<>
@@ -772,7 +773,7 @@ function Recent333Body({ data, dist, eventsJson, isZh, lp }: {
       ) : (
         <div className="rs-empty">{tr({ zh: '该组合本批暂无数据', en: 'No data for this combination' })}</div>
       )}
-    </>
+    </div>
   );
 }
 
@@ -808,7 +809,7 @@ function RecentEventBody({ event, json, isZh, lp, headExtra }: {
   const metaOf = (id: string) => json?.meta?.[id];
 
   return (
-    <>
+    <div className="rs-body">
       <div className="rs-head">
         {headExtra}
         {showLengthToggle && (
@@ -834,6 +835,6 @@ function RecentEventBody({ event, json, isZh, lp, headExtra }: {
           ))}
         </div>
       ) : null}
-    </>
+    </div>
   );
 }

@@ -2,6 +2,7 @@
 import { useDouyinToolSurface } from '@/lib/douyin-content';
 import { douyinContentAvailable } from '@cuberoot/shared/douyin-content';
 
+import { useRetainedState } from '@/hooks/useRetainedState';
 import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
 
 /** Site entrypoint — Landing page. */
@@ -26,6 +27,7 @@ import LandingSearch from '@/components/LandingSearch';
 import PersonUpcomingComps from '@/components/persons/sections/PersonUpcomingComps';
 import SearchInput from '@/components/SearchInput';
 import LazyVisible from '@/components/LazyVisible';
+import { ClientLoadStatus } from '@/components/StartupStatus';
 import {
   FOOTER_ENTRIES,
   PRIMARY_CARDS,
@@ -41,24 +43,17 @@ import {
 // Below-the-fold widgets — dynamic to defer client hydrate / chunk fetch.
 // The dynamic fallback and viewport placeholder use the same measured height,
 // so crossing the lazy boundary does not collapse the page before data arrives.
-const HOME_WIDGET_HEIGHT = {
-  recentScrambles: 320,
-  todayRecon: 360,
-  ongoingComps: 240,
-  communityFeed: 240,
-} as const;
-
 const OngoingComps = dynamic(() => import('@/components/OngoingComps'), {
-  loading: () => <div style={{ minHeight: HOME_WIDGET_HEIGHT.ongoingComps }} aria-hidden="true" />,
+  loading: () => <div className="landing-widget-skeleton" aria-hidden="true" />,
 });
 const RecentScrambles = dynamic(() => import('@/components/RecentScrambles'), {
-  loading: () => <div style={{ minHeight: HOME_WIDGET_HEIGHT.recentScrambles }} aria-hidden="true" />,
+  loading: () => <div className="landing-widget-skeleton" aria-hidden="true" />,
 });
 const TodayRecon = dynamic(() => import('@/components/TodayRecon'), {
-  loading: () => <div style={{ minHeight: HOME_WIDGET_HEIGHT.todayRecon }} aria-hidden="true" />,
+  loading: () => <div className="landing-widget-skeleton" aria-hidden="true" />,
 });
 const ForumFeedPreview = dynamic(() => import('@/components/forum/ForumFeedPreview'), {
-  loading: () => <div style={{ minHeight: HOME_WIDGET_HEIGHT.communityFeed }} aria-hidden="true" />,
+  loading: () => <div className="landing-widget-skeleton" aria-hidden="true" />,
 });
 import { useEffectiveTheme } from '@/lib/theme';
 import '../landing.css';
@@ -155,8 +150,11 @@ export default function LandingPage() {
     void markOnboardingGuided(user);
     if (replayGuide) void setReplayGuide(null);
   }, [user, replayGuide, setReplayGuide]);
-  const [featuredNotice, setFeaturedNotice] = useState<PageNotice | null>(null);
-  const [publicMembers, setPublicMembers] = useState<PublicMember[] | null>(null);
+  const [featuredNotice, setFeaturedNotice] = useRetainedState<PageNotice | null>('home:featuredNotice', null);
+  const [publicMembers, setPublicMembers] = useRetainedState<PublicMember[] | null>('home:publicMembers', null);
+  const [layoutReady, setLayoutReady] = useRetainedState('home:layoutReady', { notice: false, members: false, order: false });
+  const [visibleWidgets, setVisibleWidgets] = useRetainedState<Record<string, boolean>>('home:visibleWidgets', {});
+  const rememberWidget = (key: string) => setVisibleWidgets(previous => previous[key] ? previous : { ...previous, [key]: true });
   const [memberQueries, setMemberQueries] = useState({ enterprise: '', individual: '' });
   const orderedMembers = useMemo(() => [...(publicMembers ?? [])].sort((a, b) => {
     const aId = /^VIP(\d+)$/.exec(a.vipId ?? '');
@@ -175,24 +173,26 @@ export default function LandingPage() {
     const refresh = () => {
       if (active) setFeaturedNotice(Date.now() < endsAt ? HISTORY_HOME_FEATURE : managedNotice);
     };
-    refresh();
-    const expiryTimer = window.setTimeout(refresh, Math.max(0, endsAt - Date.now()));
+    if (Date.now() < endsAt) refresh();
+    const expiryTimer = Date.now() < endsAt ? window.setTimeout(refresh, endsAt - Date.now()) : undefined;
     fetchPageNotices()
       .then((rows) => {
         managedNotice = rows.find((row) => row.placement === 'home_featured' && row.path === '/') ?? null;
         refresh();
       })
-      .catch(() => { /* 焦点新闻不可阻断首页 */ });
+      .catch(() => { /* 焦点新闻不可阻断首页 */ })
+      .finally(() => { if (active) setLayoutReady(previous => ({ ...previous, notice: true })); });
     return () => { active = false; window.clearTimeout(expiryTimer); };
-  }, [contentRefreshKey]);
+  }, [contentRefreshKey, setFeaturedNotice, setLayoutReady]);
 
   useEffect(() => {
     let active = true;
     listPublicMembers()
       .then((members) => { if (active) setPublicMembers(members); })
-      .catch(() => { /* 会员名单不可阻断首页 */ });
+      .catch(() => { /* 会员名单不可阻断首页 */ })
+      .finally(() => { if (active) setLayoutReady(previous => ({ ...previous, members: true })); });
     return () => { active = false; };
-  }, []);
+  }, [setPublicMembers, setLayoutReady]);
 
   const t = useCallback((key: keyof typeof TEXTS) => TEXTS[key][lang], [lang]);
 
@@ -200,7 +200,7 @@ export default function LandingPage() {
   // 是 hydration-safe(SSG 首帧按未登录渲染,挂载后才切到已登录),避免 SSG/CSR 错配。
 
   const isAdmin = Boolean(user?.isAdmin || isAdminWcaId(user?.wcaId));
-  const [pinnedRecons, setPinnedRecons] = useState<ReconSolve[] | null>(null);
+  const [pinnedRecons, setPinnedRecons] = useRetainedState<ReconSolve[] | null>('home:pinnedRecons', null);
   const [savingPins, setSavingPins] = useState<Set<number>>(new Set());
   const [pinError, setPinError] = useState<string | null>(null);
   useEffect(() => {
@@ -209,7 +209,7 @@ export default function LandingPage() {
       if (active) setPinError(tr({ zh: '置顶复盘加载失败，请刷新重试。', en: 'Could not load pinned recons. Please refresh to retry.' }));
     });
     return () => { active = false; };
-  }, []);
+  }, [setPinnedRecons]);
   const onPin = async (solve: ReconSolve, pinned: boolean) => {
     if (!isAdmin || savingPins.has(solve.id)) return;
     setSavingPins(prev => new Set(prev).add(solve.id));
@@ -226,9 +226,9 @@ export default function LandingPage() {
     }
   };
   const reconProps = { lang, pinnedRecons, isAdmin, savingPins, pinError, onPin };
-  const [cardOrders, setCardOrders] = useState<Record<string, string[]>>({});
-  const [cardLocks, setCardLocks] = useState<Record<string, boolean>>({});
-  const [locksLoaded, setLocksLoaded] = useState(false);
+  const [cardOrders, setCardOrders] = useRetainedState<Record<string, string[]>>('home:cardOrders', {});
+  const [cardLocks, setCardLocks] = useRetainedState<Record<string, boolean>>('home:cardLocks', {});
+  const [locksLoaded, setLocksLoaded] = useRetainedState('home:locksLoaded', false);
   const [savingLocks, setSavingLocks] = useState<Set<string>>(new Set());
   useEffect(() => {
     let active = true;
@@ -240,16 +240,17 @@ export default function LandingPage() {
     refresh();
     window.addEventListener('focus', refresh);
     return () => { active = false; window.removeEventListener('focus', refresh); };
-  }, []);
+  }, [setCardLocks, setLocksLoaded]);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   useEffect(() => {
     let active = true;
     getHomeCardOrders(isAdmin)
       .then((orders) => { if (active) setCardOrders(orders); })
-      .catch(() => { /* 自定义顺序不可阻断首页 */ });
+      .catch(() => { /* 自定义顺序不可阻断首页 */ })
+      .finally(() => { if (active) setLayoutReady(previous => ({ ...previous, order: true })); });
     return () => { active = false; };
-  }, [isAdmin, contentRefreshKey]);
+  }, [isAdmin, contentRefreshKey, setCardOrders, setLayoutReady]);
 
   const searchCards = useMemo(
     () => SEARCH_CARDS.filter((card) => (isAdmin || locksLoaded)
@@ -437,6 +438,11 @@ export default function LandingPage() {
     );
   });
 
+  // These small responses decide which sections exist. Reveal one settled
+  // structure, then let the fixed widget slots fill independently. Warm route
+  // mounts already have the snapshot and skip this boundary entirely.
+  if (!locksLoaded || !layoutReady.notice || !layoutReady.members || !layoutReady.order) return <ClientLoadStatus />;
+
   if (douyin) return <div className="landing-page">
     <div className="landing-auth"><Link href="/account" prefetch={false}>{tr({ zh: '我的', en: 'Account' })}</Link><HeaderToggles /></div>
     <div className="brand-line"><span className="brand-name">CubeRoot</span></div>
@@ -494,7 +500,11 @@ export default function LandingPage() {
         <span className="brand-name">{t('brand')}</span>
       </div>
       <LandingSearch cards={searchCards} lang={lang} />
-      {user?.wcaId && <PersonUpcomingComps wcaId={user.wcaId} isZh={lang === 'zh'} title={tr({ zh: '我的比赛', en: 'My competitions' })} />}
+      {user?.wcaId && <div className="landing-personal-comps">
+        <PersonUpcomingComps wcaId={user.wcaId} isZh={lang === 'zh'}
+          title={tr({ zh: '我的比赛', en: 'My competitions' })}
+          emptyMessage={tr({ zh: '暂无即将参加的比赛', en: 'No upcoming competitions' })} />
+      </div>}
       {featuredNotice && featuredNotice.href && (() => {
         const FeaturedIcon = iconFor(featuredNotice);
         const isHistoryFeature = featuredNotice === HISTORY_HOME_FEATURE;
@@ -539,7 +549,13 @@ export default function LandingPage() {
         <Link href="/alg/3x3/lsll/run" className="landing-card" data-site-surface="panel" prefetch={false}>
           <LandingCardContent label={tr({ zh: 'LSLL 训练', en: 'LSLL Training' })} Icon={Blocks} />
         </Link>
-        {!!pinnedRecons?.length && <TodayRecon {...reconProps} pinnedOnly />}
+        <div className="landing-pinned-recons" aria-busy={pinnedRecons === null && !pinError}>
+          {pinnedRecons === null && !pinError
+            ? <><div className="landing-widget-skeleton" aria-hidden="true" /><div className="landing-widget-skeleton" aria-hidden="true" /></>
+            : pinnedRecons?.length
+              ? <TodayRecon {...reconProps} pinnedOnly />
+              : <p className="landing-slot-message" role="status">{pinError ?? tr({ zh: '暂无置顶复盘', en: 'No pinned recons yet' })}</p>}
+        </div>
       </div>
 
       {/* 两行 hero 的共同外壳。桌面是 5 + 4 两个独立网格;手机端外壳自己变成 3 列网格、
@@ -552,18 +568,18 @@ export default function LandingPage() {
         {renderCardGrid('wca', WCA_CARDS, 'wca-hero-grid')}
       </div>
 
-      <LazyVisible minHeight={HOME_WIDGET_HEIGHT.recentScrambles} rootMargin="120px 0px" unwrapWhenVisible>
+      <LazyVisible className="landing-widget landing-widget--scrambles" minHeight={0} rootMargin="120px 0px" initiallyVisible={visibleWidgets.scrambles} onVisible={() => rememberWidget('scrambles')}>
         <RecentScrambles lang={lang} />
       </LazyVisible>
-      <LazyVisible minHeight={HOME_WIDGET_HEIGHT.todayRecon} rootMargin="120px 0px" unwrapWhenVisible>
+      <LazyVisible className="landing-widget landing-widget--recons" minHeight={0} rootMargin="120px 0px" initiallyVisible={visibleWidgets.recons} onVisible={() => rememberWidget('recons')}>
         <TodayRecon {...reconProps} />
       </LazyVisible>
 
-      <LazyVisible minHeight={HOME_WIDGET_HEIGHT.ongoingComps} rootMargin="120px 0px" unwrapWhenVisible>
+      <LazyVisible className="landing-widget landing-widget--comps" minHeight={0} rootMargin="120px 0px" initiallyVisible={visibleWidgets.comps} onVisible={() => rememberWidget('comps')}>
         <OngoingComps lang={lang} />
       </LazyVisible>
 
-      <LazyVisible minHeight={HOME_WIDGET_HEIGHT.communityFeed} rootMargin="120px 0px" unwrapWhenVisible>
+      <LazyVisible className="landing-widget landing-widget--forum" minHeight={0} rootMargin="120px 0px" initiallyVisible={visibleWidgets.forum} onVisible={() => rememberWidget('forum')}>
         <ForumFeedPreview />
       </LazyVisible>
 

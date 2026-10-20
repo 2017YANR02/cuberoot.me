@@ -4,7 +4,7 @@
  */
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import { create } from 'zustand';
 import { ADMIN_WCA_IDS, isAdminWcaId } from '@cuberoot/shared/admin';
 import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
@@ -353,12 +353,13 @@ export function isAdmin(): boolean {
 // store 在模块初始化时 user: readUser() 同步读 localStorage:server 端为 null,
 // client 首帧已是真实登录态。任何「按登录态分叉渲染」的组件必须用下面两个 hook
 // (而非裸 useAuthStore(s => s.user) / isAdmin()),否则 SSG 页 hydration 错配
-// (server 渲染未登录分支,client 首帧渲染已登录分支)。mount 后才暴露真实态。
+// (server 渲染未登录分支,client 首帧渲染已登录分支)。
+// Server snapshot protects hydration; later route mounts read the live user
+// immediately instead of flashing the guest layout again.
+const authUserSnapshot = () => useAuthStore.getState().user;
+const authUserServerSnapshot = () => null;
 export function useAuthUser(): WcaUser | null {
-  const user = useAuthStore((s) => s.user);
-  const [hydrated, setHydrated] = useState(false);
-  useEffect(() => { setHydrated(true); }, []);
-  return hydrated ? user : null;
+  return useSyncExternalStore(useAuthStore.subscribe, authUserSnapshot, authUserServerSnapshot);
 }
 
 export function hasAdminAccess(user: Pick<WcaUser, 'wcaId' | 'isAdmin'> | null | undefined): boolean {

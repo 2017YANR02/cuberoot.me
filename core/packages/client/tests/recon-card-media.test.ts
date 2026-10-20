@@ -56,4 +56,11 @@ describe('ReconCard media', () => {
     expect(html).not.toContain('recon-card-media');
     expect(html).not.toContain('recon-card-scramble');
   });
+
+  it('reserves the homepage media slot before an asynchronous cover resolves', () => {
+    const html = renderCard({ ...BASE_SOLVE, videoUrl: 'https://www.bilibili.com/video/BV1test123' }, false);
+    expect(html).toContain('class="recon-card-media"');
+    expect(html).not.toContain('class="recon-card-cover"');
+    expect(html).not.toContain('recon-card-scramble');
+  });
 });

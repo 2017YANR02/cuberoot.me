@@ -1,5 +1,6 @@
 'use client';
 
+import { useRetainedState } from '@/hooks/useRetainedState';
 import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
 
 // Landing「今日复盘」— /recon 最新录入那天的全部复盘。每次加载自动取最新一天。
@@ -7,7 +8,7 @@ import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
 // 但不显示打乱公式:showScrambleFallback={false},只有视频封面才出媒体区);
 // 超出固定高度的部分走右侧滚动条(.scroll-panel,与「比赛中心」同一套)。点卡进 /recon/[id] 看完整回放。
 // 数据:lib/recon-api getTodayRecons()(主用 /v1/recon/today,回退 /latest 单条)。
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import Link from '@/components/AppLink';
 import type { ReconSolve } from '@cuberoot/shared';
 import { getTodayRecons } from '@/lib/recon-api';
@@ -30,7 +31,7 @@ interface Props {
 export default function TodayRecon({ lang, pinnedRecons, pinnedOnly = false, isAdmin, savingPins, pinError, onPin }: Props) {
   const isZh = lang === 'zh';
   const refreshKey = useContentRefreshKey(!pinnedOnly);
-  const [recons, setRecons] = useState<ReconSolve[] | null>(null);
+  const [recons, setRecons] = useRetainedState<ReconSolve[] | null>('home:todayRecons', null);
 
   // idle-defer fetch(同 RecentScrambles / OngoingComps,不阻塞首屏)
   useEffect(() => {
@@ -40,7 +41,7 @@ export default function TodayRecon({ lang, pinnedRecons, pinnedOnly = false, isA
       if (!on) return;
       getTodayRecons()
         .then((list) => { if (on) setRecons(list.filter(s => s.recordType !== 'timing')); })
-        .catch(() => { if (on) setRecons([]); });
+        .catch(() => { if (on) setRecons(previous => previous ?? []); });
     };
     type RIC = (cb: () => void, opts?: { timeout?: number }) => number;
     const w = window as Window & { requestIdleCallback?: RIC; cancelIdleCallback?: (id: number) => void };
@@ -53,12 +54,12 @@ export default function TodayRecon({ lang, pinnedRecons, pinnedOnly = false, isA
       if (idleId !== null) w.cancelIdleCallback?.(idleId);
       if (timeoutId !== null) clearTimeout(timeoutId);
     };
-  }, [pinnedOnly, refreshKey]);
+  }, [pinnedOnly, refreshKey, setRecons]);
 
   const visibleRecons = pinnedOnly ? pinnedRecons : recons;
   if (pinnedOnly && !visibleRecons?.length) return null;
   if (visibleRecons === null) return <div className="today-recon today-recon--loading" data-tour="today-replay" aria-hidden="true" />;
-  if (visibleRecons.length === 0) return null;
+  if (visibleRecons.length === 0) return <p className="landing-slot-message">{tr({ zh: '暂无复盘', en: 'No recons available' })}</p>;
 
   const cards = visibleRecons.map((s) => {
     const pinned = pinnedRecons?.some(item => item.id === s.id) ?? false;

@@ -1071,8 +1071,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'LazyVisible',
     import: "import LazyVisible from '@/components/LazyVisible';",
     category: 'more',
-    zh: '视口懒挂载容器：内容接近可见区域后才挂载并保持，用于避免折叠线下的重组件和数据请求争抢首屏资源。',
-    en: 'Viewport-deferred mount container that stays mounted once nearby, keeping below-the-fold components and data requests out of the initial render.',
+    zh: '视口懒挂载容器：内容接近可见区域后才挂载并保持；可用 initiallyVisible 与 onVisible 在返回页面时恢复已显示的区域。',
+    en: 'Viewport-deferred mount container that stays mounted once nearby; initiallyVisible and onVisible can restore visited sections on route return.',
     note: { zh: '用 minHeight 或固定宽高比防止滚动跳动；行内小图用 inline + style 预留准确宽高；依赖原顶层布局时传 unwrapWhenVisible；动画可传 unmountWhenHidden 离屏卸载，此时保留容器。', en: 'Use minHeight or a fixed aspect ratio to avoid scroll jumps; inline plus style reserves exact diagram dimensions; unwrapWhenVisible preserves the original top-level layout; unmountWhenHidden releases offscreen animations and keeps the wrapper.' },
   },
   {

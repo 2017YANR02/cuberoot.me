@@ -128,6 +128,14 @@ export const CATALOG: UtilEntry[] = [
     en: 'Fixed-record corpus format and optimal HTM scramble decoding shared by the offline builder and browser.',
   },
   {
+    name: 'useRetainedState',
+    sig: 'useRetainedState<T>(key: string, initial: T)',
+    imp: "import { useRetainedState } from '@/hooks/useRetainedState';",
+    category: 'hook',
+    zh: '在当前浏览会话中保留已加载的数据，页面返回时立即恢复；SSR 使用固定初始快照，身份变化时清空，调用方继续后台刷新。',
+    en: 'Retain loaded data across route mounts with a fixed SSR snapshot and identity-change reset; callers keep their background refresh effects.',
+  },
+  {
     name: 'useContentRefreshKey',
     sig: 'useContentRefreshKey(enabled = true): number',
     imp: "import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';",
