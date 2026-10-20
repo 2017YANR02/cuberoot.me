@@ -58,6 +58,14 @@ describe('web session fetch boundary', () => {
     expect(mocks.fetch).not.toHaveBeenCalled();
   });
 
+  it('resolves the administrator session only for the same-origin test-history endpoint', async () => {
+    vi.stubGlobal('window', { location: { href: 'https://www.cuberoot.me/recon/ground-truth', origin: 'https://www.cuberoot.me' } });
+    await sessionFetch('/api/admin/recon-tests?offset=20', { headers: { Authorization: 'Bearer web-session:a' } });
+    expect(new Headers(mocks.fetch.mock.calls[0][1].headers).get('Authorization')).toBe('Bearer short-access');
+    await expect(sessionFetch('https://attacker.example/api/admin/recon-tests', { headers: { Authorization: 'Bearer web-session:a' } })).rejects.toThrow('outside');
+    expect(mocks.fetch).toHaveBeenCalledTimes(1);
+  });
+
   it('allows only explicitly configured same-origin private page endpoints', async () => {
     vi.stubGlobal('window', { location: { href: 'https://www.cuberoot.me/account', origin: 'https://www.cuberoot.me' } });
     await sessionFetch('/api/identity-choice', {

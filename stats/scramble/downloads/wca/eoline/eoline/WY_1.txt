@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / WY / bin 1
-# Population in this bin: 169
-# Samples listed: 169 (all entries in this bin)
+# Population in this bin: 172
+# Samples listed: 172 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 64339001,F' D2 F R2 B' D B D' B' D' R2 D2 B L2 D L',Y,Hamilton Spring 2014 (2014-10-05),333oh Final A #2
@@ -174,3 +174,6 @@
 5825332001,R2 F R2 B' U2 F' D2 B2 D R2 F U B2 R2 F' D L2 B2,W,Williamsburg Open Fall 2026 (2026-09-12),333 R1 B #4
 5831425001,L U' R F2 D F2 D' B2 U L R2 F2 L' B2 D B',Y,Shin Kong Cube Open - Kaohsiung 2026 (2026-09-13),333 R1 A #4
 5842758001,B2 R' U2 R' B' R L2 B' R F' U2 D2 F2 R2 U2 F2 B,W,New Cubing Season Athens B 2026 (2026-09-20),333oh Final A #3
+5864279001,L2 U' F2 D' L2 D U2 B2 U2 B2 U' B L2 D U' F' U F2,Y,IV Teresina Bright Cube 2026 (2026-10-03),333 R1 A E1
+5871025001,F U D2 L2 B' F' D2 B2 U2 B R2 D2 U R2 D2 B' L2 U2 L,Y,Concordia Fall Foliage 2026 (2026-10-10~11),333oh R1 B E2
+5871656001,B2 R2 B' L2 U2 F L2 B2 R2 D' R2 D B' U' B F2,Y,Meath For Mega Speed 2026 (2026-10-10~11),333 R1 C #5

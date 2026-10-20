@@ -5,7 +5,7 @@ import { ollCommentName, pllCommentName, primaryCaseName, zbllCommentLabel } fro
 export interface ReconCommentLink { start: number; end: number; href: string }
 export type ReconCommentCases = ReadonlyMap<string, ReadonlyMap<string, string>>;
 
-const labels = /\b(ZBLL|ZBLS|EPLL|OLL|PLL|F2L|COLL)\b(?:[- \t]+([A-Za-z0-9][A-Za-z0-9+-]*(?:[ \t]+\d+)?))?/gi;
+const labels = /\b(OLL\(CP\)|OLLCP|1LLL|ZBLL|ZBLS|EPLL|OLL|PLL|ELL|F2L|COLL|VLS|WV|SV)(?:[- \t]+([A-Za-z0-9][A-Za-z0-9+-]*(?:[ \t]+\d+)?))?(?=$|[\s/()])/gi;
 const caseKey = (name: string) => name.toLowerCase().replace(/\s+/g, '');
 
 /** Use the library's source names, display names and canonical case slugs together. */
@@ -33,7 +33,7 @@ export function reconCommentCaseIndex(set: string, cases: AlgCase[]): Map<string
 }
 
 /** Offsets are in the original line; never rewrite the player's source text. */
-export function reconCommentLinks(line: string, cases: ReconCommentCases = new Map()): ReconCommentLink[] {
+export function reconCommentLinks(line: string, cases: ReconCommentCases = new Map(), identifiedCase?: (set: string) => string | undefined): ReconCommentLink[] {
   const comment = line.indexOf('//');
   if (comment < 0) return [];
   const offset = comment + 2;
@@ -41,8 +41,8 @@ export function reconCommentLinks(line: string, cases: ReconCommentCases = new M
   const pattern = new RegExp(labels);
   const links: ReconCommentLink[] = [];
   for (let match = pattern.exec(text); match; match = pattern.exec(text)) {
-    const set = match[1].toLowerCase().replace(/^epll$/, 'pll');
-    const exact = match[2] ? cases.get(set)?.get(caseKey(match[2])) : undefined;
+    const set = match[1].toLowerCase().replace(/^epll$/, 'pll').replace(/^oll\(cp\)$/, 'ollcp');
+    const exact = (match[2] ? cases.get(set)?.get(caseKey(match[2])) : undefined) ?? identifiedCase?.(set);
     const length = exact ? match[0].length : match[1].length;
     links.push({
       start: offset + match.index,

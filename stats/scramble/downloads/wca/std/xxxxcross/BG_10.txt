@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxxcross / BG / bin 10
-# Population in this bin: 748
+# Population in this bin: 751
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 4332297001,F' R2 U2 L2 B' L F D' R2 B' U' L2 D' R2 U D',G,Berkeley December Weekday Tricubealon 2024 (2024-12-04),333oh R1 A #2
@@ -80,7 +80,7 @@
 995580001,U2 R2 U L2 U B2 D2 B2 L F D2 U B' D2 F' U' L' B2 F',B,Bursa Winter 2019 (2019-01-26~27),333 R1 A #5
 973336003,U2 R B2 L2 D2 U2 R' F2 R' B L2 F' U' F2 L F D U F2 L2 U',G,Utah Valley Open 2019 (2019-01-05),333mbf Final A #1
 3124333001,F D' B R' F' R' B L' B U2 B' U2 B2 D2 F' L' B',B,Imaginaire Quebec 2023 (2023-09-30~10-01),333 R2 A #4
-3984985001,U' B' R U2 R2 B' F2 D2 F' L2 B L' R' U2 F U' F2 R2,B,Cubing with the Kilkenny Cats Sunday 2024 (2024-08-04),333 R1 B #3
+5857568001,R F' R L2 F D' B' R D B2 U2 L2 F2 D2 L U2 L',B,Indian Elite Championship 2026 (2026-10-02~04),333oh R2 D E1
 1636760001,U2 B2 R2 D U' R2 U' R' D L2 F L2 D B U2 F2 R B,B,Brisbane Is Back On 2021 (2021-01-16~17),333oh Final A #5
 1695877001,D2 B L' F2 B L' U2 L2 B' U R' U R2 B2 U2 F2 D' F2,G,Jordan Fall Open 2021 (2021-09-25),333 Final A #5
 440871001,B2 F2 D2 F2 L2 U L2 R2 U' L' R B D B2 R U L' B L F' L2 U2,B,Swisscubing Cup I 2017 (2017-02-04),333bf Final B E1
@@ -100,7 +100,7 @@
 2449919003,F2 L2 F2 R2 U' F2 L D' L' R2 D' L2 F D' U2 B2 L' B',G,BrizZon Side Open 2023 (2023-01-21~22),333mbf Final B #2
 3530517001,R U B2 R2 U R' U F2 D' L F R2 F' L2 B D2 F R2,G,Fullerton Winter 2024 (2024-02-24),333 R2 B #3
 2661926001,U' L B' U2 L2 U2 B D2 U R D' R' B2 L R2 F2 R2 D,G,South Jersey Speedsolving 2023 (2023-04-22),333bf Final A #2
-1828202007,D' R U2 F U2 B' D2 F L2 F2 U L' R' D B2 U R D L B,G,Kidderminster - British Blind Off 2022 (2022-03-12~13),333mbf Final B #2
+5860226001,L B' L2 U2 B U' R F2 B2 L2 D F2 D F2 D F U' R2 D',G,ODU Big Blue Fall 2026 (2026-10-03),333oh Final C E1
 4363298001,D' L F2 R2 U2 R F2 L2 U L' R2 F U R' D L2 D2 B',B,Rocklin Winter 2024 (2024-12-15),333 Final A #5
 5312489001,U' R' F' D2 B2 U2 B2 L' D2 R2 B U2 L2 R' D B' F2 L2,G,OKC Winter 2026 (2026-01-10),333 R1 D E1
 5728929001,L F' B' L B L U2 D F' U' L2 B2 R2 D2 B2 L' U2 D2 R B R',G,Almourol Riverside 2026 (2026-06-27~28),333bf R1 A #2

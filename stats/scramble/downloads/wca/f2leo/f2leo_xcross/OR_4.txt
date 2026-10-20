@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xcross / OR / bin 4
-# Population in this bin: 912
+# Population in this bin: 916
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 2658293001,L2 B' D' L2 D' F2 R2 B2 U B L' R' U2 B' F2 L2 U' L2,R,Cube Ta Liwat Iloilo 2023 (2023-04-23),333 R2 B E2
@@ -160,7 +160,7 @@
 5076641001,U R2 U2 F2 U2 F' R2 F L' U' R U' B U' B' U' F,O,Australian Nationals 2025 (2025-10-02~05),333oh R1 C E2
 5559453001,L2 D R2 U F2 D' R2 L' F D2 U' B D2 L' R2 U' F R2,R,BQHS Spring Open 2026 (2026-04-18~19),333 R2 D E1
 660909029,L2 U2 L2 R2 U B2 R2 D2 R' F R U' B' L2 D2 F L2 D R D2,R,Torneo Aventura Cubica 2016 (2016-01-23~24),333mbf Final A #2
-4150846001,B L' D2 L D2 U2 R' F2 R2 F2 B' U' F' U2 B2 F' D' B R',O, Esprit Cube Open Bayonne 2024 (2024-09-28~29),333 R2 C #3
+4150846001,B L' D2 L D2 U2 R' F2 R2 F2 B' U' F' U2 B2 F' D' B R',O,Esprit Cube Open Bayonne 2024 (2024-09-28~29),333 R2 C #3
 5210584001,F' U L2 U' B2 L2 U' F2 D2 L D R2 B2 L2 F L D2 U,O,Medvode Open 2025 (2025-11-22~23),333 Final A #4
 661066009,L2 D2 F2 D2 L' U2 R2 U2 F2 D L2 F' L D F' D2 L2 U B L2,R,Full Steps in Brest 2016 (2016-08-06~07),333mbf Final A #2
 2336044032,R' D' B2 U' L2 D' U2 R2 U B2 F2 R' D2 B U2 L R2 B R2,R,Silence in Cebu 2022 (2022-11-26),333mbf Final A #2

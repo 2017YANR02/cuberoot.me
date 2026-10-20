@@ -12,7 +12,6 @@ import { FollowStar } from '@/components/CompFollow';
 import { compLinkProps } from '@/lib/comp-link';
 import { localizeCompName } from '@/lib/comp-localize';
 import { localizeCity } from '@/lib/city-localize';
-import { countryName } from '@/lib/country-name';
 import { toWcaEventId } from '@/lib/wca-events';
 import { Flag } from '@/components/Flag';
 import { CubingIcon } from '@/components/EventIcon';
@@ -86,7 +85,6 @@ export function CompCard({ comp, isZh, lang, pill, dimmed, follow, competitorLim
 }) {
   const name = localizeCompName(comp.id, comp.name, isZh, { explicitNameZh: comp.name_zh ?? undefined, date: comp.start_date });
   const city = comp.city ? (isZh ? localizeCity(comp.city, true, comp.country) : comp.city) : '';
-  const country = countryName(comp.country, isZh);
   const dateStr = formatDateRangeIso(comp.start_date, comp.end_date || comp.start_date).replace(/20\d\d-/g, '');
   const events = useMemo(
     () => [...new Set((comp.events ?? []).map(toWcaEventId).filter(Boolean))]
@@ -116,7 +114,7 @@ export function CompCard({ comp, isZh, lang, pill, dimmed, follow, competitorLim
           <span className="rc-date">{dateStr}</span>
         </div>
         <div className="rc-place">
-          <span>{city ? `${city}${tr({ zh: '，', en: ', ' })}${country}` : country}</span>
+          {city && <span>{city}</span>}
           {competitorLimit ? (
             <span className="rc-limit" title={tr({ zh: `报名上限 ${competitorLimit} 人`, en: `Competitor limit ${competitorLimit}` })}>
               <Users size={13} aria-hidden="true" />

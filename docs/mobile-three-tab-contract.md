@@ -173,3 +173,7 @@ P0/P1 实施顺序与所有阶段证据统一由路线图维护；稳定合同�
 ### Android 更新渠道（2026-10-14）
 
 「我的」canonical 页面上方允许共享 App 壳显示应用版本与更新控件，账号正文仍由网站提供。Android 宿主通过原生版本/渠道能力提供信息；官网 direct 检查公开版本清单，下载及系统安装需用户确认；Play 只进入 Play 商店。其他宿主不注入 Android 更新能力，不展示错误的 APK 更新入口。
+
+### UU 远程（2026-10-16）
+
+用户授权将 UU 远程接入 CubeRoot App。「我的」上方的共享折叠入口提供绑定、全屏远控、小窗观看和移除本机绑定；账号正文仍使用 canonical 网站。协议及状态只在 app-ui 实现，Mobile 注入官方 AppLauncher、App 深链和现有 Keychain/Keystore adapter。官方协议调用端仅支持 Android/iOS（UU 4.42.0+），目标仅限 Windows/macOS；iOS PiP 需要 iOS 18+。其他宿主显示平台限制，不虚构可用 adapter，也不算五端全部支持。绑定信息不上传 CubeRoot、不进入网站 iframe 或计时备份。仅小窗最终成功回调表示 PiP 已启动，全屏唤起成功不等于连接成功。首次授权、真实连接及设备端效果分别验收。

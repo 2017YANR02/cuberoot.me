@@ -33,11 +33,11 @@ describe('simulator custom logo membership access', () => {
 
   it('wires the member gate into the simulator controls and membership benefits', () => {
     const simPage = readFileSync(new URL('../app/[lang]/sim/SimPage.tsx', import.meta.url), 'utf8');
-    const controls = readFileSync(new URL('../app/[lang]/sim/PlayerControls.tsx', import.meta.url), 'utf8');
+    const controls = readFileSync(new URL('../app/[lang]/sim/SimAppearancePanel.tsx', import.meta.url), 'utf8');
     const membershipPage = readFileSync(new URL('../app/[lang]/membership/page.tsx', import.meta.url), 'utf8');
     const benefitsHook = readFileSync(new URL('../hooks/useMembershipBenefits.ts', import.meta.url), 'utf8');
 
-    expect(simPage).toContain('withCustomLogoAccess(settings, isMember)');
+    expect(simPage).toContain('withCustomLogoAccess({ ...settings, backView: animationMode && settings.backView }, isMember)');
     expect(controls).toContain('setShowCustomLogoUpsell(true)');
     expect(controls).toContain('href="/membership"');
     expect(controls).not.toContain('<option value="custom" disabled={!canUseCustomLogo}>');

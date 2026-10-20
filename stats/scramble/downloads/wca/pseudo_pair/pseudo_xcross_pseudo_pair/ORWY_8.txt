@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / ORWY / bin 8
-# Population in this bin: 310
+# Population in this bin: 313
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 4636001,L2 B2 L2 R B2 D2 R' D2 R' D' R D' U2 B D U' B F' R' D,O,Madrid Spring Open 2014 (2014-03-21~22),333oh Final A E2
@@ -10,7 +10,7 @@
 10712001,B' D2 L2 B2 D2 L2 F R2 D' L2 D' U' L' D R' B U2 F' D,O,Inspiria Cube Day 2014 (2014-04-12),333 R2 B #5
 33632001,U B2 D B2 D' B2 U F U' F2 U' B F' U F' L R F U,O,P3 Grand Open 2014 (2014-06-28~29),333 R1 K E2
 45881001,F2 L2 D2 F2 D B2 L2 U2 B2 L F' U2 F U' B' F2 D' L' F R2,O,US Nationals 2014 (2014-08-01~03),333 R1 J E1
-82765001,U B2 D2 R2 F2 L2 R2 U' B2 L' R2 B D2 F2 U F' L' R D F2,O,Game Pro Tour 2014 (2014-11-29~30),333oh Final A #3
+5872487001,B2 R D2 L' D2 U2 F2 L' U2 F D' F2 L U R B D2 F L U2,O,Cascavel ao Cubo 2026 (2026-10-10~11),333oh R1 B E2
 91673001,B' U2 B' L2 R2 B2 R2 B L2 U F R2 D2 U F2 R' U2 L D' L2 U,O,Oxford Winter 2014 (2014-12-20~21),333bf R1 B E2
 4830281032,D L' U2 R2 D2 B2 R' F2 L2 D2 B' L' D F' U' B' D U R' D L' F,O,Valdepeñas Open 2025 (2025-06-28~29),333mbf Final A #2
 133780001,B U2 F D2 U2 B' R2 D2 R2 F R' U' B' L' R' D' L' F R B2,O,Riga Open 2015 (2015-04-26),333 R1 A #2
@@ -110,7 +110,7 @@
 4863443001,B L2 F R2 U2 L2 D2 B U2 F D R B' U' F L2 D' R U R,O,Villanueva Open 2025 (2025-07-12~13),333 R2 C #2
 3604761001,B2 D F2 R2 F' R2 U2 F' U2 L2 F' L' D2 L2 U' F R D2 B D',O,Sofia Spring 2024 (2024-03-16~17),333oh R1 B E1
 5378927001,R U2 R U2 F2 D2 U2 R2 F2 R F' L2 R D B R' F D' L' F2,O,Leuven Open 2026 (2026-02-07),333 Final A #2
-4702435001,R2 F R2 B2 R F2 D2 R D2 U2 B2 U' R' D' B' U' F' U2 L' D2,O,Keep Up Karrinyup 2025 (2025-05-04),333 R2 A #4
+5869008001,B U F2 L' F2 B' U' D2 F2 B U2 F' L2 F' U2 F' R' D' F',O,Turn Back the Clock Miami 2026 (2026-10-10),333 Final A #2
 1381802001,D2 R2 B2 L2 U L2 D2 B2 D' B' L2 U' L2 F2 R U L R' D' R B',O,Boise 2019 (2019-11-02),333 R1 D E2
 4610937001,F2 D' R' D2 L2 F2 R2 D B2 D R2 D2 U2 B' F' U' R F' L' F',O,Ulaanbaatar Spring 2025 (2025-03-29),333 R1 B E1
 1496042001,R2 D2 B2 U L2 B2 U' F2 D' B' U' B' U B R B2 F U B L U' L2 U',O,Sana OLL Cubing 2020 (2020-01-11~12),333bf Final A E1
@@ -146,7 +146,7 @@
 2242244001,U' L D' U2 L' B2 R F2 R2 F2 R' F2 R2 F' L' R' D' B F2 R,O,Bagnolo Al Cubo 2022 (2022-10-15~16),333 R2 C #4
 4147205001,D' L' U2 B2 U2 L' U2 B2 L2 U B' F' D' R' F' D' L' F2 U',O,Iguatemi Fortaleza V 2024 (2024-09-28~29),333 R1 C #1
 5630620001,B R2 F U2 F' U2 B2 D2 F U F L2 B R2 U2 R F' L D U L',O,Chess & Cubes Madrid Miniopen 2026 (2026-05-16),333bf Final B #3
-2322203001,B' R U2 B' D2 F2 D2 B2 L' D2 L' B2 R2 D' L U' L2 B F D,O,KoprCube 2022 (2022-11-26),333oh R1 A #5
+5867299001,U' L' U2 B' D2 B2 L2 B2 D L2 D U' R F L B' L2 R' F',O,Vilajuga Vilafranca 2026 (2026-10-03~04),333 R1 A #3
 2357499001,U2 F D2 L2 F R2 F' D2 B2 D2 R' B U2 L' U' F' L' B R U L2 U2,O,New Zealand Nationals 2022 (2022-12-09~11),333bf R1 A #3
 5602138001,L D R2 B' U2 L2 D' F2 L2 F2 D' U R2 B R' F2 R2 F' U L',O,MilaNxNesas en La MataNxNza 2026 (2026-05-02~03),333 R1 A #1
 2430334001,R' U' D2 L' F' R' F2 B D F B2 D2 L U2 B2 R2 F2 L B2 U2,O,Bangkok Cube Day Winter 2023 (2023-01-14~15),333 R2 C #1

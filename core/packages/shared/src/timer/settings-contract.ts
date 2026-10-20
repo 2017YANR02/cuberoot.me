@@ -50,7 +50,7 @@ export const TIMER_SETTING_CATEGORY_CONTRACTS: readonly TimerSettingCategoryCont
   {
     id: 'scramble',
     label: { en: 'Scrambles', zh: '打乱' },
-    description: { en: 'Rules, orientation, and sync seed', zh: '生成规则、朝向和同步种子' },
+    description: { en: 'Rules and orientation', zh: '生成规则和朝向' },
   },
   {
     id: 'training',
@@ -156,11 +156,11 @@ export function normalizeTimerRankScopes(value: unknown): TimerRankScope[] {
     : [...TIMER_RANK_SCOPES];
 }
 
-export const TIMER_SCRAMBLE_CLICK_ACTIONS = ['none', 'next', 'copy'] as const;
+export const TIMER_SCRAMBLE_CLICK_ACTIONS = ['start', 'none', 'next', 'copy'] as const;
 
 export type TimerScrambleClickAction = (typeof TIMER_SCRAMBLE_CLICK_ACTIONS)[number];
 
-export const DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION: TimerScrambleClickAction = 'copy';
+export const DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION: TimerScrambleClickAction = 'start';
 
 export interface TimerScramblePreviewSettings {
   showCubePreview: boolean;
@@ -176,7 +176,7 @@ function normalizedBoolean(value: unknown, fallback: boolean): boolean {
   return typeof value === 'boolean' ? value : fallback;
 }
 
-export const TIMER_SMART_CUBE_AUTO_READY_MODES = ['scrambled', 'off', 'still', 'double-flick'] as const;
+export const TIMER_SMART_CUBE_AUTO_READY_MODES = ['scrambled', 'still', 'double-flick'] as const;
 export const TIMER_SMART_CUBE_LIVE_VIEWS = ['3d', 'twizzle', 'q2look', 'net', '2d'] as const;
 
 export interface TimerSmartCubeSettings {
@@ -187,6 +187,7 @@ export interface TimerSmartCubeSettings {
   /** Whether the live virtual cube consumes the device gyroscope pose. */
   gyroEnabled: boolean;
   autoCalibrateGyro: boolean;
+  /** Compatibility field: pose recording is always enabled, independent of the live view. */
   recordGyro: boolean;
   autoRecap: boolean;
   autoOpenSolution: boolean;
@@ -210,7 +211,7 @@ export function normalizeTimerSmartCubeSettings(value: Partial<Record<keyof Time
       ? value.liveCubeView as TimerSmartCubeSettings['liveCubeView'] : DEFAULT_TIMER_SMART_CUBE_SETTINGS.liveCubeView,
     gyroEnabled: normalizedBoolean(value.gyroEnabled, DEFAULT_TIMER_SMART_CUBE_SETTINGS.gyroEnabled),
     autoCalibrateGyro: normalizedBoolean(value.autoCalibrateGyro, DEFAULT_TIMER_SMART_CUBE_SETTINGS.autoCalibrateGyro),
-    recordGyro: normalizedBoolean(value.recordGyro, DEFAULT_TIMER_SMART_CUBE_SETTINGS.recordGyro),
+    recordGyro: true,
     autoRecap: normalizedBoolean(value.autoRecap, DEFAULT_TIMER_SMART_CUBE_SETTINGS.autoRecap),
     autoOpenSolution: normalizedBoolean(value.autoOpenSolution, DEFAULT_TIMER_SMART_CUBE_SETTINGS.autoOpenSolution),
   };
@@ -236,9 +237,10 @@ export function timerScramblePreview3DDisabled(value: Pick<TimerScramblePreviewS
   return !value.showCubePreview;
 }
 
-export type TimerScrambleClickEffect = 'none' | 'next' | 'copy' | 'retry';
+export type TimerScrambleClickEffect = TimerScrambleClickAction | 'retry';
 
 export const TIMER_SCRAMBLE_CLICK_TITLE_COPY: Record<TimerScrambleClickEffect, TimerSettingCopy> = {
+  start: { en: 'Hold to start timing', zh: '按住打乱开始计时' },
   none: { en: 'Click disabled', zh: '点击无操作' },
   next: { en: 'Click to refresh', zh: '点击换一个打乱' },
   copy: { en: 'Click to copy', zh: '点击复制打乱' },
@@ -258,6 +260,7 @@ export function timerScrambleClickEffect(
 ): TimerScrambleClickEffect {
   if (retryable) return 'retry';
   if (!ready) return 'none';
+  if (action === 'start') return 'start';
   if (action === 'next') return 'next';
   return action === 'copy' && hasScramble ? 'copy' : 'none';
 }
@@ -268,21 +271,20 @@ export const TIMER_SETTING_FIELD_CONTRACTS = [
   { id: 'settings.timer.enabled', category: 'timer', copy: { en: 'Timing mode', zh: '计时模式' }, storagePath: 'timingEnabled', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-timing-enabled' },
   { id: 'settings.timer.inspection', category: 'timer', copy: { en: 'WCA inspection', zh: 'WCA 观察' }, storagePath: 'inspectionSec', value: { kind: 'enum', values: [0, 15] }, visibility: 'always', disabledWhen: 'never', effect: 'persist-inspection-seconds' },
   { id: 'settings.timer.hold-threshold', category: 'timer', copy: { en: 'Hold threshold (ms)', zh: '按住阈值（毫秒）' }, storagePath: 'holdMs', value: { kind: 'integer', min: 100, max: 2000, step: 50 }, visibility: 'always', disabledWhen: 'never', effect: 'persist-hold-threshold' },
-  { id: 'settings.timer.auto-session-for-event', category: 'timer', copy: { en: 'Match session when changing event', zh: '切换项目时匹配分组' }, storagePath: 'autoSessionForEvent', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-auto-session-for-event' },
-  { id: 'settings.timer.auto-event-for-session', category: 'timer', copy: { en: 'Match event when changing session', zh: '切换分组时匹配项目' }, storagePath: 'autoEventForSession', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-auto-event-for-session' },
   { id: 'settings.timer.hide-running-time', category: 'timer', copy: { en: 'Hide time while running', zh: '隐藏运行中的时间' }, storagePath: 'hideTime', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-hide-running-time' },
   { id: 'settings.timer.running-precision', category: 'timer', copy: { en: 'Running precision', zh: '计时中精度' }, storagePath: 'runningPrecision', value: { kind: 'enum', values: [0, 1, 2, 3] }, visibility: 'always', disabledWhen: 'never', effect: 'persist-running-precision' },
   { id: 'settings.timer.result-precision', category: 'timer', copy: { en: 'Result precision', zh: '成绩精度' }, storagePath: 'precision', value: { kind: 'enum', values: [2, 3] }, visibility: 'always', disabledWhen: 'never', effect: 'persist-result-precision' },
+  { id: 'settings.timer.auto-session-for-event', category: 'timer', copy: { en: 'Match session when changing event', zh: '切换项目时匹配分组' }, storagePath: 'autoSessionForEvent', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-auto-session-for-event' },
+  { id: 'settings.timer.auto-event-for-session', category: 'timer', copy: { en: 'Match event when changing session', zh: '切换分组时匹配项目' }, storagePath: 'autoEventForSession', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-auto-event-for-session' },
 
   // Smart cube
-  { id: 'settings.smart-cube.fake-cube', category: 'smart-cube', copy: { en: 'Fake cube', zh: '假魔方' }, storagePath: 'showAdminFakeCube', value: bool, visibility: 'admin-only', disabledWhen: 'never', effect: 'persist-admin-fake-cube-controls' },
+  { id: 'settings.smart-cube.fake-cube', category: 'smart-cube', copy: { en: 'Virtual cube', zh: '虚拟魔方' }, storagePath: 'showAdminFakeCube', value: bool, visibility: 'admin-only', disabledWhen: 'never', effect: 'persist-admin-fake-cube-controls' },
+  { id: 'settings.smart-cube.auto-ready', category: 'smart-cube', copy: { en: 'Enter ready state', zh: '准备状态进入' }, storagePath: 'bluetoothAutoReady', value: { kind: 'enum', values: TIMER_SMART_CUBE_AUTO_READY_MODES }, visibility: 'always', disabledWhen: 'never', effect: 'persist-smart-cube-auto-ready' },
   { id: 'settings.smart-cube.gyro', category: 'smart-cube', copy: { en: 'Gyroscope', zh: '陀螺仪' }, storagePath: 'gyroEnabled', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-live-cube-gyro' },
-  { id: 'settings.smart-cube.auto-calibrate', category: 'smart-cube', copy: { en: 'Auto-reset orientation before the last scramble move', zh: '打乱剩最后一步时自动重置朝向' }, storagePath: 'autoCalibrateGyro', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-auto-calibrate-gyro' },
-  { id: 'settings.smart-cube.auto-ready', category: 'smart-cube', copy: { en: 'Smart-cube auto-ready', zh: '智能魔方自动预备' }, storagePath: 'bluetoothAutoReady', value: { kind: 'enum', values: TIMER_SMART_CUBE_AUTO_READY_MODES }, visibility: 'always', disabledWhen: 'never', effect: 'persist-smart-cube-auto-ready' },
+  { id: 'settings.smart-cube.auto-calibrate', category: 'smart-cube', copy: { en: 'Auto-reset orientation', zh: '朝向自动重置' }, storagePath: 'autoCalibrateGyro', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-auto-calibrate-gyro' },
   { id: 'settings.smart-cube.live-view', category: 'smart-cube', copy: { en: 'Live cube', zh: '实况魔方' }, storagePath: 'liveCubeView', value: { kind: 'enum', values: TIMER_SMART_CUBE_LIVE_VIEWS }, visibility: 'always', disabledWhen: 'never', effect: 'persist-live-cube-view' },
-  { id: 'settings.smart-cube.record-orientation', category: 'smart-cube', copy: { en: 'Record orientation for replay', zh: '记录姿态用于回放' }, storagePath: 'recordGyro', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-record-orientation' },
-  { id: 'settings.smart-cube.auto-recap', category: 'smart-cube', copy: { en: 'Open reconstruction after each solve', zh: '结束后自动打开复盘' }, storagePath: 'autoRecap', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-auto-recap' },
-  { id: 'settings.smart-cube.auto-solution', category: 'smart-cube', copy: { en: 'Open solution after each solve', zh: '结束后自动打开解法' }, storagePath: 'autoOpenSolution', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-auto-solution' },
+  { id: 'settings.smart-cube.auto-recap', category: 'smart-cube', copy: { en: 'Open reconstruction', zh: '自动打开复盘' }, storagePath: 'autoRecap', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-auto-recap' },
+  { id: 'settings.smart-cube.auto-solution', category: 'smart-cube', copy: { en: 'Open solution', zh: '自动打开解法' }, storagePath: 'autoOpenSolution', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-auto-solution' },
 
   { id: 'settings.scramble.training-pre-orientation', category: 'smart-cube', copy: { en: 'Training orientation', zh: '训练朝向' }, storagePath: 'preScrT', value: { kind: 'orientation' }, visibility: 'always', disabledWhen: 'never', effect: 'persist-training-pre-scramble-orientation' },
 
@@ -293,6 +295,7 @@ export const TIMER_SETTING_FIELD_CONTRACTS = [
   { id: 'settings.scramble.color-neutral', category: 'scramble', copy: { en: 'Color neutral', zh: '颜色中立' }, storagePath: 'cnMode', value: { kind: 'enum', values: ['none', 'single', 'dual', 'six'] }, visibility: 'color-neutral-event', disabledWhen: 'never', effect: 'persist-color-neutral-mode' },
 
   // Training
+  { id: 'settings.training.start-mode', category: 'training', copy: { en: 'Smart-cube training timing', zh: '智能魔方专项计时方式' }, storagePath: 'trainingStartMode', value: { kind: 'enum', values: ['first-turn', 'scrambled', 'manual'] }, visibility: 'always', disabledWhen: 'never', effect: 'persist-training-start-mode' },
   { id: 'settings.training.stage-splits', category: 'training', copy: { en: 'CFOP stage splits', zh: 'CFOP 分阶段计时' }, storagePath: 'multiStage', value: bool, visibility: 'stage-split-event', disabledWhen: 'never', effect: 'persist-stage-splits' },
   { id: 'settings.training.bld-memo-split', category: 'training', copy: { en: 'BLD memo split', zh: '盲拧记忆 / 执行分段' }, storagePath: 'bldMemo', value: bool, visibility: 'bld-event', disabledWhen: 'never', effect: 'persist-bld-memo-split' },
   { id: 'settings.training.target-time', category: 'training', copy: { en: 'Target time', zh: '目标时间' }, storagePath: 'targetMsByEvent', value: { kind: 'per-event-duration' }, visibility: 'always', disabledWhen: 'never', effect: 'persist-current-event-target' },
@@ -318,11 +321,11 @@ export const TIMER_SETTING_FIELD_CONTRACTS = [
 
   // Sound and rhythm
   { id: 'settings.sound.enabled', category: 'sound', copy: { en: 'Sounds', zh: '提示音' }, storagePath: 'soundsEnabled', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-sounds-and-warm-audio' },
-  { id: 'settings.sound.volume', category: 'sound', copy: { en: 'Volume', zh: '音量' }, storagePath: 'volume', value: { kind: 'number-range', min: 0, max: 1, step: 0.05 }, visibility: 'always', disabledWhen: 'sounds-disabled', effect: 'persist-volume-or-preview-sound' },
+  { id: 'settings.sound.volume', category: 'sound', copy: { en: 'Volume', zh: '音量' }, storagePath: 'volume', value: { kind: 'number-range', min: 0, max: 1, step: 0.05 }, visibility: 'always', disabledWhen: 'never', effect: 'persist-volume-or-preview-sound' },
   { id: 'settings.sound.voice-inspection', category: 'sound', copy: { en: 'Voice inspection', zh: '语音观察' }, storagePath: 'voiceInspection', value: { kind: 'enum', values: ['none', 'en-male', 'en-female', 'zh-male', 'zh-female'] }, visibility: 'always', disabledWhen: 'sounds-disabled-or-voice-unavailable', effect: 'persist-inspection-voice' },
   { id: 'settings.sound.metronome-enabled', category: 'sound', copy: { en: 'Enable metronome', zh: '开启节拍器' }, storagePath: 'metronomeOn', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-metronome-and-warm-audio' },
   { id: 'settings.sound.metronome-tempo', category: 'sound', copy: { en: 'Tempo', zh: '速度' }, storagePath: 'metronome.bpm', value: { kind: 'number-range', min: 30, max: 1800, step: 1 }, visibility: 'always', disabledWhen: 'metronome-disabled', effect: 'set-shared-metronome-bpm-or-tap-tempo' },
-  { id: 'settings.sound.inspection-beeps', category: 'sound', copy: { en: 'Beep at (sec)', zh: '观察提示音（秒）' }, storagePath: 'inspectionBeepAt', value: { kind: 'string-list' }, visibility: 'always', disabledWhen: 'metronome-disabled', effect: 'persist-normalized-inspection-beep-seconds-or-preview' },
+  { id: 'settings.sound.inspection-beeps', category: 'sound', copy: { en: 'Beep at (sec)', zh: '观察提示音（秒）' }, storagePath: 'inspectionBeepAt', value: { kind: 'string-list' }, visibility: 'always', disabledWhen: 'never', effect: 'persist-normalized-inspection-beep-seconds-or-preview' },
 
   // Data commands and the one persisted backup preference
   { id: 'settings.data.auto-backup-frequency', category: 'data', copy: { en: 'Back up every N solves', zh: '每完成 N 次自动备份' }, storagePath: 'autoBackupEvery', value: { kind: 'integer', min: 0, max: 30, step: 1 }, visibility: 'always', disabledWhen: 'never', effect: 'persist-auto-backup-frequency' },
@@ -335,8 +338,8 @@ export const TIMER_SETTING_FIELD_CONTRACTS = [
   { id: 'settings.data.import-file', category: 'data', copy: { en: 'One-click import', zh: '一键导入' }, storagePath: null, value: { kind: 'file' }, visibility: 'always', disabledWhen: 'import-busy', effect: 'inspect-and-import-cuberoot-cstimer-or-dctimer' },
   { id: 'settings.data.import-session-mapping', category: 'data', copy: { en: 'Choose event', zh: '选择项目' }, storagePath: null, value: { kind: 'enum' }, visibility: 'staged-import', disabledWhen: 'never', effect: 'map-unrecognized-import-session-event' },
   { id: 'settings.data.import-complete', category: 'data', copy: { en: 'Finish import', zh: '完成导入' }, storagePath: null, value: action, visibility: 'staged-import', disabledWhen: 'import-unresolved', effect: 'create-imported-sessions' },
-  { id: 'settings.data.export-cuberoot', category: 'data', copy: { en: 'CubeRoot JSON', zh: 'CubeRoot JSON' }, storagePath: null, value: action, visibility: 'always', disabledWhen: 'never', effect: 'download-cuberoot-json' },
-  { id: 'settings.data.export-cstimer', category: 'data', copy: { en: 'csTimer JSON', zh: 'csTimer JSON' }, storagePath: null, value: action, visibility: 'always', disabledWhen: 'never', effect: 'download-cstimer-json' },
+  { id: 'settings.data.export-cuberoot', category: 'data', copy: { en: 'CubeRoot', zh: 'CubeRoot' }, storagePath: null, value: action, visibility: 'always', disabledWhen: 'never', effect: 'download-cuberoot-json' },
+  { id: 'settings.data.export-cstimer', category: 'data', copy: { en: 'csTimer', zh: 'csTimer' }, storagePath: null, value: action, visibility: 'always', disabledWhen: 'never', effect: 'download-cstimer-json' },
   { id: 'settings.data.export-csv', category: 'data', copy: { en: 'CSV', zh: 'CSV' }, storagePath: null, value: action, visibility: 'always', disabledWhen: 'never', effect: 'download-solves-csv' },
   { id: 'settings.data.export-speedstacks', category: 'data', copy: { en: 'Speedstacks', zh: 'Speedstacks' }, storagePath: null, value: action, visibility: 'always', disabledWhen: 'never', effect: 'download-current-event-speedstacks' },
   { id: 'settings.data.reanalyze', category: 'data', copy: { en: 'Reanalyze stage data', zh: '重算分阶段数据' }, storagePath: null, value: action, visibility: 'always', disabledWhen: 'reanalyze-busy', effect: 'reanalyze-recorded-move-streams' },
@@ -345,7 +348,7 @@ export const TIMER_SETTING_FIELD_CONTRACTS = [
   { id: 'settings.advanced.sync-seed', category: 'advanced', copy: { en: 'Seed', zh: '种子' }, storagePath: 'syncSeed', value: { kind: 'text' }, visibility: 'always', disabledWhen: 'sync-seed-draft-empty-or-unchanged', effect: 'apply-or-clear-sync-seed-and-reset-counter' },
   { id: 'settings.advanced.sync-seed-counter', category: 'advanced', copy: { en: 'Current', zh: '当前' }, storagePath: 'syncSeedCounter', value: action, visibility: 'always', disabledWhen: 'sync-seed-off', effect: 'reset-sync-seed-counter' },
   { id: 'settings.advanced.keymap', category: 'advanced', copy: { en: 'Shortcut bindings', zh: '快捷键绑定' }, storagePath: 'keymap', value: { kind: 'keymap' }, visibility: 'always', disabledWhen: 'never', effect: 'capture-rebind-or-unbind-timer-action' },
-  { id: 'settings.advanced.reset-keymap', category: 'advanced', copy: { en: 'Reset shortcuts to defaults', zh: '恢复默认快捷键' }, storagePath: 'keymap', value: action, visibility: 'always', disabledWhen: 'never', effect: 'clear-keymap-overrides' },
+  { id: 'settings.advanced.reset-keymap', category: 'advanced', copy: { en: 'Reset defaults', zh: '恢复默认' }, storagePath: 'keymap', value: action, visibility: 'always', disabledWhen: 'never', effect: 'clear-keymap-overrides' },
   { id: 'settings.advanced.reset-defaults', category: 'advanced', copy: { en: 'Reset defaults', zh: '恢复默认' }, storagePath: null, value: action, visibility: 'always', disabledWhen: 'never', effect: 'confirm-and-reset-all-timer-settings' },
 ] as const satisfies readonly TimerSettingFieldContract[];
 

@@ -1,5 +1,5 @@
-/* Opt-in, narrowly scoped offline support for the public ZBLL trainer. */
-const APP_CACHE = 'cuberoot-double-zbll-app-v1';
+/* Automatically cached, narrowly scoped offline support for the public ZBLL trainer. */
+const APP_CACHE = 'cuberoot-double-zbll-app-v3';
 const DATA_CACHE = 'cuberoot-double-zbll-data-v1';
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', event => event.waitUntil(self.clients.claim()));

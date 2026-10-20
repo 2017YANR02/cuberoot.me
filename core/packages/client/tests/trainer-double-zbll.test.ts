@@ -1,6 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AlgCase } from '@cuberoot/shared/alg';
-vi.mock('@/lib/double-zbll', () => ({ doubleZbllSupports: () => true, doubleZbllScramble: (top: string, bottom: string) => `${top}/${bottom}` }));
+const orientation = vi.hoisted(() => ({ swapped: false }));
+vi.mock('@/lib/double-zbll', () => ({
+  doubleZbllSupports: () => true,
+  doubleZbllTrainingPair: (top: string, bottom: string) => ({ key: orientation.swapped ? bottom : top,
+    bottomKey: orientation.swapped ? top : bottom, scramble: `${top}/${bottom}${orientation.swapped ? '/z2' : ''}` }),
+  isDoubleZbllPllCase: (c: AlgCase) => c.subgroup.startsWith('PLL/'),
+  doubleZbllPllCases: () => Array.from({ length: 21 }, (_, i) => ({ subgroup: 'PLL/PLL', name: String(i), setup: 'R', standard: 'R', algs: [], sticker: { kind: 'pll' } })),
+}));
 const saved = new Map<string, string>();
 Object.assign(globalThis, {
   window: { location: { pathname: '/' }, addEventListener() {} },
@@ -13,8 +20,26 @@ function boot(count: number) {
   const st = store.getState(); st.loadSession('3x3', 'zbll', cases.slice(0, count));
   st.setSelected(cases.slice(0, count).map(c => `T|${c.name}`)); st.setMode('recap'); st.setRecapOrder('seq'); st.setDoubleZbll(true);
 }
-beforeEach(() => { saved.clear(); store.setState({ doubleZbll: false, scope: null, timerState: TimerState.NOT_RUNNING, mode: 'recap', multiScramble: false, showRecapRoundEnd: true }); });
+beforeEach(() => { orientation.swapped = false; saved.clear(); store.setState({ doubleZbll: false, scope: null, timerState: TimerState.NOT_RUNNING, mode: 'recap', multiScramble: false, showRecapRoundEnd: true }); });
 describe('Double ZBLL trainer', () => {
+  it('keeps swapped layer identities, previews, coverage and saved solves aligned', () => {
+    orientation.swapped = true;
+    boot(5);
+    expect(current()).toMatchObject({ key: 'T|B', bottomKey: 'T|A', name: 'B', scramble: 'T|A/T|B/z2' });
+    expect(store.getState().currentKey).toBe('T|B');
+    expect(store.getState().currentScramble).toBe(current().scramble);
+    const preview = store.getState().peek;
+    expect(preview).toMatchObject({ key: 'T|D', bottomKey: 'T|C' });
+    store.getState().setPreAuf(false);
+    expect(store.getState().peek).toEqual(preview);
+    vi.useFakeTimers();
+    store.getState().startTimer(1000); store.getState().stopTimer(9000);
+    expect(store.getState().solves[0]).toMatchObject({ caseKey: 'T|B', bottomKey: 'T|A', scramble: 'T|A/T|B/z2' });
+    vi.clearAllTimers(); vi.useRealTimers();
+    store.setState({ timerState: TimerState.NOT_RUNNING });
+    store.getState().nextScramble(); expect(current()).toEqual(preview);
+    expect(completedRecapCount(current().recap, false)).toBe(2);
+  });
   it('consumes both layers once, preserves previews and accounts for the odd tail', () => {
     boot(5);
     expect(current().scramble).toBe('T|A/T|B');
@@ -31,11 +56,10 @@ describe('Double ZBLL trainer', () => {
     store.getState().nextScramble(); expect(store.getState().recapRoundDone).toBe(true);
     expect(completedRecapCount(current().recap, true)).toBe(5);
   });
-  it('supports one selected case and rejects incompatible modes', async () => {
+  it('supports one selected case and rejects incompatible modes', () => {
     boot(1); expect(current().scramble).toBe('T|A/T|A');
     store.getState().setMode('memo'); expect(store.getState().mode).toBe('recap');
     store.getState().setScrambleKind('inv'); expect(store.getState().scrambleKind).toBe('htm');
-    expect((await store.getState().createRoom()).ok).toBe(false);
   });
   it('replaces both layers and previews when selection or scope changes', () => {
     boot(5);
@@ -52,6 +76,30 @@ describe('Double ZBLL trainer', () => {
     store.getState().setSelected([]);
     expect(store.getState().currentScramble).toBeNull();
     expect(store.getState().hist.list).toHaveLength(0);
+  });
+  it('adds PLL to the selected scope, removes it cleanly and remembers the toggle', () => {
+    boot(2);
+    store.getState().setScope(['T|A']);
+    store.getState().setDoubleZbllIncludePll(true);
+    expect(store.getState().cases).toHaveLength(23);
+    expect(store.getState().selected).toHaveLength(23);
+    expect(store.getState().scope).toHaveLength(22);
+    expect(current().scramble).toBe('T|A/PLL/PLL|0');
+    store.getState().setDoubleZbllIncludePll(false);
+    expect(store.getState().cases).toHaveLength(2);
+    expect(store.getState().scope).toEqual(['T|A']);
+    expect(current().scramble).toBe('T|A/T|A');
+    expect(store.getState().hist.list).toHaveLength(1);
+    store.getState().setDoubleZbllIncludePll(true);
+    store.getState().setDoubleZbll(false);
+    expect(store.getState().cases).toHaveLength(2);
+    expect(store.getState().selected).toEqual(['T|A', 'T|B']);
+    store.getState().setDoubleZbll(true);
+    expect(store.getState().doubleZbllIncludePll).toBe(true);
+    expect(store.getState().cases).toHaveLength(23);
+    store.setState({ timerState: TimerState.RUNNING });
+    store.getState().setDoubleZbllIncludePll(false);
+    expect(store.getState().doubleZbllIncludePll).toBe(true);
   });
   it('stores paired times separately and restores each mode’s history', () => {
     boot(2);

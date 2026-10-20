@@ -1,0 +1,345 @@
+{
+  "source": "https://cuberoot.me/zh/timer?share=wK8NnBt_kHU",
+  "recording": {
+    "scramble": "F2 L2 F D' L B2 D2 B L2 F2 L R2 D' F' D R B2 R'",
+    "moves": [
+      {
+        "m": "B'",
+        "ts": 0
+      },
+      {
+        "m": "F",
+        "ts": 249
+      },
+      {
+        "m": "U'",
+        "ts": 414
+      },
+      {
+        "m": "F'",
+        "ts": 563
+      },
+      {
+        "m": "F'",
+        "ts": 620
+      },
+      {
+        "m": "B",
+        "ts": 991
+      },
+      {
+        "m": "B",
+        "ts": 1051
+      },
+      {
+        "m": "U'",
+        "ts": 1300
+      },
+      {
+        "m": "L'",
+        "ts": 2364
+      },
+      {
+        "m": "D'",
+        "ts": 2469
+      },
+      {
+        "m": "L",
+        "ts": 2568
+      },
+      {
+        "m": "D",
+        "ts": 2658
+      },
+      {
+        "m": "D",
+        "ts": 2701
+      },
+      {
+        "m": "R",
+        "ts": 2955
+      },
+      {
+        "m": "D",
+        "ts": 3069
+      },
+      {
+        "m": "R'",
+        "ts": 3168
+      },
+      {
+        "m": "R'",
+        "ts": 3839
+      },
+      {
+        "m": "D",
+        "ts": 3894
+      },
+      {
+        "m": "R",
+        "ts": 3968
+      },
+      {
+        "m": "L'",
+        "ts": 4144
+      },
+      {
+        "m": "D",
+        "ts": 4210
+      },
+      {
+        "m": "L",
+        "ts": 4341
+      },
+      {
+        "m": "F",
+        "ts": 4740
+      },
+      {
+        "m": "D'",
+        "ts": 4910
+      },
+      {
+        "m": "D'",
+        "ts": 4990
+      },
+      {
+        "m": "F'",
+        "ts": 5144
+      },
+      {
+        "m": "F'",
+        "ts": 5201
+      },
+      {
+        "m": "D'",
+        "ts": 5342
+      },
+      {
+        "m": "F",
+        "ts": 5440
+      },
+      {
+        "m": "D'",
+        "ts": 5762
+      },
+      {
+        "m": "F",
+        "ts": 5888
+      },
+      {
+        "m": "D'",
+        "ts": 6020
+      },
+      {
+        "m": "D'",
+        "ts": 6062
+      },
+      {
+        "m": "F'",
+        "ts": 6269
+      },
+      {
+        "m": "D",
+        "ts": 6340
+      },
+      {
+        "m": "R",
+        "ts": 6481
+      },
+      {
+        "m": "L'",
+        "ts": 6498
+      },
+      {
+        "m": "U",
+        "ts": 6602
+      },
+      {
+        "m": "F'",
+        "ts": 6700
+      },
+      {
+        "m": "U'",
+        "ts": 6801
+      },
+      {
+        "m": "R'",
+        "ts": 6865
+      },
+      {
+        "m": "L",
+        "ts": 6873
+      },
+      {
+        "m": "D'",
+        "ts": 7586
+      },
+      {
+        "m": "D'",
+        "ts": 7641
+      },
+      {
+        "m": "F",
+        "ts": 7728
+      },
+      {
+        "m": "D",
+        "ts": 7802
+      },
+      {
+        "m": "F'",
+        "ts": 7897
+      },
+      {
+        "m": "D",
+        "ts": 7971
+      },
+      {
+        "m": "R'",
+        "ts": 8175
+      },
+      {
+        "m": "F",
+        "ts": 8261
+      },
+      {
+        "m": "D'",
+        "ts": 8353
+      },
+      {
+        "m": "D'",
+        "ts": 8433
+      },
+      {
+        "m": "F'",
+        "ts": 8566
+      },
+      {
+        "m": "D'",
+        "ts": 8702
+      },
+      {
+        "m": "D'",
+        "ts": 8760
+      },
+      {
+        "m": "F'",
+        "ts": 8967
+      },
+      {
+        "m": "R",
+        "ts": 9046
+      },
+      {
+        "m": "F",
+        "ts": 9123
+      },
+      {
+        "m": "D",
+        "ts": 9548
+      },
+      {
+        "m": "D",
+        "ts": 9600
+      }
+    ],
+    "timeMs": 9600,
+    "model": "gan-v4",
+    "gyro": "RwIAWAAA9aniqQAe76jhrAAd96XnqwB58aboqwBZ+qL1rABaBqXqqwB4+aLwrQBh9KbkrAA19q3aqAB48qjqqACWDKvopQCd8ajgrABx9KPsrQAe+J/tsACW+J70sQBa7aDvsAA866nvqAB5APvogwB4EAf8ggBaBgj2ggA7CAnvgwC0CAXpgwGODAzehwAWDRLfhwBgCwrohACQCv7vgwAkCQnlhADMDAbphAAlDAnihgAYEAjmhQBZDQbjhQCWBwPkhAB4A/zihQCXBfrqgwEsDgP1ggA7FAgFgwBaAwDihQBaDAP2ggBbB//ahwBZD/jehwB4DfbvgwBbBMzakwB3AbXonAA87rLqoAB49KvrpAA88qfvqAEt6az1pAAl/aTvqgA09q/apgCA8rPhoQBw8qvppgBa86bxqQBa8ajsqAEV8qX4qQCu8af8pgAH6qv3pADL8aH9rQAH6qrspwBS6qfuqgBmEqXOugBtL66/yQA8MLHKuwBZL7S4ygB+BqrVrQBy76nxpgA98ajtqACz9annqADS8KnpqAEP567qpQAj56nvqABV5qf0qgA7467mpwB47KvhqQBa66/fpwBa36zrqQBa5qP9rgB52qgPrgBZ4KUFrQBb3a3vqAB446vsqACW363ypwAH6qvwpQCO5LDuowB53LbTqgAd5qXvrQB546XzrQCV5Kj0qgCW66P3rA=="
+  },
+  "issue": "用户确认正确的完整智能魔方复盘",
+  "displayRows": [
+    {
+      "colors": [],
+      "diagrams": [],
+      "hrefs": [],
+      "label": "",
+      "moves": "F2 L2 F D' L B2 D2 B L2 F2 L R2 D' F' D R B2 R'"
+    },
+    {
+      "colors": [
+        "Yellow Red"
+      ],
+      "diagrams": [],
+      "hrefs": [],
+      "label": "// inspection",
+      "moves": "x2 y"
+    },
+    {
+      "colors": [
+        "White"
+      ],
+      "diagrams": [],
+      "hrefs": [],
+      "label": "//  cross",
+      "moves": "L' R D' R2' L2 D'"
+    },
+    {
+      "colors": [
+        "Blue Red"
+      ],
+      "diagrams": [
+        "iso"
+      ],
+      "hrefs": [],
+      "label": "// ",
+      "moves": "y R' U' R U2 L U L'"
+    },
+    {
+      "colors": [
+        "Orange Blue"
+      ],
+      "diagrams": [
+        "iso"
+      ],
+      "hrefs": [],
+      "label": "// ",
+      "moves": "L' U L R' U R"
+    },
+    {
+      "colors": [
+        "Green Orange"
+      ],
+      "diagrams": [
+        "iso"
+      ],
+      "hrefs": [
+        "/alg/3x3/f2l/x-"
+      ],
+      "label": "// ",
+      "moves": "y' R U2' R2' U' R"
+    },
+    {
+      "colors": [
+        "Green Red"
+      ],
+      "diagrams": [
+        "iso"
+      ],
+      "hrefs": [
+        "/alg/3x3/f2l/q+"
+      ],
+      "label": "// /ZBLS",
+      "moves": "U' R U2' R' U S' R U' R' S"
+    },
+    {
+      "colors": [],
+      "diagrams": [
+        "plan"
+      ],
+      "hrefs": [
+        "/alg/3x3/zbll/pib6"
+      ],
+      "label": "// ZBLL-PiB6",
+      "moves": "U2' R U R' U F' R U2 R' U2 R' F R U2"
+    }
+  ],
+  "approval": {
+    "status": "approved",
+    "confirmedBy": "user",
+    "instruction": "收录到回归测试",
+    "confirmedAt": "2026-10-17T09:53:15.560Z",
+    "contentHash": "a37f43eda6e2d1357c8d78f1714c81ac27ee756d288bcc63d041439bebad0bda"
+  }
+}

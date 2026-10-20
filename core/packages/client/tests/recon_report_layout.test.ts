@@ -4,48 +4,49 @@
  *
  * 2026-08-03 用户提的三件事,是同一个判断的三个面:
  *
- * **一、数据那一半排在回放和谱子后面。** 以前报告一开口就是质量分 + 阶段条 +
+ * **一、数据那一半排在回放和还原步骤后面。** 以前报告一开口就是质量分 + 阶段条 +
  * 5×7 的分步分析表,道理是「这把慢在哪」该一眼看到。但那假设了读者已经知道自己
  * 拧了什么 —— 真实顺序是反的:先认出这把是怎么拧的,那些数字才有东西可归因。
- * 屏幕上的证据是用户每次都直接往下翻去找谱子。
+ * 屏幕上的证据是用户每次都直接往下翻去找还原步骤。
  *
- * **二、打乱是谱子的第一行。** 它以前孤零零挂在整页最底下,读谱子的人要滚到底
- * 再滚回来才凑齐「从这个局面开始,往下是这么拧的」。搬进谱子那一块之后这一块
+ * **二、打乱是还原步骤的第一行。** 它以前孤零零挂在整页最底下,读还原步骤的人要滚到底
+ * 再滚回来才凑齐「从这个局面开始,往下是这么拧的」。搬进还原步骤那一块之后这一块
  * 自己就是一份能照着复现的东西 —— 和复制按钮导出的那份逐字相同。
  *
  * 用的必须是 `recon.scramble`,而 2026-08-04 起它就是**这把真正的打乱** —— 和成绩
  * 里存的、和用户手上拧的那条逐字相同。以前它是「转进十字朝下」共轭之后的写法,
- * 理由是谱子写在那个视角里、配原始打乱对不上;理由没错,办法错了:用户做的是
+ * 理由是还原步骤写在那个视角里、配原始打乱对不上;理由没错,办法错了:用户做的是
  * `R2 B' L2 R D' …`,报告印的是 `R2 F' L2 R U' …`,「这不行,必须是原始打乱」。
  * 共轭过的那条不是任何人做过的打乱,粘到 cubedb 也对不上。
  *
- * 现在两边这么接:打乱印原始的,视角那一手写成谱子的第一行(`recon.inspection`,
- * `z2 // 观察`),和人写复盘一模一样 —— 打乱 + 观察 + 谱子接起来照着拧还是这把。
+ * 现在两边这么接:打乱印原始的,视角那一手写成还原步骤的第一行(`recon.inspection`,
+ * `z2 // 观察`),和人写复盘一模一样 —— 打乱 + 观察 + 还原步骤接起来照着拧还是这把。
  *
  * **三、智能魔方那把不摆打乱图。** 打乱图是给「照着拧」用的,而这把已经拧完了。
- * 手动计时的成绩仍然两样都有 —— 它们没有谱子可以承载打乱。
+ * 手动计时的成绩仍然两样都有 —— 它们没有还原步骤可以承载打乱。
  */
 // guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
+import { playbackMoveDurationTicks } from '@cuberoot/timer-ui/reconstruct/report-player';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..'); // packages/client
 const TIMER = join(ROOT, 'app', '[lang]', 'timer');
 const REPORT = join(ROOT, '..', 'timer-ui', 'src', 'reconstruct', 'ReconstructReport.tsx');
-const STEP_LIST = join(ROOT, '..', 'timer-ui', 'src', 'reconstruct', 'StepMoveList.tsx');
 const SOLVE_MODAL = join(TIMER, '_components', 'SolveModal.tsx');
 const TIMER_UI = join(ROOT, '..', 'timer-ui', 'src');
 const SHELL_CSS = join(TIMER, '_shell', 'shell.css');
 const DETAIL_MODAL = join(TIMER_UI, 'TimerSolveDetailModal.tsx');
-const STEP_ANALYSIS = join(TIMER_UI, 'reconstruct', 'StepAnalysis.tsx');
+const CONTENT = join(TIMER_UI, 'reconstruct', 'report-content.ts');
+const NOTATION = join(TIMER_UI, 'reconstruct', 'report-notation.ts');
 
 const read = (p: string) => readFileSync(p, 'utf8');
 /** 只留代码。断言「不许再出现某个写法」时用 —— 注释里讲得清来历,那不算回归。 */
 const stripComments = (src: string) => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
 
-describe('报告顺序:回放和谱子在前,数据在后', () => {
+describe('报告顺序:回放和还原步骤在前,数据在后', () => {
   const src = read(REPORT);
 
   it('数据那一半是一整块,不是散在各处的几段', () => {
@@ -62,8 +63,9 @@ describe('报告顺序:回放和谱子在前,数据在后', () => {
   });
 
   it('渲染时排在回放后面', () => {
-    const playback = src.indexOf('<PlaybackPanel');
-    const rendered = src.indexOf('{analysisBlock}');
+    const content=read(CONTENT);
+    const playback = content.indexOf("slot('playback')");
+    const rendered = content.indexOf("slot('analysis')");
     expect(playback, '报告里找不到回放面板').toBeGreaterThan(0);
     expect(rendered, '报告里没有渲染 analysisBlock').toBeGreaterThan(0);
     expect(rendered).toBeGreaterThan(playback);
@@ -71,14 +73,15 @@ describe('报告顺序:回放和谱子在前,数据在后', () => {
 
   it('回放固定展示,不再保留展开行', () => {
     const code = stripComments(src);
-    expect(code).toMatch(/\{playbackAvailable && \(\s*<PlaybackPanel/);
+    expect(read(CONTENT)).toContain("timerEventNxnSize(solve.event)!=null&&slot('playback')");
     expect(code).not.toMatch(/playbackExpanded|reconstruct-playback-toggle|回放与分步动作/);
   });
 
   it('参考解法排在数据之后、动作序列之前', () => {
-    const analysis = src.indexOf('{analysisBlock}');
-    const reference = src.indexOf("title={tr({ zh: '参考解法'");
-    const moves = src.indexOf("title={tr({ zh: `动作序列");
+    const content=read(CONTENT);
+    const analysis = content.indexOf("slot('analysis')");
+    const reference = content.indexOf("disclosure('references'");
+    const moves = content.indexOf("disclosure('raw'");
     expect(reference, '报告里找不到参考解法').toBeGreaterThan(analysis);
     expect(moves, '报告里找不到动作序列').toBeGreaterThan(reference);
   });
@@ -90,7 +93,7 @@ describe('报告顺序:回放和谱子在前,数据在后', () => {
 });
 
 describe('CFOP 分步分析表头', () => {
-  const src = read(STEP_ANALYSIS);
+  const src = read(join(TIMER_UI, 'reconstruct', 'report-columns.ts'));
 
   it('使用 Cross 与 F1-F4 的紧凑列名', () => {
     expect(src).toMatch(/label: 'Cross'/);
@@ -118,8 +121,8 @@ describe('同一个数不写两遍', () => {
   });
 
   it('废步只在动作序列里标记,不再额外显示汇总说明', () => {
-    expect(report).toMatch(/const wasted = wastedIdx\.has\(i\)/);
-    expect(report).toMatch(/reconstruct-move-row[^\n]*wasted/);
+    expect(read(CONTENT)).toContain('wasted.has(i)');
+    expect(read(CONTENT)).toMatch(/reconstruct-move-row[^\n]*wasted/);
     expect(report).not.toMatch(/reconstruct-waste-line/);
   });
 });
@@ -143,15 +146,22 @@ describe('回放进度条匀速走', () => {
 
   it('该播到第几手是从时间反查的,不是自增', () => {
     // 自增会和墙钟脱钩:掉帧 / 后台标签页回来之后,魔方停在半路而游标已经到底。
-    expect(pb).toMatch(/while \(i < total && moves\[i\]\.ts <= at\) i\+\+/);
+    expect(pb).toMatch(/playbackFrame\(moves, lastTs, t\)/);
+    expect(read(join(TIMER_UI, 'reconstruct', 'playback-track.ts'))).toContain('playbackIndexAt');
   });
 
   it('虚拟魔方按相邻动作的真实间隔转动', () => {
     // 引擎默认一手 500ms,比真实动作间隔长时会把动作排队,所以回放必须
     // 把当前动作到下一手(或结束)的时间间隔换成 60Hz ticks,并跟随播放倍率。
-    expect(pb).toMatch(/moveDurationTicks = idx > 0/);
-    expect(pb).toMatch(/moves\[idx\]\.ts : totalMs/);
-    expect(pb).toMatch(/\* 60\) \/\s*\(1000 \* speedMult\)/);
+    expect(pb).toContain('playbackMoveDurationTicks(moves,idx,totalMs,speedMult)');
+    const moves = [
+      { m: 'R', ts: 100, endTs: 100, rawAfter: 1 },
+      { m: 'U', ts: 300, endTs: 400, rawAfter: 2 },
+    ];
+    expect(playbackMoveDurationTicks(moves, 1, 600, 1)).toBe(12);
+    expect(playbackMoveDurationTicks(moves, 1, 600, 2)).toBe(6);
+    // Replaced moves must also finish inside their own allocated interval.
+    expect(playbackMoveDurationTicks(moves, 2, 600, 1)).toBe(6);
     expect(pb).toMatch(/moveDurationTicks=\{moveDurationTicks\}/);
   });
 });
@@ -205,15 +215,15 @@ describe('关闭连续陀螺仪仍回放已识别转体', () => {
   });
 });
 
-describe('打乱是谱子的第一行', () => {
-  const src = read(STEP_LIST);
+describe('打乱是还原步骤的第一行', () => {
+  const src = read(NOTATION);
 
-  it('谱子那一块自己摆打乱', () => {
-    expect(src).toMatch(/className="sml-group sml-scramble"/);
+  it('还原步骤那一块自己摆打乱', () => {
+    expect(src).toContain('sml-group sml-scramble');
   });
 
   it('摆的是 recon.scramble', () => {
-    expect(src).toMatch(/\{recon\.scramble\}/);
+    expect(src).toContain("text:recon.scramble,className:'sml-moves is-seek'");
     expect(src).not.toMatch(/solve\.scramble/);
   });
 
@@ -224,20 +234,20 @@ describe('打乱是谱子的第一行', () => {
   });
 
   it('观察那一手印在打乱下面 —— 少了它两边接不上', () => {
-    expect(src).toMatch(/const displayInspection = .*: recon\.inspection;/);
-    expect(src).toMatch(/\{displayInspection\}/);
+    expect(src).toContain('const inspection=projection.inspection');
+    expect(src).toContain(":inspection,className:'sml-moves is-seek'");
     const scramble = src.indexOf('sml-scramble');
-    const insp = src.indexOf('{displayInspection}');
+    const insp = src.indexOf(":inspection,className:'sml-moves is-seek'");
     expect(insp).toBeGreaterThan(scramble);
-    expect(insp).toBeLessThan(src.indexOf('{groups.map('));
-    // 剪贴板那一份也得带上,否则粘出去的谱子照着拧是错的。
+    expect(insp).toBeLessThan(src.indexOf('...groups,options.notice'));
+    // 剪贴板那一份也得带上,否则粘出去的还原步骤照着拧是错的。
     const recon = read(join(ROOT, '..', 'shared', 'src', 'timer', 'reconstruct', 'recon_text.ts'));
     expect(recon).toMatch(/viewRot === '' \? \[\] : \[`\$\{viewRot\} \/\/ insp`\]/);
   });
 
   it('排在十字前面', () => {
     const scramble = src.indexOf('sml-scramble');
-    const groups = src.indexOf('{groups.map(');
+    const groups = src.indexOf('...groups,options.notice');
     expect(scramble).toBeGreaterThan(0);
     expect(groups).toBeGreaterThan(0);
     expect(scramble).toBeLessThan(groups);
@@ -252,9 +262,9 @@ describe('打乱是谱子的第一行', () => {
 });
 
 describe('阶段名和阶段用时只出现一次(2026-08-04)', () => {
-  const src = stripComments(read(STEP_LIST));
+  const src = stripComments(read(NOTATION));
 
-  it('谱子这一块不写「十字 [4.02]」', () => {
+  it('还原步骤这一块不写「十字 [4.02]」', () => {
     // 同一屏左边那根带游标的轴(SolveTimeline showLabels)已经把四段的名字和
     // 用时画出来了。两处都写等于同一件事说两次,而且两处口径一旦分叉没人看得出来。
     expect(src).not.toMatch(/sml-group-ms/);
@@ -264,27 +274,24 @@ describe('阶段名和阶段用时只出现一次(2026-08-04)', () => {
 
   it('打乱直接展示原文，不再重复组标题', () => {
     expect(src).not.toMatch(/sml-group-head|sml-group-name/);
-    expect(src).toMatch(/sml-scramble[\s\S]{0,200}\{recon\.scramble\}/);
+    expect(src).toContain("text:recon.scramble,className:'sml-moves is-seek'");
   });
 
-  it('十字 / OLL / PLL 的最优徽章跟着动作那一行走', () => {
-    // 只保留追平参考时的「最优」；比参考更短的情况不再显示评价徽章。
-    expect(src).toMatch(/g\.key === 'f2l' \|\| g\.lines\.length === 1 \? gradeFor\(line\)/);
-    expect(src).toMatch(/className=\{`sa-grade \$\{grade\}`\}/);
-    expect(src).not.toMatch(/妙手|Brilliant|brilliant/);
-  });
-});
+  it('最优评价只保留在分步分析，不重复到动作记录里', () => {
+    expect(src).not.toMatch(/sa-grade|gradeFor\(/);
+    expect(read(CONTENT)).toContain('sa-grade optimal');
+  });});
 
 describe('打乱不许一个字都不剩', () => {
-  const src = read(REPORT);
+  const src = read(CONTENT);
 
   it('没有文字复盘的那些把,报告自己兜一条', () => {
-    // 非三阶、切分失败、半途放弃的把没有谱子可以承载打乱 —— 而详情页已经不摆了。
-    expect(src).toMatch(/className="rc-scramble"/);
+    // 非三阶、切分失败、半途放弃的把没有还原步骤可以承载打乱 —— 而详情页已经不摆了。
+    expect(src).toContain("'rc-scramble'");
   });
 
-  it('兜底只在没有谱子时出现,不和谱子里那条打对台', () => {
-    expect(src).toMatch(/!\(reconText && reconText\.lines\.length > 0\)[\s\S]{0,120}rc-scramble/);
+  it('兜底只在没有还原步骤时出现,不和还原步骤里那条打对台', () => {
+    expect(src).toContain("!recon?.lines.length&&groupNode('scramble'");
   });
 });
 
@@ -307,7 +314,7 @@ describe('智能魔方那把不摆打乱图', () => {
     expect(fullPage).not.toMatch(/\{preview/);
   });
 
-  it('整屏详情页不再第二次摆打乱 —— 谱子里已经有了', () => {
+  it('整屏详情页不再第二次摆打乱 —— 还原步骤里已经有了', () => {
     expect(fullPage).not.toMatch(/solve\.scramble/);
   });
 
@@ -322,7 +329,7 @@ describe('智能魔方那把不摆打乱图', () => {
   });
 
   it('手动 / 键盘计时那个弹窗照旧两样都有', () => {
-    // 它们没有谱子可以承载打乱,拿掉就真的没了。
+    // 它们没有还原步骤可以承载打乱,拿掉就真的没了。
     const manual = detail.slice(end);
     expect(manual).toMatch(/solve\.scramble/);
     expect(manual).toMatch(/\{preview/);

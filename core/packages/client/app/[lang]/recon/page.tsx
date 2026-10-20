@@ -244,7 +244,7 @@ export default function ReconListPage() {
   const owner = String(user?.uid ?? '');
   const ownerRef = useRef(owner);
   ownerRef.current = owner;
-  const [favoritesOnly, setFavoritesOnly] = useQueryState('favorites', parseAsBoolean.withDefault(false));
+  const [favoritesOnly] = useQueryState('favorites', parseAsBoolean.withDefault(false));
   const [favoriteState, setFavoriteState] = useState<{ owner: string; rows: ReconSolve[] } | null>(null);
   const [favoriteRevision, setFavoriteRevision] = useState(0);
   const favorites = favoriteState?.owner === owner ? favoriteState.rows : null;
@@ -1037,17 +1037,7 @@ export default function ReconListPage() {
               <TestTube2 size={17} />
             </Link>
           ) : null}
-          <button type="button" className="btn-secondary" aria-pressed={favoritesOnly}
-            title={tr({ zh: '收藏夹', en: 'Favorites' })}
-            aria-label={tr({ zh: '收藏夹', en: 'Favorites' })}
-            onClick={() => {
-              if (!user) { useAuthStore.getState().login(); return; }
-              if (favorites === null) setFavoriteRevision(value => value + 1);
-              void setFavoritesOnly(!favoritesOnly);
-            }}>
-            <Bookmark size={17} fill={favoritesOnly ? 'currentColor' : 'none'} aria-hidden="true" />
-          </button>
-          <WcaAuth />
+          <WcaAuth href={user?.wcaId ? `/recon/person/${user.wcaId}` : '/account'} />
           <SearchInput
             value={filters.search}
             onChange={(v) => setFilter('search', v)}

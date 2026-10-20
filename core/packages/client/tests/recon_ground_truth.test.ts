@@ -1,5 +1,6 @@
 // guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
-import { describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it } from 'vitest';
+import { configureAlgFileLoader, type AlgFile } from '@cuberoot/shared/alg';
 import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
@@ -27,6 +28,13 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const CLIENT_ROOT = join(HERE, '..');
 const SYNC_SCRIPT = join(CLIENT_ROOT, 'scripts', 'sync-recon-ground-truth.mjs');
 const SNAPSHOT_PATH = join(HERE, 'fixtures', 'recon-ground-truth.json');
+// Use the same frozen library as the display regression; CI has no live API dependency.
+const libraries = JSON.parse(readFileSync(join(HERE, 'fixtures/recon-workbook/libraries.json'), 'utf8')) as Record<string, AlgFile>;
+configureAlgFileLoader(async (_, set) => {
+  if (!libraries[set]) throw new Error('Missing frozen library: ' + set);
+  return libraries[set];
+});
+afterAll(() => configureAlgFileLoader(null));
 
 const syncCheck = spawnSync(process.execPath, [SYNC_SCRIPT, 'check'], {
   cwd: CLIENT_ROOT,

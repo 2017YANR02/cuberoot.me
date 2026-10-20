@@ -26,6 +26,8 @@ import { primaryCaseName } from '@/lib/alg_case_display';
 import AlgEditor, { type AlgEditorHandle, type AlgEditorMirror, type AlgInvalidMark } from '@/components/AlgEditor';
 import AlgDeleteConfirm, { type AlgDeleteGroup } from '@/components/AlgDeleteConfirm';
 import AlgInput from '@/components/AlgInput';
+import F2lSolutionGroups from '@/components/F2lSolutionGroups';
+import { isF2lStandard } from '@/lib/f2l-solution-groups';
 import AlgPlayer, { type AlgPlayerHandle } from '@/components/AlgPlayer';
 import CubeKeyboardSection from '@/components/CubeKeyboardSection';
 import { syncPlayerToMoveCount } from '@/lib/recon-alg-utils';
@@ -59,6 +61,7 @@ interface Props {
   initialInvalid?: AlgInvalidMark[];
   /** 内联详情页中，紧跟公式编辑列表显示的附加内容。 */
   algorithmsAfter?: React.ReactNode;
+  f2lLibrary?: readonly AlgCase[];
   /** 内联多朝向详情中，按当前朝向渲染由原始 setup 派生的打乱。 */
   renderOrientationSetup?: (setup: string, oi: number) => React.ReactNode;
   children?: (parts: InlineCaseEditorParts) => React.ReactNode;
@@ -98,7 +101,7 @@ function blankCase(puzzle: string, set: string): AlgCase {
   };
 }
 
-export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid, algorithmsAfter, renderOrientationSetup, onClose, onSaved, children }: Props) {
+export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid, algorithmsAfter, f2lLibrary, renderOrientationSetup, onClose, onSaved, children }: Props) {
   useTranslation(); // subscribe to language changes; text via tr()
   const initial = state.mode === 'edit' ? state.existing : blankCase(puzzle, setSlug);
   const [orientation] = useQueryState(
@@ -146,6 +149,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
     setup: initialPreviewEntry?.setup,
     oi: 0,
   }));
+  const [groupPlayRequests, setGroupPlayRequests] = useState<Record<number, number>>({});
   const [oriPreviews, setOriPreviews] = useState<Record<number, { alg: string; setup?: string }>>({});
   const handlePreviewAlg = useCallback((alg: string, entrySetup?: string, oi = 0) => {
     setPreview({ alg, setup: entrySetup, oi });
@@ -526,7 +530,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
               formatInitialHtml={html => displayCaseAlgHtml(puzzle, setSlug, html)}
               caseContext={children ? { puzzle, set: setSlug, caseObj: initial, sq1NotationMode } : undefined}
               renderBeforeAdd={children ? oi => oi === 0 ? algorithmsAfter : null : undefined}
-              renderOrientation={children ? (rows, oi, firstEntry) => {
+              renderOrientation={children ? (rows, oi, firstEntry, entries) => {
                 const selected = oriPreviews[oi] ?? initial.algs[oi]?.[0];
                 const derivesOrientationSetup = initial.algs.length > 1;
                 const orientationSetup = derivesOrientationSetup
@@ -541,13 +545,20 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
                       alg={selected?.alg ?? ''}
                       setup={orientationSetup}
                       puzzle={puzzle} set={setSlug} orientation={orientation} size={260}
+                      playRequest={groupPlayRequests[oi] ?? 0} autoPlay={(groupPlayRequests[oi] ?? 0) > 0}
                     />
                   </div>
                   <div className="alg-case-detail-ori-algs alg-player-list-options">
                     {renderOrientationSetup && (derivesOrientationSetup
                       ? renderOrientationSetup(orientationSetup, oi)
                       : oi === 0 ? setupField : renderOrientationSetup(orientationSetup, oi))}
-                    {rows}
+                    {f2lLibrary && !isF2lStandard(initial) ? <F2lSolutionGroups
+                      cases={f2lLibrary} entries={entries} setup={orientationSetup} orientation={oi} editing
+                      onSelect={entry => {
+                        setOriPreviews(current => ({ ...current, [oi]: entry }));
+                        setGroupPlayRequests(current => ({ ...current, [oi]: (current[oi] ?? 0) + 1 }));
+                      }}
+                    >{rows}</F2lSolutionGroups> : rows}
                   </div>
                 </div>;
               } : undefined}

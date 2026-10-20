@@ -6,6 +6,8 @@
 // 故浏览器 tab 保持紧凑、分享标题仍能识别站点。想要更丰富描述 / 专属图的页面自己
 // 调 useWeChatShare(在此之后运行、覆盖之)。非微信环境不加载 SDK、不发任何请求。
 
+import { isDouyinToolSurface } from '@/lib/douyin-content';
+import { douyinContentAvailable } from '@cuberoot/shared/douyin-content';
 import { useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { configureWeChatShare, isInWeChat } from '@/lib/wechat-share';
@@ -24,7 +26,11 @@ export default function WeChatShareSync() {
     const intercept = (event: MouseEvent) => {
       if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
       const link = (event.target as Element)?.closest?.('a[href]');
-      if (!(link instanceof HTMLAnchorElement) || link.target === '_blank' || link.hasAttribute('download')) return;
+      if (!(link instanceof HTMLAnchorElement)) return;
+      if (isDouyinToolSurface() && !douyinContentAvailable(link.href)) {
+        event.preventDefault(); event.stopPropagation(); return;
+      }
+      if (link.target === '_blank' || link.hasAttribute('download')) return;
       const url = new URL(link.href, location.href);
       if (url.origin !== location.origin || url.pathname.startsWith('/auth/')) return;
       const nativeTarget = link.dataset.miniProgramTarget;

@@ -45,11 +45,24 @@ impl OptSolver {
         cube: cube::Cube,
         options: search::SearchOptions,
     ) -> Result<search::SearchOutcome, String> {
+        #[cfg(all(feature = "opt8-native-specialized", not(target_family = "wasm")))]
+        if self.pruning.variant().number() == 8 {
+            return search::solve(cube, &Opt8Oracle(self), options);
+        }
         if self.pruning.variant().number() == 9 {
             search::solve(cube, &Opt9Oracle::new(self), options)
         } else {
             search::solve(cube, self, options)
         }
+    }
+
+    /// One native Opt8 dispatch; construction of this private oracle is
+    /// impossible for a mismatched coordinate/table variant.
+    #[cfg(all(feature = "opt8-native-specialized", not(target_family = "wasm")))]
+    pub fn experimental_native_opt8_oracle(
+        &self,
+    ) -> Option<impl search::PruningOracle<Query = u64> + Sync + '_> {
+        (self.pruning.variant().number() == 8).then_some(Opt8Oracle(self))
     }
 
     /// Borrow the validated Opt9 layout for the opt-in native experiment.
@@ -70,6 +83,11 @@ impl OptSolver {
     /// Exposes the same optimized path to the small coordinate differential
     /// checks; no search or input/solution convention is changed.
     pub fn query_specialized(&self, cube: &cube::Cube) -> (u64, u8) {
+        #[cfg(all(feature = "opt8-native-specialized", not(target_family = "wasm")))]
+        if self.pruning.variant().number() == 8 {
+            let index = self.coordinates.index8(cube);
+            return (index, self.pruning.get_opt8(index));
+        }
         if self.pruning.variant().number() == 9 {
             let index = self.coordinates.index9(cube);
             (index, self.pruning.get_opt9(index))
@@ -78,6 +96,41 @@ impl OptSolver {
             (index, self.pruning.get(index))
         }
     }
+}
+
+/// Native Opt8 candidates are explicit opt-ins. Lookup specialization alone
+/// keeps the preserved quarter-only policy; the separate search feature adds
+/// parent propagation, dynamic prefix ownership, and a proven root bound.
+#[cfg(all(feature = "opt8-native-specialized", not(target_family = "wasm")))]
+struct Opt8Oracle<'a>(&'a OptSolver);
+
+#[cfg(all(feature = "opt8-native-specialized", not(target_family = "wasm")))]
+impl search::PruningOracle for Opt8Oracle<'_> {
+    type Query = u64;
+    #[inline(always)]
+    fn prepare(&self, cube: &cube::Cube, _: u8) -> Result<u64, u8> {
+        Ok(self.0.coordinates.index8(cube))
+    }
+    #[inline(always)]
+    fn lookup(&self, index: u64) -> u8 { self.0.pruning.get_opt8(index) }
+    #[cfg(feature = "opt8-native-batch")]
+    #[inline(always)]
+    fn lookup_batch(&self, queries: &[Option<u64>; 8]) -> [u8; 8] {
+        self.0.pruning.get_opt8_batch(queries)
+    }
+    fn conjugate(&self, cube: &cube::Cube, symmetry: u8) -> Option<cube::Cube> {
+        Some(self.0.coordinates.conjugate(cube, symmetry))
+    }
+    #[inline(always)]
+    fn max_bound(&self) -> u8 { 13 }
+    #[inline(always)]
+    fn allow_quarter_pruning(&self) -> bool { cfg!(feature = "opt8-native-quarter") }
+    #[inline(always)]
+    fn allow_parent_propagation(&self) -> bool { cfg!(feature = "opt8-native-search") }
+    #[inline(always)]
+    fn allow_dynamic_prefixes(&self) -> bool { cfg!(feature = "opt8-native-search") }
+    #[inline(always)]
+    fn allow_root_bound(&self) -> bool { cfg!(feature = "opt8-native-search") }
 }
 
 /// This private type cannot be constructed with a different variant by an
@@ -168,6 +221,11 @@ impl search::PruningOracle for Opt9Oracle<'_> {
 }
 
 impl search::PruningOracle for OptSolver {
+    fn allow_quarter_pruning(&self) -> bool {
+        cfg!(all(feature = "opt8-native-quarter", not(target_family = "wasm")))
+            && self.pruning.variant().number() == 8
+    }
+
     type Query = u64;
     #[inline(always)]
     fn prepare(&self, cube: &cube::Cube, _: u8) -> Result<u64, u8> {

@@ -1,4 +1,6 @@
 'use client';
+import { useDouyinToolSurface } from '@/lib/douyin-content';
+import { douyinContentAvailable } from '@cuberoot/shared/douyin-content';
 import NextLink from 'next/link';
 import { useParams } from 'next/navigation';
 import type { ComponentProps } from 'react';
@@ -18,6 +20,7 @@ const NO_PREFIX = /^\/(v1|api|auth|callback\.html|stats|tools|cubing-chunks|cube
 export default function AppLink({ href, ...props }: Props) {
   const params = useParams();
   const trainingHref = useTrainingHref();
+  const douyin = useDouyinToolSurface();
   const lang = params?.lang;
   const prefix = lang === 'zh' ? '/zh' : '';
   let h = href;
@@ -30,5 +33,6 @@ export default function AppLink({ href, ...props }: Props) {
     const bare = href.replace(/^\/(en|zh)(?=\/|$)/, '') || '/';
     h = prefix ? `${prefix}${bare === '/' ? '' : bare}` : bare;
   }
+  if (douyin && !douyinContentAvailable(typeof h === 'string' ? h : String(h.pathname ?? '/'))) return null;
   return <NextLink href={typeof h === 'string' ? trainingHref(h) : h} {...props} />;
 }

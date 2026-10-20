@@ -470,7 +470,7 @@ function WeakCards({ recs }: { recs: Record<string, SrsRecs> }) {
                 })}
               >
                 {c ? (
-                  <CaseThumb
+                  <CaseThumb local
                     puzzle={w.puzzle}
                     set={w.set}
                     sticker={c.sticker}

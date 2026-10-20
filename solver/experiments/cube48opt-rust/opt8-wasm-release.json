@@ -1,0 +1,26 @@
+{
+  "schema": "cuberoot.opt8-wasm-release.v1",
+  "status": "deployed",
+  "variant": 8,
+  "threads": 4,
+  "bundle": "cubeopt-opt8-rustb600c699ab91-20261014",
+  "wasmSha256": "b600c699ab91c29f0bef5a14b7c2871bf1fb03d840b8813d5656266132433bb6",
+  "frozenBuild": ".tmp/cubeopt-reverse/rust-wasm-shared-builds/build-FcRcSF",
+  "buildCommand": "node solver/experiments/cube48opt-rust/wasm-adapter/shared/build.mjs quarter-fixed-four",
+  "localBenchmark": {
+    "cases": 100,
+    "threads": 4,
+    "passes": 1,
+    "warmup": 0,
+    "compiler": "turbofan",
+    "baselineSeconds": 37.794426789,
+    "candidateSeconds": 33.36867566599999,
+    "verifiedSolutions": 100
+  },
+  "serverBenchmarkRerun": false,
+  "oldBundleRetained": true,
+  "verification": ".tmp/cubeopt-reverse/opt8-local-release-20261014/remote-verification.json",
+  "oldTableLinksRemoved": true,
+  "rollbackRequiresRelinkingTable": true,
+  "serverTableCleanupReceipt": "/root/core-api/artifacts/opt8-local-release-20261014/obsolete-table-links-cleanup.json"
+}

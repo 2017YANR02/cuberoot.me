@@ -1,3 +1,4 @@
+import type { Moyu32AddressIO } from '@cuberoot/shared/smart-cube/moyu32';
 import { miniProgramApi } from '../platform';
 import { tr } from '../i18n';
 import {
@@ -62,6 +63,7 @@ export interface EncryptedBleOptions {
   diagnosticLabel: string;
   matches(device: DiscoveredDevice): boolean;
   readOnly?: boolean;
+  negotiateMac?(device: DiscoveredDevice, io: Moyu32AddressIO): Promise<string>;
   resolveMac?(device: DiscoveredDevice): ResolvedBleMac | null;
   createCipher?(mac: Uint8Array): {
     decrypt(frame: Uint8Array): Uint8Array;
@@ -202,7 +204,9 @@ export async function connectEncryptedBle(options: EncryptedBleOptions): Promise
       ? { source: resolvedMac.source, mac: resolvedMac.value }
       : { source: null, mac: null });
     if (options.resolveMac && !resolvedMac) throw new Error(tr({ en: 'The cube address could not be read. Wake it and scan again.', zh: '未读取到魔方地址，请唤醒魔方后重新扫描' }));
-    const mac = resolvedMac?.value ?? '';
+    let mac = resolvedMac?.value ?? '';
+    let probeReceive: ((frame: Uint8Array) => void) | undefined;
+    let negotiating = Boolean(options.negotiateMac);
     connectedDeviceId = device.deviceId;
     const closeConnection = (): Promise<unknown> => invokeBleCleanupForLease(lease, (callbacks) => api.closeBLEConnection({ ...callbacks, deviceId: device.deviceId }));
     await raceBleAbortWithLateCleanup(
@@ -274,11 +278,11 @@ export async function connectEncryptedBle(options: EncryptedBleOptions): Promise
       subscriptionType,
       writeType,
     });
-    const cipher = options.createCipher?.(parseMac(mac)) ?? { encrypt: (frame: Uint8Array) => frame, decrypt: (frame: Uint8Array) => frame };
-    const write = (value: Uint8Array, begin?: () => boolean): Promise<void> => writeQueue.enqueue(() => {
+    let cipher = (negotiating ? undefined : options.createCipher?.(parseMac(mac))) ?? { encrypt: (frame: Uint8Array) => frame, decrypt: (frame: Uint8Array) => frame };
+    const write = (value: Uint8Array, begin?: () => boolean, raw = false): Promise<void> => writeQueue.enqueue(() => {
       if (closing || !active || !connectedDeviceId || !serviceId || !characteristicId) throw new Error(tr({ en: 'Smart cube disconnected', zh: '智能魔方连接已断开' }));
       if (begin && !begin()) throw new Error('Device calibration cancelled');
-      const encrypted = cipher.encrypt(value);
+      const encrypted = raw ? value : cipher.encrypt(value);
       const sequence = ++writeCount;
       diagnostic.info('write-start', {
         sequence,
@@ -302,6 +306,7 @@ export async function connectEncryptedBle(options: EncryptedBleOptions): Promise
         || normalizeBleUuid(result.characteristicId) !== normalizeBleUuid(notifyCharacteristicId as string)) return;
       try {
         const raw = new Uint8Array(result.value);
+        if (negotiating) { probeReceive?.(raw); return; }
         const frame = cipher.decrypt(raw);
         const sequence = ++notificationCount;
         if (sequence <= 40 || sequence % 50 === 0) {
@@ -338,6 +343,15 @@ export async function connectEncryptedBle(options: EncryptedBleOptions): Promise
       characteristicId: notifyCharacteristic.uuid,
       subscriptionType,
     });
+    if (options.negotiateMac) {
+      mac = await raceBleAbort(options.negotiateMac(device, {
+        current: () => active && !closing && !options.signal?.aborted,
+        write: frame => write(frame, undefined, true),
+        subscribe: async receive => { probeReceive = receive; return async () => { probeReceive = undefined; }; },
+      }), options.signal);
+      cipher = options.createCipher!(parseMac(mac));
+      negotiating = false;
+    }
     const initialFrames = typeof options.initialFrames === 'function'
       ? options.initialFrames(parseMac(mac))
       : options.initialFrames ?? [];

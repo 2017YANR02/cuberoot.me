@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / Y / bin 14
-# Population in this bin: 114
-# Samples listed: 114 (all entries in this bin)
+# Population in this bin: 115
+# Samples listed: 115 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 22559001,U2 B2 U B2 U2 B2 D2 L' B' D2 F2 D2 B2 L2 R B' D' F' U,Y,Brasilia Open 2014 (2014-05-17~18),333fm Final A #1
@@ -119,3 +119,4 @@
 5793875001,R' B' D L U2 L' B2 D2 L2 U2 L2 U2 B2 D' L' B' U R2 D L,Y,Nats Warm-Up Delmenhorst 2026 (2026-08-22~23),333 Final B E2
 5799092001,U2 B L2 R2 U2 R2 B2 L B' D U2 L F2 D2 U B F L U' L2 U,Y,Northwest Championship 2026 (2026-08-21~23),333bf R1 B #2
 5842659001,R2 U2 F2 D B2 D' L2 R2 D F2 L' D2 F' R2 B' F2 U F2 U',Y,New Cubing Season Athens A 2026 (2026-09-19),333 Final C #4
+5873845001,D B2 D2 U' L2 B2 U R' B L2 B2 U B2 L' U B2 D2 L2 U',Y,Cuberos del Chaco 2026 (2026-10-10),333oh Final B E2

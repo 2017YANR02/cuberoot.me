@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / WY / bin 3
-# Population in this bin: 730
+# Population in this bin: 736
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 4641929001,R2 D F B R' D R F2 L B2 U' L' B2 L D2 F2 R2 F2 L,Y,Rexburg Rumble 2025 (2025-04-12),333 R1 C #3
@@ -26,7 +26,7 @@
 5442258001,U B R2 D2 U2 B' L2 B' L2 R B' R' B F' R B R' U',Y,Uppsalaligan 3: Gear - 2026 (2026-03-12),333oh Final A #5
 146546001,B R2 F D2 B F L2 B U2 L' U2 B' D2 B2 U L' F L2 U,W,Indian Nationals 2015 (2015-05-29~31),333 R2 A #5
 151393001,B L D2 L2 F U L' F' U2 B D2 B2 L' D2 L2 U2 B2 D2,W,Valpo 2015 (2015-06-13),333 R1 C #5
-3965245001,F D B' R F' B2 R' B R2 B' L U2 L' F2 R2 F2 D2 F2 R B R',W,NZ North Island Championship 2024 (2024-07-19~21),333bf Final A #1
+5857581001,U R' F R2 D F2 D F L2 D2 R' B2 L2 B2 D2 L' U2 L',W,Indian Elite Championship 2026 (2026-10-02~04),333 R2 E E1
 3480981001,F2 D2 F L2 R2 F' R2 D2 L2 R F' R2 B2 R' F' R' B2 L',W,Dębica Cubing Winter 2024 (2024-02-03~04),333 R1 D #1
 1748472019,D' F L2 U2 B2 L' U2 B2 U2 F2 D' L2 U L' R D' B' L' D2 L2 U,W,Stockholm VRG 2021 (2021-11-27~28),333mbf Final B #1
 4739251001,U' B D2 F L2 R2 U2 B2 L D' F L' B2 F2 U2 L2 R2 F,Y,Beijing Summer 2025 (2025-05-17~18),333oh R1 C #2
@@ -109,7 +109,7 @@
 3339203001,L2 U' B2 D R2 B2 D' R2 F2 L' D' F L F2 U' L' R' F' R',Y,TCG Selva Cubica 2023 (2023-12-10),333 R1 D #1
 613162001,L2 D' L2 D' F2 L2 B2 D2 F' D2 F2 U R D B D' B' U L,W,NIT Trichy Open 2017 (2017-10-07~08),333 R1 B E2
 615083001,R' D R' F2 U L' U' D B' R' B' R2 B2 L' U2 R D2 R F2,Y,Tathva Cube Open 2017 (2017-10-14),333oh R1 E #4
-3762992001,D2 F' R2 B2 L2 U2 F2 U2 L' B2 U F U F' D' U F U' L' F2,W,Howrah Cube Open 2024 (2024-05-11~12),333bf Final A #3
+5864384001,D2 B2 D F2 D F2 U F2 U' R' B' U' F2 R2 B' F2 R B2 U2,Y,Reto Finales Aves María 2026 (2026-10-04),333 R1 A #2
 618907001,F' L' U D2 F2 D2 L F2 R' B' U2 R2 D2 L2 U L2 U' B2 U',W,Spanish Championship 2017 (2017-10-13~15),333 R1 A E1
 5837327001,L2 D2 F2 D2 F U2 D B' D2 B R2 B D' L2 B' U R',Y,UNSA Speedcubing Otoño II 2026 (2026-09-19),333 R1 G E2
 621132001,D2 B' D2 B2 U2 R2 F' L2 B' L2 F' D' F' L B F D L F' R2,W,Zhanjiang Open 2017 (2017-10-22),333oh Final A #3

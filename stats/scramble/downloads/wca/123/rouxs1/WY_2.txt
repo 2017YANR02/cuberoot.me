@@ -1,14 +1,14 @@
 # Scramble samples — 123 / rouxs1 / WY / bin 2
-# Population in this bin: 280
+# Population in this bin: 282
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 749001,B' F' L2 B' R2 F' D2 R' D2 F R2 F' D L B' L' R' F2,Y,Bogotá Cúbico 2014 (2014-03-15),333 R1 A #2
 4628160001,U2 R' D2 L F2 R' B2 R U2 R F' U' F2 L D' F L2 U',Y,Langenstein City Blind Open 2025 (2025-04-05~06),333oh R1 A #5
 38039001,U R2 U2 L2 D' B2 L2 R U' R' U F D2 U R2 F2 L' R',Y,Dixon Summer 2014 (2014-07-19),333 R2 A E1
-64566001,D' B2 D2 L2 B2 F2 D F2 D' F2 R2 B' R B' U R' B2 F' L,Y,LeanNova Cube Day 2014 (2014-10-11),333oh R1 A #2
+5875932001,F' D L D2 L' D2 F2 R2 B2 F2 L' B' D' F' R B2 D' F2,Y,Thailand Championship 2026 (2026-10-09~11),333oh R1 A #5
 65890001,F2 U B2 D F2 R2 D2 L' R2 B2 D R' B F2 U2 R' F2 U2,Y,Speedcubing Medellin 2014 (2014-10-11),333 R1 A E1
 71022001,B2 U' R2 F2 R2 D U2 L2 R F L R F U F2 U' L2 D2 R',Y,Tathva Cube Open 2014 (2014-11-01),333oh Final B E1
 81935001,D B2 R2 F2 L2 U F2 U2 L' B' L' F' R2 D R2 B2 L U' B' R' B' L',Y,Michigan Mystery 2014 (2014-11-22~23),333bf Final A E2
@@ -91,7 +91,7 @@
 5225787001,D2 F' D2 B' F D2 R2 B2 F' D' L' F' D2 L2 U B L2 B U2,Y,Delhi Cube Challenge 2025 (2025-11-29~30),333 R1 A #1
 972284032,D L2 U' B2 U2 B2 L2 F2 D B2 L2 R' B2 F D F R2 F2 D' F2 L,W,Speedcubing Camp Minsk 2019 (2019-01-04~06),333mbf Final A #2
 980866001,B2 L' U2 B2 R D2 L' D2 L' B2 L U L2 R' F' L' B2 D L2 B,W,Bay Area Speedcubin' 13 2019 (2019-01-13),333oh R1 B #3
-5820794001,U2 R2 B D2 B U2 B' F D2 R B' D L' B L' U' R' U2 R',Y,Santos Mágico Open 2026 (2026-09-06~07),333oh Final C #5
+5866014001,D' L U B2 R2 F2 D2 R2 D' R' F R' F R F R,W,UMBC Fall 2026 (2026-10-03),333 R2 C #2
 5756324001,U R' B R2 B2 U2 L2 D F2 L2 B2 L' D' F2 R U L' D F',W,Guelaguetza Oaxaca 2026 (2026-07-18~19),333oh R1 B #2
 1036209016,L R2 F2 R U2 R' D2 R U' L2 F U2 B' R2 F' D R D' R2 D,W,Shenzhen 3x3 Days 2019 (2019-03-02~03),333mbf Final A #1
 1056919001,R' D2 R D2 B2 U2 F2 U B' F L' B2 R2 B U F U B,W,Indianapolis Cubes 2019 (2019-03-16),333 R2 C #4

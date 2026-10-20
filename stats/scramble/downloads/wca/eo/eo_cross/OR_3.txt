@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / OR / bin 3
-# Population in this bin: 411
+# Population in this bin: 412
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 3222001,U' R2 U L2 R2 F2 L2 U' R B2 U L' F2 D' F2 L2 F L,O,CMI Fiesta Open 2014 (2014-03-21~23),333oh R1 L E1
@@ -121,7 +121,7 @@
 874534001,R2 U2 F U2 L2 R2 F' L2 F R' B2 U2 B' L' D2 L2 B' R2 U',R,German Nationals 2018 (2018-09-07~09),333 Final A #1
 3675592001,R B' L' U D L B2 U L2 D2 F' L2 F2 U2 L D R2,O,Slow N Steady Spring 2024 (2024-04-13~14),333 Final B #2
 880993001,U2 B2 U' R2 U L2 U' F2 U' B2 L F D2 L' U' B2 L2 U R2 U,R,KSF Semey City 2018 (2018-09-15~16),333oh R1 A #1
-2720332001,R' F2 R L2 D' R L' B2 U L' R2 F2 U L2 U R2 U L2,O,Cube4fun in Lublin 2023 (2023-05-13),333 R1 A #4
+5866979001,F L2 B' R F2 U2 D2 L' B U2 B2 D2 L2 D2 F' R2 F D2,O,St. John's Fall 2026 (2026-10-04),333 Final A E1
 884583001,R2 D2 L2 D2 B2 F U2 R2 U' R2 F2 L D2 F2 L' B2 D L U L2,R,Cube Factory Częstochowa 2018 (2018-09-15~16),333bf Final A E2
 884593001,R2 U' B2 D' L2 D2 R2 D B2 F2 D' R U' R2 U2 B2 U L R' F,R,Cube Factory Częstochowa 2018 (2018-09-15~16),333oh R1 B #3
 892521001,B2 L2 F R F2 B2 R' L' B' D F' B L2 B' U2 F D2 R2,R,China Championship 2018 (2018-10-02~04),333oh R3 B E1

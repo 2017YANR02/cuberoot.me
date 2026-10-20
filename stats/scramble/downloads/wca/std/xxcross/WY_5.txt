@@ -1,8 +1,8 @@
 # Scramble samples — std / xxcross / WY / bin 5
-# Population in this bin: 256
+# Population in this bin: 257
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 26001,U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2,Y,Galeries Dorian Open 2014 (2014-03-15),333bf Final A E2
@@ -108,7 +108,7 @@
 1500835001,B2 L2 R2 U' L2 R2 B2 U' R2 F2 L U' R' B' L2 U B L2 U B',W,Bay Area Speedcubin' 23 2020 (2020-01-12),333 R1 C #3
 1565602013,U F2 D2 B2 D F2 R D' B2 F R' D2 R F R U2 L U B R',W,Mudd Winter 2020 (2020-02-22~23),333mbf Final B #1
 1579267001,F2 U2 L2 F2 U' R2 F2 R2 B D' B D F' U2 R B' D B R2,W,San Martín Cubea 2020 (2020-02-22~23),333oh R1 A E1
-1599259038,F2 R2 B2 D' L2 U' R2 D U2 B' D2 U2 R F' R D B L2 U L2 U',W,Side 'n Blind Forserum 2020 (2020-03-06~08),333mbf Final A #3
+5864735001,U' L2 B' R' F' B' U' B F2 U R2 D R2 D R2 B2 U,Y,Guangzhou Grand Open 2026 (2026-10-05~06),333 R1 B #3
 1599261010,L' U2 L' U2 B2 U2 B2 F2 L2 F' D' R' U2 B' F' D L' B' L B' L2,Y,Side 'n Blind Forserum 2020 (2020-03-06~08),333mbf Final B #3
 5539194001,L2 U2 B2 F2 L2 U' B2 D' R2 L U2 F U' B2 D' F' U2 B' D2,Y,Adelaide Autumn 2026 (2026-04-12),333 R1 A #2
 1682873001,F2 D L' D2 B' U2 D2 F' R2 F2 U2 L2 D2 B' D' L',W,Empire State Summer B 2021 (2021-08-01),333oh R2 B #3
@@ -186,7 +186,7 @@
 4054367001,U' R' B' U' B U R U D B' U' F B L2 U2 B2,Y,Cubi Koronel 2024 (2024-08-24~25),333oh Final A E1
 5337256016,B2 D L' F' B D' L' F' L' F U2 B2 D R2 U L2 U2 L2 U,W,Just Judge Jura 2026 (2026-01-17~18),333mbf Final A #1
 4093356001,U' R U2 F2 L2 F2 U2 F R B2 D F2 L B2 D' U B,Y,Aliso Niguel Summer 2024 (2024-09-08),333 R2 B #5
-4151018001,R2 D' R' D L2 F2 U' L2 R2 D U2 F D U' R F2 D B' L,Y, Esprit Cube Open Bayonne 2024 (2024-09-28~29),333oh Final A E1
+4151018001,R2 D' R' D L2 F2 U' L2 R2 D U2 F D U' R F2 D B' L,Y,Esprit Cube Open Bayonne 2024 (2024-09-28~29),333oh Final A E1
 4154034001,B R' D L' U2 L D2 B' U' D2 L2 U D' R2 L2 F U,W,Fast Turns Only in Cebu 2024 (2024-09-28~29),333 R2 C #2
 4214351016,L' B' L2 D L D2 R2 D2 F2 R' B2 U L2 U2 B F' U' F' L' F,W,Valsugana Speedcubing 2024 (2024-10-19~20),333mbf Final A #1
 4216075001,U' B2 R2 U B' D' R2 U' F2 U2 D2 L2 B2 L' D2 R' F2,Y,Berkeley October Weekday Tricubealon 2024 (2024-10-21),333 Final A E2

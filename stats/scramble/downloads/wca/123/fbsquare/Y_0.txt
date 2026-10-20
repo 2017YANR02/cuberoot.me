@@ -1,8 +1,8 @@
 # Scramble samples — 123 / fbsquare / Y / bin 0
-# Population in this bin: 858
+# Population in this bin: 860
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 1937346001,U B' U' B' R' D2 B' D2 F' B2 R D2 R U2 B2 U2 R2 B2 R,Y,Ponikva Open 2022 (2022-05-21),333oh R1 A #1
@@ -69,7 +69,7 @@
 350383001,B2 L U2 B2 L' U2 B2 L D2 F' U R F' R2 D2 R' D' F2 R,Y,Toronto Limited Summer 2016 (2016-08-20),333 R1 C E2
 4638841001,U2 R' F2 L' R' B2 L2 B2 D F' U B U2 R' U2 F D F2,Y,Slovenska Bistrica Open 2025 (2025-04-12~13),333oh Final B E1
 4068489001,U' F' R F2 R B2 D2 L2 D F D' U L U' B2 F2 U2,Y,Val d'Aran Open 2024 (2024-08-31~09-01),333oh Final B #3
-4276692062,R2 F2 D F' R F R' F' U2 L U2 L' F2 L2 B2 D2 L' B' L' F2,Y,Colombian Nationals Avenida Chile 2024 (2024-11-09~11),333mbf Final B #1
+5875932001,F' D L D2 L' D2 F2 R2 B2 F2 L' B' D' F' R B2 D' F2,Y,Thailand Championship 2026 (2026-10-09~11),333oh R1 A #5
 3960657001,L B' F2 R F2 L' D2 L2 B2 R' U2 D B2 U F' L' D2 R' U L B',Y,Rubik's WCA South American Championship 2024 (2024-07-22~25),333bf R1 F E1
 4737445001,U' B' R2 D2 F' B' L B' L2 B2 R2 U' R2 L2 B2 D R2 L',Y,Assumption Mustang Cubing 2025 (2025-05-24),333oh R1 A #2
 1659466001,R2 U F2 L2 R2 D' B2 D F2 L2 R2 B R U' B2 U B R2,Y,Bogoroditsk Open 2021 (2021-05-29~30),333 R2 B E2

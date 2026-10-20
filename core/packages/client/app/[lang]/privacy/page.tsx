@@ -112,8 +112,8 @@ export default function PrivacyPage() {
         )}</li>
         <li>
           {t(
-            '小程序原生外壳不包含广告或分析 SDK,也不调用定位、摄像头、麦克风、相册或通讯录权限。只有在你主动进入智能魔方连接页并点击搜索后,才会使用蓝牙发现并连接附近的兼容魔方。',
-            'The native Mini Program shell contains no advertising or analytics SDK and does not access location, camera, microphone, photo library, or contacts. Bluetooth is used only after you open the Smart Cube page and tap search, to discover and connect to a nearby compatible cube.',
+            '小程序原生外壳不包含广告或分析 SDK,也不调用定位、摄像头、相册或通讯录权限。主动搜索智能魔方或外接计时器时才使用蓝牙；主动启动 Stackmat 音频计时时才请求麦克风授权,在本机解码且不上传音频,断开后停止采集。拒绝授权不影响普通计时。',
+            'The native Mini Program shell contains no advertising or analytics SDK and does not access location, camera, photo library, or contacts. Bluetooth is used only when you search for a smart cube or external timer. Starting Stackmat audio timing requests microphone permission for local decoding without uploading audio; collection stops on disconnect. Declining permission does not affect ordinary timing.',
           )}
         </li>
         <li>
@@ -179,7 +179,7 @@ export default function PrivacyPage() {
       <h2>{t('复盘分享', 'Replay sharing')}</h2>
       <p>
         {t(
-          '主动分享复盘时,生成的链接会包含该条成绩的打乱、时间、动作、设备名称、可用的姿态轨迹以及已确认的复盘谱子。链接接收方可以查看并再次转发这些数据;删除本机成绩不会撤回已分享链接或导出副本。App 不会自动分享复盘。',
+          '主动分享复盘时,生成的链接会包含该条成绩的打乱、时间、动作、设备名称、可用的姿态轨迹以及已确认的复盘还原步骤。链接接收方可以查看并再次转发这些数据;删除本机成绩不会撤回已分享链接或导出副本。App 不会自动分享复盘。',
           'When you choose to share a replay, its link contains that solve’s scramble, time, turns, device name, available orientation track, and confirmed reconstruction lines. Recipients can view and forward these data; deleting the local solve does not revoke shared links or exported copies. The app does not share replays automatically.',
         )}
       </p>

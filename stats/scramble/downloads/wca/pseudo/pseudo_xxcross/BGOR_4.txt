@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxcross / BGOR / bin 4
-# Population in this bin: 720
+# Population in this bin: 726
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 1863333001,D2 R2 D2 B2 D2 L' D2 L B2 R U' L B' L' U L' F2 L,G,Romerike Easter Open 2022 (2022-04-09~10),333 R2 A E1
@@ -154,7 +154,7 @@
 2815229001,R U F2 L' U R2 U' L B2 L2 U2 B' U2 F L2 F U2 F,O,Bulldog Spring 2023 (2023-06-17),333oh R1 C #1
 2936104001,L R2 D2 F' U2 F' R2 B D2 B U2 R' F R' F U F' U,O,Vietnam Championship 2023 (2023-07-14~16),333 R1 E #4
 3429325001,U L B' R2 U2 D2 B2 D L' U' B2 L2 U2 D' B2 L2 R' B,R,Hayange Open 2024 (2024-01-20~21),333 R2 C #3
-1056660022,F2 L2 U' F2 L2 D B2 R2 U2 F R' B L2 U R' U2 R' D' U' R D',G,Please Be Quiet Korea 2019 (2019-03-16),333mbf Final A #1
+5875035001,F2 L F' L2 U2 D' F D2 B U2 D R2 U2 R2 F2 U B2 F,O,Berkeley Fall 2026 (2026-10-11),333oh R1 A E1
 1203650001,F2 L F2 R' U2 L' F2 R' U2 F' U' L2 D' U' L2 R F2 D L' F,B,Swisscubing Cup III 2019 (2019-06-29~30),333 R2 D #4
 2513719001,R U2 R F2 R F2 L2 F2 B' R2 F U B' D R' B' D' U',B,Amore Open 2023 (2023-02-25~26),333 R2 C #3
 5593860001,F2 L2 R2 B' L2 F D F' R' B R' U L2 R U R' U,R,Foshan Open 2026 (2026-05-02~03),333oh R1 B E1

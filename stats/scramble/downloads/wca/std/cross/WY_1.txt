@@ -1,8 +1,8 @@
 # Scramble samples — std / cross / WY / bin 1
-# Population in this bin: 204
+# Population in this bin: 205
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 6462001,U L2 D U2 R2 U R2 B F' L' U F' L R2 B' F' D',W,Rumia Open 2014 (2014-03-29~30),333bf R1 A E2
@@ -21,7 +21,7 @@
 202273001,B L' F' B' U2 L2 U' R2 F B L' D2 B R2 U2 B R2 F2 D2,Y,Cubing ATMOSphere 2015 (2015-10-10~11),333ft Final E #2
 205892001,F2 D B2 R2 U' F2 L2 U' R' D2 B' F' L2 F' R' D2 U2 R B' L B2,Y,Beijing Open 2015 (2015-10-24~25),333bf R1 A #2
 231235001,U2 F' R2 B U2 L2 D2 U2 F2 U' F2 D' R U' F2 R' B' L2 R2 U',Y,Melgar Summer 2015 (2015-12-19),333oh Final A E1
-238917001,F2 U B2 D' F2 D' L2 D2 R2 F D F L' R2 B L' B,W,Great Indian Cubeathon 2016 (2016-01-08~10),333oh R1 G E1
+5875238001,B R D' R' L F D' R F2 R F2 B L2 B' R2 L2 F' L',W,Nexta Andorra Championship 2026 (2026-10-10~12),333 R1 C #2
 248244001,B2 D2 B' U2 F' D2 B L2 D' L' F U' L2 D' U' R D B D' L2 U',Y,Camarma Open 2016 (2016-01-30),333bf Final A #1
 254419001,L F2 R2 F2 D2 U2 L2 D B2 R U2 R' B' L2 B R' F L,W,Big 'n Weird Pretoria 2016 (2016-02-13),333 R1 A E1
 282610001,D2 B2 L D F' L2 D L2 F B2 R' D F2 U R2 F2 U D' R2,Y,Hungarian Nationals 2016 (2016-04-16~17),333 R3 B #3

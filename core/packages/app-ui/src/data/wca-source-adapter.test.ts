@@ -109,7 +109,7 @@ describe('mobile WCA competition-scramble adapter', () => {
     await expect(fresh.loadMobileWcaCompetitions('zh')).resolves.toMatchObject([{
       id: 'EnglishStillWorks2026',
       displayName: '中文恢复赛',
-      displayCity: '洛杉矶, 加利福尼亚州',
+      displayCity: '洛杉矶，加利福尼亚州',
       country: 'US',
       selectedDisplayName: '中文恢复赛2026',
     }]);

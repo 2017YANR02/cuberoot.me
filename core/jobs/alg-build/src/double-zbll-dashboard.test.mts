@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { computed, ObservedSpeed, renderDashboard, fitLine, TerminalDashboard, type DashboardProgress } from './double-zbll-dashboard.mjs';
+import { computed, ObservedSpeed, renderDashboard, renderCompletion, fitLine, TerminalDashboard, type DashboardProgress } from './double-zbll-dashboard.mjs';
 
 const p: DashboardProgress = {
   total: 7555446, verified: 355891, activeCompleted: 6600, activeTotal: 16384, activeBatch: 0,
@@ -10,6 +10,13 @@ const p: DashboardProgress = {
   solverThreads: 16,
   histogram: [0,0,0,0,0,0,0,0,0,0,3,55,392,1973,10103,43133,136635,152361,11235,1], meanHtm: 16.291,
 };
+test('completion remains printable outside the alternate screen and rejects unfinished work', () => {
+  const done = renderCompletion({ ...p, status: 'complete', verified: p.total }, '/saved/results');
+  assert.match(done, /7,555,446 \/ 7,555,446（100%）/);
+  assert.match(done, /计算已结束/); assert.match(done, /\/saved\/results/);
+  assert.ok(!done.includes('\x1b'));
+  assert.throws(() => renderCompletion(p, '/saved/results'));
+});
 test('Opt10 title and verified reservation show anonymous memory without double subtraction', () => {
   const text=renderDashboard({...p,solverEngine:'opt10',availableGiB:9,currentRssGiB:29,reservedRssGiB:0.5},{now:Date.parse(p.updatedAt)});
   assert.match(text,/Rust Opt10/);assert.match(text,/8\.5 GiB/);assert.doesNotMatch(text,/-20\.0/);

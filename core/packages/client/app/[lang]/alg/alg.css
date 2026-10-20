@@ -54,7 +54,7 @@ html[data-theme=dark] .alg-root {
 .alg-index-credit a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 .alg-index-credit a:hover { color: var(--accent); }
 
-/* 套列表网格。卡片统一走 components/AlgCard(.alg-card),此处只管网格排布。 */
+/* 套列表共用 AlgCard，入口以无外框的缩略图和名称展示。 */
 .alg-bento {
   max-width: 1200px;
   margin: 0 auto;
@@ -64,7 +64,14 @@ html[data-theme=dark] .alg-root {
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 12px;
 }
-.alg-bento .alg-card { width: 100%; }
+.alg-bento .alg-card {
+  width: 100%;
+  background: transparent;
+  border: 0;
+}
+.alg-bento .alg-card:hover {
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+}
 /* SQ1 双层横排封面放大；窄屏由卡片宽度约束，外框随 SVG 等比缩小。 */
 .alg-bento .alg-card--sq1-set .puzzle-art {
   height: auto !important;
@@ -670,8 +677,51 @@ html[data-theme=dark] .alg-root {
   gap: 12px;
   align-items: flex-start;
 }
+.alg-case-list:not(.is-cards) .alg-case {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
 .alg-case-cube {
   flex: 0 0 auto;
+}
+.alg-case-figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 0 0 auto;
+  width: min-content;
+  gap: 6px;
+}
+.alg-case-figure .alg-case-name {
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.alg-case-letter.alg-case-letter--zbll {
+  white-space: nowrap;
+}
+.alg-case-detail-link {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: inherit;
+  text-decoration: none;
+}
+.alg-case-detail-link > svg {
+  flex-shrink: 0;
+}
+.alg-case-detail-link:hover,
+.alg-case-detail-link:focus-visible {
+  color: var(--accent);
+}
+.alg-case-detail-link:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
 }
 .alg-thumb-rotate {
   appearance: none;
@@ -774,6 +824,27 @@ html[data-theme=dark] .alg-root {
   word-break: break-word;
   flex: 1;
   min-width: 0;
+}
+.alg-formula-copy {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+}
+.alg-case-standard.alg-formula-copy {
+  width: 100%;
+}
+.alg-formula-copy:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+.alg-formula-copy:disabled {
+  cursor: not-allowed;
 }
 /* 打乱行的复制按钮:行是 align-items:flex-start(打乱会折行),按钮得自己贴顶,
    否则长打乱折成两行时它会掉到中间。 */
@@ -972,7 +1043,32 @@ html[data-theme=dark] .alg-root {
 .alg-case-inline-editor .alg-editor-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; align-items: start; }
 .alg-case-inline-editor .alg-editor-tools { max-width: 250px; }
 .alg-case-inline-editor .alg-alg-sortable { display: block; padding-left: 18px; margin-bottom: 6px; }
-.alg-case-inline-editor .alg-alg-drag-handle { position: absolute; left: 0; top: 8px; }
+/* Align with the input's first text line (1px border + 6px padding), even when it wraps. */
+.alg-case-inline-editor .alg-alg-drag-handle {
+  position: absolute;
+  left: 0;
+  top: 7px;
+  transform: none;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  height: 1.5em;
+  padding: 0 2px;
+}
+.f2l-solution-groups { min-width: 0; display: grid; gap: 10px; }
+.f2l-solution-group { min-width: 0; }
+.f2l-solution-group > summary { cursor: pointer; padding: 10px 0; line-height: 1.6; overflow-wrap: anywhere; }
+.f2l-solution-prefix { font-size: 0.9rem; }
+.f2l-solution-target { margin-left: 12px; color: var(--muted-foreground); font-size: 0.78rem; white-space: nowrap; }
+.f2l-solution-choices { display: grid; gap: 12px; padding: 0 0 12px 18px; min-width: 0; }
+.f2l-solution-choices label { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; font-size: 0.78rem; color: var(--muted-foreground); }
+.f2l-solution-select { max-width: 100%; width: fit-content; font: inherit; color: var(--foreground); }
+.f2l-solution-composed { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.f2l-solution-play { flex: 1; display: flex; align-items: center; gap: 8px; min-width: 0; padding: 8px 0; border: 0; background: none; color: inherit; font: inherit; font-size: 0.85rem; text-align: left; cursor: pointer; overflow-wrap: anywhere; }
+.f2l-solution-play svg { flex-shrink: 0; }
+.f2l-solution-play strong { font-weight: 500; color: var(--accent); }
+.f2l-solution-copy { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; min-width: 32px; min-height: 32px; padding: 4px; border: 0; background: none; color: var(--muted-foreground); cursor: pointer; }
+.f2l-solution-source { width: fit-content; font-size: 0.75rem; color: var(--muted-foreground); }
+.f2l-solution-originals > summary { cursor: pointer; padding: 8px 0; color: var(--muted-foreground); font-size: 0.75rem; }
 .alg-editor-mirror { flex-basis: 100%; min-width: 0; }
 .alg-editor-notation { flex-basis: 100%; overflow-wrap: anywhere; }
 .alg-validation-name:is(button, a) { display: flex; flex: 1; align-items: center; gap: 6px; color: inherit; font: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: start; }
@@ -1472,6 +1568,21 @@ a.alg-community-author:hover {
   align-items: center;
   flex-wrap: wrap;
   gap: 10px;
+}
+.alg-list-settings .settings-popover-panel > .bool-toggle,
+.alg-list-settings .alg-list-settings-row,
+.alg-list-settings .alg-view-angle {
+  width: 100%;
+  justify-content: space-between;
+}
+.alg-list-settings .alg-optimal-filter {
+  align-self: flex-start;
+  flex-wrap: wrap;
+  max-width: 100%;
+}
+.alg-list-settings .settings-popover-panel {
+  max-height: min(80dvh, 640px);
+  overflow-y: auto;
 }
 .alg-list-settings-label {
   color: var(--muted-foreground);
@@ -2517,6 +2628,7 @@ a.alg-community-author:hover {
   }
   .alg-case-inline-editor .alg-editor-tools-group::before {
     content: '…';
+    pointer-events: none;
     position: absolute;
     inset: 0;
     display: grid;
@@ -2531,13 +2643,13 @@ a.alg-community-author:hover {
     transform: translateX(8px);
     transition: opacity 140ms ease, transform 300ms cubic-bezier(.22, 1, .36, 1);
   }
-  .alg-case-inline-editor .alg-editor-tools:is(:hover, :has(:focus-visible), :has([aria-expanded='true'])) .alg-editor-tools-group {
+  .alg-case-inline-editor .alg-editor-tools:is(:hover, :focus-within, :has([aria-expanded='true'])) .alg-editor-tools-group {
     max-width: min(320px, calc(100vw - 32px));
   }
-  .alg-case-inline-editor .alg-editor-tools:is(:hover, :has(:focus-visible), :has([aria-expanded='true'])) .alg-editor-tools-group::before {
+  .alg-case-inline-editor .alg-editor-tools:is(:hover, :focus-within, :has([aria-expanded='true'])) .alg-editor-tools-group::before {
     opacity: 0;
   }
-  .alg-case-inline-editor .alg-editor-tools:is(:hover, :has(:focus-visible), :has([aria-expanded='true'])) .alg-editor-tools-group > * {
+  .alg-case-inline-editor .alg-editor-tools:is(:hover, :focus-within, :has([aria-expanded='true'])) .alg-editor-tools-group > * {
     opacity: 1;
     pointer-events: auto;
     transform: none;

@@ -2,13 +2,14 @@
 import { useSyncExternalStore, type ComponentProps, type ReactNode } from 'react';
 import { TimerTopbar, type TimerTopbarProps } from './TimerChrome';
 import { TimerStageLayout, type TimerStageLayoutProps } from './TimerStageLayout';
-import { useTimerWideLayout } from './TimerWorkspace';
+import { TimerWorkspaceDivider, useTimerWideLayout } from './TimerWorkspace';
 import './timer-solo-page.css';
 import { TimerTools, type TimerToolsProps } from './TimerTools';
 import TimingSurface from './TimingSurface';
 
 export interface TimerSoloPageProps {
   title?: string;
+  resizeLabel?: string;
   topbar: TimerTopbarProps;
   stage: Omit<TimerStageLayoutProps, 'children'>;
   timing: Omit<ComponentProps<typeof TimingSurface>, 'layout'>;
@@ -21,7 +22,7 @@ export interface TimerSoloPageProps {
 }
 /** Canonical Solo view. Routing, stores and device transports stay with hosts;
  * this component owns responsive placement and renders exactly one solver. */
-export function TimerSoloPage({ title, topbar, stage, timing, solver, afterTiming, narrowRecap, hints, history, tools }: TimerSoloPageProps) {
+export function TimerSoloPage({ title, resizeLabel = 'Resize panel', topbar, stage, timing, solver, afterTiming, narrowRecap, hints, history, tools }: TimerSoloPageProps) {
   const wide = useTimerWideLayout();
   return <>
     <TimerTopbar {...topbar} className={`timer-solo-topbar${stage.fullscreen ? ' timer-solo-topbar--fullscreen' : ''}${topbar.className ? ` ${topbar.className}` : ''}`}
@@ -34,6 +35,7 @@ export function TimerSoloPage({ title, topbar, stage, timing, solver, afterTimin
         {afterTiming}
         {hints}
       </div>
+      {wide && <TimerWorkspaceDivider side="left" label={resizeLabel} />}
       <div className="shell-rail timer-solver-rail" data-no-timer>{wide && solver}</div>
     </TimerStageLayout>
     {history}

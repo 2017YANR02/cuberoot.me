@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xcross / W / bin 4
-# Population in this bin: 428
+# Population in this bin: 430
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 2533429046,U' F2 D R' U' D L F D' U2 F R2 B2 L2 D2 F2 B' R2 U2 D B' L2,W,MBLD in a Madison Meeting Room 2023 (2023-03-04~05),333mbf Final A #2
@@ -44,19 +44,19 @@
 283669001,R2 F2 R2 D' F2 D F L B2 R2 L D2 L F2 U2 F2 U2 L,W,Small Cubingitaly 2016 (2016-04-17),333oh R1 B #3
 287627001,B2 U2 F R2 B F2 D2 R2 F2 L F2 L U2 B L' U' L U R2,W,BSU Cubing Days 2016 (2016-04-23~24),333oh Final A #1
 4357863041,B2 R' F2 R D2 L' B2 R F2 R U' B2 U' R' F2 L R2 B' R' F2 L' F2,W,Nacionales Guatemala 2024 (2024-12-06~08),333mbf Final A #1
-317879001,D' F2 U' B2 U F2 D' R2 D' F2 D2 R' D2 L' F' R B U R' U,W,Slow N Steady Spring 2016 (2016-06-18~19),333oh R1 J #5
+5872181001,U' F L U B2 R2 U' L2 D' U2 B2 F2 L B2 L' B D' U,W,Dosquebradas II 2026 (2026-10-10),333 R2 A #4
 326438001,L' U D2 B2 D R D' R2 L' U2 F L2 F' R2 U2 F D2 B' L2 D2,W,Cowboys Summer 2016 (2016-07-02~03),333 R1 C #4
 4581560001,F2 L F2 U2 L2 R' D2 L2 B' U' F' L' D2 B' U2 R D U2,W,Lundakuben 2025 (2025-03-22~23),333 Final A #1
 334680001,F L' F L B2 U' R L B2 R2 B2 U F2 L2 D' R2 F2 B2 U,W,Ural Open 2016 (2016-07-25~27),333oh R2 B #4
 3488045001,D2 F2 D' B U' F' R' F B2 U' F2 R2 D2 F2 U' F2 D' L2 F2,W,Brisbane Summer 2024 (2024-02-03~04),333 R2 C #4
 348739001,B' D2 F2 D2 R2 U2 F R' D L' R' D B2 D F2 U2 L B',W,Xela Open 2016 (2016-08-12~14),333 R2 A E1
-349352001,L R' B2 L2 D2 U2 L D' R D2 B2 F2 R' D R F' D U',W,Australian Nationals 2016 (2016-08-20~21),333oh R1 B #1
+5867506001,D' R' F2 L' U' B D2 F L' D2 F2 D' R2 F2 U' B2 D B2 L,W,Cube-bers in Iloilo 2026 (2026-10-04),333 R2 B #3
 356355001,R2 F2 L2 F2 U B2 D L D2 R' U2 F2 L B2 F' D2 F L,W,Lima Rubik 2016 (2016-08-27~28),333 R2 C E1
 2818787001,R' L F' D R' F' D' B2 D2 B D2 L2 D2 R2 F R2 U F D',W,Just 3x3: Old Shanghai Edition 2023 (2023-06-24),333 R1 D E2
 394202001,D2 F2 D2 R' B L2 U2 B' U' F2 L F2 L D2 R F2 L2 F2 R',W,Gdańsk Rubik's Cube Day 2016 (2016-11-05),333 R1 A E1
 3298250032,B L D2 F2 D' R F2 R' F R' F2 L2 D' F2 B2 U' L2 D2 R2 B' L2,W,Mountain View Multi Madness 2023 (2023-11-24~27),333mbf R1 C #1
 402731001,B D2 U2 R2 U2 B R2 U2 B L B' L B2 R' F' L2 F L',W,TJHSST Fall 2016 (2016-11-19),333 R1 D #3
-3161728001,F' D2 F L B2 L2 B2 U2 F2 D' U' R' D' R2 D' B' U R,W, Esprit Cube Open Bayonne 2023 (2023-10-14~15),333 Final A #1
+3161728001,F' D2 F L B2 L2 B2 U2 F2 D' U' R' D' R2 D' B' U R,W,Esprit Cube Open Bayonne 2023 (2023-10-14~15),333 Final A #1
 405931001,D' B2 D' B2 L' U2 F2 D' F' U' R2 D R2 F2 D' F2 U' L2,W,MPEI Open 2016 (2016-11-25~27),333 R2 B E1
 5065410001,U' R' D2 B2 R' U2 L B' U2 R L2 F2 L U2 L U2 R2 U R2,W,Clock & 'Minx Ohio 2025 (2025-10-04),333 Final A E2
 3903916001,U' B' U2 R2 D2 F2 R2 U F2 B D F2 D2 R2 B' R' U B2,W,Humble Cube Rumble Summer 2024 (2024-06-30),333 Final A #2

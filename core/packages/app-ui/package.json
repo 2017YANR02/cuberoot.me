@@ -8,20 +8,27 @@
     "externalRuntime": {
       "lucide-react": "react-dom",
       "react": "react-dom",
-      "@emoji-mart/data": "runtime-neutral"
+      "@emoji-mart/data": "runtime-neutral",
+      "@2017yanr02/continuous-corners": "react-dom"
     },
     "runtime": {
       ".": "react-dom",
       "./app.css": "asset",
       "./chat": "react-dom",
-      "./chat.css": "asset"
+      "./chat.css": "asset",
+      "./watch-cube": "runtime-neutral",
+      "./watch-cube-scene": "mixed",
+      "./watch-replay": "mixed"
     }
   },
   "exports": {
     ".": "./src/index.ts",
     "./app.css": "./src/app.css",
     "./chat": "./src/chat/index.ts",
-    "./chat.css": "./src/chat/chat.css"
+    "./chat.css": "./src/chat/chat.css",
+    "./watch-cube": "./src/watch-cube.ts",
+    "./watch-cube-scene": "./src/watch-cube-scene.ts",
+    "./watch-replay": "./src/watch-replay.ts"
   },
   "sideEffects": true,
   "scripts": {
@@ -32,7 +39,8 @@
     "@cuberoot/puzzle-solvers": "workspace:*",
     "@cuberoot/shared": "workspace:*",
     "@cuberoot/timer-ui": "workspace:*",
-    "@emoji-mart/data": "1.2.1"
+    "@emoji-mart/data": "1.2.1",
+    "@2017yanr02/continuous-corners": "file:../../vendor/continuous-corners-0.3.1.tgz"
   },
   "peerDependencies": {
     "lucide-react": "1.8.0",

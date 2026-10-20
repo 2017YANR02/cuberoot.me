@@ -1,14 +1,17 @@
 import { inspectionPenalty, type AutoPenalty } from './inspection';
+import type { TrainingStartMode } from './training-settings';
 
 export type TimerPhase = 'idle' | 'inspecting' | 'holding' | 'ready' | 'running' | 'stopped';
 
 export interface SolveResult {
+  trainingStartMode?: TrainingStartMode;
   timeMs: number;
   inspectionMs: number;
   autoPenalty: AutoPenalty;
 }
 
 export interface TimerMachineState {
+  trainingStartMode?: TrainingStartMode;
   phase: TimerPhase;
   lastMs: number | null;
   startedAtMs: number | null;
@@ -20,6 +23,8 @@ export interface TimerMachineState {
 }
 
 export interface TimerMachineConfig {
+  /** Only supplied for a connected smart cube in a specialized training event. */
+  trainingStartMode?: TrainingStartMode;
   inspectionSec: number;
   maxCubeBackdateMs?: number;
 }
@@ -32,7 +37,7 @@ export type TimerMachineAction =
   | { type: 'start-now'; nowMs: number; elapsedMs?: number }
   | { type: 'stop-external'; timeMs: number; inspectionMs?: number }
   | { type: 'start-from-cube'; nowMs: number; atMs?: number }
-  | { type: 'arm-from-cube'; nowMs: number }
+  | { type: 'arm-from-cube'; nowMs: number; atMs?: number }
   | { type: 'stop-from-cube'; nowMs: number; atMs?: number }
   | { type: 'abort-run'; nowMs: number }
   | { type: 'cancel-arm' }
@@ -54,7 +59,7 @@ export interface TimerMachineTransition {
   accepted?: boolean;
 }
 
-const DEFAULT_MAX_CUBE_BACKDATE_MS = 2000;
+export const DEFAULT_MAX_CUBE_BACKDATE_MS = 2000;
 
 export function initialTimerMachineState(): TimerMachineState {
   return {
@@ -98,7 +103,9 @@ function startRunning(
   config: TimerMachineConfig,
   effects: TimerMachineEffect[] = ['run-started'],
 ): TimerMachineTransition {
-  const normalizedStartedAtMs = normalizedNow(startedAtMs);
+  const trainingStartMode = state.trainingStartMode ?? config.trainingStartMode;
+  const normalizedStartedAtMs = normalizedNow(trainingStartMode && state.inspectionStartedAtMs !== null
+    ? Math.min(startedAtMs, state.inspectionStartedAtMs) : startedAtMs);
   const inspectionMs = state.inspectionStartedAtMs === null
     ? 0
     : finiteNonNegative(normalizedStartedAtMs - state.inspectionStartedAtMs);
@@ -106,9 +113,10 @@ function startRunning(
     state: {
       ...state,
       phase: 'running',
+      trainingStartMode,
       lastMs: null,
       startedAtMs: normalizedStartedAtMs,
-      autoPenalty: inspectionPenalty(inspectionMs, state.inspectionSec ?? config.inspectionSec),
+      autoPenalty: trainingStartMode ? 'ok' : inspectionPenalty(inspectionMs, state.inspectionSec ?? config.inspectionSec),
     },
     effects,
   };
@@ -125,13 +133,15 @@ function stopRunning(
     : finiteNonNegative(startedAtMs - state.inspectionStartedAtMs);
   const solve: SolveResult = {
     timeMs,
-    inspectionMs,
+    inspectionMs: state.trainingStartMode ? 0 : inspectionMs,
+    ...(state.trainingStartMode ? { trainingStartMode: state.trainingStartMode } : {}),
     autoPenalty: state.autoPenalty ?? 'ok',
   };
   return {
     state: {
       ...state,
       phase: 'stopped',
+      trainingStartMode: undefined,
       lastMs: timeMs,
       startedAtMs: null,
       inspectionStartedAtMs: null,
@@ -176,6 +186,7 @@ export function transitionTimer(
       state: {
         ...state,
         phase: state.lastMs === null ? 'idle' : 'stopped',
+        trainingStartMode: undefined,
         inspectionStartedAtMs: null,
         inspectionSec: null,
         autoPenalty: null,
@@ -192,6 +203,14 @@ export function transitionTimer(
 
   if (action.type === 'arm-from-cube') {
     if (state.phase !== 'idle' && state.phase !== 'stopped') return { state, effects: [], accepted: false };
+    if (config.trainingStartMode) {
+      const armed = { ...state, trainingStartMode: config.trainingStartMode };
+      if (config.trainingStartMode !== 'first-turn') {
+        const atMs = Math.min(action.nowMs, Math.max(action.nowMs - (config.maxCubeBackdateMs ?? DEFAULT_MAX_CUBE_BACKDATE_MS), action.atMs ?? action.nowMs));
+        return { ...startInspection(armed, atMs, 0), accepted: true };
+      }
+      return { state: { ...armed, phase: 'ready', inspectionStartedAtMs: null, inspectionSec: null, autoPenalty: null }, effects: [], accepted: true };
+    }
     if (config.inspectionSec > 0) return startInspection(state, action.nowMs, config.inspectionSec);
     return {
       state: { ...state, phase: 'ready', inspectionStartedAtMs: null, inspectionSec: null, autoPenalty: null },
@@ -277,6 +296,7 @@ export function transitionTimer(
   }
 
   if (action.type === 'press-up') {
+    if (state.trainingStartMode) return { state, effects: [] };
     if (state.phase === 'ready') return startRunning(state, action.nowMs, config);
     if (state.phase === 'holding') {
       return {
@@ -294,6 +314,9 @@ export function transitionTimer(
   }
 
   const nowMs = normalizedNow(action.nowMs);
+  // Once armed, a training attempt is driven only by cube turns. Repeated
+  // keyboard/pointer events cannot restart observation or stop execution.
+  if (state.trainingStartMode) return { state, effects: [], accepted: false };
   if (state.phase === 'running') {
     return stopRunning(state, nowMs);
   }

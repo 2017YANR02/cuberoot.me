@@ -3,8 +3,9 @@ import { invertAlg } from '@cuberoot/shared/alg-transform';
 import { normalizeWcaScramble } from '@cuberoot/shared/normalize-wca-scramble';
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
 import { hintSmartCubeScramble, verifySmartCubeScramble } from '@cuberoot/shared/smart-cube/scramble-hint';
-import { applyColorNeutral, CUBE_ORIENTATIONS, orientCubeFacelets, timerTrainerCases, timerSmartCubeTrainingOrientation, timerSmartCubeAttemptScramble } from '@cuberoot/shared/timer';
+import { applyColorNeutral, CUBE_ORIENTATIONS, generateTimerTrainerScramble, orientCubeFacelets, orientedFaceColors, timerTrainerCases, timerSmartCubeTrainingOrientation, timerSmartCubeAttemptScramble } from '@cuberoot/shared/timer';
 import { applyMoves, applyScramble, solved, toFaceletString, type CubeFaces } from '@cuberoot/shared/timer/reconstruct/state';
+import { stepSolvedInFrame } from '@cuberoot/shared/timer/reconstruct/steps';
 import { parseScramble } from '@cuberoot/puzzle-solvers/cube-moves';
 
 // Independent sticker model: execute the written notation, then physically
@@ -30,6 +31,38 @@ function canonical(state: CubeFaces): string {
 const after = (alg: string) => canonical(applyScramble(3, alg));
 
 describe('smart cube training notation', () => {
+  it('keeps every OLL, PLL and ZBLL case on the selected top in all 24 grips', () => {
+    for (const event of ['oll', 'pll', 'zbll'] as const) {
+      for (const item of timerTrainerCases(event)) {
+        const { scramble } = generateTimerTrainerScramble(event, { caseIds: [item.id] });
+        // The original library formula must solve the generated case without
+        // a compensating regrip, including formulas with a net x/y/z rotation.
+        expect(after(`${scramble} ${item.solutionAlg}`), `${event}/${item.id}`).toBe(after(''));
+        for (const { value: orientation } of CUBE_ORIENTATIONS) {
+          const target = smartCubeTargetFacelets(scramble, orientation)!;
+          const display = orientCubeFacelets(target, orientation);
+          const colors = orientedFaceColors(orientation);
+          const label = `${event}/${item.id}/${orientation}`;
+          expect(display[4], label).toBe(colors.U);
+          expect(display[22], label).toBe(colors.F);
+          expect(stepSolvedInFrame('f2l', display), label).toBe(true);
+          expect(toFaceletString(applyScramble(3, `${orientation} ${scramble}`)), label).toBe(display);
+          expect(after(timerSmartCubeAttemptScramble(event, scramble, orientation)), label).toBe(target);
+        }
+      }
+    }
+  });
+
+  it('composes LL cases in independent starting grips', () => {
+    for (const oll of timerTrainerCases('oll')) {
+      for (const pll of timerTrainerCases('pll')) {
+        const generated = generateTimerTrainerScramble('ll', { caseIds: [oll.id, pll.id] });
+        expect(stepSolvedInFrame('f2l', after(generated.scramble)), `${oll.id}/${pll.id}`).toBe(true);
+        expect(after(`${generated.scramble} ${generated.solutionAlg}`)).toBe(after(''));
+      }
+    }
+  });
+
   it('matches the sticker model for every move family and suffix', () => {
     expect(orientations).toHaveLength(24);
     for (const family of ['U', 'R', 'F', 'D', 'L', 'B', 'u', 'r', 'f', 'd', 'l', 'b', 'Uw', 'Rw', 'Fw', 'Dw', 'Lw', 'Bw', 'M', 'E', 'S', 'x', 'y', 'z']) {
@@ -45,14 +78,19 @@ describe('smart cube training notation', () => {
     expect(normalizeWcaScramble("2Rw U 2Rw'")).toBe("L F L'");
   });
 
-  it('uses yellow-top green-front by default, keeps WCA unchanged and records physical scrambles', () => {
-    expect(timerSmartCubeTrainingOrientation('zbll')).toBe('z2');
+  it('uses white-top green-front by default, keeps WCA unchanged and records selected physical grips', () => {
+    expect(timerSmartCubeTrainingOrientation('zbll')).toBe('');
     expect(timerSmartCubeTrainingOrientation('333')).toBe('');
     expect(timerSmartCubeTrainingOrientation('zbll', '')).toBe('');
     expect(timerSmartCubeAttemptScramble('zbll', 'r U', '')).toBe('L F');
     const recorded = timerSmartCubeAttemptScramble('zbll', 'R U');
-    expect(recorded).toBe('L D');
-    expect(after(`${recorded} D' L'`)).toBe(after(''));
+    expect(recorded).toBe('R U');
+    expect(after(`${recorded} U' R'`)).toBe(after(''));
+    expect(orientCubeFacelets(after(''), timerSmartCubeTrainingOrientation('zbll'))[4]).toBe('U');
+    expect(orientCubeFacelets(after(''), timerSmartCubeTrainingOrientation('zbll'))[22]).toBe('F');
+    const selected = timerSmartCubeAttemptScramble('zbll', 'R U', 'z2');
+    expect(selected).toBe('L D');
+    expect(after(`${selected} D' L'`)).toBe(after(''));
     expect(after("R U D' L'")).not.toBe(after(''));
     const display = orientCubeFacelets(after(''), 'z2');
     expect(display[4]).toBe('D');

@@ -1,3 +1,4 @@
+import { resolveWebMoyu32Mac } from './moyu32';
 /**
  * Public API for the smart-cube Bluetooth integration.
  *
@@ -1041,11 +1042,23 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       throw new BluetoothConnectError('discover', `Unrecognised smart cube: ${device.name ?? '(no name)'}`);
     }
 
-    // MY32 requires a user-provided MAC; only reuse a previously validated
-    // cache entry. Other brands retain advertisement/name-based discovery.
+    // MoYu hints must pass an encrypted state probe before entering the timer session.
     let mac: string | null = null;
     if (driver.needsMac) {
-      mac = installedBleDeviceMac(device) ?? (driver.brand === 'moyu32' ? savedMac(device.name) : normalizeMac(advMac)
+      if (driver.brand === 'moyu32') {
+        try {
+          mac = await resolveWebMoyu32Mac(server, [installedBleDeviceMac(device), normalizeMac(advMac), savedMac(device.id)],
+            isCurrentSession, () => {
+              clearMac(device.id);
+              return onNeedMacRef.current?.(device.name ?? '') ?? Promise.resolve(null);
+            });
+          if (isCurrentSession()) saveMac(device.id, mac);
+        } catch (error) {
+          clearMac(device.id);
+          try { server.disconnect(); } catch { /* already disconnected */ }
+          throw error;
+        }
+      } else mac = installedBleDeviceMac(device) ?? (normalizeMac(advMac)
         ?? savedMac(device.name)
         ?? parseMacFromName(device.name)
         // Brand-specific name fallback, never used for MY32.
@@ -1115,7 +1128,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
         return;
       }
       macRef.current = macToUse;
-      pendingSaveMacRef.current = macToUse ? { name: device.name ?? null, mac: macToUse } : null;
+      pendingSaveMacRef.current = macToUse ? { name: driver.brand === 'moyu32' ? device.id : device.name ?? null, mac: macToUse } : null;
 
       // Establish the fallback baseline before start(). Drivers are allowed to
       // synchronously publish their authoritative state during the handshake;
@@ -1193,7 +1206,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
         if (!isCurrentSession()) return;
         cleanupRef.current?.();
         cleanupRef.current = null;
-        clearMac(device.name);
+        clearMac(driver?.brand === 'moyu32' ? device.id : device.name);
         pendingSaveMacRef.current = null;
         let newMac: string | null = null;
         if (onNeedMacRef.current) {
@@ -1240,12 +1253,12 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     const nameDriver = pickDriver(device);
     const nativeMac = installedBleDeviceMac(device);
     const reusableMac = nameDriver?.needsMac
-      ? nativeMac ?? savedMac(device.name)
+      ? nativeMac ?? (nameDriver.brand === 'moyu32' ? savedMac(device.id) : savedMac(device.name))
         ?? parseMacFromName(device.name)
-        ?? nameDriver.defaultMac?.(device)
+        ?? (nameDriver.brand === 'moyu32' ? null : nameDriver.defaultMac?.(device))
         ?? null
       : null;
-    const shouldWatchMac = nameDriver?.brand !== 'moyu32' && (nameDriver === null
+    const shouldWatchMac = (nameDriver === null
       || (nameDriver.needsMac === true && reusableMac === null));
     setAdvertisementDiagnostic(shouldWatchMac
       ? {

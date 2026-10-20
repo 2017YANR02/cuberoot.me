@@ -172,7 +172,7 @@ describe('mobile timer repository contract', () => {
     const { driver, repo } = repository();
     const data = await repo.load();
     expect(data.database.activeSessionId).toBe('id-0');
-    expect(data.settings.scrambleClickAction).toBe('copy');
+    expect(data.settings.scrambleClickAction).toBe('start');
     expect(data.settings).toMatchObject({ showCubePreview: true, prefer3D: false });
     expect(driver.data).toEqual(data);
   });
@@ -365,7 +365,7 @@ describe('mobile timer repository contract', () => {
     await expect(repo.load()).resolves.toMatchObject({ schemaVersion: 2, database: { version: 3 } });
     expect(driver.data).toMatchObject({ schemaVersion: 2, database: { version: 3 } });
     expect((driver.data as TimerStoreData).settings.statsRollingColumns).toEqual(['ao5', 'ao12']);
-    expect((driver.data as TimerStoreData).settings.scrambleClickAction).toBe('copy');
+    expect((driver.data as TimerStoreData).settings.scrambleClickAction).toBe('start');
     expect((driver.data as TimerStoreData).settings).toMatchObject({
       showCubePreview: true,
       prefer3D: false,
@@ -571,6 +571,20 @@ describe('mobile timer repository contract', () => {
       await repo.updateSettings({ scrambleClickAction });
       await expect(repo.load()).resolves.toMatchObject({ settings: { scrambleClickAction } });
     }
+  });
+
+  it.each(['none', 'copy', 'next'] as const)('migrates hidden %s once and preserves new choices after restart', async (legacy) => {
+    const { repo, driver } = repository();
+    const data = await repo.load();
+    data.settings.scrambleClickAction = legacy;
+    delete data.settings.scrambleClickStartMigrated;
+    driver.data = data;
+    const migrated = repository(driver).repo;
+    expect((await migrated.load()).settings).toMatchObject({
+      scrambleClickAction: 'start', scrambleClickStartMigrated: true,
+    });
+    await migrated.updateSettings({ scrambleClickAction: 'copy' });
+    expect((await repository(driver).repo.load()).settings.scrambleClickAction).toBe('copy');
   });
 
   it('persists all eight shared timing settings without a Mobile-only schema', async () => {

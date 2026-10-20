@@ -61,6 +61,9 @@ importers:
       '@app-foundation/verification':
         specifier: https://github.com/2017YANR02/app-foundation/releases/download/v0.2.0/app-foundation-verification-0.1.0.tgz
         version: https://github.com/2017YANR02/app-foundation/releases/download/v0.2.0/app-foundation-verification-0.1.0.tgz
+      '@app-foundation/workspace-policy':
+        specifier: https://github.com/2017YANR02/app-foundation/releases/download/v0.6.0/app-foundation-workspace-policy-0.1.0.tgz
+        version: https://github.com/2017YANR02/app-foundation/releases/download/v0.6.0/app-foundation-workspace-policy-0.1.0.tgz
       '@apple/app-store-server-library':
         specifier: ^3.1.0
         version: 3.1.0
@@ -277,9 +280,18 @@ importers:
 
   apps/miniprogram:
     dependencies:
+      '@cuberoot/puzzle-render-core':
+        specifier: workspace:*
+        version: link:../../packages/puzzle-render-core
       '@cuberoot/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      '@ungap/url-search-params':
+        specifier: ^0.2.2
+        version: 0.2.2
+      abort-controller:
+        specifier: ^3.0.0
+        version: 3.0.0
     devDependencies:
       '@types/node':
         specifier: ^22.0.0
@@ -320,6 +332,9 @@ importers:
       '@capacitor/app':
         specifier: 8.1.1
         version: 8.1.1(@capacitor/core@8.5.3)
+      '@capacitor/app-launcher':
+        specifier: 8.0.1
+        version: 8.0.1(@capacitor/core@8.5.3)
       '@capacitor/browser':
         specifier: 8.0.4
         version: 8.0.4(@capacitor/core@8.5.3)
@@ -347,6 +362,9 @@ importers:
       '@cuberoot/timer-ui':
         specifier: workspace:*
         version: link:../../packages/timer-ui
+      cubing:
+        specifier: 0.63.3
+        version: 0.63.3(patch_hash=026724bd89e53a602c720d772bbd4c11ebe3c4040d840ba0c7df469b5244c9f6)
       lucide-react:
         specifier: 1.8.0
         version: 1.8.0(react@19.2.4)
@@ -502,6 +520,9 @@ importers:
 
   packages/app-ui:
     dependencies:
+      '@2017yanr02/continuous-corners':
+        specifier: file:../../vendor/continuous-corners-0.3.1.tgz
+        version: file:vendor/continuous-corners-0.3.1.tgz(react@19.2.4)
       '@cuberoot/puzzle-solvers':
         specifier: workspace:*
         version: link:../puzzle-solvers
@@ -548,9 +569,18 @@ importers:
 
   packages/client:
     dependencies:
+      '@2017yanr02/continuous-corners':
+        specifier: file:../../vendor/continuous-corners-0.3.1.tgz
+        version: file:vendor/continuous-corners-0.3.1.tgz(react@19.2.4)
       '@airwallex/components-sdk':
         specifier: ^1.35.1
         version: 1.35.1
+      '@app-foundation/workspace-policy':
+        specifier: https://github.com/2017YANR02/app-foundation/releases/download/v0.6.0/app-foundation-workspace-policy-0.1.0.tgz
+        version: https://github.com/2017YANR02/app-foundation/releases/download/v0.6.0/app-foundation-workspace-policy-0.1.0.tgz
+      '@app-foundation/workspace-ui':
+        specifier: https://github.com/2017YANR02/app-foundation/releases/download/v0.7.0/app-foundation-workspace-ui-0.1.0.tgz
+        version: https://github.com/2017YANR02/app-foundation/releases/download/v0.7.0/app-foundation-workspace-ui-0.1.0.tgz(@app-foundation/workspace-policy@https://github.com/2017YANR02/app-foundation/releases/download/v0.6.0/app-foundation-workspace-policy-0.1.0.tgz)(react@19.2.4)
       '@codemirror/lang-markdown':
         specifier: ^6.5.0
         version: 6.5.0
@@ -1106,6 +1136,16 @@ importers:
 
 packages:
 
+  '@2017yanr02/continuous-corners@file:vendor/continuous-corners-0.3.1.tgz':
+    resolution: {integrity: sha512-DKOri0eSNLDaldxHOWxZfv8zc9meHnFa20hv2oGgxQM+PKm+JXlfwS6/ucqYY12UTYG0lHGYzbbmcOl5VVN0vA==, tarball: file:vendor/continuous-corners-0.3.1.tgz}
+    version: 0.3.1
+    engines: {node: '>=18'}
+    peerDependencies:
+      react: '>=18'
+    peerDependenciesMeta:
+      react:
+        optional: true
+
   '@ai-sdk/deepseek@3.0.63':
     resolution: {integrity: sha512-oSIwe9tIpRXkANMsdNcW7JnJRLp+dakWiudl8ZImffhw3PD91i5zpN8x3V6jkXhknvEhRxyd6IIiCSCevVZHyw==}
     engines: {node: '>=22'}
@@ -1177,6 +1217,19 @@ packages:
     resolution: {integrity: sha512-z/wHi7+xhpQUAyIPgxRsfTiNQ5bP8IUPo8HYr5MA4mnOWEYgdceryQ4LXXAteSgd6sxYhTdoAmeGK9iaecLLpw==, tarball: https://github.com/2017YANR02/app-foundation/releases/download/v0.2.0/app-foundation-verification-0.1.0.tgz}
     version: 0.1.0
     engines: {node: '>=22'}
+
+  '@app-foundation/workspace-policy@https://github.com/2017YANR02/app-foundation/releases/download/v0.6.0/app-foundation-workspace-policy-0.1.0.tgz':
+    resolution: {integrity: sha512-Krq2gZLSwqTSsHNHZD3EYdfGzlSpUbdk7YSD0cLBXjGtDWEAlenYFG3PhQUV2W6I3TUa8r9FQRLCVkpMhHQObg==, tarball: https://github.com/2017YANR02/app-foundation/releases/download/v0.6.0/app-foundation-workspace-policy-0.1.0.tgz}
+    version: 0.1.0
+    engines: {node: '>=22'}
+
+  '@app-foundation/workspace-ui@https://github.com/2017YANR02/app-foundation/releases/download/v0.7.0/app-foundation-workspace-ui-0.1.0.tgz':
+    resolution: {integrity: sha512-5+mtjmZgqbCZxaac/VAywn6UQBj8V5ykp4Sfz9D3s5nfzr9Ai+zgKYsjA6tOmHHuj/ghlci41eDnuWV1X+1bhA==, tarball: https://github.com/2017YANR02/app-foundation/releases/download/v0.7.0/app-foundation-workspace-ui-0.1.0.tgz}
+    version: 0.1.0
+    engines: {node: '>=22'}
+    peerDependencies:
+      '@app-foundation/workspace-policy': 0.1.0
+      react: '>=19'
 
   '@apple/app-store-server-library@3.1.0':
     resolution: {integrity: sha512-d26SICRz8BwCV2qPR0BSXBMxmw0NEvJLwsdREcBmCrus8NmyHw2XgOOP0fiFjcctPn/JXtmSDuGVnaHe+dqO+A==}
@@ -1258,6 +1311,11 @@ packages:
     resolution: {integrity: sha512-ilH4gSSz3DrketMkzDVAvY9JsWJ//rCQnECLTdcFRO7xXDogwAbUvQAnIAbiqefwV/D1xfjEL4Gw1MJXEcaA9g==}
     peerDependencies:
       '@capacitor/core': ^8.5.0
+
+  '@capacitor/app-launcher@8.0.1':
+    resolution: {integrity: sha512-23D8zi74sn7kxvISix8qYwgqdxGJN+4NImcNGvHen98LB1zb4eZfkJvFvp7pwntxGw4OjIE7yuf4wbzZxQHpog==}
+    peerDependencies:
+      '@capacitor/core': '>=8.0.0'
 
   '@capacitor/app@8.1.1':
     resolution: {integrity: sha512-xM2ZTX5jK60tFtmjsmJv+Cdj1Qsb6NcavkqmdEnCPQBeya9oKhamZJxYOnQNj1ZvcJM7sWfG6BEtSLx42pisbA==}
@@ -3200,6 +3258,9 @@ packages:
   '@ungap/structured-clone@1.3.1':
     resolution: {integrity: sha512-mUFwbeTqrVgDQxFveS+df2yfap6iuP20NAKAsBt5jDEoOTDew+zwLAOilHCeQJOVSvmgCX4ogqIrA0mnyr08yQ==}
 
+  '@ungap/url-search-params@0.2.2':
+    resolution: {integrity: sha512-qQsguKXZVKdCixOHX9jqnX/K/1HekPDpGKyEcXHT+zR6EjGA7S4boSuelL4uuPv6YfhN0n8c4UxW+v/Z3gM2iw==}
+
   '@vercel/cli-config@0.3.1':
     resolution: {integrity: sha512-sISbygqlFXYb8qfPu/+2Cf/A8IjrlAuZePdag3EDQr2PRA455s7UZtl9Ro674CWsB/saBRmz3jEkw0YsQs8OoQ==}
 
@@ -3270,6 +3331,10 @@ packages:
   '@xmldom/xmldom@0.9.12':
     resolution: {integrity: sha512-5AXjrcMClTryPe9LgZrygpB1lj7s0S9E0+W+AHaVKAVyHanafK86iPSvG5xHVSp/jC+VH1UXu0TAEmY279xH7A==}
     engines: {node: '>=14.6'}
+
+  abort-controller@3.0.0:
+    resolution: {integrity: sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg==}
+    engines: {node: '>=6.5'}
 
   accepts@2.0.0:
     resolution: {integrity: sha512-5cvg6CtKwfgdmVqY1WIiXKc3Q1bkRqGLi+2W/6ao+6Y7gu/RCwRuAhGEzh5B4KlszSuTLgZYuqFqo5bImjNKng==}
@@ -3949,6 +4014,10 @@ packages:
   etag@1.8.1:
     resolution: {integrity: sha512-aIL5Fx7mawVa300al2BnEE4iNvo1qETxLrPI/o05L7z6go7fCw1J6EQmbK4FmJ2AS7kgVF/KEZWufBfdClMcPg==}
     engines: {node: '>= 0.6'}
+
+  event-target-shim@5.0.1:
+    resolution: {integrity: sha512-i/2XbnSz/uxRCU6+NdVJgKWDTM427+MqYbkQzD321DuCQJUqOuJKIA0IM2+W2xtYHdKOmZ4dR6fExsd4SXL+WQ==}
+    engines: {node: '>=6'}
 
   eventemitter3@4.0.7:
     resolution: {integrity: sha512-8guHBZCwKnFhYdHr2ysuRWErTwhoN2X8XELRlrRwpmfeY2jjuUN4taQMsULKUVo1K4DvZl+0pgfyoysHxvmvEw==}
@@ -6475,6 +6544,10 @@ packages:
 
 snapshots:
 
+  '@2017yanr02/continuous-corners@file:vendor/continuous-corners-0.3.1.tgz(react@19.2.4)':
+    optionalDependencies:
+      react: 19.2.4
+
   '@ai-sdk/deepseek@3.0.63(zod@4.4.3)':
     dependencies:
       '@ai-sdk/provider': 4.0.26
@@ -6534,6 +6607,13 @@ snapshots:
   '@app-foundation/sms@https://github.com/2017YANR02/app-foundation/releases/download/v0.3.1/app-foundation-sms-0.1.1.tgz': {}
 
   '@app-foundation/verification@https://github.com/2017YANR02/app-foundation/releases/download/v0.2.0/app-foundation-verification-0.1.0.tgz': {}
+
+  '@app-foundation/workspace-policy@https://github.com/2017YANR02/app-foundation/releases/download/v0.6.0/app-foundation-workspace-policy-0.1.0.tgz': {}
+
+  '@app-foundation/workspace-ui@https://github.com/2017YANR02/app-foundation/releases/download/v0.7.0/app-foundation-workspace-ui-0.1.0.tgz(@app-foundation/workspace-policy@https://github.com/2017YANR02/app-foundation/releases/download/v0.6.0/app-foundation-workspace-policy-0.1.0.tgz)(react@19.2.4)':
+    dependencies:
+      '@app-foundation/workspace-policy': https://github.com/2017YANR02/app-foundation/releases/download/v0.6.0/app-foundation-workspace-policy-0.1.0.tgz
+      react: 19.2.4
 
   '@apple/app-store-server-library@3.1.0':
     dependencies:
@@ -6642,6 +6722,10 @@ snapshots:
       '@types/web-bluetooth': 0.0.20
 
   '@capacitor/android@8.5.3(@capacitor/core@8.5.3)':
+    dependencies:
+      '@capacitor/core': 8.5.3
+
+  '@capacitor/app-launcher@8.0.1(@capacitor/core@8.5.3)':
     dependencies:
       '@capacitor/core': 8.5.3
 
@@ -8397,6 +8481,8 @@ snapshots:
 
   '@ungap/structured-clone@1.3.1': {}
 
+  '@ungap/url-search-params@0.2.2': {}
+
   '@vercel/cli-config@0.3.1':
     dependencies:
       xdg-app-paths: 5.5.1
@@ -8499,6 +8585,10 @@ snapshots:
   '@xmldom/xmldom@0.8.15': {}
 
   '@xmldom/xmldom@0.9.12': {}
+
+  abort-controller@3.0.0:
+    dependencies:
+      event-target-shim: 5.0.1
 
   accepts@2.0.0:
     dependencies:
@@ -9184,6 +9274,8 @@ snapshots:
   esutils@2.0.3: {}
 
   etag@1.8.1: {}
+
+  event-target-shim@5.0.1: {}
 
   eventemitter3@4.0.7: {}
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { cube3x3x3 } from 'cubing/puzzles';
 import { LBL_STEPS } from '@/app/[lang]/tutorial/lbl/content';
+import { practiceState } from '@/app/[lang]/tutorial/lbl/practice-state';
 import { resolvePlayerSetup, resolveSimPreviewMoves } from '@/components/AlgPlayer/player-setup';
 
 const kp = await cube3x3x3.kpuzzle();
@@ -21,15 +22,23 @@ describe('LBL teaching examples', () => {
         if (demo.setup) expect(end.patternData.CORNERS.orientation.filter(o => o !== 0).length).toBe(3);
       }
       if (step.id === 'edge-position') {
-        expect(start.patternData.CORNERS).toEqual(solved.patternData.CORNERS);
-        expect(start.patternData.EDGES.pieces[2]).toBe(2);
-        expect(start.patternData.EDGES.pieces.filter((p, i) => p !== i).length).toBe(3);
+        // Wall cases now teach y' first; compare piece IDs after that rotation.
+        const prepared = demo.setup ? start : start.applyAlg("y'");
+        expect(prepared.patternData.CORNERS).toEqual(solved.patternData.CORNERS);
+        if (!demo.setup) expect(prepared.patternData.EDGES.pieces[2]).toBe(2);
+        expect(prepared.patternData.EDGES.pieces.filter((p, i) => p !== i).length).toBe(demo.setup ? 4 : 3);
       }
       if (step.id === 'yellow-cross') {
         expect(start.patternData.EDGES.orientation.filter(o => o !== 0).length).toBe(demo.title.en === 'Dot' ? 4 : 2);
       }
       if (step.id === 'cross') {
-        expect(end.patternData.EDGES).toEqual(solved.patternData.EDGES);
+        // The first three moves insert one petal; the full sequence completes four.
+        const colors = ['U', 'R', 'F', 'D', 'L', 'B'].flatMap(color => Array<string>(9).fill(color));
+        const faces = (alg: string): string[][] => JSON.parse(practiceState(colors, `${setup} ${alg}`));
+        expect([1, 3, 5, 7].filter(i => faces(demo.alg.split(' ').slice(0, 3).join(' '))[3][i] === 'D').length).toBe(1);
+        const complete = faces(demo.alg);
+        expect([1, 3, 5, 7].filter(i => complete[3][i] === 'D').length).toBe(4);
+        for (const side of [1, 2, 4, 5]) expect(complete[side][7]).toBe(complete[side][4]);
       }
       if (step.id === 'corner-position') {
         const p = start.patternData.CORNERS.pieces.slice(0, 4);

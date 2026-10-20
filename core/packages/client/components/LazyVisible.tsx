@@ -10,7 +10,7 @@
  * SSR/SSG:服务端与首帧都渲染占位(min-height 撑住),不依赖 window;mount 后才接 IO。
  */
 
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 
 export default function LazyVisible({
   children,
@@ -19,6 +19,8 @@ export default function LazyVisible({
   className,
   unwrapWhenVisible = false,
   unmountWhenHidden = false,
+  inline = false,
+  style,
 }: {
   children: ReactNode;
   /** 提前量:容器距视口多远就预挂(默认提前 300px,滚到时已就绪) */
@@ -30,8 +32,11 @@ export default function LazyVisible({
   unwrapWhenVisible?: boolean;
   /** 离屏卸载动画等持续占用资源的内容;此时保留 wrapper 供持续观察。 */
   unmountWhenHidden?: boolean;
+  /** Inline diagrams reserve their exact dimensions without inserting a block wrapper. */
+  inline?: boolean;
+  style?: CSSProperties;
 }) {
-  const ref = useRef<HTMLDivElement | null>(null);
+  const ref = useRef<HTMLDivElement & HTMLSpanElement>(null);
   const [show, setShow] = useState(false);
 
   useEffect(() => {
@@ -57,9 +62,10 @@ export default function LazyVisible({
 
   if (show && unwrapWhenVisible && !unmountWhenHidden) return children;
 
+  const Container = inline ? 'span' : 'div';
   return (
-    <div ref={ref} className={className} style={show ? undefined : { minHeight }}>
+    <Container ref={ref} className={className} style={{ ...(!show ? { minHeight } : {}), ...style }}>
       {show ? children : null}
-    </div>
+    </Container>
   );
 }

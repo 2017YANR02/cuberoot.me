@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / ORWY / bin 2
-# Population in this bin: 224
+# Population in this bin: 226
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 17474001,D2 B2 L2 B D2 L2 R2 F2 D' L D R U' L2 F U2 F' U',R,Apollo Open 2014 (2014-05-04),333 R2 B E1
@@ -141,12 +141,12 @@
 3642947008,D2 B2 D2 F' R2 D2 U2 F2 R D2 B U' F' U' B' L2 B' U' F',R,Please Be Quiet Auckland 2024 (2024-04-07),333mbf Final A #2
 3662366001,U' F2 U L2 D2 F2 D' B2 L B' L D2 F2 L2 D' B' U2 B F',Y,Luanda Open 2024 (2024-04-13),333 Final B #4
 5569118001,R2 F B2 L2 U' B2 D2 U B2 L2 F' U R' B' U' L' B2 D R2,O,Twist and Turn Ghent 2026 (2026-04-18~19),333 R1 A #2
-5556435001,L' B2 L' U' R' U R B2 L2 U2 R2 U F2 U2 B' U' R2,O,New Providence Spring AM 2026 (2026-04-18),333oh Final A #5
+5867591001,R2 D B2 R2 D' R2 U F2 U' L2 B L2 F2 D' U2 R' D L F2,O,Cube-bers in Iloilo 2026 (2026-10-04),333 R2 C E1
 3742365019,F' R' F2 R' B2 D U R2 D' U2 L2 F2 L' F' L B' D2 R2 D B' L',O,Kansas Championship 2024 (2024-05-03~05),333mbf Final A #1
 3744563001,B' U L2 D' R D R' F' D2 R2 F2 R2 F U2 B' L2 B2 L2 R' D2,W,Palmerston North 2024 (2024-05-04~05),333oh R1 B #2
 3748096001,R' U' F L D' R2 D2 U2 B F2 D2 L2 U2 L2 B' L2 D' F R2 D' U B D2 R' U' F,W,Schiller Theater FMC Utrecht 2024 (2024-05-11),333fm Final A #1
 3825874001,L2 R2 F2 D R2 U2 F2 D' B2 L R' U F' L D B2 F2 R2 F',Y,Bacolod Big Cubes 2024 (2024-06-01~02),333 Final A #3
-3904784001,L2 B2 L2 D B2 L2 D' F2 L2 F R' U R2 D2 B D U' B U2,Y, Wembley Quimbaya 2024 (2024-06-30),333 R1 A E2
+3904784001,L2 B2 L2 D B2 L2 D' F2 L2 F R' U R2 D2 B D U' B U2,Y,Wembley Quimbaya 2024 (2024-06-30),333 R1 A E2
 3909393030,U R2 D2 L R F2 R D2 B D U' B U L D B2 U2 B',R,Hari-Hari Horas 10 2024 (2024-07-05),333mbf Final D #1
 3926566001,F2 U' R2 L' B' U' D' F L2 B2 L2 U' R2 D F2 U F' U2 L,O,PIB Itaim Open 2024 (2024-07-13),333 Final A #1
 3961862001,R' F2 L2 D' U2 L2 D B2 F2 R D U2 B2 F2 L2 B D' B2,W,Vintage Cubing La Paz 2024 (2024-07-20),333 Final A #5
@@ -187,7 +187,7 @@
 4723539001,F2 D2 F' R2 B R2 D2 L2 D2 B' L2 D' L2 F2 U F R F',O,Ankara May A 2025 (2025-05-10),333 R2 A E2
 5604508001,F2 U2 L U' R2 F2 D' L2 F2 L' D2 R2 B2 D2 F2 D2 R B U L' F,O,Start of Summer Beijing 2026 (2026-05-01~02),333bf R1 A #1
 4740644001,R2 F2 D F B D2 L' R2 U2 D L2 D2 F2 U' F2 D' B' R U2,Y,Singapore Cubing Mayday 2025 (2025-05-25),333oh R1 A E2
-4742030001,D' B' D B2 F2 R2 D' B2 U R2 B2 U L' D R' F' L' D2 L2,O,Open the Pot Dijon 2025 (2025-05-24~25),333oh R1 B #3
+5867506001,D' R' F2 L' U' B D2 F L' D2 F2 D' R2 F2 U' B2 D B2 L,W,Cube-bers in Iloilo 2026 (2026-10-04),333 R2 B #3
 4758809001,L' F R B' R F2 B' D' F2 L R2 U2 L2 D' F2 U L2 U' D',R,Noida Cube Open 2025 (2025-05-24~25),333 R2 D #2
 4791087001,B2 R2 U2 F' U2 B2 F2 R2 D B D' B R F' U2 R' B2,O,Napule È Mille Culure 2025 (2025-06-08),333 R2 A #2
 4795751001,R2 F2 R F2 L' F2 L' U2 B2 R2 U L2 R' F2 R2 B2 D B U,W,Saint John's Warm Up 2025 (2025-06-07),333oh R2 A E2

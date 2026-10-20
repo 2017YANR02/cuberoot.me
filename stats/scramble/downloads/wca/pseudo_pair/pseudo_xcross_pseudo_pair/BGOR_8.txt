@@ -2,7 +2,7 @@
 # Population in this bin: 332
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 7959001,U D' F' U2 L' U2 R' U2 B U L2 F' U2 L2 B' L2 B' U2 F2,B,Welwyn Garden City Open 2014 (2014-04-05~06),333 R1 C E1
@@ -76,7 +76,7 @@
 661440024,L2 D2 L2 F' D2 R2 F2 L2 B' L2 F R B F L F D2 U' R' D' L2 U2,B,China Championship 2017 (2017-07-28~30),333mbf Final A #2
 661459003,L' F2 L' R' U2 F2 R D2 U2 R2 B2 F' L2 U F2 U2 R D' R2 B' F D,B,Univalle Spring 2017 (2017-08-12~13),333mbf Final A #2
 661459008,L2 D L2 U' R2 U' L2 D F2 U' B2 F U' L D R' B' F' U' F2 R B,B,Univalle Spring 2017 (2017-08-12~13),333mbf Final A #2
-5048122001,R2 D' F2 D' F2 D' R2 F2 D2 R' D' L2 U2 R' B F L2 U R' D',B, Kyrgyzstan Nationals 2025 (2025-09-27~28),333 R1 C #3
+5048122001,R2 D' F2 D' F2 D' R2 F2 D2 R' D' L2 U2 R' B F L2 U R' D',B,Kyrgyzstan Nationals 2025 (2025-09-27~28),333 R1 C #3
 665180001,F2 L2 D2 U' F2 U' R2 U2 B2 R2 D' R B2 D' U' B U2 L' U F,B,Zhenjiang Open 2017 (2017-12-10),333 R2 C E1
 673067001,L' F2 U' L' D B U R2 F' R L U2 F R2 F D2 R2 B2 D2 B2,B,Crazy Cubes Christmas 2017 (2017-12-16~17),333 Final A #3
 5848451001,F U2 R' B2 R' B2 L D2 F2 L D2 B' D' R' U F' U L' R' B',B,Floripa ao Cubo 2026 (2026-09-26~27),333oh R1 A #5

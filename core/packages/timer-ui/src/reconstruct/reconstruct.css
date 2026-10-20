@@ -684,7 +684,7 @@
 .rc-action--icon { padding: 5px 9px; }
 
 /* 打乱兜底那一行(见 ReconstructReport:只在没有文字复盘时出现,有的话打乱是
-   谱子的第一行)。一行摆完,标签在左。 */
+   还原步骤的第一行)。一行摆完,标签在左。 */
 .rc-scramble {
   display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px;
   margin: 0 0 14px;
@@ -888,6 +888,7 @@ button.stl-track:focus-visible { outline: 2px solid var(--ring); outline-offset:
   letter-spacing: 0.08em; color: var(--muted-foreground);
 }
 
+.sml-line { display: block; }
 .sml-line + .sml-line { margin-top: 6px; }
 .sml-line[data-state='future'] { opacity: 0.42; }
 .sml-line[data-state='now'] .sml-moves { color: var(--accent); }
@@ -896,29 +897,23 @@ button.stl-track:focus-visible { outline: 2px solid var(--ring); outline-offset:
 .sml-sub-name { font-size: 11px; color: var(--muted-foreground); }
 /* Inline text keeps the trailing stage comment on the same clipboard line. */
 .sml-body { display: block; }
-.sml-body > * + * { margin-inline-start: 8px; }
 .sml-moves {
   font-family: var(--font-mono); font-size: 13px; line-height: 1.7;
   color: var(--foreground); word-break: break-word;
   text-align: left;
 }
-button.sml-moves {
+.sml-moves.is-seek {
   display: inline;
   max-width: 100%;
   appearance: none; background: transparent; border: 0; padding: 0;
   cursor: pointer;
 }
-button.sml-moves:hover { color: var(--accent); }
-button.sml-moves:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.sml-moves.is-seek:hover { color: var(--accent); }
+.sml-moves.is-seek:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 .sml-label {
   font-family: var(--font-mono); font-size: 12px;
-  color: var(--faint-foreground); white-space: nowrap;
+  color: var(--faint-foreground); white-space: normal;
 }
-.sml-case-link { color: inherit; text-decoration: none; }
-.sml-case-link:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
-.sml-case-link:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
-/* 色块直接替代颜色字母,和剩余的阶段名称留一点间距。 */
-.sml-label-chip { margin: 0 4px 0 0; width: 17px; height: 11px; }
 
 @media (max-width: 480px) {
   .sml-moves { font-size: 12px; }
@@ -962,3 +957,12 @@ button.sml-moves:focus-visible { outline: 2px solid var(--ring); outline-offset:
   font-size: clamp(16px, 2vw, 22px);
   line-height: 1.5;
 }
+.rc-training-summary { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.rc-training-identity { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; }
+.rc-training-case { font-weight: 600; overflow-wrap: anywhere; }
+.rc-training-times.rc-summary, .rc-training-history.rc-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; }
+.rc-training-summary .rc-summary-big { font-family: var(--font-sans); font-weight: 500; }
+.rc-training-times .rc-summary-big { font-size: 1.5rem; }
+.rc-training-history .rc-summary-big { font-size: 1rem; }
+.rc-training-note { color: var(--muted-foreground); font-size: .8rem; line-height: 1.5; }
+.rc-training-statistics { display: flex; flex-direction: column; gap: 8px; }

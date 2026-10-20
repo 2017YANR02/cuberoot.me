@@ -1,13 +1,13 @@
 # Scramble samples — dr / dr / BG / bin 6
-# Population in this bin: 628
+# Population in this bin: 633
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 17503001,R U2 R' F U2 F' R2 F2 D2 R' L2 U' L2 U D2 F2 U L2 U2,B,Mumbai Summer Open 2014 (2014-05-03~04),333 R1 C E2
 3737768006,R U L2 U' R B D2 R' D U2 R2 F U2 D2 F B2 U2 B L2 B' L2,B,Minnesota Qualifier 2024 (2024-05-04~05),333mbf Final A #1
-4500287001,L U F' U' L U2 D' F L F2 U2 F' D2 F' L2 F R,B,Central Asian Tour Bishkek 2025 (2025-02-15~16),333 R1 D #4
+5872706001,D' R B' D2 F' D2 F D2 B D2 R2 D B2 L2 R' D' B2 R2,B,Penn Cube Day Fall 2026 (2026-10-10),333 R2 A #4
 1962627001,R L' U L F B' U' R' L2 U2 R D2 F2 R' U2 F U' B,B,Yay Yarışları - Gəncə 2022 (2022-06-11),333 Final A #3
 5052829001,R F' U2 B' U2 B2 D2 U2 B' U R D F2 L2 D L2 D2 F2,B,Montserrat Open Serra 2025 (2025-09-27~28),333oh Final A #4
 2135382001,B R2 B2 L2 D2 F' R2 U2 L2 F2 D' U R2 D L F' U' B U',B,Amman Summertime 2022 (2022-08-27~28),333oh Final C #2
@@ -85,7 +85,7 @@
 4388593014,F U' L2 F' U B U2 B R L2 U2 B2 D2 F2 R2 B' R2 F L' F',B,Rubik's WCA Oceanic Championship 2024 (2024-12-19~22),333mbf Final A #1
 3195594026,U2 R2 B' R2 B2 F U2 F R2 L F L B' L2 R D2 R D2 L2,B,CubingUSA Great Lakes Championship 2023 (2023-10-20~22),333mbf Final B #1
 590547001,F R2 D2 B L2 D2 U2 F' R D' B L' F2 R2 D2 L2 D2,B,Israel Championship 2017 (2017-08-30~31),333 R1 C #5
-3863784001,F R2 F2 U2 R2 U2 R2 B' D2 B D2 F D' L R2 U L D,B,Parthenope Summer Open 2024 (2024-06-15~16),333 R2 B #2
+5863512001,U2 L2 B' L2 B L2 F' L2 D2 B L2 R2 D' R' D' U2 L D',B,WetterWürfeln Wölfersheim 2026 (2026-10-03~04),333 R2 A #1
 4251454001,F2 U2 B R2 D2 B L2 R2 D2 F' L' D2 R' U2 R2 D2 U' R,B,Canadian Prairie Championship 2024 (2024-11-02~03),333 R2 D #2
 603492001,D2 U2 F2 R2 B L2 U2 B' U2 R' D L' B2 L' B F U2 B F',B,Puget Sound Fall 2017 (2017-09-23),333oh R1 A E1
 5439440001,L B' F2 U' L2 R2 B2 L2 U' F2 D2 R' F' D R2 F R D B R,B,PUCP Cubing Festival IX 2026 (2026-03-07~08),333bf R1 A #1
@@ -128,7 +128,7 @@
 4410339001,F L2 D L2 D U' R2 F U R' F' L2 B R2 B' F R,B,Spokane Winter 2025 (2025-01-04),333 R1 B #1
 3060500001,B L2 B2 D2 U2 F' R2 F U R U' R2 D2 B2 R' F' D U2,B,Amsterdam Open 2023 (2023-09-10),333oh Final B #1
 802372001,D2 B2 L2 D B2 F2 L2 R2 U' L B L U2 L B' F D' F2 R',B,Roma3 Al Cubo 2018 (2018-06-09),333 R2 A E2
-1940564001,D2 L2 F2 U2 B' L2 U2 R2 U2 F' D2 R' U2 L B D' R2,B,Country Roads Huntington 2022 (2022-05-28),333 R1 B #1
+5872613001,R2 D2 F' R2 L B' R L2 U2 R' U2 D2 R' D2 B R' B R,B,Wembley Quimbaya IV 2026 (2026-10-11),333bf Final B E2
 803710046,F2 D2 B' L2 F L2 U2 B' U L2 B2 L' B D' L D' U2 B' F' L,B,Indian Nationals 2018 (2018-05-25~27),333mbf Final A #2
 818880001,L2 B' R2 F' L2 U2 B' U2 F' R2 F U' L' U L' F2 R2 D B',B,Peru Nationals 2018 (2018-06-29~07-01),333oh R1 G E1
 4284674001,L2 F' U2 B' F' L2 D2 L2 B U2 L F2 L' B U2 R B,B,Miami Skewbed 2024 (2024-11-16),333 R1 C #2

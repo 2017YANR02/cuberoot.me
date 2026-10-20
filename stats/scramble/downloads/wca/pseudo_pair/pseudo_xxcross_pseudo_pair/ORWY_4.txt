@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / ORWY / bin 4
-# Population in this bin: 229
+# Population in this bin: 233
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 10812001,B2 L R' D2 B2 F D F R D2 L' B L B' U' R,W,Open Cube Project 2014 (2014-04-12),333 Final A E2
@@ -47,7 +47,7 @@
 660669011,D2 B2 L2 B2 L' R2 U2 R' B' D' F D U B' D B2 U' B L2 U2,Y,Indian Open Rubik's Cube 2015 (2015-03-20~22),333mbf Final A #1
 5706827001,L' F L D R2 B R' D2 B' R F2 B R2 U2 F D2 F B,R,Nacionales Honduras 2026 (2026-06-13~14),333 Final A #3
 660851016,D2 R2 D2 F L2 R2 D2 B F' D2 F' L' U2 B U' R B L2 R2 U' L2 U',O,Two days in Vitebsk 2015 (2015-10-31~11-01),333mbf Final A #1
-660956020,D2 L' D2 R B2 R D2 U2 L R' D' F2 U' B D' R2 B2 D' B' R B,W,VSU Open 2016 (2016-03-26~27),333mbf Final A #1
+5875631001,U' R2 B2 D' F2 L2 F2 R2 F2 L' U' L B2 L2 R F R B2,W,Thailand Championship 2026 (2026-10-09~11),333oh Final A #1
 5834102003,R B R2 U2 D2 B U2 L D' F D2 R2 D2 L2 F2 B R2 D2 F' R2 B R,R,SacQuiet Fall 2026 (2026-09-19),333mbf Final A #2
 5288143001,F2 R2 D2 F R' D2 L' F2 R2 U2 R2 U2 B' R' D' R' B L2 R2 B R',W,DC Hyderabad Winter Open 2025 (2025-12-20~21),333bf R1 B E2
 675585001,D2 L F L B2 U2 R2 F' U' L' D2 F U2 B2 D2 F B' U2,W,Anguja Open 2017 (2017-12-16),333 R2 A #3
@@ -89,7 +89,7 @@
 1283987001,R' D2 R U2 B2 L' D2 U2 L' R' F2 D B D2 B' L2 U' R' F2 L2,Y,San Diego Summer 2019 (2019-08-31),333oh Final A #2
 1324395001,R2 U R2 B2 U' B2 R2 D' R' F R2 D2 U2 B' L B2 F' L',Y,Philippine Championship 2019 (2019-09-27~29),333ft Final B #2
 1326405001,D2 L B' L B2 R2 B' D R2 U R B' D2 F' D2 R2 U2 B2 L2 F2,W,Dragon Cubing 2019 (2019-09-28~29),333 R1 B #4
-1332274001,B2 D2 U' L2 D' R2 F2 L' B F2 U B' U2 L' D' B' R U,W,Santa Fe Primavera 2019 (2019-09-28~29),333 R1 B E1
+5858718050,L2 F L U' B U2 R L U' F D2 F2 U2 L' U2 B2 R' B2 L2 B R',R,Please Be Quiet Singapore Oct 2026 (2026-10-03~04),333mbf Final A #1
 1348334001,L' D F2 U L' D' F2 R2 L B2 R2 D2 B2 U2 B2 D',Y,Dutch Open 2019 (2019-10-12~13),333oh Final B #3
 5053823001,F D2 F2 B' R' U' R2 F D' B L2 F2 B D2 F2 U2 L2 U2 L2,R,Amor y Amistad Aves María 2025 (2025-09-27~28),333 R2 B #4
 1373857001,U2 R2 D2 L2 U2 B' L2 B R2 U2 B D L D2 L B L2 R2 D' U2,O,Marikina City Open II 2019 (2019-10-26~27),333 R1 C #1
@@ -115,7 +115,7 @@
 2154412001,D2 F D R2 F' U' B2 L B' U2 D' R2 D R2 L2 D F2 L,O,Pretzel Mania 2022 (2022-09-03~04),333 R2 B #1
 2156013001,F L' D R' B' R2 L2 U' L' B2 U2 F2 B2 D' B2 R2 U D B2,Y,Fénix México 2022 (2022-09-03~04),333 Final A #2
 5456211001,U L' U B2 R2 F2 U L2 B2 U' R' F' U' B2 R' F R' D2,R,Stockholmsligan 4: Bilar - 2026 (2026-03-19),333 Final A #1
-2261587001,R D R B2 D' R L D' B U2 L2 U2 B' R2 U2 F' D,O,Minyons de Terrassa Open 2022 (2022-10-22),333 R1 C #5
+5874012001,L2 F2 U2 F2 U2 L2 B2 F' D2 R' D' R D' L' B2 F' D2 B,W,Portugal Championship 2026 (2026-10-09~11),333bf R1 A #2
 2261742009,D2 B2 F' R2 D2 F L F' L2 B F R2 D' R2 D2 B' D2 B',Y,Mini Mental Breakdown San Diego 2022 (2022-10-23),333mbf Final B #2
 2270537001,D R' D R' U R' D B D' L2 U2 D2 L F2 L B2 R' B' L B' L,R,Swedish Championship 2022 (2022-10-28~30),333bf Final A #3
 2277980001,B' D2 F2 L2 F' D2 B2 R' U' B D' R2 F U' R' U F' U',Y,Floripa ao Cubo 2022 (2022-10-29~30),333 R1 A #5

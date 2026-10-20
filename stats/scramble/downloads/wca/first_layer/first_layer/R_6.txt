@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_layer / R / bin 6
-# Population in this bin: 231
+# Population in this bin: 233
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 7768001,R2 B2 R2 U' R2 U' R2 B' R' F D' R2 F2 R' U F' U B' D2,R,German Open 2014 (2014-04-05~06),333bf Final A E2
@@ -117,7 +117,7 @@
 2128748001,D2 F D2 L2 F' U2 F R2 F D' B D F R D' B2 D' R' U2,R,Poznań Summer Side Open 2022 (2022-08-27~28),333 R1 A E1
 2176228001,U' B' L2 B2 U B2 U B U F2 D R2 B2 U R' D' F2,R,Delhi Big Cube Open 2022 (2022-09-17~18),333 Final A E1
 2239410001,F' D' F R B2 R F2 D2 L D2 L' D F' D F2 R D2 B2,R,Pucallpa Cubea 2022 (2022-10-16),333 R2 B #1
-2257058001,D F' R D2 L2 F2 D2 R' D2 R' D L' B2 U F' D2 U R,R,Amrita Silence Open 2022 (2022-10-22~23),333 Final A #2
+5871700001,D' U2 F' L2 B F D2 U2 R2 D2 B2 R D' R B L F L B2,R,Meath For Mega Speed 2026 (2026-10-10~11),333 R1 D E1
 5261898001,R F' D' B2 U' R B2 U' R' L' U2 R2 D2 F' D2 B' D2 L2 F',R,Gelugor Cube Carnival 2025 (2025-12-13),333 R1 C #5
 2285311001,U F2 U' D2 F U2 B L2 B' U2 B D B' D2 B' L' R U' F,R,Cubing for Cancer RPV 2022 (2022-11-05),333oh R1 A #5
 2308948001,B' R2 U' F2 D2 R2 L B2 R' F D B2 U F2 B2 D B2 R2,R,Cerrado Open 2022 (2022-11-18~20),333 R2 B E2
@@ -175,7 +175,7 @@
 4280309042,L' U2 L' U' B' L' U2 F R F D2 B2 R' B2 L D2 L F2 L',R,Keep Christchurch Qualified 2024 (2024-11-16),333mbf Final A #1
 4283091001,B2 U2 F L2 B F2 L' R D' L R D' B R2 U2 B' L2,R,Lakewood Fall 2024 (2024-11-16),333 R2 C E2
 4305810001,L' U2 B R' L' F R' D B' L' B R' U2 R L2 D2 R' L B,R,Stekt Falukorv Open 2024 (2024-11-23~24),333bf R1 A #1
-4349430001,B R2 D' F R' D R' D B R2 U2 R2 U2 D R2 L2 F,R,II CubeBook Campinas 2024 (2024-12-08),333 R1 C #2
+5859563001,F' U R' D' F2 D2 F2 R2 F2 D' F2 L' F' U' F' U2 L F,R,Beijing Autumn Rivalry 2026 (2026-10-01~03),333oh R1 D E1
 4353314043,U' B' R2 D' F2 D' U R2 L' B' F' D R' F' U2 L2 R' D2 L2 U',R,Please Be Quiet Johor 2024 (2024-12-14),333mbf Final A #1
 4368951036,L2 U' R F R' D2 F2 U R F2 L2 U2 B2 L2 U2 B' R2 L2 F2 L' F,R,Success For Candy Stockholm 2024 (2024-12-15),333mbf Final B #1
 4431742001,D B' L U2 L U2 F2 U2 L2 D2 L R D' L B' U' F' L' F',R,Bolivia Cubing Tour - SCZ 2025 (2025-01-19),333oh Final B #3

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / O / bin 7
-# Population in this bin: 828
+# Population in this bin: 832
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 1284434015,R2 F' U2 F L2 D2 B2 D2 U' L' U B D U' B' D2 B2 L D B' L',O,Croatian Nationals 2019 (2019-08-31~09-01),333mbf Final A #1
@@ -36,7 +36,7 @@
 4014018001,F D2 L' F R U' F R' L' U2 D2 B' D2 B' U2 B D2 B' L2 U2,O,Mega Time Singapore 2024 (2024-08-18),333bf R1 B E1
 5237940001,U F2 U B F U2 B' D2 B' D2 F' R' U2 F' D R2 D' F,O,Taoyuan Airport Cube Day 2025 (2025-11-29~30),333 R2 B #1
 4308872001,D2 L' B U2 F' L' B' U2 B' U F2 U D2 B2 U B2 U L F',O,A Buffalo Cube Day 2024 (2024-11-23),333 R1 B #2
-1306988001,D' B R' F' L' U2 R2 B' U' D2 L' F B2 D2 B L2,O,Damas ao Cubo 2019 (2019-09-21),333ft Final A #3
+5867860001,D2 L R' D2 B2 L' F2 L F2 B' D2 L U B' D' R' D2 B R',O,Colégio Salesiano Itajaí 2026 (2026-10-10),333oh Final B #1
 5329619001,U2 L2 D2 R2 F2 U' F2 L2 F D B2 D L' F' U' L U2 B U2,O,Rhein-Sieg Open 2026 (2026-01-16~18),333 R1 C #3
 117644001,U2 L B D2 B L' D R2 F U L U2 D2 B2 R' U2 L' B2 D2 R' U2,O,Grudziadz Open 2015 (2015-03-07~08),333 R1 B #5
 2536683001,L' U' B2 L' U2 B' L B' R2 L' U' R F2 R' B2 R' D2 L2 B2 L B2,O,I Hope It's Solved Calgary 2023 (2023-03-04~05),333bf R1 B E1
@@ -102,7 +102,7 @@
 3857017001,L' B2 U2 L' B D R' B' D' R F' L2 R2 D2 L',O,Energy Cube Ciechanów 2024 (2024-06-15~16),333 R1 A E2
 2079305022,R2 D F U2 L2 R2 F2 D B2 F2 L2 U L' F U' L2 D B' R D',O,Mile High Please Be Quiet 2022 (2022-08-06),333mbf Final A #1
 3228293006,F2 U2 L2 D L B L2 B U' R2 U2 R2 F2 U B2 L D2 B' L' F',O,Jaqueca Di Tella V2 2023 (2023-11-04),333mbf Final A #2
-3888174044,L' F2 L2 D' F U2 L2 U2 F' D' L2 F2 U2 F2 L D2 R' F2 D2 L' F2,O,Hari-Hari Horas 2 2024 (2024-06-27),333mbf Final A #2
+5873222001,B L2 U2 B2 L2 R2 F' U F U' R B F2 L' U F L2 F2,O,Mini Guildford in Olomouc 2026 (2026-10-10~11),333 Final A #4
 448375001,D L2 U2 B2 L U' L' D2 L U2 R D2 B2 D2 B' R2 L2 B U2 L2,O,Altasierra 2017 (2017-02-18),333 R2 A #3
 987198001,R' U' R' B R U2 F' D F B D R2 D2 L2 F B2 D2 R2 D2,O,Korea Winter 2019 (2019-01-19),333 R1 M #3
 3350510001,L2 F R2 F' L2 B' F R F2 L2 B' U' L2 U B2 U B2 F,O,Italian Championship 2023 (2023-12-08~10),333 R1 A #4

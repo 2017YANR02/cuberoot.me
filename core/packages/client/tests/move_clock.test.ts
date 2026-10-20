@@ -13,6 +13,25 @@ import { describe, it, expect } from 'vitest';
 import { MoveClock, RESYNC_THRESHOLD_MS } from '@/app/[lang]/timer/_lib/bluetooth/move_clock';
 
 describe('MoveClock', () => {
+  it('does not move the device epoch to the arrival of an untimed history page', () => {
+    const clock = new MoveClock();
+    expect(clock.stamp(1000, 1000)).toBe(1000);
+    expect(clock.stamp(undefined, 5000, { delayed: true })).toBe(1000);
+    expect(clock.anchored).toBe(true);
+    expect(clock.stamp(1250, 5100, { delayed: true })).toBe(1250);
+  });
+
+  it('preserves the device timeline when a history reply arrives seconds late', () => {
+    const clock = new MoveClock();
+    expect(clock.stamp(1000, 100000)).toBe(100000);
+    expect(clock.stamp(1100, 100100)).toBe(100100);
+    expect(clock.stamp(1200, 115000, { delayed: true })).toBe(100200);
+    expect(clock.stamp(1300, 115000, { delayed: true })).toBe(100300);
+    expect(clock.stamp(16000, 115020)).toBe(115000);
+    // A firmware restart still resets the anchor, even in recovered history.
+    expect(clock.stamp(5, 115100, { delayed: true })).toBe(115100);
+  });
+
   it('recovers true intervals from moves that arrived in one BLE batch', () => {
     const clock = new MoveClock();
     // The cube says these turns were 40 ms apart. The radio delivered all four

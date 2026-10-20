@@ -25,6 +25,7 @@ import {
   connectGanV4,
 } from '../src/lib/smart-cube/gan-v4-ble';
 import { BLE_OPERATION_TIMEOUT_MS } from '../src/lib/smart-cube/ble-api';
+import { discoverSmartCubeDriver, type DiscoveredCubeAdapter } from '../src/lib/smart-cube/discover-driver';
 import type {
   BleConnectionStateChange,
   CharacteristicValueChange,
@@ -384,6 +385,91 @@ describe('WeChat GAN BLE transport', () => {
     expect(rig.events.filter((event) => event === 'scan:stop')).toHaveLength(1);
     expect(rig.events.filter((event) => event === 'scan-listener:off')).toHaveLength(1);
     await connection.disconnect();
+  });
+
+  it('hands the picker adapter to GAN without reopening or scanning again, and closes on disconnect', async () => {
+    const rig = createBleRig();
+    let adapter: DiscoveredCubeAdapter | undefined;
+    const found = await discoverSmartCubeDriver({
+      api: rig.api,
+      scanTimeoutMs: 1000,
+      onAdapterRetained: (value) => { adapter = value; },
+    });
+    expect(adapter).toBeDefined();
+    expect(rig.events).not.toContain('adapter:close');
+    const connection = await connectGanV4({ adapter, device: found[0]!.device });
+    expect(rig.events.filter((event) => event === 'adapter:open')).toHaveLength(1);
+    expect(rig.events.filter((event) => event === 'scan:start')).toHaveLength(1);
+    expect(rig.events).not.toContain('adapter:close');
+    await connection.disconnect();
+    expect(rig.events.filter((event) => event === 'adapter:close')).toHaveLength(1);
+  });
+
+  it('releases a retained picker adapter when the user abandons selection', async () => {
+    const rig = createBleRig();
+    let adapter: DiscoveredCubeAdapter | undefined;
+    await discoverSmartCubeDriver({ api: rig.api, scanTimeoutMs: 1000,
+      onAdapterRetained: (value) => { adapter = value; } });
+    await adapter!.close();
+    await adapter!.close();
+    expect(rig.events.filter((event) => event === 'adapter:close')).toHaveLength(1);
+    expect(rig.events).not.toContain('connection:open');
+  });
+
+  it('connects with Douyin iOS short characteristic UUIDs and receives full-UUID notifications', async () => {
+    const rig = createBleRig({ characteristics: [
+      { uuid: 'FFF5', properties: { write: true, writeNoResponse: true } },
+      { uuid: 'FFF6', properties: { notify: true } },
+    ] });
+    const write = vi.spyOn(rig.api, 'writeBLECharacteristicValue');
+    const notify = vi.spyOn(rig.api, 'notifyBLECharacteristicValueChange');
+    const onBattery = vi.fn();
+    const connection = await connectGanV4({ api: rig.api, onBattery });
+    expect(write).toHaveBeenCalledWith(expect.objectContaining({ characteristicId: 'FFF5' }));
+    expect(notify).toHaveBeenCalledWith(expect.objectContaining({ characteristicId: 'FFF6', state: true }));
+    const battery = ganFrame(0xef);
+    battery[1] = 1;
+    battery[2] = 80;
+    rig.emit(battery);
+    expect(onBattery).toHaveBeenCalledWith(80);
+    await connection.disconnect();
+  });
+
+  it('rediscovers the selected GAN after reopening an adapter that cleared its device cache', async () => {
+    const rig = createBleRig();
+    const connect = rig.api.createBLEConnection.bind(rig.api);
+    rig.api.createBLEConnection = (callbacks) => {
+      if (!rig.events.includes('scan:start')) {
+        callbacks.fail?.({ errNo: 19999, errorCode: 187503, errMsg: 'createBLEConnection:fail no device' });
+        return;
+      }
+      connect(callbacks);
+    };
+
+    const connection = await connectGanV4({
+      api: rig.api,
+      device: { deviceId: 'ios-device-uuid', name: 'GAN16ui', advertisData: GAN_ADVERTISEMENT },
+    });
+
+    expect(rig.events.indexOf('scan:start')).toBeLessThan(rig.events.indexOf('connection:open'));
+    expect(rig.events.filter((event) => event === 'adapter:open')).toHaveLength(1);
+    expect(rig.events).not.toContain('adapter:close');
+    await connection.disconnect();
+  });
+
+  it('does not substitute another nearby GAN for the selected cube', async () => {
+    vi.useFakeTimers();
+    const rig = createBleRig({ deviceId: 'another-cube' });
+    const attempt = connectGanV4({
+      api: rig.api,
+      scanTimeoutMs: 1000,
+      device: { deviceId: 'selected-cube', name: 'GAN16ui', advertisData: GAN_ADVERTISEMENT },
+    });
+    const rejected = expect(attempt).rejects.toMatchObject({ code: 'device-not-found' });
+    await vi.advanceTimersByTimeAsync(1000);
+    await rejected;
+    expect(rig.events).not.toContain('connection:open');
+    expect(rig.events).toContain('adapter:close');
   });
 
   it('connects, decrypts moves and battery, then disconnects idempotently', async () => {

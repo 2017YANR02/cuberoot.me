@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxcross / O / bin 6
-# Population in this bin: 739
+# Population in this bin: 744
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 2497001,L' D2 R' D2 R' U2 L B U2 L F' U L' D2 U' B U2,O,CMI Fiesta Open 2014 (2014-03-21~23),333 R1 B #5
@@ -67,7 +67,7 @@
 5853400001,D L B R' B' D' R2 D' R' D L' F2 R U2 R' B2 L',O,Toronto Weeknights I 2026 (2026-09-30),333bf Final A E1
 292125001,B2 U2 B2 L D2 R2 F2 U' R2 U2 F2 R' U' F L B' D' R2,O,CCC Spring Open 2016 (2016-04-29~05-01),333oh R1 D #2
 1994874001,L B2 L2 F2 L2 F' U2 F' L' U' R' D' L2 D F2 L',O,Feicobol Open 2022 (2022-06-18),333 R2 D #1
-312833001,U' B R B D B' R U' L2 B L' U' D' L2 U' D2 F2 R2 F2,O,Duke Summer 2016 (2016-06-11),333 R1 B #2
+5872162001,R2 D2 B R2 B2 R' D2 R D' B F2 U2 F2 R2 U' B2 D B2 L,O,Dosquebradas II 2026 (2026-10-10),333 R2 A #3
 2184415016,B' F2 D2 B R2 F L' U' F L U' B2 U2 L' U' L2 D2 L B',O,Szansa Cubing Open Warsaw 2022 (2022-09-17~18),333mbf Final A #2
 2280524023,U2 D2 B2 R' B' U' F' B2 U2 D2 L F2 U2 D2 B U2 L2 F2 B L B2,O,Koalafication Tauranga 2022 (2022-10-29~30),333mbf Final A #1
 3518432035,B R' D' L2 B L F' D R2 U' L2 D' L2 U2 R2 D F2 L B2 U' L2 U,O,Cube With Retention in Denton 2024 (2024-02-17~18),333mbf Final A #1
@@ -93,7 +93,7 @@
 1216396001,L U2 R' F2 R' F2 U R B' U R2 U R' F2 L U,O,Luzon Championship 2019 (2019-06-22~23),333 R1 C #5
 1361058001,U L2 U L2 D2 R2 D' F2 L' D2 B2 R B' D2 B L D2 U R',O,Tianjin Autumn 2019 (2019-10-20),333 R1 C #5
 490259001,D' B2 U B2 R2 F2 D' R2 B2 U R' F U R F D2 F' U' R2 F2,O,Berkeley Spring 2017 (2017-04-15~16),333 R1 L #2
-498113001,B2 D F2 U' L2 U F2 L2 F2 D B' R' F2 L2 D B' D B U R2,O,Cat and Mouse 2017 (2017-04-29),333 R1 A #4
+5858255001,F2 R U' R2 B2 F R2 B' F L2 U2 R U L2 U F' L' R2,O,Trondheim Høst 2026 (2026-10-02~04),333 R1 B #2
 3304830001,L2 D' F' R F2 B2 D F' B' L2 F' U2 B2 R' B2 U' L',O,Malaysia Cube Championship 2023 (2023-12-01~03),333 R2 D E2
 2354616001,F' R2 D B2 D' R2 D2 U' F2 L R B U2 B' R' B' L F2 D,O,Cariló Open 2022 (2022-12-09~10),333oh R1 A E1
 510953001,R2 D2 L2 R2 F2 D' R2 B' D' F L B' F' R2 B2 L U F2,O,Wuhan NxN Open 2017 (2017-05-20~21),333oh R1 B #5
@@ -138,7 +138,7 @@
 5645041001,R' B2 R D2 L U2 B' R U' B2 U F2 R' D2 L2 D2 U',O,Instituto Apontar Rio 2026 (2026-05-16),333 R1 B #5
 1260554001,B' L2 F R2 D2 R2 D2 F2 U2 B' L' D L' D' B2 L2 B' D2 U',O,Hoogland Open 2019 (2019-08-16~17),333oh Final D #5
 5480742001,U B2 L2 D' R2 U F R' U F' L2 R U' L' U2 B2 R F,O,Ulaanbaatar Spring 2026 (2026-03-28),333 R1 F #2
-3412700001,L B' D2 F2 L2 D R' F U' R2 U' F2 D R2 D2 L2 F2 U' L' F2,O,Come Back to Landvetter 2024 (2024-01-13~14),333bf R1 B E1
+5856788001,B R2 D2 R' L' B' R F D B F2 D2 L2 U2 L' B2 D2 B2,O,Viña Spring 2026 (2026-10-03),333 R2 A E2
 2629052001,D2 L U2 F R2 D2 B R2 D B2 D2 L2 D' L2 F2 D' F2 D B2,O,Stockholmsligan Easter Special: The Toffees - 2023 (2023-04-10),333 R1 A #1
 3468913001,U' L F2 U2 L2 B2 U2 F2 L D2 U B F U2 F D B2 L',O,Hala February Kuwait 2024 (2024-02-02),333 Final B #2
 4326163001,B2 D B R2 F D F' R2 D2 R F R2 F' D2 R2 U2 R2 F,O,Minnesota Championship 2024 (2024-11-30~12-01),333oh R1 A #2

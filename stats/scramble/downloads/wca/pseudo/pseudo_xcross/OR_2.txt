@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xcross / OR / bin 2
-# Population in this bin: 289
+# Population in this bin: 291
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 17474001,D2 B2 L2 B D2 L2 R2 F2 D' L D R U' L2 F U2 F' U',R,Apollo Open 2014 (2014-05-04),333 R2 B E1
@@ -43,7 +43,7 @@
 4966502001,R' L2 D F2 D' L2 F' R' D L' R2 B2 L2 B' U2 D2 L2 B' L2,R,Cube Factory League Rogów Summer 2025 (2025-08-23~24),333 R1 B #3
 512895001,R B2 L' D2 R U F R2 D' R2 F2 R2 D2 R2 F' D2 R2 F B2,O,Sumatra Open 2017 (2017-05-21),333 R1 C #4
 5690417025,R' D' L2 B2 U2 B2 U2 L2 B' D' R2 U R2 B' R2 F2 U' L2 U',R,Headache in Kode 2026 (2026-06-05~07),333mbf R1 B #1
-574868001,F2 D2 L F2 U2 L2 D2 L' F2 L F2 D B2 L' B2 R D' F' L',O,ChimboteRubik 2017 (2017-08-19~20),333 R1 C E2
+5867591001,R2 D B2 R2 D' R2 U F2 U' L2 B L2 F2 D' U2 R' D L F2,O,Cube-bers in Iloilo 2026 (2026-10-04),333 R2 C E1
 4964982001,U2 B2 L2 D2 L2 D2 U2 F' D2 F2 R' D' F' D' R' D' B2 D' F',R,Tramsheds VI: Winter Saturday 2025 (2025-08-23),333 R1 D E2
 5006395003,U L U' B2 U R' F R F2 R2 U2 B2 R2 U F2 L2 D F2 B' L2 B' L',O,New York Quiet Championship 2025 (2025-09-06~07),333mbf Final A #2
 642910001,L2 B' D2 F D2 L2 B' L2 B' L2 D U2 B' R U2 B2 D' F D2,R,Chak-chak cubing in Kazan 2017 (2017-11-11~12),333 R2 A #3
@@ -83,7 +83,7 @@
 984819001,U2 R2 U' L' U2 R U2 R U2 B U2 L2 F L2 U2 L2 F D2,O,Poções 2019 (2019-01-19~20),333oh Final A E1
 1009284008,D2 B' F' U2 F' L2 B R2 D2 R2 D2 R' B' L D R' U B L R2 D' L' F',R,Mentallinn 2019 (2019-02-09),333mbf Final A #2
 1039818001,L2 D' F2 L2 D' F2 D L R' D2 L' D B2 D2 B R2 F R2 B R2,R,Carte Blanche Kube Open 2019 (2019-03-02~03),333bf R1 C #3
-4683732001,L F R' D2 B2 R2 B U' D' L D B2 L2 F2 B2 U' D' R2 D,O,Cubing by the Border Tijuana 2025 (2025-04-26~27),333 R2 B #3
+5864735001,U' L2 B' R' F' B' U' B F2 U R2 D R2 D R2 B2 U,R,Guangzhou Grand Open 2026 (2026-10-05~06),333 R1 B #3
 1049986001,F B R2 U B2 U F U R' F L' B2 R D2 L' D2 B2 L2 U2,R,Lion Pride 2019 (2019-03-09),333 Final B E2
 4980453008,R B2 D2 U' F2 D' B2 L2 D2 B' D2 B D' F2 L2 F' U2 L F' L,O,Israel Championship 2025 (2025-08-25~28),333mbf Final A #1
 1068563001,B' D2 B2 L F L F' R2 U' B R' L' U2 R U2 F2 U2 R2 L',R,İstanbul Spring 2019 (2019-03-24),333 R1 B #3

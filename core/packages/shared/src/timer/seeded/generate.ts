@@ -6,8 +6,8 @@ import { generatePyraminxDuoScramble } from '@cuberoot/puzzle-solvers/pyraminx-d
 import { generateNativePuzzleScramble, isNativePuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { rngFor } from './seeded_rng';
 import * as nx from './nxnxn';
-import * as other from './others';
 import * as bld from './bld';
+import { generateTimedWcaScramble, isTimedWcaEvent } from './wca';
 import { formatTimerCompoundScramble, TIMER_COMPOUND_SCRAMBLE_CHILDREN } from '../compound-scramble';
 import { generateTimerTrainerScramble, isTimerTrainerEvent, generateTimerDrillScramble } from '../trainer-scramble';
 import { applyColorNeutral, isCnEligible } from '../color-neutral';
@@ -41,6 +41,9 @@ export function generateSeededTimerScramble(request: TimerSeedRequest): TimerSee
   const cstimer = (key: string, length = 0) => generateSeededCstimerScramble(key, length,
     JSON.stringify([ticket.seed, ticket.index, key]));
   const generate = (id: EventId): string => {
+    if (isTimedWcaEvent(id) && !(id === '222' && event === '222' && request.scramble222Type && request.scramble222Type !== 'full')) {
+      return generateTimedWcaScramble(id, random, request.scramble222Mode);
+    }
     if (isNativePuzzleId(id)) return generateNativePuzzleScramble(id, random);
     if (id === 'lse' || id === 'l10p') return generateTimerTrainingStateScramble(id, () =>
       generateRouxTrainingCandidate(id === 'lse' ? 'roux-lse' : 'roux-l10p', random));
@@ -59,19 +62,8 @@ export function generateSeededTimerScramble(request: TimerSeedRequest): TimerSee
         }
         return nx.scramble222(random, request.scramble222Mode);
       }
-      case '333': case '333oh': case '333fm': case '333mr': case 'sphere': case 'cross': return nx.scramble333(random);
-      case '444': return nx.scramble444(random);
-      case '555': return nx.scramble555(random);
-      case '666': return nx.scramble666(random);
-      case '777': return nx.scramble777(random);
-      case '333bld': case '333ni': return bld.scramble333Bld(random);
-      case '444bld': return bld.scramble444Bld(random);
-      case '555bld': return bld.scramble555Bld(random);
-      case 'pyra': return other.scramblePyra(random);
-      case 'skewb': return other.scrambleSkewb(random);
-      case 'sq1': return other.scrambleSq1(random);
-      case 'mega': return other.scrambleMega(random);
-      case 'clock': return other.scrambleClock(random);
+      case '333fm': case '333mr': case 'sphere': case 'cross': return nx.scramble333(random);
+      case '333ni': return bld.scramble333Bld(random);
       case 'gear': return generateGearTimerScramble(random);
       case 'ivy': return generateIvyTimerScramble(random);
       case 'pyraminx_duo': return generatePyraminxDuoScramble(random);

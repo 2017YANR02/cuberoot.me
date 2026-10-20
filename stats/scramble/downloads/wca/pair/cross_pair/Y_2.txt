@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / Y / bin 2
-# Population in this bin: 203
+# Population in this bin: 205
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 68774001,D2 R2 D' R U2 L' D R' L' B' D' R2 F2 U F2 U F2 B2 U' D2,Y,Hungarian Open 2014 (2014-10-17~19),333oh R2 B E1
@@ -10,7 +10,7 @@
 132495001,B2 L B2 R' U2 R2 D2 U2 B U B' U' R2 U' F2 L2 R' U2 L2 D2,Y,Orange Coast Puzzle Meet 2015 (2015-04-18),333bf Final A E2
 156262001,D2 B2 U2 B' L2 D2 F U2 L2 D2 R2 U' B' L D' U B' D' L2 U,Y,Lent Open 2015 (2015-06-27~28),333 Final A #5
 188627001,U B D2 B2 R' L D' R F' R2 B2 L' F2 U2 B2 U2 L' D2 F2 U2,Y,TransmiCube Open 2015 (2015-09-12),333 R1 C #2
-198338001,D2 F2 L R F2 L' R' D2 F2 R' B D' F' R' D' U R' F R' B2,Y,REC Cube Challenge 2015 (2015-10-02~03),333 R1 D E1
+5866509001,F R2 D2 B2 L2 D2 R' B2 U' F U B' U' B L2 B2 L2 U2,Y,Croatian Championship 2026 (2026-10-03~04),333 R1 A #4
 218668001,B2 F2 R F2 L' D2 F2 U' F D' L2 B' D2 B' F U B D2,Y,Clash Of Cubers Davao 2015 (2015-11-15),333oh Final A E3
 238001001,R2 D R2 U L2 D2 L2 R D B' F U' F D2 F2 D F' R,Y,Music City Winter 2016 (2016-01-02),333 R2 A #4
 239354001,D' R2 B2 R2 U' F2 D' F U F L' F U' F D F2 D B2 L2 U2,Y,Great Indian Cubeathon 2016 (2016-01-08~10),333bf Final A #1
@@ -141,7 +141,7 @@
 3783214001,L2 B2 D2 U2 B L2 F2 D B' L B D R2 B2 L F' R D2 L' F2,Y,Barby Cube 2024 (2024-05-18~20),333bf R1 A E1
 3784470025,R' U' B' R' U' L2 F2 R L' B' L2 F B' R2 B D2 R' B2 L' F',Y,South Bay Weeknight Brain Freeze 3 2024 (2024-05-22),333mbf Final A #2
 3871934001,U2 B2 U2 R' B2 F2 L' F R2 F2 U R2 D2 U' B' U2 L' B,Y,Johor Cube Open 2024 (2024-06-22),333 R1 E E2
-3888177070,B' U2 D2 F' L2 U B2 D F' R' U L2 B2 L2 U' R2 U' D L2 U2,Y,Hari-Hari Horas 2 2024 (2024-06-27),333mbf Final C #1
+5868151001,U B' L D2 R2 U R2 D B2 F2 D R U B R' B2 D2 L2 D2 B' L2,Y,Newmarket Side Events 2026 (2026-10-10),333bf Final A #3
 3906033001,U2 F' L2 R2 D' R2 F2 D L2 B2 U' B2 D2 B' L' U2 L' D' R',Y,Dandong Yalu River Open 2024 (2024-06-29),333 Final A #5
 3975197001,F U' F R2 D2 L B2 D2 R' D2 F2 R2 F D2 F D' B D' R',Y,Bangkok Cube Day Rainy 2024 (2024-07-27~28),333 R2 B #2
 4020379057,F R2 B U2 B' D2 F D2 F D2 U B R D' U B' U B L F2 L B2,Y,Shhicago II 2024 (2024-08-17~18),333mbf Final A #2

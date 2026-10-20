@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxcross / ORWY / bin 7
-# Population in this bin: 303
+# Population in this bin: 304
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 4049432001,L B D2 L' D L2 B2 U B2 U2 F2 R' U' L B2 F2 U2,R,Telangana Cube Championship 2024 (2024-08-23~25),333oh R1 E E1
@@ -106,7 +106,7 @@
 1146927001,R' U' F D R2 U F2 D' L2 D2 U' B2 F2 R F' R U2 L' D' U' B2 D2 U R' U' F,W,Uzbekistan Big Cubes Spring 2019 (2019-05-18~19),333fm Final A #1
 1176032001,R2 U' B2 D R2 U L2 U' L D' L' R B2 L R2 U',O,High Wycombe Open 2019 (2019-06-08~09),333 R2 B #2
 3990057001,U' R2 F' D2 F U2 R2 U2 F2 L B D2 L D2 F U B' D2 R',O,Niagara Falls Summer 2024 (2024-08-04),333oh R1 B E2
-1201932001,R2 B' D2 F' U2 B L2 B' R2 U' R F L2 F R' B U R2 F',Y,Cusco Speedcubing II 2019 (2019-06-29),333 R1 A E2
+5867833001,R F' L' B' R D' F R U' F2 B' U2 R2 B2 R2 F' D F',Y,Cube4fun Lublin Autumn 2026 (2026-10-10),333oh Final A E2
 1202501001,L' B' D2 F B2 R F R F' D' F2 U F2 D' R2 D' R2 F2,R,NTU Open 2019 (2019-06-29~30),333 R1 A #3
 4495571001,D' R F2 U' B2 U' L2 U' F2 L2 D2 R U F D2 U2 F U,W,Cube Against Cancer Edmond 2025 (2025-02-16),333 R2 B #5
 1231985001,D2 B' D2 F2 R2 B2 F2 U2 F' R' D F D' U2 L' D2 B2 U',Y,Gdańsk Cubing Summer Camp 2019 (2019-07-15~19),333 Final A #3

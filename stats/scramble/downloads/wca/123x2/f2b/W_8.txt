@@ -1,8 +1,8 @@
 # Scramble samples — 123x2 / f2b / W / bin 8
-# Population in this bin: 416
+# Population in this bin: 417
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 5395765001,L2 B2 F' U2 F U2 L2 F L D' B F2 D2 U2 L' U L2 U F',W,Cuenca Open 2026 (2026-02-21),333 R1 A #4
@@ -67,7 +67,7 @@
 501254001,L2 B F2 D2 U2 L2 B' R2 U2 B U B R2 B L B L D2 U L,W,Swedish Decathlon Challenge 2017 (2017-04-29~30),333oh R2 B #1
 511853001,D2 U L2 D' B2 D2 F2 D2 F U R U R' B2 U B' F L',W,Bay Area Speedcubin' 10 2017 (2017-05-20),333 R2 A #2
 3436298001,U2 F D2 L' F' R' U B U' D2 F D2 R2 F U2 F' R2 F R2 F2,W,North Star Cubing Challenge 2024 (2024-01-20~21),333 R1 E #4
-5803254001,R' F' L' D B2 D' B2 L2 D2 B U B2 F2 U2 L' U2 L2 D B' L,W,Israel Championship 2026 (2026-08-25~27),333bf R1 D #2
+5873358001,F' L2 U2 R' L2 B' R' U2 R2 F U D L2 U D2 F2 L2,W,Mini Guildford in Olomouc 2026 (2026-10-10~11),333 R2 A E2
 5395839001,D2 L2 F U2 B F2 D2 B L' F2 D' U' R D' B' U2 L R2,W,Cuenca Open 2026 (2026-02-21),333oh Final A #1
 4220873001,D2 B R U2 D2 F2 L' F B' R B2 L2 U D2 R2 F2 B2 D,W,QY Mongolian Championship 2024 (2024-10-19~20),333oh R1 B #5
 2877728001,U' F' B2 R F D L' D L' D F2 L2 U' R2 B2 D' R,W,Bolivia Nationals 2023 (2023-07-07~09),333 R1 A #3

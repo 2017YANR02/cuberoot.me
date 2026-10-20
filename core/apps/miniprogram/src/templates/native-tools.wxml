@@ -1,0 +1,18 @@
+<view class="page native-tools" style="{{appearanceStyle}}">
+  <view class="tools-heading"><text class="page-title">{{copy.title}}</text><button hover-class="press-feedback" class="tools-button" bindtap="openTimer">{{copy.timer}}</button></view>
+  <picker mode="selector" range="{{copy.choices}}" value="{{modeIndex}}" bindchange="changeMode"><view class="tools-select">{{copy.choices[modeIndex]}}</view></picker>
+  <view wx:if="{{mode === 'person'}}" class="tools-search">
+    <input value="{{query}}" bindinput="inputQuery" bindconfirm="search" confirm-type="search" placeholder="{{copy.placeholder}}" aria-label="WCA ID" maxlength="10" />
+    <button hover-class="press-feedback" wx:if="{{query}}" class="tools-button" bindtap="clearQuery" aria-label="{{copy.clear}}">×</button>
+    <button hover-class="press-feedback" class="tools-button" bindtap="search" disabled="{{loading}}">{{copy.search}}</button>
+  </view>
+  <button hover-class="press-feedback" wx:else class="tools-button" bindtap="search" disabled="{{loading}}">{{copy.retry}}</button>
+  <text class="tools-note">{{copy.source}}</text>
+  <text wx:if="{{loading}}" class="tools-note" aria-role="status">{{copy.loading}}</text>
+  <view wx:elif="{{error}}"><text class="tools-error">{{error}}</text><button hover-class="press-feedback" class="tools-button" bindtap="search">{{copy.retry}}</button></view>
+  <block wx:else>
+    <text wx:if="{{personName}}" class="page-title">{{personName}}</text>
+    <text wx:if="{{!rows.length}}" class="tools-note">{{copy.empty}}</text>
+    <view wx:for="{{rows}}" wx:key="id" class="tools-row"><text class="tools-row-title" selectable="{{true}}">{{item.title}}</text><text class="tools-note">{{item.detail}}</text><text wx:if="{{item.result}}" class="tools-rank">{{item.result}}</text></view>
+  </block>
+</view>

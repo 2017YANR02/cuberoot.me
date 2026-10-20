@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_layer / G / bin 6
-# Population in this bin: 222
+# Population in this bin: 223
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 85630001,D2 R2 U B2 R2 B2 R2 F2 D B2 F D L B D' U' F L F' R,G,New Zealand Nationals 2014 (2014-12-07),333 Final A #5
@@ -154,7 +154,7 @@
 3804011001,D F2 R' U2 L U2 L B2 F2 U2 R F2 U' F' U B R' D' B D2 L' F',G,Guiyang Open 2024 (2024-05-26),333bf Final A #2
 3846547001,U' F' D L2 B L2 U' B' R F' L2 B2 L F2 L B2 L2 U2 D2,G,Hverdagscubing - Fyn 2024 (2024-06-12),333 Final B E1
 3866680001,F' L2 F2 L2 F2 D2 L2 B' L' B' L' R2 B R2 B U' F L,G,Northern Kentucky 2024 (2024-06-15),333 R1 C E1
-3869892001,D B L' U2 L2 D2 B U D B' U' R D2 R2 L U2 F2 L',G,Apollo Bay Cubing 2024 (2024-06-15~16),333oh R1 A #4
+5875808001,U' L U2 R2 D2 F' L2 U2 B' U R' B U2 L2 F D F2,G,Thailand Championship 2026 (2026-10-09~11),333oh R1 B #3
 3901144001,B2 L2 B L2 D2 B2 F L2 B' L' B U' B2 F' D' L2 R U,G,Calentando Motores Di Tella Domingo 2024 (2024-06-30),333 R1 C E1
 3904143001,D' R D L' D U' R2 D2 U' B2 D L U2 F2 U' F U B,G,Gurugram Monsoon Cube Open 2024 (2024-06-29~30),333oh Final A #4
 3939170011,B2 D' F2 U F2 R2 D U2 B' D' L2 D B' R F' L D2 B D2 L' F,G,Big and Blind North Andover 2024 (2024-07-13),333mbf Final B #2

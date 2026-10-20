@@ -115,6 +115,21 @@ describe('standard and community formula duplicate enforcement', () => {
     expect(mocks.query).not.toHaveBeenCalled();
   });
 
+  it.each(['FS', 'UD', 'MR', 'ML', "F U S' R U R' FS"])(
+    'accepts and preserves parallel notation %s in standard edits', async alg => {
+      mocks.query.mockImplementation(async (sql: string, params: unknown[]) =>
+        sql.startsWith('UPDATE alg_cases')
+          ? [{ id: 7, puzzle: '3x3', set_slug: 'f2l', name: 'G+', setup: '', standard: null, algs: params[5] }]
+          : []);
+      const response = await send('sets/3x3/f2l/cases/7', 'PUT', {
+        caseName: 'G+', sticker: {}, algs: [[{ alg }]],
+      });
+      expect(response.status, await response.clone().text()).toBe(200);
+      const update = mocks.query.mock.calls.find(([sql]) => sql.startsWith('UPDATE alg_cases'));
+      expect(update?.[1][5]).toEqual([[{ alg }]]);
+    },
+  );
+
   it('prevents a standard edit from duplicating an existing community submission', async () => {
     mocks.query.mockImplementation(async (sql: string) => sql.startsWith('SELECT id, alg') ? [existing] : []);
     const r = await send('sets/3x3/oll/cases/3930', 'PUT', { caseName: 'L', sticker: {}, algs: [[{ alg: '(R U)' }]] });

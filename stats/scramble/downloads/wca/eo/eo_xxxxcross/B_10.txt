@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxxcross / B / bin 10
-# Population in this bin: 55
-# Samples listed: 55 (all entries in this bin)
+# Population in this bin: 56
+# Samples listed: 56 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 19730001,R U L F2 U' R D' R' U F R' D2 B2 L2 F2 R2 L F2 B2,B,Michigan May Madness 2014 (2014-05-10),333 R1 B #4
@@ -50,7 +50,7 @@
 4624715001,B' D2 L2 U' R2 U L2 U L2 F U2 L2 B D B' L B L' R' B R,B,Mike's Cubes Israel 2025 (2025-04-06),333bf R1 A #1
 4878320001,F' D' F2 R2 B L2 U2 B' U' F D2 F' U' B' F2,B,Missouri Championship 2025 (2025-07-18~20),333oh R1 D #5
 5058379001,B2 D' L' F B2 U2 R U R2 U2 F2 U2 R2 F R2 F' D R',B,Plaza Río 2 Open 2025 (2025-09-26~28),333oh R1 C E1
-5179409001,L B D' B2 R2 U2 R2 D' R2 D L2 B2 D2 B' L U R B' R' U',B, Balam Cubes Bogor Revival 2025 (2025-11-08),333 R1 B #5
+5179409001,L B D' B2 R2 U2 R2 D' R2 D L2 B2 D2 B' L U R B' R' U',B,Balam Cubes Bogor Revival 2025 (2025-11-08),333 R1 B #5
 5207401001,L F' L2 B' R2 U2 F' U2 R2 F' R F R' F R D2 F' U,B,Nanchang Winter 2025 (2025-11-23),333 R1 I #3
 5217038037,R' F' D R F' L U' L2 D2 F R2 D2 F2 B' R2 F' U F2 U2 B' L,B,Rizal Raise a Silence 2025 (2025-11-23),333mbf Final A #1
 5424488019,B' R D2 R' B2 L' F2 D' B2 D' F D F U2 B2 L' B L' F2,B,Richardshhhon 2026 (2026-02-28~03-01),333mbf Final B #2
@@ -60,3 +60,4 @@
 5721779001,R' B2 D2 B2 D R2 U2 R2 B2 R D F' D' U L2 B' L2 F2 U2 B R2,B,Kublördag Uppsala VI - Summer Special 2026 (2026-06-27),333bf R1 A #2
 5781514001,F2 U2 R2 F' L2 U2 F2 R' D L' B' D2 L' D B' F2 L2 B,B,Pavlodar Open 2026 (2026-08-09),333oh Final B #2
 5850633001,R' B U2 R F' R2 U2 B2 L U' F U2 R2 F D2 L2 F2 U2 B,B,Colorado Cubing Weekend 2026 (2026-09-26~27),333 R2 A #3
+5857568001,R F' R L2 F D' B' R D B2 U2 L2 F2 D2 L U2 L',B,Indian Elite Championship 2026 (2026-10-02~04),333oh R2 D E1

@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxxcross / O / bin 11
-# Population in this bin: 618
+# Population in this bin: 620
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 3315260001,R2 U' R' U2 L U2 R B2 R' U F R F' D' F2 R B',O,ZGZ Open 2023 (2023-12-02~03),333 R1 D E2
@@ -98,7 +98,7 @@
 4084246001,L B2 D F2 D2 U2 R2 U L' D' L2 B D2 B2 L D2 F2 U,O,Trieste Speedcubing 2024 (2024-09-01),333 Final B #3
 4095766001,D L' F' B D2 F' R' U' R2 U' D F2 R2 D' R2 D' R' F' D',O,JCC & Q8speedcubing Nationals 2024 (2024-09-06~07),333oh R1 A E2
 4049682024,B2 U' D2 F2 R2 F' D2 F2 D F R2 U' R2 F2 L2 B' L' F',O,Telangana Cube Championship 2024 (2024-08-23~25),333mbf Final A #1
-644654001,R2 D2 B2 U2 F2 L2 U2 L D2 R D2 U F D L' B' D2 L' D F,O,Estância Open 2017 (2017-11-18),333 R1 D #2
+5861037001,R2 U' R2 B2 D' U2 L' B' U' R B2 L U2 R2 D' U' B' D',O,Chorzów Cubing Days 2026 (2026-10-03~04),333oh R1 B E1
 652051001,U2 L D' R2 D' L D R' D' R' B R L2 D2 L' B2 R' D2 R,O,Alicante Open 2017 (2017-11-25~26),333oh R1 B #3
 4263457001,L U' R2 U' F D2 L2 B' R2 B2 R U2 B2 L' F2 L F2 D2 F' L',O,Rubik's WCA Asian Championship 2024 (2024-11-01~04),333bf Final A E1
 653401001,F2 D2 F2 D2 B R2 F2 L2 U L' U2 F' U' L2 B2 F' D R,O,Bekasi Cube Days 2017 (2017-11-25~26),333oh R1 B #1

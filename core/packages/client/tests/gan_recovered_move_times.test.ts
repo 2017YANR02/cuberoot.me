@@ -27,6 +27,48 @@ function seeded(hooks: GanMoveSyncHooks = {}) {
 }
 
 describe('history-recovered move timestamps', () => {
+  it('requests only the head hole and never loops state queries from duplicate history pages', () => {
+    let now = 0, wedged = 0;
+    const requested: number[][] = [];
+    const sync = new GanMoveSync({ now: () => now,
+      requestHistory: (start, count) => requested.push([start, count]), onWedged: () => wedged++ });
+    sync.seed(139);
+    for (let counter = 148; counter <= 219; counter++) sync.push(counter, 'R', counter * 100);
+    // Real Watch failure: 72 buffered turns, only 140..147 are missing.
+    for (let i = 0; i < 65; i++) {
+      sync.observe(219); sync.requestResync(219);
+      sync.injectHistory(Array.from({ length: 24 }, (_, j) => ({ cnt: 195 - j, mv: 'R' })));
+    }
+    expect(requested).toEqual([[147, 10]]);
+    expect(wedged).toBe(1);
+    now = 500; sync.requestResync(219);
+    expect(requested).toEqual([[147, 10], [147, 10]]);
+    const recovered = sync.injectHistory(Array.from({ length: 8 }, (_, j) => ({ cnt: 147 - j, mv: 'R' })));
+    expect(recovered).toHaveLength(80);
+    expect(sync.counter).toBe(219);
+    expect(sync.pending).toBe(0);
+    expect(wedged).toBe(1);
+  });
+  it('keeps the first serial-window anchor across unrelated, repeated and split replies', () => {
+    let now = 100;
+    const sync = seeded({ now: () => now, requestHistory: () => {} });
+    sync.push(1, 'R', 1000);
+    now = 500; sync.observe(5); sync.requestResync(5);
+    now = 2000;
+    expect(sync.injectHistory([{ cnt: 250, mv: 'D' }])).toEqual([]);
+    sync.requestResync(5); // retries must not shift the original time window
+    expect(sync.injectHistory([{ cnt: 3, mv: 'F' }, { cnt: 2, mv: 'U' }])).toEqual([
+      { mv: 'U', ts: 1100, estimatedTime: true },
+      { mv: 'F', ts: 1200, estimatedTime: true },
+    ]);
+    expect(sync.injectHistory([{ cnt: 3, mv: 'F' }, { cnt: 2, mv: 'U' }])).toEqual([]);
+    now = 3000;
+    expect(sync.injectHistory([{ cnt: 5, mv: 'B' }, { cnt: 4, mv: 'L' }])).toEqual([
+      { mv: 'L', ts: 1300, estimatedTime: true },
+      { mv: 'B', ts: 1400, estimatedTime: true },
+    ]);
+  });
+
   it('estimates trailing turns at request time, not the later reply arrival', () => {
     let now = 100;
     const sync = seeded({ now: () => now, requestHistory: () => {} });

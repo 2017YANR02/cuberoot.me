@@ -49,13 +49,14 @@ describe.skipIf(!databaseUrl)('renewal lifecycle in isolated PostgreSQL, synthet
     await db.unsafe(`CREATE FUNCTION trg_set_updated_at() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN NEW.updated_at=NOW(); RETURN NEW; END $$;
       CREATE TABLE app_users(id int PRIMARY KEY, wca_id text, display_name text, merged_into_user_id int);
       INSERT INTO app_users VALUES (1, '2017TEST01', 'Fixture', NULL);`);
-    for (const file of ['0046_membership.sql', '0222_membership_contracts.sql', '0276_membership_renewal_pipeline.sql']) {
+    for (const file of ['0046_membership.sql', '0181_enterprise_membership_plans.sql', '0222_membership_contracts.sql', '0276_membership_renewal_pipeline.sql', '0283_enterprise_membership_renewal.sql']) {
       await db.unsafe(readFileSync(new URL(`../migrations/${file}`, import.meta.url), 'utf8'));
     }
     await db.unsafe(`INSERT INTO membership_plans(slug,name_zh,name_en,period,price_cents,active) VALUES
       ('monthly_auto_renew','月','Month','month',2999,false), ('yearly_auto_renew','年','Year','year',29900,false)`);
   });
   beforeEach(async () => {
+    vi.unstubAllEnvs();
     await db.unsafe('TRUNCATE membership_renewal_debits, membership_contracts, membership_orders, memberships');
     vi.stubEnv('WECHAT_PAPAY_APPID', 'wx0123456789abcdef'); vi.stubEnv('WECHAT_PAPAY_MCHID', '1234567890');
     vi.stubEnv('WECHAT_PAPAY_API_V2_KEY', '0123456789abcdef0123456789abcdef');
@@ -69,6 +70,25 @@ describe.skipIf(!databaseUrl)('renewal lifecycle in isolated PostgreSQL, synthet
     vi.unstubAllEnvs(); await db?.end();
     if (admin) { await admin.unsafe(`DROP SCHEMA "${schema}" CASCADE`); await admin.end(); }
   });
+  it.each([
+    ['enterprise_monthly_auto_renew', 'MONTHLY', '345001', 29900],
+  ] as const)('settles %s with its own template, amount and enterprise entitlement', async (planSlug, cadence, id, priceCents) => {
+    await expect(enrollMembership('2017TEST01', { ...consent, planSlug, priceCents }, '127.0.0.1')).rejects.toThrow();
+    vi.stubEnv(`WECHAT_PAPAY_ENTERPRISE_${cadence}_PLAN_ID`, id);
+    vi.stubEnv(`WECHAT_PAPAY_ENTERPRISE_${cadence}_APPROVED`, id);
+    await enrollMembership('2017TEST01', { ...consent, planSlug, priceCents }, '127.0.0.1');
+    await db.unsafe("UPDATE membership_contracts SET state='active', contract_id='enterprise-contract', verified_at=now()");
+    await runMembershipRenewalsOnce();
+    expect(state.apply).toHaveBeenCalledTimes(1);
+    const [order] = await db.unsafe('SELECT * FROM membership_orders');
+    expect(order.amount_cents).toBe(priceCents);
+    const [contract] = await db.unsafe('SELECT * FROM membership_contracts');
+    expect(contract.plan_id).toBe(id);
+    state.query.mockResolvedValue({ trade_state: 'SUCCESS', trade_type: 'PAP', total_fee: String(priceCents), fee_type: 'CNY', transaction_id: 'enterprise-transaction' });
+    expect(await reconcileRenewalDebit(order.out_trade_no)).toBe(true);
+    const [member] = await db.unsafe('SELECT * FROM memberships');
+    expect(member.plan_slug).toBe(planSlug);
+  });
   async function activated() {
     const result = await enrollMembership('2017TEST01', consent, '127.0.0.1');
     await db.unsafe("UPDATE membership_contracts SET state='active', contract_id='wx-contract', verified_at=now()");
@@ -78,6 +98,28 @@ describe.skipIf(!databaseUrl)('renewal lifecycle in isolated PostgreSQL, synthet
     state.query.mockImplementation(async no => ({ trade_state: 'SUCCESS', out_trade_no: no, trade_type: 'PAP',
       total_fee: '2999', fee_type: 'CNY', transaction_id: `tx${no}` }));
   }
+  it('private signing never charges until separately enabled and never submits a second cycle', async () => {
+    await activated();
+    vi.stubEnv('WECHAT_PAPAY_RELEASE_ENABLED', 'false');
+    vi.stubEnv('WECHAT_PAPAY_SIGNING_CHANNEL', 'miniprogram');
+    vi.stubEnv('WECHAT_PAPAY_APPID', 'wx1f92ba91b7e42015');
+    vi.stubEnv('WECHAT_MINI_APP_ID', 'wx1f92ba91b7e42015');
+    vi.stubEnv('WECHAT_MINI_APP_SECRET', 'fixture');
+    vi.stubEnv('WECHAT_PAPAY_PILOT_ENABLED', 'true');
+    vi.stubEnv('WECHAT_PAPAY_PILOT_OWNER', '2017TEST01');
+    vi.stubEnv('WECHAT_PAPAY_PILOT_UNTIL', new Date(Date.now() + 3600000).toISOString());
+    vi.stubEnv('WECHAT_PAPAY_PILOT_DEBIT_ENABLED', 'false');
+    await runMembershipRenewalsOnce();
+    expect(state.apply).not.toHaveBeenCalled();
+    await db.unsafe("UPDATE membership_contracts SET appid='wx1f92ba91b7e42015'");
+    vi.stubEnv('WECHAT_PAPAY_PILOT_DEBIT_ENABLED', 'true');
+    await runMembershipRenewalsOnce();
+    expect(state.apply).toHaveBeenCalledTimes(1);
+    await db.unsafe("UPDATE membership_contracts SET debit_cycle=1,next_debit_at=now()-interval '1 day'");
+    await runMembershipRenewalsOnce();
+    expect(state.apply).toHaveBeenCalledTimes(1);
+    vi.unstubAllEnvs();
+  });
   it('closed gate creates no contract and never contacts WeChat', async () => {
     vi.stubEnv('WECHAT_PAPAY_YEARLY_APPROVED', '');
     await expect(enrollMembership('2017TEST01', consent, '127.0.0.1')).rejects.toThrow();

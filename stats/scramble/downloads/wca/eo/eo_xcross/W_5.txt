@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xcross / W / bin 5
-# Population in this bin: 741
+# Population in this bin: 747
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 1663999001,R2 U2 B D2 B' R2 F2 D2 R2 F' U' R2 F' D' F2 R2 B2 L',W,GA Cubers Return A 2021 (2021-07-10),333oh Final B E2
@@ -48,7 +48,7 @@
 946990001,D' L2 U2 B2 R2 D' B2 L' D' L2 B' D2 L2 B R2 F L2 U',W,Vancouver Select Winter 2018 (2018-12-02),333 R2 F #3
 4617839001,L' B2 U2 R U' B2 U' L2 D2 R' L' B2 U2 L' U2 B R U2,W,Norrland Tour: Umekuben 2025 (2025-04-05),333 R1 B #3
 5081951001,D' L2 F D' F2 L U' R2 D2 B2 R2 B R2 B' R2 U F2 D' L,W,Purwokerto Side Events 2025 (2025-10-04),333 R1 B #5
-270368001,D' F2 R2 D2 B2 D2 F2 L' B2 L F2 L' B2 U' B2 U' F',W,Crazy Cubes Summer 2016 (2016-03-20),333 R1 B E2
+5875418001,U' D' F2 B D B2 D2 F B2 L2 U R2 U L2 U2 D L2 D,W,Nexta Andorra Championship 2026 (2026-10-10~12),333 R1 B E2
 2738304001,U R2 B2 U R2 B2 F2 U' F L B2 R' F' U' L2 R F' R2 U2 L' F,W,Leovit Anniversary Cubing Kazakhstan 2023 (2023-05-20~21),333bf Final B #1
 274062001,F U2 B' U L U2 R2 D L D' F D2 B2 U2 B L2 U2 D2 B D2,W,Indian Nationals 2016 (2016-03-25~27),333 R1 M #3
 1131695001,B2 L2 U F D R D' F D B R' B2 D2 F2 B2 R2 D2 R F2 R2,W,Ulaanbaatar Spring 2019 (2019-05-05),333 R1 F E1

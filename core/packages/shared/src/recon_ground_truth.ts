@@ -301,7 +301,7 @@ export function findCrossLineIndex(solution: string): number {
   return -1;
 }
 
-/** 十字段里存在会被 Normalize cross 改写的宽转动或中层转动。 */
+/** 十字段里的转体、宽层和中层都应收进观察阶段的朝向。 */
 export function hasNormalizableCrossMove(solution: string): boolean {
   const idx = findCrossLineIndex(solution);
   if (idx < 0) return false;
@@ -310,6 +310,7 @@ export function hasNormalizableCrossMove(solution: string): boolean {
     const { alg } = splitAlgComment(lines[i]);
     for (const tok of tokenizeReconMoves(alg)) {
       const c = tok[0];
+      if (i === idx && 'xyz'.includes(c)) return true;
       if (tok.length > 1 && tok[1] === 'w' && c >= 'A' && c <= 'Z') return true;
       if ('rludfb'.includes(c)) return true;
       if ('MES'.includes(c) && (tok.length === 1 || tok[1] !== 'w')) return true;
@@ -346,7 +347,8 @@ export function buildNormalizedSolution(solution: string): string | null {
     return null;
   }
 
-  let prefixLine = lineAlgs.findIndex((alg) => alg.trim().length > 0);
+  let prefixLine = lineComments.findIndex(comment => /^(?:insp(?:ection)?|观察)$/i.test(comment));
+  if (prefixLine < 0) prefixLine = lineAlgs.findIndex((alg) => alg.trim().length > 0);
   if (prefixLine < 0) prefixLine = crossLineIdx;
   const out = [...lines];
   for (let i = 0; i <= crossLineIdx; i++) {
@@ -439,4 +441,47 @@ export function reconCandidateMetadataBlockers(source: ReconCandidateMetadata): 
   const rawTime = source.rawTime == null ? Number.NaN : Number(source.rawTime);
   if (!result || !Number.isFinite(rawTime) || rawTime <= 0) blockers.push('missing_result');
   return [...new Set(blockers)];
+}
+export type ReconTestStatus = 'running' | 'passed' | 'failed' | 'not-run' | 'interrupted';
+export interface ReconTestRow { moves: string; label: string; colors: (string | null)[]; hrefs: (string | null)[]; diagrams: (string | null)[] }
+export interface ReconTestCase {
+  id: string; source: string; issue: string;
+  /** Snapshot of explicit user approval at run time; old reports do not imply approval. */
+  approved?: boolean;
+  expected: ReconTestRow[]; actual?: ReconTestRow[];
+  status: ReconTestStatus; durationMs?: number; errors: string[];
+}
+export interface ReconTestRun {
+  version: 1; id: string; startedAt: string; finishedAt?: string;
+  status: ReconTestStatus; trigger: string; commit: string; dirty: boolean;
+  fingerprint: string; pid: number; cases: ReconTestCase[];
+  passed: number; failed: number; skipped?: number; total: number; errors: string[];
+}
+export interface ReconTestHistory { runs: ReconTestRun[]; currentFingerprint?: string; scope: 'local' | 'cloud' }
+
+/** Only bounded, complete reports may enter the shared administrator history. */
+export function isReconTestRun(value: unknown): value is ReconTestRun {
+  if (!value || typeof value !== 'object') return false;
+  const run = value as ReconTestRun;
+  const strings = (items: unknown) => Array.isArray(items) && items.length <= 500 && items.every(item => typeof item === 'string' && item.length <= 20000);
+  const cells = (items: unknown) => Array.isArray(items) && items.length <= 100 && items.every(item => item === null || (typeof item === 'string' && item.length <= 2000));
+  const rows = (items: unknown) => Array.isArray(items) && items.length <= 100 && items.every(row => row && typeof row.moves === 'string' && row.moves.length < 10000 && typeof row.label === 'string' && row.label.length < 1000 && cells(row.colors) && cells(row.hrefs) && cells(row.diagrams));
+  return run.version === 1 && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(run.id) && Number.isFinite(Date.parse(run.startedAt))
+    && typeof run.finishedAt === 'string' && Number.isFinite(Date.parse(run.finishedAt))
+    && ['passed', 'failed', 'interrupted'].includes(run.status)
+    && typeof run.commit === 'string' && /^[0-9a-f]{0,64}$/.test(run.commit)
+    && typeof run.fingerprint === 'string' && /^[0-9a-f]{64}$/.test(run.fingerprint)
+    && typeof run.dirty === 'boolean' && ['manual', 'commit', 'ci'].includes(run.trigger)
+    && [run.passed, run.failed, run.skipped ?? 0, run.total].every(n => Number.isSafeInteger(n) && n >= 0)
+    && run.passed + run.failed + (run.skipped ?? 0) <= run.total
+    && strings(run.errors) && Array.isArray(run.cases) && run.cases.length <= 200
+    && new Set(run.cases.map(sample => sample?.id)).size === run.cases.length
+    && (run.status !== 'passed' || (run.failed === 0 && run.errors.length === 0 && run.passed + (run.skipped ?? 0) === run.total && run.cases.every(sample => sample && (sample.approved === false
+      ? sample.status === 'not-run' && sample.actual === undefined && sample.errors.length === 0
+      : sample.status === 'passed' && sample.actual !== undefined))))
+    && run.cases.every(sample => sample && /^[A-Za-z0-9_-]{1,80}$/.test(sample.id) && typeof sample.issue === 'string'
+      && sample.issue.length < 2000 && typeof sample.source === 'string' && sample.source.length < 1000
+      && (sample.approved === undefined || typeof sample.approved === 'boolean')
+      && ['passed', 'failed', 'not-run', 'interrupted'].includes(sample.status) && strings(sample.errors)
+      && rows(sample.expected) && (sample.actual === undefined || rows(sample.actual)));
 }

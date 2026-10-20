@@ -2,6 +2,7 @@
 
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared/alg';
 import Link from '@/components/AppLink';
+import AlgImageDownloadButton from '@/components/AlgImageDownloadButton';
 import { CaseThumb } from '@/components/CaseThumb';
 import type { CaseViewAngle } from '@/lib/alg_display';
 
@@ -36,6 +37,8 @@ export function AlgCaseRelationCards({
   const content = (item: AlgCaseRelationCardItem) => item.caseObj ? (
     <>
       <CaseThumb
+        // A detail view has only a few related cases; render together without an image request.
+        local
         onRotate={item.onRotate}
         puzzle={puzzle}
         set={set}
@@ -62,21 +65,19 @@ export function AlgCaseRelationCards({
     <div className="alg-meta-related-grid alg-meta-top-grid">
       {items.map(item => {
         const className = `alg-meta-related-card${item.current ? ' is-self is-current' : ''}${item.caseObj ? '' : ' is-plain'}`;
-        if (item.current || (!item.href && !item.onSelect)) {
-          return <div key={item.key} className={className}>{content(item)}</div>;
-        }
-        if (item.href) {
-          return (
-            <Link key={item.key} href={item.href} className={className} prefetch={false} title={item.title}>
-              {content(item)}
-            </Link>
-          );
-        }
-        return (
-          <button key={item.key} type="button" className={className} onClick={item.onSelect} title={item.title}>
-            {content(item)}
-          </button>
-        );
+        const card = item.current || (!item.href && !item.onSelect)
+          ? <div className={className}>{content(item)}</div>
+          : item.href
+            ? <Link href={item.href} className={className} prefetch={false} title={item.title}>{content(item)}</Link>
+            : <button type="button" className={className} onClick={item.onSelect} title={item.title}>{content(item)}</button>;
+        return <div key={item.key} className="alg-related-download-card">{item.caseObj ? <AlgImageDownloadButton build={() => {
+          const image = { name: `${puzzle}-${set}-${item.caseObj!.name}`, input: {
+            puzzle, set, sticker: item.caseObj!.sticker,
+            alg: item.alg || item.caseObj!.algs[0]?.[0]?.alg || item.caseObj!.setup || '',
+            setup: item.caseObj!.setup, sq1BlackTop, viewAngle, orientation,
+          } };
+          return { filename: image.name, groups: [{ id: item.key, label: item.name, current: [image], all: [image] }] };
+        }}>{card}</AlgImageDownloadButton> : card}</div>;
       })}
     </div>
   );

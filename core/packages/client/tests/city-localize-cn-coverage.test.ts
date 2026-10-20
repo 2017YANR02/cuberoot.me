@@ -3,7 +3,8 @@
 // 其余走 shared 中生成的全球字典)。
 //
 // 触发场景:WCA 新办了一场比赛,落在某个生成字典还没收录的城市(以前没办过比赛)。
-// upcoming 管道刷新 all_upcoming_comps.json 后这条测试就红 —— 重跑 scripts/gen-place-zh.mjs
+// 完整性检查仅在每周 CI 定时任务运行；本地可用 CHECK_CITY_TRANSLATION_COVERAGE=1 主动检查。
+// upcoming 管道刷新 all_upcoming_comps.json 后可能发现遗漏 —— 重跑 scripts/gen-place-zh.mjs
 // + packages/shared/scripts/merge-place-zh.mjs(新城市进 shared LLM 兜底)即可。
 //
 // 判定:中文化后整串含 CJK 即视为已覆盖(逐段译,城市段译出即够;纯数字邮编段例外)。
@@ -28,7 +29,7 @@ const isUntranslatable = (s: string) => !/[A-Za-z㐀-鿿]/.test(s);
 
 interface RawComp { id: string; city?: string; country?: string }
 
-describe('city-localize coverage (all countries)', () => {
+describe.runIf(process.env.CHECK_CITY_TRANSLATION_COVERAGE === '1')('city-localize coverage (all countries)', () => {
   it('每个 upcoming 比赛城市在中文下都有中文译名', () => {
     if (!existsSync(DATA)) {
       console.warn(`[city-localize] 跳过:${DATA} 不存在`);

@@ -41,6 +41,7 @@ describe('shared training settings and persisted runtime', () => {
     expect(loaded.settings.targetMsByEvent).toEqual({});
     expect(loaded.database).toEqual(legacy.database);
     const training: TimerTrainingSettings = {
+      ...normalizeTimerTrainingSettings(),
       targetMsByEvent: { '333': 10_500, '222': 5_000 }, dailySolveGoal: 50,
       round: { on: true, format: 'ao5', cutoffMs: 10_000, cutoffAttempts: 2, limitMs: 60_000, cumulative: true },
     };

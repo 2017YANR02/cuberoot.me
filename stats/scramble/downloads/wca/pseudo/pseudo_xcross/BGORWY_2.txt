@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xcross / BGORWY / bin 2
-# Population in this bin: 834
+# Population in this bin: 842
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 2261741080,B' L F' B D2 B L' F2 R D B2 D' R2 U2 F2 L' F L',Y,Mini Mental Breakdown San Diego 2022 (2022-10-23),333mbf Final B #1
@@ -24,7 +24,7 @@
 2526341001,D2 L2 B2 F2 U2 L F2 L2 U L' B U' L D' U L2 D2 L' F2,Y,Marshall Cubing Spring 2023 (2023-03-04),333oh R2 A #2
 937554001,L2 R2 D2 L2 U' L2 D F2 U F2 L2 F' R' D2 U' B' U' R2 F L D L2 U',W,Cubing Kerala Aleppey Open 2018 (2018-11-17),333bf Final A E2
 5778712006,F' D' F2 U R2 D2 R2 F2 U2 L U' F L' R F2 R' B' F' U B R,G,Ocaña BotijOpen 2026 (2026-08-08~09),333mbf Final A #1
-4603889001,B2 R2 F2 D2 B2 R F' L2 R2 F2 R' D' B2 D R2 F R',G,Dåstrup Diverse 2025 (2025-03-29~30),333 R1 C #2
+5875631001,U' R2 B2 D' F2 L2 F2 R2 F2 L' U' L B2 L2 R F R B2,W,Thailand Championship 2026 (2026-10-09~11),333oh Final A #1
 1228045001,B' D2 B' U2 F' D2 U2 L2 B' F' R B2 F' D L2 F' U B U',B,Israel Summer Open 2019 (2019-07-17~18),333 R1 D E2
 141237001,D2 F L2 F2 U2 F D2 B R2 U' B' L2 D2 R F' L B2 F' L B2 L' F,Y,Nacionales Aquarela SpeedCubing 2015 (2015-05-16~18),333bf Final A #2
 5210414001,F R' D2 U2 R2 B U2 B2 R2 B' R' B U B L F2 U B D2,O,Kent Fall 2025 (2025-11-22),333 R1 D #2
@@ -82,7 +82,7 @@
 4153527001,R' F' L2 B' L' F' U' L B' U2 L2 B U2 B2 L2 D2 F2 L' F2,Y,New Zealand Cubing Decathlon 2024 (2024-09-28~29),333 R2 A #4
 1032256016,R2 F2 R2 B F2 U2 B' F' R' F L R2 F D F' D2 F' D B,B,Singapore Cube Championship 2019 (2019-02-23~24),333mbf Final A #1
 4696104001,L U' B L U2 B2 L D2 R' D' U' L' R U L U' R2,O,Southern Utah Summer 2025 (2025-05-03),333 R1 B #1
-351082001,F2 D2 B2 R U2 L' F2 U2 F2 D2 L2 B D' F2 L' D F R2 B2 L2,O,CCC Summer Open 2016 (2016-08-20~21),333 R2 B E2
+5867506001,D' R' F2 L' U' B D2 F L' D2 F2 D' R2 F2 U' B2 D B2 L,W,Cube-bers in Iloilo 2026 (2026-10-04),333 R2 B #3
 5453935036,F' L' R2 B2 L2 R2 U' F' R' U2 L R B L2 F' L2 U B' L2,G,SCU III: FMC Triple-Scoop 2026 (2026-03-14~15),333mbf Final A #2
 3085588001,F L' F2 D2 R U2 R U2 L2 F2 R' D' R D2 F D' U' F U L,O,Muggiò & Chill Open 2023 (2023-09-16~17),333bf Final A E1
 5834098001,F B' R U B2 D' B2 U B L2 F' R2 U2 R2 B2 R2 D L2 U L',G,SacQuiet Fall 2026 (2026-09-19),333mbf Final A #1
@@ -170,7 +170,7 @@
 4533875037,F2 D' B2 U' B' D2 B U' L' R2 U2 F' D2 F2 D2 R2 L' D L2 U',W,Glasgow Spring - Scottish Blind Off 2025 (2025-03-01~02),333mbf Final A #1
 691327001,L2 U2 L' D2 B2 R U2 B' F' R' D' R2 U' L' F' L B2 U,G,Bulacan Speedcubing Open 2018 (2018-01-20),333oh Final A #5
 2333502001,R' L2 U2 D' R' U F D B2 L2 F U2 D2 R2 F D2 L2 F' L2,W,Oxente Open 2022 (2022-11-26~27),333 R1 B #4
-703307001,B' D' L2 F' R U2 L2 F R U2 F' L2 F2 D2 F U2 F2 U2 L2,W,Bulgarian Open 2018 (2018-02-10),333 R1 D #3
+5860537001,B2 L2 U2 L2 R2 B2 L2 F' D2 R' D2 U B F' D' B' R' B2 U',Y,Bowling Green Fall 2026 (2026-10-03),333 R1 B E2
 4626092001,F' L U2 B2 L2 B2 R2 U' B2 L2 U R2 F' U2 L' B2 R F' L2 D' L2 U2,O,Xi'an Cherry Blossom 2025 (2025-04-04~05),333bf R1 A E1
 3144225001,D L U' F' U2 D R U D2 F' D2 F' R2 F U2 B2 L2 B D2 U L B,W,Please Be Quiet Bergen 2023 (2023-10-07~08),333bf Final B E2
 2276375001,L2 U B L B2 L2 D F2 L2 R2 D2 R B2 U' L' R U2 B',Y,Prague Open 2022 (2022-10-29~30),333bf R1 A #3

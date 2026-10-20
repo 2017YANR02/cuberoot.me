@@ -19,11 +19,9 @@ import GenStepsConfig from './GenStepsConfig';
 import GenDiffConfig from './GenDiffConfig';
 import { stepPuzzleOf } from '../_lib/scramble/step-metrics';
 import { canTrainerDifficulty } from '../_lib/scramble/trainer-source';
-import { tr } from '@/i18n/tr';
 import Scramble222ModePicker from '@/components/Scramble222ModePicker';
 import { use222Type } from '@/lib/scramble-222-mode';
-import { TIMER_MANUAL_SCRAMBLE_EMPTY_COPY, SCRAMBLE_222_TYPES, WCA_SCRAMBLE_222_TYPES, timerSupportsRealWcaScrambles, type Scramble222Type } from '@cuberoot/shared/timer';
-import { ManualScrambleQueueEditor } from '@cuberoot/timer-ui';
+import { SCRAMBLE_222_TYPES, WCA_SCRAMBLE_222_TYPES, timerSupportsRealWcaScrambles, type Scramble222Type } from '@cuberoot/shared/timer';
 
 interface Props {
   disabled?: boolean;
@@ -56,15 +54,6 @@ export default function ScrambleSourceBar({ disabled = false, event, isZh, diffS
     <fieldset className="scramble-src-bar surface-chrome" data-no-timer disabled={disabled}>
       {src === 'wca' && timerSupportsRealWcaScrambles(event) && (
         <WcaSourceConfig disabled={disabled} isZh={isZh} event={event} settings={s} updateSettings={updateSettings} toggleSlot={diffSlot} mergeSlot={mergeSlot} sourceSlot={wcaSourceSlot} />
-      )}
-
-      {src === 'manual' && (
-        <ManualScrambleQueueEditor
-          ariaLabel={tr({ zh: '手动输入打乱', en: 'Manual scrambles' })}
-          placeholder={tr(TIMER_MANUAL_SCRAMBLE_EMPTY_COPY)}
-          onChange={(manualScrambles) => updateSettings({ manualScrambles })}
-          value={s.manualScrambles}
-        />
       )}
 
       {/* 随机状态来源的难度 = 直接生成该难度的状态(3×3 族;真题那边的难度筛在 WcaSourceConfig 里)。 */}

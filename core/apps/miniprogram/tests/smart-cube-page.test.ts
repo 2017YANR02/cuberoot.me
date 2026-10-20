@@ -14,7 +14,7 @@ interface Snapshot {
 
 interface SmartCubePage {
   data: Record<string, unknown>;
-  onLoad(options: { token?: string }): void;
+  onLoad(options: { token?: string; native?: string }): void;
   onUnload(): void;
   retryConnection(): void;
   selectDevice(event: { currentTarget: { dataset: { deviceId?: string } } }): void;
@@ -40,6 +40,7 @@ async function loadPage(
     token: 't'.repeat(20),
     user: { uid: 42, name: 'CubeRoot user', wcaId: null, avatar: '' },
   },
+  native = false,
 ) {
   let page: SmartCubePage | undefined;
   let listener: ((snapshot: Snapshot) => void) | undefined;
@@ -47,6 +48,7 @@ async function loadPage(
     listener?.(connectedSnapshot());
   });
   const session = {
+    relayOpen: true,
     connect: vi.fn(async () => undefined),
     scan: scanMock,
     connectDevice: vi.fn(async () => {
@@ -62,7 +64,7 @@ async function loadPage(
     }),
   };
 
-  vi.doMock('../src/lib/smart-cube/session', () => ({ smartCubeSession: session }));
+  vi.doMock('../src/lib/smart-cube/session', () => ({ getSmartCubeSession: () => session }));
   const switchTab = vi.fn();
   vi.stubGlobal('wx', {
     getDeviceInfo: () => ({ platform: 'ios' }),
@@ -71,6 +73,10 @@ async function loadPage(
     removeStorageSync: vi.fn(),
     switchTab,
   });
+  if (native) {
+    vi.stubGlobal('__MINI_PROGRAM_TARGET__', 'douyin');
+    vi.stubGlobal('tt', wx);
+  }
   vi.stubGlobal('Page', (options: SmartCubePage) => {
     page = options;
   });
@@ -104,6 +110,39 @@ function connectedSnapshot(battery: number | null = null): Snapshot {
 }
 
 describe('native smart-cube page', () => {
+  it('retries a native scan in place with a wake-up window while preserving its receiver', async () => {
+    const navigateBack = vi.fn();
+    const scan = vi.fn(async () => undefined);
+    const { emit, page, session } = await loadPage(navigateBack, idleSnapshot, scan, null, true);
+    page.onLoad({ native: '1' });
+    await vi.waitFor(() => expect(scan).toHaveBeenCalledOnce());
+    emit({ ...idleSnapshot, phase: 'error', error: 'No smart cube found' });
+    page.retryConnection();
+    await vi.waitFor(() => expect(scan).toHaveBeenCalledTimes(2));
+    expect(scan).toHaveBeenNthCalledWith(1, { scanTimeoutMs: 30_000 });
+    expect(scan).toHaveBeenNthCalledWith(2, { scanTimeoutMs: 30_000 });
+    expect(session.start).not.toHaveBeenCalled();
+    expect(navigateBack).not.toHaveBeenCalled();
+    page.onUnload();
+  });
+
+  it.each([true, false])('returns to the timer after a failed connection (relay open: %s)', async (relayOpen) => {
+    const navigateBack = vi.fn();
+    const scan = vi.fn(async () => undefined);
+    const { emit, page, session } = await loadPage(navigateBack, idleSnapshot, scan);
+    page.onLoad({ token: 'relay-token' });
+    await vi.waitFor(() => expect(scan).toHaveBeenCalledOnce());
+    emit({ ...idleSnapshot, phase: 'error', error: '蓝牙用途未声明' });
+    session.relayOpen = relayOpen;
+
+    page.retryConnection();
+
+    expect(navigateBack).toHaveBeenCalledOnce();
+    expect(session.start).toHaveBeenCalledOnce();
+    expect(scan).toHaveBeenCalledOnce();
+    page.onUnload();
+  });
+
   afterEach(() => {
     vi.useRealTimers();
     vi.resetModules();

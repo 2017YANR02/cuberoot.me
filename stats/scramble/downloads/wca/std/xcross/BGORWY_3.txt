@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / BGORWY / bin 3
-# Population in this bin: 809
+# Population in this bin: 816
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 3212179001,L2 F L' R2 B' U2 F' R2 B' L2 F D' B2 D B2 R' D U2,O,Ventanal de la Sierra Open 2023 (2023-10-28~29),333 R1 B #2
@@ -60,7 +60,7 @@
 953342021,R2 D2 R' B2 F2 D2 L D2 L2 B D F D' L' U2 B' F U R' F' L2 U,O,Swisscubing Cup Final 2018 (2018-12-08~09),333mbf Final A #1
 2285084001,L2 F' L' F U2 B' D2 L2 D2 F' D2 B L U L' U' F2 D F',Y,Houston Fall 2022 (2022-11-05),333 R2 A #3
 1933469001,B2 F D2 B2 F' R2 D' R' U' L B2 R' F' L' D' R2 B,Y,Colorado Cubing Weekend 2022 (2022-05-21~22),333 R2 A #4
-1015089001,B2 R' F2 R2 B2 D2 L B2 F' L' D2 B' U' B2 D2 F L2 B' L' B',B,Medan Lunar New Year 2019 (2019-02-09~10),333bf Final B E1
+5873913001,L2 F' U L2 U2 R2 B2 D' B' D B2 D F' D2 F L R',R,Road to Nats Caracas II 2026 (2026-10-10),333oh Final B #5
 4422318001,U2 D F2 R2 D R' F' R' F R L' F2 U2 B2 D L2 U,R,Bay Area Speedcubin' 67 - San Ramon 2025 (2025-01-12),333 R2 A #5
 4998897001,L2 U' L' D B2 R2 U F D F' R L U2 F2 R U2 R',R,Mofunland Speedcubing Singapore 2025 (2025-09-06),333 R3 A #3
 937401001,L2 B L2 F2 R2 B D2 B' L' F U B' F2 U' R2 D' B D2 U,Y,Berkeley Fall 2018 (2018-11-17),333 R2 A E2
@@ -138,7 +138,7 @@
 4804027001,U2 B D' B2 D2 U' L2 D2 L2 U' B2 R U' L2 D' U R D R2,O,Berlin Summer Open 2025 (2025-06-14~15),333 R1 E #1
 661210030,D L2 U' L2 D2 B2 U' L' B2 R2 D B U F2 R B' D' L2 U L',W,Polish Championship 2016 (2016-12-09~11),333mbf Final A #2
 661227017,R2 B2 L2 R2 D2 U2 F2 D' R' F L2 B D2 B R2 F' R' U F2 U' L',R,Yura Speedcubers 2017 (2017-01-14),333mbf Final A #1
-3916774001,U F2 R2 U2 B2 L F2 R F U B2 R2 F2 D2 R D R B,Y,Stevenage July 2024 (2024-07-06~07),333 R1 D E1
+5875808001,U' L U2 R2 D2 F' L2 U2 B' U R' B U2 L2 F D F2,G,Thailand Championship 2026 (2026-10-09~11),333oh R1 B #3
 5787765001,L F U R F' B U2 B L D F2 D' F2 L2 U' D2 R2 L2 F2,Y,Cultura Campos do Jordão 2026 (2026-08-15~16),333oh Final B #2
 661341008,R2 D2 F2 D2 F' D2 U2 B2 D2 L U' R F' U F2 L' B2 F2 L2 U,W,Meguro 2017 (2017-05-05),333mbf Final A #2
 661369015,R2 B2 U2 B2 R2 B2 D' L B2 D' B2 L2 B D L2 B' D' L D2,B,Wuhan NxN Open 2017 (2017-05-20~21),333mbf Final A #2
@@ -150,7 +150,7 @@
 1565602013,U F2 D2 B2 D F2 R D' B2 F R' D2 R F R U2 L U B R',O,Mudd Winter 2020 (2020-02-22~23),333mbf Final B #1
 1125223001,U L2 D B2 U' L2 U F L B' L2 F' R D L D2 L' R2,R,Chengdu Open 2019 (2019-05-01~02),333oh Final A #5
 4701564001,B2 R2 D B R D2 R U2 R2 F L D F' U' R' B2,W,Hessen Mini Open 2025 (2025-05-02),333 Final B #4
-682867001,B' U2 L F' L' F' D' R2 B D F2 L2 F2 R2 F' U2 R2 U2 F2,G,Shaastra Cube Open 2018 (2018-01-06~07),333 R1 N #3
+5874897001,U' F' U' L2 D' F2 U' L2 D U2 F R2 F2 D2 L R B L B',R,Kuwait Nationals 2026 (2026-10-09~10),333 R2 B E2
 5372676001,F2 U2 B2 U2 F2 R D2 B2 F' R' U F' L U2 L' B2 F2 L2,W,DFW Favorites 2026 (2026-02-07),333 R2 B E2
 2080297001,B2 U2 R F L' U2 R2 U F R2 B2 D' F2 B2 L2 D L2 U' L2 D2 B R',B,Bay Area Speedcubin' 36 2022 (2022-08-06),333bf Final A #1
 4430001001,D' B2 D' U2 B2 U' F2 R' D2 L' B R B' D L D2 U' R,G,Aachen Open 2025 (2025-01-18~19),333 R2 B #3

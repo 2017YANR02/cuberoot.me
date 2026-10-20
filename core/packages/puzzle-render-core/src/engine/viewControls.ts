@@ -24,6 +24,15 @@ export const HOME_SCENE_ROT = { x: Math.PI / 6, y: -Math.PI / 4 + Math.PI / 16, 
  */
 export const FRONT_SCENE_ROT = { x: 0, y: 0, z: 0 } as const;
 
+/** Live smart-cube camera shared by browser and native scene consumers. */
+export function liveCubeSceneRotation(view: 'iso' | 'front' | 'smart', hasGyro: boolean) {
+  if (view === 'front') return FRONT_SCENE_ROT;
+  if (view === 'iso') return homeSceneRot(3);
+  return hasGyro
+    ? { x: Math.atan2(4.1, 7.2), y: 0, z: 0 }
+    : { x: Math.atan2(4.1, Math.hypot(4.8, 7.2)), y: -Math.atan2(4.8, 7.2), z: 0 };
+}
+
 /**
  * 这个拼图的开局姿态。默认就是 `HOME_SCENE_ROT`,只有正十二面体要动偏航。
  *

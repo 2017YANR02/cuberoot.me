@@ -124,6 +124,24 @@ const validInput = {
 };
 
 describe('mini program release check', () => {
+  it('requires reviewed original inputs and matching fingerprints for shared Bluetooth chunks', () => {
+    const path = 'shared/chunk-ABC123.js';
+    const input = 'src/lib/smart-cube/encrypted-ble.ts';
+    const fixture = {
+      ...validInput,
+      sourceFiles: [{ path: input, source: 'wx.openBluetoothAdapter({})' }],
+      uploadFiles: [{ path, source: 'wx.openBluetoothAdapter({})' }],
+      buildState: { ...validInput.buildState, bundleInputs: { [path]: [input] } },
+    };
+    expect(collectReleaseFailures(fixture)).toEqual([]);
+    for (const extra of [
+      { currentOutputFingerprint: 'changed' },
+      { sourceFiles: [] },
+      { buildState: { ...fixture.buildState, bundleInputs: { [path]: ['unknown.ts'] } } },
+    ]) {
+      expect(collectReleaseFailures({ ...fixture, ...extra }).some(failure => failure.includes('蓝牙能力'))).toBe(true);
+    }
+  });
   it('builds public images from their canonical Mini Program assets', async () => {
     expect(BUILD_ASSETS).toHaveLength(16);
     expect(BUILD_ASSETS[0].output).toBe('assets/cuberoot-logo.png');

@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / O / bin 8
-# Population in this bin: 901
+# Population in this bin: 904
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 9064001,R F2 L F2 D2 F2 L' F' L R' F' L B' L U' L2 F D,O,SESC Santo Amaro 2014 (2014-04-05~06),333 R1 B #1
@@ -156,7 +156,7 @@
 5645041001,R' B2 R D2 L U2 B' R U' B2 U F2 R' D2 L2 D2 U',O,Instituto Apontar Rio 2026 (2026-05-16),333 R1 B #5
 5749568001,U2 B D B2 D2 L2 D' B2 D' B2 D2 B2 L D' B2 D' B D,O,FLIP Open 2026 (2026-07-11~12),333 R1 C #5
 5758642001,L' U' L B U' F' L' D2 L2 B R2 F B2 L2 U2 F D B,O,Chien Kuo Cubing Party 2026 (2026-07-18~19),333 R2 C #5
-985184001,B R' B' R B' D' R' D2 R B U2 F2 U' R2 D' R2 D L2 D2,O,D-City Cubing 2019 (2019-01-19~20),333 R1 B #4
+5871949001,D' B2 U L' D2 F D2 F' R2 U2 F2 U' L2 U' R2 B2 D,O,Cubetcha MN 2026 (2026-10-10),333 Final A #2
 1940173001,B2 R2 U2 L D2 U2 B2 U2 R2 U2 L2 R D' B2 L F L2 D R',O,3x3x3 Only Hamilton B 2022 (2022-05-29),333 R1 E #1
 708284001,L' B' R2 B L F' U' F2 B' D' B2 L2 B2 D2 F2 R' D2 B2,O,Halifax Open 2018 (2018-02-17),333oh R1 A #5
 708988001,U2 D' B2 U' F' R U' R' B U B2 L2 U2 R2 F' U2 F' B2 L2,O,Ural Winter 2018 (2018-02-17~18),333 Final A #2
@@ -189,7 +189,7 @@
 4543181001,R' F' D' B2 R2 L' F' U2 B2 R F2 B2 U2 B2 D' B U',O,Luoyang Spring 2025 (2025-03-01),333 R1 D #3
 3755280013,D2 F2 D' F2 R L D B' D F R2 D2 R2 B2 R' F2 B2 D2 L' F',O,Blind Faith Denver 2024 (2024-05-11~12),333mbf R1 A #1
 817360001,F L2 U2 B' D2 B U2 R2 D2 R' D' U2 F' D' U2 B' D R U,O,Peterborough Open 2018 (2018-06-30~07-01),333oh Final A #3
-1062342001,R' U R' B' D' R2 F' B2 U2 R' B R L B2 L' F2 L B2 L2 U2,O,Lower Moreland Winter 2019 (2019-03-16),333 R2 B #5
+5872790001,F' B U B' R' F2 B R U R2 U' F2 B2 R2 B2 D F2 L F',O,Penn Cube Day Fall 2026 (2026-10-10),333 R1 B E2
 2779215001,U' F' D B' D2 U2 B2 F' U2 F' L' B F' L F R B' F',O,WCC Speedcubing Open 2023 (2023-06-04),333 R2 A E1
 5165141001,D' B2 F2 D2 R B2 L' R' B2 R2 F L2 U' R' B L' D2 L2 F L,O,Arizona Favorites 2025 (2025-11-08),333bf Final A #3
 5073981001,F' R2 B2 U2 R2 U2 R U2 B2 R' U' B2 F' D' R' B D2 R F2,O,Swiss Science Open 2025 (2025-10-04~05),333 Final C #2

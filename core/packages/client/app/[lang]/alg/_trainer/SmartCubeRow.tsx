@@ -1,10 +1,11 @@
 'use client';
 
 /**
- * The smart-cube controls in the trainer's settings panel.
+ * One smart-cube control instance: toolbar trigger and trainer settings.
  *
  * Presentational: everything it shows comes from `useTrainerCube`, which is
- * where the cube and the MAC prompt live. It renders in the panel's own idiom
+ * where the cube and the MAC prompt live. Portals keep connection/prompt state
+ * alive while settings are closed. It renders in the panel's own idiom
  * (`trainer-opts-*`) rather than reusing /timer's Bluetooth modal — that modal
  * is a modal, and it draws on `timer.css`, which would mean pulling a page's
  * whole stylesheet in for four rows of text.
@@ -14,13 +15,14 @@
  */
 
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Check, X } from 'lucide-react';
 
 import { tr } from '@/i18n/tr';
 import { TimerDeviceCenter } from '@cuberoot/timer-ui';
 import { detectBluetoothEnv, envAdvice } from '@/lib/bluetooth';
 import type { CubeStep } from '@cuberoot/shared/timer/reconstruct/steps';
-import type { TrainerCubePracticeMode, TrainerCubeState } from './useTrainerCube';
+import type { TrainerCubeState } from './useTrainerCube';
 import TrainerCubeViewPicker from './TrainerCubeViewPicker';
 
 /** What each finish line is called, in the words the alg library already uses. */
@@ -47,10 +49,13 @@ interface Props {
   state: TrainerCubeState;
   /** False for puzzles with no smart cube — the whole block is pointless then. */
   supported: boolean;
+  devicePortal?: HTMLElement | null;
+  settingsPortal?: HTMLElement | null;
+  onSettingsRequested?: () => void;
 }
 
-export default function SmartCubeRow({ enabled, onEnabledChange, state, supported }: Props) {
-  const { cube, stopStep, reason, view, setView, connect, macPrompt, submitMac, cancelMac, practiceMode, setPracticeMode } = state;
+export default function SmartCubeRow({ enabled, onEnabledChange, state, supported, devicePortal, settingsPortal, onSettingsRequested }: Props) {
+  const { cube, stopStep, reason, view, setView, connect, macPrompt, submitMac, cancelMac, practiceMode } = state;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mac, setMac] = useState('');
@@ -64,6 +69,7 @@ export default function SmartCubeRow({ enabled, onEnabledChange, state, supporte
   if (!supported) return null;
 
   const doConnect = async () => {
+    onSettingsRequested?.();
     setError(null);
     setBusy(true);
     try {
@@ -81,18 +87,7 @@ export default function SmartCubeRow({ enabled, onEnabledChange, state, supporte
   const env = detectBluetoothEnv();
   const advice = env === 'available' ? null : envAdvice(env);
 
-  return (
-    <>
-      <div className="trainer-opts-row">
-        {cube.status.connected && (
-          <>
-            <span className="trainer-opts-label">{cube.status.deviceName}</span>
-            {cube.status.battery !== null && (
-              <span className="trainer-opts-label">{cube.status.battery}%</span>
-            )}
-          </>
-        )}
-        <TimerDeviceCenter
+  const device = <TimerDeviceCenter
           ariaLabel={tr({ zh: '计时设备', en: 'Timer devices' })}
           className="trainer-device-center"
           directSingleItem
@@ -113,13 +108,18 @@ export default function SmartCubeRow({ enabled, onEnabledChange, state, supporte
           }]}
           menuLabel={tr({ zh: '可用计时设备', en: 'Available timer devices' })}
           triggerLabel={tr({ zh: '设备', en: 'Devices' })}
-        />
-        <select className="native-select" aria-label={tr({ zh: '智能魔方打乱方式', en: 'Smart cube scramble mode' })}
-          value={practiceMode} disabled={reason === 'running'}
-          onChange={event => setPracticeMode(event.target.value as TrainerCubePracticeMode)}>
-          <option value="virtual">{tr({ zh: '免打乱', en: 'Virtual scramble' })}</option>
-          <option value="manual">{tr({ zh: '手动打乱', en: 'Manual scramble' })}</option>
-        </select>
+        />;
+  const controls = <>
+      <div className="trainer-opts-row">
+        {cube.status.connected && (
+          <>
+            <span className="trainer-opts-label">{cube.status.deviceName}</span>
+            {cube.status.battery !== null && (
+              <span className="trainer-opts-label">{cube.status.battery}%</span>
+            )}
+          </>
+        )}
+        {devicePortal === undefined && device}
       </div>
 
       {cube.status.connected && (
@@ -176,12 +176,12 @@ export default function SmartCubeRow({ enabled, onEnabledChange, state, supporte
       )}
       {error && <div className="trainer-opts-hint trainer-room-err">{error}</div>}
 
-      {reason !== 'off' && (
+      {reason !== 'off' && (practiceMode !== 'manual' || reason === 'ready' || reason === 'running') && (
         <div className="trainer-opts-hint">
           {practiceMode === 'manual'
           ? tr({
-              zh: reason === 'ready' ? '打乱已就绪，下一步转动开始还原' : reason === 'running' ? `还原中，${stepLabel(stopStep ?? 'solved')}后进入下一题` : '按打乱公式转动实体魔方，匹配后才开始训练；打乱过程不计时',
-              en: reason === 'ready' ? 'Scramble ready — turn to begin solving' : reason === 'running' ? `Solving — next case after ${stepLabel(stopStep ?? 'solved')}` : 'Apply the scramble to your physical cube. Training starts after it matches; scrambling is not timed',
+              zh: reason === 'ready' ? '打乱已就绪，下一步转动开始还原' : `还原中，${stepLabel(stopStep ?? 'solved')}后进入下一题`,
+              en: reason === 'ready' ? 'Scramble ready — turn to begin solving' : `Solving — next case after ${stepLabel(stopStep ?? 'solved')}`,
             })
           : reason === 'disconnected'
           ? tr({
@@ -189,7 +189,7 @@ export default function SmartCubeRow({ enabled, onEnabledChange, state, supporte
               en: 'Connect a bluetooth cube and each case is handed to you on the cube itself — no scramble to apply, and the clock starts and stops on its own. The cube in your hands drifts further from solved every rep, which never matters',
             })
           : reason === 'unreadable-case'
-              ? tr({ zh: '这题的打乱含看不懂的记号,本题由你自己停表', en: 'This case’s scramble has notation we can’t read, so stop the clock yourself' })
+              ? tr({ zh: '这题的打乱记号无法识别，请切换打乱方式', en: 'This scramble has unsupported notation; choose another scramble mode' })
               : reason === 'no-case'
                 ? tr({ zh: '等出题', en: 'Waiting for a case' })
                 : reason === 'settling'
@@ -204,11 +204,14 @@ export default function SmartCubeRow({ enabled, onEnabledChange, state, supporte
                       en: `Your first turn starts the clock; it stops at ${stepLabel(stopStep)}`,
                     })
                   : tr({
-                      zh: '这一套的收尾状态判定不了,第一下转动开始计时,整体还原或按空格停表',
-                      en: 'We can’t state where this set finishes: your first turn starts the clock, and a full solve or the space bar stops it',
+                      zh: '这一套没有阶段判定，第一下转动开始计时，整体还原后停表',
+                      en: 'This set has no stage detector: your first turn starts the clock, and a full solve stops it',
                     })}
         </div>
       )}
-    </>
-  );
+    </>;
+  return <>
+    {devicePortal && createPortal(device, devicePortal)}
+    {settingsPortal === undefined ? controls : settingsPortal ? createPortal(controls, settingsPortal) : null}
+  </>;
 }

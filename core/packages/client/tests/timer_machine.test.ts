@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import {
   initialTimerMachineState,
   transitionTimer,
+  decodeTimerSolve,
+  normalizeTimerTrainingSettings,
   type TimerMachineConfig,
   type TimerMachineState,
 } from '@cuberoot/shared/timer';
@@ -24,6 +26,31 @@ function apply(
 }
 
 describe('shared timer machine', () => {
+  it('defaults old preferences to first-turn and validates persisted timing modes', () => {
+    expect(normalizeTimerTrainingSettings().trainingStartMode).toBe('first-turn');
+    const solve = { id: 'sample', event: 'pll' as const, scramble: '', ts: 100, timeMs: 2_100, penalty: 'ok' as const, trainingStartMode: 'scrambled' };
+    expect(decodeTimerSolve(solve, 'pll')?.trainingStartMode).toBe('scrambled');
+    expect(decodeTimerSolve({ ...solve, trainingStartMode: 'unknown' }, 'pll')).toBeNull();
+  });
+  it.each(['first-turn', 'scrambled', 'manual'] as const)('keeps the %s training origin and never adds WCA penalties', trainingStartMode => {
+    const config = { inspectionSec: 15, trainingStartMode };
+    const armed = apply(initialTimerMachineState(), { type: 'arm-from-cube', nowMs: 120, atMs: 100 }, config);
+    expect(armed.accepted).toBe(true);
+    expect(armed.state.phase).toBe(trainingStartMode === 'first-turn' ? 'ready' : 'inspecting');
+    expect(apply(armed.state, { type: 'press-up', nowMs: 150 }, config).state).toBe(armed.state);
+    expect(apply(armed.state, { type: 'press-down', nowMs: 160 }, config).state).toBe(armed.state);
+    expect(apply(armed.state, { type: 'arm-from-cube', nowMs: 200 }, config).accepted).toBe(false);
+    // Settings can change without changing the already armed clock origin.
+    const started = apply(armed.state, { type: 'start-from-cube', nowMs: 20_200, atMs: 20_100 }, { inspectionSec: 15 });
+    expect(started.state.startedAtMs).toBe(trainingStartMode === 'first-turn' ? 20_100 : 100);
+    expect(started.state.autoPenalty).toBe('ok');
+    const stopped = apply(started.state, { type: 'stop-from-cube', nowMs: 21_200, atMs: 21_100 }, config);
+    expect(stopped.solve).toEqual({ timeMs: trainingStartMode === 'first-turn' ? 1_000 : 21_000,
+      inspectionMs: 0, autoPenalty: 'ok', trainingStartMode });
+    const cancelled = apply(armed.state, { type: 'cancel-arm' }, config);
+    expect(cancelled.state.trainingStartMode).toBeUndefined();
+    expect(cancelled.state.inspectionStartedAtMs).toBeNull();
+  });
   it('records an aborted smart-cube run once with its actual time and inspection', () => {
     const armed = apply(initialTimerMachineState(), { type: 'arm-from-cube', nowMs: 100 }, inspection);
     const started = apply(armed.state, { type: 'start-from-cube', nowMs: 15500, atMs: 15480 }, inspection);

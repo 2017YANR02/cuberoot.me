@@ -57,14 +57,15 @@ export function PlaybackBackViewButton({ visible, toggle = true, onClick, showLa
 }
 
 export default function PlaybackBar({
-  step, total, playing,
+  step, total, playing, disabled = false,
   onScrub, onSkipStart, onStepBack, onTogglePlay, onStepForward, onSkipEnd,
-  leading, trailing, labels, layout = 'compact', segmentEnds,
+  leading, trailing, labels, stepMarkers, layout = 'compact', segmentEnds,
 }: {
   step: number;
   total: number;
   segmentEnds?: readonly number[];
   playing: boolean;
+  disabled?: boolean;
   onScrub: (n: number) => void;
   onSkipStart: () => void;
   onStepBack: () => void;
@@ -75,11 +76,13 @@ export default function PlaybackBar({
   leading?: ReactNode;
   trailing?: ReactNode;
   labels?: Partial<PlaybackBarLabels>;
+  /** Move counts at the boundaries of teaching stages. */
+  stepMarkers?: readonly number[];
 }) {
   const L = { ...DEFAULT_LABELS, ...labels };
-  const atStart = step <= 0;
-  const atEnd = step >= total;
-  const empty = total === 0;
+  const atStart = disabled || step <= 0;
+  const atEnd = disabled || step >= total;
+  const empty = disabled || total === 0;
   // Fraction of the way along the track the thumb sits, so the value bubble can
   // float directly above it (native <input type=range> gives no thumb hook — the
   // calc offsets by the thumb width so the label tracks the thumb centre exactly).
@@ -94,6 +97,16 @@ export default function PlaybackBar({
           {step}
         </span>
         <PlaybackScrubber step={step} total={total} segmentEnds={segmentEnds} onScrub={onScrub} disabled={empty} ariaLabel={L.scrub} />
+        {stepMarkers && !empty && <div className="playback-bar-markers" aria-hidden="true">
+          {stepMarkers.map(position => <span
+            key={position}
+            className="playback-bar-marker"
+            data-step={position}
+            data-complete={position <= step}
+            data-current={position === step}
+            style={{ left: `${position / total * 100}%` }}
+          />)}
+        </div>}
       </div>
       <div className="playback-bar-controls">
         {leading}
@@ -107,3 +120,4 @@ export default function PlaybackBar({
     </div>
   );
 }
+

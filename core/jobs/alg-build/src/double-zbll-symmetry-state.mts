@@ -32,7 +32,7 @@ export function claimOwner(path: string): boolean {
   } finally { rmdirSync(claim); }
 }
 export interface Memory { boot: string; swapouts: number; pressure: number; available: number; disk: number }
-export interface Baseline { boot: string; baselineSwapouts: number; status?: string; reason?: string }
+export interface Baseline { boot: string; baselineSwapouts: number; reviewedSwapouts?: number; status?: string; reason?: string }
 
 /** Read only this launch's bounded log tail, including failures before progress.json exists. */
 export interface BatchFailure { reason: string; startupMemory?: { available: number; swapouts: number; pressure: number } }
@@ -91,7 +91,9 @@ export function guard(m: Memory, baseline: Baseline, rss: number, starting = fal
   if (![m.swapouts, m.pressure, m.available, m.disk, rss, reservedRss, baseline.baselineSwapouts].every(Number.isFinite)) return '资源数据读取失败，停止。';
   if (baseline.status === 'protected-stop') return `上次已触发资源保护，需要检查后才能恢复，不能自动重设基线。${baseline.reason ? '\n上次原因：' + baseline.reason : ''}`;
   if (m.boot !== baseline.boot) return '电脑已重新启动，需要核对上次停止原因和新的换出基线后再恢复。';
-  if (m.swapouts !== baseline.baselineSwapouts) return `系统换出计数变化：${baseline.baselineSwapouts} → ${m.swapouts}。禁止自动重启。`;
+  const expectedSwapouts = baseline.reviewedSwapouts ?? baseline.baselineSwapouts;
+  if (!Number.isSafeInteger(expectedSwapouts) || expectedSwapouts < baseline.baselineSwapouts) return '复核换出记录异常。';
+  if (m.swapouts !== expectedSwapouts) return `系统换出计数变化：${expectedSwapouts} → ${m.swapouts}。禁止自动重启。`;
   if (m.pressure !== 1) return '系统内存压力异常。';
   if (m.disk < 30 * GiB) return '磁盘剩余空间不足 30 GiB。';
   if (starting && m.available < 34 * GiB) return `可回收内存约 ${(m.available / GiB).toFixed(1)} GiB，启动需要至少 34 GiB。`;

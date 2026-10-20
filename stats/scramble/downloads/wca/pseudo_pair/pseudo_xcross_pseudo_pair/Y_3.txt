@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / Y / bin 3
-# Population in this bin: 732
+# Population in this bin: 734
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 1067552001,B' D2 R2 F D2 B U L B' L B2 U' F' D2 R2 D' U2,Y,Astrakhan Spring Open 2019 (2019-03-23~24),333 R1 A #5
@@ -119,7 +119,7 @@
 623314001,L2 D2 F2 R2 F U2 R2 F2 L2 U L' U F' D2 B R' B2 L' D2,Y,Guatemala Championship 2017 (2017-10-21~22),333 R2 B E2
 5690429005,D' F2 L2 D2 R' B2 L' F D B D2 F' R2 F2 R2 U2 B2 R2 U2 L2 U',Y,Headache in Kode 2026 (2026-06-05~07),333mbf Final B #3
 5669651001,U B D B L2 D2 F R2 U2 F' U2 R B' R B D' F U',Y,Nuevo Chimbote Speedcube Fest 2026 (2026-05-23~24),333 Final B #4
-660460001,F R2 U2 L2 U2 F' R2 U2 F2 R' B D' B' F2 D U L2 D' R D' L2 U,Y,Italian Championship 2014 (2014-05-10~11),333mbf Final A #1
+5863295001,F2 R2 U2 R2 U' F2 R2 D' L2 U2 B' L2 B' L' F' D R F2 R,Y,Primma Cube Open 2026 (2026-10-03~04),333 R1 A E2
 2993621001,U2 F2 R' L2 D' R2 F2 R2 F2 D2 L2 B' R' D2 U' L U' L B2,Y,Aves María Teams 2023 (2023-08-20~21),333bf R1 A #3
 4526405001,B' L2 D2 L' R2 D2 R2 U2 B2 D R' B' D R U2 L F' U2,Y,Olte Februar Füürobe 2025 (2025-02-25),333oh Final B #1
 660669011,D2 B2 L2 B2 L' R2 U2 R' B' D' F D U B' D B2 U' B L2 U2,Y,Indian Open Rubik's Cube 2015 (2015-03-20~22),333mbf Final A #1
@@ -132,7 +132,7 @@
 1157435001,U R2 F2 R2 D B2 U2 R2 U' B2 U' R U B D2 U F' D' B2 F,Y,CubingUSA Great Lakes Championship 2019 (2019-05-24~26),333 R1 E #4
 1676189001,R2 B2 D R2 F2 L F L2 F U' D L2 U B2 L2 B2 F' R2,Y,Lubelska Liga Speedcubingu III Zamość 2021 (2021-07-24~25),333 R1 D #2
 661266005,L2 U2 F' L2 D2 L2 F D2 U R B' D U F' R D2 B2 D B2,Y,Delhi Open 2017 (2017-02-25~26),333mbf Final A #1
-1996965064,R' L' F2 R B U2 B L' F U R2 D F2 D2 R2 B2 U' R F2 L' F2,Y,Bay Area Speedcubin' 33 But it's Quiet - 2022 (2022-06-25),333mbf Final A #2
+5859406001,L' F2 R2 D2 B' L2 D2 B' F U2 R2 L D' R2 F2 D' R U2 R',Y,Beijing Autumn Rivalry 2026 (2026-10-01~03),333 R1 G #4
 661418110,B2 L B2 U2 L' B2 D2 R' U2 B R D2 B2 F2 D' L2 D2 R D' L' F',Y,CubingUSA Nationals 2017 (2017-07-07~09),333mbf Final A #2
 2625741001,D2 B2 D2 U R2 D' L2 R2 B2 D' B' U' B' R' U2 B U',Y,Cubing in the Valley 2023 (2023-04-08),333 R1 D #3
 1077790001,L2 B2 L F2 R' U2 R B2 R2 U' B' D B' R2 D L' D2 B U2,Y,Ghana Open 2019 (2019-04-06),333 R1 B E1

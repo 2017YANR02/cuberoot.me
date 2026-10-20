@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / BGOR / bin 2
-# Population in this bin: 205
+# Population in this bin: 206
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 17474001,D2 B2 L2 B D2 L2 R2 F2 D' L D R U' L2 F U2 F' U',R,Apollo Open 2014 (2014-05-04),333 R2 B E1
@@ -133,7 +133,7 @@
 3675822001,F' L' F' B R' L' U L D2 F2 U2 L2 B D2 L2 B' U' B2 R,O,Sambil Caracas 2024 (2024-04-13),333 R1 B #2
 3676188021,R2 F2 L2 U2 F' R U L2 D2 R2 B L2 B L2 B D2 B' R' F2 L',B,Kyiv Mental Breakdown April 2024 (2024-04-13~14),333mbf Final A #1
 3708830003,U F R2 B2 D F2 R2 U' F2 U2 B2 R2 L' D2 L' F' U L D L',O,PSKG Premiere Cubing 2024 (2024-04-27~28),333mbf Final A #1
-3742365019,F' R' F2 R' B2 D U R2 D' U2 L2 F2 L' F' L B' D2 R2 D B' L',O,Kansas Championship 2024 (2024-05-03~05),333mbf Final A #1
+5867591001,R2 D B2 R2 D' R2 U F2 U' L2 B L2 F2 D' U2 R' D L F2,O,Cube-bers in Iloilo 2026 (2026-10-04),333 R2 C E1
 3775412001,F L2 B D B' L B L F D B D2 R2 F' R2,B,Mriy Diy Cubing Lviv 2024 (2024-05-18~19),333 R1 A #4
 3909393030,U R2 D2 L R F2 R D2 B D U' B U L D B2 U2 B',R,Hari-Hari Horas 10 2024 (2024-07-05),333mbf Final D #1
 3926566001,F2 U' R2 L' B' U' D' F L2 B2 L2 U' R2 D F2 U F' U2 L,O,PIB Itaim Open 2024 (2024-07-13),333 Final A #1

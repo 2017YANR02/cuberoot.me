@@ -17,6 +17,14 @@ describe('WeChat APIv2 entrusted-payment contract transport', () => {
     fetchMock.mockReset().mockImplementation(async () => new Response(xml(responseFields)));
   });
   afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
+  it('accepts signed pretty-printed provider XML without trimming signed values', async () => {
+    const fields = { ...responseFields, contract_display_account: ' CubeRoot owner ', contract_termination_remark: '' };
+    const body = new XMLBuilder({ format: true }).build({ xml: { ...fields, sign: signPapay(fields, key) } });
+    fetchMock.mockResolvedValueOnce(new Response(body));
+    await expect(queryPapayContract(contract)).resolves.toEqual({ state: 'active', contractId: contract.contract_id });
+    expect(parsePapayResponse(body, key).contract_display_account).toBe(' CubeRoot owner ');
+    expect(() => parsePapayResponse(body.replace('<xml>', '<xml>unexpected'), key)).toThrow('invalid');
+  });
   it('accepts only the official HTTPS H5 redirect and signs the request', async () => {
     fetchMock.mockResolvedValueOnce(new Response('<xml><return_code>SUCCESS</return_code><result_code>SUCCESS</result_code><redirect_url>https://payapp.weixin.qq.com/authorize</redirect_url></xml>'));
     expect(await createPapayEnrollment(contract, '1', '127.0.0.1')).toBe('https://payapp.weixin.qq.com/authorize');

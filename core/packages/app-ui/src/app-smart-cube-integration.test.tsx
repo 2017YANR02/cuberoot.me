@@ -108,6 +108,10 @@ beforeEach(async () => {
   backListener = null;
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
   vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
+  // JSDOM has no constructable stylesheet adoption; preserve the real App/corner
+  // lifecycle while supplying the browser API surface this device test needs.
+  Object.defineProperty(document, 'adoptedStyleSheets', { configurable: true, writable: true, value: [] });
+  vi.stubGlobal('CSSStyleSheet', class { replaceSync(_css: string) {} });
   wideViewport = false;
   mediaListeners.clear();
   vi.stubGlobal('matchMedia', (query: string) => ({
@@ -120,7 +124,7 @@ beforeEach(async () => {
   localStorage.clear();
   const data = createTimerStoreData(Date.now(), 'test-session', 'en');
   data.settings = { ...data.settings, event: '333', language: 'en', liveCubeView: '3d',
-    scrambleClickAction: 'copy',
+    scrambleClickAction: 'start',
     recordGyro: true, autoRecap: true, bluetoothAutoReady: 'scrambled', inspectionSec: 0,
     showCubePreview: false, wcaUseOptimal: false };
   memory.data = data;
@@ -140,6 +144,7 @@ beforeEach(async () => {
 afterEach(async () => {
   vi.useRealTimers();
   await act(async () => root.unmount()); container.remove();
+  Reflect.deleteProperty(document, 'adoptedStyleSheets');
   vi.restoreAllMocks(); vi.unstubAllGlobals();
 });
 
@@ -266,13 +271,14 @@ describe('installed App GAN lifecycle integration', () => {
     const disconnect = vi.fn(async () => undefined);
     const resetState = vi.fn();
     await act(async () => setRadio({ ...radio, disconnect, resetState }));
-    const selector = container.querySelector<HTMLSelectElement>('.shell-players-select')!;
+    await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Settings"]')!.click());
+    const selector = document.querySelector<HTMLSelectElement>('.settings-modal .shell-players-select')!;
     await act(async () => {
       selector.value = mode;
       selector.dispatchEvent(new Event('change', { bubbles: true }));
     });
     await settle();
-    await act(async () => container.querySelector<HTMLButtonElement>('.timer-stage-footer .shell-device-center-trigger')!.click());
+    await act(async () => container.querySelector<HTMLButtonElement>('.shell-device-center-trigger')!.click());
     // Both the chooser and the connected shortcut lead to the same operation dialog.
     await act(async () => container.querySelector<HTMLButtonElement>('[role="menuitem"]')?.click());
     const dialog = document.querySelector<HTMLElement>('.timer-smart-cube-device__modal')!;
@@ -386,7 +392,8 @@ describe('installed App GAN lifecycle integration', () => {
 
   it.each([
     ['touch', '.timer-display-value'], ['mouse', '.timer-display-value'],
-  ])('keeps legacy copy settings inert and %s presses on %s on the real timer', async (pointerType, selector) => {
+    ['touch', '.scramble-moves'], ['mouse', '.scramble-moves'],
+  ])('uses the shared %s press lifecycle on %s', async (pointerType, selector) => {
     const clipboard = vi.spyOn(host, 'writeClipboardText');
     const scramble = container.querySelector<HTMLElement>('.scramble-moves')!;
     const originalScramble = scramble.textContent;
@@ -401,13 +408,6 @@ describe('installed App GAN lifecycle integration', () => {
       bubbles: true,
       cancelable: true,
     }))).toBe(false);
-    const ignoredPress = new Event('pointerdown', { bubbles: true, cancelable: true });
-    Object.defineProperties(ignoredPress, {
-      pointerType: { value: pointerType }, pointerId: { value: 2 }, button: { value: 0 },
-      clientX: { value: 100 }, clientY: { value: 100 },
-    });
-    scramble.dispatchEvent(ignoredPress);
-    expect(phase).toBe('idle');
     const timingText = container.querySelector<HTMLElement>(selector)!;
     // Hold readiness must be deterministic even on a busy build machine.
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
@@ -437,6 +437,36 @@ describe('installed App GAN lifecycle integration', () => {
     expect(saved()).toHaveLength(1);
     expect(saved()[0].timeMs).toBe(600);
     expect(clipboard).not.toHaveBeenCalled();
+  });
+
+  it.each(['copy', 'none', 'next'])('keeps the selected %s action separate from timer presses', async (action) => {
+    const clipboard = vi.spyOn(host, 'writeClipboardText');
+    await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Settings"]')!.click());
+    const dialog = document.querySelector<HTMLElement>('.settings-modal')!;
+    const category = dialog.querySelector<HTMLSelectElement>('.settings-category-select')!;
+    await act(async () => { category.value = 'appearance'; category.dispatchEvent(new Event('change', { bubbles: true })); });
+    const select = dialog.querySelector<HTMLSelectElement>('[data-setting-id="settings.appearance.scramble-click-action"] select')!;
+    expect(select.value).toBe('start');
+    await act(async () => { select.value = action; select.dispatchEvent(new Event('change', { bubbles: true })); });
+    await settle();
+    await act(async () => dialog.querySelector<HTMLButtonElement>('.settings-modal-close')!.click());
+    const moves = container.querySelector<HTMLElement>('.scramble-moves')!;
+    const original = moves.textContent;
+    await act(async () => {
+      for (const type of ['pointerdown', 'pointerup']) {
+        const event = new Event(type, { bubbles: true, cancelable: true });
+        Object.defineProperties(event, { pointerType: { value: 'touch' }, pointerId: { value: 1 }, button: { value: 0 } });
+        moves.dispatchEvent(event);
+      }
+      moves.click();
+    });
+    await settle();
+    expect(phase).toBe('idle');
+    expect(saved()).toHaveLength(0);
+    if (action === 'copy') expect(clipboard).toHaveBeenCalledWith(original);
+    else expect(clipboard).not.toHaveBeenCalled();
+    if (action === 'next') expect(container.querySelector('.scramble-moves')?.textContent).not.toBe(original);
+    else expect(container.querySelector('.scramble-moves')?.textContent).toBe(original);
   });
 
   it.each([false, true])('routes the live cube, saved recap and full report (wide=%s)', async (wide) => {

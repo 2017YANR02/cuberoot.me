@@ -160,7 +160,7 @@
   cursor: pointer; font-weight: 500; color: var(--vc-text); user-select: none;
   padding: 2px 0;
 }
-.vc-api-doc summary::-webkit-details-marker { color: var(--vc-text-dim); }
+
 .vc-api-doc[open] summary { margin-bottom: 10px; }
 .vc-api-doc p { margin: 8px 0; line-height: 1.5; }
 .vc-api-example {
@@ -209,3 +209,25 @@
   .vc-arrow-builder { gap: 6px; padding: 8px; }
   .vc-num, .vc-select { max-width: 100%; }
 }
+
+.vc-control-section > summary {
+  cursor: pointer;
+  padding: 8px 0;
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+.vc-control-section > .vc-row-controls { margin-top: 8px; }
+
+
+.vc-control-section > summary,
+.vc-api-doc > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  list-style: none;
+}
+.vc-control-section > summary::-webkit-details-marker,
+.vc-api-doc > summary::-webkit-details-marker { display: none; }
+.vc-disclosure-caret { flex: 0 0 auto; }
+.vc-control-section[open] > summary > .vc-disclosure-caret,
+.vc-api-doc[open] > summary > .vc-disclosure-caret { transform: rotate(90deg); }

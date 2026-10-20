@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / OR / bin 8
-# Population in this bin: 389
+# Population in this bin: 391
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 14362001,U' D' R' B' L U' D' R2 B U' D2 R2 D2 B2 U F2 D' F2 L2 F2,O,Hsinchu Spring Open 2014 (2014-04-27),333 R2 A #1
@@ -196,7 +196,7 @@
 2723503001,B2 R' D2 U2 B2 R2 B L2 U2 L2 R2 D' B R' U2 B2 L R' D' B',O,Marrickville Many May Open 2023 (2023-05-20),333oh Final C E2
 3664662008,U L' U2 R L2 B' U2 B' L2 D2 F' D' B' D2 U F L2 U' R' B,O,Nittedal Mental Breakdown 2024 (2024-04-13~14),333mbf Final A #3
 2782133028,L2 B2 D B2 R2 U R2 D' B' R F D2 U B R' U' B U' B2 L' B R,O,Swedish Championship 2023 (2023-06-03~05),333mbf Final B #1
-3329794005,B2 L2 B D2 U2 B' U2 B' L2 D' L B2 R' U2 L' F' D U L B' D2,O,5x5 on Madison Ice 2023 (2023-12-09~10),333mbf Final A #1
+5860943001,B2 D F D2 U' L2 F2 U2 R2 B2 U' L R B F' U R' F',O,Chorzów Cubing Days 2026 (2026-10-03~04),333oh R1 A #4
 3604945001,B2 D2 F2 L' F2 L2 R F2 D2 U' B D' F R B2 R' F2 L2 B' L',O,Ohio State Weekend of Madness 2024 (2024-03-16~17),333oh R1 C E2
 5721301001,B D L F U D' F' U2 F2 R B' R2 D2 B' U2 L2 B' U2 B' U2,O,Kublördag Landvetter IV: 2026 (2026-06-27),333oh Final B #3
 5034809058,D L2 B2 D2 B2 D' B2 R B F U2 B2 L2 D' B R' U2 F2 U2 L2,O,Cube Factory League Brzeziny 2025 (2025-09-20~21),333mbf Final B #1

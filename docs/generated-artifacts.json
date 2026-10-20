@@ -70,24 +70,26 @@
       "id": "trainer.double-zbll",
       "kind": "local-heavy-artifact",
       "source": {
-        "locator": "Frozen 472-case ZBLL catalog plus deterministic per-pair AUF phases",
+        "locator": "Frozen 472 ZBLL + 21 PLL cases; all 7,555,446 canonical AUF results, selected by HTM then QTM then distinct face count",
         "paths": [
-          "core/jobs/alg-build/src/double-zbll.ts",
+          "core/jobs/alg-build/src/double-zbll-select.mts",
+          "core/jobs/alg-build/src/double-zbll-selection.mts",
           "core/packages/shared/src/double_zbll.ts"
         ],
-        "snapshot": ".tmp/double-zbll-v1/source.json"
+        "snapshot": ".tmp/double-zbll-symmetry-v2/solutions-integrity.json"
       },
       "license": {
         "spdx": "LicenseRef-CubeRoot",
         "evidence": "Algorithm catalog attribution retained in cases JSON; native solver license remains in solver/vendor/nissy-core"
       },
-      "owner": ["core/jobs/alg-build/src/double-zbll.ts", "core/packages/client/scripts/install-double-zbll.mts"],
+      "owner": ["core/jobs/alg-build/src/double-zbll-select.mts", "core/packages/client/scripts/install-double-zbll.mts", "core/packages/client/scripts/summarize-double-zbll.mts"],
       "workingDirectory": "core",
-      "command": "pnpm --filter @cuberoot/alg-build double-zbll, then pnpm --filter @cuberoot/client double-zbll:install",
+      "command": "pnpm --filter @cuberoot/alg-build double-zbll:export, then pnpm --filter @cuberoot/client double-zbll:install ../.tmp/double-zbll-symmetry-v2/export, then pnpm --filter @cuberoot/client double-zbll:summary",
       "outputs": [
         "core/packages/client/public/data/double-zbll/manifest.json",
         "core/packages/client/public/data/double-zbll/pairs-*.bin",
-        "core/packages/client/public/data/double-zbll/cases-*.json"
+        "core/packages/client/public/data/double-zbll/cases-*.json",
+        "core/packages/client/app/[lang]/alg/double-zbll-about/statistics.json"
       ],
       "transientOutputs": [
         ".tmp/double-zbll-v1/**"
@@ -98,7 +100,7 @@
         "tests/trainer-double-zbll.test.ts",
         "Offline reload and selection after downloading both page shells"
       ],
-      "driftPolicy": "Generate locally with an existing H48 h10 table; never recompute during CI or browser startup. Preserve source identity and append-only solve checkpoints. Publish manifest last after full verification. Hash-named assets are immutable."
+      "driftPolicy": "Export locally from completed verified journals without loading solver tables; never recompute during CI or browser startup. Preserve source identity and append-only solve checkpoints. Publish manifest last after full verification. Hash-named assets are immutable."
     },
     {
       "id": "client.maplibre-worker",

@@ -9,6 +9,16 @@ import { useTranslation } from 'react-i18next';
 
 const BRAND = 'CubeRoot';
 
+// All mounted consumers share one writer. Independent observers would keep
+// replacing each other's titles in an endless MutationObserver microtask loop.
+const titleOwners = new Map<symbol, string>();
+let titleObserver: MutationObserver | null = null;
+
+function applyTitle() {
+  const title = [...titleOwners.values()].at(-1) ?? BRAND;
+  if (document.title !== title) document.title = title;
+}
+
 export function useDocumentTitle(zh: string, en: string, enabled = true): void {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
@@ -16,15 +26,20 @@ export function useDocumentTitle(zh: string, en: string, enabled = true): void {
     if (!enabled) return;
     const page = (isZh ? zh : en).trim();
     const title = page || BRAND;
-    const applyTitle = () => {
-      if (document.title !== title) document.title = title;
-    };
+    const owner = Symbol();
+    titleOwners.set(owner, title);
     applyTitle();
-    const observer = new MutationObserver(applyTitle);
-    observer.observe(document.head, { childList: true, subtree: true, characterData: true });
+    if (!titleObserver) {
+      titleObserver = new MutationObserver(applyTitle);
+      titleObserver.observe(document.head, { childList: true, subtree: true, characterData: true });
+    }
     return () => {
-      observer.disconnect();
-      document.title = BRAND;
+      titleOwners.delete(owner);
+      if (titleOwners.size === 0) {
+        titleObserver?.disconnect();
+        titleObserver = null;
+      }
+      applyTitle();
     };
   }, [zh, en, isZh, i18n.language, enabled]);
 }

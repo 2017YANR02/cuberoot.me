@@ -31,6 +31,9 @@ export interface AlgInputHandle {
 }
 
 export interface AlgInputProps {
+  id?: string;
+  ariaInvalid?: boolean;
+  ariaDescribedBy?: string;
   initialText?: string;
   initialHtml?: string;
   markable?: boolean;
@@ -61,6 +64,9 @@ function autoResizeTextarea(el: HTMLTextAreaElement) {
 
 const AlgInput = forwardRef<AlgInputHandle, AlgInputProps>(function AlgInput(props, ref) {
   const {
+    id,
+    ariaInvalid,
+    ariaDescribedBy,
     initialText = '',
     initialHtml,
     markable = false,
@@ -193,6 +199,9 @@ const AlgInput = forwardRef<AlgInputHandle, AlgInputProps>(function AlgInput(pro
   if (!markable) {
     return (
       <textarea
+        id={id}
+      aria-invalid={ariaInvalid}
+      aria-describedby={ariaDescribedBy}
         ref={attachEl as (el: HTMLTextAreaElement | null) => void}
         defaultValue={initialText}
         rows={rows}
@@ -231,6 +240,9 @@ const AlgInput = forwardRef<AlgInputHandle, AlgInputProps>(function AlgInput(pro
   return (
     <div
       ref={attachEl as (el: HTMLDivElement | null) => void}
+      id={id}
+      aria-invalid={ariaInvalid}
+      aria-describedby={ariaDescribedBy}
       contentEditable
       suppressContentEditableWarning
       className={className}

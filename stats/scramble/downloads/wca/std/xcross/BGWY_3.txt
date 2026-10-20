@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / BGWY / bin 3
-# Population in this bin: 543
+# Population in this bin: 547
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 4701564001,B2 R2 D B R D2 R U2 R2 F L D F' U' R' B2,W,Hessen Mini Open 2025 (2025-05-02),333 Final B #4
@@ -94,7 +94,7 @@
 661369015,R2 B2 U2 B2 R2 B2 D' L B2 D' B2 L2 B D L2 B' D' L D2,B,Wuhan NxN Open 2017 (2017-05-20~21),333mbf Final A #2
 4874507014,B D R' B' R2 U2 B2 R2 U2 B2 U2 R' F R' D B2 F D F' L' F,B,BrizZon Side Open III 2025 (2025-07-19~20),333mbf Final A #2
 661388019,D2 L U' R' F2 R U2 D F' U2 B2 R2 U R2 L2 U R2 D R2,Y,Pulmapelipäivät 2017 (2017-06-09~11),333mbf Final A #1
-4020381042,R2 D' F2 U R2 D2 U' L2 U B R2 D2 B D' B' L' U2 L' F L' F,G,Shhicago II 2024 (2024-08-17~18),333mbf Final B #1
+5867840001,R2 U' F' L' F2 D F' D2 R F2 R F2 R F2 L' D2 L2 B,G,Cube4fun Lublin Autumn 2026 (2026-10-10),333 R1 B E2
 5315615001,R2 F2 R2 D2 L2 F R2 B R' B F U' R U2 B D' B2 U' F',W,Rhön Open 2026 (2026-01-10~11),333 R2 C #4
 667364001,U' R2 D2 L2 D' F2 D' R2 B' U2 L' B' U2 R2 B' L2 B R2,G,MTD Spring 2017 (2017-12-09~10),333oh Final B #2
 682867001,B' U2 L F' L' F' D' R2 B D F2 L2 F2 R2 F' U2 R2 U2 F2,G,Shaastra Cube Open 2018 (2018-01-06~07),333 R1 N #3
@@ -169,7 +169,7 @@
 5693421001,D F' U2 B' D2 F' U2 R' U2 B2 F2 U2 R' B D' L2 R' B' L2,Y,Burnaby Cubes Big & Small 2026 (2026-06-07),333bf Final A E2
 4164783001,R U F2 R2 F R U R2 U F2 R U2 R' F2 R' U2 R' B2 R',B,Autumn Cubing Reunion Athens A - 2024 (2024-09-28),333 R1 C E2
 1111500027,B2 L D2 U2 L U2 L2 U2 R2 F D2 F2 D L U L2 D L2 U B R',G,YJ Petersburg Special 2019 (2019-04-20~21),333mbf Final A #2
-1125495001,D F D L' D F B2 R B' U B' U2 L U2 R D2 R' D2 F2,W,Guiyang Open 2019 (2019-05-01~02),333 R1 A #4
+5866509001,F R2 D2 B2 L2 D2 R' B2 U' F U B' U' B L2 B2 L2 U2,Y,Croatian Championship 2026 (2026-10-03~04),333 R1 A #4
 4124011001,R F' R2 F L2 B D2 B L2 R' D' B2 L2 B2 L F2 L' D' L',B,Ibarra Open 2024 (2024-09-21),333 Final A #3
 2726355040,U' B2 L2 B2 R2 U2 B2 U' R2 F D R2 D' L R U2 L F2 D L2,Y,PBQ Green Bay 2023 (2023-05-21),333mbf Final A #1
 1128452001,D' F2 L2 U' L2 D U2 F2 R' U2 F2 U2 F D2 U' B2 U' B2,Y,Chillán Open 2019 (2019-05-04),333oh Final A #1

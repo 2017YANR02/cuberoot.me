@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxcross / BGOR / bin 7
-# Population in this bin: 291
+# Population in this bin: 293
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 6373001,U D2 F U' L' F2 D R2 L D' L2 D' F2 R2 F2 U F2 R2 D,B,Rumia Open 2014 (2014-03-29~30),333 R1 A E2
@@ -28,7 +28,7 @@
 239354001,D' R2 B2 R2 U' F2 D' F U F L' F U' F D F2 D B2 L2 U2,R,Great Indian Cubeathon 2016 (2016-01-08~10),333bf Final A #1
 241662001,D B2 D' B2 D B2 U F2 U2 B2 L B2 F' U L' U2 F L U' L2,B,Beskidy Cubing Day 2016 (2016-01-09),333 R1 C #3
 5150807001,U2 B U R' U R2 F' L U2 B2 U2 R2 B2 D2 R2 B2 U2 R' U,G,Xi'an Autumn 2025 (2025-11-02),333 R1 G #5
-5164135001,F L2 B R2 D2 L2 F D2 R2 U' B R2 B2 D2 R U2 R' D' F',O,Sequoia Cubing 2025 (2025-11-01),333oh R1 B #2
+5858879001,D U2 L2 B2 L D2 R' B2 L' D2 R' U' L F R2 F' D' R U',G,Honey Cube Barcin 2026 (2026-10-03~04),333 R1 B #3
 267153001,F' D L U L2 D' F2 D2 B2 U' B U2 R2 B L2 F D2 F',R,Roskilde by Vote 2016 (2016-03-13),333 R1 D #2
 273537001,D' F B2 U2 L U' B' U' L2 F B2 R2 F2 D' B2 U2 D F2 B2 D',O,Indian Nationals 2016 (2016-03-25~27),333oh R2 E E1
 286389001,R2 L' B' L2 U F R' F2 B U D' L2 F2 D2 B2 L B2 R U2 B2,G,Plaza Norte Rubik 2016 (2016-04-23~24),333 R2 B #3
@@ -111,7 +111,7 @@
 1263974001,F2 R B2 L D2 B2 F2 U2 L F2 U' B2 L' F U R2 B' L2 F' U2,G,Bay Area Speedcubin' 19 2019 (2019-08-18),333oh R1 B #2
 1265184001,F' R' L U L2 U D' F R F' R' B2 L2 D2 R U2 R' B2 L2 B2,G,Kharkiv Open 2019 (2019-08-17~18),333ft Final B #4
 1274348001,U D' L F2 L2 F2 B' R B D L2 D2 F D2 F R2 F2 L2 U2 B',O,Strathcona 2019 (2019-08-24),333 R1 D #1
-1280759049,B' L2 D2 F R2 D2 B L U' R2 D F' D2 R' F' D R' D2 B R',G,Xi'an 10th Anniversary 2019 (2019-08-24~25),333mbf Final A #1
+5870493001,R L2 F' R2 U2 B F2 D2 F R2 U2 R2 L F L R D F R2 B2,G,Maine Fall 2026 (2026-10-10),333 R1 B #4
 1317942001,R' D F2 U2 F L' B' R2 B R' D2 L2 B' R2 L2 B' R2 B,G,Westcoast Woodvale Weekends 2019 (2019-09-28~29),333oh Final A E2
 1329188001,R2 U R2 B2 D U' F2 D' U' B U2 F' L B' D F D2 F2 R' F,G,Sioux Fall 2019 (2019-09-28~29),333 R1 C #3
 1353166001,R' U2 L R2 F2 D2 U L2 D2 F L' F' D L' D B2 D',O,KubeKids Vila Velha 2019 (2019-10-12~13),333 R1 E #3

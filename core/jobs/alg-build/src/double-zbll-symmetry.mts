@@ -8,11 +8,25 @@ import { availableParallelism } from 'node:os';
 import { resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { atomicJson, maybeJson, readJson, repairTail, guard, TOTAL, GiB, selectPairBatch, pairGroup, CsvTail, claimOwner, askSolverThreads, batchFailure, recoverableStartupStop, waitForStartupMemory, type Memory, type PairGroup } from './double-zbll-symmetry-state.mjs';
-import { activeOwner, watchDashboard, renderDashboard, TerminalDashboard, REFRESH_MS } from './double-zbll-dashboard.mjs';
+import { activeOwner, watchDashboard, renderDashboard, renderCompletion, TerminalDashboard, REFRESH_MS } from './double-zbll-dashboard.mjs';
 import { WebsiteStatistics } from './double-zbll-website-stats.mjs';
 import { PairSelection } from './double-zbll-selection.mjs';
 
 const root = resolve(import.meta.dirname, '../../../..');
+// The standalone solver is outside the job's build unit, like the existing
+// runtime-loaded resource adapter below. Keep its source out of job compilation.
+interface ResidentSession {
+  child: ChildProcess;
+  startedAt: string;
+  closed: Promise<number>;
+  check(): void;
+  run(rows: { id: number; scramble: string }[], result: (raw: string, csv: string) => void): Promise<void>;
+  finish(): Promise<void>;
+}
+const { ResidentRustSession } = await import(resolve(root,'solver/333opt/resident-rust-session.mts')) as {
+  ResidentRustSession: new (child: ChildProcess) => ResidentSession;
+};
+const { opt10Configuration, rustScramble } = await import(resolve(root,'solver/333opt/rust-h10-adapter.mts'));
 const { observeZbllMemory } = await import(resolve(root,'core/scripts/zbll-memory-budget.mts'));
 const work = resolve(root, '.tmp/double-zbll-symmetry-v2');
 const path = (name: string) => resolve(work, name);
@@ -28,10 +42,24 @@ if (args[0] === '--watch' || (solve && activeOwner(work))) {
 }
 // Verify the selected release without loading its table, before touching checkpoints.
 const opt10Release = solverEngine === 'opt10' && (solve || args[0] === '--plan')
-  ? (await import(resolve(root,'solver/333opt/rust-h10-adapter.mts'))).opt10Configuration(root,1).release : undefined;
+  ? opt10Configuration(root,1).release : undefined;
 const seed = readJson(path('migration.json')), integrity = readJson(path('migration-integrity.json')), audit = readJson(path('audit.json'));
 if (seed.status !== 'complete' || seed.unique !== integrity.rows || audit.orbits !== TOTAL) throw Error('迁移或对称审计不完整。');
 const progressPath = path('progress.json'), prior = maybeJson(progressPath), checkpoint = maybeJson(path('checkpoint.json'));
+// A completed task only verifies saved-file hashes and prints its result. No
+// thread prompt, replay or solver/table startup is needed on subsequent opens.
+if ((solve || args[0] === '--plan') && prior?.verified === TOTAL
+  && (prior.status === 'complete' || prior.stage === '全部完成并验证') && existsSync(path('solutions-integrity.json'))) {
+  const report = readJson(path('solutions-integrity.json'));
+  if (report.total !== TOTAL || report.importedSha256 !== integrity.sha256
+    || JSON.stringify(report.histogram) !== JSON.stringify(prior.histogram)
+    || await hashFile(path('representatives.csv')) !== report.importedSha256
+    || await hashFile(path('solutions.csv')) !== report.solutionsSha256) throw Error('最终结果文件完整性检查未通过，文件保留。');
+  const completed = { ...prior, status: 'complete' };
+  if (solve && prior.status !== 'complete') atomicJson(progressPath, completed);
+  console.log(renderCompletion(completed, work));
+  process.exit(0);
+}
 const memory = (): Memory => {
   const raw = execFileSync('vm_stat', { encoding: 'utf8', timeout: 5000 });
   const n = (key: string) => { const m = raw.match(new RegExp(key + ':\\s+(\\d+)')); if (!m) throw Error('无法读取 ' + key); return Number(m[1]); };
@@ -47,8 +75,18 @@ const recoveredStartup = prior?.status === 'protected-stop' && existsSync(previo
   && recoverableStartupStop(prior, batchFailure(previousLog, Math.max(0, statSync(previousLog).size - 16384), 1),
     existsSync(path(`batches/${String(prior.activeBatch).padStart(6, '0')}/progress.json`)));
 // Only the old pre-table startup rejection is reclassified. Never reset boot or swap.
-const baseline = recoveredStartup ? { ...prior, status: 'stopped' } : prior ?? seed;
+let baseline = recoveredStartup ? { ...prior, status: 'stopped' } : prior ?? seed;
 let current = memory();
+if (solverEngine === 'opt10') {
+  try {
+    const {readResumeReview,resumeBaseline}=await import(resolve(root,'solver/experiments/cube48opt-rust/zbll-resume-review.mts'));
+    const resume=readResumeReview(current);
+    if(resume) baseline=resumeBaseline(prior,resume,readFileSync(progressPath));
+  } catch(error) {
+    console.error(`\n暂未启动计算\n${error instanceof Error ? error.message : String(error)}\n已有 ${(prior?.verified ?? seed.unique).toLocaleString()} 个结果和断点均保留。`);
+    process.exit(2);
+  }
+}
 const count = prior?.verified ?? seed.unique;
 if (args[0] === '--plan') {
   console.log(`求解器：${solverEngine === 'opt10' ? `Rust Opt10 · ${opt10Release} · 31.13 GB 表 · 最多 ${Math.min(18,availableParallelism())} 搜索线程` : solverEngine === 'rust' ? 'Rust H10' : 'C H10'}`);
@@ -84,6 +122,7 @@ process.once('exit', () => screen.close());
 process.on('exit', () => { try { if (readFileSync(ownerPath, 'utf8') === String(process.pid)) unlinkSync(ownerPath); } catch {} });
 
 let interrupted = false, protectedStop = false, reason = '', child: ChildProcess | undefined, interval: NodeJS.Timeout | undefined;
+let resident: ResidentSession | undefined, residentVerify: (() => void) | undefined;
 let stage = '核验已有断点', verified = 0, newCount = 0, activeCompleted = 0, activeTotal = 0, activeBatch = checkpoint?.batch ?? 0;
 const histogram = Array.from({ length: 21 }, () => 0);
 let sum = 0, peak = prior?.peakRssGiB ?? 0, min = prior?.minimumHeadroomGiB ?? null;
@@ -113,8 +152,10 @@ function ratePerSecond() {
 }
 function snapshot(status: string) {
   return { status, updatedAt: new Date().toISOString(), boot: baseline.boot, baselineSwapouts: baseline.baselineSwapouts,
+    reviewedSwapouts:baseline.reviewedSwapouts,resumeReviewSha256:baseline.resumeReviewSha256,
     total: TOTAL, verified, imported: seed.unique, newlyVerified: newCount, activeBatch, activeCompleted, activeTotal,
-    stage, activeVerified, solverThreads, solverEngine, ratePerSecond: ratePerSecond(), memoryPressure: current.pressure, diskGiB: current.disk / GiB,
+    stage, activeVerified, solverThreads, solverEngine, residentPid: resident?.child.pid, residentStartedAt: resident?.startedAt,
+    ratePerSecond: ratePerSecond(), memoryPressure: current.pressure, diskGiB: current.disk / GiB,
     computeSeconds: elapsed(), currentSwapouts: current.swapouts, currentRssGiB: currentRss / GiB, reservedRssGiB: reservedRss / GiB,
     peakRssGiB: peak, minimumHeadroomGiB: min, availableGiB: current.available / GiB,
     histogram, meanHtm: verified ? sum / verified : null, reason: reason || undefined,
@@ -141,7 +182,10 @@ function finishPair(group: PairGroup, save = true) {
 function show(force = false, status = 'running') {
   if (!force && Date.now() - lastRender < REFRESH_MS) return;
   lastRender = Date.now();
-  const text = renderDashboard(snapshot(status), {
+  const live = snapshot(status);
+  // Startup replay must be visible without replacing the durable checkpoint.
+  atomicJson(path('live-progress.json'), { ...live, ownerPid: process.pid });
+  const text = renderDashboard(live, {
     columns: process.stdout.columns, rows: process.stdout.rows, color: process.stdout.isTTY && !process.env.NO_COLOR,
   });
   screen.render(text);
@@ -285,6 +329,7 @@ try {
       let bp = batchProgress(); activeCompleted = bp?.completed ?? 0;
       if (activeBatch === (checkpoint?.batch ?? 0)) sessionActiveStart = Math.max(0, activeCompleted - activeVerified);
       const tail = new CsvTail(), wanted = new Set(inputs.map(r=>r.id)); let seen = 0;
+      if (solverEngine === 'opt10') repairTail(resolve(batchDir,'solutions.csv'));
       const verifyLive = () => {
         tail.poll(resolve(batchDir,'solutions.csv'), line=>{
           if (!wanted.delete(Number(line.split(',')[0]))) throw Error('实时结果未知或重复 ID');
@@ -297,7 +342,59 @@ try {
         fsyncSync(pairFd!);
       };
       verifyLive();
-      while (bp?.status !== 'complete') {
+      if (solverEngine === 'opt10' && bp?.status !== 'complete') {
+        const priorBatch = bp;
+        if (priorBatch?.reason && priorBatch.reason !== 'Interrupted') throw Error('批次存在未处理的停止记录：' + priorBatch.reason);
+        if (priorBatch && (priorBatch.boot !== baseline.boot || priorBatch.baselineSwapouts !== baseline.baselineSwapouts))
+          throw Error('批次 boot/Swapouts 基线发生变化');
+        residentVerify = verifyLive;
+        if (!resident) {
+          await awaitStartupMemory();
+          const config = opt10Configuration(root, solverThreads!);
+          const logFd = openSync(log, 'a');
+          try {
+            child = spawn(process.execPath, [config.args[0], 'double-zbll-opt10-session', ...config.args.slice(2)],
+              { cwd: root, env: { ...process.env, ...config.env }, stdio: ['pipe', 'pipe', logFd] });
+          } finally { closeSync(logFd); }
+          resident = new ResidentRustSession(child);
+          atomicJson(path(`resident-${child.pid}.json`), { ...config, mode: 'resident', guardPid: child.pid,
+            startedAt: resident.startedAt, boot: baseline.boot, baselineSwapouts: baseline.baselineSwapouts,
+            reviewedSwapouts:baseline.reviewedSwapouts,resumeReviewSha256:baseline.resumeReviewSha256 });
+          appendFileSync(log, `${resident.startedAt} 常驻求解器启动 pid=${child.pid}，表仅加载一次\n`);
+          stage = '加载并校验大表（仅本次启动）';
+          interval = setInterval(() => {
+            try {
+              resident!.check(); checkResources(); residentVerify?.();
+              atomicJson(progressPath, snapshot('running')); show();
+            } catch (error) { stop(String(error), true); }
+          }, 1000);
+        } else { resident.check(); stage = '求解中'; }
+        const started = Date.now(), batchOut = resolve(batchDir, 'solutions.csv');
+        const batchFd = openSync(batchOut, 'a');
+        const rawPath = resolve(batchDir, 'solutions.csv.rust.jsonl'); repairTail(rawPath);
+        const rawFd = openSync(rawPath, 'a');
+        atomicJson(resolve(batchDir, 'progress.json'), { status: 'solving', boot: baseline.boot,
+          baselineSwapouts: baseline.baselineSwapouts, completed: seen, total: inputs.length, residentPid: child!.pid });
+        try {
+          await resident.run(inputs.filter(row => wanted.has(row.id)).map(row => ({ id: row.id, scramble: rustScramble(row.setup) })), (raw, csv) => {
+            const result = JSON.parse(raw);
+            if (result.threads !== solverThreads || result.batch_threads !== 1) throw Error('常驻求解线程配置发生变化');
+            writeFileSync(rawFd, raw + '\n'); writeFileSync(batchFd, csv + '\n');
+            stage = '求解中';
+          });
+          fsyncSync(batchFd); fsyncSync(rawFd); verifyLive(); checkResources();
+          if (wanted.size || seen !== inputs.length) throw Error('常驻批次结果不完整');
+          const report = { states: seen, verified: seen, solutionsSha256: await hashFile(batchOut),
+            elapsedSeconds: (Date.now() - started) / 1000, baselineSwapouts: baseline.baselineSwapouts,
+            finalSwapouts: current.swapouts, residentPid: child!.pid, residentStartedAt: resident.startedAt };
+          atomicJson(resolve(batchDir, 'report.json'), report);
+          bp = { status: 'complete', completed: seen, total: inputs.length, boot: baseline.boot,
+            baselineSwapouts: baseline.baselineSwapouts, updatedAt: new Date().toISOString(), residentPid: child!.pid };
+          atomicJson(resolve(batchDir, 'progress.json'), bp);
+          appendFileSync(log, `${new Date().toISOString()} 常驻批次 ${activeBatch} 完成 ${seen}/${inputs.length} pid=${child!.pid}\n`);
+        } finally { fsyncSync(batchFd); closeSync(batchFd); fsyncSync(rawFd); closeSync(rawFd); residentVerify = undefined; }
+      }
+      while (solverEngine !== 'opt10' && bp?.status !== 'complete') {
         await awaitStartupMemory();
         stage = '求解中'; atomicJson(progressPath, snapshot('running')); show(true);
         const logFd = openSync(log, 'a');
@@ -333,12 +430,16 @@ try {
       appendFileSync(log, `${new Date().toISOString()} 已保存 ${verified}/${TOTAL}\n`);
     }
     if (verified !== TOTAL) throw Error(`枚举不完整：${verified}/${TOTAL}`);
-    stage = '全部完成并验证'; atomicJson(progressPath, snapshot('complete')); show(true, 'complete');
+    if (interval) { clearInterval(interval); interval = undefined; }
+    if (resident) await resident.finish();
     atomicJson(path('solutions-integrity.json'), { total: verified, importedSha256: integrity.sha256, solutionsSha256: await hashFile(journal), histogram });
+    stage = '全部完成并验证'; atomicJson(progressPath, snapshot('complete')); show(true, 'complete');
+    screen.close(); console.log(renderCompletion(snapshot('complete'), work));
   }
 } catch (e) {
   if (interval) clearInterval(interval);
   if (child?.exitCode === null) child.kill('SIGTERM');
+  if (resident) await resident.closed;
   if (fd !== undefined) fsyncSync(fd);
   if (!reason) reason = String(e);
   stage = protectedStop ? '资源保护停止' : '已停止';

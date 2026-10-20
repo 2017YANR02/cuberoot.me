@@ -34,6 +34,20 @@ describe('single-device trainer split queue', () => {
     expect(splitRoundDone(round)).toBe(true);
   });
 
+  it('assigns double batches without losing odd tails when resizing', () => {
+    let round = startSplitRound(['a', 'b', 'c', 'd', 'e', 'f', 'g'], 'seq', Math.random, 1, 2);
+    expect(round.lanes.a.keys).toEqual(['a', 'c']);
+    expect(round.lanes.b.keys).toEqual(['b', 'd']);
+    round = advanceSplitLane(round, 'a');
+    expect(round.completed).toBe(2);
+    round = resizeSplitRound(round, 6);
+    expect(new Set([...round.lanes.a.keys, ...round.lanes.b.keys, ...round.remaining]).size).toBe(5);
+    round = advanceSplitLane(round, 'a');
+    round = advanceSplitLane(round, 'b');
+    expect(round.completed).toBe(7);
+    expect(splitRoundDone(round)).toBe(true);
+  });
+
   it('deduplicates invalid input and ignores advancement on an idle lane', () => {
     const round = startSplitRound(['a', '', 'a'], 'seq');
     expect(round.total).toBe(1);

@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxcross / BG / bin 6
-# Population in this bin: 235
+# Population in this bin: 236
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 3270001,D2 R D2 R' F2 D2 F2 R2 F2 R B U' R' U B' U' R2 D F',B,CMI Fiesta Open 2014 (2014-03-21~23),333oh R1 S #5
@@ -60,7 +60,7 @@
 882959001,U2 F2 B' R L' F L F' U R U F B R2 F2 B L2 B',G,Canarias Open 2018 (2018-09-15~16),333 R2 A #4
 888951001,B2 D2 B U L U F U' D' R D' B2 D F2 U' R2 U' F2 L2 B2 R2,B,Santa Cruz Spring Open 2018 (2018-09-29~30),333 R1 A #5
 897025001,B2 F2 R2 D U2 R2 F2 U F U B2 D F2 D U' B2 U' B',G,Australian Nationals 2018 (2018-10-06~07),333 R1 F #1
-898107001,F' R2 U2 B D B' D' R2 L2 D2 B' R2 F R2 L2 F' L2 U2,G,Sicily Open 2018 (2018-10-06~07),333 R2 A #5
+5862708001,F2 U F2 D L2 D2 B2 U' R2 F U B' D' L' D' L R2 U',B,Sydney Cubing Decathlon 2026 (2026-10-02~04),333 R1 F #1
 898961030,B2 U2 L U2 R D2 L' B' R F L' U2 F L F L2 F R' B,G,Paris Open 2018 (2018-10-06~07),333mbf Final A #1
 932534021,B2 L2 U2 B U2 B U2 L' R U2 B U B2 U R D2 B' R2 D',G,CFL Sieradz 2018 (2018-11-10),333mbf Final A #1
 937668001,U2 R2 D' B2 U B2 D' B U2 F D2 F L2 D',G,Taipei Winter Open 2018 (2018-11-18),333 R1 G #2

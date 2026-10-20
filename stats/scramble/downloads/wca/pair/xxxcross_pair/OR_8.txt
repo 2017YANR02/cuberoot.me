@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / OR / bin 8
-# Population in this bin: 233
+# Population in this bin: 234
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 26001,U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2,R,Galeries Dorian Open 2014 (2014-03-15),333bf Final A E2
@@ -39,7 +39,7 @@
 495726001,F' L2 R2 F D2 F U2 L U2 L U' R2 U' L U2 R' F' L',R,Arnold Classic South America 2017 (2017-04-21),333 R1 G #3
 532115001,F2 B' D' R L2 U2 L2 F D' L2 F2 R' D2 L B2 R B2 L2 D2,O,Foon Yew Open 2017 (2017-06-11),333 R2 C E2
 573409001,R2 B2 F D2 B2 D2 U' F' R' U2 R D U2 F D' F R2,R,Shantou Open 2017 (2017-08-20),333 R1 B E1
-590697001,F D B' R L U L2 B U2 R' D R2 U2 L2 U L2 F2 U' F2 B2,R, Raipur Cube Challenge 2017 (2017-09-10),333oh Final A #1
+590697001,F D B' R L U L2 B U2 R' D R2 U2 L2 U L2 F2 U' F2 B2,R,Raipur Cube Challenge 2017 (2017-09-10),333oh Final A #1
 5227474001,B2 D B' U2 B2 L2 U' L' D R2 F2 R U2 L U2 D2 F2 R B,R,Kyiv Blind Side Autumn 2025 (2025-11-29~30),333 R1 C E2
 613267001,D2 F' R2 U2 B2 D2 F R2 B2 U' F' L U' F' R D' F' D' R2,R,NIT Trichy Open 2017 (2017-10-07~08),333 Final B E2
 5761702001,F2 D2 U F2 R2 U' F' U' F' D2 R' F2 D B2 F L' B F2,R,Barpeta Cubing Open 2026 (2026-07-26),333oh Final B #3
@@ -57,7 +57,7 @@
 774788001,B2 R2 D' R2 D L2 U2 R2 F2 D U2 F U2 R B' U' F' D2 B L,O,Glorioso San Carlos 2018 (2018-05-05),333 Final A #3
 778991001,R2 B2 D' B' D' F2 L' B D' L2 F2 D' L2 U D F2 B2,R,Lower Moreland Spring 2018 (2018-05-12),333 R1 A E1
 781801001,R2 F' B2 D' R' B' D2 R' L D R U2 F2 L' F2 U2 D2 L D2,R,Shanghai Love in ECNU 2018 (2018-05-19~20),333 R1 D E1
-791717001,D F2 D' L2 U L' U2 R F R L' F' R2 B U2 F L2,O,GhanaTantra 2018 (2018-06-02),333 R2 A E2
+5872790001,F' B U B' R' F2 B R U R2 U' F2 B2 R2 B2 D F2 L F',O,Penn Cube Day Fall 2026 (2026-10-10),333 R1 B E2
 802340001,R2 D B2 L2 U2 R2 D F2 R2 F' L' R2 U' B2 U' L' R2 F2 U2 B' L B2,O,Roma3 Al Cubo 2018 (2018-06-09),333bf Final B #2
 808468001,D' F' U R2 U2 R' F' U F L' F2 U D B2 U' L2,O,El Escorial Open 2018 (2018-06-16~17),333 R2 B E1
 842712001,L' F2 L' F2 L' U2 L B2 L2 U R2 F' L' D2 F R U2 L U',O,VCP Invierno 2018 (2018-07-28),333oh Final C #1

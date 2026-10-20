@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / BG / bin 2
-# Population in this bin: 871
+# Population in this bin: 875
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 4898413001,D F' B2 U F2 D L2 U' L2 F2 D2 B' F L' R' F U F U' R2,B,Boise One-Handed Blitz 2025 (2025-08-02),333 R1 A #3
@@ -69,7 +69,7 @@
 4324751001,L' B2 L F' B2 D2 L B2 R' U2 R2 D' R2 D2 B2 R2 D L2,B,Centro Suba Bogotá IV 2024 (2024-12-01),333 R2 A #3
 1662386010,U2 B2 U2 B L' F2 U' B R F2 R F2 U2 F2 R2 D2 R U2 D2 L B R',B,Tianjin Summer Solstice 2021 (2021-06-20),333mbf Final A #1
 1727708001,R' L2 U2 L2 D2 B2 D' F2 D F R2 F2 R' U2 L' R2 F' R2 U2,G,Norwegian Championship 2021 (2021-11-12~14),333oh Final A #4
-293490001,U F2 D' F2 L U2 B D2 R D' F D2 F' L2 D2 F' U2 D2 F',B,Hari ng Norte 2016 (2016-05-01),333oh Final A #2
+5870413001,R' F' R2 L' F D' B2 R D' L2 D2 F2 D L2 D' R2 F R',G,Waremme Open 2026 (2026-10-11),333 R1 A E2
 4735567001,U' L2 U' L2 B2 F2 D L2 U B2 U2 R' D U R2 D2 L2 F R2 F',B,Tramsheds V: Autumn Sunday 2025 (2025-05-18),333 R1 A #5
 4739026001,F U2 F' R2 F' D2 U2 F2 R2 L' U2 F' L U F' L' U' L2,B,Beijing Summer 2025 (2025-05-17~18),333 R1 C #2
 5735563001,B2 F2 D' L2 F2 U' B2 R2 U B' D U2 B2 R' U F' D' U R2,B,Queensland Open 2026 (2026-06-27~28),333 R1 F E1
@@ -139,7 +139,7 @@
 4758670001,U R F2 B D2 B' U L2 F2 R2 B2 L' F2 B2 L' F2 U F2,B,FECAP Open 2025 (2025-05-24),333 R1 C #3
 4529582001,R' B R' F U2 F2 D' R2 D2 L' F2 L2 U2 F2 R2 U2 B2 L' F' L2,G,Unicentro Tunja 2025 (2025-03-01),333 R2 B #4
 3304777001,R2 D' F2 L2 U' B D L D L D2 F U2 L2 D2 L2 B2 D,G,Malaysia Cube Championship 2023 (2023-12-01~03),333 R1 D #3
-3954428001,F2 B R' B R U2 F' L' B' U F2 D' F2 D2 L2 D' B2 U2 L',G,Baja Favorites 2024 (2024-07-20~21),333 R1 C E1
+5875278001,B U F2 R2 F' D2 B2 L2 B' D2 F2 R' F2 U B D2 U2 L' U,B,Nexta Andorra Championship 2026 (2026-10-10~12),333 R2 C #3
 1125726001,F' U D R F' B2 R2 U F U2 B2 R2 F2 R' B2 R U2 L U2 F2,G,Xuzhou Spring 2019 (2019-05-01),333 R2 A #4
 1530028001,F' U R2 L' D' L B' U' D' F' R F2 L F2 L B2 L2 F2 R' F2,G,Amrita Cube Open 2020 (2020-02-01),333oh R1 B E1
 3021912001,F D2 L D2 B2 R' F2 D R F2 R' U2 R' U2 F2 D2 R2 B2 U' B,B,IISER-K Autumn Open 2023 (2023-08-26),333oh R1 A E1

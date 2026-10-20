@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_face / ORWY / bin 3
-# Population in this bin: 236
+# Population in this bin: 237
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 5770627001,F' U F' D2 R B D B D R U2 B2 L2 F2 U2 L' U2 L' D2 B R,Y,Super Side Summer Fürth 2026 (2026-07-31~08-02),333bf R2 B E2
@@ -80,7 +80,7 @@
 1363001001,R' B' D R2 L' U2 F2 D L2 B' R2 F2 R D2 F2 L D2 R2 U2,Y,Winnipeg Open 2019 (2019-10-19~20),333 R1 A #3
 1376634001,U R' D' L F2 D L F' D2 L' F' D2 F L2 F L2 F' D2,R,I Itapê Open 2019 (2019-10-26),333 R1 A #3
 1436088001,B2 L2 D2 R' F2 L2 D2 U R D B2 D' L D' B2 D2 B' U',Y,Nacionales El Salvador 2019 (2019-11-30~12-01),333ft Final A #1
-1455336001,D' R U R F U D2 R D' B' D2 B2 R2 D F2 D R2 U F2,Y,CCC Qualification Murmansk 2019 (2019-12-14~15),333 R1 C E1
+5856725001,D R2 L' D' F U B' U D2 F' D L2 D R2 U F2 R2 B2 R',W,Viña Spring 2026 (2026-10-03),333oh Final A #3
 5744422001,D' R2 B' R2 U' B2 R2 U' L2 R2 D L2 U2 F' L' D' U F' L' B',Y,Weihai Open 2026 (2026-07-05),333oh R1 A #1
 1462228001,U2 L2 R2 B2 U B2 D' U' F2 D' L' R2 B R B' L2 B' R B2,R,New Zealand Nationals 2019 (2019-12-13~15),333oh R1 B E1
 1463110001,L' U2 L' B2 L' R2 D2 B2 R2 B2 L' D B' D2 F2 L2 U2 B' L2 F',W,FME Open 2019 (2019-12-14~15),333 R2 A #1

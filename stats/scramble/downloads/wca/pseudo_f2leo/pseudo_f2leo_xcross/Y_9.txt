@@ -1,11 +1,11 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / Y / bin 9
-# Population in this bin: 373
+# Population in this bin: 377
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
-2643001,D2 B2 L2 D2 U2 B2 R' D2 L D2 L2 D B' L2 U2 F' D2 R' B U' L,Y,CMI Fiesta Open 2014 (2014-03-21~23),333 R2 C #4
+5862996001,F' D' R' D' B2 L U B' D L' F2 D2 R' F2 R D2 R2 U,Y,Jaque al Cubo LP 2026 (2026-10-04),333 R1 A #3
 4058165001,L F L2 R2 F2 U2 L2 D U2 B2 U' F' R' U' F L F' D' U2,Y,Mofunland Speedcubing Singapore 2024 (2024-08-31),333oh R1 A #2
 5028124001,L B' L2 B2 D2 R2 D2 R' U2 D F R F2 R' B R F,Y,Athens Never Ending Summer B 2025 (2025-09-14),333 R1 D #1
 3172784001,L U' R2 U R' B D R B2 L F2 U2 R2 B2 L2 B2 L F' R2 B2 L2 U',Y,Half Turns Hataitai 2023 (2023-10-07),333bf R1 B #3
@@ -74,7 +74,7 @@
 4042922001,R U' L2 F D' R' D2 R2 B' U' L2 D2 R2 U R2 D B2 L F,Y,Back to the Cube Ceilândia 2024 (2024-08-24~25),333oh R1 A #2
 5077334001,D2 L' B2 L2 D2 R2 B' U2 B2 F2 U2 L' B2 U R F' D U F2,Y,Cavite Speedcubing Open XII 2025 (2025-10-04),333 R1 B #4
 5817056001,U D R' L D L F B U D B' U D R2 F2 L2 F2 U F2,Y,Soorsi 2026 (2026-09-05~06),333 Final B #2
-729279001,D2 B' L2 F' U2 R2 U2 R2 F2 R' D' L F R' U F D2 F D' B2,Y,I Hope I Qualify 2018 (2018-03-17),333oh Final B #4
+5861916001,B' R' U2 F2 L' D2 L B2 L F L' B R' B' D' U' B R D2,Y,GA Cuber Jackets Fall 2026 (2026-10-04),333 R2 C #1
 755380001,U2 F2 D U' F2 U R2 D2 R2 U B' R F2 L F' D' U R' B',Y,Cerritos Open 2018 (2018-04-14),333oh Final C E1
 759182001,D' F' B R F L' F D L U' B2 U R2 U' R2 U2 F2 L2 B2,Y,Oakridge Cube Open - April 2018 (2018-04-14~15),333oh R1 B #2
 765623001,R2 D2 F' U2 B2 U2 L2 U2 F' R' D2 F' R F2 R' D' B L' F2 U,Y,Riga Open 2018 (2018-04-28),333oh R1 D E2
@@ -126,7 +126,7 @@
 1348325001,F2 R2 U2 B F' R2 U2 B' D2 R U B' R B2 D' R' U F' U2,Y,Dutch Open 2019 (2019-10-12~13),333oh Final A #1
 4461509001,B2 R' B U L2 R2 U' B2 D U L' D2 B2 U2 B' D U' L' U' L B,Y,Melbourne Summer 2025 (2025-01-24~26),333bf Final A E2
 1369427001,F2 D2 L2 F' R2 F2 D2 R2 F' D2 F' R' B2 F2 L D' U B R F',Y,Lanyang Open 2019 (2019-10-26~27),333 R2 B #4
-1369902001,F2 D2 B2 R2 F2 R2 D' R2 F2 D F L2 R' U' B D2 F' L2 R U',Y,German Big Cube Open 2019 (2019-10-26~27),333 R1 C E2
+5870025001,D' L' F' D2 R2 F2 U2 R' B2 L B2 F R2 F L2 R' U L' R,Y,Bergen Open 2026 (2026-10-10~11),333 R1 B #2
 5594772001,L R2 B2 D2 L2 B2 U R2 U' F' D2 B F' D2 U R' U B',Y,İstanbul April 2026 (2026-04-25~26),333 Final A #3
 1384408001,R2 D R2 F2 U B2 D L2 D2 F' D L B L2 F' D F D' B2 R,Y,Black Pawn in Brest 2019 (2019-11-02),333 R1 A #2
 4800135001,F' L D L2 D2 F D2 B2 R2 F' R2 L' F2 R2 B L' D B R,Y,Cube Factory League Justynów 2025 (2025-06-14~15),333oh Final A E2

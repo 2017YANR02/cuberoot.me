@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxcross / B / bin 6
-# Population in this bin: 114
-# Samples listed: 114 (all entries in this bin)
+# Population in this bin: 115
+# Samples listed: 115 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 3270001,D2 R D2 R' F2 D2 F2 R2 F2 R B U' R' U B' U' R2 D F',B,CMI Fiesta Open 2014 (2014-03-21~23),333oh R1 S #5
@@ -119,3 +119,4 @@
 5773259001,F' D R2 L2 B U' B U F B2 D2 R2 D2 F D2 F2 B',B,Perth Winter 2026 (2026-08-01~02),333 R1 E E2
 5789904001,B' L' B' D2 R U' F R' U D B2 D' R2 U2 D' R2 F' B2,B,Delacuesta PRs 2026 (2026-08-17),333 R1 C #5
 5814348001,U L' U' L U B2 L2 R2 D2 U L D2 F2 L' D F2 U2,B,KC College Cube Open 2026 (2026-09-05),333 R1 D #1
+5862708001,F2 U F2 D L2 D2 B2 U' R2 F U B' D' L' D' L R2 U',B,Sydney Cubing Decathlon 2026 (2026-10-02~04),333 R1 F #1

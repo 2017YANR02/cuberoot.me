@@ -1,5 +1,132 @@
 # CubeRoot 五端 App 完整路线图
 
+### 2026-10-16：Watch 多型号智能魔方接入（本地，新增型号实物待验）
+
+- Watch 已接 GAN v1/v2/v3/v4、MoYu32、QiYi；服务识别、MAC 输入缓存、按服务/特征路由通知及真实协议成绩标签已落地，直接连接魔方，无需 iPhone 中转。
+- v1 共享 csTimer 协议适配，其他协议复用现有安装端驱动；v4 保留原恢复驱动。超历史窗口或状态无法对齐时中断计时，避免保存不完整录像。
+- 定向回归、app-ui/mobile 类型检查、watchOS 签名构建与原生 QuickJS smoke 通过。新增型号真机 BLE、自动计时、断线与功耗未验；已有 GAN 16 UI 记录不外推到其他款。详细边界见 [手表文档](./apple-watch-timer.md#多协议直连2026-10-16)。
+
+
+- 已本地提交 `2283eb9db2`，未推送；签名新包经 devicectl 重试后覆盖安装到 Series 8。安装前已取回 16 笔成绩完整备份。用户解锁后远程启动成功，并读回应用容器：原 16 笔成绩逐字段完全保留，当前共 17 笔，当前打乱存在且缓存队列为 3 条；BLE 引擎诊断为空闲、无错误，尚未连接实体魔方，因此各型号实拧验收仍待完成。
+
+### 2026-10-16：Watch 本地三阶标准打乱（本地，已覆盖安装）
+
+- 复用锁定版本 cubing.js 的原随机状态三阶生成器与 min2phase，构建时仅适配 Worker 传输；手表系统随机源、独立串行 QuickJS（32 MiB、30 秒单次 CPU 上限）常驻复用表，不改变 BLE/计时预算。空闲时自动补三条待用题，沿用最近手机分组/观察设置，首次无手机配置默认三阶手表分组。
+- 本地题使用已有 shared tracker 和 WatchCubeScene 显示紧凑状态预览；队列与模板原子保存，新手机配置拒收在途旧生成结果，当前题不替换。其他项目仍需手机补充；1,000 笔未同步上限保持，失败可显式重试。
+- Mobile 类型检查通过；新生成器回归连续生成 12 条通过；既有 Swift 契约/成绩导入 8 项通过。实际 C QuickJS 宿主连续生成三条通过，Mac 进程峰值约 12 MiB（不代表手表耗时或内存）。独立审阅修正构建输出依赖声明后，Watch 签名构建及深层签名校验通过。
+- 已备份原始手表状态并覆盖安装到 Series 8；远程启动被系统 `Locked` 拒绝，已请求解锁以继续真机生成、续题和重启恢复核对。未提交、推送或商店发布。
+- 用户解锁并打开后直接读回真机状态：从空题/空队列变为本地当前题＋三条本地缓存，期间新增四笔本地打乱的手动计时记录；原十笔成绩逐字段保持不变。诊断 `generating=false`、`failed=false`、`localCurrent=true`、`queued=3`，证明手机缺席时生成与消耗后续题成功。Watch 模拟器构建亦通过；本轮未完成真实 GAN 自动起停、长时功耗或真机重启恢复验收，不以手动短记录代替这些证据。
+
+### 2026-10-16：UU 远程接入（Android 用户验收通过，iOS 真机待验）
+
+- Android 真机用户反馈 UU 版本达标但点击绑定提示“未检测到”；该文案来自发起 Intent 前的 `canOpenUrl` 拦截，并不是启动失败结果。核对已发 APK 的 queries 与官方 Android 安装包的 `uuremote://external` 声明均存在。按 Android 官方 package-visibility use-cases 指引，Android 改为直接尝试 `ACTION_VIEW`、以 AppLauncher 的实际启动结果处理失败；iOS 保留 canOpenURL。此修复消除查询假阴性阻止启动的路径，未连接用户手机，不能声称已确认该机系统返回 false 的具体原因或真实跳转已通过。11 项定向检查、Mobile typecheck 与 Web build/sync 通过；新 APK 的真机重试单独验收。
+
+- 修正版 Android Debug APK 构建及签名校验通过；用户安装测试后明确确认“验收完成”。据此记录本次 Android UU 远程接入验收通过，不推断未逐项反馈的异常场景或 iOS 真机已通过。
+
+- 用户授权接入 CubeRoot App。共享「我的 → UU 远程」折叠入口支持绑定、更换电脑、全屏远控、PiP 小窗、停止等待和移除本机绑定；中英文及不支持平台提示共用一份 React UI。Android/iOS 宿主注入官方 `@capacitor/app-launcher@8.0.1`、现有 App 深链及 Keychain/Keystore，不新增账号、屏幕采集或远控 SDK。
+- 设备标识与待处理请求一起保存在本机安全存储；绑定 nonce、小窗 callback request、严格回调地址/重复参数检查、串行处理、30 分钟过期及消费后去重覆盖热/冷启动。全屏只记已唤起，PiP 仅最终成功回调记成功；设备失效清除绑定，未知错误不冒充成功。有效回跳显示「我的」结果，活动计时仍受原导航保护。
+- `pnpm --filter @cuberoot/app-ui typecheck`、Mobile typecheck、`vitest run src/uu-remote.test.ts src/uu-remote-panel.test.tsx`（10 项）、Mobile Vite build、Android/iOS `cap sync`、plist lint 和差异空白检查通过。Android 使用本机 OpenJDK 21 执行 `./gradlew :app:assembleDebug --max-workers=2` 成功；Debug 包仍用 `.debug` ID，回调 scheme 按实际 App ID 创建。
+- iOS 原 `ios:build` helper 的通用模拟器命令因 WatchJS.o 路径失败；保持源工程不变，使用新的 derived-data 目录并让 destination 决定 SDK：`xcrun xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug -destination 'generic/platform=iOS Simulator' -derivedDataPath /tmp/cuberoot-uu-ios-derived-data CODE_SIGNING_ALLOWED=NO build`，包含 Watch 的联合模拟器构建成功。未更改签名或实际安装。
+- 真机授权/绑定、Windows/macOS 真实连接、PiP 显示、离线设备/账号切换和系统版本差异仍待用户验收；本轮未安装手机、提交、推送或商店发布。官方协议仅支持 Android/iOS 调用（UU 4.42.0+），iOS PiP 需 iOS 18+；不据此标记其他三端或五端整体完成。维护说明见 `core/apps/mobile/README.md` 的 UU Remote 小节。
+
+### 2026-10-15：Watch 复盘完整对照（验收未通过）
+
+- 用户确认最终出现分段，但等待太久，且方法入口与整个报告未与现有平台一致。直接读取手表确认分析完成；不能据此称为完整复盘验收通过。
+- 对同一把 13.983 秒/73 动作做 Web 实际界面与源码对照，并独立复核。确认摘要口径、默认回放轨迹、点击谱子、最终文字投影、分步表、缓存、案例数据及其他报告内容仍有差异。Web 实际输出 `OLL(CP)-285`，Watch 仅 `OLL(CP)`，验证离线公式集遗漏会影响真实结果。
+- 当前其他平台默认 CFOP、记忆可选 Roux/ZZ，自动识别阶段与 ZBLS/ZBLL 案例；未发现跨完整方法自动分类。Watch 不应把方法选择变成主流程，也不能另造猜测算法冒充复用。完整证据、差异与修正验收顺序见 [Watch 复盘对照](apple-watch-replay-parity-audit.md)。本轮审计未改产品代码或重新安装，整体继续 NOT COMPLETE。
+
+### 2026-10-15：Watch 分段谱子复用（本地已安装，界面验收待确认）
+
+- 用户指出复盘仍展示一串原始动作。此前 Watch 只调用分步统计；现从同一个 `ReconstructReport` 提取 `prepareReconstruction`，Web/iOS 报告与 Watch 共用姿态归一化、原始物理流、阶段、F2L 槽与核心轨迹，再直接调用 `buildReconText`、`correctReconFromLibrary` 和 `simplifyF2lRotations`。Swift 只显示共享输出的分段谱子、标签、用时，点击分段按 `fromIdx` 跳到原始回放；不改写录制。
+- 方法选项来自 shared `METHOD_ORDER/METHODS`（CFOP、Roux、ZZ）；ZBLS/ZBLL 沿用 CFOP 的现有识别标签，并非另造 ZB 检测器。构建时从同一公开 AlgFile API 生成 OLL/PLL/ZBLL 离线快照，留在 DerivedData 并打包，非手写公式/编号副本；其他公式集的精确库校正未随该快照提供，不能声明整个在线公式库已离线化。
+- 复盘分析独立为延后加载的 `WatchReplay.js`，计时 BLE 引擎不加载它。宿主提供按后续 tick 执行的 timer；scene 引擎 32 MiB、每次最多 64 个 Promise jobs 后续继续，计时仍为独立 16 MiB、1024 jobs 必须清空。方法切换保持一个在途任务及最新待选方法，缓存命中仍继续推进在途任务。
+- 真实 QuickJS 验证：ES2020 的私有字段转译版本在 64 MiB 仍失败；复盘包使用 QuickJS 支持的 ES2022 原生私有字段后，32 MiB 限额下同一真实 73 步记录的 CFOP/Roux/ZZ 均生成成功，本机进程峰值约 31 MB。另用同库 ZBLL U 1 完整阶段样本确认输出 `ZBLL-UR3`，不是泛 OLL 标签。这不替代手表上的性能验收。
+- shared build、client/app-ui/mobile 类型检查、86 项共享谱子/方法/公式校正/加载回归及 2 项原有回放检查通过，独立源码复核无新增阻断。Watch 签名构建、签名校验、安装及启动成功，前后持久化状态完全一致（3 笔待同步记录，最近一把 73 步）。已请用户在手表打开现有复盘确认分段、点击跳转及方法切换，无需再做一把。
+- 首次界面验收用户报告停在「分析中」。真机日志证实 `replayVisible=true/visible=true/awake=false` 时分析不再推进；把调度生命周期改为完整复盘页后仍被 Always On 刷新频率拖慢。现由同一 serial worker 以约 16 ms 软预算推进 QuickJS timer/jobs，片间让回主线程，不再等画面刷新；非活跃前台只暂停播放，背景/关闭报告停止续跑。仍保留单次 2 秒 CPU 保护，未启用假运动/后台保活。
+- 同一真实记录、同一 JS 包在 Mac 原生 QuickJS 对照中，未优化 C 耗时 14.82 秒，`-O2` 为 2.93 秒；WatchJS Debug 因此也开启 C 优化，Swift 宿主仍可调试。沿用现有 `analysis.worker` 先发布原始分段、再补库校正的顺序，不复制分析器。本轮 app-ui/mobile 类型检查、2 项既有三维/回放检查、签名构建与校验、安装及启动通过，独立复核无新增阻断。更新后完整持久化状态与更新前一致。Mac 对照不是手表性能验收，需继续读取点亮手表后的完成结果。
+
+### 2026-10-15：Watch 补收积压与完成后误起表（本轮真机起停通过，后台/同步待验）
+
+- Mac 直接取回两次实体记录：第一把 76 步、19.062 秒，末手与成绩一致，但 66 步集中迟到；第二把 80 步同批补回。起表时间被原 machine 的 2 秒上限裁到 264127 ms，末手 261539 ms 早于该起点，停表被拒绝；不能以首把时间范围已一致宣称实时计时通过。
+- 同一日志有 66 个历史回复，其中 65 个未输出动作；队首缺口仅约 8 步却请求 82 步，空历史回复又触发状态查询，形成重复请求。修复 shared `GanMoveSync` 的首缺口窗口、500 ms 同窗去重及历史回复的再查询循环；原 App GAN driver 合并排队恢复命令并在写入时跳过过期窗口，没有新增 Watch 协议实现。
+- 手表直接复用 solo controller 的 `futureHistory` 保护和 machine 原有 2 秒回溯界限：短暂漏首手可补收；历史不能自建准备/起表，过期首手取消旧准备并提示重新打乱；已起表的长段补录保留。原生只增加提示及有界耗时诊断，并避免每个陀螺仪包都重复发布未改变的电量。
+- 定向回归 47 项通过（14 项 App/Watch、23 项时钟/恢复、10 项序号/多动作帧），shared build、App 类型检查、Mobile build/sync 已通过。独立复核未发现新增阻断；签名构建、安装及新实体延迟结果继续分别记录，暂未验收完成。
+- iOS/Watch 联合签名构建及深层签名验证通过，分别安装成功；手机首次启动被系统 Security 校验拒绝，签名/描述文件/设备登记匹配，再次覆盖安装后正常启动；手表启动成功并收到 10 条新打乱。本轮安装后手表容器读到初始空状态，更新前的完整记录与协议日志已取回 Mac 留存，不能把新队列当作旧数据仍在手表的证据。已请用户进行四次 U 和一把实体还原，实时延迟、完整记录及同步尚待本轮结果。
+- 随后实体测试触发「动作接收延迟，本次未计时」：四次 U 实时收到，完整还原期间协议轨迹出现约 15.6 秒空段，再收到积压动作，保护未生成幽灵成绩。用户明确确认屏幕一直亮着，不能归因为熄屏；既有 JS 单次耗时也不足以证明阻塞原因。
+- Watch 原生 BLE 改用独立串行接收队列，回调先复制数据，再按序交给主线程上同一 JS driver/共享计时逻辑；服务发现以主线程已处理的 pendingServices 确认完成，避免队列分离引入握手竞态。加入回调排队、tick 间隔和生命周期有界诊断；接收时间目前只用于诊断，不另建时钟算法。声明 bluetooth-central 后台能力，但不宣称可持续后台高频接收，也未申请假运动会话。
+- Watch 单独签名构建、安装和启动成功，安装前后持久化状态完全一致。首轮快速 `U U U U R R R R` 八步均按序实时输出，无历史补收、积压或 timingLate；回调等待主线程最大 167.47 ms，tick 最大间隔 253.65 ms。该证据只覆盖短串，完整一把的自动起停、复盘时间与同步仍待验证。
+- 随后用户连续完成三把并确认「这次都对了」。Mac 读取 12.392 秒/74 步、12.0693505 秒/77 步、13.983 秒/73 步，三笔均以原打乱及原动作通过 shared cubie 重放到还原态，末手时间分别等于成绩，最终无 interrupted。前两把取样未见历史补收或 timingLate，主线程回调等待最大约 604 ms，未再见此前数秒积压。此轮自动起停和记录验收通过；三笔仍在 Watch outbox，手机同步尚未确认，亦不外推为所有后台/无线条件均通过。
+
+### 2026-10-15：Watch 复盘时间偏差（本地修正，实体复测待验）
+
+- 从上一把 76 步真实协议轨迹确认 GAN 历史回复会分片并重复；共享 `GanMoveSync` 旧 FIFO 将每一页当作一次请求的回复，错耗时间锚点。独立最小复现显示无关页后有效动作失去时间，`MoveClock` 再以延迟到达时间重锚，使后续动作整体偏移；不是复盘 UI 格式化问题。
+- 修正在同一个 shared 同步器/时钟：按动作序号保存首次请求窗口的时间估计，仅消费实际输出动作的锚点，分片结束按窗口位置插值；延迟且无时间的动作保留已有设备时钟。没有缩放原录像、改写旧成绩或另造 Watch 时间算法。历史动作仍只能估时，不能声明精确还原原始逐手时间。
+- 恢复/时钟定向 22 项检查和 app-ui GAN/Watch 集成 12 项检查通过，shared 构建及 app-ui 类型检查通过；独立审阅无阻断。补充每次停表的有界动作时钟日志，安装与实体新成绩末手时间/停表时间核对继续独立记账。
+- Mobile build/sync、iOS/Watch 联合签名构建与深层签名验证通过，修正版分别安装到 iPhone 15 Pro Max 与 Series 8，两个 App 启动成功。已请用户只完成一把并告知完成，日志由 Mac 直接取回，无需用户手动传输；本轮实体时间轴验收等待新记录。
+
+### 2026-10-15：Watch 复盘仅两步的回归修正（本地，真机复测待验）
+
+- 用户完整还原后仅见 `U' R`；真实容器记录为 15.65 秒、两步分别在 1.40/2.89 秒，连接共输出 34 步，当前打乱需 32 个四分之一转。确认保存源已缺失，非播放器截断。旧诊断没有恢复轨迹，不能断言这次具体丢包原因。
+- 已在现有 Watch→iOS GAN driver→shared session/recording 路径复现：缺一帧后积压超过 16，原 driver 清空同步队列，以复原状态快照正常停表，只保存前两步。改用小程序既有保留队列的恢复方式；迟到历史补齐后，23 步与 2200 ms 完整保留。补收标记传入 shared MoveClock，避免将回复延迟误作设备时钟漂移；Watch/iOS 共用。
+- 同一缺口无进展 15 秒或积压达到 128 步，走原协议错误及中断路径；显式硬件重置取消旧恢复期限。手表增加有界协议/计时轨迹以核对实体原因，不从打乱生成虚构动作。相关桥接/driver 12 项、MoveClock 10 项检查通过，shared 构建与 app-ui 类型检查通过；安装和实体复测继续单独记账。原缺失记录保留，无法从当前两步恢复此前真实手法。
+- 修正版 Mobile build/sync、iOS/Watch 联合签名构建及深层签名校验通过；设备工具确认分别安装到 iPhone 15 Pro Max 与 Series 8，两个 App 均启动成功。尚需用户重新连接 GAN 16 UI 完整还原，读取真实动作/协议轨迹与最终复原状态确认，未将安装记为实体复盘验收通过。
+- 随后通过 Mac 的 devicectl 再次直接取回实体日志：新成绩 31.15 秒，持久化 76 个动作；使用 shared tracker 从该成绩的原打乱逐手重放，最终确实还原，手表播放器诊断也读取到 replayCount=76。补收轨迹有超过 16 步积压并继续补齐，未清空动作。仍发现时间轴问题：末手相对时间 37.08 秒超过成绩 31.15 秒，且本次 outbox=1，时间准确性及手机同步仍未验收，不能标记复盘整体完成。Device Hub 当前实时视图报 unsupportedDeviceOS，未影响 devicectl 读取应用容器日志。
+
+### 2026-10-15：Apple Watch 复用现有复盘（本地，真机待验）
+
+- 用户已确认重置可用，要求复盘必须复用其他平台。手表此前仅保存时间，现直接接入 `SmartCubeAttemptProducer`，保存首手到末手的原始动作/相对时间、设备、v2 校准姿态（缺起始姿态时兼容 v1）；手机导入同一 `Solve`，通过原 `stageSegmentsFor` 补派生分段，直接使用已有完整 `ReconstructReport`。
+- 手表最近一把提供复盘入口并在新录像保存后展开，使用原 `sliceReconstruction`、`computeStepMetrics` 和 `playbackIndexAt`；原 tracker/three.js NxN 引擎负责局面和动画。SwiftUI 仅适配播放、暂停、步进、倍速、共享分步指标和原始动作显示。手表不另写复盘算法，不声称完整 React 报告 UI 已搬到 watchOS；手机继续提供原文字谱子、参考等完整能力。
+- 大录像沿已有 durable outbox/ACK 契约增加 WC 文件通道，最近一把不随 ACK 丢失。复盘期间禁止新起表，放腕幂等暂停；统一连续时钟，v1/v2 姿态坐标和 +2 显示已按独立审阅修正。未完成录像不保证进程终止后的恢复，仍按既有 DNF 机制处理。
+- 4 项桥接/场景检查、7 项导入/Swift 契约检查通过，另补放腕重复暂停检查通过；shared 构建、app-ui/Mobile 类型检查、Mobile Web 构建/sync、iOS/Watch 签名构建与 watchOS 模拟器构建通过。真实 16 MiB QuickJS 完成 30 手录像回放并核对最终复原状态，模拟器截图可见成绩、HTM/TPS、三维打乱状态。共享 `stage_segments` 兼容入口改为直连原 producer，避免把无关浏览器 worker 拉进手表包；未改算法。
+- 安装实际被设备连接阻塞：iPhone 15 Pro Max 显示 unavailable，安装报 CoreDevice 4016；手表安装报远程连接失败，未确认成功。本轮复盘包未宣称已装好，已请用户连接并解锁配对手机。补齐 `recordingVersion=1` 握手，旧版手机不能接收后丢弃录像字段再 ACK；新增真实 Swift DTO 录像往返、能力门禁和 +2 显示检查通过，最终签名构建通过。实体录像/回放/同步验收待继续，未提交、推送或发布商店。
+- 用户连接并解锁手机后，设备工具确认复盘版已分别安装到 iPhone 15 Pro Max 与 Series 8，两端启动成功。实际容器读回：手机批次 sequence=8、`recordingVersion=1`，手表也已持久化 `recordingVersion=1`，队列 10 条、无待传/草稿/新录像。已请用户完成新一把并操作回放；此时尚无新真实动作流，不能记作真机复盘或同步验收通过。
+
+### 2026-10-15：Apple Watch 复用 iOS 三维模型与动画（真机显示已确认）
+
+- 用户明确授权复用 iOS three.js 模型/动画，只新增必要的手表绘制适配。`NativeCubeScene` 直接消费原 NxN Cube/Twister/InstancedRenderer/Tweener；SceneKit 只接受几何、颜色、矩阵。未重写转层、状态或计时算法；原 iOS 摄像机朝向函数提取为同一入口，原可选 WASM 初始化增加运行环境判断，已有 JS 运算路径不变。
+- 原 GAN driver 的状态快照、实际转动及 gyro 已接到独立渲染队列，原 shared 姿态校准/平滑、节奏及中层跟随参数继续复用。乱态连接通过现有贴纸寻址采纳真实状态，后续原动画引擎转动；渲染上下文独立于计时，最多 30 Hz，放腕停画，恢复采纳最新状态，积压保留及时到达的最新一手动画。异常不关闭计时。
+- 定向检查：任意乱态开始的六面动画及最终序列化、最新动作追帧、倒序渲染时钟、重新同步、陀螺仪矩阵与现有 BLE/计时集成共 2 项通过；app-ui 类型检查通过。实际 16 MiB QuickJS 加载三维 bundle/几何，完整打乱+还原 60 个转动逐手比对 shared tracker 状态通过。
+- watchOS 27 模拟器显示原模型；录屏通过生产 SceneKit adapter 播放 8 手，诊断 `ready=true`、`failed=false`、`moves=8`、`settledMatches=true`。独立审阅发现的时钟倒退及快速连转丢动画问题已修正。模拟器和 iOS/Watch 联合签名构建、深层签名校验通过，手机与 Series 8 安装成功；真机远程启动被系统锁屏拒绝，已请用户解锁、连接 GAN 16 UI 并确认模型/转层/姿态。未将安装或模拟器证据记作真机显示、完整自动计时或长期耗电验收。
+- 计时执行超时修正已随本包更新。未提交、推送或商店发布。详细复用及诊断边界见 [Apple Watch 计时器](./apple-watch-timer.md)。
+- 后续用户解锁并连接后确认「可以了」。实机读回 `watch-scene-status.json`：`ready=true`、`failed=false`、6 次转动、813 个渲染帧，最终 `displayed` 与 `expected` 相同，`settledMatches=true`。此证据不扩展为完整自动计时或长期功耗验收。
+- 按用户要求新增设备页「重置魔方」，直接复用 iOS GAN driver 的确认式硬件重置、shared session 与姿态校准；SwiftUI 仅承载入口和反馈。定向 10 项检查通过，另验证确认回调与转动同批到达时最终显示同步、等待期间无伪成绩、重复请求/运行中拒绝、超时与断线处理；类型检查、联合签名构建及深层签名校验通过。新版安装与用户点击确认单独记账。
+- 重置版已分别安装到 Series 8 和配对 iPhone；远程启动被系统 `Locked` 拒绝，已请用户解锁后实际还原、白顶绿前握好并点击重置，硬件重置和朝向的本轮真机验收待回报。未自动向未确认实体状态的魔方发送重置指令。
+- 用户反馈未见按钮并要求智能魔方模式禁用屏幕计时。实际容器诊断含 `reset=idle`、`phase=connected`，确认新逻辑已运行；原按钮仅在设备页。现将同一个 SwiftUI 控件同时放到计时页三维魔方下方和设备页顶部；连接时 Swift/JS 均拒绝触屏起停，继续复用实体转动自动计时，断开时保留手动。两项定向桥接检查覆盖 connected idle/ready/running 的点击隔离、实体自动成绩、断线 DNF 和断开后手动计时，均通过；类型检查、签名构建和深层签名校验通过，手机及手表安装成功。独立审阅通过，按钮可见性/点击与硬件重置仍待用户真机确认。
+
+### 2026-10-15：Apple Watch 直连 GAN 16 UI（本地，连接与转动已验）
+
+- 用户追加要求手表直接连接、离开手机使用，并明确 GAN 16 UI 为默认实体测试魔方，不再重复询问型号；已记入根 AGENTS 与 mobile skill。手表不提供「下一条打乱」「获取打乱」按钮。
+- 新增仅负责 CoreBluetooth 的手表 transport，打包执行现有 iOS `GanV4CubeConnection` 与 shared session / MoveClock / solo timer / timer machine；手动点击起停也使用该 machine。为执行既有 TypeScript，嵌入未修改的官方 QuickJS core；没有复制 GAN 协议、AES、魔方状态或自动起停逻辑。
+- app-ui 类型检查通过；共享 GAN fixture 定向集成检查通过（打乱预备、500 ms 自动成绩、重复帧去重、禁用状态不被快照覆盖、断线 DNF、手动观察 +2）；原有手表同步/Swift 契约 10 项通过。实际 QuickJS C 引擎执行最终 App 内 bundle，手动样例得到 500 ms、观察 16000 ms、+2。含手表的 iOS 签名联合构建通过，手机和 Series 8 分别安装并启动。
+- 独立审阅发现并修复了睡眠时钟差异、诊断写盘影响运行、存储提交隐藏引擎故障的问题。计时源统一为 ContinuousClock；诊断不参与计时成败；运行时故障需重启后恢复。
+- 真机用户确认扫描发现 GAN，但连接失败，四次 U 未接收。诊断定位为 `Cube MAC address required`，失败发生在打开 GATT 前：广播长 22 字节，厂商头为 `01 00`，Apple adapter 分离后留下 20 字节；原 app-ui MAC adapter 直接交给共享解析器而丢失格式信息。对照微信/抖音既有完整段处理，在唯一 app-ui adapter 补回厂商头再调用同一 shared parser；新增匿名 20 字节 fixture 在修复前重现同错，修复后新旧长度和 Watch 集成共 8 项检查通过。另修复 SDK 实证的 CBUUID 短/完整 uuidString 查找问题，改用系统等价键按服务隔离。连接/转动/自动计时及离线实体验收仍在进行，不标记完成。
+- 当前离线范围为已有缓存打乱和手表本地成绩队列，缓存耗尽仍需手机补充；走偏修正 Worker、逐手复盘、其他品牌、长期后台和耗电尚未交付/验收。未提交、推送或商店发布。
+- 地址适配修复后 Mobile Web build/sync、iOS/Watch 联合签名构建及深层签名校验通过；GAN 既有驱动另 6 项回归通过，修正版已安装到手表并重新启动。等待用户重新连接并做四次 U，未将安装成功记作连接成功。
+- 用户随后确认「成功了」。Series 8 实际读回：`phase=connected`、`stateReady=true`，收到 296 帧及 15 个转动，最后一手 U；`badFrames=0`、`pendingMoves=0`。这证明手表 CoreBluetooth → 原 GAN driver → 共享状态链路已通；未从仅保存的 9.16 秒记录推断自动计时已验。完整自动起停及离线使用/恢复同步待真机验收；用户选择关闭配对手机的蓝牙，无需关机。
+- 随后真机出现「计时引擎暂不可用」。补齐即时异常记录后抓到 `InternalError: interrupted`；原桥接用墙上流逝时间限制一次脚本，可能把系统挂起算入执行预算。本地真实 QuickJS 的执行中暂停 3 秒再恢复，旧版重现同错；改为线程 CPU 时间后正常返回，死循环仍按 2 秒预算中断，内存/栈/Promise job 上限保留。当前完整打乱与逆序还原的 60 个四分之一转动在 QuickJS 重放得到 ready → running → stopped、7250 ms；临时测试曾漏展开 `R2'` 等半圈，修正测试输入后通过。这不是完整自动计时的真机通过证据。
+- 用户新增连接后显示 iOS 同款 three.js 实时动画的需求。已核查原 SimCubeView/NxN 引擎与 watchOS SDK：原 React/WebGL 组件无法直接挂载，候选为复用几何/转层/姿态逻辑、以 SceneKit 做绘制适配；尚未实现或安装动画，不宣称外观或流畅度已验。
+
+### 2026-10-15：Apple Watch 真机安装、起停与打乱图（本地）
+
+- 用户已授权在自己的 Series 8 GPS / watchOS 26.6 上安装并验收，配对手机为 iPhone 15 Pro Max。Mac 已实际识别该手表，设备工具读到 watchOS 26.6；设备标识仅保留在本机日志，不入库。
+- 含 Watch App 的 iOS 开发签名构建通过，`codesign --verify --deep --strict` 通过；用户开启手表 Developer Mode 后，设备工具确认为 Enabled。`devicectl device install app` 分别确认手机和手表安装成功，手表 `process launch` 成功，保留既有 bundle ID 与数据。
+- 用户确认两次长按松手起表/点击停表正常，准备时有震感，包含放下手腕约 10 秒后继续计时。手机历史实际读到默认分组新增 3.54（+2），以及「Watch 真机验证」分组 3.22；不据此宣称长时间后台/离线重连已验收。
+- 用户要求打乱图必须复用现有 iOS 能力。新增共享渲染导出和手机 PNG 转换，手表只显示缓存图；10 项定向检查通过，新增最终 Swift JSON 大小边界 fixture 通过，Mobile Web 构建/sync 与签名联合原生构建通过，新版已分别安装到手机/手表并启动。
+- 真机容器读回：手机生成 10 条三阶图，每张 Base64 3452–3604 字符；手表缓存 10 条的 ID、打乱与 PNG 均逐条一致。提取首张 PNG 确认有完整展开图，用户随后确认「已看到打乱图」。保存 0.55 秒草稿后手机显示测试分组 2/2、mean 1.89、best 0.55，手表 outbox 为零。Xcode Device Hub 对此 watchOS 26.6 报告屏幕共享不可用，屏幕显示结论来自用户确认。
+- 后续用户指出缩图模糊、要求对齐 iOS 流程。现改用 iOS TwistyPlayer 二维视图同一 SVG 渲染器及 `hintFacelets: none`，保留 Canvas 原生 480 像素宽 PNG，以系统 `transferFile` 传高清批次，无自写图像编码器。全内容区点击起停，删除长按准备文字/罚时选择/确认保存，停表自动落盘、入队并换下一题，保留上一成绩显示。十项定向检查、类型检查、Web/sync 和签名原生构建通过，最终版本已安装启动。
+- 高清传输真机证据：手机批次序号 6 的 10 张三阶图均由手表接收；当前题为 480×408 高清图，缓存 9 条的 ID、原打乱及 PNG 与手机逐项一致，单图 Base64 约 81–86 KB，draft/outbox 均空。用户对高清图、全屏起停、停表自动保存换题确认「对了」；手机测试组记录由 4/4 增至 11/11，mean 0.94、best 0.38，证明测试记录持续回传。随后按用户要求移除「下一条打乱」「获取打乱」，仅保留自动补充缓存。
+- 离线重连、后台传输、观察 8/12 秒震感、VoiceOver 和电量仍待验。未上传 TestFlight / App Store、未提交或推送。
+
+### 2026-10-14：Apple Watch 配套计时器第一版（本地，真机待验）
+
+- 用户授权以现有 iOS 工程增加手表计时器，优先复用。新增 SwiftUI `CubeRootWatch` target，随 iOS App 嵌入；共享品牌图、手机端随机打乱生成器、唯一 `TimerRepository` 和原有统计/历史。明确的 watchOS 首版范围见 [apple-watch-timer.md](./apple-watch-timer.md)，不改变五端完整计时器 parity 合同。
+- 首版为 12 个常规计时项目的普通随机打乱、本地长按松手起表/点击停表、观察与前台 8/12 秒震动、OK/+2/DNF、持久化草稿及离线队列。手机下发每批 10 条打乱，冻结原分组/项目；无手机时可使用缓存。中断尝试恢复为 DNF，不伪造正常用时。
+- WatchConnectivity 原生 inbox/outbox 与原子文件保存；同一 IndexedDB 事务提交成绩和 receipt 后才 ACK，去重覆盖断线重投、已编辑/删除成绩和备份导入。已删除原分组用稳定恢复组，不改变当前选择。原生批次 source/sequence 水位阻止跨通道乱序回滚。
+- 本地证据：app-ui/mobile 类型检查通过；Mobile production build + iOS sync 通过；iOS 和 watchOS 联合 unsigned device build、联合 Simulator build 通过，包内可见 `Watch/CubeRootWatch.app`。10 项定向风险检查通过，含真实 Swift 编译执行与 TS 观察罚时/显示格式、JSON DTO 和乱序游标对照；独立反例审查发现的停表存储门禁、手势清理、罚时导航、批次重试和 snapshot 恢复问题已修正。
+- 模拟器实际验收：Xcode 27 / watchOS 27 的 Series 9 41mm 与 iOS 27 配对；手机既有生成器下发真实随机打乱，连续两次长按松手起表及点击停表通过，罚时选择器可进入并选择 +2。第一笔 4.207679292 秒加二后显示 6.20+，重开仍保留草稿和罚时；第二笔显示 19.99。确认保存后手机原有计时统计显示 2/2、mean 13.10、best 6.20，手表 outbox 与手机 inbox 均清空。第三次计时中终止进程，再开恢复为不可改 OK 的 DNF 草稿（timeMs=0、recovered=true）。41mm 上长内容通过滚动访问，未声称全部控件同屏。
+- 用户提供目标设备为 Apple Watch Series 8 GPS，watchOS 26.6 (23U67)；deployment target 为 watchOS 10。当前 watchOS 27 模拟器不支持创建 Series 8，因此上面的证据不是该真机/系统版本验收。真机安装、震感、熄屏、离线重连、后台传输、VoiceOver 与耗电仍待验；模拟器前台通信成功不等于后台 transferUserInfo 送达保证。无签名发布、TestFlight、App Store、提交或推送。
+
+
 ### 2026-10-13：官网 Android 直链版支付渠道（本地实现，未发布）
 
 - 单一源码和 Web bundle，原生 Gradle `mobileDistribution=play|direct`（默认 Play）决定支付能力。direct 产物在 `app/build/direct/`，不覆盖 Play；正式 APK scripts 强制既有发布签名，direct 不产 AAB。包名保持不变，跨渠道升级仍须核对 app-signing 证书和更高 versionCode，不能把 Play upload key 当成相同安装签名。
@@ -451,6 +578,8 @@
 - [ ] 上传密钥、恢复资料、上一版兼容和暂停发布能力验证完成。
 
 ### 阶段 9：iOS 移植与 TestFlight
+
+2026-10-15 本地发布工具接入：Mac 已安装 asc 5.14.0；`@cuberoot/mobile ios:release` 提供离线 plan、只读 status、复用既有 Capacitor 同步的 archive/export，以及核对 IPA SHA-256 后上传并等待处理的 upload。导出后核对 IPA bundle ID、version、build number，禁用导出时自动改号。plan 与缺参数/非法参数拒绝检查通过；Xcode toolchain doctor 通过。维护者确认创建 App 管理权限 API 密钥并授权保存后，`CubeRoot` profile 已存入 System Keychain，网络认证、CubeRoot app 查询和 `ios:release status --profile CubeRoot` 均通过；私钥备份位于仓库外且权限为 600，凭据不入 Git。新入口尚未实际归档、签名或上传；不改变下列 TestFlight/审核验收状态。使用方式见 Mobile README 的 iOS release with asc。
 
 - [x] 已准备 Mac、Xcode 26.6 正式版和 iPhone 真机。（2026-09-11：Xcode 26.6 build 17F113；iPhone 15 Pro Max / iOS 26.6.1 已实际连接、安装并运行 App）
 - [x] 确认 Apple Developer Program 个人会员有效期、已接受开发者协议与 Xcode Team；证据与边界见阶段 0。App Store Connect 收款协议和付费发布条件仍独立待验。
@@ -1627,3 +1756,24 @@ CubeRoot 应以这些证据证明不是简单套壳：
 随后所有者明确授权仅增加 CubeRoot 应用级正式发布权限，已在 Console 保存（Google 自动附带政策声明与深层链接管理；未授予管理员或账号级权限）。同一服务账号重新创建临时 edit，`edits.validate` 返回200，随后删除未提交 edit 返回204；原403阻断已消除。没有重新提交或替换正在审核的1005，完整 API commit 的实发证据留待下一次新版本发布。
 
 当前没有连接Android真机，未验覆盖安装、系统安装授权、实际下载与更新后业务；1004首次升级仍须手动下载。旧包GETUI_APPID为空，本次同样未启用推送，不宣称通知可达。
+
+### 2026-10-15 Apple Watch 复盘共享与真机补证
+
+Watch 与 React 报告共用分析缓存/管道、谱子投影、摘要、时间轴、分步表、播放器映射及历史计算。
+维护者要求取消方法选择，现由 shared 自动判定 CFOP/Roux/ZZ；ZB 案例继续原识别。
+已修正离线公式同键请求覆盖、错误首块朝向、watchOS 挂起触发墙钟超时及原生 Picker 导航容器。
+Series 8 的 11.524 秒/66 动作记录真机分析完成，无错误，七段、64 STM；CPU 约 5.33 秒。
+重启恢复七段缓存，回调 CPU 约 0.483 ms（不是 App 启动耗时）。手机配套版已安装。
+详细清单与尚未验收的分享/反馈往返、复杂参考预算等边界见 `apple-watch-replay-parity-audit.md`；
+不把该结果当作所有平台、所有方法或所有 UI 交互已完全一致。
+
+### 2026-10-17：全端共享 MoYu32 地址发现（本地实现，实体魔方待验）
+
+- 唯一策略在 `shared/smart_cube/moyu32.ts`：原生真实地址、广播 manufacturer payload 尾部六字节逆序、已验证缓存，随后 MY32 的 `00/01/02` 或 MY33 的 `02/01/00` 前缀候选，最后手动输入。候选源参考 [csTimer](https://github.com/cs0x7f/cstimer/blob/master/src/js/hardware/moyu32cube.js) 和 [poliva](https://github.com/poliva/smartcube-web-bluetooth/blob/main/src/smartcube/attachment/mac-candidates.ts)，致谢登记在 canonical credits。
+- 地址只作为待验证提示：复用现有 AES 发状态请求，收到可解密且通过完整 cubie 合法性检查的状态才接受。每个候选最多等待两秒，并重发一次状态请求；探测不输出计时动作，不执行校准/重置。超时、断线和取消清理临时订阅；错误缓存不会阻止后续候选和手输。
+- Web 恢复 MoYu 广播观察，允许 CIC 0（明确识别为 Chromium <130 时保留兼容排除），支持标准 manufacturer map 和 Bluefy 原始段。Apple 平台仍以 UUID 连接，广播中携带的协议地址不等于系统 API 暴露硬件 MAC。
+- Android/iOS、Windows/macOS、HarmonyOS NEXT 共用 app-ui 的同一协商入口，Apple Watch 同样复用；微信/抖音通过现有 encrypted-ble adapter 接入同一 shared 协商。缓存分别由 Web/App localStorage、Watch UserDefaults、小程序 storage 按设备身份持久化，每次重连仍验证。
+- Watch 扫描允许后续广播补齐 manufacturer data；iOS 扫描不再用不足六字节的首包结束地址捕获。没有额外的 iPhone 依赖。
+- 本轮只提交本地代码。自动化/构建证据与 MoYu 实物连接、连续转动和自动计时验收分开记录；尚未覆盖安装、推送或发布，也不宣称各端 MoYu32 真机已通过。
+
+验证：shared 构建、Client/app-ui/Mobile 类型检查、MoYu 地址探测与 Watch/安装端协议回归、Web 蓝牙回归、Mobile 广播 adapter 回归、小程序检查及微信/抖音构建通过；Watch watchOS 未签名构建通过。Watch 模拟 MY33 握手无需 iPhone 或手输即可发布已验证缓存与 connected，尚未替代实体魔方验收。

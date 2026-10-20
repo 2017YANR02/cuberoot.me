@@ -1,12 +1,12 @@
 # Scramble samples — eoline / eoline / BGORWY / bin 1
-# Population in this bin: 480
+# Population in this bin: 485
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 4152799001,U L2 D' B2 L2 B' D2 F D2 U' B2 U2 B' F D' U2 B,G,Side Events in Nyack 2024 (2024-09-28~29),333oh R1 D #4
-2726056001,L2 F D' L2 D B2 D2 R2 F2 U B2 U' L F2 U2 R' D2 B D',O,Anzio Open 2023 (2023-05-20~21),333 Final A #1
+5871656001,B2 R2 B' L2 U2 F L2 B2 R2 D' R2 D B' U' B F2,Y,Meath For Mega Speed 2026 (2026-10-10~11),333 R1 C #5
 3789704027,R D2 B F2 L2 U2 R2 D2 L F2 D' U B' L B' D L D',G,Washtenaw Qualifiers 2024 (2024-05-24~26),333mbf Final B #1
 4020788001,R2 B2 D2 R2 F R2 B2 L2 D R2 F' D L2 F' U2 F2 D2 L',G,En Lille Søndag i Ishøj 2024 (2024-08-18),333 R2 A #4
 4521554001,L2 B D2 U2 B L2 U2 F L2 F' U' F2 R2 U L2 B F L2,Y,PUCP Cubing Festival IV 2025 (2025-02-22~23),333 R2 F #1
@@ -152,11 +152,11 @@
 942757001,D2 U' R2 D B2 R2 F2 D2 B2 F' U' R' D R2 B' D' U' R' B2 L2 D,G,Latvian Open 2018 (2018-11-23~25),333bf Final B E2
 2593206001,L2 U' F2 D' L2 F2 D2 F2 U L' R' D' U' L D' R2 D,Y,Bayonne Atoutcubes Open 2023 (2023-03-25~26),333oh Final A E2
 948951001,B U2 L2 R2 B' D2 U2 B2 D2 F' L B2 F' L' R2 F L2 F R',G,Bengaluru Winter Open 2018 (2018-12-01~02),333 R1 H #1
-953271001,L B' R F2 B R U2 L' F' R2 U2 B2 D2 F U2 D2 L2 D2,G,Swisscubing Cup Final 2018 (2018-12-08~09),333 R1 B E2
+5866979001,F L2 B' R F2 U2 D2 L' B U2 B2 D2 L2 D2 F' R2 F D2,G,St. John's Fall 2026 (2026-10-04),333 Final A E1
 968118001,D2 R' B2 L2 F2 U2 L' R F D2 U R U R' D2 L' U' R' F' L' F,Y,Sumatra Open 2018 (2018-12-29~30),333bf Final C #1
 978384001,D F2 U F2 L2 B2 U' R2 U L2 B2 L' U R' U' B2 L F2 D',W,Ajax Winter 2019 (2019-01-12),333oh Final A E1
 3626768046,U R2 F2 L2 F D2 U2 B2 R2 U2 L' U L B2 F D2 R' B R2 D2,G,TahimiKubing in MultiLupa 2024 (2024-03-31),333mbf Final A #2
-3008732001,F' U2 B' D' L2 F' R F2 R' B' F2 R D2 R' D2 L2 U2,W,Pingtung Summer Open 2023 (2023-08-26~27),333 R2 E E2
+5871025001,F U D2 L2 B' F' D2 B2 U2 B R2 D2 U R2 D2 B' L2 U2 L,Y,Concordia Fall Foliage 2026 (2026-10-10~11),333oh R1 B E2
 1019935001,L2 D2 B' L' F D2 R' U2 L2 B2 L2 B L2 B L2 B D2 B2,R,Mantua Winter 2019 (2019-02-16),333oh Final A E2
 2429675001,L F2 B2 R B U2 B' R B2 U2 B2 U2 R F2 R2 D2 L' F D,B,Partage Open 2023 (2023-01-14~15),333 R1 B #3
 2608863001,F B' R2 F' D2 R2 B' R' U2 R2 U2 B2 L U2 R' D,B,San Juan II 2023 (2023-04-02),333oh Final A #2

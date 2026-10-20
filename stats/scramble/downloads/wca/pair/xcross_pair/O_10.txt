@@ -1,8 +1,8 @@
 # Scramble samples — pair / xcross_pair / O / bin 10
-# Population in this bin: 108
-# Samples listed: 108 (all entries in this bin)
+# Population in this bin: 109
+# Samples listed: 109 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 73556001,F' B2 L' D L' B2 U' R D L F2 U2 R2 B D2 B2 R2 B' D2 R2,O,40th Anniversary Peru 2014 (2014-11-08),333 R2 A #1
@@ -113,3 +113,4 @@
 5831986011,L' D2 L' B R U B2 L2 B2 L2 U2 L2 B U B F' U' L' D2 B R,O,Les Beaupreau du Blind 2026 (2026-09-12~13),333mbf Final A #2
 5834427001,U R F2 R' B2 F2 L D2 R F2 D B2 F2 R2 F L B' R B' F',O,Tagum City Open 2026 (2026-09-12~13),333oh Final B #1
 5844608001,F R2 B U B D' B2 L' F2 U2 F2 D L2 D' B2 D R U' F,O,Kedah Cube Open 2026 (2026-09-26),333 R2 B E1
+5860466001,F2 U2 B R2 F2 U2 F D2 F U' R2 U' F D2 U' L2 R' D' B' L',O,Bowling Green Fall 2026 (2026-10-03),333 Final C #5

@@ -24,7 +24,7 @@ Git 发布先保存本轮统计提交，再用临时 Git index 把该提交的�
 | job | 内容 | 主要产物 |
 | --- | --- | --- |
 | `stages` | WCA 三阶标准阶段与变体按 ID 增量补缺 | `distribution.json`、`wca_cross`、`comp_steps*`、`difficulty_first_appearance*` |
-| `333opt` | 原生 H48 h10 续解、333 注入、最优等价打乱 | `out.0.csv`、333 变体、`wca_optimal.csv` |
+| `333opt` | 正式原生 Opt10 续解、333 注入、最优等价打乱 | `out.0.csv`、333 变体、`wca_optimal.csv` |
 | `puzzles` | 222、pyraminx、skewb、clock、SQ1 精确双口径 | `puzzle_distribution.json`、`puzzle_examples.json`、`puzzle_first_appearance.json` |
 
 `stages` 构建会重写分布和示例，故统计入口在它之后自动重注入 333。`puzzles` 会更新近期打乱、不同度量的 222/金字塔步数和 SQ1 WCA/slash 精确分布。非 WCA TIER C/D 离线采样默认停用，只有用户明确要求才用独立 `scripts/stats/puzzles-cli.ts --sampled`。TIER B 精确距离表仅明确加 `--rebuild-tier-b` 时重建。
@@ -42,3 +42,5 @@ Git 发布先保存本轮统计提交，再用临时 Git index 把该提交的�
 - 三阶整解最优：读 [333opt.md](references/333opt.md)，并读 `solver/333opt/README.md`。
 
 轻量回归：仓库根运行 `./core/node_modules/.bin/tsx --test scripts/stats/*.test.ts`；`core/` 运行 `pnpm --filter @cuberoot/scramble-stats-build exec vitest run tests/scramble_manifest.test.mjs`。全量统计、表生成和发布均是独立长任务，不属于这两个隔离测试。
+
+2026-10-17：333opt 默认已切换正式 Opt10 32G，旧 H48 h10 表不再是日常前置条件。详见 references/333opt.md 的最新约定；不要为本次缺旧表错误重建 H10。

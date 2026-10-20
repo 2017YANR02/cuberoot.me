@@ -25,8 +25,9 @@ export function TimerSoundSettings({ value, onChange, localize: tr, voiceAvailab
       )} />
     <TimerSettingRow field={volume} label={tr(volume.copy)}>
       <input type="range" min={0} max={1} step={0.05} className="settings-row-control-input"
-        aria-label={tr(volume.copy)} value={value.volume} disabled={!value.soundsEnabled}
+        aria-label={tr(volume.copy)} value={value.volume}
         onChange={e => onChange({ volume: Number(e.target.value) })} />
+      <span className="settings-volume-value">{Math.round(value.volume * 100)}%</span>
       <button type="button" className="hint-btn" style={{ minWidth: 44, minHeight: 44 }} disabled={!value.soundsEnabled}
         aria-label={tr({ zh: '试听', en: 'Test' })} onClick={() => { onWarmup(); onPreview(); }}>♪</button>
     </TimerSettingRow>

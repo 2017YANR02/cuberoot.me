@@ -1,3 +1,4 @@
+import { isDouyinToolSurface } from '@/lib/douyin-content';
 import { normalizeTimerSyncSeed, consumeTimerSeed, type TimerSeedTicket } from '@cuberoot/shared/timer/sync-seed';
 /**
  * User-facing settings — persisted to localStorage as a single JSON blob.
@@ -22,6 +23,7 @@ import {
   normalizeTimerMetronomeSettings,
   normalizeTimerColorNeutralMode,
   normalizeTimerTrainingSettings,
+  type TrainingStartMode,
   normalizeTimerKeymap,
   type TimerTypeface,
   DEFAULT_TIMER_SMART_CUBE_SETTINGS,
@@ -41,6 +43,7 @@ import {
   type TimerRandomDifficultySettings,
 } from '@cuberoot/shared/timer';
 import { useSyncExternalStore } from 'react';
+import { DEFAULT_SOLO_LAYOUT, normalizeSoloLayout, type SoloLayout } from './layout';
 import { persistItem } from '@/lib/safe-storage';
 import {
   DEFAULT_ROLLING_STAT_COLUMNS,
@@ -60,6 +63,9 @@ export interface TimerSettings extends
   TimerAttemptSplitOptions,
   TimerScramblePreviewSettings,
   TimerRandomDifficultySettings {
+  trainingStartMode: TrainingStartMode;
+  soloLayout: SoloLayout;
+
   /** Play start/stop/8s/12s sounds via Web Audio. */
   soundsEnabled: boolean;
   /** 0..1 master volume. */
@@ -159,8 +165,9 @@ export interface TimerSettings extends
 
   /** Action when user clicks the scramble strip. */
   scrambleClickAction: TimerScrambleClickAction;
+  scrambleClickStartMigrated?: boolean;
 
-  /** One-shot marker: the scramble-click default flipped to 'copy' (migrate legacy 'next'). */
+  /** Legacy marker retained for old backups; superseded by scrambleClickStartMigrated. */
   scrambleClickMigrated?: boolean;
 
   /**
@@ -254,6 +261,7 @@ export interface TimerSettings extends
 }
 
 export const DEFAULTS: TimerSettings = {
+  soloLayout: { ...DEFAULT_SOLO_LAYOUT },
   ...DEFAULT_TIMER_TIMING_SETTINGS,
   ...DEFAULT_TIMER_SMART_CUBE_SETTINGS,
   ...DEFAULT_TIMER_ATTEMPT_SPLIT_SETTINGS,
@@ -265,7 +273,7 @@ export const DEFAULTS: TimerSettings = {
   ...DEFAULT_TIMER_TYPOGRAPHY,
   compactScramble: false,
   preScr: '',    // (UF)
-  preScrT: 'z2', // (DF) — LL cases are read yellow-up (csTimer's default)
+  preScrT: '', // (UF) — white up, green front
   cnMode: 'none',
   voiceInspection: 'none',
   statsRollingColumns: [...DEFAULT_ROLLING_STAT_COLUMNS],
@@ -292,6 +300,7 @@ export const DEFAULTS: TimerSettings = {
   ...DEFAULT_TIMER_RANDOM_DIFFICULTY_SETTINGS,
   autoMarkWcaScramble: true,
   scrambleClickAction: DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION,
+  scrambleClickStartMigrated: true,
   scrambleClickMigrated: false,
   recordGyroMigrated: false,
   hideAllUiWhileRunning: false,
@@ -305,6 +314,7 @@ export const DEFAULTS: TimerSettings = {
   keymap: {},
   round: DEFAULT_ROUND_CONFIG,
   targetMsByEvent: {},
+  trainingStartMode: 'first-turn',
   dailySolveGoal: null,
   rankScopes: normalizeTimerRankScopes(undefined),
   rankCountry: '',
@@ -345,6 +355,7 @@ function load(): TimerSettings {
       ...normalizedScramblePreview,
       ...normalizedSmartCube,
       ...normalizeTimerTypography(parsed),
+      soloLayout: normalizeSoloLayout(parsed.soloLayout),
       ...normalizeTimerDisplaySettings(parsed),
       ...normalizeTimerPreScrambleSettings(parsed),
       ...normalizeTimerSoundSettings(parsed),
@@ -391,11 +402,11 @@ function load(): TimerSettings {
     merged.wcaDifficultyOn = false;
 
     // 迁移都先改 `merged`,末尾只落一次盘 —— 每条自己 `save()` 会在一次加载里写三遍。
-    // One-shot migration: scramble-click now copies by default. Flip the legacy
-    // 'next' default once (leave a deliberate 'none' alone), then persist the marker.
-    if (!merged.scrambleClickMigrated) {
-      if (merged.scrambleClickAction === 'next') merged.scrambleClickAction = 'copy';
-      merged.scrambleClickMigrated = true;
+    // The old hidden preference was ignored. Enable timing once for existing
+    // stores; preserve any explicit choices made after this migration.
+    if (parsed.scrambleClickStartMigrated !== true) {
+      merged.scrambleClickAction = DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION;
+      merged.scrambleClickStartMigrated = true;
       dirty = true;
     }
     // 录姿态默认从关翻成开 —— 存档里那个 false 是旧默认值,不是用户选的。
@@ -405,12 +416,9 @@ function load(): TimerSettings {
       merged.recordGyroMigrated = true;
       dirty = true;
     }
-    // Existing profiles persisted the old `off` default. New profiles already use
-    // `scrambled`, so only stored settings without the marker need this migration.
+    // Shared normalization migrates retired `off` values to `scrambled`.
+    // Keep the historical marker for storage compatibility.
     if (parsed.bluetoothAutoReadyMigrated !== true) {
-      if (parsed.bluetoothAutoReady === 'off') {
-        merged.bluetoothAutoReady = 'scrambled';
-      }
       merged.bluetoothAutoReadyMigrated = true;
       dirty = true;
     }
@@ -448,8 +456,21 @@ function save(s: TimerSettings): void {
   persistItem(KEY, JSON.stringify(s));
 }
 
+let douyinSource: TimerSettings | undefined;
+let douyinSettings: TimerSettings | undefined;
 export function getSettings(): TimerSettings {
-  return _cache;
+  if (!isDouyinToolSurface()) return _cache;
+  // Effective product capabilities never overwrite the user's full-site preferences.
+  if (douyinSource !== _cache) {
+    douyinSource = _cache;
+    douyinSettings = { ..._cache, ...DEFAULT_TIMER_ATTEMPT_SPLIT_SETTINGS,
+      scrambleSource: 'random', genByStepsOn: false,
+      genDiffOn: false, wcaDifficultyOn: false, wcaUseOptimal: false,
+      dailySolveGoal: null, targetMsByEvent: {}, round: { ...DEFAULT_ROUND_CONFIG, on: false },
+      showAdminFakeCube: false,
+    };
+  }
+  return douyinSettings!;
 }
 
 export function updateSettings(patch: Partial<TimerSettings>): void {
@@ -462,6 +483,7 @@ export function updateSettings(patch: Partial<TimerSettings>): void {
     ...normalizeTimerTimingSettings({ ...candidate, timingEnabled: true }),
     ...normalizeTimerSyncSeed(candidate),
     ...normalizeTimerTypography(candidate),
+    soloLayout: normalizeSoloLayout(candidate.soloLayout),
     ...normalizeTimerDisplaySettings(candidate),
     ...normalizeTimerPreScrambleSettings(candidate),
     ...normalizeTimerSoundSettings(candidate),

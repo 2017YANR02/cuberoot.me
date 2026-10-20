@@ -28,6 +28,16 @@ import {
   leadingCubeColors,
 } from '@/components/CubeColorChip/CubeColorChip';
 import SolutionView from '@/components/SolutionView';
+import { projectReconComment, reconCommentFills } from '@cuberoot/timer-ui/reconstruct/report-presentation';
+
+describe('shared React and native report comments', () => {
+  it('uses the same xcross color groups without exposing grouping punctuation', () => {
+    const parts = projectReconComment('W xcross (RB+GO)', 'cfop', new Map());
+    expect(parts.map(part => part.colors ?? part.text).join('')).toBe('// Wxcross RB GO');
+    expect(reconCommentFills('RB', ['W cross'])).toEqual(['#0000F2', '#EE0000']);
+    expect(projectReconComment('OLL-F-', 'cfop', new Map()).some(part => part.colors)).toBe(false);
+  });
+});
 
 describe('leadingCubeColors', () => {
   it('两片配色的标注 → 两个字母', () => {

@@ -1,4 +1,4 @@
-import galleryPresets from './account_avatar_gallery.generated';
+import galleryPresets, { galleryPresetIds } from './account_avatar_gallery.generated';
 export const AVATAR_SOURCES = ['auto', 'clawd', 'upload'] as const;
 export type AvatarSource = (typeof AVATAR_SOURCES)[number];
 
@@ -27,10 +27,11 @@ export const CLAWD_AVATAR_PRESETS = [
 ] as const;
 
 // 'clawd' remains the stored preset-source value for backwards-compatible sessions.
-export const ACCOUNT_AVATAR_PRESETS = [
+// Session validation only needs IDs; let bundles omit the full display gallery.
+export const ACCOUNT_AVATAR_PRESETS = /* @__PURE__ */ (() => [
   ...CLAWD_AVATAR_PRESETS.map(p => ({ ...p, petId: 'clawd', src: '/deskpet/' + p.file, sourceSrc: '/deskpet/' + p.file })),
   ...galleryPresets,
-];
+])();
 export type ClawdAvatarPresetId = string;
 export function getAccountAvatarPreset(id: string | null | undefined) {
   return ACCOUNT_AVATAR_PRESETS.find(p => p.id === id);
@@ -38,7 +39,10 @@ export function getAccountAvatarPreset(id: string | null | undefined) {
 export const DEFAULT_CLAWD_AVATAR_PRESET: ClawdAvatarPresetId = 'idle';
 
 const AVATAR_SOURCE_SET = new Set<string>(AVATAR_SOURCES);
-const CLAWD_AVATAR_PRESET_SET = new Set<string>(ACCOUNT_AVATAR_PRESETS.map((preset) => preset.id));
+const CLAWD_AVATAR_PRESET_SET = new Set<string>([
+  ...CLAWD_AVATAR_PRESETS.map((preset) => preset.id),
+  ...galleryPresetIds,
+]);
 
 export function isAvatarSource(value: unknown): value is AvatarSource {
   return typeof value === 'string' && AVATAR_SOURCE_SET.has(value);

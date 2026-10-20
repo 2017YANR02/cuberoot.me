@@ -337,7 +337,7 @@ function CaseRow({ row, cases }: { row: ProgressCase; cases: AlgCase[] | undefin
   return (
     <Link href={href} className="alg-case-row" prefetch={false}>
       {c
-        ? <CaseThumb puzzle={row.puzzle} set={row.set} sticker={c.sticker}
+        ? <CaseThumb loading="lazy" local puzzle={row.puzzle} set={row.set} sticker={c.sticker}
             alg={alg} setup={c.setup} size={54} />
         : <span className="alg-case-blank" aria-hidden />}
       <span className="alg-case-main">

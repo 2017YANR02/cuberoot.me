@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / BGWY / bin 3
-# Population in this bin: 851
+# Population in this bin: 854
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 1706763001,D' B2 F2 U L2 D2 L2 B2 D' R U L' D2 L2 D' B L D' L',Y,Kharkiv Cubefall 2021 (2021-10-23~24),333 R2 B #4
@@ -79,7 +79,7 @@
 376060001,F2 U2 B U' F2 U' B D2 F2 U' L2 F' R2 F' D2 B U2 B2,Y,Ebenezer Spring 2016 (2016-10-09),333 R1 B #5
 379911001,U' D L U' F' B D' L D B' U2 L' U2 R2 L F2 L' F2,W,Cubing ATMOSphere 2016 (2016-10-15~16),333 R1 I E2
 1136875001,D2 U F2 D L2 D' L2 B2 L' U' B2 D2 U2 R B' F U B2 L,Y,San Marino Nationals 2019 (2019-05-11~12),333 R2 B E1
-3161715001,U2 B F D2 U2 B' U2 R2 U R2 B2 R' F L D2 R2 F2 L,G, Esprit Cube Open Bayonne 2023 (2023-10-14~15),333 R2 B #2
+3161715001,U2 B F D2 U2 B' U2 R2 U R2 B2 R' F L D2 R2 F2 L,G,Esprit Cube Open Bayonne 2023 (2023-10-14~15),333 R2 B #2
 5821060001,D R' F2 D2 F' D2 B D2 L2 U2 L2 U B2 U' B F2 U B L2 U',W,Presidente Prudente Open 2026 (2026-09-05~06),333bf Final B #5
 391470001,F2 R2 D2 U' L2 D' B2 D2 R2 F D2 F2 D B U F D2 U',B,Cubetcha 2016 (2016-11-05),333 R2 A #3
 2966977028,B2 D2 F' U2 B R2 U2 F' U L2 F' L' R B' L B' R2 B R D,G,Zoioff Campinas 2023 (2023-08-05~06),333mbf Final A #2

@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxxcross / B / bin 11
-# Population in this bin: 591
+# Population in this bin: 596
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 4096276001,B' R2 F R2 B' D2 F U R U D2 R2 L2 D R2 U B2 D,B,Laos Championship 2024 (2024-09-14),333oh Final B E2
@@ -118,7 +118,7 @@
 3225675001,D2 U2 F2 D2 U2 L D2 U2 F2 L' D' F' D2 L' D' U' B L2 R,B,Guwahati Autumn Open 2023 (2023-10-29),333 R1 D #2
 3227592001,D' F2 D2 R2 D F2 L2 D' U' L' F U' F' D' F' R2 D' F',B,Bavarian Open 2023 (2023-11-03~05),333 R3 B E1
 4526224001,D2 F L F' B' U' D' L2 D' B' R2 U2 R' U2 R U2 R' B2,B,Sqauckland 2025 (2025-02-22),333 R2 B #1
-5000493001,D' F' R2 U L2 U' R2 B2 L' B L R2 B L2 D2 B R2,B,Clock on the Madison Rocks 2025 (2025-09-05~06),333 R2 B #4
+5873784001,F L2 B2 R' D2 B2 D2 F2 R B2 D L' D2 L F2 U2 R,B,Cuberos del Chaco 2026 (2026-10-10),333 R1 A #2
 1495818001,F D2 L2 B' L2 F' R2 F L B2 L' U2 L2 R' F' L2 B U2,B,Potomac Speedcubing 2020 (2020-01-11),333 R1 F #3
 3255452001,R2 B' U2 D R2 F' B L D2 R U' L2 D R2 D F2 R2 D B2,B,Evanston Fall Mini C 2023 (2023-11-11),333 R1 D E2
 2993075001,B' L2 F R2 B' F2 R2 B' D L R' B2 F U2 L B2 R U' R,B,Evanston Summer Big Cubes 2023 (2023-08-20),333 Final A #3
@@ -171,7 +171,7 @@
 4126711001,U R2 U L F L' F R2 U' L F2 R U2 R' F2 R' F2,B,Meridiano Cota 2024 (2024-09-22),333 R1 B E2
 2816027001,R' D2 R2 U2 R D2 B2 U B U' R' U2 R' F' L2 B U2 L2,B,Southern Ontario Summer - Waterloo 2023 (2023-06-24),333 R1 A #1
 5792069001,F L2 B2 D' R2 U' F2 D2 U B D2 L' R B2 L2 B' D2 F' U,B,Temecula Valley Back To School 2026 (2026-08-22),333 R1 B E1
-3876255001,U' F D' B' U D' B' D2 R' D2 L D2 L' B2 L U2 R' F2 R2,B,Good Time at Beletime 2024 (2024-06-23),333oh Final A E1
+5874012001,L2 F2 U2 F2 U2 L2 B2 F' D2 R' D' R D' L' B2 F' D2 B,B,Portugal Championship 2026 (2026-10-09~11),333bf R1 A #2
 4707222001,L' F' U2 R2 D' R2 D F2 D2 L2 U B2 L D2 B L R2 D L' B R,B,Flatåsen Open 2025 (2025-05-03~04),333bf R1 A #3
 1031806001,D' L2 U' B2 R2 B2 U2 F2 R D B2 D' B' D2 R' D' U R2 F,B,Newton Speedcubing 2019 (2019-02-24),333 R1 B #5
 1034920001,B2 D R2 D' F2 L2 U' B2 R' D' L2 D2 B2 L2 B' D2 F' L2 B R2,B,El Carmen De Viboral 2019 (2019-02-23~24),333bf Final A E2

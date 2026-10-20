@@ -1,6 +1,6 @@
 export type SplitLaneId = 'a' | 'b';
 export type SplitOrder = 'shuffle' | 'seq';
-export type SplitBatchSize = 1 | 3;
+export type SplitBatchSize = 1 | 2 | 3 | 6;
 
 export interface SplitLaneState {
   keys: string[];

@@ -1,8 +1,8 @@
 # Scramble samples — std / xxcross / O / bin 5
-# Population in this bin: 147
-# Samples listed: 147 (all entries in this bin)
+# Population in this bin: 148
+# Samples listed: 148 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 33688001,D' L D2 R2 L' D R' B' D L' F D2 R2 B2 U2 B2 D2 B D2,O,P3 Grand Open 2014 (2014-06-28~29),333 R1 S E2
@@ -152,3 +152,4 @@
 5821807001,F R F' B' R2 B R' D2 L2 F D' R2 D R2 U2 R2 B2 D2,O,Jogjakarta Happy Solving 2026 (2026-09-05),333 R1 C E1
 5838211004,F U L B' D2 R2 B2 D2 L2 F' R2 U2 L' B D2 R U' L' B2 F2 L B2,O,Gouverneur Quiet 2026 (2026-09-19~20),333mbf Final B #2
 5846258001,L2 F' R2 L' F' B L D2 F2 U2 D' L2 U2 D B2 L' B' R2,O,Tafalla Open 2026 (2026-09-26~27),333 R1 B #3
+5860203001,B2 F' L2 F' D2 B' L2 R2 U2 F U' B F2 L' U2 L B F,O,ODU Big Blue Fall 2026 (2026-10-03),333oh Final C #5

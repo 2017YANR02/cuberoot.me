@@ -9,6 +9,7 @@ import {
   type UseQueryStatesKeysMap, type UseQueryStatesOptions, type UseQueryStatesReturn,
 } from 'nuqs';
 import { trainingQueryKey, trainingSearchParams } from './timer-training-location';
+import { retiredAlgTrainerHref } from './timer-training-catalog';
 
 export { trainingQueryKey } from './timer-training-location';
 
@@ -18,11 +19,11 @@ export interface TrainingHost {
   mapHref(href: string): string;
   /** Optional toolbar destination for an explicitly hosted settings popover. */
   settingsPortal?: HTMLElement | null;
-  practiceSettings?: ReactNode;
+  /** Device trigger owned by the active trainer, with one BLE/input lifecycle. */
+  devicePortal?: HTMLElement | null;
 }
 
 const TrainingHostContext = createContext<TrainingHost | null>(null);
-const unchangedHref = (href: string) => href;
 
 export function TrainingHostProvider({ value, children }: { value: TrainingHost; children: ReactNode }) {
   return <TrainingHostContext.Provider value={value}>{children}</TrainingHostContext.Provider>;
@@ -34,7 +35,7 @@ export function useTrainingHost(): TrainingHost | null {
 
 /** Context-only: safe for global AppLink without introducing a search-params Suspense boundary. */
 export function useTrainingHref(): (href: string) => string {
-  return useTrainingHost()?.mapHref ?? unchangedHref;
+  return useTrainingHost()?.mapHref ?? retiredAlgTrainerHref;
 }
 
 export function useTrainingParams<T extends Record<string, string | string[]> = Record<string, string | string[]>>(): T {

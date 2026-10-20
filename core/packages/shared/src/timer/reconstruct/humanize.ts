@@ -372,7 +372,15 @@ export function humanizeStream(
     const b = counted[i + 1];
     const split = b ? table.get(`${a.m} ${b.m}`) : undefined;
     return !!core && !!b && !!split
-      && coreTurnsIn(core, a.ts, b.endTs, split.rotation).length > 0;
+      && coreTurnsIn(core, a.ts, b.endTs, split.rotation).some(index => {
+        if (core.frame !== 'scramble') return true;
+        const event = core.events[index];
+        // Both encoder notifications must belong to the measured gesture.
+        // An opposite face after a pause must not borrow the earlier slice's
+        // core event merely because its interval starts near that event.
+        const start = event.sliceStartMs ?? event.startMs ?? event.tMs;
+        return a.ts >= start - CORE_EVENT_SLACK_MS && b.endTs <= event.tMs + CORE_EVENT_SLACK_MS;
+      });
   });
   const eligible = counted.map(() => true);
   if (core?.frame === 'scramble') {
@@ -397,9 +405,13 @@ export function humanizeStream(
   // 增量方案；判据是中心块必须回家,不是间隔,也不是「姿态流没看见就算没有」。
   const algebraicPlan = planMerges(counted, table, counted.map(() => false), eligible, boundaries);
   const measuredPlan = planMerges(counted, table, forced, eligible, boundaries);
-  // 姿态阳性只在它能认出更多中层时介入。相同合并数时纯代数方案已经满足中心
-  // 回位,而真机姿态里的短暂倾斜可能恰好落进别的相对面对,不能拿它改写整段。
-  const planned = measuredPlan.size > algebraicPlan.size ? measuredPlan : algebraicPlan;
+  // 优先认出更多中层；数量相同时，已标定姿态可用完整覆盖两条通知的
+  // 实测证据裁决，避免把中层的后半步与下一组动作错配。
+  const supportedPairs = (plan: Set<number>) => [...plan].filter(index => forced[index]).length;
+  const planned = measuredPlan.size > algebraicPlan.size
+    || (core?.frame === 'scramble' && measuredPlan.size === algebraicPlan.size
+      && supportedPairs(measuredPlan) > supportedPairs(algebraicPlan))
+    ? measuredPlan : algebraicPlan;
 
   const out: HtmMove[] = [];
   const rotations: HumanRotation[] = [];
@@ -519,6 +531,7 @@ export function humanizeStream(
   // 区间横跨了已由动作流还原出的中层,说明检测器把「独立转体 + 中层核心运动」并成了
   // 一段。这时开始时刻才是独立转体的位置,不能按结尾把它塞给最后一个中层。
   const eventTime = (event: (typeof events)[number]): number => {
+    if (!event.wide && event.notationMs !== undefined) return event.notationMs;
     const start = event.startMs ?? event.tMs;
     if (event.tMs - start <= 1200) return start;
     const spansPlannedSlice = [...planned].some(i => {
@@ -527,13 +540,18 @@ export function humanizeStream(
     });
     return spansPlannedSlice ? start : event.tMs;
   };
+  // Pose settle times and wide-turn encoder anchors can cross. Consume events
+  // in the same notation-time order used to weave the displayed sequence;
+  // retain source indices for slice ownership and the untouched gyro track.
+  const notationOrder = events.map((_, index) => index)
+    .sort((a, b) => eventTime(events[a]) - eventTime(events[b]) || a - b);
   let evPtr = 0;
   /** `out` 里从这个下标起才允许和前一条并 —— 转体会把它推到末尾。 */
   let noJoinBefore = 0;
   /** 这一手开始之前还没被认领的换格 = 人在这儿做了转体。 */
   const writeRotationsBefore = (tMs: number): void => {
-    while (evPtr < events.length && eventTime(events[evPtr]) <= tMs) {
-      const idx = evPtr++;
+    while (evPtr < notationOrder.length && eventTime(events[notationOrder[evPtr]]) <= tMs) {
+      const idx = notationOrder[evPtr++];
       if (claimed.has(idx) || suppressed.has(idx)) continue;
       const event = events[idx];
       const token = event.wide ? (event.wideToken ?? inverseToken(event.token)) : event.token;

@@ -46,15 +46,15 @@ function doctor() {
   console.log(`simctl: ${simctl}`);
 }
 
-function buildSimulator() {
+function buildSimulator(watch = false) {
   doctor();
   run('xcrun', [
     'xcodebuild',
     '-project', XCODE_PROJECT,
-    '-scheme', 'App',
+    '-scheme', watch ? 'CubeRootWatch' : 'App',
     '-configuration', 'Debug',
-    '-sdk', 'iphonesimulator',
-    '-destination', 'generic/platform=iOS Simulator',
+    '-sdk', watch ? 'watchsimulator' : 'iphonesimulator',
+    '-destination', watch ? 'generic/platform=watchOS Simulator' : 'generic/platform=iOS Simulator',
     '-derivedDataPath', join(tmpdir(), 'cuberoot-mobile-ios-derived-data'),
     'CODE_SIGNING_ALLOWED=NO',
     'build',
@@ -64,6 +64,7 @@ function buildSimulator() {
 const command = process.argv[2] ?? 'doctor';
 if (command === 'doctor') doctor();
 else if (command === 'build') buildSimulator();
+else if (command === 'watch-build') buildSimulator(true);
 else {
   console.error(`Unknown iOS toolchain command: ${command}`);
   process.exit(2);

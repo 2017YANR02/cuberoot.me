@@ -2,7 +2,7 @@
 # Population in this bin: 92
 # Samples listed: 92 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 29329001,B2 R2 F2 U R2 U B2 U2 B U L2 D' F D2 U' L2 U,O,No Parity Open 2014 (2014-06-21),333 R2 A E2
@@ -69,7 +69,7 @@
 3590416001,B2 R' U2 B2 D2 R2 B2 L2 F' D2 B' D2 L' B U2 L' R,O,Nýliðamót Kubbafélagsins 2024 (2024-03-16),333 R2 C #2
 3591587001,R2 F' U L2 B' D2 B2 D2 B2 R2 B R' D' L' F2 R' F' L',O,Don't Turn SLOw Spring 2024 (2024-03-16),333 Final A #2
 3645930001,B' L' B D2 B L' B2 L U2 F R2 B' D2 F' B' U2 R2 B2,R,Freo Cube-Off 2024 (2024-04-07),333 R1 B E1
-3886385001,U' B U' F' B' R F2 R' D2 L2 U2 B D2 B U2 F2 U2 L2 B',O, Vasconcubos 2024 (2024-06-22~23),333 R2 B #1
+3886385001,U' B U' F' B' R F2 R' D2 L2 U2 B D2 B U2 F2 U2 L2 B',O,Vasconcubos 2024 (2024-06-22~23),333 R2 B #1
 3977667001,L2 F D R2 B2 F L2 B2 F R2 U2 D' F2 R2 D2 F U2 L R,R,Malaysia 15th Anniversary Championship 2024 (2024-07-27~28),333oh R1 D E1
 4003397001,U2 L2 R D' U' L2 D L2 F2 D R2 U2 R' D2 F' R' F2 R2 F',O,V per Varese 2024 (2024-08-10~11),333oh R1 A #4
 4087938001,U' R' D B L2 R2 U2 F' R2 B R2 D' L2 D2 U2 R D' L2 U,R,Apol Open Guayaquil 2024 (2024-09-07),333oh Final C E1

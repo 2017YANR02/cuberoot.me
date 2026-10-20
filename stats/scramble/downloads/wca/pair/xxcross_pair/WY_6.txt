@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxcross_pair / WY / bin 6
-# Population in this bin: 503
+# Population in this bin: 505
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 3261628010,B2 L2 F2 U B2 D2 F2 D' F2 L' U2 R2 U L2 U' B' D L B' L,W,Virginia Championship 2023 (2023-11-10~12),333mbf Final A #1
@@ -153,7 +153,7 @@
 1104286011,D' B2 F2 R2 D2 F2 U' B2 D B' L' B' D' B2 L2 F D F2 R2 U' B' L',W,Rocky Point Open 2019 (2019-04-13~14),333mbf Final A #2
 4301981003,L2 B L2 U2 L2 F' D2 F' D2 B2 L2 R B D2 U' R' B2 L D2 U' B R,Y,Blind in Aveiro 2024 (2024-11-23),333mbf Final A #1
 4459333054,D2 F' D2 L B' U' L' D F2 D2 L U2 R' B2 L2 U2 L U2 D',W,Wellington Mind Games 2025 (2025-01-26),333mbf Final A #2
-2861826001,U2 F' L' F2 U' R2 U2 R2 U2 B2 D B2 U' R U R B' D' B' F2,W,Cubing Returns Munich B 2023 (2023-07-09),333 R1 C #4
+5864735001,U' L2 B' R' F' B' U' B F2 U R2 D R2 D R2 B2 U,Y,Guangzhou Grand Open 2026 (2026-10-05~06),333 R1 B #3
 1169883001,L2 U' B2 L2 B2 L2 D' B2 U' F' R' B2 U2 B' U2 R2 U B2 D B' L,W,Copa Black Horse 2019 (2019-06-01~02),333bf Final A E1
 1177682001,R2 D' U R2 F2 R2 F2 R2 D2 U' L' D U' R' D2 R' D' F' L' F' L2 U,W,Ukrainian Open 2019 (2019-06-08~09),333bf Final B #2
 2891123001,B R2 U D' B L D2 R B' R2 F2 D2 L2 B2 L2 D' R2 D2 R',W,Canadian Championship 2023 (2023-07-13~16),333oh Final A #5

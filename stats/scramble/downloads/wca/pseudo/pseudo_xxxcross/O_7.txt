@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxxcross / O / bin 7
-# Population in this bin: 921
+# Population in this bin: 926
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 23001,D2 U L2 B2 R2 F2 R2 U2 R2 D' R' D B2 U B' R B' D B' L',O,Galeries Dorian Open 2014 (2014-03-15),333bf Final A #2
@@ -24,7 +24,7 @@
 4846168001,D' F U R B' U2 L B U' B2 D2 B2 L2 D2 L2 F R' F' D2,O,Trentatré Trentini Entrarono a Trento 2025 (2025-07-05~06),333bf R1 A #2
 4578226001,R D R' B R2 B' L2 F2 D2 F' D2 F' L' D2 F U F',O,Wichita Art Museum 2025 (2025-03-22),333 Final A #1
 70443001,U' B D2 B D B2 R' U2 R U D2 R2 U2 R2 B2 U2 B2 L2 B2,O,Saint Petersburg Open 2014 (2014-10-25~26),333oh R2 A E2
-70745001,D2 B2 L' D B' U' R D2 R' F2 D2 L2 F2 U' R2 U' R2 F2 D L2,O,Hérimoncourt Open 2014 (2014-10-25~26),333 R1 C #1
+5863083001,F R B D2 F R2 F' D2 B' F2 D L B L R' U' R' U',O,Primma Cube Open 2026 (2026-10-03~04),333oh Final A #1
 4474132002,B2 L2 U' R2 U2 R2 L B2 F L U2 F L F2 U2 F U' L B',O,Singapore Championship 2025 (2025-02-07~09),333mbf Final A #1
 77446001,F2 U' L2 U' B2 U' F2 U' F' R B2 F R U' F2 R D' B2 D,O,PLS Autumn Reda 2014 (2014-11-08~09),333oh R1 B E1
 5439449001,R2 B2 D2 B2 L2 U R' U' L F D2 F2 U R2 D2 R2 U B',O,PUCP Cubing Festival IX 2026 (2026-03-07~08),333bf Final A #3

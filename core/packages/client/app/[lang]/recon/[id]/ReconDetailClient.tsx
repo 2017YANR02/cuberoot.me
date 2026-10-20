@@ -1,5 +1,6 @@
 'use client';
 
+import { reconVideoGroups } from '@/lib/recon-video-url';
 import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';
 
@@ -703,8 +704,14 @@ function StatsGrid({ solve }: { solve: ReconSolve }) {
 }
 
 export function VideoSection({ videoUrl }: { videoUrl: string }) {
-  const urls = videoUrl.split('\n').map(u => u.trim()).filter(u => u);
+  const groups = reconVideoGroups(videoUrl);
+  if (!groups.length) return null;
+  return <div className="detail-section detail-video-row">
+    {groups.map((urls, index) => <VideoSourceGroup key={index + ':' + urls.join('\n')} urls={urls} />)}
+  </div>;
+}
 
+function VideoSourceGroup({ urls }: { urls: string[] }) {
   const ytUrls: string[] = [];
   const biliUrls: string[] = [];
   const douyinUrls: string[] = [];
@@ -719,9 +726,10 @@ export function VideoSection({ videoUrl }: { videoUrl: string }) {
   const [country, setCountry] = useState<string | null>(null);
   const [selectedUrl, setSelectedUrl] = useState<string | null>(null);
   const sources = [
-    { url: ytUrls[0], platform: 'youtube', label: 'YouTube', logo: YOUTUBE_LOGO },
-    { url: biliUrls[0], platform: 'bilibili', label: tr({ zh: 'B 站', en: 'Bilibili' }), logo: BILIBILI_LOGO },
-    { url: douyinUrls[0], platform: 'douyin', label: tr({ zh: '抖音', en: 'Douyin' }), logo: DOUYIN_LOGO },
+    ...ytUrls.map(url => ({ url, platform: 'youtube', label: 'YouTube', logo: YOUTUBE_LOGO })),
+    ...biliUrls.map(url => ({ url, platform: 'bilibili', label: tr({ zh: 'B 站', en: 'Bilibili' }), logo: BILIBILI_LOGO })),
+    ...douyinUrls.map(url => ({ url, platform: 'douyin', label: tr({ zh: '抖音', en: 'Douyin' }), logo: DOUYIN_LOGO })),
+    ...otherUrls.map(url => ({ url, platform: 'other', label: tr({ zh: '视频链接', en: 'Video link' }), logo: '' })),
   ].filter(source => source.url);
   const hasChoice = sources.length > 1;
   useEffect(() => {
@@ -731,39 +739,29 @@ export function VideoSection({ videoUrl }: { videoUrl: string }) {
     return () => { cancelled = true; };
   }, [hasChoice]);
 
-  const priority = country === 'cn' ? ['bilibili', 'douyin', 'youtube'] : ['youtube', 'bilibili', 'douyin'];
+  const priority = country === 'cn' ? ['bilibili', 'douyin', 'youtube', 'other'] : ['youtube', 'bilibili', 'douyin', 'other'];
   const preferred = sources.find(source => source.platform === priority.find(platform => sources.some(item => item.platform === platform)));
   // Wait for the bounded IP lookup before loading either platform's cover. A manual
   // choice takes precedence and is never replaced by a late region response.
   const active = sources.find(source => source.url === selectedUrl)
     ?? (!hasChoice || country !== null ? preferred : undefined);
-  const linkUrls = [...ytUrls.slice(1), ...biliUrls.slice(1), ...douyinUrls.slice(1), ...otherUrls];
-  if (!sources.length && !linkUrls.length) return null;
+  if (!sources.length) return null;
 
   return (
-    <div className="detail-section">
-      {sources.length > 0 && <div className="detail-video-row">
-        <div className="detail-video-player">
-          {active ? <VideoEmbed key={active.url} url={active.url} /> : <div className="detail-video-wrap" aria-busy="true" />}
-          {hasChoice && <div className="detail-video-switches">
-            {sources.filter(source => source !== active).map(source => {
-              const label = tr({ zh: `切换到 ${source.label}`, en: `Switch to ${source.label}` });
-              return <Tooltip key={source.platform} content={label}>{tip => (
-                <button {...tip} type="button" className="detail-video-switch"
-                  aria-label={label} onClick={() => setSelectedUrl(source.url)}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={source.logo} alt="" width={26} height={26} />
-                </button>
-              )}</Tooltip>;
-            })}
-          </div>}
-        </div>
+    <div className="detail-video-player">
+      {active ? <VideoEmbed key={active.url} url={active.url} /> : <div className="detail-video-wrap" aria-busy="true" />}
+      {hasChoice && <div className="detail-video-switches">
+        {sources.filter(source => source !== active).map(source => {
+          const label = tr({ zh: `切换到 ${source.label}`, en: `Switch to ${source.label}` });
+          return <Tooltip key={source.url} content={label}>{tip => (
+            <button {...tip} type="button" className="detail-video-switch"
+              aria-label={label} onClick={() => setSelectedUrl(source.url)}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              {source.logo ? <img src={source.logo} alt="" width={26} height={26} /> : <Video size={26} />}
+            </button>
+          )}</Tooltip>;
+        })}
       </div>}
-      {linkUrls.map((url, i) => (
-        <a key={`l${i}`} href={url} target="_blank" rel="noopener noreferrer" className="detail-video-link">
-          <Video size={16} /> {url}
-        </a>
-      ))}
     </div>
   );
 }
@@ -805,7 +803,7 @@ function VideoEmbed({ url }: { url: string }) {
   const isB23 = /b23\.tv/i.test(url);
   if (bvMatch) {
     const bvId = bvMatch[1];
-    return <BilibiliFacade bvId={bvId} href={`https://www.bilibili.com/video/${bvId}`} />;
+    return <BilibiliFacade bvId={bvId} href={url} />;
   }
   if (isB23) {
     return <BilibiliFacade bvId={null} href={url} />;
@@ -815,9 +813,18 @@ function VideoEmbed({ url }: { url: string }) {
     return <DouyinFacade url={url} />;
   }
 
+  if (/\/v1\/recon\/video\/\d+(?:[?#]|$)|\.(?:mp4|webm|mov)(?:[?#]|$)/i.test(url)) {
+    return <div className="detail-video-wrap">
+      <video src={url} controls preload="metadata" playsInline aria-label={tr({ zh: '视频', en: 'Video' })} />
+    </div>;
+  }
+
   return (
-    <a href={url} target="_blank" rel="noopener noreferrer" className="detail-video-link">
-      <Video size={16} /> {url}
+    <a href={url} target="_blank" rel="noopener noreferrer" className="detail-video-wrap detail-video-facade">
+      <span className="detail-video-fallback">
+        <Video size={40} aria-hidden="true" />
+        {tr({ zh: '打开视频', en: 'Open video' })}
+      </span>
     </a>
   );
 }

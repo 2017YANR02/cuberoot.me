@@ -17,7 +17,7 @@
  *
  * 2026-08-03 起只剩一根:回放那根(带阶段名、阶段用时、游标,可以点着跳)。报告
  * 顶部那根删了 —— 同一份切分在一页上画两遍,读者第一反应是去找两者的区别。名字和
- * 游标仍是可选的:切不出谱子的把仍会拿它当素条用。
+ * 游标仍是可选的:切不出还原步骤的把仍会拿它当素条用。
  *
  * ## 游标为什么不走 React 状态
  *
@@ -33,13 +33,14 @@
 import { useImperativeHandle, useLayoutEffect, useMemo, useRef } from 'react';
 
 import { useReconstructHost } from './ReconstructHost';
+import { reconstructionTimeline } from './timeline-model';
 
 import type { ReconTextLine } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import type { SolveMove } from '@cuberoot/shared/timer/reconstruct/stage-segments';
-import { METHODS, type MethodId } from '@cuberoot/shared/timer/reconstruct/methods';
+import type { ReconstructionType } from '@cuberoot/shared/timer/reconstruct/recon-text';
 
 export interface SolveTimelineProps {
-  method?: MethodId;
+  method?: ReconstructionType;
   moves: SolveMove[];
   /** 计时总长。所有横坐标都按它归一化。 */
   totalMs: number;
@@ -63,34 +64,7 @@ export interface SolveTimelineHandle {
   setPlayhead(ms: number | null): void;
 }
 
-type StageKey = 'cross' | 'f2l' | 'oll' | 'pll';
-
-interface StageSpan {
-  key: string;
-  color: StageKey;
-  label: string;
-  fromMs: number;
-  toMs: number;
-  ms: number;
-}
-
-/** 轨道上的一段:一步的「在看」或「在拧」。 */
-interface Seg {
-  key: string;
-  stage: string;
-  color: StageKey;
-  /** 同阶段里的第几段,用来给四对 F2L 分深浅。 */
-  shade: number;
-  pause: boolean;
-  fromMs: number;
-  toMs: number;
-}
-
 const pct = (v: number) => `${(v * 100).toFixed(3)}%`;
-
-const stageOfLine = (kind: ReconTextLine['kind']): StageKey => (
-  kind === 'inspection' || kind === 'cross' ? 'cross' : kind === 'f2l' ? 'f2l' : kind
-);
 
 export default function SolveTimeline({
   method = 'cfop', moves, totalMs, lines, showLabels, currentIdx, onSeek, ref,
@@ -103,45 +77,7 @@ export default function SolveTimeline({
   const pointerRef = useRef<number | null>(null);
 
   // 一行两段:识别(暗)+ 执行(亮)。识别数缺席时整行都算执行 —— 不为它编一个停顿。
-  const segs = useMemo<Seg[]>(() => {
-    const out: Seg[] = [];
-    const seen: Record<string, number> = {};
-    for (const line of lines) {
-      const color = stageOfLine(line.kind);
-      const stage = line.stageKey ?? (method === 'cfop' ? color : line.key === 'tail' ? METHODS[method].stages.at(-1)!.key : line.key);
-      const shade = seen[stage] ?? 0;
-      seen[stage] = shade + 1;
-      // 一步从「上一手落下」算起,所以起点是 fromIdx-1 那一手的时刻(第一步从 0 起)。
-      const fromMs = line.fromIdx > 0 ? (moves[line.fromIdx - 1]?.ts ?? 0) : 0;
-      const toMs = moves[line.toIdx]?.ts ?? fromMs;
-      // 识别时间是分步分析表算好的,可能因为四舍五入比这一步还长 —— 钳住,
-      // 否则执行段会算出负宽度盖到下一步头上。
-      const recog = Math.max(0, Math.min(line.recognitionMs ?? 0, toMs - fromMs));
-      if (recog > 0) {
-        out.push({ key: `${line.key}-p`, stage, color, shade, pause: true, fromMs, toMs: fromMs + recog });
-      }
-      out.push({ key: line.key, stage, color, shade, pause: false, fromMs: fromMs + recog, toMs });
-    }
-    return out;
-  }, [lines, moves, method]);
-
-  const stages = useMemo<StageSpan[]>(() => {
-    const label: Record<StageKey, string> = {
-      cross: tr({ zh: '十字', en: 'CROSS' }), f2l: 'F2L', oll: 'OLL', pll: 'PLL',
-    };
-    const out: StageSpan[] = [];
-    for (const line of lines) {
-      const color = stageOfLine(line.kind);
-      const key = line.stageKey ?? (method === 'cfop' ? color : line.key === 'tail' ? METHODS[method].stages.at(-1)!.key : line.key);
-      const definition = METHODS[method].stages.find(stage => stage.key === key);
-      const fromMs = line.fromIdx > 0 ? (moves[line.fromIdx - 1]?.ts ?? 0) : 0;
-      const toMs = moves[line.toIdx]?.ts ?? fromMs;
-      const last = out[out.length - 1];
-      if (last && last.key === key) { last.toMs = toMs; last.ms += toMs - fromMs; }
-      else out.push({ key, color, label: method === 'cfop' ? label[color] : definition ? tr(definition) : line.label ?? key, fromMs, toMs, ms: toMs - fromMs });
-    }
-    return out;
-  }, [lines, moves, tr, method]);
+  const { segs, stages } = useMemo(() => reconstructionTimeline(lines, moves, method, tr), [lines, moves, method, tr]);
 
   if (moves.length === 0) return null;
 
@@ -186,7 +122,7 @@ export default function SolveTimeline({
               className="stl-cap"
               style={{ left: pct(s.fromMs / span), width: pct((s.toMs - s.fromMs) / span) }}
             >
-              {(s.ms / 1000).toFixed(2)}
+              {s.timeText}
             </span>
           ))}
         </div>

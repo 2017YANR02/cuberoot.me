@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / BGWY / bin 6
-# Population in this bin: 256
+# Population in this bin: 259
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 6373001,U D2 F U' L' F2 D R2 L D' L2 D' F2 R2 F2 U F2 R2 D,B,Rumia Open 2014 (2014-03-29~30),333 R1 A E2
@@ -103,7 +103,7 @@
 5424486025,U2 L2 U L2 B2 D R2 B' L B2 F2 D F2 L' B' U2 L D2 L2 U',W,Richardshhhon 2026 (2026-02-28~03-01),333mbf Final A #3
 1725328001,B U2 B2 L2 F2 D R2 U2 F D' F2 L F2 L2 F' U L2 F',W,SacCubing X 2021 (2021-11-13),333 Final A #4
 1752595001,F R U L' D2 L2 D L' D' F' L2 F' D2 L2 U2 B U2 B D',W,Rocky Top 2021 (2021-12-04~05),333oh Final A E1
-1768036001,R2 F2 D2 F B' D F2 R' D R U D B2 L2 U L2 B2 U2,G,Tartu Open 2021 (2021-12-18),333 R1 A E1
+5870493001,R L2 F' R2 U2 B F2 D2 F R2 U2 R2 L F L R D F R2 B2,G,Maine Fall 2026 (2026-10-10),333 R1 B #4
 1820034001,D F' U B' F' R2 B R2 D2 F' D2 U2 B' D' B D2 R B2 F' L',B,UIO 2022 (2022-02-26~27),333 R1 C #2
 5624269001,R F2 D2 B2 U2 R B2 L B2 D' R B' R2 B2 F D2 L2 F2,G,Bayonne Atoutcubes Open 2026 (2026-05-08~10),333oh Final B #1
 1940206001,B D' B' L U' B2 U F' B2 D' B R2 B2 D2 R' D2 R' D2 F2,Y,3x3x3 Only Hamilton B 2022 (2022-05-29),333 R2 A E1

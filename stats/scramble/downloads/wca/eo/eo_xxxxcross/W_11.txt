@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxxcross / W / bin 11
-# Population in this bin: 627
+# Population in this bin: 630
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 38706001,U' L' F' R' F D B' R2 D B2 L U L2 U2 L2 U D2 B2,W,Croatian Open 2014 (2014-07-19~20),333oh Final A #1
@@ -90,7 +90,7 @@
 3924706001,F U' R2 U F' D B U' L F' U D L2 D L2 U2 B2 U L2,W,Green Summer 2024 (2024-07-06),333 R1 B #4
 5728202001,D' B2 D' U' L2 B2 U R' B L2 U2 R D2 R2 D F L' B',W,Warm Up Carolina Pride 2026 (2026-06-27~28),333oh R1 B #2
 567711001,R' F B D F L2 D' F2 D L B' L2 F2 U2 R' U2,W,Cross-strait Cubing Exchange 2017 (2017-08-12~13),333 R2 C #4
-590703001,D' U R2 B2 D U2 B2 F' D' L F' U2 R2 U F2 U2 R2 B',W, Raipur Cube Challenge 2017 (2017-09-10),333oh Final A E2
+590703001,D' U R2 B2 D U2 B2 F' D' L F' U2 R2 U F2 U2 R2 B',W,Raipur Cube Challenge 2017 (2017-09-10),333oh Final A E2
 594845001,L2 D2 B2 U2 B F D2 F L2 U B2 L2 U' L F' L B' F,W,Metal Rubik Core 2017 (2017-09-16),333oh Final C E2
 2485603001,D2 B' R2 B' L2 B D2 B2 L R' U R' B2 L2 F U' R F' L2,W,Charente Open 2023 (2023-02-11~12),333oh Final B #2
 3297851001,L2 F2 R2 B2 D2 U L2 D' U' B' U B' L2 F' D2 U' B2 U2,W,Hverdagscubing IX - Roskilde 2023 (2023-11-28),333 Final B E1
@@ -180,7 +180,7 @@
 1817168001,D F' L2 D2 L' D' F' U2 R2 U2 L U2 R F2 U2 L' F2 L D',W,TCG Summer Arequipa 2022 (2022-02-26),333 R2 A E1
 1091818001,U' L2 U' L2 D L2 B2 U' B2 U R2 B' U2 R B' D2 F D2 L' B2,W,Indian Nationals 2019 (2019-04-11~14),333 R2 A #3
 4805784062,B2 U2 B2 D2 R2 F2 L2 U' B D' F D U L U2 B U' L' F D,W,New York Multimate PBQ II 2025 (2025-06-13~15),333mbf Final A #3
-1107276001,D R B L F2 R2 L2 D2 R' U L' D R2 U D2 B2 D' L2,W,JukiMods Baztan Open 2019 (2019-04-19~20),333 Final A #1
+5858465005,L' F L' F U2 R D2 B2 D2 R' U F2 D' B2 R2 B' F' L B,W,Kärnan Open 2026 (2026-10-03~04),333mbf Final A #1
 2049718001,D' U2 B' D2 B U2 F R2 F R' B2 D2 R2 D B U L2,W,Da Nang Open 2022 (2022-07-24),333oh Final B #1
 1135140001,U2 B' D2 F L2 F' L2 U2 L2 F2 D B2 D2 R2 F' L' B' L2 R,W,Valborg Cubing 2019 (2019-05-03~05),333 Final A #1
 5807425001,R' U2 L' D2 F' R2 F U2 L2 F' D2 F' R2 D' B' R2 D' R F2 U2 L2,W,Rubik's German Nationals 2026 (2026-08-28~30),333bf R1 A #3

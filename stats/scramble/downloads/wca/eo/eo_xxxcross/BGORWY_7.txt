@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / BGORWY / bin 7
-# Population in this bin: 52
-# Samples listed: 52 (all entries in this bin)
+# Population in this bin: 53
+# Samples listed: 53 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 115238001,D R' U L' U2 B U2 L2 B' L' U' B2 U2 R2 U L2 D L2 B2,W,Summit City Open 2015 (2015-03-07),333 R2 A E1
@@ -57,3 +57,4 @@
 5671196001,D R2 F' D' L D2 F' R2 L2 B2 U F2 L2 U R2 U' B2 U2 F2,R,Magnolia State Cubing 2026 (2026-05-30),333 R2 B E2
 5707715001,D2 R L D' L D' F' U2 L' R2 D2 F2 B U2 F R2 F,R,Garland City NY 2026 (2026-06-20),333 Final B #5
 5831025001,U2 F2 L U2 F' L F B' R2 L D2 F2 L2 D2 R B' D2,W,Road to Nats Maracay II 2026 (2026-09-13),333 R1 B E2
+5858879001,D U2 L2 B2 L D2 R' B2 L' D2 R' U' L F R2 F' D' R U',G,Honey Cube Barcin 2026 (2026-10-03~04),333 R1 B #3

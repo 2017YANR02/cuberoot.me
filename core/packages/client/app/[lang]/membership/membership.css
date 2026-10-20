@@ -113,7 +113,7 @@
 }
 .mem-plans {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
 }
 .mem-plan {
@@ -194,6 +194,29 @@
   transition: background 0.15s;
 }
 .mem-plan-cta:hover { background: color-mix(in srgb, var(--primary) 88%, black); }
+.mem-plan .mem-plan-cta:disabled {
+  background: var(--muted);
+  color: var(--muted-foreground);
+  cursor: not-allowed;
+}
+.mem-purchase-heading { display: flex; align-items: center; justify-content: flex-start; gap: 12px; margin-bottom: 18px; }
+.mem-purchase-heading .mem-plan-section-title { margin: 0; }
+.mem-payment-choice { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.mem-payment-select {
+  align-self: flex-start;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--input);
+  border-radius: 10px;
+  background: var(--background);
+  color: var(--foreground);
+  font: inherit;
+}
+.mem-payment-note { margin: 12px 0 0; color: var(--muted-foreground); font-size: 13px; line-height: 1.6; }
+.mem-plan-saving { margin: 8px 0 0; font-size: 13px; color: var(--accent); line-height: 1.5; }
+.mem-details { margin-top: 24px; }
+.mem-details > summary { cursor: pointer; padding: 12px 0; font-size: 14px; font-weight: 600; }
 .mem-plan.is-feature .mem-plan-cta { background: var(--accent); color: var(--accent-foreground); }
 .mem-plan.is-feature .mem-plan-cta:hover { background: color-mix(in srgb, var(--accent) 88%, black); }
 
@@ -431,7 +454,12 @@
   font-weight: 600;
   cursor: pointer;
 }
-.mem-autorenew-sign:disabled { opacity: 0.45; cursor: default; }
+.mem-autorenew-sign:disabled {
+  opacity: 1;
+  background: var(--muted);
+  color: var(--muted-foreground);
+  cursor: not-allowed;
+}
 .mem-autorenew-caption {
   margin: 10px 0 0;
   color: var(--muted-foreground);

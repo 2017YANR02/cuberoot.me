@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / O / bin 5
-# Population in this bin: 650
+# Population in this bin: 652
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 1973508001,R B R B2 D2 L' D B' F2 L B2 L2 F2 R' U L F,O,Welcome Back Nepal 2022 (2022-06-17~18),333oh R1 A #2
@@ -28,7 +28,7 @@
 152399001,B2 L D2 R D2 F2 D2 B2 U' R' B D R2 B2 U2 R2 B2 D2,O,Cowboys Summer 2015 (2015-06-13~14),333oh R1 A #5
 177841001,U2 L F2 D2 L' R D2 R2 F D F' U F' D2 L D' B' R,O,SCMU Freedom Open 2015 (2015-08-15~16),333oh Final F #5
 4128757001,R U D R' D L U' L' B F2 L2 U2 D2 B2 U F2 L,O,Back to School Ankara 2024 (2024-09-21~22),333 R2 A E2
-2586690001,D2 R F U2 B U2 B' U2 F2 R' U' F R2 B D L F' R2,O,All or Nothing Bogotá 2023 (2023-03-26),333oh Final A #3
+5858465020,B' R B' R' U D2 F' L2 D L' U2 B2 U L2 B2 D F2 L2 B' L,O,Kärnan Open 2026 (2026-10-03~04),333mbf Final A #1
 3901847001,B' R2 B2 R' B2 R' D' F' L2 F2 R2 U2 B D2 B L2 B R2 U,O,CubingUSA Southeast Championship 2024 (2024-06-28~30),333 R1 C E2
 5693421001,D F' U2 B' D2 F' U2 R' U2 B2 F2 U2 R' B D' L2 R' B' L2,O,Burnaby Cubes Big & Small 2026 (2026-06-07),333bf Final A E2
 217500001,R2 D2 B2 D2 U R2 B2 U2 L' D2 R F' L U' L F' U' L' F',O,Valencia Open 2015 (2015-11-14),333 R1 C #1

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / ORWY / bin 6
-# Population in this bin: 256
+# Population in this bin: 257
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 5024080001,D B U' D2 F' B' R F R' F R' F2 U2 D F2 R2 D,Y,León Open 2025 (2025-09-13~14),333 R1 A E2
@@ -142,7 +142,7 @@
 5311568001,D' R' U R' B' R' B2 L D F' D2 B2 U2 L2 B D2 F U2 R2,R,Almaty New Year 2026 (2026-01-03~04),333oh R1 B #5
 2722763001,R' B2 U F' U' R F' D F' U' L F2 B U2 L2 B L2 F',Y,Gniezno 3x3 Day 2023 (2023-05-20),333 R1 A #4
 2728031001,F R' U2 F2 L F2 D' B' U2 R2 D2 R2 F' B2 R2 U B U2,Y,BC Spring Solving A 2023 (2023-05-21),333 R2 B #4
-2910188001,U L U L2 D R2 B2 D2 B2 L' D L' D2 L D' F,R,Israel Championship 2023 (2023-07-17~20),333 R3 A #4
+5859826001,U' B2 U F B L' B L' D' R' D' F2 D2 L2 F2 D F2 L2 B2 L2 U2,Y,Nuti Estonian Championship 2026 (2026-10-03~04),333bf Final A #4
 2920621001,R U2 L' R U2 B2 F' U L B' U B U' F' L' F2 U L B',R,Four The Win Dandenong 2023 (2023-07-23),333bf R2 A #2
 2983292021,L' F2 D' U' R2 U F2 L2 B R' B' L R2 F U L2 B' L2,O,Tauranga Open 2023 (2023-08-19~20),333mbf Final B #1
 2984172001,L' F L2 D R2 D' L2 U' L2 U2 R' U' R D2 B2 D B2,Y,Sigulda Open 2023 (2023-08-12~13),333 R1 C #4

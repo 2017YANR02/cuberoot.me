@@ -16,7 +16,11 @@ import {
 } from 'react';
 import dynamic from 'next/dynamic';
 import { useQueryStates, parseAsString, parseAsStringEnum } from 'nuqs';
+import CollapsibleSection from './CollapsibleSection';
 import HomeLink from '@/components/HomeLink';
+import NxNOrderInput from '@/components/NxNOrderInput';
+import { useTranslation } from 'react-i18next';
+import { PuzzleTypeSelect } from './PuzzleTypeSelect';
 import { persistItem } from '@/lib/safe-storage';
 import { orientedCubeFaceColors } from '@/lib/cube-orientation';
 import { NXN_ORDER_DEFAULT, NXN_ORDER_MAX, NXN_ORDER_MIN } from '@/lib/nxn-order';
@@ -25,8 +29,8 @@ import { NXN_ORDER_DEFAULT, NXN_ORDER_MAX, NXN_ORDER_MIN } from '@/lib/nxn-order
 // pyraminx/skewb/megaminx (which use cubing.js TwistyPlayer, not THREE).
 import type * as THREE from 'three';
 import {
-  ChevronLeft, ChevronRight,
-  BookOpen,
+  ChevronLeft,
+  BookOpen, FlaskConical,
   Maximize2, Minimize2,
   ArrowLeftRight,
   ImagePlus,
@@ -129,6 +133,7 @@ import { useMembership } from '@/hooks/useMembership';
 import {
   loadKeymap, saveKeymap, resetKeymap as resetKeymapStorage, type KeyMove,
 } from './keymap';
+import { DRAW_PUZZLES, normalizeDrawPuzzle } from './puzzleOptions';
 import './sim.css';
 
 const FtoImageGenerator = dynamic(() => import('./FtoImageGenerator'), { ssr: false });
@@ -270,6 +275,7 @@ const DAISY_SETUP = 'F2 R2 B2 L2';
 
 export default function SimPage() {
   const t = useT();
+  const { i18n } = useTranslation();
   const { isMember } = useMembership();
   // 管理员自建遮罩(DB)。首屏为空 → 按代码清单渲染;拉到后 stickering effect 重跑。
   const { rows: simMaskRows } = useSimMasks();
@@ -280,12 +286,14 @@ export default function SimPage() {
   // identity is never silently dropped (which used to read back as a 3x3 fallback).
   const [query, setQuery] = useQueryStates(
     {
-      tool: parseAsStringEnum(['sim', 'draw', 'image'] as const)
+      tool: parseAsStringEnum(['sim', 'capture', 'draw', 'image'] as const)
         .withDefault('sim')
         .withOptions({ history: 'push' }),
       puzzle: parseAsString.withDefault('3').withOptions({ clearOnDefault: false }),
       // Custom-cut PuzzleGeometry description for the Puzzle Cuts editor (e.g. "c f 0.255").
       cuts: parseAsString,
+      drawPuzzle: parseAsString,
+      imageAlg: parseAsString,
       alg: parseAsString,
       setup: parseAsString,
       // The timer uses csTimer's face names. Share the convention with the text:
@@ -323,9 +331,49 @@ export default function SimPage() {
   const setupParam = query.setup || '';
   const drawMode = query.tool === 'draw';
   const imageMode = query.tool === 'image';
+  const animationMode = query.tool === 'sim';
+  const captureMode = query.tool === 'capture';
+  const [panelExpanded, setPanelExpanded] = useState(false);
+  const pageRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const page = pageRef.current;
+    const viewport = window.visualViewport;
+    if (!page || !viewport) return;
+    const syncViewport = () => {
+      for (const [name, value] of [
+        ['--sim-visible-height', `${viewport.height}px`],
+        ['--sim-visible-top', `${viewport.offsetTop}px`],
+      ]) {
+        if (page.style.getPropertyValue(name) !== value) page.style.setProperty(name, value);
+      }
+    };
+    syncViewport();
+    viewport.addEventListener('resize', syncViewport);
+    viewport.addEventListener('scroll', syncViewport);
+    return () => {
+      viewport.removeEventListener('resize', syncViewport);
+      viewport.removeEventListener('scroll', syncViewport);
+      page.style.removeProperty('--sim-visible-height');
+      page.style.removeProperty('--sim-visible-top');
+    };
+  }, []);
+  const [openPanel, setOpenPanel] = useState<'appearance' | 'algs' | 'research' | null>('appearance');
+  const [lastCreationTool, setLastCreationTool] = useState<'capture' | 'draw' | 'image'>(
+    query.tool === 'sim' ? 'capture' : query.tool,
+  );
+  useEffect(() => {
+    if (query.tool !== 'sim') setLastCreationTool(query.tool);
+  }, [query.tool]);
+  // Drawing owns its puzzle; entering a template must never replace the animation.
+  const [initialDrawPuzzle] = useState(() => normalizeDrawPuzzle(query.puzzle));
+  const drawPuzzle = normalizeDrawPuzzle(query.drawPuzzle ?? initialDrawPuzzle);
+  const [drawOrder, setDrawOrder] = useState(typeof drawPuzzle === 'number' ? drawPuzzle : 3);
+  useEffect(() => { if (typeof drawPuzzle === 'number') setDrawOrder(drawPuzzle); }, [drawPuzzle]);
+  const [initialImageAlg] = useState(() => imageMode || query.puzzle === 'fto' ? query.alg ?? '' : '');
+  const [imageVisited, setImageVisited] = useState(imageMode);
+  useEffect(() => { if (imageMode) setImageVisited(true); }, [imageMode]);
 
   const puzzleParam: SimPuzzle = useMemo(() => {
-    if (imageMode) return 'fto';
     const raw = query.puzzle;
     if (!raw) return NXN_ORDER_DEFAULT;
     if (raw === 'sq1' || raw === 'sq2' || raw === 'sq4') return raw;
@@ -346,7 +394,7 @@ export default function SimPage() {
     const n = parseInt(raw, 10);
     if (!Number.isFinite(n) || n < NXN_ORDER_MIN || n > NXN_ORDER_MAX) return NXN_ORDER_DEFAULT;
     return n;
-  }, [imageMode, query.puzzle]);
+  }, [query.puzzle]);
 
   // Force the puzzle id into the URL on mount (clearOnDefault:false keeps it there):
   // a bare /sim becomes /sim?puzzle=3 so the project is always explicit and never
@@ -422,6 +470,8 @@ export default function SimPage() {
   // Slot below the cube canvas that PlayerControls portals its playback bar into
   // (twizzle-style controls directly under the puzzle). state (not ref) so the
   // portal re-renders once the node mounts.
+  const [apiDocHost, setApiDocHost] = useState<HTMLDivElement | null>(null);
+  const [captureStickeringSlot, setCaptureStickeringSlot] = useState<HTMLDivElement | null>(null);
   const [playbackSlot, setPlaybackSlot] = useState<HTMLDivElement | null>(null);
   // Slot at the canvas' bottom-left corner that PlayerControls portals the 背景(BG)
   // selector into (overlays the big cube, like the top-right back-view window). state
@@ -505,7 +555,7 @@ export default function SimPage() {
   // that parent effect; children must not replay the new puzzle on the old cube.
   const [activeCube, setActiveCube] = useState<World['cube'] | null>(null);
   const [settings, setSettings] = useState<SimSettings>(() => {
-    const saved = loadSettings();
+    const saved = { ...loadSettings(), viewMode: 'cube' as const };
     if (!query.anchor) return saved;
     return { ...saved, playbackMode: query.anchor === 'end' ? 'algorithm' : 'moves' };
   });
@@ -529,19 +579,10 @@ export default function SimPage() {
   const keymapRef = useRef(keymap);
   useEffect(() => { keymapRef.current = keymap; saveKeymap(keymap); }, [keymap]);
 
-  const [algsOpen, setAlgsOpen] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    try { return localStorage.getItem('sim.panel.algs') === '1'; } catch { return false; }
-  });
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    persistItem('sim.panel.algs', algsOpen ? '1' : '0');
-  }, [algsOpen]);
-
   // 画布左上角图像浮层的显隐(侧栏的 studio 控件常驻,不再受它控制)。分享链接带任何
   // img_ 键 = 对方特意调过图 → 自动显示浮层,否则读持久化偏好。panel 模式的 codec 省略
   // img_pzl 且只写非默认值,所以「一动没动的 studio」不会产生任何 img_ 键。
-  const [imageOpen, setImageOpen] = useState<boolean>(() => {
+  const [imagePreferred, setImageOpen] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     try {
       const sp = new URLSearchParams(window.location.search);
@@ -553,8 +594,9 @@ export default function SimPage() {
   });
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    persistItem('sim.panel.image', imageOpen ? '1' : '0');
-  }, [imageOpen]);
+    persistItem('sim.panel.image', imagePreferred ? '1' : '0');
+  }, [imagePreferred]);
+  const imageOpen = captureMode || imagePreferred;
 
   // 交换主图 ↔ 伴图(伴图铺满画布、实时 3D 缩进左上小框)。观察偏好,走 localStorage。
   // 交换态下渲染器/world 真调到小框尺寸(resize 闭包读 imgSwapRef;CSS 只钉显示位),
@@ -672,8 +714,8 @@ export default function SimPage() {
   // 外观区那两行同步锁死(PlayerControls 的 transCore),不给出「滑块 100% 而图是 50%」的假读数。
   const transCore = typeof puzzleParam === 'number' && imgSpec.cubeView === 'trans';
   const renderSettings = useMemo(
-    () => withTransCore(withCustomLogoAccess(settings, isMember), transCore),
-    [settings, isMember, transCore],
+    () => withTransCore(withCustomLogoAccess({ ...settings, backView: animationMode && settings.backView }, isMember), transCore),
+    [settings, isMember, transCore, animationMode],
   );
   const renderSettingsRef = useRef(renderSettings);
   useEffect(() => { renderSettingsRef.current = renderSettings; }, [renderSettings]);
@@ -720,9 +762,9 @@ export default function SimPage() {
   // World init. Twisty puzzles (pyraminx/skewb/megaminx) don't use the cuber
   // engine — they render via cubing.js TwistyPlayer in <TwistySection> below.
   // Dependencies let cleanup tear down a live cuber instance when the user
-  // switches NxN ↔ twisty or enters the image-only tool.
+  // switches NxN ↔ twisty. Mode changes retain the existing scene and timeline.
   useEffect(() => {
-    if (imageMode || twisty) return;
+    if (twisty) return;
     if (worldRef.current) return;
     const container = containerRef.current;
     if (!container) return;
@@ -916,10 +958,17 @@ export default function SimPage() {
       const swapped = imgSwapRef.current;
       const w = swapped ? backSizeRef.current : container.clientWidth;
       const h = swapped ? backSizeRef.current : container.clientHeight;
+      if (w <= 0 || h <= 0) return;
+      const size = renderer.getSize(new THREE.Vector2());
+      if (size.x === w && size.y === h && world.width === w && world.height === h) return;
       world.width = w;
       world.height = h;
       world.resize();
       renderer.setSize(w, h, true);
+      // setSize clears the drawing buffer. ResizeObserver can run after this
+      // frame's animation callback, so repaint before the browser presents it.
+      renderer.clear();
+      renderer.render(world.scene, world.camera);
       world.dirty = true;
     };
     resizeMainViewRef.current = resize;
@@ -1288,7 +1337,7 @@ export default function SimPage() {
     // lockstep with the main view (only inside the dirty block) so they never
     // drift.
     const renderBackView = (w: World, activeHints: World['faceHints']) => {
-      if (!settingsRef.current.backView) return;
+      if (!renderSettingsRef.current.backView) return;
       const host = backFrameRef.current;
       if (!host) return;
       if (!backViewRef.current) {
@@ -1401,7 +1450,7 @@ export default function SimPage() {
       cleanup?.();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [imageMode, twisty]);
+  }, [twisty]);
 
   const applyPuzzle = useCallback((kind: SimPuzzle) => {
     if (typeof kind === 'number') setOrder(kind);
@@ -1435,9 +1484,6 @@ export default function SimPage() {
     setQuery({ renderer: r === 'group' ? null : r });
   }, [setQuery]);
 
-  const handleOrder = useCallback((n: number) => {
-    handlePuzzle(n);
-  }, [handlePuzzle]);
 
   // Controls read the URL puzzle directly. Always sync engine puzzles, even when
   // a newly created World already has the requested default cube: applyPuzzle
@@ -1677,11 +1723,12 @@ export default function SimPage() {
   }, []);
 
   useEffect(() => {
+    if (!animationMode) return;
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
       // 菜单内编辑与键盘拖拽只操作菜单，不能同时转动魔方。
-      if (target?.closest('[role="dialog"], [role="listbox"]')) return;
-      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
+      if (target?.closest('[role="dialog"], [role="listbox"], [role="menu"]')) return;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable)) return;
       if ((e.ctrlKey || e.metaKey) && (e.code === 'KeyZ')) {
         e.preventDefault();
         if (e.shiftKey) handleRedo(); else handleUndo();
@@ -1726,7 +1773,7 @@ export default function SimPage() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [handleUndo, handleRedo]);
+  }, [animationMode, handleUndo, handleRedo]);
 
   const onAlgChange = useCallback((alg: string) => {
     setQuery({ alg: alg || null });
@@ -1780,13 +1827,21 @@ export default function SimPage() {
     worldRef.current as unknown as SimWorldView | null, []);
   const getRenderer = useCallback((): THREE.WebGLRenderer | null => rendererRef.current, []);
 
+  const netMode = !roomsActive && settings.viewMode === 'net' && typeof puzzleParam === 'number';
+  const clockMode = puzzleParam === 'clock';
+  const flatMode = netMode || clockMode;
+  const getFlatSvg = useCallback(() => containerRef.current?.querySelector<SVGSVGElement>(
+    '.sim-clock .iclock-svg, .sim-net > .sim-net-svg',
+  ) ?? null, []);
+
   const simBridge = useMemo<SimBridge>(() => ({
     getCanvas, getWorld, getRenderer,
+    getSvg: flatMode ? getFlatSvg : undefined,
     // cubing.js TwistyPlayer(自定义切割 / PG 目录拼图 / renderer='cubing'):
     // 引擎 world 不在场时,截图组从它的 vantage 取 scene+camera 做 SVG 投影 / PNG。
     getTwistyPlayer: () => twistyPlayerRef.current,
     setup: setupParam, alg: algParam,
-  }), [getCanvas, getWorld, getRenderer, setupParam, algParam]);
+  }), [getCanvas, getWorld, getRenderer, flatMode, getFlatSvg, setupParam, algParam]);
 
   // Keep the (seeded) image spec in step with the sim as its puzzle / alg / colours
   // change after mount — the codec injection only runs on the cold-load seed, so every
@@ -1885,19 +1940,37 @@ export default function SimPage() {
   const srCompanionForced = imgEngineMode === 'sr';
   const [engineSvg, setEngineSvg] = useState<string | null>(null);
   const [engineSvgUnavailable, setEngineSvgUnavailable] = useState(false);
+  const engineSvgSourceRef = useRef('');
+  const [engineSvgSettled, setEngineSvgSettled] = useState(false);
   useEffect(() => {
     const active = imageOpen && (!srCompanionForced || pictureCubeActive || roomsActive || !staticFallbackExact);
     setEngineSvgUnavailable(false);
-    // A restarted mirror must wait for its current source, including when
-    // leaving a native 2D puzzle for a player with no ready frame yet.
-    setEngineSvg(null);
-    if (!active) { setEngineSvg(null); return; }
+    // Keep the last frame while the same renderer settles after a resize or
+    // settings change. Clearing it used to flash a different spec-rendered cube
+    // for several sampling frames. A different puzzle/view must never reuse it.
+    const source = `${puzzleParam}|${query.renderer}|${imgSpec.cubeView}|${imgSpec.puzzleVariant}`;
+    if (engineSvgSourceRef.current !== source) {
+      engineSvgSourceRef.current = source;
+      setEngineSvg(null);
+      setEngineSvgSettled(false);
+    }
+    if (!active) {
+      // The cube can change while this mirror is hidden. Never reveal a cached
+      // image from the previous visit when the user returns to capture.
+      setEngineSvg(null);
+      setEngineSvgSettled(false);
+      return;
+    }
+    const publishEngineSvg = (svg: string | null) => {
+      setEngineSvg(svg);
+      setEngineSvgSettled(true);
+    };
     // 贴纸遮罩(mask 直映):有派生表的拼图把灰化烙进镜像;没有的整程置 null,
     // PuzzleImage 落回 spec 渲染器(sr/visualcube 认 mask)—— 哪条路都不丢遮罩。
     // engine-only 拼图没有遮罩编辑入口,忽略 URL 残值(免把伴图饿死在等待帧)。
     const maskIds = pictureImageStudioEngineOnly ? null : parseMask(imgSpec.stickerMask || '');
     const maskKeys = maskIds?.size ? toEngineMask(imgPuzzle.puzzleType, maskIds) : null;
-    if (maskIds?.size && maskKeys === undefined) { setEngineSvg(null); return; }
+    if (maskIds?.size && maskKeys === undefined) { publishEngineSvg(null); return; }
     // 伴图复杂度上限:普通阶几何 ≈ 88 三角/块 + 204 三角/贴纸,6x6 ≈ 5.7 万已是
     // 主线程单帧 ~1s 量级;更高阶(至 N≥50 换简化几何前)会到百万级,必须掐断。
     // 超限在收集阶段即抛(几十 ms),伴图回退 visualcube,不卡页面。
@@ -1934,7 +2007,9 @@ export default function SimPage() {
     const tick = (): void => {
       if (disposed) return;
       raf = requestAnimationFrame(tick);
-      if (++frame % 8 !== 0) return; // ~7.5Hz 采样
+      // Prime the mirror in its first three frames; after that sample at ~7.5Hz.
+      // Initial settling should not expose the fallback renderer for ~400ms.
+      if (++frame > 3 && frame % 8 !== 0) return;
       const world = worldRef.current;
       if (world) {
         if (roomsActive) {
@@ -1948,7 +2023,7 @@ export default function SimPage() {
           const canvas = rendererRef.current?.domElement;
           if (!canvas) return;
           exportedSig = sig;
-          setEngineSvg(`<svg xmlns="http://www.w3.org/2000/svg" width="${canvas.width}" height="${canvas.height}" viewBox="0 0 ${canvas.width} ${canvas.height}"><image width="100%" height="100%" href="${canvas.toDataURL('image/png')}"/></svg>`);
+          publishEngineSvg(`<svg xmlns="http://www.w3.org/2000/svg" width="${canvas.width}" height="${canvas.height}" viewBox="0 0 ${canvas.width} ${canvas.height}"><image width="100%" height="100%" href="${canvas.toDataURL('image/png')}"/></svg>`);
           return;
         }
         if (pictureCubeActive && typeof world.puzzleKind === 'number') {
@@ -1965,7 +2040,7 @@ export default function SimPage() {
           const maskFn = stickeringMaskFor(nxn);
           const stickering = maskFn ? nxn.serializeStickering(maskFn) : null;
           exportedSig = sig;
-          setEngineSvg(renderPictureCubeNetSvg({
+          publishEngineSvg(renderPictureCubeNetSvg({
             order: nxn.order,
             facelets,
             faces: settings.pictureFaces,
@@ -2014,7 +2089,7 @@ export default function SimPage() {
             exportedSig = sig;
             try {
               const fc = settings.faceColors;
-              setEngineSvg(cv === 'plan'
+              publishEngineSvg(cv === 'plan'
                 // plan 透视投影随 spec 的 dist/opacity/旋转变 → 传 imgSpec,渲染旋钮
                 // 复用 specToCubeOptions,与 VC 路逐字节同(net 是 2D emitter,无关 spec)。
                 // 壳体色/两个不透明度改由外观区的内核色那组管(spec 里那三行只留给 /visualcube
@@ -2039,7 +2114,7 @@ export default function SimPage() {
                 }));
             } catch (err) {
               console.warn('[sim] flat companion export failed', err);
-              setEngineSvg(null);
+              publishEngineSvg(null);
             }
             return;
           }
@@ -2055,7 +2130,7 @@ export default function SimPage() {
           // reconstructs those colours on its real curved triangles. A flat NxN
           // schematic or spec fallback would change the shape.
           if (world.puzzleKind === 'sphere') {
-            setEngineSvg(exportSimSvg({ world, renderer: rendererRef.current, maxTriangles: MAX_TRIS }));
+            publishEngineSvg(exportSimSvg({ world, renderer: rendererRef.current, maxTriangles: MAX_TRIS }));
             return;
           }
           // 拼图带示意小面(userData.schematicPoly)→ SR 范式示意导出器:每个小面
@@ -2066,7 +2141,7 @@ export default function SimPage() {
             // 左边 3D 什么样右边就什么样(退役对照表 §2b:inset 模型衬底=壳体,贴纸=sticker)。
             // trans(X 光)视图的银壳 50% 已经由 renderSettings 顶在设置里(withTransCore),
             // 3D 与这里同吃 —— 所以此处不再有第二处 trans 判断。
-            setEngineSvg(exportSimSvgSchematic({
+            publishEngineSvg(exportSimSvgSchematic({
               world,
               // 黑边 = 网格缝宽占小面的百分比(inset 模型):比例量纲天然与视口尺寸、
               // 阶数无关 —— 交换态小框视口、40 阶小贴纸下观感都恒定,也正因如此才能
@@ -2091,20 +2166,20 @@ export default function SimPage() {
             }));
             return;
           }
-          if (bspSceneAudit(world.scene).miscolors) { setEngineSvg(null); return; } // 原核分色:回退旧渲染器
-          setEngineSvg(exportSimSvgBsp({ world, maxTriangles: MAX_TRIS }));
+          if (bspSceneAudit(world.scene).miscolors) { publishEngineSvg(null); return; } // 原核分色:回退旧渲染器
+          publishEngineSvg(exportSimSvgBsp({ world, maxTriangles: MAX_TRIS }));
         } catch (err) {
           if (!(err instanceof Error && err.message.startsWith('SVG_TOO_COMPLEX'))) {
             console.warn('[sim] BSP companion export failed', err);
           }
-          setEngineSvg(null); // 本帧回退旧渲染器
+          publishEngineSvg(null); // 本帧回退旧渲染器
         }
         return;
       }
       // twisty 路径。通常由 spec 精确渲染;engine-only 或 spec 表达不了当前阶段
       // (例如 megaminx LS)时才走 vantage 镜像。
       if (!pictureImageStudioEngineOnly && staticFallbackExact) {
-        if (exportedSig) { exportedSig = ''; setEngineSvg(null); }
+        if (exportedSig) { exportedSig = ''; publishEngineSvg(null); }
         return;
       }
       const tp = twistyPlayerRef.current as TwistyPlayerLike | null;
@@ -2114,10 +2189,10 @@ export default function SimPage() {
           stopNativeCompanion = undefined;
           nativeCompanionPlayer = null;
           native2DActive = false;
-          setEngineSvg(null);
+          publishEngineSvg(null);
           setEngineSvgUnavailable(false);
         }
-        if (exportedSig) { exportedSig = ''; setEngineSvg(null); }
+        if (exportedSig) { exportedSig = ''; publishEngineSvg(null); }
         return;
       }
       if (isNativePuzzleId(puzzleParam)) {
@@ -2134,7 +2209,7 @@ export default function SimPage() {
               // setup + alg or request a nonexistent 3D vantage in this mode.
               twistyView = null;
               exportedSig = '';
-              setEngineSvg(frame.svg);
+              publishEngineSvg(frame.svg);
               setEngineSvgUnavailable(frame.status === 'unavailable');
             },
           });
@@ -2158,15 +2233,15 @@ export default function SimPage() {
       if (sig === exportedSig) return;
       exportedSig = sig;
       try {
-        setEngineSvg(exportSimSvg({ world: view, srgbColors: true }));
+        publishEngineSvg(exportSimSvg({ world: view, srgbColors: true }));
       } catch (err) {
         console.warn('[sim] twisty companion export failed', err);
-        setEngineSvg(null);
+        publishEngineSvg(null);
       }
     };
     raf = requestAnimationFrame(tick);
     return () => { disposed = true; cancelAnimationFrame(raf); stopNativeCompanion?.(); };
-  }, [imageOpen, srCompanionForced, pictureCubeActive, roomsActive, settings.roomTheme, pictureImageStudioEngineOnly,
+  }, [imageOpen, srCompanionForced, pictureCubeActive, roomsActive, settings.roomTheme, pictureImageStudioEngineOnly, query.renderer,
       staticFallbackExact,
       imgSpec.stickerMask, imgSpec.maskColor, imgPuzzle.puzzleType,
       // 伴图外观跟 3D 走同一份设置(见上面 exportSimSvgSchematic 的注释);trans 预设
@@ -2185,46 +2260,95 @@ export default function SimPage() {
       imgSpec.planForceShow, imgSpec.planForceHide,
       settings.faceColors, settings.ghostFaceColors, settings.pictureBaseColors, settings.pictureFaces, stickeringMaskFor]);
 
-  // 2D flat-net view mode — NxN only (number puzzle), driven by the same live cube.
-  const netMode = !roomsActive && settings.viewMode === 'net' && typeof puzzleParam === 'number';
-  // 魔表:唯一没有立体形态的拼图 —— 画面恒走 DOM 层的 SVG 板,3D 画布是空的。判据与
-  // netMode 同族(都是"画布上盖一层平面图"),所以下面凡是 `!netMode` 的角落控件
-  // (背面小窗 / 交换主图 …)也一并要避开它,统一用 flatMode。
-  const clockMode = puzzleParam === 'clock';
-  const flatMode = netMode || clockMode;
-
   // 主图 ↔ 伴图交换态生效条件(与画布 wrap 的 --imgswap class 同一判据):把它写进
   // resize 闭包读的 ref,再触发一次重排,渲染器在全幅 ↔ 左上小框之间切换。
-  const imgSwapActive = imageOpen && imgSwap && !flatMode;
+  const imgSwapActive = captureMode || (imageOpen && imgSwap && !flatMode);
   useEffect(() => {
     imgSwapRef.current = imgSwapActive;
     resizeMainViewRef.current?.();
   }, [imgSwapActive]);
 
+  const selectedPuzzle = drawMode ? drawPuzzle : imageMode ? 'fto' : puzzleParam;
+  const selectPuzzle = (puzzle: SimPuzzle) => {
+    if (drawMode) void setQuery({ drawPuzzle: String(puzzle) });
+    else if (!imageMode) handlePuzzle(puzzle);
+  };
+  const changeTool = (tool: 'sim' | 'capture' | 'draw' | 'image') => {
+    void setQuery({
+      tool: tool === 'sim' ? null : tool,
+      // Legacy creation links share puzzle/alg with animation until the first mode
+      // change. Snapshot the departing document before animation can edit those keys.
+      ...(drawMode || tool === 'draw' ? {
+        drawPuzzle: query.drawPuzzle ?? String(drawMode ? drawPuzzle : normalizeDrawPuzzle(query.puzzle)),
+      } : {}),
+      ...(imageMode || tool === 'image' ? {
+        imageAlg: query.imageAlg ?? (imageMode ? initialImageAlg : puzzleParam === 'fto' ? algParam : initialImageAlg),
+      } : {}),
+    });
+  };
+
   return (
-    <div className={`sim-page${fullscreen && !drawMode && !imageMode ? ' sim-page--fullscreen' : ''}`} data-board-bg={settings.boardBg}>
+    <div ref={pageRef} className={`sim-page${fullscreen && animationMode ? ' sim-page--fullscreen' : ''}${panelExpanded ? ' sim-page--panel-expanded' : ''}`} data-board-bg={settings.boardBg} data-workspace={query.tool}>
       <header className="sim-header">
         <HomeLink className="sim-back" title={t('返回', 'Back')}>
           <ChevronLeft size={18} />
         </HomeLink>
         <h1 className="sim-title">{t('模拟', 'Sim')}</h1>
+        <div className="sim-project-controls">
+          <PuzzleTypeSelect
+            value={typeof selectedPuzzle === 'number' ? 'nxn' : selectedPuzzle}
+            isZh={i18n.language.startsWith('zh')}
+            showName
+            allowedValues={drawMode ? DRAW_PUZZLES : imageMode ? ['fto'] : undefined}
+            onChange={(value) => selectPuzzle(value === 'nxn' ? (drawMode ? drawOrder : order) : value as SimPuzzle)}
+          />
+          {typeof selectedPuzzle === 'number' && (
+            <label className="sim-order-label">
+              <span>{t('阶数', 'Order')}</span>
+              <NxNOrderInput
+                className="sim-order-input"
+                value={selectedPuzzle}
+                min={drawMode ? 2 : NXN_ORDER_MIN}
+                max={drawMode ? 20 : NXN_ORDER_MAX}
+                onCommit={selectPuzzle}
+                aria-label={t('阶数', 'Order')}
+              />
+            </label>
+          )}
+        </div>
         <select
           className="sim-tool-select"
-          value={query.tool}
-          onChange={(event) => {
-            const tool = event.target.value as 'sim' | 'draw' | 'image';
-            setQuery({ tool: tool === 'sim' ? null : tool, ...(tool === 'image' ? { puzzle: 'fto' } : {}) });
-          }}
-          aria-label={t('工具', 'Tool')}
+          value={animationMode ? 'animation' : 'creation'}
+          onChange={(event) => changeTool(event.target.value === 'animation' ? 'sim' : lastCreationTool)}
+          aria-label={t('工作模式', 'Workspace mode')}
         >
-          <option value="sim">{t('模拟', 'Simulate')}</option>
-          <option value="draw">{t('绘图', 'Draw')}</option>
-          {puzzleParam === 'fto' && (
-            <option value="image">{t('FTO 图片', 'FTO image')}</option>
-          )}
+          <option value="animation">{t('动画', 'Animation')}</option>
+          <option value="creation">{t('作图', 'Create images')}</option>
         </select>
+        {!animationMode && (
+          <select
+            className="sim-tool-select"
+            value={query.tool}
+            onChange={(event) => changeTool(event.target.value as 'capture' | 'draw' | 'image')}
+            aria-label={t('作图方式', 'Image source')}
+          >
+            <option value="capture">{t('当前状态', 'Current state')}</option>
+            <option value="draw">{t('自由绘图', 'Free drawing')}</option>
+            <option value="image">{t('FTO 公式出图', 'FTO algorithm')}</option>
+          </select>
+        )}
+        {!drawMode && !imageMode && (
+          <button type="button" className="sim-panel-toggle" aria-expanded={panelExpanded} aria-controls="sim-task-panel"
+            onClick={() => {
+              if (panelExpanded && document.activeElement instanceof HTMLElement
+                && document.activeElement.closest('#sim-task-panel')) document.activeElement.blur();
+              setPanelExpanded(expanded => !expanded);
+            }}>
+            {panelExpanded ? t('收起面板', 'Collapse panel') : t('展开面板', 'Expand panel')}
+          </button>
+        )}
         <div className="sim-spacer" />
-        {!drawMode && !imageMode && reconHref && (
+        {animationMode && reconHref && (
           <AppLink
             href={reconHref}
             prefetch={false}
@@ -2349,14 +2473,14 @@ export default function SimPage() {
             <div
               ref={backFrameRef}
               className="sim-backview"
-              style={{ display: settings.backView && !flatMode ? 'block' : 'none' }}
+              style={{ display: animationMode && settings.backView && !flatMode ? 'block' : 'none' }}
               aria-hidden
             />
           )}
           {/* Swap main view ↔ back-view mini window. Only while the cuber engine
               back-view is on (NxN / SQ1); twisty puzzles use cubing.js native
               back-view and aren't covered here. */}
-          {!twisty && !flatMode && settings.backView && (
+          {animationMode && !twisty && !flatMode && settings.backView && (
             <button
               ref={swapButtonRef}
               type="button"
@@ -2370,7 +2494,7 @@ export default function SimPage() {
           )}
           {/* 背面小窗的关闭钮 —— 与图像浮层那个同款,钉在小窗右上内角。小窗自身
               pointer-events:none,按钮在 .sim-float-close 里自带 auto。 */}
-          {!twisty && !flatMode && settings.backView && (
+          {animationMode && !twisty && !flatMode && settings.backView && (
             <button
               type="button"
               className="sim-float-close sim-float-close--backview"
@@ -2383,29 +2507,25 @@ export default function SimPage() {
           )}
           {/* 背景(BG)选择器浮层落点 —— 画布左下角(与右上角背面小窗、左上角图像浮层
               同族的角落控件)。PlayerControls 把选择器 portal 进这里。空时 CSS 收起。 */}
-          <div className="sim-bg-overlay" ref={setBgSlot} />
+          <div className="sim-canvas-tools">
+            <div className="sim-bg-overlay" ref={setBgSlot} />
+            <div className="sim-capture-stage-slot" ref={setCaptureStickeringSlot} />
+          </div>
         </div>
         <div className="sim-playback-under" ref={setPlaybackSlot} />
         </div>
 
-        <aside className="sim-side">
-          <CollapsibleSection
-            open={algsOpen}
-            onToggle={() => setAlgsOpen((o) => !o)}
-            icon={BookOpen}
-            label={t('公式', 'Algs')}
-          >
-            <AlgsPanel
-              onSelect={(setup, alg) => { onAlgPick(setup, alg); }}
-              activePuzzle={puzzleParam}
-            />
-          </CollapsibleSection>
+        <aside className="sim-side" data-site-surface="panel" id="sim-task-panel" onFocusCapture={event => {
+          if (window.matchMedia('(max-width: 767px)').matches
+            && event.target.matches('textarea, input:not([type="range"]), [contenteditable="true"]')) setPanelExpanded(true);
+        }}>
           {puzzleParam === 'custom' && (
             <div className="sim-cut-editor-wrap">
               <CutEditor value={customCuts} onChange={(d) => setQuery({ cuts: d })} />
             </div>
           )}
           <PlayerControls
+            active={animationMode}
             world={worldRef.current}
             activeCube={activeCube}
             clearFrozen={clearPartialFreeze}
@@ -2413,10 +2533,9 @@ export default function SimPage() {
             setup={setupParam}
             onAlgChange={onAlgChange}
             onSetupChange={onSetupChange}
+            toPlaybackText={toPlayerText}
             order={order}
-            onOrderChange={handleOrder}
             puzzleKind={puzzleKind}
-            onPuzzleChange={handlePuzzle}
             settings={settings}
             onSettingsChange={handleSettingsChange}
             canUseCustomLogo={isMember}
@@ -2435,6 +2554,9 @@ export default function SimPage() {
             renderer={query.renderer}
             onRendererChange={handleRendererChange}
             playbackSlot={playbackSlot}
+            captureStickeringSlot={captureStickeringSlot}
+            appearanceOpen={openPanel === 'appearance'}
+            onAppearanceToggle={() => setOpenPanel(panel => panel === 'appearance' ? null : 'appearance')}
             bgSlot={bgSlot}
             fullscreenButton={
               <button
@@ -2447,29 +2569,16 @@ export default function SimPage() {
                 {fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
               </button>
             }
-            /* 两个浮层的「找回来」按钮,位置对应它们在画布上的角:图像在左上 → 按钮在
-               最左;背面小窗在右上 → 按钮在最右。只在对应浮层关着时出现 —— 开着时关它
-               的入口是浮层自己右上角那个 ×,这里再放一个同义按钮纯属占位。 */
-            imageButton={!imageOpen ? (
-              <button
-                type="button"
-                className="playback-bar-btn"
-                onClick={() => setImageOpen(true)}
-                title={t('显示图像', 'Show image')}
-                aria-label={t('显示图像', 'Show image')}
-              >
+            imageButton={!clockMode ? (
+              <button type="button" className="playback-bar-btn" aria-pressed={imageOpen}
+                onClick={() => setImageOpen(!imageOpen)}
+                title={t('伴图', 'Companion image')} aria-label={t('伴图', 'Companion image')}>
                 <ImagePlus size={14} />
               </button>
             ) : null}
-            /* 小窗按钮在两条渲染路径下语义不同,因为「关」的入口不一样:
-               - 引擎(NxN / SQ1):小窗是我们自己画的浮层,右上角有 ×,所以这里
-                 只做「开」,关着时才出现,和图像那个一致;
-               - cubing.js:小窗是 player 原生画的,我们钉不上 ×(那块区域归它管),
-                 所以这里必须常驻并且是真开关,否则 settings.backView 在这条路径上
-                 一个入口都没有 —— 侧栏那个「小窗」toggle 已经删掉了。 */
-            backViewButton={!flatMode && (twisty || !settings.backView) ? (
-              <PlaybackBackViewButton visible={twisty ? settings.backView : false} toggle={twisty}
-                onClick={() => setSettings(prev => ({ ...prev, backView: twisty ? !prev.backView : true }))}
+            backViewButton={!flatMode ? (
+              <PlaybackBackViewButton visible={settings.backView} toggle
+                onClick={() => setSettings(prev => ({ ...prev, backView: !prev.backView }))}
                 showLabel={t('显示小窗', 'Show back view')} hideLabel={t('关闭小窗', 'Hide back view')} />
             ) : null}
             stickering={query.stickering}
@@ -2492,50 +2601,76 @@ export default function SimPage() {
             customRest={query.stickeringRest}
             onCustomRestChange={(v) => recordCustomMask({ ...maskHistory.current.history.current, rest: v })}
           />
-          {/* 图像:不再套折叠区。图本身已经浮在画布左上角,侧栏这一段只剩控件 + 导出,
-              一个「图像」标题栏既没东西可折叠也没图可指。显隐归浮层自己的 × 和播放条
-              按钮(imageOpen),侧栏常驻。 */}
+          <div className="sim-api-slot" ref={setApiDocHost} hidden={!captureMode} />
+          {/* One studio owns the preview in both modes; only creation exposes its controls. */}
+          <section className="sim-capture-controls" hidden={!captureMode}>
+          <h2 className="sim-panel-title">{t('图片与导出', 'Image & export')}</h2>
           <PuzzleImageStudio
             spec={imgSpec}
             onSpecChange={setImgSpec}
             simBridge={simBridge}
             previewHost={imageHost}
+            apiDocHost={apiDocHost}
             engineSvg={engineSvg}
             engineSvgUnavailable={engineSvgUnavailable}
-            staticFallbackExact={staticFallbackExact}
+            // Do not flash the spec renderer while the first engine frame is
+            // still settling. A completed failed export may use its exact fallback.
+            staticFallbackExact={staticFallbackExact && (twisty || srCompanionForced || engineSvgSettled)}
             engineOnly={pictureImageStudioEngineOnly}
             compare={imgEngineMode === 'both' && !pictureCubeActive && !roomsActive}
           />
-          {/* Group-theory panel = the visible half of the non-cubing.js view. Shows for any
-              PG-bound puzzle that isn't on cubing.js. Pure-engine PG puzzles (dino/heli/NxN)
-              have no cubing.js option at all → the panel is always on for them. */}
-          {(((PG_BOUND_KINDS.has(String(puzzleParam)) || (typeof puzzleParam === 'number' && nxnHasPgKernel(puzzleParam)))
-            && (query.renderer !== 'cubing' || !ENGINE_TWISTY.has(String(puzzleParam))))
-            // cubing.js "explore" puzzles: facts-only kernel, shown unless the user picks the
-            // plain cubing.js renderer (default renderer is 'group', so on by default).
-            || (EXPLORE_BOUND.has(String(puzzleParam)) && query.renderer !== 'cubing')) && (
-            <GroupTheoryPanel puzzle={String(puzzleParam)} getWorld={getWorldView} />
+          </section>
+          {animationMode && <CollapsibleSection
+            open={openPanel === 'algs'}
+            onToggle={() => setOpenPanel(panel => panel === 'algs' ? null : 'algs')}
+            icon={BookOpen}
+            label={t('公式', 'Algs')}
+          >
+            <AlgsPanel
+              onSelect={(setup, alg) => { onAlgPick(setup, alg); }}
+              activePuzzle={puzzleParam}
+            />
+          </CollapsibleSection>}
+          {/* Mount panel-only analysis on demand, independently of the render engine. */}
+          {animationMode && (PG_BOUND_KINDS.has(String(puzzleParam))
+            || (typeof puzzleParam === 'number' && nxnHasPgKernel(puzzleParam))
+            || EXPLORE_BOUND.has(String(puzzleParam))) && (
+            <CollapsibleSection
+              open={openPanel === 'research' && animationMode}
+              onToggle={() => setOpenPanel(panel => panel === 'research' ? null : 'research')}
+              icon={FlaskConical}
+              label={t('结构研究', 'Structure research')}
+            >
+              {query.renderer === 'cubing' && (ENGINE_TWISTY.has(String(puzzleParam)) || EXPLORE_BOUND.has(String(puzzleParam))) ? (
+                <div className="sim-research-enable">
+                  <p>{t('结构分析需要启用对应的分析内核。切换会保留初始状态和公式。', 'Structural analysis needs its analysis engine. Switching preserves the initial state and algorithm.')}</p>
+                  <button type="button" onClick={() => handleRendererChange('group')}>
+                    {t('启用结构分析', 'Enable structural analysis')}
+                  </button>
+                </div>
+              ) : <GroupTheoryPanel puzzle={String(puzzleParam)} getWorld={getWorldView} />}
+            </CollapsibleSection>
           )}
         </aside>
       </div>
 
-      {imageMode && (
+      {imageVisited && (
+        <div className="sim-image-workspace" hidden={!imageMode}>
         <FtoImageGenerator
-          algorithm={algParam}
-          onAlgorithmChange={(algorithm) => setQuery({ alg: algorithm || null })}
+          algorithm={query.imageAlg ?? initialImageAlg}
+          onAlgorithmChange={(algorithm) => setQuery({ imageAlg: algorithm })}
           inverse={query.imageInverse === '1'}
           onInverseChange={(inverse) => setQuery({ imageInverse: inverse ? '1' : null })}
         />
+        </div>
       )}
 
       {drawVisited && (
         <div style={{ display: drawMode ? 'contents' : 'none' }}>
           <PuzzleDrawWorkspace
             active={drawMode}
-            puzzle={puzzleParam}
-            order={order}
-            onPuzzleChange={handlePuzzle}
-            onOrderChange={handleOrder}
+            puzzle={drawPuzzle}
+            order={typeof drawPuzzle === 'number' ? drawPuzzle : drawOrder}
             onDocumentChange={setDrawDocument}
             exportPanel={drawDocument ? (
               <PuzzleImageStudio
@@ -2549,32 +2684,5 @@ export default function SimPage() {
         </div>
       )}
     </div>
-  );
-}
-
-function CollapsibleSection({
-  open, onToggle, icon: Icon, label, children,
-}: {
-  open: boolean;
-  onToggle: () => void;
-  icon: typeof BookOpen;
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="sim-puzzle">
-      <button
-        type="button"
-        className="sim-puzzle-head"
-        onClick={onToggle}
-        aria-expanded={open}
-        title={label}
-      >
-        <ChevronRight size={14} className={'sim-puzzle-caret' + (open ? ' open' : '')} />
-        <Icon size={14} />
-        <span className="sim-puzzle-title">{label}</span>
-      </button>
-      {open && <div className="sim-section-body">{children}</div>}
-    </section>
   );
 }

@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / WY / bin 9
-# Population in this bin: 308
+# Population in this bin: 310
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 5742360001,L B2 R U' R F L F' L2 B' D2 L2 F' R2 F2 D2 R2 L' D' F',W,Rubik's WCA North American Championship 2026 (2026-07-02~05),333 R1 L #4
@@ -172,7 +172,7 @@
 5834136001,B' R D L F R F2 D F U2 F' B2 U2 R2 F2 L2 F L2 U2,W,Shin Kong Cube Open - Hualien 2026 (2026-09-20),333 R2 D #2
 3251185001,B2 R2 U' F2 D2 L2 F2 L2 F2 U R2 D' B' R' B' F D' L' D' R' B',W,Zottegem Afternoon 2023 (2023-11-11),333 R1 B E1
 3281556001,L2 B' D' B2 L' B2 U B' L2 F' R2 B2 L2 U2 B2 D2 B' L' D2 F2,W,Potosí Spring 2023 (2023-11-18),333 R2 B #3
-3308542001,B D' L2 B2 R B2 D' L' R2 U2 R2 U2 F2 R2 B' U2 B2 R2 U R',W,Montevideo en Llamas 2023 (2023-12-03),333 Final A E2
+5872487001,B2 R D2 L' D2 U2 F2 L' U2 F D' F2 L U R B D2 F L U2,W,Cascavel ao Cubo 2026 (2026-10-10~11),333oh R1 B E2
 3361275040,B U2 R2 B R2 B2 F R2 U2 F2 U F' L' D' R2 B U2 F L D2 B' L',W,Shenyang Open 2023 (2023-12-17),333mbf Final A #1
 5053818001,U2 R' U B2 U2 F' R B' L' B2 D F2 R2 U2 R2 U2 L2 B D,W,Amor y Amistad Aves María 2025 (2025-09-27~28),333 R2 A E1
 3451336001,F R2 B' F2 L2 B D2 U2 F' U F2 U L D L2 R' B U F D',W,Folkets Kub Alvesta 2024 (2024-01-27~28),333 R1 D E2

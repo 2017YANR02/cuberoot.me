@@ -95,6 +95,10 @@ fn run() -> Result<(), String> {
         PruningTable::load_variant(Path::new(pdb_path), variant)?,
     )?;
     let (options, parallelism) = search.unwrap();
+    #[cfg(all(feature = "opt8-native-specialized", not(target_family = "wasm")))]
+    if let Some(specialized) = oracle.experimental_native_opt8_oracle() {
+        return run_solver(&specialized, options, parallelism);
+    }
     // Preserve the default native binary and every other table variant.
     // Only an explicitly built candidate opts into the Opt9 specialized
     // oracle and the selected experimental pruning/scheduling policy.

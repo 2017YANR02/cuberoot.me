@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / OR / bin 7
-# Population in this bin: 255
+# Population in this bin: 256
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 5099434028,B2 R' D B' D R' U R U' F' R2 U F2 D F2 U2 B2 U D L B,O,Thailand Championship 2025 (2025-10-11~13),333mbf Final A #1
@@ -43,7 +43,7 @@
 561263001,L' D R' D' L2 U R' U2 R B' L2 U F2 L2 F2 D' B2 D' F2,O,FLIP Open 2017 (2017-07-22~23),333 R2 B #3
 567292001,F' L2 F U2 B F2 L B2 R D2 B2 D F' D' B' D F2,R,Cube Jatra 2017 (2017-08-12),333 Final A #4
 582395001,D L D F2 U' F' R' U' L' F U' R2 F2 U F2 U' R2 U' F2 L2,R,SacCubing II 2017 (2017-08-26),333 R1 F #2
-590697001,F D B' R L U L2 B U2 R' D R2 U2 L2 U L2 F2 U' F2 B2,R, Raipur Cube Challenge 2017 (2017-09-10),333oh Final A #1
+590697001,F D B' R L U L2 B U2 R' D R2 U2 L2 U L2 F2 U' F2 B2,R,Raipur Cube Challenge 2017 (2017-09-10),333oh Final A #1
 5564013001,F' B2 U2 B2 D2 L' U2 L B R F2 D' L U L F' R2 D2,O,Duper Super Davis Spring 2026 (2026-04-19),333 R2 A E1
 610681001,U L2 D' U' R2 B2 U' B' U2 L2 R' D F R' F' R D' L',R,III ETEC Jacareí 2017 (2017-09-30),333oh R1 C #1
 613267001,D2 F' R2 U2 B2 D2 F R2 B2 U' F' L U' F' R D' F' D' R2,R,NIT Trichy Open 2017 (2017-10-07~08),333 Final B E2
@@ -154,7 +154,7 @@
 3526034043,U2 F U2 F' R2 U2 B' U2 R2 D' U' F' U F R2 D' F R' B R,R,Glasgow Winter - Scottish Blind Off 2024 (2024-02-17~18),333mbf Final A #1
 3530600050,F' B2 R2 U L2 D F2 D' L2 R2 D L' F L' R B' R B' L B' L,R,Fullerton Winter 2024 (2024-02-24),333mbf Final A #1
 5585387001,R D' R' F D R D2 F B2 U2 R2 F' B2 D2 B' L' D2,O,Berkeley Spring 2026 (2026-04-26),333 R1 C #2
-3596200001,D R L B L' U2 B U L F U' R2 U D B2 R2 U' R2 L2 F2 L B2,R,Kuopion Kuutiokemut 2024 (2024-03-16~17),333bf Final A E1
+5863083001,F R B D2 F R2 F' D2 B' F2 D L B L R' U' R' U',O,Primma Cube Open 2026 (2026-10-03~04),333oh Final A #1
 3596672001,R L' D' F2 U F D' F' L2 D R2 U' B2 U D' F',R,Lyttelton Newcomer Rumble 2024 (2024-03-17),333 R1 C #2
 3607875001,L2 U2 R2 U' R2 D' L' D' R U2 F L U F L F R' U,O,Ajax 3x3x3 Newcomers A 2024 (2024-03-24),333 R1 C #1
 3613829001,D2 B D2 L2 U2 F L2 F' D F' D' F' L' U2 R' U B2 L',O,Arnhem Open A 2024 (2024-03-23),333 R1 A #1

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / BGORWY / bin 4
-# Population in this bin: 350
+# Population in this bin: 354
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 10812001,B2 L R' D2 B2 F D F R D2 L' B L B' U' R,W,Open Cube Project 2014 (2014-04-12),333 Final A E2
@@ -43,9 +43,9 @@
 5751664001,L2 U2 L2 B F L2 B F2 L F D' R' D2 B2 U' R2 D2 U',Y,Bring the Heat AZ 2026 (2026-07-18),333 R1 B #1
 410742001,D F2 L2 D L2 U F2 L2 U L2 B R D' F U L2 U' B2 R2,B,Urdaneta City Fiesta Open 2016 (2016-12-04),333 R1 A #1
 4949325001,L2 U2 F U2 L2 B U2 L D2 L' R' B' D B R B F D,W,Korea Open 2025 (2025-08-15~17),333 R2 D E2
-430292001,U2 L2 R2 B' R2 B F U' L U' B L2 B L2 F' R' U B,G,Chișinău Winter 2017 (2017-01-08),333 R2 B #2
+5858718050,L2 F L U' B U2 R L U' F D2 F2 U2 L' U2 B2 R' B2 L2 B R',R,Please Be Quiet Singapore Oct 2026 (2026-10-03~04),333mbf Final A #1
 4219003001,D' R2 F2 U' L2 F2 L2 B2 R D' L2 B2 D' L2 R D' R,G,Brazos Cubing Fall 2024 (2024-10-20),333 R1 C #3
-451205001,U B' D2 R' D' L D' L' D R' L2 B D2 B L2 D2 F2 R2 B,W,P3 Grand Open - Feb 2017 (2017-02-26),333 R1 C E1
+5875035001,F2 L F' L2 U2 D' F D2 B U2 D R2 U2 R2 F2 U B2 F,O,Berkeley Fall 2026 (2026-10-11),333oh R1 A E1
 468612001,F D2 F2 L2 D2 U2 B2 L2 D' L2 B' U B' R U F R F',W,Unionville Open Spring 2017 (2017-03-18~19),333 R2 A #2
 3380727001,R2 U F2 D2 R2 F2 U R2 L B2 U' F' D2 L U' B L R2 B' L' F',R,Changsha Open 2023 (2023-12-23),333bf Final A #3
 4526209001,B2 R' L2 F2 U' B2 R2 D2 F2 L2 R2 F R2 F D' R' D' L2 B2,Y,Sqauckland 2025 (2025-02-22),333 R1 C E2
@@ -150,7 +150,7 @@
 1599259038,F2 R2 B2 D' L2 U' R2 D U2 B' D2 U2 R F' R D B L2 U L2 U',W,Side 'n Blind Forserum 2020 (2020-03-06~08),333mbf Final A #3
 3607374001,B' U' R F2 L F2 R B2 U2 D' F L2 B' F U' F2 D' U',G,CubingVic 2024 (2024-03-23),333 Final A E2
 1603235016,B2 D2 R2 F2 D' B2 F2 R2 U R' U' B2 R D R2 F L U' F' D,B,Pi Berkeley Quiet 2020 (2020-03-14),333mbf Final B #1
-4324135001,D' L2 F2 U R' D' L' B F2 R F2 R B2 L U2 F D2,W,Barcelona Open 2024 (2024-11-30~12-01),333 R1 E #5
+5875631001,U' R2 B2 D' F2 L2 F2 R2 F2 L' U' L B2 L2 R F R B2,W,Thailand Championship 2026 (2026-10-09~11),333oh Final A #1
 1663101001,D' B2 R2 D B U' B R L F' R B2 L' B2 R D2 R' L',W,Happy Cubing Acton 2021 (2021-06-27),333 R2 C #1
 4170083001,B U' D R' B U F' U' R' U2 L' D2 F2 R' B2 R2 B2 F R,R,Estonian Championship 2024 (2024-10-04~06),333oh Final A #1
 1761589001,F2 R2 U' B2 L2 D' L2 D2 L F D F2 L D' F' L2 F2 D',B,Richmond Open A 2021 (2021-12-11),333oh R1 A #5

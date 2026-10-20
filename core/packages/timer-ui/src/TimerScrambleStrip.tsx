@@ -49,6 +49,7 @@ export type TimerScrambleStatusProps = TimerScrambleStatusBaseProps & (
 
 export interface TimerScrambleStripProps {
   children?: ReactNode;
+  editor?: ReactNode;
   className?: string;
   compact?: boolean;
   copied?: boolean;
@@ -62,6 +63,8 @@ export interface TimerScrambleStripProps {
   match?: boolean | null;
   nonOptimal?: TimerScrambleNonOptimalLabel;
   onActivate?: () => void;
+  /** Plain scramble presses use the surrounding timer's existing input path. */
+  timingEnabled?: boolean;
   scramble: string;
   status?: TimerScrambleStatusProps;
   title?: string;
@@ -109,6 +112,7 @@ export function TimerScrambleHintText({ hint, tailExtra }: TimerScrambleHintText
  */
 export function TimerScrambleStrip({
   children,
+  editor,
   className,
   compact = false,
   copied = false,
@@ -122,6 +126,7 @@ export function TimerScrambleStrip({
   match = null,
   nonOptimal,
   onActivate,
+  timingEnabled = true,
   scramble,
   status,
   title,
@@ -142,12 +147,13 @@ export function TimerScrambleStrip({
     '--scramble-length-scale': lengthScale,
   } as CSSProperties;
 
-  const stripActivate = status?.onRetry || status?.delayedAction ? undefined : onActivate;
+  const stripActivate = editor || status?.onRetry || status?.delayedAction ? undefined : onActivate;
   const activateFromKeyboard = (event: KeyboardEvent<HTMLSpanElement>) => {
     if (event.target !== event.currentTarget
       || !stripActivate
       || (event.key !== 'Enter' && event.key !== ' ')) return;
     event.preventDefault();
+    event.stopPropagation();
     stripActivate();
   };
 
@@ -157,6 +163,7 @@ export function TimerScrambleStrip({
       className={`scramble-strip sf-${font}${compact ? ' compact' : ''}${className ? ` ${className}` : ''}`}
       data-scramble-match={match === null ? undefined : match ? 'ok' : 'off'}
       data-interactive={stripActivate ? 'true' : undefined}
+      data-no-timer={!!editor || !timingEnabled || stripActivate || status ? true : undefined}
       style={style}
       title={title}
     >
@@ -164,10 +171,13 @@ export function TimerScrambleStrip({
         className="scramble-text"
         onClick={stripActivate}
         onKeyDown={activateFromKeyboard}
+        onKeyUp={(event) => {
+          if (stripActivate && (event.key === 'Enter' || event.key === ' ')) event.stopPropagation();
+        }}
         role={stripActivate ? 'button' : undefined}
         tabIndex={stripActivate ? 0 : undefined}
       >
-        {scramble
+        {editor ?? (scramble
           ? <>
               <span className="scramble-moves">
                 {liveHint
@@ -184,7 +194,7 @@ export function TimerScrambleStrip({
             ? <TimerScrambleStatus {...status} />
           : fallbackKind === 'empty'
             ? <span className="scramble-empty">{fallback}</span>
-            : fallback}
+            : fallback)}
       </span>
 
       {liveHint && correctionActive && copied && (

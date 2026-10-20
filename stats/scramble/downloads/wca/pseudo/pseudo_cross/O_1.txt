@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_cross / O / bin 1
-# Population in this bin: 356
+# Population in this bin: 359
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 4347560001,U2 D' L2 F' L U' L2 F' D2 F2 L2 D L2 U R2 D R D,O,KUbing Nepal 2024 (2024-12-05~06),333 R1 A #5
@@ -31,7 +31,7 @@
 4273734001,D F2 L2 F2 D U' B D' R' D' U2 R' B' U' B' U' L',O,Swiss Science Open 2024 (2024-11-09~10),333 R1 D #4
 5296162001,F D2 F2 L2 R2 D' B2 R2 L U B R' F2 L2 D' B D2 B,O,Zhengzhou Zest 2025 (2025-12-27),333 R1 H #2
 348245001,R B2 U2 B2 D B L2 U R' U' R2 U' F2 U D R2 F2 R2 D,O,Michigan 2016 (2016-08-13~14),333 R2 B #3
-360106001,U2 L2 F L2 D2 B U2 L2 D2 L2 B L U2 L' D2 R' F2 D' R2 D,O,GLS Cup IV 2016 (2016-09-03),333oh Final A #3
+5859202001,D2 R2 U L' B2 U' D' B' R' B' U D2 R2 D2 L2 F B R2 F2,O,Beijing Autumn Rivalry 2026 (2026-10-01~03),333 R3 B #2
 4925441025,D B2 R2 B2 D' R2 U2 L2 U F' R' U2 L' F' D R2 U' L D' B',O,Gem City Airplane Mode Special VI OH 2025 (2025-08-10),333mbf Final A #1
 377694001,D' R2 U' R2 F2 L2 B' D' F L2 D2 L2 R B' F' U' B,O,Newport Fall 2016 (2016-10-08),333 R1 A #1
 381912001,L2 B' R L B' R2 B L2 U R2 F2 R' U2 B2 R' B2 R' F2 R,O,ÅF Swedish Cube Open 2016 (2016-10-15~16),333 R1 D #3
@@ -65,7 +65,7 @@
 638358001,B2 U2 F' D2 L2 F' D2 R2 U L' D F2 D B' U2 L2 R D' L2,O,KCubing Fall 2017 (2017-11-04),333oh Final A #3
 650799001,B2 U' F2 U' B2 R2 U2 L2 R2 U R B D2 R D U' B' R U2 B',O,Return Open 2017 (2017-11-18~19),333 R1 A #4
 5467116001,D' F' L2 B2 D B2 R2 D' L2 D' R' B' R' D2 R' D F R2,O,Sumgait Spring Open 2026 (2026-03-19),333 R1 A #4
-660507008,F2 R2 B2 D' R2 D' L2 R' U2 B' U2 F R F L' B' U R2 U L B2,O,Welcome To Cambridge 2014 (2014-07-12~13),333mbf Final A #1
+5873950011,R' B D' R L' U2 L U' F2 R F2 R' D2 R2 B2 D' R2 U B' L',O,Portugal Championship 2026 (2026-10-09~11),333mbf Final A #1
 660532008,U L2 B2 U2 B2 D R2 D' F2 D' B2 F U' L R2 F D2 B' D' U L2,O,Bydgoszcz Summer 2014 (2014-08-23~24),333mbf Final A #1
 5297405027,L2 U B2 L2 F2 U F U L2 F' U B L' B D' F U' F' L2 U,O,Taiwan Championship 2025 (2025-12-19~21),333mbf Final A #1
 660838023,B2 F2 R2 B2 R2 D' U' F2 L' B' F2 R2 B' R2 U F D' L D B R,O,Spanish Championship 2015 (2015-10-09~11),333mbf Final A #1

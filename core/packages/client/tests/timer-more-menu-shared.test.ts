@@ -236,7 +236,7 @@ describe('shared TimerMoreMenu interaction and viewport contract', () => {
     await act(async () => first.panel.dispatchEvent(new KeyboardEvent('keydown', {
       bubbles: true, cancelable: true, key: 'End',
     })));
-    expect(document.activeElement?.textContent).not.toContain('Clear current event');
+    expect(document.activeElement?.textContent).not.toContain('Clear current data');
 
     await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'Escape' })));
     await act(async () => { await new Promise((resolve) => requestAnimationFrame(resolve)); });
@@ -253,7 +253,7 @@ describe('shared TimerMoreMenu interaction and viewport contract', () => {
     await render(fixtureItems(select));
     const { panel, trigger } = await openMenu();
     const clear = Array.from(panel.querySelectorAll<HTMLButtonElement>('button'))
-      .find((button) => button.textContent?.includes('Clear current event'))!;
+      .find((button) => button.textContent?.includes('Clear current data'))!;
     const solver = Array.from(panel.querySelectorAll<HTMLButtonElement>('button'))
       .find((button) => button.textContent?.includes('Solver'))!;
     const manual = Array.from(panel.querySelectorAll<HTMLButtonElement>('button'))

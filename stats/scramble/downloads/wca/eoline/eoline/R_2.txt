@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / R / bin 2
-# Population in this bin: 882
+# Population in this bin: 886
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 1710001,L U2 L' F2 L U2 L' B2 U2 B2 L2 D' L2 F' U2 F' U2 L F',R,Kansai Open 2014 (2014-03-21~22),333 R1 C #3
@@ -82,7 +82,7 @@
 1226585001,B' R2 F2 L2 R2 B' D2 U2 L F L' F D F2 D2 U' B' L,R,CCC Qualification Voronezh 2019 (2019-07-20~21),333oh Final A #1
 1416662001,L2 D2 R F2 U2 B2 U2 R B2 F2 L D' B2 F2 U' L' B2 U L B',R,Ankara Bulut 2019 (2019-11-23~24),333oh R1 B #2
 294810001,U2 F2 R F2 U2 F2 L2 D2 L' B2 U' F2 D2 L' D2 L' F2 L2 F,R,Kawasaki Spring 2016 (2016-05-08),333 R1 B E2
-4480186001,F' L B2 F2 D2 L' B2 D2 F2 B U' L2 U R' F2 L2 D R' B L B',R,Central Asian Tour Astana 2025 (2025-02-08~09),333bf Final B #3
+5873204001,L' B' U' B' L U2 F D2 F L U2 L2 U2 B2 L B2 L U,R,Mini Guildford in Olomouc 2026 (2026-10-10~11),333 R1 A #4
 5747338001,L U2 B2 R F2 R' U2 L F D L2 F D' R B' L U F2 D L' F,R,Poznań Mental Breakdown 2026 (2026-07-04~05),333bf R1 A #2
 2413221001,R2 F2 U2 F' R2 B2 R F2 R' F2 D2 L U B2 L B2 F' L2 F',R,Lynnwood Winter 2023 (2023-01-07),333 R1 B #3
 1925665001,F2 D2 L' B2 F2 D2 L U2 L' D2 B2 L2 F L2 B' L' B,R,Dutch Masters 2022 (2022-05-21~22),333 R1 D E1
@@ -202,6 +202,6 @@
 3640794001,L2 F2 L D2 L2 B U F2 U B R2 B' R' B' U2 L,R,Beachside Auckland 2024 (2024-04-06),333 Final A #3
 5589010001,L2 F R2 D2 U F2 U2 F2 L2 D' L' D' L U F' U2 F2 L2,R,Illini Cubers Spring 2026 (2026-05-01),333 R2 A #5
 853731024,F2 U2 L2 D2 U2 R F2 L' U2 L2 F L' B' U2 F' R2 F2 L' F2,R,Mexican Championship 2018 (2018-08-10~12),333mbf Final A #3
-719336001,B R2 D2 B' D2 B2 L2 F' L' R F L2 B2 F' R' B' L R,R,Caracolí Open 2018 (2018-03-03~04),333 R2 A #2
+5865096001,U L2 B2 R2 U' F2 R U R' U2 L2 U F2 D2 R D,R,Río Grande TDF 2026 (2026-09-26~27),333oh R1 B #1
 3907486001,U L2 U2 L' D B' L B' D F2 D F2 U2 B2 D L2 U2 L B,R,Los Fuertes Puebla 2024 (2024-06-29~30),333bf R1 B #1
 4668350001,B2 D' R D2 R2 B' D2 F' D2 F R2 D2 F R' B' D' B2 F' R B',R,Stevenage April 2025 (2025-04-19~20),333oh R1 B #3

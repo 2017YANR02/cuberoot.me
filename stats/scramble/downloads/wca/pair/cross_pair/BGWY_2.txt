@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / BGWY / bin 2
-# Population in this bin: 818
+# Population in this bin: 825
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 28543001,D2 R2 D2 B F L2 B U' F' U F' D U' R' D2 R2 F2 U2 L2 U2,G,Bucharest Rubik Summer 2014 (2014-06-15),333bf Final A #1
@@ -86,7 +86,7 @@
 3755286030,F' D B D' L' U2 R' D' B' L2 U B2 D' R2 U' R2 U2 B2 L' F2,G,Blind Faith Denver 2024 (2024-05-11~12),333mbf Final A #2
 4702497001,F' R B R' U2 L D2 R B2 F2 R2 D L2 D R' F L' D2 F',Y,Keep Up Karrinyup 2025 (2025-05-04),333oh R1 B #3
 1811893001,L2 U L2 U R2 F2 D' L D F2 D2 L' B D' R' D' R' U,Y,Cocha Sub-X 2022 (2022-02-11~12),333 R1 B #3
-5584831001,F L2 D' F2 L2 R2 U F2 D' L2 D R2 U' R D B L' B' R U2,B,Trinidad and Tobago Nationals 2026 (2026-04-25),333 R1 F #5
+5868151001,U B' L D2 R2 U R2 D B2 F2 D R U B R' B2 D2 L2 D2 B' L2,Y,Newmarket Side Events 2026 (2026-10-10),333bf Final A #3
 432157001,F2 D' R F' D2 R' D2 F2 L2 F' U2 D F2 L2 F2 L2 U2 D' L2 U',W,Yura Speedcubers 2017 (2017-01-14),333 R2 A #5
 5840294001,U2 L2 R2 F' R2 U2 R2 U2 B2 D' L' F2 D' F' R2 B R2 F2 U2 B R,W,Galgotias Cube Open 2026 (2026-09-19~20),333bf Final A #1
 436770001,L2 B2 D B2 D' F2 R2 U' B D' B L R D' B D' B' L D2,B,Mind Games 2017 (2017-01-28),333 R1 A #1

@@ -164,13 +164,13 @@ export const EXPECTED_APP_PAGES = [
   'pages/account/index',
   'pages/web/index',
   'pages/payment/index',
+  'pages/membership/index',
   'pages/preferences/index',
 ];
 
 export const EXPECTED_TAB_BAR = [
   { pagePath: 'pages/timer/index', text: '计时' },
   { pagePath: 'pages/tools/index', text: '工具' },
-  { pagePath: 'pages/training/index', text: '训练' },
   { pagePath: 'pages/account/index', text: '我的' },
 ];
 
@@ -548,6 +548,19 @@ export function collectReleaseFailures({
           typeof source === 'string'
           && uploadPattern.test(source)
           && !uploadPathAllowed(path)
+          && !(/^shared\/chunk-[A-Z0-9]+\.js$/.test(path)
+            && buildState?.outputFingerprint === currentOutputFingerprint
+            && buildState?.sourceFingerprint === currentSourceFingerprint
+            && Array.isArray(buildState?.bundleInputs?.[path])
+            && buildState.bundleInputs[path].some(input => sourceFiles.some(file => (
+              file.path === input && typeof file.source === 'string'
+              && uploadPattern.test(file.source) && sourcePathAllowed(input)
+            )))
+            && buildState.bundleInputs[path].every(input => {
+              const file = sourceFiles.find(candidate => candidate.path === input);
+              return file && typeof file.source === 'string'
+                && (!uploadPattern.test(file.source) || sourcePathAllowed(input));
+            }))
         ))
         .map(({ path }) => path),
     ];

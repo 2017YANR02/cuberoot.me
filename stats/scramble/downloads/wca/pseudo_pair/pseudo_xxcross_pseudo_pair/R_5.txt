@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / R / bin 5
-# Population in this bin: 670
+# Population in this bin: 676
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 2411907001,L D' B2 U L2 D2 L B2 R2 D2 F U R' D B' R D,R,Cebu New Year Open 2023 (2023-01-07),333 R2 E #2
@@ -75,10 +75,10 @@
 3607413001,L' B2 U2 B' R2 B2 L2 D' R D2 U R2 F' L2 R2 F2 D' L B,R,CubingVic 2024 (2024-03-23),333bf Final A E1
 4079996016,F' D R' F D2 F2 D L2 R2 F2 D B2 R' D F U' B2 D' F2 L2 U',R,New York Quiet Championship 2024 (2024-09-07),333mbf Final A #1
 4946763001,R' U B R2 F2 U L F2 U' F2 R' L B2 L U2 D2 R' F',R,Michigan Championship 2025 (2025-08-15~17),333oh R1 B #2
-2713243001,R2 L' U' F U2 B' U L' D2 B D2 R2 D' F2 U' L2 B2 R2 D2 B2,R,Cubing Comes To Shillong 2023 (2023-05-06),333 R1 A #1
+5864546001,U' D2 R F2 R' F2 U2 R D2 R' B D B2 R B' F2 D' R',R,Head to UBC Afternoon 2026 (2026-10-03),333 R1 A E2
 2405910001,D' B2 D L2 D B2 D' R2 F' L2 F U2 F2 R' U F',R,UK New Year Countdown 2023 (2022-12-31~2023-01-01),333 R1 C #4
 397187001,F D2 L' D' L F' U R' L2 B R D F2 L2 B2 R2 D2 L2 U,R,Reno Fall 2016 (2016-11-12),333oh R1 D #4
-4241958001,D R B2 L2 U2 R B2 U F' D' R D F D' R D L,R,Kublördag Västerås V - 2024 (2024-11-02),333oh Final A E2
+5870169001,U2 L2 F2 R2 F2 U2 R B2 R' F R2 F D B' D' L' U B2 L,R,Bergen Open 2026 (2026-10-10~11),333 R1 B #5
 4967939001,L U' D B D' F2 L' D R F' U2 F2 D2 F2 R L U2 L2 D',R,Em Ammò Mia Cubat Asee 2025 (2025-08-23~24),333oh Final C E1
 3519018001,F B L B' R' U D B D2 L F2 U2 D2 L F2 U2 D2 R' D2,R,Greater Toronto 2024 (2024-02-18),333 Final E E2
 5065391001,B2 L2 B D' B' R2 U' R2 U' R' B2 D2 B2 L2 U2 R D2 F2 U2,R,Clock & 'Minx Ohio 2025 (2025-10-04),333 R2 B #2

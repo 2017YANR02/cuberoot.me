@@ -114,6 +114,11 @@
 .timer-battle-key-bindings legend { margin-bottom: 8px; }
 .timer-battle-key-bindings button { min-width: 88px; cursor: pointer; }
 .timer-battle-key-bindings button[aria-pressed="true"] { background: var(--accent-soft); }
+.timer-battle-settings-reset { padding-top: 16px; border-top: 1px solid var(--border-default); }
+.timer-battle-settings-reset p { font-size: 13px; color: var(--muted-foreground); }
+.timer-battle-settings-reset button { min-height: 44px; padding: 8px 12px; border: 1px solid var(--destructive); border-radius: 6px; color: var(--destructive); background: transparent; font: inherit; cursor: pointer; }
+.timer-battle-appearance-disclosure > summary { padding-block: 12px; cursor: pointer; }
+.timer-battle-appearance-disclosure > summary:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 .timer-battle-cube-controls h3 { margin: 0 0 12px; font-size: inherit; }
 .timer-battle-cube-controls p { font-size: 13px; color: var(--muted-foreground); }
 .timer-battle-cube-device { margin-block: 12px; }

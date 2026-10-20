@@ -224,6 +224,10 @@ describe('TwistySection without WebGL', () => {
     for (const [filename] of download.mock.calls) expect(filename).toMatch(/^sim-\d+$/);
     expect(screenshot).not.toHaveBeenCalled();
     expect(vantages).not.toHaveBeenCalled();
+    const record = [...host.querySelectorAll<HTMLButtonElement>('button')]
+      .find((candidate) => candidate.textContent?.trim() === 'Record MP4')!;
+    expect(record.disabled).toBe(true);
+    expect(record.title).toBe('Video export is not available for the current renderer');
   });
 
   const addedNativeCases = [
@@ -307,6 +311,11 @@ describe('TwistySection without WebGL', () => {
     },
     {
       id: 'radioweb', setup: 'R', alg: '2R', move: 'Rw', order: 3,
+      controls: [{ move: 'R', order: 3 }, { move: '2R', order: 3 }, { move: 'Rw', order: 3 }],
+      invalid: '4R', absent: ['3R', '3Rw'],
+    },
+    {
+      id: 'catscradle', setup: 'R', alg: '2R', move: 'Rw', order: 3,
       controls: [{ move: 'R', order: 3 }, { move: '2R', order: 3 }, { move: 'Rw', order: 3 }],
       invalid: '4R', absent: ['3R', '3Rw'],
     },
@@ -502,10 +511,13 @@ describe('TwistySection without WebGL', () => {
     await mountNative(spec, { externalControls: true, hideControls });
     const player = host.querySelector('.twisty-container')!.firstElementChild as HTMLElement & {
       controlPanel: string;
+      timestamp: number;
     };
     expect(probe.construct).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
       controlPanel: 'none', background: 'none',
     }));
+    expect(probe.construct.mock.calls[0][0]).not.toHaveProperty('timestamp');
+    expect(player.timestamp).toBe(0);
     expect(player.controlPanel).toBe('none');
     expect(player.style.colorScheme).toBe('');
     expect(host.querySelector('.recon-play-overlay')).toBeNull();

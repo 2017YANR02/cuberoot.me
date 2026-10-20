@@ -20,7 +20,7 @@ export interface TimerLocalBattlePageProps {
 }
 /** One page tree for local multiplayer; stores and native event subscriptions stay in adapters. */
 export function TimerLocalBattlePage({ className, ariaLabel, devices, layout, toolbar, settings, history, feedback, error }: TimerLocalBattlePageProps) {
-  return <section className={className} aria-label={ariaLabel}>
+  return <section className={`timer-no-selection${className ? ` ${className}` : ''}`} aria-label={ariaLabel}>
     <TimerStageLayout devices={devices}>
       <TimerBattleLayout {...layout} middle={<TimerBattleToolbar {...toolbar} />} />
     </TimerStageLayout>

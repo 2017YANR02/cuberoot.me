@@ -145,3 +145,6 @@
 @media (max-width: 540px) {
   .settings-row { flex-wrap: wrap; }
 }
+
+/* Empty portal targets must not reserve a trailing flex gap beside search. */
+.wca-src-shared-controls:empty { display: none; }

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_cross / BG / bin 1
-# Population in this bin: 689
+# Population in this bin: 691
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 4635102044,D' L' F2 L2 D2 F' B D' L F2 B2 D2 F U2 L2 U2 B' D2 F L2,B,Tip of Skåne 2025 (2025-04-12),333mbf Final A #1
@@ -101,7 +101,7 @@
 558345001,R2 D L2 B2 R2 D L2 B2 R2 B' L2 B' D2 R D B' R B R,G,China Championship 2017 (2017-07-28~30),333oh R2 B #1
 5599615008,L D2 L2 F2 D2 F2 D2 L U2 L' R' F D L' B' L R' D2 R2 B R,G,Campeonato Mineiro 2026 (2026-05-01~03),333mbf Final B #2
 3320931001,D2 B2 R' D2 B L' D F L' R2 F' R2 B2 R2 F' R2 F,G,KUbing Nepal 2023 (2023-12-02~03),333 R1 C #4
-4150855001,F2 R' F' D' L' D' L2 U2 R2 D' L2 B2 L' F2 U2 R' D2 L U2,B, Esprit Cube Open Bayonne 2024 (2024-09-28~29),333 Final A #5
+4150855001,F2 R' F' D' L' D' L2 U2 R2 D' L2 B2 L' F2 U2 R' D2 L U2,B,Esprit Cube Open Bayonne 2024 (2024-09-28~29),333 Final A #5
 4626878057,L2 F L2 D' F' R2 U F R' D2 B D2 B' R2 U2 R2 F2 L' D' L' F,G,New York Multimate PBQ 2025 (2025-04-04~06),333mbf R1 A #1
 1223927001,D' L2 D2 U B2 F2 L2 B2 F' D U2 R' F2 L B2 R' D B' D',G,Jakarta Open 2019 (2019-07-13~14),333 R2 A E1
 2769446001,R L2 U2 L2 B2 U2 B D2 B R' U2 B' R2 B R' D R' B2 F,G,Singapore AMK CC Cubing A 2023 (2023-06-03),333 Final A #3
@@ -151,7 +151,7 @@
 4643459001,U2 L F' D' F2 R D L U2 F' U2 F R2 L2 F R2 D2 R2 D,G,NZ South Island Championship 2025 (2025-04-12~14),333 R2 B E2
 4433820001,F' B2 L' B2 L2 B' L' F' U2 D' B2 U2 F2 U L2 U' D2 L',G,Paulo VI Cartago 2025 (2025-01-19),333 R2 B E2
 743596001,D2 B' D2 B2 L2 B2 F' D2 L' B' U B' D2 L' B D2 U2 B' R,B,SNU Open 2018 (2018-04-07~08),333 R2 A #3
-4245291001,F' L B' R2 F2 L2 F2 D2 U B2 L2 D L2 F' U L2 D L' F U2,B,Ukrainian Nationals 2024 (2024-11-01~03),333oh R1 C #1
+5869746001,D F2 B R2 L2 U2 F B2 L B R2 U L2 U2 F2 U2 F2 L2 D,B,Jordan Nationals 2026 (2026-10-09~10),333oh Final B #1
 4087632001,U2 F2 L F2 L' U2 R' D2 B R U' F2 U F' R B' D2 U2,G,Ibagué 2024 (2024-09-08),333 R1 C #1
 4602889001,D' U' F2 R2 F2 D' L2 F2 D2 R' U2 R' B2 D2 B' R B' U2,G,First Solves Gothenburg 2025 (2025-03-29~30),333 Final B E1
 5453935036,F' L' R2 B2 L2 R2 U' F' R' U2 L R B L2 F' L2 U B' L2,G,SCU III: FMC Triple-Scoop 2026 (2026-03-14~15),333mbf Final A #2

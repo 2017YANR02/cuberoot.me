@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_layer / OR / bin 6
-# Population in this bin: 461
+# Population in this bin: 464
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 2405783001,U D2 F R2 D L' B2 U' B' L B U2 B R2 L2 F D2 R2 B' L2 U2,O,BrizZon Sylwester Open 2022 (2022-12-31),333bf Final E #1
@@ -38,7 +38,7 @@
 261088001,L2 B' D2 B2 D2 F' D2 L' B L2 U' L' D2 B R B' R2 B,R,GLS Cup I 2016 (2016-02-27),333 R2 A #5
 5119465001,D2 F U2 F2 R2 F2 R2 F2 D R B' L2 U' L' D2 B D L',O,NCSU Wolfpack 2025 (2025-10-19),333 R1 B #2
 4495066001,R' D2 R2 U' R2 B2 R2 D2 B2 D' B U' L' R B' L2 D U' B2 L',R,Cube n' Chill in Chiang Mai 2025 (2025-02-15~16),333bf Final A #2
-278804001,U2 L U' F2 D R' U' D' F2 R2 F U2 R2 U2 B2 R2 B L2,O,Jeonju Spring 2016 (2016-04-02),333 R1 B #4
+5859408001,B2 R2 L2 D B L' U' L2 B L2 F U2 L2 F' D2 B2 D' B R2,O,Beijing Autumn Rivalry 2026 (2026-10-01~03),333 R1 H #4
 282287001,R D2 B2 L' F2 L' B2 D2 F' D B' F' D' B' L2 B D2 F,O,Finnish Open 2016 (2016-04-16~17),333oh R1 B #1
 287665001,R F2 R2 F R' U2 L2 F' U R D B L2 B U2 R2 F' D2 R2,O,BSU Cubing Days 2016 (2016-04-23~24),333 R1 A #2
 5283684003,L' B2 R2 F2 R2 D U F2 U' L2 R2 F L' F' U B D2 L D2 L2 U,O,Uppsala Christmas Special 2025 (2025-12-20),333mbf Final A #2

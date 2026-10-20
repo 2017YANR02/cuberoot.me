@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxcross / BGORWY / bin 6
-# Population in this bin: 614
+# Population in this bin: 617
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 1682873001,F2 D L' D2 B' U2 D2 F' R2 F2 U2 L2 D2 B' D' L',W,Empire State Summer B 2021 (2021-08-01),333oh R2 B #3
@@ -52,7 +52,7 @@
 332418001,U2 F2 D' L2 F2 U' F' R2 U' B U' B D U2 F' R2 U',B,National Cubing Region Open 2016 (2016-07-23~24),333 R2 I #3
 2954245001,R2 U R2 B2 U B2 L2 D' B2 U' B D U2 R' D B2 D F' L2,O,Richmond Summer Open 2023 (2023-08-05),333 R2 B E2
 349238001,U B U' F L2 F' D' L F U2 F2 R2 F2 L2 U' D2 B2 U2,W,Mindanao Championship 2016 (2016-08-13~14),333 R2 B #2
-350417001,F2 L D2 F' B2 U' R B2 R2 U D' L2 B R2 L2 B U2 B',W,Toronto Limited Summer 2016 (2016-08-20),333 R2 A E1
+5858277001,D2 L B R' F2 R2 U R2 U' B2 U F' D2 L D2 B2 L2 F2 R,W,Trondheim Høst 2026 (2026-10-02~04),333oh R1 A #3
 5068224001,L D2 L2 F2 U2 F2 U2 R F R' U F' L F2 D2 L' F D,O,II Nova Carapina Challenge 2025 (2025-10-04~05),333 R2 B #4
 359276001,R' U R2 F' U2 F' B D' B R' D2 B2 R D2 R' D2 B2 R2 L F2,R,Swiss Nationals 2016 (2016-09-03~04),333oh R1 A E1
 3067427001,F' R D' F2 D R2 U F2 U L U' F' D' L F2 D' U2,W,Glacier National Park Open 2023 (2023-09-09),333bf Final A E1

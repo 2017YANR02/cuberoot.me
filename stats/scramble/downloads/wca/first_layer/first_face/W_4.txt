@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_face / W / bin 4
-# Population in this bin: 680
+# Population in this bin: 684
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 4286619001,U' B2 R B' U' D' F' L' D U2 B' L2 D2 F U2 B U2 L,W,Tír Chonaill Cubing 2024 (2024-11-16~17),333 R2 B #2
@@ -125,7 +125,7 @@
 625423001,F2 L U' R F2 U' D2 R' B' D F2 L U2 F2 U2 R L' U2 R B2,W,Rubikku Champ 2017 (2017-10-21~22),333oh Final B #2
 5587717001,R' F U2 B2 D2 U2 R2 U' B R F' U B' F2 R2 B F',W,Odd Day in Hong Kong 2026 (2026-04-26),333 R1 H E1
 4972663012,L' D B R2 D2 L' F2 L2 U2 L B2 D2 F U' R' F2 R F D2 L2 U',W,Rubik's UK Championship 2025 (2025-08-22~24),333mbf Final A #2
-637979001,F' R B' R2 L2 U' B L2 F B2 L2 U2 F2 L' B2 R D2 B2 L,W,Raleigh Rubik's Rally 2017 (2017-11-04),333oh Final A #1
+5858879001,D U2 L2 B2 L D2 R' B2 L' D2 R' U' L F R2 F' D' R U',W,Honey Cube Barcin 2026 (2026-10-03~04),333 R1 B #3
 5088141001,F2 R2 F2 U' L2 B2 U2 F2 L' B L' B F U' L2 D L' B2 R',W,Virginia Beach Fall 2025 (2025-10-11),333 R1 C #5
 4740290001,F' B2 L' U2 L F2 D2 R' F2 R2 F2 D' F L2 F2 R D U F' R2,W,CubeX Summer Open Bangalore 2025 (2025-05-24~25),333 R1 E #3
 644669001,R2 U' B' D2 F L' B' R2 U' D2 F2 U2 B2 R' L2 F2 U2 D2 R' L2,W,Estância Open 2017 (2017-11-18),333 R2 B #3
@@ -184,7 +184,7 @@
 5310076001,F D' L' F' U2 B R2 B' D2 B2 D R2 B2 D F2 U F2 B2 U2 L2 U',W,Your Average Sonvico 2026 (2026-01-02),333bf R1 A #5
 1291030036,U2 L2 F D2 B L2 D2 R2 D2 L D2 L B2 F' D' F2 R F D2 U' B' L2,W,Big n Blind in Bangalore 2019 (2019-08-31~09-02),333mbf Final A #1
 1123016036,L D' R' B2 D R B' U D' F2 L2 B2 L B2 L' D2 F2 L U2 D2,W,CubingUSA Southeast Championship 2019 (2019-04-27~28),333mbf Final A #1
-5026287001,U2 B D2 B' R2 B2 R2 B' R' B2 L B' L D L' D2 B' D' L2,W,Fastest Fingers First Pune 2025 (2025-09-14),333 Final B E1
+5860396001,L' F' R2 F' D R2 U D2 L F' B2 L2 U2 F' U2 R2 L2 B R2 B' L,W,Bowling Green Fall 2026 (2026-10-03),333bf Final A #4
 3816138001,D L R F2 U2 R2 F2 D2 R2 D F' U L' D2 B2 F' U B2 R',W,See Georgia: Lake Russell A 2024 (2024-06-01),333 R1 C #5
 5814524001,D F2 D U2 B2 U L2 U R' B U B2 L' R' B' L2 R2 F D2,W,Greitieji Miško Kuberiai 2026 (2026-09-05),333 R1 C #2
 1579921001,L B' R' F2 D2 B2 R' B U' F' B2 U2 F D2 L2 U2 F D2,W,La Serena Open 2020 (2020-02-29),333 R1 D #3

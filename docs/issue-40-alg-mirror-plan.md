@@ -352,9 +352,7 @@ JSON 内容与落库前逐字节相同 —— 正好证明四向没污染这条�
 `gen: 'lr'|'fb'|'y2'` + `src: { id, ori, i }`(源 case id + 视角 + 序号)——
 后者比 uuid 更直接:UI 要显示"自动镜像自〈case〉第 N 条"时不用再按 uuid 回查。
 
-**② 只拿第 0 视角(FR)当源。** 四个视角都当源的话,每个视角会被另外三个灌进来,一个 case 的公式数翻两番。
-只认 FR 当源,则每个目标视角恰好有唯一来源,**FR 那栏永远是纯人写的**。§5.0 / §5.7 的所有计数本来
-也都是按这个口径量的("只数第 0 朝向")。
+**② 四个视角的原创公式均可作为源（2026-10-15 更新）。** 使用 `MIRROR_VIEW[gen][ori]` 映射目标视角：左右镜进入伙伴的 FR↔FL、BL↔BR，前后镜进入伙伴的 FR↔BR、FL↔BL，y² 进入自身的 FR↔BL、FL↔BR。只以原创条为源，目标先保留人工公式再按展示记号去重，生成条不继续派生；`src.ori` 记录实际源视角。编辑、删除、排序和连带预览沿用整体重算。原方案 FR 单源的数量统计不再代表当前规则。现有“不生成含 B 族动作的自动条”规则保持。
 
 **③ cls 不参与公式同步**(仍参与建链与 case 页现算)。不是数学问题是数据形状问题:镜像公式落到的是
 **别的视角**,而 f2l / zbls 每个 case 存了四个视角数组,**cls 只存一个**(实测 97/97 case 的 `algs` 长度都是 1)。
@@ -553,3 +551,24 @@ DB 迁移一条(`mirror_case_id`);zbls/wv 数据批量改走 admin API,可回滚
 ### 待拍板
 
 8. **T3 豁免清单**(属 T3 不属 T5):盘点后我列表格,默认"非 case 列表页豁免",可以吗?
+
+
+### 四朝向存量补齐（2026-10-15）
+
+新增、编辑和存量重算共用 `regenerateMirrorAlgs`，不按公式创建时间筛选。
+`backfill-mirror-algs.mts` 默认只读，遍历 F2L / ZBLS 全量 case，核对互指链、重算及重复执行一致性。
+在 `core/` 运行：
+
+```sh
+pnpm --filter @cuberoot/client exec esbuild scripts/backfill-mirror-algs.mts --bundle --platform=node --format=esm --outfile=/tmp/backfill-mirror-algs.mjs
+node /tmp/backfill-mirror-algs.mjs
+```
+
+发布新版 API 后，在已设置 `ALG_API_BASE`（目标 API origin）和 `ADMIN_API_KEY` 的环境中运行
+`node /tmp/backfill-mirror-algs.mjs --apply`，复用现有 `mirror-links` 端点提交刚读取的完整配对表。
+该端点即使配对未变化也会逐对重算全部历史公式，执行服务端目标状态/AUF 对齐；不需要逐条编辑保存。
+执行期间避免同时修改配对关系；它是全量链表接口，不能只传需要补齐的部分 case。
+脚本遇到结构、互指、幂等或服务端 notes 错误会停止；跨 set 写入不构成一个事务，失败时检查已返回的各 set 报告，再重跑。
+
+本轮仅本地预演：F2L 41 个 case（38 个变化，生成条 99 → 316），ZBLS 305 个 case（70 个变化，生成条 138 → 256），零重算 notes。
+以上是共享重写层预演数量，实际写入还经过服务端状态对齐；不代表已更新线上数据。

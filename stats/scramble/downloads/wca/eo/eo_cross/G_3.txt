@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / G / bin 3
-# Population in this bin: 207
+# Population in this bin: 208
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 28514001,F U2 F2 R2 F2 D2 B U L2 B' U2 D2 L2 B U2 F R2 U2 B',G,Bucharest Rubik Summer 2014 (2014-06-15),333 R2 B E2
@@ -117,7 +117,7 @@
 3075622030,L U' D2 F L2 R2 B' U2 B2 F U2 B' D' F2 L F L2 B L2 U2 L2 U2,G,SacQuiet Fall 2023 (2023-09-16),333mbf Final A #2
 3126689001,B' L2 F2 D2 L2 B L2 F L2 F2 U R2 U2 B' F2 D2 F2,G,Búfalo Open 2023 (2023-09-30),333 R2 A E1
 3140564001,D2 R' D2 R2 B2 L' D2 B2 L F2 L2 B' L D L2 U' F U R2 B2,G,Speedcube Battle Vallekas 2023 (2023-09-30~10-01),333 R2 B #4
-3161715001,U2 B F D2 U2 B' U2 R2 U R2 B2 R' F L D2 R2 F2 L,G, Esprit Cube Open Bayonne 2023 (2023-10-14~15),333 R2 B #2
+3161715001,U2 B F D2 U2 B' U2 R2 U R2 B2 R' F L D2 R2 F2 L,G,Esprit Cube Open Bayonne 2023 (2023-10-14~15),333 R2 B #2
 3163072001,U2 B' U D2 B R2 F U2 L2 R2 B L2 D B2 D2 B D' U' R',G,Vaudesincourt Farmer Big Cubes 2023 (2023-10-14~15),333 Final A #2
 3186408024,B2 L D' B L' B' L F U2 L' U2 F2 D F2 L2 B2 D2 R2 F2 L B,G,Hverdagscubing VIII - Lille Friheden 2023 (2023-10-24),333mbf Final A #1
 3189240001,B2 D2 B2 U2 F2 L' U2 L' D2 B2 L F' R B' F2 D2 B' L',G,Intercolegial Tarija 2023 (2023-10-21),333 R1 A #4
@@ -194,7 +194,7 @@
 5365455001,D' R L2 U F2 D R2 U' F2 L2 B2 R B R' B2 U' B' D R,G,San Cristóbal 2026 (2026-01-31),333 R1 A #1
 5416353001,D2 U2 L2 R2 F2 L R' B' D2 L' U2 R2 F L F R F,G,Good Solves in Gibson Park 2026 (2026-03-01),333 R1 C #5
 5463948001,L' D' R U2 L B2 U2 R' F2 R2 D' R' B D2 R' B D2 L,G,Bergen Spring 2026 (2026-03-21~22),333 R1 C #1
-5467116001,D' F' L2 B2 D B2 R2 D' L2 D' R' B' R' D2 R' D F R2,G,Sumgait Spring Open 2026 (2026-03-19),333 R1 A #4
+5866979001,F L2 B' R F2 U2 D2 L' B U2 B2 D2 L2 D2 F' R2 F D2,G,St. John's Fall 2026 (2026-10-04),333 Final A E1
 5513103001,D2 F L2 D2 B' D2 U2 R2 B2 L B U2 B' L2 F R' B2 U2,G,DFW Cubing Spring 2026 (2026-03-28~29),333oh R2 B E2
 5516180001,L' U2 L2 U2 F R2 B' U2 B R U2 R' B F2 L' F D,G,Marble City Cubing NY 2026 (2026-04-11),333 Final B #1
 5548973001,L F2 B R B' L' B' R2 B L B' L2 D2 R2 D F2 B2 L2,G,Nairobi Big and OH 2026 (2026-04-18),333 Final A E2

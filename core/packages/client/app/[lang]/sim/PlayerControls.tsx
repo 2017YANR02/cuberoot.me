@@ -14,90 +14,45 @@
  *    either way). See `algAutoSpaceSafe` below.
  *  - Virtual keyboards (issue #32): 'alg' = CubeVirtualKeyboard writing into the
  *    solution box; 'qwerty' = SimQwertyKeypad mirroring the keymap (click =
- *    twist, same applyMove path as hard keys). Mobile auto-opens qwerty.
+ *    twist, same applyMove path as hard keys). Keyboards open only on request.
  *  - Scramble path uses tnoodleRandomScramble (lib/cubing-scramble.ts), which
  *    routes to cubing.js + the in-app pool. NxN N≥8 falls back to inline
  *    random-move (cheap, no solver needed).
  */
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-  type RefObject,
-} from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useT } from '@/hooks/useT';
-import { tr } from '@/i18n/tr';
-import {
-  Play,
-  FlipHorizontal2, FlipVertical2, Eraser,
-  Shuffle, Link2, Check,
-  Search, Loader2,
-  Keyboard, Grid3x3, ImagePlus, Upload, Trash2, Crop,
-} from 'lucide-react';
+import { FlipHorizontal2, FlipVertical2, Eraser, Link2, Check, Keyboard, Grid3x3 } from 'lucide-react';
 import { Alg, Move } from 'cubing/alg';
+import type { TwistyPlayer } from 'cubing/twisty';
 import World from './engine/world';
+import AlgTransformPanel from './AlgTransformPanel';
+import SimAppearancePanel from './SimAppearancePanel';
+import type { SimPuzzle } from './puzzleOptions';
 import { TwistAction } from './engine/nxn/twister';
 import { timing } from './engine/tweenTiming';
 import tweener from './engine/tweener';
 import { parseSq1Scramble, type Sq1Move } from './engine/sq1/sq1State';
-import {
-  SQUARE_FAMILY_SPECS,
-  formatSquareFamilyAlg,
-  invertSquareFamilyMoves,
-  randomSquareFamilyScramble,
-  simplifySquareFamilyAlg,
-  squareFamilyMovesToString,
-  tryParseSquareFamilyMoves,
-  type SquareFamilyKind,
-  type SquareFamilyMove,
-  type SquareFamilyNotationFormat,
-} from './engine/squareFamily/squareFamilyState';
+import { SQUARE_FAMILY_SPECS, formatSquareFamilyAlg, invertSquareFamilyMoves, randomSquareFamilyScramble, simplifySquareFamilyAlg, squareFamilyMovesToString, tryParseSquareFamilyMoves, type SquareFamilyKind, type SquareFamilyMove, type SquareFamilyNotationFormat } from './engine/squareFamily/squareFamilyState';
 import { parseIvyMoves } from './engine/ivy/IvyTwister';
 import type { IvyMove } from './engine/ivy/IvyCube';
 import { classifyIvyTokens } from '@/lib/ivy-solver';
-import {
-  parseDinoMoves, dinoMovesToString, randomDinoScramble, type DinoMove,
-} from './engine/dino/dinoState';
-import {
-  parseRediMoves, rediMovesToString, randomRediScramble, type RediMove,
-} from './engine/redi/rediState';
-import {
-  parseRexMoves, rexMovesToString, randomRexScramble, type RexMove,
-} from './engine/rex/rexState';
-import {
-  parseHeliMoves, heliMovesToString, randomHeliScrambleMoves, type HeliMove,
-} from './engine/heli/heliState';
-import {
-  parseGearMoves, gearMovesToString, invertGearMoves, reduceGearAlg, randomGearScrambleMoves, type GearAnyMove,
-} from './engine/gear/gearState';
-import {
-  parseSkewbMoves, skewbMovesToString, randomSkewbScramble, isSkewbRot, type SkewbMove,
-} from './engine/skewb/skewbState';
-import {
-  parsePyraMoves, pyraMovesToString, invertPyraMoves, reducePyraAlg, randomPyraScramble, type PyraMove,
-} from './engine/pyra/pyraState';
-import {
-  parseMegaMoves, megaMovesToString, invertMegaMoves, reduceMegaAlg, randomMegaScramble, type MegaMove,
-} from './engine/mega/megaState';
-import {
-  parseFtoMoves, ftoMovesToString, invertFtoMoves, randomFtoScramble, type FtoMove,
-} from './engine/fto/ftoState';
+import { parseDinoMoves, dinoMovesToString, randomDinoScramble, type DinoMove } from './engine/dino/dinoState';
+import { parseRediMoves, rediMovesToString, randomRediScramble, type RediMove } from './engine/redi/rediState';
+import { parseRexMoves, rexMovesToString, randomRexScramble, type RexMove } from './engine/rex/rexState';
+import { parseHeliMoves, heliMovesToString, randomHeliScrambleMoves, type HeliMove } from './engine/heli/heliState';
+import { parseGearMoves, gearMovesToString, invertGearMoves, reduceGearAlg, randomGearScrambleMoves, type GearAnyMove } from './engine/gear/gearState';
+import { parseSkewbMoves, skewbMovesToString, randomSkewbScramble, isSkewbRot, type SkewbMove } from './engine/skewb/skewbState';
+import { parsePyraMoves, pyraMovesToString, invertPyraMoves, reducePyraAlg, randomPyraScramble, type PyraMove } from './engine/pyra/pyraState';
+import { parseMegaMoves, megaMovesToString, invertMegaMoves, reduceMegaAlg, randomMegaScramble, type MegaMove } from './engine/mega/megaState';
+import { parseFtoMoves, ftoMovesToString, invertFtoMoves, randomFtoScramble, type FtoMove } from './engine/fto/ftoState';
 import { parseFtoEifMoveGroups } from './engine/fto/ftoEifMoves';
 import GhostCube from '@cuberoot/puzzle-render-core/engine/ghost/GhostCube';
-import { GHOST_DEFAULT_FACE_COLORS } from '@cuberoot/puzzle-render-core/engine/ghost/ghostGeometry';
-import {
-  GHOST_ALIGN, ghostAlignmentMoves, parseGhostMoves, ghostMovesToString,
-  invertGhostMoves, reduceGhostAlg, ghostSequenceValid, type GhostMove,
-} from '@cuberoot/puzzle-render-core/engine/ghost/ghostState';
-import {
-  parseClockSteps, clockStepsToString, invertClockSteps, type ClockStep,
-} from '@/lib/clock-notation';
+
+import { GHOST_ALIGN, ghostAlignmentMoves, parseGhostMoves, ghostMovesToString, invertGhostMoves, reduceGhostAlg, ghostSequenceValid, type GhostMove } from '@cuberoot/puzzle-render-core/engine/ghost/ghostState';
+import { parseClockSteps, clockStepsToString, invertClockSteps, type ClockStep } from '@/lib/clock-notation';
 import { reduceClockAlg, randomClockScramble } from '@cuberoot/puzzle-solvers/clock';
 
 /** Random Ivy scramble: ~9 R/L/D/B turns, no immediate axis repeat. */
@@ -117,21 +72,11 @@ import { invertAlg, simplifyAlg, simplifyTwistyAlg, mirrorAlg } from '@/lib/cube
 import { convertKilominxAlg, fromCubingKilominx, type KilominxNotation } from '@/lib/kilominx-notation';
 import MagicCube from '@cuberoot/puzzle-render-core/engine/magic/MagicCube';
 import MagicRouteControls from './MagicRouteControls';
-import {
-  classifyMagicTokens, isMagicPuzzle, parseMagicMoves, magicMovesToString,
-  invertMagicMoves, reduceMagicAlg, magicSequenceValid, magicSolution,
-  type MagicMove, type MagicPuzzle,
-} from '@cuberoot/puzzle-solvers/magic';
+import { classifyMagicTokens, isMagicPuzzle, parseMagicMoves, magicMovesToString, invertMagicMoves, reduceMagicAlg, magicSequenceValid, magicSolution, type MagicMove, type MagicPuzzle } from '@cuberoot/puzzle-solvers/magic';
 import { formatTimerCompoundScramble } from '@cuberoot/shared/timer';
-import {
-  classifyDuoTokens, duoMovesToString, generatePyraminxDuoScramble,
-  invertDuoMoves, parseDuoMoves, reduceDuoAlg, type DuoMove,
-} from '@cuberoot/puzzle-solvers/pyraminx-duo';
+import { classifyDuoTokens, duoMovesToString, generatePyraminxDuoScramble, invertDuoMoves, parseDuoMoves, reduceDuoAlg, type DuoMove } from '@cuberoot/puzzle-solvers/pyraminx-duo';
 import { get_shortened_rotation } from '@/lib/roux/RotationHelp';
-import {
-  cleanForPlayer, extractAlgFromText, findTokenPositions, findWhitespaceTokenPositions,
-  type TokenPosition,
-} from '@/lib/recon-alg-utils';
+import { cleanForPlayer, extractAlgFromText, findTokenPositions, findWhitespaceTokenPositions, type TokenPosition } from '@/lib/recon-alg-utils';
 import { deriveScrambleFromSolution } from '@/lib/scramble-from-solution';
 import { tnoodleRandomScramble } from '@/lib/cubing-scramble';
 import { pgRandomScramble } from '@/lib/pg-scramble';
@@ -139,72 +84,33 @@ import { generateNativePuzzleScramble, isNativePuzzleId } from '@cuberoot/puzzle
 import { parseNativePuzzleAlg, simplifyNativePuzzleAlg } from '@cuberoot/puzzle-solvers/native-puzzle-model';
 import { cloudOptimalScramble } from '@/lib/cloud-optimal-scramble';
 import { useAuthStore } from '@/lib/auth-store';
-import {
-  formatScrambleForEvent, canonicalSq1Alg, compactSq1Alg,
-  simplifySq1Alg, invertSq1Alg,
-} from '@cuberoot/shared/sq1-notation';
+import { formatScrambleForEvent, canonicalSq1Alg, compactSq1Alg, simplifySq1Alg, invertSq1Alg } from '@cuberoot/shared/sq1-notation';
 import { toWca as toWcaSkewb, type SkewbNotation } from '@cuberoot/shared/skewb-notation';
 import SkewbNotationGuide from './SkewbNotationGuide';
-import {
-  Slider, ValueField, OrbitPad, Toggle, KeymapModal, resetWorldView, mapFrames,
-  DEFAULT_SETTINGS, DEFAULT_FACE_COLORS, MIRROR_DEFAULT_COLOR, persistPictureFaces, saveSettings, cuberLightingActive,
-  type SimSettings, type SimBoardBg, type SliderUnit,
-} from './SettingDrawer';
-import { CUBER_APPEARANCE } from './engine/define';
+import { Slider, Toggle, KeymapModal, resetWorldView, mapFrames, DEFAULT_SETTINGS, type SimSettings, type SliderUnit } from './SettingDrawer';
+
 import { KEYBOARD_ROWS, keyLabel, displayMove, type KeyMove } from './keymap';
 import CubeVirtualKeyboard from '@/components/CubeVirtualKeyboard';
 import ResetDefaultsButton from '@/components/ResetDefaultsButton';
-import AppLink from '@/components/AppLink';
-import { defaultPlatonicColorSchemes } from '@/lib/puzzle-geometry/colors';
-import { fileToLogoDataUrl } from './engine/nxn/logo';
-import {
-  PICTURE_FACE_ORDER,
-  DEFAULT_PICTURE_CROP,
-  countPictureFaces,
-  drawPictureCrop,
-  emptyPictureFaces,
-  fileToPictureEditSourceDataUrl,
-  fileToPictureFaceDataUrl,
-  normalizePictureCrop,
-  panPictureCropBy,
-  pictureCropGeometry,
-  pictureEditSourceToFaceDataUrl,
-  rotatePictureCropTo,
-  zoomPictureCropAt,
-  type PictureCrop,
-  type PictureFace,
-  type PictureFaces,
-} from './engine/nxn/pictureCube';
-import { isPgPuzzleId, type PgPuzzleId } from './pgCatalog';
+
+import { isPgPuzzleId } from './pgCatalog';
 import { isTwistyPuzzle } from './twistyPuzzles';
 import { resolveCaps } from './simCaps';
 import StickeringSelect from './StickeringSelect';
-import SwatchCell, { SwatchPopup } from './SwatchCell';
+
 import type { PickGrain, CustomTreatment, CustomBrush } from '@/components/sim-embed/customStickering';
 import { simulateGrips, type GripName, type GripSimStep, type HandSide, type PinSpec } from './engine/hands/handsRig';
 import { flattenAlg, stm, stripGripMarks } from '@cuberoot/shared/alg-notation';
-import {
-  canonicalFtoEifAlgorithm,
-  invertFtoEifAlgorithm,
-  reduceFtoEifAlgorithm,
-} from '@cuberoot/shared/fto-notation';
+import { canonicalFtoEifAlgorithm, invertFtoEifAlgorithm, reduceFtoEifAlgorithm } from '@cuberoot/shared/fto-notation';
 import { stripFtnBlocks, FTN_TOKEN, parseFtnPin } from './engine/hands/ftn';
-import { ClearButton } from '@/components/ClearButton';
-import PuzzlePicker, { type PuzzlePickerGroup, type PuzzlePickerItem } from '@/components/PuzzlePicker/PuzzlePicker';
-import { groupSimPuzzleOptions, type SimPuzzleTypeOption } from './puzzleOptions';
 export { SIM_FIXED_PUZZLE_OPTIONS } from './puzzleOptions';
 import { simSpeedToTps, simTpsToSpeed } from '@/lib/sim_timing';
-import AlgInput from '@/components/AlgInput';
+import SimAlgEditor, { type SimAlgHighlightSpan } from './SimAlgEditor';
 import ReconAutofill from '@/components/ReconAutofill';
 import PlaybackBar, { PlaybackAnchorSelect } from '@/components/PlaybackBar';
-import {
-  createTwistyPlayback, EMPTY_TWISTY_PLAYBACK_STATE,
-  type TwistyPlaybackPlayer, type TwistyPlaybackState,
-} from '@/lib/twisty-playback';
-import BoolToggle from '@/components/BoolToggle';
-import NxNOrderInput from '@/components/NxNOrderInput';
+import { createTwistyPlayback, EMPTY_TWISTY_PLAYBACK_STATE, type TwistyPlaybackPlayer, type TwistyPlaybackState } from '@/lib/twisty-playback';
+
 import './player-controls.css';
-import { ROOM_THEMES, normalizeRoomTheme, roomCubeActive } from './room-themes';
 
 /**
  * 换握记号(仅 NxN 解法框):↑ 上手(拇指起手在 U 面)、↓ 下手(D 面)、· 回 home 握。
@@ -351,49 +257,6 @@ function convertSquareText(text: string, convert: (s: string) => string): string
   }).join('\n');
 }
 
-export function PuzzleTypeSelect({ value, onChange, isZh, allowedValues }: {
-  value: string;
-  onChange: (v: string) => void;
-  isZh: boolean;
-  /** Optional subset for another /sim tool that shares this selector. */
-  allowedValues?: readonly string[];
-}) {
-  const catalog = groupSimPuzzleOptions(allowedValues);
-  const options = catalog.flatMap(group => group.options);
-  const current = options.find((option) => option.value === value) ?? options[0];
-  const toItem = (option: SimPuzzleTypeOption): PuzzlePickerItem => ({
-      id: option.value,
-      label: [option.labelEn, option.labelZh][Number(isZh)],
-      iconClass: option.iconClass,
-      textLabel: option.textLabel,
-  });
-  const families = catalog.filter(group => group.submenu);
-  const groups: PuzzlePickerGroup[] = [];
-  const wca = catalog.find(group => group.id === 'wca');
-  if (wca) groups.push({ id: wca.id, label: [wca.labelEn, wca.labelZh][Number(isZh)], items: wca.options.map(toItem) });
-  if (families.length) groups.push({
-    id: 'sim-families', label: tr({ en: 'Series', zh: '系列' }),
-    items: families.map(group => ({
-      id: `sim-family:${group.id}`,
-      label: [group.labelEn, group.labelZh][Number(isZh)],
-      iconClass: group.options[0].iconClass,
-      textLabel: group.options[0].textLabel,
-      children: group.options.map(toItem),
-    })),
-  });
-  const other = catalog.find(group => group.id === 'other');
-  if (other) groups.push({ id: other.id, label: [other.labelEn, other.labelZh][Number(isZh)], items: other.options.map(toItem) });
-
-  return (
-    <PuzzlePicker
-      isZh={isZh}
-      selectedEvent={current?.value}
-      groups={groups}
-      onSelect={onChange}
-    />
-  );
-}
-
 /** Random-move NxN scrambler for N≥8 (no solver). */
 const SCRAMBLE_FACES = ['U', 'D', 'L', 'R', 'F', 'B'] as const;
 const SCRAMBLE_AXIS_OF: Record<string, number> = {
@@ -427,7 +290,7 @@ function randomMoveScrambleNxN(N: number): string {
 }
 
 /** SimPage puzzle kind. */
-export type SimPuzzle = number | 'sq1' | 'sq2' | 'sq4' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'ghost' | 'pyraminx' | 'pyraminx_duo' | 'skewb' | 'megaminx' | 'kilominx' | 'fto' | 'mirror' | 'mirror2' | 'sphere' | 'clock' | 'magic' | 'mmagic' | 'custom' | PgPuzzleId;
+export type { SimPuzzle } from './puzzleOptions';
 
 interface SquarePlaybackCube {
   twister: {
@@ -758,18 +621,16 @@ function autosize(el: HTMLTextAreaElement | null): void {
   el.style.height = el.scrollHeight + 'px';
 }
 
-type AlgHlSpan = { text: string; bad?: boolean; current?: boolean };
-
 /** Splice a `[start, end)` "currently playing" range across a span list, tagging
  *  the overlapping slice(s) `current` (and slicing a span in two/three when the
  *  range only partly covers it) — same mirror-overlay trick the Ivy `bad`
  *  highlighting already uses (`.sim-player-hl`), just orange instead of red and
  *  driven by playback position instead of live validation. */
-function applyAlgHighlight(spans: AlgHlSpan[], range: [number, number] | null): AlgHlSpan[] {
+function applyAlgHighlight(spans: SimAlgHighlightSpan[], range: [number, number] | null): SimAlgHighlightSpan[] {
   if (!range) return spans;
   const [hs, he] = range;
   if (he <= hs) return spans;
-  const out: AlgHlSpan[] = [];
+  const out: SimAlgHighlightSpan[] = [];
   let pos = 0;
   for (const s of spans) {
     const start = pos;
@@ -957,6 +818,8 @@ function collapseSameAxis(alg: string, N: number): string {
 }
 
 interface Props {
+  /** Only animation owns playback and physical keyboard input. */
+  active?: boolean;
   world: World | null;
   /** Cube identity published after the parent completes its puzzle switch. */
   activeCube?: World['cube'] | null;
@@ -965,10 +828,10 @@ interface Props {
   setup?: string;
   onAlgChange: (alg: string) => void;
   onSetupChange: (setup: string) => void;
+  /** Translate editor notation only at the playback boundary. */
+  toPlaybackText?: (text: string) => string;
   order: number;
-  onOrderChange: (n: number) => void;
   puzzleKind: SimPuzzle;
-  onPuzzleChange: (kind: SimPuzzle) => void;
   settings: SimSettings;
   onSettingsChange: (s: SimSettings) => void;
   /** 自定义 logo 是会员权益；无权限时仍可使用无 logo 或本站 logo。 */
@@ -1003,6 +866,10 @@ interface Props {
   /** DOM node below the cube canvas to portal the playback control row into
    *  (twizzle-style bar under the puzzle). Falls back to inline when absent. */
   playbackSlot?: HTMLElement | null;
+  /** Current-state stage control shares the canvas footer with animation tools. */
+  captureStickeringSlot?: HTMLElement | null;
+  appearanceOpen?: boolean;
+  onAppearanceToggle?: () => void;
   /** DOM node at the canvas' bottom-left corner to portal the 背景(BG)selector into
    *  (overlays the big cube view, like the top-right back-view window). When absent the
    *  selector simply doesn't render — SimPage always provides the slot. */
@@ -1039,17 +906,19 @@ interface Props {
 }
 
 export default function PlayerControls({
+  active = true,
   world, activeCube = world?.cube ?? null,
   clearFrozen, alg, setup, onAlgChange: onAlgChangeProp, onSetupChange: onSetupChangeProp,
-  order, onOrderChange, puzzleKind, onPuzzleChange,
+  order, puzzleKind,
   settings, onSettingsChange, canUseCustomLogo, transCore = null,
   keymap, onKeymapChange, onResetKeymap,
-  userMoveRef, twistyPlayerRef, twistyPlaybackPlayer = null,
+  userMoveRef, twistyPlayerRef, twistyPlaybackPlayer = null, toPlaybackText,
   skewbNotation, onSkewbNotationChange,
   kilominxNotation = 'cstimer', onKilominxNotationChange,
   onCopyLink,
   renderer = 'cubing', onRendererChange,
-  playbackSlot, bgSlot, fullscreenButton, imageButton, backViewButton,
+  appearanceOpen, onAppearanceToggle,
+  playbackSlot, captureStickeringSlot, bgSlot, fullscreenButton, imageButton, backViewButton,
   stickering = 'full', onStickeringChange,
   stickeringRot = '', onStickeringRotChange,
   stickeringMask = '', onStickeringMaskClear,
@@ -1167,6 +1036,11 @@ export default function PlayerControls({
   const [setupDraft, setSetupDraft] = useState(() => formatIncomingSquareText(setup ?? ''));
   const [step, setStep] = useState(0);
   const [playing, setPlaying] = useState(false);
+  useEffect(() => {
+    if (active) return;
+    setPlaying(false);
+    twistyPlaybackPlayer?.pause();
+  }, [active, twistyPlaybackPlayer]);
   const [twistyPlayback, setTwistyPlayback] = useState<TwistyPlaybackState>(EMPTY_TWISTY_PLAYBACK_STATE);
   const twistyPlaybackRef = useRef<ReturnType<typeof createTwistyPlayback> | null>(null);
   // Caret char offset in the solution box while the user is navigating text (click
@@ -1176,6 +1050,7 @@ export default function PlayerControls({
   // a non-caret action (play / step / reset) moves the timeline.
   const [caretChar, setCaretChar] = useState<number | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [lastEdit, setLastEdit] = useState<{ setup: string; alg: string; nextSetup: string; nextAlg: string; puzzle: SimPuzzle; step: number } | null>(null);
   const [optimalScrambleBusy, setOptimalScrambleBusy] = useState(false);
   const [optimalScrambleStatus, setOptimalScrambleStatus] = useState<string | null>(null);
   const optimalScrambleAbortRef = useRef<AbortController | null>(null);
@@ -1191,17 +1066,15 @@ export default function PlayerControls({
   const stepRef = useRef(0);
   const replayRequestRef = useRef(0);
   const replayPendingRef = useRef(false);
+  const [replayPending, setReplayPending] = useState(false);
   const setupElRef = useRef<HTMLTextAreaElement | null>(null);
   const algElRef = useRef<HTMLTextAreaElement | null>(null);
   useEffect(() => { stepRef.current = step; }, [step]);
 
   // 虚拟键盘:'alg' = 记号输入键盘(写进解法框),'qwerty' = 按键映射键盘(点击 =
-  // 转魔方)。桌面默认收起;移动端(实体键盘点不到)mount 后自动展开 qwerty —
-  // 不能用 useIsMobile 做 useState 初值:SSR 首帧按非移动渲染,水合会不一致。
+  // 转魔方)。按需打开，避免与手机系统键盘争抢空间。
   const [kbVariant, setKbVariant] = useState<'alg' | 'qwerty' | null>(null);
-  useEffect(() => {
-    if (window.matchMedia('(max-width: 768px)').matches) setKbVariant('qwerty');
-  }, []);
+
   // 快捷键弹窗(查看 / 自定义按键映射)。按钮与虚拟键盘开关同排 —— 都是「键盘」主题,
   // 放一起比藏在下方设置区里好找(设置区原按钮已移除)。
   const [keymapOpen, setKeymapOpen] = useState(false);
@@ -1353,14 +1226,16 @@ export default function PlayerControls({
     }
   }, [algDraft, isSquarePuzzle, isIvy, corner, isTwistyMode]);
 
-  const nativeSetupValid = useMemo(() => {
-    if (!isNativePuzzleId(puzzleKind)) return true;
-    try { parseNativePuzzleAlg(puzzleKind, setupDraft); return true; } catch { return false; }
+  const nativeSetupError = useMemo(() => {
+    if (!isNativePuzzleId(puzzleKind)) return '';
+    try { parseNativePuzzleAlg(puzzleKind, setupDraft); return ''; } catch (error) { return String((error as Error).message); }
   }, [puzzleKind, setupDraft]);
-  const nativeAlgValid = useMemo(() => {
-    if (!isNativePuzzleId(puzzleKind)) return true;
-    try { parseNativePuzzleAlg(puzzleKind, algDraft); return true; } catch { return false; }
+  const nativeAlgError = useMemo(() => {
+    if (!isNativePuzzleId(puzzleKind)) return '';
+    try { parseNativePuzzleAlg(puzzleKind, algDraft); return ''; } catch (error) { return String((error as Error).message); }
   }, [puzzleKind, algDraft]);
+  const nativeSetupValid = !nativeSetupError;
+  const nativeAlgValid = !nativeAlgError;
 
   useEffect(() => {
     setTwistyPlayback(EMPTY_TWISTY_PLAYBACK_STATE);
@@ -1441,6 +1316,21 @@ export default function PlayerControls({
     cornerSetupValid && !cornerCanPlay && !cornerAlgSpans?.some(span => span.bad)
       ? [{ text: algDraft, bad: true }] : cornerAlgSpans
   );
+  const describeInvalid = (spans: readonly { text: string; bad?: boolean }[] | null | undefined) => {
+    let prefix = '';
+    for (const span of spans ?? []) {
+      if (span.bad) {
+        const line = prefix.split('\n').length;
+        const column = prefix.length - prefix.lastIndexOf('\n');
+        const token = span.text.trim().slice(0, 32);
+        return t(`第 ${line} 行、第 ${column} 列附近的记号或转动序列无效：${token}`, `Invalid notation or move sequence near line ${line}, column ${column}: ${token}`);
+      }
+      prefix += span.text;
+    }
+    return '';
+  };
+  const setupError = nativeSetupError || describeInvalid(setupValidationSpans);
+  const algError = nativeAlgError || describeInvalid(algValidationSpans);
   useEffect(() => { if (!cornerCanPlay) setPlaying(false); }, [cornerCanPlay]);
 
   // One move list for whichever corner-turn engine puzzle is active (empty otherwise).
@@ -1504,7 +1394,7 @@ export default function PlayerControls({
     return p ? [p.start, p.end] : null;
   }, [playing, caretChar, itemPositions, step, algDraft]);
 
-  const algHlBaseSpans = useMemo<AlgHlSpan[]>(
+  const algHlBaseSpans = useMemo<SimAlgHighlightSpan[]>(
     () => algValidationSpans ?? [{ text: algDraft }],
     [algValidationSpans, algDraft],
   );
@@ -1516,6 +1406,7 @@ export default function PlayerControls({
 
   const totalSteps = isTwistyMode
     ? (nativeSetupValid && nativeAlgValid && twistyPlayback.ready ? twistyPlayback.total : 0)
+    : !engineReady ? 0
     : isSquarePuzzle
     ? (squareFamilyCanPlay ? squareActions.length : 0)
     : isIvy
@@ -1532,6 +1423,7 @@ export default function PlayerControls({
     if (!world || !engineReady || world.cube !== activeCube) return;
     const replayRequest = ++replayRequestRef.current;
     replayPendingRef.current = false; // non-NxN replay paths below are synchronous
+    setReplayPending(false);
     // Release any held-partial (debug) turn first: an NxN frozen layer holds the
     // cube lock, which would make the replay's group.twist below spin forever.
     clearFrozen();
@@ -1609,11 +1501,13 @@ export default function PlayerControls({
       ? (setupDraft + ' ' + invertAlg(stripHandMarks(algDraft))).trim()
       : setupDraft;
     replayPendingRef.current = true;
+    setReplayPending(true);
     try {
       await cube.twister.setupAsync(effectiveSetup);
     } finally {
       if (replayRequest === replayRequestRef.current && world.cube === cube) {
         replayPendingRef.current = false;
+        setReplayPending(false);
       }
     }
     // A later seek or puzzle switch owns the UI now. Do not continue replaying on
@@ -1663,6 +1557,23 @@ export default function PlayerControls({
   const animatingScrambleRef = useRef(false);
   const scrambleReqIdRef = useRef(0);
   const twistyReplayReqIdRef = useRef(0);
+  const [scramblePreview, setScramblePreview] = useState(false);
+  const restorePreviewRef = useRef<((revision: number) => Promise<void>) | null>(null);
+  const restoreScramblePreview = useCallback(async () => {
+    const revision = ++twistyReplayReqIdRef.current;
+    const restore = restorePreviewRef.current;
+    restorePreviewRef.current = null;
+    setScramblePreview(false);
+    await restore?.(revision);
+  }, []);
+  useEffect(() => {
+    restoreScramblePreview();
+    return () => {
+      const revision = ++twistyReplayReqIdRef.current;
+      void restorePreviewRef.current?.(revision);
+      restorePreviewRef.current = null;
+    };
+  }, [active, puzzleKind, renderer, setupDraft, algDraft, settings.playbackMode, restoreScramblePreview]);
   useEffect(() => {
     ++twistyReplayReqIdRef.current;
     return () => { ++twistyReplayReqIdRef.current; };
@@ -1684,6 +1595,7 @@ export default function PlayerControls({
       setPlaying(false);
       replayRequestRef.current++;
       replayPendingRef.current = true;
+      setReplayPending(true);
       scrambleReqIdRef.current++;
       skipAutoResetRef.current = false;
       animatingScrambleRef.current = false;
@@ -1889,7 +1801,7 @@ export default function PlayerControls({
   }, [activeCube, engineReady, world, playing, step, totalSteps, jumpToStep, clearFrozen, isTwistyMode]);
 
   useEffect(() => {
-    if (!playing || !engineReady) {
+    if (!active || !playing || !engineReady) {
       if (playTimerRef.current) { window.clearInterval(playTimerRef.current); playTimerRef.current = null; }
       return;
     }
@@ -1977,20 +1889,34 @@ export default function PlayerControls({
       if (playTimerRef.current) { window.clearInterval(playTimerRef.current); playTimerRef.current = null; }
       timing.frames = mapFrames(settings.speed);
     };
-  }, [activeCube, engineReady, puzzleKind, playing, nxnItems, squareActions, ivyActions, cornerActions, corner, world, clearFrozen, playbackFrames, isSquarePuzzle, isIvy, settings.animatePlayback, settings.speed]);
+  }, [active, activeCube, engineReady, puzzleKind, playing, nxnItems, squareActions, ivyActions, cornerActions, corner, world, clearFrozen, playbackFrames, isSquarePuzzle, isIvy, settings.animatePlayback, settings.speed]);
 
+  const replaceDrafts = async (nextSetup: string, nextAlg: string, restoreStep = 0) => {
+    await restoreScramblePreview();
+    setPlaying(false);
+    twistyPlaybackPlayer?.pause();
+    setCaretChar(null);
+    skipAutoResetRef.current = false;
+    stepRef.current = restoreStep;
+    setStep(restoreStep);
+    setSetupDraft(nextSetup);
+    onSetupChange(nextSetup);
+    setAlgDraft(nextAlg);
+    onAlgChange(nextAlg);
+    if (setupElRef.current) { setupElRef.current.value = nextSetup; autosize(setupElRef.current); }
+    if (algElRef.current) { algElRef.current.value = nextAlg; autosize(algElRef.current); }
+  };
+  const editDrafts = (nextSetup: string, nextAlg: string) => {
+    setLastEdit({ setup: setupDraft, alg: algDraft, nextSetup, nextAlg, puzzle: puzzleKind, step: stepRef.current });
+    void replaceDrafts(nextSetup, nextAlg);
+  };
+  const canUndoEdit = lastEdit && lastEdit.puzzle === puzzleKind && setupDraft === lastEdit.nextSetup && algDraft === lastEdit.nextAlg;
   const tool = (transform: (s: string) => string) => () => {
-    // 镜像/转体变换先剥手部记号(cubing.js Alg 解析不了会 catch 返 '',静默清空解法框)。
-    // Keep a trailing setup comment from swallowing the first solution move.
+    // A transformation applies to the complete sequence; preserve its two-field
+    // source for undo, including comments and grip notation.
     const separator = /\/\/[^\n\r]*$/.test(setupDraft) ? '\n' : ' ';
     const combined = stripHandMarks(setupDraft + separator + algDraft).trim();
-    const next = transform(combined);
-    setSetupDraft('');
-    onSetupChange('');
-    setAlgDraft(next);
-    onAlgChange(next);
-    if (setupElRef.current) setupElRef.current.value = '';
-    if (algElRef.current) algElRef.current.value = next;
+    editDrafts('', transform(combined));
   };
 
   // Per-puzzle "消步" (cancel redundant moves) + invert. SQ1 has its own token
@@ -2085,6 +2011,10 @@ export default function PlayerControls({
   }, [flushAlgCommit, onCopyLink, setupDraft, algDraft]);
 
   const appendUserMove = useCallback((action: TwistAction | string, anchoredSetup?: { setup: string }) => {
+    if (restorePreviewRef.current) {
+      restoreScramblePreview();
+      return algDraftRef.current;
+    }
     let moveText = typeof action === 'string' ? action : action.value;
     if (typeof action !== 'string' && !isSquarePuzzle && !isTwistyMode && world && world.cube.order === 1) {
       const norm = normalizeTo1x1(action);
@@ -2160,7 +2090,7 @@ export default function PlayerControls({
     // The native player uses the exact editor spelling to recognize its later
     // URL echo, including a batch of turns or a live-reduction setting change.
     return next;
-  }, [commitAlgDebounced, onSetupChange, onAlgChange, isSquarePuzzle, isSq1, squareFamilySpec, isIvy, isTwistyMode, world, settings.liveReduce, simplifyForPuzzle, squareFormat, puzzleKind, cornerActions]);
+  }, [commitAlgDebounced, onSetupChange, onAlgChange, isSquarePuzzle, isSq1, squareFamilySpec, isIvy, isTwistyMode, world, settings.liveReduce, simplifyForPuzzle, squareFormat, puzzleKind, cornerActions, restoreScramblePreview]);
 
   useEffect(() => {
     if (!userMoveRef) return;
@@ -2215,11 +2145,11 @@ export default function PlayerControls({
   // 打乱框聚焦时放行(让字符正常落进打乱框)。capture + stopPropagation 同时挡掉
   // SimPage 的全局 keydown,不会双触发。
   useEffect(() => {
-    if (kbVariant !== 'qwerty' || isTwistyMode) return;
+    if (!active || kbVariant !== 'qwerty' || isTwistyMode) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       const target = e.target as HTMLElement | null;
-      if (target?.closest('[role="dialog"], [role="listbox"]')) return;
+      if (target?.closest('[role="dialog"], [role="listbox"], [role="menu"]')) return;
       // 设置区的原生表单控件必须自行接收按键。否则 Digit2 等会命中魔方
       // keymap，applyMove 随后聚焦解法框，在 iOS 上表现为数字键盘输一位即关闭。
       if (target && (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.isContentEditable)) return;
@@ -2232,7 +2162,7 @@ export default function PlayerControls({
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
-  }, [kbVariant, keymap, applyMove, isTwistyMode]);
+  }, [active, kbVariant, keymap, applyMove, isTwistyMode]);
 
   const handleScramble = useCallback(async () => {
     // A new setup may replace an invalid setup draft, but keep the last valid
@@ -2370,37 +2300,48 @@ export default function PlayerControls({
     const scramble = setupDraft.trim();
     if (!scramble || !squareFamilySetupValid || !cornerSetupValid || !nativeSetupValid || !nativeAlgValid) return;
     if (isTwistyMode) {
+      await restoreScramblePreview();
+      const player = twistyPlayerRef?.current as TwistyPlayer | null;
+      if (!player) return;
       const reqId = ++twistyReplayReqIdRef.current;
-      const requestedPlayer = twistyPlayerRef?.current;
-      // This action explicitly plays solved → scramble, regardless of the editor anchor.
-      if (settings.playbackMode !== 'moves') onSettingsChange({ ...settings, playbackMode: 'moves' });
-      if (setupElRef.current) { setupElRef.current.value = ''; autosize(setupElRef.current); }
-      setSetupDraft('');
-      onSetupChange('');
-      if (algElRef.current) { algElRef.current.value = scramble; autosize(algElRef.current); }
-      skipAutoResetRef.current = true;
-      setAlgDraft(scramble);
-      onAlgChange(scramble);
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          // A new puzzle, scramble or editor change cancels this queued replay.
-          // Recheck the live inputs before touching the native animation model.
-          if (reqId !== twistyReplayReqIdRef.current || twistyPlayerRef?.current !== requestedPlayer) return;
-          if ((setupElRef.current?.value ?? setupDraftRef.current).trim()
-            || (algElRef.current?.value ?? algDraftRef.current) !== scramble) return;
-          if (isNativePuzzleId(puzzleKind)) {
-            try { parseNativePuzzleAlg(puzzleKind, scramble); } catch { return; }
-          }
-          const p = twistyPlayerRef?.current as unknown as {
-            experimentalSetupAnchor?: string;
-            jumpToStart?: (opts?: unknown) => void;
-            play?: () => void;
-          } | null;
-          try { if (p) p.experimentalSetupAnchor = 'start'; } catch { /* */ }
-          try { p?.jumpToStart?.({ flash: false }); } catch { /* */ }
-          try { p?.play?.(); } catch { /* */ }
-        });
-      });
+      const model = player.experimentalModel;
+      const [timeline, originalSetup, originalAlg, originalAnchor] = await Promise.all([
+        model.detailedTimelineInfo.get(), model.setupAlg.get(), model.alg.get(), model.setupAnchor.get(),
+      ]).catch(() => [null, null, null, null] as const);
+      if (!timeline || !originalSetup || !originalAlg || !originalAnchor) return;
+      if (reqId !== twistyReplayReqIdRef.current) return;
+      const original = { setup: originalSetup.alg, alg: originalAlg.alg, anchor: originalAnchor };
+      let previewText: string;
+      try { previewText = new Alg(toPlaybackText?.(scramble) ?? scramble).toString(); }
+      catch { return; }
+      restorePreviewRef.current = async (revision) => {
+        player.pause();
+        const [currentAlg, currentSetup, currentAnchor] = await Promise.all([
+          model.alg.get(), model.setupAlg.get(), model.setupAnchor.get(),
+        ]).catch(() => [null, null, null] as const);
+        if (revision !== twistyReplayReqIdRef.current || !currentAlg || !currentSetup) return;
+        // A new URL/project has already replaced the borrowed model: do not
+        // restore an obsolete snapshot over its new owner.
+        if (currentAlg.alg.toString() !== previewText || currentSetup.alg.toString() !== '') return;
+        player.experimentalSetupAlg = original.setup;
+        player.alg = original.alg;
+        if (currentAnchor === 'start') player.experimentalSetupAnchor = original.anchor;
+        player.timestamp = timeline?.timestamp ?? 0;
+      };
+      player.pause();
+      player.experimentalSetupAlg = '';
+      player.alg = previewText;
+      player.experimentalSetupAnchor = 'start';
+      setScramblePreview(true);
+      // Wait for this model's parsed timeline, never a fixed number of frames.
+      const ready = await model.indexer.get().then(() => true, () => false);
+      if (!ready) { await restoreScramblePreview(); return; }
+      if (reqId !== twistyReplayReqIdRef.current || twistyPlayerRef?.current !== player) return;
+      player.jumpToStart({ flash: false });
+      player.play();
+      void model.coarseTimelineInfo.get().then(() => {
+        if (reqId !== twistyReplayReqIdRef.current) player.pause();
+      }).catch(() => { player.pause(); });
       return;
     }
     if (!world) return;
@@ -2428,12 +2369,13 @@ export default function PlayerControls({
     clearFrozen();
     tw.setup('');
     tw.push(engScramble);
-  }, [setupDraft, squareFamilySetupValid, cornerSetupValid, nativeSetupValid, nativeAlgValid, isTwistyMode, puzzleKind, world, clearFrozen, corner, onSetupChange, onAlgChange, twistyPlayerRef, toEngineText, settings, onSettingsChange]);
+  }, [setupDraft, squareFamilySetupValid, cornerSetupValid, nativeSetupValid, nativeAlgValid, isTwistyMode, puzzleKind, world, clearFrozen, corner, onSetupChange, onAlgChange, twistyPlayerRef, toEngineText, toPlaybackText, restoreScramblePreview]);
 
   // 点解法框时,若打乱动画仍在逐步播放(高阶打乱可达 400+ 步 ≈ 分钟级),立即落到完整打乱态,
   // 让用户马上能在打乱好的魔方上输解法。走快速整体应用 setup(打乱文本):它清空待播队列后用
   // WASM 路径一次性重建,不逐步 replay,高阶宽转也不卡(逐步 finish 会几百万次 getColor 卡死)。
   const flushPendingScramble = useCallback(() => {
+    restoreScramblePreview();
     if (!world || isTwistyMode) return;
     const tw = (world.cube as unknown as CornerCube).twister;
     const scr = setupDraft.trim();
@@ -2445,7 +2387,7 @@ export default function PlayerControls({
       return;
     }
     tw.setup(engScramble);
-  }, [world, isTwistyMode, corner, setupDraft, squareFamilySetupValid, cornerSetupValid, toEngineText]);
+  }, [world, isTwistyMode, corner, setupDraft, squareFamilySetupValid, cornerSetupValid, toEngineText, restoreScramblePreview]);
 
   // Derive the state solved by the reconstruction, then minimize its scramble.
   const handleDeriveScramble = useCallback(async () => {
@@ -2547,158 +2489,95 @@ export default function PlayerControls({
 
   return (
     <div className="sim-player">
-      <div className="sim-player-row sim-player-row--top">
-        <div className="sim-player-hlwrap">
-          {setupValidationSpans && (
-            <div className="sim-player-hl" aria-hidden="true">
-              {setupValidationSpans.map((s, i) => (
-                <span key={i} className={s.bad ? 'bad' : undefined}>{s.text}</span>
-              ))}
-            </div>
-          )}
-          <textarea
-            ref={setupElRef}
-            defaultValue={setupDraft}
-            rows={1}
-            spellCheck={false}
-            className={setupValidationSpans ? 'sim-player-input sim-player-input--hl' : 'sim-player-input'}
-            aria-invalid={!nativeSetupValid || (squareFamilySpec ? !squareFamilySetupValid : corner ? !cornerSetupValid : undefined)}
-            placeholder={t('打乱', 'Scramble')}
-            onInput={(e) => {
-              const el = e.currentTarget;
-              autosize(el);
-              setSetupDraft(el.value);
-              onSetupChange(el.value);
-            }}
-          />
-        </div>
-        <button
-          type="button"
-          className="sim-player-scramble"
-          onClick={handleScramble}
-          disabled={!nativeAlgValid}
-          title={t('随机打乱', 'Random scramble')}
-          aria-label={t('随机打乱', 'Random scramble')}
-        >
-          <Shuffle size={14} />
-        </button>
-        {is3x3 && (
-          <button
-            type="button"
-            className="sim-player-scramble"
-            onClick={handleDeriveScramble}
-            disabled={optimalScrambleBusy || !algDraft.trim()}
-            title={t('从下方解法反推最优打乱(云端，需登录)', 'Derive an optimal scramble from the solution below (cloud, sign-in required)')}
-            aria-label={t('反推最优打乱', 'Derive optimal scramble')}
-          >
-            {optimalScrambleBusy ? <Loader2 size={14} className="sim-spin" /> : <Search size={14} />}
-          </button>
-        )}
-        <button
-          type="button"
-          className="sim-player-scramble"
-          onClick={handlePlayScramble}
-          disabled={corner?.endAnchor === false || !setupDraft.trim() || !squareFamilySetupValid || !cornerSetupValid || !nativeSetupValid || !nativeAlgValid}
-          title={t('动画展示打乱', 'Animate scramble')}
-          aria-label={t('动画展示打乱', 'Animate scramble')}
-        >
-          <Play size={14} />
-        </button>
-      </div>
-      {isMagicPuzzle(puzzleKind) && (
-        <MagicRouteControls
-          cube={engineReady && world?.cube instanceof MagicCube ? world.cube : null}
-          puzzle={puzzleKind}
-          valid={cornerCanPlay}
-          onRoute={direction => {
-            clearFrozen();
-            setPlaying(false);
-            const setup = `${puzzleKind === 'mmagic' ? 'M ' : ''}${direction}`;
-            const solution = magicSolution(puzzleKind);
-            setSetupDraft(setup);
-            onSetupChange(setup);
-            setAlgDraft(solution);
-            onAlgChange(solution);
-            if (setupElRef.current) setupElRef.current.value = setup;
-            if (algElRef.current) algElRef.current.value = solution;
-            stepRef.current = 0;
-            setStep(0);
-            if (world?.cube instanceof MagicCube) world.cube.twister.setup(setup);
-          }}
-          onFold={dir => {
-            if (!engineReady || !(world?.cube instanceof MagicCube)) return;
-            clearFrozen();
-            if (world.cube.twister.twist({ kind: 'fold', dir }, settings.animatePlayback === false, false)) {
-              appendUserMove(dir === 1 ? 'F' : "F'");
-            }
-          }}
-        />
+      {stickeringSelect && captureStickeringSlot && createPortal(
+        <div className="sim-capture-stickering">
+          <div className="sim-capture-stickering-controls">{stickeringSelect}</div>
+        </div>,
+        captureStickeringSlot,
       )}
-      {puzzleKind === 'pyraminx_duo' && (
-        <div className="sim-player-status">
-          {tr('使用 U、L、R、B 及其逆转（加撇号），每次转动 120°。', 'Use U, L, R, B and their inverses (with a prime); each turn is 120°.')}
-        </div>
-      )}
-      {puzzleKind === 'ghost' && (
-        <div className="sim-player-status">
-          <button type="button" className="sim-player-scramble" onClick={() => {
-            if (!(world?.cube instanceof GhostCube)) return;
-            clearFrozen();
-            world.cube.twister.finish();
-            const text = ghostMovesToString(ghostAlignmentMoves(world.cube.pose));
-            if (text) { world.cube.twister.push(text); appendUserMove(text); }
-          }}>{tr('对齐切层', 'Align layers')}</button>
-          <span>{cornerCanPlay
-            ? tr('先对齐再转侧层；字母表示内部转轴。', 'Align before side turns; letters refer to internal axes.')
-            : tr('记号无效或切层未对齐。还原态先输入 U29° D35°。', 'Invalid notation or misaligned layers. From solved, start with U29° D35°.')}</span>
-        </div>
-      )}
-      {optimalScrambleStatus && (
-        <div className="sim-player-status">
-          {optimalScrambleBusy && <Loader2 size={14} className="sim-spin" />}
-          <span>{optimalScrambleStatus}</span>
-          {optimalScrambleBusy && (
-            <ClearButton
-              variant="standalone"
-              onClick={cancelOptimalScramble}
-              ariaLabel={t('取消', 'Cancel')}
-              title={t('取消', 'Cancel')}
+      <div className="sim-animation-controls" hidden={!active}>
+      <SimAlgEditor
+        setup={{
+          text: setupDraft, elementRef: setupElRef, spans: setupValidationSpans, error: setupError,
+          invalid: !nativeSetupValid || (squareFamilySpec ? !squareFamilySetupValid : corner ? !cornerSetupValid : undefined),
+          onFocus: restoreScramblePreview,
+          onInput: (el) => {
+            autosize(el);
+            setSetupDraft(el.value);
+            onSetupChange(el.value);
+          },
+        }}
+        alg={{
+          text: algDraft, elementRef: algElRef, spans: algHlSpans, error: algError,
+          showOverlay: showAlgOverlay, autoSpace: algAutoSpace, onFocus: flushPendingScramble,
+          // Virtual-key presses refocus this textarea; only a direct click closes the keyboard.
+          onClick: () => setKbVariant(null),
+          onChange: (text) => { setAlgDraft(text); onAlgChange(text); },
+          onCaretChange: handleCaretSync,
+        }}
+        is3x3={is3x3}
+        algStm={algStm}
+        scramble={{
+          previewing: !!scramblePreview, onRestore: restoreScramblePreview,
+          onRandom: handleScramble,
+          randomDisabled: !nativeAlgValid || (isTwistyMode ? !twistyPlaybackPlayer : !engineReady),
+          onPreview: handlePlayScramble,
+          previewDisabled: corner?.endAnchor === false || !setupDraft.trim() || !squareFamilySetupValid || !cornerSetupValid || !nativeSetupValid || !nativeAlgValid,
+          onDerive: is3x3 ? handleDeriveScramble : undefined,
+          busy: optimalScrambleBusy, status: optimalScrambleStatus,
+          onCancel: cancelOptimalScramble,
+        }}
+        setupExtras={<>
+          {isMagicPuzzle(puzzleKind) && (
+            <MagicRouteControls
+              cube={engineReady && world?.cube instanceof MagicCube ? world.cube : null}
+              puzzle={puzzleKind}
+              valid={cornerCanPlay}
+              onRoute={direction => {
+                clearFrozen();
+                setPlaying(false);
+                const setup = `${puzzleKind === 'mmagic' ? 'M ' : ''}${direction}`;
+                const solution = magicSolution(puzzleKind);
+                setSetupDraft(setup);
+                onSetupChange(setup);
+                setAlgDraft(solution);
+                onAlgChange(solution);
+                if (setupElRef.current) setupElRef.current.value = setup;
+                if (algElRef.current) algElRef.current.value = solution;
+                stepRef.current = 0;
+                setStep(0);
+                if (world?.cube instanceof MagicCube) world.cube.twister.setup(setup);
+              }}
+              onFold={dir => {
+                if (!engineReady || !(world?.cube instanceof MagicCube)) return;
+                clearFrozen();
+                if (world.cube.twister.twist({ kind: 'fold', dir }, settings.animatePlayback === false, false)) {
+                  appendUserMove(dir === 1 ? 'F' : "F'");
+                }
+              }}
             />
           )}
-        </div>
-      )}
-
-      <div className="sim-player-row">
-        <div className="sim-player-hlwrap">
-          {showAlgOverlay && (
-            <div className="sim-player-hl" aria-hidden="true">
-              {algHlSpans.map((s, i) => (
-                <span
-                  key={i}
-                  className={[s.bad && 'bad', s.current && 'current'].filter(Boolean).join(' ') || undefined}
-                >
-                  {s.text}
-                </span>
-              ))}
+          {puzzleKind === 'pyraminx_duo' && (
+            <div className="sim-player-status">
+              {tr('使用 U、L、R、B 及其逆转（加撇号），每次转动 120°。', 'Use U, L, R, B and their inverses (with a prime); each turn is 120°.')}
             </div>
           )}
-          <AlgInput
-            elementRef={algElRef as RefObject<HTMLTextAreaElement | HTMLDivElement | null>}
-            initialText={algDraft}
-            rows={1}
-            spellCheck={false}
-            autoSpace={algAutoSpace}
-            autoResize
-            className={showAlgOverlay ? 'sim-player-input sim-player-input--hl' : 'sim-player-input'}
-            placeholder={t('解法', 'Solution')}
-            title={is3x3 ? t('支持换握记号:↑ 上手(拇指起手 U 面)、↓ 下手(D 面)、· 回 home 握', 'Grip marks supported: ↑ thumb-up grip, ↓ thumb-down grip, · back to home grip') : undefined}
-            onFocus={flushPendingScramble}
-            onChange={(text) => {
-              setAlgDraft(text);
-              onAlgChange(text);
-            }}
-            onCaretChange={handleCaretSync}
-          />
+          {puzzleKind === 'ghost' && (
+            <div className="sim-player-status">
+              <button type="button" className="sim-player-scramble" onClick={() => {
+                if (!(world?.cube instanceof GhostCube)) return;
+                clearFrozen();
+                world.cube.twister.finish();
+                const text = ghostMovesToString(ghostAlignmentMoves(world.cube.pose));
+                if (text) { world.cube.twister.push(text); appendUserMove(text); }
+              }}>{tr('对齐切层', 'Align layers')}</button>
+              <span>{cornerCanPlay
+                ? tr('先对齐再转侧层；字母表示内部转轴。', 'Align before side turns; letters refer to internal axes.')
+                : tr('记号无效或切层未对齐。还原态先输入 U29° D35°。', 'Invalid notation or misaligned layers. From solved, start with U29° D35°.')}</span>
+            </div>
+          )}
+        </>}
+        autofill={<>
           {is3x3 && <ReconAutofill
             textareaRef={algElRef}
             value={algDraft}
@@ -2713,99 +2592,103 @@ export default function PlayerControls({
               onAlgChange(text);
             }}
           />}
-        </div>
-        {is3x3 && algStm > 0 && (
-          <output
-            className="sim-player-count"
-            aria-label={t(`解法步数:${algStm} STM`, `Solution length: ${algStm} STM`)}
-          >
-            {algStm} STM
-          </output>
+        </>}
+        notationControls={<>
+          {puzzleKind === 'skewb' && skewbNotation && onSkewbNotationChange && (
+            <select
+              className="sim-player-mode"
+              value={skewbNotation}
+              onChange={(e) => onSkewbNotationChange(e.target.value as SkewbNotation)}
+              title={t('斜转记号:WCA (R/U/L/B) 或 Sarah (R/L/B/F 含 S H 宏)', 'Skewb notation: WCA (R/U/L/B) or Sarah (R/L/B/F with S/H macros)')}
+            >
+              <option value="wca">WCA</option>
+              <option value="sarah">Sarah</option>
+            </select>
+          )}
+          {puzzleKind === 'kilominx' && onKilominxNotationChange && (
+            <select
+              className="sim-player-mode"
+              aria-label={t('二阶五魔方记号', 'Kilominx notation')}
+              value={kilominxNotation}
+              onChange={(e) => {
+                const next = e.target.value as KilominxNotation;
+                const newSetup = convertKilominxAlg(setupDraft, kilominxNotation, next);
+                const newAlg = convertKilominxAlg(algDraft, kilominxNotation, next);
+                // Supersede pending moves / scrambles before changing their convention.
+                ++scrambleReqIdRef.current;
+                pendingAlgCommitRef.current = null;
+                if (algCommitTimerRef.current != null) {
+                  window.clearTimeout(algCommitTimerRef.current);
+                  algCommitTimerRef.current = null;
+                }
+                replacedSetupRef.current = setupDraftRef.current;
+                pushedSetupRef.current = newSetup;
+                replacedAlgRef.current = lastCommittedAlgRef.current;
+                pushedAlgRef.current = newAlg;
+                lastCommittedAlgRef.current = newAlg;
+                setSetupDraft(newSetup);
+                setAlgDraft(newAlg);
+                onKilominxNotationChange(next, newSetup, newAlg);
+              }}
+              title={t('计时器使用 csTimer 记号；切换时自动转换打乱与解法', 'The timer uses csTimer notation; switching converts both scramble and solution')}
+            >
+              <option value="cstimer">csTimer</option>
+              <option value="cubing">Twizzle</option>
+            </select>
+          )}
+          {isSquarePuzzle && (
+            <select
+              className="sim-player-mode"
+              value={squareFormat}
+              onChange={(e) => {
+                const next = e.target.value as SquareFamilyNotationFormat;
+                const convert = isSq1
+                  ? next === 'wca' ? canonicalSq1Alg : compactSq1Alg
+                  : squareFamilySpec
+                    ? (text: string) => formatSquareFamilyAlg(text, squareFamilySpec, next)
+                    : (text: string) => text;
+                const newSetup = setupDraft.trim() ? convertSquareText(setupDraft, convert) : '';
+                const newAlg = algDraft.trim() ? convertSquareText(algDraft, convert) : '';
+                if (squarePuzzleKind) {
+                  setSquareFormats((formats) => ({ ...formats, [squarePuzzleKind]: next }));
+                }
+                setSetupDraft(newSetup);
+                onSetupChange(newSetup);
+                setAlgDraft(newAlg);
+                onAlgChange(newAlg);
+              }}
+              title={t('记号格式', 'Notation format')}
+            >
+              <option value="compact">{t('简化', 'Compact')}</option>
+              <option value="wca">{isSq1 ? 'WCA' : t('标准', 'Standard')}</option>
+            </select>
+          )}
+        </>}
+        algHelp={puzzleKind === 'skewb' && skewbNotation && !isTwistyMode && (
+          <SkewbNotationGuide
+            notation={skewbNotation}
+            onDemo={demoNotationMove}
+            onRestore={restoreFromDemo}
+          />
         )}
-        {puzzleKind === 'skewb' && skewbNotation && onSkewbNotationChange && (
-          <select
-            className="sim-player-mode"
-            value={skewbNotation}
-            onChange={(e) => onSkewbNotationChange(e.target.value as SkewbNotation)}
-            title={t('斜转记号:WCA (R/U/L/B) 或 Sarah (R/L/B/F 含 S H 宏)', 'Skewb notation: WCA (R/U/L/B) or Sarah (R/L/B/F with S/H macros)')}
-          >
-            <option value="wca">WCA</option>
-            <option value="sarah">Sarah</option>
-          </select>
-        )}
-        {puzzleKind === 'kilominx' && onKilominxNotationChange && (
-          <select
-            className="sim-player-mode"
-            aria-label={t('二阶五魔方记号', 'Kilominx notation')}
-            value={kilominxNotation}
-            onChange={(e) => {
-              const next = e.target.value as KilominxNotation;
-              const newSetup = convertKilominxAlg(setupDraft, kilominxNotation, next);
-              const newAlg = convertKilominxAlg(algDraft, kilominxNotation, next);
-              // Supersede pending moves / scrambles before changing their convention.
-              ++scrambleReqIdRef.current;
-              pendingAlgCommitRef.current = null;
-              if (algCommitTimerRef.current != null) {
-                window.clearTimeout(algCommitTimerRef.current);
-                algCommitTimerRef.current = null;
-              }
-              replacedSetupRef.current = setupDraftRef.current;
-              pushedSetupRef.current = newSetup;
-              replacedAlgRef.current = lastCommittedAlgRef.current;
-              pushedAlgRef.current = newAlg;
-              lastCommittedAlgRef.current = newAlg;
-              setSetupDraft(newSetup);
-              setAlgDraft(newAlg);
-              onKilominxNotationChange(next, newSetup, newAlg);
-            }}
-            title={t('计时器使用 csTimer 记号；切换时自动转换打乱与解法', 'The timer uses csTimer notation; switching converts both scramble and solution')}
-          >
-            <option value="cstimer">csTimer</option>
-            <option value="cubing">Twizzle</option>
-          </select>
-        )}
-        {isSquarePuzzle && (
-          <select
-            className="sim-player-mode"
-            value={squareFormat}
-            onChange={(e) => {
-              const next = e.target.value as SquareFamilyNotationFormat;
-              const convert = isSq1
-                ? next === 'wca' ? canonicalSq1Alg : compactSq1Alg
-                : squareFamilySpec
-                  ? (text: string) => formatSquareFamilyAlg(text, squareFamilySpec, next)
-                  : (text: string) => text;
-              const newSetup = setupDraft.trim() ? convertSquareText(setupDraft, convert) : '';
-              const newAlg = algDraft.trim() ? convertSquareText(algDraft, convert) : '';
-              if (squarePuzzleKind) {
-                setSquareFormats((formats) => ({ ...formats, [squarePuzzleKind]: next }));
-              }
-              setSetupDraft(newSetup);
-              onSetupChange(newSetup);
-              setAlgDraft(newAlg);
-              onAlgChange(newAlg);
-            }}
-            title={t('记号格式', 'Notation format')}
-          >
-            <option value="compact">{t('简化', 'Compact')}</option>
-            <option value="wca">{isSq1 ? 'WCA' : t('标准', 'Standard')}</option>
-          </select>
-        )}
-      </div>
+      />
 
-      {puzzleKind === 'skewb' && skewbNotation && !isTwistyMode && (
-        <SkewbNotationGuide
-          notation={skewbNotation}
-          onDemo={demoNotationMove}
-          onRestore={restoreFromDemo}
-        />
-      )}
-
-      {(() => {
+      {active && (() => {
       const playbackBar = (
       // 播放控制排:twizzle alpha.twizzle.net/edit 同款两排布局(进度条在上、传输按钮在下),
       // 与 /recon 播放条共用同一份 <PlaybackBar>。stickering / 锚点两个下拉挂在按钮排两端。
+      <div className="sim-stage-controls">
+      <div className="sim-view-tools" role="toolbar" aria-label={t('画布工具', 'Canvas tools')}>
+        {imageButton}{backViewButton}{fullscreenButton}
+        {!resolveCaps(puzzleKind, renderer).flat && <button type="button" className="playback-bar-btn"
+          onClick={() => {
+            const next = { ...settings, scale: DEFAULT_SETTINGS.scale, viewAngle: DEFAULT_SETTINGS.viewAngle, viewGradient: DEFAULT_SETTINGS.viewGradient };
+            onSettingsChange(next);
+            if (world) resetWorldView(world, next);
+          }}>{t('重置视角', 'Reset view')}</button>}
+      </div>
       <PlaybackBar layout="wide"
+        disabled={!isTwistyMode && (!engineReady || replayPending)}
         step={isTwistyMode ? (totalSteps > 0 ? twistyPlayback.step : 0) : step}
         total={totalSteps}
         playing={isTwistyMode ? totalSteps > 0 && twistyPlayback.playing : playing}
@@ -2815,8 +2698,7 @@ export default function PlayerControls({
         onTogglePlay={handleTogglePlay}
         onStepForward={stepForward}
         onSkipEnd={() => { setCaretChar(null); jumpToStep(totalSteps); }}
-        leading={<>{imageButton}{fullscreenButton}{stickeringSelect}</>}
-        trailing={<>{anchorSelect}{backViewButton}</>}
+
         labels={{
           skipStart: t('回到起点', 'Skip to start'),
           stepBack: t('上一步', 'Step back'),
@@ -2827,6 +2709,15 @@ export default function PlayerControls({
           scrub: t('拖动播放进度', 'Scrub playback'),
         }}
       />
+      <div className="sim-playback-options">
+        <Slider label="TPS" value={settings.speed} onChange={speed => onSettingsChange({ ...settings, speed })} unit={UNIT_TPS} title={t('每秒转动步数', 'Turns per second')} />
+        <details>
+          <summary>{t('播放设置', 'Playback settings')}</summary>
+          {anchorSelect}
+          <Toggle label={t('动画', 'Animation')} value={settings.animatePlayback !== false} onChange={animatePlayback => onSettingsChange({ ...settings, animatePlayback })} />
+        </details>
+      </div>
+      </div>
       );
       return playbackSlot ? createPortal(playbackBar, playbackSlot) : playbackBar;
       })()}
@@ -2892,6 +2783,7 @@ export default function PlayerControls({
         )}
       </div>
 
+      <section className="sim-alg-tools" aria-label={t('公式操作', 'Algorithm tools')}>
       <div className="sim-player-tools">
         <button disabled={corner?.endAnchor === false} onClick={tool(invertForPuzzle)} title={t('取逆', 'Invert')}>{t('逆', 'Invert')}</button>
         {/* 消步:实时消步开关(默认开)。开 = 手势 / 键盘转动追加时自动合并 / 抵消重复转动,
@@ -2903,8 +2795,31 @@ export default function PlayerControls({
             onChange={setLiveReduce}
           />
         )}
-        {!isSquarePuzzle && !isTwistyMode && corner?.cubeMirrors !== false && <button onClick={tool((s) => mirrorAlg(s, 'M'))} title={t('Mirror M (L↔R)', 'Mirror M (L↔R)')} aria-label="Mirror M"><FlipHorizontal2 size={13} /></button>}
-        {!isSquarePuzzle && !isTwistyMode && corner?.cubeMirrors !== false && <button onClick={tool((s) => mirrorAlg(s, 'S'))} title={t('Mirror S (F↔B)', 'Mirror S (F↔B)')} aria-label="Mirror S"><FlipVertical2 size={13} /></button>}
+        {!(typeof puzzleKind === 'number' || puzzleKind === 'mirror' || puzzleKind === 'mirror2' || puzzleKind === 'sphere') && !isSquarePuzzle && !isTwistyMode && corner?.cubeMirrors !== false && <button onClick={tool((s) => mirrorAlg(s, 'M'))} title={t('Mirror M (L↔R)', 'Mirror M (L↔R)')} aria-label="Mirror M"><FlipHorizontal2 size={13} /></button>}
+        {!(typeof puzzleKind === 'number' || puzzleKind === 'mirror' || puzzleKind === 'mirror2' || puzzleKind === 'sphere') && !isSquarePuzzle && !isTwistyMode && corner?.cubeMirrors !== false && <button onClick={tool((s) => mirrorAlg(s, 'S'))} title={t('Mirror S (F↔B)', 'Mirror S (F↔B)')} aria-label="Mirror S"><FlipVertical2 size={13} /></button>}
+        {(typeof puzzleKind === 'number' || puzzleKind === 'mirror' || puzzleKind === 'mirror2' || puzzleKind === 'sphere') && (
+          <AlgTransformPanel
+            text={stripHandMarks(setupDraft + '\n' + algDraft).trim()}
+            order={order}
+            onApply={(next) => {
+              const previousSetup = setupDraft, previousAlg = algDraft, previousStep = stepRef.current;
+              const update = (newSetup: string, newAlg: string, targetStep: number) => {
+                setPlaying(false);
+                setCaretChar(null);
+                skipAutoResetRef.current = false;
+                stepRef.current = targetStep;
+                setSetupDraft(newSetup);
+                onSetupChange(newSetup);
+                setAlgDraft(newAlg);
+                onAlgChange(newAlg);
+                if (setupElRef.current) setupElRef.current.value = newSetup;
+                if (algElRef.current) algElRef.current.value = newAlg;
+              };
+              update('', next, parseNxnItems(next).length);
+              return () => update(previousSetup, previousAlg, previousStep);
+            }}
+          />
+        )}
         {!isSquarePuzzle && !isIvy && !corner && !isTwistyMode && (
           <button
             onClick={tool(flattenAlg)}
@@ -2913,7 +2828,12 @@ export default function PlayerControls({
             {t('去括号', 'Expand')}
           </button>
         )}
-        <button onClick={tool(() => '')} title={t('清空', 'Clear')}><Eraser size={13} />{t('清空', 'Clear')}</button>
+        <button onClick={() => editDrafts(setupDraft, '')} title={t('清空公式', 'Clear algorithm')}><Eraser size={13} />{t('清空公式', 'Clear algorithm')}</button>
+        <button type="button" onClick={() => editDrafts('', '')} title={t('重置为还原态', 'Reset to solved')}>{t('重置', 'Reset')}</button>
+        {canUndoEdit && <button type="button" title={t('撤销公式操作', 'Undo algorithm edit')} onClick={() => {
+          void replaceDrafts(lastEdit.setup, lastEdit.alg, lastEdit.step);
+          setLastEdit(null);
+        }}>{t('撤销公式操作', 'Undo algorithm edit')}</button>}
         <button
           onClick={handleCopyLink}
           className={linkCopied ? 'sim-link-copied' : undefined}
@@ -2923,13 +2843,15 @@ export default function PlayerControls({
           {linkCopied ? t('已复制', 'Copied') : t('复制链接', 'Copy link')}
         </button>
       </div>
+      </section>
+      </div>
 
-      <PuzzleSettings
+      <SimAppearancePanel
+        open={appearanceOpen}
+        onToggle={onAppearanceToggle}
         world={world}
         order={order}
-        onOrderChange={onOrderChange}
         puzzleKind={puzzleKind}
-        onPuzzleChange={onPuzzleChange}
         renderer={renderer}
         onRendererChange={onRendererChange}
         settings={settings}
@@ -2988,1656 +2910,4 @@ function SimQwertyKeypad({
   );
 }
 
-// 五魔方 12 面色 —— 复用 vendored puzzle-geometry 的十二面体配色(单一源,不另造)。
-const MEGAMINX_COLORS = Object.values(defaultPlatonicColorSchemes()[12]) as string[];
-/** 按小写去重,保序;让各调色板拼接预设 + 12 色时不出现重复格。 */
-function dedupeColors(cs: string[]): string[] {
-  const seen = new Set<string>();
-  return cs.filter((c) => { const k = c.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
-}
-
-const CORE_COLOR_PRESETS: string[] = dedupeColors([
-  '#202020', '#EE0000', '#FFA100', '#FFFFFF', '#FEFE00', '#00D800', '#0000F2',
-  ...MEGAMINX_COLORS,
-]);
-
-// Mirror Cube single-colour presets — classic gold / silver first, then tints + the 12 Megaminx colours.
-const MIRROR_COLOR_PRESETS: string[] = dedupeColors([
-  '#E3B23C', '#C0C0C0', '#EE0000', '#00A0E0', '#00C060', '#B060E0',
-  ...MEGAMINX_COLORS,
-]);
-
-// Face-colour presets — the WCA 6 then the 12 Megaminx colours, for a rich per-face palette.
-const FACE_COLOR_PRESETS: string[] = dedupeColors([
-  DEFAULT_FACE_COLORS.U, DEFAULT_FACE_COLORS.L, DEFAULT_FACE_COLORS.F,
-  DEFAULT_FACE_COLORS.R, DEFAULT_FACE_COLORS.B, DEFAULT_FACE_COLORS.D,
-  ...MEGAMINX_COLORS,
-]);
-
-const CUBER_FACE_COLORS = CUBER_APPEARANCE.faces;
-
-// 甲油预设(经典美甲色系:正红 / 酒红 / 粉 / 裸 / 白 / 黑 / 蓝 / 薄荷 / 丁香 / 金;
-// 物理甲油色,非主题灰阶)。底色与渐变第二色共用同一板。
-const NAIL_COLOR_PRESETS: string[] = dedupeColors([
-  '#C21807', '#7B1F3A', '#F48FB1', '#E8C4B0', '#F5F0EA', '#212121',
-  '#1565C0', '#7FD8C4', '#B39DDB', '#D4AF37',
-]);
-/** 从自然甲切到自定义时 trigger 色块的兜底显示色(未选前);选色即覆盖。 */
-const NAIL_DEFAULT_COLOR = '#C21807';
-
-const FACE_ORDER = ['U', 'L', 'F', 'R', 'B', 'D'] as const;
-const FACE_LABELS_ZH: Record<typeof FACE_ORDER[number], string> = {
-  U: '顶', D: '底', L: '左', R: '右', F: '前', B: '后',
-};
-
-/** 模式 + 取色合并下拉:把一个「特殊模式」(镜面六色 / 内核原核)与单色取色收进一个菜单。
- *  trigger 普通态显当前色块、特殊态显特殊图标格;面板顶部一个特殊项 + 自定义取色 + 预设色板。
- *  选色 = 退出特殊模式并用该色;选特殊项 = 进特殊模式。 */
-function ModeColorSelect({
-  special = false, color, presets, specialTitle, specialSwatchClass,
-  onPickColor, onPickSpecial, title, t,
-}: {
-  /** 特殊模式(镜面六色 / 内核原核)。不传 special 系列即退化成普通取色下拉(面色用)。 */
-  special?: boolean;
-  color: string;
-  presets: string[];
-  specialTitle?: string;
-  specialSwatchClass?: string;
-  onPickColor: (c: string) => void;
-  onPickSpecial?: () => void;
-  title: string;
-  t: (zh: string, en: string) => string;
-}) {
-  const specialSwatch = specialSwatchClass ? <span className={'sim-swatch-box ' + specialSwatchClass} /> : null;
-  return (
-    <SwatchPopup
-      title={title}
-      trigger={special && specialSwatch ? specialSwatch : <span className="sim-swatch-box" style={{ background: color }} />}
-    >
-      {(close) => (
-        <>
-          {onPickSpecial && specialSwatch && (
-            <button
-              type="button"
-              className={'sim-swatch' + (special ? ' active' : '')}
-              title={specialTitle}
-              onClick={() => { onPickSpecial(); close(); }}
-            >
-              {specialSwatch}
-            </button>
-          )}
-          <SwatchCell
-            color={color}
-            title={t('自定义', 'Custom')}
-            custom
-            onPick={onPickColor}
-          />
-          {presets.map((c) => (
-            <SwatchCell
-              key={c}
-              color={c}
-              title={c}
-              active={!special && c.toLowerCase() === color.toLowerCase()}
-              onClick={() => { onPickColor(c); close(); }}
-            />
-          ))}
-        </>
-      )}
-    </SwatchPopup>
-  );
-}
-
-function ColorRow({
-  label, children, action, trailing, disabled, title,
-}: {
-  label: string;
-  children: ReactNode;
-  action?: { label: string; title?: string; onClick: () => void };
-  /** 色块右侧附加控件(如内核色行的「原核」开关)。 */
-  trailing?: ReactNode;
-  /** 该拼图暂不支持此配色 → 变灰 + 不可点(pointer-events:none 兜住所有色块按钮)。 */
-  disabled?: boolean;
-  title?: string;
-}) {
-  return (
-    <div className={'sim-color-row' + (disabled ? ' sim-color-row--disabled' : '')} aria-disabled={disabled || undefined} title={title}>
-      <span className="sim-color-row-label">{label}</span>
-      {/* trailing(如「原核」开关)紧贴标签右侧,再到色块 */}
-      {trailing}
-      {action && (
-        <button type="button" className="sim-face-color-reset" onClick={action.onClick} title={action.title}>
-          {action.label}
-        </button>
-      )}
-      <div className="sim-swatch-list">{children}</div>
-    </div>
-  );
-}
-
-/** 外观区的百分比滑条(内核不透明度 / 贴纸不透明度 / 黑边)。行式与 ColorRow 一致
- *  —— 标签、控件、右侧读数,不支持该拼图时整行灰化 + 滑条 disabled。
- *  读数是可打字的数字框(与上方 Slider 同一个 ValueField):拖不准的值直接输入。 */
-function PercentRow({
-  label, value, onChange, min = 0, max = 100, step = 1, disabled, title,
-}: {
-  label: string;
-  value: number;
-  onChange: (v: number) => void;
-  min?: number;
-  max?: number;
-  step?: number;
-  disabled?: boolean;
-  title?: string;
-}) {
-  return (
-    <div className={'sim-color-row sim-percent-row' + (disabled ? ' sim-color-row--disabled' : '')} aria-disabled={disabled || undefined} title={title}>
-      <span className="sim-color-row-label">{label}</span>
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        disabled={disabled}
-        aria-label={label}
-        onChange={(e) => onChange(Number(e.target.value))}
-      />
-      <ValueField
-        display={value}
-        // 显示位数跟着步长走:整步 → 整数(100),半步 → 一位小数(黑边 12.5)。
-        decimals={Number.isInteger(step) ? 0 : 1}
-        min={min}
-        max={max}
-        step={step}
-        suffix="%"
-        disabled={disabled}
-        commit={(n) => {
-          const q = Math.min(max, Math.max(min, Math.round(n / step) * step));
-          if (q !== value) onChange(q);
-          return q;
-        }}
-      />
-    </div>
-  );
-}
-
-/** 滑条数字框的真实单位(内部仍存 0..100,见 SliderUnit):
- *  - 缩放 → 倍率:引擎 world.scale = 0.5 + v/100;cubing.js 用 cameraDistance [9,3] 逼近同档感受。
- *  - 左右/上下 → 旋转角度(度):引擎 scene.rotation ±90°;cubing.js 经度全程 ±180°(纬度同 ±90°),
- *    所以左右按渲染路径二选一。上下正值 = 俯视(相机在上)。
- *  - TPS → 每秒公式 token 数:引擎按真实 elapsed time 推进;cubing.js 使用相同精确倍率。 */
-// 灵敏度 → 相对默认(滑杆 50)的倍率。它同时驱动三种手感 —— 拖贴纸转层的角速度
-// (controller.sensitivity)、拖空白转视角的 rad/px(mapOrbitK)、SQ1 / SQ2 / SQ4 拖拽(mapTurnDragFactor)
-// —— 三者都是 mapSensitivity(v) 的常数倍,所以只有"相对默认几倍"对三条路径同时精确;
-// 标成 °/px 之类的物理量只有转视角那条对得上,拖贴纸会对不上(它还受透视/缩放影响)。
-// mapSensitivity 是几何映射(每 25 格 ×2),倍率 = 2^((v-50)/25),0.25×~4×。
-const UNIT_SENS: SliderUnit = { to: (v) => Math.pow(2, (v - 50) / 25), from: (m) => 50 + 25 * Math.log2(m), min: 0.25, max: 4, step: 0.05, decimals: 2, suffix: '×' };
-const UNIT_SCALE: SliderUnit = { to: (v) => 0.5 + v / 100, from: (m) => (m - 0.5) * 100, min: 0.5, max: 1.5, step: 0.05, decimals: 2, suffix: '×' };
-// 透视 → 35mm 等效焦距:引擎是 dolly-zoom(distance = 取景半径×p,p = 2 + v×0.08,FOV 反向
-// 补偿定画幅),竖直 FOV = 2·atan(1/p) ⇔ 全画幅(半高 12mm)焦距 f = 12p = 24 + 0.96v mm。
-// 24mm 广角畸变强 → 120mm 长焦近正交。仅引擎路径(cubing.js 拼图此滑条本就禁用)。
-const UNIT_FOCAL: SliderUnit = { to: (v) => 24 + v * 0.96, from: (f) => (f - 24) / 0.96, min: 24, max: 120, step: 1, decimals: 0, suffix: 'mm' };
-// 视角盘的度数框:约定「右 = 正(看右面)」→ 显示符号相对内部值翻转(默认 viewAngle=30
-// 从旧 −36° 变 +36°)。内部 0..100 与引擎 mapYaw / twisty cameraLongitude 全不变,纯显示层。
-// pad·90(引擎)/ pad·180(twisty)= (50−v)·1.8 / (50−v)·3.6,与 padX=(50−v)/50 同号。
-const UNIT_YAW_ENGINE: SliderUnit = { to: (v) => (50 - v) * 1.8, from: (d) => 50 - d / 1.8, min: -90, max: 90, step: 1, decimals: 0, suffix: '°' };
-const UNIT_YAW_TWISTY: SliderUnit = { to: (v) => (50 - v) * 3.6, from: (d) => 50 - d / 3.6, min: -180, max: 180, step: 1, decimals: 0, suffix: '°' };
-// 上下(pitch):(50−v)·1.8 本就「上 = 正 = 俯视」,默认 33 → +31°,符号无需翻。
-const UNIT_PITCH: SliderUnit = { to: (v) => (50 - v) * 1.8, from: (d) => 50 - d / 1.8, min: -90, max: 90, step: 1, decimals: 0, suffix: '°' };
 const UNIT_TPS: SliderUnit = { to: simSpeedToTps, from: simTpsToSpeed, min: 0.5, max: 6, step: 0.1, decimals: 1 };
-
-const PICTURE_FACE_LABELS: Record<PictureFace, readonly [string, string]> = {
-  U: ['上面', 'Up'], R: ['右面', 'Right'], F: ['前面', 'Front'],
-  D: ['下面', 'Down'], L: ['左面', 'Left'], B: ['后面', 'Back'],
-};
-
-function PictureFaceMiniNet({ faces }: { faces: PictureFaces }) {
-  return (
-    <span className="sim-picture-mini" aria-hidden>
-      {PICTURE_FACE_ORDER.map((face) => (
-        <span key={face} data-face={face}>
-          {faces[face] ? <img src={faces[face]} alt="" /> : <span>{face}</span>}
-        </span>
-      ))}
-    </span>
-  );
-}
-
-const PICTURE_CROP_SIZE = 384;
-
-function defaultPictureCrops(): Record<PictureFace, PictureCrop> {
-  return Object.fromEntries(
-    PICTURE_FACE_ORDER.map((face) => [face, { ...DEFAULT_PICTURE_CROP }]),
-  ) as Record<PictureFace, PictureCrop>;
-}
-
-function PictureCropWorkspace({
-  face, source, initialCrop, order, busy, onReplace, onApply, t,
-}: {
-  face: PictureFace;
-  source: string;
-  initialCrop: PictureCrop;
-  order: number;
-  busy: boolean;
-  onReplace: () => void;
-  onApply: (crop: PictureCrop) => void;
-  t: (zh: string, en: string) => string;
-}) {
-  const [crop, setCrop] = useState<PictureCrop>(() => normalizePictureCrop(initialCrop));
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-  const [imageError, setImageError] = useState(false);
-  const [dragging, setDragging] = useState(false);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const imageRef = useRef<HTMLImageElement | null>(null);
-  const cropRef = useRef(crop);
-  const pointersRef = useRef(new Map<number, { clientX: number; clientY: number }>());
-  const gestureRef = useRef<
-    | {
-      kind: 'drag';
-      pointerId: number;
-      clientX: number;
-      clientY: number;
-      crop: PictureCrop;
-    }
-    | {
-      kind: 'pinch';
-      pointerIds: readonly [number, number];
-      distance: number;
-      centerX: number;
-      centerY: number;
-      crop: PictureCrop;
-    }
-    | null
-  >(null);
-
-  cropRef.current = crop;
-
-  const commitCrop = useCallback((next: PictureCrop) => {
-    const normalized = normalizePictureCrop(next);
-    cropRef.current = normalized;
-    setCrop(normalized);
-  }, []);
-
-  useEffect(() => {
-    setCrop(normalizePictureCrop(initialCrop));
-    pointersRef.current.clear();
-    gestureRef.current = null;
-    setDragging(false);
-    setDimensions({ width: 0, height: 0 });
-    setImageError(false);
-    const image = new Image();
-    image.decoding = 'async';
-    image.onload = () => {
-      imageRef.current = image;
-      setDimensions({ width: image.naturalWidth, height: image.naturalHeight });
-    };
-    image.onerror = () => setImageError(true);
-    image.src = source;
-    return () => {
-      imageRef.current = null;
-      image.onload = null;
-      image.onerror = null;
-    };
-  }, [initialCrop, source]);
-
-  const geometry = useMemo(() => {
-    if (!dimensions.width || !dimensions.height) return null;
-    return pictureCropGeometry(
-      dimensions.width,
-      dimensions.height,
-      PICTURE_CROP_SIZE,
-      crop,
-    );
-  }, [crop, dimensions]);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const image = imageRef.current;
-    if (!canvas || !image || !dimensions.width || !dimensions.height) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    drawPictureCrop(
-      ctx,
-      image,
-      dimensions.width,
-      dimensions.height,
-      PICTURE_CROP_SIZE,
-      crop,
-    );
-  }, [crop, dimensions]);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const onWheel = (event: WheelEvent) => {
-      if (!dimensions.width || !dimensions.height) return;
-      event.preventDefault();
-      const rect = canvas.getBoundingClientRect();
-      if (!rect.width || !rect.height) return;
-      const delta = event.deltaMode === 1
-        ? event.deltaY * 16
-        : event.deltaMode === 2 ? event.deltaY * rect.height : event.deltaY;
-      const anchorX = ((event.clientX - rect.left) / rect.width - 0.5) * PICTURE_CROP_SIZE;
-      const anchorY = ((event.clientY - rect.top) / rect.height - 0.5) * PICTURE_CROP_SIZE;
-      commitCrop(zoomPictureCropAt(
-        dimensions.width,
-        dimensions.height,
-        PICTURE_CROP_SIZE,
-        cropRef.current,
-        cropRef.current.zoom * Math.exp(-delta * 0.002),
-        anchorX,
-        anchorY,
-      ));
-    };
-    canvas.addEventListener('wheel', onWheel, { passive: false });
-    return () => canvas.removeEventListener('wheel', onWheel);
-  }, [commitCrop, dimensions.height, dimensions.width]);
-
-  const gridCount = order >= 2 && order <= 12 ? order : 0;
-  const [zhFace, enFace] = PICTURE_FACE_LABELS[face];
-
-  const setRotation = (rotation: number) => {
-    if (!dimensions.width || !dimensions.height) {
-      commitCrop({ ...cropRef.current, rotation });
-      return;
-    }
-    commitCrop(rotatePictureCropTo(
-      dimensions.width,
-      dimensions.height,
-      PICTURE_CROP_SIZE,
-      cropRef.current,
-      rotation,
-    ));
-  };
-
-  const beginPinch = () => {
-    const pair = [...pointersRef.current.entries()].slice(0, 2);
-    if (pair.length < 2) return;
-    const [[firstId, first], [secondId, second]] = pair;
-    gestureRef.current = {
-      kind: 'pinch',
-      pointerIds: [firstId, secondId],
-      distance: Math.max(1, Math.hypot(second.clientX - first.clientX, second.clientY - first.clientY)),
-      centerX: (first.clientX + second.clientX) / 2,
-      centerY: (first.clientY + second.clientY) / 2,
-      crop: cropRef.current,
-    };
-    setDragging(true);
-  };
-
-  const endPointer = (event: React.PointerEvent<HTMLCanvasElement>) => {
-    pointersRef.current.delete(event.pointerId);
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-    if (pointersRef.current.size >= 2) {
-      beginPinch();
-      return;
-    }
-    const remaining = [...pointersRef.current.entries()][0];
-    if (remaining) {
-      const [pointerId, point] = remaining;
-      gestureRef.current = {
-        kind: 'drag',
-        pointerId,
-        clientX: point.clientX,
-        clientY: point.clientY,
-        crop: cropRef.current,
-      };
-      setDragging(true);
-      return;
-    }
-    gestureRef.current = null;
-    setDragging(false);
-  };
-
-  return (
-    <div className="sim-picture-crop-workspace">
-      <div className="sim-picture-crop-heading">
-        <span className="sim-picture-crop-icon"><Crop size={17} /></span>
-        <div>
-          <h3>{t(`调整 ${face} ${zhFace}`, `Adjust ${face} ${enFace}`)}</h3>
-        </div>
-      </div>
-
-      <div className="sim-picture-crop-body">
-        <div className="sim-picture-crop-stage-wrap">
-          <div className={'sim-picture-crop-stage' + (dragging ? ' is-dragging' : '')}>
-            <canvas
-              ref={canvasRef}
-              width={PICTURE_CROP_SIZE}
-              height={PICTURE_CROP_SIZE}
-              tabIndex={0}
-              aria-label={t('拖动图片调整取景,双指或滚轮缩放', 'Drag to reframe; pinch or scroll to zoom')}
-              onPointerDown={(event) => {
-                if (!geometry || (event.pointerType !== 'touch' && event.button !== 0)) return;
-                pointersRef.current.set(event.pointerId, {
-                  clientX: event.clientX,
-                  clientY: event.clientY,
-                });
-                event.currentTarget.setPointerCapture(event.pointerId);
-                if (pointersRef.current.size >= 2) beginPinch();
-                else {
-                  gestureRef.current = {
-                    kind: 'drag',
-                    pointerId: event.pointerId,
-                    clientX: event.clientX,
-                    clientY: event.clientY,
-                    crop: cropRef.current,
-                  };
-                  setDragging(true);
-                }
-              }}
-              onPointerMove={(event) => {
-                if (!pointersRef.current.has(event.pointerId) || !geometry) return;
-                pointersRef.current.set(event.pointerId, {
-                  clientX: event.clientX,
-                  clientY: event.clientY,
-                });
-                const gesture = gestureRef.current;
-                if (!gesture) return;
-                const rect = event.currentTarget.getBoundingClientRect();
-                if (!rect.width || !rect.height) return;
-                if (gesture.kind === 'pinch') {
-                  const first = pointersRef.current.get(gesture.pointerIds[0]);
-                  const second = pointersRef.current.get(gesture.pointerIds[1]);
-                  if (!first || !second) return;
-                  const distance = Math.max(1, Math.hypot(
-                    second.clientX - first.clientX,
-                    second.clientY - first.clientY,
-                  ));
-                  const centerX = (first.clientX + second.clientX) / 2;
-                  const centerY = (first.clientY + second.clientY) / 2;
-                  const toCanvasX = (clientX: number) => (
-                    (clientX - rect.left) / rect.width - 0.5
-                  ) * PICTURE_CROP_SIZE;
-                  const toCanvasY = (clientY: number) => (
-                    (clientY - rect.top) / rect.height - 0.5
-                  ) * PICTURE_CROP_SIZE;
-                  commitCrop(zoomPictureCropAt(
-                    dimensions.width,
-                    dimensions.height,
-                    PICTURE_CROP_SIZE,
-                    gesture.crop,
-                    gesture.crop.zoom * distance / gesture.distance,
-                    toCanvasX(gesture.centerX),
-                    toCanvasY(gesture.centerY),
-                    toCanvasX(centerX),
-                    toCanvasY(centerY),
-                  ));
-                  return;
-                }
-                if (gesture.pointerId !== event.pointerId) return;
-                commitCrop(panPictureCropBy(
-                  dimensions.width,
-                  dimensions.height,
-                  PICTURE_CROP_SIZE,
-                  gesture.crop,
-                  (event.clientX - gesture.clientX) / rect.width * PICTURE_CROP_SIZE,
-                  (event.clientY - gesture.clientY) / rect.height * PICTURE_CROP_SIZE,
-                ));
-              }}
-              onPointerUp={endPointer}
-              onPointerCancel={endPointer}
-              onLostPointerCapture={(event) => {
-                if (!pointersRef.current.has(event.pointerId)) return;
-                pointersRef.current.clear();
-                gestureRef.current = null;
-                setDragging(false);
-              }}
-              onKeyDown={(event) => {
-                const nudge = event.shiftKey ? 40 : 12;
-                if (event.key === 'ArrowLeft') commitCrop(panPictureCropBy(
-                  dimensions.width, dimensions.height, PICTURE_CROP_SIZE, cropRef.current, -nudge, 0,
-                ));
-                else if (event.key === 'ArrowRight') commitCrop(panPictureCropBy(
-                  dimensions.width, dimensions.height, PICTURE_CROP_SIZE, cropRef.current, nudge, 0,
-                ));
-                else if (event.key === 'ArrowUp') commitCrop(panPictureCropBy(
-                  dimensions.width, dimensions.height, PICTURE_CROP_SIZE, cropRef.current, 0, -nudge,
-                ));
-                else if (event.key === 'ArrowDown') commitCrop(panPictureCropBy(
-                  dimensions.width, dimensions.height, PICTURE_CROP_SIZE, cropRef.current, 0, nudge,
-                ));
-                else if (event.key === '+' || event.key === '=') commitCrop(zoomPictureCropAt(
-                  dimensions.width,
-                  dimensions.height,
-                  PICTURE_CROP_SIZE,
-                  cropRef.current,
-                  cropRef.current.zoom * 1.15,
-                  0,
-                  0,
-                ));
-                else if (event.key === '-') commitCrop(zoomPictureCropAt(
-                  dimensions.width,
-                  dimensions.height,
-                  PICTURE_CROP_SIZE,
-                  cropRef.current,
-                  cropRef.current.zoom / 1.15,
-                  0,
-                  0,
-                ));
-                else return;
-                event.preventDefault();
-                event.stopPropagation();
-              }}
-            />
-            {gridCount > 0 && (
-              <span
-                className="sim-picture-crop-grid"
-                style={{ backgroundSize: `${100 / gridCount}% ${100 / gridCount}%` }}
-                aria-hidden
-              />
-            )}
-            {!dimensions.width && !imageError && <Loader2 size={24} className="sim-picture-crop-loading sim-spin" />}
-            {imageError && <span className="sim-picture-crop-load-error">{t('无法预览', 'Preview unavailable')}</span>}
-          </div>
-        </div>
-
-        <div className="sim-picture-crop-controls">
-          <label className="sim-picture-rotation">
-            <span>{t('旋转', 'Rotate')}</span>
-            <ValueField
-              display={crop.rotation}
-              decimals={2}
-              min={-180}
-              max={180}
-              step={0.01}
-              suffix="°"
-              commit={(rotation) => {
-                setRotation(rotation);
-                return normalizePictureCrop({ ...cropRef.current, rotation }).rotation;
-              }}
-            />
-            <input
-              type="range"
-              min={-180}
-              max={180}
-              step={0.1}
-              value={crop.rotation}
-              aria-label={t('旋转角度', 'Rotation angle')}
-              onChange={(event) => setRotation(Number(event.target.value))}
-            />
-          </label>
-
-          <div className="sim-picture-crop-actions">
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => setCrop({ ...DEFAULT_PICTURE_CROP, rotation: crop.rotation })}
-            >
-              {t('居中', 'Center')}
-            </button>
-            <button type="button" disabled={busy} onClick={onReplace}>
-              <Upload size={14} />{t('换图', 'Change image')}
-            </button>
-            <button
-              type="button"
-              className="sim-picture-crop-apply"
-              disabled={busy || !dimensions.width || imageError}
-              onClick={() => onApply(crop)}
-            >
-              {busy && <Loader2 size={14} className="sim-spin" />}
-              {t('应用', 'Apply')}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function PictureCubeEditor({
-  open, initialFaces, initialBaseColors, order, onClose,
-  onFacesChange, onBaseColorsChange, t,
-}: {
-  open: boolean;
-  initialFaces: PictureFaces;
-  initialBaseColors: boolean;
-  order: number;
-  onClose: () => void;
-  onFacesChange: (faces: PictureFaces) => boolean;
-  onBaseColorsChange: (baseColors: boolean) => void;
-  t: (zh: string, en: string) => string;
-}) {
-  const [draft, setDraft] = useState<PictureFaces>(() => ({ ...initialFaces }));
-  const [baseColors, setBaseColors] = useState(initialBaseColors);
-  const [editSources, setEditSources] = useState<PictureFaces>(() => ({ ...initialFaces }));
-  const [faceCrops, setFaceCrops] = useState<Record<PictureFace, PictureCrop>>(defaultPictureCrops);
-  const [cropFace, setCropFace] = useState<PictureFace | null>(null);
-  const [targetFace, setTargetFace] = useState<PictureFace>('U');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-  const faceInputRef = useRef<HTMLInputElement>(null);
-  const bulkInputRef = useRef<HTMLInputElement>(null);
-  const dialogRef = useRef<HTMLElement>(null);
-  const cropFaceRef = useRef<PictureFace | null>(null);
-  const openingStateRef = useRef({ faces: initialFaces, baseColors: initialBaseColors });
-
-  cropFaceRef.current = cropFace;
-
-  useEffect(() => {
-    if (!open) openingStateRef.current = { faces: initialFaces, baseColors: initialBaseColors };
-  }, [initialBaseColors, initialFaces, open]);
-
-  useEffect(() => {
-    if (!open) return;
-    const initial = openingStateRef.current;
-    setDraft({ ...initial.faces });
-    setBaseColors(initial.baseColors);
-    setEditSources({ ...initial.faces });
-    setFaceCrops(defaultPictureCrops());
-    setCropFace(null);
-    setError('');
-    setBusy(false);
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-    const oldOverflow = document.body.style.overflow;
-    const previouslyFocused = document.activeElement instanceof HTMLElement
-      ? document.activeElement
-      : null;
-    document.body.style.overflow = 'hidden';
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        if (cropFaceRef.current) {
-          setCropFace(null);
-          return;
-        }
-        onClose();
-        return;
-      }
-      if (event.key !== 'Tab') return;
-      const dialog = dialogRef.current;
-      if (!dialog) return;
-      const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(
-        'button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
-      )).filter((element) => element.offsetParent !== null);
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (!first || !last) return;
-      if (event.shiftKey && (document.activeElement === first || document.activeElement === dialog)) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-    window.addEventListener('keydown', onKeyDown);
-    requestAnimationFrame(() => dialogRef.current?.focus());
-    return () => {
-      document.body.style.overflow = oldOverflow;
-      window.removeEventListener('keydown', onKeyDown);
-      previouslyFocused?.focus();
-    };
-  }, [onClose, open]);
-
-  if (!open || typeof document === 'undefined') return null;
-
-  const messageForError = (reason: unknown) => {
-    const code = reason instanceof Error ? reason.message : '';
-    if (code === 'too-large') return t('单张图片请小于 15 MB', 'Keep each image under 15 MB');
-    if (code === 'not-image') return t('请选择图片文件', 'Choose an image file');
-    return t('这张图片无法读取,请换一张再试', 'This image could not be read. Try another file');
-  };
-
-  const autoSaveFaces = (faces: PictureFaces): boolean => {
-    if (onFacesChange(faces)) {
-      setError('');
-      return true;
-    }
-    setError(t(
-      '浏览器存储空间不足,图片尚未保存。请清理部分站点数据或减少图片后重试',
-      'Browser storage is full, so the images were not saved. Free some site storage or use fewer images, then try again',
-    ));
-    return false;
-  };
-
-  const processFace = async (face: PictureFace, file: File) => {
-    const source = await fileToPictureEditSourceDataUrl(file);
-    const crop = { ...DEFAULT_PICTURE_CROP };
-    const url = await pictureEditSourceToFaceDataUrl(source, crop);
-    const next = { ...draft, [face]: url };
-    if (!autoSaveFaces(next)) return;
-    setEditSources((current) => ({ ...current, [face]: source }));
-    setFaceCrops((current) => ({ ...current, [face]: crop }));
-    setDraft(next);
-    setCropFace(face);
-  };
-
-  const handleFaceFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    event.target.value = '';
-    if (!file) return;
-    setBusy(true);
-    setError('');
-    try {
-      await processFace(targetFace, file);
-    } catch (reason) {
-      setError(messageForError(reason));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const handleBulkFiles = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files ?? []).slice(0, 6);
-    event.target.value = '';
-    if (files.length === 0) return;
-    setBusy(true);
-    setError('');
-    try {
-      const imported: Array<{ face: PictureFace; source: string; url: string }> = [];
-      for (let index = 0; index < files.length; index++) {
-        const source = await fileToPictureEditSourceDataUrl(files[index]);
-        imported.push({
-          face: PICTURE_FACE_ORDER[index],
-          source,
-          url: await pictureEditSourceToFaceDataUrl(source, DEFAULT_PICTURE_CROP),
-        });
-      }
-      const next = { ...draft };
-      imported.forEach(({ face, url }) => { next[face] = url; });
-      if (!autoSaveFaces(next)) return;
-      setDraft(next);
-      setEditSources((current) => {
-        const next = { ...current };
-        imported.forEach(({ face, source }) => { next[face] = source; });
-        return next;
-      });
-      setFaceCrops((current) => {
-        const next = { ...current };
-        imported.forEach(({ face }) => { next[face] = { ...DEFAULT_PICTURE_CROP }; });
-        return next;
-      });
-      setCropFace(null);
-      if (files.length < 6) {
-        setError(t(`已按顺序填入前 ${files.length} 面,其余可逐面补充`, `Filled the first ${files.length} faces in order; add the rest individually`));
-      }
-    } catch (reason) {
-      setError(messageForError(reason));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const removeFace = (face: PictureFace) => {
-    const next = { ...draft, [face]: '' };
-    if (!autoSaveFaces(next)) return;
-    setDraft(next);
-    setEditSources((current) => ({ ...current, [face]: '' }));
-    setFaceCrops((current) => ({ ...current, [face]: { ...DEFAULT_PICTURE_CROP } }));
-    if (cropFace === face) setCropFace(null);
-  };
-
-  const clearAllFaces = () => {
-    const next = emptyPictureFaces();
-    if (!autoSaveFaces(next)) return;
-    setDraft(next);
-    setEditSources({ ...next });
-    setFaceCrops(defaultPictureCrops());
-    setCropFace(null);
-  };
-
-  const applyCrop = async (face: PictureFace, crop: PictureCrop) => {
-    const source = editSources[face];
-    if (!source) return;
-    setBusy(true);
-    setError('');
-    try {
-      const normalized = normalizePictureCrop(crop);
-      const url = await pictureEditSourceToFaceDataUrl(source, normalized);
-      const next = { ...draft, [face]: url };
-      if (!autoSaveFaces(next)) return;
-      setFaceCrops((current) => ({ ...current, [face]: normalized }));
-      setDraft(next);
-      setCropFace(null);
-    } catch (reason) {
-      setError(messageForError(reason));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const count = countPictureFaces(draft);
-  const dialog = (
-    <div
-      className="sim-picture-backdrop"
-      onPointerDown={(event) => { if (event.target === event.currentTarget) onClose(); }}
-    >
-      <section
-        ref={dialogRef}
-        className="sim-picture-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="sim-picture-title"
-        tabIndex={-1}
-      >
-        <header className="sim-picture-head">
-          <div>
-            <h2 id="sim-picture-title">{t('制作图案魔方', 'Create a picture cube')}</h2>
-          </div>
-          <ClearButton
-            variant="standalone"
-            className="sim-picture-icon-btn"
-            onClick={() => {
-              if (cropFace) setCropFace(null);
-              else onClose();
-            }}
-            ariaLabel={cropFace ? t('返回六面', 'Back to faces') : t('关闭', 'Close')}
-          />
-        </header>
-
-        {cropFace && editSources[cropFace] ? (
-          <PictureCropWorkspace
-            key={cropFace}
-            face={cropFace}
-            source={editSources[cropFace]}
-            initialCrop={faceCrops[cropFace]}
-            order={order}
-            busy={busy}
-            onReplace={() => {
-              setTargetFace(cropFace);
-              faceInputRef.current?.click();
-            }}
-            onApply={(crop) => { void applyCrop(cropFace, crop); }}
-            t={t}
-          />
-        ) : (
-          <>
-            <div className="sim-picture-toolbar">
-              <button type="button" className="sim-picture-bulk" disabled={busy} onClick={() => bulkInputRef.current?.click()}>
-                {busy ? <Loader2 size={16} className="sim-spin" /> : <Upload size={16} />}
-                {t('一次选择 6 张', 'Choose 6 at once')}
-              </button>
-              <span>{t('顺序:U R F D L B', 'Order: U R F D L B')}</span>
-              <BoolToggle
-                value={baseColors}
-                disabled={busy}
-                onChange={(next) => {
-                  setBaseColors(next);
-                  onBaseColorsChange(next);
-                  setError('');
-                }}
-                label={t('保留原色', 'Keep face colors')}
-              />
-              <button
-                type="button"
-                className="sim-picture-clear-all"
-                disabled={busy || count === 0}
-                onClick={clearAllFaces}
-                aria-label={t('清空 6 张图片', 'Clear all 6 images')}
-                title={t('清空 6 张图片', 'Clear all 6 images')}
-              >
-                <Trash2 size={16} aria-hidden="true" />
-              </button>
-            </div>
-
-            <div className="sim-picture-net" aria-label={t('六面图片', 'Six face images')}>
-              {PICTURE_FACE_ORDER.map((face) => {
-                const [zh, en] = PICTURE_FACE_LABELS[face];
-                const hasImage = !!draft[face];
-                return (
-                  <div className="sim-picture-face" data-face={face} key={face}>
-                    <button
-                      type="button"
-                      className="sim-picture-face-main"
-                      onClick={() => {
-                        if (hasImage) setCropFace(face);
-                        else {
-                          setTargetFace(face);
-                          faceInputRef.current?.click();
-                        }
-                      }}
-                      disabled={busy}
-                      aria-label={hasImage ? t(`调整${zh}图片`, `Adjust ${en} image`) : t(`上传${zh}图片`, `Upload ${en} image`)}
-                    >
-                      {hasImage
-                        ? <img src={draft[face]} alt="" />
-                        : <ImagePlus size={22} />}
-                      {hasImage && <em><Crop size={12} />{t('调整', 'Adjust')}</em>}
-                      <span>{face}</span>
-                    </button>
-                    {hasImage && (
-                      <button
-                        type="button"
-                        className="clear-btn clear-btn--standalone sim-picture-face-remove"
-                        disabled={busy}
-                        onClick={() => removeFace(face)}
-                        aria-label={t(`删除${zh}图片`, `Remove ${en} image`)}
-                        title={t(`删除${zh}图片`, `Remove ${en} image`)}
-                      >
-                        <Trash2 size={13} aria-hidden="true" />
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="sim-picture-notes">
-              <span>{t(`已设置 ${count}/6 面`, `${count}/6 faces set`)}</span>
-              <span>{t('更改会自动保存在当前浏览器,不会上传到服务器', 'Changes are saved automatically in this browser and are not uploaded to a server')}</span>
-            </div>
-          </>
-        )}
-        <input ref={bulkInputRef} type="file" accept="image/*" multiple hidden onChange={handleBulkFiles} />
-        <input ref={faceInputRef} type="file" accept="image/*" hidden onChange={handleFaceFile} />
-        {error && <p className="sim-picture-error" role="status">{error}</p>}
-      </section>
-    </div>
-  );
-  return createPortal(dialog, document.body);
-}
-
-function PuzzleSettings({
-  world,
-  order, onOrderChange, puzzleKind, onPuzzleChange,
-  renderer, onRendererChange,
-  settings, onSettingsChange, transCore, bgSlot, t,
-  canUseCustomLogo,
-}: {
-  world: World | null;
-  order: number;
-  onOrderChange: (n: number) => void;
-  puzzleKind: SimPuzzle;
-  onPuzzleChange: (kind: SimPuzzle) => void;
-  renderer: 'cubing' | 'engine' | 'group';
-  onRendererChange?: (r: 'cubing' | 'engine' | 'group') => void;
-  settings: SimSettings;
-  onSettingsChange: (s: SimSettings) => void;
-  canUseCustomLogo: boolean;
-  /** 非 null = trans 视图接管了内核色 / 内核不透明度(见 Props.transCore)。 */
-  transCore?: { coreColor: string; coreOpacity: number } | null;
-  /** 画布左下角浮层槽(SimPage 的 .sim-bg-overlay);背景选择器 portal 到这里,
-   *  贴在大图上而非埋在设置面板的开关行里。 */
-  bgSlot?: HTMLElement | null;
-  t: (zh: string, en: string) => string;
-}) {
-  const { i18n } = useTranslation();
-  const isZh = i18n.language.startsWith('zh');
-  // Per-puzzle UI capabilities come from the single registry in simCaps — no per-kind
-  // boolean chains here. The settings panel itself is intentionally identical for every
-  // puzzle (engine-only toggles always render, no-op where the engine isn't driving); the
-  // only per-puzzle bits left are `caps.carve` (挖角/挖面/挖棱 — the moving group differs
-  // by puzzle, absent on NxN/SQ1) and `caps.hasRendererChoice` (cubing.js ↔ 群论内核
-  // dropdown). Adding a puzzle's controls = one simCaps entry, never an edit to the JSX.
-  const caps = resolveCaps(puzzleKind, renderer);
-  const roomsActive = roomCubeActive(puzzleKind, settings.roomTheme) && caps.engineActive;
-  // Rooms replace only the visible surface; keep the user's ordinary cube settings.
-  if (roomsActive) Object.assign(caps.supports, {
-    thickness: false, hollow: false, hint: false, logo: false, structureColor: false,
-    coreColor: false, coreOpacity: false, coreFinish: false, faceColors: false,
-  });
-  const isNxNLocal = typeof puzzleKind === 'number';
-  const isMirror = puzzleKind === 'mirror' || puzzleKind === 'mirror2';
-  const faceColorsKey = puzzleKind === 'ghost' ? 'ghostFaceColors' : 'faceColors';
-  const faceColors = settings[faceColorsKey] ?? GHOST_DEFAULT_FACE_COLORS;
-  const matchesPalette = (palette: typeof DEFAULT_FACE_COLORS) => Object.entries(palette)
-    .every(([face, color]) => faceColors[face as keyof typeof faceColors]?.toLowerCase() === color.toLowerCase());
-  const facePreset = matchesPalette(DEFAULT_FACE_COLORS) ? 'wca' : matchesPalette(CUBER_FACE_COLORS) ? 'cuber' : 'custom';
-  // 灰掉「该拼图暂不支持」的控件时,hover 给出统一说明。engineMode 拼图(斜转/金字塔/五魔/FTO)
-  // 在 cubing.js 渲染下引擎特性不生效,但切到「群论内核」即点亮 → 附一句提示往哪切;PG 探索
-  // 拼图切渲染也不会启用(引擎未建),只给通用说明。
-  const switchEnables = !caps.engineActive && resolveCaps(puzzleKind, 'engine').engineActive;
-  const naHint = roomsActive
-    ? t('立体房间使用独立布景，切回普通色块后可调整', '3D rooms use their own artwork. Switch to classic colors to adjust this.')
-    : switchEnables
-    ? t('该拼图暂不支持此功能(切到「群论内核」渲染可启用)', 'Not available for this puzzle (switch the renderer to "Group theory" to enable)')
-    : t('该拼图暂不支持此功能', 'Not available for this puzzle');
-  const hint = (ok: boolean) => (ok ? undefined : naHint);
-  // trans(X 光)是接管内核外观的预设,不是单纯换张伴图:选中时内核色 / 内核不透明度
-  // 由它定值(3D 与伴图同吃),这两行随之锁死 —— hover 说明是谁锁的、怎么解锁。
-  const transHint = transCore
-    ? t(`已被图像面板的 trans(X 光)视图接管:银色内核 + ${transCore.coreOpacity}% 不透明。换成别的视图即可解锁`,
-      `Taken over by the image panel's trans (x-ray) view: silver core at ${transCore.coreOpacity}% opacity. Switch to another view to unlock`)
-    : undefined;
-
-  const set = <K extends keyof SimSettings>(key: K, value: SimSettings[K]) => {
-    onSettingsChange({ ...settings, [key]: value });
-  };
-
-  const [pictureEditorOpen, setPictureEditorOpen] = useState(false);
-  const pictureFaceCount = countPictureFaces(settings.pictureFaces);
-  const pictureCubeActive = caps.supports.pictureCube
-    && settings.pictureCube
-    && pictureFaceCount > 0;
-  const closePictureEditor = useCallback(() => setPictureEditorOpen(false), []);
-  const autoSavePictureFaces = useCallback((faces: PictureFaces) => {
-    if (!persistPictureFaces(faces)) return false;
-    onSettingsChange({
-      ...settings,
-      pictureFaces: faces,
-      pictureCube: countPictureFaces(faces) > 0,
-      roomTheme: 'off',
-    });
-    return true;
-  }, [onSettingsChange, settings]);
-  const autoSavePictureBaseColors = useCallback((pictureBaseColors: boolean) => {
-    onSettingsChange({ ...settings, pictureBaseColors });
-  }, [onSettingsChange, settings]);
-
-  // 人物头像在本地保存，照片贴图的位置与缩放可对照正脸调整。
-  const avatarFileRef = useRef<HTMLInputElement>(null);
-  const [avatarBusy, setAvatarBusy] = useState(false);
-  const [avatarPreview, setAvatarPreview] = useState(false);
-  useEffect(() => {
-    if (!world || !avatarPreview) return;
-    if (!settings.hands || !settings.fullBody || !caps.supports.hands) {
-      setAvatarPreview(false);
-      resetWorldView(world, settings);
-      return;
-    }
-    let frame = 0;
-    const focus = () => {
-      const target = world.camera.position.clone(), direction = target.clone();
-      world.scene.updateMatrixWorld(true);
-      if (!world.hands?.getHeadView?.(target, direction)) {
-        frame = requestAnimationFrame(focus);
-        return;
-      }
-      world.camera.position.copy(target).addScaledVector(direction, 3200);
-      world.camera.fov = 35;
-      world.camera.near = 1;
-      world.camera.far = 30000;
-      world.camera.lookAt(target);
-      world.camera.updateProjectionMatrix();
-      world.dirty = true;
-    };
-    frame = requestAnimationFrame(focus);
-    window.addEventListener('resize', focus);
-    return () => { cancelAnimationFrame(frame); window.removeEventListener('resize', focus); };
-  }, [avatarPreview, world, settings, caps.supports.hands]);
-  const [avatarError, setAvatarError] = useState('');
-  const avatarVersion = useRef(0);
-  const latestSettings = useRef({ settings, onSettingsChange });
-  latestSettings.current = { settings, onSettingsChange };
-  useEffect(() => () => { avatarVersion.current++; }, []);
-  const handleAvatarFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    event.target.value = '';
-    if (!file) return;
-    const version = ++avatarVersion.current;
-    setAvatarError('');
-    if (!/^image\/(png|jpeg|webp)$/.test(file.type) || file.size > 10 * 1024 * 1024) {
-      setAvatarError(t('请选择不超过 10 MB 的 JPG、PNG 或 WebP 图片', 'Choose a JPG, PNG or WebP image up to 10 MB'));
-      return;
-    }
-    setAvatarBusy(true);
-    try {
-      const bodyAvatar = await fileToPictureFaceDataUrl(file, 384);
-      if (version !== avatarVersion.current) return;
-      const current = latestSettings.current;
-      const next = { ...current.settings, bodyAvatar, bodyAvatarX: 50, bodyAvatarY: 50, bodyAvatarZoom: 50 };
-      if (!saveSettings(next)) {
-        setAvatarError(t('浏览器存储空间不足，头像未保存', 'Browser storage is full. The face was not saved.'));
-        return;
-      }
-      current.onSettingsChange(next);
-      setAvatarPreview(true);
-    } catch {
-      if (version === avatarVersion.current) setAvatarError(t('无法读取图片，请重新选择', 'Could not read the image. Please choose another.'));
-    } finally {
-      if (version === avatarVersion.current) setAvatarBusy(false);
-    }
-  };
-
-  const logoFileRef = useRef<HTMLInputElement>(null);
-  const [showCustomLogoUpsell, setShowCustomLogoUpsell] = useState(false);
-  useEffect(() => {
-    if (canUseCustomLogo) setShowCustomLogoUpsell(false);
-  }, [canUseCustomLogo]);
-  const handleLogoFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = ''; // 允许再次选同一文件
-    if (!file || !canUseCustomLogo) return;
-    try {
-      const url = await fileToLogoDataUrl(file);
-      onSettingsChange({ ...settings, customLogo: url, logo: 'custom' });
-    } catch { /* 坏图忽略 */ }
-  };
-
-  // 背景(BG)选择器:复用内核色那套弹出色块选择器(SwatchPopup),trigger 显当前
-  // 背景,点开弹 5 档可视色块。原先埋在设置面板开关行,现 portal 到画布左下角浮层
-  // (.sim-bg-overlay),贴着大图 —— 背景是画布属性,控件搬到画布上更直觉。
-  // 只留色块,不带文字标签 —— 色块本身就说明是什么(title 兜 a11y / 悬停提示)。
-  const bgSelector = (
-    <>
-      <SwatchPopup
-        title={t('背景', 'Background')}
-        trigger={<span className={`sim-swatch-box sim-bg-box--${settings.boardBg}`} />}
-      >
-        {(close) =>
-          ([
-            ['auto', t('跟随主题', 'Theme')],
-            ['white', t('纯白', 'White')],
-            ['dark', t('深灰', 'Dark')],
-            ['checkerDark', t('深色棋盘', 'Dark grid')],
-            ['checkerLight', t('浅色棋盘', 'Light grid')],
-          ] as [SimBoardBg, string][]).map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              className={'sim-swatch' + (settings.boardBg === value ? ' active' : '')}
-              title={label}
-              aria-label={label}
-              aria-pressed={settings.boardBg === value}
-              onClick={() => { set('boardBg', value); close(); }}
-            >
-              <span className={`sim-swatch-box sim-bg-box--${value}`} />
-            </button>
-          ))
-        }
-      </SwatchPopup>
-    </>
-  );
-
-  return (
-    <section className="sim-puzzle">
-      {/* 背景选择器浮层 —— portal 到画布左下角(SimPage 的 .sim-bg-overlay)。slot 未
-          挂载(SimPage 恒提供)前不渲染。 */}
-      {bgSlot && createPortal(<div className="sim-bg-overlay-inner">{bgSelector}</div>, bgSlot)}
-        <div className="sim-puzzle-body">
-          <div className="sim-puzzle-row">
-            <div className="sim-puzzle-section">
-              <PuzzleTypeSelect
-                value={typeof puzzleKind === 'number' ? 'nxn' : String(puzzleKind)}
-                isZh={isZh}
-                onChange={(v) => {
-                  if (isTwistyPuzzle(v) || v === 'sq1' || v === 'sq2' || v === 'sq4' || v === 'ivy' || v === 'dino' || v === 'redi' || v === 'rex' || v === 'heli' || v === 'gear' || v === 'ghost' || v === 'pyraminx_duo' || v === 'mirror' || v === 'mirror2' || v === 'sphere' || v === 'clock' || v === 'magic' || v === 'mmagic' || v === 'custom') onPuzzleChange(v);
-                  else if (isPgPuzzleId(v)) onPuzzleChange(v as PgPuzzleId);
-                  else onPuzzleChange(order || 3);
-                }}
-              />
-            </div>
-            {isNxNLocal && (
-              <div className="sim-puzzle-section">
-                <NxNOrderInput
-                  value={order}
-                  onCommit={onOrderChange}
-                  aria-label={t('阶数', 'Order')}
-                  onMouseDown={(e) => e.stopPropagation()}
-                />
-              </div>
-            )}
-            {/* Renderer choice: cubing.js ↔ 群论内核 (= the in-house engine + a live group
-                panel). The standalone 自有引擎 (engine without panel) option was retired —
-                群论内核 is its strict superset. Only puzzles with a cubing.js renderer get a
-                toggle; pure-engine PG puzzles (dino/heli) have no alternative, so no select. */}
-            {caps.hasRendererChoice && onRendererChange && (
-              <div className="sim-puzzle-section">
-                <div className="sim-puzzle-section-title">{t('渲染', 'Renderer')}</div>
-                <select
-                  className="sim-puzzle-select"
-                  value={renderer === 'cubing' ? 'cubing' : 'group'}
-                  onChange={(e) => onRendererChange(e.target.value as 'cubing' | 'engine' | 'group')}
-                  title={t('cubing.js 官方渲染 / 群论内核(本站引擎:圆润外观 + 拖拽转动 + 群结构面板)', 'cubing.js renderer / group-theory kernel (in-house engine: rounded look + drag + group panel)')}
-                >
-                  <option value="group">{t('群论内核', 'Group theory')}</option>
-                  <option value="cubing">cubing.js</option>
-                </select>
-              </div>
-            )}
-            {isNxNLocal && (
-              <div className="sim-puzzle-section">
-                <select
-                  className="sim-puzzle-select"
-                  value={roomsActive ? 'cube' : settings.viewMode}
-                  onChange={(e) => set('viewMode', e.target.value as 'cube' | 'net')}
-                >
-                  <option value="cube">{t('立体图', '3D cube')}</option>
-                  <option value="net" disabled={roomsActive}>{t('平面图', 'Flat net')}</option>
-                </select>
-              </div>
-            )}
-          </div>
-
-          <div className="sim-puzzle-sliders">
-            <Slider label={t('灵敏度', 'Sensitivity')} value={settings.sensitivity} onChange={(v) => set('sensitivity', v)} disabled={!caps.supports.sensitivity} unit={UNIT_SENS}
-              title={hint(caps.supports.sensitivity) ?? (settings.pointerTurns === false
-                // 手拧关 → 拖层/SQ1 两条路径不再产生 move,只剩转视角,单位含义随之收窄(仍然可调)。
-                ? t('跟手倍率(相对默认):手拧已关,当前只作用于拖动转视角', 'Responsiveness relative to the default — with drag-turn off it only scales view rotation')
-                : t('跟手倍率(相对默认):同时作用于拖层转动、拖空白转视角、SQ1 / SQ2 / SQ4 拖拽', 'Responsiveness relative to the default — scales layer drags, view drags and SQ1 / SQ2 / SQ4 drags alike'))} />
-            <Slider label={t('缩放', 'Scale')} value={settings.scale} onChange={(v) => set('scale', v)} disabled={!caps.supports.scale} unit={UNIT_SCALE} title={hint(caps.supports.scale) ?? t('缩放倍率', 'Zoom factor')} />
-            <Slider label={t('透视', 'Perspective')} value={settings.perspective} onChange={(v) => set('perspective', v)} disabled={!caps.supports.perspective} unit={UNIT_FOCAL} title={hint(caps.supports.perspective) ?? t('35mm 等效焦距(小 = 广角畸变强,大 = 接近正交)', '35mm-equivalent focal length (low = wide-angle distortion, high = near-orthographic)')} />
-            <Slider label={t('TPS', 'TPS')} value={settings.speed} onChange={(v) => set('speed', v)} unit={UNIT_TPS} title={t('每秒转动步数', 'Turns per second')} />
-          </div>
-          {/* 视角盘:「左右 / 上下」两条滑条合成一个平面直角坐标系 —— 可拖圆点 + 两个精确度数框
-              (打 30 正好 30)。右 = 正(看右面)、上 = 正(俯视),纯显示层符号,不改底层 3D 旋转。
-              twisty 渲染下左右量程 ±180°(cameraLongitude 全程),引擎 ±90°。 */}
-          <OrbitPad
-            xValue={settings.viewAngle}
-            yValue={settings.viewGradient}
-            onChange={(x, y) => onSettingsChange({ ...settings, viewAngle: x, viewGradient: y })}
-            xLabel={t('左右', 'Yaw')}
-            yLabel={t('上下', 'Pitch')}
-            xUnit={caps.engineActive ? UNIT_YAW_ENGINE : UNIT_YAW_TWISTY}
-            yUnit={UNIT_PITCH}
-            xTitle={t('左右旋转角度(右 = 正,看右面)', 'Horizontal view angle (right = positive, toward the right face)')}
-            yTitle={t('上下旋转角度(上 = 正,俯视)', "Vertical view angle (up = positive, bird's-eye)")}
-          />
-          <div className="sim-puzzle-toggles">
-            {/* 手拧:关 = 鼠标 / 手势不能拧动拼图(点贴纸、拖贴纸都只转视角,不记步);
-                视角旋转 / 缩放 / 平移 / 键盘 / 播放不受影响。三条路径都接:NxN controller、
-                SQ1 / Ivy / 角转系 gesture、cubing.js addMove。 */}
-            <Toggle
-              label={t('手拧', 'Drag turn')}
-              value={settings.pointerTurns !== false}
-              onChange={(v) => set('pointerTurns', v)}
-              title={t('关闭后鼠标 / 手势只能转视角,不能拧动拼图(键盘和播放不受影响)', 'Off: mouse / touch only rotates the view — it cannot turn the puzzle (keyboard and playback still work)')}
-            />
-            {/* 「消步」开关已移到播放器工具行(逆 旁),此处不再重复。 */}
-            <label className={`sim-toggle${caps.supports.dragEmpty ? '' : ' sim-toggle--disabled'}`} title={hint(caps.supports.dragEmpty)}>
-              <span>{t('拖空白', 'Drag empty')}</span>
-              <select
-                value={settings.dragEmpty}
-                disabled={!caps.supports.dragEmpty}
-                onChange={(e) => set('dragEmpty', e.target.value as 'orbit' | 'rotate' | 'view')}
-              >
-                <option value="rotate">{t('整步转体', 'Snap rotate')}</option>
-                <option value="view">{t('视角', 'View')}</option>
-                <option value="orbit">{t('自动转体', 'Auto rotate')}</option>
-              </select>
-            </label>
-            {/* 播放动画开关:关 → 「播放」时瞬切每一步(不逐格转动);单步前进/后退本就瞬切。 */}
-            <Toggle label={t('动画', 'Animation')} value={settings.animatePlayback !== false} onChange={(v) => set('animatePlayback', v)} />
-            {/* 方位字母常显:U/D/L/R/F/B(角/棱/面转拼图显对应标签),等同拖视角时浮现的标签但常驻。 */}
-            <Toggle
-              label={t('字母', 'Letters')}
-              value={settings.faceLabels === true}
-              onChange={(v) => set('faceLabels', v)}
-              disabled={!caps.supports.faceLabels || pictureCubeActive || roomsActive}
-              title={pictureCubeActive || roomsActive
-                ? t('使用图案时暂时隐藏字母', 'Letters are hidden while artwork is active')
-                : hint(caps.supports.faceLabels) ?? (puzzleKind === 'sphere'
-                  ? t('三阶逻辑面的辅助方位提示', 'Auxiliary labels for the logical 3×3 faces') : undefined)}
-            />
-            {/* 背景(BG)选择器已移到画布左下角浮层(见本组件顶部 bgSelector + SimPage
-                的 .sim-bg-overlay),不再占开关行。 */}
-            {/* 顶面 U 中心 logo:无 / 网站 / 自定义上传。仅 NxN 奇数阶有正中心块时实际显示
-                (偶数阶 / 非 NxN 引擎里 setLogo 自动隐藏)。选「自定义」开文件选择器。 */}
-            <div className="sim-logo-setting">
-              <label className={'sim-toggle' + (caps.supports.logo ? '' : ' sim-toggle--disabled')} title={hint(caps.supports.logo)}>
-                <span>logo</span>
-                <select
-                  value={settings.logo === 'custom' && !canUseCustomLogo ? 'none' : settings.logo}
-                  disabled={!caps.supports.logo}
-                  onChange={(e) => {
-                    const v = e.target.value as SimSettings['logo'];
-                    if (v === 'custom') {
-                      if (!canUseCustomLogo) {
-                        setShowCustomLogoUpsell(true);
-                        return;
-                      }
-                      setShowCustomLogoUpsell(false);
-                      logoFileRef.current?.click();
-                      return;
-                    }
-                    setShowCustomLogoUpsell(false);
-                    set('logo', v);
-                  }}
-                >
-                  <option value="none">{t('无', 'None')}</option>
-                  <option value="site">{t('魔方根', 'CubeRoot')}</option>
-                  <option value="custom">
-                    {canUseCustomLogo ? t('自定义', 'Custom') : t('自定义（会员）', 'Custom (members)')}
-                  </option>
-                </select>
-                <input
-                  ref={logoFileRef}
-                  type="file"
-                  accept="image/*"
-                  disabled={!canUseCustomLogo}
-                  style={{ display: 'none' }}
-                  onChange={handleLogoFile}
-                />
-              </label>
-              {showCustomLogoUpsell && !canUseCustomLogo && (
-                <span className="sim-logo-member-prompt" role="status">
-                  {t('会员权益：', 'Member benefit:')}
-                  <AppLink href="/membership" prefetch={false}>{t('开通会员', 'Join')}</AppLink>
-                </span>
-              )}
-            </div>
-            {/* 锁定大小位置 锁的是引擎滚轮/捏合缩放,cubing.js 拼图自管缩放 → 引擎未驱动时灰掉。 */}
-            <Toggle label={t('锁定大小位置', 'Lock size & position')} value={settings.lockView} onChange={(v) => set('lockView', v)} disabled={!caps.supports.lockView} title={hint(caps.supports.lockView)} />
-            {/* 小窗(背面视图)的开关不在这里:小窗自己右上角有 ×,关掉后播放条最右出现
-                找回按钮 —— 同一个 settings.backView 已经有两个入口,再放一个是第三份。 */}
-            {/* 立体贴片 / 镂空 是本站引擎特性,cubing.js 渲染的拼图上无此能力 → 引擎未驱动时灰掉
-                (面板形状仍保持每拼图一致:控件常显,只是不可点)。 */}
-            <Toggle label={t('立体贴片', 'Sticker thickness')} value={settings.thickness} onChange={(v) => set('thickness', v)} disabled={!caps.supports.thickness} title={hint(caps.supports.thickness)} />
-            <Toggle label={t('镂空', 'Hollow')} value={settings.hollow} onChange={(v) => set('hollow', v)} disabled={!caps.supports.hollow} title={hint(caps.supports.hollow)} />
-            {/* 提示贴片(hint)两条路径都支持(引擎 hint / cubing.js hintFacelets)→ 不灰。 */}
-            <Toggle label={t('提示贴片', 'Hint facelets')} value={settings.hint} onChange={(v) => set('hint', v)} disabled={!caps.supports.hint} title={hint(caps.supports.hint)} />
-            {/* 手指(指法演示):双手握持,转层时腕转/弹指跟动画。仅 3x3(simCaps.hands)。 */}
-            <Toggle label={t('手指', 'Hands')} value={settings.hands === true} onChange={(v) => set('hands', v)} disabled={!caps.supports.hands} title={hint(caps.supports.hands)} />
-            {/* 全身人物:SMPL-X 完整人随手出场(躯干静态 + 双臂 IK 追手;拉远 Scale 看全身)。
-                依赖手指开启;资产逐机转换,缺失时静默降级。 */}
-            <Toggle label={t('全身人物', 'Full body')} value={settings.fullBody === true} onChange={(v) => set('fullBody', v)} disabled={!caps.supports.hands || settings.hands !== true} title={hint(caps.supports.hands)} />
-            {/* 箭头贴片仅 NxN 引擎生效(cube.arrow),非 NxN 拼图无此属性 → 仅 NxN 显示。
-                用户指定的唯一例外。 */}
-            {caps.supports.arrow && (
-              <Toggle label={t('箭头', 'Arrows')} value={settings.arrow} onChange={(v) => set('arrow', v)} disabled={roomsActive} title={hint(!roomsActive)} />
-            )}
-          </div>
-          {caps.supports.hands && settings.hands && settings.fullBody && (
-            <div className="sim-person-avatar">
-              <span>{t('人物头像', 'Character face')}</span>
-              {settings.bodyAvatar && <img src={settings.bodyAvatar} alt={t('当前人物头像', 'Current character face')} width={40} height={40} />}
-              <button type="button" disabled={avatarBusy} onClick={() => avatarFileRef.current?.click()}>
-                {avatarBusy ? t('读取中…', 'Loading…') : t('上传头像', 'Upload face')}
-              </button>
-              {settings.bodyAvatar && <button type="button" onClick={() => {
-                avatarVersion.current++; setAvatarBusy(false); setAvatarError('');
-                const next = { ...settings, bodyAvatar: '', bodyAvatarX: 50, bodyAvatarY: 50, bodyAvatarZoom: 50 };
-                if (saveSettings(next)) onSettingsChange(next);
-                else setAvatarError(t('浏览器存储不可用，无法保存更改', 'Browser storage is unavailable. Could not save changes.'));
-              }}>{t('恢复默认头像', 'Reset face')}</button>}
-              <button type="button" aria-pressed={avatarPreview} onClick={() => {
-                if (avatarPreview && world) resetWorldView(world, settings);
-                setAvatarPreview(!avatarPreview);
-              }}>{avatarPreview ? t('结束正脸预览', 'Close face preview') : t('查看正脸', 'Preview face')}</button>
-              <input ref={avatarFileRef} type="file" accept="image/png,image/jpeg,image/webp" hidden aria-label={t('上传人物头像', 'Upload character face')} onChange={handleAvatarFile} />
-              <small>{t('选择脸部居中的正面照片，自动居中裁剪，仅保存在当前浏览器', 'Choose a centered, front-facing photo. Center-cropped and saved only in this browser.')}</small>
-              {settings.bodyAvatar && <div className="sim-person-avatar-adjust">
-                <Slider label={t('头像左右', 'Face horizontal')} value={settings.bodyAvatarX} onChange={v => { setAvatarPreview(true); set('bodyAvatarX', v); }} />
-                <Slider label={t('头像上下', 'Face vertical')} value={settings.bodyAvatarY} onChange={v => { setAvatarPreview(true); set('bodyAvatarY', v); }} />
-                <Slider label={t('头像缩放', 'Face zoom')} value={settings.bodyAvatarZoom} onChange={v => { setAvatarPreview(true); set('bodyAvatarZoom', v); }} />
-                <small>{t('对照正脸预览，调整照片五官与人物眼睛、嘴的位置', 'Use the face preview to align the photo with the character’s eyes and mouth.')}</small>
-              </div>}
-              {avatarError && <small role="alert">{avatarError}</small>}
-            </div>
-          )}
-          {/* 调试控件单独成行(用户要求):半转停 / 结构着色 / 骨架线条 / 挖块。组前缀「调试」标一次,
-              各控件去掉重复的「调试:」前缀。半转停 / 结构着色 为本站引擎特性,在 cubing.js 渲染的拼图上
-              为 no-op(仅存设置);骨架线条为手部 MediaPipe 风格叠加线,仅 3x3 手指开启时有效;
-              挖块为统一三选一占位(见 applySettings)。 */}
-          <div className="sim-puzzle-debug">
-            <div className="sim-puzzle-section-title">{t('调试', 'Debug')}</div>
-            <div className="sim-puzzle-debug-toggles">
-              <Toggle label={t('半转停', 'Hold partial turn')} value={settings.holdPartialTurn} onChange={(v) => set('holdPartialTurn', v)} disabled={!caps.supports.holdPartialTurn} title={hint(caps.supports.holdPartialTurn)} />
-              <Toggle label={t('结构着色', 'Structure colors')} value={settings.debugStructureColor} onChange={(v) => set('debugStructureColor', v)} disabled={!caps.supports.structureColor} title={hint(caps.supports.structureColor)} />
-              {/* 骨架线条:MediaPipe 风格关键点叠加,仅手指(hands)开启的拼图上可用(同 caps.supports.hands)。 */}
-              <Toggle label={t('骨架线条', 'Skeleton overlay')} value={settings.handsSkeleton} onChange={(v) => set('handsSkeleton', v)} disabled={!caps.supports.handsSkeleton} title={hint(caps.supports.handsSkeleton)} />
-              {/* 指甲:立体甲片显隐(mesh.visible,不拆几何),门控同骨架线条(手指相关调试)。 */}
-              <Toggle label={t('指甲', 'Nails')} value={settings.showNails} onChange={(v) => set('showNails', v)} disabled={!caps.supports.handsSkeleton} title={hint(caps.supports.handsSkeleton)} />
-              {/* SMPL-X 全身:藏拼图与手,只看原版 SMPL-X neutral T-pose 人体(手/臂比例上游真值)。
-                  资产逐机转换(convert-mano.py),缺失时开了也无效果 —— 不灰,调试自担。
-                  平面拼图是唯一的例外:它根本没有 3D 场景可以站人,那不是"资产可能缺",是没地方放。 */}
-              <Toggle label={t('SMPL-X 全身', 'SMPL-X body')} value={settings.showSmplxBody === true} onChange={(v) => set('showSmplxBody', v)} disabled={caps.flat} title={hint(!caps.flat)} />
-              {/* 挖块:仅当该拼图有「原生转动元素」(角/面/棱)可掀起时可选;NxN/SQ1 无单一会动块组,
-                  cubing.js 拼图引擎未驱动 → 灰掉。 */}
-              <label className={'sim-toggle' + (caps.supports.carve ? '' : ' sim-toggle--disabled')} title={hint(caps.supports.carve)}>
-                <span>{t('挖块', 'Carve')}</span>
-                <select
-                  value={settings.debugCarve}
-                  disabled={!caps.supports.carve}
-                  onChange={(e) => set('debugCarve', e.target.value as SimSettings['debugCarve'])}
-                >
-                  <option value="off">{t('关', 'Off')}</option>
-                  <option value="corner">{t('挖角', 'Corner')}</option>
-                  <option value="face">{t('挖面', 'Face')}</option>
-                  <option value="edge">{t('挖棱', 'Edge')}</option>
-                </select>
-              </label>
-              {/* 隔离:只保留某类块、挖掉其余(挖块的反操作)。选项由 simCaps 各魔方声明的
-                  isolate 列表驱动(目前仅齿轮:角/棱/中心 —— 中心块含核心骨架),未声明置灰。
-                  选了某类后旁边出「编号」下拉:全部 / 第 1…count 个(用户要单独看一个块)。 */}
-              <label className={'sim-toggle' + (caps.supports.isolate ? '' : ' sim-toggle--disabled')} title={hint(caps.supports.isolate)}>
-                <span>{t('隔离', 'Isolate')}</span>
-                <select
-                  value={settings.debugIsolate}
-                  disabled={!caps.supports.isolate}
-                  onChange={(e) => onSettingsChange({
-                    ...settings,
-                    debugIsolate: e.target.value as SimSettings['debugIsolate'],
-                    debugIsolateIndex: -1, // 换类别复位到「全部」,免旧编号越界
-                  })}
-                >
-                  <option value="off">{t('关', 'Off')}</option>
-                  {caps.isolate.some((x) => x.kind === 'corner') && <option value="corner">{t('角块', 'Corner')}</option>}
-                  {caps.isolate.some((x) => x.kind === 'edge') && <option value="edge">{t('棱块', 'Edge')}</option>}
-                  {caps.isolate.some((x) => x.kind === 'center') && <option value="center">{t('中心块', 'Center')}</option>}
-                  {caps.isolate.some((x) => x.kind === 'core') && <option value="core">{t('骨架', 'Frame')}</option>}
-                </select>
-              </label>
-              {(() => {
-                const spec = caps.isolate.find((x) => x.kind === settings.debugIsolate);
-                if (!caps.supports.isolate || !spec) return null;
-                return (
-                  <label className="sim-toggle">
-                    <span>{t('编号', 'Piece')}</span>
-                    <select
-                      value={String(settings.debugIsolateIndex)}
-                      onChange={(e) => set('debugIsolateIndex', Number(e.target.value))}
-                    >
-                      <option value="-1">{t('全部', 'All')}</option>
-                      {Array.from({ length: spec.count }, (_, i) => (
-                        <option key={i} value={String(i)}>{i + 1}</option>
-                      ))}
-                    </select>
-                  </label>
-                );
-              })()}
-            </div>
-          </div>
-          {isMirror && (
-            <ColorRow label={t('镜面配色', 'Mirror colour')}>
-              <ModeColorSelect
-                special={(settings.mirrorColorMode ?? 'single') === 'six'}
-                color={settings.mirrorColor ?? MIRROR_DEFAULT_COLOR}
-                presets={MIRROR_COLOR_PRESETS}
-                specialTitle={t('六色', 'Six colours')}
-                specialSwatchClass="sim-swatch-six-box"
-                onPickColor={(c) => onSettingsChange({ ...settings, mirrorColorMode: 'single', mirrorColor: c })}
-                onPickSpecial={() => set('mirrorColorMode', 'six')}
-                title={t('镜面配色', 'Mirror colour')}
-                t={t}
-              />
-            </ColorRow>
-          )}
-          <ColorRow
-            label={t('内核色', 'Core color')}
-            disabled={!caps.supports.coreColor || !!transCore}
-            title={transHint ?? hint(caps.supports.coreColor)}
-          >
-            <ModeColorSelect
-              special={!transCore && settings.coreStyle === 'raw'}
-              color={transCore ? transCore.coreColor : settings.coreColor}
-              presets={CORE_COLOR_PRESETS}
-              specialTitle={t('原核', 'Raw body')}
-              specialSwatchClass="sim-swatch-raw-box"
-              onPickColor={(c) => onSettingsChange({ ...settings, coreStyle: 'normal', coreColor: c })}
-              onPickSpecial={() => set('coreStyle', 'raw')}
-              title={t('内核色', 'Core color')}
-              t={t}
-            />
-          </ColorRow>
-          {/* 内核色的三个同族旋钮 —— 都作用在「贴纸之外那层」上,3D 与示意伴图共用同一份值
-              (伴图导出器的 bodyOpacity / stickerOpacity / inset)。原来只挂在图像面板里、
-              只改图不改动画,现在并到内核色下面一起管。 */}
-          <PercentRow
-            label={puzzleKind === 'sphere' ? t('球体不透明度', 'Sphere opacity') : t('内核不透明度', 'Core opacity')}
-            value={transCore ? transCore.coreOpacity : settings.coreOpacity}
-            onChange={(v) => set('coreOpacity', v)}
-            disabled={!caps.supports.coreOpacity || !!transCore}
-            title={transHint ?? hint(caps.supports.coreOpacity) ?? (puzzleKind === 'sphere'
-              ? t('调整整体彩色球块的不透明度', 'Opacity of the whole coloured sphere') : undefined)}
-          />
-          <PercentRow
-            label={t('贴纸不透明度', 'Sticker opacity')}
-            value={settings.stickerOpacity}
-            onChange={(v) => set('stickerOpacity', v)}
-            disabled={!caps.supports.coreFinish}
-            title={hint(caps.supports.coreFinish)}
-          />
-          <PercentRow
-            label={t('贴纸自发光', 'Sticker emission')}
-            value={settings.stickerEmission}
-            onChange={(v) => set('stickerEmission', v)}
-            disabled={!caps.supports.coreFinish || !cuberLightingActive(puzzleKind, settings.coreStyle)}
-            title={hint(caps.supports.coreFinish && cuberLightingActive(puzzleKind, settings.coreStyle))
-              ?? t('按贴纸原色增加自发光，上游默认强度为 50%', 'Add emission in each sticker’s own color; upstream defaults to 50%')}
-          />
-          <PercentRow
-            label={t('黑边', 'Gap')}
-            value={settings.stickerGap}
-            min={0}
-            max={30}
-            step={0.5}
-            onChange={(v) => set('stickerGap', v)}
-            disabled={!caps.supports.coreFinish}
-            title={hint(caps.supports.coreFinish)
-              ?? t('贴纸之间那条缝有多宽(占小面的百分比)', 'Width of the gap between stickers, as a % of one facelet')}
-          />
-          <label className="sim-toggle">
-            <span>{t('配色预设', 'Color preset')}</span>
-            <select
-              aria-label={t('配色预设', 'Color preset')}
-              disabled={!caps.supports.faceColors}
-              value={facePreset}
-              onChange={(event) => {
-                if (event.target.value === 'custom') return;
-                set(faceColorsKey, { ...(event.target.value === 'cuber' ? CUBER_FACE_COLORS : DEFAULT_FACE_COLORS) });
-              }}
-            >
-              <option value="wca">WCA</option>
-              <option value="cuber">{t('柔和', 'Soft')}</option>
-              <option value="custom" disabled>{t('自定义', 'Custom')}</option>
-            </select>
-          </label>
-          <ColorRow
-            label={t('面色', 'Face colors')}
-            disabled={!caps.supports.faceColors}
-            title={hint(caps.supports.faceColors)}
-            action={{
-              label: 'WCA',
-              title: t('恢复 WCA 默认', 'Reset to WCA defaults'),
-              onClick: () => set(faceColorsKey, { ...DEFAULT_FACE_COLORS }),
-            }}
-          >
-            {FACE_ORDER.map((f) => (
-              <span key={f} className="sim-face-pick">
-                <span className="sim-swatch-label">{f}</span>
-                <ModeColorSelect
-                  color={faceColors[f]}
-                  presets={FACE_COLOR_PRESETS}
-                  onPickColor={(c) => set(faceColorsKey, { ...faceColors, [f]: c })}
-                  title={t(FACE_LABELS_ZH[f], f)}
-                  t={t}
-                />
-              </span>
-            ))}
-          </ColorRow>
-          <div
-            className={'sim-picture-setting' + (caps.supports.pictureCube ? '' : ' sim-picture-setting--disabled')}
-            title={hint(caps.supports.pictureCube)}
-          >
-            <label className="sim-toggle">
-              <span>{t('图案魔方', 'Picture cube')}</span>
-              <select
-                aria-label={t('图案魔方主题', 'Picture cube theme')}
-                value={roomsActive ? settings.roomTheme : settings.pictureCube ? 'pictures' : 'off'}
-                disabled={!caps.supports.pictureCube}
-                onChange={(event) => {
-                  const value = event.target.value;
-                  if (value === 'pictures' && pictureFaceCount === 0) {
-                    setPictureEditorOpen(true);
-                    return;
-                  }
-                  const roomTheme = normalizeRoomTheme(value);
-                  onSettingsChange({ ...settings, roomTheme, pictureCube: value === 'pictures',
-                    ...(roomTheme !== 'off' ? { viewMode: 'cube' as const } : {}) });
-                }}
-              >
-                <option value="off">{t('普通色块', 'Classic colors')}</option>
-                <optgroup label={t('立体房间（二至七阶）', '3D rooms (2–7 layers)')}>
-                  {ROOM_THEMES.map((theme) => <option key={theme.id} value={theme.id}
-                    disabled={!caps.supports.roomCube}>{t(theme.zh, theme.en)}</option>)}
-                </optgroup>
-                <option value="pictures">{t('自选图片', 'Your pictures')}</option>
-              </select>
-            </label>
-            {settings.pictureCube && <button
-              type="button"
-              className="sim-picture-open"
-              disabled={!caps.supports.pictureCube}
-              onClick={() => setPictureEditorOpen(true)}
-            >
-              <PictureFaceMiniNet faces={settings.pictureFaces} />
-              <span>{pictureFaceCount > 0
-                ? t('编辑', 'Edit')
-                : t('选择六面图片', 'Choose face images')}</span>
-            </button>}
-            {(pictureCubeActive || roomsActive) && (
-              <span className="sim-picture-setting-note">
-                {roomsActive
-                  ? t('每个小块都是立体房间，随转动一起移动', 'Every cubie is a 3D room that moves with your turns')
-                  : t('使用图案时暂时隐藏 logo、字母和箭头', 'Logo, letters and arrows are hidden while pictures are in use')}
-              </span>
-            )}
-          </div>
-          <PictureCubeEditor
-            open={pictureEditorOpen}
-            initialFaces={settings.pictureFaces}
-            initialBaseColors={settings.pictureBaseColors}
-            order={order}
-            onClose={closePictureEditor}
-            onFacesChange={autoSavePictureFaces}
-            onBaseColorsChange={autoSavePictureBaseColors}
-            t={t}
-          />
-          {/* 指甲配色(甲油):自然甲 special + 甲油底色;选了底色后追加「渐变」第二色
-              (甲根→游离缘)与「深浅」滑杆(50 = 原色,低淡高深)。重涂手部立体甲片
-              顶点色(engine/hands paintNailPolish);门控同全身人物(需手指开启)。 */}
-          <ColorRow
-            label={t('指甲配色', 'Nail colour')}
-            disabled={!caps.supports.hands || settings.hands !== true}
-            title={hint(caps.supports.hands)}
-          >
-            <ModeColorSelect
-              special={!settings.nailColor}
-              color={settings.nailColor || NAIL_DEFAULT_COLOR}
-              presets={NAIL_COLOR_PRESETS}
-              specialTitle={t('自然甲', 'Natural')}
-              specialSwatchClass="sim-swatch-nail-box"
-              onPickColor={(c) => set('nailColor', c)}
-              onPickSpecial={() => set('nailColor', '')}
-              title={t('指甲配色', 'Nail colour')}
-              t={t}
-            />
-            {settings.nailColor !== '' && (
-              <>
-                <span className="sim-face-pick">
-                  <span className="sim-swatch-label">{t('渐变', 'Tip')}</span>
-                  <ModeColorSelect
-                    special={!settings.nailColorTip}
-                    color={settings.nailColorTip || settings.nailColor}
-                    presets={NAIL_COLOR_PRESETS}
-                    specialTitle={t('无渐变', 'No gradient')}
-                    specialSwatchClass="sim-swatch-nail-off-box"
-                    onPickColor={(c) => set('nailColorTip', c)}
-                    onPickSpecial={() => set('nailColorTip', '')}
-                    title={t('渐变第二色(甲根 → 指尖)', 'Gradient tip colour (root → tip)')}
-                    t={t}
-                  />
-                </span>
-                <label className="sim-nail-shade" title={t('深浅:左淡右深,中间原色', 'Depth: light ↔ dark, centre = as picked')}>
-                  <span className="sim-swatch-label">{t('深浅', 'Depth')}</span>
-                  <input
-                    type="range"
-                    min={0}
-                    max={100}
-                    value={settings.nailShade}
-                    onChange={(e) => set('nailShade', Number(e.target.value))}
-                  />
-                </label>
-              </>
-            )}
-          </ColorRow>
-        </div>
-    </section>
-  );
-}

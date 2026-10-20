@@ -1,2 +1,16 @@
 .timer-solo-main { display: flex; flex-direction: column; position: relative; }
+.shell-topbar.timer-solo-topbar:has(.shell-topbar-left) {
+  grid-template-columns: minmax(32px, 1fr) minmax(0, auto) minmax(32px, 1fr);
+}
+.shell-topbar.timer-solo-topbar:has(.shell-topbar-right:not(:empty)) {
+  grid-template-columns: minmax(64px, 1fr) minmax(0, auto) minmax(64px, 1fr);
+}
+.shell-topbar.timer-solo-topbar .shell-topbar-left {
+  grid-column: 2;
+  justify-content: center;
+  justify-self: center;
+}
+.shell-topbar.timer-solo-topbar .shell-topbar-right {
+  grid-column: 3;
+}
 .shell-topbar.timer-solo-topbar--fullscreen { display: none; }

@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxxcross / R / bin 10
-# Population in this bin: 304
+# Population in this bin: 307
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 7768001,R2 B2 R2 U' R2 U' R2 B' R' F D' R2 F2 R' U F' U B' D2,R,German Open 2014 (2014-04-05~06),333bf Final A E2
@@ -52,7 +52,7 @@
 660564017,L2 D2 L2 B2 R2 B2 D L2 D2 B U' B2 U' F L' U' B' U R F2 L B2,R,DJ Open 2014 (2014-10-18~19),333mbf Final A #1
 660698003,L2 D2 F D2 L2 F L2 B' R D2 L' F2 L R B2 D' F U' B' L2,R,Curitiba Open 2015 (2015-04-25~26),333mbf Final A #2
 5209539001,L F2 R' D2 F2 D2 U2 R B L B D' B2 F R F2 U B' F2,R,Aarhus Fall 2025 (2025-11-22~23),333 Final A E2
-661131020,R2 B2 R2 U B2 D L2 D2 U' B R' D2 L' R' D' R' U2 B D2 B L' F,R,German Nationals 2016 (2016-10-07~09),333mbf Final A #1
+5875998001,D B2 F2 D' U F2 U R' U L2 F D B D' R B L R F,R,Thailand Championship 2026 (2026-10-09~11),333 R1 F #5
 661351014,L2 D2 R D2 L' F2 U2 F2 R B2 R2 B' R U' B D F' D U2 F R' B R,R,Tlaxcala Open Clásico 2017 (2017-05-06~07),333mbf Final A #3
 661386029,D2 U2 R' F2 R D2 U2 B2 R2 F D2 U2 B L F' U' B L' R B2 L2 U2,R,QUALberta 2017 (2017-06-10),333mbf Final A #1
 706969001,F D2 F2 D' L' D' R' B' L U2 R' L2 B2 R U2 R' U2,R,Johor Cube Open 2018 (2018-02-11),333 R1 D #1
@@ -186,11 +186,11 @@
 3452262016,U2 F U' B R2 U R2 F2 U' B2 D' U' R D2 R' D' B D2 B L B,R,Ljubljana Blind Open 2024 (2024-01-27~28),333mbf Final C #1
 5787901001,B R L2 F D2 F' U2 D' F' L D' R2 U L2 F2 R2 L2 U B,R,Cultura Campos do Jordão 2026 (2026-08-15~16),333oh Final B E1
 4755807001,D2 R2 F' U2 F U2 F' R F U' L2 D2 F L' R' F2 R',R,USFA Challenge 2025 (2025-05-24~25),333 R2 C E1
-3478366001,L D2 F U2 D2 R' D B2 D2 R' F2 L2 U2 B L' U' F2,R,MYHM Singapore Championship 2024 (2024-02-02~04),333 Final A E2
+5873524001,D F2 L2 B2 D L2 U' B2 U R2 L B2 F2 U' R2 F R D F2,R,IIT Gandhinagar Cube Open 2026 (2026-10-10~11),333 R1 A #5
 3492724001,U2 L B F' U2 F2 D2 B' D' L2 R2 B2 U' R2 B U2 R',R,HCHS Winter Open 2024 (2024-02-03),333 R1 B #2
 3503893001,R2 L' U D' F L' D' L B' R' B2 U2 R2 F2 D2 L2 F U2 D2,R,Ecuador Cubing 2024 (2024-02-10~11),333oh R1 A #1
 3518432007,U D2 B2 R' U2 B' L' F2 L2 U B2 U2 F2 B' L2 B R2 U2 L B' L2,R,Cube With Retention in Denton 2024 (2024-02-17~18),333mbf Final A #1
-3536920001,D2 B U' R U' B L U2 R B L2 U' D' R2 L2 F2 L2 U2 B,R,Gran Asociación Open 2024 (2024-02-24~25),333 R2 A #5
+5859473001,U R' B F2 L U2 B2 R2 B2 L R' B2 F L2 F2 D' R' F' L B,R,Beijing Autumn Rivalry 2026 (2026-10-01~03),333oh R1 D #5
 4683189001,R2 B2 L' B U2 B' L2 D2 L2 B2 L2 R' B' U F2 D2 R' B,R,Chichester April 2025 (2025-04-26~27),333oh Final A #1
 3600278001,D' F R2 B U' F B2 U R' B2 R F2 U2 F2 B2 R U2 R',R,Nouveaux Venus à Montréal B 2024 (2024-03-17),333 R1 A #5
 3605153001,L' F' R2 U2 B2 F2 D B2 R2 L U R2 U R2 U2 R2,R,Brilliant Ballarat 2024 (2024-03-16~17),333 R2 B #5

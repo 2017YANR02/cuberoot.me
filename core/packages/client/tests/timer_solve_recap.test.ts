@@ -204,7 +204,10 @@ describe('复盘异步加载时先稳定容器', () => {
   it('桌面自动复盘不在完整报告挂载时动画改变栏宽', () => {
     const css = read(fileURLToPath(import.meta.resolve('@cuberoot/timer-ui/timer-workspace.css')));
     expect(css).toContain('.timer-workspace[data-recap-open]');
-    expect(css).not.toMatch(/transition\s*:/);
+    // Explicitly disabling transitions while dragging does not animate the dock.
+    for (const match of css.matchAll(/transition\s*:\s*([^;}]+)/g)) {
+      expect(match[1].trim()).toBe('none');
+    }
   });
 
   it('报告自身的 lazy 边界也保留正文占位', () => {

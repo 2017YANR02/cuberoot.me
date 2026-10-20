@@ -1117,3 +1117,10 @@
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
+
+.submit-video-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-block: 8px;
+}

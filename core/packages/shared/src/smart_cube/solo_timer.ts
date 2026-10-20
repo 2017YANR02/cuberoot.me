@@ -43,7 +43,7 @@ export interface SmartCubeSoloMoveOutcome {
 export interface SmartCubeSoloTimerControllerOptions<
   Metadata extends SmartCubeSoloMoveMetadata = SmartCubeSoloMoveMetadata,
 > {
-  armFromCube(): boolean | void;
+  armFromCube(timestamp?: number): boolean | void;
   autoReadyOnScramble(): boolean;
   canStartAttempt(): boolean;
   getPhase(): TimerPhase;
@@ -197,7 +197,7 @@ export class SmartCubeSoloTimerController<
         && this.options.canStartAttempt()
         && this.options.autoReadyOnScramble()) {
         const currentPhase = this.options.getPhase();
-        if (currentPhase === 'idle' || currentPhase === 'stopped') this.options.armFromCube();
+        if (currentPhase === 'idle' || currentPhase === 'stopped') this.options.armFromCube(event.timestamp);
       }
       return outcome;
     } finally {

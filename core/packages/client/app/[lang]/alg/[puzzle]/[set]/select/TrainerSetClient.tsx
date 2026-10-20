@@ -6,7 +6,7 @@ import Link from '@/components/AppLink';
 import { parseAsStringEnum } from 'nuqs';
 import { useTrainingRouter as useRouter, useTrainingParams as useParams, useTrainingQueryState as useQueryState, useTrainingHost } from '@/lib/training-host';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Eraser, MousePointer2 } from 'lucide-react';
+import { Eraser, MousePointer2 } from 'lucide-react';
 import { getAlgSetMeta, type AlgCase } from '@cuberoot/shared/alg';
 import { loadTrainingAlg as loadAlg } from '@/lib/alg_case_alignment';
 import { MIX_SLUG, MIX_MIN_SETS, parseMixSets, mixTitle, mixHref, loadMixCases, setLabel } from '@/lib/alg-mix';
@@ -37,6 +37,7 @@ type MarkFilter = (typeof MARK_FILTERS)[number];
 export default function TrainerSetClient() {
   const trainingHost = useTrainingHost();
   const [modeParam] = useQueryState('mode');
+  const [timingParam] = useQueryState('timing');
   const [drawParam] = useQueryState('draw');
   const params = useParams<{ lang: string; puzzle: string; set: string }>();
   const puzzleParam = (Array.isArray(params?.puzzle) ? params.puzzle[0] : params?.puzzle) ?? '';
@@ -224,6 +225,7 @@ export default function TrainerSetClient() {
   const runUrl = new URL(originalRunBase, 'https://training.invalid');
   if (trainingHost) {
     if (modeParam) runUrl.searchParams.set('mode', modeParam);
+    if (timingParam !== null) runUrl.searchParams.set('timing', timingParam);
     if (modeParam === 'memo' && drawParam) runUrl.searchParams.set('draw', drawParam);
   }
   const runBase = `${runUrl.pathname}${runUrl.search}`;
@@ -270,9 +272,9 @@ export default function TrainerSetClient() {
         <Link
           href={backHref}
           className="trainer-back"
-          aria-label={tr({ zh: '返回公式集', en: 'Back to alg set' })}
+          prefetch={false}
         >
-          <ArrowLeft size={14} />
+          {tr({ zh: '查看公式', en: 'View algorithms' })}
         </Link>
         {(!trainingHost || scopeSlug) && <span style={{ fontSize: '1.1rem', fontWeight: 600 }}>
           {!trainingHost && `${puzzle} · ${tr(meta)}`}
@@ -293,7 +295,7 @@ export default function TrainerSetClient() {
           disabled={!canStart}
         >
           {trainingHost
-            ? tr({ zh: '开始', en: 'Start' })
+            ? `${tr({ zh: '开始练习', en: 'Start practice' })} (${scopedSelectedCount})`
             : `${tr({ zh: '训练', en: 'Train' })} (${scopedSelectedCount})`}
         </button>
       </div>

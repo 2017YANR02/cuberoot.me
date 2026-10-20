@@ -3,7 +3,17 @@ import assert from 'node:assert/strict';
 import {resolve} from 'node:path';
 import {availableParallelism} from 'node:os';
 import {researchPolicy} from './guard.mts';
-import {sha256,validateOpt10BatchReview} from './opt10-zbll-policy.mts';
+import {sha256,validateOpt10BatchReview,zbllOfficialPolicy,zbllOfficialReviewPath} from './opt10-zbll-policy.mts';
+import {officialPaths,officialArgs} from './opt10-official-policy.mts';
+test('only the reviewed persistent ZBLL session removes the per-batch deadline',()=>{
+  const request={label:'double-zbll-opt10-session',executable:officialPaths.executable,args:officialArgs,
+    env:{CUBEOPT_BACKEND:'opt10',CUBEOPT_SOLVE_THREADS:'1',CUBEOPT_SEARCH_THREADS:'16',CUBEOPT_ZBLL_REVIEW:zbllOfficialReviewPath}};
+  assert.equal(zbllOfficialPolicy(request,18).deadlineMs,0);
+  const batch=zbllOfficialPolicy({...request,label:'double-zbll-opt10-batch'},18);
+  assert.equal(batch.deadlineMs,7_200_000);
+  assert.equal(zbllOfficialPolicy(request,18).rssLimit,batch.rssLimit);
+  assert.throws(()=>zbllOfficialPolicy({...request,args:['generate-opt10']},18));
+});
 const root=resolve(import.meta.dirname,'../../..');
 const bin=resolve(import.meta.dirname,'target/opt10/release/cube48opt-research');
 const args=['solve-opt10',resolve(root,'.tmp/cubeopt-reverse/opt9-generated/small-memory.bin'),resolve(root,'.tmp/cubeopt-reverse/opt10-generated-v2/cuberoot-opt10.dat'),'8','20','0'];

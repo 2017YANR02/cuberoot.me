@@ -254,6 +254,9 @@ const STATS_PATHS = [
 
 const TEST_PATHS = [
   repoPath('.node-version'),
+  repoPath('.githooks', 'pre-commit'),
+  repoPath('.codex', 'hooks', 'recon-ground-truth-gate.mts'),
+  repoPath('.codex', 'hooks.json'),
   corePath('**'),
   `!${packagePath('platform', '**')}`,
   repoPath('solver', '333opt', 'inject.mjs'),
@@ -402,6 +405,16 @@ describe('deployment workflow path contracts', () => {
   const statsPaths = readEventPaths('stats.yml', 'push');
   const testPushPaths = readEventPaths('test.yml', 'push');
   const testPullRequestPaths = readEventPaths('test.yml', 'pull_request');
+
+  it('runs client regressions when the automatic reconstruction gate changes', () => {
+    const clientPaths = readStepFilterPaths('test.yml', 'Detect affected inputs', 'client');
+    for (const path of ['.githooks/pre-commit', '.codex/hooks/recon-ground-truth-gate.mts',
+      '.codex/hooks.json', 'core/scripts/recon-ground-truth-gate.mjs',
+      'core/packages/client/tests/fixtures/recon-workbook/new-record.json']) {
+      expect(workflowTriggers(testPushPaths, [path]), path).toBe(true);
+      expect(workflowTriggers(clientPaths, [path]), path).toBe(true);
+    }
+  });
 
   it('bounds Next transfers and reuses live bytes without modifying the live release', () => {
     const transfer = readStepRun('deploy_next.yml', 'rsync standalone + systemd unit');

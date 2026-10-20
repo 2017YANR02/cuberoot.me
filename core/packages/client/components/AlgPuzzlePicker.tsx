@@ -12,6 +12,7 @@ import PuzzlePicker, { type PuzzlePickerGroup } from '@/components/PuzzlePicker/
 import { eventDisplayName } from '@/lib/wca-events';
 import { tr } from '@/i18n/tr';
 import { toWcaEventId } from '@/lib/wca-events';
+import { useTrainingHost } from '@/lib/training-host';
 
 export const ALG_PUZZLE_PICKER_IDS = [...ALG_PUZZLES, '3bld', 'commutator'] as const;
 export type AlgPuzzlePickerId = (typeof ALG_PUZZLE_PICKER_IDS)[number];
@@ -43,6 +44,8 @@ interface Props {
 }
 
 export default function AlgPuzzlePicker({ current, isZh, groupLabel, includeIvy, linkFor }: Props) {
+  const host = useTrainingHost();
+  if (host) return null;
   return (
     <PuzzlePicker
       isZh={isZh}

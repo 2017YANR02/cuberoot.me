@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / B / bin 3
-# Population in this bin: 357
+# Population in this bin: 358
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 242001,L' U2 F2 L D2 U2 R D2 U' B' R2 D R' B D F' D' B2 D',B,Montréal Open 2014 (2014-03-15),333 R1 A #3
@@ -24,7 +24,7 @@
 238312001,U2 L2 R2 F L2 B' R2 U' F' U L' U B2 U L F R' D2,B,Cubers East India Open 2016 (2016-01-09),333 R1 A #3
 4936686001,U2 B2 R F2 L2 F2 R' D2 B U2 R' B2 F L U B F U' B2,B,Begastri Open 2025 (2025-08-15~17),333 Final A E2
 3591883001,R2 B L' F' R D2 R L2 B U2 B2 U2 R2 D' R2 B2 R2 D,B,San Diego Newcomers 2024 (2024-03-16),333 R1 C #4
-4555918001,U B2 U R L' B D2 B L B' D' R2 U' F2 U' D2,B,Delhi Cube Open 2025 (2025-03-08~09),333 R1 E #4
+5859776001,B' D2 L' B U2 D2 R' F2 L2 F2 L2 F L2 D2 L2 U' L,B,Nuti Estonian Championship 2026 (2026-10-03~04),333 R1 A #3
 4236380001,F2 B2 U B' U R2 F' U' B2 U2 F2 U D F2 L2 U2 L' D' F2,B,Sarriguren Open 2024 (2024-10-26~27),333 R1 A E1
 309954001,R2 U L2 U' B2 L2 D B2 L B L2 U L2 U' L2 B' R' U L,B,Cube4Cam 2016 (2016-06-04),333oh R1 E #3
 313032001,R' U' F U R2 U' R2 U' B2 L2 U B2 U' F L2 U L' D L U2 B2 D2 L F' R' U' F,B,Cube of Odd Numbers 2016 (2016-06-18~19),333fm Final A #1

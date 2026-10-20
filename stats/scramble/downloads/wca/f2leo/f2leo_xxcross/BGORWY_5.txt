@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxcross / BGORWY / bin 5
-# Population in this bin: 367
+# Population in this bin: 370
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 1779001,F U2 B' U L' F' R F' B D F R2 U R2 F2 B2 D' F2,G,Kansai Open 2014 (2014-03-21~22),333ft Final A #1
@@ -133,7 +133,7 @@
 1191798003,D' L2 U' F2 D2 U B' L2 B2 F2 D2 U' R U R2 D2 L' U2 L' F,W,Medan Farewell 2019 (2019-06-22~24),333mbf Final A #1
 1218102001,F' U B' U' R' F2 U R U' F D2 L2 F2 D2 F U2 D2 R2 F',Y,Deccan Cube Open July 2019 (2019-07-14),333 R1 C E2
 1227808001,L' D2 L F' D R2 F2 U' L' B2 R2 B' D2 F' L2 U2 R2 B' U2 F,R,NSK Cubing Fest 2019 (2019-07-19~20),333 R1 D #5
-1227842001,R D2 R' B D' L2 U' L' F' R2 U2 R F2 R2 L U2 R U2 B2 R2,G,NSK Cubing Fest 2019 (2019-07-19~20),333oh R1 B #4
+5860203001,B2 F' L2 F' D2 B' L2 R2 U2 F U' B F2 L' U2 L B F,O,ODU Big Blue Fall 2026 (2026-10-03),333oh Final C #5
 3462225001,R D B' D R' B2 D2 R D2 B2 R2 D' R' B D' L B' U',O,DJ Sanghvi Cube Open 2024 (2024-01-28),333 R1 E #2
 5005575001,B' R2 L2 U2 R' U R L F2 D' L D2 B2 R D2 L,O,Nova Plaza Facatativá 2025 (2025-09-07),333oh Final A #5
 1265813031,U2 B2 R2 U R2 F2 D F L D' U L' U R2 D' U2 R2 B2 U' L B',O,Korean Championship 2019 (2019-08-16~18),333mbf Final A #1
@@ -174,7 +174,7 @@
 4749101001,U' R2 B' F2 R2 F' U2 B U' L' U' R2 U' L F' D2 L D,G,Daejeon Spring 2025 (2025-05-25),333 R1 B #2
 4279953001,D F R' F' R2 L2 D' R2 U' F' R2 F2 R2 F R2 F' U,B,Egypt Fall 2024 (2024-11-09),333 R2 C #5
 2318007001,U2 B2 L' D2 R2 U2 F2 D2 R' B' R' U2 L B R2 U B' F L,O,Butler Blitz 2022 (2022-11-26),333 R1 E #2
-2325976001,R L' F2 D B' D2 F' R F' L2 F2 B' U2 F L2 F D2 R' U2,G,El CUBO Tour Zacamil 2022 (2022-11-26~27),333 R2 C #3
+5866912001,D2 L' D F' R' L2 F2 B D B' R2 B2 R2 F2 R2 U' B2 L2,B,St. John's Fall 2026 (2026-10-04),333 R1 A #2
 5854329001,F L' B2 L2 F D L' B2 D2 L F' U' D2 F2 D' R2 B2 R2,B,Balam Cubes Bekasi Comeback 2026 (2026-09-26~27),333 Final A E2
 5697437027,R2 L U L B' L' U L2 U2 L2 B2 R2 L' U2 B2 L F' L2 D2 B R,R,Side N Blind Narre Warren 2026 (2026-06-13~14),333mbf Final A #2
 2380898001,U2 B' D F' D2 L2 F U2 B2 F' D2 U L R U' R' U R2 F2,G,Panama Nationals 2022 (2022-12-17~18),333 R1 C #2
@@ -197,7 +197,7 @@
 5844209001,B' D L' B D2 B2 L' R2 D' F2 U R2 U' B2 U2 R2 U L' B',G,Ribeirão ao Cubo 2026 (2026-09-19~20),333oh Final C #4
 3960674001,L2 F2 U F2 D2 U F2 L' D F2 R' F' D B2 D L2 D2 U' L' F',R,Rubik's WCA South American Championship 2024 (2024-07-22~25),333bf Final A #1
 3516189003,U B U B2 L2 U2 B L2 R' U2 L U B U L2 B' L2 U',G,Love Is Blind Lima 2024 (2024-02-18),333mbf Final A #1
-4151018001,R2 D' R' D L2 F2 U' L2 R2 D U2 F D U' R F2 D B' L,Y, Esprit Cube Open Bayonne 2024 (2024-09-28~29),333oh Final A E1
+4151018001,R2 D' R' D L2 F2 U' L2 R2 D U2 F D U' R F2 D B' L,Y,Esprit Cube Open Bayonne 2024 (2024-09-28~29),333oh Final A E1
 3452114001,U B L' U2 F2 R' U2 L2 D2 L' B D B2 D' B2 D F' R2 U',W,Big Cube Battle of Waterloo 2024 (2024-01-27),333oh Final A #2
 4325994001,B' L B' R2 U' R2 B D2 R2 U' F2 D F2 D' R2 D L' U,R,Minnesota Championship 2024 (2024-11-30~12-01),333 R2 A E2
 4980454006,F' D' L' U R D R' D2 L' D' L2 D' R2 U' R2 L2 B U' B' L,G,Israel Championship 2025 (2025-08-25~28),333mbf Final A #2

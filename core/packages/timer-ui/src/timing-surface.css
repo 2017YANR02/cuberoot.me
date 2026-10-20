@@ -153,6 +153,21 @@
   font-weight: 700;
 }
 
+/* Segment7's D is lowercase-shaped. Replace only that glyph in LCD penalties,
+   retaining the font's advance width, baseline and the original N/F/S glyphs. */
+.timer-capital-d { position: relative; display: inline-block; }
+.timer-capital-d-segments { display: none; }
+.timer-display:not(.tf-mono):not(.tf-liberation):not(.tf-sans) .timer-capital-d-text { color: transparent; }
+.timer-display:not(.tf-mono):not(.tf-liberation):not(.tf-sans) .timer-capital-d-segments {
+  display: block;
+  position: absolute;
+  left: 0;
+  bottom: .24em;
+  width: 100%;
+  height: .74em;
+  overflow: visible;
+}
+
 .timing-surface-sub {
   display: flex;
   width: max-content;

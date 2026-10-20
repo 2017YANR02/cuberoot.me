@@ -10,6 +10,7 @@
     "double-zbll": "tsx src/double-zbll.ts",
     "double-zbll:symmetry": "node --max-old-space-size=512 --import tsx src/double-zbll-symmetry.mts",
     "double-zbll:select": "node --max-old-space-size=256 --import tsx src/double-zbll-select.mts --snapshot",
+    "double-zbll:export": "node --max-old-space-size=256 --import tsx src/double-zbll-select.mts --export",
     "build": "tsx src/cli.ts",
     "typecheck": "tsc --noEmit"
   },

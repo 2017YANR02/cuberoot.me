@@ -16,7 +16,7 @@ import '@cuberoot/timer-ui/compact-select.css';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Copy, Check, Download, ChevronDown, MousePointerClick, RotateCcw, Plus, Trash2 } from 'lucide-react';
+import { Code2, Copy, Check, Download, ChevronDown, ChevronRight, MousePointerClick, RotateCcw, Plus, Trash2 } from 'lucide-react';
 import SimCaptureGroup, { type SimBridge } from '@/components/puzzle-image/SimCaptureGroup';
 import BoolToggle from '@/components/BoolToggle';
 import PuzzleImage from '@/components/puzzle-image/PuzzleImage';
@@ -108,7 +108,7 @@ function CopyButton({
 }
 
 /** Local format actions share the existing export functions and clipboard gesture. */
-function ImageExportMenu({ kind, formats, disabled }: {
+export function ImageExportMenu({ kind, formats, disabled }: {
   kind: 'copy' | 'download';
   formats: { label: string; run: () => void | Promise<void> }[];
   disabled: boolean;
@@ -204,6 +204,8 @@ export interface PuzzleImageStudioProps {
    *  /sim passes the canvas' top-left overlay: the image sits next to the live cube
    *  rather than at the bottom of a scrolled sidebar. Null until the host mounts. */
   previewHost?: HTMLElement | null;
+  /** Optional sibling section below the simulator appearance settings. */
+  apiDocHost?: HTMLElement | null;
   /** /sim 引擎 BSP 矢量镜像,透传 PuzzleImage(见其 engineSvg 注释)。 */
   engineSvg?: string | null;
   /** The native 2D mirror failed or timed out; hide stale output and disable export. */
@@ -227,7 +229,7 @@ export interface PuzzleImageStudioProps {
 }
 
 export default function PuzzleImageStudio({
-  spec, onSpecChange, className, simBridge, previewHost, engineSvg,
+  spec, onSpecChange, className, simBridge, previewHost, apiDocHost, engineSvg,
   engineSvgUnavailable = false, staticFallbackExact, engineOnly = false, compare = false, externalImage,
 }: PuzzleImageStudioProps) {
   const t = useT();
@@ -487,82 +489,102 @@ export default function PuzzleImageStudio({
     </section>
   );
 
-  return (
-    <div className={`vc-studio${className ? ` ${className}` : ''}`}>
-      {!externalImage && (previewHost ? createPortal(preview, previewHost) : preview)}
-
-      <section className="vc-exports">
-        {/* 实时截图组排在静态导出之上:它出的是画布当下这一帧,跟左上角浮层里
-            看到的是同一个东西,离图更近;下面那排导出的是 spec 重渲染的结果。 */}
-        {!externalImage && simBridge && <SimCaptureGroup simBridge={simBridge} />}
-
-        {/* 链接类按钮指向服务端 spec 渲染(/v1/visualcube.svg),engine-only 拼图服务端
-            画不了 → 只留 SVG/PNG(下载预览那份引擎矢量)。没有单独的「分享链接」按钮:
-            面板状态本来就写在地址栏的 img_* 里,复制地址栏即分享。 */}
-        {!engineOnly && staticFallbackExact && !externalImage && (
+  const apiDoc = !engineOnly && staticFallbackExact && !externalImage ? (
+      <details className={`vc-api-doc${apiDocHost ? ' sim-api-section' : ''}`}>
+        <summary><ChevronRight className="vc-disclosure-caret" size={14} aria-hidden /><Code2 size={16} aria-hidden />{t('API 用法（外部嵌入）', 'API usage (embed elsewhere)')}</summary>
+        <div className="vc-exports">
           <CopyButton label={t('API 链接', 'API URL')} getValue={() => apiSvgUrl} />
-        )}
-        <ImageExportMenu
-          kind="copy"
-          disabled={!exportReady}
-          formats={[
-            { label: 'PNG', run: () => copyPngToClipboard(externalImage
-              ? svgToRasterBlob(getCurrentSvg(), { width: exportWidth, height: exportHeight, format: 'png' })
-              : svgToPngBlob(getCurrentSvg(), s.imageSize)) },
-            { label: 'SVG', run: () => navigator.clipboard.writeText(getCurrentSvg()) },
-          ]}
-        />
-        <ImageExportMenu
-          kind="download"
-          disabled={!exportReady}
-          formats={[
-            { label: 'SVG', run: downloadSvg },
-            { label: 'PNG', run: downloadPng },
-            ...(externalImage ? [{ label: 'JPG', run: downloadJpeg }] : []),
-          ]}
-        />
-        {!engineOnly && staticFallbackExact && !externalImage && (
           <CopyButton
             label={t('<img> 标签', '<img> tag')}
             getValue={() => `<img src="${apiSvgUrl}" alt="cube" width="${s.imageSize}" height="${s.imageSize}" />`}
           />
-        )}
-        {!engineOnly && staticFallbackExact && !externalImage && (
           <CopyButton label="Markdown" getValue={() => `![cube](${apiSvgUrl})`} />
-        )}
-      </section>
+        </div>
+        <p>
+          {t(
+            '直接通过 GET /v1/visualcube.svg 拿到 SVG 字节流，可放进 <img>、curl、博客 Markdown 等。这是简化端点（7 个参数），端点覆盖不到的设置请在这里调好后复制地址栏。',
+            'GET /v1/visualcube.svg returns image/svg+xml directly. Use it in an <img>, curl, blog Markdown, etc. This is a simplified endpoint (7 params); for anything it does not cover, set it up here and copy the address bar.',
+          )}
+        </p>
+        <pre className="vc-api-example">{`https://api.cuberoot.me/v1/visualcube.svg?alg=R+U+R'+U'+R+U2+R'&view=oll&size=128`}</pre>
+        <table className="vc-api-table">
+          <thead>
+            <tr>
+              <th>{t('参数', 'Param')}</th>
+              <th>{t('取值', 'Values')}</th>
+              <th>{t('默认', 'Default')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>alg</code></td><td>{t('WCA notation；alg 直接作用到 solved（forward）。和 case 互斥，case 优先', 'WCA notation; applied DIRECTLY to solved (forward). Mutually exclusive with case (case wins)')}</td><td>Sune</td></tr>
+            <tr><td><code>case</code></td><td>{t('WCA notation；alg 的逆作用到 solved，即"该 alg 能还原的 case"。覆盖 alg', 'WCA notation; alg INVERTED on solved — "the case this alg solves". Overrides alg')}</td><td>—</td></tr>
+            <tr><td><code>setup</code></td><td>{t('alg 的别名（forward）；语义上是 case 的预置打乱', 'Alias of alg (forward); semantic hint that the string is a case-setup scramble')}</td><td>—</td></tr>
+            <tr><td><code>view</code></td><td><code>iso / plan / f2l / oll / pll / pll-iso / trans</code></td><td><code>iso</code></td></tr>
+            <tr><td><code>mask</code></td><td>{t('显式 Masking 枚举值（覆盖 view 推断）', 'Explicit Masking enum, overrides view-derived')}</td><td>—</td></tr>
+            <tr><td><code>size</code></td><td>{t('像素，clamped [32, 1000]', 'Pixels, clamped [32, 1000]')}</td><td>256</td></tr>
+            <tr><td><code>bg</code></td><td>{t('hex（带不带 #）或 CSS 颜色名', 'Hex (with/without #) or CSS colour name')}</td><td>{t('透明', 'transparent')}</td></tr>
+            <tr><td><code>cc</code></td><td>{t('壳体色（PHP cc）', 'Cube shell colour (PHP cc)')}</td><td>{t('黑（trans 时银）', 'black (silver when trans)')}</td></tr>
+            <tr><td><code>co</code></td><td>{t('壳体不透明度 0-100（PHP co）', 'Cube opacity 0-100 (PHP co)')}</td><td>{t('100（trans 时 50）', '100 (50 when trans)')}</td></tr>
+            <tr><td><code>mid</code></td><td>{t('Square-1 的 wca 视图：0 隐藏中层', 'Square-1 wca view: 0 hides the middle layer')}</td><td>1</td></tr>
+            <tr><td><code>blk</code></td><td>{t('Square-1 的 wca 视图：0 使用黄色顶面', 'Square-1 wca view: 0 uses a yellow top')}</td><td>1</td></tr>
+          </tbody>
+        </table>
+        <p className="vc-api-note">
+          {t(
+            '该端点不支持完整 PHP query API（无 arw / ac / sch / fc / fd 等）。需要这些参数就在这里调好，然后下载 SVG / PNG 或复制图片。',
+            'Endpoint does not accept the full PHP query API (no arw / ac / sch / fc / fd). For those, set it up here and download the SVG / PNG or copy the image.',
+          )}
+        </p>
+      </details>
+  ) : null;
+
+  return (
+    <div className={`vc-studio${className ? ` ${className}` : ''}`}>
+      {!externalImage && (previewHost ? createPortal(preview, previewHost) : preview)}
+
+      {/* 背景色是**导出件**的底色(默认透明),不是画布背景 —— sim 那个 BG 选择器管的是
+            左边 3D 画布看着舒不舒服,两回事,所以这一行留着。其余「sim 已经有一个」的控件
+            (拼图 / 阶数 / 公式 / 六面配色 / 视角旋转 / 壳体与贴纸不透明度 / 投影距离)
+            随 /visualcube 页退役一并删,一个概念只留一个入口。 */}
+      {!externalImage && !engineOnly && (
+        <ColorRow
+          label={t('背景色', 'Background Color')}
+          value={s.backgroundColor}
+          onChange={(v) => set('backgroundColor', v)}
+          onReset={() => set('backgroundColor', '')}
+          allowEmpty
+        />
+      )}
+      {!externalImage && simBridge && (
+        <section className="vc-exports"><SimCaptureGroup simBridge={simBridge} /></section>
+      )}
 
       {!externalImage && <section className="vc-controls">
+        <div className="vc-view-size-row">
         {!engineOnly && (
         <div className="vc-row">
           <label className="vc-label">{t('视图', 'View')}</label>
           <div className="vc-row-controls">
-            {isCube ? (
-              (['normal', 'plan', 'trans', 'wca'] as SpecialView[]).map((v) => (
-                <button
-                  key={v}
-                  type="button"
-                  className={`vc-btn vc-btn-sm${activeCubeView === v ? ' vc-btn-active' : ''}`}
-                  onClick={() => set('cubeView', v)}
-                >
-                  {v}
-                </button>
-              ))
-            ) : (
-              variantsFor(s.puzzleType).map((pv) => (
-                <button
-                  key={pv}
-                  type="button"
-                  className={`vc-btn vc-btn-sm${s.puzzleVariant === pv ? ' vc-btn-active' : ''}`}
-                  onClick={() => onSpecChange(snapRotationOnVariantBoundary(s, { puzzleVariant: pv }))}
-                >
-                  {pv === 'iso' ? tr({ zh: '立体', en: 'iso' })
-                    : pv === 'top' ? tr({ zh: '顶视', en: 'top' })
-                    : pv === 'wca' ? 'wca'
+            <select
+              className="vc-select"
+              aria-label={t('视图', 'View')}
+              value={isCube ? activeCubeView : s.puzzleVariant}
+              onChange={(event) => {
+                if (isCube) set('cubeView', event.target.value as SpecialView);
+                else onSpecChange(snapRotationOnVariantBoundary(s, { puzzleVariant: event.target.value as PuzzleVariant }));
+              }}
+            >
+              {isCube ? (['normal', 'plan', 'trans', 'wca'] as SpecialView[]).map((view) => (
+                <option key={view} value={view}>{view}</option>
+              )) : variantsFor(s.puzzleType).map((variant) => (
+                <option key={variant} value={variant}>
+                  {variant === 'iso' ? tr({ zh: '立体', en: 'iso' })
+                    : variant === 'top' ? tr({ zh: '顶视', en: 'top' })
+                    : variant === 'wca' ? 'wca'
                     : tr({ zh: '展开', en: 'net' })}
-                </button>
-              ))
-            )}
+                </option>
+              ))}
+            </select>
             {/* 俯视图独有:侧面一圈灰格是「不关心」的占位,删掉只留彩条 = OLL 识别图。
                 顶面 9 格不受影响(侧环由渲染器的独立 pass 画)。 */}
             {isCube && activeCubeView === 'plan' && (
@@ -589,6 +611,23 @@ export default function PuzzleImageStudio({
           </div>
         </div>
         )}
+        <div className="vc-row">
+          <label className="vc-label">
+            {t('图片尺寸 (px)', 'Image Size (px)')}
+          </label>
+          {/* 只留自由输入。以前预设下拉 + 数字框并排,两个控件绑同一个 imageSize,
+              永远显示同一个数,改一个另一个跟着变 —— 看着像坏了。预设本来就是为了
+              「下拉里选不到当前值」补的,值既然能直接读能直接改,预设就多余了。 */}
+          <input
+            type="number" className="vc-num" value={s.imageSize} min={1} max={1000}
+            aria-label={t('图片尺寸 (px)', 'Image Size (px)')}
+            onChange={(e) => {
+              const n = parseInt(e.target.value, 10);
+              if (!isNaN(n)) set('imageSize', Math.max(1, Math.min(1000, n)));
+            }}
+          />
+        </div>
+        </div>
 
         {/* 识别简化:只留「认图真正要看的」那几格。规则是阈值 —— 选中档位以下的图案全留,
             以上的抹掉;真要全抹光时会自动放宽一档,不会给出一张空图。侧面/顶面两条规则的
@@ -654,27 +693,12 @@ export default function PuzzleImageStudio({
           </div>
         )}
 
-        <div className="vc-row">
-          <label className="vc-label">
-            {t('图片尺寸 (px)', 'Image Size (px)')}
-          </label>
-          {/* 只留自由输入。以前预设下拉 + 数字框并排,两个控件绑同一个 imageSize,
-              永远显示同一个数,改一个另一个跟着变 —— 看着像坏了。预设本来就是为了
-              「下拉里选不到当前值」补的,值既然能直接读能直接改,预设就多余了。 */}
-          <input
-            type="number" className="vc-num" value={s.imageSize} min={1} max={1000}
-            aria-label={t('图片尺寸 (px)', 'Image Size (px)')}
-            onChange={(e) => {
-              const n = parseInt(e.target.value, 10);
-              if (!isNaN(n)) set('imageSize', Math.max(1, Math.min(1000, n)));
-            }}
-          />
-        </div>
+
 
         {!engineOnly && (<>
         {isCube && projected && (
-          <div className="vc-row vc-row-block">
-            <label className="vc-label">{t('箭头', 'Arrow Definition')}</label>
+          <details className="vc-control-section">
+            <summary><ChevronRight className="vc-disclosure-caret" size={14} aria-hidden />{t('箭头标注', 'Arrow annotations')}</summary>
             <div className="vc-row-controls vc-col">
               <div className="vc-arrow-builder">
                 <span>{t('面', 'Face')}</span>
@@ -775,12 +799,12 @@ export default function PuzzleImageStudio({
                 allowEmpty
               />
             </div>
-          </div>
+          </details>
         )}
 
         {maskable && (
-          <div className="vc-row vc-row-block">
-            <label className="vc-label">{t('贴纸遮罩', 'Sticker Mask')}</label>
+          <details className="vc-control-section">
+            <summary><ChevronRight className="vc-disclosure-caret" size={14} aria-hidden />{t('贴纸遮罩', 'Sticker mask')}</summary>
             <div className="vc-row-controls vc-col">
               <div className="vc-row-controls">
                 <input
@@ -841,63 +865,39 @@ export default function PuzzleImageStudio({
                 />
               )}
             </div>
-          </div>
+          </details>
         )}
 
-        {/* 背景色是**导出件**的底色(默认透明),不是画布背景 —— sim 那个 BG 选择器管的是
-            左边 3D 画布看着舒不舒服,两回事,所以这一行留着。其余「sim 已经有一个」的控件
-            (拼图 / 阶数 / 公式 / 六面配色 / 视角旋转 / 壳体与贴纸不透明度 / 投影距离)
-            随 /visualcube 页退役一并删,一个概念只留一个入口。 */}
-        <ColorRow
-          label={t('背景色', 'Background Color')}
-          value={s.backgroundColor}
-          onChange={(v) => set('backgroundColor', v)}
-          onReset={() => set('backgroundColor', '')}
-          allowEmpty
-        />
         </>)}
       </section>}
 
-      {!engineOnly && staticFallbackExact && !externalImage && (
-      <details className="vc-api-doc">
-        <summary>{t('API 用法（外部嵌入）', 'API usage (embed elsewhere)')}</summary>
-        <p>
-          {t(
-            '直接通过 GET /v1/visualcube.svg 拿到 SVG 字节流，可放进 <img>、curl、博客 Markdown 等。这是简化端点（7 个参数），端点覆盖不到的设置请在这里调好后复制地址栏。',
-            'GET /v1/visualcube.svg returns image/svg+xml directly. Use it in an <img>, curl, blog Markdown, etc. This is a simplified endpoint (7 params); for anything it does not cover, set it up here and copy the address bar.',
-          )}
-        </p>
-        <pre className="vc-api-example">{`https://api.cuberoot.me/v1/visualcube.svg?alg=R+U+R'+U'+R+U2+R'&view=oll&size=128`}</pre>
-        <table className="vc-api-table">
-          <thead>
-            <tr>
-              <th>{t('参数', 'Param')}</th>
-              <th>{t('取值', 'Values')}</th>
-              <th>{t('默认', 'Default')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td><code>alg</code></td><td>{t('WCA notation；alg 直接作用到 solved（forward）。和 case 互斥，case 优先', 'WCA notation; applied DIRECTLY to solved (forward). Mutually exclusive with case (case wins)')}</td><td>Sune</td></tr>
-            <tr><td><code>case</code></td><td>{t('WCA notation；alg 的逆作用到 solved，即"该 alg 能还原的 case"。覆盖 alg', 'WCA notation; alg INVERTED on solved — "the case this alg solves". Overrides alg')}</td><td>—</td></tr>
-            <tr><td><code>setup</code></td><td>{t('alg 的别名（forward）；语义上是 case 的预置打乱', 'Alias of alg (forward); semantic hint that the string is a case-setup scramble')}</td><td>—</td></tr>
-            <tr><td><code>view</code></td><td><code>iso / plan / f2l / oll / pll / pll-iso / trans</code></td><td><code>iso</code></td></tr>
-            <tr><td><code>mask</code></td><td>{t('显式 Masking 枚举值（覆盖 view 推断）', 'Explicit Masking enum, overrides view-derived')}</td><td>—</td></tr>
-            <tr><td><code>size</code></td><td>{t('像素，clamped [32, 1000]', 'Pixels, clamped [32, 1000]')}</td><td>256</td></tr>
-            <tr><td><code>bg</code></td><td>{t('hex（带不带 #）或 CSS 颜色名', 'Hex (with/without #) or CSS colour name')}</td><td>{t('透明', 'transparent')}</td></tr>
-            <tr><td><code>cc</code></td><td>{t('壳体色（PHP cc）', 'Cube shell colour (PHP cc)')}</td><td>{t('黑（trans 时银）', 'black (silver when trans)')}</td></tr>
-            <tr><td><code>co</code></td><td>{t('壳体不透明度 0-100（PHP co）', 'Cube opacity 0-100 (PHP co)')}</td><td>{t('100（trans 时 50）', '100 (50 when trans)')}</td></tr>
-            <tr><td><code>mid</code></td><td>{t('Square-1 的 wca 视图：0 隐藏中层', 'Square-1 wca view: 0 hides the middle layer')}</td><td>1</td></tr>
-            <tr><td><code>blk</code></td><td>{t('Square-1 的 wca 视图：0 使用黄色顶面', 'Square-1 wca view: 0 uses a yellow top')}</td><td>1</td></tr>
-          </tbody>
-        </table>
-        <p className="vc-api-note">
-          {t(
-            '该端点不支持完整 PHP query API（无 arw / ac / sch / fc / fd 等）。需要这些参数就在这里调好，然后下载 SVG / PNG 或复制图片。',
-            'Endpoint does not accept the full PHP query API (no arw / ac / sch / fc / fd). For those, set it up here and download the SVG / PNG or copy the image.',
-          )}
-        </p>
-      </details>
-      )}
+      <section className="vc-exports">
+        {/* 链接类按钮指向服务端 spec 渲染(/v1/visualcube.svg),engine-only 拼图服务端
+            画不了 → 只留 SVG/PNG(下载预览那份引擎矢量)。没有单独的「分享链接」按钮:
+            面板状态本来就写在地址栏的 img_* 里,复制地址栏即分享。 */}
+        <ImageExportMenu
+          kind="copy"
+          disabled={!exportReady}
+          formats={[
+            { label: 'PNG', run: () => copyPngToClipboard(externalImage
+              ? svgToRasterBlob(getCurrentSvg(), { width: exportWidth, height: exportHeight, format: 'png' })
+              : svgToPngBlob(getCurrentSvg(), s.imageSize)) },
+            { label: 'SVG', run: () => navigator.clipboard.writeText(getCurrentSvg()) },
+          ]}
+        />
+        <ImageExportMenu
+          kind="download"
+          disabled={!exportReady}
+          formats={[
+            { label: 'SVG', run: downloadSvg },
+            { label: 'PNG', run: downloadPng },
+            ...(externalImage ? [{ label: 'JPG', run: downloadJpeg }] : []),
+          ]}
+        />
+      </section>
+
+      {apiDoc && (apiDocHost ? createPortal(<div className="vc-studio">{apiDoc}</div>, apiDocHost) : apiDoc)}
+
     </div>
   );
 }

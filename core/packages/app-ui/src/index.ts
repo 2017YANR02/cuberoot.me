@@ -1,4 +1,6 @@
 export { App } from './App';
+export { UURemoteClient, type UURemoteRuntime } from './uu-remote';
+export { UURemotePanel } from './UURemotePanel';
 export {
   InstalledAuthClient,
   jwtExpiresAt,
@@ -36,3 +38,5 @@ export {
   type TimerWakeLockPage,
   type TimerWakeLockSentinel,
 } from './timer-effects';
+
+export type { WatchTimerPort, WatchTimerBatch } from './watch-timer';

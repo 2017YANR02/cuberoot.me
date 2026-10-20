@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / ORWY / bin 7
-# Population in this bin: 277
+# Population in this bin: 278
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 6373001,U D2 F U' L' F2 D R2 L D' L2 D' F2 R2 F2 U F2 R2 D,O,Rumia Open 2014 (2014-03-29~30),333 R1 A E2
@@ -108,7 +108,7 @@
 1353895001,R' U' R2 U F' U2 L' F R F D2 L2 D' B2 D' F2 U2 B2 D' R2,O,NxN Barquisimeto 2019 (2019-10-12),333 R2 A #5
 5164135001,F L2 B R2 D2 L2 F D2 R2 U' B R2 B2 D2 R U2 R' D' F',O,Sequoia Cubing 2025 (2025-11-01),333oh R1 B #2
 5311568001,D' R' U R' B' R' B2 L D F' D2 B2 U2 L2 B D2 F U2 R2,R,Almaty New Year 2026 (2026-01-03~04),333oh R1 B #5
-1453885001,D' L2 F2 D L2 F2 D2 L2 R D' L B L2 D2 F2 D' U B2 F2,O,NEU Open 2019 (2019-12-15),333 R2 A #3
+5867833001,R F' L' B' R D' F R U' F2 B' U2 R2 B2 R2 F' D F',Y,Cube4fun Lublin Autumn 2026 (2026-10-10),333oh Final A E2
 1475236001,B2 F' U2 R2 F' L2 B' L' U R2 B2 U B R2 F L2 B2 R2,Y,Shaoxing Open 2019 (2019-12-21~22),333 R2 A #3
 1477785001,F2 D2 B' R2 B F' R2 B2 L2 U' B U' B F2 L' U2 B2 U' B,R,Cubing Chiriquí 2019 (2019-12-21~22),333bf Final B E1
 1535604001,U2 D2 R B2 D' L2 U F2 D' F' L D B2 D2 L2 D' L2,W,CMI Tessellate Cube Open 2020 (2020-01-31~02-02),333oh R1 B E1

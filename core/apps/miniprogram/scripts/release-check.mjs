@@ -47,8 +47,9 @@ async function runReleaseCheck() {
     ]);
   const buildState = await readBuildState(packageRoot);
   let currentSourceFingerprint = null;
+  let graphInputFiles = [];
   try {
-    const graphInputFiles = restoreBuildGraphInputs(
+    graphInputFiles = restoreBuildGraphInputs(
       packageRoot,
       buildState?.buildGraphInputs,
     );
@@ -63,6 +64,13 @@ async function runReleaseCheck() {
       path,
       source: isReleaseAuditTextFile(path) ? await readFile(file, 'utf8') : null,
     });
+  }
+  // Split chunks can include shared-package code. Audit those original inputs
+  // too, rather than trusting a generated chunk name as a privacy exemption.
+  for (const file of graphInputFiles) {
+    const path = normalizedRelativePath(packageRoot, file);
+    if (sourceFiles.some(source => source.path === path)) continue;
+    sourceFiles.push({ path, source: await readFile(file, 'utf8') });
   }
   const outputFiles = await walkFiles(outputRoot, { missingOk: true });
   const uploadFiles = await Promise.all(outputFiles.map(async (file) => {

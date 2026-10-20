@@ -1,8 +1,8 @@
 # Scramble samples — dr / dr / O / bin 6
-# Population in this bin: 582
+# Population in this bin: 586
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 2769423001,U2 B2 D2 B2 F L2 U2 F' R D' B' R2 D2 F2 U' L U F2 D2,O,Singapore AMK CC Cubing A 2023 (2023-06-03),333 R1 F #1
@@ -195,7 +195,7 @@
 5010708001,L2 R2 F U2 B' R2 B R' F' R2 F2 D' L F L' D2 L,O,La Cacería GT 2025 (2025-09-06),333 R1 D #1
 2284172001,U' B R2 B L2 D2 R2 D F2 D2 U2 L D' L' U,O,Crevalcore al Cubo 2022 (2022-11-05~06),333 R2 C #3
 1197519001,F R F2 B D R2 D' B R L' F2 R2 L2 U' R2 U B2 L2,O,Newmarket Open 2019 (2019-06-22),333oh R1 B #4
-1820924001,B2 R' D2 R2 U' B' L' U L' U2 L2 U2 F' L2 D2 F' R2 U2 D2,O,Back To Cubing Chiriquí 2022 (2022-03-05),333oh Final A #5
+5860187001,U2 L' F2 L B2 U2 B2 L' U2 R' F2 R' B U2 B D B2 F',O,ODU Big Blue Fall 2026 (2026-10-03),333 R1 A #5
 1201787001,F L2 U2 L2 B' D2 B' D2 B2 D2 F R' B2 F U F D' B2 D,O,Juan Manuel Zafra Open 2019 (2019-06-29~30),333 R1 C #2
 5719834001,B2 L' B2 F2 L' U2 L' F2 L R2 F2 U L' F R2 B' D',O,Shenyang Cubing League 3x3 II 2026 (2026-06-24),333 R2 B #5
 4942522017,F U' L F2 D' R2 F U2 R D2 R2 L F2 L2 B2 R U B R B' L',O,Rubik's Irish Championship 2025 (2025-08-15~17),333mbf Final A #2

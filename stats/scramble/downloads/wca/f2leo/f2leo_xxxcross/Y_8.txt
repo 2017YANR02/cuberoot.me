@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / Y / bin 8
-# Population in this bin: 924
+# Population in this bin: 933
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 5759014001,F2 U' L2 D2 U' B2 R2 B2 F2 D' R2 B R2 B' L B F U R' B F',Y,Rubisian Summer Cubing Iasi 2026 (2026-07-18~19),333 R1 C E2
@@ -88,7 +88,7 @@
 318807001,L2 F' D' F2 L U D2 R2 F R U2 F2 L2 B' L2 D2 B L2 B',Y,Torneo Rubik Aventura 2016 (2016-06-25),333 Final A E2
 5252327001,B2 D2 L2 D2 U2 B2 L2 F2 R D B D' B2 L2 D' L' U2 B2 D2,Y,Robinson Lifestyle Ratchaphruek Cube Battle 2025 (2025-12-06~07),333oh Final A #2
 2137502001,R B2 L' D2 F2 D2 L U2 F L2 F D B D L B2 R' B',Y,Runaway Bay Sunday Challenge 2022 (2022-09-04),333 R1 E #1
-4307161001,R' B2 D R2 B' D2 R2 F2 L F2 B2 D R2 U R2 D2 L2 U2 F,Y,Medvode Open 2024 (2024-11-23~24),333 R2 C #1
+5860167001,R F B R2 B' U2 R F2 R2 D' B2 D2 B2 L2 F2 R2 U2 L F',Y,ODU Big Blue Fall 2026 (2026-10-03),333oh Final A #4
 4930372001,R2 D2 B2 U2 L U2 R' U' L' F R' F' D2 F2 L D',Y,Cube Camp in Suan Phueng 2025 (2025-08-09~11),333oh R1 B #4
 340366001,U2 L U2 F2 B' L D B' U D B' L' D2 F2 R D2 B2 L' U2,Y,Macclesfield Open 2016 (2016-07-30~31),333 R1 C #5
 343323001,U L2 U B2 D U2 F' L2 F U F2 L' U R' U2 F2 L',Y,AZCubing Summer 2016 (2016-08-06),333 R2 A #1
@@ -158,7 +158,7 @@
 5270388001,L2 U2 L2 B' L U' R' U F2 D' U2 L2 U2 B' L2 F' D2 B',Y,Bay Area Speedcubin' 68 - Belmont 2025 (2025-12-13),333 Final A #1
 2533426028,R' L2 F L2 D2 L2 U2 F' L2 U' R B U' B F2 D' L2 U2 L,Y,MBLD in a Madison Meeting Room 2023 (2023-03-04~05),333mbf R1 A #1
 657568001,U B2 R2 D2 L2 D' R2 D' F2 D2 F L2 F' L F2 D F U F U',Y,Lviv Cube Cup 2017 (2017-11-25~26),333 R2 B E1
-3991434001,B D2 F' L2 F' D2 L2 D2 F' L2 B2 L B D' B' U' B L2 R B',Y,Slovak Nationals 2024 (2024-08-02~04),333 R1 C #4
+5859826001,U' B2 U F B L' B L' D' R' D' F2 D2 L2 F2 D F2 L2 B2 L2 U2,Y,Nuti Estonian Championship 2026 (2026-10-03~04),333bf Final A #4
 3212747001,B2 U2 L2 B2 U' L2 R B2 L B' U' L' F L' U2 R' F',Y,Davis Fall 2023 (2023-10-29),333 R2 A #4
 660492025,F' B R F2 R B' R2 L' U' L D' R2 B2 U2 L2 B2 U' F2 R2,Y,Valenzuela City Open 2 2014 (2014-07-05),333mbf Final A #1
 3310877001,R' F2 R2 D F D F L B L' D2 R2 B U2 F2 B D2,Y,Claws Up Winter 2023 (2023-12-03),333oh Final A #3
@@ -200,7 +200,7 @@
 1349795029,B2 U2 R' U2 F2 L U2 L F2 U' B F R2 D' B L2 U2 L2 B D' B' L2,Y,345 Cube Day Allen 2019 (2019-10-13),333mbf Final B #2
 5224977001,F L D2 B' U2 B' U B' U' R' B2 R2 U D2 L2 D' B2 D',Y,Kamppi Cube Weekend 2025 (2025-11-29~30),333oh R1 B #4
 3030632001,U B' L2 D2 F' D2 L2 U' B' R2 F D F U B D,Y,Puzzling at the Shopping Centre Plaza in Salo 2023 (2023-09-02~03),333 R2 A #4
-3886553021,F2 R2 U' R2 U' F2 D' U2 R' F2 L2 F D' F D B' L F' U2 L' F',Y, Vasconcubos 2024 (2024-06-22~23),333mbf Final A #1
+3886553021,F2 R2 U' R2 U' F2 D' U2 R' F2 L2 F D' F D B' L F' U2 L' F',Y,Vasconcubos 2024 (2024-06-22~23),333mbf Final A #1
 3605434129,B' D' U2 B L2 R2 U2 F' R2 B2 U2 R2 B2 R' D U2 F R B' D' L' F,Y,Supermiya PBQ in Tashkent 2024 (2024-03-16~17),333mbf Final A #2
 2043513017,U2 L' B' U F2 R2 D' F2 U2 R2 D F' U B2 L' U' L B L,Y,Mallorca Open 2022 (2022-07-23~24),333mbf Final A #1
 1444219001,B' D2 R2 B L2 B F R2 D2 R B' U2 F' R B2 F L F2,Y,QueTalca Open 2019 (2019-12-07),333oh R1 C #3

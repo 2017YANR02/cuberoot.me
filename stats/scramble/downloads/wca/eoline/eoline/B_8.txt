@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / B / bin 8
-# Population in this bin: 74
-# Samples listed: 74 (all entries in this bin)
+# Population in this bin: 75
+# Samples listed: 75 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 56437001,D2 F U2 F2 L2 B2 R2 F' R2 D R B U F2 D2 U R' D F2 U,B,IGA Rubik 2014 (2014-09-07),333 Final B #5
@@ -79,3 +79,4 @@
 5720832001,R' L2 D' U' L2 D' B2 L2 F2 L2 U2 B D L F U' R D F2 U,B,GAN Warm Up Iloilo 2026 (2026-06-20),333 R2 E #2
 5847644001,R B' L' B' D2 B U F' D' R B U2 B2 U2 B2 U B2 D' F2 D2,B,Kölner Kubing 2026 (2026-09-25~27),333 R1 A E2
 5855427001,B' U' R2 B' D L D' R' D2 B2 D2 B2 L' B2 L B2 F L B D,B,Dublin Autumn Solving 2026 (2026-09-26~27),333bf Final A #1
+5876456001,D2 B U L2 F D' F2 R D2 F R' L' U2 F2 U2 B2 R L2 B2 U2 D2 B R2,B,Regionales Santander 2026 (2026-10-10~11),333bf Final A E2

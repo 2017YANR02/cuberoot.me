@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / OR / bin 3
-# Population in this bin: 292
+# Population in this bin: 295
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 4126175001,L' D2 L' B L' D2 B F2 R D2 L' U2 D2 L2 F2 D L2 B2,R,McMinnville Cubing Fall 2024 (2024-09-21),333oh R1 A #5
@@ -139,7 +139,7 @@
 1975912001,R2 F' R2 B2 U2 B U2 B L2 B2 U B' L B' D2 U' L2 B' F,R,NSW Central West Winter 2022 (2022-06-19),333 R1 C E1
 1978462001,F R L2 U2 R' B L2 B' D' B2 D2 B' L2 U2 F L2 B' D2 R2,O,Luxembourg Open 2022 (2022-06-18~19),333oh Final A E1
 2013460001,B' R2 B' D B2 R U' B' D' R2 D2 F2 D2 F2 L2 D2 L2 F' R2,O,Rubik's WCA North American Championship 2022 (2022-07-07~10),333oh R1 E #5
-4118123001,B R2 B2 F' L2 U2 F L U L' F2 D2 L B2 U F2 D R,R,New York Championship 2024 (2024-09-14~15),333oh R1 B E2
+5864735001,U' L2 B' R' F' B' U' B F2 U R2 D R2 D R2 B2 U,R,Guangzhou Grand Open 2026 (2026-10-05~06),333 R1 B #3
 2051231001,L' D B2 R2 L U B L' B' U' L2 U L2 D' R2 U' R2 L2 D' F2 D2,R,Surabaya Open 2022 (2022-07-23),333bf Final B #3
 2085389001,F B' U B U' F' U2 R' F R' U' F2 D F2 R2 D' L2 D2,R,BeCubed Summer 2022 (2022-08-06),333 R1 B #2
 2156434001,F D2 B' L B' R B2 D' F' D L' D2 F L2 F' B R2 F',R,Apollo Bay Cubing 2022 (2022-09-10~11),333 R1 C #4
@@ -184,7 +184,7 @@
 3205706001,L' U F U2 F' U' L B L' F' D' R2 B2 D F2 U2 L2 F',R,Suncheon Fall 2023 (2023-10-29),333 R2 E #5
 3212179001,L2 F L' R2 B' U2 F' R2 B' L2 F D' B2 D B2 R' D U2,O,Ventanal de la Sierra Open 2023 (2023-10-28~29),333 R1 B #2
 3850461001,F R' F D B' D B' L U' R2 D L2 D' R2 B2 U2 B2 L,O,Zielona Góra Fresh Cubing 2024 (2024-06-08~09),333 R1 B #1
-5402872010,U' F' R' U' R' F' L' U L F2 R U' R2 U' R2 U' L2 B',O,Oregon State PBQ 2026 (2026-02-22),333mbf Final A #1
+5874897001,U' F' U' L2 D' F2 U' L2 D U2 F R2 F2 D2 L R B L B',R,Kuwait Nationals 2026 (2026-10-09~10),333 R2 B E2
 3237546001,B2 R' U' L2 F' U2 F' U2 L2 F' U' R B' R' F D L2 D',R,Future Park Cubing 2023 (2023-11-04~05),333 R1 E #2
 3273333001,U2 F2 D2 L2 F U2 B L2 U' L2 B2 F2 L D2 F2 R F R',O,Ekerö Open 2023 (2023-11-19),333oh R1 B #4
 5552532001,U2 R2 B R' U B2 L' B R' D2 L B2 L F2 L' U2 B2 L2,O,Lakewood Spring 2026 (2026-04-18),333 R1 E #3

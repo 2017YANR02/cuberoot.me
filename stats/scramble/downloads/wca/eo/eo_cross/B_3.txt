@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / B / bin 3
-# Population in this bin: 223
+# Population in this bin: 224
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 17503001,R U2 R' F U2 F' R2 F2 D2 R' L2 U' L2 U D2 F2 U L2 U2,B,Mumbai Summer Open 2014 (2014-05-03~04),333 R1 C E2
@@ -32,7 +32,7 @@
 571881001,F2 D2 R2 D2 R2 F2 D F' L U2 F U2 L' D' L F2 L' U2,B,Northwest Championships 2017 (2017-08-11~13),333 R1 B E2
 587977001,F2 U2 B2 R2 B2 F2 R2 U R' B R F R B' D' L2 U' R2 D2,B,Rubik Xela Open 2017 (2017-09-02~03),333 Final B #2
 616819001,D2 R D2 B2 R F2 D2 U2 R' D L' B' D R' U2 B R F' R,B,Hungarian Open 2017 (2017-10-13~15),333oh R2 B #5
-627491001,B' D2 L2 B' D2 L2 B' L' B' D2 L R2 B R2 B2 L2 F' R',B,Toulon Open 2017 (2017-10-27~29),333oh R2 B E2
+5871861001,L2 D2 B F2 R2 B2 D R' F2 U' B L B' D L D L',B,Hazlet Fall 2026 (2026-10-11),333 R2 A E2
 653867017,L2 U R2 D F2 R2 D U L2 R' F' R F' R B2 D2 U F' L D L,B,Kansai Big Cube 2017 (2017-11-25~26),333mbf Final A #1
 659439001,F' L2 F D2 B U L2 U B D2 B2 D' L2 D2 F2 B2 D,B,Rocky Top 2017 (2017-12-02~03),333 R2 C #1
 660855003,L2 U' B2 U B2 U F2 R F' U F2 D F2 L D' B2 R' U' F' L B,B,Cientifico Open 2015 (2015-11-08),333mbf Final A #1
@@ -154,7 +154,7 @@
 4049387001,L2 R2 D2 U2 B2 U2 B' L2 B U' F' D2 U2 F2 L B' L' D2 F' D,B,Telangana Cube Championship 2024 (2024-08-23~25),333bf R1 A E1
 4120737001,B U2 R2 B2 R L2 F' D2 R F' B2 U2 L2 F2 R U2 F2 B2,B,Unicentro Armenia III 2024 (2024-09-21),333 R2 B #1
 4128984001,L2 B D2 L D2 B' R B D2 B2 R' L' D2 R' F2 U2 F',B,Barberton Mini 2 2024 (2024-09-16),333oh Final B #3
-4150971001,F2 L2 U L2 F L B D' B R F2 D2 L2 D2 L' U2 F2 R2 D2 L2 U2,B, Esprit Cube Open Bayonne 2024 (2024-09-28~29),333bf R1 B E1
+4150971001,F2 L2 U L2 F L B D' B R F2 D2 L2 D2 L' U2 F2 R2 D2 L2 U2,B,Esprit Cube Open Bayonne 2024 (2024-09-28~29),333bf R1 B E1
 4187090047,D2 B' U2 B2 L2 D' L2 U2 B2 R2 F2 R D2 R' U2 F' L2 B F' L' F',B,Kuwaiti Nationals 2024 (2024-10-11~12),333mbf Final A #1
 5433365065,R B2 L D2 R B2 R2 B2 U2 B2 F' R2 F L U2 B2 L2 D',B,BrizZon Side Open II 2026 (2026-03-07~08),333mbf Final B #2
 4228492001,R2 L2 F R2 B' D' B2 R2 F' L2 D2 F2 D2 B' R2 B2 L2 U2,B,Oct-ober-ahedron i Hvidovre 2024 (2024-10-26~27),333 R1 B #1

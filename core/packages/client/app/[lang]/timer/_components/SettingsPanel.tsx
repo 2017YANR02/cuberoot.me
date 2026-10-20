@@ -1,5 +1,7 @@
 'use client';
-import { TimerSyncSeedSettings, TimerRankSettings, TimerBackupSettings, TimerImportSettings, TimerReanalyzeSettings, TimerDisplaySettings, TimerSoundSettings, TimerMetronomeSettings } from '@cuberoot/timer-ui';
+import { timerFontPreviewStyle } from '@cuberoot/timer-ui/font-picker';
+import { useDouyinToolSurface } from '@/lib/douyin-content';
+import { TimerSyncSeedSettings, TimerRankSettings, TimerBackupSettings, TimerImportSettings, TimerDisplaySettings, TimerSoundSettings, TimerMetronomeSettings } from '@cuberoot/timer-ui';
 
 /**
  * Settings panel — modal launched from the topbar gear button.
@@ -24,7 +26,6 @@ import { exportSolvesCsv } from '../_lib/storage/export_csv';
 import { uploadBackup, restoreFromCloud, fetchBackupMeta } from '../_lib/storage/cloud';
 import { getSessionToken, useAuthStore, useIsAdmin } from '@/lib/auth-store';
 import { useRankCountry } from '../_shared/use-rank-country';
-import { reanalyzeAll } from '../_lib/storage/reanalyze';
 import { type EventId } from '../_lib/types';
 
 import {
@@ -44,7 +45,6 @@ import { CountryInput } from '@/components/CountryInput';
 import SharedBoolToggle from '@/components/BoolToggle';
 import { TimerResetSettings, TimerExportSettings } from '@cuberoot/timer-ui';
 import { tr } from '@/i18n/tr';
-import { TIMER_TRAINING_HELP } from '@/lib/timer-training-help';
 
 
 // .settings-row* 原语来自 wca-source.css(现已提取到共享 components/)—— 以前靠
@@ -54,6 +54,8 @@ import '@/components/wca-source.css';
 interface Props {
   onClose: () => void;
   actions: readonly MoreMenuItem[];
+  presenceControl?: React.ReactNode;
+  playersControl?: React.ReactNode;
   /** Current event — target-time setting applies to this event. */
   event: EventId;
   mergeSlotRef: (element: HTMLDivElement | null) => void;
@@ -101,8 +103,9 @@ function SettingsSection({ category, activeCategory, title, children, headerCont
   );
 }
 
-export default function SettingsPanel({ onClose, event, actions, mergeSlotRef, onDataReplaced }: Props) {
+export default function SettingsPanel({ onClose, event, actions, presenceControl, playersControl, mergeSlotRef, onDataReplaced }: Props) {
   const s = useSettings();
+  const douyin = useDouyinToolSurface();
   const optimalUser = useAuthStore((st) => st.user);
   const metro = useMetronome();
   const [activeCategory, setActiveCategory] = useState<TimerSettingCategoryId>('timer');
@@ -244,27 +247,14 @@ export default function SettingsPanel({ onClose, event, actions, mergeSlotRef, o
   }
 
   return (
-    <TimerSettingsPanel language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'}
+    <TimerSettingsPanel categories={douyin ? ['timer', 'smart-cube', 'appearance', 'sound', 'data', 'advanced'] : undefined} language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'}
+      playersControl={playersControl}
+      resetControl={<TimerResetSettings onReset={resetSettings} confirmReset={message => confirm(message)} localize={tr} />}
       activeCategory={activeCategory} onCategoryChange={setActiveCategory} onClose={onClose}>
-        {actions.some(action => action.visible && !action.danger && ACTION_CATEGORY[action.id] === activeCategory) && (
-          <div className="timer-settings-actions" aria-label={tr({ en: 'Tools', zh: '工具' })}>
-            {actions.filter(action => action.visible && !action.danger && ACTION_CATEGORY[action.id] === activeCategory).map(action => {
-              const label = action.id === 'more.fullscreen' && action.active
-                ? tr({ en: 'Exit fullscreen', zh: '退出全屏' }) : action.label;
-              const content = <><span>{label}</span><ChevronRight size={16} aria-hidden="true" /></>;
-              return action.href && !action.disabled ? (
-                <AppLink key={action.id} className="timer-settings-action" href={action.href} prefetch={false} onClick={onClose}>{content}</AppLink>
-              ) : (
-                <button key={action.id} type="button" className="timer-settings-action"
-                  disabled={action.disabled || !action.onSelect}
-                  onClick={() => {
-                    // Unmount the dialog before prompts/print or opening another
-                    // tool, while preserving fullscreen's user activation.
-                    flushSync(onClose);
-                    action.onSelect?.();
-                  }}>{content}</button>
-              );
-            })}
+        {activeCategory === 'timer' && presenceControl && (
+          <div className="settings-row">
+            <span className="settings-row-label">{tr({ zh: '当前在线', en: 'Currently online' })}</span>
+            <span className="settings-row-control">{presenceControl}</span>
           </div>
         )}
             {activeCategory === 'appearance' && (
@@ -277,8 +267,8 @@ export default function SettingsPanel({ onClose, event, actions, mergeSlotRef, o
                 aria-label={tr({ zh: '外观预览', en: 'Appearance preview' })}
               >
                 <span className="settings-preview-label">{tr({ zh: '预览', en: 'Preview' })}</span>
-                <strong className={`tf-${s.timerFont}`}>12.34</strong>
-                <span className={`sf-${s.scrambleFont}`}>R U R&apos; U&apos; F2</span>
+                <strong style={timerFontPreviewStyle(s.timerFont)}>12.34</strong>
+                <span style={timerFontPreviewStyle(s.scrambleFont, 400)}>R U R&apos; U&apos; F2</span>
               </div>
             )}
 
@@ -294,17 +284,20 @@ export default function SettingsPanel({ onClose, event, actions, mergeSlotRef, o
         <SettingsSection
           category="smart-cube"
           activeCategory={activeCategory}
-          title={tr({ zh: '连接后的行为', en: 'Connected cube behavior' })}
         >
+          <TimerSmartCubeSettingsFields value={s} localize={tr} onChange={updateSettings} renderBooleanControl={renderTimingBooleanControl} />
+          <TimerPreScrambleSettings only="training" value={s} onChange={updateSettings} localize={tr} />
           {settingState('settings.smart-cube.fake-cube').visible && (
+            <details className="settings-disclosure">
+              <summary><ChevronRight size={14} aria-hidden="true" />{tr({ zh: '开发调试', en: 'Developer tools' })}</summary>
             <BooleanSettingRow
               id="settings.smart-cube.fake-cube"
               value={s.showAdminFakeCube}
               onChange={(v) => updateSettings({ showAdminFakeCube: v })}
             />
+            </details>
           )}
-          <TimerSmartCubeSettingsFields value={s} localize={tr} onChange={updateSettings} renderBooleanControl={renderTimingBooleanControl} />
-          <TimerPreScrambleSettings only="training" value={s} onChange={updateSettings} localize={tr} />
+
         </SettingsSection>
 
         <SettingsSection
@@ -312,10 +305,6 @@ export default function SettingsPanel({ onClose, event, actions, mergeSlotRef, o
           activeCategory={activeCategory}
           title={tr({ zh: '目标与分段', en: 'Goals and splits' })}
         >
-          <details>
-            <summary>{tr(TIMER_TRAINING_HELP.title)}</summary>
-            {TIMER_TRAINING_HELP.paragraphs.map((paragraph) => <p key={paragraph.en}>{tr(paragraph)}</p>)}
-          </details>
           <TimerAttemptSplitSettings
             bldVisible={settingState('settings.training.bld-memo-split').visible}
             localize={tr}
@@ -326,7 +315,7 @@ export default function SettingsPanel({ onClose, event, actions, mergeSlotRef, o
             stageVisible={settingState('settings.training.stage-splits').visible}
             value={s}
           />
-          <TimerGoalSettings value={s} event={event} onChange={updateSettings} localize={tr} />
+          <TimerGoalSettings value={s} event={event} onChange={updateSettings} localize={tr} trainingTiming />
         </SettingsSection>
 
         <SettingsSection
@@ -347,7 +336,7 @@ export default function SettingsPanel({ onClose, event, actions, mergeSlotRef, o
                 ? tr({ zh: '登录后可用', en: 'Sign in to use' })
                 : s.scrambleSource === 'random' && event === '333' && !!optimalUser && !!s.syncSeed
                   ? tr({ zh: '同步种子开启时不可用', en: 'Unavailable with a sync seed' })
-                  : undefined}
+                  : !optimalAvailable ? tr({ zh: '当前项目或出题来源不支持', en: 'Unavailable for this event or scramble source' }) : undefined}
               renderBooleanControl={renderTimingBooleanControl}
             />
           )}
@@ -378,19 +367,8 @@ export default function SettingsPanel({ onClose, event, actions, mergeSlotRef, o
         <SettingsSection
           category="sound"
           activeCategory={activeCategory}
-          title={tr({ zh: '节拍器', en: 'Metronome'
-        })}
         >
           <TimerMetronomeSettings value={s} bpm={metro.bpm} onChange={updateSettings} onBpmChange={bpm => setMetronome({ bpm })} onTap={tapTempo} onWarmup={warmupSound} onPreviewBeep={playInspectionBeep} localize={tr} />
-        </SettingsSection>
-
-        <SettingsSection
-          category="advanced"
-          activeCategory={activeCategory}
-          title={tr({ zh: '同步种子', en: 'Sync seed'
-        })}
-        >
-          <TimerSyncSeedSettings value={s} language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} onReset={seed => updateSettings(resetTimerSyncSeed(getSettings(), seed))} />
         </SettingsSection>
 
         {activeCategory === 'data' && <TimerBackupSettings language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} every={s.autoBackupEvery} onEveryChange={autoBackupEvery => updateSettings({ autoBackupEvery })}
@@ -429,20 +407,17 @@ export default function SettingsPanel({ onClose, event, actions, mergeSlotRef, o
           {ioMsg !== null && (
             <Row label=""><span className="hint" role="status" aria-live="polite">{ioMsg}</span></Row>
           )}
-          <TimerReanalyzeSettings language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} run={async () => {
-            const result = await reanalyzeAll();
-            onDataReplaced?.();
-            return result;
-          }} />
         </SettingsSection>
 
         <SettingsSection
           category="appearance"
           activeCategory={activeCategory}
-          title={tr({ zh: '外观', en: 'Appearance'
-        })}
+          title={tr({ zh: '字体', en: 'Fonts' })}
         >
-          <TimerTypographySettings value={s} onChange={updateSettings} language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} />
+          <TimerTypographySettings showScaleControls={false} value={s} onChange={updateSettings} language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} />
+          <p className="settings-section-note">{tr({ zh: '字号和布局可通过计时器顶部的“调整布局”修改。', en: 'Use “Edit layout” in the timer toolbar to resize text and arrange the layout.' })}</p>
+        </SettingsSection>
+        <SettingsSection category="appearance" activeCategory={activeCategory} title={tr({ zh: '显示与操作', en: 'Display and interaction' })}>
           <TimerDisplaySettings value={s} onChange={updateSettings} localize={tr} renderBooleanControl={props => <SharedBoolToggle {...props} />}>
           <TimerScramblePreviewSettings
             localize={tr}
@@ -458,6 +433,8 @@ export default function SettingsPanel({ onClose, event, actions, mergeSlotRef, o
             value={s}
           />
           </TimerDisplaySettings>
+        </SettingsSection>
+        <SettingsSection category="appearance" activeCategory={activeCategory} title={tr({ zh: '成绩排名', en: 'Result rankings' })}>
           <TimerRankSettings language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} scopes={s.rankScopes} country={s.rankCountry ?? ''} accountCountry={rankAccountCountry} onScopes={rankScopes => updateSettings({ rankScopes })} onCountry={rankCountry => updateSettings({ rankCountry })} renderCountry={() => <CountryInput value={(s.rankCountry ?? '').toLowerCase()} onChange={iso2 => updateSettings({ rankCountry: iso2.toUpperCase() })} placeholder="" />} login={!user ? login : undefined} />
         </SettingsSection>
 
@@ -469,14 +446,44 @@ export default function SettingsPanel({ onClose, event, actions, mergeSlotRef, o
           title={tr({ zh: '快捷键与手势', en: 'Shortcuts and gestures' })}
         >
           <TimerKeymapSettings value={s.keymap} onChange={update => updateSettings({ keymap: update(getSettings().keymap) })} localize={tr} />
-          <TimerResetSettings onReset={resetSettings} confirmReset={message => confirm(message)} localize={tr} />
         </SettingsSection>
+        <SettingsSection
+          category="advanced"
+          activeCategory={activeCategory}
+        >
+          <details className="settings-disclosure">
+            <summary><ChevronRight size={14} aria-hidden="true" />{tr({ zh: '同步种子（生成相同打乱）', en: 'Sync seed (matching scrambles)' })}</summary>
+          <TimerSyncSeedSettings value={s} language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} onReset={seed => updateSettings(resetTimerSyncSeed(getSettings(), seed))} />
+          </details>
+        </SettingsSection>
+
+        {actions.some(action => action.visible && !action.danger && ACTION_CATEGORY[action.id] === activeCategory) && (
+          <div className="timer-settings-actions" aria-label={tr({ en: 'Tools', zh: '工具' })}>
+            {actions.filter(action => action.visible && !action.danger && ACTION_CATEGORY[action.id] === activeCategory).map(action => {
+              const label = action.id === 'more.fullscreen' && action.active
+                ? tr({ en: 'Exit fullscreen', zh: '退出全屏' }) : action.label;
+              const content = <><span>{label}</span><ChevronRight size={16} aria-hidden="true" /></>;
+              return action.href && !action.disabled ? (
+                <AppLink key={action.id} className="timer-settings-action" href={action.href} prefetch={false} onClick={onClose}>{content}</AppLink>
+              ) : (
+                <button key={action.id} type="button" className="timer-settings-action"
+                  disabled={action.disabled || !action.onSelect}
+                  onClick={() => {
+                    // Unmount the dialog before prompts/print or opening another
+                    // tool, while preserving fullscreen's user activation.
+                    flushSync(onClose);
+                    action.onSelect?.();
+                  }}>{content}</button>
+              );
+            })}
+          </div>
+        )}
         {actions.filter(action => action.visible && action.danger && ACTION_CATEGORY[action.id] === activeCategory).map(action => (
-          <div className="settings-reset-row" key={action.id}>
-            <button type="button" className="timer-settings-action timer-settings-action-danger"
+          <div className="settings-reset-row settings-danger-actions" key={action.id}>
+            <button type="button" className="hint-btn timer-settings-action-danger"
               disabled={action.disabled || !action.onSelect}
               onClick={() => { flushSync(onClose); action.onSelect?.(); }}>
-              <span>{action.label}</span><ChevronRight size={16} aria-hidden="true" />
+              <span>{action.label}</span>
             </button>
           </div>
         ))}

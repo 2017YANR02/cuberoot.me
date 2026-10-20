@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / G / bin 8
-# Population in this bin: 964
+# Population in this bin: 969
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 3888175073,D2 R2 F' D2 L2 R D2 F2 L D2 U L' D L' D U' L F' L,G,Hari-Hari Horas 2 2024 (2024-06-27),333mbf Final B #1
@@ -111,7 +111,7 @@
 1136604001,F' R2 B D2 F' D2 F2 D2 U2 F' D' L2 R2 F U' L' U L' R' F2,G,London Open 2019 (2019-05-11~12),333oh Final A E2
 1953878001,F B U' B2 L' U F2 R F2 R D2 B2 D B U B' L2,G,Almadar International School 2022 (2022-05-27~28),333bf Final A E2
 5128871001,L2 B2 U B2 U' B2 R B U2 R2 D' B D2 L' B' U' L2,G,Gdańska Liga Speedcubingu V 2025 (2025-10-25~26),333oh R1 B E1
-5455328001,B2 D2 R2 B2 D' F D' F' R' D L U2 D2 L' F2 B2 D2,G,Morrow Mixup Mania 2026 (2026-03-15),333 R1 E E2
+5871876001,D R B U' R B U' L2 F' U' R F R2 D2 F' R2 B R2 D2 B,G,Minnesota Quiet Championship 2026 (2026-10-11),333bf R1 A #1
 498818001,D2 B2 F2 R' D2 B2 L U2 R' U2 B D F R' F' D U' L F U2,G,Alagoinhas Open 2017 (2017-04-30),333oh Final A #2
 5630991001,U2 B2 D' R2 B' R2 U B2 U2 F2 R U2 B2 R U2 L' B2 L2 U L2 U,G,Toledo Big & Blind 2026 (2026-05-16),333bf Final B #4
 3955378001,B D' R L' F' U B' D' F' R2 L2 U' B2 U' R2 D' R' L2,G,Rubik's WCA North American Championship 2024 (2024-07-18~21),333oh R1 D E2

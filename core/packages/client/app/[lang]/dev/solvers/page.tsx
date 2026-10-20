@@ -47,7 +47,7 @@ const NATIVE: NativeSolver[] = [
   { key: 'pair', stages: 4, fbRows: 1_293_570, rate: 200, tier: 'huge', zhWhy: '不在默认补缺 (opt-in), 暖表后 ~200/s 已全量回填', enWhy: 'opt-in (off the default run), ~200/s once tables warm — fully backfilled' },
   { key: 'f2leo', stages: 4, fbRows: 252, rate: 31, tier: 'huge', zhWhy: '联合大表剪枝 (同 std huge 表) + 自由棱 EO 门控, 4 阶段无 xxxxcross', enWhy: 'joint big-table pruning (same huge tables as std) + free-edge EO gating, 4 stages no xxxxcross' },
   { key: 'pseudo_f2leo', stages: 4, fbRows: 252, rate: 81, tier: 'huge', zhWhy: 'pseudo 大表电池 (C4E + corner2/3 + edge2/3) max + 自由棱 EO, 4 阶段无 xxxxcross', enWhy: 'pseudo big-table battery (C4E + corner2/3 + edge2/3) max + free-edge EO, 4 stages no xxxxcross' },
-  { key: '333', stages: 1, fbRows: 240, rate: null, tier: 'huge', zhWhy: '本机三阶最优研究仅保留 Rust 原生 Opt9 / Opt10，共享表多线程搜索；旧 H10 统计入口当前缺表，未自动切换后端', enWhy: 'Local optimal-solver research retains only native Rust Opt9 / Opt10 with shared-table parallel search; the old H10 statistics entry currently lacks its table and has not switched backends' },
+  { key: '333', stages: 1, fbRows: 240, rate: null, tier: 'huge', zhWhy: '本机三阶最优研究使用 Rust 原生 Opt9 / Opt10，另有 nxopt22 独立对照；旧 H10 统计入口当前缺表，未自动切换后端', enWhy: 'Local optimal-solver research uses native Rust Opt9 / Opt10 with a separate nxopt22 comparison; the old H10 statistics entry currently lacks its table and has not switched backends' },
   { key: '222', stages: 1, fbRows: 1_297_444, rate: 1_250_000, tier: 'small', zhWhy: '2x2x2 块 (1 角 + 3 棱) 全空间仅 253,440 态, 精确距离表直查零搜索', enWhy: '2x2x2 block (corner + 3 edges) — 253,440 states total, exact distance table lookup, zero search' },
   { key: '123', stages: 2, fbRows: 1_297_444, rate: 600_000, tier: 'small', zhWhy: 'Roux 左桥: 1x2x2 方块 (1角+2棱, 前/后双微表) + 1x2x3 (2角+3棱, 5,322,240 态全表), 精确距离表直查零搜索', enWhy: 'Roux first block: 1x2x2 square (corner + 2 edges, front/back micro-tables) + 1x2x3 (2 corners + 3 edges, 5,322,240-state full table) — exact lookups, zero search' },
   { key: '223', stages: 1, fbRows: 1_297_444, rate: 19_000, tier: 'small', zhWhy: 'Petrus 2x2x3 (2角+5棱) 全空间 ~1.5G 态放不下全表, IDA* + max(1x2x3 全表, 角2+DB/DF 表) 可采纳下界', enWhy: 'Petrus 2x2x3 (2 corners + 5 edges) — 1.5G states, too big for a full table; IDA* with admissible h = max(1x2x3 full table, corners+DB/DF table)' },
@@ -105,7 +105,7 @@ const BROWSER_MAP: Record<string, BrowserSolver> = Object.fromEntries(BROWSER.ma
 // cnt>1 = 同规格一组; cond = 对角剪枝表, 仅全模式载, 设 *_NO_DIAG 可跳过 (各省 ~10GB).
 interface Tbl { n: string; b: number; cnt?: number; cond?: boolean }
 interface TablePlan { profile: string; move: Tbl[]; prune: Tbl[]; note: { zh: string; en: string }; replacesBase?: boolean; generated?: boolean }
-interface SolverTbls { move: Tbl[]; prune: Tbl[]; builtZh?: string; builtEn?: string; plan?: TablePlan }
+interface SolverTbls { move: Tbl[]; prune: Tbl[]; builtZh?: string; builtEn?: string; plan?: TablePlan; benchmarkTables?: Tbl[] }
 
 const TABLES: Record<string, SolverTbls> = {
   daisy: {
@@ -191,6 +191,7 @@ const TABLES: Record<string, SolverTbls> = {
   '333': {
     move: [{ n: 'opt9-generated/small-memory.bin', b: 818008 }],
     prune: [{ n: 'opt9-generated/h48prun31h9.dat', b: 15565455360 }],
+    benchmarkTables: [{ n: 'nxopt22-20261015/nxopth22b.dat', b: 7809269764 }],
     plan: {
       profile: 'Rust Opt10', generated: true, replacesBase: true,
       move: [{ n: 'opt9-generated/small-memory.bin', b: 818008 }],
@@ -200,8 +201,8 @@ const TABLES: Record<string, SolverTbls> = {
         en: 'Selected separately from Opt9, sharing its required coordinate snapshot. The official Opt10 coset release solved WCA first1000 in 24.591 seconds with 16 search threads, one pass and no warmup; all solutions passed verification. The resumable double-ZBLL job uses this same release; its actual throughput has not yet been measured.',
       },
     },
-    builtZh: '本机三阶最优大表仅保留 Opt9（15.6 GB）与自研 Opt10 v2（31.1 GB）。Opt1–8、H7/H10 及旧 Opt10 未完成文件已移入废纸篓；原始程序与报告保留。Opt9 已完成 18 线程 WCA100 单轮不预热测试，耗时 6.4 秒。旧 H10 统计入口当前缺表，尚未迁移；服务器 Rust WASM Opt8 不受本地清理影响。',
-    builtEn: 'Local 3x3 optimal tables are limited to Opt9 (15.6 GB) and custom Opt10 v2 (31.1 GB). Opt1–8, H7/H10 and the incomplete old Opt10 file were moved to Trash; original programs and reports remain. Opt9 completed WCA100 with 18 threads in one pass without warmup in 6.4 seconds. The old H10 statistics entry now lacks its table and has not been migrated; the server Rust WASM Opt8 is unaffected.',
+    builtZh: '本机保留 Opt9（15.6 GB）与自研 Opt10 v2（31.1 GB），另已生成 nxopt22 对照表（7.8 GB），位于 .tmp/cubeopt-reverse/ 下。各求解器独立选表，不同时加载。旧 H10 统计入口当前缺表，尚未迁移；服务器 Rust WASM Opt8 不受影响。',
+    builtEn: 'Local tables include Opt9 (15.6 GB), custom Opt10 v2 (31.1 GB), and the newly generated nxopt22 benchmark table (7.8 GB), under .tmp/cubeopt-reverse/. Each solver loads its own table separately. The old H10 statistics entry lacks its table and has not been migrated; server Rust WASM Opt8 is unaffected.',
   },
   '222': {
     move: [{ n: 'mt_edge3', b: 760332 }, { n: 'mt_corn', b: 1740 }],
@@ -285,8 +286,8 @@ const TABLES: Record<string, SolverTbls> = {
 
 // 内存档共享文案 (原「内存与剪枝表」三卡: huge / small / mid + 并行约束).
 const MEM_HUGE = {
-  zh: 'mmap GB 级联合/电池剪枝表 (CEE/CCE/C4C5C6 / pair huge / E0E1E2 等)。eo 默认档工作集峰值 ~24GB, 但 private 仅 ~0.1GB — 表是只读共享 mmap；high-memory 档已在 Mac 本机生成，分析器工作集尚未实测。f2leo 复用 std 的 pair huge 表 (各 ~10GB);pseudo_f2leo 用 pseudo 电池 (corner3 862MB + edge3 1GB 等), 各仅多叶子自由棱 EO 门控。本机 333 整解最优研究仅保留 Opt9（15.6 GB）与 Opt10（31.1 GB），每次只加载一档。旧 H10 统计入口当前缺表。云端 /scramble/solver 仍使用托管 opt8。sq1 用 13G jsq_full + 双 283MB 投影磁盘表 (slash 口径另零盘 ~43MB 现场建)。',
-  en: 'GB-scale joint/battery prune tables (CEE/CCE/C4C5C6 / pair huge / E0E1E2) via mmap. The default eo tier peaks at ~24GB working set but only ~0.1GB private — read-only shared mmap; the high-memory tier was generated locally on a Mac, while its analyzer working set remains unmeasured. f2leo reuses std pair huge tables (~10GB each); pseudo_f2leo uses the pseudo battery (corner3 862MB + edge3 1GB), each adding only leaf free-edge EO gating. Local 333 optimal research retains only Opt9 (15.6 GB) and Opt10 (31.1 GB), loaded one at a time. The old H10 statistics entry currently lacks its table. Cloud /scramble/solver still uses its hosted opt8 table. SQ1 uses a 13G jsq_full plus two 283MB projection disk tables (the slash metric is a separate ~43MB in-RAM build).',
+  zh: 'mmap GB 级联合/电池剪枝表 (CEE/CCE/C4C5C6 / pair huge / E0E1E2 等)。eo 默认档工作集峰值 ~24GB, 但 private 仅 ~0.1GB — 表是只读共享 mmap；high-memory 档已在 Mac 本机生成，分析器工作集尚未实测。f2leo 复用 std 的 pair huge 表 (各 ~10GB);pseudo_f2leo 用 pseudo 电池 (corner3 862MB + edge3 1GB 等), 各仅多叶子自由棱 EO 门控。本机 333 整解最优研究保留 Opt9（15.6 GB）、Opt10（31.1 GB）及 nxopt22 对照表（7.8 GB），每次只加载一档。旧 H10 统计入口当前缺表。云端 /scramble/solver 仍使用托管 opt8。sq1 用 13G jsq_full + 双 283MB 投影磁盘表 (slash 口径另零盘 ~43MB 现场建)。',
+  en: 'GB-scale joint/battery prune tables (CEE/CCE/C4C5C6 / pair huge / E0E1E2) via mmap. The default eo tier peaks at ~24GB working set but only ~0.1GB private — read-only shared mmap; the high-memory tier was generated locally on a Mac, while its analyzer working set remains unmeasured. f2leo reuses std pair huge tables (~10GB each); pseudo_f2leo uses the pseudo battery (corner3 862MB + edge3 1GB), each adding only leaf free-edge EO gating. Local 333 optimal research retains Opt9 (15.6 GB), Opt10 (31.1 GB), and an nxopt22 comparison table (7.8 GB), loaded one at a time. The old H10 statistics entry currently lacks its table. Cloud /scramble/solver still uses its hosted opt8 table. SQ1 uses a 13G jsq_full plus two 283MB projection disk tables (the slash metric is a separate ~43MB in-RAM build).',
 };
 const MEM_SMALL = {
   zh: '333-daisy 与 333-first_layer 的 native 分析器复用 mt_edge4 (17.4MB)并现场建距离/PDB；first_layer 实测稳定约 107MiB、建表峰值约 258MiB。浏览器 first_layer 另拉 26.3MiB gzip 的预构建 bundle（54.7MiB 解压,4-bit PDB）,零现场 BFS。333-222/333-123/333-223 仅微移动表；其余 small 变体按各自微表现场建。无 GB 级依赖,可与任意 huge 变体并发。',
@@ -511,6 +512,10 @@ export default function SolversPage() {
           </div>
         )}
         {(zh ? t.builtZh : t.builtEn) && <p className="solv-tbl-built">{zh ? t.builtZh : t.builtEn}</p>}
+        {t.benchmarkTables && <div className="solv-tbl-grp">
+          <div className="solv-tbl-grp-h">{tr({ zh: '独立对照表 · 不计入当前引擎总和', en: 'Separate benchmark tables · excluded from this engine total' })}</div>
+          {t.benchmarkTables.map(tblItem)}
+        </div>}
         {hasCond && <p className="solv-tbl-note">{zh
           ? `† 对角剪枝表 (10.2GB) 可选, 未计入上方总和; 设 ${s.key === 'pair' ? 'CUBE_PAIR_NO_DIAG' : 'CUBE_EO_NO_DIAG'}=1 跳过 (略损剪枝)。`
           : `† diagonal prune table (10.2GB), optional, excluded from the total above; set ${s.key === 'pair' ? 'CUBE_PAIR_NO_DIAG' : 'CUBE_EO_NO_DIAG'}=1 to skip (weaker pruning).`}</p>}

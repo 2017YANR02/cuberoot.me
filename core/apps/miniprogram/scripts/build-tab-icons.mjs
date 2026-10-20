@@ -21,6 +21,10 @@ export async function buildDouyinTabIcons(outputRoot, tabBar) {
   const directory = join(outputRoot, 'assets', 'tabbar');
   await mkdir(directory, { recursive: true });
   await copyFile(require.resolve('lucide-static/LICENSE'), join(directory, 'LICENSE.txt'));
+  const bluetooth = await readFile(require.resolve('lucide-static/icons/bluetooth.svg'), 'utf8');
+  if (!/^#[\da-f]{6}$/i.test(tabBar.selectedColor)) throw new Error('Invalid resolved icon color');
+  await sharp(Buffer.from(bluetooth.replaceAll('currentColor', tabBar.selectedColor)), { density: 243 })
+    .resize(81, 81).png().toFile(join(directory, 'bluetooth.png'));
   return Promise.all(tabBar.list.map(async (tab, index) => {
     const icon = icons[index];
     const svg = await readFile(require.resolve(`lucide-static/icons/${icon}.svg`), 'utf8');

@@ -1,8 +1,8 @@
 # Scramble samples — dr / dr / B / bin 6
-# Population in this bin: 628
+# Population in this bin: 633
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 1875958001,U2 L2 B L2 B2 D2 F' U2 F2 L2 R' U' F2 D B R',B,Kirkkonummen Kuutionvääntelyt 2022 (2022-04-15~17),333 Final A #2
@@ -48,7 +48,7 @@
 3350957001,U2 R U2 B' D' L U2 F B D B2 R U2 R U2 R2 F2 L2,B,Cavite Speedcubing Open VI 2023 (2023-12-17),333 R1 E #5
 3643880001,D2 L2 D2 L2 U2 B' U2 L2 U2 L U L' D2 L B' F' L' B2,B,Wide Bay Cubing 2024 (2024-04-06~07),333 R1 D #5
 4545284001,B' R2 F' U2 L2 F' R2 B D2 B' D2 F2 D' L U' R B' R2,B,Eugene Cubing Spring 2025 (2025-03-08),333 R2 B #5
-4833480001,F' D B2 L U2 B2 F2 U2 F2 U' L2 D' R F2 D L F' R' D2,B,Todo o Nada - San Andrés Cholula 2025 (2025-06-28~29),333bf R1 A #3
+5872706001,D' R B' D2 F' D2 F D2 B D2 R2 D B2 L2 R' D' B2 R2,B,Penn Cube Day Fall 2026 (2026-10-10),333 R2 A #4
 5814040001,R F U2 R2 B L2 F' R2 F R' D2 B' F2 R B L D' R,B,Mofunland Speedcubing Singapore 2026 (2026-09-05),333 R3 B E2
 5814149001,F' U2 L2 B2 U2 B' R2 F2 D2 F' L2 F' U' F2 U2 F R B',B,Hungarian All-Rounder 7 2026 (2026-09-05),333 R1 C #4
 2399632001,R' L2 U F2 D L2 F2 D U2 L B D2 B2 F2 L2 F2 R D B2,B,Mumbai Winter Open 2022 (2022-12-28),333oh R1 B #3
@@ -61,7 +61,7 @@
 2225447001,L2 F' L2 F' R2 D2 B2 R2 F' D2 F2 L' U2 L2 B' R2 B2 F,B,Rockies Rager Fall 2022 (2022-10-08),333oh R1 B #5
 1656126001,D2 B D2 L2 F' L2 B' U2 B2 R2 B L D2 L B2 L2 U' F,B,Barnaul Open 2021 (2021-05-15),333 Final A E2
 4099088001,L2 F U2 F2 U2 F2 L2 F' D L' D R2 F2 R F U R F R',B,Ambato Open 2024 (2024-09-14),333 R1 C #3
-387248001,L2 B U2 L' D2 L D' B' L2 B2 D' L2 D B2 D B2,B,Sumaré Open 2016 (2016-10-22),333 Final A #3
+5863512001,U2 L2 B' L2 B L2 F' L2 D2 B L2 R2 D' R' D' U2 L D',B,WetterWürfeln Wölfersheim 2026 (2026-10-03~04),333 R2 A #1
 4805039001,R D U2 R' F2 L' F2 R' F2 R2 D F' U2 F L' F R2 B,B,CubingUSA Southeast Championship 2025 (2025-06-13~15),333oh Final A E1
 5634425001,F R B2 U2 F2 U2 L2 U' R D R F2 L' U2 F' L D,B,Tomelloso Open 2026 (2026-05-16~17),333 Final B E1
 5701553001,D F R' F L' D2 F' B' U B2 U2 L2 U' B2 D' B2 D' B D2,B,Phalsbourg Saint Antoine 2026 (2026-06-13~14),333 R2 A #5
@@ -83,7 +83,7 @@
 537373001,R' L' F B' R D2 B L' B' R B2 L2 F L2 B D2 B D2,B,Beijing Open 2017 (2017-06-24~25),333 R2 B E2
 1966172001,F' L2 U2 F2 R2 U2 F R2 U2 F2 U2 B' R D2 B F2 D L D,B,Angers ESEOpen 2022 (2022-06-11~12),333 R2 A #4
 553745001,F' D2 L2 U2 F' R2 F L2 B R2 U2 R B2 L B2 L2 D U L',B,South Cube Open 2017 (2017-07-15),333 R1 C E2
-570406001,L B' U2 F2 L2 U2 L U2 D R F2 U' F2 U F2 D2 R2 D',B,Univalle Spring 2017 (2017-08-12~13),333oh R1 A #3
+5872613001,R2 D2 F' R2 L B' R L2 U2 R' U2 D2 R' D2 B R' B R,B,Wembley Quimbaya IV 2026 (2026-10-11),333bf Final B E2
 590547001,F R2 D2 B L2 D2 U2 F' R D' B L' F2 R2 D2 L2 D2,B,Israel Championship 2017 (2017-08-30~31),333 R1 C #5
 2287302001,R F R' F U' R B R2 B L2 B2 D L2 U' F2 U' R2 F2 U,B,Tashkent All Events 2022 (2022-11-04~06),333 R1 A #3
 4457707001,D L2 B2 U2 F2 D L2 B R' U2 R D2 L' D F D2 B D2 B' L2,B,Berkeley January Weekday Tricubealon 2025 (2025-01-31),333bf Final A #1

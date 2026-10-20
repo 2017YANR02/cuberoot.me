@@ -402,6 +402,18 @@ function renderFaceStickers(
       const color = getStickerColor(face, i, j, options)
       if (color !== ColorName.Transparent) {
         inner.push(renderSticker(p1, p2, p3, p4, color, options.cubeColor))
+        const index = AllFaces.indexOf(face) * cubeSize * cubeSize + i * cubeSize + j
+        const outline = options.stickerOutline?.indices.includes(index) ? options.stickerOutline
+          : options.view === 'plan' && face === Face.U
+            && color.toLowerCase() === (options.maskColor ?? ColorCode.DarkGray).toLowerCase()
+            ? options.maskedTopOutline : undefined
+        if (outline) {
+          // Use the same inset geometry for plan and projected stickers.
+          const fraction = Math.max(0, Math.min(0.5, outline.widthFraction))
+          const width = Math.hypot(p2[0] - p1[0], p2[1] - p1[1]) * fraction
+          const points = [p1, p2, p3, p4].map(p => transScale(p, centerPoint, 1 - fraction))
+          inner.push(`<polygon data-sticker-outline="true" points="${pointsAttr(points)}" fill="none" stroke="${attr(outline.color)}" stroke-opacity="1" stroke-width="${width}"/>`)
+        }
       }
     }
   }

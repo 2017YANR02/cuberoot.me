@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / G / bin 2
-# Population in this bin: 448
+# Population in this bin: 449
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 10544001,F2 D2 R' F2 L2 R' D2 R B F2 D' L' D' B2 L' R B' F2,G,Northpark Adelaide 2014 (2014-04-12),333 R2 A #3
@@ -177,7 +177,7 @@
 1254795001,U2 B2 R' U2 B2 D2 F2 L2 D2 L B' R2 U' L2 R2 F' U L' R2 F L' F,G,Sens Open 2019 (2019-08-10~11),333bf Final A #1
 1255489001,R' F' R' L' U2 B U L2 U' R' U2 R L2 B2 R2 D2 L' B2 D2 F2,G,Los Ángeles al Cubo 2019 (2019-08-10),333 R2 C E1
 3156007001,L D2 B2 D2 U2 R2 U2 R B2 R B2 D F' U2 R' B2 L F L' D',G,Kube Kids Vila Velha 2023 (2023-10-08),333 R1 A #1
-1283036001,D2 L B2 D B' L2 B2 D' F L' B' L2 U2 F' R2 L2 D2 R2 F,G,CCC Qualification Saratov 2019 (2019-08-24~25),333oh Final B #4
+5870413001,R' F' R2 L' F D' B2 R D' L2 D2 F2 D L2 D' R2 F R',G,Waremme Open 2026 (2026-10-11),333 R1 A E2
 1304075001,B2 D2 B' U2 L2 R2 B' L U2 B2 F L F' L2 D2 F2 U2,G,Republica Dominicana Nationals 2019 (2019-09-14),333 Final C #3
 2562523038,R B2 D' F U2 R2 F2 R2 B' U2 F L' B2 F2 R' B2 D' B L',G,Bothell Spring Open 2023 (2023-03-17~18),333mbf Final A #1
 1309443001,L2 F2 D2 R2 D2 F' U2 R2 B' L D2 F R B2 U2 L' D2 U' B2,G,UPM Open 2019 (2019-09-21~22),333 R1 B #5

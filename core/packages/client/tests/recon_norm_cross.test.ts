@@ -51,8 +51,9 @@ describe('什么时候挂 ⇄ 按钮', () => {
 
   it('纯单层转的十字不挂 —— 没什么可换的', () => {
     expect(hasNormalizableCrossMove("D R' F D2 // cross")).toBe(false);
-    // 转体本来就在前缀里,不算
-    expect(hasNormalizableCrossMove("x' z' D R' // cross")).toBe(false);
+    // Cross-line rotations belong in the separate inspection line.
+    expect(hasNormalizableCrossMove("x' z' D R' // cross")).toBe(true);
+    expect(hasNormalizableCrossMove("x' z' // insp\nD R' // cross")).toBe(false);
   });
 
   it('十字之后的中层不算 —— 这个按钮只管十字段', () => {
@@ -154,4 +155,30 @@ describe('ground truth 候选池硬过滤', () => {
   ])('%s 直接排除', (_name, source, blocker) => {
     expect(reconCandidateMetadataBlockers(source)).toContain(blocker);
   });
+});
+
+it.each(['cross', 'xcross', 'xxcross', 'xxxcross', 'pseudo cross', 'pxcross', 'pxxcross'])(
+  'moves cross rotations into inspection for %s and preserves the bottom cross', async label => {
+    const { isCross } = await import('@cuberoot/shared/timer/reconstruct/cfop-detect');
+    const scramble = "F' L D2 B' R F2 L U' R2 F2 R B U2 L2 D F R D";
+    const text = `x' z // insp\nU' R' U2 z L' U' x' D2 R // W ${label}\nU' y L' U' L2 U L' // GR`;
+    expect(hasNormalizableCrossMove(text)).toBe(true);
+    const result = buildNormalizedSolution(text)!;
+    expect(facesEqual(apply(algOf(text)), apply(algOf(result)))).toBe(true);
+    const crossLine = result.split('\n')[1];
+    expect(algOf(crossLine).every(token => /^[URFDLB](?:2'?|')?$/.test(token))).toBe(true);
+    const state = apply(algOf(`${scramble}\n${result.split('\n').slice(0, 2).join('\n')}`));
+    expect(isCross(state)).toBe(true);
+    expect(state.D[4]).toBe('U');
+    expect(result.split('\n')[2]).toBe(text.split('\n')[2]);
+  },
+);
+
+it('uses an empty inspection row for the prefix instead of leaving it on the cross', () => {
+  for (const move of ['r', "l'", 'Uw', 'Fw2', 'M', "S'", 'z', "x'"]) {
+    const text = `// insp\n${move} U R // xcross`;
+    const result = buildNormalizedSolution(text)!;
+    expect(facesEqual(apply(algOf(text)), apply(algOf(result)))).toBe(true);
+    expect(algOf(result.split('\n')[1]).every(token => /^[URFDLB](?:2'?|')?$/.test(token))).toBe(true);
+  }
 });

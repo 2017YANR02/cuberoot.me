@@ -16,7 +16,8 @@ import {
 } from '@cuberoot/shared/smart-cube/moyu32';
 import type { GyroSink } from '@cuberoot/shared/smart-cube/gan-crypto';
 
-import { resolveCubeMac } from './mac';
+import { macStringToBytes } from '@cuberoot/shared/timer/external/mac';
+import { resolveMoyu32Address, moyu32ManufacturerMac } from '@cuberoot/shared/smart-cube/moyu32';
 
 import type { BleDeviceRef, BleTransport } from './transport';
 
@@ -32,6 +33,7 @@ export interface Moyu32CubeStatus {
 }
 
 export interface Moyu32CubeCallbacks {
+  onVerifiedMac?(mac: string): void;
   onDisconnect(): void;
   onNeedMac?(deviceName: string): Promise<string | null>;
   onMove(move: string, deviceTimestamp?: number): void;
@@ -83,7 +85,6 @@ export class Moyu32CubeConnection {
   private async connectDevice(device: BleDeviceRef): Promise<void> {
     if (!matchesMoyu32Name(device.name)) throw new Error('unsupported MoYu32 protocol');
     const generation = ++this.generation;
-    const mac = await resolveCubeMac(device, 'moyu32', this.callbacks.onNeedMac);
     if (generation !== this.generation) throw new Error('smart cube connection closed');
 
     this.deviceId = device.id;
@@ -114,7 +115,20 @@ export class Moyu32CubeConnection {
       throw new Error('MoYu32 service or characteristic unavailable');
     }
 
-    const cipher = createMoyu32Cipher(mac);
+    const address = await resolveMoyu32Address({
+      id: device.id, name: device.name,
+      hints: [device.id, moyu32ManufacturerMac(device.manufacturerData), device.macAddress],
+      requestMac: () => this.callbacks.onNeedMac?.(device.name) ?? Promise.resolve(null),
+      onVerified: this.callbacks.onVerifiedMac,
+      io: {
+        current,
+        write: frame => this.transport.write(device.id, MOYU32_SERVICE_UUID, MOYU32_WRITE_CHARACTERISTIC_UUID, frame),
+        subscribe: receive => this.transport.subscribe(device.id, MOYU32_SERVICE_UUID,
+          MOYU32_NOTIFY_CHARACTERISTIC_UUID, value => receive(bytesFromView(value))),
+      },
+    });
+    if (!current()) throw new Error('smart cube connection closed');
+    const cipher = createMoyu32Cipher(macStringToBytes(address));
     let writeTail: Promise<void> = Promise.resolve();
     const send = (command: Uint8Array, strict = true, begin?: () => boolean): Promise<void> => {
       const encrypted = cipher.encrypt(command);
@@ -146,7 +160,9 @@ export class Moyu32CubeConnection {
     let confirmed: { facelets: string; counter: number } | null = null;
     let pending: Uint8Array[] = [];
     const apply = (plain: Uint8Array) => {
+        if (protocolError.value || !current()) return;
         const notification = decodeMoyu32Notification(plain, decodeState);
+        if (decodeState.historyLost) { reportProtocolError(); return; }
         if (notification.state) {
           stateReady = true;
           this.callbacks.onState?.(notification.state);

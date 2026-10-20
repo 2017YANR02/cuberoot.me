@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxxcross / Y / bin 11
-# Population in this bin: 533
+# Population in this bin: 536
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 1568001,B' U2 D' F U' L' B' R B' D2 R B2 R B2 L2 U2 B2 U2 B2 L',Y,Open Colca 2014 (2014-03-21),333 R1 A #1
@@ -12,7 +12,7 @@
 34703001,D L2 U' B2 U F2 U2 B2 L2 U' R' D2 B L' R F D2 B' D L B R,Y,Chojnice Open 2014 (2014-07-05~06),333bf R1 A E1
 1976033001,F D2 R' B2 R2 F2 D U2 L2 D B2 U2 F' U2 L' R2 F D B,Y,Ciu Open 2022 (2022-06-18~19),333 R1 A #1
 5724448051,F U2 B2 F D2 B' D2 R2 D2 U L' B' L U2 L2 U R' B R' B,Y,Ljubljana Blind & Big 2026 (2026-06-27~28),333mbf Final A #1
-64855001,B2 R2 D2 L2 F2 U B2 U L B2 D' F2 D' F L2 B' F' D' B',Y,Cuthberts Open 2014 (2014-10-11~12),333oh Final A E1
+5868121001,U L D' R B U F' U' B2 D L2 U F2 D' B2 U' L B' D2 L2,Y,Newmarket Side Events 2026 (2026-10-10),333bf Final A #1
 5111960001,D2 R2 U' F2 D2 B2 R2 B' L2 U2 R2 L' B2 U B2 U' L2 R,Y,SuNxNter Speedcubing 2025 (2025-10-11~12),333 R1 B #5
 5270333001,U R F' U2 L2 D' B2 U' R2 B2 D2 B R2 D R2 B L2 R' F',Y,Bay Area Speedcubin' 68 - Belmont 2025 (2025-12-13),333 R1 A #2
 85552001,F' L2 F L2 F' U2 B' L' B' R2 D2 R' F' R D F2 R' U2,Y,Newport Winter Open 2014 (2014-12-06),333oh Final A #4
@@ -170,7 +170,7 @@
 2737159001,D F' D2 R F2 D2 L' B2 R U2 L' U2 R2 B' D' L B' F L F2,Y,Salt Lake Utah Summer 2023 (2023-05-19~21),333 Final A #2
 5628892001,L2 R2 D R2 U2 F2 B U2 B' D2 B' L' D2 L F' U' R',Y,Cubing at Vivira A 2026 (2026-05-09),333 R1 B #3
 1120497001,F' R2 B' R2 F R2 B2 U2 R2 B' U R D' U' B' U2 L2 F2,Y,Campus Classic Cape Town 2019 (2019-04-28),333oh Final B E1
-4540589001,B2 R2 F2 D2 F2 R' U2 L D' R B' L2 F L2 D2 R B' R2,Y, Ruta Cubera Queretaro NxN 2025 (2025-03-01~02),333 R2 A E2
+4540589001,B2 R2 F2 D2 F2 R' U2 L D' R B' L2 F L2 D2 R B' R2,Y,Ruta Cubera Queretaro NxN 2025 (2025-03-01~02),333 R2 A E2
 1136707001,F2 U2 B' R2 D2 L U' L2 U B2 R2 B' D U2,Y,London Open 2019 (2019-05-11~12),333 R2 B #5
 5629820001,D' U B2 R2 D R2 L' D' B' F' D R2 B2 F' D' B D2 U2,Y,Cubing in Westerly RI 2026 (2026-05-09~10),333oh R2 B #4
 3672758001,B2 U F2 U2 B2 D R2 D F2 B U2 F D2 R2 F' D2,Y,Circle City Cubing 2024 (2024-04-13),333 R2 B #1

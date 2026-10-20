@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxcross / BGWY / bin 4
-# Population in this bin: 698
+# Population in this bin: 703
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 1882840001,U2 B2 R2 D U' L2 F2 U F R2 D' R2 B' D' L' U2 F U L,B,Paris Open 2022 (2022-04-16~18),333 R2 C #1
@@ -77,10 +77,10 @@
 5752054001,F' B U2 R D F' R' D2 R' B' R2 D2 B' R2 D2 F R2 U2 B2,W,Nanchang Summer 2026 (2026-07-18),333 Final A #2
 379726001,L D2 R U2 R' U2 B R B' D' R U' F' R' D' F D',Y,Cubing ATMOSphere 2016 (2016-10-15~16),333oh R1 H #5
 1278459001,F2 R2 U2 F' R2 B' D2 F2 U2 L2 R D2 B' D L D' U R2 F',G,Teresina Open 2019 (2019-08-24~25),333 R1 C #3
-5323360001,F' D2 F' U2 B' F2 U R2 U' R F R' B' R' F' D2 U',G,Try Cubing in St Helens 2026 (2026-01-15),333 R1 A #3
+5875631001,U' R2 B2 D' F2 L2 F2 R2 F2 L' U' L B2 L2 R F R B2,W,Thailand Championship 2026 (2026-10-09~11),333oh Final A #1
 1246242001,B2 R2 U' R2 F2 L2 D R2 U' B R D U2 B' R' B D R2 U' L2,W,CIC Pasto Open 2019 (2019-08-03~04),333 R1 A #5
 1940044027,L F' D L2 D B R D2 R B' R U2 R2 U2 L2 U2 B2 L2 B R2,W,Please Be Quiet Colorado 2022 (2022-05-28),333mbf Final A #2
-4574758001,B' L2 U2 B D2 F2 U2 F U' R2 D2 B U' L' U B2 U F,Y,Lipovljani Newcomer Day 2025 (2025-03-16),333 R2 A #1
+5873496001,B2 L' B R' F2 U2 L' U F U2 R' D2 L' U2 R F2 R F2 U2 B2 L',B,IIT Gandhinagar Cube Open 2026 (2026-10-10~11),333bf Final A #4
 5288143001,F2 R2 D2 F R' D2 L' F2 R2 U2 R2 U2 B' R' D' R' B L2 R2 B R',W,DC Hyderabad Winter Open 2025 (2025-12-20~21),333bf R1 B E2
 5690429005,D' F2 L2 D2 R' B2 L' F D B D2 F' R2 F2 R2 U2 B2 R2 U2 L2 U',Y,Headache in Kode 2026 (2026-06-05~07),333mbf Final B #3
 433258001,B2 U' L2 R2 D B2 D2 R2 F R F2 L2 B' L' D' F' L B' D,G,Santa Fe Open 2016 (2016-12-10),333 R1 D E1
@@ -181,7 +181,7 @@
 4252236051,F' R B' F R2 U2 F D2 B L2 R2 U L D2 F' R F' U' R' B' L2,B,5BLD in a Madison Fall 2024 (2024-11-02~03),333mbf Final A #1
 5035191001,U F R L U L B R D' B D U2 R2 L' U2 R2 L',Y,Fitchburg Fall 2025 (2025-09-20),333 R2 B #4
 5693041049,F2 L2 F U2 B L2 R2 F2 R2 L U B' R2 F D U F U R2 B' L2,G,Brilliant Big & Blind Bravo Orlando 2026 (2026-06-06~07),333mbf Final B #1
-883323001,U2 R2 B D2 F' D2 B2 U2 F U' L' D2 U F R' F U F2 L' B2,B,Tokyo Pyraminx Returns 2018 (2018-09-22),333 R1 A #3
+5874012001,L2 F2 U2 F2 U2 L2 B2 F' D2 R' D' R D' L' B2 F' D2 B,W,Portugal Championship 2026 (2026-10-09~11),333bf R1 A #2
 888111001,F' R U' L B R2 L' F L2 U2 F2 D' L2 F2 D F2 D R2 U2,G,Xela Open 2018 (2018-09-22~23),333 R1 D #1
 1473395001,U2 F2 B L' B' U R' D B2 L2 B L2 F' R2 U2 F2 U2 F L2,W,Medan 10th Anniversary 2019 (2019-12-21~22),333 Final B #3
 889206027,F' R2 F2 L2 D2 F D2 F' D2 L2 U B2 F L2 R2 D' L R D2 B' L B,G,Philippine Championship 2018 (2018-09-28~30),333mbf Final A #1

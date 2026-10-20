@@ -11,7 +11,13 @@ describe('autoSpaceMoves — 相邻转动自动加空格', () => {
     expect(typed('FB').value).toBe('FB');
   });
 
-  it('其余相邻面必须加空格', () => {
+  it.each(['FS', 'SF', 'MR', 'ML', 'RM', 'LM', 'UE', 'ED', "F2S'", "M'R"])(
+    '%s 同轴中层连写保持原文和光标', value => {
+      expect(typed(value)).toEqual({ value, cursor: value.length });
+    },
+  );
+
+  it('其余相邻面必须加空格' , () => {
     expect(typed('rU').value).toBe('r U');
     expect(typed('Dr').value).toBe('D r');
     expect(typed('RF').value).toBe('R F');

@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_cross / WY / bin 2
-# Population in this bin: 295
+# Population in this bin: 296
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 4280293025,L' F' D L' D2 L' F B' L B2 U' R2 L2 U' R2 D L2 U' B',W,Kubing in Kapiti 2024 (2024-11-09),333mbf Final A #1
@@ -121,7 +121,7 @@
 4699776001,B' R2 D F' R2 B' R' B D R2 F B U2 F L2 U2 D2 L,W,Skewbing in School Kennesaw 2025 (2025-05-03),333 Final A E1
 5170456001,U2 B' L' D F2 D2 F L' B U2 D2 R2 D' B2 D2 R2 F2 B2 R2,W,Thailand Cool Down 2025 (2025-11-08~09),333 R1 C #3
 1853941001,R' F2 L2 U2 B2 U L2 B2 U' R B2 F' L' D2 L F' D' R B2,W,Ohio State Expo Open 2022 (2022-04-01~03),333 R1 A #5
-1858779001,L' F' D2 L U' F' L B' R2 B2 D' B2 U2 B2 L2 D2 R2 D2 R',Y,Slow N Steady Spring 2022 (2022-04-02),333oh Final A E2
+5862765001,U2 B2 D B2 F2 L2 U' F' D2 L2 R' U2 B L' U L B2 D2,Y,Sydney Cubing Decathlon 2026 (2026-10-02~04),333 R1 B #3
 1885251001,U' F' R2 D2 R2 F U' L' D F R2 D2 R F2 B2 R2 F2 R L',Y,Aficube A 2022 (2022-04-17~18),333 R2 D #5
 1912867001,F' L' F' B R' D F2 B' L' R2 U D2 R2 F2 D2 L2 U F,W,Princeton Spring 2022 (2022-05-07),333 Final A E1
 4734495001,F' B2 R2 D' L2 U R2 D' U' F D' F2 D' R' D' F L2 R' B,W,Grove City Weeknight Trios 2025 (2025-05-22),333 Final A E1

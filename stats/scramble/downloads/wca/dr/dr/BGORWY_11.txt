@@ -1,8 +1,8 @@
 # Scramble samples — dr / dr / BGORWY / bin 11
-# Population in this bin: 213
+# Population in this bin: 215
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-10-04
+# Generated: 2026-10-17
 # Columns: id,scramble,bottom_color,competition,round
 
 27465001,U' F' L B' R2 U' F B2 R' B' D B2 U' D' F2 B2 L2 U' L2,B,Mingdao Cube Carnival 2014 (2014-06-15),333oh R2 A #4
@@ -130,7 +130,7 @@
 3163263001,D F R2 B2 R' F2 R2 D2 L R' F' L' R U L' U2 L' D F',B,Beskid Cubing 2023 (2023-10-14~15),333 R1 D #3
 3274483001,R U B' L' D F U F' R2 B L2 D2 L2 U2 B2 D2 F2 R F' D,B,Don't NxN Tlaxcala 2023 (2023-11-18~19),333 R1 D #4
 3277351001,D F' R2 F2 R' B2 L D2 B2 F2 L' F2 L R' U B' D F D2 R U' L B2,B,Chongqing Open 2023 (2023-11-18),333bf Final A #1
-5794318001,L2 D2 B D2 F U2 L2 R2 D' R D U' L' F D2 F2 L' R2 B',B,Tierrasanta Pizza Party 2026 (2026-08-23),333oh Final E #4
+5867487001,F2 L F2 D2 B D2 F' L2 F' D' R' B F L2 D L' U' B',B,Cube-bers in Iloilo 2026 (2026-10-04),333 R1 E #2
 3393107001,D2 F' D R B2 L2 B2 F2 U' L2 F2 D U R F U R D B' L',B,Autotalo Anime Adventure I 2024 (2024-01-06~07),333oh R2 A #3
 3437787001,F D2 L2 U R2 U F2 D U B2 R U2 F' D2 L F U2 L F' R,B,Nimble Hands in Noblesville 2024 (2024-01-21),333 R1 B #3
 5780696001,U' F' D2 R2 F2 R2 F L2 F2 D2 L2 R' D2 B U' F' R' D L' U,B,Shin Kong Cube Open - New Taipei 2026 (2026-08-09),333 R1 B #2
@@ -187,7 +187,7 @@
 5669152001,F' B' U2 B' L2 U D B' R' D L2 F2 R D2 B2 L D2 R2 F2 B2,B,Waterloo Spring 2026 (2026-05-30),333oh R2 A #1
 5136615006,D L D L R D2 L R2 B2 D2 U2 R2 F' D' U F' L2 B' R' B2 L2 U',B,New Zealand Cubing Decathlon 2025 (2025-10-25~26),333mbf Final A #1
 5141946001,L B' U' D2 L2 U2 F2 L' U2 L U2 R' F U' R B' U L2 D',B,San Antonio Fall 2025 (2025-10-25~26),333 R2 A #5
-5783314001,B' U' R' D B2 R2 D2 B R2 D2 B D2 F' R D' F R U2 L2,B,BC Championship 2026 (2026-08-07~09),333 R1 C #1
+5865121001,F' D L F2 D2 F2 U2 L F2 L D2 L2 B' U2 L' F2 L D' B' U,B,Río Grande TDF 2026 (2026-09-26~27),333oh Final A #2
 5186583001,R' U' F U R D R2 U' B2 F2 R2 F2 U2 R' B R F' U' L2 D' U2 F R' U' F,B,Polish Championship 2025 (2025-11-13~16),333fm Final A #1
 5247999001,L' R2 D2 U2 F L2 D2 B2 D2 R' U R D U2 F U' R B' L,B,Cube Factory Santa Claus Race Brzeziny 2025 (2025-12-06~07),333oh R2 A E2
 5280173001,R' U' L2 D' F' B L' B2 L U R2 D2 R2 F2 U B2 U2 R2 U' B2 L',B,Master Cube Salvador B 2025 (2025-12-13),333 R1 B #5

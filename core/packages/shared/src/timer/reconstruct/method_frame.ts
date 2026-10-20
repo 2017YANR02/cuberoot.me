@@ -23,7 +23,7 @@ export function methodFrame(method: MethodId, scramble: string, moves: SolveMove
   if (method === 'cfop') return normalizeSolve(scramble, moves, { preferredRotation });
   const candidates = [...new Set([...(preferredRotation == null ? [] : [preferredRotation]), ...rotations])];
   let best = { scramble, moves, rotation: '' };
-  let first = Infinity;
+  let bestScore = [Infinity, Infinity, Infinity];
   for (const rotation of candidates) {
     const perm = facePermFor(rotation);
     const scr = conjugateSequence(scramble, perm);
@@ -33,13 +33,24 @@ export function methodFrame(method: MethodId, scramble: string, moves: SolveMove
     if (rotation === candidates[0]) best = { scramble: scr, moves: framed, rotation };
     let state;
     try { state = applyScramble(3, scr); } catch { continue; }
-    // A stage already present in the scramble fixes the frame too.
-    for (let i = -1; i < framed.length && i < first; i++) {
+    // An incidental block in the scramble must not lock the entire report to
+    // the wrong axis. Prefer the frame completing both blocks first, then its
+    // first milestone. The same frame is used for detection and presentation.
+    const blockStage = method === 'roux' ? 1 : 2;
+    let first = Infinity, second = Infinity, blocks = Infinity;
+    for (let i = -1; i < framed.length; i++) {
       if (i >= 0) state = applyOneToken(state, framed[i].m);
-      if (!METHODS[method].stages[0].done(state, facesToFacelets(state))) continue;
-      first = i;
-      best = { scramble: scr, moves: framed, rotation };
+      const facelets = facesToFacelets(state);
+      if (first === Infinity && METHODS[method].stages[0].done(state, facelets)) first = i;
+      if (second === Infinity && METHODS[method].stages[1].done(state, facelets)) second = i;
+      if (!METHODS[method].stages[blockStage].done(state, facelets)) continue;
+      blocks = i;
       break;
+    }
+    if (blocks < bestScore[0] || blocks === bestScore[0] && (first < bestScore[1]
+      || first === bestScore[1] && second < bestScore[2])) {
+      bestScore = [blocks, first, second];
+      best = { scramble: scr, moves: framed, rotation };
     }
   }
   return best;

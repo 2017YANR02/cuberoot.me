@@ -57,7 +57,7 @@ describe('Timer source controls follow puzzle capabilities', () => {
     'lattice', 'hyperx', 'latticex', 'masterbrilic', 'masterftov2',
     'quadx', 'dinoocta', 'fto5', 'fto6', 'eto', 'radiocrystal',
     'cube3skewb', 'heliskewb', 'comboctahedron', 'circoradiolarian', 'icosababyface',
-    'cube2heli', 'cube3heli', 'radiojewel', 'radioweb',
+    'cube2heli', 'cube3heli', 'radiojewel', 'radioweb', 'catscradle',
   ] as const)(
     'hides competition controls for %s and restores them on returning to 333 without changing settings',
     (event) => {
@@ -71,17 +71,12 @@ describe('Timer source controls follow puzzle capabilities', () => {
     },
   );
 
-  it('retains the native puzzle manual queue and persists edits without changing its source', () => {
+  it('leaves manual entry to the scramble strip without duplicating or changing the queue', () => {
     state.settings.scrambleSource = 'manual';
     render('dogic');
     expect(host.querySelector('[data-testid="wca-source-config"]')).toBeNull();
-    const textarea = host.querySelector<HTMLTextAreaElement>('textarea[aria-label="Manual scrambles"]');
-    expect(textarea?.value).toBe("UFR UFL'");
-    act(() => {
-      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
-        ?.call(textarea, "UFR UFL'\nUBR");
-      textarea?.dispatchEvent(new Event('input', { bubbles: true }));
-    });
-    expect(state.updateSettings).toHaveBeenCalledExactlyOnceWith({ manualScrambles: "UFR UFL'\nUBR" });
+    expect(host.querySelector('textarea')).toBeNull();
+    expect(state.settings.manualScrambles).toBe("UFR UFL'");
+    expect(state.updateSettings).not.toHaveBeenCalled();
   });
 });

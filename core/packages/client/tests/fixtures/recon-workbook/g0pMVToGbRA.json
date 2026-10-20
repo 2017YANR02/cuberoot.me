@@ -1,0 +1,424 @@
+{
+  "source": "https://cuberoot.me/zh/timer?share=g0pMVToGbRA",
+  "recording": {
+    "scramble": "R' U' D R' U2 B R U' F' L R' F2 D U2 L R D'",
+    "moves": [
+      {
+        "m": "U'",
+        "ts": 0
+      },
+      {
+        "m": "L'",
+        "ts": 296
+      },
+      {
+        "m": "U",
+        "ts": 531
+      },
+      {
+        "m": "U",
+        "ts": 588
+      },
+      {
+        "m": "F'",
+        "ts": 780
+      },
+      {
+        "m": "B",
+        "ts": 996
+      },
+      {
+        "m": "U'",
+        "ts": 1265
+      },
+      {
+        "m": "D",
+        "ts": 1778
+      },
+      {
+        "m": "B'",
+        "ts": 2013
+      },
+      {
+        "m": "L",
+        "ts": 2086
+      },
+      {
+        "m": "F",
+        "ts": 2214
+      },
+      {
+        "m": "L'",
+        "ts": 2290
+      },
+      {
+        "m": "F'",
+        "ts": 2386
+      },
+      {
+        "m": "L'",
+        "ts": 2558
+      },
+      {
+        "m": "B",
+        "ts": 2657
+      },
+      {
+        "m": "D'",
+        "ts": 2831
+      },
+      {
+        "m": "F",
+        "ts": 2941
+      },
+      {
+        "m": "D'",
+        "ts": 3017
+      },
+      {
+        "m": "F'",
+        "ts": 3093
+      },
+      {
+        "m": "D",
+        "ts": 3169
+      },
+      {
+        "m": "D",
+        "ts": 3245
+      },
+      {
+        "m": "F",
+        "ts": 3300
+      },
+      {
+        "m": "D'",
+        "ts": 3377
+      },
+      {
+        "m": "F'",
+        "ts": 3480
+      },
+      {
+        "m": "D",
+        "ts": 3682
+      },
+      {
+        "m": "D",
+        "ts": 3756
+      },
+      {
+        "m": "B'",
+        "ts": 3961
+      },
+      {
+        "m": "D'",
+        "ts": 4050
+      },
+      {
+        "m": "B",
+        "ts": 4141
+      },
+      {
+        "m": "D'",
+        "ts": 4477
+      },
+      {
+        "m": "R",
+        "ts": 4593
+      },
+      {
+        "m": "D",
+        "ts": 4735
+      },
+      {
+        "m": "R'",
+        "ts": 4808
+      },
+      {
+        "m": "D",
+        "ts": 5357
+      },
+      {
+        "m": "D",
+        "ts": 5406
+      },
+      {
+        "m": "B'",
+        "ts": 5512
+      },
+      {
+        "m": "L'",
+        "ts": 5651
+      },
+      {
+        "m": "B",
+        "ts": 5728
+      },
+      {
+        "m": "D",
+        "ts": 5837
+      },
+      {
+        "m": "B",
+        "ts": 5902
+      },
+      {
+        "m": "D'",
+        "ts": 5968
+      },
+      {
+        "m": "B'",
+        "ts": 6066
+      },
+      {
+        "m": "L",
+        "ts": 6165
+      },
+      {
+        "m": "D'",
+        "ts": 6678
+      },
+      {
+        "m": "D'",
+        "ts": 7133
+      },
+      {
+        "m": "F'",
+        "ts": 7441
+      },
+      {
+        "m": "F'",
+        "ts": 7515
+      },
+      {
+        "m": "D'",
+        "ts": 7682
+      },
+      {
+        "m": "F",
+        "ts": 7738
+      },
+      {
+        "m": "R",
+        "ts": 7798
+      },
+      {
+        "m": "F'",
+        "ts": 7920
+      },
+      {
+        "m": "D",
+        "ts": 7952
+      },
+      {
+        "m": "F",
+        "ts": 8022
+      },
+      {
+        "m": "F",
+        "ts": 8069
+      },
+      {
+        "m": "D'",
+        "ts": 8110
+      },
+      {
+        "m": "F'",
+        "ts": 8216
+      },
+      {
+        "m": "R'",
+        "ts": 8295
+      },
+      {
+        "m": "F",
+        "ts": 8342
+      },
+      {
+        "m": "B",
+        "ts": 8972
+      },
+      {
+        "m": "D",
+        "ts": 9064
+      },
+      {
+        "m": "B'",
+        "ts": 9168
+      },
+      {
+        "m": "U",
+        "ts": 9244
+      },
+      {
+        "m": "D'",
+        "ts": 9258
+      },
+      {
+        "m": "B",
+        "ts": 9345
+      },
+      {
+        "m": "B",
+        "ts": 9384
+      },
+      {
+        "m": "D'",
+        "ts": 9493
+      },
+      {
+        "m": "B",
+        "ts": 9580
+      },
+      {
+        "m": "D'",
+        "ts": 9680
+      },
+      {
+        "m": "B'",
+        "ts": 9751
+      },
+      {
+        "m": "D",
+        "ts": 9774
+      },
+      {
+        "m": "B'",
+        "ts": 9842
+      },
+      {
+        "m": "D",
+        "ts": 9895
+      },
+      {
+        "m": "B",
+        "ts": 10050
+      },
+      {
+        "m": "B",
+        "ts": 10097
+      },
+      {
+        "m": "U'",
+        "ts": 10223
+      },
+      {
+        "m": "D",
+        "ts": 10259
+      }
+    ],
+    "timeMs": 10256.5,
+    "model": "gan-v4",
+    "gyro": "RwIAXgAAE1wfUAAlFWQQSQBwEW0MPgBaE2kRQwA7DmcMSADY/WUITABUAGQBTwBbA2EHUgCWCF0UVAAeBFwOVgDRBGQBTwEPBWf0SQADDGj1RwBXDmXySgB4DmP1TgBaFF/1UgBaDmDyUQDSCl/qUQB430vCSgCW3kG1SAB420S6SAA820zGSwDX2EnVVQAE9VXyXQCNEV//UgAeCWH2UQB4AGTrTACWCF/xUwEOAmHqTgAeB1/nUABaEF72UwDYCWL2UACQEV/9UgAeElr9WABa4kwAYQC0FGn+RQCWGnr5GAA8Dn73CABa/H75+AB4B371+gA8/Xvj9wCb/n3r9QA3C372+wB4Fnju4wB4A2fmuwBZCF3urABbA1X7ogEOAVf/pAA1E2LysgAWGGbpvABpE2DqsgB4/FT9oQC09U0AnAAk7U33nQAd91LnowBV8VL8oABa8Fb4pADw9lT2ogA8+VXyowB47FH8oAA86FvprgCW6VXwpgBa70/3nwA860zznQB/507zoABT61LzogB45lH0ogBa01UJrgBgwypZywA1wR1l3QC7vDZU2QAdylAwvQBzuDlL1AA8siJc7ABa7FnyqQC05Fr+qwAIwFEuxgCOA1nkqgBa/1npqABa+FnsqABa+ljzpgEOBVnvpwBa8lT4owBa9lACngCW/1f/owA8A1r9pgB4/VYEowA8+FYEowB47lMKogBa9VUHowA8GFr7qgB+E1ztrQDL81z4qgB5BWD0rg=="
+  },
+  "issue": "F1 保留实际双层转动：U r′ U R U′ R′ U′ r，不能改写成 L/B 手法。",
+  "displayRows": [
+    {
+      "colors": [],
+      "diagrams": [],
+      "hrefs": [],
+      "label": "",
+      "moves": "R' U' D R' U2 B R U' F' L R' F2 D U2 L R D'"
+    },
+    {
+      "colors": [
+        "Yellow Red"
+      ],
+      "diagrams": [],
+      "hrefs": [],
+      "label": "// inspection",
+      "moves": "x2 y"
+    },
+    {
+      "colors": [
+        "White"
+      ],
+      "diagrams": [],
+      "hrefs": [],
+      "label": "//  cross",
+      "moves": "D' B' D2 R' L D'"
+    },
+    {
+      "colors": [
+        "Green Orange"
+      ],
+      "diagrams": [
+        "iso"
+      ],
+      "hrefs": [
+        "/alg/3x3/f2l/w+"
+      ],
+      "label": "// ",
+      "moves": "U r' U R U' R' U' r"
+    },
+    {
+      "colors": [
+        "Green Red"
+      ],
+      "diagrams": [
+        "iso"
+      ],
+      "hrefs": [
+        "/alg/3x3/f2l/u+"
+      ],
+      "label": "// ",
+      "moves": "U' R U' R' U2 R U' R'"
+    },
+    {
+      "colors": [
+        "Blue Red"
+      ],
+      "diagrams": [
+        "iso"
+      ],
+      "hrefs": [
+        "/alg/3x3/f2l/v-"
+      ],
+      "label": "// ",
+      "moves": "U2 L' U' L y' U' R U R'"
+    },
+    {
+      "colors": [
+        "Orange Blue"
+      ],
+      "diagrams": [
+        "iso"
+      ],
+      "hrefs": [
+        "/alg/3x3/f2l/e+"
+      ],
+      "label": "// ",
+      "moves": "y' U2 R' F' R U R U' R' F"
+    },
+    {
+      "colors": [],
+      "diagrams": [
+        "plan"
+      ],
+      "hrefs": [
+        "/alg/3x3/oll/f+"
+      ],
+      "label": "// OLL-F+",
+      "moves": "U2' r2' D' r U r' D r2 U' r' U' r"
+    },
+    {
+      "colors": [],
+      "diagrams": [
+        "plan"
+      ],
+      "hrefs": [
+        "/alg/3x3/pll/gd"
+      ],
+      "label": "// PLL-Gd",
+      "moves": "R U R' U' D R2 U' R U' R' U R' U R2 D' U"
+    }
+  ],
+  "approval": {
+    "status": "approved",
+    "confirmedBy": "user",
+    "instruction": "收录到回归测试",
+    "confirmedAt": "2026-10-17T09:11:39.306Z",
+    "contentHash": "319a00585a86b1ec52ffec6d923409a61b4d7e1d8ceb0b88a04713172600c5e3"
+  }
+}

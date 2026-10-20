@@ -1,6 +1,6 @@
 {
   "name": "@cuberoot/mobile",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "cuberoot": {
     "kind": "app"
@@ -22,15 +22,18 @@
     "android:apk:direct": "pnpm cap:sync:android && node scripts/build-android.ts direct",
     "android:apk:play": "pnpm cap:sync:android && node scripts/build-android.ts play",
     "ios:doctor": "node ../../scripts/mobile-ios-toolchain.mjs doctor",
+    "ios:release": "node ../../scripts/ios-release.mts",
     "ios:build": "pnpm cap:sync:ios && node ../../scripts/mobile-ios-toolchain.mjs build",
     "ios:open": "cap open ios",
-    "ios:run": "pnpm ios:doctor && pnpm cap:sync:ios && cap run ios"
+    "ios:run": "pnpm ios:doctor && pnpm cap:sync:ios && cap run ios",
+    "watch:build": "node ../../scripts/mobile-ios-toolchain.mjs watch-build"
   },
   "dependencies": {
     "@aparajita/capacitor-secure-storage": "8.0.0",
     "@capacitor-community/bluetooth-le": "8.3.0",
     "@capacitor/android": "8.5.3",
     "@capacitor/app": "8.1.1",
+    "@capacitor/app-launcher": "8.0.1",
     "@capacitor/browser": "8.0.4",
     "@capacitor/clipboard": "8.0.1",
     "@capacitor/core": "8.5.3",
@@ -40,6 +43,7 @@
     "@cuberoot/app-ui": "workspace:*",
     "@cuberoot/shared": "workspace:*",
     "@cuberoot/timer-ui": "workspace:*",
+    "cubing": "0.63.3",
     "lucide-react": "1.8.0",
     "react": "19.2.4",
     "react-dom": "19.2.4"

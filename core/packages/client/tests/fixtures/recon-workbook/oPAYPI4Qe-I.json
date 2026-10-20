@@ -1,0 +1,421 @@
+{
+  "source": "https://cuberoot.me/zh/timer?share=oPAYPI4Qe-I",
+  "recording": {
+    "scramble": "B2 F L2 U R B2 L2 F D B2 U2 B' D F2 L' U' F' L",
+    "moves": [
+      {
+        "m": "L'",
+        "ts": 118.69999998807907
+      },
+      {
+        "m": "U",
+        "ts": 487.69999998807907
+      },
+      {
+        "m": "B'",
+        "ts": 610.6999999880791
+      },
+      {
+        "m": "L'",
+        "ts": 781.6999999880791
+      },
+      {
+        "m": "F",
+        "ts": 868.6999999880791
+      },
+      {
+        "m": "U",
+        "ts": 1488.699999988079
+      },
+      {
+        "m": "U",
+        "ts": 1600.699999988079
+      },
+      {
+        "m": "D'",
+        "ts": 4147.699999988079
+      },
+      {
+        "m": "B",
+        "ts": 4227.699999988079
+      },
+      {
+        "m": "D'",
+        "ts": 4382.699999988079
+      },
+      {
+        "m": "B'",
+        "ts": 4543.699999988079
+      },
+      {
+        "m": "F'",
+        "ts": 4701.699999988079
+      },
+      {
+        "m": "D",
+        "ts": 4775.699999988079
+      },
+      {
+        "m": "F",
+        "ts": 4922.699999988079
+      },
+      {
+        "m": "D",
+        "ts": 6687.699999988079
+      },
+      {
+        "m": "D",
+        "ts": 6779.699999988079
+      },
+      {
+        "m": "R'",
+        "ts": 6891.699999988079
+      },
+      {
+        "m": "D'",
+        "ts": 6986.699999988079
+      },
+      {
+        "m": "D'",
+        "ts": 7404.699999988079
+      },
+      {
+        "m": "R",
+        "ts": 7504.699999988079
+      },
+      {
+        "m": "D",
+        "ts": 7580.699999988079
+      },
+      {
+        "m": "R'",
+        "ts": 7644.699999988079
+      },
+      {
+        "m": "D'",
+        "ts": 7695.699999988079
+      },
+      {
+        "m": "D'",
+        "ts": 7742.699999988079
+      },
+      {
+        "m": "R",
+        "ts": 7814.699999988079
+      },
+      {
+        "m": "R",
+        "ts": 8735.699999988079
+      },
+      {
+        "m": "D",
+        "ts": 8822.699999988079
+      },
+      {
+        "m": "R'",
+        "ts": 8944.699999988079
+      },
+      {
+        "m": "D",
+        "ts": 8997.699999988079
+      },
+      {
+        "m": "D",
+        "ts": 9064.699999988079
+      },
+      {
+        "m": "R",
+        "ts": 9117.699999988079
+      },
+      {
+        "m": "D'",
+        "ts": 9152.699999988079
+      },
+      {
+        "m": "R'",
+        "ts": 9260.699999988079
+      },
+      {
+        "m": "D'",
+        "ts": 10802.699999988079
+      },
+      {
+        "m": "L'",
+        "ts": 11004.699999988079
+      },
+      {
+        "m": "D'",
+        "ts": 11508.699999988079
+      },
+      {
+        "m": "L",
+        "ts": 11621.699999988079
+      },
+      {
+        "m": "D'",
+        "ts": 11726.699999988079
+      },
+      {
+        "m": "B",
+        "ts": 11944.699999988079
+      },
+      {
+        "m": "D",
+        "ts": 12102.699999988079
+      },
+      {
+        "m": "B'",
+        "ts": 12370.699999988079
+      },
+      {
+        "m": "D",
+        "ts": 12882.699999988079
+      },
+      {
+        "m": "D",
+        "ts": 12953.699999988079
+      },
+      {
+        "m": "B'",
+        "ts": 13632.699999988079
+      },
+      {
+        "m": "F",
+        "ts": 13647.699999988079
+      },
+      {
+        "m": "B'",
+        "ts": 13665.699999988079
+      },
+      {
+        "m": "U'",
+        "ts": 13859.699999988079
+      },
+      {
+        "m": "L'",
+        "ts": 13916.699999988079
+      },
+      {
+        "m": "U",
+        "ts": 13993.699999988079
+      },
+      {
+        "m": "L",
+        "ts": 14072.699999988079
+      },
+      {
+        "m": "B",
+        "ts": 14184.699999988079
+      },
+      {
+        "m": "L'",
+        "ts": 14326.699999988079
+      },
+      {
+        "m": "B",
+        "ts": 14484.699999988079
+      },
+      {
+        "m": "F'",
+        "ts": 14492.699999988079
+      },
+      {
+        "m": "R'",
+        "ts": 15703.699999988079
+      },
+      {
+        "m": "L",
+        "ts": 15703.699999988079
+      },
+      {
+        "m": "R'",
+        "ts": 15768.699999988079
+      },
+      {
+        "m": "L",
+        "ts": 15768.699999988079
+      },
+      {
+        "m": "U",
+        "ts": 15839.699999988079
+      },
+      {
+        "m": "U",
+        "ts": 15896.699999988079
+      },
+      {
+        "m": "R",
+        "ts": 15981.699999988079
+      },
+      {
+        "m": "L'",
+        "ts": 16005.699999988079
+      },
+      {
+        "m": "B",
+        "ts": 16163.699999988079
+      },
+      {
+        "m": "L",
+        "ts": 16250.699999988079
+      },
+      {
+        "m": "R'",
+        "ts": 16261.699999988079
+      },
+      {
+        "m": "R'",
+        "ts": 16316.699999988079
+      },
+      {
+        "m": "L",
+        "ts": 16316.699999988079
+      },
+      {
+        "m": "F",
+        "ts": 16415.69999998808
+      },
+      {
+        "m": "L",
+        "ts": 16511.69999998808
+      },
+      {
+        "m": "R'",
+        "ts": 16518.69999998808
+      },
+      {
+        "m": "L",
+        "ts": 16567.69999998808
+      },
+      {
+        "m": "R'",
+        "ts": 16575.69999998808
+      },
+      {
+        "m": "B",
+        "ts": 16632.69999998808
+      },
+      {
+        "m": "R",
+        "ts": 16698.69999998808
+      },
+      {
+        "m": "L'",
+        "ts": 16706.69999998808
+      },
+      {
+        "m": "D",
+        "ts": 17025.69999998808
+      },
+      {
+        "m": "D",
+        "ts": 17104.69999998808
+      }
+    ],
+    "timeMs": 17040.5,
+    "model": "gan-v4",
+    "gyro": "RwIAjQAABmHzrwBZ/172qwA992L9sABZ9WMIsgDT7mMPtAAJ82YSuABTBWnsuwB1DGzjxAB4CWjcwQBaD2TduwBa+WrxvQB462b/uAAe6WEFsgBa7mIQswB45F0ZsQBa21wpvABe0lg3xwCS0FU9yQA91Fg3xAB32VskuQA86mMGtAB4/Gn5uQA8Amv2vQC0Bm71wgDS/2n8uAB4+2X+swC092L/sAC0514TsABa1FQ5wgC111g1wQBa5mAetwBa9GYKtgB3+WgItwBa9WcLtwBa82YPuADT8mQNtAB38GATsQA87V8QrwCs3VYcrgAm1lIgrgCh5loargCM9mEXsgBa6mEkugA752AetwB86l0VrwA45FgVqwB451wTrgBa52ARswB46mcNugA862wLwQBb6n0EAQCW7X0FDwA78HsCGwEs8Hz/FAC07338EQC07X34DgFK6Hz5DQDS8337EwAeBXv7HwBa+3z7GwB49H35FQDS+H34EQCW6nvuDABj9X33DgCNDHv1HAB49n32EgAe8n34DwEO7n31DQAe6Hz1CwBa7Xz4EQCX8nz7FwAn63v6FQBu7nz7EgB47334DgA80Xb5AwBdwm769wBX4nv6AwCX5Hz/CABayXL7BwA70nb6AABa3Xr5/gC02nn4BQCW33r4BgBa43v5BQDT6nz0AwB47X30CADR6nz3CwGG53z6CAB443v9BwCW4Hr9DQBaxGwOHAB4yW0OHwDSw2oOHgCWv2kKHACCzXP+EgBQ1XbvBwBf13fy/ACw23frBQAD3XnwCgBW4XoBDQBa5XsBEAB46Hz0CwB46HvsBwA/5Xv1CAEL5Xv2DgCa4nv8DACS5nwADAEO5XsDEwDS63sCFgC453XXDQAB5VipAgB02V+1/wBdxmHM5wB19mGwCwB39Vyp/AAh9lup9AB17lio8QBa6Uqc9QBk7XfY/QBQ833t/wB4+H3tBwA8+nzuEgDT9333FQCz9n37EwEs8n32DQDy8HzwDgAcUF/n+QCceR/z7wBYdCjv4wA5TVvc6QBZRWPb7gB5S1/f7wBddN4D2QB+bMsN2ABaU64j3ABQ2ZUyFgBhAJA7CgBTLZ1A8AA8HpE07gCWFown6AA8FIga6A=="
+  },
+  "issue": "No F2L rotation cascades; OLL(CP)-412 exact link; keep matched PLL M formula.",
+  "displayRows": [
+    {
+      "moves": "B2 F L2 U R B2 L2 F D B2 U2 B' D F2 L' U' F' L",
+      "label": "",
+      "colors": [],
+      "hrefs": [],
+      "diagrams": []
+    },
+    {
+      "moves": "x2",
+      "label": "// inspection ",
+      "colors": [
+        "Yellow Blue"
+      ],
+      "hrefs": [],
+      "diagrams": []
+    },
+    {
+      "moves": "L' D F' L' B D D",
+      "label": "// cross",
+      "colors": [
+        "White"
+      ],
+      "hrefs": [],
+      "diagrams": []
+    },
+    {
+      "moves": "U' F U' F' B' U B",
+      "label": "// ",
+      "colors": [
+        "Green Orange"
+      ],
+      "hrefs": [],
+      "diagrams": [
+        "iso"
+      ]
+    },
+    {
+      "moves": "U2 R' U2' R U R' U2' R",
+      "label": "// ",
+      "colors": [
+        "Green Red"
+      ],
+      "hrefs": [
+        "/alg/3x3/f2l/m-"
+      ],
+      "diagrams": [
+        "iso"
+      ]
+    },
+    {
+      "moves": "R U R' U2 R U' R'",
+      "label": "// ",
+      "colors": [
+        "Blue Red"
+      ],
+      "hrefs": [
+        "/alg/3x3/f2l/w+"
+      ],
+      "diagrams": [
+        "iso"
+      ]
+    },
+    {
+      "moves": "U' L' U' L U' F U F'",
+      "label": "// ",
+      "colors": [
+        "Orange Blue"
+      ],
+      "hrefs": [
+        "/alg/3x3/f2l/v-"
+      ],
+      "diagrams": [
+        "iso"
+      ]
+    },
+    {
+      "moves": "y' U2 R'M' b' R' b U R U' M",
+      "label": "// OLL(CP)-412",
+      "colors": [],
+      "hrefs": [
+        "/alg/3x3/ollcp/ollcp41-2"
+      ],
+      "diagrams": [
+        "plan"
+      ]
+    },
+    {
+      "moves": "y M2' U2 M U M2' U M2' U M U2",
+      "label": "// PLL-Z",
+      "colors": [],
+      "hrefs": [
+        "/alg/3x3/pll/z"
+      ],
+      "diagrams": [
+        "plan"
+      ]
+    }
+  ]
+,
+  "approval": { "status": "pending" }
+}
