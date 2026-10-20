@@ -69,7 +69,8 @@
     "@ai-sdk/deepseek": "3.0.63",
     "@ai-sdk/openai-compatible": "^3.0.67",
     "@langchain/textsplitters": "^1.0.2",
-    "minisearch": "^7.2.0"
+    "minisearch": "^7.2.0",
+    "@app-foundation/workspace-policy": "https://github.com/2017YANR02/app-foundation/releases/download/v0.6.0/app-foundation-workspace-policy-0.1.0.tgz"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.0",
