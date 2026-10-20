@@ -7,7 +7,8 @@ import { TIMER_MANUAL_SCRAMBLE_EMPTY_COPY } from '@cuberoot/shared/timer/manual-
 import { TIMER_HISTORY_QUICK_ACTION_IDS, TIMER_HISTORY_QUICK_ACTION_COPY, timerHistoryQuickActionPenalty, timerHistoryMoveTargets } from '@cuberoot/shared/timer/history';
 import type { EventId, Solve } from '@cuberoot/shared/timer/types';
 import { effectiveMs } from '@cuberoot/shared/timer/types';
-import { TIMER_SCRAMBLE_CLICK_ACTIONS, TIMER_SCRAMBLE_CLICK_TITLE_COPY, timerScrambleClickEffect, TIMER_SETTING_FIELD_CONTRACTS } from '@cuberoot/shared/timer/settings-contract';
+import { TIMER_SCRAMBLE_CLICK_ACTIONS, TIMER_SCRAMBLE_CLICK_TITLE_COPY, timerScrambleClickEffect, TIMER_SETTING_FIELD_CONTRACTS, TIMER_SETTING_CATEGORY_CONTRACTS } from '@cuberoot/shared/timer/settings-contract';
+import { timerHidesRunningUi } from '@cuberoot/shared/timer/display-settings';
 import { NativeTimer, nativeTimerEvents } from './native-timer';
 import { createNativeWcaPool, nativeCompetitionCatalog, loadNativeCompetitionScrambles } from './native-timer-wca';
 import { searchTimerWcaCompetitions, timerWcaRoundGroupOptions, timerWcaRoundShortLabel, type TimerWcaCompetition, type TimerWcaCompetitionScramble } from '@cuberoot/shared/timer/wca-source-config';
@@ -35,13 +36,24 @@ const rankCountries = ['', ...searchCountries('', { limit: 250 }).map(row => row
 // Only settings with a native effect. Labels and available values remain shared.
 const nativeSettings = TIMER_SETTING_FIELD_CONTRACTS.filter(f => [
   'timingEnabled', 'hideTime', 'runningPrecision', 'precision', 'showCubePreview', 'autoSessionForEvent', 'autoEventForSession',
+  'compactScramble', 'hideAllUiWhileRunning', 'timerFontScale', 'scrambleFontScale',
 ].includes(f.storagePath ?? ''));
+const nativeCategories = TIMER_SETTING_CATEGORY_CONTRACTS.filter(c => ['timer', 'smart-cube', 'scramble', 'appearance', 'data'].includes(c.id));
+function settingValues(f: typeof nativeSettings[number]): readonly (boolean | number | string)[] {
+  if (f.value.kind === 'boolean') return [false, true];
+  if ('values' in f.value) return f.value.values ?? [];
+  if (f.value.kind === 'number-range') {
+    const { min, max, step } = f.value;
+    return Array.from({ length: Math.round((max - min) / step) + 1 }, (_, i) => Number((min + step * i).toFixed(2)));
+  }
+  return [];
+}
 function settingRows(t: NativeTimer) {
   return nativeSettings.map(f => {
-    const values: readonly (boolean | number | string)[] = f.value.kind === 'boolean' ? [false, true] : 'values' in f.value ? f.value.values : [];
-    const labels = values.map(value => typeof value === 'boolean' ? tr(value ? { en: 'On', zh: '开启' } : { en: 'Off', zh: '关闭' }) : String(value));
+    const values = settingValues(f);
+    const labels = values.map(value => typeof value === 'boolean' ? tr(value ? { en: 'On', zh: '开启' } : { en: 'Off', zh: '关闭' }) : f.value.kind === 'number-range' ? `${Math.round(Number(value) * 100)}%` : String(value));
     const index = values.indexOf(t.settings[f.storagePath as keyof typeof t.settings] as boolean | number | string);
-    return { key: f.storagePath, label: tr(f.copy), labels, index, value: labels[index] };
+    return { key: f.storagePath, category: f.category, boolean: f.value.kind === 'boolean', checked: index === 1, label: tr(f.copy), labels, index: Math.max(0, index), value: labels[index] };
   });
 }
 
@@ -179,6 +191,10 @@ function refresh(page: NativePage, history = false) {
   } catch { images.previewError = tr({ en: 'Unable to draw this state', zh: '无法绘制当前状态' }); }
   page.setData({ phase: t.state.phase, display: t.display(), scramble: t.scramble, error: t.error, busy: t.busy, generating: t.loading, sourceLine: t.sourceLine, canPrevious: t.canPrevious,
     ...images, guidance: !t.cubeKnown ? labels.unknown : t.guidance.match ? labels.matched : labels.unmatched,
+    hideChrome: timerHidesRunningUi(t.state.phase, t.settings),
+    compactScramble: t.settings.compactScramble,
+    timerFontSize: Math.min(108 * t.settings.timerFontScale, 580 / Math.max(t.display().length * 0.65, 1)),
+    scrambleFontSize: 36 * t.settings.scrambleFontScale,
     event: t.event, eventName: nativeTimerEvents().find(e => e.id === t.event)?.name,
     eventIndex: nativeTimerEvents().findIndex(e => e.id === t.event),
     sourceIndex: ['random', 'manual', 'wca'].indexOf(t.currentSource),
@@ -211,7 +227,7 @@ function generate(page: NativePage, event?: string) {
 }
 export function createNativeTimerPageOptions(): WechatMiniprogram.Page.Options<Record<string, unknown>, WechatMiniprogram.Page.CustomOption> {
   return {
-    data: { nativeTimerPage: true, appearanceStyle: '', copy: copy(), display: '0.000', phase: 'idle', scramble: '', generating: true, sheet: '', summary: { rows: [] } },
+    data: { nativeTimerPage: true, appearanceStyle: '', copy: copy(), display: '0.000', phase: 'idle', scramble: '', generating: true, sheet: '', settingsCategory: 'timer', settingsCategoryIndex: 0, summary: { rows: [] } },
     onLoad() {
       const p = this as unknown as NativePage;
       p.nativeTimer = new NativeTimer(miniProgramApi(), undefined, createNativeWcaPool());
@@ -223,7 +239,7 @@ export function createNativeTimerPageOptions(): WechatMiniprogram.Page.Options<R
       if (!p.nativeTimer) p.nativeTimer = new NativeTimer(miniProgramApi(), undefined, createNativeWcaPool());
       p.nativeTimer.onChange = () => refresh(p, true);
       p.nativeTimer.visible = true;
-      this.setData({ copy: copy(), events: nativeTimerEvents(), inspectionOptions: [copy().off, '15 s'] });
+      this.setData({ copy: copy(), events: nativeTimerEvents(), inspectionOptions: [copy().off, '15 s'], settingsCategories: nativeCategories.map(c => tr(c.label)) });
       applyNativeAppearance(); miniProgramApi().setNavigationBarTitle({ title: copy().title });
       if (!p.nativeTimer.scramble) generate(p);
       refresh(p, true);
@@ -328,10 +344,20 @@ export function createNativeTimerPageOptions(): WechatMiniprogram.Page.Options<R
       if (key === 'tap') t.updateSettings({ scrambleClickAction: TIMER_SCRAMBLE_CLICK_ACTIONS[index] ?? 'start' });
       const field = nativeSettings.find(f => f.storagePath === key);
       if (field) {
-        const values = field.value.kind === 'boolean' ? [false, true] : 'values' in field.value ? field.value.values : [];
+        const values = settingValues(field);
         if (index >= 0 && index < values.length) t.updateSettings({ [String(key)]: values[index] });
       }
       refresh(p, true);
+    },
+    selectSettingsCategory(e: WechatMiniprogram.PickerChange) {
+      const index = Number(e.detail.value), category = nativeCategories[index];
+      if (category) this.setData({ settingsCategory: category.id, settingsCategoryIndex: index });
+    },
+    toggleSetting(e: WechatMiniprogram.SwitchChange) {
+      const p = this as unknown as NativePage, t = p.nativeTimer;
+      const field = nativeSettings.find(f => f.storagePath === e.currentTarget.dataset.setting && f.value.kind === 'boolean');
+      if (!t || t.busy || !field) return;
+      t.updateSettings({ [field.storagePath!]: e.detail.value }); refresh(p, true);
     },
     toggleRankScope(e: WechatMiniprogram.TouchEvent) {
       const p = this as unknown as NativePage, t = p.nativeTimer;

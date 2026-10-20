@@ -28,6 +28,9 @@ function fixture() {
     clearWca(event: WechatMiniprogram.TouchEvent): void;
     closeSheet(): void;
     selectSource(event: WechatMiniprogram.PickerChange): void;
+    selectSettingsCategory(event: WechatMiniprogram.PickerChange): void;
+    toggleSetting(event: WechatMiniprogram.SwitchChange): void;
+    timerUp(): void;
   };
   const page = {
     ...options, data: { ...options.data }, active: true, nativeTimer: timer,
@@ -51,6 +54,24 @@ describe('native timer source sheet lifecycle', () => {
     expect(timer.currentSource).toBe('random');
     page.closeSheet();
     expect(timer.currentSource).toBe('random');
+  });
+
+  it('groups settings and hides only surrounding controls during a run', () => {
+    const { page, timer } = fixture();
+    timer.setManualScrambles('R U');
+    page.openSheet(event({ sheet: 'settings' }));
+    page.selectSettingsCategory({ detail: { value: '3' } } as WechatMiniprogram.PickerChange);
+    expect(page.data.settingsCategory).toBe('appearance');
+    page.toggleSetting({ currentTarget: { dataset: { setting: 'hideAllUiWhileRunning' } }, detail: { value: true } } as unknown as WechatMiniprogram.SwitchChange);
+    expect(timer.settings.hideAllUiWhileRunning).toBe(true);
+    expect(page.data.hideChrome).toBe(false);
+    page.closeSheet();
+    timer.down(); timer.dispatch({ type: 'hold-ready' }); page.timerUp();
+    expect(page.data.phase).toBe('running');
+    expect(page.data.hideChrome).toBe(true);
+    timer.down(); page.timerUp();
+    expect(page.data.phase).toBe('stopped');
+    expect(page.data.hideChrome).toBe(false);
   });
 
   it('shows the current competition rounds and groups', async () => {

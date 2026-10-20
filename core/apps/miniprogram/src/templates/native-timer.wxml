@@ -1,5 +1,5 @@
 <view class="native-timer" style="{{appearanceStyle}}">
-  <view class="nt-toolbar">
+  <view class="nt-toolbar" hidden="{{hideChrome}}">
     <button class="nt-control" bindtap="connectCube" disabled="{{busy}}" aria-label="{{copy.bluetooth}}" hover-class="press-feedback"><image class="nt-icon" src="/assets/tabbar/bluetooth.png" aria-hidden="true" /></button>
     <picker mode="selector" range="{{events}}" range-key="name" value="{{eventIndex}}" bindchange="selectEvent" disabled="{{busy || generating}}">
       <view class="nt-control nt-event">{{eventName}}</view>
@@ -7,48 +7,62 @@
     <picker range="{{copy.sourceOptions}}" value="{{sourceIndex}}" bindchange="selectSource" disabled="{{busy || generating}}" aria-label="{{copy.source}}"><view class="nt-control">{{copy.sourceOptions[sourceIndex]}}</view></picker>
     <button class="nt-control" bindtap="openSheet" data-sheet="settings" disabled="{{busy}}" aria-label="{{copy.settings}}" hover-class="press-feedback"><image class="nt-icon" src="/assets/tabbar/settings-2.png" aria-hidden="true" /></button>
   </view>
-  <view wx:if="{{deviceName}}" class="nt-device">{{deviceName}} <text wx:if="{{battery !== null}}"> · {{battery}}%</text></view>
-  <view wx:if="{{externalName}}" class="nt-device">{{externalName}}</view>
+  <view wx:if="{{deviceName}}" hidden="{{hideChrome}}" class="nt-device">{{deviceName}} <text wx:if="{{battery !== null}}"> · {{battery}}%</text></view>
+  <view wx:if="{{externalName}}" hidden="{{hideChrome}}" class="nt-device">{{externalName}}</view>
   <text wx:if="{{error}}" class="nt-error" aria-role="alert">{{error}}</text>
-  <button hover-class="press-feedback" class="nt-scramble" bindtap="scrambleTap" bindtouchstart="scrambleDown" bindtouchend="scrambleUp" bindtouchcancel="timerCancel" disabled="{{generating || phase === 'running'}}" aria-label="{{scramble}}">{{generating ? copy.loading : scramble}}</button>
-  <text wx:if="{{sourceLine}}" class="nt-hint nt-source">{{sourceLine}}</text>
+  <button hover-class="press-feedback" hidden="{{hideChrome}}" class="nt-scramble {{compactScramble ? 'nt-scramble--compact' : ''}}" style="font-size: {{scrambleFontSize}}rpx" bindtap="scrambleTap" bindtouchstart="scrambleDown" bindtouchend="scrambleUp" bindtouchcancel="timerCancel" disabled="{{generating || phase === 'running'}}" aria-label="{{scramble}}">{{generating ? copy.loading : scramble}}</button>
+  <text wx:if="{{sourceLine}}" hidden="{{hideChrome}}" class="nt-hint nt-source">{{sourceLine}}</text>
   <button class="nt-clock nt-clock--{{phase}}" bindtouchstart="timerDown" bindtouchend="timerUp" bindtouchcancel="timerCancel" aria-label="{{hint}}" hover-class="press-feedback">
-    <text class="nt-time">{{display}}</text>
+    <text class="nt-time" style="font-size: {{timerFontSize}}rpx">{{display}}</text>
   </button>
-  <view wx:if="{{preview || livePreview}}" class="nt-previews">
+  <view wx:if="{{preview || livePreview}}" hidden="{{hideChrome}}" class="nt-previews">
     <view wx:if="{{preview}}" class="nt-preview"><image mode="aspectFit" src="{{preview}}" binderror="imageError" aria-label="{{copy.preview}}" /><text wx:if="{{cubeConnected}}" class="nt-hint">{{copy.preview}}</text></view>
     <view wx:if="{{livePreview}}" class="nt-preview"><image mode="aspectFit" src="{{livePreview}}" binderror="imageError" aria-label="{{copy.live}}" /><text class="nt-hint">{{copy.live}}</text></view>
   </view>
   <text wx:if="{{previewError}}" class="nt-error">{{previewError}}</text>
-  <text wx:if="{{cubeConnected}}" class="nt-hint nt-cube-hint">{{guidance}}</text>
+  <text wx:if="{{cubeConnected}}" hidden="{{hideChrome}}" class="nt-hint nt-cube-hint">{{guidance}}</text>
   <button hover-class="press-feedback" wx:if="{{phase === 'ready' || phase === 'inspecting'}}" class="nt-control" bindtap="cancelAttempt">{{copy.cancel}}</button>
-  <view class="nt-footer">
+  <view class="nt-footer" hidden="{{hideChrome}}">
     <button class="nt-control" bindtap="previousScramble" disabled="{{busy || generating || !canPrevious}}" aria-label="{{copy.previous}}" hover-class="press-feedback"><image class="nt-icon" src="/assets/tabbar/chevron-left.png" aria-hidden="true" /></button>
     <button class="nt-control" bindtap="openSheet" data-sheet="history" disabled="{{busy}}" hover-class="press-feedback">{{copy.results}}</button>
     <button class="nt-control" bindtap="nextScramble" disabled="{{busy || generating}}" aria-label="{{copy.next}}" hover-class="press-feedback"><image class="nt-icon" src="/assets/tabbar/chevron-right.png" aria-hidden="true" /></button>
   </view>
-  <button hover-class="press-feedback" class="nt-stats" bindtap="openSheet" data-sheet="statistics"><text>{{copy.best}} {{summary.best}}</text><text>ao5 {{summary.ao5}}</text><text>ao12 {{summary.ao12}}</text></button>
-  <text wx:if="{{rankLine}}" class="nt-rank" aria-label="{{copy.rankHint}}">{{rankLine}}</text>
+  <button hover-class="press-feedback" hidden="{{hideChrome}}" class="nt-stats" bindtap="openSheet" data-sheet="statistics"><text>{{copy.best}} {{summary.best}}</text><text>ao5 {{summary.ao5}}</text><text>ao12 {{summary.ao12}}</text></button>
+  <text wx:if="{{rankLine}}" hidden="{{hideChrome}}" class="nt-rank" aria-label="{{copy.rankHint}}">{{rankLine}}</text>
   <view wx:if="{{sheet}}" id="nt-backdrop" class="nt-backdrop" bindtap="closeSheet">
     <view class="nt-sheet">
       <view class="nt-sheet-header"><text>{{sheet === 'wca' ? copy.wca : sheet === 'settings' ? copy.settings : sheet === 'manual' ? copy.manualEntry : sheet === 'scrambles' ? copy.manualScrambles : sheet === 'create' ? copy.newSession : sheet === 'rename' ? copy.rename : sheet === 'comment' ? copy.comment : sheet === 'restore' ? copy.restore : sheet === 'import' ? copy.import : sheet === 'statistics' ? copy.statistics : copy.results}}</text><button hover-class="press-feedback" class="nt-control" bindtap="closeSheet">{{copy.close}}</button></view>
       <scroll-view scroll-y="{{true}}" class="nt-sheet-content">
       <block wx:if="{{sheet === 'settings'}}">
+        <picker range="{{settingsCategories}}" value="{{settingsCategoryIndex}}" bindchange="selectSettingsCategory"><view class="nt-category">{{settingsCategories[settingsCategoryIndex]}}</view></picker>
+        <block wx:if="{{settingsCategory === 'timer'}}">
         <view class="nt-setting"><text>{{copy.inspectionSetting}}</text><picker range="{{inspectionOptions}}" value="{{inspectionIndex}}" data-setting="inspection" bindchange="changeSetting"><view class="nt-control">{{inspectionOptions[inspectionIndex]}}</view></picker></view>
         <view class="nt-setting"><text>{{copy.holdSetting}}</text><picker range="{{holdOptions}}" value="{{holdIndex}}" data-setting="hold" bindchange="changeSetting"><view class="nt-control">{{holdOptions[holdIndex]}}</view></picker></view>
+        </block>
+        <block wx:if="{{settingsCategory === 'appearance'}}">
         <view class="nt-setting"><text>{{copy.tapSetting}}</text><picker range="{{copy.tapOptions}}" value="{{tapIndex}}" data-setting="tap" bindchange="changeSetting"><view class="nt-control">{{copy.tapOptions[tapIndex]}}</view></picker></view>
-        <view wx:for="{{settingRows}}" wx:key="key" class="nt-setting"><text>{{item.label}}</text><picker range="{{item.labels}}" value="{{item.index}}" data-setting="{{item.key}}" bindchange="changeSetting"><view class="nt-control">{{item.value}}</view></picker></view>
+        </block>
+        <block wx:for="{{settingRows}}" wx:key="key"><view wx:if="{{item.category === settingsCategory}}" class="nt-setting"><text>{{item.label}}</text><switch wx:if="{{item.boolean}}" checked="{{item.checked}}" disabled="{{busy}}" aria-label="{{item.label}}" data-setting="{{item.key}}" bindchange="toggleSetting" /><picker wx:else range="{{item.labels}}" value="{{item.index}}" data-setting="{{item.key}}" bindchange="changeSetting"><view class="nt-control">{{item.value}}</view></picker></view></block>
+        <block wx:if="{{settingsCategory === 'appearance'}}">
         <view class="nt-setting"><text>{{copy.rankScopes}}</text><view class="nt-actions"><button hover-class="press-feedback" wx:for="{{rankScopes}}" wx:key="scope" class="nt-control" data-scope="{{item.scope}}" bindtap="toggleRankScope">{{item.scope}}{{item.selected ? ' ✓' : ''}}</button></view></view>
         <view class="nt-setting"><text>{{copy.rankCountry}}</text><picker range="{{rankCountries}}" value="{{rankCountryIndex}}" bindchange="changeRankCountry"><view class="nt-control">{{rankCountries[rankCountryIndex]}}</view></picker></view>
+        </block>
+        <block wx:if="{{settingsCategory === 'data'}}">
         <view class="nt-setting"><text>{{copy.session}}</text><picker range="{{sessions}}" range-key="name" value="{{sessionIndex}}" bindchange="selectSession"><view class="nt-control">{{sessions[sessionIndex].name}}</view></picker></view>
         <view class="nt-actions"><button hover-class="press-feedback" class="nt-control" bindtap="sessionAction" data-action="create">{{copy.newSession}}</button><button hover-class="press-feedback" class="nt-control" bindtap="sessionAction" data-action="rename">{{copy.rename}}</button><button hover-class="press-feedback" class="nt-control" bindtap="sessionAction" data-action="clear">{{copy.clearSession}}</button><button hover-class="press-feedback" class="nt-control" bindtap="sessionAction" data-action="delete" disabled="{{sessions.length < 2}}">{{copy.deleteSession}}</button></view>
-        <view class="nt-setting"><button hover-class="press-feedback" class="nt-control" bindtap="randomScrambles">{{copy.random}}{{source === 'random' ? ' ✓' : ''}}</button><button hover-class="press-feedback" class="nt-control" bindtap="openSheet" data-sheet="scrambles">{{copy.manualScrambles}}{{source === 'manual' ? ' ✓' : ''}}</button></view>
-        <button hover-class="press-feedback" class="nt-control" bindtap="openSheet" data-sheet="wca">{{copy.wca}}{{source === 'wca' ? ' ✓' : ''}}</button>
         <button hover-class="press-feedback" class="nt-control" bindtap="openSheet" data-sheet="manual">{{copy.manualEntry}}</button>
-        <button hover-class="press-feedback" wx:if="{{canResetCube}}" disabled="{{calibrating}}" class="nt-control" bindtap="calibrateCube">{{copy.calibrate}}</button>
-        <button hover-class="press-feedback" class="nt-control" bindtap="connectExternalTimer">{{externalConnected ? copy.disconnect : copy.externalTimer}}</button>
         <view class="nt-actions"><button hover-class="press-feedback" class="nt-control" bindtap="exportBackup">{{copy.backup}}</button><button hover-class="press-feedback" class="nt-control" bindtap="openSheet" data-sheet="restore">{{copy.restore}}</button><button hover-class="press-feedback" class="nt-control" bindtap="openSheet" data-sheet="import">{{copy.import}}</button></view>
         <view class="nt-actions"><button hover-class="press-feedback" class="nt-control" bindtap="cloudBackup" data-action="upload" disabled="{{cloudBusy}}">{{copy.cloudUpload}}</button><button hover-class="press-feedback" class="nt-control" bindtap="cloudBackup" data-action="download" disabled="{{cloudBusy}}">{{copy.cloudDownload}}</button></view>
+        </block>
+        <block wx:if="{{settingsCategory === 'scramble'}}">
+        <view class="nt-setting"><button hover-class="press-feedback" class="nt-control" bindtap="randomScrambles">{{copy.random}}{{source === 'random' ? ' ✓' : ''}}</button><button hover-class="press-feedback" class="nt-control" bindtap="openSheet" data-sheet="scrambles">{{copy.manualScrambles}}{{source === 'manual' ? ' ✓' : ''}}</button></view>
+        <button hover-class="press-feedback" class="nt-control" bindtap="openSheet" data-sheet="wca">{{copy.wca}}{{source === 'wca' ? ' ✓' : ''}}</button>
+        </block>
+        <block wx:if="{{settingsCategory === 'smart-cube'}}">
+        <button hover-class="press-feedback" class="nt-control" bindtap="connectCube">{{cubeConnected ? copy.disconnect : copy.bluetooth}}</button>
+        <button hover-class="press-feedback" wx:if="{{canResetCube}}" disabled="{{calibrating}}" class="nt-control" bindtap="calibrateCube">{{copy.calibrate}}</button>
+        <button hover-class="press-feedback" class="nt-control" bindtap="connectExternalTimer">{{externalConnected ? copy.disconnect : copy.externalTimer}}</button>
+        </block>
       </block>
       <block wx:elif="{{sheet === 'wca'}}">
         <picker range="{{copy.wcaModes}}" value="{{settings.wcaScrambleMode === 'comp' ? 0 : 1}}" data-setting="mode" bindchange="changeWca"><view class="nt-control">{{settings.wcaScrambleMode === 'comp' ? copy.wcaModes[0] : copy.wcaModes[1]}}</view></picker>

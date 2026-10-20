@@ -11,6 +11,8 @@ import type { createWcaScramblePool, WcaSourceSpec, WcaDispensedScramble } from 
 import { timerWcaScrambleSourceLine, resolveTimerWcaSourceCore, normalizeTimerWcaSourceCoreSettings } from '@cuberoot/shared/timer/wca-source-config';
 import { localizeCompName } from '@cuberoot/shared/comp-localize';
 import { normalizeTimerTimingSettings, normalizeTimerScrambleClickAction, normalizeTimerScramblePreviewSettings } from '@cuberoot/shared/timer/settings-contract';
+import { normalizeTimerDisplaySettings } from '@cuberoot/shared/timer/display-settings';
+import { normalizeTimerTypography } from '@cuberoot/shared/timer/typography';
 import { timerCanSwitchScramble, timerCanHandleAttemptPress } from '@cuberoot/shared/timer/input-contract';
 import { activateTimerSession, createAndActivateTimerSession, renameTimerSession, deleteTimerSession, clearTimerSession, timerSessionSnapshot, timerSessionSelectedEvent, TIMER_SESSION_UI_COPY, type TimerSessionMutationResult, selectTimerEventSession, moveTimerSolveToSession } from '@cuberoot/shared/timer/session';
 import { parseTimerEntry } from '@cuberoot/shared/timer/manual-entry';
@@ -212,6 +214,8 @@ export class NativeTimer {
     if (this.busy) return;
     this.store.settings = { ...this.settings, ...patch, ...normalizeTimerTimingSettings({ ...this.settings, ...patch }),
       ...normalizeTimerScramblePreviewSettings({ ...this.settings, ...patch }),
+      ...normalizeTimerDisplaySettings({ ...this.settings, ...patch }),
+      ...normalizeTimerTypography({ ...this.settings, ...patch }),
       ...normalizeTimerWcaSourceCoreSettings({ ...this.settings, ...patch }),
       scrambleClickAction: normalizeTimerScrambleClickAction(patch.scrambleClickAction ?? this.settings.scrambleClickAction) };
     this.persist();

@@ -21,6 +21,14 @@ function fixture() {
 function start(timer: NativeTimer) { timer.down(); timer.dispatch({ type: 'hold-ready' }); timer.up(); }
 
 describe('native timer adapter', () => {
+  it('persists shared display settings and clamps typography through the shared contract', () => {
+    const { timer, storage } = fixture();
+    timer.updateSettings({ compactScramble: true, hideAllUiWhileRunning: true, timerFontScale: 3, scrambleFontScale: 0.1 });
+    const reopened = new NativeTimer(storage);
+    expect(reopened.settings).toMatchObject({ compactScramble: true, hideAllUiWhileRunning: true, timerFontScale: 2, scrambleFontScale: 0.6 });
+    timer.dispose(); reopened.dispose();
+  });
+
   it('navigates retained scrambles and moves the original solve without changing its fields', () => {
     const { timer } = fixture();
     timer.setManualScrambles('R U\nF2\nD2');
