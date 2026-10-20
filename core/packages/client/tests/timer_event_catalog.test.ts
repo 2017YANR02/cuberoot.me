@@ -24,6 +24,7 @@ import {
 } from '@cuberoot/shared/timer';
 import { nxnSizeForEvent } from '@/app/[lang]/timer/_lib/cube/colors';
 import { cstimerEvent } from '@/lib/cstimer-scramble';
+import { NATIVE_PUZZLES, NATIVE_PUZZLE_IDS } from '@cuberoot/puzzle-solvers/native-puzzles';
 
 const EXPECTED_WCA: EventId[] = [
   '333', '222', '444', '555', '666', '777', '333bld', '333fm', '333oh',
@@ -138,52 +139,32 @@ describe('shared timer event picker catalog', () => {
     }
   });
 
-  it('uses dedicated icons where available and explicit native-puzzle text badges', () => {
+  it('uses the same structural artwork for physical puzzles and keeps training badges', () => {
     expect(cstimerEvent('gear')?.iconClass).toBe('puzzle-gear');
+    expect(timerEventPickerItem('gear').iconClass).toBe('puzzle-gear');
+    expect(timerEventPickerItem('fto').iconClass).toBe('puzzle-fto');
+    expect(timerEventPickerItem('mpyram').iconClass).toBe('puzzle-masterpyraminx');
     expect(timerEventPickerItem('333mr').iconClass).toBe('unofficial-333_mirror_blocks');
     expect(timerEventPickerItem('333mr').textLabel).toBeUndefined();
     expect(timerEventPickerItem('pyraminx_duo')).toMatchObject({
-      nameEn: 'Pyraminx Duo', nameZh: '二重奏', textLabel: 'Duo',
+      nameEn: 'Pyraminx Duo', nameZh: '二重奏', iconClass: 'unofficial-pyraminx_duo',
     });
-    expect(timerEventPickerItem('pyraminx_duo').iconClass).toBeUndefined();
     expect(timerEventPickerItem('sphere')).toMatchObject({
-      nameEn: 'Sphere Cube', nameZh: '球形', textLabel: 'Sphere',
+      nameEn: 'Sphere Cube', nameZh: '球形', iconClass: 'puzzle-sphere',
     });
-    expect(timerEventPickerItem('sphere').iconClass).toBeUndefined();
-    expect(timerEventPickerItem('superz')).toMatchObject({
-      nameEn: 'SuperZ (2×2 + Skewb)', nameZh: '二阶＋斜转', textLabel: 'SuperZ',
-    });
-    expect(timerEventPickerItem('superz').iconClass).toBeUndefined();
-    for (const [event, nameEn, nameZh, textLabel] of [
-      ['dogic', 'Dogic', 'Dogic 二十面体', 'Dogic'],
-      ['octahedron4', '4×4 Octahedron', '四阶八面体', 'Octa4'],
-      ['dinoskewb', 'Dino Skewb', '恐龙斜转', 'DinoSk'],
-      ['cube3dino', '3×3 + Dino', '三阶＋恐龙', '3Dino'],
-      ['lattice', 'Lattice Cube', 'Lattice', 'Lat'],
-      ['hyperx', 'Hyper X', 'Hyper X', 'HyperX'],
-      ['latticex', 'Lattice X', 'Lattice X', 'LatX'],
-      ['masterbrilic', 'Master Brilic', 'Master Brilic', 'MBrilic'],
-      ['masterftov2', 'Master FTO v2', '四阶 FTO v2', 'FTOv2'],
-      ['quadx', 'Quad-X', 'Quad-X', 'QuadX'],
-      ['dinoocta', 'Dino Octa', '恐龙八面体', 'DinoOct'],
-      ['fto5', '5-layer FTO', '五阶 FTO', 'FTO5'],
-      ['fto6', '6-layer FTO', '六阶 FTO', 'FTO6'],
-      ['eto', "Eitan's ETO", 'ETO 棱转八面体', 'ETO'],
-      ['radiocrystal', 'Radio Crystal', 'Radio Crystal', 'RadioCr'],
-      ['cube3skewb', '3×3 + Skewb', '三阶＋斜转', '3Skewb'],
-      ['heliskewb', 'Helicopter Skewb', '直升机斜转', 'HeliSk'],
-      ['comboctahedron', 'Comboctahedron', 'Comboctahedron', 'Combo'],
-      ['circoradiolarian', 'Circo-Radiolarian', 'Circo-Radiolarian', 'Circo'],
-      ['icosababyface', 'Deep-Cut Icosahedron', '深切角转二十面体', 'Icosa'],
-      ['cube2heli', '2×2 + Helicopter', '二阶＋直升机', '2Heli'],
-      ['cube3heli', '3×3 + Helicopter', '三阶＋直升机', '3Heli'],
-      ['radiojewel', 'Radio Jewel', 'Radio Jewel', 'Jewel'],
-      ['radioweb', 'Radio Web', 'Radio Web', 'Web'],
-      ['catscradle', 'Cat’s Cradle', 'Cat’s Cradle', 'Cradle'],
-      ['radiocanon', 'Radio Canon', 'Radio Canon', 'Canon'],
-    ] as const) {
-      expect(timerEventPickerItem(event)).toMatchObject({ nameEn, nameZh, textLabel });
-      expect(timerEventPickerItem(event).iconClass).toBeUndefined();
+    for (const id of NATIVE_PUZZLE_IDS) {
+      expect(timerEventPickerItem(id)).toMatchObject({
+        nameEn: NATIVE_PUZZLES[id].en,
+        nameZh: NATIVE_PUZZLES[id].zh,
+        iconClass: `puzzle-${id}`,
+      });
+    }
+    for (const item of TIMER_EVENT_PICKER_ITEMS) {
+      if (item.iconClass) expect(item.textLabel, item.id).toBeUndefined();
+    }
+    for (const id of ['oll', 'pll', 'zbll', 'cross', 'custom'] as const) {
+      expect(timerEventPickerItem(id).iconClass).toBeUndefined();
+      expect(timerEventPickerItem(id).textLabel).toBeTruthy();
     }
   });
 

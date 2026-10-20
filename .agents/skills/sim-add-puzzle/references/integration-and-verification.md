@@ -61,7 +61,7 @@
 - 将无上游事件键的生成器接入 `packages/client/lib/native-scramble.ts`，由其派生事件 ID、双语名称和选择器项。
 - 外观变体先核对 `packages/client/lib/shape-mod-scramble.ts` 的来源映射，让比赛与批量复用现有生成器，同时在图示分发中保留变体 ID。
 - 让比赛和批量的生成分支复用该 native 入口；让输入模式复用同一项目识别和图示入口。
-- 通过生成页 `_event-picker.ts` 处理分组；使用真实图标或可读 `textLabel`，核对多选后结果对应所选项目。
+- 通过生成页 `_event-picker.ts` 处理分组；具体拼图使用已在 `/zh/icon` 收录的真实共享图标，训练/自定义模式才保留语义 `textLabel`，核对多选后结果对应所选项目。
 - 将共享 SVG 接入 `packages/client/components/scramble-preview-svg.ts` 的支持列表和分发；从解析后的状态生成颜色和片位。
 - 在生成页 `_tnoodle-pdf.ts` 核对图示入口与宽高比；让网页、PDF 和 Timer 共用 SVG，避免各画一份轮廓或调色表。
 - 分别检查还原态与合法打乱态，核对片数、面色和方向；错误输入不得静默画成另一个项目或宣称已还原。
@@ -82,7 +82,7 @@
 
 - 在 `TIMER_SCRAMBLE_CAPABILITIES` 注册真实能力；按 `timerScrambleCapability` 选择 shared、worker、manual 等现有分支。同步 `timer_scramble_runtime.test.ts` 的独立能力清单及适用的生成、worker 和错误传播参数名单，保留逐项目集合对账。
 - 让普通生成和种子生成调用同一纯生成器；按同一随机输入核对结果，保留确定性和来源信息。
-- 从 `TIMER_EVENT_PICKER_ITEMS` 或其查询函数读取可展示项目；允许 `icon` 或 `textLabel`，不要要求每个非 WCA 项目都有 csTimer key 和图标。
+- 从 `TIMER_EVENT_PICKER_ITEMS` 或其查询函数读取可展示项目；具体拼图在 `EVENTS.icon` 登记与模拟器和图标库一致的共享键，训练/自定义模式可用 `textLabel`；独立核对生成器来源，不要求非 WCA 项目一定有 csTimer key。
 - 区分事件语义分组与选择器视觉分组；保留各自契约，不要求 `nonwca` 与选择器的 `other` 字面相等。
 - 核对 Timer 的实际 SVG 消费入口；保持普通与种子打乱的图示、计时记录和项目 ID 一致。
 - 核对共享 `packages/timer-ui/src/TimerCubePreview.tsx` 的外层分发与 `TimerScramblePreview.tsx` 的实际渲染；子组件支持不代表项目能穿过外层判断。

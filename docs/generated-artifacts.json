@@ -517,16 +517,16 @@
       "id": "event-icon.puzzle-glyphs",
       "kind": "checked-in-generated",
       "source": {
-        "locator": "Simulator PG cut definitions and CubeRoot projection/gap design",
-        "paths": ["core/packages/client/app/[lang]/sim/pgCatalog.ts", "core/packages/client/scripts/generate-puzzle-icons.mts"]
+        "locator": "Exact puzzle cuts, shape-mod geometry, canonical bandage/overlap models and CubeRoot projection/gap design",
+        "paths": ["core/packages/client/app/[lang]/sim/pgCatalog.ts", "core/packages/client/scripts/generate-puzzle-icons.mts", "core/packages/client/scripts/generate-extra-puzzle-icons.mts", "core/packages/client/scripts/generate-shape-mod-icons.mts"]
       },
       "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE; existing cubing.js PG definitions and original projection design" },
-      "owner": "core/packages/client/scripts/generate-puzzle-icons.mts",
+      "owner": "core/packages/event-icon",
       "workingDirectory": "core",
-      "command": "pnpm --filter @cuberoot/client exec node scripts/generate-puzzle-icons.mts",
+      "command": "pnpm --filter @cuberoot/client exec node scripts/generate-puzzle-icons.mts && pnpm --filter @cuberoot/client exec node scripts/generate-extra-puzzle-icons.mts && pnpm --filter @cuberoot/client exec node scripts/generate-shape-mod-icons.mts",
       "outputs": ["core/packages/event-icon/svg/puzzle/*.svg"],
-      "verification": ["Run the command with --check", "Review every glyph in /zh/icon and at menu size in /zh/sim"],
-      "driftPolicy": "Regenerate from the exact /sim definitions, then run event-icon generate. Never use a generic family icon to stand in for different cuts. Curvy Copter retains curved upstream artwork; gear.svg is authored artwork."
+      "verification": ["Run each generator with --check", "Run tests/puzzle-icon-catalog.test.ts", "Review glyphs in /zh/icon and at menu size in the simulator, timer and scramble generator"],
+      "driftPolicy": "Regenerate the affected family from its exact model, then run event-icon generate. Keep every physical puzzle registered in /icon before connecting consumers; never substitute a generic family icon or text badge for different cuts. Curvy Copter retains curved upstream artwork; gear.svg is authored artwork."
     },
     {
       "id": "event-icon.maps",

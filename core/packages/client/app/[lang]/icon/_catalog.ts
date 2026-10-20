@@ -32,8 +32,8 @@ export interface IconGroup {
 const CATEGORY_ORDER: IconCategory[] = ['event', 'puzzle', 'unofficial', 'penalty'];
 const CATEGORY_SET = new Set<string>(CATEGORY_ORDER);
 
-// Slugs only ever use letters/digits/underscore (never '-'), so splitting on
-// the first hyphen cleanly separates category from slug.
+// Only the first hyphen separates the category; original-design slugs may
+// contain further hyphens (for example mastermorphix-shape).
 function parseKey(key: string): { category: IconCategory; slug: string } | null {
   const i = key.indexOf('-');
   if (i < 0) return null;

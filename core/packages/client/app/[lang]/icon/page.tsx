@@ -21,7 +21,7 @@ import {
   ICON_GROUPS, CATEGORY_LABEL, svgHref,
   type IconEntry, type IconCategory,
 } from './_catalog';
-import { PUZZLE_ICON_NAMES } from './_site-icons';
+import { PUZZLE_ICON_NAMES, PUZZLE_ICON_SEARCH_TERMS } from './_site-icons';
 import './icon.css';
 
 // Display-name overrides for non-event icons whose upstream slug reads
@@ -71,6 +71,7 @@ export default function IconGalleryPage() {
           (e) =>
             e.key.toLowerCase().includes(q) ||
             e.slug.toLowerCase().includes(q) ||
+            PUZZLE_ICON_SEARCH_TERMS[e.key]?.includes(q) ||
             friendlyName(e, isZh).toLowerCase().includes(q) ||
             friendlyName(e, !isZh).toLowerCase().includes(q),
         ),
@@ -92,7 +93,7 @@ export default function IconGalleryPage() {
         </a>
       </header>
 
-      <p>{tr({ zh: '魔方根项目图标与模拟器菜单共用同一套 SVG，按实际形状和切割结构绘制。', en: 'CubeRoot puzzle icons share the simulator’s SVG artwork, drawn from each puzzle’s shape and cut structure.' })}</p>
+      <p>{tr({ zh: '按实际形状和切割结构绘制，与模拟器、计时器和打乱生成器共用同一套 SVG。', en: 'Drawn from each puzzle’s shape and cut structure, with the same SVG artwork used by the simulator, timer, and scramble generator.' })}</p>
 
       <div className="icon-toolbar">
         <div className="icon-search">

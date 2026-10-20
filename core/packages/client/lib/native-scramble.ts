@@ -10,13 +10,12 @@ interface NativeScrambleEvent {
   id: string;
   zh: string;
   en: string;
-  iconClass?: string;
-  textLabel?: string;
+  iconClass: string;
   practiceHint?: { zh: string; en: string };
 }
 
 export const NATIVE_SCRAMBLE_EVENTS = [
-  { id: 'pyraminx_duo', zh: '二重奏', en: 'Pyraminx Duo', textLabel: 'Duo' },
+  { id: 'pyraminx_duo', zh: '二重奏', en: 'Pyraminx Duo', iconClass: 'unofficial-pyraminx_duo' },
   {
     id: 'magic', zh: '八板', en: "Rubik's Magic", iconClass: 'event-magic',
     practiceHint: {
@@ -35,7 +34,7 @@ export const NATIVE_SCRAMBLE_EVENTS = [
     id,
     zh: NATIVE_PUZZLES[id].zh,
     en: NATIVE_PUZZLES[id].en,
-    textLabel: NATIVE_PUZZLES[id].textLabel,
+    iconClass: `puzzle-${id}`,
     practiceHint: {
       zh: `练习打乱：${NATIVE_PUZZLES[id].scrambleLength} 步随机转动。`,
       en: `Practice scramble: ${NATIVE_PUZZLES[id].scrambleLength} random moves.`,
@@ -47,10 +46,9 @@ export const NATIVE_SCRAMBLE_EVENT_IDS: ReadonlySet<string> = new Set(
   NATIVE_SCRAMBLE_EVENTS.map(({ id }) => id),
 );
 
-export const NATIVE_SCRAMBLE_APPEND = NATIVE_SCRAMBLE_EVENTS.map(({ id, iconClass = '', textLabel }: NativeScrambleEvent) => ({
+export const NATIVE_SCRAMBLE_APPEND = NATIVE_SCRAMBLE_EVENTS.map(({ id, iconClass }: NativeScrambleEvent) => ({
   id,
   iconClass,
-  textLabel,
 }));
 
 export function isNativeScrambleEvent(id: string): boolean {

@@ -62,7 +62,7 @@ describe('native puzzle client integration', () => {
     for (const isZh of [true, false]) {
       const groups = scrambleEventPickerGroups([...NATIVE_SCRAMBLE_EVENT_IDS], NATIVE_SCRAMBLE_APPEND, isZh);
       expect(groups.find((group) => group.id === 'other')?.items.find((item) => item.id === id)).toEqual({
-        id, label: eventDisplayName(id, isZh), iconClass: undefined, textLabel: NATIVE_PUZZLES[id].textLabel,
+        id, label: eventDisplayName(id, isZh), iconClass: `puzzle-${id}`, textLabel: undefined,
       });
       expect(eventDisplayName(id, isZh)).toBe(NATIVE_PUZZLES[id][isZh ? 'zh' : 'en']);
     }
