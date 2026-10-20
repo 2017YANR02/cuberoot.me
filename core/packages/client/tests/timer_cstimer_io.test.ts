@@ -386,9 +386,25 @@ describe('3×3 + Helicopter csTimer session names', () => {
 
 describe('Radio Canon session-name boundaries', () => {
   it.each([
+    'Radio Canon.',
+    'Radio Cannon. Practice',
+    'Session_Radiolarian_1.5.',
+    'Radiolarian 1.5. Practice',
+  ])('recognizes the punctuated session name %s through both import APIs', (name) => {
+    const raw = JSON.stringify({
+      session1: [[[0, 8_765], 'R', '', 1_700_000_000]],
+      properties: { sessionData: { 1: { name, opt: { scrType: 'input' } } } },
+    });
+    expect(parseCstimerExport(raw)[0]).toMatchObject({ event: 'radiocanon', matched: true });
+    expect(importCstimerJson(raw)?.radiocanon?.[0].event).toBe('radiocanon');
+  });
+  it.each([
     'Session_Radiolarian15_Practice',
     'Session_Radiolarian_1.50',
+    'Radiolarian 1.5.0',
     'Radio Canonical practice',
+    'XRadio Canon',
+    'RadioXCanon',
     'XRadio Canon Practice',
   ])('does not claim the different name %s as Radio Canon', (name) => {
     const raw = JSON.stringify({
@@ -397,6 +413,14 @@ describe('Radio Canon session-name boundaries', () => {
     });
     expect(parseCstimerExport(raw)[0].event).not.toBe('radiocanon');
     expect(importCstimerJson(raw)?.radiocanon).toBeUndefined();
+  });
+  it.each(['3x3', '3x3x3'])('preserves the dimension separator alias %s', (name) => {
+    const raw = JSON.stringify({
+      session1: [[[0, 8_765], 'R', '', 1_700_000_000]],
+      properties: { sessionData: { 1: { name, opt: { scrType: 'input' } } } },
+    });
+    expect(parseCstimerExport(raw)[0]).toMatchObject({ event: '333', matched: true });
+    expect(importCstimerJson(raw)?.['333']?.[0].event).toBe('333');
   });
 });
 
