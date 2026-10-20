@@ -1,4 +1,3 @@
-import { resolveMoyu32Address, MOYU32_NOTIFY_CHARACTERISTIC_UUID, MOYU32_WRITE_CHARACTERISTIC_UUID } from '@cuberoot/shared/smart-cube/moyu32';
 import { createMoyu32ResetCommand } from '@cuberoot/shared/smart-cube/moyu32';
 import { createDeviceStateReset } from '@cuberoot/shared/smart-cube/device-reset';
 /**
@@ -66,8 +65,8 @@ import { createDeviceStateReset } from '@cuberoot/shared/smart-cube/device-reset
  * 171) { // gyro`), so the layout comes from lukeburong's write-up.
  * UNVERIFIED against hardware — we own no smart cube.
  *
- * MAC: shared encrypted state probe verifies native/advertisement/cache hints,
- * then finite MY32/MY33 name candidates, before falling back to manual input.
+ * MAC: use the native address, saved address, or manual input, then run the
+ * normal info/state/battery handshake without a separate address probe.
  */
 
 import {
@@ -544,34 +543,3 @@ export const moyu32Driver: CubeDriver = {
     return { battery, cleanup, setGyro, resetDeviceState: cmdChar ? resetDeviceState : undefined };
   },
 };
-
-export async function resolveWebMoyu32Mac(
-  server: BluetoothRemoteGATTServer,
-  hints: (string | null)[],
-  current: () => boolean,
-  requestMac: () => Promise<string | null>,
-): Promise<string> {
-  const service = await server.getPrimaryService(MOYU32_SERVICE);
-  const notify = await service.getCharacteristic(MOYU32_NOTIFY_CHARACTERISTIC_UUID);
-  const write = await service.getCharacteristic(MOYU32_WRITE_CHARACTERISTIC_UUID);
-  return resolveMoyu32Address({
-    id: server.device.id, name: server.device.name ?? '', hints, requestMac,
-    io: {
-      current: () => current() && server.connected,
-      write: frame => writeGattValue(write, Uint8Array.from(frame)),
-      subscribe: async receive => {
-        const listener = () => {
-          const value = notify.value;
-          if (value) receive(new Uint8Array(value.buffer, value.byteOffset, value.byteLength));
-        };
-        notify.addEventListener('characteristicvaluechanged', listener);
-        try { await notify.startNotifications(); }
-        catch (error) { notify.removeEventListener('characteristicvaluechanged', listener); throw error; }
-        return async () => {
-          notify.removeEventListener('characteristicvaluechanged', listener);
-          await notify.stopNotifications();
-        };
-      },
-    },
-  });
-}

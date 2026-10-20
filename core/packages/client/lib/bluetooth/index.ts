@@ -1,4 +1,3 @@
-import { resolveWebMoyu32Mac } from './moyu32';
 /**
  * Public API for the smart-cube Bluetooth integration.
  *
@@ -1043,23 +1042,13 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       throw new BluetoothConnectError('discover', `Unrecognised smart cube: ${device.name ?? '(no name)'}`);
     }
 
-    // MoYu hints must pass an encrypted state probe before entering the timer session.
+    // MY32 uses a manual or saved MAC and the driver's normal handshake.
+    // Other brands retain advertisement/name-based discovery.
     let mac: string | null = null;
     if (driver.needsMac) {
-      if (driver.brand === 'moyu32') {
-        try {
-          mac = await resolveWebMoyu32Mac(server, [installedBleDeviceMac(device), normalizeMac(advMac), savedMac(device.name ?? device.id)],
-            isCurrentSession, () => {
-              clearMac(device.name ?? device.id);
-              return onNeedMacRef.current?.(device.name ?? '') ?? Promise.resolve(null);
-            });
-          if (isCurrentSession()) saveMac(device.name ?? device.id, mac);
-        } catch (error) {
-          clearMac(device.name ?? device.id);
-          try { server.disconnect(); } catch { /* already disconnected */ }
-          throw error;
-        }
-      } else mac = installedBleDeviceMac(device) ?? (normalizeMac(advMac)
+      mac = installedBleDeviceMac(device) ?? (driver.brand === 'moyu32'
+        ? savedMac(device.name ?? device.id)
+        : normalizeMac(advMac)
         ?? savedMac(device.name)
         ?? parseMacFromName(device.name)
         // Brand-specific name fallback, never used for MY32.
@@ -1266,7 +1255,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
         ?? (nameDriver.brand === 'moyu32' ? null : nameDriver.defaultMac?.(device))
         ?? null
       : null;
-    const shouldWatchMac = (nameDriver === null
+    const shouldWatchMac = nameDriver?.brand !== 'moyu32' && (nameDriver === null
       || (nameDriver.needsMac === true && reusableMac === null));
     setAdvertisementDiagnostic(shouldWatchMac
       ? {
