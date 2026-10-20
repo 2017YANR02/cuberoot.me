@@ -1004,6 +1004,7 @@
         "paths": [
           "core/apps/miniprogram/src/**",
           "core/apps/miniprogram/project.config.json",
+          "core/apps/miniprogram/scripts/build*.mjs",
           "core/apps/miniprogram/scripts/release-check.mjs"
         ]
       },
@@ -1014,6 +1015,26 @@
       "transientOutputs": ["core/apps/miniprogram/dist/**"],
       "verification": ["release:check validates build state and source fingerprint consistency"],
       "driftPolicy": "dist is build output and not a hand-edited source. Release checks must prove that its fingerprint matches the current source."
+    },
+    {
+      "id": "miniprogram.douyin-dist",
+      "kind": "build-output",
+      "source": {
+        "locator": "shared mini-program source, Douyin project configuration and Lucide icon generator",
+        "paths": [
+          "core/apps/miniprogram/src/**",
+          "core/apps/miniprogram/project.douyin.config.json",
+          "core/apps/miniprogram/scripts/build*.mjs",
+          "core/apps/miniprogram/package.json"
+        ]
+      },
+      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE and bundled lucide-static LICENSE.txt" },
+      "owner": "core/apps/miniprogram",
+      "workingDirectory": "core",
+      "command": "pnpm --filter @cuberoot/miniprogram build:douyin",
+      "transientOutputs": ["core/apps/miniprogram/dist-douyin/**"],
+      "verification": ["miniprogram typecheck and tests; build:douyin; developer-tool and device acceptance tracked separately"],
+      "driftPolicy": "TTML, TTSS, JavaScript and Lucide tab/toolbar PNGs are generated together. Never hand-edit dist-douyin; successful conversion does not imply device acceptance or publication."
     },
     {
       "id": "server.cubeopt-runtime",

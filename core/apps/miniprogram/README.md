@@ -6,6 +6,7 @@
 
 - `native-timer.ts` 复用共享计时状态机、打乱、罚时、统计与智能魔方控制器；`timer-store.ts` 从早期微信原生计时器（`7cb3e75349`，当时位于 `core/packages/miniprogram`）恢复，沿用 `cuberoot:timer` 存储格式与 `TimerStoreSettings`。网站 WebView 的 localStorage 成绩不会自动迁入原生存储。
 - `native-timer-page.ts` / `templates/native-timer.wxml` 适配小程序触摸、设置、成绩及生命周期。支持15个计时项目的本地打乱图、智能魔方实况图、观察计时、分组/成绩编辑、共享滚动统计、手动打乱、真题搜索与日期选择、单行排名、CSV/csTimer/Speedstacks导出及备份恢复；不包含FMC、多盲成绩录入或旧网页全部高级设置。接入与实际验收状态见[原生计时器跟踪](../../../docs/douyin-native-timer-tracker.md)。
+- 顶部直接选择项目与打乱来源；设置按共享契约分为计时、智能魔方、打乱、外观和数据，已接紧凑打乱、字号及运行中隐藏界面。统计支持日期范围、汇总、滚动均值和共享分箱的原生成绩分布；详情显示原始时间、罚时、来源、设备及已有分段，修改罚时/备注后保留详情上下文。未提供的声音、3D/姿态、跨组图表等仍按跟踪表记为缺口。
 - `native-tools-page.ts` 通过现有公共 API 原生展示近期公示比赛、近期纪录与 WCA ID 个人成绩/排名。教程、课程与专项训练继续下线。
 - 蓝牙由 `getSmartCubeSession()` 保存在 App 实例，避免每个独立页面 bundle 创建不同连接；原生模式不需要网页中继 WebSocket。旧微信网页中继路径保留。
 - 抖音构建直接选择原生 TTML 主页面；旧网页主功能深链重定向到原生 tab，隐私说明和账号辅助流程仍可使用网页。
