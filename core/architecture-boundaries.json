@@ -94,6 +94,30 @@
       ]
     },
     {
+      "id": "recon-intake-node-runtime-test",
+      "from": "packages/client/tests/recon-intake.test.ts",
+      "to": "local Node and tsx runtime",
+      "phase": "subprocess-native",
+      "mechanism": "One fixed Node import with a 30 second timeout validates the AI checker outside Vitest.",
+      "owner": "timer and reconstruction maintainers",
+      "rationale": "Vitest can load CommonJS code that fails on cubing's import-only exports in the real CLI; exercise the actual ESM loader.",
+      "replacement": "Keep this bounded test-only command; it accepts no user-provided executable or script.",
+      "subprocessCalls": [
+        {
+          "file": "packages/client/tests/recon-intake.test.ts",
+          "mechanism": "spawnSync",
+          "target": "<dynamic>",
+          "count": 1
+        }
+      ],
+      "evidence": [
+        {
+          "file": "core/packages/client/tests/recon-intake.test.ts",
+          "contains": "timeout: 30000"
+        }
+      ]
+    },
+    {
       "id": "watch-native-test-subprocess",
       "from": "packages/client/tests/watch_timer_native.test.ts",
       "to": "local toolchain",

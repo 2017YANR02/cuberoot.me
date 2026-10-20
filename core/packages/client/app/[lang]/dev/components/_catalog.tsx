@@ -1427,6 +1427,13 @@ export const CATALOG: ComponentEntry[] = [
     Demo: RecordBadgeDemo,
   },
   {
+    name: 'ReconIntakeAction / ReconIntakeEditor',
+    import: "import ReconIntakeAction, { ReconIntakeEditor } from '@/components/recon/ReconIntakeAction';",
+    category: 'more',
+    zh: '管理员收录和步骤批注，复用共享复盘播放器，批注绑定原始动作范围。',
+    en: 'Administrator intake and step annotations using the shared reconstruction player and original move ranges.',
+  },
+  {
     name: 'ReconCompletionBadge',
     import: "import { ReconCompletionBadge } from '@/components/recon/ReconCompletionBadge';",
     category: 'badge',

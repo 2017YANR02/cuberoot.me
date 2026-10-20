@@ -72,7 +72,10 @@ export default function StepMoveList({method='cfop',recon,currentIdx,onSeek,noti
     const content=reportNotation(recon,method,ui,host.localize,{prepared,currentIdx,canSeek:Boolean(onSeek),cases:commentCases,caseHref:caseHrefAt,inspectionColors:host.inspectionColors,wasteBrackets:host.wasteBrackets,
       notice:notice?{id:'notice',kind:'slot'}:null,feedback:feedback?{id:'feedback',kind:'slot'}:null});
     const slots:Record<string,React.ReactNode>={notice,feedback};
-    projection.lines.forEach((_,i)=>{const line=i+projection.inspectionOffset;slots['diagram:'+line]=diagramAt(line);});
+    projection.lines.forEach(({ line },i)=>{
+      slots['diagram:'+(i+projection.inspectionOffset)]=diagramAt(i+projection.inspectionOffset);
+      slots['annotation:'+line.key]=host.renderAnnotationAction?.(line,()=>onSeek?.(line.fromIdx));
+    });
     return <ReportContent node={content.node} slots={slots} dispatch={action=>{
       if(action.copyText)void host.writeClipboardText(action.copyText).catch(err=>console.warn('[step-move-list] copy failed:',err));
       if(action.type==='play-from')onSeek?.(Number(action.value),action.timeMs);

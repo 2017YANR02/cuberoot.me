@@ -39,7 +39,9 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts",
     ".tmp/competition-preview/types/**/*.ts",
-    ".tmp/competition-preview/dev/types/**/*.ts"
+    ".tmp/competition-preview/dev/types/**/*.ts",
+    ".tmp/recon-intake-next/types/**/*.ts",
+    ".tmp/recon-intake-next/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

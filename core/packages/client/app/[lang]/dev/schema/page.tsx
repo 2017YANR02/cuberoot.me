@@ -42,6 +42,9 @@ const DOMAINS: { key: DomainKey; dot: string; name: Bi; sub: Bi }[] = [
 ];
 
 const TABLES: Table[] = [
+  { name: 'recon_intake', domain: 'recon', origin: '0286', purpose: { zh: '复盘收录、原始记录、批注、确认版本和领取租约', en: 'Reconstruction intake, recordings, annotations, approvals and leases' } },
+  { name: 'recon_intake_revisions', domain: 'recon', origin: '0286', purpose: { zh: '原始批注与人工预期的版本历史', en: 'Version history of annotations and human expectations' } },
+  { name: 'recon_intake_runs', domain: 'recon', origin: '0286', purpose: { zh: '复盘待办的不可变测试报告', en: 'Immutable intake test reports' } },
   { name: 'recon_test_runs', domain: 'recon', origin: '0278', purpose: { zh: '智能魔方自动回归检查历史、逐例结果和显示差异', en: 'Smart cube regression history, case results and display differences' } },
   { name: 'site_assistant_requests', domain: 'community', origin: '0277', purpose: { zh: '管理员聊天监控：问答保留 30 天、指标保留 90 天，注销级联删除', en: 'Admin chat monitoring: 30-day content, 90-day metrics, cascade on account deletion' } },
   { name: 'site_assistant_entry_daily', domain: 'community', origin: '0277', purpose: { zh: '未通过准入的匿名日计数', en: 'Anonymous daily admission failures' } },
@@ -578,6 +581,7 @@ const TABLES: Table[] = [
 const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 282, slug: 'workspace_account_deletion', desc: { zh: '员工账号注销：清理私有数据、撤销权限并保留匿名团队记录', en: 'Employee account deletion: purge private data and retain anonymous team records' } },
   { n: 281, slug: 'workspace', desc: { zh: 'CubeRoot 独立员工权限、项目、工作记录、评论与审计', en: 'CubeRoot employee access, projects, reports, comments and audit' } },
+  { n: 286, slug: 'recon_intake', desc: { zh: '智能魔方复盘收录与 AI 处理队列', en: 'Smart cube reconstruction intake and AI queue' } },
   { n: 278, slug: 'recon_test_runs', desc: { zh: '持久保存复盘自动检查结果', en: 'Persist automated reconstruction check results' } },
   { n: 279, slug: 'enterprise_membership_prices', desc: { zh: '本期购买定价：个人 39.99/月、399/年；企业 399/月、3999/年', en: 'Update one-time personal and enterprise membership prices' } },
   { n: 285, slug: 'smart_cube_macs', desc: { zh: '智能魔方 MAC 地址随账号同步', en: 'Account sync for smart cube MAC addresses' } },

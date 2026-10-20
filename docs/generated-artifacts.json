@@ -1218,6 +1218,31 @@
         "pnpm --filter @cuberoot/client exec vitest run tests/account-avatar.test.ts"
       ],
       "driftPolicy": "Regenerate from the pet gallery; stable asset-path hashes preserve saved IDs. Full gallery coverage and asset existence are checked. Script-driven Cloudling scenes are frozen at 1.5 seconds with deterministic randomness into inert SVGs and content-hashed URLs. Public visibility is read from the existing runtime catalog, not frozen into this generated list."
+    },
+    {
+      "id": "recon.intake-regressions",
+      "kind": "build-generated",
+      "source": {
+        "locator": "Administrator-approved active recon_intake cases",
+        "paths": [
+          "core/apps/api/src/routes/recon_intake.ts"
+        ]
+      },
+      "license": {
+        "spdx": "LicenseRef-CubeRoot",
+        "evidence": "Administrator-submitted reconstruction samples"
+      },
+      "owner": "core/scripts/recon-intake.mts",
+      "workingDirectory": "core",
+      "command": "pnpm recon:intake export",
+      "outputs": [
+        "core/packages/client/tests/fixtures/recon-intake.json"
+      ],
+      "verification": [
+        "tests/recon-intake.test.ts",
+        "node scripts/recon-ground-truth-gate.mjs run --offline"
+      ],
+      "driftPolicy": "Explicit authenticated export only. Preserve approved expectations; ordinary offline CI does not fetch new samples. An empty export is not proof of reconstruction correctness."
     }
   ]
 }
