@@ -63,6 +63,7 @@ interface AccountPageData {
 }
 
 interface AccountPage {
+  signOut(): void;
   loadIdentities(): Promise<void>;
   toggleIdentities(): void;
   editDisplayName(): void;
@@ -120,6 +121,30 @@ function normalLaunchOptions() {
 }
 
 describe('mini program account page', () => {
+  it.each(['confirm', 'cancel', 'switch', 'hide', 'storage-failure'] as const)('signs out only the confirmed current native session: %s', async scenario => {
+    let session: unknown = { token: 't'.repeat(20), user: { uid: 12, name: 'Member', wcaId: null } };
+    let confirm!: (result: { confirm: boolean; cancel: boolean }) => void;
+    const removeStorageSync = vi.fn((key: string) => {
+      expect(key).toBe('cuberoot:session');
+      if (scenario === 'storage-failure') throw new Error('blocked');
+      session = null;
+    });
+    const page = await loadPage({ getStorageSync: () => session, removeStorageSync,
+      showModal(options: { success: typeof confirm }) { confirm = options.success; } });
+    page.setData({ loginRequired: false });
+    page.signOut();
+    if (scenario === 'switch') session = { token: 'b'.repeat(20), user: { uid: 13, name: 'Other', wcaId: null } };
+    if (scenario === 'hide') page.onHide();
+    confirm({ confirm: scenario !== 'cancel', cancel: scenario === 'cancel' });
+    confirm({ confirm: true, cancel: false });
+    if (scenario === 'confirm') {
+      expect(removeStorageSync).toHaveBeenCalledOnce();
+      expect(page.data.loginRequired).toBe(true);
+    } else if (scenario === 'storage-failure') {
+      expect(page.data.loginRequired).toBe(false);
+      expect(page.data.accountError).not.toBe('');
+    } else expect(removeStorageSync).not.toHaveBeenCalled();
+  });
   it('shows readable handles, collapses Douyin identities and clears private rows on hide', async () => {
     const session = { token: 't'.repeat(20), user: { uid: 12, name: 'Member', wcaId: null } };
     const page = await loadPage({

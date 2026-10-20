@@ -12,10 +12,32 @@ import {
   previewIdentityLinkCode,
   validateStoredSession,
   updateNativeDisplayName,
+  unlinkNativeAccountIdentity,
   requestJson,
 } from '../src/lib/auth';
 
 describe('mini program authentication', () => {
+  it.each(['success', 'last', 'switched'] as const)('uses canonical unlink semantics and protects the session: %s', async scenario => {
+    const original = { token: 't'.repeat(20), user: { uid: 12, name: 'Member', wcaId: null } };
+    let stored = original;
+    let respond!: (value: unknown) => void;
+    const setStorageSync = vi.fn();
+    const request = vi.fn((options: { success(value: unknown): void }) => { respond = options.success; });
+    vi.stubGlobal('wx', { getStorageSync: () => stored, setStorageSync, request });
+    const result = unlinkNativeAccountIdentity(original, { provider: 'douyin', providerUid: 'private-id' }, () => true);
+    expect(request.mock.calls[0][0]).toMatchObject({ data: { provider: 'douyin' } });
+    if (scenario === 'switched') stored = { ...original, token: 'b'.repeat(20) };
+    respond({ statusCode: scenario === 'last' ? 409 : 200, data: scenario === 'last'
+      ? { error: 'cannot unlink your only login method' }
+      : { token: 'n'.repeat(20), user: { ...original.user, avatar: '' } } });
+    if (scenario === 'success') {
+      await expect(result).resolves.toMatchObject({ user: { uid: 12 } });
+      expect(setStorageSync).toHaveBeenCalledOnce();
+    } else {
+      await expect(result).rejects.toBeInstanceOf(ApiError);
+      expect(setStorageSync).not.toHaveBeenCalled();
+    }
+  });
   it.each(['success', 'changed', 'hidden', 'wrong-user', 'storage'] as const)('guards profile session installation: %s', async (scenario) => {
     const session = { token: 't'.repeat(20), user: { uid: 12, name: 'Old', wcaId: null } };
     let stored = session;

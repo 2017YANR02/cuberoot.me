@@ -126,6 +126,7 @@
     <view wx:for="{{identityRows}}" wx:key="key" class="account-identity">
       <text>{{item.label}}</text>
       <text wx:if="{{item.handle}}" class="account-user-meta" selectable="{{true}}">{{item.handle}}</text>
+      <button class="text-button" data-index="{{index}}" disabled="{{identityMutationBusy || nameBusy}}" bindtap="unlinkIdentity">{{copy.unlink}}</button>
     </view>
     <text wx:if="{{hasPassword}}" class="account-user-meta">{{copy.password}}</text>
     <text wx:if="{{!identitiesBusy && !identitiesError && !identityRows.length && !hasPassword}}" class="account-user-meta">{{copy.identitiesEmpty}}</text>
@@ -143,6 +144,8 @@
   >
     {{copy.accountButtonLabel}}
   </button>
+  <button class="text-button account-name-edit" disabled="{{identityMutationBusy || nameBusy}}" bindtap="signOut">{{copy.signOut}}</button>
+  <button class="text-button account-name-edit" disabled="{{identityMutationBusy || nameBusy}}" bindtap="openDeleteAccount">{{copy.deleteAccount}}</button>
   <text
     wx:if="{{accountError}}"
     class="status-text status-text--error"

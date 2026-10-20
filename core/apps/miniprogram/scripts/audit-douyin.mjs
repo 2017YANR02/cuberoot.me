@@ -40,13 +40,17 @@ await check('页面完整性与核心原生模板', async () => {
     for (const extension of ['js', 'json', 'ttml', 'ttss']) await stat(join(output, `${page}.${extension}`));
   }
   const core = [...new Set([app.pages[0], ...(app.tabBar?.list ?? []).map(tab => tab.pagePath),
-    'pages/privacy/index', 'pages/contact/index', 'pages/account-link/index'])];
+    'pages/privacy/index', 'pages/contact/index', 'pages/account-link/index', 'pages/account-delete/index'])];
   if (core.some(page => !app.pages.includes(page))) throw new Error('核心页面未登记');
   await validateNativePages(output, core);
 });
 await check('上传包无源码映射', async () => {
   const files = await walkFiles(output);
   if (files.some(file => file.endsWith('.map'))) throw new Error('包含开发调试 sourcemap');
+});
+await check('个人主体全部登记页面原生', async () => {
+  const app = await json(join(output, 'app.json'));
+  await validateNativePages(output, app.pages);
 });
 console.log('\n仍须人工验收：主体及服务类目、请求/业务域名、隐私声明与授权、内容安全、审核账号、真实设备完整流程、反馈中心接收与回复。');
 console.log('本检查不上传、不提审；本地检查通过不代表满足全部审核条件。');

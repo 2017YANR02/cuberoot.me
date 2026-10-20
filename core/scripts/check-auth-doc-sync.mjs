@@ -93,6 +93,7 @@ export function isAuthDocSource(path) {
     || normalized.startsWith('packages/client/app/api/identity-choice/')
     || normalized.startsWith('apps/miniprogram/src/pages/account/')
     || normalized.startsWith('apps/miniprogram/src/pages/account-link/')
+    || normalized.startsWith('apps/miniprogram/src/pages/account-delete/')
     || normalized.startsWith('packages/shared/src/auth/')
     || normalized.startsWith('packages/app-ui/src/auth/')) return true;
   return ROOTS.some(root => normalized.startsWith(`${root}/`)) && NAME.test(name);

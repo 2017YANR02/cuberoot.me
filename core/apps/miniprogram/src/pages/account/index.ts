@@ -14,6 +14,9 @@ import {
   validateStoredSession,
   updateNativeDisplayName,
   fetchNativeAccountIdentities,
+  unlinkNativeAccountIdentity,
+  clearStoredSession,
+  type NativeAccountIdentity,
   type SessionData,
 } from '../../lib/auth';
 import { cancelWebsiteNavigation, openWebsitePageOnce } from '../../lib/navigation';
@@ -41,6 +44,9 @@ function createAccountCopy() {
     identitiesEmpty: tr({ en: 'No linked sign-in methods', zh: '暂无已绑定的登录方式' }),
     identitiesRetry: tr({ en: 'Retry', zh: '重试' }),
     password: tr({ en: 'Password set', zh: '已设置密码' }),
+    unlink: tr({ en: 'Unlink', zh: '解绑' }),
+    signOut: tr({ en: 'Sign out of this Mini Program', zh: '退出小程序登录' }),
+    deleteAccount: tr({ en: 'Delete account', zh: '注销账号' }),
     wcaLinkHint: tr({ en: 'Complete WCA authorization in your system browser. This page refreshes when you return.', zh: '请在系统浏览器完成 WCA 授权，返回后页面会刷新' }),
     agreementLabel: tr({
       en: 'I have read and agree to the terms above',
@@ -197,6 +203,7 @@ interface AccountPageData {
   identitiesError: string;
   identityRows: Array<{ key: string; label: string; handle: string }>;
   hasPassword: boolean;
+  identityMutationBusy: boolean;
   isTimelineEntry: boolean;
   loginBusy: boolean;
   loginError: string;
@@ -229,6 +236,8 @@ const disposedPages = new WeakSet<AccountPageInstance>();
 const profileAttempts = new WeakMap<object, object>();
 const profileSessions = new WeakMap<object, string>();
 const identityAttempts = new WeakMap<object, object>();
+const loadedIdentities = new WeakMap<object, { session: SessionData; rows: NativeAccountIdentity[] }>();
+const accountActionAttempts = new WeakMap<object, object>();
 const EMPTY_IDENTITIES = { identitiesOpen: false, identitiesBusy: false, identitiesError: '', identityRows: [], hasPassword: false };
 const phonePrompts = new WeakMap<AccountPageInstance, object>();
 const phoneAuthorizations = new WeakMap<AccountPageInstance, { prompt: object; sessionToken: string | undefined }>();
@@ -517,6 +526,7 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
     nameDraft: '',
     nameBusy: false,
     ...EMPTY_IDENTITIES,
+    identityMutationBusy: false,
     isTimelineEntry: false,
     loginBusy: false,
     loginError: '',
@@ -614,13 +624,17 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
   },
 
   onHide() {
+    accountActionAttempts.delete(this);
+    loadedIdentities.delete(this);
     identityAttempts.delete(this);
     profileAttempts.delete(this);
     profileSessions.delete(this);
-    this.setData({ editingName: false, nameDraft: '', nameBusy: false, ...EMPTY_IDENTITIES });
+    this.setData({ editingName: false, nameDraft: '', nameBusy: false, identityMutationBusy: false, ...EMPTY_IDENTITIES });
   },
 
   onUnload() {
+    accountActionAttempts.delete(this);
+    loadedIdentities.delete(this);
     identityAttempts.delete(this);
     profileAttempts.delete(this);
     profileSessions.delete(this);
@@ -767,24 +781,28 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
   },
 
   toggleIdentities() {
+    if (this.data.identityMutationBusy) return;
     if (this.data.identitiesOpen) {
       identityAttempts.delete(this);
+      loadedIdentities.delete(this);
       this.setData({ ...EMPTY_IDENTITIES });
     } else { void this.loadIdentities(); }
   },
 
   async loadIdentities() {
-    if (this.data.loginRequired || this.data.isTimelineEntry || this.data.identitiesBusy) return;
+    if (this.data.loginRequired || this.data.isTimelineEntry || this.data.identitiesBusy || this.data.identityMutationBusy) return;
     const session = getStoredSessionSnapshot().session;
     if (!session) { refreshStoredSession(this as unknown as AccountPageInstance); return; }
     const attempt = {};
     identityAttempts.set(this, attempt);
+    loadedIdentities.delete(this);
     const current = () => identityAttempts.get(this) === attempt;
     this.setData({ ...EMPTY_IDENTITIES, identitiesOpen: true, identitiesBusy: true });
     try {
       const result = await fetchNativeAccountIdentities(session, current);
       if (!current()) return;
       const rows = visibleAccountIdentities(result.identities);
+      loadedIdentities.set(this, { session, rows });
       this.setData({ hasPassword: result.hasPassword, identityRows: rows.map((row, index) => ({
         key: String(index), label: tr(Object.prototype.hasOwnProperty.call(ACCOUNT_PROVIDER_LABELS, row.provider)
           ? ACCOUNT_PROVIDER_LABELS[row.provider] : { zh: row.provider, en: row.provider }),
@@ -797,8 +815,83 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
     }
   },
 
+  unlinkIdentity(event: { currentTarget: { dataset: { index?: string | number } } }) {
+    if (this.data.identityMutationBusy || this.data.nameBusy) return;
+    const loaded = loadedIdentities.get(this);
+    const index = Number(event.currentTarget.dataset.index);
+    if (!loaded || !Number.isSafeInteger(index) || index < 0 || !loaded.rows[index]) return;
+    const identity = loaded.rows[index];
+    if (getStoredSessionSnapshot().session?.token !== loaded.session.token) {
+      loadedIdentities.delete(this); this.setData({ ...EMPTY_IDENTITIES }); return;
+    }
+    const attempt = {};
+    accountActionAttempts.set(this, attempt);
+    this.setData({ identityMutationBusy: true, accountError: '' });
+    const current = () => accountActionAttempts.get(this) === attempt;
+    const release = () => {
+      if (current()) { accountActionAttempts.delete(this); this.setData({ identityMutationBusy: false }); }
+    };
+    let handled = false;
+    try { miniProgramApi().showModal({
+      title: tr({ zh: '解绑登录方式', en: 'Unlink sign-in method' }),
+      content: tr({ zh: `解绑 ${this.data.identityRows[index].label} 后，将无法用它登录此账号。最后一种登录方式不能解绑。`,
+        en: `You will no longer be able to sign in with ${this.data.identityRows[index].label}. Your last sign-in method cannot be unlinked.` }),
+      confirmText: ACCOUNT_COPY.unlink, cancelText: ACCOUNT_COPY.cancelLabel,
+      success: async result => {
+        if (handled || !current()) return;
+        handled = true;
+        if (!result.confirm) { release(); return; }
+        try {
+          await unlinkNativeAccountIdentity(loaded.session, identity, current);
+          if (!current()) return;
+          release();
+          refreshStoredSession(this as unknown as AccountPageInstance);
+          await this.loadIdentities();
+        } catch (error) {
+          if (current()) this.setData({ accountError: error instanceof ApiError && error.status === 409
+            ? tr({ zh: '不能解绑最后一种登录方式，或账号状态已变化，请刷新后重试。', en: 'Cannot unlink the last sign-in method, or the account changed. Refresh and retry.' })
+            : tr({ zh: '未能确认解绑结果，请刷新登录方式后核对。', en: 'Could not confirm unlinking. Refresh sign-in methods to check.' }) });
+          release();
+        }
+      },
+      fail: release,
+    }); } catch { release(); }
+  },
+
+  signOut() {
+    if (this.data.loginRequired || this.data.nameBusy || this.data.identityMutationBusy) return;
+    const session = getStoredSessionSnapshot().session;
+    if (!session) return;
+    const attempt = {};
+    accountActionAttempts.set(this, attempt);
+    this.setData({ identityMutationBusy: true, accountError: '' });
+    const release = () => {
+      if (accountActionAttempts.get(this) === attempt) {
+        accountActionAttempts.delete(this); this.setData({ identityMutationBusy: false });
+      }
+    };
+    let handled = false;
+    try { miniProgramApi().showModal({
+      title: ACCOUNT_COPY.signOut,
+      content: tr({ zh: '退出本机小程序账号，本地计时成绩保留。其他设备和网站的登录不会退出。', en: 'Sign out on this device and keep local solves. Other devices and website sessions remain signed in.' }),
+      confirmText: tr({ zh: '退出', en: 'Sign out' }), cancelText: ACCOUNT_COPY.cancelLabel,
+      success: result => {
+        if (handled || accountActionAttempts.get(this) !== attempt) return;
+        handled = true;
+        if (result.confirm && getStoredSessionSnapshot().session?.token === session.token) {
+          if (clearStoredSession()) {
+            identityAttempts.delete(this); loadedIdentities.delete(this); profileSessions.delete(this);
+            this.setData({ ...EMPTY_IDENTITIES, editingName: false, nameDraft: '' });
+            refreshStoredSession(this as unknown as AccountPageInstance);
+          } else this.setData({ accountError: ACCOUNT_COPY.storageUnavailable });
+        }
+        release();
+      }, fail: release,
+    }); } catch { release(); }
+  },
+
   editDisplayName() {
-    if (this.data.loginRequired || this.data.isTimelineEntry || this.data.wcaId || this.data.nameBusy) return;
+    if (this.data.loginRequired || this.data.isTimelineEntry || this.data.wcaId || this.data.nameBusy || this.data.identityMutationBusy) return;
     const session = getStoredSessionSnapshot().session;
     if (!session || session.user.wcaId) return;
     profileSessions.set(this, session.token);
@@ -818,7 +911,7 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
   },
 
   async saveDisplayName() {
-    if (!this.data.editingName || this.data.nameBusy || this.data.loginRequired) return;
+    if (!this.data.editingName || this.data.nameBusy || this.data.loginRequired || this.data.identityMutationBusy) return;
     const name = normalizeDisplayName(this.data.nameDraft);
     if (!isValidDisplayName(name)) {
       this.setData({ accountError: tr({ zh: '展示名须为 1–50 个字符，不能包含控制字符。', en: 'Use 1–50 characters without control characters.' }) });
@@ -848,6 +941,15 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
     } finally {
       if (current()) { profileAttempts.delete(this); this.setData({ nameBusy: false }); }
     }
+  },
+
+  openDeleteAccount() {
+    if (this.data.loginRequired || this.data.isTimelineEntry || this.data.identityMutationBusy || this.data.nameBusy) return;
+    this.setData({ identityMutationBusy: true, accountError: '' });
+    const fail = () => this.setData({ accountError: ACCOUNT_COPY.accountFailure });
+    try { miniProgramApi().navigateTo({ url: '/pages/account-delete/index', fail,
+      complete: () => this.setData({ identityMutationBusy: false }) }); }
+    catch { this.setData({ identityMutationBusy: false }); fail(); }
   },
 
   openAccount() {

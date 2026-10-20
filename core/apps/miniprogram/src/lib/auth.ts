@@ -414,6 +414,16 @@ export async function updateNativeDisplayName(session: SessionData, raw: string,
 }
 
 export interface NativeAccountIdentity { provider: string; providerUid: string }
+export async function unlinkNativeAccountIdentity(session: SessionData, identity: NativeAccountIdentity, isCurrent: () => boolean) {
+  const current = () => isCurrent() && getStoredSession()?.token === session.token;
+  if (!session.user.uid || !current()) throw new ApiError(409, 'account changed', 'ACCOUNT_CHANGED');
+  const response = await requestJson<unknown>('/auth/unlink', {
+    method: 'POST', token: session.token,
+    body: { provider: identity.provider, ...(identity.provider === 'douyin' ? {} : { providerUid: identity.providerUid }) },
+  });
+  return saveLoginResponse(response, current, session.user.uid);
+}
+
 export async function fetchNativeAccountIdentities(session: SessionData, isCurrent: () => boolean) {
   const current = () => isCurrent() && getStoredSession()?.token === session.token;
   if (!current()) throw new ApiError(409, 'account changed', 'ACCOUNT_CHANGED');
