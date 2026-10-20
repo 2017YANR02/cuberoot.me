@@ -1396,7 +1396,6 @@
 
 .sim-stage-controls { width: 100%; min-width: 0; }
 .sim-view-tools,
-.sim-playback-options,
 .sim-preview-notice {
   display: flex;
   align-items: center;
@@ -1416,10 +1415,15 @@
   color: var(--accent);
   background: var(--accent-soft);
 }
-.sim-playback-options { margin-top: 6px; justify-content: space-between; }
-.sim-playback-options > .sim-slider { width: 180px; min-width: 0; }
-.sim-playback-options > details { max-width: 100%; font-size: 13px; }
-.sim-playback-options summary { cursor: pointer; padding: 4px 0; }
+.sim-stage-controls .playback-bar-controls { display: grid; grid-template-columns: minmax(0, 1fr) repeat(5, 38px) minmax(0, 1fr); gap: 4px; }
+.sim-playback-speed { width: min(140px, 100%); min-width: 0; justify-self: start; }
+.sim-playback-speed > .sim-slider { width: 100%; min-width: 0; }
+.sim-playback-settings { justify-self: end; }
+.sim-playback-settings .settings-popover-panel {
+  /* anchored-panel: clamped (SettingsPopover uses usePanelClamp). */
+  top: auto;
+  bottom: calc(100% + 6px);
+}
 .sim-preview-notice { color: var(--muted-foreground); font-size: 13px; }
 .sim-preview-notice button,
 .sim-research-enable button {
@@ -1435,7 +1439,8 @@
 .sim-input-error { margin: 0; font-size: 13px; color: var(--destructive); overflow-wrap: anywhere; }
 
 @media (max-width: 767px) {
-  .sim-view-tools { flex-wrap: nowrap; overflow-x: auto; }
+  .sim-stage-controls .playback-bar-controls { grid-template-columns: minmax(0, 1fr) repeat(5, 44px) minmax(0, 1fr); gap: 2px; }
+  .sim-view-tools { flex-wrap: nowrap; }
   .sim-view-tools > * { flex-shrink: 0; }
   .sim-stage-controls .playback-bar-btn,
   .sim-player button:not(.pill-toggle):not(.bool-toggle-label),
@@ -1450,19 +1455,16 @@
 /* Fixed editing tools precede optional panels. One chevron style for every
    disclosure; native summary markers must not create a second visual hierarchy. */
 .sim-appearance-presets > summary,
-.sim-puzzle-debug > summary,
-.sim-playback-options summary {
+.sim-puzzle-debug > summary {
   display: flex;
   align-items: center;
   gap: 8px;
   list-style: none;
 }
 .sim-appearance-presets > summary::-webkit-details-marker,
-.sim-puzzle-debug > summary::-webkit-details-marker,
-.sim-playback-options summary::-webkit-details-marker { display: none; }
+.sim-puzzle-debug > summary::-webkit-details-marker { display: none; }
 .sim-appearance-presets > summary::before,
-.sim-puzzle-debug > summary::before,
-.sim-playback-options summary::before {
+.sim-puzzle-debug > summary::before {
   content: '';
   width: 6px;
   height: 6px;
@@ -1473,8 +1475,7 @@
   margin: 0 4px;
 }
 .sim-appearance-presets[open] > summary::before,
-.sim-puzzle-debug[open] > summary::before,
-.sim-playback-options details[open] > summary::before { transform: rotate(45deg); }
+.sim-puzzle-debug[open] > summary::before { transform: rotate(45deg); }
 
 .sim-alg-tools { padding-block: 4px; }
 .sim-puzzle-section-title,

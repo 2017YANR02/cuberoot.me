@@ -169,6 +169,22 @@ it('snapshots a legacy drawing puzzle before animation changes its project', asy
   expect(host.querySelector('[data-drawing-puzzle]')?.getAttribute('data-drawing-puzzle')).toBe('skewb');
 });
 
+it('keeps canvas and playback tools together and opens settings in a dismissible popover', async () => {
+  await act(async () => root.render(createElement(NuqsTestingAdapter, {
+    searchParams: '?puzzle=skewb&renderer=cubing', hasMemory: true,
+    children: createElement(SimPage),
+  })));
+  expect(host.querySelector('.sim-view-tools .sim-canvas-tools')).not.toBeNull();
+  const controls = host.querySelector('.playback-bar-controls')!;
+  expect(controls.querySelector('.sim-playback-speed')).not.toBeNull();
+  const trigger = controls.querySelector<HTMLButtonElement>('[aria-label="Playback settings"]')!;
+  await act(async () => trigger.click());
+  expect(controls.querySelector('[role="dialog"]')).not.toBeNull();
+  expect(trigger.getAttribute('aria-expanded')).toBe('true');
+  await act(async () => trigger.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+  expect(controls.querySelector('[role="dialog"]')).toBeNull();
+});
+
 it('snapshots a legacy FTO image algorithm before animation changes its formula', async () => {
   await act(async () => {
     root.render(createElement(NuqsTestingAdapter, {

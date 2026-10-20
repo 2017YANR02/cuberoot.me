@@ -24,6 +24,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useT } from '@/hooks/useT';
+import { SettingsPopover } from '@/components/TrainingSettings';
 import { FlipHorizontal2, FlipVertical2, Eraser, Link2, Check, Keyboard, Grid3x3 } from 'lucide-react';
 import { Alg, Move } from 'cubing/alg';
 import type { TwistyPlayer } from 'cubing/twisty';
@@ -866,6 +867,7 @@ interface Props {
   /** DOM node below the cube canvas to portal the playback control row into
    *  (twizzle-style bar under the puzzle). Falls back to inline when absent. */
   playbackSlot?: HTMLElement | null;
+  canvasTools?: ReactNode;
   /** Current-state stage control shares the canvas footer with animation tools. */
   captureStickeringSlot?: HTMLElement | null;
   appearanceOpen?: boolean;
@@ -913,7 +915,7 @@ export default function PlayerControls({
   onCopyLink,
   renderer = 'cubing', onRendererChange,
   appearanceOpen, onAppearanceToggle,
-  playbackSlot, captureStickeringSlot, bgSlot, fullscreenButton, backViewButton,
+  playbackSlot, canvasTools, captureStickeringSlot, bgSlot, fullscreenButton, backViewButton,
   stickering = 'full', onStickeringChange,
   stickeringRot = '', onStickeringRotChange,
   stickeringMask = '', onStickeringMaskClear,
@@ -2681,6 +2683,7 @@ export default function PlayerControls({
             onSettingsChange(next);
             if (world) resetWorldView(world, next);
           }}>{t('重置视角', 'Reset view')}</button>}
+        {canvasTools}
       </div>
       <PlaybackBar layout="wide"
         disabled={!isTwistyMode && (!engineReady || replayPending)}
@@ -2693,7 +2696,13 @@ export default function PlayerControls({
         onTogglePlay={handleTogglePlay}
         onStepForward={stepForward}
         onSkipEnd={() => { setCaretChar(null); jumpToStep(totalSteps); }}
-
+        leading={<div className="sim-playback-speed">
+          <Slider label="TPS" value={settings.speed} onChange={speed => onSettingsChange({ ...settings, speed })} unit={UNIT_TPS} title={t('每秒转动步数', 'Turns per second')} />
+        </div>}
+        trailing={<SettingsPopover label={t('播放设置', 'Playback settings')} className="sim-playback-settings" iconSize={14}>
+          {anchorSelect}
+          <Toggle label={t('动画', 'Animation')} value={settings.animatePlayback !== false} onChange={animatePlayback => onSettingsChange({ ...settings, animatePlayback })} />
+        </SettingsPopover>}
         labels={{
           skipStart: t('回到起点', 'Skip to start'),
           stepBack: t('上一步', 'Step back'),
@@ -2704,14 +2713,6 @@ export default function PlayerControls({
           scrub: t('拖动播放进度', 'Scrub playback'),
         }}
       />
-      <div className="sim-playback-options">
-        <Slider label="TPS" value={settings.speed} onChange={speed => onSettingsChange({ ...settings, speed })} unit={UNIT_TPS} title={t('每秒转动步数', 'Turns per second')} />
-        <details>
-          <summary>{t('播放设置', 'Playback settings')}</summary>
-          {anchorSelect}
-          <Toggle label={t('动画', 'Animation')} value={settings.animatePlayback !== false} onChange={animatePlayback => onSettingsChange({ ...settings, animatePlayback })} />
-        </details>
-      </div>
       </div>
       );
       return playbackSlot ? createPortal(playbackBar, playbackSlot) : playbackBar;

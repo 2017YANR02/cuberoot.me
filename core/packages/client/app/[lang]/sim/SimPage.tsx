@@ -465,9 +465,8 @@ export default function SimPage() {
   const [apiDocHost, setApiDocHost] = useState<HTMLDivElement | null>(null);
   const [captureStickeringSlot, setCaptureStickeringSlot] = useState<HTMLDivElement | null>(null);
   const [playbackSlot, setPlaybackSlot] = useState<HTMLDivElement | null>(null);
-  // Slot at the canvas' bottom-left corner that PlayerControls portals the 背景(BG)
-  // selector into (overlays the big cube, like the top-right back-view window). state
-  // (not ref) so the portal re-renders once the node mounts.
+  // Background selector host in the canvas tools row; state updates its portal
+  // when switching between animation and capture mode.
   const [bgSlot, setBgSlot] = useState<HTMLDivElement | null>(null);
   const worldRef = useRef<World | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -2470,10 +2469,10 @@ export default function SimPage() {
           )}
         </div>
           {/* Shared adjustment row below the canvas. */}
-          <div className="sim-canvas-tools">
+          {!animationMode && <div className="sim-canvas-tools">
             <div className="sim-bg-overlay" ref={setBgSlot} />
             <div className="sim-capture-stage-slot" ref={setCaptureStickeringSlot} />
-          </div>
+          </div>}
         <div className="sim-playback-under" ref={setPlaybackSlot} />
         </div>
 
@@ -2516,6 +2515,10 @@ export default function SimPage() {
             renderer={query.renderer}
             onRendererChange={handleRendererChange}
             playbackSlot={playbackSlot}
+            canvasTools={<div className="sim-canvas-tools">
+              <div className="sim-bg-overlay" ref={setBgSlot} />
+              <div className="sim-capture-stage-slot" ref={setCaptureStickeringSlot} />
+            </div>}
             captureStickeringSlot={captureStickeringSlot}
             appearanceOpen={openPanel === 'appearance'}
             onAppearanceToggle={() => setOpenPanel(panel => panel === 'appearance' ? null : 'appearance')}
