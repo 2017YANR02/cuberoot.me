@@ -9,7 +9,7 @@
 - 权限：员工状态与项目资格每次请求重查；草稿和历史版本仅作者可见；共享报告按成员资格过滤后分页；项目归档后可读但不能写；管理员开通员工和管理项目。
 - 审计：所有成员、项目、报告和评论写入审计；版本冲突拒绝覆盖。评论重试按 ID 幂等。身份预览会话不用于员工操作。
 
-用户已授权配套发布。按正常 migration runner 应用迁移后，由管理员开通员工权限；Mira 与 CubeRoot 分别部署、分别验收。最终上线结果见发布证据。
+管理员在本站开通员工权限；Mira 与 CubeRoot 分别部署、分别验收。
 
 隔离数据库验证（显式指向一次性 PostgreSQL，测试不会读取应用 DB 配置）：
 
@@ -19,6 +19,16 @@ WORKSPACE_TEST_DATABASE_URL=postgres://USER@127.0.0.1:PORT/postgres pnpm --filte
 pnpm --filter @cuberoot/server exec vitest run tests/workspace-http.test.ts
 ```
 
-本地验证：API 与前端类型检查通过；一次性 PostgreSQL 及 HTTP 身份边界共 7 项检查通过，路由、目录和 metadata 共 18 项检查通过。两个工作台入口均返回 HTTP 200。共享包隔离安装及 CJS/ESM/TypeScript 消费通过。真实员工操作、视觉及线上部署尚未验收。
+本地验证：API 与前端类型检查通过；一次性 PostgreSQL 及 HTTP 身份边界共 9 项检查通过，包含既有 WCA 管理员及账号注销；注销覆盖率与 schema/API 文档漂移共 47 项通过，路由、目录和 metadata 共 18 项通过。共享包隔离安装及 CJS/ESM/TypeScript 消费通过。
 
 账号注销由 `0282_workspace_account_deletion.sql` 在同一事务清理私人草稿与历史修订、撤销项目资格并匿名化成员/评论；已提交团队记录保留，账号外键置空。日常停用仍保留历史，不等于账号注销。
+
+## 2026-10-19 生产验收
+
+- App Foundation [v0.7.0](https://github.com/2017YANR02/app-foundation/releases/tag/v0.7.0) 已发布；UI 包 SHA-256 为 `5ecdfda61a82c6490a8e4fdfafdbcb544b5a747ba8ab8a1378532165dc5365a0`。
+- Mira 应用 `23af9031` 经 [CI 与生产部署](https://github.com/2017YANR02/mira.fans/actions/runs/39354119968) 成功上线，服务 active，活动目录与提交匹配。
+- 使用生产临时身份验证两站登录、草稿保存、提交读取、评论重试幂等、草稿隔离及权限撤销。相同邮箱使用独立密码，跨站密码、会话和记录访问均被拒绝，停用仅影响所属应用。验证账号、会话及业务数据已清理，审计保留。
+- 两站 /workspace 页面与 API 健康接口均返回 200；未执行真实员工操作、付费 AI 调用、实际报销付款或视觉验收。
+- CubeRoot 最终功能提交 `533753580b2c85df9c17657154598daa296bdd7e`；[自有前端部署](https://github.com/2017YANR02/cuberoot.me/actions/runs/39355684592) 与 Vercel 均成功。线上 API 活动目录已匹配该版本，0282 触发器及账号可空外键已回读确认。
+- [最新主线检查](https://github.com/2017YANR02/cuberoot.me/actions/runs/39355899880) 的类型检查、后端检查及前端第1分片通过；第2分片唯一失败为比赛城市 Domažlice 缺中文译名（`city-localize-cn-coverage.test.ts`），没有跳过或放宽断言。工作台注销覆盖率失败已修复；不能把全仓 CI 标记为全绿。
+- [最终 API 部署 39355684610](https://github.com/2017YANR02/cuberoot.me/actions/runs/39355684610) 已成功完成，生产求解服务 ready=true，最终版本保持启用，无回滚。
