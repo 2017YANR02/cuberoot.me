@@ -21,6 +21,27 @@ function fixture() {
 function start(timer: NativeTimer) { timer.down(); timer.dispatch({ type: 'hold-ready' }); timer.up(); }
 
 describe('native timer adapter', () => {
+  it('uses the same dated solve set for statistics and distribution without counting DNF as finite', () => {
+    const { timer } = fixture();
+    const now = 1_800_000_000_000;
+    const clock = vi.spyOn(Date, 'now');
+    try {
+      timer.setManualScrambles('R U');
+      timer.updateSettings({ precision: 2 });
+      clock.mockReturnValue(now - 10 * 86_400_000);
+      timer.manualEntry('10');
+      clock.mockReturnValue(now);
+      for (const input of ['12+2', '15', '20', '25', '30']) expect(timer.manualEntry(input)).toBe(true);
+      timer.updatePenalty(timer.records.at(-1)!.id, 'DNF');
+      const stats = timer.statistics('all', now);
+      expect(stats).toMatchObject({ count: 6, solved: 5, best: '10.00', worst: 'DNF', mean: 'DNF' });
+      expect(stats.distribution.reduce((count, bin) => count + bin.count, 0)).toBe(5);
+      expect(stats.rows.find(row => row.key === 'mo3')?.current).toBe('DNF');
+      expect(timer.statistics('7d', now)).toMatchObject({ count: 5, solved: 4, best: '14.00', distribution: [] });
+      expect(timer.records).toHaveLength(6);
+    } finally { clock.mockRestore(); timer.dispose(); }
+  });
+
   it('persists shared display settings and clamps typography through the shared contract', () => {
     const { timer, storage } = fixture();
     timer.updateSettings({ compactScramble: true, hideAllUiWhileRunning: true, timerFontScale: 3, scrambleFontScale: 0.1 });

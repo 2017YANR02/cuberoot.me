@@ -17,8 +17,9 @@ import { timerCanSwitchScramble, timerCanHandleAttemptPress } from '@cuberoot/sh
 import { activateTimerSession, createAndActivateTimerSession, renameTimerSession, deleteTimerSession, clearTimerSession, timerSessionSnapshot, timerSessionSelectedEvent, TIMER_SESSION_UI_COPY, type TimerSessionMutationResult, selectTimerEventSession, moveTimerSolveToSession } from '@cuberoot/shared/timer/session';
 import { parseTimerEntry } from '@cuberoot/shared/timer/manual-entry';
 import { parseManualScrambleQueue, takeManualScramble } from '@cuberoot/shared/timer/manual-scramble-queue';
-import { averageOfN, bestSingle, formatMs, formatSolveResult } from '@cuberoot/shared/timer/stats';
-import { EVENTS, type Penalty, type Solve } from '@cuberoot/shared/timer/types';
+import { averageOfN, bestSingle, meanOfAll, meanOfN, worstSingle, stdDev, formatMs, formatSolveResult, buildTimerHistogramBuckets } from '@cuberoot/shared/timer/stats';
+import { filterSolvesByStatsDateRange, type TimerStatsDateRange } from '@cuberoot/shared/timer/stats-buckets';
+import { EVENTS, effectiveMs, type Penalty, type Solve } from '@cuberoot/shared/timer/types';
 import { generateTimedWcaScramble, isTimedWcaEvent, type TimedWcaEvent } from '@cuberoot/shared/timer/seeded/wca';
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
 import { SmartCubeSessionController, type SmartCubeSessionLease } from '@cuberoot/shared/smart-cube/session';
@@ -240,10 +241,29 @@ export class NativeTimer {
   summary(limit = 100) {
     const solves = this.solves;
     const filtered = filterTimerHistorySolves(solves, this.historyFilters).solves;
-    return { count: solves.length, filteredCount: filtered.length, best: formatMs(bestSingle(solves), this.settings.precision), ao5: formatMs(averageOfN(solves, 5), this.settings.precision), ao12: formatMs(averageOfN(solves, 12), this.settings.precision),
+    return { count: solves.length, solved: solves.filter(s => Number.isFinite(effectiveMs(s))).length,
+      mean: formatMs(meanOfAll(solves), this.settings.precision), mo3: formatMs(meanOfN(solves, 3), this.settings.precision),
+      filteredCount: filtered.length, best: formatMs(bestSingle(solves), this.settings.precision), ao5: formatMs(averageOfN(solves, 5), this.settings.precision), ao12: formatMs(averageOfN(solves, 12), this.settings.precision),
       rows: filtered.slice(0, limit).map(s => ({ id: s.id, result: formatSolveResult(s, this.settings.precision), scramble: s.scramble, penalty: s.penalty, comment: s.comment ?? '' })) };
   }
-  statistics() { return ROLLING_STAT_PRESETS.map(key => ({ key, current: formatMs(rollingStatCurrent(this.solves, key), this.settings.precision), best: formatMs(rollingStatBest(this.solves, key), this.settings.precision) })); }
+  statistics(range: TimerStatsDateRange = 'all', now = Date.now()) {
+    const solves = filterSolvesByStatsDateRange(this.solves, range, now);
+    const f = (value: number | null) => formatMs(value, this.settings.precision);
+    const finite = solves.map(effectiveMs).filter(Number.isFinite);
+    const buckets = buildTimerHistogramBuckets(finite, 12);
+    const peak = Math.max(1, ...buckets.map(b => b.count));
+    return {
+      count: solves.length, solved: finite.length,
+      mean: f(meanOfAll(solves)), best: f(bestSingle(solves)), worst: f(worstSingle(solves)), sd: f(stdDev(solves)),
+      rows: ROLLING_STAT_PRESETS.map(key => ({ key, current: f(rollingStatCurrent(solves, key)), best: f(rollingStatBest(solves, key)) })),
+      distribution: finite.length < 5 ? [] : buckets.map((b, index) => ({
+        ...b, index, height: b.count / peak * 100,
+        label: `${f(b.lo)} – ${f(b.hi)}: ${b.count}`,
+      })),
+      distributionMin: buckets.length ? f(buckets[0].lo) : '',
+      distributionMax: buckets.length ? f(buckets[buckets.length - 1].hi) : '',
+    };
+  }
   persist() {
     if (!this.storageReadable) return false;
     try {

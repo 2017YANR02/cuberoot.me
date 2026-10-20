@@ -10,6 +10,40 @@ import type { Solve, EventId, Penalty } from './types';
 import { effectiveMs } from './types';
 import { roundTimedAverageMs } from './round';
 
+export interface TimerHistogramBucket {
+  lo: number;
+  hi: number;
+  count: number;
+}
+
+/** Equal-width finite-time buckets, shared by the Web and native distributions. */
+export function buildTimerHistogramBuckets(times: number[], bucketCount: number): TimerHistogramBucket[] {
+  if (times.length === 0 || bucketCount <= 0) return [];
+  let min = Infinity;
+  let max = -Infinity;
+  for (const t of times) {
+    if (t < min) min = t;
+    if (t > max) max = t;
+  }
+  if (min === max) {
+    const pad = Math.max(min * 0.05, 100);
+    min -= pad;
+    max += pad;
+  }
+  const w = (max - min) / bucketCount;
+  const buckets: TimerHistogramBucket[] = [];
+  for (let i = 0; i < bucketCount; i++) {
+    buckets.push({ lo: min + i * w, hi: min + (i + 1) * w, count: 0 });
+  }
+  for (const t of times) {
+    let idx = Math.floor((t - min) / w);
+    if (idx >= bucketCount) idx = bucketCount - 1;
+    if (idx < 0) idx = 0;
+    buckets[idx].count++;
+  }
+  return buckets;
+}
+
 /** WCA trim count: ceil(n/20), but at least 1 for n in [3,20]. */
 function trimCount(n: number): number {
   if (n < 3) return 0;

@@ -9,6 +9,7 @@ import type { EventId, Solve } from '@cuberoot/shared/timer/types';
 import { effectiveMs } from '@cuberoot/shared/timer/types';
 import { TIMER_SCRAMBLE_CLICK_ACTIONS, TIMER_SCRAMBLE_CLICK_TITLE_COPY, timerScrambleClickEffect, TIMER_SETTING_FIELD_CONTRACTS, TIMER_SETTING_CATEGORY_CONTRACTS } from '@cuberoot/shared/timer/settings-contract';
 import { timerHidesRunningUi } from '@cuberoot/shared/timer/display-settings';
+import { TIMER_STATS_DATE_RANGES } from '@cuberoot/shared/timer/stats-buckets';
 import { NativeTimer, nativeTimerEvents } from './native-timer';
 import { createNativeWcaPool, nativeCompetitionCatalog, loadNativeCompetitionScrambles } from './native-timer-wca';
 import { searchTimerWcaCompetitions, timerWcaRoundGroupOptions, timerWcaRoundShortLabel, type TimerWcaCompetition, type TimerWcaCompetitionScramble } from '@cuberoot/shared/timer/wca-source-config';
@@ -97,6 +98,11 @@ function copy() { return {
   import: tr({ en: 'Import csTimer JSON', zh: '导入 csTimer JSON' }), comment: tr(TIMER_HISTORY_QUICK_ACTION_COPY['history.quick.comment']),
   calibrate: tr({ en: 'Calibrate cube state', zh: '校准魔方状态' }),
   statistics: tr({ en: 'Statistics', zh: '统计' }), current: tr({ en: 'Current', zh: '当前' }), more: tr({ en: 'Load more', zh: '加载更多' }),
+  mean: tr({ en: 'Mean', zh: '平均' }), worst: tr({ en: 'Worst', zh: '最差' }),
+  count: tr({ en: 'Solved / total', zh: '成功 / 总次数' }), deviation: tr({ en: 'Standard deviation', zh: '标准差' }),
+  distribution: tr({ en: 'Time distribution', zh: '成绩分布' }),
+  distributionEmpty: tr({ en: 'Need 5+ solves to chart distribution', zh: '至少 5 次成绩才显示分布' }),
+  statsRanges: [tr({ en: 'All', zh: '全部' }), tr({ en: '7d', zh: '近7天' }), tr({ en: '30d', zh: '近30天' }), tr({ en: '90d', zh: '近90天' }), tr({ en: '365d', zh: '近一年' })],
   rankHint: tr({ en: 'Compared with historical WCA results; not a live official rank', zh: '对比 WCA 历史成绩，非实时官方排名' }),
   rankScopes: tr(TIMER_SETTING_FIELD_CONTRACTS.find(f => f.storagePath === 'rankScopes')!.copy),
   rankCountry: tr(TIMER_SETTING_FIELD_CONTRACTS.find(f => f.storagePath === 'rankCountry')!.copy),
@@ -227,7 +233,7 @@ function generate(page: NativePage, event?: string) {
 }
 export function createNativeTimerPageOptions(): WechatMiniprogram.Page.Options<Record<string, unknown>, WechatMiniprogram.Page.CustomOption> {
   return {
-    data: { nativeTimerPage: true, appearanceStyle: '', copy: copy(), display: '0.000', phase: 'idle', scramble: '', generating: true, sheet: '', settingsCategory: 'timer', settingsCategoryIndex: 0, summary: { rows: [] } },
+    data: { nativeTimerPage: true, appearanceStyle: '', copy: copy(), display: '0.000', phase: 'idle', scramble: '', generating: true, sheet: '', settingsCategory: 'timer', settingsCategoryIndex: 0, statsRangeIndex: 0, summary: { rows: [] } },
     onLoad() {
       const p = this as unknown as NativePage;
       p.nativeTimer = new NativeTimer(miniProgramApi(), undefined, createNativeWcaPool());
@@ -304,7 +310,7 @@ export function createNativeTimerPageOptions(): WechatMiniprogram.Page.Options<R
       const sheetGeneration = p.sheetGeneration = (p.sheetGeneration ?? 0) + 1;
       p.draft = p.sheet === 'scrambles' ? p.nativeTimer?.settings.manualScrambles ?? '' : '';
       this.setData({ sheet: p.sheet, draft: p.draft, formError: '' }); refresh(p, true);
-      if (p.sheet === 'statistics') this.setData({ statistics: p.nativeTimer?.statistics() });
+      if (p.sheet === 'statistics') this.setData({ statistics: p.nativeTimer?.statistics(TIMER_STATS_DATE_RANGES[Number(this.data.statsRangeIndex)] ?? 'all') });
       if (p.sheet === 'wca') {
         p.competitionQuery = ''; this.setData({ competitionQuery: '', competitionMatches: [] });
         void loadCompetitionOptions(p);
@@ -352,6 +358,10 @@ export function createNativeTimerPageOptions(): WechatMiniprogram.Page.Options<R
     selectSettingsCategory(e: WechatMiniprogram.PickerChange) {
       const index = Number(e.detail.value), category = nativeCategories[index];
       if (category) this.setData({ settingsCategory: category.id, settingsCategoryIndex: index });
+    },
+    selectStatsRange(e: WechatMiniprogram.PickerChange) {
+      const index = Number(e.detail.value), range = TIMER_STATS_DATE_RANGES[index];
+      if (range) this.setData({ statsRangeIndex: index, statistics: (this as unknown as NativePage).nativeTimer?.statistics(range) });
     },
     toggleSetting(e: WechatMiniprogram.SwitchChange) {
       const p = this as unknown as NativePage, t = p.nativeTimer;

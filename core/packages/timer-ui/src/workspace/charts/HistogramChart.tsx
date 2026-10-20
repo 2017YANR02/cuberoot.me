@@ -11,6 +11,7 @@ import { useMemo } from 'react';
 import type { Solve } from '@cuberoot/shared/timer';
 import { effectiveMs } from '@cuberoot/shared/timer';
 import { formatMs } from '@cuberoot/shared/timer';
+import { buildTimerHistogramBuckets } from '@cuberoot/shared/timer/stats';
 import './charts.css';
 import { useWorkspaceText } from '../localization';
 
@@ -23,42 +24,6 @@ interface HistogramChartProps {
   /** Number of buckets. Default 12. */
   bucketCount?: number;
   className?: string;
-}
-
-interface Bucket {
-  lo: number;
-  hi: number;
-  count: number;
-}
-
-/** Build equal-width buckets from finite times. */
-function buildBuckets(times: number[], bucketCount: number): Bucket[] {
-  if (times.length === 0 || bucketCount <= 0) return [];
-  let min = Infinity;
-  let max = -Infinity;
-  for (const t of times) {
-    if (t < min) min = t;
-    if (t > max) max = t;
-  }
-  // Degenerate case: all values equal — give a small artificial span.
-  if (min === max) {
-    const pad = Math.max(min * 0.05, 100);
-    min -= pad;
-    max += pad;
-  }
-  const span = max - min;
-  const w = span / bucketCount;
-  const buckets: Bucket[] = [];
-  for (let i = 0; i < bucketCount; i++) {
-    buckets.push({ lo: min + i * w, hi: min + (i + 1) * w, count: 0 });
-  }
-  for (const t of times) {
-    let idx = Math.floor((t - min) / w);
-    if (idx >= bucketCount) idx = bucketCount - 1; // include max in last bucket
-    if (idx < 0) idx = 0;
-    buckets[idx].count++;
-  }
-  return buckets;
 }
 
 export default function HistogramChart({
@@ -75,7 +40,7 @@ export default function HistogramChart({
       const e = effectiveMs(s);
       if (Number.isFinite(e)) times.push(e);
     }
-    const bs = buildBuckets(times, bucketCount);
+    const bs = buildTimerHistogramBuckets(times, bucketCount);
     let peak = 0;
     for (const b of bs) if (b.count > peak) peak = b.count;
     return {

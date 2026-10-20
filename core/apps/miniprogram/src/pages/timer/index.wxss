@@ -37,3 +37,10 @@
 .nt-category { min-height: 88rpx; display: flex; align-items: center; font-weight: 650; }
 .nt-setting > text { flex: 1; min-width: 0; overflow-wrap: break-word; }
 .nt-setting > switch, .nt-setting > picker { flex-shrink: 0; }
+.nt-stat-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); gap: 16rpx; padding: 20rpx 0; font-variant-numeric: tabular-nums; }
+.nt-stat-row > text:not(:first-child), .nt-setting > text:last-child:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; }
+.nt-histogram { height: 220rpx; display: flex; gap: 6rpx; padding-top: 36rpx; }
+.nt-histogram-column { flex: 1; min-width: 0; height: 100%; display: flex; align-items: flex-end; }
+.nt-histogram-bar { width: 100%; min-height: 2rpx; background: var(--cr-accent); position: relative; }
+.nt-histogram-bar text { position: absolute; bottom: 100%; width: 100%; text-align: center; font-size: 20rpx; color: var(--cr-muted); font-variant-numeric: tabular-nums; }
+.nt-chart-axis { display: flex; justify-content: space-between; }

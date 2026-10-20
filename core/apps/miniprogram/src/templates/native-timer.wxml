@@ -27,7 +27,10 @@
     <button class="nt-control" bindtap="openSheet" data-sheet="history" disabled="{{busy}}" hover-class="press-feedback">{{copy.results}}</button>
     <button class="nt-control" bindtap="nextScramble" disabled="{{busy || generating}}" aria-label="{{copy.next}}" hover-class="press-feedback"><image class="nt-icon" src="/assets/tabbar/chevron-right.png" aria-hidden="true" /></button>
   </view>
-  <button hover-class="press-feedback" hidden="{{hideChrome}}" class="nt-stats" bindtap="openSheet" data-sheet="statistics"><text>{{copy.best}} {{summary.best}}</text><text>ao5 {{summary.ao5}}</text><text>ao12 {{summary.ao12}}</text></button>
+  <button hover-class="press-feedback" hidden="{{hideChrome}}" class="nt-stats" bindtap="openSheet" data-sheet="statistics" disabled="{{busy}}">
+    <block wx:if="{{summary.count}}"><text>{{summary.solved}}/{{summary.count}}</text><text>{{copy.mean}} {{summary.mean}}</text><text>{{copy.best}} {{summary.best}}</text><text>mo3 {{summary.mo3}}</text><text>ao5 {{summary.ao5}}</text><text>ao12 {{summary.ao12}}</text></block>
+    <text wx:else>{{copy.statistics}}</text>
+  </button>
   <text wx:if="{{rankLine}}" hidden="{{hideChrome}}" class="nt-rank" aria-label="{{copy.rankHint}}">{{rankLine}}</text>
   <view wx:if="{{sheet}}" id="nt-backdrop" class="nt-backdrop" bindtap="closeSheet">
     <view class="nt-sheet">
@@ -90,8 +93,23 @@
         <button hover-class="press-feedback" wx:if="{{summary.rows.length < summary.filteredCount}}" class="nt-control" bindtap="loadMoreHistory">{{copy.more}}</button>
       </block>
       <block wx:elif="{{sheet === 'statistics'}}">
-        <view class="nt-setting"><text></text><text>{{copy.current}}</text><text>{{copy.best}}</text></view>
-        <view wx:for="{{statistics}}" wx:key="key" class="nt-setting"><text>{{item.key}}</text><text>{{item.current}}</text><text>{{item.best}}</text></view>
+        <picker range="{{copy.statsRanges}}" value="{{statsRangeIndex}}" bindchange="selectStatsRange"><view class="nt-category">{{copy.statsRanges[statsRangeIndex]}}</view></picker>
+        <text wx:if="{{!statistics.count}}" class="nt-hint">{{copy.empty}}</text>
+        <block wx:else>
+          <view class="nt-setting"><text>{{copy.count}}</text><text>{{statistics.solved}}/{{statistics.count}}</text></view>
+          <view class="nt-setting"><text>{{copy.mean}}</text><text>{{statistics.mean}}</text></view>
+          <view class="nt-setting"><text>{{copy.best}}</text><text>{{statistics.best}}</text></view>
+          <view class="nt-setting"><text>{{copy.worst}}</text><text>{{statistics.worst}}</text></view>
+          <view class="nt-setting"><text>{{copy.deviation}}</text><text>{{statistics.sd}}</text></view>
+          <view class="nt-stat-row nt-hint"><text></text><text>{{copy.current}}</text><text>{{copy.best}}</text></view>
+          <view wx:for="{{statistics.rows}}" wx:key="key" class="nt-stat-row"><text>{{item.key}}</text><text>{{item.current}}</text><text>{{item.best}}</text></view>
+          <text class="nt-category">{{copy.distribution}}</text>
+          <view wx:if="{{statistics.distribution.length}}" class="nt-histogram">
+            <view wx:for="{{statistics.distribution}}" wx:key="index" class="nt-histogram-column" aria-label="{{item.label}}"><view wx:if="{{item.count}}" class="nt-histogram-bar" style="height: {{item.height}}%"><text>{{item.count}}</text></view></view>
+          </view>
+          <view wx:if="{{statistics.distribution.length}}" class="nt-chart-axis nt-hint"><text>{{statistics.distributionMin}}</text><text>{{statistics.distributionMax}}</text></view>
+          <text wx:else class="nt-hint">{{copy.distributionEmpty}}</text>
+        </block>
       </block>
       <block wx:elif="{{sheet === 'detail'}}">
         <text class="nt-time">{{detail.result}}</text><text class="nt-hint">{{detail.date}}</text>
