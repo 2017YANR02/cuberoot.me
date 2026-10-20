@@ -903,26 +903,35 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     background: transparent;
 }
 
-/* The shell owns geometry through lazy mount, chunk/data/cover loading,
-   empty results and failures. Only the existing content panels scroll. */
+/* Reserve space only while a widget is pending. Loaded feeds use their
+   intrinsic height and existing scroll-panel caps, including short/empty feeds.
+   A permanent shell height would turn unused skeleton space into a blank gap. */
 .landing-page .landing-widget {
-    --home-widget-height: 22rem;
+    --home-widget-placeholder-height: 320px;
     width: 100%;
     max-width: 1100px;
-    height: var(--home-widget-height);
     flex-shrink: 0;
     margin: 0 auto 2.5rem;
 }
-.landing-page .landing-widget--recons { --home-widget-height: 26rem; }
-.landing-page .landing-widget--comps { --home-widget-height: 20rem; }
-.landing-page .landing-widget--forum { --home-widget-height: 19rem; }
+.landing-page .landing-widget--recons { --home-widget-placeholder-height: 128px; }
+.landing-page .landing-widget--comps { --home-widget-placeholder-height: 240px; }
+.landing-page .landing-widget--forum { --home-widget-placeholder-height: 160px; }
+.landing-page .landing-widget:empty {
+    height: var(--home-widget-placeholder-height);
+}
+.landing-widget > .landing-widget-skeleton,
+.landing-widget > :is(.recent-scrambles--loading, .today-recon--loading, .ongoing-comps--loading),
+.landing-widget > .forum-feed-preview[aria-busy="true"] {
+    min-height: var(--home-widget-placeholder-height);
+}
 .landing-page .landing-personal-comps {
     width: 100%;
     max-width: 1100px;
-    height: 12rem;
+    max-height: 12rem;
     margin: 0 auto 2.5rem;
     overflow-y: auto;
 }
+.landing-page .landing-personal-comps:empty { min-height: 12rem; }
 .landing-widget:empty,
 .landing-personal-comps:empty,
 .landing-widget :is(.recent-scrambles--loading, .today-recon--loading, .ongoing-comps--loading),
@@ -969,40 +978,8 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     .landing-widget .forum-feed-preview[aria-busy="true"] { animation: none; }
 }
 .landing-widget > :is(.recent-scrambles, .today-recon, .ongoing-comps, .forum-feed-preview) {
-    height: 100%;
-    min-height: 0;
     margin: 0;
-    display: flex;
-    flex-direction: column;
-    flex-wrap: nowrap;
-    align-items: stretch;
 }
-.landing-widget .rs-topbar,
-.landing-widget .rs-head {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 0.5rem 0.6rem;
-    flex-shrink: 0;
-}
-.landing-widget .rs-body {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    flex: 1;
-    min-height: 0;
-}
-.landing-widget :is(.rs-cards, .tr-cards, .ongoing-comps-groups, .community-feed-list) {
-    flex: 1 1 0;
-    min-height: 0;
-    max-height: none;
-    overflow-y: auto;
-    align-content: start;
-}
-.landing-widget .community-feed-list { scrollbar-gutter: stable; }
-.landing-widget .tr-head,
-.landing-widget .ongoing-comps-tabbar,
-.landing-widget .forum-feed-preview-header { flex-shrink: 0; }
-@media (max-width: 640px) {
-    .landing-page .landing-widget--scrambles { --home-widget-height: 28rem; }
+@media (max-width: 1080px) {
+    .landing-page .landing-widget--recons { --home-widget-placeholder-height: 240px; }
 }

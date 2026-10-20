@@ -439,7 +439,7 @@ export default function LandingPage() {
   });
 
   // These small responses decide which sections exist. Reveal one settled
-  // structure, then let the fixed widget slots fill independently. Warm route
+  // structure, then let the lazy widgets fill independently. Warm route
   // mounts already have the snapshot and skip this boundary entirely.
   if (!locksLoaded || !layoutReady.notice || !layoutReady.members || !layoutReady.order) return <ClientLoadStatus />;
 
