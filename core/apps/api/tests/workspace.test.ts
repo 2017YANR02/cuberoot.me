@@ -27,6 +27,7 @@ suite('independent CubeRoot workspace',()=>{
     await q('CREATE TABLE app_users(id BIGINT PRIMARY KEY,display_name TEXT,is_admin BOOLEAN,forum_banned BOOLEAN DEFAULT FALSE,merged_into_user_id BIGINT,wca_id TEXT)');
     await q("INSERT INTO app_users(id,display_name,is_admin) VALUES (1,'Owner',TRUE),(2,'Alice',FALSE),(3,'Bob',FALSE),(4,'Unassigned',FALSE)");
     await sql.unsafe(readFileSync(new URL('../migrations/0281_workspace.sql',import.meta.url),'utf8'));
+    await sql.unsafe(readFileSync(new URL('../migrations/0282_workspace_account_deletion.sql',import.meta.url),'utf8'));
     // A separate application's account record is not in CubeRoot app_users.
     await q('CREATE SCHEMA other_application');await q('CREATE TABLE other_application.employees(id INT PRIMARY KEY,name TEXT)');await q("INSERT INTO other_application.employees VALUES (99,'External employee')");
     aliceId=(await service.post(admin,'member',{userId:2,name:'Alice',role:'member',active:true})).id as number;
@@ -70,4 +71,17 @@ suite('independent CubeRoot workspace',()=>{
     await service.post(admin,'member',{userId:2,name:'Alice',role:'member',active:false});
     await expect(service.get(alice,'session',new URLSearchParams())).rejects.toMatchObject({status:403});
   });
+  it('deletes private drafts and credentials while retaining anonymous submitted team history',async()=>{
+    await service.post(admin,'member',{userId:2,name:'Alice',role:'member',active:true});
+    const draft=randomUUID();await service.post(alice,'report',{...input(draft),projectId:null});
+    await q('DELETE FROM app_users WHERE id=2');
+    expect(await q('SELECT id FROM workspace_reports WHERE id=?',[draft])).toEqual([]);
+    expect(await q('SELECT report_id FROM workspace_revisions WHERE report_id=?',[report])).toEqual([]);
+    expect(await q('SELECT member_id FROM workspace_project_members WHERE member_id=?',[aliceId])).toEqual([]);
+    expect(await q('SELECT user_id,name,active FROM workspace_members WHERE id=?',[aliceId])).toEqual([{user_id:null,name:'—',active:false}]);
+    expect(await service.get(admin,'detail',new URLSearchParams({id:report}))).toHaveProperty('report.name','—');
+    await expect(service.get(alice,'session',new URLSearchParams())).rejects.toMatchObject({status:401});
+    expect(await q('SELECT * FROM other_application.employees')).toEqual([{id:99,name:'External employee'}]);
+  });
+
 });

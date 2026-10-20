@@ -67,7 +67,7 @@ export function createWorkspaceService(query: QueryRunner, transact: Transaction
     const revisions = a.kind==='staff' && report.memberId===a.id ? await q('SELECT version,created_at AS "createdAt",snapshot FROM workspace_revisions WHERE report_id=? ORDER BY version DESC',[id]) : [];
     return {report,comments,revisions};
   }
-  async function directory(q: QueryRunner) { return q('SELECT id,name,active FROM workspace_members ORDER BY id'); }
+  async function directory(q: QueryRunner) { return q('SELECT id,name,active FROM workspace_members WHERE user_id IS NOT NULL ORDER BY id'); }
   return {
     async get(identity: Identity, action: string, search: URLSearchParams) {
       const a = await actor(query,identity);
