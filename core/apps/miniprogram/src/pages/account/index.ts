@@ -73,13 +73,14 @@ function createAccountCopy() {
     cancelLabel: tr({ en: 'Cancel', zh: '取消' }),
     clearCodeLabel: tr({ en: 'Clear sign-in code', zh: '清除登录码' }),
     linkCodeLabel: tr({ en: 'Enter 6-digit sign-in code', zh: '输入 6 位登录码' }),
-    linkCodeHint: tr({ en: 'Sign in to your existing CubeRoot account on the website, generate a 6-digit code, then enter it here.', zh: '在网站登录原账号并生成 6 位登录码，然后在这里输入。' }),
+    linkCodeHint: tr({ en: 'Get a six-digit sign-in code using email verification or the website, then enter it here.', zh: '通过邮箱验证或网站获取原账号的 6 位登录码，然后在这里输入。' }),
     linkCodeReadyHint: tr({ en: 'Have a code? Enter the 6 digits below.', zh: '已有登录码？在下方输入 6 位数字。' }),
     openLinkCodeWebsiteLabel: tr({ en: 'Sign in on the website', zh: '去网站登录' }),
+    emailLinkCodeLabel: tr({ en: 'Get a code with email', zh: '通过邮箱获取登录码' }),
     previewLinkCodeLabel: tr({ en: 'Continue', zh: '继续' }),
     confirmLinkCodeLabel: tr({ en: 'Sign in to this account', zh: '登录这个账号' }),
     loginAsLabel: tr({ en: 'Account:', zh: '登录账号：' }),
-    linkCodeInvalid: tr({ en: 'Enter the 6-digit sign-in code shown on the website.', zh: '请输入网站上显示的 6 位登录码。' }),
+    linkCodeInvalid: tr({ en: 'Enter the six-digit sign-in code you received.', zh: '请输入获取的 6 位登录码。' }),
     choiceExpired: tr({ en: 'This sign-in request expired. Start again.', zh: '本次登录已过期，请重新开始。' }),
     defaultUser: tr({ en: 'CubeRoot user', zh: 'CubeRoot 用户' }),
     entryCopy: tr({
@@ -656,6 +657,16 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
   openLinkCodeWebsite() {
     if (this.data.loginBusy || !currentPendingIdentity(this as unknown as AccountPageInstance)) return;
     openWebsitePageOnce(this, 'account-link', { failureMessage: ACCOUNT_COPY.accountLinkFailure, onFailure: (message) => this.setData({ loginError: message }) });
+  },
+
+  openEmailLinkCode() {
+    if (this.data.loginBusy || !currentPendingIdentity(this as unknown as AccountPageInstance)) return;
+    this.setData({ loginBusy: true });
+    try { miniProgramApi().navigateTo({
+      url: '/pages/account-link/index',
+      fail: () => this.setData({ loginError: ACCOUNT_COPY.accountLinkFailure }),
+      complete: () => this.setData({ loginBusy: false }),
+    }); } catch { this.setData({ loginBusy: false, loginError: ACCOUNT_COPY.accountLinkFailure }); }
   },
 
   onLinkCodeInput(event: WechatMiniprogram.Input) {

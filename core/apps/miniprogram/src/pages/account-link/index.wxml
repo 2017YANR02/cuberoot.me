@@ -1,0 +1,21 @@
+<view class="page link-page" style="{{appearanceStyle}}">
+  <text class="page-title">{{copy.title}}</text>
+  <text class="link-note">{{copy.note}}</text>
+  <block wx:if="{{linkCode}}">
+    <text class="link-note">{{account}}</text>
+    <text class="link-code">{{linkCode}}</text>
+    <text class="link-note">{{expiresLabel}}</text>
+    <button class="primary-button" bindtap="copyCode">{{copy.copy}}</button>
+    <button class="text-button link-action" bindtap="returnToAccount">{{copy.back}}</button>
+  </block>
+  <block wx:else>
+    <input class="link-input" value="{{email}}" placeholder="{{copy.email}}" aria-label="{{copy.email}}" maxlength="320" disabled="{{busy}}" bindinput="inputEmail" />
+    <input class="link-input" value="{{code}}" type="number" placeholder="{{copy.verification}}" aria-label="{{copy.verification}}" maxlength="6" disabled="{{busy}}" bindinput="inputCode" />
+    <button class="text-button link-action" bindtap="openPolicy">{{copy.policy}}</button>
+    <button class="text-button link-action" aria-pressed="{{agreement}}" disabled="{{busy}}" bindtap="toggleAgreement">{{agreement ? '✓' : '○'}} {{copy.agreement}}</button>
+    <button class="text-button link-action" disabled="{{busy || !agreement}}" bindtap="sendCode">{{copy.send}}</button>
+    <button class="primary-button" disabled="{{busy || !agreement}}" loading="{{busy}}" bindtap="generateCode">{{copy.generate}}</button>
+  </block>
+  <text wx:if="{{message}}" class="link-note" aria-role="status">{{message}}</text>
+  <text wx:if="{{error}}" class="link-error" aria-role="alert">{{error}}</text>
+</view>

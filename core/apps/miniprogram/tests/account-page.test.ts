@@ -65,6 +65,7 @@ interface AccountPage {
   confirmLinkCode(): Promise<void>;
   previewLinkCode(): Promise<void>;
   openLinkCodeWebsite(): void;
+  openEmailLinkCode(): void;
   onLinkCodeInput(event: { detail: { value: string } }): void;
   data: AccountPageData;
   linkExistingAccount(): void;
@@ -455,6 +456,16 @@ describe('mini program account page', () => {
     expect(request.mock.calls[2][0].header?.Authorization).toBeUndefined();
     expect(request.mock.calls.every(([options]) => !options.url.includes(ticket) && !options.url.includes('123456'))).toBe(true);
     expect(page.data.uidText).toBe('42'); expect(setStorageSync).toHaveBeenCalledOnce();
+  });
+
+  it('opens native email verification without persisting or transmitting the pending identity', async () => {
+    const { page, request, setStorageSync, navigateTo, ticket } = await douyinChoiceFixture();
+    page.linkExistingAccount();
+    page.openEmailLinkCode();
+    expect(navigateTo).toHaveBeenCalledWith(expect.objectContaining({ url: '/pages/account-link/index' }));
+    expect(JSON.stringify(navigateTo.mock.calls)).not.toContain(ticket);
+    expect(request).toHaveBeenCalledOnce();
+    expect(setStorageSync).not.toHaveBeenCalled();
   });
 
   it('invalidates target confirmation whenever the entered binding code changes or clears', async () => {

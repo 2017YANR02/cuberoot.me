@@ -8,6 +8,7 @@
     "pages/account/index",
     "pages/privacy/index",
     "pages/contact/index",
+    "pages/account-link/index",
     "pages/web/index",
     "pages/payment/index",
     "pages/membership/index",

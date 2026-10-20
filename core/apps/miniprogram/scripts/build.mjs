@@ -230,7 +230,7 @@ async function validateDouyinOutput() {
   const appConfig = JSON.parse(await readFile(join(stagingRoot, 'app.json'), 'utf8'));
   const nativePages = [
     'pages/timer/index', 'pages/tools/index', 'pages/account/index',
-    'pages/smart-cube/index', 'pages/external-timer/index', 'pages/privacy/index', 'pages/contact/index',
+    'pages/smart-cube/index', 'pages/external-timer/index', 'pages/privacy/index', 'pages/contact/index', 'pages/account-link/index',
   ];
   for (const page of nativePages) {
     if (!appConfig.pages.includes(page)) throw new Error(`抖音原生页面未登记：${page}`);

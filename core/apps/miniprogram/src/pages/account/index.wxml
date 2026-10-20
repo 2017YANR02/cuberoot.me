@@ -60,7 +60,8 @@
         <button class="text-button account-create-button" aria-label="{{copy.clearCodeLabel}}" disabled="{{loginBusy}}" hover-class="press-feedback" bindtap="clearLinkCode">{{copy.clearCodeLabel}}</button>
       </block>
       <block wx:else>
-        <button class="primary-button account-primary-button account-link-website-button" disabled="{{loginBusy}}" hover-class="press-feedback" bindtap="openLinkCodeWebsite">{{copy.openLinkCodeWebsiteLabel}}</button>
+        <button class="primary-button account-primary-button" disabled="{{loginBusy}}" hover-class="press-feedback" bindtap="openEmailLinkCode">{{copy.emailLinkCodeLabel}}</button>
+        <button class="text-button account-create-button account-link-website-button" disabled="{{loginBusy}}" hover-class="press-feedback" bindtap="openLinkCodeWebsite">{{copy.openLinkCodeWebsiteLabel}}</button>
         <text class="account-link-code-prompt">{{copy.linkCodeReadyHint}}</text>
         <view class="account-link-code-row">
           <input class="account-link-code-input" value="{{accountLinkCode}}" type="number" placeholder="{{copy.linkCodeLabel}}" aria-label="{{copy.linkCodeLabel}}" maxlength="6" disabled="{{loginBusy}}" bindinput="onLinkCodeInput" />
