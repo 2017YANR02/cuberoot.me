@@ -63,7 +63,9 @@ export default function NativePuzzleControls({ id, disabled, showDragDepth, dept
   return (
     <div className="twisty-native-controls">
       <p className="twisty-fallback-notice">{t(...NOTES[id])}</p>
-      <div className="twisty-fallback-controls" role="group" aria-label={t('手动转动', 'Manual turns')}>
+      {/* Keep these native form controls on their shared CSS radii. The global
+          corner surface decorator must not repaint the measured control strip. */}
+      <div className="twisty-fallback-controls" data-corner-shape="native" role="group" aria-label={t('手动转动', 'Manual turns')}>
         <label className="twisty-fallback-angle-label">
           <span>{t('转轴', 'Move')}</span>
           <select className="btn-secondary twisty-fallback-angle" aria-label={t('转动记号', 'Move notation')} value={current.move} onChange={(e) => setSelected(e.target.value)}>

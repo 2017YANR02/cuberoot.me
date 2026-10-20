@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useSyncExternalStore } from 'react';
+import { useCallback, useSyncExternalStore, type ReactNode } from 'react';
 import AlgNotationStyleSelect from '@/components/AlgNotationStyleSelect';
 import type { AlgViewMode } from '@/components/AlgViewModeToggle';
 import BoolToggle from '@/components/BoolToggle';
@@ -67,6 +67,7 @@ interface AlgListSettingsProps {
   notationStyle?: AlgNotationStyle;
   onNotationStyleChange?: (style: AlgNotationStyle) => void;
   className?: string;
+  children?: ReactNode;
 }
 
 /** `/alg` case 列表页的统一设置入口。 */
@@ -79,6 +80,7 @@ export default function AlgListSettings({
   notationStyle,
   onNotationStyleChange,
   className,
+  children,
 }: AlgListSettingsProps) {
   return (
     <SettingsPopover
@@ -103,6 +105,7 @@ export default function AlgListSettings({
         onChange={onShowCaseNumbersChange}
         label={tr({ zh: '数字编号', en: 'Numeric IDs' })}
       />
+      {children}
     </SettingsPopover>
   );
 }

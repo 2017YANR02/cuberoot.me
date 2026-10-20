@@ -8,3 +8,21 @@
   --workspace-accent: var(--accent);
   --workspace-error: var(--destructive);
 }
+
+.staff-workspace .staff-header,
+.staff-workspace .staff-nav {
+  border-bottom: 0;
+}
+
+/* The selected navigation item already names the page; retain its h1 for readers. */
+.staff-workspace .staff-layout:has(.staff-nav [aria-current="page"]) > .staff-main > .staff-page-heading {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

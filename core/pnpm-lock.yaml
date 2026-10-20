@@ -521,8 +521,8 @@ importers:
   packages/app-ui:
     dependencies:
       '@2017yanr02/continuous-corners':
-        specifier: file:../../vendor/continuous-corners-0.3.0.tgz
-        version: file:vendor/continuous-corners-0.3.0.tgz(react@19.2.4)
+        specifier: file:../../vendor/continuous-corners-0.3.1.tgz
+        version: file:vendor/continuous-corners-0.3.1.tgz(react@19.2.4)
       '@cuberoot/puzzle-solvers':
         specifier: workspace:*
         version: link:../puzzle-solvers
@@ -570,8 +570,8 @@ importers:
   packages/client:
     dependencies:
       '@2017yanr02/continuous-corners':
-        specifier: file:../../vendor/continuous-corners-0.3.0.tgz
-        version: file:vendor/continuous-corners-0.3.0.tgz(react@19.2.4)
+        specifier: file:../../vendor/continuous-corners-0.3.1.tgz
+        version: file:vendor/continuous-corners-0.3.1.tgz(react@19.2.4)
       '@airwallex/components-sdk':
         specifier: ^1.35.1
         version: 1.35.1
@@ -1136,9 +1136,9 @@ importers:
 
 packages:
 
-  '@2017yanr02/continuous-corners@file:vendor/continuous-corners-0.3.0.tgz':
-    resolution: {integrity: sha512-MgTEWmm2tfRB3qoe0Cz24OUPg/sVUs5F9Midpsjt/byphzYjmXe6iEs1ktmW7K/BDqClrjoLRPfoCq//2chncA==, tarball: file:vendor/continuous-corners-0.3.0.tgz}
-    version: 0.3.0
+  '@2017yanr02/continuous-corners@file:vendor/continuous-corners-0.3.1.tgz':
+    resolution: {integrity: sha512-DKOri0eSNLDaldxHOWxZfv8zc9meHnFa20hv2oGgxQM+PKm+JXlfwS6/ucqYY12UTYG0lHGYzbbmcOl5VVN0vA==, tarball: file:vendor/continuous-corners-0.3.1.tgz}
+    version: 0.3.1
     engines: {node: '>=18'}
     peerDependencies:
       react: '>=18'
@@ -6544,7 +6544,7 @@ packages:
 
 snapshots:
 
-  '@2017yanr02/continuous-corners@file:vendor/continuous-corners-0.3.0.tgz(react@19.2.4)':
+  '@2017yanr02/continuous-corners@file:vendor/continuous-corners-0.3.1.tgz(react@19.2.4)':
     optionalDependencies:
       react: 19.2.4
 

@@ -6,6 +6,7 @@ import { Trash2, ChevronDown, ChevronRight, Check, Star } from 'lucide-react';
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
 import Link from '@/components/AppLink';
 import { CaseThumb } from '@/components/CaseThumb';
+import { groupAlgCases, type AlgTopGroup } from '@/lib/alg-case-groups';
 import { LEVEL2_PICKER_MASK, DEFAULT_ALG_CUBE_ORIENTATION } from '@/lib/alg_thumb_plan';
 import { visualCubeSchemeForOrientation } from '@/lib/cube-orientation';
 import { VisualCube } from '@/components/VisualCube';
@@ -495,12 +496,6 @@ export function CaseMarkBadges({ marks, k }: { marks: CaseMarks; k: string }) {
   return st ? <TrainerMarkBadge status={st} /> : null;
 }
 
-interface TopGroup {
-  label: string;
-  subs: Map<string, AlgCase[]>;
-  allCases: AlgCase[];
-  sample: AlgCase;
-}
 
 export function CaseTreePicker({
   puzzle, set, cases, selected, onChange, marks, brush, onPaint, showSetName = true,
@@ -520,24 +515,7 @@ export function CaseTreePicker({
   onPaint?: (keys: string[]) => void;
 }) {
   const { tops, hasSubLevel } = useMemo(() => {
-    const map = new Map<string, TopGroup>();
-    let hasSub = false;
-    for (const c of cases) {
-      const parts = (c.subgroup || '').split('/');
-      const top = parts[0] || '';
-      const sub = parts.slice(1).join('/');
-      if (sub) hasSub = true;
-      let g = map.get(top);
-      if (!g) {
-        g = { label: top, subs: new Map(), allCases: [], sample: c };
-        map.set(top, g);
-      }
-      g.allCases.push(c);
-      const arr = g.subs.get(sub) ?? [];
-      arr.push(c);
-      g.subs.set(sub, arr);
-    }
-    return { tops: Array.from(map.values()), hasSubLevel: hasSub };
+    return groupAlgCases(cases);
   }, [cases]);
 
   const [expanded, setExpanded] = useState<Set<string>>(() => {
@@ -587,7 +565,7 @@ export function CaseTreePicker({
     onChange(next);
   };
 
-  function TopThumb({ g }: { g: TopGroup }) {
+  function TopThumb({ g }: { g: AlgTopGroup }) {
     if (hasSubLevel && puzzle === '3x3') {
       const firstAlg = g.sample.algs.flat()[0]?.alg ?? g.sample.standard ?? '';
       // setup 优先:公式带起手转体 / 收尾 AUF 时,inverse(alg) 会把图整体转一格。
