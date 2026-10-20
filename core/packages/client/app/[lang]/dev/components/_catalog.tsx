@@ -943,6 +943,14 @@ export const CATALOG: ComponentEntry[] = [
     Demo: () => <UserIdLabel userId={66} />,
   },
   {
+    name: 'ProgressiveImage',
+    import: "import { ProgressiveImage } from '@/components/ProgressiveImage';",
+    category: 'more',
+    zh: '固定尺寸内先显示模糊小图，清晰图完整加载并解码后淡入；保留原生懒加载，失败时保留预览，并支持减少动态效果。',
+    en: 'Shows a blurred small preview in reserved dimensions, then fades in the fully decoded image; preserves native lazy loading, preview on failure and reduced-motion support.',
+    usage: '<ProgressiveImage src={fullUrl} previewSrc={smallUrl} alt="" className="cover" />',
+  },
+  {
     name: 'ClientLoadStatus',
     import: "import { AppFailure, ClientLoadStatus, LinkPendingIndicator } from '@/components/StartupStatus';",
     category: 'more',

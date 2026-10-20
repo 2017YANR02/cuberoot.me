@@ -40,13 +40,13 @@ describe('ReconCard media', () => {
 
     expect(html).toContain('class="recon-card-scramble mono"');
     expect(html).toContain("R U R&#x27; U&#x27; F2 D2 L2 B2 U R2 F2 D&#x27;");
-    expect(html).not.toContain('class="recon-card-cover"');
+    expect(html).not.toContain('recon-card-cover');
   });
 
   it('keeps an available video cover and does not render the scramble formula', () => {
     const html = renderCard({ ...BASE_SOLVE, videoUrl: 'https://youtu.be/abc123XYZ' });
 
-    expect(html).toContain('class="recon-card-cover"');
+    expect(html).toContain('class="progressive-image recon-card-cover"');
     expect(html).toContain('https://img.youtube.com/vi/abc123XYZ/mqdefault.jpg');
     expect(html).not.toContain('recon-card-scramble');
   });
@@ -61,7 +61,7 @@ describe('ReconCard media', () => {
   it('reserves the homepage media slot before an asynchronous cover resolves', () => {
     const html = renderCard({ ...BASE_SOLVE, videoUrl: 'https://www.bilibili.com/video/BV1test123' }, false);
     expect(html).toContain('class="recon-card-media"');
-    expect(html).not.toContain('class="recon-card-cover"');
+    expect(html).not.toContain('recon-card-cover');
     expect(html).not.toContain('recon-card-scramble');
   });
 });

@@ -1,0 +1,59 @@
+.progressive-image {
+  display: block;
+  overflow: hidden;
+  background: var(--muted);
+}
+.progressive-image-frame {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+.progressive-image-frame > :is(.progressive-image-preview, .progressive-image-full, .progressive-image-fallback) {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.progressive-image-fallback {
+  display: grid;
+  place-items: center;
+  color: var(--faint-foreground);
+  background: var(--muted);
+}
+.progressive-image-preview,
+.progressive-image-full {
+  opacity: 0;
+}
+.progressive-image-preview {
+  filter: blur(10px);
+  transform: scale(1.12);
+}
+.progressive-image[data-preview-ready="true"] .progressive-image-preview {
+  opacity: 1;
+  animation: progressive-image-reveal 160ms ease-out;
+}
+.progressive-image[data-state="ready"] .progressive-image-full {
+  opacity: 1;
+  animation: progressive-image-reveal 240ms ease-out;
+}
+.progressive-image[data-state="loading"][data-preview-ready="false"] .progressive-image-fallback {
+  animation: progressive-image-pulse 1.8s ease-in-out infinite;
+}
+@keyframes progressive-image-reveal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes progressive-image-pulse {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .progressive-image[data-preview-ready="true"] .progressive-image-preview,
+  .progressive-image[data-state="ready"] .progressive-image-full,
+  .progressive-image[data-state="loading"][data-preview-ready="false"] .progressive-image-fallback {
+    animation: none;
+  }
+}

@@ -49,6 +49,20 @@ export function coverSyncSrc(cover: CoverRef): string | null {
   return cover.kind === 'yt' ? `https://img.youtube.com/vi/${cover.id}/mqdefault.jpg` : null;
 }
 
+/** Only known thumbnail providers; leave signed/unknown CDN URLs untouched. */
+export function coverPreviewSrc(cover: CoverRef | null, src: string): string | null {
+  if (cover?.kind === 'yt') return `https://img.youtube.com/vi/${cover.id}/default.jpg`;
+  if (cover?.kind !== 'bili') return null;
+  try {
+    const url = new URL(src);
+    if (url.protocol !== 'https:' || !/(^|\.)hdslb\.com$/.test(url.hostname)) return null;
+    url.pathname = `${url.pathname.split('@')[0]}@64w_36h_1c.webp`;
+    return url.href;
+  } catch {
+    return null;
+  }
+}
+
 const biliCoverCache = new Map<string, Promise<string | null>>();
 export function loadBiliCover(bvid: string): Promise<string | null> {
   let p = biliCoverCache.get(bvid);

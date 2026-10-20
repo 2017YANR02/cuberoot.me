@@ -9,7 +9,8 @@ import Link from '@/components/AppLink';
 import { Video, Link2, Lock } from 'lucide-react';
 import type { ReconSolve } from '@cuberoot/shared';
 import { getReconScramble } from '@cuberoot/shared/recon-completion';
-import { pickReconCover, coverSyncSrc, loadBiliCover, loadDouyinCover } from '@/lib/recon-video-cover';
+import { pickReconCover, coverSyncSrc, coverPreviewSrc, loadBiliCover, loadDouyinCover } from '@/lib/recon-video-cover';
+import { ProgressiveImage } from '@/components/ProgressiveImage';
 import { formatAvg, formatReconSingle } from '@/lib/recon-utils';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { Flag } from '@/components/Flag';
@@ -48,14 +49,14 @@ function ReconCardMedia({ solve, isZh, showScrambleFallback }: { solve: ReconSol
   if (imgSrc) {
     return (
       <div className="recon-card-media">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <ProgressiveImage
           className="recon-card-cover"
           src={imgSrc}
+          previewSrc={coverPreviewSrc(cover, imgSrc)}
           alt=""
           referrerPolicy="no-referrer"
           loading="lazy"
-          onError={() => setFailed(true)}
+          fallback={<Video size={24} />}
         />
       </div>
     );
