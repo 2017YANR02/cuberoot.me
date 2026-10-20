@@ -32,6 +32,7 @@ describe('confirmed live reconstruction', () => {
         expect(rotations.some(a => rotations.some(b => actual.applyAlg(`${a} ${b}`).isIdentical(expected)))).toBe(true);
       }
       expect(projectReconNotation(result, 'cfop').simplifiedRecon).toBe(presentation);
+      expect(simplifyF2lRotations(result)).toBe(presentation);
       if (length === moves.length) expect(confirmedReconPrefix(input, result).lines).toHaveLength(result.lines.length);
       previous = input;
     }
@@ -50,8 +51,8 @@ it('bridges a changed display frame in the new row without rewriting the confirm
   const built = await buildReconText(input);
   const prefix = confirmedReconPrefix(input, built);
   const end = prefix.lines.at(-1)!.toIdx;
-  const changed = { ...built, lines: built.lines.map(line => line.toIdx === end
-    ? { ...line, moves: [...line.moves, 'y'] } : line) };
+  const changed = { ...built, lines: built.lines.flatMap(line => line.toIdx === end
+    ? [line, { ...line, key: 'rotation', fromIdx: end + 1, moves: ['y'] }] : [line]) };
   const merged = await retainConfirmedRecon(changed, prefix);
   expect(merged.lines[0]).toBe(prefix.lines[0]);
   expect(merged.lines[prefix.lines.length].moves[0]).toBe('y');

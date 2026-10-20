@@ -1,4 +1,5 @@
 import { createReconstructionAnalyzer } from './analysis-core';
+import { confirmedReconPrefix, isAnalysisContinuation } from './analysis-protocol';
 import type { AnalysisInput, AnalysisSnapshot } from './analysis-protocol';
 export { createReconstructionAnalyzer } from './analysis-core';
 export type { AnalysisInput, AnalysisRequest, AnalysisResponse, AnalysisSnapshot } from './analysis-protocol';
@@ -14,6 +15,7 @@ export function createLiveReconstructionStream(
   analyzer = reconstructionAnalyzer,
 ) {
   let pending: AnalysisInput | null = null;
+  let confirmed: { input: AnalysisInput; snapshot: AnalysisSnapshot } | null = null;
   let busy = false;
   let disposed = false;
   let unsubscribe: (() => void) | undefined;
@@ -24,9 +26,16 @@ export function createLiveReconstructionStream(
     const input = pending;
     pending = null;
     busy = true;
-    unsubscribe = analyzer.subscribe(input, snapshot => {
+    const prefix = confirmed && isAnalysisContinuation(confirmed.input, input) && confirmed.snapshot.text
+      ? confirmedReconPrefix(confirmed.input.text, confirmed.snapshot.text) : undefined;
+    const request = prefix?.lines.length ? { ...input, text: { ...input.text, confirmed: prefix } } : input;
+    unsubscribe = analyzer.subscribe(request, snapshot => {
       if (disposed) return;
-      listener(input, snapshot);
+      // Publish only the corrected result, never the replaceable draft.
+      if (snapshot.status === 'complete' && snapshot.text) {
+        confirmed = { input, snapshot };
+        listener(input, snapshot);
+      } else if (snapshot.status === 'error' || !snapshot.text) listener(input, snapshot);
       if (snapshot.status !== 'pending') {
         // Cached subscriptions may complete synchronously, before subscribe
         // returns its cleanup. Defer the handoff in both cases.

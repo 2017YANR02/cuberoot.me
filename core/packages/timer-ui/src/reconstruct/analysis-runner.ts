@@ -1,5 +1,5 @@
 import { reconstructionLibraries } from './library-cache';
-import { buildReconText } from '@cuberoot/shared/timer/reconstruct/recon-text';
+import { buildReconText, retainConfirmedRecon, simplifyF2lRotations } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import { correctReconFromLibrary } from '@cuberoot/shared/timer/reconstruct/library-correction';
 import { stageReferenceSteps, slotReferenceSteps } from '@cuberoot/shared/timer/reconstruct/reference';
 import type { AnalysisWorkerRequest, AnalysisResponse } from './analysis-protocol';
@@ -25,10 +25,16 @@ export async function runReconstructionAnalysis(data: AnalysisWorkerRequest, pub
     if (!data.skipText) {
       const original = await buildReconText(text);
       if (isCancelled()) return;
-      send({ patch: { text: original } });
-      const corrected = await correctReconFromLibrary(original, reconstructionLibraries.load).catch(() => original);
+      // A live continuation is published atomically after library correction.
+      if (!text.confirmed) send({ patch: { text: original } });
+      const corrected = await correctReconFromLibrary(original, reconstructionLibraries.load, text.confirmed?.lines.at(-1)?.toIdx).catch(() => original);
       if (isCancelled()) return;
-      if (corrected !== original) send({ patch: { text: corrected } });
+      const retained = await retainConfirmedRecon(corrected, text.confirmed);
+      const presentation = await retainConfirmedRecon(
+        !text.method || text.method === 'cfop' ? simplifyF2lRotations(retained) : retained,
+        text.confirmed?.presentation,
+      );
+      send({ patch: { text: { ...retained, presentation: { ...presentation, presentation: undefined } } } });
     }
   } catch (error) { failed(error); }
   await new Promise<void>(resolve => setTimeout(resolve, 0));

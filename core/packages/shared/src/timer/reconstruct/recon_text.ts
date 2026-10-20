@@ -790,6 +790,7 @@ function omitBoundaryRotationLoops(recon: ReconTextResult): ReconTextResult {
 }
 
 export function simplifyF2lRotations(source: ReconTextResult): ReconTextResult {
+  if (source.presentation) return source.presentation;
   let recon: ReconTextResult;
   try { recon = orientInspectionForCross(source); } catch { return source; }
   const expanded = recon.lines.map(line => {
@@ -1599,7 +1600,7 @@ export async function retainConfirmedRecon(next: ReconTextResult, confirmed?: Re
     if (bridge !== undefined) break;
   }
   if (bridge === undefined) throw new Error('Confirmed reconstruction state changed');
-  const tail = next.lines.filter(line => line.fromIdx > end);
+  const tail = next.lines.filter(line => line.fromIdx > end && line.toIdx > end);
   if (tail.length && bridge) {
     const line = tail[0];
     const tokens = bridge.split(' ');
