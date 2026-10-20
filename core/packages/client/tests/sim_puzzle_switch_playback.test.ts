@@ -119,6 +119,11 @@ describe('sim playback across active cube changes', () => {
     await act(async () => button('Step forward').click());
     expectState('R U');
     await act(async () => {
+      const scope = host.querySelector<HTMLSelectElement>('select[aria-label="Transform scope"]')!;
+      scope.value = 'solution';
+      scope.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    await act(async () => {
       if (value) {
         const select = host.querySelector<HTMLSelectElement>(`select[aria-label="${label}"]`)!;
         select.value = value;
@@ -140,6 +145,23 @@ describe('sim playback across active cube changes', () => {
     });
     expectTextPreserved();
     expectState('R U');
+  });
+
+  it('defaults to transforming both fields and restores both on undo', async () => {
+    await mount();
+    expect(host.querySelector<HTMLSelectElement>('select[aria-label="Transform scope"]')?.value).toBe('both');
+    await act(async () => {
+      const select = host.querySelector<HTMLSelectElement>('select[aria-label="Mirror"]')!;
+      select.value = 'M';
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    expect(host.querySelector<HTMLTextAreaElement>('#sim-setup')?.value).toBe("L'");
+    expect(host.querySelector<HTMLTextAreaElement>('#sim-alg')?.value).toBe("U' F'");
+    await act(async () => {
+      [...host.querySelectorAll<HTMLButtonElement>('.sim-player-tools button')]
+        .find(element => element.textContent === 'Undo')!.click();
+    });
+    expectTextPreserved();
   });
 
   it('offers only solution moves for rotation insertion and preserves the scramble', async () => {

@@ -3,33 +3,42 @@
 import { useMemo, useState } from 'react';
 import { Move } from 'cubing/alg';
 import { Undo2, PencilLine, X } from 'lucide-react';
-import { parseCubeAlg } from '@cuberoot/shared/alg-transform';
 import { useT } from '@/hooks/useT';
 import { mirrorAlg, rotateAlg } from '@/lib/cube3';
-import { manipulateAlg, manipulationNodes, oppositeMove } from './alg-manipulation';
+import { manipulateAlg, cubeTextMoves, oppositeMove, transformCubeText, hasHandNotation } from './alg-manipulation';
 
-export default function AlgTransformPanel({ text, order, onApply }: {
-  text: string; order: number; onApply: (text: string) => () => void;
+export default function AlgTransformPanel({ text, setup, order, onApply }: {
+  text: string; setup: string; order: number; onApply: (setup: string, text: string) => () => void;
 }) {
   const t = useT();
+  const [scopeChoice, setScopeChoice] = useState<'solution' | 'both' | null>(null);
+  const scope = scopeChoice ?? (setup.trim() ? 'both' : 'solution');
   const [editing, setEditing] = useState(false);
   const [selected, setSelected] = useState<number | null>(null);
-  const [history, setHistory] = useState<{ result: string; undo: () => void }[]>([]);
+  const [history, setHistory] = useState<{ setup: string; result: string; undo: () => void }[]>([]);
   const parsed = useMemo(() => {
     try {
-      rotateAlg(text, 'x');
-      return { canonical: parseCubeAlg(text).toString(), moves: manipulationNodes(text).filter((node): node is Move => node instanceof Move) };
+      return { moves: cubeTextMoves(text).map(token => token.move) };
     } catch { return null; }
   }, [text]);
   const enabled = !!parsed?.moves.length;
   const index = selected !== null && parsed && selected < parsed.moves.length ? selected : null;
   const move = index !== null ? parsed?.moves[index] : null;
   const replacement = order === 3 && move ? oppositeMove(move) : null;
-  const canUndo = history.length > 0 && history[history.length - 1].result === text;
-  const apply = (next: string) => {
-    if (next === text) return;
-    const undo = onApply(next);
-    setHistory(previous => [...(canUndo ? previous : []), { result: next, undo }].slice(-20));
+  const canUndo = history.length > 0 && history[history.length - 1].result === text && history[history.length - 1].setup === setup;
+  const apply = (next: string, nextSetup = setup) => {
+    if (next === text && nextSetup === setup) return;
+    const undo = onApply(nextSetup, next);
+    setHistory(previous => [...(canUndo ? previous : []), { setup: nextSetup, result: next, undo }].slice(-20));
+  };
+  const setupValid = useMemo(() => {
+    try { transformCubeText(setup, move => move); return true; } catch { return false; }
+  }, [setup]);
+  const transformEnabled = !!parsed && (enabled || (scope === 'both' && !!setup.trim())) && (scope !== 'both' || setupValid);
+  const transform = (fn: (move: string) => string) => {
+    const next = transformCubeText(text, fn);
+    const nextSetup = scope === 'both' ? transformCubeText(setup, fn) : setup;
+    apply(next, nextSetup);
   };
   const edit = (action: string) => {
     if (index === null) return;
@@ -38,16 +47,23 @@ export default function AlgTransformPanel({ text, order, onApply }: {
   };
   const rotations = ['x', 'x2', "x'", 'y', 'y2', "y'", 'z', 'z2', "z'"];
   return <>
-    <select className="sim-transform-select" aria-label={t('换朝向', 'Orientation')} value="" disabled={!enabled}
+    <select className="sim-transform-select" aria-label={t('转换范围', 'Transform scope')} value={scope}
+      aria-describedby="sim-transform-scope-note"
+      onChange={event => setScopeChoice(event.target.value as 'solution' | 'both')}>
+      <option value="solution">{t('仅解法', 'Solution only')}</option>
+      <option value="both">{t('打乱与解法', 'Scramble and solution')}</option>
+    </select>
+    <span id="sim-transform-scope-note" className="sim-move-note">{t('范围用于换朝向和镜像；取逆、消步、改单步仅作用于解法。', 'Scope applies to orientation and mirror; invert, reduce and move edits affect only the solution.')}</span>
+    <select className="sim-transform-select" aria-label={t('换朝向', 'Orientation')} value="" disabled={!transformEnabled}
       onChange={event => {
         const rotation = new Move(event.target.value);
-        apply(rotateAlg(text, rotation.family as 'x' | 'y' | 'z', rotation.amount));
+        transform(move => rotateAlg(move, rotation.family as 'x' | 'y' | 'z', rotation.amount));
       }}>
       <option value="" disabled>{t('换朝向', 'Orientation')}</option>
       {rotations.map(value => <option key={value} value={value}>{value}</option>)}
     </select>
-    <select className="sim-transform-select" aria-label={t('镜像', 'Mirror')} value="" disabled={!enabled}
-      onChange={event => { if (parsed) apply(mirrorAlg(parsed.canonical, event.target.value as 'M' | 'S' | 'E')); }}>
+    <select className="sim-transform-select" aria-label={t('镜像', 'Mirror')} value="" disabled={!transformEnabled}
+      onChange={event => { const axis = event.target.value as 'M' | 'S' | 'E'; transform(move => mirrorAlg(move, axis)); }}>
       <option value="" disabled>{t('镜像', 'Mirror')}</option>
       <option value="M">{t('LR 镜像', 'LR mirror')}</option>
       <option value="S">{t('FB 镜像', 'FB mirror')}</option>
@@ -62,6 +78,12 @@ export default function AlgTransformPanel({ text, order, onApply }: {
       setHistory(previous => previous.slice(0, -1));
       setSelected(null);
     }}><Undo2 size={14} />{t('撤销', 'Undo')}</button>}
+    {(hasHandNotation(text) || (scope === 'both' && hasHandNotation(setup))) && <span className="sim-move-note" role="status">
+      {t('含指法记号，暂不支持无损转换；原文保留。', 'Finger notation cannot yet be transformed losslessly; the original is preserved.')}
+    </span>}
+    {scope === 'solution' && !!setup.trim() && <span className="sim-move-note">
+      {t('仅转换解法可能不再还原原打乱；保持同一打乱请用转体插入。', 'Transforming only the solution may no longer solve this scramble; use rotation insertion to keep it.')}
+    </span>}
     {editing && <div className="sim-move-editor" onKeyDown={event => {
       if (event.key === 'Escape') { setEditing(false); setSelected(null); }
     }}>

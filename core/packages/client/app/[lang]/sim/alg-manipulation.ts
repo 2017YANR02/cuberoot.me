@@ -1,6 +1,40 @@
 import { Alg, Move, type AlgNode } from 'cubing/alg';
 import { rotateAlg } from '@/lib/cube3';
 import { parseCubeAlg } from '@cuberoot/shared/alg-transform';
+import { MOVE_RE, stripComments } from '@cuberoot/shared/alg-notation';
+
+export function hasHandNotation(text: string): boolean {
+  return /[↑↓·p@<>]/.test(stripComments(text));
+}
+
+/** Source offsets, not expanded playback indices: retain layout and annotations. */
+export function cubeTextMoves(text: string): { start: number; end: number; text: string; move: Move }[] {
+  if (hasHandNotation(text)) throw new Error('Finger notation cannot be transformed losslessly');
+  rotateAlg(text.replace(/\r\n?/g, '\n').replace(/[^\S\n]/g, ' '), 'x'); // Validate supported notation before changing any source.
+  const tokens: { start: number; end: number; text: string; move: Move }[] = [];
+  for (let i = 0; i < text.length;) {
+    if (text.startsWith('//', i)) {
+      const end = text.indexOf('\n', i);
+      i = end < 0 ? text.length : end + 1;
+      continue;
+    }
+    const match = MOVE_RE.exec(text.slice(i));
+    if (!match) { i++; continue; }
+    const raw = match[0];
+    tokens.push({ start: i, end: i + raw.length, text: raw, move: new Move(raw) });
+    i += raw.length;
+  }
+  return tokens;
+}
+
+/** Rewrite only moves, leaving comments, whitespace and group syntax verbatim. */
+export function transformCubeText(text: string, transform: (move: string) => string): string {
+  let result = text;
+  for (const token of cubeTextMoves(text).reverse()) {
+    result = result.slice(0, token.start) + transform(token.text) + result.slice(token.end);
+  }
+  return result;
+}
 
 /** Expand with a bound so a large repeat cannot lock up the editor. */
 export function manipulationNodes(text: string): AlgNode[] {

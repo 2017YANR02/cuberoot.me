@@ -29,6 +29,7 @@ import { Alg, Move } from 'cubing/alg';
 import type { TwistyPlayer } from 'cubing/twisty';
 import World from './engine/world';
 import AlgTransformPanel from './AlgTransformPanel';
+import { hasHandNotation } from './alg-manipulation';
 import SimAppearancePanel from './SimAppearancePanel';
 import type { SimPuzzle } from './puzzleOptions';
 import { TwistAction } from './engine/nxn/twister';
@@ -1913,7 +1914,8 @@ export default function PlayerControls({
   const canUndoEdit = lastEdit && lastEdit.puzzle === puzzleKind && setupDraft === lastEdit.nextSetup && algDraft === lastEdit.nextAlg;
   const tool = (transform: (s: string) => string) => () => {
     // Algorithm tools edit the solution; setup remains a separate playback anchor.
-    editDrafts(setupDraft, transform(stripHandMarks(algDraft).trim()));
+    if (hasHandNotation(algDraft)) return;
+    editDrafts(setupDraft, transform(algDraft));
   };
 
   // Per-puzzle "消步" (cancel redundant moves) + invert. SQ1 has its own token
@@ -1972,7 +1974,7 @@ export default function PlayerControls({
         squareFormat,
       );
     }
-    return invertAlg(stripHandMarks(s)); // 倒序后换握/推法位点失义,直接剥
+    return invertAlg(s); // The tool entry rejects hand notation instead of discarding it.
   }, [isSq1, squareFamilySpec, corner, squareFormat, puzzleKind]);
 
   // 消步 = 实时消步开关(settings.liveReduce);开启时手势 / 键盘追加自动消步。
@@ -2782,7 +2784,7 @@ export default function PlayerControls({
 
       <section className="sim-alg-tools" aria-label={t('公式操作', 'Algorithm tools')}>
       <div className="sim-player-tools">
-        <button disabled={corner?.endAnchor === false} onClick={tool(invertForPuzzle)} title={t('取逆', 'Invert')}>{t('逆', 'Invert')}</button>
+        <button disabled={corner?.endAnchor === false || hasHandNotation(algDraft)} onClick={tool(invertForPuzzle)} title={t('取逆', 'Invert')}>{t('解法取逆', 'Invert solution')}</button>
         {/* 消步:实时消步开关(默认开)。开 = 手势 / 键盘转动追加时自动合并 / 抵消重复转动,
             并对当前解法消一次步;关 = 原样保留。取代原一次性「消步」按钮。 */}
         {!isIvy && (
@@ -2796,17 +2798,19 @@ export default function PlayerControls({
         {!(typeof puzzleKind === 'number' || puzzleKind === 'mirror' || puzzleKind === 'mirror2' || puzzleKind === 'sphere') && !isSquarePuzzle && !isTwistyMode && corner?.cubeMirrors !== false && <button onClick={tool((s) => mirrorAlg(s, 'S'))} title={t('Mirror S (F↔B)', 'Mirror S (F↔B)')} aria-label="Mirror S"><FlipVertical2 size={13} /></button>}
         {(typeof puzzleKind === 'number' || puzzleKind === 'mirror' || puzzleKind === 'mirror2' || puzzleKind === 'sphere') && (
           <AlgTransformPanel
-            text={stripHandMarks(algDraft).trim()}
+            text={algDraft}
+            setup={setupDraft}
             order={order}
-            onApply={(next) => {
+            onApply={(nextSetup, next) => {
               const previousSetup = setupDraft, previousAlg = algDraft, previousStep = stepRef.current;
-              void replaceDrafts(previousSetup, next, parseNxnItems(next).length);
+              void replaceDrafts(nextSetup, next, parseNxnItems(next).length);
               return () => { void replaceDrafts(previousSetup, previousAlg, previousStep); };
             }}
           />
         )}
         {!isSquarePuzzle && !isIvy && !corner && !isTwistyMode && (
           <button
+            disabled={hasHandNotation(algDraft)}
             onClick={tool(flattenAlg)}
             title={t('展开所有括号并保留等价动作', 'Expand all groups into equivalent moves')}
           >

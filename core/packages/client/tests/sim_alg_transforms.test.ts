@@ -2,9 +2,18 @@ import { describe, expect, it } from 'vitest';
 import { Alg, Move } from 'cubing/alg';
 import { cube3x3x3 } from 'cubing/puzzles';
 import { rotateAlg } from '@/lib/cube3';
-import { manipulateAlg } from '@/app/[lang]/sim/alg-manipulation';
+import { manipulateAlg, transformCubeText } from '@/app/[lang]/sim/alg-manipulation';
 
 describe('sim algorithm translator', () => {
+  it('rewrites moves without rewriting source layout, comments or group syntax', () => {
+    const input = "  [R, U]  (3Rw . F)2 // R U p stays a comment\r\n2-3Uw\tFS  ";
+    expect(transformCubeText(input, move => rotateAlg(move, 'y')))
+      .toBe("  [F, U]  (3Fw . L)2 // R U p stays a comment\r\n2-3Uw\tLM  ");
+    for (const text of ["U'p R", '↑ R U', 'R[R2:@C] U', 'R @ U']) {
+      expect(() => transformCubeText(text, move => rotateAlg(move, 'y'))).toThrow();
+    }
+  });
+
   it('rotates every family using physical cube conjugation', async () => {
     const cube = await cube3x3x3.kpuzzle();
     for (const axis of ['x', 'y', 'z'] as const) {
