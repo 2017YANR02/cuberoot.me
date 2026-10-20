@@ -1577,5 +1577,3 @@
 @media (max-width: 480px) {
   .sim-puzzle-toggles > * { border-inline-end: 0; padding-inline-end: 0; }
 }
-.sim-anchor-toggle { display: flex; align-items: center; gap: 8px; min-height: 32px; }
-.sim-anchor-value { margin-left: auto; color: var(--muted-foreground); min-width: 2em; }

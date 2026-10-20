@@ -209,6 +209,7 @@ describe('Kilominx simulator controls', () => {
       resolveScramble = resolve;
     }));
     await mount(false, 'U R2', 'algorithm');
+    await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="Playback settings"]')!.click());
     expect(world).toBeNull();
     expect(anchorSelect().value).toBe('algorithm');
     expect(player.experimentalSetupAnchor).toBe('end');

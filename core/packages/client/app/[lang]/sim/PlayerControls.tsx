@@ -109,7 +109,6 @@ import { simSpeedToTps, simTpsToSpeed } from '@/lib/sim_timing';
 import SimAlgEditor, { type SimAlgHighlightSpan } from './SimAlgEditor';
 import ReconAutofill from '@/components/ReconAutofill';
 import PlaybackBar from '@/components/PlaybackBar';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { createTwistyPlayback, EMPTY_TWISTY_PLAYBACK_STATE, type TwistyPlaybackPlayer, type TwistyPlaybackState } from '@/lib/twisty-playback';
 
 import './player-controls.css';
@@ -2461,13 +2460,15 @@ export default function PlayerControls({
   // reads as the target/solved state the moves resolve to). Shared by both render paths
   // below — the engine path also shows step/play controls, twisty mode (cubing.js
   // TwistyPlayer) has its own native scrubber and only needs this anchor toggle.
-  const anchorSelect = <div className="sim-anchor-toggle">
+  const anchorSelect = <label className="sim-toggle">
     <span>{t('锚定', 'Anchor')}</span>
-    <span className="sim-anchor-value">{playbackMode === 'algorithm' ? t('终点', 'End') : t('起点', 'Start')}</span>
-    <PillToggle value={playbackMode === 'algorithm'} disabled={corner?.endAnchor === false}
-      ariaLabel={t('锚定终点', 'Anchor at end')}
-      onChange={atEnd => onSettingsChange({ ...settings, playbackMode: atEnd ? 'algorithm' : 'moves' })} />
-  </div>;
+    <select value={playbackMode} disabled={corner?.endAnchor === false}
+      aria-label={t('锚定起点或终点', 'Anchor: keep the scramble start or the solve end fixed')}
+      onChange={event => onSettingsChange({ ...settings, playbackMode: event.target.value as 'moves' | 'algorithm' })}>
+      <option value="moves">{t('起点', 'Start')}</option>
+      <option value="algorithm">{t('终点', 'End')}</option>
+    </select>
+  </label>;
 
   // 按阶段展示色块(twizzle edit 同款,issue #27)— 播放条最左。支持面走 simCaps
   // (NxN 引擎 ≥2 阶 / cubing.js megaminx·fto),不支持的拼图整个隐藏。
