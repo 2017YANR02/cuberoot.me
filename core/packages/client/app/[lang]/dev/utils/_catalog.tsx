@@ -112,6 +112,14 @@ export const CATALOG: UtilEntry[] = [
     en: 'Map trainer links and query keys while preserving the timer event, room and solve share when leaving training.',
   },
   {
+    name: 'Timer practice URLs',
+    sig: 'canonicalTimerPracticeSearch(search: string | URLSearchParams): URLSearchParams',
+    imp: "import { canonicalTimerPracticeSearch, decodeTimerPracticeSearch, encodeTimerPracticeSearch } from '@/lib/timer-practice-url';\nimport { TimerPracticeUrlProvider, useTimerSearchParams } from '@/lib/timer-practice-url-adapter';",
+    category: 'util',
+    zh: '计时器统一练习地址：项目、内容、来源、练习方式、选题界面、出题方式和范围分别表达；兼容旧链接，保留引擎会话与成绩标识。',
+    en: 'Canonical timer practice URLs separate event, content, source, method, selection view, draw and scope while accepting old links and preserving engine sessions and result IDs.',
+  },
+  {
     name: 'Timer practice content',
     sig: 'timerPracticeContents(event: string): readonly TimerPracticeContent[]',
     imp: "import { timerPracticeContents, selectedTimerPracticeContent } from '@/lib/timer-practice-navigation';\nimport { virtualTrainingSessionId } from '@/lib/training-set-metadata';",

@@ -25,6 +25,10 @@ export function douyinContentAvailable(href: string): boolean {
       }
       return parameters.every(([key, value]) =>
         (key !== 'event' || DOUYIN_BASIC_TIMER_EVENTS.includes(value))
+        && (key !== 'content' || value === 'full')
+        && (key !== 'source' || ['random', 'manual', 'wca'].includes(value))
+        && (key !== 'method' || value === 'practice')
+        && !['view', 'draw', 'group', 'round', 'flippedEdges', 'selection', 'sets', 'case', 'split', 'multi'].includes(key)
         && (key !== 'players' || value === '1'));
     }
     return path === '/' || path === '/account' || path === '/privacy' || path === '/terms'
