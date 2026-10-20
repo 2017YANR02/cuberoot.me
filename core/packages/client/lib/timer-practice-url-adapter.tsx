@@ -17,7 +17,11 @@ const usePracticeAdapter: UseAdapterHook = () => {
     startTransition(() => {
       // Next integrates native history with useSearchParams. The root nuqs
       // NavigationSpy still owns its queue reset and popstate lifecycle.
+      // allow-raw-history: this nuqs transport encodes the batched engine state
+      // into the public URL; calling query hooks here would recursively re-enter it.
+      // eslint-disable-next-line no-restricted-syntax, no-restricted-globals
       if (options.history === 'push') window.history.pushState(null, '', url);
+      // eslint-disable-next-line no-restricted-syntax, no-restricted-globals
       else window.history.replaceState(null, '', url);
       if (options.scroll) window.scrollTo(0, 0);
       if (!options.shallow) router.replace(url, { scroll: false });

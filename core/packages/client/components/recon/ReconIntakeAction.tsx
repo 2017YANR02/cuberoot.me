@@ -61,21 +61,21 @@ export default function ReconIntakeAction({ solve, snapshot, host }: {
   const resolved = target?.solve ?? solve;
   const unresolvedLink = !!link.trim() && !target;
   return <div className="ri-action">
-    <button ref={trigger} type="button" onClick={() => { setOpen(v => !v); setError(''); }}
+    <button className="ri-button" ref={trigger} type="button" onClick={() => { setOpen(v => !v); setError(''); }}
       aria-expanded={open}>{tr({ zh: '收录样本', en: 'Collect sample' })}</button>
     {saved && <Link href="/recon/ground-truth?view=queue" prefetch={false}>{tr({ zh: '已收录 · 查看队列', en: 'Saved · View queue' })}</Link>}
     {open && <div ref={panel} className="ri-popover" data-site-surface="popover">
       <label>{tr({ zh: '其他复盘链接（选填，留空使用当前复盘）', en: 'Another replay link (optional; blank uses this replay)' })}
-        <span className="ri-input"><input value={link} disabled={busy} onChange={e => { setLink(e.target.value); setTarget(null); }} />
+        <span className="ri-input"><input className="ri-field ri-link-input" value={link} disabled={busy} onChange={e => { setLink(e.target.value); setTarget(null); }} />
           {link && <ClearButton onClick={() => { if (!busy) { setLink(''); setTarget(null); } }} />}</span>
       </label>
-      {unresolvedLink && <button type="button" disabled={busy} onClick={() => void resolveTarget()}>{tr({ zh: '读取链接', en: 'Load link' })}</button>}
+      {unresolvedLink && <button className="ri-button" type="button" disabled={busy} onClick={() => void resolveTarget()}>{tr({ zh: '读取链接', en: 'Load link' })}</button>}
       {target && <p>{(target.solve.timeMs / 1000).toFixed(3)}s · {target.solve.scramble}</p>}
       <p>{tr({ zh: '确认后保存默认化简步骤为预期，自动测试尚未运行。', en: 'Confirmation saves the default simplified steps as expected output. Automated tests have not run yet.' })}</p>
       {!snapshot && !target && <p>{tr({ zh: '等待复盘完成；第一版支持标准三阶 CFOP。', en: 'Waiting for reconstruction. Version 1 supports standard 3×3 CFOP.' })}</p>}
-      <button type="button" disabled={busy || unresolvedLink || (!snapshot && !target)} onClick={() => void choose('correct')}>
+      <button className="ri-button" type="button" disabled={busy || unresolvedLink || (!snapshot && !target)} onClick={() => void choose('correct')}>
         {tr({ zh: '确认正确并收录 · 待测试', en: 'Confirm correct · Queue tests' })}</button>
-      <button type="button" disabled={busy || unresolvedLink} onClick={() => void choose('needs-fix')}>
+      <button className="ri-button" type="button" disabled={busy || unresolvedLink} onClick={() => void choose('needs-fix')}>
         {tr({ zh: '批注问题并收录', en: 'Annotate and collect' })}</button>
       {error && <p role="alert">{error}</p>}
     </div>}
@@ -131,7 +131,7 @@ export function ReconIntakeEditor({ solve, host, mode, source, existing, onClose
   };
   const reviewHost: ReconstructHost = {
     ...host, renderIntakeAction: undefined,
-    renderAnnotationAction: mode === 'needs-fix' ? (line, seek) => <button type="button" className="ri-annotate" onClick={() => {
+    renderAnnotationAction: mode === 'needs-fix' ? (line, seek) => <button className="ri-button ri-annotate" type="button" onClick={() => {
       seek(); setSelected({ fromIdx: line.fromIdx, toIdx: line.toIdx });
       const displayed = snapshot?.lines.find(item => item.key === line.key) ?? line;
       setObserved(`${displayed.moves.join(' ')} // ${displayed.label ?? ''}`); form.current?.focus();
@@ -141,22 +141,22 @@ export function ReconIntakeEditor({ solve, host, mode, source, existing, onClose
     <section className="ri-dialog" role="dialog" aria-modal="true" aria-label={tr({ zh: '复盘样本批注', en: 'Review reconstruction sample' })} data-site-surface="panel"
       onKeyDownCapture={event => { if (event.key === 'Escape') { event.stopPropagation(); if (!saving) onClose(); } }}>
       <div className="ri-heading"><h2>{tr({ zh: '收录复盘样本', en: 'Collect reconstruction sample' })}</h2>
-        <button type="button" disabled={saving} onClick={onClose}>{tr({ zh: '关闭', en: 'Close' })}</button></div>
+        <button className="ri-button" type="button" disabled={saving} onClick={onClose}>{tr({ zh: '关闭', en: 'Close' })}</button></div>
       <ReconstructReport solve={solve} isZh={tr({ zh: true, en: false })} host={reviewHost} hideActions hideDate onReviewSnapshot={receiveSnapshot} />
       {!snapshot && <p>{tr({ zh: '等待分析完成；暂仅支持标准三阶 CFOP。', en: 'Waiting for analysis; standard 3×3 CFOP only for now.' })}</p>}
       {mode === 'needs-fix' && <div className="ri-editor">
         <p>{tr({ zh: '点击步骤旁的“批注”定位。未批注的部分不代表已确认正确。', en: 'Select Annotate beside a step. Unannotated steps are not automatically approved.' })}</p>
-        <button type="button" onClick={() => { setSelected(null); setObserved(''); }}>{tr({ zh: '批注整条复盘', en: 'Annotate whole replay' })}</button>
+        <button className="ri-button" type="button" onClick={() => { setSelected(null); setObserved(''); }}>{tr({ zh: '批注整条复盘', en: 'Annotate whole replay' })}</button>
         <p>{selected ? `${selected.fromIdx + 1}–${selected.toIdx + 1}` : tr({ zh: '整条复盘', en: 'Whole replay' })} {observed}</p>
-        <label>{tr({ zh: '问题说明', en: 'Problem' })}<textarea ref={form} value={problem} onChange={e => setProblem(e.target.value)} maxLength={4000} /></label>
-        <label>{tr({ zh: '预期公式（选填，精确匹配默认化简步骤）', en: 'Expected algorithm (optional; exact default notation)' })}<textarea value={algorithm} onChange={e => setAlgorithm(e.target.value)} maxLength={4000} /></label>
-        <label>{tr({ zh: '预期效果（选填）', en: 'Expected behavior (optional)' })}<textarea value={effect} onChange={e => setEffect(e.target.value)} maxLength={4000} /></label>
-        <button type="button" disabled={!problem.trim()} onClick={add}>{tr({ zh: '添加批注，继续下一条', en: 'Add annotation and continue' })}</button>
+        <label>{tr({ zh: '问题说明', en: 'Problem' })}<textarea className="ri-field ri-textarea" ref={form} value={problem} onChange={e => setProblem(e.target.value)} maxLength={4000} /></label>
+        <label>{tr({ zh: '预期公式（选填，精确匹配默认化简步骤）', en: 'Expected algorithm (optional; exact default notation)' })}<textarea className="ri-field ri-textarea" value={algorithm} onChange={e => setAlgorithm(e.target.value)} maxLength={4000} /></label>
+        <label>{tr({ zh: '预期效果（选填）', en: 'Expected behavior (optional)' })}<textarea className="ri-field ri-textarea" value={effect} onChange={e => setEffect(e.target.value)} maxLength={4000} /></label>
+        <button className="ri-button" type="button" disabled={!problem.trim()} onClick={add}>{tr({ zh: '添加批注，继续下一条', en: 'Add annotation and continue' })}</button>
         {annotations.map(note => <div key={note.id} className="ri-note"><p>{note.observed}</p><p>{note.problem}</p><p>{note.expectedAlgorithm} {note.expectedEffect}</p>
-          <button type="button" onClick={() => setAnnotations(items => items.filter(item => item.id !== note.id))}>{tr({ zh: '移除批注', en: 'Remove annotation' })}</button></div>)}
+          <button className="ri-button" type="button" onClick={() => setAnnotations(items => items.filter(item => item.id !== note.id))}>{tr({ zh: '移除批注', en: 'Remove annotation' })}</button></div>)}
       </div>}
       {error && <p role="alert">{error}</p>}
-      <button type="button" disabled={saving || !snapshot || (mode === 'needs-fix' && !annotations.length && !problem.trim())} onClick={() => void save()}>
+      <button className="ri-button" type="button" disabled={saving || !snapshot || (mode === 'needs-fix' && !annotations.length && !problem.trim())} onClick={() => void save()}>
         {mode === 'correct' ? tr({ zh: '确认当前复盘正确并收录', en: 'Confirm this reconstruction and collect' })
           : tr({ zh: '提交批注 · 待修正', en: 'Submit annotations · Needs correction' })}</button>
     </section>

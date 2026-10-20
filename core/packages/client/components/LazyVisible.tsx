@@ -43,29 +43,40 @@ export default function LazyVisible({
 }) {
   const ref = useRef<HTMLDivElement & HTMLSpanElement>(null);
   const [show, setShow] = useState(initiallyVisible);
+  const revealed = useRef(initiallyVisible);
+  const onVisibleRef = useRef(onVisible);
+  useEffect(() => { onVisibleRef.current = onVisible; }, [onVisible]);
 
   useEffect(() => {
-    if (show && !unmountWhenHidden) return;
+    if (revealed.current && !unmountWhenHidden) return;
     const el = ref.current;
     if (!el) return;
     // 老浏览器无 IntersectionObserver:直接挂载(失去懒加载但功能不丢)。
-    if (typeof IntersectionObserver === 'undefined') { setShow(true); onVisible?.(); return; }
+    if (typeof IntersectionObserver === 'undefined') { revealed.current = true; setShow(true); onVisibleRef.current?.(); return; }
+    let disconnected = false;
+    const disconnect = () => {
+      if (disconnected) return;
+      disconnected = true;
+      io.disconnect();
+    };
     const io = new IntersectionObserver(
       (entries) => {
+        if (disconnected) return;
         const visible = entries.some((e) => e.isIntersecting);
         if (unmountWhenHidden) {
           setShow(visible);
         } else if (visible) {
+          revealed.current = true;
           setShow(true);
-          onVisible?.();
-          io.disconnect();
+          onVisibleRef.current?.();
+          disconnect();
         }
       },
       { rootMargin },
     );
     io.observe(el);
-    return () => io.disconnect();
-  }, [rootMargin, unmountWhenHidden, show, onVisible]);
+    return disconnect;
+  }, [rootMargin, unmountWhenHidden]);
 
   if (show && unwrapWhenVisible && !unmountWhenHidden) return children;
 

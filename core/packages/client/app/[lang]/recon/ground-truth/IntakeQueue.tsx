@@ -80,19 +80,19 @@ export default function IntakeQueue() {
     <h1>{tr({ zh: '复盘收录待办', en: 'Reconstruction intake queue' })}</h1>
     <p>{tr({ zh: '收录保存原始记录。人工确认、自动测试和正式启用分别记账。', en: 'Collected samples retain their original recordings. Human approval, test results and activation are tracked separately.' })}</p>
     <div className="ri-queue-controls">
-      <label>{tr({ zh: '状态', en: 'Status' })} <select value={filter} onChange={e => { setFilter(e.target.value); setOffset(0); }}>
+      <label>{tr({ zh: '状态', en: 'Status' })} <select className="ri-field" value={filter} onChange={e => { setFilter(e.target.value); setOffset(0); }}>
         <option value="todo">{tr({ zh: '全部待办', en: 'All pending' })}</option><option value="all">{tr({ zh: '全部样本', en: 'All samples' })}</option>
         {Object.entries(statuses).map(([key, label]) => <option key={key} value={key}>{tr(label)}</option>)}
       </select></label>
-      <button type="button" disabled={busy} onClick={refresh}>{tr({ zh: '刷新', en: 'Refresh' })}</button>
-      <button type="button" onClick={() => void copyTask()}>{copied ? tr({ zh: '已复制 AI 处理指令', en: 'AI instructions copied' }) : tr({ zh: '复制 AI 处理指令', en: 'Copy AI instructions' })}</button>
-      <button type="button" disabled={!offset || busy} onClick={() => setOffset(v => Math.max(0, v - 50))}>{tr({ zh: '上一页', en: 'Previous' })}</button>
-      <button type="button" disabled={!hasMore || busy} onClick={() => setOffset(v => v + 50)}>{tr({ zh: '下一页', en: 'Next' })}</button>
+      <button className="ri-button" type="button" disabled={busy} onClick={refresh}>{tr({ zh: '刷新', en: 'Refresh' })}</button>
+      <button className="ri-button" type="button" onClick={() => void copyTask()}>{copied ? tr({ zh: '已复制 AI 处理指令', en: 'AI instructions copied' }) : tr({ zh: '复制 AI 处理指令', en: 'Copy AI instructions' })}</button>
+      <button className="ri-button" type="button" disabled={!offset || busy} onClick={() => setOffset(v => Math.max(0, v - 50))}>{tr({ zh: '上一页', en: 'Previous' })}</button>
+      <button className="ri-button" type="button" disabled={!hasMore || busy} onClick={() => setOffset(v => v + 50)}>{tr({ zh: '下一页', en: 'Next' })}</button>
     </div>
     {error && <p role="alert">{error}</p>}
     {!busy && !items.length && !error && <p>{tr({ zh: '当前没有样本。可在智能魔方复盘顶部收录。', en: 'No samples here. Collect one from the top of a smart cube reconstruction.' })}</p>}
     <div className="ri-queue-grid"><nav className="ri-case-list">
-      {items.map(sample => <button key={sample.id} type="button" aria-pressed={selected === sample.id} onClick={() => { setSelected(sample.id); setCopied(false); }}>
+      {items.map(sample => <button className="ri-button ri-case-button" key={sample.id} type="button" aria-pressed={selected === sample.id} onClick={() => { setSelected(sample.id); setCopied(false); }}>
         {tr(statuses[sample.status])} · {(sample.input.recording.timeMs / 1000).toFixed(3)}s<br /><small>{sample.id.slice(0, 8)} · v{sample.revision}</small>
       </button>)}
     </nav>{item && <section>
@@ -111,9 +111,9 @@ export default function IntakeQueue() {
       <p>{tr({ zh: '最近测试', en: 'Latest test' })}：{item.latestRun ? `${tr(runStatuses[item.latestRun.status])} · v${item.latestRun.revision} · ${item.latestRun.createdAt}` : tr({ zh: '未运行', en: 'Not run' })}</p>
       {item.latestRun && <><pre>{item.latestRun.errors.join('\n')}</pre><small>{item.latestRun.commit} · {item.latestRun.fingerprint}</small></>}
       <div className="ri-queue-controls">
-        <button type="button" disabled={busy} onClick={() => setEditing(true)}>{tr({ zh: '补充／修改批注', en: 'Revise annotations' })}</button>
+        <button className="ri-button" type="button" disabled={busy} onClick={() => setEditing(true)}>{tr({ zh: '补充／修改批注', en: 'Revise annotations' })}</button>
         {item.status === 'needs-review' && item.latestRun?.status === 'passed' && item.latestRun.revision === item.revision &&
-          <button type="button" disabled={busy} onClick={() => void approve()}>{tr({ zh: '确认此测试输出为预期，重新测试', en: 'Approve this output and queue retest' })}</button>}
+          <button className="ri-button" type="button" disabled={busy} onClick={() => void approve()}>{tr({ zh: '确认此测试输出为预期，重新测试', en: 'Approve this output and queue retest' })}</button>}
       </div>
       <details><summary>{tr({ zh: '测试历史', en: 'Test history' })}</summary>
         {detail.runs.map((run, i) => <div key={run.payload?.id ?? i}><p>v{run.revision} · {run.payload && tr(runStatuses[run.payload.status])} · {run.created_at}</p>

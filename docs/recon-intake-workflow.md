@@ -45,6 +45,13 @@ LOCAL_DOMAINS=recon-intake LOCAL_API_PORT=3011 NEXT_DEV_DIST_DIR=.tmp/recon-inta
 
 ## AI 处理指令
 
+发布后的网页通过线上 API 读写生产队列；本地 3003 预览仍连接独立的本地队列，
+两个队列不会自动合并。处理线上样本时，显式将 `RECON_INTAKE_API_URL` 设置为
+`https://api.cuberoot.me`，并通过进程环境提供已授权的生产 `ADMIN_API_KEY`。
+这两个环境变量优先于本地配置文件；不要把生产密钥写进指令、报告或源码，
+也不要用本地队列的空列表推断线上没有待办。测试与规则修改仍在本地运行，
+只将对应样本的领取、续期和测试报告回写到所选队列。
+
 用户说「处理待办复盘」或使用页面复制的指令后，在 `core/` 执行：
 
 ```sh
