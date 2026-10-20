@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isAdminWcaId } from '@cuberoot/shared/admin';
 import { canReadReport, reportReadScope, canWriteProject, decideReportChange, isWorkDate, isResultUrl, type WorkspaceActor, type ReportState } from '@app-foundation/workspace-policy';
 import type { QueryRunner } from '../db/connection.js';
 
@@ -29,9 +30,9 @@ export function createWorkspaceService(query: QueryRunner, transact: Transaction
     return transact(async q => { await q("SELECT pg_advisory_xact_lock(2812026)"); return fn(q, await actor(q, identity)); });
   }
   async function actor(q: QueryRunner, identity: Identity): Promise<Actor> {
-    const [user] = await q<{ is_admin: boolean; display_name: string }>('SELECT is_admin, display_name FROM app_users WHERE id=? AND merged_into_user_id IS NULL AND NOT forum_banned', [identity.uid]);
+    const [user] = await q<{ is_admin: boolean; display_name: string; wca_id: string | null }>('SELECT is_admin, display_name, wca_id FROM app_users WHERE id=? AND merged_into_user_id IS NULL AND NOT forum_banned', [identity.uid]);
     if (!user) throw new WorkspaceError('登录已失效 / Sign in again', 401);
-    if (identity.isAdmin && user.is_admin) return { kind: 'admin', role: 'admin', id: identity.uid, name: user.display_name };
+    if (identity.isAdmin && (user.is_admin || isAdminWcaId(user.wca_id))) return { kind: 'admin', role: 'admin', id: identity.uid, name: user.display_name };
     const [member] = await q<{id: number; name: string; role: 'member'|'manager'}>('SELECT id,name,role FROM workspace_members WHERE user_id=? AND active', [identity.uid]);
     if (!member) throw new WorkspaceError('请将 CubeRoot ID 交给负责人开通员工权限 / Ask your administrator to enable your CubeRoot ID', 403);
     return { ...member, kind: 'staff' };

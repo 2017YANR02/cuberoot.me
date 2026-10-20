@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { ADMIN_WCA_IDS } from '@cuberoot/shared/admin';
 import { randomUUID } from 'node:crypto';
 import postgres from 'postgres';
 import { beforeAll, afterAll, describe, expect, it } from 'vitest';
@@ -23,7 +24,7 @@ suite('independent CubeRoot workspace',()=>{
   const input=(id:string,status='draft')=>({id,projectId:project,version:0,workDate:'2026-10-19',status,visibility:'company',progress:'Delivered',resultUrl:'https://example.com/result',help:'',next:''});
   beforeAll(async()=>{
     await q('CREATE SCHEMA workspace_fixture');await q('SET search_path TO workspace_fixture');
-    await q('CREATE TABLE app_users(id BIGINT PRIMARY KEY,display_name TEXT,is_admin BOOLEAN,forum_banned BOOLEAN DEFAULT FALSE,merged_into_user_id BIGINT)');
+    await q('CREATE TABLE app_users(id BIGINT PRIMARY KEY,display_name TEXT,is_admin BOOLEAN,forum_banned BOOLEAN DEFAULT FALSE,merged_into_user_id BIGINT,wca_id TEXT)');
     await q("INSERT INTO app_users(id,display_name,is_admin) VALUES (1,'Owner',TRUE),(2,'Alice',FALSE),(3,'Bob',FALSE),(4,'Unassigned',FALSE)");
     await sql.unsafe(readFileSync(new URL('../migrations/0281_workspace.sql',import.meta.url),'utf8'));
     // A separate application's account record is not in CubeRoot app_users.
@@ -33,6 +34,11 @@ suite('independent CubeRoot workspace',()=>{
     await service.post(admin,'project',{id:project,version:0,name:'CubeRoot',url:'https://cuberoot.me',active:true,memberIds:[aliceId,bobId]});
   });
   afterAll(async()=>{await q('DROP SCHEMA workspace_fixture CASCADE');await q('DROP SCHEMA other_application CASCADE');await sql.end();});
+  it('keeps existing WCA administrator access without a duplicate employee grant',async()=>{
+    await q('UPDATE app_users SET wca_id=?,is_admin=FALSE WHERE id=1',[[...ADMIN_WCA_IDS][0]]);
+    expect(await service.get(admin,'session',new URLSearchParams())).toHaveProperty('actor.kind','admin');
+    await q('UPDATE app_users SET wca_id=NULL,is_admin=TRUE WHERE id=1');
+  });
   it('requires CubeRoot identity and an explicit employee grant',async()=>{
     await expect(service.get(unassigned,'session',new URLSearchParams())).rejects.toMatchObject({status:403});
     await expect(service.get({uid:99,isAdmin:true,name:'External'},'session',new URLSearchParams())).rejects.toMatchObject({status:401});
