@@ -60,14 +60,17 @@ describe('native timer adapter', () => {
     expect(timer.scramble).toBe('D2'); expect(timer.currentSource).toBe('manual');
     expect(timer.sourceLine).toBe(''); timer.dispose();
   });
-  it('draws every supported event locally and retains the canonical NxN image bytes', () => {
+  it.each(nativeTimerEvents())('draws $id locally', (event) => {
     const { timer } = fixture();
-    for (const event of nativeTimerEvents()) {
+    try {
       timer.selectEvent(event.id);
       const svg = decodeURIComponent(nativeTimerPreview(event.id, timer.scramble).split(',').slice(1).join(','));
       expect(svg, event.id).toContain('<svg');
       expect(svg, event.id).toContain('</svg>');
-    }
+    } finally { timer.dispose(); }
+  });
+
+  it('retains the canonical NxN image bytes', () => {
     expect(decodeURIComponent(nativeTimerPreview('333', "R U R'").split(',')[1])).toBe(renderUnfoldedSvgForEvent('333', "R U R'"));
   });
 

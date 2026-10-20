@@ -1,6 +1,6 @@
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join, resolve, sep } from 'node:path';
 import { runInNewContext } from 'node:vm';
 import { expect, it } from 'vitest';
 import { buildWechatBundle } from '../scripts/build-wechat-bundle.mjs';
@@ -36,6 +36,6 @@ it.each([false, true])('loads shared native modules once and preserves page hand
     expect(page.data.count).toBe(1);
     expect(page.onTap()).toBe(2);
     expect(page.data.count).toBe(2);
-    expect([...sources.keys()].some(path => path.includes('/shared/'))).toBe(true);
+    expect([...sources.keys()].some(path => path.includes(`${sep}shared${sep}`))).toBe(true);
   } finally { await rm(root, { recursive: true, force: true }); }
 });
