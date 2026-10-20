@@ -11,6 +11,7 @@ import { SITE_ORIGIN } from './runtime-config';
 import { isSafeWebSessionDestination, isWebSessionTicket } from './web-session-contract';
 import { MINI_PROGRAM_WEB_MARKER, isDouyinMiniProgram } from './platform';
 import { publicPageSharePath, type PageShareMessage } from '@cuberoot/shared/page-share';
+import { nativeWebDestination } from './native-web-destination';
 
 type DiscoveryRouteKey = Exclude<SiteDirectoryEntryId, 'algdb' | 'alg' | 'github'> | 'alg';
 export type WebRouteKey = DiscoveryRouteKey | 'home' | 'training' | 'account' | 'account-link' | 'privacy' | 'renewal-terms' | 'logout';
@@ -230,7 +231,8 @@ export function resolveWebRouteShare(key: unknown, currentUrl?: string, metadata
       imageUrl: WEB_ROUTE_SHARE_IMAGE,
       title: metadata?.path === path ? metadata.title : tr({ en: 'CubeRoot', zh: '魔方根CubeRoot' }),
       // A current destination is independent of the tab/entry used to reach it.
-      path: `/pages/web/index?key=home&path=${encodeURIComponent(path)}`,
+      path: (isDouyinMiniProgram() ? nativeWebDestination(path)?.url : undefined)
+        ?? `/pages/web/index?key=home&path=${encodeURIComponent(path)}`,
     };
   }
 
@@ -240,7 +242,7 @@ export function resolveWebRouteShare(key: unknown, currentUrl?: string, metadata
       en: `CubeRoot: ${route.title}`,
       zh: `魔方根CubeRoot：${route.title}`,
     }),
-    path: route.nativeTabPath
+    path: (isDouyinMiniProgram() ? nativeWebDestination(route.path)?.url : undefined) ?? route.nativeTabPath
       ?? `/pages/web/index?key=${encodeURIComponent(routeKey)}`,
   };
 }

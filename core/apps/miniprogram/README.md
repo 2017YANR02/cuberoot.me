@@ -5,6 +5,7 @@
 ## 抖音原生主页面
 
 - 协议与隐私入口使用 `pages/privacy` 原生离线页；全文由 `@cuberoot/shared/privacy` 与网站共同消费，修改政策时只维护共享数据。第三方政策及支持邮箱提供复制入口。
+- 联系页使用无需登录的 `pages/contact`，与账号页共用 `native-contact` 数据、模板和样式；社交地址、邮箱与号码复制，微信二维码使用原生预览。旧抖音网页链接按实际路径映射到原生页，未支持的页面及参数明确提示，不再全部切到工具首页；账号网页流程仍保留。
 - 抖音构建递归检查计时、工具、账号、设备和协议页面引用的模板，拒绝核心页面引入 `web-view`。这只证明这些页面的渲染边界，不证明账号网站流程、全部深链和平台审核已完成；完整清单见[原生化审核核查](../../../docs/douyin-native-review-audit.md)。
 
 - `native-timer.ts` 复用共享计时状态机、打乱、罚时、统计与智能魔方控制器；`timer-store.ts` 从早期微信原生计时器（`7cb3e75349`，当时位于 `core/packages/miniprogram`）恢复，沿用 `cuberoot:timer` 存储格式与 `TimerStoreSettings`。网站 WebView 的 localStorage 成绩不会自动迁入原生存储。
