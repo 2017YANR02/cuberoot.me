@@ -36,6 +36,9 @@ interface AccountPageData {
     }>;
   };
   displayName: string;
+  editingName: boolean;
+  nameDraft: string;
+  nameBusy: boolean;
   isTimelineEntry: boolean;
   loginBusy: boolean;
   loginError: string;
@@ -55,6 +58,9 @@ interface AccountPageData {
 }
 
 interface AccountPage {
+  editDisplayName(): void;
+  saveDisplayName(): Promise<void>;
+  onHide(): void;
   copyContactValue(event: { currentTarget: { dataset: { value?: unknown } } }): void;
   createAccount(): Promise<void>;
   beginPhoneAuthorization(): void;
@@ -107,6 +113,39 @@ function normalLaunchOptions() {
 }
 
 describe('mini program account page', () => {
+  it('does not apply a display-name draft to a different session', async () => {
+    let stored = { token: 't'.repeat(20), user: { uid: 12, name: 'Old', wcaId: null } };
+    const request = vi.fn();
+    const page = await loadPage({ getStorageSync: () => stored, request });
+    page.setData({ loginRequired: false, displayName: 'Old' });
+    page.editDisplayName();
+    page.setData({ nameDraft: 'Changed' });
+    stored = { token: 'b'.repeat(20), user: { uid: 13, name: 'Other', wcaId: null } };
+    await page.saveDisplayName();
+    expect(request).not.toHaveBeenCalled();
+    expect(page.data.editingName).toBe(false);
+    expect(page.data.displayName).toBe('Other');
+  });
+
+  it('clears a hidden name editor and ignores its late save response', async () => {
+    const session = { token: 't'.repeat(20), user: { uid: 12, name: 'Old', wcaId: null } };
+    let respond!: (value: unknown) => void;
+    const setStorageSync = vi.fn();
+    const page = await loadPage({
+      getStorageSync: () => session, setStorageSync,
+      request(options: { success(value: unknown): void }) { respond = options.success; },
+    });
+    page.setData({ loginRequired: false, displayName: 'Old' });
+    page.editDisplayName();
+    page.setData({ nameDraft: 'Changed' });
+    const saving = page.saveDisplayName();
+    page.onHide();
+    respond({ statusCode: 200, data: { token: 'n'.repeat(20), user: { ...session.user, name: 'Changed', avatar: '' } } });
+    await saving;
+    expect(setStorageSync).not.toHaveBeenCalled();
+    expect(page.data).toMatchObject({ editingName: false, nameDraft: '', nameBusy: false, displayName: 'Old', accountError: '' });
+  });
+
   afterEach(() => {
     vi.useRealTimers();
     vi.restoreAllMocks();

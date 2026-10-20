@@ -1,4 +1,5 @@
 import { createContactView } from '../../lib/native-contact';
+import { isValidDisplayName, normalizeDisplayName } from '@cuberoot/shared/account';
 import { applyNativeAppearance, nativeAppearanceStyle } from '../../lib/appearance';
 import type { PendingIdentity } from '@cuberoot/shared/auth/web-session';
 import {
@@ -11,6 +12,7 @@ import {
   loginWithMiniProgram,
   previewIdentityLinkCode,
   validateStoredSession,
+  updateNativeDisplayName,
   type SessionData,
 } from '../../lib/auth';
 import { cancelWebsiteNavigation, openWebsitePageOnce } from '../../lib/navigation';
@@ -31,6 +33,9 @@ function createAccountCopy() {
     : { en: 'WeChat', zh: '微信' });
   return {
     accountEyebrow: tr({ en: 'ACCOUNT', zh: '账号' }),
+    editName: tr({ en: 'Edit display name', zh: '修改展示名' }),
+    saveName: tr({ en: 'Save', zh: '保存' }),
+    clearName: tr({ en: 'Clear display name', zh: '清除展示名' }),
     wcaLinkHint: tr({ en: 'Complete WCA authorization in your system browser. This page refreshes when you return.', zh: '请在系统浏览器完成 WCA 授权，返回后页面会刷新' }),
     agreementLabel: tr({
       en: 'I have read and agree to the terms above',
@@ -179,6 +184,9 @@ interface AccountPageData {
   contact: typeof CONTACT_VIEW;
   copy: typeof ACCOUNT_COPY;
   displayName: string;
+  editingName: boolean;
+  nameDraft: string;
+  nameBusy: boolean;
   isTimelineEntry: boolean;
   loginBusy: boolean;
   loginError: string;
@@ -208,6 +216,8 @@ interface AccountPageInstance {
 type PagePendingIdentity = PendingIdentity & { expiresAt: number; sessionToken: string | undefined };
 const pendingIdentities = new WeakMap<AccountPageInstance, PagePendingIdentity>();
 const disposedPages = new WeakSet<AccountPageInstance>();
+const profileAttempts = new WeakMap<object, object>();
+const profileSessions = new WeakMap<object, string>();
 const phonePrompts = new WeakMap<AccountPageInstance, object>();
 const phoneAuthorizations = new WeakMap<AccountPageInstance, { prompt: object; sessionToken: string | undefined }>();
 const EMPTY_LINK_CODE = { accountLinkCode: '', accountLinkTargetId: null, accountLinkTargetName: '' };
@@ -491,6 +501,9 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
     contact: CONTACT_VIEW,
     copy: ACCOUNT_COPY,
     displayName: '',
+    editingName: false,
+    nameDraft: '',
+    nameBusy: false,
     isTimelineEntry: false,
     loginBusy: false,
     loginError: '',
@@ -585,7 +598,15 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
 }
   },
 
+  onHide() {
+    profileAttempts.delete(this);
+    profileSessions.delete(this);
+    this.setData({ editingName: false, nameDraft: '', nameBusy: false });
+  },
+
   onUnload() {
+    profileAttempts.delete(this);
+    profileSessions.delete(this);
     disposedPages.add(this as unknown as AccountPageInstance);
     pendingIdentities.delete(this as unknown as AccountPageInstance);
     phonePrompts.delete(this as unknown as AccountPageInstance);
@@ -726,6 +747,59 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
       failureMessage: ACCOUNT_COPY.policyFailure,
       onFailure: (message) => this.setData({ loginError: message }),
     });
+  },
+
+  editDisplayName() {
+    if (this.data.loginRequired || this.data.isTimelineEntry || this.data.wcaId || this.data.nameBusy) return;
+    const session = getStoredSessionSnapshot().session;
+    if (!session || session.user.wcaId) return;
+    profileSessions.set(this, session.token);
+    this.setData({ editingName: true, nameDraft: this.data.displayName, accountError: '' });
+  },
+
+  inputDisplayName(event: WechatMiniprogram.Input) {
+    if (!this.data.nameBusy) this.setData({ nameDraft: event.detail.value, accountError: '' });
+  },
+
+  clearDisplayName() {
+    if (!this.data.nameBusy) this.setData({ nameDraft: '' });
+  },
+
+  cancelDisplayName() {
+    if (!this.data.nameBusy) this.setData({ editingName: false, nameDraft: '', accountError: '' });
+  },
+
+  async saveDisplayName() {
+    if (!this.data.editingName || this.data.nameBusy || this.data.loginRequired) return;
+    const name = normalizeDisplayName(this.data.nameDraft);
+    if (!isValidDisplayName(name)) {
+      this.setData({ accountError: tr({ zh: '展示名须为 1–50 个字符，不能包含控制字符。', en: 'Use 1–50 characters without control characters.' }) });
+      return;
+    }
+    const session = getStoredSessionSnapshot().session;
+    if (!session || session.user.wcaId || profileSessions.get(this) !== session.token) {
+      this.setData({ editingName: false, nameDraft: '' });
+      refreshStoredSession(this as unknown as AccountPageInstance);
+      return;
+    }
+    const attempt = {};
+    profileAttempts.set(this, attempt);
+    const current = () => profileAttempts.get(this) === attempt;
+    this.setData({ nameBusy: true, accountError: '' });
+    try {
+      await updateNativeDisplayName(session, name, current);
+      if (current()) {
+        refreshStoredSession(this as unknown as AccountPageInstance);
+        this.setData({ editingName: false, nameDraft: '' });
+      }
+    } catch {
+      if (current()) this.setData({ accountError: tr({
+        zh: '未能确认保存结果，请刷新账号资料后重试。',
+        en: 'Could not confirm the save. Refresh your account before retrying.',
+      }) });
+    } finally {
+      if (current()) { profileAttempts.delete(this); this.setData({ nameBusy: false }); }
+    }
   },
 
   openAccount() {

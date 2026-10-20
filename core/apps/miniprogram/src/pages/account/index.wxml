@@ -110,6 +110,17 @@
   <text class="eyebrow">{{copy.accountEyebrow}}</text>
   <text class="page-title">{{displayName}}</text>
   <text wx:if="{{uidText}}" class="account-user-meta">CubeRoot ID {{uidText}}</text>
+  <view wx:if="{{editingName}}" class="account-name-editor">
+    <view class="account-link-code-row">
+      <input class="account-link-code-input" value="{{nameDraft}}" maxlength="100" aria-label="{{copy.editName}}" disabled="{{nameBusy}}" bindinput="inputDisplayName" />
+      <button wx:if="{{nameDraft}}" class="text-button" aria-label="{{copy.clearName}}" disabled="{{nameBusy}}" bindtap="clearDisplayName">×</button>
+    </view>
+    <view class="account-name-actions">
+      <button class="text-button" disabled="{{nameBusy}}" bindtap="cancelDisplayName">{{copy.cancelLabel}}</button>
+      <button class="primary-button" disabled="{{nameBusy || !nameDraft}}" loading="{{nameBusy}}" bindtap="saveDisplayName">{{copy.saveName}}</button>
+    </view>
+  </view>
+  <button wx:elif="{{!wcaId}}" class="text-button account-name-edit" bindtap="editDisplayName">{{copy.editName}}</button>
   <text wx:if="{{wcaLinkPending}}" class="status-text" aria-role="status" aria-live="polite">{{copy.wcaLinkHint}}</text>
   <button
     class="primary-button account-primary-button"

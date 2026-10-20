@@ -1,4 +1,5 @@
 import { API_ORIGIN } from './runtime-config';
+import { isValidDisplayName, normalizeDisplayName } from '@cuberoot/shared/account';
 import {
   decodeWebSessionError,
   decodeWebSession,
@@ -397,6 +398,19 @@ export async function validateStoredSession(session: SessionData): Promise<Sessi
     throw new ApiError(STORAGE_ERROR_STATUS, 'session storage unavailable');
   }
   return next;
+}
+
+export async function updateNativeDisplayName(session: SessionData, raw: string, isCurrent: () => boolean): Promise<SessionData> {
+  const name = normalizeDisplayName(raw);
+  if (!isValidDisplayName(name) || session.user.wcaId || !session.user.uid) {
+    throw new ApiError(400, 'invalid display name');
+  }
+  const current = () => isCurrent() && getStoredSession()?.token === session.token;
+  if (!current()) throw new ApiError(409, 'account changed', 'ACCOUNT_CHANGED');
+  const response = await requestJson<unknown>('/auth/profile', {
+    method: 'POST', token: session.token, body: { name },
+  });
+  return saveLoginResponse(response, current, session.user.uid);
 }
 
 export async function createWebSessionTicket(session: SessionData): Promise<WebSessionTicket> {
