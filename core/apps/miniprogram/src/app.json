@@ -6,6 +6,7 @@
     "pages/tools/index",
     "pages/training/index",
     "pages/account/index",
+    "pages/privacy/index",
     "pages/web/index",
     "pages/payment/index",
     "pages/membership/index",

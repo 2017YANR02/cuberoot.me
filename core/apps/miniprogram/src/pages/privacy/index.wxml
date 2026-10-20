@@ -1,0 +1,6 @@
+<view class="page policy-page" style="{{appearanceStyle}}">
+  <text wx:for="{{blocks}}" wx:key="index" class="policy-block policy-{{item.kind}}" selectable="{{true}}">{{item.text}}</text>
+  <view class="policy-links">
+    <button wx:for="{{links}}" wx:key="value" class="text-button" data-index="{{index}}" bindtap="copyLink" hover-class="press-feedback">{{copyLabel}} {{item.label}}</button>
+  </view>
+</view>

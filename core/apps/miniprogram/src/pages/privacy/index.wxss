@@ -1,0 +1,7 @@
+.policy-page { background: var(--cr-bg); color: var(--cr-text); }
+.policy-block { display: block; margin-bottom: 24rpx; line-height: 1.75; }
+.policy-h1 { font-size: 42rpx; font-weight: 700; line-height: 1.3; }
+.policy-h2 { margin-top: 44rpx; font-size: 34rpx; font-weight: 650; }
+.policy-li { padding-left: 24rpx; }
+.policy-li::before { content: '•'; margin-left: -24rpx; margin-right: 12rpx; color: var(--cr-muted); }
+.policy-links { margin-top: 36rpx; display: flex; flex-direction: column; gap: 20rpx; align-items: flex-start; }
