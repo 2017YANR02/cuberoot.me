@@ -943,6 +943,14 @@ export const CATALOG: ComponentEntry[] = [
     Demo: () => <UserIdLabel userId={66} />,
   },
   {
+    name: 'LoadingIndicator',
+    import: "import { LoadingIndicator } from '@/components/LoadingIndicator';",
+    category: 'more',
+    zh: '内容请求的行内加载提示：复用 Spinner，保留页面原有尺寸与文案，支持减少动态效果。',
+    en: 'Inline content-loading feedback using Spinner; preserves page geometry and copy, with reduced-motion support.',
+    usage: '<LoadingIndicator />',
+  },
+  {
     name: 'ProgressiveImage',
     import: "import { ProgressiveImage } from '@/components/ProgressiveImage';",
     category: 'more',

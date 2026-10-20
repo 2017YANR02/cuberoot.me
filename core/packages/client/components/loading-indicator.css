@@ -1,0 +1,10 @@
+.loading-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  max-width: 100%;
+  vertical-align: middle;
+}
+.loading-indicator > span:last-child {
+  min-width: 0;
+}
