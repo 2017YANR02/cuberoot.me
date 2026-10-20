@@ -1,3 +1,4 @@
+import { SiteCorners } from "@2017yanr02/continuous-corners/react";
 import { shareOrDownloadBackup } from './file-export';
 import { AndroidUpdateNotice } from './AndroidUpdateNotice';
 import { UURemotePanel } from './UURemotePanel';
@@ -3849,6 +3850,7 @@ export function App({ host }: { host: InstalledAppHost }) {
       data-wide={wideLayout ? 'true' : undefined}
       style={shellViewport.style}
     >
+      <SiteCorners exclude=".site-glass-engine, .maplibregl-map" containers=".cg-card, .rc-card, .recon-card, .sortable-card, .timer-workspace-panel" />
       <TimerPrintController
         currentResult={timerText}
         currentScramble={formatScrambleForEvent(activeEvent, scramble)}

@@ -49,7 +49,7 @@ describe.skipIf(!databaseUrl)('renewal lifecycle in isolated PostgreSQL, synthet
     await db.unsafe(`CREATE FUNCTION trg_set_updated_at() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN NEW.updated_at=NOW(); RETURN NEW; END $$;
       CREATE TABLE app_users(id int PRIMARY KEY, wca_id text, display_name text, merged_into_user_id int);
       INSERT INTO app_users VALUES (1, '2017TEST01', 'Fixture', NULL);`);
-    for (const file of ['0046_membership.sql', '0222_membership_contracts.sql', '0276_membership_renewal_pipeline.sql']) {
+    for (const file of ['0046_membership.sql', '0181_enterprise_membership_plans.sql', '0222_membership_contracts.sql', '0276_membership_renewal_pipeline.sql', '0283_enterprise_membership_renewal.sql']) {
       await db.unsafe(readFileSync(new URL(`../migrations/${file}`, import.meta.url), 'utf8'));
     }
     await db.unsafe(`INSERT INTO membership_plans(slug,name_zh,name_en,period,price_cents,active) VALUES
@@ -69,6 +69,25 @@ describe.skipIf(!databaseUrl)('renewal lifecycle in isolated PostgreSQL, synthet
   afterAll(async () => {
     vi.unstubAllEnvs(); await db?.end();
     if (admin) { await admin.unsafe(`DROP SCHEMA "${schema}" CASCADE`); await admin.end(); }
+  });
+  it.each([
+    ['enterprise_monthly_auto_renew', 'MONTHLY', '345001', 29900],
+  ] as const)('settles %s with its own template, amount and enterprise entitlement', async (planSlug, cadence, id, priceCents) => {
+    await expect(enrollMembership('2017TEST01', { ...consent, planSlug, priceCents }, '127.0.0.1')).rejects.toThrow();
+    vi.stubEnv(`WECHAT_PAPAY_ENTERPRISE_${cadence}_PLAN_ID`, id);
+    vi.stubEnv(`WECHAT_PAPAY_ENTERPRISE_${cadence}_APPROVED`, id);
+    await enrollMembership('2017TEST01', { ...consent, planSlug, priceCents }, '127.0.0.1');
+    await db.unsafe("UPDATE membership_contracts SET state='active', contract_id='enterprise-contract', verified_at=now()");
+    await runMembershipRenewalsOnce();
+    expect(state.apply).toHaveBeenCalledTimes(1);
+    const [order] = await db.unsafe('SELECT * FROM membership_orders');
+    expect(order.amount_cents).toBe(priceCents);
+    const [contract] = await db.unsafe('SELECT * FROM membership_contracts');
+    expect(contract.plan_id).toBe(id);
+    state.query.mockResolvedValue({ trade_state: 'SUCCESS', trade_type: 'PAP', total_fee: String(priceCents), fee_type: 'CNY', transaction_id: 'enterprise-transaction' });
+    expect(await reconcileRenewalDebit(order.out_trade_no)).toBe(true);
+    const [member] = await db.unsafe('SELECT * FROM memberships');
+    expect(member.plan_slug).toBe(planSlug);
   });
   async function activated() {
     const result = await enrollMembership('2017TEST01', consent, '127.0.0.1');

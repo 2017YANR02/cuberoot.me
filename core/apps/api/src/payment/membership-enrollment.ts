@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { withTransaction } from '../db/connection.js';
 import { createPapayEnrollment, createPapayMiniEnrollment, papayConfig, PapayUnavailable } from './wechat-papay.js';
-import { RENEWAL_TEMPLATES, RENEWAL_TERMS_VERSION, renewalChannel, renewalEnrollmentAllowed, type RenewalSlug } from './membership-renewal-policy.js';
+import { RENEWAL_TEMPLATES, RENEWAL_TERMS_VERSION, renewalChannel, renewalEnrollmentAllowed, renewalPlanConfigured, type RenewalSlug } from './membership-renewal-policy.js';
 import type { MembershipContractRow } from './membership-contracts.js';
 
 /** Reserve ownership and immutable consent before handing off to WeChat. Retry reuses the reservation. */
@@ -11,6 +11,7 @@ export async function enrollMembership(owner: string, input: unknown, ip: string
   if (!body || typeof body.planSlug !== 'string' || !Object.hasOwn(RENEWAL_TEMPLATES, body.planSlug)
     || body.agreed !== true || body.termsVersion !== RENEWAL_TERMS_VERSION) throw new Error('invalid renewal consent');
   const slug = body.planSlug as RenewalSlug;
+  if (!renewalPlanConfigured(slug)) throw new PapayUnavailable();
   const template = RENEWAL_TEMPLATES[slug];
   if (body.priceCents !== template.cents) throw new Error('renewal price changed');
   const { appid, mchId } = papayConfig();

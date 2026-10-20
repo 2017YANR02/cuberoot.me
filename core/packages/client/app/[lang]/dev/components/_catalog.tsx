@@ -896,6 +896,14 @@ export const CATALOG: ComponentEntry[] = [
     en: 'On-demand scroll diagnostics from the appearance menu, with bounded gesture/timing capture, temporary glass comparisons and local report export.',
   },
   {
+    name: 'ContinuousCorners',
+    import: "import { Surface, SiteCorners } from '@2017yanr02/continuous-corners/react';",
+    category: 'more',
+    zh: '版本化苹果 SwiftUI 连续圆角：Web 与共享 app-ui 共用同一个 TypeScript 包；像素四角与声明的卡片容器支持同心规则，新组件可显式使用 Surface。',
+    en: 'Versioned SwiftUI continuous corners shared by Web and app-ui. Independent corners and declared card containers support concentric rules; new components can use Surface explicitly.',
+    note: { zh: '圆形、复杂背景和原生阴影等限制见 docs/continuous-corners.md。', en: 'See docs/continuous-corners.md for circles, complex backgrounds and native-shadow limitations.' },
+  },
+  {
     name: 'SiteGlass',
     import: "import SiteGlass from '@/components/SiteGlass';",
     category: 'more',

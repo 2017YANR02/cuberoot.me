@@ -510,7 +510,7 @@ CREATE SEQUENCE membership_enrollment_serial;
 CREATE TABLE membership_contracts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   wca_id TEXT NOT NULL CHECK (btrim(wca_id) <> ''),
-  plan_slug TEXT NOT NULL CHECK (plan_slug IN ('monthly_auto_renew', 'yearly_auto_renew')),
+  plan_slug TEXT NOT NULL CHECK (plan_slug IN ('monthly_auto_renew', 'yearly_auto_renew', 'enterprise_monthly_auto_renew')),
   appid TEXT NOT NULL CHECK (btrim(appid) <> ''),
   mch_id TEXT NOT NULL CHECK (btrim(mch_id) <> ''),
   plan_id TEXT NOT NULL CHECK (btrim(plan_id) <> ''),
@@ -533,8 +533,8 @@ CREATE TABLE membership_contracts (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE (mch_id, appid, plan_id, contract_code),
   UNIQUE (mch_id, contract_id),
-  CHECK ((plan_slug = 'monthly_auto_renew' AND period = 'month')
-      OR (plan_slug = 'yearly_auto_renew' AND period = 'year'))
+  CHECK ((plan_slug IN ('monthly_auto_renew', 'enterprise_monthly_auto_renew') AND period = 'month')
+      OR (plan_slug IN ('yearly_auto_renew') AND period = 'year'))
 );
 CREATE INDEX idx_membership_contracts_owner ON membership_contracts(wca_id);
 CREATE TABLE membership_renewal_debits (
@@ -9454,3 +9454,6 @@ END;
 $$;
 CREATE TRIGGER workspace_prepare_account_delete BEFORE DELETE ON app_users
   FOR EACH ROW EXECUTE FUNCTION workspace_prepare_account_delete();
+
+-- Automatic administrator employee access, independent of explicit employee grants.
+ALTER TABLE workspace_members ADD COLUMN admin_access BOOLEAN NOT NULL DEFAULT FALSE;
