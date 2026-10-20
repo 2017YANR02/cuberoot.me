@@ -85,11 +85,40 @@
   --cube-h: calc(var(--timer-cube-h) * var(--solo-cube-scale, 1));
 }
 
-/* Sidebars must not contribute their content height to the timer's grid.
-   Only the main content may grow the document on short screens. */
+/* Keep the desktop workspace within the viewport; previews use the remaining
+   height after the scramble, readout and fixed footer have been laid out. */
 @media (min-width: 1024px) {
   .timer-shell.timer-workspace.timer-workspace {
-    grid-template-rows: auto minmax(min-content, 1fr);
+    height: calc(100dvh - var(--page-notice-h, 0px));
+    min-height: 0;
+    overflow: hidden;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+  .timer-shell .timer-solo-main { container-type: inline-size; }
+  .timer-shell .timing-surface.timing-surface--solo {
+    min-height: 0;
+    flex: 1 1 0;
+    grid-template-rows: auto minmax(0, 1fr);
+    row-gap: min(var(--solo-timer-gap, 20px), 2dvh);
+    --timer-scramble-fs: min(36px, 6cqw);
+  }
+  .timer-shell .timing-surface--solo .timing-surface-core {
+    min-height: 0;
+    height: 100%;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    justify-items: center;
+    --timer-readout-max-size: min(15dvh, 22cqw);
+  }
+  .timer-shell .timing-surface--solo .timing-surface-sub,
+  .timer-shell .timing-surface--solo .timing-surface-cube {
+    min-height: 0;
+    height: 100%;
+  }
+  .timer-shell .timing-surface--solo .timing-surface-cube-frame {
+    height: min(100%, calc(var(--timer-cube-h) * var(--solo-cube-scale, 1)));
+    width: auto;
+    aspect-ratio: var(--timer-cube-aspect, 1.5);
   }
   .timer-shell .timer-workspace-panel {
     contain: size;
@@ -154,6 +183,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  height: var(--timer-topbar-control-size);
+  min-height: var(--timer-topbar-control-size);
+  padding: 0 6px;
+  margin: 0;
 }
 .shell-topbar-left .shell-players-select,
 .shell-topbar-left .timer-difficulty-trigger {
