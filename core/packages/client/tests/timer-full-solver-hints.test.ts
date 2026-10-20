@@ -9,8 +9,13 @@ import { solveMega } from '@cuberoot/puzzle-solvers/timer-mega-hints';
 import { __megaSelfCheck } from '@cuberoot/puzzle-solvers/timer-mega-state';
 import { sq1MoveCounts } from '@cuberoot/shared/sq1-metrics';
 
-vi.mock('@cuberoot/timer-ui/CuberReconPlayer', () => ({ default: (props: { scramble: string; alg: string }) =>
-  createElement('div', { 'data-player-setup': props.scramble, 'data-player-alg': props.alg }) }));
+const player = vi.hoisted(() => ({ seek: vi.fn() }));
+vi.mock('@cuberoot/timer-ui/CuberReconPlayer', () => ({ default: (props: {
+  scramble: string; alg: string; playerRef?: { current: unknown };
+}) => {
+  if (props.playerRef) props.playerRef.current = { jumpToMoveCount: player.seek };
+  return createElement('div', { 'data-player-setup': props.scramble, 'data-player-alg': props.alg });
+} }));
 vi.mock('@cuberoot/puzzle-solvers/timer-333-step', async (original) => {
   const actual = await original<typeof import('@cuberoot/puzzle-solvers/timer-333-step')>();
   const result = (scramble: string) => ({ totalMoves: 2, stages: [
@@ -40,27 +45,39 @@ describe('complete shared solver hints', () => {
     vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
     FakeWorker.instances = [];
     localStorage.clear();
+    player.seek.mockClear();
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: vi.fn().mockResolvedValue(undefined) } });
     host = document.createElement('div'); document.body.appendChild(host); root = createRoot(host);
   });
   afterEach(async () => { await act(async () => root.unmount()); host.remove(); vi.useRealTimers(); vi.unstubAllGlobals(); });
 
   it('keeps six methods, raw stage setup, and hides cached results immediately when changing scramble', async () => {
     await act(async () => root.render(createElement(TimerStepSolve, { scramble: 'R', isZh: false })));
-    await act(async () => host.querySelector<HTMLButtonElement>('.stepsolve-head')!.click());
     await act(async () => vi.runOnlyPendingTimers());
-    expect(host.querySelectorAll('.stepsolve-tab')).toHaveLength(METHOD_REGISTRY.length);
-    await act(async () => host.querySelectorAll<HTMLButtonElement>('.stepsolve-row')[1].click());
-    expect(host.querySelector('[data-player-setup]')?.getAttribute('data-player-setup')).toBe('R R');
-    expect(host.querySelector('[data-player-alg]')?.getAttribute('data-player-alg')).toBe('U');
+    expect(host.querySelectorAll('.stepsolve-method option')).toHaveLength(METHOD_REGISTRY.length);
+    expect(host.querySelector('.stepsolve-method option[value="roux"]')?.textContent).toBe('Roux');
+    expect(host.querySelector('.stepsolve-method option[value="petrus"]')?.textContent).toBe('Petrus');
+    expect(host.querySelector('.stepsolve-head')).toBeNull();
+    expect(host.querySelector('.recon-notation-list')).not.toBeNull();
+    await act(async () => host.querySelectorAll<HTMLButtonElement>('.sml-line .sml-moves')[2].click());
+    expect(player.seek).toHaveBeenCalledWith(1, true);
+    expect(host.querySelector('[data-player-setup]')?.getAttribute('data-player-setup')).toBe('R');
+    expect(host.querySelector('[data-player-alg]')?.getAttribute('data-player-alg')).toBe('R U');
+    await act(async () => host.querySelector<HTMLButtonElement>('.sml-copy')!.click());
+    expect(navigator.clipboard.writeText).toHaveBeenLastCalledWith('R\n\nR // Cross\nU // F2L-1');
     await act(async () => root.render(createElement(TimerStepSolve, { scramble: 'F', isZh: false })));
     expect(host.querySelector('[data-player-alg]')).toBeNull();
     await act(async () => vi.runOnlyPendingTimers());
     expect(host.querySelector('[data-player-setup]')?.getAttribute('data-player-setup')).toBe('F');
     expect(host.querySelector('[data-player-alg]')?.getAttribute('data-player-alg')).toBe('F U');
-    await act(async () => host.querySelectorAll<HTMLButtonElement>('.stepsolve-tab')[1].click());
+    const selectMethod = async (value: string) => {
+      const select = host.querySelector<HTMLSelectElement>('.stepsolve-method')!;
+      await act(async () => { select.value = value; select.dispatchEvent(new Event('change', { bubbles: true })); });
+    };
+    await selectMethod('roux');
     await act(async () => vi.runOnlyPendingTimers());
     const otherMethodPlayer = host.querySelector('[data-player-alg]');
-    await act(async () => host.querySelectorAll<HTMLButtonElement>('.stepsolve-tab')[0].click());
+    await selectMethod('cfop');
     expect(host.querySelector('[data-player-alg]')).not.toBe(otherMethodPlayer);
   });
 
@@ -68,7 +85,6 @@ describe('complete shared solver hints', () => {
     let dismiss: (() => boolean) | null = null;
     await act(async () => root.render(createElement(TimerStepSolve, { scramble: 'R', isZh: false,
       onDismissChange: next => { dismiss = next; } })));
-    await act(async () => host.querySelector<HTMLButtonElement>('.stepsolve-head')!.click());
     const trigger = host.querySelector<HTMLButtonElement>('.stepsolve-compare')!;
     trigger.focus();
     await act(async () => trigger.click());

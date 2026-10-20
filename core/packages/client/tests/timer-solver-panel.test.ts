@@ -7,7 +7,7 @@ import TimerSolverPanel from '@cuberoot/timer-ui/TimerSolverPanel';
 const fixture = vi.hoisted(() => ({ nested: false, mounts: 0 }));
 let reportBlocking: ((blocked: boolean) => void) | undefined;
 vi.mock('@cuberoot/timer-ui/TimerSolverBody', () => ({ default: (props: {
-  compact: boolean; scramble: string; onDismissChange?(fn: (() => boolean) | null): void;
+  compact: boolean; scramble: string; view: string; onDismissChange?(fn: (() => boolean) | null): void;
   onBlockingChange?(blocked: boolean): void;
 }) => {
   reportBlocking = props.onBlockingChange;
@@ -16,7 +16,7 @@ vi.mock('@cuberoot/timer-ui/TimerSolverBody', () => ({ default: (props: {
     props.onDismissChange?.(() => { const open = fixture.nested; fixture.nested = false; return open; });
     return () => props.onDismissChange?.(null);
   }, [props.onDismissChange]);
-  return createElement('div', { 'data-solver-body': props.compact ? 'compact' : 'wide' }, props.scramble,
+  return createElement('div', { 'data-solver-body': props.compact ? 'compact' : 'wide', 'data-view': props.view }, props.scramble,
     createElement('input', { 'aria-label': 'solver input' }), createElement('button', null, 'last'));
 } }));
 
@@ -76,6 +76,30 @@ it('keeps one solver while docking/fullscreen, persists collapse, and does not r
   expect(fixture.mounts).toBe(0); expect(localStorage.getItem('timer.solverHints.panelOpen')).toBe('0');
 });
 
+it('switches solution views from the title and preserves the choice across fullscreen and close', async () => {
+  await act(async () => root.render(createElement(Harness)));
+  const chooseView = async (view: string) => {
+    const select = document.querySelector<HTMLSelectElement>('.solver-view-select')!;
+    await act(async () => {
+      select.value = view;
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+  };
+  await click('.solver-view-select');
+  expect(document.querySelector('[data-view]')?.getAttribute('data-view')).toBe('solutions');
+  await chooseView('steps');
+  expect(document.querySelector('[data-view]')?.getAttribute('data-view')).toBe('steps');
+  await click('[aria-label="View solutions fullscreen"]');
+  expect(document.querySelector('[data-view]')?.getAttribute('data-view')).toBe('steps');
+  expect(document.querySelector('[aria-label="Restore to side panel"]')).toBeNull();
+  await chooseView('solutions');
+  expect(document.querySelector('[data-view]')?.getAttribute('data-view')).toBe('solutions');
+  await click('.solver-sheet-close');
+  expect(document.querySelector('.solver-sheet')).toBeNull();
+  expect(document.querySelector('[data-view]')?.getAttribute('data-view')).toBe('solutions');
+  expect(fixture.mounts).toBe(1);
+});
+
 it('consumes auto-open once and ready-collapse without persisting the automatic collapse', async () => {
   localStorage.setItem('timer.solverHints.panelOpen', '0');
   await act(async () => root.render(createElement(Harness, {request: 1})));
@@ -113,7 +137,7 @@ it('Escape consumes inner dismiss before outer close, and Tab stays in the full 
   expect(document.querySelector('[data-solver-body]')?.getAttribute('data-solver-body')).toBe('wide');
   const buttons = sheet.querySelectorAll<HTMLButtonElement>('button'); buttons[buttons.length - 1].focus();
   await act(async () => buttons[buttons.length - 1].dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true })));
-  expect(document.activeElement).toBe(buttons[0]);
+  expect(document.activeElement).toBe(sheet.querySelector('.solver-view-select'));
   fixture.nested = true;
   await act(async () => sheet.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
   expect(document.querySelector('.solver-sheet')).not.toBeNull();

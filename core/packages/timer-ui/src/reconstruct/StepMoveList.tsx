@@ -55,13 +55,15 @@ export interface StepMoveListProps {
   notice?: React.ReactNode;
   /** 「复盘对不对」那一行。省略则不显示。 */
   feedback?: React.ReactNode;
+  /** Untimed generated solutions can supply notation without recorded-solve metrics. */
+  clipboardText?: string;
 }
 
 
 
 const NoLineDiagrams: NonNullable<ReconstructHost['LineDiagramProvider']> = ({ children }) => children(() => null, () => undefined);
 
-export default function StepMoveList({method='cfop',recon,currentIdx,onSeek,notice,feedback}:StepMoveListProps) {
+export default function StepMoveList({method='cfop',recon,currentIdx,onSeek,notice,feedback,clipboardText}:StepMoveListProps) {
   const host=useReconstructHost(), {LineDiagramProvider=NoLineDiagrams}=host;
   const [ui,setUI]=useState(initialReportUI);
   const commentCases=useNotationCases((recon?.lines??[]).map(line=>'// '+(line.label??'')).join('\n'),method==='cfop');
@@ -76,7 +78,7 @@ export default function StepMoveList({method='cfop',recon,currentIdx,onSeek,noti
     return <ReportContent node={content.node} slots={slots} dispatch={action=>{
       if(action.copyText)void host.writeClipboardText(action.copyText).catch(err=>console.warn('[step-move-list] copy failed:',err));
       if(action.type==='play-from')onSeek?.(Number(action.value),action.timeMs);
-      if(action.type==='copy-notation')void host.writeClipboardText(content.clipboard).then(()=>{
+      if(action.type==='copy-notation')void host.writeClipboardText(clipboardText ?? content.clipboard).then(()=>{
         setUI(state=>reduceReportUI(state,{type:'copied',key:'notation'}));
         setTimeout(()=>setUI(state=>reduceReportUI(state,{type:'copied'})),1500);
       }).catch(err=>console.warn('[step-move-list] copy failed:',err));

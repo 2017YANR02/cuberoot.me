@@ -20,7 +20,7 @@
 
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
-import { Info, X, Settings, ArrowLeft, ArrowRight, ChevronRight, ChevronDown } from 'lucide-react';
+import { Info, X, SlidersHorizontal, ArrowLeft, ArrowRight, ChevronRight, ChevronDown } from 'lucide-react';
 import { CompactSelect } from './CompactSelect';
 import { MethodStagePicker } from './TimerPuzzlePicker';
 import { Spinner } from './Spinner';
@@ -1154,7 +1154,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
           aria-expanded={settingsOpen}
           aria-controls={settingsId}
         >
-          <Settings size={18} />
+          <SlidersHorizontal size={18} />
         </button>
         {onPrevScramble && <button type="button" className="stsv-settings-toggle" data-no-swipe
           onClick={onPrevScramble} aria-label={t('上一个打乱', 'Previous scramble')}
@@ -1548,7 +1548,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                           <div className={`stsv-solution-row${i === selectedSolIndex ? ' is-selected' : ''}`} key={item.value}>
                             <button type="button" className="stsv-sol-yrot"
                               aria-label={t('切换 y 预转体', 'Toggle y pre-rotation')}
-                              onClick={() => cycleRot(i)}>{Y_ROT_LABEL[rowRot[i] ?? 0] || '·'}</button>
+                              onClick={() => cycleRot(i)}>{Y_ROT_LABEL[rowRot[i] ?? 0] || 'y0'}</button>
                             <button type="button" className="stsv-solution-choice" aria-pressed={i === selectedSolIndex}
                               onClick={() => {
                                 selectSol(i, true);
@@ -1568,10 +1568,11 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                         title={t('切换预转体:y → y2 → y′ → 无(换个朝向做同一套公式)', 'Toggle pre-rotation: y → y2 → y′ → none (same solve, different grip)')}
                         aria-label={t('切换 y 预转体', 'Toggle y pre-rotation')}
                       >
-                        {Y_ROT_LABEL[rowRot[selectedSolIndex] ?? 0] || null}
+                        {Y_ROT_LABEL[rowRot[selectedSolIndex] ?? 0] || 'y0'}
                       </button>
                       <CompactSelect
                         className="stsv-solution-select"
+                        showArrow
                         popupClassName="stsv-solution-menu"
                         contentAnchorRef={solutionControlsRef}
                         variant="plain"

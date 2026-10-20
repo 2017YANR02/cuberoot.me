@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import StageSolver from './StageSolver';
-import TimerStepSolve from './TimerStepSolve';
+import './TimerStepSolve.css';
+const TimerStepSolve = lazy(() => import('./TimerStepSolve'));
 
-export default function TimerSolverBody({ scramble, language, compact, settingsSlot, onPrevScramble, onNextScramble, onDismissChange, onBlockingChange }: {
+export default function TimerSolverBody({ view = 'solutions', scramble, language, compact, settingsSlot, onPrevScramble, onNextScramble, onDismissChange, onBlockingChange }: {
+  view?: 'solutions' | 'steps';
   scramble: string; language: 'en' | 'zh'; compact: boolean; settingsSlot?: HTMLElement | null;
   onPrevScramble?(): void; onNextScramble?(): void;
   onBlockingChange?(blocked: boolean): void;
@@ -25,9 +27,12 @@ export default function TimerSolverBody({ scramble, language, compact, settingsS
   return <div data-no-timer onKeyDown={event => {
     if (event.key === 'Escape' && stageDismiss.current?.()) { event.preventDefault(); event.stopPropagation(); }
   }}>
-    {scramble.trim() && <p className="solver-panel-scramble">{scramble}</p>}
-    <StageSolver scramble={scramble} lang={language} compact={compact} expandedSolutions={!compact} settingsSlot={settingsSlot}
-      onPrevScramble={onPrevScramble} onNextScramble={onNextScramble} onDismissChange={registerStage} onBlockingChange={setStageBlocking} />
-    <TimerStepSolve scramble={scramble} isZh={language === 'zh'} onDismissChange={registerCompare} onBlockingChange={setCompareBlocking} />
+    {view === 'solutions' ? <>
+      {scramble.trim() && <p className="solver-panel-scramble">{scramble}</p>}
+      <StageSolver scramble={scramble} lang={language} compact={compact} expandedSolutions={!compact} settingsSlot={settingsSlot}
+        onPrevScramble={onPrevScramble} onNextScramble={onNextScramble} onDismissChange={registerStage} onBlockingChange={setStageBlocking} />
+    </> : <Suspense fallback={null}>
+      <TimerStepSolve scramble={scramble} isZh={language === 'zh'} onDismissChange={registerCompare} onBlockingChange={setCompareBlocking} />
+    </Suspense>}
   </div>;
 }

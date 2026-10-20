@@ -10,7 +10,6 @@ import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 
 import {
   METHOD_REGISTRY,
   solveByMethodId,
-  timer333MethodLabel,
   timer333StageLabel,
   type MethodId,
   type SolveResult,
@@ -155,7 +154,7 @@ function MethodCard({ outcome, isZh, bestTotal }: CardProps) {
     <div style={isBest ? cardBestStyle : cardStyle}>
       <div style={cardHeadStyle}>
         <span style={isBest ? cardTitleBestStyle : cardTitleStyle}>
-          {timer333MethodLabel(entry, language)}
+          {entry.nameEn}
         </span>
         <span style={cardTotalStyle}>
           {!r
@@ -213,7 +212,7 @@ function MethodAccordion({ outcome, isZh, bestTotal, open, onToggle }: Accordion
         aria-expanded={open}
       >
         <span style={isBest ? cardTitleBestStyle : cardTitleStyle}>
-          {timer333MethodLabel(entry, language)}
+          {entry.nameEn}
         </span>
         <span style={cardTotalStyle}>
           {!r

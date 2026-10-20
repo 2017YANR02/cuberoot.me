@@ -56,8 +56,9 @@
   gap: 6px;
   flex: 0 0 auto;
   min-height: 32px;
-  margin: 0 8px;
-  padding: 6px 8px;
+  margin: 0;
+  width: 33px;
+  padding: 6px;
   border: 0;
   border-radius: 6px;
   background: transparent;
@@ -104,6 +105,7 @@
    the tap read as a dead button (issue #49). Fixed + inset:0 with its own scroll
    container; ?hints=1 owns the open state so the back gesture closes it. */
 .solver-sheet {
+  --solver-sheet-padding: 12px;
   position: fixed;
   inset: 0;
   /* over the 成绩/图表/工具 bottom sheet (61) and the deskpet (40). Only comparable
@@ -126,11 +128,24 @@
   align-items: center;
   gap: 8px;
   flex: 0 0 auto;
-  padding: calc(10px + env(safe-area-inset-top)) 12px 10px;
+  padding: calc(10px + env(safe-area-inset-top)) var(--solver-sheet-padding) 10px;
   border-bottom: 1px solid var(--shell-divider, var(--border-default));
 }
-.solver-sheet-title { font-size: 15px; font-weight: 600; }
-.solver-settings-slot { display: flex; align-items: center; flex: 1; }
+.solver-view-select {
+  flex: 0 0 auto;
+  align-self: center;
+  max-width: 100%;
+  padding: 6px 0;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.solver-sheet-head .solver-settings-slot { justify-content: flex-start; }
+.solver-settings-slot { display: flex; align-items: center; flex: 1; gap: 4px; }
 /* Toolbar convention: title left, close right — the one place a spacer is right. */
 .solver-sheet-close {
   margin-left: auto;
@@ -151,7 +166,7 @@
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 10px 12px calc(16px + env(safe-area-inset-bottom));
+  padding: 10px var(--solver-sheet-padding) calc(16px + env(safe-area-inset-bottom));
 }
 
 /* Desktop: solutions dock on the left of .timer-solver-stage. The right grid column
@@ -217,7 +232,9 @@
      好让标题按钮与形态开关共用同一条底边。 */
   .timer-workspace:has(.timer-solver-rail .solver-panel[data-open='true']) .timer-solver-rail .solver-panel-headrow {
     display: flex;
-    align-items: stretch;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
     border-bottom: 1px solid var(--shell-divider, var(--border-default));
   }
   .timer-workspace:has(.timer-solver-rail .solver-panel[data-open='true']) .timer-solver-rail .solver-panel-head {
@@ -269,9 +286,9 @@
   .shell-topbar-left .solver-panel-head { height: 30px; padding: 0 3px; font-size: 12px; gap: 4px; }
 }
 
-/* Reserve a second column only while step-by-step content is expanded.
-   Its existing disclosure state also controls layout; no extra UI state is needed. */
+/* Both solution views start on the same left edge as the toolbar. */
 @media (min-width: 900px) {
+  .solver-sheet { --solver-sheet-padding: 28px; }
   .solver-sheet .solver-sheet-body { padding: 20px 28px; }
   .solver-sheet-body > [data-no-timer] {
     display: grid;
@@ -279,11 +296,7 @@
     align-items: start;
     gap: 16px 32px;
     max-width: 640px;
-    margin-inline: auto;
-  }
-  .solver-sheet-body > [data-no-timer]:has(.stepsolve-head[aria-expanded='true']) {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    max-width: 1040px;
+    margin: 0;
   }
   .solver-sheet .solver-panel-scramble { grid-column: 1 / -1; margin: 0; }
   .solver-sheet .stepsolve { margin-top: 0; }
