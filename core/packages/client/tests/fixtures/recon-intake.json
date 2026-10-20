@@ -1,4 +1,677 @@
 {
   "version": 1,
-  "cases": []
+  "cases": [
+    {
+      "id": "f6b01d1e-d1b1-45dc-8887-0a15ea049d56",
+      "revision": 1,
+      "contentHash": "7b1bc9268fb35c4c794a8565fbc0860823a8cdbb0a41d0e98189c0bb16fb92ba",
+      "input": {
+        "source": "",
+        "verdict": "correct",
+        "language": "zh",
+        "observed": {
+          "lines": [
+            {
+              "key": "cross",
+              "kind": "cross",
+              "label": "W cross",
+              "moves": [
+                "F'",
+                "B'",
+                "D",
+                "F'",
+                "D2",
+                "F'"
+              ],
+              "toIdx": 6,
+              "fromIdx": 0
+            },
+            {
+              "key": "slot-FL",
+              "kind": "f2l",
+              "label": "GR",
+              "moves": [
+                "R",
+                "U'",
+                "R'",
+                "U2",
+                "R'",
+                "U'",
+                "R",
+                "U",
+                "R'",
+                "U2'",
+                "R"
+              ],
+              "toIdx": 19,
+              "fromIdx": 7
+            },
+            {
+              "key": "slot-BR",
+              "kind": "f2l",
+              "label": "OB",
+              "moves": [
+                "(U",
+                "U",
+                "U')",
+                "L'",
+                "U",
+                "L",
+                "U",
+                "L'",
+                "U",
+                "L",
+                "U'",
+                "L'",
+                "U",
+                "L"
+              ],
+              "toIdx": 33,
+              "fromIdx": 20
+            },
+            {
+              "key": "slot-FR",
+              "kind": "f2l",
+              "label": "GO",
+              "moves": [
+                "U'",
+                "R",
+                "U'",
+                "R'",
+                "U'",
+                "R",
+                "U'",
+                "R'",
+                "L",
+                "U2",
+                "L'"
+              ],
+              "toIdx": 45,
+              "fromIdx": 34
+            },
+            {
+              "key": "slot-BL",
+              "kind": "f2l",
+              "label": "RB/ZBLS-W IY",
+              "moves": [
+                "U'",
+                "R",
+                "U",
+                "R'",
+                "U",
+                "R'",
+                "F",
+                "R",
+                "F'"
+              ],
+              "toIdx": 54,
+              "fromIdx": 46
+            },
+            {
+              "key": "oll",
+              "kind": "oll",
+              "label": "COLL-U4",
+              "moves": [
+                "(R'",
+                "U'",
+                "U",
+                "R)",
+                "U'",
+                "F",
+                "R",
+                "U'",
+                "R'",
+                "U",
+                "R",
+                "U",
+                "R'",
+                "U",
+                "R",
+                "U'",
+                "R'",
+                "F'"
+              ],
+              "toIdx": 72,
+              "fromIdx": 55
+            },
+            {
+              "key": "pll",
+              "kind": "pll",
+              "label": "PLL-U-",
+              "moves": [
+                "R",
+                "U'",
+                "R",
+                "U",
+                "R",
+                "U",
+                "R",
+                "U'",
+                "R'",
+                "U'",
+                "R2",
+                "U'",
+                "x'",
+                "x",
+                "U'"
+              ],
+              "toIdx": 86,
+              "fromIdx": 73
+            }
+          ],
+          "inspection": "x2"
+        },
+        "recording": {
+          "gyro": "RwIAzQAA934D8gAf8n388AAs7nz97QBp9H3/8ABZ+X768QBA93397gAp8X397ABp7HwA7gBp63sH7AAy6XoK6QFy5nkH5gAg4HgG5gBn13UH5wBM3ngI6QBK53sG7QA85Xn/5AAt23X93wBO2HIA2gAb03MG4QAt0XQL6gBp3XgL7QAx7HsE5wA45nn95gAt4Hj85AAv3Xb84QCj2HT83gBa3HX73gA82HP63QAtzW702wAx1HDu3ACn1HDy2wCQ3XXz3wBu3Xb34QBk2XT93wA823b75gAe33j86ABA6XsB7AAp7XwE7gA08H0C9ABi5Xv97wA84Hn86QAu2nb+5QAs33kB6QA85HoC7AAx6HwA8QA48n7/+QAt+H/5/wAt9n75+gA87Hz18QAt33jy6QBp3Hf35wBa2Hb36gA82nf+7ACc1nYA7QD52XcA6QA0zXP/8AA2yHIC9gBZzXQC9gA8yHL/8wAvznT+7gA71nYA6wBs33kC6gBa1nb97QApyXL+9QA9y3MG+QBZz3QG9ABB13cG8AAo2ngH7QA/2XgB8ACTy3MB+AAuyHIA+wBoy3P79gAy03b78QA32Hf+7gCW1nb66gFo13X35wCW3Xfx6QBa2XXz5wBLz3Du4wAgzW7o4gA6znDu4gBh1HPz5QBs2XX05ABgz3Du4wAszW7o4wA80nLw5gAu3nfx6wDR3nj17QAt1Xbx9AAt3Hn48gA82nn79QAt4Xr79ABp3Xn78QBq2Hf48ABo2Hf07QDD3Xfw6QBp13Po5wA6027p2wAvyWv01wAtzm/83QA+2Xb56AAr43ny7QA13Hfz6wBh5nrx8QAu8n3y9wA9/3/5AAAs/X/5+AA7833z9AA38n72+AAn8H3z9gA45nvy8wA03nn58ACP2Hf67gA84Hr+8AAt4nsC8gA84nv98wAt3nn57gBp3Hj27ABa13b36ABBznDy5AApyWvm3wBo0nDo4gA12nXu5wA433jy6wAp43r27gAt5nv78gA97H36+ABB8n78+QAx9X79/ACM+n/3/QAw+H336gA5+H396gAt93367gAu8n779wA88n4CAQAs6H36/AA85Hv19gAt33n27gAt03Ty6AA8ymzn5AAtzGzh5QAzyW3q5QA30HLv6QAs2Xbs7QBG3Hfx7AAk2nbt6wA/1nLr4wAvzW742gA6zXAB4AA113YB6gAo3Hn48QAq13f58QA41HX17QAxym/s6QAqznHt6gA823fx7wAs6Hz49gA/8H76/gAr9n7y/gAs8Hzr+QA85Hrx8wCW4Xnw8ABp3Hfw7gBa3nbn7ACl4nfn6QAy3Hbr6wBr33Xh7AAm53jg9AA95nrq9gBL43jm8gBK6Hnl+QA87Hrl+wAe8n3vAgBp9H3uBwA9933uCwBa/H3tCwA9833wBAAr43rw+ABS33nu8wAX2Xbw7QBq0nPu6QAw1HPo6gA41HTs6wAu2Xbv7QBw3Hfu7wC813Xs7QCmzW/k6QAsxWrj6QAttGHl8QA7plXl+QA2oVDn/AA5nEvp/wAxlUHrAwAkkTrwBQA9jjXyBgCGjTT2BAFBjzr0AgA1mEfw/wAup1nv+gA7uWbt7gAuwWrt5wAsxWvv5ABp0nPz5gA93Xj27ACW3nn77A==",
+          "model": "moyu32",
+          "moves": [
+            {
+              "m": "B'",
+              "ts": 8.299999997019768
+            },
+            {
+              "m": "F'",
+              "ts": 329.29999999701977
+            },
+            {
+              "m": "U",
+              "ts": 1113.2999999970198
+            },
+            {
+              "m": "B'",
+              "ts": 1314.2999999970198
+            },
+            {
+              "m": "U",
+              "ts": 1509.2999999970198
+            },
+            {
+              "m": "U",
+              "ts": 1564.2999999970198
+            },
+            {
+              "m": "B'",
+              "ts": 1705.2999999970198
+            },
+            {
+              "m": "R",
+              "ts": 2168.2999999970198
+            },
+            {
+              "m": "D'",
+              "ts": 2248.2999999970198
+            },
+            {
+              "m": "R'",
+              "ts": 2554.2999999970198
+            },
+            {
+              "m": "D",
+              "ts": 2793.2999999970198
+            },
+            {
+              "m": "D",
+              "ts": 2844.2999999970198
+            },
+            {
+              "m": "R'",
+              "ts": 2926.2999999970198
+            },
+            {
+              "m": "D'",
+              "ts": 3021.2999999970198
+            },
+            {
+              "m": "R",
+              "ts": 3107.2999999970198
+            },
+            {
+              "m": "D",
+              "ts": 3216.2999999970198
+            },
+            {
+              "m": "R'",
+              "ts": 3285.2999999970198
+            },
+            {
+              "m": "D'",
+              "ts": 3437.2999999970198
+            },
+            {
+              "m": "D'",
+              "ts": 3457.2999999970198
+            },
+            {
+              "m": "R",
+              "ts": 3587.2999999970198
+            },
+            {
+              "m": "D",
+              "ts": 3938.2999999970198
+            },
+            {
+              "m": "D",
+              "ts": 3938.2999999970198
+            },
+            {
+              "m": "D'",
+              "ts": 4232.29999999702
+            },
+            {
+              "m": "L'",
+              "ts": 4317.29999999702
+            },
+            {
+              "m": "D",
+              "ts": 4478.29999999702
+            },
+            {
+              "m": "L",
+              "ts": 4604.29999999702
+            },
+            {
+              "m": "D",
+              "ts": 4743.29999999702
+            },
+            {
+              "m": "L'",
+              "ts": 4844.29999999702
+            },
+            {
+              "m": "D",
+              "ts": 4932.29999999702
+            },
+            {
+              "m": "L",
+              "ts": 5103.29999999702
+            },
+            {
+              "m": "D'",
+              "ts": 5209.29999999702
+            },
+            {
+              "m": "L'",
+              "ts": 5317.29999999702
+            },
+            {
+              "m": "D",
+              "ts": 5426.29999999702
+            },
+            {
+              "m": "L",
+              "ts": 5558.29999999702
+            },
+            {
+              "m": "D'",
+              "ts": 6258.29999999702
+            },
+            {
+              "m": "R",
+              "ts": 6392.29999999702
+            },
+            {
+              "m": "D'",
+              "ts": 6490.29999999702
+            },
+            {
+              "m": "R'",
+              "ts": 6615.29999999702
+            },
+            {
+              "m": "D'",
+              "ts": 6711.29999999702
+            },
+            {
+              "m": "R",
+              "ts": 6798.29999999702
+            },
+            {
+              "m": "D'",
+              "ts": 6895.29999999702
+            },
+            {
+              "m": "R'",
+              "ts": 6973.29999999702
+            },
+            {
+              "m": "L",
+              "ts": 7161.29999999702
+            },
+            {
+              "m": "D",
+              "ts": 7307.29999999702
+            },
+            {
+              "m": "D",
+              "ts": 7360.29999999702
+            },
+            {
+              "m": "L'",
+              "ts": 7443.29999999702
+            },
+            {
+              "m": "D'",
+              "ts": 7865.29999999702
+            },
+            {
+              "m": "R",
+              "ts": 7971.29999999702
+            },
+            {
+              "m": "D",
+              "ts": 8075.29999999702
+            },
+            {
+              "m": "R'",
+              "ts": 8203.29999999702
+            },
+            {
+              "m": "D",
+              "ts": 8306.29999999702
+            },
+            {
+              "m": "R'",
+              "ts": 8436.29999999702
+            },
+            {
+              "m": "B",
+              "ts": 8503.29999999702
+            },
+            {
+              "m": "R",
+              "ts": 8563.29999999702
+            },
+            {
+              "m": "B'",
+              "ts": 8714.29999999702
+            },
+            {
+              "m": "R'",
+              "ts": 8995.29999999702
+            },
+            {
+              "m": "D'",
+              "ts": 9099.29999999702
+            },
+            {
+              "m": "D",
+              "ts": 9351.29999999702
+            },
+            {
+              "m": "R",
+              "ts": 9420.29999999702
+            },
+            {
+              "m": "D'",
+              "ts": 9478.29999999702
+            },
+            {
+              "m": "B",
+              "ts": 10302.29999999702
+            },
+            {
+              "m": "R",
+              "ts": 10546.29999999702
+            },
+            {
+              "m": "D'",
+              "ts": 10618.29999999702
+            },
+            {
+              "m": "R'",
+              "ts": 10752.29999999702
+            },
+            {
+              "m": "D",
+              "ts": 10827.29999999702
+            },
+            {
+              "m": "R",
+              "ts": 10888.29999999702
+            },
+            {
+              "m": "D",
+              "ts": 10977.29999999702
+            },
+            {
+              "m": "R'",
+              "ts": 11091.29999999702
+            },
+            {
+              "m": "D",
+              "ts": 11183.29999999702
+            },
+            {
+              "m": "R",
+              "ts": 11259.29999999702
+            },
+            {
+              "m": "D'",
+              "ts": 11322.29999999702
+            },
+            {
+              "m": "R'",
+              "ts": 11398.29999999702
+            },
+            {
+              "m": "B'",
+              "ts": 11573.29999999702
+            },
+            {
+              "m": "R",
+              "ts": 12216.29999999702
+            },
+            {
+              "m": "D'",
+              "ts": 12335.29999999702
+            },
+            {
+              "m": "R",
+              "ts": 12424.29999999702
+            },
+            {
+              "m": "D",
+              "ts": 12698.29999999702
+            },
+            {
+              "m": "R",
+              "ts": 12990.29999999702
+            },
+            {
+              "m": "D",
+              "ts": 13118.29999999702
+            },
+            {
+              "m": "R",
+              "ts": 13223.29999999702
+            },
+            {
+              "m": "D'",
+              "ts": 13282.29999999702
+            },
+            {
+              "m": "R'",
+              "ts": 13373.29999999702
+            },
+            {
+              "m": "D'",
+              "ts": 13488.29999999702
+            },
+            {
+              "m": "R",
+              "ts": 13542.29999999702
+            },
+            {
+              "m": "R",
+              "ts": 13608.29999999702
+            },
+            {
+              "m": "D'",
+              "ts": 13732.29999999702
+            },
+            {
+              "m": "D'",
+              "ts": 15351.29999999702
+            }
+          ],
+          "timeMs": 15345.59999999404,
+          "scramble": "F' L F2 U2 F' U' B L B' L R' B U2 B L2 U2 F2 L2"
+        },
+        "annotations": [],
+        "hadOverride": false
+      },
+      "expected": {
+        "lines": [
+          {
+            "key": "cross",
+            "kind": "cross",
+            "label": "W cross",
+            "moves": [
+              "F'",
+              "B'",
+              "D",
+              "F'",
+              "D2",
+              "F'"
+            ],
+            "toIdx": 6,
+            "fromIdx": 0
+          },
+          {
+            "key": "slot-FL",
+            "kind": "f2l",
+            "label": "GR",
+            "moves": [
+              "R",
+              "U'",
+              "R'",
+              "U2",
+              "R'",
+              "U'",
+              "R",
+              "U",
+              "R'",
+              "U2'",
+              "R"
+            ],
+            "toIdx": 19,
+            "fromIdx": 7
+          },
+          {
+            "key": "slot-BR",
+            "kind": "f2l",
+            "label": "OB",
+            "moves": [
+              "(U",
+              "U",
+              "U')",
+              "L'",
+              "U",
+              "L",
+              "U",
+              "L'",
+              "U",
+              "L",
+              "U'",
+              "L'",
+              "U",
+              "L"
+            ],
+            "toIdx": 33,
+            "fromIdx": 20
+          },
+          {
+            "key": "slot-FR",
+            "kind": "f2l",
+            "label": "GO",
+            "moves": [
+              "U'",
+              "R",
+              "U'",
+              "R'",
+              "U'",
+              "R",
+              "U'",
+              "R'",
+              "L",
+              "U2",
+              "L'"
+            ],
+            "toIdx": 45,
+            "fromIdx": 34
+          },
+          {
+            "key": "slot-BL",
+            "kind": "f2l",
+            "label": "RB/ZBLS-W IY",
+            "moves": [
+              "U'",
+              "R",
+              "U",
+              "R'",
+              "U",
+              "R'",
+              "F",
+              "R",
+              "F'"
+            ],
+            "toIdx": 54,
+            "fromIdx": 46
+          },
+          {
+            "key": "oll",
+            "kind": "oll",
+            "label": "COLL-U4",
+            "moves": [
+              "(R'",
+              "U'",
+              "U",
+              "R)",
+              "U'",
+              "F",
+              "R",
+              "U'",
+              "R'",
+              "U",
+              "R",
+              "U",
+              "R'",
+              "U",
+              "R",
+              "U'",
+              "R'",
+              "F'"
+            ],
+            "toIdx": 72,
+            "fromIdx": 55
+          },
+          {
+            "key": "pll",
+            "kind": "pll",
+            "label": "PLL-U-",
+            "moves": [
+              "R",
+              "U'",
+              "R",
+              "U",
+              "R",
+              "U",
+              "R",
+              "U'",
+              "R'",
+              "U'",
+              "R2",
+              "U'",
+              "x'",
+              "x",
+              "U'"
+            ],
+            "toIdx": 86,
+            "fromIdx": 73
+          }
+        ],
+        "inspection": "x2"
+      }
+    }
+  ]
 }
