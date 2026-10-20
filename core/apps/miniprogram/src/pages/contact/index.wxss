@@ -1,0 +1,4 @@
+@import "../../templates/native-contact.wxss";
+.contact-page { background: var(--cr-bg); color: var(--cr-text); }
+.contact-page .account-contact { margin-top: 0; }
+.contact-error { display: block; color: var(--cr-danger); margin-top: 24rpx; }

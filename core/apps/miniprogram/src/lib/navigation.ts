@@ -57,7 +57,8 @@ export function openWebsitePageOnce(
 
   try {
     miniProgramApi().navigateTo({
-      url: key === 'privacy' ? '/pages/privacy/index' : `/pages/web/index?key=${encodeURIComponent(String(key))}`,
+      url: key === 'privacy' || key === 'contact'
+        ? `/pages/${key}/index` : `/pages/web/index?key=${encodeURIComponent(String(key))}`,
       fail,
       complete: release,
     });

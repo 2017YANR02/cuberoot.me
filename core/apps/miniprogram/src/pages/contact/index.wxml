@@ -1,0 +1,4 @@
+<view class="page contact-page" style="{{appearanceStyle}}">
+  <include src="../../templates/native-contact.wxml" />
+  <text wx:if="{{accountError}}" class="contact-error" aria-role="alert">{{accountError}}</text>
+</view>

@@ -1043,7 +1043,7 @@ describe('mini program account page', () => {
 
     page.openContactWebsite();
     expect(navigateTo).toHaveBeenCalledWith(expect.objectContaining({
-      url: '/pages/web/index?key=contact',
+      url: '/pages/contact/index',
     }));
 
     page.previewWechatQr();

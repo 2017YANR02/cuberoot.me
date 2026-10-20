@@ -27,7 +27,7 @@ export function douyinContentAvailable(href: string): boolean {
         (key !== 'event' || DOUYIN_BASIC_TIMER_EVENTS.includes(value))
         && (key !== 'players' || value === '1'));
     }
-    return path === '/' || path === '/account' || path === '/privacy' || path === '/terms'
+    return path === '/' || path === '/account' || path === '/contact' || path === '/privacy' || path === '/terms'
       || path === '/auth/miniprogram' || path === '/calc' || path === '/timezone'
       || path === '/calendar' || path === '/frame-count'
       || path === '/wca' || path.startsWith('/wca/');
