@@ -14,7 +14,7 @@ export const TIMER_DEVICE_CENTER_LABELS = {
   listening: { zh: '监听中', en: 'Listening' },
   'smart-cube': { zh: '智能魔方', en: 'Smart cube' },
   'smart-timer': { zh: '智能计时器', en: 'Smart timer' },
-  stackmat: { zh: 'Stackmat 麦克风', en: 'Stackmat microphone' },
+  stackmat: { zh: 'Stackmat', en: 'Stackmat' },
 } as const;
 
 export interface TimerDeviceCenterItem {

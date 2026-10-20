@@ -37,6 +37,7 @@ export interface CompactSelectProps<T extends string | number> {
   popupClassName?: string;
   /** Align option content with an external row containing the trigger. */
   contentAnchorRef?: RefObject<HTMLElement | null>;
+  align?: 'start' | 'center';
   variant?: 'pill' | 'plain';
   /** Some icon-only triggers are self-explanatory and do not need a caret. */
   showArrow?: boolean;
@@ -85,6 +86,7 @@ export function CompactSelect<T extends string | number>({
   triggerClassName,
   popupClassName,
   contentAnchorRef,
+  align = 'start',
   variant = 'pill',
   showArrow = false,
   footer,
@@ -195,7 +197,7 @@ export function CompactSelect<T extends string | number>({
       const naturalWidth = panel.scrollWidth || panelRect.width || anchor.width;
       const desiredWidth = Math.min(naturalWidth, safeWidth);
       const left = Math.min(
-        Math.max(anchor.left - contentInset, safeLeft),
+        Math.max(align === 'center' ? anchor.left + (anchor.width - desiredWidth) / 2 : anchor.left - contentInset, safeLeft),
         Math.max(safeLeft, safeRight - desiredWidth),
       );
       const belowTop = anchor.bottom + PANEL_GAP;
@@ -227,7 +229,7 @@ export function CompactSelect<T extends string | number>({
       window.visualViewport?.removeEventListener('resize', positionPanel);
       window.visualViewport?.removeEventListener('scroll', positionPanel);
     };
-  }, [contentAnchorRef, items.length, open, viewportBottomInset, hasPanelContent]);
+  }, [align, contentAnchorRef, items.length, open, viewportBottomInset, hasPanelContent]);
 
   const panelStyle = geometry ? {
     left: geometry.left,

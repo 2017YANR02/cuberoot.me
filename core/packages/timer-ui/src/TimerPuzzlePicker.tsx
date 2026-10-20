@@ -236,11 +236,8 @@ export function TimerPuzzlePicker({
       const width = panel.offsetWidth;
       const viewportWidth = document.documentElement.clientWidth;
       const overflow = left + width - (viewportWidth - VIEWPORT_MARGIN_PX);
-      const shift = Math.min(
-        Math.max(0, overflow),
-        Math.max(0, left - VIEWPORT_MARGIN_PX),
-      );
-      if (shift > 0) panel.style.marginLeft = `${-shift}px`;
+      const shift = Math.max(VIEWPORT_MARGIN_PX - left, -Math.max(0, overflow));
+      if (shift !== 0) panel.style.marginLeft = `${shift}px`;
     };
     clamp();
     window.addEventListener('resize', clamp);

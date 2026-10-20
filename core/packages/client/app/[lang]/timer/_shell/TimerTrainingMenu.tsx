@@ -186,7 +186,7 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
     </button> : <>
       {!training && sourceControl ? sourceControl(content?.selectPath
         ? () => startTraining(content, method, true, true) : undefined)
-        : <CompactSelect variant="plain" showArrow={false} dataNoTimer
+        : <CompactSelect align="center" variant="plain" showArrow={false} dataNoTimer
           disabled={sourceLocked || sourceItems.length === 0}
           ariaLabel={tr({ zh: '出题来源', en: 'Question source' })}
           label={training ? casesLabel : settings.scrambleSource === 'manual'
@@ -235,6 +235,7 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
     </span>
     {hasPractice && (content?.runPath || content?.recognizePath) && <span className="timer-practice-control">
       <CompactSelect<'train' | 'recognize' | 'memo'>
+        align="center"
         variant="plain" showArrow={false} disabled={methodLocked || restrictMethod} dataNoTimer
         ariaLabel={tr({ zh: '练习方式', en: 'Practice method' })}
         label={method === 'recognize' ? tr({ zh: '识别', en: 'Recognition' })

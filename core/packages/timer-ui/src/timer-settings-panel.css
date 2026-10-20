@@ -345,3 +345,13 @@
   .settings-modal .settings-export-buttons { gap: 4px; font-size: 11px; }
 }
 .settings-modal .hint-btn.timer-settings-action-danger { width: auto; }
+.settings-modal .settings-row-control.timer-sync-seed-controls {
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+.settings-modal .timer-sync-seed-controls .settings-row-control-input {
+  width: 12em;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.settings-modal .timer-sync-seed-controls > button { flex-shrink: 0; white-space: nowrap; }

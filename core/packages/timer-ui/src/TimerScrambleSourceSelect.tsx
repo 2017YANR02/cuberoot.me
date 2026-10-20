@@ -209,7 +209,7 @@ export function TimerScrambleSourceSelect<
         VIEWPORT_MARGIN_PX,
         window.innerWidth - panel.offsetWidth - VIEWPORT_MARGIN_PX,
       );
-      const left = Math.min(Math.max(VIEWPORT_MARGIN_PX, anchor.left), maxLeft);
+      const left = Math.min(Math.max(VIEWPORT_MARGIN_PX, anchor.left + (anchor.width - panel.offsetWidth) / 2), maxLeft);
       const below = anchor.bottom + POPUP_GAP_PX;
       const top = below + panel.offsetHeight <= window.innerHeight - VIEWPORT_MARGIN_PX
         ? below
