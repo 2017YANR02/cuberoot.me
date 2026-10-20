@@ -106,7 +106,8 @@ interface NativePage {
   competitions?: readonly TimerWcaCompetition[];
   competitionRows?: TimerWcaCompetitionScramble[] | null;
   competitionQuery?: string;
-  competitionRequest?: string;
+  competitionRequest?: number;
+  sheetGeneration?: number;
   rankKey?: string;
   rankOfficial?: { id: string; rows: TimerRankOfficialRow[] };
 }
@@ -147,13 +148,14 @@ function refreshCompetitionOptions(p: NativePage) {
 }
 async function loadCompetitionOptions(p: NativePage) {
   const id = p.nativeTimer?.settings.wcaComp ?? '';
-  p.competitionRequest = id; p.competitionRows = null; refreshCompetitionOptions(p);
+  const request = p.competitionRequest = (p.competitionRequest ?? 0) + 1;
+  p.competitionRows = null; refreshCompetitionOptions(p);
   if (!id) return;
   try {
     const rows = await loadNativeCompetitionScrambles(id);
-    if (!p.active || p.competitionRequest !== id) return;
+    if (!p.active || p.sheet !== 'wca' || p.competitionRequest !== request) return;
     p.competitionRows = rows; refreshCompetitionOptions(p);
-  } catch { if (p.active && p.competitionRequest === id) p.setData({ formError: tr({ en: 'Unable to load rounds. Reopen to retry.', zh: '轮次加载失败，请重新打开重试。' }) }); }
+  } catch { if (p.active && p.sheet === 'wca' && p.competitionRequest === request) p.setData({ formError: tr({ en: 'Unable to load rounds. Reopen to retry.', zh: '轮次加载失败，请重新打开重试。' }) }); }
 }
 function refresh(page: NativePage, history = false) {
   const t = page.nativeTimer;
@@ -231,6 +233,8 @@ export function createNativeTimerPageOptions(): WechatMiniprogram.Page.Options<R
     onHide() {
       const p = this as unknown as NativePage;
       p.nativeTimer?.hide(); p.active = false; p.generation = (p.generation ?? 0) + 1;
+      p.competitionRequest = (p.competitionRequest ?? 0) + 1;
+      p.sheetGeneration = (p.sheetGeneration ?? 0) + 1;
       void disconnectExternalTimer();
       cancelHold(p); if (p.ticker) clearInterval(p.ticker); p.ticker = undefined; p.unsubscribe?.(); p.unsubscribe = undefined;
       this.setData({ generating: false });
@@ -270,6 +274,7 @@ export function createNativeTimerPageOptions(): WechatMiniprogram.Page.Options<R
       const p = this as unknown as NativePage;
       if (p.nativeTimer?.busy) return;
       p.sheet = String(e.currentTarget.dataset.sheet);
+      const sheetGeneration = p.sheetGeneration = (p.sheetGeneration ?? 0) + 1;
       p.draft = p.sheet === 'scrambles' ? p.nativeTimer?.settings.manualScrambles ?? '' : '';
       this.setData({ sheet: p.sheet, draft: p.draft, formError: '' }); refresh(p, true);
       if (p.sheet === 'statistics') this.setData({ statistics: p.nativeTimer?.statistics() });
@@ -277,17 +282,20 @@ export function createNativeTimerPageOptions(): WechatMiniprogram.Page.Options<R
         p.competitionQuery = ''; this.setData({ competitionQuery: '', competitionMatches: [] });
         void loadCompetitionOptions(p);
         if (!p.competitions) void nativeCompetitionCatalog.load(getMiniProgramLocale()).then(rows => {
-          if (!p.active) return;
+          if (!p.active || p.sheet !== 'wca' || p.sheetGeneration !== sheetGeneration) return;
           p.competitions = rows;
           this.setData({ competitionMatches: searchTimerWcaCompetitions(p.competitionQuery ?? '', rows) });
-        }).catch(() => { if (p.active) this.setData({ formError: tr({ en: 'Competition search is unavailable. Reopen to retry or select a date range.', zh: '比赛目录加载失败，可重新打开重试或按日期选择。' }) }); });
+        }).catch(() => { if (p.active && p.sheet === 'wca' && p.sheetGeneration === sheetGeneration) this.setData({ formError: tr({ en: 'Competition search is unavailable. Reopen to retry or select a date range.', zh: '比赛目录加载失败，可重新打开重试或按日期选择。' }) }); });
       }
     },
     closeSheet(e?: WechatMiniprogram.TouchEvent) {
       // Douyin catch handlers cancel native scrolling and input defaults as well as bubbling.
       // Dismiss only taps originating on the backdrop; inner controls retain their defaults.
       if (e?.currentTarget.id === 'nt-backdrop' && e.target.id !== 'nt-backdrop') return;
-      (this as unknown as NativePage).sheet = ''; this.setData({ sheet: '' });
+      const p = this as unknown as NativePage;
+      p.sheet = ''; p.sheetGeneration = (p.sheetGeneration ?? 0) + 1;
+      p.competitionRequest = (p.competitionRequest ?? 0) + 1;
+      this.setData({ sheet: '' });
     },
     loadMoreHistory() { const p = this as unknown as NativePage; p.historyLimit = (p.historyLimit ?? 100) + 100; refresh(p, true); },
     searchHistory(e: WechatMiniprogram.Input) {
@@ -441,6 +449,7 @@ export function createNativeTimerPageOptions(): WechatMiniprogram.Page.Options<R
     clearWca(e: WechatMiniprogram.TouchEvent) {
       const p = this as unknown as NativePage, key = e.currentTarget.dataset.setting;
       p.nativeTimer?.updateSettings(key === 'comp' ? { wcaComp: '', wcaCompName: '', wcaRound: '', wcaGroup: '' } : { wcaDateFrom: '', wcaDateTo: '' });
+      if (key === 'comp') { p.competitionRequest = (p.competitionRequest ?? 0) + 1; p.competitionRows = null; }
       refreshCompetitionOptions(p); refresh(p, true);
     },
     imageError() { this.setData({ previewError: tr({ en: 'Image could not be displayed', zh: '图示加载失败' }) }); },
