@@ -19,6 +19,7 @@ export const INSTRUCTION_PHASES: Record<string, InstructionPhase[][]> = {
     { ...phase('左手拿住顶层，右手同时转下面两层，让白棱侧面的颜色对齐同色中心', 'Hold the top layer with your left hand and turn the lower two layers until the white edge’s side color matches its center', 1), moves: [1] },
     { ...phase('转体把它放到右手边', 'Rotate the cube to put this edge on the right', 2), moves: [2] },
     { ...phase('做“上上”', 'turn the right face twice', 3), moves: [3] },
+    phase('用同样的方法处理其余三条白棱，完成白十字', 'Use the same method for the remaining three white edges to complete the white cross', 4, 12),
   ]],
   corners: [
     [phase('转顶层，把这个角另一侧的非白色格朝前', 'Turn the top to face the corner’s other side sticker forward', 1), phase('同时转下面两层，让它与同色中心对齐', 'Turn the lower two layers together to match it with its center', 2), phase('做右公式', 'do the right trigger', 3, 6)],
@@ -28,8 +29,8 @@ export const INSTRUCTION_PHASES: Record<string, InstructionPhase[][]> = {
   ],
   middle: [
     [], // Arrow-separated insert flows use the existing alg groups directly.
-    [phase('转体把它放右前方', 'Rotate the cube to put it at front-right', 1), phase('做本次公式取出', 'use this algorithm to eject it', 2, 11)],
     [],
+    [phase('转体把它放右前方', 'Rotate the cube to put it at front-right', 1), phase('做本次公式取出', 'use this algorithm to eject it', 2, 11)],
   ],
   'yellow-cross': [
     [phase('转顶层，把两条黄色棱左右横放', 'Turn the top to hold the two yellow edges left to right', 1), phase('压', 'F', 2), phase('右公式', 'the right trigger', 3, 6), phase('提', 'F′', 7)],

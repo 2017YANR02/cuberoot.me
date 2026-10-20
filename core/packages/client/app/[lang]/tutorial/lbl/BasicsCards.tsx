@@ -35,23 +35,25 @@ export default function BasicsCards({ onStart, heading }: { onStart: () => void;
   const guide = BASIC_GUIDE_TOPICS.find(item => item.id === topic);
   const selectTopic = (id: string) => { void setQuery({ topic: id, basics: null }); };
 
-  return <section className="lbl-basics" data-site-surface="panel" aria-label={tr({ zh: '魔方基础知识', en: 'Cube basics' })}>
+  return <section className="lbl-basics-intro" aria-label={tr({ zh: '魔方基础知识', en: 'Cube basics' })}>
+    <div className="lbl-basics-layout lbl-lesson">
+      <aside className="lbl-visuals lbl-basics-sidebar">
     <div className="lbl-basics-heading" id="lbl-guide-title">{heading}</div>
     <select className="lbl-basics-mobile-select" aria-label={tr({ zh: '选择基础知识', en: 'Choose a topic' })} value={topic} onChange={event => selectTopic(event.target.value)}>
       {topicGroups.map(group => <optgroup key={group.title.en} label={tr(group.title)}>
         {group.items.map(item => <option key={item.id} value={item.id}>{tr(item.title)}</option>)}
       </optgroup>)}
     </select>
-    <div className="lbl-basics-layout">
-      <nav className="lbl-basics-sidebar" aria-label={tr({ zh: '选择基础知识', en: 'Choose a topic' })}>
+      <nav className="lbl-basics-topics" aria-label={tr({ zh: '选择基础知识', en: 'Choose a topic' })}>
         {topicGroups.map(group => <div className="lbl-basics-nav-group" key={group.title.en}>
           <p>{tr(group.title)}</p>
           {group.items.map(item => <button type="button" key={item.id} className="lbl-button lbl-topic" aria-pressed={topic === item.id} aria-controls="lbl-basics-panel" onClick={() => selectTopic(item.id)}>
-            {'colors' in item && <VisualCube view="iso" setup={item.setup} stickerColors={item.colors} stickerMaskColor={FM_FIXED_COLOR[FM_IGNORED]} size={38} alt={tr(item.title)} />}
+            {'colors' in item && <VisualCube view="iso" setup={item.setup} stickerColors={item.colors} stickerMaskColor={FM_FIXED_COLOR[FM_IGNORED]} size={52} alt={tr(item.title)} />}
             <span>{tr(item.title)}</span>
           </button>)}
         </div>)}
       </nav>
+      </aside>
       <div className="lbl-basics-main">
         <div className="lbl-basics-panel" id="lbl-basics-panel">
           {topic === 'facelet' && <FaceletPanel />}
