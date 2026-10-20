@@ -2,6 +2,8 @@
   margin-top: 76rpx;
 }
 
+.contact-feedback-copy { display: block; color: var(--cr-muted); line-height: 1.65; margin-top: 20rpx; }
+
 .account-contact-header {
   display: flex;
   flex-direction: column;

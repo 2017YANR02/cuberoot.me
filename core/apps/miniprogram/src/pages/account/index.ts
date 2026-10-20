@@ -869,6 +869,7 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
   },
 
   previewWechatQr() {
+    if (this.data.contact.platformFeedback) return;
     if (this.data.isTimelineEntry || this.data.loginRequired) return;
     const path = CONTACT_VIEW.qrPath;
     try {
@@ -882,6 +883,7 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
   },
 
   copyContactValue(event: ContactCopyEvent) {
+    if (this.data.contact.platformFeedback) return;
     const value = event.currentTarget.dataset.value;
     if (typeof value !== 'string' || value.length === 0) return;
 

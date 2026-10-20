@@ -6,7 +6,15 @@
 
 [运营规范重点解读](https://partner.open-douyin.com/docs/resource/zh-CN/mini-app/operation/management/specification/mini-app-operation-interpretation)要求全部或核心页面原生，并要求提交功能可完整使用。[WebView 开发说明](https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/tutorial/basic-ability/web-view-component)仍支持配置业务域名的网页容器。因此保留辅助网页并不自动构成违规，但“存在原生首页”也不能证明主要功能或所有审核条件合格。
 
-本次没有通过隐藏入口、审核状态判断或账号白名单改变审核人员看到的功能。当前不能声明“全部原生化”或保证过审。
+本次没有通过审核状态判断或账号白名单改变审核人员看到的功能。维护者已确认将抖音端联系功能永久改为平台反馈，网站和微信保留社群目录。当前不能声明“全部原生化”或保证过审。
+
+## 本机提审阻塞复核（2026-10-20）
+
+- 维护者提供正式 AppID，本机被忽略的 `project.douyin.config.json` 已更新；AppID 不是密钥，不涉及 AppSecret。旧文档中其他机器的配置记录不能证明本机已配置。
+- **主体待确认**：[WebView 官方说明](https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/tutorial/basic-ability/web-view-component)明确个人类型暂不支持；企业仍须满足全部或核心页面原生的要求。若为个人，现有账号辅助 WebView 是阻塞项，不能仅以核心页原生判定合格。
+- **内容安全未闭环**：`POST /auth/profile` 展示名写入路径目前只做格式校验，尚未发现抖音内容安全接口接入；需核对公开展示文本的检测、失败处理及上线凭据，不能以字符校验替代内容安全。
+- **联系功能调整**：[第三方引流规则](https://partner.open-douyin.com/docs/resource/zh-CN/mini-app/operation/management/specification/drainage)涵盖站外账号和群引导。抖音联系页及我的页均改为平台反馈说明，不再向视图传入站外社群、二维码或复制动作；不是审核临时分支。使用[右上角菜单反馈与后台反馈中心](https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/open-capacity/basic-capacities/feedback-violation/handle-user-feedback)，不伪造未开通的 IM 客服按钮。后台接收、回复和真机操作仍待验收。
+- `pnpm --filter @cuberoot/miniprogram audit:douyin` 只读检查正式 AppID、域名校验开关、独立构建指纹、页面完整性、核心原生模板及 sourcemap；它不验证平台主体、域名白名单、隐私后台或真机，不输出“已具备全部提审条件”。
 
 ## 页面及入口清单
 
@@ -21,7 +29,7 @@
 | 修改展示名 | 我的页原生编辑 | 共用展示名校验与资料接口；WCA 认证姓名不可修改；离页、换号与响应身份不符时不覆盖会话。完整资料编辑仍未迁完 |
 | 已绑定登录方式 | 我的页按需原生查询 | 显示邮箱、手机、WCA 及其他三方绑定状态、密码设置状态；离页清空，换号与畸形响应不展示；绑定、解绑仍使用网站 |
 | 已有账号登录码 | 原生 `pages/account-link` 邮箱验证；其他方式仍提供 `pages/web?key=account-link` | 邮箱路径已原生化；仅验证已有账号，临时会话只签发一次性码，不替换小程序会话，返回后保留目标账号预览与确认；其他登录方式仍为 H5 |
-| 联系页按钮 | 原生 `pages/contact` | 已迁移；无需登录，与账号页共用完整社交、直接联系和社群目录，支持复制与二维码预览 |
+| 联系页按钮 | 原生 `pages/contact` | 抖音为平台问题反馈说明，无需登录；微信保留完整联系目录。抖音后台反馈中心接收与回复待验收 |
 | 通用网页与分享深链 | `pages/web` 路由适配 | 根地址、计时（含 event/单条 scramble）、联系及隐私地址转原生；计时设置需确认才应用。账号、其他登录方式、退出仍使用受限 H5；未知参数与其他功能仍未完成 |
 | 偏好回传 | 原生 `pages/preferences` | 桥接页面，不是设置界面 |
 | 支付页 | 原生提示抖音暂不支持支付 | 不应宣称抖音支付功能可用 |

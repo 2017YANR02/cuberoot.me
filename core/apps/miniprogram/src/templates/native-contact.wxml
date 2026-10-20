@@ -4,6 +4,11 @@
       <text class="account-contact-title">{{contact.title}}</text>
     </view>
 
+    <view wx:if="{{contact.platformFeedback}}" class="contact-profile">
+      <text class="contact-feedback-copy">{{contact.feedbackInstruction}}</text>
+      <text class="contact-feedback-copy">{{contact.feedbackPrivacy}}</text>
+    </view>
+    <block wx:else>
     <view class="contact-profile">
       <button
         class="contact-site-button"
@@ -131,4 +136,5 @@
         </view>
       </view>
     </view>
+    </block>
   </view>

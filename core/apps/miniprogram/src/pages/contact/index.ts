@@ -20,14 +20,17 @@ export function createContactPageOptions() {
     },
     onShareTimeline() { return { title: this.data.contact.title }; },
     openContactWebsite() {
+      if (this.data.contact.platformFeedback) return;
       this.copyContactValue({ currentTarget: { dataset: { value: `https://${this.data.contact.website}` } } });
     },
     previewWechatQr() {
+      if (this.data.contact.platformFeedback) return;
       const path = this.data.contact.qrPath;
       const fail = () => this.setData({ accountError: tr({ zh: '二维码暂时无法打开，请复制微信号。', en: 'Unable to open the QR code. Copy the WeChat ID instead.' }) });
       try { miniProgramApi().previewImage({ current: path, urls: [path], fail }); } catch { fail(); }
     },
     copyContactValue(event: { currentTarget: { dataset: { value?: unknown } } }) {
+      if (this.data.contact.platformFeedback) return;
       const value = event.currentTarget.dataset.value;
       const contact = this.data.contact;
       const allowed = new Set([

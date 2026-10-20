@@ -9,6 +9,7 @@ import {
   type ContactPlatformId,
 } from '@cuberoot/shared/contact';
 import { getMiniProgramLocale, tr } from './i18n';
+import { isDouyinMiniProgram } from './platform';
 
 const CONTACT_PLATFORM_ICON_PATHS: Record<ContactPlatformId, string> = {
   youtube: '/assets/contact/youtube.png',
@@ -29,9 +30,20 @@ const CONTACT_DETAIL_ICON_PATHS: Record<ContactDirectDetailId, string> = {
 };
 export function createContactView() {
   const contactLocale = getMiniProgramLocale();
+  if (isDouyinMiniProgram()) return {
+    platformFeedback: true,
+    feedbackInstruction: tr({ zh: '打开右上角菜单，选择「反馈」，提交问题描述和截图。', en: 'Open the top-right menu and choose Feedback to send a description and screenshots.' }, contactLocale),
+    feedbackPrivacy: tr({ zh: '请勿提交密码、验证码或其他敏感信息。', en: 'Do not include passwords, verification codes or other sensitive information.' }, contactLocale),
+    eyebrow: tr({ zh: '支持', en: 'SUPPORT' }, contactLocale),
+    title: tr({ zh: '问题反馈', en: 'Feedback' }, contactLocale),
+    joinInstructionAfter: '', joinInstructionBefore: '', joinInstructionValue: '', joinTitle: '',
+    qrAria: '', qrPath: '', websiteLabel: '', website: '',
+    platforms: [], details: [], sections: [],
+  };
   const joinInstruction = tr(CONTACT_JOIN_INSTRUCTION, contactLocale);
   const [joinInstructionBefore, joinInstructionAfter = ''] = joinInstruction.split(CONTACT_WECHAT_ID);
   return {
+    platformFeedback: false, feedbackInstruction: '', feedbackPrivacy: '',
     eyebrow: tr({ en: 'CONTACT & COMMUNITY', zh: '联系与社群' }, contactLocale),
     joinInstructionAfter,
     joinInstructionBefore,
