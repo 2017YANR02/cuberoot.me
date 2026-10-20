@@ -163,8 +163,8 @@ it('teaches color matching before inserting each of the four daisy petals', () =
   const example = LBL_STEPS.find(step => step.id === 'cross')!.examples[0];
   const colors = ['U', 'R', 'F', 'D', 'L', 'B'].flatMap(color => Array<string>(9).fill(color));
   const faces = (alg: string): string[][] => JSON.parse(practiceState(colors, alg));
-  expect(example.alg).toBe("d y' R2");
-  const moves = example.practiceAlg!.split(' ');
+  expect(example.alg).toBe("d y' R2 d y' R2 d2 y' R2 d y' R2");
+  const moves = example.alg.split(' ');
   expect(moves.length).toBe(12);
   let sequence = example.setup!;
   expect([1, 3, 5, 7].filter(i => faces(sequence)[0][i] === 'D').length).toBe(4);
@@ -333,7 +333,7 @@ describe('LBL middle-layer prerequisites', () => {
       const after = faces(setup + ' ' + example.alg);
       expect(firstLayerSolved(before)).toBe(true);
       expect(firstLayerSolved(after)).toBe(true);
-      if (index !== 1) {
+      if (index !== 2) {
         const moves = new Alg(example.alg).expand().toString().split(/\s+/);
         expect(moves.slice(0, 2)).toEqual(index === 0 ? ['U', 'd'] : ["U'", "d'"]);
         const front = faces(`${setup} ${moves[0]}`);

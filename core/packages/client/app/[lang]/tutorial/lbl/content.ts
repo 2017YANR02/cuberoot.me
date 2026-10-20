@@ -1,5 +1,5 @@
 type Text = { zh: string; en: string };
-export type LblExample = { title: Text; caption?: Text; hint: Text; alg: string; practiceAlg?: string; setup?: string; startSolved?: boolean; sceneRot?: { x: number; y: number; z: number } };
+export type LblExample = { title: Text; caption?: Text; hint: Text; alg: string; setup?: string; startSolved?: boolean; sceneRot?: { x: number; y: number; z: number } };
 type Step = { id: string; title: Text; goal: Text; paragraphs: Text[]; examples: LblExample[] };
 const text = (zh: string, en: string): Text => ({ zh, en });
 // Face the learner squarely, tilted enough to read the top-face pattern.
@@ -105,12 +105,11 @@ export const LBL_STEPS: Step[] = [
   {
     id: 'cross', title: text('十字（棱）', 'White cross'), goal: text('白十字在底面，四条侧面颜色也对齐中心。', 'Make a bottom white cross with all four side colors matching their centers.'),
     paragraphs: [
-      text("左手拿住顶层，右手同时转下面两层，让白棱侧面的颜色对齐同色中心。转体把它放到右手边，做“上上”。", "Hold the top layer with your left hand and turn the lower two layers until the white edge’s side color matches its center. Rotate the cube to put this edge on the right, then turn the right face twice."),
-      text("用同样的方法处理其余三条白棱，完成白十字。", "Use the same method for the remaining three white edges to complete the white cross."),
+      text("左手拿住顶层，右手同时转下面两层，让白棱侧面的颜色对齐同色中心。转体把它放到右手边，做“上上”。用同样的方法处理其余三条白棱，完成白十字。", "Hold the top layer with your left hand and turn the lower two layers until the white edge’s side color matches its center. Rotate the cube to put this edge on the right, then turn the right face twice. Use the same method for the remaining three white edges to complete the white cross."),
     ],
-    // The demo inserts one petal; practice completes all four. d turns the lower two layers while keeping U fixed;
+    // Both demo and practice complete all four petals. d turns the lower two layers while keeping U fixed;
     // y' puts the aligned front edge on the right, then R2 sends it to the bottom.
-    examples: [{ ...example('对齐 → 转体 → 上上', 'Match colors → rotate → turn twice', "d y' R2", '每条白棱都先对齐，再转体放到右手边，做“上上”。', 'For each white edge, match its side color first, rotate it to the right, then turn the right face twice.', "F2 U R2 U2 B2 U L2 U'"), practiceAlg: "d y' R2 d y' R2 d2 y' R2 d y' R2" }],
+    examples: [example('对齐 → 转体 → 上上', 'Match colors → rotate → turn twice', "d y' R2 d y' R2 d2 y' R2 d y' R2", '每条白棱都先对齐，再转体放到右手边，做“上上”。', 'For each white edge, match its side color first, rotate it to the right, then turn the right face twice.', "F2 U R2 U2 B2 U L2 U'")],
   },
   {
     id: 'corners', title: text('底层（角）', 'First-layer corners'), goal: text('复原白色底层和侧面第一行。', 'Solve the white layer and the bottom row of each side.'),
@@ -129,8 +128,8 @@ export const LBL_STEPS: Step[] = [
     ],
     examples: [
       { ...example('去右', 'Insert right', `U d ${MIDDLE_RIGHT}`, '转顶层放前 → 转下面两层对齐 → 右手拨 → 右公式 → 左转体 → 左公式', 'Bring the edge to the front → match colors with the lower two layers → U → right trigger → rotate left → left trigger'), sceneRot: DOCUMENT_RIGHT_VIEW, caption: text('棱心对齐', 'Match edge and center') },
-      { ...example('中层非黄棱', 'Non-yellow middle edge', `y' ${MIDDLE_RIGHT}`, '转体把它放右前方，再做本次公式取出，再根据棱块的去向选择“去右”或“去左”。', 'Rotate the cube to put it at front-right, then use this algorithm to eject it. Then choose “Insert right” or “Insert left” according to where the edge belongs.', `${MIDDLE_RIGHT} y' U ${MIDDLE_RIGHT} y' y`), sceneRot: DOCUMENT_RIGHT_VIEW, caption: text('放错或翻转', 'Misplaced or flipped') },
       { ...example('去左', 'Insert left', `U' d' ${MIDDLE_LEFT}`, '转顶层放前 → 转下面两层对齐 → 左手拨 → 左公式 → 右转体 → 右公式', 'Bring the edge to the front → match colors with the lower two layers → U′ → left trigger → rotate right → right trigger'), sceneRot: DOCUMENT_LEFT_VIEW, caption: text('棱心对齐', 'Match edge and center') },
+      { ...example('中层非黄棱', 'Non-yellow middle edge', `y' ${MIDDLE_RIGHT}`, '转体把它放右前方，再做本次公式取出，再根据棱块的去向选择“去右”或“去左”。', 'Rotate the cube to put it at front-right, then use this algorithm to eject it. Then choose “Insert right” or “Insert left” according to where the edge belongs.', `${MIDDLE_RIGHT} y' U ${MIDDLE_RIGHT} y' y`), sceneRot: DOCUMENT_RIGHT_VIEW, caption: text('放错或翻转', 'Misplaced or flipped') },
     ],
   },
   {
@@ -161,11 +160,11 @@ export const LBL_STEPS: Step[] = [
   {
     id: 'corner-position', title: text('角位置', 'Position the corners'), goal: text('顶面保持全黄，让四个顶角归位。', 'Keep the top yellow and put all four top corners in place.'),
     paragraphs: [
-      text("先找“眼”", "First look for headlights"),
+      text("先找眼", "First look for headlights"),
     ],
     examples: [
       example('有眼 · 眼放左', 'Headlights · Hold on the left', `y ${CORNER_POSITION} U`, '先转体把眼放左，再做公式。做完转顶层，让四个角与侧面中心对齐。', 'Rotate the whole cube to put the headlights on the left, then do the algorithm. Finish by turning the top to match all four corners with the side centers.'),
-      example('无眼 · 先造眼', 'No headlights · Create a pair', CORNER_POSITION, '先做一遍公式，产生“眼”后，再选择“有眼 · 眼放左”继续。', 'Do the algorithm once to create headlights, then select “Headlights · Hold on the left” to continue.', `(${CORNER_POSITION} U ${CORNER_POSITION} U)'`),
+      example('无眼 · 先造眼', 'No headlights · Create a pair', CORNER_POSITION, '先做一遍公式，产生眼后，再选择“有眼 · 眼放左”继续。', 'Do the algorithm once to create headlights, then select “Headlights · Hold on the left” to continue.', `(${CORNER_POSITION} U ${CORNER_POSITION} U)'`),
     ],
   },
   {
