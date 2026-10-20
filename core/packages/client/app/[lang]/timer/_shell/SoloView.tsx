@@ -3195,10 +3195,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
             realMenuContent={<div ref={setWcaSourceSlot} />}
           />
             </span>}
-          />
-          {/* 「难度」开关的落点(内容由 ScrambleSourceBar 里的两个配置组件 portal 过来)。
-              摆在「解法」左边,和来源下拉同一组:难度讲的就是这条打乱怎么来的。
-              data-no-timer 得挂在这儿 —— 开关已经不在打乱来源条里,借不到那块的豁免。 */}
+            beforeSettings={<>
+          <span className="shell-topbar-diff" data-no-timer ref={setDiffSlot} />
           <Tooltip content={tr({ zh: '调整布局', en: 'Edit layout' })}>{tip => (
             <button {...tip} type="button" className="tb-btn solo-layout-toggle" data-no-timer
               aria-label={tr({ zh: '调整布局', en: 'Edit layout' })}
@@ -3209,7 +3207,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
                 else { layoutEditingRef.current = true; setLayoutEditing(true); }
               }}><LayoutTemplate size={18} strokeWidth={1.6} /></button>
           )}</Tooltip>
-          <span className="shell-topbar-diff" data-no-timer ref={setDiffSlot} />
+            </>}
+          />
           {/* 解法提示(手机形态)。桌面同一个组件挂在左侧 .shell-rail 里(见下),
               这里是二选一 —— 两处同时挂就有两个实例抢同一个 ?hints。 */}
 

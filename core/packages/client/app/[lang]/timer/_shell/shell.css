@@ -139,9 +139,16 @@
 .shell-topbar-left {
   --timer-topbar-control-size: 32px;
 }
-.shell-topbar-left .settings-popover-trigger {
+.shell-topbar-left .settings-popover-trigger,
+.shell-topbar-left .solo-layout-toggle {
   width: var(--timer-topbar-control-size);
   height: var(--timer-topbar-control-size);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  flex-shrink: 0;
 }
 .shell-topbar-left .timer-difficulty-trigger {
   display: inline-flex;

@@ -23,13 +23,14 @@ import { selectSessionForEvent } from '../_lib/storage/db';
 type PracticeMethod = 'train' | 'memo' | 'recognize';
 
 /** One content identity, with existing timer/trainer engines as its practice methods. */
-export default function TimerTrainingMenu({ currentEvent, disabled = false, showProject = false, onTimerEventChange, sourceControl, onAdvancedSettings }: {
+export default function TimerTrainingMenu({ currentEvent, disabled = false, showProject = false, onTimerEventChange, sourceControl, onAdvancedSettings, beforeSettings }: {
   currentEvent?: string;
   disabled?: boolean;
   showProject?: boolean;
   onTimerEventChange?: (event: EventId) => void;
   sourceControl?: (onSelectCases?: () => void) => ReactNode;
   onAdvancedSettings?: () => void;
+  beforeSettings?: ReactNode;
 }) {
   const douyin = useDouyinToolSurface();
   const [training] = useQueryState('training');
@@ -112,6 +113,7 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
       })).filter(group => group.items.length > 0)}
       onSelect={id => { const next = timerEventIdFromSelector(id); if (next && DOUYIN_BASIC_TIMER_EVENTS.includes(next)) onTimerEventChange?.(next); }}
     />
+    {beforeSettings}
     {onAdvancedSettings && <button type="button" className="settings-popover-trigger" data-no-timer
       aria-label={tr({ zh: '设置', en: 'Settings' })} onClick={onAdvancedSettings}><Settings size={18} /></button>}
   </>;
@@ -248,6 +250,7 @@ export default function TimerTrainingMenu({ currentEvent, disabled = false, show
       />
     </span>}
     {practiceSource}
+    {beforeSettings}
     {practiceSource && !isRun && onAdvancedSettings && <>
       <button type="button" className="settings-popover-trigger" data-no-timer
         aria-label={tr({ zh: '设置', en: 'Settings' })} aria-haspopup="dialog"

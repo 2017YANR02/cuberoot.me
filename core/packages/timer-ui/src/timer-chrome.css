@@ -16,7 +16,7 @@
   align-items: center;
   justify-content: center;
   justify-self: center;
-  gap: 6px 0;
+  gap: 6px;
 }
 
 .shell-topbar-right {
@@ -372,7 +372,7 @@
   }
 
   .shell-topbar-left {
-    gap: 4px 0;
+    gap: 4px;
   }
 
   .shell-stat-rail,
