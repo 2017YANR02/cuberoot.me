@@ -1,10 +1,11 @@
 <view class="native-timer" style="{{appearanceStyle}}">
   <view class="nt-toolbar">
     <button class="nt-control" bindtap="connectCube" disabled="{{busy}}" aria-label="{{copy.bluetooth}}" hover-class="press-feedback"><image class="nt-icon" src="/assets/tabbar/bluetooth.png" aria-hidden="true" /></button>
-    <picker mode="selector" range="{{events}}" range-key="name" bindchange="selectEvent" disabled="{{busy || generating}}">
+    <picker mode="selector" range="{{events}}" range-key="name" value="{{eventIndex}}" bindchange="selectEvent" disabled="{{busy || generating}}">
       <view class="nt-control nt-event">{{eventName}}</view>
     </picker>
-    <button class="nt-control" bindtap="openSheet" data-sheet="settings" disabled="{{busy}}" hover-class="press-feedback">{{copy.settings}}</button>
+    <picker range="{{copy.sourceOptions}}" value="{{sourceIndex}}" bindchange="selectSource" disabled="{{busy || generating}}" aria-label="{{copy.source}}"><view class="nt-control">{{copy.sourceOptions[sourceIndex]}}</view></picker>
+    <button class="nt-control" bindtap="openSheet" data-sheet="settings" disabled="{{busy}}" aria-label="{{copy.settings}}" hover-class="press-feedback"><image class="nt-icon" src="/assets/tabbar/settings-2.png" aria-hidden="true" /></button>
   </view>
   <view wx:if="{{deviceName}}" class="nt-device">{{deviceName}} <text wx:if="{{battery !== null}}"> · {{battery}}%</text></view>
   <view wx:if="{{externalName}}" class="nt-device">{{externalName}}</view>
@@ -13,19 +14,18 @@
   <text wx:if="{{sourceLine}}" class="nt-hint nt-source">{{sourceLine}}</text>
   <button class="nt-clock nt-clock--{{phase}}" bindtouchstart="timerDown" bindtouchend="timerUp" bindtouchcancel="timerCancel" aria-label="{{hint}}" hover-class="press-feedback">
     <text class="nt-time">{{display}}</text>
-    <text class="nt-hint">{{hint}}</text>
   </button>
   <view wx:if="{{preview || livePreview}}" class="nt-previews">
     <view wx:if="{{preview}}" class="nt-preview"><image mode="aspectFit" src="{{preview}}" binderror="imageError" aria-label="{{copy.preview}}" /><text wx:if="{{cubeConnected}}" class="nt-hint">{{copy.preview}}</text></view>
     <view wx:if="{{livePreview}}" class="nt-preview"><image mode="aspectFit" src="{{livePreview}}" binderror="imageError" aria-label="{{copy.live}}" /><text class="nt-hint">{{copy.live}}</text></view>
   </view>
   <text wx:if="{{previewError}}" class="nt-error">{{previewError}}</text>
-  <text wx:if="{{cubeConnected}}" class="nt-hint nt-cube-hint">{{guidance}} · {{copy.cube}}</text>
+  <text wx:if="{{cubeConnected}}" class="nt-hint nt-cube-hint">{{guidance}}</text>
   <button hover-class="press-feedback" wx:if="{{phase === 'ready' || phase === 'inspecting'}}" class="nt-control" bindtap="cancelAttempt">{{copy.cancel}}</button>
   <view class="nt-footer">
-    <button class="nt-control" bindtap="previousScramble" disabled="{{busy || generating || !canPrevious}}" hover-class="press-feedback">{{copy.previous}}</button>
-    <button class="nt-control" bindtap="nextScramble" disabled="{{busy || generating}}" hover-class="press-feedback">{{copy.next}}</button>
-    <button class="nt-control" bindtap="openSheet" data-sheet="history" disabled="{{busy}}" hover-class="press-feedback">{{copy.results}} · {{summary.count}}</button>
+    <button class="nt-control" bindtap="previousScramble" disabled="{{busy || generating || !canPrevious}}" aria-label="{{copy.previous}}" hover-class="press-feedback"><image class="nt-icon" src="/assets/tabbar/chevron-left.png" aria-hidden="true" /></button>
+    <button class="nt-control" bindtap="openSheet" data-sheet="history" disabled="{{busy}}" hover-class="press-feedback">{{copy.results}}</button>
+    <button class="nt-control" bindtap="nextScramble" disabled="{{busy || generating}}" aria-label="{{copy.next}}" hover-class="press-feedback"><image class="nt-icon" src="/assets/tabbar/chevron-right.png" aria-hidden="true" /></button>
   </view>
   <button hover-class="press-feedback" class="nt-stats" bindtap="openSheet" data-sheet="statistics"><text>{{copy.best}} {{summary.best}}</text><text>ao5 {{summary.ao5}}</text><text>ao12 {{summary.ao12}}</text></button>
   <text wx:if="{{rankLine}}" class="nt-rank" aria-label="{{copy.rankHint}}">{{rankLine}}</text>

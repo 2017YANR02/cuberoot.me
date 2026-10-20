@@ -27,6 +27,7 @@ function fixture() {
     openSheet(event: WechatMiniprogram.TouchEvent): void;
     clearWca(event: WechatMiniprogram.TouchEvent): void;
     closeSheet(): void;
+    selectSource(event: WechatMiniprogram.PickerChange): void;
   };
   const page = {
     ...options, data: { ...options.data }, active: true, nativeTimer: timer,
@@ -41,6 +42,15 @@ describe('native timer source sheet lifecycle', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(nativeCompetitionCatalog.load).mockResolvedValue([]);
+  });
+
+  it('opens manual source editing without changing the source on cancel', () => {
+    const { page, timer } = fixture();
+    page.selectSource({ detail: { value: '1' } } as WechatMiniprogram.PickerChange);
+    expect(page.data.sheet).toBe('scrambles');
+    expect(timer.currentSource).toBe('random');
+    page.closeSheet();
+    expect(timer.currentSource).toBe('random');
   });
 
   it('shows the current competition rounds and groups', async () => {

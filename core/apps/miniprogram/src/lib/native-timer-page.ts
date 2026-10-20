@@ -70,6 +70,8 @@ function copy() { return {
   manualPlaceholder: timerManualEntryCopy(getMiniProgramLocale()).timePlaceholder,
   manualScrambles: tr({ en: 'Manual scrambles', zh: '手动打乱' }), queuePlaceholder: tr(TIMER_MANUAL_SCRAMBLE_EMPTY_COPY),
   random: tr({ en: 'Random scrambles', zh: '随机打乱' }), save: timerManualEntryCopy(getMiniProgramLocale()).save,
+  source: tr({ en: 'Scramble source', zh: '打乱来源' }),
+  sourceOptions: [tr({ en: 'Random', zh: '随机' }), tr({ en: 'Manual', zh: '手动' }), tr({ en: 'Official', zh: '真题' })],
   wca: tr({ en: 'Official scrambles', zh: '比赛真题' }),
   wcaModes: [tr({ en: 'Competition', zh: '按比赛' }), tr({ en: 'Date range', zh: '按日期' })],
   competitionSearch: tr({ en: 'Search competition', zh: '搜索比赛' }), all: tr({ en: 'All', zh: '全部' }),
@@ -178,6 +180,8 @@ function refresh(page: NativePage, history = false) {
   page.setData({ phase: t.state.phase, display: t.display(), scramble: t.scramble, error: t.error, busy: t.busy, generating: t.loading, sourceLine: t.sourceLine, canPrevious: t.canPrevious,
     ...images, guidance: !t.cubeKnown ? labels.unknown : t.guidance.match ? labels.matched : labels.unmatched,
     event: t.event, eventName: nativeTimerEvents().find(e => e.id === t.event)?.name,
+    eventIndex: nativeTimerEvents().findIndex(e => e.id === t.event),
+    sourceIndex: ['random', 'manual', 'wca'].indexOf(t.currentSource),
     hint: t.state.phase === 'running' ? labels.stop : t.state.phase === 'ready' ? labels.ready : t.state.phase === 'inspecting' ? labels.inspection : labels.hold,
     cubeConnected: t.cubeConnected, canResetCube: t.canResetCube, calibrating: t.calibrating,
     externalConnected: t.externalConnected, externalName: t.externalName,
@@ -270,7 +274,14 @@ export function createNativeTimerPageOptions(): WechatMiniprogram.Page.Options<R
     nextScramble() { generate(this as unknown as NativePage); },
     previousScramble() { const p = this as unknown as NativePage; p.nativeTimer?.previousScramble(); refresh(p, true); },
     selectEvent(e: WechatMiniprogram.PickerChange) { generate(this as unknown as NativePage, nativeTimerEvents()[Number(e.detail.value)]?.id); },
-    openSheet(e: WechatMiniprogram.TouchEvent) {
+    selectSource(e: WechatMiniprogram.PickerChange) {
+      const p = this as unknown as NativePage;
+      if (!p.nativeTimer || p.nativeTimer.busy) return;
+      const index = Number(e.detail.value);
+      if (index === 0) this.randomScrambles();
+      else if (index === 1 || index === 2) this.openSheet({ currentTarget: { dataset: { sheet: index === 1 ? 'scrambles' : 'wca' } } });
+    },
+    openSheet(e: { currentTarget: { dataset: { sheet?: string } } }) {
       const p = this as unknown as NativePage;
       if (p.nativeTimer?.busy) return;
       p.sheet = String(e.currentTarget.dataset.sheet);

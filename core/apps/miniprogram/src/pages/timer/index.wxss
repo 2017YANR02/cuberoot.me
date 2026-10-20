@@ -1,11 +1,11 @@
 .native-timer { padding: 16rpx 28rpx calc(32rpx + env(safe-area-inset-bottom)); min-height: 100vh; display: flex; flex-direction: column; box-sizing: border-box; background: var(--cr-bg); color: var(--cr-text); }
 .nt-toolbar, .nt-footer, .nt-stats, .nt-sheet-header, .nt-setting { display: flex; align-items: center; justify-content: space-between; gap: 16rpx; }
-.nt-toolbar { justify-content: center; }
+.nt-toolbar { justify-content: center; gap: 4rpx; flex-wrap: wrap; }
 .nt-control { min-height: 88rpx; min-width: 88rpx; padding: 0 18rpx; display: flex; align-items: center; justify-content: center; box-sizing: border-box; color: var(--cr-accent); }
 .nt-event { font-weight: 650; color: var(--cr-text); }
 .nt-icon { width: 42rpx; height: 42rpx; }
-.nt-scramble { display: block; padding: 36rpx 8rpx; min-height: 160rpx; font-size: 40rpx; line-height: 1.6; overflow-wrap: break-word; }
-.nt-clock { display: flex; flex: 1; min-height: 330rpx; flex-direction: column; align-items: center; justify-content: center; padding: 36rpx 0; width: 100%; touch-action: none; }
+.nt-scramble { display: block; padding: 24rpx 8rpx; min-height: 88rpx; font-size: 36rpx; line-height: 1.5; overflow-wrap: break-word; }
+.nt-clock { display: flex; flex: 1; min-height: 240rpx; flex-direction: column; align-items: center; justify-content: center; padding: 24rpx 0; width: 100%; touch-action: none; }
 .nt-time { font-size: 108rpx; font-variant-numeric: tabular-nums; font-weight: 500; white-space: nowrap; }
 .nt-hint, .nt-device { display: block; color: var(--cr-muted); font-size: 26rpx; line-height: 1.5; }
 .nt-device, .nt-cube-hint { text-align: center; }
