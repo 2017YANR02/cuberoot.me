@@ -62,7 +62,7 @@ export async function publishStagedDirectory({ stagedPath, targetPath, backupPat
   if (preserveRoot) {
     await assertRegularTree(stagedPath);
     if (hadTarget) await assertRegularTree(targetPath);
-    // Douyin opens dist-douyin itself as the project root. Windows may deny
+    // IDEs watch the output tree. Windows may deny
     // renaming that directory even though its individual files remain writable.
     // This is not a multi-file transaction; retain staging if an I/O error occurs
     // so the next build can reconcile it, and never report a failed sync as success.

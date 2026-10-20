@@ -23,6 +23,7 @@ import {
 import { validateJsonObjectFiles } from './json-object-file.mjs';
 import { publishStagedDirectory } from './staged-output.mjs';
 import { validateWxmlExpressionFiles } from './wxml-expression.mjs';
+import { validateNativePages } from './native-page-check.mjs';
 
 const packageRoot = resolve(import.meta.dirname, '..');
 const sourceRoot = join(packageRoot, 'src');
@@ -162,7 +163,7 @@ async function buildProject() {
     stagedPath: stagingRoot,
     targetPath: outputRoot,
     backupPath: backupRoot,
-    preserveRoot: douyin,
+    preserveRoot: douyin || process.platform === 'win32',
   });
   if (!douyin) {
     await writeBuildState(packageRoot, {
@@ -227,6 +228,16 @@ async function validateDouyinOutput() {
     throw new Error(`抖音产物残留微信模板：${normalizedRelativePath(stagingRoot, forbiddenFile)}`);
   }
   const appConfig = JSON.parse(await readFile(join(stagingRoot, 'app.json'), 'utf8'));
+  const nativePages = [
+    'pages/timer/index', 'pages/tools/index', 'pages/account/index',
+    'pages/smart-cube/index', 'pages/external-timer/index', 'pages/privacy/index',
+  ];
+  for (const page of nativePages) {
+    if (!appConfig.pages.includes(page)) throw new Error(`抖音原生页面未登记：${page}`);
+  }
+  await validateNativePages(stagingRoot, [...new Set([
+    ...nativePages, appConfig.pages[0], ...appConfig.tabBar.list.map(tab => tab.pagePath),
+  ])]);
   const unsupportedKey = douyinUnsupportedAppConfigKeys.find((key) => key in appConfig);
   if (unsupportedKey) throw new Error(`抖音 app.json 残留微信配置：${unsupportedKey}`);
   if (appConfig.usePrivacyCheck !== true) {
