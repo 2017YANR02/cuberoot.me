@@ -25,6 +25,7 @@ import {
   musicAssetUrl,
 } from '@/lib/music-player';
 import './music.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 function formatTime(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
@@ -208,7 +209,7 @@ function SyncedLyrics({ track, time }: { track: MusicTrack | null; time: number 
   if (lines.length === 0) {
     return (
       <div className="music-lyrics-empty">
-        <span>{loading ? tr({ zh: '正在载入歌词…', en: 'Loading lyrics…' }) : tr({ zh: '这首歌暂时没有同步歌词', en: 'No synced lyrics for this track' })}</span>
+        <span>{loading ? <LoadingIndicator>{tr({ zh: '正在载入歌词…', en: 'Loading lyrics…' })}</LoadingIndicator> : tr({ zh: '这首歌暂时没有同步歌词', en: 'No synced lyrics for this track' })}</span>
       </div>
     );
   }
@@ -386,7 +387,7 @@ export default function MusicPage() {
             </p>
           )}
           <div className="music-track-list">
-            {player.status === 'loading' && <p className="music-state">{tr({ zh: '正在载入曲库…', en: 'Loading library…' })}</p>}
+            {player.status === 'loading' && <p className="music-state"><LoadingIndicator>{tr({ zh: '正在载入曲库…', en: 'Loading library…' })}</LoadingIndicator></p>}
             {player.status === 'error' && (
               <div className="music-state"><p>{tr({ zh: '曲库载入失败', en: 'Could not load the library' })}</p>
                 <button type="button" className="music-text-button" onClick={() => { void loadMusicLibrary(true); }}>{tr({ zh: '重试', en: 'Try again' })}</button>

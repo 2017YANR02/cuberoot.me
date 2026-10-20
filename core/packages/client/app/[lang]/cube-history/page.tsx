@@ -20,6 +20,7 @@ import { PRICE_MARKETS, preferredPrice, priceAmount, priceLabel, sortedPrices } 
 import type { Cube, CubePrice, LocalizedText } from './_data/types';
 import '@/components/sticky-table.css';
 import './cube-history.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type View = 'timeline' | 'catalog' | 'compare' | 'sources';
 const VIEW_OPTIONS: { id: View; label: LocalizedText; Icon: typeof History }[] = [
@@ -543,7 +544,7 @@ function Explorer() {
 
 export default function CubeHistoryPage() {
   useLang();
-  return <main className="ch-page"><Hero /><Suspense fallback={<p className="ch-loading" role="status">{tr({ zh: '正在加载交互图鉴…', en: 'Loading the interactive archive…' })}</p>}><Explorer /></Suspense>
+  return <main className="ch-page"><Hero /><Suspense fallback={<p className="ch-loading" role="status"><LoadingIndicator>{tr({ zh: '正在加载交互图鉴…', en: 'Loading the interactive archive…' })}</LoadingIndicator></p>}><Explorer /></Suspense>
     <footer className="ch-footer"><p>CubeRoot · {tr({ zh: '三阶魔方硬件档案', en: '3×3 hardware archive' })}</p><p>{tr({ zh: '发现缺失型号或更好的原始资料？欢迎带着来源补充。', en: 'Found a missing model or a better original source? Contributions with evidence are welcome.' })}</p><div><AppLink href="/wiki" prefetch={false}>{tr({ zh: '速拧术语表', en: 'Cubing glossary' })}</AppLink><AppLink href="/forum" prefetch={false}>{tr({ zh: '交流与补充', en: 'Discuss and contribute' })}</AppLink></div></footer>
   </main>;
 }

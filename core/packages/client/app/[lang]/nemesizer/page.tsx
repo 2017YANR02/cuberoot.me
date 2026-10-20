@@ -12,6 +12,7 @@ import WhatIfMode from './_modes/WhatIfMode';
 import StatsMode from './_modes/StatsMode';
 import './nemesizer.css';
 import { tr } from '@/i18n/tr';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 type Mode = 'standard' | 'h2h' | 'whatif' | 'stats';
 const MODES: Mode[] = ['standard', 'h2h', 'whatif', 'stats'];
@@ -67,7 +68,7 @@ function TabBtn({ active, onClick, children }: { active: boolean; onClick: () =>
 
 export default function NemesizerPage() {
   return (
-    <Suspense fallback={<div className="nemesizer-page"><div className="nemesizer-loading">Loading…</div></div>}>
+    <Suspense fallback={<div className="nemesizer-page"><div className="nemesizer-loading"><LoadingIndicator /></div></div>}>
       <NemesizerInner />
     </Suspense>
   );

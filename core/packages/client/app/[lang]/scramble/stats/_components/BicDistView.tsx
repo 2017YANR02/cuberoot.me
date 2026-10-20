@@ -19,6 +19,7 @@ import {
   type BicTable,
 } from '@cuberoot/puzzle-solvers/bicube';
 import { tr } from '@/i18n/tr';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const BIC_COLOR = '#8338ec'; // 联体异形紫(数据色,非 UI 灰阶)
 
@@ -180,7 +181,7 @@ export default function BicDistView({ isZh }: { isZh: boolean }) {
         </div>
       ) : examples === null ? (
         <div className="scramble-stats-examples-hint">
-          {tr({ zh: '正在加载精确距离表并生成示例…', en: 'Loading the exact-distance table and generating examples…' })}
+          <LoadingIndicator>{tr({ zh: '正在加载精确距离表并生成示例…', en: 'Loading the exact-distance table and generating examples…' })}</LoadingIndicator>
         </div>
       ) : effectiveBin !== null && (
         <div className="scramble-stats-panel scramble-stats-examples-panel">

@@ -40,6 +40,7 @@ import {
 import { isPopularZone, zoneIso2, zoneLabel, zoneOptions, zoneSearchTerms } from '@/lib/tz-zones';
 import DiscordStamps from './_components/DiscordStamps';
 import './timezone.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const STORE_KEY = 'cuberoot-timezone.v1';
 /** 没有任何存档时的初始对方时区 —— 常见的两头:美西和英国。 */
@@ -230,7 +231,7 @@ function TimezonePage() {
       <div className="tz-page">
         <div className="tz-topbar"><BackHome /><HeaderToggles /></div>
         <h1>{title}</h1>
-        <div className="tz-skeleton" aria-hidden="true" />
+        <div className="tz-skeleton"><LoadingIndicator /></div>
       </div>
     );
   }
@@ -570,7 +571,7 @@ function HourSelect({ value, onChange, max = 23 }: { value: number; onChange: (v
 
 export default function Page() {
   return (
-    <Suspense fallback={<div className="tz-page" />}>
+    <Suspense fallback={<div className="tz-page"><LoadingIndicator /></div>}>
       <TimezonePage />
     </Suspense>
   );

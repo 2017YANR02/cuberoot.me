@@ -21,6 +21,7 @@ import {
   fetchByDifficulty, BY_DIFFICULTY_PAGE_SIZE,
   type ByDifficultyRow,
 } from '@/lib/scramble-by-difficulty';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const COLS_ORDER: ColorLetter[] = ['B', 'G', 'O', 'R', 'W', 'Y'];
 
@@ -222,7 +223,7 @@ export default function FullScrambleList({
         </ul>
       )}
 
-      {loading && <div className="scramble-stats-examples-hint">{tr({ zh: '加载中…', en: 'Loading…' })}</div>}
+      {loading && <div className="scramble-stats-examples-hint"><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…' })}</LoadingIndicator></div>}
       {rows.length > 0 && (
         <div className="scramble-stats-fulllist-foot">
           {!loading && hasMore && (

@@ -26,6 +26,7 @@ import {
   CLOCK_GODS_NUMBER, CLOCK_LENGTH_DISTRIBUTION, CLOCK_MEAN_LENGTH, CLOCK_STATE_COUNT,
 } from '@cuberoot/puzzle-solvers/clock';
 import { tr } from '@/i18n/tr';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 // puzzle key → 在线求解器 event slug(/scramble/solver?event=;sq1 不在表里 → 示例卡不可点)。
 const PUZZLE_ROUTE: Record<string, string> = { '222': '222', pyraminx: 'pyram', skewb: 'skewb', clock: 'clock' };
@@ -289,7 +290,7 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
     return <div className="scramble-stats-error">{tr({ zh: '加载失败', en: 'Load failed' })}: {error}</div>;
   }
   if (!json) {
-    return <div className="scramble-stats-loading">{tr({ zh: '加载中…', en: 'Loading…' })}</div>;
+    return <div className="scramble-stats-loading"><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…' })}</LoadingIndicator></div>;
   }
   if (!entry) {
     return (

@@ -20,6 +20,7 @@ import {
   type Ref,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { Spinner } from './Spinner';
 
 import {
   TIMER_OVERLAY_IDS,
@@ -693,7 +694,7 @@ export function TimerWcaSourceConfig({
       </div>
 
       {mode === 'comp' && !settings.wcaComp && competitionListStatus === 'loading' && (
-        <p className="timer-wca-source-hint" role="status">{labels.competitionListLoading}</p>
+        <p className="timer-wca-source-hint" role="status"><Spinner /> {labels.competitionListLoading}</p>
       )}
       {mode === 'comp' && !settings.wcaComp && competitionListStatus === 'error' && (
         <p className="timer-wca-source-hint is-warning" role="alert">
@@ -728,7 +729,7 @@ export function TimerWcaSourceConfig({
 
       {mode === 'comp' && settings.wcaComp && competitionRowsStatus === 'loading' && (
         <p className="timer-wca-source-hint" role="status">
-          {labels.competitionScramblesLoading}
+          <Spinner /> {labels.competitionScramblesLoading}
         </p>
       )}
       {mode === 'comp' && settings.wcaComp && competitionRowsStatus === 'error' && (

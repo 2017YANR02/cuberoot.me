@@ -5,6 +5,7 @@ import { useQueryState, parseAsStringEnum } from 'nuqs';
 import PersonCell from '../_components/PersonCell';
 import { fetchStats, type StatsResponse } from '../_data/nemesizerApi';
 import { tr } from '@/i18n/tr';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 interface Props { isZh: boolean; }
 
@@ -60,8 +61,8 @@ export default function StatsMode({ isZh }: Props) {
         {tr({ zh: '（世界范围）', en: '(world scope)'
         })}
       </p>
-      {loading && !data && <div className="nemesizer-loading">{tr({ zh: '加载中…', en: 'Loading…'
-    })}</div>}
+      {loading && !data && <div className="nemesizer-loading"><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…'
+    })}</LoadingIndicator></div>}
       {data && tab === 'most' && <PersonsCountTable persons={data.persons ?? []} valueLabel={tr({ zh: '宿敌数', en: 'Nemeses'
     })} valueKey="nemesisCount" isZh={isZh} />}
       {data && tab === 'few' && <PersonsCountTable persons={data.persons ?? []} valueLabel={tr({ zh: '宿敌数', en: 'Nemeses'

@@ -25,6 +25,7 @@ import { tr } from '@/i18n/tr';
 import { fetchRecentMarks, deleteMarkById, type RecentMark } from '../_lib/marks';
 import { formatMs } from '../_lib/stats';
 import './marks.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const PAGE_SIZE = 30;
 
@@ -163,8 +164,8 @@ function MarksFeed() {
 
       {loadErr && <p className="scrmarks-empty">{tr({ zh: '加载失败,稍后再试。', en: 'Failed to load — try again later.'
     })}</p>}
-      {!loadErr && marks === null && <p className="scrmarks-empty">{tr({ zh: '加载中…', en: 'Loading…'
-    })}</p>}
+      {!loadErr && marks === null && <p className="scrmarks-empty"><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…'
+    })}</LoadingIndicator></p>}
       {!loadErr && marks !== null && marks.length === 0 && (
         <p className="scrmarks-empty">{q
           ? tr({ zh: '没有匹配的标记。', en: 'No matching marks.' })
@@ -216,8 +217,8 @@ function MarksFeed() {
 
       {marks !== null && marks.length > 0 && !done && (
         <button type="button" className="scrmarks-more" disabled={loadingMore} onClick={loadMore}>
-          {loadingMore ? tr({ zh: '加载中…', en: 'Loading…'
-                          }) : tr({ zh: '加载更多', en: 'Load more'
+          {loadingMore ? <LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…'
+                          })}</LoadingIndicator> : tr({ zh: '加载更多', en: 'Load more'
                               })}
         </button>
       )}
@@ -227,7 +228,7 @@ function MarksFeed() {
 
 export default function ScrambleMarksPage() {
   return (
-    <Suspense fallback={<div className="scrmarks-page"><p className="scrmarks-empty">Loading…</p></div>}>
+    <Suspense fallback={<div className="scrmarks-page"><p className="scrmarks-empty"><LoadingIndicator /></p></div>}>
       <MarksFeed />
     </Suspense>
   );

@@ -13,6 +13,7 @@ import { WcaPersonTeamBadge } from '@/components/WcaPersonTeamBadge';
 import { uploadedImageUrl } from '@/lib/image-upload';
 import { getPublicMemberProfile, listPublicMembers } from '@/lib/membership-api';
 import './gallery.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const MemberProfileEditor = dynamic(() => import('@/components/MemberProfileEditor'));
 
@@ -90,7 +91,7 @@ export default function GalleryPage() {
       <section className="gallery-collection" aria-labelledby="gallery-collection-title">
         <h2 id="gallery-collection-title">{tr({ zh: '会员照片', en: 'Member photos' })}</h2>
         {loading ? (
-          <p className="gallery-state" aria-live="polite">{tr({ zh: '正在加载图库…', en: 'Loading the gallery…' })}</p>
+          <p className="gallery-state" aria-live="polite"><LoadingIndicator>{tr({ zh: '正在加载图库…', en: 'Loading the gallery…' })}</LoadingIndicator></p>
         ) : failed ? (
           <div className="gallery-state" role="alert">
             <p>{tr({ zh: '图库暂时无法加载。', en: 'The gallery could not be loaded.' })}</p>

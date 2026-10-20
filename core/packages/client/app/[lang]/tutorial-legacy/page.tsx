@@ -18,6 +18,7 @@ import { CATEGORY_CARDS, type Tier } from './_data/categories';
 import { TutorialCard } from './_components/TutorialCard';
 import './tutorial.css';
 import { tr } from '@/i18n/tr';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 // Icon per category. The order, tier and bilingual label live in
 // _data/categories so the server metadata for /tutorial-legacy/c/<cat> can render the
@@ -137,8 +138,8 @@ function TutorialIndexPageInner() {
         </div>
       </div>
 
-      {loading && <div className="tutorial-empty-state">{tr({ zh: '加载中…', en: 'Loading…'
-    })}</div>}
+      {loading && <div className="tutorial-empty-state"><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…'
+    })}</LoadingIndicator></div>}
       {error && (
         <div className="tutorial-empty-state">
           {tr({ zh: '加载失败: ', en: 'Load failed: '
@@ -195,7 +196,7 @@ function TutorialIndexPageInner() {
 
 export default function TutorialIndexPage() {
   return (
-    <Suspense fallback={<div className="tutorial-root"><div className="tutorial-empty-state">Loading…</div></div>}>
+    <Suspense fallback={<div className="tutorial-root"><div className="tutorial-empty-state"><LoadingIndicator /></div></div>}>
       <TutorialIndexPageInner />
     </Suspense>
   );

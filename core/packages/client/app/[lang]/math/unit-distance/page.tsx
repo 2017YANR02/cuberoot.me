@@ -26,6 +26,7 @@ import { TeX, TeXBlock } from '@/components/math/Tex';
 import './unit_distance.css';
 import { useT } from "@/hooks/useT";
 import { tr, T } from '@/i18n/tr';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const UnitDistanceSandbox = dynamic(() => import('./_components/UnitDistanceSandbox'), { ssr: false });
 const GridConstruction = dynamic(() => import('./_components/GridConstruction'), { ssr: false });
@@ -181,7 +182,7 @@ export default function UnitDistancePage() {
           <p>
             {<T zh={<>下面拖点试试。等边三角形给最高 ν/n(每个三角形边都是单位距离);切到方格立刻能看出 <em>水平 + 垂直</em> 两族,但少了对角线那一族。</>} en={<>Drag any point below. Equilateral triangles maximise local ν/n (every triangle edge is a unit distance); switching to the square lattice loses the diagonal family entirely.</>} />}
           </p>
-          <Suspense fallback={<div className="ud-loading">Loading…</div>}>
+          <Suspense fallback={<div className="ud-loading"><LoadingIndicator /></div>}>
             <UnitDistanceSandbox />
           </Suspense>
         </section>
@@ -237,7 +238,7 @@ export default function UnitDistancePage() {
         <section className="ud-section">
           <h2>{t('4. Erdős 1946 的小聪明 — 重定义"单位"', '4. Erdős\'s 1946 trick — redefine "unit"')}</h2>
 
-          <Suspense fallback={<div className="ud-loading">Loading…</div>}>
+          <Suspense fallback={<div className="ud-loading"><LoadingIndicator /></div>}>
             <ErdosGridHero />
           </Suspense>
           <p className="ud-figure-caption">
@@ -262,7 +263,7 @@ export default function UnitDistancePage() {
           <p>
             {<T zh={<>正是猜想的形式!Erdős 猜的上界与他自己的下界<em>形式</em>一样,差的是常数 c → C。他相信这就是真实增长。下面拖滑块改 k 和 s 看看 r₂(k) 怎么影响 ν 的:</>} en={<>The same form as his conjectured upper! He believed his own lower bound was tight up to constants. Below, slide k and s to see how r₂(k) drives ν:</>} />}
           </p>
-          <Suspense fallback={<div className="ud-loading">Loading…</div>}>
+          <Suspense fallback={<div className="ud-loading"><LoadingIndicator /></div>}>
             <GridConstruction />
           </Suspense>
         </section>
@@ -347,7 +348,7 @@ export default function UnitDistancePage() {
                                                                                                                                         </>} />}
           </p>
 
-          <Suspense fallback={<div className="ud-loading">Loading…</div>}>
+          <Suspense fallback={<div className="ud-loading"><LoadingIndicator /></div>}>
             <BoundsChart />
           </Suspense>
         </section>
@@ -564,7 +565,7 @@ export default function UnitDistancePage() {
           <p>
             {<T zh={<>每一步点开看公式 + 解释。整体顺序:<em>基场 F → pro-3 塔 → CM 扩张 K = F(i) → Minkowski 格 → 切+投影</em>。前 3 步是<strong>数论部分</strong>(构造好"高维 + 多 norm-1 元素"的代数对象),后 2 步是<strong>几何部分</strong>(把代数对象翻译成 ℝ² 的点集)。</>} en={<>Click any stage to expand. The pipeline: <em>base F → pro-3 tower → CM extension K = F(i) → Minkowski lattice → cut + project</em>. The first three are the <strong>arithmetic part</strong> (build an algebraic object with high dim + many norm-1 elements); the last two are the <strong>geometric part</strong> (translate it into a planar point set).</>} />}
           </p>
-          <Suspense fallback={<div className="ud-loading">Loading…</div>}>
+          <Suspense fallback={<div className="ud-loading"><LoadingIndicator /></div>}>
             <ConstructionFlow />
           </Suspense>
         </section>
@@ -575,7 +576,7 @@ export default function UnitDistancePage() {
           <p>
             {<T zh={<>这一节是论文 §2 的可视化。论文里 f → ∞,这里我们退到 f = 2 (Gauss 整数 ℤ[i] in ℂ) 来直观地看。改 R 看 |X| 和单位距离对怎么同时指数增长 — 关键比是它们的指数差,正比于 1 + δ。</>} en={<>This visualises §2 of the paper. The real proof has f → ∞; we drop to f = 2 (Gaussian integers ℤ[i] in ℂ) for intuition. Slide R to see |X| and unit-pair counts both grow exponentially — the gap between their exponents is what 1 + δ is.</>} />}
           </p>
-          <Suspense fallback={<div className="ud-loading">Loading…</div>}>
+          <Suspense fallback={<div className="ud-loading"><LoadingIndicator /></div>}>
             <LatticeProjection />
           </Suspense>
 

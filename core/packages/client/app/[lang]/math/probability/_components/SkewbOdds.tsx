@@ -10,6 +10,7 @@ import Link from '@/components/AppLink';
 import { T, tr } from '@/i18n/tr';
 import { groupDigits } from '@/lib/group-digits';
 import { SKEWB_ODDS, SKEWB_PURE_CENTRE_3CYCLE } from '@/lib/skewb-odds';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const { total, wcaLegal, recognition: rec, centresOnly, steps, lastLayer } = SKEWB_ODDS;
 
@@ -136,7 +137,7 @@ export default function SkewbOdds() {
 
       {!sample && <p className="prob-note" role="status">{sampleFailed
         ? tr({ zh: '真题统计暂时无法加载。', en: 'Scramble statistics are temporarily unavailable.' })
-        : tr({ zh: '正在加载真题统计…', en: 'Loading scramble statistics…' })}</p>}
+        : <LoadingIndicator>{tr({ zh: '正在加载真题统计…', en: 'Loading scramble statistics…' })}</LoadingIndicator>}</p>}
 
       <div className="prob-cols">
         <div>

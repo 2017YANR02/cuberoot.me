@@ -12,6 +12,7 @@ import { SpeffzSchemeView } from '../_components/speffz/SpeffzSchemeView';
 import { AlgsetView } from '../_components/AlgsetView';
 import '../tutorial.css';
 import { tr } from '@/i18n/tr';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const CFOP_SLUG = 'cfop-tutorial';
 const SPEFFZ_SLUG = 'speffz-letter-scheme';
@@ -32,8 +33,8 @@ export default function TutorialPostClient() {
     return (
       <div className="tutorial-root">
         <div style={{ padding: 48, textAlign: 'center', color: 'var(--tutorial-text-muted)' }}>
-          {tr({ zh: '加载中…', en: 'Loading…'
-        })}
+          <LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…'
+        })}</LoadingIndicator>
         </div>
       </div>
     );

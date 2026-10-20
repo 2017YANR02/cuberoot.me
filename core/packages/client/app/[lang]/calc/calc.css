@@ -1112,19 +1112,6 @@
     box-shadow: 0 0 8px color-mix(in srgb, var(--calc-a) 50%, transparent);
 }
 
-/* NOTE: 加载中 — 用 ::after 覆盖显示 ⏳ */
-.calc-page .me-btn[data-loading]::after {
-    content: attr(data-loading);
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--muted);
-    font-size: 16px;
-    border-radius: 50%;
-}
-
 .calc-page .me-menu {
     /* anchored-panel: clamped (usePanelClamp in PlayerIdentity) */
     position: absolute;

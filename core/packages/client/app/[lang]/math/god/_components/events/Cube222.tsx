@@ -22,6 +22,7 @@ import {
   TeX, TeXBlock, MathText, tr,
   type HighlightCard, type RefItem, type StatItem,
 } from './_shared';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const Bfs2x2Demo = lazy(() => import('../Bfs2x2Demo'));
 
@@ -268,7 +269,7 @@ export default function Cube222({ isZh }: { isZh: boolean; eventId?: string }) {
           'The "antipodes" are the positions farthest from solved. The 2×2 has just 2644 of them in HTM (all exactly 11 moves) and only 276 in QTM (exactly 14). That is well under one-tenth of one percent of all states — which is why a genuinely worst-case scramble is almost never seen in practice. The demo below runs that BFS live in your browser, drawing the same distribution and reporting the 2644 antipodes.',
         )}
       >
-        <Suspense fallback={<div className="god-loading">{t('加载现场 BFS……', 'Loading live BFS…')}</div>}>
+        <Suspense fallback={<div className="god-loading"><LoadingIndicator>{t('加载现场 BFS……', 'Loading live BFS…')}</LoadingIndicator></div>}>
           <Bfs2x2Demo isZh={isZh} />
         </Suspense>
 

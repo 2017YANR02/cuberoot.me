@@ -31,6 +31,7 @@ import './wiki.css';
 import '@/components/hash-highlight.css';
 import { tr } from '@/i18n/tr';
 import { UserContactLink } from '@/components/UserIdLabel';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const LETTERS = ['#', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')];
 
@@ -323,8 +324,8 @@ export default function WikiPage() {
         )}
 
         {!data && !loadErr && (
-          <div className="wiki-empty">{tr({ zh: '加载中…', en: 'Loading…'
-        })}</div>
+          <div className="wiki-empty"><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…'
+        })}</LoadingIndicator></div>
         )}
 
         <div className="wiki-sections">

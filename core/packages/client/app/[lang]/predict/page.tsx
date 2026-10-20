@@ -69,13 +69,14 @@ import {
   type PredictPuzzle, type PredictPuzzleId,
 } from './_lib/puzzles';
 import './predict.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 /** 还没出题时:遮罩为空 = 不压暗。 */
 const EMPTY_FACELETS: readonly number[] = [];
 
 const PredictBoard = dynamic(() => import('./_components/PredictBoard'), {
   ssr: false,
-  loading: () => <div className="predict-board" aria-hidden="true" />,
+  loading: () => <div className="predict-board"><LoadingIndicator /></div>,
 });
 
 /** 站内那块公式键盘。只有「自己输入」这一档用得上,所以别让它进首包 —— 手机上
@@ -792,7 +793,7 @@ function PredictPageInner() {
 
 export default function PredictPage() {
   return (
-    <Suspense fallback={<div className="predict-page" />}>
+    <Suspense fallback={<div className="predict-page"><LoadingIndicator /></div>}>
       <PredictPageInner />
     </Suspense>
   );

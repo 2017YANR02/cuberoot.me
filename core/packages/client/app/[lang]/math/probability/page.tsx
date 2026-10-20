@@ -21,9 +21,10 @@ import { TeX, TeXBlock } from '@/components/math/Tex';
 import './probability.css';
 import { useT } from '@/hooks/useT';
 import { T } from '@/i18n/tr';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 // 四个都是长文里的交互实验块:占位撑住高度,chunk 落地时不把下文顶开(CLS)。
-const labBox = () => <div style={{ minHeight: 360 }} aria-hidden="true" />;
+const labBox = () => <div style={{ minHeight: 360 }}><LoadingIndicator /></div>;
 const UniverseBuilder = dynamic(() => import('./_components/UniverseBuilder'), { ssr: false, loading: labBox });
 const OrbitExplorer = dynamic(() => import('./_components/OrbitExplorer'), { ssr: false, loading: labBox });
 const BurnsideLab = dynamic(() => import('./_components/BurnsideLab'), { ssr: false, loading: labBox });

@@ -22,6 +22,7 @@ import { statsUrl } from '@/lib/stats-base';
 import { computeStats, modeOf, type DistStats } from '@/lib/scramble-dist/stats';
 import { downloadCsv } from '@/lib/scramble-dist/download';
 import type { DistJson } from '@/lib/scramble-dist/types';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 export interface TrText { zh: string; en: string }
 
@@ -187,7 +188,7 @@ export default function EnumeratedDistView({ spec, isZh }: { spec: EnumSpec; isZ
     return <div className="scramble-stats-error">{tr({ zh: '加载失败', en: 'Load failed' })}: {d.error}</div>;
   }
   if (d.loading) {
-    return <div className="scramble-stats-loading">{tr({ zh: '加载中…', en: 'Loading…' })}</div>;
+    return <div className="scramble-stats-loading"><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…' })}</LoadingIndicator></div>;
   }
 
   const binCount = effectiveBin !== null ? Number(d.counts[String(effectiveBin)] ?? 0) : 0;

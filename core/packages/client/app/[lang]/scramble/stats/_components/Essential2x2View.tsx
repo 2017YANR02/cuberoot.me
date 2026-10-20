@@ -21,10 +21,11 @@ import { tr } from '@/i18n/tr';
 import FirstStepGallery, { type GalleryRow } from './FirstStepGallery';
 import firstFace2x2 from '../_data/firstface_2x2.json';
 import './_essential-shared.css';
+import { LoadingIndicator } from '@/components/LoadingIndicator';
 
 const Essential2x2CaseTable = dynamic(() => import('./Essential2x2CaseTable'), {
   ssr: false,
-  loading: () => <div className="scramble-stats-loading">{tr({ zh: '加载中…', en: 'Loading…' })}</div>,
+  loading: () => <div className="scramble-stats-loading"><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…' })}</LoadingIndicator></div>,
 });
 
 const RED = '#f04f4f';   // 主分布(与 WCA 222 图同色,魔方红)
@@ -155,7 +156,7 @@ export default function Essential2x2View({ isZh, view }: { isZh: boolean; view: 
   }, [data]);
 
   if (error) return <div className="scramble-stats-error">{tr({ zh: '加载失败', en: 'Load failed' })}: {error}</div>;
-  if (!data) return <div className="scramble-stats-loading">{tr({ zh: '加载中…', en: 'Loading…' })}</div>;
+  if (!data) return <div className="scramble-stats-loading"><LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…' })}</LoadingIndicator></div>;
 
   const { meta } = data;
 
@@ -369,7 +370,7 @@ export default function Essential2x2View({ isZh, view }: { isZh: boolean; view: 
             <div className="ess-load">
               <button type="button" className="ess-load-btn" onClick={loadCases} disabled={casesLoading}>
                 {casesLoading
-                  ? tr({ zh: '加载中…', en: 'Loading…' })
+                  ? <LoadingIndicator>{tr({ zh: '加载中…', en: 'Loading…' })}</LoadingIndicator>
                   : tr({ zh: '浏览全部 {n} 个状态(约 5 MB)', en: 'Browse all {n} states (~5 MB)' }).replace('{n}', data.case_agg.total.toLocaleString())}
               </button>
               {casesError && <span className="scramble-stats-error">{tr({ zh: '加载失败', en: 'Load failed' })}: {casesError}</span>}
