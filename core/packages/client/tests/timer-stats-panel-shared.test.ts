@@ -51,6 +51,18 @@ describe('shared compact TimerStatsPanel', () => {
   let container: HTMLDivElement;
   let root: Root;
 
+  it('shows fixed current/best rows through ao100 without extra controls', async () => {
+    await act(async () => root.render(createElement(TimerStatsPanel, {
+      summaryOnly: true, event: '333', solves: [], labels,
+      rollingColumns: ['ao5', 'ao25'], onRollingColumnsChange: vi.fn(),
+    })));
+    expect([...container.querySelectorAll<HTMLElement>('[data-stat-row]')].map(row => row.dataset.statRow))
+      .toEqual(['time', 'mo3', 'ao5', 'ao12', 'ao25', 'ao50', 'ao100']);
+    expect(container.querySelector('button')).toBeNull();
+    expect(container.querySelector('.stats-foot')).toBeNull();
+    expect(container.querySelector('.subx-section')).toBeNull();
+  });
+
   beforeEach(() => {
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     container = document.createElement('div');
@@ -273,7 +285,8 @@ describe('Web statistics adapters', () => {
     expect(solo).toContain('onRollingColumnsChange={statsRollingColumns => updateSettings({statsRollingColumns})}');
     expect(solo).not.toContain('<TimerStatsPanel');
     expect(solo).not.toContain('<TimerRollingStatsPicker');
-    expect(workspace).toContain('<TimerStatsPanel renderPrBadge={() => <RecordBadge record="PR" variant="inline" />} {...stats}');
+    expect(workspace).toContain('summaryOnly={compact}');
+    expect(workspace).toContain('<RecordBadge record="PR" variant="inline" />');
     expect(workspace).not.toContain('bestSingle(');
     expect(stats).toContain("from './TimerRollingStatsPicker'");
     expect(stats).toContain('<TimerRollingStatsPicker');

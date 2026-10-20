@@ -63,9 +63,8 @@ export function TimerHistoryRollingCells({
         const value = formatEventMs(event, point?.value ?? null);
         const label = `; ${key}: ${value}${point?.isPb ? ', PB' : ''}`;
         return (
-          <span aria-label={label} className="hao timer-history-rolling-cell" data-stat={key} key={key}>
+          <span aria-label={label} className={`hao timer-history-rolling-cell${point?.isPb ? ' is-pb' : ''}`} data-stat={key} key={key}>
             <span aria-hidden="true">{value}</span>
-            {point?.isPb && <span aria-hidden="true" className="timer-history-rolling-pb">PB</span>}
           </span>
         );
       })}

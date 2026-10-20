@@ -1,3 +1,4 @@
+.timer-history-rolling-cell.is-pb { color: var(--accent); }
 .timer-history-columns-head {
   position: sticky;
   top: 0;
@@ -9,7 +10,7 @@
   gap: 8px;
   padding: 5px 14px;
   border-bottom: 1px solid var(--shell-divider);
-  background: var(--background);
+  background: transparent;
   color: var(--muted-foreground);
   font-size: 11px;
 }

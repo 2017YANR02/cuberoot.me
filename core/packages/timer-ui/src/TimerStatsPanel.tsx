@@ -54,6 +54,7 @@ export interface TimerStatsPrBadgeContext {
 }
 
 export interface TimerStatsPanelProps {
+  summaryOnly?: boolean;
   className?: string;
   defaultExpanded?: boolean;
   event?: EventId;
@@ -83,6 +84,7 @@ function isEmptyValue(value: string): boolean {
  * inject translated copy, persistence, and their platform PR badge.
  */
 export function TimerStatsPanel({
+  summaryOnly = false,
   className,
   defaultExpanded = false,
   event,
@@ -95,8 +97,10 @@ export function TimerStatsPanel({
 }: TimerStatsPanelProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
   const columns = useMemo(
-    () => rollingStatColumnsForEvent(event, rollingColumns),
-    [event, rollingColumns],
+    () => summaryOnly
+      ? event === '333mbld' ? [] : ['mo3', 'ao5', 'ao12', 'ao25', 'ao50', 'ao100'] as RollingStatKey[]
+      : rollingStatColumnsForEvent(event, rollingColumns),
+    [event, rollingColumns, summaryOnly],
   );
 
   const table = useMemo<StatsTableRow[]>(() => {
@@ -160,7 +164,7 @@ export function TimerStatsPanel({
         {table.map(row => (
           <div className="stats-row" key={row.key} data-stat-row={row.key}>
             <div className="st-label">
-              {row.stat
+              {row.stat && !summaryOnly
                 ? (
                   <TimerRollingStatsPicker
                     columns={columns}
@@ -184,7 +188,7 @@ export function TimerStatsPanel({
         ))}
       </div>
 
-      <div className="stats-foot">
+      {!summaryOnly && <><div className="stats-foot">
         <span>σ {sd === null ? '—' : (event ? formatEventMs(event, Math.round(sd)) : formatMs(Math.round(sd)))}</span>
         <span>{labels.count} {solves.length}</span>
       </div>
@@ -224,6 +228,7 @@ export function TimerStatsPanel({
           </div>
         </section>
       )}
+      </>}
     </div>
   );
 }

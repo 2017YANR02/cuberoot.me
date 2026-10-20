@@ -39,6 +39,10 @@ import { TimerHistoryTagBadges, TimerHistoryTagFilter } from './TimerHistoryTags
 
 export interface TimerHistoryWorkspaceHandle { dismiss(): boolean; clearFilters(): void; }
 export interface TimerHistoryWorkspaceProps {
+  /** A host toolbar owns search and settings in the compact results view. */
+  minimal?: boolean;
+  searchQuery?: string;
+  onSearchQueryChange?(query: string): void;
   ref?: Ref<TimerHistoryWorkspaceHandle>;
   onBlockingChange?(open: boolean): void;
   quickMenuOpen?: boolean;
@@ -73,6 +77,7 @@ export interface TimerHistoryWorkspaceProps {
 const MOBILE_QUERY = '(max-width: 480px)';
 
 export function TimerHistoryWorkspace({
+  minimal = false, searchQuery, onSearchQueryChange,
   ref, onBlockingChange, quickMenuOpen, onQuickMenuOpenChange, dateRangeLabels, rollingPickerLabels, onRollingColumnsChange, onCopyText, viewportBottomInset,
   historyContextKey, solves, isZh, onRowClick, onBulkDelete,
   onQuickPenalty, onQuickDelete, onQuickComment,
@@ -81,7 +86,9 @@ export function TimerHistoryWorkspace({
   const tr = (copy: {en: string; zh: string}) => copy[isZh ? 'zh' : 'en'];
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState(false);
-  const [query, setQuery] = useState('');
+  const [localQuery, setLocalQuery] = useState('');
+  const query = searchQuery ?? localQuery;
+  const setQuery = (value: string) => { setLocalQuery(value); onSearchQueryChange?.(value); };
   const [compareMode, setCompareMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [compareOpen, setCompareOpen] = useState(false);
@@ -431,7 +438,7 @@ export function TimerHistoryWorkspace({
   return (
     <div className="history-panel timer-history-workspace" data-no-timer>
       {deleteError && <p role="alert">{tr({en:"Unable to delete solves. Try again.",zh:"删除成绩失败，请重试。"})}</p>}
-      <div className="history-header">
+      {!minimal && <><div className="history-header">
         <span>{tr({ zh: '历史', en: 'History'
         })}</span>
         <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -769,6 +776,7 @@ export function TimerHistoryWorkspace({
           </div>
         )}
       </div>
+      </>}
       {visibleCompareMode && (
         <TimerHistoryCompareStatus count={visibleSelectedIds.length} labels={compareLabels} />
       )}
@@ -858,7 +866,7 @@ export function TimerHistoryWorkspace({
         {filteredReversed.length > 0 && !visibleCompareMode && !selectMode && (
           <TimerHistoryColumnsHeader
             picker={visibleStatColumns.length > 0
-              ? <TimerRollingStatsPicker columns={rollingStatColumns} triggerColumns={visibleStatColumns} labels={rollingPickerLabels} onColumnsChange={onRollingColumnsChange} viewportBottomInset={viewportBottomInset} />
+              ? minimal ? <div className="rolling-stats-column-pickers rolling-stats-column-pickers--header">{visibleStatColumns.map(key => <span key={key}>{key}</span>)}</div> : <TimerRollingStatsPicker columns={rollingStatColumns} triggerColumns={visibleStatColumns} labels={rollingPickerLabels} onColumnsChange={onRollingColumnsChange} viewportBottomInset={viewportBottomInset} />
               : undefined}
             resultLabel={panelEvent === '333mbld'
               ? tr({ zh: '成绩', en: 'Result' })
@@ -886,10 +894,10 @@ export function TimerHistoryWorkspace({
             }
           };
 
-          // Auto-tagged PBs move into their matching visible columns. If the
-          // user replaces that column, keep the tag beside the shared result.
+          // PBs use the result/rolling-column accent; keep only other badges.
           const rowTags = (
             <TimerHistoryTagBadges
+              hiddenTagIds={new Set(['pb-single', 'pb-ao5', 'pb-ao12'])}
               language={tagLanguage}
               rollingColumns={visibleStatColumns}
               tagIds={tagsById.get(s.id) ?? []}
@@ -897,6 +905,7 @@ export function TimerHistoryWorkspace({
           );
 
               return <TimerHistoryRow
+              className={tagsById.get(s.id)?.includes('pb-single') ? 'is-pb' : undefined}
               accessibleTimestamp={new Intl.DateTimeFormat(tagLanguage === 'zh' ? 'zh-CN' : 'en', {
                 dateStyle: 'long',
                 timeStyle: 'short',

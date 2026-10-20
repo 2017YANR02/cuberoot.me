@@ -72,6 +72,16 @@ describe('shared TimerSessionSwitcher interaction contract', () => {
     };
   });
 
+  it('keeps toolbar operations outside the picker and scopes them to the active session', async () => {
+    const confirm = vi.fn().mockResolvedValue(true);
+    await render({ inlineActions: true, confirm });
+    await act(async () => container.querySelector<HTMLButtonElement>('[aria-label^="Clear session"]')!.click());
+    expect(host.clear).toHaveBeenCalledWith('a');
+    await act(async () => container.querySelector<HTMLButtonElement>('.tsession-trigger')!.click());
+    expect(document.querySelector('.tsession-panel .tsession-actions')).toBeNull();
+    expect(document.querySelectorAll('.tsession-name-btn')).toHaveLength(2);
+  });
+
   afterEach(async () => {
     await act(async () => root.unmount());
     container.remove();

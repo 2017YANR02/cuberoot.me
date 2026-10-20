@@ -35,6 +35,8 @@ import RecordsOverlay from './RecordsOverlay';
 import CfopCaseStatsPanel from './CfopCaseStatsPanel';
 import DailyStatsPanel from './DailyStatsPanel';
 import { useWorkspaceText } from './localization';
+import { TimerStatsPanel } from '../TimerStatsPanel';
+import { timerStatsPanelLabels } from './stats-labels';
 
 interface Props {
   event: EventId;
@@ -268,6 +270,11 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose, on
         </div>
 
         <div className="modal-section" data-tab="overview">
+          <TimerStatsPanel summaryOnly event={event} solves={solves}
+            labels={timerStatsPanelLabels(isZh ? 'zh' : 'en')}
+            rollingColumns={[]} onRollingColumnsChange={() => {}} />
+          <details>
+          <summary>{tr({ zh: '更多指标', en: 'More metrics' })}</summary>
           <div className="stats-modal-grid">
             {lines.map(([k, v]) => (
               <div className="stats-modal-row" key={k}>
@@ -276,6 +283,7 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose, on
               </div>
             ))}
           </div>
+          </details>
         </div>
 
         {pbIdx >= 0 && (
@@ -289,7 +297,7 @@ export default function StatsModal({ event, solves: rawSolves, isZh, onClose, on
           </div>
         )}
 
-        <div className="modal-section" data-tab="overview">
+        <div className="modal-section" data-tab="daily">
           <h3 className="settings-h3">{tr({ zh: '时间段', en: 'Time periods'
         })}</h3>
           <table style={{ borderCollapse: 'collapse', fontSize: '0.9em', width: '100%' }}>

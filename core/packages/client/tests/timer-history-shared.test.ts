@@ -172,7 +172,7 @@ describe('shared timer history filtering', () => {
 
   it('locks the exact filter manifest and default newest-first result', () => {
     expect(TIMER_HISTORY_FILTER_CONTRACTS).toEqual([
-      { id: 'history.filter.search', effect: 'match-comment-or-scramble', visibility: 'always', disabledWhen: 'never' },
+      { id: 'history.filter.search', effect: 'match-result-comment-or-scramble', visibility: 'always', disabledWhen: 'never' },
       { id: 'history.filter.date', effect: 'limit-local-date-range', visibility: 'filters-expanded', disabledWhen: 'never' },
       { id: 'history.filter.time', effect: 'limit-effective-time', visibility: 'filters-expanded', disabledWhen: 'never' },
       { id: 'history.filter.penalty', effect: 'include-selected-penalties', visibility: 'filters-expanded', disabledWhen: 'never' },
@@ -190,6 +190,7 @@ describe('shared timer history filtering', () => {
     const defaults = createTimerHistoryFilters();
     expect(filterTimerHistorySolves(solves, { ...defaults, query: 'SPECIAL' }, tags).solves.map((s) => s.id)).toEqual(['b']);
     expect(filterTimerHistorySolves(solves, { ...defaults, query: 'warm' }, tags).solves.map((s) => s.id)).toEqual(['a']);
+    expect(filterTimerHistorySolves(solves, { ...defaults, query: '10.00' }, tags).solves.map((s) => s.id)).toEqual(['b']);
     expect(filterTimerHistorySolves(solves, {
       ...defaults, dateFrom: '2026-08-30', dateTo: '2026-08-30',
     }, tags).solves.map((s) => s.id)).toEqual(['c', 'b']);

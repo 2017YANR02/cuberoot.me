@@ -36,7 +36,7 @@ import {
   type TimerSettingCategoryId,
   type TimerSettingFieldId,
 } from '@cuberoot/shared/timer';
-import { TimerAttemptSplitSettings, TimerScramblePreviewSettings, TimerBooleanSettingRow, TimerTimingSettingsSections, TimerSmartCubeSettingsFields, type TimerBooleanControlProps } from '@cuberoot/timer-ui';
+import { TimerRollingStatsPicker, TimerAttemptSplitSettings, TimerScramblePreviewSettings, TimerBooleanSettingRow, TimerTimingSettingsSections, TimerSmartCubeSettingsFields, type TimerBooleanControlProps } from '@cuberoot/timer-ui';
 import { canUseRandomOptimal333 } from '../_lib/scramble/optimal333_pool';
 import { TimerPreScrambleSettings, TimerColorNeutralSetting } from '@cuberoot/timer-ui';
 import { useMetronome, setMetronome, tapTempo } from '@/lib/metronome';
@@ -280,6 +280,17 @@ export default function SettingsPanel({ onClose, event, actions, presenceControl
           renderBooleanControl={renderTimingBooleanControl}
           value={s}
         />
+        <SettingsSection category="timer" activeCategory={activeCategory} title={tr({ zh: '成绩', en: 'Results' })}>
+          <TimerRollingStatsPicker variant="row" columns={s.statsRollingColumns}
+            triggerColumns={s.statsRollingColumns} onColumnsChange={statsRollingColumns => updateSettings({ statsRollingColumns })}
+            labels={{
+              changeColumn: current => tr({ zh: `更改统计列，当前 ${current}`, en: `Change stats column, currently ${current}` }),
+              clear: tr({ zh: '清除', en: 'Clear' }),
+              customPlaceholder: tr({ zh: '自定义 ao', en: 'Custom ao' }),
+              customSize: tr({ zh: '自定义 ao 大小', en: 'Custom ao size' }),
+              replace: tr({ zh: '替换', en: 'Replace' }),
+            }} />
+        </SettingsSection>
 
         <SettingsSection
           category="smart-cube"

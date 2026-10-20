@@ -16,6 +16,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type ReactNode,
   type KeyboardEvent as ReactKeyboardEvent,
 } from 'react';
 import { createPortal } from 'react-dom';
@@ -96,6 +97,9 @@ export function timerSessionSwitcherLabels(
 }
 
 export interface TimerSessionSwitcherProps extends TimerOverlayControlProps {
+  inlineActions?: boolean;
+  hideActions?: boolean;
+  trailing?: ReactNode;
   activeSessionId: string;
   className?: string;
   event: EventId;
@@ -129,6 +133,7 @@ function defaultConfirm(message: string): boolean {
  * async-success interaction contract.
  */
 export function TimerSessionSwitcher({
+  inlineActions = false, hideActions = false, trailing,
   activeSessionId,
   className,
   confirm = defaultConfirm,
@@ -245,7 +250,7 @@ export function TimerSessionSwitcher({
         viewportTop + viewportHeight - VIEWPORT_MARGIN - Math.max(0, viewportBottomInset),
       );
       const triggerRect = trigger.getBoundingClientRect();
-      const width = Math.max(0, Math.min(triggerRect.width, safeRight - safeLeft));
+      const width = Math.max(0, Math.min(Math.max(triggerRect.width, inlineActions ? 240 : 0), safeRight - safeLeft));
       const left = Math.min(Math.max(triggerRect.left, safeLeft), safeRight - width);
       const belowTop = triggerRect.bottom + PANEL_GAP;
       const belowSpace = safeBottom - belowTop;
@@ -274,7 +279,7 @@ export function TimerSessionSwitcher({
       window.visualViewport?.removeEventListener('resize', update);
       window.visualViewport?.removeEventListener('scroll', update);
     };
-  }, [creating, open, operationError, renamingId, sessions, viewportBottomInset]);
+  }, [creating, open, operationError, renamingId, sessions, viewportBottomInset, inlineActions]);
 
   const run = useCallback(async (
     operation: TimerSessionOperation,
@@ -460,10 +465,9 @@ export function TimerSessionSwitcher({
                     title={session.name}
                     type="button"
                   >
-                    {isActive && <Check aria-hidden="true" className="tsession-check" size={13} />}
                     <span className="tsession-name-text">{session.name}</span>
                   </button>
-                  <div className="tsession-actions">
+                  {!inlineActions && <div className="tsession-actions">
                     <button
                       aria-label={`${labels.renameSession}: ${session.name}`}
                       className="tsession-icon-btn"
@@ -488,7 +492,7 @@ export function TimerSessionSwitcher({
                       title={sessions.length <= 1 ? labels.keepOneSession : labels.deleteSession}
                       type="button"
                     ><Trash2 aria-hidden="true" size={13} /></button>
-                  </div>
+                  </div>}
                 </>
               )}
             </div>
@@ -543,7 +547,7 @@ export function TimerSessionSwitcher({
   ), document.body) : null;
 
   return (
-    <div className={`tsession${className ? ` ${className}` : ''}`} data-no-timer>
+    <div className={`tsession${inlineActions ? ' tsession--toolbar' : ''}${className ? ` ${className}` : ''}`} data-no-timer>
       <button
         aria-controls={open ? popupId : undefined}
         aria-expanded={open}
@@ -562,6 +566,19 @@ export function TimerSessionSwitcher({
         <span className="tsession-trigger-name">{active?.name ?? labels.session}</span>
         <ChevronDown aria-hidden="true" className="tsession-trigger-caret" size={14} />
       </button>
+      {inlineActions && !hideActions && active && <div className="tsession-actions">
+        <button type="button" className="tsession-icon-btn" disabled={busy !== null}
+          aria-label={`${labels.renameSession}: ${active.name}`} title={labels.rename}
+          onClick={() => { startRename(active); changeOpen(true, 'trigger'); }}><Pencil size={16} /></button>
+        <button type="button" className="tsession-icon-btn" disabled={busy !== null}
+          aria-label={`${labels.clearSessionSolves}: ${active.name}`} title={labels.clearSolves}
+          onClick={() => handleClear(active)}><Eraser size={16} /></button>
+        <button type="button" className="tsession-icon-btn" disabled={busy !== null || sessions.length <= 1}
+          aria-label={`${labels.deleteSession}: ${active.name}`} title={labels.deleteSession}
+          onClick={() => handleDelete(active)}><Trash2 size={16} /></button>
+      </div>}
+      {trailing}
+      {inlineActions && !open && operationError && <p className="tsession-error" role="alert">{labels.operationFailed}</p>}
       {panel}
     </div>
   );

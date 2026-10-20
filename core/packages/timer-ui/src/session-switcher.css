@@ -51,6 +51,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.tsession-panel .tsession-name-text { white-space: normal; overflow-wrap: anywhere; overflow: visible; }
 
 .tsession-trigger-caret,
 .tsession-check {
@@ -67,7 +68,7 @@
   flex-direction: column;
   box-sizing: border-box;
   visibility: hidden;
-  overflow: hidden;
+  overflow: auto;
   border: 1px solid var(--border-default);
   border-radius: 12px;
   background: var(--popover);
@@ -77,11 +78,19 @@
 }
 
 .tsession-list {
+  flex: 0 0 auto;
   min-height: 0;
   padding: 4px;
-  overflow-y: auto;
+  overflow: visible;
   overscroll-behavior: contain;
 }
+.tsession--toolbar { display: flex; align-items: center; gap: 4px; }
+.tsession--toolbar .tsession-trigger { width: auto; max-width: 42%; min-height: 32px; padding: 4px 8px; background: transparent; border-radius: 6px; }
+.tsession--toolbar .tsession-actions { margin: 0; gap: 4px; }
+.tsession--toolbar .tsession-icon-btn { width: 32px; height: 32px; }
+.tsession-search { display: flex; align-items: center; margin-left: auto; min-width: 0; }
+.tsession-search.is-open { flex: 1; }
+.tsession-search input { width: 100%; min-width: 0; height: 32px; padding: 4px 6px; border: 1px solid var(--border-default); border-radius: 6px; color: var(--foreground); background: transparent; font: inherit; font-size: 13px; }
 
 .tsession-item {
   display: flex;

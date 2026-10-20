@@ -502,6 +502,20 @@ describe('shared history tag surfaces', () => {
     ]);
   });
 
+  it('renders a minimal history with external result search and PB emphasis', async () => {
+    const solves = [makeSolve({ id: 'first', timeMs: 12000, ts: 1, penalty: 'ok' }),
+      makeSolve({ id: 'second', timeMs: 9000, ts: 2, penalty: 'ok' })];
+    await act(async () => root.render(createElement(HistoryPanel, {
+      minimal: true, searchQuery: '9.00', historyContextKey: 'a', solves, isZh: false, onRowClick: vi.fn(),
+    })));
+    expect(host.querySelector('.history-header')).toBeNull();
+    expect(host.querySelector('.history-search')).toBeNull();
+    expect(host.querySelector('.timer-history-columns-head button')).toBeNull();
+    expect(host.querySelectorAll('.timer-history-row')).toHaveLength(1);
+    expect(host.querySelector('.timer-history-row.is-pb .time')?.textContent).toContain('9.00');
+    expect(host.querySelector('[data-tag-id="pb-single"]')).toBeNull();
+  });
+
   it('renders one shared header, semantic day divider, and event-aware rolling cells', async () => {
     const solves = [10_000, 20_000, 30_000].map((timeMs, index) => makeSolve({
       id: `rolling-${index}`,
@@ -529,6 +543,8 @@ describe('shared history tag surfaces', () => {
       .toBe('; mo3: 20.00, PB');
     expect(host.querySelector('[data-stat="mo3"] [aria-hidden="true"]')?.textContent)
       .toBe('20.00');
+    expect(host.querySelector('[data-stat="mo3"]')?.classList.contains('is-pb')).toBe(true);
+    expect(host.querySelector('.timer-history-rolling-pb')).toBeNull();
   });
 
   it('moves matching ao PB tags into columns and restores them after replacement', async () => {

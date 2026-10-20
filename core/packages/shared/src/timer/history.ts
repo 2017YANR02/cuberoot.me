@@ -1,6 +1,7 @@
 import type { TimerSessionMeta } from './persistence';
 import type { TimerHistoryTagId } from './history-tags';
 import { effectiveMs, type Penalty, type Solve } from './types';
+import { formatSolveResult } from './stats';
 
 /** Web `/timer` row-menu actions, in the exact order users reach them. */
 export const TIMER_HISTORY_QUICK_ACTION_IDS = [
@@ -245,7 +246,7 @@ export function timerSolveDetailBldTimes(solve: Solve): {
 
 /** Stable filter IDs and effects from the current Web HistoryPanel. */
 export const TIMER_HISTORY_FILTER_CONTRACTS = [
-  { id: 'history.filter.search', effect: 'match-comment-or-scramble', visibility: 'always', disabledWhen: 'never' },
+  { id: 'history.filter.search', effect: 'match-result-comment-or-scramble', visibility: 'always', disabledWhen: 'never' },
   { id: 'history.filter.date', effect: 'limit-local-date-range', visibility: 'filters-expanded', disabledWhen: 'never' },
   { id: 'history.filter.time', effect: 'limit-effective-time', visibility: 'filters-expanded', disabledWhen: 'never' },
   { id: 'history.filter.penalty', effect: 'include-selected-penalties', visibility: 'filters-expanded', disabledWhen: 'never' },
@@ -362,7 +363,8 @@ export function filterTimerHistorySolves(
     if (query) {
       const comment = (solve.comment ?? '').toLowerCase();
       const scramble = (solve.scramble ?? '').toLowerCase();
-      if (!comment.includes(query) && !scramble.includes(query)) return false;
+      const result = formatSolveResult(solve).toLowerCase();
+      if (!comment.includes(query) && !scramble.includes(query) && !result.includes(query)) return false;
     }
     if (dateFromMs !== null && solve.ts < dateFromMs) return false;
     if (dateToMs !== null && solve.ts >= dateToMs) return false;

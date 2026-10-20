@@ -39,6 +39,7 @@
   text-align: right;
 }
 
+.timer-history-row.is-pb .time { color: var(--accent); }
 .timer-history-row .time {
   min-width: 0;
   overflow-wrap: anywhere;

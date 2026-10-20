@@ -12,6 +12,7 @@ import TrendChart from './workspace/charts/TrendChart';
 import PracticeHeatmap from './workspace/charts/PracticeHeatmap';
 
 export interface TimerStatisticsWorkspaceProps extends Omit<TimerStatsPanelProps, 'event' | 'solves'> {
+  compact?: boolean;
   event: EventId;
   solves: Solve[];
   language: 'en' | 'zh';
@@ -21,7 +22,7 @@ export interface TimerStatisticsWorkspaceProps extends Omit<TimerStatsPanelProps
   onOpenFull(): void;
 }
 /** Both hosts inject snapshots and persistence; all statistics controls live here. */
-export function TimerStatisticsWorkspace({ language, view, sessionData, activeSessionId, onOpenFull, ...stats }: TimerStatisticsWorkspaceProps) {
+export function TimerStatisticsWorkspace({ compact = false, language, view, sessionData, activeSessionId, onOpenFull, ...stats }: TimerStatisticsWorkspaceProps) {
   const [crossSession, setCrossSession] = useState(false);
   const [chart, setChart] = useState('histogram');
   const isZh = language === 'zh';
@@ -30,14 +31,15 @@ export function TimerStatisticsWorkspace({ language, view, sessionData, activeSe
   return <TimerWorkspaceLanguage.Provider value={language}>
     <section className="timer-statistics-workspace" data-no-timer>
       {view === 'stats' ? <>
-        <TimerStatsPanel renderPrBadge={() => <RecordBadge record="PR" variant="inline" />} {...stats} />
-        <CaseStatsPanel event={stats.event} solves={stats.solves} isZh={isZh} />
-        <div className="timer-statistics-actions">
+        <TimerStatsPanel renderPrBadge={compact ? undefined : () => <RecordBadge record="PR" variant="inline" />} {...stats} summaryOnly={compact} />
+        {!compact && <CaseStatsPanel event={stats.event} solves={stats.solves} isZh={isZh} />}
+        {!compact && <div className="timer-statistics-actions">
           <button type="button" onClick={onOpenFull}>{tr({en:'Full stats',zh:'完整统计'})}</button>
           <button type="button" aria-expanded={crossSession} onClick={() => setCrossSession(value => !value)}>{tr({en:'Cross-session',zh:'跨分组统计'})}</button>
-        </div>
-        {crossSession && <CrossSessionStats event={stats.event} isZh={isZh} data={sessionData} activeId={activeSessionId} />}
-      </> : <>
+        </div>}
+        {!compact && crossSession && <CrossSessionStats event={stats.event} isZh={isZh} data={sessionData} activeId={activeSessionId} />}
+      </> : null}
+      {(compact || view === 'chart') && <>
         <select aria-label={tr({en:'Chart',zh:'图表'})} value={chart} onChange={event => setChart(event.target.value)}>
           {Object.entries({histogram:{en:'Histogram',zh:'分布'},trend:{en:'Trend',zh:'趋势'},scatter:{en:'Scatter',zh:'散点'},hour:{en:'Hour',zh:'时段'},heatmap:{en:'Heatmap',zh:'日历'}}).map(([id,copy]) => <option key={id} value={id}>{tr(copy)}</option>)}
         </select>
@@ -49,6 +51,9 @@ export function TimerStatisticsWorkspace({ language, view, sessionData, activeSe
           {chart === 'heatmap' && <PracticeHeatmap solves={stats.solves} isZh={isZh} cellSize={11} />}
         </div>
       </>}
+      {compact && <div className="timer-statistics-actions">
+        <button type="button" onClick={onOpenFull}>{tr({en:'Full stats',zh:'完整统计'})}</button>
+      </div>}
     </section>
   </TimerWorkspaceLanguage.Provider>;
 }

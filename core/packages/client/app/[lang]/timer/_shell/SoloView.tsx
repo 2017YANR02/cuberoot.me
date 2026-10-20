@@ -370,7 +370,7 @@ function useMediaQuery(query: string): boolean {
 // 三档各答一个问题,名字就是答案:**成绩**是这些把本身(会话 + 那张单子),**统计**
 // 是从它们算出来的数(当前/最佳、σ、阈值占比、完整统计),**图表**是画出来的。
 // 原来成绩那一档从当前/最佳一路铺到阈值占比再到历史,要滚很久才够到自己刚拧的那把。
-type PanelTab = 'times' | 'stats' | 'chart';
+type PanelTab = 'times' | 'stats';
 
 interface SoloViewProps {
   /** The players select node, injected by the shell into settings. */
@@ -2835,6 +2835,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const [diffSlot, setDiffSlot] = useState<HTMLSpanElement | null>(null);
   const [wcaSourceSlot, setWcaSourceSlot] = useState<HTMLDivElement | null>(null);
   const [mergeSlot, setMergeSlot] = useState<HTMLDivElement | null>(null);
+  const [historyQuery, setHistoryQuery] = useState('');
 
   const distractionFree = timer.phase === 'running' && !prefersReducedMotion;
   // Opt-in, and stronger than `distractionFree`: that one only fades
@@ -2850,6 +2851,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       return (
         <>
           <SessionSwitcher
+            query={historyQuery}
+            onQueryChange={setHistoryQuery}
             isZh={isZh}
             event={event}
             open={sessionSwitcherOpen}
@@ -2858,6 +2861,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           />
           {/* 这一档就是这些把本身:会话切换器 + 那张单子。算出来的数都在「统计」那档。 */}
           <HistoryPanel onBlockingChange={setHistoryOverlayOpen}
+            minimal
+            searchQuery={historyQuery}
+            onSearchQueryChange={setHistoryQuery}
             historyContextKey={`${getActiveSessionId()}|${event}`}
             solves={solves}
             isZh={isZh}
@@ -2871,8 +2877,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         </>
       );
     }
-    if (panelTab === 'stats' || panelTab === 'chart') {
-      return <TimerStatisticsWorkspace view={panelTab} language={isZh ? 'zh' : 'en'} event={event} solves={solves}
+    if (panelTab === 'stats') {
+      return <TimerStatisticsWorkspace compact view={panelTab} language={isZh ? 'zh' : 'en'} event={event} solves={solves}
         labels={timerStatsPanelLabels(isZh ? 'zh' : 'en')} rollingColumns={settings.statsRollingColumns}
         onRollingColumnsChange={statsRollingColumns => updateSettings({statsRollingColumns})}
         sessionData={loadAllSessionData().map(item => item.session.id === getActiveSessionId() ? {...item, byEvent} : item)} activeSessionId={getActiveSessionId()}
@@ -3436,8 +3442,6 @@ children: <>
         <aside className={`timer-workspace-panel shell-panel${isDesktop ? ' shell-panel--rail' : ' shell-panel--sheet'}`}>
           <div className="shell-panel-tabs">
             <button type="button" className={`shell-panel-tab${panelTab === 'times' ? ' active' : ''}`} onClick={() => setPanelTab('times')}>{tr({ zh: '成绩', en: 'Times'
-          })}</button>
-            <button type="button" className={`shell-panel-tab${panelTab === 'chart' ? ' active' : ''}`} onClick={() => setPanelTab('chart')}>{tr({ zh: '图表', en: 'Chart'
           })}</button>
             <button type="button" className={`shell-panel-tab${panelTab === 'stats' ? ' active' : ''}`} onClick={() => setPanelTab('stats')}>{tr({ zh: '统计', en: 'Stats'
           })}</button>
