@@ -4,8 +4,9 @@ import { FM_IGNORED, FM_REGULAR, stickeringMaskFn } from '@cuberoot/puzzle-rende
 import { simplifyAlg } from '@cuberoot/shared/recon/cube3';
 import { resolveSimPreviewMoves } from '@/components/AlgPlayer/player-setup';
 import { CUBE_ORIENTATIONS } from '@/lib/cube-orientation';
-import { F2L_CASES, f2lDiagramFacelets, f2lPlaybackSections } from './content';
-import algSnapshot from './alg-snapshot.json';
+import { F2L_CASES } from '../data/basic-cases';
+import { f2lDiagramFacelets, f2lPlaybackSections } from './cube-preview';
+import algSnapshot from '../data/alg-snapshot.json';
 
 const GROUP_NAMES: Record<string, { zh: string; en: string }> = {
   'Free Pairs': { zh: '自由棱角对', en: 'Free pairs' },
