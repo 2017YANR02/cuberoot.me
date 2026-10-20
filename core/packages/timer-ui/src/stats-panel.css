@@ -13,13 +13,14 @@
 
 .stats-table {
   margin-bottom: 8px;
-  font-family: var(--font-mono);
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
 }
 
 .stats-table-head,
 .stats-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 4.8em 4.8em;
+  grid-template-columns: minmax(0, 1fr) repeat(2, minmax(0, 5rem));
   align-items: center;
   gap: 8px;
 }
@@ -30,7 +31,7 @@
   color: var(--muted-foreground);
   font-family: inherit;
   font-size: 11px;
-  letter-spacing: 0.05em;
+  letter-spacing: normal;
   text-transform: uppercase;
 }
 
@@ -88,6 +89,8 @@
   display: inline-grid;
   width: fit-content;
 }
+.rolling-stats-column-pickers--settings { width: fit-content; }
+.rolling-stats-column-pickers--settings .compact-select-trigger { min-height: 36px; font: inherit; }
 
 .rolling-stats-column-pickers--row .compact-select-trigger {
   justify-content: flex-start;

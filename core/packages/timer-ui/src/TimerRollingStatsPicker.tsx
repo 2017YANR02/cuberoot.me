@@ -27,7 +27,7 @@ export interface TimerRollingStatsPickerProps {
   labels: TimerRollingStatsPickerLabels;
   onColumnsChange: (columns: RollingStatKey[]) => void;
   triggerColumns: readonly RollingStatKey[];
-  variant?: 'header' | 'row';
+  variant?: 'header' | 'row' | 'settings';
   viewportBottomInset?: number;
 }
 
@@ -75,7 +75,7 @@ export function TimerRollingStatsPicker({
             className="rolling-stats-column-select"
             triggerClassName={variant === 'header' ? 'hao-head' : undefined}
             popupClassName="rolling-stats-menu"
-            variant="plain"
+            variant={variant === 'settings' ? 'pill' : 'plain'}
             label={current}
             items={rollingStatReplacementOptions(columns).map(key => ({ value: key, label: key }))}
             onChange={replacement => replaceColumn(current, replacement)}

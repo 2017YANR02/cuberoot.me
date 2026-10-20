@@ -281,8 +281,10 @@ export default function SettingsPanel({ onClose, event, actions, presenceControl
           value={s}
         />
         <SettingsSection category="timer" activeCategory={activeCategory} title={tr({ zh: '成绩', en: 'Results' })}>
-          <TimerRollingStatsPicker variant="row" columns={s.statsRollingColumns}
-            triggerColumns={s.statsRollingColumns} onColumnsChange={statsRollingColumns => updateSettings({ statsRollingColumns })}
+          {s.statsRollingColumns.map((column, index) => <Row key={index}
+            label={tr({ zh: `统计指标${index === 0 ? '一' : '二'}`, en: `Statistic ${index + 1}` })}>
+          <TimerRollingStatsPicker variant="settings" columns={s.statsRollingColumns}
+            triggerColumns={[column]} onColumnsChange={statsRollingColumns => updateSettings({ statsRollingColumns })}
             labels={{
               changeColumn: current => tr({ zh: `更改统计列，当前 ${current}`, en: `Change stats column, currently ${current}` }),
               clear: tr({ zh: '清除', en: 'Clear' }),
@@ -290,6 +292,7 @@ export default function SettingsPanel({ onClose, event, actions, presenceControl
               customSize: tr({ zh: '自定义 ao 大小', en: 'Custom ao size' }),
               replace: tr({ zh: '替换', en: 'Replace' }),
             }} />
+          </Row>)}
         </SettingsSection>
 
         <SettingsSection
