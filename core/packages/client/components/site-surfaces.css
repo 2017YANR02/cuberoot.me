@@ -426,11 +426,16 @@ body[data-site-scenery] .solver-view-select {
 }
 /* Statistics controls share the scenic panel instead of an opaque input fill. */
 body[data-site-scenery] .timer-statistics-workspace > select,
-body[data-site-scenery] .timer-statistics-actions > button {
+body[data-site-scenery] .timer-statistics-actions > button:not(.timer-statistics-report) {
   background-color: transparent !important;
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
   font-family: inherit;
+}
+body[data-site-scenery] .timer-statistics-actions > .timer-statistics-report {
+  background-color: var(--card) !important;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 body[data-site-scenery] :is(

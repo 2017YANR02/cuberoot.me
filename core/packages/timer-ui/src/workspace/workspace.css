@@ -53,7 +53,7 @@
 .timer-history-workspace .history-list {
   flex: 1;
   overflow-y: auto;
-  font-family: 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace;
+  font-family: inherit;
   font-size: 13px;
 }
 .timer-history-workspace .history-row .actions {
@@ -111,6 +111,16 @@
 .timer-statistics-workspace { min-width: 0; }
 .timer-statistics-workspace select { max-width: 100%; padding: 6px; background: var(--background); color: var(--foreground); border: 1px solid var(--border-default); border-radius: 4px; }
 .timer-statistics-actions { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px 0; }
+.timer-statistics-actions--report { justify-content: flex-end; }
+.timer-statistics-actions .timer-statistics-report {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 8px 12px;
+  background: var(--card);
+  font: inherit;
+}
 .timer-statistics-actions button { background: var(--background); color: var(--foreground); border: 1px solid var(--border-default); padding: 6px 10px; border-radius: 4px; cursor: pointer; }
 .timer-statistics-chart { overflow-x: auto; max-width: 100%; }
 .timer-statistics-chart svg { max-width: 100%; height: auto; }

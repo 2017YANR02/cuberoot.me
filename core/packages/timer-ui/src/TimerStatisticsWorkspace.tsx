@@ -1,4 +1,5 @@
 import { RecordBadge } from './RecordBadge';
+import { FileChartColumn } from 'lucide-react';
 import { useState, type ComponentProps } from 'react';
 import type { EventId, Solve } from '@cuberoot/shared/timer';
 import { TimerStatsPanel, type TimerStatsPanelProps } from './TimerStatsPanel';
@@ -51,8 +52,11 @@ export function TimerStatisticsWorkspace({ compact = false, language, view, sess
           {chart === 'heatmap' && <PracticeHeatmap solves={stats.solves} isZh={isZh} cellSize={11} />}
         </div>
       </>}
-      {compact && <div className="timer-statistics-actions">
-        <button type="button" onClick={onOpenFull}>{tr({en:'Full stats',zh:'完整统计'})}</button>
+      {compact && <div className="timer-statistics-actions timer-statistics-actions--report">
+        <button type="button" className="timer-statistics-report" onClick={onOpenFull}>
+          <FileChartColumn size={16} aria-hidden="true" />
+          {tr({en:'Full stats',zh:'完整统计'})}
+        </button>
       </div>}
     </section>
   </TimerWorkspaceLanguage.Provider>;
