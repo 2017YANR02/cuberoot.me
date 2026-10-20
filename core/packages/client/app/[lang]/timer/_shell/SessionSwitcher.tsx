@@ -8,7 +8,7 @@ import {
   timerSessionSwitcherLabels,
   type TimerSessionSwitcherHost,
 } from '@cuberoot/timer-ui';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Search } from 'lucide-react';
 
 import {
@@ -41,6 +41,8 @@ export default function SessionSwitcher({
 }: Props) {
   const [state, setState] = useState(getSessionSnapshot);
   const [searchOpen, setSearchOpen] = useState(false);
+  const searchInput = useRef<HTMLInputElement>(null);
+  useEffect(() => { if (searchOpen) searchInput.current?.focus(); }, [searchOpen]);
   const labels = useMemo(
     () => timerSessionSwitcherLabels((['en', 'zh'] as const)[Number(isZh)]),
     [isZh],
@@ -81,10 +83,12 @@ export default function SessionSwitcher({
       inlineActions
       hideActions={searchOpen}
       trailing={onQueryChange && <div className={`tsession-search${searchOpen ? ' is-open' : ''}`}>
-        {searchOpen && <input autoFocus type="search" value={query}
+        <div className="tsession-search-field" inert={!searchOpen}>
+        <input ref={searchInput} type="search" value={query} tabIndex={searchOpen ? 0 : -1}
           onChange={event => onQueryChange(event.target.value)}
           placeholder={isZh ? '时间、打乱、注释' : 'Time, scramble, comment'}
-          aria-label={isZh ? '搜索成绩' : 'Search solves'} />}
+          aria-label={isZh ? '搜索成绩' : 'Search solves'} />
+        </div>
         <button type="button" className="tsession-icon-btn" aria-expanded={searchOpen}
           aria-label={isZh ? '搜索成绩' : 'Search solves'}
           onClick={() => { setSearchOpen(!searchOpen); if (searchOpen) onQueryChange(''); }}>

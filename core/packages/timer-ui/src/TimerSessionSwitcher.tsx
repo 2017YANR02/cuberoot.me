@@ -566,7 +566,7 @@ export function TimerSessionSwitcher({
         <span className="tsession-trigger-name">{active?.name ?? labels.session}</span>
         <ChevronDown aria-hidden="true" className="tsession-trigger-caret" size={14} />
       </button>
-      {inlineActions && !hideActions && active && <div className="tsession-actions">
+      {inlineActions && active && <div className={`tsession-actions${hideActions ? ' is-hidden' : ''}`} inert={hideActions}>
         <button type="button" className="tsession-icon-btn" disabled={busy !== null}
           aria-label={`${labels.renameSession}: ${active.name}`} title={labels.rename}
           onClick={() => { startRename(active); changeOpen(true, 'trigger'); }}><Pencil size={16} /></button>

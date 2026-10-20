@@ -86,10 +86,12 @@
 }
 .tsession--toolbar { display: flex; align-items: center; gap: 4px; }
 .tsession--toolbar .tsession-trigger { width: auto; max-width: 42%; min-height: 32px; padding: 4px 8px; background: transparent; border-radius: 6px; }
-.tsession--toolbar .tsession-actions { margin: 0; gap: 4px; }
+.tsession--toolbar .tsession-actions { margin: 0; gap: 4px; max-width: 104px; overflow: hidden; transition: max-width 180ms ease, opacity 180ms ease; }
+.tsession--toolbar .tsession-actions.is-hidden { max-width: 0; opacity: 0; }
 .tsession--toolbar .tsession-icon-btn { width: 32px; height: 32px; }
-.tsession-search { display: flex; align-items: center; margin-left: auto; min-width: 0; }
-.tsession-search.is-open { flex: 1; }
+.tsession-search { display: flex; flex: 1; align-items: center; justify-content: flex-end; margin-left: auto; min-width: 0; }
+.tsession-search-field { flex: 1; min-width: 0; max-width: 0; overflow: hidden; opacity: 0; transform: translateX(12px); transition: max-width 180ms ease, opacity 180ms ease, transform 180ms ease; }
+.tsession-search.is-open .tsession-search-field { max-width: 100%; opacity: 1; transform: translateX(0); }
 .tsession-search input { width: 100%; min-width: 0; height: 32px; padding: 4px 6px; border: 1px solid var(--border-default); border-radius: 6px; color: var(--foreground); background: transparent; font: inherit; font-size: 13px; }
 
 .tsession-item {
@@ -246,6 +248,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .tsession-search-field,
+  .tsession--toolbar .tsession-actions,
   .tsession-trigger,
   .tsession-icon-btn {
     transition: none;

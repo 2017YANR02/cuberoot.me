@@ -77,9 +77,17 @@ describe('shared TimerSessionSwitcher interaction contract', () => {
     await render({ inlineActions: true, confirm });
     await act(async () => container.querySelector<HTMLButtonElement>('[aria-label^="Clear session"]')!.click());
     expect(host.clear).toHaveBeenCalledWith('a');
+    const trigger = container.querySelector<HTMLButtonElement>('.tsession-trigger')!;
+    const rect = trigger.getBoundingClientRect();
+    vi.spyOn(trigger, 'getBoundingClientRect').mockReturnValue({ ...rect, width: 80, right: rect.left + 80 });
     await act(async () => container.querySelector<HTMLButtonElement>('.tsession-trigger')!.click());
     expect(document.querySelector('.tsession-panel .tsession-actions')).toBeNull();
     expect(document.querySelectorAll('.tsession-name-btn')).toHaveLength(2);
+    expect(document.querySelector('.tsession-name-btn svg')).toBeNull();
+    expect(document.querySelector<HTMLElement>('.tsession-panel')!.style.width).toBe('240px');
+    await render({ inlineActions: true, hideActions: true });
+    expect(container.querySelector('.tsession-actions')?.hasAttribute('inert')).toBe(true);
+    expect(container.querySelectorAll('.tsession-actions button')).toHaveLength(3);
   });
 
   afterEach(async () => {
