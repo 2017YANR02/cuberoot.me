@@ -40,18 +40,20 @@ const nativeSettings = TIMER_SETTING_FIELD_CONTRACTS.filter(f => [
   'compactScramble', 'hideAllUiWhileRunning', 'timerFontScale', 'scrambleFontScale',
 ].includes(f.storagePath ?? ''));
 const nativeCategories = TIMER_SETTING_CATEGORY_CONTRACTS.filter(c => ['timer', 'smart-cube', 'scramble', 'appearance', 'data'].includes(c.id));
-function settingValues(f: typeof nativeSettings[number]): readonly (boolean | number | string)[] {
+function settingValues(f: typeof nativeSettings[number], current?: unknown): readonly (boolean | number | string)[] {
   if (f.value.kind === 'boolean') return [false, true];
   if ('values' in f.value) return f.value.values ?? [];
   if (f.value.kind === 'number-range') {
     const { min, max, step } = f.value;
-    return Array.from({ length: Math.round((max - min) / step) + 1 }, (_, i) => Number((min + step * i).toFixed(2)));
+    const values = Array.from({ length: Math.round((max - min) / step) + 1 }, (_, i) => Number((min + step * i).toFixed(2)));
+    if (typeof current === 'number' && Number.isFinite(current) && current >= min && current <= max) values.push(current);
+    return [...new Set(values)].sort((a, b) => a - b);
   }
   return [];
 }
 function settingRows(t: NativeTimer) {
   return nativeSettings.map(f => {
-    const values = settingValues(f);
+    const values = settingValues(f, t.settings[f.storagePath as keyof typeof t.settings]);
     const labels = values.map(value => typeof value === 'boolean' ? tr(value ? { en: 'On', zh: '开启' } : { en: 'Off', zh: '关闭' }) : f.value.kind === 'number-range' ? `${Math.round(Number(value) * 100)}%` : String(value));
     const index = values.indexOf(t.settings[f.storagePath as keyof typeof t.settings] as boolean | number | string);
     return { key: f.storagePath, category: f.category, boolean: f.value.kind === 'boolean', checked: index === 1, label: tr(f.copy), labels, index: Math.max(0, index), value: labels[index] };
@@ -384,7 +386,7 @@ export function createNativeTimerPageOptions(): WechatMiniprogram.Page.Options<R
       if (key === 'tap') t.updateSettings({ scrambleClickAction: TIMER_SCRAMBLE_CLICK_ACTIONS[index] ?? 'start' });
       const field = nativeSettings.find(f => f.storagePath === key);
       if (field) {
-        const values = settingValues(field);
+        const values = settingValues(field, t.settings[field.storagePath as keyof typeof t.settings]);
         if (index >= 0 && index < values.length) t.updateSettings({ [String(key)]: values[index] });
       }
       refresh(p, true);

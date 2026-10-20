@@ -36,6 +36,7 @@ function fixture() {
     resultAction(event: WechatMiniprogram.TouchEvent): void;
     draftInput(event: WechatMiniprogram.Input): void;
     saveDraft(): void;
+    changeSetting(event: WechatMiniprogram.PickerChange): void;
   };
   const page = {
     ...options, data: { ...options.data }, active: true, nativeTimer: timer,
@@ -77,6 +78,17 @@ describe('native timer source sheet lifecycle', () => {
     timer.down(); page.timerUp();
     expect(page.data.phase).toBe('stopped');
     expect(page.data.hideChrome).toBe(false);
+  });
+
+  it('preserves a restored font scale between standard picker increments', () => {
+    const { page, timer } = fixture();
+    timer.updateSettings({ timerFontScale: 1.23 });
+    page.openSheet(event({ sheet: 'settings' }));
+    const rows = page.data.settingRows as { key: string; index: number; value: string }[];
+    const row = rows.find(row => row.key === 'timerFontScale')!;
+    expect(row.value).toBe('123%');
+    page.changeSetting({ currentTarget: { dataset: { setting: row.key } }, detail: { value: String(row.index) } } as unknown as WechatMiniprogram.PickerChange);
+    expect(timer.settings.timerFontScale).toBe(1.23);
   });
 
   it('updates penalties in place while preserving the raw result and source', () => {
