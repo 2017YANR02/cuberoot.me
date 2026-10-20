@@ -32,11 +32,11 @@ describe('LBL teaching examples', () => {
         expect(start.patternData.EDGES.orientation.filter(o => o !== 0).length).toBe(demo.title.en === 'Dot' ? 4 : 2);
       }
       if (step.id === 'cross') {
-        // The lesson inserts one petal; the practice sequence completes four.
+        // The first three moves insert one petal; the full sequence completes four.
         const colors = ['U', 'R', 'F', 'D', 'L', 'B'].flatMap(color => Array<string>(9).fill(color));
         const faces = (alg: string): string[][] => JSON.parse(practiceState(colors, `${setup} ${alg}`));
-        expect([1, 3, 5, 7].filter(i => faces(demo.alg)[3][i] === 'D').length).toBe(1);
-        const complete = faces(demo.practiceAlg!);
+        expect([1, 3, 5, 7].filter(i => faces(demo.alg.split(' ').slice(0, 3).join(' '))[3][i] === 'D').length).toBe(1);
+        const complete = faces(demo.alg);
         expect([1, 3, 5, 7].filter(i => complete[3][i] === 'D').length).toBe(4);
         for (const side of [1, 2, 4, 5]) expect(complete[side][7]).toBe(complete[side][4]);
       }

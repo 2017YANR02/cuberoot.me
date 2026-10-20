@@ -52,8 +52,7 @@ export default function Practice({ step }: { step: typeof LBL_STEPS[number] }) {
 }
 
 function Exercise({ step, index, onNext, textMoves, onTextMovesChange }: { step: typeof LBL_STEPS[number]; index: number; onNext: () => void; textMoves: boolean; onTextMovesChange: (value: boolean) => void }) {
-  const source = step.examples[index];
-  const example = { ...source, alg: source.practiceAlg ?? source.alg };
+  const example = step.examples[index];
   const beginner = step.id === 'daisy';
   const setup = new Alg(resolvePlayerSetup('3x3', example.alg, example.setup, example.startSolved ?? false)).expand().toString();
   const target = new Alg(`${setup} ${example.alg}`).expand().toString();
@@ -107,7 +106,7 @@ function Exercise({ step, index, onNext, textMoves, onTextMovesChange }: { step:
   const actionRows = (rows: typeof practiceMoves) => rows.map(row => <div className="lbl-action-row" key={row.en}>
     <span>{tr(row)}</span>{row.moves.map((move, i) => <button className="lbl-button" type="button" key={move} onClick={() => turn(move)}><b aria-hidden="true">{row.arrows[i]}</b>{moveLabel(move)}</button>)}
   </div>);
-  return <section className="lbl-basics lbl-exercise" data-site-surface="panel">
+  return <section className="lbl-basics lbl-exercise">
     {completed && <CompletionDialog onClose={() => setCompleted(false)} />}
     <div className="lbl-exercise-heading"><h2>{tr(step.title)}</h2><span className="lbl-basic-progress">{index + 1} / {step.examples.length}</span></div>
     <div className="lbl-basic-content">

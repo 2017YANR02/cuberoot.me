@@ -43,7 +43,7 @@ describe('LBL bilingual move cues', () => {
       [['左转体', 'y']],
       [['上', "L'"], ['勾', "U'"], ['下', 'L'], ['回', 'U']],
     ]);
-    expect(getLblAlgGroups('middle', examples[2].alg).map(group => group.map(move => move.cue.zh).join('')))
+    expect(getLblAlgGroups('middle', examples[1].alg).map(group => group.map(move => move.cue.zh).join('')))
       .toEqual(['转顶层', '对齐', '右', '上勾下回', '右转体', '上勾下回']);
   });
 
