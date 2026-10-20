@@ -250,12 +250,13 @@ export function TimerSessionSwitcher({
         viewportTop + viewportHeight - VIEWPORT_MARGIN - Math.max(0, viewportBottomInset),
       );
       const triggerRect = trigger.getBoundingClientRect();
-      const width = Math.max(0, Math.min(Math.max(triggerRect.width, inlineActions ? 240 : 0), safeRight - safeLeft));
+      const width = Math.max(0, Math.min(Math.max(triggerRect.width, inlineActions ? 180 : 0), safeRight - safeLeft));
       const left = Math.min(Math.max(triggerRect.left, safeLeft), safeRight - width);
       const belowTop = triggerRect.bottom + PANEL_GAP;
       const belowSpace = safeBottom - belowTop;
       const aboveSpace = triggerRect.top - PANEL_GAP - safeTop;
-      const desiredHeight = Math.max(MIN_PANEL_HEIGHT, panel.scrollHeight);
+      // scrollHeight excludes borders, while the panel uses border-box sizing.
+      const desiredHeight = Math.max(MIN_PANEL_HEIGHT, panel.scrollHeight + panel.offsetHeight - panel.clientHeight);
       const placeBelow = belowSpace >= Math.min(desiredHeight, MIN_PANEL_HEIGHT)
         || belowSpace >= aboveSpace;
       const maxHeight = Math.max(
@@ -408,7 +409,7 @@ export function TimerSessionSwitcher({
       aria-busy={busy !== null}
       aria-label={labels.sessions}
       aria-modal="true"
-      className="tsession-panel"
+      className={`tsession-panel${inlineActions ? ' tsession-panel--compact' : ''}`}
       data-no-timer
       id={popupId}
       onKeyDown={handlePanelKeyDown}

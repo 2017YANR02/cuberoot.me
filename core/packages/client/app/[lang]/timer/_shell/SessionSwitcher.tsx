@@ -44,7 +44,8 @@ export default function SessionSwitcher({
   const searchInput = useRef<HTMLInputElement>(null);
   useEffect(() => { if (searchOpen) searchInput.current?.focus(); }, [searchOpen]);
   const labels = useMemo(
-    () => timerSessionSwitcherLabels((['en', 'zh'] as const)[Number(isZh)]),
+    () => ({ ...timerSessionSwitcherLabels((['en', 'zh'] as const)[Number(isZh)]),
+      newSession: isZh ? '新建' : 'New' }),
     [isZh],
   );
   const refresh = useCallback(() => setState(getSessionSnapshot()), []);
