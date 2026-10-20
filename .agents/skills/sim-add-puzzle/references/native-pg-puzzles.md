@@ -13,6 +13,7 @@
 - [验证范围](#验证范围)
 - [机制审查记录](#机制审查记录)
 - [Cat’s Cradle](#cats-cradle)
+- [Radio Canon](#radio-canon)
 
 ## 共享入口
 
@@ -58,6 +59,7 @@
 | `icosababyface` | 深切角转二十面体 / Deep-Cut Icosahedron | `i v 0.562777422255239` | 使用 [cubing.js 维护者列出的单层深角切描述](https://github.com/cubing/cubing.js/issues/127)，以外接球半径 r 推导切深 r/√5，使每个切面经过五个邻接顶点；只采用 Dogic 的深切族，不添加小角片。上游昵称带问号，显示名使用明确结构名称。 |
 | `cube3heli` | 三阶＋直升机 / 3×3 + Helicopter | `c f 0.333333333333333 e 0.7071067811865476` | 根据 [cubing.js 官方 pgPuzzles.ts](https://github.com/cubing/cubing.js/blob/main/src/cubing/puzzle-geometry/pgPuzzles.ts) 的独立 `3x3x3`、`helicopter` 预设及 [Jaap 的平面棱转说明](https://www.jaapsch.net/puzzles/helicopter.htm)，组合均匀三阶面切与 Helicopter 棱切；以立方体半边长 1 推导面切 ±1/3、棱切 ±√2/2。支持保形 90° 面转及 180° 棱转，不包含 jumbling，不宣称精确复刻 Grégoire Pfennig 的 Helicopter 3×3 实物切深。 |
 | `radiojewel` | Radio Jewel / Radio Jewel | `i f 0.5278640450004204` | 按 [Jason Smith 的 Radiolarian 7 原作](https://www.puzzleforge.com/wp/2012/11/06/radiolarian-7-radio-jewel-112012/)和 [Hyperspeedcube 的 radio07 实现](https://github.com/HactarCE/Hyperspeedcube/blob/main/lua/puzzles/ft_icosahedra.lua)，取内切球半径 1、面切深 5−2√5；核对原作照片的中央六边形与十五个三角形，以及[实体规格的 242 个外露块](https://cubein.cn/products/radio-jewel-radiolarian-7)。保留二十色和保形 120° 面转，不包含实物的两种 jumbling，不宣称测量复刻商品尺寸。 |
+| `radiocanon` | Radio Canon / Radio Canon | `i f 0.77` | 按 [Jason Smith 的 Radiolarian 1.5 原作](https://www.puzzleforge.com/wp/2014/05/08/radiolarian-1-5-the-radio-cannon-52014/)核对固定面中心及实物分区，采用 [Hyperspeedcube 的 `radio01_5` 切深](https://github.com/HactarCE/Hyperspeedcube/blob/main/lua/puzzles/ft_icosahedra.lua) 0.77；这是已知模拟器的理想化平面模型，不是商品尺寸测量值。保留标准 120° 面转，不包含 jumbling。 |
 
 把拼图描述视为几何数据；Dino Skewb、3×3 + Dino 与 3×3 + Helicopter 的组合描述由已核证的两类切面推导，不标注成上游预设中逐字复制的条目。
 
@@ -88,6 +90,7 @@
 | 3×3 + Helicopter | 6 | 28（12 三角形、12 四边形、4 五边形） | 168 | 8 个三贴片角块、24 个双贴片棱块、四组各 24 个单贴片中心块，共 128 块 | 面轴 90°、棱轴 180° |
 | Radio Jewel | 20 | 16（15 三角形、1 六边形） | 320 | 12 个五贴片角块、30 个双贴片棱块、三组各 60 个三角中心块、20 个六边形中心块，共 242 块 | 面轴 120° |
 | Cat’s Cradle | 20 | 19（15 三角形、3 四边形、1 六边形） | 380 | 12 个五贴片角块、60+30 个双贴片棱块、两组各 60 个单贴片中心块、20 个六边形中心块，共 242 块 | 面轴 120° |
+| Radio Canon | 20 | 16（7 三角形、9 四边形） | 320 | 12 个五贴片角块、60+30 个双贴片棱块、60 个单贴片中心块、20 个固定三角中心，共 182 块 | 面轴 120° |
 
 - 从 `get3d()` 的 `isDup` 排除只为表示朝向而重复的贴片，再统计可见几何；开启 `orientCenters` 后 Dogic 和四阶八面体会分别返回 120、48 条贴片数据，不要把它们当成实际贴片数。
 - 对 Master FTO v2 去掉 168 条原始数据中的 16 个朝向重复片，保持 152 个真实贴片；核对普通 Master FTO 为 128 片、86 块，新版为 152 片、110 块，不把版本差异只实现为名称或配色。
@@ -218,3 +221,12 @@
 - 在注册前从 `core/` 运行 `node packages/client/scripts/native-puzzles/compare-outlines.mjs --set=catscradle` 生成平面对照及完整展开图，核对原作网状切分；黑色 Radio Web 线只作几何对比，不保留为新模型切面。
 - 在 `native-mixed-puzzles-geometry.test.ts` 从独立正二十面体半空间重导全部面、片位和层选择；将 `h±0.0001` 的两侧分区作为负例，两者都恢复为每面 22 区，不能用近似切深冒充原作。遍历全部手动层、整体转体、正反方向与五个进度的切面分离，并分别验证真实 PG3D 的中间矩阵及浏览器拖转。
 - 让三入口消费同一注册表、60 步原生随机转动与完整二十面 SVG；计时记录使用独立 `catscradle`，csTimer 导出用 `input` 并保留 `cuberootEvent`，导入兼容直／弯撇号名称和 `Radiolarian 5`。保留练习来源说明，核对比赛、批量、输入和 PDF，不宣称 WCA 或均匀随机状态。
+
+## Radio Canon
+
+- 将 `radiocanon` 注册为 Jason Smith 的 Radio Canon（Radiolarian 1.5），沿用原名和 `Canon` 文字徽标。以内切球半径 1 使用 `i f 0.77`，按上表原作照片及上游 `radio01_5` 切深核对每面的七个三角形和九个四边形；320 片与 Radio Jewel 数量相同，分区和块结构不同。
+- 在注册前从 `core/` 运行 `node packages/client/scripts/native-puzzles/compare-outlines.mjs --set=radiocanon`，对照 Circo-Radiolarian 的旧切线和 Radio Canon 的新切线；旧切深仅作比较，不能一起保留在新描述中。放大中央三角和周围四边形，并核对完整二十面展开图。
+- 从 360 条原生数据排除 40 个面中心朝向重复片，保留 320 个可见贴片、182 个可见块。复用 `native-mixed-puzzles-geometry.test.ts` 的独立正二十面体半空间分割，核对原生轨道 `C5RNER(12,5)`、`EDGES(60,2)`、`CENTERS(60,1)`、`EDGES2(30,2)`、`CENTERS2(20,3)`，不把轨道名称当成独立几何证据。
+- 从独立面中心定位二十个中央三角。核对不同面法向点积的最大值为 `√5/3 < 0.77`，并逐外层面转及逆转检查所有中央三角置换保持恒等；转动面的单色中心允许不可辨自转。固定中心不意味着内层转动或整体转体的中心置换也恒等。
+- 复用二十面轴、120° 基本转角及 `A/2A/Aw/Av` 记号，检查宽转组合、对侧中层反向别名和非法层拒绝。遍历全部手动层及整体转体的独立刚体终态与五进度切面分离；对真实 PG3D 在 `0/0.2/0.5/0.8/1` 逐手动层核对正反转动及播放方向，同时单独记录浏览器能否实测 3D 拖层。
+- 让三入口共用 60 步练习用随机转动和完整 SVG，沿用保形转动、不含 jumbling 的双语说明。csTimer 导出用 `input` 并保留 `cuberootEvent`；导入兼容 Radio Canon、Radio Cannon、Radiolarian 1.5，并保留小数点和词边界，拒绝将 Radiolarian 15、1.50 或 Radio Canonical 误归本项目。
