@@ -39,6 +39,11 @@ interface AccountPageData {
   editingName: boolean;
   nameDraft: string;
   nameBusy: boolean;
+  identityRows: Array<{ key: string; label: string; handle: string }>;
+  identitiesOpen: boolean;
+  identitiesBusy: boolean;
+  identitiesError: string;
+  hasPassword: boolean;
   isTimelineEntry: boolean;
   loginBusy: boolean;
   loginError: string;
@@ -58,6 +63,8 @@ interface AccountPageData {
 }
 
 interface AccountPage {
+  loadIdentities(): Promise<void>;
+  toggleIdentities(): void;
   editDisplayName(): void;
   saveDisplayName(): Promise<void>;
   onHide(): void;
@@ -113,6 +120,48 @@ function normalLaunchOptions() {
 }
 
 describe('mini program account page', () => {
+  it('shows readable handles, collapses Douyin identities and clears private rows on hide', async () => {
+    const session = { token: 't'.repeat(20), user: { uid: 12, name: 'Member', wcaId: null } };
+    const page = await loadPage({
+      getStorageInfoSync: () => ({ keys: ['cuberoot:session'] }),
+      getStorageSync: () => session,
+      request(options: { header: { Authorization: string }; success(value: unknown): void }) {
+        expect(options.header.Authorization).toBe(`Bearer ${session.token}`);
+        options.success({ statusCode: 200, data: { hasPassword: true, identities: [
+          { provider: 'email', providerUid: 'member@example.com' },
+          { provider: 'douyin', providerUid: 'private-openid' },
+          { provider: 'douyin', providerUid: 'private-alliedid' },
+        ] } });
+      },
+    }, 'douyin');
+    page.setData({ loginRequired: false });
+    await page.loadIdentities();
+    expect(page.data.identityRows.map(row => row.handle)).toEqual(['member@example.com', '']);
+    expect(page.data.hasPassword).toBe(true);
+    expect(JSON.stringify(page.data)).not.toContain('private-openid');
+    page.onHide();
+    expect(page.data.identityRows).toEqual([]);
+    expect(page.data.identitiesOpen).toBe(false);
+  });
+
+  it.each(['hide', 'switch', 'malformed'] as const)('does not expose identities after %s', async (scenario) => {
+    let session = { token: 't'.repeat(20), user: { uid: 12, name: 'Member', wcaId: null } };
+    let respond!: (value: unknown) => void;
+    const page = await loadPage({
+      getStorageSync: () => session,
+      request(options: { success(value: unknown): void }) { respond = options.success; },
+    });
+    page.setData({ loginRequired: false });
+    const loading = page.loadIdentities();
+    if (scenario === 'hide') page.onHide();
+    if (scenario === 'switch') session = { ...session, token: 'n'.repeat(20) };
+    respond({ statusCode: 200, data: { hasPassword: false, identities: [{ provider: 'email', providerUid: scenario === 'malformed' ? null : 'member@example.com' }] } });
+    await loading;
+    expect(page.data.identityRows).toEqual([]);
+    expect(page.data.identitiesBusy).toBe(false);
+    if (scenario !== 'hide') expect(page.data.identitiesError).not.toBe('');
+  });
+
   it('does not apply a display-name draft to a different session', async () => {
     let stored = { token: 't'.repeat(20), user: { uid: 12, name: 'Old', wcaId: null } };
     const request = vi.fn();

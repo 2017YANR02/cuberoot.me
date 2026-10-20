@@ -1,5 +1,23 @@
 import { ACCOUNT_LOCATION_REQUIREMENTS } from './data/account_location_requirements';
 
+export const ACCOUNT_PROVIDER_LABELS: Record<string, { zh: string; en: string }> = {
+  email: { zh: '邮箱', en: 'Email' },
+  phone: { zh: '手机', en: 'Phone' },
+  wca: { zh: 'WCA', en: 'WCA' },
+  apple: { zh: 'Apple', en: 'Apple' },
+  google: { zh: 'Google', en: 'Google' },
+  wechat: { zh: '微信', en: 'WeChat' },
+  alipay: { zh: '支付宝', en: 'Alipay' },
+  qq: { zh: 'QQ', en: 'QQ' },
+  douyin: { zh: '抖音', en: 'Douyin' },
+};
+
+/** Douyin OpenID and AlliedID represent one visible sign-in method. */
+export function visibleAccountIdentities<T extends { provider: string }>(identities: readonly T[]): T[] {
+  return identities.filter((row, index, all) => row.provider !== 'douyin'
+    || all.findIndex(item => item.provider === 'douyin') === index);
+}
+
 // 内部账号相关的纯逻辑(无 DB / 无 crypto 依赖),前后端共用 + 可单测。
 // 后端 apps/api/src/utils/account.ts 从这里再导出,前端可直接 import 校验输入。
 

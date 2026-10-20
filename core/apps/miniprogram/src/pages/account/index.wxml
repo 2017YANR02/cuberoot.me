@@ -121,6 +121,19 @@
     </view>
   </view>
   <button wx:elif="{{!wcaId}}" class="text-button account-name-edit" bindtap="editDisplayName">{{copy.editName}}</button>
+  <button class="text-button account-name-edit" loading="{{identitiesBusy}}" aria-expanded="{{identitiesOpen}}" bindtap="toggleIdentities">{{copy.identities}}</button>
+  <view wx:if="{{identitiesOpen}}" class="account-identities">
+    <view wx:for="{{identityRows}}" wx:key="key" class="account-identity">
+      <text>{{item.label}}</text>
+      <text wx:if="{{item.handle}}" class="account-user-meta" selectable="{{true}}">{{item.handle}}</text>
+    </view>
+    <text wx:if="{{hasPassword}}" class="account-user-meta">{{copy.password}}</text>
+    <text wx:if="{{!identitiesBusy && !identitiesError && !identityRows.length && !hasPassword}}" class="account-user-meta">{{copy.identitiesEmpty}}</text>
+    <view wx:if="{{identitiesError}}">
+      <text class="status-text status-text--error" aria-role="status">{{identitiesError}}</text>
+      <button class="text-button" bindtap="loadIdentities">{{copy.identitiesRetry}}</button>
+    </view>
+  </view>
   <text wx:if="{{wcaLinkPending}}" class="status-text" aria-role="status" aria-live="polite">{{copy.wcaLinkHint}}</text>
   <button
     class="primary-button account-primary-button"

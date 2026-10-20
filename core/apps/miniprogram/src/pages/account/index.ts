@@ -1,5 +1,5 @@
 import { createContactView } from '../../lib/native-contact';
-import { isValidDisplayName, normalizeDisplayName } from '@cuberoot/shared/account';
+import { ACCOUNT_PROVIDER_LABELS, visibleAccountIdentities, isValidDisplayName, normalizeDisplayName } from '@cuberoot/shared/account';
 import { applyNativeAppearance, nativeAppearanceStyle } from '../../lib/appearance';
 import type { PendingIdentity } from '@cuberoot/shared/auth/web-session';
 import {
@@ -13,6 +13,7 @@ import {
   previewIdentityLinkCode,
   validateStoredSession,
   updateNativeDisplayName,
+  fetchNativeAccountIdentities,
   type SessionData,
 } from '../../lib/auth';
 import { cancelWebsiteNavigation, openWebsitePageOnce } from '../../lib/navigation';
@@ -36,6 +37,10 @@ function createAccountCopy() {
     editName: tr({ en: 'Edit display name', zh: '修改展示名' }),
     saveName: tr({ en: 'Save', zh: '保存' }),
     clearName: tr({ en: 'Clear display name', zh: '清除展示名' }),
+    identities: tr({ en: 'Sign-in methods', zh: '登录方式' }),
+    identitiesEmpty: tr({ en: 'No linked sign-in methods', zh: '暂无已绑定的登录方式' }),
+    identitiesRetry: tr({ en: 'Retry', zh: '重试' }),
+    password: tr({ en: 'Password set', zh: '已设置密码' }),
     wcaLinkHint: tr({ en: 'Complete WCA authorization in your system browser. This page refreshes when you return.', zh: '请在系统浏览器完成 WCA 授权，返回后页面会刷新' }),
     agreementLabel: tr({
       en: 'I have read and agree to the terms above',
@@ -187,6 +192,11 @@ interface AccountPageData {
   editingName: boolean;
   nameDraft: string;
   nameBusy: boolean;
+  identitiesOpen: boolean;
+  identitiesBusy: boolean;
+  identitiesError: string;
+  identityRows: Array<{ key: string; label: string; handle: string }>;
+  hasPassword: boolean;
   isTimelineEntry: boolean;
   loginBusy: boolean;
   loginError: string;
@@ -218,6 +228,8 @@ const pendingIdentities = new WeakMap<AccountPageInstance, PagePendingIdentity>(
 const disposedPages = new WeakSet<AccountPageInstance>();
 const profileAttempts = new WeakMap<object, object>();
 const profileSessions = new WeakMap<object, string>();
+const identityAttempts = new WeakMap<object, object>();
+const EMPTY_IDENTITIES = { identitiesOpen: false, identitiesBusy: false, identitiesError: '', identityRows: [], hasPassword: false };
 const phonePrompts = new WeakMap<AccountPageInstance, object>();
 const phoneAuthorizations = new WeakMap<AccountPageInstance, { prompt: object; sessionToken: string | undefined }>();
 const EMPTY_LINK_CODE = { accountLinkCode: '', accountLinkTargetId: null, accountLinkTargetName: '' };
@@ -504,6 +516,7 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
     editingName: false,
     nameDraft: '',
     nameBusy: false,
+    ...EMPTY_IDENTITIES,
     isTimelineEntry: false,
     loginBusy: false,
     loginError: '',
@@ -579,6 +592,8 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
 
   onShow() {
     if (this.data.isTimelineEntry) return;
+    identityAttempts.delete(this);
+    this.setData({ ...EMPTY_IDENTITIES });
     this.refreshLocale();
     this.setData({ appearanceStyle: nativeAppearanceStyle() });
     applyNativeAppearance();
@@ -599,12 +614,14 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
   },
 
   onHide() {
+    identityAttempts.delete(this);
     profileAttempts.delete(this);
     profileSessions.delete(this);
-    this.setData({ editingName: false, nameDraft: '', nameBusy: false });
+    this.setData({ editingName: false, nameDraft: '', nameBusy: false, ...EMPTY_IDENTITIES });
   },
 
   onUnload() {
+    identityAttempts.delete(this);
     profileAttempts.delete(this);
     profileSessions.delete(this);
     disposedPages.add(this as unknown as AccountPageInstance);
@@ -747,6 +764,37 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
       failureMessage: ACCOUNT_COPY.policyFailure,
       onFailure: (message) => this.setData({ loginError: message }),
     });
+  },
+
+  toggleIdentities() {
+    if (this.data.identitiesOpen) {
+      identityAttempts.delete(this);
+      this.setData({ ...EMPTY_IDENTITIES });
+    } else { void this.loadIdentities(); }
+  },
+
+  async loadIdentities() {
+    if (this.data.loginRequired || this.data.isTimelineEntry || this.data.identitiesBusy) return;
+    const session = getStoredSessionSnapshot().session;
+    if (!session) { refreshStoredSession(this as unknown as AccountPageInstance); return; }
+    const attempt = {};
+    identityAttempts.set(this, attempt);
+    const current = () => identityAttempts.get(this) === attempt;
+    this.setData({ ...EMPTY_IDENTITIES, identitiesOpen: true, identitiesBusy: true });
+    try {
+      const result = await fetchNativeAccountIdentities(session, current);
+      if (!current()) return;
+      const rows = visibleAccountIdentities(result.identities);
+      this.setData({ hasPassword: result.hasPassword, identityRows: rows.map((row, index) => ({
+        key: String(index), label: tr(Object.prototype.hasOwnProperty.call(ACCOUNT_PROVIDER_LABELS, row.provider)
+          ? ACCOUNT_PROVIDER_LABELS[row.provider] : { zh: row.provider, en: row.provider }),
+        handle: ['email', 'phone', 'wca'].includes(row.provider) ? row.providerUid : '',
+      })) });
+    } catch {
+      if (current()) this.setData({ identitiesError: tr({ zh: '登录方式加载失败，请重试。', en: 'Could not load sign-in methods. Try again.' }) });
+    } finally {
+      if (current()) { identityAttempts.delete(this); this.setData({ identitiesBusy: false }); }
+    }
   },
 
   editDisplayName() {

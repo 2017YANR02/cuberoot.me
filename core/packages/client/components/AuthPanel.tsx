@@ -10,7 +10,7 @@ import '@cuberoot/timer-ui/compact-select.css';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Check, Copy, Loader2, Mail, Smartphone, KeyRound, Merge } from 'lucide-react';
 import { SiApple, SiWechat, SiQq, SiAlipay, SiTiktok } from 'react-icons/si';
-import { primaryHandle } from '@cuberoot/shared/account';
+import { primaryHandle, visibleAccountIdentities, ACCOUNT_PROVIDER_LABELS as PROVIDER_LABEL } from '@cuberoot/shared/account';
 import type { MobileAuthProvider } from '@cuberoot/shared/auth/web-session';
 import AppLink from '@/components/AppLink';
 import { PasswordInput } from '@/components/PasswordInput';
@@ -1031,18 +1031,6 @@ export function WcaLinkPrompt({ returnTo, onSkip }: { returnTo?: string | null; 
   );
 }
 
-const PROVIDER_LABEL: Record<string, { zh: string; en: string }> = {
-  email: { zh: '邮箱', en: 'Email' },
-  phone: { zh: '手机', en: 'Phone' },
-  wca: { zh: 'WCA', en: 'WCA' },
-  apple: { zh: 'Apple', en: 'Apple' },
-  google: { zh: 'Google', en: 'Google' },
-  wechat: { zh: '微信', en: 'WeChat' },
-  alipay: { zh: '支付宝', en: 'Alipay' },
-  qq: { zh: 'QQ', en: 'QQ' },
-  douyin: { zh: '抖音', en: 'Douyin' },
-};
-
 /** Only an authenticated account may issue this short-lived proof; it is never an account lookup. */
 function MiniProgramLinkCodePanel({ emphasized = false }: { emphasized?: boolean }) {
   const t = useT();
@@ -1306,7 +1294,7 @@ export function AccountPanel({ expectedAppleUid, miniProgramLogin = false }: { e
         ) : identities.length === 0 ? (
           <p className="auth-hint">{t('暂无已绑定的登录方式。', 'No linked login methods yet.')}</p>
         ) : (
-          identities.filter((i, index, all) => i.provider !== 'douyin' || all.findIndex((row) => row.provider === 'douyin') === index).map((i) => {
+          visibleAccountIdentities(identities).map((i) => {
             const lab = PROVIDER_LABEL[i.provider] ?? { zh: i.provider, en: i.provider };
             const key = `${i.provider}:${i.providerUid}`;
             const onlyOne = new Set(identities.map((row) => row.provider === 'douyin' ? 'douyin' : `${row.provider}:${row.providerUid}`)).size <= 1;

@@ -413,6 +413,23 @@ export async function updateNativeDisplayName(session: SessionData, raw: string,
   return saveLoginResponse(response, current, session.user.uid);
 }
 
+export interface NativeAccountIdentity { provider: string; providerUid: string }
+export async function fetchNativeAccountIdentities(session: SessionData, isCurrent: () => boolean) {
+  const current = () => isCurrent() && getStoredSession()?.token === session.token;
+  if (!current()) throw new ApiError(409, 'account changed', 'ACCOUNT_CHANGED');
+  const response = await requestJson<{ identities?: unknown; hasPassword?: unknown }>('/auth/identities', { token: session.token });
+  if (!current()) throw new ApiError(409, 'account changed', 'ACCOUNT_CHANGED');
+  if (!Array.isArray(response?.identities) || typeof response.hasPassword !== 'boolean'
+    || response.identities.some((row: unknown) => {
+      if (!row || typeof row !== 'object') return true;
+      const item = row as Record<string, unknown>;
+      return typeof item.provider !== 'string' || !/^[a-z][a-z0-9_-]{0,63}$/.test(item.provider)
+        || typeof item.providerUid !== 'string' || item.providerUid.length > 1024
+        || CONTROL_CHARACTER_PATTERN.test(item.providerUid);
+    })) throw new ApiError(502, 'invalid identities response');
+  return { identities: response.identities as NativeAccountIdentity[], hasPassword: response.hasPassword };
+}
+
 export async function createWebSessionTicket(session: SessionData): Promise<WebSessionTicket> {
   const response = await requestJson<unknown>('/auth/web-session/ticket', {
     method: 'POST',

@@ -39,6 +39,8 @@
 }
 
 .account-name-edit { margin-top: 24rpx; }
+.account-identities { margin-top: 24rpx; display: flex; flex-direction: column; gap: 20rpx; }
+.account-identity { display: flex; flex-direction: column; gap: 8rpx; overflow-wrap: anywhere; }
 .account-name-actions { display: flex; justify-content: flex-end; gap: 24rpx; margin-top: 24rpx; }
 .account-name-actions button { margin: 0; }
 
