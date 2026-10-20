@@ -85,7 +85,7 @@ export function TimerScrambleSourceSelect<
   realValue,
   realMenuContent,
   triggerClassName,
-  showArrow = true,
+  showArrow = false,
   value,
 }: TimerScrambleSourceSelectProps<TReal>) {
   const [open, changeOpen] = useTimerOverlayControl({

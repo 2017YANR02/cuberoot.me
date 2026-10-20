@@ -46,8 +46,14 @@
   outline-offset: 2px;
 }
 
+/* Native dropdowns use the same arrow-free trigger as CompactSelect. */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+}
+
 .native-select {
-  appearance: auto;
+  appearance: none;
   width: fit-content;
   max-width: 100%;
   align-self: flex-start;

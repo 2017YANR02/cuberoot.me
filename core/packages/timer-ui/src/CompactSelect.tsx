@@ -86,7 +86,7 @@ export function CompactSelect<T extends string | number>({
   popupClassName,
   contentAnchorRef,
   variant = 'pill',
-  showArrow = true,
+  showArrow = false,
   footer,
   panelContent,
   dataNoTimer = false,

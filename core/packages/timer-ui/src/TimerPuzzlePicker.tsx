@@ -83,7 +83,7 @@ export function TimerPuzzlePicker({
   scrambleTypeLabel,
   combineScrambleTypes = false,
   triggerLabel,
-  showArrow = true,
+  showArrow = false,
   showItemIcons = true,
   showMenuHeadings = true,
   showSubmenuHeading = showMenuHeadings,

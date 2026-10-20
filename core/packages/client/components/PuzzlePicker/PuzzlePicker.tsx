@@ -95,7 +95,7 @@ const menuLabel = (label: string): string => label.replaceAll('魔方', '').repl
 
 export default function PuzzlePicker({
   isZh = false, selectedEvent, selectedEvents, wcaEvents, availableEvents, onSelect, onToggle, linkFor,
-  discovery, groups: suppliedGroups, placeholderLabel, showArrow = true, showTriggerIcon = true, showItemIcons = true, popupFooter, itemAction, dataNoTimer,
+  discovery, groups: suppliedGroups, placeholderLabel, showArrow = false, showTriggerIcon = true, showItemIcons = true, popupFooter, itemAction, dataNoTimer,
 }: Props) {
   const params = useParams();
   const prefix = params?.lang === 'zh' ? '/zh' : '';
