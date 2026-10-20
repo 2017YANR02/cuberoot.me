@@ -117,6 +117,8 @@ export interface ReconTextLine {
 }
 
 export interface ReconTextResult {
+  /** Confirmed live display projection; later turns must not optimize it again. */
+  presentation?: ReconTextResult;
   currentStage?: { key: string; zh: string; en: string };
   /** Method metrics use the exact gesture boundaries rendered by playback. */
   methodStages?: MethodStageMetric[];
@@ -912,6 +914,8 @@ export function formattedReconMoves(line: ReconTextLine): string[] {
 }
 
 export interface ReconTextInput {
+  /** Completed, corrected prefix from this same physical attempt. */
+  confirmed?: ReconTextResult;
   method?: MethodId;
   language?: 'zh' | 'en';
   scramble: string;
@@ -1313,10 +1317,14 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
     }
     return isCfop && span.kind === 'cross' ? snapCrossAufBeforePause(end, counted, totalMs) : end;
   };
-  const snappedSpans = sourceSpans.map(span => ({
+  const confirmedLines = input.confirmed?.lines ?? [];
+  const confirmedEnd = confirmedLines.at(-1)?.toIdx ?? -1;
+  const confirmedKeys = new Set(confirmedLines.map(line => line.key));
+  const snappedSpans = [...confirmedLines.map(line => ({ ...line, endIdx: line.toIdx })), ...sourceSpans
+    .filter(span => !confirmedKeys.has(span.key) && span.endIdx > confirmedEnd).map(span => ({
     ...span,
     endIdx: snappedEnd(span),
-  }));
+  }))];
   const spans = snappedSpans.filter((span, i) => span.endIdx >= 0 && (i === 0 || span.endIdx > snappedSpans[i - 1].endIdx));
   const boundaries = new Set(spans.map(span => span.endIdx));
   const wasteSpans = wastedDisplaySpans(scramble, moves, boundaries);
@@ -1400,7 +1408,10 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
 
     let label: string | null = null;
     try {
-      if (!isCfop) {
+      const confirmedLine = confirmedLines.find(line => line.key === span.key);
+      if (confirmedLine) {
+        label = confirmedLine.label;
+      } else if (!isCfop) {
         label = span.label ?? null;
       } else {
         let effectivePrev = prevPattern;
@@ -1562,5 +1573,46 @@ export function applyReconTextOverride(
       label: parsed[i]!.label,
     })),
     text: lines.join('\n'),
+    presentation: undefined,
   };
+}
+
+/** Retain an immutable prefix and bridge only the new suffix into its frame.
+ * Exact cubie-state equality rejects a changed gesture instead of silently
+ * producing a reconstruction that no longer plays back the recorded solve. */
+export async function retainConfirmedRecon(next: ReconTextResult, confirmed?: ReconTextResult): Promise<ReconTextResult> {
+  if (!confirmed?.lines.length) return next;
+  const end = confirmed.lines.at(-1)!.toIdx;
+  const prefix = next.lines.filter(line => line.toIdx <= end);
+  if (prefix.at(-1)?.toIdx !== end) throw new Error('Confirmed reconstruction boundary changed');
+  const alg = (recon: ReconTextResult, lines: ReconTextLine[]) =>
+    [recon.scramble, recon.inspection, ...lines.flatMap(line => line.moves)].join(' ');
+  const before = await patternFromAlg(alg(confirmed, confirmed.lines));
+  const after = await patternFromAlg(alg(next, prefix));
+  const turns = ['', 'x', "x'", 'x2', 'y', "y'", 'y2', 'z', "z'", 'z2'];
+  let bridge: string | undefined;
+  for (const a of turns) {
+    for (const b of turns) {
+      const rotation = compactCubeRotations(`${a} ${b}`);
+      if (before.applyAlg(rotation).isIdentical(after)) { bridge = rotation; break; }
+    }
+    if (bridge !== undefined) break;
+  }
+  if (bridge === undefined) throw new Error('Confirmed reconstruction state changed');
+  const tail = next.lines.filter(line => line.fromIdx > end);
+  if (tail.length && bridge) {
+    const line = tail[0];
+    const tokens = bridge.split(' ');
+    const first = line.moveRanges?.[0];
+    tail[0] = { ...line, moves: [...tokens, ...line.moves],
+      moveRanges: first ? [...tokens.map(token => ({ ...first, token, endTs: first.ts,
+        startIdx: line.fromIdx, endIdx: line.fromIdx - 1 })), ...line.moveRanges!] : undefined,
+      wasteGroups: line.wasteGroups ? [...tokens.map(() => null), ...line.wasteGroups] : undefined,
+      algorithmGroups: line.algorithmGroups?.map(group => ({ from: group.from + tokens.length, to: group.to + tokens.length })),
+      libraryCorrection: undefined,
+    };
+  }
+  const lines = [...confirmed.lines, ...tail];
+  return { ...next, inspection: confirmed.inspection, crossColor: confirmed.crossColor, lines,
+    text: [...(confirmed.inspection ? [`${confirmed.inspection} // insp`] : []), ...lines.map(formatReconLine)].join('\n') };
 }
