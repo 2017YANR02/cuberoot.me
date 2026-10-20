@@ -929,6 +929,22 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
     border-radius: 12px;
     background: var(--muted);
 }
+.landing-widget:empty,
+.landing-widget-skeleton,
+.landing-widget :is(.recent-scrambles--loading, .today-recon--loading, .ongoing-comps--loading),
+.landing-widget .forum-feed-preview[aria-busy="true"] {
+    animation: home-placeholder-breathe 1.8s ease-in-out infinite;
+}
+@keyframes home-placeholder-breathe {
+    0%, 100% { opacity: 0.55; }
+    50% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .landing-widget:empty,
+    .landing-widget-skeleton,
+    .landing-widget :is(.recent-scrambles--loading, .today-recon--loading, .ongoing-comps--loading),
+    .landing-widget .forum-feed-preview[aria-busy="true"] { animation: none; }
+}
 .landing-widget > :is(.recent-scrambles, .today-recon, .ongoing-comps, .forum-feed-preview) {
     height: 100%;
     min-height: 0;

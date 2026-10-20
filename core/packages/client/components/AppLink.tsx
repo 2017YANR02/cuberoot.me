@@ -5,6 +5,7 @@ import NextLink from 'next/link';
 import { useParams } from 'next/navigation';
 import type { ComponentProps } from 'react';
 import { useTrainingHref } from '@/lib/training-host';
+import { LinkPendingIndicator } from '@/components/StartupStatus';
 
 type Props = ComponentProps<typeof NextLink>;
 
@@ -34,5 +35,8 @@ export default function AppLink({ href, ...props }: Props) {
     h = prefix ? `${prefix}${bare === '/' ? '' : bare}` : bare;
   }
   if (douyin && !douyinContentAvailable(typeof h === 'string' ? h : String(h.pathname ?? '/'))) return null;
-  return <NextLink href={typeof h === 'string' ? trainingHref(h) : h} {...props} />;
+  return <NextLink href={typeof h === 'string' ? trainingHref(h) : h} {...props}>
+    {props.children}
+    <LinkPendingIndicator />
+  </NextLink>;
 }

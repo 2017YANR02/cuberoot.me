@@ -17,6 +17,7 @@ vi.mock('next/navigation', async original => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), prefetch: vi.fn() }),
 }));
 vi.mock('next/link', () => ({
+  useLinkStatus: () => ({ pending: false }),
   default: ({ children, ...props }: { children: ReactNode; href: string }) => createElement('a', props, children),
 }));
 vi.mock('@/lib/trainer-room-api', () => ({ createRoom: vi.fn(), getRoom: vi.fn(), claimRoomBatch: vi.fn(), nextRoundRoom: vi.fn() }));

@@ -12,6 +12,7 @@ vi.mock('next/navigation', async importOriginal => ({
   useParams: () => ({ lang: 'zh' }),
 }));
 vi.mock('next/link', () => ({
+  useLinkStatus: () => ({ pending: false }),
   default: ({ children, ...props }: { children: ReactNode; href: string }) => createElement('a', props, children),
 }));
 vi.mock('@/i18n/tr', () => ({ tr: ({ en }: { en: string }) => en }));

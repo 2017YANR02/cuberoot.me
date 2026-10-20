@@ -1,6 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { useLinkStatus } from 'next/link';
+import { Spinner } from '@/components/Spinner/Spinner';
 import { tr, type Msg } from '@/i18n/tr';
 
 const DEFAULT_SLOW_LOAD_MS = 20_000;
@@ -84,7 +87,21 @@ export function ClientLoadStatus({
 
   return (
     <div className="app-startup app-startup-loading app-startup-page" role="status" aria-live="polite">
+      <Spinner size={28} />
       <p>{tr(label)}</p>
     </div>
+  );
+}
+
+/** Lives under NextLink so cancellation, errors and completion follow Next's transition. */
+export function LinkPendingIndicator() {
+  const { pending } = useLinkStatus();
+  if (!pending) return null;
+  return createPortal(
+    <div className="app-navigation-loading" data-site-surface="popover" role="status" aria-live="polite">
+      <Spinner size={18} />
+      <span>{tr(COPY.loading)}</span>
+    </div>,
+    document.body,
   );
 }

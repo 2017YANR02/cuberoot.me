@@ -33,6 +33,36 @@
 
 .app-startup-loading {
   color: var(--muted-foreground);
+  justify-items: center;
+  text-align: center;
+}
+
+/* A portal keeps feedback out of the link's flow and transformed ancestors.
+   Delay only the visual reveal, never navigation or the finished page. */
+.app-navigation-loading {
+  position: fixed;
+  top: calc(0.75rem + env(safe-area-inset-top, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  max-width: calc(100vw - 2rem);
+  padding: 0.7rem 1rem;
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+  pointer-events: none;
+  animation: navigation-loading-reveal 140ms ease-out 120ms both;
+}
+@keyframes navigation-loading-reveal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-navigation-loading { animation: none; }
 }
 
 .app-startup p,

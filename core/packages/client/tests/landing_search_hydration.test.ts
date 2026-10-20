@@ -14,6 +14,7 @@ const speechState = vi.hoisted(() => ({ supported: false, listening: false, stat
 
 vi.mock('next/dynamic', () => ({ default: () => () => null }));
 vi.mock('next/link', () => ({
+  useLinkStatus: () => ({ pending: false }),
   default: ({ children, prefetch: _prefetch, ...props }: AnchorHTMLAttributes<HTMLAnchorElement> & { children?: ReactNode; prefetch?: boolean }) => (
     createElement('a', props, children)
   ),

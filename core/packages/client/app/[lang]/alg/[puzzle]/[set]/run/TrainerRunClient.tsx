@@ -79,6 +79,7 @@ import '@/app/[lang]/alg/_trainer/memory.css';
 import '@/app/[lang]/alg/alg.css';
 import { tr } from '@/i18n/tr';
 import { Spinner } from '@/components/Spinner/Spinner';
+import { ClientLoadStatus } from '@/components/StartupStatus';
 import { SettingsPopover } from '@/components/TrainingSettings';
 
 /** 成绩回看复用训练卡片，生命周期与训练游标完全分离。 */
@@ -1160,7 +1161,7 @@ export default function TrainerRunClient() {
         <div className="trainer-root">
           {mounted
             ? <MixSetPicker puzzle={puzzle} puzzleParam={puzzleParam} leaf="run" initial={mixSets} />
-            : <div className="trainer-landing-empty">{tr({ zh: '加载中…', en: 'Loading…' })}</div>}
+            : <div className="trainer-landing-empty"><Spinner size={18} /> {tr({ zh: '加载中…', en: 'Loading…' })}</div>}
         </div>
       );
     }
@@ -1174,7 +1175,7 @@ export default function TrainerRunClient() {
   }
 
   if (sessionLoadError) return <div className="trainer-root"><p role="alert">{tr({ zh: '训练加载失败，请重试。', en: 'Training could not load. Please retry.' })}</p><button type="button" onClick={() => setLoadRetry(value => value + 1)}>{tr({ zh: '重试', en: 'Retry' })}</button></div>;
-  if (storePuzzle !== puzzle || storeSet !== sessionId) return <div className="trainer-root" role="status">{tr({ zh: '加载中…', en: 'Loading…' })}</div>;
+  if (storePuzzle !== puzzle || storeSet !== sessionId) return <ClientLoadStatus />;
 
   const originalSelectHref = isMix
     ? mixHref(puzzleParam, mixSets, 'select')

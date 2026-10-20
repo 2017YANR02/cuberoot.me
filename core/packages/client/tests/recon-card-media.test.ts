@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { ReconCard } from '@/components/ReconCard/ReconCard';
 
 vi.mock('next/link', () => ({
+  useLinkStatus: () => ({ pending: false }),
   default: ({ children, prefetch: _prefetch, ...props }: AnchorHTMLAttributes<HTMLAnchorElement> & { children?: ReactNode; prefetch?: boolean }) => (
     createElement('a', props, children)
   ),

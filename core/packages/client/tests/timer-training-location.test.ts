@@ -21,6 +21,7 @@ vi.mock('next/navigation', async (importOriginal) => ({
   useRouter: () => navigation.router,
 }));
 vi.mock('next/link', () => ({
+  useLinkStatus: () => ({ pending: false }),
   default: ({ children, ...props }: { children: ReactNode; href: string }) => createElement('a', props, children),
 }));
 import AppLink from '@/components/AppLink';

@@ -29,6 +29,7 @@ vi.mock('@/lib/auth-store', () => ({ useAuthUser: () => auth.user, nextQuery: ()
 vi.mock('next/dynamic', () => ({ default: () => () => null }));
 vi.mock('next/navigation', () => ({ usePathname: () => '/zh', useParams: () => ({ lang: 'zh' }) }));
 vi.mock('next/link', () => ({
+  useLinkStatus: () => ({ pending: false }),
   default: ({ children, prefetch: _prefetch, ...props }: AnchorHTMLAttributes<HTMLAnchorElement> & { children?: ReactNode; prefetch?: boolean }) => createElement('a', props, children),
 }));
 vi.mock('@/components/HeaderToggles', () => ({ default: () => null }));

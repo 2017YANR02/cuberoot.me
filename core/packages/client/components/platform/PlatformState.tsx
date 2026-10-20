@@ -1,6 +1,7 @@
 'use client';
 
-import { AlertTriangle, Inbox, LoaderCircle, LockKeyhole } from 'lucide-react';
+import { AlertTriangle, Inbox, LockKeyhole } from 'lucide-react';
+import { Spinner } from '@/components/Spinner/Spinner';
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
 
@@ -27,7 +28,7 @@ export function PlatformState({
   }
   const content = {
     loading: {
-      Icon: LoaderCircle,
+      Icon: Spinner,
       title: t('正在加载', 'Loading'),
       detail: t('正在从 Platform 服务获取最新数据。', 'Fetching the latest data from the Platform service.'),
     },
@@ -51,7 +52,7 @@ export function PlatformState({
 
   return (
     <div className={`platform-state platform-state-${kind}`} role={kind === 'error' ? 'alert' : 'status'}>
-      <Icon className={kind === 'loading' ? 'platform-spin' : undefined} aria-hidden />
+      <Icon aria-hidden />
       <div>
         <strong>{content.title}</strong>
         <p>{content.detail}</p>

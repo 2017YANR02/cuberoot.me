@@ -944,10 +944,10 @@ export const CATALOG: ComponentEntry[] = [
   },
   {
     name: 'ClientLoadStatus',
-    import: "import { AppFailure, ClientLoadStatus } from '@/components/StartupStatus';",
+    import: "import { AppFailure, ClientLoadStatus, LinkPendingIndicator } from '@/components/StartupStatus';",
     category: 'more',
-    zh: '顶层客户端 chunk 的可见加载、超时和启动失败状态，超时后提供重试操作。',
-    en: 'Visible loading, timeout, and startup-failure states for route-critical client chunks, with an actionable retry after timeout.',
+    zh: '路由与客户端 chunk 共用轻量加载动画、超时和失败提示；AppLink 内的 LinkPendingIndicator 跟随 Next 导航状态显示浮动提示，不占页面高度。',
+    en: 'Shared animated route and chunk loading with timeout/retry; AppLink uses LinkPendingIndicator for floating feedback driven by Next navigation state without changing page geometry.',
   },
   {
     name: 'LessonVideoPlayer',

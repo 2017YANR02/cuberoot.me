@@ -4,7 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { AssistantAnswer } from '@cuberoot/shared/site-assistant';
 
-vi.mock('next/link',()=>({default:({children,prefetch:_prefetch,...props}:AnchorHTMLAttributes<HTMLAnchorElement> & {children?:ReactNode;prefetch?:boolean})=>createElement('a',props,children)}));
+vi.mock('next/link',()=>({useLinkStatus:()=>({pending:false}),default:({children,prefetch:_prefetch,...props}:AnchorHTMLAttributes<HTMLAnchorElement> & {children?:ReactNode;prefetch?:boolean})=>createElement('a',props,children)}));
 vi.mock('next/navigation',()=>({useParams:()=>({lang:'zh'})}));
 vi.mock('@/hooks/useSpeechToText',()=>({useSpeechToText:()=>({listening:false,start:vi.fn(),stop:vi.fn()})}));
 vi.mock('@/lib/site-assistant-request',()=>({sendAssistantEvent:vi.fn().mockResolvedValue({ok:true})}));
