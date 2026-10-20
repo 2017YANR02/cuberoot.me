@@ -30,10 +30,9 @@ import { NXN_ORDER_DEFAULT, NXN_ORDER_MAX, NXN_ORDER_MIN } from '@/lib/nxn-order
 import type * as THREE from 'three';
 import {
   ChevronLeft,
-  BookOpen, FlaskConical,
+  BookOpen,
   Maximize2, Minimize2,
   ArrowLeftRight,
-  ImagePlus,
   X,
 } from 'lucide-react';
 import World, { type PuzzleKind } from './engine/world';
@@ -102,7 +101,6 @@ import { reconEventForSim, buildReconSubmitQuery } from '@/lib/sim-recon-link';
 import { PG_DEF_BY_ID, isPgPuzzleId } from './pgCatalog';
 import { isNativePuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { isTwistyPuzzle } from './twistyPuzzles';
-import { EXPLORE_BOUND } from './engine/exploreBound';
 import AlgsPanel from './AlgsPanel';
 import PuzzleImageStudio, { type SimBridge } from '@/components/puzzle-image/PuzzleImageStudio';
 import type { DrawExport } from '@/components/puzzle-draw/types';
@@ -115,8 +113,6 @@ import { type InheritedFields } from '@/lib/puzzle-image/codec';
 import type { ImageSpec, PuzzleType } from '@/lib/puzzle-image/types';
 import { parseMask, MASK_COLOR } from '@/lib/puzzle-image/mask-core';
 import { toEngineMask } from '@/lib/puzzle-image/puzzle-mask';
-import GroupTheoryPanel, { type SimWorldView } from './GroupTheoryPanel';
-import { nxnHasPgKernel } from './engine/nxn/nxnPgBridge';
 import { stickeringMaskFn, type StickeringMaskFn } from './engine/nxn/stickering';
 import {
   CUSTOM_STICKERING, CUSTOM_TREATMENTS, CUSTOM_BRUSHES, customMaskFn, pickedSids, paintSids, CustomMaskHistory,
@@ -213,10 +209,6 @@ const SR_ANGLE_BASE: Partial<Record<PuzzleType, {
   // default moved to the engine.) Colours: srSchemeFor(megaminx) sr12→cubing map.
   megaminx: { yaw: 0, pitch: -19, yawSign: 1, pitchSign: 1 },
 };
-
-/** Engine puzzle kinds that have a PG group-theory binding (kept in sync with the
- *  pgBindings registry + GroupTheoryPanel.PG_BOUND). Gates the `renderer='group'` panel. */
-const PG_BOUND_KINDS = new Set<string>(['pyraminx', 'skewb', 'dino', 'heli', 'megaminx', 'fto', 'redi', 'ivy', 'rex', 'mirror', 'mirror2', 'sphere']);
 
 /** Narrow `world.cube` to the NxN Cube type. Returns null for every non-NxN engine puzzle.
  *  正向判断(NxN = 数字阶数、镜面、球形),不再用排除法枚举 —— 旧写法漏了 'pyraminx',
@@ -357,7 +349,7 @@ export default function SimPage() {
       page.style.removeProperty('--sim-visible-top');
     };
   }, []);
-  const [openPanel, setOpenPanel] = useState<'appearance' | 'algs' | 'research' | null>('appearance');
+  const [openPanel, setOpenPanel] = useState<'appearance' | 'algs' | null>('appearance');
   const [lastCreationTool, setLastCreationTool] = useState<'capture' | 'draw' | 'image'>(
     query.tool === 'sim' ? 'capture' : query.tool,
   );
@@ -579,24 +571,8 @@ export default function SimPage() {
   const keymapRef = useRef(keymap);
   useEffect(() => { keymapRef.current = keymap; saveKeymap(keymap); }, [keymap]);
 
-  // 画布左上角图像浮层的显隐(侧栏的 studio 控件常驻,不再受它控制)。分享链接带任何
-  // img_ 键 = 对方特意调过图 → 自动显示浮层,否则读持久化偏好。panel 模式的 codec 省略
-  // img_pzl 且只写非默认值,所以「一动没动的 studio」不会产生任何 img_ 键。
-  const [imagePreferred, setImageOpen] = useState<boolean>(() => {
-    if (typeof window === 'undefined') return false;
-    try {
-      const sp = new URLSearchParams(window.location.search);
-      for (const [k] of sp) {
-        if (k.startsWith('img_')) return true;
-      }
-    } catch { /* ignore */ }
-    try { return localStorage.getItem('sim.panel.image') === '1'; } catch { return false; }
-  });
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    persistItem('sim.panel.image', imagePreferred ? '1' : '0');
-  }, [imagePreferred]);
-  const imageOpen = captureMode || imagePreferred;
+  // Image preview belongs to creation mode, never to the animation workspace.
+  const imageOpen = captureMode;
 
   // 交换主图 ↔ 伴图(伴图铺满画布、实时 3D 缩进左上小框)。观察偏好,走 localStorage。
   // 交换态下渲染器/world 真调到小框尺寸(resize 闭包读 imgSwapRef;CSS 只钉显示位),
@@ -1821,10 +1797,6 @@ export default function SimPage() {
     return rendererRef.current?.domElement ?? null;
   }, []);
   const getWorld = useCallback((): World | null => worldRef.current, []);
-  // The sim World as the structural shape GroupTheoryPanel reads (puzzleKind + cube);
-  // the panel only drives it when renderer==='group' and the active puzzle has a PG kernel.
-  const getWorldView = useCallback((): SimWorldView | null =>
-    worldRef.current as unknown as SimWorldView | null, []);
   const getRenderer = useCallback((): THREE.WebGLRenderer | null => rendererRef.current, []);
 
   const netMode = !roomsActive && settings.viewMode === 'net' && typeof puzzleParam === 'number';
@@ -2440,15 +2412,6 @@ export default function SimPage() {
               (若卸载,previewHost 变 null → studio 会把预览渲回侧栏里)。 */}
           <div className="sim-image-overlay" style={{ display: imageOpen ? 'block' : 'none' }}>
             <div className="sim-image-overlay-host" ref={setImageHost} />
-            <button
-              type="button"
-              className="sim-float-close"
-              onClick={() => setImageOpen(false)}
-              title={t('关闭图像', 'Hide image')}
-              aria-label={t('关闭图像', 'Hide image')}
-            >
-              <X size={12} />
-            </button>
             {/* 交换主图 ↔ 伴图:与背面小窗右下角的交换钮同款。开着时伴图铺满画布、
                 实时 3D 缩进左上小框(纯 CSS 换位,见 .sim-canvas-wrap--imgswap)。
                 net 视图没有可缩的主 3D → 不给按钮。 */}
@@ -2505,13 +2468,12 @@ export default function SimPage() {
               <X size={12} />
             </button>
           )}
-          {/* 背景(BG)选择器浮层落点 —— 画布左下角(与右上角背面小窗、左上角图像浮层
-              同族的角落控件)。PlayerControls 把选择器 portal 进这里。空时 CSS 收起。 */}
+        </div>
+          {/* Shared adjustment row below the canvas. */}
           <div className="sim-canvas-tools">
             <div className="sim-bg-overlay" ref={setBgSlot} />
             <div className="sim-capture-stage-slot" ref={setCaptureStickeringSlot} />
           </div>
-        </div>
         <div className="sim-playback-under" ref={setPlaybackSlot} />
         </div>
 
@@ -2569,13 +2531,6 @@ export default function SimPage() {
                 {fullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
               </button>
             }
-            imageButton={!clockMode ? (
-              <button type="button" className="playback-bar-btn" aria-pressed={imageOpen}
-                onClick={() => setImageOpen(!imageOpen)}
-                title={t('伴图', 'Companion image')} aria-label={t('伴图', 'Companion image')}>
-                <ImagePlus size={14} />
-              </button>
-            ) : null}
             backViewButton={!flatMode ? (
               <PlaybackBackViewButton visible={settings.backView} toggle
                 onClick={() => setSettings(prev => ({ ...prev, backView: !prev.backView }))}
@@ -2631,26 +2586,6 @@ export default function SimPage() {
               activePuzzle={puzzleParam}
             />
           </CollapsibleSection>}
-          {/* Mount panel-only analysis on demand, independently of the render engine. */}
-          {animationMode && (PG_BOUND_KINDS.has(String(puzzleParam))
-            || (typeof puzzleParam === 'number' && nxnHasPgKernel(puzzleParam))
-            || EXPLORE_BOUND.has(String(puzzleParam))) && (
-            <CollapsibleSection
-              open={openPanel === 'research' && animationMode}
-              onToggle={() => setOpenPanel(panel => panel === 'research' ? null : 'research')}
-              icon={FlaskConical}
-              label={t('结构研究', 'Structure research')}
-            >
-              {query.renderer === 'cubing' && (ENGINE_TWISTY.has(String(puzzleParam)) || EXPLORE_BOUND.has(String(puzzleParam))) ? (
-                <div className="sim-research-enable">
-                  <p>{t('结构分析需要启用对应的分析内核。切换会保留初始状态和公式。', 'Structural analysis needs its analysis engine. Switching preserves the initial state and algorithm.')}</p>
-                  <button type="button" onClick={() => handleRendererChange('group')}>
-                    {t('启用结构分析', 'Enable structural analysis')}
-                  </button>
-                </div>
-              ) : <GroupTheoryPanel puzzle={String(puzzleParam)} getWorld={getWorldView} />}
-            </CollapsibleSection>
-          )}
         </aside>
       </div>
 

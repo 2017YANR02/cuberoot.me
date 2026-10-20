@@ -234,15 +234,15 @@
   top: 12px;
   right: 12px;
 }
-/* 背景选择器 portal 到画布左下角,仅保留当前背景色块的一层边框。 */
+/* Background and stickering controls share a row below the canvas. */
 .sim-canvas-tools {
   display: flex;
   align-items: center;
   gap: 8px;
-  position: absolute;
-  bottom: 8px;
-  left: 8px;
-  z-index: 9;
+  justify-content: center;
+  padding: 8px;
+  font-size: 14px;
+  flex-shrink: 0;
 }
 .sim-bg-overlay:empty { display: none; }
 /* Native/manual controls share the canvas with the background picker. Reserve
@@ -262,10 +262,13 @@
 /* 留白属于实际按钮的点击区域,不再形成包住色块的第二层外框。 */
 .sim-bg-overlay .sim-color-select-trigger {
   padding: 4px;
+  min-width: 32px;
+  min-height: 32px;
+  box-sizing: border-box;
 }
 .sim-bg-overlay .sim-color-select-trigger .sim-swatch-box {
-  width: 32px;
-  height: 32px;
+  width: 18px;
+  height: 18px;
   border-color: color-mix(in srgb, var(--foreground) 55%, var(--background));
 }
 /* 控件贴画布底沿 → 弹层向上展开(默认向下会被画布下沿裁掉),靠左对齐 + 单列。
@@ -736,15 +739,16 @@
 }
 .sim-project-controls { min-width: 0; flex-wrap: wrap; }
 .sim-order-label { flex-shrink: 0; white-space: nowrap; font-size: 13px; color: var(--muted-foreground); }
-.sim-order-input {
+.nxn-order-input.sim-order-input {
   height: 32px;
   box-sizing: border-box;
   width: 58px;
   padding: 6px;
-  border: 1px solid var(--input);
-  border-radius: 6px;
+  border: 0;
+  border-bottom: 1px solid var(--input);
+  border-radius: 0;
   color: var(--foreground);
-  background: var(--background);
+  background: transparent;
   font: inherit;
 }
 .sim-panel-toggle {

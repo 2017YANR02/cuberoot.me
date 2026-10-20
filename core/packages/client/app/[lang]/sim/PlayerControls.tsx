@@ -870,17 +870,12 @@ interface Props {
   captureStickeringSlot?: HTMLElement | null;
   appearanceOpen?: boolean;
   onAppearanceToggle?: () => void;
-  /** DOM node at the canvas' bottom-left corner to portal the 背景(BG)selector into
-   *  (overlays the big cube view, like the top-right back-view window). When absent the
-   *  selector simply doesn't render — SimPage always provides the slot. */
+  /** Background selector slot in the shared row below the canvas. */
   bgSlot?: HTMLElement | null;
   /** 全屏/退出全屏按钮(SimPage 持有 fullscreen 状态),渲染在播放条按钮排最左
    *  (twizzle alpha.twizzle.net/edit 同款,全屏钮居首)。 */
   fullscreenButton?: ReactNode;
-  /** 画布左上角图像浮层的显隐开关(状态归 SimPage),放在按钮排最左 —— 与浮层
-   *  自身的关闭钮是同一个开关的两个入口。 */
-  imageButton?: ReactNode;
-  /** 画布右上角背面小窗的显隐开关,放在按钮排最右,同上。 */
+  /** 画布右上角背面小窗的显隐开关。 */
   backViewButton?: ReactNode;
   /** 按阶段展示色块(twizzle stickering,issue #27)。URL 状态归 SimPage(nuqs),
    *  这里只渲染播放条最左的下拉。支持与否走 simCaps.supports.stickering(不支持隐藏)。 */
@@ -918,7 +913,7 @@ export default function PlayerControls({
   onCopyLink,
   renderer = 'cubing', onRendererChange,
   appearanceOpen, onAppearanceToggle,
-  playbackSlot, captureStickeringSlot, bgSlot, fullscreenButton, imageButton, backViewButton,
+  playbackSlot, captureStickeringSlot, bgSlot, fullscreenButton, backViewButton,
   stickering = 'full', onStickeringChange,
   stickeringRot = '', onStickeringRotChange,
   stickeringMask = '', onStickeringMaskClear,
@@ -2679,7 +2674,7 @@ export default function PlayerControls({
       // 与 /recon 播放条共用同一份 <PlaybackBar>。stickering / 锚点两个下拉挂在按钮排两端。
       <div className="sim-stage-controls">
       <div className="sim-view-tools" role="toolbar" aria-label={t('画布工具', 'Canvas tools')}>
-        {imageButton}{backViewButton}{fullscreenButton}
+        {backViewButton}{fullscreenButton}
         {!resolveCaps(puzzleKind, renderer).flat && <button type="button" className="playback-bar-btn"
           onClick={() => {
             const next = { ...settings, scale: DEFAULT_SETTINGS.scale, viewAngle: DEFAULT_SETTINGS.viewAngle, viewGradient: DEFAULT_SETTINGS.viewGradient };

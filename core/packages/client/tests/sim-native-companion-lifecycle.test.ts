@@ -190,7 +190,7 @@ async function navigate(puzzle: string) {
 
 it('clears the old native image and exports while the next puzzle has no frame, then resumes from a new native player', async () => {
   await act(async () => root.render(createElement(NuqsTestingAdapter, {
-    searchParams: '?puzzle=dogic&renderer=cubing',
+    searchParams: '?tool=capture&puzzle=dogic&renderer=cubing',
     hasMemory: true,
     children: [createElement(RouteControls, { key: 'routes' }), createElement(SimPage, { key: 'sim' })],
   })));

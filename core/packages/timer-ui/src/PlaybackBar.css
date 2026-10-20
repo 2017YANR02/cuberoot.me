@@ -105,7 +105,7 @@
 
 /* Full-width simulator and reconstruction panes share their control layout. */
 .playback-bar.playback-bar--wide { width: 100%; min-width: 0; }
-.playback-bar--wide .playback-bar-controls { justify-content: space-between; }
+.playback-bar--wide .playback-bar-controls { justify-content: center; }
 .playback-bar-anchor {
   font-size: 12px;
   background: var(--background);
