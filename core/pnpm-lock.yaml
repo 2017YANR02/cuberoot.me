@@ -61,6 +61,9 @@ importers:
       '@app-foundation/verification':
         specifier: https://github.com/2017YANR02/app-foundation/releases/download/v0.2.0/app-foundation-verification-0.1.0.tgz
         version: https://github.com/2017YANR02/app-foundation/releases/download/v0.2.0/app-foundation-verification-0.1.0.tgz
+      '@app-foundation/workspace-policy':
+        specifier: https://github.com/2017YANR02/app-foundation/releases/download/v0.6.0/app-foundation-workspace-policy-0.1.0.tgz
+        version: https://github.com/2017YANR02/app-foundation/releases/download/v0.6.0/app-foundation-workspace-policy-0.1.0.tgz
       '@apple/app-store-server-library':
         specifier: ^3.1.0
         version: 3.1.0
@@ -566,6 +569,12 @@ importers:
       '@airwallex/components-sdk':
         specifier: ^1.35.1
         version: 1.35.1
+      '@app-foundation/workspace-policy':
+        specifier: https://github.com/2017YANR02/app-foundation/releases/download/v0.6.0/app-foundation-workspace-policy-0.1.0.tgz
+        version: https://github.com/2017YANR02/app-foundation/releases/download/v0.6.0/app-foundation-workspace-policy-0.1.0.tgz
+      '@app-foundation/workspace-ui':
+        specifier: https://github.com/2017YANR02/app-foundation/releases/download/v0.7.0/app-foundation-workspace-ui-0.1.0.tgz
+        version: https://github.com/2017YANR02/app-foundation/releases/download/v0.7.0/app-foundation-workspace-ui-0.1.0.tgz(@app-foundation/workspace-policy@https://github.com/2017YANR02/app-foundation/releases/download/v0.6.0/app-foundation-workspace-policy-0.1.0.tgz)(react@19.2.4)
       '@codemirror/lang-markdown':
         specifier: ^6.5.0
         version: 6.5.0
@@ -1192,6 +1201,19 @@ packages:
     resolution: {integrity: sha512-z/wHi7+xhpQUAyIPgxRsfTiNQ5bP8IUPo8HYr5MA4mnOWEYgdceryQ4LXXAteSgd6sxYhTdoAmeGK9iaecLLpw==, tarball: https://github.com/2017YANR02/app-foundation/releases/download/v0.2.0/app-foundation-verification-0.1.0.tgz}
     version: 0.1.0
     engines: {node: '>=22'}
+
+  '@app-foundation/workspace-policy@https://github.com/2017YANR02/app-foundation/releases/download/v0.6.0/app-foundation-workspace-policy-0.1.0.tgz':
+    resolution: {integrity: sha512-Krq2gZLSwqTSsHNHZD3EYdfGzlSpUbdk7YSD0cLBXjGtDWEAlenYFG3PhQUV2W6I3TUa8r9FQRLCVkpMhHQObg==, tarball: https://github.com/2017YANR02/app-foundation/releases/download/v0.6.0/app-foundation-workspace-policy-0.1.0.tgz}
+    version: 0.1.0
+    engines: {node: '>=22'}
+
+  '@app-foundation/workspace-ui@https://github.com/2017YANR02/app-foundation/releases/download/v0.7.0/app-foundation-workspace-ui-0.1.0.tgz':
+    resolution: {integrity: sha512-5+mtjmZgqbCZxaac/VAywn6UQBj8V5ykp4Sfz9D3s5nfzr9Ai+zgKYsjA6tOmHHuj/ghlci41eDnuWV1X+1bhA==, tarball: https://github.com/2017YANR02/app-foundation/releases/download/v0.7.0/app-foundation-workspace-ui-0.1.0.tgz}
+    version: 0.1.0
+    engines: {node: '>=22'}
+    peerDependencies:
+      '@app-foundation/workspace-policy': 0.1.0
+      react: '>=19'
 
   '@apple/app-store-server-library@3.1.0':
     resolution: {integrity: sha512-d26SICRz8BwCV2qPR0BSXBMxmw0NEvJLwsdREcBmCrus8NmyHw2XgOOP0fiFjcctPn/JXtmSDuGVnaHe+dqO+A==}
@@ -6565,6 +6587,13 @@ snapshots:
   '@app-foundation/sms@https://github.com/2017YANR02/app-foundation/releases/download/v0.3.1/app-foundation-sms-0.1.1.tgz': {}
 
   '@app-foundation/verification@https://github.com/2017YANR02/app-foundation/releases/download/v0.2.0/app-foundation-verification-0.1.0.tgz': {}
+
+  '@app-foundation/workspace-policy@https://github.com/2017YANR02/app-foundation/releases/download/v0.6.0/app-foundation-workspace-policy-0.1.0.tgz': {}
+
+  '@app-foundation/workspace-ui@https://github.com/2017YANR02/app-foundation/releases/download/v0.7.0/app-foundation-workspace-ui-0.1.0.tgz(@app-foundation/workspace-policy@https://github.com/2017YANR02/app-foundation/releases/download/v0.6.0/app-foundation-workspace-policy-0.1.0.tgz)(react@19.2.4)':
+    dependencies:
+      '@app-foundation/workspace-policy': https://github.com/2017YANR02/app-foundation/releases/download/v0.6.0/app-foundation-workspace-policy-0.1.0.tgz
+      react: 19.2.4
 
   '@apple/app-store-server-library@3.1.0':
     dependencies:

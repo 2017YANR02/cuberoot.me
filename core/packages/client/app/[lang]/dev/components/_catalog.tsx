@@ -2466,6 +2466,13 @@ export const CATALOG: ComponentEntry[] = [
 
   // ── 导航与链接 ──────────────────────────────────────────────────────────
   {
+    name: 'WorkspaceProvider',
+    import: "import { WorkspaceProvider, WorkspaceShell, Reports, Projects } from '@app-foundation/workspace-ui';",
+    category: 'nav',
+    zh: '工作台共享布局、项目与工作记录；宿主注入自己的 API、路由、品牌和控件，账号与数据保持独立。',
+    en: 'Shared workspace shell, projects and reports; hosts inject their own API, routing, brand and controls, with independent identities and data.',
+  },
+  {
     name: 'WcaAuth',
     import: "import WcaAuth from '@/components/WcaAuth';",
     category: 'nav',
