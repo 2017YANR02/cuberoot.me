@@ -4,7 +4,7 @@
 
 ## 共用标准
 
-独立仓库 [continuous-corners](https://github.com/2017YANR02/continuous-corners)，初始研究基线 `5d96cef` 已在此前推送，后续实现尚未推送。产品固定 `@2017yanr02/continuous-corners@0.3.0`，几何版本 `swiftui-27-uniform-v1` / `swiftui-27-independent-v1`。安装包随本仓库跟踪，使用相对 `file:` 引用；不跨仓库 import 或依赖开发者路径、业务数据。
+独立仓库 [continuous-corners](https://github.com/2017YANR02/continuous-corners)，初始研究基线 `5d96cef` 已在此前推送，后续实现尚未推送。产品本地升级为 `@2017yanr02/continuous-corners@0.3.1`，几何版本 `swiftui-27-uniform-v1` / `swiftui-27-independent-v1`。安装包随本仓库跟踪，使用相对 `file:` 引用；不跨仓库 import 或依赖开发者路径、业务数据。
 
 核心以苹果公开 SwiftUI `.continuous` 的原始路径为基准：每角三段三次贝塞尔，按尺寸限制半径和过渡段。578 组 macOS/iOS 模拟器原始样本相同；TypeScript 重建最大坐标误差约 0.0000283 个逻辑单位。不是苹果官方源码，也不宣称逐位或逐像素等同。公开算法研究与来源见共享包 `docs/geometry.md`。
 
@@ -35,3 +35,11 @@ CubeRoot 排除 `.site-glass-engine` 和 `.maplibregl-map`；共享 app-ui 安�
 Web 与共享 app-ui 使用同一组 `.cg-card, .rc-card, .recon-card, .sortable-card, .timer-workspace-panel` 容器。没有实际半径或不适配的节点不作容器推断；第三方玻璃与地图边界继续排除。
 
 0.3.0接入后，client与app-ui类型检查均通过；Mac Safari已观察组件页正常载入。原有ClockDial的SVG浮点文本hydration提示仍存在，不属于本库改写属性；不把页面可用写成整页无警告。
+
+## 2026-10-19 动态控件与排名页修复（0.3.1，本地）
+
+修复自动绘制临时清除背景时触发 CSS 过渡、采样透明中间值的问题：有背景/边框过渡或动画的元素保留原生 CSS。将同步微任务刷新改为逐帧合并，保留结构选择器所需的子树重算，通过逐帧合并避免微任务连续重绘阻塞页面。Web 与共享 app-ui 同步引用本地 0.3.1 包，无页面级颜色覆盖或排名 API 改动。
+
+内置 Chromium 浏览器 40 项库回归通过，含动态选中背景、开关切换、100 行追加和有界刷新。实际本地 WCA 查询标签恢复浅底深字，排名页同参数加载成功且主线程可响应。Safari/iPhone 尚未重验；未提交、未推送、未部署。
+
+后续按负责人更正，统一入口继续保留在 continuous-corners 独立仓库（本地修复提交 `96c8487`），未迁入 App Foundation。新增 Chromium/WebKit 双引擎 CI 回归入口；本地 Chromium 40项回归与最终排名页表格加载复核通过，远端 CI 尚未触发。Mira 同步直接引用同一0.3.1归档；两站类型检查通过，无推送部署。
