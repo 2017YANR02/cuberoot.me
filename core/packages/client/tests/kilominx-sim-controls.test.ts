@@ -190,10 +190,23 @@ describe('Kilominx simulator controls', () => {
   }
 
   function anchorSelect() {
-    const select = host.querySelector<HTMLSelectElement>('select[aria-label="Anchor: keep the scramble start or the solve end fixed"]');
+    const select = host.querySelector<HTMLButtonElement>('button[aria-label="Anchor: keep the scramble start or the solve end fixed"]');
     expect(select).not.toBeNull();
     return select!;
   }
+
+  it('changes the anchor through the shared custom menu', async () => {
+    await mount(false, 'U R2', 'algorithm');
+    await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="Playback settings"]')!.click());
+    await act(async () => anchorSelect().click());
+    const options = [...document.querySelectorAll<HTMLButtonElement>('.sim-anchor-menu [role="option"]')];
+    expect(options.map(option => option.textContent)).toEqual(['Start', 'End']);
+    expect(options[1].getAttribute('aria-selected')).toBe('true');
+    await act(async () => options[0].click());
+    expect(anchorSelect().textContent).toBe('Start');
+    expect(settingsChanges).toHaveBeenLastCalledWith(expect.objectContaining({ playbackMode: 'moves' }));
+    expect(document.querySelector('.sim-anchor-menu')).toBeNull();
+  });
 
   function expectNxnState(algorithm: string) {
     const expected = new Cube(3);
@@ -211,7 +224,7 @@ describe('Kilominx simulator controls', () => {
     await mount(false, 'U R2', 'algorithm');
     await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="Playback settings"]')!.click());
     expect(world).toBeNull();
-    expect(anchorSelect().value).toBe('algorithm');
+    expect(anchorSelect().textContent).toBe('End');
     expect(player.experimentalSetupAnchor).toBe('end');
     await act(async () => button('Random scramble').click());
     expect(tnoodleRandomScramble).toHaveBeenCalledExactlyOnceWith('kilominx');
@@ -224,7 +237,7 @@ describe('Kilominx simulator controls', () => {
     expect(player.jumpToEnd).toHaveBeenCalledWith({ flash: false });
     expect(player.jumpToStart).not.toHaveBeenCalled();
     expect(settingsChanges).not.toHaveBeenCalled();
-    expect(anchorSelect().value).toBe('algorithm');
+    expect(anchorSelect().textContent).toBe('End');
     expect(seekAnchors).toHaveBeenCalledWith('end');
     expect(player.experimentalSetupAnchor).toBe('end');
     expect(player.play).not.toHaveBeenCalled();
@@ -236,7 +249,7 @@ describe('Kilominx simulator controls', () => {
     player.jumpToStart.mockClear();
     await act(async () => button('Animate scramble').click());
     expect(settingsChanges).not.toHaveBeenCalled();
-    expect(anchorSelect().value).toBe('algorithm');
+    expect(anchorSelect().textContent).toBe('End');
     expect(text('Scramble')).toBe(EDITOR_SCRAMBLE);
     expect(text('Solution')).toBe('U R2');
     await nextAnimationFrame();

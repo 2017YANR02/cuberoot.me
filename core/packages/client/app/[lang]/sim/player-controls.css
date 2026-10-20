@@ -1419,6 +1419,16 @@
 .sim-playback-speed { width: min(140px, 100%); min-width: 0; justify-self: start; }
 .sim-playback-speed > .sim-slider { width: 100%; min-width: 0; }
 .sim-playback-settings { justify-self: end; }
+.sim-anchor-setting { justify-content: space-between; gap: 12px; }
+.sim-anchor-setting .sim-anchor-trigger {
+  min-width: 76px;
+  min-height: 32px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 400;
+}
+.sim-anchor-menu { font-size: 13px; }
 .sim-playback-settings .settings-popover-panel {
   /* anchored-panel: clamped (SettingsPopover uses usePanelClamp). */
   top: auto;

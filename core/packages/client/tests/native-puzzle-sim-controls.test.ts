@@ -270,7 +270,7 @@ describe('native PG simulator controls', () => {
     expect(algChanges).toHaveBeenCalledExactlyOnceWith(nextAlg);
     expect(settingsChanges).not.toHaveBeenCalled();
     await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="Playback settings"]')!.click());
-    expect(host.querySelector<HTMLSelectElement>('select[aria-label="Anchor: keep the scramble start or the solve end fixed"]')!.value).toBe('algorithm');
+    expect(host.querySelector('button[aria-label="Anchor: keep the scramble start or the solve end fixed"]')?.textContent).toBe('End');
     await act(async () => button('Copy this page link (with scramble / solution)').click());
     expect(copyLinks).toHaveBeenCalledExactlyOnceWith(nextSetup, nextAlg);
     expect(writeText).not.toHaveBeenCalled();
