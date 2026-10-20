@@ -32,6 +32,8 @@ import ReportContent from './ReportContent';
 import { reportNotation, prepareReportNotation } from './report-notation';
 import { initialReportUI, reduceReportUI } from './report-content';
 import { useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
+import type { ReportAction } from './report-content';
 import { useNotationCases } from '../recon/NotationLine';
 
 import { useReconstructHost, type ReconstructHost } from './ReconstructHost';
@@ -57,13 +59,15 @@ export interface StepMoveListProps {
   feedback?: React.ReactNode;
   /** Untimed generated solutions can supply notation without recorded-solve metrics. */
   clipboardText?: string;
+  /** Optional host toolbar for the shared notation actions. */
+  toolbar?: HTMLElement | null;
 }
 
 
 
 const NoLineDiagrams: NonNullable<ReconstructHost['LineDiagramProvider']> = ({ children }) => children(() => null, () => undefined);
 
-export default function StepMoveList({method='cfop',recon,currentIdx,onSeek,notice,feedback,clipboardText}:StepMoveListProps) {
+export default function StepMoveList({method='cfop',recon,currentIdx,onSeek,notice,feedback,clipboardText,toolbar}:StepMoveListProps) {
   const host=useReconstructHost(), {LineDiagramProvider=NoLineDiagrams}=host;
   const [ui,setUI]=useState(initialReportUI);
   const commentCases=useNotationCases((recon?.lines??[]).map(line=>'// '+(line.label??'')).join('\n'),method==='cfop');
@@ -75,7 +79,7 @@ export default function StepMoveList({method='cfop',recon,currentIdx,onSeek,noti
       notice:notice?{id:'notice',kind:'slot'}:null,feedback:feedback?{id:'feedback',kind:'slot'}:null});
     const slots:Record<string,React.ReactNode>={notice,feedback};
     projection.lines.forEach((_,i)=>{const line=i+projection.inspectionOffset;slots['diagram:'+line]=diagramAt(line);});
-    return <ReportContent node={content.node} slots={slots} dispatch={action=>{
+    const dispatch = (action: ReportAction) => {
       if(action.copyText)void host.writeClipboardText(action.copyText).catch(err=>console.warn('[step-move-list] copy failed:',err));
       if(action.type==='play-from')onSeek?.(Number(action.value),action.timeMs);
       if(action.type==='copy-notation')void host.writeClipboardText(clipboardText ?? content.clipboard).then(()=>{
@@ -83,6 +87,12 @@ export default function StepMoveList({method='cfop',recon,currentIdx,onSeek,noti
         setTimeout(()=>setUI(state=>reduceReportUI(state,{type:'copied'})),1500);
       }).catch(err=>console.warn('[step-move-list] copy failed:',err));
       setUI(state=>reduceReportUI(state,action));
-    }}/>;
+    };
+    const head = toolbar ? content.node?.children?.find(node => node.id === 'head') : null;
+    const node = head && content.node ? {...content.node, children: content.node.children?.filter(child => child !== head)} : content.node;
+    return <>
+      {head && toolbar && createPortal(<ReportContent node={head} slots={slots} dispatch={dispatch}/>, toolbar)}
+      <ReportContent node={node} slots={slots} dispatch={dispatch}/>
+    </>;
   }}</LineDiagramProvider>;
 }

@@ -59,6 +59,8 @@ describe('complete shared solver hints', () => {
     expect(host.querySelector('.stepsolve-method option[value="petrus"]')?.textContent).toBe('Petrus');
     expect(host.querySelector('.stepsolve-head')).toBeNull();
     expect(host.querySelector('.recon-notation-list')).not.toBeNull();
+    expect(host.querySelector('.stepsolve-tabs .sml-copy')).not.toBeNull();
+    expect(host.querySelector('.recon-notation-list .sml-copy')).toBeNull();
     await act(async () => host.querySelectorAll<HTMLButtonElement>('.sml-line .sml-moves')[2].click());
     expect(player.seek).toHaveBeenCalledWith(1, true);
     expect(host.querySelector('[data-player-setup]')?.getAttribute('data-player-setup')).toBe('R');

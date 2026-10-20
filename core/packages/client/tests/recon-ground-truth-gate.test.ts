@@ -198,6 +198,8 @@ describe('reconstruction ground-truth commit gate', () => {
       expect(preflight().status).toBe(3);
       expect(run('git', ['config', '--get', 'core.hooksPath']).stdout.trim()).toBe('custom-hooks');
     } finally { rmSync(temp, { recursive: true, force: true }); }
-  }, 15_000);
+  // Windows runs many real Git/Node child processes here; startup alone can
+  // exceed 15 seconds. Keep every gate assertion and give the integration time.
+  }, process.platform === 'win32' ? 60_000 : 15_000);
 
 });

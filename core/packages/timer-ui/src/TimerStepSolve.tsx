@@ -61,6 +61,7 @@ export default function TimerStepSolve({ scramble, isZh, onDismissChange, onBloc
   const [computing, setComputing] = useState(false);
   const [errorKey, setErrorKey] = useState<string | null>(null);
   const [compareOpen, setCompareOpen] = useState(false);
+  const [notationToolbar, setNotationToolbar] = useState<HTMLDivElement | null>(null);
   useEffect(() => { onBlockingChange?.(compareOpen); return () => onBlockingChange?.(false); }, [compareOpen, onBlockingChange]);
   const selectionKey = `${methodId}\u0000${scramble}`;
   // Shared player handle for seeking from notation lines.
@@ -147,6 +148,7 @@ export default function TimerStepSolve({ scramble, isZh, onDismissChange, onBloc
             <button type="button" className="stepsolve-compare" onClick={() => setCompareOpen(true)}>
               {tr({ zh: '对比全部', en: 'Compare all' })}
             </button>
+            <div className="stepsolve-notation-actions" ref={setNotationToolbar} />
           </div>
 
           {computing && !result && (
@@ -163,6 +165,7 @@ export default function TimerStepSolve({ scramble, isZh, onDismissChange, onBloc
             <>
               <ReconstructHostContext.Provider value={notationHost}>
                 <StepMoveList method="training" recon={recon} reference={null} slotReference={null}
+                  toolbar={notationToolbar}
                   clipboardText={`${scramble}\n\n${recon?.text ?? ''}`}
                   onSeek={index => playerRef.current?.jumpToMoveCount(index, true)} />
               </ReconstructHostContext.Provider>

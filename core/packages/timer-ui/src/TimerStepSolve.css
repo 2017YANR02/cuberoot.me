@@ -3,9 +3,15 @@
   text-align: left;
 }
 .stepsolve-body { display: flex; flex-direction: column; gap: 8px; padding: 6px 2px 2px; }
-.stepsolve-tabs { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.stepsolve-tabs { display: flex; gap: 4px; align-items: center; }
+.stepsolve-tabs .sa-method { margin-left: 0; }
+.stepsolve-tabs .sa-method-select { min-height: 32px; }
+.stepsolve-notation-actions { flex: 0 0 auto; }
+.stepsolve-notation-actions .sml-copy { width: 32px; height: 32px; }
 .stepsolve-compare {
-  margin-left: auto;
+  margin-left: 0;
+  min-height: 32px;
+  white-space: nowrap;
   padding: 3px 10px;
   background: transparent;
   border: 1px dashed var(--border-default);

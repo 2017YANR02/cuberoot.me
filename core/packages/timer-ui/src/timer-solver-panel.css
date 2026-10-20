@@ -21,7 +21,7 @@
   background: var(--shell-chip, var(--card));
   border: 1px solid var(--shell-divider, var(--border-default));
   border-radius: 999px;
-  color: var(--muted-foreground);
+  color: var(--foreground);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -70,7 +70,9 @@
   cursor: pointer;
   transition: background 120ms, color 120ms;
 }
-.solver-layout-action:hover { background: var(--shell-hover, var(--muted)); color: var(--foreground); }
+.solver-layout-action:hover { background: transparent; color: var(--foreground); }
+.solver-layout-action { color: var(--foreground); }
+.solver-layout-action .solver-panel-chevron { opacity: 1; }
 .solver-layout-action:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 .solver-panel-body { width: 100%; margin-top: 8px; }
 .solver-panel-body .stsv-controls { justify-content: center; }
@@ -135,13 +137,14 @@
   flex: 0 0 auto;
   align-self: center;
   max-width: 100%;
-  padding: 6px 0;
+  padding: 6px 8px;
   appearance: none;
-  border: 0;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
   background: transparent;
   color: inherit;
   font: inherit;
-  font-weight: 600;
+  font-weight: 400;
   cursor: pointer;
 }
 .solver-sheet-head .solver-settings-slot { justify-content: flex-start; }

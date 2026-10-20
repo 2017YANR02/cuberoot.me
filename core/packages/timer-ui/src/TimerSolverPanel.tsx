@@ -328,7 +328,7 @@ export default function TimerSolverPanel({
               aria-label={tr({ zh: '收起解法面板', en: 'Collapse solutions panel' })}
               title={tr({ zh: '收起解法面板', en: 'Collapse solutions panel' })}
             >
-              <ChevronRight size={14} className="solver-panel-chevron" aria-hidden="true" />
+              <ChevronRight size={16} className="solver-panel-chevron" aria-hidden="true" />
             </button>
           )}
         </div>
