@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { VisualCube } from '@/components/VisualCube';
-import { cubeColorGroups } from '@/components/CubeColorChip/CubeColorChip';
+import { cubeColorGroups, crossColorFromReconText } from '@/components/CubeColorChip/CubeColorChip';
 import { cleanForPlayer } from '@/lib/recon-alg-utils';
 import { visualCubeSchemeForOrientation } from '@/lib/cube-orientation';
 import { tr } from '@/i18n/tr';
@@ -39,6 +39,11 @@ function LibraryLineDiagram({ setup, set, sticker, lastSlot }: {
     alt={tr({ zh: '执行此行前的魔方状态', en: 'Cube state before this line' })} />;
 }
 
+function retainRowKeys<T>(current: Map<string, T>, keys: Set<string>): Map<string, T> {
+  return [...current.keys()].every(key => keys.has(key)) ? current
+    : new Map([...current].filter(([key]) => keys.has(key)));
+}
+
 /** Shared pre-line states, F2L masking and library links for recon and timer. */
 export function useReconLineDiagrams(scramble: string, text: string, enabled = true) {
   const lineSetups = useMemo(() => {
@@ -49,22 +54,32 @@ export function useReconLineDiagrams(scramble: string, text: string, enabled = t
       return before;
     });
   }, [scramble, text]);
-  const [f2lLinks, setF2lLinks] = useState<Map<number, Map<string, string>>>(new Map());
-  const [f2lDiagrams, setF2lDiagrams] = useState<Map<number, { colors: string; facelets: string }[]>>(new Map());
+  const sourceLines = useMemo(() => text.replace(/\r\n?/g, '\n').split('\n'), [text]);
+  // A later turn does not change an earlier row's state or annotation. Key
+  // async results by their actual inputs, never by the whole live document.
+  const rowKeys = useMemo(() => {
+    const cross = crossColorFromReconText(text);
+    return sourceLines.map((line, index) => JSON.stringify([scramble, lineSetups[index], line, cross]));
+  }, [scramble, text, sourceLines, lineSetups]);
+  const [f2lLinkRows, setF2lLinks] = useState<Map<string, Map<string, string>>>(new Map());
+  const [f2lDiagrams, setF2lDiagrams] = useState<Map<string, { colors: string; facelets: string }[]>>(new Map());
   const [f2lLoading, setF2lLoading] = useState(false);
   const [libraryStickers, setLibraryStickers] = useState<Map<string, AlgSticker>>(new Map());
-  const [libraryLinks, setLibraryLinks] = useState<Map<number, Map<string, string>>>(new Map());
+  const [libraryLinkRows, setLibraryLinks] = useState<Map<string, Map<string, string>>>(new Map());
   useEffect(() => {
     let cancelled = false;
-    setLibraryLinks(new Map());
-    setLibraryStickers(new Map());
+    const validKeys = new Set(rowKeys);
+    setLibraryLinks(current => retainRowKeys(current, validKeys));
+    const stickerKeys = new Set(sourceLines.flatMap((line, index) => reconCommentLinks(line)
+      .map(comment => `${rowKeys[index]}:${comment.href.split('/')[3]}`)));
+    setLibraryStickers(current => retainRowKeys(current, stickerKeys));
     if (!enabled) return;
     // Bare stage labels in manually authored /recon text need the same exact
     // recognition as timer labels. Reuse the matcher and the existing dialog.
     void (async () => {
       const { identifyLibraryCase } = await import('@cuberoot/shared/timer/reconstruct/library-correction');
       const files = new Map<string, ReturnType<typeof loadAlg>>();
-      const links = new Map<number, Map<string, string>>();
+      const links = new Map<string, Map<string, string>>();
       const lines = text.replace(/\r\n?/g, '\n').split('\n');
       for (const [index, line] of lines.entries()) {
         if (cancelled) return;
@@ -81,13 +96,13 @@ export function useReconLineDiagrams(scramble: string, text: string, enabled = t
               ? file.cases.find(item => item.id != null && algCaseDetailHref('3x3', set, slugs.byId.get(item.id) ?? '') === namedHref)
               : await identifyLibraryCase({ moves: cleanForPlayer(line).split(/\s+/).filter(Boolean) }, file.cases, set);
             const sticker = item?.sticker;
-            const key = `${index}:${set}`;
+            const key = `${rowKeys[index]}:${set}`;
             if (sticker && !cancelled) setLibraryStickers(current => current.get(key) === sticker ? current : new Map(current).set(key, sticker));
             if (namedHref) continue;
             const slug = item?.id == null ? undefined : slugs.byId.get(item.id);
             if (slug) {
-              if (!links.has(index)) links.set(index, new Map());
-              links.get(index)!.set(set, algCaseDetailHref('3x3', set, slug));
+              if (!links.has(rowKeys[index])) links.set(rowKeys[index], new Map());
+              links.get(rowKeys[index])!.set(set, algCaseDetailHref('3x3', set, slug));
             }
           } catch { /* Do not guess a case when the library is unavailable. */ }
         }
@@ -95,11 +110,13 @@ export function useReconLineDiagrams(scramble: string, text: string, enabled = t
       if (!cancelled) setLibraryLinks(links);
     })();
     return () => { cancelled = true; };
-  }, [enabled, text]);
+  }, [enabled, text, rowKeys, sourceLines]);
   useEffect(() => {
     let cancelled = false;
-    setF2lLinks(new Map());
-    setF2lDiagrams(new Map());
+    const validKeys = new Set(rowKeys);
+    setF2lLinks(current => retainRowKeys(current, validKeys));
+    setF2lDiagrams(current => retainRowKeys(current, validKeys));
+    const keyed = <T,>(rows: Map<number, T>) => new Map([...rows].map(([index, value]) => [rowKeys[index], value]));
     setF2lLoading(false);
     if (enabled && scramble && text.split('\n').some(line => {
       const comment = line.indexOf('//');
@@ -108,15 +125,21 @@ export function useReconLineDiagrams(scramble: string, text: string, enabled = t
       return /\bF2L[1-4]?\b/i.test(label) || cubeColorGroups(label).some(group => group.colors.length === 2);
     })) {
       setF2lLoading(true);
-      void import('@/lib/recon-f2l-links').then(({ reconF2lAnnotations }) => reconF2lAnnotations(scramble, text, diagrams => { if (!cancelled) setF2lDiagrams(diagrams); }))
-        .then(({ links, diagrams }) => { if (!cancelled) { setF2lLinks(links); setF2lDiagrams(diagrams); } })
+      void import('@/lib/recon-f2l-links').then(({ reconF2lAnnotations }) => reconF2lAnnotations(scramble, text, diagrams => { if (!cancelled) setF2lDiagrams(keyed(diagrams)); }))
+        .then(({ links, diagrams }) => { if (!cancelled) { setF2lLinks(keyed(links)); setF2lDiagrams(keyed(diagrams)); } })
         .catch(() => { /* Unknown states stay as plain labels, never a guessed case. */ })
         .finally(() => { if (!cancelled) setF2lLoading(false); });
     }
     return () => { cancelled = true; };
-  }, [enabled, scramble, text]);
+  }, [enabled, scramble, text, rowKeys]);
 
-  const sourceLines = useMemo(() => text.replace(/\r\n?/g, '\n').split('\n'), [text]);
+  const f2lLinks = new Map<number, Map<string, string>>();
+  const libraryLinks = new Map<number, Map<string, string>>();
+  if (enabled) rowKeys.forEach((key, index) => {
+    const f2l = f2lLinkRows.get(key), library = libraryLinkRows.get(key);
+    if (f2l) f2lLinks.set(index, f2l);
+    if (library) libraryLinks.set(index, library);
+  });
   const diagramAt = (index: number): ReactNode => {
     if (!enabled || !scramble.trim()) return null;
     const line = sourceLines[index] ?? '';
@@ -128,9 +151,9 @@ export function useReconLineDiagrams(scramble: string, text: string, enabled = t
     const set = reconCommentLinks(line).map(link => link.href.split('/')[3])
       .find(value => value !== 'f2l');
     if (set && lineSetups[index]) return <LibraryLineDiagram setup={lineSetups[index]}
-      set={set} sticker={libraryStickers.get(`${index}:${set}`)} lastSlot={lastSlot} />;
+      set={set} sticker={libraryStickers.get(`${rowKeys[index]}:${set}`)} lastSlot={lastSlot} />;
     const f2l = cubeColorGroups(label).some(group => group.colors.length === 2) || /^F2L(?:[1-4])?\b/i.test(label);
-    if (f2l && f2lDiagrams.has(index)) return <>{f2lDiagrams.get(index)!.map(({ colors, facelets }) =>
+    if (f2l && f2lDiagrams.has(rowKeys[index])) return <>{f2lDiagrams.get(rowKeys[index])!.map(({ colors, facelets }) =>
       <VisualCube key={colors} faceletColors={facelets} view="iso" size={28} local interactive enlargeable
         alt={tr({ zh: `执行此行前的 ${colors} F2L 状态`, en: `${colors} F2L state before this line` })} />)}</>;
     return null;
