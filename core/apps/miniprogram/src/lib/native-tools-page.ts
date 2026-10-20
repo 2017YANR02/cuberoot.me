@@ -6,6 +6,7 @@ import { requestJson } from './auth';
 import { applyNativeAppearance } from './appearance';
 import { getMiniProgramLocale, tr } from './i18n';
 import { miniProgramApi } from './platform';
+import { WCA_ID_REGEX } from '@cuberoot/shared/wca-person';
 
 interface Row { id: string; title: string; detail: string; result?: string }
 interface PersonResponse {
@@ -31,10 +32,10 @@ async function load(page: ToolPage) {
   const id = page.requestId = (page.requestId ?? 0) + 1;
   const mode = page.data.mode;
   const query = page.data.query.trim().toUpperCase();
-  if (mode === 'person' && !/^\d{4}[A-Z]{4}\d{2}$/.test(query)) {
-    page.setData({ error: labels().idRequired, loading: false, rows: [] }); return;
+  if (mode === 'person' && !WCA_ID_REGEX.test(query)) {
+    page.setData({ error: labels().idRequired, loading: false, rows: [], personName: '', searched: false }); return;
   }
-  page.setData({ loading: true, rows: [], error: '', personName: '' });
+  page.setData({ loading: true, rows: [], error: '', personName: '', searched: true });
   try {
     let rows: Row[];
     let personName = '';
@@ -61,7 +62,7 @@ async function load(page: ToolPage) {
 }
 export function createNativeToolsPageOptions() {
   return {
-    data: { nativeToolsPage: true, appearanceStyle: '', copy: labels(), mode: 'competitions', modeIndex: 0, query: '', rows: [] as Row[], error: '', loading: false, personName: '' },
+    data: { nativeToolsPage: true, appearanceStyle: '', copy: labels(), mode: 'competitions', modeIndex: 0, query: '', rows: [] as Row[], error: '', loading: false, personName: '', searched: false },
     onShow() { this.active = true; this.setData({ copy: labels() }); applyNativeAppearance(); miniProgramApi().setNavigationBarTitle({ title: labels().title }); if (this.data.mode !== 'person' || this.data.query) void load(this); },
     onHide() { this.active = false; this.requestId = (this.requestId ?? 0) + 1; },
     onUnload() { this.onHide(); },
@@ -69,12 +70,12 @@ export function createNativeToolsPageOptions() {
     openTimer() { miniProgramApi().switchTab({ url: '/pages/timer/index' }); },
     changeMode(e: WechatMiniprogram.PickerChange) {
       const index = Number(e.detail.value);
-      this.setData({ modeIndex: index, mode: ['competitions', 'records', 'person'][index] ?? 'competitions', rows: [], error: '', personName: '', loading: false });
+      this.setData({ modeIndex: index, mode: ['competitions', 'records', 'person'][index] ?? 'competitions', rows: [], error: '', personName: '', loading: false, searched: false });
       ++this.requestId;
       if (this.data.mode !== 'person' || this.data.query) void load(this);
     },
-    inputQuery(e: WechatMiniprogram.Input) { ++this.requestId; this.setData({ query: e.detail.value, loading: false }); },
-    clearQuery() { ++this.requestId; this.setData({ query: '', rows: [], error: '', loading: false, personName: '' }); },
+    inputQuery(e: WechatMiniprogram.Input) { ++this.requestId; this.setData({ query: e.detail.value, rows: [], error: '', personName: '', loading: false, searched: false }); },
+    clearQuery() { ++this.requestId; this.setData({ query: '', rows: [], error: '', loading: false, personName: '', searched: false }); },
     search() { void load(this); },
   } satisfies WechatMiniprogram.Page.Options<ToolPage['data'], WechatMiniprogram.Page.CustomOption>;
 }
