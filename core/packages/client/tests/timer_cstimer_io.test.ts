@@ -243,6 +243,7 @@ describe.each([
   { event: 'radiojewel', nameEn: 'Radio Jewel', nameZh: 'Radio Jewel' },
   { event: 'radioweb', nameEn: 'Radio Web', nameZh: 'Radio Web' },
   { event: 'catscradle', nameEn: 'Cat’s Cradle', nameZh: 'Cat’s Cradle' },
+  { event: 'radiocanon', nameEn: 'Radio Canon', nameZh: 'Radio Canon' },
 ] as const)('$event csTimer compatibility', ({ event, nameEn, nameZh }) => {
   it('preserves renamed sessions and mixed native notation through both import APIs', () => {
     const solve = {
@@ -333,6 +334,14 @@ describe('compound native csTimer session names', () => {
     ["Session_Cat's_Cradle", 'catscradle'],
     ['Cats Cradle practice', 'catscradle'],
     ['Session_Radiolarian_5', 'catscradle'],
+    ['Radio_Canon_Practice', 'radiocanon'],
+    ['Session_Radio-Canon', 'radiocanon'],
+    ['Radio Cannon', 'radiocanon'],
+    ['Session_Radio_Cannon_Practice', 'radiocanon'],
+    ['Radiolarian1.5', 'radiocanon'],
+    ['Radiolarian 1.5 practice', 'radiocanon'],
+    ['Session_Radiolarian_1.5', 'radiocanon'],
+    ['Session_Radiolarian1.5_Practice', 'radiocanon'],
     ['Session_3x3_+_Skewb', 'cube3skewb'],
     ['3×3 + Skewb_Practice', 'cube3skewb'],
     ['练习：三阶＋斜转', 'cube3skewb'],
@@ -372,6 +381,22 @@ describe('3×3 + Helicopter csTimer session names', () => {
     const byEvent = importCstimerJson(raw);
     expect(byEvent?.cube3heli?.[0].event).toBe('cube3heli');
     expect(byEvent?.['333']).toBeUndefined();
+  });
+});
+
+describe('Radio Canon session-name boundaries', () => {
+  it.each([
+    'Session_Radiolarian15_Practice',
+    'Session_Radiolarian_1.50',
+    'Radio Canonical practice',
+    'XRadio Canon Practice',
+  ])('does not claim the different name %s as Radio Canon', (name) => {
+    const raw = JSON.stringify({
+      session1: [[[0, 8_765], 'R', '', 1_700_000_000]],
+      properties: { sessionData: { 1: { name, opt: { scrType: 'input' } } } },
+    });
+    expect(parseCstimerExport(raw)[0].event).not.toBe('radiocanon');
+    expect(importCstimerJson(raw)?.radiocanon).toBeUndefined();
   });
 });
 

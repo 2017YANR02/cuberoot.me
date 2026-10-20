@@ -118,6 +118,7 @@ const CSTIMER_EVENT_MAP: Record<string, EventId> = {
   'radioweb': 'radioweb', 'radiolarian6': 'radioweb',
   'catscradle': 'catscradle', 'cat’scradle': 'catscradle', "cat'scradle": 'catscradle',
   'radiolarian5': 'catscradle',
+  'radiocanon': 'radiocanon', 'radiocannon': 'radiocanon', 'radiolarian1.5': 'radiocanon',
 };
 
 /* ------------------------------------------------------------------ */
@@ -199,6 +200,10 @@ function nameToEvent(name: unknown): { event: EventId; matched: boolean } {
   }
   if (tokens.some((token, index) => token === 'radio' && tokens[index + 1] === 'jewel')) {
     return normalizeEventKey('radiojewel');
+  }
+  // Preserve the decimal in Radiolarian 1.5 before the generic token fallback.
+  if (/(?:^|[^a-z0-9])(?:radio[\s_-]*cann?on|radiolarian[\s_-]*1\.5)(?:$|[^a-z0-9.])/i.test(name)) {
+    return normalizeEventKey('radiocanon');
   }
   if (tokens.some((token, index) =>
     (token === 'radio' && tokens[index + 1] === 'web')
