@@ -75,7 +75,7 @@ async function prepareOutput(sourceFiles) {
     .map(async (file) => {
       const output = join(compileRoot, relative(sourceRoot, file));
       await mkdir(dirname(output), { recursive: true });
-      const page = relative(sourceRoot, file).replaceAll('\\', '/').match(/^pages\/(timer|tools)\/index\.wxml$/)?.[1];
+      const page = relative(sourceRoot, file).replaceAll('\\', '/').match(/^pages\/(timer|tools|web)\/index\.wxml$/)?.[1];
       if (douyin && page) {
         await writeFile(output, `<include src="../../templates/native-${page}.wxml" />\n`);
         return;
@@ -212,6 +212,8 @@ async function normalizeDouyinAppConfig() {
   normalized.pages = normalized.pages.filter(page => page !== 'pages/training/index' && page !== 'pages/membership/index');
   normalized.tabBar.list = normalized.tabBar.list.filter(tab => tab.pagePath !== 'pages/training/index');
   await rm(join(stagingRoot, 'pages/training'), { recursive: true, force: true });
+  // No Douyin page uses the WeChat-only web container after native routing.
+  await rm(join(stagingRoot, 'templates/web-route-view.ttml'), { force: true });
   normalized.tabBar.list = await buildDouyinTabIcons(stagingRoot, normalized.tabBar);
   await writeFile(appConfigPath, `${JSON.stringify(normalized, null, 2)}\n`, 'utf8');
   await Promise.all([
@@ -236,6 +238,7 @@ async function validateDouyinOutput() {
     if (!appConfig.pages.includes(page)) throw new Error(`抖音原生页面未登记：${page}`);
   }
   await validateNativePages(stagingRoot, [...new Set([
+    ...appConfig.pages,
     ...nativePages, appConfig.pages[0], ...appConfig.tabBar.list.map(tab => tab.pagePath),
   ])]);
   const unsupportedKey = douyinUnsupportedAppConfigKeys.find((key) => key in appConfig);

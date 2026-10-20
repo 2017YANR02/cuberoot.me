@@ -1,6 +1,6 @@
 import { resolveWebRoute } from './web-routes';
 import { createPlatformActionGuard } from './platform-action-guard';
-import { miniProgramApi } from './platform';
+import { isDouyinMiniProgram, miniProgramApi } from './platform';
 
 interface WebsitePageNavigationOptions {
   failureMessage: string;
@@ -57,7 +57,9 @@ export function openWebsitePageOnce(
 
   try {
     miniProgramApi().navigateTo({
-      url: key === 'privacy' || key === 'contact'
+      url: isDouyinMiniProgram() && (key === 'account' || key === 'account-link')
+        ? `/pages/${key === 'account' ? 'account-settings' : 'account-link'}/index`
+        : key === 'privacy' || key === 'contact'
         ? `/pages/${key}/index` : `/pages/web/index?key=${encodeURIComponent(String(key))}`,
       fail,
       complete: release,

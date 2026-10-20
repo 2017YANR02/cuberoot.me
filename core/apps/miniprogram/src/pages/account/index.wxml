@@ -61,7 +61,7 @@
       </block>
       <block wx:else>
         <button class="primary-button account-primary-button" disabled="{{loginBusy}}" hover-class="press-feedback" bindtap="openEmailLinkCode">{{copy.emailLinkCodeLabel}}</button>
-        <button class="text-button account-create-button account-link-website-button" disabled="{{loginBusy}}" hover-class="press-feedback" bindtap="openLinkCodeWebsite">{{copy.openLinkCodeWebsiteLabel}}</button>
+        <button wx:if="{{!requiresAgreement}}" class="text-button account-create-button account-link-website-button" disabled="{{loginBusy}}" hover-class="press-feedback" bindtap="openLinkCodeWebsite">{{copy.openLinkCodeWebsiteLabel}}</button>
         <text class="account-link-code-prompt">{{copy.linkCodeReadyHint}}</text>
         <view class="account-link-code-row">
           <input class="account-link-code-input" value="{{accountLinkCode}}" type="number" placeholder="{{copy.linkCodeLabel}}" aria-label="{{copy.linkCodeLabel}}" maxlength="6" disabled="{{loginBusy}}" bindinput="onLinkCodeInput" />
@@ -145,7 +145,7 @@
     {{copy.accountButtonLabel}}
   </button>
   <button class="text-button account-name-edit" disabled="{{identityMutationBusy || nameBusy}}" bindtap="signOut">{{copy.signOut}}</button>
-  <button class="text-button account-name-edit" disabled="{{identityMutationBusy || nameBusy}}" bindtap="openSecuritySettings">{{copy.securitySettings}}</button>
+  <button wx:if="{{!requiresAgreement}}" class="text-button account-name-edit" disabled="{{identityMutationBusy || nameBusy}}" bindtap="openSecuritySettings">{{copy.securitySettings}}</button>
   <button class="text-button account-name-edit" disabled="{{identityMutationBusy || nameBusy}}" bindtap="openDeleteAccount">{{copy.deleteAccount}}</button>
   <text
     wx:if="{{accountError}}"

@@ -558,7 +558,7 @@ describe('mini program account page', () => {
     expect(page.data.accountLinkCodeMode).toBe(true);
     expect(navigateTo).not.toHaveBeenCalled();
     page.openLinkCodeWebsite();
-    expect(navigateTo).toHaveBeenCalledWith(expect.objectContaining({ url: '/pages/web/index?key=account-link' }));
+    expect(navigateTo).toHaveBeenCalledWith(expect.objectContaining({ url: '/pages/account-link/index' }));
     page.onLinkCodeInput({ detail: { value: ' 123456 ' } });
     await page.previewLinkCode();
     expect(page.data.accountLinkTargetId).toBe(42);

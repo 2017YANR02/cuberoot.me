@@ -47,6 +47,7 @@ const EXACT = new Set([
   'packages/client/components/LandingSearch.tsx', 'packages/client/components/SiteAssistantDialog.tsx',
   'apps/miniprogram/src/lib/navigation.ts', 'apps/miniprogram/src/lib/web-routes.ts',
   'apps/miniprogram/src/pages/web/index.ts',
+  'apps/miniprogram/src/lib/native-route-page.ts',
   'apps/miniprogram/src/pages/training/index.ts',
   'packages/client/app/[lang]/training/[orgSlug]/page.tsx',
   'apps/miniprogram/src/pages/external-timer/index.ts',

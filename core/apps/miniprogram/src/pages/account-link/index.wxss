@@ -1,4 +1,6 @@
 .link-page { background: var(--cr-bg); color: var(--cr-text); }
+.link-input-row { display: flex; align-items: center; gap: 16rpx; }
+.link-input-row input { flex: 1; min-width: 0; }
 .link-note { display: block; margin: 24rpx 0; line-height: 1.6; color: var(--cr-muted); }
 .link-input { border-bottom: 1rpx solid var(--cr-line); min-height: 88rpx; margin: 24rpx 0; }
 .link-action { margin: 24rpx 0; text-align: left; }

@@ -1,0 +1,5 @@
+<page-meta page-style="{{appearanceStyle}}" />
+<view class="page">
+  <text wx:if="{{error}}" class="status-text" aria-role="status">{{error}}</text>
+  <button wx:if="{{canRetry}}" class="primary-button" bindtap="navigate">{{retry}}</button>
+</view>

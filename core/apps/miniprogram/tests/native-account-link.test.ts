@@ -18,6 +18,21 @@ function fixture() {
   page.onShow();
   return page;
 }
+it.each([1, 2])('verifies existing accounts with native password or SMS method %s without installing tokens', async method => {
+  const page = fixture();
+  page.data.method = method;
+  page.data.email = method === 1 ? 'member@example.com' : '13800138000';
+  page.data.password = 'local-fixture-password';
+  vi.mocked(requestJson).mockResolvedValueOnce(session).mockResolvedValueOnce({ linkCode: '654321', expiresInSeconds: 60 });
+  await page.generateCode();
+  expect(requestJson).toHaveBeenNthCalledWith(1, method === 1 ? '/auth/email/password' : '/auth/phone/verify', {
+    method: 'POST', body: method === 1 ? { email: 'member@example.com', password: 'local-fixture-password' }
+      : { phone: '+8613800138000', code: '123456', purpose: 'login', existingOnly: true },
+  });
+  expect(page.data.linkCode).toBe('654321');
+  expect(page.data.password).toBe('');
+  expect(storage).not.toHaveBeenCalled();
+});
 it('verifies only an existing account and issues a uid-bound code without installing its session', async () => {
   vi.mocked(requestJson).mockResolvedValueOnce(session).mockResolvedValueOnce({ linkCode: '654321', expiresInSeconds: 60 });
   const page = fixture();
