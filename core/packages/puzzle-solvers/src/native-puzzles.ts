@@ -191,6 +191,13 @@ export const NATIVE_PUZZLES = {
     axes: ICOSAHEDRON_FACE_AXES, order: 3, layers: 2,
     scrambleLength: 60, aspect: 8 / 5, visibleFacelets: 380,
   },
+  // Jason Smith's fixed-center Radiolarian 1.5; Hyperspeedcube radio01_5
+  // uses h = 0.77. Keep the twenty face centers and standard non-jumbling turns.
+  radiocanon: {
+    description: 'i f 0.77', zh: 'Radio Canon', en: 'Radio Canon', textLabel: 'Canon',
+    axes: ICOSAHEDRON_FACE_AXES, order: 3, layers: 2,
+    scrambleLength: 60, aspect: 8 / 5, visibleFacelets: 320,
+  },
 } as const;
 
 export type NativePuzzleId = keyof typeof NATIVE_PUZZLES;

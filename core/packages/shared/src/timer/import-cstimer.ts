@@ -118,6 +118,7 @@ const CSTIMER_EVENT_MAP: Record<string, EventId> = {
   'radioweb': 'radioweb', 'radiolarian6': 'radioweb',
   'catscradle': 'catscradle', 'cat’scradle': 'catscradle', "cat'scradle": 'catscradle',
   'radiolarian5': 'catscradle',
+  'radiocanon': 'radiocanon', 'radiocannon': 'radiocanon', 'radiolarian1.5': 'radiocanon',
 };
 
 /* ------------------------------------------------------------------ */
@@ -166,7 +167,8 @@ function normalizeEventKey(raw: unknown): { event: EventId; matched: boolean } {
   if (typeof raw !== 'string') return { event: '333', matched: false };
   const k = raw.toLowerCase().trim().replace(/[\s_-]/g, '');
   if (k in CSTIMER_EVENT_MAP) return { event: CSTIMER_EVENT_MAP[k], matched: true };
-  const noX = k.replace(/x/g, '');
+  // Treat x as a dimension separator only between numbers, not inside names.
+  const noX = k.replace(/(\d)x(?=\d)/g, '$1');
   if (noX in CSTIMER_EVENT_MAP) return { event: CSTIMER_EVENT_MAP[noX], matched: true };
   return { event: '333', matched: false };
 }
@@ -199,6 +201,10 @@ function nameToEvent(name: unknown): { event: EventId; matched: boolean } {
   }
   if (tokens.some((token, index) => token === 'radio' && tokens[index + 1] === 'jewel')) {
     return normalizeEventKey('radiojewel');
+  }
+  // Preserve the decimal in Radiolarian 1.5 before the generic token fallback.
+  if (/(?:^|[^a-z0-9])(?:radio[\s_-]*cann?on(?![a-z0-9])|radiolarian[\s_-]*1\.5(?![a-z0-9]|\.\d))/i.test(name)) {
+    return normalizeEventKey('radiocanon');
   }
   if (tokens.some((token, index) =>
     (token === 'radio' && tokens[index + 1] === 'web')
